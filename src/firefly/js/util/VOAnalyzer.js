@@ -70,7 +70,7 @@ function getObsCoreTableColumn(tableOrId, name) {
         const prefUtype= cols.find( (c) => c.name===name);
         return prefUtype ? prefUtype : cols[0];
     }
-    cols= tblRec.getTblColumnsOnUCD(entry.ucd);
+    cols= tblRec.getTblColumnsOnDefinedUCDValue(entry.ucd);
     if (cols.length) {
         if (cols.length===1) return cols[0];
         const prefUcd= cols.find( (c) => c.name===name);
@@ -224,6 +224,22 @@ class TableRecognizer {
         return this.regionColumnInfo;
     }
 
+    /**
+     * filter the columns per ucd value defined in the UCD value of relevant OBSTAP column
+     * @param ucds ucd value defined in OBSTAP, it may contain more than one ucd values
+     * @returns {*}
+     */
+    getTblColumnsOnDefinedUCDValue(ucds) {
+        const ucdList = ucds.split(';');
+
+        return ucdList.reduce((prev, ucd) => {
+                prev = prev.filter((oneCol) => {
+                    return (has(oneCol, 'UCD') && isUCDWith(oneCol.UCD, ucd, get(ucdSyntaxMap, ucd)));
+                });
+                return prev;
+        }, this.columns);
+
+    }
     /**
      * get columns containing the same ucd value
      * @param ucd
@@ -609,10 +625,26 @@ export function findTableCenterColumns(table) {
 }
 
 
+/**
+ * find ObsCore defined 's_region' column
+ * @param table
+ * @returns {(*|TableRecognizer)|*}
+ */
 export function findTableRegionColumn(table) {
     const tblRecog = get(table, ['tableData', 'columns']) && TableRecognizer.newInstance(table);
     return tblRecog && tblRecog.getRegionColumn();
 }
+
+/**
+ * find the ObsCore defined 'access_url' column
+ * @param table
+ * @returns {Object}
+ */
+export function findTableAccessURLColumn(table) {
+    const urlCol = getObsCoreTableColumn(table, 'access_url');
+    return isEmpty(urlCol) ? null : urlCol;
+}
+
 /**
  * Given a TableModel or a table id return a table model
  * @param {TableModel|String} tableOrId - a table model or a table id
@@ -623,6 +655,7 @@ function getTableModel(tableOrId) {
     if (isObject(tableOrId)) return tableOrId;
     return undefined;
 }
+
 
 /**
  * table analyzer based on the table model for columns which contains column_name & ucd columns
