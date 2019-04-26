@@ -4,6 +4,9 @@
 
 import {TABLE_LOADED} from '../../tables/TablesCntlr.js';
 import {findTableAccessURLColumn} from '../../util/VOAnalyzer.js';
+import {getTblById} from '../../tables/TableUtil.js';
+import {dispatchTableUpdate} from '../../tables/TablesCntlr.js';
+import {clone} from '../../util/WebUtil.js';
 
 
 /** type {TableWatcherDef}
@@ -43,10 +46,12 @@ export function watchURLLinkColumns(tbl_id, action, cancelSelf, params) {
 }
 
 function handleLinkColumnUpdate(tbl_id) {
+    const tbl = getTblById(tbl_id);
     const linkCol = findTableAccessURLColumn(tbl_id);
 
     if (linkCol && (!linkCol.type || linkCol.type === 'char')) {
         linkCol.type = 'location';
         //linkCol.links = [ { }];
+        dispatchTableUpdate(clone(tbl));
     }
 }

@@ -625,15 +625,26 @@ export function findTableCenterColumns(table) {
 }
 
 
+/**
+ * find ObsCore defined 's_region' column
+ * @param table
+ * @returns {(*|TableRecognizer)|*}
+ */
 export function findTableRegionColumn(table) {
     const tblRecog = get(table, ['tableData', 'columns']) && TableRecognizer.newInstance(table);
     return tblRecog && tblRecog.getRegionColumn();
 }
 
+/**
+ * find the ObsCore defined 'access_url' column
+ * @param table
+ * @returns {Object}
+ */
 export function findTableAccessURLColumn(table) {
     const urlCol = getObsCoreTableColumn(table, 'access_url');
     return isEmpty(urlCol) ? null : urlCol;
 }
+
 /**
  * Given a TableModel or a table id return a table model
  * @param {TableModel|String} tableOrId - a table model or a table id
