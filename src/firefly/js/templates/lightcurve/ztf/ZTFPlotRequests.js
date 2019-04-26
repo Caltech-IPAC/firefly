@@ -24,10 +24,8 @@ export function getWebPlotRequestViaZTFIbe(tableModel, hlrow, cutoutSize, params
     fluxCol: 'mag',
     dataSource: 'field'
 }) {
-    const ra = getCellValue(tableModel, hlrow, 'sra');
-    const dec = getCellValue(tableModel, hlrow, 'sdec');
-    const cra = getCellValue(tableModel, hlrow, 'ra');
-    const cdec = getCellValue(tableModel, hlrow, 'dec');
+    const ra = getCellValue(tableModel, hlrow, 'ra');
+    const dec = getCellValue(tableModel, hlrow, 'dec');
     const field = getCellValue(tableModel, hlrow, 'field');
     const ccdid = getCellValue(tableModel, hlrow, 'ccdid');
     const qid = getCellValue(tableModel, hlrow, 'qid');
@@ -63,8 +61,8 @@ export function getWebPlotRequestViaZTFIbe(tableModel, hlrow, cutoutSize, params
 
         let wp = null;
         sr.setParam('doCutout', 'false');
-        if (!isNil(cra) && !isNil(cdec)) {
-            sr.setParam('center', `${cra},${cdec}`);
+        if (!isNil(ra) && !isNil(dec)) {
+            sr.setParam('center', `${ra},${dec}`);
             sr.setParam('in_ra', `${ra}`);
             sr.setParam('in_dec', `${dec}`);
             wp = makeWorldPt(ra, dec, CoordinateSys.EQ_J2000);
