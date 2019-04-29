@@ -44,6 +44,10 @@
     box-sizing: content-box;
 }
 
+.ff-dropDownIndicator {
+    margin-left: 1px;
+}
+
 .ff-menuItemHText {
     display: inline-block;
     padding-top: 4px;

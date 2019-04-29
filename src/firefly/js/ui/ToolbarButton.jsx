@@ -9,11 +9,17 @@ import './ToolbarButton.css';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
 import {DROP_DOWN_KEY} from './DropDownToolbarButton.jsx';
 import {ToolTipCtx} from '../visualize/ui/VisToolbar.jsx';
+import DROP_DOWN_ICON from 'html/images/dd-narrow.png';
 
 
 export function makeBadge(cnt) {
     var cName= `ff-badge ${cnt<10 ? 'badge-1-digit' : 'badge-2-digit'}`;
     return <div className={cName}>{Math.trunc(cnt)}</div>;
+}
+
+export function makeDropDownIndicator(cnt) {
+    // return (<img className={'ff-dropDownIndicator'} src={DROP_DOWN_ICON}/>);
+    return (<img src={DROP_DOWN_ICON}/>);
 }
 
 
@@ -97,7 +103,7 @@ export class ToolbarButton extends PureComponent {
             icon,text,tip,badgeCount=0,enabled=true,
             horizontal=true, bgDark, visible=true, active,
             imageStyle, lastTextItem=false, todo, additionalStyle,
-            hasHorizontalLayoutSep} = this.props;
+            hasHorizontalLayoutSep, useDropDownIndicator} = this.props;
 
 
         var s= { position: 'relative'};
@@ -133,6 +139,7 @@ export class ToolbarButton extends PureComponent {
                          ref={this.setupRef}
                          onClick={this.click} onMouseOver={this.mouseOver} onMouseOut={this.mouseOut}>
                         <div className={textCName}>{text}</div>
+                        {useDropDownIndicator ? makeDropDownIndicator() : ''}
                         {badgeCount ? makeBadge(badgeCount) : ''}
                         {todo?<div style={todoStyle}>ToDo</div>:false}
                     </div>
@@ -196,6 +203,7 @@ ToolbarButton.propTypes= {
     dropDownCB : PropTypes.func,
     imageStyle : PropTypes.object,
     lastTextItem : PropTypes.boolean,
+    useDropDownIndicator: PropTypes.bool,
     additionalStyle : PropTypes.object
 };
 

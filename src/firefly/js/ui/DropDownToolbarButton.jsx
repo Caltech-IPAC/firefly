@@ -120,6 +120,7 @@ DropDownToolbarButton.propTypes= {
     tipOnCB : PropTypes.func,
     tipOffCB : PropTypes.func,
     hasHorizontalLayoutSep: PropTypes.bool,
-    dropDown : PropTypes.object.isRequired
+    dropDown : PropTypes.object.isRequired,
+    useDropDownIndicator: PropTypes.bool
 };
 

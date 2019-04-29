@@ -117,6 +117,30 @@ export function getObsCoreSingleDataProduct(table, row, activateParams, includeM
                     .filter(({contentType,size}) => {
                         return (contentType.toLowerCase().includes('fits') && (size<=GIG));
                     });
+
+                if (!filterDLData.length) {
+                    if (dataLinkData.length>0) {
+                        return {
+                            displayType: 'message', message: 'No displayable data available for this row',
+                            menu: [
+                                {
+                                    name: 'Show Datalink VO Table for list of products',
+                                    type: 'table',
+                                    activate: createTableActivate(dataSource,'Datalink VO Table', activateParams),
+                                    url: dataSource
+                                },
+                                {
+                                    name: 'Download Datalink VO Table for list of products',
+                                    type: 'download',
+                                    url: dataSource
+                                },
+                            ]
+                        };
+                    }
+                    else {
+                        return {displayType: 'message', message : 'No data available for this row'};
+                    }
+                }
                 let idx= filterDLData.findIndex( (item) => item.semantics.includes('this'));
                 if (idx<0) idx= 0;
 
@@ -124,13 +148,8 @@ export function getObsCoreSingleDataProduct(table, row, activateParams, includeM
                 if (!canHandle) {
                     return {displayType: 'message', message: filterDLData[idx].contentType+' is not yet supported', menu};
                 }
-                if (filterDLData.length)  {
-                    const req= makeObsCoreRequest(filterDLData[idx].url,positionWP,titleStr);
-                    return makeObsCoreImageDisplayType(req,table,row,menu,activateParams);
-                }
-                else {
-                    return {displayType: 'message', message : 'No data available for this row'};
-                }
+                const req= makeObsCoreRequest(filterDLData[idx].url,positionWP,titleStr);
+                return makeObsCoreImageDisplayType(req,table,row,menu,activateParams);
 
             }
         ).catch(
@@ -249,6 +268,14 @@ function createTableActivate(url, titleStr, activateParams) {
     return () => {
         const {tableGroupViewerId}= activateParams;
         const dataTableReq= makeFileRequest(titleStr, url, undefined, { tbl_id:previewTableId, startIdx : 0, pageSize : 100});
-        dispatchTableSearch(dataTableReq, {noHistory: true, tbl_group: tableGroupViewerId,backgroundable: true, showFilters: true, showInfoButton: true});
+        dispatchTableSearch(dataTableReq,
+            {
+                noHistory: true,
+                removable:false,
+                tbl_group: tableGroupViewerId,
+                backgroundable: false,
+                showFilters: true,
+                showInfoButton: true
+            });
     };
 }

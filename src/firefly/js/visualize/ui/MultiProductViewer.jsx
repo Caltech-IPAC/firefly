@@ -4,7 +4,7 @@
 
 import React, {memo, useContext, useState, useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {get} from 'lodash';
+import {get,isEmpty} from 'lodash';
 import {flux} from '../../Firefly.js';
 import {NewPlotMode, dispatchAddViewer, dispatchViewerUnmounted, WRAPPER, META_VIEWER_ID, IMAGE,
         getMultiViewRoot, getViewer, dispatchUpdateCustom} from '../MultiViewCntlr.js';
@@ -90,12 +90,13 @@ OtherOptionsDropDown.propTypes= {
 function getMakeDropdown(menu, viewerId) {
     return () => {
         return (
-            <DropDownToolbarButton text={'More...'}
+            <DropDownToolbarButton text={'More'}
                                    tip='Other data to display'
                                    enabled={true} horizontal={true}
                                    visible={true}
                                    additionalStyle={{paddingRight:20}}
                                    hasHorizontalLayoutSep={false}
+                                   useDropDownIndicator={true}
                                    dropDown={<OtherOptionsDropDown menu={menu} viewerId={viewerId}/>} />
 
             );
@@ -137,6 +138,7 @@ export const MultiProductViewer= memo(({viewerId, imageMetaViewerId=META_VIEWER_
             result= ( <MultiImageViewer viewerId= {imageMetaViewerId} insideFlex={true}
                                         canReceiveNewPlots={NewPlotMode.none.key}
                                         tableId={metaDataTableId} controlViewerMounting={false}
+                                        handleInlineToolsWhenSingle={false}
                                         makeDropDown={menu && getMakeDropdown(menu,viewerId) }
                                         Toolbar={ImageMetaDataToolbar}/>
             );
@@ -152,14 +154,21 @@ export const MultiProductViewer= memo(({viewerId, imageMetaViewerId=META_VIEWER_
             );
             break;
         case 'table' :
-            result= (<TablesContainer tbl_group= {tableGroupViewerId} mode='both' closeable={false} expandedMode={false} />);
+            result= (
+                <div style={{display:'flex', flexDirection: 'column', background: '#c8c8c8', width:'100%', height:'100%'}}>
+                    {!isEmpty(menu) && <div style={{height:30, width:'100%'}}>
+                        {getMakeDropdown(menu,viewerId)()}
+                    </div>}
+                    <TablesContainer tbl_group= {tableGroupViewerId} mode='both' closeable={false} expandedMode={false} />
+                </div>
+            );
             break;
         case 'png' :
             result= (
                 <div style={{display:'flex', flexDirection: 'column', background: '#c8c8c8', width:'100%', height:'100%'}}>
-                    <div style={{height:30, width:'100%'}}>
+                    { !isEmpty(menu) &&  <div style={{height:30, width:'100%'}}>
                         {getMakeDropdown(menu,viewerId)()}
-                    </div>
+                    </div>}
                     <div style={{overflow:'auto', display:'flex', justifyContent: 'center', alignItem:'center'}}>
                         <img src={url} alt={url} style={{maxWidth:'100%', flexGrow:0, flexShrink:0 }}/>
                     </div>
