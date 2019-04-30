@@ -20,9 +20,11 @@ import ImagePlotCntlr, {visRoot} from '../../visualize/ImagePlotCntlr.js';
 import {TABLE_LOADED, TBL_RESULTS_ACTIVE, TBL_RESULTS_ADDED} from '../../tables/TablesCntlr.js';
 import {getAppOptions, REINIT_APP} from '../../core/AppDataCntlr.js';
 import {startCoverageWatcher} from '../saga/CoverageWatcher.js';
-import {startImageMetadataWatcher} from '../saga/ImageMetaDataWatcher.js';
+import {startDataProductsWatcher} from '../saga/DataProductsWatcher.js';
 import {isCatalog, isMetaDataTable} from '../../util/VOAnalyzer.js';
+import {MultiProductViewer} from  '../ui/MultiProductViewer';
 
+const META_DATA_TBL_GROUP_ID= 'TableDataProducts';
 
 /**
  * This component works with ImageMetaDataWatch sega which should be launch during initialization
@@ -67,11 +69,10 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
                 }
                 { showMeta &&
                     <Tab name={metaTitle} removable={false} id='meta'>
-                        <MultiImageViewer viewerId= {META_VIEWER_ID}
-                                          insideFlex={true}
-                                          canReceiveNewPlots={NewPlotMode.none.key}
-                                          tableId={metaDataTableId}
-                                          Toolbar={ImageMetaDataToolbar}/>
+                        <MultiProductViewer viewerId={'DataProductsType'}
+                                            metaDataTableId={metaDataTableId}
+                                            tableGroupViewerId={META_DATA_TBL_GROUP_ID}
+                                           imageMetaViewerId={META_VIEWER_ID}/>
                     </Tab>
                 }
                 { showCoverage &&
@@ -105,7 +106,7 @@ TriViewImageSection.propTypes= {
 
 export function launchTableTypeWatchers() {
     const coverageOps= get(getAppOptions(), 'coverage',{});
-    startImageMetadataWatcher({viewerId: META_VIEWER_ID});
+    startDataProductsWatcher({imageViewerId: META_VIEWER_ID,tableGroupViewerId:META_DATA_TBL_GROUP_ID});
     startCoverageWatcher({...coverageOps, viewerId:'coverageImages', ignoreCatalogs:true});
     startLayoutWatcher();
 }
@@ -155,11 +156,19 @@ function layoutHandler(action, cancelSelf) {
             newLayoutInfo = onPlotDelete(newLayoutInfo, action);
             break;
         case TABLE_LOADED:
+            if (action.payload.tbl_id!==META_DATA_TBL_GROUP_ID) {
+                newLayoutInfo = handleNewTable(newLayoutInfo, action);
+            }
+            break;
         case TBL_RESULTS_ADDED:
-            newLayoutInfo = handleNewTable(newLayoutInfo, action);
+            if (action.payload.options.tbl_group!==META_DATA_TBL_GROUP_ID) {
+                newLayoutInfo = handleNewTable(newLayoutInfo, action);
+            }
             break;
         case TBL_RESULTS_ACTIVE:
-            newLayoutInfo = onActiveTable(newLayoutInfo, action);
+            if (action.payload.tbl_group!==META_DATA_TBL_GROUP_ID) {
+                newLayoutInfo = onActiveTable(newLayoutInfo, action);
+            }
             break;
         case REINIT_APP:
             cancelSelf();

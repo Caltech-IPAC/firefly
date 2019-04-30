@@ -4,7 +4,7 @@
 
 import {filter, isEmpty, isArray, uniq} from 'lodash';
 
-import {startImageMetadataWatcher} from '../../visualize/saga/ImageMetaDataWatcher.js';
+import {startDataProductsWatcher} from '../../visualize/saga/DataProductsWatcher.js';
 import {startCoverageWatcher} from '../../visualize/saga/CoverageWatcher.js';
 
 import {LO_VIEW, SHOW_DROPDOWN, SET_LAYOUT_MODE, ENABLE_SPECIAL_VIEWER, SPECIAL_VIEWER,
@@ -101,7 +101,7 @@ function startSpecialViewerSaga(action, alreadyStarted) {
     switch (viewerType) {
 
         case SPECIAL_VIEWER.tableImageMeta:
-            startImageMetadataWatcher({viewerId: cellId, paused:false});
+            startDataProductsWatcher({imageViewerId: cellId, paused:false});
             break;
         case SPECIAL_VIEWER.coverageImage:
             startCoverageWatcher({viewerId:cellId, ignoreCatalogs:true, paused:false});

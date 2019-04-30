@@ -154,11 +154,18 @@ public class WebPlotFactory {
                 ImagePlotInfo pi = pInfo[i];
                 if (i==0) saveRequest= pi.getState().getWebPlotRequest();
 
-                boolean notify= pInfo.length<5 || i % ((pInfo.length/10)+1)==0;
+                boolean notify= pInfo.length<5 || i % ((pInfo.length/10)+1)==0 || i==pInfo.length-1;
                 if (notify) {
                     if (pInfo.length>3) {
-                        PlotServUtils.updatePlotCreateProgress(pi.getState().getWebPlotRequest(), ProgressStat.PType.CREATING,
-                                PlotServUtils.PROCESSING_MSG+": "+ (i+1)+" of "+pInfo.length);
+                        if (i==pInfo.length-1) {
+                            PlotServUtils.updatePlotCreateProgress(pi.getState().getWebPlotRequest(),
+                                    ProgressStat.PType.CREATING,
+                                    PlotServUtils.PROCESSING_COMPLETED_MSG);
+                        }
+                        else {
+                            PlotServUtils.updatePlotCreateProgress(pi.getState().getWebPlotRequest(), ProgressStat.PType.CREATING,
+                                    PlotServUtils.PROCESSING_MSG+": "+ (i+1)+" of "+pInfo.length);
+                        }
                     }
                     else {
                         PlotServUtils.updatePlotCreateProgress(pi.getState().getWebPlotRequest(),ProgressStat.PType.CREATING,
@@ -193,7 +200,7 @@ public class WebPlotFactory {
             throw e;
         } catch (FitsException e) {
             updateProgressIsFailure(saveRequest);
-            throw new FailedRequestException("Invalid FITS File format", e.getMessage(),e);
+            throw new FailedRequestException(e.getMessage(), e.getMessage(), e);
         } catch (Exception e) {
             updateProgressIsFailure(saveRequest);
             throw new FailedRequestException("Could not create plot", e.getMessage(), e);

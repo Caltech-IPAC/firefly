@@ -9,11 +9,17 @@ import './ToolbarButton.css';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
 import {DROP_DOWN_KEY} from './DropDownToolbarButton.jsx';
 import {ToolTipCtx} from '../visualize/ui/VisToolbar.jsx';
+import DROP_DOWN_ICON from 'html/images/dd-narrow.png';
 
 
 export function makeBadge(cnt) {
     var cName= `ff-badge ${cnt<10 ? 'badge-1-digit' : 'badge-2-digit'}`;
     return <div className={cName}>{Math.trunc(cnt)}</div>;
+}
+
+export function makeDropDownIndicator(cnt) {
+    // return (<img className={'ff-dropDownIndicator'} src={DROP_DOWN_ICON}/>);
+    return (<img src={DROP_DOWN_ICON}/>);
 }
 
 
@@ -96,7 +102,8 @@ export class ToolbarButton extends PureComponent {
         const {
             icon,text,tip,badgeCount=0,enabled=true,
             horizontal=true, bgDark, visible=true, active,
-            imageStyle, lastTextItem=false, todo, additionalStyle} = this.props;
+            imageStyle, lastTextItem=false, todo, additionalStyle,
+            hasHorizontalLayoutSep, useDropDownIndicator} = this.props;
 
 
         var s= { position: 'relative'};
@@ -121,17 +128,18 @@ export class ToolbarButton extends PureComponent {
             s.fontSize= '10pt';
             s.position= 'relative';
             textCName= 'ff-menuItemHText';
-            const topStyle= Object.assign({display:'inline-block', height:'100%', flex:'0 0 auto' },additionalStyle);
+            const topStyle= Object.assign({}, {display:'inline-block', height:'100%', flex:'0 0 auto' },additionalStyle);
             return (
                 <div style={topStyle}>
                     <div style={{ display:'inline-block',
                               margin:'0 4px 0 4px',
                               height: 'calc(100% - 7px)',
-                              borderLeft : '1px solid rgba(0,0,0,.6)' }} />
+                              borderLeft : hasHorizontalLayoutSep ? '1px solid rgba(0,0,0,.6)':'none' }} />
                     <div title={tip} style={s} className={cName}
                          ref={this.setupRef}
                          onClick={this.click} onMouseOver={this.mouseOver} onMouseOut={this.mouseOut}>
                         <div className={textCName}>{text}</div>
+                        {useDropDownIndicator ? makeDropDownIndicator() : ''}
                         {badgeCount ? makeBadge(badgeCount) : ''}
                         {todo?<div style={todoStyle}>ToDo</div>:false}
                     </div>
@@ -139,7 +147,8 @@ export class ToolbarButton extends PureComponent {
                     {lastTextItem ? <div style={{ display:'inline-block',
                                               margin:'0 4px 0 4px',
                                               height: 'calc(100% - 7px)',
-                                              borderLeft : '1px solid rgba(0,0,0,.6)' }} /> : false}
+                                              borderLeft : hasHorizontalLayoutSep ? '1px solid rgba(0,0,0,.6)':'none'
+                                              }} /> : false}
                 </div>
             );
 
@@ -184,6 +193,7 @@ ToolbarButton.propTypes= {
     bgDark: PropTypes.bool,
     todo: PropTypes.bool,
     useBorder : PropTypes.bool,
+    hasHorizontalLayoutSep: PropTypes.bool,
     onClick : PropTypes.func,
     horizontal : PropTypes.bool,
     visible : PropTypes.bool,
@@ -193,6 +203,7 @@ ToolbarButton.propTypes= {
     dropDownCB : PropTypes.func,
     imageStyle : PropTypes.object,
     lastTextItem : PropTypes.boolean,
+    useDropDownIndicator: PropTypes.bool,
     additionalStyle : PropTypes.object
 };
 
@@ -206,7 +217,8 @@ ToolbarButton.DefaultProps= {
     horizontal : true,
     todo : false,
     hideDropDowns: false,
-    visible : true
+    visible : true,
+    hasHorizontalLayoutSep :true
 };
 
 

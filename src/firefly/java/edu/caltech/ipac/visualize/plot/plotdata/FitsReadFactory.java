@@ -37,6 +37,9 @@ import java.util.ArrayList;
  */
 public class FitsReadFactory {
 
+    public static final String NO_IMAGE_HDU_MSG= "FITS file does not contain image data";
+    public static final String NO_IMAGE_HDU_MSG_ONLY_TABLE= "FITS file does not contain image data, only table data";
+    public static final String BAD_FORMAT_MSG="Invalid FITS file format";
 
     /**
      *
@@ -82,22 +85,20 @@ public class FitsReadFactory {
         //get all the Header Data Unit from the image FITS file
         BasicHDU[] HDUs = imageFits.read();
 
-        if (HDUs == null) {
-            // Error: file doesn't seem to have any HDUs!
-            throw new FitsException("Bad format in FITS file");
-        }
+        if (HDUs == null) throw new FitsException(BAD_FORMAT_MSG);
 
         ArrayList<BasicHDU> HDUList = FitsReadUtil.getImageHDUList(HDUs);
 
         if (HDUList.size() == 0) { //The FITS file does not have any Image
-            throw new FitsException("No image headers in FITS file");
+            String msg= (HDUs.length>1) ? NO_IMAGE_HDU_MSG_ONLY_TABLE : NO_IMAGE_HDU_MSG;
+            throw new FitsException(msg);
         }
 
         //Get the TAB look up Binary Table HDU
         BasicHDU[] tblHDUs = tableFits.read();
         if (tblHDUs == null) {
             // Error: file doesn't seem to have any HDUs!
-            throw new FitsException("Bad format in FITS file");
+            throw new FitsException(BAD_FORMAT_MSG);
         }
 
         return getFitsReadArray(HDUList.toArray(new BasicHDU[0]), tblHDUs, false);
@@ -129,8 +130,7 @@ public class FitsReadFactory {
         BasicHDU[] HDUs = fits.read();
 
         if (HDUs == null) {
-            // Error: file doesn't seem to have any HDUs!
-            throw new FitsException("Bad format in FITS file");
+            throw new FitsException(BAD_FORMAT_MSG);
         }
 
         return createFitsReadArray(HDUs,clearHdu);
@@ -147,14 +147,18 @@ public class FitsReadFactory {
             throws FitsException {
 
 
-        if (HDUs == null) {
-            // Error: file doesn't seem to have any HDUs!
-            throw new FitsException("Bad format in FITS file");
-        }
+        if (HDUs == null) throw new FitsException(BAD_FORMAT_MSG);
+
 
         ArrayList<BasicHDU> HDUList = FitsReadUtil.getImageHDUList(HDUs);
-        if (HDUList.size() == 0)
-            throw new FitsException("No image headers in FITS file");
+
+        if (HDUList.size() == 0) { //The FITS file does not have any Image
+            String msg= (HDUs.length>1) ? NO_IMAGE_HDU_MSG_ONLY_TABLE : NO_IMAGE_HDU_MSG;
+            throw new FitsException(msg);
+        }
+
+
+
 
         return getFitsReadArray(HDUList.toArray(new BasicHDU[0]), HDUs, clearHdu);
 

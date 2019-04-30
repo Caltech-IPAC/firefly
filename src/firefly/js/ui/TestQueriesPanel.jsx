@@ -33,19 +33,10 @@ import {dispatchTableSearch} from '../tables/TablesCntlr.js';
 import {FieldGroupTabs, Tab} from './panel/TabPanel.jsx';
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
-import {ListBoxInputField} from './ListBoxInputField.jsx';
-import {FileUpload} from '../ui/FileUpload.jsx';
 import {parseWorldPt} from '../visualize/Point.js';
-import {makeTblRequest, makeIrsaCatalogRequest} from '../tables/TableRequestUtil.js';
-import {dispatchAddViewerItems,getAViewFromMultiView,getMultiViewRoot, DEFAULT_FITS_VIEWER_ID, IMAGE} from '../visualize/MultiViewCntlr.js';
-import WebPlotRequest from '../visualize/WebPlotRequest.js';
-import {dispatchPlotImage, dispatchPlotHiPS} from '../visualize/ImagePlotCntlr.js';
+import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {getDS9Region} from '../rpc/PlotServicesJson.js';
 import {RegionFactory} from '../visualize/region/RegionFactory.js';
-import {HiPSId, URL_COL} from '../visualize/HiPSListUtil.js';
-import {HiPSPopupMsg, HiPSSurveyListSelection, getTblModelOnPanel,
-        getHiPSSourcesChecked, sourcesPerChecked} from './HiPSSurveyListDisplay.jsx';
-import {getCellValue} from '../tables/TableUtil.js';
 import {NaifidPanel} from './NaifidPanel';
 
 

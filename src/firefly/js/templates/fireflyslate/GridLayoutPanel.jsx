@@ -16,6 +16,8 @@ import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {LO_VIEW, getGridDim, dispatchUpdateGridView} from '../../core/LayoutCntlr.js';
 import {NewPlotMode} from '../../visualize/MultiViewCntlr.js';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
+import {MultiProductViewer} from '../../visualize/ui/MultiProductViewer.jsx';
+import {getActiveTableId} from '../../tables/TableUtil.js';
 
 import './react-grid-layout_styles.css';
 import './react-resizable_styles.css';
@@ -184,10 +186,10 @@ function makeComponent(g) {
         case LO_VIEW.tableImageMeta:
             return (
                 <div key={g.cellId} style={{flex: 'auto', display: 'flex'}} >
-                    <MultiImageViewer key={g.cellId} viewerId= {g.cellId}
-                                      insideFlex={true}
-                                      canReceiveNewPlots={NewPlotMode.none.key}
-                                      Toolbar={ImageMetaDataToolbar}/>
+
+                    <MultiProductViewer key={g.cellId}  viewerId={'DataProductsType'}
+                                        metaDataTableId={getActiveTableId()}
+                                        imageMetaViewerId={g.cellId}/>
                 </div>
             );
             break;

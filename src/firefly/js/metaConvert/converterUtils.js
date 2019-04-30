@@ -82,7 +82,7 @@ export const computePlotId= (plotIdRoot ,plotIdx) => `${plotIdRoot}-row-${plotId
  * @param table
  * @param maxRows
  * @param plotIdRoot
- * @return {Array}
+ * @return {Array<{plotId:String,row:number,highlight:boolean}>}
  */
 export function findGridTableRows(table,maxRows, plotIdRoot) {
 
