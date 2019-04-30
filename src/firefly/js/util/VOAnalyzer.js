@@ -628,7 +628,7 @@ export function findTableCenterColumns(table) {
 /**
  * find ObsCore defined 's_region' column
  * @param table
- * @returns {(*|TableRecognizer)|*}
+ * @return {RegionColDescription|null}  return ObsCore defined s_region column
  */
 export function findTableRegionColumn(table) {
     const tblRecog = get(table, ['tableData', 'columns']) && TableRecognizer.newInstance(table);
@@ -638,7 +638,7 @@ export function findTableRegionColumn(table) {
 /**
  * find the ObsCore defined 'access_url' column
  * @param table
- * @returns {Object}
+ * @return {TableColumn|null} return ObsCore defined access_url column
  */
 export function findTableAccessURLColumn(table) {
     const urlCol = getObsCoreTableColumn(table, 'access_url');
@@ -1016,6 +1016,7 @@ export const findTargetName = (columns) => columns.find( (c) => DEFAULT_TNAME_OP
  *
  * @summary And object that describes a pairs of columns in a table that makes up a coordinate
  *
+ * @prop {string} type -   content type of the columns, 'center'
  * @prop {string} lonCol - name of the longitudinal column
  * @prop {string} latCol - name of the latitudinal column
  * @prop {number} lonIdx - column index for the longitudinal column
@@ -1033,6 +1034,20 @@ export const findTargetName = (columns) => columns.find( (c) => DEFAULT_TNAME_OP
  * @prop {string} colName - name of the column
  * @prop {number} colIdx - column index for the column
  * @prop {string} unit - unit for the column
+ */
+
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} RegionColDescription
+ *
+ * @summary An object that describes the column which is ObsCore defined 's_region'
+ *
+ * @prop {string} type -   content type of the column, 'region'
+ * @prop {string} regionCol - name of the column
+ * @prop {number} regionIdx - column index for the column
+ * @prop {string} unit - unit of the measurement of the region
  */
 
 /**
