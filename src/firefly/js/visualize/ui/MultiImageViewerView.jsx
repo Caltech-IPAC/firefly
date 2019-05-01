@@ -3,7 +3,7 @@
  */
 
 
-import React from 'react';
+import React, {forwardRef} from 'react';
 import PropTypes from 'prop-types';
 import {omit} from 'lodash';
 import {SINGLE, GRID} from '../MultiViewCntlr.js';
@@ -11,7 +11,7 @@ import {MultiItemViewerView} from './MultiItemViewerView.jsx';
 import {ImageViewer} from './../iv/ImageViewer.jsx';
 
 
-export function MultiImageViewerView(props) {
+export const MultiImageViewerView = forwardRef( (props, ref) => {
 
     const {Toolbar, visRoot, viewerPlotIds, showWhenExpanded=false,
         handleInlineToolsWhenSingle=true, inlineTitle= true, aboveTitle=false}= props;
@@ -39,9 +39,9 @@ export function MultiImageViewerView(props) {
 
 
     return (
-        <MultiItemViewerView {...newProps} />
+        <MultiItemViewerView {...{...newProps, ref}} />
     );
-}
+});
 
 MultiImageViewerView.propTypes= {
     visRoot : PropTypes.object,

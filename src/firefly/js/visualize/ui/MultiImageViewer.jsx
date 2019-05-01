@@ -4,7 +4,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {isEmpty,omit} from 'lodash';
+import {isEmpty,omit,get} from 'lodash';
 import {flux} from '../../Firefly.js';
 import {NewPlotMode, dispatchAddViewer, dispatchViewerUnmounted,
         getMultiViewRoot, getViewer, getLayoutType, IMAGE} from '../MultiViewCntlr.js';
@@ -52,9 +52,10 @@ export class MultiImageViewer extends PureComponent {
         }
         const pv= getActivePlotView(visRoot());
         const viewer = getViewer(getMultiViewRoot(), props.viewerId);
-        if (!pv || !viewer) return;
-        if (viewer.lastActiveItemId && viewer.lastActiveItemId!==pv.plotId) {
-            setTimeout(() => dispatchChangeActivePlotView(viewer.lastActiveItemId), 5);
+        if (!viewer) return;
+        if (viewer.lastActiveItemId && viewer.lastActiveItemId!==get(pv,'plotId')
+            && this.rootWidget.offsetWidth && this.rootWidget.offsetHeight) {
+            setTimeout(() => { dispatchChangeActivePlotView(viewer.lastActiveItemId) }, 5);
         }
 
     }
@@ -98,6 +99,7 @@ export class MultiImageViewer extends PureComponent {
                                   inlineTitle={true}
                                   aboveTitle={false}
                                   visRoot={visRoot}
+                                  ref={(c) => this.rootWidget= c}
                                   dlAry={dlAry}
             />
         );

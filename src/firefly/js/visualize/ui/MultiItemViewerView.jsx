@@ -3,7 +3,7 @@
  */
 
 
-import React from 'react';
+import React, {forwardRef} from 'react';
 import PropTypes from 'prop-types';
 import {SINGLE, GRID} from '../MultiViewCntlr.js';
 import {get} from  'lodash';
@@ -26,7 +26,7 @@ const flexToolbarStyle= {
 };
 
 
-export function MultiItemViewerView(props) {
+export const MultiItemViewerView=forwardRef( (props, ref) =>  {
 
     const {layoutType, activeItemId,
         viewerItemIds, forceRowSize, forceColSize, gridDefFunc,
@@ -68,7 +68,7 @@ export function MultiItemViewerView(props) {
     const s= Object.assign({}, style, wrapperStyle, defaultDecoration? defDecStyle: {});
 
     return (
-        <div style={s}>
+        <div style={s} ref={ref}>
             {makeToolbar &&
                 <div key='toolbar' style={flexToolbarStyle}>
                     {makeToolbar()}
@@ -79,7 +79,7 @@ export function MultiItemViewerView(props) {
             </div>
         </div>
     );
-}
+});
 
 //{Toolbar ? <div style={flexContainerStyle}><Toolbar/> </div> : ''}
 
