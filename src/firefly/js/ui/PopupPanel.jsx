@@ -131,7 +131,7 @@ export class PopupPanel extends PureComponent {
         return (
             <div style={{zIndex: this.props.zIndex, position:'relative'}}>
                 {this.props.modal && <div className='popup-panel-glass'/>}
-                <div ref={(c) => this.popupRef=c} style={rootStyle} className={'popup-panel-shadow disable-select'}
+                <div ref={(c) => this.popupRef=c} style={rootStyle} className={'popup-panel-shadow enable-select'}
                      onTouchStart={this.dialogMoveStart}
                      onTouchMove={this.dialogMove}
                      onTouchEnd={this.dialogMoveEnd}
