@@ -41,7 +41,8 @@ public class WsServerCommands {
         FILE_CREATED_DATE("createdDate"),
         FILE_SIZE_BYTES("sizeBytes"),
         FILE_PROPS_MAP("extraProperties"),
-        FILE_CONTENT_TYPE("contentType");
+        FILE_CONTENT_TYPE("contentType"),
+        FILE_IS_FOLDER("isFolder");
 
         private final String key;
 

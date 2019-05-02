@@ -40,12 +40,12 @@ public class WspaceMeta implements Serializable {
     }
 
     public enum Includes {
-        NONE(false, 0), NONE_PROPS(true, 0), CHILDREN(false, 1), CHILDREN_PROPS(true, 1), ALL(false), ALL_PROPS(true);
+        NONE(false, 0), NONE_PROPS(true, 0), CHILDREN(false, 1), CHILDREN_PROPS(true, 1), ALL(false), ALL_PROPS(true, 1);
         public boolean inclProps = false;
         public int depth = 0;
 
         Includes(boolean b) {
-            this(b, Integer.MAX_VALUE);
+            this(b, 1);
         }
 
         Includes(boolean b, int d) {
@@ -142,6 +142,7 @@ public class WspaceMeta implements Serializable {
         s.append(wsHome).append(relPath).append("\n");
         s.append("creationDate:").append(creationDate).append("\n");
         s.append("lastModified:").append(lastModified).append("\n");
+        s.append("isFile:").append(isFile).append("\n");
         s.append("contentType:").append(contentType).append("\n");
         s.append("size:").append(size).append("\n");
         s.append("url:").append(url).append("\n");

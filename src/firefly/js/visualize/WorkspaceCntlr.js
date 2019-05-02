@@ -487,11 +487,12 @@ const convertFileToKey = (wsFile) => {
  */
 function convertFilesToList(wFiles) {
     const list = flattenDeep(wFiles).reduce((prev, oneFile) => {
-        const {relPath, modifiedDate:modified, sizeBytes:size, url} = oneFile;
+        const {relPath, modifiedDate:modified, sizeBytes, url, isFolder:isFolderVal} = oneFile;
 
         if (relPath && !relPath.includes('/.')) {
             const key = convertFileToKey(relPath);
-            const isFolder = key.lastIndexOf('/') === (key.length - 1);
+            const isFolder = isFolderVal || (key.lastIndexOf('/') === (key.length - 1));
+            const size = isFolder ? 0 : sizeBytes;
 
             //const key = relPath;
             prev.push({key, modified, size, url, relPath, isFolder});

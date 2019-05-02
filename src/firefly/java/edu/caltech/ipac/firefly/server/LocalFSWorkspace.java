@@ -24,7 +24,8 @@ import java.util.function.Consumer;
  */
 public class LocalFSWorkspace implements WorkspaceManager {
     //TODO We might need to change those properties if we need to deal with 2 or more workspaces at the same time
-    String WS_HOST_URL = AppProperties.getProperty("workspace.host.url", "https://irsa.ipac.caltech.edu");
+    private String WS_HOST_URL = AppProperties.getProperty("workspace.host.url", "https://irsa.ipac.caltech.edu");
+
 
 
     private final WsCredentials wscred;
@@ -42,7 +43,7 @@ public class LocalFSWorkspace implements WorkspaceManager {
         wscred = cred;
     }
 
-    public static final String WS_ROOT_DIR = ".";
+    private static final String WS_ROOT_DIR = ".";
 
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
 
@@ -143,10 +144,10 @@ public class LocalFSWorkspace implements WorkspaceManager {
         return WsUtil.error(500);
     }
 
-    @Override
-    public File createWsLocalFile(String wspaceSaveDirectory, String filePrefix, String fileExt) {
-        return null;
-    }
+//    @Override
+//    public File createWsLocalFile(String wspaceSaveDirectory, String filePrefix, String fileExt) {
+//        return null;
+//    }
 
     @Override
     public WsResponse delete(String uri) throws WsException {
@@ -179,10 +180,10 @@ public class LocalFSWorkspace implements WorkspaceManager {
         return false;
     }
 
-    @Override
-    public WspaceMeta newLocalWsMeta(File file, String propName, String value) {
-        throw new IllegalArgumentException("not implemented");
-    }
+//    @Override
+//    public WspaceMeta newLocalWsMeta(File file, String propName, String value) {
+//        throw new IllegalArgumentException("not implemented");
+//    }
 
     @Override
     public WsCredentials getCredentials() {

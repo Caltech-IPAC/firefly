@@ -15,42 +15,42 @@ import java.io.File;
  */
 public interface WorkspaceManager extends Workspaces {
 
-    String SEARCH_DIR = WspaceMeta.SEARCH_DIR;
+    //String SEARCH_DIR = WspaceMeta.SEARCH_DIR;
 
     WsCredentials getCredentials();
 
     String getWsHome();
 
-    public enum PROTOCOL {LOCAL, WEBDAV, VOSPACE}
+    enum PROTOCOL {LOCAL, WEBDAV, VOSPACE}
 
     enum PROPS {PROTOCOL, AUTH, ROOT_URL, ROOT_DIR}
 
-    public PROTOCOL getProtocol();
+    PROTOCOL getProtocol();
 
-    public String getProp(PROPS ps);
+    String getProp(PROPS ps);
 
-    /**
-     * TODO kept this because somehow we used it elsewhere
-     * TODO but i think we should be using http and not local access
-     * Create file in ws relative path
-     *
-     * @param wspaceRelDir
-     * @param filePrefix
-     * @param fileExt
-     * @return File created
-     * @deprecated should be using {@link Workspaces#putFile(String, File, String)}
-     */
-    @Deprecated
-    File createWsLocalFile(String wspaceRelDir, String filePrefix, String fileExt);
+//    /**
+//     * TODO kept this because somehow we used it elsewhere
+//     * TODO but i think we should be using http and not local access
+//     * Create file in ws relative path
+//     *
+//     * @param wspaceRelDir
+//     * @param filePrefix
+//     * @param fileExt
+//     * @return File created
+//     * @deprecated should be using {@link Workspaces#putFile(String, boolean, File, String)}
+//     */
+//    @Deprecated
+//    File createWsLocalFile(String wspaceRelDir, String filePrefix, String fileExt);
 
-    /**
-     * build ws meta from local file in ws fs
-     *
-     * @param file     file located in ws fs
-     * @param propName
-     * @param value
-     * @return WspaceMeta
-     * ¬
-     */
-    WspaceMeta newLocalWsMeta(File file, String propName, String value);
+//    /**
+//     * build ws meta from local file in ws fs
+//     *
+//     * @param file     file located in ws fs
+//     * @param propName
+//     * @param value
+//     * @return WspaceMeta
+//     * ¬
+//     */
+//    WspaceMeta newLocalWsMeta(File file, String propName, String value);
 }
