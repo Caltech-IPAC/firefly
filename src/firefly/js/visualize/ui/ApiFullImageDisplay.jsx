@@ -11,7 +11,7 @@ import {VisHeaderView, VisPreview} from './VisHeaderView.jsx';
 // import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
 import {MultiViewStandardToolbar} from './MultiViewStandardToolbar.jsx';
 import {VisToolbar} from './VisToolbar.jsx';
-import {addMouseListener, lastMouseCtx} from '../VisMouseSync.js';
+import {addImageMouseListener, lastMouseCtx} from '../VisMouseSync.js';
 import {readoutRoot} from '../../visualize/MouseReadoutCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
@@ -36,7 +36,7 @@ export class ApiFullImageDisplay extends PureComponent {
 
     componentDidMount() {
         this.removeListener= flux.addListener(() => this.storeUpdate());
-        this.removeMouseListener= addMouseListener(() => this.storeUpdate());
+        this.removeMouseListener= addImageMouseListener(() => this.storeUpdate());
     }
 
     storeUpdate() {

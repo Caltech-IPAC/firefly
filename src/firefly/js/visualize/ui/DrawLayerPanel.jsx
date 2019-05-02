@@ -14,7 +14,7 @@ import {getDlAry} from '../DrawLayerCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {DrawLayerPanelView} from './DrawLayerPanelView.jsx';
 import {flux} from '../../Firefly.js';
-import {readoutRoot} from '../../visualize/MouseReadoutCntlr.js';
+import {addImageReadoutUpdateListener, lastMouseImageReadout} from '../VisMouseSync';
 
 
 export const DRAW_LAYER_POPUP= 'DrawLayerPopup';
@@ -68,17 +68,19 @@ class DrawLayerPanel extends PureComponent {
 
     componentWillUnmount() {
         if (this.removeListener) this.removeListener();
+        if (this.removeMouseListener) this.removeMouseListener();
     }
 
 
     componentDidMount() {
         this.removeListener= flux.addListener(() => this.storeUpdate());
+        this.removeMouseListener= addImageReadoutUpdateListener(() => this.storeUpdate());
     }
 
     storeUpdate() {
         var state= this.state;
         var activePv= getActivePlotView(visRoot());
-        const mouseOverMaskValue= get(readoutRoot(), 'standardReadout.readoutItems.imageOverlay.value',0);
+        const mouseOverMaskValue= get(lastMouseImageReadout(),'readoutItems.imageOverlay.value',0);
 
         if (activePv!==state.activePv  || getDlAry()!==state.dlAry  || mouseOverMaskValue!==this.state.mouseOverMaskValue) {
             const dlAry= getDlAry();

@@ -2,18 +2,17 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get,isEmpty} from 'lodash';
 import {flux} from '../Firefly.js';
 import {clone} from '../util/WebUtil.js';
 
 export const READOUT_PREFIX= 'ReadoutCntlr';
 
-export const READOUT_DATA= `${READOUT_PREFIX}.ReadoutData`;
 export const CHANGE_LOCK_BY_CLICK= `${READOUT_PREFIX}.ChangeLockByClick`;
 export const CHANGE_READOUT_PREFS= `${READOUT_PREFIX}.ChangeReadoutPref`;
 export const CHANGE_LOCK_UNLOCK_BY_CLICK= `${READOUT_PREFIX}.ChangeLockUnlockByClick`;
 export const READOUT_KEY= 'readout';
-export const STANDARD_READOUT= 'standardReadout';
+export const STANDARD_READOUT= 'standardImageReadout';
+export const HIPS_STANDARD_READOUT= 'standardHiPSReadout';
 
 export const NUM_VAL= 'value';
 export const POINT_VAL= 'point';
@@ -33,22 +32,6 @@ export default {
 //======================================== Dispatch Functions =============================
 //======================================== Dispatch Functions =============================
 
-/**
- *
- * @param {Object} p
- * @param p.plotId
- * @param p.readoutItems
- * @param p.threeColor
- * @param p.readoutKey
- */
-// export function dispatchReadoutData(plotId, readoutItems, threeColor= false, readoutKey=STANDARD_READOUT) {
-export function dispatchReadoutData({plotId, readoutItems, threeColor= false,
-                                        isHiPS= false, readoutKey=STANDARD_READOUT}) {
-    flux.process({type: READOUT_DATA, payload: {readoutKey, plotId, threeColor, 
-                                                readoutItems, isHiPS,
-                                                 hasValues:!isEmpty(readoutItems)}});
-}
-
 export function dispatchChangeLockByClick(lockByClick) {
     flux.process({type: CHANGE_LOCK_BY_CLICK, payload: {lockByClick}});
 }
@@ -62,19 +45,9 @@ export function dispatchChangeReadoutPrefs(readoutPref) {
     flux.process({type: CHANGE_READOUT_PREFS, payload: {readoutPref}});
 }
 
-
 //======================================== Utility Functions =============================
 //======================================== Utility Functions =============================
 //======================================== Utility Functions =============================
-
-export function getReadout(root,readoutKey= STANDARD_READOUT) {
-    return root[readoutKey];
-}
-
-export function getReadoutPref(root,key) {
-    return root.readoutPref[key];
-}
-
 export function isLockByClick(root) {
     return root.lockByClick;
 }
@@ -127,9 +100,6 @@ function reducer(state=initState(), action={}) {
 
     let retState= state;
     switch (action.type) {
-        case READOUT_DATA:
-            retState= processReadoutData(state,action);
-            break;
         case CHANGE_LOCK_BY_CLICK:
             retState= clone(state,{lockByClick:action.payload.lockByClick});
             break;
@@ -151,18 +121,9 @@ function reducer(state=initState(), action={}) {
 }
 
 
- function processReadoutData(state,action) {
-     const {plotId, readoutKey,readoutItems, threeColor, hasValues, isHiPS}= action.payload;
-     return clone(state, {[readoutKey]: {plotId, threeColor, hasValues, readoutItems, isHiPS}});
- }
-
-
-
-
 const initState= function() {
 
     return {
-        [STANDARD_READOUT] : {},
         lockByClick : false,
         isLocked: false,
         readoutPref :{
@@ -177,4 +138,3 @@ const initState= function() {
     };
 
 };
-

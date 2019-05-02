@@ -1,0 +1,67 @@
+
+.mouseReadoutDisplaySpace {
+    width: 698px;
+    min-width: 660px;
+    height: 32px;
+    min-height: 32px;
+    position: absolute;
+    vertical-align: top;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.mouseReadoutImageGrid {
+    display: grid;
+    grid-column-gap: 3px;
+    grid-template-columns :  60px 90px 80px 105px 74px 160px 130px;
+    grid-template-rows :  auto;
+    grid-template-areas:
+            "greenLabel greenValue pixSizeLabel pixSizeValue pixReadoutTopLabel pixReadoutTopValue plotTitle"
+            "blueLabel blueValue redLabel redValue pixReadoutBottomLabel pixReadoutBottomValue lock";
+}
+
+.mouseReadoutPopupMinimalGrid {
+    display: grid;
+    grid-column-gap: 3px;
+    grid-template-columns :  30px 70px 170px 130px;
+    grid-template-rows : 1.4em 1.4em;
+    grid-template-areas:
+            "lockDialog pixReadoutTopLabel pixReadoutTopValue ."
+            "lockDialog pixReadoutBottomLabel pixReadoutBottomValue lock";
+}
+
+.mouseReadoutPopupFullGrid {
+    display: grid;
+    grid-column-gap: 3px;
+    grid-template-columns:  30px 80px 80px 88px 170px;
+    grid-template-rows : 1.4em 1.4em 1.4em 1.4em;
+    grid-template-areas:
+            "lockDialog pixSizeLabel pixSizeValue pixReadoutTopLabel pixReadoutTopValue"
+            "lockDialog redLabel redValue pixReadoutBottomLabel pixReadoutBottomValue"
+            "lockDialog greenLabel greenValue blueLabel blueValue"
+            "lockDialog . lock . .";
+}
+
+
+
+.mouseReadoutHiPSGrid {
+    display: grid;
+    grid-column-gap: 3px;
+    grid-template-columns :  60px 90px 80px 105px 74px 160px 130px;
+    grid-template-rows :  auto;
+    grid-template-areas:
+            "nOrderLabel nOrderValue pixSizeLabel pixSizeValue pixReadoutTopLabel pixReadoutTopValue plotTitle"
+            "healpixPixelLabel healpixPixelValue empty empty pixReadoutBottomLabel pixReadoutBottomValue lock";
+}
+
+
+.mouseReadoutClickLabel {
+    text-decoration: underline;
+    font-style: italic;
+}
+
+.mouseReadoutLabel {
+    color: DarkGray;
+    justify-self: end;
+}

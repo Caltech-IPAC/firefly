@@ -11,7 +11,7 @@ import {ImageViewerView} from './ImageViewerDecorate.jsx';
 import {visRoot, ExpandType} from '../ImagePlotCntlr.js';
 import {extensionRoot} from '../../core/ExternalAccessCntlr.js';
 import {MouseState} from '../VisMouseSync.js';
-import {addMouseListener, lastMouseCtx} from '../VisMouseSync.js';
+import {addImageMouseListener, lastMouseCtx} from '../VisMouseSync.js';
 import {getPlotUIExtensionList} from '../../core/ExternalAccessUtils.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
 import {getTaskCount} from '../../core/AppDataCntlr.js';
@@ -44,7 +44,7 @@ export class ImageViewer extends PureComponent {
     componentDidMount() {
         this.alive= true;
         this.removeListener= flux.addListener(() => this.storeUpdate());
-        this.removeMouseListener= addMouseListener(() => this.storeUpdate());
+        this.removeMouseListener= addImageMouseListener(() => this.storeUpdate());
         this.storeUpdate();
     }
 

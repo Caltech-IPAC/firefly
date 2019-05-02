@@ -6,18 +6,14 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {flux} from '../../Firefly.js';
-// import {currMouseState} from '../VisMouseCntlr.js';
 import { readoutRoot} from '../MouseReadoutCntlr.js';
-import {addMouseListener, lastMouseCtx} from '../VisMouseSync.js';
+import {lastMouseCtx} from '../VisMouseSync.js';
 import {getActivePlotView, getPlotViewById} from '../PlotViewUtil.js';
 import {ThumbnailView} from './ThumbnailView.jsx';
 import {MagnifiedView} from './MagnifiedView.jsx';
+import {addImageReadoutUpdateListener, lastMouseImageReadout} from '../VisMouseSync';
 
-var fullStyle= {
-    // width: 680,
-    // height: 70,
-    // minWidth: 680,
-    // minHeight:70,
+const fullStyle= {
     display: 'inline-block',
     position: 'relative',
     verticalAlign: 'top',
@@ -26,11 +22,7 @@ var fullStyle= {
     overflow : 'hidden'
 };
 
-var minimalStyle= {
-    // width: 360,
-    // height: 70,
-    // minWidth: 360,
-    // minHeight:70,
+const minimalStyle= {
     display: 'inline-block',
     position: 'relative',
     verticalAlign: 'top',
@@ -54,16 +46,18 @@ export class DefaultApiReadout extends PureComponent {
     componentDidMount() {
         this.iAmMounted= true;
         this.removeListener= flux.addListener(() => this.storeUpdate());
-        this.removeMouseListener= addMouseListener(() => this.storeUpdate());
+        this.removeMouseListener= addImageReadoutUpdateListener(() => this.storeUpdate());
     }
 
     storeUpdate() {
         const readout= readoutRoot();
-        if (visRoot()!==this.state.visRoot || 
-            lastMouseCtx() !==this.state.currMouseState ||
+        const {currMouseState,readoutData}= this.state;
+        if (visRoot()!==this.state.visRoot ||
+            lastMouseImageReadout()!== readoutData ||
+            lastMouseCtx() !==currMouseState ||
             readout !== this.state.readout) {
             if (this.iAmMounted) {
-                this.setState({visRoot:visRoot(), currMouseState:lastMouseCtx(), readout});
+                this.setState({visRoot:visRoot(), readoutData:lastMouseImageReadout(), currMouseState:lastMouseCtx(), readout});
             }
         }
     }
@@ -72,12 +66,12 @@ export class DefaultApiReadout extends PureComponent {
 
         //<div style={{display:'inline-block', float:'right', whiteSpace:'nowrap'}}>
         const {MouseReadoutComponent, showThumb, showMag}= this.props;
-        var {currMouseState, readout}= this.state;
+        var {currMouseState, readout, readoutData={} }= this.state;
         var pv = getActivePlotView(visRoot());
         var mousePv = getPlotViewById(visRoot(), currMouseState.plotId);
 
         if (!showThumb && !showMag) {
-            return renderMouseReadoutOnly(MouseReadoutComponent, readout);
+            return renderMouseReadoutOnly(MouseReadoutComponent, readout, readoutData);
         }
         else {
 
@@ -87,7 +81,7 @@ export class DefaultApiReadout extends PureComponent {
                 <div style={{display:'flex',flexWrap:'nowrap'}}>
                     <div style={style}>
                         <div style={{position:'relative', color:'black', height:'100%'}}>
-                            <MouseReadoutComponent readout={readout} showMag={ showMag} showThumb={showThumb}/>
+                            <MouseReadoutComponent readout={readout} readoutData={readoutData} showMag={ showMag} showThumb={showThumb}/>
                         </div>
                     </div>
 
@@ -101,12 +95,10 @@ export class DefaultApiReadout extends PureComponent {
     }
 }
 
-function renderMouseReadoutOnly(MouseReadoutComponent, readout){
+function renderMouseReadoutOnly(MouseReadoutComponent, readout, readoutData){
     return (
     <div style={{display:'inline-block', float:'right', whiteSpace:'nowrap'}}>
-
-             <MouseReadoutComponent readout={readout}/>
-       
+             <MouseReadoutComponent readout={readout} readoutData={readoutData}/>
     </div>
     );
 }
