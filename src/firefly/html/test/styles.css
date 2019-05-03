@@ -144,12 +144,14 @@ ul.expected-list li{
 }
 
 .tst-iframe-container.popout {
-    position: absolute;
-    border: 1px solid #b3b3b3;
-    height: calc(100% - 50px);
-    width: calc(100% - 50px);
+    position: fixed;
+    border: 2px solid #b3b3b3;
+    height: calc(100% - 50px) !important;
+    width: calc(100% - 50px) !important;
     background: #cccccc;
-    box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    box-shadow: 5px 5px 10px 0 rgba(0,0,0,0.3);
+    margin: 0 -10px;
+    border-radius: 3px;
 }
 
 #tpl-popout {
