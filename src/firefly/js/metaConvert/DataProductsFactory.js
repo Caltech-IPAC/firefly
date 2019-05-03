@@ -61,10 +61,10 @@ const simpleCreate= (table, converterTemplate) => converterTemplate;
 
 
 /**
- *
+ * Returns a callback function or a Promise<DataProductsDisplayType>.
+ * callback: function(table:TableModel, row:String,activeParams:{imageViewerId:String,chartViewId:String,tableViewId:String,converterId:String})
  * @param makeReq
- * @return {function(table:TableModel, row:String,activeParams:{imageViewerId:String,chartViewId:String,tableViewId:String,converterId:String})
- *                                : Promise<DataProductsDisplayType>}
+ * @return {function | promise}
  */
 function getSingleDataProductWrapper(makeReq) {
     return (table, row, activateParams) => {
@@ -79,9 +79,10 @@ function getSingleDataProductWrapper(makeReq) {
 
 /**
  *
+ * Returns a callback function or a Promise<DataProductsDisplayType>.
+ * callback: function(table:TableModel, plotRows:Array.<Object>,activeParams:{imageViewerId:String,chartViewId:String,tableViewId:String,converterId:String})
  * @param makeReq
- * @return {function(table:TableModel, plotRows:Array.<Object>,activeParams:{imageViewerId:String,chartViewId:String,tableViewId:String,converterId:String})
- *                                : Promise<DataProductsDisplayType>}
+ * @return {function | promise}
  */
 function getGridDataProductWrapper(makeReq) {
     return (table, plotRows, activateParams) => {
