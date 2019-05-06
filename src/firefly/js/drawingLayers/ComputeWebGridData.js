@@ -802,52 +802,17 @@ function fixPoints(points){
     return points;
 }
 
-function getSlope(x, y, bounds, val, cc){
-    
-    var dArr = Array(x.length).fill(1.e6);
-    for (let i=0; i<x.length-1; i++) {
-        //check the x[i] and y[i] are inside the image screen
-        if (x[i] > -1000 && x[i + 1] > -1000 &&
-            ((x[i] >= bounds.x) &&
-                ((x[i] - bounds.x) < bounds.width) &&
-                (y[i] >= bounds.y) &&
-                ((y[i] - bounds.y) < bounds.height) ||
-                // bounds check on x[i+1], y[i+1]
-                (x[i + 1] >= bounds.x) &&
-                ((x[i + 1] - bounds.x) < bounds.width) &&
-                (y[i + 1] >= bounds.y) &&
-                ((y[i + 1] - bounds.y) < bounds.height))) {
-            dArr[i] = Math.abs(y[i] - val);
-        }
-    }
 
-    const min=Math.min(...dArr);
-    const i = dArr.indexOf(min);
-    const ipt0= makeImageWorkSpacePt(x[i],y[i]);
-    const ipt1= makeImageWorkSpacePt(x[i+1], y[i+1]);
-    var wpt1 = cc.getScreenCoords(ipt0);
-    var wpt2 = cc.getScreenCoords(ipt1);
-    const slope = (wpt2.y - wpt1.y) / (wpt2.x - wpt1.x);
-    var slopAngle = Math.atan(slope) * 180 / Math.PI;
-    //since atan is multi-value function, we set the slopeAngle to the range of −π/2 < y < π/2
-    if (slopAngle > 90) {
-        slopAngle = 180 - slopAngle;
-    }
-    if (slopAngle < -90) {
-        slopAngle = 180 + slopAngle;
-    }
-    return slopAngle;
-}
-function drawLabeledPolyLine (drawData, bounds,  label,  x, y, aitoff,screenWidth, useLabels,cc,plot,csys, centerWpt,isLonLine,labelFormat){
+
+function drawLabeledPolyLine (drawData, bounds,  label, labelPoint, slopAngle, isLonLine, x, y, aitoff,screenWidth, useLabels,cc,plot){
 
 
 
     //add the  draw line data to the drawData
-    var ipt0, ipt1;
-    var slopAngle;
-    var labelPoint;
+    let ipt0, ipt1;
     if(!x) return;
 
+    let pointCount=0;
     const plotType = plot.plotType;
     for (let i=0; i<x.length-1; i+=1) {
         //check the x[i] and y[i] are inside the image screen
@@ -869,102 +834,154 @@ function drawLabeledPolyLine (drawData, bounds,  label,  x, y, aitoff,screenWidt
                  plotType==='image' && (!aitoff  ||  ((Math.abs(ipt1.x-ipt0.x)<screenWidth /8 ) && (aitoff))) ) {
 
                  drawData.push(ShapeDataObj.makeLine(ipt0, ipt1));
-
-                 //find the middle point of the line, index from 0, so minus 1
-                if (i===Math.round(x.length/2)-1 ){
-                        var wpt1 = cc.getScreenCoords(ipt0);
-                        var wpt2 = cc.getScreenCoords(ipt1);
-                        
-                        const slope = (wpt2.y - wpt1.y) / (wpt2.x - wpt1.x);
-
-                        slopAngle = Math.atan(slope) * 180 / Math.PI;
-                        //since atan is multi-value function, we set the slopeAngle to the range of −π/2 < y < π/2
-                        if (slopAngle > 90) {
-                            slopAngle = 180 - slopAngle;
-                        }
-                        if (slopAngle < -90) {
-                            slopAngle = 180 + slopAngle;
-                        }
-                        labelPoint =wpt1;
-
-                }
+                 pointCount++;
             }
         } //if
     } // for
 
-    // draw the label.
-    var lon, lat, wpt, scpt1, scpt2;
-    if (useLabels  ){
-        if (plotType==='hips') {
-          if (!isLonLine) {
-            const isHms = labelFormat === 'hms' && (csys === CoordinateSys.EQ_J2000 || csys === CoordinateSys.EQ_B1950);
-            lat = isHms ? CoordUtil.convertStringToLat(label, csys) : parseFloat(label);
-            lon = centerWpt.x;
-            wpt = makeWorldPt(lon, lat, csys);
-            const ip = cc.getImageWorkSpaceCoords(wpt);
-            labelPoint = cc.getScreenCoords(ip);
-            scpt1 = cc.getScreenCoords(wpt);
-            scpt2 = cc.getScreenCoords(makeWorldPt(nearCenterLonValue, lat, csys));
-            if (scpt1 && scpt2) {
-              const slope = (scpt2.y - scpt1.y) / (scpt2.x - scpt1.x);
-              slopAngle = Math.atan(slope) * 180 / Math.PI;
-              //since atan is multi-value function, we set the slopeAngle to the range of −π/2 < y < π/2
-              if (slopAngle > 90) {
-                slopAngle = 180 - slopAngle;
-              }
-              if (slopAngle < -90) {
-                slopAngle = 180 + slopAngle;
-              }
-            }
-
-          }
-          else {
-              if (!labelPoint) {
-                const isHms = labelFormat === 'hms' && (csys === CoordinateSys.EQ_J2000 || csys === CoordinateSys.EQ_B1950);
-                lon = isHms ? CoordUtil.convertStringToLon(label, csys) : parseFloat(label);
-                lat = middleLatValue[0];//centerWpt.y;
-                wpt = makeWorldPt(lon, lat, csys);
-                const ip = cc.getImageWorkSpaceCoords(wpt);
-
-                labelPoint = cc.getScreenCoords(ip);
-
-                scpt1 = cc.getScreenCoords(wpt);
-                scpt2 = cc.getScreenCoords(makeWorldPt(lon,middleLatValue[1], csys));
-                if (scpt1 && scpt2) {
-                  const slope = (scpt2.y - scpt1.y) / (scpt2.x - scpt1.x);
-                  slopAngle = Math.atan(slope) * 180 / Math.PI;
-                  //since atan is multi-value function, we set the slopeAngle to the range of −π/2 < y < π/2
-                  if (slopAngle > 90) {
-                    slopAngle = 180 - slopAngle;
-                  }
-                  if (slopAngle < -90) {
-                    slopAngle = 180 + slopAngle;
-                  }
-                }
-
-            }
-            console.log('label=' + label + ' angle=' + slopAngle);
-          }
-        }
-
-      //if (isLonLine) console.log('label=' + label + ' angle=' + slopAngle);
-
-      drawData.push(ShapeDataObj.makeText(labelPoint, label, slopAngle+'deg'));
+    // add label location, text, and angle
+    if (useLabels  &&  (plotType==='image' &&  pointCount>2  || plotType==='hips' &&  pointCount>1)  ){
+       drawData.push(ShapeDataObj.makeText(labelPoint, label, slopAngle+'deg', isLonLine ));
     }
 }
+function getHiPsLabelPositionAndAngle(xLines, yLines, labels, cc, csys, centerWpt, labelFormat){
 
-function drawLines(bounds, labels, xLines,yLines, aitoff,screenWidth, useLabels,cc, plot, csys=null, centerWpt=null,labelFormat=null) {
+    const  lineCount = labels.length;
+    let isLonLine, lon, lat, slope,slopAngle;
+    let  scpt0,scpt1;
+
+    let lonLinePos=[];
+    let lonLineAngles=[];
+    let latLinePos=[];
+    let latLineAngles=[];
+
+    const isHms = labelFormat === 'hms' && (csys === CoordinateSys.EQ_J2000 || csys === CoordinateSys.EQ_B1950);
+
+    for (let i=0; i<lineCount; i++) {
+        isLonLine = i < lineCount / 2 ? true : false;
+        if (isLonLine){
+                lon = isHms ? CoordUtil.convertStringToLon(labels[i], csys) : parseFloat(labels[i]);
+                lat = middleLatValue[0];
+                scpt0 = cc.getScreenCoords(makeWorldPt(lon, lat, csys));
+                scpt1 = cc.getScreenCoords(makeWorldPt(lon, middleLatValue[1], csys));
+                if (scpt0 && scpt1) {
+                    slope = (scpt1.y - scpt0.y) / (scpt1.x - scpt0.x);
+                    slopAngle = Math.atan(slope) * 180 / Math.PI;
+                }
+
+                lonLineAngles.push(slopAngle);
+                lonLinePos.push(scpt0);
+
+        }
+        else {
+
+            lat = isHms ? CoordUtil.convertStringToLat(labels[i], csys) : parseFloat(labels[i]);
+            lon = centerWpt.x;
+
+            scpt0 = cc.getScreenCoords(makeWorldPt(lon, lat, csys));
+            scpt1 = cc.getScreenCoords(makeWorldPt(nearCenterLonValue, lat, csys));
+            if (scpt0 && scpt1) {
+                const slope = (scpt1.y - scpt0.y) / (scpt1.x - scpt0.x);
+                slopAngle = Math.atan(slope) * 180 / Math.PI;
+            }
+            latLinePos.push(scpt0);
+            latLineAngles.push(slopAngle);
+        }
+
+    }
+
+    // checkAndUpdateLabelAngles(lonLineAngles);
+    // checkAndUpdateLabelAngles(latLineAngles);
+
+    return {lonLinePos, lonLineAngles, latLinePos, latLineAngles};
+}
+
+/*
+ Use two workspace points to find the slop of the line, the angle = arctan(slope) are in the range [-90, 90].
+ For all lon(or lat) lines, the slope may be positive or negative.  The text label is placed above the grid lines
+ if the angle is positive and under the line if the angle is negative. In such case, if some lon lines have positive
+ angle and some has negative angle, the negative angle is changed to 180+angle which is postive.  Thus, the label text
+ are all placed in the same manner.
+
+ check to see if all angles to make sure they are all the same positive or negative.
+ If any of them are not the same sign as the other, some of the labels are above the line and some are under the line
+ because the native angle.  Since  arctan(a) lies [-90, 90] and the tag(a)=tag(a+n*PI), if a <0, use 180+a
+ */
+function checkAndUpdateLabelAngles(angleArr){
+    var negatives = angleArr.filter((e) => e < 0);
+    if (negatives.length != 0 && negatives.length != angleArr.length) {
+        for (let i = 0; i < angleArr.length; i++) {
+            if (angleArr[i] < 0) {
+                angleArr[i] += 180;
+            }
+        }
+    }
+}
+function getImageLabelPositionAndAngle(xLines,yLines,cc){
+    const  lineCount = xLines.length;
+    var ipt0, ipt1, wpt0, wpt1;
+    var slopAngle;
+    let isLonLine=false;
+    let lonLineAngles=[];
+    let latLineAngles=[];
+    let lonLinePos=[];
+    let latLinePos=[];
+    let midLinePos;
+
+    for (let i=0; i<lineCount; i++) {
+         isLonLine = i < lineCount / 2 ? true : false;
+         midLinePos=Math.ceil(xLines[i].length / 2) - 1;
+
+         ipt0 = makeImageWorkSpacePt(xLines[i][midLinePos], yLines[i][midLinePos]);
+         ipt1 = makeImageWorkSpacePt(xLines[i][midLinePos + 1], yLines[i][midLinePos + 1]);
+         wpt0 = cc.getScreenCoords(ipt0);
+         wpt1 = cc.getScreenCoords(ipt1);
+
+         const slope = (wpt1.y - wpt0.y) / (wpt1.x - wpt0.x);
+         slopAngle = Math.atan(slope) * 180 / Math.PI; //Math.atan(slope) return [-pi/2, pi/2]
+         if (isLonLine){
+             lonLineAngles.push(slopAngle);
+             lonLinePos.push(wpt0);
+         }
+         else {
+             latLineAngles.push(slopAngle);
+             latLinePos.push(wpt0);
+         }
+
+     }
+
+    checkAndUpdateLabelAngles(lonLineAngles);
+    checkAndUpdateLabelAngles(latLineAngles);
+    return {lonLinePos, lonLineAngles, latLinePos, latLineAngles};
+}
+
+function drawLines(bounds,  labels, xLines,yLines, aitoff,screenWidth, useLabels,cc, plot, csys=null, centerWpt=null,labelFormat=null) {
     // Draw the lines previously computed.
     //get the locations where to put the labels
-    var drawData=[];
+    let drawData=[];
 
-    var  lineCount = xLines.length;
+    const  lineCount = xLines.length;
+    const lonLineCount = lineCount/2;
+    let isLonLine=false, labelPosition, labelAngle;
 
-    var isLonLine=false;
+   const {lonLinePos, lonLineAngles, latLinePos, latLineAngles}=plot.plotType==='hips'?
+        getHiPsLabelPositionAndAngle(xLines,yLines,labels, cc, csys, centerWpt, labelFormat)
+       :getImageLabelPositionAndAngle(xLines,yLines,cc);
     for (let i=0; i<lineCount; i++) {
-            isLonLine = i<lineCount/2?true:false;
-            drawLabeledPolyLine(drawData, bounds, labels[i] ,
-            xLines[i], yLines[i], aitoff,screenWidth, useLabels,cc, plot,csys, centerWpt,isLonLine,labelFormat);
+            isLonLine = i<lonLineCount?true:false;
+            if (isLonLine){
+                labelPosition=lonLinePos[i];
+                labelAngle=lonLineAngles[i];
+               // console.log( 'label='+labels[i] + ' labelPosition='+ labelPosition + 'labelAngle= '+labelAngle);
+            }
+            else {
+                labelPosition=latLinePos[i-lonLineCount];
+                labelAngle=latLineAngles[i-lonLineCount];
+
+            }
+            drawLabeledPolyLine(drawData, bounds, labels[i],labelPosition, labelAngle,isLonLine,
+            xLines[i], yLines[i], aitoff,screenWidth, useLabels,cc, plot);
+
     }
     return drawData;
 
@@ -1064,9 +1081,10 @@ function getLonLevels(viewRange, centerWpt,  cc,csys,poles, isPrimeMeridianVisib
                 lon=centerWpt.x+count*det;
             };
 
+
             //center toward upper border, there is PM(0, 360)  in between
             //lon will be from centerWpt.x - 0, and 360 - longRange[1]
-            count=1;//reset count
+            count=0;//reset count
             len=levels.length;
             lon=centerWpt.x-det;
 
@@ -1090,7 +1108,7 @@ function getLonLevels(viewRange, centerWpt,  cc,csys,poles, isPrimeMeridianVisib
 
             //go toward lower border, there is PM point in between
             //lon will be centerWpt.x-360, 0-lonRange[0]
-            count=1;//reset count
+            count=0;//reset count
             len=levels.length;
             lon=centerWpt.x+det;
             while ( lon>centerWpt.x || lon<lonRange[0]){
@@ -1121,26 +1139,24 @@ function getLonLevels(viewRange, centerWpt,  cc,csys,poles, isPrimeMeridianVisib
 }
 
 function getLatLevels(viewRange, poles,  maxLines){
-    var levels =[], range=[];
+    var levels =[];
     var numLines = isEven(maxLines)?maxLines+1:maxLines;
 
+    let range=viewRange;
     if (poles!==0){
         switch (poles){
             case 1:
-                range = [viewRange[0], 90];
+                range[1] = 90;
 
                 break;
             case 2:
-                range = [-90,viewRange[1]];
+                range[0] = -90;
                 break;
             case 3:
                 range=[-90,90];
                 break;
         }
 
-    }
-    else {
-       range=viewRange;
     }
 
     const det = (range[1] - range[0]) / (numLines - 1);
@@ -1195,27 +1211,38 @@ function computeHipGridLines(cc, csys,  screenWidth, nGridLines, labelFormat, pl
 
     }
 
+    //find the appropriate latitude to put the labels
     const zeroLatIdx = levels[1].indexOf(0);
     const midIdx = parseInt(zeroLatIdx / 2);
-    if (zeroLatIdx!=-1  && cc.pointInView(makeWorldPt(0, -90, csys)) ) {
 
-        //if ( )) {
-            middleLatValue[0] = levels[1][midIdx];
-            middleLatValue[1] = levels[1][midIdx + 1];
+    /**
+     * This block is taking care of the sphere case.  If the sphere is visible, it has three condition,
+     * 1. north pole [0, 90] is facing users [a,..0, 10, 20, ...90]
+     * 2. south pole [0, -90] is facing users [-90, ..., 0, .... a]
+     * 3. no pole is visible
+     *
+     * In order the labels are visible, we don't use the middle line.  Instead we zero index as a measure.
+     * If the north pole is facing to us, we use the line no = zeroLatIdx + half/positve_lat_length;
+     * If the south pole is facing us, half of the zeroLatIndex.
+     */
+    //When the [0, -90] is facing user, we want to make sure the labels are visible.
+    if (zeroLatIdx!=-1  && cc.pointInView(makeWorldPt(0, -90, csys)) && !cc.pointInView(makeWorldPt(0, 90, csys))) {
+
+         middleLatValue[0] = levels[1][midIdx ];
+         middleLatValue[1] = levels[1][midIdx  + 1];
+
+     }   //When the [0, 90] is facing user, we want to make sure the labels are visible.
+     else if (zeroLatIdx!=-1  && cc.pointInView(makeWorldPt(0, 90, csys)) &&  !cc.pointInView(makeWorldPt(0, -90, csys))) {
+         middleLatValue[0] = levels[1][zeroLatIdx + midIdx];
+         middleLatValue[1] = levels[1][zeroLatIdx + midIdx + 1];
 
 
-        }
-        else if (zeroLatIdx!=-1  && cc.pointInView(makeWorldPt(0, 90, csys))) {
-            middleLatValue[0] = levels[1][zeroLatIdx + midIdx];
-            middleLatValue[1] = levels[1][zeroLatIdx + midIdx + 1];
-
-
-        }
-       else {
+     }
+    else { //all other cases are falling in here
             middleLatValue[0] = levels[1][parseInt(levels[1].length / 2)];
             middleLatValue[1] = levels[1][parseInt(levels[1].length / 2) + 1];
 
-     }
+    }
 
 
     var dist=10000, d;
@@ -1264,10 +1291,8 @@ function isSorted(arr){
     }
     return sorted;
 }
-function getViewableAreaInfo(cc, csys, viewBorder, centerWp){
-
-    var isPrimeMeridianVisible=false, lon, lat;
-    var poles=0; //north pole: poles=1; south pole: poles = 2; both poles:poles=3
+function getPoles(cc, csys){
+    let poles=0,  lon, lat; //north pole: poles=1; south pole: poles = 2; both poles:poles=3
 
     //check if north pole is visible
     lon=0;
@@ -1280,6 +1305,13 @@ function getViewableAreaInfo(cc, csys, viewBorder, centerWp){
     if (cc.pointInView(makeWorldPt(lon, lat, csys))){
         poles +=2;
     }
+    return poles;
+}
+function getViewableAreaInfo(cc, csys, viewBorder, centerWp){
+
+    let isPrimeMeridianVisible=false,  lat;
+    const poles=getPoles(cc, csys); //north pole: poles=1; south pole: poles = 2; both poles:poles=3
+
 
     const arr = [viewBorder[0][0], centerWp.x, viewBorder[0][1]];
     if (isSorted(arr)) {
