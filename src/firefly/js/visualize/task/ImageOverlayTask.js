@@ -1,11 +1,6 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
-
 import {get} from 'lodash';
 import {logError} from '../../util/WebUtil.js';
 import ImagePlotCntlr, {makeUniqueRequestKey, IMAGE_PLOT_KEY, dispatchPlotMask, dispatchZoom, dispatchPlotMaskLazyLoad} from '../ImagePlotCntlr.js';
@@ -19,6 +14,8 @@ import {clone} from '../../util/WebUtil.js';
 import {WebPlot} from '../WebPlot.js';
 import {callGetWebPlot} from '../../rpc/PlotServicesJson.js';
 import {take} from 'redux-saga/effects';
+import WebPlotRequest from '../WebPlotRequest';
+import {populateFromHeader} from './PlotImageTask';
 
 const colorList= [
     '#FF0000','#00FF00', '#0000FF', '#91D33D',
@@ -232,10 +229,12 @@ function makeMaskRequest(fileKey, imageOverlayId, pv, maskValue, imageNumber, co
 function processMaskSuccessResponse(dispatcher, payload, result) {
 
     if (result.success) {
-        const {PlotCreate}= result;
+        const {PlotCreate, PlotCreateHeader}= result;
+        populateFromHeader(PlotCreateHeader, PlotCreate)
 
         const plotState= PlotState.makePlotStateWithJson(PlotCreate[0].plotState);
         const imageOverlayId= plotState.getWebPlotRequest().getPlotId();
+        // const imageOverlayId= WebPlotRequest.parse(result.PlotCreateHeader.plotRequestSerialize).getPlotId();
 
         var plot= WebPlot.makeWebPlotData(imageOverlayId, PlotCreate[0], {}, true);
         const resultPayload= clone(payload, {plot});
