@@ -74,7 +74,7 @@ function handleTableUpdates(root, action) {
     return root;
 }
 
-/* Additional logic to applies to the table before it's place into the store */
+/* Applies ObsCore's related logic to the table before it's placed into the store */
 function handleObsCoreTable(root, action) {
 
     const {tbl_id} = action.payload || {};

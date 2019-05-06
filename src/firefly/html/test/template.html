@@ -67,6 +67,7 @@
 
         function closePopout() {
             window.template.iframeContainer.classList.remove('popout');
+            window.frameElement.style.position = 'initial';
             const handle = document.getElementById('tpl-popout');
             handle.onclick = popout;
             handle.textContent = "expand"
@@ -76,6 +77,7 @@
 
         function popout() {
             window.template.iframeContainer.classList.add('popout');
+            window.frameElement.style.position = 'absolute';
             const handle = document.getElementById('tpl-popout');
             handle.onclick = closePopout;
             handle.textContent = "close"
