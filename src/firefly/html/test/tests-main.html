@@ -18,7 +18,7 @@
 <!-- define all of your tests below -->
 
 <template title="IRSA Gator Table" class="tpl" >
-    <div id="expected" class="flow-h">
+    <div id="expected" class="flow-h" style="width: 450px">
         <div class="source-code indent-3">
             - widgets loaded
             - toolbars match
@@ -31,7 +31,6 @@
         <div id="gatorXy" class="box"></div>
     </div>
     <script>
-        resizeIframeToHeight('300px');
         irsaviewer_init();
 
         onFireflyLoaded = function (firefly) {
@@ -73,7 +72,7 @@
 </template>
 
 
-<template title="NED catalog VOTable" class="tpl sm">
+<template title="NED catalog VOTable" class="tpl">
     <div id="expected">
         <img src="./images/ned-table.jpg">
         <div class="source-code indent-3">
@@ -83,7 +82,6 @@
     </div>
     <div id="actual" class="box x3"></div>
     <script>
-        resizeIframeToHeight('240px');
         onFireflyLoaded = function (firefly) {
             tblReq = firefly.util.table.makeTblRequest('NedSearch', 'm8 (NED SCS 10)',
                 { use: "catalog_overlay",
@@ -124,8 +122,8 @@
     </script>
 </template>
 
-<template title="Failed API Image Load" class="tpl sm">
-    <div id="expected" style="width: 400px; white-space: normal; padding-top: 2px">
+<template title="Failed API Image Load" class="tpl" style="height: 260px">
+    <div id="expected" >
         <div>Image load fails. The following should happen:
             <ul class='expected-list'>
                 <li>No Image</li>
@@ -137,7 +135,6 @@
     </div>
     <div id="actual" class="box x3"></div>
     <script>
-        resizeIframeToHeight('260px');
         function onFireflyLoaded(firefly) {
             const req= {
                 plotGroupId : 'myGroup',
@@ -151,8 +148,8 @@
     </script>
 </template>
 
-<template title="Two table coverage" class="tpl sm">
-    <div id="expected" style="width: 400px; white-space: normal; padding-top: 2px">
+<template title="Two table coverage" class="tpl" style="height: 260px">
+    <div id="expected" >
         <div>Both tables cover similar area, HiPS coverage
             <ul class='expected-list'>
                 <li>one from url, one from service</li>
@@ -166,7 +163,6 @@
         <div id='coverageHere' class="box"></div>
     </div>
     <script>
-        resizeIframeToHeight('260px');
         function onFireflyLoaded(firefly) {
             firefly.showCoverage('coverageHere', {gridOn:true});
             tblReq1 = firefly.util.table.makeIrsaCatalogRequest('allwise_p3as_psd', 'WISE', 'allwise_p3as_psd',
@@ -180,6 +176,53 @@
                 });
             firefly.showTable('tables-1', tblReq1);
             firefly.showTable('tables-1', tblReq3);
+        }
+    </script>
+</template>
+
+<template title="Column links via API" class="tpl sm">
+    <div id="expected" >
+        <div>Using META-INFO API to show cell value as links
+            <ul class='expected-list'>
+                <li><b>band</b> should be shown as links</li>
+                <li>first one links to irsa</li>
+                <li>second links to ivoa with constant text</li>
+            </ul>
+        </div>
+    </div>
+    <div id="actual" class="flow-h" style="width: 600px">
+        <div id='tables-1' class="box"></div>
+    </div>
+    <script>
+        function onFireflyLoaded(firefly) {
+            tblReq1 = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
+                { META_INFO: {
+                    "col.band.Links": [{href: "https://irsa.ipac.caltech.edu/?id="}, {href: "http://ivoa.net/?id=", value: 'ivoa'}]
+                }});
+            firefly.showTable('tables-1', tblReq1);
+        }
+    </script>
+</template>
+
+
+<template title="Test Proprietary Data Display" class="tpl sm">
+    <div id="expected" >
+        <div>Set <b>band</b> as a data_rights columns. Values that will resolve to true are: 'public', 'secure', '1', 'true', 't'
+            <ul class='expected-list'>
+                <li>all rows where band != 1 will show up as no-access(pink)</li>
+            </ul>
+        </div>
+    </div>
+    <div id="actual" class="flow-h" style="width: 600px">
+        <div id='tables-1' class="box"></div>
+    </div>
+    <script>
+        function onFireflyLoaded(firefly) {
+            tblReq1 = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
+                { META_INFO: {
+                        DATARIGHTS_COL: "band"
+                    }});
+            firefly.showTable('tables-1', tblReq1);
         }
     </script>
 </template>

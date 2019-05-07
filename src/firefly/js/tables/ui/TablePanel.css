@@ -229,6 +229,14 @@
     background-color: rgba(255,255,255,.8);
 }
 
+.TablePanel__no-access {
+    background-color: #ffe8e8;
+}
+
+.TablePanel__no-access--highlighted {
+    background-color: #ffc1c1;
+}
+
 /** below are taken from FixedDataTable with some modifications */
 
 /**

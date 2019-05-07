@@ -6,6 +6,8 @@ package edu.caltech.ipac.table;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONValue;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -19,6 +21,8 @@ import java.util.stream.Collectors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static edu.caltech.ipac.table.JsonTableUtil.toLinkInfos;
+import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 import static edu.caltech.ipac.table.TableMeta.*;
 
@@ -55,26 +59,32 @@ public class IpacTableUtil {
             if (col.getPrefWidth() > 0) {
                 ensureKey(attribs, col.getKeyName(), String.valueOf(col.getPrefWidth()), PREF_WIDTH_TAG);
             }
-            ensureKey(attribs, col.getKeyName(), col.getDesc(), TableMeta.SDESC_TAG);
-            ensureKey(attribs, col.getKeyName(), col.getDesc(), TableMeta.DESC_TAG);
-            ensureKey(attribs, col.getKeyName(), col.getFormat(), TableMeta.FORMAT_TAG);
-            ensureKey(attribs, col.getKeyName(), col.getFmtDisp(), TableMeta.FORMAT_DISP_TAG);
+            ensureKey(attribs, col.getKeyName(), col.getDesc(), SDESC_TAG);
+            ensureKey(attribs, col.getKeyName(), col.getDesc(), DESC_TAG);
+            ensureKey(attribs, col.getKeyName(), col.getFormat(), FORMAT_TAG);
+            ensureKey(attribs, col.getKeyName(), col.getFmtDisp(), FORMAT_DISP_TAG);
             if (!col.isSortable()) {
-                ensureKey(attribs, col.getKeyName(), "false", TableMeta.SORTABLE_TAG);
+                ensureKey(attribs, col.getKeyName(), "false", SORTABLE_TAG);
             }
             if (!col.isFilterable()) {
-                ensureKey(attribs, col.getKeyName(), "false", TableMeta.FILTERABLE_TAG);
+                ensureKey(attribs, col.getKeyName(), "false", FILTERABLE_TAG);
             }
-            ensureKey(attribs, col.getKeyName(), col.getSortByCols(), TableMeta.SORT_BY_TAG);
-            ensureKey(attribs, col.getKeyName(), col.getEnumVals(), TableMeta.ENUM_VALS_TAG);
-            ensureKey(attribs, col.getKeyName(), col.getPrecision(), TableMeta.PRECISION_TAG);
-            ensureKey(attribs, col.getKeyName(), col.getUCD(), TableMeta.UCD_TAG);
-            ensureKey(attribs, col.getKeyName(), col.getUType(), TableMeta.UTYPE_TAG);
-            ensureKey(attribs, col.getKeyName(), col.getRef(), TableMeta.REF_TAG);
-            ensureKey(attribs, col.getKeyName(), col.getMinValue(), TableMeta.MIN_VALUE_TAG);
-            ensureKey(attribs, col.getKeyName(), col.getMaxValue(), TableMeta.MAX_VALUE_TAG);
+            ensureKey(attribs, col.getKeyName(), col.getSortByCols(), SORT_BY_TAG);
+            ensureKey(attribs, col.getKeyName(), col.getEnumVals(), ENUM_VALS_TAG);
+            ensureKey(attribs, col.getKeyName(), col.getPrecision(), PRECISION_TAG);
+            ensureKey(attribs, col.getKeyName(), col.getUCD(), UCD_TAG);
+            ensureKey(attribs, col.getKeyName(), col.getUType(), UTYPE_TAG);
+            ensureKey(attribs, col.getKeyName(), col.getRef(), REF_TAG);
+            ensureKey(attribs, col.getKeyName(), col.getMinValue(), MIN_VALUE_TAG);
+            ensureKey(attribs, col.getKeyName(), col.getMaxValue(), MAX_VALUE_TAG);
             if (col instanceof ParamInfo) {
-                ensureKey(attribs, col.getKeyName(), ((ParamInfo)col).getValue(), TableMeta.VALUE_TAG);
+                ensureKey(attribs, col.getKeyName(), ((ParamInfo)col).getValue(), VALUE_TAG);
+            }
+
+            List<LinkInfo> links = col.getLinkInfos();
+            if (links != null && links.size() > 0) {
+                String json = JSONValue.toJSONString(JsonTableUtil.toJsonLinkInfos(links));
+                ensureKey(attribs, col.getKeyName(), json, LINKS_TAG);
             }
         }
         return attribs;
@@ -119,8 +129,11 @@ public class IpacTableUtil {
             consumeMeta(MIN_VALUE_TAG, meta, dt, (v, c) -> c.setMinValue(v));
             consumeMeta(MAX_VALUE_TAG, meta, dt, (v, c) -> c.setMaxValue(v));
 
+            consumeMeta(LINKS_TAG, meta, dt, (json, c) -> applyIfNotEmpty(toLinkInfos(json), infos -> c.setLinkInfos(infos)));
+
             if (dt instanceof ParamInfo)
                 consumeMeta(VALUE_TAG, meta, dt, (v, c) -> ((ParamInfo)c).setValue(v));
+
         }
     }
 

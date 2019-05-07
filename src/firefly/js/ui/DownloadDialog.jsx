@@ -2,11 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React, {useCallback} from 'react';
 import PropTypes from 'prop-types';
-import {set, cloneDeep, get} from 'lodash';
+import {set, cloneDeep, get, isEmpty} from 'lodash';
 
-import {flux} from '../Firefly.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import {dispatchShowDialog, dispatchHideDialog} from '../core/ComponentCntlr.js';
@@ -16,14 +15,14 @@ import Validate from '../util/Validate.js';
 import {InputField} from './InputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {showInfoPopup} from './PopupUtil.jsx';
-import {SimpleComponent} from './SimpleComponent.jsx';
 
-import {getTblInfoById, getActiveTableId} from '../tables/TableUtil.js';
+import {getTblInfoById, getActiveTableId, getProprietaryInfo, getTblById} from '../tables/TableUtil.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {dispatchPackage, dispatchBgSetEmailInfo} from '../core/background/BackgroundCntlr.js';
 import {getBgEmailInfo} from '../core/background/BackgroundUtil.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {DataTagMeta} from '../tables/TableRequestUtil.js';
+import {useStoreConnector} from './SimpleComponent.jsx';
 
 const DOWNLOAD_DIALOG_ID = 'Download Options';
 /**
@@ -62,36 +61,18 @@ const DOWNLOAD_DIALOG_ID = 'Download Options';
  *         </DownloadOptionPanel>
  *     </DownloadButton>
  * </code>
+ * @param props
+ * @returns {*}
  */
-export class DownloadButton extends PureComponent {
+export function DownloadButton(props) {
 
-    constructor(props) {
-        super(props);
-        this.state = {tbl_id: props.tbl_id};
-        this.onClick = this.onClick.bind(this);
-    }
+    const tblIdGetter = () => props.tbl_id || getActiveTableId(props.tbl_grp);
+    const selectInfoGetter = () => get(getTblInfoById(tblIdGetter()), 'selectInfo');
 
-    componentDidMount() {
-        this.removeListener= flux.addListener(() => this.storeUpdate());
-    }
+    const [tbl_id, selectInfo] = useStoreConnector(tblIdGetter, selectInfoGetter);
+    const selectInfoCls = SelectInfo.newInstance(selectInfo);
 
-    componentWillUnmount() {
-        this.removeListener && this.removeListener();
-        this.isUnmounted = true;
-    }
-
-
-    storeUpdate() {
-        if (!this.isUnmounted) {
-            const tbl_id = this.props.tbl_id || getActiveTableId(this.props.tbl_grp);
-            const {selectInfo} = getTblInfoById(tbl_id);
-            this.setState({selectInfo, tbl_id});
-        }
-    }
-
-    onClick() {
-        const {tbl_id, selectInfo={}} = this.state;
-        const selectInfoCls = SelectInfo.newInstance(selectInfo);
+    const onClick = useCallback(() => {
         if (selectInfoCls.getSelectedCount()) {
             var panel = this.props.children ? React.Children.only(this.props.children) : <DownloadOptionPanel/>;
             panel = React.cloneElement(panel, {tbl_id});
@@ -99,20 +80,16 @@ export class DownloadButton extends PureComponent {
         } else {
             showInfoPopup('You have not chosen any data to download', 'No Data Selected');
         }
-    }
+    }, selectInfo);
 
-    render() {
-        const {selectInfo={}} = this.state;
-        const selectInfoCls = SelectInfo.newInstance(selectInfo);
-        const style = selectInfoCls.getSelectedCount() ? 'button std attn' : 'button std hl';
-        return (
-            <button style={{display: 'inline-block'}}
-                    type = 'button'
-                    className = {style}
-                    onClick = {this.onClick}
-            >Prepare Download</button>
-        );
-    }
+    const style = selectInfoCls.getSelectedCount() ? 'button std attn' : 'button std hl';
+    return (
+        <button style={{display: 'inline-block'}}
+                type = 'button'
+                className = {style}
+                onClick = {onClick}
+        >Prepare Download</button>
+    );
 }
 
 
@@ -122,102 +99,98 @@ DownloadButton.propTypes = {
 };
 
 
-export class DownloadOptionPanel extends SimpleComponent {
+export function DownloadOptionPanel (props) {
+    const {mask, groupKey, cutoutSize, help_id, children, style, title, tbl_id, dlParams, dataTag} = props;
 
-    getNextState() {
-        const {email, enableEmail} = getBgEmailInfo();
-        return {mask:false, email, enableEmail};
-    }
-
-    onEmailChanged(v) {
+    const [{email, enableEmail}] = useStoreConnector(getBgEmailInfo);
+    const onEmailChanged = useCallback((v) => {
         if (get(v, 'valid')) {
-            const {email} = this.state;
             if (email !== v.value) dispatchBgSetEmailInfo({email: v.value});
         }
-    }
+    }, [email]);
 
-    render() {
-        const {groupKey, cutoutSize, help_id, children, style, title, tbl_id, dlParams, dataTag} = this.props;
-        const {mask, email, enableEmail} = this.state;
-        const labelWidth = 110;
-        const ttl = title || DOWNLOAD_DIALOG_ID;
+    const labelWidth = 110;
+    const ttl = title || DOWNLOAD_DIALOG_ID;
 
-        const onSubmit = (options) => {
-            var {request, selectInfo} = getTblInfoById(tbl_id);
-            const {FileGroupProcessor} = dlParams;
-            const Title = dlParams.Title || options.Title;
-            const dreq = makeTblRequest(FileGroupProcessor, Title, Object.assign(dlParams, {cutoutSize}, options));
-            request = set(cloneDeep(request), DataTagMeta, dataTag);
-            dispatchPackage(dreq, request, SelectInfo.newInstance(selectInfo).toString());
-            showDownloadDialog(this, false);
-        };
+    const onSubmit = useCallback((options) => {
+        var {request, selectInfo} = getTblInfoById(tbl_id);
+        const {FileGroupProcessor} = dlParams;
+        const Title = dlParams.Title || options.Title;
+        const dreq = makeTblRequest(FileGroupProcessor, Title, Object.assign(dlParams, {cutoutSize}, options));
+        request = set(cloneDeep(request), DataTagMeta, dataTag);
+        dispatchPackage(dreq, request, SelectInfo.newInstance(selectInfo).toString());
+        showDownloadDialog(this, false);
+    }, tbl_id);
 
-        const toggleEnableEmail = (e) => {
-            const enableEmail = e.target.checked;
-            const email = enableEmail ? email : ''; 
-            dispatchBgSetEmailInfo({email, enableEmail});
-        };
-        return (
-            <div style = {Object.assign({margin: '4px', position: 'relative', minWidth: 350}, style)}>
-                {mask && <div style={{width: '100%', height: '100%'}} className='loading-mask'/>}
-                <FormPanel
-                    submitText = 'Prepare Download'
-                    groupKey = {groupKey}
-                    onSubmit = {onSubmit}
-                    onCancel = {() => dispatchHideDialog(ttl)}
-                    help_id  = {help_id}>
-                    <FieldGroup groupKey={groupKey} keepState={true}>
+    const toggleEnableEmail = (e) => {
+        const enableEmail = e.target.checked;
+        const email = enableEmail ? email : '';
+        dispatchBgSetEmailInfo({email, enableEmail});
+    };
 
-                        {children}
+    const hasProprietaryData = !isEmpty(getProprietaryInfo(getTblById(tbl_id)));
 
-                        {cutoutSize &&
-                            <ListBoxInputField
-                                wrapperStyle={{marginTop: 5}}
-                                fieldKey ='dlCutouts'
-                                initialState = {{
-                                        tooltip: 'Download Cutouts Option',
-                                        label : 'Download:'
-                                    }}
-                                options = {[
-                                        {label: 'Specified Cutouts', value: 'cut'},
-                                        {label: 'Original Images', value: 'orig'}
-                                    ]}
-                                labelWidth = {labelWidth}
-                            />
-                        }
+    return (
+        <div style = {Object.assign({margin: '4px', position: 'relative', minWidth: 350}, style)}>
+            {mask && <div style={{width: '100%', height: '100%'}} className='loading-mask'/>}
+            {hasProprietaryData && <div>This table contains proprietary data. Only data to which you have access will be downloaded.</div>}
+            <FormPanel
+                submitText = 'Prepare Download'
+                groupKey = {groupKey}
+                onSubmit = {onSubmit}
+                onCancel = {() => dispatchHideDialog(ttl)}
+                help_id  = {help_id}>
+                <FieldGroup groupKey={groupKey} keepState={true}>
+
+                    {children}
+
+                    {cutoutSize &&
                         <ListBoxInputField
                             wrapperStyle={{marginTop: 5}}
-                            fieldKey ='zipType'
+                            fieldKey ='dlCutouts'
                             initialState = {{
-                                        tooltip: 'Zip File Structure',
-                                        label : 'Zip File Structure:'
-                                    }}
+                                    tooltip: 'Download Cutouts Option',
+                                    label : 'Download:'
+                                }}
                             options = {[
-                                        {label: 'Structured (with folders)', value: 'folder'},
-                                        {label: 'Flattened (no folders)', value: 'flat'}
-                                    ]}
+                                    {label: 'Specified Cutouts', value: 'cut'},
+                                    {label: 'Original Images', value: 'orig'}
+                                ]}
                             labelWidth = {labelWidth}
                         />
+                    }
+                    <ListBoxInputField
+                        wrapperStyle={{marginTop: 5}}
+                        fieldKey ='zipType'
+                        initialState = {{
+                                    tooltip: 'Zip File Structure',
+                                    label : 'Zip File Structure:'
+                                }}
+                        options = {[
+                                    {label: 'Structured (with folders)', value: 'folder'},
+                                    {label: 'Flattened (no folders)', value: 'flat'}
+                                ]}
+                        labelWidth = {labelWidth}
+                    />
 
-                        <div style={{width: 250, marginTop: 10}}><input type='checkbox' checked={enableEmail} onChange={toggleEnableEmail}/>Enable email notification</div>
-                        {enableEmail &&
-                        <InputField
-                            validator={Validate.validateEmail.bind(null, 'an email field')}
-                            tooltip='Enter an email to be notified when a process completes.'
-                            label='Email:'
-                            labelStyle={{display: 'inline-block', marginLeft: 18, width: 32, fontWeight: 'bold'}}
-                            value={email}
-                            placeholder='Enter an email to get notification'
-                            style={{width: 170}}
-                            onChange={this.onEmailChanged.bind(this)}
-                            actOn={['blur','enter']}
-                        />
-                        }
-                    </FieldGroup>
-                </FormPanel>
-            </div>
-        );
-    }
+                    <div style={{width: 250, marginTop: 10}}><input type='checkbox' checked={enableEmail} onChange={toggleEnableEmail}/>Enable email notification</div>
+                    {enableEmail &&
+                    <InputField
+                        validator={Validate.validateEmail.bind(null, 'an email field')}
+                        tooltip='Enter an email to be notified when a process completes.'
+                        label='Email:'
+                        labelStyle={{display: 'inline-block', marginLeft: 18, width: 32, fontWeight: 'bold'}}
+                        value={email}
+                        placeholder='Enter an email to get notification'
+                        style={{width: 170}}
+                        onChange={onEmailChanged}
+                        actOn={['blur','enter']}
+                    />
+                    }
+                </FieldGroup>
+            </FormPanel>
+        </div>
+    );
 }
 
 

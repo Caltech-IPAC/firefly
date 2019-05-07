@@ -83,7 +83,7 @@ jest.mock('firefly/visualize/WorkspaceCntlr.js', () => {
 
 jest.mock('firefly/tables/TablesCntlr.js', () => {
     return {
-        TABLE_UPDATE:'',TABLE_REPLACE:'',TABLE_SPACE_PATH: '',
+        TABLE_UPDATE:'',TABLE_REPLACE:'',TABLE_SPACE_PATH: '', TABLE_LOADED: 'table.loaded',
         dispatchTableFilter: () => '',
         dispatchTableSelect: () => '',
     };

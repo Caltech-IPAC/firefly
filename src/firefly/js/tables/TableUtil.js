@@ -18,6 +18,7 @@ import {ServerParams} from '../data/ServerParams.js';
 import {doUpload} from '../ui/FileUpload.jsx';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga.js';
 import {getWsConnId} from '../core/messaging/WebSocketClient.js';
+import {MetaConst} from '../data/MetaConst';
 
 
 // this is so test can mock the function when used within it's module
@@ -935,6 +936,47 @@ export function getColsByType(tblColumns=[], type=COL_TYPE.ALL) {
     return tblColumns.filter((col) => get(col, 'visibility') !== 'hidden'
                         && (type === COL_TYPE.ALL || matcher(col)));
 }
+
+export function getColByUtype(tableModel, utype) {
+    return getColumns(tableModel).filter( (col) => col.utype === utype);
+}
+
+export function getColByUCD(tableModel, ucd) {
+    return getColumns(tableModel).filter( (col) => col.UCD === ucd);
+}
+
+/**
+ * returns a 2-part array, [release date column, datarights column] if this table
+ * contains proprietary data
+ * @param tableModel
+ * @returns {string[]}
+ */
+export function getProprietaryInfo(tableModel) {
+    const rcname = get(tableModel, ['tableMeta', MetaConst.RELEASE_DATE_COL]);
+    const dcname = get(tableModel, ['tableMeta', MetaConst.DATARIGHTS_COL]);
+    return rcname || dcname ? [rcname, dcname] : [];
+}
+
+export function hasRowAccess(tableModel, rowIdx) {
+
+    const [rcname, dcname] = getProprietaryInfo(tableModel);
+    if (!rcname && !dcname) return true;        // no proprietary info
+
+    if (dcname) {
+        const rights = getCellValue(tableModel, rowIdx, dcname) || '';
+        if (['public', 'secure', '1', 'true', 't'].includes(rights.trim().toLocaleLowerCase()) ) {
+            return true;
+        }
+    }
+    if (rcname) {
+        const rdate = getCellValue(tableModel, rowIdx, rcname) || '';
+        if ( rdate && new Date() > new Date(rdate)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 
 export function isNumericType(col={}) {
     return num_types.includes(col.type);

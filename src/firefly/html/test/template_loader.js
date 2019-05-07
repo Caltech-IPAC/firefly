@@ -10,22 +10,24 @@
             const scpt = c.querySelector('script');
             const title = cnt++ + ' - ' + test.title;
 
-            renderTest(expected, actual, scpt, title, test.className);
+            renderTest(expected, actual, scpt, title, test);
         });
     };
 
-    function renderTest(expected, actual, script, title, className) {
+    function renderTest(expected, actual, script, title, testTmpl) {
         const iframe = document.createElement('iframe');
+        iframe.id = 'iframe';
         iframe.src = './template.html';
-        iframe.style.minHeight= '200px';
-        const idiv = document.createElement('div');
-        idiv.className = 'tst-iframe-container';
-        idiv.appendChild(iframe);
-        document.getElementById('tst-container').appendChild(idiv);
+        iframe.style.height= '100%';
+        const iframeContainer = document.createElement('div');
+        iframeContainer.className = 'tst-iframe-container ' + testTmpl.className;
+        iframeContainer.style.cssText = testTmpl.style.cssText;
+        iframeContainer.appendChild(iframe);
+        document.getElementById('tst-container').appendChild(iframeContainer);
 
-        iframe.contentWindow.template = {expected, actual, script, title, className};
+        iframe.contentWindow.template = {expected, actual, script, title, className: testTmpl.className, iframeContainer};
         iframe.contentWindow.resizeIframeToHeight= function (size) {
-            iframe.style.minHeight= size;
+            iframe.parentElement.style.minHeight= size;
         };
     }
 
