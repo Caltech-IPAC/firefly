@@ -206,21 +206,24 @@ There are additional information specific to each input field.  Click the top bu
 Anything set in META_INFO will go into the resulting table as tableMeta.
 
 Column property can be set via META_INFO as well.  However, there's a discrepancy between the JS and Java constants.
-This will be resolved in the near future.
+This will be resolved in the near future.  These exposed properties should mirrored java code: edu.caltech.ipac.table.IpacTableUtil.consumeColumnInfo
 Use format:  col.[col-name].[col-prop]
 
 [col-prop] : java -> javascript
-Label               * @prop {string} label     display name of the column
-Unit                * @prop {string} units     data units
+Label               * @prop {string} label      display name of the column
+Visibility          * @prop {string} visibility show, hide, or hidden.  hidden columns are not viewable by users.
+Width               * @prop {number} width      max width needed to display data.
+PrefWidth           * @prop {number} prefWidth  preferred width, regardless of the data.
+Desc                * @prop {string} desc       description of the column
+ShortDescription    * @prop {string} desc       description of the column        // @deprecated, for backward compatibility only
 NullStr             * @prop {string} nullString string used to represent null value
-Desc                * @prop {string} desc      description of the column
-Width               * @prop {number} width     max width needed to display data.
-PrefWidth           * @prop {number} prefWidth     preferred width, regardless of the data.
-Sortable            * @prop {boolean} sortable     true if undefined
-Filterable          * @prop {boolean} filterable   true if undefined
-Visibility          * @prop {string} visibility    show, hide, or hidden.  hidden columns are not viewable by users.
+Unit                * @prop {string} units      data units
+Format              * @prop {string} format     a java format to be applied to the value.  This can applies to any data type.
+FmtDisp             * @prop {string} fmtDisp    alias to Format.                // @deprecated, for backward compatibility only
+Sortable            * @prop {boolean} sortable  true if undefined
+Filterable          * @prop {boolean} filterable true if undefined
+SortByCols          * @prop {string} sortByCols column to be sorted by.  values are separted by comma(',')
 EnumVals            * @prop {string} enumVals   contains only values in this list.  values are seprated by comma(',')
-Format              * @prop {string} format   a java format to be applied to the value.  This can applies to any data type.
 Precision           * @prop {string} precision applies only to floating point numbers.
                                                A string Tn where T is either F, E, or G
                                                If T is not present, it defaults to F.
@@ -229,9 +232,10 @@ Precision           * @prop {string} precision applies only to floating point nu
 UCD                 * @prop {string} UCD       UCD of this column.
 UType               * @prop {string} utype     UType of this column.
 Ref                 * @prop {string} ref       refer to this column for declarations.
-Value               * @prop {string} value     static value of this column for all of the rows in this table
-MaxValue            * @prop {string} maxValue  maximum value.
 MinValue            * @prop {string} minValue  minimum value.
+MaxValue            * @prop {string} maxValue  maximum value.
+Links               * @prop {string} links     array of LINK if any
+Value               * @prop {string} value     static value of this column for all of the rows in this table
 
                 </pre>
             </div>
