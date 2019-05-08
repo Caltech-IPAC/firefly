@@ -50,7 +50,7 @@ class NaifidPanelView extends PureComponent {
         return rval.p.then((response)=>{
             if(response.valid) {
                 const suggestionsList = Object.entries(response.data).map(([k,v])=>({naifId:v, naifName:k}));
-                searchHistory.push({'searchVal':val, 'searchRes': suggestionsList});
+                searchHistory.push({searchVal:val, searchRes: suggestionsList});
 
                 return Object.entries(suggestionsList).map( ([k,v]) => `Object Name:${v.naifName}, NAIF ID:${v.naifId}`);
             } else {
@@ -162,7 +162,7 @@ function renderSuggestion(str){
 function handleValueChange(payload, fireValueChange) {
     const newPayload= {...payload};
     newPayload.valid  = Boolean(newPayload.value) || (newPayload.displayValue === '' || newPayload.displayValue === naifNamevalue);
-    if (!newPayload.valid && !newPayload.message) {
+    if (!newPayload.valid) {
         if (!newPayload.message) {
             newPayload.message = 'Please use name from the list';
         }
