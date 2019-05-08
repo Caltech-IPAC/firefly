@@ -1,6 +1,5 @@
-import React, {PureComponent, memo} from 'react';
+import React, {memo} from 'react';
 import PropTypes from 'prop-types';
-import {flux} from '../Firefly.js';
 import {get} from 'lodash';
 import {isFunction, isNil, isEmpty} from 'lodash';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
@@ -32,58 +31,43 @@ const workspaceUploadDef = { file: {fkey: 'uploadfile', label: 'Workspace Upload
 const workspacePopupId = 'workspacePopupId';
 
 import LOADING from 'html/images/gxt/loading.gif';
+import ComponentCntlr from '../core/ComponentCntlr.js';
 
 /*-----------------------------------------------------------------------------------------*/
 /* core component as FilePicker wrapper
 /*-----------------------------------------------------------------------------------------*/
-export class WorkspaceView extends PureComponent {
-    constructor(props) {
-        super(props);
-        this.state = {files: this.props.files, currentSelection: ''};
+
+export const WorkspaceView = memo( (props) => {
+
+    const {canCreateFolder, canCreateFiles, canRenameFolder, canRenameFile,
+        canDeleteFolder, canDeleteFile, onClickItem, files, wrapperStyle={width: '100%', height: '100%'},
+        keepSelect, folderLevel=1, selectedItem} = props;
+    const eventHandlers = {
+        onCreateFolder: canCreateFolder ? onCreateFolder : undefined,
+        onCreateFiles: canCreateFiles ? onCreateFiles : undefined,
+        onRenameFolder: canRenameFolder ? onRenameFolder : undefined,
+        onRenameFile: canRenameFile ? onRenameFile : undefined,
+        onDeleteFolder: canDeleteFolder ? onDeleteFolder : undefined,
+        onDeleteFile: canDeleteFile ? onDeleteFile : undefined,
+        onClickItem};
+
+    let openFolders = getFolderUnderLevel(folderLevel);
+    // keep selected folder open initially
+    // it requires the ancestor folders to be open too
+    const selectedFile = files.find((oneFile) => oneFile.key === selectedItem);
+    if (selectedFile && selectedFile.isFolder && selectedFile.childrenRetrieved) {
+        openFolders = {};
+        const parts = selectedItem.split('/').filter((e)=>e);
+        parts.map((e,i,a)=>a.slice(0,i+1)
+            .join('/'))
+            .forEach((e) => {openFolders[e+'/'] = true;});
     }
-
-    componentWillUnmount() {
-        if (this.removeListener) this.removeListener();
-        this.iAmMounted = false;
-    }
-
-    componentDidMount() {
-        this.iAmMounted = true;
-        this.removeListener = flux.addListener(() => this.storeUpdate());
-    }
-
-    storeUpdate() {
-        if (this.iAmMounted) {
-            const workspaceList = getWorkspaceList();
-            if (this.state.files !== workspaceList) {
-                this.setState({files: workspaceList});
-            }
-        }
-    }
-
-
-    render () {
-        const {canCreateFolder, canCreateFiles, canRenameFolder, canRenameFile,
-               canDeleteFolder, canDeleteFile, onClickItem, files, wrapperStyle={width: '100%', height: '100%'},
-               keepSelect, folderLevel=1} = this.props;
-        const {selectedItem} = this.props;
-        const eventHandlers = {
-                onCreateFolder: canCreateFolder ? onCreateFolder : undefined,
-                onCreateFiles: canCreateFiles ? onCreateFiles : undefined,
-                onRenameFolder: canRenameFolder ? onRenameFolder : undefined,
-                onRenameFile: canRenameFile ? onRenameFile : undefined,
-                onDeleteFolder: canDeleteFolder ? onDeleteFolder : undefined,
-                onDeleteFile: canDeleteFile ? onDeleteFile : undefined,
-                onClickItem};
-
-        const openFolders = getFolderUnderLevel(folderLevel);
-        return (
-            <div style={wrapperStyle}>
-                {FilePicker({files, selectedItem, keepSelect, openFolders, ...eventHandlers})}
-            </div>
-        );
-    }
-}
+    return (
+        <div style={wrapperStyle}>
+            {FilePicker({files, selectedItem: selectedFile?selectedItem:WS_HOME+'/', keepSelect, openFolders, ...eventHandlers})}
+        </div>
+    );
+});
 
 WorkspaceView.defaultProps = {
     canCreateFolder: false,
@@ -120,8 +104,17 @@ WorkspaceView.propTypes = {
 export const WorkspaceViewField = memo( (props) => {
     const {viewProps, fireValueChange} = useFieldGroupConnector(props);
 
+    const onClickItem = (key) => {
+        fireValueChange({value: key});
+        const files = get(props, 'files', []);
+        const file = files.find((oneFile) => oneFile.key === key);
+        if (file && file.isFolder && !file.childrenRetrieved) {
+            dispatchWorkspaceUpdate({relPath: file.relPath});
+        }
+    };
+
     return (<WorkspaceView {...{...viewProps, selectedItem: viewProps.value}}
-                           onClickItem={(key) => fireValueChange({value: key})}/>); // get key from FilePicker
+                           onClickItem={onClickItem}/>); // get key from FilePicker
 });
 
 
@@ -182,15 +175,24 @@ WorkspacePickerPopup.propTypes = {
  */
 export function showWorkspaceDialog({onComplete, value, fieldKey}) {
     dispatchAddActionWatcher({
-        actions:[WORKSPACE_LIST_UPDATE],
+        id: 'workspaceRead',
+        actions:[WORKSPACE_LIST_UPDATE, ComponentCntlr.HIDE_DIALOG],
         callback: (a , cancelSelf) => {
-            cancelSelf();
-
-            const newList = getWorkspaceList() || [];
-            if (isEmpty(newList)) {
-                workspacePopupMsg('Workspace access error: ' + getWorkspaceErrorMsg() , 'Workspace access');
-            } else {
-                showWorkspaceAsPopup({onComplete, value, fieldKey});
+            switch (a.type) {
+                case ComponentCntlr.HIDE_DIALOG:
+                    const dialogId = get(a.payload, 'dialogId');
+                    if (dialogId === workspacePopupId) {
+                        cancelSelf();
+                    }
+                    break;
+                case WORKSPACE_LIST_UPDATE:
+                    const newList = getWorkspaceList() || [];
+                    if (isEmpty(newList)) {
+                        workspacePopupMsg('Workspace access error: ' + getWorkspaceErrorMsg(), 'Workspace access');
+                    } else {
+                        showWorkspaceAsPopup({onComplete, value, fieldKey});
+                    }
+                    break;
             }
         }
     });

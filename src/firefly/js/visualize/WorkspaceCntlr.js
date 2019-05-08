@@ -9,7 +9,7 @@ import {getRootURL} from '../util/BrowserUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {workspacePopupMsg} from '../ui/WorkspaceViewer.jsx';
 import Enum from 'enum';
-import {updateMerge} from '../util/WebUtil.js';
+import {updateMerge, updateSet} from '../util/WebUtil.js';
 import {getAppOptions} from '../core/AppDataCntlr.js';
 
 export const WORKSPACE_PREFIX = 'WorkspaceCntlr';
@@ -219,8 +219,11 @@ function updatePathList(action) {
         };
 
         if (!get(action, ['payload', 'files'], null)) {
+
+            const relPath = get(action, ['payload', 'relPath']);
+
             const params = {
-                [WS_SERVER_PARAM.currentrelpath.key]: '/',
+                [WS_SERVER_PARAM.currentrelpath.key]: relPath || '/',
                 [ServerParams.COMMAND]: ServerParams.WS_LIST
             };
 
@@ -298,7 +301,7 @@ export function isExistWorkspaceList() {
     return (!list || !isEmpty(list));
 }
 /**
- * get full path for FilePicker based on the given path (file or foloder) plus filename
+ * get full path for FilePicker based on the given path (file or folder) plus filename
  * the full path is compliant to the path from the server
  * @param path
  * @param filename
@@ -341,14 +344,15 @@ export function isValidWSFolder(key, isFolderValid=true) {
 
     const files = getWorkspaceFiles();
     const file = files&&files.find((oneItem) => {
-            return (oneItem.relPath === path || oneItem.relPath === ('/'+path));
+            return (oneItem.relPath === path || oneItem.relPath === ('/'+path)
+                || oneItem.relPath+'/' === path);
         });
     let valid, message;
 
     if (file) {
-        // isFolderValid xor file.contentType === 'folder'
+        // isFolderValid xor file.isFolder
         const p = isFolderValid ? 1 : 0;
-        const q = (file.contentType === 'folder') ? 1 : 0;
+        const q = (file.isFolder) ? 1 : 0;
         valid = file && ((p+q)%2 === 0);
         if (!valid) {
             message = isFolderValid ? `${path} is not a folder` :
@@ -472,7 +476,7 @@ function itemForHome(list) {
             url = oneUrl.substring(0, idx+1);
         }
     }
-    return [{key: WS_HOME+'/', modified: '', size: -1, url, relPath: '/', isFolder: true}];
+    return [{key: WS_HOME+'/', modified: '', size: -1, url, relPath: '/', isFolder: true, childrenRetrieved: true}];
 }
 
 const convertFileToKey = (wsFile) => {
@@ -490,8 +494,11 @@ function convertFilesToList(wFiles) {
         const {relPath, modifiedDate:modified, sizeBytes, url, isFolder:isFolderVal} = oneFile;
 
         if (relPath && !relPath.includes('/.')) {
-            const key = convertFileToKey(relPath);
+            let key = convertFileToKey(relPath);
             const isFolder = isFolderVal || (key.lastIndexOf('/') === (key.length - 1));
+            if (isFolderVal && (key.lastIndexOf('/') !== (key.length - 1))) {
+                key += '/'; // folder keys end with '/'
+            }
             const size = isFolder ? 0 : sizeBytes;
 
             //const key = relPath;
@@ -557,6 +564,24 @@ function moveWorkspaceList(oldFile, files, state) {
     return addToWorkspaceList(files, newState);
 }
 
+/**
+ * Since infinite depth is not supported by the server,
+ * folders are populated as they are clicked to be open.
+ * This function sets childrenRetrieved attribute of the object
+ * representing folder node in the state.
+ * @param folderRelPath
+ * @param state
+ * @returns {*}
+ */
+function updateFolderStatus(folderRelPath, state) {
+    const folderIdx = get(state, 'data', []).findIndex((oneFile) => oneFile.relPath === folderRelPath);
+    if (folderIdx >= 0) {
+        return updateSet(state, ['data', folderIdx, 'childrenRetrieved'], true);
+    } else {
+        return state;
+    }
+}
+
 function reducer(state=initState(), action={}) {
     const {type} = action;
 
@@ -584,7 +609,14 @@ function reducer(state=initState(), action={}) {
             }
             break;
         case WORKSPACE_LIST_UPDATE:
-            retState = updateWorkspaceList(files, data, status, statusCode, state);
+            if (action.payload.relPath) {
+                // populate data for the folder
+                retState = addToWorkspaceList(files, state);
+                // update folder status (childrenRetrieved attribute)
+                retState =  updateFolderStatus(action.payload.relPath, retState);
+            } else {
+                retState = updateWorkspaceList(files, data, status, statusCode, state);
+            }
             retState.isLoading = false;
             break;
         case WORKSPACE_LIST:
