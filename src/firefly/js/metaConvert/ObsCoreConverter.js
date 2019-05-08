@@ -1,6 +1,6 @@
 import {get} from 'lodash';
 import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
-import {getCellValue, doFetchTable, getProprietaryInfo} from '../tables/TableUtil.js';
+import {getCellValue, doFetchTable, hasRowAccess} from '../tables/TableUtil.js';
 import {getObsCoreAccessURL, getObsCoreProdType} from '../util/VOAnalyzer.js';
 import {
     findTableCenterColumns,
@@ -14,7 +14,6 @@ import {ZoomType} from '../visualize/ZoomType.js';
 import {makeWorldPt} from '../visualize/Point.js';
 import {createGridImagesActivate, createSingleImageActivate} from './ImageDataProductsUtil.js';
 import {dispatchTableSearch} from '../tables/TablesCntlr';
-import {hasRowAccess} from '../tables/TableUtil';
 
 const GIG= 1048576 * 1024;
 const previewTableId= 'OBCORE-TBL';
@@ -96,7 +95,7 @@ export function getObsCoreSingleDataProduct(table, row, activateParams, includeM
         return Promise.resolve({displayType:'message', message: prodType +' is not yet supported'});
     }
 
-    if (getProprietaryInfo(table).length > 0 && !hasRowAccess(table, table.highlightedRow)) {
+    if (!hasRowAccess(table, row)) {
         return Promise.resolve({displayType:'message', message: 'You do not have access to these data.'});
     }
 

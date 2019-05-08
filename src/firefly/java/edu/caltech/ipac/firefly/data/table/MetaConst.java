@@ -4,13 +4,8 @@
 package edu.caltech.ipac.firefly.data.table;
 
 /**
- * User: roby
- * Date: Apr 16, 2010
- * Time: 2:22:46 PM
- */
-
-
-/**
+ * Meta info that are used on server-side as well as client-side.  Make sure the constants
+ * are in synced with data/MetaConst.js
  * @author Trey Roby
  */
 public class MetaConst {
@@ -45,5 +40,13 @@ public class MetaConst {
     
     /** id string for types of image */
     public final static String IMAGE_SOURCE_ID = "ImageSourceId";
+
+    /** the column name with access rights info;  true if (public, 1, or true), otherwise false  */
+    public static final String DATARIGHTS_COL = "DATARIGHTS_COL";
+
+    /** the column name with public release date info;  null is considered not public */
+    public static final String  RELEASE_DATE_COL = "RELEASE_DATE_COL";
+
+
 }
 

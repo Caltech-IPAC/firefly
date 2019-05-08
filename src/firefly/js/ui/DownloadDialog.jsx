@@ -74,13 +74,13 @@ export function DownloadButton(props) {
 
     const onClick = useCallback(() => {
         if (selectInfoCls.getSelectedCount()) {
-            var panel = this.props.children ? React.Children.only(this.props.children) : <DownloadOptionPanel/>;
+            var panel = props.children ? React.Children.only(props.children) : <DownloadOptionPanel/>;
             panel = React.cloneElement(panel, {tbl_id});
             showDownloadDialog(panel);
         } else {
             showInfoPopup('You have not chosen any data to download', 'No Data Selected');
         }
-    }, selectInfo);
+    }, [selectInfo]);
 
     const style = selectInfoCls.getSelectedCount() ? 'button std attn' : 'button std hl';
     return (
@@ -98,6 +98,15 @@ DownloadButton.propTypes = {
     tbl_grp     : PropTypes.string,
 };
 
+
+const noticeCss = {
+    backgroundColor: 'beige',
+    color: 'brown',
+    border: '1px solid #cacaae',
+    padding: 3,
+    borderRadius: 2,
+    marginBottom: 3,
+};
 
 export function DownloadOptionPanel (props) {
     const {mask, groupKey, cutoutSize, help_id, children, style, title, tbl_id, dlParams, dataTag} = props;
@@ -133,7 +142,7 @@ export function DownloadOptionPanel (props) {
     return (
         <div style = {Object.assign({margin: '4px', position: 'relative', minWidth: 350}, style)}>
             {mask && <div style={{width: '100%', height: '100%'}} className='loading-mask'/>}
-            {hasProprietaryData && <div>This table contains proprietary data. Only data to which you have access will be downloaded.</div>}
+            {hasProprietaryData && <div style={noticeCss}>This table contains proprietary data. Only data to which you have access will be downloaded.</div>}
             <FormPanel
                 submitText = 'Prepare Download'
                 groupKey = {groupKey}
