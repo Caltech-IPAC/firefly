@@ -44,7 +44,7 @@ class NaifidPanelView extends PureComponent {
         if(searchHistory.length > 0){
             const cachedSuggList = Object.entries(searchHistory).find(([k,v])=>(v.searchVal === val));
             if(cachedSuggList){
-                return Object.entries(cachedSuggList.pop().searchRes).map( ([k,v]) => `Object Name:${v.naifName}, NAIF ID:${v.naifId}`);
+                return Object.entries(cachedSuggList.pop().searchRes).map( ([k,v]) => ({name:v.naifName, naifid:v.naifId}));
             }
         }
         return rval.p.then((response)=>{
@@ -52,7 +52,7 @@ class NaifidPanelView extends PureComponent {
                 const suggestionsList = Object.entries(response.data).map(([k,v])=>({naifId:v, naifName:k}));
                 searchHistory.push({searchVal:val, searchRes: suggestionsList});
 
-                return Object.entries(suggestionsList).map( ([k,v]) => `Object Name:${v.naifName}, NAIF ID:${v.naifId}`);
+                return Object.entries(suggestionsList).map( ([k,v]) => ({name:v.naifName, naifid:v.naifId}));
             } else {
                 //console.error(response);
                 this.props.fireValueChange({valid: false, message: response.feedback});
@@ -114,15 +114,14 @@ function valueChanged(payload,fireValueChange){
     fireValueChange({message:payload.message, valid:payload.valid, displayValue:payload.value, showHelp});
 }
 
-function updateFeedback(resolvedStr, valid, fireValueChange){
-    const {objName, naifId}=  parseNaifPair(resolvedStr);
+function updateFeedback(naifObj, valid, fireValueChange){
     const payload={
-        feedback: resolvedStr,
+        feedback: `Object Name: <b>${naifObj.name}</b>, NAIF ID: <b>${naifObj.naifid}</b>`,
         valid,
-        displayValue: objName,
-        value: objName+';'+naifId,//this is the returned value from the component.
+        displayValue: naifObj.name,
+        value: naifObj.name+';'+naifObj.naifid,//this is the returned value from the component.
     };
-    naifNamevalue = objName;
+    naifNamevalue = naifObj.name;
     fireValueChange(payload);
 }
 
@@ -133,29 +132,21 @@ function updateFeedback(resolvedStr, valid, fireValueChange){
  * @returns {function(*, *=)}
  */
 function getNaifidValue(onCallBack) {
-    return (val, str) => {
-        if (! str) return;
-        const result= parseNaifPair(str);
-        onCallBack(str);
-        return result.objName;
+    return (val, obj) => {
+        if (! obj) return;
+        onCallBack(obj);
+        return obj.name;
     };
-}
-
-function parseNaifPair(str) {
-    const [,objName=''] = str.match(/Object Name:(.*),/) || [];
-    const [,naifId=''] = str.match(/NAIF ID:(.*)/) || [];
-    return {objName,naifId};
 }
 
 
 /**
  * renders suggestion list's popup
- * @param str
+ * @param naifObj
  * @returns {*}
  */
-function renderSuggestion(str){
-    const {objName, naifId}=  parseNaifPair(str);
-    return  <span>Name:<b>{objName}</b>, NAIF ID: <b>{naifId}</b></span>;
+function renderSuggestion(naifObj){
+    return  <span>Name:<b>{naifObj.name}</b>, NAIF ID: <b>{naifObj.naifid}</b></span>;
 }
 
 
