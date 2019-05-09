@@ -4,7 +4,7 @@
 
 import React, {useCallback} from 'react';
 import PropTypes from 'prop-types';
-import {set, cloneDeep, get, isEmpty} from 'lodash';
+import {set, cloneDeep, get} from 'lodash';
 
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
@@ -16,7 +16,7 @@ import {InputField} from './InputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {showInfoPopup} from './PopupUtil.jsx';
 
-import {getTblInfoById, getActiveTableId, getProprietaryInfo, getTblById} from '../tables/TableUtil.js';
+import {getActiveTableId, getTblById, hasRowAccess, getProprietaryInfo} from '../tables/TableUtil.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {dispatchPackage, dispatchBgSetEmailInfo} from '../core/background/BackgroundCntlr.js';
 import {getBgEmailInfo} from '../core/background/BackgroundUtil.js';
@@ -67,7 +67,7 @@ const DOWNLOAD_DIALOG_ID = 'Download Options';
 export function DownloadButton(props) {
 
     const tblIdGetter = () => props.tbl_id || getActiveTableId(props.tbl_grp);
-    const selectInfoGetter = () => get(getTblInfoById(tblIdGetter()), 'selectInfo');
+    const selectInfoGetter = () => get(getTblById(tblIdGetter()), 'selectInfo');
 
     const [tbl_id, selectInfo] = useStoreConnector(tblIdGetter, selectInfoGetter);
     const selectInfoCls = SelectInfo.newInstance(selectInfo);
@@ -122,7 +122,7 @@ export function DownloadOptionPanel (props) {
     const ttl = title || DOWNLOAD_DIALOG_ID;
 
     const onSubmit = useCallback((options) => {
-        var {request, selectInfo} = getTblInfoById(tbl_id);
+        var {request, selectInfo} = getTblById(tbl_id);
         const {FileGroupProcessor} = dlParams;
         const Title = dlParams.Title || options.Title;
         const dreq = makeTblRequest(FileGroupProcessor, Title, Object.assign(dlParams, {cutoutSize}, options));
@@ -137,12 +137,12 @@ export function DownloadOptionPanel (props) {
         dispatchBgSetEmailInfo({email, enableEmail});
     };
 
-    const hasProprietaryData = !isEmpty(getProprietaryInfo(getTblById(tbl_id)));
+    const showWarnings = hasProprietaryData(getTblById(tbl_id));
 
     return (
         <div style = {Object.assign({margin: '4px', position: 'relative', minWidth: 350}, style)}>
             {mask && <div style={{width: '100%', height: '100%'}} className='loading-mask'/>}
-            {hasProprietaryData && <div style={noticeCss}>This table contains proprietary data. Only data to which you have access will be downloaded.</div>}
+            {showWarnings && <div style={noticeCss}>This table contains proprietary data. Only data to which you have access will be downloaded.</div>}
             <FormPanel
                 submitText = 'Prepare Download'
                 groupKey = {groupKey}
@@ -227,6 +227,22 @@ DownloadOptionPanel.defaultProps= {
     groupKey: 'DownloadDialog',
 };
 
+
+function hasProprietaryData(tableModel={}) {
+
+    if (getProprietaryInfo().length === 0) return false;
+
+    const {selectInfo} = tableModel;
+    const selectInfoCls = SelectInfo.newInstance(selectInfo);
+
+    const selectedRows = [...selectInfoCls.getSelected()];
+    for (let i = 0; i < selectedRows.length; i++) {
+        if (!hasRowAccess(tableModel, selectedRows[i])) {
+            return true;
+        }
+    }
+    return false;
+}
 
 
 /**
