@@ -40,7 +40,7 @@ public class TwoMassIbeDataSource extends BaseIbeDataSource {
         ASKYW("askyw","full","full"),
         SX("sx","sixxcat","sixxcat"),
         SXW("sxw","sixxfull","sixxfull"),
-        //MOSAIC("mosaic", "mosaic", "sixdeg"), // not ready yet
+        MOSAIC("mosaic", "mosaic", "sixdeg"), // not ready yet
         CAL("cal", "calibration", "calibration");
 
         private String name;
