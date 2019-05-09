@@ -107,7 +107,8 @@ const projTypes= {
 		name: 'SFL',
 		fwdProject: SansonFlamsteedProjection.fwdProject,
 		revProject: SansonFlamsteedProjection.revProject,
-		wrapping : true
+        implemented : true,
+        wrapping : true
 	},
 	[LINEAR] : {
 		name: 'LINEAR',
