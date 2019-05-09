@@ -12,17 +12,19 @@ import {TargetFeedback} from './TargetFeedback';
 
 
 const LABEL_DEFAULT='Moving Target Name:';
-
 const makeValidRet= (valid,message='') => ({valid,message});
-const defValidator= (val) => val ? makeValidRet(false,'Naif name not found') : makeValidRet(true);
+//const defValidator= (val) => val ? makeValidRet(true): makeValidRet(false,'Naif name not found');
+const defValidator= () => makeValidRet(true);
+const searchHistory =[];
+let naifNamevalue = '';
+
 
 class NaifidPanelView extends PureComponent {
-
     constructor(props) {
         super(props);
         this.state = {suggestions: ''};
         this.getSuggestions = this.getSuggestions.bind(this);
-        this.activeValidator= defValidator;
+        naifNamevalue = props.value;
     }
 
     componentWillUnmount() {
@@ -34,52 +36,33 @@ class NaifidPanelView extends PureComponent {
         this.iAmMounted = true;
     }
 
-
     getSuggestions(val= '') {
-            // if (val.length<2) return Promise.resolve([]);
-            this.activeValidator= defValidator;
-            if (val.length<2) return [];
-            const rval = resolveNaifidObj(val);
-            if (!rval.p) return [];
-            return rval.p.then((response)=>{
-                //const [result] = response;
-                if(response.valid) {
-                    let suggestionsList = response.data || [];
+        if (val.length<1) return [];
+        const rval = resolveNaifidObj(val);
+        if (!rval.p) return [];
+        //if value has been searched previously, no need to call the api again.
+        if(searchHistory.length > 0){
+            const cachedSuggList = Object.entries(searchHistory).find(([k,v])=>(v.searchVal === val));
+            if(cachedSuggList){
+                return Object.entries(cachedSuggList.pop().searchRes).map( ([k,v]) => ({name:v.naifName, naifid:v.naifId}));
+            }
+        }
+        return rval.p.then((response)=>{
+            if(response.valid) {
+                const suggestionsList = Object.entries(response.data).map(([k,v])=>({naifId:v, naifName:k}));
+                searchHistory.push({searchVal:val, searchRes: suggestionsList});
 
-                    if(this.iAmMounted && this.state.suggestions !== suggestionsList) {
-                        this.setState({suggestions: suggestionsList});
-                    }else if(this.iAmMounted && this.state.suggestions === suggestionsList){
-                        this.setState({suggestions:''});
-                    }
-
-                    this.activeValidator= (val= '') => {
-                        if (!val) return makeValidRet(true);
-                        if (Object.keys(suggestionsList).find((k) => k.toUpperCase()===val.toUpperCase())) {
-                            return makeValidRet(true);
-                        }
-                        else {
-                            return makeValidRet(false,'Choose naif name from list');
-                        }
-                    };
-
-                    return Object.keys(suggestionsList).map( (k) => `Object Name:${k}, NAIF ID:${suggestionsList[k]}`);
-
-                }else {
-                   //console.error("Error: "+response.feedback);
-                }
-            });
+                return Object.entries(suggestionsList).map( ([k,v]) => ({name:v.naifName, naifid:v.naifId}));
+            } else {
+                //console.error(response);
+                this.props.fireValueChange({valid: false, message: response.feedback});
+            }
+        });
     }
 
-
     render() {
-        const {showHelp, valid, message, feedback, value,
+        const {showHelp, valid, message, examples, feedback, value,
             labelWidth, feedbackStyle, popStyle, label= LABEL_DEFAULT, fireValueChange}= this.props;
-
-
-        const validator=  (val) => {
-            return this.activeValidator(val);
-        };
-
 
         const positionField = (<SuggestBoxInputFieldView
             wrapperStyle={{width:200}}
@@ -93,15 +76,14 @@ class NaifidPanelView extends PureComponent {
             valueOnSuggestion={getNaifidValue((selectedSugg) => {
                 updateFeedback(selectedSugg, true, fireValueChange);
             })}
+            validator={defValidator}
             getSuggestions={this.getSuggestions}
             renderSuggestion={renderSuggestion}
             fireValueChange={(payload) => {
-                fireValueChange({message:payload.message, valid:payload.valid, displayValue:payload.value});
+                valueChanged(payload, fireValueChange);
             }}
-            validator={validator}
         />);
-        const naifidFeedback = (<TargetFeedback {...{feedback}} {...{feedbackStyle}}/>);
-
+        const naifidFeedback = (<TargetFeedback {...{showHelp, feedback, examples}} style={feedbackStyle}/>);
         return (
             <div>
                 <div>{positionField}</div>
@@ -109,7 +91,6 @@ class NaifidPanelView extends PureComponent {
             </div>
         );
     }
-
 }
 
 NaifidPanelView.propTypes = {
@@ -118,6 +99,7 @@ NaifidPanelView.propTypes = {
     showHelp   : PropTypes.bool.isRequired,
     feedback: PropTypes.string.isRequired,
     message: PropTypes.string.isRequired,
+    examples: PropTypes.object,
     value : PropTypes.string.isRequired,
     labelWidth : PropTypes.number,
     popStyle : PropTypes.object, //style for the suggestion box popup list
@@ -126,57 +108,67 @@ NaifidPanelView.propTypes = {
     fireValueChange: PropTypes.func
 };
 
-
-
-function updateFeedback(resolvedStr, valid, fireValueChange){
-   const {objName, naifId}=  parseNaifPair(resolvedStr);
-   const payload={
-       feedback: resolvedStr,
-       valid,
-       displayValue: objName,
-       value: naifId,
-   };
-   fireValueChange(payload);
+function valueChanged(payload,fireValueChange){
+    let showHelp = false;
+    if(payload.value ==='') showHelp = true;
+    fireValueChange({message:payload.message, valid:payload.valid, displayValue:payload.value, showHelp});
 }
 
-/** Parses the selected option, and returns the value which gets populated in the input field of the suggestion box*/
+function updateFeedback(naifObj, valid, fireValueChange){
+    const payload={
+        feedback: `Object Name: <b>${naifObj.name}</b>, NAIF ID: <b>${naifObj.naifid}</b>`,
+        valid,
+        displayValue: naifObj.name,
+        value: naifObj.name+';'+naifObj.naifid,//this is the returned value from the component.
+    };
+    naifNamevalue = naifObj.name;
+    fireValueChange(payload);
+}
+
+
+/**
+ * Parses the selected option, and returns the value which gets populated in the input field of the suggestion box
+ * @param onCallBack
+ * @returns {function(*, *=)}
+ */
 function getNaifidValue(onCallBack) {
-    return (val, str) => {
-        if (! str) return;
-        const result= parseNaifPair(str);
-        onCallBack(str);
-        return result.objName;
+    return (val, obj) => {
+        if (! obj) return;
+        onCallBack(obj);
+        return obj.name;
     };
 }
 
-function parseNaifPair(str) {
-    const [,objName=''] = str.match(/Object Name:(.*),/) || [];
-    const [,naifId=''] = str.match(/NAIF ID:(.*)/) || [];
-    return {objName,naifId};
-}
 
-
-/** renders suggestion list's popup */
-function renderSuggestion(str){
-    const {objName, naifId}=  parseNaifPair(str);
-    return  <span>Name:<b>{objName}</b>, NAIF ID: <b>{naifId}</b></span>;
+/**
+ * renders suggestion list's popup
+ * @param naifObj
+ * @returns {*}
+ */
+function renderSuggestion(naifObj){
+    return  <span>Name:<b>{naifObj.name}</b>, NAIF ID: <b>{naifObj.naifid}</b></span>;
 }
 
 
 function handleValueChange(payload, fireValueChange) {
     const newPayload= {...payload};
-    if (!payload.valid) {
-        newPayload.value= '';
-        newPayload.feedback= '';
+    newPayload.valid  = Boolean(newPayload.value) || (newPayload.displayValue === '' || newPayload.displayValue === naifNamevalue);
+    if (!newPayload.valid) {
+        if (!newPayload.message) {
+            newPayload.message = 'Please use name from the list';
+        }
+        if (naifNamevalue) {
+            newPayload.value = '';
+            newPayload.feedback = '';
+        }
     }
     fireValueChange(newPayload) ;
 }
 
 export const NaifidPanel= memo( (props) => {
+
     const {fieldKey= 'NaifId'}= props;
     const {viewProps, fireValueChange}=  useFieldGroupConnector({fieldKey, ...props});
-
-
     const newProps=
         {
             ...viewProps,
@@ -188,6 +180,5 @@ export const NaifidPanel= memo( (props) => {
             showHelp: get(viewProps,'showHelp', true),
             fireValueChange: (payload) => handleValueChange(payload,fireValueChange)
         };
-
     return <NaifidPanelView {...newProps} /> ;
 });
