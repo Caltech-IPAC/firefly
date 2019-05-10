@@ -52,18 +52,7 @@ public class URLFileRetriever implements FileRetriever {
 //        }
         try {
             AnyUrlParams params = new AnyUrlParams(new URL(urlStr), request.getProgressKey());
-            RequestOwner ro = ServerContext.getRequestOwner();
-            Map<String, String> cookies = ro.getCookieMap();
-            if (cookies != null) {
-                for (String name : cookies.keySet()) {
-                    params.addCookie(name, cookies.get(name));
-                }
-            }
-            if (!ro.getUserInfo().isGuestUser()) {
-                params.setCacheLifespanInSec(EXPIRE_IN_SEC);
-                params.setLoginName(ro.getUserInfo().getLoginName());
-                params.setSecurityCookie(ro.getRequestAgent().getAuthKey());
-            }
+            handleAuthParam(params);
             params.setCheckForNewer(true);
             params.setLocalFileExtensions(Arrays.asList(FileUtil.FITS, FileUtil.GZ)); //assuming WebPlotRequest ONLY expect FITS or GZ file.
             params.setMaxSizeToDownload(VisContext.FITS_MAX_SIZE);
@@ -82,4 +71,19 @@ public class URLFileRetriever implements FileRetriever {
         return new FileData(fitsFile, urlStr);
     }
 
+
+    public static void handleAuthParam(AnyUrlParams params) {
+
+        RequestOwner ro = ServerContext.getRequestOwner();
+        if (!ro.getUserInfo().isGuestUser()) {
+            params.setCacheLifespanInSec(EXPIRE_IN_SEC);
+            params.setLoginName(ro.getUserInfo().getLoginName());
+            params.setSecurityCookie(ro.getRequestAgent().getAuthKey());
+
+            Map<String, String> cookies = ServerContext.getRequestOwner().getIdentityCookies();
+            if (cookies != null && cookies.size() > 0) {
+                cookies.forEach((k,v) -> params.addCookie(k, v));
+            }
+        }
+    }
 }

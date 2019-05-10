@@ -3,23 +3,16 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.visualize.URLFileRetriever;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.firefly.core.SearchDescResolver;
 import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
-import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
-import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.visualize.net.AnyUrlParams;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -37,14 +30,9 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
             if (url==null) throw new MalformedURLException("computed url is null");
 
             AnyUrlParams params = new AnyUrlParams(url);
-            if (identityAware()) {
-                Map<String, String> cookies = ServerContext.getRequestOwner().getIdentityCookies();
-                if (cookies != null && cookies.size() > 0) {
-                    for (String key : cookies.keySet()) {
-                        params.addCookie(key, cookies.get(key));
-                    }
-                }
-            }
+            URLFileRetriever.handleAuthParam(params);
+            params.setCheckForNewer(true);
+
             retval= LockingVisNetwork.getFitsFile(params);
             _logger.info("retrieving URL:" + url.toString());
         } catch (FailedRequestException e) {

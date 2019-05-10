@@ -43,13 +43,20 @@ public class AnyUrlParams extends BaseNetParams {
         if (_loginName!=null)  {
             loginName= "-"+ _loginName;
         }
+
         if (_securityCookie!=null && cookies!=null && cookies.containsKey(_securityCookie))  {
             securCookie= "-"+ cookies.get(_securityCookie);
         }
 
-        String baseKey= loginName+ securCookie +"-"+ fileStr.toString();
-        baseKey= baseKey.replaceAll("[ :\\[\\]\\/\\\\|\\*\\?<>]", "");
-        int originalHashCode = (_url.getHost()+ baseKey).hashCode();
+        // since this string is limited to MAX_LENGTH, having loginName in the baseKey is not ideal
+        // loginName can be long.  it'll be used in hashcode calculation instead.
+        String baseKey = securCookie +"-"+ fileStr;
+        int originalHashCode = (_url.getHost() + loginName + baseKey).hashCode();
+        baseKey= baseKey.replaceAll("[ :\\[\\]\\/\\\\|\\*\\?\\+<>]", "");
+
+
+
+
         if (baseKey.length()>MAX_LENGTH) {
             baseKey= baseKey.substring(0,MAX_LENGTH);
         }
@@ -57,8 +64,11 @@ public class AnyUrlParams extends BaseNetParams {
         String retval;
         if (_desc!=null) {
             retval = _desc + "-"+originalHashCode;
-        } else
-            retval = "URL--"+ _url.getHost() + "-"+originalHashCode+baseKey;
+        }
+        else {
+            String host = FileUtil.makeShortHostName(_url.getHost());
+            retval = "URL-" + host + "-" + originalHashCode + baseKey;
+        }
         //note: "=","," signs causes problem in download servlet.
         retval = retval.replaceAll("[ :\\[\\]\\/\\\\|\\*\\?<>\\=\\,]","\\-");
         if (_localFileExtensions!=null && !_localFileExtensions.contains(FileUtil.getExtension(retval))) {
