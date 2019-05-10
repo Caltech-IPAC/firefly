@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, isUndefined} from 'lodash';
+import {isUndefined} from 'lodash';
 import {DtoR, RtoD, computeDistance} from '../VisUtil.js';
 import { GNOMONIC, ORTHOGRAPHIC, NCP, AITOFF, CAR, LINEAR, PLATE,
     ARC, SFL, CEA, TPV, UNSPECIFIED, UNRECOGNIZED } from './Projection.js';
@@ -10,7 +10,7 @@ import { findCoordSys, EQUATORIAL_J, EQUATORIAL_B, GALACTIC_JSYS,
            ECLIPTIC_B, SUPERGALACTIC_JSYS, ECLIPTIC_J } from '../CoordSys.js';
 import {MAX_SIP_LENGTH} from './ProjectionUtil.js';
 import {makeProjectionNew} from './Projection.js';
-import {FitsHdr} from '../WebPlot';
+import {getHeader, makeHeaderParse, HdrConst} from '../FitsHeaderUtil.js';
 
 const CD1_1_HEADERS= ['CD1_1','CD001001'];
 const CD1_2_HEADERS= ['CD1_2','CD001002'];
@@ -19,21 +19,6 @@ const CD2_2_HEADERS= ['CD2_2','CD002002'];
 
 const isDefined= (x) => x!==undefined;
 
-function makeHeaderParse(header, altWcs='') {
-    return {
-        header,
-        getIntValue: (key, def= 0) => parseInt(get(header, [key, 'value'], def)),
-        getValue: (key, def= '') => get(header, [key, 'value'], def),
-        getDoubleValue(key, def) {
-           const v= get(header, [key, 'value'], def);
-           return (isDefined(v)) ? Number(v) : v;
-        },
-        isDefinedHeaderList(list) {
-            const key= list.find( (i) =>  header[i+altWcs]);
-            return Boolean(key);
-        }
-    };
-}
 
 function getHeaderListD(parse, list, def, altWcs) {
 	const key= list.find( (i) =>  parse.header[i+altWcs]);
@@ -111,7 +96,7 @@ const SGAL = 3;
 
 
 
-export function parseSpacialHeaderInfo(header, altWcs='') {
+export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
 
 
     let ctype1_trim = '';
@@ -220,10 +205,6 @@ export function parseSpacialHeaderInfo(header, altWcs='') {
 
 	p.datamax = parse.getDoubleValue('DATAMAX', NaN);
 	p.datamin = parse.getDoubleValue('DATAMIN', NaN);
-	p.bunit = parse.getValue('BUNIT');
-	if (!p.bunit) p.bunit = 'DN';
-
-
 
 	p.origin = parse.getValue(ORIGIN, '');
 
@@ -369,10 +350,28 @@ export function parseSpacialHeaderInfo(header, altWcs='') {
         p.crpix2 = p.naxis2 - p.crpix2 + 1;
     }
 
+
+
+    p.bunit = parse.getValue('BUNIT');
+    if (!p.bunit) p.bunit = 'DN';
+    p.fluxUnits= getFluxUnits(parse, zeroHeader);
+
+
     return p;
 }
 
 
+function getFluxUnits(parse, zeroHeader) {
+    let bunit = parse.getValue('BUNIT', 'NONE');
+    if (bunit==='NONE') {
+        bunit= zeroHeader  ? getHeader(zeroHeader, 'BUNIT', 'DN') : 'DN';
+    }
+    if (bunit.startsWith('HITS')) return 'frames';
+
+                    //todo- decide if this next line is still correct
+    if (parse.getValue('ORIGIN','').startsWith('Palomar Transient Factory')) return 'mag';
+    return bunit;
+}
 
 function getCoordSys(params) {
     const {maptype, ctype1} = params;
@@ -432,9 +431,9 @@ function getJsys(params) {
 export function makeDirectFileAccessData(header,cubePlane) {
 
     const parse= makeHeaderParse(header);
-    const dataOffset = parse.getIntValue(FitsHdr.SPOT_OFF,0)+ parse.getIntValue(FitsHdr.SPOT_HS,0);
+    const dataOffset = parse.getIntValue(HdrConst.SPOT_OFF,0)+ parse.getIntValue(HdrConst.SPOT_HS,0);
     const miniHeader= {...getBasicHeaderValues(parse), dataOffset, planeNumber:cubePlane>-1?cubePlane:0};
-    miniHeader.bitpix= parse.getValue(FitsHdr.SPOT_BP);
+    miniHeader.bitpix= parse.getValue(HdrConst.SPOT_BP);
 
     if (parse.getValue(ORIGIN,'').startsWith(PALOMAR_ID)) {
         miniHeader[ORIGIN]= header[ORIGIN];

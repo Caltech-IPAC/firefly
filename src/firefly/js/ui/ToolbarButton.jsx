@@ -202,7 +202,7 @@ ToolbarButton.propTypes= {
     tipOffCB : PropTypes.func,
     dropDownCB : PropTypes.func,
     imageStyle : PropTypes.object,
-    lastTextItem : PropTypes.boolean,
+    lastTextItem : PropTypes.bool,
     useDropDownIndicator: PropTypes.bool,
     additionalStyle : PropTypes.object
 };
@@ -222,13 +222,18 @@ ToolbarButton.DefaultProps= {
 };
 
 
-export function ToolbarHorizontalSeparator({top=0}) {
-    return <div style={{top}} className='ff-horizontal-separator'/>;
+export function ToolbarHorizontalSeparator({top=0, style={}}) {
+    const s= {top, ...style}
+    return <div style={s} className='ff-horizontal-separator'/>;
 }
 
-ToolbarButton.propTypes= {
+ToolbarHorizontalSeparator.propTypes= {
+    style:PropTypes.object,
     top : PropTypes.number
+
 };
+
+
 
 export function DropDownVerticalSeparator() {
     return <div className='ff-vertical-separator'/>;

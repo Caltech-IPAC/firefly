@@ -134,6 +134,8 @@ const initState= function() {
             hipsMouseReadout2:'galactic',
             healpixPixel:'healpixPixel',
             healpixNorder:'healpixNorder',
+            wl:'wl',
+            
         }
     };
 

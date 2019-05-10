@@ -56,6 +56,7 @@ public class FitsRead implements Serializable {
     private float[] float1d;
     private ImageHeader imageHeader;
     private Header header;
+    private Header zeroHeader;
     private Histogram hist;
 
     private final boolean tileCompress;
@@ -70,7 +71,7 @@ public class FitsRead implements Serializable {
      * @param imageHdu
      * @throws FitsException
      */
-    FitsRead( BasicHDU imageHdu, boolean clearHdu) throws FitsException {
+    FitsRead( BasicHDU imageHdu, Header zeroHeader, boolean clearHdu) throws FitsException {
 
         tileCompress= (imageHdu instanceof CompressedImageHDU);
 
@@ -86,6 +87,7 @@ public class FitsRead implements Serializable {
 
 
         header = hdu.getHeader();
+        this.zeroHeader= zeroHeader;
         planeNumber = header.getIntValue("SPOT_PL", 0);
         hduNumber = header.getIntValue("SPOT_EXT", 0);
         long HDUOffset= header.getIntValue("SPOT_OFF", 0);
@@ -113,9 +115,9 @@ public class FitsRead implements Serializable {
      * @param clearHdu
      * @throws FitsException
      */
-    FitsRead( BasicHDU imageHdu, BinaryTableHDU tableHDU, boolean clearHdu) throws FitsException {
+    FitsRead( BasicHDU imageHdu, BinaryTableHDU tableHDU, Header zeroHeader, boolean clearHdu) throws FitsException {
 
-        this(imageHdu, clearHdu);
+        this(imageHdu, zeroHeader, clearHdu);
         this.tableHDU = tableHDU;
     }
 
@@ -253,6 +255,7 @@ public class FitsRead implements Serializable {
     }
 
     public Header getHeader() { return header; }
+    public Header getZeroHeader() { return zeroHeader; }
 
 
 

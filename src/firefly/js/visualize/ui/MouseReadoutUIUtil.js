@@ -2,15 +2,18 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, padEnd, fill} from 'lodash';
+import {get, padEnd, fill, isString} from 'lodash';
 import numeral from 'numeral';
 import VisUtil from '../VisUtil.js';
 import CoordUtil from '../CoordUtil.js';
 import CoordinateSys from '../CoordSys.js';
 import {showMouseReadoutOptionDialog} from './MouseReadoutOptionPopups.jsx';
+import {getFormattedWaveLengthUnits} from '../PlotViewUtil';
+import {showInfoPopup} from '../../ui/PopupUtil';
 
 
 const precision7Digit = '0.0000000';
+const precision4Digit = '0.0000';
 const precision1Digit = '0.0';
 
 const myFormat= (v,precision) => !isNaN(v) ? numeral(v).format(padEnd('0.',precision+1,'0')) : '';
@@ -27,6 +30,7 @@ const labelMap = {
     sPixelSize: 'Screen Pixel Size:',
     healpixPixel: 'Pixel: ',
     healpixNorder: 'Norder: ',
+    wl: 'Wavelength: ',
 };
 
 
@@ -34,11 +38,11 @@ export function getNonFluxDisplayElements(readoutItems, readoutPref, isHiPS= fal
     const objList= getNonFluxReadoutElements(readoutItems,  readoutPref, isHiPS);
 
     const {imageMouseReadout1, imageMouseReadout2, hipsMouseReadout1,
-                     hipsMouseReadout2, pixelSize, healpixPixel, healpixNorder} = objList;
+                     hipsMouseReadout2, pixelSize, healpixPixel, healpixNorder, wl} = objList;
 
 
-    let readout1, readout2, healpixPixelReadout, healpixNorderReadout;
-    let showReadout1PrefChange, showReadout2PrefChange;
+    let readout1, readout2, healpixPixelReadout, healpixNorderReadout, waveLength;
+    let showReadout1PrefChange, showReadout2PrefChange, showWavelengthFailed;
 
     if (isHiPS) {
         readout1= {value:hipsMouseReadout1, label: labelMap[readoutPref.hipsMouseReadout1]};
@@ -51,12 +55,16 @@ export function getNonFluxDisplayElements(readoutItems, readoutPref, isHiPS= fal
     else {
         readout1= {value:imageMouseReadout1, label: labelMap[readoutPref.imageMouseReadout1]};
         readout2= {value:imageMouseReadout2, label: labelMap[readoutPref.imageMouseReadout2]};
+        if (wl) {
+            waveLength= {value:wl, label:labelMap.wl};
+            showWavelengthFailed= readoutItems.wl.failReason ? () => showInfoPopup(readoutItems.wl.failReason) : undefined;
+        }
         showReadout1PrefChange= () => showMouseReadoutOptionDialog('imageMouseReadout1', readoutPref.imageMouseReadout1);
         showReadout2PrefChange= () => showMouseReadoutOptionDialog('imageMouseReadout2', readoutPref.imageMouseReadout2);
     }
 
     return {
-        readout1, readout2,
+        readout1, readout2, waveLength, showWavelengthFailed,
         showReadout1PrefChange, showReadout2PrefChange, healpixPixelReadout, healpixNorderReadout,
         pixelSize: {value: pixelSize, label: labelMap[readoutPref.pixelSize]},
         showPixelPrefChange:() => showMouseReadoutOptionDialog('pixelSize', readoutPref.pixelSize)
@@ -116,6 +124,10 @@ export function getReadoutElement(readoutItems, readoutKey) {
         case 'healpixNorder' :
             const {healpixNorder}= readoutItems;
             return (healpixNorder && healpixNorder.value) ? `${healpixNorder.value}` : '';
+        case 'wl' :
+            const {wl}= readoutItems;
+            if (!wl) return;
+            return makeWLReturn(wl.value, getFormattedWaveLengthUnits(wl.unit));
     }
 
     return '';
@@ -176,7 +188,15 @@ function makeCoordReturn(wp, toCsys, hms= false) {
 
 function makeImagePtReturn(imagePt) {
     if (!imagePt) return '';
-    return ` ${numeral(imagePt.x).format(precision1Digit)}, ${numeral(imagePt.y).format(precision1Digit)}`;
+    return `${numeral(imagePt.x).format(precision1Digit)}, ${numeral(imagePt.y).format(precision1Digit)}`;
+}
+
+function makeWLReturn(value,unit) {
+    if (isString(value)) return 'Failed';
+    if (isNaN(value)) return 'NaN';
+    if (value===0) return `0 ${unit}`;
+    if (value < .0001) return `${value.toExponential(6).replace('e+', 'E')} ${unit}`;
+    else               return `${numeral(value).format(precision4Digit)} ${unit}`;
 }
 
 function makePixelReturn(pixel) {

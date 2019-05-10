@@ -53,7 +53,7 @@ public class FitsEvaluation {
             if (HDUs == null || HDUs.length==0) throw new FitsException("Bad format in FITS file");
             FitsRead frAry[] = FitsReadFactory.createFitsReadArray(HDUs, clearHdu);
             FitsDataEval fitsDataEval= new FitsDataEval(frAry);
-            if (frAry.length >1) { // Do evaluation
+            if (HDUs.length >1) { // Do evaluation
                 for(int i= 0; i<frAry.length; i++) {
                     if (frAry[i].getPlaneNumber()==0) {
                         for (Eval e : evalList) {

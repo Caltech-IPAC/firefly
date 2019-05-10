@@ -17,6 +17,14 @@ import {mouseUpdatePromise} from '../VisMouseSync.js';
 import {getPixScaleArcSec, getScreenPixScaleArcSec, isImage, isHiPS, getFluxUnits} from '../WebPlot.js';
 import {getPlotTilePixelAngSize} from '../HiPSUtil.js';
 import {fireMouseReadoutChange} from '../VisMouseSync';
+import {
+    failedToParseWavelenthInfo,
+    getImageCubeIdx,
+    getPtWavelength, getWavelenghParseFailReason,
+    getWaveLengthUnits, hasPixelLevelWLInfo, hasPlaneOnlyWLInfo,
+    hasWLInfo,
+    isImageCube, wavelenthInfoParsedSuccessfully
+} from '../PlotViewUtil';
 
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -373,6 +381,25 @@ function showSingleBandFluxLabel(plot, band) {
 
 }
 
+function makeWLResult(plot,imagePt= undefined) {
+               // do wavelength readout if it has pixel level wl or if it is a not a cube image with plane wl info
+    if ((hasPixelLevelWLInfo(plot) || (hasPlaneOnlyWLInfo(plot) && !isImageCube(plot)))) {
+        if (wavelenthInfoParsedSuccessfully(plot)) {
+            if (!imagePt) return;
+            const cubeIdx= (isImageCube(plot) && getImageCubeIdx(plot)) || 0;
+            const wlValue= getPtWavelength(plot, imagePt, cubeIdx);
+            return makeValueReadoutItem('Wavelength', wlValue, getWaveLengthUnits(plot), 4);
+        }
+        else {
+            const item=  makeValueReadoutItem('Wavelength', 'Failed', '', 4);
+            item.failReason= getWavelenghParseFailReason(plot);
+            return item;
+        }
+    }
+    else {
+        return;
+    }
+}
 
 
 
@@ -395,11 +422,14 @@ function makeReadout(plot, worldPt, screenPt, imagePt) {
             zeroBasedImagePt: makePointReadoutItem('FITS Standard Image Point', csys.getZeroBasedImagePtFromInternal(imagePt)),
             title: makeDescriptionItem(plot.title),
             pixel: makeValueReadoutItem('Pixel Size',getPixScaleArcSec(plot),'arcsec', 3),
-            screenPixel:makeValueReadoutItem('Screen Pixel Size',getScreenPixScaleArcSec(plot),'arcsec', 3)
+            screenPixel:makeValueReadoutItem('Screen Pixel Size',getScreenPixScaleArcSec(plot),'arcsec', 3),
+            wl: makeWLResult(plot,imagePt)
         };
     }
     else {
-        return {};
+        return {
+            wl: makeWLResult(plot)
+        };
     }
 
 }

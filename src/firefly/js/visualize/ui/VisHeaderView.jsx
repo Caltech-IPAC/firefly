@@ -55,7 +55,7 @@ export function VisHeaderView({readout, readoutData, showHealpixPixel=false}) {
 
 VisHeaderView.propTypes= {
     readout:  PropTypes.object.isRequired,
-    readoutData:  PropTypes.object.isRequired,
+    readoutData:  PropTypes.object,
     showHealpixPixel : PropTypes.bool
 };
 

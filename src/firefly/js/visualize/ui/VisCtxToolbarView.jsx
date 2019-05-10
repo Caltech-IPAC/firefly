@@ -5,13 +5,15 @@
 import React, {PureComponent} from 'react';
 import numeral from 'numeral';
 import PropTypes from 'prop-types';
-import {isEmpty, get, padEnd} from 'lodash';
+import {isEmpty, get, padEnd, isString} from 'lodash';
 import {primePlot,isMultiImageFitsWithSameArea, getPlotViewById,
         getDrawLayersByType, isDrawLayerAttached, getAllDrawLayersForPlot,
-        isMultiHDUFits, getCubePlaneCnt, getHDU, getHeader } from '../PlotViewUtil.js';
+        isMultiHDUFits, getCubePlaneCnt, getHDU} from '../PlotViewUtil.js';
+import {getHeader} from '../FitsHeaderUtil.js';
 import {findScrollPtToCenterImagePt} from '../reducer/PlotView.js';
 import {CysConverter} from '../CsysConverter.js';
-import {PlotAttribute,FitsHdr, isHiPS, isImage} from '../WebPlot.js';
+import {PlotAttribute,isHiPS, isImage} from '../WebPlot.js';
+import {HdrConst} from '../FitsHeaderUtil.js';
 import {makeDevicePt, makeScreenPt, makeImagePt} from '../Point.js';
 import {callGetAreaStatistics} from '../../rpc/PlotServicesJson.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
@@ -46,6 +48,7 @@ import {RequestType} from '../RequestType.js';
 import {StateInputField} from '../../ui/StatedInputfield.jsx';
 import Validate from '../../util/Validate.js';
 import LSSTFootprint, {selectFootprint, unselectFootprint, filterFootprint, clearFilterFootprint} from '../../drawingLayers/ImageLineBasedFootprint';
+import {ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 
 import CROP from 'html/images/icons-2014/24x24_Crop.png';
 import STATISTICS from 'html/images/icons-2014/24x24_Statistics.png';
@@ -57,6 +60,13 @@ import PAGE_RIGHT from 'html/images/icons-2014/20x20_PageRight.png';
 import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
 import SELECTED_ZOOM from 'html/images/icons-2014/ZoomFitToSelectedSpace.png';
 import SELECTED_RECENTER from 'html/images/icons-2014/RecenterImage-selection.png';
+import {
+    convertHDUIdxToImageIdx,
+    convertImageIdxToHDU, getFormattedWaveLengthUnits,
+    getHDUCount, getHDUIndex,
+    getHduPlotStartIndexes, getPtWavelength, getWaveLengthUnits, hasPlaneOnlyWLInfo, hasWLInfo,
+    isImageCube
+} from '../PlotViewUtil';
 
 
 //todo move the statistics constants to where they are needed
@@ -536,11 +546,18 @@ export class VisCtxToolbarView extends PureComponent {
 
         return (
             <div style={rS}>
+
                 {showMultiImageController && <MultiImageControllerView plotView={pv} />}
+
+                {showMultiImageController && showOptions &&
+                <ToolbarHorizontalSeparator style={{height: 20}}/>}
+
                 {showOptions && <div
                     style={{padding: '0 0 2px 2px', fontStyle: 'italic', fontWeight: 'bold'}}>
                     Options:</div>
                 }
+
+
                 {showSelectionTools && isImage(plot) &&
                 <ToolbarButton icon={CROP} tip='Crop the image to the selected area'
                                horizontal={true} onClick={() => crop(pv, dlAry)}/>}
@@ -612,9 +629,7 @@ ToolbarButton.defaultProps= {
 
 
 const leftImageStyle= {
-    verticalAlign:'bottom',
     cursor:'pointer',
-    flex: '0 0 auto',
     paddingLeft: 3
 };
 
@@ -635,60 +650,71 @@ const mulImStyle= {
 
 export function MultiImageControllerView({plotView:pv}) {
 
-    const {plots,plotId}= pv;
-
+    const {plots}= pv;
     const plot= primePlot(pv);
     const image= isImage(plot);
 
     let cIdx;
-    let nextIdx;
-    let prevIdx;
     let length;
-    let desc;
-    let positionStr= '';
+    let wlStr= '';
+    let startStr;
+    const  cube= isImageCube(plot) || !image;
+    const multiHdu= isMultiHDUFits(pv);
+    let hduDesc= '';
+    let tooltip= '';
 
     if (image) {
+        tooltip= '';
         cIdx= plots.findIndex( (p) => p.plotImageId===plot.plotImageId);
         if (cIdx<0) cIdx= 0;
-        nextIdx= cIdx===plots.length-1 ? 0 : cIdx+1;
-        prevIdx= cIdx ? cIdx-1 : plots.length-1;
         length= plots.length;
-        desc= plot.plotDesc;
-        if (isMultiHDUFits(pv)) {
-            if (!desc) desc= getHeader(plot,FitsHdr.EXTNAME,'');
-            if (plot.cubeIdx>-1) positionStr+= `, Cube: ${plot.cubeIdx+1}/${getCubePlaneCnt(pv,plot)}`;
-            positionStr+= `, HDU: ${getHDU(plot)}`;
+        if (multiHdu) {
+            startStr= 'Image: ';
+            if (plot.plotDesc) {
+                startStr= 'HDU: ';
+                hduDesc= `${plot.plotDesc || getHeader(plot,HdrConst.EXTNAME,'')}`;
+            }
+            tooltip+= `HDU: ${getHDU(plot)}`;
         }
+        if (plot.cubeIdx>-1) {
+            tooltip+= `${multiHdu ? ', ':''} Cube: ${plot.cubeIdx+1}/${getCubePlaneCnt(pv,plot)}`;
+
+            if (hasPlaneOnlyWLInfo(plot)) {
+                const wl= doFormat(getPtWavelength(plot,null, plot.cubeIdx),4);
+                const unitStr= getFormattedWaveLengthUnits(plot);
+                wlStr= `${wl} ${unitStr}`;
+            }
+        }
+        tooltip+= `, Image Count: ${cIdx+1} / ${length}`;
     }
     else {
+        wlStr= getHipsCubeDesc(plot);
         cIdx= plot.cubeIdx;
-        nextIdx= cIdx===plot.cubeDepth-1 ? 0 : cIdx+1;
-        prevIdx= cIdx ? cIdx-1 : plot.cubeDepth-1;
-        length= plot.cubeDepth;
-        desc= getHipsCubeDesc(plot);
+        tooltip= `HiPS Cube: ${wlStr},  ${cIdx+1} / ${plot.cubeDepth+1}`;
     }
     if (cIdx<0) cIdx= 0;
-    const useText= length>8;
-
-
 
     return (
-        <div style={mulImStyle}>
-            <div style={{fontStyle: 'italic', fontWeight: 'bold', padding: '0 0 0 5px'}}>Image:</div>
-            <img style={{...leftImageStyle}} src={PAGE_LEFT}
-                 onClick={() => image ? dispatchChangePrimePlot({plotId,primeIdx:prevIdx}) : dispatchChangeHiPS({plotId, cubeIdx:prevIdx})}/>
-            <img style={{verticalAlign:'bottom', cursor:'pointer', float: 'right', paddingLeft:3, flex: '0 0 auto'}}
-                 src={PAGE_RIGHT}
-                 onClick={() => image ? dispatchChangePrimePlot({plotId,primeIdx:nextIdx}): dispatchChangeHiPS({plotId, cubeIdx:nextIdx})} />
-            {desc && <div style={{minWidth: '3em', padding:'0 5px 0 5px', fontWeight:'bold'}}>{desc}</div>}
-            <div style={{minWidth: '3em', padding:'0 10px 0 4px'}}>
-                {useText ? makeframeInput(pv,cIdx+1,length) : `${cIdx+1}`}
-                {`${useText?' / ' : '/'}${length}${positionStr}`}
-                </div>
+        <div style={mulImStyle} title={tooltip}>
+            {startStr && <div style={{
+                width: '13em', overflow: 'hidden',
+                textOverflow: 'ellipsis', padding: '0 0 0 5px', textAlign: 'end'} }>
+                <span style={{fontStyle: 'italic', fontWeight: 'bold'}}> {startStr} </span>
+                <span> {hduDesc} </span>
+            </div>}
+
+            {multiHdu && <FrameNavigator {...{pv, currPlotIdx:cIdx, minForInput:4, displayType:'hdu',tooltip}} />}
+            {cube && multiHdu && <ToolbarHorizontalSeparator style={{height: 20}}/>}
+            {cube &&
+            <div style={{
+                fontStyle: 'italic', fontWeight: 'bold',
+                overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 0 0 5px'}
+            }> {'Plane: '} </div> }
+            {wlStr && <div style={{paddingLeft: 6}}>{wlStr}</div>}
+            {cube && <FrameNavigator {...{pv, currPlotIdx:cIdx, minForInput:6, displayType:image?'cube':'hipsCube',tooltip}} /> }
         </div>
     );
 }
-
 
 MultiImageControllerView.propTypes= {
     plotView : PropTypes.object.isRequired,
@@ -709,7 +735,7 @@ function getHipsCubeDesc(plot) {
     const value = crval3 + ( plot.cubeIdx - crpix3 ) * cdelt3;
     const bunit3= (data_cube_bunit3!=='null' && data_cube_bunit3!=='nil' && data_cube_bunit3!=='undefined') ?
                                data_cube_bunit3 : '';
-    return `${doFormat(value,dp)} ${bunit3}`;
+    return `${doFormat(value,dp)} ${getFormattedWaveLengthUnits(bunit3)}`;
 }
 
 function selectDrawingLayer(pv,dlAry) {
@@ -760,52 +786,89 @@ function clearFilterDrawingLayer(pv,dlAry) {
     }
 }
 
-function changeFrame(plot,frameNumber) {
-    const {plotId}= plot;
-    isImage(plot) ? dispatchChangePrimePlot({plotId,primeIdx:frameNumber-1}) :
-                    dispatchChangeHiPS({plotId, cubeIdx:frameNumber-1});
+const typeConvert= {
+    hdu: {
+        getLen: getHDUCount,
+        getContextIdx: (pv,idx) => convertImageIdxToHDU(pv,idx).hduIdx,
+        getPlotIdx: (pv,idx) => convertHDUIdxToImageIdx(pv,idx, 'follow'),
+    },
+    cube: {
+        getLen: getCubePlaneCnt,
+        getContextIdx: (pv,idx) => convertImageIdxToHDU(pv,idx).cubeIdx,
+        getPlotIdx: (pv,idx) => convertHDUIdxToImageIdx(pv, getHDUIndex(pv, primePlot(pv)), idx)
+    },
+    images: {
+        getLen: (pv) => pv.plots.length,
+        getContextIdx: (pv,idx) => idx,
+        getPlotIdx: (pv,idx) => idx
+    },
+    hipsCube: {
+        getLen: (pv) => primePlot(pv).cubeDepth,
+        getContextIdx: (pv,idx) => idx,
+        getPlotIdx: (pv,idx) => idx
+    }
+};
+
+function getEmLength(len) {
+   const size= Math.trunc(Math.log10(len)) + 1;
+   return size>=4 ? '4em' : size+'em';
 }
 
-function handleUpDown(pv,currValue, key) {
 
-    if (key !== 'ArrowLeft' && key !== 'ArrowRight') return;
-    const frameNumber= Number(currValue);
+function FrameNavigator({pv, currPlotIdx, minForInput, displayType, tooltip}) {
+
     const plot= primePlot(pv);
-    if (!frameNumber) return;
-    let prevIdx;
-    let nextIdx;
-    if (isImage(plot)) {
-        prevIdx= frameNumber>1? frameNumber-1 : pv.plots.length;
-        nextIdx= frameNumber===pv.plots.length ? 1 : frameNumber+1;
-    }
-    else {
-        prevIdx= frameNumber>1? frameNumber-1 : plot.cubeDepth;
-        nextIdx= frameNumber===plot.cubeDepth ? 1 : frameNumber+1;
-    }
-    changeFrame(plot,key==='ArrowLeft' ? prevIdx : nextIdx);
+    const {plotId}= pv;
+    const converter= typeConvert[displayType];
+    const len= converter.getLen(pv);
+    const currIdx= converter.getContextIdx(pv, currPlotIdx);
+    const nextIdx= currIdx===len-1 ? 0 : currIdx+1;
+    const prevIdx= currIdx ? currIdx-1 : len-1;
 
-
-}
-
-function makeframeInput(pv, curr, max) {
-
-    const handleFrameChange= (update) => {
-        const {valid,value}= update;
-        const frameNumber= Number(value);
-        if (valid && frameNumber) changeFrame(primePlot(pv),frameNumber);
+    const doDispatchChange= (idx) => {
+        isImage(plot) ? dispatchChangePrimePlot({plotId,primeIdx:idx}) : dispatchChangeHiPS({plotId, cubeIdx:idx});
     };
 
-    const handleKeyDown= (ev,currValue) => handleUpDown(pv,currValue,ev.key);
-    const validator= (value) => Validate.intRange(1, max, 'step range', value, false);
+    const changeFrameIdx= ({value,valid=true}) => {
+        if (!valid || (isString(value) && value.trim()==='')) return;
+        doDispatchChange(converter.getPlotIdx(pv,Number(value)-1));
+    };
+
+    const handleKeyDown= (ev) => {
+        if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
+        doDispatchChange(converter.getPlotIdx(pv,ev.key==='ArrowLeft' ? prevIdx : nextIdx));
+    };
+
+    const validator= (value) => {
+        return Validate.intRange(1, len+1, 'step range', value, true);
+    };
+
+    const showNavControl= minForInput<=len;
+    const currStr= `${currIdx+1}`;
 
     return (
-        <StateInputField defaultValue={curr+''} valueChange={handleFrameChange}
-                         labelWidth={0} label={''}
-                         tooltip={'Enter frame number to jump to, right arrow goes forward, left arrow goes back'}
-                         showWarning={false} style={{width:`${max<1000?2:4}em`, textAlign:'right'}}
-                         validator={validator}
-                         onKeyDown={handleKeyDown}
+        <div title= {tooltip}
+             style={{ display:'inline-flex', flexDirection:'row', flexWrap:'nowrap', alignItems: 'center', }}>
+            <img title= {tooltip} style={leftImageStyle} src={PAGE_LEFT}
+                                      onClick={() => changeFrameIdx({value:prevIdx+1}) }/>
+            <img title= {tooltip} style={{verticalAlign:'bottom', cursor:'pointer', paddingRight:4}} src={PAGE_RIGHT}
+                                       onClick={() => changeFrameIdx({value:nextIdx+1})} />
 
-        />
+            {showNavControl ? <StateInputField defaultValue={currStr} valueChange={changeFrameIdx} labelWidth={0} label={''}
+                                tooltip={`Enter frame number to jump to, right arrow goes forward, left arrow goes back\n${tooltip}`}
+                                showWarning={false} style={{width:getEmLength(len), textAlign:'right'}}
+                                validator={validator} onKeyDown={handleKeyDown} />
+                                : currStr}
+            {` / ${len}`}
+        </div>
     );
 }
+
+FrameNavigator.propTypes= {
+    pv: PropTypes.object,
+    currPlotIdx: PropTypes.number,
+    minForInput: PropTypes.number,
+    displayType: PropTypes.oneOf(['hdu', 'cube', 'images', 'hipsCube']),
+    tooltip: PropTypes.string,
+};
+
