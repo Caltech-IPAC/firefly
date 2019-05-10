@@ -11,7 +11,7 @@ import {VisHeaderView, VisPreview} from './VisHeaderView.jsx';
 // import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
 import {MultiViewStandardToolbar} from './MultiViewStandardToolbar.jsx';
 import {VisToolbar} from './VisToolbar.jsx';
-import {addImageMouseListener, lastMouseCtx} from '../VisMouseSync.js';
+import {addImageMouseListener, lastMouseCtx, lastMouseImageReadout} from '../VisMouseSync.js';
 import {readoutRoot} from '../../visualize/MouseReadoutCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
@@ -40,10 +40,13 @@ export class ApiFullImageDisplay extends PureComponent {
     }
 
     storeUpdate() {
-        if (visRoot()!==this.state.visRoot || 
-            lastMouseCtx() !==this.state.currMouseState || 
+        const {currMouseState,readoutData}= this.state;
+        if (visRoot()!==this.state.visRoot ||
+            lastMouseCtx() !==currMouseState ||
+            lastMouseImageReadout()!== readoutData ||
             readoutRoot()!==this.state.readout) {
-            this.setState({visRoot:visRoot(), currMouseState:lastMouseCtx(), readout:readoutRoot()});
+            this.setState({visRoot:visRoot(), currMouseState:lastMouseCtx(),
+                readoutData:lastMouseImageReadout(), readout:readoutRoot()});
         }
     }
 
@@ -53,7 +56,7 @@ export class ApiFullImageDisplay extends PureComponent {
      */
     render() {
         const {closeFunc, viewerId}= this.props;
-        const {visRoot,currMouseState, readout, showHealpixPixel}= this.state;
+        const {visRoot,currMouseState, readout, readoutData, showHealpixPixel}= this.state;
         return (
             <RenderTreeIdCtx.Provider value={{renderTreeId : this.props.renderTreeId}}>
                 <div style={{width:'100%', height:'100%', display:'flex', flexWrap:'nowrap',
@@ -62,7 +65,7 @@ export class ApiFullImageDisplay extends PureComponent {
                         display:'flex', flexWrap:'nowrap', flexDirection:'row', justifyContent: 'center'}}
                          className='banner-background'>
                         <div style={{display:'flex', flexDirection:'row', alignItems:'flex-end'}}>
-                            <VisHeaderView visRoot={visRoot} currMouseState={currMouseState} readout={readout}
+                            <VisHeaderView visRoot={visRoot} readoutData={readoutData} currMouseState={currMouseState} readout={readout}
                                            showHealpixPixel={showHealpixPixel}/>
                         </div>
                     </div>

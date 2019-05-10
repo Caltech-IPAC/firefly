@@ -38,7 +38,8 @@ export class VisHeader extends PureComponent {
         const readout= readoutRoot();
         const {currMouseState,readoutData}= this.state;
         if (visRoot()!==this.state.visRoot || lastMouseImageReadout()!== readoutData || lastMouseCtx() !==currMouseState || readout!==this.state.readout) {
-            this.setState({visRoot:visRoot(), currMouseState:lastMouseCtx(), readoutData:lastMouseImageReadout(), readout});
+            this.setState({visRoot:visRoot(), currMouseState:lastMouseCtx(),
+                           readoutData:lastMouseImageReadout(), readout});
         }
 
 

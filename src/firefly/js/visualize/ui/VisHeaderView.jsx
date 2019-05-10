@@ -39,8 +39,8 @@ const rS= {
  */
 export function VisHeaderView({readout, readoutData, showHealpixPixel=false}) {
 
-    const ActiveReadoutUI= readoutUI[readoutData.readoutType];
-    if (!ActiveReadoutUI) return null;
+    const ActiveReadoutUI= readoutData && readoutUI[readoutData.readoutType];
+    if (!ActiveReadoutUI) return (<div style={rS}/>);
 
     return (
         <div style={{display:'inline-block', float:'right', whiteSpace:'nowrap'}}>
