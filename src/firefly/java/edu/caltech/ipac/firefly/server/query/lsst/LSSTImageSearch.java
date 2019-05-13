@@ -32,7 +32,7 @@ public class LSSTImageSearch extends URLFileInfoProcessor {
     private static final String IMAGE_REPOSITORY = AppProperties.getProperty("lsst.dax.imgserv.repository", "DC_W13_Stripe82");
 
     public static String getImgBaseUrl() {
-        return LSSTQuery.getImgservURL() + "/" + IMAGE_REPOSITORY;
+        return LSSTQuery.getImgservURL() + IMAGE_REPOSITORY;
     }
 
     /**
