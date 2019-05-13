@@ -44,8 +44,7 @@ import {ChartPanel} from '../charts/ui/ChartPanel.jsx';
 import {MultiChartViewer} from '../charts/ui/MultiChartViewer.jsx';
 import {PlotlyWrapper} from '../charts/ui/PlotlyWrapper.jsx';
 
-import {PopupMouseReadoutMinimal} from  '../visualize/ui/PopupMouseReadoutMinimal.jsx';
-import {PopupMouseReadoutFull} from  '../visualize/ui/PopupMouseReadoutFull.jsx';
+import {PopupMouseReadoutFull, PopupMouseReadoutMinimal} from '../visualize/ui/PopupMouseReadout.jsx';
 
 
 // builds the highlevel api

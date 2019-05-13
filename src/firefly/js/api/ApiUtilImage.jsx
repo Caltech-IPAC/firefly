@@ -4,20 +4,21 @@
 
 import React from 'react';
 import {take,race,call} from 'redux-saga/effects';
-import {has} from 'lodash';
+import {has,get} from 'lodash';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import ImagePlotCntlr, {visRoot, ExpandType} from '../visualize/ImagePlotCntlr.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {DefaultApiReadout} from '../visualize/ui/DefaultApiReadout.jsx';
 import {reduxFlux} from '../core/ReduxFlux.js';
-import {PopupMouseReadoutFull} from '../visualize/ui/PopupMouseReadoutFull.jsx';
+import {PopupMouseReadoutFull} from '../visualize/ui/PopupMouseReadout.jsx';
 import DialogRootContainer from '../ui/DialogRootContainer.jsx';
 import {PopupPanel, LayoutType} from '../ui/PopupPanel.jsx';
 import {dispatchShowDialog,dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
-import {readoutRoot,isAutoReadIsLocked, isLockByClick,STANDARD_READOUT} from '../visualize/MouseReadoutCntlr.js';
+import {readoutRoot,isAutoReadIsLocked, isLockByClick} from '../visualize/MouseReadoutCntlr.js';
 import {mouseUpdatePromise} from '../visualize/VisMouseSync.js';
 import {RangeValues} from '../visualize/RangeValues.js';
+import {lastMouseImageReadout} from '../visualize/VisMouseSync';
 
 
 
@@ -130,12 +131,12 @@ export function serializeSimpleRangeValues(stretchType,lowerValue,upperValue,alg
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function *autoReadoutVisibility({ReadoutComponent,props}) {
-    var inDialog= false;
-    var showing;
-    var mouseState;
+    let inDialog= false;
+    let showing;
+    let mouseState;
     // var action;
-    var doYield= true;
-    var winner;
+    let doYield= true;
+    let winner;
     while (true) {
         // if (doYield) action= yield take([MOUSE_STATE_CHANGE, ImagePlotCntlr.CHANGE_EXPANDED_MODE]);
 
@@ -182,8 +183,7 @@ function *autoReadoutVisibility({ReadoutComponent,props}) {
 
 function showReadout(DefaultApiReadout, props={},  mouseInDialog) {
 
-    const  readout=readoutRoot();
-    const title = readout[STANDARD_READOUT] && readout[STANDARD_READOUT].readoutItems  && readout[STANDARD_READOUT].readoutItems.title?readout[STANDARD_READOUT].readoutItems.title.value:'';
+    const title= get(lastMouseImageReadout(),'readoutItems.title.value','');
     const popup= (
         <PopupPanel title={title} layoutPosition={LayoutType.TOP_RIGHT} mouseInDialog={mouseInDialog} >
             <DefaultApiReadout {...props} />

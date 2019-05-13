@@ -6,8 +6,8 @@ import {race,call} from 'redux-saga/effects';
 import {get} from 'lodash';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {clone} from '../../util/WebUtil.js';
-import {readoutRoot, dispatchReadoutData, makeValueReadoutItem, makePointReadoutItem,makeHealpixReadoutItem,
-        makeDescriptionItem, isLockByClick} from '../MouseReadoutCntlr.js';
+import {readoutRoot, makeValueReadoutItem, makePointReadoutItem,
+        makeDescriptionItem, isLockByClick, STANDARD_READOUT, HIPS_STANDARD_READOUT} from '../MouseReadoutCntlr.js';
 import {callGetFileFlux} from '../../rpc/PlotServicesJson.js';
 import {Band} from '../Band.js';
 import {MouseState} from '../VisMouseSync.js';
@@ -16,11 +16,27 @@ import {CysConverter} from '../CsysConverter.js';
 import {mouseUpdatePromise} from '../VisMouseSync.js';
 import {getPixScaleArcSec, getScreenPixScaleArcSec, isImage, isHiPS, getFluxUnits} from '../WebPlot.js';
 import {getPlotTilePixelAngSize} from '../HiPSUtil.js';
+import {fireMouseReadoutChange} from '../VisMouseSync';
 
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const PAUSE_DELAY= 200;
 
 
+/**
+ * Readout watcher defined the algorythm to drive the mouse readout. It does the following:
+ *   - waits for a promise of a mouse event
+ *   - Has two modes lockByClick, on or off
+ *   - lockByClick off:
+ *       - on mouse move compute and fire a mouse readout object
+ *       - if mouse pauses (200 ms) and readout uses async, call the server for more data (the image pixel flux value)
+ *       - if mouse still pause, fire a updated mouse readout object
+ *   - lockByClick on:
+ *       - on mouse click compute and fire a mouse readout object
+ *       - if readout uses async, call the server for more data
+ *       - if the position has not changed, fire a updated mouse readout object
+ *
+ */
 export function* watchReadout() {
 
     let mouseCtx;
@@ -30,35 +46,29 @@ export function* watchReadout() {
 
     while (true) {
 
-        let getNextWithFlux= false;
+        let getNextWithWithAsync= false;
         const lockByClick= isLockByClick(readoutRoot());
         const {plotId,worldPt,screenPt,imagePt,mouseState, healpixPixel, norder}= mouseCtx;
 
-        let readout= undefined;
         const plotView= getPlotViewById(visRoot(), plotId);
         const plot= primePlot(plotView);
         const threeColor= plot.plotState.threeColor;
         if (usePayload(mouseState,lockByClick)) {
-
             if (plot) {
-                if (isImage(plot)) {
-                    readout= makeReadoutWithFlux(makeReadout(plot,worldPt,screenPt,imagePt), plot, null, threeColor);
-                    dispatchReadoutData({plotId,readoutItems:readout, threeColor});
-                    getNextWithFlux= true;
-                }
-                else {
-                    dispatchReadoutData({plotId,readoutItems:makeReadout(plot,worldPt,screenPt,imagePt, healpixPixel, norder),
-                                         isHiPS:true});
-                }
+                const readoutItems= makeImmediateReadout(plot, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder);
+                // dispatchReadoutData({plotId, readoutItems, threeColor, readoutKey:getReadoutKey(plot)});
+                fireMouseReadoutChange({plotId, readoutItems, threeColor, readoutType:getReadoutKey(plot)});
+                getNextWithWithAsync= hasAsyncReadout(plot);
             }
         }
         else if (!lockByClick) {
-            dispatchReadoutData({plotId, readoutItems:{}, isHiPS:isHiPS(plot)});
+            // dispatchReadoutData({plotId, readoutItems:{}, readoutKey:getReadoutKey(plot)});
+            fireMouseReadoutChange({plotId, readoutItems:{}, readoutType:getReadoutKey(plot)});
         }
 
-        if (getNextWithFlux) { // get the next mouse event or the flux
-            mouseCtx= lockByClick ? yield call(processImmediateFlux,readout,plotView,imagePt,threeColor) :
-                                    yield call(processDelayedFlux,readout,plotView,imagePt,threeColor);
+        if (getNextWithWithAsync) { // get the next mouse event or the flux
+            mouseCtx= lockByClick ? yield call(processAsyncDataImmediate,plotView, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder) :
+                                    yield call(processAsyncDataDelayed,plotView, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder);
         }
         else { // get the next mouse event
             mouseCtx = yield call(mouseUpdatePromise);
@@ -67,13 +77,13 @@ export function* watchReadout() {
     }
 }
 
-function* processImmediateFlux(noFluxReadout,plotView,imagePt, threeColor) {
+function* processAsyncDataImmediate(plotView, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder) {
     try {
-        const fluxResult= yield call(doFluxCall, plotView, imagePt);
-        if (fluxResult) {
+        const readoutItems= yield call(makeAsyncReadout,plotView, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder);
+        if (readoutItems) {
             const plot= primePlot(plotView);
-            const readout= makeReadoutWithFlux(noFluxReadout,plot, fluxResult, threeColor);
-            dispatchReadoutData({plotId:plotView.plotId,readoutItems:readout, isHiPS:isHiPS(plot), threeColor});
+            // dispatchReadoutData({plotId:plotView.plotId,readoutItems, threeColor, readoutKey:getReadoutKey(plot)});
+            fireMouseReadoutChange({plotId:plotView.plotId,readoutItems, threeColor, readoutType:getReadoutKey(plot)});
             const mouseCtx = yield call(mouseUpdatePromise);
             return mouseCtx;
         }
@@ -86,26 +96,24 @@ function* processImmediateFlux(noFluxReadout,plotView,imagePt, threeColor) {
 }
 
 
-function* processDelayedFlux(noFluxReadout,plotView,imagePt, threeColor) {
-    var raceWinner = yield race({
-        mouseCtx: call(mouseUpdatePromise),
-        timer: call(delay, 200)
-    });
+function* processAsyncDataDelayed(plotView, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder) {
+    const mousePausedRaceWinner = yield race({ mouseCtx: call(mouseUpdatePromise), timer: call(delay, PAUSE_DELAY) });
 
-    if (raceWinner.mouseCtx) return raceWinner.mouseCtx;
-
+    if (mousePausedRaceWinner.mouseCtx) return mousePausedRaceWinner.mouseCtx;
 
     try {
-        raceWinner = yield race({
+        const mouseMoveRaceWinner = yield race({
             mouseCtx: call(mouseUpdatePromise),
-            fluxResult: call(doFluxCall, plotView, imagePt,200)
+            readoutItems: call(makeAsyncReadout,plotView, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder)
         });
-        if (raceWinner.mouseCtx) return raceWinner.mouseCtx;
+        if (mouseMoveRaceWinner.mouseCtx) return mouseMoveRaceWinner.mouseCtx;
 
-        if (raceWinner.fluxResult) {
+        if (mouseMoveRaceWinner.readoutItems) {
             const plot= primePlot(plotView);
-            const readout= makeReadoutWithFlux(noFluxReadout,primePlot(plotView), raceWinner.fluxResult, threeColor);
-            dispatchReadoutData({plotId:plotView.plotId,readoutItems:readout, isHiPS:isHiPS(plot), threeColor});
+            // dispatchReadoutData({plotId:plotView.plotId,readoutItems:mouseMoveRaceWinner.readoutItems,
+            //                  threeColor, readoutKey:getReadoutKey(plot)});
+            fireMouseReadoutChange({plotId:plotView.plotId,readoutItems:mouseMoveRaceWinner.readoutItems,
+                threeColor, readoutType:getReadoutKey(plot)});
             const mouseCtx = yield call(mouseUpdatePromise);
             return mouseCtx;
         }
@@ -118,7 +126,6 @@ function* processDelayedFlux(noFluxReadout,plotView,imagePt, threeColor) {
 }
 
 
-
 function usePayload(mouseState, lockByClick) {
     if (lockByClick) {
         return mouseState===MouseState.CLICK;
@@ -126,74 +133,119 @@ function usePayload(mouseState, lockByClick) {
     else {
         return mouseState!==MouseState.EXIT;
     }
+}
 
+
+
+//-------------------------------------------------------------------------------
+//------- Interface Functions between the readout watcher and the factory
+//-------------------------------------------------------------------------------
+
+const getReadoutType= (plot) => readoutTypes.find( (r) => r.matches(plot));
+
+function makeImmediateReadout(plot,worldPt,screenPt,imagePt, threeColor, healpixPixel, norder) {
+    const rt= getReadoutType(plot);
+    return rt && rt.createImmediateReadout(plot,worldPt,screenPt,imagePt, threeColor, healpixPixel, norder);
+}
+
+function makeAsyncReadout(plotView,worldPt,screenPt,imagePt, threeColor) {
+    const rt= getReadoutType(primePlot(plotView));
+    return Promise.resolve(rt && rt.createAsyncReadout(plotView,worldPt,screenPt,imagePt, threeColor));
+}
+
+function hasAsyncReadout(plot) {
+    const rt= getReadoutType(plot);
+    return rt && rt.hasAsyncReadout(plot);
+}
+
+function getReadoutKey(plot) {
+    const rt= getReadoutType(plot);
+    return rt && rt.readoutKey;
+}
+
+
+//-------------------------------------
+//------- Factory ---------------------
+//-------------------------------------
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} MouseReadoutType
+ *
+ * @prop {String} readoutKey: unique key represent this readout type
+ *
+ * @prop {function(WebPlot:plot):boolean} matches: function to test if this readout should be used form: tableMatches(WebPlot): boolean
+ *
+ * @prop {function(WebPlot:plot, WorldPt:worldPt, ScreenPt:screenPt,
+ * ImagePt:imagePt, Boolean:threeColor, number:healpixPixel, number:norder):Object} createImmediateReadout:
+ *            function to create a readout object
+ *
+ * @prop {function(WebPlot:plot, WorldPt:worldPt, ScreenPt:screenPt, ImagePt:imagePt, Boolean:threeColor):Promise<Object>} createAsyncReadout:
+ *            function to create a readout by calling the server to get data, returns a promise with a readout
+ *
+ * @prop {function(WebPlot:plot):boolean} hasAsyncReadout: function to test readout should be used make async calls: hasAsyncReadout(WebPlot): boolean
+ *
+ */
+
+
+
+
+
+/**
+ * @type {Array.<MouseReadoutType>}
+ */
+const readoutTypes= [
+    {  // this first one is not used yet.
+        readoutKey: 'spectral-cube',
+        matches: (plot) => false,
+        createImmediateReadout: () => {throw Error('not implemented');},
+        createAsyncReadout: () => {throw Error('not implemented');},
+        hasAsyncReadout: (plot) => true,
+    },
+    {
+        readoutKey: STANDARD_READOUT,
+        matches: (plot) => isImage(plot),
+        createImmediateReadout: makeImagePlotImmediateReadout,
+        createAsyncReadout: makeImagePlotAsyncReadout,
+        hasAsyncReadout: (plot) => true,
+    },
+    {
+        readoutKey: HIPS_STANDARD_READOUT,
+        matches: (plot) => isHiPS(plot),
+        createImmediateReadout: makeHiPSReadout,
+        createAsyncReadout: () => {throw Error('HiPS should not do async');},
+        hasAsyncReadout: (plot) => false,
+
+    },
+];
+
+
+
+
+//-------------------------------------
+//------- Standard Image Plot and routines to get flux
+//-------------------------------------
+
+function makeImagePlotImmediateReadout(plot, worldPt, screenPt, imagePt, threeColor) {
+    return makeReadoutWithFlux(makeReadout(plot,worldPt,screenPt,imagePt), plot, null, threeColor);
+}
+
+function makeImagePlotAsyncReadout(plotView, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder) {
+
+    const plot= primePlot(plotView);
+    const readoutItems= makeImmediateReadout(plot, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder);
+    return doFluxCall(plotView,imagePt).then( (fluxResult) => {
+        if (fluxResult) {
+            const plot= primePlot(plotView);
+            return makeReadoutWithFlux(readoutItems,plot, fluxResult, threeColor);
+        }
+    });
 }
 
 
 /**
  *
- * @param {WebPlot} plot
- * @param {WorldPt} worldPt
- * @param {ScreenPt} screenPt
- * @param {ImagePt} imagePt
- * @param {number} [healpixPixel] the healpix pixel for the current tile, only passed with HiPS
- * @param {number} [norder] the healpix pixel norder
- * @return {{worldPt: *, screenPt: *, imagePt: *, threeColor: (boolean), title: *, pixel: ({title, value, unit, precision}|{title: *, value: *, unit: *, precision: *})}}
- */
-function makeReadout(plot, worldPt, screenPt, imagePt, healpixPixel, norder) {
-    const csys= CysConverter.make(plot);
-    if (csys.pointInPlot(imagePt)) {
-        if (isImage(plot)) {
-            return {
-                worldPt: makePointReadoutItem('World Point', worldPt),
-                screenPt: makePointReadoutItem('Screen Point', screenPt),
-                imagePt: makePointReadoutItem('Image Point', imagePt),
-                fitsImagePt: makePointReadoutItem('FITS Standard Image Point', csys.getFitsStandardImagePtFromInternal(imagePt)),
-                zeroBasedImagePt: makePointReadoutItem('FITS Standard Image Point', csys.getZeroBasedImagePtFromInternal(imagePt)),
-                title: makeDescriptionItem(plot.title),
-                pixel: makeValueReadoutItem('Pixel Size',getPixScaleArcSec(plot),'arcsec', 3),
-                screenPixel:makeValueReadoutItem('Screen Pixel Size',getScreenPixScaleArcSec(plot),'arcsec', 3)
-            };
-        }
-        else {
-            return {
-                worldPt: makePointReadoutItem('World Point', worldPt),
-                screenPt: makePointReadoutItem('Screen Point', screenPt),
-                imagePt: makePointReadoutItem('Image Point', imagePt),
-                fitsImagePt: makePointReadoutItem('FITS Standard Image Point', csys.getFitsStandardImagePtFromInternal(imagePt)),
-                title: makeDescriptionItem(plot.title),
-                pixel: makeHiPSPixelReadoutItem(plot),
-                screenPixel:makeValueReadoutItem('Screen Pixel Size',getScreenPixScaleArcSec(plot),'arcsec', 3),
-                healpixPixel:makeValueReadoutItem('Healpix Pixel', healpixPixel, 'pixel', 0),
-                healpixNorder:makeValueReadoutItem('Healpix norder', norder,'norder', 0),
-            };
-
-        }
-    }
-    else {
-        return {};
-    }
-
-}
-
-function makeHiPSPixelReadoutItem(plot) {
-    const pixDeg= getPlotTilePixelAngSize(plot);
-    let unit= 'degree', value= pixDeg;
-    if (pixDeg*3600 < 60) {
-        unit= 'arcsec';
-        value= pixDeg*3600;
-    }
-    else if (pixDeg*60 < 60) {
-        unit= 'arcmin';
-        value= pixDeg*60;
-    }
-    return makeValueReadoutItem('Pixel Size',value, unit, 3);
-}
-
-
-
-/**
- * 
  * @param readout
  * @param {WebPlot} plot
  * @param fluxResult
@@ -219,15 +271,67 @@ function makeReadoutWithFlux(readout, plot, fluxResult,threeColor) {
         }
     }
     return readout;
+
 }
 
+function doFluxCall(plotView,iPt) {
+    const plot= primePlot(plotView);
+    if (CysConverter.make(plot).pointInPlot(iPt)) {
+        const plotStateAry= getPlotStateAry(plotView);
+        return callGetFileFlux(plotStateAry, iPt)
+            .then((result) => {
+                return result;
+            })
+            .catch((e) => {
+                console.log(`flux error: ${plotView.plotId}`, e);
+                return ['', '', ''];
+            });
+    }
+    else {
+        return Promise.resolve(['', '', '']);
+    }
+}
+
+
+function getFlux(result, plot) {
+    const fluxArray = [];
+    if (result.NO_BAND) {
+        const fluxUnitStr = getFluxUnits(plot,Band.NO_BAND);
+        const fValue = parseFloat(result.NO_BAND);
+        fluxArray[0]= {value: fValue, unit: fluxUnitStr};
+    }
+    else {
+        const bands = plot.plotState.getBands();
+        let bandName;
+        for (let i = 0; i < bands.length; i++) {
+            switch (bands[i].key) {
+                case 'RED':
+                    bandName = 'Red';
+                    break;
+                case 'GREEN':
+                    bandName = 'Green';
+                    break;
+                case 'BLUE':
+                    bandName = 'Blue';
+                    break;
+            }
+            const unitStr = getFluxUnits(plot,bands[i]);
+            const fnum = parseFloat(result[bandName]);
+            fluxArray[i]= {bandName, value:fnum, unit:unitStr};
+        }
+    }
+    Object.keys(result)
+        .filter((k) => k.startsWith('overlay'))
+        .forEach( (k) => {fluxArray.push({ imageOverlay : true, value : parseFloat(result[k]), unit : 'mask' });});
+    return fluxArray;
+}
 
 function getFluxLabels(plot) {
 
     if (!plot) return '';
-    var bands = plot.plotState.getBands();
-    var fluxLabels = ['', '', ''];
-    for (var i = 0; i < bands.length; i++) {
+    const bands = plot.plotState.getBands();
+    const fluxLabels = ['', '', ''];
+    for (let i = 0; i < bands.length; i++) {
         fluxLabels[i] = showSingleBandFluxLabel(plot, bands[i]);
     }
     return fluxLabels;
@@ -272,58 +376,81 @@ function showSingleBandFluxLabel(plot, band) {
 
 
 
-
-
-
-function doFluxCall(plotView,iPt) {
-    const plot= primePlot(plotView);
-    if (CysConverter.make(plot).pointInPlot(iPt)) {
-        const plotStateAry= getPlotStateAry(plotView);
-        return callGetFileFlux(plotStateAry, iPt)
-            .then((result) => {
-                return result;
-            })
-            .catch((e) => {
-                console.log(`flux error: ${plotView.plotId}`, e);
-                return ['', '', ''];
-            });
+/**
+ *
+ * @param {WebPlot} plot
+ * @param {WorldPt} worldPt
+ * @param {ScreenPt} screenPt
+ * @param {ImagePt} imagePt
+ * @return {Object}
+ */
+function makeReadout(plot, worldPt, screenPt, imagePt) {
+    const csys= CysConverter.make(plot);
+    if (csys.pointInPlot(imagePt)) {
+        return {
+            worldPt: makePointReadoutItem('World Point', worldPt),
+            screenPt: makePointReadoutItem('Screen Point', screenPt),
+            imagePt: makePointReadoutItem('Image Point', imagePt),
+            fitsImagePt: makePointReadoutItem('FITS Standard Image Point', csys.getFitsStandardImagePtFromInternal(imagePt)),
+            zeroBasedImagePt: makePointReadoutItem('FITS Standard Image Point', csys.getZeroBasedImagePtFromInternal(imagePt)),
+            title: makeDescriptionItem(plot.title),
+            pixel: makeValueReadoutItem('Pixel Size',getPixScaleArcSec(plot),'arcsec', 3),
+            screenPixel:makeValueReadoutItem('Screen Pixel Size',getScreenPixScaleArcSec(plot),'arcsec', 3)
+        };
     }
     else {
-        return Promise.resolve(['', '', '']);
+        return {};
     }
+
 }
 
+//-------------------------------------
+//------- HiPS Image Plot
+//-------------------------------------
 
-function getFlux(result, plot) {
-    var fluxArray = [];
-    if (result.NO_BAND) {
-        var fluxUnitStr = getFluxUnits(plot,Band.NO_BAND);
-        var fValue = parseFloat(result.NO_BAND);
-        fluxArray[0]= {value: fValue, unit: fluxUnitStr};
+
+function makeHiPSPixelReadoutItem(plot) {
+    const pixDeg= getPlotTilePixelAngSize(plot);
+    let unit= 'degree', value= pixDeg;
+    if (pixDeg*3600 < 60) {
+        unit= 'arcsec';
+        value= pixDeg*3600;
+    }
+    else if (pixDeg*60 < 60) {
+        unit= 'arcmin';
+        value= pixDeg*60;
+    }
+    return makeValueReadoutItem('Pixel Size',value, unit, 3);
+}
+
+/**
+ *
+ * @param {WebPlot} plot
+ * @param {WorldPt} worldPt
+ * @param {ScreenPt} screenPt
+ * @param {ImagePt} imagePt
+ * @param {boolean} threeColor
+ * @param {number} [healpixPixel] the healpix pixel for the current tile, only passed with HiPS
+ * @param {number} [norder] the healpix pixel norder
+ * @return {Object}
+ */
+function makeHiPSReadout(plot, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder) {
+    const csys= CysConverter.make(plot);
+    if (csys.pointInPlot(imagePt)) {
+            return {
+                worldPt: makePointReadoutItem('World Point', worldPt),
+                screenPt: makePointReadoutItem('Screen Point', screenPt),
+                imagePt: makePointReadoutItem('Image Point', imagePt),
+                fitsImagePt: makePointReadoutItem('FITS Standard Image Point', csys.getFitsStandardImagePtFromInternal(imagePt)),
+                title: makeDescriptionItem(plot.title),
+                pixel: makeHiPSPixelReadoutItem(plot),
+                screenPixel:makeValueReadoutItem('Screen Pixel Size',getScreenPixScaleArcSec(plot),'arcsec', 3),
+                healpixPixel:makeValueReadoutItem('Healpix Pixel', healpixPixel, 'pixel', 0),
+                healpixNorder:makeValueReadoutItem('Healpix norder', norder,'norder', 0),
+            };
     }
     else {
-        const bands = plot.plotState.getBands();
-        var bandName, unitStr, fnum;
-        for (let i = 0; i < bands.length; i++) {
-            switch (bands[i].key) {
-                case 'RED':
-                    bandName = 'Red';
-                    break;
-                case 'GREEN':
-                    bandName = 'Green';
-                    break;
-                case 'BLUE':
-                    bandName = 'Blue';
-                    break;
-            }
-            unitStr = getFluxUnits(plot,bands[i]);
-            fnum = parseFloat(result[bandName]);
-            fluxArray[i]= {bandName, value:fnum, unit:unitStr};
-        }
+        return {};
     }
-    Object.keys(result)
-        .filter((k) => k.startsWith('overlay'))
-        .forEach( (k) => {fluxArray.push({ imageOverlay : true, value : parseFloat(result[k]), unit : 'mask' });});
-    return fluxArray;
-}
 
+}

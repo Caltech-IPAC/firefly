@@ -12,6 +12,7 @@ import {CysConverter} from './CsysConverter.js';
 import {isHiPS} from './WebPlot.js';
 import {getHealpixCornerTool} from './HiPSUtil.js';
 import {getHealpixPixel} from './HiPSUtil';
+import {STANDARD_READOUT} from './MouseReadoutCntlr';
 
 export const MouseState= new Enum(['NONE', 'ENTER', 'EXIT', 'DOWN', 'UP',
     'DRAG_COMPONENT', 'DRAG', 'MOVE', 'CLICK',
@@ -26,17 +27,29 @@ var lastCtx = {
     modifiers: {}
 };
 
-var listenerList= [];
+var lastReadout= {};
+
+var imageMouseListenerList= [];
+var imageReadoutListenerList= [];
 var oneTimeCallList= [];
 
 
 export function lastMouseCtx() { return lastCtx; }
+export function lastMouseImageReadout() { return lastReadout; }
 
-export function addMouseListener(l) {
-    listenerList.push(l);
+export function addImageMouseListener(l) {
+    imageMouseListenerList.push(l);
     return () => {
-        const idx= listenerList.indexOf(l);
-        if (idx>-1) listenerList.splice(idx,1);
+        const idx= imageMouseListenerList.indexOf(l);
+        if (idx>-1) imageMouseListenerList.splice(idx,1);
+    };
+}
+
+export function addImageReadoutUpdateListener(l) {
+    imageReadoutListenerList.push(l);
+    return () => {
+        const idx= imageReadoutListenerList.indexOf(l);
+        if (idx>-1) imageReadoutListenerList.splice(idx,1);
     };
 }
 
@@ -49,11 +62,23 @@ export function mouseUpdatePromise() {
 
 export function fireMouseCtxChange(mouseCtx) {
     lastCtx= mouseCtx;
-    listenerList.forEach((l) => l(mouseCtx));
+    imageMouseListenerList.forEach((l) => l(mouseCtx));
     oneTimeCallList.forEach((l) => l(mouseCtx));
     oneTimeCallList=[];
 }
 
+/**
+ *
+ * @param readoutData
+ * @param {string} readoutData.readoutType
+ * @param {string} readoutData.plotId
+ * @param {Object} readoutData.readoutItems
+ * @param {boolean} readoutData.threeColor
+ */
+export function fireMouseReadoutChange({readoutType= STANDARD_READOUT, plotId, readoutItems={}, threeColor=false}) {
+    lastReadout=  {readoutType,plotId,readoutItems,threeColor};
+    imageReadoutListenerList.forEach((l) => l(lastReadout));
+}
 
 
 /**
@@ -63,9 +88,10 @@ export function fireMouseCtxChange(mouseCtx) {
  * @param {Object} screenPt
  * @param {number} screenX
  * @param {number} screenY
- * @param shiftDown
- * @param controlDown
- * @param metaDown
+ * @param {Object} kState
+ * @param kState.shiftDown
+ * @param kState.controlDown
+ * @param kState.metaDown
  * @return {{plotId: string, mouseState: Enum, screenPt: object, imagePt: object, worldPt: object, screenX: number, screenY: number}}
  */
 export function makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY,

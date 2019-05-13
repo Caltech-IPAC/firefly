@@ -9,7 +9,7 @@ import {visRoot} from '../ImagePlotCntlr.js';
 import {flux} from '../../Firefly.js';
 import {VisHeaderView} from './VisHeaderView.jsx';
 import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
-import {addMouseListener, lastMouseCtx} from '../VisMouseSync.js';
+import {addImageMouseListener, lastMouseCtx} from '../VisMouseSync.js';
 import {readoutRoot} from '../../visualize/MouseReadoutCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 
@@ -30,7 +30,7 @@ export class ApiExpandedDisplay extends PureComponent {
 
     componentDidMount() {
         this.removeListener= flux.addListener(() => this.storeUpdate());
-        this.removeMouseListener= addMouseListener(() => this.storeUpdate());
+        this.removeMouseListener= addImageMouseListener(() => this.storeUpdate());
     }
 
     storeUpdate() {

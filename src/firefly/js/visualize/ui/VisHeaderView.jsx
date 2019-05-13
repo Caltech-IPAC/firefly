@@ -8,34 +8,45 @@ import {ThumbnailView} from './ThumbnailView.jsx';
 import {MagnifiedView} from './MagnifiedView.jsx';
 import {getActivePlotView, getPlotViewById} from '../PlotViewUtil.js';
 import {MouseReadout} from './MouseReadout.jsx';
+import {HiPSMouseReadout} from './HiPSMouseReadout';
+import {STANDARD_READOUT, HIPS_STANDARD_READOUT} from '../../visualize/MouseReadoutCntlr.js';
 
+
+const readoutUI = {
+    [STANDARD_READOUT] : MouseReadout,
+    [HIPS_STANDARD_READOUT] : HiPSMouseReadout
+};
+
+const rS= {
+    width: 700,
+    minWidth:660,
+    height: 32,
+    minHeight:32,
+    display: 'inline-block',
+    position: 'relative',
+    verticalAlign: 'top',
+    cursor:'pointer',
+    whiteSpace : 'nowrap',
+    overflow : 'hidden'
+};
 
 /**
  *
- * @param {object} currMouseState  the current state of the mouse
- * @param {boolean} true to enable healpix pixel readout
- * @return {XML}
+ * @param props
+ * @param props.readout
+ * @param props.readoutData
+ * @param props.showHealpixPixel
  */
-export function VisHeaderView({readout, showHealpixPixel=false}) {
+export function VisHeaderView({readout, readoutData, showHealpixPixel=false}) {
 
-    var rS= {
-        width: 700,
-        minWidth:660,
-        height: 32,
-        minHeight:32,
-        display: 'inline-block',
-        position: 'relative',
-        verticalAlign: 'top',
-        cursor:'pointer',
-        whiteSpace : 'nowrap',
-        overflow : 'hidden'
-    };
+    const ActiveReadoutUI= readoutData && readoutUI[readoutData.readoutType];
+    if (!ActiveReadoutUI) return (<div style={rS}/>);
 
     return (
         <div style={{display:'inline-block', float:'right', whiteSpace:'nowrap'}}>
             <div style={rS}>
                 <div style={{position:'absolute', color:'white'}}>
-                    <MouseReadout readout={readout} showHealpixPixel={showHealpixPixel}/>
+                    {ActiveReadoutUI && <ActiveReadoutUI readout={readout} readoutData={readoutData} showHealpixPixel={showHealpixPixel}/>}
                 </div>
             </div>
         </div>
@@ -44,20 +55,21 @@ export function VisHeaderView({readout, showHealpixPixel=false}) {
 
 VisHeaderView.propTypes= {
     readout:  PropTypes.object.isRequired,
+    readoutData:  PropTypes.object.isRequired,
     showHealpixPixel : PropTypes.bool
 };
 
 
 /**
- * @param {Object} p        React props object.
+ * @param {Object} p React props object.
  * @param {Object} p.visRoot
  * @param {Object} p.currMouseState
  * @returns {HTML}
  * @constructor
  */
 export function VisPreview({visRoot,currMouseState}) {
-    var pv= getActivePlotView(visRoot);
-    var mousePv= getPlotViewById(visRoot,currMouseState.plotId);
+    const pv= getActivePlotView(visRoot);
+    const mousePv= getPlotViewById(visRoot,currMouseState.plotId);
     return (
         <div>
             <ThumbnailView plotView={pv}/>
