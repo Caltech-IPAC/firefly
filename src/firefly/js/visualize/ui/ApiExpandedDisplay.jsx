@@ -9,9 +9,9 @@ import {visRoot} from '../ImagePlotCntlr.js';
 import {flux} from '../../Firefly.js';
 import {VisHeaderView} from './VisHeaderView.jsx';
 import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
-import {addImageMouseListener, lastMouseCtx} from '../VisMouseSync.js';
 import {readoutRoot} from '../../visualize/MouseReadoutCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
+import {addImageReadoutUpdateListener, lastMouseImageReadout, lastMouseCtx} from '../VisMouseSync.js';
 
 
 
@@ -30,14 +30,17 @@ export class ApiExpandedDisplay extends PureComponent {
 
     componentDidMount() {
         this.removeListener= flux.addListener(() => this.storeUpdate());
-        this.removeMouseListener= addImageMouseListener(() => this.storeUpdate());
+        this.removeMouseListener= addImageReadoutUpdateListener(() => this.storeUpdate());
     }
 
     storeUpdate() {
-        if (visRoot()!==this.state.visRoot || 
-            lastMouseCtx() !==this.state.currMouseState || 
+        const {currMouseState,readoutData}= this.state;
+        if (visRoot()!==this.state.visRoot ||
+            lastMouseCtx() !==currMouseState ||
+            lastMouseImageReadout() !==readoutData ||
             readoutRoot()!==this.state.readout) {
-            this.setState({visRoot:visRoot(), currMouseState:lastMouseCtx(), readout:readoutRoot()});
+            this.setState({visRoot:visRoot(), readoutData:lastMouseImageReadout(),
+                            currMouseState:lastMouseCtx(), readout:readoutRoot()});
         }
     }
 
@@ -47,12 +50,13 @@ export class ApiExpandedDisplay extends PureComponent {
      */
     render() {
         const {closeFunc, viewerId}= this.props;
-        const {visRoot,currMouseState, readout, showHealpixPixel}= this.state;
+        const {visRoot,currMouseState, readout, readoutData, showHealpixPixel}= this.state;
         return (
             <div style={{width:'100%', height:'100%', display:'flex', flexWrap:'nowrap',
                          alignItems:'stretch', flexDirection:'column'}}>
                 <div style={{position: 'relative', marginBottom:'6px'}} className='banner-background'>
-                    <VisHeaderView visRoot={visRoot} currMouseState={currMouseState} readout={readout}
+                    <VisHeaderView visRoot={visRoot} currMouseState={currMouseState}
+                                   readoutData={readoutData} readout={readout}
                                    showHealpixPixel={showHealpixPixel}/>
                 </div>
                 <div style={{flex: '1 1 auto', display:'flex'}}>
