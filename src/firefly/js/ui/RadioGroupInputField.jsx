@@ -30,7 +30,7 @@ function checkForUndefined(v,props) {
 }
 
 export const RadioGroupInputField= memo( (props) => {
-    const {viewProps, fireValueChange}=  useFieldGroupConnector({...props, confirmInitialValue:checkForUndefined});
+    const {viewProps, fireValueChange}=  useFieldGroupConnector({...props, confirmValue:checkForUndefined});
     const newProps= {...viewProps,  value: assureValue(viewProps)};
     return <RadioGroupInputFieldView {...newProps}
                                      onChange={(ev) => handleOnChange(ev,viewProps, fireValueChange)}/> ;

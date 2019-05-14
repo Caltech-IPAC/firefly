@@ -163,9 +163,8 @@ function makePayloadAndUpdateActive(displayValue, parseResults, resolvePromise, 
 }
 
 
-function replaceValue(v,props) {
+function replaceValue(v) {
     const t= getActiveTarget();
-    // if (props.nullAllowed && !v) return v;
     let retVal= v;
     if (t && t.worldPt) {
        if (get(t,'worldPt')) retVal= t.worldPt.toString();
@@ -177,7 +176,8 @@ function replaceValue(v,props) {
 
 
 export const TargetPanel = memo( ({fieldKey= 'UserTargetWorldPt',initialState= {}, ...restOfProps}) => {
-    const {viewProps, fireValueChange, groupKey}=  useFieldGroupConnector({fieldKey, initialState, confirmInitialValue:replaceValue});
+    const {viewProps, fireValueChange, groupKey}=  useFieldGroupConnector({
+                                fieldKey, initialState, confirmValueOnInit:replaceValue});
     const newProps= computeProps(viewProps, restOfProps, fieldKey, groupKey);
     return ( <TargetPanelView {...newProps}
                               onChange={(value,source) => handleOnChange(value,source,newProps, fireValueChange)}/>);
