@@ -11,16 +11,16 @@ import {flux} from '../Firefly.js';
 import {GroupKeyCtx} from './FieldGroup';
 import {isDefined} from '../util/WebUtil';
 
-const defaultConfirmInitValue= (v) => v;
+const defaultConfirmValue= (v) => v;
 const defValidatorFunc= () => ({valid:true,message:''});
 
 
 
 const STORE_OMIT_LIST= ['fieldKey', 'groupKey', 'initialState', 'fireReducer',
-    'confirmInitialValue', 'forceReinit', 'mounted'];
+    'confirmValue', 'confirmValueOnInit', 'forceReinit', 'mounted'];
 
-function buildViewProps(fieldState,props,fieldKey,groupKey) {
-    const {message= '', valid= true, visible= true, value= '', displayValue= '',
+function buildViewProps(fieldState,props,fieldKey,groupKey,value='') {
+    const {message= '', valid= true, visible= true, value:ignoreValue, displayValue= '',
         tooltip= '', validator= defValidatorFunc, ...rest}= fieldState;
     const propsClean= Object.keys(props).reduce( (obj,k)=> {
         if (isDefined(props[k]) && k!=='value') obj[k]=props[k];
@@ -54,14 +54,14 @@ function isInit(infoRef,fieldKey,groupKey) {
 
 function hasNewKeys(infoRef,fieldKey,groupKey) {
     const {prevFieldKey, prevGroupKey}= infoRef.current;
-    return isInit(infoRef,fieldKey,groupKey) && prevFieldKey && prevGroupKey
+    return isInit(infoRef,fieldKey,groupKey) && prevFieldKey && prevGroupKey;
 }
 
-function doGetInitialState(groupKey, initialState,  props) {
-    const {fieldKey, forceReinit, confirmInitialValue= defaultConfirmInitValue}= props;
+function doGetInitialState(groupKey, initialState,  props, confirmValueOnInit= defaultConfirmValue) {
+    const {fieldKey, forceReinit}= props;
     const storeField= get(FieldGroupUtils.getGroupFields(groupKey), [fieldKey]);
     const initS= forceReinit ? (initialState ||  storeField || {}) : (storeField || initialState || {});
-    return {...initS, value: confirmInitialValue(initS.value,props,initS)};
+    return {...initS, value: confirmValueOnInit(initS.value,props,initialState)};
 }
 
 
@@ -74,12 +74,12 @@ function doGetInitialState(groupKey, initialState,  props) {
  * fireValueChange. Simple pass the viewProps to the component and call fireValueChange when the view component has a
  * value change call.
  *
- * @prop {Function} fireValueChange- Call the anytime the value of the view changes. The parameter is an object
- * the should contains as least a value properties plus anything else that is appropriate to pass
+ * @prop {function(payload:Object)} fireValueChange- Call with the value of the view changes. The parameter is an object
+ * the should contains as least a value property plus anything else that is appropriate to pass
  * @prop {Object} viewProps - all the properties passed to useFieldGroupConnector with the connection properties
  * removed.  This object should contain all the properties to pass on the the view component
- * @prop {fieldKey} return the passed fieldKey, you don't usually need to access this value
- * @prop {groupKey} return the passed groupKey, you don't usually need to access this value
+ * @prop {String} fieldKey - the passed fieldKey, you don't usually need to access this value
+ * @prop {String} groupKey -  the passed groupKey, you don't usually need to access this value
  */
 
 /**
@@ -97,7 +97,8 @@ export const fgConnectPropsTypes= {
         tooltip:  PropTypes.string,
         label:  PropTypes.string,
     }),
-    confirmInitialValue: PropTypes.func
+    confirmValueOnInit: PropTypes.func,
+    confirmValue: PropTypes.func
 };
 
 /**
@@ -107,6 +108,17 @@ export const fgMinPropTypes= {
     fieldKey: PropTypes.string.isRequired,
     groupKey: PropTypes.string,  // normally passed in context
 };
+
+/**
+ * @name ConfirmValueFunc
+ * Give a value, props, and state, return the same or a updated value. It must return a value. This is most often
+ * used with a radio box type component when the value must be one in the list.
+ * @function
+ * @param {*} value
+ * @param {Object} props
+ * @param {Object} state
+ * @returns *
+ */
 
 /**
  *
@@ -120,16 +132,20 @@ export const fgMinPropTypes= {
  * @param {Object} props
  * @param {string} props.fieldKey - required, a unique id for this field (unique within group)
  * @param {string} [props.groupKey] - optional - a unique group id, normally this is not use because it is passed in the context
- * @param {string} [props.forceReinit] - optional - if true, this field will be reinited from the properties and not from the field group
- * @param {string} [props.initialState] - optional - the initial state object
- * @param {function} [props.confirmInitialValue] - optional - on the first render the value from the properties is passed and a value is returned
+ * @param {string} [props.initialState] - optional - the initial state object, anything in the initialState,
+ * should be thought of as state data, it can change over the lifetime of the component and is not controlled by props.
+ * Typically only items like value (and possibly displayValue) are in the state but other items can be manage there as well.
+ * @param {ConfirmValueFunc} [props.confirmValueOnInit] - optional - If defined it will be call only on init
+ * @param {ConfirmValueFunc} [props.confirmValue] - optional - If defined it called every update or init.
+ * @param {boolean} [props.forceReinit] - optional - if true, this field will be reinited from the properties and not from the field group,
+ *                                it is almost always unnecessary, only use if you know what you are doing and even then make sure.
  * @return {ConnectorInterface}
  *
  */
 export const useFieldGroupConnector= (props) => {
     const infoRef = useRef({prevFieldKey:undefined, prevGroupKey:undefined});
     const gkFromCtx= useContext(GroupKeyCtx);
-    const {fieldKey}= props;
+    const {fieldKey,confirmValue,confirmValueOnInit}= props;
     let {initialState}= props;
     const groupKey= props.groupKey || gkFromCtx;
     const doingInit= isInit(infoRef,fieldKey,groupKey);
@@ -142,10 +158,16 @@ export const useFieldGroupConnector= (props) => {
         }
     }
 
-    const getInitialState= () => doingInit ? doGetInitialState(groupKey, initialState,  props) : undefined;
-
+    const getInitialState= () => doingInit ?
+        doGetInitialState(groupKey, initialState,  props, (confirmValueOnInit||confirmValue))
+        : undefined;
     const [fieldState, setFieldState] = useState(getInitialState());
 
+    const fireValueChange= (payload) => dispatchValueChange({...payload, fieldKey,groupKey});
+    const value= confirmValue ? confirmValue(fieldState.value,props,fieldState) : fieldState.value;
+
+    const effectChangeAry= [fieldKey, groupKey, fieldState];
+    if (confirmValue) effectChangeAry.push(value); // only need to watch value in this case
 
     useEffect(() => {
         if (doingInit) {  // called the first time or when fieldKey or groupKey change
@@ -160,16 +182,17 @@ export const useFieldGroupConnector= (props) => {
             dispatchMountComponent( groupKey, fieldKey, true, value, initialState );
             infoRef.current={prevFieldKey: fieldKey, prevGroupKey: groupKey};
         }
+        else if (confirmValue) {// in this case the value might have been updated during the render
+            if (fieldState.value!==value) fireValueChange({value}); // put value back in sync
+        }
         return flux.addListener(()=> {
             const gState = getFieldGroupState(groupKey);
             if (!gState || !gState.mounted || !get(gState,['fields',fieldKey])) return;
             if (fieldState !== gState.fields[fieldKey]) setFieldState(gState.fields[fieldKey]);
         });
-    }, [fieldKey, groupKey, fieldState]);
-
+    }, effectChangeAry);
+    
     return {
-        fireValueChange: (payload) => dispatchValueChange({...payload, fieldKey,groupKey}),
-        viewProps: buildViewProps(fieldState,props,fieldKey,groupKey),
-        fieldKey, groupKey
+        fireValueChange, viewProps: buildViewProps(fieldState,props,fieldKey,groupKey, value), fieldKey, groupKey
     };
 };

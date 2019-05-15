@@ -96,7 +96,7 @@ function checkForUndefined(v,props) {
 
 
 export const ListBoxInputField= memo( (props) => {
-    const {viewProps, fireValueChange}=  useFieldGroupConnector({...props, confirmInitialValue:checkForUndefined});
+    const {viewProps, fireValueChange}=  useFieldGroupConnector({...props, confirmValue:checkForUndefined});
     const newProps= {
         ...viewProps,
         value: convertValue(viewProps.value, viewProps.options),
