@@ -43,7 +43,7 @@ export class FilterEditor extends PureComponent {
                             columns={cols}
                             rowHeight={24}
                             selectable={selectable}
-                            {...{data, selectInfoCls, sortInfo, callbacks, renderers, tbl_ui_id}}
+                            {...{data, selectInfoCls, sortInfo, callbacks, renderers, tbl_ui_id: `${tbl_ui_id}_FilterEditor`}}
                         />
                     </div>
                 </div>
