@@ -5,7 +5,6 @@ package edu.caltech.ipac.visualize.net;
 
 
 import edu.caltech.ipac.table.IpacTableUtil;
-import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataParam;
@@ -13,6 +12,8 @@ import edu.caltech.ipac.astro.ibe.IbeDataSource;
 import edu.caltech.ipac.astro.ibe.IbeQueryParam;
 import edu.caltech.ipac.astro.ibe.datasource.TwoMassIbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.WiseIbeDataSource;
+import edu.caltech.ipac.astro.ibe.datasource.ZtfIbeDataSource;
+import edu.caltech.ipac.astro.ibe.datasource.PtfIbeDataSource;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
@@ -76,6 +77,30 @@ public class IbeImageGetter {
                   Assert.argTst(false, "unknown request type");
               }
           }
+          else if (params instanceof ZtfImageParams) {
+              ZtfImageParams ztfParams;
+              ztfParams = (ZtfImageParams) params;
+              ZtfIbeDataSource.DataProduct product= ZtfIbeDataSource.DataProduct.REF;
+
+              ibeSource = new ZtfIbeDataSource(product);
+
+              queryMap.put("filtercode", ztfParams.getBand());
+              if (!Float.isNaN(ztfParams.getSize())) {
+                sizeStr = ztfParams.getSize() + "";
+              }
+          }
+          else if (params instanceof PtfImageParams) {
+              PtfImageParams ptfParams;
+              ptfParams = (PtfImageParams) params;
+              PtfIbeDataSource.DataProduct product= PtfIbeDataSource.DataProduct.LEVEL2;
+
+              ibeSource = new PtfIbeDataSource(product);
+
+              queryMap.put("fid", ptfParams.getBand());
+              if (!Float.isNaN(ptfParams.getSize())) {
+                sizeStr = ptfParams.getSize() + "";
+              }
+          }
           else {
               Assert.argTst(false, "unknown request type");
           }
@@ -88,14 +113,18 @@ public class IbeImageGetter {
 
           IbeQueryParam queryParam= ibeSource.makeQueryParam(queryMap);
           queryParam.setPos(params.getRaJ2000String() + "," + params.getDecJ2000String());
-          queryParam.setMcen(true);
+          if ((params instanceof ZtfImageParams) || (params instanceof PtfImageParams)) {
+              queryParam.setMcen(false);
+          }  else {
+              queryParam.setMcen(true);
+          }
           queryParam.setIntersect(IbeQueryParam.Intersect.CENTER);
           ibe.query(queryTbl, queryParam);
 
           DataGroup data = IpacTableReader.read(queryTbl);
 
 
-          if (data.values().size() == 1) {
+          if (data.values().size() >= 1) {
               DataObject row = data.get(0);
               Map<String, String> dataMap = IpacTableUtil.asMap(row);
               if (isWise) {

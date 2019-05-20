@@ -234,6 +234,8 @@ const defaultOrder= [
     'iras',
     '2mass',
     'wise',
+    'ztf',
+    'ptf',
     'msx',
     'dss',
     'sdss',

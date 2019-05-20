@@ -87,11 +87,12 @@ public class PtfIbeDataSource extends BaseIbeDataSource {
 
         if (getTableName().equalsIgnoreCase(DataProduct.LEVEL2.name())) {
             String filename = pathInfo.get("filename");
-            String fieldId = pathInfo.get("ptffield");
+            String fieldId = filename.split("_")[1];
+            String fieldDir = fieldId.substring(0, 4);
             String filterId = pathInfo.get("fid");
             String ccdId = pathInfo.get("ccdid");
 
-            dataParam.setFilePath("/d" + fieldId + "/f" + filterId + "/c" + ccdId + "/" + filename);
+            dataParam.setFilePath(fieldDir + "/" + fieldId + "/f" + filterId + "/c" + ccdId + "/" + filename);
         } else {
             if(pathInfo.get("pfilename")!=null){
                 dataParam.setFilePath(pathInfo.get("pfilename"));

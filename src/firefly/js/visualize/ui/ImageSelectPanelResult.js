@@ -95,7 +95,7 @@ function imagePlotOnBlank(request) {
 // image plot on IRAS, 2MASS, WISE, MSX, DSS, SDSS
 function imagePlotOnSurvey(crtCatalogId, request) {
 
-    const {ATLAS, IRAS, TWOMASS, WISE, MSX, DSS, SDSS}= getTabsIndexes();
+    const {ATLAS, IRAS, TWOMASS, WISE, ZTF, PTF, MSX, DSS, SDSS}= getTabsIndexes();
     var wp = parseWorldPt(request.UserTargetWorldPt);
     var sym = getPanelCatalogs()[crtCatalogId].Symbol.toLowerCase();
 
@@ -123,6 +123,12 @@ function imagePlotOnSurvey(crtCatalogId, request) {
 
         case TWOMASS:
             wpr = WebPlotRequest.make2MASSRequest(wp, survey, band, sizeInDeg);
+            break;
+        case ZTF:
+            wpr = WebPlotRequest.makeZTFRequest(wp, survey, band, sizeInDeg);
+            break;
+        case PTF:
+            wpr = WebPlotRequest.makePTFRequest(wp, survey, band, sizeInDeg);
             break;
         case ATLAS:
             //TODO: Not sure how to combine several dataset with different missions under same ATLAS service type

@@ -78,6 +78,15 @@ public class IBEUtils {
                 return new SortInfo("ptffield","fid","ccdid");
             }
             return null;
+        } else if (source instanceof ZtfIbeDataSource) {
+            // Add ZTF
+            String productLevel = ((ZtfIbeDataSource)source).getTableName();
+            if (productLevel.equalsIgnoreCase("SCI")) {
+                return new SortInfo("nid","expif","ccdid","qid");
+            } else if (productLevel.equalsIgnoreCase("REF")) {
+                return new SortInfo("field","ccdid","qid","fid");
+            }
+            return null;
         }
         return null;
     }
@@ -135,7 +144,23 @@ public class IBEUtils {
                 relatedCols = "ccdid";
             }
 
-
+        } else if (source instanceof ZtfIbeDataSource) {
+            // ADD: ZTF
+            String productLevel = ((ZtfIbeDataSource)source).getTableName();
+            if (productLevel.equalsIgnoreCase("SCI")) {
+                //sci image
+                sortByCols.put("nid", "nid,expid,ccdid,qid");
+                sortByCols.put("expid", "expid,ccdid");
+                sortByCols.put("qid", "qid");
+                colsToHide = new String[]{"in_row_id", "in_ra", "in_dec","ra_1", "dec_1",
+                        "ra_2", "dec_2", "ra_2=3", "dec_3", "ra_4", "dec_4"};
+            } else {
+                //ref image
+                sortByCols.put("field", "ccdid,qid,fid");
+                colsToHide = new String[]{"in_row_id", "in_ra", "in_dec","ra_1", "dec_1",
+                        "ra_2", "dec_2", "ra_2=3", "dec_3", "ra_4", "dec_4"};
+                relatedCols = "ccdid";
+            }
         } else if (source instanceof AtlasIbeDataSource) {
 
                 sortByCols.put("facility_name", "facility_name,instrument_name,band_name,file_type");

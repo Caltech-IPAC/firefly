@@ -38,6 +38,8 @@ public class ServiceRetriever implements FileRetriever {
             case SDSS: return getSloanDSSPlot(r);
             case WISE: return getWisePlot(r);
             case AKARI:
+            case ZTF: return getZtfPlot(r);
+            case PTF: return getPtfPlot(r);
             case SEIP:
             case ATLAS: return getAtlasPlot(r);
             case DSS_OR_IRIS: return getDSSorIris(r);
@@ -170,6 +172,33 @@ public class ServiceRetriever implements FileRetriever {
         fi.addRelatedDataList(rdList);
         return fi;
     }
+
+    private FileInfo getZtfPlot(WebPlotRequest r) throws FailedRequestException {
+        Circle circle = PlotServUtils.getRequestArea(r);
+        ZtfImageParams params = new ZtfImageParams();
+        params.setWorldPt(circle.getCenter());
+        params.setProductLevel(r.getSurveyKey());
+        params.setBand(r.getSurveyBand());
+        params.setSize((float)circle.getRadius());
+        FileInfo fi= LockingVisNetwork.retrieve(params, (p,f) -> IbeImageGetter.get(p));
+        fi.setDesc(ServiceDesc.get(r));
+        return fi;
+
+    }
+
+    private FileInfo getPtfPlot(WebPlotRequest r) throws FailedRequestException {
+        Circle circle = PlotServUtils.getRequestArea(r);
+        PtfImageParams params = new PtfImageParams();
+        params.setWorldPt(circle.getCenter());
+        params.setProductLevel(r.getSurveyKey());
+        params.setBand(r.getSurveyBand());
+        params.setSize((float)circle.getRadius());
+        FileInfo fi= LockingVisNetwork.retrieve(params, (p,f) -> IbeImageGetter.get(p));
+        fi.setDesc(ServiceDesc.get(r));
+        return fi;
+
+    }
+
 
     private FileInfo getDSSorIris(WebPlotRequest request) throws FailedRequestException {
         FileInfo retval;

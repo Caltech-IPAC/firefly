@@ -27,11 +27,11 @@ const DEFAULT_HIPS_OVERLAYS= ['ACTIVE_TARGET_TYPE','POINT_SELECTION_TYPE', 'NORT
 
 /**
  * @summary service type
- * @description can be 'IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'DSS_OR_IRIS', 'WISE', 'ATLAS', 'NONE'
+ * @description can be 'IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'DSS_OR_IRIS', 'WISE', 'ATLAS','ZTF', 'PTF', 'NONE'
  * @public
  * @global
  */
-export const ServiceType= new Enum(['IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'DSS_OR_IRIS', 'WISE', 'ATLAS', 'NONE'],
+export const ServiceType= new Enum(['IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'DSS_OR_IRIS', 'WISE', 'ATLAS', 'ZTF', 'PTF', 'NONE'],
                                               { ignoreCase: true });
 /**
  * @summary title options
@@ -466,6 +466,42 @@ export class WebPlotRequest extends ServerRequest {
         req.setDrawingSubGroupId('wise');
         return req;
     }
+
+    //======================== ZTF =====================================
+
+    /**
+     *
+     * @param wp
+     * @param {string} survey  'ref'
+     * @param {string} band  must be one of 'zg', 'zr'
+     * @param sizeInDeg
+     * @return {WebPlotRequest}
+     */
+    static makeZTFRequest(wp, survey, band, sizeInDeg) {
+        const req= this.makePlotServiceReq(ServiceType.ZTF, wp, survey, sizeInDeg);
+        req.setTitle('ZTF '+band.toUpperCase());
+        req.setParam(C.SURVEY_KEY_BAND, band + '');
+        req.setDrawingSubGroupId('ztf');
+        return req;
+    }
+    //======================== PTF =====================================
+
+    /**
+     *
+     * @param wp
+     * @param {string} survey 'level2'
+     * @param {string} band  must be one of '1' '2'
+     * @param sizeInDeg
+     * @return {WebPlotRequest}
+     */
+    static makePTFRequest(wp, survey, band, sizeInDeg) {
+        const req= this.makePlotServiceReq(ServiceType.PTF, wp, survey, sizeInDeg);
+        req.setTitle('PTF '+band.toUpperCase());
+        req.setParam(C.SURVEY_KEY_BAND, band + '');
+        req.setDrawingSubGroupId('ptf');
+        return req;
+    }
+
 
     //======================== Atlas =====================================
     /**
