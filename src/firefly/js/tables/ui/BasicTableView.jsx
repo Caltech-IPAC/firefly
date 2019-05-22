@@ -258,6 +258,7 @@ function correctScrollLeftIfNeeded(scrollLeft, columns, columnWidths, width) {
             scrollLeft = undefined;
         }
     }
+    return scrollLeft;
 }
 
 function calcMaxWidth(idx, col, data) {
