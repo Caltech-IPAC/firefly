@@ -350,14 +350,17 @@ function tableSearch(action) {
 
 function tableAddLocal(action) {
     return (dispatch) => {
-        const {tableModel={}, options={}, addUI=true} = action.payload || {};
+        const {options={}, addUI=true} = action.payload || {};
         const {tbl_ui_id} = options || {};
+        let {tableModel={}} = action.payload || {};
+
+        if (!tableModel.origTableModel) {
+            tableModel = TblUtil.cloneClientTable(tableModel);
+        }
+
         const title = tableModel.title || get(tableModel, 'request.META_INFO.title') || 'untitled';
         const tbl_id = tableModel.tbl_id || get(tableModel, 'request.tbl_id');
 
-        Object.assign(tableModel, {isFetching: false});
-        set(tableModel, 'tableMeta.Loading-Status', 'COMPLETED');
-        if (!tableModel.origTableModel) tableModel.origTableModel = cloneDeep(tableModel);
         if (addUI) dispatchTblResultsAdded(tbl_id, title, options, tbl_ui_id);
         dispatch( {type: TABLE_REPLACE, payload: tableModel} );
         dispatchTableLoaded(Object.assign( TblUtil.getTblInfo(tableModel), {invokedBy: TABLE_FETCH}));
@@ -460,7 +463,7 @@ function tableFetch(action) {
 function tableSort(action) {
     return (dispatch) => {
         if (!action.err) {
-            var {request, hlRowIdx} = action.payload;
+            const {request, hlRowIdx} = action.payload;
             TblUtil.fixRequest(request);
             const {tbl_id} = request;
             const tableStub = setupTableOps(tbl_id, request);
@@ -486,7 +489,7 @@ function setupTableOps(tbl_id, nrequest) {
     // We'd like to preserve the columns so that the table renders while we are waiting for the response.
     // With server-side tables filtering and sorting preserves the number of columns.
     // There is no need to preserve columns for client-side tables.
-    // Additionally, removing sort/filters on client-table can reduce the number of columns (ORIG_IDX removed),
+    // Additionally, removing sort/filters on client-table can reduce the number of columns (ROW_IDX removed),
     // which would cause smartMerge bugs, if we preserve columns.
     const tableData = origTableModel? {} : pick(tableModel.tableData, 'columns');
     const nreq = merge({}, request, nrequest);
@@ -541,7 +544,7 @@ function tableFilterSelrow(action) {
         const filterInfoCls = FilterInfo.parse(filters);
 
         if (tableModel.origTableModel) {
-            const selRowIds = selected.map((idx) => TblUtil.getCellValue(tableModel, idx, 'ORIG_IDX') || idx).toString();
+            const selRowIds = selected.map((idx) => TblUtil.getCellValue(tableModel, idx, 'ROW_IDX') || idx).toString();
             // using addFilter instead of setFilter, so that each filter is removable on its own in free-form box
             filterInfoCls.addFilter('ROW_IDX', `IN (${selRowIds})`);
             request = Object.assign({}, request, {filters: filterInfoCls.serialize()});

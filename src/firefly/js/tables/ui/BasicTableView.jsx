@@ -32,7 +32,7 @@ const BasicTableViewInternal = React.memo((props) => {
             showMask, error, tbl_ui_id=uniqueTblUiId(), currentPage, startIdx=0} = props;
 
     const [uiStates={}] = useStoreConnector(() => getTableUiById(tbl_ui_id));
-    const {tbl_id, columnWidths, scrollLeft, scrollTop} = uiStates;
+    const {tbl_id, columnWidths} = uiStates;
 
     const onScrollEnd    = useCallback( doScrollEnd.bind({tbl_ui_id}), [tbl_ui_id]);
     const onColumnResize = useCallback( doColumnResize.bind({columnWidths, tbl_ui_id}), [columnWidths]);
@@ -56,14 +56,16 @@ const BasicTableViewInternal = React.memo((props) => {
         onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected, tbl_id};
 
     const headerHeight = 22 + (showUnits && 8) + (showTypes && 8) + (showFilters && 22);
+    const scrollToRow = hlRowIdx > 3 ? hlRowIdx + 2 : hlRowIdx;
+
+    let {scrollLeft} = uiStates;
+    scrollLeft = correctScrollLeftIfNeeded(scrollLeft, columns, columnWidths, width);
 
     const content = () => {
         if (error) {
             return <div style={{padding: 10}}>{error}</div>;
         } else if (width === 0 || showMask || isEmpty(columns)) {
             return <div/>;
-        } else if (isEmpty(data)) {
-            return <div className='TablePanel_NoData'> {filterInfo ? noDataFromFilter : noDataMsg} </div>;
         } else if (textView) {
             return <TextView { ...{columns, data, showUnits, width, height} }/>;
         } else {
@@ -75,10 +77,9 @@ const BasicTableViewInternal = React.memo((props) => {
                         onColumnResizeEndCallback={onColumnResize}
                         onRowClick={(e, index) => callbacks.onRowHighlight && callbacks.onRowHighlight(index)}
                         rowClassNameGetter={rowClassNameGetter(tbl_id, hlRowIdx, startIdx)}
-                        scrollToRow={hlRowIdx}
+                        scrollToRow={scrollToRow}
                         onScrollEnd={onScrollEnd}
                         scrollLeft={scrollLeft}
-                        scrollTop={scrollTop}
                         width={width}
                         height={height}>
 
@@ -88,10 +89,21 @@ const BasicTableViewInternal = React.memo((props) => {
         }
     };
 
+    const status = () => {
+        if (!error) {
+            if (showMask) {
+                return <div style={{top: 0}} className='loading-mask'/>;
+            } else if (isEmpty(data)) {
+                return <div className='TablePanel_NoData'> {filterInfo ? noDataFromFilter : noDataMsg} </div>;
+            }
+        }
+        return null;
+    };
+
     return (
         <div tabIndex='-1' onKeyDown={onKeyDown} className='TablePanel__frame'>
             {content()}
-            {showMask && <div style={{top: 0}} className='loading-mask'/>}
+            {status()}
         </div>
     );
 });
@@ -149,9 +161,12 @@ export const BasicTableView = wrapResizer(BasicTableViewInternal);
 
 /*---------------------------------------------------------------------------*/
 
-function doScrollEnd(scrollLeft, scrollTop) {
+function doScrollEnd(scrollLeft) {
     const {tbl_ui_id} = this;
-    dispatchTableUiUpdate({ tbl_ui_id, scrollLeft, scrollTop});
+    const {scrollLeft:cScrollLeft} =  getTableUiById(tbl_ui_id);
+    if (cScrollLeft !== scrollLeft) {
+        dispatchTableUiUpdate({ tbl_ui_id, scrollLeft});
+    }
 }
 
 function doColumnResize(newColumnWidth, columnKey) {
@@ -228,6 +243,22 @@ const TextView = ({columns, data, showUnits, width, height}) => {
         </div>
     );
 };
+
+function correctScrollLeftIfNeeded(scrollLeft, columns, columnWidths, width) {
+    if (scrollLeft < 0) {
+        scrollLeft = undefined;
+    } else if (scrollLeft > 0) {
+        const totalColWidths = columns.reduce((pv, c, idx) => {
+            const delta =  get(c, ['visibility'], 'show') === 'show' ?  columnWidths[idx] : 0;
+            return pv + delta;
+        }, 0);
+
+        if (totalColWidths < width) {
+            // if the total widths of the columns is less than the view's width, don't apply scrollLeft
+            scrollLeft = undefined;
+        }
+    }
+}
 
 function calcMaxWidth(idx, col, data) {
     let nchar = col.prefWidth || col.width;

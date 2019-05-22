@@ -160,6 +160,7 @@
             <button class="tabButton" onclick="showTab('ParamInfo')">ParamInfo</button>
             <button class="tabButton" onclick="showTab('META_INFO')">META_INFO</button>
             <button class="tabButton" onclick="showTab('TblOptions')">TblOptions</button>
+            <button class="tabButton" onclick="showTab('META_OPTIONS')">META_OPTIONS</button>
         </div>
         <div class="tabContent">
 
@@ -239,6 +240,20 @@ Value               * @prop {string} value     static value of this column for a
 
                 </pre>
             </div>
+
+            <div id="META_OPTIONS"  class="tabItem">
+                <h3>META_OPTIONS</h3>
+                <pre>
+META_OPTIONS is internally used to pass options to the server.  The information in this map is intended for single and applies only
+to this request.  Unlike META_INFO, it will not be set back into the returned table.
+
+The available options are defined in MetaConst.js and MetaConst.java:
+highlightedRow          {number}         // the current highlightedRow.
+highlightedRowByRowIdx  {number}         // the highlightedRow's ROW_ID value.  This is the row index of the original table.
+
+                </pre>
+            </div>
+
 
             <div id="ParamInfo"  class="tabItem">
                 <h3>ParamInfo</h3>
