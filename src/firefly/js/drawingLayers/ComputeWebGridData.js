@@ -961,6 +961,9 @@ function drawLines(bounds,  labels, xLines,yLines, aitoff,screenWidth, useLabels
     let drawData=[];
 
     const  lineCount = xLines.length;
+    // For image grid, we regrid the levels so that the line count is always the same for lon and lat (each have 11 lines)
+    //For HiPs image, the total lines (lon and lat) is not fixed.  When the image is not in the full range, we add lines dynamically.
+    //But the lon and lat lines are always have the same count.
     const lonLineCount = lineCount/2;
     let isLonLine=false, labelPosition, labelAngle;
 
@@ -1420,7 +1423,7 @@ function getLevels(ranges,factor, maxLines){
     }
 
     return levels.map( (row)=>{
-        if (row.length<maxLines){
+        if (row.length<maxLines  || row.length>maxLines){
             return Regrid(row,  maxLines, true);
         }
         else {
