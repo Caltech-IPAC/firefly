@@ -35,7 +35,7 @@ const BasicTableViewInternal = React.memo((props) => {
             showMask, error, tbl_ui_id=uniqueTblUiId(), currentPage, startIdx=0} = props;
 
     const uiStates = getTableUiById(tbl_ui_id) || {};
-    const {tbl_id, columnWidths, triggeredBy} = uiStates;
+    const {tbl_id, columnWidths, scrollLeft=0, scrollTop=0, triggeredBy} = uiStates;
 
     const onScrollEnd    = useCallback( doScrollEnd.bind({tbl_ui_id}), [tbl_ui_id]);
     const onColumnResize = useCallback( doColumnResize.bind({columnWidths, tbl_ui_id}), [columnWidths]);
@@ -51,22 +51,34 @@ const BasicTableViewInternal = React.memo((props) => {
             dispatchTableUiUpdate({tbl_ui_id, columnWidths: makeColWidth(columns, data)});
         }
     });
+    const headerHeight = 22 + (showUnits && 8) + (showTypes && 8) + (showFilters && 22);
+    let totalColWidths = 0;
+    if (!isEmpty(columns) && !isEmpty(columnWidths)) {
+        totalColWidths = columns.reduce((pv, c, idx) => {
+            const delta =  get(c, ['visibility'], 'show') === 'show' ?  columnWidths[idx] : 0;
+            return pv + delta;
+        }, 0);
+    }
+
+    const adjScrollTop = correctScrollTopIfNeeded(totalColWidths, scrollTop, width, height-headerHeight, rowHeight, hlRowIdx, triggeredBy);
+    const adjScrollLeft = correctScrollLeftIfNeeded(totalColWidths, scrollLeft, width, triggeredBy);
+
+    useEffect( () => {
+        const changes = {};
+        if (!columnWidths)                  changes.columnWidths = makeColWidth(columns, data);
+        if (adjScrollTop !== scrollTop)     changes.scrollTop = adjScrollTop;
+        if (adjScrollLeft !== scrollLeft)   changes.scrollLeft = adjScrollLeft;
+
+        if (!isEmpty(changes)) {
+            dispatchTableUiUpdate({tbl_ui_id, ...changes});
+        }
+    });
 
     if (!error && (isEmpty(columns) || isEmpty(columnWidths))) return (<div style={{top: 0}} className='loading-mask'/>);
 
     const makeColumnsProps = {columns, data, selectable, selectInfoCls, renderers, bgColor,
         columnWidths, filterInfo, sortInfo, showUnits, showTypes, showFilters,
         onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected, tbl_id};
-
-    const headerHeight = 22 + (showUnits && 8) + (showTypes && 8) + (showFilters && 22);
-    let {scrollLeft=0, scrollTop=0} = uiStates;
-    const totalColWidths = columns.reduce((pv, c, idx) => {
-        const delta =  get(c, ['visibility'], 'show') === 'show' ?  columnWidths[idx] : 0;
-        return pv + delta;
-    }, 0);
-
-    scrollTop = correctScrollTopIfNeeded(totalColWidths, scrollTop, width, height-headerHeight, rowHeight, hlRowIdx, triggeredBy);
-    scrollLeft = correctScrollLeftIfNeeded(totalColWidths, scrollLeft, columns, columnWidths, width, triggeredBy);
 
     const content = () => {
         if (error) {
@@ -85,8 +97,8 @@ const BasicTableViewInternal = React.memo((props) => {
                         onRowClick={(e, index) => callbacks.onRowHighlight && callbacks.onRowHighlight(index)}
                         rowClassNameGetter={rowClassNameGetter(tbl_id, hlRowIdx, startIdx)}
                         onScrollEnd={onScrollEnd}
-                        scrollTop = {scrollTop}
-                        scrollLeft={scrollLeft}
+                        scrollTop = {adjScrollTop}
+                        scrollLeft={adjScrollLeft}
                         width={width}
                         height={height}>
 
@@ -271,14 +283,14 @@ function correctScrollTopIfNeeded(totalColWidths, scrollTop, width, height, rowH
     return scrollTop;
 }
 
-function correctScrollLeftIfNeeded(totalColWidths, scrollLeft, columns, columnWidths, width, triggeredBy) {
-    if (scrollLeft < 0) {
-        scrollLeft = undefined;
-    } else if (scrollLeft > 0 && triggeredBy === Cntlr.TBL_UI_UPDATE) {
+function correctScrollLeftIfNeeded(totalColWidths, scrollLeft, width, triggeredBy) {
 
+    if (scrollLeft < 0) {
+        return undefined;
+    } else if (scrollLeft > 0 && triggeredBy === Cntlr.TBL_UI_UPDATE) {
         if (totalColWidths < width) {
             // if the total widths of the columns is less than the view's width, don't apply scrollLeft
-            scrollLeft = undefined;
+            return undefined;
         }
     }
     return scrollLeft;

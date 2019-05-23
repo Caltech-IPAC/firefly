@@ -349,7 +349,7 @@ export function getFilterCount(tableModel) {
 export function clearFilters(tableModel) {
     const {request, tbl_id} = tableModel || {};
     if (request && request.filters) {
-        TblCntlr.dispatchTableFilter({tbl_id, filters: ''}, 0);
+        TblCntlr.dispatchTableFilter({tbl_id, filters: ''});
     }
 }
 

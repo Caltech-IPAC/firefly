@@ -526,7 +526,7 @@ function tableFilter(action) {
 }
 
 function doTableFetch({request, hlRowIdx, dispatch, tbl_id}) {
-    request.startIdx = 0;
+    request.startIdx = request.startIdx || 0;
     const backgroundable = get(request, 'META_INFO.backgroundable', false);
     if (backgroundable) {
         asyncFetch(request, hlRowIdx, dispatch, tbl_id);
