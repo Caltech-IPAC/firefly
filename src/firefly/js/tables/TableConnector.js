@@ -4,9 +4,8 @@
 
 import {isEmpty, omitBy, isUndefined, cloneDeep, get, set, range} from 'lodash';
 import * as TblCntlr from './TablesCntlr.js';
-import {getTableUiByTblId, getTblById, getTblInfoById, getCellValue} from './TableUtil.js';
+import {getTableUiByTblId, getTblById, getTblInfoById} from './TableUtil.js';
 import {SelectInfo} from './SelectInfo.js';
-import {MetaConst} from '../data/MetaConst.js';
 import {getTableUiById} from './TableUtil';
 
 export class TableConnector {
@@ -34,19 +33,11 @@ export class TableConnector {
     }
 
     onSort(sortInfoString) {
-        const {tableModel, request, highlightedRow} = getTblInfoById(this.tbl_id);
-        const nreq = cloneDeep(request);
-        nreq.sortInfo = sortInfoString;
-        setHlRowByRowIdx(nreq, tableModel, highlightedRow);
-        TblCntlr.dispatchTableSort(nreq);
+        TblCntlr.dispatchTableSort({tbl_id: this.tbl_id, sortInfo: sortInfoString});
     }
 
     onFilter(filterIntoString) {
-        const {tableModel, request, highlightedRow} = getTblInfoById(this.tbl_id);
-        const nreq = cloneDeep(request);
-        nreq.filters = filterIntoString;
-        setHlRowByRowIdx(nreq, tableModel, highlightedRow);
-        TblCntlr.dispatchTableFilter(nreq);
+        TblCntlr.dispatchTableFilter({tbl_id: this.tbl_id, filters: filterIntoString});
     }
 
     /**
@@ -55,10 +46,8 @@ export class TableConnector {
      */
     onFilterSelected(selected) {
         if (isEmpty(selected)) return;
-        const {tableModel, request, highlightedRow} = getTblInfoById(this.tbl_id);
-        const nreq = cloneDeep(request);
-        setHlRowByRowIdx(nreq, tableModel, highlightedRow);
-        TblCntlr.dispatchTableFilterSelrow(nreq, selected);
+        const {request} = getTblInfoById(this.tbl_id);
+        TblCntlr.dispatchTableFilterSelrow(request, selected);
     }
 
     onPageSizeChange(nPageSize) {
@@ -163,11 +152,3 @@ export class TableConnector {
         return new TableConnector(tbl_id, tbl_ui_id, tableModel, options);
     }
 }
-
-function setHlRowByRowIdx(nreq, tableModel, highlightedRow) {
-    const hlRowIdx = getCellValue(tableModel, highlightedRow, 'ROW_IDX');
-    if (hlRowIdx) {
-        set(nreq, ['META_OPTIONS', MetaConst.HIGHLIGHTED_ROW_BY_ROWIDX], hlRowIdx);
-    }
-}
-

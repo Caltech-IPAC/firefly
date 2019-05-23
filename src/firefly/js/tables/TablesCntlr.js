@@ -18,6 +18,7 @@ import {trackBackgroundJob, isSuccess, isDone, getErrMsg} from '../core/backgrou
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
 import {dispatchJobAdd} from '../core/background/BackgroundCntlr.js';
+import {MetaConst} from '../data/MetaConst.js';
 
 
 export const TABLE_SPACE_PATH = 'table_space';
@@ -466,8 +467,10 @@ function tableSort(action) {
             const {request, hlRowIdx} = action.payload;
             TblUtil.fixRequest(request);
             const {tbl_id} = request;
-            const [nreq, tableStub] = setupTableOps(tbl_id, request);
+            const [nreq, tableStub, tableModel] = setupTableOps(tbl_id, request);
             if (!tableStub) return;
+
+            setHlRowByRowIdx(nreq, tableModel);
 
             dispatch({type:TABLE_FETCH, payload: tableStub});
 
@@ -481,8 +484,8 @@ function tableSort(action) {
     };
 }
 
-// return the full request after merging with the original and a table sub in
-// an array.  [fullRequest, tableStub]
+// return the full request after merging with the original, a table stub, and the current tableModel in
+// an array.  [fullRequest, tableStub, tableModel]
 function setupTableOps(tbl_id, nrequest) {
     const tableModel = TblUtil.getTblById(tbl_id);
     if (!tableModel) return;
@@ -495,7 +498,7 @@ function setupTableOps(tbl_id, nrequest) {
     // which would cause smartMerge bugs, if we preserve columns.
     const tableData = origTableModel? {} : pick(tableModel.tableData, 'columns');
     const nreq = merge({}, request, nrequest);
-    return [nreq, {tbl_id, tableMeta, selectInfo, tableData}];
+    return [nreq, {tbl_id, tableMeta, selectInfo, tableData}, tableModel];
 }
 
 
@@ -505,8 +508,10 @@ function tableFilter(action) {
             var {request, hlRowIdx} = action.payload;
             TblUtil.fixRequest(request);
             const {tbl_id} = request;
-            const [nreq, tableStub] = setupTableOps(tbl_id, request);
+            const [nreq, tableStub, tableModel] = setupTableOps(tbl_id, request);
             if (!tableStub) return;
+
+            setHlRowByRowIdx(nreq, tableModel);
 
             dispatch({type:TABLE_FETCH, payload: tableStub});
 
@@ -538,12 +543,18 @@ function doTableFetch({request, hlRowIdx, dispatch, tbl_id}) {
  * @returns {function}
  */
 function tableFilterSelrow(action) {
-    return () => {
+    return (dispatch) => {
         var {request={}, hlRowIdx, selected=[]} = action.payload || {};
         TblUtil.fixRequest(request);
         const {tbl_id, filters} = request;
-        const tableModel = TblUtil.getTblById(tbl_id);
         const filterInfoCls = FilterInfo.parse(filters);
+
+        const [nreq, tableStub, tableModel] = setupTableOps(tbl_id, request);
+        if (!tableStub) return;
+
+        setHlRowByRowIdx(nreq, tableModel);
+
+        dispatch({type:TABLE_FETCH, payload: tableStub});
 
         if (tableModel.origTableModel) {
             const selRowIds = selected.map((idx) => TblUtil.getCellValue(tableModel, idx, 'ROW_IDX') || idx).toString();
@@ -592,7 +603,12 @@ function reducer(state=initState(), action={}) {
 /*-----------------------------------------------------------------------------------------*/
 
 
-
+function setHlRowByRowIdx(nreq, tableModel) {
+    const hlRowIdx = TblUtil.getCellValue(tableModel, tableModel.highlightedRow, 'ROW_IDX');
+    if (hlRowIdx) {
+        set(nreq, ['META_OPTIONS', MetaConst.HIGHLIGHTED_ROW_BY_ROWIDX], hlRowIdx);
+    }
+}
 
 function getRowIdFor(request, selected) {
     const params = {columnNames: ['ROW_IDX'], request, selectedRows: selected};

@@ -9,7 +9,7 @@ import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {fetchTable} from '../../rpc/SearchServicesJson.js';
 import {getColumnIdx, getTblById, createErrorTbl} from '../../tables/TableUtil.js';
-import {BasicTableView} from '../../tables/ui/BasicTableView.jsx';
+import {BasicTableViewWithConnector} from '../../tables/ui/BasicTableView.jsx';
 import {createLinkCell, createInputCell} from '../../tables/ui/TableRenderer.js';
 import * as TblCntlr from '../../tables/TablesCntlr.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';
@@ -399,7 +399,7 @@ class ConstraintPanel extends PureComponent {
                     <div className='TablePanel'>
                         <div className={'TablePanel__wrapper--border'}>
                             <div className='TablePanel__table' style={{top: 0}}>
-                                <BasicTableView
+                                <BasicTableViewWithConnector
                                     tbl_ui_id={tbl_ui_id}
                                     columns={columns}
                                     data={data}

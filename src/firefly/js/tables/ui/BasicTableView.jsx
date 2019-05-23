@@ -34,7 +34,7 @@ const BasicTableViewInternal = React.memo((props) => {
             bgColor, selectable, selectInfoCls, sortInfo, callbacks, textView, rowHeight,
             showMask, error, tbl_ui_id=uniqueTblUiId(), currentPage, startIdx=0} = props;
 
-    const [uiStates={}] = useStoreConnector(() => getTableUiById(tbl_ui_id));
+    const uiStates = getTableUiById(tbl_ui_id) || {};
     const {tbl_id, columnWidths, triggeredBy} = uiStates;
 
     const onScrollEnd    = useCallback( doScrollEnd.bind({tbl_ui_id}), [tbl_ui_id]);
@@ -60,8 +60,13 @@ const BasicTableViewInternal = React.memo((props) => {
 
     const headerHeight = 22 + (showUnits && 8) + (showTypes && 8) + (showFilters && 22);
     let {scrollLeft=0, scrollTop=0} = uiStates;
-    scrollTop = correctScrollTopIfNeeded(scrollTop, height, rowHeight, hlRowIdx, triggeredBy);
-    scrollLeft = correctScrollLeftIfNeeded(scrollLeft, columns, columnWidths, width, triggeredBy);
+    const totalColWidths = columns.reduce((pv, c, idx) => {
+        const delta =  get(c, ['visibility'], 'show') === 'show' ?  columnWidths[idx] : 0;
+        return pv + delta;
+    }, 0);
+
+    scrollTop = correctScrollTopIfNeeded(totalColWidths, scrollTop, width, height-headerHeight, rowHeight, hlRowIdx, triggeredBy);
+    scrollLeft = correctScrollLeftIfNeeded(totalColWidths, scrollLeft, columns, columnWidths, width, triggeredBy);
 
     const content = () => {
         if (error) {
@@ -160,6 +165,11 @@ BasicTableViewInternal.defaultProps = {
 
 export const BasicTableView = wrapResizer(BasicTableViewInternal);
 
+export const BasicTableViewWithConnector = React.memo((props) => {
+    const {tbl_ui_id=uniqueTblUiId()} = props;
+    useStoreConnector(() => getTableUiById(tbl_ui_id));
+    return <BasicTableView {...{tbl_ui_id, ...props}}/>;
+});
 
 /*---------------------------------------------------------------------------*/
 
@@ -246,22 +256,25 @@ const TextView = ({columns, data, showUnits, width, height}) => {
     );
 };
 
-function correctScrollTopIfNeeded(scrollTop, height, rowHeight, hlRowIdx, triggeredBy) {
+function correctScrollTopIfNeeded(totalColWidths, scrollTop, width, height, rowHeight, hlRowIdx, triggeredBy) {
     const rowHpos = hlRowIdx * rowHeight;
-    if (triggeredBy !== BY_SCROLL && (rowHpos < scrollTop || rowHpos > scrollTop + height)) {
-        return rowHpos - 30;
+    if (triggeredBy !== BY_SCROLL) {
+        // delta is a workaround for the horizontal scrollbar hiding part of the last row when visible
+        const delta = totalColWidths > width ? (.5*rowHeight) : 0;
+
+        if (rowHpos < scrollTop) {
+            return rowHpos - (height * .3);
+        } else if(rowHpos + rowHeight + delta > scrollTop + height) {
+            return rowHpos - height + (height * .3);
+        }
     }
     return scrollTop;
 }
 
-function correctScrollLeftIfNeeded(scrollLeft, columns, columnWidths, width, triggeredBy) {
+function correctScrollLeftIfNeeded(totalColWidths, scrollLeft, columns, columnWidths, width, triggeredBy) {
     if (scrollLeft < 0) {
         scrollLeft = undefined;
     } else if (scrollLeft > 0 && triggeredBy === Cntlr.TBL_UI_UPDATE) {
-        const totalColWidths = columns.reduce((pv, c, idx) => {
-            const delta =  get(c, ['visibility'], 'show') === 'show' ?  columnWidths[idx] : 0;
-            return pv + delta;
-        }, 0);
 
         if (totalColWidths < width) {
             // if the total widths of the columns is less than the view's width, don't apply scrollLeft
