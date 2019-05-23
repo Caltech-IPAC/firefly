@@ -31,7 +31,7 @@ function handleTableUpdates(root, action, state) {
 
         case (Cntlr.TBL_RESULTS_ADDED) :
             const options = onUiUpdate(get(action, 'payload.options', {}));
-            return updateSet(root, [tbl_ui_id], {tbl_ui_id, tbl_id, ...options});
+            return updateSet(root, [tbl_ui_id], {tbl_ui_id, tbl_id, triggeredBy: action.type, ...options});
 
         case (Cntlr.TABLE_FETCH)      :
         case (Cntlr.TABLE_FILTER)      :
@@ -42,7 +42,7 @@ function handleTableUpdates(root, action, state) {
         case (Cntlr.TABLE_LOADED) :
         case (Cntlr.TABLE_HIGHLIGHT)  :
             // state is in-progress(fresh) data.. use it to reduce ui state.
-            return uiStateReducer(root, get(state, ['data', tbl_id]));
+            return uiStateReducer(root, get(state, ['data', tbl_id]), action);
         default:
             return root;
     }
@@ -54,7 +54,7 @@ function handleUiUpdates(root, action, state) {
     switch (action.type) {
         case (Cntlr.TBL_UI_UPDATE)    :
             const changes = onUiUpdate(action.payload);
-            return updateMerge(root, [tbl_ui_id], changes);
+            return updateMerge(root, [tbl_ui_id], {triggeredBy: action.type, ...changes});
 
         case (Cntlr.TBL_UI_EXPANDED) :
             const tbl_group = findKey(get(state, 'results'), (o) =>  has(o, ['tables', tbl_id]));
@@ -78,7 +78,7 @@ function removeTable(root, action) {
     return root;
 }
 
-function uiStateReducer(ui, tableModel) {
+function uiStateReducer(ui, tableModel, action) {
     // if (!get(tableModel, 'tableData')) return ui;
     const {startIdx, endIdx, tbl_id, ...others} = getTblInfo(tableModel);
     const filterInfo = get(tableModel, 'request.filters');
@@ -90,7 +90,7 @@ function uiStateReducer(ui, tableModel) {
     var data = has(tableModel, 'tableData.data') ? tableModel.tableData.data.slice(startIdx, endIdx) : [];
     var tableRowCount = data.length;
 
-    var uiData = {tbl_id, startIdx, endIdx, tableRowCount, sortInfo, filterInfo, filterCount, data, showLoading, showMask, ...others};
+    var uiData = {tbl_id, startIdx, endIdx, tableRowCount, sortInfo, filterInfo, filterCount, data, showLoading, showMask, triggeredBy: action.type, ...others};
 
     Object.keys(ui).filter( (ui_id) => {
         return get(ui, [ui_id, 'tbl_id']) === tbl_id;

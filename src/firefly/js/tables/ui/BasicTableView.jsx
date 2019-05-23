@@ -18,10 +18,13 @@ import './TablePanel.css';
 import {LinkCell} from './TableRenderer';
 import {useStoreConnector} from '../../ui/SimpleComponent';
 import {dispatchTableUiUpdate} from '../TablesCntlr';
+import * as Cntlr from '../TablesCntlr';
 
 const {Table, Column} = FixedDataTable;
 const noDataMsg = 'No Data Found';
 const noDataFromFilter = 'No data match these criteria';
+
+const BY_SCROLL = 'byScroll';
 
 
 const BasicTableViewInternal = React.memo((props) => {
@@ -32,7 +35,7 @@ const BasicTableViewInternal = React.memo((props) => {
             showMask, error, tbl_ui_id=uniqueTblUiId(), currentPage, startIdx=0} = props;
 
     const [uiStates={}] = useStoreConnector(() => getTableUiById(tbl_ui_id));
-    const {tbl_id, columnWidths} = uiStates;
+    const {tbl_id, columnWidths, triggeredBy} = uiStates;
 
     const onScrollEnd    = useCallback( doScrollEnd.bind({tbl_ui_id}), [tbl_ui_id]);
     const onColumnResize = useCallback( doColumnResize.bind({columnWidths, tbl_ui_id}), [columnWidths]);
@@ -57,8 +60,8 @@ const BasicTableViewInternal = React.memo((props) => {
 
     const headerHeight = 22 + (showUnits && 8) + (showTypes && 8) + (showFilters && 22);
     let {scrollLeft=0, scrollTop=0} = uiStates;
-    scrollTop = correctScrollTopIfNeeded(scrollTop, height, rowHeight, hlRowIdx);
-    scrollLeft = correctScrollLeftIfNeeded(scrollLeft, columns, columnWidths, width);
+    scrollTop = correctScrollTopIfNeeded(scrollTop, height, rowHeight, hlRowIdx, triggeredBy);
+    scrollLeft = correctScrollLeftIfNeeded(scrollLeft, columns, columnWidths, width, triggeredBy);
 
     const content = () => {
         if (error) {
@@ -164,7 +167,7 @@ function doScrollEnd(scrollLeft, scrollTop) {
     const {tbl_ui_id} = this;
     const {scrollLeft:cScrollLeft, scrollTop:cScrollTop} =  getTableUiById(tbl_ui_id);
     if (cScrollLeft !== scrollLeft || cScrollTop !== scrollTop) {
-        dispatchTableUiUpdate({ tbl_ui_id, scrollLeft, scrollTop});
+        dispatchTableUiUpdate({ tbl_ui_id, scrollLeft, scrollTop, triggeredBy: BY_SCROLL});
     }
 }
 
@@ -243,18 +246,18 @@ const TextView = ({columns, data, showUnits, width, height}) => {
     );
 };
 
-function correctScrollTopIfNeeded(scrollTop, height, rowHeight, hlRowIdx) {
+function correctScrollTopIfNeeded(scrollTop, height, rowHeight, hlRowIdx, triggeredBy) {
     const rowHpos = hlRowIdx * rowHeight;
-    if (rowHpos < scrollTop || rowHpos > scrollTop + height) {
+    if (triggeredBy !== BY_SCROLL && (rowHpos < scrollTop || rowHpos > scrollTop + height)) {
         return rowHpos - 30;
     }
     return scrollTop;
 }
 
-function correctScrollLeftIfNeeded(scrollLeft, columns, columnWidths, width) {
+function correctScrollLeftIfNeeded(scrollLeft, columns, columnWidths, width, triggeredBy) {
     if (scrollLeft < 0) {
         scrollLeft = undefined;
-    } else if (scrollLeft > 0) {
+    } else if (scrollLeft > 0 && triggeredBy === Cntlr.TBL_UI_UPDATE) {
         const totalColWidths = columns.reduce((pv, c, idx) => {
             const delta =  get(c, ['visibility'], 'show') === 'show' ?  columnWidths[idx] : 0;
             return pv + delta;
