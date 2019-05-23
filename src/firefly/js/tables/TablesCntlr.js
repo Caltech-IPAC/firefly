@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, set, omitBy, pickBy, pick, isNil, cloneDeep, findKey, isEqual, unset, merge} from 'lodash';
+import {get, set, omitBy, pickBy, pick, isNil, cloneDeep, findKey, isEqual, unset, merge, omit} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import * as TblUtil from './TableUtil.js';
@@ -466,7 +466,7 @@ function tableSort(action) {
             const {request, hlRowIdx} = action.payload;
             TblUtil.fixRequest(request);
             const {tbl_id} = request;
-            const tableStub = setupTableOps(tbl_id, request);
+            const [nreq, tableStub] = setupTableOps(tbl_id, request);
             if (!tableStub) return;
 
             dispatch({type:TABLE_FETCH, payload: tableStub});
@@ -476,11 +476,13 @@ function tableSort(action) {
                 dispatch(action);
             });
 
-            doTableFetch({tbl_id, request: tableStub.request, hlRowIdx, dispatch});
+            doTableFetch({tbl_id, request: nreq, hlRowIdx, dispatch});
         }
     };
 }
 
+// return the full request after merging with the original and a table sub in
+// an array.  [fullRequest, tableStub]
 function setupTableOps(tbl_id, nrequest) {
     const tableModel = TblUtil.getTblById(tbl_id);
     if (!tableModel) return;
@@ -493,7 +495,7 @@ function setupTableOps(tbl_id, nrequest) {
     // which would cause smartMerge bugs, if we preserve columns.
     const tableData = origTableModel? {} : pick(tableModel.tableData, 'columns');
     const nreq = merge({}, request, nrequest);
-    return {tbl_id, request:nreq, tableMeta, selectInfo, tableData};
+    return [nreq, {tbl_id, tableMeta, selectInfo, tableData}];
 }
 
 
@@ -503,7 +505,7 @@ function tableFilter(action) {
             var {request, hlRowIdx} = action.payload;
             TblUtil.fixRequest(request);
             const {tbl_id} = request;
-            const tableStub = setupTableOps(tbl_id, request);
+            const [nreq, tableStub] = setupTableOps(tbl_id, request);
             if (!tableStub) return;
 
             dispatch({type:TABLE_FETCH, payload: tableStub});
@@ -513,7 +515,7 @@ function tableFilter(action) {
                 dispatch(action);
             });
 
-            doTableFetch({tbl_id, request: tableStub.request, hlRowIdx,  dispatch});
+            doTableFetch({tbl_id, request: nreq, hlRowIdx,  dispatch});
         }
     };
 }

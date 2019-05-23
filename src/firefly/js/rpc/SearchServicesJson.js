@@ -7,7 +7,7 @@
  */
 
 
-import {get, set, pickBy, cloneDeep, has} from 'lodash';
+import {get, set, pickBy, cloneDeep, has, isUndefined} from 'lodash';
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest, DEF_BASE_URL} from '../core/JsonUtils.js';
 import {getBgEmail} from '../core/background/BackgroundUtil.js';
@@ -71,8 +71,10 @@ export function fetchTable(tableRequest, hlRowIdx) {
             tableModel.allMeta.forEach( (m) => m.key && set(tableModel, ['tableMeta', m.key], m.value));
         }
 
-        if (!has(tableModel, 'highlightedRow')) {
-            tableModel.highlightedRow = hlRowIdx || startIdx;
+        if (!isUndefined(hlRowIdx)) {
+            tableModel.highlightedRow = hlRowIdx;
+        } else if (!has(tableModel, 'highlightedRow')) {
+            tableModel.highlightedRow = startIdx;
         }
         return tableModel;
     });

@@ -56,9 +56,8 @@ const BasicTableViewInternal = React.memo((props) => {
         onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected, tbl_id};
 
     const headerHeight = 22 + (showUnits && 8) + (showTypes && 8) + (showFilters && 22);
-    const scrollToRow = hlRowIdx > 3 ? hlRowIdx + 2 : hlRowIdx;
-
-    let {scrollLeft} = uiStates;
+    let {scrollLeft=0, scrollTop=0} = uiStates;
+    scrollTop = correctScrollTopIfNeeded(scrollTop, height, rowHeight, hlRowIdx);
     scrollLeft = correctScrollLeftIfNeeded(scrollLeft, columns, columnWidths, width);
 
     const content = () => {
@@ -77,8 +76,8 @@ const BasicTableViewInternal = React.memo((props) => {
                         onColumnResizeEndCallback={onColumnResize}
                         onRowClick={(e, index) => callbacks.onRowHighlight && callbacks.onRowHighlight(index)}
                         rowClassNameGetter={rowClassNameGetter(tbl_id, hlRowIdx, startIdx)}
-                        scrollToRow={scrollToRow}
                         onScrollEnd={onScrollEnd}
+                        scrollTop = {scrollTop}
                         scrollLeft={scrollLeft}
                         width={width}
                         height={height}>
@@ -161,11 +160,11 @@ export const BasicTableView = wrapResizer(BasicTableViewInternal);
 
 /*---------------------------------------------------------------------------*/
 
-function doScrollEnd(scrollLeft) {
+function doScrollEnd(scrollLeft, scrollTop) {
     const {tbl_ui_id} = this;
-    const {scrollLeft:cScrollLeft} =  getTableUiById(tbl_ui_id);
-    if (cScrollLeft !== scrollLeft) {
-        dispatchTableUiUpdate({ tbl_ui_id, scrollLeft});
+    const {scrollLeft:cScrollLeft, scrollTop:cScrollTop} =  getTableUiById(tbl_ui_id);
+    if (cScrollLeft !== scrollLeft || cScrollTop !== scrollTop) {
+        dispatchTableUiUpdate({ tbl_ui_id, scrollLeft, scrollTop});
     }
 }
 
@@ -243,6 +242,14 @@ const TextView = ({columns, data, showUnits, width, height}) => {
         </div>
     );
 };
+
+function correctScrollTopIfNeeded(scrollTop, height, rowHeight, hlRowIdx) {
+    const rowHpos = hlRowIdx * rowHeight;
+    if (rowHpos < scrollTop || rowHpos > scrollTop + height) {
+        return rowHpos - 30;
+    }
+    return scrollTop;
+}
 
 function correctScrollLeftIfNeeded(scrollLeft, columns, columnWidths, width) {
     if (scrollLeft < 0) {
