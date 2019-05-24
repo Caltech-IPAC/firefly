@@ -42,9 +42,10 @@ class NaifidPanelView extends PureComponent {
         if (!rval.p) return [];
         //if value has been searched previously, no need to call the api again.
         if(searchHistory.length > 0){
-            const cachedSuggList = Object.entries(searchHistory).find(([k,v])=>(v.searchVal === val));
-            if(cachedSuggList){
-                return sortBy(Object.entries(cachedSuggList.pop().searchRes).map( ([k,v]) => ({name:v.naifName, naifid:v.naifId})), 'naifid').reverse();
+            const cachedSuggList = Object.values(searchHistory).find((v)=>(v.searchVal === val));
+            if(get(cachedSuggList,'searchRes')){
+                const resSuggestionsList = Object.values(cachedSuggList.searchRes).map( (v) => ({name:v.naifName, naifid:v.naifId}));
+                return sortBy(resSuggestionsList, 'naifid').reverse();
             }
         }
         return rval.p.then((response)=>{
@@ -52,7 +53,9 @@ class NaifidPanelView extends PureComponent {
                 const suggestionsList = Object.entries(response.data).map(([k,v])=>({naifId:v, naifName:k}));
                 searchHistory.push({searchVal:val, searchRes: suggestionsList});
 
-                return sortBy(Object.entries(suggestionsList).map( ([k,v]) => ({name:v.naifName, naifid:v.naifId})), 'naifid').reverse();
+                const resSuggestionsList = Object.values(suggestionsList).map( (v) => ({name:v.naifName, naifid:v.naifId}));
+                return sortBy(resSuggestionsList, 'naifid').reverse();
+
             } else {
                 //console.error(response);
                 this.props.fireValueChange({valid: false, message: response.feedback});
