@@ -4,7 +4,6 @@
 package edu.caltech.ipac.firefly.server.ws;
 
 
-import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.WspaceMeta;
 import edu.caltech.ipac.firefly.server.ServCommand;
@@ -12,15 +11,18 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
+import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.util.FileUtil;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.List;
-import java.util.HashMap;
 
 import static edu.caltech.ipac.firefly.server.servlets.AnyFileDownload.FILE_PARAM;
-import static edu.caltech.ipac.firefly.server.servlets.AnyFileDownload.RETURN_PARAM;
 
 /**
  * Handle the commands to manage ws
@@ -174,18 +176,32 @@ public class WsServerCommands {
         /**
          * If table, it will get it and then put it into WS under relative path passed to {@link WsServerParams}
          *
-         * @param sp
-         * @return
+         * @param sp parameters
+         * @return response as JSON string
          * @throws Exception
          */
         public String doCommand(SrvParam sp) throws Exception {
 
             TableServerRequest request = sp.getTableServerRequest();
             if (request == null) throw new IllegalArgumentException("Invalid/Missing table request");
-            FileInfo f = new SearchManager().getFileInfo(request);
+
+            TableUtil.Format tblFormat = sp.getTableFormat();
+            String fileNameExt = tblFormat.getFileNameExt();
+
+            File file = File.createTempFile(request.getRequestId(), fileNameExt, ServerContext.getTempWorkDir());
+
+            SearchManager am = new SearchManager();
+            try (OutputStream out = new BufferedOutputStream(new FileOutputStream(file), (int) (32 * FileUtil.K))) {
+                am.save(out, request, tblFormat);
+            }
 
             WsServerParams wsParams = convertToWsServerParams(sp);
-            WsResponse wsResponse = getWsUtils().putFile(wsParams, f.getFile());
+            String fileName = wsParams.getRelPath();
+            if (!fileName.toLowerCase().endsWith(fileNameExt)) {
+                fileName += fileNameExt;
+                wsParams.set(WsServerParams.WS_SERVER_PARAMS.CURRENTRELPATH, fileName);
+            }
+            WsResponse wsResponse = getWsUtils().putFile(wsParams, file);
 
             return getResponseOnRelpath(wsResponse, wsParams);
             //return wsResponse.doContinue()?RESPONSE.TRUE.name().toLowerCase():RESPONSE.FALSE.name().toLowerCase();
