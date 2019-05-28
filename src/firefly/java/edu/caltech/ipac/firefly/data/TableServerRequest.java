@@ -223,7 +223,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
      * by '='.  If the keyword contains a '/' char, then the left side is
      * the keyword, and the right side is its description.
      * @return the serialize version of the class
-     * @deprecated
+     * @deprecated  use JSON format instead.  @see edu.caltech.ipac.table.JsonTableUtil#toJsonTableRequest
      */
     public String toString() {
 
