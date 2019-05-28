@@ -152,7 +152,7 @@ function EnumSelect({col, tbl_id, filterInfo, filterInfoCls, onFilter}) {
                 <div className='ff-href' style={{marginLeft: 3, fontSize: 13}} onClick={onApply}>filter</div>
                 <div className='btn-close' onClick={hideEnumSelect} style={{margin: -2, fontSize: 12}}/>
             </div>
-            <CheckboxGroupInputField {...{fieldKey, alignment: 'vertical', initialState:{options,value}}}/>
+            <CheckboxGroupInputField {...{fieldKey, alignment: 'vertical', options, initialState:{value}}}/>
         </FieldGroup>
     );
 }

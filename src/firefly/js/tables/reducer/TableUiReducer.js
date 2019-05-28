@@ -31,7 +31,7 @@ function handleTableUpdates(root, action, state) {
 
         case (Cntlr.TBL_RESULTS_ADDED) :
             const options = onUiUpdate(get(action, 'payload.options', {}));
-            return updateSet(root, [tbl_ui_id], {tbl_ui_id, tbl_id, ...options});
+            return updateSet(root, [tbl_ui_id], {tbl_ui_id, tbl_id, triggeredBy: 'byTable', ...options});
 
         case (Cntlr.TABLE_FETCH)      :
         case (Cntlr.TABLE_FILTER)      :
@@ -54,7 +54,7 @@ function handleUiUpdates(root, action, state) {
     switch (action.type) {
         case (Cntlr.TBL_UI_UPDATE)    :
             const changes = onUiUpdate(action.payload);
-            return updateMerge(root, [tbl_ui_id], changes);
+            return updateMerge(root, [tbl_ui_id], {triggeredBy: action.type, ...changes});
 
         case (Cntlr.TBL_UI_EXPANDED) :
             const tbl_group = findKey(get(state, 'results'), (o) =>  has(o, ['tables', tbl_id]));
@@ -90,7 +90,7 @@ function uiStateReducer(ui, tableModel) {
     var data = has(tableModel, 'tableData.data') ? tableModel.tableData.data.slice(startIdx, endIdx) : [];
     var tableRowCount = data.length;
 
-    var uiData = {tbl_id, startIdx, endIdx, tableRowCount, sortInfo, filterInfo, filterCount, data, showLoading, showMask, ...others};
+    var uiData = {tbl_id, startIdx, endIdx, tableRowCount, sortInfo, filterInfo, filterCount, data, showLoading, showMask, triggeredBy: 'byTable', ...others};
 
     Object.keys(ui).filter( (ui_id) => {
         return get(ui, [ui_id, 'tbl_id']) === tbl_id;

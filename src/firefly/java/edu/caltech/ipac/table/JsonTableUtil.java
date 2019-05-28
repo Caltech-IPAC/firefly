@@ -6,7 +6,6 @@ package edu.caltech.ipac.table;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.util.StringUtils;
-import netscape.javascript.JSObject;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -50,6 +49,11 @@ public class JsonTableUtil {
         if (!StringUtils.isEmpty(page.getErrorMsg())) {
             tableModel.put("error", page.getErrorMsg());
         }
+
+        if (page.getData().getHighlightedRow() >= 0) {
+            tableModel.put("highlightedRow", page.getData().getHighlightedRow());
+        }
+
         return tableModel;
     }
 

@@ -6,7 +6,7 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, cloneDeep, get} from 'lodash';
 
-import {BasicTableView} from './BasicTableView.jsx';
+import {BasicTableViewWithConnector} from './BasicTableView.jsx';
 import {SelectInfo} from '../SelectInfo.js';
 import {createInputCell} from './TableRenderer.js';
 import {FILTER_CONDITION_TTIPS, FILTER_TTIPS, FilterInfo} from '../FilterInfo.js';
@@ -40,11 +40,11 @@ export class FilterEditor extends PureComponent {
             <div style={{height: '100%', display: 'flex', flexDirection: 'column'}}>
                 <div style={{flexGrow: 1, position: 'relative'}}>
                     <div style={{position: 'absolute', top:0, bottom:5, left:0, right:0, backgroundColor: 'white'}}>
-                        <BasicTableView
+                        <BasicTableViewWithConnector
                             columns={cols}
                             rowHeight={24}
                             selectable={selectable}
-                            {...{data, selectInfoCls, sortInfo, callbacks, renderers, tbl_ui_id}}
+                            {...{data, selectInfoCls, sortInfo, callbacks, renderers, tbl_ui_id: `${tbl_ui_id}_FilterEditor`}}
                         />
                     </div>
                 </div>
@@ -84,8 +84,8 @@ function prepareOptionData(columns, sortInfo, filterInfo, selectable, allowUnits
 
     var cols = [
         {name: 'Column', fixed: true},
-        {name: 'Filter'},
-        allowUnits ? {name: 'Units'} : {name: 'Units', visibility:'hidden'},
+        {name: 'Filter', fixed: true},
+        {name: 'Units', visibility: (allowUnits ? 'show' : 'hidden')},
         {name: '', visibility: 'hidden'},
         {name: 'Selected', visibility: 'hidden'}
     ];
@@ -174,7 +174,7 @@ function collectFilterInfo(data, orgFilterInfo) {
 }
 
 function makeRenderers(onFilter, tbl_id) {
-    const style = {width: '100%', boxSizing: 'border-box'};
+    const style = {width: '100%', backgroundColor: 'white', boxSizing: 'border-box'};
     const validator = (cond, data, rowIndex) => {
         const cname = get(data, [rowIndex, 0]);
         return FilterInfo.conditionValidator(cond, tbl_id, cname);
