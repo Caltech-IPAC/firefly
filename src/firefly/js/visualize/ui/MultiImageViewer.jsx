@@ -52,10 +52,10 @@ export class MultiImageViewer extends PureComponent {
         }
         const pv= getActivePlotView(visRoot());
         const viewer = getViewer(getMultiViewRoot(), props.viewerId);
-        if (!viewer) return;
-        if (viewer.lastActiveItemId && viewer.lastActiveItemId!==get(pv,'plotId')
-            && this.rootWidget.offsetWidth && this.rootWidget.offsetHeight) {
-            setTimeout(() => { dispatchChangeActivePlotView(viewer.lastActiveItemId) }, 5);
+        const {rootWidget}= this;
+        if (!pv || !viewer || !rootWidget || !viewer.lastActiveItemId ) return;
+        if (viewer.lastActiveItemId!==pv.plotId && rootWidget.offsetWidth && rootWidget.offsetHeight) {
+            setTimeout(() => dispatchChangeActivePlotView(viewer.lastActiveItemId), 5);
         }
 
     }
