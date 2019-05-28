@@ -31,7 +31,8 @@ export class FilterEditor extends PureComponent {
 
         if (isEmpty(columns)) return false;
 
-        const {cols, data, selectInfoCls} = prepareOptionData(columns, sortInfo, filterInfo, selectable);
+        const {allowUnits} = getTableUiById(tbl_ui_id);
+        const {cols, data, selectInfoCls} = prepareOptionData(columns, sortInfo, filterInfo, selectable, allowUnits);
         const callbacks = makeCallbacks(onChange, columns, data, filterInfo);
         const renderers = makeRenderers(callbacks.onFilter, tbl_id);
         
@@ -79,12 +80,12 @@ FilterEditor.defaultProps = {
     selectable: true
 };
 
-function prepareOptionData(columns, sortInfo, filterInfo, selectable) {
+function prepareOptionData(columns, sortInfo, filterInfo, selectable, allowUnits) {
 
     var cols = [
         {name: 'Column', fixed: true},
         {name: 'Filter', fixed: true},
-        {name: 'Units'},
+        {name: 'Units', visibility: (allowUnits ? 'show' : 'hidden')},
         {name: '', visibility: 'hidden'},
         {name: 'Selected', visibility: 'hidden'}
     ];

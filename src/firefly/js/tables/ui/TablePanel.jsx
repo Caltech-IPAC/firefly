@@ -125,7 +125,7 @@ export class TablePanel extends PureComponent {
         const { selectable, expandable, expandedMode, border, renderers, title, removable, rowHeight, help_id,
             showToolbar, showTitle, showInfoButton,
             showOptionButton, showPaging, showSave, showFilterButton,
-            totalRows, showLoading, columns, showUnits, showTypes, showFilters, textView,
+            totalRows, showLoading, columns, showUnits, allowUnits, showTypes, showFilters, textView,
             tbl_id, error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask,
             filterInfo, filterCount, sortInfo, data, backgroundable} = this.state;
         var {leftButtons, rightButtons} =  this.state;
@@ -203,7 +203,7 @@ export class TablePanel extends PureComponent {
                         >
                             <BasicTableView
                                 callbacks={tableConnector}
-                                { ...{columns, data, hlRowIdx, rowHeight, selectable, showUnits, showTypes, showFilters,
+                                { ...{columns, data, hlRowIdx, rowHeight, selectable, showUnits, allowUnits, showTypes, showFilters,
                                     selectInfoCls, filterInfo, sortInfo, textView, showMask, currentPage,
                                     tableConnector, renderers, tbl_ui_id} }
                             />
@@ -265,6 +265,7 @@ TablePanel.propTypes = {
     removable: PropTypes.bool,
     border: PropTypes.bool,
     showUnits: PropTypes.bool,
+    allowUnits: PropTypes.bool,
     showTypes: PropTypes.bool,
     showFilters: PropTypes.bool,
     showToolbar: PropTypes.bool,
@@ -286,6 +287,7 @@ TablePanel.propTypes = {
 
 TablePanel.defaultProps = {
     showUnits: false,
+    allowUnits: true,
     showFilters: false,
     showToolbar: true,
     showTitle: true,
