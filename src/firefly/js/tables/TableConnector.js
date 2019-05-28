@@ -60,11 +60,11 @@ export class TableConnector {
     }
 
     onGotoPage(number = '1') {
-        const {currentPage, totalPages, request, pageSize} = getTblInfoById(this.tbl_id);
+        const {currentPage, totalPages, pageSize} = getTblInfoById(this.tbl_id);
         number = Number.parseInt(number);
         if (Number.isInteger(number) && number !== currentPage && number > 0 && number <= totalPages) {
-            const startIdx = (number - 1) * pageSize;
-            TblCntlr.dispatchTableFetch({...request, ...{startIdx}});
+            const highlightedRow = (number - 1) * pageSize;
+            TblCntlr.dispatchTableHighlight(this.tbl_id, highlightedRow);
         }
     }
 
