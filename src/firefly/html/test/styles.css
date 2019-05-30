@@ -35,6 +35,10 @@
     --tpl-height: 450px;
     height: var(--tpl-height);
 }
+.tpl.xxl {
+    --tpl-height: 550px;
+    height: var(--tpl-height);
+}
 
 .box {
     width: calc(var(--tpl-height) * 1);
@@ -52,6 +56,10 @@
     font-family: monospace;
     white-space: pre;
     padding: 0 5px;
+}
+
+ul.expected-list {
+    margin: 2px;
 }
 
 ul.expected-list li{
@@ -103,7 +111,7 @@ ul.expected-list li{
 #expected {
     width: 400px;
     white-space: normal;
-    padding-top: 2px;
+    padding: 2px;
 }
 
 .tpl-test-container {
