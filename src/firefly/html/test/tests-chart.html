@@ -1,0 +1,417 @@
+<!doctype html>
+
+<!--
+  ~ License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+  -->
+
+<html>
+
+<head>
+    <title>Firefly Chart Tests</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="text/javascript" src="template_loader.js"></script>
+</head>
+
+<body>
+
+<!-- define all of your tests below -->
+
+
+
+<template title="Multiple Chart Views of a Table" class="tpl xxl" >
+    <div id="expected">
+        <img width="100%" src="images/chart_multi.png">
+        <ul class='expected-list'>
+            <li>All views are connected. Filtering from any view should affect table and all charts. Selecting should affect table and all scatters.</li>
+            <li>Multi-chart viewer allows to switch between single chart view and chart grid.</li>
+            <li>Charts should be deletable, unless one chart is left.</li>
+        </ul>
+    </div>
+    <div id="actual" class="flow-h" style="width: 1200px">
+        <div id="tableHere" class="box"></div>
+        <div id="multiChartsHere" class="box x2"></div>
+    </div>
+    <script>
+        
+        irsaviewer_init();
+
+        onFireflyLoaded= function(firefly) {
+
+            tblReq =  firefly.util.table.makeIrsaCatalogRequest('allwise-500', 'WISE', 'allwise_p3as_psd',
+                    {   position: '10.68479;41.26906;EQ_J2000',
+                        SearchMethod: 'Cone',
+                        radius: 300
+                    });
+            firefly.showTable('tableHere', tblReq);
+
+            // table id to reference in the charts
+            tableId = tblReq.tbl_id;
+
+            scatter1 = [{
+                tbl_id: tableId,  // id of the table where to find column references
+                x: 'tables::ra',  // reference to column "ra"
+                y: 'tables::dec', // reference to column "dec"
+                mode: 'markers'   // plotly attribute, see https://plot.ly/javascript/reference/#scatter
+            }];
+            firefly.showChart('multiChartsHere', {data: scatter1});
+
+
+            scatter2 = [{
+                tbl_id: tableId,
+                x: 'tables::w1mpro+w2mpro',
+                y: 'tables::w3mpro+w4mpro',
+                mode: 'markers'
+            }];
+
+            // plotly layout attributes
+            // see https://plot.ly/javascript/reference/#layout-xaxis
+            plotlyLayout2 = {
+                xaxis: {title: 'w1+w2', type: 'log'},
+                yaxis: {title: 'w3 + w4', type: 'log'}
+            };
+            firefly.showChart('multiChartsHere', {data: scatter2, layout: plotlyLayout2});
+
+            histogram1 = [{
+                type: 'fireflyHistogram',
+                firefly: {
+                    tbl_id: tableId,
+                    options: {
+                        algorithm: 'fixedSizeBins',
+                        fixedBinSizeSelection: 'numBins',
+                        numBins: 30,
+                        columnOrExpr: 'w1mpro+w2mpro'
+                    }
+                }
+            }];
+            firefly.showChart('multiChartsHere', {data: histogram1, layout: {xaxis: {title: 'w1+w2', type: 'log'}}});
+
+            histogram2 = [{
+                type: 'fireflyHistogram',
+                firefly: {
+                    tbl_id: tableId,
+                    options: {
+                        algorithm: 'bayesianBlocks',
+                        falsePositiveRate: 0.05,
+                        columnOrExpr: 'w1mpro+w2mpro'
+                    }
+                }
+            }];
+            firefly.showChart('multiChartsHere', {data: histogram2, layout: {xaxis: {title: 'w1+w2', type: 'log'}}});
+        }
+    </script>
+</template>
+
+<template title="NED SED Chart with uncertainties and upper limits" class="tpl xxl" >
+    <div id="expected">
+        <ul class='expected-list'>
+            <li>Arrows represent upper limits. Click on one of the arrows, and move a mouse over it to see the tooltip.
+                It should say "Upper limit" on the bottom.</li>
+            <li>Use mouse wheel to zoom. Reset back to the original size with 1x button on top.</li>
+        </ul>
+        <img width="100%" src="images/chart_sed.png">
+    </div>
+    <div id="actual" class="flow-h" style="width: 1200px">
+        <div id="sedTableHere" class="box"></div>
+        <div id="sedChartHere" class="box x2"></div>
+    </div>
+    <script>
+
+        firefly = {
+            options: {charts: {singleTraceUI: true, upperLimitUI: true}}
+        };
+        
+        onFireflyLoaded= function(firefly) {
+            const tblReq = firefly.util.table.makeFileRequest(
+                'SED: ARP-220 raw', // title
+                'http://ned.ipac.caltech.edu/cgi-bin/datasearch?ebars_spec=ebars&label_spec=no&x_spec=freq&y_spec=Fnu_jy&xr=-2&objname=ARP+220&objid=58863&search_type=Photo_id&meas_type=bot&of=xml_main&objname=ARP+220&objid\
+=58863&search_type=Photo_id&meas_type=bot',  // source
+                null,  // alt_source
+                {filters: '"NED Units" like \'Jy\''} // options
+            );
+            //tblReq.inclCols = '"No.","Frequency","Flux Density","Upper limit of Flux Density","Lower limit of uncertainty","Upper limit of uncertainty"'
+
+            // wrapper request make prefiltered table to appeas as if it's an original
+            const wrapperReq = firefly.util.table.makeTblRequest('IpacTableFromSource', 'SED: ARP-220',
+                {searchRequest: tblReq}, {pageSize: 50});
+            const tblId = wrapperReq.tbl_id;
+
+            firefly.showTable('sedTableHere', wrapperReq);
+
+            firefly.showChart('sedChartHere', {
+                data: [{
+                    name: 'sed',
+                    tbl_id: tblId,
+                    x: 'tables::"Frequency"',
+                    y: 'tables::"Flux Density"',
+                    error_y: {
+                         arrayminus: 'tables::"Lower limit of uncertainty"', // error bar (minus)
+                         array: 'tables::"Upper limit of uncertainty"', // error bar (plus)
+                    },
+                    firefly: {
+                        yMax: 'tables::"Upper limit of Flux Density"'
+                    },
+                    mode: 'markers'
+                }],
+                layout: {
+                    xaxis: {
+                        title: '<em>v</em> [Hz]',
+                        type: 'log'
+                    },
+                    yaxis: {
+                        title: 'F<sub><em>v</em></sub> [Jy]',
+                        type: 'log'
+                    }
+                }
+            });
+
+        }
+    </script>
+</template>
+
+<template title="Multi-trace chart from a table, which is not on display" class="tpl xxl" >
+    <div id="expected">
+        <img width="100%" src="images/chart_scatter.png">
+        <ul class='expected-list'>
+            <li>Select mode should be underlined (active by default)</li>
+            <li>Each trace represents a corner of an image</li>
+            <li>Filtering, selecting, and highlighting applies to the active trace (displayed in toolbar)</li>
+            <li>After dragging mouse over to select an area with no active trace points, a warning should be displayed:
+                "No active trace points in the selection area"</li>
+        </ul>
+    </div>
+    <div id="actual" class="flow-h" style="width: 800px">
+        <div id="xyplotHere" class="box"></div>
+    </div>
+    <script>
+        onFireflyLoaded= function(firefly) {
+            firefly.debug = true;
+            const searchRequest = firefly.util.table.makeFileRequest(
+                'WiseDemoTable', // title
+                'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',  // source
+                null,  // alt_source
+                {pageSize: 1} // options
+            );
+            const tblIdDemo = searchRequest.tbl_id;
+            firefly.action.dispatchTableFetch(searchRequest);
+
+            const traces = [];
+            for (let i = 1; i <= 4; i++) {
+                traces.push({
+                    name: 'corner ' + i,
+                    tbl_id: tblIdDemo,
+                    x: 'tables::ra' + i,  // references to table columns ra1,ra2,ra3,ra4
+                    y: 'tables::dec' + i, // references to table columns dec1,dec2,dec3,dec4
+                    mode: 'markers'
+                });
+            }
+            firefly.showChart('xyplotHere', {data: traces});
+        }
+    </script>
+</template>
+
+<template title="Multitrace Histogram" class="tpl xxl" >
+    <div id="expected">
+        <img width="100%" src="images/chart_hist.png">
+        <ul class='expected-list'>
+            <li>Zoom mode should be active (undelined) by default, select mode should not be available.</li>
+            <li>Active trace (shown on the toolbar) should be on top of other traces.</li>
+            <li>Selecting different trace in the list on the toolbar should make it active.</li>
+        </ul>
+    </div>
+    <div id="actual" class="flow-h" style="width: 1200px">
+        <div id="tableTstHistDivId" class="box"></div>
+        <div id="histogramDivId" class="box x2"></div>
+    </div>
+    <script>
+        onFireflyLoaded= function(firefly) {
+            dataH = [
+                {
+                    type: 'fireflyHistogram',
+                    firefly: {
+                        tbl_id: 'test-tbl',
+                        options: {
+                            algorithm: 'fixedSizeBins',
+                            fixedBinSizeSelection: 'numBins',
+                            numBins: 30,
+                            columnOrExpr: 'dec-0.02'
+                        }
+                    },
+                    name: 'dec-0.02',
+                    marker: {color: 'rgba(153, 51, 153, 0.8)'}
+                },
+                {
+                    type: 'fireflyHistogram',
+                    firefly: {
+                        tbl_id: 'test-tbl',
+                        options: {
+                            algorithm: 'fixedSizeBins',
+                            fixedBinSizeSelection: 'numBins',
+                            numBins: 40,
+                            columnOrExpr: 'dec+0.02'   // same column but shifted
+                        }
+                    },
+                    name: 'dec+0.02',
+                    marker: {color: 'rgba(102,153,0, 0.7)'}
+                }
+            ];
+            firefly.showChart('histogramDivId', {data: dataH});
+            tblReq =  firefly.util.table.makeIrsaCatalogRequest('allwise-500', 'WISE', 'allwise_p3as_psd',
+                    {   position: '10.68479;41.26906;EQ_J2000',
+                        SearchMethod: 'Cone',
+                        radius: 300
+                    },
+                    {   tbl_id: 'test-tbl',
+                         META_INFO: {defaultChartDef: JSON.stringify({data: [{x: 'tables::w1mpro', y: 'tables::w2mpro', mode: 'markers'}]})}
+                    });
+            firefly.showTable('tableTstHistDivId', tblReq);
+        }
+    </script>
+</template>
+
+<template title="Multitrace Heatmap" class="tpl xxl" >
+    <div id="expected">
+        <img width="100%" src="images/chart_heatmap.png">
+        <ul class='expected-list'>
+            <li>Zoom mode should be active (undelined) by default</li>
+            <li>Active trace (shown on the toolbar) should be on top of other traces.</li>
+            <li>Selecting different trace in the list on the toolbar should make it active.</li>
+        </ul>
+    </div>
+    <div id="actual" class="flow-h" style="width: 1200px">
+        <div id="tableLgDivId" class="box"></div>
+        <div id="heatmapDivId" class="box x2"></div>
+    </div>
+    <script>
+        onFireflyLoaded = function (firefly) {
+
+            tblReqLg =  firefly.util.table.makeIrsaCatalogRequest('allwise_p3as_psd', 'WISE', 'allwise_p3as_psd',
+                {   position: '10.68479;41.26906;EQ_J2000',
+                    SearchMethod: 'Cone',
+                    radius: 1200
+                },
+                {tbl_id: 'test-tbl-lg'});
+            firefly.showTable('tableLgDivId', tblReqLg);
+
+            dataHM = [
+                {
+                    type: 'fireflyHeatmap',
+                    tbl_id: 'test-tbl-lg',
+                    x: 'tables::w1mpro',
+                    y: 'tables::w2mpro',
+                    name: 'w1-w2',
+                    colorscale: 'Blues'
+                },
+                {
+                    type: 'fireflyHeatmap',
+                    tbl_id: 'test-tbl-lg',
+                    x: 'tables::w1mpro',
+                    y: 'tables::w3mpro',
+                    name: 'w1-w3',
+                    colorscale: 'Reds',
+                    reversescale: true
+                },
+                {
+                    type: 'fireflyHeatmap',
+                    tbl_id: 'test-tbl-lg',
+                    x: 'tables::w1mpro',
+                    y: 'tables::w4mpro',
+                    name: 'w1-w4',
+                    colorscale: 'Greens'
+                }
+            ];
+
+            firefly.showChart('heatmapDivId', {data: dataHM});
+        }
+    </script>
+</template>
+
+
+<template title="Static Plotly Charts (no connection to a table)" class="tpl xxl" >
+    <div id="expected">
+        Two interactive Plotly charts:
+        <ul class='expected-list'>
+            <li>Pie chart</li>
+            <li>Two traces: scatter and line</li>
+        </ul>
+        Firefly can show any chart, supported by Plotly.
+        See <a href="https://plot.ly/javascript/reference">plotly.js reference</a> for available attributes.
+    </div>
+    <div id="actual" class="flow-h" style="width: 1200px">
+        <div id="pieChartDivId" class="box"></div>
+        <div id="twoTracesDivId" class="box"></div>
+    </div>
+    <script>
+        onFireflyLoaded = function (firefly) {
+
+            const pieChart = {
+                data: [{
+                    values: [57, 14, 29],
+                    labels: ['Chrome', 'Safari', 'Others'],
+                    type: 'pie'
+                }]};
+            firefly.util.renderDOM('pieChartDivId', firefly.ui.PlotlyWrapper, pieChart);
+
+            trace1 = {
+                x: [1, 2, 3, 4],
+                y: [10, 15, 13, 17],
+                mode: 'markers',
+                type: 'scatter'
+            };
+            trace2 = {
+                x: [2, 3, 4, 5],
+                y: [16, 5, 11, 9],
+                mode: 'lines',
+                type: 'scatter'
+            };
+            twoTraces = {data: [trace1, trace2]};
+            firefly.util.renderDOM('twoTracesDivId', firefly.ui.PlotlyWrapper, twoTraces);
+        }
+    </script>
+</template>
+
+<template title="Static Plotly Charts in Multi-Chart Viewer" class="tpl xxl" >
+    <div id="expected">
+        The same charts as in the previous test, but with a multi-chart viewer toolbar.
+        <ul class='expected-list'>
+            <li>Notice, that Firefly defaults for scatter chart are different from Plotly defaults.
+                You can specify any layout option explicitely, when creating the chart to achieve the desired look.</li>
+            <li>Multichart viewer allows to switch between single chart view and chart grid.</li>
+            <li>A few layout options can be modified from Settings dialog, accessible from the tool bar.</li>
+        </ul>
+    </div>
+    <div id="actual" class="flow-h" style="width: 1200px">
+        <div id="multiChartViewerDivId" class="box"></div>
+    </div>
+    <script>
+        onFireflyLoaded = function (firefly) {
+
+            const pieChart = {
+                data: [{
+                    values: [57, 14, 29],
+                    labels: ['Chrome', 'Safari', 'Others'],
+                    type: 'pie'
+                }]};
+            firefly.showChart('multiChartViewerDivId', pieChart);
+
+            trace1 = {
+                x: [1, 2, 3, 4],
+                y: [10, 15, 13, 17],
+                mode: 'markers',
+                type: 'scatter'
+            };
+            trace2 = {
+                x: [2, 3, 4, 5],
+                y: [16, 5, 11, 9],
+                mode: 'lines',
+                type: 'scatter'
+            };
+            twoTraces = {data: [trace1, trace2]};
+            firefly.showChart('multiChartViewerDivId', twoTraces);
+        }
+    </script>
+</template>
+
+<!-- this is where test cases will be attached-->
+<div id="tst-container"/>
+</body>
+</html>

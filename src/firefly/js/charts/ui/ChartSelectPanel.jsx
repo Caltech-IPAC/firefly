@@ -20,6 +20,7 @@ import {ScatterOptions} from './options/ScatterOptions.jsx';
 import {HeatmapOptions} from './options/HeatmapOptions.jsx';
 import {FireflyHistogramOptions} from './options/FireflyHistogramOptions.jsx';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
+import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
 
 
 export const [CHART_ADDNEW, CHART_TRACE_ADDNEW, CHART_TRACE_MODIFY, CHART_TRACE_REMOVE ] =
@@ -29,7 +30,7 @@ export const [CHART_ADDNEW, CHART_TRACE_ADDNEW, CHART_TRACE_MODIFY, CHART_TRACE_
 function getChartActions({chartId, tbl_id}) {
     const chartActions = [];
     if (chartId) {
-        const {data=[]} = getChartData(chartId);
+        const {data=[], viewerId} = getChartData(chartId);
         if (data.length > 0) {
             // can modify active trace
             chartActions.push(CHART_TRACE_MODIFY);
@@ -41,11 +42,20 @@ function getChartActions({chartId, tbl_id}) {
         if (tbl_id) {
             // can add trace
             chartActions.push(CHART_TRACE_ADDNEW);
+
+            // TODO: adding charts to non-default viewer does not work from charts options dialog
+            // to be able to add charts to any viewer, we need to pass viewerId to addNewTrace
+            // and eventually to dispatchChartAdd in BasicOptions.jsx
+            if (!viewerId || viewerId === DEFAULT_PLOT2D_VIEWER_ID) {
+                // can add chart
+                chartActions.push(CHART_ADDNEW);
+            }
         }
-    }
-    if (tbl_id) {
-        // can add chart
-        chartActions.push(CHART_ADDNEW);
+    } else {
+        if (tbl_id) {
+            // can add chart
+            chartActions.push(CHART_ADDNEW);
+        }
     }
     return chartActions;
 }

@@ -1,4 +1,3 @@
-
 <!doctype html>
 
 <!--
@@ -18,12 +17,12 @@
 <!-- define all of your tests below -->
 
 <template title="IRSA Gator Table" class="tpl" >
-    <div id="expected" class="flow-h" style="width: 450px">
-        <div class="source-code indent-3">
+    <div id="expected" style="position: relative" >
+        <img style="position: absolute; right: 2px; width: 275px" src="./images/gator-expected.jpg"/>
+        <div class="source-code indent-3" style="position: absolute; bottom: 0; left: 0">
             - widgets loaded
             - toolbars match
         </div>
-        <div><img src="./images/gator-expected.jpg"></div>
     </div>
     <div id="actual" class="flow-h">
         <div id="gatorTable" class="box"></div>
@@ -75,10 +74,10 @@
 <template title="NED catalog VOTable" class="tpl">
     <div id="expected">
         <img src="./images/ned-table.jpg">
-        <div class="source-code indent-3">
-            - sortBy column where name contains spaces
-            - using FmtDisp to format text
-        </div>
+        <ul class='expected-list'>
+            <li>sortBy column name contains spaces</li>
+            <li>FmtDisp is used to format text</li>
+        </ul>
     </div>
     <div id="actual" class="box x3"></div>
     <script>
@@ -124,14 +123,13 @@
 
 <template title="Failed API Image Load" class="tpl" style="height: 260px">
     <div id="expected" >
-        <div>Image load fails. The following should happen:
-            <ul class='expected-list'>
-                <li>No Image</li>
-                <li><i>Centered Message</i>: Failed- SDSS: Area not covered</li>
+        Image load fails. The following should happen:
+	    <ul class='expected-list'>
+                <li>No image, <i>centered message</i>: "Failed- SDSS: Area not covered"</li>
                 <li>Toolbar button active, when toolbar popup shown, toolbar should have "select image" button active</li>
             </ul>
-        </div>
-        <div><img src="./images/fail-plot-expected.jpg"></div>
+
+        <img src="./images/fail-plot-expected.jpg">
     </div>
     <div id="actual" class="box x3"></div>
     <script>
@@ -204,7 +202,6 @@
     </script>
 </template>
 
-
 <template title="Test Proprietary Data Display" class="tpl sm">
     <div id="expected" >
         <div>Set <b>band</b> as a data_rights columns. Values that will resolve to true are: 'public', 'secure', '1', 'true', 't'
@@ -227,7 +224,41 @@
     </script>
 </template>
 
+<template title="Table group with default charts" class="tpl" style="height: 260px">
+    <div id="expected" >
+        <div>
+            Chart specs are passed with the table requests
+            <ul class='expected-list'>
+                <li>chart should be without toolbar and non-interactive</li>
+                <li>table paging should cause chart hightlight change, but not chart reload</li>
+                <li>when changing active table, the chart should change</li>
+            </ul>
+        </div>
+    </div>
+    <div id="actual" class="flow-h" style="width: 800px">
+        <div id='tables-aw' class="box x2"></div>
+        <div id='default-chart' class="box x3"></div>
+    </div>
+    <script>
+        function onFireflyLoaded(firefly) {
 
+            tblReqSm =  firefly.util.table.makeIrsaCatalogRequest('allwise-10', 'WISE', 'allwise_p3as_psd',
+                { position: '202.48;47.23;EQ_J2000', SearchMethod: 'Cone', radius: 30},
+                { pageSize: 20,
+                    META_INFO: {defaultChartDef: JSON.stringify({data: [{x: 'tables::w1mpro', y: 'tables::w2mpro', mode: 'markers'}]})}
+                });
+            tblReq =  firefly.util.table.makeIrsaCatalogRequest('allwise-500', 'WISE', 'allwise_p3as_psd',
+                { position: '10.68479;41.26906;EQ_J2000', SearchMethod: 'Cone', radius: 300},
+                { pageSize: 20,
+                    META_INFO: {defaultChartDef: JSON.stringify({data: [{x: 'tables::w1mpro+w4mpro', y: 'tables::w3mpro', mode: 'markers'}]})}
+                });
+
+            firefly.showTable('tables-aw', tblReqSm, {tbl_group: 'allwise'});
+            firefly.showTable('tables-aw', tblReq, {tbl_group: 'allwise'});
+            firefly.showChart('default-chart', {tbl_group: 'allwise', noChartToolbar: true});
+        }
+    </script>
+</template>
 
 <!-- this is where test cases will be attached-->
 <div id="tst-container"/>
