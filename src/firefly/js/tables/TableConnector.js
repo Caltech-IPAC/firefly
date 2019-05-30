@@ -2,11 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isEmpty, omitBy, isUndefined, cloneDeep, get, set, range} from 'lodash';
+import {isEmpty, omitBy, isUndefined, cloneDeep, get, set} from 'lodash';
 import * as TblCntlr from './TablesCntlr.js';
-import {getTableUiByTblId, getTblById, getTblInfoById} from './TableUtil.js';
+import * as TblUtil from './TableUtil.js';
 import {SelectInfo} from './SelectInfo.js';
-import {getTableUiById} from './TableUtil';
 
 export class TableConnector {
     
@@ -23,17 +22,21 @@ export class TableConnector {
 
     onMount() {
         const {tbl_ui_id, tbl_id, tableModel} = this;
-        if (!getTableUiByTblId(tbl_id)) {
+        if (!TblUtil.getTableUiByTblId(tbl_id)) {
             TblCntlr.dispatchTableUiUpdate({tbl_ui_id, tbl_id, ...this.options});
             if (tableModel && !tableModel.origTableModel) {
                 set(tableModel, 'request.tbl_id', tbl_id);
-                TblCntlr.dispatchTableAddLocal(tableModel, undefined, false);
+                const workingTableModel = cloneDeep(tableModel);
+                workingTableModel.origTableModel = tableModel;
+                TblCntlr.dispatchTableAddLocal(workingTableModel, undefined, false);
             }
         }
     }
 
     onSort(sortInfoString) {
-        TblCntlr.dispatchTableSort({tbl_id: this.tbl_id, sortInfo: sortInfoString});
+        var {request} = TblUtil.getTblInfoById(this.tbl_id);
+        request = Object.assign({}, request, {sortInfo: sortInfoString});
+        TblCntlr.dispatchTableSort(request);
     }
 
     onFilter(filterIntoString) {
@@ -46,13 +49,13 @@ export class TableConnector {
      */
     onFilterSelected(selected) {
         if (isEmpty(selected)) return;
-        const {request} = getTblInfoById(this.tbl_id);
+        const {request} = TblUtil.getTblInfoById(this.tbl_id);
         TblCntlr.dispatchTableFilterSelrow(request, selected);
     }
 
     onPageSizeChange(nPageSize) {
         nPageSize = Number.parseInt(nPageSize);
-        const {pageSize, highlightedRow} = getTblInfoById(this.tbl_id);
+        const {pageSize, highlightedRow} = TblUtil.getTblInfoById(this.tbl_id);
         if (Number.isInteger(nPageSize) && nPageSize !== pageSize) {
             const request = {pageSize: nPageSize};
             TblCntlr.dispatchTableHighlight(this.tbl_id, highlightedRow, request);
@@ -60,7 +63,7 @@ export class TableConnector {
     }
 
     onGotoPage(number = '1') {
-        const {currentPage, totalPages, pageSize} = getTblInfoById(this.tbl_id);
+        const {currentPage, totalPages, pageSize} = TblUtil.getTblInfoById(this.tbl_id);
         number = Number.parseInt(number);
         if (Number.isInteger(number) && number !== currentPage && number > 0 && number <= totalPages) {
             const highlightedRow = (number - 1) * pageSize;
@@ -69,7 +72,7 @@ export class TableConnector {
     }
 
     onRowHighlight(rowIdx) {
-        const {hlRowIdx, startIdx} = getTblInfoById(this.tbl_id);
+        const {hlRowIdx, startIdx} = TblUtil.getTblInfoById(this.tbl_id);
         if (rowIdx !== hlRowIdx) {
             const highlightedRow = startIdx + rowIdx;
             TblCntlr.dispatchTableHighlight(this.tbl_id, highlightedRow);
@@ -77,7 +80,7 @@ export class TableConnector {
     }
 
     onSelectAll(checked) {
-        const {startIdx, tableModel} = getTblInfoById(this.tbl_id);
+        const {startIdx, tableModel} = TblUtil.getTblInfoById(this.tbl_id);
         const selectInfo = tableModel.selectInfo ? cloneDeep(tableModel.selectInfo) : {};
         const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
         selectInfoCls.setSelectAll(checked);
@@ -85,7 +88,7 @@ export class TableConnector {
     }
 
     onRowSelect(checked, rowIndex) {
-        const {tableModel, startIdx} = getTblInfoById(this.tbl_id);
+        const {tableModel, startIdx} = TblUtil.getTblInfoById(this.tbl_id);
         const selectInfo = tableModel.selectInfo ? cloneDeep(tableModel.selectInfo) : {};
         const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
         selectInfoCls.setRowSelect(rowIndex, checked);
@@ -109,27 +112,7 @@ export class TableConnector {
         if (!isUndefined(filterInfo)) {
             this.onFilter(filterInfo);
         }
-
         const changes = omitBy({columns, showUnits, showTypes, showFilters, optSortInfo:sortInfo}, isUndefined);
-
-        if (columns) {
-            const {columns:prevColumns, columnWidths, scrollLeft} = getTableUiById(this.tbl_ui_id);
-            const updColIdx = columns.findIndex((c, idx) => c.visibility !== prevColumns[idx].visibility);
-            if (updColIdx >= 0) {
-                const updColPos = range(0, updColIdx).reduce((pv, idx) => {
-                    const delta =  get(columns, [idx, 'visibility'], 'show') === 'show' ?  columnWidths[idx] : 0;
-                    return pv + delta;
-                }, 0);
-                if (updColPos < scrollLeft) {
-                    if (get(columns, [updColIdx, 'visibility'], 'show') === 'show') {
-                        changes.scrollLeft = scrollLeft + columnWidths[updColIdx];
-                    } else {
-                        changes.scrollLeft = scrollLeft - columnWidths[updColIdx];
-                    }
-                }
-            }
-        }
-
         if (!isEmpty(changes)) {
             changes.tbl_ui_id = this.tbl_ui_id;
             TblCntlr.dispatchTableUiUpdate(changes);
@@ -137,7 +120,7 @@ export class TableConnector {
     }
 
     onOptionReset() {
-        const ctable = getTblById(this.tbl_id);
+        const ctable = TblUtil.getTblById(this.tbl_id);
         var filterInfo = get(ctable, 'request.filters', '').trim();
         filterInfo = filterInfo !== '' ? '' : undefined;
         var {showUnits, showTypes, showFilters, pageSize} = this.orig || {};
@@ -152,3 +135,4 @@ export class TableConnector {
         return new TableConnector(tbl_id, tbl_ui_id, tableModel, options);
     }
 }
+

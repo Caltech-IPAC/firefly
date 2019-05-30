@@ -30,9 +30,15 @@ import java.util.List;
  */
 public class WebPlotRequest extends ServerRequest {
 
-    // TODO this is actually coupled with edu.caltech.ipac.firefly.data.FinderChartRequestUtil.ImageSet.ImageSet and so we need to add imageset here although SEIP, AKARI are using ATLAS services.
-    public enum
-            ServiceType {IRIS, SEIP, AKARI, ATLAS, ISSA, DSS, SDSS, TWOMASS, MSX, DSS_OR_IRIS, WISE, NONE}
+    public static WebPlotRequest makeZTFRequest(WorldPt wp,
+                                                  String survey,
+                                                  String band,
+                                                  float sizeInDeg) {
+        WebPlotRequest req= makePlotServiceReq(ServiceType.ZTF, wp, survey, sizeInDeg);
+        req.setParam(SURVEY_KEY_BAND, band + "");
+        req.setTitle("ZTF: "+survey.toUpperCase());
+        return req;
+    }
     public enum TitleOptions {NONE,  // use what it in the title
                               PLOT_DESC, // use the plot description key
                               FILE_NAME, // use the file name or analyze the URL and make a title from that
@@ -390,6 +396,12 @@ public class WebPlotRequest extends ServerRequest {
         req.setTitle("WISE: "+sDesc+ ", B"+ band);
         return req;
     }
+
+    //======================== ZTF =====================================
+
+    // TODO this is actually coupled with edu.caltech.ipac.firefly.data.FinderChartRequestUtil.ImageSet.ImageSet and so we need to add imageset here although SEIP, AKARI are using ATLAS services.
+    public enum
+            ServiceType {IRIS, SEIP, AKARI, ATLAS, ISSA, DSS, SDSS, TWOMASS, MSX, DSS_OR_IRIS, WISE, ZTF, PTF, NONE}
 
     /**
      * @param wp

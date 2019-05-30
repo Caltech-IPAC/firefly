@@ -228,20 +228,6 @@ public class TableUtil {
         }
     }
 
-    private static Map<String, Format> allFormats = new HashMap<>();
-    static {
-        allFormats.put("ipac", Format.IPACTABLE);
-        allFormats.put("csv", Format.CSV);
-        allFormats.put("tsv", Format.TSV);
-        allFormats.put("votable-tabledata", Format.VO_TABLE_TABLEDATA);
-        allFormats.put("votable-binary-inline", Format.VO_TABLE_BINARY);
-        allFormats.put("votable-binary2-inline", Format.VO_TABLE_BINARY2);
-        allFormats.put("votable-fits-inline", Format.VO_TABLE_FITS);
-        allFormats.put("fits", Format.FITS);
-    }
-
-    public static Map<String, Format> getAllFormats() { return allFormats; }
-
     public static class ColCheckInfo {
         HashMap<String, CheckInfo> colCheckInfos = new HashMap<>();  // keyed by column name
 

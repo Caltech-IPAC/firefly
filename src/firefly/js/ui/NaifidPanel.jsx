@@ -4,7 +4,7 @@
 
 import React, {PureComponent, memo} from 'react';
 import PropTypes from 'prop-types';
-import {get, sortBy} from 'lodash';
+import {get} from 'lodash';
 import {resolveNaifidObj} from  './NaifidPanelWorker.js';
 import {SuggestBoxInputFieldView} from './SuggestBoxInputField';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
@@ -42,10 +42,9 @@ class NaifidPanelView extends PureComponent {
         if (!rval.p) return [];
         //if value has been searched previously, no need to call the api again.
         if(searchHistory.length > 0){
-            const cachedSuggList = Object.values(searchHistory).find((v)=>(v.searchVal === val));
-            if(get(cachedSuggList,'searchRes')){
-                const resSuggestionsList = Object.values(cachedSuggList.searchRes).map( (v) => ({name:v.naifName, naifid:v.naifId}));
-                return sortBy(resSuggestionsList, 'naifid').reverse();
+            const cachedSuggList = Object.entries(searchHistory).find(([k,v])=>(v.searchVal === val));
+            if(cachedSuggList){
+                return Object.entries(cachedSuggList.pop().searchRes).map( ([k,v]) => ({name:v.naifName, naifid:v.naifId}));
             }
         }
         return rval.p.then((response)=>{
@@ -53,9 +52,7 @@ class NaifidPanelView extends PureComponent {
                 const suggestionsList = Object.entries(response.data).map(([k,v])=>({naifId:v, naifName:k}));
                 searchHistory.push({searchVal:val, searchRes: suggestionsList});
 
-                const resSuggestionsList = Object.values(suggestionsList).map( (v) => ({name:v.naifName, naifid:v.naifId}));
-                return sortBy(resSuggestionsList, 'naifid').reverse();
-
+                return Object.entries(suggestionsList).map( ([k,v]) => ({name:v.naifName, naifid:v.naifId}));
             } else {
                 //console.error(response);
                 this.props.fireValueChange({valid: false, message: response.feedback});

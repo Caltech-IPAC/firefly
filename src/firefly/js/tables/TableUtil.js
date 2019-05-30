@@ -50,7 +50,7 @@ export function doFetchTable(tableRequest, hlRowIdx) {
     const {tbl_id} = tableRequest;
     const tableModel = getTblById(tbl_id) || {};
     if (tableModel.origTableModel) {
-        return Promise.resolve(processRequest(tableModel, tableRequest, hlRowIdx));
+        return Promise.resolve(processRequest(tableModel.origTableModel, tableRequest, hlRowIdx));
     } else {
         return fetchTable(tableRequest, hlRowIdx);
     }
@@ -349,7 +349,7 @@ export function getFilterCount(tableModel) {
 export function clearFilters(tableModel) {
     const {request, tbl_id} = tableModel || {};
     if (request && request.filters) {
-        TblCntlr.dispatchTableFilter({tbl_id, filters: ''});
+        TblCntlr.dispatchTableFilter({tbl_id, filters: ''}, 0);
     }
 }
 
@@ -564,38 +564,23 @@ export function filterTable(table, filterInfoStr) {
     return table.tableData;
 }
 
+export function processRequest(origTableModel, tableRequest, hlRowIdx) {
+    const {filters, sortInfo, inclCols, startIdx, pageSize} = tableRequest;
 
-export function cloneClientTable (tableModel) {
-    const nTable = cloneDeep(tableModel);
-    nTable.origTableModel = tableModel;
-
-    nTable.isFetching = false;
-    set(nTable, 'tableMeta.Loading-Status', 'COMPLETED');
-
-    const {data, columns} = nTable.tableData;
-    // add ROW_IDX to working table for tracking original row index
-    columns.push({name: 'ROW_IDX', type: 'int', visibility: 'hidden'});
-    data.forEach((r, idx) => r.push(String(idx)));
-    return nTable;
-}
-
-export function processRequest(tableModel, tableRequest, hlRowIdx) {
-    const {filters, sortInfo, inclCols} = tableRequest;
-    const {origTableModel} = tableModel;
-    let {startIdx, pageSize} = tableRequest;
-
-    const nTable = cloneClientTable(origTableModel);
-    let {data, columns} = nTable.tableData;
-
+    var nTable = cloneDeep(origTableModel);
+    nTable.origTableModel = origTableModel;
     nTable.request = tableRequest;
-    pageSize = pageSize || data.length || MAX_ROW;
+    var {data, columns} = nTable.tableData;
+
+    if (filters || sortInfo) {      // need to track original rowId.
+        columns.push({name: 'ORIG_IDX', type: 'int', visibility: 'hidden'});
+        data.forEach((r, idx) => r.push(String(idx)));
+    }
 
     if (filters) {
         filterTable(nTable, filters);
     }
-
     data = nTable.tableData.data;
-
     if (sortInfo) {
         data = sortTableData(data, columns, sortInfo);
     }
@@ -605,30 +590,13 @@ export function processRequest(tableModel, tableRequest, hlRowIdx) {
         const inclIdices = columns.map( (c) => origTableModel.tableData.indexOf(c));
         data = data.map( (r) =>  r.filters( (c, idx) => inclIdices.includes(idx)));
     }
-
-    const prevHlRowIdx = get(tableRequest, ['META_OPTIONS', MetaConst.HIGHLIGHTED_ROW_BY_ROWIDX], 0);
-    if (hlRowIdx) {
-        const currentPage = Math.floor(hlRowIdx / pageSize) + 1;
-        startIdx = (currentPage-1) * pageSize;
-        nTable.highlightedRow = hlRowIdx;
-    } else if (prevHlRowIdx) {
-        // preserve previous highlightedRow if possible.
-        let relRowIdx = data.findIndex( (r, rIdx) => getCellValue(nTable, rIdx, 'ROW_IDX') === prevHlRowIdx );
-        relRowIdx = relRowIdx < 0 ? 0 : relRowIdx;
-        const currentPage = Math.floor(relRowIdx / pageSize) + 1;
-        startIdx = (currentPage-1) * pageSize;
-        nTable.highlightedRow = relRowIdx;
-    } else {
-        nTable.highlightedRow = startIdx;
-    }
-
-    data = data.slice(startIdx, startIdx + pageSize);
-
+    data = data.slice(startIdx, startIdx + (pageSize ? pageSize : data.length));
+    nTable.highlightedRow = hlRowIdx || startIdx;
     nTable.tableData.data = data;
     nTable.tableData.columns = columns;
 
     // set selections from the original table
-    const idxCol = getColumnIdx(nTable, 'ROW_IDX');
+    const idxCol = getColumnIdx(nTable, 'ORIG_IDX');
     if (idxCol >= 0) {
         const nTableSelectInfoCls = SelectInfo.newInstance({rowCount: data.length});
         const origSelectInfoCls = SelectInfo.newInstance(get(origTableModel, 'selectInfo'));

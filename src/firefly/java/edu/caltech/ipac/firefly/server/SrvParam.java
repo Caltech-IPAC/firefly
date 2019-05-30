@@ -19,8 +19,6 @@ import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.visualize.VisJsonSerializer;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.table.TableUtil;
-import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 
 import java.util.ArrayList;
@@ -266,24 +264,6 @@ public class SrvParam {
     public TableServerRequest getTableServerRequest(String key) {
         String reqString = getRequired(key);
         return QueryUtil.convertToServerRequest(reqString);
-    }
-
-    public TableUtil.Format getTableFormat() {
-        final String fileFormat = getOptional("file_format").toLowerCase();
-
-        Map<String, TableUtil.Format> allFormats = TableUtil.getAllFormats();
-
-        String formatInMap;
-        if (StringUtils.isEmpty(fileFormat)) {
-            formatInMap = "ipac";
-        } else {
-            Object[] formats = allFormats.keySet().stream()
-                    .filter((t) -> fileFormat.equals(t))
-                    .toArray();
-            formatInMap = (formats.length != 1) ? "ipac" : (String)formats[0];
-        }
-
-        return allFormats.get(formatInMap);
     }
 }
 

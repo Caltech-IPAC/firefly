@@ -2,13 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {useCallback, useEffect} from 'react';
+import React, {PureComponent, useMemo} from 'react';
 import PropTypes from 'prop-types';
 import FixedDataTable from 'fixed-data-table-2';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {get, isEmpty} from 'lodash';
 
-import {tableTextView, getTableUiById, getProprietaryInfo, getTblById, hasRowAccess, uniqueTblUiId} from '../TableUtil.js';
+import {tableTextView, getTableUiById, getProprietaryInfo, getTblById, hasRowAccess} from '../TableUtil.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
@@ -16,117 +16,151 @@ import {TextCell, HeaderCell, SelectableHeader, SelectableCell} from './TableRen
 
 import './TablePanel.css';
 import {LinkCell} from './TableRenderer';
-import {useStoreConnector} from '../../ui/SimpleComponent';
-import {dispatchTableUiUpdate} from '../TablesCntlr';
-import * as Cntlr from '../TablesCntlr';
 
 const {Table, Column} = FixedDataTable;
 const noDataMsg = 'No Data Found';
 const noDataFromFilter = 'No data match these criteria';
 
-const BY_SCROLL = 'byScroll';
+class BasicTableViewInternal extends PureComponent {
+    constructor(props) {
+        super(props);
+        this.state = {
+            showMask: false,
+            data: [],
+            columnWidths: makeColWidth(props.columns, props.data)
+        };
 
-
-const BasicTableViewInternal = React.memo((props) => {
-
-    const {width, height} = props.size;
-    const {columns, data, hlRowIdx, showUnits, showTypes, showFilters, filterInfo, renderers,
-            bgColor, selectable, selectInfoCls, sortInfo, callbacks, textView, rowHeight,
-            showMask, error, tbl_ui_id=uniqueTblUiId(), currentPage, startIdx=0} = props;
-
-    const uiStates = getTableUiById(tbl_ui_id) || {};
-    const {tbl_id, columnWidths, scrollLeft=0, scrollTop=0, triggeredBy} = uiStates;
-
-    const onScrollEnd    = useCallback( doScrollEnd.bind({tbl_ui_id}), [tbl_ui_id]);
-    const onColumnResize = useCallback( doColumnResize.bind({columnWidths, tbl_ui_id}), [columnWidths]);
-    const onKeyDown      = useCallback( doKeyDown.bind({callbacks, hlRowIdx, currentPage}), [callbacks, hlRowIdx, currentPage]);
-    const onRowSelect    = useCallback( doRowSelect.bind({callbacks}), [callbacks]);
-    const onSelectAll    = useCallback( doSelectAll.bind({callbacks}), [callbacks]);
-    const onSort         = useCallback( doSort.bind({callbacks, sortInfo}), [callbacks, sortInfo]);
-    const onFilter       = useCallback( doFilter.bind({callbacks, filterInfo}), [callbacks, filterInfo]);
-    const onFilterSelected = useCallback( doFilterSelected.bind({callbacks, selectInfoCls}), [callbacks, selectInfoCls]);
-
-    useEffect( () => {
-        if (!columnWidths) {
-            dispatchTableUiUpdate({tbl_ui_id, columnWidths: makeColWidth(columns, data)});
-        }
-    });
-    const headerHeight = 22 + (showUnits && 8) + (showTypes && 8) + (showFilters && 22);
-    let totalColWidths = 0;
-    if (!isEmpty(columns) && !isEmpty(columnWidths)) {
-        totalColWidths = columns.reduce((pv, c, idx) => {
-            const delta =  get(c, ['visibility'], 'show') === 'show' ?  columnWidths[idx] : 0;
-            return pv + delta;
-        }, 0);
+        this.onColumnResizeEndCallback = this.onColumnResizeEndCallback.bind(this);
+        this.onKeyDown    = this.onKeyDown.bind(this);
+        this.onRowSelect  = this.onRowSelect.bind(this);
+        this.onSelectAll  = this.onSelectAll.bind(this);
+        this.onSort       = this.onSort.bind(this);
+        this.onFilter     = this.onFilter.bind(this);
+        this.onFilterSelected = this.onFilterSelected.bind(this);
     }
 
-    const adjScrollTop = correctScrollTopIfNeeded(totalColWidths, scrollTop, width, height-headerHeight, rowHeight, hlRowIdx, triggeredBy);
-    const adjScrollLeft = correctScrollLeftIfNeeded(totalColWidths, scrollLeft, width, triggeredBy);
+    onColumnResizeEndCallback(newColumnWidth, columnKey) {
+        var columnWidths = Object.assign({}, this.state.columnWidths, {[columnKey]: newColumnWidth});
+        this.setState({columnWidths});
+    }
 
-    useEffect( () => {
-        const changes = {};
-        if (!columnWidths)                  changes.columnWidths = makeColWidth(columns, data);
-        if (adjScrollTop !== scrollTop)     changes.scrollTop = adjScrollTop;
-        if (adjScrollLeft !== scrollLeft)   changes.scrollLeft = adjScrollLeft;
-
-        if (!isEmpty(changes)) {
-            dispatchTableUiUpdate({tbl_ui_id, ...changes});
+    UNSAFE_componentWillReceiveProps(nProps) {
+        if (isEmpty(this.state.columnWidths) && !isEmpty(nProps.columns)) {
+            this.setState({columnWidths: makeColWidth(nProps.columns, nProps.data)});
         }
-    });
+    }
 
-    if (!error && (isEmpty(columns) || isEmpty(columnWidths))) return (<div style={{top: 0}} className='loading-mask'/>);
+    componentWillUnmount() {
+        this.isUnmounted = true;
+    }
 
-    const makeColumnsProps = {columns, data, selectable, selectInfoCls, renderers, bgColor,
-        columnWidths, filterInfo, sortInfo, showUnits, showTypes, showFilters,
-        onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected, tbl_id};
 
-    const content = () => {
-        if (error) {
-            return <div style={{padding: 10}}>{error}</div>;
-        } else if (width === 0 || showMask || isEmpty(columns)) {
-            return <div/>;
-        } else if (textView) {
-            return <TextView { ...{columns, data, showUnits, width, height} }/>;
-        } else {
-            return (
-                <Table  rowHeight={rowHeight}
-                        headerHeight={headerHeight}
-                        rowsCount={data.length}
-                        isColumnResizing={false}
-                        onColumnResizeEndCallback={onColumnResize}
-                        onRowClick={(e, index) => callbacks.onRowHighlight && callbacks.onRowHighlight(index)}
-                        rowClassNameGetter={rowClassNameGetter(tbl_id, hlRowIdx, startIdx)}
-                        onScrollEnd={onScrollEnd}
-                        scrollTop = {adjScrollTop}
-                        scrollLeft={adjScrollLeft}
-                        width={width}
-                        height={height}>
-
-                    { makeColumns(makeColumnsProps) }
-                </Table>
-            );
+    onKeyDown(e) {
+        const {callbacks, hlRowIdx, currentPage} = this.props;
+        const key = get(e, 'key');
+        if (key === 'ArrowDown') {
+            callbacks.onRowHighlight && callbacks.onRowHighlight(hlRowIdx + 1);
+            e.preventDefault && e.preventDefault();
+        } else if (key === 'ArrowUp') {
+            callbacks.onRowHighlight && callbacks.onRowHighlight(hlRowIdx - 1);
+            e.preventDefault && e.preventDefault();
+        } else if (key === 'PageDown') {
+            callbacks.onGotoPage && callbacks.onGotoPage(currentPage + 1);
+            e.preventDefault && e.preventDefault();
+        } else if (key === 'PageUp') {
+            callbacks.onGotoPage && callbacks.onGotoPage(currentPage - 1);
+            e.preventDefault && e.preventDefault();
         }
-    };
+    }
+    onFilterSelected() {
+        const {callbacks, selectInfoCls} = this.props;
+        if (callbacks.onFilterSelected) {
+            const selected = [...selectInfoCls.getSelected()];
+            callbacks.onFilterSelected(selected);
+        }
+    }
 
-    const status = () => {
-        if (!error) {
-            if (showMask) {
-                return <div style={{top: 0}} className='loading-mask'/>;
-            } else if (isEmpty(data)) {
-                return <div className='TablePanel_NoData'> {filterInfo ? noDataFromFilter : noDataMsg} </div>;
+    onFilter({fieldKey, valid, value}) {
+        const {callbacks, filterInfo} = this.props;
+        if (callbacks.onFilter) {
+            const filterInfoCls = FilterInfo.parse(filterInfo);
+            if (valid && !filterInfoCls.isEqual(fieldKey, value)) {
+                filterInfoCls.setFilter(fieldKey, value);
+                callbacks.onFilter(filterInfoCls.serialize());
             }
         }
-        return null;
     };
 
-    return (
-        <div tabIndex='-1' onKeyDown={onKeyDown} className='TablePanel__frame'>
-            {content()}
-            {status()}
-        </div>
-    );
-});
+    onSort(cname) {
+        const {callbacks, sortInfo} = this.props;
+        if (callbacks.onSort) {
+            const sortInfoCls = SortInfo.parse(sortInfo);
+            callbacks.onSort(sortInfoCls.toggle(cname));
+        }
+    };
 
+    onSelectAll(checked) {
+        const {callbacks} = this.props;
+        callbacks.onSelectAll && callbacks.onSelectAll(checked);
+    }
+
+    onRowSelect(checked, rowIndex) {
+        const {callbacks} = this.props;
+        callbacks.onRowSelect && callbacks.onRowSelect(checked, rowIndex);
+    }
+
+    render() {
+        const {width, height}= this.props.size;
+        const {columns, data, hlRowIdx, showUnits, showTypes, showFilters, filterInfo, renderers, bgColor,
+            selectable, selectInfoCls, sortInfo, callbacks, textView, rowHeight, showMask, error, tbl_ui_id} = this.props;
+        const {columnWidths} = this.state;
+        const {onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected} = this;
+        const {tbl_id} = getTableUiById(tbl_ui_id) || {};
+
+        if (!error && isEmpty(columns)) return (<div style={{top: 0}} className='loading-mask'/>);
+
+        const makeColumnsProps = {columns, data, selectable, selectInfoCls, renderers, bgColor,
+                              columnWidths, filterInfo, sortInfo, showUnits, showTypes, showFilters,
+                              onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected, tbl_id};
+
+        const headerHeight = 22 + (showUnits && 8) + (showTypes && 8) + (showFilters && 22);
+
+        const content = () => {
+            if (error) {
+                return <div style={{padding: 10}}>{error}</div>;
+            } else if (width === 0 || showMask || isEmpty(columns)) {
+                return <div/>;
+            } else if (isEmpty(data)) {
+                return <div className='TablePanel_NoData'> {filterInfo ? noDataFromFilter : noDataMsg} </div>;
+            } else if (textView) {
+                return <TextView { ...{columns, data, showUnits, width, height} }/>;
+            } else {
+                return (
+                    <Table  rowHeight={rowHeight}
+                            headerHeight={headerHeight}
+                            rowsCount={data.length}
+                            isColumnResizing={false}
+                            onColumnResizeEndCallback={this.onColumnResizeEndCallback}
+                            onRowClick={(e, index) => callbacks.onRowHighlight && callbacks.onRowHighlight(index)}
+                            rowClassNameGetter={rowClassNameGetter(tbl_id, hlRowIdx)}
+                            scrollToRow={hlRowIdx}
+                            width={width}
+                            height={height}>
+
+                        { makeColumns(makeColumnsProps) }
+                    </Table>
+                );
+            }
+        };
+
+        return (
+            <div tabIndex='-1' onKeyDown={this.onKeyDown} className='TablePanel__frame'>
+                {content()}
+                {showMask && <div style={{top: 0}} className='loading-mask'/>}
+            </div>
+        );
+    }
+}
 
 BasicTableViewInternal.propTypes = {
     tbl_ui_id: PropTypes.string,
@@ -144,7 +178,6 @@ BasicTableViewInternal.propTypes = {
     rowHeight: PropTypes.number,
     showMask: PropTypes.bool,
     currentPage: PropTypes.number,
-    startIdx: PropTypes.number,
     bgColor: PropTypes.string,
     error:  PropTypes.string,
     size: PropTypes.object.isRequired,
@@ -175,87 +208,7 @@ BasicTableViewInternal.defaultProps = {
     currentPage: -1
 };
 
-export const BasicTableView = wrapResizer(BasicTableViewInternal);
-
-export const BasicTableViewWithConnector = React.memo((props) => {
-    const {tbl_ui_id=uniqueTblUiId()} = props;
-    useStoreConnector(() => getTableUiById(tbl_ui_id));
-    return <BasicTableView {...{tbl_ui_id, ...props}}/>;
-});
-
-/*---------------------------------------------------------------------------*/
-
-function doScrollEnd(scrollLeft, scrollTop) {
-    const {tbl_ui_id} = this;
-    const {scrollLeft:cScrollLeft, scrollTop:cScrollTop} =  getTableUiById(tbl_ui_id);
-    if (cScrollLeft !== scrollLeft || cScrollTop !== scrollTop) {
-        dispatchTableUiUpdate({ tbl_ui_id, scrollLeft, scrollTop, triggeredBy: BY_SCROLL});
-    }
-}
-
-function doColumnResize(newColumnWidth, columnKey) {
-    const {columnWidths={}, tbl_ui_id} = this;
-    dispatchTableUiUpdate({
-        tbl_ui_id,
-        columnWidths: Object.assign({}, columnWidths, {[columnKey]: newColumnWidth})
-    });
-}
-
-function doKeyDown(e) {
-    const {callbacks, hlRowIdx, currentPage} = this;
-    const key = get(e, 'key');
-    if (key === 'ArrowDown') {
-        callbacks.onRowHighlight && callbacks.onRowHighlight(hlRowIdx + 1);
-        e.preventDefault && e.preventDefault();
-    } else if (key === 'ArrowUp') {
-        callbacks.onRowHighlight && callbacks.onRowHighlight(hlRowIdx - 1);
-        e.preventDefault && e.preventDefault();
-    } else if (key === 'PageDown') {
-        callbacks.onGotoPage && callbacks.onGotoPage(currentPage + 1);
-        e.preventDefault && e.preventDefault();
-    } else if (key === 'PageUp') {
-        callbacks.onGotoPage && callbacks.onGotoPage(currentPage - 1);
-        e.preventDefault && e.preventDefault();
-    }
-}
-
-function doFilterSelected() {
-    const {callbacks, selectInfoCls} = this;
-    if (callbacks.onFilterSelected) {
-        const selected = [...selectInfoCls.getSelected()];
-        callbacks.onFilterSelected(selected);
-    }
-}
-
-function doFilter({fieldKey, valid, value}) {
-    const {callbacks, filterInfo} = this;
-    if (callbacks.onFilter) {
-        const filterInfoCls = FilterInfo.parse(filterInfo);
-        if (valid && !filterInfoCls.isEqual(fieldKey, value)) {
-            filterInfoCls.setFilter(fieldKey, value);
-            callbacks.onFilter(filterInfoCls.serialize());
-        }
-    }
-};
-
-function doSort(cname) {
-    const {callbacks, sortInfo} = this;
-    if (callbacks.onSort) {
-        const sortInfoCls = SortInfo.parse(sortInfo);
-        callbacks.onSort(sortInfoCls.toggle(cname));
-    }
-};
-
-function doSelectAll(checked) {
-    const {callbacks} = this;
-    callbacks.onSelectAll && callbacks.onSelectAll(checked);
-}
-
-function doRowSelect(checked, rowIndex) {
-    const {callbacks} = this;
-    callbacks.onRowSelect && callbacks.onRowSelect(checked, rowIndex);
-}
-
+export const BasicTableView= wrapResizer(BasicTableViewInternal);
 
 const TextView = ({columns, data, showUnits, width, height}) => {
     const text = tableTextView(columns, data, showUnits);
@@ -267,34 +220,6 @@ const TextView = ({columns, data, showUnits, width, height}) => {
         </div>
     );
 };
-
-function correctScrollTopIfNeeded(totalColWidths, scrollTop, width, height, rowHeight, hlRowIdx, triggeredBy) {
-    const rowHpos = hlRowIdx * rowHeight;
-    if (triggeredBy !== BY_SCROLL) {
-        // delta is a workaround for the horizontal scrollbar hiding part of the last row when visible
-        const delta = totalColWidths > width ? (.5*rowHeight) : 0;
-
-        if (rowHpos < scrollTop) {
-            return rowHpos - (height * .3);
-        } else if(rowHpos + rowHeight + delta > scrollTop + height) {
-            return rowHpos - height + (height * .3);
-        }
-    }
-    return scrollTop;
-}
-
-function correctScrollLeftIfNeeded(totalColWidths, scrollLeft, width, triggeredBy) {
-
-    if (scrollLeft < 0) {
-        return undefined;
-    } else if (scrollLeft > 0 && triggeredBy === Cntlr.TBL_UI_UPDATE) {
-        if (totalColWidths < width) {
-            // if the total widths of the columns is less than the view's width, don't apply scrollLeft
-            return undefined;
-        }
-    }
-    return scrollLeft;
-}
 
 function calcMaxWidth(idx, col, data) {
     let nchar = col.prefWidth || col.width;
@@ -322,14 +247,13 @@ function makeColWidth(columns, data) {
     }, {});
 }
 
-function rowClassNameGetter(tbl_id, hlRowIdx, startIdx) {
+function rowClassNameGetter(tbl_id, hlRowIdx) {
 
     const tableModel = getTblById(tbl_id);
     const hasProprietaryInfo = !isEmpty(getProprietaryInfo(tableModel));
 
     return (rowIndex) => {
-        const absRowIndex = startIdx + rowIndex;
-        if (hasProprietaryInfo && !hasRowAccess(tableModel, absRowIndex)) {
+        if (hasProprietaryInfo && !hasRowAccess(tableModel, rowIndex)) {
             return hlRowIdx === rowIndex ? 'TablePanel__no-access--highlighted' : 'TablePanel__no-access';
         }
         if (hlRowIdx === rowIndex) return 'tablePanel__Row_highlighted';

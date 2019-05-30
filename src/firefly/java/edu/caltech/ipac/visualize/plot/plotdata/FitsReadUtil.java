@@ -191,9 +191,8 @@ public class FitsReadUtil {
     }
 
     public static ArrayList<BasicHDU> getImageHDUList(BasicHDU[] HDUs) throws FitsException {
-        ArrayList<BasicHDU> HDUList = new ArrayList<>();
+        ArrayList<BasicHDU> HDUList = new ArrayList<BasicHDU>();
 
-        String delayedExceptionMsg = null; // the exception can be ignored if HDUList size is greater than 0
         for (int j = 0; j < HDUs.length; j++) {
             if (!(HDUs[j] instanceof ImageHDU) && !(HDUs[j] instanceof CompressedImageHDU)) {
                 continue;   //ignore non-image extensions
@@ -208,24 +207,7 @@ public class FitsReadUtil {
                 throw new FitsException("Missing header in FITS file");
 
             int naxis = header.getIntValue("NAXIS", -1);
-
-
-            // check weather image is valid
-            boolean goodImage = true;
-            if (naxis <= 0) goodImage = false;
-            else if (naxis == 1) {
-                delayedExceptionMsg = "FITS image contains only one dimension, two are required.";
-                goodImage = false;
-            } else {
-                for (int i = 1; i <= naxis; i++) {
-                    int naxisValue = header.getIntValue("NAXIS" + i, 0);
-                    if (naxisValue == 0) {
-                        delayedExceptionMsg = "FITS image has NAXIS" + i + "=0";
-                        goodImage = false;
-                    }
-                }
-            }
-
+            boolean goodImage = FitsReadUtil.isImageGood(header);
 
             if (goodImage) {
                 insertPositionIntoHeader(header, j, hdu.getFileOffset());
@@ -246,11 +228,6 @@ public class FitsReadUtil {
             //header.resetOriginalSize();
 
         } //end j loop
-
-        if (HDUList.size() == 0 && delayedExceptionMsg != null ) {
-            throw new FitsException(delayedExceptionMsg);
-        }
-
         return HDUList;
     }
 
@@ -315,6 +292,16 @@ public class FitsReadUtil {
                 throw new IllegalArgumentException("naxis="+naxis + " is not supported");
 
         }
+    }
+
+    private static boolean isImageGood(Header aHeader) {
+        int naxis = aHeader.getIntValue("NAXIS", -1);
+        if (naxis == 0) return false;
+        for (int i = 1; i <= Math.max(naxis,2); i++) {
+            int naxisValue = aHeader.getIntValue("NAXIS" + i, 0);
+            if (naxisValue == 0) return false;
+        }
+        return true;
     }
 
     /**

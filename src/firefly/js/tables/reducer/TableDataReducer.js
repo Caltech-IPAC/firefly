@@ -126,7 +126,7 @@ function clientTableSelectionSync(root, tbl_id, selectInfo) {
     if (!origTableModel || !origTblData) {
         return root;
     }
-    // if ROW_IDX column is present in the table, its row indexes differ from the original table
+    // if ORIG_IDX column is present in the table, its row indexes differ from the original table
     const tableModel = get(root, [tbl_id]);
     const idxCol = TblUtil.getColumnIdx(tableModel, 'ORIG_IDX');
     if (idxCol < 0) {

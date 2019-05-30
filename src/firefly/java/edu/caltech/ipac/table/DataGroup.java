@@ -26,7 +26,6 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
     private List<LinkInfo> links = new ArrayList<>();     // for <LINK> under <TABLE> of VOTable
     private List<ParamInfo> params = new ArrayList<>();  // for <PARAM> under <TABLE> of VOTABLE
     private transient DataType[] cachedColumnsAry = null;
-    private transient int highlightedRow = -1;
 
     public DataGroup() {}
 
@@ -201,15 +200,6 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
 
     public int size() {
         return size;
-    }
-
-
-    public int getHighlightedRow() {
-        return highlightedRow;
-    }
-
-    public void setHighlightedRow(int highlightedRow) {
-        this.highlightedRow = highlightedRow;
     }
 
 //======================================================================

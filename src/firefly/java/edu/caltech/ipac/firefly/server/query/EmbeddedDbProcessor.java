@@ -27,6 +27,7 @@ import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.JsonTableUtil;
+import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.table.DataGroup;
@@ -51,8 +52,6 @@ import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW;
-import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW_BY_ROWIDX;
 import static edu.caltech.ipac.firefly.server.ServerContext.SHORT_TASK_EXEC;
 import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
 import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.execRequestQuery;
@@ -382,14 +381,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             nreq.setInclColumns(cols.toArray(new String[0]));
         }
 
-        // handle highlightedRow request if present
-        // meta can be HIGHLIGHTED_ROW or HIGHLIGHTED_ROW_BY_ROWIDX
-        // if this row exists in the new table, fetch the page where this row is at, and set highlightedRow to it.
-        // Otherwise, return as requested.
-        int highlightedRow = handleHighlighedRowRequest(treq, nreq, dbFile, resultSetID);
-
         DataGroupPart page = execRequestQuery(nreq, dbFile, resultSetID);
-        page.getData().setHighlightedRow(highlightedRow);
 
         // handle selectInfo
         // selectInfo is sent to the server as Request.META_INFO.selectInfo
@@ -402,29 +394,6 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         treq.setMeta(TableMeta.RESULTSET_ID, resultSetID);
 
         return page;
-    }
-
-    // use HIGHLIGHTED_ROW_BY_ROWIDX if exists then check HIGHLIGHTED_ROW
-    private int handleHighlighedRowRequest(TableServerRequest treq, TableServerRequest nreq, File dbFile, String resultSetID) {
-        int highlightedRow = StringUtils.getInt(treq.getOption(HIGHLIGHTED_ROW), -1);
-        int hlRowByRowIdx = StringUtils.getInt(treq.getOption(HIGHLIGHTED_ROW_BY_ROWIDX), -1);
-        if (hlRowByRowIdx >= 0) {
-            DbAdapter dbAdapter = DbAdapter.getAdapter(nreq);
-            try {
-                highlightedRow =  JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
-                        .queryForInt(String.format("select row_num from %s where ROW_IDX = %d", resultSetID, hlRowByRowIdx));
-            } catch (Exception e) {
-                // row does not exists in new resultset.. ignore the error.
-            }
-        }
-        if (highlightedRow >= 0) {
-            // based on highlightedRow, update startIdx
-            int currentPage = (int) (Math.floor(highlightedRow / nreq.getPageSize()) + 1);
-            int startIdx = (currentPage-1) * nreq.getPageSize();
-            nreq.setStartIndex(startIdx);
-            treq.setStartIndex(startIdx);
-        }
-        return highlightedRow;
     }
 
     private String makeResultSetReqStr(TableServerRequest treq) {

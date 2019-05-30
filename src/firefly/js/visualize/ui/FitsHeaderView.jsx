@@ -327,7 +327,6 @@ function renderTable(band, fitsHeaderInfo, isPlacedOnTab) {
                showToolbar={false}
                selectable={false}
                showOptionButton={true}
-               allowUnits={false}
            />
 
         </div>

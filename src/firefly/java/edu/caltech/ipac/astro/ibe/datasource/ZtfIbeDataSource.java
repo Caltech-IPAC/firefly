@@ -57,8 +57,7 @@ public class ZtfIbeDataSource extends BaseIbeDataSource {
         this(null, ds);
     }
 
-    public ZtfIbeDataSource(String ibeHost, DataProduct ds) {
-        setupDS(ibeHost, ds.getDataset(), ds.getTable());
+    public ZtfIbeDataSource(String ibeHost, DataProduct ds) { setupDS(ibeHost, ds.getDataset(), ds.getTable());
     }
 
 //====================================================================
@@ -104,6 +103,18 @@ public class ZtfIbeDataSource extends BaseIbeDataSource {
 
 
             dataParam.setFilePath(baseDir + baseFile);
+        } else if (getTableName().equalsIgnoreCase(DataProduct.REF.name())) {
+
+            String field = pathInfo.get("field");
+            String filtercode = pathInfo.get("filtercode");
+            String qid = pathInfo.get("qid");
+            String ccdid = pathInfo.get("ccdid");
+            String formatccdid = ("00" + ccdid).substring(ccdid.length());
+            String formatfield =  ("000000" + field).substring(field.length());
+            String fff = formatfield.substring(0,3);
+            String refbaseDir = fff + "/" + "field" + formatfield + "/" + filtercode +"/" + "ccd" +formatccdid +"/" + "q" + qid +"/";
+            String refbaseFile = "ztf_" + formatfield + "_" + filtercode +"_c" + formatccdid + "_q" + qid + ZtfRequest.REFIMAGE;
+            dataParam.setFilePath(refbaseDir + refbaseFile);
         }
 
         // check cutout params
@@ -118,7 +129,7 @@ public class ZtfIbeDataSource extends BaseIbeDataSource {
             }
         }
 
-        // look for dec_obj first - moving object search
+        // look for dec_obj first - moving osetupDS(host, schema, table) object search
         String subLat = pathInfo.get("dec_obj");
         if (StringUtils.isEmpty(subLat)) {
             // next look for in_dec (IBE returns this)
@@ -186,22 +197,17 @@ public class ZtfIbeDataSource extends BaseIbeDataSource {
         }
         setIbeHost(ibeHost);
         setMission(ZTF);
-        setDataset(dataset);
+        setDataset("products");
         setTableName(table);
 
     }
 
     private String processConstraints(Map<String, String> queryInfo) {
         // create constraint array
-        // create constraint array
         ArrayList<String> constraints = new ArrayList<String>();
         String constrStr = "";
 
-//        String productLevel = req.getSafeParam("ProductLevel");
-        String productLevel = "sci";
-
-        // process L1 only constraints
-        if (productLevel.equalsIgnoreCase("sci")) {
+        //if (getTableName().equalsIgnoreCase(DataProduct.REF.name())) {
             // process DATE RANGE
             String timeStart = queryInfo.get("timeStart");
             if (!StringUtils.isEmpty(timeStart)) {
@@ -268,34 +274,11 @@ public class ZtfIbeDataSource extends BaseIbeDataSource {
                 constraints.add(ccdIdConstraint);
             }
 
-            }
-
-            //process CCD IDs (support multiple ccdids)
-            String ccdIds = queryInfo.get("ccdId");
-            if (!StringUtils.isEmpty(ccdIds)) {
-                String[] ccdIdArray = ccdIds.split("[,; ]+");
-                String ccdIdConstraint = "ccdid";
-                if (ccdIdArray.length == 1) {
-                    ccdIdConstraint += "='" + ccdIdArray[0] + "'";
-                } else {
-                    ccdIdConstraint += " IN (";
-                    int cnt = 0;
-                    for (String ccdId : ccdIdArray) {
-                        if (StringUtils.isEmpty(ccdId)) {
-                            continue;
-                        }
-
-                        if (cnt > 0) {
-                            ccdIdConstraint += ",";
-                        }
-                        ccdIdConstraint += "'" + ccdId + "'";
-                        cnt++;
-                    }
-
-                    ccdIdConstraint += ")";
-                }
-
-                constraints.add(ccdIdConstraint);
+            //process filter constriant, this is from image search panel
+            String filtercodeConstr = queryInfo.get("filtercode");
+            if (!StringUtils.isEmpty(filtercodeConstr)) {
+                String ztffilterConstraint = "filtercode='" + filtercodeConstr + "'";
+                constraints.add(ztffilterConstraint);
             }
 
         // compile all constraints

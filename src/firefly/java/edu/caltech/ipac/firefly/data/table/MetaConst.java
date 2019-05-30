@@ -47,8 +47,6 @@ public class MetaConst {
     /** the column name with public release date info;  null is considered not public */
     public static final String  RELEASE_DATE_COL = "RELEASE_DATE_COL";
 
-    // meta options
-    public static final String HIGHLIGHTED_ROW = "highlightedRow";
-    public static final String HIGHLIGHTED_ROW_BY_ROWIDX = "highlightedRowByRowIdx";
+
 }
 

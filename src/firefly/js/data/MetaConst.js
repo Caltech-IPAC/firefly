@@ -63,9 +63,6 @@ export const MetaConst = {
     /** the column name with public release date info;  null is considered not public */
     RELEASE_DATE_COL : 'RELEASE_DATE_COL',
 
-    HIGHLIGHTED_ROW             : 'highlightedRow',                 // row to highlight on data fetch
-    HIGHLIGHTED_ROW_BY_ROWIDX   : 'highlightedRowByRowIdx',         // row to highlight on data fetch based on original row index
-
     /** @deprecated use CENTER_COLUMN */
     CATALOG_COORD_COLS : 'CatalogCoordColumns',
 

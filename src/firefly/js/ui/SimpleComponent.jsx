@@ -1,4 +1,4 @@
-import {PureComponent, useEffect, useState} from 'react';
+import React, {PureComponent, useEffect, useState} from 'react';
 import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
@@ -42,30 +42,22 @@ export class SimpleComponent extends PureComponent {
  * This function make use of useState and useEffect to
  * trigger a re-render of functional components when the value in the store changes.
  *
- * By default, this will call Object.is() to ensure the state has changed before
- * calling setState.  To override this behavior, use useStoreConnector.bind({comparator: your_compare_function}).
- *
  * @param stateGetters  one or more functions returning a state
  * @returns {Object[]}  an array of state's value in the order of the given stateGetters
  */
 export function useStoreConnector(...stateGetters) {
-    const {comparator=Object.is} = this || {};
 
     const rval = [];
     const setters = stateGetters.map((getter) => {
         const [val, setter] = useState(getter());
         rval.push(val);
-        return [getter, setter, val];
+        return [getter, setter];
     });
 
     useEffect(() => {
         return flux.addListener(() => {
-                setters.forEach(([getter, setter, oldState], idx) => {
-                    const newState = getter();
-                    setters[idx][2] = newState;
-                    if (!comparator(oldState, newState)) {
-                        setter(newState);
-                    }
+                setters.forEach(([getter, setter]) => {
+                    setter(getter());
                 });
         });
     }, []);     // only run once

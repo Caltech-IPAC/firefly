@@ -160,7 +160,6 @@
             <button class="tabButton" onclick="showTab('ParamInfo')">ParamInfo</button>
             <button class="tabButton" onclick="showTab('META_INFO')">META_INFO</button>
             <button class="tabButton" onclick="showTab('TblOptions')">TblOptions</button>
-            <button class="tabButton" onclick="showTab('META_OPTIONS')">META_OPTIONS</button>
         </div>
         <div class="tabContent">
 
@@ -188,7 +187,6 @@ There are additional information specific to each input field.  Click the top bu
 * @prop {boolean} [removable=true]  true if this table can be removed from view.
 * @prop {boolean} [border=true]
 * @prop {boolean} [showUnits=true]
-* @prop {boolean} [allowUnits=true] enable/disable the use of units in a table.
 * @prop {boolean} [showFilters=false]
 * @prop {boolean} [showToolbar=true]
 * @prop {boolean} [showTitle=true]
@@ -241,20 +239,6 @@ Value               * @prop {string} value     static value of this column for a
 
                 </pre>
             </div>
-
-            <div id="META_OPTIONS"  class="tabItem">
-                <h3>META_OPTIONS</h3>
-                <pre>
-META_OPTIONS is internally used to pass options to the server.  The information in this map is intended for single use and applies only
-to this request.  Unlike META_INFO, it will not be sent back to the client.
-
-The available options are defined in MetaConst.js and MetaConst.java:
-highlightedRow          {number}         // set the highlightedRow to the given value.
-highlightedRowByRowIdx  {number}         // set the highlightedRow to the row with original row index of the given value.
-
-                </pre>
-            </div>
-
 
             <div id="ParamInfo"  class="tabItem">
                 <h3>ParamInfo</h3>

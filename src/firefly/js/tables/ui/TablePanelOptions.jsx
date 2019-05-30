@@ -10,7 +10,6 @@ import {FilterEditor} from './FilterEditor.jsx';
 import {InputField} from '../../ui/InputField.jsx';
 import {intValidator} from '../../util/Validate.js';
 import * as TblUtil from '../TableUtil.js';
-import {getTableUiById} from "../TableUtil";
 
 
 const labelStyle = {display: 'inline-block', whiteSpace: 'nowrap', width: 50};
@@ -26,7 +25,7 @@ export class TablePanelOptions extends SimpleComponent  {
 
     render() {
         const {onChange, onOptionReset, tbl_ui_id} = this.props;
-        const {columns, pageSize, showUnits=true, allowUnits=true,showTypes=false, showFilters=false, showPaging=true, optSortInfo, filterInfo} = this.state;
+        const {columns, pageSize, showUnits=false, showTypes=false, showFilters=false, showPaging=true, optSortInfo, filterInfo} = this.state;
 
         if (isEmpty(columns)) return false;
 
@@ -37,12 +36,10 @@ export class TablePanelOptions extends SimpleComponent  {
                 <div style={{display: 'inline-flex', justifyContent: 'space-between'}}>
                     <div style={{display: 'inline-block', whiteSpace: 'nowrap'}}>
                         <div style={{...labelStyle, width: 35}}>Show:</div>
-                        {allowUnits &&
-                               <div style={labelStyle}><input type='checkbox'
+                        <div style={labelStyle}><input type='checkbox'
                                                        onChange={(e) => onPropChanged(e.target.checked, 'showUnits')}
                                                        checked={showUnits}/>Units
-                               </div>
-                        }
+                        </div>
                         <div style={{...labelStyle, width: 80}}><input type='checkbox'
                                                                        onChange={(e) => onPropChanged(e.target.checked, 'showTypes')}
                                                                        checked={showTypes}/>Data Types

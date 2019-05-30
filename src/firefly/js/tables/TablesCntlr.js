@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, set, omitBy, pickBy, pick, isNil, cloneDeep, findKey, isEqual, unset, merge, omit} from 'lodash';
+import {get, set, omitBy, pickBy, pick, isNil, cloneDeep, findKey, isEqual, unset, merge} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import * as TblUtil from './TableUtil.js';
@@ -18,7 +18,6 @@ import {trackBackgroundJob, isSuccess, isDone, getErrMsg} from '../core/backgrou
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
 import {dispatchJobAdd} from '../core/background/BackgroundCntlr.js';
-import {MetaConst} from '../data/MetaConst.js';
 
 
 export const TABLE_SPACE_PATH = 'table_space';
@@ -351,17 +350,14 @@ function tableSearch(action) {
 
 function tableAddLocal(action) {
     return (dispatch) => {
-        const {options={}, addUI=true} = action.payload || {};
+        const {tableModel={}, options={}, addUI=true} = action.payload || {};
         const {tbl_ui_id} = options || {};
-        let {tableModel={}} = action.payload || {};
-
-        if (!tableModel.origTableModel) {
-            tableModel = TblUtil.cloneClientTable(tableModel);
-        }
-
         const title = tableModel.title || get(tableModel, 'request.META_INFO.title') || 'untitled';
         const tbl_id = tableModel.tbl_id || get(tableModel, 'request.tbl_id');
 
+        Object.assign(tableModel, {isFetching: false});
+        set(tableModel, 'tableMeta.Loading-Status', 'COMPLETED');
+        if (!tableModel.origTableModel) tableModel.origTableModel = cloneDeep(tableModel);
         if (addUI) dispatchTblResultsAdded(tbl_id, title, options, tbl_ui_id);
         dispatch( {type: TABLE_REPLACE, payload: tableModel} );
         dispatchTableLoaded(Object.assign( TblUtil.getTblInfo(tableModel), {invokedBy: TABLE_FETCH}));
@@ -464,13 +460,11 @@ function tableFetch(action) {
 function tableSort(action) {
     return (dispatch) => {
         if (!action.err) {
-            const {request, hlRowIdx} = action.payload;
+            var {request, hlRowIdx} = action.payload;
             TblUtil.fixRequest(request);
             const {tbl_id} = request;
-            const [nreq, tableStub, tableModel] = setupTableOps(tbl_id, request);
+            const tableStub = setupTableOps(tbl_id, request);
             if (!tableStub) return;
-
-            setHlRowByRowIdx(nreq, tableModel);
 
             dispatch({type:TABLE_FETCH, payload: tableStub});
 
@@ -479,13 +473,11 @@ function tableSort(action) {
                 dispatch(action);
             });
 
-            doTableFetch({tbl_id, request: nreq, hlRowIdx, dispatch});
+            doTableFetch({tbl_id, request: tableStub.request, hlRowIdx, dispatch});
         }
     };
 }
 
-// return the full request after merging with the original, a table stub, and the current tableModel in
-// an array.  [fullRequest, tableStub, tableModel]
 function setupTableOps(tbl_id, nrequest) {
     const tableModel = TblUtil.getTblById(tbl_id);
     if (!tableModel) return;
@@ -494,11 +486,11 @@ function setupTableOps(tbl_id, nrequest) {
     // We'd like to preserve the columns so that the table renders while we are waiting for the response.
     // With server-side tables filtering and sorting preserves the number of columns.
     // There is no need to preserve columns for client-side tables.
-    // Additionally, removing sort/filters on client-table can reduce the number of columns (ROW_IDX removed),
+    // Additionally, removing sort/filters on client-table can reduce the number of columns (ORIG_IDX removed),
     // which would cause smartMerge bugs, if we preserve columns.
     const tableData = origTableModel? {} : pick(tableModel.tableData, 'columns');
     const nreq = merge({}, request, nrequest);
-    return [nreq, {tbl_id, tableMeta, selectInfo, tableData}, tableModel];
+    return {tbl_id, request:nreq, tableMeta, selectInfo, tableData};
 }
 
 
@@ -508,10 +500,8 @@ function tableFilter(action) {
             var {request, hlRowIdx} = action.payload;
             TblUtil.fixRequest(request);
             const {tbl_id} = request;
-            const [nreq, tableStub, tableModel] = setupTableOps(tbl_id, request);
+            const tableStub = setupTableOps(tbl_id, request);
             if (!tableStub) return;
-
-            setHlRowByRowIdx(nreq, tableModel);
 
             dispatch({type:TABLE_FETCH, payload: tableStub});
 
@@ -520,13 +510,13 @@ function tableFilter(action) {
                 dispatch(action);
             });
 
-            doTableFetch({tbl_id, request: nreq, hlRowIdx,  dispatch});
+            doTableFetch({tbl_id, request: tableStub.request, hlRowIdx,  dispatch});
         }
     };
 }
 
 function doTableFetch({request, hlRowIdx, dispatch, tbl_id}) {
-    request.startIdx = request.startIdx || 0;
+    request.startIdx = 0;
     const backgroundable = get(request, 'META_INFO.backgroundable', false);
     if (backgroundable) {
         asyncFetch(request, hlRowIdx, dispatch, tbl_id);
@@ -543,21 +533,15 @@ function doTableFetch({request, hlRowIdx, dispatch, tbl_id}) {
  * @returns {function}
  */
 function tableFilterSelrow(action) {
-    return (dispatch) => {
+    return () => {
         var {request={}, hlRowIdx, selected=[]} = action.payload || {};
         TblUtil.fixRequest(request);
         const {tbl_id, filters} = request;
+        const tableModel = TblUtil.getTblById(tbl_id);
         const filterInfoCls = FilterInfo.parse(filters);
 
-        const [nreq, tableStub, tableModel] = setupTableOps(tbl_id, request);
-        if (!tableStub) return;
-
-        setHlRowByRowIdx(nreq, tableModel);
-
-        dispatch({type:TABLE_FETCH, payload: tableStub});
-
         if (tableModel.origTableModel) {
-            const selRowIds = selected.map((idx) => TblUtil.getCellValue(tableModel, idx, 'ROW_IDX') || idx).toString();
+            const selRowIds = selected.map((idx) => TblUtil.getCellValue(tableModel, idx, 'ORIG_IDX') || idx).toString();
             // using addFilter instead of setFilter, so that each filter is removable on its own in free-form box
             filterInfoCls.addFilter('ROW_IDX', `IN (${selRowIds})`);
             request = Object.assign({}, request, {filters: filterInfoCls.serialize()});
@@ -603,12 +587,7 @@ function reducer(state=initState(), action={}) {
 /*-----------------------------------------------------------------------------------------*/
 
 
-function setHlRowByRowIdx(nreq, tableModel) {
-    const hlRowIdx = TblUtil.getCellValue(tableModel, tableModel.highlightedRow, 'ROW_IDX');
-    if (hlRowIdx) {
-        set(nreq, ['META_OPTIONS', MetaConst.HIGHLIGHTED_ROW_BY_ROWIDX], hlRowIdx);
-    }
-}
+
 
 function getRowIdFor(request, selected) {
     const params = {columnNames: ['ROW_IDX'], request, selectedRows: selected};

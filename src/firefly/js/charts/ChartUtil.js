@@ -15,7 +15,7 @@ import {
 import shallowequal from 'shallowequal';
 
 import {getAppOptions} from '../core/AppDataCntlr.js';
-import {getTblById, isFullyLoaded, isNumericType, watchTableChanges} from '../tables/TableUtil.js';
+import {getTblById, isFullyLoaded, watchTableChanges} from '../tables/TableUtil.js';
 import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_SELECT} from '../tables/TablesCntlr.js';
 import {dispatchLoadTblStats} from './TableStatsCntlr.js';
 import {dispatchChartUpdate, dispatchChartHighlighted, dispatchChartSelect, getChartData} from './ChartsCntlr.js';
@@ -103,7 +103,7 @@ export function getNumericCols(cols) {
     const ncols = [];
     const excludeNames = ['ROW_IDX', 'ROW_NUM'];
     cols.forEach((c) => {
-        if (isNumericType(c)) {
+        if (c.type.match(/^[dfil]/) !== null) {      // int, float, double, long .. or their short form.
             if (!excludeNames.includes(c.name)) { ncols.push(c); }
         }
     });

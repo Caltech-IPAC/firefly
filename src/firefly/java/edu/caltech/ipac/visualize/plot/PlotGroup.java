@@ -131,8 +131,6 @@ public class PlotGroup implements Iterable<Plot> {
    public void setZoomTo(float level) {
        _screenWidth  = (int)((Math.abs(_minX) + Math.abs(_maxX))  * level);
        _screenHeight = (int)((Math.abs(_minY) + Math.abs(_maxY))  * level);
-       if (_screenWidth == 0 && _minX != _maxX) {  _screenWidth = 1; }
-       if (_screenHeight == 0 && _minY != _maxY) {  _screenHeight = 1; }
        _maxYscale = (int)(Math.abs(_maxY) * level);
        _minXscale = (int)(Math.abs(_minX) * level);
        double scaleX =  1.0 * level;

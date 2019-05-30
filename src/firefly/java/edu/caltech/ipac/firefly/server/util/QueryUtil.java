@@ -103,19 +103,14 @@ public class QueryUtil {
                     String skey = String.valueOf(key);
                     if (skey.equals(TableServerRequest.META_INFO)) {
                         Map meta = (Map) val;
-                        meta.forEach((k,v) -> {
-                            String mkey = String.valueOf(k);
+                        for (Object mk : meta.keySet()) {
+                            String mkey = String.valueOf(mk);
                             if (mkey.equals(TableServerRequest.SELECT_INFO)) {
-                                retval.setSelectInfo(SelectionInfo.parse(String.valueOf(v)));
+                                retval.setSelectInfo(SelectionInfo.parse(String.valueOf(meta.get(mkey))));
                             } else {
-                                retval.setMeta(mkey, String.valueOf(v));
+                                retval.setMeta(mkey, String.valueOf(meta.get(mk)));
                             }
-                        });
-                    } else if (skey.equals(TableServerRequest.META_OPTIONS)) {
-                        Map options = (Map) val;
-                        options.forEach((k,v) -> {
-                            retval.setOption(String.valueOf(k), String.valueOf(v));
-                        });
+                        }
                     } else {
                         retval.setTrueParam(skey, String.valueOf(val));
                     }
