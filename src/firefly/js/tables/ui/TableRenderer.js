@@ -7,7 +7,7 @@ import FixedDataTable from 'fixed-data-table-2';
 import {set, get, isEqual, pick} from 'lodash';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS} from '../FilterInfo.js';
-import {isNumericType, tblDropDownId, getCellValue, getTblById, getColumn, getColumnByID} from '../TableUtil.js';
+import {isNumericType, tblDropDownId, getTblById, getColumn} from '../TableUtil.js';
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {SORT_ASC, UNSORTED} from '../SortInfo';
@@ -157,14 +157,9 @@ function EnumSelect({col, tbl_id, filterInfo, filterInfoCls, onFilter}) {
     );
 }
 
-export class SelectableHeader extends Component {
+export class SelectableHeader extends PureComponent {
     constructor(props) {
         super(props);
-    }
-
-    shouldComponentUpdate(nProps) {
-        const toCompare = ['checked', 'showUnits', 'showTypes', 'showFilters'];
-        return !isEqual(pick(nProps, toCompare), pick(this.props, toCompare));
     }
 
     // componentDidUpdate(prevProps, prevState) {

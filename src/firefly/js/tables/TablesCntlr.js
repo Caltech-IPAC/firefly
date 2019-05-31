@@ -470,7 +470,7 @@ function tableSort(action) {
             const [nreq, tableStub, tableModel] = setupTableOps(tbl_id, request);
             if (!tableStub) return;
 
-            setHlRowByRowIdx(nreq, tableModel);
+            TblUtil.setHlRowByRowIdx(nreq, tableModel);
 
             dispatch({type:TABLE_FETCH, payload: tableStub});
 
@@ -511,7 +511,7 @@ function tableFilter(action) {
             const [nreq, tableStub, tableModel] = setupTableOps(tbl_id, request);
             if (!tableStub) return;
 
-            setHlRowByRowIdx(nreq, tableModel);
+            TblUtil.setHlRowByRowIdx(nreq, tableModel);
 
             dispatch({type:TABLE_FETCH, payload: tableStub});
 
@@ -543,23 +543,19 @@ function doTableFetch({request, hlRowIdx, dispatch, tbl_id}) {
  * @returns {function}
  */
 function tableFilterSelrow(action) {
-    return (dispatch) => {
+    return () => {
         var {request={}, hlRowIdx, selected=[]} = action.payload || {};
         TblUtil.fixRequest(request);
         const {tbl_id, filters} = request;
         const filterInfoCls = FilterInfo.parse(filters);
 
-        const [nreq, tableStub, tableModel] = setupTableOps(tbl_id, request);
+        const [, tableStub, tableModel] = setupTableOps(tbl_id, request);
         if (!tableStub) return;
-
-        setHlRowByRowIdx(nreq, tableModel);
-
-        dispatch({type:TABLE_FETCH, payload: tableStub});
 
         if (tableModel.origTableModel) {
             const selRowIds = selected.map((idx) => TblUtil.getCellValue(tableModel, idx, 'ROW_IDX') || idx).toString();
             // using addFilter instead of setFilter, so that each filter is removable on its own in free-form box
-            filterInfoCls.addFilter('ROW_IDX', `IN (${selRowIds})`);
+            filterInfoCls.setFilter('ROW_IDX', `IN (${selRowIds})`);
             request = Object.assign({}, request, {filters: filterInfoCls.serialize()});
             dispatchTableFilter(request, hlRowIdx);
         } else {
@@ -567,7 +563,7 @@ function tableFilterSelrow(action) {
                 const value = selectedRowIdAry.reduce((rv, val, idx) => {
                         return rv + (idx ? ',':'') + val;
                     }, 'IN (') + ')';
-                filterInfoCls.addFilter('ROW_IDX', value);
+                filterInfoCls.setFilter('ROW_IDX', value);
                 request = Object.assign({}, request, {filters: filterInfoCls.serialize()});
                 dispatchTableFilter(request, hlRowIdx);
             });
@@ -602,13 +598,6 @@ function reducer(state=initState(), action={}) {
 
 /*-----------------------------------------------------------------------------------------*/
 
-
-function setHlRowByRowIdx(nreq, tableModel) {
-    const hlRowIdx = TblUtil.getCellValue(tableModel, tableModel.highlightedRow, 'ROW_IDX');
-    if (hlRowIdx) {
-        set(nreq, ['META_OPTIONS', MetaConst.HIGHLIGHTED_ROW_BY_ROWIDX], hlRowIdx);
-    }
-}
 
 function getRowIdFor(request, selected) {
     const params = {columnNames: ['ROW_IDX'], request, selectedRows: selected};

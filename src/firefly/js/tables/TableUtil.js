@@ -572,17 +572,19 @@ export function cloneClientTable (tableModel) {
     nTable.isFetching = false;
     set(nTable, 'tableMeta.Loading-Status', 'COMPLETED');
 
-    const {data, columns} = nTable.tableData;
-    // add ROW_IDX to working table for tracking original row index
-    columns.push({name: 'ROW_IDX', type: 'int', visibility: 'hidden'});
-    data.forEach((r, idx) => r.push(String(idx)));
+    if (nTable.tableData) {
+        const {data=[], columns=[]} = nTable.tableData;
+        // add ROW_IDX to working table for tracking original row index
+        columns.push({name: 'ROW_IDX', type: 'int', visibility: 'hidden'});
+        data.forEach((r, idx) => r.push(String(idx)));
+    }
     return nTable;
 }
 
 export function processRequest(tableModel, tableRequest, hlRowIdx) {
     const {filters, sortInfo, inclCols} = tableRequest;
-    const {origTableModel} = tableModel;
-    let {startIdx, pageSize} = tableRequest;
+    const {origTableModel=tableModel} = tableModel;
+    let {startIdx=0, pageSize} = tableRequest;
 
     const nTable = cloneClientTable(origTableModel);
     let {data, columns} = nTable.tableData;
@@ -765,6 +767,13 @@ function makeTableSourceUrl(columns, request, otherParams) {
     return wsCmd ? params : encodeServerUrl(DEF_BASE_URL, params);
 }
 
+export function setHlRowByRowIdx(nreq, tableModel) {
+    const hlRowIdx = getCellValue(tableModel, tableModel.highlightedRow, 'ROW_IDX');
+    if (hlRowIdx) {
+        set(nreq, ['META_OPTIONS', MetaConst.HIGHLIGHTED_ROW_BY_ROWIDX], hlRowIdx);
+    }
+}
+
 /**
  * convert this table into IPAC format
  * @param tableModel
@@ -822,6 +831,57 @@ export function tableTextView(columns, dataAry, showUnits=false, tableMeta) {
     return [meta, head, dataStr].join('\n');
 }
 
+/**
+ * returns a details view of the highlightedRow in a form of a tableModel
+ * with columns Name, Value, Type, Units, and Description
+ * @param {string} tbl_id             tbl_id of the table
+ * @param {number} highlightedRow     the row to generate the details for
+ * @param {string} details_tbl_id     tbl_id of the details table.  defaults to tbl_id + '_details'
+ */
+export function tableDetailsView(tbl_id, highlightedRow, details_tbl_id) {
+    const tableModel = getTblById(tbl_id);
+    const dataCols = getColumns(tableModel);
+    const {totalRows} = tableModel || {};
+    const nTblId = details_tbl_id || tbl_id + '_details';
+
+    if (totalRows <= 0 || highlightedRow < 0 || highlightedRow > tableModel.totalRows) {
+        return {tbl_id: nTblId, error: 'No Data Found'};
+    }
+
+    const columns = [
+        {name: 'Name', type: 'char', desc: 'Column name'},
+        {name: 'Value', type: 'char'},
+        {name: 'Type', type: 'char'},
+        {name: 'Units', type: 'char'},
+        {name: 'Description', type: 'char'}
+    ];
+
+    const data = dataCols.map((c) => {
+        const name  = c.label || c.name;
+        const value = getCellValue(tableModel, highlightedRow, c.name) || '';
+        const type  = c.type || '';
+        const units = c.units || '';
+        const desc  = c.desc || '';
+
+        return [name, value, type, units, desc];
+    });
+
+    const prevDetails = getTblById(nTblId) || {};
+    const {request={}} = prevDetails;
+    let nTable = {
+        tbl_id: nTblId,
+        request,
+        title: 'Additional Information',
+        tableData: {columns, data},
+        totalRows: data.length,
+        highlightedRow: prevDetails.highlightedRow
+    };
+    if (request.sortInfo || request.filters) {
+        setHlRowByRowIdx(request, prevDetails);
+        nTable = processRequest(nTable, request);
+    }
+    return nTable;
+}
 
 /**
  * returns an object map of the column name and its width.
