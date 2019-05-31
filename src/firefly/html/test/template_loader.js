@@ -8,18 +8,19 @@
             const expected = c.querySelector('#expected');
             const actual = c.querySelector('#actual');
             const scpt = c.querySelector('script');
-            const title = cnt++ + ' - ' + test.title;
 
-            renderTest(expected, actual, scpt, title, test);
+            renderTest(cnt++, expected, actual, scpt, test);
         });
     };
 
-    function renderTest(expected, actual, script, title, testTmpl) {
+    function renderTest(cnt, expected, actual, script, testTmpl) {
+        const title = cnt + ' - ' + testTmpl.title;
         const iframe = document.createElement('iframe');
         iframe.id = 'iframe';
         iframe.src = './template.html';
         iframe.style.height= '100%';
         const iframeContainer = document.createElement('div');
+        iframeContainer.id = 'test-' + cnt;
         iframeContainer.className = 'tst-iframe-container ' + testTmpl.className;
         iframeContainer.style.cssText = testTmpl.style.cssText;
         iframeContainer.appendChild(iframe);
