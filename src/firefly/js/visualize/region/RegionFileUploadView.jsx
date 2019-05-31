@@ -145,12 +145,13 @@ class RegionUpload extends PureComponent {
             <div style={{padding: 10, width: 380}}>
                 <FieldGroup groupKey={rgUploadGroupKey}>
                     <FileUpload
-                        wrapperStyle={{margin: '5px 0'}}
+                        wrapperStyle={{margin: '5px 0', width: 180}}
+                        innerStyle={{width: 80}}
                         fieldKey={rgUploadFieldKey}
                         initialState={{
                             tooltip: 'Select a region file to upload',
                             label: 'Upload File:'}}
-                        fileNameStyle={{marginLeft: -150, width: '15em', height: 16, fontSize: 12, verticalAlign: 'middle'}}
+                        fileNameStyle={{marginLeft: 0, width: 200, height: 16, fontSize: 12, verticalAlign: 'middle'}}
                     />
                     <CheckboxGroupInputField
                         fieldKey={relocatableKey}
