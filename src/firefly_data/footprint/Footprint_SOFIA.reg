@@ -9,3 +9,33 @@ image;box(0, 0, 2.4", 191", 0) # color=green tag={FORCAST_GRISMS_A}
 #FORCAST_GRISMS_B
 image;box(0, 0, 4.7", 191", 0) # color=green tag={FORCAST_GRISMS_B}
 
+#FLITECAM_GRISMS_ABBA
+image;box(0, 0, 1", 60", 0) # color=green tag={FLITECAM_GRISMS_ABBA}
+#FLITECAM_GRISMS_AB
+image;box(0, 0, 2", 60", 0) # color=green tag={FLITECAM_GRISMS_AB}
+#FLITECAM_IMAGE
+image;circle(0, 0, 8') # color=green tag={FLITECAM_IMAGE}
+
+#HAWC_BAND_A_TOTAL
+image;box(0, 0, 1.7', 2.8', 0)  # color=green tag={HAWC_BAND_A_TOTAL}
+#HAWC_BAND_A_POLAR
+image;box(0, 0, 1.7', 1.4', 0)  # color=green tag={HAWC_BAND_A_POLAR}
+
+#HAWC_BAND_C_TOTAL
+image;box(0, 0, 2.7', 4.2', 0)  # color=green tag={HAWC_BAND_C_TOTAL}
+#HAWC_BAND_C_POLAR
+image;box(0, 0, 2.7', 2.1', 0)  # color=green tag={HAWC_BAND_C_POLAR}
+
+#HAWC_BAND_D_TOTAL
+image;box(0, 0, 4.6', 7.4', 0)  # color=green tag={HAWC_BAND_D_TOTAL}
+#HAWC_BAND_D_POLAR
+image;box(0, 0, 4.6', 3.7', 0)  # color=green tag={HAWC_BAND_D_POLAR}
+
+#HAWC_BAND_E_TOTAL
+image;box(0, 0, 6.3', 10.0', 0)  # color=green tag={HAWC_BAND_E_TOTAL}
+#HAWC_BAND_E_POLAR
+image;box(0, 0, 6.3', 5.0', 0)  # color=green tag={HAWC_BAND_E_POLAR}
+#FPI+
+image;box(0, 0, 8.7', 8.7', 0)  # color=green tag={FPI+}
+
+

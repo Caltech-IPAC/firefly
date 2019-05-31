@@ -121,6 +121,25 @@ public class VisContext {
         footprintMap.put("SOFIA_FORCAST_GRISMS_A",      "footprint/Footprint_SOFIA.reg");
         footprintMap.put("SOFIA_FORCAST_GRISMS_B",      "footprint/Footprint_SOFIA.reg");
 
+        footprintMap.put("SOFIA_FLITECAM_GRISMS_ABBA",      "footprint/Footprint_SOFIA.reg");
+        footprintMap.put("SOFIA_FLITECAM_GRISMS_AB",      "footprint/Footprint_SOFIA.reg");
+        footprintMap.put("SOFIA_FLITECAM_IMAG",      "footprint/Footprint_SOFIA.reg");
+
+        footprintMap.put("SOFIA_HAWC_BAND_A_TOTAL",      "footprint/Footprint_SOFIA.reg");
+        footprintMap.put("SOFIA_HAWC_BAND_A_POLAR",      "footprint/Footprint_SOFIA.reg");
+
+        footprintMap.put("SOFIA_HAWC_BAND_C_TOTAL",      "footprint/Footprint_SOFIA.reg");
+        footprintMap.put("SOFIA_HAWC_BAND_C_POLAR",      "footprint/Footprint_SOFIA.reg");
+
+        footprintMap.put("SOFIA_HAWC_BAND_D_TOTAL",      "footprint/Footprint_SOFIA.reg");
+        footprintMap.put("SOFIA_HAWC_BAND_D_POLAR",      "footprint/Footprint_SOFIA.reg");
+
+        footprintMap.put("SOFIA_HAWC_BAND_E_TOTAL",      "footprint/Footprint_SOFIA.reg");
+        footprintMap.put("SOFIA_HAWC_BAND_E_POLAR",      "footprint/Footprint_SOFIA.reg");
+
+        footprintMap.put("SOFIA_FPI+",      "footprint/Footprint_SOFIA.reg");
+
+
 
     }
 
