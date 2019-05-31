@@ -3,7 +3,7 @@
  */
 
 
-import {get, isEmpty} from 'lodash';
+import {get, isEmpty, isArray} from 'lodash';
 import {makeWisePlotRequest} from './WiseRequestList.js';
 import {make2MassPlotRequest} from './TwoMassRequestList.js';
 import {makeAtlasPlotRequest} from './AtlasRequestList.js';
@@ -27,8 +27,12 @@ import {
 const FILE= 'FILE';
 
 
-const matchById= (table) =>
-    Boolean(get(table, ['tableMeta', MetaConst.IMAGE_SOURCE_ID]) || get(table, ['tableMeta', MetaConst.DATASET_CONVERTER]));
+function matchById(table,id)  {
+    if (!id) return false;
+    const value= findTableMetaEntry(table, [MetaConst.IMAGE_SOURCE_ID, MetaConst.DATASET_CONVERTER]);
+    if (!value) return false;
+    return value.toUpperCase()===id.toUpperCase();
+}
 
 /**
  * @param {TableModel} table
@@ -159,7 +163,7 @@ function getRelatedDataProductWrapper(makeReq) {
 export const converterTemplates = [
     {
         converterId : 'wise',
-        tableMatches: matchById,
+        tableMatches: (table) => matchById(table,'wise'),
         create : simpleCreate,
         threeColor : true,
         hasRelatedBands : true,
@@ -177,7 +181,7 @@ export const converterTemplates = [
     },
     {
         converterId : 'atlas',
-        tableMatches: matchById,
+        tableMatches: (table) => matchById(table,'atlas'),
         create : simpleCreate,
         hasRelatedBands : true,
         canGrid : true,
@@ -188,7 +192,7 @@ export const converterTemplates = [
     },
     {
         converterId : 'twomass',
-        tableMatches: matchById,
+        tableMatches: (table) => matchById(table,'twomass'),
         create : simpleCreate,
         threeColor : true,
         hasRelatedBands : true,
@@ -205,7 +209,7 @@ export const converterTemplates = [
     },
     {
         converterId : 'lsst_sdss',
-        tableMatches: matchById,
+        tableMatches: (table) => matchById(table,'lsst_sdss'),
         create : simpleCreate,
         threeColor : true,
         hasRelatedBands : true,
@@ -224,7 +228,7 @@ export const converterTemplates = [
     },
     {
         converterId : 'lsst_wise',
-        tableMatches: matchById,
+        tableMatches: (table) => matchById(table,'lsst_wise'),
         create : simpleCreate,
         threeColor : true,
         hasRelatedBands : true,
@@ -414,6 +418,15 @@ function findADataSourceColumn(meta,columns) {
     guesses= guesses.map( (g) => g.toUpperCase());
     return columns.find( (c) => guesses.includes(c.name.toUpperCase()));
 }
+
+function findTableMetaEntry(table,ids) {
+    const testIdAry= isArray(ids) ? ids.map( (id) => id.toUpperCase()) : [ids.toUpperCase()];
+    const foundKey= Object.keys(table.tableMeta)
+        .find( (key) => testIdAry
+            .find( (t) => t===key.toUpperCase()));
+    return foundKey ? table.tableMeta[foundKey] : undefined;
+}
+
 
 
 /**
