@@ -176,6 +176,7 @@ public class HttpServices {
             input = input == null ? new HttpServiceInput() : input;
             LOG.info("HttpServices URL:" + method.getURI().toString());
 
+            method.setRequestHeader("Connection", "close");            // request server to NOT keep-alive.. we don't plan to reuse this connection.
             method.setRequestHeader("User-Agent", USER_AGENT);
             method.setRequestHeader(HttpHeaders.ACCEPT_ENCODING, "gzip");
             if (method instanceof GetMethod) {
