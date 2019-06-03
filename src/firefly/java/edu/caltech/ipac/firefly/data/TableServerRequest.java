@@ -30,6 +30,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
     public static final String INCL_COLUMNS = "inclCols";
     public static final String FIXED_LENGTH = "fixedLength";
     public static final String META_INFO = "META_INFO";
+    public static final String META_OPTIONS = "META_OPTIONS";
     public static final List<String> SYS_PARAMS = Arrays.asList(REQUEST_CLASS,INCL_COLUMNS,SORT_INFO,FILTERS,PAGE_SIZE,START_IDX,FIXED_LENGTH,META_INFO,TBL_ID);
     public static final String TBL_INDEX = "tbl_index";     // the table to show if it's a multi-table file.
     public static final String SELECT_INFO = "selectInfo";  // a property of META_INFO.  deserialize into SelectionInfo.java
@@ -39,6 +40,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
     private ArrayList<String> filters;
     private SelectionInfo selectInfo;
     private Map<String, String> metaInfo;
+    private transient Map<String, String> metaOptions;               // options to apply for this request.  it will not persist nor returned to the client
 
     public TableServerRequest() {
     }
@@ -57,9 +59,6 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
     }
 
     public String getMeta(String key) {
-        if (metaInfo == null) {
-
-        }
         return metaInfo == null ? null : metaInfo.get(key);
     }
 
@@ -68,6 +67,17 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
             metaInfo = new HashMap<>();
         }
         metaInfo.put(meta, value);
+    }
+
+    public String getOption(String key) {
+        return metaOptions == null ? null : metaOptions.get(key);
+    }
+
+    public void setOption(String key, String value) {
+        if (metaOptions == null) {
+            metaOptions = new HashMap<>();
+        }
+        metaOptions.put(key, value);
     }
 
     public void setTblId(String id) {
@@ -185,21 +195,12 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
         super.copyFrom(req);
         if (req instanceof TableServerRequest) {
             TableServerRequest treq = (TableServerRequest) req;
-            pageSize = treq.pageSize;
-            startIdx = treq.startIdx;
-            if (treq.filters == null) {
-                filters = null;
-            } else {
-                filters = new ArrayList<>(treq.filters.size());
-                filters.addAll(treq.filters);
-            }
-            if (treq.metaInfo == null) {
-                metaInfo = null;
-            } else {
-                metaInfo = new HashMap<>(treq.metaInfo.size());
-                metaInfo.putAll(treq.metaInfo);
-            }
-            selectInfo = treq.selectInfo;
+            pageSize    = treq.pageSize;
+            startIdx    = treq.startIdx;
+            filters     = treq.filters == null ? null : new ArrayList<>(treq.filters);
+            metaInfo    = treq.metaInfo == null ? null : new HashMap<>(treq.metaInfo);
+            metaOptions = treq.metaOptions == null ? null : new HashMap<>(treq.metaOptions);
+            selectInfo  = treq.selectInfo;
         }
     }
 
@@ -222,6 +223,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
      * by '='.  If the keyword contains a '/' char, then the left side is
      * the keyword, and the right side is its description.
      * @return the serialize version of the class
+     * @deprecated  use JSON format instead.  @see edu.caltech.ipac.table.JsonTableUtil#toJsonTableRequest
      */
     public String toString() {
 
@@ -300,6 +302,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
             tsr.startIdx = startIdx;
             tsr.filters = filters == null ? null : new ArrayList<>(filters);
             tsr.metaInfo = metaInfo == null ? null : new HashMap<>(metaInfo);
+            tsr.metaOptions = metaOptions == null ? null : new HashMap<>(metaOptions);
             tsr.selectInfo = selectInfo == null ? null : (SelectionInfo) selectInfo.clone();
         } catch (CloneNotSupportedException e) {
             // ignore.. should not happen

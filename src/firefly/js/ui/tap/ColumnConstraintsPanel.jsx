@@ -121,8 +121,8 @@ function mergeConstraintsIntoOrig(tbl) {
     if (!origTableModel || !tblData) {
         return;
     }
-    // if ORIG_IDX column is present in the table, its row indexes differ from the original table
-    const idxCol = getColumnIdx(tbl, 'ORIG_IDX');
+    // if ROW_IDX column is present in the table, its row indexes differ from the original table
+    const idxCol = getColumnIdx(tbl, 'ROW_IDX');
     const origTblData = get(origTableModel, 'tableData.data');
     tblData.forEach((row, i) => {
         const origIdx = idxCol < 0 ? i : parseInt(row[idxCol]);

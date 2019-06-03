@@ -38,7 +38,7 @@ export class FilterEditorWrapper extends Component {
                         onChange={(obj) => {
                             if (!isUndefined(obj.filterInfo)) {
                                 const newRequest = Object.assign({}, tableModel.request, {filters: obj.filterInfo});
-                                TablesCntlr.dispatchTableFilter(newRequest, 0);
+                                TablesCntlr.dispatchTableFilter(newRequest);
                             } else if (!isUndefined(obj.sortInfo)) {
                                 this.setState({sortInfo: obj.sortInfo});
                             }

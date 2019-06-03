@@ -13,10 +13,10 @@ import {toRegion} from './ShapeToRegion.js';
 import {getDrawobjArea,  isScreenPtInRegion, makeHighlightShapeDataObj, DELTA} from './ShapeHighlight.js';
 import CsysConverter from '../CsysConverter.js';
 import {has, isNil, get, set, isEmpty} from 'lodash';
-import {getPlotViewById, getCenterOfProjection} from '../PlotViewUtil.js';
+import {getPlotViewById, getCenterOfProjection, primePlot} from '../PlotViewUtil.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {getPixScaleArcSec, getScreenPixScaleArcSec} from '../WebPlot.js';
-import {toRadians, toDegrees} from '../VisUtil.js';
+import {toRadians, toDegrees,isPlotNorth} from '../VisUtil.js';
 import {rateOpacity, maximizeOpacity} from '../../util/Color.js';
 
 const FONT_FALLBACK= ',sans-serif';
@@ -225,8 +225,9 @@ function makePolygon(ptAry, drawObjAry=null) {
  *  @param  rotationAngle - the rotation angle + 'deg'
  * @return {*}
  */
-function makeText(pt, text, rotationAngle=undefined) {
-    return Object.assign(make(ShapeType.Text), {pts:[pt],text, rotationAngle});
+
+function makeText(pt, text, rotationAngle=undefined, isLonLine=true) {
+    return Object.assign(make(ShapeType.Text), {pts:[pt],text, rotationAngle, isLonLine});
 }
 
 function makeTextWithOffset(textOffset, pt, text) {
@@ -244,6 +245,7 @@ function makeDrawParams(drawObj,def={}) {
     var fontWeight= drawObj.fontWeight || def.fontWeight || 'normal';
     var fontStyle= drawObj.fontStyle || def.fontStyle || 'normal';
     var rotationAngle = drawObj.rotationAngle||undefined;
+
     return {
         color: DrawUtil.getColor(drawObj.color,def.color),
         lineWidth,
@@ -680,31 +682,38 @@ function drawCircle(drawObj, ctx,  plot, drawParams) {
 export function drawText(drawObj, ctx, plot, inPt, drawParams) {
     if (!inPt) return false;
     
-    const {text, textOffset, renderOptions, rotationAngle, textBaseline= 'top', textAlign='start', textAngle=0}= drawObj;
+    const {text, textOffset, renderOptions, rotationAngle, isLonLine, textBaseline= 'top', textAlign='start', textAngle=0}= drawObj;
     //the angle of the grid line
-    var angle=undefined;
-    var pvAngle=undefined;
+    let angle=0;
+    let pvAngle=undefined;
+
     if (rotationAngle){
-        const lineAngle = parseInt( rotationAngle.substring(0,  rotationAngle.length-3));
+        const lineAngle = parseFloat( rotationAngle.substring(0,  rotationAngle.length-3));
         const pv = getPlotViewById(visRoot(), plot.plotId);
-        pvAngle =pv.rotation;
-        if (pv.flipY){
-           angle = (pvAngle-lineAngle);
-        }
-        else {
-            angle = pvAngle + lineAngle;
-        }
-        if (angle){
-            //angle = angle>360? (angle-360)+'deg' : angle+'deg';
-            while (angle > 360 || angle < -360) {
-                angle = angle > 360 ? (angle-360) : (angle+360);
+        pvAngle = pv.flipY? 180 - pv.rotation:pv.rotation;
+        if (pvAngle>0) {
+            if (isLonLine  && pvAngle<=210 ){
+                //flip the label text
+                    pvAngle +=180;
+
+            }
+
+            if (!isLonLine && pvAngle > 80  && pvAngle<280) {
+                //flip the label text
+                pvAngle +=180;
+
             }
         }
+
+        angle = pvAngle + lineAngle;
+
+
     }
 
     if (textAngle) {
         angle = angle ? angle - textAngle : -textAngle;
     }
+
 
     const {fontName, fontSize, fontWeight, fontStyle}= drawParams;
     const color = drawParams.color || drawObj.color || 'black';
@@ -754,10 +763,13 @@ export function drawText(drawObj, ctx, plot, inPt, drawParams) {
     }
 
     const textColor = maximizeOpacity(color);
-    DrawUtil.drawTextCanvas(ctx, text, x, y, textColor, Object.assign({}, renderOptions, {rotAngle: 0.0}),
+
+    DrawUtil.drawTextCanvas(ctx, text, x, y, textColor, Object.assign({}, renderOptions, {rotAngle:0.0}),
         {rotationAngle:angle, textBaseline, textAlign},
         {fontName:fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle}
     );
+
+
 
     drawObj.textWorldLoc = plot.getImageCoords(makeDevicePt(x, y));
     return true;
