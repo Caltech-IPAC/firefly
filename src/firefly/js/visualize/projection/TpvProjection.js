@@ -112,8 +112,8 @@ export const TpvProjection= {
             m1 = tmp;
 
             //newton raphson to find the best coordinates on the plane tangent
-            dx = m1 * (fsamp - X) + m3 * (fline - Y);
-            dy = m2 * (fsamp - X) + m4 * (fline - Y);
+            dx = m1 * (fsamp * RtoD - X) + m3 * (fline * RtoD - Y);
+            dy = m2 * (fsamp * RtoD - X) + m4 * (fline * RtoD - Y);
 
             xx += dx;
             yy += dy;
@@ -150,18 +150,18 @@ export const TpvProjection= {
         fsamp = xx;
         fline = yy;
         if (using_cd) {
-            temp = -(dc1_1 * fsamp + dc1_2 * fline) * RtoD;
-            fline = -(dc2_1 * fsamp + dc2_2 * fline) * RtoD;
+            temp = -(dc1_1 * fsamp + dc1_2 * fline);
+            fline = -(dc2_1 * fsamp + dc2_2 * fline);
             fsamp = temp;
         } else {
             /* do the twist */
             rtwist = twist * DtoR;       /* convert to radians */
-            temp = fsamp * Math.cos(rtwist) + fline * Math.sin(rtwist);
-            fline = -fsamp * Math.sin(rtwist) + fline * Math.cos(rtwist);
+            temp = fsamp * DtoR * Math.cos(rtwist) + fline * DtoR * Math.sin(rtwist);
+            fline = -fsamp * DtoR * Math.sin(rtwist) + fline * DtoR * Math.cos(rtwist);
             fsamp = temp;
 
-            fsamp = (fsamp / rpp1);     /* now apply cdelt */
-            fline = (fline / rpp2);
+            fsamp = (fsamp * DtoR / rpp1);     /* now apply cdelt */
+            fline = (fline * DtoR / rpp2);
         }
 
         const x = fsamp + crpix1 - 1;
@@ -202,12 +202,13 @@ export const TpvProjection= {
         }
 
         // Apply PV distortion
-        const xy = distortion(x, y, pv1, pv2);
+        const xy = distortion(x * RtoD, y * RtoD, pv1, pv2);
+
 
         //Intermediate coords distorsioned
         const {xprime, yprime} = xy;
-        const xx = xprime;
-        let yy = yprime;
+        const xx = xprime * DtoR;
+        let yy = yprime * DtoR;
         const delta = Math.atan(Math.sqrt(xx * xx + yy * yy));
 
         if ((xx===0.0) && (yy===0.0)) yy = 1.0;  // avoid domain error in atan2
@@ -241,6 +242,7 @@ export const TpvProjection= {
 function distortion (x, y, pv1, pv2) {
 
     // Apply correction (source http//iraf.noao.edu/projects/ccdmosaic/tpv.html);
+    // x, y are intermediate coordinates in units of degrees
     const r = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
     const xprime = pv1[0] + pv1[1] * x + pv1[2] * y + pv1[3] * r +
         pv1[4] * Math.pow(x, 2) + pv1[5] * x * y + pv1[6] * Math.pow(y, 2) +
