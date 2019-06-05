@@ -44,7 +44,7 @@ export class IbeSpacialType extends PureComponent {
 
     componentDidMount() {
         this.iAmMounted= true;
-        const groupKey= this.context;
+        const groupKey= this.context && this.context.groupKey;
         this.removeListener= FieldGroupUtils.bindToStore(groupKey, (fields) => {
             this.setState({fields});
         });

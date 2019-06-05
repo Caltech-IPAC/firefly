@@ -31,7 +31,8 @@ class TargetPanelView extends PureComponent {
 
     render() {
         const {showHelp, feedback, valid, message, onChange, value,
-            labelWidth, children, resolver, feedbackStyle, examples, label= LABEL_DEFAULT}= this.props;
+            labelWidth, children, resolver, feedbackStyle, showResolveSourceOp= true, showExample= true,
+            examples, label= LABEL_DEFAULT}= this.props;
         let positionField = (<InputFieldView
                                 valid={valid}
                                 visible= {true}
@@ -48,7 +49,7 @@ class TargetPanelView extends PureComponent {
             <div>
                 <div style= {{display: 'flex'}}>
                     {positionField}
-                    <ListBoxInputFieldView
+                    {showResolveSourceOp && <ListBoxInputFieldView
                         options={[{label: 'Try NED then Simbad', value: nedThenSimbad},
                                {label: 'Try Simbad then NED', value: simbadThenNed}
                               ]}
@@ -59,9 +60,11 @@ class TargetPanelView extends PureComponent {
                         label=''
                         labelWidth={3}
                         wrapperStyle={{}}
-                    />
+                    />}
                 </div>
-                <TargetFeedback {...{showHelp, feedback, style:feedbackStyle, examples}}/>
+                {(showExample || !showHelp) &&
+                        <TargetFeedback {...{showHelp, feedback, style:feedbackStyle, examples}}/>
+                }
             </div>
         );
     }
@@ -81,7 +84,9 @@ TargetPanelView.propTypes = {
     labelWidth : PropTypes.number,
     onUnmountCB : PropTypes.func,
     feedbackStyle: PropTypes.object,
-    nullAllowed: PropTypes.bool
+    nullAllowed: PropTypes.bool,
+    showResolveSourceOp: PropTypes.bool,
+    showExample: PropTypes.bool
 };
 
 
@@ -191,7 +196,9 @@ TargetPanel.propTypes = {
     examples: PropTypes.object,
     labelWidth : PropTypes.number,
     nullAllowed: PropTypes.bool,
-    initialState: PropTypes.object
+    initialState: PropTypes.object,
+    showResolveSourceOp: PropTypes.bool,
+    showExample: PropTypes.bool
 };
 
 

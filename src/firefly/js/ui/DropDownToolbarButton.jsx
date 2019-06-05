@@ -13,6 +13,7 @@ import DialogRootContainer from './DialogRootContainer.jsx';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible, getDialogOwner} from '../core/ComponentCntlr.js';
 import {ToolbarButton} from './ToolbarButton.jsx';
 import {DropDownDirCTX} from './DropDownDirContext.js';
+import {DROP_DOWN_WRAPPER_CLASSNAME} from './DropDownMenu';
 
 
 function computeDropdownXY(divElement, isIcon) {
@@ -31,8 +32,11 @@ function showDialog(divElement,dropDown,ownerId,offButtonCB, isIcon) {
     const dropDownClone= React.cloneElement(dropDown, { toolbarElement:divElement });
     const dd= <DropDownMenuWrapper x={x} y={y} content={dropDownClone}/>;
     DialogRootContainer.defineDialog(DROP_DOWN_KEY,dd);
+    document.removeEventListener('mousedown', offButtonCB);
     dispatchShowDialog(DROP_DOWN_KEY,ownerId);
-    document.addEventListener('mousedown', offButtonCB);
+    setTimeout(() => {
+        document.addEventListener('mousedown', offButtonCB);
+    },10);
 }
 
 
@@ -47,16 +51,19 @@ export class DropDownToolbarButton extends PureComponent {
         super(props);
         this.state= {dropDownVisible:false, dropDownOwnerId:null };
         this.ownerId= uniqueId(OWNER_ROOT);
+        this.mounted= true;
     }
 
     componentWillUnmount() {
         if (this.storeListenerRemove) this.storeListenerRemove();
+        this.mounted= false;
         document.removeEventListener('mousedown', this.docMouseDownCallback);// just in case
     }
 
     componentDidMount() {
         this.storeListenerRemove= flux.addListener(() => this.update());
         this.docMouseDownCallback= (ev)=> this.offButtonCallback(ev);
+        this.mounted= true;
     }
 
     update() {
@@ -68,12 +75,30 @@ export class DropDownToolbarButton extends PureComponent {
         }
     }
 
-    offButtonCallback() {
+    offButtonCallback(ev) {
+        document.removeEventListener('mousedown', this.docMouseDownCallback);
         delay( () => {
-            document.removeEventListener('mousedown', this.docMouseDownCallback);
             const {dropDownVisible, dropDownOwnerId}= this.state;
-            if (dropDownVisible && dropDownOwnerId===this.ownerId) {
+            if (!dropDownVisible) {
+                return;
+            }
+            let e= document.activeElement;
+            let focusIsDropwdownInput= false;
+            if (e && e.tagName==='INPUT') {
+                for(;e;e= e.parentElement) {
+                     if (e.className===DROP_DOWN_WRAPPER_CLASSNAME) {
+                         focusIsDropwdownInput= true;
+                         break;
+                     }
+                }
+            }
+            const onDropDownInput= focusIsDropwdownInput && ev && ev.target.tagName==='INPUT';
+            console.log(ev);
+            if (!onDropDownInput&& dropDownVisible && dropDownOwnerId===this.ownerId) {
                 dispatchHideDialog(DROP_DOWN_KEY);
+            }
+            else {
+                document.addEventListener('mousedown', this.docMouseDownCallback);
             }
         },200);
     }
@@ -94,6 +119,7 @@ export class DropDownToolbarButton extends PureComponent {
                 if (dropDownOwnerId===this.ownerId) {
                     dispatchHideDialog(DROP_DOWN_KEY);
                     document.removeEventListener('mousedown', this.docMouseDownCallback);
+                    this.setState({dropDownVisible:false});
                 }
                 else {
                     showDialog(divElement,dropDownWithContext,this.ownerId,this.docMouseDownCallback, isIcon);

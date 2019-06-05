@@ -197,7 +197,7 @@ ToolbarButton.contextType = ToolTipCtx;
 
 ToolbarButton.propTypes= {
     icon : PropTypes.string,
-    text : PropTypes.string,
+    text : PropTypes.node,
     tip : PropTypes.string,
     badgeCount : PropTypes.number,
     enabled : PropTypes.bool,

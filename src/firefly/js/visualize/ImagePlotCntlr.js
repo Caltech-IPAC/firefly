@@ -134,6 +134,7 @@ const PLOT_MASK_FAIL= `${PLOTS_PREFIX}.plotMaskFail`;
 const DELETE_OVERLAY_PLOT=`${PLOTS_PREFIX}.deleteOverlayPlot`;
 const OVERLAY_PLOT_CHANGE_ATTRIBUTES=`${PLOTS_PREFIX}.overlayPlotChangeAttributes`;
 const CHANGE_HIPS_IMAGE_CONVERSION=`${PLOTS_PREFIX}.changeHipsImageConversion`;
+const CHANGE_TABLE_AUTO_SCROLL=`${PLOTS_PREFIX}.changeTableAutoScroll`;
 
 const WCS_MATCH=`${PLOTS_PREFIX}.wcsMatch`;
 
@@ -207,8 +208,9 @@ const initState= function() {
         //--  misc
         pointSelEnableAry : [],
         apiToolsView: false,
+        autoScrollToHighlightedTableRow: true,
 
-        //-- wcs match parameters //todo this might have to be in a plotGroup, not sure at this point
+        //-- wcs match parameters
         wcsMatchCenterWP: null,
         wcsMatchType: false,
         mpwWcsPrimId: null,
@@ -290,7 +292,7 @@ export default {
     DELETE_PLOT_VIEW, CHANGE_ACTIVE_PLOT_VIEW, CHANGE_PRIME_PLOT,
     PLOT_MASK, PLOT_MASK_START, PLOT_MASK_FAIL, PLOT_MASK_LAZY_LOAD, DELETE_OVERLAY_PLOT,
     OVERLAY_PLOT_CHANGE_ATTRIBUTES, WCS_MATCH, ADD_PROCESSED_TILES, API_TOOLS_VIEW, CHANGE_MOUSE_READOUT_MODE,
-    CHANGE_HIPS_IMAGE_CONVERSION
+    CHANGE_HIPS_IMAGE_CONVERSION, CHANGE_TABLE_AUTO_SCROLL
 };
 
 const KEY_ROOT= 'progress-';
@@ -881,6 +883,10 @@ export function dispatchChangePointSelection(requester, enabled) {
     flux.process({ type: CHANGE_POINT_SELECTION, payload: {requester,enabled} });
 }
 
+export function dispatchChangeTableAutoScroll(enabled) {
+    flux.process({ type: CHANGE_TABLE_AUTO_SCROLL, payload: {enabled} });
+}
+
 
 /**
  *
@@ -982,7 +988,7 @@ const changeActions= convertToIdentityObj([
 
 const adminActions= convertToIdentityObj([
     API_TOOLS_VIEW, CHANGE_ACTIVE_PLOT_VIEW, CHANGE_EXPANDED_MODE, CHANGE_MOUSE_READOUT_MODE,
-    EXPANDED_AUTO_PLAY, CHANGE_POINT_SELECTION, DELETE_PLOT_VIEW, WCS_MATCH,
+    EXPANDED_AUTO_PLAY, CHANGE_POINT_SELECTION, DELETE_PLOT_VIEW, WCS_MATCH, CHANGE_TABLE_AUTO_SCROLL
 ]);
 
 

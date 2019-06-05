@@ -1,5 +1,6 @@
 /*eslint "prefer-template": 0*/
 
+import {isFunction} from 'lodash';
 import React, {PureComponent} from 'react';
 import {get} from 'lodash';
 import PropTypes from 'prop-types';
@@ -8,6 +9,7 @@ import {DropDownDirCTX} from './DropDownDirContext.js';
 import './DropDownMenu.css';
 
 const DEFAULT_DROPDOWN_DIR = 'right';
+export const DROP_DOWN_WRAPPER_CLASSNAME= 'ff-dropdown-menu';
 
 const computePosition= (tgtX,tgtY)  => ({x:tgtX,y:tgtY+18});
 
@@ -55,7 +57,7 @@ export class DropDownMenuWrapper extends PureComponent {
         return (
             <div style={{position:'absolute', left:0, top:0, visibility:'hidden', zIndex}}
                  onClick={futureCallback} >
-                    <div style={{padding : 5}} className='ff-dropdown-menu'>
+                    <div style={{padding : 5}} className={DROP_DOWN_WRAPPER_CLASSNAME}>
                         {content}
                     </div>
             </div>
@@ -110,7 +112,7 @@ export class DropDownSubMenu extends PureComponent {
                         {showSubMenu &&
                         <div className={'dropdown-menu__' + dropdownDirection} onMouseEnter={this.show}>
                             <SingleColumnMenu>
-                                {children}
+                                {isFunction(children) ? children() : children}
                             </SingleColumnMenu>
                         </div>
                         }

@@ -2,13 +2,22 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {useContext} from 'react';
+import {delay} from 'lodash';
+import React, {useContext, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {validateFieldGroup, getFieldGroupResults} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
 import {GroupKeyCtx} from './FieldGroup';
 
 
+function inGroup(e, groupKey) {
+    for(;e; e= e.parentElement) {
+        if (e.getAttribute('groupkey')===groupKey) {
+            return true;
+        }
+    }
+    return false;
+}
 
 
 
@@ -47,12 +56,31 @@ function onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,includeUnmounte
 
 
 
+
 export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
                           closeOnValid=true, dialogId,includeUnmounted= false,
-                          style={}, changeMasking}) {
+                          style={}, changeMasking, fireOnEnter= false}) {
     const context= useContext(GroupKeyCtx);
-    if (!groupKey && context) groupKey= context;
+    if (!groupKey && context) groupKey= context.groupKey;
     const onComplete = () => onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,includeUnmounted,changeMasking);
+
+
+    useEffect(() => {
+        if (fireOnEnter) {
+            const keyCheck= (ev) => {
+                if ( ev.key==='Enter' && ev.target.tagName==='INPUT' && inGroup(ev.target,groupKey)) {
+                    delay( () => {
+                        onComplete();
+                    }, 100);
+                }
+            };
+            document.addEventListener('keypress',keyCheck);
+            return () => document.removeEventListener('keypress', keyCheck);
+        }
+    }, []);
+
+
+
     return (
         <div style={style}>
             <button type='button' className='button std hl'  onClick={onComplete}>{text}</button>
@@ -70,7 +98,8 @@ CompleteButton.propTypes= {
     dialogId: PropTypes.string,
     style: PropTypes.object,
     includeUnmounted : PropTypes.bool,
-    changeMasking: PropTypes.func
+    changeMasking: PropTypes.func,
+    fireOnEnter: PropTypes.bool
 };
 
 export default CompleteButton;

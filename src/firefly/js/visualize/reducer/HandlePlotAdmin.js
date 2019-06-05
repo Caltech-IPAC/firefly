@@ -22,6 +22,8 @@ export function reducer(state, action) {
             return changeMouseReadout(state, action);
         case Cntlr.CHANGE_POINT_SELECTION:
             return changePointSelection(state,action);
+        case Cntlr.CHANGE_TABLE_AUTO_SCROLL:
+            return {...state, autoScrollToHighlightedTableRow:action.payload.enabled};
         case Cntlr.DELETE_PLOT_VIEW:
             return deletePlotView(state,action);
 
