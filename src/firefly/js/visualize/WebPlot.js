@@ -16,24 +16,24 @@ import {changeProjectionCenter} from './HiPSUtil.js';
 import {CysConverter} from './CsysConverter.js';
 import {makeImagePt} from './Point';
 import {convert} from './VisUtil.js';
-import {parseSpacialHeaderInfo, makeDirectFileAccessData} from './projection/ProjectionInfo.js';
+import {parseSpacialHeaderInfo, makeDirectFileAccessData} from './projection/ProjectionHeaderParser.js';
 import {UNSPECIFIED, UNRECOGNIZED } from './projection/Projection.js';
 import {getImageCubeIdx} from './PlotViewUtil.js';
+import {parseWavelengthHeaderInfo} from './projection/WavelengthHeaderParser.js';
+import {geAtlProjectionIDs} from './FitsHeaderUtil.js';
+import {TAB} from './projection/Wavelength';
 
 
 export const RDConst= {
     IMAGE_OVERLAY: 'IMAGE_OVERLAY',
     IMAGE_MASK: 'IMAGE_MASK',
     TABLE: 'TABLE',
+    WAVELENGTH_TABLE: 'WAVELENGTH_TABLE',
     SUPPORTED_DATATYPES: ['IMAGE_MASK', 'TABLE']
-   // SUPPORTED_DATATYPES: ['IMAGE_MASK', 'TABLE', 'IMAGE_OVERLAY']
 };
 
 const HIPS_DATA_WIDTH=  10000000000;
 const HIPS_DATA_HEIGHT= 10000000000;
-
-const alphabetAry= 'ABCDEFGHIJKLMNOPQRSTUVWZYZ'.split('');
-
 
 
 
@@ -43,30 +43,6 @@ export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_
  * FITS headers keys
  * todo: add more headers
  */
-export const FitsHdr= {
-
-    // Common FITS Headers that are added by firefly
-    BITPIX   : 'BITPIX',
-    CRPIX1   : 'CRPIX1',
-    CRPIX2   : 'CRPIX2',
-    CRVAL1   : 'CRVAL1',
-    CRVAL2   : 'CRVAL2',
-    CDELT1   : 'CDELT1',
-    CDELT2   : 'CDELT2',
-    CROTA1   : 'CROTA1',
-    CROTA2   : 'CROTA2',
-    DATAMAX  : 'DATAMAX',
-    DATAMIN  : 'DATAMIN',
-    EXTNAME  : 'EXTNAME',
-
-    // FITS Headers that are added by firefly
-    SPOT_OFF : 'SPOT_OFF', // Extension Offset (added by Firefly)
-    SPOT_EXT : 'SPOT_EXT', // Extension Number (added by Firefly)
-    SPOT_HS  : 'SPOT_HS',  // Header block size on disk (added by Firefly)
-    SPOT_BP  : 'SPOT_BP',  // Original Bitpix value (added by Firefly)
-    SPOT_PL  : 'SPOT_PL',  // Plane of FITS cube (added by Firefly)
-};
-
 
 export const PlotAttribute= {
 
@@ -213,6 +189,7 @@ export const PlotAttribute= {
  * @prop {CoordinateSys} imageCoordSys - the image coordinate system
  * @prop {Dimension} screenSize - width/height in screen pixels
  * @prop {Projection} projection - projection routines for this projections
+ * @prop {Object} wlData - data object to wave length conversions, if defined then this conversion is available
  * @prop {Object} affTrans - the affine transform
  * @prop {{width:number, height:number}} viewDim  size of viewable area  (div size: offsetWidth & offsetHeight)
  * @prop {Array.<Object>} directFileAccessDataAry - object of parameters to get flux from the FITS file
@@ -333,7 +310,6 @@ function makePlotTemplate(plotId, plotType, asOverlay, imageCoordSys) {
         projection: undefined,
         dataWidth : undefined,
         dataHeight : undefined,
-        imageScaleFactor: undefined,
         title : '',
         plotDesc        : '',
         dataDesc        : '',
@@ -354,9 +330,9 @@ function makePlotTemplate(plotId, plotType, asOverlay, imageCoordSys) {
 }
 
 
-function processAllAltWcs(header) {
+function processAllSpacialAltWcs(header) {
 
-    const availableAry= alphabetAry.filter( (c) => header['CTYPE1'+c]);
+    const availableAry= geAtlProjectionIDs(header);
     if (isEmpty(availableAry)) return {};
 
     return availableAry.reduce( (obj, altChar) => {
@@ -375,6 +351,17 @@ function processAllAltWcs(header) {
     }, {});
 }
 
+function processAllWavelengthAltWcs(header,wlTable) {
+    const availableAry= geAtlProjectionIDs(header);
+    if (isEmpty(availableAry)) return {};
+
+    return availableAry.reduce( (obj, altChar) => {
+        const wlData= parseWavelengthHeaderInfo(header, altChar, undefined, wlTable);
+        if (wlData) obj[altChar]= wlData;
+        return obj;
+    }, {});
+}
+
 
 /**
  *
@@ -387,18 +374,35 @@ export const WebPlot= {
      * @param wpInit init data returned from server
      * @param {object} attributes any attributes to initialize
      * @param {boolean} asOverlay
-     * @param {{cubePlane,cubeHeaderAry}}  cubeCtx
+     * @param {{cubePlane,cubeHeaderAry,relatedData,dataWidth,dataHeight,imageCoordSys}} cubeCtx
      * @return {WebPlot} the plot
      */
     makeWebPlotData(plotId, wpInit, attributes= {}, asOverlay= false, cubeCtx) {
 
+        const relatedData = cubeCtx ? cubeCtx.relatedData : wpInit.relatedData;
         const plotState= PlotState.makePlotStateWithJson(wpInit.plotState);
         const headerAry= !cubeCtx ? wpInit.headerAry : [cubeCtx.cubeHeaderAry[0]];
         const header= headerAry[plotState.firstBand().value];
-        const processHeader= parseSpacialHeaderInfo(header);
+        const zeroHeader= wpInit.zeroHeaderAry[0];
+        const processHeader= parseSpacialHeaderInfo(header,'',zeroHeader);
         const projection= makeProjectionNew(processHeader, processHeader.imageCoordSys);
-        const allWCSMap= processAllAltWcs(header);
+        const processHeaderAry= !plotState.isThreeColor() ?
+                                   [processHeader] :
+                                    headerAry.map( (h,idx) => parseSpacialHeaderInfo(h,'',wpInit.zeroHeaderAry[idx]));
+        const fluxUnitAry= processHeaderAry.map( (p) => p.fluxUnits);
+
+
+        const wlRelated= relatedData && relatedData.find( (r) => r.dataType==='WAVELENGTH_TABLE_RESOLVED');
+
+        let wlData= parseWavelengthHeaderInfo(header, '', zeroHeader, get(wlRelated,'table'));
+        const allWCSMap= processAllSpacialAltWcs(header);
+        const allWlMap= processAllWavelengthAltWcs(header, get(wlRelated,'table'));
+        // if (!wlData && Object.values(allWlMap)>0) {
+        allWlMap['']= wlData;
         allWCSMap['']= projection;
+        if (Object.values(allWlMap).length>0 && get(wlData, 'algorithm')!==TAB) {
+            wlData= Object.values(allWlMap)[0];
+        }
         const zf= plotState.getZoomLevel();
 
         for(let i= 0; (i<3); i++) {
@@ -411,21 +415,24 @@ export const WebPlot= {
         //todo: i think is could be cached on the server side so we don't need to be send it back and forth
         const directFileAccessDataAry= plotState.getBands().map( (b) => plotState.getDirectFileAccessData(b));
 
-        let plot= makePlotTemplate(plotId,'image',asOverlay, CoordinateSys.parse(wpInit.imageCoordSys));
+        const imageCoordSys= cubeCtx ? cubeCtx.imageCoordSys : wpInit.imageCoordSys;
+        let plot= makePlotTemplate(plotId,'image',asOverlay, CoordinateSys.parse(imageCoordSys));
 
         const imagePlot= {
             tileData    : wpInit.initImages,
             relatedData     : null,
             header,
             headerAry,
+            zeroHeader,
+            fluxUnitAry,
             cubeCtx,
-            // processHeader: parseSpacialHeaderInfo(header),
             plotState,
             projection,
+            wlData,
             allWCSMap,
-            dataWidth       : wpInit.dataWidth,
-            dataHeight      : wpInit.dataHeight,
-            imageScaleFactor: wpInit.imageScaleFactor,
+            allWlMap,
+            dataWidth       : cubeCtx ? cubeCtx.dataWidth : wpInit.dataWidth,
+            dataHeight      : cubeCtx ? cubeCtx.dataHeight : wpInit.dataHeight,
             title : '',
             plotDesc        : wpInit.desc,
             dataDesc        : wpInit.dataDesc,
@@ -439,9 +446,12 @@ export const WebPlot= {
         };
         plot= clone(plot, imagePlot);
         plot.cubeIdx= getImageCubeIdx(plot);
+        if (relatedData) {
+            plot.relatedData= relatedData.map( (d) => clone(d,{relatedDataId: plotId+relatedIdRoot+d.dataKey}));
+        }
 
-        if (wpInit.relatedData) {
-            plot.relatedData= wpInit.relatedData.map( (d) => clone(d,{relatedDataId: plotId+relatedIdRoot+d.dataKey}));
+        if ((!cubeCtx || cubeCtx.cubePlane===0) && wlData && wlData.failWarning)  {
+            console.warn(`ImagePlot (${plotId}): Wavelength projection parse error: ${wlData.failWarning}`);
         }
 
         return plot;
@@ -493,7 +503,6 @@ export const WebPlot= {
             allWCSMap: {'':projection},
             dataWidth: HIPS_DATA_WIDTH,
             dataHeight: HIPS_DATA_HEIGHT,
-            imageScaleFactor: 1,
 
             title : getHiPsTitleFromProperties(hipsProperties),
             plotDesc        : desc,
@@ -634,6 +643,14 @@ export function replaceHeader(plot, header) {
     return retPlot;
 }
 
+/**
+ * Return true if this is a WebPlot obj
+ * @param obj
+ * @return boolean
+ */
+export function isPlot(obj) {
+    return Boolean(obj && obj.plotType && obj.plotId && obj.plotImageId && obj.conversionCache);
+}
 
 
 
@@ -685,8 +702,8 @@ export function getScreenPixScaleArcSec(plot) {
 
 
 export function getFluxUnits(plot,band) {
-    if (!band) return '';
-    return get(plot,['webFitsData',band.value,'fluxUnits'], '');
+    if (!plot || !band || !isImage(plot)) return '';
+    return plot.fluxUnitAry[band.value];
 }
 
 

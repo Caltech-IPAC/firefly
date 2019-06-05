@@ -17,6 +17,7 @@ public class RelatedData implements Serializable {
     public static final String IMAGE_OVERLAY= "IMAGE_OVERLAY";
     public static final String IMAGE_MASK= "IMAGE_MASK";
     public static final String TABLE= "TABLE";
+    public static final String WAVELENGTH_TABLE= "WAVELENGTH_TABLE";
 
     private String dataType= ""; // image or table
     private String desc;
@@ -109,6 +110,16 @@ public class RelatedData implements Serializable {
     public static RelatedData makeTabularRelatedData(Map<String,String> searchParams, String dataKey, String desc) {
         RelatedData d= new RelatedData(true);
         d.dataType= TABLE;
+        d.searchParams= searchParams;
+        d.dataKey = dataKey;
+        d.desc= desc;
+        return d;
+    }
+
+    public static RelatedData makeWavelengthTabularRelatedData(Map<String,String> searchParams,
+                                                               String dataKey, String desc) {
+        RelatedData d= new RelatedData(true);
+        d.dataType= WAVELENGTH_TABLE;
         d.searchParams= searchParams;
         d.dataKey = dataKey;
         d.desc= desc;

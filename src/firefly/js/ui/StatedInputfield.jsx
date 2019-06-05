@@ -1,64 +1,36 @@
-import React, {PureComponent} from 'react';
+import React, {useState, useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {has} from 'lodash';
+import {has,get} from 'lodash';
 
 import {InputFieldView} from './InputFieldView.jsx';
 
 
+export function StateInputField({defaultValue, visible=true, message, label='', tooltip, labelWidth= 100, showWarning,
+                                    style='', wrapperStyle={}, onKeyDown, onKeyUp, validator, valueChange}) {
 
-const ARROW_UP = 38;
-const ARROW_DOWN = 40;
+    const [value, setValue] = useState(defaultValue);
+    const [valid, setValid] = useState(true);
 
+    const onChange= (ev) => {
+        let newValue = ev.target.value;
+        const {valid:newValidState,message, ...others}= validator ? validator(newValue) : {valid:true, message:''};
+        has(others, 'value') && (newValue = others.value);    // allow the validator to modify the value.. useful in auto-correct.
+        valueChange && valueChange({ value:newValue, message, valid:newValidState });
+        setValid(newValidState);
+        setValue(newValue);
+    };
 
-export class StateInputField extends PureComponent {
+    useEffect(() => {  // if the default value is replaced then because the new value
+        const newValidState= validator ? get(validator(defaultValue),'valid',true) : true;
+        setValue(defaultValue);
+        setValid(newValidState);
+    }, [defaultValue]);
 
-    constructor(props) {
-        super(props);
-        this.state= {
-            value: props.defaultValue
-        };
-        this.onChange= this.onChange.bind(this);
-    }
-
-    onChange(ev) {
-        const {validator, valueChange}= this.props;
-        let value = ev.target.value;
-        const {valid,message, ...others}= validator ? validator(value) : {valid:true, message:''};
-        has(others, 'value') && (value = others.value);    // allow the validator to modify the value.. useful in auto-correct.
-        valueChange && valueChange({ value, message, valid });
-        this.setState(() => ({valid, value}));
-    }
-
-    static getDerivedStateFromProps(props) {
-        return {valid: true, value: props.defaultValue};
-    }
-
-
-    render() {
-        const {visible=true, message, label='', tooltip, labelWidth= 100, showWarning,
-            style='', wrapperStyle='', onKeyDown, onKeyUp}= this.props;
-        const {value, valid}= this.state;
-
-        return (
-            <InputFieldView
-            valid={valid}
-            visible={visible}
-            message={message}
-            onChange={this.onChange}
-            label={''}
-            value={value}
-            tooltip={tooltip}
-            labelWidth={labelWidth}
-            inline={true}
-            showWarning={showWarning}
-            style={style}
-            wrapperStyle={wrapperStyle}
-            onKeyDown={onKeyDown}
-            onKeyUp={onKeyUp}
+    return (
+        <InputFieldView {...{valid, visible, message, onChange, label, value, tooltip,
+            labelWidth, inline:true, showWarning, style, wrapperStyle, onKeyDown, onKeyUp}}
         />
-        );
-    }
-
+    );
 }
 
 StateInputField.propTypes= {
@@ -77,15 +49,6 @@ StateInputField.propTypes= {
     validator: PropTypes.func,
     onKeyUp: PropTypes.func,
     onKeyDown: PropTypes.func,
-    valueChange: PropTypes.func.isRequired
-};
-
-StateInputField.defaultProps= {
-    showWarning : true,
-    valid : true,
-    visible : true,
-    message: '',
-    type: 'text',
-    style: {},
-    wrapperStyle: {}
+    valueChange: PropTypes.func.isRequired,
+    visible: PropTypes.bool,
 };

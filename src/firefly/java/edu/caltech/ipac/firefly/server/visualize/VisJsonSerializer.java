@@ -54,6 +54,7 @@ public class VisJsonSerializer {
             if (wpHeader.isThreeColor()) map.put("threeColor", wpHeader.isThreeColor());
             map.put("plotRequestSerialize", wpHeader.getRequest().toString());
             map.put("dataDesc", wpHeader.getDataDesc());
+            map.put("zeroHeaderAry", serializeHeaderAry(wpHeader.getZeroHeaderAry()));
         }
         return map;
     }
@@ -62,12 +63,12 @@ public class VisJsonSerializer {
     public static JSONObject serializeWebPlotInitializerDeep(WebPlotInitializer wpInit) {
         JSONObject map = new JSONObject();
 
-        map.put("imageCoordSys", wpInit.getCoordinatesOfPlot().toString());
+        if (wpInit.getCoordinatesOfPlot()!=null) map.put("imageCoordSys", wpInit.getCoordinatesOfPlot().toString());
         if (wpInit.getHeaderAry()!=null) map.put("headerAry", serializeHeaderAry(wpInit.getHeaderAry()));
+        if (wpInit.getZeroHeaderAry()!=null) map.put("zeroHeaderAry", serializeHeaderAry(wpInit.getZeroHeaderAry()));
         if (wpInit.getRelatedData()!=null) map.put("relatedData", serializeRelatedDataArray(wpInit.getRelatedData()));
-        map.put("dataWidth", wpInit.getDataWidth());
-        map.put("dataHeight", wpInit.getDataHeight());
-        map.put("imageScaleFactor", wpInit.getImageScaleFactor());
+        if (wpInit.getDataWidth()>=0) map.put("dataWidth", wpInit.getDataWidth());
+        if (wpInit.getDataWidth()>=0) map.put("dataHeight", wpInit.getDataHeight());
         map.put("initImages", serializePlotImages(wpInit.getInitImages()));
         map.put("plotState", serializePlotState(wpInit.getPlotState()));
         map.put("desc", wpInit.getPlotDesc());

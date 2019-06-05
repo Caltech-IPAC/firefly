@@ -48,12 +48,13 @@ public class FitsReadFactory {
      *
      * @param imageHDUs
      * @param tableHDUs
+     * @param zeroHeader
      * @param clearHdu
      * @return
      * @throws FitsException
      */
     private static FitsRead[] getFitsReadArray(BasicHDU[]  imageHDUs, BasicHDU[] tableHDUs,
-                                               boolean clearHdu)throws FitsException{
+                                               Header zeroHeader, boolean clearHdu)throws FitsException{
 
         FitsRead[] fitsReadAry = new FitsRead[imageHDUs.length];
         for (int i = 0; i < imageHDUs.length; i++) {
@@ -67,7 +68,9 @@ public class FitsReadFactory {
                 }
                 bHdu = FitsReadUtil.getBinaryTableHdu(tableHDUs, extName);
             }
-            fitsReadAry[i] = bHdu!=null? new FitsRead(imageHDUs[i], bHdu, clearHdu) : new FitsRead(imageHDUs[i], clearHdu);
+            fitsReadAry[i] = bHdu!=null?
+                    new FitsRead(imageHDUs[i], bHdu, zeroHeader, clearHdu) :
+                    new FitsRead(imageHDUs[i], zeroHeader, clearHdu);
         }
         return fitsReadAry;
     }
@@ -101,7 +104,8 @@ public class FitsReadFactory {
             throw new FitsException(BAD_FORMAT_MSG);
         }
 
-        return getFitsReadArray(HDUList.toArray(new BasicHDU[0]), tblHDUs, false);
+        Header zeroHeader= getZeroHeader(HDUs);
+        return getFitsReadArray(HDUList.toArray(new BasicHDU[0]), tblHDUs, zeroHeader, false);
     }
 
     /**
@@ -152,15 +156,17 @@ public class FitsReadFactory {
 
         ArrayList<BasicHDU> HDUList = FitsReadUtil.getImageHDUList(HDUs);
 
-        if (HDUList.size() == 0) { //The FITS file does not have any Image
-            String msg= (HDUs.length>1) ? NO_IMAGE_HDU_MSG_ONLY_TABLE : NO_IMAGE_HDU_MSG;
-            throw new FitsException(msg);
+        Header zeroHeader= getZeroHeader(HDUs);
+        return getFitsReadArray( HDUList.toArray(new BasicHDU[0]), HDUs, zeroHeader, clearHdu);
+
+    }
+
+    private static Header getZeroHeader(BasicHDU[] HDUs) {
+        Header zeroHeader= null;
+        if (HDUs.length>1 && (HDUs[0] instanceof ImageHDU) && HDUs[0].getHeader().getIntValue("NAXIS", -1)==0) {
+            zeroHeader= HDUs[0].getHeader();
         }
-
-
-
-
-        return getFitsReadArray(HDUList.toArray(new BasicHDU[0]), HDUs, clearHdu);
+        return zeroHeader;
 
     }
 

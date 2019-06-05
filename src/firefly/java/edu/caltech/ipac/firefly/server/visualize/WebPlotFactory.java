@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.visualize;
 
+import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -21,6 +22,7 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.UTCTimeUtil;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImageDataGroup;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
@@ -182,9 +184,15 @@ public class WebPlotFactory {
 
                 if (i==0 && !threeColor) {
                     PlotState s= pInfo[i].getState();
+
+                    FitsRead[] frAry= pInfo[0].getFrGroup().getFitsReadAry();
+                    Header[] zeroHeaderAry= new Header[frAry.length];
+                    for(int k=0; k<zeroHeaderAry.length; k++) {
+                        zeroHeaderAry[k]= frAry[k]!=null ? frAry[k].getZeroHeader() : null;
+                    }
                     wpHeader= new WebPlotHeaderInitializer(s.getOriginalFitsFileStr(NO_BAND),
                             s.getWorkingFitsFileStr(NO_BAND), s.getUploadFileName(NO_BAND),
-                            pInfo[i].getDataDesc(), false, s.getPrimaryRequest());
+                            pInfo[i].getDataDesc(), false, s.getPrimaryRequest(),zeroHeaderAry);
                 }
                 wpInit[i] = makePlotResults(pi, (i < 2 || i > pInfo.length - 2), allPlots.getZoomChoice(), !threeColor);
             }
@@ -234,7 +242,8 @@ public class WebPlotFactory {
     }
 
     private static WebPlotInitializer makeWebPlotInitializer(PlotState state, PlotImages images,
-                                                             ImagePlotInfo pInfo, boolean clearHeaderData) {
+                                                             ImagePlotInfo pInfo,
+                                                             boolean clearHeaderData) {
         // need a WebFits Data each band: normal is 1, 3 color is three
         WebFitsData wfDataAry[] = new WebFitsData[3];
 
@@ -247,13 +256,30 @@ public class WebPlotFactory {
         ImagePlot plot = pInfo.getPlot();
         FitsRead[] frAry= pInfo.getFrGroup().getFitsReadAry();
         Header[] headerAry= new Header[frAry.length];
-        for(int i=0; i<headerAry.length; i++) headerAry[i]= frAry[i]!=null ? frAry[i].getHeader() : null;
+        Header[] zeroHeaderAry= new Header[frAry.length];
+        for(int i=0; i<headerAry.length; i++) {
+            headerAry[i]= frAry[i]!=null ? frAry[i].getHeader() : null;
+            zeroHeaderAry[i]= frAry[i]!=null ? frAry[i].getZeroHeader() : null;
+        }
         ImageDataGroup imageData = plot.getImageData();
-        int cubePlain= headerAry[NO_BAND.getIdx()].getIntValue("SPOT_PL",-1);
-        if (cubePlain==0) state.setCubePlaneNumber(0,NO_BAND);
-        if (!state.isThreeColor() && cubePlain>0) {  // have a cube
-            state.setCubePlaneNumber(cubePlain,NO_BAND);
+
+        int dataWidth= imageData.getImageWidth();
+        int dataHeight= imageData.getImageHeight();
+        CoordinateSys imageCoordSys= plot.getCoordinatesOfPlot();
+
+
+
+        List<RelatedData> rdList= pInfo.getRelatedData();
+        int cubePlane= headerAry[NO_BAND.getIdx()].getIntValue("SPOT_PL",-1);
+        if (cubePlane==0) state.setCubePlaneNumber(0,NO_BAND);
+
+        if (!state.isThreeColor() && cubePlane>0) {  // have a cube
+            state.setCubePlaneNumber(cubePlane,NO_BAND);
             headerAry= null;
+            rdList= null;
+            dataWidth= -1;
+            dataHeight= -1;
+            imageCoordSys= null;
         }
 
         if (clearHeaderData) {
@@ -267,20 +293,20 @@ public class WebPlotFactory {
                     bsAry[i].setOriginalFitsFileStr(null);
                 }
             }
+            zeroHeaderAry= null;
         }
 
 
         return new WebPlotInitializer(state,
                                       images,
-                                      plot.getCoordinatesOfPlot(),
+                                      imageCoordSys,
                                       headerAry,
-                                      imageData.getImageWidth(),
-                                      imageData.getImageHeight(),
-                                      pInfo.getFrGroup().getFitsRead(state.firstBand()).getImageScaleFactor(),
+                                      zeroHeaderAry,
+                                      dataWidth, dataHeight,
                                       wfDataAry,
                                       plot.getPlotDesc(),
                                       clearHeaderData ? null : pInfo.getDataDesc(),
-                                      pInfo.getRelatedData());
+                                      rdList);
     }
 
 

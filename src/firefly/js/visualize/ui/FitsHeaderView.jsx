@@ -22,10 +22,11 @@ import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {getTblById} from '../../tables/TableUtil.js';
 import {TABLE_SORT, TABLE_REPLACE, dispatchTableSort} from '../../tables/TablesCntlr.js';
 import {getHDU, isThreeColor} from '../PlotViewUtil';
+import {getHeader, getHeaderDesc} from '../FitsHeaderUtil.js';
 
 const popupIdRoot = 'directFileAccessData';
 const popupPanelResizableStyle = {
-    width: 450,
+    width: 550,
     minWidth: 448,
     height: 400,
     minHeight: 300,
@@ -328,6 +329,7 @@ function renderTable(band, fitsHeaderInfo, isPlacedOnTab) {
                selectable={false}
                showOptionButton={true}
                allowUnits={false}
+               showFilters={true}
            />
 
         </div>
@@ -385,6 +387,19 @@ function createTableIdForFitsHeader(plot) {
     return  str.replace(/[^a-zA-Z0-9]/g, '_')  + colors; //replace the no numeric/alphabet character by _
 }
 
+
+function createRowData(header,hduStr) {
+    return Object.keys(header)
+        .sort((a, b) => header[a].idx - header[b].idx)
+        .reduce((prev, aKey, idx) => {
+            if (aKey === 'COMMENT') return prev;
+            const row= [`${idx}`, aKey, getHeader(header,aKey,''), getHeaderDesc(header,aKey)];
+            if (hduStr) row.push(hduStr);
+            prev.push(row);
+            return prev;
+        }, []);
+}
+
 /**
  * create fits header table model based on the fits header array from plot
  * @param tableId
@@ -392,34 +407,26 @@ function createTableIdForFitsHeader(plot) {
  * @returns {*}
  */
 function createFitsHeaderTable(tableId, plot) {
-    const {headerAry} = plot;
+    const {headerAry,zeroHeader} = plot;
     if (!headerAry) return null;
 
     tableId = tableId ? tableId : createTableIdForFitsHeader(plot);
     const bands = plot.plotState.getBands();
 
-    const columns = [{name: '#', type: 'int', width: 3},
-                     {name: 'Keyword', type: 'char', width: 10},
-                     {name: 'Value', type: 'char', width: 15},
-                     {name: 'Comments', type: 'char', width: 32}];
-    const headerComment = 'comment';
-    const headerValue = 'value';
+    const columns = [
+        {name: '#', type: 'int', width: 3},
+        {name: 'Keyword', type: 'char', width: 10},
+        {name: 'Value', type: 'char', width: 15},
+        {name: 'Comments', type: 'char', width: zeroHeader? 32 : 45}
+    ];
+    const hduStr= 'HDU ' + getHDU(plot);
+    const primaryStr= 'Primary';
+    if (zeroHeader) columns.push({name: 'HDU #', type: 'char', width: 10, enumVals: `${hduStr},${primaryStr}`});
 
     const getHeaderData = (header) => {
-        const headerKeys = Object.keys(header).sort(sortHeaderKey(header));
-
-        return headerKeys.reduce((prev, aKey, idx) => {
-            if (aKey !== 'COMMENT') {
-                let val = get(header, [aKey, headerValue]);
-                let cmt = get(header, [aKey, headerComment]);
-
-                if (!val) val = '';
-                if (!cmt) cmt = '';
-
-                prev.push([`${idx}`, aKey, val, cmt]);
-            }
-            return prev;
-        }, []);
+        const hduRows= zeroHeader?
+            [...createRowData(header,hduStr),  ...createRowData(zeroHeader,primaryStr)] : createRowData(header);
+        return hduRows;
     };
 
     return bands.reduce((prev, oneBand) => {
@@ -439,17 +446,6 @@ function createFitsHeaderTable(tableId, plot) {
             }
         return prev;
     }, {});
-}
-
-/**
- * sort the header key/value based on the original order in fits header
- * @param header
- * @returns {Function}
- */
-function sortHeaderKey(header) {
-    return (a, b) => {
-        return header[a].idx - header[b].idx;
-    };
 }
 
 // resort table based on current sort info.

@@ -3,7 +3,7 @@
  */
 
 import React, {Fragment,memo} from 'react';
-import PropTypes from 'prop-types';
+import {number,string,oneOfType,object,func,bool} from 'prop-types';
 import {get} from 'lodash';
 import {getNonFluxDisplayElements, getFluxInfo} from './MouseReadoutUIUtil.js';
 import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
@@ -15,11 +15,13 @@ import './MouseReadout.css';
 export function MouseReadout({readout, readoutData}){
 
     if (!readoutData.readoutItems) return (<div className='mouseReadoutDisplaySpace'/>);
+    const {threeColor}= readoutData;
 
     const title= get(readoutData, 'readoutItems.title.value','');
 
     const displayEle= getNonFluxDisplayElements(readoutData.readoutItems,  readout.readoutPref, false);
-    const {readout1, readout2, pixelSize, showReadout1PrefChange, showReadout2PrefChange, showPixelPrefChange}= displayEle;
+    const {readout1, readout2, pixelSize, showReadout1PrefChange, showWavelengthFailed,
+        showReadout2PrefChange, showPixelPrefChange, waveLength}= displayEle;
 
     const fluxArray = getFluxInfo(readoutData);
 
@@ -35,7 +37,9 @@ export function MouseReadout({readout, readoutData}){
                              value={pixelSize.value} prefChangeFunc={showPixelPrefChange}/>
                              
             <DataReadoutItem lArea='redLabel' vArea='redValue' label={fluxArray[0].label} value={fluxArray[0].value}/>
-            <DataReadoutItem lArea='greenLabel' vArea='greenValue' label={fluxArray[1].label} value={fluxArray[1].value}/>
+            {threeColor && <DataReadoutItem lArea='greenLabel' vArea='greenValue' label={fluxArray[1].label} value={fluxArray[1].value}/>}
+            {waveLength && <DataReadoutItem lArea='greenLabel' vArea='greenValue' label={waveLength.label} value={waveLength.value}
+                prefChangeFunc={showWavelengthFailed} /> }
             <DataReadoutItem lArea='blueLabel' vArea='blueValue' label={fluxArray[2].label} value={fluxArray[2].value}/>
 
             <MouseReadoutLock gArea='lock' lockByClick={readout.lockByClick} />
@@ -44,8 +48,8 @@ export function MouseReadout({readout, readoutData}){
 }
 
 MouseReadout.propTypes = {
-    readout: PropTypes.object,
-    readoutData: PropTypes.object
+    readout: object,
+    readoutData: object
 };
 
 
@@ -66,9 +70,9 @@ export const MouseReadoutLock= memo(({gArea, style={}, lockByClick}) => {
 });
 
 MouseReadoutLock.propTypes = {
-    style:       PropTypes.object,
-    gArea:       PropTypes.string, // grid Area used with css grid-template-areas
-    lockByClick: PropTypes.bool.isRequired
+    style:       object,
+    gArea:       string, // grid Area used with css grid-template-areas
+    lockByClick: bool.isRequired
 };
 
 
@@ -87,11 +91,11 @@ export const DataReadoutItem= memo(({lArea, vArea, labelStyle={}, valueStyle={},
 });
 
 DataReadoutItem.propTypes = {
-    lArea:          PropTypes.string,   //  label grid Area used with css grid-template-areas
-    vArea:          PropTypes.string,   //  value grid Area used with css grid-template-areas
-    labelStyle:     PropTypes.object,
-    valueStyle:     PropTypes.object,
-    label:          PropTypes.string,
-    value:          PropTypes.string,
-    prefChangeFunc: PropTypes.func,
+    lArea:          string,   //  label grid Area used with css grid-template-areas
+    vArea:          string,   //  value grid Area used with css grid-template-areas
+    labelStyle:     object,
+    valueStyle:     object,
+    label:          string,
+    value:          oneOfType([number,string]),
+    prefChangeFunc: func,
 };

@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {flatten, isArray, uniqueId, uniqBy, get, isEmpty} from 'lodash';
+import {flatten, flattenDeep, isArray, uniqueId, uniqBy, get, isEmpty} from 'lodash';
 import {WebPlotRequest, GridOnStatus} from '../WebPlotRequest.js';
 import ImagePlotCntlr, {visRoot, makeUniqueRequestKey, IMAGE_PLOT_KEY} from '../ImagePlotCntlr.js';
 import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
@@ -28,7 +28,8 @@ import {getDlAry} from '../DrawLayerCntlr.js';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
 import {dispatchPlotProgressUpdate, dispatchRecenter} from '../ImagePlotCntlr';
 import {isDefined} from '../../util/WebUtil';
-import {FitsHdr} from '../WebPlot';
+import {HdrConst} from '../FitsHeaderUtil.js';
+import {doFetchTable} from '../../tables/TableUtil';
 
 //======================================== Exported Functions =============================
 //======================================== Exported Functions =============================
@@ -290,11 +291,28 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
         const wpRequest= r.data.PlotCreateHeader ?  WebPlotRequest.parse(r.data.PlotCreateHeader.plotRequestSerialize) : plotState.getWebPlotRequest();
         dispatchPlotProgressUpdate(wpRequest.getPlotId(), 'Loading Images', false,wpRequest.getRequestKey());
     });
-    setTimeout( () => processPlotImageResponseDeferred(dispatcher, payload, successAry, failAry) , 5);
+
+    lookForRelatedDataThenContinue(successAry,failAry, payload, dispatcher);
 
 }
 
-export function processPlotImageResponseDeferred(dispatcher, payload, successAry, failAry) {
+function lookForRelatedDataThenContinue(successAry,failAry, payload, dispatcher) {
+    setTimeout( () => {
+        const promiseAry= [Promise.resolve()];
+        successAry.forEach( (s) => s.data.PlotCreate.forEach( (pc) => {
+            const tType= pc.relatedData && pc.relatedData.find( (r) => r.dataType==='WAVELENGTH_TABLE');
+            if (tType) {
+                const p= doFetchTable(tType.searchParams).then( (wlTable) => {
+                    pc.relatedData.push({dataType:'WAVELENGTH_TABLE_RESOLVED',dataKey:tType.dataKey+'-resolved', table:wlTable});
+                });
+                promiseAry.push(p);
+            }
+        }));
+        Promise.all(promiseAry).then( () =>continuePlotImageSuccess(dispatcher, payload, successAry, failAry));
+    } , 5);
+}
+
+function continuePlotImageSuccess(dispatcher, payload, successAry, failAry) {
 
     if (successAry.length) {
         const pvNewPlotInfoAry= successAry.map( (r) => handleSuccessfulCall(r.data.PlotCreate, r.data.PlotCreateHeader,payload, r.data.requestKey) );
@@ -394,8 +412,8 @@ export function addDrawLayers(request, plot ) {
  function findCubePlane(plotCreate) {
      const plotState= PlotState.makePlotStateWithJson(plotCreate.plotState);
      if (plotState.isThreeColor()) return -1;
-     if (plotCreate.headerAry && isDefined(plotCreate.headerAry[0][FitsHdr.SPOT_PL])) { // this should be the zero plane of the cube
-         return Number(plotCreate.headerAry[0][FitsHdr.SPOT_PL].value);
+     if (plotCreate.headerAry && isDefined(plotCreate.headerAry[0][HdrConst.SPOT_PL])) { // this should be the zero plane of the cube
+         return Number(plotCreate.headerAry[0][HdrConst.SPOT_PL].value);
      }
      else if (!plotCreate.headerAry) {  // if no headerAry, it is a plane of the cube
          return plotState.getCubePlaneNumber();
@@ -437,13 +455,14 @@ export function populateFromHeader(plotCreateHeader, plotCreate) {
              populateBandStateFromHeader(plotCreate[i].plotState.bandStateAry,plotCreateHeader);
          }
          plotCreate[i].dataDesc= plotCreateHeader.dataDesc;
+         plotCreate[i].zeroHeaderAry= plotCreateHeader.zeroHeaderAry;
      }
  }
 
 /**
  *
- * @param plotCreate
- * @param plotCreateHeader
+ * @param {Array.<Object>} plotCreate
+ * @param {Object} plotCreateHeader
  * @param payload
  * @param requestKey
  * @return {PvNewPlotInfo}
@@ -457,7 +476,15 @@ function handleSuccessfulCall(plotCreate, plotCreateHeader, payload, requestKey)
         .map( (pC,idx) => {
             const cubePlane= findCubePlane(pC);
             if (cubePlane===0) cubeStartIdx= idx;
-            return cubePlane>-1 ? {cubePlane,cubeHeaderAry:plotCreate[cubeStartIdx].headerAry} : undefined;
+            const cubeStartPC= plotCreate[cubeStartIdx];
+            return cubePlane>-1 ? {
+                cubePlane,
+                cubeHeaderAry: cubeStartPC.headerAry,
+                relatedData: cubeStartPC.relatedData,
+                dataWidth: cubeStartPC.dataWidth,
+                dataHeight: cubeStartPC.dataHeight,
+                imageCoordSys: cubeStartPC.imageCoordSys
+            } : undefined;
         });
 
 

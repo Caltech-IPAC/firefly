@@ -39,6 +39,7 @@ class MaskEval implements FitsEvaluation.Eval {
      * @return the data relations
      */
     public List<RelatedData> evaluate(File f, FitsRead[] frAry, BasicHDU[] HDUs, int fitsReadIndex, int hduIndex, WebPlotRequest req) {
+        if (HDUs.length<2) return null;
         String extType = frAry[fitsReadIndex].getExtType();
         if (extType.equalsIgnoreCase("IMAGE")) {
             List<RelatedData> relatedList = new ArrayList<>();
