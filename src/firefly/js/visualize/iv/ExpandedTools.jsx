@@ -14,8 +14,6 @@ import {showExpandedOptionsPopup} from '../ui/ExpandedOptionsPopup.jsx';
 import { dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {VisToolbar} from '../ui/VisToolbar.jsx';
 import {getMultiViewRoot, getExpandedViewerItemIds} from '../MultiViewCntlr.js';
-import {WcsMatchOptions, HiPSMatchingOptions} from '../ui/WcsMatchOptions.jsx';
-import {isImage} from '../WebPlot.js';
 
 import './ExpandedTools.css';
 
@@ -37,7 +35,6 @@ const tStyle= {
 
 function createOptions(expandedMode, singleAutoPlay, visRoot, plotIdAry) {
     let autoPlay= false;
-    let wcsMatch= false;
     if (expandedMode===ExpandType.SINGLE && plotIdAry.length>1) {
         autoPlay= (
             <div style={{paddingLeft:25}}>
@@ -51,18 +48,9 @@ function createOptions(expandedMode, singleAutoPlay, visRoot, plotIdAry) {
         );
     }
 
-    const imageDataViewers= plotIdAry.filter( (plotId) => isImage(primePlot(visRoot,plotId)));
-    if (imageDataViewers.length>1 ) {
-        wcsMatch= (
-                <WcsMatchOptions activePlotId={visRoot.activePlotId} wcsMatchType={visRoot.wcsMatchType} />
-        );
-    }
-
     return (
         <div style={{display:'inline-flex', flexDirection:'row', alignItems: 'center', flexWrap:'nowrap', paddingLeft:15}}>
-            {wcsMatch}
             {autoPlay}
-            {expandedMode===ExpandType.GRID && <HiPSMatchingOptions  visRoot={visRoot} plotIdAry={plotIdAry}/>}
         </div>
     );
 }
@@ -71,11 +59,6 @@ function createOptions(expandedMode, singleAutoPlay, visRoot, plotIdAry) {
 const closeButtonStyle= {
     display: 'inline-block',
     padding: '1px 12px 0 1px'
-};
-
-const singlePlotTitleStyle= {
-    paddingLeft: 2,
-    alignSelf : 'center'
 };
 
 const gridPlotTitleStyle= {

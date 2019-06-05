@@ -21,6 +21,7 @@ import {clone} from '../../util/WebUtil.js';
 import Enum from 'enum';
 import {has, isNil, get, isEmpty, isArray, set} from 'lodash';
 import {isHiPS} from '../WebPlot.js';
+import {hasWCSProjection} from '../PlotViewUtil';
 
 const HANDLER_BOX = 6;        // handler size (square size in screen coordinate)
 const CENTER_BOX = 60;
@@ -44,7 +45,7 @@ export const OutlineType = new Enum(['original', 'center', 'plotcenter']);
 const AllHandle = [MARKER_HANDLE.outline, MARKER_HANDLE.resize, MARKER_HANDLE.rotate];
 const AllOutline = [OutlineType.original, OutlineType.center, OutlineType.plotcenter];
 
-export var getWorldOrImage = (pt, cc) => ((cc.projection.isSpecified() && cc.projection.isImplemented()) ?
+export var getWorldOrImage = (pt, cc) => (hasWCSProjection(cc) ?
                                            cc.getWorldCoords(pt, CoordinateSys.EQ_J2000) : cc.getImageCoords(pt));
 
 
@@ -105,7 +106,7 @@ const screenUnit = ShapeDataObj.UnitType.PIXEL;
 export function lengthSizeUnit(cc, size, unitType, resUnit=imageUnit) {
     var len, unit;
 
-    if (cc.projection.isSpecified() && cc.projection.isImplemented()) {
+    if (hasWCSProjection(cc)) {
         len = lengthToArcsec(size, cc, unitType);
         unit = worldUnit;
     } else if (imageUnit.is(resUnit)) {

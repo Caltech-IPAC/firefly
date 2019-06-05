@@ -20,10 +20,10 @@ import {fireMouseReadoutChange} from '../VisMouseSync';
 import {
     failedToParseWavelenthInfo,
     getImageCubeIdx,
-    getPtWavelength, getWavelenghParseFailReason,
+    getPtWavelength, getWavelengthParseFailReason,
     getWaveLengthUnits, hasPixelLevelWLInfo, hasPlaneOnlyWLInfo,
     hasWLInfo,
-    isImageCube, wavelenthInfoParsedSuccessfully
+    isImageCube, wavelengthInfoParsedSuccessfully
 } from '../PlotViewUtil';
 
 
@@ -384,7 +384,7 @@ function showSingleBandFluxLabel(plot, band) {
 function makeWLResult(plot,imagePt= undefined) {
                // do wavelength readout if it has pixel level wl or if it is a not a cube image with plane wl info
     if ((hasPixelLevelWLInfo(plot) || (hasPlaneOnlyWLInfo(plot) && !isImageCube(plot)))) {
-        if (wavelenthInfoParsedSuccessfully(plot)) {
+        if (wavelengthInfoParsedSuccessfully(plot)) {
             if (!imagePt) return;
             const cubeIdx= (isImageCube(plot) && getImageCubeIdx(plot)) || 0;
             const wlValue= getPtWavelength(plot, imagePt, cubeIdx);
@@ -392,7 +392,7 @@ function makeWLResult(plot,imagePt= undefined) {
         }
         else {
             const item=  makeValueReadoutItem('Wavelength', 'Failed', '', 4);
-            item.failReason= getWavelenghParseFailReason(plot);
+            item.failReason= getWavelengthParseFailReason(plot);
             return item;
         }
     }

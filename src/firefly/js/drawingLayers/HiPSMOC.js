@@ -6,7 +6,7 @@ import Enum from 'enum';
 import {makeDrawingDef, TextLocation, Style} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
-import {primePlot, getDrawLayerById, getPlotViewIdListInGroup} from '../visualize/PlotViewUtil.js';
+import {primePlot, getDrawLayerById, getPlotViewIdList} from '../visualize/PlotViewUtil.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import DrawLayerCntlr, {DRAWING_LAYER_KEY, dispatchUpdateDrawLayer} from '../visualize/DrawLayerCntlr.js';
 import {get, set, isEmpty, cloneDeep, isString} from 'lodash';
@@ -406,7 +406,7 @@ function asyncComputeDrawData(drawLayer, action) {
             pIdAry = plotIdAry;
         } else if (action.type === ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION ) {
             if (plotId) {
-                pIdAry = getPlotViewIdListInGroup(visRoot(), plotId);
+                pIdAry = getPlotViewIdList(visRoot(), plotId);
             }
         } else if (plotId) {
             pIdAry = [plotId];

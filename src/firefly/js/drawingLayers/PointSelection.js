@@ -30,17 +30,22 @@ export default {factoryDef, TYPE_ID}; // every draw layer must default export wi
 var idCnt=0;
 
 function dispatchSelectPoint(mouseStatePayload) {
-    var {plotId,screenPt,drawLayer}= mouseStatePayload;
+    const {plotId,screenPt,drawLayer}= mouseStatePayload;
     if (drawLayer.drawData.data) {
         flux.process({type:DrawLayerCntlr.SELECT_POINT, payload:mouseStatePayload} );
-        dispatchAttributeChange(plotId,true,PlotAttribute.ACTIVE_POINT,{pt:makeSelectedPt(screenPt,plotId)},true);
+        dispatchAttributeChange(
+            {plotId,
+            attKey:PlotAttribute.ACTIVE_POINT,attValue:{pt:makeSelectedPt(screenPt,plotId)}
+        });
     }
 }
 
 
 function onDetach(drawLayer,action) {
-    var {plotIdAry}= action.payload;
-    plotIdAry.forEach( (plotId) => dispatchAttributeChange(plotId,false,PlotAttribute.ACTIVE_POINT,null,true));
+    const {plotIdAry}= action.payload;
+    plotIdAry.forEach( (plotId) => dispatchAttributeChange(
+        { plotId ,overlayColorScope:false,attKey:PlotAttribute.ACTIVE_POINT,attValue:null }
+    ));
 }
 
 

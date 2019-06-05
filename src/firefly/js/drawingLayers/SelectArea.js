@@ -58,11 +58,11 @@ export function selectAreaEndActionCreator(rawAction) {
         if (drawLayer.drawData.data) {
             const selectBox= drawLayer.drawData.data.find( (drawObj) => drawObj.type===SelectBox.SELECT_BOX);
             const sel= {pt0:selectBox.pt1,pt1:selectBox.pt2};
-            dispatchAttributeChange(plotId,true,PlotAttribute.SELECTION,sel,true);
+            dispatchAttributeChange({plotId,attKey:PlotAttribute.SELECTION,attValue:sel});
             // const imBoundSel= pv.rotation ? getImageBoundsSelection(sel,CsysConverter.make(plot)) : sel;
             const imBoundSel= getImageBoundsSelection(sel,CsysConverter.make(plot), drawLayer.selectedShape,
                                                       pv.rotation);
-            dispatchAttributeChange(plotId,true,PlotAttribute.IMAGE_BOUNDS_SELECTION, imBoundSel,true);
+            dispatchAttributeChange({plotId,attKey:PlotAttribute.IMAGE_BOUNDS_SELECTION, attValue:imBoundSel});
         }
     };
 }
@@ -108,8 +108,8 @@ function creator(initPayload) {
 function onDetach(drawLayer,action) {
     const {plotIdAry}= action.payload;
     plotIdAry.forEach( (plotId) => {
-        dispatchAttributeChange(plotId, false, PlotAttribute.SELECTION, null, true);
-        dispatchAttributeChange(plotId,false,PlotAttribute.IMAGE_BOUNDS_SELECTION,null,true);
+        dispatchAttributeChange({plotId, overlayColorScope:false, attKey:PlotAttribute.SELECTION, attValue:null});
+        dispatchAttributeChange({plotId,overlayColorScope:false,attKey:PlotAttribute.IMAGE_BOUNDS_SELECTION,attValue:null});
     });
 }
 

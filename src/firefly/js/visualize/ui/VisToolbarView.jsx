@@ -6,12 +6,12 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {getActivePlotView,
     primePlot,
-    hasGroupLock,
     findPlotGroup,
+    hasOverlayColorLock,
     getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {findUnactivatedRelatedData} from '../RelatedDataUtil.js';
 import {dispatchRotate, dispatchFlip, dispatchRecenter,
-        dispatchRestoreDefaults,dispatchGroupLocking} from '../ImagePlotCntlr.js';
+        dispatchRestoreDefaults,dispatchOverlayColorLocking} from '../ImagePlotCntlr.js';
 import {RotateType} from '../PlotState.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
@@ -35,7 +35,7 @@ import {showRegionFileUploadPanel} from '../region/RegionFileUploadView.jsx';
 import {MarkerDropDownView} from './MarkerDropDownView.jsx';
 import {showImageSelPanel} from './ImageSearchPanelV2.jsx';
 import {showMaskDialog} from './MaskAddPanel.jsx';
-import {isImage,isHiPS} from '../WebPlot.js';
+import {isHiPS} from '../WebPlot.js';
 import {HiPSPropertyView} from './HiPSPropertyView.jsx';
 import {SelectAreaDropDownView, getSelectedAreaIcon} from './SelectAreaDropDownView.jsx';
 
@@ -63,17 +63,21 @@ import SAVE from 'html/images/icons-2014/Save.png';
 import FLIP_Y from 'html/images/icons-2014/Mirror.png';
 import FLIP_Y_ON from 'html/images/icons-2014/Mirror-ON.png';
 import RECENTER from 'html/images/icons-2014/RecenterImage.png';
-import LOCKED from 'html/images/icons-2014/BkgLocked.png';
-import UNLOCKED from 'html/images/icons-2014/BkgUnlocked.png';
+// import LOCKED from 'html/images/icons-2014/BkgLocked.png';
+// import UNLOCKED from 'html/images/icons-2014/BkgUnlocked.png';
+import LOCKED from 'html/images/OverlayLocked.png';
+import UNLOCKED from 'html/images/OverlayUnlocked.png';
 import NEW_IMAGE from 'html/images/icons-2014/28x28_FITS_NewImage.png';
 
 import COLOR from 'html/images/icons-2014/28x28_ColorPalette.png';
 import STRETCH from 'html/images/icons-2014/28x28_Log.png';
 import MARKER from 'html/images/icons-2014/MarkerCirclesIcon_28x28.png';
+import {MatchLockDropDown} from './MatchLockDropDown';
 
 export const VIS_TOOLBAR_HEIGHT=34;
 export const VIS_TOOLBAR_V_HEIGHT=48;
 
+// let matchType= 'target'; //todo- temporary
 
 const tipStyle= {
     display: 'inline-block',
@@ -318,13 +322,15 @@ export class VisToolbarView extends PureComponent {
                                onClick={() => dispatchRestoreDefaults({plotId:pv.plotId})}/>
 
                 <SimpleLayerOnOffButton plotView={pv}
-                                isIconOn={pv&&plot? isGroupLocked(pv,plotGroupAry) : false }
-                                tip='lock images of all bands for zooming, scrolling etc.'
+                                isIconOn={pv&&plot? isOverlayColorLocked(pv,plotGroupAry) : false }
+                                tip='Lock images of all bands for color change and overlays'
                                 iconOn={LOCKED}
                                 iconOff={UNLOCKED}
-                                visible={mi.lockRelated}
-                                onClick={() => toggleLockRelated(pv,plotGroupAry)}
+                                visible={mi.overlayColorLock}
+                                onClick={() => toggleOverlayColorLock(pv,plotGroupAry)}
                                  />
+
+                <MatchLockDropDown visRoot={visRoot} enabled={enabled} />
 
 
                 <ToolbarButton icon={FITS_HEADER}
@@ -368,15 +374,14 @@ function flipY(pv) {
 //     return <div style={tipStyle}>{toolTip}</div>;
 // }
 
-function isGroupLocked(pv,plotGroupAry){
+function isOverlayColorLocked(pv,plotGroupAry){
     const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
-    const lockEnabled = hasGroupLock(pv,plotGroup);
-    return lockEnabled;
+    return hasOverlayColorLock(pv,plotGroup);
 
 }
-function toggleLockRelated(pv,plotGroupAry){
+function toggleOverlayColorLock(pv,plotGroupAry){
     const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
-    dispatchGroupLocking(pv.plotId,!hasGroupLock(pv,plotGroup));
+    dispatchOverlayColorLocking(pv.plotId,!hasOverlayColorLock(pv,plotGroup));
 }
 
 function showImagePopup() {
@@ -407,3 +412,7 @@ LayerButton.propTypes= {
     visible : PropTypes.bool.isRequired,
     dlCount : PropTypes.number.isRequired // must be here. We don't use directly but it forces an update
 };
+
+
+
+

@@ -27,12 +27,13 @@ import {colorChangeActionCreator, stretchChangeActionCreator, cropActionCreator}
 import {wcsMatchActionCreator} from './task/WcsMatchTask.js';
 import {autoPlayActionCreator, changePointSelectionActionCreator,
     restoreDefaultsActionCreator, deletePlotViewActionCreator} from './task/PlotAdminTask.js';
+import {processScrollActionCreator, recenterActionCreator} from './task/PlotChangeTask';
 
 /** enum can be 'COLLAPSE', 'GRID', 'SINGLE' */
 export const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
 
 /** enum can be 'Standard', 'Target' */
-export const WcsMatchType= new Enum(['Standard', 'Target']);
+export const WcsMatchType= new Enum(['Standard', 'Target', 'Pixel', 'PixelCenter']);
 
 
 
@@ -105,7 +106,8 @@ const CHANGE_CENTER_OF_PROJECTION= `${PLOTS_PREFIX}.changeCenterOfProjection`;
 const RECENTER= `${PLOTS_PREFIX}.recenter`;
 /** Action Type: replot the image with the original plot parameters */
 const RESTORE_DEFAULTS= `${PLOTS_PREFIX}.restoreDefaults`;
-const GROUP_LOCKING= `${PLOTS_PREFIX}.GroupLocking`;
+const POSITION_LOCKING= `${PLOTS_PREFIX}.PositionLocking`;
+const OVERLAY_COLOR_LOCKING= `${PLOTS_PREFIX}.OverlayColorLocking`;
 
 const CHANGE_POINT_SELECTION= `${PLOTS_PREFIX}.ChangePointSelection`;
 
@@ -179,6 +181,7 @@ const initState= function() {
      * @prop {ExpandType} previousExpandedMode the value last time it was expanded
      * @prop {boolean} singleAutoPlay true if auto play on in expanded mode
      * @prop {boolean} apiToolsView true if working in api mode
+     * @prop {boolean} positionLock plots are locked together for scrolling and rotation.
      */
     return {
         activePlotId: null,
@@ -195,6 +198,7 @@ const initState= function() {
         //                                                    greenReq : object,
         //                                                    blueReq : object }
 
+        positionLock: false,
         //-- expanded settings
         expandedMode: ExpandType.COLLAPSE,
         previousExpandedMode: ExpandType.GRID, //  must be SINGLE OR GRID
@@ -268,6 +272,8 @@ function actionCreators() {
         [EXPANDED_AUTO_PLAY]: autoPlayActionCreator,
         [WCS_MATCH]: wcsMatchActionCreator,
         [DELETE_PLOT_VIEW]: deletePlotViewActionCreator,
+        [RECENTER]: recenterActionCreator,
+        [PROCESS_SCROLL]: processScrollActionCreator,
     };
 }
 
@@ -279,7 +285,7 @@ export default {
     CHANGE_CENTER_OF_PROJECTION, ROTATE, FLIP, CROP_START, CROP, CROP_FAIL,
     COLOR_CHANGE_START, COLOR_CHANGE, COLOR_CHANGE_FAIL,
     STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL, CHANGE_POINT_SELECTION, CHANGE_EXPANDED_MODE,
-    PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL, RECENTER, GROUP_LOCKING,
+    PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL, RECENTER, OVERLAY_COLOR_LOCKING, POSITION_LOCKING,
     RESTORE_DEFAULTS, CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,
     DELETE_PLOT_VIEW, CHANGE_ACTIVE_PLOT_VIEW, CHANGE_PRIME_PLOT,
     PLOT_MASK, PLOT_MASK_START, PLOT_MASK_FAIL, PLOT_MASK_LAZY_LOAD, DELETE_OVERLAY_PLOT,
@@ -328,21 +334,31 @@ export function dispatchPlotProgressUpdate(plotId, message, done, requestKey, ca
  * Notify that the size of the plot viewing area has changed
  *
  * @param {string} plotId
- * @param {number} width  this parameter should be the offsetWidth of the dom element
- * @param {number} height this parameter should be the offsetHeight of the dom element
+ * @param {number} [width]  this parameter should be the offsetWidth of the dom element
+ * @param {number} [height] this parameter should be the offsetHeight of the dom element
  */
 export function dispatchUpdateViewSize(plotId,width,height) {
     flux.process({type: UPDATE_VIEW_SIZE, payload: {plotId, width, height} });
 }
 
 /**
- * change group lock for zoom and scrolling
+ * change overlay/color lock for color change and overlays
  *
  * @param {string} plotId is required
- * @param {boolean} groupLocked  true to set group lockRelated on
+ * @param {boolean} overlayColorLock true to set group lockRelated on
  */
-export function dispatchGroupLocking(plotId,groupLocked) {
-    flux.process({ type: GROUP_LOCKING, payload :{ plotId, groupLocked }});
+export function dispatchOverlayColorLocking(plotId,overlayColorLock) {
+    flux.process({ type: OVERLAY_COLOR_LOCKING, payload :{ plotId, overlayColorLock}});
+}
+
+/**
+ * change position lock for zoom and scrolling
+ *
+ * @param {string} plotId is required
+ * @param {boolean} positionLock true to set group lockRelated on
+ */
+export function dispatchPositionLocking(plotId,positionLock) {
+    flux.process({ type: POSITION_LOCKING, payload :{ plotId, positionLock }});
 }
 
 /**
@@ -411,11 +427,12 @@ export function dispatchStretchChange({plotId, stretchData,
  * Enable / Disable WCS Match
  * @param {Object}  p
  * @param {string} p.plotId
- * @param {Enum|string} p.matchType one of 'Standard', 'Off'
- * @param {Function} p.dispatcher
+ * @param {Enum|string|boolean} p.matchType one of 'Standard', 'Off', or you may pass false
+ * @param {boolean} [p.lockMatch]
+ * @param {Function} [p.dispatcher]
  */
-export function dispatchWcsMatch({plotId, matchType, dispatcher= flux.process} ) {
-    dispatcher({ type: WCS_MATCH, payload: { plotId, matchType}});
+export function dispatchWcsMatch({plotId, matchType, lockMatch= true, dispatcher= flux.process} ) {
+    dispatcher({ type: WCS_MATCH, payload: { plotId, matchType, lockMatch}});
 }
 
 
@@ -566,7 +583,7 @@ export function dispatchPlotImage({plotId,wpRequest, threeColor=isArray(wpReques
                                   pvOptions= {},
                                   hipsImageConversion= undefined,
                                   setNewPlotAsActive= true,
-                                  holdWcsMatch= false,
+                                  holdWcsMatch= true,
                                   enableRestore= true,
                                   viewerId,
                                   renderTreeId} ) {
@@ -586,13 +603,13 @@ export function dispatchPlotImage({plotId,wpRequest, threeColor=isArray(wpReques
  * @param {PVCreateOptions} p.pvOptions PlotView init Options
  * @param {Object} [p.attributes] meta data that is added the plot
  * @param {boolean} [p.setNewPlotAsActive] the last completed plot will be active
- * @param {boolean} [p.holdWcsMatch= false] if wcs match is on, then modify the request to hold the wcs match
+ * @param {boolean} [p.holdWcsMatch= true] if wcs match is on, then modify the request to hold the wcs match
  * @param {boolean} [p.enableRestore= true] if true the original request is saved for restore
  * @param {string} [p.renderTreeId] - used only with multiple rendered tree, like slate in jupyter lab
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  */
 export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {},
-                                   attributes={}, setNewPlotAsActive= true, holdWcsMatch= false, renderTreeId,
+                                   attributes={}, setNewPlotAsActive= true, holdWcsMatch= true, renderTreeId,
                                    enableRestore= true,
                                    dispatcher= flux.process}) {
     dispatcher( { type: PLOT_IMAGE, payload: { wpRequestAry, pvOptions, attributes, setNewPlotAsActive,
@@ -682,11 +699,11 @@ export function dispatchChangeHipsImageConversion({plotId, hipsImageConversionCh
  * @summary change the hips repository or some other attribute
  * @param {Object}  p this function takes a single parameter
  * @param {string} p.plotId
- * @param {string} p.hipsUrlRoot
- * @param {CoordinateSys} p.coordSys
- * @param {WorldPt} p.centerProjPt
- * @param {boolean} p.applyToGroup, apply to the whole group it is locked
- * @param {Function} p.dispatcher only for special dispatching uses such as remote
+ * @param {string} [p.hipsUrlRoot]
+ * @param {CoordinateSys} [p.coordSys]
+ * @param {WorldPt} [p.centerProjPt]
+ * @param {boolean} [p.applyToGroup], apply to the whole group it is locked
+ * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  */
 export function dispatchChangeHiPS({ plotId, hipsUrlRoot, coordSys, centerProjPt, cubeIdx,
                                        applyToGroup=true, dispatcher= flux.process }) {
@@ -803,13 +820,13 @@ export function dispatchZoom({plotId, userZoomType, maxCheck= true,
  * Note - function parameter is a single object
  * @param {Object}  p this function takes a single parameter
  * @param {string} p.plotId
- * @param {boolean} [p.holdWcsMatch= false] if wcs match is on, then modify the request to hold the wcs match
+ * @param {boolean} [p.holdWcsMatch= true] if wcs match is on, then modify the request to hold the wcs match
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  * @public
  * @function dispatchDeletePlotView
  * @memberof firefly.action
  */
-export function dispatchDeletePlotView({plotId, holdWcsMatch= false, dispatcher= flux.process}) {
+export function dispatchDeletePlotView({plotId, holdWcsMatch= true, dispatcher= flux.process}) {
     dispatcher({ type: DELETE_PLOT_VIEW, payload: {plotId, holdWcsMatch} });
 }
 
@@ -838,14 +855,20 @@ export function dispatchChangeActivePlotView(plotId) {
 
 /**
  *
- * @param plotId
- * @param applyToGroup
- * @param attKey
- * @param attValue
- * @param toAll if a multiImageFits apply to all the images
+ * @param {Object}  p this function takes a single parameter
+ * @param p.plotId
+ * @param p.overlayColorScope
+ * @param p.positionScope
+ * @param p.attKey
+ * @param p.attValue
+ * @param p.toAllPlotsInPlotView if a multiImageFits apply to all the images
  */
-export function dispatchAttributeChange(plotId,applyToGroup,attKey,attValue,toAll=false) {
-    flux.process({ type: CHANGE_PLOT_ATTRIBUTE, payload: {plotId,attKey,attValue,applyToGroup,toAll} });
+export function dispatchAttributeChange({plotId,overlayColorScope=true,positionScope=false,
+                                            attKey,attValue,toAllPlotsInPlotView=true}) {
+    flux.process({
+        type: CHANGE_PLOT_ATTRIBUTE,
+        payload: {plotId,attKey,attValue,overlayColorScope,positionScope, toAllPlotsInPlotView}
+    });
 }
 
 /**
@@ -952,7 +975,7 @@ const creationActions= convertToIdentityObj([
 const changeActions= convertToIdentityObj([
     ZOOM_LOCKING, ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE, UPDATE_VIEW_SIZE, PROCESS_SCROLL,
     CHANGE_PLOT_ATTRIBUTE, COLOR_CHANGE, COLOR_CHANGE_START, COLOR_CHANGE_FAIL, ROTATE, FLIP,
-    STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL, RECENTER, GROUP_LOCKING,
+    STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL, RECENTER, OVERLAY_COLOR_LOCKING, POSITION_LOCKING,
     PLOT_PROGRESS_UPDATE, OVERLAY_PLOT_CHANGE_ATTRIBUTES, CHANGE_PRIME_PLOT, CHANGE_CENTER_OF_PROJECTION,
     CHANGE_HIPS, ADD_PROCESSED_TILES, CHANGE_HIPS_IMAGE_CONVERSION
 ]);

@@ -22,6 +22,7 @@ import {clone} from '../util/WebUtil.js';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 import {get, set, has, isArray, isEmpty} from 'lodash';
 import Enum from 'enum';
+import {hasWCSProjection} from '../visualize/PlotViewUtil';
 
 const editHelpText='Click the marker and drag to move, click corner and drag to resize';
 
@@ -839,5 +840,5 @@ function ratioSize(oldSize, newSize, cc, toSize) {
 }
 
 export function hasNoProjection(cc) {
-    return !cc.projection.isSpecified()||!cc.projection.isImplemented();
+    return !hasWCSProjection(cc);
 }

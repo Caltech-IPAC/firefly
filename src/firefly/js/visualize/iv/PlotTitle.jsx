@@ -13,13 +13,14 @@ import {primePlot} from '../PlotViewUtil.js';
 import './PlotTitle.css';
 import LOADING from 'html/images/gxt/loading.gif';
 import {isImage} from '../WebPlot.js';
+import {hasWCSProjection} from '../PlotViewUtil';
 
 export const TitleType= new Enum(['INLINE', 'HEAD', 'EXPANDED']);
 
 export function PlotTitle({plotView:pv, titleType, brief, working}) {
     let styleName= '';
     const plot= primePlot(pv);
-    const world= plot.projection.isSpecified() && plot.projection.isImplemented();
+    const world= hasWCSProjection(plot)
     switch (titleType) {
         case TitleType.INLINE:
             styleName= 'plot-title-inline-title-container';

@@ -7,15 +7,16 @@ import {UserZoomTypes, getArcSecPerPix, getEstimatedFullZoomFactor,
     getNextZoomLevel, getZoomLevelForScale} from '../ZoomUtil.js';
 import {logError} from '../../util/WebUtil.js';
 import {isImage, isHiPS} from '../WebPlot.js';
-import ImagePlotCntlr, {ActionScope, IMAGE_PLOT_KEY,
+import ImagePlotCntlr, {ActionScope, IMAGE_PLOT_KEY, WcsMatchType,
                        dispatchUpdateViewSize, dispatchRecenter} from '../ImagePlotCntlr.js';
-import {getPlotViewById,primePlot,getPlotStateAry,
-        operateOnOthersInGroup, applyToOnePvOrGroup, findPlotGroup, getFoV} from '../PlotViewUtil.js';
+import {getPlotViewById,primePlot,getPlotStateAry, operateOnOthersInPositionGroup,
+    applyToOnePvOrAll} from '../PlotViewUtil.js';
 import {callSetZoomLevel} from '../../rpc/PlotServicesJson.js';
 import {isImageViewerSingleLayout, getMultiViewRoot} from '../MultiViewCntlr.js';
 import WebPlotResult from '../WebPlotResult.js';
 import VisUtil from '../VisUtil.js';
 import {doHiPSImageConversionIfNecessary} from './PlotHipsTask.js';
+import {matchHiPStoPlotView} from './PlotHipsTask';
 
 
 const ZOOM_WAIT_MS= 1500; // 1.5 seconds
@@ -65,12 +66,13 @@ export function zoomActionCreator(rawAction) {
         visRoot= getState()[IMAGE_PLOT_KEY];
         if (zoomActive) doZoom(dispatcher,plot,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay,getState);
         if (actionScope===ActionScope.GROUP) {
-            const matchFunc= makeZoomLevelMatcher(dispatcher, visRoot,pv,level,isFullScreen,
+            const {wcsMatchType}= visRoot;
+            const matchByScale= (wcsMatchType!==WcsMatchType.Pixel && wcsMatchType!==WcsMatchType.PixelCenter);
+            const matchFunc= makeZoomLevelMatcher(dispatcher, visRoot,pv,level,matchByScale, isFullScreen,
                                                    zoomLockingEnabled,userZoomType,useDelay, getState);
-            operateOnOthersInGroup(getState()[IMAGE_PLOT_KEY],pv, matchFunc);
+            operateOnOthersInPositionGroup(getState()[IMAGE_PLOT_KEY],pv, matchFunc);
         }
-        visRoot= getState()[IMAGE_PLOT_KEY]; // need a new one after actions
-        alignWCS(visRoot,pv);
+        alignWCS(getState,pv);
     };
 
 }
@@ -120,9 +122,11 @@ function evaluateZoomType(visRoot, pv, userZoomType, forceDelay, payloadLevel= 1
             }
             else if (userZoomType===UserZoomTypes.WCS_MATCH_PREV) {
                 if (visRoot.prevActivePlotId) {
+                    const {wcsMatchType}= visRoot;
                     const masterPlot= primePlot(visRoot,visRoot.prevActivePlotId);
                     const asPerPix= getArcSecPerPix(masterPlot,masterPlot.zoomFactor);
-                    level= getZoomLevelForScale(plot, asPerPix);
+                    level= (wcsMatchType!==WcsMatchType.Pixel && wcsMatchType!==WcsMatchType.PixelCenter) ?
+                                 getZoomLevelForScale(plot, asPerPix) : masterPlot.zoomFactor;
                 }
                 else { // just to a fit
                     level = getEstimatedFullZoomFactor(plot, dim, VisUtil.FullType.WIDTH_HEIGHT);
@@ -137,21 +141,27 @@ function evaluateZoomType(visRoot, pv, userZoomType, forceDelay, payloadLevel= 1
 }
 
 
-function alignWCS(visRoot, pv) {
+function alignWCS(getState, pv) {
+    let visRoot= getState()[IMAGE_PLOT_KEY];
     if (!visRoot.wcsMatchType) return;
     if (isImageViewerSingleLayout(getMultiViewRoot(), visRoot, pv.plotId)) {
         dispatchUpdateViewSize(pv.plotId);
     }
     else {
-        const pg= findPlotGroup(pv.plotGroupId, visRoot.plotGroupAry);
-        applyToOnePvOrGroup(visRoot.plotViewAry, pv.plotId, pg, false, (pv) => dispatchUpdateViewSize(pv.plotId) );
+        applyToOnePvOrAll(true, visRoot.plotViewAry, pv.plotId, false, (pv) => dispatchUpdateViewSize(pv.plotId) );
+    }
+    visRoot= getState()[IMAGE_PLOT_KEY]; // need a new one after actions
+    pv= getPlotViewById(visRoot, pv.plotId);
+    if (isImage(primePlot(pv)) && (visRoot.wcsMatchType===WcsMatchType.Target || visRoot.wcsMatchType===WcsMatchType.Standard)) {
+        matchHiPStoPlotView(visRoot,pv);
     }
 }
 
 
-function makeZoomLevelMatcher(dispatcher, visRoot, sourcePv,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay,getState) {
+function makeZoomLevelMatcher(dispatcher, visRoot, sourcePv,level,matchByScale,isFullScreen,
+                              zoomLockingEnabled,userZoomType,useDelay,getState) {
     const selectedPlot= primePlot(sourcePv);
-    const targetArcSecPix= getArcSecPerPix(selectedPlot, level);
+    const targetArcSecPix= matchByScale && getArcSecPerPix(selectedPlot, level);
 
     return (pv) => {
         const  plot= primePlot(pv);

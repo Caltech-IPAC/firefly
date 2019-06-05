@@ -10,10 +10,9 @@ import {getPlotViewById, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {dispatchChangeActivePlotView, visRoot} from '../ImagePlotCntlr.js';
 import {VisInlineToolbarView} from './VisInlineToolbarView.jsx';
 import {dispatchChangeViewerLayout, getViewer, getMultiViewRoot,
-        GRID, GRID_FULL, GRID_RELATED, SINGLE} from '../MultiViewCntlr.js';
+        GRID_FULL, GRID_RELATED, SINGLE} from '../MultiViewCntlr.js';
 import {showColorBandChooserPopup} from './ColorBandChooserPopup.jsx';
 import {ImagePager} from './ImagePager.jsx';
-import {WcsMatchOptions} from './WcsMatchOptions.jsx';
 
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import ONE from 'html/images/icons-2014/Images-One.png';
@@ -36,7 +35,7 @@ const toolsStyle= {
 };
 
 
-export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds=[], layoutType, dlAry, wcsMatchType,
+export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds=[], layoutType, dlAry,
                                           activeTable, makeDataProductsConverter, handleInlineTools=true, makeDropDown}) {
 
     const converter= makeDataProductsConverter(activeTable) || {};
@@ -110,7 +109,6 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds=
                                  onClick={() => dispatchChangeActivePlotView(viewerPlotIds[nextIdx])} />
                 }
             </div>
-            {showMultiImageOps && <WcsMatchOptions activePlotId={activePlotId} wcsMatchType={wcsMatchType} />}
             {showPager && <ImagePager pageSize={converter.maxPlots} tbl_id={activeTable.tbl_id} />}
             {handleInlineTools && <InlineRightToolbarWrapper visRoot={vr} pv={pv} dlAry={pvDlAry} />}
         </div>

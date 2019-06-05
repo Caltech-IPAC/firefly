@@ -286,11 +286,11 @@ export function* watchForResizing(options) {
     const pv= getPlotViewById(vr, vr.mpwWcsPrimId);
     if (pv && primePlot(vr, pv)) {
         if (vr.wcsMatchType) {
-            setTimeout(() => dispatchRecenter({
-                plotId: vr.activePlotId,
-                centerOnImage:vr.wcsMatchType===WcsMatchType.Standard
-            }) , 100);
-        }
+            const centerOnImage= (
+                vr.wcsMatchType===WcsMatchType.Standard  ||
+                vr.wcsMatchType===WcsMatchType.Pixel ||
+                vr.wcsMatchType===WcsMatchType.PixelCenter);
+            setTimeout(() => dispatchRecenter({ plotId: vr.activePlotId, centerOnImage}) , 100); }
     }
 }
 

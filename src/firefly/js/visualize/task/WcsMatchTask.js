@@ -4,18 +4,30 @@
 
 import {get} from 'lodash';
 import {take} from 'redux-saga/effects';
-import ImagePlotCntlr, {WcsMatchType, IMAGE_PLOT_KEY,
-                       dispatchGroupLocking, dispatchZoom, dispatchRotate, dispatchFlip,
-                       dispatchUpdateViewSize, dispatchRecenter, ActionScope} from '../ImagePlotCntlr.js';
-import {getPlotViewById, primePlot, applyToOnePvOrGroup, findPlotGroup} from '../PlotViewUtil.js';
+import ImagePlotCntlr, {
+    ActionScope,
+    dispatchFlip,
+    dispatchPositionLocking,
+    dispatchRecenter,
+    dispatchRotate,
+    dispatchUpdateViewSize,
+    dispatchZoom,
+    IMAGE_PLOT_KEY,
+    WcsMatchType
+} from '../ImagePlotCntlr.js';
+import {applyToOnePvOrAll, getPlotViewById, primePlot} from '../PlotViewUtil.js';
 import {PlotAttribute} from '../WebPlot.js';
-import {FullType, isPlotNorth, isEastLeftOfNorth, getRotationAngle, isRotationMatching} from '../VisUtil.js';
-import {getEstimatedFullZoomFactor, getArcSecPerPix, getZoomLevelForScale, UserZoomTypes} from '../ZoomUtil.js';
+import {FullType, getRotationAngle, isEastLeftOfNorth, isPlotNorth, isRotationMatching} from '../VisUtil.js';
+import {getArcSecPerPix, getEstimatedFullZoomFactor, getZoomLevelForScale, UserZoomTypes} from '../ZoomUtil.js';
 import {RotateType} from '../PlotState.js';
 import {CCUtil} from '../CsysConverter.js';
 import {ZoomType} from '../ZoomType.js';
 import {makeScreenPt} from '../Point.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
+import {getCenterOfProjection, hasWCSProjection} from '../PlotViewUtil';
+import {isHiPS, isImage} from '../WebPlot';
+import {matchHiPStoPlotView} from './PlotHipsTask';
+import {dispatchChangeCenterOfProjection, dispatchChangeHiPS} from '../ImagePlotCntlr';
 
 
 export function* watchForCompletedPlot(options, dispatch, getState) {
@@ -47,7 +59,7 @@ export function* watchForCompletedPlot(options, dispatch, getState) {
                 const ft=  masterPlot.attributes[PlotAttribute.FIXED_TARGET];
                 if (ft) dispatchRecenter({plotId:masterPv.plotId, centerPt:ft});
             }
-            syncPlotToLevel(pv, masterPv, asPerPix);
+            syncPlotToLevelForWcsMatching(pv, masterPv, asPerPix);
             dispatchUpdateViewSize(pv.plotId);
         }
     }
@@ -59,78 +71,109 @@ export function wcsMatchActionCreator(action) {
     return (dispatcher, getState) => {
         let visRoot= getState()[IMAGE_PLOT_KEY];
         const plotId= action.payload.plotId || visRoot.activePlotId || get(visRoot.plotViewAry, '0.plotId');
-        if (!plotId) return;
         const matchType= WcsMatchType.get(action.payload.matchType);
+        const {lockMatch}= action.payload;
+
+        if (!plotId && lockMatch) {
+            dispatchPositionLocking(undefined, lockMatch); //TODO:
+            if (lockMatch) dispatcher({ type: ImagePlotCntlr.WCS_MATCH, payload: {wcsMatchType:matchType} });
+            return;
+        }
         let masterPv= getPlotViewById(visRoot, plotId);
 
         const width= get(masterPv,'viewDim.width',false);
         const height= get(masterPv,'viewDim.height',false);
+        const image= isImage(primePlot(masterPv));
+        const hips= isHiPS(primePlot(masterPv));
 
-        let group= findPlotGroup(masterPv.plotGroupId, visRoot.plotGroupAry);
-
-
-        if (!matchType || !width  || !height) {
+        // if (!matchType || !width  || !height) {
+        if (image && lockMatch && (!width  || !height)) {
             dispatcher({
                 type: ImagePlotCntlr.WCS_MATCH,
-                payload: {wcsMatchCenterWP:null,wcsMatchType:matchType,mpwWcsPrimId:plotId}
+                payload: {wcsMatchCenterWP:null,wcsMatchType:matchType,mpwWcsPrimId:plotId, lockMatch}
             });
-            if (matchType) {
-                applyToOnePvOrGroup(visRoot.plotViewAry, masterPv.plotId, group, false,
-                    (pv) => {
-                        if (masterPv.plotId!==pv.plotId) {
-                            dispatchAddSaga( watchForCompletedPlot, {plotId:pv.plotId, masterPlotId:plotId, wcsMatchType:matchType});
-                        }
+            applyToOnePvOrAll(true, visRoot.plotViewAry, masterPv.plotId, false,
+                (pv) => {
+                    if (masterPv.plotId!==pv.plotId) {
+                        dispatchAddSaga( watchForCompletedPlot, {plotId:pv.plotId, masterPlotId:plotId, wcsMatchType:matchType});
                     }
-                );
-            }
-            else {
-                dispatchRotate({ plotId, rotateType: RotateType.UNROTATE, actionScope: ActionScope.GROUP});
-                applyToOnePvOrGroup(visRoot.plotViewAry, masterPv.plotId, group, false,
-                    (pv) => dispatchUpdateViewSize(pv.plotId) );
-            }
+                }
+            );
+            return;
+        }
+        else if (!lockMatch && (!width  || !height)) {
             return;
         }
 
         const wcsMatchCenterWP= findWcsMatchPoint(masterPv, plotId, matchType);
 
-
-
         dispatcher({
             type: ImagePlotCntlr.WCS_MATCH,
             payload: {wcsMatchCenterWP,wcsMatchType:matchType,mpwWcsPrimId:masterPv.plotId}
         });
-        dispatchGroupLocking(masterPv.plotId,true);
+
+
+        if (!matchType) {
+            dispatchPositionLocking(masterPv.plotId,false);
+            return;
+        }
+
+
+        dispatchPositionLocking(masterPv.plotId,true);
 
         visRoot= getState()[IMAGE_PLOT_KEY];
-        group= findPlotGroup(masterPv.plotGroupId, visRoot.plotGroupAry);
         masterPv= getPlotViewById(visRoot, plotId);
         const masterPlot= primePlot(masterPv);
         if (!masterPlot) return;
 
-        const level = matchType===WcsMatchType.Standard  || matchType===WcsMatchType.Target ?
-                  masterPlot.zoomFactor :
-                  getEstimatedFullZoomFactor(primePlot(masterPv),masterPv.viewDim, FullType.WIDTH_HEIGHT);
-        const asPerPix= getArcSecPerPix(masterPlot,level);
+        if (image) {
+            const level = matchType ?
+                masterPlot.zoomFactor :
+                getEstimatedFullZoomFactor(primePlot(masterPv),masterPv.viewDim, FullType.WIDTH_HEIGHT);
+            const asPerPix= getArcSecPerPix(masterPlot,level);
 
+            dispatchUpdateViewSize(masterPv.plotId);
 
+            if (matchType===WcsMatchType.Target) {
+                const ft=  masterPlot.attributes[PlotAttribute.FIXED_TARGET];
+                if (ft) dispatchRecenter({plotId:masterPv.plotId, centerPt:ft});
+            }
 
-        dispatchUpdateViewSize(masterPv.plotId);
-
-        if (matchType===WcsMatchType.Target) {
-            const ft=  masterPlot.attributes[PlotAttribute.FIXED_TARGET];
-            if (ft) dispatchRecenter({plotId:masterPv.plotId, centerPt:ft});
+            applyToOnePvOrAll(true, visRoot.plotViewAry, masterPv.plotId, false,
+                (pv) => {
+                    if (masterPv.plotId!==pv.plotId && isImage(primePlot(pv))) {
+                        if (matchType===WcsMatchType.Pixel || matchType===WcsMatchType.PixelCenter) {
+                            syncPlotToLevelForPixelMatching(pv,masterPv);
+                        }
+                        else {
+                            syncPlotToLevelForWcsMatching(pv, masterPv, asPerPix);
+                        }
+                        dispatchUpdateViewSize(pv.plotId);
+                    }
+                }
+            );
+            matchHiPStoPlotView(visRoot,masterPv);
+        }
+        else if (hips) {
+            dispatchZoom({plotId, userZoomType: UserZoomTypes.LEVEL, level:masterPlot.zoomFactor});
+            dispatchChangeCenterOfProjection({plotId,centerProjPt:getCenterOfProjection(masterPlot)});
+            dispatchChangeHiPS({plotId, coordSys: masterPlot.imageCoordSys});
         }
 
-        applyToOnePvOrGroup(visRoot.plotViewAry, masterPv.plotId, group, false,
-                     (pv) => {
-                         if (masterPv.plotId!==pv.plotId) {
-                             syncPlotToLevel(pv, masterPv, asPerPix);
-                             dispatchUpdateViewSize(pv.plotId);
-                         }
-                     }
-            );
+        if (!lockMatch) {
+            dispatchPositionLocking(masterPv.plotId,false);
+            dispatcher({
+                type: ImagePlotCntlr.WCS_MATCH,
+                payload: {wcsMatchCenterWP,wcsMatchType:false,mpwWcsPrimId:masterPv.plotId}
+            });
+        }
     };
 }
+
+
+
+
+
 
 export function modifyRequestForWcsMatch(pv, wpr) {
     const plot= primePlot(pv);
@@ -153,9 +196,15 @@ export function modifyRequestForWcsMatch(pv, wpr) {
 }
 
 
-function syncPlotToLevel(pv, masterPv, targetASpix) {
+/**
+ * @param {PlotView} pv
+ * @param {PlotView} masterPv
+ * @param {number} targetASpix
+ */
+function syncPlotToLevelForWcsMatching(pv, masterPv, targetASpix) {
     const plot= primePlot(pv);
     if (!plot) return;
+    if (!hasWCSProjection(pv)) return;
     const currZoomLevel= plot.zoomFactor;
 
 
@@ -169,6 +218,25 @@ function syncPlotToLevel(pv, masterPv, targetASpix) {
 
     if (!isRotationMatching(pv, masterPv)) rotateToMatch(pv, masterPv);
     zoomToLevel(plot, newZoomLevel);
+}
+
+
+/**
+ * @param {PlotView} pv
+ * @param {PlotView} masterPv
+ */
+function syncPlotToLevelForPixelMatching(pv, masterPv) {
+    const plot= primePlot(pv);
+    const masterPlot= primePlot(masterPv);
+    if (!plot || !masterPlot) return;
+
+
+    if (pv.flipY!==masterPv.flipY) dispatchFlip({plotId:pv.plotId, actionScope: ActionScope.SINGLE});
+    if (pv.rotation!==masterPv.rotation) {
+        dispatchRotate({ plotId: plot.plotId, rotateType: RotateType.ANGLE,
+            angle: masterPv.rotation, actionScope: ActionScope.SINGLE, });
+    }
+    zoomToLevel(plot, masterPlot.zoomFactor);
 }
 
 

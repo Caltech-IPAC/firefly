@@ -162,6 +162,7 @@ const formatFOV = (charCode, fNum) => {
 
 export function makeFoVString(fov) {
     let fovFormatted;
+    if (isNaN(fov)) return '';
     if (fov > 1.0) {
         fovFormatted= formatFOV(String.fromCharCode(176), fov);
     } else {
@@ -183,8 +184,7 @@ export function getZoomDesc(pv) {
     if (!plot || !plot.viewDim) return {fovFormatted:'',zoomLevelFormatted:''};
 
     const zoomLevelFormatted= isImage(plot) ? convertZoomToString(plot.zoomFactor) : '';
-    const fov= getFoV(pv);
-    const fovFormatted= makeFoVString(fov);
+    const fovFormatted= makeFoVString(getFoV(pv));
 
     return {fovFormatted,zoomLevelFormatted};
 

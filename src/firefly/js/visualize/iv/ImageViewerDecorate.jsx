@@ -236,7 +236,7 @@ function getBorderColor(pv,visRoot) {
 
     const group= getPlotGroupById(visRoot,pv.plotGroupId);
 
-    if (group && group.lockRelated) return '#005da4';
+    if (group && group.overlayColorLock) return '#005da4';
     else return 'rgba(0,0,0,.4)';
 }
 
