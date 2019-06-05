@@ -1,22 +1,25 @@
 package edu.caltech.ipac.visualize.plot.projection;
-import edu.caltech.ipac.firefly.util.FitsHeaderToJson;
+
 import edu.caltech.ipac.firefly.util.FileLoader;
+import edu.caltech.ipac.firefly.util.FitsHeaderToJson;
 import edu.caltech.ipac.visualize.plot.*;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
-import nom.tam.fits.*;
-import org.junit.*;
-import java.io.File;
-import java.net.URISyntaxException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-
-
+import nom.tam.fits.Fits;
+import nom.tam.fits.FitsException;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.HashMap;
 /**
  * Created by zhang on 6/15/16.
  * We use the CoordinateSys defined in the FITS header, and also use the RA and DEC in the center of the image
@@ -135,9 +138,13 @@ public class ProjectionTest {
     }
 
     @Test
-    public void testTpvProjection() throws ProjectionException, FitsException {
+    public void testTpvProjection() throws ProjectionException, Exception {
+//        // Uncomment to regenerate sample for js test.
+//        String path = "/Users/ejoliet/devspace/branch/dev/firefly_test_data/edu/caltech/ipac/visualize/plot/projection/";
+//        String[] fNames = {"ztf-TPV.fits"};
+//        FitsHeaderToJson.writeImageHeaderProjectionToJson(path + fNames[0]);
 
-        Fits fits = new Fits(new File( FileLoader.getDataPath(ProjectionTest.class)+"ztf-TPV.fits"));
+        Fits fits = new Fits(new File(FileLoader.getDataPath(ProjectionTest.class) + "ztf-TPV.fits"));
         FitsRead[] fitsReadArray = FitsReadFactory.createFitsReadArray(fits);
 
         FitsRead reader = fitsReadArray[0];
@@ -152,18 +159,57 @@ public class ProjectionTest {
 
         ProjectionPt pix = proj.getImageCoords(10.65804830797796, 41.32089363435967);
 
-        Assert.assertTrue(pix.getX()==309.21832404070005);
-        Assert.assertTrue(pix.getY()==67.7236241551891);
+        Assert.assertTrue(pix.getX() == 316.204891500171);
+        Assert.assertTrue(pix.getY() == 61.22584370414165);
 
-        WorldPt pix2 = proj.getWorldCoords(309.21, 67.72);
+        WorldPt pix2 = proj.getWorldCoords(316.2, 61.2);
 
-        Assert.assertEquals(pix2.getLat(),41.32089, 1E-05);
-        Assert.assertEquals(pix2.getLon(),10.65804,1E-04);//5th is wrong
-
+        Assert.assertEquals(pix2.getLat(), 41.32089, 1E-05);
+        Assert.assertEquals(pix2.getLon(), 10.65804, 1E-04);//5th is wrong
 
 
     }
 
+
+    @Test
+    public void testTpvProjection2() throws Exception {
+//        // Uncomment ro regenerate sample for js test.
+//        String path = "/Users/ejoliet/devspace/branch/dev/firefly_test_data/edu/caltech/ipac/visualize/plot/projection/";
+//        String[] fNames = {"ztf-TPV-IRSA-2895.fits"};
+//        FitsHeaderToJson.writeImageHeaderProjectionToJson(path + fNames[0]);
+        Fits fits = new Fits(new File( FileLoader.getDataPath(ProjectionTest.class)+"ztf-TPV-IRSA-2895.fits"));
+        FitsRead[] fitsReadArray = FitsReadFactory.createFitsReadArray(fits);
+
+        FitsRead reader = fitsReadArray[0];
+        CoordinateSys cs = CoordinateSys.EQ_J2000;
+        ImageHeader imageHeader = new ImageHeader(reader.getHeader());
+        Projection proj = imageHeader.createProjection(cs);
+
+//        System.out.println(proj.getProjectionName()+": "+worldCoords.getLon()+", "+worldCoords.getLat());
+
+        //using (upload it into Firefly) ztf-TPV-IRSA-2895.fits in firefly_test_data branch IRSA-2895 and
+        // searching around the area of the image visible with Gaia catalog:
+        // Select from the table the Gaia object sourceId=1434110646950162432, its coords are (260.424642, 59.42155329)
+        // it appears offset from the overlay
+
+        // pixel of the object in the image is:
+        ProjectionPt pix = proj.getImageCoords(260.80424642, 59.42155329);
+
+        // -> result in x,y =  x : 283.33477517167955   y :348.93811396421916
+
+        Assert.assertEquals(pix.getX(), 278.980447, 1E-05 );
+        Assert.assertEquals(pix.getY(),356.97939, 1E-05);
+
+        // This x,y pixel should be where to find the Gaia object on ra, dec define above but actually,
+        // the pixel readout says 280, 358 (and overlay is offset for that reason)
+        WorldPt pix2 = proj.getWorldCoords(278.9, 356.9);
+        // This means that error is in the Reverse projection from pixel to ra,dec
+
+        // object coords from pixel 280,358:   _x = 260.8060023181227, _y = 59.41882038221668
+        Assert.assertEquals(pix2.getLon(),260.804, 1E-03);
+        Assert.assertEquals(pix2.getLat(),59.421,1E-03);
+
+    }
 
     /**
      * This main method is used to create unit test reference files.

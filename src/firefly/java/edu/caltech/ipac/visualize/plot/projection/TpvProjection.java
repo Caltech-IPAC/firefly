@@ -4,6 +4,8 @@ import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.ProjectionPt;
 import edu.caltech.ipac.visualize.plot.Pt;
 
+import static edu.caltech.ipac.visualize.plot.projection.Projection.DtoR;
+
 
 /**
  * See ref https://fits.gsfc.nasa.gov/registry/tpvwcs.html
@@ -86,8 +88,8 @@ public class TpvProjection {
         double Y = axis2poly[0];
         double dx;
         double dy;
-        double xx = fsamp;
-        double yy = fline;
+        double xx = 0;
+        double yy = 0;
         int niter = 20; //Seems that after 4 is already enough but this is a rule of thumb.
         int iter = 0;
         double m1, m2, m3, m4;
@@ -139,8 +141,8 @@ public class TpvProjection {
             m1 = tmp;
 
             //newton raphson to find the best coordinates on the plane tangent
-            dx = m1 * (fsamp - X) + m3 * (fline - Y);
-            dy = m2 * (fsamp - X) + m4 * (fline - Y);
+            dx = m1 * (fsamp * rtd - X) + m3 * (fline * rtd - Y);
+            dy = m2 * (fsamp * rtd - X) + m4 * (fline * rtd - Y);
 
             xx += dx;
             yy += dy;
@@ -173,24 +175,22 @@ public class TpvProjection {
                     axis2poly[11] * r * r * r;
         }
 
+        // Finally, image pixel derived from above intermdiate coordinates found
         fsamp = xx;
         fline = yy;
-
-        // Finally, image pixel derived from above intermdiate coordinates found
-
         if (using_cd) {
-            temp = -(dc1_1 * fsamp + dc1_2 * fline) * rtd;
-            fline = -(dc2_1 * fsamp + dc2_2 * fline) * rtd;
+            temp = -(dc1_1 * fsamp + dc1_2 * fline);
+            fline = -(dc2_1 * fsamp + dc2_2 * fline);
             fsamp = temp;
         } else {
         /* do the twist */
             rtwist = twist * dtr;       /* convert to radians */
-            temp = fsamp * Math.cos(rtwist) + fline * Math.sin(rtwist);
-            fline = -fsamp * Math.sin(rtwist) + fline * Math.cos(rtwist);
+            temp = fsamp * dtr * Math.cos(rtwist) + fline * dtr * Math.sin(rtwist);
+            fline = -fsamp * dtr * Math.sin(rtwist) + fline * dtr * Math.cos(rtwist);
             fsamp = temp;
 
-            fsamp = (fsamp / rpp1);     /* now apply cdelt */
-            fline = (fline / rpp2);
+            fsamp = (fsamp * dtr / rpp1);     /* now apply cdelt */
+            fline = (fline * dtr / rpp2);
         }
 
         x = fsamp + crpix1 - 1;
@@ -214,7 +214,7 @@ public class TpvProjection {
     static public Pt FwdProject(double px, double py,
                                 ProjectionParams hdr) throws ProjectionException {
 
-        double x, y; //sky coords
+        double x, y; //Intermediate coords undistortioned
 
         double crpix1 = hdr.crpix1;
         double crpix2 = hdr.crpix2;
@@ -224,6 +224,11 @@ public class TpvProjection {
         double cd12 = hdr.cd1_2;
         double cd21 = hdr.cd2_1;
         double cd22 = hdr.cd2_2;
+        double cdelt1 = hdr.cdelt1;
+        double cdelt2 = hdr.cdelt2;
+        double twist = hdr.crota2;
+        boolean using_cd = hdr.using_cd;
+        double rpp1, rpp2, rtwist, temp;
 
         // the intermediate coordinates offset from the distortion-center origin
         double fsamp = px - crpix1 + 1;
@@ -233,18 +238,29 @@ public class TpvProjection {
 
         //Distortion is applied to intermediate (tangent) world coordinates so lets calculate those
         // by inverting cd matrix
-        x = -(cd11 * fsamp + cd12 * fline) * dtr;
-        y = -(cd21 * fsamp + cd22 * fline) * dtr;
+        if (using_cd) {
+            x = -(cd11 * fsamp + cd12 * fline) * dtr;
+            y = -(cd21 * fsamp + cd22 * fline) * dtr;
 //        x = cd11 * (px - rx) + cd12 * (py - ry);
 //        y = cd21 * (px - rx) + cd22 * (py - ry);
 
+        } else {
+            rpp1 = cdelt1 * DtoR;        // radians per pixel
+            rpp2 = cdelt2 * DtoR;        // radians per pixel
+            x = -fsamp * rpp1;
+            y = -fline * rpp2;
 
+            rtwist = twist * DtoR;       // convert to radians
+            temp = x * Math.cos(rtwist) - y * Math.sin(rtwist); // do twist
+            y = x * Math.sin(rtwist) + y * Math.cos(rtwist);
+            x = temp;
+        }
         // Apply PV distortion
-        double[] xy = distortion(x, y, hdr);
+        double[] xy = distortion(x * rtd, y * rtd, hdr);
 
         // distortioned-corrected intermediate coordinates:
-        double xx = xy[0];
-        double yy = xy[1];
+        double xx = xy[0] * dtr;
+        double yy = xy[1] * dtr;
 
 //        if ((xy[0] == 0.0) && (xy[1] == 0.0))
 //            xy[1] = 1.0; /* avoid domain error in atan2 */
