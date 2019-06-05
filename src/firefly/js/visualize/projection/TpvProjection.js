@@ -52,6 +52,9 @@ export const TpvProjection= {
             fsamp = -ff1 * Math.cos(lat) * Math.sin(lon - lon0);
         }
 
+        fsamp = -fsamp * RtoD;  // must align with North and be in degrees
+        fline = -fline * RtoD;  // must align with East and be in degrees
+
         // Recover uncorrected-intermediate coordinate before TPV distortion
 
         const axis1poly = pv1;
@@ -61,7 +64,7 @@ export const TpvProjection= {
         let dx, dy;
         let xx  = 0;
         let yy = 0;
-        const niter = 20; //Seems that after 4 is already enough but this is a rule of thumb.
+        const niter = 5; //Seems that after 4 is already enough but this is a rule of thumb.
         let iter = 0;
         let m1, m2, m3, m4;
 
@@ -78,7 +81,12 @@ export const TpvProjection= {
                 3 * axis1poly[7] * xx * xx +
                 axis1poly[9] * yy * yy +
                 2 * axis1poly[8] * yy * xx +
-                3 * axis1poly[11] * xx * Math.sqrt(xx * xx + yy * yy);
+                6 * axis1poly[11] * xx * r +
+                4 * axis1poly[12] * xx * xx * xx +
+                3 * axis1poly[13] * xx * xx * yy +
+                2 * axis1poly[14] * xx * yy * yy +
+                axis1poly[15] * yy * yy * yy;
+
             m2 = axis2poly[2] +
                 axis2poly[3] * xx / r +
                 2 * axis2poly[6] * xx +
@@ -86,7 +94,11 @@ export const TpvProjection= {
                 3 * axis2poly[10] * xx * xx +
                 axis2poly[8] * yy * yy +
                 2 * axis2poly[9] * yy * xx +
-                3 * axis2poly[11] * xx * Math.sqrt(xx * xx + yy * yy);
+                6 * axis2poly[11] * xx * r +
+                axis2poly[13] * yy * yy * yy +
+                2 * axis2poly[14] * xx * yy * yy +
+                3 * axis2poly[15] * xx * xx * yy +
+                4 * axis2poly[16] * xx * xx * xx;
 
             m3 = axis1poly[2] +
                 axis1poly[3] * yy / r +
@@ -95,7 +107,12 @@ export const TpvProjection= {
                 3 * axis1poly[10] * yy * yy +
                 2 * axis1poly[9] * yy * xx +
                 axis1poly[8] * xx * xx +
-                3 * axis1poly[11] * yy * Math.sqrt(xx * xx + yy * yy);
+                6 * axis1poly[11] * yy * r +
+                axis1poly[13] * xx * xx * xx +
+                2 * axis1poly[14] * yy * xx * xx +
+                3 * axis1poly[15] * yy * yy * xx +
+                4 * axis1poly[16] * yy * yy * yy;
+
             m4 = axis2poly[1] +
                 axis2poly[3] * yy / r +
                 2 * axis2poly[4] * yy +
@@ -103,7 +120,12 @@ export const TpvProjection= {
                 3 * axis2poly[7] * yy * yy +
                 2 * axis2poly[8] * yy * xx +
                 axis2poly[9] * xx * xx +
-                3 * axis2poly[11] * yy * Math.sqrt(xx * xx + yy * yy);
+                6 * axis2poly[11] * yy * r +
+                4 * axis2poly[12] * yy * yy * yy +
+                3 * axis2poly[13] * yy * yy * xx +
+                2 * axis2poly[14] * yy * xx * xx +
+                axis2poly[15] * xx * xx * xx;
+
             const det = m1 * m4 - m2 * m3;
             const tmp = m4 / det;
             m2 /= -det;
@@ -112,8 +134,8 @@ export const TpvProjection= {
             m1 = tmp;
 
             //newton raphson to find the best coordinates on the plane tangent
-            dx = m1 * (fsamp * RtoD - X) + m3 * (fline * RtoD - Y);
-            dy = m2 * (fsamp * RtoD - X) + m4 * (fline * RtoD - Y);
+            dx = m1 * (fsamp - X) + m3 * (fline - Y);
+            dy = m2 * (fsamp - X) + m4 * (fline - Y);
 
             xx += dx;
             yy += dy;
@@ -122,7 +144,7 @@ export const TpvProjection= {
             X = axis1poly[0] +
                 axis1poly[2] * yy +
                 axis1poly[1] * xx +
-                axis1poly[3] * Math.sqrt(xx * xx + yy * yy) +
+                axis1poly[3] * r +
                 axis1poly[6] * yy * yy +
                 axis1poly[4] * xx * xx +
                 axis1poly[5] * yy * xx +
@@ -130,12 +152,17 @@ export const TpvProjection= {
                 axis1poly[7] * xx * xx * xx +
                 axis1poly[9] * yy * yy * xx +
                 axis1poly[8] * yy * xx * xx +
-                axis1poly[11] * r * r * r;
-            //   X  *= DtoR ;
+                axis1poly[11] * r * r * r +
+                axis1poly[12] * xx * xx * xx * xx +
+                axis1poly[13] * xx * xx * xx * yy +
+                axis1poly[14] * xx * xx * yy * yy +
+                axis1poly[15] * xx * yy * yy * yy +
+                axis1poly[16] * yy * yy * yy * yy;
+
             Y = axis2poly[0] +
                 axis2poly[1] * yy +
                 axis2poly[2] * xx +
-                axis2poly[3] * Math.sqrt(xx * xx + yy * yy) +
+                axis2poly[3] * r +
                 axis2poly[4] * yy * yy +
                 axis2poly[6] * xx * xx +
                 axis2poly[5] * yy * xx +
@@ -143,12 +170,17 @@ export const TpvProjection= {
                 axis2poly[10] * xx * xx * xx +
                 axis2poly[8] * yy * yy * xx +
                 axis2poly[9] * yy * xx * xx +
-                axis2poly[11] * r * r * r;
+                axis2poly[11] * r * r * r +
+                axis2poly[12] * yy * yy * yy * yy +
+                axis2poly[13] * yy * yy * yy * xx +
+                axis2poly[14] * yy * yy * xx * xx +
+                axis2poly[15] * yy * xx * xx * xx +
+                axis2poly[16] * xx * xx * xx * xx;
         }
 
         // Finally, image pixel derived from above intermdiate coordinates found
-        fsamp = xx;
-        fline = yy;
+        fsamp = -xx;
+        fline = -yy;
         if (using_cd) {
             temp = -(dc1_1 * fsamp + dc1_2 * fline);
             fline = -(dc2_1 * fsamp + dc2_2 * fline);
@@ -186,14 +218,14 @@ export const TpvProjection= {
         //Distortion is applied to intermediate (tangent) world coordinates so lets calculate those
         // by inverting cd matrix
         if (using_cd) {
-            x = -(cd1_1 * fsamp + cd1_2 * fline) * DtoR;
-            y = -(cd2_1 * fsamp + cd2_2 * fline) * DtoR;
+            x = (cd1_1 * fsamp + cd1_2 * fline) * DtoR;
+            y = (cd2_1 * fsamp + cd2_2 * fline) * DtoR;
         }
         else {
             const rpp1 = cdelt1 * DtoR;        // radians per pixel
             const rpp2 = cdelt2 * DtoR;        // radians per pixel
-            x = -fsamp * rpp1;
-            y = -fline * rpp2;
+            x = fsamp * rpp1;
+            y = fline * rpp2;
 
             const rtwist = twist * DtoR;       // convert to radians
             const temp = x * Math.cos(rtwist) - y * Math.sin(rtwist); // do twist
@@ -207,8 +239,8 @@ export const TpvProjection= {
 
         //Intermediate coords distorsioned
         const {xprime, yprime} = xy;
-        const xx = xprime * DtoR;
-        let yy = yprime * DtoR;
+        const xx = -xprime * DtoR;
+        let yy = -yprime * DtoR;
         const delta = Math.atan(Math.sqrt(xx * xx + yy * yy));
 
         if ((xx===0.0) && (yy===0.0)) yy = 1.0;  // avoid domain error in atan2
