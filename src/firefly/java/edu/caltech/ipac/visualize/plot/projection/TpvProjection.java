@@ -80,6 +80,9 @@ public class TpvProjection {
             fsamp = -ff1 * Math.cos(lat) * Math.sin(lon - lon0);
         }
 
+        fsamp = -fsamp * rtd;  // must align with North and be in degrees
+        fline = -fline * rtd;  // must align with East and be in degrees
+
         // Recover uncorrected-intermediate coordinate before TPV distortion
 
         double[] axis1poly = hdr.pv1;
@@ -90,7 +93,7 @@ public class TpvProjection {
         double dy;
         double xx = 0;
         double yy = 0;
-        int niter = 20; //Seems that after 4 is already enough but this is a rule of thumb.
+        int niter = 5; //Seems that after 4 is already enough but this is a rule of thumb.
         int iter = 0;
         double m1, m2, m3, m4;
 
@@ -107,7 +110,11 @@ public class TpvProjection {
                     3 * axis1poly[7] * xx * xx +
                     axis1poly[9] * yy * yy +
                     2 * axis1poly[8] * yy * xx +
-                    3 * axis1poly[11] * xx * Math.sqrt(xx * xx + yy * yy);
+                    6 * axis1poly[11] * xx * r +
+                    4 * axis1poly[12] * xx * xx * xx +
+                    3 * axis1poly[13] * xx * xx * yy +
+                    2 * axis1poly[14] * xx * yy * yy +
+                    axis1poly[15] * yy * yy * yy;
             m2 = axis2poly[2] +
                     axis2poly[3] * xx / r +
                     2 * axis2poly[6] * xx +
@@ -115,7 +122,11 @@ public class TpvProjection {
                     3 * axis2poly[10] * xx * xx +
                     axis2poly[8] * yy * yy +
                     2 * axis2poly[9] * yy * xx +
-                    3 * axis2poly[11] * xx * Math.sqrt(xx * xx + yy * yy);
+                    6 * axis2poly[11] * xx * r +
+                    axis2poly[13] * yy * yy * yy +
+                    2 * axis2poly[14] * xx * yy * yy +
+                    3 * axis2poly[15] * xx * xx * yy +
+                    4 * axis2poly[16] * xx * xx * xx;
 
             m3 = axis1poly[2] +
                     axis1poly[3] * yy / r +
@@ -124,7 +135,11 @@ public class TpvProjection {
                     3 * axis1poly[10] * yy * yy +
                     2 * axis1poly[9] * yy * xx +
                     axis1poly[8] * xx * xx +
-                    3 * axis1poly[11] * yy * Math.sqrt(xx * xx + yy * yy);
+                    6 * axis1poly[11] * yy * r +
+                    axis1poly[13] * xx * xx * xx +
+                    2 * axis1poly[14] * yy * xx * xx +
+                    3 * axis1poly[15] * yy * yy * xx +
+                    4 * axis1poly[16] * yy * yy * yy;
             m4 = axis2poly[1] +
                     axis2poly[3] * yy / r +
                     2 * axis2poly[4] * yy +
@@ -132,7 +147,11 @@ public class TpvProjection {
                     3 * axis2poly[7] * yy * yy +
                     2 * axis2poly[8] * yy * xx +
                     axis2poly[9] * xx * xx +
-                    3 * axis2poly[11] * yy * Math.sqrt(xx * xx + yy * yy);
+                    6 * axis2poly[11] * yy * r +
+                    4 * axis2poly[12] * yy * yy * yy +
+                    3 * axis2poly[13] * yy * yy * xx +
+                    2 * axis2poly[14] * yy * xx * xx +
+                    axis2poly[15] * xx * xx * xx;
             double det = m1 * m4 - m2 * m3;
             double tmp = m4 / det;
             m2 /= -det;
@@ -141,8 +160,8 @@ public class TpvProjection {
             m1 = tmp;
 
             //newton raphson to find the best coordinates on the plane tangent
-            dx = m1 * (fsamp * rtd - X) + m3 * (fline * rtd - Y);
-            dy = m2 * (fsamp * rtd - X) + m4 * (fline * rtd - Y);
+            dx = m1 * (fsamp - X) + m3 * (fline - Y);
+            dy = m2 * (fsamp - X) + m4 * (fline - Y);
 
             xx += dx;
             yy += dy;
@@ -159,7 +178,12 @@ public class TpvProjection {
                     axis1poly[7] * xx * xx * xx +
                     axis1poly[9] * yy * yy * xx +
                     axis1poly[8] * yy * xx * xx +
-                    axis1poly[11] * r * r * r;
+                    axis1poly[11] * r * r * r +
+                    axis1poly[12] * xx * xx * xx * xx +
+                    axis1poly[13] * xx * xx * xx * yy +
+                    axis1poly[14] * xx * xx * yy * yy +
+                    axis1poly[15] * xx * yy * yy * yy +
+                    axis1poly[16] * yy * yy * yy * yy;
             //   X  *= dtr ;
             Y = axis2poly[0] +
                     axis2poly[1] * yy +
@@ -172,12 +196,17 @@ public class TpvProjection {
                     axis2poly[10] * xx * xx * xx +
                     axis2poly[8] * yy * yy * xx +
                     axis2poly[9] * yy * xx * xx +
-                    axis2poly[11] * r * r * r;
+                    axis2poly[11] * r * r * r +
+                    axis2poly[12] * yy * yy * yy * yy +
+                    axis2poly[13] * yy * yy * yy * xx +
+                    axis2poly[14] * yy * yy * xx * xx +
+                    axis2poly[15] * yy * xx * xx * xx +
+                    axis2poly[16] * xx * xx * xx * xx;
         }
 
         // Finally, image pixel derived from above intermdiate coordinates found
-        fsamp = xx;
-        fline = yy;
+        fsamp = -xx;
+        fline = -yy;
         if (using_cd) {
             temp = -(dc1_1 * fsamp + dc1_2 * fline);
             fline = -(dc2_1 * fsamp + dc2_2 * fline);
@@ -239,16 +268,16 @@ public class TpvProjection {
         //Distortion is applied to intermediate (tangent) world coordinates so lets calculate those
         // by inverting cd matrix
         if (using_cd) {
-            x = -(cd11 * fsamp + cd12 * fline) * dtr;
-            y = -(cd21 * fsamp + cd22 * fline) * dtr;
+            x = (cd11 * fsamp + cd12 * fline) * dtr;
+            y = (cd21 * fsamp + cd22 * fline) * dtr;
 //        x = cd11 * (px - rx) + cd12 * (py - ry);
 //        y = cd21 * (px - rx) + cd22 * (py - ry);
 
         } else {
             rpp1 = cdelt1 * DtoR;        // radians per pixel
             rpp2 = cdelt2 * DtoR;        // radians per pixel
-            x = -fsamp * rpp1;
-            y = -fline * rpp2;
+            x = fsamp * rpp1;
+            y = fline * rpp2;
 
             rtwist = twist * DtoR;       // convert to radians
             temp = x * Math.cos(rtwist) - y * Math.sin(rtwist); // do twist
@@ -259,8 +288,8 @@ public class TpvProjection {
         double[] xy = distortion(x * rtd, y * rtd, hdr);
 
         // distortioned-corrected intermediate coordinates:
-        double xx = xy[0] * dtr;
-        double yy = xy[1] * dtr;
+        double xx = -xy[0] * dtr;
+        double yy = -xy[1] * dtr;
 
 //        if ((xy[0] == 0.0) && (xy[1] == 0.0))
 //            xy[1] = 1.0; /* avoid domain error in atan2 */

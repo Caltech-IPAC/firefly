@@ -159,12 +159,12 @@ public class ProjectionTest {
 
         ProjectionPt pix = proj.getImageCoords(10.65804830797796, 41.32089363435967);
 
-        Assert.assertTrue(pix.getX() == 316.204891500171);
-        Assert.assertTrue(pix.getY() == 61.22584370414165);
+        Assert.assertEquals(pix.getX(),  315.5, 1E-01);
+        Assert.assertEquals(pix.getY(), 61.9,1E-01);
 
-        WorldPt pix2 = proj.getWorldCoords(316.2, 61.2);
+        WorldPt pix2 = proj.getWorldCoords(315.5, 61.9);
 
-        Assert.assertEquals(pix2.getLat(), 41.32089, 1E-05);
+        Assert.assertEquals(pix2.getLat(), 41.320917, 1E-05);
         Assert.assertEquals(pix2.getLon(), 10.65804, 1E-04);//5th is wrong
 
 
@@ -197,8 +197,8 @@ public class ProjectionTest {
 
         // -> result in x,y =  x : 283.33477517167955   y :348.93811396421916
 
-        Assert.assertEquals(pix.getX(), 278.980447, 1E-05 );
-        Assert.assertEquals(pix.getY(),356.97939, 1E-05);
+        Assert.assertEquals(pix.getX(), 278.842857, 1E-05 );
+        Assert.assertEquals(pix.getY(),356.939094, 1E-05);
 
         // This x,y pixel should be where to find the Gaia object on ra, dec define above but actually,
         // the pixel readout says 280, 358 (and overlay is offset for that reason)
