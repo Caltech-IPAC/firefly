@@ -837,3 +837,7 @@ export function hashCode(str) {
      * signed int to an unsigned by doing an unsigned bitshift. */
     return hash >>> 0;
 }
+
+export function isNumeric(n) {
+    return !isNaN(parseFloat(n)) && isFinite(n);
+}

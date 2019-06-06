@@ -310,6 +310,10 @@
     padding: 3px;
 }
 
+.public_fixedDataTableCell_cellContent.right_align {
+    text-align: right;
+}
+
 .public_fixedDataTableCell_columnResizerKnob {
     background-color: #0284ff
 }
