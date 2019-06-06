@@ -126,9 +126,7 @@ function Triview({layout}) {
                                 {...images}  />
                         </SplitContent>
                         <SplitContent>
-                            <TablesContainer mode='both'
-                                             closeable={true}
-                                             expandedMode={expanded===LO_VIEW.tables}
+                            <TablesContainer expandedMode={expanded===LO_VIEW.tables}
                                              tableOptions={{help_id:'main1TSV.table'}}/>
                         </SplitContent>
                     </SplitPane>
@@ -148,9 +146,7 @@ function TableChart ({layout}) {
     return (
         <SplitPane split='horizontal' maxSize={-20} minSize={20} defaultSize={'60%'}>
             <SplitContent>
-                <TablesContainer mode='both'
-                                 closeable={true}
-                                 expandedMode={expanded===LO_VIEW.tables}
+                <TablesContainer expandedMode={expanded===LO_VIEW.tables}
                                  tableOptions={{help_id:'main1TSV.table'}}/>
             </SplitContent>
             <SplitContent>
@@ -164,9 +160,7 @@ function TableChart ({layout}) {
 function TableOnly ({layout}) {
     const expanded = get(layout, 'mode.expanded');
     return (
-        <TablesContainer mode='both'
-                         closeable={true}
-                         expandedMode={expanded===LO_VIEW.tables}
+        <TablesContainer expandedMode={expanded===LO_VIEW.tables}
                          tableOptions={{help_id:'main1TSV.table'}}/>
     );
 }

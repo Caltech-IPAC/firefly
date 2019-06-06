@@ -70,7 +70,7 @@ TablesContainer.propTypes = {
 TablesContainer.defaultProps = {
     expandedMode: false,
     closeable: true,
-    mode: 'standard'
+    mode: 'both'
 };
 
 

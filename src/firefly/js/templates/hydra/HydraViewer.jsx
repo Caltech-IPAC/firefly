@@ -5,7 +5,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {pickBy} from 'lodash';
+import {pickBy, get} from 'lodash';
 
 import {flux, firefly} from '../../Firefly.js';
 import {dispatchSetMenu, dispatchOnAppReady, getMenu, isAppReady, getSearchInfo} from '../../core/AppDataCntlr.js';
@@ -18,11 +18,20 @@ import {VisHeader} from '../../visualize/ui/VisHeader.jsx';
 import {getActionFromUrl} from '../../core/History.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 
-import {TriViewImageSection, launchTableTypeWatchers} from '../../visualize/ui/TriViewImageSection.jsx';
+import {ImageExpandedMode} from '../../visualize/iv/ImageExpandedMode.jsx';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {warningDivId} from '../../ui/LostConnection';
 import {startTTFeatureWatchers} from '../common/ttFeatureWatchers.js';
+import {getAppOptions} from '../../core/AppDataCntlr';
+import {startDataProductsWatcher} from '../../visualize/saga/DataProductsWatcher';
+import {META_VIEWER_ID} from '../../visualize/MultiViewCntlr';
+import {startCoverageWatcher} from '../../visualize/saga/CoverageWatcher';
+import {dispatchSetLayoutMode, LO_MODE} from '../../core/LayoutCntlr';
+
+export const COVERAGE_VIEWER_ID = 'CoverageViewerId';
+export const IMAGE_DATA_VIEWER_ID = META_VIEWER_ID;
+const META_DATA_TBL_GROUP_ID= 'TableDataProducts';
 
 
 /**
@@ -33,9 +42,15 @@ export class HydraViewer extends PureComponent {
     constructor(props) {
         super(props);
         this.state = this.getNextState();
+        const {hasCoverage=true, hasDataProduct=true} = props;
+
         dispatchAddSaga(hydraManager);
         startTTFeatureWatchers();
-        launchTableTypeWatchers();
+        hasDataProduct && startDataProductsWatcher({imageViewerId:IMAGE_DATA_VIEWER_ID, tableGroupViewerId:META_DATA_TBL_GROUP_ID});
+        if (hasCoverage) {
+            const coverageOps= get(getAppOptions(), 'coverage',{});
+            startCoverageWatcher({...coverageOps, viewerId:COVERAGE_VIEWER_ID, ignoreCatalogs:true});
+        }
     }
 
     getNextState() {
@@ -107,7 +122,9 @@ HydraViewer.propTypes = {
     altAppIcon: PropTypes.string,
     footer: PropTypes.element,
     dropdownPanels: PropTypes.arrayOf(PropTypes.element),
-    style: PropTypes.object
+    style: PropTypes.object,
+    hasCoverage: PropTypes.bool,
+    hasDataProduct: PropTypes.bool
 };
 
 HydraViewer.defaultProps = {
@@ -155,7 +172,7 @@ function ResultSection({layoutInfo}) {
     return expanded === LO_VIEW.none ? standard : <ExpandedImpl {...{layoutInfo, expanded, images}}/>;
 }
 
-function showExpandedView ({expanded,  images}) {
+function showExpandedView ({expanded}) {
 
     let view;
     if (expanded === LO_VIEW.tables) {
@@ -171,11 +188,11 @@ function showExpandedView ({expanded,  images}) {
                          expandedMode={expanded===LO_VIEW.xyPlots}/>
                 );
     } else {
-        view = (<TriViewImageSection key='res-tri-img'
-                         closeable={true}
-                         imageExpandedMode={expanded===LO_VIEW.images}
-                         {...images}  />
-                );
+        view = (
+            <ImageExpandedMode
+                key='results-plots-expanded'
+                closeFunc={closeExpanded}/>
+        );
     }
     return (
         <div style={{ display: 'flex', flexGrow: 1, overflow: 'hidden'}}>
@@ -184,3 +201,6 @@ function showExpandedView ({expanded,  images}) {
     );
 };
 
+function closeExpanded() {
+    dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none);
+}
