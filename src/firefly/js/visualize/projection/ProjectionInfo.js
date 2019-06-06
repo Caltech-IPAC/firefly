@@ -153,13 +153,17 @@ export function parseSpacialHeaderInfo(header, altWcs='') {
 	    p.ctype1 = parse.getValue('CTYPE1'+altWcs, '');
 	    p.ctype2 = parse.getValue('CTYPE2'+altWcs, '');
 	    ctype1_trim = p.ctype1.trim();
-	    const ctype1End= ctype1_trim.substring(ctype1_trim.length-4);
-
+	    var endstr = ctype1_trim.substring(ctype1_trim.length-4);
+        if (endstr==='-SIP') {
+            var ctype1End = ctype1_trim.substring(4,8);
+        }
+        else {
+            var ctype1End = endstr;
+        }
 
 	    switch (ctype1End) {
             case '-TAN': p.maptype = GNOMONIC; break;
             case '-TPV': p.maptype = TPV; break;
-            case '-SIP':
             case '-SIN': p.maptype = ORTHOGRAPHIC; break;
             case '-NCP': p.maptype = NCP; break;
             case '-ARC': p.maptype = ARC; break;
