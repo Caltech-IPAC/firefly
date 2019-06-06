@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PureComponent, Fragment, useRef, useCallback} from 'react';
+import React, {Component, PureComponent, useRef, useCallback} from 'react';
 import FixedDataTable from 'fixed-data-table-2';
 import {set, get, isEqual, pick} from 'lodash';
 
@@ -11,7 +11,7 @@ import {isNumericType, tblDropDownId, getTblById, getColumn} from '../TableUtil.
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {SORT_ASC, UNSORTED} from '../SortInfo';
-import {toBoolean} from '../../util/WebUtil.js';
+import {toBoolean, isNumeric} from '../../util/WebUtil.js';
 
 import ASC_ICO from 'html/images/sort_asc.gif';
 import DESC_ICO from 'html/images/sort_desc.gif';
@@ -241,11 +241,14 @@ export class TextCell extends Component {
     // }
     //
     render() {
-        var val = getValue(this.props) || '';
-        const lineHeight = this.props.height - 6 + 'px';  // 6 is the top/bottom padding.
+        const {col={}, style, height} = this.props;
+        const isNumeric = isNumericType(col);
+        let val = getValue(this.props) || '';
+        const lineHeight = height - 6 + 'px';  // 6 is the top/bottom padding.
         val = (val.search && val.search(html_regex) >= 0) ? <div dangerouslySetInnerHTML={{__html: val}}/> : val;
+        const className = 'public_fixedDataTableCell_cellContent' + (isNumeric ? ' right_align' : '');
         return (
-            <div style={{lineHeight, ...this.props.style}} className='public_fixedDataTableCell_cellContent'>{val}</div>
+            <div style={{lineHeight, ...style}} className={className}>{val}</div>
         );
     }
 }
@@ -255,29 +258,39 @@ export class TextCell extends Component {
  * LinkCell is implementing A.4 using link substitution based on A.1
  */
 export const LinkCell = React.memo((props) => {
-    const {tbl_id, col={}, rowIndex, height, style={}} = props;
+    const {tbl_id, col={}, rowIndex, style={}} = props;
     const val = getValue(props) || '';
-
-    const mStyle = {lineHeight: `${height - 6}px`, ...style};
+    let mStyle = style;
+    let className = 'public_fixedDataTableCell_cellContent';
     if (col.links) {
         const tableModel = getTblById(tbl_id);
+        if (col.links.length === 1) {
+            const rval = resolveHRefVal(tableModel, get(col, 'links.0.value', val), rowIndex);
+            className += isNumeric(rval) ? ' right_align' : '';
+        }
         return (
-            <Fragment>
+            <div className={className}>
                 {
                     col.links.map( (link={}, idx) => {
                         const {href, title, value=val, action} = link;
                         const target = action || '_blank';
                         const rvalue = resolveHRefVal(tableModel, value, rowIndex);
                         const rhref = resolveHRefVal(tableModel, href, rowIndex, val);
+                        if (idx > 0) mStyle = {marginLeft: 3, ...mStyle};
                         return (<ATag key={'ATag_' + idx} href={rhref}
                                       {...{value:rvalue, title, target, style:mStyle}}
                                 />);
                     })
                 }
-            </Fragment>
+            </div>
         );
     } else {
-        return <ATag href={val} value={val} target='_blank' style={mStyle}/>;
+        className += isNumeric(val) ? ' right_align' : '';
+        return (
+            <div className={className}>
+                <ATag href={val} value={val} target='_blank' style={mStyle}/>
+            </div>
+        );
     }
 });
 
@@ -366,10 +379,6 @@ const ATag = React.memo(({value='', title, href, target, style={}}) => {
         value = imageStubMap[imgStubKey] || <img data-src={imgStubKey}/>;   // if a src is given but, not found.. show bad img.
     }
 
-    return (
-        <div style={{display: 'inline-flex', height: '100%', alignItems: 'center', padding: '0 3px', ...style}}>
-            <a {...{title, href, target}}> {value} </a>
-        </div>
-    );
+    return <a {...{title, href, target, style}}> {value} </a>;
 });
 

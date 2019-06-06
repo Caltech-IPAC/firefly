@@ -182,9 +182,9 @@
     <div id="expected" >
         <div>Using META-INFO API to show cell value as links
             <ul class='expected-list'>
-                <li><b>band</b> should be shown as links</li>
-                <li>first one links to irsa</li>
-                <li>second links to ivoa with constant text</li>
+                <li><b>band</b> should be shown as links, right aligned</li>
+                <li><b>in_row_id</b> should contain 2 links</li>
+                <li>one with its value and the second is fixed text 'ivoa'</li>
             </ul>
         </div>
     </div>
@@ -195,7 +195,8 @@
         function onFireflyLoaded(firefly) {
             tblReq1 = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
                 { META_INFO: {
-                    "col.band.Links": [{href: "https://irsa.ipac.caltech.edu/?id="}, {href: "http://ivoa.net/?id=", value: 'ivoa'}]
+                    "col.band.Links": [{href: "https://irsa.ipac.caltech.edu/?id="}],
+                    "col.in_row_id.Links": [{href: "https://irsa.ipac.caltech.edu/?id="}, {href: "http://ivoa.net/?id=", value: 'ivoa'}]
                 }});
             firefly.showTable('tables-1', tblReq1);
         }

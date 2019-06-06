@@ -361,7 +361,7 @@ function makeColumnTag(props, col, idx) {
             key={col.name}
             columnKey={idx}
             header={<HeadRenderer {...{col, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter, tbl_id}} />}
-            cell={<CellRenderer {...{style, data, tbl_id, colIdx:idx}} />}
+            cell={<CellRenderer {...{style, data, tbl_id, col, colIdx:idx}} />}
             fixed={fixed}
             width={columnWidths[idx]}
             isResizable={true}
