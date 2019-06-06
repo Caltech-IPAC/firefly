@@ -33,6 +33,8 @@ public class TwoMassIbeDataSource extends BaseIbeDataSource {
     public static final String XDATE_KEY = "xdate";
     public static final String SCAN_KEY = "scan";
 
+    public static final String XTRA_CONSTRAINT = "xtraConstraint"; // IRSA-2742
+
     private DS ds;
 
     public enum DS {
@@ -109,9 +111,15 @@ public class TwoMassIbeDataSource extends BaseIbeDataSource {
             fname =  "image/" + fname;
         }
 
-        // sample path
-        // http://<hostname>:8000/ibe/data/twomass/allsky/allsky/980623n/s076/image/hi0760126.fits.gz
-        dataParam.setFilePath(ordate+hemisphere+"/"+"s"+ne.format(scanno)+"/"+ fname);
+        if(this.ds.equals(DS.MOSAIC)){
+            //ex https://<hostname>/ibe/data/twomass/mosaic/sixdeg/j/01381/mosaic_6deg_j01381_1asec.fits
+            int seqnum = StringUtils.getInt(pathInfo.get("seqnum"));
+            dataParam.setFilePath( pathInfo.get("fname") );
+        }else {
+            // sample path
+            // http://<hostname>:8000/ibe/data/twomass/allsky/allsky/980623n/s076/image/hi0760126.fits.gz
+            dataParam.setFilePath(ordate + hemisphere + "/" + "s" + ne.format(scanno) + "/" + fname);
+        }
 
         // check cutout params
         // look for ra_obj first - moving object search
@@ -198,9 +206,19 @@ public class TwoMassIbeDataSource extends BaseIbeDataSource {
         ArrayList<String> constraints = new ArrayList<String>();
         String constrStr = "";
 
+        //Add proper filter for mosaic in IBE (IRSA-2742)
+        String filter = queryInfo.get(XTRA_CONSTRAINT);
+        String filterStr = "";
         String band = queryInfo.get(BAND_KEY);
-        if (!StringUtils.isEmpty(band)&&!band.startsWith("A"))  {
-            constraints.add("filter=\'"+band.toLowerCase()+"\'");
+        if (!StringUtils.isEmpty(band) && !band.startsWith("A")) {
+            filterStr += "filter = \'" + band.toLowerCase() + "\'";
+            if (!StringUtils.isEmpty(filter)) {
+                filterStr += " and " + filter;
+            }
+            constraints.add(filterStr);
+        } else if (!StringUtils.isEmpty(filter)) {
+            filterStr += "filter = " + filter;
+            constraints.add(filterStr);
         }
 
         String hem = queryInfo.get(HEM_KEY);

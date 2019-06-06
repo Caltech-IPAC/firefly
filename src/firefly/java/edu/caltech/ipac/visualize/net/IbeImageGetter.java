@@ -71,6 +71,10 @@ public class IbeImageGetter {
 
 
                   queryMap.put("band", irsaParams.getBand());
+                  // Add extra filtering of filename 'fname' in case of mosaic (IRSA-2742)
+                  if(irsaParams.getDataset().equalsIgnoreCase(TwoMassIbeDataSource.DS.MOSAIC.toString())){
+                      queryMap.put(TwoMassIbeDataSource.XTRA_CONSTRAINT, "fname like '%_1asec.fit%'");
+                  }
                   sizeStr= (irsaParams.getSize()/3600)+"";
               }
               else {
