@@ -169,7 +169,7 @@ function resolveObject(posFieldDef, resolver) {
                 else {
                     return {
                         showHelp: false,
-                        feedback: `Could not resolve: ${objName}`,
+                        feedback: `Could not resolve: ${decodeURIComponent(objName)}`,
                         valid: false,
                         wpt: null
                     };
@@ -178,7 +178,7 @@ function resolveObject(posFieldDef, resolver) {
             else {
                 return {
                     showHelp: false,
-                    feedback: `Could not resolve: ${objName}`,
+                    feedback: `Could not resolve: ${decodeURIComponent(objName)}`,
                     valid: false,
                     wpt: null
                 };
@@ -187,7 +187,7 @@ function resolveObject(posFieldDef, resolver) {
     ).catch((e) => {
         // e is undefined when a newer request came in, and promise is rejected
         if (e) {
-            let feedback = `Could not resolve: ${objName}`;
+            let feedback = `Could not resolve: ${decodeURIComponent(objName)}`;
             if (e.name === 'AbortError') {
                 feedback += '. Unresponsive service.';
             } else {

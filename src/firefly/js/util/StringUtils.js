@@ -57,7 +57,7 @@ export function convertExtendedAscii(sbOriginal) {
         return null;
     }
 
-    const retval= sbOriginal;
+    let retval= sbOriginal;
     let origCharAsInt;
     for (let isb = 0; isb < retval.length; isb++) {
 
@@ -66,15 +66,15 @@ export function convertExtendedAscii(sbOriginal) {
             switch (origCharAsInt) {
                 case 223:
                 case 224:
-                    retval[isb]= '"';
+                    retval = replaceAt(retval, isb, '"');
                     break;
                 case 150:
                 case 151:
-                    retval[isb]= '-';
+                    retval = replaceAt(retval, isb, '-');
                     break;
                 default:
                     if (origCharAsInt>127) {
-                        retval[isb]= '?';
+                        retval = replaceAt(retval, isb, '?');
                     }
                     break;
             }
@@ -86,31 +86,35 @@ export function convertExtendedAscii(sbOriginal) {
                 case '\u201A': // lower quotation mark
                 case '\u2039': // Single Left-Pointing Quotation Mark
                 case '\u203A': // Single right-Pointing Quotation Mark
-                    retval[isb]= '\'';
+                    retval = replaceAt(retval, isb, '\'');
                     break;
 
                 case '\u201C': // left double quote
                 case '\u201D': // right double quote
                 case '\u201E': // double low quotation mark
-                    retval[isb]= '"';
+                    retval = replaceAt(retval, isb, '"');
                     break;
 
                 case '\u02DC':
-                    retval[isb]= '~';
+                    retval = replaceAt(retval, isb, '~');
                     break;  // Small Tilde
 
                 case '\u2013': // En Dash
                 case '\u2014': // EM Dash
-                    retval[isb]= '-';
+                    retval = replaceAt(retval, isb, '-');
                     break;
 
                 default:
                     if (origCharAsInt>127) {
-                        retval[isb]= '?';
+                        retval = replaceAt(retval, isb, '?');
                     }
                     break;
             }
         }
     }
-    return sbOriginal;
+    return retval;
+}
+
+function replaceAt(str, index, replacement) {
+    return str.substr(0, index) + replacement+ str.substr(index + replacement.length);
 }
