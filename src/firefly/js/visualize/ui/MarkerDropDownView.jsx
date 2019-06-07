@@ -84,7 +84,7 @@ export function MarkerDropDownView({plotView:pv}) {
 
                     }
                     else {
-                        innerDropDownMenu[i]=instruments[i];
+                        innerDropDownMenu[i]=footprintCmdJSX(instruments[i], fp, instruments[i]);
                     }
                 }
 
