@@ -71,6 +71,10 @@ public class IbeImageGetter {
 
 
                   queryMap.put("band", irsaParams.getBand());
+                  // Add extra filtering of filename 'fname' in case of mosaic (IRSA-2742)
+                  if(irsaParams.getDataset().equalsIgnoreCase(TwoMassIbeDataSource.DS.MOSAIC.toString())){
+                      queryMap.put(TwoMassIbeDataSource.XTRA_CONSTRAINT, "fname like '%_1asec.fit%'");
+                  }
                   sizeStr= (irsaParams.getSize()/3600)+"";
               }
               else {
@@ -113,18 +117,14 @@ public class IbeImageGetter {
 
           IbeQueryParam queryParam= ibeSource.makeQueryParam(queryMap);
           queryParam.setPos(params.getRaJ2000String() + "," + params.getDecJ2000String());
-          if ((params instanceof ZtfImageParams) || (params instanceof PtfImageParams)) {
-              queryParam.setMcen(false);
-          }  else {
-              queryParam.setMcen(true);
-          }
+          queryParam.setMcen(true);
           queryParam.setIntersect(IbeQueryParam.Intersect.CENTER);
           ibe.query(queryTbl, queryParam);
 
           DataGroup data = IpacTableReader.read(queryTbl);
 
-
-          if (data.values().size() >= 1) {
+          int count = data.values().size();
+          if (count == 1) {
               DataObject row = data.get(0);
               Map<String, String> dataMap = IpacTableUtil.asMap(row);
               if (isWise) {
@@ -140,7 +140,7 @@ public class IbeImageGetter {
               return new File(result.getInternalFilename());
           }
           else {
-              throw new FailedRequestException("Area not covered");
+              throw new FailedRequestException(count>1?"Too many results from "+params.getType():"Area not covered in "+params.getType());
           }
 
       } catch (IOException me){
