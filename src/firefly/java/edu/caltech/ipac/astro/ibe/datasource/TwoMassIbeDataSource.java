@@ -43,7 +43,8 @@ public class TwoMassIbeDataSource extends BaseIbeDataSource {
         SX("sx","sixxcat","sixxcat"),
         SXW("sxw","sixxfull","sixxfull"),
         MOSAIC("mosaic", "mosaic", "sixdeg"), // not ready yet
-        CAL("cal", "calibration", "calibration");
+        CAL("cal", "calibration", "calibration"),
+        LH("lh", "lh","lh");
 
         private String name;
         private String schema;

@@ -194,6 +194,11 @@ public class AtlasIbeDataSource extends BaseIbeDataSource {
 
         dataParam.setFilePath(root + "/" + fname);
 
+        // IRSA-2296, target example: NGC 3353, ugly stuff to fix IBE file path not consistent in IBE2 API (Atlas)
+        if(getTableName().contains("lh_images")){
+            dataParam.setFilePath(root.replace("lh_images","lh") + "/" + fname);
+        }
+
         // check cutout params
         // look for ra_obj first - moving object search
         String subLon = pathInfo.get("ra_obj");
