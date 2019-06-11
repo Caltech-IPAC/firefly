@@ -4,7 +4,7 @@
 
 import {getColumnIdx, getColumn, isNumericType, getTblById, stripColumnNameQuotes} from './TableUtil.js';
 import {Expression} from '../util/expr/Expression.js';
-import {isUndefined, get, isArray, isEmpty} from 'lodash';
+import {isNil, get, isArray, isEmpty} from 'lodash';
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
 
 const operators = /(!=|>=|<=|<|>|=| like | in | is not | is )/i;
@@ -22,6 +22,8 @@ export const FILTER_TTIPS =
 * when IN is used, enclose the values in parentheses
 Examples:  "ra" > 12345; "color" != 'blue'; "band" IN (1,2,3)
 `;
+
+export const NULL_TOKEN = '%NULL';          // need to match DbAdapter.NULL_TOKEN
 
 /**
  * return [column_name, operator, value] triplet.
@@ -191,7 +193,7 @@ export class FilterInfo {
 
         // remove the double quote or the single quote around cname and val (which is added in auto-correction)
         const removeQuoteAroundString = (str, quote = "'") => {
-            if (str.startsWith(quote)) {
+            if (str && str.startsWith(quote)) {
                 const reg = new RegExp('^' + quote + '(.*)' + quote + '$');
                 return str.replace(reg, '$1');
             } else {
@@ -223,7 +225,7 @@ export class FilterInfo {
             if (val.match(/^\(.*\)$/)) {
                 val = val.substring(1, val.length-1);
             }
-            val = val.split(',').map((s) => s.trim());
+            val = val.split(',').map((s) => removeQuoteAroundString(s.trim()) === NULL_TOKEN.toLowerCase() ? null : s.trim());
         }
 
         // remove single quote enclosing the string for the value of operater 'like' or char type column
@@ -236,12 +238,12 @@ export class FilterInfo {
         return (row, idx) => {
             if (!row) return false;
             let compareTo = noROWID ? idx : row[cidx];
-            if (isUndefined(compareTo)) return false;
+            compareTo = (compareTo === get(getColumn(tableModel, cname), 'nullString', '')) ? null : compareTo;     // resolve nullString
 
             if (op !== 'like' && colType.match(/^[dfil]/)) {      // int, float, double, long .. or their short form.
-                compareTo = Number(compareTo);
+                compareTo = compareTo ? Number(compareTo) : compareTo;
             } else {
-                compareTo = compareTo.toLowerCase();
+                compareTo = compareTo ? compareTo.toLowerCase() : compareTo;
             }
 
             switch (op) {
@@ -262,6 +264,10 @@ export class FilterInfo {
                     return compareTo <= val;
                 case 'in'  :
                     return val.includes(compareTo);
+                case 'is'  :
+                    return val === 'null' && isNil(compareTo);
+                case 'is not'  :
+                    return val === 'null' && !isNil(compareTo);
                 default :
                     return false;
             }
@@ -440,7 +446,7 @@ function autoCorrectCondition(v, isNumeric=false) {
     switch (op) {
         case 'like':
             if (!val.match(/^'.*'$/)) {
-                val = val.replace(/([_|%|\\])/g, '\\$1');
+                val = val.replace(/([_|%\\])/g, '\\$1');
 
                 val = encloseByQuote(encloseByQuote(val, '%'));
             }

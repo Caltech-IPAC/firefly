@@ -246,6 +246,7 @@ public class IpacTableUtil {
             for (int idx = 0; idx < names.length; idx++) {
                 cname = names[idx];
                 DataType dt = new DataType(cname.trim(), null);
+                dt.setNullString("null");       // defaults to 'null'
                 cols.add(dt);
                 tableDef.setColOffsets(idx, cursor);
                 cursor += cname.length() + 1;

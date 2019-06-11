@@ -433,7 +433,7 @@ public class EmbeddedDbUtil {
 
                 applyIfNotEmpty(rs.getString("label"), dtype::setLabel);
                 applyIfNotEmpty(rs.getString("units"), dtype::setUnits);
-                applyIfNotEmpty(rs.getString("null_str"), dtype::setNullString);
+                dtype.setNullString(rs.getString("null_str"));
                 applyIfNotEmpty(rs.getString("format"), dtype::setFormat);
                 applyIfNotEmpty(rs.getString("fmtDisp"), dtype::setFmtDisp);
                 applyIfNotEmpty(rs.getInt("width"), dtype::setWidth);

@@ -2,15 +2,14 @@ import {get} from 'lodash';
 
 import * as TblUtil from '../TableUtil.js';         // used for named import
 import TableUtil from '../TableUtil.js';            // using default import
-import {FilterInfo} from '../FilterInfo.js';
 import {SelectInfo} from '../SelectInfo';
 import {MetaConst} from '../../data/MetaConst';
-import {hasRowAccess} from '../TableUtil';
 import {dataReducer} from '../reducer/TableDataReducer.js';
 import {TABLE_LOADED} from '../TablesCntlr.js';
+import {NULL_TOKEN} from '../FilterInfo.js';
 
 
-describe('TableUtil:', () => {
+describe('TableUtil: ', () => {
 
     test('isTableLoaded', () => {
         // a simple test to ensure when a table is loaded.
@@ -96,10 +95,15 @@ describe('TableUtil:', () => {
             });
     });
 
+});
+
+
+describe('TableUtil: datarights', () => {
+
     test('DATARIGHTS_COL', () => {
         const table = {
             tableMeta: {[MetaConst.DATARIGHTS_COL]: 'a'},
-            totalRows: 6,
+            totalRows: 7,
             tableData: {
                 columns: [ {name: 'a'}, {name: 'b'}, {name: 'c'}],
                 data: [
@@ -114,13 +118,13 @@ describe('TableUtil:', () => {
             }
         };
 
-        expect(hasRowAccess(table, 0)).toBe(true);
-        expect(hasRowAccess(table, 1)).toBe(false);
-        expect(hasRowAccess(table, 2)).toBe(true);
-        expect(hasRowAccess(table, 3)).toBe(true);
-        expect(hasRowAccess(table, 4)).toBe(true);
-        expect(hasRowAccess(table, 5)).toBe(false);
-        expect(hasRowAccess(table, 6)).toBe(false);
+        expect(TblUtil.hasRowAccess(table, 0)).toBe(true);
+        expect(TblUtil.hasRowAccess(table, 1)).toBe(false);
+        expect(TblUtil.hasRowAccess(table, 2)).toBe(true);
+        expect(TblUtil.hasRowAccess(table, 3)).toBe(true);
+        expect(TblUtil.hasRowAccess(table, 4)).toBe(true);
+        expect(TblUtil.hasRowAccess(table, 5)).toBe(false);
+        expect(TblUtil.hasRowAccess(table, 6)).toBe(false);
     });
 
     test('RELEASE_DATE_COL', () => {
@@ -137,9 +141,9 @@ describe('TableUtil:', () => {
             }
         };
 
-        expect(hasRowAccess(table, 0)).toBe(true);
-        expect(hasRowAccess(table, 1)).toBe(false);
-        expect(hasRowAccess(table, 2)).toBe(false);
+        expect(TblUtil.hasRowAccess(table, 0)).toBe(true);
+        expect(TblUtil.hasRowAccess(table, 1)).toBe(false);
+        expect(TblUtil.hasRowAccess(table, 2)).toBe(false);
     });
 
     test('both RELEASE_DATE_COL and DATARIGHTS_COL', () => {
@@ -159,9 +163,9 @@ describe('TableUtil:', () => {
             }
         };
 
-        expect(hasRowAccess(table, 0)).toBe(true);
-        expect(hasRowAccess(table, 1)).toBe(true);
-        expect(hasRowAccess(table, 2)).toBe(false);
+        expect(TblUtil.hasRowAccess(table, 0)).toBe(true);
+        expect(TblUtil.hasRowAccess(table, 1)).toBe(true);
+        expect(TblUtil.hasRowAccess(table, 2)).toBe(false);
     });
 
     test('Proprietary data by ObsCore cnames', () => {
@@ -182,9 +186,9 @@ describe('TableUtil:', () => {
         const dataRoot = dataReducer({data:{id123: table}}, {type: TABLE_LOADED, payload: table});
         const otable = get(dataRoot, 'id123');
 
-        expect(hasRowAccess(otable, 0)).toBe(true);
-        expect(hasRowAccess(otable, 1)).toBe(true);
-        expect(hasRowAccess(otable, 2)).toBe(false);
+        expect(TblUtil.hasRowAccess(otable, 0)).toBe(true);
+        expect(TblUtil.hasRowAccess(otable, 1)).toBe(true);
+        expect(TblUtil.hasRowAccess(otable, 2)).toBe(false);
     });
 
     test('Proprietary data by utype', () => {
@@ -205,9 +209,9 @@ describe('TableUtil:', () => {
         const dataRoot = dataReducer({data:{id123: table}}, {type: TABLE_LOADED, payload: table});
         const otable = get(dataRoot, 'id123');
 
-        expect(hasRowAccess(otable, 0)).toBe(true);
-        expect(hasRowAccess(otable, 1)).toBe(true);
-        expect(hasRowAccess(otable, 2)).toBe(false);
+        expect(TblUtil.hasRowAccess(otable, 0)).toBe(true);
+        expect(TblUtil.hasRowAccess(otable, 1)).toBe(true);
+        expect(TblUtil.hasRowAccess(otable, 2)).toBe(false);
     });
 
     test('Proprietary data by UCD', () => {
@@ -229,55 +233,81 @@ describe('TableUtil:', () => {
         const otable = get(dataRoot, 'id123');
 
         // only release date matters
-        expect(hasRowAccess(otable, 0)).toBe(true);
-        expect(hasRowAccess(otable, 1)).toBe(false);
-        expect(hasRowAccess(otable, 2)).toBe(false);
+        expect(TblUtil.hasRowAccess(otable, 0)).toBe(true);
+        expect(TblUtil.hasRowAccess(otable, 1)).toBe(false);
+        expect(TblUtil.hasRowAccess(otable, 2)).toBe(false);
     });
 
 });
 
 
-describe('FilterInfo', () => {
+describe('TableUtil: client_table', () => {
 
-    test('autoCorrectConditions: string columns', () => {
+    const table = {
+        totalRows: 6,
+        tableData: {
+            columns: [  {name: 'c1', type: 'char', nullString: 'null'},
+                        {name: 'c2', type: 'double'},
+                        {name: 'c3', type: 'int'}
+            ],
+            data: [
+                ['abc'      , 0.123     ,  100      ],
+                [undefined  , -2.34     ,   -1      ],
+                ['123'      ,   0.0     , null      ],
+                [''         ,  null     ,   50      ],
+                [null       , 0.131     ,  -20      ],
+                ['ABC'      , undefined ,   undefined]
+            ],
+        }
+    };
 
-        /*
-        *  This test is a little trickier.   conditionValidator() takes a tbl_id that uses TblUtil.getTblById to resolve a tableModel.
-        *  This involves a fully functional redux store which is not available to our JS test environment at the moment.
-        *  So, we will 'fake' the return value of getTblById by 'mocking' that function
-        */
-        const aStringColumn = {
-            tableData: {
-                columns: [ {name: 'desc', type: 'char'}],
-            }
-        };
+    test('Sort', () => {
+        // undefined is smallest, then null, then natural order
+        let res = TblUtil.processRequest(table, {sortInfo: 'ASC,c1'});
+        expect(TblUtil.getColumnValues(res, 'c1')).toEqual([undefined, null, '', '123', 'ABC', 'abc']);
 
-        TblUtil.getTblById = jest.fn().mockReturnValue(aStringColumn);          // mock getTblById to return the aStringColumn table
+        res = TblUtil.processRequest(table, {sortInfo: 'DESC,c1'});
+        expect(TblUtil.getColumnValues(res, 'c1')).toEqual(['abc', 'ABC', '123', '', null, undefined]);
 
-        let actual = FilterInfo.conditionValidator('=abc', 'a_fake_tbl_id', 'desc');
-        expect(actual.valid).toBe(true);
-        expect(actual.value).toBe("= 'abc'");      // the validator correctly insert space and quote around a value of a string column.
+        res = TblUtil.processRequest(table, {sortInfo: 'ASC,c2'});
+        expect(TblUtil.getColumnValues(res, 'c2')).toEqual([undefined, null, -2.34, 0.0, 0.123, 0.131]);
 
-        actual = FilterInfo.conditionValidator('abc', 'a_fake_tbl_id', 'desc');
-        expect(actual.valid).toBe(true);
-        expect(actual.value).toBe("like '%abc%'");      // the validator correctly convert it into a LIKE operator
+        res = TblUtil.processRequest(table, {sortInfo: 'DESC,c2'});
+        expect(TblUtil.getColumnValues(res, 'c2')).toEqual([0.131, 0.123, 0.0, -2.34, null, undefined]);
+
+        res = TblUtil.processRequest(table, {sortInfo: 'ASC,c3'});
+        expect(TblUtil.getColumnValues(res, 'c3')).toEqual([undefined, null, -20, -1, 50, 100]);
+
+        res = TblUtil.processRequest(table, {sortInfo: 'DESC,c3'});
+        expect(TblUtil.getColumnValues(res, 'c3')).toEqual([100, 50, -1, -20, null, undefined]);
     });
 
-    test('autoCorrectConditions: numeric columns', () => {
+    test('filter', () => {
 
-        const aNumericColumn = {
-            tableData: {
-                columns: [ {name: 'ra', type: 'double'}],
-            }
-        };
+        let res = TblUtil.processRequest(table, {filters: "c1 IN ('abc','')"});
+        expect(TblUtil.getColumnValues(res, 'c2')).toEqual([0.123, null, undefined]);       // filtering is not case sensitive. abc === ABC
 
-        TblUtil.getTblById = jest.fn().mockReturnValue(aNumericColumn);          // once again mock getTblById to return the different (numeric) table
+        res = TblUtil.processRequest(table, {filters: `c1 IN ('abc', ${NULL_TOKEN})`});
+        expect(TblUtil.getColumnValues(res, 'c2')).toEqual([0.123, 0.131, undefined]);      // testing special NULL_TOKEN
 
-        const {valid, value} = FilterInfo.conditionValidator('>1.23', 'a_fake_tbl_id', 'ra');
-        expect(valid).toBe(true);
-        expect(value).toBe('> 1.23');      // the validator correctly insert space and no quotes on numeric columns.
+        res = TblUtil.processRequest(table, {filters: 'c2 > 0'});
+        expect(TblUtil.getColumnValues(res, 'c2')).toEqual([0.123, 0.131]);                 // testing greater than (>)
+
+        res = TblUtil.processRequest(table, {filters: 'c2 < 0'});
+        expect(TblUtil.getColumnValues(res, 'c2')).toEqual([-2.34]);                        // equality test, null and undefined are ignored
+
+        res = TblUtil.processRequest(table, {filters: 'c1 < a'});
+        expect(TblUtil.getColumnValues(res, 'c1')).toEqual(['123', '']);                    // testing less than (<) on string
+
+        res = TblUtil.processRequest(table, {filters: 'c1 IS NULL'});
+        expect(TblUtil.getColumnValues(res, 'c2')).toEqual([-2.34, 0.131]);                 // testing IS NULL on a string column
+
+        res = TblUtil.processRequest(table, {filters: 'c2 IS NULL'});
+        expect(TblUtil.getColumnValues(res, 'c1')).toEqual(['', 'ABC']);                    // testing IS NULL on numeric column
+
+        res = TblUtil.processRequest(table, {filters: 'c2 IS NOT NULL'});
+        expect(TblUtil.getColumnValues(res, 'c1')).toEqual(['abc', undefined, '123', null]); // testing IS NOT NULL
     });
-
 
 });
 
