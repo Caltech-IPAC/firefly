@@ -164,7 +164,14 @@ function makeCompass(plotId, action){
     var zf= cc.zoomFactor || 1;
     var wpt2= makeWorldPt(wpStart.getLon(), wpStart.getLat() + (Math.abs(cdelt1)/zf)*(px), CoordinateSys.EQ_J2000);
     var spt2= cc.getScreenCoords(wpt2);
-    var sptE2 = getEastFromNorthOnScreen(cc, sptStart, spt2, Math.PI/2);
+    var wpt3= makeWorldPt(wpStart.getLon() + (Math.abs(cdelt1)/(Math.cos(wpStart.getLat()*Math.PI/180.)*zf))*(px),
+                           wpStart.getLat(), CoordinateSys.EQ_J2000);
+    var spt3= cc.getScreenCoords(wpt3);
+    // don't use spt3 because of funny effects near the celestial poles
+    // the sign of the cross product of compass vectors tells us if the image is mirror-reversed from the sky
+    var cross_product= (spt3.x - sptStart.x)*(spt2.y - sptStart.y) -
+                       (spt3.y - sptStart.y)*(spt2.x - sptStart.x);
+    var sptE2= getEastFromNorthOnScreen(cc, sptStart, spt2, Math.sign(cross_product));
 
     if (sptStart===null || spt2===null || sptE2===null) {
         return null;
@@ -176,12 +183,12 @@ function makeCompass(plotId, action){
     return [dataE, dataN];
 }
 
-function getEastFromNorthOnScreen(cc, origin, nVec) {
+function getEastFromNorthOnScreen(cc, origin, nVec, sign) {
     var originSpt = cc.getScreenCoords(origin);
     var vec1Spt = cc.getScreenCoords(nVec);
 
-    var x2 = (vec1Spt.y - originSpt.y) + originSpt.x;
-    var y2 = -(vec1Spt.x - originSpt.x) + originSpt.y;
+    var x2 = sign*(vec1Spt.y - originSpt.y) + originSpt.x;
+    var y2 = -sign*(vec1Spt.x - originSpt.x) + originSpt.y;
 
     return makeScreenPt(x2, y2);
 }
