@@ -9,7 +9,7 @@ import shallowequal from 'shallowequal';
 
 import {flux} from '../../Firefly.js';
 import * as TblUtil from '../TableUtil.js';
-import {dispatchTableRemove, dispatchTblExpanded, dispatchTableSearch} from '../TablesCntlr.js';
+import {dispatchTableRemove, dispatchTblExpanded, dispatchTableFetch} from '../TablesCntlr.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
 import {TableInfo} from './TableInfo.jsx';
@@ -22,7 +22,6 @@ import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {showTableDownloadDialog} from './TableSave.jsx';
 import {showOptionsPopup} from '../../ui/PopupUtil.jsx';
 import {BgMaskPanel} from '../../core/background/BgMaskPanel.jsx';
-import {getAppOptions} from '../../core/AppDataCntlr.js';
 
 //import INFO from 'html/images/icons-2014/24x24_Info.png';
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
@@ -346,7 +345,7 @@ function Loading({showTitle, tbl_id, title, removable, backgroundable}) {
 function TableError({tbl_id, message}) {
     const prevReq = TblUtil.getResultSetRequest(tbl_id);
     const reloadTable = () => {
-        dispatchTableSearch(JSON.parse(prevReq));
+        dispatchTableFetch(JSON.parse(prevReq));
     };
     return (
         <div className='TablePanel__error'>
