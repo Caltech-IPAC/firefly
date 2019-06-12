@@ -54,11 +54,21 @@ var makePositionParser = function(helper) {
                     isValid = true;
                 }
             } else {
-                var map= getPositionMap(s);
+                const map= getPositionMap(s);
                 _coordSys= getCoordSysFromString(map[COORDINATE_SYS]);
                 _ra = map[RA];
                 _dec = map[DEC];
-                isValid = retPP.getCoordSys() !==CoordinateSys.UNDEFINED && !isNaN(retPP.getRa()) && !isNaN(retPP.getDec());
+                const validRa = !isNaN(retPP.getRa());
+                const validDec = !isNaN(retPP.getDec());
+                // determineType uses the first string to decide if the input is a position or object name.
+                // "12 mus" (a valid object name in NED) would be classified as a position.
+                if (!validDec) {
+                    _inputType = PositionParsedInput.Name;
+                    _objName= s;
+                    isValid = true;
+                } else {
+                    isValid = retPP.getCoordSys() !== CoordinateSys.UNDEFINED && validRa && validDec;
+                }
             }
         }
 
