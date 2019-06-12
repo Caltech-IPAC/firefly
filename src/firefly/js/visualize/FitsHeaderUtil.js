@@ -86,11 +86,19 @@ export function makeHeaderParse(header, altWcs='') {
             const retAry= [];
             let i= 0;
             for (let headerIdx = startIdx; headerIdx <= endIdx; headerIdx++) {
-                retAry[i]= getNumberHeader(header, `${keyRoot}${headerIdx}${altWcs}`,NaN);
-                if (isNaN(retAry[i])) return def;
+                retAry[i]= getNumberHeader(header, `${keyRoot}${headerIdx}${altWcs}`,def);
                 i++;
             }
             return retAry;
+        },
+        hasKeyStartWith(startKeys){
+          let key;
+          for (key in header) {
+            if (key.startsWith(startKeys)) {
+              return true;
+            }
+          }
+          return false;
         }
     };
 }
@@ -128,9 +136,18 @@ export function makeDoubleHeaderParse(header,zeroHeader,altWcs) {
         },
         getDoubleAry(keyRoot,altWcs, startIdx,endIdx,def=undefined) {
             if (startIdx>endIdx) return def;
-            const retAry= hp.getDoubleAry(keyRoot,altWcs,startIdx,endIdx);
-            if (retAry) return retAry;
+            const retAry= hp.getDoubleAry(keyRoot,altWcs,startIdx,endIdx, def);
+            let validValueArr = retAry.filter( (v)=> v!==def );
+            if (validValueArr.length>0) return retAry;
             return zhp ? zhp.getDoubleAry(keyRoot,altWcs, startIdx,endIdx,def) : def;
+        },
+        hasKeyStartWith(startKeys){
+           if (hp.hasKeyStartWith(startKeys)){
+               return true;
+           }
+           else {
+             return zhp ? zhp.hasKeyStartWith(startKeys):false;
+           }
         },
         isDefinedHeaderList: (list) => hp.isDefinedHeaderList(list) || (zhp && zhp.isDefinedHeaderList(list))
     };
