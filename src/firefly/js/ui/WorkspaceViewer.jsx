@@ -11,7 +11,8 @@ import {dispatchWorkspaceCreatePath,
         dispatchWorkspaceUpdate,
         getWorkspaceErrorMsg,
         getWorkspaceList, getFolderUnderLevel,
-        getWorkspacePath, isWsFolder, WS_SERVER_PARAM, WS_HOME, WORKSPACE_LIST_UPDATE} from '../visualize/WorkspaceCntlr.js';
+        getWorkspacePath, isAccessWorkspace, isWsFolder,
+        WS_SERVER_PARAM, WS_HOME, WORKSPACE_IN_LOADING, WORKSPACE_LIST_UPDATE} from '../visualize/WorkspaceCntlr.js';
 import {CompleteButton} from './CompleteButton.jsx';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
 import {PopupPanel} from './PopupPanel.jsx';
@@ -113,8 +114,10 @@ export const WorkspaceViewField = memo( (props) => {
         }
     };
 
-    return (<WorkspaceView {...{...viewProps, selectedItem: viewProps.value}}
-                           onClickItem={onClickItem}/>); // get key from FilePicker
+    return (
+        <WorkspaceView {...{...viewProps, selectedItem: viewProps.value}}
+                       onClickItem={onClickItem}/>
+    );
 });
 
 
@@ -176,7 +179,7 @@ WorkspacePickerPopup.propTypes = {
 export function showWorkspaceDialog({onComplete, value, fieldKey}) {
     dispatchAddActionWatcher({
         id: 'workspaceRead',
-        actions:[WORKSPACE_LIST_UPDATE, ComponentCntlr.HIDE_DIALOG],
+        actions:[WORKSPACE_IN_LOADING, WORKSPACE_LIST_UPDATE, ComponentCntlr.HIDE_DIALOG],
         callback: (a , cancelSelf) => {
             switch (a.type) {
                 case ComponentCntlr.HIDE_DIALOG:
@@ -184,6 +187,10 @@ export function showWorkspaceDialog({onComplete, value, fieldKey}) {
                     if (dialogId === workspacePopupId) {
                         cancelSelf();
                     }
+                    break;
+                case WORKSPACE_IN_LOADING:
+                    if (!isDialogVisible(workspacePopupId)) return;
+                    showWorkspaceAsPopup({onComplete, value, fieldKey});
                     break;
                 case WORKSPACE_LIST_UPDATE:
                     const newList = getWorkspaceList() || [];
@@ -412,8 +419,8 @@ export function workspacePopupMsg(msg, title) {
  */
 function showWorkspaceAsPopup({onComplete, value, fieldKey=workspaceUploadDef.file.fkey}) {
     const newList = getWorkspaceList() || [];
-    const dialogWidth = 500;
-    const dialogHeight = 350;
+    const dialogWidth = 650;
+    const dialogHeight = 400;
     const popupPanelResizableStyle = {
         width: dialogWidth,
         height: dialogHeight,
@@ -436,10 +443,11 @@ function showWorkspaceAsPopup({onComplete, value, fieldKey=workspaceUploadDef.fi
     };
 
     const startWorkspaceReadPopup = () => {
+        const showMask = isAccessWorkspace();
         const popup = (
             <PopupPanel title={'Read file from workspace'}>
                 <div style={popupPanelResizableStyle}>
-                    <FieldGroup style={{height: 'calc(100% - 80px)', width: '100%'}}
+                    <FieldGroup style={{height: 'calc(100% - 80px)', width: '100%', position: 'relative'}}
                                 groupKey={workspacePopupGroup} keepState={true}>
                         <div style={style}>
                             <WorkspaceViewField fieldKey={fieldKey}
@@ -447,6 +455,7 @@ function showWorkspaceAsPopup({onComplete, value, fieldKey=workspaceUploadDef.fi
                                                 keepSelect={true}
                                                 initialState={{value, validator: isWsFolder(false)}}/>
                         </div>
+                        {showMask && <div className='loading-mask' style={Object.assign({}, style, {top:0, marginTop: 0})}/>}
                     </FieldGroup>
 
                     <div style={{display: 'flex', justifyContent: 'space-between',

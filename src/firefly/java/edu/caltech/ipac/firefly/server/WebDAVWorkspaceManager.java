@@ -56,8 +56,8 @@ public class WebDAVWorkspaceManager extends WebDAVWorkspaceManagerBase {
         }
         if (propFound.equals(PROPS.ROOT_URL)) {
             propVal = WS_HOST_URL;
-//        } else if (propFound.equals(PROPS.ROOT_DIR)) {
-//            propVal = WS_ROOT_DIR;
+        } else if (propFound.equals(PROPS.ROOT_DIR)) {
+            propVal = getWsHome();
         } else if (propFound.equals(PROPS.AUTH)) {
             propVal = this.partition.name();
         } else if (propFound.equals(PROPS.PROTOCOL)) {
@@ -221,7 +221,11 @@ public class WebDAVWorkspaceManager extends WebDAVWorkspaceManagerBase {
         man.setMeta(meta);
         man.setMeta(ufilePath, "added_by", man.userHome);
 
-        WspaceMeta meta2 = man.getMeta("/", WspaceMeta.Includes.ALL_PROPS);
-        System.out.println(meta2.getNodesAsString());
+        try {
+            WspaceMeta meta2 = man.getMeta("/", WspaceMeta.Includes.ALL_PROPS);
+            System.out.println(meta2.getNodesAsString());
+        } catch (Exception e) {
+            e.printStackTrace(System.err);
+        }
     }
 }

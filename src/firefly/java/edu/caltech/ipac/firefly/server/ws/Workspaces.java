@@ -96,7 +96,7 @@ public interface Workspaces {
     WsResponse moveFile(String originalFileRelPath, String newfilepath, boolean shouldOverwrite) throws WsException;
 
 
-    WspaceMeta getMeta(String uri, WspaceMeta.Includes includes);
+    WspaceMeta getMeta(String uri, WspaceMeta.Includes includes) throws WsException;
 
     boolean setMeta(WspaceMeta... metas);
 }

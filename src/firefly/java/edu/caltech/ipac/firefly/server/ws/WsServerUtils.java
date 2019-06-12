@@ -112,8 +112,9 @@ public class WsServerUtils {
      * @param wsParams see {@link edu.caltech.ipac.firefly.server.ws.WsServerParams}
      * @param level    see {@link WspaceMeta.Includes}
      * @return list of metadata
+     * @throws WsException on error
      */
-    public List<WspaceMeta> getMeta(WsServerParams wsParams, WspaceMeta.Includes level) {
+    public List<WspaceMeta> getMeta(WsServerParams wsParams, WspaceMeta.Includes level) throws IOException {
         WorkspaceManager wsm = getWsManager(wsParams);
 
         WspaceMeta meta = wsm.getMeta(wsParams.getRelPath(), level);
@@ -126,7 +127,7 @@ public class WsServerUtils {
      * @param wsParams parameters
      * @return see {@link WspaceMeta}
      */
-    public WspaceMeta getMeta(WsServerParams wsParams) {
+    public WspaceMeta getMeta(WsServerParams wsParams) throws IOException {
         WorkspaceManager wsm = getWsManager(wsParams);
 
         WspaceMeta meta = wsm.getMeta(wsParams.getRelPath(), WspaceMeta.Includes.ALL);

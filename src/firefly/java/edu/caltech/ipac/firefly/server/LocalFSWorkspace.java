@@ -64,7 +64,7 @@ public class LocalFSWorkspace implements WorkspaceManager {
         if (propFound.equals(PROPS.ROOT_URL)) {
             propVal = WS_HOST_URL;
         } else if (propFound.equals(PROPS.ROOT_DIR)) {
-            propVal = WS_ROOT_DIR;
+            propVal = getWsHome();
         } else if (propFound.equals(PROPS.AUTH)) {
             propVal = "NONE";
         } else if (propFound.equals(PROPS.PROTOCOL)) {

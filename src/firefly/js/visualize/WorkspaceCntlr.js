@@ -9,7 +9,7 @@ import {getRootURL} from '../util/BrowserUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {workspacePopupMsg} from '../ui/WorkspaceViewer.jsx';
 import Enum from 'enum';
-import {updateMerge, updateSet} from '../util/WebUtil.js';
+import {getProp, toBoolean, updateMerge, updateSet} from '../util/WebUtil.js';
 import {getAppOptions} from '../core/AppDataCntlr.js';
 
 export const WORKSPACE_PREFIX = 'WorkspaceCntlr';
@@ -152,6 +152,7 @@ function createPath(action) {
             const newpath = get(action, ['payload', 'newPath']);
 
             if (newpath) {
+                startLoadWorkspace(dispatch);
                 const wsPath = getWorkspacePath(newpath);
                 const params = {[ServerParams.COMMAND]: ServerParams.WS_CREATE_FOLDER,
                                 [WS_SERVER_PARAM.newpath.key] : wsPath,
@@ -271,6 +272,9 @@ export function getWorkspaceErrorMsg(){
     switch (statusCode){
         case '401':
             errorMsg = 'You are not logged in. Please click \'Login\' in the upper right corner of the window.';
+            break;
+        case '405':
+            errorMsg = 'You are not logged in or not allowed to access workspace from this server.';
             break;
         case '403':
             errorMsg = 'You do not have access right';
@@ -449,8 +453,12 @@ const workspaceFiles = [
 */
 
 export function initWorkspace() {
-    //dispatchWorkspaceSearch({files: workspaceFiles});
-    dispatchWorkspaceSearch({});
+    //dispatchWorkspaceSearch({files: workspaceFiles});  // testing
+
+    // since workspace can be changed externally,
+    // we should get fresh data on every interaction,
+    // no need to search workspace here
+    //dispatchWorkspaceSearch({});
 }
 
 /**
@@ -490,6 +498,7 @@ const convertFileToKey = (wsFile) => {
  * @returns {*}
  */
 function convertFilesToList(wFiles) {
+    const supportsInfinity = toBoolean(getProp('workspace.propfind.infinity', true));
     const list = flattenDeep(wFiles).reduce((prev, oneFile) => {
         const {relPath, modifiedDate:modified, sizeBytes, url, isFolder:isFolderVal} = oneFile;
 
@@ -497,12 +506,17 @@ function convertFilesToList(wFiles) {
             let key = convertFileToKey(relPath);
             const isFolder = isFolderVal || (key.lastIndexOf('/') === (key.length - 1));
             if (isFolderVal && (key.lastIndexOf('/') !== (key.length - 1))) {
-                key += '/'; // folder keys end with '/'
-            }
+                    key += '/'; // folder keys end with '/'
+                }
+
             const size = isFolder ? 0 : sizeBytes;
 
             //const key = relPath;
-            prev.push({key, modified, size, url, relPath, isFolder});
+            const fileProps = {key, modified, size, url, relPath, isFolder};
+            if (isFolder && supportsInfinity) {
+                fileProps['childrenRetrieved'] = true;
+            }
+            prev.push(fileProps);
         }
         return prev;
     }, []);
@@ -537,9 +551,13 @@ function createWorkspaceList(wFiles = [], state, status, statusCode) {
 
 function addToWorkspaceList(wFiles = [], state) {
     const newState = Object.assign({}, state);
-    const list = convertFilesToList(wFiles);
+    const loadedRelPaths = newState.files.map((e) => e[0].relPath);
 
-    newState.files = newState.files ? newState.files.concat(wFiles) : wFiles;
+    // make sure the added files are not yet added
+    const wFilesNoDup = wFiles.filter((e) => !loadedRelPaths.includes(e[0].relPath));
+    const list = convertFilesToList(wFilesNoDup);
+
+    newState.files = newState.files ? newState.files.concat(wFiles) : wFilesNoDup;
     newState.data = newState.data ? newState.data.concat(list) : list;
 
     return newState;
@@ -565,7 +583,7 @@ function moveWorkspaceList(oldFile, files, state) {
 }
 
 /**
- * Since infinite depth is not supported by the server,
+ * If infinite depth is not supported by the server,
  * folders are populated as they are clicked to be open.
  * This function sets childrenRetrieved attribute of the object
  * representing folder node in the state.
@@ -596,7 +614,13 @@ function reducer(state=initState(), action={}) {
                 retState = addToWorkspaceList(files, state);
             } else if (newPath) {
                 retState = addToWorkspaceList(newPath, state);
+                // new folder has children retrieved
+                const relPath = get(newPath, [0, 0, 'relPath']);
+                if (relPath) {
+                    retState =  updateFolderStatus(relPath, retState);
+                }
             }
+            retState.isLoading = false;
             break;
         case WORKSPACE_RENAME_PATH:
             break;

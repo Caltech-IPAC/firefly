@@ -23,7 +23,6 @@ import org.apache.jackrabbit.webdav.property.*;
 import org.apache.jackrabbit.webdav.xml.Namespace;
 
 import java.io.*;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
@@ -39,6 +38,7 @@ import java.util.function.Consumer;
 public abstract class WebDAVWorkspaceManagerBase implements WorkspaceManager {
 
     protected static String WS_HOST_URL = AppProperties.getProperty("workspace.host.url", "https://irsa.ipac.caltech.edu");
+    private static boolean INFINITY_DEPTH_SUPPORTED = AppProperties.getBooleanProperty("workspace.propfind.infinity", true);
 
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
 
@@ -100,7 +100,7 @@ public abstract class WebDAVWorkspaceManagerBase implements WorkspaceManager {
 
 
 
-    boolean exists(String relRemoteUri) {
+    boolean exists(String relRemoteUri) throws WsException {
         return getMeta(relRemoteUri, WspaceMeta.Includes.NONE) != null;
     }
 
@@ -169,8 +169,8 @@ public abstract class WebDAVWorkspaceManagerBase implements WorkspaceManager {
             return WsUtil.success(put.getStatusCode(), put.getStatusText(), newUrl);
         } catch (Exception e) {
             LOG.error(e, "Error while uploading file:" + upload.getPath());
+            return WsUtil.error(500, "Error while uploading file:" + upload.getPath());
         }
-        return WsUtil.error(500);
     }
 
     private WsResponse davGet(File outfile, String fromPath) {
@@ -207,7 +207,7 @@ public abstract class WebDAVWorkspaceManagerBase implements WorkspaceManager {
     }
 
     @Override
-    public WsResponse getList(String parentUri, int depth) {
+    public WsResponse getList(String parentUri, int depth) throws WsException {
 
         WspaceMeta.Includes prop = WspaceMeta.Includes.CHILDREN_PROPS;
 
@@ -284,12 +284,13 @@ public abstract class WebDAVWorkspaceManagerBase implements WorkspaceManager {
             }
         } catch (Exception e) {
             LOG.error(e, "Error while deleting remote file:" + url);
+            return WsUtil.error(e);
         }
         return WsUtil.success(200, "Deleted " + uri, uri);
     }
 
     @Override
-    public WsResponse createParent(String newRelPath) {
+    public WsResponse createParent(String newRelPath) throws WsException {
         String[] parts = newRelPath.split("/");
         String cdir = "/";
         for (String s : parts) {
@@ -305,7 +306,7 @@ public abstract class WebDAVWorkspaceManagerBase implements WorkspaceManager {
                         LOG.error("Unable to create directory:" + newRelPath + " -- " + mkcol.getStatusText());
                         return WsUtil.error(mkcol, "Resource already exist");
                     }
-                } catch (URISyntaxException|MalformedURLException e) {
+                } catch (URISyntaxException|IOException e) {
                     return WsUtil.error(e);
                 }
             }
@@ -313,7 +314,7 @@ public abstract class WebDAVWorkspaceManagerBase implements WorkspaceManager {
         return WsUtil.success(200, "Created", getResourceUrl(newRelPath));
     }
 
-    public WsResponse moveFile(String originalFileRelPath, String newPath, boolean overwrite) {
+    public WsResponse moveFile(String originalFileRelPath, String newPath, boolean overwrite) throws WsException {
         WspaceMeta meta = new WspaceMeta(newPath);
         String parent = meta.getParentPath();
 
@@ -326,14 +327,14 @@ public abstract class WebDAVWorkspaceManagerBase implements WorkspaceManager {
         MoveMethod move = new MoveMethod(getResourceUrl(originalFileRelPath), newUrl, overwrite);
         if (!executeMethod(move)) {
             // handle error
-            LOG.error("Unable to move:" + originalFileRelPath + " based on url -- " +newUrl+" -- "+ move.getStatusText());
+            LOG.error("Unable to move:" + originalFileRelPath + " based on url -- " + newUrl + " -- " + move.getStatusText());
             return WsUtil.error(move.getStatusCode(), move.getStatusLine().getReasonPhrase());
         }
         return WsUtil.success(move.getStatusCode(), move.getStatusText(), newUrl);
     }
 
     @Override
-    public WsResponse renameFile(String originalFileRelPath, String newfileName, boolean overwrite) {
+    public WsResponse renameFile(String originalFileRelPath, String newfileName, boolean overwrite) throws WsException {
         WspaceMeta meta = new WspaceMeta(originalFileRelPath);
         String parent = meta.getParentPath();
 
@@ -354,19 +355,20 @@ public abstract class WebDAVWorkspaceManagerBase implements WorkspaceManager {
         return WsUtil.success(move.getStatusCode(), move.getStatusText(), newUrl);
     }
 
-    public WspaceMeta getMeta(String relPath) {
-        return getMeta(relPath, WspaceMeta.Includes.ALL);
-    }
+//    public WspaceMeta getMeta(String relPath) {
+//        return getMeta(relPath, WspaceMeta.Includes.ALL);
+//    }
 
-    public WspaceMeta getMeta(String relPath, WspaceMeta.Includes includes) {
+    public WspaceMeta getMeta(String relPath, WspaceMeta.Includes includes) throws WsException {
 
         // this can be optimized by retrieving only the props we care for.
         DavMethod pFind = null;
         try {
+            int depth = getDepth(includes);
             if (includes.inclProps) {
-                pFind = new PropFindMethod(getResourceUrl(relPath), DavConstants.PROPFIND_ALL_PROP, includes.depth);
+                pFind = new PropFindMethod(getResourceUrl(relPath), DavConstants.PROPFIND_ALL_PROP, depth);
             } else {
-                pFind = new PropFindMethod(getResourceUrl(relPath), DavConstants.PROPFIND_BY_PROPERTY, includes.depth);
+                pFind = new PropFindMethod(getResourceUrl(relPath), DavConstants.PROPFIND_BY_PROPERTY, depth);
             }
 
             if (!executeMethod(pFind, false)) {
@@ -394,12 +396,16 @@ public abstract class WebDAVWorkspaceManagerBase implements WorkspaceManager {
             return root;
         } catch (Exception e) {
             LOG.error(e, "Error while getting meta for:" + relPath);
+            if (e instanceof WsException) {
+                throw (WsException)e;
+            } else {
+                throw new WsException(e.getMessage(), e);
+            }
         } finally {
             if (pFind != null) {
                 pFind.releaseConnection();
             }
         }
-        return null;
     }
 
 
@@ -488,7 +494,7 @@ public abstract class WebDAVWorkspaceManagerBase implements WorkspaceManager {
                     } else if (name.equals(DavConstants.PROPERTY_GETCONTENTLENGTH)) {
                         long size = Long.parseLong(v);
                         meta.setSize(size);
-                        //meta.setIsFile(true); // WEBDAV/IRSA only set content length for files. // not WEBDav standard behaviour
+                        //meta.setIsFile(true); // not WEBDav standard behaviour, in WEBDAV/IRSA only files have content length
                     } else if (name.equals(DavConstants.PROPERTY_GETCONTENTTYPE)) {
                         meta.setContentType(v);
                     } else if (p.getName().getNamespace().equals(namespace)) {
@@ -513,16 +519,16 @@ public abstract class WebDAVWorkspaceManagerBase implements WorkspaceManager {
             root.addChild(meta);
         }
     }
-    boolean executeMethod(DavMethod method) {
+    boolean executeMethod(DavMethod method) throws WsException {
         return executeMethod(method, true);
     }
 
-    private boolean executeMethod(DavMethod method, boolean releaseConnection) {
+    private boolean executeMethod(DavMethod method, boolean releaseConnection) throws WsException {
         try {
             HttpServices.Status status = doExecuteMethod(method);
             return !status.isError();
         } catch (IOException e) {
-            return false;
+            throw new WsException(e.getMessage(), e);
         } finally {
             if (releaseConnection && method != null) {
                 method.releaseConnection();
@@ -539,7 +545,7 @@ public abstract class WebDAVWorkspaceManagerBase implements WorkspaceManager {
     private WsResponse getResponse(String relPath){
         DavMethod pFind = null;
         try {
-            pFind = new PropFindMethod(getResourceUrl(relPath), DavConstants.PROPFIND_BY_PROPERTY, WspaceMeta.Includes.ALL_PROPS.depth);
+            pFind = new PropFindMethod(getResourceUrl(relPath), DavConstants.PROPFIND_BY_PROPERTY, getDepth(WspaceMeta.Includes.ALL_PROPS));
 
 
             if (!executeMethod(pFind, false)) {
@@ -552,12 +558,21 @@ public abstract class WebDAVWorkspaceManagerBase implements WorkspaceManager {
             return WsUtil.success(pFind.getStatusCode(), pFind.getStatusText(), pFind.getPath());
         } catch (Exception e) {
             LOG.error(e, "Error while getting meta for:" + relPath);
+            return WsUtil.error(500, "Error while getting meta for:" + relPath);
         } finally {
             if (pFind != null) {
                 pFind.releaseConnection();
             }
         }
-        return new WsResponse();
+    }
+
+    /**
+     * Return allowed depth
+     * @param includes
+     * @return
+     */
+    private int getDepth(WspaceMeta.Includes includes) {
+        return includes.depth > 1 && !INFINITY_DEPTH_SUPPORTED ? 1: includes.depth;
     }
 
     class WebDAVGetMethod extends DavMethodBase {
