@@ -12,6 +12,7 @@ import {DropDownMenuWrapper} from './DropDownMenu.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible, getDialogOwner} from '../core/ComponentCntlr.js';
 import {ToolbarButton} from './ToolbarButton.jsx';
+import {DropDownDirCTX} from './DropDownDirContext.js';
 
 
 function computeDropdownXY(divElement, isIcon) {
@@ -38,6 +39,8 @@ function showDialog(divElement,dropDown,ownerId,offButtonCB, isIcon) {
 
 export const DROP_DOWN_KEY= 'toolbar-dropDown';
 const OWNER_ROOT= 'toolbar-dropDown';
+const DEFAULT_DROPDOWN_DIR = 'right';
+
 
 export class DropDownToolbarButton extends PureComponent {
     constructor(props) {
@@ -80,18 +83,25 @@ export class DropDownToolbarButton extends PureComponent {
         if (divElement) {
             const isIcon= Boolean(this.props.icon);
             const {dropDownVisible, dropDownOwnerId}= this.state;
+
+            const dropDownWithContext= (
+                <DropDownDirCTX.Provider value={{dropdownDirection: calcDropDownDir(divElement, this.props.menuMaxWidth)}}>
+                    {dropDown}
+                </DropDownDirCTX.Provider>
+            );
+
             if (dropDownVisible) {
                 if (dropDownOwnerId===this.ownerId) {
                     dispatchHideDialog(DROP_DOWN_KEY);
                     document.removeEventListener('mousedown', this.docMouseDownCallback);
                 }
                 else {
-                    showDialog(divElement,dropDown,this.ownerId,this.docMouseDownCallback, isIcon);
+                    showDialog(divElement,dropDownWithContext,this.ownerId,this.docMouseDownCallback, isIcon);
                 }
 
             }
             else {
-                showDialog(divElement,dropDown,this.ownerId,this.docMouseDownCallback, isIcon);
+                showDialog(divElement,dropDownWithContext,this.ownerId,this.docMouseDownCallback, isIcon);
             }
         }
     }
@@ -99,9 +109,10 @@ export class DropDownToolbarButton extends PureComponent {
 
     render() {
         const {dropDown}= this.props;
+        const {direction}= this.props || DEFAULT_DROPDOWN_DIR;
         const {dropDownVisible, dropDownOwnerId}= this.state;
         return (<ToolbarButton {...this.props} active={dropDownVisible && dropDownOwnerId===this.ownerId}
-            dropDownCB={(divElement)=> this.handleDropDown(divElement,dropDown)}/>);
+            dropDownCB={(divElement)=> this.handleDropDown(divElement,dropDown,direction)}/>);
     }
 }
 
@@ -120,7 +131,21 @@ DropDownToolbarButton.propTypes= {
     tipOnCB : PropTypes.func,
     tipOffCB : PropTypes.func,
     hasHorizontalLayoutSep: PropTypes.bool,
+    menuMaxWidth: PropTypes.number,
     dropDown : PropTypes.object.isRequired,
     useDropDownIndicator: PropTypes.bool
 };
 
+
+
+function calcDropDownDir(element, menuWidth){
+    const bodyRect = document.body.getBoundingClientRect();
+    const elemRect = element.getBoundingClientRect();
+    const space = bodyRect.width - elemRect.x;
+
+    let dropdownDir = DEFAULT_DROPDOWN_DIR;
+
+    space < menuWidth ? dropdownDir ='left' : dropdownDir = 'right';
+
+    return dropdownDir;
+}

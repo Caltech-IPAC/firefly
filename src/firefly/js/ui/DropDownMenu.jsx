@@ -3,12 +3,10 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
-
-import {dispatchShowDialog, dispatchHideDialog, isDialogVisible, getDialogOwner} from '../core/ComponentCntlr.js';
-
+import {DropDownDirCTX} from './DropDownDirContext.js';
 import './DropDownMenu.css';
 
-
+const DEFAULT_DROPDOWN_DIR = 'right';
 
 const computePosition= (tgtX,tgtY)  => ({x:tgtX,y:tgtY+18});
 
@@ -26,13 +24,11 @@ function placeDropDown(e,x,y) {
 
 
 export function SingleColumnMenu({children}) {
-
     return (
-        <div className='ff-MenuItem-dropDown' >
+        <div className='ff-MenuItem-dropDown'>
             {children}
         </div>
     );
-
 }
 
 
@@ -40,7 +36,7 @@ export function SingleColumnMenu({children}) {
 export class DropDownMenuWrapper extends PureComponent {
     constructor(props) {
         super(props);
-    }
+}
 
     componentDidMount() {
         var {x,y}= this.props;
@@ -56,7 +52,7 @@ export class DropDownMenuWrapper extends PureComponent {
         if (!visible) return false;
         if (!x && !y && !content) return false;
         return (
-            <div style={{position:'absolute',left:0,top:0, visibility:'hidden',zIndex }}
+            <div style={{position:'absolute', left:0, top:0, visibility:'hidden', zIndex}}
                  onClick={futureCallback} >
                     <div style={{padding : 5}} className='ff-dropdown-menu'>
                         {content}
@@ -82,12 +78,12 @@ DropDownMenuWrapper.propTypes= {
 
 export class DropDownSubMenu extends PureComponent {
 
-    constructor(props) {
+    constructor(props, context) {
         super(props);
         this.state= {showSubMenu: false};
         this.show = this.show.bind(this);
         this.hide = this.hide.bind(this);
-
+        this.dropdownDirection = context.dropdownDirection || DEFAULT_DROPDOWN_DIR;
     }
 
     show() {
@@ -106,25 +102,34 @@ export class DropDownSubMenu extends PureComponent {
         return (
             <div className='ff-MenuItem ff-MenuItem-light' title={tip}>
                 <div className='menuItemText subMenu' onMouseEnter={this.show} onMouseLeave={this.hide}>
-                    <div>{text}</div>
-                    <div style={{position: 'relative', marginLeft: 10}}>
-                        <div className='arrow-right'/>
+
+                    <div className={'menu-text-style__' + this.dropdownDirection}>{text}</div>
+
+                    <div style={{position: 'relative', marginRight: 0}}>
                         {showSubMenu &&
-                        <div style={{position: 'absolute', top:-10, left:8}} onMouseEnter={this.show}>
+                        <div className={'dropdown-menu__' + this.dropdownDirection} onMouseEnter={this.show}>
                             <SingleColumnMenu>
                                 {children}
                             </SingleColumnMenu>
                         </div>
                         }
                     </div>
+
+                    {<div className={'arrow-right'}/>}
+
                 </div>
             </div>
         );
     }
 }
 
+DropDownSubMenu.contextType = DropDownDirCTX;
+
+
 DropDownSubMenu.propTypes= {
     text: PropTypes.string.isRequired,
     visible: PropTypes.bool,
     tip: PropTypes.string,
+    direction: PropTypes.string
 };
+
