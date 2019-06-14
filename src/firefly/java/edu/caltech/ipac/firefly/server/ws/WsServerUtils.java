@@ -8,18 +8,14 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
-import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -34,9 +30,9 @@ public class WsServerUtils {
 
     /**
      *
-     * @param filePath
-     * @return
-     * @throws DataAccessException
+     * @param filePath file path
+     * @return object, representing a file from workspace
+     * @throws DataAccessException on I/O or other failure
      */
     public static File getFileFromWorkspace(String filePath) throws DataAccessException {
         WsServerParams wsParams = new WsServerParams();
@@ -57,7 +53,7 @@ public class WsServerUtils {
      * @param wsParams see {@link edu.caltech.ipac.firefly.server.ws.WsServerParams}
      * @param depth    if -1, give all the folders/files below the parent, 0 return the parent, 1 return children only (one level)
      * @return response
-     * @throws IOException
+     * @throws IOException on I/O error
      */
     public WsResponse getList(WsServerParams wsParams, int depth) throws IOException {
         WorkspaceManager wsm = getWsManager(wsParams);
@@ -67,11 +63,11 @@ public class WsServerUtils {
     }
 
     /**
-     * Put file into the workspace {@link WorkspaceManager#putFile(String, File, String)}
+     * Put file into the workspace {@link WorkspaceManager#putFile(String, boolean, File, String)}
      *
      * @param wsParams see {@link edu.caltech.ipac.firefly.server.ws.WsServerParams}
      * @return response
-     * @throws IOException
+     * @throws IOException on I/O error
      */
     public WsResponse putFile(WsServerParams wsParams, File item) throws IOException {
         WorkspaceManager wsm = getWsManager(wsParams);
@@ -86,7 +82,7 @@ public class WsServerUtils {
      *
      * @param wsParams see {@link edu.caltech.ipac.firefly.server.ws.WsServerParams}
      * @return response
-     * @throws IOException
+     * @throws IOException on I/O error
      */
     public WsResponse deleteFile(WsServerParams wsParams) throws IOException {
         WorkspaceManager wsm = getWsManager(wsParams);
@@ -100,7 +96,7 @@ public class WsServerUtils {
      *
      * @param wsParams see {@link edu.caltech.ipac.firefly.server.ws.WsServerParams}
      * @return response
-     * @throws WsException
+     * @throws WsException on error
      */
     public WsResponse move(WsServerParams wsParams) throws IOException {
         WorkspaceManager wsm = getWsManager(wsParams);
@@ -116,7 +112,7 @@ public class WsServerUtils {
      * @param wsParams see {@link edu.caltech.ipac.firefly.server.ws.WsServerParams}
      * @param level    see {@link WspaceMeta.Includes}
      * @return list of metadata
-     * @throws IOException
+     * @throws WsException on error
      */
     public List<WspaceMeta> getMeta(WsServerParams wsParams, WspaceMeta.Includes level) throws IOException {
         WorkspaceManager wsm = getWsManager(wsParams);
@@ -128,9 +124,8 @@ public class WsServerUtils {
 
     /**
      * Get ALL metadata from a node
-     * @param wsParams
+     * @param wsParams parameters
      * @return see {@link WspaceMeta}
-     * @throws IOException
      */
     public WspaceMeta getMeta(WsServerParams wsParams) throws IOException {
         WorkspaceManager wsm = getWsManager(wsParams);
@@ -144,7 +139,7 @@ public class WsServerUtils {
      * Create parent
      * @param wsParams should contain the new path to create
      * @return response
-     * @throws WsException
+     * @throws WsException on error
      */
     public WsResponse createParent(WsServerParams wsParams) throws WsException {
         WorkspaceManager wsm = getWsManager(wsParams);
@@ -194,8 +189,7 @@ public class WsServerUtils {
     }
 
     private static WsJson serializeWsMeta(WspaceMeta next) {
-        WsJson map = new WsJson(next);
-        return map;
+        return new WsJson(next);
     }
 
     private WorkspaceManager getWsManager(WsServerParams wsParams) {
@@ -207,16 +201,16 @@ public class WsServerUtils {
     }
 
     /**
-     * @param wsParams
+     * @param wsParams parameters
      * @return path string
-     * @throws IOException
+     * @throws IOException on I/O error
      * @throws FailedRequestException
      */
     public String upload(WsServerParams wsParams) throws IOException, FailedRequestException {
 
         String url = getMeta(wsParams).getUrl();
         Map<String, String> cookies = getCredentials().getCookies();
-        HttpServiceInput input = new HttpServiceInput();
+        HttpServiceInput input = HttpServiceInput.createWithCredential(url);
 
         input.setUserId("x");
         input.setPasswd("x");
@@ -226,20 +220,14 @@ public class WsServerUtils {
             }
         }
 
-//      URLConnection conn = URLDownload.makeConnection(new URL(meta.getUrl()), getCredentials().getCookies());
-//      conn.setRequestProperty("Accept", "*/*");
-
         String relPath = wsParams.getRelPath();
         int idx = wsParams.getRelPath().lastIndexOf('/');
-        String fileName =  (idx >= 0) ? relPath.substring(idx + 1) : new String(relPath);
+        String fileName =  (idx >= 0) ? relPath.substring(idx + 1) : relPath;
         File f = getTempUploadFile(fileName);
 
         HttpServices.getData(url, f, input);
 
-        //URLDownload.getDataToFile(conn, f);
-
-        String rPathInfo = ServerContext.replaceWithPrefix(f);
-        return rPathInfo;
+        return ServerContext.replaceWithPrefix(f);
     }
 
     public File getTempUploadFile(String fileName) throws IOException {
@@ -259,6 +247,7 @@ public class WsServerUtils {
             JSONArray arr = new JSONArray();
             JSONObject map = new JSONObject();
             map.put(FILE_PATH.getKey(), meta.getRelPath());
+            map.put(FILE_IS_FOLDER.getKey(), !meta.isFile());
             map.put(FILE_SIZE_BYTES.getKey(), meta.getSize());
             map.put(FILE_MOD_DATE.getKey(), meta.getLastModified());
             map.put(FILE_CREATED_DATE.getKey(), meta.getCreationDate());

@@ -19,9 +19,8 @@ import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {SizeInputFields} from './SizeInputField.jsx';
 import {InputAreaFieldConnected} from './InputAreaField.jsx';
-import {FileUpload} from '../ui/FileUpload.jsx';
 import {UploadOptionsDialog} from './UploadOptionsDialog.jsx';
-import {getWorkspaceConfig,initWorkspace} from '../visualize/WorkspaceCntlr.js';
+import {getWorkspaceConfig} from '../visualize/WorkspaceCntlr.js';
 import {FieldGroup} from './FieldGroup.jsx';
 
 import CsysConverter from '../visualize/CsysConverter.js';

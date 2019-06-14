@@ -38,13 +38,9 @@ public class WsPropTest extends ConfigTest {
             WorkspaceManager m = ws.withCredentials(getWsCredentials());
             Assert.assertTrue(m.getProp(prop).equals(urlHost));
             Assert.assertTrue(m.getProp(WorkspaceManager.PROPS.PROTOCOL).equalsIgnoreCase(prot));
-
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-
     }
     @Test
     public void testPoolWsManager() {

@@ -277,7 +277,7 @@ public class JOSSOAdapter implements SsoAdapter {
             Cookie c = new Cookie(AUTH_KEY, "");
             c.setMaxAge(0);
             c.setValue(TO_BE_DELETE);
-            c.setDomain(".ipac.caltech.edu");
+            c.setDomain("ipac.caltech.edu");
             c.setPath("/");
             ServerContext.getRequestOwner().getRequestAgent().sendCookie(c);
         }

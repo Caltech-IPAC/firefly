@@ -17,6 +17,7 @@ import java.util.Map;
  */
 public class WspaceMeta implements Serializable {
 
+
     public static final String SEARCH_DIR = "searches";
     public static final String STAGING_DIR = "staging";
     public static final String CATALOGS = "catalogs";
@@ -41,8 +42,8 @@ public class WspaceMeta implements Serializable {
 
     public enum Includes {
         NONE(false, 0), NONE_PROPS(true, 0), CHILDREN(false, 1), CHILDREN_PROPS(true, 1), ALL(false), ALL_PROPS(true);
-        public boolean inclProps = false;
-        public int depth = 0;
+        public boolean inclProps = false; // include properties
+        public int depth = 0; // desired depth, can be 0, 1, or Integer.MAX_VALUE for infinity (which might not be supported by WS server)
 
         Includes(boolean b) {
             this(b, Integer.MAX_VALUE);
@@ -142,6 +143,7 @@ public class WspaceMeta implements Serializable {
         s.append(wsHome).append(relPath).append("\n");
         s.append("creationDate:").append(creationDate).append("\n");
         s.append("lastModified:").append(lastModified).append("\n");
+        s.append("isFile:").append(isFile).append("\n");
         s.append("contentType:").append(contentType).append("\n");
         s.append("size:").append(size).append("\n");
         s.append("url:").append(url).append("\n");

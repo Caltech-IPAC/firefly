@@ -17,6 +17,7 @@ import edu.caltech.ipac.firefly.server.persistence.HistoryAndTagsDao;
 import edu.caltech.ipac.firefly.server.persistence.PreferencesDao;
 import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
+import edu.caltech.ipac.firefly.server.ws.WsException;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.cache.Cache;
@@ -294,7 +295,7 @@ public class UserServicesImpl {
         return new ArrayList<Alert>(alerts.values());
     }
 
-    public WspaceMeta getMeta(String relPath, WspaceMeta.Includes includes) {
+    public WspaceMeta getMeta(String relPath, WspaceMeta.Includes includes) throws WsException {
         return ServerContext.getRequestOwner().getWsManager().getMeta(relPath, includes);
     }
 

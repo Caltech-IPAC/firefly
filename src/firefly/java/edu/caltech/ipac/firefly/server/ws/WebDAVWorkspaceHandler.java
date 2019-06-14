@@ -30,7 +30,6 @@ public class WebDAVWorkspaceHandler implements WorkspaceHandler {
     public WorkspaceManager withCredentials(WsCredentials cred) {
 
         synchronized (cred) {
-            String id = cred.getWsId();
             String protocol = AppProperties.getProperty("workspace.protocol", "webdav");
             String managerClass = AppProperties.getProperty("workspace.protocol."+protocol.toLowerCase(), "edu.caltech.ipac.firefly.server.WebDAVWorkspaceManager");
 
@@ -44,15 +43,7 @@ public class WebDAVWorkspaceHandler implements WorkspaceHandler {
                 Constructor<?> ctor = clazz.getConstructor(WsCredentials.class);
                 ws = (WorkspaceManager) ctor.newInstance(new Object[]{cred});
                 wsPool.put(cred.getWsId(), ws);
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
+            } catch (InstantiationException|IllegalAccessException|ClassNotFoundException|NoSuchMethodException|InvocationTargetException e) {
                 e.printStackTrace();
             }
 
