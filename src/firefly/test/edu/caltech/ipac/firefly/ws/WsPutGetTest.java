@@ -108,7 +108,7 @@ public class WsPutGetTest extends ConfigTest {
 
     }
 
-    private void printPath(WspaceMeta parent, boolean avoidFolders) {
+    private void printPath(WspaceMeta parent, boolean avoidFolders) throws WsException {
 
         if(avoidFolders && parent.getContentType()==null || (parent.getContentType()!=null && !parent.getContentType().contains("directory"))){
             LOG.info("File: "+parent.getUrl());
