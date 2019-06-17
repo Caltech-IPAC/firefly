@@ -24,6 +24,7 @@ public interface DbAdapter {
     String HSQL = "hsql";
 
     String MAIN_DB_TBL = "DATA";
+    String NULL_TOKEN = "%NULL";
 
     /*
       CLEAN UP POLICY:

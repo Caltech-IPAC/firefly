@@ -33,6 +33,7 @@ public abstract class AsyncSearchProcessor extends EmbeddedDbProcessor  {
                     case COMPLETED:
                         return asyncJob.getDataGroup();
                     case ERROR:
+                    case UNKNOWN:
                         throw new DataAccessException(asyncJob.getErrorMsg());
                     case ABORTED:
                         throw new DataAccessException("Query aborted");

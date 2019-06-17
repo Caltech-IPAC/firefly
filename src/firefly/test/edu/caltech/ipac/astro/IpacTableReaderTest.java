@@ -406,6 +406,35 @@ public class IpacTableReaderTest extends ConfigTest{
 
     }
 
+    /**
+     * This test IpacTableReader handling of NULL related values
+     */
+    @Test
+    public void testNullValues() {
+        String input =  "|ra      |dec    |spec   |SpType   |\n" +
+                        "|double  |double |char   |char     |\n" +
+                        "|        |       |       |         |\n" +
+                        "|null    |       |       |null     |\n" +
+                        " 123.4    5.67    null    K6Ve-1    \n" +
+                        " null                               \n" +
+                        " 123.4    5.67    abc     null      \n";
+        try{
+            DataGroup dg = IpacTableReader.read(asInputStream(input));
+
+            Assert.assertNull(dg.getData("ra", 1));                         // value is same as NULL_STR, so value should be read in as null
+            Assert.assertNull(dg.getData("dec", 1));                        // value is same as NULL_STR, so value should be read in as null
+
+            Assert.assertEquals("null", dg.getData("spec", 0));    // NULL_STR is empty_str, so null should be interpreted as a string
+            Assert.assertNull(dg.getData("spec", 1));                       // value is same as NULL_STR, so value should be read in as null
+
+            Assert.assertEquals("", dg.getData("SpType", 1));      // NULL_STR is 'null', so blank should be interpreted as an empty string
+            Assert.assertNull(dg.getData("SpType", 2));                     // value is same as NULL_STR, so value should be read in as null
+        } catch (IOException e) {
+            Assert.fail("Unexpected read error:" + e.getMessage());
+        }
+
+    }
+
     @Test
     /**
      * This test calls the method IpacTableReader.readIpacTable to read a table which has one datum under "|".

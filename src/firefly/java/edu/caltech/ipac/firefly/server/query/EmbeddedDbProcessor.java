@@ -55,6 +55,7 @@ import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW;
 import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW_BY_ROWIDX;
 import static edu.caltech.ipac.firefly.server.ServerContext.SHORT_TASK_EXEC;
 import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
+import static edu.caltech.ipac.firefly.server.db.DbAdapter.NULL_TOKEN;
 import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.execRequestQuery;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
@@ -586,9 +587,8 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                             .queryForList(String.format("SELECT distinct \"%s\" FROM data order by 1", cname));
 
                     if (vals.size() <= MAX_COL_ENUM_COUNT) {
-                        DataType dt = results.getData().getDataDefintion(cname);
-                        String enumVals = vals.stream().map(m -> String.valueOf(m.get(cname)))       // list of map to list of string(colname)
-                                .filter(s -> !isEmpty(s) && !StringUtils.areEqual(dt.getNullString(), s))            // remove null or blank values because it's hard to handle at the column filter level
+                        String enumVals = vals.stream()
+                                .map(m -> m.get(cname) == null ? NULL_TOKEN : m.get(cname).toString())  // list of map to list of string(colname)
                                 .collect(Collectors.joining(","));                          // combine the names into comma separated string.
                         results.getData().getDataDefintion(cname).setEnumVals(enumVals);
                         // update dd table

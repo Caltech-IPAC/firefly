@@ -533,12 +533,16 @@ export function sortTableData(tableData, columns, sortInfoStr) {
     var comparator;
     if (!col.type || ['char', 'c'].includes(col.type) ) {
         comparator = (r1, r2) => {
-            const [s1, s2] = [r1[colIdx], r2[colIdx]];
+            let [s1, s2] = [r1[colIdx], r2[colIdx]];
+            s1 = s1 === '' ? '\u0002' : s1 === null ? '\u0001' : isUndefined(s1) ? '\u0000' : s1;
+            s2 = s2 === '' ? '\u0002' : s2 === null ? '\u0001' : isUndefined(s2) ? '\u0000' : s2;
             return multiplier * (s1 > s2 ? 1 : -1);
         };
     } else {
         comparator = (r1, r2) => {
-            const [v1, v2] = [r1[colIdx], r2[colIdx]];
+            let [v1, v2] = [r1[colIdx], r2[colIdx]];
+            v1 = v1 === null ? -Number.MAX_VALUE : isUndefined(v1) ? Number.NEGATIVE_INFINITY : Number(v1);
+            v2 = v2 === null ? -Number.MAX_VALUE : isUndefined(v2) ? Number.NEGATIVE_INFINITY : Number(v2);
             return multiplier * (Number(v1) - Number(v2));
         };
     }
@@ -895,8 +899,13 @@ export function tableDetailsView(tbl_id, highlightedRow, details_tbl_id) {
  */
 export function calcColumnWidths(columns, dataAry) {
     return columns.map( (cv, idx) => {
+
+        let width = cv.prefWidth || cv.width;
+        if (width) {
+            return width;
+        }
         const cname = cv.label || cv.name;
-        var width = Math.max(cname.length, get(cv, 'units.length', 0),  get(cv, 'type.length', 0));
+        width = Math.max(cname.length, get(cv, 'units.length', 0),  get(cv, 'type.length', 0));
         width = dataAry.reduce( (maxWidth, row) => {
             return Math.max(maxWidth, get(row, [idx, 'length'], 0));
         }, width);  // max width of data

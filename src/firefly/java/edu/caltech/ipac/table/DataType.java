@@ -52,7 +52,7 @@ public class DataType implements Serializable, Cloneable {
     private       String typeDesc;
     private       Class type;
     private       String units;
-    private       String nullString = "";
+    private       String nullString;
     private       String desc;
     private       int width;
     private       int prefWidth;
@@ -142,7 +142,7 @@ public class DataType implements Serializable, Cloneable {
     }
 
     public String getNullString() {
-        return nullString;
+        return nullString == null ? "" : nullString;
     }
 
     public void setNullString(String nullString) {
@@ -305,9 +305,8 @@ public class DataType implements Serializable, Cloneable {
      * @return
      */
     public String format(Object value, boolean replaceCtrl) {
-        if (value == null) {
-            return getNullString() == null ? "" : getNullString();
-        }
+        if (value == null) return getNullString();
+
         // do escaping if requested
         if (replaceCtrl && type == String.class) {
             value = replaceCtrl((String)value);
@@ -419,8 +418,7 @@ public class DataType implements Serializable, Cloneable {
      * @return an object
      */
     public Object convertStringToData(String s) {
-        if (s == null || s.length() == 0 || s.equalsIgnoreCase("null")) return null;
-        if (nullString != null && nullString.equals(s)) return null;
+        if (s == null || getNullString().equals(s)) return null;
 
         Object retval= s;
         try {

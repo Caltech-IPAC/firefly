@@ -9,7 +9,6 @@ import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
-import org.apache.xpath.operations.Bool;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -19,6 +18,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
@@ -134,9 +134,13 @@ abstract public class BaseDbAdapter implements DbAdapter {
         if (treq.getFilters() != null && treq.getFilters().size() > 0) {
             where = "";
             for (String cond :treq.getFilters()) {
-                if (cond.matches("(?i).* LIKE .*(\\\\_|\\\\%|\\\\\\\\).*")) {       // search for LIKE w/  \_, \%, or \\ in the condition.
+                if (cond.matches("(?i).* LIKE .*(\\\\_|\\\\%|\\\\\\\\).*")) {       // search for LIKE with  \_, \%, or \\ in the condition.
                     // for LIKE, to search for '%', '\' or '_' itself, an escape character must also be specified using the ESCAPE clause
                     cond += " ESCAPE '\\'";
+                }
+                String[] parts = StringUtils.groupMatch("(.+) IN (.+)", cond, Pattern.CASE_INSENSITIVE);
+                if (parts != null && cond.contains(NULL_TOKEN)) {
+                    cond = String.format("%s OR %s IS NULL", cond.replace(NULL_TOKEN, NULL_TOKEN.substring(1)), parts[0]);
                 }
                 if (where.length() > 0) {
                     where += " and ";

@@ -74,7 +74,8 @@ public class StringUtils {
      * an array of strings, otherwise null.
      * @param regex pattern to match
      * @param val   string value to match with
-     * @return
+     * @param flags Match flags, a bit mask
+     * @return return all of the matching groups as an array of strings, otherwise null.
      */
     public static String[] groupMatch(String regex, String val, int flags) {
         return groupMatch(Pattern.compile(regex, flags), val);

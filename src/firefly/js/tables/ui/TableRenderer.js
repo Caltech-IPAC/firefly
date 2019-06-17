@@ -6,7 +6,7 @@ import React, {Component, PureComponent, useRef, useCallback} from 'react';
 import FixedDataTable from 'fixed-data-table-2';
 import {set, get, isEqual, pick} from 'lodash';
 
-import {FilterInfo, FILTER_CONDITION_TTIPS} from '../FilterInfo.js';
+import {FilterInfo, FILTER_CONDITION_TTIPS, NULL_TOKEN} from '../FilterInfo.js';
 import {isNumericType, tblDropDownId, getTblById, getColumn} from '../TableUtil.js';
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
@@ -20,6 +20,7 @@ import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField';
 import {showDropDown, hideDropDown} from '../../ui/DialogRootContainer.jsx';
 import {FieldGroup} from '../../ui/FieldGroup';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
+import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {useStoreConnector} from './../../ui/SimpleComponent.jsx';
 import {resolveHRefVal} from '../../util/VOAnalyzer.js';
 
@@ -117,26 +118,34 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
     );
 }
 
-function EnumSelect({col, tbl_id, filterInfo, filterInfoCls, onFilter}) {
+function EnumSelect({col, tbl_id, filterInfoCls, onFilter}) {
     const {name, enumVals} = col || {};
     const groupKey = 'TableRenderer_enum';
     const fieldKey = tbl_id + '-' + name;
-    const options = col.enumVals.split(',')
-                        .map( (s) => s.trim())
-                        .map( (s) => ({label: s, value: s}) );
-    let value = '';
-    const filterBy = (filterInfoCls.getFilter(name) || '').match(/IN \((.+)\)/);
+    const options = enumVals.split(',')
+                        .map( (s) => {
+                            const value = s === '' ? '%EMPTY' : s;                  // because CheckboxGroupInputField does not support '' as an option, use '%EMPTY' as substitute
+                            const label = value === NULL_TOKEN ? '<NULL>' : value === '%EMPTY' ? '<EMPTY_STR>' : value;
+                            return {label, value};
+                        } );
+    let value;
+    const filterBy = (filterInfoCls.getFilter(name) || '').match(/IN \((.+)\)/i);
     if (filterBy) {
         // IN condition is used, set value accordingly.  remove enclosed quote if exists
         value = filterBy[1].split(',')
-                           .map( (s) => s.trim().replace(/^'(.+)'$/, '$1'))
+                           .map( (s) => s.trim().replace(/^'(.*)'$/, '$1'))
+                           .map((s) => s === '' ? '%EMPTY' : s)                 // convert '' to %EMPTY
                            .join(',');
     }
 
     const hideEnumSelect = () => hideDropDown(tblDropDownId(tbl_id));
+    const onClear = () => {
+        dispatchValueChange({fieldKey, groupKey, value: '', valid: true});
+    };
     const onApply = () => {
-        let value = getFieldVal(groupKey, fieldKey, '');
+        let value = getFieldVal(groupKey, fieldKey);
         if (value) {
+            value = value.split(',').map((s) => s === '%EMPTY' ? '' : s).join();           // convert %EMPTY back into ''
             value = isNumericType(col) ? value :
                     value.split(',')
                          .map((s) => `'${s.trim()}'`).join(',');
@@ -149,7 +158,8 @@ function EnumSelect({col, tbl_id, filterInfo, filterInfoCls, onFilter}) {
     return (
         <FieldGroup groupKey='TableRenderer_enum' style={{minWidth: 100}}>
             <div style={{display: 'inline-flex', marginBottom: 5, width: '100%', justifyContent: 'space-between'}}>
-                <div className='ff-href' style={{marginLeft: 3, fontSize: 13}} onClick={onApply}>filter</div>
+                <div className='ff-href' style={{marginLeft: 3, fontSize: 13}} onClick={onApply} title='Apply selected filter'>filter</div>
+                <div className='ff-href' style={{marginLeft: 3, fontSize: 13}} onClick={onClear} title='Clear selection'>clear</div>
                 <div className='btn-close' onClick={hideEnumSelect} style={{margin: -2, fontSize: 12}}/>
             </div>
             <CheckboxGroupInputField {...{fieldKey, alignment: 'vertical', options, initialState:{value}}}/>

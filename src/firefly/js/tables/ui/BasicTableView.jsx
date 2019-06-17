@@ -8,7 +8,7 @@ import FixedDataTable from 'fixed-data-table-2';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {get, isEmpty} from 'lodash';
 
-import {tableTextView, getTableUiById, getProprietaryInfo, getTblById, hasRowAccess, uniqueTblUiId} from '../TableUtil.js';
+import {tableTextView, getTableUiById, getProprietaryInfo, getTblById, hasRowAccess, calcColumnWidths, uniqueTblUiId} from '../TableUtil.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
@@ -46,11 +46,6 @@ const BasicTableViewInternal = React.memo((props) => {
     const onFilter       = useCallback( doFilter.bind({callbacks, filterInfo}), [callbacks, filterInfo]);
     const onFilterSelected = useCallback( doFilterSelected.bind({callbacks, selectInfoCls}), [callbacks, selectInfoCls]);
 
-    useEffect( () => {
-        if (!columnWidths) {
-            dispatchTableUiUpdate({tbl_ui_id, columnWidths: makeColWidth(columns, data)});
-        }
-    });
     const headerHeight = 22 + (showUnits && 8) + (showTypes && 8) + (showFilters && 22);
     let totalColWidths = 0;
     if (!isEmpty(columns) && !isEmpty(columnWidths)) {
@@ -65,7 +60,7 @@ const BasicTableViewInternal = React.memo((props) => {
 
     useEffect( () => {
         const changes = {};
-        if (!columnWidths)                  changes.columnWidths = makeColWidth(columns, data);
+        if (!columnWidths)                  changes.columnWidths = columnWidthsInPixel(columns, data);
         if (adjScrollTop !== scrollTop)     changes.scrollTop = adjScrollTop;
         if (adjScrollLeft !== scrollLeft)   changes.scrollLeft = adjScrollLeft;
 
@@ -296,30 +291,9 @@ function correctScrollLeftIfNeeded(totalColWidths, scrollLeft, width, triggeredB
     return scrollLeft;
 }
 
-function calcMaxWidth(idx, col, data) {
-    let nchar = col.prefWidth || col.width;
-    if (!nchar) {
-        const label = col.label || col.name;
-        const hWidth = Math.max(
-            get(label, 'length', 0) + 2,
-            get(col, 'units.length', 0) + 2,
-            get(col, 'type.length', 0) + 2
-        );
-        nchar = hWidth;
-        for (const r in data) {
-            const w = get(data, [r, idx, 'length'], 0);
-            if (w > nchar) nchar = w;
-        }
-    }
-    return nchar * 7;
-}
-
-function makeColWidth(columns, data) {
-
-    return !columns ? {} : columns.reduce((widths, col, idx) => {
-        widths[idx] = calcMaxWidth(idx, col, data);
-        return widths;
-    }, {});
+function columnWidthsInPixel(columns, data) {
+    return calcColumnWidths(columns, data)
+            .map( (w) =>  (w + 2) * 7);
 }
 
 function rowClassNameGetter(tbl_id, hlRowIdx, startIdx) {
