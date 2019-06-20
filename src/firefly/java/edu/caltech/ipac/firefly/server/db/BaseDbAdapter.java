@@ -132,16 +132,20 @@ abstract public class BaseDbAdapter implements DbAdapter {
     public String wherePart(TableServerRequest treq) {
         String where = "";
         if (treq.getFilters() != null && treq.getFilters().size() > 0) {
-            where = "";
             for (String cond :treq.getFilters()) {
-                if (cond.matches("(?i).* LIKE .*(\\\\_|\\\\%|\\\\\\\\).*")) {       // search for LIKE with  \_, \%, or \\ in the condition.
-                    // for LIKE, to search for '%', '\' or '_' itself, an escape character must also be specified using the ESCAPE clause
-                    cond += " ESCAPE '\\'";
-                }
-                String[] parts = StringUtils.groupMatch("(.+) IN (.+)", cond, Pattern.CASE_INSENSITIVE);
-                if (parts != null && cond.contains(NULL_TOKEN)) {
-                    cond = String.format("%s OR %s IS NULL", cond.replace(NULL_TOKEN, NULL_TOKEN.substring(1)), parts[0]);
-                }
+                cond = Arrays.stream(cond.split("(?i)(?= and | or )"))                        // because each filter may contains multiple conditions... apply cleanup logic to each one.
+                        .map(eCond -> {
+                            if (eCond.matches("(?i).* LIKE .*(\\\\_|\\\\%|\\\\\\\\).*")) {       // search for LIKE with  \_, \%, or \\ in the condition.
+                                // for LIKE, to search for '%', '\' or '_' itself, an escape character must also be specified using the ESCAPE clause
+                                eCond += " ESCAPE '\\'";
+                            }
+                            String[] parts = StringUtils.groupMatch("(.+) IN (.+)", eCond, Pattern.CASE_INSENSITIVE);
+                            if (parts != null && eCond.contains(NULL_TOKEN)) {
+                                eCond = String.format("%s OR %s IS NULL", eCond.replace(NULL_TOKEN, NULL_TOKEN.substring(1)), parts[0]);
+                            }
+                            return eCond;
+                        }).collect(Collectors.joining(""));
+
                 if (where.length() > 0) {
                     where += " and ";
                 }
