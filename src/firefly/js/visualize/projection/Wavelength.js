@@ -1,7 +1,12 @@
-
-
-
-
+/**
+ *  References:
+ *  1. "Representations of spectral coordinates in FITS", by E. W. Greisen1,M.R.Calabretta2, F.G.Valdes3,
+ *     and S. L. Allen. A&A Volume 446, Number 2, February I 2006
+ *  2. "Representations of world coordinates in FITS" A&A 395, 1061-1075 (2002) DOI: 10.1051/0004-6361:20021326
+ *     E. W. Greisen1 - M. R. Calabretta2
+ *  3. https://www.aanda.org/articles/aa/full/2002/45/aah3859/aah3859.html,
+ *
+ */
 
 export const PLANE  = 'PLANE';
 export const LINEAR = 'LINEAR';
@@ -72,10 +77,11 @@ export function getWavelength(pt, cubeIdx, wlData) {
         return wl;
     }
 }
-
+//TODO check here to see the cubeIdx??
 function getWaveLengthPlane(ipt, cubeIdx, wlData) {
     const {crpix, crval, cdelt} = wlData;
-    const wl = crval + ( cubeIdx - crpix ) * cdelt;
+    //pixel count starts from 1 to naxisn
+    const wl = crval + ( cubeIdx + 1  - crpix ) * cdelt;
     return wl;
 }
 
@@ -328,14 +334,29 @@ function searchIndex(indexVec, psi) {
  *
  *  lambda_r : is the reference value,  given by CRVAL3
  *
+ * Get pixel at given "ImagePt" coordinates
+ *   "ImagePt" coordinates have 0,0 lower left corner of lower left pixel
+ *   (from the reference paper above) Note that integer pixel numbers refer to the center of the pixel in each axis,
+ *   so that, for example, the first pixel runs from pixel number 0.5 to pixel number 1.5 on every axis.
+ *   Note also that the reference point location need not be integer nor need it even occur within the image.
+ *   The original FITS paper (Wells et al. 1981) defined the pixel numbers to be counted from 1 to NAXIS j ($ \geq $1)
+ *   on each axis in a Fortran-like order as presented in the FITS image[*].
+ *
+ *   This method get the coordinates for given image point (p1, p2, p3) where imagePt=(p1, p2)
+ *   If it is only one plan, the p3=1 since the axis is count staring from 1.
+ *
  * @param {ImagePt} ipt
  * @param {number} cubeIdx
  * @return {Array.<number>}
  */
 function getPixelCoords(ipt, cubeIdx) {
-    const p0 = Math.round(ipt.x - 0.5); //x
-    const p1 = Math.round(ipt.y - 0.5); //y
-    return [p0, p1, cubeIdx];
+
+    //As noted above, the pixel is counting from 1 to naxis j where (j=1, 2,... naxis).  Since the p = Math.round(ipt.x - 0.5)
+    //starts from 0.  Thus, 1 is added here.
+    //pixel numbers refer to the center of the pixel, so we subtract 0.5, see notes above
+    const p0 = Math.round(ipt.x - 0.5) + 1 ;
+    const p1 = Math.round(ipt.y - 0.5) + 1 ;
+    return [p0, p1, cubeIdx+1]; //since cubeIdx starts from 0
 }
 
 /**
@@ -362,7 +383,7 @@ function getPixelCoords(ipt, cubeIdx) {
  * @return number
  */
 function getOmega(pixCoords, N,  r_j, pc_3j, s_3){
-    if (!pc_3j || !r_j ) return s_3*(pixCoords[0]+pixCoords[1]);
+    //if (!pc_3j || !r_j ) return s_3*(pixCoords[0]+pixCoords[1]);
 
     let omega =0.0;
     for (let i=0; i<N; i++){

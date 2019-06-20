@@ -43,7 +43,7 @@ public class Wavelength {
 
     /**
      * This method will calculate wavelength at any given image point.  The calculation is based on
-     * the paper "Representations of spectral coordinates in FITS", by E. W. Greisen1,M.R.Calabretta2, F.G.Valdes3,
+     * Reference paper: the paper "Representations of spectral coordinates in FITS", by E. W. Greisen1,M.R.Calabretta2, F.G.Valdes3,
      * and S. L. Allen.
      *
      * Current, the Linear, Log and Non-linear algorithms based on the WCS parameters/keywords in the headers
@@ -506,17 +506,31 @@ public class Wavelength {
      *
      *  lamda_r : is the reference value,  given by CRVAL3
      *
+     * * Get pixel at given "ImagePt" coordinates
+     *
+     *
+     *   (from the reference paper above) Note that integer pixel numbers refer to the center of the pixel in each axis,
+     *   so that, for example, the first pixel runs from pixel number 0.5 to pixel number 1.5 on every axis.
+     *   Note also that the reference point location need not be integer nor need it even occur within the image.
+     *   The original FITS paper (Wells et al. 1981) defined the pixel numbers to be counted from 1 to NAXIS j ($ \geq $1)
+     *   on each axis in a Fortran-like order as presented in the FITS image[*].
+     *
+     *   This method get the coordinates for given image point (p1, p2, p3) where imagePt=(p1, p2)
+     *   If it is only one plan, the p3=1 since the axis is count staring from 1.
      * @param ipt
      * @return
      * @throws PixelValueException
      */
     public static double[] getPixelCoords(ImagePt ipt, Header header) throws PixelValueException {
 
-        int p0 = (int) Math.round(ipt.getX() - 0.5); //x
-        int p1 = (int) Math.round(ipt.getY() - 0.5); //y
+        //pixel numbers refer to the center of the pixel, so we subtract 0.5, see notes above
+        //As noted above, the pixel is counting from 1 to naxis j where (j=1, 2,... naxis).  Since the p = Math.round(ipt.x - 0.5)
+        //starts from 0.  Thus, 1 is added here.
+        int p0 = (int) Math.round(ipt.getX() - 0.5) +1 ; //x
+        int p1 = (int) Math.round(ipt.getY() - 0.5) +1; //y
+        int p2 = header.getIntValue("SPOT_PL", 1) + 1;  //since SPOT_PL starts from 0
 
-        int p2 = header.getIntValue("SPOT_PL", 0)-1; //z  default is 0  // todo: I think subtracting 1 is wrong, this should be looked at
-        if (p2<0) p2= 0;
+       // if (p2<0) p2= 0;
         int naxis1 = header.getIntValue("NAXIS1");
         int naxis2 = header.getIntValue("NAXIS2");
 
