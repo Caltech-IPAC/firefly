@@ -9,6 +9,7 @@ export function parseWavelengthHeaderInfo(header, altWcs='', zeroHeader, wlTable
     const parse= makeDoubleHeaderParse(header, zeroHeader, altWcs);
     const which= altWcs?'1':getWCSAXES(parse);
     const mijMatrixKeyRoot = getPC_ijKey(parse,which);
+    if (!mijMatrixKeyRoot) return; //When both PC i_j and CD i_j are present, we don't show the wavelength
     return calculateWavelengthParams(parse,altWcs,which,mijMatrixKeyRoot, wlTable);
 }
 
@@ -212,13 +213,13 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
 
     //Plot and display the wavelength as one of the mouse readout only if the FITs header
     //contains the required parameters and the wavelength is depending on the image axes.
-    /* We don't show the wavelength in the mouse readout in following four situations:
+    /* We don't show the wavelength in the mouse readout in following three situations:
      *  1. Algorithm is not defined
      *  2. wlType is not defined or the type is not supported
      *  3. The FITs file is not wavelength type (may be plane)
-     *  4. It has both PC_ij and CD_ij, thus, we don't know which parameters to use
+     *
      */
-    if (!algorithm || !wlType  || !isWL || !pc_3j_key) return;
+    if (!algorithm || !wlType  || !isWL) return;
 
 
     if (algorithm===LOG){  //the values in CRPIXk and CDi_j (PC_i_j) are log based on 10 rather than natural log, so a factor is needed.
