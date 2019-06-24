@@ -10,6 +10,7 @@ import {dispatchHideDialog} from '../core/ComponentCntlr.js';
 import {DROP_DOWN_KEY} from './DropDownToolbarButton.jsx';
 import {ToolTipCtx} from '../visualize/ui/VisToolbar.jsx';
 import DROP_DOWN_ICON from 'html/images/dd-narrow.png';
+import CHECK_BOX from 'html/images/black_check-on_10x10.gif';
 
 
 export function makeBadge(cnt) {
@@ -103,15 +104,16 @@ export class ToolbarButton extends PureComponent {
             icon,text,tip,badgeCount=0,enabled=true,
             horizontal=true, bgDark, visible=true, active,
             imageStyle, lastTextItem=false, todo, additionalStyle,
-            hasHorizontalLayoutSep, useDropDownIndicator} = this.props;
+            hasHorizontalLayoutSep, useDropDownIndicator,
+            hasCheckBox=false, checkBoxOn=false } = this.props;
 
 
         var s= { position: 'relative'};
         if (horizontal) {
-            s.display='inline-block';
+            s.display='inline-flex';
         }
         else {
-            s.display= 'block';
+            s.display= 'flex';
         }
 
         var textCName= 'menuItemText';
@@ -168,10 +170,19 @@ export class ToolbarButton extends PureComponent {
                 );
             } else {
                 s.flex= '0 0 auto';
+                let cb= '';
+                if (hasCheckBox) {
+                   cb= ( checkBoxOn ?
+                            <img style={{width: 10, height: 10, paddingRight: 4, alignSelf: 'center', ...imageStyle}}
+                                            src={CHECK_BOX}/> :
+                            <span style={{width:14}}/>
+                   );
+                }
                 return (
                     <div title={tip} style={s} className={cName}
                          ref={this.setupRef}
                          onClick={this.click} onMouseOver={this.mouseOver} onMouseOut={this.mouseOut}>
+                        {hasCheckBox && cb}
                         {icon ? <img style={imageStyle} src={icon}/> : <div className={textCName}>{text}</div>}
                         {badgeCount ? makeBadge(badgeCount) : ''}
                         {todo?<div style={todoStyle}>ToDo</div> : false}
@@ -204,7 +215,9 @@ ToolbarButton.propTypes= {
     imageStyle : PropTypes.object,
     lastTextItem : PropTypes.bool,
     useDropDownIndicator: PropTypes.bool,
-    additionalStyle : PropTypes.object
+    additionalStyle : PropTypes.object,
+    hasCheckBox: PropTypes.bool,
+    checkBoxOn: PropTypes.bool,
 };
 
 ToolbarButton.DefaultProps= {
@@ -235,9 +248,11 @@ ToolbarHorizontalSeparator.propTypes= {
 
 
 
-export function DropDownVerticalSeparator() {
-    return <div className='ff-vertical-separator'/>;
+export function DropDownVerticalSeparator({useLine=false}) {
+    return <div className={useLine? 'ff-vertical-line-separator' : 'ff-vertical-separator'}/>;
 }
 
-
+DropDownVerticalSeparator.propTypes= {
+    useLine: PropTypes.bool
+};
 

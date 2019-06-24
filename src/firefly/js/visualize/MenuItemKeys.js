@@ -30,7 +30,7 @@ export const MenuItemKeys= {
     layer : 'layer',
     irsaCatalog : 'irsaCatalog',
     restore : 'restore',
-    lockRelated: 'lockRelated',
+    overlayColorLock: 'overlayColorLock',
     fitsHeader: 'fitsHeader'
 };
 

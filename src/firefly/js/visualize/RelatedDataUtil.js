@@ -3,7 +3,7 @@
  */
 
 import {isEmpty, difference,get, flatten, values, uniq} from 'lodash';
-import {primePlot, getPlotViewIdListInGroup, getPlotViewById, operateOnOthersInGroup} from './PlotViewUtil.js';
+import {primePlot, getPlotViewIdList, getPlotViewById, operateOnOthersInOverlayColorGroup} from './PlotViewUtil.js';
 import {WPConst} from './WebPlotRequest.js';
 import {RDConst} from './WebPlot.js';
 import {visRoot, dispatchPlotMask, dispatchOverlayPlotChangeAttributes, dispatchPlotMaskLazyLoad} from './ImagePlotCntlr.js';
@@ -87,7 +87,7 @@ function unactivatedDataTypeMatches(r,idx, pv) {
  * @param {Function} func  an OverlayPlotView is passed as parameter
  */
 export function operateOnOverlayPlotViewsThatMatch(vr, opv, func) {
-    const opvList= flatten(getPlotViewIdListInGroup(vr, opv.plotId)
+    const opvList= flatten(getPlotViewIdList(vr, opv.plotId)
         .map( (id) => getPlotViewById(vr,id).overlayPlotViews))
         .filter( (aOpv) => get(aOpv,'title')===opv.title);
 
@@ -135,7 +135,7 @@ export function enableRelatedDataLayer(vr, pv, relatedData) {
 function enableRelatedDataLayerMaskInGroup(vr, pv,relatedData) {
     enableRelatedDataLayerMask(pv,relatedData);
 
-    operateOnOthersInGroup(vr, pv, (aPv) => {
+    operateOnOthersInOverlayColorGroup(vr, pv, (aPv) => {
         const rd= findUnactivatedRelatedData(aPv).filter( (aRd) => aRd.dataType===RDConst.IMAGE_MASK);
         if (rd[0]) enableRelatedDataLayerMask(aPv,rd[0]);
     } );

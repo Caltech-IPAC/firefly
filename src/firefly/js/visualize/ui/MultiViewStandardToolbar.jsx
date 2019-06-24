@@ -8,10 +8,8 @@ import PropTypes from 'prop-types';
 import {dispatchChangeViewerLayout} from '../MultiViewCntlr.js';
 import {dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {VisInlineToolbarView} from './VisInlineToolbarView.jsx';
-import {getPlotViewById, getAllDrawLayersForPlot, primePlot} from '../PlotViewUtil.js';
-import {WcsMatchOptions, HiPSMatchingOptions} from './WcsMatchOptions.jsx';
+import {getPlotViewById, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {clone} from '../../util/WebUtil.js';
-import {isImage} from '../WebPlot.js';
 
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import BrowserInfo from '../../util/BrowserInfo.js';
@@ -39,7 +37,7 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds,
                                           makeDropDown,
                                           alwaysShowToolbar= false}) {
     
-    var cIdx= viewerPlotIds.findIndex( (plotId) => plotId===visRoot.activePlotId);
+    let cIdx= viewerPlotIds.findIndex( (plotId) => plotId===visRoot.activePlotId);
     const pv= getPlotViewById(visRoot, visRoot.activePlotId);
     const pvDlAry= getAllDrawLayersForPlot(dlAry,visRoot.activePlotId,true);
 
@@ -63,15 +61,6 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds,
     const nextIdx= cIdx===viewerPlotIds.length-1 ? 0 : cIdx+1;
     const prevIdx= cIdx ? cIdx-1 : viewerPlotIds.length-1;
     var wcsMatch= false;
-
-    const imageDataViewers= viewerPlotIds.filter( (plotId) => isImage(primePlot(visRoot,plotId)));
-
-
-    if (imageDataViewers.length>1) {
-        wcsMatch= (
-            <WcsMatchOptions activePlotId={visRoot.activePlotId} wcsMatchType={visRoot.wcsMatchType} />
-        );
-    }
 
 
     const style= moreThanOne ? toolsStyle : clone(toolsStyle,{height:15});
@@ -98,7 +87,6 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds,
                      onClick={() => dispatchChangeActivePlotView(viewerPlotIds[nextIdx])} />
                 }
                 {wcsMatch}
-                {layoutType==='grid' && <HiPSMatchingOptions  visRoot={visRoot} plotIdAry={viewerPlotIds}/>}
                 {makeDropDown && makeDropDown()}
             </div>
             {handleInlineTools && moreThanOne && makeInlineRightToolbar(visRoot,pv,pvDlAry)}
@@ -109,8 +97,8 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds,
 function makeInlineRightToolbar(visRoot,pv,dlAry){
     if (!pv) return false;
 
-    var lVis= BrowserInfo.isTouchInput() || visRoot.apiToolsView;
-    var tb= visRoot.apiToolsView;
+    const lVis= BrowserInfo.isTouchInput() || visRoot.apiToolsView;
+    const tb= visRoot.apiToolsView;
     return (
         <div>
             <VisInlineToolbarView
@@ -135,6 +123,7 @@ MultiViewStandardToolbar.propTypes= {
     viewerPlotIds : PropTypes.arrayOf(PropTypes.string).isRequired,
     handleInlineTools : PropTypes.bool,
     alwaysShowToolbar : PropTypes.bool,
-    makeDropDownFunc: PropTypes.func
+    makeDropDownFunc: PropTypes.func,
+    makeDropDown: PropTypes.bool
 };
 

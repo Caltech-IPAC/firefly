@@ -16,7 +16,7 @@ import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {makeImagePt} from '../visualize/Point.js';
 import CysConverter from '../visualize/CsysConverter';
 import {getUIComponent} from './HiPSGridlUI.jsx';
-import {getAllPlotViewId} from '../visualize/PlotViewUtil';
+import {getAllPlotViewIdByOverlayLock} from '../visualize/PlotViewUtil';
 import {clone} from '../util/WebUtil.js';
 
 const ID= 'HIPS_GRID';
@@ -93,7 +93,7 @@ function dealWithMods(drawLayer,action) {
 
 function computeDrawData(drawLayer,action, gridType, gridLockLevel, isVisible = false) {
     const {payload}= action;
-    const plotIdAry= payload.plotId ? getAllPlotViewId(visRoot(), payload.plotId, false, true) : payload.plotIdAry;
+    const plotIdAry= payload.plotId ? getAllPlotViewIdByOverlayLock(visRoot(), payload.plotId, false, true) : payload.plotIdAry;
     if (plotIdAry) {
         const drawData= {data: clone(drawLayer.drawData.data)};
 

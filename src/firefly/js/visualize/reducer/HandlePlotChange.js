@@ -18,8 +18,9 @@ import {PlotPref} from './../PlotPref.js';
 import {primePlot,
         clonePvAry,
         clonePvAryWithPv,
-        applyToOnePvOrGroup,
-        matchPlotView,
+        applyToOnePvOrAll,
+        applyToOnePvOrOverlayGroup,
+        matchPlotViewByPositionGroup,
         getPlotViewIdxById,
         getPlotGroupIdxById,
         getOverlayById,
@@ -35,6 +36,7 @@ import {RotateType} from '../PlotState.js';
 import Point from '../Point.js';
 import {updateTransform} from '../PlotTransformUtils.js';
 import {WebPlotRequest} from '../WebPlotRequest.js';
+import {hasWCSProjection} from '../PlotViewUtil';
 
 
 //============ EXPORTS ===========
@@ -117,8 +119,11 @@ export function reducer(state, action) {
         case Cntlr.ZOOM_LOCKING:
             retState= changeLocking(state,action);
             break;
-        case Cntlr.GROUP_LOCKING:
-            retState= changeGroupLocking(state,action);
+        case Cntlr.POSITION_LOCKING:
+            retState= changePositionLocking(state,action);
+            break;
+        case Cntlr.OVERLAY_COLOR_LOCKING:
+            retState= changeOverlayColorLocking(state,action);
             break;
         case Cntlr.PLOT_PROGRESS_UPDATE  :
             retState= updatePlotProgress(state,action);
@@ -148,23 +153,30 @@ export function reducer(state, action) {
 
 /**
  *
- * @param state
- * @param action
- * @return {*}
+ * @param {VisRoot} state
+ * @param {Action} action
+ * @return {VisRoot}
  */
-
 function changePlotAttribute(state,action) {
-    const {plotId,attKey,attValue,toAll}= action.payload;
-    const {plotGroupAry}= state;
+    const {plotId,attKey,attValue,overlayColorScope,positionScope,toAllPlotsInPlotView}= action.payload;
     let {plotViewAry}= state;
     const pv= getPlotViewById(state,plotId);
     const plot= primePlot(pv);
     if (!plot) return state;
 
-    const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
-
-    plotViewAry= applyToOnePvOrGroup( plotViewAry, plotId, plotGroup, false,
-        (pv)=> replaceAtt(pv,{[attKey]:attValue},toAll) );
+    if (positionScope) {
+        plotViewAry= applyToOnePvOrAll(state.positionLock, plotViewAry, plotId, false,
+            (pv)=> replaceAtt(pv,{[attKey]:attValue},toAllPlotsInPlotView) );
+    }
+    else if (overlayColorScope) {
+        const plotGroup= findPlotGroup(pv.plotGroupId,state.plotGroupAry);
+        plotViewAry= applyToOnePvOrOverlayGroup(plotViewAry, plotId, plotGroup, false,
+            (pv)=> replaceAtt(pv,{[attKey]:attValue},toAllPlotsInPlotView) );
+    }
+    else {
+        plotViewAry= applyToOnePvOrAll(false, plotViewAry, plotId, false,
+            (pv)=> replaceAtt(pv,{[attKey]:attValue},toAllPlotsInPlotView) );
+    }
     return clone(state,{plotViewAry});
 }
 
@@ -181,7 +193,7 @@ function changeLocking(state,action) {
 
 
 function zoomStart(state, action) {
-    const {plotViewAry, expandedMode, mpwWcsPrimId}= state;
+    const {wcsMatchType, plotViewAry, expandedMode, mpwWcsPrimId}= state;
     const {plotId, zoomLevel, userZoomType, zoomLockingEnabled}= action.payload;
     const pvIdx=getPlotViewIdxById(state,plotId);
     const plot= pvIdx>-1 ? primePlot(plotViewAry[pvIdx]) : null;
@@ -202,7 +214,7 @@ function zoomStart(state, action) {
     pv= replacePrimaryPlot(pv,clonePlotWithZoom(plot,zoomLevel));
 
 
-    if (state.wcsMatchType && mpwWcsPrimId!==plotId) {
+    if (wcsMatchType && mpwWcsPrimId!==plotId) {
         const masterPv= getPlotViewById(state, mpwWcsPrimId);
         pv= updateScrollToWcsMatch(state.wcsMatchType, masterPv, pv);
     }
@@ -222,7 +234,7 @@ function zoomStart(state, action) {
 }
 
 function installTiles(state, action) {
-    const {plotViewAry, mpwWcsPrimId}= state;
+    const {plotViewAry, mpwWcsPrimId, wcsMatchType}= state;
     const {plotId, primaryStateJson,primaryTiles,overlayUpdateAry}= action.payload;
     let pv= getPlotViewById(state,plotId);
     let plot= primePlot(pv);
@@ -236,7 +248,7 @@ function installTiles(state, action) {
     pv.serverCall='success';
     pv= replacePrimaryPlot(pv,WebPlot.setPlotState(plot,primaryStateJson,primaryTiles));
 
-    if (state.wcsMatchType && mpwWcsPrimId!==plotId) {
+    if (wcsMatchType && mpwWcsPrimId!==plotId) {
         const masterPV= getPlotViewById(state, mpwWcsPrimId);
         pv= updateScrollToWcsMatch(state.wcsMatchType, masterPV, pv);
     }
@@ -269,37 +281,33 @@ function installTiles(state, action) {
 
 /**
  *
- * @param state
- * @param action
- * @return {*}
+ * @param {VisRoot} state
+ * @param {Action} action
+ * @return {VisRoot}
  */
 function processProjectionChange(state,action) {
     const {plotId,centerProjPt}= action.payload;
     const {plotViewAry}= state;
-    const pv= getPlotViewById(state, plotId);
-    const {plotGroupAry}= state;
-
-    const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
-
-    const newPlotViewAry= applyToOnePvOrGroup( plotViewAry, plotId, plotGroup, false,
+    const newPlotViewAry= applyToOnePvOrAll(state.positionLock, plotViewAry, plotId, false,
          (pv)=> {
              const plot= primePlot(pv);
              if (plot) pv= replacePrimaryPlot(pv, changeProjectionCenter(plot,centerProjPt));
              return pv;
          } );
 
-
-    // const plot= primePlot(pv);
-    // if (!plot) return state;
-    // pv= replacePrimaryPlot(pv, changeProjectionCenter(plot,centerProjPt));
-    // return clone(state, {plotViewAry : replacePlotView(plotViewAry,pv)});
     return clone(state, {plotViewAry : newPlotViewAry});
 }
 
+/**
+ *
+ * @param {VisRoot} state
+ * @param {Action} action
+ * @return {VisRoot}
+ */
 function changeHiPS(state,action) {
     const {plotId,hipsProperties, coordSys, hipsUrlRoot, cubeIdx, applyToGroup}= action.payload;
     let {centerProjPt}= action.payload;
-    let {plotViewAry}= state;
+    let {plotViewAry, positionLock}= state;
 
     let pv= getPlotViewById(state, plotId);
     const originalPlot= primePlot(pv);
@@ -330,17 +338,13 @@ function changeHiPS(state,action) {
     pv.plottingStatus= 'done';
     plotViewAry= replacePlotView(plotViewAry,pv);
 
-
-    // group plot stuff
-    const plotGroup= applyToGroup && findPlotGroup(pv.plotGroupId,state.plotGroupAry);
-
     if (coordSys) {
-        plotViewAry= changeHipsCoordinateSys(plotViewAry, state.plotGroupAry,pv, coordSys, applyToGroup);
+        plotViewAry= changeHipsCoordinateSys(plotViewAry, pv, coordSys, applyToGroup && positionLock);
         if (!centerProjPt) centerProjPt= convert(getCenterOfProjection(originalPlot), coordSys);
     }
 
     if (centerProjPt) {
-        plotViewAry= applyToOnePvOrGroup(plotViewAry, plot.plotId, plotGroup, false,
+        plotViewAry= applyToOnePvOrAll(state.positionLock, plotViewAry, plot.plotId, false,
             (pv) => {
                 const p= changeProjectionCenter(primePlot(pv),centerProjPt);
                 return replacePrimaryPlot(pv, p);
@@ -354,15 +358,13 @@ function changeHiPS(state,action) {
 /**
  *
  * @param {Array<PlotView>} plotViewAry
- * @param plotGroupAry
  * @param {PlotView} pv
  * @param {CoordinateSys} coordSys
  * @param {boolean} applyToGroup
  * @return {Array<PlotView>}
  */
-function changeHipsCoordinateSys(plotViewAry, plotGroupAry, pv, coordSys, applyToGroup) {
-    const plotGroup= applyToGroup && findPlotGroup(pv.plotGroupId,plotGroupAry);
-    return applyToOnePvOrGroup(plotViewAry, pv.plotId, plotGroup, false,
+function changeHipsCoordinateSys(plotViewAry, pv, coordSys, applyToGroup) {
+    return applyToOnePvOrAll(applyToGroup, plotViewAry, pv.plotId, false,
         (pv) => {
             let plot= primePlot(pv);
             plot= replaceHiPSProjection(plot, coordSys, getCenterOfProjection(plot) );
@@ -408,9 +410,14 @@ function rotatePvToMatch(pv, matchToPv, rotateNorthLock) {
 }
 
 
+/**
+ * @param {VisRoot} state
+ * @param {Action} action
+ * @return {VisRoot}
+ */
 function updateClientRotation(state,action) {
     const {plotId,angle, rotateType, actionScope}= action.payload;
-    const {plotGroupAry}= state;
+    const {plotGroupAry, wcsMatchType}= state;
     let   {plotViewAry}= state;
 
     const pv= getPlotViewById(state,plotId);
@@ -441,15 +448,16 @@ function updateClientRotation(state,action) {
 
     const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
     const masterPv= rotatePv(pv,targetAngle,rotateNorthLock);
-    if (state.wcsMatchType || rotateType===RotateType.NORTH) {
+    const matchingByWcs= wcsMatchType===WcsMatchType.Standard || wcsMatchType===WcsMatchType.Target;
+    if (matchingByWcs || (rotateType===RotateType.NORTH && !wcsMatchType) ) {
         plotViewAry= clonePvAryWithPv(plotViewAry, masterPv);
         if (actionScope===ActionScope.GROUP) {
-            plotViewAry= matchPlotView(masterPv,plotViewAry, plotGroup, false, (pv) => rotatePvToMatch(pv,masterPv, rotateNorthLock));
+            plotViewAry= matchPlotViewByPositionGroup(state, masterPv,plotViewAry, false, (pv) => rotatePvToMatch(pv,masterPv, rotateNorthLock));
         }
     }
     else {
         plotViewAry= actionScope===ActionScope.GROUP ?
-            applyToOnePvOrGroup(plotViewAry,plotId,plotGroup, false, (pv) => rotatePv(pv,targetAngle, rotateNorthLock)) :
+            applyToOnePvOrAll(state.positionLock, plotViewAry,plotId,false, (pv) => rotatePv(pv,targetAngle, rotateNorthLock)) :
             clonePvAryWithPv(plotViewAry, masterPv);
     }
 
@@ -472,6 +480,12 @@ function flipPv(pv, isY) {
 }
 
 
+/**
+ *
+ * @param {VisRoot} state
+ * @param {Action} action
+ * @return {VisRoot}
+ */
 function updateClientFlip(state,action) {
     const {plotId,isY,actionScope=ActionScope.GROUP }= action.payload;
     const {plotGroupAry}= state;
@@ -479,10 +493,9 @@ function updateClientFlip(state,action) {
 
     const pv= getPlotViewById(state,plotId);
     if (!pv) return state;
-    const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
 
     plotViewAry= actionScope===ActionScope.GROUP ?
-        applyToOnePvOrGroup(plotViewAry,plotId,plotGroup, false, (pv) => flipPv(pv,isY)) :
+        applyToOnePvOrAll(true, plotViewAry,plotId,false, (pv) => flipPv(pv,isY)) :
         clonePvAryWithPv(plotViewAry, flipPv(pv,isY));
 
     return clone(state,{plotViewAry});
@@ -510,15 +523,19 @@ function updateViewSize(state,action) {
 
         const masterPv= getPlotViewById(state, state.mpwWcsPrimId);
         pv= updateTransform(pv);
+        const hasProj= hasWCSProjection(pv) ;
 
         if (isHiPS(plot)) {
             centerImagePt= makeImagePt( plot.dataWidth/2, plot.dataHeight/2);
             pv= updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv,centerImagePt));
         }
-        else if (state.wcsMatchType===WcsMatchType.Standard && state.mpwWcsPrimId!==plotId) {
+        else if (state.wcsMatchType===WcsMatchType.Standard && state.mpwWcsPrimId!==plotId && hasProj) {
             pv= updateScrollToWcsMatch(state.wcsMatchType, masterPv, pv);
         }
-        else if (state.wcsMatchType===WcsMatchType.Target) {
+        else if (state.wcsMatchType===WcsMatchType.Target && hasProj) {
+            pv= updateScrollToWcsMatch(state.wcsMatchType, masterPv, pv);
+        }
+        else if (state.wcsMatchType===WcsMatchType.Pixel || state.wcsMatchType===WcsMatchType.PixelCenter) {
             pv= updateScrollToWcsMatch(state.wcsMatchType, masterPv, pv);
         }
         else if (isUndefined(pv.scrollX) || isUndefined(pv.scrollY)) {
@@ -537,22 +554,26 @@ function updateViewSize(state,action) {
 
 
 
+/**
+ * @param {VisRoot} state
+ * @param {Action} action
+ * @return {VisRoot}
+ */
 function recenter(state,action) {
     const {plotId, centerPt, centerOnImage }= action.payload;
-    const {plotGroupAry}= state;
+    const {plotGroupAry, wcsMatchType}= state;
     let   {plotViewAry}= state;
     const pv= getPlotViewById(state,plotId);
-    const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
 
-    if (state.wcsMatchType) {
+    if (wcsMatchType) {
         const newPv= recenterPv(centerPt, centerOnImage)(pv);
         plotViewAry= replacePlotView(plotViewAry, newPv);
-        plotViewAry= matchPlotView(newPv, plotViewAry,plotGroup, false, (pv) => {
-            return updateScrollToWcsMatch(state.wcsMatchType, newPv, pv);
+        plotViewAry= matchPlotViewByPositionGroup(state, newPv, plotViewAry, false, (pv) => {
+            return updateScrollToWcsMatch(wcsMatchType, newPv, pv);
         } );
     }
     else {
-        plotViewAry= applyToOnePvOrGroup(plotViewAry,plotId,plotGroup,false, recenterPv(centerPt, centerOnImage));
+        plotViewAry= applyToOnePvOrAll(state.positionLock, plotViewAry,plotId,false, recenterPv(centerPt, centerOnImage));
     }
 
 
@@ -612,27 +633,39 @@ function makeNewPrimePlot(state,action) {
     return clone(state,{plotViewAry:clonePvAryWithPv(state,pv)});
 }
 
-function changeGroupLocking(state,action) {
-    const {plotId,groupLocked}=  action.payload;
-    const {plotGroupId} = getPlotViewById(state,plotId);
-
-    const pgIdx= getPlotGroupIdxById(state,plotGroupId);
-
-    if (pgIdx < 0) return state;
-    state= updateSet(state, ['plotGroupAry',pgIdx,'lockRelated'], groupLocked);
-
-    if (groupLocked && isHiPS(primePlot(state,plotId))) {
+/**
+ *
+ * @param {VisRoot} state
+ * @param {Action} action
+ * @return {VisRoot}
+ */
+function changePositionLocking(state,action) {
+    const {plotId,positionLock}=  action.payload;
+    if (positionLock && plotId && isHiPS(primePlot(state,plotId))) {
         const pv= getPlotViewById(state, plotId);
         const plot= primePlot(pv);
-        const plotViewAry= changeHipsCoordinateSys(state.plotViewAry, state.plotGroupAry, pv,plot.imageCoordSys,true );
+        const plotViewAry= changeHipsCoordinateSys(state.plotViewAry, pv,plot.imageCoordSys,true );
         state= clone(state, {plotViewAry});
         state= processProjectionChange(state,
             clone(action, {payload:{plotId, centerProjPt:getCenterOfProjection(plot) }}));
     }
 
-    return state;
+    return {...state, positionLock};
 
 }
+
+
+function changeOverlayColorLocking(state,action) {
+    const {plotId,overlayColorLock}=  action.payload;
+    const {plotGroupId} = getPlotViewById(state,plotId);
+
+    const pgIdx= getPlotGroupIdxById(state,plotGroupId);
+
+    if (pgIdx < 0) return state;
+    state= updateSet(state, ['plotGroupAry',pgIdx,'overlayColorLock'], overlayColorLock);
+    return state;
+}
+
 
 function endServerCallFail(state,action) {
     const {plotId,message}= action.payload;

@@ -13,13 +13,13 @@ export default {makePlotGroup};
 /**
  *
  * @param plotGroupId
- * @param {boolean} groupLocked
- * @return {{plotGroupId: *, lockRelated: boolean, enableSelecting: boolean, allSelected: boolean}}
+ * @param {boolean} overlayColorLock
+ * @return {{plotGroupId: *, overlayColorLock: boolean, enableSelecting: boolean, allSelected: boolean}}
  */
-function makePlotGroup(plotGroupId,groupLocked) {
+function makePlotGroup(plotGroupId,overlayColorLock ) {
     return {
         plotGroupId,
-        lockRelated  : groupLocked,
+        overlayColorLock,
         enableSelecting :false,    //todo
         allSelected :false    //todo
     };

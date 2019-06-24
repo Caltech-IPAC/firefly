@@ -30,6 +30,7 @@ import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {getValueInScreenPixel} from '../visualize/draw/ShapeDataObj.js';
 
 import './CatalogSearchMethodType.css';
+import {hasWCSProjection} from '../visualize/PlotViewUtil';
 
 /*
  Component which suppose to handle the catalog method search such as cone, elliptical,etc.
@@ -156,7 +157,7 @@ const spatialSelection = (withPos, polyIsDef, searchOption) => {
 const maxHipsRadiusSearch = 5; //degrees
 
 export function calcCornerString(pv, method) {
-    if (method==='clear' || !pv) return '';
+    if (method==='clear' || !pv || !hasWCSProjection(pv)) return '';
     const f5 = (v) => v.toFixed(5);
 
     var pt1, pt2, pt3, pt4;

@@ -18,6 +18,7 @@ import {getPixScaleDeg} from '../visualize/WebPlot.js';
 import DrawLayerCntlr, { dispatchForceDrawLayerUpdate} from '../visualize/DrawLayerCntlr.js';
 import Color from '../util/Color.js';
 import {CoordinateSys} from '../visualize/CoordSys.js';
+import {hasWCSProjection} from '../visualize/PlotViewUtil';
 
 const ID= 'NORTH_UP_COMPASS_TOOL';
 const TYPE_ID= 'NORTH_UP_COMPASS_TYPE';
@@ -108,7 +109,7 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
 function makeCompass(plotId, action){
     const plot= primePlot(visRoot(),plotId);
     if (!plot) return null;
-    if (!plot.projection.isImplemented()) return null;
+    if (!hasWCSProjection(plot)) return null;
 
     const cc= CsysConverter.make(plot);
     if (!cc) return null;

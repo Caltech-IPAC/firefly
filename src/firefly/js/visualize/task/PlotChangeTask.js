@@ -4,18 +4,48 @@
 
 import {get} from 'lodash';
 import {logError} from '../../util/WebUtil.js';
-import ImagePlotCntlr, {IMAGE_PLOT_KEY} from '../ImagePlotCntlr.js';
-import {primePlot, getPlotViewById, operateOnOthersInGroup,getPlotStateAry} from '../PlotViewUtil.js';
+import ImagePlotCntlr, {IMAGE_PLOT_KEY, WcsMatchType} from '../ImagePlotCntlr.js';
+import {primePlot, getPlotViewById, operateOnOthersInOverlayColorGroup, getPlotStateAry} from '../PlotViewUtil.js';
 import {callCrop, callChangeColor, callRecomputeStretch} from '../../rpc/PlotServicesJson.js';
 import WebPlotResult from '../WebPlotResult.js';
 import {WebPlot} from '../WebPlot.js';
 import {populateFromHeader} from './PlotImageTask';
+import {isImage} from '../WebPlot';
+import {matchHiPStoPlotView} from './PlotHipsTask';
 
 
 
 //=======================================================================
 //-------------------- Action Creators ----------------------------------
 //=======================================================================
+
+
+export function recenterActionCreator(rawAction) {
+    return (dispatcher,getState) => {
+        dispatcher(rawAction);
+        locateHiPSIfMatched(getState()[IMAGE_PLOT_KEY], rawAction.payload.plotId);
+    };
+}
+
+
+export function processScrollActionCreator(rawAction) {
+    return (dispatcher,getState) => {
+        dispatcher(rawAction);
+        locateHiPSIfMatched(getState()[IMAGE_PLOT_KEY], rawAction.payload.plotId);
+    };
+}
+
+/**
+ * @param {VisRoot} vr
+ * @param {String} plotId
+ */
+function locateHiPSIfMatched(vr,plotId) {
+    const pv = getPlotViewById(vr, plotId);
+    if (vr.wcsMatchType !== WcsMatchType.Target && vr.wcsMatchType !== WcsMatchType.Standard) return;
+    if (isImage(primePlot(pv))) matchHiPStoPlotView(vr, pv);
+}
+
+
 
 /**
  * color bar Action creator
@@ -33,7 +63,7 @@ export function colorChangeActionCreator(rawAction) {
         if (!primePlot(pv).plotState.isThreeColor()) {
             doColorChange(dispatcher,getState, store,plotId,cbarId);
         }
-        operateOnOthersInGroup(store,pv, (pv) => {
+        operateOnOthersInOverlayColorGroup(store,pv, (pv) => {
             const p= primePlot(pv);
             if (p && !p.plotState.isThreeColor()) { // only do others that are not three color
                 doColorChange(dispatcher,getState, store,pv.plotId,cbarId);
@@ -63,7 +93,7 @@ export function stretchChangeActionCreator(rawAction) {
 
         const threeColor= plot.plotState.isThreeColor();
         doStretch(dispatcher,getState, store,plotId,stretchData);
-        operateOnOthersInGroup(store,pv, (pv) => {
+        operateOnOthersInOverlayColorGroup(store,pv, (pv) => {
             const p= primePlot(pv);
             if (p && p.plotState.isThreeColor()===threeColor) { // only do others that are similar
                 doStretch(dispatcher,getState, store,pv.plotId,stretchData);

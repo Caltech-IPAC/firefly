@@ -4,8 +4,8 @@
 
 import {flux} from '../Firefly.js';
 import Enum from 'enum';
-import {getPlotViewIdListInGroup, getPlotViewById, getDrawLayerById,
-          getConnectedPlotsIds, getAllPlotViewId} from './PlotViewUtil.js';
+import {getPlotViewIdList, getPlotViewById, getDrawLayerById,
+          getConnectedPlotsIds, getAllPlotViewIdByOverlayLock} from './PlotViewUtil.js';
 import ImagePlotCntlr, {visRoot}  from './ImagePlotCntlr.js';
 import DrawLayerReducer from './reducer/DrawLayerReducer.js';
 import {flatten, uniqBy, without,union,isEmpty} from 'lodash';
@@ -230,7 +230,7 @@ export function dispatchCreateDrawLayer(drawLayerTypeId, params={}) {
  *  @function dispatchChangeVisibility
  */
 export function dispatchChangeVisibility({id,visible, plotId, useGroup= true, subGroupId, matchTitle= false}) {
-    let plotIdAry= useGroup ? getPlotViewIdListInGroup(visRoot(), plotId) : [plotId];
+    let plotIdAry= useGroup ? getPlotViewIdList(visRoot(), plotId) : [plotId];
     if (subGroupId) {
         const vr= visRoot();
         plotIdAry= plotIdAry.filter( (plotId) => {
@@ -258,7 +258,7 @@ export function dispatchChangeVisibility({id,visible, plotId, useGroup= true, su
  *  @function dispatchChangeDrawingDef
  */
 export function dispatchChangeDrawingDef(id,drawingDef, plotId, matchTitle= false) {
-    const plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
+    const plotIdAry= getPlotViewIdList(visRoot(), plotId);
 
     getDrawLayerIdAry(dlRoot(),id, matchTitle)
         .forEach( (drawLayerId) => {
@@ -278,7 +278,7 @@ export function dispatchChangeDrawingDef(id,drawingDef, plotId, matchTitle= fals
  */
 export function dispatchModifyCustomField(id,changes, plotId) {
 
-    const plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
+    const plotIdAry= getPlotViewIdList(visRoot(), plotId);
 
     getDrawLayerIdAry(dlRoot(),id)
         .forEach( (drawLayerId) => {
@@ -304,7 +304,7 @@ export function dispatchUpdateDrawLayer(drawLayer) {
  */
 export function dispatchForceDrawLayerUpdate(id,plotId) {
 
-    const plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
+    const plotIdAry= getPlotViewIdList(visRoot(), plotId);
 
     getDrawLayerIdAry(dlRoot(),id)
         .forEach( (drawLayerId) => {
@@ -357,7 +357,7 @@ export function dispatchAttachLayerToPlot(id,plotId,  attachAllPlot=false, visib
         plotIdAry= plotId;
     }
     else {
-        plotIdAry = attachAllPlot ? getAllPlotViewId(visRoot(), plotId, false, plotTypeMustMatch) : [plotId];
+        plotIdAry = attachAllPlot ? getAllPlotViewIdByOverlayLock(visRoot(), plotId, false, plotTypeMustMatch) : [plotId];
     }
 
     getDrawLayerIdAry(dlRoot(),id)
@@ -384,7 +384,7 @@ export function dispatchDetachLayerFromPlot(id,plotId, detachAllPlot=false, dest
         plotIdAry= plotId;
     }
     else {
-        plotIdAry= detachAllPlot ? getAllPlotViewId(visRoot(), plotId) : [plotId];
+        plotIdAry= detachAllPlot ? getAllPlotViewIdByOverlayLock(visRoot(), plotId) : [plotId];
     }
 
     getDrawLayerIdAry(dlRoot(),id)

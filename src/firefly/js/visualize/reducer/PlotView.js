@@ -11,7 +11,7 @@ import {WPConst} from './../WebPlotRequest.js';
 import {makeScreenPt, makeDevicePt} from './../Point.js';
 import {getActiveTarget} from '../../core/AppDataCntlr.js';
 import VisUtil from './../VisUtil.js';
-import {getPlotViewById, matchPlotView, primePlot, findCurrentCenterPoint, findPlotGroup} from './../PlotViewUtil.js';
+import {getPlotViewById, matchPlotViewByPositionGroup, primePlot, findCurrentCenterPoint, findPlotGroup} from './../PlotViewUtil.js';
 import {changeProjectionCenter} from '../HiPSUtil.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {ZoomType} from '../ZoomType.js';
@@ -22,7 +22,7 @@ import {getDefMenuItemKeys} from '../MenuItemKeys.js';
 import {ExpandType, WcsMatchType} from '../ImagePlotCntlr.js';
 import {updateTransform, makeTransform} from '../PlotTransformUtils.js';
 import {isHiPS} from '../WebPlot.js';
-const DEF_WORKING_MSG= 'Plotting ';
+import {makeImagePt} from './../Point';
 
 export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignoreCase: true });
 
@@ -310,21 +310,20 @@ export function replacePrimaryPlot(plotView,primePlot) {
 }
 
 /**
- * scroll a plot view to a new screen pt, if plotGroup.lockRelated is true then all the plot views in the group
+ * scroll a plot view to a new screen pt, if positionLock is true then all the plot views in the group
  * will be scrolled to match
  * @param {VisRoot} visRoot
  * @param {string} plotId plot id to set the scrolling on
  * @param {Array} plotViewAry an array of plotView
  * @param {Array} plotGroupAry the plotGroup array
  * @param {ScreenPt} newScrollPt a screen point in the plot to scroll to
- * @return {Array}
+ * @return {Array.<PlotView>}
  */
 export function updatePlotGroupScrollXY(visRoot, plotId,plotViewAry, plotGroupAry, newScrollPt) {
     const plotView= updatePlotViewScrollXY(getPlotViewById(plotViewAry, plotId), newScrollPt);
     plotViewAry= replacePlotView(plotViewAry, plotView);
-    const plotGroup= findPlotGroup(plotView.plotGroupId,plotGroupAry);
-    if (get(plotGroup,'lockRelated')) {
-        plotViewAry= matchPlotView(plotView,plotViewAry,plotGroup,false, makeScrollPosMatcher(plotView, visRoot));
+    if (get(visRoot,'positionLock')) {
+        plotViewAry= matchPlotViewByPositionGroup(visRoot, plotView,plotViewAry,false, makeScrollPosMatcher(plotView, visRoot));
     }
     return plotViewAry;
 }
@@ -346,6 +345,7 @@ export function updateScrollToWcsMatch(wcsMatchType, masterPv, matchToPv) {
     return updatePlotViewScrollXY(matchToPv, newScrollPoint);
 }
 
+const PIXEL_MATCH_BY_CENTER= true;
 /**
  * Find a scroll point that the point puts the plot be scroll the to same wcs or target as the master plot
  * To use this function the plot view objects and the primary plot objects must all be defined.
@@ -373,6 +373,18 @@ function findWCSMatchScrollPosition(wcsMatchType, masterPv, matchToPv) {
         const matchPoint= ccMatch.getImageCoords(matchToP.attributes[PlotAttribute.FIXED_TARGET]);
         return findScrollPtToPlaceOnDevPt( matchToPv, matchPoint, mastDevPt);
     }
+    else if (wcsMatchType===WcsMatchType.PixelCenter) {
+        const centerMasterImagePt=  findCurrentCenterPoint(masterPv);
+        const wDelta= (masterP.dataWidth - matchToP.dataWidth)/2;
+        const hDelta= (masterP.dataHeight - matchToP.dataHeight)/2;
+        return findScrollPtToCenterImagePt( matchToPv,
+            makeImagePt(centerMasterImagePt.x-wDelta, centerMasterImagePt.y-hDelta) );
+    }
+    else if (wcsMatchType===WcsMatchType.Pixel) {
+        const centerMasterImagePt=  findCurrentCenterPoint(masterPv);
+        return findScrollPtToCenterImagePt( matchToPv,  centerMasterImagePt);
+
+    }
     else {
         return makeScreenPt(masterPv.scrollX, masterPv.scrollY);
     }
@@ -388,6 +400,7 @@ function findWCSMatchScrollPosition(wcsMatchType, masterPv, matchToPv) {
  */
 function makeScrollPosMatcher(sourcePV, visRoot) {
     const {scrollX:srcSx,scrollY:srcSy}= sourcePV;
+    const {wcsMatchType}= visRoot;
     const sourcePlot= primePlot(sourcePV);
     const {screenSize:{width:srcScreenWidth,height:srcScreenHeight}}= sourcePlot;
     const {scrollWidth:srcSW,scrollHeight:srcSH}= getScrollSize(sourcePV);
@@ -398,7 +411,7 @@ function makeScrollPosMatcher(sourcePV, visRoot) {
         let retPV= pv;
         const plot= primePlot(pv);
         if (plot) {
-            if (visRoot.wcsMatchType) {
+            if (wcsMatchType) {
                 retPV= updateScrollToWcsMatch(visRoot.wcsMatchType, sourcePV, pv);
             }
             else {

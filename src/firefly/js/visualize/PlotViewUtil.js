@@ -93,6 +93,42 @@ export function expandedPlotViewAry(ref,activePlotId=null) {
     return plotViewAry.filter( (pv) => (pv.plotId===activePlotId || pv.plotViewCtx.inExpandedList));
 }
 
+/**
+ * @param {PlotView[]|PlotView|VisRoot|CysConverter|WebPlot} ref this can be the visRoot or the plotViewAry, or a plotView Object.
+ * @return {boolean} true if there is a projection
+ */
+export function hasWCSProjection(ref) {
+    if (!ref) return false;
+    let projection;
+    if (ref.projection) {
+        projection= ref.projection;
+    }
+    else  {
+        const p= primePlot(ref);
+        if (!p) return false;
+        projection= p.projection;
+    }
+    return projection.isSpecified() && projection.isImplemented();
+}
+
+/**
+ * Return an array of plotId's that are in the plot group associated with the the pvOrId parameter.
+ * @param {VisRoot} visRoot - root of the visualization object in store
+ * @param pvOrId this parameter will take the plotId string or a plotView object
+ * @param onlyIfPositionLocked
+ * @param hasPlots
+ * @returns {Array.<PlotView>}
+ */
+export function getPlotViewIdList(visRoot, pvOrId, onlyIfPositionLocked=true, hasPlots=false) {
+    if (!pvOrId) return [];
+    const pv= (typeof pvOrId ==='string') ? getPlotViewById(visRoot,pvOrId) : pvOrId;
+    const locked= visRoot.positionLock;
+    if (!locked && onlyIfPositionLocked) return [pv.plotId];
+    const idList=  visRoot.plotViewAry.map( (pv) => pv.plotId);
+    if (!hasPlots) return idList;
+
+    return idList.filter( (id) => get(getPlotViewById(visRoot,id),'plots.length') );
+}
 
 /**
  * Return an array of plotId's that are in the plot group associated with the the pvOrId parameter.
@@ -100,14 +136,14 @@ export function expandedPlotViewAry(ref,activePlotId=null) {
  * @param pvOrId this parameter will take the plotId string or a plotView object
  * @param onlyIfGroupLocked
  * @param hasPlots
- * @returns {*}
+ * @returns {Array.<PlotView>}
  */
-export function getPlotViewIdListInGroup(visRoot,pvOrId,onlyIfGroupLocked=true, hasPlots=false) {
+export function getPlotViewIdListInOverlayGroup(visRoot,pvOrId,onlyIfGroupLocked=true, hasPlots=false) {
     if (!pvOrId) return [];
     const pv= (typeof pvOrId ==='string') ? getPlotViewById(visRoot,pvOrId) : pvOrId;
     const gid= pv.plotGroupId;
     const group= getPlotGroupById(visRoot,gid);
-    const locked= hasGroupLock(pv,group);
+    const locked= hasOverlayColorLock(pv,group);
     if (!locked && onlyIfGroupLocked) return [pv.plotId];
     const idList=  visRoot.plotViewAry.filter( (pv) => pv.plotGroupId===gid).map( (pv) => pv.plotId);
     if (!hasPlots) return idList;
@@ -116,7 +152,7 @@ export function getPlotViewIdListInGroup(visRoot,pvOrId,onlyIfGroupLocked=true, 
 }
 
 /**
- * return an array of plotIds that are all under visRoot and based on the group lock of the group associated
+ * return an array of plotIds that are all under visRoot and based on the overlay/color lock of the group associated
  * width the pvOrId parameter
  * @param visRoot
  * @param pvOrId
@@ -124,12 +160,12 @@ export function getPlotViewIdListInGroup(visRoot,pvOrId,onlyIfGroupLocked=true, 
  * @param plotTypeMustMatch
  * @returns {Array.<string>}  plotId Array
  */
-export function getAllPlotViewId(visRoot, pvOrId, hasPlots=false, plotTypeMustMatch) {
+export function getAllPlotViewIdByOverlayLock(visRoot, pvOrId, hasPlots=false, plotTypeMustMatch) {
     if (!pvOrId) return [];
     const majorPv= (typeof pvOrId ==='string') ? getPlotViewById(visRoot,pvOrId) : pvOrId;
     const gid= majorPv.plotGroupId;
     const group= getPlotGroupById(visRoot,gid);
-    const locked= hasGroupLock(majorPv,group);
+    const locked= hasOverlayColorLock(majorPv,group);
 
     if (!locked) {
         return [majorPv.plotId];
@@ -368,9 +404,14 @@ export function getPlotStateAry(pv) {
  * @param {object} plotGroup
  * @return {boolean}
  */
-export function hasGroupLock(pv,plotGroup) {
-    return Boolean(plotGroup && plotGroup.plotGroupId && plotGroup.lockRelated &&
-                    pv && pv.plotGroupId===plotGroup.plotGroupId);
+// export function hasGroupLock(pv,plotGroup) {
+//     return Boolean(plotGroup && plotGroup.plotGroupId && plotGroup.overlayColorLock &&
+//                     pv && pv.plotGroupId===plotGroup.plotGroupId);
+// }
+
+export function hasOverlayColorLock(pv,plotGroup) {
+    return Boolean(plotGroup && plotGroup.plotGroupId && plotGroup.overlayColorLock &&
+        pv && pv.plotGroupId===plotGroup.plotGroupId);
 }
 
 
@@ -407,7 +448,7 @@ export function findPlotGroup(plotGroupId, plotGroupAry) {
  * @return {Array.<PlotView>}
  */
 export function getOnePvOrGroup(plotViewAry, plotId,plotGroup, forceAllInGroup= false) {
-    const groupLock= hasGroupLock(getPlotViewById(plotViewAry,plotId),plotGroup) || forceAllInGroup;
+    const groupLock= hasOverlayColorLock(getPlotViewById(plotViewAry,plotId),plotGroup) || forceAllInGroup;
     return groupLock ?
         plotViewAry.filter( (pv) => pv.plotGroupId===plotGroup.plotGroupId) :
         [getPlotViewById(plotViewAry,plotId)];
@@ -420,21 +461,41 @@ export const primePlotType= (pv) => get(primePlot(pv), 'plotType', 'image');
 /**
  * Perform an operation on all the PlotViews in a group except the source, get the plotViewAry and group from the store.
  * The operations are only performed if the group is locked.
- * @param visRoot - root of the visualization object in store
- * @param sourcePv
- * @param operationFunc
- * @param ignoreThreeColor
- * @param anyPlotType
+ * @param {VisRoot} visRoot - root of the visualization object in store
+ * @param {PlotView} sourcePv
+ * @param {Function} operationFunc
+ * @param {boolean} ignoreThreeColor
+ * @param {boolean} anyPlotType
  * @return {Array} new plotView array after the operation
  */
-export function operateOnOthersInGroup(visRoot,sourcePv,operationFunc, ignoreThreeColor=false, anyPlotType= false) {
+export function operateOnOthersInOverlayColorGroup(visRoot,sourcePv,operationFunc, ignoreThreeColor=false, anyPlotType= false) {
     const plotGroup= getPlotGroupById(visRoot,sourcePv.plotGroupId);
     const srcType= primePlotType(sourcePv);
-    if (hasGroupLock(sourcePv,plotGroup)) {
+    if (hasOverlayColorLock(sourcePv,plotGroup)) {
         visRoot.plotViewAry.forEach( (pv) => {
             if (ignoreThreeColor && isThreeColor(primePlot(pv))) return;
             if (pv.plotGroupId===sourcePv.plotGroupId && pv.plotId!==sourcePv.plotId &&
                 (primePlotType(pv)===srcType || anyPlotType))  {
+                operationFunc(pv);
+            }
+        });
+    }
+}
+
+/**
+ *
+ * @param {VisRoot} visRoot
+ * @param {PlotView} sourcePv
+ * @param {Function} operationFunc
+ * @param {boolean} ignoreThreeColor
+ * @param {boolean} anyPlotType
+ */
+export function operateOnOthersInPositionGroup(visRoot,sourcePv,operationFunc, ignoreThreeColor=false, anyPlotType= false) {
+    const srcType= primePlotType(sourcePv);
+    if (visRoot.positionLock) {
+        visRoot.plotViewAry.forEach( (pv) => {
+            if (ignoreThreeColor && isThreeColor(primePlot(pv))) return;
+            if (pv.plotId!==sourcePv.plotId && (primePlotType(pv)===srcType || anyPlotType))  {
                 operationFunc(pv);
             }
         });
@@ -447,20 +508,19 @@ export function operateOnOthersInGroup(visRoot,sourcePv,operationFunc, ignoreThr
  * Perform an operation on all the PlotViews in a group except the source a return a new version of the plotViewAry
  * The operations are only performed if the group is locked.
  * Typically used inside of reducer
+ * @param {VisRoot} vr
  * @param sourcePv
  * @param plotViewAry
- * @param plotGroup
  * @param {boolean} matchAnyType matching across plot types ie, would return a hips or an image
  * @param {Function} operationFunc the function to operate on the other plot views
  * @param {PlotView} operationFunc.param pv the PlotView to operate on
  * @return {Array.<PlotView>} new plotView array after the operation
  */
-export function matchPlotView(sourcePv,plotViewAry,plotGroup,matchAnyType, operationFunc) {
+export function matchPlotViewByPositionGroup(vr, sourcePv, plotViewAry, matchAnyType, operationFunc) {
     const srcType= primePlotType(sourcePv);
-    if (hasGroupLock(sourcePv,plotGroup)) {
+    if (vr.positionLock) {
         plotViewAry= plotViewAry.map( (pv) => {
-            return (pv.plotGroupId===sourcePv.plotGroupId && pv.plotId!==sourcePv.plotId &&
-                    (primePlotType(pv)===srcType || matchAnyType)) ?
+            return (pv.plotId!==sourcePv.plotId && (primePlotType(pv)===srcType || matchAnyType)) ?
                 operationFunc(pv) : pv;
         });
     }
@@ -471,20 +531,31 @@ export function matchPlotView(sourcePv,plotViewAry,plotGroup,matchAnyType, opera
 /**
  * perform an operation on a plotView or its related group depending on the lock state.
  * Typically used inside of reducer
- * @param plotViewAry plotViewAry
- * @param plotId the that is primary.
- * @param {PlotGroup} plotGroup the group to check against, passing falsey will only apply to primary
+ * @param {boolean} toAll
+ * @param {Array.<PlotView>} plotViewAry plotViewAry
+ * @param {string} plotId the that is primary.
  * @param {boolean} matchAnyType matching across plot types ie, would return a hips or an image
  * @param {Function} operationFunc the function to operate on the other plot views
  * @param {PlotView} operationFunc.param pv the PlotView to operate on
  * @return {Array.<PlotView>} new plotViewAry
  */
 
-export function applyToOnePvOrGroup(plotViewAry, plotId,plotGroup,matchAnyType, operationFunc) {
+export function applyToOnePvOrAll(toAll, plotViewAry, plotId, matchAnyType, operationFunc) {
     const sourcePv= getPlotViewById(plotViewAry,plotId);
     if (!sourcePv) return;
     const srcType= primePlotType(sourcePv);
-    const groupLock= plotGroup && hasGroupLock(sourcePv,plotGroup);
+    return plotViewAry.map( (pv) => {
+        if (pv.plotId===plotId) return operationFunc(pv);
+        else if (toAll && (primePlotType(pv)===srcType || matchAnyType) ) return operationFunc(pv);
+        else return pv;
+    });
+}
+
+export function applyToOnePvOrOverlayGroup(plotViewAry, plotId,plotGroup,matchAnyType, operationFunc) {
+    const sourcePv= getPlotViewById(plotViewAry,plotId);
+    if (!sourcePv) return;
+    const srcType= primePlotType(sourcePv);
+    const groupLock= plotGroup && hasOverlayColorLock(sourcePv,plotGroup);
     return plotViewAry.map( (pv) => {
         if (pv.plotId===plotId) {
             return operationFunc(pv);
@@ -697,7 +768,7 @@ export function getAllCanvasLayersForPlot(plotId) {
 /**
  *
  * @param {PlotView} pv
- * @param {number} alternateZoomFactor
+ * @param {number} [alternateZoomFactor]
  * @return {number} fov in degrees
  */
 export function getFoV(pv, alternateZoomFactor) {
@@ -916,11 +987,11 @@ export function hasWLInfo(plot) {
     return Boolean(plot.wlData && isDefined(plot.wlData.algorithm) && isWLAlgorithmImplemented(plot.wlData) );
 }
 
-export function wavelenthInfoParsedSuccessfully(plot) {
+export function wavelengthInfoParsedSuccessfully(plot) {
     return hasWLInfo(plot) && !Boolean(plot.wlData.failReason);
 }
 
-export function getWavelenghParseFailReason(plot) {
+export function getWavelengthParseFailReason(plot) {
     return hasWLInfo(plot) && plot.wlData.failReason;
 }
 

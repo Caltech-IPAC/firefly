@@ -19,6 +19,7 @@ import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
 import {getUIComponent} from './DistanceToolUI.jsx';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
+import {hasWCSProjection} from '../visualize/PlotViewUtil';
 
 
 const EDIT_DISTANCE= BrowserInfo.isTouchInput() ? 18 : 10;
@@ -54,7 +55,7 @@ export function distanceToolEndActionCreator(rawAction) {
         drawLayer= getDrawLayerById(getState()[DRAWING_LAYER_KEY], drawLayer.drawLayerId);
         
         var sel= {pt0:drawLayer.firstPt,pt1:drawLayer.currentPt};
-        dispatchAttributeChange(plotId,true,PlotAttribute.ACTIVE_DISTANCE,sel,true);
+        dispatchAttributeChange({plotId,attKey:PlotAttribute.ACTIVE_DISTANCE,attValue:sel});
     };
 }
 
@@ -94,7 +95,10 @@ function creator() {
 
 function onDetach(drawLayer,action) {
     var {plotIdAry}= action.payload;
-    plotIdAry.forEach( (plotId) => dispatchAttributeChange(plotId,false,PlotAttribute.ACTIVE_DISTANCE,null,true));
+    plotIdAry.forEach( (plotId) => dispatchAttributeChange({
+        plotId,overlayColorScope:false,
+        attKey:PlotAttribute.ACTIVE_DISTANCE,attValue:null
+    }));
 }
 
 function getCursor(plotView, screenPt) {
@@ -321,7 +325,7 @@ function makeSelectObj(firstPt,currentPt, posAngle,cc) {
     var anyPt1;
     var anyPt2;
     var dist;
-    var world= cc.projection.isSpecified() && cc.projection.isImplemented();
+    const world= hasWCSProjection(cc);
 
     if (world) {
         anyPt1 = cc.getWorldCoords(ptAry[0]);

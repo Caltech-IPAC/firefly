@@ -25,8 +25,7 @@ export class ImageMetaDataToolbar extends Component {
         var update= !shallowequal(omit(props,om), omit(np,om)) || !shallowequal(ns,state);
         if (update) return true;
 
-        return ((np.layoutType===SINGLE && props.visRoot.activePlotId!==np.visRoot.activePlotId) ||
-                props.visRoot.wcsMatchType!==np.visRoot.wcsMatchType);
+        return ((np.layoutType===SINGLE && props.visRoot.activePlotId!==np.visRoot.activePlotId));
     }
 
 
@@ -55,7 +54,6 @@ export class ImageMetaDataToolbar extends Component {
         const {visRoot, viewerId, viewerPlotIds, layoutType, dlAry, makeDropDown}= this.props;
         return (
             <ImageMetaDataToolbarView activePlotId={visRoot.activePlotId} viewerId={viewerId}
-                                      wcsMatchType={visRoot.wcsMatchType}
                                       viewerPlotIds={viewerPlotIds} layoutType={layoutType} dlAry={dlAry}
                                       activeTable={activeTable} makeDataProductsConverter={makeDataProductsConverter}
                                       makeDropDown={makeDropDown}

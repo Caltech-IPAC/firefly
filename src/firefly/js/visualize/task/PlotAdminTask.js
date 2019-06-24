@@ -12,12 +12,13 @@ import {dispatchAttachLayerToPlot,
     dispatchCreateDrawLayer,
     dispatchDetachLayerFromPlot,
     DRAWING_LAYER_KEY} from '../DrawLayerCntlr.js';
-import { getPlotViewById, applyToOnePvOrGroup, findPlotGroup, isDrawLayerAttached,
+import { getPlotViewById, applyToOnePvOrAll, findPlotGroup, isDrawLayerAttached,
     primePlot, getDrawLayerByType } from '../PlotViewUtil.js';
 import {isHiPS, isImage} from '../WebPlot.js';
 import {RotateType} from '../PlotState.js';
 import {clone} from '../../util/WebUtil.js';
 import {detachSelectAreaRelatedLayers} from '../ui/SelectAreaDropDownView.jsx';
+import {dispatchWcsMatch} from '../ImagePlotCntlr';
 
 export function autoPlayActionCreator(rawAction) {
     return (dispatcher) => {
@@ -92,12 +93,11 @@ export function restoreDefaultsActionCreator(rawAction) {
     return (dispatcher, getState) => {
         const vr= getState()[IMAGE_PLOT_KEY];
         const {plotId}= rawAction.payload;
-        const {plotGroupAry,plotViewAry}= vr;
+        const {plotViewAry, positionLock}= vr;
         const pv= getPlotViewById(vr,plotId);
-        const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
 
         detachSelectAreaRelatedLayers(pv, true);
-        applyToOnePvOrGroup( plotViewAry, plotId, plotGroup, false,
+        applyToOnePvOrAll(positionLock, plotViewAry, plotId, false,
             (pv)=> {
                 if (vr.plotRequestDefaults[pv.plotId]) {
                     const plot= primePlot(pv);
@@ -125,6 +125,7 @@ export function restoreDefaultsActionCreator(rawAction) {
                     }
                 }
             });
+        dispatchWcsMatch({plotId, matchType:false});
     };
 }
 

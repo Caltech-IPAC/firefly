@@ -1,3 +1,4 @@
+
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
@@ -25,6 +26,7 @@ import {ActionEventHandler} from './core/messaging/MessageHandlers.js';
 import {init} from './rpc/CoreServices.js';
 import {getPropsWith, mergeObjectOnly} from './util/WebUtil.js';
 import {initLostConnectionWarning} from './ui/LostConnection.jsx';
+import {dispatchWcsMatch} from './visualize/ImagePlotCntlr';
 
 export const flux = reduxFlux;
 
@@ -112,6 +114,7 @@ const defFireflyOptions = {
     imageMasterSources: ['ALL'],
     imageMasterSourcesOrder: undefined,
     workspace : { showOptions: false},
+    wcsMatchType: false,
 
     charts: {
         defaultDeletable: undefined, // by default if there are more than one chart in container, all charts are deletable
@@ -178,6 +181,9 @@ function fireflyInit(props, options={}) {
     }
     if (options.readoutDefaultPref) {
         dispatchChangeReadoutPrefs(options.readoutDefaultPref);
+    }
+    if (options.wcsMatchType) {
+        dispatchWcsMatch({matchType:options.wcsMatchType, lockMatch:true});
     }
 
     // initialize UI or API depending on entry mode.

@@ -19,14 +19,14 @@ import ActiveTarget  from '../../drawingLayers/ActiveTarget.js';
 import {clone} from '../../util/WebUtil.js';
 import {makePostPlotTitle} from '../reducer/PlotTitle.js';
 import {dispatchAddViewerItems, getMultiViewRoot, findViewerWithItemId, EXPANDED_MODE_RESERVED, IMAGE, DEFAULT_FITS_VIEWER_ID} from '../MultiViewCntlr.js';
-import {getPlotViewById, getDrawLayerByType, getDrawLayersByType, getDrawLayerById, getPlotViewIdListInGroup} from '../PlotViewUtil.js';
+import {getPlotViewById, getDrawLayerByType, getDrawLayersByType, getDrawLayerById, getPlotViewIdList} from '../PlotViewUtil.js';
 import {enableMatchingRelatedData, enableRelatedDataLayer} from '../RelatedDataUtil.js';
 import {modifyRequestForWcsMatch} from './WcsMatchTask.js';
 import WebGrid from '../../drawingLayers/WebGrid.js';
 import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
-import {dispatchPlotProgressUpdate, dispatchRecenter} from '../ImagePlotCntlr';
+import {dispatchPlotProgressUpdate, dispatchRecenter, dispatchWcsMatch} from '../ImagePlotCntlr';
 import {isDefined} from '../../util/WebUtil';
 import {HdrConst} from '../FitsHeaderUtil.js';
 import {doFetchTable} from '../../tables/TableUtil';
@@ -69,7 +69,7 @@ const getFirstReq= (wpRAry) => isArray(wpRAry) ? wpRAry.find( (r) => Boolean(r))
 function makeSinglePlotPayload(vr, rawPayload, requestKey) {
 
    const {threeColor, attributes, setNewPlotAsActive= true,
-         holdWcsMatch= false, useContextModifications= true, enableRestore= true,
+         holdWcsMatch= true, useContextModifications= true, enableRestore= true,
          renderTreeId}= rawPayload;
    let {plotId, wpRequest, pvOptions= {}}= rawPayload;
 
@@ -335,6 +335,11 @@ function continuePlotImageSuccess(dispatcher, payload, successAry, failAry) {
 
         //todo- this this plot is in a group and locked, make a unique list of all the drawing layers in the group and add to new
         dispatchAddViewerItems(EXPANDED_MODE_RESERVED, plotIdAry, IMAGE);
+
+        const vr= visRoot();
+        if (vr.wcsMatchType && vr.positionLock) {
+            dispatchWcsMatch( {plotId:vr.activePlotId, matchType:vr.wcsMatchType, lockMatch:true});
+        }
     }
 
 
@@ -574,7 +579,7 @@ function matchAndActivateOverlayPlotViewsByGroup(plotIdAry) {
         .map( (plotId) => getPlotViewById(visRoot(), plotId))
         .filter( (pv) => pv)
         .forEach( (pv) => {
-            const opvMatchArray= uniqBy(flatten(getPlotViewIdListInGroup(vr, pv.plotId)
+            const opvMatchArray= uniqBy(flatten(getPlotViewIdList(vr, pv.plotId)
                                                        .filter( (id) => id!== pv.plotId)
                                                        .map( (id) => getPlotViewById(vr,id))
                                                        .map( (gpv) => gpv.overlayPlotViews)),

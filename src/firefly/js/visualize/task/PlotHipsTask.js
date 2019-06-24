@@ -3,39 +3,69 @@
  */
 
 import {get, isEmpty} from 'lodash';
-import ImagePlotCntlr, {visRoot, IMAGE_PLOT_KEY,
-    dispatchChangeCenterOfProjection, dispatchZoom,
+import ImagePlotCntlr, {
     dispatchAttributeChange,
-    dispatchPlotProgressUpdate, dispatchPlotImage, dispatchPlotHiPS,
-    dispatchChangeHiPS} from '../ImagePlotCntlr.js';
+    dispatchChangeCenterOfProjection,
+    dispatchChangeHiPS,
+    dispatchPlotHiPS,
+    dispatchPlotImage,
+    dispatchPlotProgressUpdate,
+    dispatchZoom,
+    IMAGE_PLOT_KEY,
+    visRoot,
+    WcsMatchType
+} from '../ImagePlotCntlr.js';
 import {getArcSecPerPix, getZoomLevelForScale, UserZoomTypes} from '../ZoomUtil.js';
-import {WebPlot, PlotAttribute} from '../WebPlot.js';
-import {fetchUrl, clone, loadImage} from '../../util/WebUtil.js';
-import {getPlotGroupById} from '../PlotGroup.js';
-import {primePlot, getPlotViewById, hasGroupLock} from '../PlotViewUtil.js';
+import {PlotAttribute, WebPlot} from '../WebPlot.js';
+import {clone, fetchUrl, loadImage} from '../../util/WebUtil.js';
+import {
+    findCurrentCenterPoint,
+    getCenterOfProjection,
+    getCorners,
+    getDrawLayerByType,
+    getDrawLayersByType,
+    getFoV,
+    getPlotViewById,
+    primePlot,
+    getPlotViewAry
+} from '../PlotViewUtil.js';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
-import {getHiPSZoomLevelToFit} from '../HiPSUtil.js';
-import {getCenterOfProjection, findCurrentCenterPoint, getCorners,
-        getDrawLayerByType, getDrawLayersByType, getOnePvOrGroup, getFoV} from '../PlotViewUtil.js';
-import {findAllSkyCachedImage, addAllSkyCachedImage} from '../iv/HiPSTileCache.js';
-import {makeHiPSAllSkyUrl, makeHiPSAllSkyUrlFromPlot,
-         makeHipsUrl, resolveHiPSConstant, getPointMaxSide, getPropertyItem} from '../HiPSUtil.js';
+import {
+    getHiPSZoomLevelToFit,
+    getPointMaxSide,
+    getPropertyItem,
+    makeHiPSAllSkyUrl,
+    makeHiPSAllSkyUrlFromPlot,
+    makeHipsUrl,
+    resolveHiPSConstant
+} from '../HiPSUtil.js';
+import {addAllSkyCachedImage, findAllSkyCachedImage} from '../iv/HiPSTileCache.js';
 import {ZoomType} from '../ZoomType.js';
 import {CCUtil} from '../CsysConverter.js';
-import {ensureWPR, determineViewerId, getHipsImageConversion,
-        initBuildInDrawLayers, addDrawLayers} from './PlotImageTask.js';
-import {dlRoot, dispatchAttachLayerToPlot,
-        dispatchCreateDrawLayer, dispatchDetachLayerFromPlot, getDlAry} from '../DrawLayerCntlr.js';
+import {
+    addDrawLayers,
+    determineViewerId,
+    ensureWPR,
+    getHipsImageConversion,
+    initBuildInDrawLayers
+} from './PlotImageTask.js';
+import {
+    dispatchAttachLayerToPlot,
+    dispatchCreateDrawLayer,
+    dispatchDetachLayerFromPlot,
+    dlRoot,
+    getDlAry
+} from '../DrawLayerCntlr.js';
 import ImageOutline from '../../drawingLayers/ImageOutline.js';
 import Artifact from '../../drawingLayers/Artifact.js';
 import {isHiPS, isImage} from '../WebPlot';
 import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
 import ActiveTarget from '../../drawingLayers/ActiveTarget.js';
 import {resolveHiPSIvoURL} from '../HiPSListUtil.js';
-import {addNewMocLayer, makeMocTableId, isMOCFitsFromUploadAnalsysis, MOCInfo, UNIQCOL} from '../HiPSMocUtil.js';
+import {addNewMocLayer, isMOCFitsFromUploadAnalsysis, makeMocTableId, MOCInfo, UNIQCOL} from '../HiPSMocUtil.js';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
 import {doUpload} from '../../ui/FileUpload.jsx';
-import CoordinateSys from '../CoordSys';
+import CoordinateSys from '../CoordSys.js';
 
 const PROXY= true;
 
@@ -95,8 +125,7 @@ function initCorrectCoordinateSys(pv) {
     const plot= primePlot(pv);
     const vr= visRoot();
     const {plotId}= pv;
-    const plotGroup= getPlotGroupById(vr, pv.plotGroupId);
-    if (hasGroupLock(pv, plotGroup)) {
+    if (vr.positionLock) {
         const hipsPv = vr.plotViewAry.filter((pv) => isHiPS(primePlot(pv)) && pv.plotId !== plotId)[0];
         const hipsPlot = primePlot(hipsPv);
         if (hipsPlot && hipsPlot.imageCoordSys !== plot.imageCoordSys) {
@@ -117,7 +146,11 @@ function watchForHiPSViewDim(action, cancelSelf, params) {
         if (!plot) return;
         const wp= pv.request && pv.request.getWorldPt();
 
-        if (!pv.request.getSizeInDeg() && !wp && lockedToOtherHiPS(vr,pv)) { //if nothing enter, match to existing HiPS
+        if ((vr.wcsMatchType===WcsMatchType.Standard || vr.wcsMatchType===WcsMatchType.Target) &&
+                                     isImage(primePlot(getPlotViewById(vr, vr.mpwWcsPrimId)))) {
+            matchHiPStoPlotView(vr, getPlotViewById(vr, vr.mpwWcsPrimId));
+        }
+        else if (!pv.request.getSizeInDeg() && !wp && lockedToOtherHiPS(vr,pv)) { //if nothing enter, match to existing HiPS
             const otherPlot= primePlot(getOtherLockedHiPS(vr,pv));
             dispatchZoom({ plotId, userZoomType: UserZoomTypes.LEVEL, level:otherPlot.zoomFactor });
             const {centerWp}= getPointMaxSide(otherPlot, otherPlot.viewDim);
@@ -154,11 +187,17 @@ function lockedToOtherHiPS(vr, pv) {
     return Boolean(getOtherLockedHiPS(vr,pv));
 }
 
+/**
+ *
+ * @param {VisRoot} vr
+ * @param {PlotView} pv
+ * @return {Array.<PlotView>|boolean}  return the array of other HiPS or false if there is not any
+ */
 function getOtherLockedHiPS(vr, pv) {
-    const plotGroup= getPlotGroupById(vr, pv.plotGroupId);
-    const ary= getOnePvOrGroup(vr.plotViewAry, pv.plotId, plotGroup);
-    if (ary===1) return false;
-    return ary.find( (testPv) => (testPv!==pv  && isHiPS(primePlot(testPv))) );
+    if (!vr.positionLock) return false;
+    const ary= vr.plotViewAry.filter( (testPv) => isHiPS(primePlot(testPv)) || pv.plotId!==testPv.plotId);
+    if (!ary.length) return false;
+    return ary;
 }
 
 
@@ -477,6 +516,17 @@ function prepFromImageConversion(pv, wpRequest) {
 }
 
 
+/**
+ *
+ * @param {VisRoot} visRoot
+ * @param {PlotView} pv
+ */
+export function matchHiPStoPlotView(visRoot, pv) {
+    const hipsViewerIds = getPlotViewAry(visRoot)
+        .filter((testPv) => isHiPS(primePlot(testPv)))
+        .map((h) => h.plotId);
+    matchHiPSToImage(pv, hipsViewerIds);
+}
 
 
 
@@ -485,7 +535,7 @@ function prepFromImageConversion(pv, wpRequest) {
  * @param {PlotView} pv
  * @param {Array.<string>} hipsPVidAry
  */
-export function matchHiPSToImage(pv, hipsPVidAry) {
+function matchHiPSToImage(pv, hipsPVidAry) {
     if (!pv || isEmpty(hipsPVidAry)) return;
     const attributes=  getCornersAttribute(pv);
     const plot= primePlot(pv);
@@ -494,7 +544,8 @@ export function matchHiPSToImage(pv, hipsPVidAry) {
     if (!dl) dispatchCreateDrawLayer(ImageOutline.TYPE_ID);
     const asPerPix= getArcSecPerPix(plot,plot.zoomFactor);
     hipsPVidAry.forEach( (id) => {
-        Object.entries(attributes).forEach( (entry) => dispatchAttributeChange(id, false, entry[0], entry[1]));
+        Object.entries(attributes).forEach( (entry) => dispatchAttributeChange({
+            plotId:id, overlayColorScope:false, positionScope:false, attKey:entry[0], attValue:entry[1]}));
         dispatchAttachLayerToPlot(ImageOutline.TYPE_ID, id);
         dispatchChangeCenterOfProjection({plotId:id, centerProjPt:wpCenter});
         //Since HiPs map only support JS2000 and Galactic coordinates, only the image is plotted with these two coordinates
@@ -612,3 +663,4 @@ function getPlotGroupId(imageRequest, hipsRequest) {
     if (imageRequest && imageRequest.getPlotGroupId()) return imageRequest.getPlotGroupId();
     if (hipsRequest && hipsRequest.getPlotGroupId()) return hipsRequest.getPlotGroupId();
 }
+
