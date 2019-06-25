@@ -266,6 +266,7 @@ export class VisToolbarView extends PureComponent {
                                        tip='Overlay Markers and Instrument Footprints'
                                        enabled={enabled} horizontal={true}
                                        visible={mi.markerToolDD}
+                                       menuMaxWidth={580}
                                        dropDown={<MarkerDropDownView plotView={pv}/>} />
 
                 <SimpleLayerOnOffButton plotView={pv}
