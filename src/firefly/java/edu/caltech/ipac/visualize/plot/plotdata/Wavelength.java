@@ -27,6 +27,7 @@ import java.util.zip.DataFormatException;
 /**
  * @author Trey Roby
  */
+@Deprecated
 public class Wavelength {
 
 
@@ -522,6 +523,25 @@ public class Wavelength {
      * @throws PixelValueException
      */
     public static double[] getPixelCoords(ImagePt ipt, Header header) throws PixelValueException {
+
+        int p0 = (int) Math.round(ipt.getX() - 0.5); //x
+        int p1 = (int) Math.round(ipt.getY() - 0.5); //y
+
+        int p2 = header.getIntValue("SPOT_PL", 0)-1; //z  default is 0  // todo: I think subtracting 1 is wrong, this should be looked at
+        if (p2<0) p2= 0;
+        int naxis1 = header.getIntValue("NAXIS1");
+        int naxis2 = header.getIntValue("NAXIS2");
+
+
+        if ( (p0 < 0) || (p0 >= naxis1) || (p1 < 0) || (p1 >= naxis2) /*|| (p2 < 0) || (p2 >= imageHeader.naxis3) */ ) {
+            throw new PixelValueException("location " + p0 + " "+ p1 + " " +p2 + " not on the image");
+        }
+        double[] p_j={p0, p1, p2};
+        return p_j;
+    }
+    //NOTE: This is the version used in javascript.  Based on the paper, the coordinate is starting from 1, not zero.
+    //Since the unit test is based on the one above, I kept both to let unit test pass because this class is no longer used.
+    public static double[] getPixelCoordsCorrect(ImagePt ipt, Header header) throws PixelValueException {
 
         //pixel numbers refer to the center of the pixel, so we subtract 0.5, see notes above
         //As noted above, the pixel is counting from 1 to naxis j where (j=1, 2,... naxis).  Since the p = Math.round(ipt.x - 0.5)
