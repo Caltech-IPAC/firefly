@@ -1,6 +1,7 @@
 /*eslint "prefer-template": 0*/
 
 import React, {PureComponent} from 'react';
+import {get} from 'lodash';
 import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import {DropDownDirCTX} from './DropDownDirContext.js';
@@ -83,7 +84,6 @@ export class DropDownSubMenu extends PureComponent {
         this.state= {showSubMenu: false};
         this.show = this.show.bind(this);
         this.hide = this.hide.bind(this);
-        this.dropdownDirection = context.dropdownDirection || DEFAULT_DROPDOWN_DIR;
     }
 
     show() {
@@ -96,6 +96,7 @@ export class DropDownSubMenu extends PureComponent {
     }
 
     render() {
+        const dropdownDirection = get(this.context, 'dropdownDirection', DEFAULT_DROPDOWN_DIR);
         const {text, tip, visible=true, children} = this.props;
         const {showSubMenu} = this.state;
         if (!visible) return null;
@@ -103,11 +104,11 @@ export class DropDownSubMenu extends PureComponent {
             <div className='ff-MenuItem ff-MenuItem-light' title={tip}>
                 <div className='menuItemText subMenu' onMouseEnter={this.show} onMouseLeave={this.hide}>
 
-                    <div className={'menu-text-style__' + this.dropdownDirection}>{text}</div>
+                    <div className={'menu-text-style__' + dropdownDirection}>{text}</div>
 
                     <div style={{position: 'relative', marginRight: 0}}>
                         {showSubMenu &&
-                        <div className={'dropdown-menu__' + this.dropdownDirection} onMouseEnter={this.show}>
+                        <div className={'dropdown-menu__' + dropdownDirection} onMouseEnter={this.show}>
                             <SingleColumnMenu>
                                 {children}
                             </SingleColumnMenu>

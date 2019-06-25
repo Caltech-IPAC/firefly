@@ -139,7 +139,12 @@ DropDownToolbarButton.propTypes= {
 
 
 function calcDropDownDir(element, menuWidth){
+    if (!element || !menuWidth) return DEFAULT_DROPDOWN_DIR;
     const bodyRect = document.body.getBoundingClientRect();
+    const elemRect = element.getBoundingClientRect();
+    const space = bodyRect.width - elemRect.x;
+    return space < menuWidth ? 'left' : 'right';
+    /*const bodyRect = document.body.getBoundingClientRect();
     const elemRect = element.getBoundingClientRect();
     const space = bodyRect.width - elemRect.x;
 
@@ -147,5 +152,5 @@ function calcDropDownDir(element, menuWidth){
 
     space < menuWidth ? dropdownDir ='left' : dropdownDir = 'right';
 
-    return dropdownDir;
+    return dropdownDir;*/
 }
