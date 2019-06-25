@@ -41,6 +41,9 @@ export function updateTransform(pv) {
     const plot= primePlot(pv);
     if (!plot) return pv;
     const {scrollX, scrollY, rotation, viewDim}= pv;
+    if (isNil(scrollX) || isNil(scrollY)) {
+        return pv;
+    }
     const affTrans= makeTransform(0,0, scrollX, scrollY, rotation, pv.flipX, pv.flipY, viewDim);
 
     return insertTransform(pv, affTrans, viewDim);
@@ -59,7 +62,10 @@ export function updateTransform(pv) {
  * @return {Matrix}
  */
 export function makeTransform(offsetX,offsetY,scrollX,scrollY, rotation, flipX, flipY, viewDim) {
-    if (isNil(scrollX) || isNil(scrollY)) return undefined;
+    if (isNil(scrollX) || isNil(scrollY)) {
+        console.log('return  undefined');
+        return undefined;
+    }
     const left= offsetX-scrollX;
     const top= offsetY-scrollY;
     const {width:w, height:h}= viewDim;
