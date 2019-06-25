@@ -144,13 +144,4 @@ function calcDropDownDir(element, menuWidth){
     const elemRect = element.getBoundingClientRect();
     const space = bodyRect.width - elemRect.x;
     return space < menuWidth ? 'left' : 'right';
-    /*const bodyRect = document.body.getBoundingClientRect();
-    const elemRect = element.getBoundingClientRect();
-    const space = bodyRect.width - elemRect.x;
-
-    let dropdownDir = DEFAULT_DROPDOWN_DIR;
-
-    space < menuWidth ? dropdownDir ='left' : dropdownDir = 'right';
-
-    return dropdownDir;*/
 }
