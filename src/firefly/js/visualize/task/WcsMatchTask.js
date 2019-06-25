@@ -234,7 +234,7 @@ function syncPlotToLevelForPixelMatching(pv, masterPv) {
     if (pv.flipY!==masterPv.flipY) dispatchFlip({plotId:pv.plotId, actionScope: ActionScope.SINGLE});
     if (pv.rotation!==masterPv.rotation) {
         dispatchRotate({ plotId: plot.plotId, rotateType: RotateType.ANGLE,
-            angle: masterPv.rotation, actionScope: ActionScope.SINGLE, });
+            angle: 360-masterPv.rotation, actionScope: ActionScope.SINGLE, });
     }
     zoomToLevel(plot, masterPlot.zoomFactor);
 }

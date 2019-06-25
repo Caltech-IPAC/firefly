@@ -62,10 +62,7 @@ export function updateTransform(pv) {
  * @return {Matrix}
  */
 export function makeTransform(offsetX,offsetY,scrollX,scrollY, rotation, flipX, flipY, viewDim) {
-    if (isNil(scrollX) || isNil(scrollY)) {
-        console.log('return  undefined');
-        return undefined;
-    }
+    if (isNil(scrollX) || isNil(scrollY)) return undefined;
     const left= offsetX-scrollX;
     const top= offsetY-scrollY;
     const {width:w, height:h}= viewDim;
@@ -152,7 +149,6 @@ export function plotMover(originalDeviceX ,originalDeviceY , originalScrollPt, m
             const originalCenterOfProjDev= activeCC.getDeviceCoords(centerOfProj);
 
             if (!originalCenterOfProjDev) {
-                // console.log('originalCenterOfProjScreen null');
                 return null;
             }
 
