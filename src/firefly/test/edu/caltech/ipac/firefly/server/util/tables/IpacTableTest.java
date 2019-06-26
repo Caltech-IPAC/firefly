@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
+import static edu.caltech.ipac.firefly.data.TableServerRequest.FILTER_SEP;
 import static edu.caltech.ipac.table.JsonTableUtil.getMetaFromAllMeta;
 
 /**
@@ -84,7 +85,7 @@ public class IpacTableTest {
         // the request
         Assert.assertEquals("meta-info", "test-meta-value", JsonTableUtil.getPathValue(json, "request", TableServerRequest.META_INFO, "test-meta"));
         Assert.assertEquals("sort-info", "ASC,ra,dec", JsonTableUtil.getPathValue(json, "request", TableServerRequest.SORT_INFO));
-        Assert.assertEquals("filter-into", "ra > 0;dec > 0", JsonTableUtil.getPathValue(json, "request", TableServerRequest.FILTERS));
+        Assert.assertEquals("filter-into", "ra > 0" + FILTER_SEP + "dec > 0", JsonTableUtil.getPathValue(json, "request", TableServerRequest.FILTERS));
         Assert.assertEquals("decimate-info", "decimate=ra,dec,1234,0.5,,,,,-1", JsonTableUtil.getPathValue(json, "request", DecimateInfo.DECIMATE_TAG));
 
         // tableMeta

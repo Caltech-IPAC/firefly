@@ -11,8 +11,9 @@ const operators = /(!=|>=|<=|<|>|=| like | in | is not | is )/i;
 
 export const FILTER_CONDITION_TTIPS =
 `Valid values are one of (=, >, <, !=, >=, <=, LIKE, IS, IS NOT) followed by a value separated by a space.
-Or 'IN', followed by a list of values separated by commas. 
-Examples:  > 12345; != 3000; IN a,b,c,d`;
+Or 'IN', followed by a list of values separated by commas.
+You may combine conditions with either 'and' or 'or'. 
+Examples:  > 12345 or != 3000 and IN a,b,c,d`;
 
 export const FILTER_TTIPS =
 `Conditional statements in the form of "column_name" operator value separated by semicolon.
@@ -20,10 +21,16 @@ export const FILTER_TTIPS =
 * column_name must be enclosed in double quotes
 * string value must be enclosed in single quotes
 * when IN is used, enclose the values in parentheses
-Examples:  "ra" > 12345; "color" != 'blue'; "band" IN (1,2,3)
+* you may combine conditions with either 'and' or 'or'
+* grouping by parentheses is not supported at the moment 
+Examples:  "ra" > 12345 and "color" != 'blue' or "band" IN (1,2,3)
 `;
 
 export const NULL_TOKEN = '%NULL';          // need to match DbAdapter.NULL_TOKEN
+
+const COND_SEP = new RegExp('( and | or )', 'i');
+const FILTER_SEP = '_AND_';                 // internal use need to match what's defined in TableServerRequest.FILTER_SEP
+
 
 /**
  * return [column_name, operator, value] triplet.
@@ -71,12 +78,17 @@ export class FilterInfo {
      */
     static parse(filterString) {
         const filterInfo = new FilterInfo();
-        filterString && filterString.split(';').forEach( (v) => {
-                const [cname, op, val] = parseInput(v, {removeQuotes: true});
-                if (cname && op) {
-                    filterInfo.addFilter(cname, `${op} ${val}`);
+        if (filterString) {
+            filterString.split(FILTER_SEP).forEach( (filter) => {
+                const parts = filter.split(COND_SEP);
+                for (let i = 0; i < parts.length; i+=2) {
+                    const [cname, op, val] = parseInput(parts[i], {removeQuotes: true});
+                    if (cname && op) {
+                        filterInfo.addFilter(cname, `${op} ${val}`, parts[i-1]);
+                    }
                 }
             });
+        }
         return filterInfo;
     }
 
@@ -89,18 +101,20 @@ export class FilterInfo {
      */
     static autoCorrectFilter(filterInfo, columns) {
         if (filterInfo) {
-            const filters = filterInfo.split(';').map( (v) => {
-                const [cname, op, val] = parseInput(v);
-                if (!cname) return v;
-                let isNumeric = false;
-                if (columns) {
-                    const col = columns.find((c) => c.name === cname);
-                    // assume all expressions are numeric
-                    isNumeric = !col || isNumericType(col);
+            const parts = filterInfo.split(COND_SEP);
+            for (let i = 0; i < parts.length; i += 2) {
+                const [cname, op, val] = parseInput(parts[i]);
+                if (cname) {
+                    let isNumeric = false;
+                    if (columns) {
+                        const col = columns.find((c) => c.name === cname);
+                        // assume all expressions are numeric
+                        isNumeric = !col || isNumericType(col);
+                    }
+                    parts[i] = `${cname} ${autoCorrectCondition(op + ' ' + val, isNumeric)}`;
                 }
-                return `${cname} ${autoCorrectCondition(op + ' ' + val, isNumeric)}`;
-            });
-            return filters.join(';');
+            }
+            return parts.join('');
         } else {
             return filterInfo;
         }
@@ -112,10 +126,14 @@ export class FilterInfo {
      * @returns {boolean}
      */
     static isConditionValid(conditions) {
-        return !conditions || conditions.split(';').reduce( (rval, v) => {
-                const [cname, op, val] = parseInput(v);
-                return Boolean(rval && op && val && !cname);
-        }, true);
+        if (conditions) {
+            const parts = conditions.split(COND_SEP);
+            for (let i = 0; i < parts.length; i += 2) {
+                const [cname, op, val] = parseInput(parts[i]);
+                if (cname || !op || !val) return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -148,23 +166,24 @@ export class FilterInfo {
      * @returns {Array.<boolean, string>} isValid plus an error message if isValid is false.
      */
     static isValid(filterInfo, columns = []) {
-        const rval = [true, ''];
         const allowCols = columns.concat({name:'ROW_IDX'});
-        if (filterInfo && filterInfo.trim().length > 0) {
-            return filterInfo.split(';').reduce( ([isValid, msg], v) => {
-                const [cname] = parseInput(v);
+        if (filterInfo) {
+            let msg = '';
+            const parts = filterInfo.split(COND_SEP);
+            for (let i = 0; i < parts.length; i += 2) {
+                const [cname] = parseInput(parts[i]);
                 if (!cname) {
-                        msg += `\n"${v}" is not a valid filter.`;
-                    } else if (!allowCols.some( (c) => c.name === cname)) {
-                        const expr = new Expression(cname, allowCols.map((s)=>s.name));
-                        if (!expr.isValid()) {
-                            msg += `\n"${v}" unrecognized column or expression.\n`;
-                        }
+                    msg += `\n"${parts[i]}" is not a valid filter.`;
+                } else if (!allowCols.some( (c) => c.name === cname)) {
+                    const expr = new Expression(cname, allowCols.map((s)=>s.name));
+                    if (!expr.isValid()) {
+                        msg += `\n"${parts[i]}" unrecognized column or expression.\n`;
                     }
-                    return [!msg, msg];
-                }, rval);
+                }
+                if (msg) return [false, msg];
+            }
         } else {
-            return rval;
+            return [true, ''];
         }
     }
 
@@ -276,35 +295,45 @@ export class FilterInfo {
 
 
 
+    apply(f) {
+
+    }
+
+
     serialize(formatKey) {
         if (!formatKey) {
             // add quotes to key if it does not contains quotes
             formatKey = (k) => k.includes('"') ? k : `"${k}"`;
         }
+
         return Object.entries(this.filters)
-                    .map(([k,v]) => v.split(';')
-                                    .filter((f) => f)
-                                    .map( (f) => `${formatKey(k)} ${f}`)
-                                    .join(';'))
-                    .join(';');
+                    .map(([k,v]) => {
+                        const parts = v.split(COND_SEP);
+                        for (let i = 0; i < parts.length; i += 2) {
+                            parts[i] = `${formatKey(k)} ${parts[i]}`;
+                        }
+                        return parts.join('');
+                    }).join(FILTER_SEP);
     }
 
     /**
      * add additional conditions to the given column.
      * @param colName
      * @param conditions
+     * @param andOr     logical operator to prepend to this filter.  defautls to 'and'
      */
-    addFilter(colName, conditions) {
-        this.filters[colName] = !this.filters[colName] ? conditions : `${this.filters[colName]}; ${conditions}`;
+    addFilter(colName, conditions, andOr=' and ') {
+        this.filters[colName] = !this.filters[colName] ? conditions : `${this.filters[colName]}${andOr}${conditions}`;
     }
 
     setFilter(colName, conditions) {
         Reflect.deleteProperty(this.filters, colName);
         if (conditions) {
-            conditions.split(';').forEach( (v) => {
-                const [, op, val] = parseInput(v);
-                if (op) this.addFilter(colName, `${op} ${val}`);
-            });
+            const parts = conditions.split(COND_SEP);
+            for (let i = 0; i < parts.length; i += 2) {
+                const [, op, val] = parseInput(parts[i]);
+                if (op) this.addFilter(colName, `${op} ${val}`, parts[i-1]);
+            }
         }
     }
 
@@ -388,7 +417,7 @@ function likeToRegexp(text) {
 
 /**
  * Attempt to auto-correct the given condition(s).
- * @param {string} conditions  one or more conditions, separated by ';'
+ * @param {string} conditions  one or more conditions, separated by COND_SEP
  * @param {string} tbl_id   table ID.
  * @param {string} cname    column name.
  * @returns {string}
@@ -396,9 +425,13 @@ function likeToRegexp(text) {
 function autoCorrectConditions(conditions, tbl_id, cname) {
     const isNumeric = isNumericType(getColumn(getTblById(tbl_id), cname));
     if (conditions) {
-        return conditions.split(';')                                // separate them into parts
-            .map( (v) => autoCorrectCondition(v, isNumeric))      // auto correct if needed
-            .join(';');                                // put them back
+        const parts = conditions.split(COND_SEP);
+        for (let i = 0; i < parts.length; i += 2) {                       // separate them into parts
+                parts[i] = autoCorrectCondition(parts[i], isNumeric);       // auto correct if needed
+        }
+        return parts.join('');                                              // put them back
+    } else {
+        return conditions;
     }
 }
 
@@ -468,9 +501,12 @@ function autoCorrectCondition(v, isNumeric=false) {
         case '<=':
             val = isNumeric && !isNaN(val) ? val : encloseString(val);
             break;
+        case 'is':
+        case 'is not':
+            val = 'NULL';
+            break;
 
         default:
-            return '';
     }
     return `${op} ${val}`;
 }

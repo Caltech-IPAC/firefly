@@ -20,6 +20,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
 
     public static final String TBL_FILE_PATH = "tblFilePath";       // this meta if exists contains source of the data
     public static final String TBL_FILE_TYPE = "tblFileType";       // this meta if exists contains storage type, ipac, h2, sqlite, etc
+    public static final String FILTER_SEP = "_AND_";         // need to match what's defined in FilterInfo.js
 
     public static final String TBL_ID = "tbl_id";
     public static final String TITLE = "title";
@@ -41,6 +42,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
     private SelectionInfo selectInfo;
     private Map<String, String> metaInfo;
     private transient Map<String, String> metaOptions;               // options to apply for this request.  it will not persist nor returned to the client
+
 
     public TableServerRequest() {
     }
@@ -251,12 +253,12 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
 
     public static List<String> parseFilters(String s) {
         if (StringUtils.isEmpty(s)) return null;
-        String[] filters = s.split(";");
+        String[] filters = s.split(FILTER_SEP);
         return Arrays.asList(filters);
     }
 
     public static String toFilterStr(List<String> l) {
-        return StringUtils.toString(l,";");
+        return StringUtils.toString(l,FILTER_SEP);
     }
 
     /**
