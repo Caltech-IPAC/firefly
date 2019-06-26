@@ -4,13 +4,15 @@
 
 import shallowequal from 'shallowequal';
 import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil,
-        last, isPlainObject, forEach, fromPairs, merge, mergeWith, isArray} from 'lodash';
+        last, isPlainObject, forEach, fromPairs, mergeWith, isArray, truncate} from 'lodash';
 
 import {getRootURL} from './BrowserUtil.js';
 import {getWsConnId, getWsChannel} from '../core/AppDataCntlr.js';
 import {getDownloadProgress, DownloadProgress} from '../rpc/SearchServicesJson.js';
+import {showInfoPopup} from '../ui/PopupUtil.jsx';
 
 import update from 'immutability-helper';
+import {ServerParams} from '../data/ServerParams';
 
 
 const MEG          = 1048576;
@@ -413,32 +415,41 @@ export function downloadWithProgress(url, numTries=1000) {
     });
 }
 
-export function download(url) {
-    let nullFrame = document.getElementById('null_frame');
-    if (!nullFrame) {
-        nullFrame = document.createElement('iframe');
-        nullFrame.id = 'null_frame';
-        nullFrame.style.display = 'none';
-        nullFrame.style.width = '0px';
-        nullFrame.style.height = '0px';
-        document.body.appendChild(nullFrame);
+export function downloadBlob(blob, filename) {
+    if (blob) {
+        window.URL = window.URL || window.webkitURL;
+        const a = document.createElement('a');
+        a.href = window.URL.createObjectURL(blob);
+        a.download = filename;
+        a.click();
+        window.URL.revokeObjectURL(a.href);
     }
-    nullFrame.src = url;
 }
 
-export function downloadViaAnchor(url, filename) {
-    let downloadAnchor = document.getElementById('download_anchor');
-    if (!downloadAnchor) {
-        downloadAnchor = document.createElement('a');
-        downloadAnchor.id = 'download_anchor';
-        downloadAnchor.style.display = 'block';
-        downloadAnchor.style.width = '0px';
-        downloadAnchor.style.height = '0px';
-        document.body.appendChild(downloadAnchor);
+function resolveFileName(resp) {
+    if (resp && resp.headers) {
+        const cd = resp.headers.get('Content-Disposition') || '';
+        const parts = cd.match(/.*filename=(.*)/);
+        if (parts && parts.length > 1) return parts[1];
     }
-    downloadAnchor.download = filename;
-    downloadAnchor.href = url;
-    downloadAnchor.click();
+}
+
+export function download(url, filename) {
+    const {protocol, host, path, hash, searchObject={}} = parseUrl(url);
+    const cmd = searchObject[ServerParams.COMMAND];
+    url = `${protocol}//${host}${path}?${ServerParams.COMMAND}=${cmd}` + (hash ? '#' + hash : '');      // add cmd into the url as a workaround for server-side code not supporting it
+
+    const params = Object.fromEntries(
+                        Object.entries(searchObject)
+                              .map(([k, v]) => [k, (isPlainObject(v) ? JSON.stringify(v) : v)]) );          // convert object back into JSON if needed.
+
+    fetchUrl(url, {method: 'post', params})
+        .then((resp) => {
+            filename = filename || resolveFileName(resp);
+            return resp.blob(); })
+        .then( (blob) => {
+            downloadBlob(blob, filename); })
+        .catch(({message}) => showInfoPopup(truncate(message, {length: 200}), 'Unexpected error'));
 }
 
 export function parseUrl(url) {

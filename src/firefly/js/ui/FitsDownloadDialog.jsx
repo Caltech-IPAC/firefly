@@ -17,7 +17,7 @@ import {get, set, isEmpty} from 'lodash';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
 import {getRootURL} from '../util/BrowserUtil.js';
-import {download, downloadViaAnchor, encodeUrl, updateSet} from '../util/WebUtil.js';
+import {download, downloadBlob, encodeUrl, updateSet} from '../util/WebUtil.js';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
@@ -779,9 +779,7 @@ function makePngLocal(plotId, filename= 'a.png') {
 
     if (canvas) {
         canvas.toBlob( (blob) => {
-            const url= URL.createObjectURL(blob);
-            downloadViaAnchor(url, filename);
-            URL.revokeObjectURL(url);
+            downloadBlob(blob, filename);
         }, 'image/png');
     }
 
