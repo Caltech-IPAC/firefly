@@ -22,7 +22,7 @@ const mLeft = 5;
 
 function DrawLayerItemView({maxTitleChars, lastItem, deleteLayer,
                             color, canUserChangeColor, canUserDelete, title, helpLine,
-                            isPointData, drawingDef,
+                            isPointData, drawingDef, autoFormatTitle,
                             visible, changeVisible, modifyColor, modifyShape, UIComponent}) {
     var style= {
         width:'100%',
@@ -53,7 +53,7 @@ function DrawLayerItemView({maxTitleChars, lastItem, deleteLayer,
                          }} >
                 <div style={{display: 'flex', alignItems: 'center'}}>
                     <input type='checkbox' checked={visible} onChange={() => changeVisible()} />
-                    {getTitleTag(title,maxTitleChars)}
+                    {getTitleTag(title,maxTitleChars, autoFormatTitle)}
                 </div>
                 <div style={{padding:'0 4px 0 5px', width: 180, display: 'flex', justifyContent: 'flex-end'}}>
                     {makeColorChange(color, canUserChangeColor,modifyColor)}
@@ -71,24 +71,26 @@ function DrawLayerItemView({maxTitleChars, lastItem, deleteLayer,
 
 
 DrawLayerItemView.propTypes= {
-    maxTitleChars : PropTypes.number.isRequired,
-    lastItem      : PropTypes.bool.isRequired,
-    visible       : PropTypes.bool.isRequired,
+    maxTitleChars  : PropTypes.number.isRequired,
+    lastItem       : PropTypes.bool.isRequired,
+    visible        : PropTypes.bool.isRequired,
     canUserChangeColor : PropTypes.any.isRequired,
-    color         : PropTypes.string.isRequired,
-    title         : PropTypes.any.isRequired,
-    helpLine      : PropTypes.string.isRequired,
-    canUserDelete : PropTypes.bool.isRequired,
-    isPointData   : PropTypes.bool.isRequired,
-    drawingDef    : PropTypes.object,
-    deleteLayer   : PropTypes.func,
-    changeVisible : PropTypes.func,
-    modifyColor   : PropTypes.func,
-    UIComponent   : PropTypes.object
+    color          : PropTypes.string.isRequired,
+    title          : PropTypes.node.isRequired,
+    helpLine       : PropTypes.string.isRequired,
+    canUserDelete  : PropTypes.bool.isRequired,
+    isPointData    : PropTypes.bool.isRequired,
+    drawingDef     : PropTypes.object,
+    deleteLayer    : PropTypes.func,
+    changeVisible  : PropTypes.func,
+    modifyColor    : PropTypes.func,
+    UIComponent    : PropTypes.object,
+    autoFormatTitle: PropTypes.bool,
 };
 
 
-function getTitleTag(title, maxTitleChars) {
+function getTitleTag(title, maxTitleChars, autoFormatTitle) {
+    if (!autoFormatTitle) return title;
     const minW = maxTitleChars*.3 < 30 ? Math.max(maxTitleChars*.3, 10) : 30;
     const maxW = maxTitleChars*.7 > 10 ? Math.min(maxTitleChars*.7, 30) : 10;
 

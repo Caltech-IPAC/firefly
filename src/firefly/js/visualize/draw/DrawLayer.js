@@ -145,6 +145,7 @@ function makeDrawLayer(drawLayerId,
 
 
         title,
+        autoFormatTitle:true,
         plotIdAry: [],  // array of plotId that are layered
         visiblePlotIdAry: [], // array of plotId that are visible, only ids in this array are visible
         actionTypeAry,      // what actions that the reducer will allow through the drawing layer reducer

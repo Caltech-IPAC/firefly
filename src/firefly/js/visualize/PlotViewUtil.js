@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {difference, flatten, get, has, isArray, isEmpty, isString, isUndefined} from 'lodash';
+import {difference, flatten, get, has, isArray, isEmpty, isString, isUndefined, isObject} from 'lodash';
 import {getPlotGroupById} from './PlotGroup.js';
 import {makeDevicePt, makeImagePt, makeWorldPt, pointEquals} from './Point.js';
 import {clone} from '../util/WebUtil.js';
@@ -358,7 +358,10 @@ export function isDrawLayerAttached(dl, plotId) { return dl ? dl.plotIdAry.inclu
  * @param dl
  * @return {*}
  */
-export function getLayerTitle(plotId,dl) { return (typeof dl.title === 'string') ? dl.title : dl.title[plotId]; }
+export function getLayerTitle(plotId,dl) {
+    if (!dl.autoFormatTitle) return dl.title;
+    return isObject(dl.title) ? dl.title[plotId] : dl.title;
+}
 
 
 export function deleteAllDrawLayers() {

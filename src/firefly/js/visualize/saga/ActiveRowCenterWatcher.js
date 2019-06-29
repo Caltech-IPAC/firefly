@@ -11,6 +11,7 @@ import {findTableCenterColumns} from '../../util/VOAnalyzer.js';
 import {getActivePlotView, getCenterOfProjection, getFoV, hasWCSProjection, primePlot} from '../PlotViewUtil';
 import {computeDistance, toDegrees} from '../VisUtil';
 import {CysConverter} from '../CsysConverter';
+import {dispatchUseTableAutoScroll} from '../ImagePlotCntlr';
 
 
 
@@ -21,7 +22,7 @@ export const activeRowCenterDef = {
     id : 'ActiveRowCenter',
     watcher : recenterImages,
     testTable : (table) => {
-        return Boolean(findTableCenterColumns(table))
+        return Boolean(findTableCenterColumns(table));
     },
     actions: [TABLE_LOADED, TABLE_SELECT, TABLE_HIGHLIGHT, TABLE_UPDATE, TBL_RESULTS_ACTIVE, TABLE_REMOVE]
 };
@@ -36,11 +37,11 @@ export function recenterImages(tbl_id, action, cancelSelf, params) {
 
     switch (action.type) {
         case TABLE_LOADED:
-            recenterImageActiveRow(tbl_id);
+            recenterImageActiveRow(tbl_id, true);
             break;
 
         case TABLE_SELECT:
-            recenterImageActiveRow(tbl_id);
+            recenterImageActiveRow(tbl_id, true);
             break;
 
         case TABLE_HIGHLIGHT:
@@ -53,7 +54,7 @@ export function recenterImages(tbl_id, action, cancelSelf, params) {
             break;
 
         case TBL_RESULTS_ACTIVE:
-            recenterImageActiveRow(tbl_id);
+            recenterImageActiveRow(tbl_id, true);
             break;
 
     }
@@ -83,7 +84,7 @@ function getRowCenterWorldPt(tbl) {
  * @param {WorldPt} wp
  * @return {boolean}
  */
-function shouldRecenter(pv,wp) {
+function shouldRecenter(pv,wp) {//todo - keep the function for a year in case we decide to go back to it (7/2/2019)
     const plot= primePlot(pv);
     if (!plot) return false;
     const cc= CysConverter.make(plot);
@@ -105,9 +106,28 @@ function shouldRecenter(pv,wp) {
 
 }
 
-function recenterImageActiveRow(tbl_id) {
+/**
+ * return true if the point is not one the display
+ * @param pv
+ * @param wp
+ * @return {boolean}
+ */
+function shouldRecenterSimple(pv,wp) {
+    const plot= primePlot(pv);
+    if (!plot) return false;
+    const cc= CysConverter.make(plot);
+    return !cc.pointOnDisplay(wp);
+}
 
-    if (!visRoot().autoScrollToHighlightedTableRow) return;
+
+function recenterImageActiveRow(tbl_id, force=false) {
+
+    const vr= visRoot();
+    if (!force && !vr.autoScrollToHighlightedTableRow) return;
+    if (!vr.useAutoScrollToHighlightedTableRow) {
+        dispatchUseTableAutoScroll(true);
+        return;
+    }
     const tbl= getTblById(tbl_id);
     const pv = getActivePlotView(visRoot());
     const plot = primePlot(pv);
@@ -116,5 +136,5 @@ function recenterImageActiveRow(tbl_id) {
     const wp= getRowCenterWorldPt(tbl);
     if (!wp) return;
 
-    if (shouldRecenter(pv,wp)) dispatchRecenter({plotId: plot.plotId, centerPt: wp});
+    if (force || shouldRecenterSimple(pv,wp)) dispatchRecenter({plotId: plot.plotId, centerPt: wp});
 }

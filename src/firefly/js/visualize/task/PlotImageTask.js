@@ -173,7 +173,7 @@ export function makePlotImageAction(rawAction) {
                 .reduce( (obj, pv) => {
                     obj[pv.plotId]= pv.overlayPlotViews;
                     return obj;
-            },{});
+            },{})
 
             if (vr.wcsMatchType && vr.mpwWcsPrimId && rawAction.payload.holdWcsMatch) {
                 const wcsPrim= getPlotViewById(vr,vr.mpwWcsPrimId);

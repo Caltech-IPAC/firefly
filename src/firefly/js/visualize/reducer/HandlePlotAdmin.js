@@ -12,7 +12,7 @@ export function reducer(state, action) {
 
     switch (action.type) {
         case Cntlr.API_TOOLS_VIEW  :
-            return clone(state,{apiToolsView:action.payload.apiToolsView, useFloatToolbar: action.payload.useFloatToolbar});
+            return {...state,apiToolsView:action.payload.apiToolsView, useFloatToolbar: action.payload.useFloatToolbar};
 
         case Cntlr.CHANGE_ACTIVE_PLOT_VIEW:
             return changeActivePlotView(state,action);
@@ -23,20 +23,20 @@ export function reducer(state, action) {
         case Cntlr.CHANGE_POINT_SELECTION:
             return changePointSelection(state,action);
         case Cntlr.CHANGE_TABLE_AUTO_SCROLL:
+            if (state.autoScrollToHighlightedTableRow===action.payload.enabled) return state;
             return {...state, autoScrollToHighlightedTableRow:action.payload.enabled};
+        case Cntlr.USE_TABLE_AUTO_SCROLL:
+            if (state.useAutoScrollToHighlightedTableRow===action.payload.enabled) return state;
+            return {...state, useAutoScrollToHighlightedTableRow:action.payload.useAutoScroll};
         case Cntlr.DELETE_PLOT_VIEW:
             return deletePlotView(state,action);
 
         case Cntlr.WCS_MATCH:
             const {wcsMatchCenterWP,wcsMatchType,mpwWcsPrimId}= action.payload;
-            return clone(state,{wcsMatchCenterWP,wcsMatchType,mpwWcsPrimId});
+            return {...state,wcsMatchCenterWP,wcsMatchType,mpwWcsPrimId};
         case Cntlr.EXPANDED_AUTO_PLAY:
-            if (state.singleAutoPlay!==action.payload.autoPlayOn) {
-                return clone(state,{singleAutoPlay:action.payload.autoPlayOn});
-            }
-            else {
-                return state;
-            }
+            if (state.singleAutoPlay===action.payload.autoPlayOn) return state;
+            return {...state,singleAutoPlay:action.payload.autoPlayOn};
     }
     return state;
 }

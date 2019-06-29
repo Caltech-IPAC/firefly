@@ -99,6 +99,7 @@ const defAppProps = {
     menu: [
         {label:'Images', action:'ImageSelectDropDownCmd'},
         {label:'Catalogs', action:'IrsaCatalogDropDown'},
+        {label:'TAP Searches', action: 'TAPSearch'},
         {label:'Charts', action:'ChartSelectDropDownCmd'},
         {label:'Upload', action: 'FileUploadDropDownCmd'},
         //{label:'Workspace', action: 'WorkspaceDropDownCmd'}

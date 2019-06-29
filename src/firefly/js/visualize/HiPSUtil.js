@@ -119,7 +119,11 @@ export function getHiPSNorderlevel(plot, limitToImageDepth= false) {
     let norder= getNOrderForPixArcSecSize(screenPixArcsecSize);
 
     if (limitToImageDepth) {
-        const maxOrder= Number(get(plot, 'hipsProperties.hips_order', '3'));
+        let maxOrder= Number(get(plot, 'hipsProperties.hips_order'));
+        if (!maxOrder) {
+            const hipsPixelScale= Number(get(plot, 'hipsProperties.hips_pixel_scale'));
+            maxOrder= hipsPixelScale ? getNOrderForPixArcSecSize(hipsPixelScale*3600) : 3;
+        }
         norder= Math.min(norder, maxOrder);
     }
     return {norder, useAllSky:false};
@@ -132,7 +136,7 @@ const nOrderForPixAsSizeCacheMap= {};
  * Return the best norder for a given screen pixel angular size in arc seconds
  * Results are cached so this function is very efficient.
  * @param {Number} sizeInArcSec - pixel size in arc seconds
- * @return {Number} the best norder for the pixel
+ * @return {Number} the best norder for the pixet l
  */
 function getNOrderForPixArcSecSize(sizeInArcSec) {
     const sizeInArcSecKey= sizeInArcSec.toFixed(7);

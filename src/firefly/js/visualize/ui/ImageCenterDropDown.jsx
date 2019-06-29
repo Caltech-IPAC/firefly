@@ -1,4 +1,4 @@
-import React, {useState, Fragment} from 'react';
+import React, {useState} from 'react';
 import {get} from 'lodash';
 import {primePlot} from '../PlotViewUtil.js';
 import {isImage, PlotAttribute} from '../WebPlot.js';
@@ -7,7 +7,7 @@ import {DropDownVerticalSeparator, ToolbarButton} from '../../ui/ToolbarButton.j
 import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
 
 import CENTER_DROP from 'html/images/center-dropdown.png';
-import {getActivePlotView} from '../PlotViewUtil';
+import {getActivePlotView, getDrawLayersByType} from '../PlotViewUtil';
 import {dispatchChangeTableAutoScroll, dispatchRecenter} from '../ImagePlotCntlr';
 import {getTableGroup} from '../../tables/TableUtil';
 import {TargetPanel} from '../../ui/TargetPanel.jsx';
@@ -15,8 +15,10 @@ import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import CompleteButton from '../../ui/CompleteButton';
 import {parseWorldPt, pointEquals} from '../Point';
 import {dispatchAddPreference, getPreference} from '../../core/AppDataCntlr';
-import {coordToString} from '../../data/form/PositionFieldDef';
 import {DropDownSubMenu} from '../../ui/DropDownMenu';
+import FixedMarker from '../../drawingLayers/FixedMarker';
+import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer, getDlAry} from '../DrawLayerCntlr';
+import {formatWorldPt, formatWorldPtToString} from './WorldPtFormat';
 
 
 const MAX_TARGET_LEN= 10;
@@ -51,28 +53,6 @@ function  hasTablesWithCoordinates(pv) {
     return Boolean(pv && coordTable);
 }
 
-function prettyTarget(wp) {
-    if (wp.objName) {
-        if (wp.resolver) {
-            return (
-                <Fragment>
-                    <span style={{fontWeight:'bold'}}>{wp.objName}</span>
-                    <span style={{fontSize: '80%' }}>
-                        <span style={{fontStyle: 'italic'}}> by </span>
-                        {`${wp.resolver.toString().toUpperCase()}`}
-                    </span>
-                </Fragment>
-            );
-        }
-        else {
-            return ( <span style={{fontWeight:'bold'}}>{wp.objName}</span> );
-        }
-    }
-    else {
-        return ( <span style={{fontWeight:'bold'}}>{`${wp.x}, ${wp.y} ${coordToString(wp.cSys)}`}</span> );
-    }
-}
-
 
 export function ImageCenterDropDown({visRoot:vr, visible}) {
 
@@ -89,20 +69,25 @@ export function ImageCenterDropDown({visRoot:vr, visible}) {
         dispatchRecenter({plotId, centerPt:wp});
         addToRecentTargets(wp, setRecentAry);
     };
-    //   //todo code to call a future marker option
-    // const createMarkerAndMoveToTarget= (fields) => {
-    //     const wp=  parseWorldPt(get(fields,'UserTargetWorldPt'));
-    //     if (!wp) return;
-    //     moveToTarget(fields);
-    //                              todo: the section below might need to be deferred to the plot has moved to the target first
-    //     const cc = CysConverter.make(plot);
-    //     if (cc.pointInPlot(wp)) {
-    //         const title= prettyTarget(wp);
-    //         const drawLayerId = title;
-    //         dispatchCreateMarkerLayer(drawLayerId, title, plotId, true, wp, true);
-    //     }
-    // };
-    //
+
+    const createMarkerAndMoveToTarget= (fields) => {
+        const wp=  parseWorldPt(get(fields,'UserTargetWorldPt'));
+        if (!wp) return;
+        const pv= getActivePlotView(vr);
+        if (!pv) return;
+        moveToTarget(fields);
+
+
+        const fixedLayers= getDrawLayersByType(getDlAry(), FixedMarker.TYPE_ID);
+        let newDL= fixedLayers.find( (dl) => pointEquals(dl.worldPt, wp));
+
+        if (!newDL) {
+            const title= formatWorldPt(wp);
+            newDL= dispatchCreateDrawLayer(FixedMarker.TYPE_ID, {worldPt:wp, title});
+        }
+        dispatchAttachLayerToPlot(newDL.drawLayerId, pv.plotId, true);
+    };
+
 
     const dropDown= (
         <SingleColumnMenu>
@@ -121,29 +106,29 @@ export function ImageCenterDropDown({visRoot:vr, visible}) {
                            horizontal={false} key={'center-search-target'}
                            onClick={() => dispatchRecenter({plotId})} />
 
-            <ToolbarButton text='Center on Image' tip='Center on the image'
+            <ToolbarButton text='Center Image' tip='Center image in display frame'
                            enabled={Boolean(plot && isImage(plot))}
                            horizontal={false} key={'center-image'}
                            onClick={() => dispatchRecenter({plotId, centerOnImage:true})} />
 
             <DropDownVerticalSeparator useLine={true}/>
             <FieldGroup style={{display:'flex', fontSize:'10pt', padding:'5px 0 0 0'}}
-                        groupKey='TARGET_DROPDOWN' validatorFunc={null} keepState={true}>
+                        groupKey='TARGET_DROPDOWN' validatorFunc={null} keepState={false}>
                 <TargetPanel groupKey={'target-move-group'} labelWidth={80}
-                             label={'Center On:'}
+                             label={'Center On:'} defaultToActiveTarget={false}
                              showResolveSourceOp={false} showExample={false}/>
-                <div style={{display:'flex', flexDirection:'column', alignItems: 'flex-end'}}>
-                    <CompleteButton style={{paddingLeft:10}} text= 'Go' onSuccess={moveToTarget} fireOnEnter={true}
+                <div style={{display:'flex', flexDirection:'column'}}>
+                    <CompleteButton text= 'Go' innerStyle={{width:'100%'}} onSuccess={moveToTarget} fireOnEnter={true}
                                     dialogId='ExampleDialog' />
-                    {/*                //todo- button to add marker*/}
-                    {/*<CompleteButton style={{paddingLeft:10, marginTop:4}} text= 'Marker' onSuccess={createMarkerAndMoveToTarget}*/}
-                    {/*                dialogId='ExampleDialog' />*/}
+                    <CompleteButton style={{ marginTop:4}} innerStyle={{width:'100%'}}
+                                    text= 'Go & Mark' onSuccess={createMarkerAndMoveToTarget}
+                                    dialogId='ExampleDialog' />
                 </div>
             </FieldGroup>
             {recentAry.length>0 && <DropDownVerticalSeparator useLine={true}/>}
             <DropDownSubMenu text={'Recent Positions'} visible={recentAry.length>0}>
                 {() =>
-                    getRecentTargets().map( (t) => <ToolbarButton text={prettyTarget(t)} tip='recent position'
+                    getRecentTargets().map( (t) => <ToolbarButton text={formatWorldPt(t)} tip={formatWorldPtToString(t)}
                                                                   additionalStyle={{width:'100%'}}
                                                                   enabled={Boolean(plot)} horizontal={false} key={t.toString()}
                                                                   onClick={() => dispatchRecenter({plotId:pv.plotId, centerPt:t})} />)

@@ -59,7 +59,7 @@ function onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,includeUnmounte
 
 export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
                           closeOnValid=true, dialogId,includeUnmounted= false,
-                          style={}, changeMasking, fireOnEnter= false}) {
+                          style={}, innerStyle= {}, changeMasking, fireOnEnter= false}) {
     const context= useContext(GroupKeyCtx);
     if (!groupKey && context) groupKey= context.groupKey;
     const onComplete = () => onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,includeUnmounted,changeMasking);
@@ -83,7 +83,7 @@ export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
 
     return (
         <div style={style}>
-            <button type='button' className='button std hl'  onClick={onComplete}>{text}</button>
+            <button type='button' style={innerStyle} className='button std hl'  onClick={onComplete}>{text}</button>
         </div>
     );
 }
@@ -97,6 +97,7 @@ CompleteButton.propTypes= {
     closeOnValid: PropTypes.bool,
     dialogId: PropTypes.string,
     style: PropTypes.object,
+    innerStyle: PropTypes.object,
     includeUnmounted : PropTypes.bool,
     changeMasking: PropTypes.func,
     fireOnEnter: PropTypes.bool
