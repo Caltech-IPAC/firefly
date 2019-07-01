@@ -3,7 +3,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import 'babel-polyfill';
 import 'isomorphic-fetch';
 import React from 'react';
 import ReactDOM from 'react-dom';
