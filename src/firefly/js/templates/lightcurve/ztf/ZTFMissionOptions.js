@@ -1,15 +1,9 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {get,  set, isNil} from 'lodash';
-import {RadioGroupInputField} from '../../../ui/RadioGroupInputField.jsx';
-import {getCellValue, getTblById, getColumnIdx, smartMerge, getColumns, COL_TYPE} from '../../../tables/TableUtil.js';
-import {makeFileRequest} from '../../../tables/TableRequestUtil.js';
-import {sortInfoString} from '../../../tables/SortInfo.js';
-import {getInitialDefaultValues,renderMissionView,validate,getTimeAndYColInfo,fileUpdateOnTimeColumn,setValueAndValidator} from '../LcUtil.jsx';
+import {getCellValue, getTblById} from '../../../tables/TableUtil.js';
+import {getInitialDefaultValues,renderMissionView,validate,setValueAndValidator} from '../LcUtil.jsx';
 import {LC} from '../LcManager.js';
-import {DownloadOptionPanel, DownloadButton} from '../../../ui/DownloadDialog.jsx';
-import {ValidationField} from '../../../ui/ValidationField.jsx';
-import {DL_DATA_TAG} from '../LcConverterFactory.js';
 
 
 const labelWidth = 80;
@@ -87,105 +81,4 @@ export function isValidZTFTable() {
                         Please select the "Other" upload option for tables that do not meet these requirements.`;
         return {errorMsg, isValid:false};
    }
-}
-
-/**
- * Pregex pattern for ztf, at least to find mjd and meanmag if present
- * @type {string[]}
- */
-const xyColPattern = ['(?:^|\\W)mjd(?:$|\\W)', '(?:^|\\W)mag(?:$|\\W)'];
-export function ztfOnNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo) {
-
-    // Update default values AND sortInfo and
-    const metaInfo = rawTable && rawTable.tableMeta;
-
-    const numericalCols = getColumns(rawTable, COL_TYPE.NUMBER).map((c) => c.name);
-    const defaultDataSource = (getColumnIdx(rawTable, converterData.dataSource) > 0) ? converterData.dataSource : numericalCols[3];
-
-    const {defaultCTimeName,defaultYColName } = getTimeAndYColInfo(numericalCols,xyColPattern,rawTable,converterData );
-
-    const defaultValues = {
-        [LC.META_TIME_CNAME]: get(metaInfo, LC.META_TIME_CNAME, defaultCTimeName),
-        [LC.META_FLUX_CNAME]: get(metaInfo, LC.META_FLUX_CNAME, defaultYColName),
-        [LC.META_TIME_NAMES]: get(metaInfo, LC.META_TIME_NAMES, numericalCols),
-        [LC.META_FLUX_NAMES]: get(metaInfo, LC.META_FLUX_NAMES, numericalCols),
-        [LC.META_URL_CNAME]: get(metaInfo, LC.META_URL_CNAME, defaultDataSource),
-        [LC.META_FLUX_BAND]: get(metaInfo, LC.META_FLUX_BAND, 'zg')
-
-    };
-
-    missionEntries = Object.assign({}, missionEntries, defaultValues);
-    const newLayoutInfo = smartMerge(layoutInfo, {missionEntries, generalEntries});
-
-    return {newLayoutInfo, shouldContinue: false};
-}
-
-//TODO if ztfRawTableRequest and ztfOnFieldUpdate are nothing different from the ones in ztfMssionOption, these two can be replaced.
-export function ztfRawTableRequest(converter, source, uploadFileName='') {
-    const timeCName = converter.defaultTimeCName;
-    const mission = converter.converterId;
-    const options = {
-        tbl_id: LC.RAW_TABLE,
-        sortInfo: sortInfoString(timeCName), // if present, it will skip LcManager.js#ensureValidRawTable
-        META_INFO: {[LC.META_MISSION]: mission, timeCName},
-        pageSize: LC.TABLE_PAGESIZE,
-        uploadFileName
-
-    };
-    return makeFileRequest('Input Data', source, null, options);
-
-}
-
-
-export function ztfOnFieldUpdate(fieldKey, value) {
-    // images are controlled by radio button -> filter zg, zr etc.
-    if (fieldKey === LC.META_TIME_CNAME) {
-        return fileUpdateOnTimeColumn(fieldKey, value);
-    } else if ([LC.META_FLUX_CNAME, LC.META_ERR_CNAME,  LC.META_FLUX_BAND].includes(fieldKey)) {
-        return {[fieldKey]: value};
-    }
-
-
-}
-
-/**
- *  This is specialized for ZTF download.
- *  Gets the download option panel for ZTF with specific file processor id 'ZtfDownload'
- * @param mission
- * @param cutoutSizeInDeg
- * @returns {XML}
- */
-export function ztfDownloaderOptPanel (mission, cutoutSizeInDeg) {
-    const currentTime = (new Date()).toLocaleString('en-US', { hour12: false });
-
-    const style = {width: 167};
-    return (
-        <DownloadButton>
-            <DownloadOptionPanel
-                groupKey = {mission}
-                dataTag = {DL_DATA_TAG}
-                cutoutSize={cutoutSizeInDeg}
-                title={'Image Download Option'}
-                dlParams={{
-                    MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each ztf image is ~37mb
-                    FilePrefix: `${mission}_Files`,
-                    BaseFileName: `${mission}_Files`,
-                    DataSource: `${mission} images`,
-                    FileGroupProcessor: 'ZtfLcDownload',
-                    ProductLevel:'sci',
-                    schema:'products',
-                    table:'sci'
-                }}>
-                <ValidationField
-                    style={style}
-                    initialState={{
-                        value: `${mission}_Files: ${currentTime}`,
-                        label: 'ZTF:'
-                    }}
-
-                    fieldKey='Title'
-                    labelWidth={110}/>
-            </DownloadOptionPanel>
-        </DownloadButton>
-    );
 }

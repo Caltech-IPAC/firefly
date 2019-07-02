@@ -28,13 +28,15 @@ export class BgMaskPanel extends SimpleComponent {
             bgStatus && dispatchJobAdd(bgStatus);
         };
 
+
         if (inProgress) {
             return (
                 <div style={maskStyle}>
                     <div className='loading-mask'/>
                     {bgStatus &&
                     <div style={{display: 'flex', alignItems: 'center'}}>
-                        <button type='button' style={maskButton} className='button std' onClick={sendToBg}>Send to background</button>
+                      <button type='button' style={maskButton} className='button std' onClick={sendToBg}>Please click to send to background</button>;
+
                     </div>
                     }
                 </div>

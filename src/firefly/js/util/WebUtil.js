@@ -13,6 +13,9 @@ import {showInfoPopup} from '../ui/PopupUtil.jsx';
 
 import update from 'immutability-helper';
 import {ServerParams} from '../data/ServerParams';
+import {validateFileName} from '../ui/DownloadOptionsDialog';
+import {getWorkspacePath, WS_SERVER_PARAM} from '../visualize/WorkspaceCntlr';
+import {doDownloadWorkspace} from '../ui/WorkspaceViewer';
 
 
 const MEG          = 1048576;
@@ -376,11 +379,13 @@ export function copyToClipboard(str) {
 }
 
 /**
- * @param {string} url  the url to download.  It should be based on AnyFileDownload
- * @param {number} [numTries=1000]  number of time to check for progress until giving up
- * @returns {Promise}  resolve is called on DONE and reject when FAIL.
+ *
+ * @param url
+ * @param fileName
+ * @param numTries
+ * @returns {Promise<any>}
  */
-export function downloadWithProgress(url, numTries=1000) {
+export function downloadWithProgress(url, fileName, numTries=1000) {
     return new Promise(function(resolve, reject) {
         const {search} = parseUrl(url);
         let cnt = 0;
@@ -405,7 +410,7 @@ export function downloadWithProgress(url, numTries=1000) {
             }, interval);
         };
         doIt();
-        download(url);
+        download(url, fileName);
     });
 }
 
@@ -434,7 +439,8 @@ function resolveFileName(resp) {
 export function download(url, filename) {
     const {protocol, host, path, hash, searchObject={}} = parseUrl(url);
     const cmd = searchObject[ServerParams.COMMAND];
-    url = `${protocol}//${host}${path}?${ServerParams.COMMAND}=${cmd}` + (hash ? '#' + hash : '');      // add cmd into the url as a workaround for server-side code not supporting it
+    url = cmd? `${protocol}//${host}${path}?${ServerParams.COMMAND}=${cmd}` + (hash ? '#' + hash : ''):      // add cmd into the url as a workaround for server-side code not supporting it
+        url;
 
     const params = Object.fromEntries(
                         Object.entries(searchObject)
@@ -849,3 +855,33 @@ export function hashCode(str) {
 export function isNumeric(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
 }
+
+export function saveToWorkspace(fileName, wsSelect, file, url){
+
+        const zipFileName = fileName + '.zip';
+        const params = {[WS_SERVER_PARAM.currentrelpath.key]:getWorkspacePath(wsSelect, zipFileName),
+            [WS_SERVER_PARAM.newpath.key]: zipFileName,
+            file,
+            [ServerParams.COMMAND]: ServerParams.WS_PUT_IMAGE_FILE,
+            [WS_SERVER_PARAM.should_overwrite.key]: true};
+
+        url && doDownloadWorkspace(url, {params});
+}
+export function doDownload (bgStatus, isWorkSpace, wsSelect, fileName) {
+    const url1 = get(bgStatus, ['ITEMS', 0, 'url']);
+    const urlInfo =parseUrl(url1);
+    const searchObj = urlInfo.searchObject;
+    const file = searchObj.file;
+    const url = isWorkSpace ? `${getRootURL()}sticky/CmdSrv`
+        : url1;
+
+    if (isWorkSpace) {
+        if (!validateFileName(wsSelect, fileName)) return false;
+    }
+
+    if (isWorkSpace) {
+        saveToWorkspace(fileName, wsSelect, file, url);
+    } else {
+        url && download(url, fileName);
+    }
+};

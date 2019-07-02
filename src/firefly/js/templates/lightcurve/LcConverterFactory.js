@@ -13,13 +13,13 @@ import {basicURLPlotRequest} from './basic/BasicPlotRequests';
 import {LsstSdssSettingBox, lsstSdssOnNewRawTable, lsstSdssOnFieldUpdate, lsstSdssRawTableRequest} from './lsst_sdss/LsstSdssMissionOptions.js';
 import {DefaultSettingBox, defaultOnNewRawTable, defaultOnFieldUpdate, defaultRawTableRequest} from './generic/DefaultMissionOptions.js';
 import {BasicSettingBox, basicOnNewRawTable, basicOnFieldUpdate, basicRawTableRequest, imagesShouldBeDisplayed} from './basic/BasicMissionOptions.js';
-import {WiseSettingBox, wiseOnNewRawTable, wiseOnFieldUpdate, wiseRawTableRequest, wiseYColMappings, isValidWiseTable} from './wise/WiseMissionOptions.js';
-import {PTFSettingBox, ptfOnNewRawTable, ptfOnFieldUpdate, ptfRawTableRequest, isValidPTFTable, ptfDownloaderOptPanel} from './ptf/PTFMissionOptions.js';
-import {ZTFSettingBox, ztfOnNewRawTable, ztfOnFieldUpdate, ztfRawTableRequest, isValidZTFTable, ztfDownloaderOptPanel} from './ztf/ZTFMissionOptions.js';
+import {WiseSettingBox, wiseYColMappings, isValidWiseTable} from './wise/WiseMissionOptions.js';
+import {PTFSettingBox, isValidPTFTable} from './ptf/PTFMissionOptions.js';
+import {ZTFSettingBox, isValidZTFTable} from './ztf/ZTFMissionOptions.js';
 import {getWebPlotRequestViaZTFIbe} from './ztf/ZTFPlotRequests.js';
-
+import {onNewRawTable, onFieldUpdate , makeRawTableRequest} from './LcUtil';
 import {LC} from './LcManager.js';
-import {getColumnIdx, getTblInfoById} from '../../tables/TableUtil';
+import { getTblInfoById} from '../../tables/TableUtil';
 
 export const DL_DATA_TAG = 'timeseries-package';
 export const UNKNOWN_MISSION = 'generic';
@@ -90,9 +90,9 @@ const converters = {
         getYColMappings: wiseYColMappings,
         missionName: 'WISE/NEOWISE',
         MissionOptions: WiseSettingBox,
-        onNewRawTable: wiseOnNewRawTable,
-        onFieldUpdate: wiseOnFieldUpdate,
-        rawTableRequest: wiseRawTableRequest,
+        onNewRawTable: onNewRawTable,
+        onFieldUpdate: onFieldUpdate,
+        rawTableRequest: makeRawTableRequest,
         /*timeNames: ['mjd'],*/
         /*yNames: ['w1mpro_ep', 'w2mpro_ep', 'w3mpro_ep', 'w4mpro_ep'],*/
         yErrNames: '',
@@ -130,15 +130,14 @@ const converters = {
         defaultYErrCname: '',
         missionName: 'PTF',
         MissionOptions: PTFSettingBox,
-        onNewRawTable: ptfOnNewRawTable,
-        onFieldUpdate: ptfOnFieldUpdate,
-        rawTableRequest: ptfRawTableRequest,
+        onNewRawTable: onNewRawTable,
+        onFieldUpdate: onFieldUpdate,
+        rawTableRequest: makeRawTableRequest,
         yErrNames: '',
         dataSource: 'pid',
         webplotRequestCreator: getWebPlotRequestViaPTFIbe,
         shouldImagesBeDisplayed: () => {return true;},
         isTableUploadValid:isValidPTFTable,
-        downloadOptions: ptfDownloaderOptPanel,
         yNamesChangeImage: [],
         showPlotTitle:getPlotTitle
     },
@@ -150,15 +149,14 @@ const converters = {
         defaultYErrCname: '',
         missionName: 'ZTF',
         MissionOptions: ZTFSettingBox,
-        onNewRawTable: ztfOnNewRawTable,
-        onFieldUpdate: ztfOnFieldUpdate,
-        rawTableRequest: ztfRawTableRequest,
+        onNewRawTable: onNewRawTable,
+        onFieldUpdate: onFieldUpdate,
+        rawTableRequest: makeRawTableRequest,
         yErrNames: '',
         dataSource: 'field',
         webplotRequestCreator: getWebPlotRequestViaZTFIbe,
         shouldImagesBeDisplayed: () => {return true;},
         isTableUploadValid:isValidZTFTable,
-        downloadOptions: ztfDownloaderOptPanel,
         yNamesChangeImage: [],
         showPlotTitle:getPlotTitle
     },

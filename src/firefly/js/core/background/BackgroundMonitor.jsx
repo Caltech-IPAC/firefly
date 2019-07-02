@@ -26,6 +26,8 @@ import DOWNLOAED from 'html/images/blue_check-on_10x10.gif';
 import FAILED from 'html/images/exclamation16x16.gif';
 
 import './BackgroundMonitor.css';
+import {getRootURL} from '../../util/BrowserUtil';
+import {parseUrl, saveToWorkspace} from '../../util/WebUtil';
 
 export function showBackgroundMonitor(show=true) {
     const content= (
@@ -168,7 +170,7 @@ function PackageStatus(bgStatus) {
     const Content = PACKAGE_CNT > 1 ? MultiPackage : SinglePackage;
     const emailed = emailSent(bgStatus);
     const script = canCreateScript(bgStatus) && isSuccess(STATE) && PACKAGE_CNT > 1;
-    
+
     return (
         <div className='BGMon__package'>
             <div className='BGMon__package--box'>
@@ -184,8 +186,12 @@ function PackageStatus(bgStatus) {
     );
 }
 
-function SinglePackage({ID, Title, STATE, ITEMS=[]}) {
+function SinglePackage({ID, Title, fileName, isWs, wsSelect, STATE, ITEMS=[]}) {
     var progress;
+    let wsInfo={};
+    if (isWs){
+        wsInfo={ isWs, wsSelect};
+    }
     if (BG_STATE.WAITING.is(STATE)) {
         progress = <div className='BGMon__header--waiting'>Computing number of packages... <img style={{marginLeft: 3}} src={LOADING}/></div>;
     } else if (BG_STATE.WORKING.is(STATE)) {
@@ -194,17 +200,21 @@ function SinglePackage({ID, Title, STATE, ITEMS=[]}) {
         progress = <div>User aborted this request</div>;
     } else {
         const params = ITEMS[0] || {};
-        progress = <PackageItem SINGLE={true} STATE={STATE} ID={ID} {...params} />;
+        progress = <PackageItem SINGLE={true} STATE={STATE} ID={ID} Title={Title} fileName={fileName} wsInfo={wsInfo} {...params} />;
     }
     return (
         <PackageHeader {...{ID, Title, progress, STATE}} />
     );
 }
 
-function MultiPackage({ID, Title, STATE, ITEMS}) {
+function MultiPackage({ID, Title, fileName, isWs, wsSelect, STATE, ITEMS}) {
+    let wsInfo={};
+    if (isWs){
+        wsInfo={ isWs, wsSelect};
+    }
     var progress = BG_STATE.CANCELED.is(STATE) && <div>User aborted this request</div>;
     const packages = ITEMS.map( (pi, INDEX) => {
-                return <PackageItem key={'multi-' + INDEX} STATE={STATE} ID={ID} {...ITEMS[INDEX]} />;
+                return <PackageItem key={'multi-' + INDEX} STATE={STATE} fileName={fileName}  wsInfo={wsInfo} ID={ID} {...ITEMS[INDEX]} />;
             });
 
     return (
@@ -244,20 +254,35 @@ function PackageHeader({ID, Title, progress, STATE}) {
 }
 
 function PackageItem(progress) {
-    const {SINGLE, ID, INDEX, STATE, finalCompressedBytes, processedBytes, totalBytes, processedFiles, totalFiles, url, downloaded} = progress;
+    const {SINGLE, ID, fileName, wsInfo, INDEX, STATE, finalCompressedBytes, processedBytes, totalBytes, processedFiles, totalFiles, url, downloaded} = progress;
     const doDownload = () => {
-        var bgStatus = set({ID}, ['ITEMS', INDEX, 'downloaded'], DownloadProgress.WORKING);
-        dispatchBgStatus(bgStatus);
-        downloadWithProgress(url)
-            .then( () => {
-                bgStatus = set({ID}, ['ITEMS', INDEX, 'downloaded'], DownloadProgress.DONE);
-                dispatchBgStatus(bgStatus);
-                }
-            ).catch(() => {
+        const urlInfo =parseUrl(url);
+        const searchObj = urlInfo.searchObject;
+        const file = searchObj.file;
+        const urlWs =`${getRootURL()}sticky/CmdSrv`;
+
+        if (wsInfo.isWs){
+            saveToWorkspace(fileName,wsInfo.wsSelect,file,urlWs);
+            bgStatus = set({ID}, ['ITEMS', INDEX, 'downloaded'], DownloadProgress.DONE);
+            dispatchBgStatus(bgStatus);
+        }
+        else {
+            var bgStatus = set({ID}, ['ITEMS', INDEX, 'downloaded'], DownloadProgress.WORKING);
+            dispatchBgStatus(bgStatus);
+            downloadWithProgress(url,fileName)
+                .then( () => {
+                        bgStatus = set({ID}, ['ITEMS', INDEX, 'downloaded'], DownloadProgress.DONE);
+                        dispatchBgStatus(bgStatus);
+                    }
+                ).catch(() => {
                 bgStatus = set({ID}, ['ITEMS', INDEX, 'downloaded'], DownloadProgress.FAIL);
                 dispatchBgStatus(bgStatus);
             });
+        }
+
     };
+
+
     const BY_SIZE = totalBytes && totalBytes >= processedBytes;
     var pct= BY_SIZE ? (processedBytes / totalBytes) :
                          (processedFiles / totalFiles);

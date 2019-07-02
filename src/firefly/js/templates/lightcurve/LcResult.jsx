@@ -24,9 +24,7 @@ import {LcImageViewerContainer} from './LcImageViewerContainer.jsx';
 import {SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
 import {LC, getViewerGroupKey, updateLayoutDisplay} from './LcManager.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
-import {ValidationField} from '../../ui/ValidationField.jsx';
 import {LcImageToolbar} from './LcImageToolbar.jsx';
-import {DownloadOptionPanel, DownloadButton} from '../../ui/DownloadDialog.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
@@ -34,13 +32,14 @@ import {getTblById, doFetchTable, isTblDataAvail} from '../../tables/TableUtil.j
 import {MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchMultiValueChange, dispatchRestoreDefaults}  from '../../fieldGroup/FieldGroupCntlr.js';
 import {logError} from '../../util/WebUtil.js';
-import {getConverter, getMissionName,  DL_DATA_TAG} from './LcConverterFactory.js';
+import {getConverter, getMissionName} from './LcConverterFactory.js';
 import {convertAngle} from '../../visualize/VisUtil.js';
-
 const resultItems = ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'searchDesc', 'images',
     LC.MISSION_DATA, LC.GENERAL_DATA, 'periodState'];
+import {LcDownloadOptionPanel } from './LcDownloadPanel.jsx';
+import {BgMaskPanel} from '../../core/background/BgMaskPanel.jsx';
 
-
+export const LcXYPlotCompKey='XYPLOTAREA';
 export class LcResult extends PureComponent {
 
     constructor(props) {
@@ -130,44 +129,13 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
 
     const converterId = get(settingBox, ['props', 'missionEntries', LC.META_MISSION]);
     const convertData = getConverter(converterId);
-    const cutoutSize = get(convertData, 'noImageCutout') ? undefined : get(settingBox, 'props.generalEntries.cutoutSize', '5');
     const mission = getMissionName(converterId) || 'Mission';
     const showImages = isEmpty(imagePlot);
 
     // convert the default Cutout size in arcmin to deg for WebPlotRequest, expected to be string in download panel
+    const cutoutSize = get(convertData, 'noImageCutout') ? undefined : get(settingBox, 'props.generalEntries.cutoutSize', '5');
     const cutoutSizeInDeg = (convertAngle('arcmin','deg', cutoutSize)).toString();
-    const currentTime =  (new Date()).toLocaleString('en-US', { hour12: false });
-    const style = {width: 223};
-    const defaultOptPanel = (m, c) => {
-        return (
-            <DownloadButton>
-                <DownloadOptionPanel
-                    groupKey = {mission}
-                    dataTag = {DL_DATA_TAG}
-                    cutoutSize={c}
-                    title={'Image Download Options'}
-                    style = {{width: 400}}
-                    dlParams={{
-                        MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each wise image is ~64mb
-                        FilePrefix: `${m}_Files`,
-                        BaseFileName: `${m}_Files`,
-                        DataSource: `${m} images`,
-                        FileGroupProcessor: 'LightCurveFileGroupsProcessor'
-                    }}>
-                    <ValidationField
-                        style={style}
-                        initialState={{
-                            value: `${m}_Files: ${currentTime}`,
-                            label: `${m}:`
-                        }}
-                        fieldKey='Title'
-                        labelWidth={110}/>
-                </DownloadOptionPanel>
-            </DownloadButton>
-        );
-    };
 
-    const downloaderOptPanel = convertData.downloadOptions || defaultOptPanel;
 
     let tsView = (err) => {
 
@@ -183,7 +151,10 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
                                 </div>
                             </div>
                         </SplitContent>
-                        <SplitContent>{xyPlot}</SplitContent>
+                        <SplitContent>
+                            <BgMaskPanel componentKey={LcXYPlotCompKey}/>
+                            {xyPlot}
+                        </SplitContent>
                     </SplitPane>
                     <SplitContent>{imagePlot}</SplitContent>
                 </SplitPane>
@@ -199,21 +170,25 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
                             </div>
                         </div>
                     </SplitContent>
-                    <SplitContent>{xyPlot}</SplitContent>
+                    <SplitContent>
+                        <BgMaskPanel componentKey={LcXYPlotCompKey}/>
+                        {xyPlot}
+                     </SplitContent>
                 </SplitPane>
             );
         }
 
     };
     return (
-        <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1, position: 'relative'}}>
+        <div style={{width: 400, display: 'flex', flexDirection: 'column', flexGrow: 1, position: 'relative'}}>
             { visToolbar &&
             <div style={{display: 'inline-flex', justifyContent: 'space-between', alignItems: 'center'}}>
                 <div>{visToolbar}</div>
-                <div>
-                    {downloaderOptPanel(mission, cutoutSizeInDeg)}
-                </div>
-            </div>
+                    <LcDownloadOptionPanel
+                        mission = {mission}
+                        cutoutSize = {cutoutSizeInDeg}
+                    />
+              </div>
             }
             {searchDesc}
             {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}

@@ -388,7 +388,12 @@ export function doDownloadWorkspace(url, options) {
     fetchUrl(url, {method: 'post', ...options}).then( (response) => {
         response.json().then( (value) => {
             if (value.ok === 'true') {
+
+                workspacePopupMsg( 'Saving to workspace...', 'Workspace Info');
                 dispatchWorkspaceCreatePath({files: value.result});
+
+                workspacePopupMsg( 'Data is saved to workspace successfully', 'Workspace Info');
+
             } else {
                 workspacePopupMsg('Save error - '+ value.status,
                                  'Save to workspace');

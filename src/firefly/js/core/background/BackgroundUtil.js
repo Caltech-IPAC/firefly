@@ -152,10 +152,15 @@ export const BG_STATE  = new Enum([
 ]);
 
 
-export function bgDownload({dlRequest, searchRequest, selectInfo}, {key, onComplete, sentToBg}) {
+export function bgDownload({dlRequest, searchRequest, selectInfo}, {key, onComplete, sentToBg, isWs=false}) {
     dispatchComponentStateChange(key, {inProgress:true, bgStatus:undefined});
     packageRequest(dlRequest, searchRequest, SelectInfo.newInstance(selectInfo).toString())
         .then((bgStatus) => {
+            //add fileLocation and fileName information to the bgStatus
+            bgStatus.isWs=isWs;
+            const fileName = dlRequest.fileName|| dlRequest.Title.split(':');
+            bgStatus.fileName = fileName;
+            bgStatus.wsSelect=dlRequest.wsSelect;
             if (bgStatus) {
                 dispatchComponentStateChange(key, {bgStatus});
                 bgStatus = bgStatusTransform(bgStatus);

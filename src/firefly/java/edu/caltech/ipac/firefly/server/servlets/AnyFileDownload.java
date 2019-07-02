@@ -165,7 +165,18 @@ public class AnyFileDownload extends BaseHttpServlet {
     }
 
     private static void trackProgress(HttpServletRequest req, BackgroundEnv.DownloadProgress progress) {
-        StringKey statusKey= new StringKey(req.getQueryString());
+        String queryString =req.getQueryString();
+
+        if (queryString==null){
+            try {
+                throw new Exception("Status can not be tracked because the queryString is empty");
+            } catch (Exception e) {
+                Logger.error("HttpServletRequest has a null query string, the status can not be tracked");
+
+
+            }
+        }
+        StringKey statusKey= new StringKey(queryString);
         getCache().put(statusKey, progress);
     }
 

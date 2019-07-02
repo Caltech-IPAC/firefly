@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {get, has, set, isEmpty} from 'lodash';
 import {LC} from './LcManager.js';
 import {getConverter} from './LcConverterFactory.js';
-import {getCellValue, getTblById, findIndex, getColsByType, getColumnIdx, COL_TYPE} from '../../tables/TableUtil.js';
+import {getCellValue, getTblById, findIndex, getColsByType, smartMerge,getColumnIdx,getColumns,COL_TYPE} from '../../tables/TableUtil.js';
 import {dispatchTableHighlight} from '../../tables/TablesCntlr.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
@@ -11,6 +11,10 @@ import {getMissionName} from './LcConverterFactory.js';
 import {getLayouInfo} from '../../core/LayoutCntlr.js';
 import {getViewerGroupKey, onTimeColumnChange} from './LcManager.js';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
+import {sortInfoString} from '../../tables/SortInfo.js';
+import {makeFileRequest} from '../../tables/TableRequestUtil.js';
+
+
 
 export function getTypeData(key, val='', tip = '', labelV='', labelW) {
     return {
@@ -333,4 +337,86 @@ export function setValueAndValidator(missionListKeys, missionEntries,missionKeys
             set(defV, [key, 'validator'], validators[key]);
         }
     });
+}
+
+function getBandAndXYColPatterns(missionEntries){
+    const converterId = get(missionEntries, LC.META_MISSION);
+    const missionName = getMissionName(converterId) || 'Mission';
+    let bandName,xyColPattern;
+    switch(missionName.toUpperCase()){
+
+        case 'WISE/NEOWISE': bandName='w1';
+            xyColPattern = ['\\w*jd\\w*', 'w[1-4]mpro\\w*'];
+            break;
+        case  'ZTF': bandName = 'zg';
+            xyColPattern = ['(?:^|\\W)mjd(?:$|\\W)', '(?:^|\\W)mag(?:$|\\W)'];
+            break;
+        case 'PTF': bandName='g';
+            xyColPattern = ['obsmjd', 'mag_autocorr'];
+            break;
+    }
+    return {bandName, xyColPattern};
+}
+
+/**
+ *
+ * @param rawTable
+ * @param missionEntries
+ * @param generalEntries
+ * @param converterData
+ * @param layoutInfo
+ * @returns {{newLayoutInfo: Object, shouldContinue: boolean}}
+ */
+export function onNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo) {
+
+   const {bandName, xyColPattern} = getBandAndXYColPatterns(missionEntries);
+    // Update default values AND sortInfo and
+    const metaInfo = rawTable && rawTable.tableMeta;
+    const numericalCols = getColumns(rawTable, COL_TYPE.NUMBER).map((c) => c.name);
+    const defaultDataSource = (getColumnIdx(rawTable, converterData.dataSource) > 0) ? converterData.dataSource : numericalCols[3];
+
+    const {defaultCTimeName,defaultYColName } = getTimeAndYColInfo(numericalCols,xyColPattern,rawTable,converterData );
+
+    const defaultValues = {
+        [LC.META_TIME_CNAME]: get(metaInfo, LC.META_TIME_CNAME, defaultCTimeName),
+        [LC.META_FLUX_CNAME]: get(metaInfo, LC.META_FLUX_CNAME, defaultYColName),
+        [LC.META_TIME_NAMES]: get(metaInfo, LC.META_TIME_NAMES, numericalCols),
+        [LC.META_FLUX_NAMES]: get(metaInfo, LC.META_FLUX_NAMES, numericalCols),
+        [LC.META_URL_CNAME]: get(metaInfo, LC.META_URL_CNAME, defaultDataSource),
+        [LC.META_FLUX_BAND]: get(metaInfo, LC.META_FLUX_BAND,  bandName)
+
+    };
+
+    missionEntries = Object.assign({}, missionEntries, defaultValues);
+    const newLayoutInfo = smartMerge(layoutInfo, {missionEntries, generalEntries});
+
+    return {newLayoutInfo, shouldContinue: false};
+}
+
+//TODO if ztfRawTableRequest and ztfOnFieldUpdate are nothing different from the ones in ztfMssionOption, these two can be replaced.
+export function makeRawTableRequest(converter, source, uploadFileName='') {
+    const timeCName = converter.defaultTimeCName;
+    const mission = converter.converterId;
+    const options = {
+        tbl_id: LC.RAW_TABLE,
+        sortInfo: sortInfoString(timeCName), // if present, it will skip LcManager.js#ensureValidRawTable
+        META_INFO: {[LC.META_MISSION]: mission, timeCName},
+        pageSize: LC.TABLE_PAGESIZE,
+        uploadFileName
+
+    };
+    return makeFileRequest('Input Data', source, null, options);
+
+}
+
+
+export function onFieldUpdate(fieldKey, value) {
+    // images are controlled by radio button -> filter zg, zr etc.
+    if (fieldKey === LC.META_TIME_CNAME) {
+        return fileUpdateOnTimeColumn(fieldKey, value);
+    } else if ([LC.META_FLUX_CNAME, LC.META_ERR_CNAME, LC.META_URL_CNAME, LC.META_FLUX_BAND].includes(fieldKey)) {
+        return {[fieldKey]: value};
+    }
+
+
 }

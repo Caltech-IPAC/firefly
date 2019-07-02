@@ -76,7 +76,8 @@ export function DownloadButton(props) {
         if (selectInfoCls.getSelectedCount()) {
             var panel = props.children ? React.Children.only(props.children) : <DownloadOptionPanel/>;
             panel = React.cloneElement(panel, {tbl_id});
-            showDownloadDialog(panel);
+            const ttl = panel.props.title || DOWNLOAD_DIALOG_ID;
+            showDownloadDialog(panel, ttl, true);
         } else {
             showInfoPopup('You have not chosen any data to download', 'No Data Selected');
         }
@@ -128,7 +129,7 @@ export function DownloadOptionPanel (props) {
         const dreq = makeTblRequest(FileGroupProcessor, Title, Object.assign(dlParams, {cutoutSize}, options));
         request = set(cloneDeep(request), DataTagMeta, dataTag);
         dispatchPackage(dreq, request, SelectInfo.newInstance(selectInfo).toString());
-        showDownloadDialog(this, false);
+        showDownloadDialog(this,ttl, false);
     }, tbl_id);
 
     const toggleEnableEmail = (e) => {
@@ -244,24 +245,24 @@ function hasProprietaryData(tableModel={}) {
     return false;
 }
 
-
 /**
- * creates and show the DownloadDialog.
- * @param {Component}  panel  the panel to show in the popup.
- * @param {boolean} [show=true] show or hide this dialog
+ *
+ * @param panel
+ * @param title
+ * @param show
  */
-function showDownloadDialog(panel, show=true) {
-    const ttl = panel.props.title || DOWNLOAD_DIALOG_ID;
+export function showDownloadDialog(panel, title, show=true) {
+
     if (show) {
         const content= (
-            <PopupPanel title={ttl} >
+            <PopupPanel title={title} >
                 {panel}
             </PopupPanel>
         );
-        DialogRootContainer.defineDialog(ttl, content);
-        dispatchShowDialog(ttl);
+        DialogRootContainer.defineDialog(title, content);
+        dispatchShowDialog(title);
     } else {
-        dispatchHideDialog(ttl);
+        dispatchHideDialog(title);
     }
 }
 
