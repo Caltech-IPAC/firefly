@@ -4,7 +4,7 @@
     border-radius: 0 0 5px 5px;
     background-color: rgba(245,245,245,.97);
     box-shadow: 0 5px 10px rgba(0,0,0,0.3);
-    min-width: 180px;
+    min-width: 100px;
 }
 
 
@@ -29,7 +29,8 @@
 .dropdown-menu__right {
     position: absolute;
     top: -10px;
-    left: 8px;
+    /*left: 8px;*/
+    left: 13px;
 }
 
 

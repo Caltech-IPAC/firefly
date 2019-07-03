@@ -31,7 +31,8 @@ class TargetPanelView extends PureComponent {
 
     render() {
         const {showHelp, feedback, valid, message, onChange, value,
-            labelWidth, children, resolver, feedbackStyle, examples, label= LABEL_DEFAULT}= this.props;
+            labelWidth, children, resolver, feedbackStyle, showResolveSourceOp= true, showExample= true,
+            examples, label= LABEL_DEFAULT}= this.props;
         let positionField = (<InputFieldView
                                 valid={valid}
                                 visible= {true}
@@ -48,7 +49,7 @@ class TargetPanelView extends PureComponent {
             <div>
                 <div style= {{display: 'flex'}}>
                     {positionField}
-                    <ListBoxInputFieldView
+                    {showResolveSourceOp && <ListBoxInputFieldView
                         options={[{label: 'Try NED then Simbad', value: nedThenSimbad},
                                {label: 'Try Simbad then NED', value: simbadThenNed}
                               ]}
@@ -59,9 +60,11 @@ class TargetPanelView extends PureComponent {
                         label=''
                         labelWidth={3}
                         wrapperStyle={{}}
-                    />
+                    />}
                 </div>
-                <TargetFeedback {...{showHelp, feedback, style:feedbackStyle, examples}}/>
+                {(showExample || !showHelp) &&
+                        <TargetFeedback {...{showHelp, feedback, style:feedbackStyle, examples}}/>
+                }
             </div>
         );
     }
@@ -81,7 +84,9 @@ TargetPanelView.propTypes = {
     labelWidth : PropTypes.number,
     onUnmountCB : PropTypes.func,
     feedbackStyle: PropTypes.object,
-    nullAllowed: PropTypes.bool
+    nullAllowed: PropTypes.bool,
+    showResolveSourceOp: PropTypes.bool,
+    showExample: PropTypes.bool
 };
 
 
@@ -163,7 +168,8 @@ function makePayloadAndUpdateActive(displayValue, parseResults, resolvePromise, 
 }
 
 
-function replaceValue(v) {
+function replaceValue(v,defaultToActiveTarget) {
+    if (!defaultToActiveTarget) return v;
     const t= getActiveTarget();
     let retVal= v;
     if (t && t.worldPt) {
@@ -175,9 +181,11 @@ function replaceValue(v) {
 
 
 
-export const TargetPanel = memo( ({fieldKey= 'UserTargetWorldPt',initialState= {}, ...restOfProps}) => {
+export const TargetPanel = memo( ({fieldKey= 'UserTargetWorldPt',initialState= {},
+                                       defaultToActiveTarget= true, ...restOfProps}) => {
     const {viewProps, fireValueChange, groupKey}=  useFieldGroupConnector({
-                                fieldKey, initialState, confirmValueOnInit:replaceValue});
+                                fieldKey, initialState,
+                                confirmValueOnInit: (v) => replaceValue(v,defaultToActiveTarget)});
     const newProps= computeProps(viewProps, restOfProps, fieldKey, groupKey);
     return ( <TargetPanelView {...newProps}
                               onChange={(value,source) => handleOnChange(value,source,newProps, fireValueChange)}/>);
@@ -191,7 +199,10 @@ TargetPanel.propTypes = {
     examples: PropTypes.object,
     labelWidth : PropTypes.number,
     nullAllowed: PropTypes.bool,
-    initialState: PropTypes.object
+    initialState: PropTypes.object,
+    showResolveSourceOp: PropTypes.bool,
+    showExample: PropTypes.bool,
+    defaultToActiveTarget: PropTypes.bool,
 };
 
 

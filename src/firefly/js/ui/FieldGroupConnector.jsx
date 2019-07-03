@@ -144,10 +144,10 @@ export const fgMinPropTypes= {
  */
 export const useFieldGroupConnector= (props) => {
     const infoRef = useRef({prevFieldKey:undefined, prevGroupKey:undefined});
-    const gkFromCtx= useContext(GroupKeyCtx);
+    const context= useContext(GroupKeyCtx);
     const {fieldKey,confirmValue,confirmValueOnInit}= props;
     let {initialState}= props;
-    const groupKey= props.groupKey || gkFromCtx;
+    const groupKey= props.groupKey || context.groupKey;
     const doingInit= isInit(infoRef,fieldKey,groupKey);
 
     if (doingInit) {// validation checks

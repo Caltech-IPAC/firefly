@@ -40,6 +40,7 @@ import {watchExtensionActions} from '../core/messaging/ExternalAccessWatcher.js'
 
 //--- import drawing Layers
 import ActiveTarget from '../drawingLayers/ActiveTarget.js';
+import FixedMarker from '../drawingLayers/FixedMarker.js';
 import SelectArea from '../drawingLayers/SelectArea.js';
 import DistanceTool from '../drawingLayers/DistanceTool.js';
 import PointSelection from '../drawingLayers/PointSelection.js';
@@ -98,7 +99,7 @@ const actionCreators = new Map();
 
 
 
-const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,SelectArea,DistanceTool,
+const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,FixedMarker, SelectArea,DistanceTool,
                                                      PointSelection, StatsPoint, NorthUpCompass,
                                                      Catalog, Artifact, WebGrid, RegionPlot,
                                                      MarkerTool, FootprintTool, HiPSGrid, HiPSMOC,

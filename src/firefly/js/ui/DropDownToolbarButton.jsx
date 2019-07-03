@@ -13,26 +13,59 @@ import DialogRootContainer from './DialogRootContainer.jsx';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible, getDialogOwner} from '../core/ComponentCntlr.js';
 import {ToolbarButton} from './ToolbarButton.jsx';
 import {DropDownDirCTX} from './DropDownDirContext.js';
+import {DROP_DOWN_WRAPPER_CLASSNAME} from './DropDownMenu';
 
 
-function computeDropdownXY(divElement, isIcon) {
+/**
+ * j
+ * @param {Element} buttonElement
+ * @param isIcon
+ * @param {Element} dropdownElement
+ * @return {{x: number, y: number}}
+ */
+function computeDropdownXY(buttonElement, isIcon, dropdownElement) {
     const bodyRect = document.body.parentElement.getBoundingClientRect();
-    const off= isIcon ? 0 : 6;
-    const elemRect = divElement.getBoundingClientRect();
-    const x = (elemRect.left - bodyRect.left);
-    const y = elemRect.top - bodyRect.top- off;
+    const dropdownRect = dropdownElement.getBoundingClientRect();
+    const elemRect = buttonElement.getBoundingClientRect();
+    const off= isIcon ? 4 : 10;
+    let x = elemRect.left - bodyRect.left - 10;
+    const leftAdjust= (bodyRect.right-20 < x + dropdownRect.width) ? dropdownRect.width-elemRect.width-20 : 0;
+    x-= leftAdjust;
+    const y = elemRect.bottom - bodyRect.top- off;
     return {x,y};
 }
 
 
-function showDialog(divElement,dropDown,ownerId,offButtonCB, isIcon) {
-    const {x,y}= computeDropdownXY(divElement, isIcon);
+/**
+ * Compute the drop down position and build the react components to show the dropdown.
+ * The dropdown position is computed in two phases. The normal position and after the dropdown element exist
+ * it is check to make sure it is not going off the right side of the screen. Part 2 is done in the beforeVisible
+ * callback. At that point the element has be created and the visibility is set ot hidden.  They way we can do side
+ * computations.
+ *
+ * @param {Object} buttonElement - the div of where the button is
+ * @param {Object} dropDown - dropdown React component
+ * @param {String} ownerId
+ * @param {function} offButtonCB
+ * @param {boolean} isIcon
+ */
+function showDialog(buttonElement,dropDown,ownerId,offButtonCB, isIcon) {
 
-    const dropDownClone= React.cloneElement(dropDown, { toolbarElement:divElement });
-    const dd= <DropDownMenuWrapper x={x} y={y} content={dropDownClone}/>;
+    const beforeVisible= (e) =>{
+        if (!e) return;
+        const {x,y}= computeDropdownXY(buttonElement,isIcon, e);
+        e.style.left= x+'px';
+        e.style.top= y+'px';
+    };
+
+    const dropDownClone= React.cloneElement(dropDown, { toolbarElement:buttonElement});
+    const dd= <DropDownMenuWrapper x={0} y={0} content={dropDownClone} beforeVisible={beforeVisible}/>;
     DialogRootContainer.defineDialog(DROP_DOWN_KEY,dd);
+    document.removeEventListener('mousedown', offButtonCB);
     dispatchShowDialog(DROP_DOWN_KEY,ownerId);
-    document.addEventListener('mousedown', offButtonCB);
+    setTimeout(() => {
+        document.addEventListener('mousedown', offButtonCB);
+    },10);
 }
 
 
@@ -47,16 +80,20 @@ export class DropDownToolbarButton extends PureComponent {
         super(props);
         this.state= {dropDownVisible:false, dropDownOwnerId:null };
         this.ownerId= uniqueId(OWNER_ROOT);
+        this.mounted= true;
+        this.divElement= undefined;
     }
 
     componentWillUnmount() {
         if (this.storeListenerRemove) this.storeListenerRemove();
+        this.mounted= false;
         document.removeEventListener('mousedown', this.docMouseDownCallback);// just in case
     }
 
     componentDidMount() {
         this.storeListenerRemove= flux.addListener(() => this.update());
         this.docMouseDownCallback= (ev)=> this.offButtonCallback(ev);
+        this.mounted= true;
     }
 
     update() {
@@ -68,12 +105,37 @@ export class DropDownToolbarButton extends PureComponent {
         }
     }
 
-    offButtonCallback() {
+    offButtonCallback(ev) {
         delay( () => {
             document.removeEventListener('mousedown', this.docMouseDownCallback);
             const {dropDownVisible, dropDownOwnerId}= this.state;
-            if (dropDownVisible && dropDownOwnerId===this.ownerId) {
+            if (!dropDownVisible) return;
+
+            let e= document.activeElement;
+            let focusIsDropwdownInput= false;
+            if (e && e.tagName==='INPUT') {
+                for(;e;e= e.parentElement) {
+                     if (e.className===DROP_DOWN_WRAPPER_CLASSNAME) {
+                         focusIsDropwdownInput= true;
+                         break;
+                     }
+                }
+            }
+            e= ev.target;
+            const maxBack= 10;
+            let clickOnButton= false;
+            for(let i=0;(e&&i<maxBack);e= e.parentElement,i++) {
+                if (this.divElement===e) {
+                   clickOnButton= true;
+                   break;
+                }
+            }
+            const onDropDownInput= focusIsDropwdownInput && ev && ev.target.tagName==='INPUT';
+            if (!clickOnButton && !onDropDownInput && dropDownOwnerId===this.ownerId) {
                 dispatchHideDialog(DROP_DOWN_KEY);
+            }
+            else {
+                document.addEventListener('mousedown', this.docMouseDownCallback);
             }
         },200);
     }
@@ -81,11 +143,13 @@ export class DropDownToolbarButton extends PureComponent {
 
     handleDropDown(divElement,dropDown) {
         if (divElement) {
+            this.divElement= divElement;
             const isIcon= Boolean(this.props.icon);
             const {dropDownVisible, dropDownOwnerId}= this.state;
 
+            const dropdownDirection= calcDropDownDir(divElement, this.props.menuMaxWidth);
             const dropDownWithContext= (
-                <DropDownDirCTX.Provider value={{dropdownDirection: calcDropDownDir(divElement, this.props.menuMaxWidth)}}>
+                <DropDownDirCTX.Provider value={{dropdownDirection}}>
                     {dropDown}
                 </DropDownDirCTX.Provider>
             );
@@ -94,6 +158,7 @@ export class DropDownToolbarButton extends PureComponent {
                 if (dropDownOwnerId===this.ownerId) {
                     dispatchHideDialog(DROP_DOWN_KEY);
                     document.removeEventListener('mousedown', this.docMouseDownCallback);
+                    this.setState({dropDownVisible:false});
                 }
                 else {
                     showDialog(divElement,dropDownWithContext,this.ownerId,this.docMouseDownCallback, isIcon);

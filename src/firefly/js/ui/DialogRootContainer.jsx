@@ -153,7 +153,7 @@ function computeZIndex(element ) {
 /**
  * @param {string} dialogId
  * @param {object} dialog
- * @param {Element} overElement
+ * @param {Element} [overElement]
  */
 function defineDialog(dialogId, dialog, overElement) {
     if (!divElement) init();

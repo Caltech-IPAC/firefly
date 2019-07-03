@@ -281,7 +281,7 @@ export default PositionFieldDef;
  * @param csys coordinate system
  * @return string
  */
-function coordToString(csys) {
+export function coordToString(csys) {
     var retval= '';
 
     if (csys === CoordinateSys.EQ_J2000)      {

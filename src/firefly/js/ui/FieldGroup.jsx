@@ -48,7 +48,7 @@ function doMounting(props, wrapperGroupKey) {
 }
 
 
-export const GroupKeyCtx = React.createContext('');
+export const GroupKeyCtx = React.createContext({});
 
 export class FieldGroup extends Component {
 
@@ -89,8 +89,8 @@ export class FieldGroup extends Component {
     render() {
         const {style, className, groupKey} = this.props;
         return (
-            <GroupKeyCtx.Provider value={groupKey}>
-                <div className={className} style={style}>
+            <GroupKeyCtx.Provider value={{groupKey}}>
+                <div className={className} style={style} groupkey={groupKey}>
                     {this.props.children}
                 </div>
             </GroupKeyCtx.Provider>

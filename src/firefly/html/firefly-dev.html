@@ -30,11 +30,13 @@
                 workspace : {showOptions: true},
                 imageMasterSourcesOrder: ['WISE', '2MASS', 'Spitzer'],
                 wcsMatchType: 'Standard',  // 'Standard', 'Target', 'Pixel', 'PixelCenter'
+                imageScrollsToHighlightedTableRow: false, // boolean value
                 charts: {
                     singleTraceUI: false
                 },
                 hips : {
-                    useForCoverage: true, useForImageSearch: true,
+                    useForCoverage: true,
+                    useForImageSearch: true,
                     hipsSources: 'irsa,cds',
                     defHipsSources: {source: 'irsa', label: 'IRSA Featured'},
                     mergedListPriority: 'Irsa'

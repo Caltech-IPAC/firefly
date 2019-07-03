@@ -18,6 +18,8 @@ import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {LayoutType, PopupPanel} from '../../ui/PopupPanel.jsx';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 import {isHiPS} from '../WebPlot.js';
+import {getPreference} from '../../core/AppDataCntlr';
+import {TARGET_LIST_PREF} from './ImageCenterDropDown';
 
 // import {deepDiff} from '../../util/WebUtil.js';
 
@@ -65,13 +67,15 @@ export class VisToolbar extends PureComponent {
         let dlCount= 0;
         const newPv= getActivePlotView(vr);
         const oldPv= getActivePlotView(this.state.visRoot);
+        const recentTargetAry= getPreference(TARGET_LIST_PREF, []);
         if (vr.activePlotId) {
             dlCount= getAllDrawLayersForPlot(getDlAry(),vr.activePlotId).length + newPv.overlayPlotViews.length;
         }
+        const tAryIsEqual= shallowequal(recentTargetAry, this.state.recentTargetAry);
 
-        if (vr===this.state.visRoot && dlCount===this.state.dlCount) return;
+        if (vr===this.state.visRoot && dlCount===this.state.dlCount && tAryIsEqual) return;
 
-        let needsUpdate= dlCount!==this.state.dlCount;
+        let needsUpdate= dlCount!==this.state.dlCount || !tAryIsEqual;
         if (!needsUpdate) needsUpdate= vr.activePlotId!==this.state.visRoot.activePlotId;
 
         if (!needsUpdate) needsUpdate= !shallowequal(omit(vr,omList),omit(this.state.visRoot,omList));
@@ -93,18 +97,18 @@ export class VisToolbar extends PureComponent {
 
 
         if (needsUpdate && this.iAmMounted) {
-            this.setState({visRoot:visRoot(), dlCount});
+            this.setState({visRoot:visRoot(), dlCount, recentTargetAry});
         }
     }
 
     render() {
         const {messageUnder, style}= this.props;
-        const {visRoot,tip,dlCount}= this.state;
+        const {visRoot,tip,dlCount, recentTargetAry}= this.state;
         return (
 
             <ToolTipCtx.Provider value={{tipOnCB: this.tipOn, tipOffCB: this.tipOff}}>
                 <VisToolbarViewWrapper visRoot={visRoot} toolTip={tip} dlCount={dlCount}
-                                       messageUnder={messageUnder} style={style}/>
+                                       messageUnder={messageUnder} style={style} recentTargetAry={recentTargetAry}/>
             </ToolTipCtx.Provider>
         );
     }

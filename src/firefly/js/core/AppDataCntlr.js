@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, map} from 'lodash';
+import {get, map, isUndefined} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
@@ -181,8 +181,10 @@ export function getTaskCount(componentId) {
     return state.taskCounters[componentId] ? state.taskCounters[componentId].length : 0;
 }
 
-export function getPreference(name) {
-    return flux.getState()[APP_DATA_PATH].preferences[name];
+export function getPreference(name, def) {
+    const v= flux.getState()[APP_DATA_PATH].preferences[name];
+    if (isUndefined(v)) return def;
+    return v;
 }
 
 export function getRootUrlPath() {

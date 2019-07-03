@@ -32,6 +32,7 @@ import SelectArea, {SelectedShape} from './SelectArea.js';
 import {detachSelectArea} from '../visualize/ui/SelectAreaDropDownView.jsx';
 import {CysConverter} from '../visualize/CsysConverter.js';
 import {parseObsCoreRegion} from '../util/ObsCoreSRegionParser.js';
+import {dispatchChangeTableAutoScroll, dispatchUseTableAutoScroll} from '../visualize/ImagePlotCntlr';
 
 
 const TYPE_ID= 'CATALOG_TYPE';
@@ -144,6 +145,11 @@ function makeHighlightDeferred(drawLayer,plotId,screenPt) {
                 // for data representing the selected region from region data
                 if (data[closestIdx].fromRow) closestIdx = data[closestIdx].fromRow;
 
+
+                const vr= visRoot();
+                if (vr.autoScrollToHighlightedTableRow && vr.useAutoScrollToHighlightedTableRow) {
+                    dispatchUseTableAutoScroll(false);
+                }
                 if (tableMeta.decimate_key) {
                     const colIdx= tableData.columns.findIndex((c) => c.name==='rowidx');
                     dispatchTableHighlight(drawLayer.tblId,tableData.data[closestIdx][colIdx],tableRequest);

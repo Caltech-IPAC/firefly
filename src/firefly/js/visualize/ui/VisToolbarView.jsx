@@ -62,9 +62,6 @@ import CATALOG from 'html/images/catalog_28x28.png';
 import SAVE from 'html/images/icons-2014/Save.png';
 import FLIP_Y from 'html/images/icons-2014/Mirror.png';
 import FLIP_Y_ON from 'html/images/icons-2014/Mirror-ON.png';
-import RECENTER from 'html/images/icons-2014/RecenterImage.png';
-// import LOCKED from 'html/images/icons-2014/BkgLocked.png';
-// import UNLOCKED from 'html/images/icons-2014/BkgUnlocked.png';
 import LOCKED from 'html/images/OverlayLocked.png';
 import UNLOCKED from 'html/images/OverlayUnlocked.png';
 import NEW_IMAGE from 'html/images/icons-2014/28x28_FITS_NewImage.png';
@@ -73,6 +70,7 @@ import COLOR from 'html/images/icons-2014/28x28_ColorPalette.png';
 import STRETCH from 'html/images/icons-2014/28x28_Log.png';
 import MARKER from 'html/images/icons-2014/MarkerCirclesIcon_28x28.png';
 import {MatchLockDropDown} from './MatchLockDropDown';
+import {ImageCenterDropDown} from './ImageCenterDropDown';
 
 export const VIS_TOOLBAR_HEIGHT=34;
 export const VIS_TOOLBAR_V_HEIGHT=48;
@@ -129,9 +127,6 @@ export function VisToolbarViewWrapper({visRoot,toolTip,dlCount, messageUnder, st
 
 }
 
-
-
-//onClick={dispatchShowDropDown.bind(null, {view: 'ImageSelectDropDownCmd'})}/>}
 
 VisToolbarViewWrapper.propTypes= {
     visRoot : PropTypes.object.isRequired,
@@ -241,11 +236,8 @@ export class VisToolbarView extends PureComponent {
                                         visible={mi.flipImageY && image}
                                         onClick={() => flipY(pv)}
                 />
-                <ToolbarButton icon={RECENTER} tip='Re-center image on last query or center of image'
-                               enabled={enabled} horizontal={true}
-                               visible={mi.recenter}
-                               onClick={() => recenter(pv)}/>
 
+                <ImageCenterDropDown visRoot={visRoot} visible={mi.recenter} />
                 <ToolbarHorizontalSeparator/>
 
                 <SimpleLayerOnOffButton plotView={pv}
@@ -362,8 +354,6 @@ function doRotateNorth(pv,rotate) {
     const rotateType= rotate?RotateType.NORTH:RotateType.UNROTATE;
     dispatchRotate({plotId:pv.plotId, rotateType});
 }
-
-function recenter(pv) { dispatchRecenter({plotId:pv.plotId}); }
 
 function flipY(pv) {
         dispatchFlip({plotId:pv.plotId});

@@ -1,5 +1,6 @@
 /*eslint "prefer-template": 0*/
 
+import {isFunction} from 'lodash';
 import React, {PureComponent} from 'react';
 import {get} from 'lodash';
 import PropTypes from 'prop-types';
@@ -8,10 +9,11 @@ import {DropDownDirCTX} from './DropDownDirContext.js';
 import './DropDownMenu.css';
 
 const DEFAULT_DROPDOWN_DIR = 'right';
+export const DROP_DOWN_WRAPPER_CLASSNAME= 'ff-dropdown-menu';
 
 const computePosition= (tgtX,tgtY)  => ({x:tgtX,y:tgtY+18});
 
-function placeDropDown(e,x,y) {
+function placeDropDown(e,x,y, beforeVisible) {
     var pos= computePosition(x,y);
 
     var left= pos.x - 10;
@@ -20,6 +22,7 @@ function placeDropDown(e,x,y) {
     }
     e.style.left= left +'px';
     e.style.top= (pos.y + 10)+'px';
+    if (isFunction(beforeVisible)) beforeVisible(e);
     e.style.visibility='visible';
 }
 
@@ -40,12 +43,12 @@ export class DropDownMenuWrapper extends PureComponent {
 }
 
     componentDidMount() {
-        var {x,y}= this.props;
-        placeDropDown(ReactDOM.findDOMNode(this),x,y);
+        const {x,y,beforeVisible}= this.props;
+        placeDropDown(ReactDOM.findDOMNode(this),x,y, beforeVisible );
     }
     componentDidUpdate() {
-        var {x,y}= this.props;
-        placeDropDown(ReactDOM.findDOMNode(this),x,y);
+        const {x,y,beforeVisible}= this.props;
+        placeDropDown(ReactDOM.findDOMNode(this),x,y, beforeVisible);
     }
 
     render() {
@@ -55,7 +58,7 @@ export class DropDownMenuWrapper extends PureComponent {
         return (
             <div style={{position:'absolute', left:0, top:0, visibility:'hidden', zIndex}}
                  onClick={futureCallback} >
-                    <div style={{padding : 5}} className='ff-dropdown-menu'>
+                    <div style={{padding : 5}} className={DROP_DOWN_WRAPPER_CLASSNAME}>
                         {content}
                     </div>
             </div>
@@ -72,14 +75,15 @@ DropDownMenuWrapper.propTypes= {
     x : PropTypes.number.isRequired,
     y : PropTypes.number.isRequired,
     content : PropTypes.object.isRequired,
-    zIndex : PropTypes.number
+    zIndex : PropTypes.number,
+    beforeVisible : PropTypes.func
 };
 
 
 
 export class DropDownSubMenu extends PureComponent {
 
-    constructor(props, context) {
+    constructor(props) {
         super(props);
         this.state= {showSubMenu: false};
         this.show = this.show.bind(this);
@@ -110,13 +114,14 @@ export class DropDownSubMenu extends PureComponent {
                         {showSubMenu &&
                         <div className={'dropdown-menu__' + dropdownDirection} onMouseEnter={this.show}>
                             <SingleColumnMenu>
-                                {children}
+                                {isFunction(children) ? children() : children}
                             </SingleColumnMenu>
                         </div>
                         }
                     </div>
 
-                    {<div className={'arrow-right'}/>}
+                    {/*{<div style={{marginLeft:5}} className={'arrow-right'}/>}*/}
+                    {<div style={{marginLeft:5}} className={'arrow-right'}/>}
 
                 </div>
             </div>

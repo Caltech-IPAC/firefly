@@ -96,9 +96,9 @@ export function watchCatalogs(tbl_id, action, cancelSelf, params) {
             cancelSelf();
             break;
 
-        case TBL_RESULTS_ACTIVE:
-            recenterImage(getTblById(tbl_id));
-            break;
+        // case TBL_RESULTS_ACTIVE:
+        //     recenterImage(getTblById(tbl_id));
+        //     break;
 
         case ImagePlotCntlr.PLOT_HIPS:
         case ImagePlotCntlr.PLOT_IMAGE:
@@ -115,44 +115,44 @@ const isCName = (name) => (c) => c.name===name;
  * update the projection center of hips plot to be aligned with the target of catalog search
  * @param tbl
  */
-function recenterImage(tbl) {
-    const pv = getActivePlotView(visRoot());
-    const plot = pv && pv.plots[pv.primeIdx];
-
-    // exclude coverage image
-    if (!plot || get(plot, ['attributes', COVERAGE_CREATED], false)) {
-        return;
-    }
-
-    const cc = CsysConverter.make(plot);
-    const {UserTargetWorldPt, polygon} = tbl.request || {};
-    const centerPt =  cc.getWorldCoords(findCurrentCenterPoint(pv));
-
-    let   newCenter;
-
-    if (UserTargetWorldPt) {    // search method: cone, elliptical, bo
-        newCenter = parseWorldPt(UserTargetWorldPt);
-    } else if (polygon) {       // search method polygon
-        const allPts = polygon.trim().split(/\s+/);
-        const pts = allPts.reduce((prevPts, pt_x, idx) => {
-            if ((idx % 2 === 0) && ((idx + 1) < allPts.length)) {
-                const wPt = makeWorldPt(parseFloat(pt_x), parseFloat(allPts[idx + 1]));
-
-                prevPts.push(wPt);
-            }
-            return prevPts;
-        }, []);
-
-        const {centralPoint} = computeCentralPointAndRadius(pts);
-        newCenter = centralPoint;
-    }
-
-    const allSky= Boolean( (isImage(plot) && plot.projection.isWrappingProjection()) || isHiPS(plot));
-    // recenter image for 'hips' and allsky 'image' type
-    if (newCenter && allSky && !pointEquals(centerPt, newCenter)) {
-        dispatchRecenter({plotId: plot.plotId, centerPt: newCenter});
-    }
-}
+// function recenterImage(tbl) {
+//     const pv = getActivePlotView(visRoot());
+//     const plot = pv && pv.plots[pv.primeIdx];
+//
+//     // exclude coverage image
+//     if (!plot || get(plot, ['attributes', COVERAGE_CREATED], false)) {
+//         return;
+//     }
+//
+//     const cc = CsysConverter.make(plot);
+//     const {UserTargetWorldPt, polygon} = tbl.request || {};
+//     const centerPt =  cc.getWorldCoords(findCurrentCenterPoint(pv));
+//
+//     let   newCenter;
+//
+//     if (UserTargetWorldPt) {    // search method: cone, elliptical, bo
+//         newCenter = parseWorldPt(UserTargetWorldPt);
+//     } else if (polygon) {       // search method polygon
+//         const allPts = polygon.trim().split(/\s+/);
+//         const pts = allPts.reduce((prevPts, pt_x, idx) => {
+//             if ((idx % 2 === 0) && ((idx + 1) < allPts.length)) {
+//                 const wPt = makeWorldPt(parseFloat(pt_x), parseFloat(allPts[idx + 1]));
+//
+//                 prevPts.push(wPt);
+//             }
+//             return prevPts;
+//         }, []);
+//
+//         const {centralPoint} = computeCentralPointAndRadius(pts);
+//         newCenter = centralPoint;
+//     }
+//
+//     const allSky= Boolean( (isImage(plot) && plot.projection.isWrappingProjection()) || isHiPS(plot));
+//     // recenter image for 'hips' and allsky 'image' type
+//     if (newCenter && allSky && !pointEquals(centerPt, newCenter)) {
+//         dispatchRecenter({plotId: plot.plotId, centerPt: newCenter});
+//     }
+// }
 
 function handleCatalogUpdate(tbl_id) {
     const sourceTable= getTblById(tbl_id);
@@ -162,7 +162,7 @@ function handleCatalogUpdate(tbl_id) {
     const maxScatterRows = getMaxScatterRows();
     const columns= findTableCenterColumns(sourceTable);
 
-    recenterImage(sourceTable);
+    // recenterImage(sourceTable);
 
     const params= {
         startIdx : 0,

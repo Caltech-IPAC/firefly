@@ -38,7 +38,9 @@ export function DrawLayerPanelView({dlAry, plotView, mouseOverMaskValue, drawLay
     const layers= getAllDrawLayersForPlot(dlAry,plotView.plotId);
     const maxTitleChars= layers.reduce( (max,l) => {
         const t= getLayerTitle(plotView.plotId,l);
-        return Math.max(max, t?t.length:0);
+        let tLen= 0;
+        if (t) tLen= l.autoFormatTitle? t.length : 30;
+        return Math.max(max, tLen);
     },20);
 
     return (
@@ -136,6 +138,7 @@ function makeDrawLayerItemAry(layers,pv, maxTitleChars, factory) {
                                                      isPointData={l.isPointData}
                                                      drawingDef={l.drawingDef}
                                                      color={l.drawingDef.color}
+                                                     autoFormatTitle={l.autoFormatTitle}
                                                      title= {getLayerTitle(pv.plotId,l)}
                                                      visible={isDrawLayerVisible(l,pv.plotId)}
                                                      modifyColor={() => modifyColor(l,pv.plotId)}
@@ -158,6 +161,7 @@ function makeImageLayerItemAry(pv, maxTitleChars, hasLast, mouseOverMaskValue) {
                            canUserChangeColor={true}
                            isPointData={false}
                            color={opv.colorAttributes.color}
+                           autoFormatTitle={true}
                            title= {makeOverlayTitle(opv, (mouseOverMaskValue & opv.maskValue)) }
                            visible={opv.visible}
                            modifyColor={() => modifyMaskColor(opv)}

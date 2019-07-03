@@ -20,7 +20,7 @@ export function makeBadge(cnt) {
 
 export function makeDropDownIndicator(cnt) {
     // return (<img className={'ff-dropDownIndicator'} src={DROP_DOWN_ICON}/>);
-    return (<img src={DROP_DOWN_ICON}/>);
+    return (<img src={DROP_DOWN_ICON} style={{width:11, height:6, alignSelf: 'center'}}/>);
 }
 
 
@@ -197,7 +197,7 @@ ToolbarButton.contextType = ToolTipCtx;
 
 ToolbarButton.propTypes= {
     icon : PropTypes.string,
-    text : PropTypes.string,
+    text : PropTypes.node,
     tip : PropTypes.string,
     badgeCount : PropTypes.number,
     enabled : PropTypes.bool,
