@@ -18,7 +18,7 @@ Then, for example,
 
 `<script  type="text/javascript" src="http://localhost:8090/firefly/firefly_loader.js"></script>`
 
-More advanced command line here: [../dev/docker/base/start-examples.txt](../dev/docker/base/start-examples.txt)
+More advanced command line here: [firefly/docker/base/start-examples.txt](../docker/base/start-examples.txt)
 
 
 
