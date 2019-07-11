@@ -579,9 +579,15 @@ function validateInput(allFields) {
 //------------------------------------------------------------------
 function doImageSearch({ imageMasterData, request, plotId, plotGroupId, viewerId, renderTreeId}) {
 
+    const pvOptions= {};
     if (plotId) {
-        plotGroupId = getPlotViewById(visRoot(), plotId).plotGroupId;
         viewerId = findViewerWithItemId(getMultiViewRoot(), plotId, IMAGE);
+        const pv = getPlotViewById(visRoot(), plotId);
+        if (pv) {
+            plotGroupId = pv.plotGroupId;
+            pvOptions.displayFixedTarget= pv.plotViewCtx.displayFixedTarget;
+            pvOptions.userCanDeletePlots= pv.plotViewCtx.userCanDeletePlots;
+        }
     } else if (viewerId) {
         //IRSA-142 LZ 4/07/17
         //When the image from different groups, the wcsMatch does not work since the match only matches the image within the same group.
@@ -608,7 +614,8 @@ function doImageSearch({ imageMasterData, request, plotId, plotGroupId, viewerId
         wpRequest && dispatchPlotHiPS({
             plotId,
             viewerId,
-            wpRequest
+            wpRequest,
+            pvOptions,
         });
 
     } else if  (isThreeColorImgType()){       // three color
@@ -623,11 +630,11 @@ function doImageSearch({ imageMasterData, request, plotId, plotGroupId, viewerId
                 wpSet.push(wprs[0]);
             } else { wpSet.push(undefined); }
         });
-        dispatchPlotImage({threeColor:true, wpRequest: wpSet, viewerId, renderTreeId});
+        dispatchPlotImage({threeColor:true, wpRequest: wpSet, viewerId, renderTreeId, pvOptions});
 
     } else {                       // single channel
         const wprs = makeWebPlotRequests(get(request, FG_KEYS.single), imageMasterData, plotId, plotGroupId);
-        wprs.forEach( (r) => dispatchPlotImage({wpRequest:r, viewerId,renderTreeId}));
+        wprs.forEach( (r) => dispatchPlotImage({wpRequest:r, viewerId,renderTreeId,pvOptions}));
     }
 }
 

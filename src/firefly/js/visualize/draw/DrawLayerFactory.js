@@ -74,6 +74,7 @@
  * @param {DrawLayerDefinition~getLayerChanges} [getLayerChanges] get the changes to incorporate into the drawing layer object
  * @param {object} onDetachAction
  * @param {object} [getUIComponent] react component react pure function component, optional- react component
+ * @param {object} onVisibilityChange
  * @return {DrawLayerDefinition}
  */
 export function makeFactoryDef(drawLayerTypeId,
@@ -82,8 +83,9 @@ export function makeFactoryDef(drawLayerTypeId,
                                getLayerChanges= null,
                                onDetachAction= null,
                                getUIComponent= null,
+                               onVisibilityChange= null,
                                asyncComputeDrawData= null) {
-    return {drawLayerTypeId, create, getDrawDataFunc, getLayerChanges, onDetachAction,getUIComponent, asyncComputeDrawData};
+    return {drawLayerTypeId, create, getDrawDataFunc, getLayerChanges, onDetachAction,getUIComponent, onVisibilityChange, asyncComputeDrawData};
 }
 
 class DrawLayerFactory {
@@ -142,6 +144,12 @@ class DrawLayerFactory {
     onDetachAction(drawLayer, action) {
         if (!drawLayer || !this.registry[drawLayer.drawLayerTypeId]) return {};
         var f= this.registry[drawLayer.drawLayerTypeId].onDetachAction;
+        if (f) f(drawLayer,action);
+    }
+
+    onVisibilityChange(drawLayer, action) {
+        if (!drawLayer || !this.registry[drawLayer.drawLayerTypeId]) return {};
+        var f= this.registry[drawLayer.drawLayerTypeId].onVisibilityChange;
         if (f) f(drawLayer,action);
     }
 

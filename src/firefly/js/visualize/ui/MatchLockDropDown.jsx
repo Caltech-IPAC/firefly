@@ -42,7 +42,7 @@ export function MatchLockDropDown({visRoot:vr, enabled}) {
     const hasTarget= Boolean(p && get(p, ['attributes',PlotAttribute.FIXED_TARGET]));
     const pvAry= getPlotViewAry(vr);
     const singleSelectedHiPS= isHiPS(p) && pvAry.filter( (pv) => isHiPS(primePlot(pv))).length===1;
-    const additionalStyle = {paddingLeft: 15};
+    const additionalStyle = {marginLeft: 15};
     const titleDiv= {fontSize:'10pt', fontWeight: 'bold', padding: '0 0 3px 0'};
 
     const dropDown= (

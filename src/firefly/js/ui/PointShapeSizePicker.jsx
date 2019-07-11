@@ -4,30 +4,26 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
+import {get} from 'lodash';
 import {flux} from '../Firefly.js';
 import {dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {PopupPanel} from './PopupPanel.jsx';
 import {DrawSymbol} from '../visualize/draw/PointDataObj.js';
 import DrawUtil from '../visualize/draw/DrawUtil.js';
-import {drawOnCanvas} from '../visualize/ui/DrawLayerItemView.jsx';
+import {drawOnCanvas} from '../visualize/ui/DrawLayerUIComponents.jsx';
 import {dispatchChangeDrawingDef, getDlAry} from '../visualize/DrawLayerCntlr.js';
 import CompleteButton from './CompleteButton.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {RadioGroupInputFieldView} from './RadioGroupInputFieldView.jsx';
 import {InputFieldView} from './InputFieldView.jsx';
-import {showInfoPopup} from './PopupUtil.jsx';
 import {SimpleCanvas} from '../visualize/draw/SimpleCanvas.jsx';
 import {getDrawLayersByDisplayGroup} from '../visualize/PlotViewUtil.js';
-import {get, isNaN} from 'lodash';
 import {clone} from '../util/WebUtil.js';
 import Color from '../util/Color.js';
 import validator from 'validator';
 import {HelpIcon} from '../ui/HelpIcon.jsx';
 
 
-const PointOptions = [ DrawSymbol.CIRCLE, DrawSymbol.SQUARE, DrawSymbol.DIAMOND,
-                       DrawSymbol.CROSS, DrawSymbol.X, DrawSymbol.ARROW,
-                       DrawSymbol.BOXCIRCLE, DrawSymbol.DOT];
 
 const MINSIZE = 3;
 const MAXSIZE = 100;
@@ -37,13 +33,42 @@ const ARROW_DOWN = 40;
 
 var popupId;
 
-export function showPointShapeSizePickerDialog(dl, plotId) {
+
+
+function defaultUpdate(id, newDrawingDef, plotId, titleMatching) {
+    dispatchChangeDrawingDef(id, newDrawingDef, plotId, titleMatching);
+}
+
+function defaultGetColor(drawLayer) {
+    return get(drawLayer, ['drawingDef', 'color']);
+}
+
+
+/**
+ * Show a dialog to change the shape of the symbol.  Most use cases which use normal draw layers
+ * do not require the last 3 parameter. The last three are require if you are using this to modify a shape that is
+ * not using the draw layers DrawingDef
+ *
+ * @param {DrawLayer} dl
+ * @param {String} plotId
+ * @param {DrawingDef} [drawingDef]
+ * @param {Function} [update]
+ * @param {Function} [getColor]
+ */
+export function showPointShapeSizePickerDialog(dl, plotId, drawingDef= undefined,
+                                               update= defaultUpdate, getColor= defaultGetColor) {
     var {isPointData=false} = dl;
 
     popupId = popupIdBase; //keep one dialog
     const popup= isPointData ? (
         <PopupPanel title={'Symbol Picker - ' + dl.drawLayerId } >
-            <ShapePickerWrapper drawingDef={dl.drawingDef} displayGroupId={dl.displayGroupId} plotId={plotId} />
+            <ShapePickerWrapper
+                drawingDef={drawingDef || dl.drawingDef}
+                displayGroupId={dl.displayGroupId}
+                plotId={plotId}
+                update={update}
+                getColor={getColor}
+            />
         </PopupPanel>
     ) : null;
 
@@ -101,9 +126,8 @@ class ShapePickerWrapper extends PureComponent {
     storeUpdate() {   // color change externally
         if (this.iAmMounted) {
             const {drawingDef} = this.state;
-            const color = drawingDef.color;
             const dl = getDrawLayersByDisplayGroup(getDlAry(), this.props.displayGroupId);
-            const dlColor = get(dl, ['drawingDef', 'color']);
+            const dlColor = this.props.getColor(dl);
 
             if (dlColor !== drawingDef.color) {
                 this.setState({drawingDef: clone(drawingDef, {color: dlColor})});
@@ -122,7 +146,8 @@ class ShapePickerWrapper extends PureComponent {
                                                          clone(drawingDef, {symbol, size: symbolSize});
 
         const dl = getDrawLayersByDisplayGroup(getDlAry(), this.props.displayGroupId);
-        dispatchChangeDrawingDef(this.displayGroupId, newDD, this.plotId, dl.titleMatching);
+        // dispatchChangeDrawingDef(this.displayGroupId, newDD, this.plotId, dl.titleMatching);
+        this.props.update(this.displayGroupId, newDD, this.plotId, dl.titleMatching);
         this.setState({drawingDef: newDD});
 
     }
@@ -148,7 +173,8 @@ class ShapePickerWrapper extends PureComponent {
 
             this.setState({size, validSize, drawingDef: newDD});
             const dl = getDrawLayersByDisplayGroup(getDlAry(), this.props.displayGroupId);
-            dispatchChangeDrawingDef(this.displayGroupId, newDD, this.plotId, dl.titleMatching);
+            // dispatchChangeDrawingDef(this.displayGroupId, newDD, this.plotId, dl.titleMatching);
+            this.props.update(this.displayGroupId, newDD, this.plotId, dl.titleMatching);
         }
     }
 
@@ -174,7 +200,8 @@ class ShapePickerWrapper extends PureComponent {
             const newDD = clone(drawingDef, {size: symbolSize});
 
             const dl = getDrawLayersByDisplayGroup(getDlAry(), this.props.displayGroupId);
-            dispatchChangeDrawingDef(this.displayGroupId, newDD, this.plotId, dl.titleMatching);
+            // dispatchChangeDrawingDef(this.displayGroupId, newDD, this.plotId, dl.titleMatching);
+            this.props.update(this.displayGroupId, newDD, this.plotId, dl.titleMatching);
             this.setState({drawingDef: newDD});
         }
     }
@@ -189,8 +216,10 @@ class ShapePickerWrapper extends PureComponent {
         const symbolSize = DrawUtil.getSymbolSize(isize, isize, drawingDef.symbol);
 
         const dl = getDrawLayersByDisplayGroup(getDlAry(), this.props.displayGroupId);
-        dispatchChangeDrawingDef(this.displayGroupId, clone(drawingDef, {symbol: drawingDef.symbol, size: symbolSize}),
-                                                             this.plotId, dl.titleMatching);
+        // dispatchChangeDrawingDef(this.displayGroupId, clone(drawingDef, {symbol: drawingDef.symbol, size: symbolSize}),
+        //                                                      this.plotId, dl.titleMatching);
+        this.props.update(this.displayGroupId, clone(drawingDef, {symbol: drawingDef.symbol, size: symbolSize}),
+            this.plotId, dl.titleMatching);
 
     }
 
@@ -203,7 +232,7 @@ class ShapePickerWrapper extends PureComponent {
         if (size > maxSize) {
             canvasSize = validSize && Math.floor(parseFloat(maxSize)) + 2;
             const symbolSize = DrawUtil.getSymbolSize(maxSize, maxSize, drawingDef.symbol);
-            df = clone(drawingDef, {size: symbolSize})
+            df = clone(drawingDef, {size: symbolSize});
         }
 
         if (validSize) {
@@ -229,6 +258,9 @@ class ShapePickerWrapper extends PureComponent {
     }
 
     render() {
+        const PointOptions = [ DrawSymbol.CIRCLE, DrawSymbol.SQUARE, DrawSymbol.DIAMOND,
+            DrawSymbol.CROSS, DrawSymbol.X, DrawSymbol.ARROW, DrawSymbol.POINT_MARKER,
+            DrawSymbol.BOXCIRCLE, DrawSymbol.DOT];
         const {drawingDef, size, validSize} = this.state;
         const df = validSize&&drawingDef;
         const labelW = 70;
@@ -236,7 +268,7 @@ class ShapePickerWrapper extends PureComponent {
         const bkColor = getBackgroundColor(drawingDef.color);
         const textColor = '#000000';
         const options = PointOptions.map((p) => {
-                            return {value: p.key, label: drawShapeWithLabel(p, drawingDef, bkColor, textColor)}
+                            return {value: p.key, label: drawShapeWithLabel(p, drawingDef, bkColor, textColor)};
                         });
         return (
             <div style={{width: 320}}>
@@ -291,7 +323,9 @@ class ShapePickerWrapper extends PureComponent {
 ShapePickerWrapper.propTypes= {
     drawingDef: PropTypes.object.isRequired,
     displayGroupId: PropTypes.string.isRequired,
-    plotId: PropTypes.string.isRequired
+    plotId: PropTypes.string.isRequired,
+    update: PropTypes.func.isRequired,
+    getColor: PropTypes.func.isRequired
 };
 
 function drawShapeWithLabel(pointObj, drawingDef, bkColor, textColor) {

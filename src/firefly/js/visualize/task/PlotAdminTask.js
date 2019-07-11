@@ -112,15 +112,15 @@ export function restoreDefaultsActionCreator(rawAction) {
                             dispatchPlotImage({plotId:pv.plotId,
                                 viewerId, wpRequest:[def.redReq,def.greenReq,def.blueReq],
                                 threeColor:true, setNewPlotAsActive:false,
-                                useContextModifications:false});
+                                useContextModifications:false, pvOptions:def.pvOptions});
                             break;
                         case 'image' :
                             dispatchPlotImage({plotId:pv.plotId, wpRequest:def.wpRequest, setNewPlotAsActive:false,
-                                viewerId, useContextModifications:false});
+                                viewerId, useContextModifications:false, pvOptions:def.pvOptions});
                             break;
                         case 'hips' :
                             dispatchPlotHiPS({plotId:pv.plotId, wpRequest:def.wpRequest, setNewPlotAsActive:false,
-                                viewerId});
+                                viewerId, pvOptions:def.pvOptions});
                             break;
                     }
                 }

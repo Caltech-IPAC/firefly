@@ -145,6 +145,7 @@ export function getDrawLayerCntlrDef(drawLayerFactory) {
         actionCreators() {
             return {
                 [DETACH_LAYER_FROM_PLOT] :  makeDetachLayerActionCreator(drawLayerFactory),
+                [CHANGE_VISIBILITY] :  makeChangeVisibilityActionCreator(drawLayerFactory),
                 [SELECT_AREA_END] :  selectAreaEndActionCreator,
                 [DT_END] :  distanceToolEndActionCreator,
                 [MARKER_START] :  markerToolStartActionCreator,
@@ -610,6 +611,17 @@ function makeDetachLayerActionCreator(factory) {
             const drawLayer= getDrawLayerById(getDlAry(), drawLayerId);
             factory.onDetachAction(drawLayer,action);
             dispatcher(action);
+        };
+    };
+}
+
+function makeChangeVisibilityActionCreator(factory) {
+    return (action) => {
+        return (dispatcher) => {
+            const {drawLayerId}= action.payload;
+            const drawLayer= getDrawLayerById(getDlAry(), drawLayerId);
+            dispatcher(action);
+            factory.onVisibilityChange(drawLayer,action);
         };
     };
 }

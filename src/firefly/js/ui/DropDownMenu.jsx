@@ -29,7 +29,7 @@ function placeDropDown(e,x,y, beforeVisible) {
 
 export function SingleColumnMenu({children}) {
     return (
-        <div className='ff-MenuItem-dropDown'>
+        <div className='ff-MenuItem-dropDown disable-select'>
             {children}
         </div>
     );

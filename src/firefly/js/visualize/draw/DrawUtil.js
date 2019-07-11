@@ -10,7 +10,7 @@ const FALLBACK_COLOR = 'red';
 
 export default {getColor, beginPath, stroke, strokeRec, drawLine, drawText, drawTextCanvas, drawPath, makeShadow,
                 drawHandledLine, drawInnerRecWithHandles, drawCircleWithHandles, rotateAroundScreenPt,
-                drawX, drawSquareX, drawSquare, drawEmpSquareX, drawCross, drawSymbol,
+                drawX, drawSquareX, drawSquare, drawEmpSquareX, drawCross, drawSymbol, drawPointMarker,
                 drawEmpCross, drawDiamond, drawDot, drawCircle, drawEllipse, drawBoxcircle,
                 drawArrow, drawRotate, clear,clearCanvas, fillRec, getDrawingSize, polygonPath,
                 getSymbolSize, getSymbolSizeBasedOn, beginFillPath, endFillPath, fillPath};
@@ -449,6 +449,27 @@ function drawCross(ctx, x, y, color, size,lineWidth,renderOptions, onlyAddToPath
 }
 
 
+
+function drawPointMarker(ctx, x, y, color, size,lineWidth,renderOptions, onlyAddToPath) {
+    const gap= size<5 ? 1 : Math.trunc(size*.3);
+    if (!onlyAddToPath) beginPath(ctx,color,lineWidth, renderOptions);
+    ctx.moveTo(x-size,y);
+    ctx.lineTo(x-gap,y);
+
+    ctx.moveTo(x+size,y);
+    ctx.lineTo(x+gap,y);
+
+
+    ctx.moveTo(x,y-size);
+    ctx.lineTo(x,y-gap);
+    ctx.moveTo(x,y+size);
+    ctx.lineTo(x,y+gap);
+
+    if (!onlyAddToPath) stroke(ctx);
+    drawCircle(ctx, x, y, color, Math.trunc(size*.8), lineWidth, renderOptions, onlyAddToPath);
+}
+
+
 function drawEmpCross(ctx, x, y, size,lineWidth,renderOptions, color1, color2) {
 
     drawLine(ctx, color1, lineWidth, x-size,y, x+size, y, renderOptions);
@@ -604,6 +625,10 @@ function drawSymbol(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {
         case DrawSymbol.ROTATE :
             drawRotate(ctx, x, y, color, size, lineWidth, renderOptions, onlyAddToPath);
             break;
+        case DrawSymbol.POINT_MARKER :
+            drawPointMarker(ctx, x, y, color, size, lineWidth, renderOptions, onlyAddToPath);
+            break;
+
         default :
             break;
     }
@@ -622,6 +647,7 @@ function getDrawingSize(size, symbol) {
         case DrawSymbol.DIAMOND :
         case DrawSymbol.BOXCIRCLE :
         case DrawSymbol.CIRCLE :
+        case DrawSymbol.POINT_MARKER :
             width = size * 2;
             break;
         case DrawSymbol.EMP_CROSS :
@@ -659,6 +685,7 @@ function getSymbolSize(width, height, symbol) {
         case DrawSymbol.DIAMOND :
         case DrawSymbol.BOXCIRCLE :
         case DrawSymbol.CIRCLE :
+        case DrawSymbol.POINT_MARKER :
             size = Math.min(width, height)/2;
             break;
         case DrawSymbol.EMP_CROSS :

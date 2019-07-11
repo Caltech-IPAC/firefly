@@ -53,6 +53,9 @@ import {buildViewerApi} from './ApiViewer.js';
 
 // CSS
 import './ApiStyle.css';
+import {startTTFeatureWatchers} from '../templates/common/ttFeatureWatchers.js';
+import {activeRowCenterDef} from '../visualize/saga/ActiveRowCenterWatcher.js';
+import {urlLinkWatcherDef} from '../visualize/saga/UrlLinkWatcher.js';
 
 
 /**
@@ -128,6 +131,7 @@ export function initApi() {
     dispatchOnAppReady(() => {
         window.onFireflyLoaded && window.onFireflyLoaded(firefly);
     });
+    startTTFeatureWatchers([urlLinkWatcherDef.id, activeRowCenterDef.id]);
     initExpandedView();
 }
 

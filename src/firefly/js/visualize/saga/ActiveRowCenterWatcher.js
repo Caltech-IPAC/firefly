@@ -24,9 +24,9 @@ export const activeRowCenterDef = {
     testTable : (table) => {
         return Boolean(findTableCenterColumns(table));
     },
+    allowMultiples: false,
     actions: [TABLE_LOADED, TABLE_SELECT, TABLE_HIGHLIGHT, TABLE_UPDATE, TBL_RESULTS_ACTIVE, TABLE_REMOVE]
 };
-
 
 export function recenterImages(tbl_id, action, cancelSelf, params) {
 

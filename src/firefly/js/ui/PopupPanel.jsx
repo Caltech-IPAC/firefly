@@ -161,7 +161,7 @@ export class PopupPanel extends PureComponent {
                                  onClick={this.askParentToClose} />
 
                         </div>
-                        <div style={{display:'table'}}>
+                        <div style={{display:'flex'}}>
                             {this.props.children}
                         </div>
                     </div>

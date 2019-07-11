@@ -24,10 +24,12 @@ import {IMAGE} from '../MultiViewCntlr';
 const MAX_GRID_SIZE= 50;
 
 
+/** type {TableWatcherDef} */
 const DataProductsWatcherDef = {
     id : 'ImageMetaDataWatcher',
     watcher : watchDataProductsTable,
     testTable : (t) => isMetaDataTable(t.tbl_id),
+    allowMultiples: false,
     actions: [TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE, TABLE_REMOVE,
               TBL_RESULTS_ACTIVE, REINIT_APP,
               MultiViewCntlr.ADD_VIEWER, MultiViewCntlr.VIEWER_MOUNTED,

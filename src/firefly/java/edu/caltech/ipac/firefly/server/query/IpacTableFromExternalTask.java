@@ -16,6 +16,7 @@ import edu.caltech.ipac.table.TableUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_INDEX;
 
@@ -59,7 +60,10 @@ public class IpacTableFromExternalTask extends IpacTablePartProcessor {
                 defaults.setAttribute(p.getName(), p.getValue());
             }
         }
-        defaults.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "TRUE");
+        Map reqMeta= ((TableServerRequest) request).getMeta();
+        if (reqMeta==null || !reqMeta.containsKey(MetaConst.CATALOG_OVERLAY_TYPE)) {
+            defaults.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "TRUE");
+        }
     }
 
 

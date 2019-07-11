@@ -13,13 +13,14 @@ import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {formatPosForTextField} from '../data/form/PositionFieldDef.js';
+import {getUIComponent} from './ActiveTargetUI.jsx';
 
 const ID= 'ACTIVE_TARGET';
 const TYPE_ID= 'ACTIVE_TARGET_TYPE';
 
 
 
-const factoryDef= makeFactoryDef(TYPE_ID,creator,getDrawData,getLayerChanges,null,null);
+const factoryDef= makeFactoryDef(TYPE_ID,creator,getDrawData,getLayerChanges,null,getUIComponent);
 
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
 

@@ -15,7 +15,7 @@ import Point, {makeImagePt} from '../Point.js';
 import {WPConst, DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
 import {Band} from '../Band.js';
 import {PlotPref} from '../PlotPref.js';
-import ActiveTarget  from '../../drawingLayers/ActiveTarget.js';
+// import ActiveTarget  from '../../drawingLayers/ActiveTarget.js';
 import {clone} from '../../util/WebUtil.js';
 import {makePostPlotTitle} from '../reducer/PlotTitle.js';
 import {dispatchAddViewerItems, getMultiViewRoot, findViewerWithItemId, EXPANDED_MODE_RESERVED, IMAGE, DEFAULT_FITS_VIEWER_ID} from '../MultiViewCntlr.js';
@@ -30,6 +30,7 @@ import {dispatchPlotProgressUpdate, dispatchRecenter, dispatchWcsMatch} from '..
 import {isDefined} from '../../util/WebUtil';
 import {HdrConst} from '../FitsHeaderUtil.js';
 import {doFetchTable} from '../../tables/TableUtil';
+import ImageRoot from '../../drawingLayers/ImageRoot';
 
 //======================================== Exported Functions =============================
 //======================================== Exported Functions =============================
@@ -173,7 +174,7 @@ export function makePlotImageAction(rawAction) {
                 .reduce( (obj, pv) => {
                     obj[pv.plotId]= pv.overlayPlotViews;
                     return obj;
-            },{})
+            },{});
 
             if (vr.wcsMatchType && vr.mpwWcsPrimId && rawAction.payload.holdWcsMatch) {
                 const wcsPrim= getPlotViewById(vr,vr.mpwWcsPrimId);
@@ -181,9 +182,9 @@ export function makePlotImageAction(rawAction) {
             }
         }
 
-        if (!getDrawLayerByType(getDlAry(), ActiveTarget.TYPE_ID)) {
-            initBuildInDrawLayers();
-        }
+        // if (!getDrawLayerByType(getDlAry(), ActiveTarget.TYPE_ID)) {
+        //     initBuildInDrawLayers();
+        // }
 
         payload.requestKey= requestKey;
         payload.plotType= 'image';
@@ -327,7 +328,8 @@ function continuePlotImageSuccess(dispatcher, payload, successAry, failAry) {
         pvNewPlotInfoAry
             .forEach((info) => info.plotAry
                 .forEach( (p)  => {
-                    addDrawLayers(p.plotState.getWebPlotRequest(), p);
+                    const pv= getPlotViewById(visRoot(),p.plotId);
+                    addDrawLayers(p.plotState.getWebPlotRequest(), pv, p);
                     if (p.attributes[PlotAttribute.INIT_CENTER]) dispatchRecenter({plotId:p.plotId});
                 } ));
 
@@ -358,17 +360,22 @@ function continuePlotImageSuccess(dispatcher, payload, successAry, failAry) {
 }
 
 
-export function addDrawLayers(request, plot ) {
+export function addDrawLayers(request, pv, plot) {
     const {plotId}= plot;
+
+
+
+    const fixedLayers= getDrawLayersByType(getDlAry(), ImageRoot.TYPE_ID);
+    let newDL= fixedLayers.find( (dl) => dl.plotId===plot.plotId);
+    if (!newDL) {
+        newDL= dispatchCreateDrawLayer(ImageRoot.TYPE_ID, {plotId});
+        dispatchAttachLayerToPlot(newDL.drawLayerId, pv.plotId, false);
+    }
+
     request.getOverlayIds().forEach((drawLayerTypeId)=> {
         const dls = getDrawLayersByType(dlRoot(), drawLayerTypeId);
         dls.forEach((dl) => {
-            if (dl.drawLayerTypeId===ActiveTarget.TYPE_ID) {
-                const pt= plot.attributes[PlotAttribute.FIXED_TARGET];
-                if (pt && pt.type===Point.W_PT) {
-                    dispatchAttachLayerToPlot(dl.drawLayerId, plotId);
-                }
-            } else if (dl.canAttachNewPlot) {
+            if (dl.canAttachNewPlot) {
                 const visibility = (dl.drawLayerTypeId === HiPSGrid.TYPE_ID) ||
                                     (dl.drawLayerTypeId === HiPSMOC.TYPE_ID && isEmpty(dl.visiblePlotIdAry))
                                     ? false : true;
@@ -549,9 +556,9 @@ function updateActiveTarget(plot) {
     if (activeTarget || corners) dispatchActiveTarget(activeTarget,corners);
 }
 
-export function initBuildInDrawLayers() {
-    dispatchCreateDrawLayer(ActiveTarget.TYPE_ID);
-}
+// export function initBuildInDrawLayers() {
+//     dispatchCreateDrawLayer(ActiveTarget.TYPE_ID);
+// }
 
 /**
  *

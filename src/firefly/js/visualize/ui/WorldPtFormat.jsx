@@ -6,27 +6,28 @@ import Point, {isValidPoint} from '../Point';
 
 
 
-export function formatWorldPt(wp, pad=false, onlyObjNameBold=false) {
+export function formatWorldPt(wp, pad=3, useBold=true) {
     if (!isValidPoint(wp)) return '';
     if (wp.type!==Point.W_PT) return `${wp.x}, ${wp.y}`;
     if (wp.objName) {
         if (wp.resolver) {
             return (
                 <Fragment>
-                    <span style={{fontWeight:'bold', paddingRight:pad?15:0}}>{wp.objName}</span>
+                    <span style={{fontWeight:useBold?'bold':'normal', paddingRight:pad}}>{wp.objName}</span>
                     <span style={{fontSize: '80%' }}>
-                        <span style={{fontStyle: 'italic'}}> by </span>
+                        (
                         {`${wp.resolver.toString().toUpperCase()}`}
+                        )
                     </span>
                 </Fragment>
             );
         }
         else {
-            return ( <span style={{fontWeight:'bold'}}>{wp.objName}</span> );
+            return ( <span style={{fontWeight:useBold?'bold':'normal'}}>{wp.objName}</span> );
         }
     }
     else {
-        return ( <span style={{fontWeight:onlyObjNameBold?'normal':'bold'}}>{`${wp.x}, ${wp.y} ${coordToString(wp.cSys)}`}</span> );
+        return ( <span style={{fontWeight:useBold?'bold':'normal'}}>{`${wp.x}, ${wp.y} ${coordToString(wp.cSys)}`}</span> );
     }
 }
 
@@ -48,6 +49,13 @@ export function formatWorldPtToString(wp,addNewLIne=false) {
     else {
         return coordStr;
     }
-
 }
 
+export function formatLonLatToString(wp) {
+    if (!isValidPoint(wp)) return '';
+    if (wp.type!==Point.W_PT) return `${wp.x}, ${wp.y}`;
+    const lonStr = numeral(wp.getLon()).format('#.0[00000]');
+    const latStr = numeral(wp.getLat()).format('#.0[00000]');
+    return `${lonStr} ${latStr}`;
+
+}

@@ -5,21 +5,19 @@
 
 import {isEmpty} from 'lodash';
 import React from 'react';
-import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
-import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import PointDataObj, {DrawSymbol} from '../visualize/draw/PointDataObj.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {formatWorldPt, formatWorldPtToString} from '../visualize/ui/WorldPtFormat';
-import {getUIComponent} from './FixedMarkerUI.jsx';
+import {getActivePlotView} from '../visualize/PlotViewUtil';
+import {visRoot} from '../visualize/ImagePlotCntlr';
+import {FixedPtControl} from './CatalogUI';
 
 const ID= 'FIXED_MARKER';
 const TYPE_ID= 'FIXED_MARKER_TYPE';
 
-
-
-const factoryDef= makeFactoryDef(TYPE_ID,creator,getDrawData,getLayerChanges,null, getUIComponent,null);
+const factoryDef= makeFactoryDef(TYPE_ID,creator,getDrawData,null,null, null,null);
 
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
 
@@ -28,13 +26,15 @@ var idCnt=0;
 
 function creator(initPayload, presetDefaults) {
 
-    let drawingDef= makeDrawingDef('yellow', {lineWidth:1, size:6, fontWeight:'bolder', symbol: DrawSymbol.CROSS } );
-    drawingDef= Object.assign(drawingDef,presetDefaults);
+    const drawingDef= {
+        ...makeDrawingDef('yellow', {lineWidth:1, size:10, fontWeight:'bolder', symbol: DrawSymbol.POINT_MARKER } ),
+        ...presetDefaults};
     idCnt++;
 
     const options= {
         isPointData:true,
         autoFormatTitle:false,
+        title: getTitle(initPayload.worldPt),
         canUserChangeColor: ColorChangeType.DYNAMIC,
         worldPt: initPayload.worldPt
     };
@@ -47,30 +47,13 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
     return isEmpty(lastDataRet) ? computeDrawData(drawLayer) : lastDataRet;
 }
 
-function getLayerChanges(drawLayer, action) {
-    switch (action.type) {
-        case ImagePlotCntlr.ANY_REPLOT:
-            break;
-        case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
-            let {plotIdAry,plotId}= action.payload;
-            if (!plotIdAry && !plotId) return null;
-            if (!plotIdAry) plotIdAry= [plotId];
-            const title= getTitle(drawLayer);
-            return {title};
-    }
-    return null;
-}
-
-
-function getTitle(drawLayer) {
-    const {worldPt:wp}= drawLayer;
-    // return formatWorldPtToString(wp,true);
+function getTitle(wp) {
     return (
-        <div style={{display:'inline-flex', width: 100}} title={formatWorldPtToString(wp)}>
-            {formatWorldPt(wp,true,true)}
+        <div style={{display:'inline-flex', alignItems:'center', width: 100}} title={formatWorldPtToString(wp)}>
+            {formatWorldPt(wp,5,false)}
+            {<FixedPtControl wp={wp} pv={getActivePlotView(visRoot())} style={{paddingLeft:7}}/>}
         </div>
     );
-    // return wp.objName ? wp.objName :formatPosForTextField(wp);
 }
 
 function computeDrawData(drawLayer) {

@@ -24,7 +24,7 @@ import {dispatchAddTaskCount, dispatchRemoveTaskCount, makeTaskId } from '../cor
 const ID= 'MOC_PLOT';
 const TYPE_ID= 'MOC_PLOT_TYPE';
 const MocPrefix = 'MOC - ';
-const factoryDef= makeFactoryDef(TYPE_ID, creator, null, getLayerChanges, null, getUIComponent, asyncComputeDrawData);
+const factoryDef= makeFactoryDef(TYPE_ID, creator, null, getLayerChanges, null, getUIComponent, null, asyncComputeDrawData);
 export default {factoryDef, TYPE_ID};
 
 let idCnt=0;

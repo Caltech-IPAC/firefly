@@ -162,8 +162,10 @@ export class ToolbarButton extends PureComponent {
                     <div title={tip} style={{display: 'flex', alignItems: 'center'}} className={cName}
                          ref={this.setupRef}
                          onClick={this.click} onMouseOver={this.mouseOver} onMouseOut={this.mouseOut}>
-                        <img style={imageStyle} src={icon}/>
-                        <span>{text}</span>
+                        <div style= {{display:'flex', flexGrow:1, alignItems:'center'}} className={textCName}>
+                            <img style={imageStyle} src={icon} className={textCName}/>
+                            <span style={{paddingLeft:5, flexGrow:1}}>{text}</span>
+                        </div>
                         {badgeCount ? makeBadge(badgeCount) : ''}
                         {todo ? <div style={todoStyle}>ToDo</div> : false}
                     </div>
@@ -182,8 +184,10 @@ export class ToolbarButton extends PureComponent {
                     <div title={tip} style={s} className={cName}
                          ref={this.setupRef}
                          onClick={this.click} onMouseOver={this.mouseOver} onMouseOut={this.mouseOut}>
-                        {hasCheckBox && cb}
-                        {icon ? <img style={imageStyle} src={icon}/> : <div className={textCName}>{text}</div>}
+                        <div style={{flexGrow:1, display:'flex'}} className={textCName}>
+                            {hasCheckBox && cb}
+                            {icon ? <img style={{...imageStyle, flexGrow:1}} src={icon}/> : <div style={{flexGrow:1}} className={textCName}>{text}</div>}
+                        </div>
                         {badgeCount ? makeBadge(badgeCount) : ''}
                         {todo?<div style={todoStyle}>ToDo</div> : false}
                     </div>
@@ -218,20 +222,6 @@ ToolbarButton.propTypes= {
     additionalStyle : PropTypes.object,
     hasCheckBox: PropTypes.bool,
     checkBoxOn: PropTypes.bool,
-};
-
-ToolbarButton.DefaultProps= {
-    text : 'EMPTY TEXT',
-    badgeCount: 0,
-    enabled : true,
-    bgDark : true,
-    useBorder : false,
-    drawDown : null,
-    horizontal : true,
-    todo : false,
-    hideDropDowns: false,
-    visible : true,
-    hasHorizontalLayoutSep :true
 };
 
 

@@ -9,7 +9,7 @@ import {isDrawLayerVisible, getAllDrawLayersForPlot,
     getLayerTitle, getDrawLayersByDisplayGroup}  from '../PlotViewUtil.js';
 import {operateOnOverlayPlotViewsThatMatch, enableRelatedDataLayer,
                findUnactivatedRelatedData, setMaskVisible } from '../RelatedDataUtil.js';
-import DrawLayerItemView from './DrawLayerItemView.jsx';
+import {DrawLayerItemView} from './DrawLayerItemView.jsx';
 import {ColorChangeType} from '../draw/DrawLayer.js';
 import {GroupingScope} from '../DrawLayerCntlr.js';
 import {clone} from '../../util/WebUtil.js';
@@ -19,6 +19,7 @@ import {visRoot, dispatchOverlayPlotChangeAttributes, dispatchDeleteOverlayPlot}
 import {showColorPickerDialog} from '../../ui/ColorPicker.jsx';
 import {showPointShapeSizePickerDialog} from '../../ui/PointShapeSizePicker.jsx';
 import {getPlotViewById} from '../PlotViewUtil';
+import ImageRoot from '../../drawingLayers/ImageRoot.js';
 
 
 
@@ -64,8 +65,8 @@ DrawLayerPanelView.propTypes= {
 };
 
 
-function getUIComponent(dl,pv, factory) {
-    return factory.getGetUIComponentFunc(dl) && factory.getGetUIComponentFunc(dl)(dl,pv);
+function getUIComponent(dl,pv, factory, maxTitleChars) {
+    return factory.getGetUIComponentFunc(dl) && factory.getGetUIComponentFunc(dl)(dl,pv,maxTitleChars);
 }
 
 
@@ -129,11 +130,17 @@ function makeAddRelatedDataAry(pv) {
 
 function makeDrawLayerItemAry(layers,pv, maxTitleChars, factory) {
     const last= layers.length-1;
-    return layers.map( (l,idx) => <DrawLayerItemView key={l.drawLayerId}
+    return layers.sort( (l1,l2) => {
+            if (l1.drawLayerTypeId===ImageRoot.TYPE_ID && l2.drawLayerTypeId!==ImageRoot.TYPE_ID) return -1;
+            if (l1.drawLayerTypeId!==ImageRoot.TYPE_ID && l2.drawLayerTypeId===ImageRoot.TYPE_ID) return 1;
+            return 0;
+        })
+        .map( (l,idx) => <DrawLayerItemView key={l.drawLayerId}
                                                      maxTitleChars={maxTitleChars}
                                                      helpLine={l.helpLine}
                                                      lastItem={idx===last}
                                                      canUserDelete={l.canUserDelete}
+                                                     canUserHide={l.canUserHide}
                                                      canUserChangeColor={l.canUserChangeColor}
                                                      isPointData={l.isPointData}
                                                      drawingDef={l.drawingDef}
@@ -145,7 +152,7 @@ function makeDrawLayerItemAry(layers,pv, maxTitleChars, factory) {
                                                      modifyShape={() => modifyShape(l,pv.plotId)}
                                                      deleteLayer={() => deleteLayer(l,pv.plotId)}
                                                      changeVisible={() => flipVisible(l,pv.plotId)}
-                                                     UIComponent={getUIComponent(l,pv,factory)}
+                                                     UIComponent={getUIComponent(l,pv,factory, maxTitleChars)}
     />);
 }
 

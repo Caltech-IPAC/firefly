@@ -25,7 +25,7 @@ import {defaultRegionSelectColor, defaultRegionSelectStyle} from '../DrawLayerCn
  * */
 export const DrawSymbol = new Enum([
     'X','SQUARE','CROSS','DIAMOND','DOT','CIRCLE', 'SQUARE_X', 'EMP_CROSS','EMP_SQUARE_X',
-    'BOXCIRCLE', 'ARROW', 'ROTATE'
+    'BOXCIRCLE', 'ARROW', 'ROTATE', 'POINT_MARKER'
 ], { ignoreCase: true });
 
 export const POINT_DATA_OBJ= 'PointDataObj';
@@ -235,6 +235,7 @@ export function getPointDataobjArea(drawObj, cc) {
         case DrawSymbol.CIRCLE:
         case DrawSymbol.EMP_SQUARE_X:
         case DrawSymbol.EMP_CROSS :
+        case DrawSymbol.POINT_MARKER :
             width = (size + 2) * 2;
             break;
         case DrawSymbol.SQUARE :
@@ -369,6 +370,9 @@ function drawSymbolOnPlot(ctx, x, y, drawParams, renderOptions, onlyAddToPath, p
         case DrawSymbol.ARROW :
             DrawUtil.drawArrow(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPath);
             break;
+        case DrawSymbol.POINT_MARKER :
+            DrawUtil.drawPointMarker(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPath);
+            break;
         case DrawSymbol.ROTATE:
             var rotAngle = get(renderOptions, 'rotAngle', 0.0);
             rotAngle = getPVRotateAngle(plot, rotAngle);
@@ -396,6 +400,7 @@ function toRegion(pt, plot, drawObj, drawParams, renderOptions) {
             break;
         case DrawSymbol.EMP_CROSS :
         case DrawSymbol.CROSS :
+        case DrawSymbol.POINT_MARKER :
             pointType = 'cross';
             break;
         case DrawSymbol.SQUARE :

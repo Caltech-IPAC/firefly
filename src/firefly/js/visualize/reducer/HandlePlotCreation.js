@@ -79,15 +79,14 @@ export function reducer(state, action) {
 
 
 function updateDefaults(plotRequestDefaults, action) {
-    const {wpRequestAry}= action.payload;
-    const {plotId,wpRequest,redReq,greenReq, blueReq,threeColor, plotType}= action.payload;
+    const {plotId,wpRequest,wpRequestAry,redReq,greenReq, blueReq,threeColor, plotType, pvOptions}= action.payload;
     if (plotType==='hips') {
-        return clone(plotRequestDefaults, {[plotId]:{plotType:'hips',wpRequest}});
+        return clone(plotRequestDefaults, {[plotId]:{plotType:'hips',wpRequest,pvOptions}});
     }
     else if (plotType==='image') {
         if (wpRequestAry) {
             const newObj= wpRequestAry.reduce( (obj,r) => {
-                obj[r.getPlotId()]={plotType:'image', wpRequest:r};
+                obj[r.getPlotId()]={plotType:'image', wpRequest:r,pvOptions};
                 return obj;
             }, {});
             return clone(plotRequestDefaults, newObj);
@@ -95,8 +94,8 @@ function updateDefaults(plotRequestDefaults, action) {
         else {
             if (!wpRequest && !redReq && !greenReq && !blueReq) return plotRequestDefaults;
             return threeColor ?
-                clone(plotRequestDefaults, {[plotId]:{plotType:'threeColor',redReq,greenReq, blueReq}}) :
-                clone(plotRequestDefaults, {[plotId]:{plotType:'image',wpRequest}});
+                clone(plotRequestDefaults, {[plotId]:{plotType:'threeColor',redReq,greenReq, blueReq,pvOptions}}) :
+                clone(plotRequestDefaults, {[plotId]:{plotType:'image',wpRequest,pvOptions}});
         }
     }
 }

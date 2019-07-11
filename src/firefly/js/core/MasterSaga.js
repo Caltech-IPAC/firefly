@@ -127,6 +127,7 @@ export function dispatchAddActionWatcher({id, actions, callback, params={}}) {
  *                                       list will force any watcher def with an id in the list to not watch
  * @param {boolean} p.stopPropagation - like excludes but if true not only watcher will be added
  * @param {boolean} p.enabled - if true this TableTypeWatcher will test and add, if false it will be skipped
+ * @param {boolean} p.allowMultiples - multiple defs of this type are allowed.
  *
  * @see TableWatchFunc
  * @see TestWatchFunc
@@ -137,10 +138,10 @@ export function dispatchAddActionWatcher({id, actions, callback, params={}}) {
  */
 export function dispatchAddTableTypeWatcherDef({id, actions, excludes= [], testTable= ()=>true,
                                              watcher, options={}, enabled= true, stopPropagation= false,
-                                             sharedData}) {
+                                             sharedData, allowMultiples}) {
     flux.process({
         type: ADD_TABLE_TYPE_WATCHER,
-        payload: {id, actions, excludes, testTable, watcher, options, enabled, stopPropagation, sharedData}
+        payload: {id, actions, excludes, testTable, watcher, options, enabled, stopPropagation, sharedData,allowMultiples}
     });
 }
 
@@ -301,6 +302,7 @@ function addTableTypeWatcherDef(def) {
     setTimeout(() => {
         if (isEmpty(getTTWatcherDefList())) initTTWatcher();
         // validate and start
+        if (!def.allowMultiples && ttWatcherDefList.find( (d) => d.id===def.id)) return;
         if (isFunction(def.watcher) && isArray(def.actions) && def.id) insertTTWatcherDef(def);
         else console.error('TableTypeWatcher: watcher, actions, and id are required.');
         retroactiveTTStart(def);

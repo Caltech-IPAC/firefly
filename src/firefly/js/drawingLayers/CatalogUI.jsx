@@ -2,22 +2,37 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
+import React, {useState} from 'react';
 import PropTypes from 'prop-types';
 import Enum from 'enum';
 import {isEmpty, startCase} from 'lodash';
 import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
 import {dispatchModifyCustomField, dispatchChangeVisibility} from '../visualize/DrawLayerCntlr.js';
 import {isDrawLayerVisible} from '../visualize/PlotViewUtil.js';
-import {GroupingScope} from '../visualize/DrawLayerCntlr.js';
 import {DataTypes} from '../visualize/draw/DrawLayer.js';
 import {showInfoPopup, INFO_POPUP} from '../ui/PopupUtil.jsx';
+import {dispatchRecenter} from '../visualize/ImagePlotCntlr';
+import {GroupingScope} from '../visualize/DrawLayerCntlr.js';
 import {isDialogVisible, dispatchHideDialog} from '../core/ComponentCntlr.js';
-import EXCLAMATION from 'html/images/exclamation16x16.gif';
+import {formatLonLatToString, formatWorldPt, formatWorldPtToString} from '../visualize/ui/WorldPtFormat';
+import {copyToClipboard} from '../util/WebUtil';
+import {ToolbarButton} from '../ui/ToolbarButton';
+import {makeColorChange, makeShape} from '../visualize/ui/DrawLayerUIComponents';
+import {showColorPickerDialog} from '../ui/ColorPicker';
+import {showPointShapeSizePickerDialog} from '../ui/PointShapeSizePicker';
+
 import infoIcon from 'html/images/info-icon.png';
+import EXCLAMATION from 'html/images/exclamation16x16.gif';
+import CLIPBOARD from 'html/images/20x20_clipboard.png';
+import CHECKED from 'html/images/20x20_clipboard-checked.png';
+import CENTER from 'html/images/20x20-center-small.png';
+import {convert} from '../visualize/VisUtil';
+import CoordinateSys from '../visualize/CoordSys';
 
 export const TableSelectOptions = new Enum(['all', 'selected', 'highlighted']);
-export const getUIComponent = (drawLayer,pv) => <CatalogUI drawLayer={drawLayer} pv={pv}/>;
+export const getUIComponent = (drawLayer,pv,maxTitleChars) =>
+                         <CatalogUI drawLayer={drawLayer} pv={pv} maxTitleChars={maxTitleChars}/>;
+
 
 function CatalogUI({drawLayer,pv}) {
 
@@ -35,9 +50,23 @@ function CatalogUI({drawLayer,pv}) {
             return prev;
         }, []);
 
-        const subTitle = (!isFromRegion) ? null :
-            (<div>{columns.type === 'region' ? `column: ${columns.regionCol}` : `columns: ${columns.lonCol}, ${columns.latCol}`}
-             </div>);
+        const searchTargetUI= drawLayer.searchTarget ? (<SearchTargetUI drawLayer={drawLayer} PlotView={pv}/>) : false;
+
+        let subTitle;
+        if (isFromRegion) {
+            subTitle= (
+                <div>
+                    {searchTargetUI}
+                    {columns.type === 'region' ? `column: ${columns.regionCol}` : `columns: ${columns.lonCol}, ${columns.latCol}`}
+                </div>
+            );
+        }
+        else {
+            subTitle= searchTargetUI;
+        }
+
+
+
 
         // for region layer
         if (selectOption && tOptions.find((oneOp) => oneOp.value === selectOption)) {
@@ -53,7 +82,7 @@ function CatalogUI({drawLayer,pv}) {
 
             tableOptions = (
                 <div>
-                    <div style={{marginBottom: 8, height: 16, display:'flex'}}>
+                    <div style={{marginBottom: 8, display:'flex'}}>
                         {subTitle}
                         {errorIcon}
                     </div>
@@ -150,8 +179,85 @@ function changeVisibilityScope(drawLayer,pv,value) {
     }
 }
 
+function SearchTargetUI({drawLayer:dl, PlotView:pv}) {
+    const {searchTarget:wp, drawLayerId}= dl;
+    const drawingDef= dl.searchTargetDrawingDef;
+
+    const modifyColor= () => {
+        showColorPickerDialog(drawingDef.color, false, false,
+            (ev) => {
+                const {r,g,b,a}= ev.rgb;
+                const color= `rgba(${r},${g},${b},${a})`;
+                dispatchModifyCustomField(drawLayerId, {searchTargetDrawingDef:{...drawingDef,color}}, pv.plotId);
+            }, drawLayerId+'-searchTarget');
+    };
+
+
+    const modifyShape= () => {
+        showPointShapeSizePickerDialog(dl, pv.plotId, drawingDef,
+            (id, newDrawingDef) => dispatchModifyCustomField(id,
+                   {searchTargetDrawingDef:{...drawingDef,symbol:newDrawingDef.symbol, size:newDrawingDef.size}}, pv.plotId),
+            (drawLayer) => drawLayer.searchTargetDrawingDef.color
+        );
+    };
+
+    return (
+        <div style={{display: 'flex', justifyContent: 'space-between', alignItems:'center'}}>
+            <div style={{display: 'flex', alignItems: 'center'}}>
+                <span style={{paddingRight: 5}} >Search: </span>
+                <div> {formatWorldPt(wp,3,false)} </div>
+                <FixedPtControl pv={pv} wp={wp} />
+                <input type='checkbox'
+                       checked={dl.searchTargetVisible}
+                       onChange={() => dispatchModifyCustomField( dl.displayGroupId,
+                           {searchTargetVisible:!dl.searchTargetVisible}, pv.plotId )}
+                />
+            </div>
+            <div style={{paddingRight: 68}}>
+                {makeColorChange(drawingDef.color, modifyColor, {paddingRight: 14})}
+                {makeShape(drawingDef, modifyShape)}
+            </div>
+        </div>
+    );
+
+}
+
 CatalogUI.propTypes= {
     drawLayer     : PropTypes.object.isRequired,
-    pv            : PropTypes.object.isRequired
+    pv            : PropTypes.object.isRequired,
+    maxTitleChars : PropTypes.number
 };
 
+
+export function FixedPtControl({pv, wp, style={}}) {
+    const llStr= formatLonLatToString(convert(wp, CoordinateSys.EQ_J2000));
+    const [clipIcon, setClipIcon] = useState(CLIPBOARD);
+
+    const doCopy= (str) => {
+        copyToClipboard(str);
+        setTimeout( () => {
+            setClipIcon(CHECKED);
+            setTimeout( () => setClipIcon(CLIPBOARD),750);
+        }, 10);
+
+    };
+
+    return (
+        <div style={style}>
+            <ToolbarButton icon={clipIcon} tip={`Copy to the clipboard: ${llStr}`}
+                           horizontal={true} onClick={() => doCopy(llStr)} />
+
+            <ToolbarButton icon={CENTER} tip={'Center on this position'}
+                           horizontal={true}
+                           onClick={() => dispatchRecenter({plotId:pv.plotId, centerPt:wp}) } />
+
+        </div>
+    );
+
+}
+
+FixedPtControl.propTypes= {
+    pv : PropTypes.object.isRequired,
+    wp : PropTypes.object.isRequired,
+    style : PropTypes.object
+};

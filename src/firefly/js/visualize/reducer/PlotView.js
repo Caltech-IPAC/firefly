@@ -44,6 +44,7 @@ export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignore
  * @prop {String} plotId, immutable
  * @prop {String} plotGroupId, immutable
  * @prop {String} drawingSubGroupId, immutable
+ * @peop {boolean} visible true when we draw the base image
  * @prop {WebPlot[]} plots all the plots that this plotView can show, usually the image in the fits file
  * @prop {String} plottingStatus, end user description of the what is doing on
  * @prop {String} serverCall, one of 'success', 'working', 'fail'
@@ -111,6 +112,7 @@ export function makePlotView(plotId, req, pvOptions= {}) {
         plotGroupId: req.getPlotGroupId(), //should never change
         drawingSubGroupId: req.getDrawingSubGroupId(), //todo, string, this is an id, should never change
         plots:[],
+        visible: true,
         request: req && req.makeCopy(),
         plottingStatus:'Plotting...',
         serverCall:'success', // one of 'success', 'working', 'fail'
@@ -145,6 +147,7 @@ function createPlotViewContextData(req, pvOptions={}) {
         rotateNorthLock : false,
         zoomLockingEnabled : false,
         zoomLockingType: UserZoomTypes.FIT, // can be FIT or FILL
+        displayFixedTarget: get(pvOptions, 'displayFixedTarget',true),
         lastCollapsedZoomLevel: 0,
         preferenceColorKey: req.getPreferenceColorKey(),
         preferenceZoomKey:  req.getPreferenceZoomKey(), // currently not used
