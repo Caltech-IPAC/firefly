@@ -23,10 +23,10 @@ const SPITZER_INST = new Enum(['IRAC36', 'IRAC45']);
 // SOFIA_INST_FORCAST_TEXT and then add it to SOFIA_INSTRUMENTS
 const SOFIA_INST = new Enum(['FORCAST', 'FIFI-LS', 'FLITECAM', 'FPI+', 'HAWC+']);
 export const SOFIA_INST_FORCAST_TEXT = new Enum({FORCAST_IMAG:'FORCAST Imaging',
-    FORCAST_GRISMS_A: 'FORCAST Grisms a',FORCAST_GRISMS_B:'FORCAST Grisms b' });
+    FORCAST_GRISMS_A: 'FORCAST Grism a',FORCAST_GRISMS_B:'FORCAST Grism b' });
 export const SOFIA_INST_FIFILS_TEXT = new Enum({'FIFI-LS_Blue':'FIFI-LS Blue (50-120 microns)', 'FIFI-LS_Red':'FIFI-LS Red (110-200 microns)'    });
-export const SOFIA_INST_FLITECAM_TEXT = new Enum({FLITECAM_IMAG:'FLITECAM Imaging',  FLITECAM_GRISMS_ABBA: 'FLITECAM Grisms ABBA',
-    FLITECAM_GRISMS_AB: 'FLITECAM Grisms AB'});
+export const SOFIA_INST_FLITECAM_TEXT = new Enum({FLITECAM_IMAG:'FLITECAM Imaging',  FLITECAM_GRISMS_ABBA: 'FLITECAM Grism ABBA',
+    FLITECAM_GRISMS_AB: 'FLITECAM Grism AB'});
 export const SOFIA_INST_HAWC_TEXT = new Enum({
     HAWC_BAND_A_TOTAL: '53 microns (Band A), Total Intensity',
     HAWC_BAND_A_POLAR: '53 microns (Band A), Polarization',
