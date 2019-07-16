@@ -65,7 +65,7 @@ export const WorkspaceView = memo( (props) => {
     }
     return (
         <div style={wrapperStyle}>
-            {FilePicker({files, selectedItem: selectedFile?selectedItem:WS_HOME+'/', keepSelect, openFolders, ...eventHandlers})}
+            {FilePicker({files, selectedItem, keepSelect, openFolders, ...eventHandlers})}
         </div>
     );
 });
