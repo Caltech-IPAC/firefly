@@ -21,29 +21,11 @@ import {convertAngle, isAngleUnit} from '../VisUtil.js';
 import {findTableCenterColumns} from '../../util/VOAnalyzer.js';
 
 
-export const isLsstFootprintTable = (tableModel, fromAnalysis = false, tbl_idx = 0) => {
-    const HEADER_KEY_COL = 1;
-    const HEADER_VAL_COL = 2;
+export const isLsstFootprintTable = (tableModel) => {
     const lsstKeys = ['contains_lsst_footprints', 'contains_lsst_measurements'];
     const {tableMeta} = tableModel || {};
 
-    if (fromAnalysis && tableMeta) {      // check meta from analysis
-        const metaInfo = get(tableModel, ['parts', tbl_idx, 'details']);        // tableModel here is actually an analysis report
-        const metaAry = metaInfo && get(metaInfo, ['tableData', 'data']);
-
-        if (metaAry && isArray(metaAry)) {
-            const contains = metaAry.reduce((prev, oneMeta) => {
-                if (prev.length === lsstKeys.length) return prev;  // all keys are set
-                if ((oneMeta.length > HEADER_VAL_COL) && lsstKeys.includes(oneMeta[HEADER_KEY_COL]) &&
-                     oneMeta[HEADER_VAL_COL] === 'true' && (!prev.includes(oneMeta[HEADER_KEY_COL]))) {
-                    prev.push(oneMeta[HEADER_VAL_COL]);
-                }
-                return prev;
-            }, []);
-
-            return (contains.length === lsstKeys.length);
-        }
-    } else if (tableMeta) {                                        // not from analysis summary table
+    if (tableMeta) {                                        // not from analysis summary table
         const filterRes = Object.keys(tableMeta).reduce((prev, oneKey) => {
             if (prev.length === lsstKeys.length) return prev;
             if (lsstKeys.includes(oneKey) && tableMeta[oneKey] === 'true' && !prev.includes(oneKey)) {

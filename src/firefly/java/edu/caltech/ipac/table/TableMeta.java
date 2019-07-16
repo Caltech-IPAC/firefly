@@ -60,8 +60,8 @@ public class TableMeta implements Serializable {
     public static final String DESC = "desc";
     public static final String NAME = "name";
 
-    private Map<String, DataGroup.Attribute> attributes = new HashMap<>();
-    private List<DataGroup.Attribute> keywords = new ArrayList<>();
+    private Map<String, DataGroup.Attribute> attributes = new HashMap<>();                      // including keywords and meta added during processing
+    private List<DataGroup.Attribute> keywords = new ArrayList<>();                             // meta from the original source
 
     public static String makeAttribKey(String tag, String colName) {
         return tag.replaceFirst("@", colName);

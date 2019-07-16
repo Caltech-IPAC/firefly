@@ -121,7 +121,7 @@ export function resultSuccess(request) {
     const isMocFits =  isMOCFitsFromUploadAnalsysis(currentReport);
     if (isMocFits.valid) {
         sendMocRequest(fileCacheKey, currentReport.fileName, isMocFits);
-    } else if ( isLsstFootprintTable(currentReport, true, tableIndices[0]) ) {
+    } else if ( isLsstFootprintTable(currentDetailsModel) ) {
         sendLSSTFootprintRequest(fileCacheKey, request.fileName, tableIndices[0]);
     } else {
         sendTableRequest(tableIndices, fileCacheKey);

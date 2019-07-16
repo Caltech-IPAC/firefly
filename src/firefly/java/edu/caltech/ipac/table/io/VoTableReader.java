@@ -920,7 +920,7 @@ public class VoTableReader {
     public static FileAnalysis.Report analyze(File infile, FileAnalysis.ReportType type) throws Exception {
 
         FileAnalysis.Report report = new FileAnalysis.Report(type, infile.length(), infile.getPath());
-        VOElement root = makeVOElement(infile, StoragePolicy.DISCARD);
+        VOElement root = makeVOElement(infile, null);
         List<FileAnalysis.Part> parts = describeDocument(root);
         parts.forEach(report::addPart);
 
@@ -993,8 +993,14 @@ public class VoTableReader {
                 .forEach(el -> {
                     dg.getTableMeta().setAttribute(el.getName(), el.getAttribute("value"));
                 });
-
-        dg.setSize(table.hasAttribute("nrows") ? (int) table.getNrows() : -1);
+        if (table.hasAttribute("nrows")) {
+            dg.setSize((int) table.getNrows());
+        } else {
+            // if no nrows attribute, pull in the data and count the rows.
+            try {
+                dg.setSize((int)  new VOStarTable(table).getRowCount());
+            } catch (IOException e) { }     // just ignore it.
+        }
         return dg;
     }
 

@@ -318,16 +318,16 @@ function MetaInfo({tbl_id}) {
     const wrapperStyle={width: '100%'};
     const kwValStyle = {maxWidth: 0, whiteSpace: 'nowrap'};
 
-    const {allMeta, links, params} = TblUtil.getTblById(tbl_id);
+    const {keywords, links, params} = TblUtil.getTblById(tbl_id);
 
-    if (isEmpty(allMeta) && isEmpty(links) && isEmpty(params) ) {
+    if (isEmpty(keywords) && isEmpty(links) && isEmpty(params) ) {
         return null;
     }
     return (
         <div className='TablePanel__meta'>
-            { !isEmpty(allMeta) &&
+            { !isEmpty(keywords) &&
             <CollapsiblePanel componentKey={tbl_id + '-meta'} header='Table Meta' {...{contentStyle, wrapperStyle}}>
-                {allMeta.concat()                                              // make a copy so the original array does not mutate
+                {keywords.concat()                                             // make a copy so the original array does not mutate
                     .sort(({key:k1}, {key:k2}) => k1.localeCompare(k2))        // sort it by key
                     .map(({value, key}, idx) => {                              // map it into html elements
                         return (
@@ -341,7 +341,7 @@ function MetaInfo({tbl_id}) {
             }
             { !isEmpty(params) &&
             <CollapsiblePanel componentKey={tbl_id + '-params'} header='Table Params' {...{contentStyle, wrapperStyle}}>
-                {params.concat()                                                          // same logic as allMeta, but sort by name
+                {params.concat()                                                          // same logic as keywords, but sort by name
                     .sort(({name:k1}, {name:k2}) => k1.localeCompare(k2))
                     .map(({name, value, type='N/A'}, idx) => {
                     return (

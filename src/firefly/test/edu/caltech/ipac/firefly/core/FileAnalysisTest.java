@@ -51,7 +51,7 @@ public class FileAnalysisTest extends ConfigTest {
         assertEquals(voTable.length(), report.getFileSize());
         assertEquals(1, report.getParts().size());
         assertEquals(FileAnalysis.Type.Table, report.getParts().get(0).getType());
-        assertEquals("VOTable (271 cols x -1 rows)", report.getParts().get(0).getDesc());        // this VOTable does not have Table's nrows populated.
+        assertEquals("VOTable (271 cols x 5000 rows)", report.getParts().get(0).getDesc());
 
         report= FileAnalysis.analyze(ipacTable, reportType);
         assertEquals(FileAnalysis.ReportType.Brief, report.getType());
@@ -97,7 +97,7 @@ public class FileAnalysisTest extends ConfigTest {
         assertEquals(voTable.length(), report.getFileSize());
         assertEquals(1, report.getParts().size());
         assertEquals(FileAnalysis.Type.Table, report.getParts().get(0).getType());
-        assertEquals("VOTable (271 cols x -1 rows)", report.getParts().get(0).getDesc());        // this VOTable does not have Table's nrows populated.
+        assertEquals("VOTable (271 cols x 5000 rows)", report.getParts().get(0).getDesc());
 
         File wNrows = FileLoader.resolveFile("/votable-samples/stilbinary.xml");                 // VOTable with nrows
         report= FileAnalysis.analyze(wNrows, reportType);
@@ -126,7 +126,7 @@ public class FileAnalysisTest extends ConfigTest {
         report= FileAnalysis.analyze(multiVoTable, reportType);
         assertEquals(826, report.getParts().size());
         assertEquals(FileAnalysis.Type.Table, report.getParts().get(0).getType());
-        assertEquals("Main Information Table for NED objects within 1.000 arcmin of object MESSIER 031 (17 cols x -1 rows)", report.getParts().get(0).getDesc());        // first table
+        assertEquals("Main Information Table for NED objects within 1.000 arcmin of object MESSIER 031 (17 cols x 165 rows)", report.getParts().get(0).getDesc());       // first table
         assertEquals("Table of all names in NED for MESSIER 031 (2 cols x -1 rows)", report.getParts().get(1).getDesc());                                                // second table
         assertEquals("Table of External Links for the  SSTSL2 J004244.22+411708.6 (3 cols x -1 rows)", report.getParts().get(825).getDesc());                            // last table
 
