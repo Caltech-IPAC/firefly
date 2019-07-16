@@ -32,7 +32,7 @@ const BasicTableViewInternal = React.memo((props) => {
     const {width, height} = props.size;
     const {columns, data, hlRowIdx, showUnits, showTypes, showFilters, filterInfo, renderers,
             bgColor, selectable, selectInfoCls, sortInfo, callbacks, textView, rowHeight,
-            showMask, error, tbl_ui_id=uniqueTblUiId(), currentPage, startIdx=0} = props;
+            showMask, error, tbl_ui_id=uniqueTblUiId(), currentPage, startIdx=0, highlightedRowHandler} = props;
 
     const uiStates = getTableUiById(tbl_ui_id) || {};
     const {tbl_id, columnWidths, scrollLeft=0, scrollTop=0, triggeredBy} = uiStates;
@@ -75,6 +75,8 @@ const BasicTableViewInternal = React.memo((props) => {
         columnWidths, filterInfo, sortInfo, showUnits, showTypes, showFilters,
         onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected, tbl_id};
 
+    const rowClassNameGetter = highlightedRowHandler || defHighlightedRowHandler(tbl_id, hlRowIdx, startIdx);
+
     const content = () => {
         if (error) {
             return <div style={{padding: 10}}>{error}</div>;
@@ -90,7 +92,7 @@ const BasicTableViewInternal = React.memo((props) => {
                         isColumnResizing={false}
                         onColumnResizeEndCallback={onColumnResize}
                         onRowClick={(e, index) => callbacks.onRowHighlight && callbacks.onRowHighlight(index)}
-                        rowClassNameGetter={rowClassNameGetter(tbl_id, hlRowIdx, startIdx)}
+                        rowClassNameGetter={rowClassNameGetter}
                         onScrollEnd={onScrollEnd}
                         scrollTop = {adjScrollTop}
                         scrollLeft={adjScrollLeft}
@@ -143,6 +145,7 @@ BasicTableViewInternal.propTypes = {
     bgColor: PropTypes.string,
     error:  PropTypes.string,
     size: PropTypes.object.isRequired,
+    highlightedRowClsName: PropTypes.func,
     renderers: PropTypes.objectOf(
         PropTypes.shape({
             cellRenderer: PropTypes.func,
@@ -296,7 +299,7 @@ function columnWidthsInPixel(columns, data) {
             .map( (w) =>  (w + 2) * 7);
 }
 
-function rowClassNameGetter(tbl_id, hlRowIdx, startIdx) {
+function defHighlightedRowHandler(tbl_id, hlRowIdx, startIdx) {
 
     const tableModel = getTblById(tbl_id);
     const hasProprietaryInfo = !isEmpty(getProprietaryInfo(tableModel));

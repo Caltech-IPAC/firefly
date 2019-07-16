@@ -369,10 +369,12 @@ function doUploadWorkspace(file, params={}) {
     return fetchUrl(UL_URL, options).then( (response) => {
         return response.text().then((text) => {
             // text is in format ${status}::${message}::${message}::${cacheKey}::${analysisResult}
-            const result = text.split('::');
-            const [status, message, cacheKey, fileFormat] = result.slice(0, 4);
-            const analysisResult = result.slice(4).join('::');
-            return {status, message, cacheKey, fileFormat, analysisResult};
+            let [status, message, cacheKey, analysisResult, ...rest] = text.split('::');
+            if (rest.length > 0) {
+                // there are '::' in the analysisReaults.. put it back
+                analysisResult = analysisResult + '::' + rest.join('::');
+            }
+            return {status, message, cacheKey, analysisResult};
         });
     });
 }

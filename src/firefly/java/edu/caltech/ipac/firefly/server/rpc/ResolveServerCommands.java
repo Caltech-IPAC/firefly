@@ -6,13 +6,16 @@ package edu.caltech.ipac.firefly.server.rpc;
 
 import edu.caltech.ipac.astro.net.HorizonsEphPairs;
 import edu.caltech.ipac.astro.net.Resolver;
+import edu.caltech.ipac.firefly.core.FileAnalysis;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.SrvParam;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -76,5 +79,25 @@ public class ResolveServerCommands {
 
         public boolean getCanCreateJson() { return true; }
     }
+
+
+    public static class FileAnalysisCmd extends ServCommand {
+
+
+        public String doCommand(SrvParam sp) throws Exception {
+
+            String infile = null;
+            try {
+                infile = sp.getRequired("filePath");
+                String rtype = sp.getOptional("reportType");
+                FileAnalysis.ReportType reportType = StringUtils.isEmpty(rtype) ? FileAnalysis.ReportType.Brief : FileAnalysis.ReportType.valueOf(rtype);   // defaults to Brief
+                FileAnalysis.Report report = FileAnalysis.analyze(new File(infile), reportType);
+                return FileAnalysis.toJsonString(report);
+            }catch (Exception e){
+                throw new Exception("Fail to analyze file: "+ infile);
+            }
+        }
+    }
+
 }
 

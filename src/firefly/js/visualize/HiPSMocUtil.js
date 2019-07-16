@@ -31,13 +31,13 @@ export function ivoStr(ivoid) {
 
 /**
  * check if the table from upload analysis is valid with fits header
- * @param tableModel
+ * @param report
  * @returns {Object} valid and mocInfo including nipxColName and MOCOrder
  */
-function isAnalysisTableMocFits(tableModel) {
+function isAnalysisTableMocFits(report) {
 
 
-    if (tableModel.totalRows !== 2 || getCellValue(tableModel, 1, 'Type') !== 'BINTABLE') {
+    if (get(report, 'parts.length') !== 2 || get(report, 'parts.1.type') !== 'Table') {
         return {valid: false};
     }
 
@@ -47,14 +47,7 @@ function isAnalysisTableMocFits(tableModel) {
         {ORDERING: 'NUNIQ'},
         {COORDSYS: 'C'}];
 
-    const {tableData} = tableModel || {};
-    if (!tableData) return false;
-
-    const tblIdx = get(tableModel, ['tableData', 'data', 1, 0]);
-    const mocInfo = tblIdx && get(tableModel, ['tableMeta', tblIdx], '');
-    if (!mocInfo) return false;
-
-    const mocTableHeader = JSON.parse(mocInfo);
+    const mocTableHeader = get(report, 'parts.1.details');
     const {data} = mocTableHeader.tableData || {};
     if (!data) return false;
 
@@ -106,19 +99,17 @@ function isAnalysisTableMocFits(tableModel) {
 
 /**
  * check if the moc fits valid with fits header
- * @param summary
- * @param tableModel
+ * @param report
  * @returns {Object} valid and mocInfo including nipxColName and MOCOrder
  */
-export function isMOCFitsFromUploadAnalsysis(summary, tableModel) {
-    const fileType = summary ? summary.split('--', 1): '';
+export function isMOCFitsFromUploadAnalsysis(report) {
+    const fileType = report && report.dataTypes;
 
-
-    if (!fileType || !fileType[0] || !(fileType[0].toLowerCase().includes('fits'))) {
+    if (!fileType || !(fileType.includes('Table'))) {
         return {valid: false};
     }
 
-    return isAnalysisTableMocFits(tableModel);
+    return isAnalysisTableMocFits(report);
 }
 
 

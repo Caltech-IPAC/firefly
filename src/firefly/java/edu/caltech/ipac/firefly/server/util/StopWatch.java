@@ -36,6 +36,7 @@ public class StopWatch {
                         }
                     };
     private Map<String, Tracker> logs = new HashMap<String, Tracker>();
+    private Logger.LoggerImpl logger = Logger.getLogger("StopWatch");
 
     private StopWatch() {
     }
@@ -48,12 +49,26 @@ public class StopWatch {
         return stopWatch.get();
     }
 
+    /**
+     * StopWatch is designed to only work in debug mode.  This function enable it to be turned on regardless of debug mode.
+     * @return
+     */
+    public StopWatch enable() {
+        DEBUG_MODE = true;
+        return this;
+    }
+
+    public StopWatch setLogger(Logger.LoggerImpl logger) {
+        this.logger = logger;
+        return this;
+    }
+
     public StopWatch start(String desc) {
         if (!DEBUG_MODE) return this;        // if not running in debug mode, ignore StopWatch logging
 
         Tracker l = getTracker(desc);
         if (l == null) {
-            l = new Tracker(desc);
+            l = new Tracker(desc, logger);
             logs.put(desc, l);
         }
         l.starts();
@@ -99,9 +114,11 @@ public class StopWatch {
         private long numStops = 0;
         private long elapsed = 0;
         private boolean isRunning = false;
+        private Logger.LoggerImpl logger;
 
-        public Tracker(String desc) {
+        Tracker(String desc, Logger.LoggerImpl logger) {
             this.desc = desc;
+            this.logger = logger;
         }
 
         public long starts() {
@@ -135,9 +152,9 @@ public class StopWatch {
         public void printLog(Unit unit) {
             if (isRunning) stops();
             if (numStops == 1) {
-                Logger.getLogger("StopWatch").info(String.format("%s ran with elapsed time of %.4f %s", desc, getElapsedTime(unit),  unit.name()));
+                logger.info(String.format("%s ran with elapsed time of %.4f %s", desc, getElapsedTime(unit),  unit.name()));
             } else {
-                Logger.getLogger("StopWatch").info(String.format("%s ran %d times.", desc, numStops),
+                logger.info(String.format("%s ran %d times.", desc, numStops),
                              String.format("Elapsed Time: %.4f %s.", getElapsedTime(unit), unit.name()),
                              String.format("Total time is %.4f %s", getTotalTime(unit), unit.name()),
                              String.format("Avg time is %.4f %s.", getAvgTime(unit), unit.name()));

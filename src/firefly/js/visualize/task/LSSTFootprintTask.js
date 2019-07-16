@@ -28,7 +28,7 @@ export const isLsstFootprintTable = (tableModel, fromAnalysis = false, tbl_idx =
     const {tableMeta} = tableModel || {};
 
     if (fromAnalysis && tableMeta) {      // check meta from analysis
-        const metaInfo = JSON.parse(get(tableMeta, [tbl_idx]));
+        const metaInfo = get(tableModel, ['parts', tbl_idx, 'details']);        // tableModel here is actually an analysis report
         const metaAry = metaInfo && get(metaInfo, ['tableData', 'data']);
 
         if (metaAry && isArray(metaAry)) {

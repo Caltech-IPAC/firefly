@@ -4,7 +4,7 @@
 
 import React, {Component, PureComponent, useRef, useCallback} from 'react';
 import FixedDataTable from 'fixed-data-table-2';
-import {set, get, isEqual, pick} from 'lodash';
+import {set, get, isEqual, pick, isNil} from 'lodash';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS, NULL_TOKEN} from '../FilterInfo.js';
 import {isNumericType, tblDropDownId, getTblById, getColumn} from '../TableUtil.js';
@@ -230,7 +230,7 @@ export class SelectableCell extends Component {
 /*---------------------------- CELL RENDERERS ----------------------------*/
 
 function getValue({rowIndex, data, columnKey}) {
-    return get(data, [rowIndex, columnKey], 'undef');
+    return get(data, [rowIndex, columnKey]);
 }
 
 export class TextCell extends Component {
@@ -253,7 +253,8 @@ export class TextCell extends Component {
     render() {
         const {col={}, style, height} = this.props;
         const isNumeric = isNumericType(col);
-        let val = getValue(this.props) || '';
+        let val = getValue(this.props);
+        if (isNil(val)) val = isNumeric ? NaN : undefined;
         const lineHeight = height - 6 + 'px';  // 6 is the top/bottom padding.
         val = (val.search && val.search(html_regex) >= 0) ? <div dangerouslySetInnerHTML={{__html: val}}/> : val;
         const className = 'public_fixedDataTableCell_cellContent' + (isNumeric ? ' right_align' : '');
@@ -269,7 +270,7 @@ export class TextCell extends Component {
  */
 export const LinkCell = React.memo((props) => {
     const {tbl_id, col={}, rowIndex, style={}} = props;
-    const val = getValue(props) || '';
+    const val = getValue(props);
     let mStyle = style;
     let className = 'public_fixedDataTableCell_cellContent';
     if (col.links) {

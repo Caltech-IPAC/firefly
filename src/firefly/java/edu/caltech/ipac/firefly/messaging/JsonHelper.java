@@ -115,9 +115,12 @@ public class JsonHelper {
     }
 
     private Object ensureCont(Object cont, String key) {
-        if (cont != null) return cont;
         int idx = getInt(key, -1);
-        return idx == -1 ? new HashMap() : ensureList(new ArrayList(), idx);
+        if (cont == null) {
+            cont = idx == -1 ? new HashMap() :new ArrayList();
+        }
+        if (idx >= 0 && cont instanceof List)  cont = ensureList((List) cont, idx);
+        return cont;
     }
 
     private Object getCont(Object source, String key, String nkey) {
@@ -130,6 +133,8 @@ public class JsonHelper {
             if (cont == null) {
                 cont = ensureCont(cont, nkey);
                 clist.set(idx, cont);
+            } else {
+                cont = ensureCont(cont, nkey);
             }
             return cont;
         } else if (source instanceof Map) {
@@ -138,6 +143,8 @@ public class JsonHelper {
             if (cont == null) {
                 cont = ensureCont(cont, nkey);
                 cmap.put(key, cont);
+            } else {
+                cont = ensureCont(cont, nkey);
             }
             return cont;
         }

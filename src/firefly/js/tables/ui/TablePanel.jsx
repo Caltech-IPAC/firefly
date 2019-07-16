@@ -9,7 +9,7 @@ import shallowequal from 'shallowequal';
 
 import {flux} from '../../Firefly.js';
 import * as TblUtil from '../TableUtil.js';
-import {dispatchTableRemove, dispatchTblExpanded, dispatchTableFetch} from '../TablesCntlr.js';
+import {dispatchTableRemove, dispatchTblExpanded, dispatchTableFetch, dispatchTableAddLocal} from '../TablesCntlr.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
 import {TableInfo} from './TableInfo.jsx';
@@ -22,6 +22,8 @@ import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {showTableDownloadDialog} from './TableSave.jsx';
 import {showOptionsPopup} from '../../ui/PopupUtil.jsx';
 import {BgMaskPanel} from '../../core/background/BgMaskPanel.jsx';
+import {CollapsiblePanel} from '../../ui/panel/CollapsiblePanel.jsx';
+
 
 //import INFO from 'html/images/icons-2014/24x24_Info.png';
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
@@ -71,6 +73,11 @@ export class TablePanel extends PureComponent {
 
     UNSAFE_componentWillReceiveProps(props) {
         if (!shallowequal(this.props, props)) {
+            const {tableModel} = this.props;
+            if (tableModel !== props.tableModel) {
+                // table model changed..
+                dispatchTableAddLocal(props.tableModel, undefined, false);
+            }
             this.setState(this.setupInitState(props));
         }
     }
@@ -122,11 +129,11 @@ export class TablePanel extends PureComponent {
     render() {
         const {tableConnector} = this;
         const { selectable, expandable, expandedMode, border, renderers, title, removable, rowHeight, help_id,
-            showToolbar, showTitle, showInfoButton,
+            showToolbar, showTitle, showInfoButton, showMetaInfo,
             showOptionButton, showPaging, showSave, showFilterButton,
             totalRows, showLoading, columns, showUnits, allowUnits, showTypes, showFilters, textView,
             tbl_id, error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask,
-            filterInfo, filterCount, sortInfo, data, backgroundable} = this.state;
+            filterInfo, filterCount, sortInfo, data, backgroundable, highlightedRowHandler} = this.state;
         var {leftButtons, rightButtons} =  this.state;
         const {tbl_ui_id} = this.tableConnector;
 
@@ -152,6 +159,7 @@ export class TablePanel extends PureComponent {
         return (
             <div style={{ position: 'relative', width: '100%', height: '100%'}}>
                 <div className='TablePanel'>
+                    {showMetaInfo && <MetaInfo tbl_id={tbl_id} /> }
                     <div className={'TablePanel__wrapper' + (border ? '--border' : '')}>
                         {showToolbar &&
                         <div className='PanelToolbar TablePanel__toolbar'>
@@ -204,7 +212,7 @@ export class TablePanel extends PureComponent {
                                 callbacks={tableConnector}
                                 { ...{columns, data, hlRowIdx, rowHeight, selectable, showUnits, allowUnits, showTypes, showFilters,
                                     selectInfoCls, filterInfo, sortInfo, textView, showMask, currentPage,
-                                    tableConnector, renderers, tbl_ui_id} }
+                                    tableConnector, renderers, tbl_ui_id, highlightedRowHandler} }
                             />
                             {showOptionButton && !showToolbar &&
                             <img className='TablePanel__options--small'
@@ -265,6 +273,8 @@ TablePanel.propTypes = {
     border: PropTypes.bool,
     showUnits: PropTypes.bool,
     allowUnits: PropTypes.bool,
+    highlightedRowHandler: PropTypes.func,
+    showMetaInfo: PropTypes.bool,
     showTypes: PropTypes.bool,
     showFilters: PropTypes.bool,
     showToolbar: PropTypes.bool,
@@ -285,6 +295,7 @@ TablePanel.propTypes = {
 };
 
 TablePanel.defaultProps = {
+    showMetaInfo: false,
     showUnits: false,
     allowUnits: true,
     showFilters: false,
@@ -301,6 +312,65 @@ TablePanel.defaultProps = {
     border: true,
     pageSize: 100
 };
+
+function MetaInfo({tbl_id}) {
+    const contentStyle={display: 'flex', flexDirection: 'column', maxHeight: 200, overflow: 'auto'};
+    const wrapperStyle={width: '100%'};
+    const kwValStyle = {maxWidth: 0, whiteSpace: 'nowrap'};
+
+    const {allMeta, links, params} = TblUtil.getTblById(tbl_id);
+
+    if (isEmpty(allMeta) && isEmpty(links) && isEmpty(params) ) {
+        return null;
+    }
+    return (
+        <div className='TablePanel__meta'>
+            { !isEmpty(allMeta) &&
+            <CollapsiblePanel componentKey={tbl_id + '-meta'} header='Table Meta' {...{contentStyle, wrapperStyle}}>
+                {allMeta.concat()                                              // make a copy so the original array does not mutate
+                    .sort(({key:k1}, {key:k2}) => k1.localeCompare(k2))        // sort it by key
+                    .map(({value, key}, idx) => {                              // map it into html elements
+                        return (
+                            <div key={'keywords-' + idx} style={{display: 'inline-flex'}}>
+                                <div className='keyword-label'>{key}=</div><div style={kwValStyle} className='keyword-value'>{value}</div>
+                            </div>
+                        );
+                    })
+                }
+            </CollapsiblePanel>
+            }
+            { !isEmpty(params) &&
+            <CollapsiblePanel componentKey={tbl_id + '-params'} header='Table Params' {...{contentStyle, wrapperStyle}}>
+                {params.concat()                                                          // same logic as allMeta, but sort by name
+                    .sort(({name:k1}, {name:k2}) => k1.localeCompare(k2))
+                    .map(({name, value, type='N/A'}, idx) => {
+                    return (
+                        <div key={'keywords-' + idx} style={{display: 'inline-flex'}}>
+                            <div className='keyword-label'>{name}({type})=</div><div style={kwValStyle} className='keyword-value'>{value}</div>
+                        </div>
+                    );
+                })
+                }
+            </CollapsiblePanel>
+            }
+            { !isEmpty(links) &&
+            <CollapsiblePanel componentKey={tbl_id + '-links'} header='Links' {...{contentStyle, wrapperStyle}}>
+                {links.map((l, idx) => {
+                    return (
+                        <div key={'keywords-' + idx}>
+                            <div className='keyword-label'>ID</div><div style={kwValStyle} className='keyword-value'>{l.ID || 'N/A'}</div>
+                            <div className='keyword-label'>role</div><div style={kwValStyle} className='keyword-value'>{l.role || 'N/A'}</div>
+                            <div className='keyword-label'>type</div><div style={kwValStyle} className='keyword-value'>{l.type || 'N/A'}</div>
+                            <a href={l.href} value={l.value || l.href} title={l.title}/>
+                        </div>
+                    );
+                })
+                }
+            </CollapsiblePanel>
+            }
+        </div>
+    );
+}
 
 function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons}) {
     const style = {display: 'flex'};

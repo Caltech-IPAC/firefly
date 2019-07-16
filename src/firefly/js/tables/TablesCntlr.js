@@ -18,7 +18,6 @@ import {trackBackgroundJob, isSuccess, isDone, getErrMsg} from '../core/backgrou
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
 import {dispatchJobAdd} from '../core/background/BackgroundCntlr.js';
-import {MetaConst} from '../data/MetaConst.js';
 
 
 export const TABLE_SPACE_PATH = 'table_space';
@@ -425,12 +424,14 @@ function highlightRow(action) {
             dispatch(action);
         } else {
             const request = cloneDeep(tableModel.request);
-            Object.assign(request, {startIdx, pageSize});
-            TblUtil.doFetchTable(request, startIdx+hlRowIdx).then ( (tableModel) => {
-                dispatch( {type:TABLE_HIGHLIGHT, payload: tableModel} );
-            }).catch( (error) => {
-                dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Unable to load table. \n   ${error.message}`)});
-            });
+            if (request) {
+                Object.assign(request, {startIdx, pageSize});
+                TblUtil.doFetchTable(request, startIdx+hlRowIdx).then ( (tableModel) => {
+                    dispatch( {type:TABLE_HIGHLIGHT, payload: tableModel} );
+                }).catch( (error) => {
+                    dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Unable to load table. \n   ${error.message}`)});
+                });
+            }
         }
     };
 }

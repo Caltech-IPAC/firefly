@@ -3,6 +3,8 @@
  */
 package edu.caltech.ipac.table.io;
 
+import edu.caltech.ipac.firefly.core.FileAnalysis;
+import edu.caltech.ipac.table.IpacTableDef;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
@@ -16,6 +18,7 @@ import org.apache.commons.csv.CSVRecord;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -47,23 +50,13 @@ public class DsvTableIO {
 
 
     private static DataGroup getData( BufferedReader reader, CSVFormat format)throws IOException{
-        List<DataType> columns = new ArrayList<DataType>();
         CSVParser parser = new CSVParser(reader, format);
         List<CSVRecord> records = parser.getRecords();
         if (records !=null && records.size() > 0) {
 
             // parse the column info
             CSVRecord cols = records.get(0);
-            for(Iterator<String> itr = cols.iterator(); itr.hasNext(); ) {
-                String s = itr.next();
-                if ("\uFEFF".charAt(0) == s.toCharArray()[0]){
-                    s = new String(s.substring(1));//LZ fixed the issue with the BOM character
-                }
-                if (!StringUtils.isEmpty(s)) {
-                    columns.add(new DataType(s, null)); // unknown type
-                }
-            }
-
+            List<DataType> columns = convertToDataType(cols);
             DataGroup dg = new DataGroup(null, columns);
             TableUtil.ColCheckInfo colCheckInfo = new TableUtil.ColCheckInfo();
 
@@ -115,6 +108,20 @@ public class DsvTableIO {
         }
     }
 
+    private static List<DataType> convertToDataType(CSVRecord record) {
+        List<DataType> columns = new ArrayList<DataType>();
+        for(Iterator<String> itr = record.iterator(); itr.hasNext(); ) {
+            String s = itr.next();
+            if ("\uFEFF".charAt(0) == s.toCharArray()[0]){
+                s = s.substring(1);//LZ fixed the issue with the BOM character
+            }
+            if (!StringUtils.isEmpty(s)) {
+                columns.add(new DataType(s, null)); // unknown type
+            }
+        }
+        return columns;
+    }
+
     static DataObject parseRow(DataGroup source, CSVRecord line, TableUtil.ColCheckInfo colCheckInfo) {
 
         DataType[] headers = source.getDataDefinitions();
@@ -135,6 +142,36 @@ public class DsvTableIO {
             return row;
         }
         return null;
+    }
+
+    private static DataGroup getHeader(File infile, CSVFormat format)throws IOException{
+        BufferedReader reader = new BufferedReader(new FileReader(infile), IpacTableUtil.FILE_IO_BUFFER_SIZE);
+        try {
+            reader.mark(IpacTableUtil.FILE_IO_BUFFER_SIZE);
+            CSVParser parser = new CSVParser(reader, format);
+            List<DataType> columns = convertToDataType(parser.iterator().next()); // read just the first line.
+            DataGroup dg = new DataGroup(null, columns);
+            reader.reset();
+            int lines = -1;             // don't count the header
+            while (reader.readLine() != null) lines++;      // get line count
+            dg.setSize(lines);
+            return dg;
+        } finally {
+            reader.close();
+        }
+    }
+
+    public static FileAnalysis.Report analyze(File infile, CSVFormat csvFormat, FileAnalysis.ReportType type) throws IOException {
+        DataGroup header = getHeader(infile, csvFormat);
+        FileAnalysis.Report report = new FileAnalysis.Report(type, infile.length(), infile.getPath());
+        FileAnalysis.Part part = new FileAnalysis.Part(FileAnalysis.Type.Table, 0, String.format("%s (%d cols x %s rows)", csvFormat.getClass().getSimpleName(), header.getDataDefinitions().length, header.size()));
+        report.addPart(part);
+        if (type.equals(FileAnalysis.ReportType.Details)) {
+            IpacTableDef meta = new IpacTableDef();
+            meta.setCols(Arrays.asList(header.getDataDefinitions()));
+            part.setDetails(TableUtil.getDetails(0, meta));
+        }
+        return report;
     }
 
     public static void main(String[] args) {

@@ -287,7 +287,7 @@ export function findIndex(tbl_id, filterInfo) {
  * @memberof firefly.util.table
  */
 export function getColumnIdx(tableModel, colName) {
-    const cols = get(tableModel, 'tableData.columns', []);
+    const cols = getAllColumns(tableModel);
     return cols.findIndex((col) => {
         return col.name === colName;
     });
@@ -301,8 +301,7 @@ export function getColumnIdx(tableModel, colName) {
  * @public
  */
 export function getColumnType(tableModel, colName) {
-    const cols = get(tableModel, 'tableData.columns', []);
-
+    const cols = getAllColumns(tableModel);
     return get(cols.find((col)=> col.name === colName), 'type', '');
 }
 
@@ -430,26 +429,39 @@ export function getRowValues(tableModel, rowIdx) {
  * @memberof firefly.util.table
  */
 export function getSelectedData(tbl_id, columnNames=[]) {
-    const {tableModel, tableMeta, totalRows, selectInfo, request} = local.getTblInfoById(tbl_id);
+    const {tableModel, totalRows, selectInfo, request} = local.getTblInfoById(tbl_id);
     const selectedRows = [...SelectInfo.newInstance(selectInfo).getSelected()];  // get selected row idx as an array
-    if (columnNames.length === 0) {
-        columnNames = local.getColumns(tableModel).map( (c) => c.name);       // return all columns
-    }
 
     if (selectedRows.length === 0 || isTblDataAvail(0, totalRows -1, tableModel)) {
-        const meta = cloneDeep(tableMeta);
-
-        const columns = columnNames.map((cname) => local.getColumn(tableModel, cname))
-                                   .filter((c) => c)
-                                   .map((c) => cloneDeep(c));
-
-        const data = selectedRows.sort()
-                            .map( (rIdx) => columns.map((c) => local.getCellValue(tableModel, rIdx, c.name)));
-
-        return Promise.resolve({tableMeta: meta, totalRows: data.length, tableData: {columns, data}});
+        return Promise.resolve(getSelectedDataSync(tbl_id, columnNames));
     } else {
         return selectedValues({columnNames, request, selectedRows});
     }
+}
+
+/**
+ * Similar to getSelectedData, but will only check data available on the client.
+ * It will not attempt to fetch required data.  This is good for client table.
+ * @param tbl_id
+ * @param columnNames
+ */
+export function getSelectedDataSync(tbl_id, columnNames=[]) {
+    const {tableModel, tableMeta, selectInfo} = local.getTblInfoById(tbl_id);
+    const selectedRows = [...SelectInfo.newInstance(selectInfo).getSelected()];  // get selected row idx as an array
+
+    if (columnNames.length === 0) {
+        columnNames = local.getColumns(tableModel).map( (c) => c.name);       // return all columns
+    }
+    const meta = cloneDeep(tableMeta);
+
+    const columns = columnNames.map((cname) => local.getColumn(tableModel, cname))
+        .filter((c) => c)
+        .map((c) => cloneDeep(c));
+
+    const data = selectedRows.sort()
+        .map( (rIdx) => columns.map((c) => local.getCellValue(tableModel, rIdx, c.name)));
+
+    return {tableMeta: meta, totalRows: data.length, tableData: {columns, data}};
 }
 
 /**
@@ -1023,7 +1035,19 @@ export function monitorChanges(actions, accept, callback, watcherId) {
  * @func getColumns
  */
 export function getColumns(tableModel, type=COL_TYPE.ALL) {
-    return getColsByType(get(tableModel, 'tableData.columns', []), type);
+    return getColsByType(getAllColumns(tableModel), type);
+}
+
+/**
+ * @summary returns all columns of the given table including hidden ones.
+ * @param {TableModel} tableModel
+ * @returns {Array<TableColumn>}
+ * @public
+ * @memberof firefly.util.table
+ * @func getAllColumns
+ */
+export function getAllColumns(tableModel) {
+    return get(tableModel, 'tableData.columns', []);
 }
 
 /**

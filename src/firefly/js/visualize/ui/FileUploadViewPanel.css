@@ -1,0 +1,43 @@
+
+.FileUpload {
+    width: 1000px;
+    height: 350px;
+    padding: 0 10px;
+    display: flex;
+    flex-direction: column;}
+
+.FileUpload__input {
+    margin-left: 200px;
+    flex-grow: 0;
+}
+
+.FileUpload__input > * {
+    margin-top: 3px;
+}
+
+.FileUpload__headers  {
+    display: inline-flex;
+}
+
+.FileUpload__report {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+}
+
+.FileUpload__report > * {
+    margin-top: 10px;
+}
+
+.FileUpload__summary {
+    display: flex;
+    flex-grow: 1;
+    position: relative;
+}
+
+.FileUpload__noDetails {
+    text-align: center;
+    font-size: larger;
+    width: 100%;
+    margin-top: 20px;
+}

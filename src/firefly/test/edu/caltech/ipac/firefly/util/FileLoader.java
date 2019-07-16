@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.util;
 
 
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
@@ -23,6 +24,9 @@ public class FileLoader {
 
     public static final String TEST_DATA_ROOT = "firefly_test_data/";
 
+    private static final Logger.LoggerImpl LOG = Logger.getLogger("test");
+
+
     /**
      * This method returns the data path for where the test class is located and where is the data is stored.
      * @param cls
@@ -33,7 +37,7 @@ public class FileLoader {
 
 
         String rootPath =Paths.get("").toAbsolutePath().getParent().toUri().getPath();//"/hydra/cm/"; when test it in IntelliJ
-        String testDataPath = TEST_DATA_ROOT+cls.getCanonicalName().replaceAll("\\.", "/")
+        String testDataPath = cls == null ? TEST_DATA_ROOT : TEST_DATA_ROOT+cls.getCanonicalName().replaceAll("\\.", "/")
                 .replace(cls.getSimpleName(), "");
 
         String dataPath = rootPath + testDataPath;
@@ -109,10 +113,25 @@ public class FileLoader {
              return new File(getDataPath(cls) + fileName);
          }
          catch (Exception e){
-             e.printStackTrace();
+             LOG.error(e);
              return null;
          }
     }
 
+    /**
+     * return the File associated with the given filePath relative to TEST_DATA_ROOT
+     * @param filePath  a relative path to a file starting from TEST_DATA_ROOT
+     * @return
+     */
+    public static File resolveFile(String filePath)  {
+
+        try {
+            return new File(getDataPath(null) + filePath);
+        }
+        catch (Exception e){
+            LOG.error(e);
+            return null;
+        }
+    }
 
 }

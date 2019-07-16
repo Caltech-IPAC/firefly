@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.table.io;
 
+import edu.caltech.ipac.firefly.core.FileAnalysis;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.table.*;
 import edu.caltech.ipac.util.FitsHDUUtil;
@@ -20,8 +21,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 import static uk.ac.starlink.table.StoragePolicy.PREFER_MEMORY;
 
 /**
@@ -106,19 +109,22 @@ public class VoTableReader {
         return element.hasAttribute(attName) ? element.getAttribute(attName) : null;
     }
 
-
     // root VOElement for a votable file
-    private static VOElement getVOElementFromVOTable(String location, StoragePolicy policy) throws DataAccessException {
+    private static VOElement makeVOElement(File infile, StoragePolicy policy) throws DataAccessException {
         try {
             policy = policy == null ? PREFER_MEMORY : policy;
             VOElementFactory voFactory =  new VOElementFactory();
             voFactory.setStoragePolicy(policy);
-            return voFactory.makeVOElement(location);
+            return voFactory.makeVOElement(infile);
         }  catch (SAXException |IOException e) {
             e.printStackTrace();
-            throw new DataAccessException("unable to parse "+location+"\n"+
+            throw new DataAccessException("unable to parse "+ infile.getPath() + "\n" +
                     e.getMessage(), e);
         }
+    }
+
+    private static VOElement getVOElementFromVOTable(String location, StoragePolicy policy) throws DataAccessException {
+        return makeVOElement(new File(location), policy);
     }
 
     // get all <RESOURCE> under VOTable root or <RESOURCE>
@@ -906,4 +912,95 @@ public class VoTableReader {
             e.printStackTrace();
         }
     }
+
+//====================================================================
+//
+//====================================================================
+
+    public static FileAnalysis.Report analyze(File infile, FileAnalysis.ReportType type) throws Exception {
+
+        FileAnalysis.Report report = new FileAnalysis.Report(type, infile.length(), infile.getPath());
+        VOElement root = makeVOElement(infile, StoragePolicy.DISCARD);
+        List<FileAnalysis.Part> parts = describeDocument(root);
+        parts.forEach(report::addPart);
+
+        for(int i = 0; i < parts.size(); i++) {
+            if (type == FileAnalysis.ReportType.Details) {
+                // convert DataGroup headers into Report's details
+                DataGroup p = parts.get(i).getDetails();
+                IpacTableDef meta = new IpacTableDef();
+                meta.setCols(Arrays.asList(p.getDataDefinitions()));
+                parts.get(i).getDetails().getAttributeList().forEach(attr -> meta.setAttribute(attr.getKey(), attr.getValue()));
+                DataGroup details = TableUtil.getDetails(i, meta);
+                applyIfNotEmpty(p.getGroupInfos(), details::setGroupInfos);
+                applyIfNotEmpty(p.getLinkInfos(), details::setLinkInfos);
+                applyIfNotEmpty(p.getParamInfos(), details::setParamInfos);
+                parts.get(i).setDetails(details);
+            } else {
+                parts.get(i).setDetails(null);      // remove table headers.. everything else is good
+            }
+        }
+        return report;
+    }
+
+    /**
+     * @param root  the root element of the VOTable
+     * @return each Table as a part with details containing DataGroup without data
+     */
+    private static List<FileAnalysis.Part> describeDocument(VOElement root) {
+        List<FileAnalysis.Part> parts = new ArrayList<>();
+        Arrays.stream(root.getChildrenByName("RESOURCE"))
+                .forEach( res -> {
+                    Arrays.stream(res.getChildrenByName("TABLE"))
+                            .forEach(table -> {
+                                FileAnalysis.Part part = new FileAnalysis.Part(FileAnalysis.Type.Table);
+                                part.setIndex(parts.size());
+                                DataGroup dg = getTableHeader((TableElement)table);
+                                String title = isEmpty(dg.getTitle()) ? "VOTable" : dg.getTitle().trim();
+                                part.setDetails(dg);
+                                part.setDesc(String.format("%s (%d cols x %s rows)", title, dg.getDataDefinitions().length, dg.size()));
+                                parts.add(part);
+                            });
+                });
+
+
+        return parts;
+    }
+
+    private static DataGroup getTableHeader(TableElement table) {
+        String title = table.getAttribute("name");
+        // FIELD info  => columns
+        List<DataType> cols = Arrays.stream(table.getChildrenByName("FIELD"))
+                .map(f -> {
+                    DataType dt = new DataType(f.getName(), null);
+                    populateDataType(dt, f);
+                    return dt;
+                }).collect(Collectors.toList());
+        DataGroup dg = new DataGroup(title, cols);
+
+        // PARAMs info
+        Arrays.stream(table.getChildrenByName("PARAM"))
+                .forEach(el -> dg.getParamInfos().add(paramInfoFromEl(el)));
+        // GROUP info
+        dg.setGroupInfos(makeGroupInfosFromTable(table));
+
+        // LINK info  => table level
+        Arrays.stream(table.getChildrenByName("LINK"))
+                .forEach(el -> dg.getLinkInfos().add(linkElementToLinkInfo(el)));
+
+        // INFO     => only takes name/value pairs for now
+        Arrays.stream(table.getChildrenByName("INFO"))
+                .forEach(el -> {
+                    dg.getTableMeta().setAttribute(el.getName(), el.getAttribute("value"));
+                });
+
+        dg.setSize(table.hasAttribute("nrows") ? (int) table.getNrows() : -1);
+        return dg;
+    }
+
+
+
+
+
+
 }

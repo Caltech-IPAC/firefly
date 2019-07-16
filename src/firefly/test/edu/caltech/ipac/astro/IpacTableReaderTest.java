@@ -62,8 +62,8 @@ public class IpacTableReaderTest extends ConfigTest{
 
         //Input table:
         String input =
-                "\\catalog1 = 'Sample Catalog1'\n" +
-                "\\catalog2 = 'Sample Catalog2'\n" +
+                "\\catalog1 = Sample Catalog1\n" +
+                "\\catalog2 = Sample Catalog2\n" +
                 "\\ Comment1\n" +
                 "\\ Comment2\n" +
                 "|   ra      |    dec    |   n_obs  |    V     |   SpType   |\n" +
@@ -77,7 +77,7 @@ public class IpacTableReaderTest extends ConfigTest{
 
         //The attributes:
         attributeKeys = new String[]{"catalog1", "catalog2"};
-        attributeValues = new String[]{"\'Sample Catalog1\'", "\'Sample Catalog2\'"};
+        attributeValues = new String[]{"Sample Catalog1", "Sample Catalog2"};
         attributeComments = new String[]{"\\ Comment1", "\\ Comment2"};
         //The header:
         colTitles = new String[]{null, null, null, null, null};
@@ -130,8 +130,8 @@ public class IpacTableReaderTest extends ConfigTest{
 
         //Input table:
         String input =
-                "\\catalog1 = 'Sample Catalog1'\n" +
-                "\\catalog2 = 'Sample Catalog2'\n" +
+                "\\catalog1 = Sample Catalog1\n" +
+                "\\catalog2 = Sample Catalog2\n" +
                 "\\ Comment1\n" +
                 "\\ Comment2\n" +
                 "|   ra      |    dec    |   n_obs  |    V     |   SpType   |\n" +
@@ -148,7 +148,7 @@ public class IpacTableReaderTest extends ConfigTest{
         //Reset the expected values:
         //Set the attributes:
         attributeKeys = new String[]{"catalog1", "catalog2"};
-        attributeValues = new String[]{"\'Sample Catalog1\'", "\'Sample Catalog2\'"};
+        attributeValues = new String[]{"Sample Catalog1", "Sample Catalog2"};
         attributeComments = new String[]{"\\ Comment1", "\\ Comment2"};
         //Set the header:
         colTitles = new String[]{null, null};
@@ -287,8 +287,8 @@ public class IpacTableReaderTest extends ConfigTest{
     public void testDuplicateColumn() {
 
     String input =
-            "\\catalog1 = 'Sample Catalog1'\n" +
-            "\\catalog2 = 'Sample Catalog2'\n" +
+            "\\catalog1 = Sample Catalog1\n" +
+            "\\catalog2 = Sample Catalog2\n" +
             "\\ Comment1\n" +
             "\\ Comment2\n" +
             "|   ra      |    ra     |   n_obs  |    V     |   SpType   |\n" +
@@ -336,8 +336,8 @@ public class IpacTableReaderTest extends ConfigTest{
     public void testDatatype_real() {
 
         String input =
-                "\\catalog1 = 'Sample Catalog1'\n" +
-                "\\catalog2 = 'Sample Catalog2'\n" +
+                "\\catalog1 = Sample Catalog1\n" +
+                "\\catalog2 = Sample Catalog2\n" +
                 "\\ Comment1\n" +
                 "\\ Comment2\n" +
                 "|   ra      |    dec    |   n_obs  |    V     |   SpType   |\n" +
@@ -383,8 +383,8 @@ public class IpacTableReaderTest extends ConfigTest{
 
 
         String input =
-                "\\catalog1 = 'Sample Catalog1'\n" +
-                "\\catalog2 = 'Sample Catalog2'\n" +
+                "\\catalog1 = Sample Catalog1\n" +
+                "\\catalog2 = Sample Catalog2\n" +
                 "\\ Comment1\n" +
                 "\\ Comment2\n" +
                 "|   ra      |    dec    |   n_obs  |    V     |   SpType   |\n" +
@@ -444,8 +444,8 @@ public class IpacTableReaderTest extends ConfigTest{
 
 
         String input =
-                "\\catalog1 = 'Sample Catalog1'\n" +
-                "\\catalog2 = 'Sample Catalog2'\n" +
+                "\\catalog1 = Sample Catalog1\n" +
+                "\\catalog2 = Sample Catalog2\n" +
                 "\\ Comment1\n" +
                 "\\ Comment2\n" +
                 "|   ra      |    dec    |   n_obs  |    V     |   SpType   |\n" +
@@ -484,8 +484,8 @@ public class IpacTableReaderTest extends ConfigTest{
 
 
         String input =
-                "\\catalog1 = 'Sample Catalog1'\n" +
-                "\\catalog2 = 'Sample Catalog2'\n" +
+                "\\catalog1 = Sample Catalog1\n" +
+                "\\catalog2 = Sample Catalog2\n" +
                 "\\ Comment1\n" +
                 "\\ Comment2\n" +
                 "  165.466279  -34.704730      5       11.27       K6Ve\n" +

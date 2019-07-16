@@ -37,7 +37,7 @@ public class JsonTableUtil {
     public static JSONObject toJsonTableModel(DataGroupPart page, TableServerRequest request) throws IOException {
 
         JSONObject tableModel = toJsonDataGroup(page.getData());
-        tableModel.put("totalRows", page.getRowCount());
+        tableModel.put("totalRows", page.getRowCount());                // override DataGroup size because it may be just one page of data.
         if (request != null ){
             tableModel.put("request", toJsonTableRequest(request));
         }
@@ -91,6 +91,7 @@ public class JsonTableUtil {
         if (dataGroup.getParamInfos().size() > 0) {
             tableModel.put("params", toJsonParamInfos(dataGroup.getParamInfos()));
         }
+        tableModel.put("totalRows", dataGroup.size());
 
         return tableModel;
 

@@ -89,7 +89,7 @@ public class IpacTableTest {
         Assert.assertEquals("decimate-info", "decimate=ra,dec,1234,0.5,,,,,-1", JsonTableUtil.getPathValue(json, "request", DecimateInfo.DECIMATE_TAG));
 
         // tableMeta
-        Assert.assertEquals("SKYAREA", "'within 500.0 arcsec of  ra=10.68479 dec=+41.26906 Eq J2000 '", getMetaFromAllMeta(json,  "SKYAREA"));
+        Assert.assertEquals("SKYAREA", "within 500.0 arcsec of  ra=10.68479 dec=+41.26906 Eq J2000 ", getMetaFromAllMeta(json,  "SKYAREA"));
 
         // tableData.columns
         checkJsonColumn(json, "tableData.columns.0", "ra", "double", "deg", "null", null);          // first column

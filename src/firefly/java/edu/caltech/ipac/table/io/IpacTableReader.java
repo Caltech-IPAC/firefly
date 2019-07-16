@@ -3,12 +3,14 @@
  */
 package edu.caltech.ipac.table.io;
 
+import edu.caltech.ipac.firefly.core.FileAnalysis;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.IpacTableUtil;
 import edu.caltech.ipac.table.IpacTableDef;
+import edu.caltech.ipac.table.TableUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -132,4 +134,16 @@ public final class IpacTableReader {
         outData.trimToSize();
         return outData;
     }
+
+    public static FileAnalysis.Report analyze(File infile, FileAnalysis.ReportType type) throws IOException {
+        IpacTableDef meta = IpacTableUtil.getMetaInfo(infile);
+        FileAnalysis.Report report = new FileAnalysis.Report(type, infile.length(), infile.getPath());
+        FileAnalysis.Part part = new FileAnalysis.Part(FileAnalysis.Type.Table, 0, String.format("IPAC Table (%d cols x %s rows)", meta.getCols().size(), meta.getRowCount()));
+        report.addPart(part);
+        if (type.equals(FileAnalysis.ReportType.Details)) {
+            part.setDetails(TableUtil.getDetails(0, meta));
+        }
+        return report;
+    }
+
 }

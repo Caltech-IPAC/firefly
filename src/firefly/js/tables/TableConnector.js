@@ -114,7 +114,7 @@ export class TableConnector {
 
         if (columns) {
             const {columns:prevColumns, columnWidths, scrollLeft} = getTableUiById(this.tbl_ui_id);
-            const updColIdx = columns.findIndex((c, idx) => c.visibility !== prevColumns[idx].visibility);
+            const updColIdx = columns.findIndex((c, idx) => c.visibility !== get(prevColumns, [idx, 'visibility']));
             if (updColIdx >= 0) {
                 const updColPos = range(0, updColIdx).reduce((pv, idx) => {
                     const delta =  get(columns, [idx, 'visibility'], 'show') === 'show' ?  columnWidths[idx] : 0;

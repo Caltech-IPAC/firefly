@@ -3,9 +3,11 @@
  */
 package edu.caltech.ipac.util;
 
+import edu.caltech.ipac.firefly.core.FileAnalysis;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
+import nom.tam.fits.ImageHDU;
 import nom.tam.image.compression.hdu.CompressedImageHDU;
 import org.json.simple.JSONObject;
 import nom.tam.fits.Fits;
@@ -21,6 +23,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static edu.caltech.ipac.firefly.core.FileAnalysis.Type.*;
+
 
 /**
  * Date: Dec 5, 2011
@@ -29,6 +33,74 @@ import java.util.List;
  * @version $Id: VoTableUtil.java,v 1.4 2013/01/07 22:10:01 tatianag Exp $
  */
 public class FitsHDUUtil {
+    private static final List<String> NAXIS_SET = Arrays.asList("naxis", "naxis1", "naxis2", "naxis3");
+
+    public static FileAnalysis.Report analyze(File infile, FileAnalysis.ReportType type) throws Exception {
+        FileAnalysis.Report report = new FileAnalysis.Report(type, infile.length(), infile.getPath());
+
+        BasicHDU[] parts = new Fits(infile).read();               // get the headers
+        for(int i = 0; i < parts.length; i++) {
+            FileAnalysis.Type ptype   = parts[i] instanceof ImageHDU ? Image :
+                                        parts[i] instanceof TableHDU ? Table :
+                                        FileAnalysis.Type.Unknown;
+
+            boolean isCompressed = (parts[i] instanceof CompressedImageHDU);
+
+            Header header = parts[i].getHeader();
+
+            if (ptype == Image && !hasGoodData(header)) {
+                ptype = ImageNoData;
+            }
+
+            String desc = i == 0 ? "Primary" : null;
+            if (desc == null) desc = header.getStringValue("EXTNAME");
+            if (desc == null) desc = header.getStringValue("NAME");
+            if (desc == null) desc =  isCompressed ? "CompressedImage" : "NoName";
+
+            if (ptype == Table) {
+                TableHDU tHdu = (TableHDU)(parts[i]);
+                desc = String.format("%s (%d cols x %d rows)", desc, tHdu.getNCols(), tHdu.getNRows());
+            }
+            FileAnalysis.Part part = new FileAnalysis.Part(ptype, i, desc);
+            report.addPart(part);
+
+            if (type == FileAnalysis.ReportType.Brief) {
+                break;
+            } else if (type == FileAnalysis.ReportType.Details) {
+                part.setDetails(getDetails(i, header));
+            }
+        }
+        return report;
+    }
+
+    private static boolean hasGoodData(Header header) {
+        for (Cursor citr = header.iterator(); citr.hasNext(); ) {
+            HeaderCard hc = (HeaderCard) citr.next();
+            if (NAXIS_SET.contains(hc.getKey().toLowerCase()) && String.valueOf(hc.getValue()).equals("0")) return false;
+        }
+        return  true;
+    }
+
+    private static DataGroup getDetails(int idx, Header header) {
+        DataType[] cols = new DataType[] {
+                new DataType("#", Integer.class),
+                new DataType("key", String.class),
+                new DataType("value", String.class),
+                new DataType("comment", String.class)
+        };
+        DataGroup dg = new DataGroup("Header of extension with index " + idx, cols);
+        for (Cursor citr = header.iterator(); citr.hasNext(); ) {
+            HeaderCard hc = (HeaderCard) citr.next();
+
+            DataObject row = new DataObject(dg);
+            row.setDataElement(cols[0], dg.size());
+            row.setDataElement(cols[1], hc.getKey());
+            row.setDataElement(cols[2], hc.getValue());
+            row.setDataElement(cols[3], hc.getComment());
+            dg.add(row);
+        }
+        return dg;
+    }
 
     private enum MetaInfo {
         EXT("Index", "Index", Integer.class, "Extension Index"),
