@@ -60,7 +60,7 @@ const BasicTableViewInternal = React.memo((props) => {
 
     useEffect( () => {
         const changes = {};
-        if (!columnWidths)                  changes.columnWidths = columnWidthsInPixel(columns, data);
+        if (!isEmpty(columns) && !columnWidths) changes.columnWidths = columnWidthsInPixel(columns, data);
         if (adjScrollTop !== scrollTop)     changes.scrollTop = adjScrollTop;
         if (adjScrollLeft !== scrollLeft)   changes.scrollLeft = adjScrollLeft;
 
