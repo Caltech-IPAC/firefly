@@ -268,7 +268,7 @@ export class UploadPanel extends SimpleComponent {
         };
 
         return (
-            <div style={{padding: 10}}>
+            <div style={{padding: 10, marginBottom:15}}>
                 <div style={{margin: '0px 5px 5px'}}>{instruction}</div>
                 <FormPanel
                     groupKey={vFileKey}
