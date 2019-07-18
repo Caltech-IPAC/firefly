@@ -24,6 +24,16 @@
     </h2>
 </div>
 
+<div>
+    <div id="table3" style="display: inline-block; width: 500px; height: 400px; border: solid 1px;"></div>
+    <div id="sedchart3" style="display: inline-block; width: 500px; height: 400px; border: solid 1px;"></div>
+</div>
+<br/><br/>
+<div>
+    <div id="table4" style="display: inline-block; width: 500px; height: 400px; border: solid 1px;"></div>
+    <div id="sedchart4" style="display: inline-block; width: 500px; height: 400px; border: solid 1px;"></div>
+</div>
+<br/><br/>
 <div id="table" style="width: 800px; height: 550px; border: solid 1px;"></div>
 <br/><br/>
 <div id="sedchart" style="width: 800px; height: 550px; border: solid 1px;"></div>
@@ -32,6 +42,7 @@
 <div id="table2" style="width: 800px; height: 550px; border: solid 1px;"></div>
 <br/><br/>
 <div id="sedchart2" style="width: 800px; height: 550px; border: solid 1px;"></div>
+
 <br/><br/>
 
 <script type="text/javascript">
@@ -128,10 +139,105 @@
                 }
             });
 
+            // Another example: from VizieR for Simbad name set rs at 1 arcsec
+
+            var tblReq3 = firefly.util.table.makeFileRequest(
+                'VisirR SED: HD878', // title
+                'http://vizier.u-strasbg.fr/viz-bin/sed?-c=HD878&-c.rs=1',  // source
+                null,  // alt_source
+                {META_INFO:{"col._ID.Visibility": "hide"}, "pageSize":100} // options
+            );
+            var tblId1 = tblReq3.tbl_id;
+
+            firefly.showTable('table3', tblReq3);
+
+            firefly.showChart('sedchart3', {
+                data: [{
+                    name: 'sed',
+                    tbl_id: tblId1,
+                    x: 'tables::"_sed_freq"',
+                    y: 'tables::_sed_flux',
+                    error_y: {
+                        array: 'tables::_sed_eflux', // error bar (symmetrical or plus)
+                    },
+                    mode: 'markers'
+                }],
+                layout: {
+                    title: 'Spectral Energy Distribution from VizieR',
+                     xaxis: {
+                         title: '<em>v</em> [GHz]',
+                         type: 'log',
+                         tickwidth: 2,
+                         linewidth: 2,
+                         tickmode: "auto",
+                         showgrid: true,
+                         ticks: "inside",
+                         mirror: "allticks"
+                     },
+                     yaxis: {
+                         title: 'F<sub><em>v</em></sub> [Jy]',
+                         type: 'log',
+                         tickwidth: 2,
+                         linewidth: 2,
+                         tickmode: "auto",
+                         showgrid: true,
+                         ticks: "inside",
+                         mirror: "allticks"
+                     }
+                }
+            });
+
+            // Another example: from VizieR  for coordinates set rs at 5 arcsec
+
+            var tblReq4 = firefly.util.table.makeFileRequest(
+                'VisirR SED: Coordinate test', // title
+                'http://vizier.u-strasbg.fr/viz-bin/sed?-c=187.2778914224,2.0523984558&-c.rs=5',  // source
+                null,  // alt_source
+                {} // options
+            );
+            var tblId1 = tblReq4.tbl_id;
+
+            firefly.showTable('table4', tblReq4);
+
+            firefly.showChart('sedchart4', {
+                data: [{
+                    name: 'sed',
+                    tbl_id: tblId1,
+                    x: 'tables::"_sed_freq"*power(10,9)',
+                    y: 'tables::_sed_flux',
+                    error_y: {
+                        array: 'tables::_sed_eflux', // error bar (symmetrical or plus)
+                    },
+                    mode: 'markers'
+                }],
+                layout: {
+                    title: 'Spectral Energy Distribution from VizieR',
+                     xaxis: {
+                         title: '<em>v</em> [Hz]',
+                         type: 'log',
+                         tickwidth: 2,
+                         linewidth: 2,
+                         tickmode: "auto",
+                         showgrid: true,
+                         ticks: "inside",
+                         mirror: "allticks"
+                     },
+                     yaxis: {
+                     title: 'F<sub><em>v</em></sub> [Jy]',
+                     type: 'log',
+                     tickwidth: 2,
+                     linewidth: 2,
+                     tickmode: "auto",
+                     showgrid: true,
+                     ticks: "inside",
+                     mirror: "allticks"
+                     }
+                }
+            });
+
         }
     }
-
-
+    
 </script>
 
 
