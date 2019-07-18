@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.core.FileAnalysis;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.TableUtil;
 import nom.tam.fits.ImageHDU;
 import nom.tam.image.compression.hdu.CompressedImageHDU;
 import org.json.simple.JSONObject;
@@ -36,7 +37,7 @@ public class FitsHDUUtil {
     private static final List<String> NAXIS_SET = Arrays.asList("naxis", "naxis1", "naxis2", "naxis3");
 
     public static FileAnalysis.Report analyze(File infile, FileAnalysis.ReportType type) throws Exception {
-        FileAnalysis.Report report = new FileAnalysis.Report(type, infile.length(), infile.getPath());
+        FileAnalysis.Report report = new FileAnalysis.Report(type, TableUtil.Format.FITS.name(), infile.length(), infile.getPath());
 
         BasicHDU[] parts = new Fits(infile).read();               // get the headers
         for(int i = 0; i < parts.length; i++) {
@@ -49,7 +50,7 @@ public class FitsHDUUtil {
             Header header = parts[i].getHeader();
 
             if (ptype == Image && !hasGoodData(header)) {
-                ptype = ImageNoData;
+                ptype = HeaderOnly;
             }
 
             String desc = i == 0 ? "Primary" : null;

@@ -17,6 +17,8 @@ import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,27 +34,36 @@ public class FileAnalysis {
     public enum ReportType {Brief,              // expect to only get a report with one part without details
                             Normal,             // a report with all parts populated, but not details
                             Details}            // a full report with details
-    public enum Type {Image, Table, Spectrum, ImageNoData, Unknown}
+    public enum Type {Image, Table, Spectrum, HeaderOnly, Unknown}
 
 
     public static Report analyze(File infile, ReportType type) throws Exception {
 
+        ReportType mtype = type == ReportType.Brief ? ReportType.Normal : type;
+
         Format format = TableUtil.guessFormat(infile);
+        Report report;
         switch (format) {
             case VO_TABLE:
-                return VoTableReader.analyze(infile, type);
+                report = VoTableReader.analyze(infile, mtype);
+                break;
             case FITS:
-                return FitsHDUUtil.analyze(infile, type);
+                report = FitsHDUUtil.analyze(infile, mtype);
+                break;
             case IPACTABLE:
-                return IpacTableReader.analyze(infile, type);
+                report = IpacTableReader.analyze(infile, mtype);
+                break;
             case CSV:
             case TSV:
-                return DsvTableIO.analyze(infile, format.type, type);
+                report =  DsvTableIO.analyze(infile, format.type, mtype);
+                break;
             default:
-
+                report = new Report(type, Format.UNKNOWN.name(), infile.length(), infile.getAbsolutePath());
         }
-        Report report = new Report(type, infile.length(), infile.getAbsolutePath());
-        report.addPart(new Part(Type.Unknown, 0, "Unknown Type"));
+
+        if (type == ReportType.Brief) {
+            report.makeBrief();
+        }
         return report;
     };
 
@@ -62,14 +73,17 @@ public class FileAnalysis {
         helper.setValue(report.fileName, "fileName");
         helper.setValue(report.fileSize, "fileSize");
         helper.setValue(report.type.name(), "type");
+        helper.setValue(report.fileFormat, "fileFormat");
         helper.setValue(report.getDataType(), "dataTypes");
-        for(int i = 0; i < report.getParts().size(); i++) {
-            Part p = report.getParts().get(i);
-            helper.setValue(p.index, "parts", i+"", "index");
-            helper.setValue(p.type.name(), "parts", i+"", "type");
-            helper.setValue(p.desc, "parts", i+"", "desc");
-            if (!isEmpty(p.getDetails())) {
-                helper.setValue(JsonTableUtil.toJsonDataGroup(p.getDetails()), "parts", i+"", "details");
+        if (report.getParts() != null) {
+            for(int i = 0; i < report.getParts().size(); i++) {
+                Part p = report.getParts().get(i);
+                helper.setValue(p.index, "parts", i+"", "index");
+                helper.setValue(p.type.name(), "parts", i+"", "type");
+                helper.setValue(p.desc, "parts", i+"", "desc");
+                if (!isEmpty(p.getDetails())) {
+                    helper.setValue(JsonTableUtil.toJsonDataGroup(p.getDetails()), "parts", i+"", "details");
+                }
             }
         }
         return helper.toJson();
@@ -85,10 +99,13 @@ public class FileAnalysis {
         private long fileSize;
         private String filePath;
         private String fileName;
+        private String fileFormat;
         private List<Part> parts;
+        private String dataType;
 
-        public Report(ReportType type, long fileSize, String filePath) {
+        public Report(ReportType type, String fileFormat, long fileSize, String filePath) {
             this.type = type;
+            this.fileFormat = fileFormat;
             this.fileSize = fileSize;
             this.filePath = filePath;
         }
@@ -96,6 +113,8 @@ public class FileAnalysis {
         public ReportType getType() {
             return type;
         }
+
+        public String getFormat() { return fileFormat; }
 
         public long getFileSize() {
             return fileSize;
@@ -119,15 +138,37 @@ public class FileAnalysis {
         }
 
         public String getDataType() {
-            if (parts != null) {
-                if (parts.size() == 1) {
-                    return parts.get(0).type.name();
+            if (dataType == null) {
+                if (parts != null) {
+                    if (parts.size() == 1) {
+                        dataType = parts.get(0).type.name();
+                    } else {
+                        List<String> types = parts.stream().map(part -> part.type.name()).distinct().collect(Collectors.toList());
+                        dataType = StringUtils.toString(types);
+                    }
                 } else {
-                    List<String> types = parts.stream().map(part -> part.type.name()).distinct().collect(Collectors.toList());
-                    return StringUtils.toString(types);
+                    dataType = "";
                 }
             }
-            return "";
+            return dataType;
+        }
+
+        /**
+         * convert this report into a Brief version.
+         */
+        void makeBrief() {
+            if (type == ReportType.Brief) return;       // nothing to do
+            getDataType();  // init dataType
+            if (parts != null) {
+                // keep only the first part with data.
+                Part first = parts.stream()
+                        .filter(p -> !Arrays.asList(Type.HeaderOnly, Type.Unknown).contains(p.getType()))
+                        .findFirst()
+                        .orElse(null);
+                if (first != null) {
+                    parts = Collections.singletonList(first);
+                }
+            }
         }
     }
 

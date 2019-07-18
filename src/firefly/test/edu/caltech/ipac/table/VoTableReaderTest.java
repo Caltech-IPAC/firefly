@@ -5,7 +5,7 @@ package edu.caltech.ipac.table;
 
 import edu.caltech.ipac.TestCategory;
 import edu.caltech.ipac.firefly.ConfigTest;
-import edu.caltech.ipac.firefly.server.query.DataAccessException;
+import edu.caltech.ipac.firefly.core.FileAnalysis;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.util.FileLoader;
@@ -38,14 +38,14 @@ public class VoTableReaderTest extends ConfigTest {
 
     @Category({TestCategory.Perf.class})
     @Test
-    public void perfTestMidSize() throws IOException, DataAccessException {
+    public void perfTestMidSize() throws Exception {
         // before code refactor
         // [main] INFO  console  - getheader ran 10 times., Elapsed Time: 0.3430 SECONDS., Total time is 4.2630 SECONDS, Avg time is 0.4263 SECONDS.
 
         StopWatch.getInstance().start("perfTestMidSize").enable().setLogger(Logger.getLogger("console"));
         for(int i=0; i < 10; i++) {
             StopWatch.getInstance().start("getheader");
-            VoTableReader.voHeaderToDataGroup(midFile.getAbsolutePath());
+            VoTableReader.analyze(midFile, FileAnalysis.ReportType.Details);
             StopWatch.getInstance().stop("getheader");
         }
         StopWatch.getInstance().printLog("getheader", StopWatch.Unit.SECONDS);
@@ -53,14 +53,14 @@ public class VoTableReaderTest extends ConfigTest {
 
     @Category({TestCategory.Perf.class})
     @Test
-    public void perfTestLargeSize() throws IOException, DataAccessException {
+    public void perfTestLargeSize() throws Exception {
         // before code refactor
         // [main] INFO  console  - getheader ran 10 times., Elapsed Time: 0.6150 SECONDS., Total time is 6.6650 SECONDS, Avg time is 0.6665 SECONDS
 
         StopWatch.getInstance().start("perfTestLargeSize").enable().setLogger(Logger.getLogger("console"));
         for(int i=0; i < 10; i++) {
             StopWatch.getInstance().start("getheader");
-            VoTableReader.voHeaderToDataGroup(largeFile.getAbsolutePath());
+            VoTableReader.analyze(largeFile, FileAnalysis.ReportType.Details);
             StopWatch.getInstance().stop("getheader");
         }
         StopWatch.getInstance().printLog("getheader", StopWatch.Unit.SECONDS);

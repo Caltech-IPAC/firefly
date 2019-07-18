@@ -53,24 +53,6 @@ public class TableUtil {
         }
     }
 
-    public static DataGroup readAnyFormatHeader(File inf, Format ff) throws IOException {
-        Format format = ff == null ? guessFormat(inf) : ff;
-        DataGroup dg = null;
-
-        if (format == Format.VO_TABLE) {
-            dg = VoTableReader.voHeaderToDataGroup(inf.getAbsolutePath());
-        } else if (format == Format.FITS) {
-            dg = FitsHDUUtil.fitsHeaderToDataGroup(inf.getAbsolutePath());
-        } else if (format == Format.CSV || format == Format.TSV || format == Format.IPACTABLE || format == Format.JSON) {
-            String A = (format == Format.IPACTABLE) ? "IPAC Table" : format.toString();
-            String title = String.format("%s", A);
-            dg = new DataGroup(title, new ArrayList<DataType>());
-        } else {
-            dg = new DataGroup("invalid file format", new ArrayList<DataType>());
-        }
-        return dg;
-    }
-
     public static Format guessFormat(File inf) throws IOException {
 
         int readAhead = 10;
@@ -135,6 +117,8 @@ public class TableUtil {
                     return Format.UNKNOWN;
                 }
             }
+        } catch (Exception e){
+            return Format.UNKNOWN;
         } finally {
             try {reader.close();} catch (Exception e) {e.printStackTrace();}
         }

@@ -5,10 +5,8 @@ package edu.caltech.ipac.firefly.core;
 
 import edu.caltech.ipac.TestCategory;
 import edu.caltech.ipac.firefly.ConfigTest;
-import edu.caltech.ipac.firefly.server.servlets.AnyFileUpload;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
-import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.table.DataGroup;
 import org.junit.BeforeClass;
@@ -16,7 +14,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.File;
-import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 
@@ -66,7 +63,7 @@ public class FileAnalysisTest extends ConfigTest {
         assertEquals(fitsTables.getPath(), report.getFilePath());
         assertEquals(fitsTables.length(), report.getFileSize());
         assertEquals(1, report.getParts().size());
-        assertEquals(FileAnalysis.Type.ImageNoData, report.getParts().get(0).getType());
+        assertEquals(FileAnalysis.Type.HeaderOnly, report.getParts().get(0).getType());
         assertEquals("Primary", report.getParts().get(0).getDesc());
 
         report= FileAnalysis.analyze(multiImage, reportType);
@@ -74,7 +71,7 @@ public class FileAnalysisTest extends ConfigTest {
         assertEquals(multiImage.getPath(), report.getFilePath());
         assertEquals(multiImage.length(), report.getFileSize());
         assertEquals(1, report.getParts().size());
-        assertEquals(FileAnalysis.Type.ImageNoData, report.getParts().get(0).getType());
+        assertEquals(FileAnalysis.Type.HeaderOnly, report.getParts().get(0).getType());
         assertEquals("Primary", report.getParts().get(0).getDesc());
 
         report= FileAnalysis.analyze(csvTable, reportType);
@@ -136,7 +133,7 @@ public class FileAnalysisTest extends ConfigTest {
         assertEquals(fitsTables.getPath(), report.getFilePath());
         assertEquals(fitsTables.length(), report.getFileSize());
         assertEquals(11, report.getParts().size());
-        assertEquals(FileAnalysis.Type.ImageNoData, report.getParts().get(0).getType());
+        assertEquals(FileAnalysis.Type.HeaderOnly, report.getParts().get(0).getType());
         assertEquals("Primary", report.getParts().get(0).getDesc());
         assertEquals("NoName", report.getParts().get(1).getDesc());
 
@@ -155,7 +152,7 @@ public class FileAnalysisTest extends ConfigTest {
         assertEquals(multiImage.getPath(), report.getFilePath());
         assertEquals(multiImage.length(), report.getFileSize());
         assertEquals(62, report.getParts().size());
-        assertEquals(FileAnalysis.Type.ImageNoData, report.getParts().get(0).getType());
+        assertEquals(FileAnalysis.Type.HeaderOnly, report.getParts().get(0).getType());
         assertEquals("Primary", report.getParts().get(0).getDesc());
         assertEquals("NoName", report.getParts().get(1).getDesc());
         assertEquals("NoName", report.getParts().get(61).getDesc());

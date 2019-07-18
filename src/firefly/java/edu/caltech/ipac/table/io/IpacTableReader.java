@@ -137,7 +137,7 @@ public final class IpacTableReader {
 
     public static FileAnalysis.Report analyze(File infile, FileAnalysis.ReportType type) throws IOException {
         IpacTableDef meta = IpacTableUtil.getMetaInfo(infile);
-        FileAnalysis.Report report = new FileAnalysis.Report(type, infile.length(), infile.getPath());
+        FileAnalysis.Report report = new FileAnalysis.Report(type, TableUtil.Format.IPACTABLE.name(), infile.length(), infile.getPath());
         FileAnalysis.Part part = new FileAnalysis.Part(FileAnalysis.Type.Table, 0, String.format("IPAC Table (%d cols x %s rows)", meta.getCols().size(), meta.getRowCount()));
         report.addPart(part);
         if (type.equals(FileAnalysis.ReportType.Details)) {

@@ -15,6 +15,7 @@ import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {getCellValue, getTblById, uniqueTblId, getSelectedDataSync} from '../../tables/TableUtil.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
+import {getSizeAsString} from '../../util/WebUtil.js';
 
 
 import {makeFileRequest} from '../../tables/TableRequestUtil.js';
@@ -29,8 +30,7 @@ import {isAccessWorkspace, getWorkspaceConfig} from '../WorkspaceCntlr.js';
 import {getAppHiPSForMoc, addNewMocLayer} from '../HiPSMocUtil.js';
 import {primePlot, getDrawLayerById, getDrawLayersByType} from '../PlotViewUtil.js';
 import {genHiPSPlotId} from './ImageSearchPanelV2.jsx';
-import DrawLayerCntlr, {dispatchAttachLayerToPlot, dlRoot, getDlAry, dispatchCreateImageLineBasedFootprintLayer}
-    from '../DrawLayerCntlr.js';
+import DrawLayerCntlr, {dispatchAttachLayerToPlot, dlRoot, getDlAry, dispatchCreateImageLineBasedFootprintLayer} from '../DrawLayerCntlr.js';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
 import LSSTFootprint from '../../drawingLayers/ImageLineBasedFootprint.js';
 import {isMOCFitsFromUploadAnalsysis, MOCInfo, UNIQCOL} from '../HiPSMocUtil.js';
@@ -38,8 +38,6 @@ import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
 import {getComponentState, dispatchComponentStateChange} from '../../core/ComponentCntlr.js';
 
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import numeral from 'numeral';
-
 
 import './FileUploadViewPanel.css';
 
@@ -51,6 +49,9 @@ const  wsId = 'wsUpload';
 
 const summaryTblId = 'AnalysisTable';
 const detailsTblId = 'AnalysisTable-Details';
+const summaryUiId = summaryTblId + '-UI';
+const detailsUiId = detailsTblId + '-UI';
+const unknownFormat = 'UNKNOWN';
 
 const uploadOptions = 'uploadOptions';
 
@@ -73,7 +74,6 @@ export function FileUploadViewPanel() {
             dispatchComponentStateChange(panelKey, {isLoading: false});
         }
     });
-
 
     const workspace = getWorkspaceConfig();
     const uploadMethod = [{value: fileId, label: 'Upload file'},
@@ -149,22 +149,25 @@ function getNextState() {
                 {name: 'Type', type: 'char', desc: 'Data Type'},
                 {name: 'Description', type: 'char', desc: 'Extension Description'}
             ];
-
-            const data = currentReport.parts.map( (p) => {
-                return [p.index, p.type, p.desc];
-            });
-
-            const firstExtWithData = currentReport.parts.findIndex((p) => !p.type.includes('NoData'));
-            const selectInfo = SelectInfo.newInstance({rowCount: data.length});
-            selectInfo.setRowSelect(firstExtWithData, true);        // default select first extension/part with data
+            const {parts=[]} = currentReport;
+            const data = parts.map( (p) => {
+                            return [p.index, p.type, p.desc];
+                        });
 
             currentSummaryModel = {
                 tbl_id: summaryTblId,
                 title: 'File Summary',
                 totalRows: data.length,
-                tableData: {columns, data},
-                selectInfo: selectInfo.data
+                tableData: {columns, data}
             };
+
+            const firstExtWithData = parts.findIndex((p) => !p.type.includes('HeaderOnly'));
+            if (firstExtWithData >= 0) {
+                const selectInfo = SelectInfo.newInstance({rowCount: data.length});
+                selectInfo.setRowSelect(firstExtWithData, true);        // default select first extension/part with data
+                currentSummaryModel.selectInfo = selectInfo.data;
+            }
+
         }
     }
     let detailsModel = getDetailsModel();
@@ -184,7 +187,7 @@ function getDetailsModel() {
         const type = getCellValue(tableModel, highlightedRow, 'Type');
         let details = get(currentReport, ['parts', partNum, 'details'], {});
         details.tbl_id = detailsTblId || '';
-        if (type === 'Unknown') {
+        if (type === unknownFormat) {
             details = undefined;
         }
         return details;
@@ -256,11 +259,13 @@ function UploadOptions({uploadSrc=fileId, isloading, isWsUpdating}) {
 }
 
 function AnalysisInfo({report}) {
+    const partDesc = report.fileFormat === 'FITS' ? 'Extensions:' :
+                     report.fileFormat === unknownFormat ? '' : 'Parts:';
     return (
         <div className='FileUpload__headers'>
-            <div className='keyword-label'>Type(s):</div>  <div className='keyword-value'>{report.dataTypes}</div>
-            <div className='keyword-label'>Size:</div>  <div className='keyword-value'>{numeral(report.fileSize/1024).format('#,##0.0')} KB</div>
-            <div className='keyword-label'>Parts:</div> <div className='keyword-value'>{get(report, 'parts.length')}</div>
+            <div className='keyword-label'>Format:</div>  <div className='keyword-value'>{report.fileFormat}</div>
+            <div className='keyword-label'>Size:</div>  <div className='keyword-value'>{getSizeAsString(report.fileSize)} KB</div>
+            <div className='keyword-label'>{partDesc}</div> <div className='keyword-value'>{get(report, 'parts.length')}</div>
         </div>
     );
 }
@@ -270,13 +275,13 @@ function AnalysisTable({summaryModel, detailsModel}) {
 
     const tblOptions = {showToolbar:false, border:false, showOptionButton: false, showFilters: true};
     const details = ! detailsModel ? <div className='FileUpload__noDetails'>Details not available</div>
-                    : <TablePanel title='File Details' tableModel={detailsModel} tbl_ui_id='AnalysisTable-Details-UI' {...tblOptions} showMetaInfo={true} selectable={false}/>;
+                    : <TablePanel title='File Details' tableModel={detailsModel} tbl_ui_id={detailsUiId} {...tblOptions} showMetaInfo={true} selectable={false}/>;
 
     // Details table need to render first to create a stub to collect data when Summary table is loaded.
     return (
         <div className='FileUpload__summary'>
             <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={350}>
-                <TablePanel title='File Summary' tableModel={summaryModel} tbl_ui_id='AnalysisTable-UI' {...tblOptions} />
+                <TablePanel title='File Summary' tableModel={summaryModel} tbl_ui_id={summaryUiId} {...tblOptions} />
                 {details}
             </SplitPane>
         </div>
@@ -284,11 +289,15 @@ function AnalysisTable({summaryModel, detailsModel}) {
 }
 
 const FileAnalysis = React.memo( ({report, summaryModel, detailsModel}) => {
+    const isUnknownFormat = get(report, 'fileFormat') === unknownFormat;
+    const tableArea = isUnknownFormat
+                        ? <div style={{flexGrow: 1, marginTop: 40, fontSize: 'larger', color: 'red'}}>Unrecognized Format Error!</div>
+                        : <AnalysisTable {...{summaryModel, detailsModel}} />;
     if (report) {
         return (
             <div className='FileUpload__report'>
                 <AnalysisInfo report={report} />
-                <AnalysisTable {...{summaryModel, detailsModel}} />
+                {tableArea}
             </div>
         );
     }

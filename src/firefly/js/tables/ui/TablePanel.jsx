@@ -314,7 +314,7 @@ TablePanel.defaultProps = {
 };
 
 function MetaInfo({tbl_id}) {
-    const contentStyle={display: 'flex', flexDirection: 'column', maxHeight: 200, overflow: 'auto'};
+    const contentStyle={display: 'flex', flexDirection: 'column', maxHeight: 200, overflow: 'auto', paddingBottom: 1};
     const wrapperStyle={width: '100%'};
     const kwValStyle = {maxWidth: 0, whiteSpace: 'nowrap'};
 

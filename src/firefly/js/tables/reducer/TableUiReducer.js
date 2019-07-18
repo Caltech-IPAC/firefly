@@ -97,6 +97,10 @@ function uiStateReducer(ui, tableModel) {
     }).forEach( (tbl_ui_id) => {
         const columns = get(ui, [tbl_ui_id, 'columns']);
         uiData.columns = ensureColumns({tableModel, columns});
+
+        if (!isEmpty(columns) && get(tableModel, 'tableData.columns') && !hasSameCnames(tableModel, columns)) {
+            uiData.columnWidths = undefined;
+        }
         ui = updateMerge(ui, [tbl_ui_id], uiData);
     });
     return ui;
