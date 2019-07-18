@@ -17,7 +17,7 @@ process.traceDeprecation = true;
  * @param {string}  config.firefly_root  Firefly's build root
  * @param {string}  [config.firefly_dir]  Firefly's JS source directory
  * @param {Object}  [config.alias]  additional alias
- * @param {boolean=true} [config.use_loader]  generate a loader to load compiled JS script(s).  Defautls to true
+ * @param {boolean=true} [config.use_loader]  generate a loader to load compiled JS script(s).  Defaults to true
  * @param {string}  [config.project]  project name
  * @param {string}  [config.filename]  name of the generated JS script.
  * @param {string}  [config.baseWarName]  name of the the war file base, defaults to config.name
@@ -119,19 +119,22 @@ export default function makeWebpackConfig(config) {
                 // later presets run before earlier for each AST node
                 // use 'es2015', {modules: false}] for es5 with es6 modules
                 presets: [
-                    ['env',
+                    ['@babel/preset-env',
                         {
                             targets: {
                                 browsers: ['safari >= 10', 'chrome >= 67', 'firefox >= 60', 'edge >= 16']
                             },
                             debug: !ENV_PROD,
                             modules: false,  // preserve application module style - in our case es6 modules
-                            useBuiltIns : true
+                            useBuiltIns : 'usage'
                         }
                     ],
-                    'react',
-                    'stage-3'],
-                plugins: ['transform-runtime']
+                    '@babel/preset-react'
+                ],
+                plugins: [
+                    '@babel/plugin-transform-runtime',
+                    '@babel/plugin-proposal-class-properties'
+                ]
             }
         },
         {
