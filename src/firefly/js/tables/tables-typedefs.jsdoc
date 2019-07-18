@@ -20,8 +20,8 @@
  * @prop {string}   tbl_id    unique ID of this table.
  * @prop {string}   title     title, used on label.
  * @prop {TableRequest} request  the request used to create this table
- * @prop {TableKeywords} allMeta  a list of all meta info for this table, including comments and duplicates
- * @prop {TableMeta} tableMeta   table's meta information stored as key/value pair.
+ * @prop {TableKeywords} keywords  a list of all meta from the original source, including comments and duplicates
+ * @prop {TableMeta} tableMeta     additional meta added and keywords as key/value pair.  comments and duplicates are no longer here.
  * @prop {TableData} tableData  table's meta information stored as key/value pair.
  * @prop {number}   totalRows   total number of rows.
  * @prop {number}   highlightedRow  the current highlighted row index.  index is natural order starting from 0.

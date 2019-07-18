@@ -6,7 +6,7 @@ import {has, get, isEmpty, cloneDeep, findKey, omit} from 'lodash';
 
 import {updateSet, updateMerge} from '../../util/WebUtil.js';
 import * as Cntlr from '../TablesCntlr.js';
-import {getTblInfo, isTableLoaded, smartMerge} from '../TableUtil.js';
+import {getTblInfo, isTableLoaded, smartMerge, getAllColumns} from '../TableUtil.js';
 
 
 /*---------------------------- REDUCERS -----------------------------*/
@@ -97,6 +97,10 @@ function uiStateReducer(ui, tableModel) {
     }).forEach( (tbl_ui_id) => {
         const columns = get(ui, [tbl_ui_id, 'columns']);
         uiData.columns = ensureColumns({tableModel, columns});
+
+        if (!isEmpty(columns) && get(tableModel, 'tableData.columns') && !hasSameCnames(tableModel, columns)) {
+            uiData.columnWidths = undefined;
+        }
         ui = updateMerge(ui, [tbl_ui_id], uiData);
     });
     return ui;
@@ -110,10 +114,14 @@ function onUiUpdate(uiData) {
     return uiData;
 }
 
-const ensureColumns = ({tableModel, columns}) => {
-    if (isEmpty(columns)) {
+function ensureColumns({tableModel, columns}) {
+    if (isEmpty(columns) || !hasSameCnames(tableModel, columns)) {
         return cloneDeep(get(tableModel, 'tableData.columns', []));
     } else {
         return smartMerge(get(tableModel, 'tableData.columns', []), columns);
     }
-};
+}
+
+function hasSameCnames(tableModel, columns=[]) {
+    return getAllColumns(tableModel).map((c) => c.name).join() === columns.map((c) => c.name).join();
+}

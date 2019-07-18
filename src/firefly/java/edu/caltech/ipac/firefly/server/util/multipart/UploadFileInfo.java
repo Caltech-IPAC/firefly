@@ -49,6 +49,10 @@ public class UploadFileInfo implements Serializable {
         return size;
     }
 
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
     @Override
     public String toString() {
         return "FileEntry{" + fileName + "[" + size + "]}";

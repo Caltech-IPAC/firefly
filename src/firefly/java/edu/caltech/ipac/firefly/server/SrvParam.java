@@ -52,6 +52,10 @@ public class SrvParam {
         return new SrvParam(targetMap);
     }
 
+    public void setParam(String key, String value) {
+        paramMap.put(key, new String[] {value});
+    }
+
     public void addParams(Map<String, String> map) {
         for( Map.Entry<String,String> entry : map.entrySet()) {
             if (!paramMap.containsKey(entry.getKey())) {

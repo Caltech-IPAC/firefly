@@ -40,6 +40,14 @@
     padding: 0 3px 3px 3px;
 }
 
+.TablePanel__meta {
+    flex-grow: 0;
+    display: flex;
+    border: 1px solid #c8c8c8;
+    background-color: #e6e6e6;
+    margin-bottom: 2px;
+    padding-bottom: 2px;
+}
 
 .TablePanel__frame {
     position: relative;

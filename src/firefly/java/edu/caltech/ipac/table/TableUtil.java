@@ -53,42 +53,7 @@ public class TableUtil {
         }
     }
 
-    public static DataGroup readAnyFormatHeader(File inf, Format ff) throws IOException {
-        Format format = ff == null ? guessFormat(inf) : ff;
-        DataGroup dg = null;
-
-        if (format == Format.VO_TABLE) {
-            dg = VoTableReader.voHeaderToDataGroup(inf.getAbsolutePath());
-        } else if (format == Format.FITS) {
-            dg = FitsHDUUtil.fitsHeaderToDataGroup(inf.getAbsolutePath());
-        } else if (format == Format.CSV || format == Format.TSV || format == Format.IPACTABLE || format == Format.JSON) {
-            String A = (format == Format.IPACTABLE) ? "IPAC Table" : format.toString();
-            String title = String.format("%s", A);
-            dg = new DataGroup(title, new ArrayList<DataType>());
-        } else {
-            dg = new DataGroup("invalid file format", new ArrayList<DataType>());
-        }
-        return dg;
-    }
-
     public static Format guessFormat(File inf) throws IOException {
-
-        String fileExt = FileUtil.getExtension(inf);
-        if (fileExt != null) {
-            if (fileExt.equalsIgnoreCase("tbl")) {
-                return Format.IPACTABLE;
-            } else if (fileExt.matches("xml|vot")) {
-                return Format.VO_TABLE;
-            } else if (fileExt.equalsIgnoreCase("csv")) {
-                return Format.CSV;
-            } else if (fileExt.equalsIgnoreCase("tsv")) {
-                return Format.TSV;
-            } else if (fileExt.equalsIgnoreCase("fits")) {
-                return Format.FITS;
-            } else if (fileExt.equalsIgnoreCase("json")) {
-                return Format.JSON;
-            }
-        }
 
         int readAhead = 10;
 
@@ -152,6 +117,8 @@ public class TableUtil {
                     return Format.UNKNOWN;
                 }
             }
+        } catch (Exception e){
+            return Format.UNKNOWN;
         } finally {
             try {reader.close();} catch (Exception e) {e.printStackTrace();}
         }
@@ -207,6 +174,32 @@ public class TableUtil {
         IpacTableUtil.consumeColumnInfo(dg);
     }
 
+    /**
+     * converts table headers information into a tabular displayable table
+     * @param idx
+     * @param meta
+     * @return
+     */
+    public static DataGroup getDetails(int idx, IpacTableDef meta) {
+        DataType[] cols = new DataType[] {
+                new DataType("name", String.class),
+                new DataType("type", String.class),
+                new DataType("unit", String.class),
+                new DataType("desc", String.class)
+        };
+        DataGroup dg = new DataGroup("Header of extension with index " + idx, cols);
+        meta.getAttributeList().forEach(a -> dg.getTableMeta().addKeyword(a.getKey(), a.getValue()));
+        for (DataType col : meta.getCols() ) {
+            DataObject row = new DataObject(dg);
+            row.setDataElement(cols[0], col.getKeyName());
+            row.setDataElement(cols[1], col.getTypeDesc());
+            row.setDataElement(cols[2], col.getUnits());
+            row.setDataElement(cols[3], col.getDesc());
+            dg.add(row);
+        }
+        return dg;
+    }
+
 
 //====================================================================
 //
@@ -216,7 +209,7 @@ public class TableUtil {
                          FIXEDTARGETS(".tbl"), FITS(".fits"), JSON(".json"),
                          VO_TABLE(".xml"), VO_TABLE_TABLEDATA(".xml"), VO_TABLE_BINARY(".xml"), VO_TABLE_BINARY2(".xml"),
                          VO_TABLE_FITS(".xml");
-        CSVFormat type;
+        public CSVFormat type;
         String fileNameExt;
         Format(String ext) {this.fileNameExt = ext;}
         Format(CSVFormat type, String ext) {

@@ -303,9 +303,9 @@ function createHiPSMocLayer(ivoid, hipsUrl, plot, mocFile = 'Moc.fits') {
 
     doUpload(mocUrl, {isFromURL: true, fileAnalysis: ()=>{}}).then(({status, cacheKey, analysisResult}) => {
         if (status === '200') {
-            const {analysisModel={}, analysisSummary=''} = JSON.parse(analysisResult) || {};
+            const report = JSON.parse(analysisResult) || {};
 
-            const isMocFits = isMOCFitsFromUploadAnalsysis(analysisSummary, analysisModel);
+            const isMocFits = isMOCFitsFromUploadAnalsysis(report);
             if (isMocFits.valid) {
                 dl = addNewMocLayer(tblId, cacheKey, mocUrl, get(isMocFits, [MOCInfo, UNIQCOL]));
                 if (dl && plot.plotId) {

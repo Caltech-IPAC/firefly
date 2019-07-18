@@ -33,6 +33,7 @@ import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.json.simple.JSONObject;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
@@ -238,6 +239,8 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         StopWatch.getInstance().start("fetchDataGroup: " + req.getRequestId());
         DataGroup dg = fetchDataGroup(req);
         StopWatch.getInstance().stop("fetchDataGroup: " + req.getRequestId()).printLog("fetchDataGroup: " + req.getRequestId());
+
+        if (dg == null) throw new DataAccessException("Failed to retrieve data");
 
         prepareTableMeta(dg.getTableMeta(), Arrays.asList(dg.getDataDefinitions()), req);
         TableUtil.consumeColumnMeta(dg, null);      // META-INFO in the request should only be pass-along and not persist.
@@ -563,8 +566,10 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             enumeratedValuesCheck(dbFile, results, treq);
             DataGroup updates = new DataGroup(null, results.getData().getDataDefinitions());
             updates.getTableMeta().setTblId(results.getData().getTableMeta().getTblId());
+            JSONObject changes = JsonTableUtil.toJsonDataGroup(updates);
+            changes.remove("totalRows");        //changes contains only the columns with 0 rows.. we don't want to update totalRows
 
-            FluxAction action = new FluxAction(FluxAction.TBL_UPDATE, JsonTableUtil.toJsonDataGroup(updates));
+            FluxAction action = new FluxAction(FluxAction.TBL_UPDATE, changes);
             ServerEventManager.fireAction(action, target);
         });
     }

@@ -137,6 +137,10 @@ export function getFieldVal(groupKey, fldName, defval=undefined) {
     return get(getGroupFields(groupKey), [fldName, 'value'], defval);
 }
 
+export function getField(groupKey, fldName) {
+    return get(getGroupFields(groupKey), fldName);
+}
+
 export function getReducerFunc(groupKey) {
     const groupState= getFieldGroupState(groupKey);
     return get(groupState, 'reducerFunc');

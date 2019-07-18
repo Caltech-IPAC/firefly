@@ -277,6 +277,20 @@ div.rootStyle>img, div.rootStyle > html {
     font-weight: bold;
 }
 
+
+.keyword-label  {
+    font-weight: bold;
+    margin-right: 3px;
+}
+
+.keyword-value  {
+    color: maroon;
+    margin-right: 10px;
+    text-overflow: ellipsis;
+}
+
+
+
 /*-------------------< loading mask ---------------------*/
 .loading-mask {
     position: absolute;

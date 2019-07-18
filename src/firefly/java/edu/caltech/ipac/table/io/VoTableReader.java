@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.table.io;
 
+import edu.caltech.ipac.firefly.core.FileAnalysis;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.table.*;
 import edu.caltech.ipac.util.FitsHDUUtil;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 import static uk.ac.starlink.table.StoragePolicy.PREFER_MEMORY;
 
 /**
@@ -106,19 +108,22 @@ public class VoTableReader {
         return element.hasAttribute(attName) ? element.getAttribute(attName) : null;
     }
 
-
     // root VOElement for a votable file
-    private static VOElement getVOElementFromVOTable(String location, StoragePolicy policy) throws DataAccessException {
+    private static VOElement makeVOElement(File infile, StoragePolicy policy) throws DataAccessException {
         try {
             policy = policy == null ? PREFER_MEMORY : policy;
             VOElementFactory voFactory =  new VOElementFactory();
             voFactory.setStoragePolicy(policy);
-            return voFactory.makeVOElement(location);
+            return voFactory.makeVOElement(infile);
         }  catch (SAXException |IOException e) {
             e.printStackTrace();
-            throw new DataAccessException("unable to parse "+location+"\n"+
+            throw new DataAccessException("unable to parse "+ infile.getPath() + "\n" +
                     e.getMessage(), e);
         }
+    }
+
+    private static VOElement getVOElementFromVOTable(String location, StoragePolicy policy) throws DataAccessException {
+        return makeVOElement(new File(location), policy);
     }
 
     // get all <RESOURCE> under VOTable root or <RESOURCE>
@@ -466,158 +471,6 @@ public class VoTableReader {
         }
     }
 
-    /**
-     *
-     * Compose a summary table containing analysis result of the VOTable file
-     * the summary table includes:
-     *  columns: defined in FitsHDUUtil.java
-     *  rows:    contain info for each TABLE in the votable file.
-     *  metadata: contain the header info for each TABLE in the votable file, the header info includes key/value from
-     *            name attribute of the TABLE element and children elements DESCRIPTION, INFO, PARAM, LINK and GROUP
-     *            of the TABLE element
-     *
-     * @param voTableFile path of votable file
-     * @return summary table of votable file
-     */
-    public static DataGroup voHeaderToDataGroup(String voTableFile)  {
-        List<DataType> cols = new ArrayList<>();
-
-        for ( MetaInfo meta : MetaInfo.values()) {    // index, name, row, column
-            DataType dt = new DataType(meta.getKey(), meta.getTitle(), meta.getMetaClass());
-            dt.setDesc(meta.getDescription());
-            cols.add(dt);
-        }
-        DataGroup dg = new DataGroup("votable", cols);
-        String invalidMsg = "invalid votable file";
-
-        try {
-            /*
-            StarTableFactory stFactory = new StarTableFactory();
-            TableSequence tseq = stFactory.makeStarTables(voTableFile, null);
-            */
-
-            // parse the votable file using Starlink VOTable aware DOM parser
-            // by setting StoragePolicy.DISCARD as the storage policy (throw away the rows), note: # of rows is lost
-            //List<TableElement> tableAry = getTableElementsFromFile( voTableFile, StoragePolicy.DISCARD);
-
-            List<TableElement> tableAry = getTableElementsFromFile( voTableFile, null);
-            int index = 0;
-            List<JSONObject> headerColumns = FitsHDUUtil.createHeaderTableColumns(true);
-
-            for (TableElement tableEl : tableAry) {
-                StarTable table = new VOStarTable(tableEl);
-                String title = table.getName();
-                Long rowNo = table.getRowCount();
-                Integer columnNo = table.getColumnCount();
-                String tableName = String.format("%d cols x %d rows", columnNo, rowNo) ;
-
-                List<List<String>> headerRows = new ArrayList<>();
-                //List<DescribedValue> tblParams = table.getParameters();
-                int rowIdx = 0;
-
-                List<String> rowStats = new ArrayList<>();     // first key/value/comment for header
-                rowStats.add(Integer.toString(rowIdx++));
-                rowStats.add("Name");
-                rowStats.add(title);
-                rowStats.add("Table name");
-                headerRows.add(rowStats);
-
-                String desc = tableEl.getDescription();
-
-                // DESCRIPTION element under TABLE if there is
-                if (desc != null) {
-                    rowStats = new ArrayList<>();     // first key/value/comment for header
-                    rowStats.add(Integer.toString(rowIdx++));
-                    rowStats.add("Description");
-                    rowStats.add(desc);
-                    rowStats.add("Table description");
-                    headerRows.add(rowStats);
-                }
-
-                // add INFO name/value/comment to the header
-                List<DescribedValue> tblInfos = getInfosFromTable(tableEl);
-                for (DescribedValue dv : tblInfos) {
-                    ValueInfo vInfo = dv.getInfo();
-
-                    rowStats = new ArrayList<>();
-                    rowStats.add(Integer.toString(rowIdx++));
-                    rowStats.add(vInfo.getName());
-                    rowStats.add(dv.getValueAsString(Integer.MAX_VALUE));
-
-                    desc = vInfo.getDescription();
-                    if (desc == null) {
-                        desc = "";
-                    }
-                    rowStats.add(desc);
-
-                    headerRows.add(rowStats);
-                }
-
-                // add PARAM name/value/comment to the header
-                List<ParamInfo> tblParams = makeParamsFromTable(tableEl, table);
-                for (ParamInfo param : tblParams) {
-                    rowStats = new ArrayList<>();
-
-                    rowStats.add(Integer.toString(rowIdx++));
-                    rowStats.add(param.getKeyName());
-                    rowStats.add(param.getValue());
-                    rowStats.add("PARAM in TABLE");
-                    headerRows.add(rowStats);
-                }
-
-                // add LINK link/href/comment to the header
-                List<LinkInfo> links = makeLinkInfosFromTable(tableEl);
-                for (LinkInfo link : links) {
-                    rowStats = new ArrayList<>();
-
-                    rowStats.add(Integer.toString(rowIdx++));
-                    rowStats.add("LINK");
-                    rowStats.add(link.toString());
-                    rowStats.add("LINK in TABLE");
-                    headerRows.add(rowStats);
-                }
-
-                // get Group Group/refs/comment to the header
-                List<GroupInfo> groups = makeGroupInfosFromTable(tableEl);
-                for (GroupInfo group : groups) {
-                    rowStats = new ArrayList<>();
-
-                    rowStats.add(Integer.toString(rowIdx++));
-                    rowStats.add("GROUP");
-                    rowStats.add(group.toString());
-                    rowStats.add("GROUP in TABLE");
-                    headerRows.add(rowStats);
-                }
-
-                JSONObject voParamsHeader = FitsHDUUtil.createHeaderTable(headerColumns, headerRows,
-                                               "Information of table with index " + index);
-
-
-                DataObject row = new DataObject(dg);
-                row.setDataElement(cols.get(0), index);
-                row.setDataElement(cols.get(1),tableName );
-                row.setDataElement(cols.get(2), "Table");
-                dg.add(row);
-                dg.addAttribute(Integer.toString(index), voParamsHeader.toJSONString());
-                index++;
-            }
-
-            if (index == 0) {
-                throw new IOException(invalidMsg);
-            } else {
-                String title = "VOTable" +
-                        "-- The following left table shows the file summary and the right table shows the information of " +
-                        "the table which is highlighted in the file summary.";
-                dg.setTitle(title);
-            }
-        } catch (IOException | DataAccessException e) {
-            dg.setTitle(invalidMsg);
-            e.printStackTrace();
-        }
-
-        return dg;
-    }
-
 
     /**
      * convert votable content into DataGroup mainly by collecting TABLE elements and TABLE included metadata and data
@@ -643,6 +496,9 @@ public class VoTableReader {
         int precision = 8;
         String precisionStr = "";
 
+        VOElement[] fields = tableEl.getChildrenByName("FIELD");
+
+
         // collect FIELD from TABLE
         // collect attributes of <FIELD> including name, datatype, unit, precision, width, ref, ID, ucd, utype
         // collect children elements including <DESCRIPTION>, <LINK>, <VALUES>
@@ -650,6 +506,10 @@ public class VoTableReader {
             ColumnInfo cinfo = table.getColumnInfo(i);
 
             DataType dt = convertToDataType(cinfo);
+
+            // quick and dirty way to fix column name when it's not provided
+            dt.setKeyName(getCName(fields[i], i));
+
             // attribute precision
             if(cinfo.getAuxDatum(VOStarTable.PRECISION_INFO)!=null){
                 try{
@@ -852,11 +712,22 @@ public class VoTableReader {
         return dt;
     }
 
-    private static DataType dataTypeFromEl(VOElement el) {
-        DataType dt = new DataType(null, null);
-        populateDataType(dt, el);
-        return dt;
+    /**
+     * returns the column name for the given field.
+     * Although name is a required attribute for FIELD, some VOTable may not provide it.
+     * In this case, use ID or name is COLUMN_[IDX] where IDX is the index of the fields.
+     * @param el
+     * @param colIdx
+     * @return
+     */
+    private static String getCName(VOElement el, int colIdx) {
+        if (el == null) return null;
+        String name = el.getAttribute("name");
+        if (isEmpty(name)) name = el.getAttribute("ID");
+        if (isEmpty(name)) name = "COLUMN_" + colIdx;
+        return name;
     }
+
 
     /**  used by both ParamInfo and DataType  */
     private static void populateDataType(DataType dt, VOElement el) {
@@ -888,22 +759,101 @@ public class VoTableReader {
         return new GroupInfo.RefInfo(refStr, ucdStr, utypeStr);
     }
 
-    public static void main(String args[]) {
+//====================================================================
+//
+//====================================================================
 
-        File inf = new File(args[0]);
-        try {
-            DataGroup[] groups = voToDataGroups(inf.getAbsolutePath(), false);
-            if (groups != null) {
-                for (DataGroup dg : groups) {
-                    try {
-                        IpacTableWriter.save(new File(inf.getParent(), inf.getName() + "-" + dg.getTitle()), dg);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
+    public static FileAnalysis.Report analyze(File infile, FileAnalysis.ReportType type) throws Exception {
+
+        FileAnalysis.Report report = new FileAnalysis.Report(type, TableUtil.Format.VO_TABLE.name(), infile.length(), infile.getPath());
+        VOElement root = makeVOElement(infile, null);
+        List<FileAnalysis.Part> parts = describeDocument(root);
+        parts.forEach(report::addPart);
+
+        for(int i = 0; i < parts.size(); i++) {
+            if (type == FileAnalysis.ReportType.Details) {
+                // convert DataGroup headers into Report's details
+                DataGroup p = parts.get(i).getDetails();
+                IpacTableDef meta = new IpacTableDef();
+                meta.setCols(Arrays.asList(p.getDataDefinitions()));
+                parts.get(i).getDetails().getAttributeList().forEach(attr -> meta.setAttribute(attr.getKey(), attr.getValue()));
+                DataGroup details = TableUtil.getDetails(i, meta);
+                applyIfNotEmpty(p.getGroupInfos(), details::setGroupInfos);
+                applyIfNotEmpty(p.getLinkInfos(), details::setLinkInfos);
+                applyIfNotEmpty(p.getParamInfos(), details::setParamInfos);
+                parts.get(i).setDetails(details);
+            } else {
+                parts.get(i).setDetails(null);      // remove table headers.. everything else is good
             }
-        } catch (IOException | DataAccessException e) {
-            e.printStackTrace();
         }
+        return report;
     }
+
+    /**
+     * @param root  the root element of the VOTable
+     * @return each Table as a part with details containing DataGroup without data
+     */
+    private static List<FileAnalysis.Part> describeDocument(VOElement root) {
+        List<FileAnalysis.Part> parts = new ArrayList<>();
+        Arrays.stream(root.getChildrenByName("RESOURCE"))
+                .forEach( res -> {
+                    Arrays.stream(res.getChildrenByName("TABLE"))
+                            .forEach(table -> {
+                                FileAnalysis.Part part = new FileAnalysis.Part(FileAnalysis.Type.Table);
+                                part.setIndex(parts.size());
+                                DataGroup dg = getTableHeader((TableElement)table);
+                                String title = isEmpty(dg.getTitle()) ? "VOTable" : dg.getTitle().trim();
+                                part.setDetails(dg);
+                                part.setDesc(String.format("%s (%d cols x %s rows)", title, dg.getDataDefinitions().length, dg.size()));
+                                parts.add(part);
+                            });
+                });
+
+
+        return parts;
+    }
+
+    private static DataGroup getTableHeader(TableElement table) {
+        String title = table.getAttribute("name");
+        // FIELD info  => columns
+        VOElement[] fields = table.getChildrenByName("FIELD");
+        List<DataType> cols = new ArrayList<>(fields.length);
+        for (int i=0; i < fields.length; i++) {
+                    DataType dt = new DataType(getCName(fields[i], i), null);
+                    populateDataType(dt, fields[i]);
+                    cols.add(dt);
+            }
+        DataGroup dg = new DataGroup(title, cols);
+
+        // PARAMs info
+        Arrays.stream(table.getChildrenByName("PARAM"))
+                .forEach(el -> dg.getParamInfos().add(paramInfoFromEl(el)));
+        // GROUP info
+        dg.setGroupInfos(makeGroupInfosFromTable(table));
+
+        // LINK info  => table level
+        Arrays.stream(table.getChildrenByName("LINK"))
+                .forEach(el -> dg.getLinkInfos().add(linkElementToLinkInfo(el)));
+
+        // INFO     => only takes name/value pairs for now
+        Arrays.stream(table.getChildrenByName("INFO"))
+                .forEach(el -> {
+                    dg.getTableMeta().setAttribute(el.getName(), el.getAttribute("value"));
+                });
+        if (table.hasAttribute("nrows")) {
+            dg.setSize((int) table.getNrows());
+        } else {
+            // if no nrows attribute, pull in the data and count the rows.
+            try {
+                dg.setSize((int)  new VOStarTable(table).getRowCount());
+            } catch (IOException e) { }     // just ignore it.
+        }
+        return dg;
+    }
+
+
+
+
+
+
 }

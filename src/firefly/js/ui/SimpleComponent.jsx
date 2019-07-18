@@ -58,8 +58,10 @@ export function useStoreConnector(...stateGetters) {
         return [getter, setter, val];
     });
 
+    let isMounted = true;
     useEffect(() => {
-        return flux.addListener(() => {
+        const remover = flux.addListener(() => {
+            if (isMounted) {
                 setters.forEach(([getter, setter, oldState], idx) => {
                     const newState = getter();
                     setters[idx][2] = newState;
@@ -67,7 +69,12 @@ export function useStoreConnector(...stateGetters) {
                         setter(newState);
                     }
                 });
+            }
         });
+        return () => {
+            isMounted = false;
+            remover && remover();
+        };
     }, []);     // only run once
 
     return rval;

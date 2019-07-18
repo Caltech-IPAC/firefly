@@ -7,9 +7,10 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {FormPanel} from './FormPanel.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
-import {FileUploadViewPanel, panelKey, resultSuccess, resultFail, validateModelSelection} from '../visualize/ui/FileUploadViewPanel.jsx';
+import {panelKey, FileUploadViewPanel, resultSuccess, resultFail} from '../visualize/ui/FileUploadViewPanel.jsx';
 
 const dropdownName = 'FileUploadDropDownCmd';
+const helpId = 'basics.searching';
 
 const maskWrapper= {
     position:'absolute',
@@ -39,12 +40,14 @@ export class FileUploadDropdown extends PureComponent {
             <div style={{padding: 10}}>
                 <FormPanel
                     groupKey={panelKey}
-                    onSubmit={resultSuccess()}
-                    onError={resultFail()}
+                    onSubmit={resultSuccess}
+                    onError={resultFail}
                     onCancel={hideSearchPanel}
                     params={{hideOnInvalid: false}}
-                    changeMasking={this.changeMasking}>
-                    <FileUploadViewPanel />
+                    changeMasking={this.changeMasking}
+                    help_id={helpId}
+                >
+                    <FileUploadViewPanel/>
                 </FormPanel>
                 {this.state.doMask && <div style={maskWrapper}> <div className='loading-mask'/> </div> }
             </div>

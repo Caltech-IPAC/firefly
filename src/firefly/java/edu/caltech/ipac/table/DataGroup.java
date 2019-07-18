@@ -127,6 +127,7 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
      */
     public void add(DataObject s) {
         if (s != null) {
+            if (data.size() == 0) size = 0;                    // reset size if there's no data
             for (DataType dt : getDataDefinitions()) {
                 addData(dt.getKeyName(), s.getDataElement(dt.getKeyName()));
             }
@@ -203,6 +204,9 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
         return size;
     }
 
+    public void setSize(int size) {
+        this.size = size;
+    }
 
     public int getHighlightedRow() {
         return highlightedRow;
@@ -337,6 +341,12 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
         this.params.clear();
         this.params.addAll(paramInfos);
     }
+    public ParamInfo getParam(String name) {
+        return params.stream()
+                    .filter(p -> p.getKeyName().equals(name))
+                    .findAny()
+                    .orElse(null);
+    }
 
     /**
      * merge the in coming attribute list with the current one.
@@ -393,7 +403,9 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
             } else {
                 String[] keyVal = v.split("=", 2);  // key/value separated by first '='
                 if (keyVal.length == 2) {
-                    return new Attribute(keyVal[0].trim(), keyVal[1].trim());
+                    String val = keyVal[1].trim();
+                    if (val.matches("^\".+\"$|^'.+'$")) val = val.substring(1, val.length()-1);
+                    return new Attribute(keyVal[0].trim(), val);
                 } else {
                     return null;
                 }
