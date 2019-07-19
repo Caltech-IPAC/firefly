@@ -55,7 +55,7 @@ public class WebDAVWorkspaceManager extends WebDAVWorkspaceManagerBase {
             return propVal;
         }
         if (propFound.equals(PROPS.ROOT_URL)) {
-            propVal = WS_HOST_URL;
+            propVal = getWsHostUrl();
         } else if (propFound.equals(PROPS.ROOT_DIR)) {
             propVal = getWsHome();
         } else if (propFound.equals(PROPS.AUTH)) {
@@ -106,7 +106,7 @@ public class WebDAVWorkspaceManager extends WebDAVWorkspaceManagerBase {
 
     public WebDAVWorkspaceManager(Partition partition, String wsId, boolean initialize) {
 
-        Map<String, String> cookies = HttpServiceInput.createWithCredential(WS_HOST_URL).getCookies();          // should look at this again.
+        Map<String, String> cookies = HttpServiceInput.createWithCredential(getWsHostUrl()).getCookies();          // should look at this again.
 
         this.creds = new WsCredentials(wsId, cookies);
         this.partition = partition;
