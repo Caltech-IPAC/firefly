@@ -166,12 +166,12 @@ function createPath(action) {
                             dispatch(action);
                         } else {
                             workspacePopupMsg('Create workspace path fails: '+ value.status,
-                                             'Create workspace foloder');
+                                             'Create workspace folder');
                         }
                     });
                 }).catch( (error) => {
-                    workspacePopupMsg('Create workspace path fails" ' + error.message,
-                        '             Create workspace foloder');
+                    workspacePopupMsg('Create workspace path fails: ' + error.message,
+                        '             Create workspace folder');
                 });
             }
         }
