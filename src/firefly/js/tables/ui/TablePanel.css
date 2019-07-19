@@ -41,8 +41,9 @@
 }
 
 .TablePanel__meta {
-    flex-grow: 0;
     display: flex;
+    flex-direction: column;
+    flex-grow: 0;
     border: 1px solid #c8c8c8;
     background-color: #e6e6e6;
     margin-bottom: 2px;

@@ -286,7 +286,6 @@ div.rootStyle>img, div.rootStyle > html {
 .keyword-value  {
     color: maroon;
     margin-right: 10px;
-    text-overflow: ellipsis;
 }
 
 
