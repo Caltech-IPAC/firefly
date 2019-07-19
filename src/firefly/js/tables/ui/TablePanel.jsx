@@ -316,7 +316,6 @@ TablePanel.defaultProps = {
 function MetaInfo({tbl_id}) {
     const contentStyle={display: 'flex', flexDirection: 'column', maxHeight: 200, overflow: 'auto', paddingBottom: 1};
     const wrapperStyle={width: '100%'};
-    const kwValStyle = {maxWidth: 0, whiteSpace: 'nowrap'};
 
     const {keywords, links, params} = TblUtil.getTblById(tbl_id);
 
@@ -332,7 +331,7 @@ function MetaInfo({tbl_id}) {
                     .map(({value, key}, idx) => {                              // map it into html elements
                         return (
                             <div key={'keywords-' + idx} style={{display: 'inline-flex'}}>
-                                <div className='keyword-label'>{key}=</div><div style={kwValStyle} className='keyword-value'>{value}</div>
+                                <Keyword style={{maxWidth: 0}} label={key} value={value}/>
                             </div>
                         );
                     })
@@ -346,7 +345,7 @@ function MetaInfo({tbl_id}) {
                     .map(({name, value, type='N/A'}, idx) => {
                     return (
                         <div key={'keywords-' + idx} style={{display: 'inline-flex'}}>
-                            <div className='keyword-label'>{name}({type})=</div><div style={kwValStyle} className='keyword-value'>{value}</div>
+                            <Keyword label={`${name}(${type})`} value={value}/>
                         </div>
                     );
                 })
@@ -356,12 +355,13 @@ function MetaInfo({tbl_id}) {
             { !isEmpty(links) &&
             <CollapsiblePanel componentKey={tbl_id + '-links'} header='Links' {...{contentStyle, wrapperStyle}}>
                 {links.map((l, idx) => {
+                    const dispVal = l.value || l.href;
                     return (
-                        <div key={'keywords-' + idx}>
-                            <div className='keyword-label'>ID</div><div style={kwValStyle} className='keyword-value'>{l.ID || 'N/A'}</div>
-                            <div className='keyword-label'>role</div><div style={kwValStyle} className='keyword-value'>{l.role || 'N/A'}</div>
-                            <div className='keyword-label'>type</div><div style={kwValStyle} className='keyword-value'>{l.type || 'N/A'}</div>
-                            <a href={l.href} value={l.value || l.href} title={l.title}/>
+                        <div key={'keywords-' + idx} style={{display: 'inline-flex'}}>
+                            { l.ID && <Keyword label='ID' value={l.ID}/> }
+                            { l.role && <Keyword label='role' value={l.role}/> }
+                            { l.type && <Keyword label='type' value={l.type}/> }
+                            <a style={{whiteSpace: 'nowrap', maxWidth: 300}} href={l.href} title={l.title || dispVal}>{dispVal}</a>
                         </div>
                     );
                 })
@@ -369,6 +369,15 @@ function MetaInfo({tbl_id}) {
             </CollapsiblePanel>
             }
         </div>
+    );
+}
+
+function Keyword({style={}, label, value}) {
+    return (
+        <React.Fragment>
+            <div className='keyword-label'>{label}</div>
+            <div style={{whiteSpace: 'nowrap', ...style}} className='keyword-value'>{value}</div>
+        </React.Fragment>
     );
 }
 

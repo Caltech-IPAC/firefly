@@ -419,10 +419,13 @@ export function downloadBlob(blob, filename) {
     if (blob) {
         window.URL = window.URL || window.webkitURL;
         const a = document.createElement('a');
+        a.style.display = 'none';
         a.href = window.URL.createObjectURL(blob);
         a.download = filename;
+        document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(a.href);
+        document.body.removeChild(a);
     }
 }
 
