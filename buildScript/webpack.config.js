@@ -124,9 +124,10 @@ export default function makeWebpackConfig(config) {
                             targets: {
                                 browsers: ['safari >= 10', 'chrome >= 67', 'firefox >= 60', 'edge >= 16']
                             },
-                            debug: !ENV_PROD,
+                            debug: false,//!ENV_PROD, uncomment this line to enable the debugger
                             modules: false,  // preserve application module style - in our case es6 modules
-                            useBuiltIns : 'usage'
+                            useBuiltIns : 'usage',
+                            corejs:'core-js@2'
                         }
                     ],
                     '@babel/preset-react'
