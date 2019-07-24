@@ -423,8 +423,9 @@ function makeConvertButton(pv) {
 
     const {autoConvertOnZoom:auto}= pv.plotViewCtx.hipsImageConversion;
     return (
-            <div style={{display: 'flex', marginLeft: 5, marginRight: 5, marginTop: -6, padding: '1px 2px 1px 2px',
-                         border: '1px solid rgba(60,60,60,.2', borderRadius: '5px'}}>
+            <div style={{display: 'flex', alignItems: 'center',
+                         padding: '1px 2px 1px 2px', margin: '0 5px 0 5px',
+                         border: '1px solid rgba(60,60,60,.2)', borderRadius: '5px'}}>
                 <RadioGroupInputFieldView options={options}  value={value}
                                           buttonGroup={true}
                                           onChange={(ev) => doConvert(pv,ev.target.value)} />
@@ -443,7 +444,7 @@ function makeHiPSImageTable(pv, surveysId) {
 
     const inputEntry = () => {
         return (
-            <div style={{margin: '0 5px 7px 4px'}}>
+            <div style={{margin: '0 5px 0 4px'}}>
                 <input  type='button'
                         value='Change HiPS'
                         title={'Choose a different HiPS Survey'}
@@ -478,7 +479,7 @@ function makeHiPSCoordSelect(pv) {
 
 
     return (
-        <div style={{marginBottom:7}}>
+        <div>
             <ListBoxInputFieldView
 
                 inline={true}

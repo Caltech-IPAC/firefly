@@ -1,11 +1,14 @@
 
 .buttonGroupButton {
     background-color: #aaa;
+    background-image: none;
+    border-radius: 0;
+    padding: 1px 7px 2px 7px;
+
     border: 1px solid #ccc;
     border-left: 0;
     cursor: pointer;
     margin: 0;
-    /*padding: 5px 10px;*/
     position: relative;
 }
 
@@ -21,15 +24,27 @@
 
 .buttonGroupButton.On:focus {
     outline-width: 0;
+    background-image: none;
+    border-radius: 0;
 }
 
 .buttonGroupButton.Off:focus {
     outline-width: 0;
+    background-image: none;
+    border-radius: 0;
 }
 
 .buttonGroupButton.Off:hover {
-    background-color: #999;
+    background-color: #ddd;
+    background-image: none;
+    border-radius: 0;
 }
 .buttonGroupButton.On:hover {
-    background-color: #999;
+    background-color: #aaa;
+    background-image: none;
+    border-radius: 0;
+}
+
+.buttonGroupButton.Off:ACTIVE {
+    background-color: #bbb;
 }
