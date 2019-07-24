@@ -36,6 +36,9 @@ div.rootStyle>img, div.rootStyle > html {
     border:0 none;
 }
 
+div.rootStyle img {
+    max-width: unset;
+}
 
 #App {
     position: absolute;
