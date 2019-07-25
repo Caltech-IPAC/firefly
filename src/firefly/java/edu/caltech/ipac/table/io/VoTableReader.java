@@ -725,6 +725,7 @@ public class VoTableReader {
         String name = el.getAttribute("name");
         if (isEmpty(name)) name = el.getAttribute("ID");
         if (isEmpty(name)) name = "COLUMN_" + colIdx;
+        else name = name.replace("\"","");
         return name;
     }
 
