@@ -439,6 +439,7 @@ export function convertToImage(pv, allSky= false) {
     const plot= primePlot(pv);
     const attributes= clone(plot.attributes, getCornersAttribute(pv) || {});
     const fromImage= isImage(plot) && !plot.projection.isWrappingProjection();
+    const {displayFixedTarget,userCanDeletePlots}= pv.plotViewCtx;
     if (convertToAllSky) {
         if (fromImage) {
             prepFromImageConversion(pv,wpRequest);
@@ -463,7 +464,8 @@ export function convertToImage(pv, allSky= false) {
     }
 
     dispatchPlotImage({plotId, wpRequest, hipsImageConversion: pv.plotViewCtx.hipsImageConversion,
-                       attributes, enableRestore:false});
+        pvOptions:{displayFixedTarget,userCanDeletePlots},
+        attributes, enableRestore:false});
 }
 
 
@@ -482,9 +484,12 @@ export function convertToHiPS(pv, fromAllSky= false) {
     if (!fromAllSky) {
         prepFromImageConversion(pv,wpRequest);
     }
+    const {displayFixedTarget,userCanDeletePlots}= pv.plotViewCtx;
 
     dispatchPlotHiPS({plotId, wpRequest, attributes, hipsImageConversion: pv.plotViewCtx.hipsImageConversion,
-        enableRestore:false});
+        enableRestore:false,
+        pvOptions:{ displayFixedTarget, userCanDeletePlots }
+    });
 }
 
 function getCenterPt(pv) {

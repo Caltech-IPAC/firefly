@@ -335,6 +335,7 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
     dispatchPlotImageOrHiPS({
         plotId: PLOT_ID, viewerId, hipsRequest, imageRequest, allSkyRequest,
         fovDegFallOver, fovMaxFitsSize, autoConvertOnZoom, plotAllSkyFirst,
+        pvOptions: {userCanDeletePlots:false},
         attributes: {
             [COVERAGE_TARGET]: avgOfCenters,
             [COVERAGE_RADIUS]: maxRadius,
