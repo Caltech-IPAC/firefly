@@ -1,6 +1,6 @@
 import React, {memo} from 'react';
 import PropTypes from 'prop-types';
-import {get} from 'lodash';
+import {get, truncate} from 'lodash';
 import {isFunction, isNil, isEmpty} from 'lodash';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
@@ -65,7 +65,7 @@ export const WorkspaceView = memo( (props) => {
     }
     return (
         <div style={wrapperStyle}>
-            {FilePicker({files, selectedItem: selectedFile?selectedItem:WS_HOME+'/', keepSelect, openFolders, ...eventHandlers})}
+            {FilePicker({files, selectedItem, keepSelect, openFolders, ...eventHandlers})}
         </div>
     );
 });
@@ -383,7 +383,7 @@ function doUploadWorkspace(file, params={}) {
  * @param options
  */
 export function doDownloadWorkspace(url, options) {
-    fetchUrl(url, options).then( (response) => {
+    fetchUrl(url, {method: 'post', ...options}).then( (response) => {
         response.json().then( (value) => {
             if (value.ok === 'true') {
                 dispatchWorkspaceCreatePath({files: value.result});
@@ -392,7 +392,7 @@ export function doDownloadWorkspace(url, options) {
                                  'Save to workspace');
             }
         });
-    });
+    }).catch(({message}) => showInfoPopup(truncate(message, {length: 200}), 'Unexpected error'));
 }
 
 export function workspacePopupMsg(msg, title) {

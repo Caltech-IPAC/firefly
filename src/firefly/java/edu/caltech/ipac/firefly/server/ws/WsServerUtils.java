@@ -233,7 +233,7 @@ public class WsServerUtils {
     public File getTempUploadFile(String fileName) throws IOException {
         String ext = resolveExt(fileName);
 
-        return File.createTempFile("ws-upload", ext, ServerContext.getTempWorkDir());
+        return File.createTempFile("ws-upload", ext, ServerContext.getUploadDir());
     }
 
     public static class WsJson {

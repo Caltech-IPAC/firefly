@@ -60,6 +60,9 @@ export function loadTapSchemas(serviceUrl) {
             if (getColumnIdx(tableModel, 'schema_index') >= 0) {
                 sortTableData(tableModel.tableData.data, tableModel.tableData.columns, sortInfoString('schema_index'));
             }
+            if (getColumnIdx(tableModel, 'schema_name') < 0) {
+                tableModel.error = 'Invalid schemas table';
+            }
         } else {
             tableModel.error = 'No schemas available';
         }
@@ -87,6 +90,10 @@ export function loadTapTables(serviceUrl, schemaName) {
             // if it is, sort tabledata by table_index
             if (getColumnIdx(tableModel, 'table_index') >= 0) {
                 sortTableData(tableModel.tableData.data, tableModel.tableData.columns, sortInfoString('table_index'));
+            }
+            if (getColumnIdx(tableModel, 'table_name') < 0) {
+                tableModel.error = `Invalid tables returned for ${serviceUrl} schema ${schemaName}`;
+                logError(tableModel.error);
             }
         } else {
             tableModel.error = `No tables available for ${serviceUrl} schema ${schemaName}`;
@@ -121,6 +128,10 @@ export function loadTapColumns(serviceUrl, schemaName, tableName) {
             // if it is, sort tabledata by column_index
             if (getColumnIdx(tableModel, 'column_index') >= 0) {
                 sortTableData(tableModel.tableData.data, tableModel.tableData.columns, sortInfoString('column_index'));
+            }
+            if (getColumnIdx(tableModel, 'column_name') < 0) {
+                tableModel.error = `Invalid columns table returned for ${serviceUrl} schema ${schemaName} table ${tableName}`;
+                logError(tableModel.error);
             }
         } else {
             tableModel.error = `No columns available for ${serviceUrl} schema ${schemaName} table ${tableName}`;

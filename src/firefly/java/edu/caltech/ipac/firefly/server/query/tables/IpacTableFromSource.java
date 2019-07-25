@@ -9,12 +9,12 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.firefly.server.query.UserCatalogQuery;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.ws.WsServerUtils;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
@@ -27,6 +27,7 @@ import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.StringKey;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.File;
@@ -130,11 +131,17 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
                 ext = StringUtils.isEmpty(ext) ? ".ul" : "." + ext;
                 File nFile = createFile(request, ext);
 
-                HttpURLConnection conn = (HttpURLConnection) URLDownload.makeConnection(url);
+                //HttpURLConnection conn = (HttpURLConnection) URLDownload.makeConnection(url);
+                HttpServiceInput inputs = HttpServiceInput.createWithCredential(url.toString());
+                HttpURLConnection conn = (HttpURLConnection)URLDownload.makeConnection(url, inputs.getCookies(), inputs.getHeaders(), false);
+
                 // set connect timeout in milliseconds
                 conn.setConnectTimeout(10000);
                 if (res == null) {
-                    URLDownload.getDataToFile(conn, nFile, null, false, true, false, Long.MAX_VALUE);
+                    // URLDownload throws FailedRequestException for statuses from 300 inclusive to 400 exclusive,
+                    // need to check for other failures
+                    FileInfo finfo = URLDownload.getDataToFile(conn, nFile, null, false, true, false, Long.MAX_VALUE);
+                    checkForFailures(finfo);
                     res = nFile;
                     getCache().put(key, res);
                 } else if (checkForUpdates) {
@@ -142,6 +149,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
                     nFile.setLastModified(res.lastModified());
                     FileInfo finfo = URLDownload.getDataToFile(conn, nFile, null, false, true, true, Long.MAX_VALUE);
                     if (finfo.getResponseCode() != HttpURLConnection.HTTP_NOT_MODIFIED) {
+                        checkForFailures(finfo);
                         res = nFile;
                         getCache().put(key, res);
                     }
@@ -215,6 +223,11 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
         return ServerParams.IS_WS.equals(r.getParam(ServerParams.SOURCE_FROM));
     }
 
-
+    private void checkForFailures(FileInfo finfo) throws FailedRequestException {
+        if (finfo.getResponseCode() < 200 || finfo.getResponseCode() > 300) {
+            throw new FailedRequestException("Request failed with status "+finfo.getResponseCode()+" "+
+                    finfo.getResponseCodeMsg());
+        }
+    }
 }
 

@@ -320,15 +320,9 @@ export function fetchUrl(url, options, doValidation= true, enableDefOptions= tru
             if (response.ok) {
                 return response;
             } else if(response.status === 401){
-                return new Error('You are no longer logged in');
+                throw new Error('You are no longer logged in');
             } else {
-                return new Error(`${url} failed with status: ${response}.statusText`);
-            }
-        }).catch( (error) => {
-            if (error.name === 'AbortError') {
-                throw error; // fetch aborted
-            } else {
-                throw new Error(`Request failed: ${url}`, error);
+                throw new Error(`Request failed with status ${response.status}: ${url}`);
             }
         });
 }

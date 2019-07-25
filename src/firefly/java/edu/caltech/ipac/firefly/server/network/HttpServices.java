@@ -382,7 +382,9 @@ public class HttpServices {
     }
 
     private static String getDetailDesc(HttpMethod method, HttpServiceInput input) throws URIException {
-        String desc = "url: " + method.getURI() +
+        String desc = "name: "+method.getName() +
+                "\nstatus: "+method.getStatusText()+
+                "\nurl: " + method.getURI() +
                 "\nquery_str: " + method.getQueryString() +
                 "\ninput: " + (input== null ? "" : input.getDesc()) +
                 "\nREQUEST HEADERS: " + CollectionUtil.toString(method.getRequestHeaders()).replaceAll("\\r|\\n", "") +
