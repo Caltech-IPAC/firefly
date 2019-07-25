@@ -37,10 +37,18 @@ import java.util.function.Consumer;
  */
 public abstract class WebDAVWorkspaceManagerBase implements WorkspaceManager {
 
-    protected static String WS_HOST_URL = AppProperties.getProperty("workspace.host.url", "https://irsa.ipac.caltech.edu");
+    private static String WS_HOST_URL = AppProperties.getProperty("workspace.host.url");
     private static boolean INFINITY_DEPTH_SUPPORTED = AppProperties.getBooleanProperty("workspace.propfind.infinity", true);
 
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
+
+    protected String getWsHostUrl() {
+        if (StringUtils.isEmpty(WS_HOST_URL)) {
+            return ServerContext.getRequestOwner().getHostUrl();
+        } else {
+            return WS_HOST_URL;
+        }
+    }
 
     @Override
     public String getProp(PROPS prop) {
@@ -74,7 +82,7 @@ public abstract class WebDAVWorkspaceManagerBase implements WorkspaceManager {
             LOG.error(e, "Continue with relative path as it is: "+relPath);
             e.printStackTrace();
         }
-        return WS_HOST_URL + getAbsPath(valid);
+        return getWsHostUrl() + getAbsPath(valid);
     }
 
     private Namespace getNamespace() {
@@ -480,7 +488,7 @@ public abstract class WebDAVWorkspaceManagerBase implements WorkspaceManager {
             meta = new WspaceMeta(getWsHome(), URLDecoder.decode(res.getHref().replaceFirst(getWsHome(), ""),"UTF-8"));
         }
         if (res.getHref() != null) {
-            meta.setUrl(WS_HOST_URL + res.getHref());
+            meta.setUrl(getWsHostUrl() + res.getHref());
         }
         DavPropertySet props = res.getProperties(200);
         if (props != null) {
@@ -537,7 +545,7 @@ public abstract class WebDAVWorkspaceManagerBase implements WorkspaceManager {
     }
 
     protected HttpServices.Status doExecuteMethod(DavMethod method) throws IOException {
-        HttpServiceInput input = HttpServiceInput.createWithCredential(WS_HOST_URL);
+        HttpServiceInput input = HttpServiceInput.createWithCredential(getWsHostUrl());
         return HttpServices.executeMethod(method, input);
     }
 
