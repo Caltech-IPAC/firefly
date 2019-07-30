@@ -91,7 +91,7 @@ public class ZtfSciimsFileRetrieve extends URLFileInfoProcessor {
         } else if (type == FILE_TYPE.SCIIMLOG) {
             baseFile += ZtfRequest.SCIIMLOG;
         } else if (type == FILE_TYPE.SCIMREFDIFFIMG) {
-            baseFile += ZtfRequest.SCIMEFDIFFIMG;
+            baseFile += ZtfRequest.SCIMREFDIFFIMG;
         } else if (type == FILE_TYPE.DIFFIMGPSF) {
             baseFile += ZtfRequest.DIFFIMGPSF;
         } else if (type == FILE_TYPE.DIFFIMLOG) {

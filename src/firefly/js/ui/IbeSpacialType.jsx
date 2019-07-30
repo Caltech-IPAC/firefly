@@ -73,8 +73,11 @@ export class IbeSpacialType extends PureComponent {
                                           ] }
                         multiple={false}
                     />
+                    <p> </p>
                     {renderSearchRegion(searchType!=='CENTER')}
+                    <p> </p>
                     {renderImageSize(searchType==='CENTER' || searchType==='COVERS')}
+                    <p> </p>
                     {renderMostCenter(searchType==='CENTER' || searchType==='COVERS')}
                 </InputGroup>
             </div>
@@ -95,13 +98,15 @@ function renderSearchRegion(visible) {
         <SizeInputFields fieldKey='size'
                          wrapperStyle={{visibility:visible?'visible':'hidden'}}
                          initialState= {{
-                                           value: '.1',
+                                           value: '0.00833333333333',
                                            tooltip: 'Please select an option',
                                            unit: 'arcsec',
                                            min:  1/3600,
                                            max:  43200/3600
                                  }}
-                         label='Search Region (Square) Size:' />
+                         label='Search Region (Square) Size:'
+                         labelWidth={300} />
+
     );
 }
 
@@ -110,13 +115,14 @@ function renderImageSize(visible) {
        <SizeInputFields fieldKey='subsize'
                         wrapperStyle={{visibility:visible?'visible':'hidden'}}
                         initialState= {{
-                                               value: '.1',
+                                               value: '0.1388888888889',
                                                tooltip: 'Please select an option',
                                                unit: 'arcsec',
                                                min:  1/3600,
                                                max:  7200/3600
                                            }}
-                        label='Return Image Size (leave blank for full images):' />
+                        label='Return Image Size (leave blank for full images):'
+                        labelWidth={300} />
    ) ;
 }
 

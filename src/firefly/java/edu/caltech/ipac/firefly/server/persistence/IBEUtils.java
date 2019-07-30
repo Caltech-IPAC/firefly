@@ -80,10 +80,12 @@ public class IBEUtils {
             return null;
         } else if (source instanceof ZtfIbeDataSource) {
             // Add ZTF
-            String productLevel = ((ZtfIbeDataSource)source).getTableName();
+            String productLevel = ((ZtfIbeDataSource) source).getTableName();
             if (productLevel.equalsIgnoreCase("SCI")) {
-                return new SortInfo("nid","expif","ccdid","qid");
-            } else if (productLevel.equalsIgnoreCase("REF")) {
+                return new SortInfo("nid", "expid", "ccdid", "qid");
+            } else if (productLevel.equalsIgnoreCase("DIFF")) {
+                return new SortInfo("nid","expid","ccdid","qid");
+            }else if (productLevel.equalsIgnoreCase("REF")) {
                 return new SortInfo("field","ccdid","qid","fid");
             }
             return null;
