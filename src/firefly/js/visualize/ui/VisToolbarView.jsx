@@ -119,7 +119,7 @@ export function VisToolbarViewWrapper({visRoot,toolTip,dlCount, messageUnder, st
     const ts= messageUnder ? Object.assign({},tipStyle, {maxWidth:'100%'}) : tipStyle;
 
     return (
-        <div style={Object.assign({}, rS, style) }>
+        <div style={Object.assign({}, rS, style) } className='disable-select'>
             <VisToolbarView visRoot={visRoot} dlCount={dlCount}/>
             <div style={ts}>{toolTip}</div>
         </div>

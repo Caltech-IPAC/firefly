@@ -6,7 +6,7 @@
 import {isEmpty,get, isArray} from 'lodash';
 import Enum from 'enum';
 import {primePlot,getAllDrawLayersForPlot} from '../visualize/PlotViewUtil.js';
-import {visRoot} from '../visualize/ImagePlotCntlr.js';
+import {visRoot, dispatchUseTableAutoScroll} from '../visualize/ImagePlotCntlr.js';
 import PointDataObj, {DrawSymbol} from '../visualize/draw/PointDataObj.js';
 import FootprintObj from '../visualize/draw/FootprintObj.js';
 import {makeDrawingDef, getNextColor} from '../visualize/draw/DrawingDef.js';
@@ -32,7 +32,8 @@ import SelectArea, {SelectedShape} from './SelectArea.js';
 import {detachSelectArea} from '../visualize/ui/SelectAreaDropDownView.jsx';
 import {CysConverter} from '../visualize/CsysConverter.js';
 import {parseObsCoreRegion} from '../util/ObsCoreSRegionParser.js';
-import {dispatchChangeTableAutoScroll, dispatchUseTableAutoScroll} from '../visualize/ImagePlotCntlr';
+import {brighter, darker} from '../util/Color';
+import {isDefined} from '../util/WebUtil';
 
 
 const TYPE_ID= 'CATALOG_TYPE';
@@ -53,25 +54,31 @@ export default {factoryDef, TYPE_ID}; // every draw layer must default export wi
 //---------------------------------------------------------------------
 
 
-function creator(initPayload, presetDefaults) {
+function creator(initPayload, presetDefaults={}) {
     const {catalogId, tableData, tableMeta, title,
            selectInfo, columns, tableRequest, highlightedRow, color, angleInRadian=false,
            symbol, size, tblId,
            dataTooBigForSelection=false, catalog=true,
-           dataType=CatalogType.X.key, tableSelection, isFromRegion=false}= initPayload;
+           dataType=CatalogType.X.key, tableSelection, isFromRegion=false,
+           searchTarget, searchTargetSymbol= DrawSymbol.POINT_MARKER,
+    }= initPayload;
 
-    const drawingDef= Object.assign(makeDrawingDef(),
-        {
+    const drawingDef= {...makeDrawingDef(),
             size: size || 5,
-            symbol: DrawSymbol.get(symbol) || DrawSymbol.SQUARE
-        },
-        presetDefaults);
+            symbol: DrawSymbol.get(symbol) || DrawSymbol.SQUARE,
+        ...presetDefaults};
 
-    const pairs= {
-        [MouseState.DOWN.key]: highlightChange
-    };
+    const pairs= { [MouseState.DOWN.key]: highlightChange };
 
     drawingDef.color= (color || get(tableMeta,MetaConst.DEFAULT_COLOR) || getNextColor());
+
+
+    const searchTargetDrawingDef= {...makeDrawingDef(),
+            size: 10,
+            symbol: searchTargetSymbol,
+            color: darker(drawingDef.color)
+         };
+
     const helpText= `Click on ${(dataType == CatalogType.REGION.key) ? 'region' : 'point'} to highlight`;
     const options= {
         hasPerPlotData:false,
@@ -88,25 +95,28 @@ function creator(initPayload, presetDefaults) {
         supportSubgroups: Boolean(tableMeta && tableMeta[SUBGROUP])
     };
 
-    const dl= DrawLayer.makeDrawLayer(catalogId,TYPE_ID, 
+    const catalogType = dataType.toUpperCase();
+    const rawDl= DrawLayer.makeDrawLayer(catalogId,TYPE_ID,
                                       title || `Catalog: ${get(tableMeta,'title',catalogId)}`,
                                       options, drawingDef, null, pairs );
-    const catalogType = dataType.toUpperCase();
-    dl.catalogId= catalogId;
-    dl.tableData= tableData;
-    dl.tableMeta= tableMeta;
-    dl.tableRequest= tableRequest;
-    dl.selectInfo= selectInfo;
-    dl.highlightedRow= highlightedRow;
-    dl.columns= columns;
-    dl.catalog= catalog;
-    dl.catalogType = Object.keys(CatalogType).includes(catalogType) ? CatalogType.get(catalogType) : CatalogType.X;
-    dl.angleInRadian= angleInRadian;
-    dl.selectOption = tableSelection;
-    dl.isFromRegion = isFromRegion;
-    dl.tblId = tblId ? tblId : catalogId;
-
-    return dl;
+    return {...rawDl,
+        catalogId,
+        tableData,
+        tableMeta,
+        tableRequest,
+        selectInfo,
+        highlightedRow,
+        columns,
+        catalog,
+        catalogType: Object.keys(CatalogType).includes(catalogType) ? CatalogType.get(catalogType) : CatalogType.X,
+        angleInRadian,
+        selectOption: tableSelection,
+        isFromRegion,
+        tblId: tblId ? tblId : catalogId,
+        searchTarget,
+        searchTargetVisible: true,
+        searchTargetDrawingDef,
+    };
 }
 
 
@@ -192,7 +202,8 @@ function getLayerChanges(drawLayer, action) {
 
     dd[DataTypes.HIGHLIGHT_DATA]= null;
 
-    if (changes.tableData || changes.selectOption ||
+    if (changes.tableData || changes.selectOption || changes.searchTargetDrawingDef ||
+        isDefined(changes.searchTargetVisible) ||
         (changes.selectInfo && selectOption === TableSelectOptions.selected.key)) {
         dd[DataTypes.DATA]= null;
     }
@@ -268,6 +279,15 @@ function toAngle(d, radianToDegree)  {
     return (!isNaN(v) && radianToDegree) ? v*180/Math.PI : v;
 }
 
+function computeSearchTarget(drawLayer) {
+    if (!drawLayer.searchTarget || !drawLayer.searchTargetVisible) return;
+    const {searchTargetDrawingDef:{symbol,size,color}}= drawLayer;
+    const tSym= PointDataObj.make(drawLayer.searchTarget, size, symbol);
+    tSym.color= color;
+    return tSym;
+
+}
+
 function computePointDrawLayer(drawLayer, tableData, columns) {
 
     const lonIdx= findColIdx(tableData.columns, columns.lonCol);
@@ -275,16 +295,20 @@ function computePointDrawLayer(drawLayer, tableData, columns) {
     const {angleInRadian:rad}= drawLayer;
     if (lonIdx<0 || latIdx<0) return null;
 
-    return tableData.data.map( (d) => {
+    const drawData= tableData.data.map( (d) => {
         const wp= makeWorldPt( toAngle(d[lonIdx],rad), toAngle(d[latIdx],rad), columns.csys);
         return PointDataObj.make(wp);
     });
+    drawLayer.searchTarget && drawData.push(computeSearchTarget(drawLayer));
+    return drawData;
 }
+
+
 
 function computeBoxDrawLayer(drawLayer, tableData, columns) {
     const {angleInRadian:rad}= drawLayer;
 
-    return tableData.data.map( (d) => {
+    const drawData= tableData.data.map( (d) => {
         const fp= columns.map( (c) => {
             const lonIdx= findColIdx(tableData.columns, c.lonCol);
             const latIdx= findColIdx(tableData.columns, c.latCol);
@@ -292,12 +316,14 @@ function computeBoxDrawLayer(drawLayer, tableData, columns) {
         });
         return FootprintObj.make([fp]);
     });
+    drawLayer.searchTarget && drawData.push(computeSearchTarget(drawLayer));
+    return drawData;
 }
 
 function computeRegionLayer(drawLayer, tableData, regionCols) {
     const regionColAry = isArray(regionCols) ? regionCols : [regionCols];
 
-    return regionColAry.reduce((prev, oneRegionCol) => {
+    const drawData= regionColAry.reduce((prev, oneRegionCol) => {
         const {unit='deg'} = oneRegionCol;
 
         const colObjs = tableData.data.map((oneRow) => {
@@ -308,6 +334,8 @@ function computeRegionLayer(drawLayer, tableData, regionCols) {
         prev.push(...colObjs);
         return prev;
     }, []);
+    drawLayer.searchTarget && drawData.push(computeSearchTarget(drawLayer));
+    return drawData;
 }
 
 function computeRegionSelected(drawLayer, tableData, regionCols) {

@@ -39,7 +39,7 @@ import {watchExtensionActions} from '../core/messaging/ExternalAccessWatcher.js'
 
 
 //--- import drawing Layers
-import ActiveTarget from '../drawingLayers/ActiveTarget.js';
+// import ActiveTarget from '../drawingLayers/ActiveTarget.js';
 import FixedMarker from '../drawingLayers/FixedMarker.js';
 import SelectArea from '../drawingLayers/SelectArea.js';
 import DistanceTool from '../drawingLayers/DistanceTool.js';
@@ -56,6 +56,7 @@ import RegionPlot from '../drawingLayers/RegionPlot.js';
 import MarkerTool from '../drawingLayers/MarkerTool.js';
 import FootprintTool from '../drawingLayers/FootprintTool.js';
 import ImageOutline from '../drawingLayers/ImageOutline.js';
+import ImageRoot from '../drawingLayers/ImageRoot.js';
 import {showExampleDialog} from '../ui/ExampleDialog.jsx';
 import ImageLineBasedFootprint from '../drawingLayers/ImageLineBasedFootprint.js';
 
@@ -99,8 +100,8 @@ const actionCreators = new Map();
 
 
 
-const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,FixedMarker, SelectArea,DistanceTool,
-                                                     PointSelection, StatsPoint, NorthUpCompass,
+const drawLayerFactory= DrawLayerFactory.makeFactory(FixedMarker, SelectArea,DistanceTool,
+                                                     PointSelection, StatsPoint, NorthUpCompass, ImageRoot,
                                                      Catalog, Artifact, WebGrid, RegionPlot,
                                                      MarkerTool, FootprintTool, HiPSGrid, HiPSMOC,
                                                      ImageOutline, ImageLineBasedFootprint);

@@ -2,19 +2,22 @@
 
     window.onload = function () {
         const tests = document.getElementsByTagName('template');
-        var cnt = 1;
-        Object.values(tests).forEach(function(test) {
-            const c = test.content;
-            const expected = c.querySelector('#expected');
-            const actual = c.querySelector('#actual');
-            const scpt = c.querySelector('script');
-
-            renderTest(cnt++, expected, actual, scpt, test);
-        });
+        let cnt = 1;
+        const allTest= Object.values(tests);
+        const exclusiveTest= allTest.filter( (test) => test.className && test.className.includes('exclusive'));
+        const activeTest= exclusiveTest.length ? exclusiveTest : allTest;
+        activeTest.forEach((test) => {
+                    const c = test.content;
+                    const expected = c.querySelector('#expected');
+                    const actual = c.querySelector('#actual');
+                    const scpt = c.querySelector('script');
+                    renderTest(cnt++, expected, actual, scpt, test, Boolean(exclusiveTest.length));
+                });
     };
 
-    function renderTest(cnt, expected, actual, script, testTmpl) {
-        const title = cnt + ' - ' + testTmpl.title;
+
+    function renderTest(cnt, expected, actual, script, testTmpl, onlyUsingExclusize) {
+        const title = (onlyUsingExclusize? 'EXCLUSIVE - ' : '') + cnt + ' - ' + testTmpl.title;
         const iframe = document.createElement('iframe');
         iframe.id = 'iframe';
         iframe.src = './template.html';

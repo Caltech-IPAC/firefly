@@ -36,6 +36,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_INDEX;
 import static edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource.PROC_ID;
@@ -165,7 +166,10 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
     public void prepareTableMeta(TableMeta defaults, List<DataType> columns, ServerRequest request) {
         String type = request.getParam(TBL_TYPE);
         if (type == null || type.equals(TYPE_CATALOG)) {
-            defaults.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "TRUE");
+            Map reqMeta= ((TableServerRequest) request).getMeta();
+            if (reqMeta==null || !reqMeta.containsKey(MetaConst.CATALOG_OVERLAY_TYPE)) {
+                defaults.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "TRUE");
+            }
         }
     }
 

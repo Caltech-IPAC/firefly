@@ -167,6 +167,7 @@ function makeDrawLayer(drawLayerId,
         isPointData: false,
         canUserChangeColor: ColorChangeType.STATIC,
         canUserDelete: true,
+        canUserHide: true,
         destroyWhenAllDetached : false, // hint to controller, when all plots have been detached, destroy this layer
         helpLine : '',
         decimate: false, // enable decimation

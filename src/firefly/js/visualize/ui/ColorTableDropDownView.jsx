@@ -139,7 +139,7 @@ const colorTables=[
 function makeItems(pv,ctAry) {
     return ctAry.map( (ct,cbarIdx) => {
         return (
-            <ToolbarButton icon={ct.icon} tip={ct.tip}
+            <ToolbarButton icon={ct.icon} tip={ct.tip} additionalStyle={{padding: '2px 0 2px 0'}}
                            enabled={true} horizontal={false} key={cbarIdx}
                            onClick={() => handleColorChange(pv,cbarIdx)}/>
         );

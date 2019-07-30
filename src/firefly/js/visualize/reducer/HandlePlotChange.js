@@ -145,6 +145,10 @@ export function reducer(state, action) {
             retState= addProcessedTileData(state,action);
             break;
 
+        case Cntlr.CHANGE_IMAGE_VISIBILITY:
+            retState= changeVisibility(state,action);
+            break;
+
         default:
             break;
     }
@@ -754,4 +758,10 @@ function updatePlotProgress(state,action) {
     const serverCall= done ? callSuccess ? 'success' : 'fail' : 'working';
 
     return clone(state,{plotViewAry:clonePvAry(state,plotId, {plottingStatus,serverCall})});
+}
+
+function changeVisibility(state,action) {
+    const {plotId, visible}= action.payload;
+    return {...state,plotViewAry:clonePvAry(state,plotId, {visible})};
+
 }

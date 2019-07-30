@@ -346,7 +346,7 @@ function makeTileDrawers(pv) {
             />
         );
     });
-    drawers.unshift(rootDrawer);
+    if (pv.visible) drawers.unshift(rootDrawer);
     return drawers;
 }
 

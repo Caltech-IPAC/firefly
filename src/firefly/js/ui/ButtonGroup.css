@@ -44,6 +44,9 @@
     background-image: none;
     border-radius: 0;
 }
+.buttonGroupButton.Off:ACTIVE {
+    background-color: #bbb;
+}
 
 .buttonGroupButton.Off:ACTIVE {
     background-color: #bbb;

@@ -10,30 +10,25 @@ import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {getTblById, doFetchTable, isTableUsingRadians} from '../../tables/TableUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
-import {getDrawLayerById, getPlotViewById, getActivePlotView,   findCurrentCenterPoint} from '../PlotViewUtil.js';
+import {getDrawLayerById, getPlotViewById} from '../PlotViewUtil.js';
 import {dlRoot} from '../DrawLayerCntlr.js';
-import {MetaConst} from '../../data/MetaConst.js';
 import Catalog from '../../drawingLayers/Catalog.js';
 import {logError} from '../../util/WebUtil.js';
 import {getMaxScatterRows} from '../../charts/ChartUtil.js';
 import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
-import {dispatchRecenter} from '../ImagePlotCntlr.js';
-import {parseWorldPt, pointEquals, makeWorldPt} from '../Point.js';
-import {computeCentralPointAndRadius} from '../VisUtil.js';
-import CsysConverter from '../CsysConverter.js';
-import {COVERAGE_CREATED} from './CoverageWatcher.js';
-import {isImage,isHiPS} from '../WebPlot.js';
+import {parseWorldPt} from '../Point.js';
 import {findTableCenterColumns, isCatalog} from '../../util/VOAnalyzer.js';
+import {getAppOptions} from '../../core/AppDataCntlr';
+import {makeWorldPt} from '../Point';
+import {CoordinateSys} from '../CoordSys.js';
 
 
-
-
-
-/** type {TableWatcherDef} */
+/** @type {TableWatcherDef} */
 export const catalogWatcherDef = {
     id : 'CatalogWatcher',
     watcher : watchCatalogs,
     testTable : (table) => !isLsstFootprintTable(table) && isCatalog(table),
+    allowMultiples: false,
     actions: [TABLE_LOADED, TABLE_SELECT, TABLE_HIGHLIGHT, TABLE_UPDATE, TBL_RESULTS_ACTIVE,
               TABLE_REMOVE, ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS]
 };
@@ -109,51 +104,6 @@ export function watchCatalogs(tbl_id, action, cancelSelf, params) {
 }
 
 
-const isCName = (name) => (c) => c.name===name;
-
-/**
- * update the projection center of hips plot to be aligned with the target of catalog search
- * @param tbl
- */
-// function recenterImage(tbl) {
-//     const pv = getActivePlotView(visRoot());
-//     const plot = pv && pv.plots[pv.primeIdx];
-//
-//     // exclude coverage image
-//     if (!plot || get(plot, ['attributes', COVERAGE_CREATED], false)) {
-//         return;
-//     }
-//
-//     const cc = CsysConverter.make(plot);
-//     const {UserTargetWorldPt, polygon} = tbl.request || {};
-//     const centerPt =  cc.getWorldCoords(findCurrentCenterPoint(pv));
-//
-//     let   newCenter;
-//
-//     if (UserTargetWorldPt) {    // search method: cone, elliptical, bo
-//         newCenter = parseWorldPt(UserTargetWorldPt);
-//     } else if (polygon) {       // search method polygon
-//         const allPts = polygon.trim().split(/\s+/);
-//         const pts = allPts.reduce((prevPts, pt_x, idx) => {
-//             if ((idx % 2 === 0) && ((idx + 1) < allPts.length)) {
-//                 const wPt = makeWorldPt(parseFloat(pt_x), parseFloat(allPts[idx + 1]));
-//
-//                 prevPts.push(wPt);
-//             }
-//             return prevPts;
-//         }, []);
-//
-//         const {centralPoint} = computeCentralPointAndRadius(pts);
-//         newCenter = centralPoint;
-//     }
-//
-//     const allSky= Boolean( (isImage(plot) && plot.projection.isWrappingProjection()) || isHiPS(plot));
-//     // recenter image for 'hips' and allsky 'image' type
-//     if (newCenter && allSky && !pointEquals(centerPt, newCenter)) {
-//         dispatchRecenter({plotId: plot.plotId, centerPt: newCenter});
-//     }
-// }
-
 function handleCatalogUpdate(tbl_id) {
     const sourceTable= getTblById(tbl_id);
 
@@ -202,17 +152,19 @@ function updateDrawingLayer(tbl_id, title, tableData, tableMeta, tableRequest,
     const plotIdAry= visRoot().plotViewAry.map( (pv) => pv.plotId);
 
     const dl= getDrawLayerById(dlRoot(),tbl_id);
+    const {showCatalogSearchTarget}= getAppOptions();
+    const searchTarget= showCatalogSearchTarget ? getSearchTarget(tableRequest) : undefined;
     if (dl) { // update drawing layer
         dispatchModifyCustomField(tbl_id, {title, tableData, tableMeta, tableRequest,
                                            highlightedRow, selectInfo, columns,
-                                           dataTooBigForSelection});
+                                           dataTooBigForSelection, searchTarget });
     }
     else { // new drawing layer
         const angleInRadian= isTableUsingRadians(tableMeta);
         dispatchCreateDrawLayer(Catalog.TYPE_ID,
             {catalogId:tbl_id, title, tableData, tableMeta, tableRequest, highlightedRow,
                                 selectInfo, columns, dataTooBigForSelection, catalog:true,
-                                angleInRadian});
+                                angleInRadian, searchTarget});
         dispatchAttachLayerToPlot(tbl_id, plotIdAry);
         const dl= getDrawLayerById(dlRoot(),tbl_id);
         if (dl.supportSubgroups  &&  dl.tableMeta[SUBGROUP]) {
@@ -242,5 +194,27 @@ function attachToCatalog(tbl_id, payload) {
 }
 
 
+export function getSearchTarget(r, searchTargetStr, overlayPositionStr) {
+    if (searchTargetStr) return parseWorldPt(searchTargetStr);
+    if (overlayPositionStr) return parseWorldPt(overlayPositionStr);
+    if (r.UserTargetWorldPt) return parseWorldPt(r.UserTargetWorldPt);
+    if (!r.QUERY) return;
+    const regEx= /CIRCLE\s?\(.*\)/;
+    const result= regEx.exec(r.QUERY);
+    if (!result) return;
+    const circle= result[0];
+    const parts= circle.split(',');
+    if (parts.length!==4) return;
+    let cStr= parts[0].split('(')[1];
+    if (!cStr) return;
+    if (cStr.startsWith(`\'`) && cStr.endsWith(`\'`)) {
+       cStr= cStr.substring(1, cStr.length-1) ;
+    }
+    if (!isNaN(Number(parts[1]))  && !isNaN(Number(parts[1]))) {
+        return makeWorldPt(parts[1], parts[2], CoordinateSys.parse(cStr))
+    }
+
+    
+}
 
 

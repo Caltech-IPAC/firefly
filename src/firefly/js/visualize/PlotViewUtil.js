@@ -574,7 +574,7 @@ export function applyToOnePvOrOverlayGroup(plotViewAry, plotId,plotGroup,matchAn
 
 
 /**
- * First fine the PlotView with the plotId, then clone the PlotView with the changes specified in the object.
+ * First find the PlotView with the plotId, then clone the PlotView with the changes specified in the object.
  * Then return a new PlotView array with the changes.
  * @param {PlotView[]|VisRoot} ref visRoot or plotViewAry
  * @param {string} plotId

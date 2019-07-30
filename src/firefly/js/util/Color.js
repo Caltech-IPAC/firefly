@@ -50,7 +50,7 @@ function min255(v) {return Math.min(Math.trunc(v), 255);}
 function max0(v) {return Math.max(Math.trunc(v), 0);}
 
 
-function brighter(colorStr,factor= .7) {
+export function brighter(colorStr,factor= .7) {
     var rgb= toRGB(colorStr);
     var r = rgb[0];
     var g = rgb[1];
@@ -68,7 +68,7 @@ function brighter(colorStr,factor= .7) {
     if ( g > 0 && g < i ) g = i;
     if ( b > 0 && b < i ) b = i;
 
-    return toHex(min255(r/factor), min255(g/factor), min255(b/factor) ); }
+    return '#'+toHex(min255(r/factor), min255(g/factor), min255(b/factor) ); }
 
 /**
  * Creates a new <code>Color</code> that is a darker version of this
@@ -86,12 +86,12 @@ function brighter(colorStr,factor= .7) {
  *                    a darker version of this <code>Color</code>.
  * @since      JDK1.0
  */
-function darker(colorStr, factor=.7) {
+export function darker(colorStr, factor=.7) {
     var rgb= toRGB(colorStr);
     var r = rgb[0];
     var g = rgb[1];
     var b = rgb[2];
-    return toHex(max0(r *factor), max0(g *factor), max0(b *factor));
+    return '#'+toHex(max0(r *factor), max0(g *factor), max0(b *factor));
 }
 
 

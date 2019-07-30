@@ -54,7 +54,7 @@ export const CoordinateSys = function () {
         var coordSys;
         if (!desc) return null;
         desc= desc.toUpperCase();
-        if        (desc===EQ_J2000.toString() || desc==='EQJ' || desc==='J2000' ) {
+        if        (desc===EQ_J2000.toString() || desc==='EQJ' || desc==='J2000' || desc==='ICRS') {
             coordSys = EQ_J2000;
         } else if (desc===EQ_B2000.toString())  {
             coordSys = EQ_B2000;

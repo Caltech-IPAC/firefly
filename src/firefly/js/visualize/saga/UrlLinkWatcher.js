@@ -9,13 +9,14 @@ import {dispatchTableUpdate} from '../../tables/TablesCntlr.js';
 import {clone} from '../../util/WebUtil.js';
 
 
-/** type {TableWatcherDef}
+/** @type {TableWatcherDef}
  *  TODO: for testTable, more logic could be added if the API of setting table meta for any link-like column is supported
  * */
 export const urlLinkWatcherDef = {
     id : 'URLLinkWatcher',
     watcher : watchURLLinkColumns,
     testTable : (table) => findTableAccessURLColumn(table),
+    allowMultiples: false,
     actions: [TABLE_LOADED]
 };
 

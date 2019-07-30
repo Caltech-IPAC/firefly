@@ -60,7 +60,7 @@ import ImageOutline from '../../drawingLayers/ImageOutline.js';
 import Artifact from '../../drawingLayers/Artifact.js';
 import {isHiPS, isImage} from '../WebPlot';
 import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
-import ActiveTarget from '../../drawingLayers/ActiveTarget.js';
+// import ActiveTarget from '../../drawingLayers/ActiveTarget.js';
 import {resolveHiPSIvoURL} from '../HiPSListUtil.js';
 import {addNewMocLayer, isMOCFitsFromUploadAnalsysis, makeMocTableId, MOCInfo, UNIQCOL} from '../HiPSMocUtil.js';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
@@ -175,7 +175,7 @@ function watchForHiPSViewDim(action, cancelSelf, params) {
 
 
         initCorrectCoordinateSys(pv);
-        addDrawLayers(pv.request, plot);
+        addDrawLayers(pv.request, pv, plot);
 
         cancelSelf();
     }
@@ -239,9 +239,9 @@ export function makePlotHiPSAction(rawAction) {
         if (hipsImageConversion) newPayload.pvOptions= clone(pvOptions, {hipsImageConversion});
 
 
-        if (!getDrawLayerByType(getDlAry(), ActiveTarget.TYPE_ID)) {
-            initBuildInDrawLayers();
-        }
+        // if (!getDrawLayerByType(getDlAry(), ActiveTarget.TYPE_ID)) {
+        //     initBuildInDrawLayers();
+        // }
 
         resolveHiPSIvoURL(wpRequest.getHipsRootUrl())
             .then( (url) => {

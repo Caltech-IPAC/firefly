@@ -120,6 +120,7 @@ const CHANGE_EXPANDED_MODE= `${PLOTS_PREFIX}.changeExpandedMode`;
 const EXPANDED_AUTO_PLAY= `${PLOTS_PREFIX}.expandedAutoPlay`;
 /** Action Type: change the primary plot for a multi image fits display */
 const CHANGE_PRIME_PLOT= `${PLOTS_PREFIX}.changePrimePlot`;
+const CHANGE_IMAGE_VISIBILITY= `${PLOTS_PREFIX}.changeImageVisibility`;
 
 const CHANGE_MOUSE_READOUT_MODE=`${PLOTS_PREFIX}.changeMouseReadoutMode`;
 /** Action Type: delete a plotView */
@@ -291,7 +292,7 @@ export default {
     STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL, CHANGE_POINT_SELECTION, CHANGE_EXPANDED_MODE,
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL, RECENTER, OVERLAY_COLOR_LOCKING, POSITION_LOCKING,
     RESTORE_DEFAULTS, CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,
-    DELETE_PLOT_VIEW, CHANGE_ACTIVE_PLOT_VIEW, CHANGE_PRIME_PLOT,
+    DELETE_PLOT_VIEW, CHANGE_ACTIVE_PLOT_VIEW, CHANGE_PRIME_PLOT, CHANGE_IMAGE_VISIBILITY,
     PLOT_MASK, PLOT_MASK_START, PLOT_MASK_FAIL, PLOT_MASK_LAZY_LOAD, DELETE_OVERLAY_PLOT,
     OVERLAY_PLOT_CHANGE_ATTRIBUTES, WCS_MATCH, ADD_PROCESSED_TILES, API_TOOLS_VIEW, CHANGE_MOUSE_READOUT_MODE,
     CHANGE_HIPS_IMAGE_CONVERSION, CHANGE_TABLE_AUTO_SCROLL, USE_TABLE_AUTO_SCROLL
@@ -375,6 +376,17 @@ export function dispatchPositionLocking(plotId,positionLock) {
  */
 export function dispatchChangePrimePlot({plotId, primeIdx, dispatcher= flux.process}) {
     dispatcher({ type: CHANGE_PRIME_PLOT , payload: { plotId, primeIdx }});
+}
+
+/**
+ * set if the base image is visible
+ * @param {Object} p
+ * @param {string} p.plotId
+ * @param {boolean} p.visible - true if visible
+ * @param {Function} p.dispatcher only for special dispatching uses such as remote
+ */
+export function dispatchChangeImageVisibility({plotId, visible, dispatcher= flux.process}) {
+    dispatcher({ type: CHANGE_IMAGE_VISIBILITY, payload: { plotId, visible}});
 }
 
 /**
@@ -988,7 +1000,7 @@ const changeActions= convertToIdentityObj([
     CHANGE_PLOT_ATTRIBUTE, COLOR_CHANGE, COLOR_CHANGE_START, COLOR_CHANGE_FAIL, ROTATE, FLIP,
     STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL, RECENTER, OVERLAY_COLOR_LOCKING, POSITION_LOCKING,
     PLOT_PROGRESS_UPDATE, OVERLAY_PLOT_CHANGE_ATTRIBUTES, CHANGE_PRIME_PLOT, CHANGE_CENTER_OF_PROJECTION,
-    CHANGE_HIPS, ADD_PROCESSED_TILES, CHANGE_HIPS_IMAGE_CONVERSION
+    CHANGE_HIPS, ADD_PROCESSED_TILES, CHANGE_HIPS_IMAGE_CONVERSION, CHANGE_IMAGE_VISIBILITY
 ]);
 
 const adminActions= convertToIdentityObj([

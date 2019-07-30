@@ -57,6 +57,9 @@ export const MetaConst = {
     /** the column name with the url or filename of the image data */
     DATA_SOURCE : 'DataSource',
 
+    /** a url for HiPS Image to use as the coverage - overrides firefly defaults */
+    COVERAGE_HIPS : 'CoverageHiPS',
+
     /** the column name with access rights info;  true if (public, 1, or true), otherwise false  */
     DATARIGHTS_COL : 'DATARIGHTS_COL',
 
