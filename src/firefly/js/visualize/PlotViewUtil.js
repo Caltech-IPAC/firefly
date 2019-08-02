@@ -982,12 +982,14 @@ export function convertImageIdxToHDU(pv, imageIdx) {
 
 /**
  * check to see if wavelength data is available
+ * Only CTYPEka = 'WAVE-ccc', exists, the hasWLInfo is true.
+ * If the wlType is not defined, it is a pure cube data
  * @param {WebPlot} plot
  * @return {boolean}
  */
 export function hasWLInfo(plot) {
     if (!plot) return false;
-    return Boolean(plot.wlData && isDefined(plot.wlData.algorithm) && isWLAlgorithmImplemented(plot.wlData) );
+    return Boolean(plot.wlData && isDefined(plot.wlData.wlType) && isWLAlgorithmImplemented(plot.wlData) );
 }
 
 export function wavelengthInfoParsedSuccessfully(plot) {
