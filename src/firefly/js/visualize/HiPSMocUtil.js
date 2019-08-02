@@ -181,9 +181,9 @@ export function computeSideCellsToOrder(maxOrder) {
 
                     prev = [...prev,...corners];
                 } else {                                              // side but corner cells
-                    const sideCells = sideOffset[atSide].map((offset) => (cellNum*4 + offset));  // sub-divided cells at the side
+                    const sCells = sideOffset[atSide].map((offset) => (cellNum*4 + offset));  // sub-divided cells at the side
 
-                    prev = [...prev,...sideCells];
+                    prev = [...prev,...sCells];
                 }
                 return prev;
         }, []);
@@ -335,14 +335,14 @@ export function getMocSidePointsNuniq(norder, npix, topOrder, coordsys, isAllSky
     if (crtSidePointsOrder === dUp) {
         return newSidePoints;
     } else if (crtSidePointsOrder < dUp) {   // needs to insert more points by dUp-crtSidePointsOrder levels
-        const sideCells = computeSideCellsToOrder(dUp);
+        const sCells = computeSideCellsToOrder(dUp);
 
         // repeatedly insert the corner points into current side points representation order by order up
 
         for (let i = crtSidePointsOrder + 1; i <= dUp; i++) {             // order difference from norder
             const nextOrder = norder + i;             // order of next side points representation
             const base_npix = npix * (NSIDE4[i]);
-            const upCells = sideCells[i];
+            const upCells = sCells[i];
             const totalPtsOneSide = upCells.length / 4;
             let insertAt = 1;
 
