@@ -61,15 +61,9 @@ public class VoTableReader {
      * @return an array of DataGroup object
      */
     public static DataGroup[] voToDataGroups(String location, boolean headerOnly) throws IOException, DataAccessException {
-        //VOTableBuilder votBuilder = new VOTableBuilder();
         List<DataGroup> groups = new ArrayList<>();
 
         try {
-            //DataSource datsrc = DataSource.makeDataSource(voTableFile);
-            //StoragePolicy policy = StoragePolicy.getDefaultPolicy();
-            //TableSequence tseq = votBuilder.makeStarTables( datsrc, policy );
-            //StarTableFactory stFactory = new StarTableFactory();
-            //TableSequence tseq = stFactory.makeStarTables(location, null);
 
             List<TableElement> tableAry = getTableElementsFromFile( location, null);
             for ( TableElement tableEl : tableAry ) {
@@ -109,21 +103,17 @@ public class VoTableReader {
     }
 
     // root VOElement for a votable file
-    private static VOElement makeVOElement(File infile, StoragePolicy policy) throws DataAccessException {
+    private static VOElement getVOElementFromVOTable(String location, StoragePolicy policy) throws DataAccessException {
         try {
             policy = policy == null ? PREFER_MEMORY : policy;
             VOElementFactory voFactory =  new VOElementFactory();
             voFactory.setStoragePolicy(policy);
-            return voFactory.makeVOElement(infile);
+            return voFactory.makeVOElement(location);
         }  catch (SAXException |IOException e) {
             e.printStackTrace();
-            throw new DataAccessException("unable to parse "+ infile.getPath() + "\n" +
+            throw new DataAccessException("unable to parse "+ location + "\n" +
                     e.getMessage(), e);
         }
-    }
-
-    private static VOElement getVOElementFromVOTable(String location, StoragePolicy policy) throws DataAccessException {
-        return makeVOElement(new File(location), policy);
     }
 
     // get all <RESOURCE> under VOTable root or <RESOURCE>
@@ -325,11 +315,6 @@ public class VoTableReader {
                 LinkInfo linkObj = linkElementToLinkInfo(link);
 
                 if (linkObj != null) {
-                    List<LinkInfo> dtLinkInfos = dt.getLinkInfos();
-
-                    if (dtLinkInfos != null) {
-                        dtLinkInfos.add(linkObj);
-                    }
                     linkObjs.add(linkObj);
                 }
             }
@@ -578,7 +563,7 @@ public class VoTableReader {
 
             // child elements <LINK> and <VALUES>
             if (tableEl != null) {
-                makeLinkInfosFromField(tableEl, dt);
+                dt.setLinkInfos(makeLinkInfosFromField(tableEl, dt));
                 getValuesFromField(tableEl, dt);
             }
 
@@ -767,7 +752,7 @@ public class VoTableReader {
     public static FileAnalysis.Report analyze(File infile, FileAnalysis.ReportType type) throws Exception {
 
         FileAnalysis.Report report = new FileAnalysis.Report(type, TableUtil.Format.VO_TABLE.name(), infile.length(), infile.getPath());
-        VOElement root = makeVOElement(infile, null);
+        VOElement root = getVOElementFromVOTable(infile.getAbsolutePath(), null);
         List<FileAnalysis.Part> parts = describeDocument(root);
         parts.forEach(report::addPart);
 
