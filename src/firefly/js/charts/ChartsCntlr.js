@@ -836,14 +836,20 @@ export function getErrors(chartId) {
 export function dispatchError(chartId, traceNum, reason) {
 
     const {data=[]} = getChartData(chartId);
-    const name = get(data, `${traceNum}.name`, `trace ${traceNum}`);
-    let message = `Failed to plot ${name} data`;
+    let forTrace = '';
+    if (data.length > 1) {
+        // only mention trace, when there are multiple traces
+        const name = get(data, `${traceNum}.name`, `trace ${traceNum}`);
+        forTrace = ` for ${name}`;
+    }
+    let message = `Cannot display requested data${forTrace}`;
     logError(`${message}: ${reason}`);
 
     let reasonStr = `${reason}`.toLowerCase();
     if (reasonStr.match(/not supported/)) {
         reasonStr = 'Unsupported feature requested. Please choose valid options.';
-    } else if (reasonStr.match(/data exception/)) {
+    } else if (reasonStr.match(/data exception/) || reasonStr.match(/column not found/)) {
+        // error from db
         reasonStr = reasonStr.replace('error: ', '');
     } else if (reasonStr.match(/invalid column/)) {
         reasonStr = 'Non-existent column or invalid expression. Please choose valid X and Y.';

@@ -209,6 +209,47 @@
     </script>
 </template>
 
+<template title="Chart errors: non-existing column" class="tpl xxl" >
+    <div id="expected">
+        <ul class='expected-list'>
+            <li>Single trace chart error: trace should not be mentioned</li>
+            <li>Multi-trace chart error: error should mention the trace name or number</li>
+            <li>If multiple columns do not exist, only the first one is mentioned</li>
+            <li>Non-existing column name is shown in lower case</li>
+        </ul>
+    </div>
+    <div id="actual" class="flow-h" style="width: 800px">
+        <div id="xyplotHere" class="box"></div>
+    </div>
+    <script>
+        onFireflyLoaded= function(firefly) {
+            firefly.debug = true;
+            const searchRequest = firefly.util.table.makeFileRequest(
+                'WiseDemoTable', // title
+                'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',  // source
+                null,  // alt_source
+                {pageSize: 1} // options
+            );
+            const tblIdDemo = searchRequest.tbl_id;
+            firefly.action.dispatchTableFetch(searchRequest);
+
+            const traces = [];
+            // typo in column name: "decl" should be "dec"
+            for (let i = 1; i <= 4; i++) {
+                traces.push({
+                    name: 'corner ' + i,
+                    tbl_id: tblIdDemo,
+                    x: 'tables::ra' + i,  // references to table columns ra1,ra2,ra3,ra4
+                    y: 'tables::decL' + i, // references to table columns dec1,dec2,dec3,dec4
+                    mode: 'markers'
+                });
+            }
+            firefly.showChart('xyplotHere', {data: [traces[0]]}); // single trace chart
+            firefly.showChart('xyplotHere', {data: traces}); // multi-trace chart
+        }
+    </script>
+</template>
+
 <template title="Multitrace Histogram" class="tpl xxl" >
     <div id="expected">
         <img width="100%" src="images/chart_hist.png">
