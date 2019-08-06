@@ -42,7 +42,7 @@ public abstract class QueryVOTABLE extends IpacTablePartProcessor {
     public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
         try {
             File votable = getSearchResult(getQueryString(req), getFilePrefix(req));
-            DataGroup[] groups = VoTableReader.voToDataGroups(votable.getAbsolutePath(), false);
+            DataGroup[] groups = VoTableReader.voToDataGroups(votable.getAbsolutePath());
             DataGroup dg;
             int tblIdx = req.getIntParam(TBL_INDEX, 0);
             if (groups.length <= tblIdx ) {
