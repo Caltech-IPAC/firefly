@@ -9,9 +9,8 @@ import {dispatchTableUpdate} from '../../tables/TablesCntlr.js';
 import {clone} from '../../util/WebUtil.js';
 
 
-/** @type {TableWatcherDef}
- *  TODO: for testTable, more logic could be added if the API of setting table meta for any link-like column is supported
- * */
+//TODO: for testTable, more logic could be added if the API of setting table meta for any link-like column is supported
+/** @type {TableWatcherDef} */
 export const urlLinkWatcherDef = {
     id : 'URLLinkWatcher',
     watcher : watchURLLinkColumns,
