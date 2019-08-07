@@ -110,7 +110,7 @@ function StandardView(props) {
     } else {
         const uid = hashCode(keys.join());
         return (
-            <TabsView key={hashCode(keys.join())} style={{height: '100%', ...style}} defaultSelected={activeIdx} onTabSelect={onTabSelect} resizable={true}>
+            <TabsView key={uid} style={{height: '100%', width: '100%', ...style}} defaultSelected={activeIdx} onTabSelect={onTabSelect} resizable={true}>
                 {tablesAsTab(tables, tableOptions, expandedMode)}
             </TabsView>
         );
