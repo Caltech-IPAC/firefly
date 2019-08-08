@@ -1075,7 +1075,7 @@ export function resolveHRefVal(tableModel, href='', rowIdx, defval='') {
         vars.forEach((v) => {
             const [,cname] = v.match(/\${([\w -.]+)}/) || [];
             const col = getColumnByID(tableModel, cname) || getColumn(tableModel, cname);
-            const rval = getCellValue(tableModel, rowIdx, col.name);
+            const rval = col ? getCellValue(tableModel, rowIdx, col.name) : v;  // if the variable cannot be resolved, show it as is.
             rhref = rhref.replace(v, rval);
         });
         return rhref;
