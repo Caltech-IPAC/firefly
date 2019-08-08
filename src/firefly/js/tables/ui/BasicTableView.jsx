@@ -145,7 +145,7 @@ BasicTableViewInternal.propTypes = {
     bgColor: PropTypes.string,
     error:  PropTypes.string,
     size: PropTypes.object.isRequired,
-    highlightedRowClsName: PropTypes.func,
+    highlightedRowHandler: PropTypes.func,
     renderers: PropTypes.objectOf(
         PropTypes.shape({
             cellRenderer: PropTypes.func,
