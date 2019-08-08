@@ -4,21 +4,19 @@
 
 import {get} from 'lodash';
 import ImagePlotCntlr, {dispatchChangeActivePlotView, dispatchPlotHiPS,
-    visRoot, IMAGE_PLOT_KEY, dispatchRotate, dispatchFlip, dispatchPlotImage } from '../ImagePlotCntlr.js';
+    visRoot, IMAGE_PLOT_KEY, dispatchRotate, dispatchFlip, dispatchPlotImage,
+    ActionScope, dispatchWcsMatch } from '../ImagePlotCntlr.js';
 import {getExpandedViewerItemIds, findViewerWithItemId,
     getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
 import PointSelection from '../../drawingLayers/PointSelection.js';
-import {dispatchAttachLayerToPlot,
-    dispatchCreateDrawLayer,
-    dispatchDetachLayerFromPlot,
-    DRAWING_LAYER_KEY} from '../DrawLayerCntlr.js';
-import { getPlotViewById, applyToOnePvOrAll, findPlotGroup, isDrawLayerAttached,
+import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer,
+    dispatchDetachLayerFromPlot, DRAWING_LAYER_KEY} from '../DrawLayerCntlr.js';
+import { getPlotViewById, applyToOnePvOrAll, isDrawLayerAttached,
     primePlot, getDrawLayerByType } from '../PlotViewUtil.js';
-import {isHiPS, isImage} from '../WebPlot.js';
+import {isImage} from '../WebPlot.js';
 import {RotateType} from '../PlotState.js';
 import {clone} from '../../util/WebUtil.js';
 import {detachSelectAreaRelatedLayers} from '../ui/SelectAreaDropDownView.jsx';
-import {dispatchWcsMatch} from '../ImagePlotCntlr';
 
 export function autoPlayActionCreator(rawAction) {
     return (dispatcher) => {
@@ -104,8 +102,9 @@ export function restoreDefaultsActionCreator(rawAction) {
                     const def= vr.plotRequestDefaults[pv.plotId];
                     const viewerId= findViewerWithItemId(getMultiViewRoot(), pv.plotId, IMAGE);
                     if (isImage(plot)) {
-                        if (pv.rotation) dispatchRotate({plotId: pv.plotId, rotateType: RotateType.UNROTATE});
-                        if (pv.flipY) dispatchFlip({plotId: pv.plotId});
+                        if (pv.rotation) dispatchRotate({plotId: pv.plotId, rotateType: RotateType.UNROTATE,
+                                                                   actionScope:ActionScope.SINGLE});
+                        if (pv.flipY) dispatchFlip({plotId: pv.plotId, actionScope:ActionScope.SINGLE});
                     }
                     switch (def.plotType) {
                         case 'threeColor' :

@@ -6,6 +6,7 @@ import {has} from 'lodash';
 import validator from 'validator';
 import {parseWorldPt} from '../visualize/Point.js';
 import {replaceAll, isDefined} from '../util/WebUtil.js';
+import {toBoolean} from '../util/WebUtil';
 
 
 const REQUEST_CLASS= 'RequestClass';
@@ -222,7 +223,7 @@ export class ServerRequest {
 //  convenience data converting routines
 //====================================================================
     getBooleanParam(key, def=false) {
-        return has(this.params,key) ? Boolean(this.params[key]) : def;
+        return has(this.params,key) ? toBoolean(this.params[key]) : def;
     }
 
     getIntParam(key, def=0) {

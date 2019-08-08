@@ -65,7 +65,8 @@ function handleClick(onClick, dropdownCB ,divElement) {
  * @param tipOnCB
  * @param tipOffCB
  * @param lastTextItem
- * @param additionalStyle
+ * @param additionalStyle - a style to apply (deprecated)
+ * @param style - a style to apply
  * @param todo show a todo message
  * @param ctx
  * @return {object}
@@ -103,7 +104,7 @@ export class ToolbarButton extends PureComponent {
         const {
             icon,text,tip,badgeCount=0,enabled=true,
             horizontal=true, bgDark, visible=true, active,
-            imageStyle, lastTextItem=false, todo, additionalStyle,
+            imageStyle, lastTextItem=false, todo, additionalStyle, style={},
             hasHorizontalLayoutSep, useDropDownIndicator,
             hasCheckBox=false, checkBoxOn=false } = this.props;
 
@@ -130,7 +131,7 @@ export class ToolbarButton extends PureComponent {
             s.fontSize= '10pt';
             s.position= 'relative';
             textCName= 'ff-menuItemHText';
-            const topStyle= Object.assign({}, {display:'inline-block', height:'100%', flex:'0 0 auto' },additionalStyle);
+            const topStyle= Object.assign({}, {display:'inline-block', height:'100%', flex:'0 0 auto' },additionalStyle,style);
             return (
                 <div style={topStyle}>
                     <div style={{ display:'inline-block',
@@ -156,7 +157,7 @@ export class ToolbarButton extends PureComponent {
 
         }
         else {
-            Object.assign(s,additionalStyle);
+            Object.assign(s,additionalStyle,style);
             if (icon&&text) {  // button in vertical style with both icon and text
                 return (
                     <div title={tip} style={{display: 'flex', alignItems: 'center'}} className={cName}
@@ -220,6 +221,7 @@ ToolbarButton.propTypes= {
     lastTextItem : PropTypes.bool,
     useDropDownIndicator: PropTypes.bool,
     additionalStyle : PropTypes.object,
+    style : PropTypes.object,
     hasCheckBox: PropTypes.bool,
     checkBoxOn: PropTypes.bool,
 };

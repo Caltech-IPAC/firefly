@@ -4,7 +4,7 @@
 
 import {get} from 'lodash';
 import {logError} from '../../util/WebUtil.js';
-import ImagePlotCntlr, {IMAGE_PLOT_KEY, WcsMatchType} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {IMAGE_PLOT_KEY, WcsMatchType, dispatchWcsMatch} from '../ImagePlotCntlr.js';
 import {primePlot, getPlotViewById, operateOnOthersInOverlayColorGroup, getPlotStateAry} from '../PlotViewUtil.js';
 import {callCrop, callChangeColor, callRecomputeStretch} from '../../rpc/PlotServicesJson.js';
 import WebPlotResult from '../WebPlotResult.js';
@@ -18,6 +18,19 @@ import {matchHiPStoPlotView} from './PlotHipsTask';
 //=======================================================================
 //-------------------- Action Creators ----------------------------------
 //=======================================================================
+
+
+export function flipActionCreator(rawAction) {
+    return (dispatcher,getState) => {
+        const {plotId}=rawAction.payload;
+        dispatcher(rawAction);
+        if (!rawAction.rematchAfterFlip) return;
+        const matchType= getState()[IMAGE_PLOT_KEY].wcsMatchType;
+        if (matchType) {
+            dispatchWcsMatch({plotId,matchType});
+        }
+    };
+}
 
 
 export function recenterActionCreator(rawAction) {

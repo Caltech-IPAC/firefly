@@ -6,7 +6,7 @@ import {InputFieldView} from './InputFieldView.jsx';
 
 
 export function StateInputField({defaultValue, visible=true, message, label='', tooltip, labelWidth= 100, showWarning,
-                                    style='', wrapperStyle={}, onKeyDown, onKeyUp, validator, valueChange}) {
+                                    style={}, wrapperStyle={}, onKeyDown, onKeyUp, validator, valueChange}) {
 
     const [value, setValue] = useState(defaultValue);
     const [valid, setValid] = useState(true);

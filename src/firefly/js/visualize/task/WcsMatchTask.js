@@ -213,7 +213,8 @@ function syncPlotToLevelForWcsMatching(pv, masterPv, targetASpix) {
     // if the new level is only slightly different then use the target level
     const newZoomLevel= (Math.abs(targetLevel-currZoomLevel)<.01) ? currZoomLevel : targetLevel;
 
-    if (!isFlipYMatching(pv, masterPv)) dispatchFlip({plotId:pv.plotId, actionScope: ActionScope.SINGLE});
+    if (!isFlipYMatching(pv, masterPv)) dispatchFlip({plotId:pv.plotId, rematchAfterFlip:false,
+                                                           actionScope: ActionScope.SINGLE});
 
 
     if (!isRotationMatching(pv, masterPv)) rotateToMatch(pv, masterPv);
@@ -231,7 +232,7 @@ function syncPlotToLevelForPixelMatching(pv, masterPv) {
     if (!plot || !masterPlot) return;
 
 
-    if (pv.flipY!==masterPv.flipY) dispatchFlip({plotId:pv.plotId, actionScope: ActionScope.SINGLE});
+    if (pv.flipY!==masterPv.flipY) dispatchFlip({plotId:pv.plotId, rematchAfterFlip:false, actionScope: ActionScope.SINGLE});
     if (pv.rotation!==masterPv.rotation) {
         dispatchRotate({ plotId: plot.plotId, rotateType: RotateType.ANGLE,
             angle: 360-masterPv.rotation, actionScope: ActionScope.SINGLE, });
@@ -258,8 +259,16 @@ function rotateToMatch(pv, masterPv) {
     const masterPlot= primePlot(masterPv);
     if (!plot) return;
     const masterRot= masterPv.rotation * (masterPv.flipY ? -1 : 1);
-    let targetRotation= ((getRotationAngle(masterPlot)+  masterRot)  -
-                           (getRotationAngle(plot))) * (masterPv.flipY ? 1 : -1);
+    let targetRotation;
+    const rot=getRotationAngle(plot);
+    if (isEastLeftOfNorth(masterPlot)) {
+        targetRotation= ((getRotationAngle(masterPlot)+  masterRot)  - rot) * (masterPv.flipY ? 1 : -1);
+    }
+    else {
+        targetRotation= ((getRotationAngle(masterPlot)+  (360-masterRot))  - rot) * (masterPv.flipY ? 1 : -1);
+
+    }
+    if (!isCsysDirMatching(plot,masterPlot)) targetRotation= 360-targetRotation;
     if (targetRotation<0) targetRotation+= 360;
     dispatchRotate({
         plotId: plot.plotId,
@@ -269,6 +278,10 @@ function rotateToMatch(pv, masterPv) {
     });
 }
 
+
+function isCsysDirMatching(p1,p2) {
+    return isEastLeftOfNorth(p1)===isEastLeftOfNorth(p2);
+}
 
 
 function isFlipYMatching(pv1, pv2) {

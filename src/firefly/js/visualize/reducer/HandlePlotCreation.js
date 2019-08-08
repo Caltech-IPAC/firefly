@@ -172,6 +172,7 @@ function addPlot(state,action, setActive, newPlot) {
             activePlotId = pv.plotId;
         }
         pv = replacePlots(pv, plotAry, overlayPlotViews, state.expandedMode, newPlot);
+        pv.request= pv.plots[0].plotState.getWebPlotRequest();
         if (pv.plotViewCtx.rotateNorthLock) {
             pv.rotation= 360 - getRotationAngle(primePlot(pv));
             pv= updateTransform(pv);

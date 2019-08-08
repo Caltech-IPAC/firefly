@@ -1,262 +1,114 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import React, {PureComponent} from 'react';
-import {dispatchShowDialog} from '../core/ComponentCntlr.js';
-import {Operation} from '../visualize/PlotState.js';
+import React, {useEffect} from 'react';
+import {dispatchShowDialog, dispatchHideDialog} from '../core/ComponentCntlr.js';
 import Validate from '../util/Validate.js';
-import {ValidationField} from './ValidationField.jsx';
-import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import CompleteButton from './CompleteButton.jsx';
-import {FieldGroup} from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
-import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
-import {primePlot} from '../visualize/PlotViewUtil.js';
+import {getActivePlotView, primePlot} from '../visualize/PlotViewUtil.js';
 import {visRoot, dispatchRotate} from '../visualize/ImagePlotCntlr.js';
+import {SimpleLayerOnOffButton} from '../visualize/ui/SimpleLayerOnOffButton';
 import {RotateType} from '../visualize/PlotState.js';
+import {StateInputField} from './StatedInputfield';
+import {useStoreConnector} from './SimpleComponent';
+import {isEastLeftOfNorth} from '../visualize/VisUtil';
+import {RangeSliderView} from './RangeSliderView';
 
 import HelpIcon from './HelpIcon.jsx';
+import ROTATE_NORTH_OFF from 'html/images/icons-2014/RotateToNorth.png';
+import ROTATE_NORTH_ON from 'html/images/icons-2014/RotateToNorth-ON.png';
 
-function getDialogBuilder() {
-    var popup = null;
-    return () => {
-        if (!popup) {
-            const popup = (
-                <PopupPanel title={'Rotate Image'}>
-                    <FitsRotationDialog groupKey={'FITS_ROTATION_FORM'}/>
-                </PopupPanel>
-            );
-            DialogRootContainer.defineDialog('fitsRotationDialog', popup);
-        }
-        return popup;
-    };
-}
-
-const dialogBuilder = getDialogBuilder();
+const DIALOG_ID= 'fitsRotationDialog';
 
 export function showFitsRotationDialog() {
-    // if (isImageOverlayLayersActive(visRoot())) {
-    //    showInfoPopup('Rotate not yet supported with mask layers');
-    // }
-    // else {
-        dialogBuilder();
-        dispatchShowDialog('fitsRotationDialog');
-    // }
+    const popup = (
+        <PopupPanel title={'Rotate Image In Degrees'}>
+            <FitsRotationImmediatePanel/>
+        </PopupPanel>
+    );
+    DialogRootContainer.defineDialog(DIALOG_ID, popup);
+    dispatchShowDialog(DIALOG_ID);
 }
 
+function getCurrentRotation(pv) {
+    if (!pv || !pv.rotation || pv.rotation>359) return 0;
+    const angle=  isEastLeftOfNorth(primePlot(pv)) ? 360-pv.rotation : pv.rotation;
+    return Math.trunc(angle*100)/100;
+}
 
-/**
- * This method is called when the dialog is rendered. Only when an image is loaded, the PlotView is available.
- * Then, the color band, plotState etc can be determined.
- * @returns {{plotState, colors: Array, hasThreeColorBand: boolean, hasOperation: boolean}}
- */
-function getInitialPlotState() {
+const marks = { 0: '0', 45:'45', 90:'90', 135: '135', 180:'180', 225: '225', 270:'270', 315:'315', 359:'359' };
 
-    var plot = primePlot(visRoot());
+function FitsRotationImmediatePanel() {
+    const [pv] = useStoreConnector(() => getActivePlotView(visRoot()));
 
+    useEffect(() => {
+        !pv && dispatchHideDialog(DIALOG_ID);
+    }, [pv]);
 
-    var plotState = plot.plotState;
+    const plot= primePlot(pv);
+    const currRotation= getCurrentRotation(pv);
 
+    const validator= (value) => Validate.floatRange(0, 360, 2, 'angle', value, true);
 
-    var isCrop = plotState.hasOperation(Operation.CROP);
-    var isRotation = plotState.hasOperation(Operation.ROTATE);
-    var cropNotRotate = isCrop && !isRotation ? true : false;
-
-    return {
-        plot,
-        colors: [],
-        hasThreeColorBand: false,
-        hasOperation: cropNotRotate
+    const changeRotation= (rotation) => {
+        const angle= Number(rotation);
+        if (!validator(angle).valid) return;
+        const rotateType= angle?RotateType.ANGLE:RotateType.UNROTATE;
+        dispatchRotate({plotId:plot.plotId, rotateType, angle} );
     };
 
-}
+    const doRotateNorth= (rNorth) =>
+                     dispatchRotate({plotId:pv.plotId, rotateType: rNorth?RotateType.NORTH:RotateType.UNROTATE});
 
 
 
-class FitsRotationDialog extends PureComponent {
+    const handleKeyDown= (ev) => {
+        if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight' && ev.key !== 'ArrowUp' && ev.key !== 'ArrowDown') return;
+        const dir= (ev.key==='ArrowRight' || ev.key==='ArrowUp') ? 1 : -1;
+        const newRot= (Math.trunc(currRotation)+dir+360) % 360;
+        changeRotation(newRot);
+    };
 
-    constructor(props)  {
-        super(props);
-        this.state = {fields:FieldGroupUtils.getGroupFields('FITS_ROTATION_FORM')};
-    }
-
-    componentWillUnmount() {
-
-        this.iAmMounted= false;
-        if (this.unbinder) this.unbinder();
-    }
-
-
-    componentDidMount() {
-
-        this.iAmMounted= true;
-        this.unbinder = FieldGroupUtils.bindToStore('FITS_ROTATION_FORM', (fields) => {
-            if (this.iAmMounted) this.setState({fields});
-        });
-    }
-
-
-    render() {
-        return <FitsRotationDialogForm  />;
-    }
-
-
-}
-
-function renderOperationOption(hasOperation) {
-
-    var leftColumn = { display: 'inline-block', paddingLeft:135, paddingBottom:15, verticalAlign:'middle'};
-    var rightColumn = {display: 'inline-block', paddingLeft:20};
-
-    if (hasOperation) {
-        return (
-            <div  style={{ minWidth : 300, minHeight: 100} }>
-                <div title = 'Please select an option'  style={leftColumn}>FITS file: </div>
-                <div style={rightColumn}>
-                    <RadioGroupInputField
-                        initialState={{
-                                    tooltip: 'Please select an option'
-                                    //move the label as InputFieldLabel above
-                                   }}
-                        options={[
-                            { label:'Original', value:'fileTypeOrig'},
-                            { label:'Cropped', value:'fileTypeCrop'}
-
-                            ]}
-                        alignment={'vertical'}
-                        fieldKey='operationOption'
-
-                    />
-                </div>
-            </div>
-        );
-    }
-    else {
-        return <br/>;
-    }
-}
-
-function renderThreeBand(hasThreeColorBand, colors) {
-
-    var rightColumn={display: 'inline-block', paddingLeft:18};
-    var leftColumn;
-
-
-
-    if (hasThreeColorBand) {
-        switch (colors.length){
-            case 1:
-                leftColumn= { display: 'inline-block', paddingLeft:125};
-                break;
-            case 2:
-                leftColumn = { display: 'inline-block', paddingLeft:125, verticalAlign: 'middle', paddingBottom:20};
-                break;
-            case 3:
-                leftColumn ={ display: 'inline-block', paddingLeft:125,verticalAlign: 'middle', paddingBottom:40};
-                break;
-        }
-
-        var optionArray=[];
-        for (var i=0; i<colors.length; i++){
-            optionArray[i]={label: colors[i], value: colors[i]+'Radio'};
-        }
-
-        return (
-            <div  style={{ minWidth:300, minHeight: 100} }>
-
-                <div title ='Please select an option' style={leftColumn}>Color Band:   </div>
-
-                <div style={rightColumn}>
-                    <RadioGroupInputField
-                        initialState={{
-                                    tooltip: 'Please select an option'
-                                     //move the label as InputFieldLabel above
-                                     }}
-                        options={optionArray}
-
-                        alignment={'vertical'}
-                        fieldKey='threeBandColor'
-                    />
-                </div>
-
-            </div>
-        );
-    }
-    else {
-        return <br/>;
-    }
-}
-
-function FitsRotationDialogForm() {
-
-    const { plot, colors, hasThreeColorBand,hasOperation} = getInitialPlotState();
-
-    var renderOperationButtons = renderOperationOption(hasOperation);
-
-    var renderThreeBandButtons = renderThreeBand(hasThreeColorBand, colors);//true, ['Green','Red', 'Blue']
-
-    var inputfield = {display: 'inline-block', paddingTop:40, paddingLeft:40, verticalAlign:'middle', paddingBottom:30};
+    if (!pv) return (<div style={{whiteSpace:'nowrap', padding:'10px 35px'}}>No Image Loaded</div>);
 
     return (
+        <div>
+            <div style={{padding: '25px 20px 40px 20px'}}>
+                <div style={{display:'flex', flexDirection: 'column', alignItems:'center',
+                                      justifyContent:'space-between', padding: '0 3px'}}>
+                    <div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+                        <StateInputField defaultValue={currRotation+''} valueChange={(v) => changeRotation(v.value)}
+                                         labelWidth={35} label={'Angle: '}
+                                         tooltip={'Enter the angle between 0 and 359 degrees'}
+                                         message={'Angle must be a number between 0 and 359'}
+                                         showWarning={true}
+                                         validator={validator} onKeyDown={handleKeyDown} />
 
-        <FieldGroup groupKey='FITS_ROTATION_FORM' keepState={true}>
-                <div style={inputfield}>
-                    <ValidationField fieldKey='rotation'
-                         initialState= {{
-                               fieldKey: 'rotation',
-                               value: '',
-                               validator: Validate.floatRange.bind(null, 0.0, 360.0, 2, 'rotation angle'),
-                               tooltip: 'enter the angle between 0 and 360',
-                               label: 'Rotation Angle:',
-                               labelWidth: 100
-                         }} />
+                        <SimpleLayerOnOffButton plotView={pv}
+                                                style={{border: '1px solid rgba(0,0,0,.2)'}}
+                                                isIconOn={pv&&plot ? pv.plotViewCtx.rotateNorthLock : false }
+                                                tip='Rotate this image so that North is up'
+                                                visible={true}
+                                                iconOn={ROTATE_NORTH_ON}
+                                                iconOff={ROTATE_NORTH_OFF}
+                                                onClick={(pv,rNorth)=> doRotateNorth(rNorth)} />
+                    </div>
+
+                    <RangeSliderView {...{
+                        wrapperStyle:{paddingTop: 15, width: 225},
+                        min:0,max:359, step:1,vertical:false, marks,
+                        defaultValue:currRotation, slideValue:currRotation,
+                        handleChange:(v) => changeRotation(v)}} />
                 </div>
-
-                <table style={{width:300}}>
-                    <colgroup>
-                        <col style={{width: '20%'}} />
-                        <col style={{width: '60%'}} />
-                        <col style={{width: '20%'}} />
-                    </colgroup>
-                    <tbody>
-                        <tr>
-                            <td></td>
-                            <td>
-                                <div style={{'textAlign':'center', marginBottom: 20}}>
-                                    < CompleteButton
-                                        text='OK'  groupKey='FITS_ROTATION_FORM'
-                                        onSuccess={(request) =>resultsSuccess(request,plot.plotId)}
-                                        onFail={resultsFail}
-                                        dialogId='fitsRotationDialog'
-
-                                    />
-                                </div>
-                            </td>
-                            <td>
-                                <div style={{ textAlign:'center', marginBottom: 20}}>
-                                    <HelpIcon helpId={'visualization.imageoptions'} />
-                                </div>
-                            </td>
-                         </tr>
-                    </tbody>
-                </table>
-        </FieldGroup>
+            </div>
+            <div style={{textAlign:'center', display:'flex', justifyContent:'space-between', padding: '0 16px'}}>
+                <CompleteButton text='Close' dialogId={DIALOG_ID} />
+                <div style={{ textAlign:'center', marginBottom: 20}}>
+                    <HelpIcon helpId={'visualization.imageoptions'} />
+                </div>
+            </div>
+        </div>
     );
-
-}
-
-
-function resultsSuccess(request,plotId) {
-    if (request.rotation) {
-        const angle= Number(request.rotation);
-        // const actionScope= request.checkAllimage ? ActionScope.GROUP : ActionScope.SINGLE;
-        const rotateType= angle?RotateType.ANGLE:RotateType.UNROTATE;
-        // dispatchRotate({plotId, rotateType, angle, actionScope} );
-        dispatchRotate({plotId, rotateType, angle} );
-    }
-}
-
-function resultsFail(request) {
-    console.log(request + ': Error');
 }

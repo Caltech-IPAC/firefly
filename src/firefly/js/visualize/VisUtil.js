@@ -447,38 +447,51 @@ export function isPlotNorth(plot) {
     return retval;
 }
 
-
-/**
- * When plot is rotated north is east on the left hand side.  This helps determine if a image is flipped.
- * @param plot
- * @return {boolean}
- */
 export function isEastLeftOfNorth(plot) {
-
     if (!plot) return true;
 
     const mx = plot.dataWidth/2;
     const my = plot.dataHeight/2;
 
-    const angle= getRotationAngle(plot);
-    const affTrans= new Matrix();
-    affTrans.translate(mx,my);
-    affTrans.rotate(toRadians(-angle));
-    affTrans.translate(-mx,-my);
-    affTrans.translateY(plot.dataHeight);
-    affTrans.scale(1,-1);
 
+    const worldOffset= plot.projection.getPixelScaleDegree() * 10;
 
     const cc= CysConverter.make(plot);
-    const cenPoint= affTrans.applyToPoint(mx,my);
-    const wpt1 = cc.getWorldCoords(makeImagePt(cenPoint));
-    if (wpt1) {
-        const rotPoint= affTrans.applyToPoint(1,my);
-        const wpt2 = cc.getWorldCoords(makeImagePt(rotPoint));
-        if (wpt2) return wpt2.x > wpt1.x;
-    }
-    return true;
+    const wptC = cc.getWorldCoords(makeImageWorkSpacePt(mx, my));
+    const wptNorth = makeWorldPt(wptC.x, wptC.y+worldOffset);
+    const wptE = makeWorldPt(wptC.x+worldOffset, wptC.y);
+
+    const impNorth= cc.getImageCoords(wptNorth);
+    const impE= cc.getImageCoords(wptE);
+
+
+    const angleN= getAngleInDeg(mx,my,impNorth.x,impNorth.y);
+    const angleE= getAngleInDeg(mx,my,impE.x,impE.y);
+    
+    // return Math.abs(angleN-angleE) < 180;
+    return angleE-angleN > 0;
 }
+
+
+function getAngleInDeg(cx,cy,x,y) {
+    const ptX= Math.round(x)-Math.round(cx);
+    const ptY= Math.round(y)-Math.round(cy);
+
+
+    if (ptY===0) return ptX >= 0 ? 0 : 180;
+    if (ptX===0) return ptY >= 0 ? 90 : 270;
+    const angle= toDegrees(Math.atan(ptY / ptX));
+    const fullAngle= circleAngle(Math.abs(angle),ptX,ptY);
+    return fullAngle;
+}
+
+function circleAngle(a,x,y) {
+    if (x>=0 && y>=0) return a;  //quad 1
+    if (x<0 && y>=0) return 180-a; // quad 2
+    if (x<0 && y<0) return 180+a; // quad 3
+    if (x>=0 && y<0) return 360-a; // quad 4
+}
+
 
 
 const getEstimatedFullZoomFactor= function(fullType, dataWidth, dataHeight,
