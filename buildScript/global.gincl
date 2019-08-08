@@ -217,3 +217,39 @@ ext.NODE = { ...cmd ->
     return res;
 }
 
+/**
+ * Publish docs to lsst.io
+ */
+ext.publishDocs = { docsDir, product ->
+
+    def branch = System.env.BRANCH ?: "master"
+    docsDir = docsDir ?: "${warDir}/docs"
+    product = product ?: "firefly"
+
+    if (!file(docsDir).exists()) {
+        println ">> docs directory does not exists.  Skipping publishDocs."
+        throw new StopExecutionException("docs directory does not exists.  Skipping publishDocs.")
+    }
+
+    try {
+        "ltd-mason-travis -h".execute()
+    } catch (Exception e) {
+        println ">> ltd-mason-travis is not installed.  Task cannot continue."
+        throw new GradleException("ltd-mason-travis is not installed.  Task cannot continue.\"", e)
+    }
+
+    def res = exec {
+        environment 'LTD_MASON_BUILD': 'true'
+        environment 'LTD_MASON_PRODUCT': product
+        environment 'LTD_MASON_AWS_ID': 'AKIAJRVDEID2GE6GLL7Q'
+        environment 'LTD_MASON_AWS_SECRET': project.appConfigProps['LTD_MASON_AWS_SECRET']
+        environment 'LTD_KEEPER_URL': 'https://keeper.lsst.codes'
+        environment 'LTD_KEEPER_USER': 'firefly'
+        environment 'LTD_KEEPER_PASSWORD': project.appConfigProps['LTD_KEEPER_PASSWORD']
+        environment 'TRAVIS_PULL_REQUEST': 'false'
+        environment 'TRAVIS_REPO_SLUG': 'Caltech-IPAC/firefly'
+        environment 'TRAVIS_BRANCH': branch
+        commandLine "ltd-mason-travis", "--html-dir", docsDir
+    }
+    return res
+}

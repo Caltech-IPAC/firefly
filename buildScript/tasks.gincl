@@ -451,7 +451,7 @@ task publishJsDocs (dependsOn: loadConfig) {
     description = 'Publish js docs to firefly.lsst.io'
     group = SUB_GROUP
 
-    def docsDir = "${warDir}/war/docs/js"
+    def docsDir = "${warDir}/docs/js"
     doLast {
         def res = project.publishDocs docsDir, 'firefly'
         if (res.getExitValue() != 0) {
