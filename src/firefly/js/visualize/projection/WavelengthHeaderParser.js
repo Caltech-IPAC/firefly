@@ -142,8 +142,10 @@ function isWaveLength(ctype, pc_3j){
     const sArray= ctype.split('-');
 
     //The header has the axis dependency information, ie. pc_31 (naxis1) or pc_32 (naxis2) are defined.
-    //If no such information, there is no dependency.  The wavelength will not be displayed in the mouse readout.
-    if (sArray[0]==='WAVE'  && ( pc_3j[0]!==0 || pc_3j[1]!==0) ){
+    //If no such information, and it is not a "TAB", thus there is no dependency.  The wavelength will not
+    // be displayed in the mouse readout.
+
+    if ( (sArray[0]==='WAVE'  && ( pc_3j[0]!==0 || pc_3j[1]!==0)  ) || (sArray[0]==='WAVE' && sArray[1]==='TAB'  )){
         return true;
     }
     return false;
@@ -200,15 +202,22 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
 
     //We only support the standard format in the FITs header.  The standard means the CTYPEka='WAVE-ccc" where
     //ccc can be 'F2W', 'V2W', 'LOG', 'TAB' or empty that means linear. If the header does not have this kind
-    // CTYPEka defined, we check if it is a spectra cube.  If it is a spectra cube, we display the wavelength
-    // at each plane.
+    // CTYPEka defined, we check if it is a spectra cube.  If it is a spectra cube,and it is independent of the
+    // images we display the wavelength at each plane.  If it is a spectra cube and it is wavelength is depending on
+    // the image coordinates, we display the wavelength at the mouse readout at each plane.
+    // This is to check if the ctype is WAVE and the wavelength depends on the two-dimension image coordinates.
     const isWL = isWaveLength(ctype, pc_3j);
 
     //If it is a cube plane FITS, plot and display the wavelength at each plane
-    if (canDoPlaneCalc && !isWL  && nAxis===3 ) {
-        //The FITs has wavelength planes, and each plane has the same wavelength, ie. the third axis
-        //is wavelength
-        return makeSimplePlaneBased(crpix, crval, cdelt,nAxis, wlType, units, 'use PLANE since is cube and parameters missing');
+    if (canDoPlaneCalc && nAxis===3  &&  (!isWL || isWL && algorithm==='TAB') ) {
+        /* There are two cases for wavelength planes:
+        *  1. The FITs has wavelength planes, and each plane has the same wavelength, ie. the third axis
+        *     is wavelength.  Then the algorithm is PLANE
+        *  2. The FITs has wavelength planes,and the wavelength on each plane is changing with the image point
+        *     position.  For example, the algorithm is TAB.
+        */
+        const algorithmForPlane = isWL? algorithm: PLANE;
+        return makeSimplePlaneBased(crpix, crval, cdelt,nAxis, algorithmForPlane, wlType, units, 'use PLANE since is cube and parameters missing');
     }
 
     //Plot and display the wavelength as one of the mouse readout only if the FITs header
@@ -252,9 +261,10 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
     };
 }
 
-function makeSimplePlaneBased(crpix,crval, cdelt, nAxis, wlType, units, reason) {
+function makeSimplePlaneBased(crpix,crval, cdelt, nAxis,algorithm, wlType, units, reason) {
     if (allGoodValues(crpix,crval,cdelt) && nAxis===3 ) {
-        return {algorithm: PLANE, wlType: wlType || WAVE, crpix, crval, cdelt, units, reason};
+        //return {algorithm: PLANE, wlType: wlType || WAVE, crpix, crval, cdelt, units, reason};
+        return {algorithm: algorithm, wlType: wlType, crpix, crval, cdelt, units, reason};
     }
     else {
         return {algorithm: undefined, wlType, failReason: 'CTYPE3, CRVAL3, CDELT3 are required for simple and NAXIS===3', failReason2: reason};
@@ -272,7 +282,7 @@ function makeSimplePlaneBased(crpix,crval, cdelt, nAxis, wlType, units, reason) 
  */
 function getAlgorithmAndType(ctype3){
     let wlType, algorithm;
-    if (!ctype3) return {algorithm:undefined,wlType:undefined};
+    if (!ctype3.trim()) return {algorithm:undefined,wlType:undefined};
     ctype3= ctype3.toUpperCase();
     const sArray = ctype3.split('-');
 
