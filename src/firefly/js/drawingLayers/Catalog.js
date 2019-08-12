@@ -540,6 +540,7 @@ function doFilter(dl,p,sel, selectedShape) {
 
     const tbl= getTblById(dl.tblId);
     if (!tbl) return;
+    const tableDataLength = dl.tableData.data.length;
     const filterInfo = get(tbl, 'request.filters');
     const filterInfoCls = FilterInfo.parse(filterInfo);
     let filter;
@@ -548,19 +549,23 @@ function doFilter(dl,p,sel, selectedShape) {
     const decimateIdx= findColIdx(dl.tableData.columns,'decimate_key');
     if (decimateIdx>1 && dl.tableMeta['decimate_key']) {
         const idxs= getSelectedPts(sel, p, dl.drawData.data, selectedShape)
+            .filter((idx) => idx < tableDataLength)
             .map( (idx) => `'${dl.tableData.data[idx][decimateIdx]}'`);
         filter= `IN (${idxs.toString()})`;
         filterInfoCls.addFilter(dl.tableMeta['decimate_key'], filter);
         newRequest = {tbl_id: tbl.tbl_id, filters: filterInfoCls.serialize()};
         dispatchTableFilter(newRequest);
-        console.log(newRequest);
-        console.log(idxs);
+        //console.log(newRequest);
+        //console.log(idxs);
     }
     else {
         const rowidIdx= findColIdx(dl.tableData.columns,'ROW_IDX');
-        let idxs= getSelectedPts(sel, p, dl.drawData.data, selectedShape);
-        idxs = rowidIdx < 0 ? idxs : idxs.map( (idx) => get(dl,`tableData.data[${idx}][${rowidIdx}]`) );
-        filter= `IN (${idxs.length === 0 ? -1 : idxs.toString()})`;     //  ROW_IDX is always positive.. use -1 to force no row selected 
+        let idxs= getSelectedPts(sel, p, dl.drawData.data, selectedShape)
+            .filter((idx) => idx < tableDataLength);
+        if (rowidIdx >= 0) {
+            idxs = idxs.map( (idx) => get(dl,`tableData.data[${idx}][${rowidIdx}]`) );
+        }
+        filter= `IN (${idxs.length === 0 ? -1 : idxs.toString()})`;     //  ROW_IDX is always positive.. use -1 to force no row selected
         filterInfoCls.setFilter('ROW_IDX', filter);
         newRequest = {tbl_id: tbl.tbl_id, filters: filterInfoCls.serialize()};
         dispatchTableFilter(newRequest);
