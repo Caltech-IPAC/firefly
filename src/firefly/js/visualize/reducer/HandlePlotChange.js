@@ -37,7 +37,7 @@ import Point from '../Point.js';
 import {updateTransform} from '../PlotTransformUtils.js';
 import {WebPlotRequest} from '../WebPlotRequest.js';
 import {hasWCSProjection} from '../PlotViewUtil';
-import {isEastLeftOfNorth} from '../VisUtil';
+import {getMatchingRotationAngle, isCsysDirMatching, isEastLeftOfNorth} from '../VisUtil';
 
 
 //============ EXPORTS ===========
@@ -401,23 +401,16 @@ function rotatePv(pv, targetAngle, rotateNorthLock) {
 
 function rotatePvToMatch(pv, masterPv, rotateNorthLock) {
     if (isRotationMatching(pv,masterPv)) return pv;
-    const plot= primePlot(pv);
     const masterPlot= primePlot(masterPv);
-    if (!plot || !masterPlot) return pv;
-    const masterRot= masterPv.rotation;
-    const rot= getRotationAngle(plot);
-    let targetRotation;
+    const csysDirMatching= isCsysDirMatching(primePlot(pv),masterPlot);
+    let rotation= getMatchingRotationAngle(masterPv,pv);
     if (isEastLeftOfNorth(masterPlot)) {
-        targetRotation= -1*(getRotationAngle(masterPlot)+  masterRot  - rot);
-        if (masterPv.flipY) targetRotation*=-1;
-        targetRotation= targetRotation ? 360- targetRotation : 0;
+        rotation= csysDirMatching ? 360-rotation :360+rotation;
     }
     else {
-        targetRotation= (360-getRotationAngle(masterPlot))+  masterRot  - (360-rot);
-        if (masterPv.flipY) targetRotation*=-1;
+        rotation= csysDirMatching ? 360+rotation :360-rotation;
     }
-    pv= clone(pv);
-    pv.rotation= (360 + targetRotation) % 360;
+    pv= {...pv, rotation};
     pv.plotViewCtx= clone(pv.plotViewCtx, {rotateNorthLock});
     return updateTransform(pv);
 }
@@ -431,7 +424,7 @@ function rotatePvToMatch(pv, masterPv, rotateNorthLock) {
  */
 function updateClientRotation(state,action) {
     const {plotId,angle, rotateType, actionScope}= action.payload;
-    const {plotGroupAry, wcsMatchType}= state;
+    const {wcsMatchType}= state;
     let   {plotViewAry}= state;
 
     const pv= getPlotViewById(state,plotId);

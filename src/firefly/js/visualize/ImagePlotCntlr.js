@@ -490,7 +490,7 @@ export function dispatchRotate({plotId, rotateType, angle=-1,
  */
 export function dispatchFlip({plotId, isY=true, rematchAfterFlip= true,
                                      actionScope=ActionScope.GROUP, dispatcher= flux.process}) {
-    dispatcher({ type: FLIP, payload: { plotId, isY, actionScope}});
+    dispatcher({ type: FLIP, payload: { plotId, isY, rematchAfterFlip, actionScope}});
 }
 
 /**

@@ -28,6 +28,7 @@ import {getCenterOfProjection, hasWCSProjection} from '../PlotViewUtil';
 import {isHiPS, isImage} from '../WebPlot';
 import {matchHiPStoPlotView} from './PlotHipsTask';
 import {dispatchChangeCenterOfProjection, dispatchChangeHiPS} from '../ImagePlotCntlr';
+import {getMatchingRotationAngle} from '../VisUtil';
 
 
 export function* watchForCompletedPlot(options, dispatch, getState) {
@@ -257,30 +258,13 @@ function zoomToLevel(plot, newZoomLevel) {
 function rotateToMatch(pv, masterPv) {
     const plot= primePlot(pv);
     const masterPlot= primePlot(masterPv);
-    if (!plot) return;
-    const masterRot= masterPv.rotation * (masterPv.flipY ? -1 : 1);
-    let targetRotation;
-    const rot=getRotationAngle(plot);
-    if (isEastLeftOfNorth(masterPlot)) {
-        targetRotation= ((getRotationAngle(masterPlot)+  masterRot)  - rot) * (masterPv.flipY ? 1 : -1);
-    }
-    else {
-        targetRotation= ((getRotationAngle(masterPlot)+  (360-masterRot))  - rot) * (masterPv.flipY ? 1 : -1);
-
-    }
-    if (!isCsysDirMatching(plot,masterPlot)) targetRotation= 360-targetRotation;
-    if (targetRotation<0) targetRotation+= 360;
+    if (!plot || !masterPlot) return;
     dispatchRotate({
-        plotId: plot.plotId,
+        plotId: pv.plotId,
         rotateType: RotateType.ANGLE,
-        angle: targetRotation,
+        angle: getMatchingRotationAngle(masterPv,pv),
         actionScope: ActionScope.SINGLE,
     });
-}
-
-
-function isCsysDirMatching(p1,p2) {
-    return isEastLeftOfNorth(p1)===isEastLeftOfNorth(p2);
 }
 
 

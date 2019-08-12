@@ -22,9 +22,9 @@ import {matchHiPStoPlotView} from './PlotHipsTask';
 
 export function flipActionCreator(rawAction) {
     return (dispatcher,getState) => {
-        const {plotId}=rawAction.payload;
+        const {plotId, rematchAfterFlip}=rawAction.payload;
         dispatcher(rawAction);
-        if (!rawAction.rematchAfterFlip) return;
+        if (!rematchAfterFlip) return;
         const matchType= getState()[IMAGE_PLOT_KEY].wcsMatchType;
         if (matchType) {
             dispatchWcsMatch({plotId,matchType});

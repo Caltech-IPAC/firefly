@@ -472,6 +472,42 @@ export function isEastLeftOfNorth(plot) {
     return angleE-angleN > 0;
 }
 
+/**
+ * return an angle that will rotate the pv to match the rotation of masterPv
+ * @param masterPv
+ * @param pv
+ * @return {number}
+ */
+export function getMatchingRotationAngle(masterPv, pv) {
+    const plot= primePlot(pv);
+    const masterPlot= primePlot(masterPv);
+    if (!plot || !masterPlot) return 0;
+    const masterRot= masterPv.rotation * (masterPv.flipY ? -1 : 1);
+    const rot=getRotationAngle(plot);
+    let targetRotation;
+    if (isEastLeftOfNorth(masterPlot)) {
+        targetRotation= ((getRotationAngle(masterPlot)+  masterRot)  - rot) * (masterPv.flipY ? 1 : -1);
+    }
+    else {
+        targetRotation= ((getRotationAngle(masterPlot)+  (360-masterRot))  - rot) * (masterPv.flipY ? 1 : -1);
+
+    }
+    if (!isCsysDirMatching(plot,masterPlot)) targetRotation= 360-targetRotation;
+    if (targetRotation<0) targetRotation+= 360;
+    if (targetRotation>359) targetRotation%= 360;
+    return targetRotation;
+}
+
+/**
+ *
+ * @param {plot} p1
+ * @param {plot} p2
+ * @return {boolean}
+ */
+export function isCsysDirMatching(p1,p2) {
+    return isEastLeftOfNorth(p1)===isEastLeftOfNorth(p2);
+}
+
 
 function getAngleInDeg(cx,cy,x,y) {
     const ptX= Math.round(x)-Math.round(cx);
