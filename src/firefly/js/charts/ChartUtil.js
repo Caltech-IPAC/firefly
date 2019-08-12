@@ -373,7 +373,8 @@ export function getDataChangesForMappings({tableModel, mappings, traceNum}) {
     if (tableModel) {
         const cols = tableModel.tableData.columns.map((c) => c.name);
         const transposed = tableModel.tableData.columns.map(() => []);
-        tableModel.tableData.data.forEach((r) => {
+        const data = get(tableModel, 'tableData.data', []);
+        data.forEach((r) => {
             r.map((e, idx) => transposed[idx].push(e));
         });
         // tableModel columns are named as the paths to the trace arrays

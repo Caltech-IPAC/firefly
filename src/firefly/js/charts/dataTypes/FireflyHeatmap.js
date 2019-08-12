@@ -106,6 +106,8 @@ function fetchData(chartId, traceNum, tablesource) {
             dispatchChartUpdate({chartId, changes});
 
             // TODO: what should happen on table highlight or cell click?
+        } else {
+            dispatchError(chartId, traceNum, 'No data');
         }
     }).catch(
         (reason) => {

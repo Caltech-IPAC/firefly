@@ -83,6 +83,9 @@ function fetchData(chartId, traceNum, tablesource) {
             if (tableModel.error) {
                 dispatchError(chartId, traceNum, tableModel.error);
                 return;
+            } else if (!get(tableModel, 'tableData.data')) {
+                dispatchError(chartId, traceNum, 'No data');
+                return;
             }
 
             let histogramData = [];
