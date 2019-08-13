@@ -270,16 +270,18 @@ public class WebPlotFactory {
 
 
         List<RelatedData> rdList= pInfo.getRelatedData();
-        int cubePlane= headerAry[NO_BAND.getIdx()].getIntValue("SPOT_PL",-1);
-        if (cubePlane==0) state.setCubePlaneNumber(0,NO_BAND);
-
-        if (!state.isThreeColor() && cubePlane>0) {  // have a cube
-            state.setCubePlaneNumber(cubePlane,NO_BAND);
-            headerAry= null;
-            rdList= null;
-            dataWidth= -1;
-            dataHeight= -1;
-            imageCoordSys= null;
+        if (!state.isThreeColor()) {
+            int cubePlane = headerAry[NO_BAND.getIdx()].getIntValue("SPOT_PL", -1);
+            if (cubePlane>=0) {
+                state.setCubePlaneNumber(cubePlane,NO_BAND);
+                if (cubePlane>0) {  // have a cube
+                    headerAry = null;
+                    rdList = null;
+                    dataWidth = -1;
+                    dataHeight = -1;
+                    imageCoordSys = null;
+                }
+            }
         }
 
         if (clearHeaderData) {

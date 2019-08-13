@@ -98,6 +98,7 @@ const SGAL = 3;
 
 export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
 
+    if (!header) return {};
 
     let ctype1_trim = '';
 
