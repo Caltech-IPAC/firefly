@@ -859,8 +859,8 @@ export function dispatchError(chartId, traceNum, reason) {
     // } else if (reasonStr.match(/same column/)) {
     //     message = 'The columns requested are identical or one of them is not numerical.';
     //     reasonStr = reason;
-    } else if (reasonStr.match(/null/)){
-        message = `No data available: ${name} data`;
+    } else if (reasonStr.match(/no data/) || reasonStr.match(/null/)){
+        message = `No data available${forTrace}`;
         reasonStr = '';
     } else {
         reasonStr = '';

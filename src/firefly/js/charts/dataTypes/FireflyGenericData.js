@@ -93,6 +93,8 @@ function fetchData(chartId, traceNum, tablesource) {
                 dispatchChartUpdate({chartId, changes});
                 updateHighlighted(chartId, traceNum, highlightedRow);
                 updateSelected(chartId, selectInfo);
+            } else {
+                dispatchError(chartId, traceNum, 'No data');
             }
         }
     ).catch(
