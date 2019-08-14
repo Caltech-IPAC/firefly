@@ -355,7 +355,11 @@ function continuePlotImageSuccess(dispatcher, payload, successAry, failAry) {
             detailFailReason: data.detailFailReason,
             plotId: data.plotId,
         };
-        dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_FAIL, payload:failPayload} );
+        const pv= getPlotViewById(visRoot(),data.plotId);
+        if (pv && pv.request && pv.request.getRequestKey()===data.requestKey) {
+            dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_FAIL, payload:failPayload} );
+        }
+
     });
 }
 

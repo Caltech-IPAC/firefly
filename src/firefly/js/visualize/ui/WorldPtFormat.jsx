@@ -51,6 +51,21 @@ export function formatWorldPtToString(wp,addNewLIne=false) {
     }
 }
 
+export function formatWorldPtToStringSimple(wp) {
+    if (!isValidPoint(wp)) return '';
+    if (wp.objName) return wp.objName;
+    if (wp.type!==Point.W_PT) return `${wp.x}, ${wp.y}`;
+    const lonStr = numeral(wp.getLon()).format('#.0[00000]');
+    const latStr = numeral(wp.getLat()).format('#.0[00000]');
+    const hmsRa = CoordUtil.convertLonToString(wp.getLon(), wp.getCoordSys());
+    const hmsDec = CoordUtil.convertLatToString(wp.getLat(), wp.getCoordSys());
+    const csys = coordToString(wp.getCoordSys());
+
+    const coordStr= `${lonStr}, ${latStr}  or   ${hmsRa}, ${hmsDec} ${csys}`;
+    return coordStr;
+
+}
+
 export function formatLonLatToString(wp) {
     if (!isValidPoint(wp)) return '';
     if (wp.type!==Point.W_PT) return `${wp.x}, ${wp.y}`;

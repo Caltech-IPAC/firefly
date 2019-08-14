@@ -479,7 +479,7 @@
      The data store in this cache is large.  it will NOT be replicated.
     -->
     <cache name="VISUALIZE"
-           maxElementsInMemory="30000"
+           maxElementsInMemory="150000"
            eternal="false"
            timeToIdleSeconds="7200"
            memoryStoreEvictionPolicy="LRU"

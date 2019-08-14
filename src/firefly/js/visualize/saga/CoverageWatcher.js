@@ -31,7 +31,7 @@ import {getAppOptions} from '../../core/AppDataCntlr';
 import {getSearchTarget} from './CatalogWatcher';
 import {MetaConst} from '../../data/MetaConst.js';
 import {getPlotViewById} from '../PlotViewUtil';
-import {isHiPS} from '../WebPlot';
+import {isHiPS, PlotAttribute} from '../WebPlot';
 
 export const CoverageType = new Enum(['X', 'BOX', 'REGION', 'ALL', 'GUESS']);
 export const FitType=  new Enum (['WIDTH', 'WIDTH_HEIGHT']);
@@ -330,6 +330,8 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
         return;
     }
 
+    const commonSearchTarget= getCommonSearchTarget(Object.values(preparedTables),options);
+
     const {fovDegFallOver, fovMaxFitsSize, autoConvertOnZoom,
         imageSourceParams, fovDegMinSize, overlayPosition= avgOfCenters}= options;
 
@@ -350,16 +352,19 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
                        viewerId, PLOT_ID, overlayPosition, avgOfCenters);
     hipsRequest.setSizeInDeg(size);
 
+    const attributes= {
+        [COVERAGE_TARGET]: avgOfCenters,
+        [COVERAGE_RADIUS]: maxRadius,
+        [COVERAGE_TABLE]: tbl_id,
+        [COVERAGE_CREATED]: true,
+    };
+    if (commonSearchTarget) attributes[PlotAttribute.CENTER_ON_FIXED_TARGET]= commonSearchTarget;
+
     dispatchPlotImageOrHiPS({
         plotId: PLOT_ID, viewerId, hipsRequest, imageRequest, allSkyRequest,
         fovDegFallOver, fovMaxFitsSize, autoConvertOnZoom, plotAllSkyFirst,
         pvOptions: {userCanDeletePlots:false, displayFixedTarget:false},
-        attributes: {
-            [COVERAGE_TARGET]: avgOfCenters,
-            [COVERAGE_RADIUS]: maxRadius,
-            [COVERAGE_TABLE]: tbl_id,
-            [COVERAGE_CREATED]: true
-        }
+        attributes,
     });
 }
 
@@ -643,4 +648,17 @@ function findPreferredHiPS(tbl_id,prevPreferredHipsSourceURL, optionHipsSourceUR
     }
     if (prevPreferredHipsSourceURL) return prevPreferredHipsSourceURL;
     if (optionHipsSourceURL) return optionHipsSourceURL;
+}
+
+
+
+function getCommonSearchTarget(tableAry,options) {
+    const searchTargetAry= tableAry
+        .filter((table) => table!=='WORKING')
+        .map ( (table) => getSearchTarget(table.request,
+                                              lookupOption(options, 'searchTarget', table.tbl_id),
+                                              lookupOption(options, 'overlayPosition', table.tbl_id)));
+    if (!searchTargetAry.length) return;
+
+    return searchTargetAry.find( (target) => !pointEquals(target,searchTargetAry[0])) ? false : searchTargetAry[0];
 }
