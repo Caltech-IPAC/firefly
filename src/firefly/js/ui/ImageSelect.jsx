@@ -105,12 +105,16 @@ function fieldsReducer(imageMasterData, groupKey) {
             filteredImages.forEach(({project, subProject, imageId}) => {
                 const fieldKey= IMG_PREFIX + project + (subProject ? '||' + subProject : '');
                 const valAry = get(inFields, [fieldKey, 'value'], '').split(',').filter((v) => v);
-                if (value === '_all_' && !valAry.includes(imageId)) {
-                    valAry.push(imageId);
-                    inFields = updateSet(inFields, [fieldKey, 'value'], valAry.join(','));
-                } else if (valAry.includes(imageId)) {
-                    remove(valAry, (v) => v === imageId);
-                    inFields = updateSet(inFields, [fieldKey, 'value'], valAry.join(','));
+                if (value === '_all_') {
+                    if (!valAry.includes(imageId)) {    // add imageId is not already selected
+                        valAry.push(imageId);
+                        inFields = updateSet(inFields, [fieldKey, 'value'], valAry.join(','));
+                    }
+                } else {
+                    if (valAry.includes(imageId)) {     // remove imageId if it was selected
+                        remove(valAry, (v) => v === imageId);
+                        inFields = updateSet(inFields, [fieldKey, 'value'], valAry.join(','));
+                    }
                 }
             });
         } else if (fieldKey.startsWith(IMG_PREFIX)) {
