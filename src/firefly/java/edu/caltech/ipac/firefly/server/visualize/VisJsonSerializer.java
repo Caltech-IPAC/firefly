@@ -278,9 +278,6 @@ public class VisJsonSerializer {
         BandState bandStateAry[]= s.getBandStateAry();
         if (s.isThreeColor()) {
             JSONArray list = new JSONArray();
-            for(BandState bs : bandStateAry) {
-                list.add((bs==null || (!bs.hasRequest() && bs.getOriginalFitsFileStr()==null)) ? null : serializeBandState(bs));
-            }
             for(int i= 0; (i< bandStateAry.length); i++) {
                 list.add((bandStateAry[i]==null || (!bandStateAry[i].hasRequest() && bandStateAry[i].getOriginalFitsFileStr()==null)) ?
                         null : serializeBandState(bandStateAry[i]));

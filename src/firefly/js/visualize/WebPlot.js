@@ -405,15 +405,13 @@ export const WebPlot= {
         }
         const zf= plotState.getZoomLevel();
 
+        // because of history we keep directFileAccessData in the plot state, however now we compute it on the client
+        // also- we need to keep a copy in plotState for backward compatability and in the plot to put in back in the plotState
+        // when a new one is generated
         for(let i= 0; (i<3); i++) {
             if (headerAry[i]) plotState.get(i).directFileAccessData= makeDirectFileAccessData(headerAry[i], cubeCtx?cubeCtx.cubePlane:-1);
         }
-
-        //original plot state come with header information for getting flux.
-        // this is only need for one call, so most time we strip it out.
-        // keeping clientFitsHeaderAry allows a way to put back the original
-        //todo: i think is could be cached on the server side so we don't need to be send it back and forth
-        const directFileAccessDataAry= plotState.getBands().map( (b) => plotState.getDirectFileAccessData(b));
+        const directFileAccessDataAry= plotState.bandStateAry.map( (bs) => bs.directFileAccessData);
 
         const imageCoordSys= cubeCtx ? cubeCtx.imageCoordSys : wpInit.imageCoordSys;
         let plot= makePlotTemplate(plotId,'image',asOverlay, CoordinateSys.parse(imageCoordSys));
