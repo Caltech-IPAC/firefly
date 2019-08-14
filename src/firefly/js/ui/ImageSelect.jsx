@@ -5,7 +5,7 @@
 import React, {PureComponent, useEffect} from 'react';
 
 import PropTypes from 'prop-types';
-import {uniqBy, get, countBy, xor, sortBy, isNil} from 'lodash';
+import {uniqBy, get, countBy, remove, sortBy, isNil} from 'lodash';
 
 
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
@@ -102,15 +102,15 @@ function fieldsReducer(imageMasterData, groupKey) {
             // a project checkbox is clicked.. only act on the currently filtered view
             const proj = fieldKey.replace(PROJ_PREFIX, '');
             const filteredImages = getFilteredImageData(imageMasterData, groupKey).filter((d) => d.project === proj);
-            const subProjects = uniqBy(filteredImages, (d) => ({project: d.project, subProject: d.subProject}));
-            subProjects.forEach(({project, subProject}) => {
+            filteredImages.forEach(({project, subProject, imageId}) => {
                 const fieldKey= IMG_PREFIX + project + (subProject ? '||' + subProject : '');
-                if (value === '_all_') {
-                    const allVals = get(inFields, [fieldKey, 'options'], [])
-                                        .map((o) => o.value).join();
-                    inFields = updateSet(inFields, [fieldKey, 'value'], allVals);
-                } else {
-                    inFields = updateSet(inFields, [fieldKey, 'value'], '');
+                const valAry = get(inFields, [fieldKey, 'value'], '').split(',').filter((v) => v);
+                if (value === '_all_' && !valAry.includes(imageId)) {
+                    valAry.push(imageId);
+                    inFields = updateSet(inFields, [fieldKey, 'value'], valAry.join(','));
+                } else if (valAry.includes(imageId)) {
+                    remove(valAry, (v) => v === imageId);
+                    inFields = updateSet(inFields, [fieldKey, 'value'], valAry.join(','));
                 }
             });
         } else if (fieldKey.startsWith(IMG_PREFIX)) {
