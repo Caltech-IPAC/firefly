@@ -4,7 +4,6 @@
 
 package edu.caltech.ipac.firefly.messaging;
 
-import com.google.gwt.thirdparty.guava.common.eventbus.Subscribe;
 import edu.caltech.ipac.TestCategory;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.util.Ref;
@@ -16,7 +15,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
 

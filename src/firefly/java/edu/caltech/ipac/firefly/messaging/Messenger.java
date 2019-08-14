@@ -10,7 +10,10 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.JedisPubSub;
+import redis.clients.jedis.Protocol;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -32,7 +35,8 @@ import java.util.concurrent.Executors;
 public class Messenger {
     private static final String REDIS_HOST = AppProperties.getProperty("redis.host", "127.0.0.1");
     private static final int REDIS_PORT = AppProperties.getIntProperty("redis.port", 6379);
-    private static final int MAX_POOL_SIZE = AppProperties.getIntProperty("redis.max.poolsize", 25);;
+    private static final int MAX_POOL_SIZE = AppProperties.getIntProperty("redis.max.poolsize", 25);
+    private static final String REDIS_PASSWORD = getRedisPassword();
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
 
     // message broker..  Jedis
@@ -40,6 +44,12 @@ public class Messenger {
 
     // to limit one thread per topic
     private static ConcurrentHashMap<String, SubscriberHandle> pubSubHandlers = new ConcurrentHashMap<>();
+
+    private static String getRedisPassword() {
+        String passwd = System.getenv("REDIS_PASSWORD");
+        if (passwd == null) passwd = AppProperties.getProperty("REDIS_PASSWORD");
+        return passwd;
+    }
 
     static boolean init() {
 
@@ -49,7 +59,7 @@ public class Messenger {
                 pconfig.setTestOnBorrow(true);
                 pconfig.setMaxTotal(MAX_POOL_SIZE);
                 pconfig.setBlockWhenExhausted(true);                // wait.. if needed
-                jedisPool = new JedisPool(pconfig, REDIS_HOST, REDIS_PORT);
+                jedisPool = new JedisPool(pconfig, REDIS_HOST, REDIS_PORT, Protocol.DEFAULT_TIMEOUT, REDIS_PASSWORD);
                 jedisPool.getResource().close();
             } catch (Exception ex) {
                 LOG.error("Unable to connect to Redis at " + REDIS_HOST + ":" + REDIS_PORT);
@@ -66,10 +76,19 @@ public class Messenger {
         if (!init()) {
             return stats.setValue("Messenger is offline").toJson();
         } else {
+            String passwd = "";
+            try {
+                if (REDIS_PASSWORD != null) {
+                    passwd = new String(MessageDigest.getInstance("MD5").digest(REDIS_PASSWORD.getBytes()));
+                }
+            } catch (NoSuchAlgorithmException e) {/* ignore */}
+
             return stats.setValue(jedisPool.getNumActive(), "active")
-                    .setValue(jedisPool.getNumIdle(), "idel")
+                    .setValue(jedisPool.getNumIdle(), "idle")
+                    .setValue(MAX_POOL_SIZE, "max")
                     .setValue(jedisPool.getMaxBorrowWaitTimeMillis(), "max-wait")
                     .setValue(jedisPool.getMeanBorrowWaitTimeMillis(), "avg-wait")
+                    .setValue(passwd, "password")
                     .toJson();
         }
     }
