@@ -35,8 +35,8 @@ import static edu.caltech.ipac.table.TableMeta.*;
 public class IpacTableUtil {
 
     public static final int FILE_IO_BUFFER_SIZE = FileUtil.BUFFER_SIZE;
-    private static final Pattern SCIENTIFIC = Pattern.compile("\\d\\.(\\d+)[Ee].*");    // scientific format
-    private static final Pattern FLOATING = Pattern.compile("\\d*\\.(\\d+)");            // decimal format
+    private static final Pattern SCIENTIFIC = Pattern.compile("[+-]?\\d\\.(\\d+)[Ee].*");    // scientific format
+    private static final Pattern FLOATING = Pattern.compile("[+-]?\\d*\\.(\\d+)");            // decimal format
 
     public static List<DataGroup.Attribute> createMetaFromColumns(DataGroup dataGroup) {
         return createMetaFromColumns(dataGroup.getAttributeList(), dataGroup.getDataDefinitions());
