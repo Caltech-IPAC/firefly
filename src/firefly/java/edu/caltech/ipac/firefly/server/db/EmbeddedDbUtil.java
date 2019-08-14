@@ -304,7 +304,11 @@ public class EmbeddedDbUtil {
             for (int i = 0; i < dg.getDataDefinitions().length; i++) {
                 DataType dt = dg.getDataDefinitions()[i];
                 int idx = i + 1;
-                Object val = dt.getDataType() == Float.class ? rs.getFloat(idx) : rs.getObject(idx);        // this is needed because hsql store float as double.
+                Object val = rs.getObject(idx);
+                if (dt.getDataType() == Float.class && val instanceof Double) {
+                    // this is needed because hsql stores float as double.
+                    val = ((Double) val).floatValue();
+                }
                 row.setDataElement(dt, val);
             }
             dg.add(row);
