@@ -14,9 +14,9 @@ import {dispatchCreateDrawLayer,
 
 
 export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,visible,
-                                            plotTypeMustMatch= false, style={},
+                                            plotTypeMustMatch= false, style={}, enabled= true,
                                             todo= false, isIconOn, onClick, dropDown, allPlots= true }) {
-    const enabled= Boolean(primePlot(pv));
+    const enableButton= Boolean(primePlot(pv)) && enabled;
     let isOn= isIconOn;
     if (typeId && pv) {
         const distLayer= getDrawLayerByType(getDlAry(),typeId);
@@ -27,7 +27,7 @@ export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,vi
         return (
             <DropDownToolbarButton  icon={iconOff}
                                     tip='Select an area for cropping or statistics'
-                                    enabled={enabled}
+                                    enabled={enableButton}
                                     horizontal={true}
                                     visible={visible}
                                     dropDown={dropDown} />
@@ -37,7 +37,7 @@ export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,vi
         return (
             <ToolbarButton icon={isOn ? iconOn : iconOff}
                            tip={tip}
-                           enabled={enabled}
+                           enabled={enableButton}
                            horizontal={true}
                            visible={visible}
                            todo={todo}
@@ -60,6 +60,7 @@ SimpleLayerOnOffButton.propTypes= {
     allPlots: PropTypes.bool,
     plotTypeMustMatch: PropTypes.bool,
     dropDown: PropTypes.object,
+    enabled: PropTypes.bool,
     style : PropTypes.object,
 };
 

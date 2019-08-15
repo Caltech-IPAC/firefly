@@ -19,12 +19,13 @@ import {RangeSliderView} from './RangeSliderView';
 import HelpIcon from './HelpIcon.jsx';
 import ROTATE_NORTH_OFF from 'html/images/icons-2014/RotateToNorth.png';
 import ROTATE_NORTH_ON from 'html/images/icons-2014/RotateToNorth-ON.png';
+import {hasWCSProjection} from '../visualize/PlotViewUtil';
 
 const DIALOG_ID= 'fitsRotationDialog';
 
 export function showFitsRotationDialog() {
     const popup = (
-        <PopupPanel title={'Rotate Image In Degrees'}>
+        <PopupPanel title={'Rotate Image'}>
             <FitsRotationImmediatePanel/>
         </PopupPanel>
     );
@@ -33,9 +34,9 @@ export function showFitsRotationDialog() {
 }
 
 function getCurrentRotation(pv) {
-    if (!pv || !pv.rotation || pv.rotation>359) return 0;
+    if (!pv || !pv.rotation || pv.rotation>359 || pv.rotation<.5) return 0;
     const angle=  isEastLeftOfNorth(primePlot(pv)) ? 360-pv.rotation : pv.rotation;
-    return Math.trunc(angle*100)/100;
+    return Math.round(angle);
 }
 
 const marks = { 0: '0', 45:'45', 90:'90', 135: '135', 180:'180', 225: '225', 270:'270', 315:'315', 359:'359' };
@@ -49,8 +50,9 @@ function FitsRotationImmediatePanel() {
 
     const plot= primePlot(pv);
     const currRotation= getCurrentRotation(pv);
+    const hasWcs= hasWCSProjection(pv);
 
-    const validator= (value) => Validate.floatRange(0, 360, 2, 'angle', value, true);
+    const validator= (value) => Validate.intRange(0, 360, 'angle', value, true);
 
     const changeRotation= (rotation) => {
         const angle= Number(rotation);
@@ -75,7 +77,7 @@ function FitsRotationImmediatePanel() {
 
     return (
         <div>
-            <div style={{padding: '25px 20px 40px 20px'}}>
+            <div style={{padding: '25px 20px 10px 20px'}}>
                 <div style={{display:'flex', flexDirection: 'column', alignItems:'center',
                                       justifyContent:'space-between', padding: '0 3px'}}>
                     <div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
@@ -90,6 +92,7 @@ function FitsRotationImmediatePanel() {
                                                 style={{border: '1px solid rgba(0,0,0,.2)'}}
                                                 isIconOn={pv&&plot ? pv.plotViewCtx.rotateNorthLock : false }
                                                 tip='Rotate this image so that North is up'
+                                                enabled={hasWcs}
                                                 visible={true}
                                                 iconOn={ROTATE_NORTH_ON}
                                                 iconOff={ROTATE_NORTH_OFF}
@@ -101,6 +104,9 @@ function FitsRotationImmediatePanel() {
                         min:0,max:359, step:1,vertical:false, marks,
                         defaultValue:currRotation, slideValue:currRotation,
                         handleChange:(v) => changeRotation(v)}} />
+                </div>
+                <div style={{paddingTop:40, textAlign:'center'}}>
+                    {hasWcs?'Angle in degrees East of North' : 'Angle in degrees counter clockwise'}
                 </div>
             </div>
             <div style={{textAlign:'center', display:'flex', justifyContent:'space-between', padding: '0 16px'}}>

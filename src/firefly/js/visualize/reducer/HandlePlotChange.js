@@ -402,7 +402,9 @@ function rotatePv(pv, targetAngle, rotateNorthLock) {
 function rotatePvToMatch(pv, masterPv, rotateNorthLock) {
     if (isRotationMatching(pv,masterPv)) return pv;
     const masterPlot= primePlot(masterPv);
-    const csysDirMatching= isCsysDirMatching(primePlot(pv),masterPlot);
+    const plot= primePlot(pv);
+    if (getRotationAngle(masterPlot)!==getRotationAngle(plot)) rotateNorthLock= false;
+    const csysDirMatching= isCsysDirMatching(plot,masterPlot);
     let rotation= getMatchingRotationAngle(masterPv,pv);
     if (isEastLeftOfNorth(masterPlot)) {
         rotation= csysDirMatching ? 360-rotation :360+rotation;
@@ -463,7 +465,7 @@ function updateClientRotation(state,action) {
     }
     else {
         plotViewAry= actionScope===ActionScope.GROUP ?
-            applyToOnePvOrAll(state.positionLock, plotViewAry,plotId,false, (pv) => rotatePv(pv,targetAngle, rotateNorthLock)) :
+            applyToOnePvOrAll(state.positionLock, plotViewAry,plotId,false, (aPv) => rotatePv(aPv,targetAngle, rotateNorthLock&&aPv===pv)) :
             clonePvAryWithPv(plotViewAry, masterPv);
     }
 

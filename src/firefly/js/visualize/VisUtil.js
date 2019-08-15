@@ -447,8 +447,15 @@ export function isPlotNorth(plot) {
     return retval;
 }
 
+/**
+ * Return true if east if left of north.  If east is right of north return false. This works regardless of the rotation
+ * of the image.
+ * @param {WebPlot} plot
+ * @return {boolean} true if is is left of north.
+ */
 export function isEastLeftOfNorth(plot) {
     if (!plot) return true;
+    if (!plot.projection.isSpecified() || !plot.projection.isImplemented()) return true;
 
     const mx = plot.dataWidth/2;
     const my = plot.dataHeight/2;
@@ -458,8 +465,10 @@ export function isEastLeftOfNorth(plot) {
 
     const cc= CysConverter.make(plot);
     const wptC = cc.getWorldCoords(makeImageWorkSpacePt(mx, my));
+    if (!wptC) return true;
     const wptNorth = makeWorldPt(wptC.x, wptC.y+worldOffset);
     const wptE = makeWorldPt(wptC.x+worldOffset, wptC.y);
+    if (!wptE) return true;
 
     const impNorth= cc.getImageCoords(wptNorth);
     const impE= cc.getImageCoords(wptE);
@@ -468,8 +477,7 @@ export function isEastLeftOfNorth(plot) {
     const angleN= getAngleInDeg(mx,my,impNorth.x,impNorth.y);
     const angleE= getAngleInDeg(mx,my,impE.x,impE.y);
     
-    // return Math.abs(angleN-angleE) < 180;
-    return angleE-angleN > 0;
+    return ((angleE-angleN) + 360)%360 < 180;
 }
 
 /**
