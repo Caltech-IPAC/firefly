@@ -2,9 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React, {PureComponent, useEffect} from 'react';
+
 import PropTypes from 'prop-types';
-import {uniqBy, uniq, get, countBy, isNil, xor, sortBy} from 'lodash';
+import {uniqBy, get, countBy, remove, sortBy, isNil} from 'lodash';
 
 
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
@@ -14,54 +15,57 @@ import FieldGroupUtils, {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchMultiValueChange} from '../fieldGroup/FieldGroupCntlr.js';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
 import {updateSet} from '../util/WebUtil.js';
+import {useStoreConnector} from './SimpleComponent';
+import shallowequal from 'shallowequal';
 
 import './ImageSelect.css';
-// import infoIcon from 'html/images/info-16x16.png';
 import infoIcon from 'html/images/info-icon.png';
 
-export class ImageSelect extends PureComponent {
 
-    constructor(props) {
-        super(props);
-        this.state= {lastMod:new Date().getTime()};
-        props.addChangeListener && props.addChangeListener('ImageSelect', fieldsReducer);
-    }
+const IMG_PREFIX = 'IMAGES_';
+const FILTER_PREFIX = 'Filter_';
+const PROJ_PREFIX = 'PROJ_ALL_';
 
-    render() {
-        const {style, imageMasterData, groupKey, multiSelect=true} = this.props;
-        imageMasterData.forEach((d)=> {
-            ['missionId', 'project', 'subProject'].forEach((k) => d[k] = d[k] || '');
-        });
+/**
+ * There are several important key related encoding that will help in understanding this file
+ * There are 3 groups of checkboxes: filters, collapsible(project) boxes, and images
+ * filters boxes are keyed(fieldkey) by FILTER_PREFIX + type
+ *      - currently, there are 3 types: mission, projectType, and waveType
+ *      - the view of this panel changes as these boxes are modified
+ *      - it only affect the view, not what has already been selected.
+ * collapsible boxes are keyed by PROJ_PREFIX + project
+ *      - logically, they represent the state of its current/filtered checkboxes
+ *      - when filter changes, this state will change
+ * images boxes are keyed by IMG_PREFIX + project + [ || + subProject]
+ *      - its option values contains the imageId found in imageMasterData
+ *      - the state of these boxes are persistent and is not affected by filtering
+ */
 
-        var {filteredImageData=imageMasterData} = this.state;
-        const filterMission = toFilterSelectAry(groupKey, 'mission');
-        const filterProjectType = toFilterSelectAry(groupKey, 'projectType');
-       // const filterwaveBand = toFilterSelectAry(groupKey, 'waveBand');
-        const filterWaveType = toFilterSelectAry(groupKey, 'waveType');
+export function ImageSelect({style, imageMasterData, groupKey, multiSelect=true, addChangeListener}) {
 
-        filteredImageData = filterMission.length > 0 ? filteredImageData.filter( (d) => filterMission.includes(d.missionId)) : filteredImageData;
-        filteredImageData = filterProjectType.length > 0 ? filteredImageData.filter( (d) => filterProjectType.includes(d.projectTypeKey)) : filteredImageData;
-        filteredImageData = filterWaveType.length > 0 ? filteredImageData.filter( (d) => filterWaveType.includes(d.waveType)) : filteredImageData;
-       /* if (filterwaveBand.length > 0) {
-            // filtering by waveband
-            const projWithWB = uniq(filteredImageData.filter( (d) => filterwaveBand.includes(d.wavelength)).map( (d) => d.project));  // may contains duplicates..
-            filteredImageData = filteredImageData.filter( (d) => projWithWB.includes(d.project));
-        }
-*/
-        return (
-            <div style={style} className='ImageSelect'>
-                <ToolBar className='ImageSelect__toolbar' {...{filteredImageData, groupKey, onChange: () => this.setState({lastMod:new Date().getTime()})}}/>
-                <div style={{flexGrow: 1, display: 'flex', height: 1}}>
-                    <div className='ImageSelect__panels' style={{marginRight: 3, flexGrow: 0}}>
-                        <FilterPanel {...{imageMasterData, groupKey}}/>
-                    </div>
-                    <div className='ImageSelect__panels' style={{flexGrow: 1}}>
-                        <DataProductList {...{filteredImageData, groupKey, multiSelect}}/>
-                    </div>
+    useEffect(() => {
+        addChangeListener && addChangeListener('ImageSelect', fieldsReducer(imageMasterData, groupKey));
+    }, [addChangeListener, imageMasterData, groupKey]);
+
+    imageMasterData.forEach((d)=> {
+        ['missionId', 'project', 'subProject'].forEach((k) => d[k] = d[k] || '');
+    });
+
+    const [filteredImageData] = useStoreConnector.bind({comparator: shallowequal})(() => getFilteredImageData(imageMasterData, groupKey));
+
+    return (
+        <div style={style} className='ImageSelect'>
+            <ToolBar className='ImageSelect__toolbar' {...{filteredImageData, groupKey, onChange: () => this.setState({lastMod:new Date().getTime()})}}/>
+            <div style={{flexGrow: 1, display: 'flex', height: 1}}>
+                <div className='ImageSelect__panels' style={{marginRight: 3, flexGrow: 0}}>
+                    <FilterPanel {...{imageMasterData, groupKey}}/>
+                </div>
+                <div className='ImageSelect__panels' style={{flexGrow: 1}}>
+                    <DataProductList {...{filteredImageData, groupKey, multiSelect}}/>
                 </div>
             </div>
-        );
-    }
+        </div>
+    );
 }
 
 ImageSelect.propTypes = {
@@ -76,37 +80,74 @@ ImageSelect.propTypes = {
 
 const toFilterSelectAry = (groupKey, s) => getFieldVal(groupKey, `Filter_${s}`, '').split(',').map((d) => d.trim()).filter((d) => d);
 
+function getFilteredImageData(imageMasterData, groupKey, defaults={}) {
 
-function fieldsReducer(inFields, action) {
-    const {fieldKey='', value=''} = action.payload;
-    if (fieldKey.startsWith('PROJ_ALL_')) {
-        // a project checkbox is clicked
-        const proj = fieldKey.replace('PROJ_ALL_', '');
-        Object.entries(inFields).forEach( ([k, f]) => {
-            if (k.startsWith(`IMAGES_${proj}`)) {
-                if (value === '_all_') {
-                    const allVals = f.options ? f.options.map((o) => o.value).join() : '';
-                    inFields = updateSet(inFields, [k, 'value'], allVals);
-                } else {
-                    inFields = updateSet(inFields, [k, 'value'], '');
-                }
-            }
-        });
-    } else if (fieldKey.startsWith('IMAGES_')) {
-        // one item changed, update project selectAll checkbox
-        const matcher = fieldKey.split('||')[0];
-        const cbGroups = Object.values(inFields).filter((f) => get(f, 'fieldKey', '').startsWith(matcher));  // array of subproject in this project
-        const allSelected = cbGroups.reduce((p, f) => {
-            const selAry = get(f,'value','').split(',');
-            const allAry = get(f,'options',[]).map((o) => o.value);
-            return p && xor(selAry, allAry).length === 0;
-        }, true);
-        const proj = matcher.substring(7);
-        inFields = updateSet(inFields, ['PROJ_ALL_' + proj, 'value'], (allSelected ? '_all_' : ''));
-    }
-    return inFields;
+    const filterMission = isNil(defaults.mission) ? toFilterSelectAry(groupKey, 'mission') : defaults.mission;
+    const filterProjectType = isNil(defaults.projectType) ? toFilterSelectAry(groupKey, 'projectType') : defaults.projectType;
+    // const filterwaveBand = isNil(defaults.waveBand) ? toFilterSelectAry(groupKey, 'waveBand') : defaults.waveBand;
+    const filterWaveType = isNil(defaults.waveType) ? toFilterSelectAry(groupKey, 'waveType') : defaults.waveType;
+
+    let filteredImageData = imageMasterData;
+    filteredImageData = filterMission.length > 0 ? filteredImageData.filter( (d) => filterMission.includes(d.missionId)) : filteredImageData;
+    filteredImageData = filterProjectType.length > 0 ? filteredImageData.filter( (d) => filterProjectType.includes(d.projectTypeKey)) : filteredImageData;
+    filteredImageData = filterWaveType.length > 0 ? filteredImageData.filter( (d) => filterWaveType.includes(d.waveType)) : filteredImageData;
+    return filteredImageData;
 }
 
+function fieldsReducer(imageMasterData, groupKey) {
+
+    return (inFields, action) => {
+        const {fieldKey='', value=''} = action.payload;
+        if (fieldKey.startsWith(PROJ_PREFIX)) {
+            // a project checkbox is clicked.. only act on the currently filtered view
+            const proj = fieldKey.replace(PROJ_PREFIX, '');
+            const filteredImages = getFilteredImageData(imageMasterData, groupKey).filter((d) => d.project === proj);
+            filteredImages.forEach(({project, subProject, imageId}) => {
+                const fieldKey= IMG_PREFIX + project + (subProject ? '||' + subProject : '');
+                const valAry = get(inFields, [fieldKey, 'value'], '').split(',').filter((v) => v);
+                if (value === '_all_') {
+                    if (!valAry.includes(imageId)) {    // add imageId is not already selected
+                        valAry.push(imageId);
+                        inFields = updateSet(inFields, [fieldKey, 'value'], valAry.join(','));
+                    }
+                } else {
+                    if (valAry.includes(imageId)) {     // remove imageId if it was selected
+                        remove(valAry, (v) => v === imageId);
+                        inFields = updateSet(inFields, [fieldKey, 'value'], valAry.join(','));
+                    }
+                }
+            });
+        } else if (fieldKey.startsWith(IMG_PREFIX)) {
+            // one item changed, update project selectAll checkbox
+            const proj = fieldKey.replace(IMG_PREFIX, '').split('||')[0];
+            const value = isAllSelected(getFilteredImageData(imageMasterData, groupKey), inFields, proj) ? '_all_' : '';
+            inFields = updateSet(inFields, [PROJ_PREFIX + proj, 'value'], value);
+        } else if (fieldKey.startsWith(FILTER_PREFIX)) {
+            const type = fieldKey.replace(FILTER_PREFIX, '');
+            // re-eval PROJECT level selections
+            const filteredImageData = getFilteredImageData(imageMasterData, groupKey, {[type]: value});
+            const projects= uniqBy(filteredImageData, 'project').map( (d) => d.project);
+            projects.forEach((proj) =>  {
+                const value = isAllSelected(filteredImageData, inFields, proj) ? '_all_' : '';
+                inFields = updateSet(inFields, [PROJ_PREFIX+proj, 'value'], value);
+
+            });
+        }
+        return inFields;
+
+    };
+}
+
+function isAllSelected(filteredImageData, inFields, proj) {
+    const availImageIds = filteredImageData.filter((d) => d.project === proj).map((d) => d.imageId);
+    const selImageIds = Object.values(inFields)
+        .filter((f) => get(f, 'fieldKey','').startsWith(IMG_PREFIX+proj))
+        .map((f) => f.value).join(',').split(',')
+        .filter((v) => v);
+    const imgNotSel = availImageIds.filter((id) => !selImageIds.includes(id));
+    return imgNotSel.length === 0;
+
+}
 
 function ToolBar({filteredImageData, groupKey, onChange}) {
     const projects= uniqBy(filteredImageData, 'project').map( (d) => d.project);
@@ -127,10 +168,10 @@ function ToolBar({filteredImageData, groupKey, onChange}) {
     return (
         <div className='ImageSelect__toolbar'>
             <div>
-                &bull;<a style={{marginRight: 7}} className='ff-href' onClick={() => clearFields(['Filter_'])}>Clear Filters</a>
+                &bull;<a style={{marginRight: 7}} className='ff-href' onClick={() => clearFields([FILTER_PREFIX])}>Clear Filters</a>
             </div>
             <div>
-                &bull;<a style={{marginRight: 7}} className='ff-href' onClick={() => clearFields(['IMAGES_', 'PROJ_ALL_'])}>Clear Selections</a>
+                &bull;<a style={{marginRight: 7}} className='ff-href' onClick={() => clearFields([IMG_PREFIX, PROJ_PREFIX])}>Clear Selections</a>
                 &bull;<a style={{marginRight: 7}} className='ff-href' onClick={() => setDSListMode(true)}>Expand All</a>
                 &bull;<a className='ff-href' onClick={() => setDSListMode(false)}>Collapse All</a>
             </div>
@@ -141,7 +182,7 @@ function ToolBar({filteredImageData, groupKey, onChange}) {
 /*--------------------------- Filter Panel ---------------------------------------------*/
 function FilterPanel({imageMasterData, groupKey, onChange}) {
     const allSelect = Object.values(FieldGroupUtils.getGroupFields(groupKey))
-        .filter( (f) => get(f, 'fieldKey','').startsWith('Filter_'))
+        .filter( (f) => get(f, 'fieldKey','').startsWith(FILTER_PREFIX))
         .filter( (f) => get(f, 'value'))                                    // look for only selected fields
         .map( (f) => f.value).join();                                       // get the value of the selected fields
 
@@ -211,10 +252,6 @@ function FilterPanelView({onChange, imageMasterData}) {
             <CollapsiblePanel componentKey='waveTypesFilter' header='BAND:' isOpen={true}>
                 <FilterSelect {...{onChange, type:'waveType', dataList: waveType}}/>
             </CollapsiblePanel>
-           {/* <CollapsiblePanel componentKey='waveBandsFilter' header='WAVEBAND:' isOpen={false}>
-                <FilterSelect {...{onChange, type:'waveBand', dataList: waveBands}}/>
-            </CollapsiblePanel>*/}
-
         </div>
     );
 }
@@ -299,7 +336,7 @@ function DataProductList({filteredImageData, groupKey, multiSelect, onChange}) {
     const projects= uniqBy(filteredImageData, 'project').map( (d) => d.project);
 
     const allSelect = Object.values(FieldGroupUtils.getGroupFields(groupKey))
-                            .filter( (f) => get(f, 'fieldKey','').startsWith('IMAGES_'))
+                            .filter( (f) => get(f, 'fieldKey','').startsWith(IMG_PREFIX))
                             .filter( (f) => get(f, 'value'))                                    // look for only selected fields
                             .map( (f) => f.options.filter( (o) => f.value.includes(o.value))
                                                   .map((o) => o.label).join() )                 // takes the label of the selected field
@@ -350,7 +387,7 @@ function DataProduct({groupKey, project, filteredImageData, multiSelect}) {
 }
 
 function Header({project, hrefInfo='', multiSelect}) {
-    const fieldKey= `PROJ_ALL_${project}`;
+    const fieldKey= `${PROJ_PREFIX}${project}`;
 
     const InfoIcon = () => hrefInfo && (
         <div>
@@ -394,13 +431,12 @@ function Header({project, hrefInfo='', multiSelect}) {
 
 const hasImageSelection = (groupKey, proj) => {
     const fields = FieldGroupUtils.getGroupFields(groupKey) || {};
-    return Object.values(fields).some((fld) => get(fld, 'fieldKey', '').startsWith(`IMAGES_${proj}`) && fld.value);
+    return Object.values(fields).some((fld) => get(fld, 'fieldKey', '').startsWith(`${IMG_PREFIX}${proj}`) && fld.value);
 };
 
 
 function BandSelect({groupKey, subProject, projectData, labelMaxWidth, multiSelect}) {
-    subProject = isNil(subProject) ? '' : subProject;
-    const fieldKey= `IMAGES_${get(projectData, [0, 'project'])}||${subProject}`;
+    const fieldKey= IMG_PREFIX + get(projectData, [0, 'project']) + (subProject ? '||' + subProject : '');
     const options = toImageOptions(projectData.filter( (p) => p.subProject === subProject));
     const label = subProject && (
                     <div style={{display: 'inline-flex'}}>
@@ -433,7 +469,7 @@ function BandSelect({groupKey, subProject, projectData, labelMaxWidth, multiSele
                 {label}
                 <RadioGroupInputField
                     key={`${groupKey}_${fieldKey}`}
-                    fieldKey={`IMAGES_${groupKey}`}
+                    fieldKey={`${IMG_PREFIX}${groupKey}`}
                     isGrouped={true}
                     initialState={{
                             options,        // Note: values in initialState are saved into fieldgroup.  options are used in the reducer above to determine what 'all' means.
