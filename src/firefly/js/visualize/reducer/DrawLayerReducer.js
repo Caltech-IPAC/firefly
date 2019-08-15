@@ -72,7 +72,7 @@ function handleOtherAction(drawLayer,action,factory) {
     else if (drawData!==newDl.drawData) {
         return Object.assign({},newDl,{drawData});
     }
-    else {
+    else {/**/
         return drawLayer;
     }
 }
@@ -83,14 +83,20 @@ function updateFromLayer(drawLayer,action,factory) {
     drawLayer= Object.assign({}, drawLayer, factory.getLayerChanges(drawLayer,action));
     if (drawLayer.hasPerPlotData) {
         plotIdAry.forEach( (id) => {
-            if (drawLayer.plotIdAry.includes(id)) {
-                drawLayer.drawData= getDrawData(factory,drawLayer, action, id);
-            }
-        });
+          if (drawLayer.plotIdAry.includes(id)) {
+              drawLayer.plotIdAry.forEach((layerID) => {
+                 drawLayer.drawData= getDrawData(factory,drawLayer, action, layerID);
+
+             });
+          }
+      });
+
+
     }
     else {
         drawLayer.drawData= getDrawData(factory,drawLayer, action);
     }
+
     return drawLayer;
 }
 
