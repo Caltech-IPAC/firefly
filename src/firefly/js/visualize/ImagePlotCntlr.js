@@ -27,7 +27,7 @@ import {colorChangeActionCreator, stretchChangeActionCreator, cropActionCreator}
 import {wcsMatchActionCreator} from './task/WcsMatchTask.js';
 import {autoPlayActionCreator, changePointSelectionActionCreator,
     restoreDefaultsActionCreator, deletePlotViewActionCreator} from './task/PlotAdminTask.js';
-import {processScrollActionCreator, recenterActionCreator} from './task/PlotChangeTask';
+import {flipActionCreator, processScrollActionCreator, recenterActionCreator} from './task/PlotChangeTask';
 
 /** enum can be 'COLLAPSE', 'GRID', 'SINGLE' */
 export const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
@@ -279,6 +279,7 @@ function actionCreators() {
         [DELETE_PLOT_VIEW]: deletePlotViewActionCreator,
         [RECENTER]: recenterActionCreator,
         [PROCESS_SCROLL]: processScrollActionCreator,
+        [FLIP]: flipActionCreator,
     };
 }
 
@@ -459,7 +460,8 @@ export function dispatchWcsMatch({plotId, matchType, lockMatch= true, dispatcher
  * @param {Object}  p
  * @param {string} p.plotId
  * @param {Enum} p.rotateType enum RotateType
- * @param {number} p.angle
+ * @param {number} p.angle - rotation angle- rotation is always toward the east of north. That is east-left images will
+ * rotate counter-clockwise, while east-right image will rotate clockwise
  * @param {string|ActionScope} p.actionScope enum ActionScope
  * @param {Function} p.dispatcher only for special dispatching uses such as remote
  *
@@ -478,6 +480,7 @@ export function dispatchRotate({plotId, rotateType, angle=-1,
  * @param {Object}  p
  * @param {string} p.plotId
  * @param {boolean} p.isY
+ * @param {boolean} p.rematchAfterFlip
  * @param {string|ActionScope} p.actionScope enum ActionScope
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  *
@@ -485,8 +488,9 @@ export function dispatchRotate({plotId, rotateType, angle=-1,
  * @function dispatchFlip
  * @memberof firefly.action
  */
-export function dispatchFlip({plotId, isY=true, actionScope=ActionScope.GROUP, dispatcher= flux.process}) {
-    dispatcher({ type: FLIP, payload: { plotId, isY, actionScope}});
+export function dispatchFlip({plotId, isY=true, rematchAfterFlip= true,
+                                     actionScope=ActionScope.GROUP, dispatcher= flux.process}) {
+    dispatcher({ type: FLIP, payload: { plotId, isY, rematchAfterFlip, actionScope}});
 }
 
 /**

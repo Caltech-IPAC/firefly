@@ -447,38 +447,95 @@ export function isPlotNorth(plot) {
     return retval;
 }
 
-
 /**
- * When plot is rotated north is east on the left hand side.  This helps determine if a image is flipped.
- * @param plot
- * @return {boolean}
+ * Return true if east if left of north.  If east is right of north return false. This works regardless of the rotation
+ * of the image.
+ * @param {WebPlot} plot
+ * @return {boolean} true if is is left of north.
  */
 export function isEastLeftOfNorth(plot) {
-
     if (!plot) return true;
+    if (!plot.projection.isSpecified() || !plot.projection.isImplemented()) return true;
 
     const mx = plot.dataWidth/2;
     const my = plot.dataHeight/2;
 
-    const angle= getRotationAngle(plot);
-    const affTrans= new Matrix();
-    affTrans.translate(mx,my);
-    affTrans.rotate(toRadians(-angle));
-    affTrans.translate(-mx,-my);
-    affTrans.translateY(plot.dataHeight);
-    affTrans.scale(1,-1);
 
+    const worldOffset= plot.projection.getPixelScaleDegree() * 10;
 
     const cc= CysConverter.make(plot);
-    const cenPoint= affTrans.applyToPoint(mx,my);
-    const wpt1 = cc.getWorldCoords(makeImagePt(cenPoint));
-    if (wpt1) {
-        const rotPoint= affTrans.applyToPoint(1,my);
-        const wpt2 = cc.getWorldCoords(makeImagePt(rotPoint));
-        if (wpt2) return wpt2.x > wpt1.x;
-    }
-    return true;
+    const wptC = cc.getWorldCoords(makeImageWorkSpacePt(mx, my));
+    if (!wptC) return true;
+    const wptNorth = makeWorldPt(wptC.x, wptC.y+worldOffset);
+    const wptE = makeWorldPt(wptC.x+worldOffset, wptC.y);
+    if (!wptE) return true;
+
+    const impNorth= cc.getImageCoords(wptNorth);
+    const impE= cc.getImageCoords(wptE);
+
+
+    const angleN= getAngleInDeg(mx,my,impNorth.x,impNorth.y);
+    const angleE= getAngleInDeg(mx,my,impE.x,impE.y);
+    
+    return ((angleE-angleN) + 360)%360 < 180;
 }
+
+/**
+ * return an angle that will rotate the pv to match the rotation of masterPv
+ * @param masterPv
+ * @param pv
+ * @return {number}
+ */
+export function getMatchingRotationAngle(masterPv, pv) {
+    const plot= primePlot(pv);
+    const masterPlot= primePlot(masterPv);
+    if (!plot || !masterPlot) return 0;
+    const masterRot= masterPv.rotation * (masterPv.flipY ? -1 : 1);
+    const rot=getRotationAngle(plot);
+    let targetRotation;
+    if (isEastLeftOfNorth(masterPlot)) {
+        targetRotation= ((getRotationAngle(masterPlot)+  masterRot)  - rot) * (masterPv.flipY ? 1 : -1);
+    }
+    else {
+        targetRotation= ((getRotationAngle(masterPlot)+  (360-masterRot))  - rot) * (masterPv.flipY ? 1 : -1);
+
+    }
+    if (!isCsysDirMatching(plot,masterPlot)) targetRotation= 360-targetRotation;
+    if (targetRotation<0) targetRotation+= 360;
+    if (targetRotation>359) targetRotation%= 360;
+    return targetRotation;
+}
+
+/**
+ *
+ * @param {plot} p1
+ * @param {plot} p2
+ * @return {boolean}
+ */
+export function isCsysDirMatching(p1,p2) {
+    return isEastLeftOfNorth(p1)===isEastLeftOfNorth(p2);
+}
+
+
+function getAngleInDeg(cx,cy,x,y) {
+    const ptX= Math.round(x)-Math.round(cx);
+    const ptY= Math.round(y)-Math.round(cy);
+
+
+    if (ptY===0) return ptX >= 0 ? 0 : 180;
+    if (ptX===0) return ptY >= 0 ? 90 : 270;
+    const angle= toDegrees(Math.atan(ptY / ptX));
+    const fullAngle= circleAngle(Math.abs(angle),ptX,ptY);
+    return fullAngle;
+}
+
+function circleAngle(a,x,y) {
+    if (x>=0 && y>=0) return a;  //quad 1
+    if (x<0 && y>=0) return 180-a; // quad 2
+    if (x<0 && y<0) return 180+a; // quad 3
+    if (x>=0 && y<0) return 360-a; // quad 4
+}
+
 
 
 const getEstimatedFullZoomFactor= function(fullType, dataWidth, dataHeight,

@@ -28,6 +28,7 @@ import {getCenterOfProjection, hasWCSProjection} from '../PlotViewUtil';
 import {isHiPS, isImage} from '../WebPlot';
 import {matchHiPStoPlotView} from './PlotHipsTask';
 import {dispatchChangeCenterOfProjection, dispatchChangeHiPS} from '../ImagePlotCntlr';
+import {getMatchingRotationAngle} from '../VisUtil';
 
 
 export function* watchForCompletedPlot(options, dispatch, getState) {
@@ -213,7 +214,8 @@ function syncPlotToLevelForWcsMatching(pv, masterPv, targetASpix) {
     // if the new level is only slightly different then use the target level
     const newZoomLevel= (Math.abs(targetLevel-currZoomLevel)<.01) ? currZoomLevel : targetLevel;
 
-    if (!isFlipYMatching(pv, masterPv)) dispatchFlip({plotId:pv.plotId, actionScope: ActionScope.SINGLE});
+    if (!isFlipYMatching(pv, masterPv)) dispatchFlip({plotId:pv.plotId, rematchAfterFlip:false,
+                                                           actionScope: ActionScope.SINGLE});
 
 
     if (!isRotationMatching(pv, masterPv)) rotateToMatch(pv, masterPv);
@@ -231,7 +233,7 @@ function syncPlotToLevelForPixelMatching(pv, masterPv) {
     if (!plot || !masterPlot) return;
 
 
-    if (pv.flipY!==masterPv.flipY) dispatchFlip({plotId:pv.plotId, actionScope: ActionScope.SINGLE});
+    if (pv.flipY!==masterPv.flipY) dispatchFlip({plotId:pv.plotId, rematchAfterFlip:false, actionScope: ActionScope.SINGLE});
     if (pv.rotation!==masterPv.rotation) {
         dispatchRotate({ plotId: plot.plotId, rotateType: RotateType.ANGLE,
             angle: 360-masterPv.rotation, actionScope: ActionScope.SINGLE, });
@@ -256,19 +258,14 @@ function zoomToLevel(plot, newZoomLevel) {
 function rotateToMatch(pv, masterPv) {
     const plot= primePlot(pv);
     const masterPlot= primePlot(masterPv);
-    if (!plot) return;
-    const masterRot= masterPv.rotation * (masterPv.flipY ? -1 : 1);
-    let targetRotation= ((getRotationAngle(masterPlot)+  masterRot)  -
-                           (getRotationAngle(plot))) * (masterPv.flipY ? 1 : -1);
-    if (targetRotation<0) targetRotation+= 360;
+    if (!plot || !masterPlot) return;
     dispatchRotate({
-        plotId: plot.plotId,
+        plotId: pv.plotId,
         rotateType: RotateType.ANGLE,
-        angle: targetRotation,
+        angle: getMatchingRotationAngle(masterPv,pv),
         actionScope: ActionScope.SINGLE,
     });
 }
-
 
 
 function isFlipYMatching(pv1, pv2) {

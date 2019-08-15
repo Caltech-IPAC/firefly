@@ -71,6 +71,7 @@ import STRETCH from 'html/images/icons-2014/28x28_Log.png';
 import MARKER from 'html/images/icons-2014/MarkerCirclesIcon_28x28.png';
 import {MatchLockDropDown} from './MatchLockDropDown';
 import {ImageCenterDropDown} from './ImageCenterDropDown';
+import {hasWCSProjection} from '../PlotViewUtil';
 
 export const VIS_TOOLBAR_HEIGHT=34;
 export const VIS_TOOLBAR_V_HEIGHT=48;
@@ -222,6 +223,7 @@ export class VisToolbarView extends PureComponent {
                 <SimpleLayerOnOffButton plotView={pv}
                                         isIconOn={pv&&plot ? pv.plotViewCtx.rotateNorthLock : false }
                                         tip='Rotate this image so that North is up'
+                                        enabled={hasWCSProjection(pv)}
                                         iconOn={ROTATE_NORTH_ON}
                                         iconOff={ROTATE_NORTH_OFF}
                                         visible={mi.rotateNorth && image}
