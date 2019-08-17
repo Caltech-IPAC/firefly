@@ -18,7 +18,7 @@ import {dispatchAddPreference, getPreference} from '../../core/AppDataCntlr';
 import {DropDownSubMenu} from '../../ui/DropDownMenu';
 import FixedMarker from '../../drawingLayers/FixedMarker';
 import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer, getDlAry} from '../DrawLayerCntlr';
-import {formatWorldPt, formatWorldPtToString} from './WorldPtFormat';
+import {formatWorldPt, formatWorldPtToString, formatWorldPtToStringSimple} from './WorldPtFormat';
 
 
 const MAX_TARGET_LEN= 10;
@@ -59,7 +59,13 @@ export function ImageCenterDropDown({visRoot:vr, visible}) {
     const pv= getActivePlotView(vr);
     const plot= primePlot(pv);
     const coordTables= hasTablesWithCoordinates(pv);
-    const hasSearchTarget= Boolean(get(plot, ['attributes',PlotAttribute.FIXED_TARGET]));
+    const hasSearchTarget= Boolean(
+        (get(plot, ['attributes',PlotAttribute.FIXED_TARGET]) && pv.plotViewCtx.displayFixedTarget) ||
+               get(plot, ['attributes',PlotAttribute.CENTER_ON_FIXED_TARGET]));
+    let searchTarget;
+    if (hasSearchTarget) {
+        searchTarget=  plot.attributes[PlotAttribute.CENTER_ON_FIXED_TARGET] || plot.attributes[PlotAttribute.FIXED_TARGET];
+    }
     const plotId= plot && plot.plotId;
     const [recentAry, setRecentAry] = useState(getRecentTargets());
 
@@ -88,6 +94,9 @@ export function ImageCenterDropDown({visRoot:vr, visible}) {
         dispatchAttachLayerToPlot(newDL.drawLayerId, pv.plotId, true);
     };
 
+    const centerText= `Center on Target${searchTarget && searchTarget.objName ? ' - '+searchTarget.objName : ''}`;
+    const centerTextTip= hasSearchTarget ? `Center on search target - ${formatWorldPtToStringSimple(searchTarget)}` :
+                                          'Center on search target';
 
     const dropDown= (
         <SingleColumnMenu>
@@ -101,10 +110,10 @@ export function ImageCenterDropDown({visRoot:vr, visible}) {
             <DropDownVerticalSeparator useLine={true}/>
 
 
-            <ToolbarButton text='Center on Target' tip='Center on search target'
+            <ToolbarButton text={centerText} tip={centerTextTip}
                            enabled={hasSearchTarget}
                            horizontal={false} key={'center-search-target'}
-                           onClick={() => dispatchRecenter({plotId})} />
+                           onClick={() => dispatchRecenter({plotId,centerPt:searchTarget})} />
 
             <ToolbarButton text='Center Image' tip='Center image in display frame'
                            enabled={Boolean(plot && isImage(plot))}

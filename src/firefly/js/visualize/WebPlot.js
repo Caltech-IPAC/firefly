@@ -63,6 +63,12 @@ export const PlotAttribute= {
     FIXED_TARGET: 'FIXED_TARGET',
 
     /**
+     * a WorldPt
+     * if defined overrides FIXED_TARGET.
+     */
+    CENTER_ON_FIXED_TARGET: 'CENTER_ON_FIXED_TARGET',
+
+    /**
      *
      */
     INIT_CENTER: 'INIT_CENTER',
@@ -415,6 +421,8 @@ export const WebPlot= {
 
         const imageCoordSys= cubeCtx ? cubeCtx.imageCoordSys : wpInit.imageCoordSys;
         let plot= makePlotTemplate(plotId,'image',asOverlay, CoordinateSys.parse(imageCoordSys));
+        const dataWidth= cubeCtx ? cubeCtx.dataWidth : wpInit.dataWidth;
+        const dataHeight= cubeCtx ? cubeCtx.dataHeight : wpInit.dataHeight;
 
         const imagePlot= {
             tileData    : wpInit.initImages,
@@ -429,14 +437,14 @@ export const WebPlot= {
             wlData,
             allWCSMap,
             allWlMap,
-            dataWidth       : cubeCtx ? cubeCtx.dataWidth : wpInit.dataWidth,
-            dataHeight      : cubeCtx ? cubeCtx.dataHeight : wpInit.dataHeight,
+            dataWidth,
+            dataHeight,
             title : '',
             plotDesc        : wpInit.desc,
             dataDesc        : wpInit.dataDesc,
             webFitsData     : isArray(wpInit.fitsData) ? wpInit.fitsData : [wpInit.fitsData],
             //=== Mutable =====================
-            screenSize: {width:wpInit.dataWidth*zf, height:wpInit.dataHeight*zf},
+            screenSize: {width:dataWidth*zf, height:dataHeight*zf},
             zoomFactor: zf,
             attributes,
             directFileAccessDataAry

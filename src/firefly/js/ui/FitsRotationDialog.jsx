@@ -76,7 +76,7 @@ function FitsRotationImmediatePanel() {
     if (!pv) return (<div style={{whiteSpace:'nowrap', padding:'10px 35px'}}>No Image Loaded</div>);
 
     return (
-        <div>
+        <div className={'disable-select'}>
             <div style={{padding: '25px 20px 10px 20px'}}>
                 <div style={{display:'flex', flexDirection: 'column', alignItems:'center',
                                       justifyContent:'space-between', padding: '0 3px'}}>
