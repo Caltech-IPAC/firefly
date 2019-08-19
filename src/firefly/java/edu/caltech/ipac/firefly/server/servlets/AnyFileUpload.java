@@ -80,7 +80,8 @@ public class AnyFileUpload extends BaseHttpServlet {
             // from a URL.. get it
             int idx = fromUrl.lastIndexOf('/');
             String fname = (idx >= 0) ? fromUrl.substring(idx + 1) : fromUrl;
-            File tmpFile = File.createTempFile("upload_", fname, ServerContext.getUploadDir());
+            fname = fname.contains("?") ? fname.substring(0, fname.indexOf("?")) : fname;       // don't save queryString as file name.  this will confuse reader expecting a url, like VoTableReader
+            File tmpFile = File.createTempFile("upload_", "-" + fname, ServerContext.getUploadDir());
             FileInfo status = URLDownload.getDataToFile(new URL(fromUrl), tmpFile);
             if (status != null && !(status.getResponseCodeMsg().equals("OK"))) {
                 throw new Exception("invalid upload from URL: " + status.getResponseCodeMsg());

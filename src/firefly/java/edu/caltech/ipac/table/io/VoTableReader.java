@@ -72,7 +72,7 @@ public class VoTableReader {
             List<Integer> indicesList = indices == null ? null : CollectionUtil.asList(indices);
             List<TableElement> tableAry = getAllTableElements( location, null);
             for (int i = 0; i < tableAry.size(); i++) {
-                if (indices == null || indicesList.contains(i)) {
+                if (indices == null || indices.length == 0 || indicesList.contains(i)) {
                     TableElement tableEl = tableAry.get(i);
                     DataGroup dg = convertToDataGroup(tableEl, new VOStarTable(tableEl), headerOnly);
                     groups.add(dg);
