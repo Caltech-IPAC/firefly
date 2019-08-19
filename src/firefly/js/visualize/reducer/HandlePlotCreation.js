@@ -15,6 +15,7 @@ import {getRotationAngle} from '../VisUtil.js';
 import {updateTransform} from '../PlotTransformUtils.js';
 import {makeImagePt} from '../Point.js';
 import {clone} from '../../util/WebUtil.js';
+import {isImage} from '../WebPlot';
 
 
 
@@ -218,7 +219,7 @@ function updateForWcsMatching(visRoot, pv, mpwWcsPrimId) {
             pv= updateScrollToWcsMatch(visRoot.wcsMatchType, masterPv, pv);
         }
     }
-    else if (wcsMatchType===WcsMatchType.Pixel || wcsMatchType===WcsMatchType.PixelCenter) {
+    else if ((wcsMatchType===WcsMatchType.Pixel || wcsMatchType===WcsMatchType.PixelCenter) && isImage(plot)) {
         pv= updateScrollToWcsMatch(visRoot.wcsMatchType, masterPv, pv);
     }
     return pv;

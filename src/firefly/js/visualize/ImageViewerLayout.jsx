@@ -225,20 +225,21 @@ export class ImageViewerLayout extends PureComponent {
         const {plotView:pv}= this.props;
         const {viewDim:{width,height}}= pv;
         let insideStuff;
-        const plot= primePlot(this.props.plotView);
+        const plot= primePlot(pv);
         const plotShowing= Boolean(width && height && plot);
         let onScreen= true;
+        let sizeViewable= true;
 
         if (plotShowing ) {
-            onScreen= isImageOnScreen(this.props.plotView);
+            onScreen= isImageOnScreen(pv);
+            sizeViewable= isImageSizeViewable(pv);
             insideStuff= this.renderInside();
-
         }
 
         return (
             <div className='web-plot-view-scr' style={rootStyle}>
                 {insideStuff}
-                {makeMessageArea(pv,plotShowing,onScreen)}
+                {makeMessageArea(pv,plotShowing,onScreen,sizeViewable)}
             </div>
         );
     }
@@ -319,6 +320,13 @@ function isImageOnScreen(plotView) {
     return found;
 }
 
+function isImageSizeViewable(plotView) {
+    const plot= primePlot(plotView);
+    if (!plot) return false;
+    const {screenSize:{width,height}}= plot;
+    if (width>5 || height>5) return true;
+    return false;
+}
 
 
 /**
@@ -386,12 +394,9 @@ function makePrevDim(props) {
 }
 
 
-function makeMessageArea(pv,plotShowing,onScreen) {
+function makeMessageArea(pv,plotShowing,onScreen, sizeViewable) {
     if (pv.serverCall==='success') {
-        if (onScreen) {
-            return false;
-        }
-        else {
+        if (!onScreen) {
             return (
                 <ImageViewerStatus message={'Center Plot'} working={false}
                                    useMessageAlpha={false}
@@ -401,6 +406,20 @@ function makeMessageArea(pv,plotShowing,onScreen) {
 
                 />
             );
+        }
+        else if (!sizeViewable) {
+            return (
+                <ImageViewerStatus message={'Minimum zoom level exceeded'} working={false}
+                                   useMessageAlpha={false}
+                                   useButton={true}
+                                   buttonText='Zoom To Fit'
+                                   buttonCB={() => dispatchZoom({plotId:pv.plotId, userZoomType:UserZoomTypes.FIT}) }
+
+                />
+            );
+        }
+        else {
+            return false;
         }
     }
 
