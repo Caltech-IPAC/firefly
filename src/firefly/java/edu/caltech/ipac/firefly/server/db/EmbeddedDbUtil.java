@@ -416,6 +416,7 @@ public class EmbeddedDbUtil {
                             dt.getMinValue(),
                             dt.getLinkInfos(),
                             dt.getDataOptions(),
+                            dt.getArraySize()
                     }
             );
         }
@@ -455,6 +456,7 @@ public class EmbeddedDbUtil {
                 applyIfNotEmpty(rs.getString("minValue"), dtype::setMinValue);
                 applyIfNotEmpty(rs.getObject("links"), v -> dtype.setLinkInfos((List<LinkInfo>) v));
                 applyIfNotEmpty(rs.getString("dataOptions"), dtype::setDataOptions);
+                applyIfNotEmpty(rs.getString("arraySize"), dtype::setArraySize);
 
             } while (rs.next());
         } catch (SQLException e) {

@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * Utility class dealing with Collection.
@@ -270,10 +271,10 @@ public class CollectionUtil {
         return newMap;
     }
 
-    public static <T> T findFirst(List<T> list, Filter<T> matcher) {
+    public static <T> T findFirst(List<T> list, Predicate<T> matcher) {
         if (!isEmpty(list)) {
             for(T item : list) {
-                if (matcher.accept(item)) {
+                if (matcher.test(item)) {
                     return item;
                 }
             }

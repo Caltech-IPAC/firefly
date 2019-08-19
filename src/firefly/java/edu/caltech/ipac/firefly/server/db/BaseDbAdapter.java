@@ -33,7 +33,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
     private static Logger.LoggerImpl LOGGER = Logger.getLogger();
     private static EmbeddedDbStats dbStats = new EmbeddedDbStats();
 
-    private static final String DD_INSERT_SQL = "insert into %s_dd values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    private static final String DD_INSERT_SQL = "insert into %s_dd values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String DD_CREATE_SQL = "create table %s_dd "+
             "(" +
             "  cname    varchar(64000)" +
@@ -58,6 +58,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
             ", minValue varchar(64000)" +
             ", links    other" +
             ", dataOptions varchar(64000)" +
+            ", arraySize varchar(64000)" +
             ")";
 
     private static final String META_INSERT_SQL = "insert into %s_meta values (?,?,?)";
@@ -97,7 +98,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
         tblName = StringUtils.isEmpty(tblName) ? MAIN_DB_TBL : tblName;
         List<String> coldefs = new ArrayList<>();
         for(DataType dt : dtTypes) {
-            coldefs.add( String.format("\"%s\" %s", dt.getKeyName(), getDataType(dt)));       // add quotes to avoid reserved words clashes
+            coldefs.add( String.format("\"%s\" %s", dt.getKeyName(), toDbDataType(dt)));       // add quotes to avoid reserved words clashes
         }
 
         return String.format("create table %s (%s)", tblName, StringUtils.toString(coldefs, ","));
@@ -187,7 +188,9 @@ abstract public class BaseDbAdapter implements DbAdapter {
         return false;
     }
 
-    public String getDataType(DataType dataType) {
+    public String toDbDataType(DataType dataType) {
+        if (dataType.getArraySize() != null) return "other";
+
         Class type = dataType.getDataType();
         if (String.class.isAssignableFrom(type)) {
             return dataType.getTypeDesc().equals(DataType.LONG_STRING) ? "longvarchar" : "varchar(64000)";

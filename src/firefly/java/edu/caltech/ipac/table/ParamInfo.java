@@ -9,8 +9,8 @@ public class ParamInfo extends DataType implements Serializable, Cloneable {
 
     private String value;
 
-    public ParamInfo(String name, Class clz) {
-        this(name, clz, null);
+    public ParamInfo() {
+        this(null, null, null);
     }
 
     public ParamInfo(String keyName, Class type, String value) {

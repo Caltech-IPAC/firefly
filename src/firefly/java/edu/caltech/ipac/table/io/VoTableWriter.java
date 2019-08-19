@@ -303,7 +303,8 @@ public class VoTableWriter {
                                      (!isEmpty(prec) && prec.startsWith("G")) ? prec.substring(1) : prec) +
                           elementAtt("unit", dt.getUnits()) +
                           elementAtt(TableMeta.UTYPE, dt.getUType()) +
-                          elementAtt(TableMeta.REF, dt.getRef());
+                          elementAtt(TableMeta.UTYPE, dt.getUType()) +
+                          elementAtt("arraySize", dt.getArraySize());
 
 
             return atts;

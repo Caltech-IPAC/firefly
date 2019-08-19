@@ -73,6 +73,16 @@ public class DataType implements Serializable, Cloneable {
     private       String minValue = "";
     private       String dataOptions;
 
+    /**
+     * follows section 2.2. of the "VOTable Format Definition" convention where arraySize can be
+     *      '*': variable length
+     *      'n': where n is an integer corresponding to the fixed length of the array
+     *      'n*': array with length of 0 to n
+     *      'nxnxn*' : multidimensional array where the last dimension may be variable, ie. 64x64x5
+     *  the data will be stored as a single array.  The information in arraySize can be used to "fold/unfold" the value.
+     */
+    private       String   arraySize;
+
     private transient Boolean isFloatingPoint;      // cached to improve formatting performance.
     private transient Boolean isWholeNumber;        // cached to improve formatting performance.
 
@@ -288,6 +298,11 @@ public class DataType implements Serializable, Cloneable {
     public String getDataOptions() { return dataOptions; }
 
     public void setDataOptions(String options) {this.dataOptions = options;}
+
+    public String getArraySize() { return arraySize; }
+
+    public void setArraySize(String arraySize) { this.arraySize = arraySize; }
+
     /**
      * Firefly has 3 metas that affect the formatting of the column's data.  They are
      * listed below in order of highest to lowest precedence.
@@ -306,6 +321,10 @@ public class DataType implements Serializable, Cloneable {
      */
     public String format(Object value, boolean replaceCtrl) {
         if (value == null) return getNullString();
+
+        if (getArraySize() != null) {
+            return String.format("%s [%s]", getTypeDesc(), getArraySize());
+        }
 
         // do escaping if requested
         if (replaceCtrl && type == String.class) {

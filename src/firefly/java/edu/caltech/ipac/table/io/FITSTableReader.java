@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
 * Convert an FITS file or FITS binary table(s) to list of DataGroup.
@@ -356,21 +357,13 @@ public final class FITSTableReader
 
     private static void addRowToDataGroup(StarTable table, DataGroup dataGroup, LinkedHashMap<ColumnInfo, Integer> colIdxMap, long rowIdx, String strategy) {
         DataObject aRow = new DataObject(dataGroup);
-        ColumnInfo[] colAry = colIdxMap.keySet().toArray(new ColumnInfo[colIdxMap.size()]);
+        ColumnInfo[] colAry = colIdxMap.keySet().toArray(new ColumnInfo[0]);
         try {
             for (int dtIdx = 0; dtIdx < dataGroup.getDataDefinitions().length; dtIdx++) {
                 DataType dt = dataGroup.getDataDefinitions()[dtIdx];
                 ColumnInfo colInfo = colAry[dtIdx];
                 int colIdx = colIdxMap.get(colInfo);
                 Object data = table.getCell(rowIdx, colIdx);
-                if (colInfo.isArray()) {
-                    if (Objects.equals(strategy, DEFAULT)) {
-                        String desc = DefaultValueInfo.formatClass(colInfo.getContentClass());
-                        data = desc.replace("[]", "[" + Array.getLength(data) + "]");
-                    } else  if (Objects.equals(strategy, TOP_MOST)) {
-                        data = Array.get(data, 0);
-                    }
-                }
                 aRow.setDataElement(dt, data);
             }
             dataGroup.add(aRow);
@@ -434,9 +427,14 @@ public final class FITSTableReader
                     "Unrecognized format character in FITS table file: " + classType);
         }
 
-        if (Objects.equals(strategy, DEFAULT) && colInfo.isArray()) {
-            java_class = String.class;
-            dataType.setTypeDesc(DataType.LONG_STRING);
+        if (colInfo.isArray()) {
+            int[] shape = colInfo.getShape();
+            if (shape != null) {
+                String arraySize = Arrays.stream(shape)
+                                        .mapToObj(d -> d > 0 ? d+"" : "*")
+                                        .collect(Collectors.joining("x"));
+                dataType.setArraySize(arraySize);
+            }
         }
 
         dataType.setDataType(java_class);
