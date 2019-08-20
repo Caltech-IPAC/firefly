@@ -33,9 +33,9 @@ public class TableUtil {
         if (format == Format.IPACTABLE) {
             return IpacTableReader.read(inf);
         } else if (format == Format.VO_TABLE) {
-            DataGroup[] tables = VoTableReader.voToDataGroups(inf.getAbsolutePath());
-            if (tables.length > tableIndex) {
-                return tables[tableIndex];
+            DataGroup[] tables = VoTableReader.voToDataGroups(inf.getAbsolutePath(), tableIndex);
+            if (tables.length > 0) {
+                return tables[0];
             } else return null;
         } else if (format == Format.CSV || format == Format.TSV) {
             return DsvTableIO.parse(inf, format.type);

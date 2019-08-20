@@ -472,19 +472,23 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
         if (dataList == null) {
             DataType dt = getDataDefintion(cname);
             if (dt != null) {
-                Class clz = dt.getDataType();
-                if (clz == Double.class) {
-                    dataList = new PrimitiveList.Doubles();
-                } else if (clz == Float.class) {
-                    dataList = new PrimitiveList.Floats();
-                } else if (clz == Long.class) {
-                    dataList = new PrimitiveList.Longs();
-                } else if (clz == Integer.class) {
-                    dataList = new PrimitiveList.Integers();
-                } else if (clz == Boolean.class) {
-                    dataList = new PrimitiveList.Booleans();
+                if (dt.getArraySize() != null) {
+                    dataList =  new PrimitiveList.Objects();
                 } else {
-                    dataList = new PrimitiveList.Objects();
+                    Class clz = dt.getDataType();
+                    if (clz == Double.class) {
+                        dataList = new PrimitiveList.Doubles();
+                    } else if (clz == Float.class) {
+                        dataList = new PrimitiveList.Floats();
+                    } else if (clz == Long.class) {
+                        dataList = new PrimitiveList.Longs();
+                    } else if (clz == Integer.class) {
+                        dataList = new PrimitiveList.Integers();
+                    } else if (clz == Boolean.class) {
+                        dataList = new PrimitiveList.Booleans();
+                    } else {
+                        dataList = new PrimitiveList.Objects();
+                    }
                 }
                 data.put(cname, dataList);
             }
