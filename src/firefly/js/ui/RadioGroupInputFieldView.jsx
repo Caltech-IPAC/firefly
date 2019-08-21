@@ -1,16 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import InputFieldLabel from './InputFieldLabel.jsx';
-
 import './ButtonGroup.css';
-
-const vStyle={paddingLeft: 3, paddingRight: 8};
-const hStyle={paddingLeft: 0, paddingRight: 12};
 
 
 function makeRadioGroup(options,alignment ,value,onChange,tooltip, labelStyle) {
 
-    const style = labelStyle?labelStyle:(alignment==='vertical' ? vStyle : hStyle);
     return options.map((option) => (
         <span key={option.value}>
             <div style={{display:'inline-block'}} title={option.tooltip || tooltip}>
@@ -19,12 +14,22 @@ function makeRadioGroup(options,alignment ,value,onChange,tooltip, labelStyle) {
                        value={option.value}
                        checked={value===option.value}
                        onChange={onChange}
-                /> <span style={style}>{option.label}</span>
+                       disabled={option.disabled || false}
+                /> <span style={labelStyle ? labelStyle : generateStyles(alignment, option)}>{option.label}</span>
             </div>
             {alignment==='vertical' ? <br/> : ''}
          </span>
     ));
 }
+
+function generateStyles(alignment, option){
+    const vStyle={paddingLeft: 3, paddingRight: 8};
+    const hStyle={paddingLeft: 0, paddingRight: 12};
+    const style = alignment==='vertical' ? vStyle : hStyle;
+
+    return option.disabled ? Object.assign(style, {opacity: 0.5}) : style;
+}
+
 
 function makeButtonGroup(options,value,onChange,tooltip, labelStyle) {
 
@@ -32,6 +37,7 @@ function makeButtonGroup(options,value,onChange,tooltip, labelStyle) {
         <button type='button'   key={'' + idx} title={option.tooltip}
                 className={value===option.value ? 'buttonGroupButton On' : 'buttonGroupButton Off'}
                 value={option.value}
+                disabled={option.disabled || false}
                 onClick={(ev) => ev.target.value!==value && onChange(ev)}>
             {option.label}
         </button>
