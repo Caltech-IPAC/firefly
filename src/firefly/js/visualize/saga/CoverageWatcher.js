@@ -480,12 +480,19 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp) {
     if (allRowsTable==='WORKING') return;
     const covType= getCoverageType(options,allRowsTable);
     const {tableMeta, tableData}= allRowsTable;
-    const angleInRadian= isTableUsingRadians(tableMeta);
 
     const createDrawLayer = (cId, dataType, isFromRegion=false) => {
         const columns = dataType === CoverageType.REGION ? findTableRegionColumn(allRowsTable) :
                         (covType === CoverageType.BOX ? getCornersColumns(allRowsTable) : findTableCenterColumns(allRowsTable));
         if (isEmpty(columns)) return;
+        let angleInRadian= false;
+        if (dataType=== CoverageType.X) {
+            angleInRadian= isTableUsingRadians(table, [columns.lonCol,columns.latCol])
+        }
+        else if (dataType=== CoverageType.BOX) {
+            const cAry= columns.map( c=> [c.lonCol,c.latCol]).flat();
+            angleInRadian= isTableUsingRadians(table, cAry);
+        }
 
         const dl = getDlAry().find((dl) => dl.drawLayerTypeId === Catalog.TYPE_ID && dl.catalogId === cId);
         if (!dl) {
