@@ -134,8 +134,7 @@ function handleCatalogUpdate(tbl_id) {
     doFetchTable(req).then(
         (tableModel) => {
             if (tableModel.tableData && tableModel.tableData.data) {
-                updateDrawingLayer(tbl_id, tableModel.title,
-                    tableModel.tableData, tableModel.tableMeta,
+                updateDrawingLayer(tbl_id, tableModel,
                     request, highlightedRow, selectInfo, columns, dataTooBigForSelection);
             }
         }
@@ -146,10 +145,11 @@ function handleCatalogUpdate(tbl_id) {
     );
 }
 
-function updateDrawingLayer(tbl_id, title, tableData, tableMeta, tableRequest,
+function updateDrawingLayer(tbl_id, tableModel, tableRequest,
                             highlightedRow, selectInfo, columns, dataTooBigForSelection) {
 
     const plotIdAry= visRoot().plotViewAry.map( (pv) => pv.plotId);
+    const {title, tableData, tableMeta}= tableModel;
 
     const dl= getDrawLayerById(dlRoot(),tbl_id);
     const {showCatalogSearchTarget}= getAppOptions();
@@ -160,7 +160,7 @@ function updateDrawingLayer(tbl_id, title, tableData, tableMeta, tableRequest,
                                            dataTooBigForSelection, searchTarget });
     }
     else { // new drawing layer
-        const angleInRadian= isTableUsingRadians(tableMeta);
+        const angleInRadian= isTableUsingRadians(tableModel, [columns.lonCol,columns.latCol]);
         dispatchCreateDrawLayer(Catalog.TYPE_ID,
             {catalogId:tbl_id, title, tableData, tableMeta, tableRequest, highlightedRow,
                                 selectInfo, columns, dataTooBigForSelection, catalog:true,

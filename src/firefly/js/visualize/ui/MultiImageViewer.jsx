@@ -7,7 +7,7 @@ import PropTypes from 'prop-types';
 import {isEmpty,omit,get} from 'lodash';
 import {flux} from '../../Firefly.js';
 import {NewPlotMode, dispatchAddViewer, dispatchViewerUnmounted,
-        getMultiViewRoot, getViewer, getLayoutType, IMAGE} from '../MultiViewCntlr.js';
+        getMultiViewRoot, getViewer, getLayoutType, findViewerWithItemId, IMAGE} from '../MultiViewCntlr.js';
 import {MultiImageViewerView} from './MultiImageViewerView.jsx';
 import {visRoot, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
@@ -26,6 +26,12 @@ function nextState(props, state) {
 
 
 
+function viewWithIdMounted(itemId) {
+    const vId= findViewerWithItemId(getMultiViewRoot(),itemId,IMAGE);
+    if (!vId) return false;
+    const v= getViewer(getMultiViewRoot(),vId);
+    return v && v.mounted;
+}
 
 
 export class MultiImageViewer extends PureComponent {
@@ -53,9 +59,11 @@ export class MultiImageViewer extends PureComponent {
         const pv= getActivePlotView(visRoot());
         const viewer = getViewer(getMultiViewRoot(), props.viewerId);
         const {rootWidget}= this;
-        if (!pv || !viewer || !rootWidget || !viewer.lastActiveItemId ) return;
+        if (!pv || !viewer || !rootWidget || !viewer.lastActiveItemId) return;
         if (viewer.lastActiveItemId!==pv.plotId && rootWidget.offsetWidth && rootWidget.offsetHeight) {
-            setTimeout(() => dispatchChangeActivePlotView(viewer.lastActiveItemId), 5);
+            setTimeout(() => {
+                if (!viewWithIdMounted(pv.plotId)) dispatchChangeActivePlotView(viewer.lastActiveItemId)
+            }, 5);
         }
 
     }

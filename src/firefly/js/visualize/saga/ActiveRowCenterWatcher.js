@@ -4,14 +4,15 @@
 
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE,TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
 import {visRoot, dispatchRecenter} from '../ImagePlotCntlr.js';
-import {getTblById, isTableUsingRadians, getCellValue} from '../../tables/TableUtil.js';
-import {makeWorldPt} from '../Point.js';
+import {getTblById, getCellValue} from '../../tables/TableUtil.js';
+import Point, {makeWorldPt, makeAnyPt} from '../Point.js';
 import {isHiPS} from '../WebPlot.js';
 import {findTableCenterColumns} from '../../util/VOAnalyzer.js';
 import {getActivePlotView, getCenterOfProjection, getFoV, hasWCSProjection, primePlot} from '../PlotViewUtil';
 import {computeDistance, toDegrees} from '../VisUtil';
 import {CysConverter} from '../CsysConverter';
 import {dispatchUseTableAutoScroll} from '../ImagePlotCntlr';
+import {isColRadians} from '../../tables/TableUtil';
 
 
 
@@ -69,12 +70,14 @@ function getRowCenterWorldPt(tbl) {
     if (!tbl) return;
     const cenCol= findTableCenterColumns(tbl);
     if (!cenCol) return;
-    const isRad= isTableUsingRadians(tbl);
-    const lon= Number(getCellValue(tbl,tbl.highlightedRow, cenCol.lonCol));
-    const lat= Number(getCellValue(tbl,tbl.highlightedRow, cenCol.latCol));
+    const {lonCol,latCol,csys}= cenCol;
+    const lon= Number(getCellValue(tbl,tbl.highlightedRow, lonCol));
+    const lat= Number(getCellValue(tbl,tbl.highlightedRow, latCol));
     if (isNaN(lon) || isNaN(lat)) return;
 
-    return makeWorldPt(isRad? toDegrees(lon) : lon, isRad? toDegrees(lat): lat, cenCol.csys);
+    const tmpPt= makeAnyPt(lon,lat,csys);
+    if (tmpPt.type!==Point.W_PT) return tmpPt;
+    return makeWorldPt(isColRadians(tbl,lonCol)? toDegrees(lon) : lon, isColRadians(tbl,latCol)? toDegrees(lat): lat, csys);
 }
 
 /**

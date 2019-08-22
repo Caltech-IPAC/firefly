@@ -973,14 +973,27 @@ export function uniqueTblUiId() {
 /**
  *  This function provides a patch until we can reliably determine that the ra/dec columns use radians or degrees.
  * @param tableOrMeta the table object or the tableMeta object
+ * @param {Array.<String>} columnNames
  * @memberof firefly.util.table
  * @func isTableUsingRadians
  *
  */
-export function isTableUsingRadians(tableOrMeta) {
+export function isTableUsingRadians(tableOrMeta, columnNames) {
     if (!tableOrMeta) return false;
     const tableMeta= tableOrMeta.tableMeta || tableOrMeta;
-    return has(tableMeta, 'HIERARCH.AFW_TABLE_VERSION');
+    const lsstRadians= Boolean(has(tableMeta, 'HIERARCH.AFW_TABLE_VERSION'));
+    if (lsstRadians) return true;
+    if (columnNames && tableOrMeta.tableMeta ) {
+        return columnNames.every( (cName) => isColRadians(tableOrMeta, cName));
+    }
+    return false;
+}
+
+export function isColRadians(table, colName) {
+    if (!table) return false;
+    const column= getColumn(table,colName);
+    const unitField= get(column,'units','degrees').toLowerCase();
+    return unitField.startsWith('rad');
 }
 
 export function createErrorTbl(tbl_id, error) {

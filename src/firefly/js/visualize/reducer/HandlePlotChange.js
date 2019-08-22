@@ -33,7 +33,6 @@ import {primePlot,
 import {makeImagePt, makeWorldPt, makeDevicePt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {RotateType} from '../PlotState.js';
-import Point from '../Point.js';
 import {updateTransform} from '../PlotTransformUtils.js';
 import {WebPlotRequest} from '../WebPlotRequest.js';
 import {hasWCSProjection} from '../PlotViewUtil';
@@ -600,15 +599,9 @@ function recenterPv(centerPt,  centerOnImage) {
     return (pv) => {
         const plot = primePlot(pv);
         if (!plot) return pv;
-        let centerImagePt;
+        let centerImagePt= centerPt;
 
-        if (centerPt) {
-            if (centerPt.type === Point.IM_PT) {
-                centerImagePt = makeImagePt(centerPt.x, centerPt.y);
-            } else {
-                centerImagePt = makeWorldPt(centerPt.x, centerPt.y);
-            }
-        } else {
+        if (!centerPt) {
             const wp = plot.attributes[PlotAttribute.INIT_CENTER] || plot.attributes[PlotAttribute.FIXED_TARGET] ;
             if (wp && !centerOnImage) {
                 centerImagePt = CCUtil.getImageCoords(plot, wp);
