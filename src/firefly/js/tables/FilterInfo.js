@@ -9,6 +9,9 @@ import {showInfoPopup} from '../ui/PopupUtil.jsx';
 
 const operators = /(!=|>=|<=|<|>|=| like | in | is not | is )/i;
 
+// filter group separator
+const FILTER_SEP = ' _AND_ ';        // internal use need to match what's defined in TableServerRequest.FILTER_SEP
+
 export const FILTER_CONDITION_TTIPS =
 `Valid values are one of (=, >, <, !=, >=, <=, LIKE, IS, IS NOT) followed by a value separated by a space.
 Or 'IN', followed by a list of values separated by commas.
@@ -22,14 +25,32 @@ export const FILTER_TTIPS =
 * string value must be enclosed in single quotes
 * when IN is used, enclose the values in parentheses
 * you may combine conditions with either 'and' or 'or'
-* grouping by parentheses is not supported at the moment 
-Examples:  "ra" > 12345 and "color" != 'blue' or "band" IN (1,2,3)
+* grouping by parentheses is not supported at the moment
+Examples:  
+  "ra" > 5 and "color" != 'blue' or "band" IN (1,2,3) 
 `;
+
+// ('${FILTER_SEP}' serves as groups separator for now when grouping is necessary)
+// "ra" < 5 or "ra" > 6 _AND_ "dec" < -1 or "dec" > 1
+
 
 export const NULL_TOKEN = '%NULL';          // need to match DbAdapter.NULL_TOKEN
 
+// condition separator
 const COND_SEP = new RegExp('( and | or )', 'i');
-const FILTER_SEP = '_AND_';                 // internal use need to match what's defined in TableServerRequest.FILTER_SEP
+
+/**
+ * returns the number of individual filters
+ * @param filterInfoStr
+ * @returns {number}
+ */
+export function getNumFilters(filterInfoStr) {
+    if (filterInfoStr) {
+        return Math.round((filterInfoStr.split(new RegExp(`( and | or |${FILTER_SEP})`, 'i')).length+1)/2);
+    } else {
+        return 0;
+    }
+}
 
 
 /**
@@ -93,7 +114,7 @@ export class FilterInfo {
     }
 
     /**
-     * given a list of filters separated by semicolon,
+     * given a list of filters separated by condition separator,
      * transform them into valid filters if they are not already so.
      * @param filterInfo
      * @param columns
@@ -101,20 +122,22 @@ export class FilterInfo {
      */
     static autoCorrectFilter(filterInfo, columns) {
         if (filterInfo) {
-            const parts = filterInfo.split(COND_SEP);
-            for (let i = 0; i < parts.length; i += 2) {
-                const [cname, op, val] = parseInput(parts[i]);
-                if (cname) {
-                    let isNumeric = false;
-                    if (columns) {
-                        const col = columns.find((c) => c.name === cname);
-                        // assume all expressions are numeric
-                        isNumeric = !col || isNumericType(col);
+            filterInfo.split(FILTER_SEP).map( (filter) => {
+                const parts = filter.split(COND_SEP);
+                for (let i = 0; i < parts.length; i += 2) {
+                    const [cname, op, val] = parseInput(parts[i]);
+                    if (cname) {
+                        let isNumeric = false;
+                        if (columns) {
+                            const col = columns.find((c) => c.name === cname);
+                            // assume all expressions are numeric
+                            isNumeric = !col || isNumericType(col);
+                        }
+                        parts[i] = `${cname} ${autoCorrectCondition(op + ' ' + val, isNumeric)}`;
                     }
-                    parts[i] = `${cname} ${autoCorrectCondition(op + ' ' + val, isNumeric)}`;
                 }
-            }
-            return parts.join('');
+                return parts.join('');
+            }).join(FILTER_SEP);
         } else {
             return filterInfo;
         }
@@ -169,22 +192,23 @@ export class FilterInfo {
         const allowCols = columns.concat({name:'ROW_IDX'});
         if (filterInfo) {
             let msg = '';
-            const parts = filterInfo.split(COND_SEP);
-            for (let i = 0; i < parts.length; i += 2) {
-                const [cname] = parseInput(parts[i]);
-                if (!cname) {
-                    msg += `\n"${parts[i]}" is not a valid filter.`;
-                } else if (!allowCols.some( (c) => c.name === cname)) {
-                    const expr = new Expression(cname, allowCols.map((s)=>s.name));
-                    if (!expr.isValid()) {
-                        msg += `\n"${parts[i]}" unrecognized column or expression.\n`;
+            filterInfo.split(FILTER_SEP).forEach( (filter) => {
+                const parts = filter.split(COND_SEP);
+                for (let i = 0; i < parts.length; i += 2) {
+                    const [cname] = parseInput(parts[i]);
+                    if (!cname) {
+                        msg += `\n"${parts[i]}" is not a valid filter.`;
+                    } else if (!allowCols.some((c) => c.name === cname)) {
+                        const expr = new Expression(cname, allowCols.map((s) => s.name));
+                        if (!expr.isValid()) {
+                            msg += `\n"${parts[i]}" unrecognized column or expression.\n`;
+                        }
                     }
+                    if (msg) return [false, msg];
                 }
-                if (msg) return [false, msg];
-            }
-        } else {
-            return [true, ''];
+            });
         }
+        return [true, ''];
     }
 
     /**
