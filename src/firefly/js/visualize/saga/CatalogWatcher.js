@@ -177,11 +177,12 @@ function updateDrawingLayer(tbl_id, tableModel, tableRequest,
 }
 
 function attachToCatalog(tbl_id, payload) {
-    const {pvNewPlotInfoAry=[], wpRequest, wpRequestAry} = payload;
+    const {pvNewPlotInfoAry=[], wpRequest, wpRequestAry, redReq, blueReq, greenReq} = payload;
     const dl= getDrawLayerById(dlRoot(), tbl_id);
     if (!dl) return;
     pvNewPlotInfoAry.forEach( (info, idx) => {
-        const r= wpRequest || wpRequestAry[idx];
+        let r= wpRequest || get(wpRequestAry,idx);
+        if (!r) r= (redReq || blueReq || greenReq);
         if (!r || r.getRelatedTableId()===tbl_id) return;
         dispatchAttachLayerToPlot(dl.drawLayerId, info.plotId);
         const pv= getPlotViewById(visRoot(), info.plotId);

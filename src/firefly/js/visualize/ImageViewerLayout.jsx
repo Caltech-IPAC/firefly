@@ -120,7 +120,7 @@ export class ImageViewerLayout extends PureComponent {
 
         const {viewDim}= pv;
         // if (width!==viewDim.width || height!==viewDim.height || prevWidth!==width || prevHeight!==height ) {
-        if (prevWidth!==width || prevHeight!==height ) {
+        if (prevWidth!==width || prevHeight!==height || (!viewDim.width && !viewDim.height && width && height)) {
             dispatchUpdateViewSize(pv.plotId,width,height); // case: any resizing
 
             if (primePlot(pv)) {

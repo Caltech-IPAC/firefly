@@ -416,7 +416,7 @@ function findADataSourceColumn(meta,columns) {
     const dsCol= Object.keys(meta).find( (key) => key.toUpperCase()===dataSourceUpper);
     let guesses= meta[dsCol] ? [meta[dsCol],...defDataSourceGuesses] : defDataSourceGuesses;
     guesses= guesses.map( (g) => g.toUpperCase());
-    return columns.find( (c) => guesses.includes(c.name.toUpperCase()));
+    return columns.find( (c) => guesses.includes(c.name.toUpperCase())) || {};
 }
 
 function findTableMetaEntry(table,ids) {
