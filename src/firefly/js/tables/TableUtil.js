@@ -8,7 +8,7 @@ import Enum from 'enum';
 import {makeFileRequest, MAX_ROW} from './TableRequestUtil.js';
 import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
-import {FilterInfo} from './FilterInfo.js';
+import {FilterInfo, getNumFilters} from './FilterInfo.js';
 import {SelectInfo} from './SelectInfo.js';
 import {flux} from '../Firefly.js';
 import {encodeServerUrl, uniqueID} from '../util/WebUtil.js';
@@ -341,7 +341,7 @@ export function getColumnByID(tableModel, ID) {
 
 export function getFilterCount(tableModel) {
     const filterInfo = get(tableModel, 'request.filters');
-    const filterCount = filterInfo ? filterInfo.split(';').length : 0;
+    const filterCount = getNumFilters(filterInfo);
     return filterCount;
 }
 

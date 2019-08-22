@@ -7,6 +7,7 @@ import {has, get, isEmpty, cloneDeep, findKey, omit} from 'lodash';
 import {updateSet, updateMerge} from '../../util/WebUtil.js';
 import * as Cntlr from '../TablesCntlr.js';
 import {getTblInfo, isTableLoaded, smartMerge, getAllColumns} from '../TableUtil.js';
+import {getNumFilters} from '../FilterInfo.js';
 
 
 /*---------------------------- REDUCERS -----------------------------*/
@@ -82,7 +83,7 @@ function uiStateReducer(ui, tableModel) {
     // if (!get(tableModel, 'tableData')) return ui;
     const {startIdx, endIdx, tbl_id, ...others} = getTblInfo(tableModel);
     const filterInfo = get(tableModel, 'request.filters');
-    const filterCount = filterInfo ? filterInfo.split(';').length : 0;
+    const filterCount = getNumFilters(filterInfo);
     const sortInfo = get(tableModel, 'request.sortInfo');
     const showLoading = !isTableLoaded(tableModel);
     const showMask = tableModel && tableModel.isFetching;
