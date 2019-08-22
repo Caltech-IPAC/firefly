@@ -46,7 +46,7 @@ const COND_SEP = new RegExp('( and | or )', 'i');
  */
 export function getNumFilters(filterInfoStr) {
     if (filterInfoStr) {
-        return Math.round((filterInfoStr.split(new RegExp(`( and | or |${FILTER_SEP})`, 'i')).length+1)/2);
+        return filterInfoStr.split(new RegExp(` and | or |${FILTER_SEP}`, 'i')).length;
     } else {
         return 0;
     }
