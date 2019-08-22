@@ -26,11 +26,13 @@ export const FILTER_TTIPS =
 * when IN is used, enclose the values in parentheses
 * you may combine conditions with either 'and' or 'or'
 * grouping by parentheses is not supported at the moment
-* '${FILTER_SEP}' serves as groups separator at the moment 
 Examples:  
-  "ra" > 5 and "color" != 'blue' or "band" IN (1,2,3)
-  "ra" < 5 or "ra" > 6 _AND_ "dec" < -1 or "dec" > 1
+  "ra" > 5 and "color" != 'blue' or "band" IN (1,2,3) 
 `;
+
+// ('${FILTER_SEP}' serves as groups separator for now when grouping is necessary)
+// "ra" < 5 or "ra" > 6 _AND_ "dec" < -1 or "dec" > 1
+
 
 export const NULL_TOKEN = '%NULL';          // need to match DbAdapter.NULL_TOKEN
 
