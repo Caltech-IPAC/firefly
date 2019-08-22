@@ -295,8 +295,9 @@ export class CysConverter {
     }
 
     static getLtv(header) {
+        let ltv1=0, ltv2=0;
+        if (!header) return {ltv1,ltv2};
         const {LTV1,LTV2, CRVAL1A,CRVAL2A}= header;
-        let ltv1, ltv2;
         if (!isNaN(Number(get(LTV1,'value'))) && !isNaN(Number(get(LTV2,'value')))) {
             ltv1= Number(get(LTV1,'value'));
             ltv2= Number(get(LTV2,'value'));
@@ -304,10 +305,6 @@ export class CysConverter {
         else if (!isNaN(Number(get(CRVAL1A,'value'))) && !isNaN(Number(get(CRVAL2A,'value')))) {
             ltv1= -Number(get(CRVAL1A,'value'));
             ltv2= -Number(get(CRVAL2A,'value'));
-        }
-        else {
-            ltv1= 0;
-            ltv2= 0;
         }
         return {ltv1,ltv2};
     }
