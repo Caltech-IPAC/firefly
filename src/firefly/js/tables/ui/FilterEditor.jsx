@@ -31,7 +31,7 @@ export class FilterEditor extends PureComponent {
 
         if (isEmpty(columns)) return false;
 
-        const {allowUnits} = getTableUiById(tbl_ui_id);
+        const {allowUnits} = getTableUiById(tbl_ui_id)||{};
         const {cols, data, selectInfoCls} = prepareOptionData(columns, sortInfo, filterInfo, selectable, allowUnits);
         const callbacks = makeCallbacks(onChange, columns, data, filterInfo);
         const renderers = makeRenderers(callbacks.onFilter, tbl_id);

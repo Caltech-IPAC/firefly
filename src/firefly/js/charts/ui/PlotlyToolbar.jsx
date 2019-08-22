@@ -412,9 +412,8 @@ function ClearFilter({style={}, tbl_id}) {
 function showFilterDialog(chartId) {
     const {data, fireflyData, activeTrace} = getChartData(chartId);
     const tbl_id = get(data, `${activeTrace}.tbl_id`) || get(fireflyData, `${activeTrace}.tbl_id`);
-    const tableModel = getTblById(tbl_id);
     const content= (
-        <FilterEditorWrapper tableModel={tableModel}/>
+        <FilterEditorWrapper tbl_id={tbl_id}/>
     );
 
     showOptionsPopup({content, title: 'Filters', modal: true, show: true});

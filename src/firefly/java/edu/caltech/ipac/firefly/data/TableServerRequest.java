@@ -20,7 +20,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
 
     public static final String TBL_FILE_PATH = "tblFilePath";       // this meta if exists contains source of the data
     public static final String TBL_FILE_TYPE = "tblFileType";       // this meta if exists contains storage type, ipac, h2, sqlite, etc
-    public static final String FILTER_SEP = "_AND_";         // need to match what's defined in FilterInfo.js
+    public static final String FILTER_SEP = " _AND_ ";         // need to match what's defined in FilterInfo.js
 
     public static final String TBL_ID = "tbl_id";
     public static final String TITLE = "title";
