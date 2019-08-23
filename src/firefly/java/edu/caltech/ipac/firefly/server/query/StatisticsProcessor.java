@@ -43,8 +43,9 @@ public class StatisticsProcessor extends TableFunctionProcessor {
     }
 
     protected DataGroup fetchData(TableServerRequest treq, File dbFile, DbAdapter dbAdapter) throws DataAccessException {
-        EmbeddedDbProcessor proc = getSearchProcessor(getSearchRequest(treq));
-        String origDataTblName = proc.getResultSetID(treq);
+        TableServerRequest sreq = getSearchRequest(treq);
+        EmbeddedDbProcessor proc = getSearchProcessor(sreq);
+        String origDataTblName = proc.getResultSetID(sreq);
         // check to see if a resultset table exists... if not, use orginal data table.
         DbInstance dbInstance = dbAdapter.getDbInstance(dbFile);
         String tblExists = String.format("select count(*) from %s", origDataTblName);
