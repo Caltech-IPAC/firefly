@@ -106,8 +106,7 @@ export function watchCatalogs(tbl_id, action, cancelSelf, params) {
 
 function handleCatalogUpdate(tbl_id) {
     const sourceTable= getTblById(tbl_id);
-
-
+    if (!sourceTable || sourceTable.isFetching) return;
     const {totalRows, request, highlightedRow,selectInfo, title}= sourceTable;
     const maxScatterRows = getMaxScatterRows();
     const columns= findTableCenterColumns(sourceTable);
@@ -117,7 +116,7 @@ function handleCatalogUpdate(tbl_id) {
     const params= {
         startIdx : 0,
         pageSize : MAX_ROW,
-        inclCols : `"${columns.lonCol}","${columns.latCol}","ROW_IDX"`        // column names should be in quotes
+        inclCols : `"${columns.lonCol}","${columns.latCol}","ROW_IDX"`        // clumn names should be in quotes
     };
 
     let req = cloneRequest(sourceTable.request, params);

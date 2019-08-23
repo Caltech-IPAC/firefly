@@ -250,7 +250,7 @@ function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, 
 
     try {
         const table = getTblById(tbl_id);
-        if (!table) return;
+        if (!table || table.isFetching) return;
         if (preparedTables[tbl_id] === 'WORKING') return;
 
 
@@ -645,8 +645,9 @@ function cleanUpOptions(options) {
  */
 function findPreferredHiPS(tbl_id,prevPreferredHipsSourceURL, optionHipsSourceURL, preparedTable) {
 
+    const table = getTblById(tbl_id);
+    if (!table || table.isFetching) return optionHipsSourceURL;
     if (!preparedTable) { // if a new table then the meta takes precedence
-        const table = getTblById(tbl_id);
         if (table && table.tableMeta[MetaConst.COVERAGE_HIPS]) return table.tableMeta[MetaConst.COVERAGE_HIPS];
     }
     const plot= primePlot(visRoot(), PLOT_ID);

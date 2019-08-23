@@ -6,17 +6,21 @@ import {DrawSymbol} from './PointDataObj.js';
 import Enum from 'enum';
 
 
-export const COLOR_SELECTED_PT = '#ffff00';
+export const COLOR_SELECTED_PT = '#ffff00'; // yellow
 export const COLOR_HIGHLIGHTED_PT = '#ff8000'; // orange
-export const COLOR_PT_1 = '#ff0000'; // red
-export const COLOR_PT_2 = '#00ff00'; //green
-export const COLOR_PT_3 = 'pink';  // pink
-export const COLOR_PT_4 = '#00a8ff'; //blue
-export const COLOR_PT_5 =  '#990099'; //purple
-export const COLOR_PT_6 = '#ff8000'; //orange
+const COLOR_PT_1 = '#ff0000'; // red
+const COLOR_PT_2 = '#00ff00'; //green
+const COLOR_PT_3 = 'pink';  // pink
+const COLOR_PT_4 = '#00a8ff'; //blue
+const COLOR_PT_5 =  '#990099'; //purple
+const COLOR_PT_6 = '#ff8000'; //orange
+const COLOR_PT_7 = '#00ffff'; //Aqua
+const COLOR_PT_8 = '#800000'; //Maroon
 
-export const COLOR_DRAW_1 = '#ff0000';
-export const COLOR_DRAW_2 = '#5500ff';
+const USED_COLORS= [COLOR_PT_1, COLOR_PT_2, COLOR_PT_3, COLOR_PT_5, COLOR_PT_6, COLOR_PT_7, COLOR_PT_8];
+
+export const COLOR_DRAW_1 = '#ff0000'; // red
+export const COLOR_DRAW_2 = '#5500ff'; // purple
 
 /** 
  *  enum
@@ -77,7 +81,7 @@ export const DEFAULT_FONT_SIZE = '9pt';
  * Object to hold defaults for drawing a group of objects.
  *
  * @param color
- * @param pointData
+ * @param presetDefaults
  * @return {DrawingDef}
  */
 export function makeDrawingDef(color= 'red', presetDefaults= {}) {
@@ -101,17 +105,21 @@ export function makeDrawingDef(color= 'red', presetDefaults= {}) {
     return Object.assign({}, def, presetDefaults);
 }
 
+const colorList= USED_COLORS.map( (c) => ({count:0, name:c}));
 
-
-export function *colorGenerator() {
-    const defColors= [COLOR_PT_1, COLOR_PT_2, COLOR_PT_3, COLOR_PT_5, COLOR_PT_6];
-    var colorCnt= 0;
-    while (true) {
-        yield defColors[colorCnt% defColors.length];
-        colorCnt++;
-    }
+export function getNextColor() {
+    const nextColor= [...colorList].sort( (cO1, cO2) => cO1.count-cO2.count)[0];
+    nextColor.count++;
+    return nextColor.name;
 }
 
-const nextColor= colorGenerator();
+export function releaseColor(cName) {
+    const colorObj= colorList.find( (cO) => cO.name===cName);
+    if (colorObj && colorObj.count>0) colorObj.count--;
+}
 
-export const getNextColor= () => nextColor.next().value;
+
+
+
+
+

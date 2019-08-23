@@ -145,6 +145,7 @@ export function getDrawLayerCntlrDef(drawLayerFactory) {
         actionCreators() {
             return {
                 [DETACH_LAYER_FROM_PLOT] :  makeDetachLayerActionCreator(drawLayerFactory),
+                [DESTROY_DRAWING_LAYER] :  makeDestoyLayerActionCreator(drawLayerFactory),
                 [CHANGE_VISIBILITY] :  makeChangeVisibilityActionCreator(drawLayerFactory),
                 [SELECT_AREA_END] :  selectAreaEndActionCreator,
                 [DT_END] :  distanceToolEndActionCreator,
@@ -603,6 +604,17 @@ function getDrawLayerIdAry(dlRoot,id, matchTitles= false) {
 //=============================================
 //=============================================
 //=============================================
+
+function makeDestoyLayerActionCreator(factory) {
+    return (action) => {
+        return (dispatcher) => {
+            const {drawLayerId}= action.payload;
+            const drawLayer= getDrawLayerById(getDlAry(), drawLayerId);
+            factory.onDetachAction(drawLayer,action);
+            dispatcher(action);
+        };
+    };
+}
 
 function makeDetachLayerActionCreator(factory) {
     return (action) => {

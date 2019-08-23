@@ -48,6 +48,11 @@ export const MetaConst = {
     /** a string or html rgb color that can be set in metadata, use with catalog overlay */
     DEFAULT_COLOR : 'DEFAULT_COLOR',
 
+    /** a string to represent the drawing symbol
+     * @see ../visualize/draw/PointDataObj.js for a list of draw symbols, DrawSymbol
+     */
+    DEFAULT_SYMBOL : 'DEFAULT_SYMBOL',
+
     /** used by time series, defines the mission
      * @see LcManager.js
      * @see getConverterId

@@ -9,7 +9,7 @@ import {primePlot,getAllDrawLayersForPlot} from '../visualize/PlotViewUtil.js';
 import {visRoot, dispatchUseTableAutoScroll} from '../visualize/ImagePlotCntlr.js';
 import PointDataObj, {DrawSymbol} from '../visualize/draw/PointDataObj.js';
 import FootprintObj from '../visualize/draw/FootprintObj.js';
-import {makeDrawingDef, getNextColor} from '../visualize/draw/DrawingDef.js';
+import {makeDrawingDef, getNextColor, releaseColor} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import DrawLayerCntlr, {SUBGROUP} from '../visualize/DrawLayerCntlr.js';
@@ -41,7 +41,7 @@ const CatalogType = new Enum(['X', 'BOX', 'REGION']);
 
 
 const findColIdx= (columns,colId) => columns.findIndex( (c) => c.name===colId);
-const factoryDef= makeFactoryDef(TYPE_ID,creator,getDrawData,getLayerChanges,null,getUIComponent);
+const factoryDef= makeFactoryDef(TYPE_ID,creator,getDrawData,getLayerChanges,layerRemoved,getUIComponent);
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
 
 
@@ -65,7 +65,9 @@ function creator(initPayload, presetDefaults={}) {
 
     const drawingDef= {...makeDrawingDef(),
             size: size || 5,
-            symbol: DrawSymbol.get(symbol) || DrawSymbol.SQUARE,
+            symbol: DrawSymbol.get(symbol) ||
+                DrawSymbol.get(get(tableMeta,MetaConst.DEFAULT_SYMBOL)) ||
+                DrawSymbol.SQUARE,
         ...presetDefaults};
 
     const pairs= { [MouseState.DOWN.key]: highlightChange };
@@ -117,6 +119,10 @@ function creator(initPayload, presetDefaults={}) {
         searchTargetVisible: true,
         searchTargetDrawingDef,
     };
+}
+
+function layerRemoved(drawLayer,action) {
+    releaseColor(drawLayer.drawingDef.color);
 }
 
 

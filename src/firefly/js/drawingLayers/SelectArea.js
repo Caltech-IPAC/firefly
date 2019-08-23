@@ -108,8 +108,13 @@ function creator(initPayload) {
 function onDetach(drawLayer,action) {
     const {plotIdAry}= action.payload;
     plotIdAry.forEach( (plotId) => {
-        dispatchAttributeChange({plotId, overlayColorScope:false, attKey:PlotAttribute.SELECTION, attValue:null});
-        dispatchAttributeChange({plotId,overlayColorScope:false,attKey:PlotAttribute.IMAGE_BOUNDS_SELECTION,attValue:null});
+        const plot= primePlot(visRoot(),plotId);
+        if (plot && plot.attributes[PlotAttribute.SELECTION]) {
+            dispatchAttributeChange({plotId, overlayColorScope:false, attKey:PlotAttribute.SELECTION, attValue:null});
+        }
+        if (plot && plot.attributes[PlotAttribute.IMAGE_BOUNDS_SELECTION]) {
+            dispatchAttributeChange({plotId,overlayColorScope:false,attKey:PlotAttribute.IMAGE_BOUNDS_SELECTION,attValue:null});
+        }
     });
 }
 
