@@ -35,8 +35,8 @@ const fKeyDef = {
 };
 
 const tableFormats = new Enum({ipac: 'ipac',
-                               csv: 'csv: Comma-Seperated values',
-                               tsv: 'tsv: Tab-Seperated values',
+                               csv: 'csv: Comma-Separated values',
+                               tsv: 'tsv: Tab-Separated values',
                                'votable-tabledata': 'votable-tablemeta: TABLEDATA-format VOTable',
                                'votable-binary-inline': 'votable-binary: inline BINARY-format VOTable',
                                //'votable-binary-href': 'votable-binary-href: External BINARY-format VOTable',
