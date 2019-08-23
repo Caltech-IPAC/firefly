@@ -95,10 +95,15 @@ function creator() {
 
 function onDetach(drawLayer,action) {
     var {plotIdAry}= action.payload;
-    plotIdAry.forEach( (plotId) => dispatchAttributeChange({
-        plotId,overlayColorScope:false,
-        attKey:PlotAttribute.ACTIVE_DISTANCE,attValue:null
-    }));
+    plotIdAry.forEach( (plotId) => {
+        const plot= primePlot(visRoot(),plotId);
+        if (plot && plot.attributes[PlotAttribute.ACTIVE_DISTANCE]) {
+            dispatchAttributeChange({
+                plotId,overlayColorScope:false,
+                attKey:PlotAttribute.ACTIVE_DISTANCE,attValue:null
+            });
+        }
+    });
 }
 
 function getCursor(plotView, screenPt) {

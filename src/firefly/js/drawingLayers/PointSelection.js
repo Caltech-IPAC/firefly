@@ -43,9 +43,14 @@ function dispatchSelectPoint(mouseStatePayload) {
 
 function onDetach(drawLayer,action) {
     const {plotIdAry}= action.payload;
-    plotIdAry.forEach( (plotId) => dispatchAttributeChange(
-        { plotId ,overlayColorScope:false,attKey:PlotAttribute.ACTIVE_POINT,attValue:null }
-    ));
+    plotIdAry.forEach( (plotId) => {
+        const plot= primePlot(visRoot(),plotId);
+        if (plot && plot.attributes[PlotAttribute.ACTIVE_POINT]) {
+            dispatchAttributeChange(
+                { plotId ,overlayColorScope:false,attKey:PlotAttribute.ACTIVE_POINT,attValue:null }
+            );
+        }
+    });
 }
 
 
