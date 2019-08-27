@@ -10,8 +10,9 @@ import {callCrop, callChangeColor, callRecomputeStretch} from '../../rpc/PlotSer
 import WebPlotResult from '../WebPlotResult.js';
 import {WebPlot} from '../WebPlot.js';
 import {populateFromHeader} from './PlotImageTask';
-import {isImage} from '../WebPlot';
+import {isHiPS, isImage} from '../WebPlot';
 import {matchHiPStoPlotView} from './PlotHipsTask';
+import {matchImageToHips} from './WcsMatchTask';
 
 
 
@@ -56,6 +57,10 @@ function locateHiPSIfMatched(vr,plotId) {
     const pv = getPlotViewById(vr, plotId);
     if (vr.wcsMatchType !== WcsMatchType.Target && vr.wcsMatchType !== WcsMatchType.Standard) return;
     if (isImage(primePlot(pv))) matchHiPStoPlotView(vr, pv);
+    else if (isHiPS(primePlot(pv))) {
+        const imagePv= vr.plotViewAry.find( (aPv) => isImage(primePlot(aPv)));
+        matchImageToHips(pv, imagePv);
+    }
 }
 
 

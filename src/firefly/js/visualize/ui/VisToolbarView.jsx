@@ -318,7 +318,7 @@ export class VisToolbarView extends PureComponent {
 
                 <SimpleLayerOnOffButton plotView={pv}
                                 isIconOn={pv&&plot? isOverlayColorLocked(pv,plotGroupAry) : false }
-                                tip='Lock images of all bands for color change and overlays'
+                                tip='Lock all images for color changes and overlays.'
                                 iconOn={LOCKED}
                                 iconOff={UNLOCKED}
                                 visible={mi.overlayColorLock}

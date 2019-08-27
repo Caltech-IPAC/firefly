@@ -16,7 +16,7 @@ import ImagePlotCntlr, {
     WcsMatchType
 } from '../ImagePlotCntlr.js';
 import {getArcSecPerPix, getZoomLevelForScale, UserZoomTypes} from '../ZoomUtil.js';
-import {PlotAttribute, WebPlot} from '../WebPlot.js';
+import {PlotAttribute, WebPlot, isHiPS, isImage} from '../WebPlot.js';
 import {clone, fetchUrl, loadImage} from '../../util/WebUtil.js';
 import {
     findCurrentCenterPoint,
@@ -47,7 +47,6 @@ import {
     determineViewerId,
     ensureWPR,
     getHipsImageConversion,
-    initBuildInDrawLayers
 } from './PlotImageTask.js';
 import {
     dispatchAttachLayerToPlot,
@@ -58,9 +57,7 @@ import {
 } from '../DrawLayerCntlr.js';
 import ImageOutline from '../../drawingLayers/ImageOutline.js';
 import Artifact from '../../drawingLayers/Artifact.js';
-import {isHiPS, isImage} from '../WebPlot';
 import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
-// import ActiveTarget from '../../drawingLayers/ActiveTarget.js';
 import {resolveHiPSIvoURL} from '../HiPSListUtil.js';
 import {addNewMocLayer, isMOCFitsFromUploadAnalsysis, makeMocTableId, MOCInfo, UNIQCOL} from '../HiPSMocUtil.js';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
@@ -560,19 +557,13 @@ function matchHiPSToImage(pv, hipsPVidAry) {
         }
         const hipsPv= getPlotViewById(visRoot(), id);
         const hipsPlot= primePlot(hipsPv);
-        // const {width,height}= pv.viewDim;
-        // const cc= CysConverter.make(hipsPlot);
-        // const sp0=  cc.getScreenCoords(attributes[PlotAttribute.OUTLINEIMAGE_BOUNDS][0]);
-        // const sp2=  cc.getScreenCoords(attributes[PlotAttribute.OUTLINEIMAGE_BOUNDS][2]);;
-        // const level= Math.min(width/Math.abs(sp0.x-sp2.x),
-        //                       height/Math.abs(sp0.y-sp2.y)) * hipsPlot.zoomFactor;
-        // dispatchZoom({ plotId:id, userZoomType: UserZoomTypes.LEVEL, level});
-
-        //---
         const level= getZoomLevelForScale(hipsPlot,asPerPix);
-        dispatchZoom({ plotId:id, userZoomType: UserZoomTypes.LEVEL, level});
-    }) ;
+        if (Math.abs(getArcSecPerPix(hipsPlot, hipsPlot.zoomFactor)-asPerPix) >.001) {
+            dispatchZoom({ plotId:id, userZoomType: UserZoomTypes.LEVEL, level});
+        }
+    });
 }
+
 
 function getCornersAttribute(pv) {
     const plot= primePlot(pv);

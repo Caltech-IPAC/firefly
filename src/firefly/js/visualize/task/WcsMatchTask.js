@@ -12,23 +12,22 @@ import ImagePlotCntlr, {
     dispatchRotate,
     dispatchUpdateViewSize,
     dispatchZoom,
+    dispatchChangeCenterOfProjection,
+    dispatchChangeHiPS,
     IMAGE_PLOT_KEY,
     WcsMatchType
 } from '../ImagePlotCntlr.js';
-import {applyToOnePvOrAll, getPlotViewById, primePlot} from '../PlotViewUtil.js';
-import {PlotAttribute} from '../WebPlot.js';
-import {FullType, getRotationAngle, isEastLeftOfNorth, isPlotNorth, isRotationMatching} from '../VisUtil.js';
+import {applyToOnePvOrAll, getPlotViewById, primePlot,
+               findCurrentCenterPoint, getCenterOfProjection, hasWCSProjection} from '../PlotViewUtil.js';
+import {PlotAttribute, isHiPS, isImage} from '../WebPlot.js';
+import {FullType, getRotationAngle, isEastLeftOfNorth, isPlotNorth, isRotationMatching, getMatchingRotationAngle} from '../VisUtil.js';
 import {getArcSecPerPix, getEstimatedFullZoomFactor, getZoomLevelForScale, UserZoomTypes} from '../ZoomUtil.js';
 import {RotateType} from '../PlotState.js';
 import {CCUtil} from '../CsysConverter.js';
 import {ZoomType} from '../ZoomType.js';
-import {makeScreenPt} from '../Point.js';
+import {makeScreenPt, pointEquals} from '../Point.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
-import {getCenterOfProjection, hasWCSProjection} from '../PlotViewUtil';
-import {isHiPS, isImage} from '../WebPlot';
 import {matchHiPStoPlotView} from './PlotHipsTask';
-import {dispatchChangeCenterOfProjection, dispatchChangeHiPS} from '../ImagePlotCntlr';
-import {getMatchingRotationAngle} from '../VisUtil';
 
 
 export function* watchForCompletedPlot(options, dispatch, getState) {
@@ -153,12 +152,16 @@ export function wcsMatchActionCreator(action) {
                     }
                 }
             );
-            matchHiPStoPlotView(visRoot,masterPv);
+            (matchType===WcsMatchType.Standard || matchType===WcsMatchType.Target) && matchHiPStoPlotView(visRoot,masterPv);
         }
         else if (hips) {
             dispatchZoom({plotId, userZoomType: UserZoomTypes.LEVEL, level:masterPlot.zoomFactor});
             dispatchChangeCenterOfProjection({plotId,centerProjPt:getCenterOfProjection(masterPlot)});
             dispatchChangeHiPS({plotId, coordSys: masterPlot.imageCoordSys});
+            visRoot= getState()[IMAGE_PLOT_KEY];
+            const imagePv= visRoot.plotViewAry.find( (aPv) => isImage(primePlot(aPv)));
+            const hipsPV= getPlotViewById(visRoot,plotId);
+            matchImageToHips(hipsPV,imagePv);
         }
 
         if (!lockMatch) {
@@ -173,6 +176,22 @@ export function wcsMatchActionCreator(action) {
 
 
 
+export function matchImageToHips(hipsPv, imagePv) {
+    const imagePlot= primePlot(imagePv);
+    const hipsPlot= primePlot(hipsPv);
+    if (!imagePlot || !hipsPlot) return;
+    const wp= getCenterOfProjection(hipsPlot);
+    const imageCenter= CCUtil.getWorldCoords(imagePlot, findCurrentCenterPoint(imagePv));
+    if (!pointEquals(imageCenter,wp)) {
+        dispatchRecenter({plotId: imagePlot.plotId, centerPt:wp});
+    }
+
+    const targetASpix= getArcSecPerPix(hipsPlot,hipsPlot.zoomFactor);
+    if (Math.abs(getArcSecPerPix(imagePlot,hipsPlot.zoomFactor)-targetASpix) >.001) {
+        const level= getZoomLevelForScale(imagePlot, targetASpix);
+        dispatchZoom({plotId:imagePlot.plotId, userZoomType:UserZoomTypes.LEVEL, level, actionScope:ActionScope.GROUP})
+    }
+}
 
 
 

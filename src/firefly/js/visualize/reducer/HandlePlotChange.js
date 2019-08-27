@@ -291,15 +291,23 @@ function installTiles(state, action) {
  */
 function processProjectionChange(state,action) {
     const {plotId,centerProjPt}= action.payload;
-    const {plotViewAry}= state;
+    const {plotViewAry,wcsMatchType}= state;
     const newPlotViewAry= applyToOnePvOrAll(state.positionLock, plotViewAry, plotId, false,
          (pv)=> {
              const plot= primePlot(pv);
              if (plot) pv= replacePrimaryPlot(pv, changeProjectionCenter(plot,centerProjPt));
              return pv;
          } );
-
-    return clone(state, {plotViewAry : newPlotViewAry});
+    const matchingByWcs= wcsMatchType===WcsMatchType.Standard || wcsMatchType===WcsMatchType.Target;
+    let newState= {...state, plotViewAry :newPlotViewAry};
+    if (matchingByWcs)  {
+        const imagePv= newPlotViewAry.find( (aPv) => isImage(primePlot(aPv)));
+        if (imagePv) {
+            const finalPvAry= recenterUsingWcsMatch(newState,imagePv,centerProjPt, false,true);
+            newState= {...newState, plotViewAry :finalPvAry};
+        }
+    }
+    return newState;
 }
 
 /**
@@ -560,6 +568,7 @@ function updateViewSize(state,action) {
 
 
 
+
 /**
  * @param {VisRoot} state
  * @param {Action} action
@@ -567,24 +576,39 @@ function updateViewSize(state,action) {
  */
 function recenter(state,action) {
     const {plotId, centerPt, centerOnImage }= action.payload;
-    const {plotGroupAry, wcsMatchType}= state;
-    let   {plotViewAry}= state;
+    const {wcsMatchType}= state;
     const pv= getPlotViewById(state,plotId);
 
+    let plotViewAry;
     if (wcsMatchType) {
-        const newPv= recenterPv(centerPt, centerOnImage)(pv);
-        plotViewAry= replacePlotView(plotViewAry, newPv);
-        plotViewAry= matchPlotViewByPositionGroup(state, newPv, plotViewAry, false, (pv) => {
-            return updateScrollToWcsMatch(wcsMatchType, newPv, pv);
-        } );
+        plotViewAry= recenterUsingWcsMatch(state,pv,centerPt,centerOnImage);
     }
     else {
-        plotViewAry= applyToOnePvOrAll(state.positionLock, plotViewAry,plotId,false, recenterPv(centerPt, centerOnImage));
+        plotViewAry= applyToOnePvOrAll(state.positionLock, state.plotViewAry,plotId,false, recenterPv(centerPt, centerOnImage));
     }
 
 
     return clone(state,{plotViewAry, mpwWcsPrimId:plotId});
 }
+
+
+function recenterUsingWcsMatch(state, pv, centerPt, centerOnImage=false, onlyImages= false) {
+    const {wcsMatchType}= state;
+    let   {plotViewAry}= state;
+    const newPv= recenterPv(centerPt, centerOnImage)(pv);
+    plotViewAry= replacePlotView(plotViewAry, newPv);
+    plotViewAry= matchPlotViewByPositionGroup(state, newPv, plotViewAry, false, (pv) => {
+        if (onlyImages && isHiPS(primePlot(pv))) return pv;
+        if (isImage(primePlot(pv))) {
+            return updateScrollToWcsMatch(wcsMatchType, newPv, pv);
+        }
+        else {
+            return recenterPv(centerPt, centerOnImage)(pv);
+        }
+    } );
+    return plotViewAry;
+}
+
 
 /**
  * Center on the FIXED_TARGET attribute or the center of the plot or specified center point

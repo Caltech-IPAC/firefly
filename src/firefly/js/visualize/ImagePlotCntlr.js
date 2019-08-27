@@ -27,7 +27,7 @@ import {colorChangeActionCreator, stretchChangeActionCreator, cropActionCreator}
 import {wcsMatchActionCreator} from './task/WcsMatchTask.js';
 import {autoPlayActionCreator, changePointSelectionActionCreator,
     restoreDefaultsActionCreator, deletePlotViewActionCreator} from './task/PlotAdminTask.js';
-import {flipActionCreator, processScrollActionCreator, recenterActionCreator} from './task/PlotChangeTask';
+import { flipActionCreator, processScrollActionCreator, recenterActionCreator } from './task/PlotChangeTask';
 
 /** enum can be 'COLLAPSE', 'GRID', 'SINGLE' */
 export const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);

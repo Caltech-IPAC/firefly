@@ -23,6 +23,7 @@ function changeMatchType(vr, matchType, lockMatch) {
  */
 const getCountWithWCS= (vr) => getPlotViewAry(vr).filter( (pv) => hasWCSProjection(pv)).length;
 
+const getCountWithImages= (vr) => getPlotViewAry(vr).filter( (pv) => isImage(primePlot(pv))).length;
 
 /**
  * @param {VisRoot} vr
@@ -37,49 +38,52 @@ export function MatchLockDropDown({visRoot:vr, enabled}) {
     const {wcsMatchType}= vr;
     const wcsCnt= getCountWithWCS(vr);
     const tCnt= getCountWithTarget(vr);
+    const imageCnt= getCountWithImages(vr);
     const p= primePlot(vr);
     const hasWcs= p && hasWCSProjection(p);
     const hasTarget= Boolean(p && get(p, ['attributes',PlotAttribute.FIXED_TARGET]));
-    const pvAry= getPlotViewAry(vr);
-    const singleSelectedHiPS= isHiPS(p) && pvAry.filter( (pv) => isHiPS(primePlot(pv))).length===1;
     const additionalStyle = {marginLeft: 15};
     const titleDiv= {fontSize:'10pt', fontWeight: 'bold', padding: '0 0 3px 0'};
 
     const dropDown= (
         <SingleColumnMenu>
-            <div style={titleDiv} title='Align only options (will always align but unlock the image and HiPS)'>Align only Options </div>
+            <div style={titleDiv} title='Align all images to the selected image, but leave unlocked'>
+                Align-only Options
+            </div>
             <ToolbarButton text='by WCS' tip='Align by WCS (no locking)'
-                           enabled={hasWcs && wcsCnt>1 && !singleSelectedHiPS}
+                           enabled={hasWcs && wcsCnt>1}
                            horizontal={false} key={'by wcs'}
                            additionalStyle={additionalStyle}
                            hasCheckBox={true}
                            onClick={() => changeMatchType(vr, WcsMatchType.Standard, false)}/>
 
             <ToolbarButton text='by Target' tip='Align by Target (no locking)'
-                           enabled={hasTarget && tCnt>1 && !singleSelectedHiPS}
+                           enabled={hasTarget && tCnt>1}
                            horizontal={false} key={'by target'}
                            additionalStyle={additionalStyle}
                            hasCheckBox={true}
                            onClick={() => changeMatchType(vr, WcsMatchType.Target, false)}/>
 
-            <ToolbarButton text='by Pixel' tip='Align by Pixel (no locking)'
-                           enabled={pvAry.length>1 && isImage(p)}
+            <ToolbarButton text='by Pixel Origins' tip='Align by Pixel Origins (no locking)'
+                           enabled={isImage(p) && imageCnt>1}
                            horizontal={false} key={'by pixel'}
                            additionalStyle={additionalStyle}
                            hasCheckBox={true}
                            onClick={() => changeMatchType(vr, WcsMatchType.Pixel, false)}/>
 
-            <ToolbarButton text='by Pixel at Image Center' tip='Align by Pixel at Image Center (no locking)'
-                           enabled={pvAry.length>1 && isImage(p)}
+            <ToolbarButton text='by Pixel at Image Centers' tip='Align by Pixel at Image Centers (no locking)'
+                           enabled={isImage(p) && imageCnt>1}
                            horizontal={false} key={'by pixel/center'}
                            additionalStyle={additionalStyle}
                            hasCheckBox={true}
                            onClick={() => changeMatchType(vr, WcsMatchType.PixelCenter, false)}/>
 
             <DropDownVerticalSeparator useLine={true}/>
-            <div style={titleDiv} title='Align and lock options'>Align and Lock Options</div>
+            <div style={titleDiv} title='Align all images to the selected image, and lock this mode'>
+                Align and Lock Options
+            </div>
 
-            <ToolbarButton text='Unlock' tip='Unlock all image and HiPS' hasCheckBox={true} checkBoxOn={!wcsMatchType}
+            <ToolbarButton text='Unlock' tip='Unlock the alignment of all images' hasCheckBox={true} checkBoxOn={!wcsMatchType}
                                      enabled={true} horizontal={false} key={'unlock'}
                                      additionalStyle={additionalStyle}
                                      onClick={() => changeMatchType(vr, false)}/>
@@ -98,7 +102,7 @@ export function MatchLockDropDown({visRoot:vr, enabled}) {
                            additionalStyle={additionalStyle}
                            onClick={() => changeMatchType(vr, WcsMatchType.Target, true)}/>
 
-            <ToolbarButton text='by Pixel' tip='Align by Pixel & Lock'
+            <ToolbarButton text='by Pixel Origin' tip='Align by Pixel Origin & Lock'
                            enabled={isImage(p)}
                            hasCheckBox={true}
                            checkBoxOn={wcsMatchType===WcsMatchType.Pixel}
@@ -106,7 +110,7 @@ export function MatchLockDropDown({visRoot:vr, enabled}) {
                            additionalStyle={additionalStyle}
                            onClick={() => changeMatchType(vr, WcsMatchType.Pixel, true)}/>
 
-            <ToolbarButton text='by Pixel at Image Center' tip='Align by Pixel at Image Center & Lock'
+            <ToolbarButton text='by Pixel at Image Centers' tip='Align by Pixel at Image Centers & Lock'
                            enabled={isImage(p)}
                            hasCheckBox={true}
                            checkBoxOn={wcsMatchType===WcsMatchType.PixelCenter}
@@ -118,7 +122,7 @@ export function MatchLockDropDown({visRoot:vr, enabled}) {
 
     return (
         <DropDownToolbarButton icon={wcsMatchType?MATCH_LOCKED:MATCH_UNLOCKED }
-                               tip='Determine how to match images'
+                               tip='Determine how to align images'
                                enabled={enabled} horizontal={true}
                                visible={true}
                                hasHorizontalLayoutSep={false}

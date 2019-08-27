@@ -17,6 +17,7 @@ import WebPlotResult from '../WebPlotResult.js';
 import VisUtil from '../VisUtil.js';
 import {doHiPSImageConversionIfNecessary} from './PlotHipsTask.js';
 import {matchHiPStoPlotView} from './PlotHipsTask';
+import {matchImageToHips} from './WcsMatchTask';
 
 
 const ZOOM_WAIT_MS= 1500; // 1.5 seconds
@@ -152,8 +153,13 @@ function alignWCS(getState, pv) {
     }
     visRoot= getState()[IMAGE_PLOT_KEY]; // need a new one after actions
     pv= getPlotViewById(visRoot, pv.plotId);
-    if (isImage(primePlot(pv)) && (visRoot.wcsMatchType===WcsMatchType.Target || visRoot.wcsMatchType===WcsMatchType.Standard)) {
-        matchHiPStoPlotView(visRoot,pv);
+    if (visRoot.wcsMatchType===WcsMatchType.Target || visRoot.wcsMatchType===WcsMatchType.Standard) {
+        if (isImage(primePlot(pv))) {
+            matchHiPStoPlotView(visRoot,pv);
+        }
+        else if (isHiPS(primePlot(pv))) {
+           matchImageToHips(pv, getPlotViewById(visRoot, visRoot.mpwWcsPrimId));
+        }
     }
 }
 
