@@ -13,7 +13,7 @@ const PRELIM = 'prelim.';
 const NoPRELIM = '';
 
 // SPITZER is not included  06/24/2016
-export const FootprintList = ['HST', 'JWST', 'WFIRST', 'SPITZER', 'SOFIA'];
+export const FootprintList = ['SPITZER', 'SOFIA', 'HST', 'JWST', 'WFIRST'];
 export const FOOTPRINT = new Enum({HST: NoPRELIM, SPITZER: NoPRELIM, JWST: PRELIM, WFIRST: NoPRELIM, SOFIA:NoPRELIM});
 const JWST_INST = new Enum(['FGS', 'MIRI', 'NIRCAM', 'NIS', 'NIRSPEC']);
 const HST_INST = new Enum(['NICMOS', 'WFPC2', 'ACS/WFC', 'ACS/HRC', 'ACS/SBC', 'WFC3/UVIS', 'WFC3/IR']);
