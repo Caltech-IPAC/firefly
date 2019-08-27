@@ -253,3 +253,28 @@ ext.publishDocs = { docsDir, product ->
     }
     return res
 }
+
+
+/**
+ * this function execute the cmd, returns the status code.
+ * if failed with exception, then the standardOut and errorOut is returned as the exception messages
+ */
+ext.doExec = { workDir, ...cmd ->
+
+    if (!file(workDir).exists()) {
+        throw new GradleException(cmd + "\n ${workDir} does not exists.")
+    }
+
+    def buff = new ByteArrayOutputStream()
+    try {
+        def res = exec {
+            workingDir = workDir
+            commandLine cmd
+            standardOutput = buff
+            errorOutput = buff
+        }
+        return res;
+    } catch (Exception e) {
+        throw new GradleException(buff.toString())
+    }
+}

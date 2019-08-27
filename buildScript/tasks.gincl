@@ -284,6 +284,26 @@ task deploy (dependsOn: [loadConfig]) {
 }
 
 
+task checkoutFirefly (dependsOn: [loadConfig]) {
+    description= 'this task will checkout firefly to a given tag/branch'
+    group = MISC_GROUP
+
+    doLast {
+
+        def tag_name = appConfigProps.get('firefly.tag.name')
+        if (tag_name == null) {
+            def fireflyTagFile = appConfigProps.get('firefly.tag.file')
+            if (fireflyTagFile != null) {
+                tag_name = file(fireflyTagFile).text.trim()
+            }
+        }
+        if (tag_name == null || tag_name.length() == 0) {
+            throw new GradleException("Unable to resolve tag/branch name.  Tag can be defined as a 'firefly.tag.name' property or in a file referenced by a 'firefly.tag.file' property")
+        }
+        doExec fireflyPath, 'git', 'checkout', tag_name
+    }
+}
+
 
 /**----------------------------    test   ---------------------------------**/
 
