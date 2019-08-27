@@ -421,9 +421,9 @@ export const WebPlot= {
 
         const imageCoordSys= cubeCtx ? cubeCtx.imageCoordSys : wpInit.imageCoordSys;
         let plot= makePlotTemplate(plotId,'image',asOverlay, CoordinateSys.parse(imageCoordSys));
-        const dataWidth= cubeCtx ? cubeCtx.dataWidth : wpInit.dataWidth;
-        const dataHeight= cubeCtx ? cubeCtx.dataHeight : wpInit.dataHeight;
 
+        const dataWidth = cubeCtx ? wpInit.dataWidth? wpInit.dataWidth:cubeCtx.dataWidth: wpInit.dataWidth;
+        const dataHeight= cubeCtx ? wpInit.dataHeight?wpInit.dataHeight:cubeCtx.dataHeight : wpInit.dataHeight;
         const imagePlot= {
             tileData    : wpInit.initImages,
             relatedData     : null,
