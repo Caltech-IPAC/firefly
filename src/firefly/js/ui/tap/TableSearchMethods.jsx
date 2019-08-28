@@ -74,7 +74,7 @@ const SpatialWidth = 400;
 const fieldsMap = {[Spatial]: {
                         [SpatialPanel]: {label: Spatial},
                         [CenterColumns]: {label: 'Position Columns'},
-                        [CenterLonColumns]: {label: 'Longtitude Column'},
+                        [CenterLonColumns]: {label: 'Longitude Column'},
                         [CenterLatColumns]: {label: 'Latitude Column'},
                         [SpatialMethod]: {label: 'Search Method'},
                         [ServerParams.USER_TARGET_WORLD_PT]: {label: 'Name or Position'},
