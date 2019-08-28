@@ -12,7 +12,7 @@ import {SimpleComponent} from './../../ui/SimpleComponent.jsx';
 import {CHART_UPDATE, dataLoadedUpdate, getChartData, dispatchChartTraceRemove} from '../ChartsCntlr.js';
 import {NewTracePanel, getNewTraceType, getSubmitChangesFunc, addNewTrace} from './options/NewTracePanel.jsx';
 
-import {showOptionsPopup} from './../../ui/PopupUtil.jsx';
+import {PopupPanel} from './../../ui/PopupPanel.jsx';
 
 import {isScatter2d} from '../ChartUtil.js';
 import {BasicOptions} from './options/BasicOptions.jsx';
@@ -21,6 +21,8 @@ import {HeatmapOptions} from './options/HeatmapOptions.jsx';
 import {FireflyHistogramOptions} from './options/FireflyHistogramOptions.jsx';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
+import {dispatchHideDialog, dispatchShowDialog} from '../../core/ComponentCntlr.js';
+import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 
 
 export const [CHART_ADDNEW, CHART_TRACE_ADDNEW, CHART_TRACE_MODIFY, CHART_TRACE_REMOVE ] =
@@ -337,17 +339,21 @@ export function getOptionsUI(chartId) {
 export function showChartsDialog(chartId,  showMultiTrace) {
     const {data, fireflyData, activeTrace} = getChartData(chartId);
     const tbl_id = get(data, `${activeTrace}.tbl_id`) || get(fireflyData, `${activeTrace}.tbl_id`);
-    
-    const content= (
-        <ChartSelectPanel {...{
-            tbl_id,
-            chartId,
-            chartAction: CHART_TRACE_MODIFY,
-            inputStyle: {backgroundColor:'none'},
-            showMultiTrace,
-            hideDialog: ()=>showOptionsPopup({show:false})}}/>
+
+    const popupId ='chartOptionsDialog';
+    const dialogContent= (
+        <PopupPanel title='Plot Parameters' modal={true}>
+            <ChartSelectPanel {...{
+                tbl_id,
+                chartId,
+                chartAction: CHART_TRACE_MODIFY,
+                inputStyle: {backgroundColor:'none'},
+                showMultiTrace,
+                hideDialog: ()=>dispatchHideDialog(popupId)}}/>
+        </PopupPanel>
     );
-    showOptionsPopup({content, title: 'Plot Parameters', modal: true, show: true});
+    DialogRootContainer.defineDialog(popupId, dialogContent);
+    dispatchShowDialog(popupId);
 }
 
 

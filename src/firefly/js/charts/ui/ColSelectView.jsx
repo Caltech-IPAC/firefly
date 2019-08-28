@@ -125,6 +125,7 @@ function renderTable(tableModel,popupId) {
                 tbl_ui_id={tbl_ui_id}
                 tableModel={tableModel}
                 showToolbar={false}
+                showFilters={true}
                 selectable={false}
                 border={false}
             />
