@@ -9,7 +9,7 @@ import {primePlot, getPlotViewById, operateOnOthersInOverlayColorGroup, getPlotS
 import {callCrop, callChangeColor, callRecomputeStretch} from '../../rpc/PlotServicesJson.js';
 import WebPlotResult from '../WebPlotResult.js';
 import {WebPlot} from '../WebPlot.js';
-import {populateFromHeader} from './PlotImageTask';
+import {makeCubeCtxAry, populateFromHeader} from './PlotImageTask';
 import {isHiPS, isImage} from '../WebPlot';
 import {matchHiPStoPlotView} from './PlotHipsTask';
 import {matchImageToHips} from './WcsMatchTask';
@@ -223,7 +223,8 @@ function processPlotReplace(dispatcher, result, pv, makeSuccessAction, makeFailA
         if (resultAry[0].success) {
             const {PlotCreateHeader:plotCreateHeader, PlotCreate:plotCreate}=resultAry[0].data;
             populateFromHeader(plotCreateHeader, plotCreate);
-            let plotAry = plotCreate.map((pc) => makePlot(pc, plotCreateHeader, pv));
+            const cubeCtxAry= makeCubeCtxAry(plotCreate);
+            let plotAry = plotCreate.map((pc,idx) => makePlot(pc, plotCreateHeader, pv, cubeCtxAry[idx]));
             if (plotAry.length===1 && pv.plots.length>1) {
                 const newP= plotAry[0];
                 plotAry= pv.plots.map( (p,idx) => idx===pv.primeIdx ? newP : p);
@@ -260,9 +261,9 @@ function getResultAry(result) {
 }
 
 
-function makePlot(pc,plotCreateHeader, pv) {
+function makePlot(pc,plotCreateHeader, pv, cubeCtx) {
     const oldPlot= primePlot(pv);
-    const plot= WebPlot.makeWebPlotData(pv.plotId, pc, oldPlot.attributes, false, oldPlot.cubeCtx);
+    const plot= WebPlot.makeWebPlotData(pv.plotId, pc, oldPlot.attributes, false, cubeCtx);
     plot.title= oldPlot.title;
     return plot;
 }

@@ -475,6 +475,26 @@ export function populateFromHeader(plotCreateHeader, plotCreate) {
      }
  }
 
+ export function makeCubeCtxAry(plotCreate) {
+     let cubeStartIdx=-1;
+     const cubeCtxAry= plotCreate
+         .map( (pC,idx) => {
+             const cubePlane= findCubePlane(pC);
+             if (cubePlane<0) return undefined;
+             if (cubePlane===0) cubeStartIdx= idx;
+             const cubeStartPC= plotCreate[cubeStartIdx];
+             return {
+                 cubePlane,
+                 cubeHeaderAry: cubeStartPC.headerAry,
+                 relatedData: cubeStartPC.relatedData,
+                 dataWidth: cubeStartPC.dataWidth,
+                 dataHeight: cubeStartPC.dataHeight,
+                 imageCoordSys: cubeStartPC.imageCoordSys
+             };
+         });
+     return cubeCtxAry;
+ }
+
 /**
  *
  * @param {Array.<Object>} plotCreate
@@ -487,23 +507,7 @@ function handleSuccessfulCall(plotCreate, plotCreateHeader, payload, requestKey)
     // const plotCreate= plotCreateStrAry.map( (s) => JSON.parse(s));
 
     populateFromHeader(plotCreateHeader, plotCreate);
-    let cubeStartIdx=-1;
-    const cubeCtxAry= plotCreate
-        .map( (pC,idx) => {
-            const cubePlane= findCubePlane(pC);
-            if (cubePlane===0) cubeStartIdx= idx;
-            const cubeStartPC= plotCreate[cubeStartIdx];
-            return cubePlane>-1 ? {
-                cubePlane,
-                cubeHeaderAry: cubeStartPC.headerAry,
-                relatedData: cubeStartPC.relatedData,
-                dataWidth: cubeStartPC.dataWidth,
-                dataHeight: cubeStartPC.dataHeight,
-                imageCoordSys: cubeStartPC.imageCoordSys
-            } : undefined;
-        });
-
-
+    const cubeCtxAry= makeCubeCtxAry(plotCreate);
     const plotState= PlotState.makePlotStateWithJson(plotCreate[0].plotState);
     const plotId= plotState.getWebPlotRequest().getPlotId();
 
