@@ -1,5 +1,5 @@
 #FROM tomcat:7.0-jre8
-FROM tomcat:9.0.11-jre10
+FROM tomcat:9.0-jdk11-openjdk
 
 #-----------------------------------------------------------------------------
 # To build: docker build -t ipac/firefly --build-arg IMAGE_NAME=ipac/firefly .
