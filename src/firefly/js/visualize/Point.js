@@ -359,6 +359,25 @@ export function makeAnyPt(x,y,coordSys) {
     }
 }
 
+/**
+ * given serialized point object return the appropriate point.
+ * @param inStr
+ * @return {Point|WorldPt|ScreenPt|ImagePt|ZeroBasedImagePt}
+ */
+export function parseAnyPt(inStr) {
+    const wp= parseWorldPt(inStr);
+    if (!wp) return;
+    const cSys= wp.cSys;
+
+    if (cSys===CoordinateSys.SCREEN_PIXEL || cSys===CoordinateSys.UNDEFINED ||
+        cSys===CoordinateSys.PIXEL || cSys===CoordinateSys.ZEROBASED ||
+        cSys===CoordinateSys.FITSPIXEL) {
+        return makeAnyPt(wp.x,wp.y,wp.cSys);
+    }
+    else {
+        return wp;
+    }
+}
 
 /**
  * @summary Test if two points are equals.  They must be the same coordinate system and have the same values to be

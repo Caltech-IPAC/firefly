@@ -82,15 +82,6 @@ function imagePlotOnFITS(request) {
 
 
 
-// image plot on blank image
-function imagePlotOnBlank(request) {
-    var sizeV = request[keyMap['blankinput']];
-    var size = request[keyMap['sizefield']];
-
-    return WebPlotRequest.makeBlankPlotRequest(
-        parseWorldPt(request.UserTargetWorldPt), sizeFromDeg(size, 'arcsec'),
-                     sizeV, sizeV);
-}
 
 // image plot on IRAS, 2MASS, WISE, MSX, DSS, SDSS
 function imagePlotOnSurvey(crtCatalogId, request) {

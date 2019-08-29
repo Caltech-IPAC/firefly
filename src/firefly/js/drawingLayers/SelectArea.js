@@ -7,7 +7,7 @@ import ImagePlotCntlr, {visRoot,dispatchAttributeChange} from '../visualize/Imag
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
-import {PlotAttribute} from '../visualize/WebPlot.js';
+import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import Point, {makeScreenPt, makeDevicePt} from '../visualize/Point.js';
 import BrowserInfo from '../util/BrowserInfo.js';

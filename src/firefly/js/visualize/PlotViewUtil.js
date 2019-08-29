@@ -1025,12 +1025,18 @@ const MICRON_SYMBOL= String.fromCharCode(0x03BC)+'m';
 /**
  *
  * @param {WebPlot|String} plotOrStr - pass a webplot to get the units from and the format or a string that will be formatted
+ * @param {boolean} anyPartOfStr - replace units with symbols in any part of a longer string
  * @return {string}
  */
-export function getFormattedWaveLengthUnits(plotOrStr) {
+export function getFormattedWaveLengthUnits(plotOrStr, anyPartOfStr=false) {
     const uStr= isString(plotOrStr) ? plotOrStr : getWaveLengthUnits(plotOrStr);
-    const u= uStr.toLowerCase();
-    return (u.startsWith('micron') || u==='um' || u==='micrometers') ? MICRON_SYMBOL : uStr;
+    if (anyPartOfStr) {
+        return uStr.replace(new RegExp('microns|micron|um|micrometers','gi'),MICRON_SYMBOL);
+    }
+    else {
+        const u= uStr.toLowerCase();
+        return (u.startsWith('micron') || u==='um' || u==='micrometers') ? MICRON_SYMBOL : uStr;
+    }
 }
 
 /**

@@ -2,20 +2,18 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {flatten, flattenDeep, isArray, uniqueId, uniqBy, get, isEmpty} from 'lodash';
+import {flatten, isArray, uniqueId, uniqBy, get, isEmpty} from 'lodash';
 import {WebPlotRequest, GridOnStatus} from '../WebPlotRequest.js';
 import ImagePlotCntlr, {visRoot, makeUniqueRequestKey, IMAGE_PLOT_KEY} from '../ImagePlotCntlr.js';
 import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
 import {dispatchActiveTarget, getActiveTarget} from '../../core/AppDataCntlr.js';
-import {WebPlot,PlotAttribute, RDConst, isImage} from '../WebPlot.js';
-import CsysConverter from '../CsysConverter.js';
+import {WebPlot, RDConst, isImage} from '../WebPlot.js';
+import {PlotAttribute} from '../PlotAttribute';
 import VisUtils from '../VisUtil.js';
 import {PlotState} from '../PlotState.js';
-import Point, {makeImagePt} from '../Point.js';
 import {WPConst, DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
 import {Band} from '../Band.js';
 import {PlotPref} from '../PlotPref.js';
-// import ActiveTarget  from '../../drawingLayers/ActiveTarget.js';
 import {clone} from '../../util/WebUtil.js';
 import {makePostPlotTitle} from '../reducer/PlotTitle.js';
 import {dispatchAddViewerItems, getMultiViewRoot, findViewerWithItemId, EXPANDED_MODE_RESERVED, IMAGE, DEFAULT_FITS_VIEWER_ID} from '../MultiViewCntlr.js';
@@ -248,11 +246,6 @@ export function modifyRequest(pvCtx, r, band, useCtxMods) {
     if (cPref) {
         if (cPref[band]) retval.setInitialRangeValues(cPref[band]);
         retval.setInitialColorTable(cPref.colorTableId);
-    }
-
-    const zPref= PlotPref.getCacheZoomPref(pvCtx.preferenceZoomKey);
-    if (zPref) {
-        retval.setInitialZoomLevel(zPref.zooomLevel);
     }
 
     return retval;
@@ -520,9 +513,7 @@ function makePlot(wpInit,plotId, attributes, cubeCtx) {
     const plot= WebPlot.makeWebPlotData(plotId, wpInit, {}, false, cubeCtx);
     const r= plot.plotState.getWebPlotRequest();
     plot.title= makePostPlotTitle(plot,r);
-    if (r.isMinimalReadout()) plot.attributes[PlotAttribute.MINIMAL_READOUT]= true;
-    if (r.getRelatedTableRow()>-1) plot.attributes[PlotAttribute.TABLE_ROW]= r.getRelatedTableRow();
-    if (r.getRelatedTableId()) plot.attributes[PlotAttribute.TABLE_ID]= r.getRelatedTableId();
+    plot.attributes= {...plot.attributes, ...r.getAttributes()}
     Object.assign(plot.attributes,attributes);
     return plot;
 }
@@ -547,21 +538,7 @@ function updateActiveTarget(plot) {
         else                              activeTarget= VisUtils.getCenterPtOfPlot(plot);
 
     }
-
-    if (req.getSaveCorners()) {
-        const w= plot.dataWidth;
-        const h= plot.dataHeight;
-        const cc= CsysConverter.make(plot);
-        const pt1= cc.getWorldCoords(makeImagePt(0, 0));
-        const pt2= cc.getWorldCoords(makeImagePt(w, 0));
-        const pt3= cc.getWorldCoords(makeImagePt(w,h));
-        const pt4= cc.getWorldCoords(makeImagePt(0, h));
-        if (pt1 && pt2 && pt3 && pt4) {
-            corners= [pt1,pt2,pt3,pt4];
-        }
-    }
-
-    if (activeTarget || corners) dispatchActiveTarget(activeTarget,corners);
+    if (activeTarget) dispatchActiveTarget(activeTarget);
 }
 
 // export function initBuildInDrawLayers() {

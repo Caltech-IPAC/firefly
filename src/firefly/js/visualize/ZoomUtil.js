@@ -5,7 +5,8 @@
 import Enum from 'enum';
 import numeral from 'numeral';
 import {logError} from '../util/WebUtil.js';
-import {getPixScaleArcSec, PlotAttribute, isImage} from './WebPlot.js';
+import {getPixScaleArcSec, isImage} from './WebPlot.js';
+import {PlotAttribute} from './PlotAttribute.js';
 import {primePlot, getFoV} from './PlotViewUtil.js';
 import VisUtil from './VisUtil.js';
 

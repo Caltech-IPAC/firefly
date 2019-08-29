@@ -74,7 +74,6 @@ public class WebPlotRequest extends ServerRequest {
     public static final String ROTATE_NORTH = "RotateNorth";
     public static final String ROTATE_NORTH_TYPE = "RotateNorthType";
     public static final String ROTATE = "Rotate";
-    public static final String ROTATE_FROM_NORTH= "RotateFromNorth";
     public static final String ROTATION_ANGLE = "RotationAngle";
     public static final String HEADER_KEY_FOR_TITLE = "HeaderKeyForTitle";
     public static final String INIT_RANGE_VALUES = "RangeValues";
@@ -91,7 +90,6 @@ public class WebPlotRequest extends ServerRequest {
     public static final String CROP_PT2 = "CropPt2";
     public static final String CROP_WORLD_PT1 = "CropWorldPt1";
     public static final String CROP_WORLD_PT2 = "CropWorldPt2";
-    public static final String UNIQUE_KEY = "UniqueKey";
     public static final String CONTINUE_ON_FAIL = "ContinueOnFail";
     public static final String OBJECT_NAME = "ObjectName";
     public static final String RESOLVER = "Resolver";
@@ -102,11 +100,9 @@ public class WebPlotRequest extends ServerRequest {
     public static final String PROGRESS_KEY = "ProgressKey";
     public static final String FLIP_Y = "FlipY";
     public static final String FLIP_X = "FlipX";
-    public static final String HAS_MAX_ZOOM_LEVEL = "HasMaxZoomLevel";
     public static final String THUMBNAIL_SIZE = "thumbnailSize";
     public static final String PIPELINE_ORDER = "pipelineOrder"; // todo: convert, doc, add to allKeys
     public static final String URL_CHECK_FOR_NEWER = "urlCheckForNewer"; // todo: convert, doc, add to allKeys
-    public static final String INITIAL_CENTER_POSITION= "InitialCenterPosition";
 
     public static final String MASK_BITS= "MaskBits";
     public static final String PLOT_AS_MASK= "PlotAsMask";
@@ -116,27 +112,16 @@ public class WebPlotRequest extends ServerRequest {
 
     // keys - client side operations
     // note- if you add a new key make sure you put it in the _allKeys array
-    public static final String PLOT_TO_DIV = "PlotToDiv";
     public static final String PREFERENCE_COLOR_KEY = "PreferenceColorKey";
-    public static final String PREFERENCE_ZOOM_KEY = "PreferenceZoomKey";
     public static final String SHOW_TITLE_AREA = "ShowTitleArea";
-    public static final String ROTATE_NORTH_SUGGESTION = "RotateNorthSuggestion";
-    public static final String SAVE_CORNERS = "SaveCornersAfterPlot";
-    public static final String EXPANDED_TITLE = "ExpandedTitle";
-    public static final String ALLOW_IMAGE_SELECTION = "AllowImageSelection";
-    public static final String HAS_NEW_PLOT_CONTAINER = "HasNewPlotContainer";
-    public static final String ADVERTISE = "Advertise";
     public static final String HIDE_TITLE_DETAIL = "HideTitleDetail";
     public static final String GRID_ON = "GridOn";
     public static final String TITLE_OPTIONS = "TitleOptions";
-    public static final String EXPANDED_TITLE_OPTIONS = "ExpandedTitleOptions";
     public static final String POST_TITLE= "PostTitle";
     public static final String PRE_TITLE= "PreTitle";
     public static final String TITLE_FILENAME_MODE_PFX = "TitleFilenameModePfx";
     public static final String OVERLAY_POSITION = "OverlayPosition";
-    public static final String MINIMAL_READOUT= "MinimalReadout";
     public static final String DRAWING_SUB_GROUP_ID= "DrawingSubgroupID";
-    public static final String GRID_ID = "GRID_ID";
     public static final String DOWNLOAD_FILENAME_ROOT = "DownloadFileNameRoot";
     public static final String PLOT_ID = "plotId";
 
@@ -149,40 +134,34 @@ public class WebPlotRequest extends ServerRequest {
                                               MULTI_IMAGE_EXTS,
                                               ZOOM_TO_WIDTH, ZOOM_TO_HEIGHT,
                                               POST_CROP, POST_CROP_AND_CENTER, FLIP_X, FLIP_Y,
-                                              HAS_MAX_ZOOM_LEVEL,
                                               POST_CROP_AND_CENTER_TYPE, CROP_PT1, CROP_PT2, CROP_WORLD_PT1, CROP_WORLD_PT2,
                                               ZOOM_ARCSEC_PER_SCREEN_PIX, CONTINUE_ON_FAIL, OBJECT_NAME, RESOLVER,
                                               BLANK_ARCSEC_PER_PIX, BLANK_PLOT_WIDTH, BLANK_PLOT_HEIGHT,
 
-                                              UNIQUE_KEY,
-                                              PLOT_TO_DIV, PREFERENCE_COLOR_KEY, PREFERENCE_ZOOM_KEY,
-                                              SHOW_TITLE_AREA, ROTATE_NORTH_SUGGESTION, SAVE_CORNERS,
-                                              EXPANDED_TITLE, PLOT_DESC_APPEND, HIDE_TITLE_DETAIL,
-                                              ALLOW_IMAGE_SELECTION, HAS_NEW_PLOT_CONTAINER,
-                                              GRID_ON, TITLE_OPTIONS, EXPANDED_TITLE_OPTIONS,
+                                              PREFERENCE_COLOR_KEY,
+                                              SHOW_TITLE_AREA,
+                                              PLOT_DESC_APPEND, HIDE_TITLE_DETAIL,
+                                              GRID_ON, TITLE_OPTIONS,
                                               POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
-                                              TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT, DRAWING_SUB_GROUP_ID, GRID_ID,
-                                              DOWNLOAD_FILENAME_ROOT, PLOT_ID, ROTATE_FROM_NORTH,
-                                              INITIAL_CENTER_POSITION
+                                              TITLE_FILENAME_MODE_PFX, DRAWING_SUB_GROUP_ID,
+                                              DOWNLOAD_FILENAME_ROOT, PLOT_ID,
 
     };
 
-    private static final String _clientSideKeys[] = {UNIQUE_KEY,
-                                                     PLOT_TO_DIV, PREFERENCE_COLOR_KEY, PREFERENCE_ZOOM_KEY,
-                                                     SHOW_TITLE_AREA, ROTATE_NORTH_SUGGESTION, SAVE_CORNERS,
-                                                     EXPANDED_TITLE,
-                                                     ALLOW_IMAGE_SELECTION, HAS_NEW_PLOT_CONTAINER,
-                                                     ADVERTISE, HIDE_TITLE_DETAIL, GRID_ON,
-                                                     TITLE_OPTIONS, EXPANDED_TITLE_OPTIONS,
+    private static final String _clientSideKeys[] = {
+                                                     PREFERENCE_COLOR_KEY,
+                                                     SHOW_TITLE_AREA,
+                                                     HIDE_TITLE_DETAIL, GRID_ON,
+                                                     TITLE_OPTIONS,
                                                      POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
-                                                     TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT,
-                                                     DRAWING_SUB_GROUP_ID, GRID_ID,
-                                                     DOWNLOAD_FILENAME_ROOT, PLOT_ID, INITIAL_CENTER_POSITION
+                                                     TITLE_FILENAME_MODE_PFX,
+                                                     DRAWING_SUB_GROUP_ID,
+                                                     DOWNLOAD_FILENAME_ROOT, PLOT_ID,
 
     };
 
 
-    private static final String _ignoreForEquals[] = {PROGRESS_KEY, ZOOM_TO_WIDTH, ZOOM_TO_HEIGHT, ZOOM_TYPE, HAS_NEW_PLOT_CONTAINER};
+    private static final String _ignoreForEquals[] = {PROGRESS_KEY, ZOOM_TO_WIDTH, ZOOM_TO_HEIGHT, ZOOM_TYPE};
 
 
     public enum Order {FLIP_Y, FLIP_X, ROTATE, POST_CROP, POST_CROP_AND_CENTER}
@@ -194,13 +173,6 @@ public class WebPlotRequest extends ServerRequest {
                                                        Order.POST_CROP_AND_CENTER;
     private static List<Order> defOrder= makeOrderList(DEFAULT_PIPELINE_ORDER);
 
-
-    public static final String MULTI_PLOT_KEY= "MultiPlotKey";
-    public static final String THREE_COLOR_PLOT_KEY= "ThreeColorPlotKey";
-    public static final String THREE_COLOR_HINT= "ThreeColorHint";
-    public static final String RED_HINT= "RedHint";
-    public static final String GREEN_HINT= "GreenHint";
-    public static final String BLUE_HINT= "BlueHint";
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -472,15 +444,6 @@ public class WebPlotRequest extends ServerRequest {
         return getParam(TITLE);
     }
 
-
-    public void setExpandedTitle(String title) {
-        setParam(EXPANDED_TITLE, title);
-    }
-
-    public String getExpandedTitle() {
-        return getParam(EXPANDED_TITLE);
-    }
-
     public void setShowTitleArea(boolean show) {
         setParam(SHOW_TITLE_AREA, show + "");
     }
@@ -504,32 +467,6 @@ public class WebPlotRequest extends ServerRequest {
         }
         return retval;
     }
-
-    public void setExpandedTitleOptions(ExpandedTitleOptions option) {
-        setParam(EXPANDED_TITLE_OPTIONS,option.toString());
-    }
-
-    public ExpandedTitleOptions getExpandedTitleOptions() {
-        ExpandedTitleOptions retval = ExpandedTitleOptions.REPLACE;
-        if (this.containsParam(EXPANDED_TITLE_OPTIONS)) {
-            retval = Enum.valueOf(ExpandedTitleOptions.class, getParam(EXPANDED_TITLE_OPTIONS));
-        }
-        return retval;
-    }
-
-
-
-
-    public void setPreTitle(String preTitle) { setParam(PRE_TITLE, preTitle); }
-
-    public String getPreTitle() { return getParam(PRE_TITLE); }
-
-
-    public void setPostTitle(String postTitle) {
-        setParam(POST_TITLE, postTitle);
-    }
-
-    public String getPostTitle() { return getParam(POST_TITLE); }
 
     public void setTitleFilenameModePfx(String pfx) {
         setParam(TITLE_FILENAME_MODE_PFX, pfx);
@@ -626,20 +563,6 @@ public class WebPlotRequest extends ServerRequest {
         return retval;
     }
 
-    public static boolean isSmartZoom(ZoomType type) { return false; }
-
-    public boolean isSmartZoom() {
-        return isSmartZoom(getZoomType());
-    }
-
-    public void setHasMaxZoomLevel(boolean b) {
-        setParam(HAS_MAX_ZOOM_LEVEL, b +"");
-    }
-
-    public boolean hasMaxZoomLevel() {
-        return getBooleanParam(HAS_MAX_ZOOM_LEVEL);
-    }
-
     /**
      * sets the zoom type, based on the ZoomType other zoom set methods may be required
      * Notes for ZoomType:
@@ -705,19 +628,6 @@ public class WebPlotRequest extends ServerRequest {
     }
 
     /**
-     * Plot should come up rotated north, unless the user has already set the rotation using the button
-     *
-     * @param rotateNorth true to rotate
-     */
-    public void setRotateNorthSuggestion(boolean rotateNorth) {
-        setParam(ROTATE_NORTH_SUGGESTION, rotateNorth + "");
-    }
-
-    public boolean getRotateNorthSuggestion() {
-        return getBooleanParam(ROTATE_NORTH_SUGGESTION);
-    }
-
-    /**
      * Set to coordinate system for rotate north, eq j2000 is the default
      *
      * @param rotateNorthType the CoordinateSys, default CoordinateSys.EQ_J2000
@@ -746,10 +656,6 @@ public class WebPlotRequest extends ServerRequest {
     public boolean getRotate() {
         return getBooleanParam(ROTATE);
     }
-
-    public void setRotateFromNorth(boolean fromNorth) { this.setParam(ROTATE_FROM_NORTH, fromNorth+ ""); }
-
-    public boolean getRotateFromNorth() { return getBooleanParam(ROTATE_FROM_NORTH,true); }
 
     /**
      * set the angle to rotate to
@@ -1046,51 +952,6 @@ public class WebPlotRequest extends ServerRequest {
         return getParam(PREFERENCE_COLOR_KEY);
     }
 
-    public void setPreferenceZoomKey(String key) {
-        setParam(PREFERENCE_ZOOM_KEY, key);
-    }
-
-    public String getPreferenceZoomKey() {
-        return getParam(PREFERENCE_ZOOM_KEY);
-    }
-
-
-
-    public void setSaveCorners(boolean save) {
-        setParam(SAVE_CORNERS, save + "");
-    }
-
-    public boolean getSaveCorners() {
-        return getBooleanParam(SAVE_CORNERS);
-    }
-
-
-    public void setAllowImageSelection(boolean allowImageSelection) {
-        setParam(ALLOW_IMAGE_SELECTION, allowImageSelection + "");
-    }
-
-    public boolean isAllowImageSelection() {
-        return getBooleanParam(ALLOW_IMAGE_SELECTION);
-    }
-
-    public void setHasNewPlotContainer(boolean allowImageSelectionCreateNew) {
-        setParam(HAS_NEW_PLOT_CONTAINER, allowImageSelectionCreateNew + "");
-    }
-
-    public boolean getHasNewPlotContainer() {
-        return getBooleanParam(HAS_NEW_PLOT_CONTAINER);
-    }
-
-
-
-    public void setAdvertise(boolean advertise)  {
-        setParam(ADVERTISE, advertise + "");
-    }
-
-    public boolean isAdvertise() {
-        return getBooleanParam(ADVERTISE);
-    }
-
     public void setGridOn(GridOnStatus gridOnStatus) {
         setParam(GRID_ON, gridOnStatus.toString());
     }
@@ -1119,35 +980,8 @@ public class WebPlotRequest extends ServerRequest {
         return containsParam(THUMBNAIL_SIZE) ? getIntParam(THUMBNAIL_SIZE) : DEFAULT_THUMBNAIL_SIZE;
     }
 
-    /**
-     * For 3 color, if this request fails then keep trying to make a plot with the other request
-     *
-     * @param continueOnFail
-     */
-    public void setContinueOnFail(boolean continueOnFail) {
-        setParam(CONTINUE_ON_FAIL, continueOnFail + "");
-    }
-
-    public boolean isContinueOnFail() {
-        return getBooleanParam(CONTINUE_ON_FAIL);
-    }
-
-    public void setUniqueKey(String key) {
-        setParam(UNIQUE_KEY, key);
-    }
-
-    public String getUniqueKey() {
-        return getParam(UNIQUE_KEY);
-    }
-
-    public void setPlotToDiv(String div) {
-        setParam(PLOT_TO_DIV, div);
-    }
-
-    public String getPlotToDiv() {
-        return getParam(PLOT_TO_DIV);
-    }
-
+    /** todo deprecate */
+    public boolean isContinueOnFail() { return getBooleanParam(CONTINUE_ON_FAIL); }
 
     public void setHeaderKeyForTitle(String headerKey) {
         setParam(HEADER_KEY_FOR_TITLE, headerKey);
@@ -1162,21 +996,9 @@ public class WebPlotRequest extends ServerRequest {
 
     public String getProgressKey() { return getParam(PROGRESS_KEY); }
 
-
-    public void setMinimalReadout(boolean minimalReadout) {
-        setParam(MINIMAL_READOUT,minimalReadout+"");
-    }
-
-    public boolean isMinimalReadout() { return getBooleanParam(MINIMAL_READOUT); }
-
-
     public void setDrawingSubGroupId(String id) { setParam(DRAWING_SUB_GROUP_ID,id); }
 
     public String getDrawingSubGroupId() { return getParam(DRAWING_SUB_GROUP_ID); }
-
-    public void setGridId(String id) { setParam(GRID_ID,id); }
-
-    public String getGridId() { return getParam(GRID_ID); }
 
     public void setDownloadFileNameRoot(String nameRoot) {
         setParam(DOWNLOAD_FILENAME_ROOT, nameRoot);
@@ -1382,10 +1204,6 @@ public class WebPlotRequest extends ServerRequest {
 
     public static String[] getAllKeys() {
         return _allKeys;
-    }
-
-    public static String[] getClientKeys() {
-        return _clientSideKeys;
     }
 
     /**

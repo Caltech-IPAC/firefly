@@ -7,13 +7,14 @@ import {isEmpty} from 'lodash';
 import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
-import {PlotAttribute} from '../visualize/WebPlot.js';
-import PointDataObj, {DrawSymbol} from '../visualize/draw/PointDataObj.js';
+import {PlotAttribute} from '../visualize/PlotAttribute.js';
+import PointDataObj from '../visualize/draw/PointDataObj.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {formatPosForTextField} from '../data/form/PositionFieldDef.js';
 import {getUIComponent} from './ActiveTargetUI.jsx';
+import {DrawSymbol} from '../visualize/draw/DrawSymbol.js';
 
 const ID= 'ACTIVE_TARGET';
 const TYPE_ID= 'ACTIVE_TARGET_TYPE';

@@ -9,7 +9,7 @@ import {replacePlots, makePlotView, updatePlotViewScrollXY,
 import {makeOverlayPlotView, replaceOverlayPlots} from './OverlayPlotView.js';
 import {primePlot, getPlotViewById, clonePvAry, getOverlayById, getPlotViewIdList} from '../PlotViewUtil.js';
 import PlotGroup from '../PlotGroup.js';
-import {PlotAttribute} from '../WebPlot.js';
+import {PlotAttribute} from '../PlotAttribute.js';
 import {CCUtil} from '../CsysConverter.js';
 import {getRotationAngle} from '../VisUtil.js';
 import {updateTransform} from '../PlotTransformUtils.js';

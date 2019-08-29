@@ -8,7 +8,8 @@ import {makeOffsetPt} from '../Point.js';
 import {convertAngle} from '../VisUtil.js';
 import {get, isEmpty, pick, set} from 'lodash';
 import ShapeDataObj from '../draw/ShapeDataObj.js';
-import {DrawSymbol, make as makePoint } from '../draw/PointDataObj.js';
+import {make as makePoint } from '../draw/PointDataObj.js';
+import {DrawSymbol} from '../draw/DrawSymbol.js';
 import {union, isArray} from 'lodash';
 import {TextLocation} from '../draw/DrawingDef.js';
 

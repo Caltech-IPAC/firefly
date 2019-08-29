@@ -14,7 +14,7 @@ import MultiViewCntlr, {dispatchReplaceViewerItems, getViewerItemIds,
                         getMultiViewRoot, getViewer, GRID, GRID_FULL, SINGLE} from '../MultiViewCntlr.js';
 import {makeDataProductsConverter, initImage3ColorDisplayManagement} from '../../metaConvert/DataProductsFactory.js';
 import {findGridTableRows} from '../../metaConvert/converterUtils.js';
-import {PlotAttribute} from '../WebPlot.js';
+import {PlotAttribute} from '../PlotAttribute.js';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga.js';
 import {isMetaDataTable} from '../../util/VOAnalyzer.js';
 import {zoomPlotPerViewSize, resetImageFullGridActivePlot, changeActivePlotView} from '../../metaConvert/ImageDataProductsUtil.js';

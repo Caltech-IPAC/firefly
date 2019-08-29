@@ -13,7 +13,8 @@ import {VisCtxToolbarView, canConvertHipsAndFits} from './../ui/VisCtxToolbarVie
 import {VisInlineToolbarView} from './../ui/VisInlineToolbarView.jsx';
 import {primePlot, isActivePlotView, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {ImageViewerLayout}  from '../ImageViewerLayout.jsx';
-import {PlotAttribute, isImage, isHiPS} from '../WebPlot.js';
+import {isImage, isHiPS} from '../WebPlot.js';
+import {PlotAttribute} from '../PlotAttribute.js';
 import {AnnotationOps} from '../WebPlotRequest.js';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import {AREA_SELECT,LINE_SELECT,POINT} from '../../core/ExternalAccessUtils.js';

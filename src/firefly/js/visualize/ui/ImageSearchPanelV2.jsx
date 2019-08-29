@@ -37,6 +37,7 @@ import {sourcesPerChecked} from '../../ui/HiPSSurveyListDisplay.jsx';
 
 import './ImageSearchPanelV2.css';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
+import {PlotAttribute} from '../PlotAttribute';
 
 
 const FG_KEYS = {
@@ -654,15 +655,15 @@ function makeWebPlotRequests(request, imageMasterData, plotId, plotGroupId){
 
     } else if (request.imageSource === 'upload') {
         const fileName = get(request, 'fileUpload');
-        return [addStdParams(WebPlotRequest.makeFilePlotRequest(fileName), 'image', plotId, plotGroupId)];
+        return [addStdParams(WebPlotRequest.makeFilePlotRequest(fileName), plotId, plotGroupId)];
 
     } else if (request.imageSource === ServerParams.IS_WS) {
         const fileName = get(request, 'wsFilepath');
-        return [addStdParams(WebPlotRequest.makeWorkspaceRequest(fileName),'image',  plotId, plotGroupId)];
+        return [addStdParams(WebPlotRequest.makeWorkspaceRequest(fileName),plotId, plotGroupId)];
 
     } else if (request.imageSource === 'url') {
         const url = get(request, 'txURL');
-        return [addStdParams(WebPlotRequest.makeURLPlotRequest(url), 'image', plotId, plotGroupId)];
+        return [addStdParams(WebPlotRequest.makeURLPlotRequest(url), plotId, plotGroupId)];
 
     } else {
         const wp = parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);
@@ -674,7 +675,7 @@ function makeWebPlotRequests(request, imageMasterData, plotId, plotGroupId){
             list.forEach( (e) => imageIdList.push(e));
         });
         const paramAry= imageMasterData.filter( (d) => imageIdList.includes(d.imageId));
-        return paramAry.map( (d) => makeWPRequest(wp, radius, d.plotRequestParams, d.dataType, plotId, plotGroupId));
+        return paramAry.map( (d) => makeWPRequest(wp, radius, d, plotId, plotGroupId));
     }
 }
 
@@ -699,19 +700,26 @@ const nextPlotId = (() => {
     };
 })();
 
-function makeWPRequest(wp, radius, params, type, plotId, plotGroupId) {
-    const inReq= Object.assign( {
-        [WPConst.WORLD_PT] : wp.toString(),
-        [WPConst.SIZE_IN_DEG] : radius+''
-    }, params);
+function makeWPRequest(wp, radius, data, plotId, plotGroupId) {
+    const {plotRequestParams:params, helpUrl, projectTypeDesc, waveType, wavelengthDesc}= data;
 
-    return addStdParams(WebPlotRequest.makeFromObj(inReq), type, plotId, plotGroupId);
+    const inReq= {
+        [WPConst.WORLD_PT] : wp.toString(),
+        [WPConst.SIZE_IN_DEG] : radius+'',
+        attributes: {
+            [PlotAttribute.DATA_HELP_URL]: helpUrl,
+            [PlotAttribute.PROJ_TYPE_DESC]: projectTypeDesc,
+            [PlotAttribute.WAVE_TYPE]: waveType,
+            [PlotAttribute.WAVE_LENGTH_DESC]: wavelengthDesc,
+        },
+        ...params};
+
+    return addStdParams(WebPlotRequest.makeFromObj(inReq), plotId, plotGroupId);
 }
 
-function addStdParams(wpreq, type='image', plotId = nextPlotId(), plotGroupId = 'multiImageGroup') {
+function addStdParams(wpreq, plotId = nextPlotId(), plotGroupId = 'multiImageGroup') {
     wpreq.setPlotId(plotId);
     wpreq.setPlotGroupId(plotGroupId);
-    wpreq.setGroupLocked('true');
-    wpreq.setParam('dataType',type);
+    wpreq.setGroupLocked(true);
     return wpreq;
 }

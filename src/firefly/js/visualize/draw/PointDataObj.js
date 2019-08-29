@@ -2,7 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import Enum from 'enum';
 import DrawObj from './DrawObj.js';
 import DrawUtil from './DrawUtil.js';
 import {TextLocation, DEFAULT_FONT_SIZE} from './DrawingDef.js';
@@ -16,17 +15,8 @@ import { handleTextFromRegion } from './ShapeToRegion.js';
 import VisUtil from '../VisUtil.js';
 import {isNil, isEmpty, has, set, get, cloneDeep} from 'lodash';
 import {defaultRegionSelectColor, defaultRegionSelectStyle} from '../DrawLayerCntlr.js';
+import {DrawSymbol} from './DrawSymbol.js';
 
-
-
-/**
- *  enum
- *  one of 'X','SQUARE','CROSS','DIAMOND','DOT','CIRCLE', 'SQUARE_X', 'EMP_CROSS','EMP_SQUARE_X', 'BOXCIRCLE', 'ARROW'
- * */
-export const DrawSymbol = new Enum([
-    'X','SQUARE','CROSS','DIAMOND','DOT','CIRCLE', 'SQUARE_X', 'EMP_CROSS','EMP_SQUARE_X',
-    'BOXCIRCLE', 'ARROW', 'ROTATE', 'POINT_MARKER'
-], { ignoreCase: true });
 
 export const POINT_DATA_OBJ= 'PointDataObj';
 const DEFAULT_SIZE= 4;

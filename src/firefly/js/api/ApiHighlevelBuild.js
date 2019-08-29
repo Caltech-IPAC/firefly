@@ -277,7 +277,6 @@ function buildImagePart(llApi) {
      * @prop {CoordinateSys} RotateNorthType set to coordinate system for rotate north, eq EQ_J2000 is the default
      * @prop {boolean} Rotate set to rotate, if true, the angle should also be set
      * @prop {string} RotationAngle set the angle to rotate to
-     * @prop {string} RotateFromNorth rotate angle from north
      * @prop {boolean} FlipY set if this image should be flipped on the Y axis
      * @prop {boolean} FlipX set if this image should be flipped on the X axis
      * @prop {boolean} PostCrop crop the image before returning it.  If rotation is set then the crop will happen post rotation

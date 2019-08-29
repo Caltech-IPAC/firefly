@@ -5,7 +5,8 @@
 
 import {isEmpty} from 'lodash';
 import React from 'react';
-import PointDataObj, {DrawSymbol} from '../visualize/draw/PointDataObj.js';
+import PointDataObj from '../visualize/draw/PointDataObj.js';
+import {DrawSymbol} from '../visualize/draw/DrawSymbol.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';

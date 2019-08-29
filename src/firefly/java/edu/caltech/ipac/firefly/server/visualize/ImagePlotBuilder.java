@@ -499,7 +499,7 @@ public class ImagePlotBuilder {
         Band band = readInfoMap.entrySet().iterator().next().getKey();
         WebPlotRequest request = requestMap.get(band);
 
-        return new ZoomChoice(request.hasMaxZoomLevel(),
+        return new ZoomChoice(false,
                               request.getZoomType(),
                               request.getInitialZoomLevel(),
                               request.getZoomToWidth(),

@@ -10,7 +10,8 @@ import {isPlotIdInPvNewPlotInfoAry,
 import {getRelatedDataById} from '../visualize/RelatedDataUtil.js';
 import {clone, logError} from '../util/WebUtil.js';
 import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
-import PointDataObj, {DrawSymbol} from '../visualize/draw/PointDataObj.js';
+import PointDataObj from '../visualize/draw/PointDataObj.js';
+import {DrawSymbol} from '../visualize/draw/DrawSymbol.js';
 import {makeDrawingDef, getNextColor} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';

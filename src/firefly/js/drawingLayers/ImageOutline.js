@@ -11,7 +11,7 @@ import {get, isArray} from 'lodash';
 import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import {primePlot, isDrawLayerVisible} from '../visualize/PlotViewUtil.js';
-import {PlotAttribute} from '../visualize/WebPlot.js';
+import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import FootprintObj from '../visualize/draw/FootprintObj.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';

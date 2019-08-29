@@ -3,12 +3,12 @@ import {union,get,isEmpty,difference} from 'lodash';
 import {dispatchReplaceViewerItems, getViewerItemIds, getMultiViewRoot, isImageViewerSingleLayout} from '../visualize/MultiViewCntlr.js';
 import {dispatchPlotImage, dispatchDeletePlotView, visRoot, dispatchZoom,
     dispatchPlotGroup, dispatchChangeActivePlotView} from '../visualize/ImagePlotCntlr.js';
-import {isImageDataRequeestedEqual} from '../visualize/WebPlotRequest.js';
+import {isImageDataRequestedEqual} from '../visualize/WebPlotRequest.js';
 import {getPlotViewById, primePlot} from '../visualize/PlotViewUtil.js';
 import {UserZoomTypes} from '../visualize/ZoomUtil.js';
 import {allBandAry} from '../visualize/Band.js';
 import {getTblById} from '../tables/TableUtil.js';
-import {PlotAttribute} from '../visualize/WebPlot.js';
+import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {dispatchTableHighlight} from '../tables/TablesCntlr.js';
 
 
@@ -33,8 +33,8 @@ export function createRelatedDataGridActivate(reqRet, imageViewerId, dataId, tbl
 export function createGridImagesActivate(inReqAry, imageViewerId, dataId, tbl_id, plotRows) {
     const reqAry= inReqAry.map( (r,idx) => {
         if (!r) return;
-        r.setRelatedTableRow(plotRows[idx].row);
-        r.setRelatedTableId(tbl_id);
+        r.setAttributes({[PlotAttribute.TABLE_ROW]: plotRows[idx].row,
+                         [PlotAttribute.TABLE_ID]: tbl_id});
         r.setPlotId(plotRows[idx].plotId);
         return r;
     } );
@@ -56,8 +56,8 @@ export function createGridImagesActivate(inReqAry, imageViewerId, dataId, tbl_id
 export function createSingleImageActivate(request, imageViewerId, dataId, tbl_id, highlightedRow) {
     if (!request) return;
     request.setPlotId(`${dataId}-singleview`);
-    request.setRelatedTableRow(highlightedRow);
-    request.setRelatedTableId(tbl_id);
+    request.setAttributes({[PlotAttribute.TABLE_ROW]: highlightedRow,
+                           [PlotAttribute.TABLE_ID]: tbl_id});
     return () => replotImageDataProducts(request.getPlotId(), imageViewerId, dataId, tbl_id, [request]);
 }
 
@@ -173,10 +173,10 @@ function makePlottingList(reqAry) {
         const pv= getPlotViewById(visRoot(),r.getPlotId());
         const plot= primePlot(pv);
         if (plot) {
-            return !isImageDataRequeestedEqual(plot.plotState.getWebPlotRequest(), r);
+            return !isImageDataRequestedEqual(plot.plotState.getWebPlotRequest(), r);
         }
         else if (get(pv,'request')) {
-            return !isImageDataRequeestedEqual(pv.request,r);
+            return !isImageDataRequestedEqual(pv.request,r);
         }
         else {
             return true;
@@ -191,6 +191,6 @@ function make3ColorPlottingList(req3cAry) {
     if (!p) return req3cAry;
     const plotState= p.plotState;
     if (!plotState) return req3cAry;
-    const match= allBandAry.every( (b) => isImageDataRequeestedEqual(plotState.getWebPlotRequest(b),req3cAry[b.value]));
+    const match= allBandAry.every( (b) => isImageDataRequestedEqual(plotState.getWebPlotRequest(b),req3cAry[b.value]));
     return match ? [] : req3cAry;
 }

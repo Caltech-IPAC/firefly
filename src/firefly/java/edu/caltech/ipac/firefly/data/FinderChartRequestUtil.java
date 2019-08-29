@@ -11,7 +11,6 @@ package edu.caltech.ipac.firefly.data;
 
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
-import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.HashMap;
@@ -130,14 +129,11 @@ public class FinderChartRequestUtil {
                                                     WebPlotRequest.ServiceType service ) {
 
         WebPlotRequest wpReq= getWebPlotRequest(service, key, pt, radius);
-        if (!StringUtils.isEmpty(expandedTitle)) wpReq.setExpandedTitle(expandedTitle);
-        wpReq.setExpandedTitleOptions(WebPlotRequest.ExpandedTitleOptions.PREFIX);
         wpReq.setZoomType(ZoomType.TO_WIDTH);
         wpReq.setZoomToWidth(width);
         wpReq.setZoomToHeight(width); // set width and height the same
         wpReq.setPostCropAndCenter(true);
         wpReq.setRotateNorth(true);
-        wpReq.setSaveCorners(true);
         wpReq.setInitialColorTable(1);
         wpReq.setHideTitleDetail(true);
         wpReq.setPreferenceColorKey("FcColorKey");
@@ -174,8 +170,6 @@ public class FinderChartRequestUtil {
                 String surveyKeyBand = extractSurveyKeyBand(getComboValue(key));
                 String filter = extractFilter(key);
                 wpReq = WebPlotRequest.makeAtlasRequest(pt, surveyKey, surveyKeyBand, filter, radius);
-//                if (wpReq != null)
-//                    wpReq.setDrawingSubGroupId(surveyKey.split("\\.")[1]);// Set dataset (table) name as subgroup
                 break;
             case WISE:
                 String[] pair= getComboValue(key).split("\\.");

@@ -12,7 +12,8 @@ import {primePlot,isMultiImageFitsWithSameArea, getPlotViewById,
 import {getHeader} from '../FitsHeaderUtil.js';
 import {findScrollPtToCenterImagePt} from '../reducer/PlotView.js';
 import {CysConverter} from '../CsysConverter.js';
-import {PlotAttribute,isHiPS, isImage} from '../WebPlot.js';
+import {isHiPS, isImage} from '../WebPlot.js';
+import {PlotAttribute} from '../PlotAttribute';
 import {HdrConst} from '../FitsHeaderUtil.js';
 import {makeDevicePt, makeScreenPt, makeImagePt} from '../Point.js';
 import {callGetAreaStatistics} from '../../rpc/PlotServicesJson.js';

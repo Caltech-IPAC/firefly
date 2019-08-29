@@ -10,7 +10,8 @@ import {ValidationField} from '../ui/ValidationField.jsx';
 import {VALUE_CHANGE, dispatchValueChange} from '../fieldGroup/FieldGroupCntlr.js';
 import {TargetPanel} from '../ui/TargetPanel.jsx';
 
-import {PlotAttribute, isHiPS} from '../visualize/WebPlot.js';
+import {isHiPS} from '../visualize/WebPlot.js';
+import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import Validate from '../util/Validate.js';
 import Enum from 'enum';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';

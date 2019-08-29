@@ -6,7 +6,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {FixedPtControl} from './CatalogUI.jsx';
 import {primePlot} from '../visualize/PlotViewUtil';
-import {PlotAttribute} from '../visualize/WebPlot.js';
+import {PlotAttribute} from '../visualize/PlotAttribute.js';
 
 
 export const getUIComponent = (drawLayer,pv) => <ActiveTargetUI drawLayer={drawLayer} pv={pv}/>;

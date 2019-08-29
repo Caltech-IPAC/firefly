@@ -5,7 +5,8 @@
 import {get} from 'lodash';
 import update from 'immutability-helper';
 import Enum from 'enum';
-import {PlotAttribute, isImage} from './../WebPlot.js';
+import {PlotAttribute} from './../PlotAttribute.js';
+import {isImage} from '../WebPlot.js';
 import {clone} from '../../util/WebUtil.js';
 import {WPConst} from './../WebPlotRequest.js';
 import {makeScreenPt, makeDevicePt} from './../Point.js';
@@ -150,7 +151,6 @@ function createPlotViewContextData(req, pvOptions={}) {
         displayFixedTarget: get(pvOptions, 'displayFixedTarget',true),
         lastCollapsedZoomLevel: 0,
         preferenceColorKey: req.getPreferenceColorKey(),
-        preferenceZoomKey:  req.getPreferenceZoomKey(), // currently not used
         defThumbnailSize: DEFAULT_THUMBNAIL_SIZE,
         plotCounter:0 // index of how many plots, used for making next ID
     };
@@ -253,7 +253,6 @@ export function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, newPlo
     pv.serverCall='success';
 
     PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, pv.plots[pv.primeIdx].plotState);
-    PlotPref.putCacheZoomPref(pv.plotViewCtx.preferenceZoomKey, pv.plots[pv.primeIdx].plotState);
 
     if (expandedMode===ExpandType.COLLAPSE) {
         pv.plotViewCtx.lastCollapsedZoomLevel= pv.plots[pv.primeIdx].zoomFactor;
@@ -467,14 +466,6 @@ function getNewAttributes(plot) {
         }
     }
 
-    if (req.containsParam(WPConst.INITIAL_CENTER_POSITION)) {
-        attributes[PlotAttribute.INIT_CENTER]= req.getInitialCenterPosition();
-    }
-
-
-
-    if (req.getUniqueKey())     attributes[PlotAttribute.UNIQUE_KEY]= req.getUniqueKey();
-    if (req.isMinimalReadout()) attributes[PlotAttribute.MINIMAL_READOUT]=true;
 
     return attributes;
 }

@@ -219,7 +219,6 @@ function makeMaskRequest(fileKey, imageOverlayId, pv, maskValue, imageNumber, co
         r.setZoomType(ZoomType.LEVEL);
         r.setInitialZoomLevel(plot.zoomFactor);
         r.setFlipY(state.isFlippedY());
-        r.setFlipX(false);//todo handle flip x
     }
     return r;
 }

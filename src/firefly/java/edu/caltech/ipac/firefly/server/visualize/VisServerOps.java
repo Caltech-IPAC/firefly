@@ -1058,7 +1058,6 @@ public class VisServerOps {
 
                 if (clientIsNorth) r.setRotateNorth(true);
                 else if (clientRotAngle>0) {
-                    r.setRotateFromNorth(true);
                     r.setRotate(true);
                     r.setRotationAngle(clientRotAngle);
                 }

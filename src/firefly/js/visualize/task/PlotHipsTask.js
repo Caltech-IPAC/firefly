@@ -16,7 +16,8 @@ import ImagePlotCntlr, {
     WcsMatchType
 } from '../ImagePlotCntlr.js';
 import {getArcSecPerPix, getZoomLevelForScale, UserZoomTypes} from '../ZoomUtil.js';
-import {PlotAttribute, WebPlot, isHiPS, isImage} from '../WebPlot.js';
+import {WebPlot, isHiPS, isImage} from '../WebPlot.js';
+import {PlotAttribute} from '../PlotAttribute.js';
 import {clone, fetchUrl, loadImage} from '../../util/WebUtil.js';
 import {
     findCurrentCenterPoint,

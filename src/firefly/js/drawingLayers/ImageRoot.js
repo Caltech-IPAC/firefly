@@ -6,14 +6,16 @@
 import {isEmpty} from 'lodash';
 import React from 'react';
 import numeral from 'numeral';
-import PointDataObj, {DrawSymbol} from '../visualize/draw/PointDataObj.js';
+import PointDataObj from '../visualize/draw/PointDataObj.js';
+import {DrawSymbol} from '../visualize/draw/DrawSymbol.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {getPlotViewById, primePlot} from '../visualize/PlotViewUtil';
 import {dispatchChangeImageVisibility, visRoot} from '../visualize/ImagePlotCntlr';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr';
-import {isHiPS, isImage, PlotAttribute} from '../visualize/WebPlot';
+import {isHiPS, isImage} from '../visualize/WebPlot';
+import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {getUIComponent} from './ImageRootUI.jsx';
 import {isDefined} from '../util/WebUtil';
 

@@ -7,7 +7,8 @@ import Point, {makeImagePt, makeScreenPt, makeDevicePt, makeWorldPt, SimplePt} f
 import {CoordinateSys} from '../CoordSys.js';
 import ShapeDataObj, {lengthToImagePixel, lengthToScreenPixel,
        lengthToArcsec, makePoint, drawText, makeTextLocationComposite, flipTextLocAroundY} from './ShapeDataObj.js';
-import {POINT_DATA_OBJ, getPointDataobjArea, makePointDataObj, DrawSymbol} from './PointDataObj.js';
+import {POINT_DATA_OBJ, getPointDataobjArea, makePointDataObj} from './PointDataObj.js';
+import {DrawSymbol} from './DrawSymbol.js';
 import {getDrawobjArea, isWithinPolygon, isDrawobjAreaInView} from './ShapeHighlight.js';
 import {defaultMarkerTextLoc} from '../../drawingLayers/MarkerToolUI.jsx';
 import {defaultFootprintTextLoc} from '../../drawingLayers/FootprintToolUI.jsx';

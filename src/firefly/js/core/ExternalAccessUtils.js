@@ -11,7 +11,7 @@ import {getWsChannel} from './AppDataCntlr.js';
 import {CysConverter} from '../visualize/CsysConverter.js';
 import {getTblById, getTblRowAsObj} from '../tables/TableUtil.js';
 import {PlotState} from '../visualize/PlotState.js';
-import {PlotAttribute} from '../visualize/WebPlot.js';
+import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
 
 const EMPTY_ARRAY=[];

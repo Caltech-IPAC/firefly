@@ -1,7 +1,8 @@
 import React, {useState} from 'react';
 import {get} from 'lodash';
 import {primePlot} from '../PlotViewUtil.js';
-import {isImage, PlotAttribute} from '../WebPlot.js';
+import {isImage} from '../WebPlot.js';
+import {PlotAttribute} from '../PlotAttribute';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {DropDownVerticalSeparator, ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
@@ -127,11 +128,9 @@ export function ImageCenterDropDown({visRoot:vr, visible}) {
                              label={'Center On:'} defaultToActiveTarget={false}
                              showResolveSourceOp={false} showExample={false}/>
                 <div style={{display:'flex', flexDirection:'column'}}>
-                    <CompleteButton text= 'Go' innerStyle={{width:'100%'}} onSuccess={moveToTarget} fireOnEnter={true}
-                                    dialogId='ExampleDialog' />
+                    <CompleteButton text= 'Go' innerStyle={{width:'100%'}} onSuccess={moveToTarget} fireOnEnter={true} />
                     <CompleteButton style={{ marginTop:4}} innerStyle={{width:'100%'}}
-                                    text= 'Go & Mark' onSuccess={createMarkerAndMoveToTarget}
-                                    dialogId='ExampleDialog' />
+                                    text= 'Go & Mark' onSuccess={createMarkerAndMoveToTarget} />
                 </div>
             </FieldGroup>
             {recentAry.length>0 && <DropDownVerticalSeparator useLine={true}/>}
