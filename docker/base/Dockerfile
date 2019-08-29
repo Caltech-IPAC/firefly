@@ -2,7 +2,7 @@
 FROM tomcat:9.0.11-jre10
 
 #-----------------------------------------------------------------------------
-# To build: docker build -t ipac/firefly --build-arg IMAGE_NAME=ipac/firefly .
+# To build: docker build -t ipac/firefly --build-arg IMAGE_NAME=ipac/firefly --build-arg APP_NAME=firefly .
 # For help in running: docker run --rm  ipac/firefly --help
 #-----------------------------------------------------------------------------
 
@@ -44,10 +44,13 @@ ENV VISUALIZE_FITS_SEARCH_PATH=${EXTERNAL_MOUNT_POINT}
 ARG IMAGE_NAME=''
 ENV BUILD_TIME_NAME=${IMAGE_NAME}
 
-
+# container need access to app name, used for cleanup task
+ARG APP_NAME=''
+ENV FIREFLY_APP_NAME=${APP_NAME}
 
 # These are the file there are executed at startup, they start tomcat
 COPY launchTomcat.sh \
+     cleanup.sh \
      start-examples.txt \
      setupSharedCacheJars.sh ${CATALINA_BASE}/
 
@@ -58,7 +61,7 @@ COPY tomcat-users.xml \
 
 
 # Make directories, make scripts executable, save old tomcat config files, remove unwanted apps
-RUN chmod +x ${CATALINA_BASE}/launchTomcat.sh ${CATALINA_BASE}/setupSharedCacheJars.sh; \
+RUN chmod +x ${CATALINA_BASE}/launchTomcat.sh ${CATALINA_BASE}/cleanup.sh ${CATALINA_BASE}/setupSharedCacheJars.sh; \
     mkdir -p ${SERVER_CONFIG_DIR}; \
     mkdir -p ${FIREFLY_WORK_DIR}; \
     mkdir -p ${EXTERNAL_MOUNT_POINT}; \
@@ -80,16 +83,21 @@ EXPOSE 8080 5050
 # ----------------------------------------------------------
 # ----------------------------------------------------------
 # Overide the following from the command line:
-#          MIN_JVM_SIZE, MAX_JVM_SIZE, ADMIN_USER, ADMIN_PASSWORD,
+#          MIN_JVM_SIZE, MAX_JVM_SIZE,
+#          INIT_RAM_PERCENT, MAX_RAM_PERCENT,
+#          ADMIN_USER, ADMIN_PASSWORD,
 #          DEBUG, jvmRoute, LOG_FILE_TO_CONSOLE, FIREFLY_OPTS,
 # ----------------------------------------------------------
 # ----------------------------------------------------------
 
-# MIN_JVM_SIZE and MAX_JVM_SIZE should be used to set the min and max JVM side
-# at least MAX_JVM_SIZE should almost alway be used on the command line with 
-# parameter such as: -e "MAX_JVM_SIZE=4G"
+# MIN_JVM_SIZE and MAX_JVM_SIZE can be used to set the min and max JVM side
+# If MAX_JVM_SIZE is not set, the memory is autosized to the memory available to the container.
+# Set the available memory on the command line with --memory="4g"
+# You can change MAX_RAM_PERCENT on the command line with -e "MAX_RAM_PERCENT=80"
 ENV MIN_JVM_SIZE=1G
-ENV MAX_JVM_SIZE=8G
+ENV MAX_JVM_SIZE=
+ENV INIT_RAM_PERCENT=10
+ENV MAX_RAM_PERCENT=90
 ENV JVM_CORES=0
 
 

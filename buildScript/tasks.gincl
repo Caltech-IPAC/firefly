@@ -511,10 +511,11 @@ task dockerImage (dependsOn: loadConfig) {
         docker_tag = project.appConfigProps.docker_tag ?: docker_tag
         docker_registry = project.appConfigProps.docker_registry ?: docker_registry
         docker_registry = docker_registry == '' || docker_registry.endsWith('/') ? docker_registry : docker_registry + '/'
+        def docker_build_args = "--build-arg IMAGE_NAME=${docker_registry}${docker_repo} --build-arg APP_NAME=${project['app-name']}"
 
         def res = exec {
             workingDir "${project.buildDir}/docker"
-            commandLine "docker build --pull -t ${docker_registry}${docker_repo}:${docker_tag} --build-arg IMAGE_NAME=${docker_registry}${docker_repo} .".split(' ')
+            commandLine "docker build --pull -t ${docker_registry}${docker_repo}:${docker_tag} ${docker_build_args} .".split(' ')
         }
         if (res.getExitValue() != 0) {
             throw new GradleException("Fail to create docker image")
