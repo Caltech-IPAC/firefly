@@ -13,9 +13,8 @@ FROM tomcat:9.0.11-jre10
 # add packages: vim, etc
 # add any other standard apt packages here
 RUN apt-get update && apt-get install -y \
-        vim procps wget emacs24-nox \
-        && rm -rf var/lib/apt/lists//*
-
+        vim procps wget emacs-nox \
+        && rm -rf /var/lib/apt/lists/*
 
 # create catalina_base directory .. so tomcat can run as non-root
 ENV CATALINA_HOME=/usr/local/tomcat
