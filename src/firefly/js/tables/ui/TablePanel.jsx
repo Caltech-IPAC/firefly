@@ -204,7 +204,7 @@ export class TablePanel extends PureComponent {
                                 callbacks={tableConnector}
                                 { ...{columns, data, hlRowIdx, rowHeight, selectable, showUnits, allowUnits, showTypes, showFilters,
                                     selectInfoCls, filterInfo, sortInfo, textView, showMask, currentPage,
-                                    tableConnector, renderers, tbl_ui_id} }
+                                    tableConnector, renderers, tbl_ui_id, startIdx} }
                             />
                             {showOptionButton && !showToolbar &&
                             <img className='TablePanel__options--small'
