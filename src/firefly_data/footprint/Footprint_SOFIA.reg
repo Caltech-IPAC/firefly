@@ -1,5 +1,5 @@
-#FORCAST_IMAG
-image;box(0, 0, 3.2', 3.4', 0) # color=green tag={FORCAST_IMAG}
+#FORCAST_IMG
+image;box(0, 0, 3.2', 3.4', 0) # color=green tag={FORCAST_IMG}
 #FIFI_LS_BL
 image;box(0, 0, 30", 30", 0)   # color=green tag={FIFI-LS_Blue}
 #FIFI_LS_RD
@@ -13,8 +13,8 @@ image;box(0, 0, 4.7", 191", 0) # color=green tag={FORCAST_GRISMS_B}
 image;box(0, 0, 1", 60", 0) # color=green tag={FLITECAM_GRISMS_ABBA}
 #FLITECAM_GRISMS_AB
 image;box(0, 0, 2", 60", 0) # color=green tag={FLITECAM_GRISMS_AB}
-#FLITECAM_IMAGE
-image;circle(0, 0, 8') # color=green tag={FLITECAM_IMAGE}
+#FLITECAM_IMGE
+image;circle(0, 0, 8') # color=green tag={FLITECAM_IMGE}
 
 #HAWC_BAND_A_TOTAL
 image;box(0, 0, 1.7', 2.8', 0)  # color=green tag={HAWC_BAND_A_TOTAL}
