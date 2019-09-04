@@ -1,7 +1,7 @@
    _________________________ EXAMPLES ________________________
 
 -e  : Define environment variable in the container
--m  : (or --memory) The maximum amount of memory the container can use.
+-m  : (or --memory=) The maximum amount of memory the container can use
 -p  : Map a local port to a the container port (8080 is required)
 -v  : Map a local directory to the container directory
 -rm : Remove the image after the run (recommended)

@@ -511,7 +511,7 @@ task dockerImage (dependsOn: loadConfig) {
         docker_tag = project.appConfigProps.docker_tag ?: docker_tag
         docker_registry = project.appConfigProps.docker_registry ?: docker_registry
         docker_registry = docker_registry == '' || docker_registry.endsWith('/') ? docker_registry : docker_registry + '/'
-        def docker_build_args = "--build-arg IMAGE_NAME=${docker_registry}${docker_repo} --build-arg APP_NAME=${project['app-name']}"
+        def docker_build_args = "--build-arg IMAGE_NAME=${docker_registry}${docker_repo}"
 
         def res = exec {
             workingDir "${project.buildDir}/docker"

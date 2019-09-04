@@ -22,7 +22,10 @@ function doCleanup() {
         ${find_cmd} "${workarea}/perm_files" -name 'master*' -mtime +1 -exec /bin/rm '{}' \+ -print >> "${log_file}" 2>&1
         ${find_cmd} "${workarea}/perm_files" -type f -mtime +7 -exec /bin/rm '{}' \+ -print >> "${log_file}" 2>&1
         ${find_cmd} "${workarea}/temp_files" -type f -mtime +1 -exec /bin/rm '{}' \+ -print >> "${log_file}" 2>&1
-        ${find_cmd} "${workarea}/visualize" -type f -mtime +2 -exec /bin/rm '{}' \+ -print >> "${log_file}" 2>&1
+        ${find_cmd} "${workarea}/visualize/fits-cache" -type f -mtime +7 -exec /bin/rm '{}' \+ -print >> "${log_file}" 2>&1
+        if [ -d "${workarea}/visualize/users" ]; then
+            ${find_cmd} "${workarea}/visualize/users" -type f -mtime +1 -exec /bin/rm '{}' \+ -print >> "${log_file}" 2>&1
+        fi
 
         ${find_cmd} "${workarea}/upload" -type f -mtime +7 -exec /bin/rm '{}' \+ -print >> "${log_file}" 2>&1
         #${find_cmd} "${workarea}/HiPS" -type f -mtime +90 -exec /bin/rm '{}' \+ -print >> "${log_file}" 2>&1
@@ -30,7 +33,7 @@ function doCleanup() {
         dirs_to_clear=("${workarea}/visualize/users" "${workarea}/temp_files")
         for d in ${dirs_to_clear[@]}; do
             if [ -d "${d}" ]; then
-                # remove all empty directories excluding those at the starting level
+                # remove empty directories excluding those at the starting level
                 ${find_cmd} "${d}" -mindepth 1 -depth -type d -empty -print -exec /bin/rmdir '{}' \; >> "${log_file}" 2>&1
             fi
         done
@@ -42,18 +45,20 @@ sleep 24h
 
 while true; do
     # Remove temporary products for each Firefly workarea
-    for workarea_dir in "$@"
-    do
-        log_dir="${workarea_dir}/${FIREFLY_APP_NAME}/cleanup_logs"
-        if [ ! -d "${log_dir}" ]; then
-            mkdir -p "${log_dir}"
-        fi
-        # Remove old cleanup log files
-        ${find_cmd} "${log_dir}" -type f -mtime +10 -exec /bin/rm '{}' \+
+    for workarea_dir in "$@"; do
+        app_dirs=`find ${workarea_dir} -mindepth 1 -type d -prune`
+        for app_dir in ${app_dirs}; do
+            log_dir="${app_dir}/cleanup_logs"
+            if [ ! -d "${log_dir}" ]; then
+                mkdir -p "${log_dir}"
+            fi
+            # Remove old cleanup log files
+            ${find_cmd} "${log_dir}" -type f -mtime +10 -exec /bin/rm '{}' \+
 
-        if [ -d "${workarea_dir}" ]; then
-            doCleanup "${workarea_dir}/${FIREFLY_APP_NAME}"
-        fi
+            if [ -d "${workarea_dir}" ]; then
+                doCleanup "${app_dir}"
+            fi
+        done
     done
 
     sleep 24h

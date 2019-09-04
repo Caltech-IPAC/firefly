@@ -2,7 +2,7 @@
 FROM tomcat:9.0.11-jre10
 
 #-----------------------------------------------------------------------------
-# To build: docker build -t ipac/firefly --build-arg IMAGE_NAME=ipac/firefly --build-arg APP_NAME=firefly .
+# To build: docker build -t ipac/firefly --build-arg IMAGE_NAME=ipac/firefly .
 # For help in running: docker run --rm  ipac/firefly --help
 #-----------------------------------------------------------------------------
 
@@ -43,10 +43,6 @@ ENV VISUALIZE_FITS_SEARCH_PATH=${EXTERNAL_MOUNT_POINT}
 # container has access to the image name, used for help only
 ARG IMAGE_NAME=''
 ENV BUILD_TIME_NAME=${IMAGE_NAME}
-
-# container need access to app name, used for cleanup task
-ARG APP_NAME=''
-ENV FIREFLY_APP_NAME=${APP_NAME}
 
 # These are the file there are executed at startup, they start tomcat
 COPY launchTomcat.sh \
