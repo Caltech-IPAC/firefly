@@ -24,6 +24,7 @@ ext {
                  ':jaxrpc',
                  ':saaj',
                  ':activation',
+                 ':jta',
                  ':mail']
 
   j2ee_lib = [j2ee_rt_lib,
