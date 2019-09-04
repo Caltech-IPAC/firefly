@@ -142,6 +142,7 @@ export function makePlotView(plotId, req, pvOptions= {}) {
  * @return {PlotViewContextData}
  */
 function createPlotViewContextData(req, pvOptions={}) {
+    const attributes= req.getAttributes();
     const plotViewCtx= {
         userCanDeletePlots: get(pvOptions, 'userCanDeletePlots', true),
         annotationOps : req.getAnnotationOps(), // how titles are drawn
@@ -150,7 +151,7 @@ function createPlotViewContextData(req, pvOptions={}) {
         zoomLockingType: UserZoomTypes.FIT, // can be FIT or FILL
         displayFixedTarget: get(pvOptions, 'displayFixedTarget',true),
         lastCollapsedZoomLevel: 0,
-        preferenceColorKey: req.getPreferenceColorKey(),
+        preferenceColorKey: attributes[PlotAttribute.PREFERENCE_COLOR_KEY],
         defThumbnailSize: DEFAULT_THUMBNAIL_SIZE,
         plotCounter:0 // index of how many plots, used for making next ID
     };

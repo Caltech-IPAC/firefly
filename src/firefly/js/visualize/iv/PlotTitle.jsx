@@ -20,7 +20,7 @@ export const TitleType= new Enum(['INLINE', 'HEAD', 'EXPANDED']);
 export function PlotTitle({plotView:pv, titleType, brief, working}) {
     let styleName= '';
     const plot= primePlot(pv);
-    const world= hasWCSProjection(plot)
+    const world= hasWCSProjection(plot);
     switch (titleType) {
         case TitleType.INLINE:
             styleName= 'plot-title-inline-title-container';
@@ -62,7 +62,7 @@ export function PlotTitle({plotView:pv, titleType, brief, working}) {
 PlotTitle.propTypes= {
     plotView : PropTypes.object,
     titleType: PropTypes.object.isRequired,
-    annotationOps : PropTypes.object,
+    working : PropTypes.bool,
     brief : PropTypes.bool.isRequired
 };
 

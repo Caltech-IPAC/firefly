@@ -93,17 +93,15 @@ function makeModel(tbl_id,plotViewAry, oldModel) {
     return newModel;
 }
 
-let idCnt= 0;
-
 function dialogComplete(tbl_id) {
     const model= getTblById(tbl_id);
     if (!model) return;
-    const si= SelectInfo.newInstance(model.selectInfo);
+    const m= model.origTableModel || model;
+    const si= SelectInfo.newInstance(m.selectInfo);
 
     si.isSelected();
-    console.log(model);
 
-    const plotIdAry= model.tableData.data.map( (d) => d[PID_IDX] ).filter( (d,idx) => si.isSelected(idx));
+    const plotIdAry= m.tableData.data.map( (d) => d[PID_IDX] ).filter( (d,idx) => si.isSelected(idx));
     if (isEmpty(plotIdAry)) return;
     if (!plotIdAry.includes(visRoot().activePlotId)) {
         dispatchChangeActivePlotView(plotIdAry[0]);
@@ -117,7 +115,6 @@ function dialogComplete(tbl_id) {
 
 function ImageViewOptionsPanel() {
 
-    // const tbl_id= TABLE_ID;
     const tbl_ui_id =TABLE_ID + '-ui';
 
     const [plotViewAry,multiViewRoot] = useStoreConnector(() => getPlotViewAry(visRoot()), () => getMultiViewRoot());
@@ -125,11 +122,8 @@ function ImageViewOptionsPanel() {
 
 
     useEffect(() => {
-        const oldModel= model || getTblById(TABLE_ID);
-        // idCnt++;
-        // const tbl_id= TABLE_ID+'--'+idCnt;
-        const m= makeModel(TABLE_ID,plotViewAry,oldModel);
-        setModel(m);
+        const oldModel= getTblById(TABLE_ID);
+        setModel(makeModel(TABLE_ID,plotViewAry,oldModel));
     }, [plotViewAry,multiViewRoot]);
 
     const someFailed= plotViewAry.some( (pv) => pv.serverCall==='fail');

@@ -251,12 +251,6 @@ export function modifyRequest(pvCtx, r, band, useCtxMods) {
     return retval;
 
 }
-/**
- *
- * @param dispatcher
- * @param {object} payload the payload of the original action
- * @param {object} result the result of the search
- */
 
 /**
  *
@@ -510,11 +504,9 @@ function handleSuccessfulCall(plotCreate, plotCreateHeader, payload, requestKey)
 }
 
 function makePlot(wpInit,plotId, attributes, cubeCtx) {
-    const plot= WebPlot.makeWebPlotData(plotId, wpInit, {}, false, cubeCtx);
-    const r= plot.plotState.getWebPlotRequest();
+    const r= PlotState.makePlotStateWithJson(wpInit.plotState).getWebPlotRequest();
+    const plot= WebPlot.makeWebPlotData(plotId, wpInit, {...attributes,  ...r.getAttributes()},false, cubeCtx);
     plot.title= makePostPlotTitle(plot,r);
-    plot.attributes= {...plot.attributes, ...r.getAttributes()}
-    Object.assign(plot.attributes,attributes);
     return plot;
 }
 

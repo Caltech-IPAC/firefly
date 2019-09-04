@@ -4,18 +4,22 @@
 
 import {TitleOptions} from '../WebPlotRequest.js';
 import {RequestType} from '../RequestType.js';
+import {PlotAttribute} from '../PlotAttribute';
 
 /**
  *
- * @param plot
- * @param r the request
+ * @param {WebPlot} plot
+ * @param {WebPlotRequest} r the request
  * @return {String} the title
  */
-export function makePostPlotTitle(plot,r) {
+export function makePostPlotTitle(plot,r){
     let title= r.getTitle();
     const titleOps= r.getTitleOptions();
-    const preTitle= r.getPreTitle() ? r.getPreTitle()+': ': '';
+    const {attributes}= plot;
+    let preTitle= attributes[PlotAttribute.PRE_TITLE];
+    let postTitle= attributes[PlotAttribute.POST_TITLE];
 
+    preTitle= preTitle ? `${preTitle}: `: '';
     if (titleOps===TitleOptions.FILE_NAME) {
         title= computeFileNameBaseTitle(r,plot.plotState, plot.plotState.firstBand(),preTitle);
     }
@@ -25,8 +29,11 @@ export function makePostPlotTitle(plot,r) {
         titleOps===TitleOptions.SERVICE_OBS_DATE ) {
         title = preTitle + plot.plotDesc;
     }
+    else if (preTitle) {
+        title= preTitle+title;
+    }
 
-    const postTitle= r.getPostTitle() ? ': '+r.getPostTitle() : '';
+    postTitle= postTitle ? `: ${postTitle}` : '';
     title= title + postTitle;
 
     return title;

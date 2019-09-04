@@ -1,11 +1,10 @@
 /* eslint prefer-template:0 */
-import {get, isString, isPlainObject, isArray, join, omit} from 'lodash';
+import {get, isString, isPlainObject, isArray, join, omit, pick} from 'lodash';
 import Enum from 'enum';
 import {ServerRequest} from '../data/ServerRequest.js';
 import {RequestType} from './RequestType.js';
 import {ZoomType} from './ZoomType.js';
-import CoordinateSys from './CoordSys.js';
-import Point, {parseImagePt} from './Point.js';
+import Point from './Point.js';
 import {parseResolver} from '../astro/net/Resolver.js';
 import {RangeValues} from './RangeValues.js';
 import {PlotAttribute} from './PlotAttribute.js';
@@ -41,7 +40,7 @@ export const TitleOptions= new Enum([
     'SERVICE_OBS_DATE'
 ], { ignoreCase: true });
 
-export const AnnotationOps= new Enum([
+export const AnnotationOps= new Enum([  // note - this is not completely implemented - only finder chart using it now
     'INLINE',    //default inline title full title and tools
     'INLINE_BRIEF',  // inline brief title, no tools
     'INLINE_BRIEF_TOOLS', // brief title w/ tools
@@ -91,14 +90,16 @@ export const WPConst= {
     CONTINUE_ON_FAIL : 'ContinueOnFail',  // todo deprecate
     OBJECT_NAME : 'ObjectName',
     RESOLVER : 'Resolver',
-    PLOT_DESC_APPEND : 'PlotDescAppend',
+    PLOT_DESC_APPEND : 'PlotDescAppend', //todo deprecate
     PROGRESS_KEY : 'ProgressKey',
     FLIP_Y : 'FlipY',
     THUMBNAIL_SIZE : 'thumbnailSize',
     URL_CHECK_FOR_NEWER: 'urlCheckForNewer',
+    MASK_REQUIRED_WIDTH: 'MaskRequiredWidth',
+    MASK_REQUIRED_HEIGHT: 'MaskRequiredHeight',
 
 // keys - client side operations
-    PREFERENCE_COLOR_KEY : 'PreferenceColorKey',
+    PREFERENCE_COLOR_KEY : PlotAttribute.PREFERENCE_COLOR_KEY,  //todo make this only a attribute
     ALLOW_IMAGE_SELECTION : 'AllowImageSelection',  //todo - not used, deprecate, set to true in examples but unused
     GRID_ON : 'GridOn',
     OVERLAY_POSITION : 'OverlayPosition',
@@ -113,19 +114,18 @@ export const WPConst= {
 
     ANNOTATION_OPS : 'AnnotationOps',
     TITLE_OPTIONS : 'TitleOptions',
-    POST_TITLE: 'PostTitle',
-    PRE_TITLE: 'PreTitle',
+    POST_TITLE: PlotAttribute.POST_TITLE,  //todo make this only a attribute
+    PRE_TITLE: PlotAttribute.PRE_TITLE,   //todo make this only a attribute
 
     MASK_BITS: 'MaskBits',
     PLOT_AS_MASK: 'PlotAsMask',
     MASK_COLORS: 'MaskColors',
-    MASK_REQUIRED_WIDTH: 'MaskRequiredWidth',
-    MASK_REQUIRED_HEIGHT: 'MaskRequiredHeight'
 
 };
 
 
 const plotAttKeys= Object.values(PlotAttribute);
+const plotAttKeysEnum= new Enum([...plotAttKeys]);
 const paramKeys= Object.values(WPConst);
 const allKeys= new Enum([...paramKeys, ...plotAttKeys ], { ignoreCase: true });
 
@@ -167,9 +167,9 @@ export class WebPlotRequest extends ServerRequest {
         }
         else if (isPlainObject(obj)) {
             const wpr= new WebPlotRequest();
-            const attributes= obj.attributes || {};
+
+            wpr.setAttributes(obj.attributes);
             wpr.setParams(cleanupObj(obj));
-            wpr.setAttributes(attributes);
 
 
             let typeGuess;
@@ -369,13 +369,6 @@ export class WebPlotRequest extends ServerRequest {
         return req;
     }
 
-    //======================== DSS or IRIS =====================================
-    static makeDSSOrIRISRequest(wp, dssSurvey, IssaSurvey, sizeInDeg) {
-        const r = this.makePlotServiceReq(ServiceType.DSS_OR_IRIS, wp, dssSurvey, sizeInDeg);
-        r.setSurveyKeyAlt(IssaSurvey);
-        return r;
-    }
-
     //======================== All Sky =====================================
     static makeAllSkyPlotRequest() { return new WebPlotRequest(RequestType.ALL_SKY, 'All Sky Image'); }
 
@@ -420,18 +413,11 @@ export class WebPlotRequest extends ServerRequest {
         return AnnotationOps.get(this.getParam(WPConst.ANNOTATION_OPS)) || AnnotationOps.INLINE;
     }
 
-    setPreTitle(preTitle) { this.setParam(WPConst.PRE_TITLE, preTitle); }
-    getPreTitle() { return this.getParam(WPConst.PRE_TITLE); }
-
-    setPostTitle(postTitle) { this.setParam(WPConst.POST_TITLE, postTitle); }
-    getPostTitle() { return this.getParam(WPConst.POST_TITLE); }
-
 //======================================================================
 //----------------------- Overlay Settings ------------------------------
 //======================================================================
 
     /**
-     *
      * @param {WorldPt|String} worldPt - the world point object or a serialized version
      */
     setOverlayPosition(worldPt) {
@@ -439,7 +425,6 @@ export class WebPlotRequest extends ServerRequest {
     }
 
     /**
-     *
      * @return {WorldPt}
      */
     getOverlayPosition() { return this.getWorldPtParam(WPConst.OVERLAY_POSITION); }
@@ -615,6 +600,8 @@ export class WebPlotRequest extends ServerRequest {
 
 //======================================================================
 //----------------------- Crop Settings --------------------------------
+// this is not really used right now from the client, we might later
+// the FinderChart api uses post crop
 //======================================================================
 
     /**
@@ -626,20 +613,10 @@ export class WebPlotRequest extends ServerRequest {
     setPostCrop(postCrop) { this.setParam(WPConst.POST_CROP, postCrop + ''); }
 
     /**
-     * @return boolean, do the post crop
-     */
-    getPostCrop() { return this.getBooleanParam(WPConst.POST_CROP); }
-
-    /**
      * set the post crop
      * @param postCrop boolean
      */
     setPostCropAndCenter(postCrop) { this.setParam(WPConst.POST_CROP_AND_CENTER, postCrop + ''); }
-
-    /**
-     * @return boolean, do the post crop and center
-     */
-    getPostCropAndCenter() { return this.getBooleanParam(WPConst.POST_CROP_AND_CENTER); }
 
     /**
      * Set to coordinate system for crop and center, eq j2000 is the default
@@ -647,38 +624,15 @@ export class WebPlotRequest extends ServerRequest {
      */
     setPostCropAndCenterType(csys) { this.setParam(WPConst.POST_CROP_AND_CENTER_TYPE, csys.toString()); }
 
-    /**
-     * @return CoordinatesSys
-     */
-    getPostCropAndCenterType() {
-        const cStr= this.getParam(WPConst.POST_CROP_AND_CENTER_TYPE);
-        let retval= null;
-        if (cStr!==null) retval= CoordinateSys.parse(cStr);
-        if (retval===null) retval= CoordinateSys.EQ_J2000;
-        return retval;
-    }
 
     setCropPt1(pt1) {
         if (pt1) this.setParam((pt1.type===Point.W_PT) ? WPConst.CROP_WORLD_PT1 : WPConst.CROP_PT1, pt1.toString());
     }
 
-    /** @return imagePt */
-    getCropImagePt1() { return parseImagePt(this.getParam(WPConst.CROP_PT1)); }
 
     setCropPt2(pt2) {
         if (pt2) this.setParam((pt2.type===Point.W_PT) ? WPConst.CROP_WORLD_PT2 : WPConst.CROP_PT2, pt2.toString());
     }
-
-    /** @return imagePt */
-    getCropImagePt2() { return parseImagePt(this.getParam(WPConst.CROP_PT2)); }
-
-
-    /** @return WorldPt */
-    getCropWorldPt1() { return this.getWorldPtParam(WPConst.CROP_WORLD_PT1); }
-
-    /** @return WorldPt */
-    getCropWorldPt2() { return this.getWorldPtParam(WPConst.CROP_WORLD_PT2); }
-
 
 //======================================================================
 //----------------------- Retrieval Settings --------------------------------
@@ -714,9 +668,7 @@ export class WebPlotRequest extends ServerRequest {
     /**
      * @return RequestType
      */
-    getRequestType() {
-        return RequestType.get(this.getParam(WPConst.TYPE)) ||RequestType.FILE;
-    }
+    getRequestType() { return RequestType.get(this.getParam(WPConst.TYPE)) ||RequestType.FILE; }
 
     /**
      * Set the type of request. This parameter is required for every call.  The factory methods will always
@@ -795,7 +747,6 @@ export class WebPlotRequest extends ServerRequest {
      */
     getWorldPt() { return this.getWorldPtParam(WPConst.WORLD_PT); }
 
-
     setSizeInDeg(sizeInDeg) { this.setParam(WPConst.SIZE_IN_DEG, sizeInDeg + ''); }
     getSizeInDeg() { return this.getFloatParam(WPConst.SIZE_IN_DEG, NaN); }
 
@@ -807,28 +758,10 @@ export class WebPlotRequest extends ServerRequest {
     setMultiImageIdx(idx) { this.setParam(WPConst.MULTI_IMAGE_IDX, idx + ''); }
 
     /**
-     * @return number index of image
-     */
-    getMultiImageIdx() { return this.getIntParam(WPConst.MULTI_IMAGE_IDX,0); }
-
-    /**
      * image extension list. ex: '3,4,5' for extension 3, 4, 5
      * @param idxS
      */
     setMultiImageExts(idxS) { this.setParam(WPConst.MULTI_IMAGE_EXTS, idxS); }
-
-    /**
-     * return image extension list
-     * @returns {*}
-     */
-    getMultiImageExts() { return this.getParam(WPConst.MULTI_IMAGE_EXTS); }
-
-    /**
-     * key to store preferences in local cache
-     * @param key String
-     */
-    setPreferenceColorKey(key) { this.setParam(WPConst.PREFERENCE_COLOR_KEY, key); }
-    getPreferenceColorKey() { return this.getParam(WPConst.PREFERENCE_COLOR_KEY); }
 
     /**
      *
@@ -901,10 +834,8 @@ export class WebPlotRequest extends ServerRequest {
     }
 
     setMaskRequiredWidth(width) { this.setParam(WPConst.MASK_REQUIRED_WIDTH, width+''); }
-    getMaskRequiredWidth() { return this.getIntParam(WPConst.MASK_REQUIRED_WIDTH,0); }
 
     setMaskRequiredHeight(height) { this.setParam(WPConst.MASK_REQUIRED_HEIGHT, height+''); }
-    getMaskRequiredHeight() { return this.getIntParam(WPConst.ASK_REQUIRED_HEIGHT,0); }
 
     setHipsRootUrl(url) { this.setSafeParam(WPConst.HIPS_ROOT_URL, url);}
     getHipsRootUrl() { return this.getSafeParam(WPConst.HIPS_ROOT_URL);}
@@ -941,9 +872,6 @@ export class WebPlotRequest extends ServerRequest {
         return retval;
     }
 
-    setPlotDescAppend(s) { this.setParam(WPConst.PLOT_DESC_APPEND, s); }
-    getPlotDescAppend() { return this.getParam(WPConst.PLOT_DESC_APPEND); }
-
     toStringServerSideOnly() {
         const retReq= this.makeCopy();
         clientSideKeys.forEach( (k) => retReq.params[k]= undefined);
@@ -957,14 +885,28 @@ export class WebPlotRequest extends ServerRequest {
      */
     setAttributes(attObj) {
         if (!attObj || !isPlainObject(attObj)) return;
-        Object.keys(attObj).forEach( (k) => this.setParam(k,attObj[k].toString()));
+        // add each attribute in attObj
+        //      - if it is know PlotAttribute key then convert case insensitive keys to proper form.
+        Object.keys(attObj).forEach( (k) => {
+            this.setParam(get(plotAttKeysEnum.get(k), 'key',k),attObj[k].toString());
+        });
+        this.attributeCache= null;
     }
 
     /**
      * @return {Object} an object with all the attributes
      * @see PlotAttribute a set of predefined attribute names
      */
-    getAttributes() { return omit(this.params, paramKeys); }
+    getAttributes() {
+        // The return is computed as follows:
+        //    - all keys that are not part of the stand param keys
+        //    - and all keys the are plot attribute keys.
+        //    - this allows some param keys to be treated at attributes
+        if (!this.attributeCache) {
+            this.attributeCache= {...omit(this.params, paramKeys), ...pick(this.params, plotAttKeys)};
+        }
+        return this.attributeCache;
+    }
 
 
 //======================================================================
@@ -1016,7 +958,7 @@ export default WebPlotRequest;
 /**
  * Create a new object with the keys more consistent with the keys defined in WebPlotRequest.
  * if a case insensitive version of the key exist then replace it with the proper one, otherwise
- * use the key.
+ * use the key. This will also remove the attributes object.
  * The loop looks up the key with case insensitive matching, if it does not exist it uses the original key
  * @param {Object} r - plain object
  * @return {Object}

@@ -1,3 +1,4 @@
+import {WPConst} from './WebPlotRequest';
 
 export const PlotAttribute= {
 
@@ -106,6 +107,15 @@ export const PlotAttribute= {
 
     /** A table id related to this plot */
     TABLE_ID : 'TABLE_ID',
+
+    /** A title to be post-pended to the title */
+    POST_TITLE: 'PostTitle',
+
+    /** A title to be prepended to the title */
+    PRE_TITLE: 'PreTitle',
+
+    /** a key for saving color table selection to preferences */
+    PREFERENCE_COLOR_KEY : 'PreferenceColorKey',
 
     DATA_HELP_URL: 'DATA_HELP_URL',
     PROJ_TYPE_DESC: 'PROJ_TYPE_DESC',
