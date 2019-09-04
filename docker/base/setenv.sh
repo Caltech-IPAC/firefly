@@ -1,7 +1,12 @@
+# if MAX_JVM_SIZE is not specified, use auto-sizing parameters INIT_RAM_PERCENT and MAX_RAM_PERCENT
+if [ -z ${MAX_JVM_SIZE} ]; then
+   JVM_SIZING="-XX:InitialRAMPercentage=${INIT_RAM_PERCENT} -XX:MaxRAMPercentage=${MAX_RAM_PERCENT}"
+else
+   JVM_SIZING="-Xms${MIN_JVM_SIZE} -Xmx${MAX_JVM_SIZE}"
+fi
 
 CATALINA_OPTS="\
-        -Xms${MIN_JVM_SIZE} \
-        -Xmx${MAX_JVM_SIZE} \
+        ${JVM_SIZING} \
         -Dserver.cores=${JVM_CORES} \
         -DjvmRoute=${JVM_ROUTE} \
         -Djava.net.preferIPv4Stack=true"

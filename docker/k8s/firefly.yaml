@@ -34,8 +34,6 @@ spec:
               key: ADMIN_PASSWORD
         - name: FIREFLY_OPTS
           value: "-Dvisualize.fits.search.path=/datasets"
-        - name: MAX_JVM_SIZE
-          value: "15G"
         - name: DEBUG
           value: "FALSE"
       volumes:

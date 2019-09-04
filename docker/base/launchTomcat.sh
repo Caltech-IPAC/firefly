@@ -32,8 +32,10 @@ echo
 echo "Properties: "
 echo "        Description                  Property                 Value"
 echo "        -----------                  --------                 -----"
-echo "        Min JVM size                 MIN_JVM_SIZE            ${MIN_JVM_SIZE}"
-echo "        Min JVM size                 MAX_JVM_SIZE            ${MAX_JVM_SIZE}"
+echo "        Min JVM size (*)             MIN_JVM_SIZE            ${MIN_JVM_SIZE}"
+echo "        Max JVM size (*)             MAX_JVM_SIZE            ${MAX_JVM_SIZE}"
+echo "        Initial JVM size (**)        INIT_RAM_PERCENT        ${INIT_RAM_PERCENT}"
+echo "        Max JVM size (**)            MAX_RAM_PERCENT         ${MAX_RAM_PERCENT}"
 echo "        CPU cores (0 means guess)    JVM_CORES               ${JVM_CORES}"
 echo "        Multi node sticky routing    jvmRoute                ${JVM_ROUTE}"
 echo "        Admin username               ADMIN_USER              ${ADMIN_USER}"
@@ -44,6 +46,8 @@ echo "        Tomcat Manager available     MANAGER                 ${MANAGER}"
 echo "        Multi web app shared cache   SHARE_CACHE             ${SHARE_CACHE}"
 echo "        Extra firefly properties     FIREFLY_OPTS            ${FIREFLY_OPTS}"
 echo "        Shared work Area             FIREFLY_SHARED_WORK_DIR ${FIREFLY_SHARED_WORK_DIR}"
+echo "(*)  If MAX_JVM_SIZE is blank, autosizing properties INIT_RAM_PERCENT and MAX_RAM_PERCENT are used instead"
+echo "(**) Autosizing properties INIT_RAM_PERCENT and MAX_RAM_PERCENT are not used if MAX_JVM_SIZE is set"
 echo
 echo "Ports: "
 echo "        8080 - http"
@@ -91,6 +95,8 @@ if [ "x$FIREFLY_SHARED_WORK_DIR" != "x" ]; then
       mkdir -p ${FIREFLY_SHARED_WORK_DIR}
 fi
 
+# run cleanup script in the background
+${CATALINA_BASE}/cleanup.sh ${FIREFLY_WORK_DIR} ${FIREFLY_SHARED_WORK_DIR} &
 
 if [ "$DEBUG" = "true" ] ||[ "$DEBUG" = "t" ] ||[ "$DEBUG" = "1" ] ||  \
    [ "$DEBUG" = "TRUE" ] || [ "$DEBUG" = "True" ] || [ "$1" = "--debug" ]; then

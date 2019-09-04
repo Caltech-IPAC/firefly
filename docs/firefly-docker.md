@@ -12,7 +12,7 @@ Firefly from docker
 
 To run latest/nightly dev:
 
-`docker run -p 8090:8080  -e "MAX_JVM_SIZE=8G" --rm ipac/firefly:nightly`
+`docker run -p 8090:8080 --memory=8g --rm ipac/firefly:nightly`
 
 See tags here: https://hub.docker.com/r/ipac/firefly/tags
 
