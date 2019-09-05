@@ -129,7 +129,7 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
     }
     /**
      * This method will get the "origin_table"'s parameter value from request.  The value can be a json string passing
-     * from the TimeSeries UI or passed from Gator.  This json strin gis converted to a TableServerRequest.
+     * from the TimeSeries UI or passed from Gator.  This json string is converted to a TableServerRequest.
      * The data is found and saved to a file.  The file name is lcInputTable.tbl.  After testing, the same file can be
      * overwritten.  Thus, there is no need to have different file name.  After the file is saved, set the LC_FILE key
      * parameter in the request to the "lcInputTable.tbl".
