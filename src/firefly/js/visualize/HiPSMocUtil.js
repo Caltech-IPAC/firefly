@@ -4,7 +4,6 @@ import HiPSMOC from '../drawingLayers/HiPSMOC.js';
 import {getHealpixCornerTool} from './HiPSUtil.js';
 import {get, set, isEmpty, flatten, isArray} from 'lodash';
 import {getAppOptions} from '../core/AppDataCntlr.js';
-import {getCellValue} from '../tables/TableUtil.js';
 const HEADER_KEY_COL = 1;
 const HEADER_VAL_COL = 2;
 
@@ -42,10 +41,7 @@ function isAnalysisTableMocFits(report) {
     }
 
     const mocKeySet = [{PCOUNT: '0'}, {GCOUNT: '1'}, {TFIELDS: '1'},
-        [{TFORM1: '1J',  NAXIS1: '4'}, {TFORM1: '1K', NAXIS1: '8'}],
-        {PIXTYPE: 'HEALPIX'},
-        {ORDERING: 'NUNIQ'},
-        {COORDSYS: 'C'}];
+        [{TFORM1: '1J',  NAXIS1: '4'}, {TFORM1: '1K', NAXIS1: '8'}]];
 
     const mocTableHeader = get(report, 'parts.1.details');
     const {data} = mocTableHeader.tableData || {};
@@ -58,19 +54,32 @@ function isAnalysisTableMocFits(report) {
         return prev;
     }, []);
 
+    const mandatoryKeys = {MOCORDER: '',
+                           PIXTYPE: 'HEALPIX',
+                           ORDERING: 'NUNIQ',
+                           COORDSYS: '',
+                           TTYPE1: ''};
     const mocKeyMap = {TTYPE1: UNIQCOL, MOCORDER: MOCOrder};
+
     const mocRetVal = {};
 
     const headerItems = data.reduce((prev, oneHeaderItem) => {
         if (mocKeys.includes(oneHeaderItem[HEADER_KEY_COL])) {
             set(prev, oneHeaderItem[HEADER_KEY_COL], oneHeaderItem[HEADER_VAL_COL]);
-        } else if (Object.keys(mocKeyMap).includes(oneHeaderItem[HEADER_KEY_COL])) {
-            set(mocRetVal, mocKeyMap[oneHeaderItem[HEADER_KEY_COL]], oneHeaderItem[HEADER_VAL_COL]);
+        } else if (Object.keys(mandatoryKeys).includes(oneHeaderItem[HEADER_KEY_COL])) {
+            if (!mandatoryKeys[oneHeaderItem[HEADER_KEY_COL]] ||
+                mandatoryKeys[oneHeaderItem[HEADER_KEY_COL]].toLowerCase() === oneHeaderItem[HEADER_VAL_COL].toLowerCase()) {
+                if (Object.keys(mocKeyMap).includes(oneHeaderItem[HEADER_KEY_COL])) {
+                    set(mocRetVal, mocKeyMap[oneHeaderItem[HEADER_KEY_COL]], oneHeaderItem[HEADER_VAL_COL]);
+                } else {
+                    set(mocRetVal, oneHeaderItem[HEADER_KEY_COL], oneHeaderItem[HEADER_VAL_COL]);
+                }
+            }
         }
         return prev;
     }, {});
 
-    if (Object.keys(mocRetVal).length !== 2) {
+    if (Object.keys(mocRetVal).length !== Object.keys(mandatoryKeys).length) {
         return {valid: false};
     }
 
