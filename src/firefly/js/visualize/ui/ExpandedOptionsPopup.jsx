@@ -58,7 +58,7 @@ const getAttribute= (plot, attribute) => get(plot,['attributes',attribute],'');
 function makeModel(tbl_id,plotViewAry, oldModel) {
 
     const expandedIds= getExpandedViewerItemIds(getMultiViewRoot());
-    const selectInfo= SelectInfo.newInstance();
+    const selectInfo= SelectInfo.newInstance({rowCount: plotViewAry.length});
 
 
     plotViewAry.forEach( ({plotId},idx) => selectInfo.setRowSelect(idx, expandedIds.includes(plotId)) );
