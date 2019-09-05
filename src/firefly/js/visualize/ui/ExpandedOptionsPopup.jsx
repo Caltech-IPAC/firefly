@@ -15,7 +15,7 @@ import {getMultiViewRoot,getExpandedViewerItemIds,dispatchReplaceViewerItems,
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {TablePanel} from '../../tables/ui/TablePanel';
 import {dispatchTableAddLocal, dispatchTableReplace} from '../../tables/TablesCntlr';
-import {getTblById} from '../../tables/TableUtil';
+import {getTblById, processRequest} from '../../tables/TableUtil';
 import {SelectInfo} from '../../tables/SelectInfo';
 import {getFormattedWaveLengthUnits, getPlotViewAry} from '../PlotViewUtil';
 import {PlotAttribute} from '../PlotAttribute';
@@ -78,7 +78,7 @@ function makeModel(tbl_id,plotViewAry, oldModel) {
         return row;
     });
 
-    return {
+    let newModel = {
         tbl_id,
         tableData:{columns,data},
         totalRows: data.length, highlightedRow: 0,
@@ -86,6 +86,11 @@ function makeModel(tbl_id,plotViewAry, oldModel) {
         tableMeta:  {},
         request: oldModel ? oldModel.request : undefined
     };
+    if (newModel.request) {
+        newModel = processRequest(newModel, newModel.request, newModel.highlightedRow);
+    }
+    dispatchTableAddLocal(newModel, undefined, false);
+    return newModel;
 }
 
 let idCnt= 0;
@@ -120,11 +125,10 @@ function ImageViewOptionsPanel() {
 
 
     useEffect(() => {
-        const oldModel= model && getTblById(model.tbl_id);
-        idCnt++;
-        const tbl_id= TABLE_ID+'--'+idCnt;
-        const m= makeModel(tbl_id,plotViewAry,oldModel);
-        // dispatchTableReplace(m);
+        const oldModel= model || getTblById(TABLE_ID);
+        // idCnt++;
+        // const tbl_id= TABLE_ID+'--'+idCnt;
+        const m= makeModel(TABLE_ID,plotViewAry,oldModel);
         setModel(m);
     }, [plotViewAry,multiViewRoot]);
 
@@ -160,7 +164,6 @@ function ImageViewOptionsPanel() {
                     <div className={'TablePanel__wrapper--border'}>
                         <div className='TablePanel__table' style={{top: 0}}>
                             <TablePanel
-                                key={uniqueId()}
                                 tbl_ui_id={tbl_ui_id}
                                 tableModel={model}
                                 showToolbar={false}
