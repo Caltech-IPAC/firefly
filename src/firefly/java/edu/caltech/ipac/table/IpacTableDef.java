@@ -1,7 +1,7 @@
 package edu.caltech.ipac.table;
 
+import edu.caltech.ipac.util.KeyVal;
 import edu.caltech.ipac.util.StringUtils;
-import javafx.util.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,10 +18,10 @@ public class IpacTableDef extends TableMeta {
     private int lineWidth;
     private int rowCount;
     private int rowStartOffset;
-    private transient Pair<Integer, String> extras;     // used by IpacTableUtil to store extras data while parsing an ipac table via input stream
+    private transient KeyVal<Integer, String> extras;     // used by IpacTableUtil to store extras data while parsing an ipac table via input stream
     private transient TableUtil.ColCheckInfo colCheckInfos = new TableUtil.ColCheckInfo();      // used by IpacTableUtil to store check logic on a variety of things.
 
-    public Pair<Integer, String> getExtras() {
+    public KeyVal<Integer, String> getExtras() {
         return extras;
     }
 
@@ -38,7 +38,7 @@ public class IpacTableDef extends TableMeta {
     }
 
     public void setExtras(Integer numHeaderLines, String unreadLine) {
-        this.extras = new Pair<>(numHeaderLines, unreadLine);
+        this.extras = new KeyVal<>(numHeaderLines, unreadLine);
     }
 
     public List<DataType> getCols() {
