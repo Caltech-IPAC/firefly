@@ -420,9 +420,7 @@ export class WebPlotRequest extends ServerRequest {
     /**
      * @param {WorldPt|String} worldPt - the world point object or a serialized version
      */
-    setOverlayPosition(worldPt) {
-        this.setParam(WPConst.OVERLAY_POSITION, worldPt ? worldPt.toString() : false);
-    }
+    setOverlayPosition(worldPt) { this.setParam(WPConst.OVERLAY_POSITION, worldPt ? worldPt.toString() : false); }
 
     /**
      * @return {WorldPt}
@@ -528,9 +526,7 @@ export class WebPlotRequest extends ServerRequest {
      * @param {ZoomType} zoomType affect how the zoom is computed
      * @see ZoomType
      */
-    setZoomType(zoomType) {
-        if (zoomType) this.setParam(WPConst.ZOOM_TYPE, zoomType.key);
-    }
+    setZoomType(zoomType) { if (zoomType) this.setParam(WPConst.ZOOM_TYPE, zoomType.key); }
 
     getZoomType() {
         const w= this.getZoomToWidth();
@@ -550,15 +546,11 @@ export class WebPlotRequest extends ServerRequest {
         this.setParam(WPConst.ZOOM_ARCSEC_PER_SCREEN_PIX, arcsecSize + '');
     }
 
-    /** * @return {number} */
-    getZoomArcsecPerScreenPix() {
-        return this.getFloatParam(WPConst.ZOOM_ARCSEC_PER_SCREEN_PIX,0);
-    }
-
 //======================================================================
-//----------------------- Rotate  & Flip Settings ----------------------
+//----------------------- Rotate  & Flip Settings ---------------------
+//  these have become pure client settings. We strip then out when we
+//  call the server
 //======================================================================
-
     /**
      * Plot should come up rotated north
      *
@@ -600,10 +592,9 @@ export class WebPlotRequest extends ServerRequest {
 
 //======================================================================
 //----------------------- Crop Settings --------------------------------
-// this is not really used right now from the client, we might later
+// this is not really used right now from the client, we might later.
 // the FinderChart api uses post crop
 //======================================================================
-
     /**
      * Crop the image before returning it.  If rotation is set then the crop will happen post rotation.
      * Note: setCropPt1 & setCropPt2 are required to crop
@@ -624,11 +615,9 @@ export class WebPlotRequest extends ServerRequest {
      */
     setPostCropAndCenterType(csys) { this.setParam(WPConst.POST_CROP_AND_CENTER_TYPE, csys.toString()); }
 
-
     setCropPt1(pt1) {
         if (pt1) this.setParam((pt1.type===Point.W_PT) ? WPConst.CROP_WORLD_PT1 : WPConst.CROP_PT1, pt1.toString());
     }
-
 
     setCropPt2(pt2) {
         if (pt2) this.setParam((pt2.type===Point.W_PT) ? WPConst.CROP_WORLD_PT2 : WPConst.CROP_PT2, pt2.toString());
@@ -909,10 +898,6 @@ export class WebPlotRequest extends ServerRequest {
     }
 
 
-//======================================================================
-//------------------ Private / Protected Methods -----------------------
-//======================================================================
-
     /**
     * This method can only be used for those services that take the standard
     * ra, dec, radius approach (so far, iras, issa, 2mass, dss)
@@ -980,7 +965,6 @@ export function findInvalidWPRKeys(r) {
     return [...Object.keys(r),plotAttKeys].filter( (k) => !Boolean(allKeys.get(k)));
 }
 
-
 /**
  * take a plain object plot request and clean it up has a minimum required 
  * to be valid
@@ -1017,7 +1001,6 @@ export function confirmPlotRequest(request,global,fallbackGroupId,makePlotId) {
         return r;
     }
 }
-
 
 function makeDataOnlyRequestString(r) {
     if (!r) return '';

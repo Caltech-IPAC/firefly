@@ -98,7 +98,7 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
     const content =  <EnumSelect {...{col, tbl_id, filterInfo, filterInfoCls, onFilter}} />;
     const onEnumClicked = () => {
         showDropDown({id: tblDropDownId(tbl_id), content, atElRef: enumArrowEl.current, locDir: 33, style: {marginLeft: -10},
-            wrapperStyle: {zIndex: 110}}); // 110 is the z-index of a dropdown
+            wrapperStyle: {zIndex: 110}, planeId:'table-dropdown-id'}, ); // 110 is the z-index of a dropdown
     };
 
     return (
@@ -138,7 +138,7 @@ function EnumSelect({col, tbl_id, filterInfoCls, onFilter}) {
                            .join(',');
     }
 
-    const hideEnumSelect = () => hideDropDown(tblDropDownId(tbl_id));
+    const hideEnumSelect = () => hideDropDown(tblDropDownId(tbl_id), 'table-dropdown-id');
     const onClear = () => {
         dispatchValueChange({fieldKey, groupKey, value: '', valid: true});
     };

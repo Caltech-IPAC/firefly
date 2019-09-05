@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {difference, flatten, get, has, isArray, isEmpty, isString, isUndefined, isObject} from 'lodash';
+import {difference, flatten, get, has, isArray, isEmpty, isString, isUndefined, isObject,uniq} from 'lodash';
 import {getPlotGroupById} from './PlotGroup.js';
 import {makeDevicePt, makeImagePt, makeWorldPt, pointEquals} from './Point.js';
 import {clone} from '../util/WebUtil.js';
@@ -827,7 +827,8 @@ export function isMultiImageFits(pv) {
  */
 export function isMultiHDUFits(pv) {
     if (!pv) return false;
-    return pv.plots.some( (p) =>  Boolean(getNumberHeader(p,HdrConst.SPOT_EXT,0)));
+    const hduCnt= uniq(pv.plots.map( (p) => getNumberHeader(p,HdrConst.SPOT_EXT,0)));
+    return hduCnt.length>1;
 }
 
 /**

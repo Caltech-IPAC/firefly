@@ -3,7 +3,7 @@
  */
 
 import React, {useState, useEffect} from 'react';
-import {isEmpty, uniqueId,get} from 'lodash';
+import {isEmpty, uniqueId,get,uniq} from 'lodash';
 import {useStoreConnector} from '../../ui/SimpleComponent';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
@@ -38,21 +38,32 @@ export function showExpandedOptionsPopup(plotViewAry) {
 
 const [NAME_IDX,WAVE_LENGTH_DESC,PID_IDX,STATUS, PROJ_TYPE_DESC, WAVE_TYPE, DATA_HELP_URL]= [0,1,2,3,4,5,6];
 
-const columns = [];
-columns[NAME_IDX]= {name: 'Name', type: 'char', width: 20};
-columns[PID_IDX]= {name: 'plotId', type: 'char', width: 10, visibility: 'hidden'};
-columns[STATUS]= {name: 'Status', type: 'char', width: 15};
-columns[PROJ_TYPE_DESC]= {name: 'Project', type: 'char', width: 8};
-columns[WAVE_TYPE]= {name: 'Type', type: 'char', width: 8};
-columns[WAVE_LENGTH_DESC]= {name: 'Wavelength', type: 'char', width: 10};
-columns[DATA_HELP_URL]= {name: 'Help', type: 'location', width: 7};
+const columnsTemplate = [];
+columnsTemplate[NAME_IDX]= {name: 'Name', type: 'char', width: 20};
+columnsTemplate[PID_IDX]= {name: 'plotId', type: 'char', width: 10, visibility: 'hidden'};
+columnsTemplate[STATUS]= {name: 'Status', type: 'char', width: 15};
+columnsTemplate[PROJ_TYPE_DESC]= {name: 'Project', type: 'char', width: 8};
+columnsTemplate[WAVE_TYPE]= {name: 'Type', type: 'char', width: 8};
+columnsTemplate[WAVE_LENGTH_DESC]= {name: 'Wavelength', type: 'char', width: 10};
+columnsTemplate[DATA_HELP_URL]= {name: 'Help', type: 'location', width: 7};
+
+
+
+// columnsTemplate[DATA_HELP_URL]= {name: 'Help', type: 'location', width: 7, links:[{ href: '${Help}',  value: 'help'}]};
+// columns[DATA_HELP_URL]= {name: 'Help', type: 'location', width: 7};
+//
+// const helpAllPopulated= {name: 'Help', type: 'location', width: 7, links:[{ href: '${Help}',  value: 'help'}]};
+// const helpSomePopulated= {name: 'Help', type: 'location', width: 7};
 
 
 
 
 
-const getAttribute= (plot, attribute) => get(plot,['attributes',attribute],'');
+const getAttribute= (attributes, attribute) => get(attributes,[attribute],'');
 
+function makeEnumValues(data,idx) {
+    return uniq(data.map((d) => d[idx]).filter((d) => d)).join(',');
+}
 
 
 function makeModel(tbl_id,plotViewAry, oldModel) {
@@ -61,9 +72,11 @@ function makeModel(tbl_id,plotViewAry, oldModel) {
     const selectInfo= SelectInfo.newInstance({rowCount: plotViewAry.length});
 
 
+
     plotViewAry.forEach( ({plotId},idx) => selectInfo.setRowSelect(idx, expandedIds.includes(plotId)) );
 
     const data= plotViewAry.map( (pv) => {
+        const attributes= plot? plot.attributes : pv.request.getAttributes();
         const plot= primePlot(pv);
         const {plotId, serverCall, plottingStatus}= pv;
         const title = plot ? plot.title :  pv.request.getTitle() || 'failed image';
@@ -71,12 +84,17 @@ function makeModel(tbl_id,plotViewAry, oldModel) {
         row[NAME_IDX]=title;
         row[PID_IDX]= plotId;
         row[STATUS]= serverCall==='success' ? 'Success' : plottingStatus;
-        row[PROJ_TYPE_DESC]= getAttribute(plot,PlotAttribute.PROJ_TYPE_DESC);
-        row[WAVE_TYPE]= getAttribute(plot,PlotAttribute.WAVE_TYPE);
-        row[WAVE_LENGTH_DESC]= getFormattedWaveLengthUnits(getAttribute(plot,PlotAttribute.WAVE_LENGTH_DESC),true);
-        row[DATA_HELP_URL]= getAttribute(plot,PlotAttribute.DATA_HELP_URL);
+        row[PROJ_TYPE_DESC]= getAttribute(attributes,PlotAttribute.PROJ_TYPE_DESC);
+        row[WAVE_TYPE]= getAttribute(attributes,PlotAttribute.WAVE_TYPE);
+        row[WAVE_LENGTH_DESC]= getFormattedWaveLengthUnits(getAttribute(attributes,PlotAttribute.WAVE_LENGTH_DESC),true);
+        row[DATA_HELP_URL]= getAttribute(attributes,PlotAttribute.DATA_HELP_URL);
         return row;
     });
+
+    const columns= [...columnsTemplate];
+    columns[PROJ_TYPE_DESC].enumVals= makeEnumValues(data,PROJ_TYPE_DESC);
+    columns[WAVE_TYPE].enumVals=  makeEnumValues(data,WAVE_TYPE);
+
 
     let newModel = {
         tbl_id,

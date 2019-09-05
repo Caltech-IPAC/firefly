@@ -520,12 +520,10 @@ function updateActiveTarget(plot) {
     const req= plot.plotState.getWebPlotRequest();
     if (!req) return;
 
-    let corners;
     let activeTarget;
-
-
     if (!getActiveTarget()) {
-        const circle = req.getRequestArea(); if (req.getOverlayPosition())     activeTarget= req.getOverlayPosition();
+        const circle = req.getRequestArea();
+        if (req.getOverlayPosition())     activeTarget= req.getOverlayPosition();
         else if (circle && circle.center) activeTarget= circle.center;
         else                              activeTarget= VisUtils.getCenterPtOfPlot(plot);
 
@@ -533,9 +531,6 @@ function updateActiveTarget(plot) {
     if (activeTarget) dispatchActiveTarget(activeTarget);
 }
 
-// export function initBuildInDrawLayers() {
-//     dispatchCreateDrawLayer(ActiveTarget.TYPE_ID);
-// }
 
 /**
  *
