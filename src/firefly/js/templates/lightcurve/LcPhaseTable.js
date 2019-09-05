@@ -99,7 +99,9 @@ export function getPhase(time, timeZero, period,  dec=DEC_PHASE) {
     var q = (time - timeZero)/period;
     var p = q >= 0  ? (q - Math.floor(q)) : (q + Math.floor(-q) + 1.0);
 
+
     return p.toFixed(dec);
+
 }
 
 /**
@@ -227,7 +229,7 @@ function repeatDataCycle(phaseTable) {
     slice(tableData.data, 0).forEach((d) => {
         var newRow = slice(d);
 
-        newRow[fIdx] = `${parseFloat(d[fIdx]) + 1}`;
+        newRow[fIdx] = `${ (parseFloat(d[fIdx]) + 1).toFixed(DEC_PHASE)}`;
         tableData.data.push(newRow);
     });
 
