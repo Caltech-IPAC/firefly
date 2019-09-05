@@ -471,7 +471,7 @@ function tableSort(action) {
             const [nreq, tableStub, tableModel] = setupTableOps(tbl_id, request);
             if (!tableStub) return;
 
-            TblUtil.setHlRowByRowIdx(nreq, tableModel);
+            // TblUtil.setHlRowByRowIdx(nreq, tableModel);
 
             dispatch({type:TABLE_FETCH, payload: tableStub});
 
