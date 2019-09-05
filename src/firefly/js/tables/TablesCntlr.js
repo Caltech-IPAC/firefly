@@ -471,7 +471,9 @@ function tableSort(action) {
             const [nreq, tableStub, tableModel] = setupTableOps(tbl_id, request);
             if (!tableStub) return;
 
+            // rollback changes to keep current highlighted row.  instead set highlighted to 0.
             // TblUtil.setHlRowByRowIdx(nreq, tableModel);
+            nreq.startIdx = 0;
 
             dispatch({type:TABLE_FETCH, payload: tableStub});
 
