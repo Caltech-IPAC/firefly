@@ -582,6 +582,51 @@ task dockerPublish (dependsOn: dockerImage) {
 }
 
 
+
+task dockerDelete (dependsOn: loadConfig){
+    description = 'Delete a docker image from docker hub.'
+    group = DOCKER_GROUP
+
+    ext.docker_repo = "ipac/firefly"
+    ext.docker_registry = ''
+
+    doLast {
+        try {
+            "docker --version".execute()
+        } catch (Exception e) {
+            println ">> docker is not installed.  This task required docker"
+            throw new GradleException("docker is not installed.  This task required docker", e)
+        }
+
+        if (project.appConfigProps.docker_user != '') {
+            def proc = "docker login --username ${project.appConfigProps.docker_user} --password ${project.appConfigProps.docker_passwd}".execute()
+            proc.waitForOrKill(10000)
+            println ">> docker login as ${project.appConfigProps.docker_user} with exit status ${proc.exitValue()}"
+        }
+
+        docker_repo = project.appConfigProps.docker_repo ?: docker_repo
+        docker_registry = project.appConfigProps.docker_registry ?: docker_registry
+        docker_registry = docker_registry == '' || docker_registry.endsWith('/') ? docker_registry : docker_registry + '/'
+
+        //DELETE Restful call:
+        def str = "https://cloud.docker.com/v2/repositories/${docker_repo}/tags/${docker_tag}/"
+        def encoding = "${docker_user}:${docker_passwd}".bytes.encodeBase64().toString()
+
+        def conn = new URL(str).openConnection();
+        conn.setRequestMethod("DELETE")
+        conn.setDoOutput(true)
+        conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
+        conn.setRequestProperty("Authorization", "Basic " + encoding)
+        conn.connect()
+
+        if(conn.getResponseCode() >= 400) {
+            throw new GradleException("Fail to delete docker image")
+        }
+
+    }
+}
+
+
 task onlinehelp (dependsOn: [loadConfig]) {
     description = 'Bundled onlinehelp with the webapp'
     group = SUB_GROUP
