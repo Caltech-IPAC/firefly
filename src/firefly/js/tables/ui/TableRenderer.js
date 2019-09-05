@@ -269,14 +269,15 @@ export class TextCell extends Component {
  * LinkCell is implementing A.4 using link substitution based on A.1
  */
 export const LinkCell = React.memo((props) => {
-    const {tbl_id, col={}, rowIndex, style={}} = props;
-    const val = getValue(props);
+    const {tbl_id, col={}, rowIndex, style={}, startIdx} = props;
+    const absRowIdx = rowIndex + startIdx;              // rowIndex is the index of the current page.  Add startIdx to get the absolute index of the row in the full table.
+    const val = getValue(props) || '';
     let mStyle = style;
     let className = 'public_fixedDataTableCell_cellContent';
     if (col.links) {
         const tableModel = getTblById(tbl_id);
         if (col.links.length === 1) {
-            const rval = resolveHRefVal(tableModel, get(col, 'links.0.value', val), rowIndex);
+            const rval = resolveHRefVal(tableModel, get(col, 'links.0.value', val), absRowIdx);
             className += isNumeric(rval) ? ' right_align' : '';
         }
         return (
@@ -285,8 +286,8 @@ export const LinkCell = React.memo((props) => {
                     col.links.map( (link={}, idx) => {
                         const {href, title, value=val, action} = link;
                         const target = action || '_blank';
-                        const rvalue = resolveHRefVal(tableModel, value, rowIndex);
-                        const rhref = resolveHRefVal(tableModel, href, rowIndex, val);
+                        const rvalue = resolveHRefVal(tableModel, value, absRowIdx);
+                        const rhref = resolveHRefVal(tableModel, href, absRowIdx, val);
                         if (idx > 0) mStyle = {marginLeft: 3, ...mStyle};
                         return (<ATag key={'ATag_' + idx} href={rhref}
                                       {...{value:rvalue, title, target, style:mStyle}}

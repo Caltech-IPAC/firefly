@@ -73,7 +73,7 @@ const BasicTableViewInternal = React.memo((props) => {
 
     const makeColumnsProps = {columns, data, selectable, selectInfoCls, renderers, bgColor,
         columnWidths, filterInfo, sortInfo, showUnits, showTypes, showFilters,
-        onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected, tbl_id};
+        onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected, startIdx, tbl_id};
 
     const rowClassNameGetter = highlightedRowHandler || defHighlightedRowHandler(tbl_id, hlRowIdx, startIdx);
 
@@ -325,11 +325,11 @@ function makeColumns (props) {
 
 
 function makeColumnTag(props, col, idx) {
-    const {data, columnWidths, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter, tbl_id, renderers, bgColor='white'} = props;
+    const {data, columnWidths, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter, tbl_id, renderers, bgColor='white', startIdx} = props;
 
     if (col.visibility && col.visibility !== 'show') return false;
     const HeadRenderer = get(renderers, [col.name, 'headRenderer'], HeaderCell);
-    const CellRenderer = get(renderers, [col.name, 'cellRenderer'], getDefaultRenderer(col, tbl_id));
+    const CellRenderer = get(renderers, [col.name, 'cellRenderer'], getDefaultRenderer(col, tbl_id, startIdx));
     const fixed = col.fixed || false;
     const style = col.fixed && {backgroundColor: bgColor};
 
@@ -365,9 +365,9 @@ function makeSelColTag({selectable, onSelectAll, showUnits, showTypes, showFilte
     );
 }
 
-function getDefaultRenderer(col={}, tbl_id) {
+function getDefaultRenderer(col={}, tbl_id, startIdx) {
     if (col.type === 'location' || !isEmpty(col.links)) {
-        return ((props) => <LinkCell {...props} {...{tbl_id, col}}/>);
+        return ((props) => <LinkCell {...props} {...{tbl_id, col, startIdx}}/>);
     }
 
     return TextCell;
