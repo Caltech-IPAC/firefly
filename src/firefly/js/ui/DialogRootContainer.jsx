@@ -5,12 +5,12 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
-import {PopupStoreConnection} from './PopupStoreConnection.jsx';
 import {get, set} from 'lodash';
+import {PopupStoreConnection} from './PopupStoreConnection.jsx';
 
 
 const DIALOG_DIV= 'dialogRootDiv';
-const DROPDOWN_DIV= 'dropDownPlane';
+const DROPDOWN_DIV_ROOT= 'dropDownPlane-root';
 const TMP_ROOT='TMP-';
 const DEFAULT_ZINDEX= 200;
 
@@ -20,7 +20,6 @@ var dialogs= [];
 var tmpPopups= [];
 var tmpCount=0;
 var divElement;
-var dropDownEl;
 
 
 /**
@@ -37,28 +36,24 @@ var dropDownEl;
  * @param p.locDir      location and direction of the drop-down.  see desc for more info
  * @param p.wrapperStyle style to apply to dropdown wrapper div, ex. zIndex
  */
-export function showDropDown({id='',content, style={}, atElRef, locDir, wrapperStyle, planeId}) {
-    let ddDiv;
-    if (planeId) {
-        ddDiv = document.getElementById(planeId) ||createDiv({id: planeId, wrapperStyle});
-        const rootZindex= atElRef && computeZIndex(atElRef);
-        if (rootZindex) ddDiv.style.zIndex= rootZindex;
-    }
-    else {
-        if (!dropDownEl) dropDownEl = createDiv({id: DROPDOWN_DIV+'-root', wrapperStyle});
-        ddDiv = document.getElementById(DROPDOWN_DIV + '_' + id) ||
-            createDiv({id: DROPDOWN_DIV + '_' + id, appendTo: dropDownEl, wrapperStyle});
-    }
+export function showDropDown({id='',content, style={}, atElRef, locDir, wrapperStyle}) {
+    const planeId= getddDiv(id);
+    const ddDiv = document.getElementById(planeId) || createDiv({id: planeId, wrapperStyle});
+    const rootZindex= atElRef && computeZIndex(atElRef);
+    if (rootZindex) ddDiv.style.zIndex= rootZindex;
     ReactDOM.render( <DropDown {...{id, content, style, atElRef, locDir}}/>, ddDiv);
     return ddDiv;
 }
 
-export function hideDropDown(id='', planeId) {
-    const ddDiv = document.getElementById(planeId ? planeId : DROPDOWN_DIV + '_' + id);
-    if (ddDiv) ReactDOM.unmountComponentAtNode(ddDiv);
-    if (planeId) ddDiv.parentNode.removeChild(ddDiv);
+export function hideDropDown(id='') {
+    const ddDiv = document.getElementById(getddDiv(id));
+    if (ddDiv) {
+        ReactDOM.unmountComponentAtNode(ddDiv);
+        ddDiv.parentNode.removeChild(ddDiv);
+    }
 }
 
+const getddDiv= (id) => id ? id+ '-dropdownPlane' : DROPDOWN_DIV_ROOT;
 
 const getPos = (props) => {
     const {atElRef:el} = props;

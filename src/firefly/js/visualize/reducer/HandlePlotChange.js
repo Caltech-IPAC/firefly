@@ -251,6 +251,7 @@ function installTiles(state, action) {
         return state;
     }
 
+    pv= {...pv};
     pv.serverCall='success';
     pv= replacePrimaryPlot(pv,WebPlot.setPlotState(plot,primaryStateJson,primaryTiles));
 

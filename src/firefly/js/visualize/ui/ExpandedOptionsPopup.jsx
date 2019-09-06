@@ -3,7 +3,7 @@
  */
 
 import React, {useState, useEffect} from 'react';
-import {isEmpty, uniqueId,get,uniq} from 'lodash';
+import {isEmpty, get,uniq, isEqual} from 'lodash';
 import {useStoreConnector} from '../../ui/SimpleComponent';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
@@ -14,10 +14,10 @@ import {getMultiViewRoot,getExpandedViewerItemIds,dispatchReplaceViewerItems,
                              EXPANDED_MODE_RESERVED, IMAGE} from '../MultiViewCntlr.js';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {TablePanel} from '../../tables/ui/TablePanel';
-import {dispatchTableAddLocal, dispatchTableReplace} from '../../tables/TablesCntlr';
+import {dispatchTableAddLocal} from '../../tables/TablesCntlr';
 import {getTblById, processRequest} from '../../tables/TableUtil';
 import {SelectInfo} from '../../tables/SelectInfo';
-import {getFormattedWaveLengthUnits, getPlotViewAry} from '../PlotViewUtil';
+import {getFormattedWaveLengthUnits, getPlotViewAry, isPlotViewArysEqual} from '../PlotViewUtil';
 import {PlotAttribute} from '../PlotAttribute';
 import {dispatchDeletePlotView} from '../ImagePlotCntlr';
 
@@ -61,14 +61,12 @@ columnsTemplate[DATA_HELP_URL]= {name: 'Help', type: 'location', width: 7};
 
 const getAttribute= (attributes, attribute) => get(attributes,[attribute],'');
 
-function makeEnumValues(data,idx) {
-    return uniq(data.map((d) => d[idx]).filter((d) => d)).join(',');
-}
+const makeEnumValues= (data,idx) => uniq(data.map((d) => d[idx]).filter((d) => d)).join(',');
 
 
-function makeModel(tbl_id,plotViewAry, oldModel) {
 
-    const expandedIds= getExpandedViewerItemIds(getMultiViewRoot());
+function makeModel(tbl_id,plotViewAry, expandedIds, oldModel) {
+
     const selectInfo= SelectInfo.newInstance({rowCount: plotViewAry.length});
 
 
@@ -78,8 +76,8 @@ function makeModel(tbl_id,plotViewAry, oldModel) {
     const data= plotViewAry.map( (pv) => {
         const attributes= plot? plot.attributes : pv.request.getAttributes();
         const plot= primePlot(pv);
-        const {plotId, serverCall, plottingStatus}= pv;
-        const title = plot ? plot.title :  pv.request.getTitle() || 'failed image';
+        const {plotId, serverCall, plottingStatus,request}= pv;
+        const title = plot ? plot.title :  request.getTitle() || 'failed image';
         const row= [];
         row[NAME_IDX]=title;
         row[PID_IDX]= plotId;
@@ -131,18 +129,57 @@ function dialogComplete(tbl_id) {
 }
 
 
+// function isPvAryEqual(oldAry,newAry) {
+//     if (!oldAry) return false;
+//     if (oldAry.length!==newAry.length) return false;
+//     return oldAry.every( (pv,idx) => {
+//         const {plotId, serverCall, plottingStatus, request}= pv;
+//         const newP= primePlot(pv);
+//         const oldP= primePlot(newAry[idx]);
+//         if (Boolean(newP)!==Boolean(oldP)) return false;
+//         if (newP && oldP) {
+//             const plotEqual= (newP.plotImageId===oldP.plotImageId);
+//             if (!plotEqual) return false;
+//         }
+//         return (
+//             plotId=== newAry[idx].plotId &&
+//             request=== newAry[idx].request &&
+//             serverCall===newAry[idx].serverCall &&
+//             plottingStatus===newAry[idx].plottingStatus);
+//
+//     });
+// }
+//
+
+const pvKeys= ['plotId', 'request', 'serverCall', 'plottingStatus'];
+const plotKeys= ['plotImageId'];
+
+
+function getPvAry(oldPvAry) {
+    const pvAry= getPlotViewAry(visRoot());
+    if (!oldPvAry) return pvAry;
+    return isPlotViewArysEqual(oldPvAry, pvAry,pvKeys,plotKeys) ? oldPvAry : pvAry;
+}
+
+function getExpandedIds(oldIdAry) {
+    const expandedIds= getExpandedViewerItemIds(getMultiViewRoot());
+    return isEqual(oldIdAry,expandedIds) ? oldIdAry : expandedIds;
+}
+
+
 function ImageViewOptionsPanel() {
 
     const tbl_ui_id =TABLE_ID + '-ui';
 
-    const [plotViewAry,multiViewRoot] = useStoreConnector(() => getPlotViewAry(visRoot()), () => getMultiViewRoot());
+
+    const [plotViewAry,expandedIds] = useStoreConnector(getPvAry, getExpandedIds);
     const [model, setModel] = useState(undefined);
 
 
     useEffect(() => {
         const oldModel= getTblById(TABLE_ID);
-        setModel(makeModel(TABLE_ID,plotViewAry,oldModel));
-    }, [plotViewAry,multiViewRoot]);
+        setModel(makeModel(TABLE_ID,plotViewAry,expandedIds, oldModel));
+    }, [plotViewAry,expandedIds]);
 
     const someFailed= plotViewAry.some( (pv) => pv.serverCall==='fail');
 

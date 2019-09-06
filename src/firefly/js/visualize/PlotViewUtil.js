@@ -611,6 +611,38 @@ export function findPlot(plotView, plotImageId) {
     return plotView.plots.find( (p) => plotImageId===p.plotImageId);
 }
 
+/**
+ * Check if two PlotViews are equals by comparing
+ * @param {PlotView} pv1
+ * @param {PlotView} pv2
+ * @param {Array.<String>} pvKeys
+ * @param {Array.<String>} plotKeys
+ */
+export function isPlotViewsEqual(pv1, pv2, pvKeys=[], plotKeys=[]) {
+    if (isEmpty(pvKeys)) return pv1===pv2;
+    const p1= primePlot(pv1);
+    const p2= primePlot(pv2);
+    if (Boolean(p1)!==Boolean(p2)) return false;
+
+    if (p1 && p2) {
+        if (isImage(p1) !== isImage(p1)) return false;
+        if (isEmpty(plotKeys)) {
+            if (p1 !== p2) return false;
+        } else {
+            const plotEqual = plotKeys.every((k) => p1[k] === p2[k]);
+            if (!plotEqual) return false;
+        }
+    }
+    return pvKeys.every( (k) => pv1[k]===pv2[k])
+}
+
+export function isPlotViewArysEqual(pvAry1, pvAry2, pvKeys=[], plotKeys=[]) {
+    if (isEmpty(pvAry1) && isEmpty(pvAry1)) return true;
+    if (isEmpty(pvAry1)!==isEmpty(pvAry1)) return false;
+    if (pvAry1.length!==pvAry2.length) return false;
+    return pvAry1.every( (pv,idx) => isPlotViewsEqual(pv,pvAry2[idx], pvKeys, plotKeys));
+}
+
 
 /**
  *

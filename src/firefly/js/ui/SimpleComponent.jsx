@@ -1,4 +1,5 @@
 import {PureComponent, useEffect, useState} from 'react';
+import {isFunction,get,isPlainObject} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
@@ -45,7 +46,9 @@ export class SimpleComponent extends PureComponent {
  * By default, this will call Object.is() to ensure the state has changed before
  * calling setState.  To override this behavior, use useStoreConnector.bind({comparator: your_compare_function}).
  *
- * @param stateGetters  one or more functions returning a state
+ * @param stateGetters  one or more functions returning a state, when called the oldState is passed as a parameter.
+ * This allows a stateGetter to optionally act as a comparator.  If the stateGetter does not care about the changes
+ * then it can return the oldState and there will be no state update.
  * @returns {Object[]}  an array of state's value in the order of the given stateGetters
  */
 export function useStoreConnector(...stateGetters) {
@@ -63,7 +66,8 @@ export function useStoreConnector(...stateGetters) {
         const remover = flux.addListener(() => {
             if (isMounted) {
                 setters.forEach(([getter, setter, oldState], idx) => {
-                    const newState = getter();
+                    const newState = getter(oldState);  // if getter returns oldState then no state update
+                    if (newState===oldState) return;    // comparator might be overridden, use === first for efficiency
                     setters[idx][2] = newState;
                     if (!comparator(oldState, newState)) {
                         setter(newState);
