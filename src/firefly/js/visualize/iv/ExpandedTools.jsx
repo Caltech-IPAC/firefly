@@ -74,7 +74,7 @@ export function ExpandedTools({visRoot,closeFunc}) {
     const {expandedMode,activePlotId, singleAutoPlay}= visRoot;
     const plotIdAry= getExpandedViewerItemIds(getMultiViewRoot());
     // const single= expandedMode===ExpandType.SINGLE || plotIdAry.length===1;
-    const single= expandedMode===ExpandType.SINGLE || visRoot.plotViewAry===1;
+    const single= visRoot.plotViewAry===1;
     const pv= getActivePlotView(visRoot);
     const plot= primePlot(pv);
 

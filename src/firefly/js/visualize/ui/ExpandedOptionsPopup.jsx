@@ -45,7 +45,7 @@ columnsTemplate[STATUS]= {name: 'Status', type: 'char', width: 15};
 columnsTemplate[PROJ_TYPE_DESC]= {name: 'Project', type: 'char', width: 8};
 columnsTemplate[WAVE_TYPE]= {name: 'Type', type: 'char', width: 8};
 columnsTemplate[WAVE_LENGTH_DESC]= {name: 'Wavelength', type: 'char', width: 10};
-columnsTemplate[DATA_HELP_URL]= {name: 'Help', type: 'location', width: 7};
+columnsTemplate[DATA_HELP_URL]= {name: 'Help', type: 'location', width: 35};
 
 
 
@@ -92,6 +92,8 @@ function makeModel(tbl_id,plotViewAry, expandedIds, oldModel) {
     const columns= [...columnsTemplate];
     columns[PROJ_TYPE_DESC].enumVals= makeEnumValues(data,PROJ_TYPE_DESC);
     columns[WAVE_TYPE].enumVals=  makeEnumValues(data,WAVE_TYPE);
+    columns[STATUS].enumVals=  makeEnumValues(data,STATUS);
+    columns[WAVE_LENGTH_DESC].enumVals=  makeEnumValues(data,WAVE_LENGTH_DESC);
 
 
     let newModel = {
@@ -127,29 +129,6 @@ function dialogComplete(tbl_id) {
 
 
 }
-
-
-// function isPvAryEqual(oldAry,newAry) {
-//     if (!oldAry) return false;
-//     if (oldAry.length!==newAry.length) return false;
-//     return oldAry.every( (pv,idx) => {
-//         const {plotId, serverCall, plottingStatus, request}= pv;
-//         const newP= primePlot(pv);
-//         const oldP= primePlot(newAry[idx]);
-//         if (Boolean(newP)!==Boolean(oldP)) return false;
-//         if (newP && oldP) {
-//             const plotEqual= (newP.plotImageId===oldP.plotImageId);
-//             if (!plotEqual) return false;
-//         }
-//         return (
-//             plotId=== newAry[idx].plotId &&
-//             request=== newAry[idx].request &&
-//             serverCall===newAry[idx].serverCall &&
-//             plottingStatus===newAry[idx].plottingStatus);
-//
-//     });
-// }
-//
 
 const pvKeys= ['plotId', 'request', 'serverCall', 'plottingStatus'];
 const plotKeys= ['plotImageId'];
@@ -206,9 +185,9 @@ function ImageViewOptionsPanel() {
 
     return (
         <div style={{resize: 'both', overflow: 'hidden', display: 'flex', flexDirection: 'column',
-            width: 500, height: 400, minWidth: 250, minHeight: 200}}>
+            width: 675, height: 450, minWidth: 250, minHeight: 200}}>
 
-            <div style={{ position: 'relative', width: '100%', height: '100%'}}>
+            <div style={{ position: 'relative', width: '100%', height: 'calc(100% - 30px)'}}>
                 <div className='TablePanel'>
                     <div className={'TablePanel__wrapper--border'}>
                         <div className='TablePanel__table' style={{top: 0}}>
