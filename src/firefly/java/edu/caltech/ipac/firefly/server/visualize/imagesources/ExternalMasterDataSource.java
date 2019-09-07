@@ -328,7 +328,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         e.set(ImageMasterDataEntry.PARAMS.PROJECT,"SDSS: Sloan Digital Sky Survey");
         e.set(ImageMasterDataEntry.PARAMS.MISSION_ID,"SDSS");
         e.set(ImageMasterDataEntry.PARAMS.SUB_PROJECT,"");
-        e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"http://irsa.ipac.caltech.edu");
+        e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"https://irsa.ipac.caltech.edu/docs/irsaviewer_datasets.html#SDSS");
         e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_KEY,"all-sky");
         e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_DESC,"all-sky");
         e.set(ImageMasterDataEntry.PARAMS.MIN_RANGE_DEG,"0.016");
@@ -358,7 +358,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         e.set(ImageMasterDataEntry.PARAMS.PROJECT,"DSS: Digitized Sky Survey");
         e.set(ImageMasterDataEntry.PARAMS.MISSION_ID,"DSS");
         e.set(ImageMasterDataEntry.PARAMS.SUB_PROJECT,"");
-        e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"http://irsa.ipac.caltech.edu");
+        e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"https://irsa.ipac.caltech.edu/docs/irsaviewer_datasets.html#DSS");
         e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_KEY,"all-sky");
         e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_DESC,"all-sky");
         e.set(ImageMasterDataEntry.PARAMS.MIN_RANGE_DEG,"0.016");
