@@ -49,12 +49,21 @@ function fetchData(chartId, traceNum, tablesource) {
     const originalTableModel = getTblById(tbl_id);
     const {request, highlightedRow, selectInfo, totalRows} = originalTableModel;
 
-    // if the number of rows is above a threshhold,
-    // heatmap chart should be produced
     if (totalRows > getMaxScatterRows()) {
-        const {options:heatmapOptions, fetchData:heatmapFetchData} = heatmapTSGetter({traceTS:tablesource, chartId, traceNum});
-        const heatmapTS = Object.assign({}, tablesource, {options: heatmapOptions});
-        return heatmapFetchData(chartId, traceNum, heatmapTS);
+        const chartData = getChartData(chartId);
+        // scatterOrHeatmap attribute is set when a heatmap trace is used to represent a scatter
+        const scatterOrHeatmap = get(chartData, `fireflyData.${traceNum}.scatterOrHeatmap`);
+        if (scatterOrHeatmap) {
+            // if the number of rows is above a threshhold,
+            // heatmap chart should be produced
+            const {options: heatmapOptions, fetchData: heatmapFetchData} = heatmapTSGetter({
+                traceTS: tablesource,
+                chartId,
+                traceNum
+            });
+            const heatmapTS = Object.assign({}, tablesource, {options: heatmapOptions});
+            return heatmapFetchData(chartId, traceNum, heatmapTS);
+        }
     }
     
     const colNames = getColumns(originalTableModel).map((c) => c.name);
