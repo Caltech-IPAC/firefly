@@ -174,11 +174,12 @@ function bgSetEmail(action) {
 function bgPackage(action) {
     return (dispatch) => {
         const {dlRequest, searchRequest, selectionInfo, bgKey} = action.payload;
-
+        const fileName = dlRequest.fileName|| dlRequest.Title.split(':')[0];
         const onComplete = (bgStatus) => {
             const url = get(bgStatus, ['ITEMS', 0, 'url']);
+
             if (url && isSuccess(get(bgStatus, 'STATE'))) {
-                download(url);
+                download(url, fileName);
             } else {
                 showInfoPopup(getErrMsg(bgStatus));
             }
@@ -192,6 +193,7 @@ function bgPackage(action) {
         SearchServices.packageRequest(dlRequest, searchRequest, selectionInfo)
             .then((bgStatus) => {
                 if (bgStatus) {
+                    bgStatus.fileName = fileName;
                     bgStatus = bgStatusTransform(bgStatus);
                     dispatchComponentStateChange(bgKey, {bgStatus});
                     if (isDone(bgStatus.STATE)) {
