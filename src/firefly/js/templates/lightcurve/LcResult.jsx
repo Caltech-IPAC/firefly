@@ -39,8 +39,9 @@ import {convertAngle} from '../../visualize/VisUtil.js';
 
 const resultItems = ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'searchDesc', 'images',
     LC.MISSION_DATA, LC.GENERAL_DATA, 'periodState'];
+import {BgMaskPanel} from '../../core/background/BgMaskPanel.jsx';
 
-
+export const LcXYPlotCompKey='XYPLOTAREA';
 export class LcResult extends PureComponent {
 
     constructor(props) {
@@ -138,22 +139,19 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
     const cutoutSizeInDeg = (convertAngle('arcmin','deg', cutoutSize)).toString();
     const currentTime =  (new Date()).toLocaleString('en-US', { hour12: false });
     const style = {width: 223};
-    const defaultOptPanel = (m, c) => {
+    const dlParams = getParamters(mission, LcXYPlotCompKey );
+    const downloaderOptPanel = (m, c) => {
         return (
             <DownloadButton>
                 <DownloadOptionPanel
                     groupKey = {mission}
                     dataTag = {DL_DATA_TAG}
                     cutoutSize={c}
+                    backgroundable = {true}
                     title={'Image Download Options'}
                     style = {{width: 400}}
-                    dlParams={{
-                        MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each wise image is ~64mb
-                        FilePrefix: `${m}_Files`,
-                        BaseFileName: `${m}_Files`,
-                        DataSource: `${m} images`,
-                        FileGroupProcessor: 'LightCurveFileGroupsProcessor'
-                    }}>
+                    dlParams={dlParams}
+                    >
                     <ValidationField
                         style={style}
                         initialState={{
@@ -167,7 +165,6 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
         );
     };
 
-    const downloaderOptPanel = convertData.downloadOptions || defaultOptPanel;
 
     let tsView = (err) => {
 
@@ -183,7 +180,10 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
                                 </div>
                             </div>
                         </SplitContent>
-                        <SplitContent>{xyPlot}</SplitContent>
+                        <SplitContent>
+                            <BgMaskPanel componentKey={LcXYPlotCompKey}/>
+                            {xyPlot}
+                        </SplitContent>
                     </SplitPane>
                     <SplitContent>{imagePlot}</SplitContent>
                 </SplitPane>
@@ -199,7 +199,10 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
                             </div>
                         </div>
                     </SplitContent>
-                    <SplitContent>{xyPlot}</SplitContent>
+                    <SplitContent>
+                        <BgMaskPanel componentKey={LcXYPlotCompKey}/>
+                        {xyPlot}
+                     </SplitContent>
                 </SplitPane>
             );
         }
@@ -375,3 +378,47 @@ function updateFullRawTable(callback) {
        }
     }
 }
+
+
+function getParamters(mission, bgMaskPanelKey){
+    switch (mission.toLowerCase()){
+        case 'ptf':
+            return {
+                MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each ptf image is ~33mb
+                FilePrefix: `${mission}_Files`,
+                BaseFileName: `${mission}_Files`,
+                DataSource: `${mission} images`,
+                FileGroupProcessor: 'PtfLcDownload',
+                ProductLevel:'l1',
+                schema:'images',
+                table:'level1',
+                key: `${bgMaskPanelKey}`
+            };
+            break;
+        case 'ztf' :
+            return  {
+                MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each ztf image is ~37mb
+                FilePrefix: `${mission}_Files`,
+                BaseFileName: `${mission}_Files`,
+                DataSource: `${mission} images`,
+                FileGroupProcessor: 'ZtfLcDownload',
+                ProductLevel:'sci',
+                schema:'products',
+                table:'sci',
+                key: `${bgMaskPanelKey}`
+            };
+            break;
+        default:
+            return  {
+                MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each wise image is ~64mb
+                FilePrefix: `${mission}_Files`,
+                BaseFileName: `${mission}_Files`,
+                DataSource: `${mission} images`,
+                FileGroupProcessor: 'LightCurveFileGroupsProcessor',
+                key: `${bgMaskPanelKey}`
+            };
+    };
+
+
+}
+

@@ -15,11 +15,12 @@ import Validate from '../util/Validate.js';
 import {InputField} from './InputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {showInfoPopup} from './PopupUtil.jsx';
+import {download} from '../util/WebUtil.js';
 
 import {getActiveTableId, getTblById, hasRowAccess, getProprietaryInfo} from '../tables/TableUtil.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {dispatchPackage, dispatchBgSetEmailInfo} from '../core/background/BackgroundCntlr.js';
-import {getBgEmailInfo} from '../core/background/BackgroundUtil.js';
+import {getBgEmailInfo, bgDownload} from '../core/background/BackgroundUtil.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {DataTagMeta} from '../tables/TableRequestUtil.js';
 import {useStoreConnector} from './SimpleComponent.jsx';
@@ -76,7 +77,8 @@ export function DownloadButton(props) {
         if (selectInfoCls.getSelectedCount()) {
             var panel = props.children ? React.Children.only(props.children) : <DownloadOptionPanel/>;
             panel = React.cloneElement(panel, {tbl_id});
-            showDownloadDialog(panel);
+            const ttl = panel.props.title || DOWNLOAD_DIALOG_ID;
+            showDownloadDialog(panel, ttl, true);
         } else {
             showInfoPopup('You have not chosen any data to download', 'No Data Selected');
         }
@@ -109,7 +111,7 @@ const noticeCss = {
 };
 
 export function DownloadOptionPanel (props) {
-    const {mask, groupKey, cutoutSize, help_id, children, style, title, tbl_id, dlParams, dataTag} = props;
+    const {mask, groupKey, cutoutSize, help_id, children, style, title, tbl_id, dlParams, dataTag, backgroundable} = props;
 
     const [{email, enableEmail}] = useStoreConnector(getBgEmailInfo);
     const onEmailChanged = useCallback((v) => {
@@ -127,8 +129,20 @@ export function DownloadOptionPanel (props) {
         const Title = dlParams.Title || options.Title;
         const dreq = makeTblRequest(FileGroupProcessor, Title, Object.assign(dlParams, {cutoutSize}, options));
         request = set(cloneDeep(request), DataTagMeta, dataTag);
-        dispatchPackage(dreq, request, SelectInfo.newInstance(selectInfo).toString());
-        showDownloadDialog(this, false);
+        const fileName = dreq.fileName||dreq.Title.split(':')[0];
+        if (backgroundable){
+            const onComplete = (bgStatus) => {
+                const url = get(bgStatus, ['ITEMS', 0, 'url']);
+                download(url, fileName);
+            };
+
+            bgDownload({dlRequest:dreq, searchRequest:request, selectInfo}, {key:dreq.key, onComplete});
+        }
+        else {
+            dispatchPackage(dreq, request, SelectInfo.newInstance(selectInfo).toString());
+        }
+
+        showDownloadDialog(this,ttl, false);
     }, tbl_id);
 
     const toggleEnableEmail = (e) => {
@@ -212,6 +226,7 @@ DownloadOptionPanel.propTypes = {
     mask:       PropTypes.bool,
     style:      PropTypes.object,
     dataTag:    PropTypes.string,
+    backgroundable: PropTypes.bool,
     dlParams:   PropTypes.shape({
         TitlePrefix:    PropTypes.string,
         FilePrefix:     PropTypes.string,
@@ -220,11 +235,13 @@ DownloadOptionPanel.propTypes = {
         DataSource:     PropTypes.string,
         MaxBundleSize:  PropTypes.number,
         FileGroupProcessor: PropTypes.string.isRequired,
+        key:PropTypes.string
     })
 };
 
 DownloadOptionPanel.defaultProps= {
     groupKey: 'DownloadDialog',
+    backgroundable:false
 };
 
 
@@ -244,24 +261,24 @@ function hasProprietaryData(tableModel={}) {
     return false;
 }
 
-
 /**
- * creates and show the DownloadDialog.
- * @param {Component}  panel  the panel to show in the popup.
- * @param {boolean} [show=true] show or hide this dialog
+ *
+ * @param panel
+ * @param title
+ * @param show
  */
-function showDownloadDialog(panel, show=true) {
-    const ttl = panel.props.title || DOWNLOAD_DIALOG_ID;
+export function showDownloadDialog(panel, title, show=true) {
+
     if (show) {
         const content= (
-            <PopupPanel title={ttl} >
+            <PopupPanel title={title} >
                 {panel}
             </PopupPanel>
         );
-        DialogRootContainer.defineDialog(ttl, content);
-        dispatchShowDialog(ttl);
+        DialogRootContainer.defineDialog(title, content);
+        dispatchShowDialog(title);
     } else {
-        dispatchHideDialog(ttl);
+        dispatchHideDialog(title);
     }
 }
 

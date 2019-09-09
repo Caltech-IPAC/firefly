@@ -184,7 +184,7 @@ function PackageStatus(bgStatus) {
     );
 }
 
-function SinglePackage({ID, Title, STATE, ITEMS=[]}) {
+function SinglePackage({ID, Title, fileName, STATE, ITEMS=[]}) {
     var progress;
     if (BG_STATE.WAITING.is(STATE)) {
         progress = <div className='BGMon__header--waiting'>Computing number of packages... <img style={{marginLeft: 3}} src={LOADING}/></div>;
@@ -194,17 +194,17 @@ function SinglePackage({ID, Title, STATE, ITEMS=[]}) {
         progress = <div>User aborted this request</div>;
     } else {
         const params = ITEMS[0] || {};
-        progress = <PackageItem SINGLE={true} STATE={STATE} ID={ID} {...params} />;
+        progress = <PackageItem SINGLE={true} STATE={STATE} ID={ID} Title={Title} fileName={fileName} {...params} />;
     }
     return (
         <PackageHeader {...{ID, Title, progress, STATE}} />
     );
 }
 
-function MultiPackage({ID, Title, STATE, ITEMS}) {
+function MultiPackage({ID, Title, fileName, STATE, ITEMS}) {
     var progress = BG_STATE.CANCELED.is(STATE) && <div>User aborted this request</div>;
     const packages = ITEMS.map( (pi, INDEX) => {
-                return <PackageItem key={'multi-' + INDEX} STATE={STATE} ID={ID} {...ITEMS[INDEX]} />;
+                return <PackageItem key={'multi-' + INDEX} STATE={STATE} fileName={fileName} ID={ID} {...ITEMS[INDEX]} />;
             });
 
     return (
@@ -244,11 +244,12 @@ function PackageHeader({ID, Title, progress, STATE}) {
 }
 
 function PackageItem(progress) {
-    const {SINGLE, ID, INDEX, STATE, finalCompressedBytes, processedBytes, totalBytes, processedFiles, totalFiles, url, downloaded} = progress;
+    const {SINGLE, ID, fileName, INDEX, STATE, finalCompressedBytes, processedBytes, totalBytes, processedFiles, totalFiles, url, downloaded} = progress;
     const doDownload = () => {
         var bgStatus = set({ID}, ['ITEMS', INDEX, 'downloaded'], DownloadProgress.WORKING);
         dispatchBgStatus(bgStatus);
-        downloadWithProgress(url)
+        downloadWithProgress(url,fileName)
+
             .then( () => {
                 bgStatus = set({ID}, ['ITEMS', INDEX, 'downloaded'], DownloadProgress.DONE);
                 dispatchBgStatus(bgStatus);

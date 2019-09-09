@@ -173,10 +173,12 @@ function bgPackage(action) {
         SearchServices.packageRequest(dlRequest, searchRequest, selectionInfo)
             .then((bgStatus) => {
                 if (bgStatus) {
+                    const fileName = dlRequest.fileName|| dlRequest.Title.split(':')[0];
+                    bgStatus.fileName = fileName;
                     bgStatus = bgStatusTransform(bgStatus);
                     const url = get(bgStatus, ['ITEMS', 0, 'url']);
                     if (url && isSuccess(get(bgStatus, 'STATE'))) {
-                        download(url);
+                        download(url, bgStatus.fileName);
                     } else {
                         dispatchJobAdd(bgStatus);
                     }
