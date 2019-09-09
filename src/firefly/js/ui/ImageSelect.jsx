@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent, useEffect} from 'react';
+import React, {PureComponent, useEffect, useState} from 'react';
 
 import PropTypes from 'prop-types';
 import {uniqBy, get, countBy, remove, sortBy, isNil} from 'lodash';
@@ -52,10 +52,11 @@ export function ImageSelect({style, imageMasterData, groupKey, multiSelect=true,
     });
 
     const [filteredImageData] = useStoreConnector.bind({comparator: shallowequal})(() => getFilteredImageData(imageMasterData, groupKey));
+    const [lastMod, setLastMod] = useState({lastMod:new Date().getTime()});
 
     return (
         <div style={style} className='ImageSelect'>
-            <ToolBar className='ImageSelect__toolbar' {...{filteredImageData, groupKey, onChange: () => this.setState({lastMod:new Date().getTime()})}}/>
+            <ToolBar className='ImageSelect__toolbar' {...{filteredImageData, groupKey, onChange: () => setLastMod({lastMod:new Date().getTime()})}}/>
             <div style={{flexGrow: 1, display: 'flex', height: 1}}>
                 <div className='ImageSelect__panels' style={{marginRight: 3, flexGrow: 0}}>
                     <FilterPanel {...{imageMasterData, groupKey}}/>
