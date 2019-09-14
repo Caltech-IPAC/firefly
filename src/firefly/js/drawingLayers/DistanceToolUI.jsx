@@ -7,7 +7,9 @@ import PropTypes from 'prop-types';
 import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
 import {dispatchModifyCustomField, dispatchForceDrawLayerUpdate} from '../visualize/DrawLayerCntlr.js';
 import * as AppDataCntlr from '../core/AppDataCntlr.js';
-import {DIST_READOUT,ARC_SEC,ARC_MIN,DEG} from './DistanceTool.js';
+import {DIST_READOUT, getUnitPreference, getUnitStyle, UNIT_NO_PIXEL, UNIT_ALL} from './DistanceTool.js';
+import {hasWCSProjection} from '../visualize/PlotViewUtil';
+import CsysConverter from '../visualize/CsysConverter';
 
 
 export const getUIComponent = (drawLayer,pv) => <DistanceToolUI drawLayer={drawLayer} pv={pv}/>;
@@ -20,17 +22,19 @@ function DistanceToolUI({drawLayer,pv}) {
         minWidth: '3em',
         paddingLeft : 5
     };
-    var checked= drawLayer.posAngle;
+    const checked= drawLayer.offsetCal;
+    const plot = pv.plots[pv.primeIdx];
+    const cc = CsysConverter.make(plot);
+    const isWorld = hasWCSProjection(cc);
+    const worldUnit = [ {label: 'degrees', value: 'deg'},
+                        {label: 'arcminutes', value: 'arcmin'},
+                        {label: 'arcseconds', value: 'arcsec'}];
+    const pixelUnit = [{label: 'pixels', value: 'pixel'}];
+    const unitStyle = getUnitStyle(cc, isWorld);
 
-
-
-    var options= [ {label: 'degrees', value: 'deg'},
-                   {label: 'arcminutes', value: 'arcmin'},
-                   {label: 'arcseconds', value: 'arcsec'}
-    ];
-
-
-    var pref= AppDataCntlr.getPreference(DIST_READOUT) || DEG;
+    const pref = getUnitPreference(unitStyle);
+    const options = (unitStyle === UNIT_ALL) ? worldUnit.concat(pixelUnit)
+                                             : ((unitStyle === UNIT_NO_PIXEL)? worldUnit : pixelUnit);
 
     return (
         <div>
@@ -39,7 +43,7 @@ function DistanceToolUI({drawLayer,pv}) {
                 <input type='checkbox'
                        checked={checked}
                        onChange={() => dispatchModifyCustomField( drawLayer.displayGroupId,
-                                                              {posAngle:!checked}, pv.plotId )}
+                                                              {offsetCal:!checked}, pv.plotId )}
                 />
                 <div style={tStyle}>Offset Calculation</div>
             </div>
@@ -59,6 +63,7 @@ function changeReadoutPref(drawLayer,pv,value) {
     AppDataCntlr.dispatchAddPreference(DIST_READOUT,value);
     dispatchForceDrawLayerUpdate( drawLayer.displayGroupId, pv.plotId);
 }
+
 
 DistanceToolUI.propTypes= {
     drawLayer     : PropTypes.object.isRequired,

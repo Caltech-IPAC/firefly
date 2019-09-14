@@ -18,7 +18,6 @@ import {primePlot} from './PlotViewUtil.js';
 import {doConv} from '../astro/conv/CoordConv.js';
 import Point, {makeImageWorkSpacePt, makeImagePt, makeScreenPt,
                makeWorldPt, makeDevicePt, isValidPoint, pointEquals} from './Point.js';
-import {Matrix} from 'transformation-matrix-js';
 import {getPixScaleDeg, getFluxUnits} from './WebPlot.js';
 import {SelectedShape} from '../drawingLayers/SelectArea.js';
 
@@ -75,7 +74,6 @@ export function computeDistance(p1, p2) {
 }
 
 /**
- *
  * @param p1 {Pt}
  * @param p2 {Pt}
  * @return {number}
@@ -84,6 +82,14 @@ const computeSimpleDistance= function(p1, p2) {
     const dx = p1.x - p2.x;
     const dy = p1.y - p2.y;
     return Math.sqrt(dx * dx + dy * dy);
+};
+
+
+const computeSimpleSlopeAngle = function (fromPt, toPt) {
+    const dx = toPt.x - fromPt.x;
+    const dy = toPt.y - fromPt.y;
+
+    return Math.atan2(dy, dx);
 };
 
 /**
@@ -1204,7 +1210,7 @@ export default {
     intersects, contains, containsRec,containsCircle,
     getArrowCoords, calculatePosition, getCorners,
     makePt, getWorldPtRepresentation, getCenterPtOfPlot, toDegrees, convertAngle,
-    distToLine, distanceToPolygon, distanceToCircle
+    distToLine, distanceToPolygon, distanceToCircle, computeSimpleSlopeAngle
 };
 
 

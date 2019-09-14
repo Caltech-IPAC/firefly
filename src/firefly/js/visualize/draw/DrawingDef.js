@@ -32,6 +32,7 @@ export const TextLocation = new Enum([ 'DEFAULT',
     'LINE_MID_POINT',
     'LINE_MID_POINT_OR_BOTTOM',
     'LINE_MID_POINT_OR_TOP',
+    'LINE_TOP_STACK',
     'CIRCLE_NE',
     'CIRCLE_NW',
     'CIRCLE_SE',
@@ -50,7 +51,7 @@ export const TextLocation = new Enum([ 'DEFAULT',
     'REGION_SW',
     'CENTER']); // use MID_X, MID_X_LONG, MID_Y, MID_Y_LONG for vertical or horizontal lines
 
-export const Style= new Enum(['STANDARD','HANDLED', 'LIGHT', 'FILL']);
+export const Style= new Enum(['STANDARD','HANDLED', 'STARTHANDLED', 'ENDHANDLED', 'LIGHT', 'FILL']);
 
 export const DEFAULT_FONT_SIZE = '9pt';
 
