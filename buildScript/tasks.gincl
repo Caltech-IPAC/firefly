@@ -584,7 +584,8 @@ task dockerPublish (dependsOn: dockerImage) {
 
 
 task dockerDelete (dependsOn: loadConfig){
-    description = 'Delete a docker image from docker hub.'
+    description = ''' Delete a docker image from docker hub.
+                      Example:  gradle -Pdocker_tag=<tag name> :firefly:dockerDelete '''
     group = DOCKER_GROUP
 
     ext.docker_repo = "ipac/firefly"
@@ -620,7 +621,7 @@ task dockerDelete (dependsOn: loadConfig){
         conn.connect()
 
         if(conn.getResponseCode() >= 400) {
-            throw new GradleException("Fail to delete docker image")
+            throw new GradleException("Fail to delete docker image, using URL: ${str}")
         }
 
     }
