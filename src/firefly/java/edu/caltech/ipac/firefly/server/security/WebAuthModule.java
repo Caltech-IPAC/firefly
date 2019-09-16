@@ -58,7 +58,7 @@ public class WebAuthModule {
         if (c != null) {
             c.setMaxAge(0);
             c.setValue(TO_BE_DELETE);
-            c.setDomain(".ipac.caltech.edu");
+            c.setDomain("ipac.caltech.edu");
             c.setPath("/");
             response.addCookie(c);
         }
