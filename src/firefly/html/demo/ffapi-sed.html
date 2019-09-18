@@ -8,7 +8,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Upper Limits - Firefly</title>
+    <title>SED Plot - Firefly</title>
     <meta http-equiv="Cache-Control" content="no-cache">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -34,6 +34,11 @@
     <div id="sedchart4" style="display: inline-block; width: 500px; height: 400px; border: solid 1px;"></div>
 </div>
 <br/><br/>
+<div>
+    <div id="table5" style="display: inline-block; width: 500px; height: 400px; border: solid 1px;"></div>
+    <div id="sedchart5" style="display: inline-block; width: 500px; height: 400px; border: solid 1px;"></div>
+</div>
+<br/><br/>
 <div id="table" style="width: 800px; height: 550px; border: solid 1px;"></div>
 <br/><br/>
 <div id="sedchart" style="width: 800px; height: 550px; border: solid 1px;"></div>
@@ -55,7 +60,7 @@
         onFireflyLoaded= function(firefly) {
 
             var tblReq = firefly.util.table.makeFileRequest(
-                'SED: ARP-220 raw', // title
+                'SED: ARP-220', // title
                 'http://ned.ipac.caltech.edu/cgi-bin/datasearch?ebars_spec=ebars&label_spec=no&x_spec=freq&y_spec=Fnu_jy&xr=-2&objname=ARP+220&objid=58863&search_type=Photo_id&meas_type=bot&of=xml_main&objname=ARP+220&objid\
 =58863&search_type=Photo_id&meas_type=bot',  // source
                 null,  // alt_source
@@ -71,7 +76,7 @@
 
             firefly.showChart('sedchart', {
                 data: [{
-                    name: 'sed',
+                    name: 'SED: ARP-220',
                     tbl_id: tblId,
                     //text: 'tables::"No."', // does not display - probably not needed, if chart and table are connected
                     x: 'tables::log("Frequency")',
@@ -109,14 +114,14 @@
                 null,  // alt_source
                 {} // options
             );
-            var tblId1 = tblReq2.tbl_id;
+            var tblId2 = tblReq2.tbl_id;
 
             firefly.showTable('table2', tblReq2);
 
             firefly.showChart('sedchart2', {
                 data: [{
-                    name: 'sed',
-                    tbl_id: tblId1,
+                    name: 'SED: M31',
+                    tbl_id: tblId2,
                     x: 'tables::Frequency',
                     y: 'tables::NEDPhotometryMeasurement',
                     error_y: {
@@ -139,33 +144,33 @@
                 }
             });
 
-            // Another example: from VizieR for Simbad name set rs at 1 arcsec
-
+            // example: from VizieR for Simbad name set rs at 1 arcsec, and add a calculated colume
+            var inCols = '"_RAJ2000","_DEJ2000","_tabname","_sed_freq","_sed_flux","_sed_eflux","_sed_filter",2.998*power(10,14)/("_sed_freq"*power(10,9)) as "wavelength"';
             var tblReq3 = firefly.util.table.makeFileRequest(
                 'VisirR SED: HD878', // title
                 'http://vizier.u-strasbg.fr/viz-bin/sed?-c=HD878&-c.rs=1',  // source
                 null,  // alt_source
-                {META_INFO:{"col._ID.Visibility": "hide"}, "pageSize":100} // options
+                {inclCols: inCols, META_INFO:{"col.wavelength.Precision":"E4"}, "pageSize":100} // options
             );
-            var tblId1 = tblReq3.tbl_id;
+            var tblId3 = tblReq3.tbl_id;
 
             firefly.showTable('table3', tblReq3);
 
             firefly.showChart('sedchart3', {
                 data: [{
                     name: 'sed',
-                    tbl_id: tblId1,
-                    x: 'tables::"_sed_freq"',
-                    y: 'tables::_sed_flux',
+                    tbl_id: tblId3,
+                    x: 'tables::2.998*power(10,5)/("_sed_freq")',
+                    y: 'tables::("_sed_flux")*("_sed_freq"*power(10,9))',
                     error_y: {
-                        array: 'tables::_sed_eflux', // error bar (symmetrical or plus)
+                        array: 'tables::("_sed_eflux")*("_sed_freq"*power(10,9))', // error bar (symmetrical or plus)
                     },
                     mode: 'markers'
                 }],
                 layout: {
                     title: 'Spectral Energy Distribution from VizieR',
                      xaxis: {
-                         title: '<em>v</em> [GHz]',
+                         title: 'Wavelength [&mu;m]',
                          type: 'log',
                          tickwidth: 2,
                          linewidth: 2,
@@ -175,7 +180,7 @@
                          mirror: "allticks"
                      },
                      yaxis: {
-                         title: 'F<sub><em>v</em></sub> [Jy]',
+                         title: '<em>v</em>F<sub><em>v</em></sub> [Jy*Hz]',
                          type: 'log',
                          tickwidth: 2,
                          linewidth: 2,
@@ -193,27 +198,27 @@
                 'VisirR SED: Coordinate test', // title
                 'http://vizier.u-strasbg.fr/viz-bin/sed?-c=187.2778914224,2.0523984558&-c.rs=5',  // source
                 null,  // alt_source
-                {} // options
+                {META_INFO:{"col._ID.Visibility": "hide"}, "pageSize":100} // options
             );
-            var tblId1 = tblReq4.tbl_id;
+            var tblId4 = tblReq4.tbl_id;
 
             firefly.showTable('table4', tblReq4);
 
             firefly.showChart('sedchart4', {
                 data: [{
                     name: 'sed',
-                    tbl_id: tblId1,
-                    x: 'tables::"_sed_freq"*power(10,9)',
-                    y: 'tables::_sed_flux',
+                    tbl_id: tblId4,
+                    x: 'tables::2.998*power(10,14)/("_sed_freq"*power(10,9))',
+                    y: 'tables::("_sed_flux")*("_sed_freq"*power(10,9))',
                     error_y: {
-                        array: 'tables::_sed_eflux', // error bar (symmetrical or plus)
+                        array: 'tables::("_sed_eflux")*("_sed_freq"*power(10,9))', // error bar (symmetrical or plus)
                     },
                     mode: 'markers'
                 }],
                 layout: {
                     title: 'Spectral Energy Distribution from VizieR',
                      xaxis: {
-                         title: '<em>v</em> [Hz]',
+                         title: 'Wavelength [&mu;m]',
                          type: 'log',
                          tickwidth: 2,
                          linewidth: 2,
@@ -223,7 +228,7 @@
                          mirror: "allticks"
                      },
                      yaxis: {
-                     title: 'F<sub><em>v</em></sub> [Jy]',
+                     title: '<em>v</em>F<sub><em>v</em></sub> [Jy*Hz]',
                      type: 'log',
                      tickwidth: 2,
                      linewidth: 2,
@@ -234,6 +239,53 @@
                      }
                 }
             });
+
+            var tblReq5 = firefly.util.table.makeFileRequest(
+               'NED SED: no data test', // title
+               'http://vo.ned.ipac.caltech.edu/services/accessSED?REQUEST=getData&TARGETNAME=m16',  // source
+               null,  // alt_source
+               {} // options
+           );
+           var tblId5 = tblReq5.tbl_id;
+
+           firefly.showTable('table5', tblReq5);
+
+           firefly.showChart('sedchart5', {
+               data: [{
+                   name: 'NED SED',
+                   tbl_id: tblId5,
+                   x: 'tables::2.998*power(10,14)/("_sed_freq"*power(10,9))',
+                   y: 'tables::("_sed_flux")*("_sed_freq"*power(10,9))',
+                   error_y: {
+                       array: 'tables::("_sed_eflux")*("_sed_freq"*power(10,9))', // error bar (symmetrical or plus)
+                   },
+                   mode: 'markers'
+               }],
+               layout: {
+                   title: 'Spectral Energy Distribution from VizieR',
+                    xaxis: {
+                        title: 'Wavelength [&mu;m]',
+                        type: 'log',
+                        tickwidth: 2,
+                        linewidth: 2,
+                        tickmode: "auto",
+                        showgrid: true,
+                        ticks: "inside",
+                        mirror: "allticks"
+                    },
+                    yaxis: {
+                    title: '<em>v</em>F<sub><em>v</em></sub> [Jy*Hz]',
+                    type: 'log',
+                    tickwidth: 2,
+                    linewidth: 2,
+                    tickmode: "auto",
+                    showgrid: true,
+                    ticks: "inside",
+                    mirror: "allticks"
+                    }
+               }
+           });
+
 
         }
     }
