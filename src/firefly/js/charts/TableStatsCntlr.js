@@ -34,7 +34,8 @@ export const UPDATE_TBL_STATS = `${TBLSTATS_DATA_KEY}/UPDATE_TBL_STATS`;
  * @param {function} dispatcher only for special dispatching uses such as remote
  */
 export function dispatchLoadTblStats(searchRequest, dispatcher= flux.process) {
-    const {tbl_id} = searchRequest;
+    const tbl_id = get(searchRequest, 'tbl_id');
+    if (!tbl_id) return;
     // use resultSetID to determine if a call needs to be placed
     const resultSetID = get(flux.getState(), [TBLSTATS_DATA_KEY, tbl_id, 'resultSetID']);
     const resultSetIDNow = get(getTblById(tbl_id), 'tableMeta.resultSetID');
@@ -103,7 +104,6 @@ export function reducer(state=getInitState(), action={}) {
     }
 }
 
-
 /**
  *
  * @param statsData {Object} The table statistics object to merge with the histogram branch under root
@@ -124,6 +124,7 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
 
     const {tbl_id} = activeTableServerRequest;
 
+    const resultSetIDOnSubmit = get(getTblById(tbl_id), 'tableMeta.resultSetID');
 
     // searchRequest
     const sreq = cloneRequest(activeTableServerRequest, {'startIdx': 0, 'pageSize': MAX_ROW});
@@ -134,9 +135,18 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
 
     doFetchTable(req).then(
         (tableModel) => {
-            if (tableModel.tableData && tableModel.tableData.data) {
+
+            // if the original table has changed no need to continue
+            const resultSetIDOnFetch = get(getTblById(tbl_id), 'tableMeta.resultSetID');
+            if (resultSetIDOnSubmit !== resultSetIDOnFetch) {
+                return;
+            }
+
+            const tblData = get(tableModel, 'tableData.data');
+            let colStats = [];
+            if (tblData) {
                 const columns = get(getTblById(tbl_id), 'tableData.columns', []);
-                const colStats = tableModel.tableData.data.reduce((colstats, arow) => {
+                colStats = tblData.reduce((colstats, arow) => {
                     const r = new ColValuesStatistics(...arow);
                     const col = columns.find((c)=>{return c.name=== r.name;});
                     if (col) {
@@ -147,13 +157,13 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
                     colstats.push(r);
                     return colstats;
                 }, []);
-                dispatch(updateTblStats(
-                    {
-                        tblId: tbl_id,
-                        isColStatsReady: true,
-                        colStats
-                    }));
             }
+            dispatch(updateTblStats(
+                {
+                    tblId: tbl_id,
+                    isColStatsReady: true,
+                    colStats
+                }));
         }
     ).catch(
         (reason) => {

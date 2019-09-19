@@ -182,15 +182,15 @@ function toAngle(d, radianToDegree)  {
 function createDrawData(drawLayer, tableModel) {
     if (!tableModel) return;
 
-    const {tableData}= tableModel;
-    if (!tableData.data.length) return;
+    const tblData = get(tableModel, 'tableData.data', []);
+    if (!tblData.length) return;
 
     const columns= findTableCenterColumns(tableModel);
     if (isEmpty(columns) || columns.lonIdx<0 || columns.latIdx<0) return null;
 
     const {angleInRadian:rad}= drawLayer;
 
-    const data= tableData.data.map( (d) => {
+    const data= tblData.map( (d) => {
         const wp= makeWorldPt( toAngle(d[columns.lonIdx],rad), toAngle(d[columns.latIdx],rad), columns.csys);
         return PointDataObj.make(wp);
     });

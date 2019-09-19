@@ -55,11 +55,14 @@ export function fetchTable(tableRequest, hlRowIdx) {
     .then( (tableModel) => {
         const startIdx = get(tableModel, 'request.startIdx', 0);
         if (startIdx > 0) {
-            // shift data arrays indices to match partial fetch
-            tableModel.tableData.data = tableModel.tableData.data.reduce( (nAry, v, idx) => {
-                nAry[idx+startIdx] = v;
-                return nAry;
-            }, []);
+            const tblData = get(tableModel, 'tableData.data');
+            if (tblData) {
+                // shift data arrays indices to match partial fetch
+                tableModel.tableData.data = tblData.reduce((nAry, v, idx) => {
+                    nAry[idx + startIdx] = v;
+                    return nAry;
+                }, []);
+            }
         }
         if (tableModel.selectInfo) {
             // convert selectInfo to JS object

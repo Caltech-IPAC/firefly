@@ -993,7 +993,7 @@ export function getDataLinkAccessUrls(originTableOrId, dataLinkTable, filterStr=
     const originTable= getTableModel(originTableOrId);
     const data= get(dataLinkTable, 'tableData.data', []);
     if (!data.length) return [];
-    const urlOptions= dataLinkTable.tableData.data.map( (row,idx) => {
+    const urlOptions= get(dataLinkTable, 'tableData.data', []).map( (row,idx) => {
         const url= getCellValue(dataLinkTable,idx,'access_url' );
         const contentType= getCellValue(dataLinkTable,idx,'content_type' );
         const size= Number(getCellValue(dataLinkTable,idx,'content_length' ));
