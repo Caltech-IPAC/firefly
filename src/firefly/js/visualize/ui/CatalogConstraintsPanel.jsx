@@ -220,7 +220,7 @@ function updateColumnWidth(anyTableModel, colName, colWidth) {
 
         if (idx >= 0) {
             if (colWidth < 0) {
-                colWidth = anyTableModel.tableData.data.reduce((prev, d) => {
+                colWidth = get(anyTableModel, 'tableData.data', []).reduce((prev, d) => {
                     if (d[idx].length > prev)  {
                         prev = d[idx].length;
                     }

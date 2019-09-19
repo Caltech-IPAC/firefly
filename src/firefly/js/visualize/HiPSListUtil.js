@@ -206,7 +206,7 @@ export function resolveHiPSIvoURL(ivoOrUrl) {
             if (ivoIdx<0 || urlIdx<1) return undefined;
             const lowerIvo= ivoOrUrl.toLowerCase();
             // now match the table
-            const foundRow= tableModel.tableData.data.find( (row) =>
+            const foundRow= get(tableModel,'tableData.data', []).find( (row) =>
                                 row[ivoIdx] && row[ivoIdx].toLowerCase().includes(lowerIvo) );
             const replaceUrl= foundRow && foundRow[urlIdx];
             return replaceUrl || ivoOrUrl;

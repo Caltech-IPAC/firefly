@@ -301,7 +301,7 @@ function computePointDrawLayer(drawLayer, tableData, columns) {
     const {angleInRadian:rad}= drawLayer;
     if (lonIdx<0 || latIdx<0) return null;
 
-    const drawData= tableData.data.map( (d) => {
+    const drawData= get(tableData, 'data', []).map( (d) => {
         const wp= makeWorldPt( toAngle(d[lonIdx],rad), toAngle(d[latIdx],rad), columns.csys);
         return PointDataObj.make(wp);
     });
@@ -314,7 +314,7 @@ function computePointDrawLayer(drawLayer, tableData, columns) {
 function computeBoxDrawLayer(drawLayer, tableData, columns) {
     const {angleInRadian:rad}= drawLayer;
 
-    const drawData= tableData.data.map( (d) => {
+    const drawData= get(tableData, 'data', []).map( (d) => {
         const fp= columns.map( (c) => {
             const lonIdx= findColIdx(tableData.columns, c.lonCol);
             const latIdx= findColIdx(tableData.columns, c.latCol);
@@ -332,7 +332,7 @@ function computeRegionLayer(drawLayer, tableData, regionCols) {
     const drawData= regionColAry.reduce((prev, oneRegionCol) => {
         const {unit='deg'} = oneRegionCol;
 
-        const colObjs = tableData.data.map((oneRow) => {
+        const colObjs = get(tableData, 'data', []).map((oneRow) => {
             const regionInfo = parseObsCoreRegion(oneRow[oneRegionCol.regionIdx], unit);
 
             return regionInfo.valid ? regionInfo.drawObj : undefined;
@@ -437,7 +437,7 @@ function computeBoxHighlightLayer(drawLayer, columns, highlightedRow) {
 
 function computeRegionHighlightLayer(drawLayer, columns) {
     const {tableData, highlightedRow=0}= drawLayer;
-    const d= tableData.data[highlightedRow];
+    const d= get(tableData, ['data', highlightedRow]);
     if (!d) return null;
 
     const regionColAry = isArray(columns) ? columns : [columns];
@@ -545,7 +545,7 @@ function doClearFilter(dl) {
 function doFilter(dl,p,sel, selectedShape) {
 
     const tbl= getTblById(dl.tblId);
-    if (!tbl) return;
+    if (!tbl || !dl.tableData.data) return;
     const tableDataLength = dl.tableData.data.length;
     const filterInfo = get(tbl, 'request.filters');
     const filterInfoCls = FilterInfo.parse(filterInfo);
@@ -557,8 +557,14 @@ function doFilter(dl,p,sel, selectedShape) {
         const idxs= getSelectedPts(sel, p, dl.drawData.data, selectedShape)
             .filter((idx) => idx < tableDataLength)
             .map( (idx) => `'${dl.tableData.data[idx][decimateIdx]}'`);
-        filter= `IN (${idxs.toString()})`;
-        filterInfoCls.addFilter(dl.tableMeta['decimate_key'], filter);
+        if (idxs.length > 0) {
+            filter= `IN (${idxs.toString()})`;
+            filterInfoCls.addFilter(dl.tableMeta['decimate_key'], filter);
+        } else {
+            // no points selected
+            filterInfoCls.addFilter('ROW_IDX', '< 0');
+        }
+
         newRequest = {tbl_id: tbl.tbl_id, filters: filterInfoCls.serialize()};
         dispatchTableFilter(newRequest);
         //console.log(newRequest);

@@ -89,7 +89,8 @@ function fetchData(chartId, traceNum, tablesource) {
             }
 
             let histogramData = [];
-            if (tableModel.tableData && tableModel.tableData.data) {
+            const tblData = get(tableModel, 'tableData.data');
+            if (tblData) {
                 // if logarithmic values were requested, convert the returned exponents back
                 var toNumber = get(options, 'x', '').includes('log') ?
                     (val, i)=> {
@@ -97,7 +98,7 @@ function fetchData(chartId, traceNum, tablesource) {
                         return (i === 0) ? Number(val) : Math.pow(10, Number(val));
                     } : (val)=>Number(val);
                 var nrow, lastIdx;
-                histogramData = tableModel.tableData.data.reduce((data, arow, i) => {
+                histogramData = tblData.reduce((data, arow, i) => {
                     nrow = arow.map(toNumber);
                     lastIdx = data.length - 1;
                     if (i > 0 && data[lastIdx][1] === nrow[1]) {

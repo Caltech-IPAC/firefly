@@ -279,6 +279,8 @@ function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, 
             preparedTables[tbl_id] = 'WORKING';
             doFetchTable(req).then(
                 (allRowsTable) => {
+                    // EMPTY_TBL
+                    // if (get(allRowsTable, 'tableData')) { // empty tables would have tableData.data undefined
                     if (get(allRowsTable, ['tableData', 'data'], []).length > 0) {
                         preparedTables[tbl_id] = allRowsTable;
                         const isRegion = isTableWithRegion(allRowsTable);
@@ -320,6 +322,13 @@ function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, 
 function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, preparedTables,
                                 usesRadians, tblCatIdMap, preferredHipsSourceURL ) {
     const {maxRadius, avgOfCenters}= computeSize(options, preparedTables, usesRadians);
+
+    // EMPTY_TBL
+    // if (!avgOfCenters || maxRadius<=0) {
+    //     // coverage drawing might need to be cleared
+    //     overlayCoverageDrawing(preparedTables, options, tblCatIdMap);
+    //     return;
+    // }
     if (!avgOfCenters || maxRadius<=0) return;
 
     const plot= primePlot(visRoot(), PLOT_ID);
@@ -490,7 +499,7 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp) {
             angleInRadian= isTableUsingRadians(table, [columns.lonCol,columns.latCol])
         }
         else if (dataType=== CoverageType.BOX) {
-            const cAry= columns.map( c=> [c.lonCol,c.latCol]).flat();
+            const cAry= columns.map( (c) => [c.lonCol,c.latCol]).flat();
             angleInRadian= isTableUsingRadians(table, cAry);
         }
 
@@ -568,10 +577,11 @@ function getCoverageType(options,table) {
 function hasCorners(options, table) {
     const cornerColumns= getCornersColumns(table);
     if (isEmpty(cornerColumns)) return false;
-    const dataCnt= table.tableData.data.reduce( (tot, row) =>
+    const tblData = get(table, 'tableData.data', []);
+    const dataCnt= tblData.reduce( (tot, row) =>
         cornerColumns.every( (cDef) => row[cDef.lonIdx]!=='' && row[cDef.latIdx]!=='') ? tot+1 : tot
     ,0);
-    return dataCnt/table.tableData.data.length > .1;
+    return dataCnt > 0;
 }
 
 
@@ -588,7 +598,7 @@ function getPtAryFromTable(options,table, usesRadians){
     const cDef= findTableCenterColumns(table);
     if (isEmpty(cDef)) return [];
     const {lonIdx,latIdx,csys}= cDef;
-    return table.tableData.data
+    return get(table, 'tableData.data', [])
         .map( (row) =>
             (row[lonIdx]!=='' && row[latIdx]!=='') ? makePt(row[lonIdx], row[latIdx], csys, usesRadians) : undefined )
         .filter( (v) => v);
@@ -596,7 +606,7 @@ function getPtAryFromTable(options,table, usesRadians){
 
 function getBoxAryFromTable(options,table, usesRadians){
     const cDefAry= getCornersColumns(table);
-    return table.tableData.data
+    return get(table, 'tableData.data', [])
         .map( (row) => cDefAry
             .map( (cDef) =>
                 (row[cDef.lonIdx]!=='' && row[cDef.latIdx]!=='') ? makePt(row[cDef.lonIdx], row[cDef.latIdx], cDef.csys, usesRadians) : undefined))
@@ -607,7 +617,8 @@ function getBoxAryFromTable(options,table, usesRadians){
 function getRegionAryFromTable(options, table, usesRadians) {
     const rCol = findTableRegionColumn(table);
 
-    return table.tableData.data.map((row) => {
+    return get(table, 'tableData.data', [])
+        .map((row) => {
              const cornerInfo = parseObsCoreRegion(row[rCol.regionIdx], rCol.unit, true);
 
             return cornerInfo.valid ? cornerInfo.corners : [];

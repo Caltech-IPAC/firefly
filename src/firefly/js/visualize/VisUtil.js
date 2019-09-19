@@ -197,8 +197,9 @@ export function computeCentralPtRadiusAverage(inPoints2dAry) {
     const {centralPoint, maxRadius}= computeCentralPointAndRadius(testAry);
     if (inPoints2dAry.length===1) return {centralPoint, maxRadius, avgOfCenters:centralPoint};
 
-    const centers= inPoints2dAry.map( (ptAry) =>
-              isOnePoint(ptAry) ? ptAry[0] : computeCentralPointAndRadius(ptAry).centralPoint);
+    const centers= inPoints2dAry
+        .map( (ptAry) => isOnePoint(ptAry) ? ptAry[0] : computeCentralPointAndRadius(ptAry).centralPoint)
+        .filter((pt) => pt); // filter out undefined centers
 
     const {centralPoint:avgOfCenters}= computeCentralPointAndRadius(centers);
     return {centralPoint, maxRadius, avgOfCenters};

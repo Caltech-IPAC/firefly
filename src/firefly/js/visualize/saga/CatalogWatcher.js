@@ -132,7 +132,7 @@ function handleCatalogUpdate(tbl_id) {
 
     doFetchTable(req).then(
         (tableModel) => {
-            if (tableModel.tableData && tableModel.tableData.data) {
+            if (tableModel.tableData) {
                 updateDrawingLayer(tbl_id, tableModel,
                     request, highlightedRow, selectInfo, columns, dataTooBigForSelection);
             }

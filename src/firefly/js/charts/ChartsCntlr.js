@@ -838,16 +838,15 @@ export function dispatchError(chartId, traceNum, reason) {
     const {data=[]} = getChartData(chartId);
     let forTrace = '';
     if (data.length == 1) {
-        // this apply to Radar SED plot
         const name = get(data, `${traceNum}.name`);
-        forTrace = ` ${name}`;
+        // if a trace is user named, mention the name
+        forTrace = name && !name.toLowerCase().startsWith('trace') ? ` for ${name}` : '';
     } else if (data.length > 1) {
-        // only mention trace, when there are multiple traces
+        // mention trace name when there are multiple traces
         const name = get(data, `${traceNum}.name`, `trace ${traceNum}`);
         forTrace = ` for ${name}`;
     }
     let message = `Cannot display requested data${forTrace}`;
-    logError(`${message}: ${reason}`);
 
     let reasonStr = `${reason}`.toLowerCase();
     if (reasonStr.match(/not supported/)) {
@@ -864,9 +863,10 @@ export function dispatchError(chartId, traceNum, reason) {
     //     message = 'The columns requested are identical or one of them is not numerical.';
     //     reasonStr = reason;
     } else if (reasonStr.match(/failed to retrieve/) || reasonStr.match(/no data/) || reasonStr.match(/null/)){
-        message = `No data available:${forTrace} data`;
+        message = `No data available${forTrace}`;
         reasonStr = '';
     } else {
+        logError(`${message}: ${reason}`);
         reasonStr = '';
     }
     const changes = {};

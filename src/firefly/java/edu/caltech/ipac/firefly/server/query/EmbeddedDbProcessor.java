@@ -418,7 +418,8 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                 highlightedRow =  JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
                         .queryForInt(String.format("select row_num from %s where ROW_IDX = %d", resultSetID, hlRowByRowIdx));
             } catch (Exception e) {
-                // row does not exists in new resultset.. ignore the error.
+                // row does not exists in new resultset.. reset highlightedRow.
+                highlightedRow = 0;
             }
         }
         if (highlightedRow >= 0) {
