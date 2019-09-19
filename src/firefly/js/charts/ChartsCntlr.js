@@ -840,7 +840,7 @@ export function dispatchError(chartId, traceNum, reason) {
     if (data.length == 1) {
         const name = get(data, `${traceNum}.name`);
         // if a trace is user named, mention the name
-        forTrace = name && !name.toLowerCase().startsWith('trace') ? ` for ${name}` : '';
+        forTrace = name && !name.toLowerCase().startsWith('trace') ? `: ${name} data` : '';
     } else if (data.length > 1) {
         // mention trace name when there are multiple traces
         const name = get(data, `${traceNum}.name`, `trace ${traceNum}`);
