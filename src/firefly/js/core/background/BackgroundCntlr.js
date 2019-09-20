@@ -2,7 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {take} from 'redux-saga/effects';
 import {set, get, has, pick, isNil} from 'lodash';
 
 import {flux} from '../../Firefly.js';
@@ -12,6 +11,10 @@ import {showBackgroundMonitor} from './BackgroundMonitor.jsx';
 import {isSuccess, getDataTagMatcher} from './BackgroundUtil.js';
 import * as SearchServices from '../../rpc/SearchServicesJson.js';
 import {Keys} from './BackgroundStatus.js';
+import * as TblUtil from '../../tables/TableUtil';
+import {dispatchComponentStateChange} from '../ComponentCntlr';
+import {getErrMsg, isDone, trackBackgroundJob} from './BackgroundUtil.js';
+import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 
 export const BACKGROUND_PATH = 'background';
 
@@ -112,9 +115,10 @@ export function dispatchJobCancel(id) {
  * @param {DownloadRequest} dlRequest
  * @param {TableRequest} searchRequest
  * @param {string} selectionInfo
+ * @param {string} bgKey  used for updating UI states related to backgrounding
  */
-export function dispatchPackage(dlRequest, searchRequest, selectionInfo) {
-    flux.process({ type : BG_Package, payload: {dlRequest, searchRequest, selectionInfo} });
+export function dispatchPackage(dlRequest, searchRequest, selectionInfo, bgKey) {
+    flux.process({ type : BG_Package, payload: {dlRequest, searchRequest, selectionInfo, bgKey} });
 }
 
 
@@ -169,16 +173,33 @@ function bgSetEmail(action) {
 
 function bgPackage(action) {
     return (dispatch) => {
-        const {dlRequest, searchRequest, selectionInfo} = action.payload;
+        const {dlRequest, searchRequest, selectionInfo, bgKey} = action.payload;
+
+        const onComplete = (bgStatus) => {
+            const url = get(bgStatus, ['ITEMS', 0, 'url']);
+            if (url && isSuccess(get(bgStatus, 'STATE'))) {
+                download(url);
+            } else {
+                showInfoPopup(getErrMsg(bgStatus));
+            }
+        };
+
+        const sentToBg = (bgStatus) => {
+            dispatchJobAdd(bgStatus);
+        };
+
+        bgKey && dispatchComponentStateChange(bgKey, {inProgress:true, bgStatus:undefined});
         SearchServices.packageRequest(dlRequest, searchRequest, selectionInfo)
             .then((bgStatus) => {
                 if (bgStatus) {
                     bgStatus = bgStatusTransform(bgStatus);
-                    const url = get(bgStatus, ['ITEMS', 0, 'url']);
-                    if (url && isSuccess(get(bgStatus, 'STATE'))) {
-                        download(url);
+                    dispatchComponentStateChange(bgKey, {bgStatus});
+                    if (isDone(bgStatus.STATE)) {
+                        onComplete(bgStatus);
+                        dispatchComponentStateChange(bgKey, {inProgress:false, bgStatus:undefined});
                     } else {
-                        dispatchJobAdd(bgStatus);
+                        // not done; track progress
+                        trackBackgroundJob({bgID: bgStatus.ID, key: bgKey, onComplete, sentToBg});
                     }
                 }
             });

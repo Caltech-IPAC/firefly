@@ -23,6 +23,7 @@ import {getBgEmailInfo} from '../core/background/BackgroundUtil.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {DataTagMeta} from '../tables/TableRequestUtil.js';
 import {useStoreConnector} from './SimpleComponent.jsx';
+import {BgMaskPanel} from '../core/background/BgMaskPanel.jsx';
 
 const DOWNLOAD_DIALOG_ID = 'Download Options';
 /**
@@ -109,7 +110,7 @@ const noticeCss = {
 };
 
 export function DownloadOptionPanel (props) {
-    const {mask, groupKey, cutoutSize, help_id, children, style, title, tbl_id, dlParams, dataTag} = props;
+    const {groupKey, cutoutSize, help_id, children, style, title, tbl_id, dlParams, dataTag} = props;
 
     const [{email, enableEmail}] = useStoreConnector(getBgEmailInfo);
     const onEmailChanged = useCallback((v) => {
@@ -120,6 +121,7 @@ export function DownloadOptionPanel (props) {
 
     const labelWidth = 110;
     const ttl = title || DOWNLOAD_DIALOG_ID;
+    const bgKey = 'DownloadOptionPanel-' + tbl_id;
 
     const onSubmit = useCallback((options) => {
         var {request, selectInfo} = getTblById(tbl_id);
@@ -127,7 +129,7 @@ export function DownloadOptionPanel (props) {
         const Title = dlParams.Title || options.Title;
         const dreq = makeTblRequest(FileGroupProcessor, Title, Object.assign(dlParams, {cutoutSize}, options));
         request = set(cloneDeep(request), DataTagMeta, dataTag);
-        dispatchPackage(dreq, request, SelectInfo.newInstance(selectInfo).toString());
+        dispatchPackage(dreq, request, SelectInfo.newInstance(selectInfo).toString(), bgKey);
         showDownloadDialog(this, false);
     }, tbl_id);
 
@@ -139,9 +141,20 @@ export function DownloadOptionPanel (props) {
 
     const showWarnings = hasProprietaryData(getTblById(tbl_id));
 
+    const maskStyle = {
+        position: 'absolute',
+        top:-26,
+        bottom:-4,
+        right:-4,
+        left:-4,
+        width:undefined,
+        height:undefined,
+        backgroundColor: 'rgba(0,0,0,0.2)'
+    };
+    const maskPanel = <BgMaskPanel componentKey={bgKey} style={maskStyle}/>;
+
     return (
         <div style = {Object.assign({margin: '4px', position: 'relative', minWidth: 350}, style)}>
-            {mask && <div style={{width: '100%', height: '100%'}} className='loading-mask'/>}
             {showWarnings && <div style={noticeCss}>This table contains proprietary data. Only data to which you have access will be downloaded.</div>}
             <FormPanel
                 submitText = 'Prepare Download'
@@ -198,6 +211,7 @@ export function DownloadOptionPanel (props) {
                     }
                 </FieldGroup>
             </FormPanel>
+            {maskPanel}
         </div>
     );
 }
@@ -209,7 +223,6 @@ DownloadOptionPanel.propTypes = {
     cutoutSize: PropTypes.string,
     help_id:    PropTypes.string,
     title:      PropTypes.string,
-    mask:       PropTypes.bool,
     style:      PropTypes.object,
     dataTag:    PropTypes.string,
     dlParams:   PropTypes.shape({
@@ -251,7 +264,7 @@ function hasProprietaryData(tableModel={}) {
  * @param {boolean} [show=true] show or hide this dialog
  */
 function showDownloadDialog(panel, show=true) {
-    const ttl = panel.props.title || DOWNLOAD_DIALOG_ID;
+    const ttl = get(panel, 'props.title', DOWNLOAD_DIALOG_ID);
     if (show) {
         const content= (
             <PopupPanel title={ttl} >
