@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import {dispatchJobAdd} from './BackgroundCntlr.js';
 import {getComponentState} from '../../core/ComponentCntlr.js';
-import {SimpleComponent} from '../../ui/SimpleComponent.jsx';
+import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 
 
 /**
@@ -15,41 +15,37 @@ import {SimpleComponent} from '../../ui/SimpleComponent.jsx';
  */
 
 
-export class BgMaskPanel extends SimpleComponent {
+export const BgMaskPanel = React.memo(({componentKey, style={}}) => {
 
-    getNextState(np) {
-        return getComponentState(this.props.componentKey);
-    }
+    const [{inProgress, bgStatus}] = useStoreConnector(() => getComponentState(componentKey));
 
-    render() {
-        const {inProgress, bgStatus} = this.state;
-        const sendToBg = () => {
-            const {bgStatus} = this.state;
-            bgStatus && dispatchJobAdd(bgStatus);
-        };
+    const sendToBg = () => {
+        bgStatus && dispatchJobAdd(bgStatus);
+    };
+    const maskStyle = {...defMaskStyle, ...style};
 
-        if (inProgress) {
-            return (
-                <div style={maskStyle}>
-                    <div className='loading-mask'/>
-                    {bgStatus &&
-                    <div style={{display: 'flex', alignItems: 'center'}}>
-                        <button type='button' style={maskButton} className='button std' onClick={sendToBg}>Send to background</button>
-                    </div>
-                    }
+    if (inProgress) {
+        return (
+            <div style={maskStyle}>
+                <div className='loading-mask'/>
+                {bgStatus &&
+                <div style={{display: 'flex', alignItems: 'center'}}>
+                    <button type='button' style={maskButton} className='button std' onClick={sendToBg}>Send to background</button>
                 </div>
-            );
-        } else {
-            return null;
-        }
+                }
+            </div>
+        );
+    } else {
+        return null;
     }
-}
+});
 
 BgMaskPanel.propTypes = {
-    componentKey: PropTypes.string.isRequired, // key used to identify this background job
+    componentKey: PropTypes.string.isRequired,  // key used to identify this background job
+    style: PropTypes.object                     // used for overriding default styling
 };
 
-const maskStyle = {
+const defMaskStyle = {
             position: 'relative',
             width: '100%',
             height: '100%',
