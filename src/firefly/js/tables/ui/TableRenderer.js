@@ -288,6 +288,7 @@ export const LinkCell = React.memo((props) => {
                         const target = action || '_blank';
                         const rvalue = resolveHRefVal(tableModel, value, absRowIdx);
                         const rhref = resolveHRefVal(tableModel, href, absRowIdx, val);
+                        if (!rhref) return '';
                         if (idx > 0) mStyle = {marginLeft: 3, ...mStyle};
                         return (<ATag key={'ATag_' + idx} href={rhref}
                                       {...{value:rvalue, title, target, style:mStyle}}

@@ -710,7 +710,7 @@ function makeWPRequest(wp, radius, data, plotId, plotGroupId) {
             [PlotAttribute.DATA_HELP_URL]: helpUrl,
             [PlotAttribute.PROJ_TYPE_DESC]: projectTypeDesc,
             [PlotAttribute.WAVE_TYPE]: waveType,
-            [PlotAttribute.WAVE_LENGTH_DESC]: wavelengthDesc,
+            [PlotAttribute.WAVE_LENGTH_UM]: parseFloat(wavelengthDesc),
         },
         ...params};
 

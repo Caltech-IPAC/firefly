@@ -5,7 +5,6 @@
 import React, {useState, useEffect} from 'react';
 import {isEmpty, get,uniq, isEqual} from 'lodash';
 import {useStoreConnector} from '../../ui/SimpleComponent';
-import CompleteButton from '../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {visRoot, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
@@ -14,18 +13,18 @@ import {getMultiViewRoot,getExpandedViewerItemIds,dispatchReplaceViewerItems,
                              EXPANDED_MODE_RESERVED, IMAGE} from '../MultiViewCntlr.js';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {TablePanel} from '../../tables/ui/TablePanel';
-import {dispatchTableAddLocal} from '../../tables/TablesCntlr';
-import {getTblById, processRequest} from '../../tables/TableUtil';
-import {SelectInfo} from '../../tables/SelectInfo';
+import {dispatchTableAddLocal, TABLE_SORT} from '../../tables/TablesCntlr';
+import {getTblById, processRequest,watchTableChanges} from '../../tables/TableUtil';
 import {getFormattedWaveLengthUnits, getPlotViewAry, isPlotViewArysEqual} from '../PlotViewUtil';
 import {PlotAttribute} from '../PlotAttribute';
-import {dispatchDeletePlotView} from '../ImagePlotCntlr';
+import {TABLE_LOADED, TABLE_FILTER, TABLE_FILTER_SELROW} from '../../tables/TablesCntlr';
+import {getViewerItemIds} from '../MultiViewCntlr';
 
 const TABLE_ID= 'active-image-view-list-table';
 
 export function showExpandedOptionsPopup(plotViewAry) {
     const popup= (
-        <PopupPanel title={'Choose which'} >
+        <PopupPanel title={'Loaded Images'} >
             <ImageViewOptionsPanel  plotViewAry={plotViewAry}/>
         </PopupPanel>
     );
@@ -36,24 +35,18 @@ export function showExpandedOptionsPopup(plotViewAry) {
 
 
 
-const [NAME_IDX,WAVE_LENGTH_DESC,PID_IDX,STATUS, PROJ_TYPE_DESC, WAVE_TYPE, DATA_HELP_URL]= [0,1,2,3,4,5,6];
+const [NAME_IDX,WAVE_LENGTH_UM,PID_IDX,STATUS, PROJ_TYPE_DESC, WAVE_TYPE, DATA_HELP_URL]= [0,1,2,3,4,5,6];
 
 const columnsTemplate = [];
 columnsTemplate[NAME_IDX]= {name: 'Name', type: 'char', width: 20};
 columnsTemplate[PID_IDX]= {name: 'plotId', type: 'char', width: 10, visibility: 'hidden'};
 columnsTemplate[STATUS]= {name: 'Status', type: 'char', width: 15};
-columnsTemplate[PROJ_TYPE_DESC]= {name: 'Project', type: 'char', width: 8};
-columnsTemplate[WAVE_TYPE]= {name: 'Type', type: 'char', width: 8};
-columnsTemplate[WAVE_LENGTH_DESC]= {name: 'Wavelength', type: 'char', width: 10};
-columnsTemplate[DATA_HELP_URL]= {name: 'Help', type: 'location', width: 35};
+columnsTemplate[PROJ_TYPE_DESC]= {name: 'Type', type: 'char', width: 8};
+columnsTemplate[WAVE_TYPE]= {name: 'Band', type: 'char', width: 8};
+columnsTemplate[WAVE_LENGTH_UM]= {name: 'Wavelength', type: 'double', width: 10, units:getFormattedWaveLengthUnits('um')};
+// columnsTemplate[DATA_HELP_URL]= {name: 'Help', type: 'location', width: 35};
+ columnsTemplate[DATA_HELP_URL]= {name: 'Help', type: 'location', width: 7, links:[{ href: '${Help}',  value: 'help'}]};
 
-
-
-// columnsTemplate[DATA_HELP_URL]= {name: 'Help', type: 'location', width: 7, links:[{ href: '${Help}',  value: 'help'}]};
-// columns[DATA_HELP_URL]= {name: 'Help', type: 'location', width: 7};
-//
-// const helpAllPopulated= {name: 'Help', type: 'location', width: 7, links:[{ href: '${Help}',  value: 'help'}]};
-// const helpSomePopulated= {name: 'Help', type: 'location', width: 7};
 
 
 
@@ -66,25 +59,22 @@ const makeEnumValues= (data,idx) => uniq(data.map((d) => d[idx]).filter((d) => d
 
 
 function makeModel(tbl_id,plotViewAry, expandedIds, oldModel) {
-
-    const selectInfo= SelectInfo.newInstance({rowCount: plotViewAry.length});
-
-
-
-    plotViewAry.forEach( ({plotId},idx) => selectInfo.setRowSelect(idx, expandedIds.includes(plotId)) );
-
     const data= plotViewAry.map( (pv) => {
         const attributes= plot? plot.attributes : pv.request.getAttributes();
         const plot= primePlot(pv);
         const {plotId, serverCall, plottingStatus,request}= pv;
         const title = plot ? plot.title :  request.getTitle() || 'failed image';
         const row= [];
+        let stat;
+        if (serverCall==='success') stat= 'Success';
+        else if (serverCall==='fail') stat= 'Fail';
+        else stat= plottingStatus;
         row[NAME_IDX]=title;
         row[PID_IDX]= plotId;
-        row[STATUS]= serverCall==='success' ? 'Success' : plottingStatus;
+        row[STATUS]= stat;
         row[PROJ_TYPE_DESC]= getAttribute(attributes,PlotAttribute.PROJ_TYPE_DESC);
         row[WAVE_TYPE]= getAttribute(attributes,PlotAttribute.WAVE_TYPE);
-        row[WAVE_LENGTH_DESC]= getFormattedWaveLengthUnits(getAttribute(attributes,PlotAttribute.WAVE_LENGTH_DESC),true);
+        row[WAVE_LENGTH_UM]= getAttribute(attributes,PlotAttribute.WAVE_LENGTH_UM);
         row[DATA_HELP_URL]= getAttribute(attributes,PlotAttribute.DATA_HELP_URL);
         return row;
     });
@@ -93,14 +83,14 @@ function makeModel(tbl_id,plotViewAry, expandedIds, oldModel) {
     columns[PROJ_TYPE_DESC].enumVals= makeEnumValues(data,PROJ_TYPE_DESC);
     columns[WAVE_TYPE].enumVals=  makeEnumValues(data,WAVE_TYPE);
     columns[STATUS].enumVals=  makeEnumValues(data,STATUS);
-    columns[WAVE_LENGTH_DESC].enumVals=  makeEnumValues(data,WAVE_LENGTH_DESC);
+    columns[WAVE_LENGTH_UM].enumVals=  makeEnumValues(data,WAVE_LENGTH_UM);
 
 
     let newModel = {
         tbl_id,
         tableData:{columns,data},
         totalRows: data.length, highlightedRow: 0,
-        selectInfo: selectInfo.data,
+        selectInfo: get(oldModel,'selectInfo'),
         tableMeta:  {},
         request: oldModel ? oldModel.request : undefined
     };
@@ -114,21 +104,24 @@ function makeModel(tbl_id,plotViewAry, expandedIds, oldModel) {
 function dialogComplete(tbl_id) {
     const model= getTblById(tbl_id);
     if (!model) return;
-    const m= model.origTableModel || model;
-    const si= SelectInfo.newInstance(m.selectInfo);
-
-    si.isSelected();
-
-    const plotIdAry= m.tableData.data.map( (d) => d[PID_IDX] ).filter( (d,idx) => si.isSelected(idx));
+    const plotIdAry= model.tableData.data.map( (d) => d[PID_IDX] );
     if (isEmpty(plotIdAry)) return;
+
+    const currentPlotIdAry= getViewerItemIds(getMultiViewRoot(),EXPANDED_MODE_RESERVED);
+    if (plotIdAry.join('')===currentPlotIdAry.join('')) return;
     if (!plotIdAry.includes(visRoot().activePlotId)) {
         dispatchChangeActivePlotView(plotIdAry[0]);
     }
     dispatchReplaceViewerItems(EXPANDED_MODE_RESERVED, plotIdAry, IMAGE);
-
-
-
 }
+
+// const deleteFailedNEW= () => {
+//     getPlotViewAry(visRoot()).forEach( (pv) => {
+//         if (pv.serverCall==='fail') {
+//             dispatchDeletePlotView({plotId:pv.plotId}) ;
+//         }
+//     });
+// };
 
 const pvKeys= ['plotId', 'request', 'serverCall', 'plottingStatus'];
 const plotKeys= ['plotImageId'];
@@ -157,71 +150,70 @@ function ImageViewOptionsPanel() {
 
     useEffect(() => {
         const oldModel= getTblById(TABLE_ID);
+        if (!oldModel) {
+            watchTableChanges(TABLE_ID,[TABLE_LOADED, TABLE_FILTER, TABLE_FILTER_SELROW, TABLE_SORT],()=>dialogComplete(TABLE_ID));
+        }
         setModel(makeModel(TABLE_ID,plotViewAry,expandedIds, oldModel));
     }, [plotViewAry,expandedIds]);
 
-    const someFailed= plotViewAry.some( (pv) => pv.serverCall==='fail');
-
-    const hideFailed= () => {
-        if (isEmpty(plotViewAry)) return;
-        const plotIdAry= plotViewAry
-            .filter( (pv) => pv.serverCall!=='fail')
-            .map( (pv) => pv.plotId);
-        if (!plotIdAry.includes(visRoot().activePlotId)) {
-            dispatchChangeActivePlotView(plotIdAry[0]);
-        }
-        dispatchReplaceViewerItems(EXPANDED_MODE_RESERVED, plotIdAry, IMAGE);
-    };
-
-    const deleteFailed= () => {
-        plotViewAry.forEach( (pv) => {
-            if (pv.serverCall==='fail') {
-                dispatchDeletePlotView({plotId:pv.plotId}) ;
-            }
-            });
-        };
-
     if (!model) return null;
+    //const someFailed= plotViewAry.some( (pv) => pv.serverCall==='fail');
+
+    // const hideFailed= () => {
+    //     if (isEmpty(plotViewAry)) return;
+    //     const plotIdAry= plotViewAry
+    //         .filter( (pv) => pv.serverCall!=='fail')
+    //         .map( (pv) => pv.plotId);
+    //     if (!plotIdAry.includes(visRoot().activePlotId)) {
+    //         dispatchChangeActivePlotView(plotIdAry[0]);
+    //     }
+    //     dispatchReplaceViewerItems(EXPANDED_MODE_RESERVED, plotIdAry, IMAGE);
+    // };
+    //
+    // const deleteFailed= () => {
+    //     plotViewAry.forEach( (pv) => {
+    //         if (pv.serverCall==='fail') {
+    //             dispatchDeletePlotView({plotId:pv.plotId}) ;
+    //         }
+    //     });
+    // };
+    //
+
+    // const deleteFailedButton= () => (
+    //     <button type='button' className='button std hl'
+    //             onClick={() => deleteFailedNEW()}>Delete Failed
+    //     </button>
+    // );
+
 
     return (
         <div style={{resize: 'both', overflow: 'hidden', display: 'flex', flexDirection: 'column',
             width: 675, height: 450, minWidth: 250, minHeight: 200}}>
 
-            <div style={{ position: 'relative', width: '100%', height: 'calc(100% - 30px)'}}>
+            <div style={{ position: 'relative', width: '100%', height: 'calc(100% - 10px)'}}>
                 <div className='TablePanel'>
                     <div className={'TablePanel__wrapper--border'}>
                         <div className='TablePanel__table' style={{top: 0}}>
                             <TablePanel
                                 tbl_ui_id={tbl_ui_id}
                                 tableModel={model}
-                                showToolbar={false}
+                                showToolbar={true}
                                 showFilters={true}
                                 selectable={true}
                                 showOptionButton={true}
                                 border= {false}
+                                showTitle= {false}
+                                showPaging= {false}
+                                showSave= {false}
+                                showTypes= {false}
+                                showToggleTextView={false}
+                                expandable= {false}
+                                showUnits={true}
                                 rowHeight={23}
                             />
                         </div>
                     </div>
                 </div>
-            </div>
-
-
-            <div style={{display:'flex', justifyContent:'space-between'}}>
-                <CompleteButton
-                    style={{padding : 5}}
-                    onSuccess={() => dialogComplete(model.tbl_id)}
-                    dialogId='ExpandedOptionsPopup' />
-                {someFailed &&
-                ( <div style={{display:'flex', padding:5}}>
-                    <button type='button' className='button std hl'
-                            onClick={() => hideFailed()}>Hide Failed
-                    </button>
-                    <button type='button' className='button std hl'
-                            onClick={() => deleteFailed()}>Delete Failed
-                    </button>
-
-                </div>)}
             </div>
         </div>
     );
