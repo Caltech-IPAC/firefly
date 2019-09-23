@@ -227,8 +227,8 @@ ext.publishDocs = { docsDir, product ->
     product = product ?: "firefly"
 
     if (!file(docsDir).exists()) {
-        println ">> docs directory does not exists.  Skipping publishDocs."
-        throw new StopExecutionException("docs directory does not exists.  Skipping publishDocs.")
+        println ">> docs directory does not exist.  Skipping publishDocs."
+        throw new StopExecutionException("docs directory does not exist.  Skipping publishDocs.")
     }
 
     try {
@@ -262,7 +262,7 @@ ext.publishDocs = { docsDir, product ->
 ext.doExec = { workDir, ...cmd ->
 
     if (!file(workDir).exists()) {
-        throw new GradleException(cmd + "\n ${workDir} does not exists.")
+        throw new GradleException(cmd + "\n ${workDir} does not exist.")
     }
 
     def buff = new ByteArrayOutputStream()
