@@ -5,6 +5,7 @@
 import React, {useState, useEffect} from 'react';
 import {isEmpty, get,uniq, isEqual} from 'lodash';
 import {useStoreConnector} from '../../ui/SimpleComponent';
+import CompleteButton from '../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {visRoot, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
@@ -15,10 +16,12 @@ import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {TablePanel} from '../../tables/ui/TablePanel';
 import {dispatchTableAddLocal, TABLE_SORT} from '../../tables/TablesCntlr';
 import {getTblById, processRequest,watchTableChanges} from '../../tables/TableUtil';
-import {getFormattedWaveLengthUnits, getPlotViewAry, isPlotViewArysEqual} from '../PlotViewUtil';
+import {getFormattedWaveLengthUnits, getPlotViewAry, getPlotViewById, isPlotViewArysEqual} from '../PlotViewUtil';
 import {PlotAttribute} from '../PlotAttribute';
 import {TABLE_LOADED, TABLE_FILTER, TABLE_FILTER_SELROW} from '../../tables/TablesCntlr';
 import {getViewerItemIds} from '../MultiViewCntlr';
+import {HelpIcon} from '../../ui/HelpIcon';
+import {SelectInfo} from '../../tables/SelectInfo';
 
 const TABLE_ID= 'active-image-view-list-table';
 
@@ -38,7 +41,7 @@ export function showExpandedOptionsPopup(plotViewAry) {
 const [NAME_IDX,WAVE_LENGTH_UM,PID_IDX,STATUS, PROJ_TYPE_DESC, WAVE_TYPE, DATA_HELP_URL]= [0,1,2,3,4,5,6];
 
 const columnsTemplate = [];
-columnsTemplate[NAME_IDX]= {name: 'Name', type: 'char', width: 20};
+columnsTemplate[NAME_IDX]= {name: 'Name', type: 'char', width: 22};
 columnsTemplate[PID_IDX]= {name: 'plotId', type: 'char', width: 10, visibility: 'hidden'};
 columnsTemplate[STATUS]= {name: 'Status', type: 'char', width: 15};
 columnsTemplate[PROJ_TYPE_DESC]= {name: 'Type', type: 'char', width: 8};
@@ -60,8 +63,8 @@ const makeEnumValues= (data,idx) => uniq(data.map((d) => d[idx]).filter((d) => d
 
 function makeModel(tbl_id,plotViewAry, expandedIds, oldModel) {
     const data= plotViewAry.map( (pv) => {
-        const attributes= plot? plot.attributes : pv.request.getAttributes();
         const plot= primePlot(pv);
+        const attributes= plot? plot.attributes : pv.request.getAttributes();
         const {plotId, serverCall, plottingStatus,request}= pv;
         const title = plot ? plot.title :  request.getTitle() || 'failed image';
         const row= [];
@@ -86,13 +89,41 @@ function makeModel(tbl_id,plotViewAry, expandedIds, oldModel) {
     columns[WAVE_LENGTH_UM].enumVals=  makeEnumValues(data,WAVE_LENGTH_UM);
 
 
+    const newSi= SelectInfo.newInstance({rowCount:0});
+    let newFilters;
+    let request;
+    if (oldModel) {
+        const oldSi= SelectInfo.newInstance(oldModel.selectInfo);
+        const vr= visRoot();
+        let filterStr= ''
+        oldModel.tableData.data.forEach( (row, idx) => {
+            const plotId= row[PID_IDX];
+            if (getPlotViewById(vr,plotId) && oldSi.isSelected(idx)) {
+                const newIdx= data.findIndex( (r) => r[PID_IDX]===plotId);
+                newSi.setRowSelect(newIdx,true);
+                newSi.data.rowCount++;
+                filterStr+= filterStr ? ','+newIdx : newIdx;
+            }
+        });
+        request= {...oldModel.request};
+        if (get(oldModel,'request.filters') && newSi.data.rowCount>0) {
+            const {filters}= oldModel.request;
+            if (filters && filters.indexOf('ROW_IDX'>-1)) {
+                request.filters= filters.replace(/"ROW_IDX" IN \(.*\)/, `"ROW_IDX" IN (${filterStr})`);
+            }
+        }
+
+
+    }
+
+
     let newModel = {
         tbl_id,
         tableData:{columns,data},
         totalRows: data.length, highlightedRow: 0,
-        selectInfo: get(oldModel,'selectInfo'),
+        selectInfo: newSi.data,
         tableMeta:  {},
-        request: oldModel ? oldModel.request : undefined
+        request,
     };
     if (newModel.request) {
         newModel = processRequest(newModel, newModel.request, newModel.highlightedRow);
@@ -188,9 +219,9 @@ function ImageViewOptionsPanel() {
 
     return (
         <div style={{resize: 'both', overflow: 'hidden', display: 'flex', flexDirection: 'column',
-            width: 675, height: 450, minWidth: 250, minHeight: 200}}>
+            width: 625, height: 450, minWidth: 250, minHeight: 200}}>
 
-            <div style={{ position: 'relative', width: '100%', height: 'calc(100% - 10px)'}}>
+            <div style={{ position: 'relative', width: '100%', height: 'calc(100% - 30px)'}}>
                 <div className='TablePanel'>
                     <div className={'TablePanel__wrapper--border'}>
                         <div className='TablePanel__table' style={{top: 0}}>
@@ -214,6 +245,15 @@ function ImageViewOptionsPanel() {
                         </div>
                     </div>
                 </div>
+            </div>
+
+
+            <div style={{display:'flex', justifyContent:'space-between'}}>
+                <CompleteButton
+                    style={{padding : 5}} text={'Done'}
+                    onSuccess={() => dialogComplete(model.tbl_id)}
+                    dialogId='ExpandedOptionsPopup' />
+                <HelpIcon helpId={'visualization.loaded-images'} style={{padding:'8px 9px 0 0'}}/>
             </div>
         </div>
     );

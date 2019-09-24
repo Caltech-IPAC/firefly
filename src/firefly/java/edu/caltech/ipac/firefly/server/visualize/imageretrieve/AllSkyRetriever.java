@@ -27,6 +27,7 @@ import java.util.Collections;
 /**
  * @author Trey Roby
  */
+@FileRetrieverImpl(id ="ALL_SKY")
 public class AllSkyRetriever implements FileRetriever {
 
      private static final ReservedImage RESERVED_IMAGES[] = {

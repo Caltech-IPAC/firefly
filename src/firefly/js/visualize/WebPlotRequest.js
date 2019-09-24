@@ -19,11 +19,11 @@ const DEFAULT_HIPS_OVERLAYS= ['ACTIVE_TARGET_TYPE','POINT_SELECTION_TYPE', 'NORT
 
 /**
  * @summary service type
- * @description can be 'IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'DSS_OR_IRIS', 'WISE', 'ATLAS','ZTF', 'PTF', 'NONE'
+ * @description can be 'IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'DSS_OR_IRIS', 'WISE', 'ATLAS','ZTF', 'PTF', 'UNKNOWN'
  * @public
  * @global
  */
-export const ServiceType= new Enum(['IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'DSS_OR_IRIS', 'WISE', 'ATLAS', 'ZTF', 'PTF', 'NONE'],
+export const ServiceType= new Enum(['IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'DSS_OR_IRIS', 'WISE', 'ATLAS', 'ZTF', 'PTF', 'UNKNOWN'],
                                               { ignoreCase: true });
 /**
  * @summary title options
@@ -151,7 +151,7 @@ export class WebPlotRequest extends ServerRequest {
         super(type);
         if (type) this.setRequestType(type);
         this.setRequestClass(WEB_PLOT_REQUEST_CLASS);
-        if (serviceType && serviceType!==ServiceType.NONE) this.setServiceType(serviceType);
+        if (serviceType && serviceType!==ServiceType.UNKNOWN) this.setServiceType(serviceType);
         if (userDesc) this.setParam(WPConst.USER_DESC, userDesc);
     }
 
@@ -175,8 +175,9 @@ export class WebPlotRequest extends ServerRequest {
             let typeGuess;
             if (obj.id) typeGuess= RequestType.PROCESSOR;
             else if (obj[WPConst.FILE]) typeGuess= RequestType.FILE;
-            else if (obj[WPConst.URLKEY]) typeGuess= RequestType.URL;
             else if (obj[WPConst.SURVEY_KEY]) typeGuess= RequestType.SERVICE;
+            else if (obj[WPConst.SERVICE])   typeGuess= RequestType.SERVICE;
+            else if (obj[WPConst.URLKEY]) typeGuess= RequestType.URL;
             else if (obj[WPConst.HIPS_ROOT_URL]) typeGuess= RequestType.HiPS;
 
             if (typeGuess && !wpr.params[WPConst.TYPE]) wpr.setRequestType(typeGuess);
@@ -652,7 +653,27 @@ export class WebPlotRequest extends ServerRequest {
      *
      * @param service ServiceType
      */
-    setServiceType(service) { this.setParam(WPConst.SERVICE, service.key); }
+    setServiceType(service) {
+        if (!service) return;
+        if (isString(service)) this.setParam(WPConst.SERVICE, service);
+        else if (service.key) this.setParam(WPConst.SERVICE, service.key);
+        else this.setParam(WPConst.SERVICE, service.toString());
+    }
+
+    /**
+     *
+     * @return ServiceType
+     */
+    getServiceType() {
+        return ServiceType.get(this.getParam(WPConst.SERVICE)) ||ServiceType.UNKNOWN;
+    }
+
+    /**
+     * should only be call if getServiceType returns UNKNOWN
+     */
+    getServiceTypeString() {
+        return this.getParam(WPConst.SERVICE);
+    }
 
     /**
      * @return RequestType
@@ -668,13 +689,6 @@ export class WebPlotRequest extends ServerRequest {
      */
     setRequestType(type) { this.setParam(WPConst.TYPE, type.key); }
 
-    /**
-     *
-     * @return ServiceType
-     */
-    getServiceType() {
-        return ServiceType.get(this.getParam(WPConst.SERVICE)) ||ServiceType.NONE;
-    }
 
     /**
      * @param {string} key string

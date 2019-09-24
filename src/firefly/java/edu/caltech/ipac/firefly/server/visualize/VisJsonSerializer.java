@@ -55,6 +55,7 @@ public class VisJsonSerializer {
             map.put("plotRequestSerialize", wpHeader.getRequest().toString());
             map.put("dataDesc", wpHeader.getDataDesc());
             map.put("zeroHeaderAry", serializeHeaderAry(wpHeader.getZeroHeaderAry()));
+            if (wpHeader.getAttributes()!=null) map.put("attributes", new JSONObject(wpHeader.getAttributes()));
         }
         return map;
     }

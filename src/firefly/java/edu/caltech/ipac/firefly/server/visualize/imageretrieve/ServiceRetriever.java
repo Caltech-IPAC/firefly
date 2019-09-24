@@ -10,25 +10,49 @@ import edu.caltech.ipac.firefly.server.query.ibe.IbeQueryArtifact;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
 import edu.caltech.ipac.firefly.server.visualize.PlotServUtils;
+import edu.caltech.ipac.firefly.server.visualize.imagesources.ImageMasterData;
 import edu.caltech.ipac.firefly.server.visualize.imagesources.ImageMasterDataEntry;
 import edu.caltech.ipac.firefly.util.MathUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.visualize.net.*;
+import edu.caltech.ipac.visualize.net.AtlasImageGetter;
+import edu.caltech.ipac.visualize.net.AtlasImageParams;
+import edu.caltech.ipac.visualize.net.DssImageGetter;
+import edu.caltech.ipac.visualize.net.DssImageParams;
+import edu.caltech.ipac.visualize.net.IbeImageGetter;
+import edu.caltech.ipac.visualize.net.IrsaImageGetter;
+import edu.caltech.ipac.visualize.net.IrsaImageParams;
+import edu.caltech.ipac.visualize.net.PtfImageParams;
+import edu.caltech.ipac.visualize.net.SloanDssImageGetter;
+import edu.caltech.ipac.visualize.net.SloanDssImageParams;
+import edu.caltech.ipac.visualize.net.TwoMassImageParams;
+import edu.caltech.ipac.visualize.net.WiseImageParams;
+import edu.caltech.ipac.visualize.net.ZtfImageParams;
 import edu.caltech.ipac.visualize.plot.Circle;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static edu.caltech.ipac.firefly.server.visualize.imagesources.ImageMasterDataEntry.PLOT_REQUEST_PARAMS;
 import static edu.caltech.ipac.visualize.net.ImageServiceParams.ImageSourceTypes;
 
 
+@FileRetrieverImpl(id ="SERVICE")
 public class ServiceRetriever implements FileRetriever {
 
     public static final String WISE_3A = "3a";
+    private static JSONArray masterInfo= ImageMasterData.getJson(new String[]{"ALL"}, null);
 
 
     public FileInfo getFile(WebPlotRequest r) throws FailedRequestException {
+        FileInfo fi= getRawFile(r);
+        return addAttributes(fi, r);
+    }
+
+    public FileInfo getRawFile(WebPlotRequest r) throws FailedRequestException {
         switch (r.getServiceType()) {
             case ISSA: return getIrsaPlot(r, ImageSourceTypes.ISSA, ServiceDesc.get(r));
             case IRIS: return getIrsaPlot(r, ImageSourceTypes.IRIS, ServiceDesc.get(r));
@@ -45,6 +69,27 @@ public class ServiceRetriever implements FileRetriever {
             case DSS_OR_IRIS: return getDSSorIris(r);
             default: throw new FailedRequestException("Unsupported Service");
         }
+    }
+
+    private static FileInfo addAttributes(FileInfo fi, WebPlotRequest r) {
+        if (r.getServiceType()==null) return fi;
+        for(Object o : masterInfo) {
+            JSONObject e= (JSONObject)o;
+            JSONObject reqP= (JSONObject) e.get(PLOT_REQUEST_PARAMS);
+            if (reqP!=null) {
+                String serviceStr= (String)reqP.get("Service");
+                String key= (String)reqP.get("SurveyKey");
+                if (ComparisonUtil.equals(serviceStr, r.getServiceType().toString()) && ComparisonUtil.equals(key,r.getSurveyKey())) {
+                    fi.putAttribute(WebPlotRequest.WAVE_LENGTH_UM, (String)e.get(ImageMasterDataEntry.PARAMS.WAVELENGTH.getKey()));
+                    fi.putAttribute(WebPlotRequest.WAVE_LENGTH, (String)e.get(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC.getKey()));
+                    fi.putAttribute(WebPlotRequest.DATA_HELP_URL, (String)e.get(ImageMasterDataEntry.PARAMS.HELP_URL.getKey()));
+                    fi.putAttribute(WebPlotRequest.PROJ_TYPE_DESC, (String)e.get(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_KEY.getKey()));
+                    fi.putAttribute(WebPlotRequest.WAVE_TYPE, (String)e.get(ImageMasterDataEntry.PARAMS.WAVE_TYPE.getKey()));
+                    break;
+                }
+            }
+        }
+        return fi;
     }
 
     private FileInfo getSloanDSSPlot(WebPlotRequest request) throws FailedRequestException {

@@ -9,6 +9,7 @@ package edu.caltech.ipac.firefly.server.visualize;
  */
 
 
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotState;
@@ -30,9 +31,11 @@ public class ImagePlotInfo {
     private final Map<Band,ModFileWriter> fileWriterMap;
     private final List<RelatedData> relatedData;
     private final String dataDesc;
+    private final FileInfo fi;
 
     public ImagePlotInfo(PlotState state,
                          ImagePlot plot,
+                         FileInfo fi,
                          ActiveFitsReadGroup frGroup,
                          String    dataDesc,
                          List<RelatedData> relatedData,
@@ -40,6 +43,7 @@ public class ImagePlotInfo {
                          Map<Band, ModFileWriter> fileWriterMap) {
         this.state = state;
         this.plot = plot;
+        this.fi= fi;
         this.frGroup = frGroup;
         this.wfDataMap = wfDataMap;
         this.relatedData= relatedData;
@@ -54,5 +58,6 @@ public class ImagePlotInfo {
     public String getDataDesc() { return dataDesc; }
     public ActiveFitsReadGroup getFrGroup() { return frGroup; }
     public List<RelatedData> getRelatedData() {return relatedData;}
+    public FileInfo getFileInfo() { return fi; }
 }
 

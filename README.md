@@ -5,6 +5,9 @@ Firefly is IPAC's Advanced Astronomy WEB UI Framework. It is for building a web-
 Note - if you are pulling, look at the [branches section](#branches)
 
 
+[Release Notes are Here](docs/release-notes.md).
+
+
 #### Firefly Framework
 Firefly is being reused for various archives because it is a framework of archive components. This has allowed us now to implement multiple archive systems at a fraction of the cost of the first system, Spitzer Heritage Archive. Firefly has undergone an extensive re-write since then, adopted React/Redux framework for the client side, making it much  easier to work with other JavaScript libraries. Recently we have adopted Plotly.js graphing library.
 

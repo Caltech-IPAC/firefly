@@ -125,6 +125,12 @@ public class WebPlotRequest extends ServerRequest {
     public static final String DOWNLOAD_FILENAME_ROOT = "DownloadFileNameRoot";
     public static final String PLOT_ID = "plotId";
 
+    public static final String DATA_HELP_URL= "DATA_HELP_URL";
+    public static final String PROJ_TYPE_DESC= "PROJ_TYPE_DESC";
+    public static final String WAVE_TYPE= "WAVE_TYPE";
+    public static final String WAVE_LENGTH= "WAVE_LENGTH";
+    public static final String WAVE_LENGTH_UM= "WAVE_LENGTH_UM";
+
     private static final String _allKeys[] = {FILE, WORLD_PT, URL, SIZE_IN_DEG, SURVEY_KEY,
                                               SURVEY_KEY_ALT, SURVEY_KEY_BAND, TYPE, ZOOM_TYPE,
                                               SERVICE, USER_DESC, INIT_ZOOM_LEVEL,
@@ -183,14 +189,14 @@ public class WebPlotRequest extends ServerRequest {
     }
 
     private WebPlotRequest(RequestType type, String userDesc) {
-        this(type, userDesc, ServiceType.NONE);
+        this(type, userDesc, ServiceType.UNKNOWN);
     }
 
     private WebPlotRequest(RequestType type, String userDesc, ServiceType service) {
         super(type.toString());
         setRequestClass(WEB_PLOT_REQUEST_CLASS);
         setRequestType(type);
-        if (!service.equals(ServiceType.NONE)) setServiceType(service);
+        if (!service.equals(ServiceType.UNKNOWN)) setServiceType(service);
         setParam(USER_DESC, userDesc);
     }
 
@@ -373,7 +379,7 @@ public class WebPlotRequest extends ServerRequest {
 
     // TODO this is actually coupled with edu.caltech.ipac.firefly.data.FinderChartRequestUtil.ImageSet.ImageSet and so we need to add imageset here although SEIP, AKARI are using ATLAS services.
     public enum
-            ServiceType {IRIS, SEIP, AKARI, ATLAS, ISSA, DSS, SDSS, TWOMASS, MSX, DSS_OR_IRIS, WISE, ZTF, PTF, NONE}
+            ServiceType {IRIS, SEIP, AKARI, ATLAS, ISSA, DSS, SDSS, TWOMASS, MSX, DSS_OR_IRIS, WISE, ZTF, PTF, UNKNOWN}
 
     /**
      * @param wp
@@ -875,12 +881,20 @@ public class WebPlotRequest extends ServerRequest {
     }
 
     public ServiceType getServiceType() {
-        ServiceType retval = ServiceType.NONE;
+        ServiceType retval = ServiceType.UNKNOWN;
         if (containsParam(SERVICE)) {
             retval = Enum.valueOf(ServiceType.class, getParam(SERVICE));
         }
         return retval;
     }
+
+
+    /**
+     * should only be call if getServiceType returns UNKNOWN
+     */
+    public String getServiceTypeString() { return getParam(SERVICE); }
+
+
 
     public void setSurveyKey(String key) {
         setParam(SURVEY_KEY, key);

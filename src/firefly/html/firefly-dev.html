@@ -29,8 +29,11 @@
                 catalogSpacialOp: 'polygonWhenPlotExist',
                 workspace : {showOptions: true},
                 imageMasterSourcesOrder: ['WISE', '2MASS', 'Spitzer'],
-                wcsMatchType: 'Standard',  // 'Standard', 'Target', 'Pixel', 'PixelCenter'
+                // wcsMatchType: 'Standard',  // 'Standard', 'Target', 'Pixel', 'PixelCenter'
+                wcsMatchType: false,  // 'Standard', 'Target', 'Pixel', 'PixelCenter'
                 imageScrollsToHighlightedTableRow: false, // boolean value
+                       // a way to add more image sources into UI list, backend must still know how to search it
+                imageMasterAdditionalSources:  getMoreImagePanelDataTest(),
                 charts: {
                     singleTraceUI: false
                 },
@@ -51,6 +54,128 @@
                 }
             }
         };
+
+        function getMoreImagePanelDataTest() {
+            return [
+                {
+                    acronym: "test Dss search using URLS",
+                    dataType: "image",
+                    helpUrl: "https://irsa.ipac.caltech.edu/docs/irsaviewer_datasets.html#DSS",
+                    imageId: "testDSS-u_red",
+                    maxRangeDeg: "0.5",
+                    minRangeDeg: "0.016",
+                    missionId: "test-extension",
+                    plotRequestParams: {
+                        // available mappings- ra,dec,size, sizeDeg, sizeArcMin, sizeArcSec
+                        URL: 'http://archive.stsci.edu:80/cgi-bin/dss_search?r=${ra}&d=${dec}e=J2000&h=${sizeArcMin}&w=${sizeArcMin}&f=FITS&v=poss2ukstu_red&s=ON&c=gz',
+                        title: "Test DSS red",
+                        type: "URL",
+                    },
+                    project: "test-extension",
+                    projectTypeDesc: "all-sky",
+                    projectTypeKey: "all-sky",
+                    subProject: null,
+                    title: "Test DSS: Digitized Sky Survey Red",
+                    tooltip: "Test DSS: Digitized Sky Survey",
+                    waveType: "optical",
+                    wavebandId: "poss2ukstu_red",
+                    wavelength: "0.65",
+                    wavelengthDesc: "0.65 microns",
+                },
+                {
+                    acronym: "test Dss search using URLS",
+                    dataType: "image",
+                    helpUrl: "https://irsa.ipac.caltech.edu/docs/irsaviewer_datasets.html#DSS",
+                    imageId: "testDSS-u_IR",
+                    maxRangeDeg: "0.5",
+                    minRangeDeg: "0.016",
+                    missionId: "test-extension",
+                    plotRequestParams: {
+                        // available mappings- ra,dec,size, sizeDeg, sizeArcMin, sizeArcSec
+                        URL: 'http://archive.stsci.edu:80/cgi-bin/dss_search?r=${ra}&d=${dec}e=J2000&h=${sizeArcMin}&w=${sizeArcMin}&f=FITS&v=poss2ukstu_ir&s=ON&c=gz',
+                        title: "Test DSS IR",
+                        type: "URL",
+                    },
+                    project: "test-extension",
+                    projectTypeDesc: "all-sky",
+                    projectTypeKey: "all-sky",
+                    subProject: null,
+                    title: "Test DSS: Digitized Sky Survey IR",
+                    tooltip: "Test DSS: Digitized Sky Survey",
+                    waveType: "optical",
+                    wavebandId: "poss2ukstu_ir",
+                    wavelength: "0.65",
+                    wavelengthDesc: "0.65 microns",
+                },
+                {
+                    acronym: "wise catalog",
+                    dataType: "table",
+                    imageId: "wise-cat",
+                    maxRangeDeg: "0.5",
+                    minRangeDeg: "0.016",
+                    missionId: "test-extension",
+                    tableRequestParams: {
+                        // available mappings- ra,dec,size, sizeDeg, sizeArcMin, sizeArcSec
+                        URL: 'https://irsa.ipac.caltech.edu/cgi-bin/Gator/nph-query?outfmt=1&catalog=allwise_p3as_psd&objstr=${ra}d+${dec}d+eq+j2000&spatial=Cone&radius=${sizeArcSec}&onlist=1'
+                    },
+                    project: "test extension tables",
+                    projectTypeDesc: "all-sky",
+                    projectTypeKey: "all-sky",
+                    subProject: null,
+                    title: "A Wise catalog",
+                    tooltip: "wise catalog",
+                    waveType: "optical",
+                    wavebandId: "something",
+                    wavelength: "234",
+                    wavelengthDesc: "123 someunit",
+                },
+                {
+                    acronym: "images demo ",
+                    dataType: "table",
+                    imageId: "image-demo1",
+                    maxRangeDeg: "0.5",
+                    minRangeDeg: "0.016",
+                    missionId: "test-extension",
+                    tableRequestParams: {
+                        // available mappings- ra,dec,size, sizeDeg, sizeArcMin, sizeArcSec
+                        URL: 'http://web.ipac.caltech.edu/staff/roby/demo/test-table4.tbl',
+                        datasource: 'FITS'
+                    },
+                    project: "test extension tables",
+                    projectTypeDesc: "all-sky",
+                    projectTypeKey: "all-sky",
+                    subProject: null,
+                    title: "some images",
+                    tooltip: "wise catalog",
+                    waveType: "optical",
+                    wavebandId: "something",
+                    wavelength: "234",
+                    wavelengthDesc: "123 someunit",
+                },
+                {
+                    acronym: "obscore demo ",
+                    dataType: "table",
+                    imageId: "image-demo2",
+                    maxRangeDeg: "0.5",
+                    minRangeDeg: "0.016",
+                    missionId: "test-extension",
+                    tableRequestParams: {
+                        // available mappings- ra,dec,size, sizeDeg, sizeArcMin, sizeArcSec
+                        URL:'https://vao.stsci.edu/CAOMTAP/TapService.aspx/sync?request=doQuery&QUERY=SELECT%20*%20FROM%20ivoa.obscore%20WHERE%20CONTAINS(POINT(\'ICRS\',%20s_ra,s_dec),CIRCLE(\'ICRS\',%20${ra},${dec},${sizeDeg}))=1&LANG=ADQL&MAXREC=50000',
+                    },
+                    project: "test extension tables",
+                    projectTypeDesc: "all-sky",
+                    projectTypeKey: "all-sky",
+                    subProject: null,
+                    title: "mast obscore search",
+                    tooltip: "wise catalog",
+                    waveType: "optical",
+                    wavebandId: "something",
+                    wavelength: "234",
+                    wavelengthDesc: "something someunit",
+                }
+            ];
+        }
     </script>
     <script  type="text/javascript" src="firefly_loader.js"></script>
 </head>

@@ -29,6 +29,7 @@ import java.io.File;
 /**
  * @author Trey Roby
  */
+@FileRetrieverImpl(id ="FILE")
 public class LocalFileRetriever implements FileRetriever {
 
     public FileInfo getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {

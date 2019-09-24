@@ -8,6 +8,8 @@ package edu.caltech.ipac.firefly.visualize;
 
 import nom.tam.fits.Header;
 
+import java.util.Map;
+
 /**
  * @author Trey Roby
  */
@@ -20,10 +22,12 @@ public class WebPlotHeaderInitializer {
     private boolean threeColor;
     private WebPlotRequest request;
     private Header[] zeroHeaderAry;
+    private Map<String,String> attributes;
 
     public WebPlotHeaderInitializer(String originalFitsFileStr, String workingFitsFileStr,
                                     String uploadFileNameStr, String dataDesc,
-                                    boolean threeColor, WebPlotRequest request, Header[] zeroHeaderAry) {
+                                    boolean threeColor, WebPlotRequest request, Header[] zeroHeaderAry,
+                                    Map<String,String> attributes) {
         this.originalFitsFileStr= originalFitsFileStr;
         this.workingFitsFileStr= workingFitsFileStr;
         this.uploadFileNameStr = uploadFileNameStr;
@@ -31,6 +35,7 @@ public class WebPlotHeaderInitializer {
         this.request = request;
         this.dataDesc= dataDesc;
         this.zeroHeaderAry= zeroHeaderAry;
+        this.attributes= attributes;
     }
 
     public String getWorkingFitsFileStr() { return workingFitsFileStr; }
@@ -46,4 +51,7 @@ public class WebPlotHeaderInitializer {
     public WebPlotRequest getRequest() { return request; }
 
     public Header[] getZeroHeaderAry() { return zeroHeaderAry; }
+
+    public Map<String,String> getAttributes() { return attributes;}
 }
+

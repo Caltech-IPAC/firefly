@@ -580,6 +580,10 @@ function getTapServices() {
     if (!tapServices || !isArray(tapServices) || !tapServices.length) {
         tapServices = TAP_SERVICES;
     }
+    const additionalServices = get(getAppOptions(), 'tap.additional.services');
+    if (additionalServices && isArray(additionalServices) && additionalServices.length) {
+        tapServices = [...additionalServices, ...TAP_SERVICES];
+    }
     return tapServices;
 }
 

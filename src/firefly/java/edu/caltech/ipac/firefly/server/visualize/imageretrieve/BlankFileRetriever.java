@@ -15,6 +15,7 @@ import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
 /**
  * @author Trey Roby
  */
+@FileRetrieverImpl(id ="BLANK")
 public class BlankFileRetriever implements FileRetriever {
 
     public FileInfo getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {

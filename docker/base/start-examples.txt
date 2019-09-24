@@ -1,4 +1,7 @@
-   _________________________ EXAMPLES ________________________
+___________________________________________________________
+___________________________________________________________
+
+_________________________ EXAMPLES ________________________
 
 -e  : Define environment variable in the container
 -m  : (or --memory=) The maximum amount of memory the container can use
@@ -6,31 +9,42 @@
 -v  : Map a local directory to the container directory
 -rm : Remove the image after the run (recommended)
 
+These examples use the tag name 'latest', you can use any tag name available, for example- 'release-2019.2.1'
+To find releases try- https://hub.docker.com/r/ipac/firefly/tags
+
 
 -------------------- Very Simple - try this one first:
 
-   docker run -p 8090:8080  --memory=8g --rm ipac/firefly
+   > docker run -p 80:8080  -m 4g --rm ipac/firefly:latest
+   - start firefly with - http://localhost/firefly/
 
 -------------------- More advanced:
 
 Background:
-   docker run -p 8090:8080  --memory=8g --rm ipac/firefly >& my.log &
+   > docker run -p 80:8080  --memory=8g --rm ipac/firefly:latest >& my.log &
+   - start firefly with - http://localhost/firefly/
 
 Map a directory for direct file reading:
-   docker run -p 8090:8080  -v /local/data:/external --memory=8g --rm ipac/firefly
+   > docker run -p 80:8080  -v /local/data:/external --memory=8g --rm ipac/firefly:latest
+   - start firefly with - http://localhost/firefly/
 
 Write to logging directory outside of docker image:
-   docker run -p 8090:8080 -v /local/myLogDir:/usr/local/tomcat/logs --memory=8g --rm ipac/firefly
+   > docker run -p 80:8080 -v /local/myLogDir:/usr/local/tomcat/logs --memory=8g --rm ipac/firefly:latest
+   - start firefly with - http://localhost/firefly/
 
 View log file:
-   docker run -p 8090:8080  --memory=8g -e "LOG_FILE_TO_CONSOLE=firefly.log" --rm ipac/firefly
+   > docker run -p 80:8080  --memory=8g -e "LOG_FILE_TO_CONSOLE=firefly.log" --rm ipac/firefly:latest
+   - start firefly with - http://localhost/firefly/
 
 Debugging:
-   docker run -p 8055:8080 -p 5050:5050 -p 9050:9050 --memory=4g -e "ADMIN_PASSWORD=myPassword" -e DEBUG="TRUE" -e "LOG_FILE_TO_CONSOLE=firefly.log" --rm --name firefly ipac/firefly
+   > docker run -p 8055:8080 -p 5050:5050 -p 9050:9050 --memory=4g -e "ADMIN_PASSWORD=myPassword" -e DEBUG="TRUE" -e "LOG_FILE_TO_CONSOLE=firefly.log" --rm --name firefly ipac/firefly:latest
+   - start firefly with - http://localhost:8055/firefly/
 
 Production like:
-   docker run -p 8055:8080 -p 9050:9050 --memory=30g -e "ADMIN_PASSWORD=myPassword" -e SHARE_CACHE="TRUE" -e DEBUG="FALSE" -e "jvmRoute=MyHostName" --name productionServer ipac/firefly
+   > docker run -p 8055:8080 -p 9050:9050 --memory=30g -e "ADMIN_PASSWORD=myPassword" -e SHARE_CACHE="TRUE" -e DEBUG="FALSE" -e "jvmRoute=MyHostName" --name productionServer ipac/firefly:latest
+   - start firefly with - http://localhost:8055/firefly/
 
 Production like, multiple tomcats, using a shared work directory:
-   docker run -p 8055:8080 -p 9050:9050 --memory=30g -e "ADMIN_PASSWORD=myPassword" \
-    -e "FIREFLY_SHARED_WORK_DIR=/local/shared/work/area" -v /local/shared/work/area --name productionServer ipac/firefly
+   > docker run -p 8055:8080 -p 9050:9050 --memory=30g -e "ADMIN_PASSWORD=myPassword" \
+             -e "FIREFLY_SHARED_WORK_DIR=/local/shared/work/area" -v /local/shared/work/area --name productionServer ipac/firefly:latest
+   - start firefly with - http://localhost:8055/firefly/

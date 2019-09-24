@@ -62,12 +62,16 @@ function updateZoom(plotId, paging) {
         actionScope= ActionScope.SINGLE;
     }
     else {  // case: not expanded or expand as grid
-            // if plot are in the group that is active then only the prime plot will do the zooming for all the group.
-            // otherwise if we are not in the active group each plot will do a zoom
-        const inActive= plotInActiveGroup(vr,plotId);
-        const isActive= vr.activePlotId===plotId;
-        doZoom= (isActive || !inActive);
-        actionScope= isActive ? ActionScope.GROUP : ActionScope.SINGLE;
+            // if plot wcsMatchingType is active then only the prime plot will do the zooming for all the group.
+            // otherwise zoom each one.
+        if (vr.wcsMatchType) {
+            doZoom= vr.activePlotId===plotId;
+            actionScope= ActionScope.GROUP;
+        }
+        else {
+            doZoom= true;
+            actionScope= ActionScope.SINGLE;
+        }
     }
 
     if (doZoom) {

@@ -726,7 +726,7 @@ function  makeServiceFileName(req,plot, band) {
         case ServiceType.ATLAS:
             retval= 'atlas-'+req.getSurveyKey()+'-'+req.getSurveyBand()+'.fits';
             break;
-        case ServiceType.NONE:
+        case ServiceType.UNKNOWN:
             retval= makeTitleFileName(plot, band);
             break;
         default:

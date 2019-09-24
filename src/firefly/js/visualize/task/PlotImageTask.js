@@ -497,8 +497,9 @@ function handleSuccessfulCall(plotCreate, plotCreateHeader, payload, requestKey)
     const cubeCtxAry= makeCubeCtxAry(plotCreate);
     const plotState= PlotState.makePlotStateWithJson(plotCreate[0].plotState);
     const plotId= plotState.getWebPlotRequest().getPlotId();
+    const initAttributes= {...plotCreateHeader.attributes, ...payload.attributes};
 
-    const plotAry= plotCreate.map((wpInit,idx) => makePlot(wpInit,plotId, payload.attributes, cubeCtxAry[idx]) );
+    const plotAry= plotCreate.map((wpInit,idx) => makePlot(wpInit,plotId, initAttributes, cubeCtxAry[idx]) );
     if (plotAry.length) updateActiveTarget(plotAry[0]);
     return {plotId, requestKey, plotAry, overlayPlotViews:null};
 }
