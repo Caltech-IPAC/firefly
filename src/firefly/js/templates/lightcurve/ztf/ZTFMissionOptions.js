@@ -1,15 +1,12 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {get,  set, isNil} from 'lodash';
-import {RadioGroupInputField} from '../../../ui/RadioGroupInputField.jsx';
 import {getCellValue, getTblById, getColumnIdx, smartMerge, getColumns, COL_TYPE} from '../../../tables/TableUtil.js';
 import {makeFileRequest} from '../../../tables/TableRequestUtil.js';
 import {sortInfoString} from '../../../tables/SortInfo.js';
 import {getInitialDefaultValues,renderMissionView,validate,getTimeAndYColInfo,fileUpdateOnTimeColumn,setValueAndValidator} from '../LcUtil.jsx';
 import {LC} from '../LcManager.js';
-import {DownloadOptionPanel, DownloadButton} from '../../../ui/DownloadDialog.jsx';
-import {ValidationField} from '../../../ui/ValidationField.jsx';
-import {DL_DATA_TAG} from '../LcConverterFactory.js';
+import {defaultDownloadPanel} from '../LcResult.jsx';
 
 
 const labelWidth = 80;
@@ -156,36 +153,13 @@ export function ztfOnFieldUpdate(fieldKey, value) {
  * @returns {XML}
  */
 export function ztfDownloaderOptPanel (mission, cutoutSizeInDeg) {
-    const currentTime = (new Date()).toLocaleString('en-US', { hour12: false });
 
-    const style = {width: 167};
-    return (
-        <DownloadButton>
-            <DownloadOptionPanel
-                groupKey = {mission}
-                dataTag = {DL_DATA_TAG}
-                cutoutSize={cutoutSizeInDeg}
-                title={'Image Download Option'}
-                dlParams={{
-                    MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each ztf image is ~37mb
-                    FilePrefix: `${mission}_Files`,
-                    BaseFileName: `${mission}_Files`,
-                    DataSource: `${mission} images`,
-                    FileGroupProcessor: 'ZtfLcDownload',
-                    ProductLevel:'sci',
-                    schema:'products',
-                    table:'sci'
-                }}>
-                <ValidationField
-                    style={style}
-                    initialState={{
-                        value: `${mission}_Files: ${currentTime}`,
-                        label: 'ZTF:'
-                    }}
-
-                    fieldKey='Title'
-                    labelWidth={110}/>
-            </DownloadOptionPanel>
-        </DownloadButton>
+    return defaultDownloadPanel(mission, cutoutSizeInDeg,
+        {
+            FileGroupProcessor: 'ZtfLcDownload',
+            ProductLevel:'sci',
+            schema:'products',
+            table:'sci'
+        }
     );
 }

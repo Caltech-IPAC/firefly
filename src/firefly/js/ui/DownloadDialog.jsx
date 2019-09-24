@@ -13,17 +13,20 @@ import {FormPanel} from './FormPanel.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
 import Validate from '../util/Validate.js';
 import {InputField} from './InputField.jsx';
+import {ValidationField} from './ValidationField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {showInfoPopup} from './PopupUtil.jsx';
 
 import {getActiveTableId, getTblById, hasRowAccess, getProprietaryInfo} from '../tables/TableUtil.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {dispatchPackage, dispatchBgSetEmailInfo} from '../core/background/BackgroundCntlr.js';
+import {getWorkspaceConfig} from '../visualize/WorkspaceCntlr.js';
 import {getBgEmailInfo} from '../core/background/BackgroundUtil.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {DataTagMeta} from '../tables/TableRequestUtil.js';
 import {useStoreConnector} from './SimpleComponent.jsx';
 import {BgMaskPanel} from '../core/background/BgMaskPanel.jsx';
+import {WsSaveOptions} from './WorkspaceSelectPane.jsx';
 
 const DOWNLOAD_DIALOG_ID = 'Download Options';
 /**
@@ -109,8 +112,11 @@ const noticeCss = {
     marginBottom: 3,
 };
 
+let dlTitleIdx = 0;
+
 export function DownloadOptionPanel (props) {
     const {groupKey, cutoutSize, help_id, children, style, title, tbl_id, dlParams, dataTag} = props;
+    const { showZipStructure=true, showEmailNotify=true, showFileLocation=true, showTitle=true } = props;
 
     const [{email, enableEmail}] = useStoreConnector(getBgEmailInfo);
     const onEmailChanged = useCallback((v) => {
@@ -123,14 +129,14 @@ export function DownloadOptionPanel (props) {
     const ttl = title || DOWNLOAD_DIALOG_ID;
     const bgKey = 'DownloadOptionPanel-' + tbl_id;
 
-    const onSubmit = useCallback((options) => {
+    const onSubmit = useCallback((formInputs={}) => {
         var {request, selectInfo} = getTblById(tbl_id);
         const {FileGroupProcessor} = dlParams;
-        const Title = dlParams.Title || options.Title;
-        const dreq = makeTblRequest(FileGroupProcessor, Title, Object.assign(dlParams, {cutoutSize}, options));
+        const dreq = makeTblRequest(FileGroupProcessor, formInputs.Title, Object.assign(dlParams, {cutoutSize}, formInputs));
         request = set(cloneDeep(request), DataTagMeta, dataTag);
         dispatchPackage(dreq, request, SelectInfo.newInstance(selectInfo).toString(), bgKey);
         showDownloadDialog(this, false);
+        dlTitleIdx++;
     }, tbl_id);
 
     const toggleEnableEmail = (e) => {
@@ -140,6 +146,7 @@ export function DownloadOptionPanel (props) {
     };
 
     const showWarnings = hasProprietaryData(getTblById(tbl_id));
+    const useWs = getWorkspaceConfig() && showFileLocation;
 
     const maskStyle = {
         position: 'absolute',
@@ -153,8 +160,17 @@ export function DownloadOptionPanel (props) {
     };
     const maskPanel = <BgMaskPanel componentKey={bgKey} style={maskStyle}/>;
 
+    const saveAsProps = {
+        fieldKey: 'BaseFileName',
+        initialState: {
+            value: get(dlParams, 'BaseFileName')
+        }
+    };
+
+    const dlTitle = get(dlParams, 'TitlePrefix', 'Download') + '-' + dlTitleIdx;
+
     return (
-        <div style = {Object.assign({margin: '4px', position: 'relative', minWidth: 350}, style)}>
+        <div style = {Object.assign({margin: '4px', position: 'relative', minWidth:400}, style)}>
             {showWarnings && <div style={noticeCss}>This table contains proprietary data. Only data to which you have access will be downloaded.</div>}
             <FormPanel
                 submitText = 'Prepare Download'
@@ -163,52 +179,16 @@ export function DownloadOptionPanel (props) {
                 onCancel = {() => dispatchHideDialog(ttl)}
                 help_id  = {help_id}>
                 <FieldGroup groupKey={groupKey} keepState={true}>
+                    <div className='FieldGroup__vertical--more'>
+                        {showTitle && <TitleField {...{labelWidth, value:dlTitle }}/>}
 
-                    {children}
+                        {children}
 
-                    {cutoutSize &&
-                        <ListBoxInputField
-                            wrapperStyle={{marginTop: 5}}
-                            fieldKey ='dlCutouts'
-                            initialState = {{
-                                    tooltip: 'Download Cutouts Option',
-                                    label : 'Download:'
-                                }}
-                            options = {[
-                                    {label: 'Specified Cutouts', value: 'cut'},
-                                    {label: 'Original Images', value: 'orig'}
-                                ]}
-                            labelWidth = {labelWidth}
-                        />
-                    }
-                    <ListBoxInputField
-                        wrapperStyle={{marginTop: 5}}
-                        fieldKey ='zipType'
-                        initialState = {{
-                                    tooltip: 'Zip File Structure',
-                                    label : 'Zip File Structure:'
-                                }}
-                        options = {[
-                                    {label: 'Structured (with folders)', value: 'folder'},
-                                    {label: 'Flattened (no folders)', value: 'flat'}
-                                ]}
-                        labelWidth = {labelWidth}
-                    />
-
-                    <div style={{width: 250, marginTop: 10}}><input type='checkbox' checked={enableEmail} onChange={toggleEnableEmail}/>Enable email notification</div>
-                    {enableEmail &&
-                    <InputField
-                        validator={Validate.validateEmail.bind(null, 'an email field')}
-                        tooltip='Enter an email to be notified when a process completes.'
-                        label='Email:'
-                        labelStyle={{display: 'inline-block', marginLeft: 18, width: 32, fontWeight: 'bold'}}
-                        value={email}
-                        placeholder='Enter an email to get notification'
-                        style={{width: 170}}
-                        onChange={onEmailChanged}
-                        actOn={['blur','enter']}
-                    />
-                    }
+                        {cutoutSize         && <DownloadCutout {...{labelWidth}} />}
+                        {showZipStructure   && <ZipStructure {...{labelWidth}} />}
+                        {useWs              && <WsSaveOptions {...{groupKey, labelWidth, saveAsProps}}/>}
+                        {showEmailNotify    && <EmailNotification {...{email, onEmailChanged, enableEmail, toggleEnableEmail}}/>}
+                    </div>
                 </FieldGroup>
             </FormPanel>
             {maskPanel}
@@ -222,14 +202,19 @@ DownloadOptionPanel.propTypes = {
     tbl_id:     PropTypes.string,
     cutoutSize: PropTypes.string,
     help_id:    PropTypes.string,
-    title:      PropTypes.string,
+    title:      PropTypes.string,           // title of the dialog, appears at top of the dialog
     style:      PropTypes.object,
     dataTag:    PropTypes.string,
-    dlParams:   PropTypes.shape({
-        TitlePrefix:    PropTypes.string,
-        FilePrefix:     PropTypes.string,
-        BaseFileName:   PropTypes.string,
-        Title:          PropTypes.string,
+
+    showTitle:        PropTypes.bool,           // layout Title field.  This is the title of the package request.  It will be displayed in background monitor.
+    showZipStructure: PropTypes.bool,           // layout ZipStructure field
+    showEmailNotify:  PropTypes.bool,           // layout EmailNotification field
+    showFileLocation: PropTypes.bool,           // layout FileLocation field
+
+    dlParams:   PropTypes.shape({               // these params should be used as defaults value if they appears as input fields
+        TitlePrefix:    PropTypes.string,           // default title of the download..  an index number will be appended to this.
+        FilePrefix:     PropTypes.string,           // packaged file prefix
+        BaseFileName:   PropTypes.string,           // zip file name
         DataSource:     PropTypes.string,
         MaxBundleSize:  PropTypes.number,
         FileGroupProcessor: PropTypes.string.isRequired,
@@ -240,6 +225,74 @@ DownloadOptionPanel.defaultProps= {
     groupKey: 'DownloadDialog',
 };
 
+
+export function TitleField({style={}, labelWidth, value, label='Title:', size=30}) {
+    return (
+        <ValidationField
+            fieldKey='Title'
+            tooltip='Enter a description to identify this download.'
+            {...{value, label, labelWidth, size, style}}
+        />
+    );
+}
+
+export function ZipStructure({style={}, fieldKey='zipType', labelWidth}) {
+    return (
+        <ListBoxInputField
+            wrapperStyle={style}
+            fieldKey = {fieldKey}
+            initialState = {{
+                tooltip: 'Zip File Structure',
+                label : 'Zip File Structure:'
+            }}
+            options = {[
+                {label: 'Structured (with folders)', value: 'folder'},
+                {label: 'Flattened (no folders)', value: 'flat'}
+            ]}
+            labelWidth = {labelWidth}
+        />
+
+    );
+}
+
+export function DownloadCutout({style={}, fieldKey='dlCutouts', labelWidth}) {
+    return (
+        <ListBoxInputField
+            wrapperStyle = {style}
+            fieldKey = {fieldKey}
+            initialState = {{
+                tooltip: 'Download Cutouts Option',
+                label : 'Download:'
+            }}
+            options = {[
+                {label: 'Specified Cutouts', value: 'cut'},
+                {label: 'Original Images', value: 'orig'}
+            ]}
+            labelWidth = {labelWidth}
+        />
+    );
+}
+export function EmailNotification({style, email, onEmailChanged, enableEmail, toggleEnableEmail}) {
+
+    return (
+        <div style={style}>
+            <div style={{width: 250, marginTop: 15}}><input type='checkbox' checked={enableEmail} onChange={toggleEnableEmail}/>Enable email notification</div>
+            {enableEmail &&
+                <InputField
+                    validator={Validate.validateEmail.bind(null, 'an email field')}
+                    tooltip='Enter an email to be notified when a process completes.'
+                    label='Email:'
+                    labelStyle={{display: 'inline-block', marginLeft: 18, width: 32, fontWeight: 'bold'}}
+                    value={email}
+                    placeholder='Enter an email to get notification'
+                    style={{width: 170}}
+                    onChange={onEmailChanged}
+                    actOn={['blur', 'enter']}
+                />
+            }
+        </div>
+    );
+}
 
 function hasProprietaryData(tableModel={}) {
 

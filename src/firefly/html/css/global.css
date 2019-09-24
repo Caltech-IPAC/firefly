@@ -420,6 +420,10 @@ div.rootStyle img {
     margin-bottom: 3px;
 }
 
+.FieldGroup__vertical--more > * {
+    margin-bottom: 5px;
+}
+
 /*------------------- styled-select >---------------------*/
 .styled-select select {
     background: transparent;
