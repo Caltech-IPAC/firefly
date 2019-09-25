@@ -76,6 +76,15 @@ var validateRange = function(min,max,precision,description,dType, valStr, nullAl
     return retval;
 };
 
+export function NotBlank(val='') {
+    const retval = {valid: true,message: ''};
+    if (!val.trim()) {
+        retval.valid = false;
+        retval.message = 'Value must not be blank';
+    }
+    return retval;
+};
+
 export const validateEmail = function(description,valStr) {
     var retval = {
         valid: true,

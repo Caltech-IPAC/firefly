@@ -14,6 +14,7 @@ import {getWorkspaceList, isAccessWorkspace} from '../visualize/WorkspaceCntlr.j
 import {WorkspaceSave} from './WorkspaceViewer.jsx';
 import {useStoreConnector} from './SimpleComponent.jsx';
 import {dispatchWorkspaceUpdate, getWorkspaceErrorMsg} from '../visualize/WorkspaceCntlr.js';
+import {getWorkspaceConfig} from '../visualize/WorkspaceCntlr';
 
 export const LOCALFILE = 'isLocal';
 export const WORKSPACE = 'isWs';
@@ -25,9 +26,9 @@ export const WORKSPACE = 'isWs';
  */
 
 
-
 /*
  * A selection pane used for saving a file either to local disk or workspace.
+ * If workspace is not used, that option is not shown and only Save As is displayed.
  * There are 3 values that may come out of this selection pane.
  * 1. where it should be saved(isLocal or isWs).  default keyed as 'fileLocation'
  * 2. what is should be save as.  default keyed as 'fileName'
@@ -42,23 +43,25 @@ export function WsSaveOptions (props) {
 
     const [loc, wsSelect] = useStoreConnector(  () => getFieldVal(groupKey, fileLocProps.fieldKey),
                                                 () => getFieldVal(groupKey, wsSelectKey));
-
     useEffect(() => {
         dispatchWorkspaceUpdate();
     }, [loc]);
 
+    const useWs = getWorkspaceConfig();
 
     return (
         <div style={style}>
             <ValidationField {...saveAsProps}/>
-            <RadioGroupInputField
-                {...fileLocProps}
-                options={[
-                    {label: 'Local File', value: LOCALFILE},
-                    {label: 'Workspace', value: WORKSPACE }
-                ]}
-            />
-            {loc === WORKSPACE && <ShowWorkspace {...{wsSelect, wsSelectKey}}/>}
+            { useWs &&
+                <RadioGroupInputField
+                    {...fileLocProps}
+                    options={[
+                        {label: 'Local File', value: LOCALFILE},
+                        {label: 'Workspace', value: WORKSPACE }
+                    ]}
+                />
+            }
+            { useWs && (loc === WORKSPACE) && <ShowWorkspace {...{wsSelect, wsSelectKey}}/> }
         </div>
     );
 
@@ -72,7 +75,6 @@ WsSaveOptions.propTypes = {
     saveAsProps:    PropTypes.object,       // properties to send into the Save As input box..  see render function for defaults
     wsSelectKey:    PropTypes.string
 };
-
 
 
 function ShowWorkspace({wsSelect, wsSelectKey}) {
@@ -89,40 +91,3 @@ function ShowWorkspace({wsSelect, wsSelectKey}) {
         </div>
     );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

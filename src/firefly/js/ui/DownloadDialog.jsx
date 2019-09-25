@@ -27,6 +27,7 @@ import {DataTagMeta} from '../tables/TableRequestUtil.js';
 import {useStoreConnector} from './SimpleComponent.jsx';
 import {BgMaskPanel} from '../core/background/BgMaskPanel.jsx';
 import {WsSaveOptions} from './WorkspaceSelectPane.jsx';
+import {NotBlank} from '../util/Validate.js';
 
 const DOWNLOAD_DIALOG_ID = 'Download Options';
 /**
@@ -118,13 +119,6 @@ export function DownloadOptionPanel (props) {
     const {groupKey, cutoutSize, help_id, children, style, title, tbl_id, dlParams, dataTag} = props;
     const { showZipStructure=true, showEmailNotify=true, showFileLocation=true, showTitle=true } = props;
 
-    const [{email, enableEmail}] = useStoreConnector(getBgEmailInfo);
-    const onEmailChanged = useCallback((v) => {
-        if (get(v, 'valid')) {
-            if (email !== v.value) dispatchBgSetEmailInfo({email: v.value});
-        }
-    }, [email]);
-
     const labelWidth = 110;
     const ttl = title || DOWNLOAD_DIALOG_ID;
     const bgKey = 'DownloadOptionPanel-' + tbl_id;
@@ -139,14 +133,7 @@ export function DownloadOptionPanel (props) {
         dlTitleIdx++;
     }, tbl_id);
 
-    const toggleEnableEmail = (e) => {
-        const enableEmail = e.target.checked;
-        const email = enableEmail ? email : '';
-        dispatchBgSetEmailInfo({email, enableEmail});
-    };
-
     const showWarnings = hasProprietaryData(getTblById(tbl_id));
-    const useWs = getWorkspaceConfig() && showFileLocation;
 
     const maskStyle = {
         position: 'absolute',
@@ -186,8 +173,8 @@ export function DownloadOptionPanel (props) {
 
                         {cutoutSize         && <DownloadCutout {...{labelWidth}} />}
                         {showZipStructure   && <ZipStructure {...{labelWidth}} />}
-                        {useWs              && <WsSaveOptions {...{groupKey, labelWidth, saveAsProps}}/>}
-                        {showEmailNotify    && <EmailNotification {...{email, onEmailChanged, enableEmail, toggleEnableEmail}}/>}
+                        {showFileLocation   && <WsSaveOptions {...{groupKey, labelWidth, saveAsProps}}/>}
+                        {showEmailNotify    && <EmailNotification/>}
                     </div>
                 </FieldGroup>
             </FormPanel>
@@ -227,11 +214,13 @@ DownloadOptionPanel.defaultProps= {
 
 
 export function TitleField({style={}, labelWidth, value, label='Title:', size=30}) {
+
     return (
         <ValidationField
+            forceReinit={true}
             fieldKey='Title'
             tooltip='Enter a description to identify this download.'
-            {...{value, label, labelWidth, size, style}}
+            {...{validator:NotBlank, value, label, labelWidth, size, style}}
         />
     );
 }
@@ -272,7 +261,21 @@ export function DownloadCutout({style={}, fieldKey='dlCutouts', labelWidth}) {
         />
     );
 }
-export function EmailNotification({style, email, onEmailChanged, enableEmail, toggleEnableEmail}) {
+export function EmailNotification({style}) {
+
+    const [{email, enableEmail}] = useStoreConnector(getBgEmailInfo);
+
+    const toggleEnableEmail = (e) => {
+        const enableEmail = e.target.checked;
+        const email = enableEmail ? email : '';
+        dispatchBgSetEmailInfo({email, enableEmail});
+    };
+
+    const onEmailChanged = useCallback((v) => {
+        if (get(v, 'valid')) {
+            if (email !== v.value) dispatchBgSetEmailInfo({email: v.value});
+        }
+    }, [email]);
 
     return (
         <div style={style}>
