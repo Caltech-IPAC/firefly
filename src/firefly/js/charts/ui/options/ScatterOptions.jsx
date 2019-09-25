@@ -266,6 +266,9 @@ export function submitChangesScatter({chartId, activeTrace, fields, tbl_id, rend
     // trace type can switch between scatter and scattergl depending on the number of points
     const changes = {[`data.${activeTrace}.type`] : getTraceType(chartId, tbl_id, activeTrace)};
 
+    // highlighted and selected traces might need to be updated too
+    const {highlighted, selected} = getChartData(chartId);
+
     // check if size field is a constant
     const sizeMap = fields[`_tables.data.${activeTrace}.marker.size`];
     if (sizeMap) {
@@ -275,9 +278,26 @@ export function submitChangesScatter({chartId, activeTrace, fields, tbl_id, rend
         if (expr.isValid() && (expr.getParsedVariables().length === 0)) {
             const symSize = expr.getValue();
             changes[`data.${activeTrace}.marker.size`] = symSize;
+            if (highlighted) { changes['highlighted.marker.size'] = symSize; }
+            if (selected) { changes['selected.marker.size'] = symSize; }
             fields = omit(fields, `_tables.data.${activeTrace}.marker.size`);
         }
     }
+    
+    // check if error should be visible or symmetric
+    ['x','y'].forEach((a) => {
+        const errorsType = fields[errorTypeFieldKey(activeTrace, a)];
+        const errorsVisible = errorsType !== 'none';
+        changes[`data.${activeTrace}.error_${a}.visible`] = errorsVisible;
+        if (highlighted) { changes[`highlighted.error_${a}.visible`] = errorsVisible; }
+        if (selected) { changes[`selected.error_${a}.visible`] = errorsVisible; }
+        if (errorsVisible) {
+            const errorsSymmetric = errorsType === 'sym';
+            changes[`data.${activeTrace}.error_${a}.symmetric`] = errorsSymmetric;
+            if (highlighted) { changes[`highlighted.error_${a}.symmetric`] = errorsSymmetric; }
+            if (selected) { changes[`selected.error_${a}.symmetric`] = errorsSymmetric; }
+        }
+    });
 
     Object.assign(changes, fields);
     submitChanges({chartId, fields: changes, tbl_id, renderTreeId});

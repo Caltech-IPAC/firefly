@@ -7,6 +7,7 @@ import {cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData, getTraceSymbol, hasUpperLimits, hasLowerLimits} from '../ChartsCntlr.js';
 import {formatColExpr, getDataChangesForMappings, updateHighlighted, updateSelected, isScatter2d, getMaxScatterRows, getMinScatterGLRows} from '../ChartUtil.js';
 import {getTraceTSEntries as heatmapTSGetter} from './FireflyHeatmap.js';
+import {errorTypeFieldKey} from '../ui/options/Errors.jsx';
 
 // some chart properties can either come from a table column or be a number
 const numberOrArrayProps = ['marker.size'];
@@ -309,8 +310,9 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
         xErrHigh = []; // symmetric error
     }
     const hasXErrors = xErrLow.length > 0 || xErr.length > 0;
-    changes[`data.${traceNum}.error_x.visible`] = hasXErrors;
-    changes[`data.${traceNum}.error_x.symmetric`] = xErr.length > 0;
+    const xErrorType = get({fireflyData}, errorTypeFieldKey(traceNum, 'x'));
+    changes[`data.${traceNum}.error_x.visible`] = hasXErrors && xErrorType !== 'none';
+    changes[`data.${traceNum}.error_x.symmetric`] = xErrorType==='sym' || xErr.length > 0;
 
     let yErr = get(changes, [`data.${traceNum}.error_y.array`], []);
     let yErrHigh = yErr;
@@ -324,9 +326,10 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
     } else {
         yErrHigh = []; // symmetric error
     }
-    const hasYErrors = yErrLow.length > 0 || yErr.length > 0;
-    changes[`data.${traceNum}.error_y.visible`] = hasYErrors;
-    changes[`data.${traceNum}.error_y.symmetric`] = yErr.length > 0;
+    const hasYErrors =  yErrLow.length > 0 || yErr.length > 0;
+    const yErrorType = get({fireflyData}, errorTypeFieldKey(traceNum, 'y'));
+    changes[`data.${traceNum}.error_y.visible`] = hasYErrors && yErrorType !== 'none';
+    changes[`data.${traceNum}.error_y.symmetric`] = yErrorType==='sym' || yErr.length > 0;
 
     // set tooltips
 
