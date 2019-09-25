@@ -563,7 +563,7 @@ function periodogramSuccess(popupId, hideDropDown = false) {
                     mode: 'lines+markers'
                 }],
                 layout: {
-                    title: 'Periodogram',
+                    title: {text: 'Periodogram'},
                     xaxis: {type: 'log', showgrid: true},
                     yaxis: {showgrid: true, range: [0, undefined]}
                 }
@@ -585,7 +585,7 @@ function periodogramSuccess(popupId, hideDropDown = false) {
                     mode: 'lines+markers'
                 }],
                 layout: {
-                    title,
+                    title: {text: title},
                     xaxis: {showgrid: true},
                     yaxis: {showgrid: true, range: [0, undefined]},
                 }

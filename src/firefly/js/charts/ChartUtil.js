@@ -167,8 +167,8 @@ export function makeXYPlotParams(params) {
         layout = Object.assign(layout, defProps.layout);
     }
 
-    if (xLabel) { layout.xaxis.title = xLabel; }
-    if (yLabel) { layout.yaxis.title = yLabel; }
+    if (xLabel) { layout.xaxis.title.text = xLabel; }
+    if (yLabel) { layout.yaxis.title.text = yLabel; }
     if (xOptions) {
         if (xOptions.includes('grid')) { layout.xaxis.showgrid  = true; }
         if (xOptions.includes('flip')) { layout.xaxis.autorange  = 'reversed'; }
@@ -180,7 +180,7 @@ export function makeXYPlotParams(params) {
         if (yOptions.includes('flip')) { layout.yaxis.autorange  = 'reversed'; }
         if (yOptions.includes('log')) { layout.yaxis.type  = 'log'; }
     }
-    if (chartTitle) { layout.title = chartTitle; }
+    if (chartTitle) { layout.title.text = chartTitle; }
     return {data, layout};
 }
 
@@ -618,8 +618,10 @@ export function applyDefaults(chartData={}, resetColor = true) {
             lineColor: '#e9e9e9',
             tickwidth: 1,
             ticklen: 5,
-            titlefont: {
-                size: FSIZE
+            title: {
+                font: {
+                    size: FSIZE
+                }
             },
             ticks: noXYAxis ? '' : 'outside',
             showline: !noXYAxis,
@@ -633,8 +635,10 @@ export function applyDefaults(chartData={}, resetColor = true) {
             lineColor: '#e9e9e9',
             tickwidth: 1,
             ticklen: 5,
-            titlefont: {
-                size: FSIZE
+            title: {
+                font: {
+                    size: FSIZE
+                }
             },
             ticks: noXYAxis ? '' : 'outside',
             showline: !noXYAxis,

@@ -220,13 +220,13 @@ function getChanges({tableModel, tablesource, chartId, traceNum}) {
     if (data && data.length===1) {
         // set default title if it's the first trace
         // and no title is set by the user
-        const xAxisLabel = get(layout, 'xaxis.title');
+        const xAxisLabel = get(layout, 'xaxis.title.text');
         if (!xAxisLabel) {
-            changes['layout.xaxis.title'] = xLabel + (xUnit ? ` (${xUnit})` : '');
+            changes['layout.xaxis.title.text'] = xLabel + (xUnit ? ` (${xUnit})` : '');
         }
-        const yAxisLabel = get(layout, 'yaxis.title');
+        const yAxisLabel = get(layout, 'yaxis.title.text');
         if (!yAxisLabel) {
-            changes['layout.yaxis.title'] = yLabel + (yUnit ? ` (${yUnit})` : '');
+            changes['layout.yaxis.title.text'] = yLabel + (yUnit ? ` (${yUnit})` : '');
         }
     }
 
@@ -240,9 +240,9 @@ function getChanges({tableModel, tablesource, chartId, traceNum}) {
         // see https://github.com/plotly/plotly.js/issues/2003
         if (!BrowserInfo.isFirefox()) {
             if (singleTraceUI() || (data && data.length===1)) {
-                changes[`data.${traceNum}.colorbar.title`] = 'pts';
+                changes[`data.${traceNum}.colorbar.title.text`] = 'pts';
             } else {
-                changes[`data.${traceNum}.colorbar.title`] = get(data, `${traceNum}.name`, 'pts');
+                changes[`data.${traceNum}.colorbar.title.text`] = get(data, `${traceNum}.name`, 'pts');
             }
         }
 

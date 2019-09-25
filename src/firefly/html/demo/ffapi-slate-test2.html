@@ -189,9 +189,9 @@ Images
             };
 
             var layoutS = {
-                title: 'Color-Color',
-                xaxis: {title: 'w1mpro-w2mpro (mag)'},
-                yaxis: {title: 'w2mpro-w3mpro (mag)'}
+                title: {text: 'Color-Color'},
+                xaxis: {title: {text: 'w1mpro-w2mpro (mag)'}},
+                yaxis: {title: {text: 'w2mpro-w3mpro (mag)'}}
             };
 
             firefly.getViewer().showChart(
@@ -231,9 +231,9 @@ Images
                 }
             ];
             var layoutHM = {
-                title: 'Magnitude-magnitude densities',
-                xaxis: {title: 'w1 photometry (mag)'},
-                yaxis: {title: ''},
+                title: {text: 'Magnitude-magnitude densities'},
+                xaxis: {title: {text: 'w1 photometry (mag)'}},
+                yaxis: {title: {text: ''}},
                 firefly: { // user boundaries - so that heatmaps will be calculated in the same XY space
                     xaxis: {
                         min: 5,
@@ -285,9 +285,9 @@ Images
             ];
 
             var layoutHist = {
-                title: 'Photometry histogram',
-                xaxis: {title: 'photometry (mag)'},
-                yaxis: {title: ''}
+                title: {text: 'Photometry histogram'},
+                xaxis: {title: {text: 'photometry (mag)'}},
+                yaxis: {title: {text: ''}}
             };
 
             firefly.getViewer().showChart(
@@ -321,19 +321,16 @@ Images
 
             var tfont = {size: 11};
             var layout3d = {
-                title: 'Photometry in band 1, 2, 3',
+                title: {text: 'Photometry in band 1, 2, 3'},
                 scene:{
                     xaxis: {
-                        title: 'w1 (mag)',
-                        titlefont: tfont
+                        title: {text: 'w1 (mag)', font: tfont}
                     },
                     yaxis: {
-                        title: 'w2 (mag)',
-                        titlefont: tfont
+                        title: {text: 'w2 (mag)', font: tfont}
                     },
                     zaxis: {
-                        title: 'w3 (mag)',
-                        titlefont: tfont
+                        title: {text: 'w3 (mag)', font: tfont}
                     }
                 }
             };

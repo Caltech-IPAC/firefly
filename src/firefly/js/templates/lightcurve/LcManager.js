@@ -297,7 +297,7 @@ function updateRawTableChart(timeCName, fluxCName, converterId) {
             }],
             layout: {
                 title,
-                yaxis: {autorange: 'reversed', showgrid: true, title: fluxCName}
+                yaxis: {autorange: 'reversed', showgrid: true, title: {text: fluxCName}}
             }
         };
         dispatchChartAdd(dispatchParams);
@@ -332,9 +332,9 @@ function updatePhaseTableChart(flux, converterId) {
                 mode: 'markers',
             }],
             layout: {
-                title,
+                title: {text: title},
                 xaxis: {showgrid: true, range: [undefined, 2]},
-                yaxis: {autorange: 'reversed', showgrid: true, title: flux},
+                yaxis: {autorange: 'reversed', showgrid: true, title: {text: flux}},
             }
         };
         dispatchChartAdd(dispatchParams);

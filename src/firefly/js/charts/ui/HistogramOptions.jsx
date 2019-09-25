@@ -75,8 +75,8 @@ function columnNameReducer(colValStats, basicFieldsReducer) {
                     const colName = action.payload.value;
                     if (colName && !get(action.payload, 'validator')) {
                         // colName change is triggered by user input
-                        if (inFields['layout.xaxis.title']) {
-                            inFields = updateSet(inFields, ['layout.xaxis.title', 'value'], undefined);
+                        if (inFields['layout.xaxis.title.text']) {
+                            inFields = updateSet(inFields, ['layout.xaxis.title.text', 'value'], undefined);
                         }
                         const col = colName.replace(/^"(.+)"$/, '$1'); // remove quotes if any
                         if (isSingleColumn(col, colValStats)) {

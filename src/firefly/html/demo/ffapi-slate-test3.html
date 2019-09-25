@@ -127,8 +127,8 @@ Some unsupported plotly charts:
 
             var layoutS = {
                 title: 'Color-Color',
-                xaxis: {title: 'w1mpro-w2mpro (mag)'},
-                yaxis: {title: 'w2mpro-w3mpro (mag)'}
+                xaxis: {title: {text: 'w1mpro-w2mpro (mag)'}},
+                yaxis: {title: {text: 'w2mpro-w3mpro (mag)'}}
             };
 
 
@@ -165,19 +165,16 @@ Some unsupported plotly charts:
 
             var tfont = {size: 11};
             var layout3d = {
-                title: 'color-color-color',
+                title: {text: 'color-color-color'},
                 scene:{
                     xaxis: {
-                        title: 'w1-w2 (mag)',
-                        titlefont: tfont
+                        title: {text: 'w1-w2 (mag)', font: tfont},
                     },
                     yaxis: {
-                        title: 'w2-w3 (mag)',
-                        titlefont: tfont
+                        title: {text: 'w2-w3 (mag)', font: tfont},
                     },
                     zaxis: {
-                        title: 'w3-w4 (mag)',
-                        titlefont: tfont
+                        title: {text: 'w3-w4 (mag)', font: tfont},
                     }
                 }
             };
@@ -221,9 +218,9 @@ Some unsupported plotly charts:
             ];
 
             var layoutHist = {
-                title: 'Photometry histogram',
-                xaxis: {title: 'photometry (mag)'},
-                yaxis: {title: ''}
+                title: {text: 'Photometry histogram'},
+                xaxis: {title: {text: 'photometry (mag)'}},
+                yaxis: {title: {text: ''}}
             };
 
             firefly.getViewer().showChart(
@@ -247,8 +244,8 @@ Some unsupported plotly charts:
             ];
 
             var layoutBar = {
-                title: 'Bar: w1nm vs. clon',
-                xaxis: {title: 'w1nm'},
+                title: {text: 'Bar: w1nm vs. clon'},
+                xaxis: {title: {text: 'w1nm'}},
                 yaxis: {tickfont:{size: 11, family: 'PT Sans Narrow'}}
             };
 
@@ -270,7 +267,7 @@ Some unsupported plotly charts:
                 }];
 
             var layoutPie = {
-                title: 'pie: w1+w2 vs. clon',
+                title: {text: 'pie: w1+w2 vs. clon'},
                 showlegend: true
             };
 
@@ -292,9 +289,9 @@ Some unsupported plotly charts:
                 }];
 
             var layoutContour = {
-                title: 'histogram2dcontour: ra vs. dec',
-                xaxis: {title: 'ra'},
-                yaxis: {title: 'dec'}
+                title: {text: 'histogram2dcontour: ra vs. dec'},
+                xaxis: {title: {text: 'ra'}},
+                yaxis: {title: {text: 'dec'}}
             };
 
             firefly.getViewer().showChart(
@@ -319,15 +316,13 @@ Some unsupported plotly charts:
 
             var tfont = {size: 11};
             var layoutSurface = {
-                title: 'Surface on w1-w2 & w2-w3',
+                title: {text: 'Surface on w1-w2 & w2-w3'},
                 scene:{
                     xaxis: {
-                        title: 'w1-w2 (deg)',
-                        titlefont: tfont
+                        title: {text: 'w1-w2 (deg)', font: tfont}
                     },
                     yaxis: {
-                        title: 'w2-w3 (deg)',
-                        titlefont: tfont
+                        title: {text: 'w2-w3 (deg)', font: tfont}
                     }
                 }
             };
@@ -358,8 +353,7 @@ Some unsupported plotly charts:
 
             var tfont = {size: 11};
             var layoutBox = {
-                title: 'Box on photometry',
-                titlefont: tfont
+                title: {text: 'Box on photometry', font: tfont},
             };
 
             firefly.getViewer().showChart(

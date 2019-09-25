@@ -114,10 +114,9 @@ export class BasicOptions extends SimpleComponent {
     }
 
     render() {
-        const {chartId, tbl_Id:tblIdProp, showMultiTrace} = this.props;
+        const {chartId, tbl_Id:tblIdProp, showMultiTrace, groupKey} = this.props;
         const {activeTrace=0} = this.state;
         const {tablesources, data={}} = getChartData(chartId);
-        const groupKey = `${chartId}-basic-${activeTrace}`;
         const tablesource = get(tablesources, [activeTrace], tblIdProp ? {tbl_id: tblIdProp} : undefined);
         const tbl_id = get(tablesource, 'tbl_id');
         const type = get(data, `${activeTrace}.type`, 'scatter');
@@ -141,7 +140,7 @@ export class BasicOptions extends SimpleComponent {
 export function basicFieldReducer({chartId, activeTrace, showMultiTrace=true}) {
 
     const getFields = () => {
-        const {data, layout, fireflyLayout = {}} = getChartData(chartId);
+        const {data, layout={}, fireflyLayout = {}} = getChartData(chartId);
         let color = get(data, `${activeTrace}.marker.color`, '');
         color = Array.isArray(color) ? '' : color;
 
@@ -153,9 +152,9 @@ export function basicFieldReducer({chartId, activeTrace, showMultiTrace=true}) {
                 label: 'Legend:',
                 ...fieldProps
             },
-            ['layout.xaxis.title']: {
-                fieldKey: 'layout.xaxis.title',
-                value: get(layout, 'xaxis.title'),
+            ['layout.xaxis.title.text']: {
+                fieldKey: 'layout.xaxis.title.text',
+                value: get(layout, 'xaxis.title.text'),
                 tooltip: 'X axis label',
                 label: 'X Label:',
                 ...fieldProps
@@ -171,9 +170,9 @@ export function basicFieldReducer({chartId, activeTrace, showMultiTrace=true}) {
                 label: 'Options:',
                 ...fieldProps
             },
-            ['layout.yaxis.title']: {
-                fieldKey: 'layout.yaxis.title',
-                value: get(layout, 'yaxis.title'),
+            ['layout.yaxis.title.text']: {
+                fieldKey: 'layout.yaxis.title.text',
+                value: get(layout, 'yaxis.title.text'),
                 tooltip: 'Y axis label',
                 label: 'Y Label:',
                 ...fieldProps
@@ -253,9 +252,9 @@ export function basicFieldReducer({chartId, activeTrace, showMultiTrace=true}) {
                 label: 'Color:',
                 ...fieldProps
             },
-            ['layout.title']: {
-                fieldKey: 'layout.title',
-                value: get(layout, 'title'),
+            ['layout.title.text']: {
+                fieldKey: 'layout.title.text',
+                value: get(layout, 'title.text'),
                 tooltip: 'Plot title',
                 label: 'Plot title:',
                 ...fieldProps
@@ -273,7 +272,7 @@ export function basicFieldReducer({chartId, activeTrace, showMultiTrace=true}) {
                 fieldKey = get(action.payload, 'fieldKey');
                 ['x','y'].forEach((a) => {
                     if (fieldKey === `_tables.data.${activeTrace}.${a}`) {
-                        inFields = updateSet(inFields, [`layout.${a}axis.title`, 'value'], undefined);
+                        inFields = updateSet(inFields, [`layout.${a}axis.title.text`, 'value'], undefined);
                         inFields = updateSet(inFields, [`fireflyLayout.${a}axis.min`, 'value'], undefined);
                         inFields = updateSet(inFields, [`fireflyLayout.${a}axis.max`, 'value'], undefined);
                         inFields = updateSet(inFields, [`__${a}reset`, 'value'], 'true');
@@ -378,7 +377,7 @@ export class BasicOptionFields extends Component {
                     </div>
                     }
 
-                    {showMultiTrace &&  <div> <br/><ValidationField fieldKey={'layout.title'}/><br/></div>}
+                    {showMultiTrace &&  <div> <br/><ValidationField fieldKey={'layout.title.text'}/><br/></div>}
 
 
                     {/* checkboxgroup is not working right when there's only 1 .. will add in later
@@ -387,11 +386,11 @@ export class BasicOptionFields extends Component {
 
                     {!noXY && <div>
 
-                        <ValidationField fieldKey={'layout.xaxis.title'}/>
+                        <ValidationField fieldKey={'layout.xaxis.title.text'}/>
                         <CheckboxGroupInputField fieldKey='__xoptions'
                                                  options={xNoLog || isXNotNumeric ? X_AXIS_OPTIONS_NOLOG : X_AXIS_OPTIONS}/>
                         <br/>
-                        <ValidationField fieldKey={'layout.yaxis.title'}/>
+                        <ValidationField fieldKey={'layout.yaxis.title.text'}/>
                         <CheckboxGroupInputField fieldKey='__yoptions'
                                                  options={yNoLog || isYNotNumeric ? Y_AXIS_OPTIONS_NOLOG : Y_AXIS_OPTIONS}/>
                         {showAll &&<div>
@@ -496,11 +495,12 @@ export function submitChanges({chartId, fields, tbl_id, renderTreeId}) {
 
                     // helper hidden fields __xreset and __yreset keep track of whether x and y have changed
                     // if this field is set, we'd like to clear range
-                    const range = !fields[`__${a}reset`] && get(layout, `${a}axis.range`);
+                    let range = !fields[`__${a}reset`] && get(layout, `${a}axis.range`);
 
                     if (opts.includes('flip')) {
                         if (range) {
-                            changes[`layout.${a}axis.range`] = (range[0]<range[1]) ? reverse(range) : range;
+                            // reverse mutates the original array
+                            changes[`layout.${a}axis.range`] = (range[0]<range[1]) ? reverse([range[0],range[1]]) : range;
                             if (range[0]<range[1]) { changes[`layout.${a}axis.autorange`] = false; }
                         } else {
                             changes[`layout.${a}axis.autorange`] = 'reversed';
@@ -508,7 +508,8 @@ export function submitChanges({chartId, fields, tbl_id, renderTreeId}) {
                         }
                     } else {
                         if (range) {
-                            changes[`layout.${a}axis.range`] = (range[1]<range[0]) ? reverse(range) : range;
+                            // reverse mutates the original array
+                            changes[`layout.${a}axis.range`] = (range[1]<range[0]) ? reverse([range[0],range[1]]) : range;
                             if (range[1]<range[0]) { changes[`layout.${a}axis.autorange`] = false; }
                         } else {
                             changes[`layout.${a}axis.autorange`] = true;
@@ -539,22 +540,26 @@ export function submitChanges({chartId, fields, tbl_id, renderTreeId}) {
                     changes[k] = toRGBA(TRACE_COLORS[traceNum]);
                 }
             } else {
-                const d = data[traceNum];
-                if (d) {
-                    const type = get(d, 'type');
-                    const prevMarkerColor = get(d, 'marker.color');
-                    if (prevMarkerColor && prevMarkerColor !== v && type && colorsOnTypes[type]) {
-                        // when changing color, change all color attributes
-                        colorsOnTypes[type][0].filter((att) => att.endsWith('color')).
-                        forEach((att) => changes[`data.${traceNum}.${att}`] = v);
-                        // change annotation color
-                        const annotations = get(fireflyData, `${traceNum}.annotations`);
-                        if (isArray(annotations)) {
-                            annotations.forEach((a, i) => {
-                                if (a) {
-                                    changes[`fireflyData.${traceNum}.annotations.${i}.arrowcolor`] = v;
-                                }
-                            });
+                if (fields[`_tables.data.${traceNum}.marker.color`]) {
+                    // do not set color, if using color map
+                    v = undefined;
+                } else {
+                    const d = data[traceNum];
+                    if (d) {
+                        const type = get(d, 'type');
+                        const prevMarkerColor = get(d, 'marker.color');
+                        if (prevMarkerColor && prevMarkerColor !== v && type && colorsOnTypes[type]) {
+                            // when changing color, change all color attributes
+                            colorsOnTypes[type][0].filter((att) => att.endsWith('color')).forEach((att) => changes[`data.${traceNum}.${att}`] = v);
+                            // change annotation color
+                            const annotations = get(fireflyData, `${traceNum}.annotations`);
+                            if (isArray(annotations)) {
+                                annotations.forEach((a, i) => {
+                                    if (a) {
+                                        changes[`fireflyData.${traceNum}.annotations.${i}.arrowcolor`] = v;
+                                    }
+                                });
+                            }
                         }
                     }
                 }
@@ -577,7 +582,7 @@ export function submitChanges({chartId, fields, tbl_id, renderTreeId}) {
         });
 
         // omit fields, that start with '__'
-        if (!k.startsWith('__') && !changes[k]) {
+        if (!k.startsWith('__') && isUndefined(changes[k])) {
             changes[k] = v;
         }
 

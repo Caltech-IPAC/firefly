@@ -179,17 +179,17 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
 
     // set default title if it's the first trace
     // and no title is set by the user
-    let xAxisLabel = get(layout, 'xaxis.title');
-    let yAxisLabel = get(layout, 'yaxis.title');
+    let xAxisLabel = get(layout, 'xaxis.title.text');
+    let yAxisLabel = get(layout, 'yaxis.title.text');
     if (data && data.length === 1) {
         if (!xAxisLabel) {
             xAxisLabel = xLabel + (xUnit ? ` (${xUnit})` : '');
-            changes['layout.xaxis.title'] = xAxisLabel;
+            changes['layout.xaxis.title.text'] = xAxisLabel;
         }
 
         if (!yAxisLabel) {
             yAxisLabel = yLabel + (yUnit ? ` (${yUnit})` : '');
-            changes['layout.yaxis.title'] = yAxisLabel;
+            changes['layout.yaxis.title.text'] = yAxisLabel;
         }
     }
 
@@ -375,7 +375,7 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
     //        showticklabels: false,
     //        thickness: 5,
     //        outlinewidth: 0,
-    //        title: colorMapColOrExpr
+    //        title: {text: colorMapColOrExpr}
     //    };
     //}
 }
