@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {cloneDeep, has, get, isArray, isEmpty, isString, isUndefined, omit, omitBy, set, range} from 'lodash';
+import {cloneDeep, has, get, isArray, isEmpty, isString, isUndefined, omit, omitBy, set, range, unset} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
@@ -226,6 +226,9 @@ function chartAdd(action) {
         if (chartType === 'plot.ly') {
             // the action payload might need to be updated for firefly trace types
             const newPayload = handleFireflyTraceTypes(action.payload);
+            // update payload to handle plotly api changes
+            handleApiChanges(newPayload);
+
             // use application default if deletable is not defined for this chart
             if (isUndefined(deletable)) {
                 newPayload.deletable = get(getAppOptions(), 'charts.defaultDeletable');
@@ -527,6 +530,32 @@ function handleFireflyTraceTypes(payload) {
         newPayload = Object.assign({}, newPayload, {layout: plotlyLayout, fireflyLayout});
     }
     return newPayload;
+}
+
+/**
+ * Convert deprecated title attributes: string title and titlefont
+ * into title: {text, font}
+ * Updates payload in place, if an update is necessary
+ * @param payload
+ */
+function handleApiChanges(payload) {
+    const {layout={}} = payload;
+    const titleAttr = [
+        ['title', 'titlefont'],
+        ['xaxis.title', 'xaxis.titlefont'],
+        ['yaxis.title', 'yaxis.titlefont']];
+    titleAttr.forEach(([t, f]) => {
+        const title = get(layout, t);
+        if (isString(get(layout, t))) {
+            unset(layout, t);
+            set(layout, `${t}.text`, title);
+        }
+        const font = get(layout, f, {});
+        if (!isEmpty(font)) {
+            unset(layout, f);
+            set(layout, `${t}.font`, font);
+        }
+    });
 }
 
 
