@@ -434,7 +434,8 @@ function resolveFileName(resp) {
 export function download(url, filename) {
     const {protocol, host, path, hash, searchObject={}} = parseUrl(url);
     const cmd = searchObject[ServerParams.COMMAND];
-    url = `${protocol}//${host}${path}?${ServerParams.COMMAND}=${cmd}` + (hash ? '#' + hash : '');      // add cmd into the url as a workaround for server-side code not supporting it
+    url = cmd? `${protocol}//${host}${path}?${ServerParams.COMMAND}=${cmd}` + (hash ? '#' + hash : ''):      // add cmd into the url as a workaround for server-side code not supporting it
+        url;
 
     const params = Object.fromEntries(
                         Object.entries(searchObject)
