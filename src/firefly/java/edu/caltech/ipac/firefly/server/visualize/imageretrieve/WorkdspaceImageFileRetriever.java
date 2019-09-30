@@ -32,6 +32,7 @@ import java.io.IOException;
 /**
  * @author Trey Roby
  */
+@FileRetrieverImpl(id ="WORKSPACE")
 public class WorkdspaceImageFileRetriever implements FileRetriever {
 
     public FileInfo getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {

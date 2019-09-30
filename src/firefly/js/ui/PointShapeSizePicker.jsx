@@ -8,7 +8,7 @@ import {get} from 'lodash';
 import {flux} from '../Firefly.js';
 import {dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {PopupPanel} from './PopupPanel.jsx';
-import {DrawSymbol} from '../visualize/draw/PointDataObj.js';
+import {DrawSymbol} from '../visualize/draw/DrawSymbol.js';
 import DrawUtil from '../visualize/draw/DrawUtil.js';
 import {drawOnCanvas} from '../visualize/ui/DrawLayerUIComponents.jsx';
 import {dispatchChangeDrawingDef, getDlAry} from '../visualize/DrawLayerCntlr.js';

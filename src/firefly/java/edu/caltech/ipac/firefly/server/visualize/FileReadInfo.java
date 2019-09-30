@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.visualize;
 
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
@@ -24,9 +25,11 @@ class FileReadInfo {
     private final ModFileWriter modFileWriter;
     private final List<RelatedData> relatedData;
     private final String uploadedName;
+    private final FileInfo fi;
 
     FileReadInfo(File originalFile,
                  FitsRead fr,
+                 FileInfo fi,
                  Band band,
                  int imageIdx,
                  String dataDesc,
@@ -38,6 +41,7 @@ class FileReadInfo {
         this.band= band;
         this.originalImageIdx= imageIdx;
         this.fr= fr;
+        this.fi= fi;
         this.modFileWriter= modFileWriter;
         this.dataDesc= dataDesc;
         this.relatedData= relatedData;
@@ -53,4 +57,5 @@ class FileReadInfo {
     public ModFileWriter getModFileWriter() { return modFileWriter; }
     public String getUploadedName() {return uploadedName;}
     public List<RelatedData> getRelatedData() {return relatedData;}
+    public FileInfo getFileInfo() { return fi; }
 }

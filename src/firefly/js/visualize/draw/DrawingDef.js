@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {DrawSymbol} from './PointDataObj.js';
+import {DrawSymbol} from './DrawSymbol.js';
 import Enum from 'enum';
 
 

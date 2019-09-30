@@ -6,7 +6,6 @@ mkdir ${tmpDir}/tmpUnzip
 cd ${tmpDir}/tmpUnzip
 
 aWarFile=`ls ${CATALINA_BASE}/webapps/*.war | head -1 | awk '{print $1}'`
-echo "aWarFile=${aWarFile}"
 if [ -f ${aWarFile} ]; then
       unzip -n -j ${aWarFile}  ${webLib}/ehcache-2.7.4.jar \
                                ${webLib}/ehcache-web-2.0.4.jar \

@@ -2,7 +2,7 @@
 import React from 'react';
 import DrawUtil from '../draw/DrawUtil';
 import {SimpleCanvas} from '../draw/SimpleCanvas';
-import {DrawSymbol} from '../draw/PointDataObj.js';
+import {DrawSymbol} from '../draw/DrawSymbol.js';
 
 const symbolSize= 10;
 const mLeft = 5;

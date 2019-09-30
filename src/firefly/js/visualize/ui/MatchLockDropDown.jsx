@@ -2,7 +2,7 @@ import React from 'react';
 import {get} from 'lodash';
 import {dispatchWcsMatch, WcsMatchType} from '../ImagePlotCntlr.js';
 import {getPlotViewAry, hasWCSProjection, primePlot} from '../PlotViewUtil.js';
-import {isHiPS, PlotAttribute} from '../WebPlot.js';
+import {PlotAttribute} from '../PlotAttribute';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {DropDownVerticalSeparator, ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';

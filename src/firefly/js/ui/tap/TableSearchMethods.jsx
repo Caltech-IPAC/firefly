@@ -15,7 +15,7 @@ import {getColumnIdx, getTblById} from '../../tables/TableUtil.js';
 import {makeWorldPt, parseWorldPt} from '../../visualize/Point.js';
 import {convert} from '../../visualize/VisUtil.js';
 import {primePlot, getActivePlotView} from '../../visualize/PlotViewUtil.js';
-import {PlotAttribute} from '../../visualize/WebPlot.js';
+import {PlotAttribute} from '../../visualize/PlotAttribute.js';
 import {visRoot} from '../../visualize/ImagePlotCntlr.js';
 import {renderPolygonDataArea,  calcCornerString, initRadiusArcSec} from '../CatalogSearchMethodType.jsx';
 import {clone} from '../../util/WebUtil.js';

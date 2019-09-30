@@ -132,7 +132,7 @@ export class TablePanel extends PureComponent {
             showToolbar, showTitle, showInfoButton, showMetaInfo,
             showOptionButton, showPaging, showSave, showFilterButton,
             totalRows, showLoading, columns, showUnits, allowUnits, showTypes, showFilters, textView,
-            tbl_id, error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask,
+            tbl_id, error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask, showToggleTextView,
             filterInfo, filterCount, sortInfo, data, backgroundable, highlightedRowHandler} = this.state;
         var {leftButtons, rightButtons} =  this.state;
         const {tbl_ui_id} = this.tableConnector;
@@ -178,9 +178,9 @@ export class TablePanel extends PureComponent {
                                                badgeCount={filterCount}
                                                onClick={this.toggleFilter}/>
                                 }
-                                <div onClick={this.toggleTextView}
+                                {showToggleTextView && <div onClick={this.toggleTextView}
                                      title={TT_VIEW}
-                                     className={viewIcoStyle}/>
+                                     className={viewIcoStyle}/>}
                                 {showSave &&
                                 <div onClick={showTableDownloadDialog({tbl_id, tbl_ui_id})}
                                      title={TT_SAVE}
@@ -281,6 +281,7 @@ TablePanel.propTypes = {
     showTitle: PropTypes.bool,
     showPaging: PropTypes.bool,
     showSave: PropTypes.bool,
+    showToggleTextView: PropTypes.bool,
     showOptionButton: PropTypes.bool,
     showFilterButton: PropTypes.bool,
     showInfoButton: PropTypes.bool,
@@ -309,6 +310,7 @@ TablePanel.defaultProps = {
     selectable: true,
     expandedMode: false,
     expandable: true,
+    showToggleTextView: true,
     border: true,
     pageSize: 100
 };

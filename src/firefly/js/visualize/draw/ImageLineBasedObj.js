@@ -8,7 +8,7 @@ import {Style} from './DrawingDef.js';
 import {makeZeroBasedImagePt, makeFitsImagePt, makeImagePt, makeAnyPt} from '../Point.js';
 import {clone} from '../../util/WebUtil.js';
 import {CoordinateSys} from '../CoordSys.js';
-import {DrawSymbol} from './PointDataObj.js';
+import {DrawSymbol} from './DrawSymbol.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 

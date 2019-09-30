@@ -14,7 +14,7 @@ import {doFetchTable, getTblById, getActiveTableId, getTableInGroup, isTableUsin
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW } from '../../tables/TableRequestUtil.js';
 import MultiViewCntlr, {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
-import {DrawSymbol} from '../draw/PointDataObj.js';
+import {DrawSymbol} from '../draw/DrawSymbol.js';
 import {computeCentralPtRadiusAverage, toDegrees} from '../VisUtil.js';
 import {makeWorldPt, pointEquals} from '../Point.js';
 import {logError} from '../../util/WebUtil.js';
@@ -30,8 +30,8 @@ import {parseObsCoreRegion} from '../../util/ObsCoreSRegionParser.js';
 import {getAppOptions} from '../../core/AppDataCntlr';
 import {getSearchTarget} from './CatalogWatcher';
 import {MetaConst} from '../../data/MetaConst.js';
-import {getPlotViewById} from '../PlotViewUtil';
-import {isHiPS, PlotAttribute} from '../WebPlot';
+import {isHiPS} from '../WebPlot';
+import {PlotAttribute} from '../PlotAttribute.js';
 
 export const CoverageType = new Enum(['X', 'BOX', 'REGION', 'ALL', 'GUESS']);
 export const FitType=  new Enum (['WIDTH', 'WIDTH_HEIGHT']);

@@ -99,6 +99,9 @@ public class FileInfo implements HasAccessInfo, Serializable, CacheKey {
 
     public void putAttribute(String key, String value) { attributes.put(key,value); }
     public String getAttribute(String key) {return attributes.get(key); }
+    public Map<String,String> getAttributeMap() {return new HashMap<>(attributes);}
+
+
 
     public File getFile() {
         return attributes.containsKey(INTERNAL_NAME) ? new File(attributes.get(INTERNAL_NAME)) : null;

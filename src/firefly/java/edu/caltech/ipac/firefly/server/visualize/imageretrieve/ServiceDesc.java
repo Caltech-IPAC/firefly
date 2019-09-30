@@ -26,6 +26,7 @@ public class ServiceDesc {
             case AKARI:
             case SEIP:
             case ATLAS: return getAtlasDesc(r);
+            case UNKNOWN: return r.getServiceTypeString();
             default: return r.getServiceType()+"";
         }
     }

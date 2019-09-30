@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.visualize;
 
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.Band;
@@ -72,7 +73,7 @@ public class ImagePlotCreator {
              wfDataMap.put(Band.NO_BAND,wfData);
              Map<Band,ModFileWriter> fileWriterMap= new LinkedHashMap<>(1);
              if (readInfo.getModFileWriter()!=null) fileWriterMap.put(Band.NO_BAND,readInfo.getModFileWriter());
-             piAry[i]= new ImagePlotInfo(stateAry[i],plot, frGroup,readInfo.getDataDesc(), readInfo.getRelatedData(),
+             piAry[i]= new ImagePlotInfo(stateAry[i],plot, readInfo.getFileInfo() ,frGroup,readInfo.getDataDesc(), readInfo.getRelatedData(),
                                          wfDataMap,fileWriterMap);
          }
 
@@ -94,6 +95,8 @@ public class ImagePlotCreator {
         Map<Band,ModFileWriter> fileWriterMap= new LinkedHashMap<>(5);
         ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
         List<RelatedData> relatedData= null;
+        FileInfo fileInfo= null;
+
         for(Map.Entry<Band,FileReadInfo[]> entry :  readInfoMap.entrySet()) {
             Band band= entry.getKey();
             FileReadInfo readInfoAry[]= entry.getValue();
@@ -107,6 +110,7 @@ public class ImagePlotCreator {
             FileReadInfo readInfo= readInfoAry[imageIdx];
             frGroup.setFitsRead(band,readInfo.getFitsRead());
             if (first) {
+                fileInfo= readInfo.getFileInfo();
                 plot= createImagePlot(state,frGroup,band, readInfo.getDataDesc(),zoomChoice,false);
                 if (state.isThreeColor()) {
                     plot.setThreeColorBand(state.isBandVisible(band) ? readInfo.getFitsRead() :null,
@@ -126,7 +130,7 @@ public class ImagePlotCreator {
             wfDataMap.put(band, wfData);
         }
         String desc= make3ColorDataDesc(readInfoMap);
-        retval= new ImagePlotInfo(state,plot,frGroup, desc, relatedData, wfDataMap, fileWriterMap);
+        retval= new ImagePlotInfo(state,plot,fileInfo, frGroup, desc, relatedData, wfDataMap, fileWriterMap);
 
         if (first) _log.error("something is wrong, plot not setup correctly - no color bands specified");
         return retval;

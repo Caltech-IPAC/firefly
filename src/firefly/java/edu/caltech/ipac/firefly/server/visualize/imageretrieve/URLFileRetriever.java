@@ -36,6 +36,7 @@ import java.util.Map;
 /**
  * @author Trey Roby
  */
+@FileRetrieverImpl(id ="URL")
 public class URLFileRetriever implements FileRetriever {
 
     public static final long EXPIRE_IN_SEC = 60 * 60 * 4; // 4 hours

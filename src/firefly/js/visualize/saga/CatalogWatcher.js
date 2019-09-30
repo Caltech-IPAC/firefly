@@ -21,6 +21,7 @@ import {findTableCenterColumns, isCatalog} from '../../util/VOAnalyzer.js';
 import {getAppOptions} from '../../core/AppDataCntlr';
 import {makeWorldPt} from '../Point';
 import {CoordinateSys} from '../CoordSys.js';
+import {PlotAttribute} from '../PlotAttribute.js';
 
 
 /** @type {TableWatcherDef} */
@@ -182,7 +183,7 @@ function attachToCatalog(tbl_id, payload) {
     pvNewPlotInfoAry.forEach( (info, idx) => {
         let r= wpRequest || get(wpRequestAry,idx);
         if (!r) r= (redReq || blueReq || greenReq);
-        if (!r || r.getRelatedTableId()===tbl_id) return;
+        if (!r || r.getAttributes[PlotAttribute.TABLE_ID]===tbl_id) return;
         dispatchAttachLayerToPlot(dl.drawLayerId, info.plotId);
         const pv= getPlotViewById(visRoot(), info.plotId);
         const pvSubGroup= get(pv, 'drawingSubGroupId');

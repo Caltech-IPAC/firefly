@@ -36,7 +36,9 @@ function initImageMasterDataRetriever() {
 
             dataLoadBegin= true;
             callGetImageMasterData(imageSources,projectSortOrder).then( (result) => {
-                loadedData= result.data;
+
+                const localData= get(getAppOptions(), ['imageMasterAdditionalSources'], []);
+                loadedData= [...localData, ...result.data];
                 waitingAry.forEach( (i) => i.resolve(loadedData));
                 waitingAry= undefined;
             }).catch( () => {

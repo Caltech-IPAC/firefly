@@ -74,7 +74,7 @@ export function ExpandedTools({visRoot,closeFunc}) {
     const {expandedMode,activePlotId, singleAutoPlay}= visRoot;
     const plotIdAry= getExpandedViewerItemIds(getMultiViewRoot());
     // const single= expandedMode===ExpandType.SINGLE || plotIdAry.length===1;
-    const single= plotIdAry.length===1;
+    const single= visRoot.plotViewAry===1;
     const pv= getActivePlotView(visRoot);
     const plot= primePlot(pv);
 
@@ -165,7 +165,7 @@ function WhichView({visRoot}) {
                    <ToolbarButton icon={LIST} tip={'Choose which plots to show'}
                                   imageStyle={{width:24,height:24}}
                                   enabled={true} visible={true} horizontal={true}
-                                  onClick={() =>showExpandedOptionsPopup(visRoot.plotViewAry) }/>
+                                  onClick={() =>showExpandedOptionsPopup() }/>
             }
         </div>
     );

@@ -9,6 +9,7 @@ import {RangeValues,STRETCH_LINEAR,SIGMA} from '../visualize/RangeValues.js';
 import {getCellValue} from '../tables/TableUtil.js';
 import {parseWorldPt} from '../visualize/Point.js';
 import {convertAngle} from '../visualize/VisUtil.js';
+import {PlotAttribute} from '../visualize/PlotAttribute';
 
 const colToUse= ['scan_id', 'frame_num', 'coadd_id', 'in_ra', 'in_dec', 'image_set'];
 const rangeValues= RangeValues.makeRV({which:SIGMA, lowerValue:-2, upperValue:10, algorithm:STRETCH_LINEAR});
@@ -36,7 +37,7 @@ export function makeWisePlotRequest(table, row, includeSingle, includeStandard, 
     const svcBuilder= makeServerRequestBuilder(table,colToUse,headerParams,rangeValues,1);
     const builder = (plotId, reqKey, title, rowNum, extraParams) => {
         const req= svcBuilder(plotId, reqKey, title, rowNum, extraParams);
-        req.setPreferenceColorKey('wise-color-pref');
+        req.setAttributes({[PlotAttribute.PREFERENCE_COLOR_KEY]:'wise-color-pref'});
         const subsize = get(table, 'request.subsize');
         if (subsize && subsize>0) {
             const {UserTargetWorldPt, sizeUnit} = get(table, 'request', {});

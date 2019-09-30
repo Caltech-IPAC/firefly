@@ -21,6 +21,7 @@ import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
 /**
  * @author Trey Roby
  */
+@FileRetrieverImpl(id ="TRY_FILE_THEN_URL")
 public class TryFileThenURLRetriever implements FileRetriever {
 
     public FileInfo getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {

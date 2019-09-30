@@ -12,7 +12,7 @@ import smallHelp from 'html/images/icons-2014/Help-16x16.png';
 
 import './HelpIcon.css';
 
-export function HelpIcon({helpId, size='small'}) {
+export function HelpIcon({helpId, size='small', style={}}) {
     var imgSrc = (size === 'small') ? smallHelp : largeHelp;
 
     var onClick = (e) => {
@@ -24,7 +24,7 @@ export function HelpIcon({helpId, size='small'}) {
     };
 
     return (
-        <div>
+        <div style={style}>
             <img className={'helpicon'}
                  onClick={onClick}
                  src={imgSrc}/>
@@ -33,7 +33,8 @@ export function HelpIcon({helpId, size='small'}) {
 
 HelpIcon.propTypes = {
     helpId: PropTypes.string,
-    size:   PropTypes.oneOf(['small', 'large'])
+    size:   PropTypes.oneOf(['small', 'large']),
+    style: PropTypes.object
 };
 
 

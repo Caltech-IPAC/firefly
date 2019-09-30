@@ -19,7 +19,8 @@ import ImagePlotCntlr, {
 } from '../ImagePlotCntlr.js';
 import {applyToOnePvOrAll, getPlotViewById, primePlot,
                findCurrentCenterPoint, getCenterOfProjection, hasWCSProjection} from '../PlotViewUtil.js';
-import {PlotAttribute, isHiPS, isImage} from '../WebPlot.js';
+import {isHiPS, isImage} from '../WebPlot.js';
+import {PlotAttribute} from '../PlotAttribute';
 import {FullType, getRotationAngle, isEastLeftOfNorth, isPlotNorth, isRotationMatching, getMatchingRotationAngle} from '../VisUtil.js';
 import {getArcSecPerPix, getEstimatedFullZoomFactor, getZoomLevelForScale, UserZoomTypes} from '../ZoomUtil.js';
 import {RotateType} from '../PlotState.js';

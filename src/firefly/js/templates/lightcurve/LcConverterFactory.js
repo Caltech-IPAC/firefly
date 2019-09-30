@@ -20,6 +20,7 @@ import {getWebPlotRequestViaZTFIbe} from './ztf/ZTFPlotRequests.js';
 
 import {LC} from './LcManager.js';
 import {getColumnIdx, getTblInfoById} from '../../tables/TableUtil';
+import {PlotAttribute} from '../../visualize/PlotAttribute';
 
 export const DL_DATA_TAG = 'timeseries-package';
 export const UNKNOWN_MISSION = 'generic';
@@ -264,7 +265,7 @@ export function addCommonReqParams(inWpr,title,wp) {
     retWpr.setTitleOptions(TitleOptions.NONE);
     retWpr.setGroupLocked(true);
     retWpr.setPlotGroupId('LightCurveGroup');
-    retWpr.setPreferenceColorKey('light-curve-color-pref');
+    retWpr.setAttributes({[PlotAttribute.PREFERENCE_COLOR_KEY]:'light-curve-color-pref'});
     if(!isNil(wp)){
         retWpr.setOverlayPosition(wp);
     }

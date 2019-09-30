@@ -136,13 +136,13 @@ public class WebPlotReader {
                 newFrAry[i]= pipeRet.fr;
                 ModFileWriter modFileWriter= checkUnzip(i,band,originalFile, pipeRet.modFileWriter);
 
-                retval[i]= new FileReadInfo(originalFile, newFrAry[i], band, imageIdx,
+                retval[i]= new FileReadInfo(originalFile, newFrAry[i], fd, band, imageIdx,
                         fd.getDesc(), uploadedName, null, modFileWriter);
             }
         }
         else {
             for (int i = 0; (i < frAry.length); i++) {
-                retval[i]= new FileReadInfo(originalFile, frAry[i], band, i, fd.getDesc(), uploadedName,
+                retval[i]= new FileReadInfo(originalFile, frAry[i], fd, band, i, fd.getDesc(), uploadedName,
                         fitsDataEval.getRelatedData(i), null);
             }
         }

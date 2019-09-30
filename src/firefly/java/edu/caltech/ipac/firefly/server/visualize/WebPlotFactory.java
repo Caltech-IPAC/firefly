@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.visualize;
 
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
@@ -186,13 +187,19 @@ public class WebPlotFactory {
                     PlotState s= pInfo[i].getState();
 
                     FitsRead[] frAry= pInfo[0].getFrGroup().getFitsReadAry();
+                    FileInfo fi= pInfo[0].getFileInfo();
+                    Map<String,String> attributes= null;
+                    if (fi!=null) {
+                        attributes= fi.getAttributeMap();
+                        attributes.remove(FileInfo.INTERNAL_NAME);
+                    }
                     Header[] zeroHeaderAry= new Header[frAry.length];
                     for(int k=0; k<zeroHeaderAry.length; k++) {
                         zeroHeaderAry[k]= frAry[k]!=null ? frAry[k].getZeroHeader() : null;
                     }
                     wpHeader= new WebPlotHeaderInitializer(s.getOriginalFitsFileStr(NO_BAND),
                             s.getWorkingFitsFileStr(NO_BAND), s.getUploadFileName(NO_BAND),
-                            pInfo[i].getDataDesc(), false, s.getPrimaryRequest(),zeroHeaderAry);
+                            pInfo[i].getDataDesc(), false, s.getPrimaryRequest(),zeroHeaderAry, attributes);
                 }
                 wpInit[i] = makePlotResults(pi, (i < 2 || i > pInfo.length - 2), allPlots.getZoomChoice(), !threeColor);
             }

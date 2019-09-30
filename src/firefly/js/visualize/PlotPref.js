@@ -44,29 +44,5 @@ var getCacheColorPref= function(cacheKey) {
 };
 
 
-
-/**
- * @param {string} cacheKey
- * @param (PlotState} state
- */
-var putCacheZoomPref= function(cacheKey, state) {
-    if (!cacheKey) return;
-    BrowserCache.put(cacheKey,{zoomLevel: state.getZoomLevel()});
-};
-
-
-
-/**
- * @param {string} cacheKey
- * @return {object} the color preference
- */
-var getCacheZoomPref= function(cacheKey) {
-    if (!cacheKey) return null;
-    var pref= BrowserCache.get(cacheKey);
-    if (!pref) return null;
-
-    return pref.zoomLevel;
-};
-
-export const PlotPref= {putCacheColorPref, getCacheColorPref, getCacheZoomPref, putCacheZoomPref};
+export const PlotPref= {putCacheColorPref, getCacheColorPref};
 

@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {difference, flatten, get, has, isArray, isEmpty, isString, isUndefined, isObject} from 'lodash';
+import {difference, flatten, get, has, isArray, isEmpty, isString, isUndefined, isObject,uniq} from 'lodash';
 import {getPlotGroupById} from './PlotGroup.js';
 import {makeDevicePt, makeImagePt, makeWorldPt, pointEquals} from './Point.js';
 import {clone} from '../util/WebUtil.js';
@@ -611,6 +611,38 @@ export function findPlot(plotView, plotImageId) {
     return plotView.plots.find( (p) => plotImageId===p.plotImageId);
 }
 
+/**
+ * Check if two PlotViews are equals by comparing
+ * @param {PlotView} pv1
+ * @param {PlotView} pv2
+ * @param {Array.<String>} pvKeys
+ * @param {Array.<String>} plotKeys
+ */
+export function isPlotViewsEqual(pv1, pv2, pvKeys=[], plotKeys=[]) {
+    if (isEmpty(pvKeys)) return pv1===pv2;
+    const p1= primePlot(pv1);
+    const p2= primePlot(pv2);
+    if (Boolean(p1)!==Boolean(p2)) return false;
+
+    if (p1 && p2) {
+        if (isImage(p1) !== isImage(p1)) return false;
+        if (isEmpty(plotKeys)) {
+            if (p1 !== p2) return false;
+        } else {
+            const plotEqual = plotKeys.every((k) => p1[k] === p2[k]);
+            if (!plotEqual) return false;
+        }
+    }
+    return pvKeys.every( (k) => pv1[k]===pv2[k])
+}
+
+export function isPlotViewArysEqual(pvAry1, pvAry2, pvKeys=[], plotKeys=[]) {
+    if (isEmpty(pvAry1) && isEmpty(pvAry1)) return true;
+    if (isEmpty(pvAry1)!==isEmpty(pvAry1)) return false;
+    if (pvAry1.length!==pvAry2.length) return false;
+    return pvAry1.every( (pv,idx) => isPlotViewsEqual(pv,pvAry2[idx], pvKeys, plotKeys));
+}
+
 
 /**
  *
@@ -827,7 +859,8 @@ export function isMultiImageFits(pv) {
  */
 export function isMultiHDUFits(pv) {
     if (!pv) return false;
-    return pv.plots.some( (p) =>  Boolean(getNumberHeader(p,HdrConst.SPOT_EXT,0)));
+    const hduCnt= uniq(pv.plots.map( (p) => getNumberHeader(p,HdrConst.SPOT_EXT,0)));
+    return hduCnt.length>1;
 }
 
 /**
@@ -1025,12 +1058,18 @@ const MICRON_SYMBOL= String.fromCharCode(0x03BC)+'m';
 /**
  *
  * @param {WebPlot|String} plotOrStr - pass a webplot to get the units from and the format or a string that will be formatted
+ * @param {boolean} anyPartOfStr - replace units with symbols in any part of a longer string
  * @return {string}
  */
-export function getFormattedWaveLengthUnits(plotOrStr) {
+export function getFormattedWaveLengthUnits(plotOrStr, anyPartOfStr=false) {
     const uStr= isString(plotOrStr) ? plotOrStr : getWaveLengthUnits(plotOrStr);
-    const u= uStr.toLowerCase();
-    return (u.startsWith('micron') || u==='um' || u==='micrometers') ? MICRON_SYMBOL : uStr;
+    if (anyPartOfStr) {
+        return uStr.replace(new RegExp('microns|micron|um|micrometers','gi'),MICRON_SYMBOL);
+    }
+    else {
+        const u= uStr.toLowerCase();
+        return (u.startsWith('micron') || u==='um' || u==='micrometers') ? MICRON_SYMBOL : uStr;
+    }
 }
 
 /**

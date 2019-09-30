@@ -6,8 +6,9 @@
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
 import {primePlot, isActivePlotView} from '../visualize/PlotViewUtil.js';
-import {PlotAttribute} from '../visualize/WebPlot.js';
-import PointDataObj, {DrawSymbol} from '../visualize/draw/PointDataObj.js';
+import {PlotAttribute} from '../visualize/PlotAttribute.js';
+import PointDataObj from '../visualize/draw/PointDataObj.js';
+import {DrawSymbol} from '../visualize/draw/DrawSymbol.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';

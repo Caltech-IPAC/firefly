@@ -7,7 +7,7 @@ import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef, TextLocation} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes,ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
-import {PlotAttribute} from '../visualize/WebPlot.js';
+import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';

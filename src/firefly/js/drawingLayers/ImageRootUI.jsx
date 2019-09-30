@@ -8,9 +8,8 @@ import {get} from 'lodash';
 import {FixedPtControl} from './CatalogUI.jsx';
 import {formatWorldPt} from '../visualize/ui/WorldPtFormat';
 import {primePlot} from '../visualize/PlotViewUtil';
-import {PlotAttribute} from '../visualize/WebPlot';
+import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {dispatchModifyCustomField} from '../visualize/DrawLayerCntlr';
-import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView';
 
 
 export const getUIComponent = (drawLayer,pv) => <ImageRootUI drawLayer={drawLayer} pv={pv}/>;

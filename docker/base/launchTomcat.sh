@@ -13,15 +13,15 @@ fi
 
 echo
 echo
-echo "============================================================"
-echo "============================================================"
-echo "==================== For Help =============================="
-echo
-echo "docker run --rm ${NAME} --help"
-echo
-echo "============================================================"
-echo "============================================================"
-echo "============================================================"
+echo "!!============================================================"
+echo "!!============================================================"
+echo "!!==================== For Help =============================="
+echo "!!"
+echo "        docker run --rm ${NAME}:latest --help"
+echo "!!"
+echo "!!============================================================"
+echo "!!============================================================"
+echo "!!============================================================"
 echo
 echo
 echo
@@ -70,9 +70,18 @@ if [ "x$LOG_FILE_TO_CONSOLE" != "x" ]; then
      tail -f $logFile &
 fi
 
+# ------------------------------------------------
+# if we are doing firefly.jar setup examples in the local/www directory
+./setupFireflyExample.sh
+
 if [ "$1" = "--help" ] || [ "$1" = "-help" ] || [ "$1" = "-h" ]; then
     echo
     sed "s:ipac/firefly:${NAME}:" ./start-examples.txt
+    aWarFile=`ls ${CATALINA_BASE}/webapps/*.war | head -1 | awk '{print $1}'`
+    onlyWar=`echo ${aWarFile} | awk -F/ '{print $NF}'`
+    if [ "$onlyWar" = "firefly.war" ]; then
+        cat ./customize-firefly.txt
+    fi
     exit 0
 fi
 echo "========================================================================="
@@ -94,6 +103,7 @@ fi
 if [ "x$FIREFLY_SHARED_WORK_DIR" != "x" ]; then
       mkdir -p ${FIREFLY_SHARED_WORK_DIR}
 fi
+
 
 # run cleanup script in the background
 ${CATALINA_BASE}/cleanup.sh ${FIREFLY_WORK_DIR} ${FIREFLY_SHARED_WORK_DIR} &

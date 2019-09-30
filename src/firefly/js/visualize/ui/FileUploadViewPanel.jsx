@@ -40,6 +40,7 @@ import {getComponentState, dispatchComponentStateChange} from '../../core/Compon
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 
 import './FileUploadViewPanel.css';
+import {PlotAttribute} from '../PlotAttribute';
 
 
 export const panelKey = 'FileUploadAnalysis';
@@ -353,7 +354,8 @@ function sendImageRequest(imageIndices, request, fileCacheKey) {
                 const plotId = `${fileName}-${idx}`;
                 const {index} = parts[idx];
 
-                if (index !== -1)  wpRequest.setPostTitle(`- ext. ${idx}`); // not primary
+                // if (index !== -1)  wpRequest.setPostTitle(`- ext. ${idx}`); // not primary
+                if (index !== -1)  wpRequest.setAttributes({[PlotAttribute.POST_TITLE]:`- ext. ${idx}`}); // not primary
 
                 wpRequest.setMultiImageExts(`${index}`);
                 dispatchPlotImage({plotId, wpRequest, viewerId});
@@ -362,7 +364,7 @@ function sendImageRequest(imageIndices, request, fileCacheKey) {
             const extList = imageIndices.map((idx) => get(parts, [idx, 'index'])).join();
 
             wpRequest.setMultiImageExts(extList);
-            if (!extList.includes('-1')) wpRequest.setPostTitle(`- ext. ${extList}`);
+            if (!extList.includes('-1')) wpRequest.setAttributes({[PlotAttribute.POST_TITLE]:`- ext. ${extList}`});
 
             const plotId = `${fileName.replace('.', '_')}-${imageIndices.join('_')}`;
             dispatchPlotImage({plotId, wpRequest, viewerId});

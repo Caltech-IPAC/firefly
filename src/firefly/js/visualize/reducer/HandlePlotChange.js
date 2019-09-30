@@ -3,13 +3,14 @@
  */
 
 import update from 'immutability-helper';
-import {get, isEmpty,isUndefined, isArray, unionBy} from 'lodash';
+import {get, isEmpty,isUndefined, isArray, unionBy, isString} from 'lodash';
 import Cntlr, {ExpandType, WcsMatchType, ActionScope} from '../ImagePlotCntlr.js';
 import {replacePlotView, replacePrimaryPlot, changePrimePlot, updatePlotViewScrollXY,
         findScrollPtToCenterImagePt, findScrollPtToPlaceOnDevPt,
         updateScrollToWcsMatch, updatePlotGroupScrollXY} from './PlotView.js';
-import {WebPlot, clonePlotWithZoom, PlotAttribute, isHiPS, isImage,
+import {WebPlot, clonePlotWithZoom, isHiPS, isImage,
     replaceHiPSProjectionUsingProperties, replaceHiPSProjection, getHiPsTitleFromProperties} from '../WebPlot.js';
+import {PlotAttribute} from '../PlotAttribute.js';
 import {changeProjectionCenter} from '../HiPSUtil.js';
 import {logError, updateSet} from '../../util/WebUtil.js';
 import {CCUtil, CysConverter} from '../CsysConverter.js';
@@ -37,6 +38,7 @@ import {updateTransform} from '../PlotTransformUtils.js';
 import {WebPlotRequest} from '../WebPlotRequest.js';
 import {hasWCSProjection} from '../PlotViewUtil';
 import {getMatchingRotationAngle, isCsysDirMatching, isEastLeftOfNorth} from '../VisUtil';
+import {parseAnyPt, parseWorldPt} from '../Point';
 
 
 //============ EXPORTS ===========
@@ -249,6 +251,7 @@ function installTiles(state, action) {
         return state;
     }
 
+    pv= {...pv};
     pv.serverCall='success';
     pv= replacePrimaryPlot(pv,WebPlot.setPlotState(plot,primaryStateJson,primaryTiles));
 
@@ -276,7 +279,6 @@ function installTiles(state, action) {
 
     plot= primePlot(pv); // get the updated on
     PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, plot.plotState);
-    PlotPref.putCacheZoomPref(pv.plotViewCtx.preferenceZoomKey, plot.plotState);
     const processedTiles= state.processedTiles.filter( (d) => d.plotId!==plotId); // remove old client tile data
 
     return clone(state, {plotViewAry : replacePlotView(plotViewAry,pv), processedTiles});
@@ -626,9 +628,10 @@ function recenterPv(centerPt,  centerOnImage) {
         let centerImagePt= centerPt;
 
         if (!centerPt) {
-            const wp = plot.attributes[PlotAttribute.INIT_CENTER] || plot.attributes[PlotAttribute.FIXED_TARGET] ;
-            if (wp && !centerOnImage) {
-                centerImagePt = CCUtil.getImageCoords(plot, wp);
+            let point = plot.attributes[PlotAttribute.INIT_CENTER] || plot.attributes[PlotAttribute.FIXED_TARGET] ;
+            if (point && !centerOnImage) {
+                if (isString(point)) point= parseAnyPt(point);
+                centerImagePt = CCUtil.getImageCoords(plot, point);
             }
             else {
                 centerImagePt = makeImagePt(plot.dataWidth / 2, plot.dataHeight / 2);

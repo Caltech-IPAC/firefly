@@ -2,12 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component} from 'react';
-import PropTypes from 'prop-types';
-import {isEmpty} from 'lodash';
-import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
+import React, {useState, useEffect} from 'react';
+import {isEmpty, get,uniq, isEqual} from 'lodash';
+import {useStoreConnector} from '../../ui/SimpleComponent';
 import CompleteButton from '../../ui/CompleteButton.jsx';
-import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {visRoot, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
@@ -15,13 +13,22 @@ import {primePlot} from '../PlotViewUtil.js';
 import {getMultiViewRoot,getExpandedViewerItemIds,dispatchReplaceViewerItems,
                              EXPANDED_MODE_RESERVED, IMAGE} from '../MultiViewCntlr.js';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
+import {TablePanel} from '../../tables/ui/TablePanel';
+import {dispatchTableAddLocal, TABLE_SORT} from '../../tables/TablesCntlr';
+import {getTblById, processRequest,watchTableChanges} from '../../tables/TableUtil';
+import {getFormattedWaveLengthUnits, getPlotViewAry, getPlotViewById, isPlotViewArysEqual} from '../PlotViewUtil';
+import {PlotAttribute} from '../PlotAttribute';
+import {TABLE_LOADED, TABLE_FILTER, TABLE_FILTER_SELROW} from '../../tables/TablesCntlr';
+import {getViewerItemIds} from '../MultiViewCntlr';
+import {HelpIcon} from '../../ui/HelpIcon';
+import {SelectInfo} from '../../tables/SelectInfo';
 
-
+const TABLE_ID= 'active-image-view-list-table';
 
 export function showExpandedOptionsPopup(plotViewAry) {
     const popup= (
-        <PopupPanel title={'Choose which'} >
-            <ExpandedOptionsPanel plotViewAry={plotViewAry}/>
+        <PopupPanel title={'Loaded Images'} >
+            <ImageViewOptionsPanel  plotViewAry={plotViewAry}/>
         </PopupPanel>
     );
     DialogRootContainer.defineDialog('ExpandedOptionsPopup', popup);
@@ -29,56 +36,226 @@ export function showExpandedOptionsPopup(plotViewAry) {
 }
 
 
-function ExpandedOptionsPanel ({plotViewAry}) {
-    const groupKey = 'WHICH_PLOTS';
-    var loadedPv= plotViewAry.filter( (pv) => primePlot(pv)?true:false );
-    var options= loadedPv.map( (pv) => ({label: primePlot(pv).title, value:pv.plotId}));
+
+
+const [NAME_IDX,WAVE_LENGTH_UM,PID_IDX,STATUS, PROJ_TYPE_DESC, WAVE_TYPE, DATA_HELP_URL]= [0,1,2,3,4,5,6];
+
+const columnsTemplate = [];
+columnsTemplate[NAME_IDX]= {name: 'Name', type: 'char', width: 22};
+columnsTemplate[PID_IDX]= {name: 'plotId', type: 'char', width: 10, visibility: 'hidden'};
+columnsTemplate[STATUS]= {name: 'Status', type: 'char', width: 15};
+columnsTemplate[PROJ_TYPE_DESC]= {name: 'Type', type: 'char', width: 8};
+columnsTemplate[WAVE_TYPE]= {name: 'Band', type: 'char', width: 8};
+columnsTemplate[WAVE_LENGTH_UM]= {name: 'Wavelength', type: 'double', width: 10, units:getFormattedWaveLengthUnits('um')};
+// columnsTemplate[DATA_HELP_URL]= {name: 'Help', type: 'location', width: 35};
+ columnsTemplate[DATA_HELP_URL]= {name: 'Help', type: 'location', width: 7, links:[{ href: '${Help}',  value: 'help'}]};
+
+
+
+
+
+
+const getAttribute= (attributes, attribute) => get(attributes,[attribute],'');
+
+const makeEnumValues= (data,idx) => uniq(data.map((d) => d[idx]).filter((d) => d)).join(',');
+
+
+
+function makeModel(tbl_id,plotViewAry, expandedIds, oldModel) {
+    const data= plotViewAry.map( (pv) => {
+        const plot= primePlot(pv);
+        const attributes= plot? plot.attributes : pv.request.getAttributes();
+        const {plotId, serverCall, plottingStatus,request}= pv;
+        const title = plot ? plot.title :  request.getTitle() || 'failed image';
+        const row= [];
+        let stat;
+        if (serverCall==='success') stat= 'Success';
+        else if (serverCall==='fail') stat= 'Fail';
+        else stat= plottingStatus;
+        row[NAME_IDX]=title;
+        row[PID_IDX]= plotId;
+        row[STATUS]= stat;
+        row[PROJ_TYPE_DESC]= getAttribute(attributes,PlotAttribute.PROJ_TYPE_DESC);
+        row[WAVE_TYPE]= getAttribute(attributes,PlotAttribute.WAVE_TYPE);
+        row[WAVE_LENGTH_UM]= getAttribute(attributes,PlotAttribute.WAVE_LENGTH_UM);
+        row[DATA_HELP_URL]= getAttribute(attributes,PlotAttribute.DATA_HELP_URL);
+        return row;
+    });
+
+    const columns= [...columnsTemplate];
+    columns[PROJ_TYPE_DESC].enumVals= makeEnumValues(data,PROJ_TYPE_DESC);
+    columns[WAVE_TYPE].enumVals=  makeEnumValues(data,WAVE_TYPE);
+    columns[STATUS].enumVals=  makeEnumValues(data,STATUS);
+    columns[WAVE_LENGTH_UM].enumVals=  makeEnumValues(data,WAVE_LENGTH_UM);
+
+
+    const newSi= SelectInfo.newInstance({rowCount:0});
+    let newFilters;
+    let request;
+    if (oldModel) {
+        const oldSi= SelectInfo.newInstance(oldModel.selectInfo);
+        const vr= visRoot();
+        let filterStr= ''
+        oldModel.tableData.data.forEach( (row, idx) => {
+            const plotId= row[PID_IDX];
+            if (getPlotViewById(vr,plotId) && oldSi.isSelected(idx)) {
+                const newIdx= data.findIndex( (r) => r[PID_IDX]===plotId);
+                newSi.setRowSelect(newIdx,true);
+                newSi.data.rowCount++;
+                filterStr+= filterStr ? ','+newIdx : newIdx;
+            }
+        });
+        request= {...oldModel.request};
+        if (get(oldModel,'request.filters') && newSi.data.rowCount>0) {
+            const {filters}= oldModel.request;
+            if (filters && filters.indexOf('ROW_IDX'>-1)) {
+                request.filters= filters.replace(/"ROW_IDX" IN \(.*\)/, `"ROW_IDX" IN (${filterStr})`);
+            }
+        }
+
+
+    }
+
+
+    let newModel = {
+        tbl_id,
+        tableData:{columns,data},
+        totalRows: data.length, highlightedRow: 0,
+        selectInfo: newSi.data,
+        tableMeta:  {},
+        request,
+    };
+    if (newModel.request) {
+        newModel = processRequest(newModel, newModel.request, newModel.highlightedRow);
+    }
+    dispatchTableAddLocal(newModel, undefined, false);
+    return newModel;
+}
+
+function dialogComplete(tbl_id) {
+    const model= getTblById(tbl_id);
+    if (!model) return;
+    const plotIdAry= model.tableData.data.map( (d) => d[PID_IDX] );
+    if (isEmpty(plotIdAry)) return;
+
+    const currentPlotIdAry= getViewerItemIds(getMultiViewRoot(),EXPANDED_MODE_RESERVED);
+    if (plotIdAry.join('')===currentPlotIdAry.join('')) return;
+    if (!plotIdAry.includes(visRoot().activePlotId)) {
+        dispatchChangeActivePlotView(plotIdAry[0]);
+    }
+    dispatchReplaceViewerItems(EXPANDED_MODE_RESERVED, plotIdAry, IMAGE);
+}
+
+// const deleteFailedNEW= () => {
+//     getPlotViewAry(visRoot()).forEach( (pv) => {
+//         if (pv.serverCall==='fail') {
+//             dispatchDeletePlotView({plotId:pv.plotId}) ;
+//         }
+//     });
+// };
+
+const pvKeys= ['plotId', 'request', 'serverCall', 'plottingStatus'];
+const plotKeys= ['plotImageId'];
+
+
+function getPvAry(oldPvAry) {
+    const pvAry= getPlotViewAry(visRoot());
+    if (!oldPvAry) return pvAry;
+    return isPlotViewArysEqual(oldPvAry, pvAry,pvKeys,plotKeys) ? oldPvAry : pvAry;
+}
+
+function getExpandedIds(oldIdAry) {
     const expandedIds= getExpandedViewerItemIds(getMultiViewRoot());
-    var enabledStr= loadedPv.reduce( (s,pv) => {
-        if (!expandedIds.includes(pv.plotId)) return s;
-        return s ? `${pv.plotId},${s}` : pv.plotId;
-    },'');
+    return isEqual(oldIdAry,expandedIds) ? oldIdAry : expandedIds;
+}
+
+
+function ImageViewOptionsPanel() {
+
+    const tbl_ui_id =TABLE_ID + '-ui';
+
+
+    const [plotViewAry,expandedIds] = useStoreConnector(getPvAry, getExpandedIds);
+    const [model, setModel] = useState(undefined);
+
+
+    useEffect(() => {
+        const oldModel= getTblById(TABLE_ID);
+        if (!oldModel) {
+            watchTableChanges(TABLE_ID,[TABLE_LOADED, TABLE_FILTER, TABLE_FILTER_SELROW, TABLE_SORT],()=>dialogComplete(TABLE_ID));
+        }
+        setModel(makeModel(TABLE_ID,plotViewAry,expandedIds, oldModel));
+    }, [plotViewAry,expandedIds]);
+
+    if (!model) return null;
+    //const someFailed= plotViewAry.some( (pv) => pv.serverCall==='fail');
+
+    // const hideFailed= () => {
+    //     if (isEmpty(plotViewAry)) return;
+    //     const plotIdAry= plotViewAry
+    //         .filter( (pv) => pv.serverCall!=='fail')
+    //         .map( (pv) => pv.plotId);
+    //     if (!plotIdAry.includes(visRoot().activePlotId)) {
+    //         dispatchChangeActivePlotView(plotIdAry[0]);
+    //     }
+    //     dispatchReplaceViewerItems(EXPANDED_MODE_RESERVED, plotIdAry, IMAGE);
+    // };
+    //
+    // const deleteFailed= () => {
+    //     plotViewAry.forEach( (pv) => {
+    //         if (pv.serverCall==='fail') {
+    //             dispatchDeletePlotView({plotId:pv.plotId}) ;
+    //         }
+    //     });
+    // };
+    //
+
+    // const deleteFailedButton= () => (
+    //     <button type='button' className='button std hl'
+    //             onClick={() => deleteFailedNEW()}>Delete Failed
+    //     </button>
+    // );
+
 
     return (
-        <div style={{resize: 'both', overflow: 'hidden', display: 'flex', flexDirection: 'column', width: 300, height: 300, minWidth: 250, minHeight: 200}}>
-            <FieldGroup groupKey={groupKey} keepState={false} style={{flexGrow:1, overflow: 'auto'}}>
-                <div style={{padding:'10px 10px 5px 15px'}}>
-                    <CheckboxGroupInputField
-                        alignment={'vertical'}
-                        initialState= {{
-                            value: enabledStr,
-                            tooltip: 'Select which plot to display',
-                            label : ''
-                        }}
-                        options={options}
-                        fieldKey='optionCheckBox'
-                    />
+        <div style={{resize: 'both', overflow: 'hidden', display: 'flex', flexDirection: 'column',
+            width: 625, height: 450, minWidth: 250, minHeight: 200}}>
+
+            <div style={{ position: 'relative', width: '100%', height: 'calc(100% - 30px)'}}>
+                <div className='TablePanel'>
+                    <div className={'TablePanel__wrapper--border'}>
+                        <div className='TablePanel__table' style={{top: 0}}>
+                            <TablePanel
+                                tbl_ui_id={tbl_ui_id}
+                                tableModel={model}
+                                showToolbar={true}
+                                showFilters={true}
+                                selectable={true}
+                                showOptionButton={true}
+                                border= {false}
+                                showTitle= {false}
+                                showPaging= {false}
+                                showSave= {false}
+                                showTypes= {false}
+                                showToggleTextView={false}
+                                expandable= {false}
+                                showUnits={true}
+                                rowHeight={23}
+                            />
+                        </div>
+                    </div>
                 </div>
-            </FieldGroup>
-            <CompleteButton
-                groupKey={groupKey}
-                style={{padding : 5, borderTop: '1px solid rgb(163, 174, 185)', boxShadow: '0 -2px 10px 0 #ffffff'}}
-                onSuccess={updateView}
-                dialogId='ExpandedOptionsPopup' />
+            </div>
+
+
+            <div style={{display:'flex', justifyContent:'space-between'}}>
+                <CompleteButton
+                    style={{padding : 5}} text={'Done'}
+                    onSuccess={() => dialogComplete(model.tbl_id)}
+                    dialogId='ExpandedOptionsPopup' />
+                <HelpIcon helpId={'visualization.loaded-images'} style={{padding:'8px 9px 0 0'}}/>
+            </div>
         </div>
     );
 }
-
-
-ExpandedOptionsPanel.propTypes= {
-    plotViewAry: PropTypes.array.isRequired
-};
-
-function updateView(request) {
-    if (request.optionCheckBox) {
-        const plotIdAry= request.optionCheckBox.split(',');
-        if (!isEmpty(plotIdAry)) {
-            if (!plotIdAry.includes(visRoot().activePlotId)) {
-                dispatchChangeActivePlotView(plotIdAry[0]);
-            }
-            dispatchReplaceViewerItems(EXPANDED_MODE_RESERVED, plotIdAry, IMAGE);
-        }
-    }
-}
-
 

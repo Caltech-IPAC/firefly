@@ -1,8 +1,8 @@
 
 import numeral from 'numeral';
-import {isNil, set, isUndefined} from 'lodash';
+import {isNil, set} from 'lodash';
 import {makeScreenPt} from '../Point.js';
-import {DrawSymbol} from './PointDataObj.js';
+import {DrawSymbol} from './DrawSymbol.js';
 import {toRadians} from '../VisUtil.js';
 
 

@@ -22,6 +22,7 @@ import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
  * @author tatianag
  *         $Id: ProcessorFileRetriever.java,v 1.8 2012/07/27 22:23:29 tatianag Exp $
  */
+@FileRetrieverImpl(id ="PROCESSOR")
 public class ProcessorFileRetriever implements FileRetriever {
     public FileInfo getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {
         try {

@@ -4,7 +4,7 @@
 
 import React, {PureComponent, useContext} from 'react';
 import PropTypes from 'prop-types';
-import {get, includes, isNil} from 'lodash';
+import {get, includes, isNil, omit, isString, isPlainObject} from 'lodash';
 import {FormPanel} from '../../ui/FormPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {SizeInputFields} from '../../ui/SizeInputField.jsx';
@@ -37,6 +37,11 @@ import {sourcesPerChecked} from '../../ui/HiPSSurveyListDisplay.jsx';
 
 import './ImageSearchPanelV2.css';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
+import {PlotAttribute} from '../PlotAttribute';
+import {getCellValue, getColumn, getColumnByID} from '../../tables/TableUtil';
+import {makeFileRequest} from '../../tables/TableRequestUtil';
+import {dispatchTableSearch} from '../../tables/TablesCntlr';
+import {MetaConst} from '../../data/MetaConst';
 
 
 const FG_KEYS = {
@@ -244,7 +249,8 @@ export class ImageSearchPanelV2 extends PureComponent {
                 <div className='flex-full'>
                     <div className='ImageSearch__title'>{title}</div>
                     <ImageType/>
-                    {isThreeColor && <ThreeColor {...{imageMasterData, multiSelect, archiveName}}/>}
+                    {isThreeColor &&
+                          <ThreeColor {...{imageMasterData:imageMasterData.filter( (md) => (!md.dataType || md.dataType==='image')), multiSelect, archiveName}}/>}
                     {isSingleChannelImgType() && <SingleChannel {...{groupKey: FG_KEYS.single,
                                                                  imageMasterData, multiSelect, archiveName}}/>}
                     {isHipsImgType() && <HiPSImage {...{groupKey: FG_KEYS.hips,  archiveName}}/>}
@@ -625,16 +631,24 @@ function doImageSearch({ imageMasterData, request, plotId, plotGroupId, viewerId
 
         const wpSet = [];
         [redReq, greenReq, blueReq].forEach( (req) => {
-            const wprs = makeWebPlotRequests(req, imageMasterData, plotId, plotGroupId);
+            const wprs = makeRequests(req, imageMasterData, plotId, plotGroupId);
             if (wprs.length === 1) {
-                wpSet.push(wprs[0]);
+                wpSet.push(wprs[0].request);
             } else { wpSet.push(undefined); }
         });
         dispatchPlotImage({threeColor:true, wpRequest: wpSet, viewerId, renderTreeId, pvOptions});
 
     } else {                       // single channel
-        const wprs = makeWebPlotRequests(get(request, FG_KEYS.single), imageMasterData, plotId, plotGroupId);
-        wprs.forEach( (r) => dispatchPlotImage({wpRequest:r, viewerId,renderTreeId,pvOptions}));
+        const reqAry = makeRequests(get(request, FG_KEYS.single), imageMasterData, plotId, plotGroupId);
+        reqAry.forEach( (r) => {
+            if (r.dataType==='image') {
+                dispatchPlotImage({wpRequest:r.request, viewerId,renderTreeId,pvOptions});
+            }
+            else if (r.dataType==='table') {
+                dispatchTableSearch(r.request, {backgroundable:true, showFilters:true, removable:true });
+            }
+
+        });
     }
 }
 
@@ -645,24 +659,24 @@ function doImageSearch({ imageMasterData, request, plotId, plotGroupId, viewerId
  * @param imageMasterData
  * @param plotId
  * @param plotGroupId
- * @returns {WebPlotRequest[]}
+ * @returns {Array.<{dataType:String,request:Object}>}
  */
-function makeWebPlotRequests(request, imageMasterData, plotId, plotGroupId){
+function makeRequests(request, imageMasterData, plotId, plotGroupId){
 
     if (get(request, FD_KEYS.source, 'none') === 'none') {
         return [];
 
     } else if (request.imageSource === 'upload') {
         const fileName = get(request, 'fileUpload');
-        return [addStdParams(WebPlotRequest.makeFilePlotRequest(fileName), 'image', plotId, plotGroupId)];
+        return [{dataType:'image', request: addStdParams(WebPlotRequest.makeFilePlotRequest(fileName), plotId, plotGroupId)}];
 
     } else if (request.imageSource === ServerParams.IS_WS) {
         const fileName = get(request, 'wsFilepath');
-        return [addStdParams(WebPlotRequest.makeWorkspaceRequest(fileName),'image',  plotId, plotGroupId)];
+        return [{dataType:'image', request: addStdParams(WebPlotRequest.makeWorkspaceRequest(fileName),plotId, plotGroupId)}];
 
     } else if (request.imageSource === 'url') {
         const url = get(request, 'txURL');
-        return [addStdParams(WebPlotRequest.makeURLPlotRequest(url), 'image', plotId, plotGroupId)];
+        return [{dataType:'image', request: addStdParams(WebPlotRequest.makeURLPlotRequest(url), plotId, plotGroupId)}];
 
     } else {
         const wp = parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);
@@ -671,10 +685,13 @@ function makeWebPlotRequests(request, imageMasterData, plotId, plotGroupId){
         const imageIdList= [];
         Object.keys(request).filter( (k) => k.startsWith('IMAGES_')).forEach( (p) => {
             const list= request[p].split(',');
-            list.forEach( (e) => imageIdList.push(e));
+            list.forEach( (e) => e && imageIdList.push(e));
         });
-        const paramAry= imageMasterData.filter( (d) => imageIdList.includes(d.imageId));
-        return paramAry.map( (d) => makeWPRequest(wp, radius, d.plotRequestParams, d.dataType, plotId, plotGroupId));
+        const paramAry= imageMasterData.filter( (d) => imageIdList.includes(d.imageId) && (!d.dataType || d.dataType==='image') );
+        const wpList= paramAry.map( (d) => ({dataType:'image', request:makeWPRequest(wp, radius, d, plotId, plotGroupId)}));
+        const tParamAry= imageMasterData.filter( (d) => imageIdList.includes(d.imageId) && (d.dataType==='table') );
+        const tableList= tParamAry.map( (d) => ({dataType:'table', request:makeTableRequest(wp, radius, d, plotId, plotGroupId)}));
+        return [...wpList, ...tableList];
     }
 }
 
@@ -699,19 +716,67 @@ const nextPlotId = (() => {
     };
 })();
 
-function makeWPRequest(wp, radius, params, type, plotId, plotGroupId) {
-    const inReq= Object.assign( {
-        [WPConst.WORLD_PT] : wp.toString(),
-        [WPConst.SIZE_IN_DEG] : radius+''
-    }, params);
-
-    return addStdParams(WebPlotRequest.makeFromObj(inReq), type, plotId, plotGroupId);
+function resolveHRefVal(valObs, href='') {
+    if (!href || !isString(href))  return href;
+    const vars = href.match(/\${[\w -.]+}/g);
+    if (!vars) return href;
+    let replaceHref = href;
+    vars.forEach((v) => {
+        const [,keyName] = v.match(/\${([\w -.]+)}/) || [];
+        if (valObs[keyName]) {
+            replaceHref = replaceHref.replace(v, valObs[keyName]);
+        }
+    });
+    return replaceHref;
 }
 
-function addStdParams(wpreq, type='image', plotId = nextPlotId(), plotGroupId = 'multiImageGroup') {
+function resolveHRefValWithParams(wp,radius, href='') {
+    return resolveHRefVal(
+        {
+            ra:wp.x,
+            dec:wp.y,
+            size:radius,
+            sizeDeg:radius,
+            sizeArcMin:radius*60,
+            sizeArcSec:radius*3600
+        },
+        href);
+}
+
+
+function makeWPRequest(wp, radius, data, plotId, plotGroupId) {
+    const {plotRequestParams:{URL,...params}, helpUrl, projectTypeDesc, waveType, wavelength}= data;
+
+    params.URL=  URL && resolveHRefValWithParams(wp, radius, URL);
+    const inReq= {
+        [WPConst.WORLD_PT] : wp.toString(),
+        [WPConst.SIZE_IN_DEG] : radius+'',
+        attributes: {
+            [PlotAttribute.DATA_HELP_URL]: helpUrl,
+            [PlotAttribute.PROJ_TYPE_DESC]: projectTypeDesc,
+            [PlotAttribute.WAVE_TYPE]: waveType,
+            [PlotAttribute.WAVE_LENGTH_UM]: parseFloat(wavelength),
+        },
+        ...params};
+
+    return addStdParams(WebPlotRequest.makeFromObj(inReq), plotId, plotGroupId);
+}
+
+function makeTableRequest(wp, radius, data) {
+    const {tableRequestParams:{URL,...params},title }= data;
+    const computedURL= resolveHRefValWithParams(wp,radius, URL);
+    return makeFileRequest(title,computedURL,undefined,
+        {
+            META_INFO: {
+                [MetaConst.CATALOG_OVERLAY_TYPE]:false,
+                ...params
+            }
+        });
+}
+
+function addStdParams(wpreq, plotId = nextPlotId(), plotGroupId = 'multiImageGroup') {
     wpreq.setPlotId(plotId);
     wpreq.setPlotGroupId(plotGroupId);
-    wpreq.setGroupLocked('true');
-    wpreq.setParam('dataType',type);
+    wpreq.setGroupLocked(true);
     return wpreq;
 }

@@ -10,6 +10,7 @@ import {ServerRequest} from '../data/ServerRequest.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {toMaxFixed} from '../util/MathUtil.js';
 import {makeWisePlotRequest} from './WiseRequestList';
+import {PlotAttribute} from '../visualize/PlotAttribute';
 
 /**
  * This method returns a WebRequest object
@@ -29,7 +30,8 @@ function makeWebRequest(sr,  plotId, title) {
     r.setTitle(title);
     r.setPlotId(plotId);
     r.setMultiImageIdx(0);
-    r.setPreferenceColorKey('lsst-sdss-color-pref');
+    // r.setPreferenceColorKey('lsst-sdss-color-pref');
+    r.setAttributes({[PlotAttribute.PREFERENCE_COLOR_KEY]:'lsst-sdss-color-pref'})
     r.setZoomType(ZoomType.TO_WIDTH);
     r.setInitialRangeValues(rangeValues);
     return r;
