@@ -55,8 +55,9 @@ public class WsServerParams {
         return b != null ? Boolean.parseBoolean(b.toLowerCase().trim()) : false;
     }
 
-    public void set(WS_SERVER_PARAMS p, String val) {
+    public WsServerParams set(WS_SERVER_PARAMS p, String val) {
         map.put(p.getKey(), val);
+        return this;
     }
 
 }

@@ -33,6 +33,7 @@ const workspacePopupId = 'workspacePopupId';
 
 import LOADING from 'html/images/gxt/loading.gif';
 import ComponentCntlr from '../core/ComponentCntlr.js';
+import {isExistWorspaceFile} from '../visualize/WorkspaceCntlr';
 
 /*-----------------------------------------------------------------------------------------*/
 /* core component as FilePicker wrapper
@@ -395,6 +396,23 @@ export function doDownloadWorkspace(url, options) {
             }
         });
     }).catch(({message}) => showInfoPopup(truncate(message, {length: 200}), 'Unexpected error'));
+}
+
+
+export function validateFileName(wsSelect, fileName) {
+    if (isNil(wsSelect)) {
+        return false;
+    }
+    const fullPath = getWorkspacePath(wsSelect, fileName);
+
+    if (isExistWorspaceFile(fullPath)) {
+        workspacePopupMsg(`the file, ${fullPath}, already exists in workspace, please change the file name.`,
+            'Save to workspace');
+        return false;
+    } else {
+        return true;
+    }
+
 }
 
 export function workspacePopupMsg(msg, title) {

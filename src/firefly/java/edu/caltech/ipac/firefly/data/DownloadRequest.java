@@ -19,6 +19,8 @@ public class DownloadRequest extends ServerRequest implements Serializable {
     public static final String EMAIL = "Email";
     public static final String MAX_BUNDLE_SIZE = "MaxBundleSize";
     public static final String DATA_SOURCE = "DataSource";
+    public static final String FILE_LOC = "fileLocation";
+    public static final String WS_DEST_PATH = "wsSelect";
 
 
     private TableServerRequest searchRequest;

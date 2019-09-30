@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {useCallback} from 'react';
+import React, {useCallback, useState} from 'react';
 import PropTypes from 'prop-types';
 import {set, cloneDeep, get} from 'lodash';
 
@@ -20,7 +20,7 @@ import {showInfoPopup} from './PopupUtil.jsx';
 import {getActiveTableId, getTblById, hasRowAccess, getProprietaryInfo} from '../tables/TableUtil.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {dispatchPackage, dispatchBgSetEmailInfo} from '../core/background/BackgroundCntlr.js';
-import {getWorkspaceConfig} from '../visualize/WorkspaceCntlr.js';
+import {WS_HOME} from '../visualize/WorkspaceCntlr.js';
 import {getBgEmailInfo} from '../core/background/BackgroundUtil.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {DataTagMeta} from '../tables/TableRequestUtil.js';
@@ -114,6 +114,7 @@ const noticeCss = {
 };
 
 let dlTitleIdx = 0;
+const newBgKey = () => 'DownloadOptionPanel-' + Date.now();
 
 export function DownloadOptionPanel (props) {
     const {groupKey, cutoutSize, help_id, children, style, title, tbl_id, dlParams, dataTag} = props;
@@ -121,17 +122,20 @@ export function DownloadOptionPanel (props) {
 
     const labelWidth = 110;
     const ttl = title || DOWNLOAD_DIALOG_ID;
-    const bgKey = 'DownloadOptionPanel-' + tbl_id;
+    const [bgKey, setBgKey] = useState(newBgKey());
 
     const onSubmit = useCallback((formInputs={}) => {
         var {request, selectInfo} = getTblById(tbl_id);
         const {FileGroupProcessor} = dlParams;
+        formInputs.wsSelect = formInputs.wsSelect && formInputs.wsSelect.replace(WS_HOME, '');
         const dreq = makeTblRequest(FileGroupProcessor, formInputs.Title, Object.assign(dlParams, {cutoutSize}, formInputs));
         request = set(cloneDeep(request), DataTagMeta, dataTag);
-        dispatchPackage(dreq, request, SelectInfo.newInstance(selectInfo).toString(), bgKey);
+        const akey = newBgKey();
+        dispatchPackage(dreq, request, SelectInfo.newInstance(selectInfo).toString(), akey);
         showDownloadDialog(this, false);
         dlTitleIdx++;
-    }, tbl_id);
+        setBgKey(akey);
+    }, [cutoutSize, dataTag, dlParams, tbl_id]);
 
     const showWarnings = hasProprietaryData(getTblById(tbl_id));
 
@@ -145,10 +149,9 @@ export function DownloadOptionPanel (props) {
         height:undefined,
         backgroundColor: 'rgba(0,0,0,0.2)'
     };
-    const maskPanel = <BgMaskPanel componentKey={bgKey} style={maskStyle}/>;
+    const maskPanel = <BgMaskPanel key={bgKey} componentKey={bgKey} style={maskStyle}/>;
 
     const saveAsProps = {
-        fieldKey: 'BaseFileName',
         initialState: {
             value: get(dlParams, 'BaseFileName')
         }

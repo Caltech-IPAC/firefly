@@ -184,7 +184,7 @@ function PackageStatus(bgStatus) {
     );
 }
 
-function SinglePackage({ID, Title, STATE, ITEMS=[]}) {
+function SinglePackage({ID, Title, WS_DEST_PATH, STATE, ITEMS=[]}) {
     var progress;
     if (BG_STATE.WAITING.is(STATE)) {
         progress = <div className='BGMon__header--waiting'>Computing number of packages... <img style={{marginLeft: 3}} src={LOADING}/></div>;
@@ -194,17 +194,17 @@ function SinglePackage({ID, Title, STATE, ITEMS=[]}) {
         progress = <div>User aborted this request</div>;
     } else {
         const params = ITEMS[0] || {};
-        progress = <PackageItem SINGLE={true} STATE={STATE} ID={ID} {...params} />;
+        progress = <PackageItem SINGLE={true} {...{STATE, ID, WS_DEST_PATH}} {...params} />;
     }
     return (
         <PackageHeader {...{ID, Title, progress, STATE}} />
     );
 }
 
-function MultiPackage({ID, Title, STATE, ITEMS}) {
+function MultiPackage({ID, Title, WS_DEST_PATH, STATE, ITEMS}) {
     var progress = BG_STATE.CANCELED.is(STATE) && <div>User aborted this request</div>;
     const packages = ITEMS.map( (pi, INDEX) => {
-                return <PackageItem key={'multi-' + INDEX} STATE={STATE} ID={ID} {...ITEMS[INDEX]} />;
+                return <PackageItem key={'multi-' + INDEX} {...{STATE, ID, WS_DEST_PATH}} {...ITEMS[INDEX]} />;
             });
 
     return (
@@ -244,7 +244,7 @@ function PackageHeader({ID, Title, progress, STATE}) {
 }
 
 function PackageItem(progress) {
-    const {SINGLE, ID, INDEX, STATE, finalCompressedBytes, processedBytes, totalBytes, processedFiles, totalFiles, url, downloaded} = progress;
+    const {SINGLE, ID, INDEX, STATE, WS_DEST_PATH, finalCompressedBytes, processedBytes, totalBytes, processedFiles, totalFiles, url, downloaded} = progress;
     const doDownload = () => {
         var bgStatus = set({ID}, ['ITEMS', INDEX, 'downloaded'], DownloadProgress.WORKING);
         dispatchBgStatus(bgStatus);
@@ -267,10 +267,14 @@ function PackageItem(progress) {
     const finalSize = Math.round(Math.max(finalCompressedBytes/1024/1024,1));
     const dlmsg = SINGLE ? 'Download Now' : `Download Part #${INDEX+1}`;
 
+    const action = WS_DEST_PATH
+                   ? <div className='BGMon__packageItem--info'> Downloaded to Workspace </div>
+                   : <div className='BGMon__packageItem--url' onClick={doDownload}>{dlmsg}</div>;
+
     if (isSuccess(STATE) || pct === 100) {      // because when there is only 1 item, state is set to success but pct does not calculate to 100%
         return (
             <div className='BGMon__packageItem'>
-                <div className='BGMon__packageItem--url' onClick={doDownload}>{dlmsg}</div>
+                {action}
                 <div style={{display: 'inline-flex', alignItems: 'center'}}>
                     <div style={{marginRight: 3}}>{`${finalSize} MB`}</div>
                     <div style={{width: 15}}>

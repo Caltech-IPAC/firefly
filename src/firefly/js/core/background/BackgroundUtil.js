@@ -187,6 +187,7 @@ function bgTracker(action, cancelSelf, params={}) {
     const bgStatus = bgStatusTransform(action.payload || {});
     const {STATE, ID} = bgStatus;
     if (ID === bgID) {
+        dispatchComponentStateChange(key, {bgStatus});
         switch (action.type) {
             case BG_STATUS:
                 if (isDone(STATE)) {

@@ -14,7 +14,7 @@ import {getWorkspaceList, isAccessWorkspace} from '../visualize/WorkspaceCntlr.j
 import {WorkspaceSave} from './WorkspaceViewer.jsx';
 import {useStoreConnector} from './SimpleComponent.jsx';
 import {dispatchWorkspaceUpdate, getWorkspaceErrorMsg} from '../visualize/WorkspaceCntlr.js';
-import {getWorkspaceConfig} from '../visualize/WorkspaceCntlr';
+import {getWorkspaceConfig} from '../visualize/WorkspaceCntlr.js';
 
 export const LOCALFILE = 'isLocal';
 export const WORKSPACE = 'isWs';
@@ -29,20 +29,21 @@ export const WORKSPACE = 'isWs';
 /*
  * A selection pane used for saving a file either to local disk or workspace.
  * If workspace is not used, that option is not shown and only Save As is displayed.
+ * The magic keys below are used in other places to mean what is used here.  It cannot be replace with arbitrary keys.
  * There are 3 values that may come out of this selection pane.
- * 1. where it should be saved(isLocal or isWs).  default keyed as 'fileLocation'
- * 2. what is should be save as.  default keyed as 'fileName'
- * 3. if workspace, path to the folder to save it to.  default keyed as 'wsSelect'
+ * 1. fileLocation: where it should be saved(isLocal or isWs)
+ * 2. BaseFileName: what is should be save as.
+ * 3. wsSelect:     if workspace, path to the folder to save it to.
  */
 export function WsSaveOptions (props) {
-    const {groupKey, style, wsSelectKey='wsSelect', labelWidth} = props;
+    const {groupKey, style, labelWidth} = props;
     let {fileLocProps={}, saveAsProps={}} = props;
 
-    saveAsProps = {fieldKey:'fileName', label:'Save as:', labelWidth, wrapperStyle:{margin: '3px 0'}, size:30, ...saveAsProps};
-    fileLocProps = {fieldKey:'fileLocation', label:'File Location:', labelWidth, ...fileLocProps};
+    saveAsProps = {label:'Save as:', labelWidth, wrapperStyle:{margin: '3px 0'}, size:30, ...saveAsProps};
+    fileLocProps = {label:'File Location:', labelWidth, ...fileLocProps};
 
-    const [loc, wsSelect] = useStoreConnector(  () => getFieldVal(groupKey, fileLocProps.fieldKey),
-                                                () => getFieldVal(groupKey, wsSelectKey));
+    const [loc, wsSelect] = useStoreConnector(  () => getFieldVal(groupKey, 'fileLocation'),
+                                                () => getFieldVal(groupKey, 'wsSelect'));
     useEffect(() => {
         dispatchWorkspaceUpdate();
     }, [loc]);
@@ -51,9 +52,10 @@ export function WsSaveOptions (props) {
 
     return (
         <div style={style}>
-            <ValidationField {...saveAsProps}/>
+            <ValidationField fieldKey='BaseFileName' forceReinit={true} {...saveAsProps}/>
             { useWs &&
                 <RadioGroupInputField
+                    fieldKey='fileLocation'
                     {...fileLocProps}
                     options={[
                         {label: 'Local File', value: LOCALFILE},
@@ -61,7 +63,7 @@ export function WsSaveOptions (props) {
                     ]}
                 />
             }
-            { useWs && (loc === WORKSPACE) && <ShowWorkspace {...{wsSelect, wsSelectKey}}/> }
+            { useWs && (loc === WORKSPACE) && <ShowWorkspace {...{wsSelect}}/> }
         </div>
     );
 
@@ -72,21 +74,20 @@ WsSaveOptions.propTypes = {
     style:          PropTypes.string,
     labelWidth:     PropTypes.number,
     fileLocProps:   PropTypes.object,       // properties to send into the File Location radio button..  see render function for defaults
-    saveAsProps:    PropTypes.object,       // properties to send into the Save As input box..  see render function for defaults
-    wsSelectKey:    PropTypes.string
+    saveAsProps:    PropTypes.object        // properties to send into the Save As input box..  see render function for defaults
 };
 
 
-function ShowWorkspace({wsSelect, wsSelectKey}) {
+function ShowWorkspace({wsSelect}) {
 
     const [wsList, isUpdating] = useStoreConnector(getWorkspaceList, isAccessWorkspace);
 
-    const content = isUpdating ? <div className='loading-mask'/>
+    const content = isUpdating ? <div className='loading-mask' style={{margin:-3}}/>
                     : isEmpty(wsList) ? <div style={{color:'maroon', fontStyle:'italic', padding:10}}> {'Workspace access error: ' + getWorkspaceErrorMsg()} </div>
-                    : <WorkspaceSave fieldKey={wsSelectKey} files={wsList} value={wsSelect} />;
+                    : <WorkspaceSave fieldKey='wsSelect' files={wsList} value={wsSelect} />;
 
     return (
-        <div style={{ border:'1px solid #eaeaea', padding:3, position:'relative', minHeight:60, minWidth:550}}>
+        <div style={{ border:'1px solid #eaeaea', padding:3, marginTop:5, position:'relative', overflow: 'auto', minHeight:60, maxHeight:400, minWidth:550}}>
             {content}
         </div>
     );

@@ -44,9 +44,9 @@ public class BackgroundInfoCacher {
      * @param baseFileName base name
      * @param title title
      */
-    public BackgroundInfoCacher(String key, String email, String baseFileName, String title, String dataTag, ServerEvent.EventTarget target) {
+    public BackgroundInfoCacher(String key, String email, String baseFileName, String title, String dataTag, String wsDestPath, ServerEvent.EventTarget target) {
         this(key);
-        updateInfo(new BackgroundInfo(null, email, baseFileName, title, dataTag, target, false));
+        updateInfo(new BackgroundInfo(null, email, baseFileName, title, dataTag, wsDestPath, target, false));
     }
 
     public static void fireBackgroundJobAdd(BackgroundStatus bgStat) {
@@ -176,6 +176,7 @@ public class BackgroundInfoCacher {
             bgStatus.setParam(ServerParams.TITLE, info.getTitle());
             bgStatus.setParam(ServerParams.EMAIL, info.getEmailAddress());
             bgStatus.setParam(BackgroundStatus.DATA_TAG, info.getDataTag());
+            bgStatus.setParam(BackgroundStatus.WS_DEST_PATH, info.getWorkspaceDestPath());
         }
     }
 
@@ -194,6 +195,7 @@ public class BackgroundInfoCacher {
                                         info.getBaseFileName(),
                                         info.getTitle(),
                                         info.getDataTag(),
+                                        info.getWorkspaceDestPath(),
                                         info.getEventTarget(),
                                         info.isCanceled());
             }

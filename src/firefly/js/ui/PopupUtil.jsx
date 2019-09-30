@@ -88,6 +88,13 @@ export function showInfoPopup(content, title='Information', isCopyable) {
     dispatchShowDialog(INFO_POPUP);
 }
 
+/**
+ * Hide the info popup
+ */
+export function hideInfoPopup() {
+    dispatchHideDialog(INFO_POPUP);
+}
+
 function makeContent(content, isCopyable) {
     return (
         <div style={{padding:5}}>

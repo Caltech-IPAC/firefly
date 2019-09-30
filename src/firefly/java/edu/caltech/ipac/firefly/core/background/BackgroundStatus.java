@@ -44,6 +44,7 @@ public class BackgroundStatus implements Serializable {
     public static final String FILE_PATH = "FILE_PATH";
     public static final String TOTAL_BYTES = "TOTAL_BYTES";
     public static final String DATA_TAG = "DataTag";
+    public static final String WS_DEST_PATH = "WS_DEST_PATH";
 
     // most likely not used anymore  <---
     public static final String PUSH_DATA_BASE = "PUSH_DATA_#";

@@ -123,3 +123,8 @@
 .BGMon__packageItem--url:hover {
     cursor: pointer;
 }
+
+.BGMon__packageItem--info {
+    color: dimgray;
+    margin: auto 4px;
+}
