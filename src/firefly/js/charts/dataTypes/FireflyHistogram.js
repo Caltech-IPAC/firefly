@@ -120,7 +120,7 @@ function fetchData(chartId, traceNum, tablesource) {
             // set default title if it's the first trace
             // and no title is set by the user
             if (data && data.length===1) {
-                const xAxisLabel = get(layout, 'xaxis.title');
+                const xAxisLabel = get(layout, 'xaxis.title.text');
                 if (!xAxisLabel) {
                     // default axis label for the first trace
                     let xLabel = get(options, 'columnExpression', '');
@@ -128,11 +128,11 @@ function fetchData(chartId, traceNum, tablesource) {
                     const xUnit = get(xColumn, 'units', '');
                     //remove surrounding quotes, if any
                     if (xLabel.startsWith('"')) { xLabel = stripColumnNameQuotes(xLabel); }
-                    changes['layout.xaxis.title'] = xLabel + (xUnit ? ` (${xUnit})` : '');
+                    changes['layout.xaxis.title.text'] = xLabel + (xUnit ? ` (${xUnit})` : '');
                 }
-                const yAxisLabel = get(layout, 'yaxis.title');
+                const yAxisLabel = get(layout, 'yaxis.title.text');
                 if (!yAxisLabel) {
-                    changes['layout.yaxis.title'] = 'Number';
+                    changes['layout.yaxis.title.text'] = 'Number';
                 }
             }
 

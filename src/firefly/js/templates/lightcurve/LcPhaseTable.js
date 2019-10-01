@@ -56,9 +56,9 @@ export function uploadPhaseTable(tbl, flux) {
                     mode: 'markers'
                 }],
                 layout: {
-                    title: plotTitle,
+                    title: {text: plotTitle},
                     xaxis: {showgrid: true, range: [undefined, 2]},
-                    yaxis: {autorange: 'reversed', showgrid: true, title: flux}
+                    yaxis: {autorange: 'reversed', showgrid: true, title: {text: flux}}
                 }
             };
             dispatchChartAdd(dispatchParams);

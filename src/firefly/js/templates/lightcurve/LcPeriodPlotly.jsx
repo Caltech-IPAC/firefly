@@ -319,34 +319,27 @@ class PhaseFoldingChartInternal extends PureComponent {
             }],
             plotlyLayout: {
                 hovermode: 'closest',
-                title: period ? `period=${period} day` : 'period=',
-                titlefont: {size: 16},
+                title: {text: period ? `period=${period} day` : 'period=', font: {size: 16}},
                 xaxis: {
-                    title: `${LC.PHASE_CNAME}`,
+                    title: {text: `${LC.PHASE_CNAME}`, font: {size: 12}},
                     //range: [minPhase - Margin, minPhase + 2.0 + Margin],
                     gridLineWidth: 1,
                     type: 'linear',
                     lineColor: '#e9e9e9',
                     zeroline: false,
-                    titlefont: {
-                          size: 12
-                        },
                     tickfont: {
                         size: 12
                     },
                     exponentformat:'e'
                 },
                 yaxis: {
-                    title: `${flux} (mag)`,
+                    title: {text: `${flux} (mag)`, font: {size: 12}},
                     gridLineWidth: 1,
                     type: 'linear',
                     lineColor: '#e9e9e9',
                     // tickwidth: 1,
                     // ticklen: 1,
                     autorange: 'reversed',
-                    titlefont: {
-                        size: 12
-                    },
                     exponentformat:'e'
                 },
                 margin: {
