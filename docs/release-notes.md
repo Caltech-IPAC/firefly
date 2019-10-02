@@ -29,7 +29,8 @@ See Firefly docker guidelines [here](firefly-docker.md).
 - WCS Matching has have been completely revamped.  ([Firefly-75](https://github.com/Caltech-IPAC/firefly/pull/825),[Firefly-173](https://github.com/Caltech-IPAC/firefly/pull/857))
     - You can now either match or match and lock
     - Matching is by WCS, Target, Image corner, or image Center
--  TPV Projection fixed ([IRSA-2895](https://github.com/Caltech-IPAC/firefly/pull/819))
+- TPV Projection fixed ([IRSA-2895](https://github.com/Caltech-IPAC/firefly/pull/819))
+- User can now navigate to HiPS or FITS position from the toolbar, using centering dropdown menu ([Firefly-91](https://github.com/Caltech-IPAC/firefly/pull/831))
 
 ##### _API_
 - nothing of interest
