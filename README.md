@@ -1,11 +1,11 @@
 # Firefly
 
-Firefly is IPAC's Advanced Astronomy WEB UI Framework. It is for building a web-based Front end to access science archives. It provides sophisticated interactive data visualization capabilities. Our efforts to create a tightly integrated and user-friendly interface have generated numerous positive feedback from scientists. Users can browse and understand large volumes of archive data in a fraction of the time it took in the past.
 
 Note - if you are pulling, look at the [branches section](#branches)
 
-
 [Release Notes are Here](docs/release-notes.md).
+
+Firefly builds are available on Docker and the notes for using it are on the [Docker Page](https://hub.docker.com/r/ipac/firefly).
 
 
 #### Firefly Framework
