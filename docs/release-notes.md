@@ -11,7 +11,7 @@
 - Support for Spectral images and cubes, wavelength readout ([Firefly-73](https://github.com/Caltech-IPAC/firefly/pull/810))
 
 ##### _API_
-- nothing of interest
+- Plotly.js charting library was updated from version 1.38.3 to version 1.49.4. Plotly.js 1.43 converted `title` properties (e.g. `layout.title`) from strings into objects that contain `text` property along with new title placement properties `x`, `y`, `xref`, `yref`, `xanchor`, `yanchor` and `pad`. It also moved existing `title*` properties (e.g. `layout.titlefont`) under the `title` object (e.g. `layout.title.font`). See see [plotly.js change log](https://github.com/plotly/plotly.js/blob/master/CHANGELOG.md#1494----2019-08-22) for more information. ([Firefly-266](https://github.com/Caltech-IPAC/firefly/pull/883))
 
 
 ### Version 2019.2
