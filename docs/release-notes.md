@@ -2,6 +2,8 @@
 
 Firefly builds and the notes for using running it are on the [Docker Page](https://hub.docker.com/r/ipac/firefly).
 
+See Firefly docker guidelines [here](firefly-docker.md).
+
 ### Version 2019.3 (unreleased, current development)
 
 ##### _General_
