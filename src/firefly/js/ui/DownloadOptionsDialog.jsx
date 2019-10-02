@@ -205,18 +205,3 @@ export function fileNameValidator() {
     };
 }
 
-export function validateFileName(wsSelect, fileName) {
-    if (isNil(wsSelect)) {
-        return false;
-    }
-    const fullPath = getWorkspacePath(wsSelect, fileName);
-
-    if (isExistWorspaceFile(fullPath)) {
-        workspacePopupMsg(`the file, ${fullPath}, already exists in workspace, please change the file name.`,
-                          'Save to workspace');
-        return false;
-    } else {
-        return true;
-    }
-
-}

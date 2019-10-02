@@ -4,6 +4,8 @@
 package edu.caltech.ipac.firefly.server.packagedata;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.server.ws.WsServerParams;
+import edu.caltech.ipac.firefly.server.ws.WsServerUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
@@ -27,6 +29,8 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static edu.caltech.ipac.firefly.server.ws.WsServerParams.WS_SERVER_PARAMS.CURRENTRELPATH;
 
 /**
  * User: roby
@@ -149,6 +153,25 @@ public class Packager {
                 bgStat =  _estimateStat.cloneWithState(BackgroundState.FAIL);
             }
         }
+
+        // handle 'save to Workspace' option:  pushes files to workspace
+        String wsDestPath = backgroundInfoCacher.getPackageInfo().getWorkspaceDestPath();
+        if (!StringUtils.isEmpty(wsDestPath)) {
+            String fname = backgroundInfoCacher.getBaseFileName().replace("$.zip", "");
+            for (int i=0; i< bundleList.size(); i++) {
+                File zipFile = getZipFile(_packageID, i);
+                String wsFilePath = wsDestPath + fname + (bundleList.size() > 1 ? "-" + (i+1) :"") + ".zip";
+                try {
+                    new WsServerUtils().putFile(
+                            new WsServerParams().set(CURRENTRELPATH, wsFilePath),
+                            zipFile);
+                } catch (IOException e) {
+                    Logger.error(e);
+                    bgStat =  _estimateStat.cloneWithState(BackgroundState.FAIL);
+                }
+            }
+        }
+
         backgroundInfoCacher.setStatus(bgStat);
     }
 

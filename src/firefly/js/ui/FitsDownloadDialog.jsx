@@ -33,10 +33,10 @@ import {isImage} from '../visualize/WebPlot.js';
 import {makeRegionsFromPlot} from '../visualize/region/RegionDescription.js';
 import {saveDS9RegionFile} from '../rpc/PlotServicesJson.js';
 import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
-import {DownloadOptionsDialog, fileNameValidator, getTypeData, validateFileName,
+import {DownloadOptionsDialog, fileNameValidator, getTypeData,
         WORKSPACE, LOCALFILE} from './DownloadOptionsDialog.jsx';
 import {isValidWSFolder, WS_SERVER_PARAM, getWorkspacePath, isWsFolder, dispatchWorkspaceUpdate} from '../visualize/WorkspaceCntlr.js';
-import {doDownloadWorkspace, workspacePopupMsg} from './WorkspaceViewer.jsx';
+import {doDownloadWorkspace, workspacePopupMsg, validateFileName} from './WorkspaceViewer.jsx';
 import {ServerParams} from '../data/ServerParams.js';
 import {INFO_POPUP, showInfoPopup} from './PopupUtil.jsx';
 import {getWorkspaceConfig} from '../visualize/WorkspaceCntlr.js';

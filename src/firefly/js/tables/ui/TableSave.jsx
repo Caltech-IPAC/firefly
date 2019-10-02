@@ -14,8 +14,8 @@ import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {CompleteButton} from '../../ui/CompleteButton.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
-import {doDownloadWorkspace, workspacePopupMsg} from '../../ui/WorkspaceViewer.jsx';
-import {DownloadOptionsDialog, fileNameValidator, getTypeData, validateFileName,
+import {doDownloadWorkspace, workspacePopupMsg, validateFileName} from '../../ui/WorkspaceViewer.jsx';
+import {DownloadOptionsDialog, fileNameValidator, getTypeData,
         WORKSPACE, LOCALFILE} from '../../ui/DownloadOptionsDialog.jsx';
 import {WS_SERVER_PARAM, isWsFolder, isValidWSFolder,
         getWorkspacePath, dispatchWorkspaceUpdate} from  '../../visualize/WorkspaceCntlr.js';

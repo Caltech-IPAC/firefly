@@ -475,6 +475,7 @@ public class BackgroundEnv {
         private final String _baseFileName;
         private final String _title;
         private final String _dataTag;
+        private final String _wsDestPath;
         private final String _email;
         private final String _dataSource;
         private final RequestOwner _requestOwner;
@@ -485,26 +486,18 @@ public class BackgroundEnv {
                                    String baseFileName,
                                    String title,
                                    String dataTag,
+                                   String wsDestPath,
                                    String email,
                                    String dataSource,
                                    RequestOwner requestOwner) {
-            this(worker,baseFileName,title,dataTag,email,dataSource,requestOwner,null,null);
-        }
-
-        public BackgroundProcessor(Worker worker,
-                                   String title,
-                                   String dataTag,
-                                   String dataSource,
-                                   RequestOwner requestOwner,
-                                   String bid,
-                                   ServerEvent.EventTarget target) {
-            this(worker,null,title,dataTag,null,dataSource,requestOwner,bid,target);
+            this(worker,baseFileName,title,dataTag,wsDestPath,email,dataSource,requestOwner,null,null);
         }
 
         public BackgroundProcessor(Worker worker,
                                    String baseFileName,
                                    String title,
                                    String dataTag,
+                                   String wsDestPath,
                                    String email,
                                    String dataSource,
                                    RequestOwner requestOwner,
@@ -515,10 +508,11 @@ public class BackgroundEnv {
             _baseFileName= baseFileName;
             _title= title;
             _dataTag = dataTag;
+            _wsDestPath = wsDestPath;
             _email= email;
             _dataSource= dataSource;
             _requestOwner= requestOwner;
-            piCacher= new BackgroundInfoCacher(_bid, _email, _baseFileName, _title, _dataTag, evTarget); // force a cache entry here
+            piCacher= new BackgroundInfoCacher(_bid, _email, _baseFileName, _title, _dataTag, _wsDestPath, evTarget); // force a cache entry here
         }
 
 

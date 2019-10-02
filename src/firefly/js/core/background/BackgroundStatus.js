@@ -41,6 +41,7 @@ export const Keys= {
     FILE_PATH: 'FILE_PATH',
     TOTAL_BYTES: 'TOTAL_BYTES',
     DATA_TAG: 'DataTag',             // a tag describing the content of the returned data.  ie. 'catalog', 'imagemeta'
+    WS_DEST_PATH: 'WS_DEST_PATH',
     PUSH_DATA_BASE: 'PUSH_DATA_#',
     PUSH_TYPE_BASE: 'PUSH_TYPE_#',
     PUSH_CNT:       'PUSH_CNT',

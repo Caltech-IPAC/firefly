@@ -14,6 +14,7 @@ import edu.caltech.ipac.firefly.server.query.SearchProcessor;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -164,9 +165,14 @@ public class PackageMaster  {
 
         PackagingWorker worker= new PackagingWorker(processor,req);
         String dataTag = req.getSearchRequest() != null ? req.getSearchRequest().getMeta(BackgroundStatus.DATA_TAG) : null;
+
+        String fileLoc = req.getParam(DownloadRequest.FILE_LOC);
+        String wsDestPath = StringUtils.isEmpty(fileLoc) ? null : req.getParam(DownloadRequest.WS_DEST_PATH);
+
         BackgroundEnv.BackgroundProcessor backProcess=
                 new BackgroundEnv.BackgroundProcessor( worker,  req.getBaseFileName(),
                                                        req.getTitle(), dataTag,
+                                                       wsDestPath,
                                                        req.getEmail(),
                                                        req.getDataSource(),
                                                        ServerContext.getRequestOwner());

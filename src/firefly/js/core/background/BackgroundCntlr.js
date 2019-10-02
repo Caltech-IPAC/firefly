@@ -2,19 +2,24 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import React from 'react';
 import {set, get, has, pick, isNil} from 'lodash';
 
 import {flux} from '../../Firefly.js';
 import {smartMerge} from '../../tables/TableUtil.js';
-import {updateDelete, updateSet, download} from '../../util/WebUtil.js';
+import {updateDelete, updateSet, download, parseUrl} from '../../util/WebUtil.js';
 import {showBackgroundMonitor} from './BackgroundMonitor.jsx';
 import {isSuccess, getDataTagMatcher} from './BackgroundUtil.js';
 import * as SearchServices from '../../rpc/SearchServicesJson.js';
 import {Keys} from './BackgroundStatus.js';
-import * as TblUtil from '../../tables/TableUtil';
 import {dispatchComponentStateChange} from '../ComponentCntlr';
 import {getErrMsg, isDone, trackBackgroundJob} from './BackgroundUtil.js';
-import {showInfoPopup} from '../../ui/PopupUtil.jsx';
+import {showInfoPopup, hideInfoPopup} from '../../ui/PopupUtil.jsx';
+import {WORKSPACE} from '../../ui/WorkspaceSelectPane.jsx';
+import {doDownloadWorkspace, validateFileName} from '../../ui/WorkspaceViewer.jsx';
+import {WS_SERVER_PARAM, getWorkspacePath, dispatchWorkspaceUpdate} from '../../visualize/WorkspaceCntlr.js';
+import {ServerParams} from '../../data/ServerParams.js';
+import {DEF_BASE_URL} from '../JsonUtils.js';
 
 export const BACKGROUND_PATH = 'background';
 
@@ -163,7 +168,7 @@ function bgJobCancel(action) {
 
 function bgSetEmail(action) {
     return (dispatch) => {
-        const {email, enableEmail} = action.payload;
+        const {email} = action.payload;
         if (!isNil(email)) {
             SearchServices.setEmail(email);
         }
@@ -173,12 +178,39 @@ function bgSetEmail(action) {
 
 function bgPackage(action) {
     return (dispatch) => {
-        const {dlRequest, searchRequest, selectionInfo, bgKey} = action.payload;
+        const {dlRequest={}, searchRequest, selectionInfo, bgKey=''} = action.payload;
+        let {fileLocation, wsSelect, BaseFileName} = dlRequest;
+
+        BaseFileName = BaseFileName.endsWith('.zip') ? BaseFileName : BaseFileName.trim() + '.zip';
+        if (fileLocation === WORKSPACE) {
+            if (!validateFileName(wsSelect, BaseFileName)) return false;
+        }
+
+        const showBgMonitor = () => {
+            showBackgroundMonitor();
+            hideInfoPopup();
+        };
 
         const onComplete = (bgStatus) => {
-            const url = get(bgStatus, ['ITEMS', 0, 'url']);
+            const url = get(bgStatus, ['ITEMS', 0, 'url']);     // on immediate download, there can only be one item(file).
             if (url && isSuccess(get(bgStatus, 'STATE'))) {
-                download(url);
+                if (fileLocation === WORKSPACE) {
+                    // file(s) are already pushed to workspace on the server-side.  Just update the UI.
+                    dispatchWorkspaceUpdate();
+                } else {
+                    if (get(bgStatus, 'ITEMS.length') > 1) {
+                        sentToBg(bgStatus);
+                        const msg = (
+                            <div style={{fontStyle: 'italic', width: 275}}>This download resulted in multiple files.<br/>
+                                See <div onClick={showBgMonitor} className='clickable' style={{color: 'blue', display: 'inline'}} >Background Monitor</div> for download options
+                            </div>
+                        );
+                        showInfoPopup(msg, 'Multipart download');
+
+                    } else {
+                        download(url);
+                    }
+                }
             } else {
                 showInfoPopup(getErrMsg(bgStatus));
             }
@@ -188,7 +220,7 @@ function bgPackage(action) {
             dispatchJobAdd(bgStatus);
         };
 
-        bgKey && dispatchComponentStateChange(bgKey, {inProgress:true, bgStatus:undefined});
+        dispatchComponentStateChange(bgKey, {inProgress:true, bgStatus:undefined});
         SearchServices.packageRequest(dlRequest, searchRequest, selectionInfo)
             .then((bgStatus) => {
                 if (bgStatus) {
@@ -206,6 +238,21 @@ function bgPackage(action) {
     };
 }
 
+
+function sendToWorkspace(url, BaseFileName, wsSelect) {
+
+    const file = get(parseUrl(url), 'searchObject.file');    // the server's path of the file to send to workspace
+
+    const params = {
+        [WS_SERVER_PARAM.currentrelpath.key]: getWorkspacePath(wsSelect, BaseFileName),
+        [WS_SERVER_PARAM.newpath.key]: BaseFileName,
+        file,
+        [ServerParams.COMMAND]: ServerParams.WS_PUT_IMAGE_FILE,
+        [WS_SERVER_PARAM.should_overwrite.key]: true
+    };
+
+    doDownloadWorkspace(DEF_BASE_URL, {params});
+}
 
 function reducer(state={}, action={}) {
 

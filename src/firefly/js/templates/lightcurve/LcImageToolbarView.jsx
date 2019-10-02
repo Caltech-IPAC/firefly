@@ -40,13 +40,6 @@ const closeButtonStyle= {
     padding: '1px 12px 0 1px'
 };
 
-var options= [];
-
-for(var i= 1; (i<=LC.MAX_IMAGE_CNT); i+=2) {
-    options.push({label: String(i), value: String(i)});
-}
-
-
 export function LcImageToolbarView({activePlotId, viewerId, viewerPlotIds, layoutType, dlAry, tableId, closeFunc=null}) {
     const converter = getConverterData();
     if (!converter) { return null; }
@@ -94,6 +87,11 @@ export function LcImageToolbarView({activePlotId, viewerId, viewerPlotIds, layou
         return `Sorted by column: ${sInfo.sortColumns.join(',')} `+
                ` ${orderInfo[sInfo.direction]}`;
     };
+
+    const options= [];
+    for(var i= 1; (i<=LC.MAX_IMAGE_CNT); i+=2) {
+        options.push({label: String(i), value: String(i)});
+    }
 
     return (
         <div>

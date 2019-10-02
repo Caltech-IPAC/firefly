@@ -26,6 +26,7 @@ class BackgroundInfo implements Serializable {
     private String baseFileName;
     private String title;
     private String dataTag;
+    private String workspaceDestPath;           // if this is not null, push the packaged files to workspace
     private ServerEvent.EventTarget eventTarget;
 //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -36,6 +37,7 @@ class BackgroundInfo implements Serializable {
                           String baseFileName,
                           String title,
                           String dataTag,
+                          String workspaceDestPath,
                           ServerEvent.EventTarget eventTarget,
                           boolean canceled) {
         this.bgStat= bgStat;
@@ -45,6 +47,8 @@ class BackgroundInfo implements Serializable {
         this.dataTag = dataTag;
         this.eventTarget= eventTarget;
         this.title = title;
+        this.workspaceDestPath = workspaceDestPath;
+
     }
 
 //======================================================================
@@ -80,6 +84,10 @@ class BackgroundInfo implements Serializable {
 
     public String getTitle() { return title; }
 
+    public String getWorkspaceDestPath() {
+        return workspaceDestPath;
+    }
+
     public void setTitle(String title) {
         this.title = title;
         bgStat.setParam(BackgroundStatus.TITLE, title);
@@ -87,10 +95,6 @@ class BackgroundInfo implements Serializable {
 
     public String getDataTag() {
         return dataTag;
-    }
-
-    public void setDataTag(String dataTag) {
-        this.dataTag = dataTag;
     }
 
     public ServerEvent.EventTarget getEventTarget() { return eventTarget; }

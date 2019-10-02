@@ -24,7 +24,6 @@ import {LcImageViewerContainer} from './LcImageViewerContainer.jsx';
 import {SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
 import {LC, getViewerGroupKey, updateLayoutDisplay} from './LcManager.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
-import {ValidationField} from '../../ui/ValidationField.jsx';
 import {LcImageToolbar} from './LcImageToolbar.jsx';
 import {DownloadOptionPanel, DownloadButton} from '../../ui/DownloadDialog.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
@@ -37,8 +36,10 @@ import {logError} from '../../util/WebUtil.js';
 import {getConverter, getMissionName,  DL_DATA_TAG} from './LcConverterFactory.js';
 import {convertAngle} from '../../visualize/VisUtil.js';
 
-const resultItems = ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'searchDesc', 'images',
-    LC.MISSION_DATA, LC.GENERAL_DATA, 'periodState'];
+const resultItems = () => {
+    return ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'searchDesc', 'images',
+            LC.MISSION_DATA, LC.GENERAL_DATA, 'periodState'];
+};
 
 
 export class LcResult extends PureComponent {
@@ -46,7 +47,7 @@ export class LcResult extends PureComponent {
     constructor(props) {
         super(props);
 
-        this.state = Object.assign({}, pick(getLayouInfo(), resultItems));
+        this.state = Object.assign({}, pick(getLayouInfo(), resultItems()));
     }
 
     componentDidMount() {
@@ -61,7 +62,7 @@ export class LcResult extends PureComponent {
 
     storeUpdate() {
         if (this.iAmMounted) {
-            const nextState = pick(getLayouInfo(), resultItems);
+            const nextState = pick(getLayouInfo(), resultItems());
             this.setState(nextState);
         }
     }
@@ -115,6 +116,28 @@ export class LcResult extends PureComponent {
     }
 }
 
+export function defaultDownloadPanel(mission='', cutoutSize, addtlParams={}) {
+    mission = mission.replace(/[\/ ]/g, '_');       // clean up mission description to be used for save as value.
+    return (
+        <DownloadButton>
+            <DownloadOptionPanel
+                groupKey = {mission}
+                dataTag = {DL_DATA_TAG}
+                cutoutSize={cutoutSize}
+                title={'Image Download Options'}
+                dlParams={{
+                    MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each wise image is ~64mb
+                    TitlePrefix: mission,
+                    BaseFileName: `${mission}_Files`,
+                    DataSource: `${mission} images`,
+                    FileGroupProcessor: 'LightCurveFileGroupsProcessor',
+                    ...addtlParams
+                }}/>
+        </DownloadButton>
+    );
+}
+
+
 const ExpandedView = ({expanded, imagePlot, xyPlot, tables}) => {
     const view = expanded === LO_VIEW.tables ? tables
         : expanded === LO_VIEW.xyPlots ? xyPlot
@@ -136,38 +159,7 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
 
     // convert the default Cutout size in arcmin to deg for WebPlotRequest, expected to be string in download panel
     const cutoutSizeInDeg = (convertAngle('arcmin','deg', cutoutSize)).toString();
-    const currentTime =  (new Date()).toLocaleString('en-US', { hour12: false });
-    const style = {width: 223};
-    const defaultOptPanel = (m, c) => {
-        return (
-            <DownloadButton>
-                <DownloadOptionPanel
-                    groupKey = {mission}
-                    dataTag = {DL_DATA_TAG}
-                    cutoutSize={c}
-                    title={'Image Download Options'}
-                    style = {{width: 400}}
-                    dlParams={{
-                        MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each wise image is ~64mb
-                        FilePrefix: `${m}_Files`,
-                        BaseFileName: `${m}_Files`,
-                        DataSource: `${m} images`,
-                        FileGroupProcessor: 'LightCurveFileGroupsProcessor'
-                    }}>
-                    <ValidationField
-                        style={style}
-                        initialState={{
-                            value: `${m}_Files: ${currentTime}`,
-                            label: `${m}:`
-                        }}
-                        fieldKey='Title'
-                        labelWidth={110}/>
-                </DownloadOptionPanel>
-            </DownloadButton>
-        );
-    };
-
-    const downloaderOptPanel = convertData.downloadOptions || defaultOptPanel;
+    const downloaderOptPanel = convertData.downloadOptions || defaultDownloadPanel;
 
     let tsView = (err) => {
 

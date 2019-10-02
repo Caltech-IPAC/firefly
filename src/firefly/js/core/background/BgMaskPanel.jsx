@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import {get} from 'lodash';
 
 import {dispatchJobAdd} from './BackgroundCntlr.js';
 import {getComponentState} from '../../core/ComponentCntlr.js';
@@ -23,15 +24,20 @@ export const BgMaskPanel = React.memo(({componentKey, style={}}) => {
         bgStatus && dispatchJobAdd(bgStatus);
     };
     const maskStyle = {...defMaskStyle, ...style};
+    const parts = get(bgStatus, 'ITEMS.length', 0);
+    const msg = 'Working...' + (parts > 1 ? ` part #${parts}` : '');
 
     if (inProgress) {
         return (
             <div style={maskStyle}>
                 <div className='loading-mask'/>
-                {bgStatus &&
-                <div style={{display: 'flex', alignItems: 'center'}}>
-                    <button type='button' style={maskButton} className='button std' onClick={sendToBg}>Send to background</button>
-                </div>
+                { bgStatus &&
+                    <div style={{display: 'flex', alignItems: 'center'}}>
+                        <div style={maskButton} >
+                            <div style={{textAlign: 'center', margin: 5, fontSize: 'larger', fontStyle: 'italic'}}>{msg}</div>
+                            <div className='button large' onClick={sendToBg}>Send to background</div>
+                        </div>
+                    </div>
                 }
             </div>
         );
@@ -56,10 +62,8 @@ const defMaskStyle = {
         };
 
 const maskButton =  {
-            zIndex: 1,
-            marginTop: '80px',
-            border: '1px solid rgb(125,125,125)',
-            boxSizing: 'content-box',
-            backgroundColor: 'rgb(220,220,220)',
-            borderRadius: 4
-        };
+    marginTop: '95px',
+    position: 'relative',
+    color: 'white'
+
+};

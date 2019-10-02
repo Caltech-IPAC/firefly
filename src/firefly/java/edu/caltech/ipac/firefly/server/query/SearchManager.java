@@ -158,6 +158,7 @@ public class SearchManager {
         BackgroundEnv.BackgroundProcessor processor=
                               new BackgroundEnv.BackgroundProcessor(worker,  null,
                                                                     title, request.getMeta(BackgroundStatus.DATA_TAG),
+                                                                    null,                                   // used for workspace's put.. n/a here.
                                                                     email, request.getRequestId(),
                                                                     ServerContext.getRequestOwner() );
         return BackgroundEnv.backgroundProcess(waitMillis, processor, BackgroundStatus.BgType.SEARCH);

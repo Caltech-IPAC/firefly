@@ -1,15 +1,12 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {get,  set, isNil} from 'lodash';
-import {RadioGroupInputField} from '../../../ui/RadioGroupInputField.jsx';
 import {getCellValue, getTblById, getColumnIdx, smartMerge, getColumns, COL_TYPE} from '../../../tables/TableUtil.js';
 import {makeFileRequest} from '../../../tables/TableRequestUtil.js';
 import {sortInfoString} from '../../../tables/SortInfo.js';
 import {getInitialDefaultValues,renderMissionView,validate,getTimeAndYColInfo,fileUpdateOnTimeColumn,setValueAndValidator} from '../LcUtil.jsx';
 import {LC} from '../LcManager.js';
-import {DownloadOptionPanel, DownloadButton} from '../../../ui/DownloadDialog.jsx';
-import {ValidationField} from '../../../ui/ValidationField.jsx';
-import {DL_DATA_TAG} from '../LcConverterFactory.js';
+import {defaultDownloadPanel} from '../LcResult.jsx';
 
 
 const labelWidth = 80;
@@ -157,36 +154,12 @@ export function ptfOnFieldUpdate(fieldKey, value) {
  * @returns {XML}
  */
 export function ptfDownloaderOptPanel (mission, cutoutSizeInDeg) {
-    const currentTime = (new Date()).toLocaleString('en-US', { hour12: false });
-
-    const style = {width: 167};
-    return (
-        <DownloadButton>
-            <DownloadOptionPanel
-                groupKey = {mission}
-                dataTag = {DL_DATA_TAG}
-                cutoutSize={cutoutSizeInDeg}
-                title={'Image Download Options'}
-                dlParams={{
-                    MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each ptf image is ~33mb
-                    FilePrefix: `${mission}_Files`,
-                    BaseFileName: `${mission}_Files`,
-                    DataSource: `${mission} images`,
+    return defaultDownloadPanel(mission, cutoutSizeInDeg,
+    {
                     FileGroupProcessor: 'PtfLcDownload',
                     ProductLevel:'l1',
                     schema:'images',
                     table:'level1'
-                }}>
-                <ValidationField
-                    style={style}
-                    initialState={{
-                        value: `${mission}_Files: ${currentTime}`,
-                        label: 'PTF:'
-                    }}
-
-                    fieldKey='Title'
-                    labelWidth={110}/>
-            </DownloadOptionPanel>
-        </DownloadButton>
-    );
+                }
+        );
 }
