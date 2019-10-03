@@ -4,7 +4,7 @@
 
 import React, {useCallback, useState} from 'react';
 import PropTypes from 'prop-types';
-import {set, cloneDeep, get} from 'lodash';
+import {set, cloneDeep, get, omit} from 'lodash';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import {dispatchShowDialog, dispatchHideDialog} from '../core/ComponentCntlr.js';
@@ -76,7 +76,7 @@ export function DownloadButton(props) {
     const selectInfoCls = SelectInfo.newInstance(selectInfo);
 
     const onClick = useCallback(() => {
-        if (selectInfoCls.getSelectedCount()) {
+        if (selectInfoCls.getSelectedCount() || props.checkSelectedRow===false) {
             if(hasOnlyProprietaryData(getTblById(tbl_id))){
                 showInfoPopup('You do not have permission to download the selected data set(s).', 'Private Data Selected');
             }else if(!hasOnlyProprietaryData()){
@@ -103,9 +103,13 @@ export function DownloadButton(props) {
 DownloadButton.propTypes = {
     tbl_id      : PropTypes.string,
     tbl_grp     : PropTypes.string,
+    checkSelectedRow:PropTypes.bool
 };
 
 
+DownloadButton.defaultProps = {
+    checkSelectedRow:true
+};
 const noticeCss = {
     backgroundColor: 'beige',
     color: 'brown',
@@ -121,7 +125,7 @@ let dlTitleIdx = 0;
 const newBgKey = () => 'DownloadOptionPanel-' + Date.now();
 
 export function DownloadOptionPanel (props) {
-    const {groupKey, cutoutSize, help_id, children, style, title, tbl_id, dlParams, dataTag} = props;
+    const {groupKey, cutoutSize, help_id, children, style, title, tbl_id, dlParams, dataTag, updateSearchRequest=null, updateDownloadRequest=null} = props;
     const { showZipStructure=true, showEmailNotify=true, showFileLocation=true, showTitle=true } = props;
 
     const labelWidth = 110;
@@ -129,13 +133,32 @@ export function DownloadOptionPanel (props) {
     const [bgKey, setBgKey] = useState(newBgKey());
 
     const onSubmit = useCallback((formInputs={}) => {
-        var {request, selectInfo} = getTblById(tbl_id);
+
+        let {request,  selectInfo} = getTblById(tbl_id);
         const {FileGroupProcessor} = dlParams;
+
         formInputs.wsSelect = formInputs.wsSelect && formInputs.wsSelect.replace(WS_HOME, '');
-        const dreq = makeTblRequest(FileGroupProcessor, formInputs.Title, Object.assign(dlParams, {cutoutSize}, formInputs));
-        request = set(cloneDeep(request), DataTagMeta, dataTag);
+        //make a download request
+        let dlRequest = makeTblRequest(FileGroupProcessor, formInputs.Title, Object.assign(dlParams, {cutoutSize}, formInputs));
+
+        //make a search request
+        let searchRequest = set(cloneDeep(request), DataTagMeta, dataTag);
+
+        /*If a calling application has its own parameters to be added, deleted or updated, those parameters
+          can be provided by using getOverrideRequestParams function.
+         */
+
+        const allParams =  Object.assign(dlParams, formInputs);
+
+        if (updateSearchRequest){ //update search request
+            searchRequest = updateSearchRequest(tbl_id, allParams, searchRequest);
+        }
+        if (updateDownloadRequest){ //update download request
+            dlRequest = updateDownloadRequest(tbl_id, allParams, dlRequest);
+        }
+
         const akey = newBgKey();
-        dispatchPackage(dreq, request, SelectInfo.newInstance(selectInfo).toString(), akey);
+        dispatchPackage(dlRequest, searchRequest, SelectInfo.newInstance(selectInfo).toString(), akey);
         showDownloadDialog(this, false);
         dlTitleIdx++;
         setBgKey(akey);
@@ -190,7 +213,6 @@ export function DownloadOptionPanel (props) {
     );
 }
 
-
 DownloadOptionPanel.propTypes = {
     groupKey:   PropTypes.string,
     tbl_id:     PropTypes.string,
@@ -204,7 +226,8 @@ DownloadOptionPanel.propTypes = {
     showZipStructure: PropTypes.bool,           // layout ZipStructure field
     showEmailNotify:  PropTypes.bool,           // layout EmailNotification field
     showFileLocation: PropTypes.bool,           // layout FileLocation field
-
+    updateSearchRequest: PropTypes.func,   // customized parameters to be added or updated in request
+    updateDownloadRequest:PropTypes.func,
     dlParams:   PropTypes.shape({               // these params should be used as defaults value if they appears as input fields
         TitlePrefix:    PropTypes.string,           // default title of the download..  an index number will be appended to this.
         FilePrefix:     PropTypes.string,           // packaged file prefix
@@ -357,4 +380,3 @@ function showDownloadDialog(panel, show=true) {
         dispatchHideDialog(ttl);
     }
 }
-
