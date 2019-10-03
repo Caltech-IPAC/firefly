@@ -118,6 +118,23 @@ function doShowTable(llApi, targetDiv, request, options={}) {
     renderDOM(targetDiv, TablesContainer, contProps);
 }
 
+function doShowClientTable(llApi, targetDiv, tableModel, options={}) {
+    const {dispatchTableAddLocal}= llApi.action;
+    const {renderDOM}= llApi.util;
+    const {TablesContainer}= llApi.ui;
+
+    options = Object.assign({tbl_group: divToGrp(targetDiv)}, options);
+    const contProps = {tbl_group: options.tbl_group};
+
+    Object.keys(options).forEach( (k) => {
+        if (options[k] === undefined) {
+            Reflect.deleteProperty(options, k);
+        }
+    });
+    dispatchTableAddLocal(tableModel, options);
+    renderDOM(targetDiv, TablesContainer, contProps);
+}
+
 function buildTablePart(llApi) {
 
     /**
@@ -149,7 +166,7 @@ function buildTablePart(llApi) {
 
     /**
      * @param {string|HTMLDivElement} targetDiv to put the table in.
-     * @param {TableRequest} request         request object created from
+     * @param {TableRequest} request   request object created from
      * @param {TblOptions} options     table options.
      * @memberof firefly
      * @public
@@ -163,10 +180,21 @@ function buildTablePart(llApi) {
      *                 });
      * firefly.showTable('table-1', tblReq, {tbl_group: 'allwise'});
      */
-    // @param {module:firefly.TblOptions} options     table options.
-    const showTable= (targetDiv, request, options)  => doShowTable(llApi, targetDiv, request, options);
+    const showTable = (targetDiv, request, options)  => doShowTable(llApi, targetDiv, request, options);
 
-    return {showTable};
+
+    /**
+     * Render the tableModel into the given div
+     * @param {string|HTMLDivElement} targetDiv to put the table in.
+     * @param {TableModel} tableModel  request object created from
+     * @param {TblOptions} options     table options.
+     * @memberof firefly
+     * @public
+     */
+    const showClientTable = (targetDiv, tableModel, options)  => doShowClientTable(llApi, targetDiv, tableModel, options);
+
+
+    return {showTable, showClientTable};
 }
 
 /*---------------------------- TABLE PART >----------------------------*/

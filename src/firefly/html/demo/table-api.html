@@ -177,29 +177,29 @@ There are additional information specific to each input field.  Click the top bu
             <div id="TblOptions" class="tabItem">
                 <h3>TblOptions</h3>
                 <pre>
-* @typedef {object} TblOptions
-* @prop {string}  [tbl_group]    the group this table belongs to.  Defaults to 'main'.
-* @prop {boolean} [backgroundable=false]    true if this search can be sent to background.  Defaults to false.
-* @prop {string}  [title]        title of this table.
-* @prop {boolean} [setAsActive=true]  make this the active table once it's added to the UI.
-* @prop {number}  [pageSize]     the starting page size.  Will use the request's pageSize if not given.
-* @prop {boolean} [selectable=true]
-* @prop {boolean} [expandable=true]
-* @prop {boolean} [removable=true]  true if this table can be removed from view.
-* @prop {boolean} [border=true]
-* @prop {boolean} [showUnits=true]
-* @prop {boolean} [allowUnits=true] enable/disable the use of units in a table.
-* @prop {boolean} [showFilters=false]
-* @prop {boolean} [showToolbar=true]
-* @prop {boolean} [showTitle=true]
-* @prop {boolean} [showToggleTextView=true]
-* @prop {boolean} [showPaging=true]
-* @prop {boolean} [showSave=true]
-* @prop {boolean} [showOptionButton=true]
-* @prop {boolean} [showFilterButton=true]
-* @prop {boolean} [showInfoButton=false]
-* @prop {function[]}  [leftButtons]   an array of functions that returns a button-like component laid out on the left side of this table header.
-* @prop {function[]}  [rightButtons]  an array of functions that returns a button-like component laid out on the right side of this table header.
+@typedef {object} TblOptions
+@prop {string}  [tbl_group]    the group this table belongs to.  Defaults to 'main'.
+@prop {boolean} [backgroundable=false]    true if this search can be sent to background.  Defaults to false.
+@prop {string}  [title]        title of this table.
+@prop {boolean} [setAsActive=true]  make this the active table once it's added to the UI.
+@prop {number}  [pageSize]     the starting page size.  Will use the request's pageSize if not given.
+@prop {boolean} [selectable=true]
+@prop {boolean} [expandable=true]
+@prop {boolean} [removable=true]  true if this table can be removed from view.
+@prop {boolean} [border=true]
+@prop {boolean} [showUnits=true]
+@prop {boolean} [allowUnits=true] enable/disable the use of units in a table.
+@prop {boolean} [showFilters=false]
+@prop {boolean} [showToolbar=true]
+@prop {boolean} [showTitle=true]
+@prop {boolean} [showToggleTextView=true]
+@prop {boolean} [showPaging=true]
+@prop {boolean} [showSave=true]
+@prop {boolean} [showOptionButton=true]
+@prop {boolean} [showFilterButton=true]
+@prop {boolean} [showInfoButton=false]
+@prop {function[]}  [leftButtons]   an array of functions that returns a button-like component laid out on the left side of this table header.
+@prop {function[]}  [rightButtons]  an array of functions that returns a button-like component laid out on the right side of this table header.
                 </pre>
             </div>
 
@@ -208,37 +208,37 @@ There are additional information specific to each input field.  Click the top bu
                 <pre>
 Anything set in META_INFO will go into the resulting table as tableMeta.
 
-Column property can be set via META_INFO as well.  However, there's a discrepancy between the JS and Java constants.
-This will be resolved in the near future.  These exposed properties should mirrored java code: edu.caltech.ipac.table.IpacTableUtil.consumeColumnInfo
+Column property can be set via META_INFO as well.  These exposed properties should mirrored java code: edu.caltech.ipac.table.IpacTableUtil.consumeColumnInfo
 Use format:  col.[col-name].[col-prop]
 
-[col-prop] : java -> javascript
-Label               * @prop {string} label      display name of the column
-Visibility          * @prop {string} visibility show, hide, or hidden.  hidden columns are not viewable by users.
-Width               * @prop {number} width      max width needed to display data.
-PrefWidth           * @prop {number} prefWidth  preferred width, regardless of the data.
-Desc                * @prop {string} desc       description of the column
-ShortDescription    * @prop {string} desc       description of the column        // @deprecated, for backward compatibility only
-NullStr             * @prop {string} nullString string used to represent null value
-Unit                * @prop {string} units      data units
-Format              * @prop {string} format     a java format to be applied to the value.  This can applies to any data type.
-FmtDisp             * @prop {string} fmtDisp    alias to Format.                // @deprecated, for backward compatibility only
-Sortable            * @prop {boolean} sortable  true if undefined
-Filterable          * @prop {boolean} filterable true if undefined
-SortByCols          * @prop {string} sortByCols column to be sorted by.  values are separted by comma(',')
-EnumVals            * @prop {string} enumVals   contains only values in this list.  values are seprated by comma(',')
-Precision           * @prop {string} precision applies only to floating point numbers.
-                                               A string Tn where T is either F, E, or G
-                                               If T is not present, it defaults to F.
-                                               When T is F or E, n is the number of significant figures after the decimal point.
-                                               When T is G, n is the number of significant digits
-UCD                 * @prop {string} UCD       UCD of this column.
-UType               * @prop {string} utype     UType of this column.
-Ref                 * @prop {string} ref       refer to this column for declarations.
-MinValue            * @prop {string} minValue  minimum value.
-MaxValue            * @prop {string} maxValue  maximum value.
-Links               * @prop {string} links     array of LINK if any
-Value               * @prop {string} value     static value of this column for all of the rows in this table
+
+@prop {string} name      name of the column
+@prop {string} label     display name of the column
+@prop {string} type      data type.  i.e.  'char', 'str', 'double', 'long', 'int', 'float'
+@prop {string} units     data units
+@prop {string} nullString string used to represent null value
+@prop {string} desc      description of the column
+@prop {string} align     horizontal alignment of the value.  [left, right, center, auto(default)] auto: numeric ? right : left.
+@prop {number} width     max width needed to display data.
+@prop {number} prefWidth     preferred width, regardless of the data.
+@prop {boolean} sortable     true if undefined
+@prop {boolean} filterable   true if undefined
+@prop {string} visibility    show, hide, or hidden.  hidden columns are not viewable by users.
+@prop {string} sortByCols    for multi-columns sorting.  column names separated by comma(',').
+@prop {string} enumVals   contains only values in this list.  values are seprated by comma(',')
+@prop {string} ID        ID used to reference this column.
+@prop {string} precision applies only to floating point numbers.
+                         A string Tn where T is either F, E, or G
+                         If T is not present, it defaults to F.
+                         When T is F or E, n is the number of significant figures after the decimal point.
+                         When T is G, n is the number of significant digits
+@prop {string} UCD       UCD of this column.
+@prop {string} utype     UType of this column.
+@prop {string} ref       refer to this column for declarations.
+@prop {string} value     static value of this column for all of the rows in this table
+@prop {string} maxValue  maximum value.
+@prop {string} minValue  minimum value.
+@prop {LINK[]} links     links if any.
 
                 </pre>
             </div>

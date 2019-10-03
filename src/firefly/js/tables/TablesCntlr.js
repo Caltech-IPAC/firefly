@@ -351,20 +351,34 @@ function tableSearch(action) {
 function tableAddLocal(action) {
     return (dispatch) => {
         const {options={}, addUI=true} = action.payload || {};
-        const {tbl_ui_id} = options || {};
         let {tableModel={}} = action.payload || {};
 
-        if (!tableModel.origTableModel) {
-            tableModel = TblUtil.cloneClientTable(tableModel);
-        }
-
-        const title = tableModel.title || get(tableModel, 'request.META_INFO.title') || 'untitled';
-        const tbl_id = tableModel.tbl_id || get(tableModel, 'request.tbl_id');
+        tableModel = fixClientTable(tableModel);
+        const {title, tbl_id} = tableModel;
+        const tbl_ui_id = options.tbl_ui_id || TblUtil.uniqueTblUiId();
 
         if (addUI) dispatchTblResultsAdded(tbl_id, title, options, tbl_ui_id);
         dispatch( {type: TABLE_REPLACE, payload: tableModel} );
         dispatchTableLoaded(Object.assign( TblUtil.getTblInfo(tableModel), {invokedBy: TABLE_FETCH}));
     };
+}
+
+function fixClientTable(tableModel) {
+
+    if (!tableModel.origTableModel) {
+        tableModel = TblUtil.cloneClientTable(tableModel);
+    }
+    if (!tableModel.tbl_id) {
+        tableModel.tbl_id = get(tableModel, 'request.tbl_id') || TblUtil.uniqueTblId();
+    }
+    if (tableModel.title) {
+        tableModel.title  = get(tableModel, 'request.META_INFO.title') || 'untitled';
+    }
+    if (tableModel.totalRows) {
+        tableModel.totalRows = get(tableModel, 'tableData.data.length', 0);
+    }
+
+    return tableModel;
 }
 
 function tblResultsAdded(action) {

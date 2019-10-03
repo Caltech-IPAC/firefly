@@ -160,9 +160,9 @@ public class JsonTableUtil {
                 .forEach(att -> data.getTableMeta().removeAttribute(att.getKey()));
 
         if (data.size() > 0) {
-            List<List<String>> tableData = new ArrayList<>();
+            List<List> tableData = new ArrayList<>();
             for (int i = 0; i < data.size(); i++) {
-                String[] rowData = data.get(i).getFormattedData();
+                Object[] rowData = data.get(i).getData();
                 tableData.add(Arrays.asList(rowData));
             }
             tdata.put("data", tableData);

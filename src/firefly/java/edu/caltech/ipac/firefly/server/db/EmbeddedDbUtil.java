@@ -473,13 +473,6 @@ public class EmbeddedDbUtil {
             String cname = rsmd.getColumnName(i);
             Class type = convertToClass(rsmd.getColumnType(i));
             DataType dt = new DataType(cname, type);
-
-            // apply defaults to decimal numbers...
-            // TODO: this need to be revisited..  it's a workaround to the %.6f default later down in the code if format is not given.
-            if (type == Double.class || type == Float.class) {
-                int scale = Math.max(rsmd.getScale(i), type == Double.class ? 10 : 7);
-                dt.setPrecision("e" + scale); // double or float
-            }
             cols.add(dt);
         }
         return cols;

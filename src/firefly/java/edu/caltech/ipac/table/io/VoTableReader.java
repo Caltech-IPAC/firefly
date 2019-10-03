@@ -183,7 +183,6 @@ public class VoTableReader {
      * @return a DataGroup object representing a TABLE in votable file
      */
     private static DataGroup convertToDataGroup(TableElement tableEl, StarTable table,  boolean headerOnly) {
-        int precision = 8;
 
         DataGroup dg = getTableHeader(tableEl);
         List<DataType> cols = Arrays.asList(dg.getDataDefinitions());
@@ -214,10 +213,6 @@ public class VoTableReader {
                             val = null;
                         }
                         row.setDataElement(dtype, val);
-                        if (dtype.getPrecision() == null) {
-                            String sval = table.getColumnInfo(i).formatValue(val, Integer.MAX_VALUE);
-                            IpacTableUtil.guessFormatInfo(dtype, sval, precision);// precision min 8 can come from VOTable attribute 'precision' later on.
-                        }
                     }
                     dg.add(row);
                 }

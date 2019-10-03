@@ -98,24 +98,24 @@ public class TableTest extends ConfigTest {
     @Test
     public void testColumnMeta() {
         String testTable = "\\col.ra.Visibility = hidden\n" +
-                "\\col.ra.Label = Label\n" +
-                "\\col.ra.Width = 30\n" +
-                "\\col.ra.PrefWidth = 40\n" +
-                "\\col.ra.Desc = Desc\n" +
-                "\\col.ra.NullStr = NullStr\n" +
-                "\\col.ra.Unit = Unit\n" +
-                "\\col.ra.Format = Format\n" +
-                "\\col.ra.FmtDisp = FmtDisp\n" +
-                "\\col.ra.Sortable = false\n" +
-                "\\col.ra.Filterable = false\n" +
-                "\\col.ra.SortByCols = SortByCols\n" +
-                "\\col.ra.EnumVals = EnumVals\n" +
-                "\\col.ra.Precision = E7\n" +
+                "\\col.ra.label = Label\n" +
+                "\\col.ra.width = 30\n" +
+                "\\col.ra.prefWidth = 40\n" +
+                "\\col.ra.desc = Desc\n" +
+                "\\col.ra.nullString = NullStr\n" +
+                "\\col.ra.units = Unit\n" +
+                "\\col.ra.format = Format\n" +
+                "\\col.ra.fmtDisp = FmtDisp\n" +
+                "\\col.ra.sortable = false\n" +
+                "\\col.ra.filterable = false\n" +
+                "\\col.ra.sortByCols = SortByCols\n" +
+                "\\col.ra.enumVals = EnumVals\n" +
+                "\\col.ra.precision = E7\n" +
                 "\\col.ra.UCD = UCD\n" +
-                "\\col.ra.UType = UType\n" +
-                "\\col.ra.Ref = Ref\n" +
-                "\\col.ra.MinValue = MinValue\n" +
-                "\\col.ra.MaxValue = MaxValue\n" +
+                "\\col.ra.utype = UType\n" +
+                "\\col.ra.ref = Ref\n" +
+                "\\col.ra.minValue = MinValue\n" +
+                "\\col.ra.maxValue = MaxValue\n" +
                 "\\col.dec.ShortDescription = ShortDescription\n" +
                 "\\\n" +
                 "|ra         |dec       |\n" +

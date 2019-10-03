@@ -5,6 +5,7 @@
 import {get, set, has, isEmpty, isUndefined, uniqueId, cloneDeep, omitBy, isNil, isPlainObject, isArray, padEnd} from 'lodash';
 import Enum from 'enum';
 
+import {sprintf} from '../externalSource/sprintf.js';
 import {makeFileRequest, MAX_ROW} from './TableRequestUtil.js';
 import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
@@ -418,6 +419,46 @@ export function getColumnValues(tableModel, colName) {
 export function getRowValues(tableModel, rowIdx) {
     return get(tableModel, ['tableData', 'data', rowIdx], []);
 }
+
+/**
+ * Firefly has 3 column meta that affect the formatting of the column's data.  They are
+ * listed below in order of highest to lowest precedence.
+ *
+ * fmtDisp		: A Java format string.  It can be used to format any type.  i.e.  "cost $%.2f"
+ * format		: Same as fmtDisp
+ * precision	: This only applies to floating point numbers.
+ *                A string Tn where T is either F, E, or G
+ *                If T is not present, it defaults to F.
+ *                When T is F or E, n is the number of significant figures after the decimal point.
+ *                When T is G, n is the number of significant digits
+
+ * @param {TableColumn} col
+ * @param {Object} val
+ * @return {string}
+ * @public
+ * @func formatValue
+ * @memberof firefly.util.table
+ */
+export function formatValue(col, val) {
+    const {fmtDisp, format, precision, nullString} = col || {};
+
+    if (isNil(val)) return (nullString || '');
+
+    if (fmtDisp) {
+        return sprintf(fmtDisp, val);
+    } else if (format) {
+        return sprintf(format, val);
+    } else if (precision) {
+        if (isNumericType(col)) {
+            let [, type, prec] = precision.toLowerCase().match(/([efg]?)(\d*)/);
+            type = type || 'f';
+            prec = prec && '.' + prec;
+            return sprintf('%'+prec+type, val);
+        }
+    }
+    return String(val);
+}
+
 
 /**
  * returns an array of all the values for a columns
@@ -838,7 +879,7 @@ export function tableTextView(columns, dataAry, showUnits=false, tableMeta) {
                 .join('\n');
 
     const dataStr = dataAry.map((row) => ' ' +
-                                    row.map((c, idx) => get(columns, `${idx}.visibility`, 'show') === 'show' && padEnd(c, colWidths[idx]))
+                                    row.map((c, idx) => get(columns, `${idx}.visibility`, 'show') === 'show' && padEnd(formatValue(columns[idx],c), colWidths[idx]))
                                        .filter((v) => v)
                                        .join(' ')
                                     + ' ')
@@ -918,9 +959,10 @@ export function calcColumnWidths(columns, dataAry) {
         }
         const cname = cv.label || cv.name;
         width = Math.max(cname.length, get(cv, 'units.length', 0),  get(cv, 'type.length', 0));
-        width = dataAry.reduce( (maxWidth, row) => {
-            return Math.max(maxWidth, get(row, [idx, 'length'], 0));
-        }, width);  // max width of data
+        dataAry.forEach((row) => {
+            const v = formatValue(columns[idx], row[idx]);
+            width = Math.max(width, v.length);
+        });
         return width;
     });
 }
@@ -1101,13 +1143,13 @@ export function hasRowAccess(tableModel, rowIdx) {
     if (!rcname && !dcname) return true;        // no proprietary info
 
     if (dcname) {
-        const rights = getCellValue(tableModel, rowIdx, dcname) || '';
-        if (['public', 'secure', '1', 'true', 't'].includes(rights.trim().toLocaleLowerCase()) ) {
+        const rights = String(getCellValue(tableModel, rowIdx, dcname)).trim().toLowerCase();
+        if (['public', 'secure', '1', 'true', 't'].includes(rights) ) {
             return true;
         }
     }
     if (rcname) {
-        const rdate = getCellValue(tableModel, rowIdx, rcname) || '';
+        const rdate = getCellValue(tableModel, rowIdx, rcname);
         if ( rdate && new Date() > new Date(rdate)) {
             return true;
         }
@@ -1117,11 +1159,17 @@ export function hasRowAccess(tableModel, rowIdx) {
 
 
 export function isNumericType(col={}) {
-    return num_types.includes(col.type);
+    if (!has(col._isnumeric)) {
+        col._isnumeric = num_types.includes(col.type);      // for efficiency
+    }
+    return col._isnumeric;
 }
 
 export function isTextType(col={}) {
-    return char_types.includes(col.type);
+    if (!has(col._ischar)) {
+        col._ischar = char_types.includes(col.type);     // for efficiency
+    }
+    return col._ischar;
 }
 
 /**

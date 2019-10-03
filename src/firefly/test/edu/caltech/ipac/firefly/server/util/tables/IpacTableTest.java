@@ -97,8 +97,8 @@ public class IpacTableTest {
         checkJsonColumn(json, "tableData.columns.7", "designation", "char", null, "null", null);    // last column
 
         // tableData.data
-        Assert.assertEquals("cell(0,0)", "10.733387", JsonTableUtil.getPathValue(json, "tableData", "data", "0", "0"));             // cell (0,0) first row, first column
-        Assert.assertEquals("cell(4,7)", "0.35", JsonTableUtil.getPathValue(json, "tableData", "data",  "7", "4"));                 // cell (4,7) middle row, middle column
+        Assert.assertEquals("cell(0,0)", 10.733387, JsonTableUtil.getPathValue(json, "tableData", "data", "0", "0"));             // cell (0,0) first row, first column
+        Assert.assertEquals("cell(4,7)", 0.35, JsonTableUtil.getPathValue(json, "tableData", "data",  "7", "4"));                 // cell (4,7) middle row, middle column
         Assert.assertEquals("cell(7,15)", "00425009+4111543", JsonTableUtil.getPathValue(json, "tableData", "data",  "15", "7"));   // cell (7,15) last row, last column
     }
 
