@@ -443,6 +443,9 @@ export function formatValue(col, val) {
     const {fmtDisp, format, precision, nullString} = col || {};
 
     if (isNil(val)) return (nullString || '');
+    if (Array.isArray(val)) {
+        return (col.type || 'array') + `[${val.length}]`;
+    }
 
     if (fmtDisp) {
         return sprintf(fmtDisp, val);
