@@ -135,23 +135,18 @@ public class Packager {
 
     public void packageAll() {
         BackgroundStatus bgStat = null;
-        if (isOneFile()) {
-            bgStat= packageOneFile(_fgList.get(0).getFileInfo(0));
-        }
-        else {
-            for (int idx = 0; idx < _estimateStat.getPackageCount(); idx++) {
-                if (!backgroundInfoCacher.isCanceled()) {
-                    bgStat = packageElement(idx);
-                    if (bgStat.getState() != BackgroundState.SUCCESS)
-                        break;
-                } else {
-                    bgStat =  _estimateStat.cloneWithState(BackgroundState.CANCELED);
+        for (int idx = 0; idx < _estimateStat.getPackageCount(); idx++) {
+            if (!backgroundInfoCacher.isCanceled()) {
+                bgStat = packageElement(idx);
+                if (bgStat.getState() != BackgroundState.SUCCESS)
                     break;
-                }
+            } else {
+                bgStat =  _estimateStat.cloneWithState(BackgroundState.CANCELED);
+                break;
             }
-            if (bgStat == null) {
-                bgStat =  _estimateStat.cloneWithState(BackgroundState.FAIL);
-            }
+        }
+        if (bgStat == null) {
+            bgStat =  _estimateStat.cloneWithState(BackgroundState.FAIL);
         }
 
         // handle 'save to Workspace' option:  pushes files to workspace

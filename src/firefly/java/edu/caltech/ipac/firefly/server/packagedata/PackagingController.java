@@ -317,7 +317,7 @@ public class PackagingController {
         String details = " zTime= " + UTCTimeUtil.getHMSFromMills(procMS) +
                 ", wTime= " + UTCTimeUtil.getHMS(waitSec) +
                 ", size= " + StringUtils.getSizeAsString(zipTotal, true);
-        if (pi.getPackager().isOneFile())  details+=", One file not zipped";
+//        if (pi.getPackager().isOneFile())  details+=", One file not zipped";
 
         _log.info("Package ID: " + id,
                   "Packaging completed: " + details);
