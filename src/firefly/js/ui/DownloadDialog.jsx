@@ -111,6 +111,8 @@ const noticeCss = {
     padding: 3,
     borderRadius: 2,
     marginBottom: 10,
+    whiteSpace: 'nowrap',
+    textAlign: 'center'
 };
 
 let dlTitleIdx = 0;
