@@ -223,7 +223,7 @@ export function TitleField({style={}, labelWidth, value, label='Title:', size=30
             forceReinit={true}
             fieldKey='Title'
             tooltip='Enter a description to identify this download.'
-            {...{validator:NotBlank, value, label, labelWidth, size, style}}
+            {...{validator:NotBlank, initialState:{value}, label, labelWidth, size, style}}
         />
     );
 }
