@@ -110,7 +110,9 @@ const noticeCss = {
     border: '1px solid #cacaae',
     padding: 3,
     borderRadius: 2,
-    marginBottom: 3,
+    marginBottom: 10,
+    whiteSpace: 'nowrap',
+    textAlign: 'center'
 };
 
 let dlTitleIdx = 0;
@@ -160,8 +162,7 @@ export function DownloadOptionPanel (props) {
     const dlTitle = get(dlParams, 'TitlePrefix', 'Download') + '-' + dlTitleIdx;
 
     return (
-        <div style = {Object.assign({margin: '4px', position: 'relative', minWidth:400}, style)}>
-            {showWarnings && <div style={noticeCss}>This table contains proprietary data. Only data to which you have access will be downloaded.</div>}
+        <div style = {Object.assign({margin: '4px', position: 'relative', minWidth:400, height:'auto'}, style)}>
             <FormPanel
                 submitText = 'Prepare Download'
                 groupKey = {groupKey}
@@ -169,6 +170,7 @@ export function DownloadOptionPanel (props) {
                 onCancel = {() => dispatchHideDialog(ttl)}
                 help_id  = {help_id}>
                 <FieldGroup groupKey={groupKey} keepState={true}>
+                    {showWarnings && <div style={noticeCss}>This table contains proprietary data. Only data to which you have access will be downloaded.</div>}
                     <div className='FieldGroup__vertical--more'>
                         {showTitle && <TitleField {...{labelWidth, value:dlTitle }}/>}
 
@@ -223,7 +225,7 @@ export function TitleField({style={}, labelWidth, value, label='Title:', size=30
             forceReinit={true}
             fieldKey='Title'
             tooltip='Enter a description to identify this download.'
-            {...{validator:NotBlank, value, label, labelWidth, size, style}}
+            {...{validator:NotBlank, initialState:{value}, label, labelWidth, size, style}}
         />
     );
 }
@@ -302,7 +304,7 @@ export function EmailNotification({style}) {
 
 function hasProprietaryData(tableModel={}) {
 
-    if (getProprietaryInfo().length === 0) return false;
+    if (getProprietaryInfo(tableModel).length === 0) return false;
 
     const {selectInfo} = tableModel;
     const selectInfoCls = SelectInfo.newInstance(selectInfo);
