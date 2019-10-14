@@ -86,6 +86,8 @@ public interface SsoAdapter {
 //====================================================================
 
     static boolean requireAuthCredential(String reqUrl, String... reqAuthHosts) {
+        if (reqUrl == null) return true;
+
         if (!isEmpty(reqUrl)) {
             try {
                 String reqHost = new URL(ServerContext.resolveUrl(reqUrl)).getHost().toLowerCase();

@@ -121,7 +121,7 @@ public class JdbcFactory {
     }
 
     private static DataSource getDirectDataSource(DbInstance dbInstance) {
-        logger.briefDebug("Getting a new database connection for " + dbInstance.dbUrl + " using DriverManager");
+        logger.trace("Getting a new database connection for " + dbInstance.dbUrl + " using DriverManager");
         DriverManagerDataSource driver = new DriverManagerDataSource(
                     dbInstance.dbUrl,
                     dbInstance.userId,

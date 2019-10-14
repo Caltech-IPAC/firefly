@@ -3,7 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.util;
 
-import com.google.gwt.xml.client.Attr;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.table.IpacTableUtil;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.table.query.DataGroupQueryStatement;
@@ -68,6 +68,19 @@ public class QueryUtil {
             return "http://" + url.trim();
         }
     }
+
+    /**
+     * returns a hierarchical temporary directory.
+     * @return
+     */
+    public static File getTempDir() {
+        String sessId = ServerContext.getRequestOwner().getRequestAgent().getSessId();
+        File tempDir = new File(ServerContext.getTempWorkDir(), sessId.substring(0, 3));
+        if (!tempDir.exists()) tempDir.mkdirs();
+        return tempDir;
+    }
+
+
 
     public static DownloadRequest convertToDownloadRequest(String dlReqStr, String searchReqStr, String selInfoStr) {
         DownloadRequest retval = new DownloadRequest(convertToServerRequest(searchReqStr), null, null);

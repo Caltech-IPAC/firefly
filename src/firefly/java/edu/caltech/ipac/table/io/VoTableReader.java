@@ -4,8 +4,11 @@
 package edu.caltech.ipac.table.io;
 
 import edu.caltech.ipac.firefly.core.FileAnalysis;
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
+import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.*;
 import edu.caltech.ipac.util.CollectionUtil;
 import org.xml.sax.SAXException;
@@ -15,6 +18,8 @@ import uk.ac.starlink.votable.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -134,6 +139,19 @@ public class VoTableReader {
 
     // get all <TABLE> from one votable file
     private static List<TableElement> getAllTableElements(String location, StoragePolicy policy) throws IOException {
+
+        // if location is a URL, download it first.
+        try {
+            String url = new URL(location).toString();
+            File tmpFile = File.createTempFile("voreader-", ".xml", QueryUtil.getTempDir());
+            HttpServices.getData( HttpServiceInput.createWithCredential(url), tmpFile);
+            location = tmpFile.getPath();
+        } catch (MalformedURLException ex) {
+            // ok to ignore.  location may not be a URL
+        } catch (Exception e) {
+            LOG.error(e);
+            throw new IOException(e);
+        }
 
         VOElement root;
         try {

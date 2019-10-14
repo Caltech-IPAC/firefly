@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.table.TableUtil;
@@ -55,8 +56,12 @@ public interface SearchProcessor<Type> {
      * @return
      */
     static String getUniqueIDDef(TableServerRequest request) {
+        RequestOwner ro = ServerContext.getRequestOwner();
         SortedSet<Param> params = request.getSearchParams();
-        params.add(new Param("sessID", ServerContext.getRequestOwner().getRequestAgent().getSessId()));
+        params.add(new Param("sessID", ro.getRequestAgent().getSessId()));
+        if (ro.isAuthUser()) {
+            params.add( new Param("userID", ro.getUserInfo().getLoginName()));
+        }
         return StringUtils.toString(params, "|");
     }
 

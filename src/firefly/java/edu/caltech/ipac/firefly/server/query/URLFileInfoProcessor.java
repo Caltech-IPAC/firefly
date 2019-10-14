@@ -54,10 +54,6 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
 
     public abstract URL getURL(ServerRequest sr) throws MalformedURLException;
 
-    public static FileInfo retrieveViaURL(URL url, File dir) throws IOException, DataAccessException {
-        return retrieveViaURL(url, dir, null, null, null, null);
-    }
-
     public static FileInfo retrieveViaURL(URL url,
                                           File dir,
                                           String progressKey,

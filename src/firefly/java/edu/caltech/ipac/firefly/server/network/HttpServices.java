@@ -35,6 +35,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -73,26 +74,21 @@ public class HttpServices {
      * @return Status
      */
     public static Status getData(String url, File results) {
-        return getData(url, results, null);
+        return getData(new HttpServiceInput(url), results);
     }
-
-    public static Status getData(String url, OutputStream results) {
-        return getData(url, results, null);
-    }
-
-    public static Status getData(String url, OutputStream results, HttpServiceInput input) {
-        return getData(url, input, defaultHandler(results));
-    }
-
-    /**
-     * For convenience, this function will return 400-bad-request if url is malformed or any IO related exceptions.
-     */
-    public static Status getData(String url, File results, HttpServiceInput input) {
+    public static Status getData(HttpServiceInput input, File results) {
         try {
-            return getData(url, input, defaultHandler(results));
+            return getData(input, defaultHandler(results));
         } catch (FileNotFoundException e) {
             return new Status(400, e.getMessage());
         }
+    }
+
+    public static Status getData(String url, OutputStream results) {
+        return getData(new HttpServiceInput(url), results);
+    }
+    public static Status getData(HttpServiceInput input, OutputStream results) {
+        return getData(input, defaultHandler(results));
     }
 
     /**
@@ -100,14 +96,13 @@ public class HttpServices {
      * Exceptions will be written into the results stream when possible.
      * if params are given as input, it will replace any queryString provided in the url.  So, use one of the other.
      * params given as input will be automatically encoded with UTF-8.
-     * @param url string representation of URL
      * @param input  if params are given, it will replace any queryString provided in the url.  So, use one of the other.
      * @param handler  how to handle the response/results.  If null, do nothing.
      * @return Status
      */
-    public static Status getData(String url, HttpServiceInput input, Handler handler) {
+    public static Status getData(HttpServiceInput input, Handler handler) {
         try {
-            url = isEmpty(url) && input != null ? input.getRequestUrl() : url;
+            String url = input.getRequestUrl();
             HttpMethod method = executeMethod(new GetMethod(url), input, handler);
             return Status.getStatus(method);
         } catch (IOException e) {
@@ -116,31 +111,47 @@ public class HttpServices {
         }
     }
 
-//====================================================================
+    //====================================================================
 //  POST convenience functions
 //====================================================================
-    public static Status postData(String url, File results, HttpServiceInput input) {
+    public static Status postData(String url, File results) {
+        return postData(new HttpServiceInput(url), results);
+    }
+
+    public static Status postData(HttpServiceInput input, File results) {
         try {
-            return postData(url, input, defaultHandler(results));
+            return postData(input, defaultHandler(results));
         } catch (FileNotFoundException e) {
             return new Status(400, e.getMessage());
         }
     }
 
-    public static Status postData(String url, OutputStream results, HttpServiceInput input) {
-        return postData(url, input, defaultHandler(results));
+    public static Status postData(String url, OutputStream results) {
+        return postData(new HttpServiceInput(url), results);
     }
 
-    public static Status postData(String url, HttpServiceInput input, Handler handler) {
+    public static Status postData(HttpServiceInput input, OutputStream results) {
+        return postData(input, defaultHandler(results));
+    }
+
+    public static Status postData(HttpServiceInput input) {
+        return postData(input, (Handler) null);
+    }
+
+    public static Status postData(String url, Handler handler) {
+        return postData(new HttpServiceInput(url), handler);
+    }
+
+    public static Status postData(HttpServiceInput input, Handler handler) {
         try {
-            url = isEmpty(url) && input != null ? input.getRequestUrl() : url;
+            String url = input.getRequestUrl();
+            if (isEmpty(url))  throw new FileNotFoundException("Missing URL parameter");
             HttpMethod method = executeMethod(new PostMethod(url), input, handler);
             return Status.getStatus(method);
         } catch (IOException e) {
             return new Status(400, e.getMessage());
         }
     }
-
 
 //====================================================================
 // low level functions
@@ -205,6 +216,8 @@ public class HttpServices {
             return method;
 
         } finally {
+            LOG.trace("--> HttpServices", getDetailDesc(method, input));
+
             if (method != null) {
                 method.releaseConnection();
             }
@@ -376,21 +389,26 @@ public class HttpServices {
         }
     }
 
-    private static String getResHeader(HttpMethod method, String key) {
-        Header header = method.getResponseHeader(key);
-        return header == null ? "" : header.getValue();
-    }
+    private static String getDetailDesc(HttpMethod method, HttpServiceInput input) {
 
-    private static String getDetailDesc(HttpMethod method, HttpServiceInput input) throws URIException {
-        String desc = "name: "+method.getName() +
-                "\nstatus: "+method.getStatusText()+
-                "\nurl: " + method.getURI() +
-                "\nquery_str: " + method.getQueryString() +
-                "\ninput: " + (input== null ? "" : input.getDesc()) +
-                "\nREQUEST HEADERS: " + CollectionUtil.toString(method.getRequestHeaders()).replaceAll("\\r|\\n", "") +
-                "\nRESPONSE HEADERS: " + CollectionUtil.toString(method.getResponseHeaders()).replaceAll("\\r|\\n", "");
+        try {
+            String desc = "\tmethod: "+method.getName() +
+                    "\n\tstatus: "+method.getStatusText()+
+                    "\n\turl: " + method.getURI() +
+                    input.getDesc() +
+                    "\n\tREQUEST HEADERS: " + CollectionUtil.toString(method.getRequestHeaders()).replaceAll("\\r|\\n", "") +
+                    "\n\tRESPONSE HEADERS: " + CollectionUtil.toString(method.getResponseHeaders()).replaceAll("\\r|\\n", "");
 
-        return desc;
+            if (method.getName().equals("GET")) {
+                String curl = "curl -v";
+                for(Header h : method.getRequestHeaders())  curl += " -H '" + h.toString().trim() + "'";
+                curl += " '" + method.getURI() + "'";
+                desc += "\n\tCURL CMD: " + curl;
+            }
+            return desc;
+        } catch (Exception e) {
+            return "Details not available.  Exception occurs while trying to get the details.";
+        }
     }
 
 

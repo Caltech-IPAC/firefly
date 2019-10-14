@@ -29,12 +29,19 @@ public class HttpServiceInput implements Cloneable{
     private String userId;
     private String passwd;
 
+    public HttpServiceInput() {}
+
+    public HttpServiceInput(String requestUrl) {
+        this.requestUrl = requestUrl;
+    }
+
     public String getRequestUrl() {
         return requestUrl;
     }
 
-    public void setRequestUrl(String requestUrl) {
+    public HttpServiceInput setRequestUrl(String requestUrl) {
         this.requestUrl = requestUrl;
+        return this;
     }
 
     public String getUserId() {
@@ -104,21 +111,21 @@ public class HttpServiceInput implements Cloneable{
         StringBuilder sb = new StringBuilder();
 
         if (userId != null) {
-            sb.append("userId: ").append(userId)
-                .append("  passwd:").append(passwd).append("\n");
+            sb.append("\n\tuserId: ").append(userId)
+                .append("  passwd:").append(passwd);
         }
 
         if (params != null) {
-            sb.append("params: ").append(params.toString()).append("\n");
+            sb.append("\n\tparams: ").append(params.toString());
         }
         if (headers != null) {
-            sb.append("headers: ").append(headers.toString()).append("\n");
+            sb.append("\n\theaders: ").append(headers.toString());
         }
         if (cookies != null) {
-            sb.append("cookies: ").append(cookies.toString()).append("\n");
+            sb.append("\n\tcookies: ").append(cookies.toString());
         }
         if (files != null) {
-            sb.append("files: ").append(files.toString()).append("\n");
+            sb.append("\n\tfiles: ").append(files.toString());
         }
         return sb.toString();
     }
@@ -149,13 +156,23 @@ public class HttpServiceInput implements Cloneable{
 //  convenience functions
 //====================================================================
 
+    /**
+     * returns an HttpServiceInput that contains the required credential to access backend services.
+     * This credential information is based on the implementer of SsoAdapter.
+     * @return
+     */
     public static HttpServiceInput createWithCredential() {
         return createWithCredential(null);
     }
 
+    /**
+     * return an HttpServiceInput with the requestUrl that may contains credential needed to access backend services.
+     * The given requestUrl is used to determine whether or not to include the credential in the call.
+     * @param requestUrl
+     * @return
+     */
     public static HttpServiceInput createWithCredential(String requestUrl) {
-        HttpServiceInput input = new HttpServiceInput();
-        input.setRequestUrl(requestUrl);
+        HttpServiceInput input = new HttpServiceInput(requestUrl);
         SsoAdapter ssoAdapter = ServerContext.getRequestOwner().getSsoAdapter();
         if (ssoAdapter != null) {
             ssoAdapter.setAuthCredential(input);

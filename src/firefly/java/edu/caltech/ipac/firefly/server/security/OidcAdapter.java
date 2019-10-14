@@ -162,7 +162,7 @@ public class OidcAdapter implements SsoAdapter {
 
     private Token getToken(String url, HttpServiceInput input) {
         ByteArrayOutputStream results = new ByteArrayOutputStream();
-        if (HttpServices.postData(url, results, input).isError()) return null;
+        if (HttpServices.postData(input.setRequestUrl(url), results).isError()) return null;
 
         Token token = null;
         try {
