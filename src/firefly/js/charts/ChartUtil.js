@@ -15,7 +15,7 @@ import {
 import shallowequal from 'shallowequal';
 
 import {getAppOptions} from '../core/AppDataCntlr.js';
-import {getTblById, isFullyLoaded, isNumericType, watchTableChanges} from '../tables/TableUtil.js';
+import {getTblById, isFullyLoaded, isNumericType, stripColumnNameQuotes, watchTableChanges} from '../tables/TableUtil.js';
 import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_SELECT} from '../tables/TablesCntlr.js';
 import {dispatchLoadTblStats} from './TableStatsCntlr.js';
 import {dispatchChartUpdate, dispatchChartHighlighted, dispatchChartSelect, getChartData} from './ChartsCntlr.js';
@@ -381,7 +381,7 @@ export function getDataChangesForMappings({tableModel, mappings, traceNum}) {
         getDataVal = (k,v) => {
             // using plotly attribute path (key in the mappings object) as a column name
             // this makes it possible to use the same column as x and y, for example
-            let idx = cols.indexOf(v);
+            let idx = cols.indexOf(stripColumnNameQuotes(v));
             if (idx < 0) idx = cols.indexOf(k);
             if (idx >= 0) {
                 return transposed[idx];

@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, isArray, isUndefined, truncate, uniqueId} from 'lodash';
+import {get, isArray, isUndefined, uniqueId} from 'lodash';
 import {getTblById, getColumns, getColumn, doFetchTable, stripColumnNameQuotes} from '../../tables/TableUtil.js';
 import {cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData, getTraceSymbol, hasUpperLimits, hasLowerLimits} from '../ChartsCntlr.js';
@@ -77,10 +77,13 @@ function fetchData(chartId, traceNum, tablesource) {
         filter(([k,v]) => !numberOrArrayProps.includes(k) || Number.isNaN(parseFloat(v))).
         map(([k,v]) => {
             // we'd like expression columns to be named as the paths to trace data arrays, ex. data[0].x
-            //const asStr = (numericCols.includes(v)) ? '' : k.startsWith('firefly') ? ` as "${k}"` :` as "data.${traceNum}.${k}"`;
-            const asStr = k.startsWith('firefly') ? ` as "${k}"` :` as "data.${traceNum}.${k}"`;
+            // otherwise use column names to preserve original column attributes (type, format, etc.)
+            const asStr = colNames.includes(v) || colNames.includes(stripColumnNameQuotes(v)) ? '' :
+                k.startsWith('firefly') ? ` as "${k}"` :` as "data.${traceNum}.${k}"`;
             return `${formatColExpr({colOrExpr: v, quoted: true, colNames})}${asStr}`;
-        }).join(', ')    // allows to use the same columns, ex. "w1" as "x", "w1" as "marker.color"
+        }).
+        filter((c, i, a) => a.indexOf(c) === i). // remove duplicates
+        join(', ')    // allows to use the same columns, ex. "w1" as "x", "w1" as "marker.color"
     });
 
     const sreqTblId = uniqueId(request.tbl_id);
@@ -153,9 +156,9 @@ function addOtherChanges({changes, chartId, traceNum, tablesource, tableModel}) 
 function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}) {
 
     const {mappings} = tablesource;
-    const xColumn = getColumn(tableModel, get(mappings, 'x'));
+    const xColumn = getColumn(tableModel, stripColumnNameQuotes(get(mappings, 'x')));
     const xUnit = get(xColumn, 'units', '');
-    const yColumn = getColumn(tableModel, get(mappings, 'y'));
+    const yColumn = getColumn(tableModel, stripColumnNameQuotes(get(mappings, 'y')));
     const yUnit = get(yColumn, 'units', '');
 
     // default axes labels for the first trace (remove surrounding quotes, if any)
@@ -202,8 +205,8 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
     changes[`data.${traceNum}.type`] = traceType;
 
     // point tooltip labels
-    let xTipLabel = truncate(xLabel, {length: 20});
-    let yTipLabel = truncate(yLabel, {length: 20});
+    let xTipLabel = xLabel.length > 20 ? 'x' : xLabel;
+    let yTipLabel = yLabel.length > 20 ? 'y' : yLabel;
 
     const {xTTLabelSrc, yTTLabelSrc} = get(fireflyData, traceNum, {});
     if (xTTLabelSrc) {
