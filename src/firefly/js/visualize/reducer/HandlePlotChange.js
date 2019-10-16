@@ -328,7 +328,7 @@ function changeHiPS(state,action) {
     if (!originalPlot) return state;
 
     let plot= clone(originalPlot);
-
+    const originalImageCoordSys= plot.imageCoordSys;
 
     // single plot stuff
 

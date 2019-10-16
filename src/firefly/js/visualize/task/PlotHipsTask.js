@@ -349,7 +349,7 @@ export function makeChangeHiPSAction(rawAction) {
                 .then( (hipsProperties) => {
                     dispatcher(
                         { type: ImagePlotCntlr.CHANGE_HIPS,
-                            payload: clone(payload, {hipsUrlRoot, hipsProperties})
+                            payload: clone(payload, {hipsUrlRoot, hipsProperties, coordSys:plot.imageCoordSys})
                         });
                     initCorrectCoordinateSys(getPlotViewById(visRoot(),plotId));
                 })

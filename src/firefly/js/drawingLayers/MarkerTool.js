@@ -392,7 +392,7 @@ function getLayerChanges(drawLayer, action) {
             if (plotIdAry) {
                 return updateMarkerText(markerText, markerTextLoc, dd[DataTypes.DATA], plotIdAry);
             }
-            break;
+            return {};
 
         case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
         case ImagePlotCntlr.ANY_REPLOT:
@@ -412,10 +412,10 @@ function getLayerChanges(drawLayer, action) {
             break;
 
         default:
-            return retV;
+            return {};
 
     }
-    return retV;
+    return {};
 }
 
 const cornerCursor = ['pointer', 'pointer', 'nwse-resize', 'nesw-resize', 'nwse-resize', 'nesw-resize'];
