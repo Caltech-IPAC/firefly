@@ -165,7 +165,11 @@
                     error_y: {
                         array: 'tables::("_sed_eflux")*("_sed_freq"*power(10,9))', // error bar (symmetrical or plus)
                     },
-                    mode: 'markers'
+                    mode: 'markers',
+                    firefly: {
+                        xTTLabelSrc: 'axis',
+                        yTTLabelSrc: 'axis'
+                    }
                 }],
                 layout: {
                     title: 'Spectral Energy Distribution from VizieR',
@@ -213,7 +217,11 @@
                     error_y: {
                         array: 'tables::("_sed_eflux")*("_sed_freq"*power(10,9))', // error bar (symmetrical or plus)
                     },
-                    mode: 'markers'
+                    mode: 'markers',
+                    firefly: {
+                        xTTLabelSrc: 'axis',
+                        yTTLabelSrc: 'axis'
+                    }
                 }],
                 layout: {
                     title: 'Spectral Energy Distribution from VizieR',
