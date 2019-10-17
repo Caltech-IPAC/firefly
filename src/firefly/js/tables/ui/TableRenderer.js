@@ -7,7 +7,7 @@ import FixedDataTable from 'fixed-data-table-2';
 import {set, get, isEqual, pick} from 'lodash';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS, NULL_TOKEN} from '../FilterInfo.js';
-import {isNumericType, tblDropDownId, getTblById, getColumn, formatValue} from '../TableUtil.js';
+import {isColumnType, COL_TYPE, tblDropDownId, getTblById, getColumn, formatValue} from '../TableUtil.js';
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {SORT_ASC, UNSORTED} from '../SortInfo';
@@ -147,7 +147,7 @@ function EnumSelect({col, tbl_id, filterInfoCls, onFilter}) {
         let value = getFieldVal(groupKey, fieldKey);
         if (value) {
             value = value.split(',').map((s) => s === '%EMPTY' ? '' : s).join();           // convert %EMPTY back into ''
-            value = isNumericType(col) ? value :
+            value = isColumnType(col, COL_TYPE.NUMBER) ? value :
                     value.split(',')
                          .map((s) => `'${s.trim()}'`).join(',');
             value = `IN (${value})`;
@@ -253,7 +253,7 @@ export class TextCell extends Component {
     //
     render() {
         const {col={}, style, height} = this.props;
-        const isNumeric = isNumericType(col);
+        const isNumeric = isColumnType(col, COL_TYPE.NUMBER);
         const lineHeight = height - 6 + 'px';  // 6 is the top/bottom padding.
         const textAlign = col.align || (isNumeric ? 'right' : 'left');
 

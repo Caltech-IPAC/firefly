@@ -27,7 +27,7 @@ const re = {
     not_json: /[^j]/,
     text: /^[^\x25]+/,
     modulo: /^\x25{2}/,
-    placeholder: /^\x25(?:([1-9]\d*)\$|\(([^)]+)\))?(\+)?(0|'[^$])?(-)?(\d+)?(?:\.(\d+))?([b-gijostTuvxX])/,
+    placeholder: /^\x25(?:([1-9]\d*)\$|\(([^)]+)\))?(\+)?(0|'[^$])?(-)?(\d+)?(?:\.(\d+))?([b-gijostTuvxXJ])/,
     key: /^([a-z_][a-z_\d]*)/i,
     key_access: /^\.([a-z_][a-z_\d]*)/i,
     index_access: /^\[(\d+)]/,
@@ -100,11 +100,12 @@ function sprintf_format(parse_tree, argv) {
                 case 'f':
                     arg = prec ? parseFloat(arg).toFixed(prec) : parseFloat(arg);
                     break;
-                case 'g': {
-                    if (arg < Math.pow(10, -4) || arg > Math.pow(10, prec)) {
-                        arg = prec ? parseFloat(arg).toExponential(prec-1) : parseFloat(arg).toExponential();
+                case 'g': {     // implementation of Java g format
+                    const m = Math.abs(arg);
+                    if (m === 0 || (m >= Math.pow(10, -4) && m < Math.pow(10, prec))) {
+                        arg = prec ? arg.toPrecision(prec) : parseFloat(arg);
                     } else {
-                        arg = prec ? String(Number(arg.toPrecision(prec))) : parseFloat(arg);
+                        arg = prec ? parseFloat(arg).toExponential(prec-1) : parseFloat(arg).toExponential();
                     }
                     break;
                 }
@@ -136,6 +137,17 @@ function sprintf_format(parse_tree, argv) {
                 case 'X':
                     arg = (parseInt(arg, 10) >>> 0).toString(16).toUpperCase();
                     break;
+                case 'J': {     // implementation of Java's decimal toString
+                    const m = Math.abs(arg);
+                    if (m === 0) {
+                        arg = '0.0';
+                    } else if ( m >= Math.pow(10, -3) && m < Math.pow(10, 7)) {
+                        arg = parseFloat(arg);
+                    } else {
+                        arg = parseFloat(arg).toExponential();
+                    }
+                    break;
+                }
             }
             if (re.json.test(ph.type)) {
                 output += arg;

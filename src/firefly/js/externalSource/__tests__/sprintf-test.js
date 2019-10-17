@@ -63,14 +63,25 @@ describe('sprintf: ', () => {
     });
 
     test('g format:', () => {
-        //If value is greater than or equal to 10^-4 but less than 10^precision then it is represented in decimal format, otherwise scientific
+        // If value is greater than or equal to 10^-4 but less than 10^precision then it is represented in decimal format, otherwise scientific
         //precision is default to 6 if not given.
+        expect(sprintf('%g', 0))        .toBe('0.00000');     // 0
+        expect(sprintf('%g', 123456))   .toBe('123456');      // less than 10^6 (default)
         expect(sprintf('%g', 123456))   .toBe('123456');      // less than 10^6 (default)
         expect(sprintf('%g', 1.234567)) .toBe('1.23457');
         expect(sprintf('%.4g', 123456)) .toBe('1.235e+5');    // less than 10^4.. p=4
 
         expect(sprintf('%g', 0.0000123456))     .toBe('1.23456e-5');  // less than 10^-4, p=default
         expect(sprintf('%.4g', 0.0000123456))   .toBe('1.235e-5');    // less than 10^-4, p=4
+    });
+
+    test('J format:', () => {
+        // Java toString() format:   https://docs.oracle.com/javase/7/docs/api/java/lang/Float.html#toString(float)
+        expect(sprintf('%J', 0))            .toBe('0.0');
+        expect(sprintf('%J', 0.123456))     .toBe('0.123456');
+        expect(sprintf('%J', 0.000123456))  .toBe('1.23456e-4');
+        expect(sprintf('%J', 1234567))      .toBe('1234567');
+        expect(sprintf('%J', 12345678))     .toBe('1.2345678e+7');
     });
 
     test('width with multiple args:', () => {

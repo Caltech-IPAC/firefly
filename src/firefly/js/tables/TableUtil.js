@@ -33,10 +33,27 @@ const local = {
 };
 export default local;
 
-export const COL_TYPE = new Enum(['ALL', 'NUMBER', 'TEXT']);
-const char_types = ['char', 'c', 's', 'str'];
-const num_types = ['double', 'd', 'long', 'l', 'int', 'i', 'float', 'f'];
+export const COL_TYPE = new Enum(['ALL', 'NUMBER', 'TEXT', 'INT', 'FLOAT']);
 
+const colTypes = {
+    [COL_TYPE.TEXT]:    ['char', 'c', 's', 'str'],
+    [COL_TYPE.INT]:     ['long', 'l', 'int', 'i'],
+    [COL_TYPE.FLOAT]:   ['double', 'd', 'float', 'f'],
+    [COL_TYPE.NUMBER]:  ['long', 'l', 'int', 'i', 'double', 'd', 'float', 'f'],
+};
+
+/**
+ * @param {TableColumn} col
+ * @param {COL_TYPE} type
+ * @returns true if col is of the given type
+ */
+export function isColumnType(col={}, type) {
+    const flg = '_t-' + type.key;       // for efficiency
+    if (!has(col, flg)) {
+        col[flg] = !colTypes[type] || colTypes[type].includes(col.type);
+    }
+    return col[flg];
+}
 
 /**
  * tableRequest will be sent to the server as a json string.
@@ -451,12 +468,16 @@ export function formatValue(col, val) {
         return sprintf(fmtDisp, val);
     } else if (format) {
         return sprintf(format, val);
-    } else if (precision) {
-        if (isNumericType(col)) {
+    } else if (isColumnType(col, COL_TYPE.INT)) {
+        return sprintf('%i', val);
+    } else if (isColumnType(col, COL_TYPE.FLOAT)) {
+        if (precision) {
             let [, type, prec] = precision.toLowerCase().match(/([efg]?)(\d*)/);
             type = type || 'f';
             prec = prec && '.' + prec;
-            return sprintf('%'+prec+type, val);
+            return sprintf('%' + prec + type, val);
+        } else {
+            return sprintf('%J', val);
         }
     }
     return String(val);
@@ -1115,9 +1136,9 @@ export function getAllColumns(tableModel) {
  * @returns {Array<TableColumn>}
  */
 export function getColsByType(tblColumns=[], type=COL_TYPE.ALL) {
-    const matcher = type === COL_TYPE.TEXT ? isTextType : isNumericType;
-    return tblColumns.filter((col) => get(col, 'visibility') !== 'hidden'
-                        && (type === COL_TYPE.ALL || matcher(col)));
+    return tblColumns.filter((col) =>
+                get(col, 'visibility') !== 'hidden' &&
+                isColumnType(col, type));
 }
 
 export function getColByUtype(tableModel, utype) {
@@ -1161,11 +1182,28 @@ export function hasRowAccess(tableModel, rowIdx) {
 }
 
 
+
+
+
 export function isNumericType(col={}) {
     if (!has(col._isnumeric)) {
-        col._isnumeric = num_types.includes(col.type);      // for efficiency
+        col._isnumeric = isFloatingType(col) || isIntegerType(col);
     }
     return col._isnumeric;
+}
+
+export function isFloatingType(col={}) {
+    if (!has(col._isfloating)) {
+        col._isfloating = float_types.includes(col.type);      // for efficiency
+    }
+    return col._isfloating;
+}
+
+export function isIntegerType(col={}) {
+    if (!has(col._isInteger)) {
+        col._isInteger = int_types.includes(col.type);      // for efficiency
+    }
+    return col._isInteger;
 }
 
 export function isTextType(col={}) {
