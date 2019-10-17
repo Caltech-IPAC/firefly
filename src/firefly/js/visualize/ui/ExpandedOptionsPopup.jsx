@@ -95,7 +95,7 @@ function makeModel(tbl_id,plotViewAry, expandedIds, oldModel) {
     if (oldModel) {
         const oldSi= SelectInfo.newInstance(oldModel.selectInfo);
         const vr= visRoot();
-        let filterStr= ''
+        let filterStr= '';
         oldModel.tableData.data.forEach( (row, idx) => {
             const plotId= row[PID_IDX];
             if (getPlotViewById(vr,plotId) && oldSi.isSelected(idx)) {

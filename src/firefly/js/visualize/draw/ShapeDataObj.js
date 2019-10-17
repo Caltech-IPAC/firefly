@@ -18,6 +18,7 @@ import {visRoot} from '../ImagePlotCntlr.js';
 import {getPixScaleArcSec, getScreenPixScaleArcSec} from '../WebPlot.js';
 import {toRadians, toDegrees,isPlotNorth} from '../VisUtil.js';
 import {rateOpacity, maximizeOpacity} from '../../util/Color.js';
+import {lineCrossesRect} from '../VisUtil';
 
 const FONT_FALLBACK= ',sans-serif';
 
@@ -596,8 +597,7 @@ function drawLine(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
     const devPt1= plot.getDeviceCoords(pts[1]);
     if (!devPt0 || !devPt1) return;
 
-
-    if (plot.pointOnDisplay(devPt0) || plot.pointOnDisplay(devPt1)) {
+    if (lineCrossesRect(devPt0.x,devPt0.y,devPt1.x,devPt1.y,0,0,plot.viewDim.width,plot.viewDim.height)){
         inView= true;
         if (!onlyAddToPath || style===Style.HANDLED) {
             DrawUtil.beginPath(ctx, color,lineWidth, renderOptions);

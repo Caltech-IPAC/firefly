@@ -1072,6 +1072,26 @@ export function findIntersectionPt(seg1x1, seg1y1, seg1x2, seg1y2, seg2x1, sec2y
     };
 }
 
+export function doSegmentsCross(seg1x1, seg1y1, seg1x2, seg1y2, seg2x1, sec2y2, seg2x2, seg2y2) {
+    const result= findIntersectionPt(seg1x1, seg1y1, seg1x2, seg1y2, seg2x1, sec2y2, seg2x2, seg2y2);
+    if (!result) return false;
+    return result.onSeg1 || result.onSeg2;
+}
+
+export function lineCrossesRect(segX1, segY1, segX2, segY2, x, y, w,h) {
+
+    if (segX1>=x && segY1>=y && segX1<=x+w && segY1<=y+h) return true;
+    if (segX2>=x && segY2>=y && segX2<=x+w && segY2<=y+h) return true;
+
+    return Boolean(
+        doSegmentsCross(segX1, segY1, segX2, segY2, x,y, x+w,y) ||
+        doSegmentsCross(segX1, segY1, segX2, segY2, x+w,y, x+w,y+h) ||
+        doSegmentsCross(segX1, segY1, segX2, segY2, x+w,y+h, x,y+h) ||
+        doSegmentsCross(segX1, segY1, segX2, segY2, x,y+h, x,y)
+    );
+
+}
+
 /**
  * distance between point and line defined by two end points
  * @param pts
