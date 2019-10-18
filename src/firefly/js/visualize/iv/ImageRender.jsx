@@ -9,6 +9,7 @@ import {initImageDrawer}  from './ImageTileDrawer.js';
 import {createHiPSDrawer} from './HiPSTileDrawer.js';
 import {isImage} from '../WebPlot.js';
 import {CANVAS_IMAGE_ID_START} from '../PlotViewUtil.js';
+import {primePlot} from '../PlotViewUtil';
 
 const BG_IMAGE= 'image-working-background-24x24.png';
 const BACKGROUND_STYLE = `url(+ ${BG_IMAGE} ) top left repeat`;
@@ -50,6 +51,7 @@ export class ImageRender extends Component {
         };
     }
 
+
     shouldComponentUpdate(np,ns) {
         const {props}= this;
         const {plotView:pv}= props;
@@ -62,6 +64,10 @@ export class ImageRender extends Component {
             props.plot===np.plot && props.opacity===np.opacity ) {
             return false;
         }
+
+        const nextPlot= primePlot(nPv);
+        const plot= primePlot(pv);
+        if (nextPlot.plotType!==plot.plotType) this.tileDrawer= undefined;
 
         const result = !shallowequal(this.props,np) || !shallowequal(this.state,ns);
         return result;
@@ -83,7 +89,7 @@ export class ImageRender extends Component {
 
             return (
                 <div className='tile-drawer' style={style}>
-                    <SimpleCanvas drawIt={this.drawInit} width={width} height={height}
+                    <SimpleCanvas drawIt={this.drawInit} width={width} height={height} plotType={plot.plotType}
                                   id={`${CANVAS_IMAGE_ID_START}${idx}-${pv.plotId}`}/>
                 </div>
             );

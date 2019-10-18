@@ -1187,7 +1187,7 @@ export default {
     getRotationAngle,getTranslateAndRotatePosition,
     isPlotNorth, getEstimatedFullZoomFactor,
     intersects, contains, containsRec,containsCircle,
-    getArrowCoords, getSelectedPts, calculatePosition, getCorners,
+    getArrowCoords, calculatePosition, getCorners,
     makePt, getWorldPtRepresentation, getCenterPtOfPlot, toDegrees, convertAngle,
     distToLine, distanceToPolygon, distanceToCircle
 };

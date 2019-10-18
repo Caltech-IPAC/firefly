@@ -31,7 +31,8 @@ export const MenuItemKeys= {
     irsaCatalog : 'irsaCatalog',
     restore : 'restore',
     overlayColorLock: 'overlayColorLock',
-    fitsHeader: 'fitsHeader'
+    fitsHeader: 'fitsHeader',
+    panByTableRow: 'panByTableRow'
 };
 
 const defaultOff = [MenuItemKeys.lockImage, MenuItemKeys.irsaCatalog, MenuItemKeys.maskOverlay];

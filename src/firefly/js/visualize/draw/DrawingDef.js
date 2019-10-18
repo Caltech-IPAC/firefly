@@ -13,7 +13,7 @@ const COLOR_PT_2 = '#00ff00'; //green
 const COLOR_PT_3 = 'pink';  // pink
 const COLOR_PT_4 = '#00a8ff'; //blue
 const COLOR_PT_5 =  '#990099'; //purple
-const COLOR_PT_6 = '#ff8000'; //orange
+const COLOR_PT_6 = '#ff00FF'; //pinkish
 const COLOR_PT_7 = '#00ffff'; //Aqua
 const COLOR_PT_8 = '#800000'; //Maroon
 

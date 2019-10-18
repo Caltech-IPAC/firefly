@@ -10,6 +10,7 @@ import {loadImage} from '../../util/WebUtil.js';
 import {CysConverter} from '../CsysConverter.js';
 import {findAllSkyCachedImage, findTileCachedImage, addAllSkyCachedImage} from './HiPSTileCache.js';
 import {makeHipsRenderer} from './HiPSRenderer.js';
+import {isHiPS, isImage} from '../WebPlot';
 
 
 const noOp= { drawerTile : () => undefined, abort : () => undefined };
@@ -31,6 +32,7 @@ export function createHiPSDrawer(targetCanvas) {
 
 
     return (plot, opacity,plotView, tileProcessInfo= {shouldProcess:false}) => {
+        if (!isHiPS(plot)) return;
         abortLastDraw && abortLastDraw(); // stop any incomplete drawing
 
         const {viewDim}= plotView;

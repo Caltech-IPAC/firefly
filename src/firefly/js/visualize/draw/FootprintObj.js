@@ -78,6 +78,7 @@ const draw=  {
 			let distSq;
 			let totY = 0;
 			let last = plot.getScreenCoords(footprint[footprint.length - 1]);
+			if (!last) return 100000;
 			footprint.forEach( (wpt) => {
 				const testPt = plot.getScreenCoords(wpt);
 				if (testPt) {
@@ -85,8 +86,12 @@ const draw=  {
 					totX += testPt.x;
 					totY += testPt.y;
 					if (distSq < minDistSq) minDistSq = distSq;
+					last = testPt;
 				}
-				last = testPt;
+				else {
+					totX = 100000;
+					totY= 100000;
+				}
 			});
 			const aveX = totX / footprint.length;
 			const aveY = totY / footprint.length;

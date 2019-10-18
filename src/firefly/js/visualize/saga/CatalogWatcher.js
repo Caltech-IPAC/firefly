@@ -183,7 +183,7 @@ function attachToCatalog(tbl_id, payload) {
     pvNewPlotInfoAry.forEach( (info, idx) => {
         let r= wpRequest || get(wpRequestAry,idx);
         if (!r) r= (redReq || blueReq || greenReq);
-        if (!r || r.getAttributes[PlotAttribute.TABLE_ID]===tbl_id) return;
+        if (!r || r.getAttributes[PlotAttribute.DATALINK_TABLE_ID]===tbl_id) return; //Don't overlay catalogs on image data products
         dispatchAttachLayerToPlot(dl.drawLayerId, info.plotId);
         const pv= getPlotViewById(visRoot(), info.plotId);
         const pvSubGroup= get(pv, 'drawingSubGroupId');

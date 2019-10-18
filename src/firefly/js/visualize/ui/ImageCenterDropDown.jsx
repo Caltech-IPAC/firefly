@@ -20,6 +20,7 @@ import {DropDownSubMenu} from '../../ui/DropDownMenu';
 import FixedMarker from '../../drawingLayers/FixedMarker';
 import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer, getDlAry} from '../DrawLayerCntlr';
 import {formatWorldPt, formatWorldPtToString, formatWorldPtToStringSimple} from './WorldPtFormat';
+import {SimpleLayerOnOffButton} from './SimpleLayerOnOffButton';
 
 
 const MAX_TARGET_LEN= 10;
@@ -55,7 +56,7 @@ function  hasTablesWithCoordinates(pv) {
 }
 
 
-export function ImageCenterDropDown({visRoot:vr, visible}) {
+export function ImageCenterDropDown({visRoot:vr, visible, mi}) {
 
     const pv= getActivePlotView(vr);
     const plot= primePlot(pv);
@@ -106,9 +107,10 @@ export function ImageCenterDropDown({visRoot:vr, visible}) {
                            enabled={coordTables}
                            horizontal={false} key={'pan-table'}
                            hasCheckBox={true} checkBoxOn={vr.autoScrollToHighlightedTableRow}
+                           visible={mi.panByTableRow}
                            onClick={() => dispatchChangeTableAutoScroll(!vr.autoScrollToHighlightedTableRow)}/>
 
-            <DropDownVerticalSeparator useLine={true}/>
+            {mi.panByTableRow && <DropDownVerticalSeparator useLine={true}/>}
 
 
             <ToolbarButton text={centerText} tip={centerTextTip}

@@ -102,11 +102,6 @@ export const PlotAttribute= {
     EXPANDED_TO_FIT_TYPE : 'MAX_EXPANDED_ZOOM_LEVEL',
 
 
-    /** A table row related to this plot */
-    TABLE_ROW : 'TABLE_ROW',
-
-    /** A table id related to this plot */
-    TABLE_ID : 'TABLE_ID',
 
     /** A title to be post-pended to the title */
     POST_TITLE: 'PostTitle',
@@ -123,4 +118,16 @@ export const PlotAttribute= {
     WAVE_LENGTH: 'WAVE_LENGTH',
     WAVE_LENGTH_UM: 'WAVE_LENGTH_UM',
 
+
+    /** A source datalink (or similar) table row that was used to construct this plot */
+    DATALINK_TABLE_ROW : 'DATALINK_TABLE_ROW',
+
+    /** A source datalink (or similar) table id related that was used to construct this plot */
+    DATALINK_TABLE_ID : 'DATALINK_TABLE_ID',
+
+    /** an array of table ids used by coverage or other representation of these tables */
+    VISUALIZED_TABLE_IDS : 'VISUALIZED_TABLE_IDS',
+
+    COVERAGE_CREATED: 'COVERAGE_CREATED',
+    REPLOT_WITH_NEW_CENTER: 'REPLOT_WITH_NEW_CENTER',
 };

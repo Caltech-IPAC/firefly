@@ -406,7 +406,7 @@ function makeMessageArea(pv,plotShowing,onScreen, sizeViewable) {
                                    useMessageAlpha={false}
                                    useButton={true}
                                    buttonText='Recenter'
-                                   buttonCB={() => dispatchRecenter({plotId:pv.plotId}) }
+                                   buttonCB={() => dispatchRecenter({plotId:pv.plotId, centerOnImage:true}) }
 
                 />
             );
