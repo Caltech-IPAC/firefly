@@ -78,7 +78,7 @@ export function DownloadButton(props) {
     const onClick = useCallback(() => {
         if (selectInfoCls.getSelectedCount()) {
             if(hasOnlyProprietaryData(getTblById(tbl_id))){
-                showInfoPopup('You have chosen private data to download.', 'Private Data Selected');
+                showInfoPopup('You do not have permission to download the selected data set(s).', 'Private Data Selected');
             }else if(!hasOnlyProprietaryData()){
                 var panel = props.children ? React.Children.only(props.children) : <DownloadOptionPanel/>;
                 panel = React.cloneElement(panel, {tbl_id});
