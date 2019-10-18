@@ -110,14 +110,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
      */
     public File getDbFile(TableServerRequest treq) {
         String fname = String.format("%s_%s.%s", treq.getRequestId(), DigestUtils.md5Hex(getUniqueID(treq)), DbAdapter.getAdapter(treq).getName());
-        return new File(getTempDir(), fname);
-    }
-
-    protected File getTempDir() {
-        String sessId = ServerContext.getRequestOwner().getRequestAgent().getSessId();
-        File tempDir = new File(ServerContext.getTempWorkDir(), sessId.substring(0, 3));
-        if (!tempDir.exists()) tempDir.mkdirs();
-        return tempDir;
+        return new File(QueryUtil.getTempDir(), fname);
     }
 
     /**
@@ -304,7 +297,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     }
 
     protected File createTempFile(TableServerRequest request, String fileExt) throws IOException {
-        return File.createTempFile(request.getRequestId(), fileExt, getTempDir());
+        return File.createTempFile(request.getRequestId(), fileExt, QueryUtil.getTempDir());
     }
 
     public boolean doCache() {return false;}

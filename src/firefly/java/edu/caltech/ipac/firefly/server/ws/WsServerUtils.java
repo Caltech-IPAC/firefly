@@ -225,7 +225,7 @@ public class WsServerUtils {
         String fileName =  (idx >= 0) ? relPath.substring(idx + 1) : relPath;
         File f = getTempUploadFile(fileName);
 
-        HttpServices.getData(url, f, input);
+        HttpServices.getData(input, f);
 
         return ServerContext.replaceWithPrefix(f);
     }

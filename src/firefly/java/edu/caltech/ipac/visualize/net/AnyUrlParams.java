@@ -109,8 +109,9 @@ public class AnyUrlParams extends BaseNetParams {
         cookies.put(key,value);
     }
 
-    public String getCookie(String key) {
-        return cookies!=null ? cookies.get(key) : null;
+
+    public Map<String, String> getHeaders() {
+        return addtlInfo == null ? null : addtlInfo.getHeaders();
     }
 
     public Map<String,String> getCookies() {

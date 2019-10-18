@@ -45,7 +45,7 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
             }
         }
 
-        HttpServiceInput inputs = HttpServiceInput.createWithCredential();
+        HttpServiceInput inputs = HttpServiceInput.createWithCredential(serviceUrl + "/async");
         if (!StringUtils.isEmpty(queryStr)) inputs.setParam("QUERY", queryStr);
         if (StringUtils.isEmpty(lang)) { lang = "ADQL"; }
         if (maxrec > -1) { inputs.setParam("MAXREC", Integer.toString(maxrec)); }
@@ -53,7 +53,7 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
         inputs.setParam("request", "doQuery"); // in tap 1.0, request param is required
         
         Ref<String> location = new Ref<>();
-        HttpServices.postData(serviceUrl + "/async", inputs, (method -> {
+        HttpServices.postData(inputs, (method -> {
             Header loc = method.getResponseHeader("Location");
             if (loc != null) {
                 location.setSource(loc.getValue().trim());
@@ -66,8 +66,7 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
 
         AsyncTapJob asyncTap = new AsyncTapJob(location.getSource());
         if (asyncTap.getPhase() == AsyncJob.Phase.PENDING) {
-            HttpServices.postData(asyncTap.baseJobUrl + "/phase",
-                    HttpServiceInput.createWithCredential().setParam("PHASE", "RUN"), null);
+            HttpServices.postData(HttpServiceInput.createWithCredential(asyncTap.baseJobUrl + "/phase").setParam("PHASE", "RUN"));
         }
         return asyncTap;
     }
@@ -96,7 +95,7 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
                 //download file first: failing to parse gaia results with topcat SAX parser from url
                 String filename = getFilename(baseJobUrl);
                 File outFile = File.createTempFile(filename, ".vot", ServerContext.getTempWorkDir());
-                HttpServices.getData(baseJobUrl + "/results/result", outFile, HttpServiceInput.createWithCredential());
+                HttpServices.getData(HttpServiceInput.createWithCredential(baseJobUrl + "/results/result"), outFile);
                 DataGroup[] results = VoTableReader.voToDataGroups(outFile.getAbsolutePath());
                 if (results.length > 0) {
                     DataGroup dg = results[0];
@@ -117,14 +116,15 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
         }
 
         public boolean cancel() {
-            return ! HttpServices.postData(baseJobUrl + "/phase", new ByteArrayOutputStream(),
-                    HttpServiceInput.createWithCredential().setParam("PHASE", Phase.ABORTED.name()))
-                                .isError();
+            return !HttpServices.postData(
+                        HttpServiceInput.createWithCredential(baseJobUrl + "/phase").setParam("PHASE", Phase.ABORTED.name()),
+                        new ByteArrayOutputStream()
+            ).isError();
         }
 
         public Phase getPhase() throws DataAccessException {
             ByteArrayOutputStream phase = new ByteArrayOutputStream();
-            HttpServices.Status status = HttpServices.getData(baseJobUrl + "/phase", phase, HttpServiceInput.createWithCredential());
+            HttpServices.Status status = HttpServices.getData(HttpServiceInput.createWithCredential(baseJobUrl + "/phase"), phase);
             if (status.isError()) {
                 throw new DataAccessException("Error getting phase from "+baseJobUrl+" "+status.getErrMsg());
             }
@@ -140,7 +140,7 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
             String errorUrl = baseJobUrl + "/error";
 
             Ref<String> err = new Ref<>();
-            HttpServices.Status status = HttpServices.getData(errorUrl, HttpServiceInput.createWithCredential(),
+            HttpServices.Status status = HttpServices.getData(HttpServiceInput.createWithCredential(errorUrl),
                     (method -> {
                         boolean isText = false;
                         Header contentType = method.getResponseHeader("Content-Type");
@@ -178,13 +178,16 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
 
         public long getTimeout() {
             ByteArrayOutputStream duration = new ByteArrayOutputStream();
-            HttpServices.postData(baseJobUrl + "/executionduration", duration, HttpServiceInput.createWithCredential());
+            HttpServices.postData(HttpServiceInput.createWithCredential(baseJobUrl + "/executionduration"), duration);
             return Long.valueOf(duration.toString());
         }
 
         public void setTimeout(long duration) {
-            HttpServices.postData(baseJobUrl + "/executionduration", new ByteArrayOutputStream(),
-                    HttpServiceInput.createWithCredential().setParam("EXECUTIONDURATION", String.valueOf(duration)));
+            HttpServices.postData(
+                    HttpServiceInput.createWithCredential(baseJobUrl + "/executionduration")
+                            .setParam("EXECUTIONDURATION",
+                    String.valueOf(duration)), new ByteArrayOutputStream()
+            );
         }
 
         protected String getBaseJobUrl() {

@@ -62,11 +62,11 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
 
         File file = createFile(request, ".json");
 
-        HttpServiceInput inputs = HttpServiceInput.createWithCredential(LSSTQuery.getMetaservURL());
+        HttpServiceInput inputs = HttpServiceInput.createWithCredential(url);
         inputs.setHeader("Accept", "application/json");
 
         long cTime = System.currentTimeMillis();
-        HttpServices.Status status = HttpServices.getData(url, file, inputs);
+        HttpServices.Status status = HttpServices.getData(inputs, file);
         _log.briefDebug("Metadata call took " + (System.currentTimeMillis() - cTime) + "ms");
 
         if (status.isError()) {

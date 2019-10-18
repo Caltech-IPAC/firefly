@@ -207,6 +207,8 @@ public class Logger {
             this.name = name;
         }
 
+        public void trace(String... msgs) { log(Type.NORMAL, Level.TRACE, msgs); }
+
         public void briefDebug(String msgs) {
             log(Type.BRIEF, Level.DEBUG, msgs);
         }

@@ -54,7 +54,7 @@ public class HttpServicesTest {
 	public void testGetData(){
 
 		ByteArrayOutputStream results = new ByteArrayOutputStream();
-		HttpServices.Status status = HttpServices.getData(GET_URL, results, input);
+		HttpServices.Status status = HttpServices.getData(input.setRequestUrl(GET_URL), results);
 		validateResults(status, results);
 	}
 
@@ -62,7 +62,7 @@ public class HttpServicesTest {
 	public void testPostData(){
 
 		ByteArrayOutputStream results = new ByteArrayOutputStream();
-		HttpServices.Status status = HttpServices.postData(POST_URL, results, input);
+		HttpServices.Status status = HttpServices.postData(input.setRequestUrl(POST_URL), results);
 		validateResults(status, results);
 	}
 
@@ -76,7 +76,7 @@ public class HttpServicesTest {
 		input.setFile("samplePng", samplePng);
 
 		ByteArrayOutputStream results = new ByteArrayOutputStream();
-		HttpServices.Status status = HttpServices.postData(POST_URL, results, input);
+		HttpServices.Status status = HttpServices.postData(input.setRequestUrl(POST_URL), results);
 
 		validateResults(status, results);
 
@@ -103,7 +103,7 @@ public class HttpServicesTest {
 	public void testGzipData(){
 
 		ByteArrayOutputStream results = new ByteArrayOutputStream();
-		HttpServices.Status status = HttpServices.getData(GZIP_URL, results, input);
+		HttpServices.Status status = HttpServices.getData(input.setRequestUrl(GZIP_URL), results);
 
 		assertFalse("Has error", status.isError());
 
@@ -114,7 +114,7 @@ public class HttpServicesTest {
 	public void testRedirectData(){
 		input.setParam("url", GET_URL);  // redirect back to get
 		ByteArrayOutputStream results = new ByteArrayOutputStream();
-		HttpServices.Status status = HttpServices.getData(REDIRECT_URL, results, input);
+		HttpServices.Status status = HttpServices.getData(input.setRequestUrl(REDIRECT_URL), results);
 
 		assertFalse("Has error", status.isError());
 
