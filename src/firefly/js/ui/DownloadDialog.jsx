@@ -5,7 +5,6 @@
 import React, {useCallback, useState} from 'react';
 import PropTypes from 'prop-types';
 import {set, cloneDeep, get} from 'lodash';
-
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import {dispatchShowDialog, dispatchHideDialog} from '../core/ComponentCntlr.js';
@@ -16,7 +15,6 @@ import {InputField} from './InputField.jsx';
 import {ValidationField} from './ValidationField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {showInfoPopup} from './PopupUtil.jsx';
-
 import {getActiveTableId, getTblById, hasRowAccess, getProprietaryInfo} from '../tables/TableUtil.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {dispatchPackage, dispatchBgSetEmailInfo} from '../core/background/BackgroundCntlr.js';
@@ -79,9 +77,13 @@ export function DownloadButton(props) {
 
     const onClick = useCallback(() => {
         if (selectInfoCls.getSelectedCount()) {
-            var panel = props.children ? React.Children.only(props.children) : <DownloadOptionPanel/>;
-            panel = React.cloneElement(panel, {tbl_id});
-            showDownloadDialog(panel);
+            if(hasOnlyProprietaryData(getTblById(tbl_id))){
+                showInfoPopup('You have chosen private data to download.', 'Private Data Selected');
+            }else if(!hasOnlyProprietaryData()){
+                var panel = props.children ? React.Children.only(props.children) : <DownloadOptionPanel/>;
+                panel = React.cloneElement(panel, {tbl_id});
+                showDownloadDialog(panel);
+            }
         } else {
             showInfoPopup('You have not chosen any data to download', 'No Data Selected');
         }
@@ -317,6 +319,23 @@ function hasProprietaryData(tableModel={}) {
     }
     return false;
 }
+
+
+function hasOnlyProprietaryData(tableModel={}){
+    if (getProprietaryInfo(tableModel).length === 0) return false;
+
+    const {selectInfo} = tableModel;
+    const selectInfoCls = SelectInfo.newInstance(selectInfo);
+
+    const selectedRows = [...selectInfoCls.getSelected()];
+    for (let i = 0; i < selectedRows.length; i++) {
+        if (hasRowAccess(tableModel, selectedRows[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
 
 
 /**
