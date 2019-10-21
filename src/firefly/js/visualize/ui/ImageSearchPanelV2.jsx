@@ -123,6 +123,7 @@ function ImageSearchPanel({resizable=true, onSubmit, gridSupport = false, multiS
             <FormPanel  inputStyle = {{display: 'flex', flexDirection: 'column', backgroundColor: 'transparent', padding: 'none', border: 'none'}}
                         submitBarStyle = {{flexShrink: 0, padding: '0 4px 3px'}}
                         groupKey = {Object.values(FG_KEYS)} includeUnmounted={true}
+                        groupsToUse={getGroupsToValidate}
                         params = {{hideOnInvalid: false}}
                         submitText={submitText}
                         onSubmit = {onSubmit}
@@ -192,6 +193,12 @@ function isSingleChannelImgType() {
     return (!isThreeColorImgType() && !isHipsImgType());
 }
 
+function getGroupsToValidate() {
+    if (isThreeColorImgType()) return [FG_KEYS.main,FG_KEYS.red,FG_KEYS.green,FG_KEYS.blue];
+    else if (isHipsImgType()) return [FG_KEYS.main,FG_KEYS.hips];
+    else if (isSingleChannelImgType()) return [FG_KEYS.main,FG_KEYS.single];
+    else return Object.values(FG_KEYS);
+}
 
 /**
  *

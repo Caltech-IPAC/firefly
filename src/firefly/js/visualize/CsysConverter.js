@@ -599,7 +599,7 @@ export class CysConverter {
 
     /**
      * @desc Return the sky coordinates given a image x (fsamp) and  y (fline)
-     * @param {PointPt} pt  the point to convert
+     * @param {Point} pt  the point to convert
      * @param  {CoordinateSys} [outputCoordSys] (optional) The coordinate system to return, default to coordinate system of image
      * @returns {WorldPt} the translated coordinates
      */

@@ -46,7 +46,7 @@ function createSuccessHandler(action, params={}, title, onSubmit) {
 }
 
 export const FormPanel = function (props) {
-    const { children, onSuccess, onSubmit, onCancel=dispatchHideDropDown, onError, groupKey,
+    const { children, onSuccess, onSubmit, onCancel=dispatchHideDropDown, onError, groupKey, groupsToUse,
         action, params, title,
         submitText='Search',cancelText='Cancel', help_id, changeMasking,
         includeUnmounted=false, extraWidgets=[]} = props;
@@ -76,6 +76,7 @@ export const FormPanel = function (props) {
                         <CompleteButton style={{display: 'inline-block', marginRight: 10}}
                                         includeUnmounted={includeUnmounted}
                                         groupKey={groupKey}
+                                        groupsToUse={groupsToUse}
                                         onSuccess={onSuccess||createSuccessHandler(action, params, title, onSubmit)}
                                         onFail={onError || handleFailfure}
                                         text = {submitText} changeMasking={changeMasking}
@@ -107,6 +108,7 @@ FormPanel.propTypes = {
     onCancel: PropTypes.func,
     onError: PropTypes.func,
     groupKey: PropTypes.any,
+    groupsToUse: PropTypes.func,
     action: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
     params: PropTypes.object,
     help_id: PropTypes.string,

@@ -8,16 +8,17 @@ import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.TableUtil;
-import nom.tam.fits.ImageHDU;
-import nom.tam.image.compression.hdu.CompressedImageHDU;
-import org.json.simple.JSONObject;
+import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.Header;
-import nom.tam.fits.BasicHDU;
 import nom.tam.fits.HeaderCard;
+import nom.tam.fits.ImageHDU;
 import nom.tam.fits.TableHDU;
+import nom.tam.image.compression.hdu.CompressedImageHDU;
 import nom.tam.util.Cursor;
+import org.json.simple.JSONObject;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -41,9 +42,12 @@ public class FitsHDUUtil {
 
         BasicHDU[] parts = new Fits(infile).read();               // get the headers
         for(int i = 0; i < parts.length; i++) {
-            FileAnalysis.Type ptype   = parts[i] instanceof ImageHDU ? Image :
-                                        parts[i] instanceof TableHDU ? Table :
-                                        FileAnalysis.Type.Unknown;
+            FileAnalysis.Type ptype;
+
+            if (parts[i] instanceof CompressedImageHDU)  ptype= Image;
+            else if (parts[i] instanceof ImageHDU)  ptype= Image;
+            else if (parts[i] instanceof TableHDU)  ptype= Table;
+            else ptype= FileAnalysis.Type.Unknown;
 
             boolean isCompressed = (parts[i] instanceof CompressedImageHDU);
 
