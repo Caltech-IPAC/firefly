@@ -3,7 +3,7 @@
  */
 
 import Enum from 'enum';
-import {get,isEmpty,isObject, flattenDeep, values, isUndefined} from 'lodash';
+import {get,isEmpty,isObject, isString, flattenDeep, values, isUndefined} from 'lodash';
 import {WebPlotRequest, TitleOptions} from '../WebPlotRequest.js';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE,
         TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
@@ -32,14 +32,13 @@ import {getSearchTarget} from './CatalogWatcher';
 import {MetaConst} from '../../data/MetaConst.js';
 import {isHiPS} from '../WebPlot';
 import {PlotAttribute} from '../PlotAttribute.js';
+import {isDrawLayerVisible} from '../PlotViewUtil';
 
 export const CoverageType = new Enum(['X', 'BOX', 'REGION', 'ALL', 'GUESS']);
 export const FitType=  new Enum (['WIDTH', 'WIDTH_HEIGHT']);
 
 const COVERAGE_TARGET = 'COVERAGE_TARGET';
 const COVERAGE_RADIUS = 'COVERAGE_RADIUS';
-const COVERAGE_TABLE = 'COVERAGE_TABLE';
-export const COVERAGE_CREATED = 'COVERAGE_CREATED';
 
 export const PLOT_ID= 'CoveragePlot';
 
@@ -361,11 +360,14 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
                        viewerId, PLOT_ID, overlayPosition, avgOfCenters);
     hipsRequest.setSizeInDeg(size);
 
+    const tblIdAry= Object.keys(preparedTables).filter( (v) => !isString(preparedTables[v]));
+
     const attributes= {
         [COVERAGE_TARGET]: avgOfCenters,
         [COVERAGE_RADIUS]: maxRadius,
-        [COVERAGE_TABLE]: tbl_id,
-        [COVERAGE_CREATED]: true,
+        [PlotAttribute.VISUALIZED_TABLE_IDS]: tblIdAry,
+        [PlotAttribute.COVERAGE_CREATED]: true,
+        [PlotAttribute.REPLOT_WITH_NEW_CENTER]: true,
     };
     if (commonSearchTarget) attributes[PlotAttribute.CENTER_ON_FIXED_TARGET]= commonSearchTarget;
 
@@ -442,35 +444,50 @@ function makeOverlayCoverageDrawing() {
     return (preparedTables, options, tblCatIdMap) => {
         const plot=  primePlot(visRoot(),PLOT_ID);
         if (!plot) return;
-        const tbl_id=  plot.attributes[COVERAGE_TABLE];
-        if (!tbl_id || !preparedTables[tbl_id] || !getTblById(tbl_id)) return;
-        const table= getTblById(tbl_id);
+        const tblIdAry=  plot.attributes[PlotAttribute.VISUALIZED_TABLE_IDS];
+        if (isEmpty(tblIdAry)) return;
+        let visible= true;
 
-        if (isCatalog(table) && options.ignoreCatalogs) return; // let the catalog watcher just handle the drawing overlays
+        tblIdAry.forEach( (tbl_id) => {
+            if (!tbl_id || !preparedTables[tbl_id] || !getTblById(tbl_id)) return;
+            const table= getTblById(tbl_id);
 
-        if (tblCatIdMap[tbl_id]) {
-            tblCatIdMap[tbl_id].forEach((cId) => {
-                const layer = getDrawLayerById(getDlAry(), cId);
-                if (layer) {
-                    drawingOptions[cId] = layer.drawingDef;    // drawingDef and selectOption is stored as layer based
-                    selectOps[cId] = layer.selectOption;
-                    dispatchDestroyDrawLayer(cId);
+            if (!table) {
+                if (tblCatIdMap[tbl_id]) {
+                    tblCatIdMap[tbl_id].forEach((cId) => {
+                        const layer = getDrawLayerById(getDlAry(), cId);
+                        if (layer) dispatchDestroyDrawLayer(cId);
+                    });
                 }
+            }
+
+            if (isCatalog(table) && options.ignoreCatalogs) return; // let the catalog watcher just handle the drawing overlays
+
+            // if (tblCatIdMap[tbl_id]) {
+            //     tblCatIdMap[tbl_id].forEach((cId) => {
+            //         const layer = getDrawLayerById(getDlAry(), cId);
+            //         if (layer) {
+            //             drawingOptions[cId] = layer.drawingDef;    // drawingDef and selectOption is stored as layer based
+            //             selectOps[cId] = layer.selectOption;
+            //             visible= isDrawLayerVisible(layer, plot.plotId);
+            //             dispatchDestroyDrawLayer(cId);
+            //         }
+            //     });
+            // }
+
+            const overlayAry=  Object.keys(preparedTables);
+
+            overlayAry.forEach( (id) => {
+                tblCatIdMap[id] && tblCatIdMap[id].forEach((cId) => {
+                    if (!drawingOptions[cId]) drawingOptions[cId] = {};
+                    if (!drawingOptions[cId].color) drawingOptions[cId].color = lookupOption(options, 'color', cId) || getNextColor();
+                    if (selectOps[cId]) drawingOptions[cId].selectOption = selectOps[cId];
+                });
+                const oriTable= getTblById(id);
+                const arTable= preparedTables[id];
+                if (oriTable && arTable) addToCoverageDrawing(PLOT_ID, options, oriTable, arTable, drawingOptions, visible);
+
             });
-        }
-
-        const overlayAry=  Object.keys(preparedTables);
-
-        overlayAry.forEach( (id) => {
-            tblCatIdMap[id] && tblCatIdMap[id].forEach((cId) => {
-                if (!drawingOptions[cId]) drawingOptions[cId] = {};
-                if (!drawingOptions[cId].color) drawingOptions[cId].color = lookupOption(options, 'color', cId) || getNextColor();
-                if (selectOps[cId]) drawingOptions[cId].selectOption = selectOps[cId];
-            });
-            const oriTable= getTblById(id);
-            const arTable= preparedTables[id];
-            if (oriTable && arTable) addToCoverageDrawing(PLOT_ID, options, oriTable, arTable, drawingOptions);
-
         });
     };
 }
@@ -483,20 +500,21 @@ function makeOverlayCoverageDrawing() {
  * @param {TableData} table
  * @param {TableData} allRowsTable
  * @param {string} drawOp
+ * @param {boolean} addVisible - when added it is visible
  */
-function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp) {
+function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp, addVisible) {
 
     if (allRowsTable==='WORKING') return;
     const covType= getCoverageType(options,allRowsTable);
     const {tableMeta, tableData}= allRowsTable;
 
-    const createDrawLayer = (cId, dataType, isFromRegion=false) => {
+    const createDrawLayer = (cId, dataType, visible, isFromRegion=false) => {
         const columns = dataType === CoverageType.REGION ? findTableRegionColumn(allRowsTable) :
                         (covType === CoverageType.BOX ? getCornersColumns(allRowsTable) : findTableCenterColumns(allRowsTable));
         if (isEmpty(columns)) return;
         let angleInRadian= false;
         if (dataType=== CoverageType.X) {
-            angleInRadian= isTableUsingRadians(table, [columns.lonCol,columns.latCol])
+            angleInRadian= isTableUsingRadians(table, [columns.lonCol,columns.latCol]);
         }
         else if (dataType=== CoverageType.BOX) {
             const cAry= columns.map( (c) => [c.lonCol,c.latCol]).flat();
@@ -533,19 +551,19 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp) {
                 tableSelection: (dataType === CoverageType.REGION) ? (drawOp[cId].selectOption || TableSelectOptions.all.key) : null,
                 searchTarget,
             });
-            dispatchAttachLayerToPlot(cId, plotId);
+            dispatchAttachLayerToPlot(cId, plotId, false, visible);
         }
     };
 
     if (covType === CoverageType.BOX) {
-        createDrawLayer(table.tbl_id, covType);
+        createDrawLayer(table.tbl_id, covType, addVisible);
     } else if (covType === CoverageType.X) {
-        createDrawLayer(table.tbl_id, covType);
+        createDrawLayer(table.tbl_id, covType, addVisible);
     } else if (covType === CoverageType.REGION) {
         const layerType = [CoverageType.X, CoverageType.REGION];
         const layerId = [centerId(table.tbl_id), regionId(table.tbl_id)];
 
-        layerType.forEach((type, idx) => createDrawLayer(layerId[idx], layerType[idx], true));
+        layerType.forEach((type, idx) => createDrawLayer(layerId[idx], layerType[idx], addVisible, true));
     }
 }
 

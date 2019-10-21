@@ -64,6 +64,8 @@ import {addNewMocLayer, isMOCFitsFromUploadAnalsysis, makeMocTableId, MOCInfo, U
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
 import {doUpload} from '../../ui/FileUpload.jsx';
 import CoordinateSys from '../CoordSys.js';
+import {getRowCenterWorldPt} from '../saga/ActiveRowCenterWatcher';
+import {getActiveTableId} from '../../tables/TableUtil';
 
 const PROXY= true;
 
@@ -423,8 +425,10 @@ export function makeImageOrHiPSAction(rawAction) {
  * convert to a image defined in  hipsImageConversion
  * @param {PlotView} pv
  * @param {boolean} allSky if true, convert to the allsky image defined in hipsImageConversion
+ * @param {boolean} tryCenterBySelectedObj - if the field of view is large and convert to image is selected then try to
+ *             choose and image center that is the selected object of the associated table.
  */
-export function convertToImage(pv, allSky= false) {
+export function convertToImage(pv, allSky= false, tryCenterBySelectedObj= false) {
     const {plotId, plotGroupId,viewDim}= pv;
     const {allSkyRequest, imageRequestRoot, fovMaxFitsSize}= pv.plotViewCtx.hipsImageConversion;
     dispatchDetachLayerFromPlot(ImageOutline.TYPE_ID, plotId);
@@ -450,7 +454,7 @@ export function convertToImage(pv, allSky= false) {
         }
     }
     else {
-        wpRequest.setWorldPt(getCenterPt(pv));
+        wpRequest.setWorldPt(findWorldPtToCenterOn(pv,tryCenterBySelectedObj));
         wpRequest.setSizeInDeg(currentFoV> fovMaxFitsSize ? fovMaxFitsSize : currentFoV);
         if (currentFoV > 5) {
             wpRequest.setZoomType(ZoomType.TO_WIDTH_HEIGHT);
@@ -468,7 +472,7 @@ export function convertToImage(pv, allSky= false) {
 
 
 
-export function convertToHiPS(pv, fromAllSky= false) {
+export function convertToHiPS(pv, fromAllSky= false, tryCenterBySelectedObj= false) {
     const {plotId, plotGroupId}= pv;
     const wpRequest= pv.plotViewCtx.hipsImageConversion.hipsRequestRoot.makeCopy();
     wpRequest.setPlotId(plotId);
@@ -478,7 +482,7 @@ export function convertToHiPS(pv, fromAllSky= false) {
 
 
     const attributes= clone(plot.attributes, getCornersAttribute(pv) || {});
-    wpRequest.setWorldPt(getCenterPt(pv));
+    wpRequest.setWorldPt(findWorldPtToCenterOn(pv,tryCenterBySelectedObj));
     if (!fromAllSky) {
         prepFromImageConversion(pv,wpRequest);
     }
@@ -488,6 +492,21 @@ export function convertToHiPS(pv, fromAllSky= false) {
         enableRestore:false,
         pvOptions:{ displayFixedTarget, userCanDeletePlots }
     });
+}
+
+function findWorldPtToCenterOn(pv, tryCenterBySelectedObj) {
+    let centerPt;
+    const currentFoV= getFoV(pv);
+    const plot= primePlot(pv);
+    if (tryCenterBySelectedObj && currentFoV>15 && plot.attributes[PlotAttribute.VISUALIZED_TABLE_IDS]) {
+        const tblIdAry=  plot.attributes[PlotAttribute.VISUALIZED_TABLE_IDS];
+        const tbl_id= getActiveTableId();
+        if (!isEmpty(tblIdAry) && tblIdAry.includes(tbl_id)) {
+            centerPt= getRowCenterWorldPt(tbl_id);
+        }
+    }
+    return centerPt || getCenterPt(pv);
+
 }
 
 function getCenterPt(pv) {

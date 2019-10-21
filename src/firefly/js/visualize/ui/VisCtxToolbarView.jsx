@@ -381,10 +381,11 @@ export function canConvertHipsAndFits(pv) {
 function doConvert(pv,target) {
     if (!canConvertHipsAndFits(pv)) return;
     if (target==='fits') {
-        convertToImage(pv,false);
+        convertToImage(pv,false,true);
     }
     else if (target==='hips') {
-        convertToHiPS(pv,pv.request.getRequestType()===RequestType.ALL_SKY);
+        const fromAllsky= pv.request.getRequestType()===RequestType.ALL_SKY;
+        convertToHiPS(pv,fromAllsky, fromAllsky);
     }
     else if (target==='allsky') {
         convertToImage(pv,true);

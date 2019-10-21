@@ -27,6 +27,7 @@ export function initImageDrawer(targetCanvas) {
 
 
     return (plot, opacity,plotView, tileProcessInfo= {shouldProcess:false}) => {
+        if (!isImage(plot)) return;
         if (abortLastDraw) abortLastDraw();
         const {tileData} = plot;
         const scale = plot.zoomFactor/ plot.plotState.getZoomLevel(); // note plotState contains the zoom level that tile where produced for.

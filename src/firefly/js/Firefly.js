@@ -117,6 +117,7 @@ const defFireflyOptions = {
     workspace : { showOptions: false},
     wcsMatchType: false,
     imageScrollsToHighlightedTableRow: true,
+    imageScrollsToActiveTableOnLoadOrSelect: true,
 
     charts: {
         defaultDeletable: undefined, // by default if there are more than one chart in container, all charts are deletable

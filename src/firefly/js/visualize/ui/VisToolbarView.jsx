@@ -239,7 +239,7 @@ export class VisToolbarView extends PureComponent {
                                         onClick={() => flipY(pv)}
                 />
 
-                <ImageCenterDropDown visRoot={visRoot} visible={mi.recenter} />
+                <ImageCenterDropDown visRoot={visRoot} visible={mi.recenter} mi={mi}/>
                 <ToolbarHorizontalSeparator/>
 
                 <SimpleLayerOnOffButton plotView={pv}

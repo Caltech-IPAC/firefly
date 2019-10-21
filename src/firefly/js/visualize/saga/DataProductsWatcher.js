@@ -216,7 +216,7 @@ function updateDataProducts(tbl_id, activateParams, dataTypeViewerId, abortLastP
             viewer.itemIdAry.find((id) => {
                 const plot = primePlot(visRoot(), id);
                 if (plot && id !== activePid &&
-                    get(plot.attributes, PlotAttribute.TABLE_ROW, -1) === highlightedRow) {
+                    get(plot.attributes, PlotAttribute.DATALINK_TABLE_ROW, -1) === highlightedRow) {
                     dispatchChangeActivePlotView(id);
                     return true;
                 }
