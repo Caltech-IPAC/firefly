@@ -7,10 +7,14 @@ import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE,TBL
 import {visRoot, dispatchRecenter} from '../ImagePlotCntlr.js';
 import {getTblById, getCellValue} from '../../tables/TableUtil.js';
 import Point, {makeWorldPt, makeAnyPt} from '../Point.js';
-import {isHiPS} from '../WebPlot.js';
 import {findTableCenterColumns} from '../../util/VOAnalyzer.js';
-import {getActivePlotView, getCenterOfProjection, getFoV, hasWCSProjection, primePlot} from '../PlotViewUtil';
-import {computeDistance, toDegrees} from '../VisUtil';
+import {
+    getActivePlotView,
+    hasWCSProjection,
+    isFullyOnScreen,
+    primePlot, willFitOnScreenAtCurrentZoom
+} from '../PlotViewUtil';
+import {toDegrees} from '../VisUtil';
 import {CysConverter} from '../CsysConverter';
 import {dispatchPlotImage, dispatchUseTableAutoScroll} from '../ImagePlotCntlr';
 import {isColRadians} from '../../tables/TableUtil';
@@ -66,50 +70,32 @@ export function recenterImages(tbl_id, action, cancelSelf, params) {
     }
 }
 
-
-/**
- * Return true if the new point is in outside of 90% of the viewing area or it is a HiPS with the new point
- * over a 1/2 degree from the center or it is a HiPS with a FOV greater than 1 degree
- * @param {PlotView} pv
- * @param {WorldPt} wp
- * @return {boolean}
- */
-function shouldRecenter(pv,wp) {//todo - keep the function for a year in case we decide to go back to it (7/2/2019)
-    const plot= primePlot(pv);
-    if (!plot) return false;
-    const cc= CysConverter.make(plot);
-    const devPt= cc.getDeviceCoords(wp);
-    const {width,height}= pv.viewDim;
-    let forceRecenter= false;
-    if (isHiPS(plot)) {
-        const cenWp= getCenterOfProjection(plot);
-        if (getFoV(pv) > 1 || computeDistance(cenWp, wp)>.5) {
-            forceRecenter= true;
-        }
-    }
-    if (!forceRecenter && cc.pointOnDisplay(wp)) {
-        if (devPt.x > width*.1 && devPt.x<width*.9 && devPt.y>height*.1 && devPt.y<height*.9 ) {
-            return false;
-        }
-    }
-    return true;
-
-}
+const isImageAitoff= (plot) => (isImage(plot) && plot.projection.isWrappingProjection());
 
 /**
  * return true if the point is not one the display
  * @param pv
  * @param wp
+ * @param {boolean} force
  * @return {boolean}
  */
-function shouldRecenterSimple(pv,wp) {
+function shouldRecenterSimple(pv,wp, force) {
     const plot= primePlot(pv);
+    if (force) {
+        if (!isImageAitoff(plot)) return true; // if not an image aitoff projection
+        return !(isFullyOnScreen(pv));
+    }
     if (!plot) return false;
     const cc= CysConverter.make(plot);
     return !cc.pointOnDisplay(wp);
 }
 
 
+/**
+ *
+ * @param tbl_id the table id
+ * @param force force a recenter under all cases
+ */
 function recenterImageActiveRow(tbl_id, force=false) {
 
     const vr= visRoot();
@@ -126,8 +112,9 @@ function recenterImageActiveRow(tbl_id, force=false) {
     const wp= getRowCenterWorldPt(tbl);
     if (!wp) return;
 
-    if (force || shouldRecenterSimple(pv,wp)) {
-        dispatchRecenter({plotId: plot.plotId, centerPt: wp});
+    if (shouldRecenterSimple(pv,wp,force)) {
+        isImageAitoff(plot) && willFitOnScreenAtCurrentZoom(pv) ?
+            dispatchRecenter({plotId: plot.plotId, centerOnImage:true}) : dispatchRecenter({plotId: plot.plotId, centerPt: wp});
         if (plot && isImage(plot) && plot.attributes[PlotAttribute.REPLOT_WITH_NEW_CENTER]) {
             if (plot.projection.isWrappingProjection()) return; // it is all sky, don't do anything
             const r= pv.request.makeCopy();

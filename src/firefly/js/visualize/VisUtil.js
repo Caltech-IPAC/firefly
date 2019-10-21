@@ -687,6 +687,21 @@ export function getBoundingBox(ptAry) {
 }
 
 
+export function computeBoundingBoxInDeviceCoordsForPlot(pv) {
+    const plot= primePlot(pv);
+    if (!plot) return;
+    const {dataWidth:w,dataHeight:h}= plot;
+    const cc= CysConverter.make(plot);
+    return getBoundingBox([
+        cc.getDeviceCoords(makeImagePt(0,0)),
+        cc.getDeviceCoords(makeImagePt(w,0)),
+        cc.getDeviceCoords(makeImagePt(w,h)),
+        cc.getDeviceCoords(makeImagePt(0,h))
+    ]);
+}
+
+
+
 /**
  * @param {object} selection obj with two properties pt0 & pt1
  * @param {WebPlot} plot web plot

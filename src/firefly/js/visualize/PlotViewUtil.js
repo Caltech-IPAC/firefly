@@ -13,6 +13,7 @@ import {isHiPS, isImage} from './WebPlot.js';
 import {isDefined} from '../util/WebUtil';
 import {getWavelength, isWLAlgorithmImplemented, PLANE} from './projection/Wavelength.js';
 import {getNumberHeader, HdrConst} from './FitsHeaderUtil.js';
+import {computeBoundingBoxInDeviceCoordsForPlot, containsRec} from './VisUtil';
 
 
 export const CANVAS_IMAGE_ID_START= 'image-';
@@ -81,6 +82,24 @@ export function getPlotGroupIdxById(ref,plotGroupId) {
     return plotGroupAry.findIndex( (pg) => pg.plotGroupId===plotGroupId);
 }
 
+
+export function isFullyOnScreen(pv) {
+    if (!pv) return false;
+    const {viewDim}= pv;
+    const box=computeBoundingBoxInDeviceCoordsForPlot(pv);
+    if (!box) return false;
+    return containsRec(0,0,viewDim.width+3, viewDim.height+3, box.x,box.y,box.w,box.h);
+
+}
+
+export function willFitOnScreenAtCurrentZoom(pv) {
+    if (!pv) return false;
+    const {viewDim}= pv;
+    const box=computeBoundingBoxInDeviceCoordsForPlot(pv);
+    if (!box) return false;
+    return (viewDim.width+3>=box.w && viewDim.height+3>=box.h);
+
+}
 
 /**
  *
