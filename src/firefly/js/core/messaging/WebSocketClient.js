@@ -16,6 +16,7 @@ var intervalId;
 
 var wsClient;
 
+
 /**
  * WebSocket client.
  * @typedef {object} WsClient
@@ -139,17 +140,20 @@ function makePinger(onConnectCallback, wsUrl) {
 
     intervalId && clearInterval(intervalId);
 
+    let lastPing =  Date.now();
+
     const check = (from='ping') => {
 
         if (wsConn.readyState === WebSocket.OPEN) {
-            wsSend({});
+
+            if ((Date.now() - lastPing) > 5*60*1000) {       // 5 mins ping keep-alive
+                lastPing = Date.now();
+                wsSend({});
+                isDebug() && console.log(`ping initiated from ${from} on: ${lastPing}`);
+            }
         } else {
             dispatchUpdateAppData({websocket: {isConnected: false}});
             makeConnection(wsUrl);
-        }
-
-        if (isDebug()) {
-            console.log(`ping initiated from ${from} on: ${Date()}`);
         }
     };
 

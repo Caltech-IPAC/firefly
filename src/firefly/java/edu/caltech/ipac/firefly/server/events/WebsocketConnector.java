@@ -12,6 +12,7 @@ import edu.caltech.ipac.util.StringUtils;
 
 import javax.websocket.CloseReason;
 import javax.websocket.OnClose;
+import javax.websocket.OnError;
 import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
 import javax.websocket.Session;
@@ -34,9 +35,14 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
     private ServerEventQueue eventQueue;
     private final ReentrantLock lock = new ReentrantLock();
 
+    private static final long WS_TIMEOUT = 30*1000;  // give up after 30 sec when sending msg
+    private static final long WS_MAX_IDLE = 10*60*1000; // drop session when idled for over 10 mins.  keep-alive ping happens every 5 mins.
+
     @OnOpen
     public void onOpen(final Session session) {
         this.session = session;
+        this.session.getContainer().setAsyncSendTimeout(WS_TIMEOUT);
+        this.session.getContainer().setDefaultMaxSessionIdleTimeout(WS_MAX_IDLE);
         try {
             Map<String, List<String>> params = session.getRequestParameterMap();
             userKey = ServerContext.getRequestOwner().getUserKey();
@@ -47,9 +53,9 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
             send(ServerEventQueue.convertToJson(connected));
             ServerEventManager.addEventQueue(eventQueue);
             onClientConnect(session.getId(), channelID, userKey);
-System.out.println("ws onpen:" + channelID + "-" + session.getId());
+            LOG.trace("WS open:" + channelID + "-" + session.getId());
         } catch (Exception e) {
-            LOG.error(e, "Unable to open websocket connection:" + session.getId());
+            LOG.error(e, "WS Unable to open websocket connection:" + session.getId());
         }
     }
 
@@ -57,7 +63,10 @@ System.out.println("ws onpen:" + channelID + "-" + session.getId());
     public void onMessage(String message) {
         try {
 
-            if (StringUtils.isEmpty(message)) return;  // ignore empty messages
+            if (StringUtils.isEmpty(message)) {
+                LOG.trace(String.format("WS PING from (%s-%s)", channelID, session.getId()));
+                return;  // ignore empty messages
+            }
 
             ServerEvent event = ServerEventQueue.parseJsonEvent(message);
             event.setFrom(session.getId());
@@ -67,16 +76,23 @@ System.out.println("ws onpen:" + channelID + "-" + session.getId());
                 event.getTarget().setConnID(session.getId());
             }
             ServerEventManager.fireEvent(event);
+            LOG.trace(String.format("WS msg from (%s-%s): %s", channelID, session.getId(), message));
         } catch (Exception e) {
-            LOG.error(e, "Error while interpreting incoming json message:" + message);
+            LOG.error(e, "WS Error while interpreting incoming json message:" + message);
         }
+    }
+
+    @OnError
+    public void onError(Session session, Throwable throwable) {
+        LOG.info(String.format("WS error (%s-%s): %s", channelID, session.getId(), throwable.getMessage()));
+        onClose(session, new CloseReason(CloseReason.CloseCodes.UNEXPECTED_CONDITION, throwable.getMessage()));
     }
 
     @OnClose
     public void onClose(Session session, CloseReason closeReason) {
         ServerEventManager.removeEventQueue(eventQueue);
         updateClientConnections(CONN_UPDATED, channelID, userKey);
-        LOG.error("Websocket connection closed:" + session.getId() + " - " + closeReason.getReasonPhrase());
+        LOG.trace("WS closed:" + session.getId() + " - " + closeReason.getReasonPhrase());
     }
 
 //====================================================================
@@ -89,7 +105,7 @@ System.out.println("ws onpen:" + channelID + "-" + session.getId());
         }
         lock.lock();
         try {
-            session.getBasicRemote().sendText(message);
+            session.getAsyncRemote().sendText(message);     // use async so it will timed out after WS_TIMEOUT is reached.
         } finally {
             lock.unlock();
         }
