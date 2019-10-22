@@ -227,8 +227,8 @@ ext.publishDocs = { docsDir, product ->
     product = product ?: "firefly"
 
     if (!file(docsDir).exists()) {
-        println ">> docs directory does not exists.  Skipping publishDocs."
-        throw new StopExecutionException("docs directory does not exists.  Skipping publishDocs.")
+        println ">> docs directory does not exist.  Skipping publishDocs."
+        throw new StopExecutionException("docs directory does not exist.  Skipping publishDocs.")
     }
 
     try {
@@ -252,4 +252,29 @@ ext.publishDocs = { docsDir, product ->
         commandLine "ltd-mason-travis", "--html-dir", docsDir
     }
     return res
+}
+
+
+/**
+ * this function execute the cmd, returns the status code.
+ * if failed with exception, then the standardOut and errorOut is returned as the exception messages
+ */
+ext.doExec = { workDir, ...cmd ->
+
+    if (!file(workDir).exists()) {
+        throw new GradleException(cmd + "\n ${workDir} does not exist.")
+    }
+
+    def buff = new ByteArrayOutputStream()
+    try {
+        def res = exec {
+            workingDir = workDir
+            commandLine cmd
+            standardOutput = buff
+            errorOutput = buff
+        }
+        return res;
+    } catch (Exception e) {
+        throw new GradleException(buff.toString())
+    }
 }
