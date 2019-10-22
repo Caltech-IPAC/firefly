@@ -241,6 +241,7 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
                           computeHighlightLayer(drawLayer, columns) : lastDataRet;
         case DataTypes.SELECTED_IDXS:
             if (drawLayer.catalog || drawLayer.catalogType === CatalogType.REGION) {
+                if (drawLayer.dataTooBigForSelection) return [];
                 return isEmpty(lastDataRet) ?
                     computeSelectedIdxAry(drawLayer) : lastDataRet;
             }

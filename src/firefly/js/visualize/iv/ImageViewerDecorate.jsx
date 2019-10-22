@@ -6,7 +6,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
-import {get,isEmpty,omit} from 'lodash';
+import {get,isEmpty,omit,isFunction} from 'lodash';
 import {getPlotGroupById}  from '../PlotGroup.js';
 import {ExpandType, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {VisCtxToolbarView, canConvertHipsAndFits} from './../ui/VisCtxToolbarView.jsx';
@@ -51,7 +51,7 @@ const toolsAnno= [
  */
 function showSelect(pv,dlAry) {
     return getAllDrawLayersForPlot(dlAry, pv.plotId,true)
-        .some( (dl) => (dl.drawLayerTypeId === Catalog.TYPE_ID && dl.canSelect && dl.catalog) ||
+        .some( (dl) => (dl.drawLayerTypeId === Catalog.TYPE_ID && (dl.canSelect && !dl.dataTooBigForSelection) && dl.catalog) ||
                         (dl.drawLayerTypeId === LSSTFootprint.TYPE_ID && dl.canSelect) );
 }
 
@@ -82,8 +82,9 @@ function showUnselect(pv,dlAry) {
                    (dl.drawLayerTypeId===LSSTFootprint.TYPE_ID);
         })
         .some( (dl) => {
-                  return (Boolean(dl.drawData[DataTypes.SELECTED_IDXS] && dl.canSelect) ||
-                          Boolean(!isEmpty(dl.selectRowIdxs) && dl.canSelect));
+                  const selectIdxs=dl.drawData[DataTypes.SELECTED_IDXS];
+                  const hasIndexes= isFunction(selectIdxs) || !isEmpty(selectIdxs);
+                  return (hasIndexes && dl.canSelect);
         });
 }
 
@@ -153,7 +154,7 @@ function contextToolbar(pv,dlAry,extensionList) {
     else if (showUnselect(pv, dlAry)) {
         return (
             <VisCtxToolbarView {...{plotView:pv, dlAry,  extensionAry:EMPTY_ARRAY,
-                showCatUnSelect:true,
+                showCatUnSelect:true, showClearFilter:showClearFilter(pv,dlAry),
                 showMultiImageController:showMulti}}
             />
         );

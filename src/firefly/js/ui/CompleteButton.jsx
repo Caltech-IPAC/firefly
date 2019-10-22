@@ -21,11 +21,12 @@ function inGroup(e, groupKey) {
 
 
 
-function validUpdate(valid,onSuccess,onFail,closeOnValid,groupKey,dialogId, includeUnmounted= false) {
+function validUpdate(valid,onSuccess,onFail,closeOnValid,groupKey,dialogId, groupsToUse, includeUnmounted= false) {
     var funcToCall = valid ? onSuccess : onFail;
 
     if (Array.isArray(groupKey)) {
-        var requestObj = groupKey.reduce( (obj,groupKey) => {
+        const groupsToValidate= groupsToUse();
+        var requestObj = groupsToValidate.reduce( (obj,groupKey) => {
             obj[groupKey]= getFieldGroupResults(groupKey,includeUnmounted);
             return obj;
         },{});
@@ -39,13 +40,13 @@ function validUpdate(valid,onSuccess,onFail,closeOnValid,groupKey,dialogId, incl
     if (valid && dialogId && closeOnValid) dispatchHideDialog(dialogId);
 }
 
-function onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,includeUnmounted, changeMasking) {
+function onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,groupsToUse, includeUnmounted, changeMasking) {
     if (groupKey) {
         if (changeMasking) changeMasking(true);
-        validateFieldGroup(groupKey, includeUnmounted)
+        validateFieldGroup(groupsToUse(), includeUnmounted)
             .then( (valid)=> {
                 if (changeMasking) changeMasking(false);
-                validUpdate(valid,onSuccess,onFail,closeOnValid,groupKey,dialogId, includeUnmounted);
+                validUpdate(valid,onSuccess,onFail,closeOnValid,groupKey,dialogId, groupsToUse, includeUnmounted);
             });
     }
     else {
@@ -59,10 +60,12 @@ function onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,includeUnmounte
 
 export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
                           closeOnValid=true, dialogId,includeUnmounted= false,
+                          groupsToUse= () => groupKey,
                           style={}, innerStyle= {}, changeMasking, fireOnEnter= false}) {
     const context= useContext(GroupKeyCtx);
     if (!groupKey && context) groupKey= context.groupKey;
-    const onComplete = () => onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,includeUnmounted,changeMasking);
+    const onComplete = () => onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,
+                                      groupsToUse, includeUnmounted,changeMasking);
 
 
     useEffect(() => {
@@ -92,6 +95,7 @@ export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
 CompleteButton.propTypes= {
     onFail: PropTypes.func,
     onSuccess: PropTypes.func,
+    groupsToUse: PropTypes.func,
     groupKey: PropTypes.any,
     text: PropTypes.string,
     closeOnValid: PropTypes.bool,

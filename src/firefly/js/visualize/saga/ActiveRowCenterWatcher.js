@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isString, isObject} from 'lodash'
+import {isString, isObject} from 'lodash';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE,TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
 import {visRoot, dispatchRecenter} from '../ImagePlotCntlr.js';
 import {getTblById, getCellValue} from '../../tables/TableUtil.js';
@@ -51,7 +51,7 @@ export function recenterImages(tbl_id, action, cancelSelf, params) {
             break;
 
         case TABLE_SELECT:
-            recenterImageActiveRow(tbl_id, imageScrollsToActiveTableOnLoadOrSelect);
+            recenterImageActiveRow(tbl_id);
             break;
 
         case TABLE_HIGHLIGHT:
