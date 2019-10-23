@@ -691,7 +691,7 @@ function findPreferredHiPS(tbl_id,prevPreferredHipsSourceURL, optionHipsSourceUR
 
 function getCommonSearchTarget(tableAry,options) {
     const searchTargetAry= tableAry
-        .filter((table) => table!=='WORKING')
+        .filter((table) => table && table!=='WORKING')
         .map ( (table) => getSearchTarget(table.request,
                                               lookupOption(options, 'searchTarget', table.tbl_id),
                                               lookupOption(options, 'overlayPosition', table.tbl_id)));
