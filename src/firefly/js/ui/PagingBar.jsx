@@ -30,9 +30,11 @@ export class PagingBar extends Component {
                 callbacks.onGotoPage(pageNum.value);
             }
         };
+        const nchar = totalPages.toString().length;
+
         const pagestr = (totalRows === 0) ? '(No Data Found)' :
                         `(${(startIdx+1).toLocaleString()} - ${endIdx.toLocaleString()} of ${totalRows.toLocaleString()})`;
-        const showingLabel = (  <div style={{fontSize: 'smaller', marginLeft: 3, display: 'inline-flex', alignItems: 'center' }} >
+        const showingLabel = (  <div style={{fontSize: 'smaller', marginLeft: 3, display: 'inline-flex', alignItems: 'center', width: `${3 * nchar + 7}ch`}} >
                                     {pagestr}
                                 </div>
                             );
@@ -42,17 +44,18 @@ export class PagingBar extends Component {
             return (
                 <div className='PanelToolbar__group'>
                     <div onClick={() => callbacks.onGotoPage(1)} className='PagingBar__button first' title='First Page'/>
-                    <div onClick={() => callbacks.onGotoPage(currentPage - 1)} className='PagingBar__button previous'  title='Previous Page'/>
-                    <InputField
-                        style={{textAlign: 'right'}}
-                        validator = {intValidator(1,totalPages, 'Page Number')}
-                        tooltip = 'Jump to this page'
-                        size = {currentPage.toString().length}
-                        value = {currentPage+''}
-                        onChange = {onPageChange}
-                        actOn={['blur','enter']}
-                        showWarning={false}
-                    /> <div style={{fontSize: 'smaller', marginLeft: 3}} > of {totalPages}</div>
+                    <div onClick={() => callbacks.onGotoPage(currentPage - 1)} className='PagingBar__button previous' title='Previous Page'/>
+                    <div style={{display: 'inline-flex', alignItems: 'center'}}>
+                        <InputField
+                            style={{textAlign: 'right', width: `${nchar}ch`}}
+                            validator = {intValidator(1, totalPages, 'Page Number')}
+                            tooltip = 'Jump to this page'
+                            value = {currentPage+''}
+                            onChange = {onPageChange}
+                            actOn={['blur','enter']}
+                            showWarning={false}
+                        /> <div style={{fontSize: 'smaller', marginLeft: 3, width: `${nchar + 3}ch`}}> of {totalPages}</div>
+                    </div>
                     <div onClick={() => callbacks.onGotoPage(currentPage + 1)} className='PagingBar__button next'  title='Next Page'/>
                     <div onClick={() => callbacks.onGotoPage(totalPages)} className='PagingBar__button last'  title='Last Page'/>
                     {showingLabel}
