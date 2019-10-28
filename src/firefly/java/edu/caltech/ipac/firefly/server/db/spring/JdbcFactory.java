@@ -129,7 +129,7 @@ public class JdbcFactory {
                 );
 
         driver.setDriverClassName(dbInstance.jdbcDriver);
-        logger.briefDebug("returned DataSource:" + driver);
+        logger.trace("returned DataSource:" + driver);
         return driver;
     }
 
@@ -138,7 +138,7 @@ public class JdbcFactory {
         Context initContext = new InitialContext();
         Context envContext  = (Context)initContext.lookup("java:/comp/env");
         DataSource ds = (DataSource)envContext.lookup(dbInstance.datasourcePath);
-        logger.briefDebug("returned DataSource:" + ds);
+        logger.trace("returned DataSource:" + ds);
         return ds;
     }
 
