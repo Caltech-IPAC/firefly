@@ -349,7 +349,7 @@ function zoomIntoSelection(pv, dlAry) {
     dispatchZoom({ plotId, userZoomType: UserZoomTypes.LEVEL, level});
 
 
-    if (p.type==='image') {
+    if (isImage(p)) {
         pv= getPlotViewById(visRoot(),plotId);
         p= primePlot(pv);
         cc= CysConverter.make(p);
@@ -359,12 +359,15 @@ function zoomIntoSelection(pv, dlAry) {
         const proposedSP= findScrollPtToCenterImagePt(pv, centerPt);
         dispatchProcessScroll({plotId,scrollPt:proposedSP});
     }
-    else {
+    else if (isHiPS(p)) {
         const centerPt= makeScreenPt( Math.abs(sp0.x-sp2.x)/2+ Math.min(sp0.x,sp2.x),
                                       Math.abs(sp0.y-sp2.y)/2 + Math.min(sp0.y,sp2.y));
         const centerProjPt= cc.getWorldCoords(centerPt, p.imageCoordSys);
         if (centerProjPt) dispatchChangeCenterOfProjection({plotId,centerProjPt});
 
+    }
+    else {
+        return;
     }
 
     attachImageOutline(pv, dlAry);

@@ -66,6 +66,7 @@ import {doUpload} from '../../ui/FileUpload.jsx';
 import CoordinateSys from '../CoordSys.js';
 import {getRowCenterWorldPt} from '../saga/ActiveRowCenterWatcher';
 import {getActiveTableId} from '../../tables/TableUtil';
+import {dispatchAbortHiPS, makeUniqueRequestKey} from '../ImagePlotCntlr';
 
 const PROXY= true;
 
@@ -226,6 +227,19 @@ export function addAllSkyUsingProperties(hipsProperties, hipsUrlRoot, plotId, pr
         });
 }
 
+
+
+const currentPlots= {};
+
+
+export function makeAbortHiPSAction(rawAction) {
+    return (dispatcher) => {
+        currentPlots[rawAction.payload.plotId]= undefined;
+    };
+}
+
+
+
 export function makePlotHiPSAction(rawAction) {
     return (dispatcher) => {
 
@@ -237,6 +251,8 @@ export function makePlotHiPSAction(rawAction) {
         newPayload.viewerId= determineViewerId(payload.viewerId, plotId);
         const hipsImageConversion= getHipsImageConversion(payload.hipsImageConversion);
         if (hipsImageConversion) newPayload.pvOptions= clone(pvOptions, {hipsImageConversion});
+        const requestKey= makeUniqueRequestKey('plotRequestKey');
+        currentPlots[plotId]=requestKey;
 
 
         // if (!getDrawLayerByType(getDlAry(), ActiveTarget.TYPE_ID)) {
@@ -246,6 +262,7 @@ export function makePlotHiPSAction(rawAction) {
         resolveHiPSIvoURL(wpRequest.getHipsRootUrl())
             .then( (url) => {
                 wpRequest.setHipsRootUrl(url);
+                if (currentPlots[plotId]!==requestKey) throw Error('hips plot expired or aborted');
                 dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_START,payload:newPayload} );
                 if (!url) {
                     throw new Error('Empty URL');
@@ -270,6 +287,10 @@ export function makePlotHiPSAction(rawAction) {
                 createHiPSMocLayer(getPropertyItem(hipsProperties, 'ivoid'), wpRequest.getHipsRootUrl(), plot);
                 return plot;
             })
+            .then( (plot) => {
+                if (currentPlots[plotId]!==requestKey) throw Error('hips plot expired or aborted');
+                return plot;
+            })
             .then( addAllSky)
             .then( (plot) => {
                 createHiPSGridLayer();
@@ -282,7 +303,6 @@ export function makePlotHiPSAction(rawAction) {
                 dispatcher( { type: ImagePlotCntlr.PLOT_HIPS, payload: clone(newPayload, {plot,pvNewPlotInfoAry}) });
             })
             .catch( (error) => {
-                console.log(error);
                 hipsFail(dispatcher, plotId, wpRequest, error.message);
             } );
     };
@@ -322,6 +342,7 @@ function createHiPSGridLayer() {
         dispatchCreateDrawLayer(HiPSGrid.TYPE_ID);
     }
 }
+
 
 export function makeChangeHiPSAction(rawAction) {
     return (dispatcher, getState) => {
@@ -411,6 +432,7 @@ export function makeImageOrHiPSAction(rawAction) {
         wpRequest.setPlotId(plotId);
         wpRequest.setPlotGroupId(groupId);
 
+        dispatchAbortHiPS({plotId});
         if (useImage) {
             dispatchPlotImage({plotId, wpRequest, viewerId, hipsImageConversion, pvOptions, attributes, renderTreeId});
         }

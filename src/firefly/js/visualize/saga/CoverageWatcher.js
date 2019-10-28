@@ -187,17 +187,17 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
             updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, sharedData.preferredHipsSourceURL);
             break;
 
-        case TBL_RESULTS_ACTIVE:
-            if (!getTableInGroup(tbl_id)) return {paused};
-            sharedData.preferredHipsSourceURL= findPreferredHiPS(tbl_id, sharedData.preferredHipsSourceURL, options.hipsSourceURL, preparedTables[tbl_id]);
-            updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, sharedData.preferredHipsSourceURL);
-            break;
+        // case TBL_RESULTS_ACTIVE:
+        //     if (!getTableInGroup(tbl_id)) return {paused};
+        //     sharedData.preferredHipsSourceURL= findPreferredHiPS(tbl_id, sharedData.preferredHipsSourceURL, options.hipsSourceURL, preparedTables[tbl_id]);
+        //     updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, sharedData.preferredHipsSourceURL);
+        //     break;
 
         case TABLE_REMOVE:
             removeCoverage(payload.tbl_id, preparedTables);
             if (!isEmpty(preparedTables)) {
                 sharedData.preferredHipsSourceURL= findPreferredHiPS(tbl_id, sharedData.preferredHipsSourceURL, options.hipsSourceURL, preparedTables[tbl_id]);
-                updateCoverage(getActiveTableId(), viewerId, preparedTables, options, tblCatIdMap, sharedData.preferredHipsSourceURL);
+                updateCoverage(getActiveTableId(), viewerId, preparedTables, options, tblCatIdMap, sharedData.preferredHipsSourceURL, payload.tbl_id);
             }
             cancelSelf();
             break;
@@ -221,7 +221,9 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
 
         case ImagePlotCntlr.PLOT_IMAGE:
         case ImagePlotCntlr.PLOT_HIPS:
-            if (action.payload.plotId===PLOT_ID) overlayCoverageDrawing(preparedTables,options, tblCatIdMap);
+            if (action.payload.plotId===PLOT_ID) {
+                setTimeout( () => overlayCoverageDrawing(preparedTables,options, tblCatIdMap, undefined), 5);
+            }
             break;
             
     }
@@ -244,11 +246,15 @@ function removeCoverage(tbl_id, preparedTables) {
  * @param {CoverageOptions} options
  * @param {object} tblCatIdMap
  * @param {string} preferredHipsSourceURL
+ * @param {string} deletedTblId
  */
-function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, preferredHipsSourceURL) {
+function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, preferredHipsSourceURL, deletedTblId= undefined) {
 
     try {
         const table = getTblById(tbl_id);
+        if (!table && deletedTblId) {
+            overlayCoverageDrawing(preparedTables, options, tblCatIdMap, deletedTblId);
+        }
         if (!table || table.isFetching) return;
         if (preparedTables[tbl_id] === 'WORKING') return;
 
@@ -270,9 +276,9 @@ function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, 
 
         req.tbl_id = `cov-${tbl_id}`;
 
-        if (preparedTables[tbl_id] /*&& preparedTables[tbl_id].tableMeta.resultSetID===table.tableMeta.resultSetID*/) { //todo support decimated data
+        if (preparedTables[tbl_id]) { //todo support decimated data
             updateCoverageWithData(viewerId, table, options, tbl_id, preparedTables[tbl_id], preparedTables,
-                isTableUsingRadians(table), tblCatIdMap, preferredHipsSourceURL );
+                isTableUsingRadians(table), tblCatIdMap, preferredHipsSourceURL, deletedTblId );
         }
         else {
             preparedTables[tbl_id] = 'WORKING';
@@ -317,9 +323,10 @@ function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, 
  * @param usesRadians
  * @param {object} tblCatIdMap
  * @param {string} preferredHipsSourceURL
+ * @param {string} deletedTblId - only defined if a table has been deleted
  */
 function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, preparedTables,
-                                usesRadians, tblCatIdMap, preferredHipsSourceURL ) {
+                                usesRadians, tblCatIdMap, preferredHipsSourceURL, deletedTblId ) {
     const {maxRadius, avgOfCenters}= computeSize(options, preparedTables, usesRadians);
 
     // EMPTY_TBL
@@ -332,11 +339,14 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
 
     const plot= primePlot(visRoot(), PLOT_ID);
 
-    if (plot &&
-        pointEquals(avgOfCenters,plot.attributes[COVERAGE_TARGET]) && plot.attributes[COVERAGE_RADIUS]===maxRadius ) {
-        overlayCoverageDrawing(preparedTables, options, tblCatIdMap);
-        return;
-    }
+    // if (plot &&
+    //     pointEquals(avgOfCenters,plot.attributes[COVERAGE_TARGET]) && plot.attributes[COVERAGE_RADIUS]===maxRadius ) {
+    //     overlayCoverageDrawing(preparedTables, options, tblCatIdMap, true);
+    //     return;
+    // }
+    overlayCoverageDrawing(preparedTables, options, tblCatIdMap, deletedTblId||table.tbl_id);
+
+    if (deletedTblId) return;
 
     const commonSearchTarget= getCommonSearchTarget(Object.values(preparedTables),options);
 
@@ -440,16 +450,17 @@ function makeOverlayCoverageDrawing() {
      * @param preparedTables
      * @param {CoverageOptions} options
      * @param {object} tblCatIdMap
+     * @param {String} affectedTblId - the table id that is affected
      */
-    return (preparedTables, options, tblCatIdMap) => {
+    return (preparedTables, options, tblCatIdMap, affectedTblId) => {
         const plot=  primePlot(visRoot(),PLOT_ID);
-        if (!plot) return;
-        const tblIdAry=  plot.attributes[PlotAttribute.VISUALIZED_TABLE_IDS];
+        if (!plot && !affectedTblId) return;
+        const tblIdAry=  plot ? plot.attributes[PlotAttribute.VISUALIZED_TABLE_IDS] : [affectedTblId];
         if (isEmpty(tblIdAry)) return;
         let visible= true;
 
         tblIdAry.forEach( (tbl_id) => {
-            if (!tbl_id || !preparedTables[tbl_id] || !getTblById(tbl_id)) return;
+            if (!tbl_id) return;
             const table= getTblById(tbl_id);
 
             if (!table) {
@@ -463,24 +474,29 @@ function makeOverlayCoverageDrawing() {
 
             if (isCatalog(table) && options.ignoreCatalogs) return; // let the catalog watcher just handle the drawing overlays
 
-            // if (tblCatIdMap[tbl_id]) {
-            //     tblCatIdMap[tbl_id].forEach((cId) => {
-            //         const layer = getDrawLayerById(getDlAry(), cId);
-            //         if (layer) {
-            //             drawingOptions[cId] = layer.drawingDef;    // drawingDef and selectOption is stored as layer based
-            //             selectOps[cId] = layer.selectOption;
-            //             visible= isDrawLayerVisible(layer, plot.plotId);
-            //             dispatchDestroyDrawLayer(cId);
-            //         }
-            //     });
-            // }
+            if (tblCatIdMap[tbl_id]) {
+                tblCatIdMap[tbl_id].forEach((cId) => {
+                    const layer = getDrawLayerById(getDlAry(), cId);
+                    const tableRemoved= !Boolean(getTblById(tbl_id));
+                    if (layer && (tableRemoved || tbl_id===affectedTblId)) {
+                        drawingOptions[cId] = layer.drawingDef;    // drawingDef and selectOption is stored as layer based
+                        selectOps[cId] = layer.selectOption;
+                        visible= plot ? isDrawLayerVisible(layer, plot.plotId) : true;
+                        dispatchDestroyDrawLayer(cId);
+                    }
+                });
+            }
 
             const overlayAry=  Object.keys(preparedTables);
+
+            if (!plot) return;
 
             overlayAry.forEach( (id) => {
                 tblCatIdMap[id] && tblCatIdMap[id].forEach((cId) => {
                     if (!drawingOptions[cId]) drawingOptions[cId] = {};
-                    if (!drawingOptions[cId].color) drawingOptions[cId].color = lookupOption(options, 'color', cId) || getNextColor();
+                    if (!drawingOptions[cId].color) {
+                        drawingOptions[cId].color = preparedTables[id].tableMeta[MetaConst.DEFAULT_COLOR] || lookupOption(options, 'color', cId) || getNextColor();
+                    }
                     if (selectOps[cId]) drawingOptions[cId].selectOption = selectOps[cId];
                 });
                 const oriTable= getTblById(id);
