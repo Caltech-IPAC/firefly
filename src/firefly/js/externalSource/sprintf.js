@@ -6,8 +6,10 @@
  *      For the floating-point conversions 'e' and 'f' the precision is the number of digits after the decimal separator.
  *      If the conversion is 'g', then the precision is significant digits of the value after rounding.
  *      In both cases, precision is default to 6 if not given.
+
+ * 'E' format.  Same as 'e' but, with upper case 'E' instead.
  *
- * 'g' format.
+ * 'g' and 'G' format.
  *      If value is greater than or equal to 10^-4 but less than 10^precision then it is represented in decimal format, otherwise scientific.
  *
  * Also, modernize code using module.
@@ -21,13 +23,13 @@ const re = {
     not_bool: /[^t]/,
     not_type: /[^T]/,
     not_primitive: /[^v]/,
-    number: /[diefg]/,
-    numeric_arg: /[bcdiefguxX]/,
+    number: /[diefgJEG]/,
+    numeric_arg: /[bcdiefguxXJEG]/,
     json: /[j]/,
     not_json: /[^j]/,
     text: /^[^\x25]+/,
     modulo: /^\x25{2}/,
-    placeholder: /^\x25(?:([1-9]\d*)\$|\(([^)]+)\))?(\+)?(0|'[^$])?(-)?(\d+)?(?:\.(\d+))?([b-gijostTuvxXJ])/,
+    placeholder: /^\x25(?:([1-9]\d*)\$|\(([^)]+)\))?(\+)?(0|'[^$])?(-)?(\d+)?(?:\.(\d+))?([b-gijostTuvxXJEG])/,
     key: /^([a-z_][a-z_\d]*)/i,
     key_access: /^\.([a-z_][a-z_\d]*)/i,
     index_access: /^\[(\d+)]/,
@@ -95,12 +97,14 @@ function sprintf_format(parse_tree, argv) {
                     arg = JSON.stringify(arg, null, ph.width ? parseInt(ph.width) : 0);
                     break;
                 case 'e':
+                case 'E':
                     arg = prec ? parseFloat(arg).toExponential(prec) : parseFloat(arg).toExponential();
                     break;
                 case 'f':
                     arg = prec ? parseFloat(arg).toFixed(prec) : parseFloat(arg);
                     break;
-                case 'g': {     // implementation of Java g format
+                case 'g':
+                case 'G': {     // implementation of Java g format
                     const m = Math.abs(arg);
                     if (m === 0 || (m >= Math.pow(10, -4) && m < Math.pow(10, prec))) {
                         arg = prec ? arg.toPrecision(prec) : parseFloat(arg);
@@ -148,6 +152,9 @@ function sprintf_format(parse_tree, argv) {
                     }
                     break;
                 }
+            }
+            if (ph.type === 'G' || ph.type === 'E') {
+                arg = arg.toUpperCase();
             }
             if (re.json.test(ph.type)) {
                 output += arg;

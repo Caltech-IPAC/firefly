@@ -397,7 +397,6 @@ public final class FITSTableReader
         String colName = colInfo.getName();
         String classType = DefaultValueInfo.formatClass(colInfo.getContentClass());
         String unit = colInfo.getUnitString();
-        String nullString = null;
         String desc = colInfo.getDescription();
         desc = desc == null ? getParam(table, "TDOC" + (colIdx+1)) : desc; // this is for LSST.. not sure it applies to others.
 
@@ -416,10 +415,8 @@ public final class FITSTableReader
             java_class = Long.class;
         } else if ((classType.contains("float")) || (classType.contains("Float"))) {
             java_class = Float.class;
-            nullString = "NaN";
         } else if ((classType.contains("double")) || (classType.contains("Double"))) {
             java_class = Double.class;
-            nullString = "NaN";
         } else if ((classType.contains("char")) || (classType.contains("String"))) {
             java_class = String.class;
         } else {
@@ -439,7 +436,6 @@ public final class FITSTableReader
 
         dataType.setDataType(java_class);
         dataType.setUnits(unit);
-        dataType.setNullString(nullString);
         dataType.setDesc(desc);
 
         return dataType;

@@ -472,8 +472,8 @@ export function formatValue(col, val) {
         return sprintf('%i', val);
     } else if (isColumnType(col, COL_TYPE.FLOAT)) {
         if (precision) {
-            let [, type, prec] = precision.toLowerCase().match(/([efg]?)(\d*)/);
-            type = type || 'f';
+            let [, type='f', prec] = precision.toUpperCase().match(/([EFG]?)(\d*)/);
+            if (type === 'F') type = 'f';
             prec = prec && '.' + prec;
             return sprintf('%' + prec + type, val);
         } else {

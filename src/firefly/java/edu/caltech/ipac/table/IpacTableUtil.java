@@ -259,7 +259,6 @@ public class IpacTableUtil {
             for (int idx = 0; idx < names.length; idx++) {
                 cname = names[idx];
                 DataType dt = new DataType(cname.trim(), null);
-                dt.setNullString("null");       // defaults to 'null'
                 cols.add(dt);
                 tableDef.setColOffsets(idx, cursor);
                 cursor += cname.length() + 1;
@@ -312,6 +311,10 @@ public class IpacTableUtil {
     }
 
     public static void applyGuessLogic(DataType type, String val, TableUtil.CheckInfo chkInfo) {
+
+        if (!chkInfo.formatChecked) {
+            chkInfo.formatChecked = guessFormatInfo(type, val);
+        }
 
         if (!chkInfo.htmlChecked) {
             // disable sorting if value is HTML, or unit is 'html'
@@ -412,6 +415,9 @@ public class IpacTableUtil {
                     }
 
                     TableUtil.CheckInfo checkInfo = tableDef.getColCheckInfos().getCheckInfo(dt.getKeyName());
+                    if (!String.valueOf(tableDef.getAttribute("fixlen")).trim().equals("T")) {
+                        checkInfo.formatChecked = true;     // if fixlen != T, don't guess format
+                    }
                     applyGuessLogic(dt, val, checkInfo);
 
                     row.setDataElement(dt, dt.convertStringToData(val));

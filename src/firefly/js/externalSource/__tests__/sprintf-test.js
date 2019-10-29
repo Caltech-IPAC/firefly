@@ -17,7 +17,8 @@ describe('sprintf: ', () => {
         expect(sprintf('%j', ['foo', 'bar']))	.toBe('["foo","bar"]');
 
         expect(sprintf('%e', 2))    .toBe('2.000000e+0');
-        expect(sprintf('%.6e', 2))    .toBe('2.000000e+0');
+        expect(sprintf('%.6e', 2))  .toBe('2.000000e+0');
+        expect(sprintf('%.6E', 2))  .toBe('2.000000E+0');   // same as above but with uppercase E
         expect(sprintf('%u', 2))    .toBe('2');
         expect(sprintf('%u', -2))   .toBe('4294967294');
         expect(sprintf('%f', 2.2))  .toBe('2.200000');
@@ -73,6 +74,7 @@ describe('sprintf: ', () => {
 
         expect(sprintf('%g', 0.0000123456))     .toBe('1.23456e-5');  // less than 10^-4, p=default
         expect(sprintf('%.4g', 0.0000123456))   .toBe('1.235e-5');    // less than 10^-4, p=4
+        expect(sprintf('%.4G', 0.0000123456))   .toBe('1.235E-5');    // same as above but with uppercase G
     });
 
     test('J format:', () => {
