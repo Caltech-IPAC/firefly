@@ -7,6 +7,7 @@ import {get, isEmpty, isArray} from 'lodash';
 import {makeWisePlotRequest} from './WiseRequestList.js';
 import {make2MassPlotRequest} from './TwoMassRequestList.js';
 import {makeAtlasPlotRequest} from './AtlasRequestList.js';
+import {makeZtfPlotRequest} from './ZtfRequestList.js';
 import {makeLsstSdssPlotRequest, makeLsstWisePlotRequest} from './LsstSdssRequestList.js';
 import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
 import {ZoomType} from '../visualize/ZoomType.js';
@@ -206,6 +207,17 @@ export const converterTemplates = [
             H : {color : Band.GREEN, title: 'H'},
             K : {color : Band.BLUE, title: 'K'}
         }
+    },
+    {
+        converterId : 'ztf',
+        tableMatches: (table) => matchById(table,'ztf'),
+        create : simpleCreate,
+        hasRelatedBands : false,
+        canGrid : true,
+        maxPlots : 12,
+        getSingleDataProduct: getSingleDataProductWrapper(makeZtfPlotRequest),
+        getGridDataProduct: getGridDataProductWrapper(makeZtfPlotRequest),
+        getRelatedDataProduct: getRelatedDataProductWrapper(makeZtfPlotRequest),
     },
     {
         converterId : 'lsst_sdss',

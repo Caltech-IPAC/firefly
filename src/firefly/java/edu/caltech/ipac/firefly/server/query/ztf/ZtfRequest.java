@@ -36,7 +36,7 @@ public class ZtfRequest extends TableServerRequest {
     public final static String PSFCATL         = "_psfcat.fits";
     public final static String SCIIMGDAO       = "_sciimgdao.psf";
     public final static String SCIIMGDAOPSFCEN = "_sciimgdaopsfcent.fits";
-    public final static String SCIMEFDIFFIMG   = "_scimrefdiffimg.fits.fz";
+    public final static String SCIMREFDIFFIMG  = "_scimrefdiffimg.fits.fz";
     public final static String DIFFIMGPSF      = "_diffimgpsf.fits";
     public final static String SCIIMLOG        = "_sciimlog.txt";
     public final static String DIFFIMLOG       = "_diffimlog.txt";

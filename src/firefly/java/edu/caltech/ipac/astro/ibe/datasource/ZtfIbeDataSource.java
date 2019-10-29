@@ -34,83 +34,44 @@ public class ZtfIbeDataSource extends BaseIbeDataSource {
         INTENSITY, MASK, UNCERTAINTY, COVERAGE
     }
 
-    public enum DataProduct {
-        SCI("products","sci"),
-        REF("products","ref");
-
-        private String dataset;
-        private String table;
-
-
-        DataProduct(String dataset, String imageTable) {
-            this.dataset = dataset;
-            this.table = imageTable;
-        }
-
-        public String getDataset() { return dataset;}
-        public String getTable() { return table;}
-    }
-
-    public ZtfIbeDataSource() {}
-
-    public ZtfIbeDataSource(DataProduct ds) {
-        this(null, ds);
-    }
-
-    public ZtfIbeDataSource(String ibeHost, DataProduct ds) { setupDS(ibeHost, ds.getDataset(), ds.getTable());
-    }
-
-//====================================================================
-//  ZTF implementation of IBE services
-//====================================================================
-
-    /**
-     * use the dsInfo to define this datasource.  all values in DataProduct must be populated.
-     * @param dsInfo data set information
-     */
-    @Override
-    public void initialize(Map<String, String> dsInfo) {
-
-        String host = dsInfo.get(HOST);
-        String schema = dsInfo.get(SCHEMA);
-        String table = dsInfo.get(TABLE);
-        setupDS(host, schema, table);
-    }
-
     @Override
     public IbeDataParam makeDataParam(Map<String, String> pathInfo) {
         IbeDataParam dataParam = new IbeDataParam();
 
         String filepath;
+        String dataproduct = pathInfo.get("ProductLevel");
+        String field = pathInfo.get("field");
+        String filtercode = pathInfo.get("filtercode");
+        String qid = pathInfo.get("qid");
+        String ccdid = pathInfo.get("ccdid");
+        String formatccdid = ("00" + ccdid).substring(ccdid.length());
+        String formatfield = ("000000" + field).substring(field.length());
 
-        if (getTableName().equalsIgnoreCase(DataProduct.SCI.name())) {
-            String field = pathInfo.get("field");
-            String filtercode = pathInfo.get("filtercode");
-            String qid = pathInfo.get("qid");
-            String ccdid = pathInfo.get("ccdid");
+        if (dataproduct.equalsIgnoreCase("sci")) {
             String filefracday = pathInfo.get("filefracday");
-            String mjd = pathInfo.get("mjd");
-            String expid = pathInfo.get("expid");
-            String YYYY = filefracday.substring(0,4);
-            String MMDD = filefracday.substring(4,8);
-            String dddddd = filefracday.substring(8,14);
-            String formatccdid = ("00" + ccdid).substring(ccdid.length());
-            String formatfield =  ("000000" + field).substring(field.length());
-            String baseDir = YYYY + "/" + MMDD+ "/" + dddddd +"/";
-            String baseFile = "ztf_" + filefracday + "_" + formatfield +"_" + filtercode +"_c" + formatccdid + "_o_" + "q" + qid + ZtfRequest.SCIIMAGE;
-            //String rawbaseDir = "raw/" + YYYY + "/" + MMDD+ "/" + dddddd +"/";
-            //String rawbaseFile = rawbaseDir + "ztf_" + filefracday + "_" + formatfield +"_" + filtercode +"_c" + formatccdid + "_o.fits.fz";
-
-
+            String YYYY = filefracday.substring(0, 4);
+            String MMDD = filefracday.substring(4, 8);
+            String dddddd = filefracday.substring(8, 14);
+            String baseDir = YYYY + "/" + MMDD + "/" + dddddd + "/";
+            String baseFile = "ztf_" + filefracday + "_" + formatfield + "_" + filtercode + "_c" + formatccdid + "_o_" + "q" + qid + ZtfRequest.SCIIMAGE;
             dataParam.setFilePath(baseDir + baseFile);
-        } else if (getTableName().equalsIgnoreCase(DataProduct.REF.name())) {
-
-            String field = pathInfo.get("field");
-            String filtercode = pathInfo.get("filtercode");
-            String qid = pathInfo.get("qid");
-            String ccdid = pathInfo.get("ccdid");
-            String formatccdid = ("00" + ccdid).substring(ccdid.length());
-            String formatfield =  ("000000" + field).substring(field.length());
+        } else if (dataproduct.equalsIgnoreCase("diff")) {
+            String filefracday = pathInfo.get("filefracday");
+            String YYYY = filefracday.substring(0, 4);
+            String MMDD = filefracday.substring(4, 8);
+            String dddddd = filefracday.substring(8, 14);
+            String baseDir = YYYY + "/" + MMDD + "/" + dddddd + "/";
+            String baseFile = "ztf_" + filefracday + "_" + formatfield + "_" + filtercode + "_c" + formatccdid + "_o_" + "q" + qid + ZtfRequest.SCIMREFDIFFIMG;
+            dataParam.setFilePath(baseDir + baseFile);
+        } else if (dataproduct.equalsIgnoreCase("sso")) {
+            String filefracday = pathInfo.get("filefracday");
+            String YYYY = filefracday.substring(0, 4);
+            String MMDD = filefracday.substring(4, 8);
+            String dddddd = filefracday.substring(8, 14);
+            String baseDir = YYYY + "/" + MMDD + "/" + dddddd + "/";
+            String baseFile = "ztf_" + filefracday + "_" + formatfield + "_" + filtercode + "_c" + formatccdid + "_o_" + "q" + qid + ZtfRequest.SCIIMAGE;
+            dataParam.setFilePath(baseDir + baseFile);
+        } else if (dataproduct.equalsIgnoreCase("ref")) {
             String fff = formatfield.substring(0,3);
             String refbaseDir = fff + "/" + "field" + formatfield + "/" + filtercode +"/" + "ccd" +formatccdid +"/" + "q" + qid +"/";
             String refbaseFile = "ztf_" + formatfield + "_" + filtercode +"_c" + formatccdid + "_q" + qid + ZtfRequest.REFIMAGE;
@@ -150,6 +111,50 @@ public class ZtfIbeDataSource extends BaseIbeDataSource {
         }
 
         return dataParam;
+    }
+
+    public ZtfIbeDataSource() {}
+
+    public ZtfIbeDataSource(DataProduct ds) {
+        this(null, ds);
+    }
+
+    public ZtfIbeDataSource(String ibeHost, DataProduct ds) { setupDS(ibeHost, ds.getDataset(), ds.getTable());
+    }
+
+//====================================================================
+//  ZTF implementation of IBE services
+//====================================================================
+
+    /**
+     * use the dsInfo to define this datasource.  all values in DataProduct must be populated.
+     * @param dsInfo data set information
+     */
+    @Override
+    public void initialize(Map<String, String> dsInfo) {
+
+        String host = dsInfo.get(HOST);
+        String schema = dsInfo.get(SCHEMA);
+        String table = dsInfo.get(TABLE);
+        setupDS(host, schema, table);
+    }
+
+    public enum DataProduct {
+        SCI("products","sci"),
+        REF("products","ref"),
+        DIFF("products","sci");
+
+        private String dataset;
+        private String table;
+
+
+        DataProduct(String dataset, String imageTable) {
+            this.dataset = dataset;
+            this.table = imageTable;
+        }
+
+        public String getDataset() { return dataset;}
+        public String getTable() { return table;}
     }
 
     @Override
