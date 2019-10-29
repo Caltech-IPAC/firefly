@@ -107,25 +107,25 @@ Firefly supports the following  browsers:
 
 ## More Docs
 
-####Firefly JavaScript API overview
+#### Firefly JavaScript API overview
 See [firefly-api-overview.md](docs/firefly-api-overview.md)
  (Deprecated [docs/fftools-api-overview.md])
 
-####Firefly Remote API using Python overview
+#### Firefly Remote API using Python overview
 See [firefly-python-wrapper.md](docs/firefly-python-wrapper.md)
 
-####Code Examples Using Firefly APIs
+#### Code Examples Using Firefly APIs
 See [firefly-api-code-examples.md](tutorial/firefly-api-code-examples.md)
  (Deprecated [docs/fftools-api-code-examples.md])
 
-####Setting up the Server correctly for FITS files
+#### Setting up the Server correctly for FITS files
 See [server-settings-for-fits-files.md](docs/server-settings-for-fits-files.md)
 
-####Changing the Firefly runtime environment
+#### Changing the Firefly runtime environment
 See [firefly-environment.md](docs/firefly-environment.md)
 
-####Adding external task launcher or Python Launcher to Firefly
+#### Adding external task launcher or Python Launcher to Firefly
 See [firefly-python-launcher.md](docs/firefly-external-task-launcher.md)
 
-####Release branches and tags
+#### Release branches and tags
 See [tags-and-branches.md](docs/tags-and-branches.md)
