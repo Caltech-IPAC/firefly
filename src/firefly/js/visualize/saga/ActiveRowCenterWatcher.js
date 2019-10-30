@@ -21,6 +21,7 @@ import {isColRadians} from '../../tables/TableUtil';
 import {PlotAttribute} from '../PlotAttribute';
 import {isImage} from '../WebPlot';
 import {getAppOptions} from '../../core/AppDataCntlr';
+import CoordinateSys from '../CoordSys';
 
 
 
@@ -141,9 +142,8 @@ export function getRowCenterWorldPt(tableOrId) {
     const {lonCol,latCol,csys}= cenCol;
     const lon= Number(getCellValue(tbl,tbl.highlightedRow, lonCol));
     const lat= Number(getCellValue(tbl,tbl.highlightedRow, latCol));
-    if (isNaN(lon) || isNaN(lat)) return;
 
-    const tmpPt= makeAnyPt(lon,lat,csys);
+    const tmpPt= makeAnyPt(lon,lat,csys||CoordinateSys.EQ_J2000);
     if (tmpPt.type!==Point.W_PT) return tmpPt;
     return makeWorldPt(isColRadians(tbl,lonCol)? toDegrees(lon) : lon, isColRadians(tbl,latCol)? toDegrees(lat): lat, csys);
 }

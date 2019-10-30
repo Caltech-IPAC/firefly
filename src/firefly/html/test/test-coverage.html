@@ -1,0 +1,259 @@
+<!doctype html>
+
+<!--
+  ~ License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+  -->
+
+<html>
+
+<head>
+    <title>Firefly main tests</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="text/javascript" src="template_loader.js"></script>
+</head>
+
+<body>
+
+<!-- define all of your tests below -->
+
+
+
+<template title="IRSA Gator Table 1 deg" class="tpl" >
+    <div id="expected" style="position: relative" >
+        <img style="position: absolute; left: 2px" src="./images/coverage-large-search.png"/>
+        <div class="source-code indent-3" style="position: absolute; bottom: 0; left: 0">
+            - widgets loaded
+            - to test more:
+               - try filtering
+               - selecting, large searches: images will disable
+        </div>
+    </div>
+    <div id="actual" class="flow-h">
+        <div id="gatorTable" class="box"></div>
+        <div id="gatorCoverage" class="box"></div>
+        <div id="gatorXy" class="box"></div>
+    </div>
+    <script>
+        irsaviewer_init();
+
+        onFireflyLoaded = function (firefly) {
+
+            firefly.util.image.initAutoReadout(
+                firefly.ui.DefaultApiReadout,
+                { MouseReadoutComponent:firefly.ui.PopupMouseReadoutMinimal,
+                    showThumb:false,
+                    showMag:false
+                }
+            );
+            table1Data = firefly.util.table.makeIrsaCatalogRequest('WISE catalog', 'WISE', 'allwise_p3as_psd',
+                { position: '10.68479;41.26906;EQ_J2000',
+                    SearchMethod: 'Cone',
+                    radius: 3600
+                },
+                { META_INFO: {CENTER_COLUMN: 'ra;dec;EQJ2000', CatalogOverlayType: 'IRSA'}}
+            );
+
+            firefly.showTable('gatorTable', table1Data,
+                { removable: false,
+                    showTitle:false,
+                    showUnits: true,
+                    showFilters: true,
+                    selectable: true,
+                    expandable: true,
+                    help_id: 'tables'
+                }
+            );
+
+            firefly.showCoverage('gatorCoverage', {gridOn:'FALSE'});
+
+            firefly.addXYPlot('gatorXy', {tbl_id: table1Data.tbl_id,
+                xOptions: 'flip',
+                help_id: 'visualization.xyplotViewer'});
+
+        }
+    </script>
+</template>
+
+
+<template title="IRSA wise Table 200 arcsec" class="tpl" >
+    <div id="expected" style="position: relative" >
+        <img style="position: absolute; left: 2px" src="./images/coverage-small-1-target.png"/>
+        <div class="source-code indent-3" style="position: absolute; bottom: 0; left: 0">
+            - widgets loaded
+            - to test more:
+                - try filtering
+                - try selecting
+        </div>
+    </div>
+    <div id="actual" class="flow-h">
+        <div id="gatorTable" class="box"></div>
+        <div id="gatorCoverage" class="box"></div>
+        <div id="gatorXy" class="box"></div>
+    </div>
+    <script>
+        irsaviewer_init();
+
+        onFireflyLoaded = function (firefly) {
+
+            firefly.util.image.initAutoReadout(
+                firefly.ui.DefaultApiReadout,
+                { MouseReadoutComponent:firefly.ui.PopupMouseReadoutMinimal,
+                    showThumb:false,
+                    showMag:false
+                }
+            );
+            const table1Data = firefly.util.table.makeIrsaCatalogRequest('WISE catalog', 'WISE', 'allwise_p3as_psd',
+                { position: '10.68479;41.26906;EQ_J2000',
+                    SearchMethod: 'Cone',
+                    radius: 200
+                },
+                { META_INFO: {CENTER_COLUMN: 'ra;dec;EQJ2000', CatalogOverlayType: 'IRSA'}}
+            );
+
+            firefly.showTable('gatorTable', table1Data,
+                { removable: false,
+                    showTitle:false,
+                    showUnits: true,
+                    showFilters: false,
+                    selectable: false,
+                    expandable: true,
+                    help_id: 'tables'
+                }
+            );
+
+            firefly.showCoverage('gatorCoverage', {gridOn:'FALSE'});
+
+            firefly.addXYPlot('gatorXy', {tbl_id: table1Data.tbl_id,
+                xOptions: 'flip',
+                help_id: 'visualization.xyplotViewer'});
+
+        }
+    </script>
+</template>
+
+
+<template title="IRSA 4 targets 200 arcsec" class="tpl xl " >
+    <div id="expected" style="position: relative" >
+        <img style="position: absolute; left: 2px" src="./images/coverage-4-targets.png"/>
+        <div class="source-code indent-3" style="position: absolute; bottom: 0; left: 0">
+            - testing:
+                - delete a tab
+                    - coverage should update
+                    - draw layer should be removed
+                - change to hips and change tabs
+                    - current table should center
+        </div>
+    </div>
+    <div id="actual" class="flow-h">
+        <div id="gatorTable" class="box"></div>
+        <div id="gatorCoverage" class="box"></div>
+        <div id="gatorXy" class="box"></div>
+    </div>
+    <script>
+        irsaviewer_init();
+
+        onFireflyLoaded = function (firefly) {
+
+            firefly.util.image.initAutoReadout(
+                firefly.ui.DefaultApiReadout,
+                { MouseReadoutComponent:firefly.ui.PopupMouseReadoutMinimal,
+                    showThumb:false,
+                    showMag:false
+                }
+            );
+            const table1Data = firefly.util.table.makeIrsaCatalogRequest('WISE 1', 'WISE', 'allwise_p3as_psd',
+                { position: '10.68479;41.26906;EQ_J2000',
+                    SearchMethod: 'Cone',
+                    radius: 200
+                },
+                { META_INFO: {CENTER_COLUMN: 'ra;dec;EQJ2000', CatalogOverlayType: 'IRSA'}}
+            );
+
+            const table2Data = firefly.util.table.makeIrsaCatalogRequest('WISE 2', 'WISE', 'allwise_p3as_psd',
+                { position: '202.48417;47.23056;EQ_J2000',
+                    SearchMethod: 'Cone',
+                    radius: 200
+                },
+                { META_INFO: {CENTER_COLUMN: 'ra;dec;EQJ2000', CatalogOverlayType: 'IRSA'}}
+            );
+
+            const table3Data = firefly.util.table.makeIrsaCatalogRequest('WISE 3', 'WISE', 'allwise_p3as_psd',
+                { position: '83.63321;22.01446;EQ_J2000',
+                    SearchMethod: 'Cone',
+                    radius: 200
+                },
+                { META_INFO: {CENTER_COLUMN: 'ra;dec;EQJ2000', CatalogOverlayType: 'IRSA'}}
+            );
+
+            const table4Data = firefly.util.table.makeIrsaCatalogRequest('WISE 4', 'WISE', 'allwise_p3as_psd',
+                { position: '282.77496;-6.27002;EQ_J2000',
+                    SearchMethod: 'Cone',
+                    radius: 200
+                },
+                { META_INFO: {CENTER_COLUMN: 'ra;dec;EQJ2000', CatalogOverlayType: 'IRSA'}}
+            );
+
+
+            [table1Data, table2Data, table3Data, table4Data].forEach( (td) =>
+                firefly.showTable('gatorTable', td,
+                    { removable: true,
+                        showTitle:true,
+                        showUnits: true,
+                        showFilters: true,
+                        selectable: false,
+                        expandable: true,
+                        help_id: 'tables'
+                    }
+                )
+            );
+
+            firefly.showCoverage('gatorCoverage', {gridOn:'FALSE'});
+
+            firefly.addXYPlot('gatorXy', {tbl_id: table1Data.tbl_id,
+                xOptions: 'flip',
+                help_id: 'visualization.xyplotViewer'});
+
+        }
+    </script>
+</template>
+
+
+
+
+<template title="Two table coverage" class="tpl" >
+    <div id="expected" >
+        <div>Both tables cover similar area, HiPS coverage
+            <ul class='expected-list'>
+                <li>one from url, one from service</li>
+                <li>one with points, one with corners</li>
+            </ul>
+        </div>
+        <div><img style="width: 230px;" src="./images/2-tab-coverage.png"></div>
+    </div>
+    <div id="actual" class="flow-h" style="width: 600px">
+        <div id='tables-1' class="box"></div>
+        <div id='coverageHere' class="box"></div>
+    </div>
+    <script>
+        function onFireflyLoaded(firefly) {
+            firefly.showCoverage('coverageHere', {gridOn:true});
+            tblReq1 = firefly.util.table.makeIrsaCatalogRequest('allwise_p3as_psd', 'WISE', 'allwise_p3as_psd',
+                {   position: '148.9;68.8;EQ_J2000',
+                    SearchMethod: 'Cone',
+                    radius: 300
+                });
+            tblReq3 = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
+                { pageSize: 15,
+                    META_INFO: {CENTER_COLUMN: 'crval1;crval2;EQJ2000'}
+                });
+            firefly.showTable('tables-1', tblReq1);
+            firefly.showTable('tables-1', tblReq3);
+        }
+    </script>
+</template>
+
+<!-- this is where test cases will be attached-->
+<div id="tst-container"/>
+
+
+</body>
