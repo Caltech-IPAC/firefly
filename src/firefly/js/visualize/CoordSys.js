@@ -54,19 +54,19 @@ export const CoordinateSys = function () {
         var coordSys;
         if (!desc) return null;
         desc= desc.toUpperCase();
-        if        (desc===EQ_J2000.toString() || desc==='EQJ' || desc==='J2000' || desc==='ICRS') {
+        if        (desc===EQ_J2000.toString() || desc==='EQJ2000' ||desc==='EQJ' || desc==='J2000' || desc==='ICRS') {
             coordSys = EQ_J2000;
-        } else if (desc===EQ_B2000.toString())  {
+        } else if (desc===EQ_B2000.toString() || desc==='EQB2000' )  {
             coordSys = EQ_B2000;
-        } else if (desc===EQ_B1950.toString() || desc==='EQB' || desc==='B1950' ) {
+        } else if (desc===EQ_B1950.toString() || desc==='EQB1950' || desc==='EQB' || desc==='B1950' ) {
             coordSys = EQ_B1950;
         } else if (desc===GALACTIC.toString() || desc==='GAL') {
             coordSys = GALACTIC;
         } else if (desc===SUPERGALACTIC.toString()) {
             coordSys = SUPERGALACTIC;
-        } else if (desc===ECL_J2000.toString() || desc==='ECJ') {
+        } else if (desc===ECL_J2000.toString() || desc==='ECJ2000' | desc==='ECLJ2000' || desc==='ECJ') {
             coordSys = ECL_J2000;
-        } else if (desc===ECL_B1950.toString() || desc==='ECB') {
+        } else if (desc===ECL_B1950.toString() || desc==='ECLB1950'|| desc==='ECB') {
             coordSys = ECL_B1950;
         } else if (desc===SCREEN_PIXEL.toString()) {
             coordSys = SCREEN_PIXEL;

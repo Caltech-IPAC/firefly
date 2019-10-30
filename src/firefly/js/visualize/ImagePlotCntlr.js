@@ -28,6 +28,7 @@ import {wcsMatchActionCreator} from './task/WcsMatchTask.js';
 import {autoPlayActionCreator, changePointSelectionActionCreator,
     restoreDefaultsActionCreator, deletePlotViewActionCreator} from './task/PlotAdminTask.js';
 import { flipActionCreator, processScrollActionCreator, recenterActionCreator } from './task/PlotChangeTask';
+import {makeAbortHiPSAction} from './task/PlotHipsTask';
 
 /** enum can be 'COLLAPSE', 'GRID', 'SINGLE' */
 export const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
@@ -55,6 +56,7 @@ const PLOT_IMAGE= `${PLOTS_PREFIX}.PlotImage`;
 
 /** Action Type: plot of new HiPS image */
 const PLOT_HIPS= `${PLOTS_PREFIX}.PlotHiPS`;
+const ABORT_HIPS= `${PLOTS_PREFIX}.AbortHiPS`;
 const CHANGE_HIPS= `${PLOTS_PREFIX}.ChangeHiPS`;
 const PLOT_HIPS_OR_IMAGE= `${PLOTS_PREFIX}.plotHiPSOrImage`;
 const PLOT_HIPS_FAIL= `${PLOTS_PREFIX}.PlotHiPSFail`;
@@ -262,6 +264,7 @@ function actionCreators() {
     return {
         [PLOT_HIPS_OR_IMAGE]: makeImageOrHiPSAction,
         [PLOT_HIPS]: makePlotHiPSAction,
+        [ABORT_HIPS]: makeAbortHiPSAction,
         [CHANGE_HIPS]: makeChangeHiPSAction,
         [PLOT_IMAGE]: makePlotImageAction,
         [PLOT_MASK]: plotImageMaskActionCreator,
@@ -286,7 +289,7 @@ function actionCreators() {
 
 export default {
     reducers, actionCreators,
-    ANY_REPLOT, PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE, PLOT_HIPS, PLOT_HIPS_FAIL, CHANGE_HIPS,
+    ANY_REPLOT, PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE, PLOT_HIPS, PLOT_HIPS_FAIL, CHANGE_HIPS,ABORT_HIPS,
     ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE,ZOOM_LOCKING,
     CHANGE_CENTER_OF_PROJECTION, ROTATE, FLIP, CROP_START, CROP, CROP_FAIL,
     COLOR_CHANGE_START, COLOR_CHANGE, COLOR_CHANGE_FAIL,
@@ -664,6 +667,9 @@ export function dispatchPlotHiPS({plotId,wpRequest, viewerId, pvOptions= {}, att
                                              hipsImageConversion, setNewPlotAsActive, viewerId} });
 }
 
+export function dispatchAbortHiPS({plotId, dispatcher= flux.process }) {
+    dispatcher( { type: ABORT_HIPS, payload: {plotId} });
+}
 
 
 /**

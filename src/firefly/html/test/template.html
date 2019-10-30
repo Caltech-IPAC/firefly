@@ -27,7 +27,8 @@
             t.querySelector('.tpl-actual').appendChild(document.importNode(t_vars.actual, true));
             t.querySelector('#tpl-title').innerHTML = t_vars.title;
             t_vars.className && t_vars.className.split(/\s/g).forEach(function (c) {
-                t.querySelector('.tpl-test-container').classList.add(c);
+                c= c.trim();
+                c && t.querySelector('.tpl-test-container').classList.add(c);
             });
 
             t.appendChild(document.importNode(t_vars.script, true));

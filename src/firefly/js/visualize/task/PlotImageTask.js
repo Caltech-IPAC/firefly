@@ -29,6 +29,8 @@ import {isDefined} from '../../util/WebUtil';
 import {HdrConst} from '../FitsHeaderUtil.js';
 import {doFetchTable} from '../../tables/TableUtil';
 import ImageRoot from '../../drawingLayers/ImageRoot';
+import {dispatchDetachLayerFromPlot} from '../DrawLayerCntlr';
+import {getAllDrawLayersForPlot} from '../PlotViewUtil';
 
 //======================================== Exported Functions =============================
 //======================================== Exported Functions =============================
@@ -374,6 +376,15 @@ export function addDrawLayers(request, pv, plot) {
             }
         });
     });
+
+    getAllDrawLayersForPlot(dlRoot(), plot.plotId).forEach( (dl) => {
+        if (isImage(plot)) {
+            if (dl.drawLayerTypeId === HiPSGrid.TYPE_ID || dl.drawLayerTypeId === HiPSMOC.TYPE_ID) {
+                dispatchDetachLayerFromPlot(dl.drawLayerId, plotId);
+            }
+        }
+    });
+
 
     if (request.getGridOn()!==GridOnStatus.FALSE && isImage(plot)) {
         const dl = getDrawLayerByType(dlRoot(), WebGrid.TYPE_ID);
