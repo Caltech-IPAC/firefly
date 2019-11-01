@@ -191,7 +191,11 @@ export const useFieldGroupConnector= (props) => {
             if (fieldState !== gState.fields[fieldKey]) setFieldState(gState.fields[fieldKey]);
         });
     }, effectChangeAry);
-    
+
+    useEffect(() => {  // only run on dismount
+        return () => dispatchMountComponent( groupKey, fieldKey, false);
+    }, []);
+
     return {
         fireValueChange, viewProps: buildViewProps(fieldState,props,fieldKey,groupKey, value), fieldKey, groupKey
     };
