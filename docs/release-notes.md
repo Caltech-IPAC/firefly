@@ -4,11 +4,19 @@ Firefly builds and the notes for using running it are on the [Docker Page](https
 
 See Firefly docker guidelines [here](firefly-docker.md).
 
-### Version 2019.3 (unreleased, current development)
+### Version 2019.4 (unreleased, current development)
 
-##### _General_
 - docker tag: `nightly`
-- This release is focused on bug fixes and stability
+
+### Version 2019.3 
+
+This release is focused on bug fixes and stability
+
+##### _Docker tags, releases and patches_
+
+- 2019.3 latest -  `release-2019.3` 
+- 2019.3.0 - `release-2019.3.0` - original release
+
 
 ##### _UI_
 - New Table of loaded Images tool to control and order which images are displayed or hidden  ([Firefly-175](https://github.com/Caltech-IPAC/firefly/pull/873))
@@ -20,10 +28,14 @@ See Firefly docker guidelines [here](firefly-docker.md).
 ##### _API_
 - Plotly.js charting library was updated from version 1.38.3 to version 1.49.4. Plotly.js 1.43 converted `title` properties (e.g. `layout.title`) from strings into objects that contain `text` property along with new title placement properties `x`, `y`, `xref`, `yref`, `xanchor`, `yanchor` and `pad`. It also moved existing `title*` properties (e.g. `layout.titlefont`) under the `title` object (e.g. `layout.title.font`). See see [plotly.js change log](https://github.com/plotly/plotly.js/blob/master/CHANGELOG.md#1494----2019-08-22) for more information. ([Firefly-266](https://github.com/Caltech-IPAC/firefly/pull/883))
 
+##### _Patches details for 2019.3_ 
+No patches
+
 
 ### Version 2019.2
-##### _General_
-- docker tag: `release-2019.2.1`
+##### _Docker tags, releases and patches_
+
+- 2019.2.1 - `release-2019.2.1` - only available 2019.2 release
 
 ##### _UI_
 - WCS Matching has have been completely revamped.  ([Firefly-75](https://github.com/Caltech-IPAC/firefly/pull/825),[Firefly-173](https://github.com/Caltech-IPAC/firefly/pull/857))
@@ -36,8 +48,10 @@ See Firefly docker guidelines [here](firefly-docker.md).
 - nothing of interest
 
 ### Version 2019.1
-##### _General_
- - docker tag: `release-2019.1.0`
+
+##### _Docker tags, releases and patches_
+
+- 2019.1.0 - `release-2019.1.0` - original release
 
 ##### _UI_
 - TAP search Implemented (Multiple tickets and PRs)
