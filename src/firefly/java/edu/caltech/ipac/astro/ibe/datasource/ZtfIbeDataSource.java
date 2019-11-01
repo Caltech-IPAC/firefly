@@ -30,8 +30,26 @@ public class ZtfIbeDataSource extends BaseIbeDataSource {
     private final static String SCHEMA  = "schema";
     private final static String TABLE   = "table";
 
-    public static enum DATA_TYPE {
+    public enum DATA_TYPE {
         INTENSITY, MASK, UNCERTAINTY, COVERAGE
+    }
+
+    public enum DataProduct {
+        SCI("products","sci"),
+        REF("products","ref"),
+        DIFF("products","sci");
+
+        private String dataset;
+        private String table;
+
+
+        DataProduct(String dataset, String imageTable) {
+            this.dataset = dataset;
+            this.table = imageTable;
+        }
+
+        public String getDataset() { return dataset;}
+        public String getTable() { return table;}
     }
 
     public ZtfIbeDataSource() {}
@@ -141,24 +159,6 @@ public class ZtfIbeDataSource extends BaseIbeDataSource {
         }
 
         return dataParam;
-    }
-
-    public enum DataProduct {
-        SCI("products","sci"),
-        REF("products","ref"),
-        DIFF("products","sci");
-
-        private String dataset;
-        private String table;
-
-
-        DataProduct(String dataset, String imageTable) {
-            this.dataset = dataset;
-            this.table = imageTable;
-        }
-
-        public String getDataset() { return dataset;}
-        public String getTable() { return table;}
     }
 
     @Override
