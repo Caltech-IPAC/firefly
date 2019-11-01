@@ -34,7 +34,7 @@ const getCountWithTarget= (vr) =>
 
 
 
-export function MatchLockDropDown({visRoot:vr, enabled}) {
+export function MatchLockDropDown({visRoot:vr, enabled, visible}) {
     const {wcsMatchType}= vr;
     const wcsCnt= getCountWithWCS(vr);
     const tCnt= getCountWithTarget(vr);
@@ -124,7 +124,7 @@ export function MatchLockDropDown({visRoot:vr, enabled}) {
         <DropDownToolbarButton icon={wcsMatchType?MATCH_LOCKED:MATCH_UNLOCKED }
                                tip='Determine how to align images'
                                enabled={enabled} horizontal={true}
-                               visible={true}
+                               visible={visible}
                                hasHorizontalLayoutSep={false}
                                useDropDownIndicator={true}
                                dropDown={dropDown}/>

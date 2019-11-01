@@ -83,6 +83,8 @@ export class CatalogSelectViewPanel extends PureComponent {
                     width='auto' height='auto'
                     groupKey={[gkey, gkeySpacial]}
                     onSubmit={(request) => onSearchSubmit(request)}
+                    onError={(request) => onSearchFail(request)}
+                    params={{hideOnInvalid: false}}
                     onCancel={hideSearchPanel}>
                     <CatalogSelectView fields={fields}/>
                 </FormPanel>
@@ -104,17 +106,25 @@ export function validateConstraints(groupKey) {
     return true;
 }
 
-function onSearchSubmit(request) {
-    // console.log('original request <br />' + JSON.stringify(request));
+function onSearchFail() {
+    showInfoPopup('One or more fields are not valid');
+}
 
+function onSearchSubmit(request) {
+
+    if (!catmaster) {
+        showInfoPopup('Error: Master table was not loaded.');
+        return false;
+    }
     if (request[gkey].Tabs === 'catalog') {
-        const {spatial} = request[gkeySpacial];
-        const wp = parseWorldPt(request[gkeySpacial][ServerParams.USER_TARGET_WORLD_PT]);
+        const spacPart= request[gkeySpacial] || {};
+        const {spatial} = spacPart;
+        const wp = parseWorldPt(spacPart[ServerParams.USER_TARGET_WORLD_PT]);
         if (!wp && (spatial === SpatialMethod.Cone.value
             || spatial === SpatialMethod.Box.value
             || spatial === SpatialMethod.Elliptical.value)) {
             showInfoPopup('Target is required');
-            return;
+            return false;
         }
         if (validateConstraints(gkey)) {
             doCatalog(request);
@@ -130,8 +140,10 @@ function onSearchSubmit(request) {
         doVoSearch(request[gkey], 'NED');
     }
     else {
-        console.log('request no supported');
+        showInfoPopup('Request not supported');
+        return false;
     }
+    return true;
 }
 function hideSearchPanel() {
     dispatchHideDropDown();
@@ -140,7 +152,7 @@ function hideSearchPanel() {
 function doCatalog(request) {
 
     const catPart= request[gkey];
-    const spacPart= request[gkeySpacial];
+    const spacPart= request[gkeySpacial] || {};
     const {catalog, project, cattable}= catPart;
     const {spatial='AllSky'}= spacPart;  // if there is no 'spatial' field (catalog with no position information case)
 
