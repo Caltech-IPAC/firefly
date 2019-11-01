@@ -1,7 +1,7 @@
 
 ext["app-name"] =  name
-ext.buildRoot = "${rootDir}/build"
-project.buildDir = "${buildRoot}/${project['app-name']}"            // buildDir is a gradle's prop.  cannot use ext, must set it to project
+ext.buildRoot = findProperty("buildRoot") ?: "${rootDir}/build"
+project.buildDir = findProperty('altBuildDir') ?: "${buildRoot}/${project['app-name']}"            // allow for an alternate build directory
 ext.distDir = "${buildRoot}/dist"
 ext.warDir = "${buildDir}/war"
 ext.onlinehelp_dir = "${rootDir}/../irsa-ife-onlinehelp/"
@@ -168,12 +168,7 @@ ext.mergeDevIntoMaster = {  ->
     }
 }
 
-/**
- * this function setup node.js environment then run the given command.
- */
-ext.NODE = { ...cmd ->
-    def wpBuildDir = warDir
-
+ext.InitNode = { workDir ->
     try {
         def process = "yarn version".execute()
     } catch (Exception e) {
@@ -181,13 +176,23 @@ ext.NODE = { ...cmd ->
         throw new GradleException("Task failed due to missing yarn package manager which comes bundled with node.js", e)
     }
 
-    if (file("${rootDir}/package.json").exists()) {
+    if (file("${workDir}/package.json").exists()) {
         exec {
-            workingDir = rootDir
+            workingDir = workDir
             executable "yarn"
             args "install", "--ignore-platform", "--frozen-lockfile"
         }
     }
+}
+
+
+/**
+ * this function setup node.js environment then run the given command.
+ */
+ext.NODE = { ...cmd ->
+    def wpBuildDir = warDir
+
+    InitNode(rootDir);
 
     def versionInfo = new Properties()
     def versionFile = file("${project.buildDir}/version.tag")

@@ -77,3 +77,11 @@ if (!Files.exists(jest)) {
         System.err.println(ex);
     }
 }
+
+clean {
+    delete "${rootDir.path}/__jest__"
+    delete "${rootDir.path}/config/test"
+    delete "${rootDir.path}/yarn.lock"
+    delete "${rootDir.path}/package.json"
+    delete "${rootDir.path}/node_modules"
+}

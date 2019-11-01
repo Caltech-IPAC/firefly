@@ -1,0 +1,26 @@
+ext.fireflyPath = "../../"
+ext.altBuildDir = "${fireflyPath}/build/firefly/war/onlinehelp"
+
+apply from: "$fireflyPath/buildScript/onlinehelp.gincl"
+
+
+ext.appConfig = {
+
+  PUBLIC_URL = ""
+  BANNER_HOST = "https://irsadev.ipac.caltech.edu"
+  TITLE = "Firefly Help"
+
+  environments {
+    local {
+    }
+
+    dev {
+    }
+
+    test {
+    }
+
+    ops_int {
+    }
+  }
+}
