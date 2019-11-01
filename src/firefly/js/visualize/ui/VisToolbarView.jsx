@@ -325,7 +325,7 @@ export class VisToolbarView extends PureComponent {
                                 onClick={() => toggleOverlayColorLock(pv,plotGroupAry)}
                                  />
 
-                <MatchLockDropDown visRoot={visRoot} enabled={enabled} />
+                <MatchLockDropDown visRoot={visRoot} enabled={enabled} visible={mi.matchLockDropDown} />
 
 
                 <ToolbarButton icon={FITS_HEADER}
