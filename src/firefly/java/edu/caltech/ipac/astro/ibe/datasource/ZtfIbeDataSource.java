@@ -34,6 +34,33 @@ public class ZtfIbeDataSource extends BaseIbeDataSource {
         INTENSITY, MASK, UNCERTAINTY, COVERAGE
     }
 
+    public ZtfIbeDataSource() {}
+
+    public ZtfIbeDataSource(DataProduct ds) {
+        this(null, ds);
+    }
+
+    public ZtfIbeDataSource(String ibeHost, DataProduct ds) {
+        setupDS(ibeHost, ds.getDataset(), ds.getTable());
+    }
+
+    /**
+     * use the dsInfo to define this datasource.  all values in DataProduct must be populated.
+     * @param dsInfo data set information
+     */
+    @Override
+    public void initialize(Map<String, String> dsInfo) {
+
+        String host = dsInfo.get(HOST);
+        String schema = dsInfo.get(SCHEMA);
+        String table = dsInfo.get(TABLE);
+        setupDS(host, schema, table);
+    }
+
+//====================================================================
+//  ZTF implementation of IBE services
+//====================================================================
+
     @Override
     public IbeDataParam makeDataParam(Map<String, String> pathInfo) {
         IbeDataParam dataParam = new IbeDataParam();
@@ -46,6 +73,9 @@ public class ZtfIbeDataSource extends BaseIbeDataSource {
         String ccdid = pathInfo.get("ccdid");
         String formatccdid = ("00" + ccdid).substring(ccdid.length());
         String formatfield = ("000000" + field).substring(field.length());
+        if (StringUtils.isEmpty(dataproduct)) {
+            dataproduct = getTableName();
+        }
 
         if (dataproduct.equalsIgnoreCase("sci")) {
             String filefracday = pathInfo.get("filefracday");
@@ -111,32 +141,6 @@ public class ZtfIbeDataSource extends BaseIbeDataSource {
         }
 
         return dataParam;
-    }
-
-    public ZtfIbeDataSource() {}
-
-    public ZtfIbeDataSource(DataProduct ds) {
-        this(null, ds);
-    }
-
-    public ZtfIbeDataSource(String ibeHost, DataProduct ds) { setupDS(ibeHost, ds.getDataset(), ds.getTable());
-    }
-
-//====================================================================
-//  ZTF implementation of IBE services
-//====================================================================
-
-    /**
-     * use the dsInfo to define this datasource.  all values in DataProduct must be populated.
-     * @param dsInfo data set information
-     */
-    @Override
-    public void initialize(Map<String, String> dsInfo) {
-
-        String host = dsInfo.get(HOST);
-        String schema = dsInfo.get(SCHEMA);
-        String table = dsInfo.get(TABLE);
-        setupDS(host, schema, table);
     }
 
     public enum DataProduct {
