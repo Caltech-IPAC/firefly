@@ -1,6 +1,7 @@
 
 # New release procedure
 
+1. In the `rc-yyyy.x` branch, Edit `firefly/config/app.config` with the correct version.
 
 1. In the `rc-yyyy.x` branch, Edit the release notes and do the following:
    - Modify the note for the unreleased version to remove the `(unreleased, current development)` from the title
