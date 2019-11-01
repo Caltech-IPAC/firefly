@@ -41,7 +41,7 @@ There are several branches the this repository.  Here are the ones that you shou
  - rc: the next release canidate branch.  This is the most stable branch.
  - master: Update once a week.  Used for our relatively stable, weekly build.
  - dev: this branch could be updated every day. It is the active development branch. It is not stable.
- - DM-xxx, IRSA-xxx : Those branches are temporary for development feature branches.
+ - DM-xxx, FIREFLY-xxx, IRSA-xxx : Those branches are temporary for development feature branches.
 
 
 ## Setup
