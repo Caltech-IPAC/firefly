@@ -210,11 +210,11 @@ public class FitsReadUtil {
             int naxis = header.getIntValue("NAXIS", -1);
 
 
-            // check weather image is valid
+            // check whether image is valid
             boolean goodImage = true;
             if (naxis <= 0) goodImage = false;
             else if (naxis == 1) {
-                delayedExceptionMsg = "FITS image contains only one dimension, two are required.";
+                delayedExceptionMsg = "One-dimensional images (NAXIS==1) are not currently supported.";
                 goodImage = false;
             } else {
                 for (int i = 1; i <= naxis; i++) {
