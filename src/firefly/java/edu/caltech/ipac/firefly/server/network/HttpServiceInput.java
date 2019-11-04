@@ -28,6 +28,7 @@ public class HttpServiceInput implements Cloneable{
     private Map<String, File> files;
     private String userId;
     private String passwd;
+    private boolean followRedirect = true;
 
     public HttpServiceInput() {}
 
@@ -38,7 +39,6 @@ public class HttpServiceInput implements Cloneable{
     public String getRequestUrl() {
         return requestUrl;
     }
-
     public HttpServiceInput setRequestUrl(String requestUrl) {
         this.requestUrl = requestUrl;
         return this;
@@ -47,38 +47,22 @@ public class HttpServiceInput implements Cloneable{
     public String getUserId() {
         return userId;
     }
-
-    public String getPasswd() {
-        return passwd;
-    }
-
-    public Map<String, String> getParams() {
-        return params;
-    }
-
-    public Map<String, String> getHeaders() {
-        return headers;
-    }
-
-    public Map<String, String> getCookies() {
-        return cookies;
-    }
-
-    public Map<String, File> getFiles() {
-        return files;
-    }
-
-
     public HttpServiceInput setUserId(String userId) {
         this.userId = userId;
         return this;
     }
 
+    public String getPasswd() {
+        return passwd;
+    }
     public HttpServiceInput setPasswd(String passwd) {
         this.passwd = passwd;
         return this;
     }
 
+    public Map<String, String> getParams() {
+        return params;
+    }
     public HttpServiceInput setParam(String key, String value) {
         if (StringUtils.isEmpty(key)) return this;
         if (params == null) params = new HashMap<>();
@@ -86,6 +70,9 @@ public class HttpServiceInput implements Cloneable{
         return this;
     }
 
+    public Map<String, String> getHeaders() {
+        return headers;
+    }
     public HttpServiceInput setHeader(String key, String value) {
         if (StringUtils.isEmpty(key)) return this;
         if (headers == null) headers = new HashMap<>();
@@ -93,6 +80,9 @@ public class HttpServiceInput implements Cloneable{
         return this;
     }
 
+    public Map<String, String> getCookies() {
+        return cookies;
+    }
     public HttpServiceInput setCookie(String key, String value) {
         if (StringUtils.isEmpty(key)) return this;
         if (cookies == null) cookies = new HashMap<>();
@@ -100,10 +90,19 @@ public class HttpServiceInput implements Cloneable{
         return this;
     }
 
+    public Map<String, File> getFiles() {
+        return files;
+    }
     public HttpServiceInput setFile(String key, File value) {
         if (StringUtils.isEmpty(key)) return this;
         if (files == null) files = new HashMap<>();
         files.put(key, value);
+        return this;
+    }
+
+    public boolean isFollowRedirect() { return followRedirect; }
+    public HttpServiceInput setFollowRedirect(boolean followRedirect) {
+        this.followRedirect = followRedirect;
         return this;
     }
 

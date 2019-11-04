@@ -18,9 +18,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 import static junit.framework.TestCase.assertNotNull;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class HttpServicesTest {
 
@@ -120,6 +118,23 @@ public class HttpServicesTest {
 
 		assertEquals("url should be redirected to /get now", GET_URL, getProp(results.toString(), "url"));
 	}
+
+	@Test
+	public void testFollowRedirect(){
+		HttpServiceInput nInput = input.setRequestUrl(REDIRECT_URL)
+										.setParam("url", "http://www.acme.org")
+										.setParam("status_code", "301");
+
+		HttpServices.getData(nInput, (method -> {
+			assertFalse(HttpServices.isRedirected(method));
+		}));
+
+		HttpServices.getData(nInput.setFollowRedirect(false), (method -> {
+			assertTrue(HttpServices.isRedirected(method));
+			assertEquals("redirect to www.acme.org", method.getResponseHeader("location").getValue(), "http://www.acme.org");
+		}));
+	}
+
 
 //====================================================================
 //  private
