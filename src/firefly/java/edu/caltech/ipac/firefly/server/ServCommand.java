@@ -32,7 +32,6 @@ public abstract class ServCommand extends ServerCommandAccess.HttpCommand {
                 jsonData = makeOneEntryArray(json);
             }
         } catch (Exception e) {
-            //e.printStackTrace();
             _log.error(e.getMessage());
             json.put("success", "false");
             json.put("error", e.getMessage());
