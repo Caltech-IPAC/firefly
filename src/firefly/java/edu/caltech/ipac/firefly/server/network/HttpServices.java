@@ -11,7 +11,6 @@ import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.NameValuePair;
-import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -191,7 +190,7 @@ public class HttpServices {
             method.setRequestHeader("User-Agent", USER_AGENT);
             method.setRequestHeader(HttpHeaders.ACCEPT_ENCODING, "gzip");
             if (method instanceof GetMethod) {
-                method.setFollowRedirects(true);    // post are not allowed to follow redirect
+                method.setFollowRedirects(input.isFollowRedirect());    // post are not allowed to follow redirect
             }
             HttpClient httpClient = newHttpClient();
 
@@ -204,7 +203,7 @@ public class HttpServices {
             handleParams(method, input.getParams(), input.getFiles());
 
             int status = httpClient.executeMethod(method);
-            if (status < 200 || status >= 300) {
+            if ( ( !isOk(method) || (isRedirected(method) && input.isFollowRedirect())) ) {
                 // logs bad requests
                 LOG.error("HTTP request failed with status:" + status + "\n" + getDetailDesc(method, input));
             }
@@ -317,6 +316,28 @@ public class HttpServices {
                 FileUtil.silentClose(bos);
             }
         }
+    }
+
+    public static boolean isOk(HttpMethod method) {
+        int status = method.getStatusCode();
+        return status >= 200 && status < 300;
+    }
+
+    public static boolean isRedirected(HttpMethod method) {
+        int status = method.getStatusCode();
+        return status >= 300 && status < 400;
+    }
+
+    public static String getReqHeader(HttpMethod method, String key, String def) {
+        Header header = method.getRequestHeader(key);
+        if (header == null || header.getValue() == null) return def;
+        return header.getValue().trim();
+    }
+
+    public static String getResHeader(HttpMethod method, String key, String def) {
+        Header header = method.getResponseHeader(key);
+        if (header == null || header.getValue() == null) return def;
+        return header.getValue().trim();
     }
 
 //====================================================================

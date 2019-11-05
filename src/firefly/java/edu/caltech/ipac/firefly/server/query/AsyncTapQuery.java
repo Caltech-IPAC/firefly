@@ -15,9 +15,9 @@ import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
-import org.apache.commons.httpclient.Header;
 
 import java.io.*;
+
 
 @SearchProcessorImpl(id = AsyncTapQuery.ID, params = {
         @ParamDoc(name = "serviceUrl", desc = "base TAP url endpoint excluding '/async'"),
@@ -54,10 +54,7 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
         
         Ref<String> location = new Ref<>();
         HttpServices.postData(inputs, (method -> {
-            Header loc = method.getResponseHeader("Location");
-            if (loc != null) {
-                location.setSource(loc.getValue().trim());
-            }
+            location.setSource(HttpServices.getResHeader(method, "Location", null));
         }));
         
         if (location.getSource() == null) {
@@ -95,7 +92,27 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
                 //download file first: failing to parse gaia results with topcat SAX parser from url
                 String filename = getFilename(baseJobUrl);
                 File outFile = File.createTempFile(filename, ".vot", ServerContext.getTempWorkDir());
-                HttpServices.getData(HttpServiceInput.createWithCredential(baseJobUrl + "/results/result"), outFile);
+                HttpServiceInput input = HttpServiceInput.createWithCredential(baseJobUrl + "/results/result")
+                                                         .setFollowRedirect(false);
+                HttpServices.getData(input, (method -> {
+                    try {
+                        if(HttpServices.isOk(method)) {
+                            HttpServices.defaultHandler(outFile).handleResponse(method);
+                        } else if (HttpServices.isRedirected(method)) {
+                            String location = HttpServices.getResHeader(method, "Location", null);
+                            if (location != null) {
+                                HttpServices.getData(HttpServiceInput.createWithCredential(location), outFile);
+                            } else {
+                                throw new RuntimeException("Request redirected without a location header");
+                            }
+                        } else {
+                            throw new RuntimeException("Request failed with status:" + method.getStatusText());
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException(e.getMessage());
+                    }
+                }));
+
                 DataGroup[] results = VoTableReader.voToDataGroups(outFile.getAbsolutePath());
                 if (results.length > 0) {
                     DataGroup dg = results[0];
@@ -143,8 +160,8 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
             HttpServices.Status status = HttpServices.getData(HttpServiceInput.createWithCredential(errorUrl),
                     (method -> {
                         boolean isText = false;
-                        Header contentType = method.getResponseHeader("Content-Type");
-                        if (contentType != null && contentType.getValue().startsWith("text/plain")) {
+                        String contentType = HttpServices.getResHeader(method, "Content-Type", "");
+                        if (contentType.startsWith("text/plain")) {
                             isText = true;
                         }
                         try {
