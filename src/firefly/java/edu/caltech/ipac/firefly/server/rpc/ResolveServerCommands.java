@@ -14,7 +14,6 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,10 +23,7 @@ import java.util.Map;
  */
 public class ResolveServerCommands {
 
-
-
     public static class ResolveName extends ServCommand {
-
 
         public String doCommand(SrvParam sp) throws Exception {
 
@@ -73,7 +69,7 @@ public class ResolveServerCommands {
                 return wrapperAry.toJSONString();
 
             }catch (Exception e){
-                throw new Exception("Could not resolve "+ ServerParams.OBJ_NAME);
+                throw new Exception("Could not resolve object name: "+ sp.getRequired(ServerParams.OBJ_NAME));
             }
         }
 
