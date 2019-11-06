@@ -10,6 +10,7 @@ import edu.caltech.ipac.firefly.core.FileAnalysis;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.SrvParam;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 import org.json.simple.JSONArray;
@@ -22,6 +23,7 @@ import java.util.Map;
  * @author Trey Roby
  */
 public class ResolveServerCommands {
+    private static final Logger.LoggerImpl logger = Logger.getLogger();
 
     public static class ResolveName extends ServCommand {
 
@@ -30,23 +32,38 @@ public class ResolveServerCommands {
             Resolver resolver= Resolver.NedThenSimbad;
             String name = sp.getRequired(ServerParams.OBJ_NAME);
             String resStr = sp.getOptional(ServerParams.RESOLVER);
+            JSONArray wrapperAry= new JSONArray();
+            JSONObject result = new JSONObject();
+
             try {
                 resolver= (resStr!=null) ? Resolver.parse(resStr) : Resolver.NedThenSimbad;
                 if (resolver==null) resolver= Resolver.NedThenSimbad;
                 ResolvedWorldPt wp= new TargetServicesImpl().resolveName(name, resolver);
-                return wp.toString();
-            } catch (Exception e) {
-                throw new Exception("Could not resolve " +  name + " using " + resolver.toString());
-            }
-        }
 
-        public boolean getCanCreateJson() { return false; }
+                result.put("data", wp.toString());
+                result.put("success", "true");
+                wrapperAry.add(result);
+
+            } catch (Exception e) {
+                logger.error("Could not resolve object name: "+ sp.getRequired(ServerParams.OBJ_NAME) + " using " + resolver.toString());
+
+                result.put("success", "false");
+                result.put("error", e.getMessage());
+                wrapperAry.add(result);
+            }
+
+            return wrapperAry.toJSONString();
+        }
+        public boolean getCanCreateJson() { return true; }
     }
+
 
     public static class ResolveNaifidName extends ServCommand {
 
 
         public String doCommand(SrvParam sp) throws Exception {
+            JSONArray wrapperAry= new JSONArray();
+            JSONObject result = new JSONObject();
 
             try {
                 HorizonsEphPairs.HorizonsResults[] horizons_results = HorizonsEphPairs.lowlevelGetEphInfo(sp.getRequired(ServerParams.OBJ_NAME));
@@ -56,21 +73,21 @@ public class ResolveServerCommands {
                     values.put(element.getName(), Integer.parseInt(element.getNaifID()));
                 }
 
-                JSONObject jsonObj = new JSONObject(values);
+                JSONObject naifids = new JSONObject(values);
 
-
-                JSONArray wrapperAry= new JSONArray();
-                JSONObject result = new JSONObject();
-                result.put("data", jsonObj);
+                result.put("data", naifids);
                 result.put("success", true);
                 wrapperAry.add(result);
 
-
-                return wrapperAry.toJSONString();
-
             }catch (Exception e){
-                throw new Exception("Could not resolve object name: "+ sp.getRequired(ServerParams.OBJ_NAME));
+                logger.error("Could not resolve object name: "+ sp.getRequired(ServerParams.OBJ_NAME));
+
+                result.put("success", "false");
+                result.put("error", e.getMessage());
+                wrapperAry.add(result);
+
             }
+            return wrapperAry.toJSONString();
         }
 
         public boolean getCanCreateJson() { return true; }
