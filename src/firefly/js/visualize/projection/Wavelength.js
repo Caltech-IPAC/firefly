@@ -7,7 +7,8 @@
  *  3. https://www.aanda.org/articles/aa/full/2002/45/aah3859/aah3859.html,
  *
  */
-
+import {LinearInterpolator} from '../../util/Interp/LinearInterpolator.js';
+import {isDefined} from '../../util/WebUtil.js';
 export const PLANE  = 'PLANE';
 export const LINEAR = 'LINEAR';
 export const LOG = 'LOG';
@@ -200,7 +201,31 @@ function getWaveLengthNonLinear(ipt, cubeIdx, wlData) {
     return lamda;
 }
 
-const getArrayDataFromTable= (table, rowIdx, columnName) => undefined;  // todo implement
+/**
+ * According to the reference papers above, the coordinate has M+1 dimension where the M means the
+ *  dependence on the M axis, Coords[M][K1][K2[]...[Km].  In our case, the M=1, the coordinate is the
+ *  two dimensional array, and the first dimension is M=1  and the second dimension is K1 which is the sampling
+ *  number the data has been sampled. Thus, each image point, it corresponding coordinate is
+ *  coords[1][K1].  For example, if the sampling count is K1=100, each cell in the coordinate table, contains 100
+ *  data values. The coordinate column can convert to 100 rows of the single value table. 
+ *
+ *
+ * @param table
+ * @param columnName
+ * @returns {*}
+ */
+const getArrayDataFromTable= (table, columnName) => {
+    let tableData = table.tableData;
+    let arrayData = tableData.data;
+    let columns = tableData.columns;
+    for (let i=0; i<columns.length; i++){
+        if (columns[i].name.toUpperCase() === columnName.toUpperCase()){
+            return arrayData[0][i];
+
+        }
+    }
+    return undefined;
+};
 
 
 /**
@@ -228,48 +253,239 @@ function getWaveLengthTable(ipt, cubeIdx, wlData) {
 
 
     //read the cell coordinate from the FITS table and save to two one dimensional arrays
-    const coordData = getArrayDataFromTable(wlTable,0, ps3_1 || 'COORDS');
+    const coordData = getArrayDataFromTable(wlTable, ps3_1 || 'COORDS');
     if (!coordData) return NaN;
 
-    const indexData =  getArrayDataFromTable(wlTable,0, ps3_2 || 'INDEX');
-    if (!indexData) return coordData[psi_m];
+    const indexData =  getArrayDataFromTable(wlTable, ps3_2 || 'INDEX');
+    if (!indexData) return coordData[parseInt(Math.abs(psi_m)) ];
 
-    const psiIndex = searchIndex(indexData, psi_m);
-    if (isNaN(psiIndex) || psiIndex===-1) return NaN; // No index found in the index array, gamma is undefined, so is coordinate
 
-    const gamma_m = calculateGamma_m(indexData, psi_m, psiIndex);
-    if (isNaN(gamma_m)) return NaN;
+    const gamma_m = calculateGamma_m(indexData, psi_m);
+    if (!isDefined(gamma_m)) return NaN;
 
-    return  coordData[psiIndex] + (gamma_m - psiIndex) * (coordData[psiIndex+1] - coordData[psiIndex]);
+    return calculateC_m( gamma_m,  coordData, indexData.length) ;
+
 }
-
 
 /**
+ * In the case of a single separable coordinate with 1 ≤ k ≤ Υm < k+1 ≤K,
+ * the coordinate value is given by
+ *     Cm = Ck + (Υm − k) (Ck+1 − Ck)
+ * For Υm such that 0.5 ≤ Υm < 1 or K < Υm ≤ K + 0.5 linear
+ * extrapolation is permitted, with Cm = C1 when K = 1.
  *
- * @param {Array.<number>} indexVec
- * @param {number} psi
- * @param {number} idx
- * @return {*}
+ * @param gamma_m
+ * @param coordData
+ * @param kMax
+ * @returns {undefined}
  */
-function calculateGamma_m(indexVec, psi, idx) {
-    /* Scan the indexing vector, (Ψ1, Ψ2,...), sequen-tially starting from the ﬁrst element, Ψ1,
-     * until a successive pair of index values is found that encompass ψm (i.e. such that Ψk ≤ ψm ≤ Ψk+1
-     * for monotonically increasing index values or Ψk ≥ ψm ≥ Ψk+1 for monotonically decreasing index values
-     * for some k). Then, when Ψk  Ψk+1, interpolate linearly on the indices
-     */
+function calculateC_m(gamma_m,  coordData, kMax){
 
+   let C_m = undefined;
+   if (kMax===1) {
+     C_m = coordData[0];
+   }
+   const kIndex = Math.floor(gamma_m);
+   if (kIndex>=0 && kIndex <= gamma_m && gamma_m < kIndex+1 && kIndex+1 <=kMax-1){
+       C_m = coordData[kIndex] + (gamma_m - kIndex-1) * (coordData[kIndex+1]-coordData[kIndex]);
+   }
+   else {
+     const inCoords = Array.from(new Array(coordData.length), (x,i) => i);
+     const linearInterpolator = LinearInterpolator(inCoords, coordData, true);
+     if (gamma_m>=0.5 && gamma_m<1) {
 
-    if (idx!==-1 && indexVec[idx-1]!==indexVec[idx]){
-        // Υm = k + (ψm − Ψk) / (Ψk+1− Ψk)
-        return  idx + (psi-indexVec[idx-1])/(indexVec[idx]-indexVec[idx-1]);
-    }
-    else {
-        return NaN; // No index found in the index array, gamma is undefined, so is coordinate
-    }
+       //linear extrapolation CoorData
+       const coordData_far_left = linearInterpolator(0.5);
+       C_m = coordData_far_left + gamma_m/(coordData[0]-coordData_far_left);
 
+     }
+     else  if( kMax <gamma_m && gamma_m <= kMax+ 0.5) {
+       //linear extrapolation CoorData
+       const coordData_far_right = linearInterpolator(kMax + 0.5);
+       C_m = coordData[kMax-1] + (gamma_m-kMax) /(coordData_far_right - coordData[kMax-1]);
+
+     }
+
+   }
+   return C_m;
 }
 
+function getGammaByInterpolation(psiIndex, psi_m, indexVec, sort){
 
+    let gamma_m=undefined;
+    /*--------------------------------------------------------------------------------
+        * psiIndex is found, however the following four cases, gamma_m is undefined and so is C_m
+        */
+    //case 1: Ψk+1=Ψk=Ψm, return undefined
+    if (indexVec[psiIndex]===indexVec[psiIndex+1] && indexVec[psiIndex]===psi_m) {
+        return gamma_m;
+    }
+
+    /* case 2: Ψk < ψm = Ψk+1 for monotonically increasing index values,except when ψm = Ψ1,
+    * If Ψk+2 = Ψk+1 = ψm (or Ψ2 = Ψ1 = ψm), then Υm and Cm are undefined.
+    */
+    if (sort===1 && psiIndex!==0 && indexVec[psiIndex] < psi_m && psi_m===indexVec[psiIndex+1] ||
+
+     /* case 2: Ψk > ψm = Ψk+1 for monotonically decreasing index values,except when ψm = Ψ1
+      * Ψk > ψm = Ψk+1 for monotonically decreasing index values,except when ψm = Ψ1
+      */
+     sort===-1 && psiIndex!==0 && indexVec[psiIndex] >psi_m && psi_m===indexVec[psiIndex+1] ){
+
+        /* Since two consecutive index values may be equal, the index following
+         * the matched index must be examined. If Ψk+2 = Ψk+1 = ψm
+         * (or Ψ2 = Ψ1 = ψm), then Υm and Cm are undefined
+         */
+        if (indexVec[psiIndex+2]===psi_m){
+            return gamma_m;
+        }
+    }
+    //case 4: ψm = Ψ1
+    if (indexVec[0]===psi_m && indexVec[1]===psi_m ){
+        return gamma_m;
+    }
+
+    /*--------------------------------------------------------------------------------
+    * psiIndex is found, the gamma_m can be interpolated
+    */
+    if (indexVec[psiIndex]!==indexVec[psiIndex + 1] ) {
+        // Υm = k + (ψm − Ψk) / (Ψk+1− Ψk) where k = 1,... Kmax,
+        // array index here is from 0, so the k = psiIndex +1.  For example is psiIndex =0, it means k=1, Ψ1=ψm
+        gamma_m =psiIndex+1  + (psi_m - indexVec[psiIndex]) / (indexVec[psiIndex+1] - indexVec[psiIndex]);
+        return gamma_m;
+    }
+}
+function getGammaByExtrarpolation(psiIndex, psi_m, indexVec, sort){
+    let gamma_m=undefined;
+    const kMax = indexVec.length;
+    const inCoords = Array.from(new Array(indexVec.length), (x,i) => i);
+    const linearInterpolator = LinearInterpolator(inCoords, indexVec, true);
+    const left = indexVec[0] - (indexVec[1] - indexVec[0]) / 2;
+    const right = indexVec[kMax - 1] + (indexVec[kMax - 1] - indexVec[kMax - 2]) / 2;
+
+    // When no psi_m is found in the vector psiIndex=-1),  we need to check if the gamma_m can be extrapolated.
+
+    if (indexVec.length===1){
+        /* When the indexVector's length  = 1 with ψm in the range Ψ1 − 0.5 ≤ ψm ≤ Ψ1 + 0.5 (noting that Ψ1
+        * should be equal to 1 in this case) whence Υm = ψm
+        */
+        if (indexVec[0] - 0.5 <=psi_m && psi_m <=indexVec[0] + 0.5){
+            gamma_m= psi_m;
+        }
+    }
+    else { //do extrapolation
+        switch (sort) {
+            case 1:
+
+                if (left <= psi_m && psi_m < indexVec[0]) {
+                    const psi_left = linearInterpolator( left);
+                    gamma_m = (psi_m - psi_left) /(indexVec[0] -psi_left);
+
+                }
+                else if (indexVec[kMax - 1] < psi_m && psi_m <= right) {
+                    const psi_right =linearInterpolator( right );
+                    gamma_m = indexVec.length + 1 + (psi_m - indexVec[kMax - 1]) /
+                        (psi_right - indexVec[kMax - 1]);
+                }
+
+                break;
+            case -1:
+                if (left >= psi_m && psi_m > indexVec[0]) {
+                    const psi_left = linearInterpolator( left);
+                    gamma_m = (psi_m - psi_left) /
+                        (indexVec[0] - psi_left);
+
+                }
+                else if (indexVec[kMax - 1] > psi_m && psi_m >= right)  {
+                    const psi_right = linearInterpolator( right);
+                    gamma_m = indexVec.length + 1 + (psi_m - indexVec[kMax - 1])/(psi_right - indexVec[kMax - 1]);
+                }
+
+                break;
+        }
+    }
+
+    return gamma_m;
+
+}
+/**
+ * The algorithm for computing Υm, and thence Cm,is as follows:
+ * Scan the indexing vector, (Ψ1,Ψ2, . . .), sequentially
+ * starting from the first element, Ψ1, until a successive
+ * pair of index values is found that encompass ψm (i.e. such that
+ * Ψk ≤ ψm ≤ Ψk+1 for monotonically increasing index values or
+ * Ψk ≥ ψm ≥ Ψk+1 for monotonically decreasing index values
+ * for some k). Then, when Ψk  Ψk+1, interpolate linearly on the
+ * indices  Υm = k +  (ψm − Ψk)/ (Ψk+1 − Ψk).  The Ym (gamma_m) is the index in
+ * the coordinate array.
+ *
+ * However if Ψk+1 = Ψk, the Υm is undefined.
+ *
+ *  NOTE, the array index starting from 1, not 0 as in javascript
+ *
+ *  Υm = (k + (psi_m-psi_k)/psi_k+1 - psi_k) )
+ *  Υm = k +  ( (ψm − Ψk ) /( Ψk+1 − Ψk) )
+ *  How to calculate gamma_m (Υm):
+ *  case 1:
+ *  where psi is the index vector.  In our case, it is indexVec.
+ *  If (psi_k <= psi_m <= psi_k+1) for for monotonically increasing index values
+ *  or
+ *  If (psi_k >= psi_m >= psi_k+1) for for monotonically decreasing index values
+ *  Then the gamma_m = (k + (psi_m-psi_k)/psi_k+1 - psi_k) )
+ *
+ *  case 2:
+ *    if psi_k = psi_k+1 = psi_m, based on the formula above, the value is undefined. In this case,
+ *    we need to find a psi_k such that psi_k < psi_m = psi_k+1 for monotonically increasing index values
+ *    or psi_k > psi_m = psi_k+1 for monotonically decreasing index values. Since two consecutive index
+ *    values may be equal, the index following the matched index must be examined. If Ψk+2 = Ψk+1 = ψm
+ *    (or Ψ2 = Ψ1 = ψm), then Υm and Cm are undefined.
+ *
+ * case 3: linear interpolation
+ *  If psi_m in the range psi_1 to psi_k inclusive, interpolation is needed.
+ *
+ * case 4:
+ *     if Ψk+1 = Ψk, the Υm is undefined.
+ *
+ * case 5: extrapolation
+ *    psi_m outside range psi_1 - psi_k, and k>1,
+ *    if (psi_1 - (psi_2-psi_1)/2 ) < = psi_m <psi_1 or
+ *    psi_k <psi_m <= (psi_k + (psi_k - psi_k-1) /2)
+ *    monotonically increasing index values
+ *
+ *    (psi_1 - (psi_2-psi_1)/2 ) > = psi_m > psi_1 or
+ *    psi_k > psi_m >= (psi_k + (psi_k - psi_k-1) /2)
+ *    for monotonically decreasing index values
+ *
+ *
+ * @param {Array.<number>} indexVec
+ * @param {number} psi_m
+ * @param sort
+ * @returns {*}
+ */
+function calculateGamma_m(indexVec, psi_m, sort) {
+
+    const psiIndex = searchIndex(indexVec, psi_m, sort);
+
+
+
+    if (isNaN(psiIndex)) {//The index vector is not sorted, return undefined
+        return undefined;
+    }
+
+
+    if (psiIndex!==-1){
+        /*
+          Ψk ≤ ψm ≤ Ψk+1 for monotonically increasing index values or
+          Ψk ≥ ψm ≥ Ψk+1 for monotonically decreasing index values for some k (here, we use psiIndex)
+       */
+        return getGammaByInterpolation(psiIndex, psi_m, indexVec, sort);
+    }
+    else {
+        // psiIndex=-1: no range found, the psi_m is outside of the indexVector's range
+       return getGammaByExtrarpolation(psiIndex, psi_m, indexVec, sort);
+    }
+
+
+}
 
 
 
@@ -289,30 +505,37 @@ function isSorted(intArray) {
 }
 
 
+ /**
+ /* Scan the indexing vector, (Ψ1, Ψ2,...), sequentially starting from the ﬁrst element, Ψ1,
+  * until a successive pair of index values is found that encompass ψm (i.e. such that Ψk ≤ ψm ≤ Ψk+1
+  * for monotonically increasing index values or Ψk ≥ ψm ≥ Ψk+1 for monotonically decreasing index values
+  * for some k). Then, when Ψk  Ψk+1, interpolate linearly on the indices
+  *
+  * NOTE: the index in the algorthim is starting with 1, in Javascript, the index is starting from 0.
+  *
+  * @param indexVec
+  * @param psi_m
+  * @returns {number}
+  */
+ function searchIndex(indexVec, psi_m) {
 
-
-function searchIndex(indexVec, psi) {
-    /*Scan the indexing vector, (Ψ1, Ψ2,...), sequen-tially starting from the ﬁrst element, Ψ1,
-      until a successive pair of index values is found that encompass ψm (i.e. such that Ψk ≤ ψm ≤ Ψk+1
-      for monotonically increasing index values or Ψk ≥ ψm ≥ Ψk+1 for monotonically decreasing index values
-      for some k). Then, when Ψk  Ψk+1, interpolate linearly on the indices
-     */
 
     const sort = isSorted(indexVec); //1:ascending, -1: descending, 0: not sorted
     if (sort===0){
         return NaN; //The vector index array has to be either ascending or descending
     }
 
-
-    for (let i=1; i<indexVec.length; i++){
-        if (sort===1 && indexVec[i-1]<=psi  && psi<=indexVec[i]){
+    for (let i=0; i<indexVec.length-1; i++){
+        if (sort===1 && indexVec[i]<=psi_m  && psi_m<=indexVec[i+1]){
             return i;
         }
-        if (sort===-1 && indexVec[i-1]>=psi && psi>=indexVec[i]){
+        if (sort===-1 && indexVec[i]>=psi_m && psi_m>=indexVec[i+1]){
             return i;
 
         }
     }
+
+    //no range found, the psi_m is outside of the indexVector's range
     return -1;
 }
 
