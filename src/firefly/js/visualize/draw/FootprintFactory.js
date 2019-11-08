@@ -21,7 +21,7 @@ const SPITZER_INST = new Enum(['IRAC36', 'IRAC45']);
 
 //To add a new  Sofia instrument, add it in SOFIA_INST.  If the new instrument has submenu, create a menu list like
 // SOFIA_INST_FORCAST_TEXT and then add it to SOFIA_INSTRUMENTS
-const SOFIA_INST = new Enum(['FORCAST', 'FIFI-LS', 'FLITECAM', 'FPI+', 'HAWC+']);
+const SOFIA_INST = new Enum(['FIFI-LS', 'FLITECAM', 'FORCAST', 'FPI+', 'HAWC+']);
 export const SOFIA_INST_FORCAST_TEXT = new Enum({FORCAST_IMG:'FORCAST Imaging',
     FORCAST_GRISMS_A: 'FORCAST Grism a',FORCAST_GRISMS_B:'FORCAST Grism b' });
 export const SOFIA_INST_FIFILS_TEXT = new Enum({'FIFI-LS_Blue':'FIFI-LS Blue (50-120 microns)', 'FIFI-LS_Red':'FIFI-LS Red (110-200 microns)'    });
@@ -32,10 +32,10 @@ export const SOFIA_INST_HAWC_TEXT = new Enum({
     HAWC_BAND_A_POLAR: '53 microns (Band A), Polarization',
     HAWC_BAND_C_TOTAL: '89 microns (Band C), Total Intensity',
     HAWC_BAND_C_POLAR: '89 microns (Band C), Polarization',
-    HAWC_BAND_D_TOTAL: '154 microns (Band D) Total Intensity',
-    HAWC_BAND_D_POLAR: '154 microns (Band D) Polarization',
+    HAWC_BAND_D_TOTAL: '154 microns (Band D), Total Intensity',
+    HAWC_BAND_D_POLAR: '154 microns (Band D), Polarization',
     HAWC_BAND_E_TOTAL: '214 microns (Band E), Total Intensity',
-    HAWC_BAND_E_POLAR: '214 microns (Band E) Polarization'
+    HAWC_BAND_E_POLAR: '214 microns (Band E), Polarization'
 });
 
 
