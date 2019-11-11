@@ -4,7 +4,7 @@
 
 import React, {PureComponent, useContext} from 'react';
 import PropTypes from 'prop-types';
-import {get, includes, isNil, omit, isString, isPlainObject} from 'lodash';
+import {get, includes, isNil, isString} from 'lodash';
 import {FormPanel} from '../../ui/FormPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {SizeInputFields} from '../../ui/SizeInputField.jsx';
@@ -38,10 +38,12 @@ import {sourcesPerChecked} from '../../ui/HiPSSurveyListDisplay.jsx';
 import './ImageSearchPanelV2.css';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 import {PlotAttribute} from '../PlotAttribute';
-import {getCellValue, getColumn, getColumnByID} from '../../tables/TableUtil';
 import {makeFileRequest} from '../../tables/TableRequestUtil';
 import {dispatchTableSearch} from '../../tables/TablesCntlr';
 import {MetaConst} from '../../data/MetaConst';
+import {isDefined} from '../../util/WebUtil';
+import VisUtil from '../VisUtil';
+import CoordinateSys from '../CoordSys';
 
 
 const FG_KEYS = {
@@ -730,31 +732,49 @@ function resolveHRefVal(valObs, href='') {
     let replaceHref = href;
     vars.forEach((v) => {
         const [,keyName] = v.match(/\${([\w -.]+)}/) || [];
-        if (valObs[keyName]) {
+        if (isDefined(valObs[keyName])) {
             replaceHref = replaceHref.replace(v, valObs[keyName]);
         }
     });
     return replaceHref;
 }
 
-function resolveHRefValWithParams(wp,radius, href='') {
+function resolveHRefValWithParams(wp,radius, maxRangeDeg, href='') {
+    const rNum= Number(radius);
+    const sizeArcMin= rNum ? radius*60 : '';
+    const sizeArcSec= rNum ? radius*3600 : '';
+    const j2Wp= VisUtil.convert(wp, CoordinateSys.EQ_J2000);
+    const galWp= VisUtil.convert(wp, CoordinateSys.GALACTIC);
+
     return resolveHRefVal(
         {
-            ra:wp.x,
-            dec:wp.y,
+            ra:j2Wp.x,
+            dec:j2Wp.y,
+            galLon:galWp.x,
+            galLat:galWp.y,
             size:radius,
             sizeDeg:radius,
-            sizeArcMin:radius*60,
-            sizeArcSec:radius*3600
+            sizeArcMin,
+            sizeArcSec,
+
+            sizeOrMax:radius || maxRangeDeg,
+            sizeDegOrMax:radius || maxRangeDeg,
+            sizeArcMinOrMax:sizeArcMin || Number(maxRangeDeg) * 60,
+            sizeArcSecOrMax:sizeArcSec || Number(maxRangeDeg) * 3600,
+
+            sizeOrZero:radius || 0,
+            sizeDegOrZero:radius || 0,
+            sizeArcMinOrZero:sizeArcMin || 0,
+            sizeArcSecOrZero:sizeArcSec || 0,
         },
         href);
 }
 
 
 function makeWPRequest(wp, radius, data, plotId, plotGroupId) {
-    const {plotRequestParams:{URL,...params}, helpUrl, projectTypeDesc, waveType, wavelength}= data;
+    const {plotRequestParams:{URL,...params}, helpUrl, projectTypeDesc, waveType, wavelength, maxRangeDeg}= data;
 
-    params.URL=  URL && resolveHRefValWithParams(wp, radius, URL);
+    params.URL=  URL && resolveHRefValWithParams(wp, radius, maxRangeDeg, URL);
     const inReq= {
         [WPConst.WORLD_PT] : wp.toString(),
         [WPConst.SIZE_IN_DEG] : radius+'',

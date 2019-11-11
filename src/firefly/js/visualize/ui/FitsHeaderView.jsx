@@ -128,7 +128,7 @@ function showFitsHeaderPopup(plot, fitsHeaderInfo, element) {
                 return prev;
             }, false);
 
-            if (isThreeColor(plot) || displayedPlotId!==crtPlot.plotId || displayedHdu!==getHDU(crtPlot)) {
+            if (action.type===ImagePlotCntlr.PLOT_IMAGE || isThreeColor(plot) || displayedPlotId!==crtPlot.plotId || displayedHdu!==getHDU(crtPlot) ) {
                 updatePopup(crtPlot, newTableInfo)();
             }
             displayedPlotId= crtPlot.plotId;
@@ -356,6 +356,8 @@ export function fitsHeaderView(plotView,element) {
 
 }
 
+var tblCnt= 0;
+
 /**
  * produce table Id based on band info
  * @param plot
@@ -384,7 +386,9 @@ function createTableIdForFitsHeader(plot) {
     }
 
     const str = plot.plotImageId.replace(/\s/g, '');                   //remove the white places
-    return  str.replace(/[^a-zA-Z0-9]/g, '_')  + colors; //replace the no numeric/alphabet character by _
+    const tbl_id= str.replace(/[^a-zA-Z0-9]/g, '_')  + colors+ '--' + tblCnt; //replace the no numeric/alphabet character by _
+    tblCnt++;
+    return  tbl_id;
 }
 
 
@@ -407,6 +411,7 @@ function createRowData(header,hduStr) {
  * @returns {*}
  */
 function createFitsHeaderTable(tableId, plot) {
+    if (!plot) return null;
     const {headerAry,zeroHeader} = plot;
     if (!headerAry) return null;
 
