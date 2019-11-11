@@ -21,6 +21,8 @@ import {getUIComponent} from './DistanceToolUI.jsx';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {hasWCSProjection} from '../visualize/PlotViewUtil';
 import {isHiPS} from '../visualize/WebPlot.js';
+import {DrawingType} from '../visualize/draw/DrawObj';
+import {makeImagePt} from '../visualize/Point';
 
 
 const EDIT_DISTANCE= BrowserInfo.isTouchInput() ? 18 : 10;
@@ -401,8 +403,8 @@ function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
     const LWIDTH = 3;
 
     if (pref === PIXEL) {
-        anyPt1 = cc.getScreenCoords(ptAry[0]);
-        anyPt2 = cc.getScreenCoords(ptAry[1]);
+        anyPt1 = cc.getImageCoords(ptAry[0]);
+        anyPt2 = cc.getImageCoords(ptAry[1]);
         if (!anyPt1 || !anyPt2) return null;
         dist = screenDistance(anyPt1,anyPt2);
     } else {
@@ -427,6 +429,7 @@ function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
     obj.fontWeight = 'bold';
     obj.textLoc=TextLocation.LINE_TOP_STACK;
     obj.texttBaseLine = 'middle';
+    obj.supportedDrawingTypes=  (pref===PIXEL) ? DrawingType.ImageCoordsOnly : DrawingType.WcsCoordsOnly;
 
     if (offsetCal) {
         let highPt;
@@ -472,12 +475,12 @@ function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
                 opDist = VisUtil.computeDistance(latDelta1, latDelta2);
             }
         } else {
-            lonDelta1= makeScreenPt(highPt.x, lowPt.y);
-            lonDelta2= makeScreenPt(lowPt.x, lowPt.y);
+            lonDelta1= makeImagePt(highPt.x, lowPt.y);
+            lonDelta2= makeImagePt(lowPt.x, lowPt.y);
             adjDist= screenDistance(lonDelta1,lonDelta2);
 
-            latDelta1= makeScreenPt(highPt.x, lowPt.y);
-            latDelta2= makeScreenPt(highPt.x, highPt.y);
+            latDelta1= makeImagePt(highPt.x, lowPt.y);
+            latDelta2= makeImagePt(highPt.x, highPt.y);
             opDist= screenDistance(latDelta1,latDelta2);
         }
 
@@ -505,6 +508,8 @@ function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
         adj.fontSize = '16px';
         adj.fontWeight = 'bold';
         adj.offsetOnScreen = true;
+        adj.supportedDrawingTypes=  (pref===PIXEL) ? DrawingType.ImageCoordsOnly : DrawingType.WcsCoordsOnly;
+
 
         // for HiPS image, adj may not be perfectly horizontal
         if (end1.y === end2.y) {
@@ -525,6 +530,7 @@ function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
         op.fontSize = '16px';
         op.fontWeight = 'bold';
         op.offsetOnScreen = true;
+        op.supportedDrawingTypes=  (pref===PIXEL) ? DrawingType.ImageCoordsOnly : DrawingType.WcsCoordsOnly;
 
         // for HiPS image, op may not be perfectly vertical
         if (end1.x === end2.x) {

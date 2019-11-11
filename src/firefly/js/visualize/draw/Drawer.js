@@ -11,7 +11,11 @@ import DrawUtil from './DrawUtil.js';
 import Color from '../../util/Color.js';
 import CsysConverter, {CCUtil} from '../CsysConverter.js';
 import {POINT_DATA_OBJ} from './PointDataObj.js';
+import {DrawingType} from './DrawObj.js';
 import DrawOp from './DrawOp.js';
+import {isHiPS, isImage} from '../WebPlot';
+import {hasWCSProjection} from '../PlotViewUtil';
+
 
 const ENABLE_COLORMAP= false;
 let drawerCnt=0;
@@ -568,11 +572,19 @@ function drawObj(ctx, def, csysConv, obj, vpPtM, onlyAddToPath) {
  * it is draw on a WebPlot, and if it is in the drawing area.
  * Otherwise it will always return true
  * @param {CysConverter} csysConv the WebPlot to draw on
- * @param obj the DrawingObj to check
+ * @param {DrawObj} obj the DrawingObj to check
  * @return {boolean} true is it should be drawn
  */
 function shouldDrawObj(csysConv, obj) {
     if (!obj) return false;
+    if (obj.supportedDrawingTypes === DrawingType.WcsCoordsOnly) {
+        if (!csysConv) return false;
+        else if (isImage(csysConv) && !hasWCSProjection(csysConv)) return false;
+    }
+    else if (obj.supportedDrawingTypes===DrawingType.ImageCoordsOnly && isHiPS(csysConv)) {
+        return false;
+    }
+
     if (csysConv && obj.pt && obj.type===POINT_DATA_OBJ) {
         return csysConv.pointOnDisplay(obj.pt);
     }
