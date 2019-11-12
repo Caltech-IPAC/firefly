@@ -29,9 +29,10 @@
                     "col.in_row_id.label": 'location',
                     "col.in_row_id.type": 'location',
                     "col.in_ra.label": 'multi links',
+                    "col.in_ra.width": '15',
                     "col.in_ra.links": [
                             {href: "https://irsa.ipac.caltech.edu/?id="},
-                            {href: "http://ivoa.net/?id=", value: 'ivoa'}
+                            {href: "http://ivoa.net/?id=${band}", value: 'ivoa-${band}'}
                         ],
                     "col.in_dec.label": 'bad href',
                     "col.in_dec.links": [{href: "${abc}"}],
@@ -62,10 +63,14 @@
 
 <template title="Formatting Data" class="tpl">
     <div id="expected" >
-        <div style="margin-bottom: 10px">
-            <div>Each row having a number that's formatted in different ways</div>
+        <div style="overflow: auto hidden;height: 245px">
             <img src="images/tbl_format1.png" style="margin-bottom: 5px"/>
-            <img src="images/tbl_format2.png"/>
+            <div style="height: 100%; white-space: nowrap">
+                Each row having a float that's formatted in different ways
+                <li><i>none: </i>  without any format info, it will be displayed like Java's toString()</li>
+                <li><i>format: </i> printf-style formatting</li>
+                <li><i>precision: </i> VOTable's precision attribute</li>
+            </div>
         </div>
     </div>
     <div id="actual"  class="box x3"/>
