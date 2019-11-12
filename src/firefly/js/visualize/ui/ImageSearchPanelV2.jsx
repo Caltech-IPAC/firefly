@@ -650,7 +650,7 @@ function doImageSearch({ imageMasterData, request, plotId, plotGroupId, viewerId
     } else {                       // single channel
         const reqAry = makeRequests(get(request, FG_KEYS.single), imageMasterData, plotId, plotGroupId);
         reqAry.forEach( (r) => {
-            if (r.dataType==='image') {
+            if (r.dataType==='image' || r.dataType==='cube') {
                 dispatchPlotImage({wpRequest:r.request, viewerId,renderTreeId,pvOptions});
             }
             else if (r.dataType==='table') {
@@ -696,8 +696,8 @@ function makeRequests(request, imageMasterData, plotId, plotGroupId){
             const list= request[p].split(',');
             list.forEach( (e) => e && imageIdList.push(e));
         });
-        const paramAry= imageMasterData.filter( (d) => imageIdList.includes(d.imageId) && (!d.dataType || d.dataType==='image') );
-        const wpList= paramAry.map( (d) => ({dataType:'image', request:makeWPRequest(wp, radius, d, plotId, plotGroupId)}));
+        const paramAry= imageMasterData.filter( (d) => imageIdList.includes(d.imageId) && (!d.dataType || d.dataType==='image' || d.dataType==='cube') );
+        const wpList= paramAry.map( (d) => ({dataType:'image', request:makeWPRequest(wp, d.dataType === 'cube'?undefined:radius, d, plotId, plotGroupId)}));
         const tParamAry= imageMasterData.filter( (d) => imageIdList.includes(d.imageId) && (d.dataType==='table') );
         const tableList= tParamAry.map( (d) => ({dataType:'table', request:makeTableRequest(wp, radius, d, plotId, plotGroupId)}));
         return [...wpList, ...tableList];
