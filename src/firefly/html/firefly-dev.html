@@ -57,6 +57,13 @@
         };
 
         function getMoreImagePanelDataTest() {
+            // available URL mappings-
+            //        ra, dec - for position J2000
+            //        galLon, galLat - for position Galactic
+            //        size, sizeDeg, sizeArcMin, sizeArcSec   - if user leaves cutout size blank then blank will be substituted
+            //        sizeOrMax, sizeDegOrMax, sizeArcMinOrMax, sizeArcSecOrMax, - if user leaves cutout size blank then maxRangeDeg will be used to determine max
+            //        sizeOrZero, sizeDegOrZero, sizeArcMinOrZero, sizeArcSecOrZero - if user leaves cutout size blank then 0 will be substituted
+
             return [
                 {
                     acronym: "test Dss search using URLS",
@@ -67,8 +74,8 @@
                     minRangeDeg: "0.016",
                     missionId: "test-extension",
                     plotRequestParams: {
-                        // available mappings- ra,dec,size, sizeDeg, sizeArcMin, sizeArcSec
-                        URL: 'http://archive.stsci.edu:80/cgi-bin/dss_search?r=${ra}&d=${dec}e=J2000&h=${sizeArcMin}&w=${sizeArcMin}&f=FITS&v=poss2ukstu_red&s=ON&c=gz',
+                        // available mappings- ra,dec,galLon, galLat, size, sizeDeg, sizeArcMin, sizeArcSec
+                        URL: 'http://archive.stsci.edu:80/cgi-bin/dss_search?r=${ra}&d=${dec}&e=J2000&h=${sizeArcMinOrZero}&w=${sizeArcMinOrZero}&f=FITS&v=poss2ukstu_red&s=ON&c=gz',
                         title: "Test DSS red",
                         type: "URL",
                     },
@@ -92,8 +99,8 @@
                     minRangeDeg: "0.016",
                     missionId: "test-extension",
                     plotRequestParams: {
-                        // available mappings- ra,dec,size, sizeDeg, sizeArcMin, sizeArcSec
-                        URL: 'http://archive.stsci.edu:80/cgi-bin/dss_search?r=${ra}&d=${dec}e=J2000&h=${sizeArcMin}&w=${sizeArcMin}&f=FITS&v=poss2ukstu_ir&s=ON&c=gz',
+                        // available mappings- set description above
+                        URL: 'http://archive.stsci.edu:80/cgi-bin/dss_search?r=${ra}&d=${dec}&e=J2000&h=${sizeArcMin}&w=${sizeArcMin}&f=FITS&v=poss2ukstu_ir&s=ON&c=gz',
                         title: "Test DSS IR",
                         type: "URL",
                     },
@@ -116,7 +123,7 @@
                     minRangeDeg: "0.016",
                     missionId: "test-extension",
                     tableRequestParams: {
-                        // available mappings- ra,dec,size, sizeDeg, sizeArcMin, sizeArcSec
+                        // available mappings- set description above
                         URL: 'https://irsa.ipac.caltech.edu/cgi-bin/Gator/nph-query?outfmt=1&catalog=allwise_p3as_psd&objstr=${ra}d+${dec}d+eq+j2000&spatial=Cone&radius=${sizeArcSec}&onlist=1'
                     },
                     project: "test extension tables",
@@ -138,7 +145,7 @@
                     minRangeDeg: "0.016",
                     missionId: "test-extension",
                     tableRequestParams: {
-                        // available mappings- ra,dec,size, sizeDeg, sizeArcMin, sizeArcSec
+                        // available mappings- set description above
                         URL: 'http://web.ipac.caltech.edu/staff/roby/demo/test-table4.tbl',
                         datasource: 'FITS'
                     },
@@ -161,7 +168,7 @@
                     minRangeDeg: "0.016",
                     missionId: "test-extension",
                     tableRequestParams: {
-                        // available mappings- ra,dec,size, sizeDeg, sizeArcMin, sizeArcSec
+                        // available mappings- set description above
                         URL:'https://vao.stsci.edu/CAOMTAP/TapService.aspx/sync?request=doQuery&QUERY=SELECT%20*%20FROM%20ivoa.obscore%20WHERE%20CONTAINS(POINT(\'ICRS\',%20s_ra,s_dec),CIRCLE(\'ICRS\',%20${ra},${dec},${sizeDeg}))=1&LANG=ADQL&MAXREC=50000',
                     },
                     project: "test extension tables",
