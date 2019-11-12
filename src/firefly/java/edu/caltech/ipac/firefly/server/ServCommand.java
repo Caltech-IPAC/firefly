@@ -2,7 +2,7 @@ package edu.caltech.ipac.firefly.server;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-
+import edu.caltech.ipac.firefly.server.util.Logger;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -13,6 +13,8 @@ import javax.servlet.http.HttpServletResponse;
  * @version $Id: $
  */
 public abstract class ServCommand extends ServerCommandAccess.HttpCommand {
+
+    private static final Logger.LoggerImpl _log = Logger.getLogger();
 
     @Override
     public void processRequest(HttpServletRequest req, HttpServletResponse res, SrvParam sp) throws Exception {
@@ -30,7 +32,7 @@ public abstract class ServCommand extends ServerCommandAccess.HttpCommand {
                 jsonData = makeOneEntryArray(json);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            _log.error(e, e.getMessage());
             json.put("success", "false");
             json.put("error", e.getMessage());
 
