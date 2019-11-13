@@ -397,7 +397,6 @@ public final class FITSTableReader
         String colName = colInfo.getName();
         String classType = DefaultValueInfo.formatClass(colInfo.getContentClass());
         String unit = colInfo.getUnitString();
-        String nullString = null;
         String desc = colInfo.getDescription();
         desc = desc == null ? getParam(table, "TDOC" + (colIdx+1)) : desc; // this is for LSST.. not sure it applies to others.
 
@@ -416,10 +415,8 @@ public final class FITSTableReader
             java_class = Long.class;
         } else if ((classType.contains("float")) || (classType.contains("Float"))) {
             java_class = Float.class;
-            nullString = "NaN";
         } else if ((classType.contains("double")) || (classType.contains("Double"))) {
             java_class = Double.class;
-            nullString = "NaN";
         } else if ((classType.contains("char")) || (classType.contains("String"))) {
             java_class = String.class;
         } else {
@@ -439,7 +436,6 @@ public final class FITSTableReader
 
         dataType.setDataType(java_class);
         dataType.setUnits(unit);
-        dataType.setNullString(nullString);
         dataType.setDesc(desc);
 
         return dataType;
@@ -457,30 +453,24 @@ public final class FITSTableReader
      * @param dt     the column this format belongs to
      */
     private static void convertFormat(String format, DataType dt) {
-        if (StringUtils.isEmpty(format)) {
-            if (dt.getDataType() == Double.class) {
-                // if no precision is given double, set it to %.9g
-                dt.setFormat("%.9g");
-            }
-            return;
-        }
+        if (!StringUtils.isEmpty(format)) {
+            String[] parts = StringUtils.groupMatch(TDISP, format);     // 0:conversion code, 1: width, 2:precision
+            if (parts == null) return;
 
-        String[] parts = StringUtils.groupMatch(TDISP, format);     // 0:conversion code, 1: width, 2:precision
-        if (parts == null) return;
+            String code = parts.length > 0 ? parts[0] : "";
+            int width = parts.length > 1 ? StringUtils.getInt(parts[1], 0) : 0;
+            String prec = parts.length > 2 ? parts[2] : "";
 
-        String code = parts.length > 0 ? parts[0] : "";
-        int width = parts.length > 1 ? StringUtils.getInt(parts[1], 0) : 0;
-        String prec = parts.length > 2 ? parts[2] : "";
+            if (width > 0) dt.setWidth(width);
 
-        if (width > 0) dt.setWidth(width);
-
-        if (code != null) {
-            if (EXPONENTIAL.matcher(code).matches()) {
-                dt.setPrecision("E" + prec);
-            } else if(code.equals("F")) {
-                dt.setPrecision("F" + prec);
-            } else if(code.equals("G")) {
-                dt.setPrecision("G" + prec);
+            if (code != null) {
+                if (EXPONENTIAL.matcher(code).matches()) {
+                    dt.setPrecision("E" + prec);
+                } else if(code.equals("F")) {
+                    dt.setPrecision("F" + prec);
+                } else if(code.equals("G")) {
+                    dt.setPrecision("G" + prec);
+                }
             }
         }
     }

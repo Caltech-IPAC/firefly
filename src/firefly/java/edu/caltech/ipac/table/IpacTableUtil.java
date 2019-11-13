@@ -49,6 +49,7 @@ public class IpacTableUtil {
     public static List<DataGroup.Attribute> createMetaFromColumns(List<DataGroup.Attribute> attribs, DataType[] cols) {
         // add column's attributes as table meta
         for(DataType col : cols) {
+            ensureKey(attribs, col.getKeyName(), col.getTypeDesc(), TYPE_TAG);
             ensureKey(attribs, col.getKeyName(), col.getLabel(), LABEL_TAG);
             if (col.getVisibility() != DataType.Visibility.show) {
                 ensureKey(attribs, col.getKeyName(), col.getVisibility().name(), VISI_TAG);
@@ -108,6 +109,7 @@ public class IpacTableUtil {
 
     public static void consumeColumnInfo(DataType[] cols, TableMeta meta) {
         for (DataType dt : cols) {
+            consumeMeta(TYPE_TAG, meta, dt, (v, c) -> c.setTypeDesc(v));
             consumeMeta(LABEL_TAG, meta, dt, (v, c) -> c.setLabel(v));
             consumeMeta(VISI_TAG, meta, dt, (v, c) -> c.setVisibility(DataType.Visibility.valueOf(v)));
             consumeMeta(WIDTH_TAG, meta, dt, (v, c) -> c.setWidth(StringUtils.getInt(v, 0)));
@@ -138,6 +140,17 @@ public class IpacTableUtil {
     }
 
     private static void consumeMeta(String tag, TableMeta tableMeta, DataType col, BiConsumer<String, DataType> c) {
+        if (tag.length() < 7) return;  // col.@.? --- that's why 6 is used as magic position
+        // check backward-compatible convention..  i.e.  Label vs label, Width vs width
+        String btag = tag.substring(0,6) + tag.substring(6,7).toUpperCase() + tag.substring(7);
+        if (tag.equals(UNIT_TAG))       btag = "col.@.Unit";
+        if (tag.equals(NULL_STR_TAG))   btag = "col.@.NullStr";
+        doConsumeMeta(btag, tableMeta, col, c);
+
+        doConsumeMeta(tag, tableMeta, col, c);          // do current now to override if both are given.
+    }
+
+    private static void doConsumeMeta(String tag, TableMeta tableMeta, DataType col, BiConsumer<String, DataType> c) {
         String key = TableMeta.makeAttribKey(tag, col.getKeyName());
         if (tableMeta.contains(key)) {
             c.accept(tableMeta.getAttribute(key), col);
@@ -246,7 +259,6 @@ public class IpacTableUtil {
             for (int idx = 0; idx < names.length; idx++) {
                 cname = names[idx];
                 DataType dt = new DataType(cname.trim(), null);
-                dt.setNullString("null");       // defaults to 'null'
                 cols.add(dt);
                 tableDef.setColOffsets(idx, cursor);
                 cursor += cname.length() + 1;
@@ -299,6 +311,7 @@ public class IpacTableUtil {
     }
 
     public static void applyGuessLogic(DataType type, String val, TableUtil.CheckInfo chkInfo) {
+
         if (!chkInfo.formatChecked) {
             chkInfo.formatChecked = guessFormatInfo(type, val);
         }
@@ -337,7 +350,7 @@ public class IpacTableUtil {
 
         Matcher matcher = SCIENTIFIC.matcher(val);
         if (matcher.matches()) {
-            type.setPrecision("E" + Math.max(matcher.group(1).length() + 1, minPrecision));
+            type.setPrecision("E" + Math.max(matcher.group(1).length(), minPrecision));
         } else {
             matcher = FLOATING.matcher(val);
             if (matcher.matches()) {
@@ -402,6 +415,9 @@ public class IpacTableUtil {
                     }
 
                     TableUtil.CheckInfo checkInfo = tableDef.getColCheckInfos().getCheckInfo(dt.getKeyName());
+                    if (!String.valueOf(tableDef.getAttribute("fixlen")).trim().equals("T")) {
+                        checkInfo.formatChecked = true;     // if fixlen != T, don't guess format
+                    }
                     applyGuessLogic(dt, val, checkInfo);
 
                     row.setDataElement(dt, dt.convertStringToData(val));

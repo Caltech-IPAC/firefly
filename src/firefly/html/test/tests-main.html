@@ -178,53 +178,6 @@
     </script>
 </template>
 
-<template title="Column links via API" class="tpl sm">
-    <div id="expected" >
-        <div>Using META-INFO API to show cell value as links
-            <ul class='expected-list'>
-                <li><b>band</b> should be shown as links, right aligned</li>
-                <li><b>in_row_id</b> should contain 2 links</li>
-                <li>one with its value and the second is fixed text 'ivoa'</li>
-            </ul>
-        </div>
-    </div>
-    <div id="actual" class="flow-h" style="width: 600px">
-        <div id='tables-1' class="box"></div>
-    </div>
-    <script>
-        function onFireflyLoaded(firefly) {
-            tblReq1 = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
-                { META_INFO: {
-                    "col.band.Links": [{href: "https://irsa.ipac.caltech.edu/?id="}],
-                    "col.in_row_id.Links": [{href: "https://irsa.ipac.caltech.edu/?id="}, {href: "http://ivoa.net/?id=", value: 'ivoa'}]
-                }});
-            firefly.showTable('tables-1', tblReq1);
-        }
-    </script>
-</template>
-
-<template title="Test Proprietary Data Display" class="tpl sm">
-    <div id="expected" >
-        <div>Set <b>band</b> as a data_rights columns. Values that will resolve to true are: 'public', 'secure', '1', 'true', 't'
-            <ul class='expected-list'>
-                <li>all rows where band != 1 will show up as no-access(pink)</li>
-            </ul>
-        </div>
-    </div>
-    <div id="actual" class="flow-h" style="width: 600px">
-        <div id='tables-1' class="box"></div>
-    </div>
-    <script>
-        function onFireflyLoaded(firefly) {
-            tblReq1 = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
-                { META_INFO: {
-                        DATARIGHTS_COL: "band"
-                    }});
-            firefly.showTable('tables-1', tblReq1);
-        }
-    </script>
-</template>
-
 <template title="Table group with default charts" class="tpl" style="height: 260px">
     <div id="expected" >
         <div>

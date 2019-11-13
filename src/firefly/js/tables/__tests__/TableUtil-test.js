@@ -31,6 +31,47 @@ describe('TableUtil: ', () => {
 
     });
 
+    test('isColumnType', () => {
+        const float1 = {name: 'float1', type: 'f'};
+        const float2 = {name: 'float2', type: 'float'};
+        const float3 = {name: 'float3', type: 'd'};
+        const float4 = {name: 'float4', type: 'double'};
+
+        expect(TblUtil.isColumnType(float1, TblUtil.COL_TYPE.FLOAT)).toBe(true);
+        expect(TblUtil.isColumnType(float2, TblUtil.COL_TYPE.FLOAT)).toBe(true);
+        expect(TblUtil.isColumnType(float3, TblUtil.COL_TYPE.FLOAT)).toBe(true);
+        expect(TblUtil.isColumnType(float4, TblUtil.COL_TYPE.FLOAT)).toBe(true);
+
+        const int1 = {name: 'int1', type: 'i'};
+        const int2 = {name: 'int2', type: 'int'};
+        const int3 = {name: 'int3', type: 'l'};
+        const int4 = {name: 'int4', type: 'long'};
+
+        expect(TblUtil.isColumnType(int1, TblUtil.COL_TYPE.INT)).toBe(true);
+        expect(TblUtil.isColumnType(int2, TblUtil.COL_TYPE.INT)).toBe(true);
+        expect(TblUtil.isColumnType(int3, TblUtil.COL_TYPE.INT)).toBe(true);
+        expect(TblUtil.isColumnType(int4, TblUtil.COL_TYPE.INT)).toBe(true);
+
+        const char1 = {name: 'char1', type: 'c'};
+        const char2 = {name: 'char2', type: 'char'};
+        const char3 = {name: 'char3', type: 's'};
+        const char4 = {name: 'char4', type: 'str'};
+
+        expect(TblUtil.isColumnType(char1, TblUtil.COL_TYPE.TEXT)).toBe(true);
+        expect(TblUtil.isColumnType(char2, TblUtil.COL_TYPE.TEXT)).toBe(true);
+        expect(TblUtil.isColumnType(char3, TblUtil.COL_TYPE.TEXT)).toBe(true);
+        expect(TblUtil.isColumnType(char4, TblUtil.COL_TYPE.TEXT)).toBe(true);
+
+        expect(TblUtil.isColumnType(char1, TblUtil.COL_TYPE.ALL)).toBe(true);
+        expect(TblUtil.isColumnType(int1, TblUtil.COL_TYPE.ALL)).toBe(true);
+        expect(TblUtil.isColumnType(float1, TblUtil.COL_TYPE.ALL)).toBe(true);
+
+        expect(TblUtil.isColumnType(int1, TblUtil.COL_TYPE.NUMBER)).toBe(true);
+        expect(TblUtil.isColumnType(float1, TblUtil.COL_TYPE.NUMBER)).toBe(true);
+        expect(TblUtil.isColumnType(char1, TblUtil.COL_TYPE.NUMBER)).toBe(false);
+
+    });
+
     test('getSelectedData', () => {
         // this case is a bit more complicated.  it needs to test getSelectedData and
         // mock getTblInfoById, but both are in TableUtil.js module.

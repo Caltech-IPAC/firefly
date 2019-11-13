@@ -130,9 +130,9 @@ public class VotableTest extends ConfigTest {
     private void verifyJsonTableModel(JSONObject tm) {
 
         // test table's data
-        Assert.assertEquals("10.68", getPathValue(tm, "tableData", "data", "0", "0" ));
+        Assert.assertEquals(10.68f, getPathValue(tm, "tableData", "data", "0", "0" ));
         Assert.assertEquals("N 6744", getPathValue(tm, "tableData", "data", "1", "2" ));
-        Assert.assertEquals("0.7", getPathValue(tm, "tableData", "data", "2", "5" ));
+        Assert.assertEquals(0.7f, getPathValue(tm, "tableData", "data", "2", "5" ));
 
         // test column info
         JSONObject col6 = (JSONObject) getPathValue(tm, "tableData", "columns", "5");

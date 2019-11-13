@@ -24,28 +24,29 @@ import java.util.Map;
  */
 public class TableMeta implements Serializable {
 
-    public static final String VISI_TAG = "col.@.Visibility";
-    public static final String LABEL_TAG = "col.@.Label";
-    public static final String WIDTH_TAG = "col.@.Width";
-    public static final String PREF_WIDTH_TAG = "col.@.PrefWidth";
+    public static final String VISI_TAG = "col.@.visibility";
+    public static final String TYPE_TAG = "col.@.type";
+    public static final String LABEL_TAG = "col.@.label";
+    public static final String WIDTH_TAG = "col.@.width";
+    public static final String PREF_WIDTH_TAG = "col.@.prefWidth";
     public static final String SDESC_TAG = "col.@.ShortDescription";        // for backward compatibility only.
-    public static final String DESC_TAG = "col.@.Desc";
-    public static final String NULL_STR_TAG = "col.@.NullStr";
-    public static final String UNIT_TAG = "col.@.Unit";
-    public static final String FORMAT_TAG = "col.@.Format";
-    public static final String FORMAT_DISP_TAG = "col.@.FmtDisp";
-    public static final String SORTABLE_TAG = "col.@.Sortable";
-    public static final String FILTERABLE_TAG = "col.@.Filterable";
-    public static final String SORT_BY_TAG = "col.@.SortByCols";
-    public static final String ENUM_VALS_TAG = "col.@.EnumVals";
-    public static final String PRECISION_TAG = "col.@.Precision";
+    public static final String DESC_TAG = "col.@.desc";
+    public static final String NULL_STR_TAG = "col.@.nullString";
+    public static final String UNIT_TAG = "col.@.units";
+    public static final String FORMAT_TAG = "col.@.format";
+    public static final String FORMAT_DISP_TAG = "col.@.fmtDisp";
+    public static final String SORTABLE_TAG = "col.@.sortable";
+    public static final String FILTERABLE_TAG = "col.@.filterable";
+    public static final String SORT_BY_TAG = "col.@.sortByCols";
+    public static final String ENUM_VALS_TAG = "col.@.enumVals";
+    public static final String PRECISION_TAG = "col.@.precision";
     public static final String UCD_TAG = "col.@.UCD";
-    public static final String UTYPE_TAG = "col.@.UType";
-    public static final String REF_TAG = "col.@.Ref";
-    public static final String MIN_VALUE_TAG = "col.@.MinValue";
-    public static final String MAX_VALUE_TAG = "col.@.MaxValue";
-    public static final String VALUE_TAG = "col.@.Value";
-    public static final String LINKS_TAG = "col.@.Links";
+    public static final String UTYPE_TAG = "col.@.utype";
+    public static final String REF_TAG = "col.@.ref";
+    public static final String MIN_VALUE_TAG = "col.@.minValue";
+    public static final String MAX_VALUE_TAG = "col.@.maxValue";
+    public static final String VALUE_TAG = "col.@.value";
+    public static final String LINKS_TAG = "col.@.links";
 
 
     public static final String RESULTSET_ID = "resultSetID";            // this meta if exists contains the ID of the resultset returned.

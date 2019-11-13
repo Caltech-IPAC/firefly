@@ -672,7 +672,7 @@ function getTableModel(tableOrId) {
 class ColumnRecognizer {
     constructor(columnsModel, posCoord = 'eq') {
         this.columnsModel = columnsModel;
-        this.ucds = getColumnValues(columnsModel, 'ucd');
+        this.ucds = getColumnValues(columnsModel, 'ucd').map((v) => v || '');
         this.column_names = getColumnValues(columnsModel, 'column_name');
         this.centerColumnsInfo = null;
         this.posCoord = posCoord;
@@ -1075,7 +1075,7 @@ export function resolveHRefVal(tableModel, href='', rowIdx, defval='') {
         vars.forEach((v) => {
             const [,cname] = v.match(/\${([\w -.]+)}/) || [];
             const col = getColumnByID(tableModel, cname) || getColumn(tableModel, cname);
-            const rval = col ? getCellValue(tableModel, rowIdx, col.name) : v;  // if the variable cannot be resolved, show it as is.
+            const rval = col ? getCellValue(tableModel, rowIdx, col.name) : '';  // if the variable cannot be resolved, return empty string
             rhref = rhref.replace(v, rval);
         });
         return rhref;

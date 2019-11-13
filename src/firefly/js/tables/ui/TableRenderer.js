@@ -4,10 +4,10 @@
 
 import React, {Component, PureComponent, useRef, useCallback} from 'react';
 import FixedDataTable from 'fixed-data-table-2';
-import {set, get, isEqual, pick, isNil} from 'lodash';
+import {set, get, isEqual, pick} from 'lodash';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS, NULL_TOKEN} from '../FilterInfo.js';
-import {isNumericType, tblDropDownId, getTblById, getColumn} from '../TableUtil.js';
+import {isColumnType, COL_TYPE, tblDropDownId, getTblById, getColumn, formatValue} from '../TableUtil.js';
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {SORT_ASC, UNSORTED} from '../SortInfo';
@@ -84,16 +84,17 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
 
     const colGetter= () => getColumn(getTblById((tbl_id)), cname);
 
+    const enumArrowEl = useRef(null);
     const [col={}] = useStoreConnector(colGetter);
-    const {name, filterable=true, enumVals} = col;
 
     const validator = useCallback((cond) => {
         return FilterInfo.conditionValidator(cond, tbl_id, cname);
     }, [tbl_id, cname]);
 
+    const {name, filterable=true, enumVals} = col;
+
     if (!filterable) return <div style={{height:19}} />;      // column is not filterable
 
-    const enumArrowEl = useRef(null);
     const filterInfoCls = FilterInfo.parse(filterInfo);
     const content =  <EnumSelect {...{col, tbl_id, filterInfo, filterInfoCls, onFilter}} />;
     const onEnumClicked = () => {
@@ -146,7 +147,7 @@ function EnumSelect({col, tbl_id, filterInfoCls, onFilter}) {
         let value = getFieldVal(groupKey, fieldKey);
         if (value) {
             value = value.split(',').map((s) => s === '%EMPTY' ? '' : s).join();           // convert %EMPTY back into ''
-            value = isNumericType(col) ? value :
+            value = isColumnType(col, COL_TYPE.NUMBER) ? value :
                     value.split(',')
                          .map((s) => `'${s.trim()}'`).join(',');
             value = `IN (${value})`;
@@ -252,14 +253,15 @@ export class TextCell extends Component {
     //
     render() {
         const {col={}, style, height} = this.props;
-        const isNumeric = isNumericType(col);
-        let val = getValue(this.props);
-        if (isNil(val)) val = isNumeric ? NaN : undefined;
+        const isNumeric = isColumnType(col, COL_TYPE.NUMBER);
         const lineHeight = height - 6 + 'px';  // 6 is the top/bottom padding.
-        val = (val.search && val.search(html_regex) >= 0) ? <div dangerouslySetInnerHTML={{__html: val}}/> : val;
-        const className = 'public_fixedDataTableCell_cellContent' + (isNumeric ? ' right_align' : '');
+        const textAlign = col.align || (isNumeric ? 'right' : 'left');
+
+        let val = formatValue(col, getValue(this.props));
+        val = (val && val.search && val.search(html_regex) >= 0) ? <div dangerouslySetInnerHTML={{__html: val}}/> : val;
+
         return (
-            <div style={{lineHeight, ...style}} className={className}>{val}</div>
+            <div style={{textAlign, lineHeight, ...style}} className='public_fixedDataTableCell_cellContent'>{val}</div>
         );
     }
 }
@@ -271,17 +273,19 @@ export class TextCell extends Component {
 export const LinkCell = React.memo((props) => {
     const {tbl_id, col={}, rowIndex, style={}, startIdx} = props;
     const absRowIdx = rowIndex + startIdx;              // rowIndex is the index of the current page.  Add startIdx to get the absolute index of the row in the full table.
-    const val = getValue(props) || '';
-    let mStyle = style;
-    let className = 'public_fixedDataTableCell_cellContent';
+    const val = formatValue(col, getValue(props));
+    const className = 'public_fixedDataTableCell_cellContent';
+    let textAlign = col.align;
     if (col.links) {
         const tableModel = getTblById(tbl_id);
         if (col.links.length === 1) {
             const rval = resolveHRefVal(tableModel, get(col, 'links.0.value', val), absRowIdx);
-            className += isNumeric(rval) ? ' right_align' : '';
+            textAlign = textAlign || isNumeric(rval) ? 'right' : 'left';
+        } else {
+            textAlign = textAlign || 'middle';
         }
         return (
-            <div className={className}>
+            <div className={className} style={{textAlign}}>
                 {
                     col.links.map( (link={}, idx) => {
                         const {href, title, value=val, action} = link;
@@ -289,19 +293,19 @@ export const LinkCell = React.memo((props) => {
                         const rvalue = resolveHRefVal(tableModel, value, absRowIdx);
                         const rhref = resolveHRefVal(tableModel, href, absRowIdx, val);
                         if (!rhref) return '';
-                        if (idx > 0) mStyle = {marginLeft: 3, ...mStyle};
+                        const mstyle = idx > 0 ? {marginLeft: 3, ...style} : style;
                         return (<ATag key={'ATag_' + idx} href={rhref}
-                                      {...{value:rvalue, title, target, style:mStyle}}
+                                      {...{value:rvalue, title, target, style:mstyle}}
                                 />);
                     })
                 }
             </div>
         );
     } else {
-        className += isNumeric(val) ? ' right_align' : '';
+        textAlign = textAlign || isNumeric(val) ? 'right' : 'left';
         return (
-            <div className={className}>
-                <ATag href={val} value={val} target='_blank' style={mStyle}/>
+            <div className={className} style={{textAlign}}>
+                <ATag href={val} value={val} target='_blank' style={style}/>
             </div>
         );
     }

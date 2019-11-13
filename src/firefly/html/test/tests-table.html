@@ -1,0 +1,110 @@
+<!doctype html>
+
+<!--
+  ~ License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+  -->
+
+<html>
+
+<head>
+    <title>Firefly table tests</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="text/javascript" src="template_loader.js"></script>
+</head>
+
+<body>
+
+<!-- define all of your tests below -->
+
+<template title="Column links via API" class="tpl">
+    <div id="expected" >
+        <div style="margin-bottom: 10px">Using META-INFO API to show cell value as links</div>
+        <img src="images/tbl_links.png" />
+    </div>
+    <div id="actual" class="box x3"/>
+    <script>
+        function onFireflyLoaded(firefly) {
+            tblReq1 = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
+                { META_INFO: {
+                    "col.in_row_id.label": 'location',
+                    "col.in_row_id.type": 'location',
+                    "col.in_ra.label": 'multi links',
+                    "col.in_ra.width": '15',
+                    "col.in_ra.links": [
+                            {href: "https://irsa.ipac.caltech.edu/?id="},
+                            {href: "http://ivoa.net/?id=${band}", value: 'ivoa-${band}'}
+                        ],
+                    "col.in_dec.label": 'bad href',
+                    "col.in_dec.links": [{href: "${abc}"}],
+                    "col.band.label": 'one link',
+                    "col.band.links": [{href: "https://irsa.ipac.caltech.edu/?id="}],
+                }});
+            firefly.showTable('actual', tblReq1);
+        }
+    </script>
+</template>
+
+<template title="Proprietary Data Display" class="tpl">
+    <div id="expected" >
+        <div style="margin-bottom: 10px">Set <b>band</b> as a data_rights columns. Values that will resolve to true are: 'public', 'secure', '1', 'true', 't'</div>
+        <img src="images/tbl_propData.png"/>
+    </div>
+    <div id="actual"  class="box x3"/>
+    <script>
+        function onFireflyLoaded(firefly) {
+            tblReq1 = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
+                { META_INFO: {
+                        DATARIGHTS_COL: "band"
+                    }});
+            firefly.showTable('actual', tblReq1);
+        }
+    </script>
+</template>
+
+<template title="Formatting Data" class="tpl">
+    <div id="expected" >
+        <div style="overflow: auto hidden;height: 245px">
+            <img src="images/tbl_format1.png" style="margin-bottom: 5px"/>
+            <div style="height: 100%; white-space: nowrap">
+                Each row having a float that's formatted in different ways
+                <li><i>none: </i>  without any format info, it will be displayed like Java's toString()</li>
+                <li><i>format: </i> printf-style formatting</li>
+                <li><i>precision: </i> VOTable's precision attribute</li>
+            </div>
+        </div>
+    </div>
+    <div id="actual"  class="box x3"/>
+    <script>
+        function onFireflyLoaded(firefly) {
+
+            const columns = [
+                {name: 'none', type: 'float'},
+                {name: 'fmtDisp_f', type: 'float', fmtDisp: 'v= %f'},
+                {name: 'format_e',  type: 'float', format: 'v= %e'},
+                {name: 'prec_5',  type: 'float', precision: '5'},
+                {name: 'prec_e3', type: 'float', precision: 'E3'},
+                {name: 'prec_f3', type: 'float', precision: 'F3'},
+                {name: 'prec_g6', type: 'float', precision: 'G6'},
+            ];
+
+            const data = [
+                columns.map( (c) => 0.0000123456),  // a small number
+                columns.map( (c) => 123456789.0),   // a big number
+                columns.map( (c) => 2000/3),        // a long number
+            ];
+            const table = { tableData: { columns, data } };
+
+            firefly.showClientTable('actual', table, {selectable: false});
+        }
+    </script>
+</template>
+
+
+
+
+
+<!-- this is where test cases will be attached-->
+<div id="tst-container"/>
+
+
+</body>

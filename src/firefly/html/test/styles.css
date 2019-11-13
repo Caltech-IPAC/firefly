@@ -12,7 +12,7 @@
 }
 
 .tpl {
-    --tpl-height: 400px;
+    --tpl-height: 300px;
     height: var(--tpl-height);
 }
 .tpl.xs {

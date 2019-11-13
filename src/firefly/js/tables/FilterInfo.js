@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {getColumnIdx, getColumn, isNumericType, getTblById, stripColumnNameQuotes} from './TableUtil.js';
+import {getColumnIdx, getColumn, isColumnType, COL_TYPE, getTblById, stripColumnNameQuotes} from './TableUtil.js';
 import {Expression} from '../util/expr/Expression.js';
 import {isNil, get, isArray, isEmpty} from 'lodash';
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
@@ -131,7 +131,7 @@ export class FilterInfo {
                         if (columns) {
                             const col = columns.find((c) => c.name === cname);
                             // assume all expressions are numeric
-                            isNumeric = !col || isNumericType(col);
+                            isNumeric = !col || isColumnType(col, COL_TYPE.NUMBER);
                         }
                         parts[i] = `${cname} ${autoCorrectCondition(op + ' ' + val, isNumeric)}`;
                     }
@@ -447,7 +447,7 @@ function likeToRegexp(text) {
  * @returns {string}
  */
 function autoCorrectConditions(conditions, tbl_id, cname) {
-    const isNumeric = isNumericType(getColumn(getTblById(tbl_id), cname));
+    const isNumeric = isColumnType(getColumn(getTblById(tbl_id), cname), COL_TYPE.NUMBER);
     if (conditions) {
         const parts = conditions.split(COND_SEP);
         for (let i = 0; i < parts.length; i += 2) {                       // separate them into parts
