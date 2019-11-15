@@ -705,6 +705,19 @@ export function convertToIdentityObj(ary) {
 /*---------------------------- update >----------------------------*/
 
 /**
+ * A strict version of parseInt.  Anything that is not an integer will return NaN, i.e '12xx34'
+ * @param value
+ * @returns {number} a number or NaN if it cannot be parse into an interger
+ */
+export function strictParseInt(value) {
+    if (/^[-+]?(\d+|Infinity)$/.test(value)) {
+        return Number(value);
+    } else {
+        return NaN;
+    }
+}
+
+/**
  * return the boolean value of prop for the given object
  * @param object
  * @param prop

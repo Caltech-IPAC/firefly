@@ -39,7 +39,7 @@ function renderHiPSSurveysTable(hipsId, sources, moreStyle={}) {
     const tableId = makeHiPSSurveysTableName(hipsId, sources);
     const tableModel = getTblById(tableId);
 
-    return (tableModel && !tableModel.error) ? (
+    return tableModel && (
         <div style={surveyTableStyle}>
             <TablePanel
                 key={tableModel.tbl_id}
@@ -51,10 +51,8 @@ function renderHiPSSurveysTable(hipsId, sources, moreStyle={}) {
                 showFilters={true}
                 showOptionButton={true}
             />
-        </div>) :
-        (<div style={{display:'flex', justifyContent: 'center', alignItems: 'center', padding: 10}}>
-               {getHiPSLoadingMessage(tableId)}
-        </div>);
+        </div>
+    );
 }
 
 /**

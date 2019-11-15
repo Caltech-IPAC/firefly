@@ -9,7 +9,7 @@ import {sprintf} from '../externalSource/sprintf.js';
 import {makeFileRequest, MAX_ROW} from './TableRequestUtil.js';
 import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
-import {FilterInfo, getNumFilters} from './FilterInfo.js';
+import {FilterInfo, getNumFilters, FILTER_SEP} from './FilterInfo.js';
 import {SelectInfo} from './SelectInfo.js';
 import {flux} from '../Firefly.js';
 import {encodeServerUrl, uniqueID} from '../util/WebUtil.js';
@@ -282,7 +282,7 @@ export function findIndex(tbl_id, filterInfo) {
 
     const tableModel = getTblById(tbl_id);
     if (!tableModel) return Promise.resolve(-1);
-    const comparators = filterInfo.split(';').map((s) => s.trim()).map((s) => FilterInfo.createComparator(s, tableModel));
+    const comparators = filterInfo.split(FILTER_SEP).map((s) => s.trim()).map((s) => FilterInfo.createComparator(s, tableModel));
     const idx = get(tableModel, 'tableData.data', []).findIndex((row, idx) => comparators.reduce( (rval, matcher) => rval && matcher(row, idx), true));
     if (idx >= 0) {
         return Promise.resolve(idx);
@@ -636,7 +636,7 @@ export function sortTableData(tableData, columns, sortInfoStr) {
  */
 export function filterTable(table, filterInfoStr) {
     if (filterInfoStr) {
-        const comparators = filterInfoStr.split(';').map((s) => s.trim()).map((s) => FilterInfo.createComparator(s, table));
+        const comparators = filterInfoStr.split(FILTER_SEP).map((s) => s.trim()).map((s) => FilterInfo.createComparator(s, table));
         table.tableData.data = table.tableData.data.filter((row, idx) => {
             return comparators.reduce( (rval, match) => rval && match(row, idx), true);
         } );
@@ -649,6 +649,8 @@ export function filterTable(table, filterInfoStr) {
 export function cloneClientTable (tableModel) {
     const nTable = cloneDeep(tableModel);
     nTable.origTableModel = tableModel;
+
+    set(nTable.origTableModel, 'tableMeta.resultSetRequest', JSON.stringify(tableModel.request));
 
     nTable.isFetching = false;
     set(nTable, 'tableMeta.Loading-Status', 'COMPLETED');
@@ -721,6 +723,10 @@ export function processRequest(tableModel, tableRequest, hlRowIdx) {
             nTableSelectInfoCls.setRowSelect(i, origSelectInfoCls.isSelected(origIdx));
         });
         nTable.selectInfo = nTableSelectInfoCls.data;
+    }
+
+    if (!nTable.error) {
+        set(origTableModel, 'tableMeta.resultSetRequest', JSON.stringify(nTable.request));
     }
 
     return nTable;
@@ -1181,37 +1187,6 @@ export function hasRowAccess(tableModel, rowIdx) {
     return false;
 }
 
-
-
-
-
-export function isNumericType(col={}) {
-    if (!has(col._isnumeric)) {
-        col._isnumeric = isFloatingType(col) || isIntegerType(col);
-    }
-    return col._isnumeric;
-}
-
-export function isFloatingType(col={}) {
-    if (!has(col._isfloating)) {
-        col._isfloating = float_types.includes(col.type);      // for efficiency
-    }
-    return col._isfloating;
-}
-
-export function isIntegerType(col={}) {
-    if (!has(col._isInteger)) {
-        col._isInteger = int_types.includes(col.type);      // for efficiency
-    }
-    return col._isInteger;
-}
-
-export function isTextType(col={}) {
-    if (!has(col._ischar)) {
-        col._ischar = char_types.includes(col.type);     // for efficiency
-    }
-    return col._ischar;
-}
 
 /**
  * @param {string} tbl_id
