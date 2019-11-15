@@ -1,4 +1,4 @@
-# Release Notes 
+# Release Notes
 
 Firefly builds and the notes for using running it are on the [Docker Page](https://hub.docker.com/r/ipac/firefly).
 
@@ -12,13 +12,14 @@ See Firefly docker guidelines [here](firefly-docker.md).
 - Table data is now formatted on the client side. ([DM-20248](https://github.com/Caltech-IPAC/firefly/pull/884))
 - Significant improvements in the distance tool.  ([Firefly-56](https://github.com/Caltech-IPAC/firefly/pull/904))
 
-### Version 2019.3 
+### Version 2019.3
 
 This release is focused on bug fixes and stability.
 
 ##### _Docker tags, releases and patches_
 
-- 2019.3 latest -  `release-2019.3` 
+- 2019.3 latest -  `release-2019.3`
+- 2019.3.2 - `release-2019.3.2` - patch #2 (see [patches](#patches-20193))
 - 2019.3.1 - `release-2019.3.1` - patch #1 (see [patches](#patches-20193))
 - 2019.3.0 - `release-2019.3.0` - original release
 
@@ -33,11 +34,16 @@ This release is focused on bug fixes and stability.
 ##### _API_
 - Plotly.js charting library was updated from version 1.38.3 to version 1.49.4. Plotly.js 1.43 converted `title` properties (e.g. `layout.title`) from strings into objects that contain `text` property along with new title placement properties `x`, `y`, `xref`, `yref`, `xanchor`, `yanchor` and `pad`. It also moved existing `title*` properties (e.g. `layout.titlefont`) under the `title` object (e.g. `layout.title.font`). See see [plotly.js change log](https://github.com/plotly/plotly.js/blob/master/CHANGELOG.md#1494----2019-08-22) for more information. ([Firefly-266](https://github.com/Caltech-IPAC/firefly/pull/883))
 
-##### _Patches 2019.3_ 
+##### _Patches 2019.3_
+- 2019.3.2
+  - Logging error improved [Firefly-434](https://github.com/Caltech-IPAC/firefly/pull/909)
+  - fix pulldown for SOFIA footprint ([IRSA-3271](https://github.com/Caltech-IPAC/firefly/commit/1ebdd89e53c6efa293bc9cbfad3a689aabcfd5db))
+  - Header popup panel was not updating as the FITS image changed ([IRSA-3272](https://github.com/Caltech-IPAC/firefly/pull/912))
+  - Put back cube images ([Firefly-443](https://github.com/Caltech-IPAC/firefly/pull/913))
+  - Fixing wavelength numbers and cleanup image config file ([IRSA-3284](https://github.com/Caltech-IPAC/firefly/pull/914))
 - 2019.3.1
   - Tap query now more robust. Manually handle redirection. Include credential info only when redirected back to source. ([Firefly-414](https://github.com/Caltech-IPAC/firefly/pull/907))
   - Add build code that all for applications that are built on Firefly to reference a specified version of Firefly ([DM-20931](https://github.com/Caltech-IPAC/firefly/pull/862))
-
 
 ### Version 2019.2
 ##### _Docker tags, releases and patches_
@@ -62,14 +68,13 @@ This release is focused on bug fixes and stability.
 
 ##### _UI_
 - TAP search Implemented (Multiple tickets and PRs)
-- DataLink partial implementation ([Firelfy-71](https://github.com/Caltech-IPAC/firefly/pull/797))
-- ivoa.ObsCore support ([Firelfy-71](https://github.com/Caltech-IPAC/firefly/pull/797))
+- DataLink partial implementation ([Firefly-71](https://github.com/Caltech-IPAC/firefly/pull/797))
+- ivoa.ObsCore support ([Firefly-71](https://github.com/Caltech-IPAC/firefly/pull/797))
 
 ##### _API_
 - TAP search can be started from the API
 
 
-### Before 
+### Before
 
 - Release notes were started as of version 2019.1
-
