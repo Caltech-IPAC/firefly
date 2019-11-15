@@ -14,6 +14,8 @@ import {isDefined} from '../util/WebUtil';
 import {getWavelength, isWLAlgorithmImplemented, PLANE} from './projection/Wavelength.js';
 import {getNumberHeader, HdrConst} from './FitsHeaderUtil.js';
 import {computeBoundingBoxInDeviceCoordsForPlot, containsRec} from './VisUtil';
+import {dispatchAddActionWatcher} from '../core/MasterSaga';
+import ImagePlotCntlr, {visRoot} from './ImagePlotCntlr';
 
 
 export const CANVAS_IMAGE_ID_START= 'image-';
@@ -39,11 +41,11 @@ export function getPlotViewAry(ref) {
  *
  * @param {PlotView[]|PlotView|VisRoot} ref this can be the visRoot or the plotViewAry, or a plotView Object.
  * @param {string} [plotId] the plotId, required with plotViewAry, ignored for  plotView, optional with visRoot
- * @returns {WebPlot} the plot
+ * @returns {WebPlot|undefined} the plot, or undefined if it is not found
  */
 export function primePlot(ref,plotId) {
     let pv;
-    if (!ref) return null;
+    if (!ref) return;
     if (!isString(plotId)) plotId= '';
     if (ref.plotViewAry) { // I was passed the visRoot, use either plot it or the active plot id
         pv= getPlotViewById(ref, plotId ? plotId : ref.activePlotId);
@@ -54,19 +56,19 @@ export function primePlot(ref,plotId) {
     else if (ref.plotId && ref.plots) { // i was passed a plotView
         pv= ref;
     }
-    return (pv && pv.primeIdx>=0) ? pv.plots[pv.primeIdx] : null;
+    return (pv && pv.primeIdx>=0) ? pv.plots[pv.primeIdx] : undefined;
 }
 
 
 /**
  * @param {VisRoot | PlotView[] } ref this can be the visRoot object or a plotViewAry array.
  * @param {string} plotId
- * @returns {PlotView} the plot view object
+ * @returns {PlotView|undefined} the plot view object, or undefined if it is not found
  */
 export function getPlotViewById(ref,plotId) {
-    if (!plotId) return null;
+    if (!plotId) return undefined;
     const plotViewAry= getPlotViewAry(ref);
-    if (!plotViewAry) return null;
+    if (!plotViewAry) return undefined;
 
     return plotViewAry.find( (pv) => pv.plotId===plotId);
 }
@@ -136,7 +138,7 @@ export function hasWCSProjection(ref) {
  * @param pvOrId this parameter will take the plotId string or a plotView object
  * @param onlyIfPositionLocked
  * @param hasPlots
- * @returns {Array.<PlotView>}
+ * @returns {Array.<String>}
  */
 export function getPlotViewIdList(visRoot, pvOrId, onlyIfPositionLocked=true, hasPlots=false) {
     if (!pvOrId) return [];
@@ -155,7 +157,7 @@ export function getPlotViewIdList(visRoot, pvOrId, onlyIfPositionLocked=true, ha
  * @param pvOrId this parameter will take the plotId string or a plotView object
  * @param onlyIfGroupLocked
  * @param hasPlots
- * @returns {Array.<PlotView>}
+ * @returns {Array.<String>}
  */
 export function getPlotViewIdListInOverlayGroup(visRoot,pvOrId,onlyIfGroupLocked=true, hasPlots=false) {
     if (!pvOrId) return [];
@@ -206,7 +208,7 @@ export function isActivePlotView(visRoot,plotId) { return visRoot.activePlotId==
 /**
  * Get the active PlotView from the store
  * @param {VisRoot} visRoot - root of the visualization object in store
- * @return {object} the active plot view
+ * @return {PlotView} the active plot view
  */
 export function getActivePlotView(visRoot) {
     return visRoot.plotViewAry.find( (pv) => pv.plotId===visRoot.activePlotId);
@@ -238,10 +240,10 @@ export function isPlotView(obj) {
  *
  * @param {PlotView} plotView
  * @param {String} imageOverlayId
- * @return {OverlayPlotView}
+ * @return {OverlayPlotView|undefined}
  */
 export function getOverlayById(plotView, imageOverlayId) {
-    if (!plotView) return null;
+    if (!plotView) return undefined;
     return plotView.overlayPlotViews.find( (opv) => opv.imageOverlayId===imageOverlayId);
 }
 
@@ -328,9 +330,9 @@ export function getDrawLayersByType(ref,typeId) {
 
 /**
  *
- * @param {DrawLayer[]|DrawLayerRoot} ref - the root of the drawing layer controller or the master array of all drawing layers
+ * @param {Array.<DrawLayer>|DrawLayerRoot} ref - the root of the drawing layer controller or the master array of all drawing layers
  * @param id draw layer id
- * @returns {Array} the draw layer
+ * @returns {DrawLayer|undefined} the draw layer or undefined if not found
  */
 export function getDrawLayerById(ref,id) {
     if (!ref) return undefined;
@@ -398,7 +400,7 @@ export function deleteAllDrawLayers() {
 
 /**
  *
- * @param {visRoot} visRoot
+ * @param {VisRoot} visRoot
  * @param plotId
  */
 export function plotInActiveGroup(visRoot, plotId) {
@@ -559,7 +561,7 @@ export function matchPlotViewByPositionGroup(vr, sourcePv, plotViewAry, matchAny
  * @param {boolean} matchAnyType matching across plot types ie, would return a hips or an image
  * @param {Function} operationFunc the function to operate on the other plot views
  * @param {PlotView} operationFunc.param pv the PlotView to operate on
- * @return {Array.<PlotView>} new plotViewAry
+ * @return {Array.<PlotView>|undefined} new plotViewAry if plotId has no PlotView
  */
 
 export function applyToOnePvOrAll(toAll, plotViewAry, plotId, matchAnyType, operationFunc) {
@@ -652,7 +654,7 @@ export function isPlotViewsEqual(pv1, pv2, pvKeys=[], plotKeys=[]) {
             if (!plotEqual) return false;
         }
     }
-    return pvKeys.every( (k) => pv1[k]===pv2[k])
+    return pvKeys.every( (k) => pv1[k]===pv2[k]);
 }
 
 export function isPlotViewArysEqual(pvAry1, pvAry2, pvKeys=[], plotKeys=[]) {
@@ -725,11 +727,11 @@ export function getCenterOfProjection(plot) {
  * @param {PlotView} plotView
  * @param {number} [scrollX] optional scrollX, if not defined use plotView.scrollX
  * @param {number} [scrollY] optional scrollY, if not defined use plotView.scrollY
- * @return {ImagePt} the center point
+ * @return {ImagePt|undefined} the center point
  */
 export function findCurrentCenterPoint(plotView,scrollX,scrollY) {
     const plot= primePlot(plotView);
-    if (!plot) return null;
+    if (!plot) return undefined;
     const {viewDim}= plotView;
 
     let cc;
@@ -775,7 +777,7 @@ export function isPlotIdInPvNewPlotInfoAry(pvNewPlotInfoAry, plotId) {
 /**
  *
  * @param {Canvas} c
- * @param {number} start
+ * @param {String} start
  * @param {String} plotId
  * @return {number}
  */
@@ -798,7 +800,7 @@ export function getCorners(plot) {
 /**
  *
  * @param plotId
- * @return {Array.<canvas>}
+ * @return {Array.<Canvas>}
  */
 export function getAllCanvasLayersForPlot(plotId) {
     const cAry= [...document.getElementsByTagName('canvas')];
@@ -823,14 +825,14 @@ export function getAllCanvasLayersForPlot(plotId) {
  *
  * @param {PlotView} pv
  * @param {number} [alternateZoomFactor]
- * @return {number} fov in degrees
+ * @return {number|boolean} fov in degrees, or false if it can't be computed
  */
 export function getFoV(pv, alternateZoomFactor) {
     const plot= primePlot(pv);
     const cc = CysConverter.make(plot);
     const {width, height} = pv.viewDim;
     const allSkyImage= Boolean(isImage(plot) && plot.projection.isWrappingProjection());
-    if (!cc || !width || !height) return;
+    if (!cc || !width || !height) return false;
     if (alternateZoomFactor) cc.zoomFactor= alternateZoomFactor;
     const pt1 = cc.getWorldCoords(makeDevicePt(1, height / 2));
     const pt2 = (allSkyImage) ? cc.getWorldCoords(makeDevicePt(width/2, height / 2))  :
@@ -896,7 +898,7 @@ export function getHduPlotStartIndexes(pv) {
 
 /**
  * @param {PlotView} pv
- * @return {Array.<number>|boolean}
+ * @return {Number}
  */
 export const getHDUCount= (pv) => getHduPlotStartIndexes(pv).length;
 
@@ -990,10 +992,10 @@ export const isImageCube = (plot) => getImageCubeIdx(plot) > -1;
  * @param {PlotView} pv
  * @param {number} hduIdx
  * @param {number|'follow'} cubeIdx
- * @return {number}
+ * @return {number|undefined} the hdu number or undefined if bad parameters
  */
 export function convertHDUIdxToImageIdx(pv, hduIdx, cubeIdx=0) {
-    if (!pv || !isPlotView(pv)) return;
+    if (!pv || !isPlotView(pv)) return undefined;
     if (!isMultiImageFits(pv)) return 0;
     const plot= primePlot(pv);
     if (cubeIdx==='follow' && isImageCube(plot)) {
@@ -1024,6 +1026,55 @@ export function convertImageIdxToHDU(pv, imageIdx) {
 
 
 
+function watchViewDim(action, cancelSelf, {plotId,resolve,reject, failureAsReject,failActions}) {
+    if (!resolve) cancelSelf();
+    if (action.payload.plotId!==plotId) return;
+    const vr= visRoot();
+    const pv= getPlotViewById(vr, plotId);
+    const {width,height}= pv.viewDim;
+    if (failActions.includes(action.type)) {
+        failureAsReject ? reject(Error(action)) : resolve();
+        cancelSelf();
+    }
+    if (width && height && width>30 && height>30) {
+        resolve(pv);
+        cancelSelf();
+    }
+}
+
+
+
+/**
+ * return promise to a loaded PlotView
+ * @param plotId
+ * @param failureAsReject - if true the call reject otherwise just resolve with an undefined
+ * @return {Promise<PlotView>}
+ */
+export function onPlotComplete(plotId,failureAsReject= false) {
+
+    const failActions= [ImagePlotCntlr.ABORT_HIPS,ImagePlotCntlr.PLOT_HIPS_FAIL, ImagePlotCntlr.PLOT_IMAGE_FAIL];
+    const succActions= [ImagePlotCntlr.PLOT_HIPS, ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.UPDATE_VIEW_SIZE];
+    const allCompleteActions= [...succActions,...failActions];
+    const pv= plotId && getPlotViewById(visRoot(), plotId);
+    if (pv && pv.serverCall!=='working' && primePlot(pv) && pv.viewDim.width  && pv.viewDim.height) {
+        if (pv.serverCall==='success') {
+            return Promise.resolve(pv);
+        }
+        else {
+            return failureAsReject ? Promise.reject(pv) : Promise.resolve(pv);
+        }
+    }
+
+    return new Promise((resolve,reject) => {
+        dispatchAddActionWatcher({
+            actions:allCompleteActions,
+            callback:watchViewDim,
+            params:{plotId,resolve,reject, failureAsReject,failActions}}
+        );
+    });
+
+
+}
 
 
 //=============================================================

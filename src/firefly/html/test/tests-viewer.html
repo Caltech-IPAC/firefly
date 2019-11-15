@@ -27,6 +27,7 @@
             </ul>
         </div>
         <div><img style="width: 230px;" src="./images/slate-layout.png"></div>
+        <div style='font-size:smaller;'>After all loaded</div>
     </div>
     <div id="actual" style="width: 600px; display: flex; flex-direction: column">
         <div>
@@ -363,6 +364,42 @@
         }
     </script>
 </template>
+
+<template title="Send MOC Viewer Test" class="tpl sm">
+    <div id="expected" >
+        <div>Click to load a MOC
+            <ul class='expected-list'>
+                <li>start a new viewer window</li>
+                <li>shows the related MOC</li>
+            </ul>
+        </div>
+        <div style='padding-top: 10px;'><img style="width: 230px;" src="./images/loading-4-mocs.png"></div>
+        <div style='font-size:smaller;'>All 4 MOCS loaded</div>
+    </div>
+    <div id="actual" style="width: 600px; display: flex; flex-direction: column">
+        <ul style='margin: 0 0 0 5px;'>
+            <li><a href="javascript:loadMOC('galex.fits')">Load galex MOC</a></li>
+            <li><a href="javascript:loadMOC('hershel.fits')">Load hershel MOC</a></li>
+            <li><a href="javascript:loadMOC('nicmos.fits')">Load nicmos MOC</a></li>
+            <li><a href="javascript:loadMOC('sdss9.fits')">Load sdss9 MOC</a></li>
+        </ul>
+
+    </div>
+    <script>
+        resizeIframeToHeight('280px');
+
+        function onFireflyLoaded(firefly) { }
+
+        function loadMOC(mocFile) {
+            const req = firefly.util.table.makeFileRequest(mocFile,
+                'http://web.ipac.caltech.edu/staff/roby/demo/moc/'+mocFile,
+                null,
+                {    META_INFO: {PREFERRED_HIPS : 'https://irsa.ipac.caltech.edu/data/hips/CDS/2MASS/Color'} } );
+            firefly.getViewer().fetchTable(req);
+        }
+    </script>
+</template>
+
 
 <!-- this is where test cases will be attached-->
 <div id="tst-container"/>

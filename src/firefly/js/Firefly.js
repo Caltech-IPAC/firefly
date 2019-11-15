@@ -112,6 +112,7 @@ const defFireflyOptions = {
     irsaCatalogFilter: undefined,
     catalogSpacialOp: undefined,
     imageMasterSources: ['ALL'],
+    imageDisplayType:'standard',
     showCatalogSearchTarget: true,
     imageMasterSourcesOrder: undefined,
     workspace : { showOptions: false},

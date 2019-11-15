@@ -13,8 +13,7 @@ import {FileUpload} from '../../ui/FileUpload.jsx';
 import {getFieldVal, getField} from '../../fieldGroup/FieldGroupUtils';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {getCellValue, getTblById, uniqueTblId, getSelectedDataSync} from '../../tables/TableUtil.js';
-import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
-import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
+import {dispatchTableSearch, dispatchTableFetch} from '../../tables/TablesCntlr.js';
 import {getSizeAsString} from '../../util/WebUtil.js';
 
 
@@ -22,25 +21,24 @@ import {makeFileRequest} from '../../tables/TableRequestUtil.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
 import WebPlotRequest from '../WebPlotRequest.js';
-import {dispatchPlotImage, visRoot, dispatchPlotHiPS} from '../ImagePlotCntlr.js';
+import {dispatchPlotImage, visRoot} from '../ImagePlotCntlr.js';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {isAccessWorkspace, getWorkspaceConfig} from '../WorkspaceCntlr.js';
-import {getAppHiPSForMoc, addNewMocLayer} from '../HiPSMocUtil.js';
-import {primePlot, getDrawLayerById, getDrawLayersByType} from '../PlotViewUtil.js';
-import {genHiPSPlotId} from './ImageSearchPanelV2.jsx';
-import DrawLayerCntlr, {dispatchAttachLayerToPlot, dlRoot, getDlAry, dispatchCreateImageLineBasedFootprintLayer} from '../DrawLayerCntlr.js';
-import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
+import {getAppHiPSForMoc} from '../HiPSMocUtil.js';
+import {primePlot, getDrawLayersByType} from '../PlotViewUtil.js';
+import {getDlAry, dispatchCreateImageLineBasedFootprintLayer} from '../DrawLayerCntlr.js';
 import LSSTFootprint from '../../drawingLayers/ImageLineBasedFootprint.js';
-import {isMOCFitsFromUploadAnalsysis, MOCInfo, UNIQCOL} from '../HiPSMocUtil.js';
+import {isMOCFitsFromUploadAnalsysis} from '../HiPSMocUtil.js';
 import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
 import {getComponentState, dispatchComponentStateChange} from '../../core/ComponentCntlr.js';
 
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {PlotAttribute} from '../PlotAttribute.js';
+import {MetaConst} from '../../data/MetaConst.js';
 
 import './FileUploadViewPanel.css';
-import {PlotAttribute} from '../PlotAttribute';
 
 
 export const panelKey = 'FileUploadAnalysis';
@@ -121,7 +119,7 @@ export function resultSuccess(request) {
 
     const isMocFits =  isMOCFitsFromUploadAnalsysis(currentReport);
     if (isMocFits.valid) {
-        sendMocRequest(fileCacheKey, currentReport.fileName, isMocFits);
+        sendTableRequest(tableIndices, fileCacheKey, {[MetaConst.PREFERRED_HIPS]: getAppHiPSForMoc()}, false);
     } else if ( isLsstFootprintTable(currentDetailsModel) ) {
         sendLSSTFootprintRequest(fileCacheKey, request.fileName, tableIndices[0]);
     } else {
@@ -314,16 +312,16 @@ function getSelectedRows(type) {
         .map((row) => row[0]);                       // returns only the index
 }
 
-function sendTableRequest(tableIndices, fileCacheKey) {
+function sendTableRequest(tableIndices, fileCacheKey, metaData, loadToUI= true) {
     const {fileName, parts=[]} = currentReport;
 
     tableIndices.forEach((idx) => {
         const {index} = parts[idx];
         const title = parts.length > 1 ? `${fileName}-${index}` : fileName;
-
-        const tblReq = makeFileRequest(title, fileCacheKey, null);
+        const options=  metaData && { META_INFO: metaData};
+        const tblReq = makeFileRequest(title, fileCacheKey, null, options);
         tblReq.tbl_index = index;
-        dispatchTableSearch(tblReq);
+        loadToUI ? dispatchTableSearch(tblReq) : dispatchTableFetch(tblReq);
 
     });
 }
@@ -372,49 +370,6 @@ function sendImageRequest(imageIndices, request, fileCacheKey) {
     }
 }
 
-function sendMocRequest(uploadPath, displayValue, mocFits) {
-
-    const tblId = uniqueTblId();
-    const pv = primePlot(visRoot());
-
-    const overlayMocOnPlot = (plotId) => {
-        const dl = addNewMocLayer(tblId, uploadPath, null, get(mocFits, [MOCInfo, UNIQCOL]));
-        if (dl) {
-            dispatchAttachLayerToPlot(dl.drawLayerId, plotId, true, true);
-        }
-    };
-
-    if (!pv) {
-        const pId = genHiPSPlotId.next().value;
-
-        const watcher = (action, cancelSelf) => {
-            const {plotIdAry, plotId, drawLayerId} = action.payload;
-            const dl = getDrawLayerById(dlRoot(), drawLayerId);
-
-            // after hips moc of default HiPS is attached to the plot
-            if ((dl.drawLayerTypeId === HiPSMOC.TYPE_ID) &&
-                (drawLayerId !== tblId) && ((plotIdAry && plotIdAry[0] === pId) || (plotId && plotId === pId))) {
-                overlayMocOnPlot(pId);
-                cancelSelf();
-            }
-        };
-
-        const hipsUrl = getAppHiPSForMoc();
-        showInfoPopup('There is no image in the viewer. The MOC will be shown on top of the HiPS image from \''
-            + hipsUrl +'\'', 'MOC fits search info');
-
-        dispatchAddActionWatcher({actions: [DrawLayerCntlr.ATTACH_LAYER_TO_PLOT], callback: watcher});
-
-        const wpRequest = WebPlotRequest.makeHiPSRequest(hipsUrl);
-        const {viewerId=''} = getAViewFromMultiView(getMultiViewRoot(), IMAGE) || {};
-
-        wpRequest.setPlotGroupId(viewerId);
-        wpRequest.setPlotId(pId);
-        wpRequest && dispatchPlotHiPS({plotId: pId, viewerId, wpRequest});
-    } else {
-        overlayMocOnPlot(pv.plotId);
-    }
-}
 
 function sendLSSTFootprintRequest(uploadPath, displayValue, tblIdx) {
     const dl_id = getLSSTFootprintId();
