@@ -33,7 +33,7 @@ export function createRelatedDataGridActivate(reqRet, imageViewerId, dataId, tbl
 export function createGridImagesActivate(inReqAry, imageViewerId, dataId, tbl_id, plotRows) {
     const reqAry= inReqAry.map( (r,idx) => {
         if (!r) return;
-        r.setAttributes({[PlotAttribute.DATALINK_TABLE_ROW]: plotRows[idx].row,
+        r.setAttributes({[PlotAttribute.DATALINK_TABLE_ROW]: plotRows[idx].row+'',
                          [PlotAttribute.DATALINK_TABLE_ID]: tbl_id});
         r.setPlotId(plotRows[idx].plotId);
         return r;
@@ -56,7 +56,7 @@ export function createGridImagesActivate(inReqAry, imageViewerId, dataId, tbl_id
 export function createSingleImageActivate(request, imageViewerId, dataId, tbl_id, highlightedRow) {
     if (!request) return;
     request.setPlotId(`${dataId}-singleview`);
-    request.setAttributes({[PlotAttribute.DATALINK_TABLE_ROW]: highlightedRow,
+    request.setAttributes({[PlotAttribute.DATALINK_TABLE_ROW]: highlightedRow+'',
                            [PlotAttribute.DATALINK_TABLE_ID]: tbl_id});
     return () => replotImageDataProducts(request.getPlotId(), imageViewerId, dataId, tbl_id, [request]);
 }
@@ -80,7 +80,7 @@ export function resetImageFullGridActivePlot(tbl_id, plotIdAry) {
         const plot = primePlot(vr, pId);
         if (!plot) return false;
 
-        if (get(plot.attributes, PlotAttribute.DATALINK_TABLE_ROW, -1) !== highlightedRow) return false;
+        if (Number(get(plot.attributes, PlotAttribute.DATALINK_TABLE_ROW, -1)) !== highlightedRow) return false;
 
         dispatchChangeActivePlotView(pId);
         return true;
@@ -90,7 +90,7 @@ export function resetImageFullGridActivePlot(tbl_id, plotIdAry) {
 export function changeActivePlotView(plotId,tbl_id) {
     const plot= primePlot(visRoot(), plotId);
     if (!plot) return;
-    const row= get(plot.attributes, PlotAttribute.DATALINK_TABLE_ROW, -1);
+    const row= Number(get(plot.attributes, PlotAttribute.DATALINK_TABLE_ROW, -1));
     if (row<0) return;
     const table= getTblById(tbl_id);
     if (!table) return;

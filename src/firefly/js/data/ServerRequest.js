@@ -120,7 +120,7 @@ export class ServerRequest {
 
 
     setSafeParam(name,val) {
-        this.params[name]= val ? replaceAll(val,PARAM_SEP,URL_SUB) : null;
+        this.params[name]= val ? replaceAll(val+'',PARAM_SEP,URL_SUB) : null;
     }
 
     /**
