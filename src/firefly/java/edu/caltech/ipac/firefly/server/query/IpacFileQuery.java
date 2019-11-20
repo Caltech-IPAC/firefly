@@ -5,15 +5,18 @@ package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
-import edu.caltech.ipac.firefly.server.db.spring.mapper.IpacTableExtractor;
+import edu.caltech.ipac.firefly.server.db.spring.mapper.SqlResultSetUtil;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataGroup;
-
+import org.json.simple.JSONObject;
 import javax.sql.DataSource;
-import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
 
 /**
  * Date: Jun 5, 2009
@@ -21,44 +24,33 @@ import java.sql.SQLException;
  * @author loi
  * @version $Id: IpacFileQuery.java,v 1.22 2011/01/10 19:36:00 tatianag Exp $
  */
-abstract public class IpacFileQuery extends IpacTablePartProcessor implements Query {
+abstract public class IpacFileQuery extends EmbeddedDbProcessor implements Query {
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
 
     public String getTemplateName() {
         return null;
     }
 
-    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-        File file = null;
+    @Override
+    public DataGroup fetchDataGroup(TableServerRequest request) throws DataAccessException {
         DataSource ds = getDataSource();
+        SqlResultSetUtil ext = new SqlResultSetUtil(ds);
+        DataGroup dg = null;
         if (ds == null) throw new DataAccessException("Unable to connect to database");
         try {
             boolean proceed = onBeforeQuery(request, ds);
             String sql = getSql(request);
             if (proceed && sql != null) {
                 Object [] sqlParams = getSqlParams(request);
-                DataGroup template = TemplateGenerator.generate(getTemplateName(), sql, ds);
-                file = createFile(request);
-                IpacTableExtractor.query(template, ds, file, request.getPageSize(), sql, sqlParams);
+                dg = ext.doQuery(sql,sqlParams);
             } else {
                 closeConnection(ds);  // make sure connection is close
             }
         } catch (Exception ex) {
             closeConnection(ds);
-            // if no exception, IpacTableExtractor will close it upon complete.
-            // do not close connection in finally{} clause.
-            // IpacTableExtractor may return after spinning off another thread to complete the
-            // query.. this will cause the connection to close prematurely.
-            if (file != null) {
-                try {
-                    file.delete();
-                } catch (Exception e) {
-                    LOGGER.error(e, "Unable to delete file");
-                }
-            }
             throw new DataAccessException("Unable to get data", ex);
         }
-        return file;
+        return dg;
     }
 
     private void closeConnection(DataSource ds) {
@@ -107,5 +99,12 @@ abstract public class IpacFileQuery extends IpacTablePartProcessor implements Qu
         return JdbcFactory.getSingleConnectionDS(getDbInstance());
     }
 
+
+    public static void main(String[] args){
+        Date date = new Date();
+        Map<String, Date> m = new HashMap();
+        m.put("data",date);
+        new JSONObject(m).toJSONString();
+    }
 }
 

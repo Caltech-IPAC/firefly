@@ -4,7 +4,6 @@
 package edu.caltech.ipac.firefly.server.persistence;
 
 
-import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.NotLoggedInException;
 import edu.caltech.ipac.firefly.data.SearchInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
@@ -21,51 +20,48 @@ import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.cache.Cache;
-
-import java.io.File;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
 
+
 /**
  * @author tatianag
- *         $Id: QuerySearchHistory.java,v 1.12 2011/09/30 18:22:34 loi Exp $
+ * $Id: QuerySearchHistory.java,v 1.12 2011/09/30 18:22:34 loi Exp $
  */
-@SearchProcessorImpl(id ="searchHistory")
-public class QuerySearchHistory  extends IpacFileQuery {
+@SearchProcessorImpl(id = "searchHistory")
+public class QuerySearchHistory extends IpacFileQuery {
 
     public DbInstance getDbInstance() {
         return DbInstance.operation;
     }
 
     @Override
-    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-
+    public DataGroup fetchDataGroup(TableServerRequest request) throws DataAccessException {
         UserInfo userInfo = ServerContext.getRequestOwner().getUserInfo();
         if (userInfo.isGuestUser()) {
 
             DataType[] cols = new DataType[]{
-                        new DataType("queryid", Integer.class),
-                        new DataType("favorite", String.class),
-                        new DataType("timeadded", Date.class),
-                        new DataType("description", String.class),
-                        new DataType("historytoken", String.class)
-                    };
+                    new DataType("queryid", Integer.class),
+                    new DataType("favorite", String.class),
+                    new DataType("timeadded", Date.class),
+                    new DataType("description", String.class),
+                    new DataType("historytoken", String.class)
+            };
             cols[2].setFormat("%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS"); // date: yyyy-mm-dd hh:mm:ss
 
             DataGroup dg = new DataGroup("Search History", cols);
 
             // order by timeadded desc
             List<SearchInfo> list = GuestHistoryCache.getSearchHistory(ServerContext.getRequestOwner().getUserKey());
-            Collections.sort(list, new Comparator<SearchInfo>(){
-                        public int compare(SearchInfo o1, SearchInfo o2) {
-                            return -1 * o1.getTimeAdded().compareTo(o2.getTimeAdded());
-                        }
-                    });
-            for(SearchInfo si : list) {
+            Collections.sort(list, new Comparator<SearchInfo>() {
+                public int compare(SearchInfo o1, SearchInfo o2) {
+                    return -1 * o1.getTimeAdded().compareTo(o2.getTimeAdded());
+                }
+            });
+            for (SearchInfo si : list) {
                 DataObject row = new DataObject(dg);
                 row.setDataElement(cols[0], si.getQueryID());
                 row.setDataElement(cols[1], (si.isFavorite() ? "yes" : "no"));
@@ -74,11 +70,9 @@ public class QuerySearchHistory  extends IpacFileQuery {
                 row.setDataElement(cols[4], si.getHistoryToken());
                 dg.add(row);
             }
-            File f = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
-            IpacTableWriter.save(f, dg);
-            return f;
+            return dg;
         } else {
-            return super.loadDataFile(request);
+            return super.fetchDataGroup(request);
         }
     }
 
@@ -109,9 +103,8 @@ public class QuerySearchHistory  extends IpacFileQuery {
         return "searchHistory";
     }
 
-    @Override
     public Cache getCache() {
         return UserCache.getInstance();
     }
-    
+
 }

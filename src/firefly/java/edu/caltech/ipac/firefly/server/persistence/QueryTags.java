@@ -42,7 +42,6 @@ public class QueryTags   extends IpacFileQuery {
         return "tags";
     }
 
-    @Override
     public Cache getCache() {
         return UserCache.getInstance();
     }

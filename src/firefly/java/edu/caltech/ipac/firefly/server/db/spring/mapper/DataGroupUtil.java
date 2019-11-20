@@ -2,51 +2,39 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 package edu.caltech.ipac.firefly.server.db.spring.mapper;
-
-
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
-
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
 
 public class DataGroupUtil {
-
-
     public static DataGroup createDataGroup(ResultSet rs) throws SQLException {
         List<DataType> extraData = getExtraData(rs.getMetaData());
         return new DataGroup("DataGroupTitle", extraData);
     }
-
     public static DataGroup processResults(ResultSet rs) throws SQLException {
         return processResults(rs, null, Integer.MIN_VALUE);
     }
-
     public static DataGroup processResults(ResultSet rs, DataGroup dg) throws SQLException {
         return processResults(rs, dg, Integer.MIN_VALUE);
     }
-
     public static DataGroup processResults(ResultSet rs, DataGroup dg, int nullNum) throws SQLException {
         DataGroup dataGroup = dg == null ? createDataGroup(rs) : dg;
         DataObject dataObj;
-
         int numColumns = dataGroup.getDataDefinitions().length;
-
         if (rs.isBeforeFirst()) {
             rs.next();
         }
         if (!rs.isFirst()) return dataGroup;    // no row found
-
         Object obj;
         do {
             dataObj = new DataObject(dataGroup);
@@ -57,6 +45,9 @@ public class DataGroupUtil {
                 switch (dt.getDataType().getSimpleName()) {
                     case "Boolean":
                         obj = rs.getBoolean(idx);
+                        break;
+                    case "Date":// OR should we get instead String:
+                        obj = String.format(dt.getFormat(),rs.getObject(idx));//rs.getTimestamp(idx);
                         break;
                     case "String":
                         obj = rs.getString(idx);
@@ -89,10 +80,8 @@ public class DataGroupUtil {
             }
             dataGroup.add(dataObj);
         } while (rs.next());
-
         return dataGroup;
     }
-
     public static List<DataType> getExtraData(ResultSetMetaData rsmd) throws SQLException {
         int numCols = rsmd.getColumnCount();
         List<DataType> extraData = new ArrayList<DataType>(numCols);
@@ -103,21 +92,21 @@ public class DataGroupUtil {
             columnName = rsmd.getColumnName(i);
             columnClass = convertToClass(rsmd.getColumnType(i));
             dataType = new DataType(columnName, columnName, columnClass);
-
             // format info - for numeric types only
             if (!(columnClass == String.class)) {
                 if (columnClass == Double.class || columnClass == Float.class) {
                     int scale = Math.max(rsmd.getScale(i), columnClass == Double.class ? 10 : 7);
                     dataType.setFormat("%." + scale + "e"); // double or float
                 } else if (Date.class.isAssignableFrom(columnClass)) {
-                    dataType.setFormat("%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS"); // date
+                    //this doesn't work in the ui, it will display trueY-truem-etc...
+                    //dataType.setFormat("%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS"); // date
+                    // dataType.setDataType(String.class);
                 }
             }
             extraData.add(dataType);
         }
         return extraData;
     }
-
     private static Class convertToClass(int columnType) {
         switch (columnType) {
             case Types.BIGINT:
@@ -129,10 +118,6 @@ public class DataGroupUtil {
                 return Integer.class;
             case Types.BOOLEAN:
                 return Boolean.class;
-            case Types.DATE:
-            case Types.TIME:
-            case Types.TIMESTAMP:
-                return Date.class;
             case Types.DECIMAL:
             case Types.DOUBLE:
             case Types.REAL:
@@ -144,7 +129,6 @@ public class DataGroupUtil {
                 return String.class;
         }
     }
-
     public static Comparator<String> getComparator(final DataType dt) {
         Comparator<String> comparator = new Comparator<String>(){
             public int compare(String s, String s1) {
