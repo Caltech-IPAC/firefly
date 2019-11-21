@@ -13,6 +13,10 @@ import CsysConverter from '../visualize/CsysConverter';
 
 
 export const getUIComponent = (drawLayer,pv) => <DistanceToolUI drawLayer={drawLayer} pv={pv}/>;
+const worldUnit = [ {label: 'degrees', value: 'deg'},
+    {label: 'arcminutes', value: 'arcmin'},
+    {label: 'arcseconds', value: 'arcsec'}];
+const pixelUnit = [{label: 'pixels', value: 'pixel'}];
 
 function DistanceToolUI({drawLayer,pv}) {
 
@@ -26,12 +30,7 @@ function DistanceToolUI({drawLayer,pv}) {
     const plot = pv.plots[pv.primeIdx];
     const cc = CsysConverter.make(plot);
     const isWorld = hasWCSProjection(cc);
-    const worldUnit = [ {label: 'degrees', value: 'deg'},
-                        {label: 'arcminutes', value: 'arcmin'},
-                        {label: 'arcseconds', value: 'arcsec'}];
-    const pixelUnit = [{label: 'pixels', value: 'pixel'}];
     const unitStyle = getUnitStyle(cc, isWorld);
-
     const pref = getUnitPreference(unitStyle);
     const options = (unitStyle === UNIT_ALL) ? worldUnit.concat(pixelUnit)
                                              : ((unitStyle === UNIT_NO_PIXEL)? worldUnit : pixelUnit);

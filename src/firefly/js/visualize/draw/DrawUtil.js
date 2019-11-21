@@ -763,6 +763,13 @@ function clearCanvas(canvas) {
 }
 
 
+/**
+ * add a solid arrow to the second end of the line
+ * @param ctx
+ * @param fromPt in device coordinate
+ * @param toPt   in device coordinate
+ * @param color
+ */
 function drawArrowOnLine(ctx, fromPt, toPt, color) {
     const ahead = 16;
     const aAngle = Math.PI/6;

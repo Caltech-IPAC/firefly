@@ -631,11 +631,14 @@ function drawLine(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
 
         rOptions.rotAngle = rAngle;
 
-        if (style !== Style.ENDHANDLED) {
+        // add handle to the 'from' end of the line
+        if (style === Style.STARTHANDLED || style === Style.HANDLED) {
             rOptions.translation = {x: devPt0.x, y: devPt0.y};
             DrawUtil.fillRec(ctx, color, -3, -3, 7, 7, rOptions);
         }
-        if (style !== Style.STARTHANDLED) {
+
+        // add handle to the 'to' end of the line
+        if (style === Style.ENDHANDLED || style === Style.HANDLED) {
             rOptions.translation = {x: devPt1.x, y: devPt1.y};
             DrawUtil.fillRec(ctx, color, -3, -3, 7, 7, rOptions);
         }
@@ -707,14 +710,15 @@ export function drawText(drawObj, ctx, plot, inPt, drawParams) {
     if (!inPt) return false;
     
     const {text, textOffset, renderOptions, rotationAngle, isLonLine, textBaseline= 'top',
-           textAlign='start', textAngle=0, offsetOnScreen=false}= drawObj;
+           textAngle=0, offsetOnScreen=false}= drawObj;
+    let { textAlign='start'} = drawObj;
     //the angle of the grid line
     let angle=0;
     let pvAngle=undefined;
+    const pv = getPlotViewById(visRoot(), plot.plotId);
 
     if (rotationAngle){
         const lineAngle = parseFloat( rotationAngle.substring(0,  rotationAngle.length-3));
-        const pv = getPlotViewById(visRoot(), plot.plotId);
         pvAngle = pv.flipY? 180 - pv.rotation:pv.rotation;
         if (pvAngle>0) {
             if (isLonLine  && pvAngle<=210 ){
@@ -732,8 +736,8 @@ export function drawText(drawObj, ctx, plot, inPt, drawParams) {
 
         angle = pvAngle + lineAngle;
     } else {
-        const pv = getPlotViewById(visRoot(), plot.plotId);
-        angle = pv.flipY? 180 - pv.rotation:pv.rotation;
+        // offsetOnScreen only handle offset regardless of flip
+        angle = pv.flipY&&!offsetOnScreen ? 180 + pv.rotation : pv.rotation;
     }
 
     let devicePt= plot.getDeviceCoords(inPt);
@@ -744,6 +748,14 @@ export function drawText(drawObj, ctx, plot, inPt, drawParams) {
     let x, y;
     if (offsetOnScreen) {
         const scrPt = plot.getScreenCoords(inPt);
+        if (pv.flipY) {     // image and flipY case
+            if (textAlign === 'end') {
+                textAlign = 'start';
+            } else if (textAlign === 'start') {
+                textAlign = 'end';
+            }
+        }
+
         x = textOffset ? scrPt.x + textOffset.x : scrPt.x;
         y = textOffset ? scrPt.y + textOffset.y : scrPt.y;
 
@@ -1446,19 +1458,40 @@ function makeTextLocationLine(plot, textLoc, fontSize, inPt0, inPt1, tIndex, dra
             const slope = VisUtil.computeSimpleSlopeAngle(pt0, pt1);
             const ratio = [1/5, 4/5];
             let   offset = height * (tIndex + 0.5);
+            const r = -1;
 
-            if (slope >= -Math.PI/2 && slope < Math.PI/2) { // quadrant 1 & 4
+            const pv = getPlotViewById(visRoot(), plot.plotId);
+
+            if ((!pv.flipY && slope >= -Math.PI/2 && slope < Math.PI/2 && !pv.flipY) ||
+                (pv.flipY && (slope < -Math.PI/2 || slope >= Math.PI/2 ))) { // quadrant 1 & 4 for no flipY
+                                                                             // quadrant 2 & 3 for flipY
                 x = pt1.x * ratio[0] + pt0.x * ratio[1];    // closer to p0
                 y = pt1.y * ratio[0] + pt0.y * ratio[1];
-                if (drawObj) {
-                    drawObj.textAngle = -slope*180.0/Math.PI;
+
+                if (pv.flipY) {
+                    offset *= r;
                 }
-             } else {                                      // quadrant 2 & 3
+
+                if (drawObj) {
+                    drawObj.textAngle = -slope * 180.0 / Math.PI;
+                    if (pv.flipY) {
+                        drawObj.textAngle *= r;
+                    }
+                }
+
+             } else {                                      // quadrant 2 & 3 for no flip, quadrant 1 & 4 for flipY
                 x = pt0.x * ratio[0] + pt1.x * ratio[1];   // closer to p1
                 y = pt0.y * ratio[0] + pt1.y * ratio[1];
-                offset *= -1;
+
+
+                if (!pv.flipY) {
+                    offset *= r;
+                }
                 if (drawObj) {
-                    drawObj.textAngle = (Math.PI - slope)*180.0/Math.PI;
+                    drawObj.textAngle = (Math.PI - slope) * 180.0 / Math.PI;
+                    if (pv.flipY) {
+                        drawObj.textAngle *= r;
+                    }
                 }
             }
             x = x + offset * Math.sin(slope);

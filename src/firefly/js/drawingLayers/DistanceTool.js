@@ -12,7 +12,7 @@ import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import CsysConverter from '../visualize/CsysConverter.js';
-import { makeOffsetPt, makeWorldPt, makeScreenPt} from '../visualize/Point.js';
+import { makeOffsetPt, makeWorldPt} from '../visualize/Point.js';
 import BrowserInfo from '../util/BrowserInfo.js';
 import VisUtil from '../visualize/VisUtil.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
@@ -131,7 +131,7 @@ function getLayerChanges(drawLayer, action) {
 
     switch (action.type) {
         case DrawLayerCntlr.DT_START:
-            return start(action);
+            return start(drawLayer, action);
         case DrawLayerCntlr.DT_MOVE:
             return drag(drawLayer,action);
         case DrawLayerCntlr.DT_END:
@@ -176,6 +176,7 @@ function dealWithUnits(drawLayer,action) {
     const plot= primePlot(visRoot(),plotIdAry[0]);
     var cc= CsysConverter.make(plot);
     if (!cc) return null;
+
     var drawAry= makeSelectObj(drawLayer.firstPt, drawLayer.currentPt, drawLayer.offsetCal,cc);
 
     return makeBaseReturnObj(plot,drawLayer.firstPt, drawLayer.currentPt,drawAry);
@@ -240,7 +241,7 @@ function getMode(plot) {
     return (selection) ? 'edit' : 'select';
 }
 
-function start(action) {
+function start(drawLayer, action) {
     var {imagePt,plotId,shiftDown}= action.payload;
     var plot= primePlot(visRoot(),plotId);
     var mode= getMode(plot);
@@ -260,11 +261,14 @@ function start(action) {
         var testPt= cc.getScreenCoords(ptAry[idx]);
         if (!testPt) return {};
 
-        if (screenDistance(testPt,spt)<EDIT_DISTANCE) {
+        if (screenDistance(testPt,spt)<EDIT_DISTANCE) {   // swap the first and current point, redraw the distance tool
             var oppoIdx= idx===0 ? 1 : 0;
             retObj.firstPt= cc.getImageWorkSpaceCoords(ptAry[oppoIdx]);
             retObj.currentPt= cc.getImageWorkSpaceCoords(ptAry[idx]);
             if (!retObj.firstPt || !retObj.currentPt) return {};
+
+            const drawAry = makeSelectObj(retObj.firstPt, retObj.currentPt, drawLayer.offsetCal, CsysConverter.make(plot));
+            return Object.assign(retObj, makeBaseReturnObj(plot, retObj.firstPt, retObj.currentPt, drawAry));
         }
         else {
             retObj= setupSelect(imagePt) ;
@@ -339,7 +343,7 @@ function getDistText(dist, pref) {
 }
 
 function getPosAngleText(pt0, pt1, isWorld, cc, pref) {
-    if (!isWorld) return '';
+    if (!isWorld || pref === PIXEL) return '';
 
     const PAPrefix = 'PA = ';
     const w0 = cc.getWorldCoords(pt0);
@@ -383,6 +387,22 @@ function isPointBelowLine(line_pt1, line_pt2, pt, cc) {
 
     return ((pt2.x <= pt1.x) && (diff >= 0)) || ((pt2.x > pt1.x) && (diff < 0)) ;
 }
+
+function computeDistance(pt1, pt2, cc, pref) {
+    let anyPt1, anyPt2;
+
+    if (pref === PIXEL) {
+        anyPt1 = cc.getImageCoords(pt1);
+        anyPt2 = cc.getImageCoords(pt2);
+        if (!anyPt1 || !anyPt2) return null;
+        return screenDistance(anyPt1, anyPt2);
+    } else {
+        anyPt1 = cc.getWorldCoords(pt1);
+        anyPt2 = cc.getWorldCoords(pt2);
+        if (!anyPt1 || !anyPt2) return null;
+        return  VisUtil.computeDistance(anyPt1,anyPt2);
+    }
+}
 /**
  * @param {object} firstPt
  * @param {object} currentPt
@@ -397,11 +417,13 @@ function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
 
     const ptAry= [firstPt,currentPt];
     let retval;
-    let anyPt1;
+    let anyPt1;    // for ends of all ruler vectors
     let anyPt2;
     let dist;
     const LWIDTH = 3;
 
+    // for distance overlay set with world unit, the ends of the ruler are with world coordinate values
+    // or the ends of the ruler are with pixel values of image coordinate
     if (pref === PIXEL) {
         anyPt1 = cc.getImageCoords(ptAry[0]);
         anyPt2 = cc.getImageCoords(ptAry[1]);
@@ -414,14 +436,9 @@ function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
         dist= VisUtil.computeDistance(anyPt1,anyPt2);
     }
 
-    const d1 = cc.getScreenCoords(anyPt1);
-    const d2 = cc.getScreenCoords(anyPt2);
-    const d_midx = (d1.x+d2.x)/2;
-    const d_midy = (d1.y+d2.y)/2;
-
-    const obj= ShapeDataObj.makeLine(anyPt1,anyPt2, true);   // make line with arrow at the second end
+    const obj= ShapeDataObj.makeLine(anyPt1, anyPt2, true);   // make line with arrow at the current end
     const distText = getDistText(dist, pref);
-    const posAText = getPosAngleText(firstPt, currentPt, world, cc, DEG);
+    const posAText = getPosAngleText(ptAry[0], ptAry[1], world, cc, (pref === PIXEL ? PIXEL : DEG));
     obj.text = ((posAText) ? (posAText + '\n') : '') + distText;
     obj.style= Style.STARTHANDLED;
     obj.lineWidth = LWIDTH;
@@ -431,10 +448,15 @@ function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
     obj.texttBaseLine = 'middle';
     obj.supportedDrawingTypes=  (pref===PIXEL) ? DrawingType.ImageCoordsOnly : DrawingType.WcsCoordsOnly;
 
-    if (offsetCal) {
-        let highPt;
-        let lowPt;
+    if (!offsetCal) {
+        retval= [obj];
+    } else {
+        const d1 = cc.getScreenCoords(ptAry[0]);     // use screen coordinate to determine the text position
+        const d2 = cc.getScreenCoords(ptAry[1]);
+        const d_midx = (d1.x+d2.x)/2;
+        const d_midy = (d1.y+d2.y)/2;
 
+        let highPt, lowPt;
         if (d1.y <= d2.y) {
             highPt = anyPt1;
             lowPt = anyPt2;
@@ -443,12 +465,8 @@ function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
             lowPt = anyPt1;
         }
 
-        let adjDist;
-        let opDist;
-        let lonDelta1;
-        let lonDelta2;
-        let latDelta1;
-        let latDelta2;
+        let lon1, lon2;
+        let lat1, lat2;
         const plot= primePlot(visRoot(),cc.plotId);
         const aHiPS = isHiPS(plot);
         let  corner_pt;
@@ -457,39 +475,37 @@ function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
             corner_pt = makeWorldPt(highPt.x, lowPt.y);
 
             if (isPointBelowLine(highPt, lowPt, corner_pt, cc)) {
-                lonDelta1 = makeWorldPt(lowPt.x, lowPt.y);
-                lonDelta2 = corner_pt;
-                adjDist = VisUtil.computeDistance(lonDelta1, lonDelta2);
+                lon1 = makeWorldPt(lowPt.x, lowPt.y);
+                lon2 = corner_pt;
 
-                latDelta1 = corner_pt;
-                latDelta2 = makeWorldPt(highPt.x, highPt.y);
-                opDist = VisUtil.computeDistance(latDelta1, latDelta2);
+                lat1 = corner_pt;
+                lat2 = makeWorldPt(highPt.x, highPt.y);
             } else {
                 corner_pt = makeWorldPt(lowPt.x, highPt.y);
-                lonDelta1 = makeWorldPt(highPt.x, highPt.y);
-                lonDelta2 = corner_pt;
-                adjDist = VisUtil.computeDistance(lonDelta1, lonDelta2);
+                lon1 = makeWorldPt(highPt.x, highPt.y);
+                lon2 = corner_pt;
 
-                latDelta1 = corner_pt;
-                latDelta2 = makeWorldPt(lowPt.x, lowPt.y);
-                opDist = VisUtil.computeDistance(latDelta1, latDelta2);
+                lat1 = corner_pt;
+                lat2 = makeWorldPt(lowPt.x, lowPt.y);
             }
         } else {
-            lonDelta1= makeImagePt(highPt.x, lowPt.y);
-            lonDelta2= makeImagePt(lowPt.x, lowPt.y);
-            adjDist= screenDistance(lonDelta1,lonDelta2);
+            lon1= makeImagePt(highPt.x, lowPt.y);   // corner
+            lon2= makeImagePt(lowPt.x, lowPt.y);
 
-            latDelta1= makeImagePt(highPt.x, lowPt.y);
-            latDelta2= makeImagePt(highPt.x, highPt.y);
-            opDist= screenDistance(latDelta1,latDelta2);
+            lat1= makeImagePt(highPt.x, lowPt.y);  // corner
+            lat2= makeImagePt(highPt.x, highPt.y);
         }
 
-        const adj = ShapeDataObj.makeLine(lonDelta1,lonDelta2);
-        const op = ShapeDataObj.makeLine(latDelta1, latDelta2);
+        const adjDist = computeDistance(lon1, lon2, cc, pref);
+        const opDist = computeDistance(lat1, lat2, cc, pref);
+
+        const adj = ShapeDataObj.makeLine(lon1,lon2);
+        const op = ShapeDataObj.makeLine(lat1, lat2);
 
         adj.lineWidth = LWIDTH;
         op.lineWidth = LWIDTH;
 
+        // no distance is shown on vertical or horizontal offset vector
         const lineD = (d2.y - d1.y)*(d2.x - d1.x);
 
         let end1 = cc.getScreenCoords(adj.pts[0]);
@@ -497,7 +513,6 @@ function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
         const seg1 = 10.0;
         const seg2 = 16.0;
 
-        console.log('seg1: '+seg1+ ' seg2: '+seg2);
         const ad_midy = (end1.y+end2.y)/2;
         adj.textLoc=TextLocation.LINE_MID_POINT;
         adj.textAlign = 'center';
@@ -546,9 +561,7 @@ function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
         }
         retval= [obj,adj,op];
     }
-    else {
-        retval= [obj];
-    }
+
     return retval;
 }
 
@@ -556,7 +569,8 @@ function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
 function getPtAry(plot) {
     var sel= plot.attributes[PlotAttribute.ACTIVE_DISTANCE];
     if (!sel) return null;
-    var cc= CsysConverter.make(plot);
+    const cc = CsysConverter.make(plot);
+
     var ptAry=[];
     ptAry[0]= cc.getScreenCoords(sel.pt0);
     ptAry[1]= cc.getScreenCoords(sel.pt1);
