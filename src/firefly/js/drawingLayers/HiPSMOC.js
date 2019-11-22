@@ -27,6 +27,8 @@ import {dispatchModifyCustomField, getDlAry} from '../visualize/DrawLayerCntlr';
 import {cloneRequest} from '../tables/TableRequestUtil';
 import {dispatchAddActionWatcher} from '../core/MasterSaga';
 import isPlainObject from 'react-redux/lib/utils/isPlainObject';
+import {MetaConst} from '../data/MetaConst';
+import {getNextColor} from '../visualize/draw/DrawingDef';
 
 const ID= 'MOC_PLOT';
 const TYPE_ID= 'MOC_PLOT_TYPE';
@@ -102,10 +104,13 @@ function loadMocFitsWatcher(action, cancelSelf, params, dispatch, getState) {
  */
 function creator(initPayload) {
 
+
     const drawingDef= makeDrawingDef(colorList[idCnt%colorN],
                                      {style: Style.STANDARD,
                                       textLoc: TextLocation.CENTER,
                                       canUseOptimization: true});
+
+
     idCnt++;
     const options= {
         canUseMouse:true,
@@ -117,9 +122,15 @@ function creator(initPayload) {
 
     // const actionTypes = [DrawLayerCntlr.REGION_SELECT, TABLE_LOADED];
     const actionTypes = [DrawLayerCntlr.REGION_SELECT];
-    const mocFitsInfo = get(initPayload, 'mocFitsInfo') || {};
-    const {tbl_id} = mocFitsInfo;
+    const {mocFitsInfo={},color= getNextColor()}= initPayload || {};
+    const {tbl_id, tablePreloaded} = mocFitsInfo;
     const id =  tbl_id || get(initPayload, 'drawLayerId', `${ID}-${idCnt}`);
+
+
+
+    const preloadedTbl= tablePreloaded && getTblById(tbl_id);
+    drawingDef.color= get(preloadedTbl, ['tableMeta',MetaConst.DEFAULT_COLOR], color);
+
     const dl = DrawLayer.makeDrawLayer( id, TYPE_ID, get(initPayload, 'title', MocPrefix +id.replace('_moc', '')),
                                         options, drawingDef, actionTypes);
 

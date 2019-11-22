@@ -182,12 +182,13 @@
     </script>
 </template>
 
-<template title="Load a MOC" style='height: 400px' class="tpl lg" >
+<template title="Load a MOC" style='height: 400px' class="tpl lg " >
     <div id="expected" >
         <div class="source-code indent-3">
             - load a HiPS
             - load a MOC from a URL
             - use imageDisplayType: 'encapusulate'
+            - overlay color is pink (not green, like picture)
 
         </div>
         <div style='padding-top: 10px;'><img style="width: 325px;" src="./images/moc-overlay-on-hips.png"></div>
@@ -209,7 +210,13 @@
             const req = firefly.util.table.makeFileRequest('a moc',
                 'http://web.ipac.caltech.edu/staff/roby/demo/moc/galex.fits',
                 null,
-                {PREFERRED_HIPS : 'https://irsa.ipac.caltech.edu/data/hips/CDS/2MASS/Color'} );
+                {
+                    META_INFO: {
+                        PREFERRED_HIPS : 'https://irsa.ipac.caltech.edu/data/hips/CDS/2MASS/Color',
+                        DEFAULT_COLOR: 'pink'
+
+                    }
+                } );
             firefly.action.dispatchTableFetch(req);
 
 
