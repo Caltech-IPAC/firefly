@@ -20,6 +20,15 @@ import {dispatchTableFetch, TABLE_LOADED} from '../tables/TablesCntlr.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {MAX_ROW} from '../tables/TableRequestUtil.js';
 import {dispatchAddTaskCount, dispatchRemoveTaskCount, makeTaskId } from '../core/AppDataCntlr.js';
+import {doFetchTable} from '../tables/TableUtil';
+import {logError} from '../util/WebUtil';
+import {getDrawLayersByType} from '../visualize/PlotViewUtil';
+import {dispatchModifyCustomField, getDlAry} from '../visualize/DrawLayerCntlr';
+import {cloneRequest} from '../tables/TableRequestUtil';
+import {dispatchAddActionWatcher} from '../core/MasterSaga';
+import isPlainObject from 'react-redux/lib/utils/isPlainObject';
+import {MetaConst} from '../data/MetaConst';
+import {getNextColor} from '../visualize/draw/DrawingDef';
 
 const ID= 'MOC_PLOT';
 const TYPE_ID= 'MOC_PLOT_TYPE';
@@ -40,49 +49,51 @@ function getVisiblePlotIdsByDrawlayerId(id, getState) {
     return visiblePlotIdAry;
 }
 
+function loadMocFitsWatcher(action, cancelSelf, params, dispatch, getState) {
+    const {id, mocFitsInfo}= params;
+    if (action.payload.drawLayerId === id && (action.payload.visible)) {
+        const {fitsPath,tbl_id,tablePreloaded} = mocFitsInfo || {};
 
-function* loadMocFitsSaga({id, mocFitsInfo}, dispatch, getState) {
-    while (true) {
-        const action = yield take([DrawLayerCntlr.CHANGE_VISIBILITY, TABLE_LOADED, DrawLayerCntlr.ATTACH_LAYER_TO_PLOT]);
+        const dl = getDrawLayerById(getDlAry(), tbl_id);
+        if (!dl) return;
+        const preloadedTbl= tablePreloaded && getTblById(tbl_id);
 
-        switch (action.type) {
-            case DrawLayerCntlr.CHANGE_VISIBILITY:
-            case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
-                if (action.payload.drawLayerId === id && (action.payload.visible)) {
-                    const {fitsPath} = mocFitsInfo || {};
+        if (!dl.mocTable) { // moc table is not yet loaded
+            let tReq;
+            if (fitsPath) {       // load by getting file on server
+                tReq = makeTblRequest('userCatalogFromFile', 'Table Upload',
+                    {filePath: fitsPath, sourceFrom: 'isLocal'},
+                    {tbl_id: mocFitsInfo.tbl_id, pageSize: MAX_ROW, inclCols: mocFitsInfo.uniqColName});
+            }
+            else if (preloadedTbl){ //load by getting the full version of a already loaded table
+                tReq= cloneRequest(preloadedTbl.request,
+                    { startIdx : 0, pageSize : MAX_ROW, inclCols: mocFitsInfo.uniqColName });
+            }
+            if (!tReq) return;
 
-                    if (mocFitsInfo.tbl_id) {
-                        const mocTable = getTblById(mocFitsInfo.tbl_id);
-                        if (!mocTable && fitsPath) {       // moc fits not loaded yet
-                            const tReq = makeTblRequest('userCatalogFromFile', 'Table Upload',
-                                {filePath: fitsPath, sourceFrom: 'isLocal'},
-                                {tbl_id: mocFitsInfo.tbl_id, pageSize: MAX_ROW, inclCols: mocFitsInfo.uniqColName});
-                            dispatchTableFetch(tReq, 0);  // change to dispatchTableFetch later
-                        } else {
-                            const vPlotIds =getVisiblePlotIdsByDrawlayerId(id, getState);
-
-                            vPlotIds.forEach((pId) => {
-                                dispatch({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotId: pId}});
-                            });
-                        }
+            doFetchTable(tReq).then(
+                (tableModel) => {
+                    if (tableModel.tableData) {
+                        dispatchModifyCustomField(tbl_id, {mocTable:tableModel});
+                        const visiblePlotIdAry =getVisiblePlotIdsByDrawlayerId(id, getState);
+                        visiblePlotIdAry .forEach((pId) => {
+                            dispatch({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotId: pId}});
+                        });
                     }
                 }
-                break;
-            case TABLE_LOADED:
-                const {tbl_id} = action.payload;
-                if (tbl_id === mocFitsInfo.tbl_id) {
-                    const visiblePlotIdAry =getVisiblePlotIdsByDrawlayerId(id, getState);
-
-                    visiblePlotIdAry .forEach((pId) => {
-                        dispatch({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotId: pId}});
-                    });
+            ).catch(
+                (reason) => {
+                    logError(`Failed to MOC table: ${reason}`, reason);
                 }
-                break;
-            default:
-                break;
+            );
+
+        } else {
+            const vPlotIds =getVisiblePlotIdsByDrawlayerId(id, getState);
+            vPlotIds.forEach((pId) => {
+                dispatch({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotId: pId}});
+            });
         }
     }
-
 }
 
 
@@ -93,10 +104,13 @@ function* loadMocFitsSaga({id, mocFitsInfo}, dispatch, getState) {
  */
 function creator(initPayload) {
 
+
     const drawingDef= makeDrawingDef(colorList[idCnt%colorN],
                                      {style: Style.STANDARD,
                                       textLoc: TextLocation.CENTER,
                                       canUseOptimization: true});
+
+
     idCnt++;
     const options= {
         canUseMouse:true,
@@ -106,15 +120,29 @@ function creator(initPayload) {
         destroyWhenAllDetached: true
     };
 
-    const actionTypes = [DrawLayerCntlr.REGION_SELECT, TABLE_LOADED];
-    const mocFitsInfo = get(initPayload, 'mocFitsInfo') || {};
-    const {tbl_id} = mocFitsInfo;
+    // const actionTypes = [DrawLayerCntlr.REGION_SELECT, TABLE_LOADED];
+    const actionTypes = [DrawLayerCntlr.REGION_SELECT];
+    const {mocFitsInfo={},color= getNextColor()}= initPayload || {};
+    const {tbl_id, tablePreloaded} = mocFitsInfo;
     const id =  tbl_id || get(initPayload, 'drawLayerId', `${ID}-${idCnt}`);
+
+
+
+    const preloadedTbl= tablePreloaded && getTblById(tbl_id);
+    drawingDef.color= get(preloadedTbl, ['tableMeta',MetaConst.DEFAULT_COLOR], color);
+
     const dl = DrawLayer.makeDrawLayer( id, TYPE_ID, get(initPayload, 'title', MocPrefix +id.replace('_moc', '')),
                                         options, drawingDef, actionTypes);
 
     dl.mocFitsInfo = mocFitsInfo;
-    dispatchAddSaga(loadMocFitsSaga, {id: dl.drawLayerId, mocFitsInfo});
+    dl.mocTable= undefined;
+    dl.rootTitle= dl.title;
+
+    dispatchAddActionWatcher({
+        callback:loadMocFitsWatcher,
+        params: {id: dl.drawLayerId, mocFitsInfo},
+        actions:[DrawLayerCntlr.CHANGE_VISIBILITY, DrawLayerCntlr.ATTACH_LAYER_TO_PLOT]
+    });
 
     return dl;
 }
@@ -168,11 +196,10 @@ class UpdateStatus {
 }
 
 function getTitle(dl, pIdAry, isLoading=false) {
-    const {drawLayerId, title} = dl;
-    const mTitle = MocPrefix + drawLayerId.replace('_moc', '');
+    const {title, rootTitle} = dl;
 
     const tObj = isString(title) ? {} : Object.assign({}, title);
-    pIdAry.forEach((pId) => tObj[pId] = mTitle + (isLoading ? ' -- is loading' : ''));
+    pIdAry.forEach((pId) => tObj[pId] = rootTitle + (isLoading ? ' -- is loading' : ''));
 
     return tObj;
 }
@@ -212,7 +239,7 @@ function getLayerChanges(drawLayer, action) {
             return {title: tObj, updateStatusAry};
 
         case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
-            const {fillStyle, targetPlotId} = action.payload.changes;
+            const {fillStyle, targetPlotId, mocTable} = action.payload.changes;
 
             if (fillStyle && targetPlotId) {
                 const {mocStyle={}} = drawLayer;
@@ -221,22 +248,14 @@ function getLayerChanges(drawLayer, action) {
                 set(mocStyle, [targetPlotId], style);
                 return Object.assign({}, {mocStyle});
             }
-            break;
-
-        case TABLE_LOADED:
-            const {tbl_id} = action.payload;
-            const getMocNuniqs = (mocTable) => {
-                const {data} = get(mocTable, ['tableData']) || {};
-                return data.map((row) => row[0]);
-            };
-
-            if (tbl_id === mocFitsInfo.tbl_id)  {
-                const mocTable = getTblById(tbl_id);
-                if (mocTable) {                       // get nuniq set from moc table after table is loaded
-                    const mocTiles = getMocNuniqs(mocTable);
-                    const mocObj = createMocObj(drawLayer, mocTiles);
-                    return Object.assign({}, {mocObj, title: getTitle(drawLayer, visiblePlotIdAry)});
-                }
+            if (mocTable) {
+                const getMocNuniqs = () => {
+                    const {data} = get(mocTable, ['tableData']) || {};
+                    return data.map((row) => row[0]);
+                };
+                const mocTiles = getMocNuniqs(mocTable);
+                const mocObj = createMocObj(drawLayer, mocTiles);
+                return {mocTable, mocObj, title: getTitle(drawLayer, visiblePlotIdAry)};
             }
             break;
 
@@ -295,6 +314,7 @@ function addTask(plotId, taskId) {
 function updateMocData(dl, plotId) {
     const {updateStatusAry, mocObj} = dl;
     const plot = primePlot(visRoot(), plotId);
+    if (!plot) return;
     const updateStatus = updateStatusAry[plotId];
 
      if (isEmpty(updateStatus.newMocObj)) {    // find visible cells first

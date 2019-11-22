@@ -10,6 +10,7 @@ import {uniqueID} from '../util/WebUtil.js';
 import {TABLE_SEARCH} from '../tables/TablesCntlr.js';
 import {getTblIdsByGroup, onTableLoaded} from '../tables/TableUtil';
 import {isDebug} from '../util/WebUtil';
+import {TABLE_FETCH, TABLE_REMOVE} from '../tables/TablesCntlr';
 
 export const ADD_SAGA= 'MasterSaga.addSaga';
 export const ADD_ACTION_WATCHER= 'MasterSaga.addActionWatcher';
@@ -97,6 +98,25 @@ export function dispatchAddActionWatcher({id, actions, callback, params={}}) {
  *
  */
 
+/**
+ * @global
+ * @public
+ * @typedef {Object} TableWatcherDef
+ *
+ * @prop {String} p.id a unique identifier for this watcher
+ * @prop {TestWatchFunc} p.testTable - function: testTable(table,action,options), return true, if we should watch this table type
+ * @prop {TableWatchFunc} p.watcher - function watcher(tbl_id,action,cancelSelf,params), note- TableWatchFunc is called
+ *                        when the first time for initialization for the first call action is null
+ * @prop {Object} [p.sharedData]
+ * @prop {Object} [p.options]
+ * @prop {Array.<String>} p.actions - array of string action id's
+ * @prop {Array.<String>} p.excludes- excluded id list. if testTable return true then this
+ *                                       list will force any watcher def with an id in the list to not watch
+ * @prop {boolean} p.stopPropagation - like excludes but if true not only watcher will be added
+ * @prop {boolean} p.enabled - if true this TableTypeWatcher will test and add, if false it will be skipped
+ * @prop {boolean} p.allowMultiples - multiple defs of this type are allowed.
+ *
+ */
 
 
 
@@ -115,19 +135,7 @@ export function dispatchAddActionWatcher({id, actions, callback, params={}}) {
  * <li> It is call the first time with the action undefined.  This can be for initialization.  The table will beloaded
  * </ul>
  *
- * @param {object}   p
- * @param {String} p.id a unique identifier for this watcher
- * @param {TestWatchFunc} p.testTable - function: testTable(table,action,options), return true, if we should watch this table type
- * @param {TableWatchFunc} p.watcher - function watcher(tbl_id,action,cancelSelf,params), note- TableWatchFunc is called
- *                        when the first time for initialization for the first call action is null
- * @param {Object} [p.sharedData]
- * @param {Object} [p.options]
- * @param {Array.<String>} p.actions - array of string action id's
- * @param {Array.<String>} p.excludes- excluded id list. if testTable return true then this
- *                                       list will force any watcher def with an id in the list to not watch
- * @param {boolean} p.stopPropagation - like excludes but if true not only watcher will be added
- * @param {boolean} p.enabled - if true this TableTypeWatcher will test and add, if false it will be skipped
- * @param {boolean} p.allowMultiples - multiple defs of this type are allowed.
+ * @param {TableWatcherDef} def
  *
  * @see TableWatchFunc
  * @see TestWatchFunc
@@ -317,24 +325,48 @@ function retroactiveTTStart(def) {
 const initTTWatcher= () =>
     dispatchAddActionWatcher(
         {
-            actions: [TABLE_SEARCH],
+            actions: [TABLE_SEARCH,TABLE_FETCH,TABLE_REMOVE],
             id: 'masterTableTypeWatcher',
             callback: masterTableTypeWatcher,
             params: {getTTWatcherDefList}
         });
 
 
+
 /**
- * watcher - for TABLE_SEARCH
+ * watcher - for TABLE_FETCH
  * @param action
  * @param cancelSelf
  * @param params
  */
 function masterTableTypeWatcher(action, cancelSelf, params) {
     const tbl_id = get(action, 'payload.request.tbl_id');
-    if (!tbl_id || action.type!==TABLE_SEARCH) return;
+    if (!tbl_id || action.type!==TABLE_FETCH) return;
     startTableTypeWatchersForTable(tbl_id,action,params.getTTWatcherDefList);
 }
+
+
+// function masterTableTypeWatcher(action, cancelSelf, params) {
+//     const tbl_id = get(action, 'payload.request.tbl_id');
+//     if (!tbl_id) return params;
+//
+//     let {idList=[]}= params;
+//     const {getTTWatcherDefList}= params;
+//     console.log(`>>>>>> got ${action.type} for ${tbl_id}`);
+//     switch (action.type) {
+//         case TABLE_SEARCH:
+//         case TABLE_FETCH:
+//             if (!idList.includes(tbl_id)) {
+//                 startTableTypeWatchersForTable(tbl_id,action,getTTWatcherDefList);
+//                 idList= [...idList, tbl_id];
+//             }
+//             break;
+//         case TABLE_REMOVE:
+//             idList= idList.filter( (id) => id!==tbl_id);
+//             break;
+//     }
+//     return {...params,idList};
+// }
 
 function startTableTypeWatchersForTable(tbl_id, action, getDefList) {
     onTableLoaded(tbl_id).then( (table) => {

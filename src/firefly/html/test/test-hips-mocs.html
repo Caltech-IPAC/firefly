@@ -1,0 +1,233 @@
+<!doctype html>
+
+<!--
+  ~ License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+  -->
+
+<html>
+
+<head>
+    <title>Firefly main tests</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="text/javascript" src="template_loader.js"></script>
+</head>
+
+<body>
+
+<!-- define all of your tests below -->
+
+<template title="API 2 Table / Customized HiPS" style='height: 400px' class="tpl lg" >
+    <div id="expected" style="position: relative" >
+        <div class="source-code indent-3" style="position: absolute; bottom: 0; left: 0">
+            - two tables, both wise catalogs
+            - Coverage display, HiPS, ALLWISE
+            - HiPS image is customized
+            - META_INFO contains
+               {CoverageHiPS: 'ivo://CDS/P/allWISE/color'}
+            
+            - Testing:
+                 - click on table to center catalog
+                 - zoom in and click on rows to center
+                            if off the screen
+        </div>
+    </div>
+    <div id="actual" class="flow-h">
+        <div id="tableDiv" style='width:500px;' class="box"></div>
+        <div id="coverageDiv" style='width:500px;' class="box"></div>
+    </div>
+    <script>
+        irsaviewer_init();
+
+        onFireflyLoaded = function (firefly) {
+
+            firefly.util.image.initAutoReadout(
+                firefly.ui.DefaultApiReadout,
+                { MouseReadoutComponent:firefly.ui.PopupMouseReadoutMinimal,
+                    showThumb:false,
+                    showMag:false
+                }
+            );
+            table1Data = firefly.util.table.makeIrsaCatalogRequest('WISE catalog', 'WISE', 'allwise_p3as_psd',
+                { position: '10.68479;41.26906;EQ_J2000',
+                    SearchMethod: 'Cone',
+                    radius: 100
+                },
+                { META_INFO: {CENTER_COLUMN: 'ra;dec;EQJ2000', CatalogOverlayType: 'IRSA', CoverageHiPS: 'ivo://CDS/P/allWISE/color'}}
+            );
+
+            table2Data = firefly.util.table.makeIrsaCatalogRequest('WISE catalog', 'WISE', 'allwise_p3as_psd',
+                { position: '0;0;GAL',
+                    SearchMethod: 'Cone',
+                    radius: 200
+                },
+                { META_INFO: {CENTER_COLUMN: 'ra;dec;EQJ2000',
+                        CatalogOverlayType: 'IRSA'}}
+            );
+
+            firefly.showTable('tableDiv', table1Data,
+                { removable: true,
+                    showTitle:false,
+                    showUnits: true,
+                    showFilters: false,
+                    selectable: false,
+                    expandable: true,
+                    help_id: 'tables'
+                }
+            );
+
+            firefly.showTable('tableDiv', table2Data,
+                { removable: true,
+                    showTitle:false,
+                    showUnits: true,
+                    showFilters: false,
+                    selectable: false,
+                    expandable: true,
+                    help_id: 'tables'
+                }
+            );
+
+
+            firefly.showCoverage('coverageDiv', {gridOn:'FALSE'});
+
+        }
+    </script>
+</template>
+
+
+<template title="WCS match 2 HiPS" style='height: 400px' class="tpl lg" >
+    <div id="expected" style="position: relative" >
+        <div class="source-code indent-3" style="position: absolute; bottom: 0; left: 0">
+            - load 2 HiPS
+            - WCS matched
+        </div>
+    </div>
+    <div id="actual" class="box x3"></div>
+    <script>
+
+        window.firefly= { options: { wcsMatchType: 'Standard'} };
+        function onFireflyLoaded(firefly) {
+
+            firefly.showHiPS('actual',
+                {
+                    plotId: 'aHipsID1-1',
+                    title     : 'A HiPS',
+                    WorldPt: '10.68479;41.26906;EQ_J2000',
+                    hipsRootUrl: 'ivo://CDS/P/DSS2/color',
+                    SizeInDeg: 3.8,
+                }
+            );
+            firefly.showHiPS('actual',
+                {
+                    plotId: 'aHipsID1-2',
+                    title     : 'HiPS 2',
+                    WorldPt: '10.68479;41.26906;EQ_J2000',
+                    hipsRootUrl: 'ivo://CDS/P/allWISE/color',
+                    ZoomType : 'FOV_DEG',
+                    SizeInDeg: 3.8,
+                }
+            );
+
+        }
+    </script>
+</template>
+
+<template title="WCS matched 2 HiPS and image" style='height: 400px' class="tpl lg" >
+    <div id="expected" >
+        <div class="source-code indent-3">
+            - load 2 HiPS
+            - 1 image
+            - WCS matched
+            - use imageDisplayType: 'encapusulate'
+        </div>
+        <div style='padding-top: 10px;'><img style="width: 325px;" src="./images/two-hips-1-image.png"></div>
+    </div>
+    <div id="actual" class="box x3"></div>
+    <script>
+
+        window.firefly= {
+            options: {
+                wcsMatchType: 'Standard',
+                imageDisplayType: 'encapusulate'
+            }
+        };
+        function onFireflyLoaded(firefly) {
+
+            firefly.showHiPS('actual',
+                {
+                    plotId: 'aHipsID1-1',
+                    title     : 'A HiPS',
+                    WorldPt    : '202.48417;47.23056;EQ_J2000',
+                    hipsRootUrl: 'ivo://CDS/P/DSS2/color',
+                }
+            );
+            firefly.showHiPS('actual',
+                {
+                    plotId: 'aHipsID1-2',
+                    title     : 'HiPS 2',
+                    WorldPt    : '202.48417;47.23056;EQ_J2000',
+                    hipsRootUrl: 'ivo://CDS/P/allWISE/color',
+                    ZoomType : 'FOV_DEG',
+                }
+            );
+            firefly.showImage('actual',
+                {
+                    Service   : 'WISE',
+                    SurveyKey  : 'Atlas',
+                    SurveyKeyBand: '1',
+                    WorldPt    : '202.48417;47.23056;EQ_J2000',
+                    SizeInDeg  : '.12'
+                });
+
+        }
+    </script>
+</template>
+
+<template title="Load a MOC" style='height: 400px' class="tpl lg " >
+    <div id="expected" >
+        <div class="source-code indent-3">
+            - load a HiPS
+            - load a MOC from a URL
+            - use imageDisplayType: 'encapusulate'
+            - overlay color is pink (not green, like picture)
+
+        </div>
+        <div style='padding-top: 10px;'><img style="width: 325px;" src="./images/moc-overlay-on-hips.png"></div>
+    </div>
+    <div id="actual" class="box x3"></div>
+    <script>
+        window.firefly= { options: { imageDisplayType: 'encapusulate' } };
+        function onFireflyLoaded(firefly) {
+
+            firefly.action.dispatchApiToolsView(true, false);
+            firefly.showHiPS('actual',
+                {
+                    plotId: 'aHipsID1-1',
+                    title     : 'HiPS 1',
+                    hipsRootUrl: 'http://alasky.u-strasbg.fr/AllWISE/RGB-W4-W2-W1',
+                }
+            );
+
+            const req = firefly.util.table.makeFileRequest('a moc',
+                'http://web.ipac.caltech.edu/staff/roby/demo/moc/galex.fits',
+                null,
+                {
+                    META_INFO: {
+                        PREFERRED_HIPS : 'https://irsa.ipac.caltech.edu/data/hips/CDS/2MASS/Color',
+                        DEFAULT_COLOR: 'pink'
+
+                    }
+                } );
+            firefly.action.dispatchTableFetch(req);
+
+
+        }
+    </script>
+</template>
+
+
+
+<!-- this is where test cases will be attached-->
+<div id="tst-container"/>
+
+
+</body>

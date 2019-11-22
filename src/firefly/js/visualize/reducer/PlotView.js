@@ -58,6 +58,7 @@ export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignore
  * @prop {Object} options
  * @prop {number} rotation if > 0 then the plot is rotated by this many degrees
  * @prop {boolean} flipY if true, the the plot is flipped on the Y axis
+ * @prop {boolean} flipX - *not implemented*, if true, the the plot is flipped on the X axis
  * @prop {PlotViewContextData} plotViewCtx
  */
 

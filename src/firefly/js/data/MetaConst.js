@@ -53,6 +53,21 @@ export const MetaConst = {
      */
     DEFAULT_SYMBOL : 'DEFAULT_SYMBOL',
 
+    /**
+     * a URL or IVO ID
+     * If this table is a MOC or some other type of supported overlay, then load the PREFERRED_HIPS if there is
+     * no existing HiPS loaded
+     */
+    PREFERRED_HIPS : 'PREFERRED_HIPS',
+
+    /**
+     *
+     * a URL or IVO ID
+     * If this table is a MOC or some other type of supported overlay, then always attempt to load the REQUIRED_HIPS
+     * even it there are other HiPS loaded.
+     */
+    REQUIRED_HIPS : 'REQUIRED_HIPS',
+
     /** used by time series, defines the mission
      * @see LcManager.js
      * @see getConverterId

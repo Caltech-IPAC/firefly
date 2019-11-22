@@ -36,7 +36,6 @@ const ENCAPSULATE= 'encapsulate';
 
 
 var globalImageViewDefParams= {};
-var globalPrefs= {imageDisplayType:STANDARD};
 
 /**
  * Build the deprecated API
@@ -259,7 +258,15 @@ function buildCommon(llApi) {
      */
     const setRootPath= (rootUrlPath) => llApi.action.dispatchRootUrlPath(rootUrlPath);
 
-    const setGlobalPref= (pref)=> Object.assign(globalPrefs, pref);
+    /**
+     * @deprecated
+     * @param pref
+     */
+    const setGlobalPref= (pref)=> {
+        const newAppOp= {...llApi.util.getAppOptions(), ...pref};
+        llApi.action.dispatchAppOptions(newAppOp);
+        // Object.assign(globalPrefs, pref);
+    };// deprecated- use app options
 
     return {setRootPath,setGlobalPref};
 }
@@ -595,8 +602,11 @@ function showImageInMultiViewer(llApi, targetDiv, request, isHiPS, hipsImageConv
 
     if (!firstShowImage) {
         firstShowImage= true;
-        imageRenderType= globalPrefs.imageDisplayType;
-        if (imageRenderType===STANDARD) highlevelImageInit(llApi);
+        const appOp= llApi.util.getAppOptions();
+        if (appOp.imageDisplayType===STANDARD) {
+            imageRenderType= STANDARD;
+            highlevelImageInit(llApi);
+        }
     }
 
 
