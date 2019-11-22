@@ -61,7 +61,7 @@ function creator(initPayload, presetDefaults={}) {
            symbol, size, tblId,
            dataTooBigForSelection=false, catalog=true,
            dataType=CatalogType.X.key, tableSelection, isFromRegion=false,
-           searchTarget, searchTargetSymbol= DrawSymbol.POINT_MARKER,
+           searchTarget, searchTargetSymbol= DrawSymbol.POINT_MARKER, layersPanelLayoutId,
     }= initPayload;
 
     const drawingDef= {...makeDrawingDef(),
@@ -84,6 +84,7 @@ function creator(initPayload, presetDefaults={}) {
 
     const helpText= `Click on ${(dataType == CatalogType.REGION.key) ? 'region' : 'point'} to highlight`;
     const options= {
+        layersPanelLayoutId,
         hasPerPlotData:false,
         isPointData: catalog,
         canUserDelete: true,

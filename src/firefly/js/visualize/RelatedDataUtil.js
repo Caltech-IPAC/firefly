@@ -201,7 +201,8 @@ function enableRelatedDataLayerTableOverlay(pv, relatedData) {
     dispatchCreateDrawLayer(Artifact.TYPE_ID,{relatedDataId:relatedData.relatedDataId,
                                               title:relatedData.desc,
                                               dataKey: relatedData.dataKey,
-                                              plotId:pv.plotId} );
+                                              plotId:pv.plotId,
+                                              layersPanelLayoutId: pv.plotId+'-artifacts' } );
 
     dispatchAttachLayerToPlot(relatedData.relatedDataId, pv.plotId, false, 'inherit');
 }

@@ -57,6 +57,7 @@ import MarkerTool from '../drawingLayers/MarkerTool.js';
 import FootprintTool from '../drawingLayers/FootprintTool.js';
 import ImageOutline from '../drawingLayers/ImageOutline.js';
 import ImageRoot from '../drawingLayers/ImageRoot.js';
+import SearchTarget from '../drawingLayers/SearchTarget.js';
 import {showExampleDialog} from '../ui/ExampleDialog.jsx';
 import ImageLineBasedFootprint from '../drawingLayers/ImageLineBasedFootprint.js';
 
@@ -101,7 +102,8 @@ const actionCreators = new Map();
 
 
 const drawLayerFactory= DrawLayerFactory.makeFactory(FixedMarker, SelectArea,DistanceTool,
-                                                     PointSelection, StatsPoint, NorthUpCompass, ImageRoot,
+                                                     PointSelection, StatsPoint, NorthUpCompass,
+                                                     ImageRoot, SearchTarget,
                                                      Catalog, Artifact, WebGrid, RegionPlot,
                                                      MarkerTool, FootprintTool, HiPSGrid, HiPSMOC,
                                                      ImageOutline, ImageLineBasedFootprint);

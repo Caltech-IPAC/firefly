@@ -22,6 +22,8 @@ import {getAppOptions} from '../../core/AppDataCntlr';
 import {makeWorldPt} from '../Point';
 import {CoordinateSys} from '../CoordSys.js';
 import {PlotAttribute} from '../PlotAttribute.js';
+import SearchTarget from '../../drawingLayers/SearchTarget.js';
+import {darker} from '../../util/Color.js';
 
 
 /** @type {TableWatcherDef} */
@@ -89,6 +91,7 @@ export function watchCatalogs(tbl_id, action, cancelSelf, params) {
 
         case TABLE_REMOVE:
             dispatchDestroyDrawLayer(tbl_id);
+            dispatchDestroyDrawLayer(searchTargetId(tbl_id));
             cancelSelf();
             break;
 
@@ -105,6 +108,8 @@ export function watchCatalogs(tbl_id, action, cancelSelf, params) {
 }
 
 
+const searchTargetId= (tbl_id) => 'search-target-'+tbl_id;
+
 function handleCatalogUpdate(tbl_id) {
     const sourceTable= getTblById(tbl_id);
     if (!sourceTable || sourceTable.isFetching) return;
@@ -117,7 +122,7 @@ function handleCatalogUpdate(tbl_id) {
     const params= {
         startIdx : 0,
         pageSize : MAX_ROW,
-        inclCols : `"${columns.lonCol}","${columns.latCol}","ROW_IDX"`        // clumn names should be in quotes
+        inclCols : `"${columns.lonCol}","${columns.latCol}","ROW_IDX"`        // column names should be in quotes
     };
 
     let req = cloneRequest(sourceTable.request, params);
@@ -157,15 +162,30 @@ function updateDrawingLayer(tbl_id, tableModel, tableRequest,
     if (dl) { // update drawing layer
         dispatchModifyCustomField(tbl_id, {title, tableData, tableMeta, tableRequest,
                                            highlightedRow, selectInfo, columns,
-                                           dataTooBigForSelection, searchTarget });
+                                           dataTooBigForSelection});
     }
     else { // new drawing layer
         const angleInRadian= isTableUsingRadians(tableModel, [columns.lonCol,columns.latCol]);
-        dispatchCreateDrawLayer(Catalog.TYPE_ID,
+        const catDL= dispatchCreateDrawLayer(Catalog.TYPE_ID,
             {catalogId:tbl_id, title, tableData, tableMeta, tableRequest, highlightedRow,
                                 selectInfo, columns, dataTooBigForSelection, catalog:true,
-                                angleInRadian, searchTarget});
+                                layersPanelLayoutId: tbl_id,
+                                angleInRadian});
         dispatchAttachLayerToPlot(tbl_id, plotIdAry);
+
+        const newDL = dispatchCreateDrawLayer(SearchTarget.TYPE_ID,
+            {
+                drawLayerId: searchTargetId(tbl_id),
+                color: darker(catDL.drawingDef.color),
+                searchTargetWP: searchTarget,
+                layersPanelLayoutId: tbl_id,
+                titlePrefix: 'Catalog ',
+                canUserDelete: true,
+            });
+        dispatchAttachLayerToPlot(newDL.drawLayerId, plotIdAry, false);
+
+
+
         const dl= getDrawLayerById(dlRoot(),tbl_id);
         if (dl.supportSubgroups  &&  dl.tableMeta[SUBGROUP]) {
             plotIdAry.map( (plotId) =>  getPlotViewById(visRoot(), plotId))
