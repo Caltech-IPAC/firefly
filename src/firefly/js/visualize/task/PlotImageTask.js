@@ -29,8 +29,10 @@ import {isDefined} from '../../util/WebUtil';
 import {HdrConst} from '../FitsHeaderUtil.js';
 import {doFetchTable} from '../../tables/TableUtil';
 import ImageRoot from '../../drawingLayers/ImageRoot';
-import {dispatchDetachLayerFromPlot} from '../DrawLayerCntlr';
+import {dispatchDestroyDrawLayer, dispatchDetachLayerFromPlot} from '../DrawLayerCntlr';
 import {getAllDrawLayersForPlot} from '../PlotViewUtil';
+import SearchTarget from '../../drawingLayers/SearchTarget';
+import CsysConverter from '../CsysConverter';
 
 //======================================== Exported Functions =============================
 //======================================== Exported Functions =============================
@@ -358,11 +360,36 @@ export function addDrawLayers(request, pv, plot) {
 
 
 
-    const fixedLayers= getDrawLayersByType(getDlAry(), ImageRoot.TYPE_ID);
-    let newDL= fixedLayers.find( (dl) => dl.plotId===plot.plotId);
+    const imageRootLayers= getDrawLayersByType(getDlAry(), ImageRoot.TYPE_ID);
+    let newDL= imageRootLayers.find( (dl) => dl.plotId===plot.plotId);
     if (!newDL) {
-        newDL= dispatchCreateDrawLayer(ImageRoot.TYPE_ID, {plotId});
+        newDL= dispatchCreateDrawLayer(ImageRoot.TYPE_ID, {plotId,layersPanelLayoutId:plotId});
         dispatchAttachLayerToPlot(newDL.drawLayerId, pv.plotId, false);
+    }
+
+    const displayFixedTarget = get(pv,'plotViewCtx.displayFixedTarget', false) && plot.attributes[PlotAttribute.FIXED_TARGET];
+    const ftId= plotId + '--image-search-target';
+    if (displayFixedTarget) {
+        const wp= plot.attributes[PlotAttribute.FIXED_TARGET];
+        const cc= CsysConverter.make(plot);
+        if (cc.pointInPlot(wp)) {
+            const searchTargetLayers= getDrawLayersByType(getDlAry(), SearchTarget.TYPE_ID);
+            newDL= searchTargetLayers.find( (dl) => dl.plotId===plot.plotId);
+            if (!newDL) {
+                newDL= dispatchCreateDrawLayer(SearchTarget.TYPE_ID,
+                    {
+                        drawLayerId: ftId,
+                        plotId,
+                        layersPanelLayoutId:plotId,
+                        titlePrefix:isImage(plot)?'Image ':'HiPS '
+                    });
+                dispatchAttachLayerToPlot(newDL.drawLayerId, pv.plotId, false);
+            }
+        }
+
+    }
+    else {
+        dispatchDestroyDrawLayer(ftId);
     }
 
     request.getOverlayIds().forEach((drawLayerTypeId)=> {

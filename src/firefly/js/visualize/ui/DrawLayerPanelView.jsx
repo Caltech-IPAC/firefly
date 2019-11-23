@@ -4,7 +4,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {padStart} from 'lodash';
+import {padStart, groupBy, get} from 'lodash';
 import {isDrawLayerVisible, getAllDrawLayersForPlot,
     getLayerTitle, getDrawLayersByDisplayGroup}  from '../PlotViewUtil.js';
 import {operateOnOverlayPlotViewsThatMatch, enableRelatedDataLayer,
@@ -130,29 +130,35 @@ function makeAddRelatedDataAry(pv) {
 
 function makeDrawLayerItemAry(layers,pv, maxTitleChars, factory) {
     const last= layers.length-1;
-    return layers.sort( (l1,l2) => {
+    const sortedLayer= layers.sort( (l1,l2) => {
             if (l1.drawLayerTypeId===ImageRoot.TYPE_ID && l2.drawLayerTypeId!==ImageRoot.TYPE_ID) return -1;
             if (l1.drawLayerTypeId!==ImageRoot.TYPE_ID && l2.drawLayerTypeId===ImageRoot.TYPE_ID) return 1;
             return 0;
-        })
-        .map( (l,idx) => <DrawLayerItemView key={l.drawLayerId}
-                                                     maxTitleChars={maxTitleChars}
-                                                     helpLine={l.helpLine}
-                                                     lastItem={idx===last}
-                                                     canUserDelete={l.canUserDelete}
-                                                     canUserHide={l.canUserHide}
-                                                     canUserChangeColor={l.canUserChangeColor}
-                                                     isPointData={l.isPointData}
-                                                     drawingDef={l.drawingDef}
-                                                     color={l.drawingDef.color}
-                                                     autoFormatTitle={l.autoFormatTitle}
-                                                     title= {getLayerTitle(pv.plotId,l)}
-                                                     visible={isDrawLayerVisible(l,pv.plotId)}
-                                                     modifyColor={() => modifyColor(l,pv.plotId)}
-                                                     modifyShape={() => modifyShape(l,pv.plotId)}
-                                                     deleteLayer={() => deleteLayer(l,pv.plotId)}
-                                                     changeVisible={() => flipVisible(l,pv.plotId)}
-                                                     UIComponent={getUIComponent(l,pv,factory, maxTitleChars)}
+        });
+
+    const sortedGroupedObj= groupBy([...sortedLayer], 'layersPanelLayoutId' );
+    const sortedGroupedLayer= Object.values(sortedGroupedObj).flat(1);
+
+    return sortedGroupedLayer.map( (l,idx) =>
+        <DrawLayerItemView key={l.drawLayerId}
+                           maxTitleChars={maxTitleChars}
+                           helpLine={l.helpLine}
+                           lastItem={idx===last}
+                           canUserDelete={l.canUserDelete}
+                           canUserHide={l.canUserHide}
+                           canUserChangeColor={l.canUserChangeColor}
+                           isPointData={l.isPointData}
+                           drawingDef={l.drawingDef}
+                           color={l.drawingDef.color}
+                           packWithNext= {idx!==last && l.layersPanelLayoutId && l.layersPanelLayoutId===get(sortedGroupedLayer[idx+1],'layersPanelLayoutId')}
+                           autoFormatTitle={l.autoFormatTitle}
+                           title= {getLayerTitle(pv.plotId,l)}
+                           visible={isDrawLayerVisible(l,pv.plotId)}
+                           modifyColor={() => modifyColor(l,pv.plotId)}
+                           modifyShape={() => modifyShape(l,pv.plotId)}
+                           deleteLayer={() => deleteLayer(l,pv.plotId)}
+                           changeVisible={() => flipVisible(l,pv.plotId)}
+                           UIComponent={getUIComponent(l,pv,factory, maxTitleChars)}
     />);
 }
 

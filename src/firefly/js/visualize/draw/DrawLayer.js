@@ -144,6 +144,7 @@ function makeDrawLayer(drawLayerId,
 
 
 
+
         title,
         autoFormatTitle:true,
         plotIdAry: [],  // array of plotId that are layered
@@ -153,6 +154,7 @@ function makeDrawLayer(drawLayerId,
 
         groupingScope: GroupingScope.SUBGROUP, // only applies if a catalog has supportSubgroups
         titleMatching: false,
+        layersPanelLayoutId: undefined,
 
 
            // The following are the options that the drawing layer supports.

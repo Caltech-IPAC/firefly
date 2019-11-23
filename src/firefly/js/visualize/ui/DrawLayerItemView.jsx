@@ -21,6 +21,7 @@ const mLeft = 5;
 export function DrawLayerItemView({maxTitleChars, lastItem, deleteLayer,
                             color, canUserChangeColor, canUserDelete, title, helpLine,
                             isPointData, drawingDef, autoFormatTitle, canUserHide=true,
+                            packWithNext=false,
                             visible, changeVisible, modifyColor, modifyShape, UIComponent}) {
     var style= {
         width:'100%',
@@ -32,6 +33,10 @@ export function DrawLayerItemView({maxTitleChars, lastItem, deleteLayer,
 
     if (lastItem) {
         style.marginBottom= 10;
+    }
+    else if (packWithNext) {
+        style.marginBottom= 0;
+        style.paddingBottom= 0;
     }
     else {
         style.borderBottomStyle= 'solid';

@@ -115,7 +115,7 @@ function retrieveArtifactsTable(drawLayer) {
 //---------------------------------------------------------------------
 
 function creator(initPayload, presetDefaults) {
-    const {title, color, angleInRadian=false, relatedDataId, plotId, symbol, size}= initPayload;
+    const {title, color, angleInRadian=false, relatedDataId, plotId, symbol, size, layersPanelLayoutId}= initPayload;
 
     const pv= getPlotViewById(visRoot(), plotId);
     const rd= getRelatedDataById(pv, relatedDataId);
@@ -132,6 +132,7 @@ function creator(initPayload, presetDefaults) {
         presetDefaults);
 
     const options= {
+        layersPanelLayoutId,
         hasPerPlotData:false,
         isPointData:true,
         canUserDelete: true,

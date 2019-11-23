@@ -434,6 +434,7 @@ export const parseScreenPt= (inStr) => parsePt(SPT,inStr);
  * @return {WorldPt}
  */
 export const parseWorldPt = function (serializedWP) {
+    if (isValidPoint(serializedWP)) return serializedWP;
     if (!serializedWP || !isString(serializedWP)) return null;
 
     const sAry= serializedWP.split(';');

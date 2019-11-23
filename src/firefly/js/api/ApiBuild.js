@@ -127,7 +127,7 @@ export function initApi() {
 
     if (!window.firefly) window.firefly= {getJsonFromTask};
     window.firefly.ignoreHistory = true;
-    Object.assign(window.firefly, lowlevelApi, highLevelApi, viewInterface);
+    Object.assign(window.firefly, lowlevelApi, highLevelApi, viewInterface, React);
     const firefly= window.firefly;
     dispatchOnAppReady(() => {
         window.onFireflyLoaded && window.onFireflyLoaded(firefly);

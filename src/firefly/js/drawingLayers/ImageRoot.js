@@ -2,27 +2,21 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-
-import {isEmpty} from 'lodash';
 import React from 'react';
 import numeral from 'numeral';
-import PointDataObj from '../visualize/draw/PointDataObj.js';
 import {DrawSymbol} from '../visualize/draw/DrawSymbol.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
-import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.js';
+import DrawLayer, {ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {getPlotViewById, primePlot} from '../visualize/PlotViewUtil';
 import {dispatchChangeImageVisibility, visRoot} from '../visualize/ImagePlotCntlr';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr';
 import {isHiPS, isImage} from '../visualize/WebPlot';
-import {PlotAttribute} from '../visualize/PlotAttribute.js';
-import {getUIComponent} from './ImageRootUI.jsx';
-import {isDefined} from '../util/WebUtil';
 
 const ID= 'IMAGE_ROOT';
 const TYPE_ID= 'IMAGE_ROOT_TYPE';
 
-const factoryDef= makeFactoryDef(TYPE_ID,creator,getDrawData,getLayerChanges,null, getUIComponent,onVisibilityChange);
+const factoryDef= makeFactoryDef(TYPE_ID,creator,undefined,getLayerChanges,undefined, undefined,onVisibilityChange);
 
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
 
@@ -38,19 +32,21 @@ function onVisibilityChange(drawLayer,action) {
 function creator(initPayload, presetDefaults) {
 
     const drawingDef= {
-        ...makeDrawingDef('yellow', {lineWidth:1, size:10, fontWeight:'bolder', symbol: DrawSymbol.POINT_MARKER } ),
+        ...makeDrawingDef('yellow', {fontWeight:'bolder'} ),
         ...presetDefaults};
     idCnt++;
 
-    const {plotId}= initPayload;
+    const {plotId, layersPanelLayoutId}= initPayload;
 
 
     const options= {
         plotId,
+        layersPanelLayoutId,
         searchTargetVisible: true,
         isPointData:false,
         autoFormatTitle:false,
         canUserChangeColor: ColorChangeType.DISABLE,
+        destroyWhenAllDetached: true,
         canUserDelete: false,
     };
     return DrawLayer.makeDrawLayer(`${ID}-${idCnt}`,TYPE_ID, {}, options, drawingDef);
@@ -64,31 +60,14 @@ function getLayerChanges(drawLayer, action) {
     if (!pv || !plot) return null;
     switch (action.type) {
         case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
-            // if (!pv.plotViewCtx.displayFixedTarget) return;
-            const hasPt= Boolean(pv.plotViewCtx.displayFixedTarget && plot.attributes[PlotAttribute.FIXED_TARGET]);
-            return {
-                title: getTitle(pv, plot, drawLayer),
-                isPointData:hasPt,
-                canUserChangeColor: hasPt? ColorChangeType.DYNAMIC : ColorChangeType.DISABLE};
-        case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
-            const {changes}= action.payload;
-            if (isDefined(changes.searchTargetVisible)) {
-                const dd= Object.assign({},drawLayer.drawData);
-                dd[DataTypes.DATA]= null;
-                return {drawData:dd, searchTargetVisible:changes.searchTargetVisible};
-            }
-            break;
+            return { title: getTitle(pv, plot, drawLayer), };
         default:
             return { title:getTitle(pv, plot, drawLayer)};
     }
-    return null;
+    return undefined;
 }
 
 
-function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
-    if (dataType!==DataTypes.DATA) return null;
-    return isEmpty(lastDataRet) ? computeDrawData(drawLayer) : lastDataRet;
-}
 
 function getTitle(pv, plot, drawLayer) {
     if (!plot) return '';
@@ -117,12 +96,3 @@ function getTitle(pv, plot, drawLayer) {
     );
 }
 
-function computeDrawData(drawLayer) {
-    const {plotId}= drawLayer;
-    if (!plotId) return null;
-    const pv= getPlotViewById(visRoot(),plotId);
-    const plot= primePlot(visRoot(),plotId);
-    if (!plot || !drawLayer.searchTargetVisible || !pv.plotViewCtx.displayFixedTarget) return [];
-    const wp= plot.attributes[PlotAttribute.FIXED_TARGET];
-    return wp ? [PointDataObj.make(wp)] : [];
-}

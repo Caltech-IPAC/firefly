@@ -51,6 +51,7 @@ function max0(v) {return Math.max(Math.trunc(v), 0);}
 
 
 export function brighter(colorStr,factor= .7) {
+    if (!colorStr) return undefined;
     var rgb= toRGB(colorStr);
     var r = rgb[0];
     var g = rgb[1];
@@ -87,6 +88,7 @@ export function brighter(colorStr,factor= .7) {
  * @since      JDK1.0
  */
 export function darker(colorStr, factor=.7) {
+    if (!colorStr) return undefined;
     var rgb= toRGB(colorStr);
     var r = rgb[0];
     var g = rgb[1];

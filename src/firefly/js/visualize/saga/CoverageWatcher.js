@@ -30,9 +30,11 @@ import {parseObsCoreRegion} from '../../util/ObsCoreSRegionParser.js';
 import {getAppOptions} from '../../core/AppDataCntlr';
 import {getSearchTarget} from './CatalogWatcher';
 import {MetaConst} from '../../data/MetaConst.js';
-import {isHiPS} from '../WebPlot';
+import {isHiPS, isImage} from '../WebPlot';
 import {PlotAttribute} from '../PlotAttribute.js';
-import {isDrawLayerVisible} from '../PlotViewUtil';
+import {getDrawLayersByType, isDrawLayerVisible} from '../PlotViewUtil';
+import SearchTarget from '../../drawingLayers/SearchTarget.js';
+import {darker} from '../../util/Color';
 
 export const CoverageType = new Enum(['X', 'BOX', 'REGION', 'ALL', 'GUESS']);
 export const FitType=  new Enum (['WIDTH', 'WIDTH_HEIGHT']);
@@ -121,6 +123,7 @@ export const coverageWatcherDef = {
 const getOptions= (inputOptions) => ({...defOptions, ...cleanUpOptions(inputOptions)});
 const centerId = (tbl_id) => (tbl_id+'_center');
 const regionId = (tbl_id) => (tbl_id+'_region');
+const searchTargetId = (tbl_id) => (tbl_id+'_searchTarget');
 
 /**
  * Action watcher callback: watch the tables and update coverage display
@@ -291,7 +294,7 @@ function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, 
                         const isRegion = isTableWithRegion(allRowsTable);
                         //const isCatalog = findTableCenterColumns(allRowsTable);
 
-                        tblCatIdMap[tbl_id] = (isRegion) ? [centerId(tbl_id), regionId(tbl_id)] : [tbl_id];
+                        tblCatIdMap[tbl_id] = (isRegion) ? [centerId(tbl_id), regionId(tbl_id)] : [tbl_id, searchTargetId(tbl_id)];
                         updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, preparedTables,
                             isTableUsingRadians(table), tblCatIdMap, preferredHipsSourceURL );
                     }
@@ -475,6 +478,9 @@ function makeOverlayCoverageDrawing() {
             if (isCatalog(table) && options.ignoreCatalogs) return; // let the catalog watcher just handle the drawing overlays
 
             if (tblCatIdMap[tbl_id]) {
+                const searchTargetDL= getDrawLayerById(getDlAry(), searchTargetId(table.tbl_id));
+                searchTargetDL && dispatchDestroyDrawLayer(searchTargetDL.drawLayerId);
+
                 tblCatIdMap[tbl_id].forEach((cId) => {
                     const layer = getDrawLayerById(getDlAry(), cId);
                     const tableRemoved= !Boolean(getTblById(tbl_id));
@@ -508,6 +514,26 @@ function makeOverlayCoverageDrawing() {
     };
 }
 
+function isUsingRadians(dataType,table,columns) {
+    if (dataType=== CoverageType.X) {
+        return isTableUsingRadians(table, [columns.lonCol,columns.latCol]);
+    }
+    else if (dataType=== CoverageType.BOX) {
+        const cAry= columns.map( (c) => [c.lonCol,c.latCol]).flat();
+        return  isTableUsingRadians(table, cAry);
+    }
+}
+
+function getColumns(dataType,covType,allRowsTable) {
+    return (
+        dataType === CoverageType.REGION ?
+            findTableRegionColumn(allRowsTable) :
+            (covType === CoverageType.BOX ?
+                getCornersColumns(allRowsTable) :
+                findTableCenterColumns(allRowsTable))
+    );
+}
+
 
 /**
  *
@@ -523,64 +549,74 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp, addV
     if (allRowsTable==='WORKING') return;
     const covType= getCoverageType(options,allRowsTable);
     const {tableMeta, tableData}= allRowsTable;
+    const {showCatalogSearchTarget}= getAppOptions();
+    const {tbl_id}= table;
+    const layersPanelLayoutId= 'catgroup-'+ table.tbl_id;
+    const searchTarget= showCatalogSearchTarget ? getSearchTarget(table.request,
+                                                   lookupOption(options, 'searchTarget', table.tbl_id),
+                                                   lookupOption(options, 'overlayPosition', table.tbl_id)) : undefined;
 
     const createDrawLayer = (cId, dataType, visible, isFromRegion=false) => {
-        const columns = dataType === CoverageType.REGION ? findTableRegionColumn(allRowsTable) :
-                        (covType === CoverageType.BOX ? getCornersColumns(allRowsTable) : findTableCenterColumns(allRowsTable));
-        if (isEmpty(columns)) return;
-        let angleInRadian= false;
-        if (dataType=== CoverageType.X) {
-            angleInRadian= isTableUsingRadians(table, [columns.lonCol,columns.latCol]);
-        }
-        else if (dataType=== CoverageType.BOX) {
-            const cAry= columns.map( (c) => [c.lonCol,c.latCol]).flat();
-            angleInRadian= isTableUsingRadians(table, cAry);
-        }
-
+        const columns= getColumns(dataType,covType,allRowsTable);
         const dl = getDlAry().find((dl) => dl.drawLayerTypeId === Catalog.TYPE_ID && dl.catalogId === cId);
-        if (!dl) {
-            const {showCatalogSearchTarget}= getAppOptions();
-            const searchTarget= showCatalogSearchTarget ? getSearchTarget(table.request,
-                                                                lookupOption(options, 'searchTarget', cId),
-                                                                lookupOption(options, 'overlayPosition', cId))
-                                                         : undefined;
-            dispatchCreateDrawLayer(Catalog.TYPE_ID, {
-                catalogId: cId,
-                tblId: table.tbl_id,
-                title: `Coverage: ${table.title || table.tbl_id}` +
-                             (isFromRegion ? (dataType===CoverageType.REGION ? ' regions' : ' positions') : ''),
-                color:  drawOp[cId].color,
-                tableData,
-                tableMeta,
-                tableRequest: table.request,
-                highlightedRow: table.highlightedRow,
-                catalog: dataType === CoverageType.X,
-                boxData: dataType !== CoverageType.X,
-                dataType: dataType.key,
-                isFromRegion,
-                columns,
-                symbol: drawOp.symbol || lookupOption(options, 'symbol', cId),
-                size: drawOp.size || lookupOption(options, 'symbolSize', cId),
-                selectInfo: table.selectInfo,
-                angleInRadian,
-                dataTooBigForSelection: table.totalRows > 10000,
-                tableSelection: (dataType === CoverageType.REGION) ? (drawOp[cId].selectOption || TableSelectOptions.all.key) : null,
-                searchTarget,
-            });
-            dispatchAttachLayerToPlot(cId, plotId, false, visible);
-        }
+
+        if (dl || isEmpty(columns)) return;
+
+        dispatchCreateDrawLayer(Catalog.TYPE_ID, {
+            catalogId: cId,
+            layersPanelLayoutId,
+            tblId: tbl_id,
+            title: `Coverage: ${table.title || tbl_id}` +
+                         (isFromRegion ? (dataType===CoverageType.REGION ? ' regions' : ' positions') : ''),
+            color:  drawOp[cId].color,
+            tableData,
+            tableMeta,
+            tableRequest: table.request,
+            highlightedRow: table.highlightedRow,
+            catalog: dataType === CoverageType.X,
+            boxData: dataType !== CoverageType.X,
+            dataType: dataType.key,
+            isFromRegion,
+            columns,
+            symbol: drawOp.symbol || lookupOption(options, 'symbol', cId),
+            size: drawOp.size || lookupOption(options, 'symbolSize', cId),
+            selectInfo: table.selectInfo,
+            angleInRadian: isUsingRadians(dataType,table,columns),
+            dataTooBigForSelection: table.totalRows > 10000,
+            tableSelection: (dataType === CoverageType.REGION) ? (drawOp[cId].selectOption || TableSelectOptions.all.key) : null,
+        });
+        dispatchAttachLayerToPlot(cId, plotId, false, visible);
     };
 
     if (covType === CoverageType.BOX) {
-        createDrawLayer(table.tbl_id, covType, addVisible);
+        createDrawLayer(tbl_id, covType, addVisible);
     } else if (covType === CoverageType.X) {
-        createDrawLayer(table.tbl_id, covType, addVisible);
+        createDrawLayer(tbl_id, covType, addVisible);
     } else if (covType === CoverageType.REGION) {
         const layerType = [CoverageType.X, CoverageType.REGION];
-        const layerId = [centerId(table.tbl_id), regionId(table.tbl_id)];
+        const layerId = [centerId(tbl_id), regionId(tbl_id)];
 
         layerType.forEach((type, idx) => createDrawLayer(layerId[idx], layerType[idx], addVisible, true));
     }
+
+    if (searchTarget) {
+        let newDL = getDrawLayerById(getDlAry(), searchTargetId(tbl_id));
+        if (!newDL) {
+            newDL = dispatchCreateDrawLayer(SearchTarget.TYPE_ID,
+                {
+                    color: darker(drawOp[covType === CoverageType.REGION? centerId(tbl_id) : tbl_id].color),
+                    drawLayerId: searchTargetId(tbl_id),
+                    plotId,
+                    searchTargetWP: searchTarget,
+                    layersPanelLayoutId,
+                    titlePrefix: '',
+                    canUserDelete: true,
+                });
+            dispatchAttachLayerToPlot(newDL.drawLayerId, plotId, false);
+        }
+    }
+
+
 }
 
 

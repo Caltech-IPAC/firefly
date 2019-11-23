@@ -3,7 +3,7 @@ import numeral from 'numeral';
 import {coordToString} from '../../data/form/PositionFieldDef';
 import CoordUtil from '../CoordUtil';
 import Point, {isValidPoint} from '../Point';
-
+import {sprintf} from '../../externalSource/sprintf.js';
 
 
 export function formatWorldPt(wp, pad=3, useBold=true) {
@@ -27,7 +27,7 @@ export function formatWorldPt(wp, pad=3, useBold=true) {
         }
     }
     else {
-        return ( <span style={{fontWeight:useBold?'bold':'normal'}}>{`${wp.x}, ${wp.y} ${coordToString(wp.cSys)}`}</span> );
+        return ( <span style={{fontWeight:useBold?'bold':'normal'}}>{`${sprintf('%7.6f',wp.x)}, ${sprintf('%7.6f',wp.y)} ${coordToString(wp.cSys)}`}</span> );
     }
 }
 
