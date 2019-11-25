@@ -282,8 +282,8 @@ function getFootprintDataFromTable(tableModel) {
                     // skip no spans case
                     if (c1_x >= 0 && c1_y >= 0 && c2_x >= 0 && c2_y >= 0 && spansStr && peaksStr) {
                         const corners = [[c1_x, c1_y], [c2_x, c1_y], [c2_x, c2_y], [c1_x, c2_y]];
-                        const spanSet = everyOtherData(spansStr.replace(/\(|\)|,/g, '').split(' '), 3);
-                        const peakSet = everyOtherData(peaksStr.replace(/\(|\)|,/g, '').split(' '), 2, 'float');
+                        const spanSet = everyOtherData(spansStr, 3);
+                        const peakSet = everyOtherData(peaksStr, 2, 'float');
 
                         prev[id] = {corners, spans: spanSet, peaks: peakSet, rowIdx: oneFootprint[colsIdxMap[table_rowidx]],
                                     rowNum: oneFootprint[colsIdxMap[table_rownum]],
