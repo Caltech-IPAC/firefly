@@ -163,7 +163,80 @@
                     }
                 }
             });
+        }
+    </script>
+</template>
 
+<template title="NED SED Chart with uncertainties, upper, and lower limits" class="tpl xxl" >
+    <div id="expected">
+        <ul class='expected-list'>
+            <li>Arrows represent upper or lower limits. Click on one of the arrows, and move a mouse over it to see the tooltip.
+                It should say "Upper limit" or "Lower Limit" on the bottom.</li>
+            <li>Use mouse wheel to zoom. Reset back to the original size with 1x button on top.</li>
+        </ul>
+    </div>
+    <div id="actual" class="flow-h" style="width: 1200px">
+        <div id="sedTableHere" class="box"></div>
+        <div id="sedChartHere" class="box x2"></div>
+    </div>
+    <script>
+
+        firefly = {
+            options: {charts: {singleTraceUI: true, yLimitUI: true}}
+        };
+
+        onFireflyLoaded= function(firefly) {
+            const tblReq = firefly.util.table.makeFileRequest(
+                'SED: NGC 1068', // title
+                'http://ned.ipac.caltech.edu/cgi-bin/datasearch?meas_type=bot&ebars_spec=ebars&label_spec=no&x_spec=freq&y_spec=Fnu_jy&xr=-1&of=xml_main&search_type=Photometry&objname=NGC+1068&hconst=67.8&omegam=0.308&omegav=0.692&wmap=4&corr_z=1&objid=58240', // source
+                null,  // alt_source
+                {filters: '"NED Units" like \'Jy\''} // options
+            );
+
+            const tblId = tblReq.tbl_id;
+            firefly.showTable('sedTableHere', tblReq, {showFilters: true});
+
+            const dataLayout = {
+                xaxis: {
+                    title: '<em>v</em> [Hz]',
+                    type: 'log',
+                    tickwidth: 2,
+                    linewidth: 2,
+                    tickmode: "auto",
+                    showgrid: true,
+                    ticks: "inside",
+                    mirror: "allticks"
+                },
+                yaxis: {
+                    title: 'F<sub><em>v</em></sub> [Jy]',
+                    type: 'log',
+                    tickwidth: 2,
+                    linewidth: 2,
+                    tickmode: "auto",
+                    showgrid: true,
+                    ticks: "inside",
+                    mirror: "allticks"
+                }
+            };
+
+            firefly.showChart('sedChartHere', {
+                data: [{
+                    name: 'sed',
+                    tbl_id: tblId,
+                    x: 'tables::"Frequency"',
+                    y: 'tables::"Flux Density"',
+                    error_y: {
+                        arrayminus: 'tables::"Lower limit of uncertainty"', // error bar (minus)
+                        array: 'tables::"Upper limit of uncertainty"' // error bar (plus)
+                    },
+                    mode: 'markers',
+                    firefly: {
+                        yMax: 'tables::"Upper limit of Flux Density"',
+                        yMin: 'tables::"Lower limit of Flux Density"'
+                    },
+                }],
+                layout: dataLayout
+            });
         }
     </script>
 </template>
