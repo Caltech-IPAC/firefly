@@ -34,15 +34,15 @@ const fKeyDef = {
     overWritable: {fKey: 'fileOverwritable', label: 'File overwritable: '}
 };
 
-const tableFormats = new Enum({ipac: 'ipac',
-                               csv: 'csv: Comma-Separated values',
-                               tsv: 'tsv: Tab-Separated values',
-                               'votable-tabledata': 'votable-tablemeta: TABLEDATA-format VOTable',
-                               'votable-binary-inline': 'votable-binary: inline BINARY-format VOTable',
+const tableFormats = new Enum({ipac: 'IPAC Table (.tbl)',
+                               csv: 'Comma-separated values (.csv)',
+                               tsv: 'Tab-separated values (.tsv)',
+                               'votable-tabledata': 'VOTable - TABLEDATA (.vot)',
+                               'votable-binary2-inline': 'VOTable - BINARY2 (.vot)',
+                               'votable-fits-inline': 'VOTable - FITS (.vot)'
+                               //'votable-binary-inline': 'votable-binary: inline BINARY-format VOTable',           // (deprecated) removed
                                //'votable-binary-href': 'votable-binary-href: External BINARY-format VOTable',
-                               'votable-binary2-inline': 'votable-binary2: inline BINARY2-format VOTable',
                                //'votable-binary2-href': 'votable-binary2-href: External BINAR2Y-format VOTable',
-                               'votable-fits-inline': 'votable-fits: Inline FITS-format VOTable',
                                //'votable-fits-href': 'votable-fits-href: External FITS-format VOTable',
                                //'fits': 'fits: FITS table'
                              });
