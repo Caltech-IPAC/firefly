@@ -34,7 +34,7 @@ public class FileAnalysis {
     public enum ReportType {Brief,              // expect to only get a report with one part without details
                             Normal,             // a report with all parts populated, but not details
                             Details}            // a full report with details
-    public enum Type {Image, Table, Spectrum, HeaderOnly, Unknown}
+    public enum Type {Image, Table, Spectrum, HeaderOnly, PDF, TAR, Unknown}
 
 
     public static Report analyze(File infile, ReportType type) throws Exception {
@@ -56,6 +56,12 @@ public class FileAnalysis {
             case CSV:
             case TSV:
                 report =  DsvTableIO.analyze(infile, format.type, mtype);
+                break;
+            case PDF:
+                report =  analyzePDF(infile, mtype);
+                break;
+            case TAR:
+                report =  analyzeTAR(infile, mtype);
                 break;
             default:
                 report = new Report(type, Format.UNKNOWN.name(), infile.length(), infile.getAbsolutePath());
@@ -203,5 +209,20 @@ public class FileAnalysis {
         public void setDetails(DataGroup details) {
             this.details = details;
         }
+    }
+
+
+
+
+    public static FileAnalysis.Report analyzePDF(File infile, FileAnalysis.ReportType type) {
+        FileAnalysis.Report report = new FileAnalysis.Report(type, TableUtil.Format.PDF.name(), infile.length(), infile.getPath());
+        report.addPart(new FileAnalysis.Part(FileAnalysis.Type.PDF, 0, "PDF File"));
+        return report;
+    }
+
+    public static FileAnalysis.Report analyzeTAR(File infile, FileAnalysis.ReportType type) {
+        FileAnalysis.Report report = new FileAnalysis.Report(type, TableUtil.Format.TAR.name(), infile.length(), infile.getPath());
+        report.addPart(new FileAnalysis.Part(FileAnalysis.Type.TAR, 0, "TAR File"));
+        return report;
     }
 }

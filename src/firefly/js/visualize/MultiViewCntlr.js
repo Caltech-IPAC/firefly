@@ -388,8 +388,6 @@ export function findViewerWithItemId(multiViewRoot, itemId, containerType) {
     return v ? v.viewerId : null;
 }
 
-// get an available view from multiple views
-
 /**
  *
  * @param {MultiViewerRoot} multiViewRoot
@@ -676,6 +674,7 @@ function changeMount(state,viewerId,mounted) {
     if (viewer.mounted===mounted) return state;
     return state.map( (entry) => entry.viewerId===viewerId ? clone(entry, {mounted}) : entry);
 }
+
 
 function updateCustomData(state,action) {
     const {viewerId,customData}= action.payload;

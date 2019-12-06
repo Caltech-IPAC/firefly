@@ -450,6 +450,21 @@ export function download(url, filename) {
         .catch(({message}) => showInfoPopup(truncate(message, {length: 200}), 'Unexpected error'));
 }
 
+
+export function downloadSimple(url) {
+    let nullFrame = document.getElementById('null_frame');
+    if (!nullFrame) {
+        nullFrame = document.createElement('iframe');
+        nullFrame.id = 'null_frame';
+        nullFrame.style.display = 'none';
+        nullFrame.style.width = '0px';
+        nullFrame.style.height = '0px';
+        document.body.appendChild(nullFrame);
+    }
+    nullFrame.src = url;
+}
+
+
 export function parseUrl(url) {
     const parser = document.createElement('a');
     const pathAry = [];

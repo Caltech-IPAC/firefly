@@ -2,15 +2,124 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isEmpty} from 'lodash';
+import {get, isEmpty} from 'lodash';
 import {ServerRequest} from '../data/ServerRequest.js';
 import {WebPlotRequest} from '../visualize/WebPlotRequest.js';
 import {ZoomType} from '../visualize/ZoomType.js';
 import {getCellValue, getTblInfo} from '../tables/TableUtil.js';
+import {makeFileRequest} from '../tables/TableRequestUtil';
+import {
+    dispatchTableFetch,
+    dispatchTableLoaded,
+    dispatchTableRemove,
+    dispatchTableSearch,
+    TABLE_FETCH
+} from '../tables/TablesCntlr';
+import {MetaConst} from '../data/MetaConst';
+import {LC} from '../templates/lightcurve/LcManager';
+import {dispatchChartAdd} from '../charts/ChartsCntlr';
+import {getTblById, default as TblUtil, onTableLoaded} from '../tables/TableUtil';
 
 const getSetInSrByRow= (table,sr,rowNum) => (col) => {
     sr.setSafeParam(col.name, getCellValue(table,rowNum,col.name));
 };
+
+
+
+/**
+ *
+ * @param {String} source - a file on the server or a url
+ * @param {String} titleStr
+ * @param {ActivateParams} activateParams
+ * @param {number} [tbl_index]
+ * @param {number} [activateOnce] if true the only create this table id if it does not exist
+ * @param {String} [tbl_id]
+ * @return {function}
+ */
+export function createTableActivate(source, titleStr, activateParams, tbl_index=0, activateOnce=false, tbl_id= 'part-result-tbl') {
+    return () => {
+        if (activateOnce && getTblById(tbl_id)) return;
+        const {tableGroupViewerId}= activateParams;
+        const dataTableReq= makeFileRequest(titleStr, source, undefined,
+            {
+                tbl_id,
+                tbl_index,
+                startIdx : 0,
+                pageSize : 100,
+                META_INFO : {
+                    [MetaConst.DATA_SOURCE] : 'false',
+                    [MetaConst.CATALOG_OVERLAY_TYPE]:'false'
+                }
+            });
+        dispatchTableSearch(dataTableReq,
+            {
+                logHistory: false,
+                removable:false,
+                tbl_group: tableGroupViewerId,
+                backgroundable: false,
+                showFilters: true,
+                showInfoButton: true
+            });
+        return () => {
+            dispatchTableRemove(tbl_id,false);
+        };
+    };
+}
+
+export function createChartActivate(source, titleStr, activateParams, xAxis, yAxis, tbl_index=0,activateOnce=false,
+                                    chartId='part-result-chart',tbl_id= 'part-result-tbl') {
+    return () => {
+        if (activateOnce && getTblById(tbl_id)) return;
+        const {tableGroupViewerId, chartViewerId}= activateParams;
+        const dataTableReq= makeFileRequest(titleStr, source, undefined,
+            {
+                tbl_id,
+                tbl_index,
+                startIdx : 0,
+                pageSize : 100,
+                META_INFO : {
+                    [MetaConst.DATA_SOURCE] : 'false',
+                    [MetaConst.CATALOG_OVERLAY_TYPE]:'false'
+                }
+            });
+        // dispatchTableFetch(dataTableReq);
+        dispatchTableSearch(dataTableReq,
+            {
+                logHistory: false,
+                removable:false,
+                tbl_group: tableGroupViewerId,
+                backgroundable: false,
+                showFilters: true,
+                showInfoButton: true
+            });
+
+        const dispatchParams= {
+            viewerId: chartViewerId,
+            groupId: chartViewerId,
+            chartId,
+            data: [{
+                tbl_id,
+                x: `tables::${xAxis}`,
+                y: `tables::${yAxis}`,
+                mode: 'lines+markers'
+            }],
+            layout: {
+                title: {text: titleStr},
+                xaxis: {showgrid: true},
+                yaxis: {showgrid: true, range: [0, undefined]},
+            }
+        };
+        onTableLoaded(tbl_id).then( () => {
+            dispatchChartAdd(dispatchParams);
+        });
+        return () => {
+            dispatchTableRemove(tbl_id,false);
+        };
+    };
+
+}
+
+
 
 
 /**

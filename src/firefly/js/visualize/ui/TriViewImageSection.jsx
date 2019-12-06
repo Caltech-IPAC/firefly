@@ -24,7 +24,8 @@ import {startDataProductsWatcher} from '../saga/DataProductsWatcher.js';
 import {isCatalog, isMetaDataTable} from '../../util/VOAnalyzer.js';
 import {MultiProductViewer} from  '../ui/MultiProductViewer';
 
-const META_DATA_TBL_GROUP_ID= 'TableDataProducts';
+export const META_DATA_TBL_GROUP_ID= 'TableDataProducts';
+export const CHART_DATA_VIEWER_ID= 'ChartMetaView';
 
 /**
  * This component works with ImageMetaDataWatch sega which should be launch during initialization
@@ -72,6 +73,7 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
                         <MultiProductViewer viewerId={'DataProductsType'}
                                             metaDataTableId={metaDataTableId}
                                             tableGroupViewerId={META_DATA_TBL_GROUP_ID}
+                                            chartMetaViewerId={CHART_DATA_VIEWER_ID}
                                            imageMetaViewerId={META_VIEWER_ID}/>
                     </Tab>
                 }
@@ -100,13 +102,14 @@ TriViewImageSection.propTypes= {
     imageExpandedMode : PropTypes.bool,
     closeable: PropTypes.bool,
     metaDataTableId: PropTypes.string,
+    chartMetaId: PropTypes.string,
     selectedTab: PropTypes.oneOf(['fits', 'meta', 'coverage']),
     style: PropTypes.object
 };
 
 export function launchTableTypeWatchers() {
     const coverageOps= get(getAppOptions(), 'coverage',{});
-    startDataProductsWatcher({imageViewerId: META_VIEWER_ID,tableGroupViewerId:META_DATA_TBL_GROUP_ID});
+    startDataProductsWatcher({imageViewerId: META_VIEWER_ID, chartViewerId:CHART_DATA_VIEWER_ID, tableGroupViewerId:META_DATA_TBL_GROUP_ID});
     startCoverageWatcher({...coverageOps, viewerId:'coverageImages', ignoreCatalogs:true});
     startLayoutWatcher();
 }

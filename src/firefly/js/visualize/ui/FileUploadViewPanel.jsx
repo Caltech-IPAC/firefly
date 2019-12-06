@@ -219,7 +219,9 @@ function ImageDisplayOption() {
 
 function UploadOptions({uploadSrc=fileId, isloading, isWsUpdating}) {
 
-    const onLoading = () => dispatchComponentStateChange(panelKey, {isLoading: true});
+    const onLoading = (loading) => {
+        dispatchComponentStateChange(panelKey, {isLoading: loading});
+    };
 
     if (uploadSrc === fileId) {
         return (

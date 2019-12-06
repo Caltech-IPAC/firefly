@@ -4,18 +4,23 @@
 package edu.caltech.ipac.table;
 
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.table.io.DsvTableIO;
 import edu.caltech.ipac.firefly.server.util.JsonToDataGroup;
+import edu.caltech.ipac.table.io.DsvTableIO;
 import edu.caltech.ipac.table.io.FITSTableReader;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.io.VoTableReader;
-import edu.caltech.ipac.util.*;
 import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.lang.ArrayUtils;
 
-import java.io.*;
-import java.lang.reflect.Array;
 import java.util.*;
+import java.lang.reflect.Array;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.io.StringReader;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -61,6 +66,11 @@ public class TableUtil {
         int readAhead = 10;
 
         int row = 0;
+
+        if (inf.getName().toLowerCase().endsWith("tar")) {
+            return Format.TAR;
+        }
+
         BufferedReader reader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
         try {
             String line = reader.readLine();
@@ -85,6 +95,8 @@ public class TableUtil {
                 } else if (line.startsWith("<VOTABLE") ||
                         (line.contains("<?xml") && line.contains("<VOTABLE "))) {
                     return Format.VO_TABLE;
+                } else if (row==0 && line.toLowerCase().indexOf("pdf")>0) {
+                    return Format.PDF;
                 }
 
                 counts[row][csvIdx] = getColCount(CSVFormat.DEFAULT, line);
@@ -257,7 +269,7 @@ public class TableUtil {
 //====================================================================
 
     public enum Format { TSV(CSVFormat.TDF, ".tsv"), CSV(CSVFormat.DEFAULT, ".csv"), IPACTABLE(".tbl"), UNKNOWN(null),
-                         FIXEDTARGETS(".tbl"), FITS(".fits"), JSON(".json"),
+                         FIXEDTARGETS(".tbl"), FITS(".fits"), JSON(".json"), PDF(".pdf"), TAR(".tar"),
                          VO_TABLE(".xml"), VO_TABLE_TABLEDATA(".vot"), VO_TABLE_BINARY(".vot"), VO_TABLE_BINARY2(".vot"),
                          VO_TABLE_FITS(".vot");
         public CSVFormat type;
@@ -282,6 +294,7 @@ public class TableUtil {
         allFormats.put("votable-binary2-inline", Format.VO_TABLE_BINARY2);
         allFormats.put("votable-fits-inline", Format.VO_TABLE_FITS);
         allFormats.put("fits", Format.FITS);
+        allFormats.put("pdf", Format.PDF);
     }
 
     public static Map<String, Format> getAllFormats() { return allFormats; }

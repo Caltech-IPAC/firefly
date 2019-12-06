@@ -10,7 +10,7 @@ import {getPlotViewById, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {dispatchChangeActivePlotView, visRoot} from '../ImagePlotCntlr.js';
 import {VisInlineToolbarView} from './VisInlineToolbarView.jsx';
 import {dispatchChangeViewerLayout, getViewer, getMultiViewRoot,
-        GRID_FULL, GRID_RELATED, SINGLE} from '../MultiViewCntlr.js';
+        GRID_FULL, GRID_RELATED, SINGLE, GRID} from '../MultiViewCntlr.js';
 import {showColorBandChooserPopup} from './ColorBandChooserPopup.jsx';
 import {ImagePager} from './ImagePager.jsx';
 
@@ -64,7 +64,7 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds=
         };
     }
     const showThreeColorButton= converter.threeColor && viewer.layoutDetail!==GRID_FULL && !(viewerPlotIds[0].includes(GRID_FULL.toLowerCase()));
-    const showPager= activeTable && converter.canGrid && viewer.layoutDetail===GRID_FULL;
+    const showPager= activeTable && converter.canGrid && layoutType===GRID && viewer.layoutDetail===GRID_FULL;
     const showMultiImageOps= converter.canGrid || converter.hasRelatedBands;
 
 

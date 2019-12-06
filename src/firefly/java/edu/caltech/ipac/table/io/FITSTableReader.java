@@ -363,7 +363,7 @@ public final class FITSTableReader
                 DataType dt = dataGroup.getDataDefinitions()[dtIdx];
                 ColumnInfo colInfo = colAry[dtIdx];
                 int colIdx = colIdxMap.get(colInfo);
-                Object data = table.getCell(rowIdx, colIdx);
+                Object data =  dt.getDataType()==String.class ? table.getCell(rowIdx, colIdx)+"" :  table.getCell(rowIdx, colIdx);
                 aRow.setDataElement(dt, data);
             }
             dataGroup.add(aRow);
@@ -417,7 +417,7 @@ public final class FITSTableReader
             java_class = Float.class;
         } else if ((classType.contains("double")) || (classType.contains("Double"))) {
             java_class = Double.class;
-        } else if ((classType.contains("char")) || (classType.contains("String"))) {
+        } else if ((classType.contains("char")) || (classType.contains("String") || classType.contains("Character"))) {
             java_class = String.class;
         } else {
             throw new FitsException(

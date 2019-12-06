@@ -21,6 +21,7 @@ export function createRelatedDataGridActivate(reqRet, imageViewerId, dataId, tbl
 }
 
 
+
 /**
  *
  * @param {Array.<WebPlotRequest>} inReqAry
@@ -28,21 +29,24 @@ export function createRelatedDataGridActivate(reqRet, imageViewerId, dataId, tbl
  * @param {string} dataId
  * @param {string} tbl_id
  * @param {Array.<Object>} plotRows
- * @return {function(): void}
+ * @return {undefined|function(): void}
  */
 export function createGridImagesActivate(inReqAry, imageViewerId, dataId, tbl_id, plotRows) {
-    const reqAry= inReqAry.map( (r,idx) => {
-        if (!r) return;
-        r.setAttributes({[PlotAttribute.DATALINK_TABLE_ROW]: plotRows[idx].row+'',
-                         [PlotAttribute.DATALINK_TABLE_ID]: tbl_id});
-        r.setPlotId(plotRows[idx].plotId);
-        return r;
-    } );
+    const reqAry= inReqAry
+        .map( (r,idx) => {
+            if (!r) return;
+            r.setAttributes({
+                [PlotAttribute.DATALINK_TABLE_ROW]: plotRows[idx].row+'',
+                [PlotAttribute.DATALINK_TABLE_ID]: tbl_id
+            });
+            r.setPlotId(plotRows[idx].plotId);
+            return r;
+        } )
+        .filter( (r) =>r);
     const pR= plotRows.filter( (pR) => pR.highlight).find( (pR) => pR.plotId);
     const highlightPlotId= pR && pR.plotId;
     return () => replotImageDataProducts(highlightPlotId, imageViewerId, dataId, tbl_id, reqAry);
 }
-
 
 /**
  *
@@ -51,11 +55,11 @@ export function createGridImagesActivate(inReqAry, imageViewerId, dataId, tbl_id
  * @param {string} dataId
  * @param {string} tbl_id
  * @param {string} highlightedRow
- * @return {function(): void}
+ * @return {undefined|function(): void}
  */
 export function createSingleImageActivate(request, imageViewerId, dataId, tbl_id, highlightedRow) {
-    if (!request) return;
-    request.setPlotId(`${dataId}-singleview`);
+    if (!request) return undefined;
+    if (!request.getPlotId()) request.setPlotId(`${dataId}-singleview`);
     request.setAttributes({[PlotAttribute.DATALINK_TABLE_ROW]: highlightedRow+'',
                            [PlotAttribute.DATALINK_TABLE_ID]: tbl_id});
     return () => replotImageDataProducts(request.getPlotId(), imageViewerId, dataId, tbl_id, [request]);

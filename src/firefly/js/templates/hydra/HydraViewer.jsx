@@ -31,6 +31,7 @@ import {dispatchSetLayoutMode, LO_MODE} from '../../core/LayoutCntlr';
 
 export const COVERAGE_VIEWER_ID = 'CoverageViewerId';
 export const IMAGE_DATA_VIEWER_ID = META_VIEWER_ID;
+export const CHART_DATA_VIEWER_ID = 'ChartDataProducts';
 const META_DATA_TBL_GROUP_ID= 'TableDataProducts';
 
 
@@ -46,7 +47,8 @@ export class HydraViewer extends PureComponent {
 
         dispatchAddSaga(hydraManager);
         startTTFeatureWatchers();
-        hasDataProduct && startDataProductsWatcher({imageViewerId:IMAGE_DATA_VIEWER_ID, tableGroupViewerId:META_DATA_TBL_GROUP_ID});
+        hasDataProduct && startDataProductsWatcher({imageViewerId:IMAGE_DATA_VIEWER_ID, chartViewerId:CHART_DATA_VIEWER_ID,
+            tableGroupViewerId:META_DATA_TBL_GROUP_ID});
         if (hasCoverage) {
             const coverageOps= get(getAppOptions(), 'coverage',{});
             startCoverageWatcher({...coverageOps, viewerId:COVERAGE_VIEWER_ID, ignoreCatalogs:true});

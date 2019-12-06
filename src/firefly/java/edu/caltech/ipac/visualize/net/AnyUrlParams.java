@@ -9,7 +9,6 @@ import edu.caltech.ipac.util.download.BaseNetParams;
 
 import java.io.File;
 import java.net.URL;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,8 +81,14 @@ public class AnyUrlParams extends BaseNetParams {
         }
         //note: "=","," signs causes problem in download servlet.
         retval = retval.replaceAll("[ :\\[\\]\\/\\\\|\\*\\?<>\\=\\,]","\\-");
-        if (_localFileExtensions!=null && !_localFileExtensions.contains(FileUtil.getExtension(retval))) {
-            retval = retval + "." + _localFileExtensions.get(0);
+        if (_localFileExtensions!=null) {
+            String ext= FileUtil.getExtension(fileStr);
+            if (_localFileExtensions.contains(ext)) {
+                retval = retval + "." + ext;
+            }
+            else {
+                retval = retval + "." + _localFileExtensions.get(0);
+            }
         }
         return retval;
     }

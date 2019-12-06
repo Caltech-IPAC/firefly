@@ -11,13 +11,16 @@ import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
+import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
+import edu.caltech.ipac.firefly.server.visualize.imageretrieve.FileRetriever;
+import edu.caltech.ipac.firefly.server.visualize.imageretrieve.ImageFileRetrieverFactory;
 import edu.caltech.ipac.firefly.server.ws.WsServerCommands;
 import edu.caltech.ipac.firefly.server.ws.WsServerParams;
+import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.URLDownload;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
@@ -32,13 +35,31 @@ import java.net.URL;
 /**
  * Date: Feb 16, 2011
  *
+ *  Possible Parameters:
+ *  wcCmd
+ *  URL
+ *  webPlotRequest
+ *  workspacePut
+ *  filename
+ *  cacheKey
+ *  fileAnalysis
+ *  >> posted file
+ *
  * @author loi
  * @version $Id: AnyFileUpload.java,v 1.3 2011/10/11 21:44:39 roby Exp $
  */
 public class AnyFileUpload extends BaseHttpServlet {
+    /** name of the uploaded file*/
     private static final String FILE_NAME = "filename";
     private static final String CACHE_KEY = "cacheKey";
     private static final String WORKSPACE_PUT = "workspacePut";
+    private static final String WS_CMD = "wsCmd";
+    /** load from a URL */
+    private static final String URL = "URL";
+    /** load from a WebPlotRequest */
+    private static final String WEB_PLOT_REQUEST = "webPlotRequest";
+    /** run file analysis and return an analysis json object */
+    private static final String FILE_ANALYSIS= "fileAnalysis";
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
         doFileUpload(req, res);
@@ -70,8 +91,9 @@ public class AnyFileUpload extends BaseHttpServlet {
         // handle upload file request.. results in saved as an UploadFileInfo
         UploadFileInfo fileInfo = null;
 
-        String wsCmd = sp.getOptional("wsCmd");
-        String fromUrl = sp.getOptional("URL");
+        String wsCmd = sp.getOptional(WS_CMD);
+        String fromUrl = sp.getOptional(URL);
+        WebPlotRequest fromWPR= sp.getOptionalWebPlotRequest(WEB_PLOT_REQUEST);
 
         if (wsCmd != null) {
             // from workspace.. get the file using workspace api
@@ -81,19 +103,33 @@ public class AnyFileUpload extends BaseHttpServlet {
             int idx = fromUrl.lastIndexOf('/');
             String fname = (idx >= 0) ? fromUrl.substring(idx + 1) : fromUrl;
             fname = fname.contains("?") ? fname.substring(0, fname.indexOf("?")) : fname;       // don't save queryString as file name.  this will confuse reader expecting a url, like VoTableReader
-            File tmpFile = File.createTempFile("upload_", "-" + fname, ServerContext.getUploadDir());
-            FileInfo status = URLDownload.getDataToFile(new URL(fromUrl), tmpFile);
+            FileInfo status = LockingVisNetwork.retrieveURL(new URL(fromUrl));
+            File file= status.getFile();
             if (status != null && !(status.getResponseCodeMsg().equals("OK"))) {
                 throw new Exception("invalid upload from URL: " + status.getResponseCodeMsg());
             }
-            fileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(tmpFile), tmpFile, fname, null);
+            fileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(file), file, fname, null);
 
+        } else if (fromWPR!= null) {
+            FileRetriever retrieve = ImageFileRetrieverFactory.getRetriever(fromWPR);
+            if (retrieve==null) throw new Exception("Could not determine how to retrieve file");
+            FileInfo fi = retrieve.getFile(fromWPR);
+            File file= fi.getFile();
+            fileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(file), file, file.getName(), null);
         } else if (uploadedItem != null) {
             // it's a stream from multipart.. write it to disk
             String name = uploadedItem.getName();
             File tmpFile = File.createTempFile("upload_", "_" + name, ServerContext.getUploadDir());
             FileUtil.writeToFile(uploadedItem.openStream(), tmpFile);
             fileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(tmpFile), tmpFile, name, uploadedItem.getContentType());
+        }
+
+        if (FileUtil.isGZipFile(fileInfo.getFile())) {
+            File f= fileInfo.getFile();
+            String name= f.getName()+".gz";
+            File gzFile= new File(f.getParentFile(),name);
+            f.renameTo(gzFile);
+            FileUtil.gUnzipFile(gzFile,f,10240);
         }
 
         /// -- check if going all the way to workspace
@@ -113,7 +149,7 @@ public class AnyFileUpload extends BaseHttpServlet {
         // returns the fileCacheKey
         String returnVal = fileCacheKey;
 
-        String doAnalysis = sp.getOptional("fileAnalysis");
+        String doAnalysis = sp.getOptional(FILE_ANALYSIS);
         if (doAnalysis != null && !doAnalysis.toLowerCase().equals("false")) {
             StopWatch.getInstance().start("doAnalysis");
 
@@ -153,4 +189,3 @@ public class AnyFileUpload extends BaseHttpServlet {
 
 
 }
-
