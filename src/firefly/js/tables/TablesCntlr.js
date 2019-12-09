@@ -25,6 +25,7 @@ export const TABLE_RESULTS_PATH = 'table_space.results.tables';
 export const DATA_PREFIX = 'table';
 export const RESULTS_PREFIX = 'tableResults';
 export const UI_PREFIX = 'tableUi';
+export const LOG_HISTORY = 'logHistory';
 
 /*---------------------------- ACTIONS -----------------------------*/
 /**

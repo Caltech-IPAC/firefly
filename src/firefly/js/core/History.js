@@ -13,16 +13,23 @@
  *  query_params: key/value pairs.  this is used to populate action.payload.
  */
 
-import {get, pick, omitBy, pickBy} from 'lodash';
+import {get, pick, omitBy, set} from 'lodash';
 
 import {flux} from '../Firefly.js';
-import {TABLE_SEARCH} from '../tables/TablesCntlr.js';
+import {TABLE_SEARCH, LOG_HISTORY} from '../tables/TablesCntlr.js';
 import {encodeParams, parseUrl} from '../util/WebUtil.js';
 import {SHOW_DROPDOWN} from './LayoutCntlr.js';
 
 export const ACTION = '__action';
 export const WSCH = '__wsch';
-export const NO_HISTORY = 'noHistory';
+
+export function setLogHistory (action, flg) {
+    return set(action, 'payload.options.logHistory', flg);
+}
+
+function logHistory (action, def) {
+    return get(action, 'payload.options.logHistory', def);
+}
 
 const DEF_HANDLER = {
     actionToUrl: (action) => {
@@ -40,15 +47,15 @@ const urlPrefix = (() => {
 
 const tableSearchHandler = {
     actionToUrl: (action) => {
-        const noHistory = get(action, ['payload', 'options', NO_HISTORY], false);
-        return !noHistory && urlPrefix + `${ACTION}=${action.type}&` + encodeParams(action.payload);
+        const logHistory = get(action, ['payload', 'options', LOG_HISTORY], true);
+        return logHistory && urlPrefix + `${ACTION}=${action.type}&` + encodeParams(action.payload);
     }
 };
 
 const dropdownHandler = {
     actionToUrl: (action) => {
-        const history = get(action, 'payload.visible');
-        return history ? urlPrefix + `${ACTION}=${action.type}&` + encodeParams(action.payload) : false;
+        const logHistory = get(action, 'payload.visible', true);
+        return logHistory ? urlPrefix + `${ACTION}=${action.type}&` + encodeParams(action.payload) : false;
     }
 };
 
@@ -56,7 +63,7 @@ const dropdownHandler = {
  * a map of all actions that should be in history
  * @type {{}}
  */
-const historyAware = {
+const customHistoryHandlers = {
     [TABLE_SEARCH]: tableSearchHandler,
     [SHOW_DROPDOWN]: dropdownHandler
 };
@@ -101,7 +108,13 @@ export function getActionFromUrl() {
 export function recordHistory(action={}) {
     if (get(window, 'firefly.ignoreHistory', false) || isHistoryEvent) return;
 
-    const handler = historyAware[action.type];
+    let handler = customHistoryHandlers[action.type];
+    if (!handler) {
+        if (logHistory(action, false)) {
+            handler = DEF_HANDLER;
+        }
+    }
+
     if (get(handler, 'actionToUrl')) {
         const url = handler.actionToUrl(action);
         if (url) {
