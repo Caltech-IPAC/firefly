@@ -1,3 +1,5 @@
+import {get} from 'lodash';
+
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
@@ -17,18 +19,51 @@
 export function drawOneHiPSTile(ctx, img, cornersAry, tileSize, offsetPt, applyCorrection, norder) {
 
     const delta = norder<=3 ? 0.2 : 0;
+    const triangles= get(window,'firefly.hipsTriangles',2);
+    
 
-    const triangle1= [{x:tileSize-delta, y:tileSize-delta}, {x:tileSize-delta, y:delta}, {x:delta, y:tileSize-delta}];
-    const triangle2= [ {x:tileSize-delta, y:delta}, {x:delta, y:tileSize-delta}, {x:delta, y:delta} ];
+    if (triangles===2) {
+        const triangle1= [{x:tileSize-delta, y:tileSize-delta}, {x:tileSize-delta, y:delta}, {x:delta, y:tileSize-delta}];
+        const triangle2= [ {x:tileSize-delta, y:delta}, {x:delta, y:tileSize-delta}, {x:delta, y:delta} ];
 
-    drawTexturedTriangle(ctx, img,
-        cornersAry[0], cornersAry[1], cornersAry[3],
-        triangle1[0], triangle1[1], triangle1[2],
-        offsetPt, applyCorrection);
-    drawTexturedTriangle(ctx, img,
-        cornersAry[1], cornersAry[3], cornersAry[2],
-        triangle2[0], triangle2[1], triangle2[2],
-        offsetPt, applyCorrection);
+        drawTexturedTriangle(ctx, img,
+            cornersAry[0], cornersAry[1], cornersAry[3],
+            triangle1[0], triangle1[1], triangle1[2],
+            offsetPt, applyCorrection);
+        drawTexturedTriangle(ctx, img,
+            cornersAry[1], cornersAry[3], cornersAry[2],
+            triangle2[0], triangle2[1], triangle2[2],
+            offsetPt, applyCorrection);
+    }
+    else if (triangles===4) {
+        const mp=tileSize/2;
+        const cMx= cornersAry.reduce( (total,pt) => total+pt.x, 0)/cornersAry.length;
+        const cMy= cornersAry.reduce( (total,pt) => total+pt.y, 0)/cornersAry.length;
+        const cPt= {x:cMx,y:cMy};
+
+        const triangle1= [{x:tileSize-delta, y:tileSize-delta}, {x:mp-delta, y:mp-delta}, {x:tileSize-delta, y:delta}];
+        const triangle2= [{x:tileSize-delta, y:delta}, {x:mp-delta, y:mp-delta}, {x:delta, y:delta}];
+        const triangle3= [{x:delta, y:tileSize-delta}, {x:mp-delta, y:mp-delta}, {x:delta, y:delta}];
+        const triangle4= [{x:tileSize-delta, y:tileSize-delta}, {x:mp-delta, y:mp-delta}, {x:delta, y:tileSize-delta}];
+
+        drawTexturedTriangle(ctx, img,
+            cornersAry[0], cPt, cornersAry[1],
+            triangle1[0], triangle1[1], triangle1[2],
+            offsetPt, applyCorrection);
+        drawTexturedTriangle(ctx, img,
+            cornersAry[1], cPt, cornersAry[2],
+            triangle2[0], triangle2[1], triangle2[2],
+            offsetPt, applyCorrection);
+        drawTexturedTriangle(ctx, img,
+            cornersAry[3], cPt, cornersAry[2],
+            triangle3[0], triangle3[1], triangle3[2],
+            offsetPt, applyCorrection);
+        drawTexturedTriangle(ctx, img,
+            cornersAry[0], cPt, cornersAry[3],
+            triangle4[0], triangle4[1], triangle4[2],
+            offsetPt, applyCorrection);
+
+    }
 }
 
 

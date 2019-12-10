@@ -6,17 +6,17 @@ import Enum from 'enum';
 import validator from 'validator';
 import DrawObj from './DrawObj';
 import DrawUtil from './DrawUtil';
-import VisUtil, {convertAngle, computeScreenDistance, convert} from '../VisUtil.js';
+import VisUtil, {convertAngle, convert} from '../VisUtil.js';
 import {TextLocation, Style, DEFAULT_FONT_SIZE} from './DrawingDef.js';
 import Point, {makeScreenPt, makeDevicePt, makeOffsetPt, makeWorldPt, makeImagePt, SimplePt} from '../Point.js';
 import {toRegion} from './ShapeToRegion.js';
-import {getDrawobjArea,  isScreenPtInRegion, makeHighlightShapeDataObj, DELTA} from './ShapeHighlight.js';
+import {getDrawobjArea,  isScreenPtInRegion, makeHighlightShapeDataObj} from './ShapeHighlight.js';
 import CsysConverter from '../CsysConverter.js';
 import {has, isNil, get, set, isEmpty} from 'lodash';
-import {getPlotViewById, getCenterOfProjection, primePlot} from '../PlotViewUtil.js';
+import {getPlotViewById, getCenterOfProjection} from '../PlotViewUtil.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {getPixScaleArcSec, getScreenPixScaleArcSec} from '../WebPlot.js';
-import {toRadians, toDegrees,isPlotNorth} from '../VisUtil.js';
+import {toRadians, toDegrees} from '../VisUtil.js';
 import {rateOpacity, maximizeOpacity} from '../../util/Color.js';
 import {lineCrossesRect} from '../VisUtil';
 
@@ -109,8 +109,8 @@ function make(sType) {
     return obj;
 }
 
-function makeLine(pt1, pt2) {
-    return Object.assign(make(ShapeType.Line), {pts:[pt1, pt2]});
+function makeLine(pt1, pt2, bArrow=false) {
+    return Object.assign(make(ShapeType.Line), {pts:[pt1, pt2], withArrow: bArrow});
 }
 
 function makeCircle(pt1, pt2) {
@@ -589,7 +589,7 @@ export function drawShape(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
  * @param onlyAddToPath
  */
 function drawLine(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
-    const {pts, text, renderOptions}= drawObj;
+    const {pts, text, renderOptions, withArrow}= drawObj;
     const {style, color, lineWidth, textLoc, fontSize}= drawParams;
 
     let inView= false;
@@ -605,16 +605,43 @@ function drawLine(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
         ctx.moveTo(devPt0.x, devPt0.y);
         ctx.lineTo(devPt1.x, devPt1.y);
         if (!onlyAddToPath || style===Style.HANDLED) DrawUtil.stroke(ctx);
+        if (withArrow) {
+            DrawUtil.drawArrowOnLine(ctx, devPt0, devPt1, color);
+        }
     }
 
     if (!isNil(text) && inView) {
-        const textLocPt= makeTextLocationLine(plot, textLoc, fontSize,pts[0], pts[1]);
-        drawText(drawObj,  ctx, plot, plot.getDeviceCoords(textLocPt), drawParams);
+        if (textLoc === TextLocation.LINE_TOP_STACK) {
+            const textLines = text.split('\n');
+            textLines.forEach((oneText, idx) => {
+                const tLocPt = makeTextLocationLine(plot, textLoc, fontSize, pts[0], pts[1], idx+1, drawObj);
+                drawObj.text = oneText;
+                drawText(drawObj,  ctx, plot, plot.getDeviceCoords(tLocPt), drawParams);
+            });
+            drawObj.text = text;
+        } else {
+            const textLocPt = makeTextLocationLine(plot, textLoc, fontSize, pts[0], pts[1]);
+            drawText(drawObj, ctx, plot, plot.getDeviceCoords(textLocPt), drawParams);
+        }
     }
 
-    if (style===Style.HANDLED && inView) {
-        DrawUtil.fillRec(ctx, color,devPt0.x-2, devPt0.y-2, 5,5, renderOptions);
-        DrawUtil.fillRec(ctx, color,devPt1.x-2, devPt1.y-2, 5,5, renderOptions);
+    if ([Style.HANDLED, Style.STARTHANDLED, Style.ENDHANDLED].includes(style) && inView) {
+        const rAngle = VisUtil.computeSimpleSlopeAngle(devPt0, devPt1);
+        const rOptions = {};
+
+        rOptions.rotAngle = rAngle;
+
+        // add handle to the 'from' end of the line
+        if (style === Style.STARTHANDLED || style === Style.HANDLED) {
+            rOptions.translation = {x: devPt0.x, y: devPt0.y};
+            DrawUtil.fillRec(ctx, color, -3, -3, 7, 7, rOptions);
+        }
+
+        // add handle to the 'to' end of the line
+        if (style === Style.ENDHANDLED || style === Style.HANDLED) {
+            rOptions.translation = {x: devPt1.x, y: devPt1.y};
+            DrawUtil.fillRec(ctx, color, -3, -3, 7, 7, rOptions);
+        }
     }
 }
 
@@ -682,19 +709,21 @@ function drawCircle(drawObj, ctx,  plot, drawParams) {
 export function drawText(drawObj, ctx, plot, inPt, drawParams) {
     if (!inPt) return false;
     
-    const {text, textOffset, renderOptions, rotationAngle, isLonLine, textBaseline= 'top', textAlign='start', textAngle=0}= drawObj;
+    const {text, textOffset, renderOptions, rotationAngle, isLonLine, textBaseline= 'top',
+           textAngle=0, offsetOnScreen=false}= drawObj;
+    let { textAlign='start'} = drawObj;
     //the angle of the grid line
     let angle=0;
     let pvAngle=undefined;
+    const pv = getPlotViewById(visRoot(), plot.plotId);
 
     if (rotationAngle){
         const lineAngle = parseFloat( rotationAngle.substring(0,  rotationAngle.length-3));
-        const pv = getPlotViewById(visRoot(), plot.plotId);
         pvAngle = pv.flipY? 180 - pv.rotation:pv.rotation;
         if (pvAngle>0) {
             if (isLonLine  && pvAngle<=210 ){
                 //flip the label text
-                    pvAngle +=180;
+                pvAngle +=180;
 
             }
 
@@ -706,39 +735,54 @@ export function drawText(drawObj, ctx, plot, inPt, drawParams) {
         }
 
         angle = pvAngle + lineAngle;
+    } else {
+        // offsetOnScreen only handle offset regardless of flip
+        angle = pv.flipY&&!offsetOnScreen ? 180 + pv.rotation : pv.rotation;
+    }
 
+    let devicePt= plot.getDeviceCoords(inPt);
+    if (!devicePt) {
+        return false;
+    }
 
+    let x, y;
+    if (offsetOnScreen) {
+        const scrPt = plot.getScreenCoords(inPt);
+        if (pv.flipY) {     // image and flipY case
+            if (textAlign === 'end') {
+                textAlign = 'start';
+            } else if (textAlign === 'start') {
+                textAlign = 'end';
+            }
+        }
+
+        x = textOffset ? scrPt.x + textOffset.x : scrPt.x;
+        y = textOffset ? scrPt.y + textOffset.y : scrPt.y;
+
+        devicePt = plot.getDeviceCoords(makeScreenPt(x, y));
+        if (!devicePt) {
+            return false;
+        }
+        x = devicePt.x;
+        y = devicePt.y;
+    } else  {
+        x = textOffset ? devicePt.x + textOffset.x : devicePt.x;
+        y = textOffset ? devicePt.y + textOffset.y : devicePt.y;
     }
 
     if (textAngle) {
         angle = angle ? angle - textAngle : -textAngle;
     }
 
-
     const {fontName, fontSize, fontWeight, fontStyle}= drawParams;
     const color = drawParams.color || drawObj.color || 'black';
-
-    const devicePt= plot.getDeviceCoords(inPt);
-
-    //if (!plot.pointOnDisplay(devicePt)) {
-    if (!devicePt) {
-        return false;
-    }
-
-    let {x,y}= devicePt;
 
     let textHeight= 12;
     if (validator.isFloat(fontSize.substring(0, fontSize.length - 2))) {
         textHeight = parseFloat(fontSize.substring(0, fontSize.length - 2)) * 14 / 10;
     }
 
-
     const textWidth = textHeight*text.length*8/20;
-    if (textOffset) {
-        x+=textOffset.x;
-        y+=textOffset.y;
-    }
-
 
     if (x<2) {
         if (x<=-textWidth) return false; // don't draw
@@ -1364,22 +1408,25 @@ function makeTextLocationCircle(plot, textLoc, fontSize, centerPt, screenRadius)
  * @param fontSize
  * @param inPt0
  * @param inPt1
+ * @param tIndex text line number for multipe text lines on LINE_TOP_STACK location style
+ * @param drawObj line obj
  * @return {ScreenPt}
  */
-function makeTextLocationLine(plot, textLoc, fontSize, inPt0, inPt1) {
+function makeTextLocationLine(plot, textLoc, fontSize, inPt0, inPt1, tIndex, drawObj) {
     if (!inPt0 || !inPt1) return null;
     let pt0= plot.getScreenCoords(inPt0);
     let pt1= plot.getScreenCoords(inPt1);
 
     if (!pt0 || !pt1) return null;
     const height= fontHeight(fontSize);
+    let x, y;
 
-    // pt1 is supposed to be lower on screen
-    if (pt0.y > pt1.y) {
+    // pt1 is supposed to be lower on screen, not for TextLocation.LINE_TOP_STACK
+    if ((pt0.y > pt1.y) && (textLoc !== TextLocation.LINE_TOP_STACK)) {
         [pt1, pt0] = [pt0, pt1];
+        x = pt1.x+5;
+        y = pt1.y+5;
     }
-    let x = pt1.x+5;
-    let y = pt1.y+5;
 
     if (textLoc===TextLocation.LINE_MID_POINT || textLoc===TextLocation.LINE_MID_POINT_OR_BOTTOM ||
             textLoc===TextLocation.LINE_MID_POINT_OR_TOP) {
@@ -1405,6 +1452,51 @@ function makeTextLocationLine(plot, textLoc, fontSize, inPt0, inPt1) {
         case TextLocation.LINE_MID_POINT_OR_TOP:
             x= (pt1.x+pt0.x)/2;
             y= (pt1.y+pt0.y)/2;
+            break;
+        case TextLocation.LINE_TOP_STACK:    // stack multiple text lines at top side of the line
+                                             // calculate rotation angle on screen coordinate domain
+            const slope = VisUtil.computeSimpleSlopeAngle(pt0, pt1);
+            const ratio = [1/5, 4/5];
+            let   offset = height * (tIndex + 0.5);
+            const r = -1;
+
+            const pv = getPlotViewById(visRoot(), plot.plotId);
+
+            if ((!pv.flipY && slope >= -Math.PI/2 && slope < Math.PI/2 && !pv.flipY) ||
+                (pv.flipY && (slope < -Math.PI/2 || slope >= Math.PI/2 ))) { // quadrant 1 & 4 for no flipY
+                                                                             // quadrant 2 & 3 for flipY
+                x = pt1.x * ratio[0] + pt0.x * ratio[1];    // closer to p0
+                y = pt1.y * ratio[0] + pt0.y * ratio[1];
+
+                if (pv.flipY) {
+                    offset *= r;
+                }
+
+                if (drawObj) {
+                    drawObj.textAngle = -slope * 180.0 / Math.PI;
+                    if (pv.flipY) {
+                        drawObj.textAngle *= r;
+                    }
+                }
+
+             } else {                                      // quadrant 2 & 3 for no flip, quadrant 1 & 4 for flipY
+                x = pt0.x * ratio[0] + pt1.x * ratio[1];   // closer to p1
+                y = pt0.y * ratio[0] + pt1.y * ratio[1];
+
+
+                if (!pv.flipY) {
+                    offset *= r;
+                }
+                if (drawObj) {
+                    drawObj.textAngle = (Math.PI - slope) * 180.0 / Math.PI;
+                    if (pv.flipY) {
+                        drawObj.textAngle *= r;
+                    }
+                }
+            }
+            x = x + offset * Math.sin(slope);
+            y = y - Math.abs(offset * Math.cos(slope));
+
             break;
         default:
             break;

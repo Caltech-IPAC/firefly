@@ -1,7 +1,8 @@
 
 import numeral from 'numeral';
+
 import {isNil, set} from 'lodash';
-import {makeScreenPt} from '../Point.js';
+import {makeScreenPt,  makeDevicePt} from '../Point.js';
 import {DrawSymbol} from './DrawSymbol.js';
 import {toRadians} from '../VisUtil.js';
 
@@ -13,7 +14,9 @@ export default {getColor, beginPath, stroke, strokeRec, drawLine, drawText, draw
                 drawX, drawSquareX, drawSquare, drawEmpSquareX, drawCross, drawSymbol, drawPointMarker,
                 drawEmpCross, drawDiamond, drawDot, drawCircle, drawEllipse, drawBoxcircle,
                 drawArrow, drawRotate, clear,clearCanvas, fillRec, getDrawingSize, polygonPath,
-                getSymbolSize, getSymbolSizeBasedOn, beginFillPath, endFillPath, fillPath};
+                getSymbolSize, getSymbolSizeBasedOn, beginFillPath, endFillPath, fillPath,
+                drawArrowOnLine
+                };
 
 function drawHandledLine(ctx, color, sx, sy, ex, ey, onlyAddToPath= false) {
     let slope= NaN;
@@ -757,4 +760,29 @@ function clear(ctx,width,height) {
 function clearCanvas(canvas) {
     if (!canvas) return;
     clear(canvas.getContext('2d'),canvas.width,canvas.height);
+}
+
+
+/**
+ * add a solid arrow to the second end of the line
+ * @param ctx
+ * @param fromPt in device coordinate
+ * @param toPt   in device coordinate
+ * @param color
+ */
+function drawArrowOnLine(ctx, fromPt, toPt, color) {
+    const ahead = 16;
+    const aAngle = Math.PI/6;
+    const dx = toPt.x - fromPt.x;
+    const dy = toPt.y - fromPt.y;
+    const d = Math.sqrt(dx*dx+dy*dy);
+    const aD = d < ahead ? d : ahead;
+    const angle = Math.atan2(dy, dx);
+    const pts = [];
+
+    pts.push(toPt);
+    pts.push(makeDevicePt(toPt.x - aD * Math.cos(angle - aAngle), toPt.y - aD * Math.sin(angle - aAngle)));
+    pts.push(makeDevicePt(toPt.x - aD * Math.cos(angle + aAngle), toPt.y - aD * Math.sin(angle + aAngle)));
+
+    fillPath(ctx, color, pts, true);
 }

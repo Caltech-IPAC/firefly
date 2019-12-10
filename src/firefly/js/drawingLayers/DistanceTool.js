@@ -2,8 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import numeral from 'numeral';
-import {isBoolean, isEmpty, get} from 'lodash';
+import {isBoolean, isEmpty, get, isUndefined} from 'lodash';
 import DrawLayerCntlr, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
 import {getPreference} from '../core/AppDataCntlr.js';
 import {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
@@ -12,7 +11,7 @@ import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import CsysConverter from '../visualize/CsysConverter.js';
-import { makeOffsetPt, makeWorldPt, makeImagePt} from '../visualize/Point.js';
+import { makeOffsetPt, makeWorldPt} from '../visualize/Point.js';
 import BrowserInfo from '../util/BrowserInfo.js';
 import VisUtil from '../visualize/VisUtil.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
@@ -20,6 +19,9 @@ import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
 import {getUIComponent} from './DistanceToolUI.jsx';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {hasWCSProjection} from '../visualize/PlotViewUtil';
+import {isHiPS} from '../visualize/WebPlot.js';
+import {DrawingType} from '../visualize/draw/DrawObj';
+import {makeImagePt} from '../visualize/Point';
 
 
 const EDIT_DISTANCE= BrowserInfo.isTouchInput() ? 18 : 10;
@@ -27,12 +29,18 @@ const EDIT_DISTANCE= BrowserInfo.isTouchInput() ? 18 : 10;
 
 const ID= 'DISTANCE_TOOL';
 const TYPE_ID= 'DISTANCE_TOOL_TYPE';
+const SIGFIG = 3;
 
+export const UNIT_PIXEL_ONLY = 0;
+export const UNIT_NO_PIXEL = 1;
+export const UNIT_ALL = 2;
 
 export const DIST_READOUT = 'DistanceReadout';
 export const ARC_MIN = 'arcmin';
 export const ARC_SEC = 'arcsec';
 export const DEG = 'deg';
+export const PIXEL = 'pixel';
+
 const HTML_DEG= String.fromCharCode(176);
 
 
@@ -123,14 +131,11 @@ function getLayerChanges(drawLayer, action) {
 
     switch (action.type) {
         case DrawLayerCntlr.DT_START:
-            return start(action);
-            break;
+            return start(drawLayer, action);
         case DrawLayerCntlr.DT_MOVE:
             return drag(drawLayer,action);
-            break;
         case DrawLayerCntlr.DT_END:
             return end(action);
-            break;
         case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
             if (isEmpty(get(drawLayer, ['drawData', 'data']))) {
                 return attach();
@@ -138,10 +143,8 @@ function getLayerChanges(drawLayer, action) {
             break;
         case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
             return dealWithMods(drawLayer,action);
-            break;
         case DrawLayerCntlr.FORCE_DRAW_LAYER_UPDATE:
             return dealWithUnits(drawLayer,action);
-            break;
 
     }
     return null;
@@ -149,7 +152,7 @@ function getLayerChanges(drawLayer, action) {
 }
 
 /**
- * 
+ * Fs
  * @param plot
  * @param firstPt
  * @param currPt
@@ -167,39 +170,70 @@ function makeBaseReturnObj(plot,firstPt,currPt,drawAry )  {
 
 }
 
+
 function dealWithUnits(drawLayer,action) {
     var {plotIdAry}= action.payload;
     const plot= primePlot(visRoot(),plotIdAry[0]);
     var cc= CsysConverter.make(plot);
     if (!cc) return null;
-    var drawAry= makeSelectObj(drawLayer.firstPt, drawLayer.currentPt, drawLayer.posAngle,cc);
+
+    var drawAry= makeSelectObj(drawLayer.firstPt, drawLayer.currentPt, drawLayer.offsetCal,cc);
 
     return makeBaseReturnObj(plot,drawLayer.firstPt, drawLayer.currentPt,drawAry);
 }
 
-
-
 function dealWithMods(drawLayer,action) {
     var {changes,plotIdAry}= action.payload;
-    if (isBoolean(changes.posAngle)) {
+    if (isBoolean(changes.offsetCal)) {
         const plot= primePlot(visRoot(),plotIdAry[0]);
         var cc= CsysConverter.make(plot);
         if (!cc) return null;
-        var drawAry= makeSelectObj(drawLayer.firstPt, drawLayer.currentPt, changes.posAngle,cc);
-        return Object.assign({posAngle:changes.posAngle},
+        var drawAry= makeSelectObj(drawLayer.firstPt, drawLayer.currentPt, changes.offsetCal, cc);
+        return Object.assign({offsetCal:changes.offsetCal},
                               makeBaseReturnObj(plot,drawLayer.firstPt, drawLayer.currentPt,drawAry));
     }
     return null;
 }
 
 
+export function getUnitStyle(cc, world) {
+    if (isUndefined(world)) {
+        world = hasWCSProjection(cc);
+    }
+
+    if (!world) {
+        return UNIT_PIXEL_ONLY;
+    } else {
+        return UNIT_NO_PIXEL;
+    }
+    /*
+    const plot= primePlot(visRoot(),cc.plotId);
+    const aHiPS = isHiPS(plot);
+    if (aHiPS) {
+        return UNIT_NO_PIXEL;
+    }
+    return UNIT_ALL;
+    */
+}
+
+export function getUnitPreference(unitStyle) {
+    if (unitStyle === UNIT_PIXEL_ONLY) {
+        return PIXEL;
+    }
+    const uFromPref = getPreference(DIST_READOUT);
+    return (unitStyle === UNIT_NO_PIXEL && uFromPref === PIXEL) ? DEG : uFromPref || DEG;
+}
+
+
+
 function attach() {
     return {
         helpLine: selHelpText,
         drawData:{data:null},
-        posAngle: false,
+        offsetCal: false,
         firstPt: null,
         currentPt: null,
+        moveHead: true,      // drag start from head or not
         vertexDef: {points:null, pointDist:EDIT_DISTANCE},
         exclusiveDef: { exclusiveOnDown: true, type : 'anywhere' }
     };
@@ -212,7 +246,7 @@ function getMode(plot) {
     return (selection) ? 'edit' : 'select';
 }
 
-function start(action) {
+function start(drawLayer, action) {
     var {imagePt,plotId,shiftDown}= action.payload;
     var plot= primePlot(visRoot(),plotId);
     var mode= getMode(plot);
@@ -228,15 +262,18 @@ function start(action) {
         var cc= CsysConverter.make(plot);
         var spt= cc.getScreenCoords(imagePt);
         var idx= findClosestPtIdx(ptAry,spt);
-        
         var testPt= cc.getScreenCoords(ptAry[idx]);
         if (!testPt) return {};
 
-        if (screenDistance(testPt,spt)<EDIT_DISTANCE) {
-            var oppoIdx= idx===0 ? 1 : 0;
-            retObj.firstPt= cc.getImageWorkSpaceCoords(ptAry[oppoIdx]);
-            retObj.currentPt= cc.getImageWorkSpaceCoords(ptAry[idx]);
+        if (screenDistance(testPt,spt)<EDIT_DISTANCE) {   // swap the first and current point, redraw the distance tool
+            //var oppoIdx= idx===0 ? 1 : 0;
+            retObj.moveHead = (idx === 1);
+            retObj.firstPt= cc.getImageWorkSpaceCoords(ptAry[0]);
+            retObj.currentPt= cc.getImageWorkSpaceCoords(ptAry[1]);
             if (!retObj.firstPt || !retObj.currentPt) return {};
+
+            const drawAry = makeSelectObj(retObj.firstPt, retObj.currentPt, drawLayer.offsetCal, CsysConverter.make(plot));
+            return Object.assign(retObj, makeBaseReturnObj(plot, retObj.firstPt, retObj.currentPt, drawAry));
         }
         else {
             retObj= setupSelect(imagePt) ;
@@ -252,8 +289,12 @@ function drag(drawLayer,action) {
     const plot= primePlot(visRoot(),plotId);
     var cc= CsysConverter.make(plot);
     if (!cc) return;
-    var drawAry= makeSelectObj(drawLayer.firstPt, imagePt, drawLayer.posAngle,cc); //todo switch back
-    return Object.assign({currentPt:imagePt}, makeBaseReturnObj(plot,drawLayer.firstPt, imagePt,drawAry));
+
+    const newFirst = drawLayer.moveHead ? drawLayer.firstPt : imagePt;
+    const newCurrent = drawLayer.moveHead ? imagePt : drawLayer.currentPt;
+
+    var drawAry= makeSelectObj(newFirst, newCurrent, drawLayer.offsetCal, cc);
+    return Object.assign({firstPt: newFirst, currentPt:newCurrent}, makeBaseReturnObj(plot,  newFirst, newCurrent,drawAry));
 }
 
 function end(action) {
@@ -267,9 +308,8 @@ function end(action) {
 }
 
 
-
 function setupSelect(imagePt) {
-    return {firstPt: imagePt, currentPt: imagePt};
+    return {firstPt: imagePt, currentPt: imagePt,  moveHead: true};
 }
 
 function findClosestPtIdx(ptAry, pt) {
@@ -293,124 +333,250 @@ const screenDistance= (pt1,pt2) => VisUtil.computeScreenDistance(pt1.x,pt1.y,pt2
 /**
  *
  * @param dist
- * @param isWorld
  * @param pref
  * @return {*}
  */
-function getDistText(dist, isWorld, pref) {
-    if (isWorld)  {
+function getDistText(dist, pref) {
+    if (pref !== PIXEL)  {     // world & pref is undefined or  world & pref is not PIXEL
         if(pref===ARC_MIN){
-            return ` ${numeral(dist*60.0).format('0.000')}'`;
+            //return ` ${numeral(dist*60.0).format('0.000')}'`;
+            return ` ${Number(dist*60.0).toPrecision(SIGFIG)}'`;
         }
         else if(pref===ARC_SEC){
-            return ` ${numeral(dist*3600).format('0.000')}"`;
+            //return ` ${numeral(dist*3600).format('0.000')}"`;
+            return ` ${Number(dist*3600).toPrecision(SIGFIG)}"`;
         } else {
-            return ` ${numeral(dist).format('0.000')}${HTML_DEG}`;
+            //return ` ${numeral(dist).format('0.000')}${HTML_DEG}`;
+            return ` ${Number(dist).toPrecision(SIGFIG)}${HTML_DEG}`;
+        }
+    } else {                                        // not world or world & pref is PIXEL
+        return ` ${Math.floor(dist)} Pixels`;
+    }
+}
+
+function getPosAngleText(pt0, pt1, isWorld, cc, pref) {
+    if (!isWorld || pref === PIXEL) return '';
+
+    const PAPrefix = 'PA = ';
+    const w0 = cc.getWorldCoords(pt0);
+    const w1 = cc.getWorldCoords(pt1);
+    let   posAngle = VisUtil.getPositionAngle(w0.x, w0.y, w1.x, w1.y);
+
+    while (true) {
+        if (posAngle > 180.0) {
+            posAngle -= 360.0;
+        } else if (posAngle <= -180.0) {
+            posAngle += 360.0;
+        } else {
+            break;
         }
     }
-    else {
-        return ` ${Math.floor(dist)} Pixels`;
+
+    if(pref===ARC_MIN){
+        //return ` ${PAPrefix}${numeral(posAngle*60.0).format('0.000')}'`;
+        return ` ${PAPrefix}${Number(posAngle*60.0).toPrecision(SIGFIG)}'`;
+    } else if(pref===ARC_SEC){
+        //return ` ${PAPrefix}${numeral(posAngle*3600).format('0.000')}"`;
+        return ` ${PAPrefix}${Number(posAngle*3600).toPrecision(SIGFIG)}"`;
+    } else {
+        //return ` ${PAPrefix}${numeral(posAngle).format('0.000')}${HTML_DEG}`;
+        return ` ${PAPrefix}${Number(posAngle).toPrecision(SIGFIG)}${HTML_DEG}`;
     }
 }
 
 
 /**
- *
+ * check if the point is below the line by placing x & y with p.x & p.y in
+ * ax+by+c formed by two ends of the line and check the value after that
+ * @param line_pt1
+ * @param line_pt2   point of greater  y
+ * @param pt
+ * @param cc
+ * @returns {boolean}
+ */
+function isPointBelowLine(line_pt1, line_pt2, pt, cc) {
+    const pt1 = cc.getScreenCoords(line_pt1);
+    const pt2 = cc.getScreenCoords(line_pt2);
+    const p = cc.getScreenCoords(pt);
+    const diff = (p.x - pt2.x)*(pt2.y - pt1.y)-(pt2.x - pt1.x)*(p.y - pt2.y);
+
+    return ((pt2.x <= pt1.x) && (diff >= 0)) || ((pt2.x > pt1.x) && (diff < 0)) ;
+}
+
+function computeDistance(pt1, pt2, cc, pref) {
+    let anyPt1, anyPt2;
+
+    if (pref === PIXEL) {
+        anyPt1 = cc.getImageCoords(pt1);
+        anyPt2 = cc.getImageCoords(pt2);
+        if (!anyPt1 || !anyPt2) return null;
+        return screenDistance(anyPt1, anyPt2);
+    } else {
+        anyPt1 = cc.getWorldCoords(pt1);
+        anyPt2 = cc.getWorldCoords(pt2);
+        if (!anyPt1 || !anyPt2) return null;
+        return  VisUtil.computeDistance(anyPt1,anyPt2);
+    }
+}
+/**
  * @param {object} firstPt
  * @param {object} currentPt
- * @param {boolean} posAngle
+ * @param {boolean} offsetCal
  * @param {CysConverter} cc
  * @return {Array}
  */
-function makeSelectObj(firstPt,currentPt, posAngle,cc) {
-    var pref= getPreference(DIST_READOUT);
-    var retval;
-    var ptAry= [firstPt,currentPt];
+function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
+    const world = hasWCSProjection(cc);
+    const unitStyle = getUnitStyle(cc, world);
+    const pref = getUnitPreference(unitStyle);
 
-    var anyPt1;
-    var anyPt2;
-    var dist;
-    const world= hasWCSProjection(cc);
+    const ptAry= [firstPt,currentPt];
+    let retval;
+    let anyPt1;    // for ends of all ruler vectors
+    let anyPt2;
+    let dist;
+    const LWIDTH = 3;
 
-    if (world) {
+    // for distance overlay set with world unit, the ends of the ruler are with world coordinate values
+    // or the ends of the ruler are with pixel values of image coordinate
+    if (pref === PIXEL) {
+        anyPt1 = cc.getImageCoords(ptAry[0]);
+        anyPt2 = cc.getImageCoords(ptAry[1]);
+        if (!anyPt1 || !anyPt2) return null;
+        dist = screenDistance(anyPt1,anyPt2);
+    } else {
         anyPt1 = cc.getWorldCoords(ptAry[0]);
         anyPt2 = cc.getWorldCoords(ptAry[1]);
         if (!anyPt1 || !anyPt2) return null;
         dist= VisUtil.computeDistance(anyPt1,anyPt2);
     }
-    else {
-        anyPt1 = ptAry[0];
-        anyPt2 = ptAry[1];
-        if (!anyPt1 || !anyPt2) return null;
-        dist= screenDistance(anyPt1,anyPt2);
-    }
 
+    const obj= ShapeDataObj.makeLine(anyPt1, anyPt2, true);   // make line with arrow at the current end
+    const distText = getDistText(dist, pref);
+    const posAText = getPosAngleText(ptAry[0], ptAry[1], world, cc, (pref === PIXEL ? PIXEL : DEG));
+    obj.text = ((posAText) ? (posAText + '\n') : '') + distText;
+    obj.style= Style.STARTHANDLED;
+    obj.lineWidth = LWIDTH;
+    obj.fontSize = '16px';
+    obj.fontWeight = 'bold';
+    obj.textLoc=TextLocation.LINE_TOP_STACK;
+    obj.texttBaseLine = 'middle';
+    obj.supportedDrawingTypes=  (pref===PIXEL) ? DrawingType.ImageCoordsOnly : DrawingType.WcsCoordsOnly;
 
-    var obj= ShapeDataObj.makeLine(anyPt1,anyPt2);
-    obj.style= Style.HANDLED;
-    obj.text= getDistText(dist,world,pref);
-    obj.textLoc=TextLocation.LINE_MID_POINT;
-    obj.textOffset= makeOffsetPt(-15, 0);
-
-    if (posAngle) {
-        var eastPt;
-        var westPt;
-
-        if (anyPt1.x>anyPt2.x) {
-            eastPt= anyPt1;
-            westPt= anyPt2;
-        }
-        else {
-            eastPt= anyPt2;
-            westPt= anyPt1;
-        }
-
-        var adjDist;
-        var opDist;
-        var lonDelta1;
-        var lonDelta2;
-        var latDelta1;
-        var latDelta2;
-        if (world) {
-            lonDelta1= makeWorldPt(eastPt.x, eastPt.y);
-            lonDelta2= makeWorldPt(westPt.x, eastPt.y);
-            adjDist= VisUtil.computeDistance(lonDelta1,lonDelta2);
-
-            latDelta1= makeWorldPt(westPt.x, eastPt.y);
-            latDelta2= makeWorldPt(westPt.x, westPt.y);
-            opDist= VisUtil.computeDistance(latDelta1,latDelta2);
-        }
-        else {
-            lonDelta1= makeImagePt(eastPt.x, eastPt.y);
-            lonDelta2= makeImagePt(westPt.x, eastPt.y);
-            adjDist= screenDistance(lonDelta1,lonDelta2);
-
-            latDelta1= makeImagePt(westPt.x, eastPt.y);
-            latDelta2= makeImagePt(westPt.x, westPt.y);
-            opDist= screenDistance(latDelta1,latDelta2);
-        }
-
-        var adj= ShapeDataObj.makeLine(lonDelta1,lonDelta2);
-        var op= ShapeDataObj.makeLine(latDelta1, latDelta2);
-        var lonDelta1TextPt= lonDelta1;
-
-        adj.textLoc=TextLocation.LINE_MID_POINT;
-        adj.text= getDistText(adjDist,world,pref);
-        op.textLoc=TextLocation.LINE_MID_POINT;
-        op.text= getDistText(opDist,world,pref);
-        op.textOffset= makeOffsetPt(0,15);
-
-        var sinX= opDist/dist;
-        var angle= VisUtil.toDegrees(Math.asin(sinX));
-
-        var aStr=  `${numeral(angle).format('0.000')}${HTML_DEG}`;
-        var angleShape= ShapeDataObj.makeTextWithOffset(makeOffsetPt(8,-8), lonDelta1TextPt, aStr);
-
-        retval= [obj,adj,op,angleShape];
-    }
-    else {
+    if (!offsetCal) {
         retval= [obj];
+    } else {
+        const d1 = cc.getScreenCoords(ptAry[0]);     // use screen coordinate to determine the text position
+        const d2 = cc.getScreenCoords(ptAry[1]);
+        const d_midx = (d1.x+d2.x)/2;
+        const d_midy = (d1.y+d2.y)/2;
+
+        let highPt, lowPt;
+        if (d1.y <= d2.y) {
+            highPt = anyPt1;
+            lowPt = anyPt2;
+        } else {
+            highPt = anyPt2;
+            lowPt = anyPt1;
+        }
+
+        let lon1, lon2;
+        let lat1, lat2;
+        const plot= primePlot(visRoot(),cc.plotId);
+        const aHiPS = isHiPS(plot);
+        let  corner_pt;
+
+        if (pref !== PIXEL) {
+            corner_pt = makeWorldPt(highPt.x, lowPt.y);
+
+            if (isPointBelowLine(highPt, lowPt, corner_pt, cc)) {
+                lon1 = makeWorldPt(lowPt.x, lowPt.y);
+                lon2 = corner_pt;
+
+                lat1 = corner_pt;
+                lat2 = makeWorldPt(highPt.x, highPt.y);
+            } else {
+                corner_pt = makeWorldPt(lowPt.x, highPt.y);
+                lon1 = makeWorldPt(highPt.x, highPt.y);
+                lon2 = corner_pt;
+
+                lat1 = corner_pt;
+                lat2 = makeWorldPt(lowPt.x, lowPt.y);
+            }
+        } else {
+            lon1= makeImagePt(highPt.x, lowPt.y);   // corner
+            lon2= makeImagePt(lowPt.x, lowPt.y);
+
+            lat1= makeImagePt(highPt.x, lowPt.y);  // corner
+            lat2= makeImagePt(highPt.x, highPt.y);
+        }
+
+        const adjDist = computeDistance(lon1, lon2, cc, pref);
+        const opDist = computeDistance(lat1, lat2, cc, pref);
+
+        const adj = ShapeDataObj.makeLine(lon1,lon2);
+        const op = ShapeDataObj.makeLine(lat1, lat2);
+
+        adj.lineWidth = LWIDTH;
+        op.lineWidth = LWIDTH;
+
+        // no distance is shown on vertical or horizontal offset vector
+        const lineD = (d2.y - d1.y)*(d2.x - d1.x);
+
+        let end1 = cc.getScreenCoords(adj.pts[0]);
+        let end2 = cc.getScreenCoords(adj.pts[1]);
+        const seg1 = 10.0;
+        const seg2 = 16.0;
+
+        const ad_midy = (end1.y+end2.y)/2;
+        adj.textLoc=TextLocation.LINE_MID_POINT;
+        adj.textAlign = 'center';
+        adj.textBaseLine = 'middle';
+        adj.text = aHiPS || lineD !== 0 ? getDistText(adjDist,pref) : '';
+        adj.textOffset = ad_midy >= d_midy ? makeOffsetPt(0, seg1) : makeOffsetPt(-seg2, -seg2);
+        adj.style = Style.HANDLED;
+        adj.fontSize = '16px';
+        adj.fontWeight = 'bold';
+        adj.offsetOnScreen = true;
+        adj.supportedDrawingTypes=  (pref===PIXEL) ? DrawingType.ImageCoordsOnly : DrawingType.WcsCoordsOnly;
+
+
+        // for HiPS image, adj may not be perfectly horizontal
+        if (end1.y === end2.y) {
+            adj.textAngle = 0.0;
+        } else {
+            adj.textAngle = -Math.atan((end2.y - end1.y) / (end2.x -end1.x)) * 180.0 / Math.PI;
+        }
+
+        end1 = cc.getScreenCoords(op.pts[0]);
+        end2 = cc.getScreenCoords(op.pts[1]);
+        const op_midx = (end1.x + end2.x)/2;
+        op.textLoc=TextLocation.LINE_MID_POINT;
+        op.text= lineD !== 0 || aHiPS ? getDistText(opDist,pref) : '';
+        op.textAlign = op_midx < d_midx ? 'end' : 'start';
+        op.textOffset = op_midx < d_midx ? makeOffsetPt(-seg1, 0) : makeOffsetPt(seg1, 0);
+        op.textBaseLine = 'middle';
+        op.style = Style.HANDLED;
+        op.fontSize = '16px';
+        op.fontWeight = 'bold';
+        op.offsetOnScreen = true;
+        op.supportedDrawingTypes=  (pref===PIXEL) ? DrawingType.ImageCoordsOnly : DrawingType.WcsCoordsOnly;
+
+        // for HiPS image, op may not be perfectly vertical
+        if (end1.x === end2.x) {
+            op.textAngle = 0.0;
+        } else {
+            const a =  Math.atan((end2.y- end1.y)/(end2.x - end1.x));
+
+            if (a > 0) {
+                op.textAngle = -(a - Math.PI/2) * 180.0/Math.PI;
+            } else {
+                op.textAngle = -(a + Math.PI/2) * 180.0/Math.PI;
+            }
+        }
+        retval= [obj,adj,op];
     }
+
     return retval;
 }
 
@@ -418,7 +584,8 @@ function makeSelectObj(firstPt,currentPt, posAngle,cc) {
 function getPtAry(plot) {
     var sel= plot.attributes[PlotAttribute.ACTIVE_DISTANCE];
     if (!sel) return null;
-    var cc= CsysConverter.make(plot);
+    const cc = CsysConverter.make(plot);
+
     var ptAry=[];
     ptAry[0]= cc.getScreenCoords(sel.pt0);
     ptAry[1]= cc.getScreenCoords(sel.pt1);
