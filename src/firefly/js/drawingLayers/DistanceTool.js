@@ -2,7 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import numeral from 'numeral';
 import {isBoolean, isEmpty, get, isUndefined} from 'lodash';
 import DrawLayerCntlr, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
 import {getPreference} from '../core/AppDataCntlr.js';
@@ -30,6 +29,7 @@ const EDIT_DISTANCE= BrowserInfo.isTouchInput() ? 18 : 10;
 
 const ID= 'DISTANCE_TOOL';
 const TYPE_ID= 'DISTANCE_TOOL_TYPE';
+const SIGFIG = 3;
 
 export const UNIT_PIXEL_ONLY = 0;
 export const UNIT_NO_PIXEL = 1;
@@ -152,7 +152,7 @@ function getLayerChanges(drawLayer, action) {
 }
 
 /**
- * 
+ * Fs
  * @param plot
  * @param firstPt
  * @param currPt
@@ -203,13 +203,17 @@ export function getUnitStyle(cc, world) {
 
     if (!world) {
         return UNIT_PIXEL_ONLY;
+    } else {
+        return UNIT_NO_PIXEL;
     }
+    /*
     const plot= primePlot(visRoot(),cc.plotId);
     const aHiPS = isHiPS(plot);
     if (aHiPS) {
         return UNIT_NO_PIXEL;
     }
     return UNIT_ALL;
+    */
 }
 
 export function getUnitPreference(unitStyle) {
@@ -229,6 +233,7 @@ function attach() {
         offsetCal: false,
         firstPt: null,
         currentPt: null,
+        moveHead: true,      // drag start from head or not
         vertexDef: {points:null, pointDist:EDIT_DISTANCE},
         exclusiveDef: { exclusiveOnDown: true, type : 'anywhere' }
     };
@@ -257,14 +262,14 @@ function start(drawLayer, action) {
         var cc= CsysConverter.make(plot);
         var spt= cc.getScreenCoords(imagePt);
         var idx= findClosestPtIdx(ptAry,spt);
-        
         var testPt= cc.getScreenCoords(ptAry[idx]);
         if (!testPt) return {};
 
         if (screenDistance(testPt,spt)<EDIT_DISTANCE) {   // swap the first and current point, redraw the distance tool
-            var oppoIdx= idx===0 ? 1 : 0;
-            retObj.firstPt= cc.getImageWorkSpaceCoords(ptAry[oppoIdx]);
-            retObj.currentPt= cc.getImageWorkSpaceCoords(ptAry[idx]);
+            //var oppoIdx= idx===0 ? 1 : 0;
+            retObj.moveHead = (idx === 1);
+            retObj.firstPt= cc.getImageWorkSpaceCoords(ptAry[0]);
+            retObj.currentPt= cc.getImageWorkSpaceCoords(ptAry[1]);
             if (!retObj.firstPt || !retObj.currentPt) return {};
 
             const drawAry = makeSelectObj(retObj.firstPt, retObj.currentPt, drawLayer.offsetCal, CsysConverter.make(plot));
@@ -284,8 +289,12 @@ function drag(drawLayer,action) {
     const plot= primePlot(visRoot(),plotId);
     var cc= CsysConverter.make(plot);
     if (!cc) return;
-    var drawAry= makeSelectObj(drawLayer.firstPt, imagePt, drawLayer.offsetCal, cc); //todo switch back
-    return Object.assign({currentPt:imagePt}, makeBaseReturnObj(plot,drawLayer.firstPt, imagePt,drawAry));
+
+    const newFirst = drawLayer.moveHead ? drawLayer.firstPt : imagePt;
+    const newCurrent = drawLayer.moveHead ? imagePt : drawLayer.currentPt;
+
+    var drawAry= makeSelectObj(newFirst, newCurrent, drawLayer.offsetCal, cc);
+    return Object.assign({firstPt: newFirst, currentPt:newCurrent}, makeBaseReturnObj(plot,  newFirst, newCurrent,drawAry));
 }
 
 function end(action) {
@@ -300,7 +309,7 @@ function end(action) {
 
 
 function setupSelect(imagePt) {
-    return {firstPt: imagePt, currentPt: imagePt};
+    return {firstPt: imagePt, currentPt: imagePt,  moveHead: true};
 }
 
 function findClosestPtIdx(ptAry, pt) {
@@ -330,12 +339,15 @@ const screenDistance= (pt1,pt2) => VisUtil.computeScreenDistance(pt1.x,pt1.y,pt2
 function getDistText(dist, pref) {
     if (pref !== PIXEL)  {     // world & pref is undefined or  world & pref is not PIXEL
         if(pref===ARC_MIN){
-            return ` ${numeral(dist*60.0).format('0.000')}'`;
+            //return ` ${numeral(dist*60.0).format('0.000')}'`;
+            return ` ${Number(dist*60.0).toPrecision(SIGFIG)}'`;
         }
         else if(pref===ARC_SEC){
-            return ` ${numeral(dist*3600).format('0.000')}"`;
+            //return ` ${numeral(dist*3600).format('0.000')}"`;
+            return ` ${Number(dist*3600).toPrecision(SIGFIG)}"`;
         } else {
-            return ` ${numeral(dist).format('0.000')}${HTML_DEG}`;
+            //return ` ${numeral(dist).format('0.000')}${HTML_DEG}`;
+            return ` ${Number(dist).toPrecision(SIGFIG)}${HTML_DEG}`;
         }
     } else {                                        // not world or world & pref is PIXEL
         return ` ${Math.floor(dist)} Pixels`;
@@ -361,11 +373,14 @@ function getPosAngleText(pt0, pt1, isWorld, cc, pref) {
     }
 
     if(pref===ARC_MIN){
-        return ` ${PAPrefix}${numeral(posAngle*60.0).format('0.000')}'`;
+        //return ` ${PAPrefix}${numeral(posAngle*60.0).format('0.000')}'`;
+        return ` ${PAPrefix}${Number(posAngle*60.0).toPrecision(SIGFIG)}'`;
     } else if(pref===ARC_SEC){
-        return ` ${PAPrefix}${numeral(posAngle*3600).format('0.000')}"`;
+        //return ` ${PAPrefix}${numeral(posAngle*3600).format('0.000')}"`;
+        return ` ${PAPrefix}${Number(posAngle*3600).toPrecision(SIGFIG)}"`;
     } else {
-        return ` ${PAPrefix}${numeral(posAngle).format('0.000')}${HTML_DEG}`;
+        //return ` ${PAPrefix}${numeral(posAngle).format('0.000')}${HTML_DEG}`;
+        return ` ${PAPrefix}${Number(posAngle).toPrecision(SIGFIG)}${HTML_DEG}`;
     }
 }
 
