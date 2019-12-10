@@ -4,13 +4,14 @@
 
 import {getColumnIdx, getColumn, isColumnType, COL_TYPE, getTblById, stripColumnNameQuotes} from './TableUtil.js';
 import {Expression} from '../util/expr/Expression.js';
-import {isNil, get, isArray, isEmpty} from 'lodash';
+import {isNil, get, isArray, isEmpty, isNumber} from 'lodash';
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
+import {strictParseInt} from '../util/WebUtil.js';
 
 const operators = /(!=|>=|<=|<|>|=| like | in | is not | is )/i;
 
 // filter group separator
-const FILTER_SEP = ' _AND_ ';        // internal use need to match what's defined in TableServerRequest.FILTER_SEP
+export const FILTER_SEP = ' _AND_ ';        // internal use need to match what's defined in TableServerRequest.FILTER_SEP
 
 export const FILTER_CONDITION_TTIPS =
 `Valid values are one of (=, >, <, !=, >=, <=, LIKE, IS, IS NOT) followed by a value separated by a space.
@@ -231,96 +232,27 @@ export class FilterInfo {
      * @returns {function(): boolean}
      */
     static createComparator(filterStr, tableModel) {
-        let [cname, op, val] = parseInput(filterStr);
-        if (!cname) return () => false;       // bad filter.. returns nothing.
-
-        // remove the double quote or the single quote around cname and val (which is added in auto-correction)
-        const removeQuoteAroundString = (str, quote = "'") => {
-            if (str && str.startsWith(quote)) {
-                const reg = new RegExp('^' + quote + '(.*)' + quote + '$');
-                return str.replace(reg, '$1');
-            } else {
-                return str;
-            }
-        };
-
-        cname = removeQuoteAroundString(cname, '"');
-        op = op.toLowerCase();
-        val = val.toLowerCase();
-
-        const cidx = getColumnIdx(tableModel, cname);
-        const noROWID = cname === 'ROW_IDX' && cidx < 0;
-        const colType = noROWID ? 'int' : get(getColumn(tableModel, cname), 'type', 'char');
-
-        // bRemoveQuote: if remove the single quote enclosing the string
-        const convertStrToNumber = (str, bRemoveQuote=true) => {
-            const numStr = bRemoveQuote ? removeQuoteAroundString(str) : str;
-            const isCastInt = bRemoveQuote && str.startsWith("'") && str.endsWith("'");
-
-            // cast to integer in case it is single quoted
-            const num = colType.match(/^[i]/)&&isCastInt ? parseInt(numStr) : parseFloat(numStr);
-            return isNaN(num) ? str : num;
-        };
-
-
-        // update val of operator 'in' into an array of value
-        if (op === 'in') {
-            if (val.match(/^\(.*\)$/)) {
-                val = val.substring(1, val.length-1);
-            }
-            val = val.split(',').map((s) => removeQuoteAroundString(s.trim()) === NULL_TOKEN.toLowerCase() ? null : s.trim());
-        }
-
-        // remove single quote enclosing the string for the value of operater 'like' or char type column
-        if (op === 'like' || colType.match(/^[sc]/)) {
-            val = isArray(val) ? val.map((s) => removeQuoteAroundString(s)) : removeQuoteAroundString(val);
-        } else if (colType.match(/^[dfil]/)) {    // convert to number by removing single quote except 'in'
-            val =  isArray(val) ? val.map((s) => convertStrToNumber(s, false)) : convertStrToNumber(val);
-        }
+        filterStr = filterStr.replace(/ and /i, '#-#AND#-#')
+                             .replace(/ or /i, '#-#OR#-#');
+        const comparators = filterStr.split('#-#')
+                            .map( (fstr) => {
+                                if (fstr === 'AND' || fstr === 'OR') return fstr;
+                                else return createOneComparator(fstr, tableModel);
+                            });
 
         return (row, idx) => {
-            if (!row) return false;
-            let compareTo = noROWID ? idx : row[cidx];
-            compareTo = (compareTo === get(getColumn(tableModel, cname), 'nullString', '')) ? null : compareTo;     // resolve nullString
-
-            if (op !== 'like' && colType.match(/^[dfil]/)) {      // int, float, double, long .. or their short form.
-                compareTo = compareTo ? Number(compareTo) : compareTo;
-            } else {
-                compareTo = compareTo ? compareTo.toLowerCase() : compareTo;
+            let retval = comparators[0](row, idx);
+            if (comparators.length > 2) {
+                for (let i = 1; i < comparators.length-1; i+=2) {
+                    if (comparators[i] === 'AND') {
+                        retval = retval && comparators[i+1](row, idx);
+                    } else if (comparators[i] === 'OR') {
+                        retval = retval || comparators[i+1](row, idx);
+                    }
+                }
             }
-
-            switch (op) {
-                case 'like' :
-                    const reg = likeToRegexp(val);
-                    return reg.test(compareTo);
-                case '>'  :
-                    return compareTo > val;
-                case '<'  :
-                    return compareTo < val;
-                case '='  :
-                    return compareTo === val;
-                case '!='  :
-                    return compareTo !== val;
-                case '>='  :
-                    return compareTo >= val;
-                case '<='  :
-                    return compareTo <= val;
-                case 'in'  :
-                    return val.includes(compareTo);
-                case 'is'  :
-                    return val === 'null' && isNil(compareTo);
-                case 'is not'  :
-                    return val === 'null' && !isNil(compareTo);
-                default :
-                    return false;
-            }
+            return  retval;
         };
-    }
-
-
-
-    apply(f) {
-
     }
 
 
@@ -535,3 +467,114 @@ function autoCorrectCondition(v, isNumeric=false) {
     return `${op} ${val}`;
 }
 
+/**
+ * returns a comparator for a single, simple `column operator value` filter
+ * @param filterStr
+ * @param tableModel
+ * @returns {function(): boolean}
+ */
+function createOneComparator(filterStr, tableModel) {
+    let [cname, op, val] = parseInput(filterStr);
+    if (!cname) return () => false;       // bad filter.. returns nothing.
+
+    // remove the double quote or the single quote around cname and val (which is added in auto-correction)
+    const removeQuoteAroundString = (str, quote = "'") => {
+        if (str && str.startsWith(quote)) {
+            const reg = new RegExp('^' + quote + '(.*)' + quote + '$');
+            return str.replace(reg, '$1');
+        } else {
+            return str;
+        }
+    };
+
+    cname = removeQuoteAroundString(cname, '"');
+    op = op.toLowerCase();
+    val = val.toLowerCase();
+
+    const col = getColumn(tableModel, cname);
+    const cidx = getColumnIdx(tableModel, cname);
+    const noROWID = cname === 'ROW_IDX' && cidx < 0;
+    const colType = noROWID ? 'int' : get(col, 'type', 'char');
+
+    // bRemoveQuote: if remove the single quote enclosing the string
+    const convertStrToNumber = (str, bRemoveQuote=true) => {
+        const numStr = bRemoveQuote ? removeQuoteAroundString(str) : str;
+        const isCastInt = bRemoveQuote && str.startsWith("'") && str.endsWith("'");
+
+        // cast to integer in case it is single quoted
+        const num = colType.match(/^[i]/)&&isCastInt ? strictParseInt(numStr) : Number(numStr);
+        return isNaN(num) ? str : num;
+    };
+
+
+    // update val of operator 'in' into an array of value
+    if (op === 'in') {
+        if (val.match(/^\(.*\)$/)) {
+            val = val.substring(1, val.length-1);
+        }
+        val = val.split(',').map((s) => removeQuoteAroundString(s.trim()) === NULL_TOKEN.toLowerCase() ? null : s.trim());
+    }
+
+    // remove single quote enclosing the string for the value of operater 'like' or char type column
+    if (op === 'like' || colType.match(/^[sc]/)) {
+        val = isArray(val) ? val.map((s) => removeQuoteAroundString(s)) : removeQuoteAroundString(val);
+    } else if (colType.match(/^[dfil]/)) {    // convert to number by removing single quote except 'in'
+        val =  isArray(val) ? val.map((s) => convertStrToNumber(s, false)) : convertStrToNumber(val);
+    }
+
+
+    // catch known exceptions server-backed tables encountered to ensure behavior is consistent.
+    if (isColumnType(col, COL_TYPE.NUMBER)) {
+        if ( (op === 'in') && isArray(val)) {
+            for(let i=0; i<val.length; i++) {
+                if (!isNumber(val[i])) {
+                    tableModel.error = 'data exception: invalid character value for cast';
+                    return () => false;
+                }
+            }
+        } else if (op !== 'like') {
+            if (!isNumber(val)) {
+                tableModel.error = 'data exception: invalid character value for cast';
+                return () => false;
+            }
+        }
+    }
+
+    return (row, idx) => {
+        if (!row) return false;
+        let compareTo = noROWID ? idx : row[cidx];
+        compareTo = (compareTo === get(getColumn(tableModel, cname), 'nullString', '')) ? null : compareTo;     // resolve nullString
+
+        if (op !== 'like' && colType.match(/^[dfil]/)) {      // int, float, double, long .. or their short form.
+            compareTo = compareTo ? Number(compareTo) : compareTo;
+        } else {
+            compareTo = compareTo ? compareTo.toLowerCase() : compareTo;
+        }
+
+        switch (op) {
+            case 'like' :
+                const reg = likeToRegexp(val);
+                return reg.test(compareTo);
+            case '>'  :
+                return compareTo > val;
+            case '<'  :
+                return compareTo < val;
+            case '='  :
+                return compareTo === val;
+            case '!='  :
+                return compareTo !== val;
+            case '>='  :
+                return compareTo >= val;
+            case '<='  :
+                return compareTo <= val;
+            case 'in'  :
+                return val.includes(compareTo);
+            case 'is'  :
+                return val === 'null' && isNil(compareTo);
+            case 'is not'  :
+                return val === 'null' && !isNil(compareTo);
+            default :
+                return false;
+        }
+    };
+}

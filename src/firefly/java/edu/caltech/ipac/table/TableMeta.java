@@ -50,7 +50,7 @@ public class TableMeta implements Serializable {
 
 
     public static final String RESULTSET_ID = "resultSetID";            // this meta if exists contains the ID of the resultset returned.
-    public static final String RESULTSET_REQ = "resultSetRequest";      // this meta if exists contains the Request used to create this of the resultset.
+    public static final String RESULTSET_REQ = "resultSetRequest";      // this meta if exists contains the Request used to create this resultset.
 
     public static final String IS_FULLY_LOADED = "isFullyLoaded";
 
