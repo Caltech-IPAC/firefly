@@ -317,6 +317,8 @@
     font-size: 11px;
     white-space: nowrap;
     padding: 3px;
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 
 .public_fixedDataTableCell_cellContent.right_align {

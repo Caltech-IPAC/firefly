@@ -274,13 +274,13 @@ function AnalysisTable({summaryModel, detailsModel}) {
 
     const tblOptions = {showToolbar:false, border:false, showOptionButton: false, showFilters: true};
     const details = ! detailsModel ? <div className='FileUpload__noDetails'>Details not available</div>
-                    : <TablePanel title='File Details' tableModel={detailsModel} tbl_ui_id={detailsUiId} {...tblOptions} showMetaInfo={true} selectable={false}/>;
+                    : <TablePanel showTypes={false}  title='File Details' tableModel={detailsModel} tbl_ui_id={detailsUiId} {...tblOptions} showMetaInfo={true} selectable={false}/>;
 
     // Details table need to render first to create a stub to collect data when Summary table is loaded.
     return (
         <div className='FileUpload__summary'>
             <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={350}>
-                <TablePanel title='File Summary' tableModel={summaryModel} tbl_ui_id={summaryUiId} {...tblOptions} />
+                <TablePanel showTypes={false} title='File Summary' tableModel={summaryModel} tbl_ui_id={summaryUiId} {...tblOptions} />
                 {details}
             </SplitPane>
         </div>

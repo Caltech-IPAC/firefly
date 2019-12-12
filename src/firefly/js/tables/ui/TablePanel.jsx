@@ -307,6 +307,7 @@ TablePanel.defaultProps = {
     showOptionButton: true,
     showFilterButton: true,
     showInfoButton: false,
+    showTypes: true,
     selectable: true,
     expandedMode: false,
     expandable: true,

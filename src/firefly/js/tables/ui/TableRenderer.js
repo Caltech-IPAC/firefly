@@ -7,7 +7,7 @@ import FixedDataTable from 'fixed-data-table-2';
 import {set, get, isEqual, pick} from 'lodash';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS, NULL_TOKEN} from '../FilterInfo.js';
-import {isColumnType, COL_TYPE, tblDropDownId, getTblById, getColumn, formatValue} from '../TableUtil.js';
+import {isColumnType, COL_TYPE, tblDropDownId, getTblById, getColumn, formatValue, getTypeDesc} from '../TableUtil.js';
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {SORT_ASC, UNSORTED} from '../SortInfo';
@@ -56,7 +56,7 @@ export class HeaderCell extends PureComponent {
         const cdesc = desc || label || name;
         const sortDir = SortInfo.parse(sortInfo).getDirection(name);
         const sortCol = sortByCols || name;
-        const typeVal = col.type || '';
+        const typeVal = getTypeDesc(col);
         const unitsVal = col.units ? `(${col.units})`: '';
         
         const onClick = toBoolean(sortable, true) ?(() => onSort(sortCol)) : undefined;

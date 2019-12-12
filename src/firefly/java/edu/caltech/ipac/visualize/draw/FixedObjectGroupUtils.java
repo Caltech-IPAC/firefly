@@ -533,7 +533,6 @@ public class FixedObjectGroupUtils {
             }
 
             DataGroup.convertHREFTypes(dataGroup);
-            IpacTableWriter.save(System.out, dataGroup);
             System.exit(0);
 
         } catch (Exception e) {

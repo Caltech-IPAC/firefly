@@ -51,7 +51,7 @@ public class IpacTableTest {
         // instead of comparing the output of write, we'll write it out, read it back in and use the same test to
         // validate that the round-trip preserves the data.
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        IpacTableWriter.save(output, data, true);
+        IpacTableWriter.save(output, data);
         data = IpacTableReader.read(new ByteArrayInputStream(output.toByteArray()));
         checkTableData(data);
     }

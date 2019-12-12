@@ -6,7 +6,6 @@ package edu.caltech.ipac.table;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.util.StringUtils;
-import org.apache.commons.lang.ArrayUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -163,41 +162,12 @@ public class JsonTableUtil {
         if (data.size() > 0) {
             List<List> tableData = new ArrayList<>();
             for (int i = 0; i < data.size(); i++) {
-                Object[] rowData = Arrays.stream(data.get(i).getData()).map(d -> unboxedPrimitive(d)).toArray();
+                Object[] rowData = Arrays.stream(data.get(i).getData()).map(d -> TableUtil.boxPrimitive(d)).toArray();
                 tableData.add(Arrays.asList(rowData));
             }
             tdata.put("data", tableData);
         }
         return tdata;
-    }
-
-    /**
-     * if obj is an array of primitive, return a list of its equivalent Objects
-     * @param obj
-     * @return
-     */
-    private static Object unboxedPrimitive(Object obj) {
-        if (obj != null && obj.getClass().isArray()) {
-            switch (obj.getClass().getComponentType().getName()) {
-                case "boolean":
-                    obj = Arrays.asList(ArrayUtils.toObject((boolean[]) obj)); break;
-                case "byte":
-                    obj = Arrays.asList(ArrayUtils.toObject((byte[]) obj)); break;
-                case "char":
-                    obj = Arrays.asList(ArrayUtils.toObject((char[]) obj)); break;
-                case "short":
-                    obj = Arrays.asList(ArrayUtils.toObject((short[]) obj)); break;
-                case "int":
-                    obj = Arrays.asList(ArrayUtils.toObject((int[]) obj)); break;
-                case "long":
-                    obj = Arrays.asList(ArrayUtils.toObject((long[]) obj)); break;
-                case "float":
-                    obj = Arrays.asList(ArrayUtils.toObject((float[]) obj)); break;
-                case "double":
-                    obj = Arrays.asList(ArrayUtils.toObject((double[]) obj)); break;
-            }
-        }
-        return obj;
     }
 
     /**
@@ -313,6 +283,7 @@ public class JsonTableUtil {
             applyIfNotEmpty(dt.getNullString(), v -> c.put("nullString", v));
             applyIfNotEmpty(dt.getDesc(), v -> c.put("desc", v));
             applyIfNotEmpty(dt.getLabel(), v -> c.put("label", v));
+            applyIfNotEmpty(dt.getArraySize(), v -> c.put("arraySize", v));
 
             if (dt.getVisibility() != DataType.Visibility.show)
                 c.put("visibility", dt.getVisibility().name());

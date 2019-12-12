@@ -330,6 +330,7 @@ function renderTable(band, fitsHeaderInfo, isPlacedOnTab) {
                showOptionButton={true}
                allowUnits={false}
                showFilters={true}
+               showTypes={false}
            />
 
         </div>

@@ -11,9 +11,12 @@ import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.util.*;
 import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.lang.ArrayUtils;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 /**
@@ -84,20 +87,20 @@ public class TableUtil {
                     return Format.VO_TABLE;
                 }
 
-                counts[row][csvIdx] = CSVFormat.DEFAULT.parse(new StringReader(line)).iterator().next().size();
-                counts[row][tsvIdx] = CSVFormat.TDF.parse(new StringReader(line)).iterator().next().size();
+                counts[row][csvIdx] = getColCount(CSVFormat.DEFAULT, line);
+                counts[row][tsvIdx] = getColCount(CSVFormat.TDF, line);
                 row++;
                 line = reader.readLine();
             }
             // check csv
             int c = counts[0][csvIdx];
-            boolean cMatch = true;
+            boolean cMatch = c > 0;
             for(int i = 1; i < row; i++) {
                 cMatch = cMatch && counts[i][csvIdx] == c;
             }
             // check tsv
             int t = counts[0][tsvIdx];
-            boolean tMatch = true;
+            boolean tMatch = t > 0;
             for(int i = 1; i < row; i++) {
                 tMatch = tMatch && counts[i][tsvIdx] == t;
             }
@@ -123,6 +126,14 @@ public class TableUtil {
             try {reader.close();} catch (Exception e) {e.printStackTrace();}
         }
 
+    }
+
+    private static int getColCount(CSVFormat format, String line) {
+        try {
+            return format.parse(new StringReader(line)).iterator().next().size();
+        } catch (Exception e) {
+            return -1;
+        }
     }
 
     public static DataGroupPart getData(File inf, int start, int rows) throws IOException {
@@ -200,6 +211,77 @@ public class TableUtil {
         return dg;
     }
 
+    public static List foldAry(DataType dt, Object value) {
+
+        List aryList = aryToList(value);
+        int[] shape = dt.getShape();
+        if (shape.length > 1) {
+            for(int i = 0; i < shape.length-1; i++) {
+                aryList = foldList(aryList, shape[i]);
+            }
+        }
+        return aryList;
+    }
+
+    private static List foldList(List source, int size) {
+        size = size <= 0 ? Integer.MAX_VALUE : size;
+        List rval = new ArrayList();
+        for(int i = 0; i < source.size(); ) {
+            int end = Math.min(i + size, source.size());
+            rval.add(source.subList(i, end));
+            i = end;
+        }
+        return rval;
+    }
+
+    /**
+     * Simple util function to convert any array to a list, including primitives
+     * @param val   value to format
+     * @return
+     */
+    static List aryToList(Object val) {
+        if (val.getClass().isArray()) {
+            if (val instanceof Object[])
+                return Arrays.stream((Object[]) val).collect(Collectors.toList());
+            else {  // we can't cast to Object[] - case of primitive arrays
+                List alist = new ArrayList();
+                for (int i = 0; i < Array.getLength(val); i++) alist.add(Array.get(val, i));
+                return alist;
+            }
+        }
+        return Arrays.asList(val);
+    }
+
+    /**
+     * if obj is an array of primitive, return a list of its equivalent Objects
+     * @param obj
+     * @return
+     */
+    static Object boxPrimitive(Object obj) {
+        if (obj != null && obj.getClass().isArray()) {
+            switch (obj.getClass().getComponentType().getName()) {
+                case "boolean":
+                    obj = Arrays.asList(ArrayUtils.toObject((boolean[]) obj)); break;
+                case "byte":
+                    obj = Arrays.asList(ArrayUtils.toObject((byte[]) obj)); break;
+                case "char":
+                    obj = Arrays.asList(ArrayUtils.toObject((char[]) obj)); break;
+                case "short":
+                    obj = Arrays.asList(ArrayUtils.toObject((short[]) obj)); break;
+                case "int":
+                    obj = Arrays.asList(ArrayUtils.toObject((int[]) obj)); break;
+                case "long":
+                    obj = Arrays.asList(ArrayUtils.toObject((long[]) obj)); break;
+                case "float":
+                    obj = Arrays.asList(ArrayUtils.toObject((float[]) obj)); break;
+                case "double":
+                    obj = Arrays.asList(ArrayUtils.toObject((double[]) obj)); break;
+                case "java.lang.String":
+                    obj = Arrays.stream((String[])obj).collect(Collectors.toList()); break;
+            }
+        }
+        return obj;
+    }
 
 //====================================================================
 //

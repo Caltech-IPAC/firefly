@@ -6,16 +6,17 @@ import edu.caltech.ipac.table.*;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import edu.caltech.ipac.table.TableUtil;
 
+import edu.caltech.ipac.util.StringUtils;
 import uk.ac.starlink.table.*;
 import uk.ac.starlink.votable.*;
 import nom.tam.fits.FitsFactory;
@@ -29,36 +30,20 @@ import nom.tam.fits.FitsFactory;
  */
 public class VoTableWriter {
 
-    public static void save(File file, DataGroup dataGroup, TableUtil.Format outputFormat)
-            throws IOException {
-        save(file, dataGroup, outputFormat, false);
-    }
-
-    public static void save(OutputStream stream, DataGroup dataGroup, TableUtil.Format outputFormat)
-            throws IOException {
-        save(stream, dataGroup, outputFormat, false);
-    }
-
     /**
      * save the catalogs to a file
      *
      * @param file the file to be saved
      * @param dataGroup data group
      * @param outputFormat votable output format
-     * @param isGenericOutput true for doing generic votable output by using Starlink provided functions to output
-     *                        a VOTable document with the simplest structure capable of holding TABLE element
-     *                        in a range of different format
-     *                        false for doing more detail votable output which includes the tagged
-     *                        elements under TABLE element such as DESCRIPTION, LINK, GROUP, PARAM, INFO, FIELD
-     *                        and child elements under those elements.
      * @throws IOException on error
      */
-    public static void save(File file, DataGroup dataGroup, TableUtil.Format outputFormat, boolean isGenericOutput)
+    public static void save(File file, DataGroup dataGroup, TableUtil.Format outputFormat)
             throws IOException {
 
 
         OutputStream ostream = new BufferedOutputStream( new FileOutputStream(file) );
-        save(ostream, dataGroup, outputFormat, isGenericOutput);
+        save(ostream, dataGroup, outputFormat);
     }
 
 
@@ -68,128 +53,29 @@ public class VoTableWriter {
      * @param stream the output stream to write to
      * @param dataGroup data group
      * @param outputFormat votable output format
-     * @param isGenericOutput true for doing generic votable output by using Starlink provided functions to output VOTable
-     *                        document with simplest structure.
-     *                        false for doing more detail voatable output.
-     *                        please see save(File file, ....)
      * @throws IOException on error
      */
-    public static void save(OutputStream stream, DataGroup dataGroup, TableUtil.Format outputFormat, boolean isGenericOutput)
+    public static void save(OutputStream stream, DataGroup dataGroup, TableUtil.Format outputFormat)
             throws IOException {
 
         FitsFactory.useThreadLocalSettings(true);  // consistent with FitsTableReader
         FitsFactory.setLongStringsEnabled(false);
 
-        StarTable st = formStarTableFrom(dataGroup);
+        VOTableWriterImpl voWriter = new VOTableWriterImpl(outputFormat, dataGroup);
+        voWriter.write(stream);
 
-        if (isGenericOutput) {
-            writeGenericVotable(stream, outputFormat, st);
-        } else {
-            writeVotable(new OutputStreamWriter(stream), outputFormat, st);
-        }
         FitsFactory.useThreadLocalSettings(false);
     }
 
 
-    private static List<DataType> getColumnsForVotable(DataGroup dataGroup) {
-
-        List<DataType> headers = Arrays.asList(dataGroup.getDataDefinitions());
-
-        // this should return only visible columns
-        headers = headers.stream()
-                    .filter(dt -> IpacTableUtil.isVisible(dataGroup, dt))
-                    .collect(Collectors.toList());
-
-        return headers;
-    }
-
-    private static StarTable formStarTableFrom(DataGroup dataGroup) {
-
-        List<DataType> headers = getColumnsForVotable(dataGroup);
-        List<ColumnInfo> colList = headers.stream()
-                .map((dt) -> DataGroupStarTable.convertToColumnInfo(dt))
-                .collect(Collectors.toList());
-
-        ColumnInfo[] colInfos = colList.toArray(new ColumnInfo[colList.size()]);
-        return new DataGroupStarTable(dataGroup, colInfos, headers);
-    }
-
-    private static void writeGenericVotable(OutputStream stream, TableUtil.Format outputFormat, StarTable st) throws IOException
-    {
-        VOTableWriter voWriter = new VOTableWriter(getDataFormat(outputFormat), true, getVotVersion(outputFormat));
-        voWriter.writeStarTable(st, stream);
-    }
-
-    private static void outputElement(BufferedWriter out, String s) throws IOException {
-        if (!isEmpty(s)) {
-            out.write(s + "\n");
-        }
-    }
-
-    private static void writeVotable(Writer writer, TableUtil.Format outputFormat, StarTable st) throws IOException
-    {
-        BufferedWriter out = new BufferedWriter(writer);
-        DataGroup dataGroup = ((DataGroupStarTable)st).getDataGroup();
-        DataGroupXML dgXML = new DataGroupXML( dataGroup, ((DataGroupStarTable)st).getColumns());
-        VOTableVersion ver =  getVotVersion(outputFormat);
-
-        out.write("<?xml version='1.0'?>\n");
-        out.write("<VOTABLE version=\"" + ver.getVersionNumber() + "\">\n");
-        out.write("<RESOURCE type=\"results\">\n");
-        VOSerializer ser = VOSerializer.makeSerializer(getDataFormat(outputFormat), ver, st);
-
-        out.write(dgXML.xmlTABLE() + "\n");                    // TABLE start tag
-        outputElement(out, dgXML.xmlDESCRIPTION());     // DESCRIPTION tag
-        outputElement(out, dgXML.xmlGROUPs());          // GROUP
-        outputElement(out, dgXML.xmlPARAMs(dataGroup.getParamInfos())); // PARAM
-        outputElement(out, dgXML.xmlFIELDs());          // FIELD
-        outputElement(out, dgXML.xmlLINKs(dataGroup.getLinkInfos()));
-        ser.writeInlineDataElement(out);
-        outputElement(out, dgXML.xmlINFOs());
-        out.write("</TABLE>\n");
-        out.write("</RESOURCE>\n");
-        out.write("</VOTABLE>\n");
-        out.close();
-    }
-
-
-    private static DataFormat getDataFormat(TableUtil.Format outputFormat) {
-
-
-        if (outputFormat.equals(TableUtil.Format.VO_TABLE_BINARY2)) {
-            return DataFormat.BINARY2;
-        } else if (outputFormat.equals(TableUtil.Format.VO_TABLE_BINARY)) {
-            return DataFormat.BINARY;
-        } else if (outputFormat.equals(TableUtil.Format.VO_TABLE_FITS)) {
-            return DataFormat.FITS;
-        } else {
-            return DataFormat.TABLEDATA;
-        }
-    }
-
-    private static VOTableVersion getVotVersion(TableUtil.Format outputFormat) {
-        return outputFormat.equals(TableUtil.Format.VO_TABLE_BINARY2) ? VOTableVersion.V13 : VOTableVersion.V12;
-    }
-
-
-    private static String getNowTime() {
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-        return df.format(new Date());
-    }
-
-    public static class DataGroupXML {
+    private static class DataGroupXML {
         private List<DataGroup.Attribute> tableMeta;
         private DataGroup dataGroup;
-        private int totalRow;
-        private List<DataType> columnsDef;
         private String tagDesc = "DESCRIPTION";
         private static final Map<Class, String> dataTypeMap = new HashMap<>();
-        static {
-            initDataTypeMap();
-        }
 
         // not included: "bit", "unicodeCode", "floatComplex", "doubleComplex"
-        private static void initDataTypeMap() {
+        static {
             dataTypeMap.put(Boolean.class, "boolean");
             dataTypeMap.put(Byte.class, "unsignedByte");
             dataTypeMap.put(Short.class, "short");
@@ -203,28 +89,9 @@ public class VoTableWriter {
         }
 
 
-        public DataGroupXML(DataGroup dg, List<DataType> columns) {
+        DataGroupXML(DataGroup dg) {
             this.dataGroup = dg;
-            this.columnsDef = columns;
             tableMeta = dg.getTableMeta().getKeywords();
-            totalRow = dataGroup.size();
-        }
-
-        public String xmlTABLE() {
-            List<String> tableAtt = new ArrayList<String>() {{
-               add(TableMeta.ID);
-               add(TableMeta.NAME);
-               add(TableMeta.UCD);
-               add(TableMeta.UTYPE);
-               add(TableMeta.REF);
-            }};
-            String attStr = "";
-
-            for (String att : tableAtt) {
-                attStr += elementAtt(att, getMetaValueOf(att));
-            }
-
-            return "<TABLE" + attStr + VOSerializer.formatAttribute("nrows", ""+ totalRow) + ">";
         }
 
         public String xmlINFOs() {
@@ -241,8 +108,8 @@ public class VoTableWriter {
                                                 .collect(Collectors.joining("\n"));
         }
 
-        public String xmlDESCRIPTION() {
-            String descVal = getMetaValueOf(TableMeta.DESC);
+        private String xmlDESCRIPTION() {
+            String descVal = dataGroup.getAttribute(TableMeta.DESC);
 
             return isEmpty(descVal) ? "" : "<"+tagDesc+">" + descVal + "</"+tagDesc+">";
         }
@@ -297,14 +164,13 @@ public class VoTableWriter {
                           elementAtt(TableMeta.NAME, dt.getKeyName()) +
                           elementAtt(TableMeta.UCD, dt.getUCD()) +
                           elementAtt("datatype", dataTypeMap.get(dt.getDataType())) +
-                          getArraySize(dt.getDataType()) +
                           elementAtt("width", width) +
                           elementAtt("precision",
                                      (!isEmpty(prec) && prec.startsWith("G")) ? prec.substring(1) : prec) +
                           elementAtt("unit", dt.getUnits()) +
                           elementAtt(TableMeta.UTYPE, dt.getUType()) +
-                          elementAtt(TableMeta.UTYPE, dt.getUType()) +
-                          elementAtt("arraySize", dt.getArraySize());
+                          getArraySize(dt);
+                          getArraySize(dt);
 
 
             return atts;
@@ -329,13 +195,6 @@ public class VoTableWriter {
             String atts = xmlColumnAtt(dt);
 
             return completeTag(atts, childElements, "FIELD");
-        }
-
-        public String xmlFIELDs() {
-            return columnsDef.stream()
-                             .map( oneCol -> xmlFIELD(oneCol))
-                             .collect(Collectors.joining("\n"));
-
         }
 
         private String xmlPARAM(ParamInfo pInfo) {
@@ -399,12 +258,21 @@ public class VoTableWriter {
                          .collect(Collectors.joining("\n"));
         }
 
-        private String getMetaValueOf(String keyName) {
-            return DataGroupStarTable.getTableMetaValue(keyName, tableMeta);
+        public static List<DataGroup.Attribute> getInfosFromMeta(List<DataGroup.Attribute> meta) {
+            String[] tableMetaNotInfo = { TableMeta.ID, TableMeta.REF,
+                                          TableMeta.UCD, TableMeta.UTYPE,
+                                          TableMeta.NAME, TableMeta.DESC};
+
+            List<String> attList = Arrays.asList(tableMetaNotInfo);
+            List<DataGroup.Attribute> infoList = meta.stream()
+                    .filter(oneAtt -> (!oneAtt.isComment()) && !attList.contains(oneAtt.getKey()))
+                    .collect(Collectors.toList());
+            return infoList;
         }
 
+
         private List<DataGroup.Attribute> infosInTable(List<DataGroup.Attribute> meta) {
-            return DataGroupStarTable.getInfosFromMeta(meta);
+            return getInfosFromMeta(meta);
         }
 
         private String tagElement(String tag, String val) {
@@ -415,14 +283,117 @@ public class VoTableWriter {
              return (val != null && !isEmpty(val))  ? VOSerializer.formatAttribute(key, val) : "";
         }
 
-        private String getArraySize(Class type) {
-            return type.equals(String.class) ? elementAtt("arraysize", "*") : "";
+        private String getArraySize(DataType type) {
+            if (type.getDataType() == String.class && StringUtils.isEmpty(type.getArraySize())) {
+                return VOSerializer.formatAttribute("arraysize", "*");
+            }
+            return elementAtt("arraysize", type.getArraySize());
         }
 
         private String completeTag(String elementAtts, String childElements, String tagName) {
             String startTag = "<"+tagName+elementAtts;
             return isEmpty(childElements) ? startTag+"/>" : startTag+">\n"+childElements+"</"+tagName+">";
         }
+    }
+
+
+
+
+
+    private static class VOTableWriterImpl extends VOTableWriter {
+        private DataGroup dataGroup;
+
+        private VOTableWriterImpl(TableUtil.Format outputFormat, DataGroup dataGroup) {
+            super(getDataFormat(outputFormat), true, getVotVersion(outputFormat));
+            this.dataGroup = dataGroup;
+        }
+
+        public void write(OutputStream stream)  throws IOException {
+
+            // this should return only visible columns
+            List<String> columns = Arrays.asList(dataGroup.getDataDefinitions()).stream()
+                    .filter(dt -> IpacTableUtil.isVisible(dataGroup, dt))
+                    .map((dt) -> dt.getKeyName())
+                    .collect(Collectors.toList());
+
+            StarTable st = new DataGroupStarTable(dataGroup, columns);
+
+
+
+            writeStarTable(st, stream);
+        }
+
+        /**
+         *  Override to inject additional info into the table.
+         *  This also forces inline writing only.. and ignore optimization and File writing.
+         */
+        @Override
+        public void writeStarTables( TableSequence tableSeq, OutputStream out, File file ) throws IOException {
+
+            OutputStreamWriter osw;
+            osw = new OutputStreamWriter( out, StandardCharsets.UTF_8);
+            BufferedWriter writer = new BufferedWriter( osw );
+
+            /* Output preamble. */
+            writePreTableXML( writer );
+
+            /* Loop over all tables for output. */
+            int itable = 0;
+            for ( StarTable startab; ( startab = tableSeq.nextTable() ) != null;
+                  itable++ ) {
+
+                VOSerializer serializer = VOSerializer.makeSerializer( getDataFormat(), getVotableVersion(), startab );
+
+                /* Begin TABLE element including FIELDs etc. */
+                serializer.writePreDataXML( writer );
+
+                /* Now add our additional info */
+                DataGroupXML dgXML = new DataGroupXML( dataGroup);
+                outputElement(writer, dgXML.xmlDESCRIPTION());     // DESCRIPTION tag
+                outputElement(writer, dgXML.xmlGROUPs());          // GROUP
+                outputElement(writer, dgXML.xmlPARAMs(dataGroup.getParamInfos())); // PARAM
+                outputElement(writer, dgXML.xmlLINKs(dataGroup.getLinkInfos()));
+
+                /* Now write the DATA element. */
+                /* ALWAYS write inline. */
+                serializer.writeInlineDataElement( writer );
+
+                /* Now add our additional info */
+                outputElement(writer, dgXML.xmlINFOs());
+
+                /* Write postamble. */
+                serializer.writePostDataXML( writer );
+            }
+            writePostTableXML( writer );
+
+            /* Tidy up. */
+            writer.flush();
+        }
+
+        private static DataFormat getDataFormat(TableUtil.Format outputFormat) {
+
+
+            if (outputFormat.equals(TableUtil.Format.VO_TABLE_BINARY2)) {
+                return DataFormat.BINARY2;
+            } else if (outputFormat.equals(TableUtil.Format.VO_TABLE_BINARY)) {
+                return DataFormat.BINARY;
+            } else if (outputFormat.equals(TableUtil.Format.VO_TABLE_FITS)) {
+                return DataFormat.FITS;
+            } else {
+                return DataFormat.TABLEDATA;
+            }
+        }
+
+        private static VOTableVersion getVotVersion(TableUtil.Format outputFormat) {
+            return outputFormat.equals(TableUtil.Format.VO_TABLE_BINARY2) ? VOTableVersion.V13 : VOTableVersion.V12;
+        }
+
+        private static void outputElement(BufferedWriter out, String s) throws IOException {
+            if (!isEmpty(s)) {
+                out.write(s + "\n");
+            }
+        }
+
     }
 }
 
