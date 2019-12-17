@@ -6,20 +6,18 @@ package edu.caltech.ipac.firefly.server.persistence;
 
 import edu.caltech.ipac.firefly.core.NotLoggedInException;
 import edu.caltech.ipac.firefly.data.SearchInfo;
-import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.db.DbInstance;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.server.query.IpacFileQuery;
+import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
+import edu.caltech.ipac.firefly.server.query.Query;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
-import edu.caltech.ipac.util.cache.Cache;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -32,7 +30,11 @@ import java.util.List;
  * $Id: QuerySearchHistory.java,v 1.12 2011/09/30 18:22:34 loi Exp $
  */
 @SearchProcessorImpl(id = "searchHistory")
-public class QuerySearchHistory extends IpacFileQuery {
+public class QuerySearchHistory  extends EmbeddedDbProcessor implements Query {
+
+    public String getTemplateName() {
+        return "searchHistory";
+    }
 
     public DbInstance getDbInstance() {
         return DbInstance.operation;
@@ -72,7 +74,7 @@ public class QuerySearchHistory extends IpacFileQuery {
             }
             return dg;
         } else {
-            return super.fetchDataGroup(request);
+            return executeQuery(request);
         }
     }
 
@@ -92,19 +94,4 @@ public class QuerySearchHistory extends IpacFileQuery {
             return new Object[0];
         }
     }
-
-    @Override
-    public boolean doCache() {
-        return false;
-    }
-
-    @Override
-    public String getUniqueID(ServerRequest request) {
-        return "searchHistory";
-    }
-
-    public Cache getCache() {
-        return UserCache.getInstance();
-    }
-
 }

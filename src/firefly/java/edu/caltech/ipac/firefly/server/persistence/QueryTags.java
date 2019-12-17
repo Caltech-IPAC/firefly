@@ -3,22 +3,27 @@
  */
 package edu.caltech.ipac.firefly.server.persistence;
 
-import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.db.DbInstance;
-import edu.caltech.ipac.firefly.server.query.IpacFileQuery;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
+import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
+import edu.caltech.ipac.firefly.server.query.Query;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.rpc.UserServicesImpl;
-import edu.caltech.ipac.util.cache.Cache;
+import edu.caltech.ipac.table.DataGroup;
 
 /**
  * @author tatianag
  *         $Id: QueryTags.java,v 1.8 2011/06/07 20:31:19 loi Exp $
  */
 @SearchProcessorImpl(id ="tags")
-public class QueryTags   extends IpacFileQuery {
+public class QueryTags  extends EmbeddedDbProcessor implements Query {
+
+    public String getTemplateName() {
+        return "tags";
+    }
+
     public DbInstance getDbInstance() {
         return DbInstance.operation;
     }
@@ -32,18 +37,7 @@ public class QueryTags   extends IpacFileQuery {
         return new Object[]{createdBy, ServerContext.getAppName()};
     }
 
-    @Override
-    public boolean doCache() {
-        return false;
+    public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
+        return executeQuery(req);
     }
-
-    @Override
-    public String getUniqueID(ServerRequest request) {
-        return "tags";
-    }
-
-    public Cache getCache() {
-        return UserCache.getInstance();
-    }
-
 }
