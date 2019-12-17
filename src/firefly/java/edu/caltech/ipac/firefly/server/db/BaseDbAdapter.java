@@ -189,7 +189,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
 
     public String toDbDataType(DataType dataType) {
-        if (!StringUtils.isEmpty(dataType.getArraySize())) return "other";
+        if (dataType.isArrayType()) return "other";
 
         Class type = dataType.getDataType();
         if (String.class.isAssignableFrom(type)) {

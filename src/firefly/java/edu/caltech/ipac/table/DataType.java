@@ -440,6 +440,20 @@ public class DataType implements Serializable, Cloneable {
                 .toArray();
     }
 
+    public boolean isArrayType() {
+        int[] shape = getShape();
+        if (getDataType() == String.class) {
+            return shape.length -1 > 0;
+        } else {
+            return shape.length > 0;
+        }
+    }
+
+    public String getTypeLabel() {
+        return getTypeDesc() + (isArrayType() ? "[" + getArraySize() + "]" : "");
+    }
+
+
     /**
      * returns a string the size of the given width.  If the value is longer then the given width,
      * it will be truncated.  Values will be left-padded if numeric and right-padded otherwise.
@@ -480,7 +494,7 @@ public class DataType implements Serializable, Cloneable {
      * @return an object
      */
     public Object convertStringToData(String s) {
-        if (s == null || getNullString().equals(s)) return null;
+        if (s == null || s.length() == 0 || getNullString().equals(s)) return null;
 
         Object retval = s;
         if (StringUtils.isEmpty(getArraySize())) {
@@ -539,7 +553,9 @@ public class DataType implements Serializable, Cloneable {
 
     private Object strToObject(String s) {
         try {
-            if (type ==Boolean.class) {
+            if (type == String.class) {
+                return s;
+            } else if (type ==Boolean.class) {
                 return Boolean.valueOf(s);
             }
             else if (type ==Double.class) {
@@ -564,7 +580,7 @@ public class DataType implements Serializable, Cloneable {
                 return HREF.parseHREF(s);
             }
         } catch (IllegalArgumentException iae) {} // ok to ignore
-        return s;
+        return null;
     }
 
     private String resolveTypeDesc() {

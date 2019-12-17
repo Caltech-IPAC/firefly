@@ -289,9 +289,9 @@ public class JsonTableUtil {
                 c.put("visibility", dt.getVisibility().name());
             if (dt.getPrefWidth() > 0)
                 c.put("prefWidth", dt.getPrefWidth());
-            if (!dt.isSortable())
+            if (!dt.isSortable() || dt.isArrayType())       // disable sorting for data array type
                 c.put("sortable", false);
-            if (!dt.isFilterable())
+            if (!dt.isFilterable() || dt.isArrayType())     // disable filtering for data array type
                 c.put("filterable", false);
 
             applyIfNotEmpty(dt.getSortByCols(), v -> c.put("sortByCols", v));

@@ -170,7 +170,6 @@ public class VoTableWriter {
                           elementAtt("unit", dt.getUnits()) +
                           elementAtt(TableMeta.UTYPE, dt.getUType()) +
                           getArraySize(dt);
-                          getArraySize(dt);
 
 
             return atts;

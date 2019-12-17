@@ -203,7 +203,7 @@ public class TableUtil {
         for (DataType col : meta.getCols() ) {
             DataObject row = new DataObject(dg);
             row.setDataElement(cols[0], col.getKeyName());
-            row.setDataElement(cols[1], col.getTypeDesc());
+            row.setDataElement(cols[1], col.getTypeLabel());
             row.setDataElement(cols[2], col.getUnits());
             row.setDataElement(cols[3], col.getDesc());
             dg.add(row);

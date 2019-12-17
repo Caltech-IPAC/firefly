@@ -495,9 +495,15 @@ export function formatValue(col, val) {
     return String(val);
 }
 
-export function getTypeDesc(col={}) {
-    const {type, arraySize} = col;
-    return (type || '') + (arraySize ? `[${arraySize}]` : '');
+export function getTypeLabel(col={}) {
+    const {type, arraySize=''} = col;
+    if (!type) return '';
+    const aryDim = arraySize.split('x').filter( (s) => s).length;
+    if (type === 'char' && aryDim === 1) {
+        return type;
+    } else {
+        return type + (aryDim > 0 ? `[${arraySize}]` : '');
+    }
 }
 
 /**
@@ -898,7 +904,7 @@ export function tableToIpac(tableModel) {
 
     const head = [
                     columns.map((c, idx) => padEnd(c.name, colWidths[idx])),
-                    columns.map((c, idx) => padEnd(getTypeDesc(c), colWidths[idx])),
+                    columns.map((c, idx) => padEnd(getTypeLabel(c), colWidths[idx])),
                     columns.find((c) => c.units) && columns.map((c, idx) => padEnd(c.units, colWidths[idx])),
                     columns.find((c) => c.nullString) && columns.map((c, idx) => padEnd(c.nullString, colWidths[idx]))
                 ]
@@ -920,7 +926,7 @@ export function tableTextView(columns, dataAry, tableMeta) {
 
     const colSep = '+' + cols.map(([, idx]) => '-'.repeat(colWidths[idx])).join('+') + '+';
     const names  = '|' + cols.map(([c, idx]) => padEnd(c.label || c.name, colWidths[idx])).join('|') + '|';
-    const types  = '|' + cols.map(([c, idx]) => padEnd(getTypeDesc(c), colWidths[idx])).join('|') + '|';
+    const types  = '|' + cols.map(([c, idx]) => padEnd(getTypeLabel(c), colWidths[idx])).join('|') + '|';
 
     const head = [colSep, names, types, colSep].join('\n');
 
@@ -962,7 +968,7 @@ export function tableDetailsView(tbl_id, highlightedRow, details_tbl_id) {
     const data = dataCols.map((c) => {
         const name  = c.label || c.name;
         const value = getCellValue(tableModel, highlightedRow, c.name) || '';
-        const type  = getTypeDesc(c);
+        const type  = getTypeLabel(c);
         const units = c.units || '';
         const desc  = c.desc || '';
 
@@ -1005,7 +1011,7 @@ export function calcColumnWidths(columns, dataAry, {maxAryWidth=Number.MAX_SAFE_
             return width;
         }
         const cname = cv.label || cv.name;
-        width = Math.max(cname.length, get(cv, 'units.length', 0),  getTypeDesc(cv).length);
+        width = Math.max(cname.length, get(cv, 'units.length', 0),  getTypeLabel(cv).length);
         dataAry.forEach((row) => {
             const v = formatValue(columns[idx], row[idx]);
             width = Math.max(width, v.length);
