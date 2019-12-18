@@ -39,7 +39,7 @@ public class TemplateGenerator {
             return null;
         }
         try {
-            CacheKey cacheKey = new StringKey("TemplateGenerator", templateName);
+            CacheKey cacheKey = new StringKey("TemplateGenerator",  java.lang.System.currentTimeMillis() );
             Cache cache = CacheManager.getCache(Cache.TYPE_PERM_SMALL);
             DataGroup template = (DataGroup) cache.get(cacheKey);
             if (template == null) {

@@ -5,6 +5,10 @@ package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.db.DbInstance;
+import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
+import edu.caltech.ipac.table.DataGroup;
+
+import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.dbToDataGroup;
 
 /**
  * @author tatianag
@@ -27,5 +31,22 @@ public interface Query {
      * @return sql parameters for this query
      */
     Object [] getSqlParams(TableServerRequest request);
+
+    /**
+     * @return the query string to gather data definition info
+     */
+    default String getDDSql(TableServerRequest request) {
+        return null;
+    }
+
+    /**
+     * @param request  a table request
+     * @return the results of this request in the form of a DataGroup table.
+     */
+    default DataGroup executeQuery(TableServerRequest request) {
+        return (DataGroup) JdbcFactory.getTemplate(getDbInstance()).query(getSql(request), getSqlParams(request), rs -> {
+            return dbToDataGroup(rs, getDbInstance(), getDDSql(request));
+        });
+    }
 
 }

@@ -285,7 +285,7 @@ public class EmbeddedDbUtil {
 //  O-R mapping functions
 //====================================================================
 
-    private static DataGroup dbToDataGroup(ResultSet rs, DbInstance dbInstance, String ddSql) throws SQLException {
+    public static DataGroup dbToDataGroup(ResultSet rs, DbInstance dbInstance, String ddSql) throws SQLException {
 
         DataGroup dg = new DataGroup(null, getCols(rs));
 
