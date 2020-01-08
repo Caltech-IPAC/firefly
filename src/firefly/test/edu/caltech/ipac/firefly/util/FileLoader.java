@@ -2,6 +2,7 @@ package edu.caltech.ipac.firefly.util;
 
 
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
@@ -106,6 +107,71 @@ public class FileLoader {
             return null;
         }
     }
+
+    /**
+     *
+     * @param cls - the class name that calls this method
+     * @param fitsFileName
+     * @param tblIdx
+     * @return
+     */
+    public static DataGroup loadIpacTable(Class cls, String fitsFileName, int tblIdx) {
+
+        if (!fitsFileName.endsWith(".fits")){
+            throw new IllegalArgumentException("Wrong file type, the file has to be a .fits file");
+        }
+
+        try {
+            File inFile = new File(getDataPath(cls)+"/"+fitsFileName);
+
+            return TableUtil.readAnyFormat(inFile, tblIdx, null);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+    public static DataGroup loadIpacTable(String filePath, int tblIdx) {
+
+        if (!filePath.endsWith(".fits")){
+            throw new IllegalArgumentException("Wrong file type, the file has to be a .fits file");
+        }
+
+        try {
+            File inFile = new File(filePath);
+
+            return TableUtil.readAnyFormat(inFile, tblIdx,null);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     *
+     * @param filePath - the full path of the fitsFileName
+     * @param fitsFileName- the fits filename
+     * @param tblIdx
+     * @return
+     */
+    public static DataGroup loadIpacTable(String filePath, String fitsFileName, int tblIdx) {
+
+        if (!fitsFileName.endsWith(".fits")){
+            throw new IllegalArgumentException("Wrong file type, the file has to be a .fits file");
+        }
+
+        try {
+            File inFile = new File(filePath+"/"+fitsFileName);
+
+            return TableUtil.readAnyFormat(inFile, tblIdx,null);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 
      public static File resolveFile(Class cls, String fileName)  {
 

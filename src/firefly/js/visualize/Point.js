@@ -3,7 +3,6 @@ import {isString, isNumber, isNil, isObject, isArray} from 'lodash';
 import CoordinateSys from './CoordSys.js';
 import Resolver, {parseResolver} from '../astro/net/Resolver.js';
 import validator from 'validator';
-
 const SPT= 'ScreenPt';
 const IM_PT= 'ImagePt';
 const FITS_IM_PT= 'FitsImagePt';
