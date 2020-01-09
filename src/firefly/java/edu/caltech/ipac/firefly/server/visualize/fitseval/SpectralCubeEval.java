@@ -51,27 +51,35 @@ class SpectralCubeEval implements FitsEvaluation.Eval {
         return tabHduIdx;
     }
 
+    /**
+     * NOTE:  HDUs here is the array of all HDUs in the FITs file.
+     * For each image HDU, look for its coressonding BinaryTableHDU.  This only applies for WAVE-TAB case
+     * @param HDUs
+     * @param hduIdx
+     * @return
+     */
     public static int findWaveTabHDU(BasicHDU[] HDUs, int hduIdx) {
+
         if (HDUs.length<2) return -1;
-        int tableIdx=0;
         BasicHDU hdu= HDUs[hduIdx];
         Header header= hdu.getHeader();
         String xtensionPrim= header.getStringValue("XTENSION");
-//        if (!"IMAGE".equals(xtensionPrim)) return -1;
         if (xtensionPrim!=null && xtensionPrim.equals("BINTABLE")) return -1;
         String ctype= header.getStringValue("CTYPE3");
         if (!"WAVE-TAB".equals(ctype)) return -1;
         String waveHDUName= header.getStringValue("PS3_0");
         if  (waveHDUName==null) return -1;
-        for(int i=0; (i<HDUs.length); i++) {
+        //The hdu= HDUs[hduIdx] is the an image HDU, it has a corresponding BinaryTableHDU
+        //that contains the WAVE-TAB information. The loop below, is to find the index number of the BinaryTableHDU.
+        for(int i=0; i<HDUs.length; i++) {
             if (i!=hduIdx) {
                 Header hIHeader= HDUs[i].getHeader();
                 String xtension= hIHeader.getStringValue("XTENSION");
                 String extName= hIHeader.getStringValue("EXTNAME");
                 if ("BINTABLE".equals(xtension) && waveHDUName.equals(extName)) {
-                    return tableIdx;
+                    return i;
                 }
-                if ("BINTABLE".equals(xtension)) tableIdx++;
+
             }
         }
         return -1;
