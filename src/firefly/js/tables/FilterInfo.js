@@ -532,7 +532,7 @@ function createOneComparator(filterStr, tableModel) {
                     return () => false;
                 }
             }
-        } else if (op !== 'like') {
+        } else if ( !['like','in','is not','is'].includes(op) ) {
             if (!isNumber(val)) {
                 tableModel.error = 'data exception: invalid character value for cast';
                 return () => false;

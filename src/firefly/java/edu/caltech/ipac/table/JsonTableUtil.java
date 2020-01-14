@@ -6,13 +6,17 @@ package edu.caltech.ipac.table;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.util.StringUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.json.simple.JSONArray;
+import org.json.simple.JSONAware;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -162,12 +166,56 @@ public class JsonTableUtil {
         if (data.size() > 0) {
             List<List> tableData = new ArrayList<>();
             for (int i = 0; i < data.size(); i++) {
-                Object[] rowData = Arrays.stream(data.get(i).getData()).map(d -> TableUtil.boxPrimitive(d)).toArray();
+                Object[] rowData = Arrays.stream(data.get(i).getData()).map(d -> mapToJsonAware(d)).toArray();
                 tableData.add(Arrays.asList(rowData));
             }
             tdata.put("data", tableData);
         }
         return tdata;
+    }
+
+    /**
+     * if obj is an array of primitive, return a list of its equivalent Objects
+     * @param obj
+     * @return
+     */
+    private static Object mapToJsonAware(Object obj) {
+        if (obj != null) {
+            if (obj.getClass().isArray()) {
+                // unbox array into primitive
+                switch (obj.getClass().getComponentType().getName()) {
+                    case "boolean":
+                        obj = Arrays.asList(ArrayUtils.toObject((boolean[]) obj));
+                        break;
+                    case "byte":
+                        obj = Arrays.asList(ArrayUtils.toObject((byte[]) obj));
+                        break;
+                    case "char":
+                        obj = Arrays.asList(ArrayUtils.toObject((char[]) obj));
+                        break;
+                    case "short":
+                        obj = Arrays.asList(ArrayUtils.toObject((short[]) obj));
+                        break;
+                    case "int":
+                        obj = Arrays.asList(ArrayUtils.toObject((int[]) obj));
+                        break;
+                    case "long":
+                        obj = Arrays.asList(ArrayUtils.toObject((long[]) obj));
+                        break;
+                    case "float":
+                        obj = Arrays.asList(ArrayUtils.toObject((float[]) obj));
+                        break;
+                    case "double":
+                        obj = Arrays.asList(ArrayUtils.toObject((double[]) obj));
+                        break;
+                }
+            } else {
+                // if it's an object we have a mapper for, return the mapper
+                JSONAware jsonAware = getJsonMapper(obj);
+                if (jsonAware != null) obj = jsonAware;
+            }
+        }
+        return obj;
     }
 
     /**
@@ -421,6 +469,17 @@ public class JsonTableUtil {
         entry.put("value", value);
         return entry;
     }
+
+
+    private static final SimpleDateFormat JSON_DATE = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");       // similar to JSON.stringify()
+    public static JSONAware getJsonMapper(Object obj) {
+
+        if (obj instanceof Date) {
+            return () -> "\"" + JSON_DATE.format(obj) + "\"";
+        }
+        return null;
+    }
+
 
 }
 
