@@ -23,7 +23,8 @@ public class TempTable {
 
 
     public static boolean useTempTable(Collection<Integer> ids) {
-        return ids.size() > NUMID_FOR_TEMP_TABLE;
+        return false;
+//        return ids.size() > NUMID_FOR_TEMP_TABLE;
     }
 
 
