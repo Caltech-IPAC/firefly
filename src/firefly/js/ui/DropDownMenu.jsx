@@ -1,6 +1,6 @@
 /*eslint "prefer-template": 0*/
 
-import {isFunction} from 'lodash';
+import {isFunction, isArray} from 'lodash';
 import React, {PureComponent} from 'react';
 import {get} from 'lodash';
 import PropTypes from 'prop-types';
@@ -27,13 +27,19 @@ function placeDropDown(e,x,y, beforeVisible) {
 }
 
 
-export function SingleColumnMenu({children}) {
+export function SingleColumnMenu({children, style={}}) {
+
+    const outStyle= (isArray(children) && children.length> 12) ? {overflow: 'auto', maxHeight:500,...style } : style;
     return (
-        <div className='ff-MenuItem-dropDown disable-select'>
+        <div className='ff-MenuItem-dropDown disable-select allow-scroll' style={outStyle}>
             {children}
         </div>
     );
 }
+
+SingleColumnMenu.propTypes= {
+    style: PropTypes.object
+};
 
 
 

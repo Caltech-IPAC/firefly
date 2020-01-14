@@ -19,6 +19,7 @@ export function analyzePart(part, fileFormat, serverCacheFileKey, activateParams
 
     return {
         isImage: availableTypes.includes(DPtypes.IMAGE) && type===FileAnalysisType.Image,
+        imageSingleAxis:availableTypes.includes(DPtypes.IMAGE_SNGLE_AXIS),
         tableResult,
         chartResult
     };
@@ -79,7 +80,14 @@ export function arrangeAnalysisMenu(menu,parts,fileFormat, dataTypeHint) {
 function findAvailableTypesForAnalysisPart(part, fileFormat) {
     const {type}= part;
     if (type===FileAnalysisType.HeaderOnly || type===FileAnalysisType.Unknown) return [];
-    if (type===FileAnalysisType.Image) return [DPtypes.IMAGE];
+    if (type===FileAnalysisType.Image) {
+        const naxisRow= part.details.tableData.data.find( (h) => h[1]==='NAXIS');
+        if (naxisRow && naxisRow[2]) {
+            const naxis= Number(naxisRow[2]);
+            return naxis===1 ?[DPtypes.IMAGE_SNGLE_AXIS] :[DPtypes.IMAGE]
+        }
+        return [DPtypes.IMAGE];
+    }
     return [DPtypes.CHART,DPtypes.TABLE];
 }
 

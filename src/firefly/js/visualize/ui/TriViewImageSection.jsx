@@ -9,7 +9,6 @@ import {get, isEmpty} from 'lodash';
 import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
 import {Tab, Tabs} from '../../ui/panel/TabPanel.jsx';
 import {MultiViewStandardToolbar} from './MultiViewStandardToolbar.jsx';
-import {ImageMetaDataToolbar} from './ImageMetaDataToolbar.jsx';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 import {DEFAULT_FITS_VIEWER_ID, REPLACE_VIEWER_ITEMS, NewPlotMode, getViewerItemIds, getMultiViewRoot,
@@ -18,14 +17,11 @@ import {getTblById, findGroupByTblId, getTblIdsByGroup, smartMerge} from '../../
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode, dispatchUpdateLayoutInfo, getLayouInfo} from '../../core/LayoutCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../../visualize/ImagePlotCntlr.js';
 import {TABLE_LOADED, TBL_RESULTS_ACTIVE, TBL_RESULTS_ADDED} from '../../tables/TablesCntlr.js';
-import {getAppOptions, REINIT_APP} from '../../core/AppDataCntlr.js';
-import {startCoverageWatcher} from '../saga/CoverageWatcher.js';
-import {startDataProductsWatcher} from '../saga/DataProductsWatcher.js';
+import {REINIT_APP} from '../../core/AppDataCntlr.js';
 import {isCatalog, isMetaDataTable} from '../../util/VOAnalyzer.js';
-import {MultiProductViewer} from  '../ui/MultiProductViewer';
+import {MultiProductViewer, META_DATA_TBL_GROUP_ID} from  '../ui/MultiProductViewer';
+import {CoverageViewer} from './CoveraeViewer';
 
-export const META_DATA_TBL_GROUP_ID= 'TableDataProducts';
-export const CHART_DATA_VIEWER_ID= 'ChartMetaView';
 
 /**
  * This component works with ImageMetaDataWatch sega which should be launch during initialization
@@ -70,19 +66,12 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
                 }
                 { showMeta &&
                     <Tab name={metaTitle} removable={false} id='meta'>
-                        <MultiProductViewer viewerId={'DataProductsType'}
-                                            metaDataTableId={metaDataTableId}
-                                            tableGroupViewerId={META_DATA_TBL_GROUP_ID}
-                                            chartMetaViewerId={CHART_DATA_VIEWER_ID}
-                                           imageMetaViewerId={META_VIEWER_ID}/>
+                        <MultiProductViewer metaDataTableId={metaDataTableId} />
                     </Tab>
                 }
                 { showCoverage &&
                     <Tab name='Coverage' removable={false} id='coverage'>
-                        <MultiImageViewer viewerId='coverageImages'
-                                          insideFlex={true}
-                                          canReceiveNewPlots={NewPlotMode.replace_only.key}
-                                          Toolbar={MultiViewStandardToolbar}/>
+                        <CoverageViewer/>
                     </Tab>
                 }
             </Tabs>
@@ -108,9 +97,6 @@ TriViewImageSection.propTypes= {
 };
 
 export function launchTableTypeWatchers() {
-    const coverageOps= get(getAppOptions(), 'coverage',{});
-    startDataProductsWatcher({imageViewerId: META_VIEWER_ID, chartViewerId:CHART_DATA_VIEWER_ID, tableGroupViewerId:META_DATA_TBL_GROUP_ID});
-    startCoverageWatcher({...coverageOps, viewerId:'coverageImages', ignoreCatalogs:true});
     startLayoutWatcher();
 }
 

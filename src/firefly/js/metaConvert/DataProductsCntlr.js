@@ -63,9 +63,11 @@ function activateFileMenuItemActionCreator(rawAction) {
 }
 
 export function doDownload(url) {
+    const serviceURL = getRootURL() + 'servlet/Download';
     const tmpUrl= url.toLowerCase();
     if (tmpUrl.startsWith('http') || tmpUrl.startsWith('ftp')) {
-        downloadSimple(url);
+        const params={externalURL: url};
+        download(encodeUrl(serviceURL, params));
     }
     else if (tmpUrl.startsWith('${')) {
         const serviceURL = getRootURL() + 'servlet/Download';

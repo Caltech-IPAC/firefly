@@ -32,6 +32,7 @@ export const DPtypes= {
     MESSAGE: 'message',
     PROMISE: 'promise',
     IMAGE: 'image',
+    IMAGE_SNGLE_AXIS: 'image-single-axis',
     TABLE: 'table',
     CHART: 'xyplot',
     CHART_TABLE: 'chartTable',
@@ -93,11 +94,12 @@ export function dpdtWorkingPromise(message,promise,request=undefined, extra={}, 
  * @param {String} message
  * @param {String} titleStr download title str
  * @param {String} url download url
+ * @param {String} [fileType]
  * @return {DataProductsDisplayType}
  */
-export const dpdtMessageWithDownload= (message,titleStr, url) => {
+export const dpdtMessageWithDownload= (message,titleStr, url,fileType=undefined) => {
     const singleDownload= Boolean(titleStr && url);
-    return dpdtMessage(message,singleDownload ?[dpdtDownload(titleStr,url)] : undefined,{singleDownload} );
+    return dpdtMessage(message,singleDownload ?[dpdtDownload(titleStr,url,'download-0',fileType)] : undefined,{singleDownload} );
 };
 
 /**
@@ -166,11 +168,12 @@ export function dpdtAnalyze(name, activate, url, menuKey='analyze-0', extra={}) 
  * @param {string} name
  * @param {string} url
  * @param {number|string} menuKey
+ * @param {string} fileType type of file eg- tar or gz
  * @param {Object} extra - all values in this object are added to the DataProjectType Object
  * @return {DataProductsDisplayType}
  */
-export function dpdtDownload(name, url, menuKey='download-0', extra={}) {
-    return { displayType:DPtypes.DOWNLOAD, name, url, menuKey, ...extra};
+export function dpdtDownload(name, url, menuKey='download-0', fileType, extra={}) {
+    return { displayType:DPtypes.DOWNLOAD, name, url, menuKey, fileType, ...extra};
 }
 
 /**

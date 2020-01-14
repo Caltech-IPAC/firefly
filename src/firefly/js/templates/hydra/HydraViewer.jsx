@@ -5,7 +5,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {pickBy, get} from 'lodash';
+import {pickBy} from 'lodash';
 
 import {flux, firefly} from '../../Firefly.js';
 import {dispatchSetMenu, dispatchOnAppReady, getMenu, isAppReady, getSearchInfo} from '../../core/AppDataCntlr.js';
@@ -23,17 +23,10 @@ import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {warningDivId} from '../../ui/LostConnection';
 import {startTTFeatureWatchers} from '../common/ttFeatureWatchers.js';
-import {getAppOptions} from '../../core/AppDataCntlr';
-import {startDataProductsWatcher} from '../../visualize/saga/DataProductsWatcher';
-import {META_VIEWER_ID} from '../../visualize/MultiViewCntlr';
-import {startCoverageWatcher} from '../../visualize/saga/CoverageWatcher';
 import {dispatchSetLayoutMode, LO_MODE} from '../../core/LayoutCntlr';
 
-export const COVERAGE_VIEWER_ID = 'CoverageViewerId';
-export const IMAGE_DATA_VIEWER_ID = META_VIEWER_ID;
-export const CHART_DATA_VIEWER_ID = 'ChartDataProducts';
-const META_DATA_TBL_GROUP_ID= 'TableDataProducts';
 
+export {META_VIEWER_ID as IMAGE_DATA_VIEWER_ID } from '../../visualize/MultiViewCntlr';
 
 /**
  * This is a viewer.
@@ -43,16 +36,9 @@ export class HydraViewer extends PureComponent {
     constructor(props) {
         super(props);
         this.state = this.getNextState();
-        const {hasCoverage=true, hasDataProduct=true} = props;
 
         dispatchAddSaga(hydraManager);
         startTTFeatureWatchers();
-        hasDataProduct && startDataProductsWatcher({imageViewerId:IMAGE_DATA_VIEWER_ID, chartViewerId:CHART_DATA_VIEWER_ID,
-            tableGroupViewerId:META_DATA_TBL_GROUP_ID});
-        if (hasCoverage) {
-            const coverageOps= get(getAppOptions(), 'coverage',{});
-            startCoverageWatcher({...coverageOps, viewerId:COVERAGE_VIEWER_ID, ignoreCatalogs:true});
-        }
     }
 
     getNextState() {
@@ -201,7 +187,7 @@ function showExpandedView ({expanded}) {
             {view}
         </div>
     );
-};
+}
 
 function closeExpanded() {
     dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none);

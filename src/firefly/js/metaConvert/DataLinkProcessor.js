@@ -60,7 +60,7 @@ export function processDatalinkTable(sourceTable, row, datalinkTable, positionWP
             dpdtTable('Show Datalink VO Table for list of products',
                 createTableActivate(dataSource,'Datalink VO Table', activateParams),
                 'nd0-showtable', {url:dataSource}),
-            dpdtDownload ( 'Download Datalink VO Table for list of products', dataSource, 'nd1-downloadtable' ),
+            dpdtDownload ( 'Download Datalink VO Table for list of products', dataSource, 'nd1-downloadtable', 'vo-table' ),
         ];
         const msg= dMenu.length?
             'You may only download data for this row - nothing to display':
@@ -79,7 +79,7 @@ function addDataLinkEntries(dataSource,activateParams) {
         dpdtTable('Show Datalink VO Table for list of products',
             createTableActivate(dataSource,'Datalink VO Table', activateParams),
             'datalink-entry-showtable', {url:dataSource}),
-        dpdtDownload ( 'Download Datalink VO Table for list of products', dataSource, 'datalink-entry-downloadtable' )
+        dpdtDownload ( 'Download Datalink VO Table for list of products', dataSource, 'datalink-entry-downloadtable', 'vo-table' )
     ];
 
 }
@@ -115,13 +115,16 @@ function createDataLinkMenuRet(dataSource, dataLinkData, positionWP, sourceTable
         const activeMenuLookupKey= dataSource;
 
         if (ct.includes('tar')|| ct.includes('gz')) {
-            resultAry.push(dpdtDownload('Download file: '+name,url,'dlt-'+idx,{semantics, size, activeMenuLookupKey}));
+            let fileType;
+            if (ct.includes('tar')) fileType= 'tar';
+            if (ct.includes('gz')) fileType= 'gzip';
+            resultAry.push(dpdtDownload('Download file: '+name,url,'dlt-'+idx,fileType,{semantics, size, activeMenuLookupKey}));
         }
         else if (ct.includes('jpeg') || ct.includes('png') || ct.includes('jpg') || ct.includes('gig')) {
             resultAry.push(dpdtPNG('Show PNG image: '+name,url,'dlt-'+idx,{semantics, size, activeMenuLookupKey}));
         }
         else if (e.size>GIG) {
-            resultAry.push( dpdtDownload('Download FITS: '+name + '(too large to show)',url,'dlt-'+idx,{semantics, size, activeMenuLookupKey}));
+            resultAry.push( dpdtDownload('Download FITS: '+name + '(too large to show)',url,'dlt-'+idx,'fits',{semantics, size, activeMenuLookupKey}));
         }
         else if (ct==='' || analysisTypes.find( (a) => ct.includes(a))) {
             if (doFileAnalysis) {
@@ -194,6 +197,9 @@ export function createGuessDataType(name, menuKey, url,ct,makeReq, semantics, ac
         return dpdtPNG(name,url,menuKey,{semantics});
     }
     else if (ct.includes('tar')|| ct.includes('gz')) {
-        return dpdtDownload(name,url,menuKey,{semantics});
+        let fileType;
+        if (ct.includes('tar')) fileType= 'tar';
+        if (ct.includes('gz')) fileType= 'gzip';
+        return dpdtDownload(name,url,menuKey,fileType,{semantics});
     }
 }

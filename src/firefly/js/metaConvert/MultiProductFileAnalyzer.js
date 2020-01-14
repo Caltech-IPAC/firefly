@@ -11,7 +11,8 @@ import {
     dpdtDownload,
     dpdtImage,
     dpdtMessage,
-    dpdtMessageWithDownload, dpdtPNG,
+    dpdtMessageWithDownload,
+    dpdtPNG,
     dpdtWorkingMessage,
     dpdtWorkingPromise,
 } from './DataProductsType';
@@ -26,7 +27,7 @@ import {hasRowAccess} from '../tables/TableUtil';
 
 const uploadedCache= {};
 
-const ANALYZING_MSG= 'Loading & Analyzing';
+const LOADING_MSG= 'Loading...';
 
 /**
  * create a function to analyze and show a data product
@@ -41,7 +42,7 @@ export function makeAnalysisGetSingleDataProduct(makeReq) {
         const extDP= fileExtensionSingleProductAnalysis(r,); //todo
         if (extDP) return Promise.resolve(extDP);
         const retPromise= doUploadAndAnalysis({table,row,request:r,activateParams,dataTypeHint});
-        return Promise.resolve(dpdtWorkingPromise(ANALYZING_MSG,retPromise,r));
+        return Promise.resolve(dpdtWorkingPromise(LOADING_MSG,retPromise,r));
     };
 }
 
@@ -134,7 +135,7 @@ export function makeAnalysisGetGridDataProduct(makeReq) {
                 return makeErrorResult();
             });
 
-        return Promise.resolve(dpdtWorkingPromise(ANALYZING_MSG,retPromise));
+        return Promise.resolve(dpdtWorkingPromise(LOADING_MSG,retPromise));
     };
 }
 
@@ -189,7 +190,7 @@ function doUploadAndAnalysis({
         return Promise.resolve(result);
     }
 
-    if (dispatchWorkingMessage) dispatchUpdateDataProducts(dpId, dpdtWorkingMessage(ANALYZING_MSG,request,{menuKey}));
+    if (dispatchWorkingMessage) dispatchUpdateDataProducts(dpId, dpdtWorkingMessage(LOADING_MSG,request,{menuKey}));
     const url= request.getURL();
 
     url && dispatchAddActionWatcher({ id: url, actions:[ImagePlotCntlr.PLOT_PROGRESS_UPDATE],
@@ -264,6 +265,13 @@ function processAnalysisResult({table, row, request, activateParams, serverCache
     const hasImages= Boolean(partAnalysis.find( (pa) => pa.isImage));
 
 
+    const hasOnlySingleAxisImages= Boolean(partAnalysis.every( (pa) => pa.imageSingleAxis));
+    if (hasOnlySingleAxisImages) {
+        return dpdtMessageWithDownload('Cannot not display One-dimensional images (NAXIS==1)', 'download fits file', url);
+    }
+
+
+
     const imageEntry= hasImages &&
         dpdtImage('Image Data', createSingleImageActivate(request,imageViewerId,converterId,table.tbl_id,row),'image-'+0, {request});
 
@@ -274,6 +282,9 @@ function processAnalysisResult({table, row, request, activateParams, serverCache
         pa.chartResult && fileMenu.menu.push(pa.chartResult);
     });
 
+    partAnalysis.forEach( (pa) => {
+        pa.imageSingleAxis && fileMenu.menu.push(dpdtDownload('Download Only: Cannot not display One-dimensional images (NAXIS==1)', url));
+    });
 
     fileMenu.menu= arrangeAnalysisMenu(fileMenu.menu,parts,fileFormat, dataTypeHint);
 
@@ -287,8 +298,8 @@ function processAnalysisResult({table, row, request, activateParams, serverCache
         if (actIdx<0) actIdx= 0;
     }
     else {// error case
-        const dp= dpdtMessage(makeErrorMsg(parts,fileFormat),undefined,{menuKey:'fm-0',name:'failed to load'});
-        fileMenu.menu= [dp,dpdtDownload('Download FITS File',serverCacheFileKey,'fm-1')];
+        const msg= makeErrorMsg(parts,fileFormat);
+        return dpdtMessageWithDownload(msg, 'Download File', url, fileFormat==='FITS'&&'FITS');
     }
     dispatchUpdateActiveKey({dpId, activeFileMenuKeyChanges:{[fileMenu.activeItemLookupKey]:fileMenu.menu[actIdx].menuKey}});
     return {...fileMenu.menu[actIdx],fileMenu};

@@ -90,7 +90,7 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
     if (payload.tbl_id) {
         if (payload.tbl_id!==tbl_id) return params;
         if (action.type===TABLE_REMOVE) {
-            removeAllProducts(activateParams);
+            removeAllProducts(activateParams,tbl_id);
             // todo might need to remove other stuff as well: charts, images, jpeg
             cancelSelf();
             return;
@@ -182,7 +182,7 @@ function updateDataProducts(tbl_id, activateParams, dataTypeViewerId, abortLastP
     const table = getTblById(tbl_id);
     // check to see if tableData is available in this range.
     if (!table || !isTblDataAvail(table.highlightedRow, table.highlightedRow + 1, table)) {
-        removeAllProducts(activateParams);
+        removeAllProducts(activateParams, tbl_id);
         return;
     }
 
@@ -273,12 +273,16 @@ function handleProductResult(p, dpId, isPromiseAborted, imageViewer) {
  *
  * @param {ActivateParams} activateParams
  */
-function removeAllProducts(activateParams) {
-    const {imageViewerId, tableGroupViewerId}= activateParams;
+function removeAllProducts(activateParams, tbl_id) {
+    const {dpId, imageViewerId, tableGroupViewerId}= activateParams;
     if (!imageViewerId) return;
-    const inViewerIds= getViewerItemIds(getMultiViewRoot(), imageViewerId);
-    removeTablesFromGroup(tableGroupViewerId);
-    dispatchReplaceViewerItems(imageViewerId,[],IMAGE);
-    inViewerIds.forEach( (plotId) => dispatchDeletePlotView({plotId}));
+    // removeTablesFromGroup(tableGroupViewerId);
+    // dispatchReplaceViewerItems(imageViewerId,[],IMAGE);
+    const activeTblId= getActiveTableId();
+    if (activeTblId===tbl_id || !isMetaDataTable(activeTblId)) {
+        const inViewerIds= getViewerItemIds(getMultiViewRoot(), imageViewerId);
+        inViewerIds.forEach( (plotId) => dispatchDeletePlotView({plotId}));
+        dispatchUpdateDataProducts(dpId,dpdtMessage('No Data Products'));
+    }
 }
 

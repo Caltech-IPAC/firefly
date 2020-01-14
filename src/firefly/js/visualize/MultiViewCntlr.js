@@ -116,7 +116,7 @@ function initState() {
             viewType:GRID,
             layout: GRID,
             canReceiveNewPlots: NewPlotMode.create_replace.key,
-            reservedContainer:true,
+            reservedContainer:false,
             mounted: false,
             containerType : IMAGE,
             layoutDetail : 'none',
@@ -130,7 +130,7 @@ function initState() {
             viewType:GRID,
             layout: GRID,
             canReceiveNewPlots: NewPlotMode.create_replace.key,
-            reservedContainer:true,
+            reservedContainer:false,
             mounted: false,
             containerType : PLOT2D,
             layoutDetail : 'none',
@@ -169,11 +169,14 @@ function initState() {
  * @param {boolean} mounted
  * @param {string} [renderTreeId] - used only with multiple rendered tree, like slate in jupyter lab
  * @param {string} [layout] - layout type - SINGLE or GRID, defaults to GRID
+ * @param {boolean} reservedContainer
  */
-export function dispatchAddViewer(viewerId, canReceiveNewPlots, containerType, mounted=false, renderTreeId, layout=GRID) {
+export function dispatchAddViewer(viewerId, canReceiveNewPlots, containerType, mounted=false, renderTreeId,
+                                  layout=GRID, reservedContainer=false) {
     flux.process({
         type: ADD_VIEWER,
-        payload: {viewerId, canReceiveNewPlots, containerType, mounted, renderTreeId, lastActiveItemId:'', layout}
+        payload: {viewerId, canReceiveNewPlots, containerType, mounted,
+            renderTreeId, lastActiveItemId:'', layout, reservedContainer}
     });
 }
 
@@ -529,7 +532,7 @@ function imageViewerCanAdd(state, viewerId, plotId) {
 function addViewer(state,payload) {
 
     const {viewerId,containerType, layout=GRID,canReceiveNewPlots=NewPlotMode.replace_only.key,
-             mounted=false, renderTreeId}= payload;
+             mounted=false, renderTreeId, reservedContainer}= payload;
     var   {lastActiveItemId} = payload;
     var entryInState = hasViewerId(state,viewerId);
 
@@ -545,7 +548,7 @@ function addViewer(state,payload) {
         // set default layout for the viewer with viewerId, META_VIEWER_ID, is full-grid type
         const layoutDetail = viewerId === META_VIEWER_ID ? GRID_FULL : undefined;
         const entry = {viewerId, containerType, canReceiveNewPlots, layout, mounted, itemIdAry: [], customData: {},
-                       lastActiveItemId, layoutDetail, renderTreeId};
+                       lastActiveItemId, layoutDetail, renderTreeId, reservedContainer};
         return [...state, entry];
     }
 }

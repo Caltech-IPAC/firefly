@@ -4,7 +4,7 @@
 
 import React, {memo, useContext, useState, useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {get,isFunction,isArray} from 'lodash';
+import {get, isFunction, isArray, once} from 'lodash';
 import {flux} from '../../Firefly.js';
 import {NewPlotMode, dispatchAddViewer, dispatchViewerUnmounted, WRAPPER, META_VIEWER_ID, IMAGE,
         getMultiViewRoot, getViewer, PLOT2D, SINGLE} from '../MultiViewCntlr.js';
@@ -30,6 +30,21 @@ import {
     dispatchUpdateActiveKey
 } from '../../metaConvert/DataProductsCntlr';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView';
+import {startDataProductsWatcher} from '../saga/DataProductsWatcher';
+
+
+export const META_DATA_TBL_GROUP_ID= 'TableDataProducts';
+export const CHART_DATA_VIEWER_ID= 'ChartMetaView';
+
+
+const startWatcher= once((viewerId,imageMetaViewerId, chartMetaViewerId, tableGroupViewerId) => {
+    startDataProductsWatcher({
+        imageViewerId: imageMetaViewerId,
+        chartViewerId:chartMetaViewerId,
+        tableGroupViewerId,
+    });
+});
+
 
 
 function FileMenuDropDown({fileMenu, dpId}) {
@@ -116,8 +131,16 @@ const SHOW_CHART='showChart';
 const SHOW_TABLE='showTable';
 const makeChartTableLookupKey= (activeItemLookupKey, fileMenuKey) => `${activeItemLookupKey}-charTable-${fileMenuKey}`;
 
-export const MultiProductViewer= memo(({viewerId, imageMetaViewerId=META_VIEWER_ID,chartMetaViewerId='notsetup-chart', metaDataTableId,tableGroupViewerId }) => {
+export const MultiProductViewer= memo(({
+                                           viewerId='DataProductsType',
+                                           imageMetaViewerId=META_VIEWER_ID,
+                                           chartMetaViewerId=CHART_DATA_VIEWER_ID,
+                                           tableGroupViewerId= META_DATA_TBL_GROUP_ID,
+                                           metaDataTableId,
+                                           autoStartWatcher=true,
+                                       }) => {
 
+    autoStartWatcher && startWatcher(viewerId,imageMetaViewerId, chartMetaViewerId, tableGroupViewerId );
     const {renderTreeId} = useContext(RenderTreeIdCtx);
     const dpId= viewerId;
     const [viewer, setViewer] = useState(getViewer(getMultiViewRoot(),viewerId));
@@ -128,7 +151,7 @@ export const MultiProductViewer= memo(({viewerId, imageMetaViewerId=META_VIEWER_
 
     useEffect(() => {
         dispatchAddViewer(viewerId, NewPlotMode.none, WRAPPER,true, renderTreeId, SINGLE);
-        dispatchAddViewer(imageMetaViewerId, NewPlotMode.none, IMAGE,true, renderTreeId, SINGLE);
+        dispatchAddViewer(imageMetaViewerId, NewPlotMode.none, IMAGE,true, renderTreeId, SINGLE, true);
         dispatchAddViewer(chartMetaViewerId, NewPlotMode.none, PLOT2D,true, renderTreeId, SINGLE);
         const removeFluxListener= flux.addListener(()=> {
             const newViewer= getViewer(getMultiViewRoot(),viewerId);
@@ -170,6 +193,9 @@ export const MultiProductViewer= memo(({viewerId, imageMetaViewerId=META_VIEWER_
         case DPtypes.ANALYZE :
         case DPtypes.MESSAGE :
         case DPtypes.PROMISE :
+
+            let dMsg= singleDownload  && menu[0].name;
+            if (dMsg && menu[0].fileType) dMsg= `${dMsg}, type: ${menu[0].fileType}`;
             result= (
                 <div style={{display:'flex', flexDirection: 'column', background: '#c8c8c8', width:'100%', height:'100%'}}>
                     <div style={{height:menu?30:0}}>
@@ -182,7 +208,7 @@ export const MultiProductViewer= memo(({viewerId, imageMetaViewerId=META_VIEWER_
                     </div>
                     {
                         singleDownload && isArray(menu) && menu.length &&
-                        <CompleteButton style={{alignSelf:'center', paddingTop:25 }} text={menu[0].name}
+                        <CompleteButton style={{alignSelf:'center', paddingTop:25 }} text={dMsg}
                                         onSuccess={() => doDownload(menu[0].url)}/>
                     }
                 </div>
@@ -225,11 +251,12 @@ export const MultiProductViewer= memo(({viewerId, imageMetaViewerId=META_VIEWER_
 
 
 MultiProductViewer.propTypes= {
-    viewerId : PropTypes.string.isRequired,
-    imageMetaViewerId: PropTypes.string.isRequired,
-    tableGroupViewerId: PropTypes.string.isRequired,
+    viewerId : PropTypes.string,
+    imageMetaViewerId: PropTypes.string,
+    tableGroupViewerId: PropTypes.string,
     metaDataTableId : PropTypes.string,
-    chartMetaViewerId: PropTypes.string
+    chartMetaViewerId: PropTypes.string,
+    autoStartWatcher: PropTypes.bool
 };
 
 const chartTableOptions= [
