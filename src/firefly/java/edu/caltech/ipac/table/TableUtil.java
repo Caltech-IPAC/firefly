@@ -252,37 +252,6 @@ public class TableUtil {
         return Arrays.asList(val);
     }
 
-    /**
-     * if obj is an array of primitive, return a list of its equivalent Objects
-     * @param obj
-     * @return
-     */
-    static Object boxPrimitive(Object obj) {
-        if (obj != null && obj.getClass().isArray()) {
-            switch (obj.getClass().getComponentType().getName()) {
-                case "boolean":
-                    obj = Arrays.asList(ArrayUtils.toObject((boolean[]) obj)); break;
-                case "byte":
-                    obj = Arrays.asList(ArrayUtils.toObject((byte[]) obj)); break;
-                case "char":
-                    obj = Arrays.asList(ArrayUtils.toObject((char[]) obj)); break;
-                case "short":
-                    obj = Arrays.asList(ArrayUtils.toObject((short[]) obj)); break;
-                case "int":
-                    obj = Arrays.asList(ArrayUtils.toObject((int[]) obj)); break;
-                case "long":
-                    obj = Arrays.asList(ArrayUtils.toObject((long[]) obj)); break;
-                case "float":
-                    obj = Arrays.asList(ArrayUtils.toObject((float[]) obj)); break;
-                case "double":
-                    obj = Arrays.asList(ArrayUtils.toObject((double[]) obj)); break;
-                case "java.lang.String":
-                    obj = Arrays.stream((String[])obj).collect(Collectors.toList()); break;
-            }
-        }
-        return obj;
-    }
-
 //====================================================================
 //
 //====================================================================

@@ -494,7 +494,7 @@ public class DataType implements Serializable, Cloneable {
      * @return an object
      */
     public Object convertStringToData(String s) {
-        if (s == null || s.length() == 0 || getNullString().equals(s)) return null;
+        if (s == null || getNullString().equals(s)) return null;
 
         Object retval = s;
         if (StringUtils.isEmpty(getArraySize())) {
@@ -553,7 +553,7 @@ public class DataType implements Serializable, Cloneable {
 
     private Object strToObject(String s) {
         try {
-            if (type == String.class) {
+            if (s.length() == 0 || type == String.class) {
                 return s;
             } else if (type ==Boolean.class) {
                 return Boolean.valueOf(s);
