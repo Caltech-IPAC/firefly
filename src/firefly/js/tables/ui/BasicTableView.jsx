@@ -256,7 +256,7 @@ function doRowSelect(checked, rowIndex) {
 
 
 const TextView = ({columns, data, showUnits, width, height}) => {
-    const text = tableTextView(columns, data, showUnits);
+    const text = tableTextView(columns, data);
     return (
         <div style={{height, width,overflow: 'hidden'}}>
             <div style={{height: '100%',overflow: 'auto'}}>
@@ -295,7 +295,7 @@ function correctScrollLeftIfNeeded(totalColWidths, scrollLeft, width, triggeredB
 }
 
 function columnWidthsInPixel(columns, data) {
-    return calcColumnWidths(columns, data)
+    return calcColumnWidths(columns, data, {maxColWidth: 100, maxAryWidth: 30})      // set max width for array columns
             .map( (w) =>  (w + 2) * 7);
 }
 

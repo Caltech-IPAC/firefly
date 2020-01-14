@@ -49,6 +49,7 @@
  * @prop {string} name      name of the column
  * @prop {string} label     display name of the column
  * @prop {string} type      data type.  i.e.  'char', 'str', 'double', 'long', 'int', 'float'
+ * @prop {string} arraySize if column is an array, this describe the dimension of the array as defined here:  http://www.ivoa.net/documents/VOTable/20191021/REC-VOTable-1.4-20191021.html#ToC12
  * @prop {string} units     data units
  * @prop {string} nullString string used to represent null value
  * @prop {string} desc      description of the column

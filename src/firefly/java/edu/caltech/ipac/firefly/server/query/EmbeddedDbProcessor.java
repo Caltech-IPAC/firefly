@@ -272,7 +272,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                     VoTableWriter.save(out, page.getData(), format);
                     break;
                 default:
-                    IpacTableWriter.save(out, page.getData(), true);
+                    IpacTableWriter.save(out, page.getData());
             }
                        // this is not accurate information if used to determine exactly what was written to output stream.
             // dbFile is the database file which contains the whole search results.  What get written to the output

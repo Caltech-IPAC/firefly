@@ -98,6 +98,7 @@ public final class IpacTableReader {
         }
 
         outData.getTableMeta().setKeywords(attributes);
+        IpacTableUtil.consumeColumnInfo(outData);   // move column attributes into columns
 
         String line = null;
         int lineNum = tableDef.getExtras() == null ? 0 : tableDef.getExtras().getKey();
@@ -130,7 +131,6 @@ public final class IpacTableReader {
         } finally {
             bufferedReader.close();
         }
-        IpacTableUtil.consumeColumnInfo(outData);   // move column attributes into columns
         outData.trimToSize();
         return outData;
     }

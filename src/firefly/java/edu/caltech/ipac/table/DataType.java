@@ -5,6 +5,7 @@ package edu.caltech.ipac.table;
 
 import edu.caltech.ipac.util.HREF;
 import edu.caltech.ipac.util.StringUtils;
+import org.json.simple.JSONArray;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -15,9 +16,29 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static edu.caltech.ipac.table.TableUtil.foldAry;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
+import static edu.caltech.ipac.util.StringUtils.split;
+import static org.apache.commons.lang.StringUtils.stripEnd;
 
-
+/**
+ * TODO: need to fix DataType so that it supports these types mapping.
+ * VOTable	        FITS    IPACTable   Firefly     Bytes   Meaning
+ * --------	        ----	---------   -------     -----   -------
+ * boolean	        L	    [char]      boolean     1       Logical
+ * bit	            X	    [int]       [byte]      *       Bit
+ * unsignedByte     B	    [int]       [byte]      1       Byte (0 to 255)
+ * short	        I	    [int]       short       2       Short Integer
+ * int	            J	    int         int         4       Integer
+ * long	            K	    long        long        8       Long integer
+ * char	            A	    char        char        1       ASCII Character
+ * unicodeChar	    [B]     [int]       [int]       2       Unicode Character
+ * float	        E	    float       float       4       Floating point
+ * double	        D	    double      double      8       Double
+ * floatComplex	    C	    [char]      [char]      8       Float Complex (ordered pair of float [real, imag])
+ * doubleComplex    M	    [char]      [char]      16      Double Complex (ordered pair of double [real, imag])
+ * char             [A]     date        date        8       Date
+ */
 public class DataType implements Serializable, Cloneable {
 
     public enum Visibility {show, hide, hidden};
@@ -29,7 +50,8 @@ public class DataType implements Serializable, Cloneable {
     private static final String FLOAT = "float";
     private static final String INTEGER = "int";
     private static final String LONG = "long";
-    private static final String CHAR = "char";
+    public static final String CHAR = "char";
+    private static final String BOOLEAN = "boolean";
     private static final String BOOL = "bool";
     private static final String S_DOUBLE = "d";
     private static final String S_REAL = "r";
@@ -316,14 +338,30 @@ public class DataType implements Serializable, Cloneable {
      *                When T is G, n is the number of significant digits
      *
      * @param value         the value to be formatted
-     * @param replaceCtrl     replace control characters in strings with a replacement character
+     * @param replaceCtrl   replace control characters in strings with a replacement character
+     * @param aryAsJson     true to format array as JSON string.  Otherwise, it will be formatted as space separated.
      * @return
      */
-    public String format(Object value, boolean replaceCtrl) {
+    public String format(Object value, boolean replaceCtrl, boolean aryAsJson) {
         if (value == null) return getNullString();
 
-        if (getArraySize() != null) {
-            return String.format("%s [%s]", getTypeDesc(), getArraySize());
+        if (value.getClass().isArray()) {
+            if (aryAsJson) {
+                JSONArray ary = new JSONArray();
+                ary.addAll(foldAry(this, value));
+                value = ary.toJSONString();
+            } else {
+                if (value instanceof String[]) {
+                    // because starlink auto right-trim char arrays, we need to right pad them
+                    int[] shape = getShape();
+                    if (shape.length > 0) {
+                        value = Arrays.stream((String[])value).map( s -> StringUtils.pad(shape[0], s)).toArray();
+                    }
+                    value = StringUtils.toString(TableUtil.aryToList(value), "");
+                } else {
+                    value = StringUtils.toString(TableUtil.aryToList(value), " ");
+                }
+            }
         }
 
         // do escaping if requested
@@ -361,11 +399,11 @@ public class DataType implements Serializable, Cloneable {
      * @return
      */
     public String format(Object value) {
-        return format(value, false);
+        return format(value, false, true);
     }
 
     public String formatFixedWidth(Object value) {
-        return fitValueInto(format(value, true), getWidth(), isNumeric());
+        return fitValueInto(format(value, true, false), getWidth(), isNumeric());
     }
 
     /**
@@ -394,6 +432,27 @@ public class DataType implements Serializable, Cloneable {
         }
         return isWholeNumber;
     }
+
+    public int[] getShape() {
+        if (StringUtils.isEmpty(getArraySize())) return new int[0];
+        return Arrays.stream(getArraySize().split("x"))
+                .mapToInt(d -> StringUtils.getInt(d, -1))
+                .toArray();
+    }
+
+    public boolean isArrayType() {
+        int[] shape = getShape();
+        if (getDataType() == String.class) {
+            return shape.length -1 > 0;
+        } else {
+            return shape.length > 0;
+        }
+    }
+
+    public String getTypeLabel() {
+        return getTypeDesc() + (isArrayType() ? "[" + getArraySize() + "]" : "");
+    }
+
 
     /**
      * returns a string the size of the given width.  If the value is longer then the given width,
@@ -437,39 +496,91 @@ public class DataType implements Serializable, Cloneable {
     public Object convertStringToData(String s) {
         if (s == null || getNullString().equals(s)) return null;
 
-        Object retval= s;
-        try {
-             if (type ==Boolean.class) {
-                 retval= Boolean.valueOf(s);
-             }
-             else if (type ==String.class) {
-                 retval= s;
-             }
-             else if (type ==Double.class) {
-                 retval= new Double(s);
-             }
-             else if (type ==Float.class) {
-                 retval= new Float(s);
-             }
-             else if (type ==Integer.class) {
-                 retval= new Integer(s);
-             }
-             else if (type ==Short.class) {
-                 retval = new Short(s);
-             }
-             else if (type ==Long.class) {
-                 retval = new Long(s);
-             }
-             else if (type ==Byte.class) {
-                 retval = new Byte(s);
-             }
-             else if (type ==HREF.class) {
-                 retval = HREF.parseHREF(s);
-             }
-        } catch (IllegalArgumentException iae) {
-            retval = null;
+        Object retval = s;
+        if (StringUtils.isEmpty(getArraySize())) {
+            retval = strToObject(s);
+        } else if (type == String.class) {
+            // char array.. fold first dimension into a string
+            int[] shape = getShape();
+            if (shape.length > 1 && shape[0] > 0) {
+                return split(s, shape[0]).stream().map( v -> stripEnd(v, " ")).toArray(String[]::new);
+            } else {
+                return s;
+            }
+        } else {
+            return strToPrimitiveAry(s.split(" "));
         }
+
         return retval;
+    }
+
+    private Object strToPrimitiveAry(String[] strAry) {
+
+        try {
+            if (type == Boolean.class) {
+                boolean[] ary = new boolean[strAry.length];
+                for (int i=0; i<strAry.length; i++) ary[i] = Boolean.parseBoolean(strAry[i]);
+                return ary;
+            } else if (type == Double.class) {
+                double[] ary = new double[strAry.length];
+                for (int i=0; i<strAry.length; i++) ary[i] = Double.parseDouble(strAry[i]);
+                return ary;
+            } else if (type == Float.class) {
+                float[] ary = new float[strAry.length];
+                for (int i=0; i<strAry.length; i++) ary[i] = Float.parseFloat(strAry[i]);
+                return ary;
+            } else if (type == Integer.class) {
+                int[] ary = new int[strAry.length];
+                for (int i=0; i<strAry.length; i++) ary[i] = Integer.parseInt(strAry[i]);
+                return ary;
+            } else if (type == Short.class) {
+                short[] ary = new short[strAry.length];
+                for (int i=0; i<strAry.length; i++) ary[i] = Short.parseShort(strAry[i]);
+                return ary;
+            } else if (type == Long.class) {
+                long[] ary = new long[strAry.length];
+                for (int i=0; i<strAry.length; i++) ary[i] = Long.parseLong(strAry[i]);
+                return ary;
+            } else if (type == Byte.class) {
+                byte[] ary = new byte[strAry.length];
+                for (int i=0; i<strAry.length; i++) ary[i] = Byte.parseByte(strAry[i]);
+                return ary;
+            }
+        } catch (Exception e) {}  // ignore
+        return strAry;
+    }
+
+
+    private Object strToObject(String s) {
+        try {
+            if (s.length() == 0 || type == String.class) {
+                return s;
+            } else if (type ==Boolean.class) {
+                return Boolean.valueOf(s);
+            }
+            else if (type ==Double.class) {
+                return new Double(s);
+            }
+            else if (type ==Float.class) {
+                return new Float(s);
+            }
+            else if (type ==Integer.class) {
+                return new Integer(s);
+            }
+            else if (type ==Short.class) {
+                return new Short(s);
+            }
+            else if (type ==Long.class) {
+                return new Long(s);
+            }
+            else if (type ==Byte.class) {
+                return new Byte(s);
+            }
+            else if (type ==HREF.class) {
+                return HREF.parseHREF(s);
+            }
+        } catch (IllegalArgumentException iae) {} // ok to ignore
+        return null;
     }
 
     private String resolveTypeDesc() {
@@ -488,7 +599,7 @@ public class DataType implements Serializable, Cloneable {
         else if (type.equals(Long.class))
             typeDesc = useShortType ? S_LONG : LONG;
         else if (type.equals(Boolean.class))
-            typeDesc = useShortType ? S_BOOL : BOOL;
+            typeDesc = useShortType ? S_BOOL : BOOLEAN;
 
         return typeDesc;
     }
@@ -510,6 +621,7 @@ public class DataType implements Serializable, Cloneable {
             case S_INTEGER:
                 return Integer.class;
             case BOOL:
+            case BOOLEAN:
             case S_BOOL:
                 return Boolean.class;
             case LOCATION:

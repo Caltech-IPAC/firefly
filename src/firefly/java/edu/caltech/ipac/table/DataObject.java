@@ -72,7 +72,7 @@ public class DataObject implements Serializable, Cloneable {
     }
 
     public String getFixedFormatedData(DataType dt) {
-        return dt.formatFixedWidth(getDataElement(dt));
+        return dt.formatFixedWidth(getDataElement(dt));      // this is used by ipac table only
     }
 
     /**
@@ -81,7 +81,7 @@ public class DataObject implements Serializable, Cloneable {
      */
     public String[] getFormattedData(boolean replaceCtrl) {
         return Arrays.stream(group.getDataDefinitions())
-                .map(dt -> dt.format(getDataElement(dt), replaceCtrl))
+                .map(dt -> dt.format(getDataElement(dt), replaceCtrl, true))
                 .toArray(String[]::new);
     }
 

@@ -17,6 +17,9 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 
 /**
  * Date: Nov 2, 2007
@@ -507,6 +510,14 @@ public class StringUtils {
         }
         return rvals.toArray(new String[rvals.size()]);
     }
+
+    public static List<String> split(String source, int chunkSize) {
+        final int numberOfChunks = (source.length() + chunkSize - 1) / chunkSize;
+        return IntStream.range(0, numberOfChunks)
+                .mapToObj(index -> source.substring(index * chunkSize, Math.min((index + 1) * chunkSize, source.length())))
+                .collect(Collectors.toList());
+    }
+
 
     /**
      * this implementation is much faster than GWt's String.trim() once

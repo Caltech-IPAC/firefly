@@ -180,7 +180,6 @@ public class DsvTableIO {
         try {
             File inf = new File(args[0]);
             DataGroup dg = parse(inf, CSVFormat.DEFAULT);
-            IpacTableWriter.save(System.out, dg);
             write(new File(inf.getAbsolutePath() + ".csv"), dg);
             write(new File(inf.getAbsolutePath() + ".tsv"), dg, CSVFormat.TDF);
         } catch (Exception e) {

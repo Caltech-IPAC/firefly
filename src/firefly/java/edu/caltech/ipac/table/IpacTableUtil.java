@@ -78,6 +78,7 @@ public class IpacTableUtil {
             ensureKey(attribs, col.getKeyName(), col.getRef(), REF_TAG);
             ensureKey(attribs, col.getKeyName(), col.getMinValue(), MIN_VALUE_TAG);
             ensureKey(attribs, col.getKeyName(), col.getMaxValue(), MAX_VALUE_TAG);
+            ensureKey(attribs, col.getKeyName(), col.getArraySize(), ARY_SIZE_TAG);
             if (col instanceof ParamInfo) {
                 ensureKey(attribs, col.getKeyName(), ((ParamInfo)col).getValue(), VALUE_TAG);
             }
@@ -109,7 +110,10 @@ public class IpacTableUtil {
 
     public static void consumeColumnInfo(DataType[] cols, TableMeta meta) {
         for (DataType dt : cols) {
-            consumeMeta(TYPE_TAG, meta, dt, (v, c) -> c.setTypeDesc(v));
+            consumeMeta(TYPE_TAG, meta, dt, (v, c) -> {
+                c.setDataType(DataType.descToType(v));
+                c.setTypeDesc(v);
+            });
             consumeMeta(LABEL_TAG, meta, dt, (v, c) -> c.setLabel(v));
             consumeMeta(VISI_TAG, meta, dt, (v, c) -> c.setVisibility(DataType.Visibility.valueOf(v)));
             consumeMeta(WIDTH_TAG, meta, dt, (v, c) -> c.setWidth(StringUtils.getInt(v, 0)));
@@ -130,6 +134,7 @@ public class IpacTableUtil {
             consumeMeta(REF_TAG, meta, dt, (v, c) -> c.setRef(v));
             consumeMeta(MIN_VALUE_TAG, meta, dt, (v, c) -> c.setMinValue(v));
             consumeMeta(MAX_VALUE_TAG, meta, dt, (v, c) -> c.setMaxValue(v));
+            consumeMeta(ARY_SIZE_TAG, meta, dt, (v, c) -> c.setArraySize(v));
 
             consumeMeta(LINKS_TAG, meta, dt, (json, c) -> applyIfNotEmpty(toLinkInfos(json), infos -> c.setLinkInfos(infos)));
 

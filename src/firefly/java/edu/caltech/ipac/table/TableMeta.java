@@ -47,6 +47,7 @@ public class TableMeta implements Serializable {
     public static final String MAX_VALUE_TAG = "col.@.maxValue";
     public static final String VALUE_TAG = "col.@.value";
     public static final String LINKS_TAG = "col.@.links";
+    public static final String ARY_SIZE_TAG = "col.@.arraySize";
 
 
     public static final String RESULTSET_ID = "resultSetID";            // this meta if exists contains the ID of the resultset returned.
@@ -67,6 +68,11 @@ public class TableMeta implements Serializable {
     public static String makeAttribKey(String tag, String colName) {
         return tag.replaceFirst("@", colName);
     }
+
+    public static DataGroup.Attribute makeAttribute(String tag, String colName, String val) {
+        return new DataGroup.Attribute(makeAttribKey(tag, colName), val);
+    }
+
 
     public String getTblId() {
         return getAttribute(TableServerRequest.TBL_ID);

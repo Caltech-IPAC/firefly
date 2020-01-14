@@ -1,128 +1,67 @@
 package edu.caltech.ipac.table.io;
 
 import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.ParamInfo;
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
+
+import edu.caltech.ipac.util.StringUtils;
 import uk.ac.starlink.table.*;
 import uk.ac.starlink.votable.*;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 import edu.caltech.ipac.firefly.server.util.Logger;
 
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.net.*;
 import java.net.URL;
 import edu.caltech.ipac.table.*;
 
-/*
+/**
+ * Implementation of a StarTable based on data from DataGroup
+ *
  * Created by cwang on 2/26/19.
  */
 public class DataGroupStarTable extends RandomStarTable {
-    private ColumnInfo[] colInfos;
     private DataGroup dataGroup;
-    private List<DataType> columnsDef;
-    private long totalRow;
-    private int totalColumn;
-    private List<DataGroup.Attribute> tblMeta;
-    private List<ParamInfo> paramInfos;
-
+    private List<String> columns;
     private static Logger.LoggerImpl LOG = Logger.getLogger();
 
-    public DataGroupStarTable(DataGroup dg, ColumnInfo[] colInfoAry, List<DataType> allColumns) {
-        super();
-        dataGroup = dg;
-        colInfos = colInfoAry;
-        totalRow = dataGroup.size();
-        totalColumn = colInfos.length;
-        tblMeta = dataGroup.getTableMeta().getKeywords();
-        paramInfos = dataGroup.getParamInfos();
-        columnsDef = allColumns;
+    public DataGroupStarTable(DataGroup dataGroup, List<String> columns) {
+        this.dataGroup = dataGroup;
+        this.columns = columns;
     }
 
-    public DataGroup getDataGroup() {
-        return dataGroup;
+//====================================================================
+// override RandomStarTable
+//====================================================================
+
+    public ColumnInfo getColumnInfo(int idx) {
+        String cname = columns.get(idx);
+        return convertToColumnInfo(dataGroup.getDataDefintion(cname), dataGroup.getData(cname, 0));
     }
 
-    public List<DataType> getColumns() { return columnsDef; }
-
-    public long getRowCount() {
-        return totalRow;
+    public Object getCell(long irow, int icol) throws IOException {
+        return dataGroup.getData(columns.get(icol), (int) irow);
     }
 
     public int getColumnCount() {
-        return totalColumn;
+        return columns.size();
     }
 
-    public ColumnInfo getColumnInfo(int icol) {
-        return colInfos[icol];
+    public long getRowCount() {
+        return dataGroup.size();
     }
 
     public String getName() {
-       return getTableMetaValue(TableMeta.NAME, tblMeta);
-    }
-
-    public URL getURL() {
-        String urlStr = getTableMetaValue(TableMeta.REF, tblMeta);
-
-        try {
-            return urlStr == null ? null : new URL(urlStr);
-        } catch (MalformedURLException e) {
-            return null;
-        }
+        return dataGroup.getAttribute(TableMeta.NAME);
     }
 
 
-    public DescribedValue getParameterByName(String name) {
-        List<ParamInfo> params = paramInfos.stream()
-                .filter(pInfo -> (pInfo.getKeyName() != null)&&(pInfo.getKeyName().equals(name)))
-                .collect(Collectors.toList());
+//====================================================================
+//  internal helper functions
+//====================================================================
 
-        // check paramInfo first
-        if (params.size() != 0) {
-            return convertToDescribedValue(params.get(0));
-        } else {
-            return null;
-        }
-    }
-
-    public List<DescribedValue> getParameters() {
-        // both paramInfo and info are combined
-
-        List<DescribedValue> pInfoSet = paramInfos.stream()
-                .map(pInfo -> convertToDescribedValue(pInfo))
-                .collect(Collectors.toList());
-
-
-        return pInfoSet;
-    }
-
-    public Object[] getRow(long irow) {
-        List<Object> objs = new ArrayList<>();
-
-        for (int i = 0; i < totalColumn; i++) {
-            objs.add(getCell(irow, i));
-        }
-        return objs.toArray();
-    }
-
-    public Object getCell(long lrow, int icol) {
-        return dataGroup.getData(colInfos[icol].getName(), (int) lrow);
-    }
-
-    // the following supports the above StarTable interfaces
-
-    public static DescribedValue convertToDescribedValue(ParamInfo p) {
-        if (p == null) return null;
-
-        ValueInfo cInfo = convertToColumnInfo(p);
-
-        return new DescribedValue(cInfo, p.getValue());
-    }
-
-    public static ColumnInfo convertToColumnInfo(DataType dt) {
-        Class dType = dt.getDataType();
+    private static ColumnInfo convertToColumnInfo(DataType dt, Object data) {
+        Class dType = data != null ? data.getClass() : dt.getDataType();
 
         // name, datatype, <DESCRIPTION>
         String desc = dt.getDesc();
@@ -137,7 +76,6 @@ public class DataGroupStarTable extends RandomStarTable {
                    LOG.info("href in " + dt.getKeyName() + " is not a java.net.URL");
                }
         }
-
 
         // ID
         applyIfNotEmpty(dt.getID(), v -> addDescribedValue(col, VOStarTable.ID_INFO, v));
@@ -161,33 +99,24 @@ public class DataGroupStarTable extends RandomStarTable {
             col.setNullable(false);
         }
 
+        // handle array type
+        if (!StringUtils.isEmpty(dt.getArraySize())) {
+            int[] shape = dt.getShape();
+            if (shape.length > 0) {
+                if (dt.getDataType() == String.class) {
+                    col.setElementSize(shape[0]);
+                    col.setShape(Arrays.copyOfRange(shape, 1, shape.length));
+                } else {
+                    col.setShape(shape);
+                }
+            }
+        }
+
         return col;
     }
 
     private static void addDescribedValue(ColumnInfo cInfo, ValueInfo vInfo, Object value) {
         DescribedValue dVal = new DescribedValue(vInfo, value);
-
         cInfo.setAuxDatum(dVal);
-    }
-
-
-    public static String getTableMetaValue(String keyName, List<DataGroup.Attribute> meta) {
-        List<DataGroup.Attribute> atts = meta.stream()
-                .filter(oneAtt -> (!oneAtt.isComment())&&(oneAtt.getKey().equals(keyName)))
-                .collect(Collectors.toList());
-
-        return atts.size() == 0 ? null : atts.get(0).getValue();
-    }
-
-    public static List<DataGroup.Attribute> getInfosFromMeta(List<DataGroup.Attribute> meta) {
-        String[] tableMetaNotInfo = { TableMeta.ID, TableMeta.REF,
-                                      TableMeta.UCD, TableMeta.UTYPE,
-                                      TableMeta.NAME, TableMeta.DESC};
-
-        List<String> attList = Arrays.asList(tableMetaNotInfo);
-        List<DataGroup.Attribute> infoList = meta.stream()
-                .filter(oneAtt -> (!oneAtt.isComment()) && !attList.contains(oneAtt.getKey()))
-                .collect(Collectors.toList());
-        return infoList;
     }
 }

@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.table.*;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -41,7 +42,7 @@ public class IpacTableWriter {
         PrintWriter out = null;
         try {
             out = new PrintWriter(new BufferedWriter(new FileWriter(file), IpacTableUtil.FILE_IO_BUFFER_SIZE));
-            save(out, dataGroup, false);
+            save(out, dataGroup);
         } finally {
             if (out != null) out.close();
         }
@@ -51,46 +52,44 @@ public class IpacTableWriter {
      * save the catalogs to a stream, stream is not closed
      *
      * @param stream the output stream to write to
-     *
      * @param dataGroup data group
      * @throws IOException on error
      */
-    public static void save(OutputStream stream, DataGroup dataGroup)
-            throws IOException {
-        save(stream, dataGroup, false);
+    public static void save(OutputStream stream, DataGroup dataGroup) throws IOException {
+        save(new PrintWriter(new BufferedOutputStream(stream, IpacTableUtil.FILE_IO_BUFFER_SIZE)), dataGroup);
     }
 
-    /**
-     * save the catalogs to a stream, stream is not closed
-     *
-     * @param stream the output stream to write to
-     * @param dataGroup data group
-     * @param forExport only includes original meta and columns that are visible
-     * @throws IOException on error
-     */
-    public static void save(OutputStream stream, DataGroup dataGroup, boolean forExport)
-            throws IOException {
-        save(new PrintWriter(new BufferedOutputStream(stream, IpacTableUtil.FILE_IO_BUFFER_SIZE)), dataGroup, forExport);
-    }
-
-    private static void save(PrintWriter out, DataGroup dataGroup, boolean forExport) throws IOException {
+    private static void save(PrintWriter out, DataGroup dataGroup) throws IOException {
         shrinkToFitData(dataGroup);
         List<DataType> headers = Arrays.asList(dataGroup.getDataDefinitions());
         int totalRow = dataGroup.size();
 
-        if (forExport) {
-            // this should return only visible columns
-            headers = headers.stream()
-                            .filter(dt -> IpacTableUtil.isVisible(dataGroup, dt)
-                                    && !dt.getKeyName().equals(DataGroup.ROW_IDX)
-                                    && !dt.getKeyName().equals(DataGroup.ROW_NUM))
-                            .collect(Collectors.toList());
-        }
+        // this should return only visible columns
+        headers = headers.stream()
+                        .filter(dt -> IpacTableUtil.isVisible(dataGroup, dt)
+                                && !dt.getKeyName().equals(DataGroup.ROW_IDX)
+                                && !dt.getKeyName().equals(DataGroup.ROW_NUM))
+                        .collect(Collectors.toList());
 
-        List<DataGroup.Attribute> attributes = forExport ? dataGroup.getTableMeta().getKeywords()
-                                : IpacTableUtil.createMetaFromColumns(dataGroup);  // add column info as attributes
+        // print table headers
+        List<DataGroup.Attribute> attributes = dataGroup.getTableMeta().getKeywords();
+        IpacTableUtil.writeAttributes(out, attributes, true);
 
-        IpacTableUtil.writeAttributes(out, attributes, forExport);
+        // print and fix column with array type
+        headers.stream()
+                .filter(dt -> dt.getArraySize() != null)
+                .forEach(dt -> {
+                    List<DataGroup.Attribute> atts = Arrays.asList(TableMeta.makeAttribute(TableMeta.ARY_SIZE_TAG, dt.getKeyName(), dt.getArraySize()));
+                    IpacTableUtil.writeAttributes(out, atts, false);
+                    atts = Arrays.asList(TableMeta.makeAttribute(TableMeta.TYPE_TAG, dt.getKeyName(), dt.getTypeDesc()));
+                    IpacTableUtil.writeAttributes(out, atts, false);
+
+                    dt.setDataType(String.class);
+                    dt.setTypeDesc(DataType.CHAR);
+                });
+
+
+        // print column headers
         IpacTableUtil.writeHeader(out, headers);
 
         for (int i = 0; i < totalRow; i++) {
@@ -108,7 +107,7 @@ public class IpacTableWriter {
             int maxWidth = Arrays.stream(headers).mapToInt(s -> s == null ? 0 : s.length()).max().getAsInt();
             for (int i=0; i<dataGroup.size(); i++) {
                 Object val = dataGroup.getData(dt.getKeyName(), i);
-                int dWidth = val == null ? 0 : dt.format(val, true).length();
+                int dWidth = val == null ? 0 : dt.format(val, true, false).length();
                 if (dWidth > maxWidth) maxWidth = dWidth;
             }
             dt.setWidth(maxWidth);

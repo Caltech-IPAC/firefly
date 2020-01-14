@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, set, has, isEmpty, isUndefined, uniqueId, cloneDeep, omitBy, isNil, isPlainObject, isArray, padEnd} from 'lodash';
+import {get, set, has, isEmpty, isUndefined, uniqueId, cloneDeep, omitBy, isNil, isPlainObject, isArray, padEnd, chunk, isString} from 'lodash';
 import Enum from 'enum';
 
 import {sprintf} from '../externalSource/sprintf.js';
@@ -460,8 +460,20 @@ export function formatValue(col, val) {
     const {fmtDisp, format, precision, nullString} = col || {};
 
     if (isNil(val)) return (nullString || '');
+
     if (Array.isArray(val)) {
-        return (col.type || 'array') + `[${val.length}]`;
+        const aryDim = (col.arraySize || '').split('x');
+
+        if (col.type === 'char' && aryDim.length > 0) {
+           aryDim.shift();    // remove first dimension because char array is presented as string
+        }
+
+        if (aryDim.length > 1) {
+            for(let i = 0; i < aryDim.length-1; i++) {
+                val = chunk(val, aryDim[i]);
+            }
+        }
+        return isString(val) ? val : JSON.stringify(val);
     }
 
     if (fmtDisp) {
@@ -483,6 +495,16 @@ export function formatValue(col, val) {
     return String(val);
 }
 
+export function getTypeLabel(col={}) {
+    const {type, arraySize=''} = col;
+    if (!type) return '';
+    const aryDim = arraySize.split('x').filter( (s) => s).length;
+    if (type === 'char' && aryDim === 1) {
+        return type;
+    } else {
+        return type + (aryDim > 0 ? `[${arraySize}]` : '');
+    }
+}
 
 /**
  * returns an array of all the values for a columns
@@ -882,7 +904,7 @@ export function tableToIpac(tableModel) {
 
     const head = [
                     columns.map((c, idx) => padEnd(c.name, colWidths[idx])),
-                    columns.map((c, idx) => padEnd(c.type, colWidths[idx])),
+                    columns.map((c, idx) => padEnd(getTypeLabel(c), colWidths[idx])),
                     columns.find((c) => c.units) && columns.map((c, idx) => padEnd(c.units, colWidths[idx])),
                     columns.find((c) => c.nullString) && columns.map((c, idx) => padEnd(c.nullString, colWidths[idx]))
                 ]
@@ -895,27 +917,27 @@ export function tableToIpac(tableModel) {
     return [meta, '\\', head, dataStr].join('\n');
 }
 
-export function tableTextView(columns, dataAry, showUnits=false, tableMeta) {
+export function tableTextView(columns, dataAry, tableMeta) {
 
     const colWidths = calcColumnWidths(columns, dataAry);
     const meta = tableMeta && Object.entries(tableMeta).map(([k,v]) => `\\${k} = ${v}`).join('\n');
-    const head = [
-                    columns.map((c, idx) => get(c,'visibility', 'show') === 'show' && padEnd(c.label || c.name, colWidths[idx])),
-                    columns.map((c, idx) => get(c,'visibility', 'show') === 'show' && padEnd(c.type, colWidths[idx])),
-                    showUnits && columns.map((c, idx) => get(c,'visibility', 'show') === 'show' && padEnd(c.units, colWidths[idx]))
-                ]
-                .filter( (ary) => ary)
-                .map( (ary) => '|' + ary.filter( (v) => v ).join('|') + '|')
-                .join('\n');
 
-    const dataStr = dataAry.map((row) => ' ' +
-                                    row.map((c, idx) => get(columns, `${idx}.visibility`, 'show') === 'show' && padEnd(formatValue(columns[idx],c), colWidths[idx]))
-                                       .filter((v) => v)
-                                       .join(' ')
-                                    + ' ')
-                           .join('\n');
+    const cols = columns.map((c, idx) => get(c,'visibility', 'show') === 'show' ? [c, idx] : null).filter((c) => c);  // only visible columns: [col, colIdx]
 
-    return [meta, head, dataStr].join('\n');
+    const colSep = '+' + cols.map(([, idx]) => '-'.repeat(colWidths[idx])).join('+') + '+';
+    const names  = '|' + cols.map(([c, idx]) => padEnd(c.label || c.name, colWidths[idx])).join('|') + '|';
+    const types  = '|' + cols.map(([c, idx]) => padEnd(getTypeLabel(c), colWidths[idx])).join('|') + '|';
+
+    const head = [colSep, names, types, colSep].join('\n');
+
+    const dataStr = dataAry.map((row) =>
+                ' ' +
+                    cols.map(([c, idx]) =>
+                            padEnd(formatValue(c, row[idx]), colWidths[idx])
+                            .replace(/[^\x1F-\x7F]/g, '\xBF')).join(' ') +              // replace non-printable chars with (191 in LATIN-1) inverted '?'.  same logic as DataType.format()
+                ' ').join('\n');
+
+    return [meta, head, dataStr].filter((c) => c).join('\n');
 }
 
 /**
@@ -946,7 +968,7 @@ export function tableDetailsView(tbl_id, highlightedRow, details_tbl_id) {
     const data = dataCols.map((c) => {
         const name  = c.label || c.name;
         const value = getCellValue(tableModel, highlightedRow, c.name) || '';
-        const type  = c.type || '';
+        const type  = getTypeLabel(c);
         const units = c.units || '';
         const desc  = c.desc || '';
 
@@ -976,11 +998,12 @@ export function tableDetailsView(tbl_id, highlightedRow, details_tbl_id) {
  * the header and the data in a table given columns and dataAry.
  * @param {TableColumn[]} columns  array of column object
  * @param {TableData} dataAry  array of array.
+ * @param {int} maxAryWidth  maximum size of column with array values
  * @returns {number[]} an array of widths corresponding to the given columns array.
  * @memberof firefly.util.table
  * @func calcColumnWidths
  */
-export function calcColumnWidths(columns, dataAry) {
+export function calcColumnWidths(columns, dataAry, {maxAryWidth=Number.MAX_SAFE_INTEGER, maxColWidth=Number.MAX_SAFE_INTEGER}={}) {
     return columns.map( (cv, idx) => {
 
         let width = cv.prefWidth || cv.width;
@@ -988,11 +1011,16 @@ export function calcColumnWidths(columns, dataAry) {
             return width;
         }
         const cname = cv.label || cv.name;
-        width = Math.max(cname.length, get(cv, 'units.length', 0),  get(cv, 'type.length', 0));
+        width = Math.max(cname.length, get(cv, 'units.length', 0),  getTypeLabel(cv).length);
         dataAry.forEach((row) => {
             const v = formatValue(columns[idx], row[idx]);
             width = Math.max(width, v.length);
         });
+
+        if (cv.arraySize) {
+            width = Math.min(width, maxAryWidth);
+        }
+        width = Math.min(width, maxColWidth);
         return width;
     });
 }

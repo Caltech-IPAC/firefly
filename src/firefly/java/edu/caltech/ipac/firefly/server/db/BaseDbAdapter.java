@@ -58,7 +58,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
             ", minValue varchar(64000)" +
             ", links    other" +
             ", dataOptions varchar(64000)" +
-            ", arraySize varchar(64000)" +
+            ", arraySize varchar(255)" +
             ")";
 
     private static final String META_INSERT_SQL = "insert into %s_meta values (?,?,?)";
@@ -189,11 +189,11 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
 
     public String toDbDataType(DataType dataType) {
-        if (dataType.getArraySize() != null) return "other";
+        if (dataType.isArrayType()) return "other";
 
         Class type = dataType.getDataType();
         if (String.class.isAssignableFrom(type)) {
-            return dataType.getTypeDesc().equals(DataType.LONG_STRING) ? "longvarchar" : "varchar(64000)";
+            return "longvarchar";                           // to ensure it can accommodate any length
         } else if (Byte.class.isAssignableFrom(type)) {
             return "tinyint";
         } else if (Short.class.isAssignableFrom(type)) {

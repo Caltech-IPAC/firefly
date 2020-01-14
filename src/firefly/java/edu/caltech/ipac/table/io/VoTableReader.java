@@ -277,7 +277,7 @@ public class VoTableReader {
         // INFO     => only takes name/value pairs for now
         Arrays.stream(table.getChildrenByName("INFO"))
                 .forEach(el -> {
-                    dg.getTableMeta().setAttribute(el.getName(), el.getAttribute("value"));
+                    dg.getTableMeta().addKeyword(el.getName(), el.getAttribute("value"));
                 });
         if (table.hasAttribute("nrows")) {
             dg.setSize((int) table.getNrows());
@@ -404,10 +404,7 @@ public class VoTableReader {
             }
         });
 
-        if (dt.getDataType() != String.class) {
-            // we will ignore multi-dimensional char arrays for now
-            applyIfNotEmpty(el.getAttribute("arraysize"), dt::setArraySize);
-        }
+        applyIfNotEmpty(el.getAttribute("arraysize"), dt::setArraySize);
 
         // add all links
         Arrays.stream(el.getChildrenByName("LINK"))
