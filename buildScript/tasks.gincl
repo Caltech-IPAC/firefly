@@ -605,46 +605,60 @@ task dockerPublish (dependsOn: dockerImage) {
 
 task dockerDelete (dependsOn: loadConfig){
     description = ''' Delete a docker image from docker hub.
-                      Example:  gradle -Pdocker_tag=<tag name> :firefly:dockerDelete '''
-    group = DOCKER_GROUP
+                          Example:  gradle -Pdocker_tag=<tag name> :firefly:dockerDelete '''
+        group = DOCKER_GROUP
 
-    ext.docker_repo = "ipac/firefly"
-    ext.docker_registry = "https://cloud.docker.com/v2/repositories" //Docker registry defaults to Docker Hub. In case this needs to change, then either change this value here, or using 'project.appConfigProps'
+        ext.docker_repo = "ipac/firefly"
+        ext.docker_registry = "https://hub.docker.com/v2/repositories" //Docker registry defaults to Docker Hub. In case this needs to change, then either change this value here, or using 'project.appConfigProps'
 
-    doLast {
-        try {
-            "docker --version".execute()
-        } catch (Exception e) {
-            println ">> docker is not installed.  This task required docker"
-            throw new GradleException("docker is not installed.  This task required docker", e)
+        doLast {
+            try {
+                "docker --version".execute()
+            } catch (Exception e) {
+                println ">> docker is not installed.  This task required docker"
+                throw new GradleException("docker is not installed.  This task required docker", e)
+            }
+
+            if (project.appConfigProps.docker_user != '') {
+                def proc = "docker login --username ${project.appConfigProps.docker_user} --password ${project.appConfigProps.docker_passwd}".execute()
+                proc.waitForOrKill(10000)
+                println ">> docker login as ${project.appConfigProps.docker_user} with exit status ${proc.exitValue()}"
+            }
+
+            docker_repo = project.appConfigProps.docker_repo ?: docker_repo
+            docker_registry = project.appConfigProps.docker_registry ?: docker_registry
+            docker_registry = docker_registry == '' || docker_registry.endsWith('/') ? docker_registry : docker_registry + '/'
+
+
+            //Authentication: getting auth token.
+            def post = new URL("https://hub.docker.com/v2/users/login/").openConnection();
+            def data = '{"username":"'+ docker_user+'", "password":"'+ docker_passwd+'"}'
+            post.setRequestMethod("POST")
+            post.setDoOutput(true)
+            post.setRequestProperty("Content-Type", "application/json")
+            post.getOutputStream().write(data.getBytes("UTF-8"));
+
+            if(post.getResponseCode().equals(200)) {
+                def response = post.getInputStream().getText();
+                def authToken = response.substring(11,response.length()-3)
+
+                //DELETE Restful call:
+                def str = "${docker_registry}${docker_repo}/tags/${docker_tag}/"
+                def conn = new URL(str).openConnection();
+                conn.setRequestMethod("DELETE")
+                conn.setDoOutput(true)
+                conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
+                conn.setRequestProperty("Authorization", "JWT " + authToken)
+                conn.connect()
+
+                if(conn.getResponseCode() >= 400) {
+                    throw new GradleException("Fail to delete docker image, using URL: ${str}\n Exception: ${conn.getResponseCode()}:${conn.getResponseMessage()}")
+                }
+            }else{
+               throw new GradleException("Failed to obtain authentication token!")
+            }
+
         }
-
-        if (project.appConfigProps.docker_user != '') {
-            def proc = "docker login --username ${project.appConfigProps.docker_user} --password ${project.appConfigProps.docker_passwd}".execute()
-            proc.waitForOrKill(10000)
-            println ">> docker login as ${project.appConfigProps.docker_user} with exit status ${proc.exitValue()}"
-        }
-
-        docker_repo = project.appConfigProps.docker_repo ?: docker_repo
-        docker_registry = project.appConfigProps.docker_registry ?: docker_registry
-        docker_registry = docker_registry == '' || docker_registry.endsWith('/') ? docker_registry : docker_registry + '/'
-
-        //DELETE Restful call:
-        def str = "${docker_registry}${docker_repo}/tags/${docker_tag}/"
-        def encoding = "${docker_user}:${docker_passwd}".bytes.encodeBase64().toString()
-
-        def conn = new URL(str).openConnection();
-        conn.setRequestMethod("DELETE")
-        conn.setDoOutput(true)
-        conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
-        conn.setRequestProperty("Authorization", "Basic " + encoding)
-        conn.connect()
-
-        if(conn.getResponseCode() >= 400) {
-            throw new GradleException("Fail to delete docker image, using URL: ${str}")
-        }
-
-    }
 }
 
 
