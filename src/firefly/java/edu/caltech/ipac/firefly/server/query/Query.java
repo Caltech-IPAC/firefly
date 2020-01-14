@@ -45,8 +45,10 @@ public interface Query {
      */
     default DataGroup executeQuery(TableServerRequest request) {
         return (DataGroup) JdbcFactory.getTemplate(getDbInstance()).query(getSql(request), getSqlParams(request), rs -> {
-            return dbToDataGroup(rs, getDbInstance(), getDDSql(request));
+            return dbToDataGroup(rs, getDbInstance(), getDDSql(request), getRealAsDouble());
         });
     }
+
+    default boolean getRealAsDouble() {return false;}
 
 }
