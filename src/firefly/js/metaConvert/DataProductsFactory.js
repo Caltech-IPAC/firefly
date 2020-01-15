@@ -54,8 +54,6 @@ const simpleCreate= (table, converterTemplate) => converterTemplate;
  * @prop {string} imageViewerId
  * @prop {string} chartViewerId
  * @prop {string} tableGroupViewerId
- * @prop {string} converterId
- * @prop {string} dataTypeViewerId
  * @prop {string} dpId - data product id
  *
  */
@@ -63,16 +61,16 @@ const simpleCreate= (table, converterTemplate) => converterTemplate;
 
 /**
  * Returns a callback function or a Promise<DataProductsDisplayType>.
- * callback: function(table:TableModel, row:String,activeParams:{imageViewerId:String,chartViewId:String,tableViewId:String,converterId:String})
+ * callback: function(table:TableModel, row:String,activeParams:ActivateParams)
  * @param makeReq
  * @return {function | promise}
  */
 function getSingleDataProductWrapper(makeReq) {
     return (table, row, activateParams) => {
-        const {imageViewerId, converterId}= activateParams;
+        const {imageViewerId}= activateParams;
         const retVal= makeReq(table, row, true);
         const r= get(retVal,'single');
-        const activate= createSingleImageActivate(r,imageViewerId,converterId,table.tbl_id,row);
+        const activate= createSingleImageActivate(r,imageViewerId,table.tbl_id,row);
         return Promise.resolve( dpdtImage('Image', activate));
     };
 }
@@ -81,19 +79,19 @@ function getSingleDataProductWrapper(makeReq) {
 /**
  *
  * Returns a callback function or a Promise<DataProductsDisplayType>.
- * callback: function(table:TableModel, plotRows:Array.<Object>,activeParams:{imageViewerId:String,chartViewId:String,tableViewId:String,converterId:String})
+ * callback: function(table:TableModel, plotRows:Array.<Object>,activeParams:ActivateParams)
  * @param makeReq
  * @return {function | promise}
  */
 function getGridDataProductWrapper(makeReq) {
     return (table, plotRows, activateParams) => {
-        const {imageViewerId, converterId}= activateParams;
+        const {imageViewerId}= activateParams;
 
         const reqAry= plotRows
             .map( (pR) => get(makeReq(table,pR.row,true),'single'))
             .filter( (r) => r);
 
-        const activate= createGridImagesActivate(reqAry,imageViewerId,converterId,table.tbl_id,plotRows);
+        const activate= createGridImagesActivate(reqAry,imageViewerId,table.tbl_id,plotRows);
         return Promise.resolve( dpdtImage('Image Grid', activate));
     };
 }
@@ -106,10 +104,10 @@ function getGridDataProductWrapper(makeReq) {
  */
 function getRelatedDataProductWrapper(makeReq) {
     return (table, row, threeColorOps, highlightPlotId, activateParams) => {
-        const {imageViewerId, converterId}= activateParams;
+        const {imageViewerId}= activateParams;
         const retVal= makeReq(table, row, false,true,threeColorOps);
         if (retVal) {
-            const activate= createRelatedDataGridActivate(retVal,imageViewerId,converterId,table.tbl_id, highlightPlotId);
+            const activate= createRelatedDataGridActivate(retVal,imageViewerId,table.tbl_id, highlightPlotId);
             return Promise.resolve( dpdtImage('Images', activate));
         }
         else {

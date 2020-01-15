@@ -181,11 +181,11 @@ function makeName(s='', url, auxTot, autCnt, primeCnt=0) {
  * @return {DataProductsDisplayType}
  */
 export function createGuessDataType(name, menuKey, url,ct,makeReq, semantics, activateParams, positionWP, table,row,size) {
-    const {imageViewerId, converterId}= activateParams;
+    const {imageViewerId}= activateParams;
     if (ct.includes('image') || ct.includes('fits') || ct.includes('cube')) {
         const request= makeReq(url,positionWP,name);
         return dpdtImage(name,
-            createSingleImageActivate(request,imageViewerId,converterId,table.tbl_id,row),
+            createSingleImageActivate(request,imageViewerId,table.tbl_id,row),
             menuKey, {request,url, semantics,size});
     }
     else if (ct.includes('table') || ct.includes('spectrum') || semantics.includes('auxiliary')) {

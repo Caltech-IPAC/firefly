@@ -8,6 +8,7 @@ import {getRootURL} from '../util/BrowserUtil';
 
 export const DATA_PRODUCTS_KEY= 'dataProducts';
 const PREFIX= 'DataProductCntlr';
+export const INIT_DATA_PRODUCTS= `${PREFIX}.InitDataProducts`;
 export const UPDATE_DATA_PRODUCTS= `${PREFIX}.UpdateDataProducts`;
 export const UPDATE_ACTIVE_KEY= `${PREFIX}.UpdateActiveKey`;
 export const ACTIVATE_MENU_ITEM= `${PREFIX}.ActivateMenuItem`;
@@ -100,6 +101,11 @@ function initState() {
             dataProducts: {},
             activeFileMenuKeys: {},
             activeMenuKeys: {},
+            activateParams: {
+                imageViewerId:'DPC-image-0',
+                tableGroupViewerId:'DPC-table-0',
+                chartViewerId:'DPC-chart-0'
+            }
         }
     ];
 }
@@ -107,6 +113,14 @@ function initState() {
 export default {
     reducers, actionCreators,
 };
+
+/**
+ * Create and init a new data products id if it does not exist, otherwise no nothing.
+ * @param dpId
+ */
+export function dispatchInitDataProducts(dpId) {
+    flux.process({type: INIT_DATA_PRODUCTS, payload: {dpId} });
+}
 
 
 /**
@@ -147,17 +161,16 @@ export function dispatchActivateFileMenuItem({dpId,fileMenu, newActiveFileMenuKe
 }
 
 
+export const isInitDataProducts= (dpRoot,dpId) => Boolean(dpRoot.find( (dpContainer) => dpContainer.dpId===dpId));
 
-export function getDataProducts(dpRoot,dpId) {
-    return createOrFind(dpRoot,dpId).dataProducts;
-}
+export const getDataProducts= (dpRoot,dpId) => createOrFind(dpRoot,dpId).dataProducts;
+export const getActivateParams= (dpRoot,dpId) => createOrFind(dataProductRoot(),dpId).activateParams;
 
 export const getActiveFileMenuKey= (dpId,fileMenu) =>
     createOrFind(dataProductRoot(),dpId).activeFileMenuKeys[fileMenu.activeItemLookupKey];
 
 
-export const getActiveFileMenuKeyByKey= (dpId,key) =>
-    createOrFind(dataProductRoot(),dpId).activeFileMenuKeys[key];
+export const getActiveFileMenuKeyByKey= (dpId,key) => createOrFind(dataProductRoot(),dpId).activeFileMenuKeys[key];
 
 
 export const getActiveMenuKey= (dpId,activeMenuLookupKey) =>
@@ -171,6 +184,9 @@ function reducer(state=initState(), action={}) {
     let retState= state;
 
     switch (action.type) {
+        case INIT_DATA_PRODUCTS:
+            retState= initDataProducts(state,action);
+            break;
         case UPDATE_DATA_PRODUCTS:
             retState= updateDataProducts(state,action);
             break;
@@ -193,7 +209,22 @@ function reducer(state=initState(), action={}) {
     return retState;
 }
 
-const makeNewDPData= (dpId) =>  ({ dpId, dataProducts: {}, activeFileMenuKeys: {}, activeMenuKeys: {} });
+let activateCnt=0;
+
+const makeNewDPData= (dpId) => {
+    activateCnt++;
+    return { dpId,
+        dataProducts: {},
+        activeFileMenuKeys: {},
+        activeMenuKeys: {},
+        activateParams: {
+            imageViewerId:`DPC-image-${activateCnt}`,
+            tableGroupViewerId:`DPC-table-${activateCnt}`,
+            chartViewerId:`DPC-chart-${activateCnt}`,
+            dpId,
+        }
+    };
+}
 
 function createOrFindAndCopy(state,dpId) {
     const dp= state.find( (dpContainer) => dpContainer.dpId===dpId );
@@ -211,6 +242,11 @@ function insertOrReplace(state,dpData) {
     return found ? state.map( (d) => d.dpId===dpId ? dpData : d) : [...state,dpData];
 }
 
+function initDataProducts(state,action) {
+    const {dpId}= action.payload;
+    const found= Boolean(state.find( (dpContainer) => dpContainer.dpId===dpId ));
+    return found ? state : [...state,makeNewDPData(dpId)];
+}
 
 function updateDataProducts(state,action) {
     const {dpId, dataProducts}= action.payload;

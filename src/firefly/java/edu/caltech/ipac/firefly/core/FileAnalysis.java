@@ -87,8 +87,9 @@ public class FileAnalysis {
                 helper.setValue(p.index, "parts", i+"", "index");
                 helper.setValue(p.type.name(), "parts", i+"", "type");
                 helper.setValue(p.desc, "parts", i+"", "desc");
+                if (p.totalTableRows>-1) helper.setValue(p.totalTableRows, "parts", i+"", "totalTableRows");
                 if (!isEmpty(p.getDetails())) {
-                    helper.setValue(JsonTableUtil.toJsonDataGroup(p.getDetails()), "parts", i+"", "details");
+                    helper.setValue(JsonTableUtil.toJsonDataGroup(p.getDetails(),true), "parts", i+"", "details");
                 }
             }
         }
@@ -184,6 +185,9 @@ public class FileAnalysis {
         private String desc;
         private DataGroup details;
 
+
+        private int totalTableRows=-1;
+
         public Part(Type type) {
             this.type = type;
         }
@@ -209,6 +213,10 @@ public class FileAnalysis {
         public void setDetails(DataGroup details) {
             this.details = details;
         }
+
+        public int getTotalTableRows() { return totalTableRows; }
+        public void setTotalTableRows(int totalTableRows) { this.totalTableRows = totalTableRows; }
+
     }
 
 

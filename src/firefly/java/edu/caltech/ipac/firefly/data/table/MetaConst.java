@@ -27,6 +27,11 @@ public class MetaConst {
      */
     public static final String ALL_CORNERS   = "ALL_CORNERS";
 
+    /*
+     * comma separated names of the columns to assign to the table when reading a fits image as a table.
+     */
+    public static final String IMAGE_AS_TABLE_COL_NAMES= "IMAGE_AS_TABLE_COL_NAMES";
+
     /**
      * If defined to any value (but 'false') the the table is a catalog
      * CatalogOverlayType is required to even guess if there is no VO information.

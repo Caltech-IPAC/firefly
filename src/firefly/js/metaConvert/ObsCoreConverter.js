@@ -60,14 +60,14 @@ export function makeObsCoreConverter(table,converterTemplate) {
 export function getObsCoreGridDataProduct(table, plotRows, activateParams) {
     const pAry= plotRows.map( (pR) => getObsCoreSingleDataProduct(table,pR.row,activateParams,false));
     return Promise.all(pAry).then ( (resultAry) => {
-        const {imageViewerId, converterId}= activateParams;
+        const {imageViewerId}= activateParams;
         const requestAry= resultAry
             .filter( (result) => result && result.request && (
                 result.displayType===DPtypes.IMAGE ||
                 result.displayType===DPtypes.PROMISE ||
                 result.displayType===DPtypes.ANALYZE) )
             .map( (result) => result.request);
-        const activate= createGridImagesActivate(requestAry,imageViewerId,converterId, table.tbl_id, plotRows);
+        const activate= createGridImagesActivate(requestAry,imageViewerId, table.tbl_id, plotRows);
         return dpdtImage('image grid', activate,'image-grid-0',{requestAry});
     });
 }

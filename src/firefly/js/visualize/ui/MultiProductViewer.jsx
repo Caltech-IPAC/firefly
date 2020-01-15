@@ -7,7 +7,7 @@ import PropTypes from 'prop-types';
 import {get, isFunction, isArray, once} from 'lodash';
 import {flux} from '../../Firefly.js';
 import {NewPlotMode, dispatchAddViewer, dispatchViewerUnmounted, WRAPPER, META_VIEWER_ID, IMAGE,
-        getMultiViewRoot, getViewer, PLOT2D, SINGLE} from '../MultiViewCntlr.js';
+        getMultiViewRoot, getViewer, PLOT2D, SINGLE, GRID} from '../MultiViewCntlr.js';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 import {ImageMetaDataToolbar} from './ImageMetaDataToolbar.jsx';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
@@ -27,24 +27,9 @@ import {
     getDataProducts,
     doDownload,
     getActiveFileMenuKeyByKey,
-    dispatchUpdateActiveKey
+    dispatchUpdateActiveKey, dispatchInitDataProducts, getActivateParams, isInitDataProducts
 } from '../../metaConvert/DataProductsCntlr';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView';
-import {startDataProductsWatcher} from '../saga/DataProductsWatcher';
-
-
-export const META_DATA_TBL_GROUP_ID= 'TableDataProducts';
-export const CHART_DATA_VIEWER_ID= 'ChartMetaView';
-
-
-const startWatcher= once((viewerId,imageMetaViewerId, chartMetaViewerId, tableGroupViewerId) => {
-    startDataProductsWatcher({
-        imageViewerId: imageMetaViewerId,
-        chartViewerId:chartMetaViewerId,
-        tableGroupViewerId,
-    });
-});
-
 
 
 function FileMenuDropDown({fileMenu, dpId}) {
@@ -131,28 +116,22 @@ const SHOW_CHART='showChart';
 const SHOW_TABLE='showTable';
 const makeChartTableLookupKey= (activeItemLookupKey, fileMenuKey) => `${activeItemLookupKey}-charTable-${fileMenuKey}`;
 
-export const MultiProductViewer= memo(({
-                                           viewerId='DataProductsType',
-                                           imageMetaViewerId=META_VIEWER_ID,
-                                           chartMetaViewerId=CHART_DATA_VIEWER_ID,
-                                           tableGroupViewerId= META_DATA_TBL_GROUP_ID,
-                                           metaDataTableId,
-                                           autoStartWatcher=true,
-                                       }) => {
+export const MultiProductViewer= memo(({ viewerId='DataProductsType', metaDataTableId}) => {
 
-    autoStartWatcher && startWatcher(viewerId,imageMetaViewerId, chartMetaViewerId, tableGroupViewerId );
-    const {renderTreeId} = useContext(RenderTreeIdCtx);
     const dpId= viewerId;
+    !isInitDataProducts(dataProductRoot(), dpId) && dispatchInitDataProducts(dpId);
+    const {renderTreeId} = useContext(RenderTreeIdCtx);
     const [viewer, setViewer] = useState(getViewer(getMultiViewRoot(),viewerId));
     const [dataProductsState, setDataProductsState] = useState(getDataProducts(dataProductRoot(),dpId));
+    const {imageViewerId,chartViewerId,tableGroupViewerId}=  getActivateParams(dataProductRoot(),dpId);
     const {displayType='unsupported', menu,fileMenu,message,url, isWorkingState, menuKey,
         activate,activeMenuLookupKey,singleDownload= false}= dataProductsState;
 
 
     useEffect(() => {
         dispatchAddViewer(viewerId, NewPlotMode.none, WRAPPER,true, renderTreeId, SINGLE);
-        dispatchAddViewer(imageMetaViewerId, NewPlotMode.none, IMAGE,true, renderTreeId, SINGLE, true);
-        dispatchAddViewer(chartMetaViewerId, NewPlotMode.none, PLOT2D,true, renderTreeId, SINGLE);
+        dispatchAddViewer(imageViewerId, NewPlotMode.none, IMAGE,true, renderTreeId, SINGLE, true);
+        dispatchAddViewer(chartViewerId, NewPlotMode.none, PLOT2D,true, renderTreeId, GRID);
         const removeFluxListener= flux.addListener(()=> {
             const newViewer= getViewer(getMultiViewRoot(),viewerId);
             if (newViewer!==viewer) setViewer(newViewer);
@@ -164,8 +143,8 @@ export const MultiProductViewer= memo(({
         return () => {
             removeFluxListener();
             dispatchViewerUnmounted(viewerId);
-            dispatchViewerUnmounted(imageMetaViewerId);
-            dispatchViewerUnmounted(chartMetaViewerId);
+            dispatchViewerUnmounted(imageViewerId);
+            dispatchViewerUnmounted(chartViewerId);
         };
     }, [viewerId]);
 
@@ -182,7 +161,7 @@ export const MultiProductViewer= memo(({
     let result;
     switch (displayType) {
         case DPtypes.IMAGE :
-            result= ( <MultiImageViewer viewerId= {imageMetaViewerId} insideFlex={true}
+            result= ( <MultiImageViewer viewerId= {imageViewerId} insideFlex={true}
                                         canReceiveNewPlots={NewPlotMode.none.key}
                                         tableId={metaDataTableId} controlViewerMounting={false}
                                         handleInlineToolsWhenSingle={false}
@@ -215,10 +194,10 @@ export const MultiProductViewer= memo(({
             );
             break;
         case DPtypes.TABLE :
-            result= (<MultiProductChartTable {...{dpId,makeDropDown,tableGroupViewerId,SHOW_TABLE}}/>);
+            result= (<MultiProductChartTable {...{dpId,makeDropDown,tableGroupViewerId,whatToShow:SHOW_TABLE}}/>);
             break;
         case DPtypes.CHART :
-            result= (<MultiProductChartTable {...{dpId,makeDropDown,chartMetaViewerId,SHOW_CHART}}/>);
+            result= (<MultiProductChartTable {...{dpId,makeDropDown,chartViewerId,whatToShow:SHOW_CHART}}/>);
             break;
         case DPtypes.CHART_TABLE :
             const lookupKey= get(fileMenu,'activeItemLookupKey','');
@@ -226,7 +205,7 @@ export const MultiProductViewer= memo(({
             const whatToShow= lookupKey ?
                 getActiveFileMenuKeyByKey(dpId,ctLookupKey) || SHOW_CHART: SHOW_CHART;
             result= (<MultiProductChartTable {
-                ...{dpId,makeDropDown,chartMetaViewerId,tableGroupViewerId,whatToShow,ctLookupKey,mayToggle:true}}/>);
+                ...{dpId,makeDropDown,chartViewerId,tableGroupViewerId,whatToShow,ctLookupKey,mayToggle:true}}/>);
             break;
         case DPtypes.PNG :
             result= (
@@ -252,11 +231,7 @@ export const MultiProductViewer= memo(({
 
 MultiProductViewer.propTypes= {
     viewerId : PropTypes.string,
-    imageMetaViewerId: PropTypes.string,
-    tableGroupViewerId: PropTypes.string,
     metaDataTableId : PropTypes.string,
-    chartMetaViewerId: PropTypes.string,
-    autoStartWatcher: PropTypes.bool
 };
 
 const chartTableOptions= [
@@ -264,7 +239,7 @@ const chartTableOptions= [
     {label: 'Table', value: SHOW_TABLE}
     ];
 
-function MultiProductChartTable({dpId,makeDropDown, chartMetaViewerId,
+function MultiProductChartTable({dpId,makeDropDown, chartViewerId,
                                     tableGroupViewerId,whatToShow,ctLookupKey=undefined, mayToggle=false}) {
 
     const [ts, setTS] = useState(whatToShow);
@@ -291,9 +266,9 @@ function MultiProductChartTable({dpId,makeDropDown, chartMetaViewerId,
 
     if (ts===SHOW_CHART) {
         result= (
-            <div style={{ width:'100%', background: '#c8c8c8'}}>
+            <div style={{ width:'100%', height:'calc(100% - 30px)', background: '#c8c8c8'}}>
                 {toolbar}
-                <MultiChartViewer viewerId= {chartMetaViewerId} closeable={false}
+                <MultiChartViewer viewerId= {chartViewerId} closeable={false}
                                   canReceiveNewItems ={NewPlotMode.none.key} />
             </div>
         );

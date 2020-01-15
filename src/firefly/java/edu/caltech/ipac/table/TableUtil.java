@@ -33,10 +33,10 @@ import java.util.stream.Collectors;
 public class TableUtil {
 
     public static DataGroup readAnyFormat(File inf) throws IOException {
-        return readAnyFormat(inf, 0);
+        return readAnyFormat(inf, 0, null);
     }
 
-    public static DataGroup readAnyFormat(File inf, int tableIndex) throws IOException {
+    public static DataGroup readAnyFormat(File inf, int tableIndex, Map<String, String> metaInfo) throws IOException {
         Format format = guessFormat(inf);
         if (format == Format.IPACTABLE) {
             return IpacTableReader.read(inf);
@@ -50,7 +50,7 @@ public class TableUtil {
         } else if (format == Format.FITS ) {
             try {
                 // Switch to the new function:
-                return FITSTableReader.convertFitsToDataGroup(inf.getAbsolutePath(), null, null, FITSTableReader.DEFAULT, tableIndex);
+                return FITSTableReader.convertFitsToDataGroup(inf.getAbsolutePath(), metaInfo, FITSTableReader.DEFAULT, tableIndex);
             } catch (Exception e) {
                 throw new IOException("Unable to read FITS file:" + inf, e);
             }

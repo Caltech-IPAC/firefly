@@ -85,7 +85,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
 
         try {
             int tblIdx = req.getIntParam(TBL_INDEX, 0);
-            return TableUtil.readAnyFormat(inf, tblIdx);
+            return TableUtil.readAnyFormat(inf, tblIdx, req.getMeta());
         } catch (IOException e) {
             throw new DataAccessException(e.getMessage(), e);
         }

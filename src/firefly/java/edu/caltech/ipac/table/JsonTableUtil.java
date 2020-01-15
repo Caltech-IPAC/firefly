@@ -62,12 +62,19 @@ public class JsonTableUtil {
         return tableModel;
     }
 
+
+
+    public static JSONObject toJsonDataGroup(DataGroup dataGroup) {
+        return toJsonDataGroup(dataGroup,false);
+    }
+
+
     /**
      * Convert the java DataGroup to javascript table model.
      * @param dataGroup
      * @return
      */
-    public static JSONObject toJsonDataGroup(DataGroup dataGroup) {
+    public static JSONObject toJsonDataGroup(DataGroup dataGroup, boolean cleanUpStrings) {
 
         JSONObject tableModel = new JSONObject();
         TableMeta meta = dataGroup.getTableMeta();
@@ -81,7 +88,7 @@ public class JsonTableUtil {
         }
 
         tableModel.put("type", guessType(meta));
-        tableModel.put("tableData", toJsonTableData(dataGroup));
+        tableModel.put("tableData", toJsonTableData(dataGroup,cleanUpStrings));
 
         if (meta.getKeywords().size() > 0) {
             List<JSONObject> keywords = new ArrayList<>();
@@ -148,7 +155,7 @@ public class JsonTableUtil {
      * @param data
      * @return
      */
-    public static JSONObject toJsonTableData(DataGroup data) {
+    public static JSONObject toJsonTableData(DataGroup data, boolean cleanUpStrings) {
 
         JSONObject tdata = new JSONObject();
 
@@ -166,7 +173,7 @@ public class JsonTableUtil {
         if (data.size() > 0) {
             List<List> tableData = new ArrayList<>();
             for (int i = 0; i < data.size(); i++) {
-                Object[] rowData = Arrays.stream(data.get(i).getData()).map(d -> mapToJsonAware(d)).toArray();
+                Object[] rowData = Arrays.stream(data.get(i).getData()).map(d -> mapToJsonAware(d,cleanUpStrings)).toArray();
                 tableData.add(Arrays.asList(rowData));
             }
             tdata.put("data", tableData);
@@ -179,7 +186,7 @@ public class JsonTableUtil {
      * @param obj
      * @return
      */
-    private static Object mapToJsonAware(Object obj) {
+    private static Object mapToJsonAware(Object obj,boolean cleanUpString) {
         if (obj != null) {
             if (obj.getClass().isArray()) {
                 // unbox array into primitive
@@ -212,7 +219,12 @@ public class JsonTableUtil {
             } else {
                 // if it's an object we have a mapper for, return the mapper
                 JSONAware jsonAware = getJsonMapper(obj);
-                if (jsonAware != null) obj = jsonAware;
+                if (jsonAware != null) {
+                    obj = jsonAware;
+                }
+                else if ((obj instanceof String) && cleanUpString) {
+                    obj= ((String)obj).replaceAll("[^\\x01-\\x7F]", " ") ;
+                }
             }
         }
         return obj;

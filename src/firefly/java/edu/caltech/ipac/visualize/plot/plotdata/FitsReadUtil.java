@@ -23,6 +23,8 @@ import nom.tam.fits.HeaderCard;
 import nom.tam.fits.HeaderCardException;
 import nom.tam.fits.ImageData;
 import nom.tam.fits.ImageHDU;
+import nom.tam.fits.UndefinedData;
+import nom.tam.fits.UndefinedHDU;
 import nom.tam.image.compression.hdu.CompressedImageHDU;
 import nom.tam.util.ArrayFuncs;
 import nom.tam.util.Cursor;
@@ -514,6 +516,36 @@ public class FitsReadUtil {
 
 
     }
+
+    /**
+     * This returns a 1d array of double.  This is not interchangable with getImageHDUDataInFloatArray. It is used
+     * mostly for tables and if not as efficent.
+     * @param inHDU
+     * @return
+     * @throws FitsException
+     */
+    public static double[] getImageHDUDataInDoubleArray(BasicHDU inHDU) throws FitsException {
+
+
+
+        if (inHDU instanceof UndefinedHDU) {
+            UndefinedData data= (UndefinedData)inHDU.getData();
+            if (data==null) throw new FitsException("No data in HDU");
+            return (double[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(data.getData(), Double.TYPE, true));
+        }
+
+
+        ImageHDU imageHDU;
+        if (inHDU instanceof ImageHDU) imageHDU = (ImageHDU) inHDU;
+        else if (inHDU instanceof CompressedImageHDU) imageHDU = ((CompressedImageHDU) inHDU).asImageHDU();
+        else throw new FitsException("hdu much be a ImageHDU or a CompressedImageHDU or a UndefinedHDU");
+
+        ImageData imageDataObj= imageHDU.getData();
+        if (imageDataObj==null) throw new FitsException("No data in HDU");
+
+        return (double[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(imageDataObj.getData(), Double.TYPE, true));
+    }
+
 
 
 

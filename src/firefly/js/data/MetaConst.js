@@ -74,6 +74,11 @@ export const MetaConst = {
      */
     TS_DATASET : 'TSDatasetId',
 
+    /*
+     * comma separated names of the columns to assign to the table when reading a fits image as a table.
+     */
+    IMAGE_AS_TABLE_COL_NAMES: 'IMAGE_AS_TABLE_COL_NAMES',
+
     /** the column name with the url or filename of the image data */
     DATA_SOURCE : 'DataSource',
 

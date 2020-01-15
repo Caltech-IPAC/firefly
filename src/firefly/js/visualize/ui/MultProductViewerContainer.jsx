@@ -5,8 +5,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
-import {MultiProductViewer} from './MultiProductViewer';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
+import {MetaDataMultiProductViewer} from './MetaDataMultiProductViewer';
 
 const closeExpanded= () => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none);
 
@@ -16,15 +16,11 @@ const closeExpanded= () => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)
 export function MultiProductViewerContainer({ metaDataTableId, imageExpandedMode=false, closeable=true, insideFlex=false}) {
     
     if (imageExpandedMode) {
-        return  ( <ImageExpandedMode
-                        key='results-plots-expanded'
-                        insideFlex = {insideFlex}
+        return  ( <ImageExpandedMode key='results-plots-expanded' insideFlex = {insideFlex}
                         closeFunc={closeable ? closeExpanded : null}/>
                 );
     } else {
-        return (
-            <MultiProductViewer metaDataTableId={metaDataTableId} />
-        );
+        return ( <MetaDataMultiProductViewer metaDataTableId={metaDataTableId} /> );
     }
 }
 

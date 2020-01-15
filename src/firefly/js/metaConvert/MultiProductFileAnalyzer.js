@@ -1,3 +1,4 @@
+import {isArray} from 'lodash';
 import {doUpload} from '../ui/FileUpload';
 import {FileAnalysisType} from '../data/FileAnalysis';
 import {
@@ -39,7 +40,7 @@ export function makeAnalysisGetSingleDataProduct(makeReq) {
         if (!hasRowAccess(table, row)) return Promise.resolve(dpdtMessage('You do not have access to this data.'));
         const retVal= makeReq(table, row, true);
         const r= (retVal && retVal.single) ? retVal.single : retVal;
-        const extDP= fileExtensionSingleProductAnalysis(r,); //todo
+        const extDP= fileExtensionSingleProductAnalysis(r);
         if (extDP) return Promise.resolve(extDP);
         const retPromise= doUploadAndAnalysis({table,row,request:r,activateParams,dataTypeHint});
         return Promise.resolve(dpdtWorkingPromise(LOADING_MSG,retPromise,r));
@@ -47,7 +48,7 @@ export function makeAnalysisGetSingleDataProduct(makeReq) {
 }
 
 
-function fileExtensionSingleProductAnalysis(request,name, idx=0) {
+function fileExtensionSingleProductAnalysis(request,idx=0) {
 
     const url= request.getURL();
     if (!url) return undefined;
@@ -90,14 +91,14 @@ export function makeFileAnalysisActivate(table, row, request, positionWP, activa
 /**
  *
  * Returns a callback function or a Promise<DataProductsDisplayType>.
- * callback: function(table:TableModel, plotRows:Array.<Object>,activeParams:{imageViewerId:String,chartViewId:String,tableViewId:String,converterId:String})
+ * callback: function(table:TableModel, plotRows:Array.<Object>,activeParams:ActivateParams)
  * @param makeReq
  * @return {function | promise}
  */
 export function makeAnalysisGetGridDataProduct(makeReq) {
     return (table, plotRows, activateParams) => {
 
-        const {imageViewerId, converterId}= activateParams;
+        const {imageViewerId}= activateParams;
 
         const highlightedPlotRow= plotRows.find( (r) => r.row===table.highlightedRow);
         const highlightedId= highlightedPlotRow && highlightedPlotRow.plotId;
@@ -124,7 +125,7 @@ export function makeAnalysisGetGridDataProduct(makeReq) {
             .then( (reqAry) => {
                 const newReqAry= reqAry.filter( (r) => r);
                 if (newReqAry.length && newReqAry.find( (r) => r.getPlotId()===highlightedId) ) {
-                    const activate= createGridImagesActivate(newReqAry,imageViewerId,converterId,table.tbl_id,plotRows);
+                    const activate= createGridImagesActivate(newReqAry,imageViewerId,table.tbl_id,plotRows);
                     return Promise.resolve( dpdtImage('Image',activate));
                 }
                 else {
@@ -240,7 +241,7 @@ function makeErrorResult(message, fileName,url) {
 function processAnalysisResult({table, row, request, activateParams, serverCacheFileKey, fileAnalysis, dataTypeHint}) {
 
 
-    const {imageViewerId, converterId, dpId}= activateParams;
+    const {imageViewerId, dpId}= activateParams;
     const rStr= request.toString();
     const activeItemLookupKey= hashCode(rStr);
 
@@ -262,7 +263,8 @@ function processAnalysisResult({table, row, request, activateParams, serverCache
 
 
     const partAnalysis= parts.map( (p) => analyzePart(p,fileFormat, serverCacheFileKey,activateParams));
-    const hasImages= Boolean(partAnalysis.find( (pa) => pa.isImage));
+    const imageParts= partAnalysis.filter( (pa) => pa.isImage);
+    const hasImages= imageParts.length>0;
 
 
     const hasOnlySingleAxisImages= Boolean(partAnalysis.every( (pa) => pa.imageSingleAxis));
@@ -273,18 +275,24 @@ function processAnalysisResult({table, row, request, activateParams, serverCache
 
 
     const imageEntry= hasImages &&
-        dpdtImage('Image Data', createSingleImageActivate(request,imageViewerId,converterId,table.tbl_id,row),'image-'+0, {request});
+        dpdtImage(`Image Data ${imageParts.length>1? ': All Images in File' :''}`,
+            createSingleImageActivate(request,imageViewerId,table.tbl_id,row),'image-'+0, {request});
 
 
     if (imageEntry) fileMenu.menu.push(imageEntry);
     partAnalysis.forEach( (pa) => {
-        pa.tableResult && fileMenu.menu.push(pa.tableResult);
-        pa.chartResult && fileMenu.menu.push(pa.chartResult);
+        let pAry= [];
+        if (pa.tableResult) pAry= isArray(pa.tableResult) ? pa.tableResult : [pa.tableResult];
+        if (pa.chartResult) pAry= isArray(pa.chartResult) ? [...pAry,...pa.chartResult] : [...pAry,pa.chartResult];
+
+        pAry.forEach( (r) => fileMenu.menu.push(r));
     });
 
-    partAnalysis.forEach( (pa) => {
-        pa.imageSingleAxis && fileMenu.menu.push(dpdtDownload('Download Only: Cannot not display One-dimensional images (NAXIS==1)', url));
-    });
+    const oneDErr= partAnalysis.reduce( (str,pa,idx) => {
+        if (pa.imageSingleAxis) str+= `${str?', ':''}${idx}`;
+        return str;
+    },'');
+    if (oneDErr) fileMenu.menu.push(dpdtDownload(`Download Only, Ext ${oneDErr}: Cannot display One-dimensional images (NAXIS==1)`, url));
 
     fileMenu.menu= arrangeAnalysisMenu(fileMenu.menu,parts,fileFormat, dataTypeHint);
 

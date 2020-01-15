@@ -19,7 +19,7 @@ import ImagePlotCntlr, {visRoot} from '../../visualize/ImagePlotCntlr.js';
 import {TABLE_LOADED, TBL_RESULTS_ACTIVE, TBL_RESULTS_ADDED} from '../../tables/TablesCntlr.js';
 import {REINIT_APP} from '../../core/AppDataCntlr.js';
 import {isCatalog, isMetaDataTable} from '../../util/VOAnalyzer.js';
-import {MultiProductViewer, META_DATA_TBL_GROUP_ID} from  '../ui/MultiProductViewer';
+import {MetaDataMultiProductViewer} from './MetaDataMultiProductViewer';
 import {CoverageViewer} from './CoveraeViewer';
 
 
@@ -66,7 +66,7 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
                 }
                 { showMeta &&
                     <Tab name={metaTitle} removable={false} id='meta'>
-                        <MultiProductViewer metaDataTableId={metaDataTableId} />
+                        <MetaDataMultiProductViewer metaDataTableId={metaDataTableId} />
                     </Tab>
                 }
                 { showCoverage &&
@@ -145,17 +145,17 @@ function layoutHandler(action, cancelSelf) {
             newLayoutInfo = onPlotDelete(newLayoutInfo, action);
             break;
         case TABLE_LOADED:
-            if (action.payload.tbl_id!==META_DATA_TBL_GROUP_ID) {
+            if (action.payload.tbl_id) {
                 newLayoutInfo = handleNewTable(newLayoutInfo, action);
             }
             break;
         case TBL_RESULTS_ADDED:
-            if (action.payload.options.tbl_group!==META_DATA_TBL_GROUP_ID) {
+            if (action.payload.options.tbl_group==='main') {
                 newLayoutInfo = handleNewTable(newLayoutInfo, action);
             }
             break;
         case TBL_RESULTS_ACTIVE:
-            if (action.payload.tbl_group!==META_DATA_TBL_GROUP_ID) {
+            if (action.payload.tbl_group==='main') {
                 newLayoutInfo = onActiveTable(newLayoutInfo, action);
             }
             break;

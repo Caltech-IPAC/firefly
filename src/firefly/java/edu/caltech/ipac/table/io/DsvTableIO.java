@@ -166,6 +166,7 @@ public class DsvTableIO {
         String format = (csvFormat == CSVFormat.TDF) ? TableUtil.Format.TSV.name() : TableUtil.Format.CSV.name();
         FileAnalysis.Report report = new FileAnalysis.Report(type, format, infile.length(), infile.getPath());
         FileAnalysis.Part part = new FileAnalysis.Part(FileAnalysis.Type.Table, 0, String.format("%s (%d cols x %s rows)", csvFormat.getClass().getSimpleName(), header.getDataDefinitions().length, header.size()));
+        part.setTotalTableRows(header.size());
         report.addPart(part);
         if (type.equals(FileAnalysis.ReportType.Details)) {
             IpacTableDef meta = new IpacTableDef();
