@@ -121,6 +121,7 @@ export class DropDownToolbarButton extends PureComponent {
                      }
                 }
             }
+            const tgt= ev.target;
             e= ev.target;
             const maxBack= 10;
             let clickOnButton= false;
@@ -130,7 +131,10 @@ export class DropDownToolbarButton extends PureComponent {
                    break;
                 }
             }
-            const onDropDownInput= focusIsDropwdownInput && ev && ev.target.tagName==='INPUT';
+            const onDropDownInput= ev &&
+                (focusIsDropwdownInput && tgt.tagName==='INPUT') ||
+                (tgt.tagName==='DIV' && tgt.className && tgt.className.includes('allow-scroll'));
+
             if (!clickOnButton && !onDropDownInput && dropDownOwnerId===this.ownerId) {
                 dispatchHideDialog(DROP_DOWN_KEY);
             }

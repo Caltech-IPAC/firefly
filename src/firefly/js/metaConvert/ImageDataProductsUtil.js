@@ -14,51 +14,57 @@ import {dispatchTableHighlight} from '../tables/TablesCntlr.js';
 
 
 
-export function createRelatedDataGridActivate(reqRet, imageViewerId, dataId, tbl_id, highlightPlotId) {
+export function createRelatedDataGridActivate(reqRet, imageViewerId, tbl_id, highlightPlotId) {
     reqRet.highlightPlotId = highlightPlotId;
     if (isEmpty(reqRet.standard)) return;
-    return () => replotImageDataProducts(highlightPlotId, imageViewerId, dataId, tbl_id, reqRet.standard, reqRet.threeColor);
+    return () => replotImageDataProducts(highlightPlotId, imageViewerId, tbl_id, reqRet.standard, reqRet.threeColor);
 }
+
 
 
 /**
  *
  * @param {Array.<WebPlotRequest>} inReqAry
  * @param {string} imageViewerId
- * @param {string} dataId
  * @param {string} tbl_id
  * @param {Array.<Object>} plotRows
- * @return {function(): void}
+ * @return {undefined|function(): void}
  */
-export function createGridImagesActivate(inReqAry, imageViewerId, dataId, tbl_id, plotRows) {
-    const reqAry= inReqAry.map( (r,idx) => {
-        if (!r) return;
-        r.setAttributes({[PlotAttribute.DATALINK_TABLE_ROW]: plotRows[idx].row+'',
-                         [PlotAttribute.DATALINK_TABLE_ID]: tbl_id});
-        r.setPlotId(plotRows[idx].plotId);
-        return r;
-    } );
+export function createGridImagesActivate(inReqAry, imageViewerId, tbl_id, plotRows) {
+    const reqAry= inReqAry
+        .map( (r,idx) => {
+            if (!r) return;
+            if (tbl_id) {
+                r.setAttributes({
+                    [PlotAttribute.DATALINK_TABLE_ROW]: plotRows[idx].row+'',
+                    [PlotAttribute.DATALINK_TABLE_ID]: tbl_id
+                });
+            }
+            r.setPlotId(plotRows[idx].plotId);
+            return r;
+        } )
+        .filter( (r) =>r);
     const pR= plotRows.filter( (pR) => pR.highlight).find( (pR) => pR.plotId);
     const highlightPlotId= pR && pR.plotId;
-    return () => replotImageDataProducts(highlightPlotId, imageViewerId, dataId, tbl_id, reqAry);
+    return () => replotImageDataProducts(highlightPlotId, imageViewerId, tbl_id, reqAry);
 }
-
 
 /**
  *
  * @param {WebPlotRequest} request
  * @param {string} imageViewerId
- * @param {string} dataId
  * @param {string} tbl_id
  * @param {string} highlightedRow
- * @return {function(): void}
+ * @return {undefined|function(): void}
  */
-export function createSingleImageActivate(request, imageViewerId, dataId, tbl_id, highlightedRow) {
-    if (!request) return;
-    request.setPlotId(`${dataId}-singleview`);
-    request.setAttributes({[PlotAttribute.DATALINK_TABLE_ROW]: highlightedRow+'',
-                           [PlotAttribute.DATALINK_TABLE_ID]: tbl_id});
-    return () => replotImageDataProducts(request.getPlotId(), imageViewerId, dataId, tbl_id, [request]);
+export function createSingleImageActivate(request, imageViewerId, tbl_id, highlightedRow) {
+    if (!request) return undefined;
+    if (!request.getPlotId()) request.setPlotId(`${tbl_id|'no-table'}-singleview`);
+    if (tbl_id) {
+        request.setAttributes({[PlotAttribute.DATALINK_TABLE_ROW]: highlightedRow+'',
+            [PlotAttribute.DATALINK_TABLE_ID]: tbl_id});
+    }
+    return () => replotImageDataProducts(request.getPlotId(), imageViewerId, tbl_id, [request]);
 }
 
 
@@ -103,13 +109,12 @@ export function changeActivePlotView(plotId,tbl_id) {
  *
  * @param {string} activePlotId the new active plot id after the replot
  * @param {string} imageViewerId the id of the viewer
- * @param {string} dataId the id of table table type return by makeDataProductsConverter
  * @param {string} tbl_id table id of the table with the data products
  * @param {Array.<WebPlotRequest>} reqAry an array of request to execute
  * @param {Array.<WebPlotRequest>} [threeReqAry] an array of request for a three color plot, optional, max 3 entries, r,g,b
  */
-function replotImageDataProducts(activePlotId, imageViewerId, dataId, tbl_id, reqAry, threeReqAry)  {
-    const groupId= `${imageViewerId}-${dataId}-standard`;
+function replotImageDataProducts(activePlotId, imageViewerId, tbl_id, reqAry, threeReqAry)  {
+    const groupId= `${imageViewerId}-${tbl_id||'no-table-group'}-standard`;
     reqAry= reqAry.filter( (r) => r);
     let plottingIds= reqAry.map( (r) =>  r && r.getPlotId()).filter( (id) => id);
     let threeCPlotId;

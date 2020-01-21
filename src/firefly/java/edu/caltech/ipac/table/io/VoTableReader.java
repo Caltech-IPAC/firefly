@@ -458,6 +458,7 @@ public class VoTableReader {
             String title = isEmpty(dg.getTitle()) ? "VOTable" : dg.getTitle().trim();
             part.setDetails(dg);
             part.setDesc(String.format("%s (%d cols x %s rows)", title, dg.getDataDefinitions().length, dg.size()));
+            part.setTotalTableRows(dg.size());
             parts.add(part);
         });
 

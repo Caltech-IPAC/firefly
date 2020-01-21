@@ -2,7 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-
 import {get, isEmpty, isArray} from 'lodash';
 import {makeWisePlotRequest} from './WiseRequestList.js';
 import {make2MassPlotRequest} from './TwoMassRequestList.js';
@@ -17,19 +16,23 @@ import {makeWorldPt, parseWorldPt} from '../visualize/Point.js';
 import {MetaConst} from '../data/MetaConst.js';
 import {CoordinateSys} from '../visualize/CoordSys.js';
 import {hasObsCoreLikeDataProducts} from '../util/VOAnalyzer.js';
-import {dispatchUpdateCustom} from '../visualize/MultiViewCntlr.js';
 import {makeObsCoreConverter, getObsCoreSingleDataProduct, getObsCoreGridDataProduct} from './ObsCoreConverter.js';
 import {
     createGridImagesActivate,
     createRelatedDataGridActivate,
     createSingleImageActivate
 } from './ImageDataProductsUtil';
+import {makeAnalysisGetGridDataProduct, makeAnalysisGetSingleDataProduct} from './MultiProductFileAnalyzer';
+import {dpdtImage} from './DataProductsType';
+import {dispatchUpdateCustom} from '../visualize/MultiViewCntlr';
+import {getDataSourceColumn} from '../util/VOAnalyzer';
+import {getColumn} from '../tables/TableUtil';
 
 const FILE= 'FILE';
 
 
 function matchById(table,id)  {
-    if (!id) return false;
+    if (!id || !table || table.isFetching) return false;
     const value= findTableMetaEntry(table, [MetaConst.IMAGE_SOURCE_ID, MetaConst.DATASET_CONVERTER]);
     if (!value) return false;
     return value.toUpperCase()===id.toUpperCase();
@@ -43,15 +46,6 @@ function matchById(table,id)  {
 const simpleCreate= (table, converterTemplate) => converterTemplate;
 
 
-/**
- * @global
- * @public
- * @typedef {Object} DataProductsDisplayType
- * @prop {string} displayType
- * @prop {Function} activate
- * @prop {Object} menu
- *
- */
 
 /**
  * @global
@@ -60,24 +54,24 @@ const simpleCreate= (table, converterTemplate) => converterTemplate;
  * @prop {string} imageViewerId
  * @prop {string} chartViewerId
  * @prop {string} tableGroupViewerId
- * @prop {string} converterId
+ * @prop {string} dpId - data product id
  *
  */
 
 
 /**
  * Returns a callback function or a Promise<DataProductsDisplayType>.
- * callback: function(table:TableModel, row:String,activeParams:{imageViewerId:String,chartViewId:String,tableViewId:String,converterId:String})
+ * callback: function(table:TableModel, row:String,activeParams:ActivateParams)
  * @param makeReq
  * @return {function | promise}
  */
 function getSingleDataProductWrapper(makeReq) {
     return (table, row, activateParams) => {
-        const {imageViewerId, converterId}= activateParams;
+        const {imageViewerId}= activateParams;
         const retVal= makeReq(table, row, true);
         const r= get(retVal,'single');
-        const activate= createSingleImageActivate(r,imageViewerId,converterId,table.tbl_id,row);
-        return Promise.resolve( { displayType:'images', activate, menu:undefined });
+        const activate= createSingleImageActivate(r,imageViewerId,table.tbl_id,row);
+        return Promise.resolve( dpdtImage('Image', activate));
     };
 }
 
@@ -85,20 +79,20 @@ function getSingleDataProductWrapper(makeReq) {
 /**
  *
  * Returns a callback function or a Promise<DataProductsDisplayType>.
- * callback: function(table:TableModel, plotRows:Array.<Object>,activeParams:{imageViewerId:String,chartViewId:String,tableViewId:String,converterId:String})
+ * callback: function(table:TableModel, plotRows:Array.<Object>,activeParams:ActivateParams)
  * @param makeReq
  * @return {function | promise}
  */
 function getGridDataProductWrapper(makeReq) {
     return (table, plotRows, activateParams) => {
-        const {imageViewerId, converterId}= activateParams;
+        const {imageViewerId}= activateParams;
 
-        const reqAry= plotRows.map( (pR) => makeReq(table,pR.row,true))
-            .filter( (r) => (r && r.single))
-            .map( (result) => result.single);
+        const reqAry= plotRows
+            .map( (pR) => get(makeReq(table,pR.row,true),'single'))
+            .filter( (r) => r);
 
-        const activate= createGridImagesActivate(reqAry,imageViewerId,converterId,table.tbl_id,plotRows);
-        return Promise.resolve( { displayType:'images', activate, menu:undefined });
+        const activate= createGridImagesActivate(reqAry,imageViewerId,table.tbl_id,plotRows);
+        return Promise.resolve( dpdtImage('Image Grid', activate));
     };
 }
 
@@ -110,11 +104,11 @@ function getGridDataProductWrapper(makeReq) {
  */
 function getRelatedDataProductWrapper(makeReq) {
     return (table, row, threeColorOps, highlightPlotId, activateParams) => {
-        const {imageViewerId, converterId}= activateParams;
+        const {imageViewerId}= activateParams;
         const retVal= makeReq(table, row, false,true,threeColorOps);
         if (retVal) {
-            const activate= createRelatedDataGridActivate(retVal,imageViewerId,converterId,table.tbl_id, highlightPlotId);
-            return Promise.resolve( { displayType:'images', activate, menu:undefined });
+            const activate= createRelatedDataGridActivate(retVal,imageViewerId,table.tbl_id, highlightPlotId);
+            return Promise.resolve( dpdtImage('Images', activate));
         }
         else {
             return Promise.resolve( {});
@@ -269,18 +263,6 @@ export const converterTemplates = [
         getRelatedDataProduct: () => Promise.reject('related data products not supported')
     },
     {
-        converterId : 'UNKNOWN',
-        tableMatches: (table) => !isEmpty(Object.keys(findADataSourceColumn(table.tableMeta,table.tableData.columns))),
-        create : simpleCreate,
-        threeColor : false,
-        hasRelatedBands : false,
-        canGrid : true,
-        maxPlots : 12,
-        getSingleDataProduct: getSingleDataProductWrapper(makeRequestForUnknown),
-        getGridDataProduct: () => Promise.reject('grid not supported'),
-        getRelatedDataProduct: () => Promise.reject('related data products not supported')
-    },
-    {
         converterId : 'SimpleMoving',
         tableMatches: () => false,
         create : simpleCreate,
@@ -290,6 +272,18 @@ export const converterTemplates = [
         maxPlots : 12,
         getSingleDataProduct: getSingleDataProductWrapper(makeRequestSimpleMoving),
         getGridDataProduct: () => Promise.reject('grid not supported'),
+        getRelatedDataProduct: () => Promise.reject('related data products not supported')
+    },
+    {                            // this one should be last, it is the fallback
+        converterId : 'UNKNOWN',
+        tableMatches: findADataSourceColumn,
+        create : simpleCreate,
+        threeColor : false,
+        hasRelatedBands : false,
+        canGrid : true,
+        maxPlots : 3,
+        getSingleDataProduct: makeAnalysisGetSingleDataProduct(makeRequestForUnknown),
+        getGridDataProduct: makeAnalysisGetGridDataProduct(makeRequestForUnknown),
         getRelatedDataProduct: () => Promise.reject('related data products not supported')
     }
 ];
@@ -351,7 +345,7 @@ function makeRequestForUnknown(table, row, includeSingle, includeStandard) {
 
     const {tableMeta:meta}= table;
 
-    const dataSource= findADataSourceColumn(meta,table.tableData.columns);
+    const dataSource= findADataSourceColumn(table);
     if (!dataSource) return {};
 
 
@@ -385,12 +379,13 @@ function makeRequestForUnknown(table, row, includeSingle, includeStandard) {
 
 }
 
+
 function makeRequestSimpleMoving(table, row, includeSingle, includeStandard) {
 
     const {tableMeta:meta, tableData}= table;
 
 
-    const dataSource= findADataSourceColumn(meta, tableData.columns);
+    const dataSource= findADataSourceColumn(table);
 
     if (!dataSource) return {};
 
@@ -422,13 +417,17 @@ function makeRequestSimpleMoving(table, row, includeSingle, includeStandard) {
 
 
 const defDataSourceGuesses= [ 'FILE', 'FITS', 'DATA', 'SOURCE', 'URL' ];
-const dataSourceUpper= MetaConst.DATA_SOURCE.toUpperCase();
 
-function findADataSourceColumn(meta,columns) {
-    const dsCol= Object.keys(meta).find( (key) => key.toUpperCase()===dataSourceUpper);
-    let guesses= meta[dsCol] ? [meta[dsCol],...defDataSourceGuesses] : defDataSourceGuesses;
-    guesses= guesses.map( (g) => g.toUpperCase());
-    return columns.find( (c) => guesses.includes(c.name.toUpperCase())) || {};
+function findADataSourceColumn(table) {
+    if (!table || table.isFetching) return false;
+    const columns= get(table,'tableData.columns');
+    if (!columns) return false;
+    const dsCol= getDataSourceColumn(table);
+    if (dsCol) return getColumn(table,dsCol);
+    if (dsCol===false) return false;
+    // if dsCol is undefined then start guessing
+    const guesses= defDataSourceGuesses.map( (g) => g.toUpperCase());
+    return columns.find( (c) => guesses.includes(c.name.toUpperCase()));
 }
 
 function findTableMetaEntry(table,ids) {
@@ -476,10 +475,10 @@ function makeRequest(table, dataSource, positionWP, row) {
     let r;
     const source= getCellValue(table, row, dataSource);
     if (dataSource.toLocaleUpperCase() === FILE) {
-        r = WebPlotRequest.makeFilePlotRequest(source, 'Fits Image');
+        r = WebPlotRequest.makeFilePlotRequest(source, 'DataProduct');
     }
     else {
-        r = WebPlotRequest.makeURLPlotRequest(source, 'Fits Image');
+        r = WebPlotRequest.makeURLPlotRequest(source, 'DataProduct');
     }
     r.setZoomType(ZoomType.FULL_SCREEN);
     r.setTitleOptions(TitleOptions.FILE_NAME);
@@ -488,3 +487,4 @@ function makeRequest(table, dataSource, positionWP, row) {
 
     return r;
 }
+

@@ -15,6 +15,7 @@ import nom.tam.fits.Header;
 import nom.tam.fits.HeaderCard;
 import nom.tam.fits.ImageHDU;
 import nom.tam.fits.TableHDU;
+import nom.tam.fits.UndefinedHDU;
 import nom.tam.image.compression.hdu.CompressedImageHDU;
 import nom.tam.util.Cursor;
 import org.json.simple.JSONObject;
@@ -43,9 +44,11 @@ public class FitsHDUUtil {
         BasicHDU[] parts = new Fits(infile).read();               // get the headers
         for(int i = 0; i < parts.length; i++) {
             FileAnalysis.Type ptype;
+            int naxis= parts[i].getHeader().getIntValue("NAXIS");
 
             if (parts[i] instanceof CompressedImageHDU)  ptype= Image;
             else if (parts[i] instanceof ImageHDU)  ptype= Image;
+            else if (parts[i] instanceof UndefinedHDU && naxis==1)  ptype= Image;
             else if (parts[i] instanceof TableHDU)  ptype= Table;
             else ptype= FileAnalysis.Type.Unknown;
 
@@ -58,6 +61,7 @@ public class FitsHDUUtil {
             }
 
             String desc = i == 0 ? "Primary" : null;
+            int totalTableRows= -1;
             if (desc == null) desc = header.getStringValue("EXTNAME");
             if (desc == null) desc = header.getStringValue("NAME");
             if (desc == null) desc =  isCompressed ? "CompressedImage" : "NoName";
@@ -65,8 +69,10 @@ public class FitsHDUUtil {
             if (ptype == Table) {
                 TableHDU tHdu = (TableHDU)(parts[i]);
                 desc = String.format("%s (%d cols x %d rows)", desc, tHdu.getNCols(), tHdu.getNRows());
+                totalTableRows= tHdu.getNRows();
             }
             FileAnalysis.Part part = new FileAnalysis.Part(ptype, i, desc);
+            if (totalTableRows>-1) part.setTotalTableRows(totalTableRows);
             report.addPart(part);
 
             if (type == FileAnalysis.ReportType.Brief) {

@@ -139,6 +139,7 @@ public final class IpacTableReader {
         IpacTableDef meta = IpacTableUtil.getMetaInfo(infile);
         FileAnalysis.Report report = new FileAnalysis.Report(type, TableUtil.Format.IPACTABLE.name(), infile.length(), infile.getPath());
         FileAnalysis.Part part = new FileAnalysis.Part(FileAnalysis.Type.Table, 0, String.format("IPAC Table (%d cols x %s rows)", meta.getCols().size(), meta.getRowCount()));
+        part.setTotalTableRows(meta.getRowCount());
         report.addPart(part);
         if (type.equals(FileAnalysis.ReportType.Details)) {
             part.setDetails(TableUtil.getDetails(0, meta));

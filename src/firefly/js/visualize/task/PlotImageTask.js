@@ -311,15 +311,17 @@ function continuePlotImageSuccess(dispatcher, payload, successAry, failAry) {
         const resultPayload= Object.assign({},payload, {pvNewPlotInfoAry});
         dispatcher({type: ImagePlotCntlr.PLOT_IMAGE, payload: resultPayload});
         const plotIdAry = pvNewPlotInfoAry.map((info) => info.plotId);
-        dispatcher({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotIdAry}});
+        const filteredPlotIdAry= plotIdAry.filter( (id) => getPlotViewById(visRoot(),id));
+        dispatcher({type: ImagePlotCntlr.ANY_REPLOT, payload: {filteredPotIdAry: filteredPlotIdAry}});
 
-        matchAndActivateOverlayPlotViewsByGroup(plotIdAry);
+        matchAndActivateOverlayPlotViewsByGroup(filteredPlotIdAry);
 
 
         pvNewPlotInfoAry
             .forEach((info) => info.plotAry
                 .forEach( (p)  => {
                     const pv= getPlotViewById(visRoot(),p.plotId);
+                    if (!pv) return;
                     addDrawLayers(p.plotState.getWebPlotRequest(), pv, p);
                     if (p.attributes[PlotAttribute.INIT_CENTER]) dispatchRecenter({plotId:p.plotId});
                 } ));
@@ -327,7 +329,8 @@ function continuePlotImageSuccess(dispatcher, payload, successAry, failAry) {
 
 
         //todo- this this plot is in a group and locked, make a unique list of all the drawing layers in the group and add to new
-        dispatchAddViewerItems(EXPANDED_MODE_RESERVED, plotIdAry, IMAGE);
+
+        dispatchAddViewerItems(EXPANDED_MODE_RESERVED, filteredPlotIdAry, IMAGE);
 
         const vr= visRoot();
         if (vr.wcsMatchType && vr.positionLock) {

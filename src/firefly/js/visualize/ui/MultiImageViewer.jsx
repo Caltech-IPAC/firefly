@@ -62,7 +62,7 @@ export class MultiImageViewer extends PureComponent {
         if (!pv || !viewer || !rootWidget || !viewer.lastActiveItemId) return;
         if (viewer.lastActiveItemId!==pv.plotId && rootWidget.offsetWidth && rootWidget.offsetHeight) {
             setTimeout(() => {
-                if (!viewWithIdMounted(pv.plotId)) dispatchChangeActivePlotView(viewer.lastActiveItemId)
+                if (!viewWithIdMounted(pv.plotId)) dispatchChangeActivePlotView(viewer.lastActiveItemId);
             }, 5);
         }
 

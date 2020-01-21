@@ -25,7 +25,10 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 /**
  * User: roby
  * Date: Feb 26, 2010
@@ -41,6 +44,8 @@ public class URLFileRetriever implements FileRetriever {
 
     public static final long EXPIRE_IN_SEC = 60 * 60 * 4; // 4 hours
     public static final String FITS = "fits";
+    private static List<String> extsList=
+            Arrays.asList(FileUtil.FITS, FileUtil.GZ, "tar", FileUtil.PDF, "votable", "tbl", "csv", "tsv");
 
     public FileInfo getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {
         FileInfo fitsFileInfo;
@@ -57,7 +62,8 @@ public class URLFileRetriever implements FileRetriever {
             }
         }
         try {
-            AnyUrlParams params = new AnyUrlParams(new URL(urlStr), request.getProgressKey(),request.getPlotId());
+            String progressKey= !isEmpty(request.getProgressKey()) ? request.getProgressKey() : urlStr;
+            AnyUrlParams params = new AnyUrlParams(new URL(urlStr), progressKey,request.getPlotId());
             RequestOwner ro = ServerContext.getRequestOwner();
             Map<String, String> cookies = ro.getCookieMap();
             if (cookies != null) {
@@ -70,7 +76,7 @@ public class URLFileRetriever implements FileRetriever {
                 params.setSecurityCookie(ro.getRequestAgent().getAuthKey());
             }
             params.setCheckForNewer(request.getUrlCheckForNewer());
-            params.setLocalFileExtensions(Arrays.asList(FileUtil.FITS, FileUtil.GZ)); //assuming WebPlotRequest ONLY expect FITS or GZ file.
+            params.setLocalFileExtensions(extsList);
             params.setMaxSizeToDownload(VisContext.FITS_MAX_SIZE);
             if (request.getUserDesc() != null) params.setDesc(request.getUserDesc()); // set file description
 

@@ -45,7 +45,7 @@ public class LockingVisNetwork {
     }
 
     public static FileInfo retrieveURL(URL url) throws FailedRequestException {
-        AnyUrlParams p= new AnyUrlParams(url);
+        AnyUrlParams p= new AnyUrlParams(url, url.getFile(),null);
         p.setLocalFileExtensions(Collections.singletonList(FileUtil.FITS));
         return retrieveURL(p);
     }

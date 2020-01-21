@@ -34,7 +34,7 @@ export function LinkButton({text, tip='$text',style={}, onClick}) {
         <div style={s} title={tip} onClick={onClick}>
 
             <div style={labelStyle} title={tip}>
-                <href>{text}</href>
+                <a>{text}</a>
             </div>
 
         </div>

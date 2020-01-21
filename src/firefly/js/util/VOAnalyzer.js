@@ -8,6 +8,7 @@ import {getColumn, getColumnIdx, getColumnValues, getColumns, getTblById, getCel
 import {getCornersColumns} from '../tables/TableInfoUtil.js';
 import {MetaConst} from '../data/MetaConst.js';
 import {CoordinateSys} from '../visualize/CoordSys.js';
+import {makeWorldPt} from '../visualize/Point';
 
 
 export const UCDCoord = new Enum(['eq', 'ecliptic', 'galactic']);
@@ -633,6 +634,17 @@ export function findTableCenterColumns(table) {
    return tblRecog && tblRecog.getCenterColumns();
 }
 
+/**
+ * If there are center columns defined with this table then return a WorldPt
+ * @param table
+ * @param row
+ * @return {WorldPt|undefined} a world point or undefined it no center columns exist
+ */
+export function makeWorldPtUsingCenterColumns(table,row) {
+    const cen= findTableCenterColumns(table);
+    return cen && makeWorldPt(getCellValue(table,row,cen.lonCol), getCellValue(table,row,cen.latCol), cen.csys);
+}
+
 
 /**
  * find ObsCore defined 's_region' column
@@ -902,15 +914,60 @@ export function hasCoverageData(tableOrId) {
  */
 export function isMetaDataTable(tableOrId) {
     const table= getTableModel(tableOrId);
-    const dataSourceUpper = MetaConst.DATA_SOURCE.toUpperCase();
+    // const dataSourceUpper = MetaConst.DATA_SOURCE.toUpperCase();
     if (isEmpty(table)) return false;
     const {tableMeta, totalRows} = table;
     if (!tableMeta || !totalRows) return false;
 
-    const hasDsCol = Boolean(Object.keys(tableMeta).find((key) => key.toUpperCase() === dataSourceUpper));
+    // const dsCol = Object.keys(tableMeta).find((key) => key.toUpperCase() === dataSourceUpper);
+    // if (dsCol && tableMeta[dsCol].toLocaleLowerCase()==='false') return false;
+    const dsCol= getDataSourceColumn(table);
+    if (dsCol===false) return false;  // if the meta data specifically disables any data sources it will be set to false
 
     return Boolean(tableMeta[MetaConst.IMAGE_SOURCE_ID] || tableMeta[MetaConst.DATASET_CONVERTER] ||
-        hasDsCol || hasObsCoreLikeDataProducts(table) || isTableWithRegion(tableOrId));
+        dsCol || hasObsCoreLikeDataProducts(table) || isTableWithRegion(tableOrId));
+}
+
+
+function columnMatches(table, cName) {
+    if (!table || !cName) return undefined;
+    if (getColumn(table,cName)) return cName;
+    const cUp= cName.toUpperCase();
+    const col= table.tableData.columns.find( (c) => cUp===c.name.toUpperCase());
+    return col && col.name;
+}
+
+/**
+ * Find the a data source column if is is defined in the metadata and a column exist with that name. The
+ * meta data entry DataSource is case insensitive matched. The column name is also match case insensitive.
+ * The meta data entry can have two forms 'abc' or '[abc,efe,hij]' if it is the second form the the first
+ * entry in the array to match a column is returned. The second form is useful when the code defining the DataSource
+ * entry is handling a set of table where the data source could be one of several name such
+ * as '[url,fileurl,file_url,data_url,data]'
+ * @param {TableModel|String} tableOrId - a table model or a table id
+ * @return {boolean|undefined|string} the column name if it exist, if the meta data is not included,
+ *                                             false if defined but set to 'false' (case insensitive)
+ */
+export function getDataSourceColumn(tableOrId) {
+    const table= getTableModel(tableOrId);
+    if (!table || !get(table,'tableData.columns') || !table.tableMeta) return undefined;
+    const {tableMeta} = table;
+    const dataSourceMetaConstUpper = MetaConst.DATA_SOURCE.toUpperCase();
+    const dsColMetaKey = Object.keys(tableMeta).find((key) => key.toUpperCase() === dataSourceMetaConstUpper);
+    if (!dsColMetaKey) return undefined;
+    const dsCol= (tableMeta[dsColMetaKey] || '').trim();
+    if (!dsCol) return undefined;
+    if (dsCol.toLocaleLowerCase()==='false') return false;
+
+    if (dsCol.startsWith('[') && dsCol.endsWith(']')) {
+        return columnMatches(table,dsCol
+            .substring(1,dsCol.length-1)
+            .split(',')
+            .find( (s) => columnMatches(table,s.trim())));
+    }
+    else {
+        return columnMatches(table,dsCol);
+    }
 }
 
 
@@ -995,11 +1052,11 @@ export function getDataLinkAccessUrls(originTableOrId, dataLinkTable, filterStr=
     if (!data.length) return [];
     const urlOptions= get(dataLinkTable, 'tableData.data', []).map( (row,idx) => {
         const url= getCellValue(dataLinkTable,idx,'access_url' );
-        const contentType= getCellValue(dataLinkTable,idx,'content_type' );
+        const contentType= getCellValue(dataLinkTable,idx,'content_type' ) ||'';
         const size= Number(getCellValue(dataLinkTable,idx,'content_length' ));
         const semantics= getCellValue(dataLinkTable,idx,'semantics' );
         return {url,contentType, size, semantics  };
-    }).filter( ({url}) => url && url.startsWith('http'));
+    }).filter( ({url}) => url && (url.startsWith('http') || url.startsWith('ftp')) );
     return filterStr||maxSize ?
         urlOptions.filter( ({contentType,size}) =>
             contentType.toLowerCase()

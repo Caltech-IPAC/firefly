@@ -329,6 +329,19 @@ div.rootStyle img {
     to {transform: rotate(359deg);}
 }
 
+.loading-animation {
+    border-width: 3px;
+    border-style: solid;
+    border-color: transparent rgb(255, 255, 255) rgb(255, 255, 255);
+    border-radius: 50%;
+    top: calc(50% - 12px);
+    left: calc(50% - 12px);
+    animation-name: spin;
+    animation-duration: 2s;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+}
+
 .loading-mask::after {
     content: "";
     position: absolute;

@@ -26,6 +26,7 @@ import WorkspaceCntlr from '../visualize/WorkspaceCntlr.js';
 import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import MultiViewCntlr from '../visualize/MultiViewCntlr.js';
+import DataProductsCntlr from '../metaConvert/DataProductsCntlr';
 import ComponentCntlr, {DIALOG_OR_COMPONENT_KEY} from '../core/ComponentCntlr.js';
 
 
@@ -137,6 +138,7 @@ registerCntlr(DrawLayerCntlr.getDrawLayerCntlrDef(drawLayerFactory));
 registerCntlr(ChartsCntlrDef);
 registerCntlr(MultiViewCntlr);
 registerCntlr(WorkspaceCntlr);
+registerCntlr(DataProductsCntlr);
 
 
 let redux = null;

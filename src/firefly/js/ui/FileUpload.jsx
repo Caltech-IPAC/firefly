@@ -190,7 +190,7 @@ function makeDoUpload(file, type, isFromURL, fileAnalysis) {
  * @returns {Promise.<{Object}>}  The returned object is : {status:string, message:string, cacheKey:string}
  */
 export function doUpload(file, params={}) {
-    if (!file) return Promise.reject('Required file parameter not given');
+    if (!file && !params.webPlotRequest) return Promise.reject('Required file parameter not given');
 
     if (has(params, 'isFromURL') && params.isFromURL) {
         params = Object.assign(params, {URL: file});
@@ -199,10 +199,9 @@ export function doUpload(file, params={}) {
     }
     const options = {method: 'multipart', params};
 
-    if (params.fileAnalysis && isFunction(params.fileAnalysis)) {
-        params.fileAnalysis();
-        options.params.fileAnalysis = true;
-    }
+    const faFunction= isFunction(params.fileAnalysis) && params.fileAnalysis;
+    faFunction && faFunction(true);
+    if (params.fileAnalysis) options.params.fileAnalysis = true;
 
     return fetchUrl(UL_URL, options).then( (response) => {
         return response.text().then( (text) => {
@@ -212,6 +211,7 @@ export function doUpload(file, params={}) {
                 // there are '::' in the analysisReaults.. put it back
                 analysisResult = analysisResult + '::' + rest.join('::');
             }
+            faFunction && faFunction(false);
             return {status, message, cacheKey, analysisResult};
         });
     });

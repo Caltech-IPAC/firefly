@@ -39,6 +39,8 @@ import {PlotAttribute} from '../PlotAttribute.js';
 import {MetaConst} from '../../data/MetaConst.js';
 
 import './FileUploadViewPanel.css';
+import {getIntHeader} from '../../metaConvert/PartAnalyzer';
+import {FileAnalysisType} from '../../data/FileAnalysis';
 
 
 export const panelKey = 'FileUploadAnalysis';
@@ -150,7 +152,8 @@ function getNextState() {
             ];
             const {parts=[]} = currentReport;
             const data = parts.map( (p) => {
-                            return [p.index, p.type, p.desc];
+                            const naxis= getIntHeader('NAXIS',p,0);
+                            return [p.index, (naxis===1 && p.type===FileAnalysisType.Image)?FileAnalysisType.Table :p.type, p.desc];
                         });
 
             currentSummaryModel = {
@@ -219,7 +222,9 @@ function ImageDisplayOption() {
 
 function UploadOptions({uploadSrc=fileId, isloading, isWsUpdating}) {
 
-    const onLoading = () => dispatchComponentStateChange(panelKey, {isLoading: true});
+    const onLoading = (loading) => {
+        dispatchComponentStateChange(panelKey, {isLoading: loading});
+    };
 
     if (uploadSrc === fileId) {
         return (

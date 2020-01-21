@@ -97,7 +97,7 @@ function getContexInfo(renderTreeId) {
         viewerId= viewer.viewerId;
     }
 
-    if (!viewer || canNotUpdatePlot(viewer)) {
+    if (!viewer || viewer.reservedContainer || canNotUpdatePlot(viewer)) {
         // viewer does not exists or cannot be updated, find another one that can.
         viewer = getAViewFromMultiView(mvroot, IMAGE, renderTreeId);
         viewerId =  viewer && viewer.viewerId;
