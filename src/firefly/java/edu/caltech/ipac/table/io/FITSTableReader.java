@@ -17,6 +17,7 @@ import nom.tam.fits.FitsFactory;
 import nom.tam.fits.Header;
 import nom.tam.fits.ImageData;
 import nom.tam.fits.ImageHDU;
+import nom.tam.fits.TableHDU;
 import nom.tam.fits.UndefinedHDU;
 import nom.tam.image.compression.hdu.CompressedImageHDU;
 import nom.tam.util.ArrayFuncs;
@@ -292,10 +293,11 @@ public final class FITSTableReader
 
         // todo try to read it as an image
         BasicHDU[] parts = new Fits(fits_filename).read();
-        String val= metaInfo.get(MetaConst.IMAGE_AS_TABLE_COL_NAMES);
+        String val= (metaInfo!=null) ? metaInfo.get(MetaConst.IMAGE_AS_TABLE_COL_NAMES) : null;
         String []colNames= (val!=null && val.length()>1) ? val.split(",") : new String[] {"index"};
         if (table_idx < parts.length) {
             BasicHDU hdu= parts[table_idx];
+            if (hdu instanceof TableHDU) return null;
             if ((hdu instanceof ImageHDU) || (hdu instanceof CompressedImageHDU || hdu instanceof UndefinedHDU)) {
                 Header header = hdu.getHeader();
                 int naxis = header.getIntValue("NAXIS", -1);

@@ -113,13 +113,11 @@ public class FileAnalysisTest extends ConfigTest {
         assertEquals(FileAnalysis.Type.Table, report.getParts().get(0).getType());
         assertEquals("IPAC Table (25 cols x 49933 rows)", report.getParts().get(0).getDesc());
 
-        System.out.println("file= "+csvTable);
         report= FileAnalysis.analyze(csvTable, reportType);
         assertEquals(FileAnalysis.ReportType.Normal, report.getType());
         assertEquals(csvTable.getPath(), report.getFilePath());
         assertEquals(csvTable.length(), report.getFileSize());
         assertEquals(1, report.getParts().size());
-        System.out.println("t= "+report.getParts().get(0).getType());
         assertEquals(FileAnalysis.Type.Table, report.getParts().get(0).getType());
         assertEquals("CSVFormat (6 cols x 1000 rows)", report.getParts().get(0).getDesc());
 
