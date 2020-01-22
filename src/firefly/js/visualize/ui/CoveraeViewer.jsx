@@ -20,10 +20,11 @@ import {getActivePlotView} from '../PlotViewUtil';
 import {visRoot} from '../ImagePlotCntlr';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx';
 import {useStoreConnector} from '../../ui/SimpleComponent';
-import {getActiveTableId} from '../../tables/TableUtil';
+import {getActiveTableId, getBooleanMetaEntry} from '../../tables/TableUtil';
 import {hasCoverageData} from '../../util/VOAnalyzer';
 import {get} from 'lodash';
 import {getAppOptions} from '../../core/AppDataCntlr';
+import {MetaConst} from '../../data/MetaConst';
 
 
 
@@ -48,8 +49,9 @@ export function CoverageViewer({viewerId='coverageImages',insideFlex=true,
 
     const hasPlots = (getViewerItemIds(getMultiViewRoot(),viewerId).length===1 && pv);
     const {renderTreeId} = useContext(RenderTreeIdCtx);
+    const forceShow= getBooleanMetaEntry(tbl_id,MetaConst.COVERAGE_SHOWING,false);
 
-    if (hasPlots && hasCoverageData(tbl_id)) {
+    if (hasPlots && (hasCoverageData(tbl_id) || forceShow)) {
         return (
             <MultiImageViewer viewerId={viewerId}
                               insideFlex={insideFlex}

@@ -2,7 +2,23 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, set, has, isEmpty, isUndefined, uniqueId, cloneDeep, omitBy, isNil, isPlainObject, isArray, padEnd, chunk, isString} from 'lodash';
+import {
+    get,
+    set,
+    has,
+    isEmpty,
+    isUndefined,
+    uniqueId,
+    cloneDeep,
+    omitBy,
+    isNil,
+    isPlainObject,
+    isArray,
+    padEnd,
+    chunk,
+    isString,
+    isObject
+} from 'lodash';
 import Enum from 'enum';
 
 import {sprintf} from '../externalSource/sprintf.js';
@@ -20,6 +36,7 @@ import {doUpload} from '../ui/FileUpload.jsx';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga.js';
 import {getWsConnId} from '../core/messaging/WebSocketClient.js';
 import {MetaConst} from '../data/MetaConst';
+import {toBoolean} from '../util/WebUtil';
 
 
 // this is so test can mock the function when used within it's module
@@ -1238,6 +1255,38 @@ export function tblDropDownId(tbl_id) {
     return `table_dropDown-${tbl_id}`;
 }
 
+function getTM(tableOrId) {
+    if (isString(tableOrId)) return getTblById(tableOrId);  // was passed a table Id
+    if (isObject(tableOrId)) return tableOrId;
+    return undefined;
+}
+
+/**
+ * case insensitive search of meta data for an entry, if not found return the defVal
+ * @param {TableModel|String} tableOrId - parameters accepts the table model or tha table id
+ * @param {String} metaKey - the metadata key
+ * @param {*|undefined} [defVal] - the defVal to return if not found, defaults to undefined
+ * @return {String|undefined|*} value or the meta data or the defVal
+ */
+export function getMetaEntry(tableOrId,metaKey,defVal= undefined) {
+    const tableMeta= get(getTM(tableOrId),'tableMeta');
+    if (!tableMeta || !isString(metaKey)) return defVal;
+    const keyUp = metaKey.toUpperCase();
+    const [foundKey,value]= Object.entries(tableMeta).find( ([k]) => k.toUpperCase()===keyUp) || [];
+    return (foundKey && value!==undefined) ? value : defVal;
+}
+
+/**
+ * case insensitive search of meta data for boolean a entry, if not found return the defVal
+ * @param {TableModel|String} tableOrId - parameters accepts the table model or tha table id
+ * @param {String} metaKey - the metadata key
+ * @param {boolean} [defVal= false] - the defVal to return if not found, defaults to false
+ * @return {boolean} value or the meta data or the defVal
+ */
+export function getBooleanMetaEntry(tableOrId,metaKey,defVal= false) {
+    const v= getMetaEntry(tableOrId,metaKey,undefined);
+    return (v!==undefined) ? toBoolean(v,Boolean(defVal)) : Boolean(defVal);
+}
 
 /*-------------------------------------private------------------------------------------------*/
 

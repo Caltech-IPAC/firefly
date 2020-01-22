@@ -85,6 +85,13 @@ export const MetaConst = {
     /** a url for HiPS Image to use as the coverage - overrides firefly defaults */
     COVERAGE_HIPS : 'CoverageHiPS',
 
+    /**
+     * if true, Show the coverage display even it this table does not have coverage information
+     * if false, treat this table as it has no coverage
+     * value must be true or false, it not defined or has some other value then evaluate the table for coverage as normal.
+     */
+    COVERAGE_SHOWING : 'CoverageShowing',
+
     /** the column name with access rights info;  true if (public, 1, or true), otherwise false  */
     DATARIGHTS_COL : 'DATARIGHTS_COL',
 

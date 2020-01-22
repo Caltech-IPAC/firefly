@@ -30,6 +30,7 @@ import {
     dispatchUpdateActiveKey, dispatchInitDataProducts, getActivateParams, isInitDataProducts
 } from '../../metaConvert/DataProductsCntlr';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView';
+import {dispatchChangeActivePlotView} from '../ImagePlotCntlr';
 
 
 function FileMenuDropDown({fileMenu, dpId}) {
@@ -154,6 +155,14 @@ export const MultiProductViewer= memo(({ viewerId='DataProductsType', metaDataTa
             isFunction(deActivate) && deActivate();
         };
     }, [activate]);
+
+
+    useEffect(() => {
+        displayType!==DPtypes.IMAGE && dispatchChangeActivePlotView(undefined);
+    } );
+
+
+
 
     if (!viewer) return false;
     const makeDropDown= (!singleDownload || menu.length>1) && getMakeDropdown(menu,fileMenu,dpId, activeMenuLookupKey);

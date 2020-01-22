@@ -171,6 +171,10 @@ function replotImageDataProducts(activePlotId, imageViewerId, tbl_id, reqAry, th
         }
     }
 
+    return () => { // return the cleanup function
+        !isEmpty(wpRequestAry) && wpRequestAry.forEach( (wpR) => dispatchDeletePlotView({plotId:wpR.getPlotId()}) );
+        plottingThree && dispatchDeletePlotView({plotId:threeCPlotId});
+    };
 }
 
 function makePlottingList(reqAry) {

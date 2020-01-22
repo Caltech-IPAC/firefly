@@ -1,4 +1,4 @@
-import {isArray} from 'lodash';
+import {isArray,get} from 'lodash';
 import {doUpload} from '../ui/FileUpload';
 import {FileAnalysisType} from '../data/FileAnalysis';
 import {
@@ -102,8 +102,11 @@ export function makeAnalysisGetGridDataProduct(makeReq) {
 
         const highlightedPlotRow= plotRows.find( (r) => r.row===table.highlightedRow);
         const highlightedId= highlightedPlotRow && highlightedPlotRow.plotId;
+        
 
-        const reqAry= plotRows.map( (pR) => {
+        const reqAry= plotRows
+            .filter( (pR) => hasRowAccess(table,pR.row))
+            .map( (pR) => {
                 const r = makeReq(table, pR.row, true);
                 if (!r || !r.single) return;
                 r.single.setPlotId(pR.plotId);
@@ -118,7 +121,10 @@ export function makeAnalysisGetGridDataProduct(makeReq) {
 
         const promiseAry= reqAry.map( (r) => {
             return doUploadAndAnalysis({table,request:r,activateParams})
-                .then( (result) => gridEntryHasImages(result.fileMenu.fileAnalysis) && r);
+                .then( (result) => {
+                    if (!get(result,'fileMenu.fileAnalysis')) return false;
+                    return gridEntryHasImages(result.fileMenu.fileAnalysis) && r;
+                });
         });
 
         const retPromise= Promise.all(promiseAry)

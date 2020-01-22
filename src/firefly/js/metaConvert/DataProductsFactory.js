@@ -26,7 +26,7 @@ import {makeAnalysisGetGridDataProduct, makeAnalysisGetSingleDataProduct} from '
 import {dpdtImage} from './DataProductsType';
 import {dispatchUpdateCustom} from '../visualize/MultiViewCntlr';
 import {getDataSourceColumn} from '../util/VOAnalyzer';
-import {getColumn} from '../tables/TableUtil';
+import {getColumn, getMetaEntry} from '../tables/TableUtil';
 
 const FILE= 'FILE';
 
@@ -431,11 +431,8 @@ function findADataSourceColumn(table) {
 }
 
 function findTableMetaEntry(table,ids) {
-    const testIdAry= isArray(ids) ? ids.map( (id) => id.toUpperCase()) : [ids.toUpperCase()];
-    const foundKey= Object.keys(table.tableMeta)
-        .find( (key) => testIdAry
-            .find( (t) => t===key.toUpperCase()));
-    return foundKey ? table.tableMeta[foundKey] : undefined;
+    const testIdAry= isArray(ids) ? ids : [ids];
+    return testIdAry.find( (key) => getMetaEntry(table,key));
 }
 
 

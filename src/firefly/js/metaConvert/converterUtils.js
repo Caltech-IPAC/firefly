@@ -129,12 +129,9 @@ export function createChartActivate(source, titleStr, activateParams, xAxis, yAx
             }],
             layout: {
                 title: {text: titleStr},
-                // xaxis: {title: 'w1+w2', type: 'log'}
             }
         };
         onTableLoaded(tbl_id).then( () => {
-            const tbl= getTblById(tbl_id); //todo remove this line
-            console.log(tbl); //todo remove this line
             dispatchChartAdd(dispatchParams);
             dispatchChartAdd(histogramParams);
         });

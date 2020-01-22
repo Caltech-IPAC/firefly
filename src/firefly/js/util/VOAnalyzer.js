@@ -9,6 +9,7 @@ import {getCornersColumns} from '../tables/TableInfoUtil.js';
 import {MetaConst} from '../data/MetaConst.js';
 import {CoordinateSys} from '../visualize/CoordSys.js';
 import {makeWorldPt} from '../visualize/Point';
+import {getBooleanMetaEntry, getMetaEntry} from '../tables/TableUtil';
 
 
 export const UCDCoord = new Enum(['eq', 'ecliptic', 'galactic']);
@@ -898,6 +899,7 @@ export function isTableWithRegion(tableOrId) {
  */
 export function hasCoverageData(tableOrId) {
     const table= getTableModel(tableOrId);
+    if (!getBooleanMetaEntry(table,MetaConst.COVERAGE_SHOWING,true)) return false;
     if (!table) return false;
     if (!table.totalRows) return false;
     return !isEmpty(findTableRegionColumn(table)) || !isEmpty(findTableCenterColumns(table)) || !isEmpty(getCornersColumns(table));
@@ -951,11 +953,7 @@ function columnMatches(table, cName) {
 export function getDataSourceColumn(tableOrId) {
     const table= getTableModel(tableOrId);
     if (!table || !get(table,'tableData.columns') || !table.tableMeta) return undefined;
-    const {tableMeta} = table;
-    const dataSourceMetaConstUpper = MetaConst.DATA_SOURCE.toUpperCase();
-    const dsColMetaKey = Object.keys(tableMeta).find((key) => key.toUpperCase() === dataSourceMetaConstUpper);
-    if (!dsColMetaKey) return undefined;
-    const dsCol= (tableMeta[dsColMetaKey] || '').trim();
+    const dsCol= getMetaEntry(table,MetaConst.DATA_SOURCE,'').trim();
     if (!dsCol) return undefined;
     if (dsCol.toLocaleLowerCase()==='false') return false;
 
