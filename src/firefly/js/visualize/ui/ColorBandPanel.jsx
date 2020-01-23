@@ -4,7 +4,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import numeral from 'numeral';
+import {sprintf} from '../../externalSource/sprintf';
 import {debounce, get} from 'lodash';
 
 import {ValidationField} from '../../ui/ValidationField.jsx';
@@ -190,13 +190,12 @@ const dataStyle= { color: 'red' };
 
 function suggestedValuesPanel( plot,band ) {
 
-    const precision6Digit = '0.000000';
     const style= { fontSize: '11px', paddingBottom:5, height:16, whiteSpace: 'pre'};
 
     const  fitsData= plot.webFitsData[band.value];
     const {dataMin, dataMax} = fitsData;
-    const dataMaxStr = `Data Max: ${numeral(dataMax).format(precision6Digit)} `;
-    const dataMinStr = `Data Min: ${numeral(dataMin).format(precision6Digit)}`;
+    const dataMaxStr = `Data Max: ${sprintf('%.6f',dataMax)} `;
+    const dataMinStr = `Data Min: ${sprintf('%.6f', dataMin)}`;
 
     return (
         <div style={style}>

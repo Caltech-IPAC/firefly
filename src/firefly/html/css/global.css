@@ -363,14 +363,14 @@ div.rootStyle img {
 .lost-connection--small {
     width: 24px;
     height: 24px;
-    background: url('/images/no_internet_small.png');
+    background: url('~images/no_internet_small.png');
     margin: 1px;
 }
 
 .lost-connection {
     width: 48px;
     height: 48px;
-    background: url('/images/no_internet.png');
+    background: url('~images/no_internet.png');
     margin: 1px;
 }
 
@@ -402,7 +402,7 @@ div.rootStyle img {
 }
 
 .banner-background {
-    background: url('/images/ipac_bar.jpg');
+    background: url('~images/ipac_bar.jpg');
 }
 
 
@@ -460,7 +460,7 @@ div.rootStyle img {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    background: url('/images/down_arrow.png') no-repeat 96% 0;
+    background: url('~images/down_arrow.png') no-repeat 96% 0;
     background-size: contain;
 }
 

@@ -68,14 +68,14 @@ import { makeWorldPt, makeImagePt,makeDevicePt,makeImageWorkSpacePt} from '../vi
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import CoordinateSys from '../visualize/CoordSys.js';
 import CoordUtil from '../visualize/CoordUtil.js';
-import numeral from 'numeral';
+import {sprintf} from '../externalSource/sprintf';
 import { getDrawLayerParameters} from './WebGrid.js';
 import {Regrid} from '../util/Interp/Regrid.js';
 import {getPointMaxSide} from  '../visualize/HiPSUtil.js';
 import {convert} from '../visualize/VisUtil.js';
 
-const precision3Digit = '0.000';
-const precision6Digit = '0.000000';
+const precision3Digit = '%.3f';
+const precision6Digit = '%.6f';
 const RANGE_THRESHOLD = 1.02;
 const minUserDistance= 0.25;   // user defined max dist. (deg)
 const maxUserDistance= 3.00;   // user defined min dist. (deg)
@@ -616,7 +616,7 @@ function getLabels(levels,csys, labelFormat, fov=180) {
         const toHms= i===0 ? CoordUtil.convertLonToString : CoordUtil.convertLatToString;
         for (let j=0; j < levels[i].length; j++) {
             const value= levels[i][j];
-            labels.push(isHms ? toHms(value, csys) : ( fov && fov>1?numeral(value).format(precision3Digit):numeral(value).format(precision6Digit)) );
+            labels.push(isHms ? toHms(value, csys) : ( fov && fov>1?sprintf(precision3Digit,value):sprintf(precision6Digit,value)) );
         }
     }
     return labels;

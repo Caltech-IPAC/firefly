@@ -1,8 +1,6 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-import {get} from 'lodash';
 import {dpdtChart, dpdtChartTable, dpdtTable, DPtypes} from './DataProductsType';
 import {FileAnalysisType} from '../data/FileAnalysis';
 import {createChartActivate, createChartSingleRowArrayActivate, createTableActivate} from './converterUtils';
@@ -223,7 +221,7 @@ function getHeadersThatStartsWith(header, part) {
 }
 
 export function getHeader(header, part) {
-    const data= get(part,'details.tableData.data');
+    const data=part?.details?.tableData?.data;
     if (!data) return undefined;
     const foundRow= part.details.tableData.data.find( (row) => row[1].toLowerCase()===header.toLowerCase());
     return foundRow && foundRow[2];

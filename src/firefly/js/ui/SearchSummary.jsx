@@ -5,7 +5,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import numeral from 'numeral';
+import {sprintf} from '../externalSource/sprintf';
 import {isEmpty} from 'lodash';
 import {formatPosForTextField} from '../data/form/PositionFieldDef.js';
 
@@ -28,7 +28,7 @@ export class SearchSummary extends PureComponent {
                 wpMsg = isEmpty(wp.getObjName())?formatPosForTextField(wp):wp.objName;
             }
             const target = 'Target= ' + wpMsg;
-            const imageSize = 'Image Size=' + numeral(request.imageSizeAndUnit).format('#.0[000]')+' deg';
+            const imageSize = 'Image Size=' + sprintf('%.4f',request.imageSizeAndUnit)+ ' deg';
             const sources = 'Sources=' + request.selectImage.toUpperCase();
 
             if (target) message += target + '; ';

@@ -4,7 +4,7 @@ import CoordinateSys from '../../visualize/CoordSys.js';
 import CoordUtil from '../../visualize/CoordUtil.js';
 import Point, {makeWorldPt} from '../../visualize/Point.js';
 
-import numeral from 'numeral';
+import {sprintf} from '../../externalSource/sprintf';
 
 /**
  * Created by roby on 12/2/14.
@@ -190,8 +190,8 @@ var makePositionFieldDef= function(properties) {
 
 
 
-        var lonStr = numeral(wp.getLon()).format('#.0[00000]');
-        var latStr = numeral(wp.getLat()).format('#.0[00000]');
+        var lonStr = sprintf('%.5f',wp.getLon());
+        var latStr = sprintf('%.5f',wp.getLat());
         var csys = coordToString(wp.getCoordSys());
         if (wp.getCoordSys().isEquatorial()) {
 
@@ -310,24 +310,21 @@ export function coordToString(csys) {
  * @returns {*}
  */
 export function formatPosForTextField(wp) {
-    var retval;
     try {
-        var lon;
-        var lat;
+        let lon;
+        let lat;
         if (wp.getCoordSys().isEquatorial()) {
             lon = CoordUtil.convertLonToString(wp.getLon(), wp.getCoordSys());
             lat = CoordUtil.convertLatToString(wp.getLat(), wp.getCoordSys());
         }
         else {
-            lon = numeral(wp.getLon()).format('#.xxxxxx');
-            lat = numeral(wp.getLat()).format('#.xxxxxx');
+            lon= sprintf('%.5f',wp.getLon());
+            lat= sprintf('%.5f',wp.getLat());
         }
-        retval = `${lon} ${lat} ${coordToString(wp.getCoordSys())}`;
-
+        return `${lon} ${lat} ${coordToString(wp.getCoordSys())}`;
     } catch (e) {
-        retval = '';
+        return '';
     }
-    return retval;
 
 }
 

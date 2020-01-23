@@ -17,7 +17,7 @@ import {getPixScaleArcSec} from '../WebPlot.js';
 import {Band} from '../Band.js';
 import {get} from 'lodash';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
-import numeral from 'numeral';
+import {sprintf} from '../../externalSource/sprintf.js';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {getTblById} from '../../tables/TableUtil.js';
 import {TABLE_SORT, TABLE_REPLACE, dispatchTableSort} from '../../tables/TablesCntlr.js';
@@ -286,7 +286,7 @@ function renderFileSizeAndPixelSize(plot, band, fitsHeaderInfo, isOnTab) {
     if (fileSize) {
         const flen = fileSize.substring(0, fileSize.length - 1);
 
-        fileSizeStr = `${numeral(flen).format('0.00')}${fileSize.substring(fileSize.length - 1, fileSize.length)}`;
+        fileSizeStr = `${sprintf('%.2f',flen)}${fileSize.substring(fileSize.length - 1, fileSize.length)}`;
     } else {
         fileSizeStr = '';
     }

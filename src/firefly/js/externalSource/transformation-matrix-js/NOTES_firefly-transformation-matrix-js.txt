@@ -1,0 +1,12 @@
+transformation-matrix-js use to be one github and as a npm installation.  The owner has removed it from NPM so this is the code that we have been using.  We
+will not keep it as external source.
+
+Version when the code was not longer supported: 2.7.6
+
+There is another copy of it on github that was clone and two move version have been created.
+https://github.com/psyrendust/transformation-matrix-js
+
+This is is not on NPM. to use it you must clone it. Since we have been using the original for years now and the other one is not tested will will just use
+the one here.
+
+The botom line is that this code works really well but has poor or no support. It is safer just to maintain our own version.

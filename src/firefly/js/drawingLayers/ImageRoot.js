@@ -3,8 +3,7 @@
  */
 
 import React from 'react';
-import numeral from 'numeral';
-import {DrawSymbol} from '../visualize/draw/DrawSymbol.js';
+import {sprintf} from '../externalSource/sprintf';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
@@ -89,7 +88,7 @@ function getTitle(pv, plot, drawLayer) {
             <div style={{paddingLeft: 10, fontSize:'80%'}}>{`${isHiPS(plot) ? 'HiPS' : 'Image'}${showSize?',':''}`}</div>
             {showSize &&
                      <div  style={{paddingLeft: 5, fontSize:'80%'}}>
-                         {`Search Size: ${numeral(r.getSizeInDeg()).format(precision4Digit)}${String.fromCharCode(176)}`}
+                         {`Search Size: ${sprintf('%.4f',r.getSizeInDeg())}${String.fromCharCode(176)}`}
                      </div>
             }
         </div>

@@ -7,7 +7,7 @@
  */
 
 import {get, isNil} from 'lodash';
-import {Matrix} from 'transformation-matrix-js';
+import {Matrix} from '../externalSource/transformation-matrix-js/matrix';
 import {primePlot} from './PlotViewUtil.js';
 import {clone, updateSet} from '../util/WebUtil.js';
 import {getCenterOfProjection, getFoV} from './PlotViewUtil.js';

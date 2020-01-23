@@ -3,7 +3,6 @@
  */
 
 import React, {PureComponent} from 'react';
-import numeral from 'numeral';
 import PropTypes from 'prop-types';
 import {isEmpty, get, padEnd, isString} from 'lodash';
 import {primePlot,isMultiImageFitsWithSameArea, getPlotViewById,
@@ -68,6 +67,7 @@ import {
     getHduPlotStartIndexes, getPtWavelength, getWaveLengthUnits, hasPlaneOnlyWLInfo, hasWLInfo,
     isImageCube
 } from '../PlotViewUtil';
+import {sprintf} from '../../externalSource/sprintf';
 
 
 //todo move the statistics constants to where they are needed
@@ -320,7 +320,7 @@ function recenterToSelection(pv) {
     const centerPt= makeScreenPt( Math.abs(sp0.x-sp2.x)/2+ Math.min(sp0.x,sp2.x),
         Math.abs(sp0.y-sp2.y)/2 + Math.min(sp0.y,sp2.y));
 
-    if (p.type==='image') {
+    if (isImage(p)) {
         const newScrollPt= makeScreenPt(centerPt.x - viewDim.width/2, centerPt.y - viewDim.height/2);
         dispatchProcessScroll({plotId,scrollPt:newScrollPt});
     }
@@ -726,7 +726,7 @@ MultiImageControllerView.propTypes= {
     plotView : PropTypes.object.isRequired,
 };
 
-const doFormat= (v,precision) => precision>0 ? numeral(v).format(padEnd('0.',precision+2,'0')) : Math.trunc(v)+'';
+const doFormat= (v,precision) => precision>0 ? sprintf(`%.${precision}f`,v) : Math.trunc(v)+'';
 
 function getHipsCubeDesc(plot) {
     if (!isHiPS(plot)) return '';

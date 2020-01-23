@@ -1,7 +1,6 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {take} from 'redux-saga/effects';
 import Enum from 'enum';
 import {makeDrawingDef, TextLocation, Style} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLayer.js';
@@ -14,19 +13,15 @@ import {clone} from '../util/WebUtil.js';
 import MocObj, {createDrawObjsInMoc, setMocDisplayOrder, MocGroup} from '../visualize/draw/MocObj.js';
 import {getUIComponent} from './HiPSMOCUI.jsx';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
-import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {getTblById} from '../tables/TableUtil.js';
-import {dispatchTableFetch, TABLE_LOADED} from '../tables/TablesCntlr.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {MAX_ROW} from '../tables/TableRequestUtil.js';
 import {dispatchAddTaskCount, dispatchRemoveTaskCount, makeTaskId } from '../core/AppDataCntlr.js';
 import {doFetchTable} from '../tables/TableUtil';
 import {logError} from '../util/WebUtil';
-import {getDrawLayersByType} from '../visualize/PlotViewUtil';
 import {dispatchModifyCustomField, getDlAry} from '../visualize/DrawLayerCntlr';
 import {cloneRequest} from '../tables/TableRequestUtil';
 import {dispatchAddActionWatcher} from '../core/MasterSaga';
-import isPlainObject from 'react-redux/lib/utils/isPlainObject';
 import {MetaConst} from '../data/MetaConst';
 import {getNextColor} from '../visualize/draw/DrawingDef';
 

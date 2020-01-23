@@ -7,7 +7,7 @@ import {clone} from '../../util/WebUtil.js';
 
 export const masterTableFilter = {
     defaultFilter : (tableModel) => tableModel,
-    lsstFilter : lsstFilter
+    lsstFilter,
 };
 
 
@@ -24,7 +24,7 @@ function lsstFilter(tableModel) {
     const pIdx= getColumnIdx(tableModel, 'projectshort');
     if (pIdx<0) return tableModel;
 
-    var retData= tableModel.tableData.data
+    const retData= tableModel.tableData.data
         .filter((r) => !filterOut.find( (out) => out===r[pIdx]))
         .sort( (r1,r2) => {
             const c1P= getColPriority(r1[pIdx]);

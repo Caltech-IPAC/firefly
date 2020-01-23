@@ -4,7 +4,7 @@
 
 
 
-import {get,isEmpty,isArray} from 'lodash';
+import {isEmpty,isArray} from 'lodash';
 import {RequestType} from './RequestType.js';
 import {clone} from '../util/WebUtil.js';
 import CoordinateSys from './CoordSys.js';
@@ -178,9 +178,9 @@ export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_
 
 const relatedIdRoot= '-Related-';
 
-export const isHiPS= (plot) => Boolean(plot && plot.plotType==='hips');
-export const isImage= (plot) => Boolean(plot && plot.plotType==='image');
-export const isKnownType= (plot) => Boolean(plot && (plot.plotType==='image' || plot.plotType==='hips'));
+export const isHiPS= (plot) => Boolean(plot?.plotType==='hips');
+export const isImage= (plot) => Boolean(plot?.plotType==='image');
+export const isKnownType= (plot) => Boolean(plot?.plotType==='image' || plot?.plotType==='hips');
 
 /**
  *
@@ -287,13 +287,12 @@ export const WebPlot= {
 
         const wlRelated= relatedData && relatedData.find( (r) => r.dataType==='WAVELENGTH_TABLE_RESOLVED');
 
-        let wlData= parseWavelengthHeaderInfo(header, '', zeroHeader, get(wlRelated,'table'));
+        let wlData= parseWavelengthHeaderInfo(header, '', zeroHeader, wlRelated?.table);
         const allWCSMap= processAllSpacialAltWcs(header);
-        const allWlMap= processAllWavelengthAltWcs(header, get(wlRelated,'table'));
-        // if (!wlData && Object.values(allWlMap)>0) {
+        const allWlMap= processAllWavelengthAltWcs(header, wlRelated?.table);
         allWlMap['']= wlData;
         allWCSMap['']= projection;
-        if (Object.values(allWlMap).length>0 && get(wlData, 'algorithm')!==TAB) {
+        if (Object.values(allWlMap).length>0 && wlData?.algorithm!==TAB) {
             wlData= Object.values(allWlMap)[0];
         }
         const zf= plotState.getZoomLevel();
@@ -402,8 +401,8 @@ export const WebPlot= {
             dataDesc        : hipsProperties.label || 'HiPS',
             //=== Mutable =====================
             screenSize: {width:HIPS_DATA_WIDTH*zoomFactor, height:HIPS_DATA_HEIGHT*zoomFactor},
-            cubeDepth: Number(get(hipsProperties, 'hips_cube_depth')) || 1,
-            cubeIdx: Number(get(hipsProperties, 'hips_cube_firstframe')) || 0,
+            cubeDepth: Number(hipsProperties?.hips_cube_depth) || 1,
+            cubeIdx: Number(hipsProperties?.hips_cube_firstframe) || 0,
             zoomFactor,
             attributes,
 
