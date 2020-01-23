@@ -111,7 +111,7 @@ public class WiseRequest extends TableServerRequest {
             put(ALLSKY_4BAND,"allsky_4band_p1bs_psd");
             put(CRYO_3BAND,"allsky_3band_p1bs_psd");
             put(POSTCRYO,"allsky_2band_p1bs_psd");
-            put(NEOWISER,"neowiser_p1bs_psd");
+            put(NEOWISER,"neowiser_q1bs_psd");
             put(PASS1,"pass1_i1bs_psd_view");
             put(PASS2_4BAND,"pass2_4band_i1bs_psd_view");
             put(PASS2_3BAND,"pass2_3band_i1bs_psd_view");
@@ -121,8 +121,8 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR3,"neowiser_p1bs_psd");
             put(NEOWISER_YR4,"neowiser_p1bs_psd");
             put(NEOWISER_YR5,"neowiser_p1bs_psd");
-            put(NEOWISER_YR6,"neowiser_q1bs_psd");
-	    put(NEOWISER_YR7,"neowiser_q1bs_psd");
+            put(NEOWISER_YR6,"neowiser_yr6_p1bs_psd");
+	    put(NEOWISER_YR7,"neowiser_i1bs_psd");
 
         }
     };
