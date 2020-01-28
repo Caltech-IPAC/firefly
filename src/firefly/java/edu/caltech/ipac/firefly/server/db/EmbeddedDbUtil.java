@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_PATH;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_TYPE;
 import static edu.caltech.ipac.firefly.server.db.DbCustomFunctions.createCustomFunctions;
+import static edu.caltech.ipac.firefly.server.db.DbInstance.USE_REAL_AS_DOUBLE;
 import static edu.caltech.ipac.table.DataGroup.ROW_IDX;
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
@@ -168,7 +169,7 @@ public class EmbeddedDbUtil {
         String ddSql = refTable == null ? null : dbAdapter.getDDSql(refTable);
 
         DataGroup dg = (DataGroup)JdbcFactory.getTemplate(dbInstance).query(sql, rs -> {
-            return dbToDataGroup(rs, dbInstance, ddSql, true);
+            return dbToDataGroup(rs, dbInstance, ddSql);
         });
 
         SimpleJdbcTemplate jdbc = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile));
@@ -269,9 +270,9 @@ public class EmbeddedDbUtil {
 //  O-R mapping functions
 //====================================================================
 
-    public static DataGroup dbToDataGroup(ResultSet rs, DbInstance dbInstance, String ddSql, boolean useRealAsDouble) throws SQLException {
+    public static DataGroup dbToDataGroup(ResultSet rs, DbInstance dbInstance, String ddSql) throws SQLException {
 
-        DataGroup dg = new DataGroup(null, getCols(rs, useRealAsDouble));
+        DataGroup dg = new DataGroup(null, getCols(rs, dbInstance));
 
         if (ddSql != null) {
             try {
@@ -450,12 +451,12 @@ public class EmbeddedDbUtil {
     }
 
 
-    public static List<DataType> getCols(ResultSet rs, boolean useRealAsDouble) throws SQLException {
+    public static List<DataType> getCols(ResultSet rs, DbInstance dbInstance) throws SQLException {
         ResultSetMetaData rsmd = rs.getMetaData();
         List<DataType> cols = new ArrayList<>();
         for (int i = 1; i <= rsmd.getColumnCount(); i++) {
             String cname = rsmd.getColumnName(i);
-            Class type = convertToClass(rsmd.getColumnType(i), useRealAsDouble);
+            Class type = convertToClass(rsmd.getColumnType(i), dbInstance);
             DataType dt = new DataType(cname, type);
             cols.add(dt);
         }
@@ -467,7 +468,7 @@ public class EmbeddedDbUtil {
 //  privates functions
 //====================================================================
 
-    private static Class convertToClass(int val, boolean useRealAsDouble) {
+    private static Class convertToClass(int val, DbInstance dbInstance) {
         JDBCType type = JDBCType.valueOf(val);
         switch (type) {
             case CHAR:
@@ -483,7 +484,7 @@ public class EmbeddedDbUtil {
             case FLOAT:
                 return Float.class;
             case REAL: {
-                if (useRealAsDouble) return Double.class;
+                if (dbInstance.getBoolProp(USE_REAL_AS_DOUBLE, false)) return Double.class;
                 else return Float.class;
             }
             case DOUBLE:
