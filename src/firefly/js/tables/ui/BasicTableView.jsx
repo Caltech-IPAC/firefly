@@ -332,6 +332,7 @@ function makeColumnTag(props, col, idx) {
     const CellRenderer = get(renderers, [col.name, 'cellRenderer'], getDefaultRenderer(col, tbl_id, startIdx));
     const fixed = col.fixed || false;
     const style = col.fixed && {backgroundColor: bgColor};
+    const {resizable=true} = col;
 
     return (
         <Column
@@ -341,7 +342,7 @@ function makeColumnTag(props, col, idx) {
             cell={<CellRenderer {...{style, data, tbl_id, col, colIdx:idx}} />}
             fixed={fixed}
             width={columnWidths[idx]}
-            isResizable={true}
+            isResizable={resizable}
             allowCellsRecycling={true}
         />
     );

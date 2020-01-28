@@ -22,6 +22,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
+import static edu.caltech.ipac.firefly.data.TableServerRequest.parseSqlFilter;
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
  * @author loi
@@ -95,7 +97,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
 
     public String createDataSql(DataType[] dtTypes, String tblName) {
-        tblName = StringUtils.isEmpty(tblName) ? MAIN_DB_TBL : tblName;
+        tblName = isEmpty(tblName) ? MAIN_DB_TBL : tblName;
         List<String> coldefs = new ArrayList<>();
         for(DataType dt : dtTypes) {
             coldefs.add( String.format("\"%s\" %s", dt.getKeyName(), toDbDataType(dt)));       // add quotes to avoid reserved words clashes
@@ -105,7 +107,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
 
     public String insertDataSql(DataType[] dtTypes, String tblName) {
-        tblName = StringUtils.isEmpty(tblName) ? MAIN_DB_TBL : tblName;
+        tblName = isEmpty(tblName) ? MAIN_DB_TBL : tblName;
 
         String[] var = new String[dtTypes.length];
         Arrays.fill(var , "?");
@@ -126,7 +128,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
 
     public String selectPart(TableServerRequest treq) {
         String cols = treq.getParam(INCL_COLUMNS);
-        cols = "select " + (StringUtils.isEmpty(cols) ? "*" : cols);
+        cols = "select " + (isEmpty(cols) ? "*" : cols);
         return cols;
     }
 
@@ -153,6 +155,15 @@ abstract public class BaseDbAdapter implements DbAdapter {
                 where += "(" + cond + ")";
             }
             where = "where " + where;
+        }
+
+        String[] opSql = parseSqlFilter(treq.getSqlFilter());
+        if (!isEmpty(opSql[1])) {
+            if (where.length() > 0) {
+                where += String.format(" %s (%s)", opSql[0], opSql[1]);
+            } else {
+                where = String.format("where %s", opSql[1]);
+            }
         }
 
         return where;
@@ -192,7 +203,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
         if (dataType.isArrayType()) return "other";
 
         Class type = dataType.getDataType();
-        if (String.class.isAssignableFrom(type)) {
+        if (type == null || String.class.isAssignableFrom(type)) {
             return "longvarchar";                           // to ensure it can accommodate any length
         } else if (Byte.class.isAssignableFrom(type)) {
             return "tinyint";

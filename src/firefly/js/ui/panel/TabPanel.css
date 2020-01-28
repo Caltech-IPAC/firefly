@@ -46,6 +46,13 @@
     display: flex;
 }
 
+.TabPanel__Content.borderless{
+    border-left: unset;
+    border-right: unset;
+    border-bottom: unset;
+    background-color: unset;
+}
+
 .TabPanel__Content--inside {
     border: 1px solid #ccc;
     background: white;

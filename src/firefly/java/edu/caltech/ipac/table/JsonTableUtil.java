@@ -135,6 +135,8 @@ public class JsonTableUtil {
         treq.put(TableServerRequest.ID_KEY, req.getRequestId());
         treq.put(TableServerRequest.START_IDX, req.getStartIndex());
         treq.put(TableServerRequest.PAGE_SIZE, req.getPageSize());
+
+        applyIfNotEmpty(req.getSqlFilter(), v -> treq.put(TableServerRequest.SQL_FILTER, req.getSqlFilter()));
         if (req.getFilters() != null) {
             treq.put(TableServerRequest.FILTERS, TableServerRequest.toFilterStr(req.getFilters()));
         }

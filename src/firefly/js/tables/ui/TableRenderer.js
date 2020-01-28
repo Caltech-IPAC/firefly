@@ -7,7 +7,7 @@ import FixedDataTable from 'fixed-data-table-2';
 import {set, get, isEqual, pick} from 'lodash';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS, NULL_TOKEN} from '../FilterInfo.js';
-import {isColumnType, COL_TYPE, tblDropDownId, getTblById, getColumn, formatValue, getTypeLabel} from '../TableUtil.js';
+import {isColumnType, COL_TYPE, tblDropDownId, getTblById, getColumn, formatValue, getTypeLabel, getColumnIdx, getRowValues, getCellValue} from '../TableUtil.js';
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {SORT_ASC, UNSORTED} from '../SortInfo';
@@ -24,6 +24,7 @@ import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {useStoreConnector} from './../../ui/SimpleComponent.jsx';
 import {resolveHRefVal} from '../../util/VOAnalyzer.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
+import {dispatchTableUpdate} from '../../tables/TablesCntlr.js';
 
 const {Cell} = FixedDataTable;
 const html_regex = /<.+>/;
@@ -232,8 +233,9 @@ export class SelectableCell extends Component {
 
 /*---------------------------- CELL RENDERERS ----------------------------*/
 
-function getValue({rowIndex, data, columnKey}) {
-    return get(data, [rowIndex, columnKey]);
+function getValue({col, rowIndex, data, columnKey}) {
+    const val = get(data, [rowIndex, columnKey]);
+    return formatValue(col, val);
 }
 
 export class TextCell extends Component {
@@ -259,7 +261,7 @@ export class TextCell extends Component {
         const lineHeight = height - 6 + 'px';  // 6 is the top/bottom padding.
         const textAlign = col.align || (isNumeric ? 'right' : 'left');
 
-        let val = formatValue(col, getValue(this.props));
+        let val = getValue(this.props);
         val = (val && val.search && val.search(html_regex) >= 0) ? <div dangerouslySetInnerHTML={{__html: val}}/> : val;
 
         return (
@@ -275,7 +277,7 @@ export class TextCell extends Component {
 export const LinkCell = React.memo((props) => {
     const {tbl_id, col={}, rowIndex, style={}, startIdx} = props;
     const absRowIdx = rowIndex + startIdx;              // rowIndex is the index of the current page.  Add startIdx to get the absolute index of the row in the full table.
-    const val = formatValue(col, getValue(props));
+    const val = getValue(props);
     const className = 'public_fixedDataTableCell_cellContent';
     let textAlign = col.align;
     if (col.links) {
@@ -364,7 +366,7 @@ export const NOT_CELL_DATA = '__NOT_A_VALID_DATA___';
 export const createInputCell = (tooltips, size = 10, validator, onChange, style) => {
     const changeHandler = (rowIndex, data, colIdx, v) => {
         set(data, [rowIndex, colIdx], v.value);
-        onChange && onChange(v);
+        onChange && onChange(v, data, rowIndex, colIdx);
     };
 
     return ({rowIndex, data, colIdx}) => {
@@ -375,7 +377,7 @@ export const createInputCell = (tooltips, size = 10, validator, onChange, style)
             return null;
         } else {
             return (
-                <div style={{margin: 2}}>
+                <div style={{padding: 2}}>
                     <InputField
                         validator={(v) => validator(v, data, rowIndex, colIdx)}
                         tooltip={tooltips}
@@ -390,6 +392,101 @@ export const createInputCell = (tooltips, size = 10, validator, onChange, style)
         }
     };
 };
+
+/**
+ * an input field renderer that update tableModel.
+ * @param p
+ * @param p.tbl_id
+ * @param p.col         the column for this render
+ * @param p.tooltips
+ * @param p.style
+ * @param p.isReadOnly  a function returning true if this row is read only
+ * @param p.validator   a validator function used to validate the input
+ * @param p.onChange
+ * @returns {Function}
+ */
+export const inputColumnRenderer = ({tbl_id, cname, tooltips, style={}, isReadOnly, validator, onChange}) => {
+
+    return ({rowIndex, data, colIdx}) => {
+        const val = get(data, [rowIndex, colIdx]);
+        if (isReadOnly && isReadOnly(rowIndex, data, colIdx)) {
+            return <div style={{width: '100%', height: '100%', ...style}}>{val}</div>;
+        } else {
+            return (
+                <div style={{padding: 2, ...style}}>
+                    <InputField
+                        validator={ validator && ((v) => validator(v, data, rowIndex, colIdx))}
+                        tooltip={tooltips}
+                        style={{width: '100%', boxSizing: 'border-box', ...style}}
+                        value={val}
+                        onChange={makeChangeHandler(rowIndex, data, colIdx, tbl_id, cname, validator, onChange)}
+                        actOn={['blur','enter']}
+                    />
+                </div>
+            );
+        }
+    };
+};
+
+
+/**
+ * a checkbox renderer that update tableModel.
+ * @param p
+ * @param p.tbl_id
+ * @param p.col         the column for this render
+ * @param p.tooltips
+ * @param p.style
+ * @param p.isReadOnly  a function returning true if this row is read only
+ * @param p.validator   a validator function used to validate the input
+ * @param p.onChange
+ * @returns {Function}
+ */
+export const checkboxColumnRenderer = ({tbl_id, cname, tooltips, style={}, isReadOnly, validator, onChange}) => {
+
+    return ({rowIndex, data, colIdx}) => {
+        const val = get(data, [rowIndex, colIdx]);
+        const disabled = isReadOnly && isReadOnly(rowIndex, data, colIdx);
+        const changeHandler = makeChangeHandler(rowIndex, data, colIdx, tbl_id, cname, validator, onChange);
+
+        return (
+            <div className='TablePanel__checkbox' style={style}>
+                <input type = 'checkbox'
+                       disabled = {disabled}
+                       title = {tooltips}
+                       onChange = {(e) => changeHandler({valid: true, value: e.target.checked})}
+                       checked = {val}/>
+            </div>
+        );
+    };
+};
+
+
+function makeChangeHandler (rowIndex, data, colIdx, tbl_id, cname, validator, onChange) {
+    const table = getTblById(tbl_id);
+    const rColIdx = getColumnIdx(table, cname);
+
+    return ({valid, value}) => {
+        if (valid) {
+            const row = getRowValues(table, rowIndex);
+            if (value !== row[rColIdx]) {
+                const col =  getColumn(table, cname);
+                const rvalue = isColumnType(col, COL_TYPE.INT) ? parseInt(value) :
+                    isColumnType(col, COL_TYPE.FLOAT) ? parseFloat(value) : value;
+                row[rColIdx] = rvalue;
+                const upd = set({tbl_id}, ['tableData', 'data', rowIndex], row);
+                if (table.origTableModel) {
+                    const origRowIdx = getCellValue(table, rowIndex, 'ROW_IDX');
+                    set(upd, ['origTableModel', 'tableData', 'data', origRowIdx], row);
+                }
+                dispatchTableUpdate(upd);
+                onChange && onChange(rvalue, rowIndex, data, colIdx);
+            }
+        }
+    };
+};
+
+
+
 
 const ATag = React.memo(({value='', title, href, target, style={}}) => {
     const [,imgStubKey] = value.match(/<img +data-src='(\w+)' *\/>/i) || [];

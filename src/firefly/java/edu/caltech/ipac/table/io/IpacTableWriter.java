@@ -8,7 +8,6 @@ import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.table.*;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -60,6 +59,16 @@ public class IpacTableWriter {
     }
 
     private static void save(PrintWriter out, DataGroup dataGroup) throws IOException {
+
+        // fix type if format changes value to another type
+        Arrays.stream(dataGroup.getDataDefinitions()).forEach( col -> {
+            String prec = col.getPrecision() == null ? "" : col.getPrecision().toUpperCase();
+            if (prec.startsWith("HMS") || prec.startsWith("DMS")) {
+                col.setDataType(String.class);
+                col.setTypeDesc(DataType.CHAR);
+            }
+        });
+
         shrinkToFitData(dataGroup);
         List<DataType> headers = Arrays.asList(dataGroup.getDataDefinitions());
         int totalRow = dataGroup.size();

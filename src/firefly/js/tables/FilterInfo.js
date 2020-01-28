@@ -42,15 +42,17 @@ const COND_SEP = new RegExp('( and | or )', 'i');
 
 /**
  * returns the number of individual filters
- * @param filterInfoStr
+ * @param request   table request
  * @returns {number}
  */
-export function getNumFilters(filterInfoStr) {
-    if (filterInfoStr) {
-        return filterInfoStr.split(new RegExp(` and | or |${FILTER_SEP}`, 'i')).length;
-    } else {
-        return 0;
+export function getNumFilters(request) {
+    const {filters, sqlFilter} = request || {};
+    let count = 0;
+    if (sqlFilter) count++;
+    if (filters) {
+        count += filters.split(new RegExp(` and | or |${FILTER_SEP}`, 'i')).length;
     }
+    return count;
 }
 
 

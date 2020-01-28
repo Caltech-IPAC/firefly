@@ -87,7 +87,7 @@ export class InputAreaFieldView extends PureComponent {
     render() {
         var {hasFocus}= this.state;
         var {visible,label,tooltip,rows,cols,labelWidth,value,style,wrapperStyle,labelStyle,
-             valid,size,onChange, onBlur, onKeyPress, showWarning, message, type}= this.props;
+             valid,size,onChange, onBlur, onKeyPress, showWarning, message, type, placeholder}= this.props;
         if (!visible) return null;
         wrapperStyle = Object.assign({whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block'}, wrapperStyle);
         return (
@@ -108,6 +108,7 @@ export class InputAreaFieldView extends PureComponent {
                        title={ (!showWarning && !valid) ? message : tooltip}
                        size={size}
                        type={type}
+                       placeholder={placeholder}
                 />
                 {showWarning && this.makeWarningArea(!valid)}
             </div>
@@ -134,7 +135,8 @@ InputAreaFieldView.propTypes= {
     showWarning : PropTypes.bool,
     type: PropTypes.string,
     rows: PropTypes.number,
-    cols: PropTypes.number
+    cols: PropTypes.number,
+    placeholder: PropTypes.string
 };
 
 InputAreaFieldView.defaultProps= {

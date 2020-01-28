@@ -208,7 +208,7 @@ function convertToTreeNode(data) {
 }
 
 
-function insertAtCursor (input, textToInsert, fieldKey, groupKey) {
+export function insertAtCursor (input, textToInsert, fieldKey, groupKey) {
     const ovalue = input.value;
 
     // save selection start and end position
@@ -227,7 +227,7 @@ function insertAtCursor (input, textToInsert, fieldKey, groupKey) {
 
 }
 
-function insertNewLine (input, textToInsert, fieldKey, groupKey) {
+export function insertNewLine (input, textToInsert, fieldKey, groupKey) {
     const value = (input.value ? input.value + '\n' : '') + textToInsert;
     dispatchValueChange({fieldKey, groupKey, value, valid: true});
 }

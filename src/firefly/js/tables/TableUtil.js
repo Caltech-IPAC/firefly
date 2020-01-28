@@ -37,6 +37,7 @@ import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/Mas
 import {getWsConnId} from '../core/messaging/WebSocketClient.js';
 import {MetaConst} from '../data/MetaConst';
 import {toBoolean} from '../util/WebUtil';
+import {dd2sex} from '../visualize/CoordUtil.js';
 
 
 // this is so test can mock the function when used within it's module
@@ -67,10 +68,26 @@ const colTypes = {
 export function isColumnType(col={}, type) {
     const flg = '_t-' + type.key;       // for efficiency
     if (!has(col, flg)) {
-        col[flg] = !colTypes[type] || colTypes[type].includes(col.type);
+        col[flg] = !colTypes[type] || isOfType(col.type, type);
     }
     return col[flg];
 }
+
+/**
+ *
+ * @param {string} s string
+ * @param {COL_TYPE} type
+ * @returns {boolean}
+ */
+export function isOfType(s, type) {
+    return colTypes[type].includes(s);
+}
+
+export function isClientTable(tbl_id) {
+    const tableModel = getTblById(tbl_id) || {};
+    return !!tableModel.origTableModel;
+}
+
 
 /**
  * tableRequest will be sent to the server as a json string.
@@ -375,16 +392,25 @@ export function getColumnByID(tableModel, ID) {
 
 
 export function getFilterCount(tableModel) {
-    const filterInfo = get(tableModel, 'request.filters');
-    const filterCount = getNumFilters(filterInfo);
+    const request = get(tableModel, 'request');
+    const filterCount = getNumFilters(request);
     return filterCount;
 }
 
 export function clearFilters(tableModel) {
     const {request, tbl_id} = tableModel || {};
     if (request && request.filters) {
-        TblCntlr.dispatchTableFilter({tbl_id, filters: ''});
+        TblCntlr.dispatchTableFilter({tbl_id, filters: '', sqlFilters: ''});
     }
+}
+
+export function getSqlFilter(tbl_id) {
+    const sqlFilter =  get(getTblById(tbl_id), 'request.sqlFilter');
+    if (sqlFilter) {
+        const [op, sql] = sqlFilter.split('::');
+        return {op, sql};
+    }
+    return {};
 }
 
 export function clearSelection(tableModel) {
@@ -461,9 +487,9 @@ export function getRowValues(tableModel, rowIdx) {
  * fmtDisp		: A Java format string.  It can be used to format any type.  i.e.  "cost $%.2f"
  * format		: Same as fmtDisp
  * precision	: This only applies to floating point numbers.
- *                A string Tn where T is either F, E, or G
+ *                A string Tn where T is either F, E, G, HMS, or DMS
  *                If T is not present, it defaults to F.
- *                When T is F or E, n is the number of significant figures after the decimal point.
+ *                When T is F, E, HMS, or DMS, n is the number of significant figures after the decimal point.
  *                When T is G, n is the number of significant digits
 
  * @param {TableColumn} col
@@ -501,15 +527,29 @@ export function formatValue(col, val) {
         return sprintf('%i', val);
     } else if (isColumnType(col, COL_TYPE.FLOAT)) {
         if (precision) {
-            let [, type, prec] = precision.toUpperCase().match(/([EFG]?)(\d*)/);
-            if (!type || type === 'F') type = 'f';
-            prec = prec && '.' + prec;
-            return sprintf('%' + prec + type, val);
+            let [type, prec=0] = parsePrecision(precision);
+            if (type === 'HMS') {
+                return dd2sex(val, false, true, prec+3);
+            } else if (type === 'DMS') {
+                return dd2sex(val, true, true, prec+4);
+            } else {
+                if (!type || type === 'F') type = 'f';
+                prec = '.' + prec;
+                return sprintf('%' + prec + type, val);
+            }
         } else {
             return sprintf('%J', val);
         }
     }
     return String(val);
+}
+
+export function parsePrecision(s = '') {
+    const [, type, prec] = s.trim().toUpperCase().match(/^(HMS|DMS|[EFG])?(\d+)$/) || [];
+    if (type === 'G' && prec === '0') {
+        return [];
+    }
+    return [type, parseInt(prec)];
 }
 
 export function getTypeLabel(col={}) {
@@ -878,6 +918,23 @@ function makeTableSourceUrl(columns, request, otherParams) {
     if (visiCols.length !== columns.length) {
         tableRequest['inclCols'] = visiCols.map( (c) => c.includes('"') ? c : '"' + c + '"').join();  // add quotes to cname unless it's already quoted.
     }
+    const origTable = getTblById(request);
+    const precision = columns.filter( (col) => col.precision)
+                             .filter( (col) => col.precision !== get(getColumn(origTable, col.name), 'precision'))
+                             .map( (col) => [`col.${col.name}.precision`, col.precision]);
+    if (precision) {
+        tableRequest.META_INFO = tableRequest.META_INFO || {};
+        precision.forEach(([key, val]) => tableRequest.META_INFO[key] = val);
+    }
+
+    const nullStr = columns.filter( (col) => col.nullString)
+        .filter( (col) => col.nullString !== get(getColumn(origTable, col.name), 'nullString'))
+        .map( (col) => [`col.${col.name}.nullString`, col.nullString]);
+    if (nullStr) {
+        tableRequest.META_INFO = tableRequest.META_INFO || {};
+        nullStr.forEach(([key, val]) => tableRequest.META_INFO[key] = val);
+    }
+
     Reflect.deleteProperty(tableRequest, 'tbl_id');
     const {wsCmd, file_name} = otherParams || {};
 

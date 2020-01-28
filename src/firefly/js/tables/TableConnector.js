@@ -102,12 +102,15 @@ export class TableConnector {
         TblCntlr.dispatchTableUiUpdate(changes);
     }
 
-    onOptionUpdate({pageSize, columns, showUnits, showTypes, showFilters, sortInfo, filterInfo}) {
+    onOptionUpdate({pageSize, columns, showUnits, showTypes, showFilters, sortInfo, filterInfo, sqlFilter}) {
         if (pageSize) {
             this.onPageSizeChange(pageSize);
         }
         if (!isUndefined(filterInfo)) {
             this.onFilter(filterInfo);
+        }
+        if (!isUndefined(sqlFilter)) {
+            TblCntlr.dispatchTableFilter({tbl_id: this.tbl_id, sqlFilter});
         }
 
         const changes = omitBy({columns, showUnits, showTypes, showFilters, optSortInfo:sortInfo}, isUndefined);
@@ -138,14 +141,17 @@ export class TableConnector {
 
     onOptionReset() {
         const ctable = getTblById(this.tbl_id);
-        var filterInfo = get(ctable, 'request.filters', '').trim();
-        filterInfo = filterInfo !== '' ? '' : undefined;
         var {showUnits, showTypes, showFilters, pageSize} = this.orig || {};
         
         pageSize = get(ctable, 'request.pageSize') !== pageSize ? pageSize : undefined;
-        this.onOptionUpdate({filterInfo, pageSize,
+        this.onOptionUpdate({pageSize,
                         columns: cloneDeep(get(ctable, 'tableData.columns', [])),
                         showUnits, showTypes, showFilters});
+
+        const {filters, sqlFilter}= get(ctable, 'request');
+        if (filters || sqlFilter) {
+            TblCntlr.dispatchTableFilter({tbl_id: this.tbl_id, sqlFilter: '', filters: ''});
+        }
     }
 
     static newInstance(tbl_id, tbl_ui_id, tableModel, options) {

@@ -58,6 +58,7 @@ import static edu.caltech.ipac.firefly.server.ServerContext.SHORT_TASK_EXEC;
 import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
 import static edu.caltech.ipac.firefly.server.db.DbAdapter.NULL_TOKEN;
 import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.execRequestQuery;
+import static edu.caltech.ipac.util.StringUtils.areEqual;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
@@ -364,6 +365,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         // resultSetID is a table created sort and filter in consideration.  no need to re-apply.
         TableServerRequest nreq = (TableServerRequest) treq.cloneRequest();
         nreq.setFilters(null);
+        nreq.setSqlFilter(null);
         nreq.setSortInfo(null);
 
         if (isEmpty(treq.getInclColumns())) {
@@ -517,7 +519,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             NestedRuntimeException ex = (NestedRuntimeException) e;
 
             TableServerRequest prevReq = QueryUtil.convertToServerRequest(treq.getMeta().get(TableMeta.RESULTSET_REQ));
-            if (treq.getInclColumns() != null && !StringUtils.areEqual(treq.getInclColumns(), prevReq.getInclColumns())) {
+            if (treq.getInclColumns() != null && !areEqual(treq.getInclColumns(), prevReq.getInclColumns())) {
                 possibleErrors.add(treq.getInclColumns());
             }
             List<String> diff = CollectionUtil.diff(treq.getFilters(), prevReq.getFilters(), false);

@@ -168,30 +168,36 @@ public class EmbeddedDbUtil {
         sql = dbAdapter.translateSql(sql);
         String ddSql = refTable == null ? null : dbAdapter.getDDSql(refTable);
 
-        DataGroup dg = (DataGroup)JdbcFactory.getTemplate(dbInstance).query(sql, rs -> {
-            return dbToDataGroup(rs, dbInstance, ddSql);
-        });
+        try {
+            DataGroup dg = (DataGroup)JdbcFactory.getTemplate(dbInstance).query(sql, rs -> {
+                return dbToDataGroup(rs, dbInstance, ddSql);
+            });
 
-        SimpleJdbcTemplate jdbc = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile));
+            SimpleJdbcTemplate jdbc = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile));
 
-        if (refTable != null) {
-            // insert table meta info into the results
-            try {
-                String metaSql = dbAdapter.getMetaSql(refTable);
-                jdbc.query(metaSql, (rs, i) -> EmbeddedDbUtil.dbToMeta(dg, rs));
-            } catch (Exception e) {
-                // ignore.. may not have meta table
+            if (refTable != null) {
+                // insert table meta info into the results
+                try {
+                    String metaSql = dbAdapter.getMetaSql(refTable);
+                    jdbc.query(metaSql, (rs, i) -> EmbeddedDbUtil.dbToMeta(dg, rs));
+                } catch (Exception e) {
+                    // ignore.. may not have meta table
+                }
+                // insert aux data info into the results
+                try {
+                    String auxDataSqlSql = dbAdapter.getAuxDataSql(refTable);
+                    jdbc.query(auxDataSqlSql, (rs, i) -> EmbeddedDbUtil.dbToAuxData(dg, rs));
+                } catch (Exception e) {
+                    // ignore.. may not have meta table
+                }
             }
-            // insert aux data info into the results
-            try {
-                String auxDataSqlSql = dbAdapter.getAuxDataSql(refTable);
-                jdbc.query(auxDataSqlSql, (rs, i) -> EmbeddedDbUtil.dbToAuxData(dg, rs));
-            } catch (Exception e) {
-                // ignore.. may not have meta table
-            }
+
+            return dg;
+        } catch (Exception e) {
+            // catch for debugging
+            logger.debug(String.format("execQuery failed with error: %s \n\t sql: %s \n\t refTable: %s \n\t dbFile: %s", e.getMessage(), sql, refTable, dbFile.getAbsolutePath()) );
+            throw e;
         }
-
-        return dg;
     }
 
 
