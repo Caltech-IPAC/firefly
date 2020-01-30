@@ -8,9 +8,20 @@ See Firefly docker guidelines [here](firefly-docker.md).
 
 - docker tag: `nightly`
 
-##### _UI_
+### Version 2019.4
+
+##### _Docker tags, releases and patches_
+
+- 2019.4 latest -  `release-2019.4`
+- 2019.4.0 - `release-2019.4.0` - original release
+
+
+##### _Changes_
 - Table data is now formatted on the client side. ([DM-20248](https://github.com/Caltech-IPAC/firefly/pull/884))
+- Fixed bug releated LSST footprints, introduced in last release. ([Firefly-435](https://github.com/Caltech-IPAC/firefly/pull/918))
 - Significant improvements in the distance tool.  ([Firefly-56](https://github.com/Caltech-IPAC/firefly/pull/904))
+
+
 
 ### Version 2019.3
 
