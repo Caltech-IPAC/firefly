@@ -44,8 +44,8 @@
 
 1. In the `dev` branch, Edit `firefly/config/app.config` with the correct version.
    - Modify:
-     - `BuildMajor` = 0
-     - `BuildMinor` = 0
+     - `BuildMajor` = _year_
+     - `BuildMinor` = -1
      - `BuildRev` = 0
    - push dev
 

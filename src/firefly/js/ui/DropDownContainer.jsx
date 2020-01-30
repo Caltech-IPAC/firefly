@@ -143,7 +143,7 @@ function VersionInfo({versionInfo={}}) {
     const {BuildMajor, BuildMinor, BuildRev, BuildType, BuildDate} = versionInfo;
     const showFullInfo = () => showInfoPopup(versionInfoFull(versionInfo), 'Version Information');
 
-    let version = `v${BuildMajor}.${BuildMinor}`;
+    let version = `v${BuildMajor}.${Number(BuildMinor)<1?'Next':BuildMinor}`;
     version += BuildRev !== '0' ? `.${BuildRev}` : '';
     version += BuildType === 'Final' ? '' : `_${BuildType}`;
     const builtOn = ` Built On: ${BuildDate}`;
@@ -154,7 +154,7 @@ function VersionInfo({versionInfo={}}) {
 }
 
 function versionInfoFull({BuildMajor, BuildMinor, BuildRev, BuildNumber, BuildType, BuildTime, BuildTag, BuildCommit, BuildCommitFirefly}) {
-    let version = `v${BuildMajor}.${BuildMinor}`;
+    let version = `v${BuildMajor}.${Number(BuildMinor)<1?'Next':BuildMinor}`;
     version += BuildRev !== '0' ? `.${BuildRev}` : '';
     return (
         <div className='DD-Version'>
