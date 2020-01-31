@@ -217,7 +217,22 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
         *     position.  For example, the algorithm is TAB.
         */
         const algorithmForPlane = isWL? algorithm: PLANE;
-        return makeSimplePlaneBased(crpix, crval, cdelt,nAxis, algorithmForPlane, wlType, units, 'use PLANE since is cube and parameters missing');
+        const ret = makeSimplePlaneBased(crpix, crval, cdelt,nAxis, algorithmForPlane, wlType, units, 'use PLANE since is cube and parameters missing');
+        if (algorithm==='TAB') {
+            const part1 = {
+                N, algorithm, ctype, restWAV, pc_3j, r_j,
+                ps3_0, ps3_1, ps3_2, pv3_0, pv3_1, pv3_2,
+                s_3: isNaN(cdelt) ? 0 : cdelt,
+                lambda_r: isNaN(crval) ? 0 : crval,
+                wlTable
+            };
+
+            return {...part1, ...ret};
+        }
+        else {
+            return ret;
+        }
+
     }
 
     //Plot and display the wavelength as one of the mouse readout only if the FITs header
@@ -264,6 +279,7 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
 function makeSimplePlaneBased(crpix,crval, cdelt, nAxis,algorithm, wlType, units, reason) {
     if (allGoodValues(crpix,crval,cdelt) && nAxis===3 ) {
         //return {algorithm: PLANE, wlType: wlType || WAVE, crpix, crval, cdelt, units, reason};
+
         return {algorithm: algorithm, wlType: wlType, crpix, crval, cdelt, units, reason};
     }
     else {
