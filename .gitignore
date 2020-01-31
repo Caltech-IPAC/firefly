@@ -26,7 +26,6 @@ jars/build/
 
 # ignore javascript dependencies
 node_modules/
-package-lock.json
 
 # eclipse environment
 .classpath

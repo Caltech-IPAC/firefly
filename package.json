@@ -78,5 +78,11 @@
     "sinon-chai": "^2.7.0",
     "style-loader": "^0.12.3",
     "webpack": "^1.8.2"
+  },
+  "resolutions": {
+    "fsevents": "~2.1"
+  },
+  "scripts": {
+    "preinstall": "npx npm-force-resolutions"
   }
 }
