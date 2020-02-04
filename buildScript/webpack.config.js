@@ -43,6 +43,7 @@ export default function makeWebpackConfig(config) {
         alias       : {
             firefly : path.resolve(config.firefly_dir, 'js'),
             styles : path.resolve(config.firefly_dir, 'html', 'css'),
+            images : path.resolve(config.firefly_dir, 'html', 'images'),
             html : path.resolve(config.firefly_dir, 'html')
         }
     };
@@ -127,14 +128,13 @@ export default function makeWebpackConfig(config) {
                             debug: false,//!ENV_PROD, uncomment this line to enable the debugger
                             modules: false,  // preserve application module style - in our case es6 modules
                             useBuiltIns : 'usage',
-                            corejs:'core-js@2'
+                            corejs: 3
                         }
                     ],
                     '@babel/preset-react'
                 ],
                 plugins: [
                     '@babel/plugin-transform-runtime',
-                    '@babel/plugin-proposal-class-properties'
                 ]
             }
         },
@@ -145,7 +145,8 @@ export default function makeWebpackConfig(config) {
                     loader: 'style-loader'
                 },
                 {
-                    loader: `css-loader?root=${path.resolve(config.firefly_dir, 'html')}`,
+                    loader: 'css-loader'
+                    // loader: `css-loader?root=${path.resolve(config.firefly_dir, 'html')}`,
                 },
             ]
         },

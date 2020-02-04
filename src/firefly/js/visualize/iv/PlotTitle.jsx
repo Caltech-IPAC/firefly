@@ -6,7 +6,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Enum from 'enum';
-import numeral from 'numeral';
+import {sprintf} from '../../externalSource/sprintf';
 import {getZoomDesc} from '../ZoomUtil.js';
 import {primePlot} from '../PlotViewUtil.js';
 
@@ -42,7 +42,7 @@ export function PlotTitle({plotView:pv, titleType, brief, working}) {
         if (pv.plotViewCtx.rotateNorthLock) {
             rotString= 'North';
         } else {
-            const angleStr= numeral(360-pv.rotation).format('#');
+            const angleStr= sprintf('%d',Math.trunc(360-pv.rotation));
             rotString= angleStr + String.fromCharCode(176);
         }
         zlStr+=',';

@@ -1,6 +1,4 @@
 
-import numeral from 'numeral';
-
 import {isNil, set} from 'lodash';
 import {makeScreenPt,  makeDevicePt} from '../Point.js';
 import {DrawSymbol} from './DrawSymbol.js';
@@ -195,7 +193,7 @@ function drawTextCanvas(ctx, text, x,y,color= 'red', renderOptions= {}, location
     addStyle(ctx,renderOptions);
     if (rotationAngle) {
         ctx.translate(x,y);
-        const rotate= numeral(rotationAngle).value();
+        const rotate= Number(rotationAngle);
         if (rotate) ctx.rotate(toRadians(rotate));
         ctx.fillText(text,0,0);
     }

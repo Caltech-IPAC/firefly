@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, padEnd, fill, isString} from 'lodash';
-import numeral from 'numeral';
+import {fill, isString} from 'lodash';
+import {sprintf} from '../../externalSource/sprintf';
 import VisUtil from '../VisUtil.js';
 import CoordUtil from '../CoordUtil.js';
 import CoordinateSys from '../CoordSys.js';
@@ -12,11 +12,7 @@ import {getFormattedWaveLengthUnits} from '../PlotViewUtil';
 import {showInfoPopup} from '../../ui/PopupUtil';
 
 
-const precision7Digit = '0.0000000';
-const precision4Digit = '0.0000';
-const precision1Digit = '0.0';
-
-const myFormat= (v,precision) => !isNaN(v) ? numeral(v).format(padEnd('0.',precision+1,'0')) : '';
+const myFormat= (v,precision) => !isNaN(v) ? sprintf(`%.${precision}f`,v) : '';
 
 
 const labelMap = {
@@ -97,7 +93,7 @@ export function getReadoutElement(readoutItems, readoutKey) {
 
     if (!readoutItems) return '';
 
-    const wp= get(readoutItems, 'worldPt.value');
+    const wp= readoutItems?.worldPt?.value;
     switch (readoutKey) {
         case 'pixelSize':
             return makePixelReturn(readoutItems.pixel);
@@ -114,10 +110,9 @@ export function getReadoutElement(readoutItems, readoutKey) {
         case 'eqb1950' :
             return makeCoordReturn(wp, CoordinateSys.EQ_B1950, true);
         case 'fitsIP' :
-            // return makeImagePtReturn(get(readoutItems, 'imagePt.value'));  // - if we rollback, restore this line
-            return makeImagePtReturn(get(readoutItems, 'fitsImagePt.value'));
+            return makeImagePtReturn(readoutItems?.fitsImagePt?.value);
         case 'zeroIP' :
-            return makeImagePtReturn(get(readoutItems, 'zeroBasedImagePt.value'));
+            return makeImagePtReturn(readoutItems?.zeroBasedImagePt?.value);
         case 'healpixPixel' :
             const {healpixPixel}= readoutItems;
             return (healpixPixel && healpixPixel.value) ? `${healpixPixel.value}` : '';
@@ -176,19 +171,19 @@ function makeCoordReturn(wp, toCsys, hms= false) {
     if (!wp) return '';
     const p= VisUtil.convert(wp, toCsys);
     if (hms) {
-        const hmsLon = CoordUtil.convertLonToString(wp.getLon(), toCsys);
-        const hmsLat = CoordUtil.convertLatToString(wp.getLat(), toCsys);
+        const hmsLon = CoordUtil.convertLonToString(p.getLon(), toCsys);
+        const hmsLat = CoordUtil.convertLatToString(p.getLat(), toCsys);
         return ` ${hmsLon}, ${hmsLat}`;
     }
     else {
-        return` ${numeral(p.getLon()).format(precision7Digit)}, ${numeral(p.getLat()).format(precision7Digit)}`;
+        return sprintf('%.7f, %.7f',p.getLon(), p.getLat());
     }
 
 }
 
 function makeImagePtReturn(imagePt) {
     if (!imagePt) return '';
-    return `${numeral(imagePt.x).format(precision1Digit)}, ${numeral(imagePt.y).format(precision1Digit)}`;
+    return sprintf('%.1f, %.1f',imagePt.x, imagePt.y);
 }
 
 function makeWLReturn(value,unit) {
@@ -196,7 +191,7 @@ function makeWLReturn(value,unit) {
     if (isNaN(value)) return 'NaN';
     if (value===0) return `0 ${unit}`;
     if (value < .0001) return `${value.toExponential(6).replace('e+', 'E')} ${unit}`;
-    else               return `${numeral(value).format(precision4Digit)} ${unit}`;
+    else               return `${sprintf('%.4f',value)} ${unit}`;
 }
 
 function makePixelReturn(pixel) {

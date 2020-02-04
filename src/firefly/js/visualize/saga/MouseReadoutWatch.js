@@ -3,7 +3,6 @@
  */
 
 import {race,call} from 'redux-saga/effects';
-import {get} from 'lodash';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {clone} from '../../util/WebUtil.js';
 import {readoutRoot, makeValueReadoutItem, makePointReadoutItem,
@@ -11,18 +10,15 @@ import {readoutRoot, makeValueReadoutItem, makePointReadoutItem,
 import {callGetFileFlux} from '../../rpc/PlotServicesJson.js';
 import {Band} from '../Band.js';
 import {MouseState} from '../VisMouseSync.js';
-import {primePlot, getPlotStateAry, getPlotViewById} from '../PlotViewUtil.js';
 import {CysConverter} from '../CsysConverter.js';
-import {mouseUpdatePromise} from '../VisMouseSync.js';
 import {getPixScaleArcSec, getScreenPixScaleArcSec, isImage, isHiPS, getFluxUnits} from '../WebPlot.js';
 import {getPlotTilePixelAngSize} from '../HiPSUtil.js';
-import {fireMouseReadoutChange} from '../VisMouseSync';
+import {mouseUpdatePromise, fireMouseReadoutChange} from '../VisMouseSync';
 import {
-    failedToParseWavelenthInfo,
+    primePlot, getPlotStateAry, getPlotViewById,
     getImageCubeIdx,
     getPtWavelength, getWavelengthParseFailReason,
     getWaveLengthUnits, hasPixelLevelWLInfo, hasPlaneOnlyWLInfo,
-    hasWLInfo,
     isImageCube, wavelengthInfoParsedSuccessfully
 } from '../PlotViewUtil';
 
@@ -61,16 +57,14 @@ export function* watchReadout() {
         const plotView= getPlotViewById(visRoot(), plotId);
         const plot= primePlot(plotView);
         const threeColor= plot.plotState.threeColor;
-        if (usePayload(mouseState,lockByClick)) {
+        if (isPayloadNeeded(mouseState,lockByClick)) {
             if (plot) {
                 const readoutItems= makeImmediateReadout(plot, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder);
-                // dispatchReadoutData({plotId, readoutItems, threeColor, readoutKey:getReadoutKey(plot)});
                 fireMouseReadoutChange({plotId, readoutItems, threeColor, readoutType:getReadoutKey(plot)});
                 getNextWithWithAsync= hasAsyncReadout(plot);
             }
         }
         else if (!lockByClick) {
-            // dispatchReadoutData({plotId, readoutItems:{}, readoutKey:getReadoutKey(plot)});
             fireMouseReadoutChange({plotId, readoutItems:{}, readoutType:getReadoutKey(plot)});
         }
 
@@ -134,7 +128,7 @@ function* processAsyncDataDelayed(plotView, worldPt, screenPt, imagePt, threeCol
 }
 
 
-function usePayload(mouseState, lockByClick) {
+function isPayloadNeeded(mouseState, lockByClick) {
     if (lockByClick) {
         return mouseState===MouseState.CLICK;
     }
@@ -244,10 +238,7 @@ function makeImagePlotAsyncReadout(plotView, worldPt, screenPt, imagePt, threeCo
     const plot= primePlot(plotView);
     const readoutItems= makeImmediateReadout(plot, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder);
     return doFluxCall(plotView,imagePt).then( (fluxResult) => {
-        if (fluxResult) {
-            const plot= primePlot(plotView);
-            return makeReadoutWithFlux(readoutItems,plot, fluxResult, threeColor);
-        }
+        return makeReadoutWithFlux(readoutItems,primePlot(plotView), fluxResult, threeColor);
     });
 }
 
@@ -266,11 +257,11 @@ function makeReadoutWithFlux(readout, plot, fluxResult,threeColor) {
     const labels= getFluxLabels(plot);
     if (threeColor) {
         const bands = plot.plotState.getBands();
-        bands.forEach( (b,idx) => readout[b.key+'Flux']=
-            makeValueReadoutItem(labels[idx], get(fluxData,[idx,'value']),get(fluxData,[idx,'unit']), 6 ));
+        bands.forEach( (b,idx) =>
+            readout[b.key+'Flux']= makeValueReadoutItem(labels[idx], fluxData?.[idx]?.value,fluxData?.[idx]?.unit, 6 ));
     }
     else {
-        readout.nobandFlux= makeValueReadoutItem(labels[0], get(fluxData,[0,'value']),get(fluxData,[0,'unit']), 6);
+        readout.nobandFlux= makeValueReadoutItem(labels[0], fluxData?.[0]?.value,fluxData?.[0]?.unit, 6);
     }
     if (fluxData) {
         const oIdx= fluxData.findIndex( (d) => d.imageOverlay);
@@ -296,7 +287,7 @@ function doFluxCall(plotView,iPt) {
             });
     }
     else {
-        return Promise.resolve(['', '', '']);
+        return Promise.resolve();
     }
 }
 

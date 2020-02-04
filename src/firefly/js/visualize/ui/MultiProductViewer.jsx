@@ -150,7 +150,7 @@ export const MultiProductViewer= memo(({ viewerId='DataProductsType', metaDataTa
     }, [viewerId]);
 
     useEffect(() => {
-        const deActivate= activate && activate();
+        const deActivate= activate?.();
         return () => {
             isFunction(deActivate) && deActivate();
         };

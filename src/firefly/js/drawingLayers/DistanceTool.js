@@ -339,14 +339,11 @@ const screenDistance= (pt1,pt2) => VisUtil.computeScreenDistance(pt1.x,pt1.y,pt2
 function getDistText(dist, pref) {
     if (pref !== PIXEL)  {     // world & pref is undefined or  world & pref is not PIXEL
         if(pref===ARC_MIN){
-            //return ` ${numeral(dist*60.0).format('0.000')}'`;
             return ` ${Number(dist*60.0).toPrecision(SIGFIG)}'`;
         }
         else if(pref===ARC_SEC){
-            //return ` ${numeral(dist*3600).format('0.000')}"`;
             return ` ${Number(dist*3600).toPrecision(SIGFIG)}"`;
         } else {
-            //return ` ${numeral(dist).format('0.000')}${HTML_DEG}`;
             return ` ${Number(dist).toPrecision(SIGFIG)}${HTML_DEG}`;
         }
     } else {                                        // not world or world & pref is PIXEL
@@ -373,13 +370,10 @@ function getPosAngleText(pt0, pt1, isWorld, cc, pref) {
     }
 
     if(pref===ARC_MIN){
-        //return ` ${PAPrefix}${numeral(posAngle*60.0).format('0.000')}'`;
         return ` ${PAPrefix}${Number(posAngle*60.0).toPrecision(SIGFIG)}'`;
     } else if(pref===ARC_SEC){
-        //return ` ${PAPrefix}${numeral(posAngle*3600).format('0.000')}"`;
         return ` ${PAPrefix}${Number(posAngle*3600).toPrecision(SIGFIG)}"`;
     } else {
-        //return ` ${PAPrefix}${numeral(posAngle).format('0.000')}${HTML_DEG}`;
         return ` ${PAPrefix}${Number(posAngle).toPrecision(SIGFIG)}${HTML_DEG}`;
     }
 }

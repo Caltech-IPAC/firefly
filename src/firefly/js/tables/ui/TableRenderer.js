@@ -3,7 +3,7 @@
  */
 
 import React, {Component, PureComponent, useRef, useCallback} from 'react';
-import FixedDataTable from 'fixed-data-table-2';
+import {Cell} from 'fixed-data-table-2';
 import {set, get, isEqual, pick} from 'lodash';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS, NULL_TOKEN} from '../FilterInfo.js';
@@ -25,7 +25,6 @@ import {useStoreConnector} from './../../ui/SimpleComponent.jsx';
 import {resolveHRefVal} from '../../util/VOAnalyzer.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 
-const {Cell} = FixedDataTable;
 const html_regex = /<.+>/;
 const filterStyle = {width: '100%', boxSizing: 'border-box'};
 

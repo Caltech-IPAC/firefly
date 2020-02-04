@@ -7,7 +7,7 @@ import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import {makeScreenPt} from '../Point.js';
 import {MouseState}  from '../VisMouseSync.js';
-import {Matrix} from 'transformation-matrix-js';
+import {Matrix} from '../../externalSource/transformation-matrix-js/matrix';
 
 const style={left:0,top:0,right:0, bottom:0,position:'absolute'};
 

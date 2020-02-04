@@ -3,7 +3,7 @@
  */
 
 import Enum from 'enum';
-import numeral from 'numeral';
+import {sprintf} from '../externalSource/sprintf';
 import {logError} from '../util/WebUtil.js';
 import {getPixScaleArcSec, isImage} from './WebPlot.js';
 import {PlotAttribute} from './PlotAttribute.js';
@@ -118,7 +118,7 @@ function getOnePlusLevelDesc(level) {
         retval= Math.round(level)+'x';
     }
     else {
-        retval= numeral(level).format('0.000')+'x';
+        retval= sprintf('%.3fx',level);
     }
     return retval;
 }
@@ -151,14 +151,15 @@ export function convertZoomToString(level) {
     else if (zfInt===2500) retval= String.fromCharCode(188) +'x'; // 1/4
     else if (zfInt===7500) retval= String.fromCharCode(190) +'x';   // 3/4
     else if (zfInt===5000) retval= String.fromCharCode(189) +'x';   // 1/2
-    else if (level<.125)   retval= numeral(level).format('0.000')+'x';
-    else                   retval= numeral(level).format('0.0')+'x';
+    else if (level<.125)   retval= sprintf('%.3fx',level);
+    else                   retval= sprintf('%.1fx',level);
     return retval;
 }
 
 const formatFOV = (charCode, fNum) => {
-    const nFormat = (fNum > 10.0) ? '0' : ((fNum >= 1.0) ? '0.0' : '0.00');
-    return `${numeral(fNum).format(nFormat)}${charCode}`;
+    const nFormat = (fNum > 10.0) ? '%d' : ((fNum >= 1.0) ? '%.1f' : '%.2f');
+    const str= sprintf(`${nFormat}`,fNum);
+    return `${str}${charCode}`;
 };
 
 export function makeFoVString(fov) {

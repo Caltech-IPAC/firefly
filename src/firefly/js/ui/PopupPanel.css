@@ -12,11 +12,11 @@
 }
 
 .popup-panel-title-background {
-    background: url('/images/popup_bg-horizontal.jpg');
+    background: url('~images/popup_bg-horizontal.jpg');
 }
 
 .popup-panel-header {
-    background: #93c2f1 url('/images/bg_listgradient.png') repeat-x;
+    background: #93c2f1 url('~images/bg_listgradient.png') repeat-x;
     width: auto;
     height: auto;
     padding-top: 1px;

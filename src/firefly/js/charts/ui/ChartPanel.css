@@ -121,62 +121,62 @@
 }
 
 .ChartToolbar__restore {
-    background-image: url("/images/icons-2014/RevertToDefault-24x24.png");
+    background-image: url("~images/icons-2014/RevertToDefault-24x24.png");
 }
 
 .ChartToolbar__zoom {
-    background-image: url("/images/icons-2014/24x24_ZoomIn.png");
+    background-image: url("~images/icons-2014/24x24_ZoomIn.png");
 }
 
 .ChartToolbar__pan {
-    background-image: url("/images/icons-2014/pan.png");
+    background-image: url("~images/icons-2014/pan.png");
 }
 
 .ChartToolbar__turntable {
-    background-image: url("/images/turntable-tmp.png");
+    background-image: url("~images/turntable-tmp.png");
 }
 
 .ChartToolbar__orbital {
-    background-image: url("/images/orbital-tmp.png");
+    background-image: url("~images/orbital-tmp.png");
 }
 
 .ChartToolbar__select {
-    background-image: url("/images/icons-2014/select.png");
+    background-image: url("~images/icons-2014/select.png");
 }
 
 .ChartToolbar__tblfilters {
-    background-image: url("/images/icons-2014/24x24_Filter.png");
+    background-image: url("~images/icons-2014/24x24_Filter.png");
 }
 
 .ChartToolbar__options {
-    background-image: url("/images/icons-2014/24x24_GearsNEW.png");
+    background-image: url("~images/icons-2014/24x24_GearsNEW.png");
 }
 
 .ChartToolbar__save {
-    background-image: url("/images/icons-2014/24x24_Save.png");
+    background-image: url("~images/icons-2014/24x24_Save.png");
 }
 
 .ChartToolbar__expand {
-    background-image: url("/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png");
+    background-image: url("~images/icons-2014/24x24_ExpandArrowsWhiteOutline.png");
 }
 
 .ChartToolbar__reset-zoom {
-    background-image: url("/images/icons-2014/Zoom1x-24x24-tmp.png");
+    background-image: url("~images/icons-2014/Zoom1x-24x24-tmp.png");
 }
 
 .ChartToolbar__filter {
-    background-image: url("/images/icons-2014/24x24_FilterAdd.png");
+    background-image: url("~images/icons-2014/24x24_FilterAdd.png");
 }
 
 .ChartToolbar__clear-filters {
-    background-image: url("/images/icons-2014/24x24_FilterOff_Circle.png");
+    background-image: url("~images/icons-2014/24x24_FilterOff_Circle.png");
 }
 
 .ChartToolbar__selected {
-    background-image: url("/images/icons-2014/24x24_Checkmark.png");
+    background-image: url("~images/icons-2014/24x24_Checkmark.png");
 }
 
 .ChartToolbar__clear-selected {
-    background-image: url("/images/icons-2014/24x24_CheckmarkOff_Circle.png");
+    background-image: url("~images/icons-2014/24x24_CheckmarkOff_Circle.png");
 }
 

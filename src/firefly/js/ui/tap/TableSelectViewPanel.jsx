@@ -2,7 +2,7 @@ import React, {PureComponent, Fragment} from 'react';
 import SplitPane from 'react-split-pane';
 
 import {SplitContent} from '../panel/DockLayoutPanel';
-import CreatableSelect from 'react-select/lib/Creatable';
+import CreatableSelect from 'react-select/creatable';
 import {isArray, get, pick} from 'lodash';
 import {FormPanel, ExtraButton} from '../FormPanel.jsx';
 import {FieldGroup} from '../FieldGroup.jsx';

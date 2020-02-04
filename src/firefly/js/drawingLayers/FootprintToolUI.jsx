@@ -16,13 +16,13 @@ import CsysConverter from '../visualize/CsysConverter.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {InputFieldView} from '../ui/InputFieldView.jsx';
 import {isNil, get, isEmpty} from 'lodash';
-import numeral from 'numeral';
+import {sprintf} from '../externalSource/sprintf';
 import validator from 'validator';
 
 export const getFootprintToolUIComponent = (drawLayer,pv) => <FootprintToolUI drawLayer={drawLayer} pv={pv}/>;
 export const defaultFootprintTextLoc = TextLocation.REGION_SE;
 
-const precision = '0.0';
+const precision = '%.1f';
 
 class FootprintToolUI extends PureComponent {
     constructor(props) {
@@ -221,11 +221,11 @@ function convertWorldToString(pt) {
     var str = '';
     if (!pt) return str;
 
-    return `${numeral(pt.x).format(precision)}, ${numeral(pt.y).format(precision)}`;
+    return `${sprintf(precision,pt.x)}, ${sprintf(precision,pt.y)}`;
 }
 
 function formatAngle(angle) {
-     var anglePre = parseFloat(`${numeral(angle).format(precision)}`);
+     var anglePre = parseFloat(`${sprintf(precision,angle)}`);
 
      return `${anglePre}`;
 }

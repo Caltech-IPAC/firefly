@@ -185,7 +185,7 @@ ext.NODE = { ...cmd ->
         exec {
             workingDir = rootDir
             executable "yarn"
-            args "install", "--frozen-lockfile"
+            args "install", "--ignore-platform", "--frozen-lockfile"
         }
     }
 

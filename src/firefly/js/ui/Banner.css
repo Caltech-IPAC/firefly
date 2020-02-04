@@ -4,7 +4,7 @@
     width: 100%;
     height: 75px;
     position: relative;
-    background: url("/images/ipac_bar.jpg");
+    background: url("~images/ipac_bar.jpg");
 }
 
 .banner__left {
@@ -56,7 +56,7 @@
     height: 20px;
     color: white;
     padding: 0 10px;
-    background: url("/images/ipac_bar.jpg");
+    background: url("~images/ipac_bar.jpg");
     border-bottom-left-radius: 5px;
     z-index: 1000;
 }

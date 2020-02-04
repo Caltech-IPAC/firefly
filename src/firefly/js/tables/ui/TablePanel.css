@@ -121,43 +121,43 @@
 }
 
 .PagingBar__button.first {
-    background-image: url("/images/icons-2014/16x16_BackwardToEnd.png");
+    background-image: url("~images/icons-2014/16x16_BackwardToEnd.png");
 }
 
 .PagingBar__button.last {
-    background-image: url("/images/icons-2014/16x16_ForwardToEnd.png");
+    background-image: url("~images/icons-2014/16x16_ForwardToEnd.png");
 }
 
 .PagingBar__button.next {
-    background-image: url("/images/icons-2014/16x16_Forward.png");
+    background-image: url("~images/icons-2014/16x16_Forward.png");
 }
 
 .PagingBar__button.previous {
-    background-image: url("/images/icons-2014/16x16_Backward.png");
+    background-image: url("~images/icons-2014/16x16_Backward.png");
 }
 
 .PanelToolbar__button.info {
-    background-image: url("/images/icons-2014/24x24_Info.png");
+    background-image: url("~images/icons-2014/24x24_Info.png");
 }
 
 .PanelToolbar__button.options {
-    background-image: url("/images/icons-2014/24x24_GearsNEW.png");
+    background-image: url("~images/icons-2014/24x24_GearsNEW.png");
 }
 
 .PanelToolbar__button.textView {
-    background-image: url("/images/icons-2014/24x24_TextView.png");
+    background-image: url("~images/icons-2014/24x24_TextView.png");
 }
 
 .PanelToolbar__button.tableView {
-    background-image: url("/images/icons-2014/24x24_TableView.png");
+    background-image: url("~images/icons-2014/24x24_TableView.png");
 }
 
 .PanelToolbar__button.save {
-    background-image: url("/images/icons-2014/24x24_Save.png");
+    background-image: url("~images/icons-2014/24x24_Save.png");
 }
 
 .PanelToolbar__button.clearFilters {
-    background-image: url("/images/icons-2014/24x24_FilterOff_Circle.png");
+    background-image: url("~images/icons-2014/24x24_FilterOff_Circle.png");
 }
 
 .TablePanelInfoWrapper {

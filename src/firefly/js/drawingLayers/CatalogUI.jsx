@@ -14,7 +14,7 @@ import {showInfoPopup, INFO_POPUP} from '../ui/PopupUtil.jsx';
 import {dispatchRecenter} from '../visualize/ImagePlotCntlr';
 import {GroupingScope} from '../visualize/DrawLayerCntlr.js';
 import {isDialogVisible, dispatchHideDialog} from '../core/ComponentCntlr.js';
-import {formatLonLatToString, formatWorldPt, formatWorldPtToString} from '../visualize/ui/WorldPtFormat';
+import {formatLonLatToString, formatWorldPt} from '../visualize/ui/WorldPtFormat';
 import {copyToClipboard} from '../util/WebUtil';
 import {ToolbarButton} from '../ui/ToolbarButton';
 import {makeColorChange, makeShape} from '../visualize/ui/DrawLayerUIComponents';
