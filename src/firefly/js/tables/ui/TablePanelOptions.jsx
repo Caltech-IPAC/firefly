@@ -11,20 +11,16 @@ import {InputField} from '../../ui/InputField.jsx';
 import {intValidator} from '../../util/Validate.js';
 import {getTableUiById, isClientTable} from '../TableUtil.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {dispatchTableAddLocal, dispatchTableRemove, dispatchTableUpdate} from '../TablesCntlr.js';
+import {dispatchTableAddLocal, dispatchTableRemove, TABLE_SELECT, dispatchTableFilter} from '../TablesCntlr.js';
 import {MetaInfo} from './TablePanel.jsx';
-import {COL_TYPE, getColumnIdx, getTblById, isOfType, parsePrecision} from '../TableUtil.js';
+import {COL_TYPE,  getTblById, isOfType, parsePrecision, getColumnValues, watchTableChanges, getFilterCount, getColumn} from '../TableUtil.js';
 import {TablePanel} from './TablePanel';
 import {FILTER_CONDITION_TTIPS, FilterInfo} from '../FilterInfo';
-import {checkboxColumnRenderer, inputColumnRenderer} from './TableRenderer.js';
+import {inputColumnRenderer} from './TableRenderer.js';
 import {dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {POPUP_DIALOG_ID} from '../../ui/PopupUtil.jsx';
 import {StatefulTabs, Tab} from '../../ui/panel/TabPanel.jsx';
-
-const labelStyle = {display: 'inline-block', whiteSpace: 'nowrap', width: 50};
-
-
-
+import {SelectInfo} from '../SelectInfo.js';
 
 export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOptionReset}) => {
 
@@ -35,6 +31,7 @@ export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOpt
     return (
         <div className='TablePanelOptions'>
             <Options {...{uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChange}} />
+            <OptionsFilterStats tbl_id={ctm_tbl_id}/>
             <StatefulTabs componentKey='TablePanelOptions' defaultSelected={0} borderless={true} useFlex={true} style={{flex: '1 1 0'}}>
                 <Tab name='Column Options'>
                     <ColumnOptions {...{tbl_id, tbl_ui_id, ctm_tbl_id, onChange}} />
@@ -64,7 +61,19 @@ TablePanelOptions.propTypes = {
     onOptionReset: PropTypes.func
 };
 
+function OptionsFilterStats({tbl_id}) {
 
+    const [filterCnt] = useStoreConnector(() => getFilterCount(getTblById(tbl_id)));
+    const filterStr = filterCnt === 0 ? '' : filterCnt === 1 ? '1 filter' : `${filterCnt} filters`;
+    const clearFilters = () => dispatchTableFilter({tbl_id, filters: ''});;
+
+    if (filterCnt === 0) return null;
+    return (
+        <div style={{ position: 'absolute', top: 30, zIndex: 1, right: 5}}>
+            <button onClick={clearFilters}> remove {filterStr}</button>
+        </div>
+    );
+}
 
 function Options({uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChange}) {
     const {pageSize, showPaging=true, showUnits=false, allowUnits=true,showTypes=true, showFilters=false} = uiState || {};
@@ -88,6 +97,8 @@ function Options({uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChang
     const onClose = () => {
         dispatchHideDialog(POPUP_DIALOG_ID);
     };
+
+    const labelStyle = {display: 'inline-block', whiteSpace: 'nowrap', width: 50};
 
     return (
         <div style={{display: 'inline-flex', justifyContent: 'space-between', marginBottom: 10}}>
@@ -135,9 +146,8 @@ function Options({uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChang
 
 const columns = [
     {name: 'name', fixed: true, width: 12},
-    {name: 'show', fixed: true, width: 3, resizable: false},
     {name: 'filter', fixed: true, width: 10, sortable: false, filterable: false},
-    {name: 'precision', fixed: true, width: 7, sortable: false, filterable: false},
+    {name: 'format', fixed: true, width: 7, sortable: false, filterable: false},
     {name: 'null_str', fixed: true, width: 7, sortable: false, filterable: false},
     {name: 'type'},
     {name: 'units'},
@@ -147,10 +157,13 @@ const columns = [
     {name: 'links'},
     {name: 'description'},
     {name: 'cname', visibility: 'hidden'},
+    {name: 'show', visibility: 'hidden'},
 ];
 
-const cnameIdx = columns.length-1;
-const filterIdx = 2;
+const showIdx = columns.length-1;
+const cnameIdx = columns.length-2;
+const filterIdx = 1;
+const typeIdx = 4;
 
 
 export const ColumnOptions = React.memo(({tbl_id, tbl_ui_id, ctm_tbl_id, onChange}) => {
@@ -162,6 +175,21 @@ export const ColumnOptions = React.memo(({tbl_id, tbl_ui_id, ctm_tbl_id, onChang
             ctm.tbl_id = ctm_tbl_id;
             dispatchTableAddLocal(ctm, undefined, false);
         }
+
+        watchTableChanges(ctm_tbl_id, [TABLE_SELECT], ({payload}) => {
+            const {selectInfo} = payload || {};
+            const selectInfoCls = SelectInfo.newInstance(selectInfo);
+            const cnames = getColumnValues(getTblById(ctm_tbl_id), 'cname');
+            const nColumns = cloneDeep(get(getTableUiById(tbl_ui_id), 'columns', []));
+            nColumns.forEach((c) => {
+                const ridx = cnames.findIndex((cn) => cn === c.name);
+                if (ridx >= 0) {
+                    c.visibility = selectInfoCls.isSelected(ridx) ? 'show' : 'hide';
+                }
+            });
+            onChange({columns: nColumns});
+        });
+
         return () => {
             dispatchTableRemove(ctm_tbl_id, false);
         };
@@ -172,10 +200,10 @@ export const ColumnOptions = React.memo(({tbl_id, tbl_ui_id, ctm_tbl_id, onChang
     // the rest of the state are kept in the source table ui data
     const renderers =  {
         filter:     {cellRenderer: makeFilterRenderer(tbl_id, ctm_tbl_id, onChange)},
-        precision:  {cellRenderer: makePrecisionRenderer(tbl_ui_id, ctm_tbl_id, onChange)},
-        show:       {cellRenderer: makeShowRenderer(tbl_ui_id, ctm_tbl_id, onChange), headRenderer: makeShowHeaderRenderer(tbl_ui_id, ctm_tbl_id, onChange)},
+        format:  {cellRenderer: makePrecisionRenderer(tbl_ui_id, ctm_tbl_id, onChange)},
         null_str:   {cellRenderer: makeNullStringRenderer(tbl_ui_id, ctm_tbl_id, onChange)}
     };
+
     return (
         <div style={{flex: '1 1 0'}}>
             <TablePanel
@@ -185,7 +213,8 @@ export const ColumnOptions = React.memo(({tbl_id, tbl_ui_id, ctm_tbl_id, onChang
                 renderers = {renderers}
                 showToolbar = {false}
                 showOptionButton = {false}
-                selectable = {false}
+                showFilters={true}
+                selectable = {true}
                 rowHeight = {24}
                 highlightedRowHandler = {()=>undefined}
             />
@@ -195,11 +224,10 @@ export const ColumnOptions = React.memo(({tbl_id, tbl_ui_id, ctm_tbl_id, onChang
 
 function createColumnTableModel(tbl_id, tbl_ui_id) {
     const filterInfoCls = FilterInfo.parse(get(getTblById(tbl_id), 'request.filters'));
-    const data = get(getTableUiById(tbl_ui_id), 'columns', [])
+    const data =  get(getTableUiById(tbl_ui_id), 'columns', [])
         .filter((c) => c.visibility !== 'hidden')
         .map( (c) => [
             c.label || c.name || '',
-            !c.visibility || c.visibility === 'show',
             filterInfoCls.getFilter(c.name) || '',
             c.precision || '',
             c.nullString || '',
@@ -210,9 +238,23 @@ function createColumnTableModel(tbl_id, tbl_ui_id) {
             c.UCD || '',
             c.links || '',
             c.desc || '',
-            c.name || ''
+            c.name || '',
+            !c.visibility || c.visibility === 'show'
         ]);
-    return {tableData: {columns, data}, totalRows: data.length};
+    const selectInfoCls = SelectInfo.newInstance({rowCount: data.length});
+    for(let idx = 0; idx < data.length; idx++) {
+        selectInfoCls.setRowSelect(idx, get(data,[idx, showIdx]));
+    }
+    const ctm = {selectInfo: selectInfoCls.data,  tableData: {columns, data}, totalRows: data.length};
+
+    // hide empty columns
+    ['arraySize', 'utype', 'UCD', 'links', 'description'].forEach((cname) => {
+        const cl = getColumnValues(ctm, cname).filter((v) => v);
+        if ( cl.length === 0 ) {
+            getColumn(ctm, cname).visibility = 'hidden';
+        }
+    });
+    return ctm;
 }
 
 
@@ -224,48 +266,6 @@ function getActiveInput(data, rowIdx, tbl_ui_id) {
     const nColumns = cloneDeep(get(getTableUiById(tbl_ui_id), 'columns', []));
     const selCol = nColumns.find((col) => col.name === selColName);
     return {selColName, nColumns, selCol};
-}
-
-function makeShowRenderer(tbl_ui_id, ctm_tbl_id, onChange) {
-
-    const onCheckBoxSel = (checked, rowIdx,  data) => {
-        const {nColumns, selCol} = getActiveInput(data, rowIdx, tbl_ui_id);
-        selCol && (selCol.visibility = checked ? 'show' : 'hide');
-        onChange && onChange({columns: nColumns});
-    };
-
-    return checkboxColumnRenderer({tbl_id:ctm_tbl_id, cname: 'show', onChange: onCheckBoxSel, style: cellStyle});
-}
-
-function makeShowHeaderRenderer(tbl_ui_id, ctm_tbl_id, onChange) {
-    const onSelectAll = (checked) => {
-        const nColumns = cloneDeep(get(getTableUiById(tbl_ui_id), 'columns', []));
-        nColumns.filter( (c) => c.visibility !== 'hidden')
-            .forEach((c) => c.visibility = checked ? 'show' : 'hide');
-        onChange && onChange({columns: nColumns});
-        // requires update to the ctm table
-        const ctm_table = cloneDeep(getTblById(ctm_tbl_id));
-        const showIdx = getColumnIdx(ctm_table, 'show');
-        get(ctm_table, 'tableData.data',[])
-            .forEach( (row) => row[showIdx] = checked ? true : false);
-        get(ctm_table, 'origTableModel.tableData.data',[])
-            .forEach( (row) => row[showIdx] = checked ? true : false);
-        dispatchTableUpdate(ctm_table);
-    };
-
-    return () => {
-        const selectAll = get(getTableUiById(tbl_ui_id), 'columns', [])
-            .filter((c) => c.visibility === 'hide').length === 0;    // true when no columns are set to 'hide'
-        return (
-            <div className='TablePanel__header' style={cellStyle}>
-                <div>show</div>
-                <input type = 'checkbox'
-                       title = 'Unselect checkbox to hide this column from the table UI'
-                       onChange = {(e) => onSelectAll(e.target.checked)}
-                       checked = {selectAll}/>
-            </div>
-        );
-    };
 }
 
 function makePrecisionRenderer(tbl_ui_id, ctm_tbl_id, onChange) {
@@ -284,7 +284,7 @@ function makePrecisionRenderer(tbl_ui_id, ctm_tbl_id, onChange) {
     };
 
     const isReadOnly = (rowIndex, data) => {
-        return !isOfType(data[rowIndex][5],COL_TYPE.FLOAT);
+        return !isOfType(data[rowIndex][typeIdx],COL_TYPE.FLOAT);
     };
 
     const validator = (value) => {

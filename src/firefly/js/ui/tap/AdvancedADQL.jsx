@@ -84,7 +84,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
                 <SplitContent style={{display: 'flex', flexDirection: 'column'}}>
                     <b>Schema -> Table -> Column</b>
                     <div  style={{overflow: 'auto', flexGrow: 1}}>
-                        <Tree defaultExpandAll showLine loadData={onLoadData} onSelect={onSelect}>
+                        <Tree defaultExpandAll showLine selectedKeys={[]} selectable={false} loadData={onLoadData} onSelect={onSelect}>
                             {treeNodes}
                         </Tree>
                     </div>

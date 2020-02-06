@@ -13,7 +13,7 @@ import 'rc-tree/assets/index.css';
 import {BasicTableViewWithConnector} from './BasicTableView.jsx';
 import {SelectInfo} from '../SelectInfo.js';
 import {createInputCell} from './TableRenderer.js';
-import {FILTER_CONDITION_TTIPS, FILTER_TTIPS, FilterInfo} from '../FilterInfo.js';
+import {FILTER_CONDITION_TTIPS, FILTER_TTIPS, FilterInfo, getFiltersAsSql} from '../FilterInfo.js';
 import {sortTableData, calcColumnWidths, getTableUiByTblId, getTableUiById, getSqlFilter} from  '../TableUtil.js';
 import {InputAreaField} from '../../ui/InputAreaField.jsx';
 import {toBoolean} from '../../util/WebUtil.js';
@@ -231,7 +231,6 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange}) {
         setSqlFilter(op, sql);
     }, [tbl_id]);     // run only once
 
-
     const {columns, error} = uiState;
     const treeNodes = cloneDeep(columns)
                         .filter( (c) => c.visibility !== 'hidden')
@@ -245,12 +244,15 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange}) {
         onChange({sqlFilter});
     };
 
-    const onNodeClick = (p) => {
-        const node = ReactDOM.findDOMNode(sqlEl.current);
-        const textArea = node && node.firstChild;
-        const [key=''] = p;
+    const onNodeClick = (skeys, {node}) => {
+        const textArea = get(ReactDOM.findDOMNode(sqlEl.current), 'firstChild');
+        const key = get(node, 'props.eventKey');
         insertAtCursor(textArea, ` "${key}" `, sqlKey, groupKey);
     };
+
+    const colFilters = getFiltersAsSql(tbl_id);
+    const sqlLabel = colFilters ? 'Additional Constranints(SQL):' : 'Constranints(SQL):';
+
     const errStyle = error ? {borderColor: 'red'} : {};
     return (
         <SplitPane split='vertical' defaultSize={200} style={{display: 'inline-flex'}}>
@@ -264,19 +266,24 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange}) {
             </SplitContent>
             <SplitContent style={{overflow: 'auto'}}>
                 <div className='flex-full' style={{height: '100%', overflow: 'hidden'}}>
+                    <ColumnFilter {...{colFilters, onChange}}/>
                     <div style={{display: 'inline-flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                        <h3>SQL Filter:</h3>
-                        <div style={{display: 'inline-flex', alignItems: 'center'}}>
+                        <h3>{sqlLabel}</h3>
+                            <div style={{display: 'inline-flex', alignItems: 'center'}}>
                             <button className='button std' title='Apply the constraints' style={{height: 24}} onClick={onApply}>Apply</button>
-                            <label style={{margin: '0 5px'}}> filter using: </label>
-                            <RadioGroupInputField
-                                fieldKey={opKey}
-                                groupKey={groupKey}
-                                alignment='horizontal'
-                                options={[
-                                  {label: 'AND', value: 'AND'},
-                                  {label: 'OR', value: 'OR'}
-                            ]}/>
+                            {colFilters &&
+                                <div style={{display: 'inline-flex', alignItems: 'center'}}>
+                                    <label style={{margin: '0 5px'}}> with: </label>
+                                    <RadioGroupInputField
+                                        fieldKey={opKey}
+                                        groupKey={groupKey}
+                                        alignment='horizontal'
+                                        options={[
+                                            {label: 'AND', value: 'AND'},
+                                            {label: 'OR', value: 'OR'}
+                                        ]}/>
+                                </div>
+                            }
                         </div>
                     </div>
                     <InputAreaFieldConnected
@@ -289,7 +296,7 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange}) {
                         placeholder='e.g., "ra" > 180 AND "ra" < 185'
                     />
                     {error && <li style={{color: 'red', fontStyle: 'italic'}}>{error}</li>}
-                    <div style={{color: '#4c4c4c', overflow: 'auto'}}>
+                    <div style={{color: '#4c4c4c', overflow: 'auto', flexGrow: 1}}>
                         <h4>Usage</h4>
                         <div style={{marginLeft: 5}}>
                             <div>Input should follow the syntax of an SQL WHERE clause.</div>
@@ -327,3 +334,18 @@ SqlTableFilter.propTypes= {
     onOptionReset: PropTypes.func
 };
 
+function ColumnFilter({colFilters, onChange}) {
+    const clearFilters = () => onChange({filterInfo: ''});
+
+    if (colFilters){
+        return (
+            <div >
+                <div style={{fontWeight: 'bold', display: 'inline-flex', margin: '5px 0'}}>
+                    <div>Current Constraints: </div>
+                    <div style={{marginLeft: 5}} className='ff-href' onClick={clearFilters}>Clear</div>
+                </div>
+                <div className='TablePanelOptions__filters' title={colFilters}>{colFilters}</div>
+            </div>
+        );
+    } else return null;
+}
