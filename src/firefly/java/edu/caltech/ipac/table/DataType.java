@@ -67,7 +67,7 @@ public class DataType implements Serializable, Cloneable {
     private static final List<String> FLOATING_TYPES = Arrays.asList(DOUBLE, REAL, FLOAT, S_DOUBLE, S_REAL, S_FLOAT);
     private static final List<String> INT_TYPES = Arrays.asList(INTEGER, LONG, S_INTEGER, S_LONG);
     public static final List<String> NUMERIC_TYPES = Stream.concat(FLOATING_TYPES.stream(), INT_TYPES.stream()).collect(Collectors.toList());
-    private static final Pattern precisiontPattern = Pattern.compile("^(HMS|DMS|[EFG])?(\\d+)$", Pattern.CASE_INSENSITIVE);
+    private static final Pattern precisiontPattern = Pattern.compile("^(HMS|DMS|[EFG])?(\\d*)$", Pattern.CASE_INSENSITIVE);
 
 
     private       String keyName;
@@ -386,9 +386,9 @@ public class DataType implements Serializable, Cloneable {
                     int p = isEmpty(tp[1]) ? 0 : Integer.parseInt(tp[1]);
                     try {
                         if (c.toUpperCase().equals("HMS")) {
-                            return CoordUtil.dd2sex(Double.parseDouble(String.valueOf(value)), false, true, p+3);
+                            return CoordUtil.dd2sex(Double.parseDouble(String.valueOf(value)), false, true, 5);  // set to 5 to matches client's default
                         } else if (c.toUpperCase().equals("DMS")) {
-                            return CoordUtil.dd2sex(Double.parseDouble(String.valueOf(value)), true, true, p+4);
+                            return CoordUtil.dd2sex(Double.parseDouble(String.valueOf(value)), true, true, 5);   // set to 5 to matches client's default
                         } else {
                             return String.format("%" + "." + p + c, value);
                         }

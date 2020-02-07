@@ -322,11 +322,11 @@ export function MetaInfo({tbl_id, style, isOpen=false}) {
     const contentStyle={display: 'flex', flexDirection: 'column', maxHeight: 200, overflow: 'auto', paddingBottom: 1};
     const wrapperStyle={width: '100%'};
 
-    const {keywords, links, params} = TblUtil.getTblById(tbl_id);
-
-    if (isEmpty(keywords) && isEmpty(links) && isEmpty(params) ) {
+    if (!TblUtil.hasAuxData(tbl_id)) {
         return null;
     }
+    const {keywords, links, params} = TblUtil.getTblById(tbl_id);
+
     return (
         <div className='TablePanel__meta' style={style}>
             { !isEmpty(keywords) &&

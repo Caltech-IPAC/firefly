@@ -13,7 +13,7 @@ import {getTableUiById, isClientTable} from '../TableUtil.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {dispatchTableAddLocal, dispatchTableRemove, TABLE_SELECT, dispatchTableFilter} from '../TablesCntlr.js';
 import {MetaInfo} from './TablePanel.jsx';
-import {COL_TYPE,  getTblById, isOfType, parsePrecision, getColumnValues, watchTableChanges, getFilterCount, getColumn} from '../TableUtil.js';
+import {COL_TYPE,  getTblById, isOfType, parsePrecision, getColumnValues, watchTableChanges, getFilterCount, getColumn, hasAuxData} from '../TableUtil.js';
 import {TablePanel} from './TablePanel';
 import {FILTER_CONDITION_TTIPS, FilterInfo} from '../FilterInfo';
 import {inputColumnRenderer} from './TableRenderer.js';
@@ -45,8 +45,7 @@ export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOpt
                 }
                 <Tab name='Meta'>
                     <div style={{width: '100%', height: '100%', overflow: 'auto'}}>
-                        <div style={{margin: '10px 10px 0px'}}>Additional table related information will appear below, if any.  Click on header to expand or collapse a section.</div>
-                        <MetaInfo tbl_id={tbl_id} isOpen={true} style={{ width: '100%', border: 'none', margin: 'unset', padding: 'unset'}} />
+                        <MetaContent tbl_id={tbl_id}/>
                     </div>
                 </Tab>
             </StatefulTabs>
@@ -60,6 +59,14 @@ TablePanelOptions.propTypes = {
     onChange: PropTypes.func,
     onOptionReset: PropTypes.func
 };
+
+function MetaContent({tbl_id}) {
+    if (hasAuxData(tbl_id)) {
+        return <MetaInfo tbl_id={tbl_id} isOpen={true} style={{ width: '100%', border: 'none', margin: 'unset', padding: 'unset'}} />;
+    } else {
+        return <div style={{margin: 20, fontWeight: 'bold'}}>No metadata available</div>;
+    }
+}
 
 function OptionsFilterStats({tbl_id}) {
 
@@ -270,8 +277,9 @@ function getActiveInput(data, rowIdx, tbl_ui_id) {
 
 function makePrecisionRenderer(tbl_ui_id, ctm_tbl_id, onChange) {
     const tooltips = 'A string Tn where T is either F, E, G, HMS, or DMS\n' +
-        ' When T is F, E, HMS, or DMS, n is the number of significant figures after the decimal point.\n' +
-        ' When T is G, n is the number of significant digits';
+        ' When T is F or E, n is the number of significant figures after the decimal point\n' +
+        ' When T is G, n is the number of significant digits\n' +
+        ' When T is HMS or DMS, n is ignored';
 
     const onPrecision = (val, rowIdx,  data) => {
         const {nColumns, selCol} = getActiveInput(data, rowIdx, tbl_ui_id);

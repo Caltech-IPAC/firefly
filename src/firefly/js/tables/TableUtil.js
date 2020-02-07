@@ -488,9 +488,9 @@ export function getRowValues(tableModel, rowIdx) {
  * format		: Same as fmtDisp
  * precision	: This only applies to floating point numbers.
  *                A string Tn where T is either F, E, G, HMS, or DMS
- *                If T is not present, it defaults to F.
- *                When T is F, E, HMS, or DMS, n is the number of significant figures after the decimal point.
+ *                When T is F or E, n is the number of significant figures after the decimal point.
  *                When T is G, n is the number of significant digits
+ *                When T is HMS or DMS, n is ignored
 
  * @param {TableColumn} col
  * @param {Object} val
@@ -527,11 +527,11 @@ export function formatValue(col, val) {
         return sprintf('%i', val);
     } else if (isColumnType(col, COL_TYPE.FLOAT)) {
         if (precision) {
-            let [type, prec=0] = parsePrecision(precision);
+            let [type, prec] = parsePrecision(precision);
             if (type === 'HMS') {
-                return dd2sex(val, false, true, prec+3);
+                return dd2sex(val, false, true);    // use prec+3 to get num of decimal places
             } else if (type === 'DMS') {
-                return dd2sex(val, true, true, prec+4);
+                return dd2sex(val, true, true);     // use prec+4 to get num of decimal places
             } else {
                 if (!type || type === 'F') type = 'f';
                 prec = '.' + prec;
@@ -545,11 +545,13 @@ export function formatValue(col, val) {
 }
 
 export function parsePrecision(s = '') {
-    const [, type, prec] = s.trim().toUpperCase().match(/^(HMS|DMS|[EFG])?(\d+)$/) || [];
-    if (type === 'G' && prec === '0') {
-        return [];
-    }
-    return [type, parseInt(prec)];
+    const [, type, sprec] = s.trim().toUpperCase().match(/^(HMS|DMS|[EFG])?(\d*)$/) || [];
+    const prec = sprec ? parseInt(sprec) : -1;
+    if (type === 'G' && prec < 1) return [];
+    if (['E','F'].includes(type) && prec < 0) return [];
+    if (['HMS','DMS'].includes(type)) return [type];
+
+    return [type, prec];
 }
 
 export function getTypeLabel(col={}) {
@@ -1345,6 +1347,16 @@ export function getBooleanMetaEntry(tableOrId,metaKey,defVal= false) {
     return (v!==undefined) ? toBoolean(v,Boolean(defVal)) : Boolean(defVal);
 }
 
+/**
+ * return true if this table contains any auxiliary data, like meta, links, and params
+ * @param tbl_id
+ * @returns {boolean}
+ */
+export function hasAuxData(tbl_id) {
+    const {keywords, links, params} = getTblById(tbl_id);
+    return !isEmpty(keywords) || !isEmpty(links) || !isEmpty(params);
+}
+
 /*-------------------------------------private------------------------------------------------*/
 
 /**
@@ -1372,3 +1384,5 @@ function doOnTblLoaded(action, cancelSelf, {tbl_id, resolve}) {
         }
     }
 }
+
+
