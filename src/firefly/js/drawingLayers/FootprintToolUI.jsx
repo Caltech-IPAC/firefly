@@ -160,12 +160,12 @@ class FootprintToolUI extends PureComponent {
                 <div style={{display:'flex', justifyContent:'flex-start'}}>
 
                     <div style={tStyle}>
-                        <div title={'Add a lable to this footprint'}> Label:<input style={{width: 60}}
+                        <div title={'Add a lable to this footprint'}> Label:&nbsp;<input style={{width: 86}}
                                            type='text'
                                            value={fpText}
                                            onChange={this.changeFootprintText}/>
                         </div>
-                        <div style={mStyle} title={'Choose a corner'}> Label Location:
+                        <div style={mStyle} title={'Choose a corner'}> Label Location:&nbsp;
                             <select value={fpTextLoc} onChange={ this.changeFootprintTextLocation }>
                                 <option value={TextLocation.REGION_NE.key}> NE </option>
                                 <option value={TextLocation.REGION_NW.key}> NW </option>
