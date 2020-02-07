@@ -165,7 +165,7 @@ class FootprintToolUI extends PureComponent {
                                            value={fpText}
                                            onChange={this.changeFootprintText}/>
                         </div>
-                        <div style={mStyle} title={'Choose a corner'}> Corners:
+                        <div style={mStyle} title={'Choose a corner'}> Label Location:
                             <select value={fpTextLoc} onChange={ this.changeFootprintTextLocation }>
                                 <option value={TextLocation.REGION_NE.key}> NE </option>
                                 <option value={TextLocation.REGION_NW.key}> NW </option>
