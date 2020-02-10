@@ -1120,7 +1120,7 @@ function drawFootprintText(drawObj, plot, def, ctx) {
     if (isNil(text)) return;
     const outlineObj = (drawObj.drawObjAry.length > drawObj.outlineIndex) ?
                       drawObj.drawObjAry[drawObj.outlineIndex] :
-                      (isHiPS(plot) ? (updateHandle(drawObj, plot, []))[0] : null);
+                      (isHiPS(plot) ? (updateHandle(drawObj, plot, []))[0] : remakeOutlineBox(drawObj, plot, [OutlineType.original]));
 
 
     // if no outline exists, display text as stored location
