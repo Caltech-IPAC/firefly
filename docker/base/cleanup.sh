@@ -28,7 +28,7 @@ function doCleanup() {
         fi
 
         ${find_cmd} "${workarea}/upload" -type f -mtime +7 -exec /bin/rm '{}' \+ -print >> "${log_file}" 2>&1
-        #${find_cmd} "${workarea}/HiPS" -type f -mtime +90 -exec /bin/rm '{}' \+ -print >> "${log_file}" 2>&1
+        ${find_cmd} "${workarea}/HiPS" -type f -mtime +90 -exec /bin/rm '{}' \+ -print >> "${log_file}" 2>&1
 
         dirs_to_clear=("${workarea}/visualize/users" "${workarea}/temp_files")
         for d in ${dirs_to_clear[@]}; do
