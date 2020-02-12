@@ -22,6 +22,7 @@ import {replaceHeader, getScreenPixScaleArcSec} from './WebPlot.js';
 import {primePlot} from './PlotViewUtil.js';
 import CoordinateSys from './CoordSys';
 import {getRootURL} from '../util/BrowserUtil.js';
+import {getFireflySessionId} from '../Firefly';
 
 
 export const MAX_SUPPORTED_HIPS_LEVEL= ORDER_MAX-1;
@@ -191,6 +192,7 @@ export function makeHiPSAllSkyUrlFromPlot(plot) {
 export function makeHipsUrl(url, proxy) {
     if (proxy) {
         const params= {
+            downloadSessionId: getFireflySessionId(),
             hipsUrl : url
         };
         return encodeServerUrl(getRootURL() + 'servlet/Download', params);

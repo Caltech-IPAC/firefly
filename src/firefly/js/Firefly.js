@@ -6,7 +6,7 @@
 import 'isomorphic-fetch';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {set, get, defer} from 'lodash';
+import {set, get, defer, once} from 'lodash';
 import 'styles/global.css';
 
 import {APP_LOAD, dispatchAppOptions, dispatchUpdateAppData} from './core/AppDataCntlr.js';
@@ -23,13 +23,16 @@ import {reduxFlux} from './core/ReduxFlux.js';
 import {wsConnect} from './core/messaging/WebSocketClient.js';
 import {ActionEventHandler} from './core/messaging/MessageHandlers.js';
 import {init} from './rpc/CoreServices.js';
-import {getPropsWith, mergeObjectOnly} from './util/WebUtil.js';
+import {getPropsWith, mergeObjectOnly, getProp} from './util/WebUtil.js';
 import {initLostConnectionWarning} from './ui/LostConnection.jsx';
 import {dispatchChangeTableAutoScroll, dispatchWcsMatch, visRoot} from './visualize/ImagePlotCntlr';
 
 export const flux = reduxFlux;
 
 var initDone = false;
+
+export const getFireflySessionId= once(() =>
+    getProp('version.ClientBuildEnv')==='local' ? 'LOCAL_SESSION' : `FF-Session-${Date.now()}`);
 
 /**
  * A list of available templates
