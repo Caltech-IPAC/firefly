@@ -294,7 +294,7 @@ function doVoSearch(request, providerName = '') {
 
 function doLoadTable(request) {
     const fileLocation = get(request, 'fileLocation', LOCALFILE);
-    var tReq = makeTblRequest('userCatalogFromFile', 'Table Upload', {
+    var tReq = makeTblRequest('userCatalogFromFile', '${filename}', {
         filePath: ( fileLocation === LOCALFILE) ? request.fileUpload : request.workspaceUpload,
         sourceFrom: fileLocation
     });

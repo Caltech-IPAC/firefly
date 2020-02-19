@@ -35,6 +35,8 @@ import {CysConverter} from '../visualize/CsysConverter.js';
 import {parseObsCoreRegion} from '../util/ObsCoreSRegionParser.js';
 import {brighter, darker} from '../util/Color';
 import {isDefined} from '../util/WebUtil';
+import ShapeDataObj from '../visualize/draw/ShapeDataObj';
+import {getNumFilters} from '../tables/FilterInfo';
 
 
 const TYPE_ID= 'CATALOG_TYPE';
@@ -58,7 +60,7 @@ export default {factoryDef, TYPE_ID}; // every draw layer must default export wi
 function creator(initPayload, presetDefaults={}) {
     const {catalogId, tableData, tableMeta, title,
            selectInfo, columns, tableRequest, highlightedRow, color, angleInRadian=false,
-           symbol, size, tblId,
+           symbol, size, tblId, orbitalPath= false,
            dataTooBigForSelection=false, catalog=true,
            dataType=CatalogType.X.key, tableSelection, isFromRegion=false,
            searchTarget, searchTargetSymbol= DrawSymbol.POINT_MARKER, layersPanelLayoutId,
@@ -116,6 +118,7 @@ function creator(initPayload, presetDefaults={}) {
         angleInRadian,
         selectOption: tableSelection,
         isFromRegion,
+        orbitalPath,
         tblId: tblId ? tblId : catalogId,
         searchTarget,
         searchTargetVisible: true,
@@ -147,14 +150,20 @@ function highlightChange(mouseStatePayload) {
  * @returns {function()}
  */
 function makeHighlightDeferred(drawLayer,plotId,screenPt) {
-    let done= false;
-    let idx= 0;
-    const maxChunk= 1000;
+    let done = false;
+    let idx = 0;
+    const maxChunk = 1000;
     let minDist = 20;
-    const {data}= drawLayer.drawData;
-    const {tableRequest}= drawLayer;
-    let closestIdx= -1;
-    const plot= primePlot(visRoot(),plotId);
+    let {data} = drawLayer.drawData;
+    const {tableRequest} = drawLayer;
+    let closestIdx = -1;
+    const plot = primePlot(visRoot(), plotId);
+
+    if (drawLayer.orbitalPath) {
+        if (tableRequest.sortInfo || getNumFilters(tableRequest)) return () => undefined;
+        data = data.filter((d) => d.type !== ShapeDataObj.SHAPE_DATA_OBJ);
+    }
+
     const id= window.setInterval( () => {
         if (done) {
             window.clearInterval(id);
@@ -183,7 +192,7 @@ function makeHighlightDeferred(drawLayer,plotId,screenPt) {
         const cc= CysConverter.make(plot);
         for(let i=0;(idx<data.length && i<maxChunk ); i++) {
             const obj= data[idx];
-            if (obj) {
+            if (obj && obj.type!== ShapeDataObj.SHAPE_DATA_OBJ) {
                 dist = DrawOp.getScreenDist(obj, cc, screenPt);
                 if (dist > -1 && dist < minDist) {
                     minDist = dist;
@@ -297,18 +306,42 @@ function computeSearchTarget(drawLayer) {
 
 }
 
+
 function computePointDrawLayer(drawLayer, tableData, columns) {
 
     const lonIdx= findColIdx(tableData.columns, columns.lonCol);
     const latIdx= findColIdx(tableData.columns, columns.latCol);
-    const {angleInRadian:rad}= drawLayer;
+    const {angleInRadian:rad, orbitalPath}= drawLayer;
     if (lonIdx<0 || latIdx<0) return null;
+    const dataArray= tableData?.data ?? [];
 
-    const drawData= get(tableData, 'data', []).map( (d) => {
-        const wp= makeWorldPt( toAngle(d[lonIdx],rad), toAngle(d[latIdx],rad), columns.csys);
-        return PointDataObj.make(wp);
-    });
+    const makeWp= (d) => makeWorldPt(toAngle(d[lonIdx],rad), toAngle(d[latIdx],rad), columns.csys);
+    let drawData= [];
+
+
+    if (orbitalPath) {
+        const {tableRequest} = drawLayer;
+        if (!tableRequest.sortInfo && !getNumFilters(tableRequest)) {
+            drawData= dataArray.map( (d) => PointDataObj.make(makeWp(d),3, DrawSymbol.DOT));
+        }
+        let lastWp;
+         const orbitalData= dataArray
+            .map( (d) => {
+                const wp= makeWp(d);
+                let line;
+                if (lastWp) line= ShapeDataObj.makeLine(wp, lastWp);
+                lastWp= wp;
+                return line;
+            })
+            .filter( (l) => l);
+        drawData= [...drawData, ...orbitalData];
+    }
+    else {
+        drawData= dataArray.map( (d) => PointDataObj.make(makeWp(d)));
+    }
+    
     drawLayer.searchTarget && drawData.push(computeSearchTarget(drawLayer));
+
     return drawData;
 }
 
@@ -406,7 +439,14 @@ function computeHighlightLayer(drawLayer, columns) {
 function computePointHighlightLayer(drawLayer, columns) {
 
     const tbl= getTblById(drawLayer.tblId);
-    if (!tbl) return null;
+    if (!tbl) return undefined;
+
+    if (drawLayer.orbitalPath) {
+        const {tableRequest} = drawLayer;
+        if (tableRequest.sortInfo || getNumFilters(tableRequest)) return undefined;
+    }
+
+
     const {angleInRadian:rad}= drawLayer;
     const raStr= getCellValue(tbl,drawLayer.highlightedRow, columns.lonCol);
     const decStr= getCellValue(tbl,drawLayer.highlightedRow, columns.latCol);

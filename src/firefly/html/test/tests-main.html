@@ -178,6 +178,36 @@
     </script>
 </template>
 
+<template title="Orbital path" class="tpl" >
+    <div id="expected" >
+        <div>Orbital path
+            <ul class='expected-list'>
+                <li>file loaded from URL</li>
+            </ul>
+        </div>
+        <div><img style="width: 230px;" src="./images/orbital-path.png"></div>
+    </div>
+    <div id="actual" class="flow-h" style="width: 600px">
+        <div id='tables-1' class="box"></div>
+        <div id='coverageHere' class="box"></div>
+    </div>
+    <script>
+        function onFireflyLoaded(firefly) {
+            firefly.showCoverage('coverageHere', {gridOn:true});
+            // tblReq = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/wise-orbit.tbl',null,
+               tblReq = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu.s3-us-west-2.amazonaws.com/staff/roby/demo/wise_orbit.tbl',null,
+                { pageSize: 15,
+                    META_INFO: {
+                        CENTER_COLUMN: 'ra_obj;dec_obj;EQJ2000',
+                        ORBITAL_PATH : 'TRUE'
+                    }
+                });
+            firefly.showTable('tables-1', tblReq);
+        }
+    </script>
+</template>
+
+
 <template title="Table group with default charts" class="tpl" style="height: 260px">
     <div id="expected" >
         <div>

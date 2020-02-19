@@ -98,6 +98,12 @@ export const MetaConst = {
     /** the column name with public release date info;  null is considered not public */
     RELEASE_DATE_COL : 'RELEASE_DATE_COL',
 
+    /**
+     * if defined this table container a moving object, setting this will override any catalog evaluation
+     * value can me true or false, if true then evaluate this table as a moving obj, if false then ignore
+     */
+    ORBITAL_PATH : 'ORBITAL_PATH',
+
     HIGHLIGHTED_ROW             : 'highlightedRow',                 // row to highlight on data fetch
     HIGHLIGHTED_ROW_BY_ROWIDX   : 'highlightedRowByRowIdx',         // row to highlight on data fetch based on original row index
 

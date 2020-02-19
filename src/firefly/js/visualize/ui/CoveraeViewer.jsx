@@ -20,7 +20,7 @@ import {getActivePlotView} from '../PlotViewUtil';
 import {visRoot} from '../ImagePlotCntlr';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx';
 import {useStoreConnector} from '../../ui/SimpleComponent';
-import {getActiveTableId, getBooleanMetaEntry} from '../../tables/TableUtil';
+import {getActiveTableId, getBooleanMetaEntry, getTblById} from '../../tables/TableUtil';
 import {hasCoverageData} from '../../util/VOAnalyzer';
 import {get} from 'lodash';
 import {getAppOptions} from '../../core/AppDataCntlr';
@@ -36,7 +36,8 @@ const startWatcher= once((viewerId) => {
 
 
 export function CoverageViewer({viewerId='coverageImages',insideFlex=true,
-                                        noCovMessage='No Coverage Available',noCovStyle={}}) {
+                                        noCovMessage='No Coverage Available',
+                                        workingMessage='Working...', noCovStyle={}}) {
 
     startWatcher(viewerId);
     const [pv,tbl_id] = useStoreConnector(() => getActivePlotView(visRoot(),PLOT_ID), () => getActiveTableId());
@@ -51,6 +52,7 @@ export function CoverageViewer({viewerId='coverageImages',insideFlex=true,
     const {renderTreeId} = useContext(RenderTreeIdCtx);
     const forceShow= getBooleanMetaEntry(tbl_id,MetaConst.COVERAGE_SHOWING,false);
 
+
     if (hasPlots && (hasCoverageData(tbl_id) || forceShow)) {
         return (
             <MultiImageViewer viewerId={viewerId}
@@ -61,9 +63,10 @@ export function CoverageViewer({viewerId='coverageImages',insideFlex=true,
         );
     }
     else {
+        const msg= (getTblById(tbl_id)?.isFetching) ? workingMessage : noCovMessage;
         return (
             <div style={{...{background: '#c8c8c8', paddingTop:35, width:'100%',textAlign:'center',fontSize:'14pt'},...noCovStyle}}>
-                {noCovMessage}</div>
+                {msg}</div>
         );
     }
 }
@@ -71,5 +74,6 @@ export function CoverageViewer({viewerId='coverageImages',insideFlex=true,
 CoverageViewer.propTypes= {
     viewerId: PropTypes.string,
     noCovMessage: PropTypes.string,
+    workingMessage: PropTypes.string,
     insideFlex: PropTypes.bool,
 };

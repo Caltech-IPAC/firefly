@@ -854,6 +854,12 @@ export function findCenterColumnsByColumnsModel(columnsModel) {
 }
 
 
+export function isOrbitalPathTable(tableOrId) {
+    const table= getTableModel(tableOrId);
+    if (!table) return false;
+    return getBooleanMetaEntry(table,MetaConst.ORBITAL_PATH,false);
+}
+
 /**
  * Test to see it this is a catalog. A catalog must have one of the following:
  *  - CatalogOverlayType meta data entry defined and not equal to 'FALSE' and we must be able to find the columns
@@ -874,6 +880,8 @@ export function isCatalog(tableOrId) {
     if (isTableWithRegion(table)) return false;
     const {tableMeta, tableData}= table;
     if (!get(tableData, 'columns') || !tableMeta) return false;
+
+    if (isOrbitalPathTable(table)) return false;
 
     if (isString(tableMeta[MetaConst.CATALOG_OVERLAY_TYPE])) {
         if (tableMeta[MetaConst.CATALOG_OVERLAY_TYPE].toUpperCase()==='FALSE') return false;

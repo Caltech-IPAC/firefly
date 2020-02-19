@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, isEmpty} from 'lodash';
+import {isEmpty} from 'lodash';
 import ImagePlotCntlr, {
     dispatchAttributeChange,
     dispatchChangeCenterOfProjection,
@@ -18,7 +18,7 @@ import ImagePlotCntlr, {
 import {getArcSecPerPix, getZoomLevelForScale, UserZoomTypes} from '../ZoomUtil.js';
 import {WebPlot, isHiPS, isImage} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
-import {clone, fetchUrl, loadImage} from '../../util/WebUtil.js';
+import {fetchUrl, loadImage} from '../../util/WebUtil.js';
 import {
     findCurrentCenterPoint,
     getCenterOfProjection,
@@ -74,19 +74,6 @@ const PROXY= true;
 //======================================== Exported Functions =============================
 //======================================== Exported Functions =============================
 
-function hipsFail(dispatcher, plotId, wpRequest, reason) {
-    dispatcher( {
-        type: ImagePlotCntlr.PLOT_HIPS_FAIL,
-        payload:{
-            description: 'HiPS display failed: '+ reason,
-            plotId,
-            wpRequest
-        }});
-}
-
-function hipsChangeFail(pv, reason) {
-    dispatchPlotProgressUpdate(pv.plotId, 'Failed to change HiPS display',true, pv.request.getRequestKey(), false);
-}
 
 function parseProperties(str) {
     if (!str) {
@@ -100,7 +87,7 @@ function parseProperties(str) {
             if (sAry.length===2) obj[sAry[0].trim()]= sAry[1].trim();
             return obj;
         },{});
-    validateProperties(hipsProperties);
+    validateProperties(hipsProperties); // throws exceptions if not valid
     return hipsProperties;
 }
 
@@ -202,113 +189,103 @@ function getOtherLockedHiPS(vr, pv) {
 }
 
 
-export function addAllSky(plot) {
+async function addAllSky(plot) {
     const allSkyURL= makeHiPSAllSkyUrlFromPlot(plot);
     const cachedAllSkyImage= findAllSkyCachedImage(allSkyURL);
     if (cachedAllSkyImage) return plot;
     dispatchPlotProgressUpdate(plot.plotId, 'Retrieving HiPS Data', false, null);
-    return loadImage(makeHiPSAllSkyUrlFromPlot(plot))
-        .then( (allSkyImage) => {
-            addAllSkyCachedImage(allSkyURL, allSkyImage);
-            return plot;
-        });
+    const allSkyImage= await loadImage(makeHiPSAllSkyUrlFromPlot(plot));
+    addAllSkyCachedImage(allSkyURL, allSkyImage);
+    return plot;
 }
 
-export function addAllSkyUsingProperties(hipsProperties, hipsUrlRoot, plotId, proxyHips) {
-    const exts= get(hipsProperties, 'hips_tile_format', 'jpg');
+async function addAllSkyUsingProperties(hipsProperties, hipsUrlRoot, plotId, proxyHips) {
+    const exts= hipsProperties?.hips_tile_format ?? 'jpg';
     const allSkyURL= makeHiPSAllSkyUrl(hipsUrlRoot, exts, 0);
     const cachedAllSkyImage= findAllSkyCachedImage(allSkyURL);
     if (cachedAllSkyImage) return hipsProperties;
     dispatchPlotProgressUpdate(plotId, 'Retrieving HiPS Data', false, null);
-    return loadImage(makeHiPSAllSkyUrl(hipsUrlRoot, exts, 0, proxyHips))
-        .then( (allSkyImage) => {
-            addAllSkyCachedImage(allSkyURL, allSkyImage);
-            return hipsProperties;
-        });
+    const allSkyImage= await loadImage(makeHiPSAllSkyUrl(hipsUrlRoot, exts, 0, proxyHips));
+    addAllSkyCachedImage(allSkyURL, allSkyImage);
+    return hipsProperties;
 }
 
 
 
 const currentPlots= {};
 
+export const makeAbortHiPSAction= (rawAction) => () =>  currentPlots[rawAction.payload.plotId]= undefined;
+export const makePlotHiPSAction= (rawAction) => (dispatcher) => makeHiPSPlot(rawAction,dispatcher);
+export const makeChangeHiPSAction= (rawAction) => (dispatcher, getState) => doHiPSChange(rawAction,dispatcher,getState);
 
-export function makeAbortHiPSAction(rawAction) {
-    return (dispatcher) => {
-        currentPlots[rawAction.payload.plotId]= undefined;
-    };
+
+
+
+async function makeHiPSPlot(rawAction, dispatcher) {
+
+    const {payload}= rawAction;
+    const {plotId, attributes, pvOptions, renderTreeId}= payload;
+    const wpRequest= ensureWPR(payload.wpRequest);
+
+    const newPayload= {...payload, wpRequest, plotType:'hips', wpRequestAry:[wpRequest], renderTreeId};
+    newPayload.viewerId= determineViewerId(payload.viewerId, plotId);
+    const hipsImageConversion= getHipsImageConversion(payload.hipsImageConversion);
+    if (hipsImageConversion) newPayload.pvOptions= {...pvOptions, hipsImageConversion};
+    const requestKey= makeUniqueRequestKey('plotRequestKey');
+    currentPlots[plotId]=requestKey;
+
+    const hipsFail= (errStr) => dispatcher( { type: ImagePlotCntlr.PLOT_HIPS_FAIL,
+                                           payload:{ description: 'HiPS display failed: '+ errStr, plotId, wpRequest } });
+
+    try {
+        let url= await resolveHiPSIvoURL(wpRequest.getHipsRootUrl());
+        wpRequest.setHipsRootUrl(url);
+        if (currentPlots[plotId]!==requestKey) {
+            hipsFail('hips plot expired or aborted');
+            return;
+        }
+        dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_START,payload:newPayload} );
+        if (!url) {
+            hipsFail('Empty URL');
+            return;
+        }
+
+        dispatchPlotProgressUpdate(plotId, 'Retrieving Info', false, null);
+        url= makeHipsUrl(`${url}/properties`, PROXY);
+        const result= await fetchUrl(url, {}, true, PROXY);
+        if (!result.text) {
+            hipsFail('Could not retrieve HiPS properties file');
+            return;
+        }
+        const str= await result.text();
+        const hipsProperties= parseProperties(str);
+        let plot= WebPlot.makeWebPlotDataHIPS(plotId, wpRequest, hipsProperties, 'a hips plot', .0001, attributes, false);
+        plot.proxyHips= PROXY;
+
+        createHiPSMocLayer(getPropertyItem(hipsProperties, 'ivoid'), wpRequest.getHipsRootUrl(), plot);
+        if (currentPlots[plotId]!==requestKey) {
+            hipsFail('hips plot expired or aborted');
+            return;
+        }
+        plot= await addAllSky(plot);
+        createHiPSGridLayer();
+        dispatchAddActionWatcher({
+            actions:[ImagePlotCntlr.PLOT_HIPS, ImagePlotCntlr.UPDATE_VIEW_SIZE],
+            callback:watchForHiPSViewDim,
+            params:{plotId}}
+        );
+        const pvNewPlotInfoAry= [ {plotId, plotAry: [plot]} ];
+        dispatcher( { type: ImagePlotCntlr.PLOT_HIPS, payload: {...newPayload, plot,pvNewPlotInfoAry }});
+    } catch (error) {
+        hipsFail(error.message);
+    }
 }
 
 
 
-export function makePlotHiPSAction(rawAction) {
-    return (dispatcher) => {
-
-        const {payload}= rawAction;
-        const {plotId, attributes, pvOptions, renderTreeId}= payload;
-        const wpRequest= ensureWPR(payload.wpRequest);
-
-        const newPayload= clone(payload, {wpRequest, plotType:'hips', wpRequestAry:[wpRequest], renderTreeId});
-        newPayload.viewerId= determineViewerId(payload.viewerId, plotId);
-        const hipsImageConversion= getHipsImageConversion(payload.hipsImageConversion);
-        if (hipsImageConversion) newPayload.pvOptions= clone(pvOptions, {hipsImageConversion});
-        const requestKey= makeUniqueRequestKey('plotRequestKey');
-        currentPlots[plotId]=requestKey;
 
 
-        // if (!getDrawLayerByType(getDlAry(), ActiveTarget.TYPE_ID)) {
-        //     initBuildInDrawLayers();
-        // }
-
-        resolveHiPSIvoURL(wpRequest.getHipsRootUrl())
-            .then( (url) => {
-                wpRequest.setHipsRootUrl(url);
-                if (currentPlots[plotId]!==requestKey) throw Error('hips plot expired or aborted');
-                dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_START,payload:newPayload} );
-                if (!url) {
-                    throw new Error('Empty URL');
-                }
-
-                dispatchPlotProgressUpdate(plotId, 'Retrieving Info', false, null);
-                return makeHipsUrl(`${url}/properties`, PROXY);
-
-            })
-            .then( (url) => {
-                return fetchUrl(url, {}, true, PROXY);
-            })
-            .then( (result)=> {
-                if (!result.text) throw new Error('Could not retrieve HiPS properties file');
-                return result.text();
-            })
-            .then( (s)=> parseProperties(s))
-            .then( (hipsProperties) => {
-                const plot= WebPlot.makeWebPlotDataHIPS(plotId, wpRequest, hipsProperties, 'a hips plot', .0001, attributes, false);
-                plot.proxyHips= PROXY;
-
-                createHiPSMocLayer(getPropertyItem(hipsProperties, 'ivoid'), wpRequest.getHipsRootUrl(), plot);
-                return plot;
-            })
-            .then( (plot) => {
-                if (currentPlots[plotId]!==requestKey) throw Error('hips plot expired or aborted');
-                return plot;
-            })
-            .then( addAllSky)
-            .then( (plot) => {
-                createHiPSGridLayer();
-                dispatchAddActionWatcher({
-                    actions:[ImagePlotCntlr.PLOT_HIPS, ImagePlotCntlr.UPDATE_VIEW_SIZE],
-                    callback:watchForHiPSViewDim,
-                    params:{plotId}}
-                    );
-                const pvNewPlotInfoAry= [ {plotId, plotAry: [plot]} ];
-                dispatcher( { type: ImagePlotCntlr.PLOT_HIPS, payload: clone(newPayload, {plot,pvNewPlotInfoAry}) });
-            })
-            .catch( (error) => {
-                hipsFail(dispatcher, plotId, wpRequest, error.message);
-            } );
-    };
-}
-
-function createHiPSMocLayer(ivoid, hipsUrl, plot, mocFile = 'Moc.fits') {
+async function createHiPSMocLayer(ivoid, hipsUrl, plot, mocFile = 'Moc.fits') {
     const mocUrl = hipsUrl.endsWith('/') ? hipsUrl + mocFile : hipsUrl+'/'+mocFile;
     const tblId = makeMocTableId(ivoid);
     const dls = getDrawLayersByType(getDlAry(), HiPSMOC.TYPE_ID);
@@ -321,19 +298,23 @@ function createHiPSMocLayer(ivoid, hipsUrl, plot, mocFile = 'Moc.fits') {
         return;
     }
 
-    doUpload(mocUrl, {isFromURL: true, fileAnalysis: ()=>{}}).then(({status, cacheKey, analysisResult}) => {
+    try {
+        const {status, cacheKey, analysisResult}=  await doUpload(mocUrl, {isFromURL: true, fileAnalysis: ()=>{}});
         if (status === '200') {
             const report = JSON.parse(analysisResult) || {};
 
             const isMocFits = isMOCFitsFromUploadAnalsysis(report);
             if (isMocFits.valid) {
-                dl = addNewMocLayer(tblId, cacheKey, mocUrl, get(isMocFits, [MOCInfo, UNIQCOL]));
+                dl = addNewMocLayer(tblId, cacheKey, mocUrl, isMocFits?.[MOCInfo]?.[UNIQCOL]);
                 if (dl && plot.plotId) {
                     dispatchAttachLayerToPlot(dl.drawLayerId, plot.plotId, true, false);
                 }
             }
         }
-    });
+    }
+    catch (e) {
+        console.log(`MOC not found at URL (this is not uncommon): ${e}`) ;
+    }
 }
 
 function createHiPSGridLayer() {
@@ -344,52 +325,59 @@ function createHiPSGridLayer() {
 }
 
 
-export function makeChangeHiPSAction(rawAction) {
-    return (dispatcher, getState) => {
-        const {payload}= rawAction;
-        let {hipsUrlRoot}= payload;
-        const {plotId}= payload;
+async function doHiPSChange(rawAction, dispatcher, getState) {
 
-        hipsUrlRoot= resolveHiPSConstant(hipsUrlRoot);
-        const pv= getPlotViewById(getState()[IMAGE_PLOT_KEY], plotId);
-        const plot= primePlot(pv);
-        if (!plot) return;
-        const {width,height}= pv.viewDim;
-        if (!width || !height) return;
+    const {payload}= rawAction;
+    let {hipsUrlRoot}= payload;
+    const {plotId}= payload;
+
+    hipsUrlRoot= resolveHiPSConstant(hipsUrlRoot);
+    const pv= getPlotViewById(getState()[IMAGE_PLOT_KEY], plotId);
+    const plot= primePlot(pv);
+    if (!plot) return;
+    const {width,height}= pv.viewDim;
+    if (!width || !height) return;
 
 
-        const url= makeHipsUrl(`${hipsUrlRoot}/properties`, true);
-        if (hipsUrlRoot) {
-            dispatchPlotProgressUpdate(plotId, 'Retrieving Info', false, null);
-            fetchUrl(url, {}, true, PROXY)
-                .catch( (e) => {
-                    console.log('properties not found');
-                    throw new Error('Could not retrieve HiPS properties file');
-                })
-                .then( (result)=> result.text())
-                .then( (s)=> parseProperties(s))
-                .then ( (hipsProperties) => addAllSkyUsingProperties(hipsProperties, hipsUrlRoot, plotId, true))
-                .then( (hipsProperties) => {
-                    dispatcher(
-                        { type: ImagePlotCntlr.CHANGE_HIPS,
-                            payload: clone(payload, {hipsUrlRoot, hipsProperties, coordSys:plot.imageCoordSys})
-                        });
-                    initCorrectCoordinateSys(getPlotViewById(visRoot(),plotId));
-                })
-                .then( () => {
-                    dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload });
-                })
-                .catch( (error) => {
-                    console.log(error);
-                    hipsChangeFail(pv, error.message);
-                } );
+    const url= makeHipsUrl(`${hipsUrlRoot}/properties`, true);
+
+
+    if (!hipsUrlRoot) { // only change to some attributes, we are not replacing the HiPS source
+        dispatcher( { type: ImagePlotCntlr.CHANGE_HIPS, payload });
+        dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload });
+        return;
+    }
+
+    const hipsChangeFailP=(reason) =>
+        dispatchPlotProgressUpdate(plotId, 'Failed to change HiPS display',true, pv.request.getRequestKey(), false);
+
+    dispatchPlotProgressUpdate(plotId, 'Retrieving Info', false, null);
+    try {
+        let result;
+        try {
+            result = await fetchUrl(url, {}, true, PROXY);
+        } catch (error) {
+            console.log('properties not found');
+            hipsChangeFailP('Could not retrieve HiPS properties file');
+            return;
         }
-        else {
-            dispatcher( { type: ImagePlotCntlr.CHANGE_HIPS, payload });
-            dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload });
-        }
-    };
+        const s = await result.text();
+        const hipsProperties = parseProperties(s);
+        await addAllSkyUsingProperties(hipsProperties, hipsUrlRoot, plotId, true);
+        dispatcher(
+            {
+                type: ImagePlotCntlr.CHANGE_HIPS,
+                payload: {...payload, hipsUrlRoot, hipsProperties, coordSys: plot.imageCoordSys},
+            });
+        initCorrectCoordinateSys(getPlotViewById(visRoot(), plotId));
+        dispatcher({type: ImagePlotCntlr.ANY_REPLOT, payload});
+    } catch (error) {
+        console.log(error);
+        hipsChangeFailP(pv, error.message);
+    }
 }
+
+
 
 
 //==============================================================================
@@ -461,7 +449,7 @@ export function convertToImage(pv, allSky= false, tryCenterBySelectedObj= false)
     wpRequest.setPlotId(plotId);
     wpRequest.setPlotGroupId(plotGroupId);
     const plot= primePlot(pv);
-    const attributes= clone(plot.attributes, getCornersAttribute(pv) || {});
+    const attributes= {...plot.attributes, ...getCornersAttribute(pv)};
     const fromImage= isImage(plot) && !plot.projection.isWrappingProjection();
     const {displayFixedTarget,userCanDeletePlots}= pv.plotViewCtx;
     if (convertToAllSky) {
@@ -503,7 +491,7 @@ export function convertToHiPS(pv, fromAllSky= false, tryCenterBySelectedObj= fal
     const plot= primePlot(pv);
 
 
-    const attributes= clone(plot.attributes, getCornersAttribute(pv) || {});
+    const attributes= {...plot.attributes, ...getCornersAttribute(pv)};
     wpRequest.setWorldPt(findWorldPtToCenterOn(pv,tryCenterBySelectedObj));
     if (!fromAllSky) {
         prepFromImageConversion(pv,wpRequest);
@@ -550,7 +538,6 @@ function getCenterPt(pv) {
 function prepFromImageConversion(pv, wpRequest) {
     const {plotId}= pv;
     wpRequest.setWorldPt(getCenterPt(pv));
-    // wpRequest.setSizeInDeg(pv.plotViewCtx.hipsImageConversion.fovDegFallOver);
     wpRequest.setSizeInDeg(getFoV(pv));
     const dl = getDrawLayerByType(dlRoot(), ImageOutline.TYPE_ID);
     if (!dl) dispatchCreateDrawLayer(ImageOutline.TYPE_ID);
@@ -610,7 +597,7 @@ function matchHiPSToImage(pv, hipsPVidAry) {
 function getCornersAttribute(pv) {
     const plot= primePlot(pv);
     const cAry= getCorners(plot);
-    if (!cAry) return null;
+    if (!cAry) return {};
     return {
         [PlotAttribute.OUTLINEIMAGE_BOUNDS]: cAry,
         [PlotAttribute.OUTLINEIMAGE_TITLE]: plot.title
@@ -677,12 +664,6 @@ function validateHipsAndImage(imageRequest, hipsRequest, fovDegFallOver) {
         console.log('You must define both hipsRequest and imageRequest');
         return false;
     }
-    /*
-    if (!getSizeInDeg(imageRequest, hipsRequest)) {
-        console.log('You must call setSizeInDeg in either the hipsRequest or the imageRequest');
-        return false;
-    }
-    */
     if (!getPlotGroupId(imageRequest, hipsRequest)) {
         console.log('You must call setPlotGroupId in either the hipsRequest or the imageRequest');
         return false;
@@ -701,4 +682,3 @@ function getPlotGroupId(imageRequest, hipsRequest) {
     if (imageRequest && imageRequest.getPlotGroupId()) return imageRequest.getPlotGroupId();
     if (hipsRequest && hipsRequest.getPlotGroupId()) return hipsRequest.getPlotGroupId();
 }
-

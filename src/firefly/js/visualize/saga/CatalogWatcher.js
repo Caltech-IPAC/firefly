@@ -173,18 +173,18 @@ function updateDrawingLayer(tbl_id, tableModel, tableRequest,
                                 angleInRadian});
         dispatchAttachLayerToPlot(tbl_id, plotIdAry);
 
-        const newDL = dispatchCreateDrawLayer(SearchTarget.TYPE_ID,
-            {
-                drawLayerId: searchTargetId(tbl_id),
-                color: darker(catDL.drawingDef.color),
-                searchTargetWP: searchTarget,
-                layersPanelLayoutId: tbl_id,
-                titlePrefix: 'Catalog ',
-                canUserDelete: true,
-            });
-        dispatchAttachLayerToPlot(newDL.drawLayerId, plotIdAry, false);
-
-
+        if (searchTarget) {
+            const newDL = dispatchCreateDrawLayer(SearchTarget.TYPE_ID,
+                {
+                    drawLayerId: searchTargetId(tbl_id),
+                    color: darker(catDL.drawingDef.color),
+                    searchTargetWP: searchTarget,
+                    layersPanelLayoutId: tbl_id,
+                    titlePrefix: 'Catalog ',
+                    canUserDelete: true,
+                });
+            dispatchAttachLayerToPlot(newDL.drawLayerId, plotIdAry, false);
+        }
 
         const dl= getDrawLayerById(dlRoot(),tbl_id);
         if (dl.supportSubgroups  &&  dl.tableMeta[SUBGROUP]) {

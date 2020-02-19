@@ -24,6 +24,7 @@ import Catalog from '../../drawingLayers/Catalog.js';
 import LSSTFootprint from '../../drawingLayers/ImageLineBasedFootprint';
 import {DataTypes} from '../draw/DrawLayer.js';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
+import {getNumFilters} from '../../tables/FilterInfo';
 
 const EMPTY_ARRAY=[];
 
@@ -63,8 +64,11 @@ function showFilter(pv,dlAry) {
 
 function showClearFilter(pv,dlAry) {
     return getAllDrawLayersForPlot(dlAry, pv.plotId,true)
-        .some( (dl) => (dl.drawLayerTypeId===Catalog.TYPE_ID &&  get(dl,'tableRequest.filters') && dl.catalog ) ||
-                        (dl.drawLayerTypeId === LSSTFootprint.TYPE_ID && get(dl, 'tableRequest.filters')));
+        .some( (dl) => {
+            const filterCnt= getNumFilters(dl.tableRequest);
+            return (dl.drawLayerTypeId===Catalog.TYPE_ID &&  filterCnt && dl.catalog ) ||
+                   (dl.drawLayerTypeId === LSSTFootprint.TYPE_ID && filterCnt);
+        });
 }
 
 
