@@ -21,12 +21,33 @@ import {dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {POPUP_DIALOG_ID} from '../../ui/PopupUtil.jsx';
 import {StatefulTabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import {SelectInfo} from '../SelectInfo.js';
+import {makeBadge} from '../../ui/ToolbarButton.jsx';
+import {getSqlFilter} from '../TableUtil';
 
 export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOptionReset}) => {
 
     const [uiState] = useStoreConnector(() => getTableUiById(tbl_ui_id));
     const ctm_tbl_id = `${tbl_ui_id}-columnOptions`;
     const showAdvFilter = !isClientTable(tbl_id);
+
+    const {sql=''} = getSqlFilter(tbl_id);
+    const advFilterName = 'Advanced Filter';
+    const label = () => {
+        if (!sql) return advFilterName;
+        return (
+            <div style={{display: 'inline-flex'}}>
+                <div style={{marginRight: 10}}>{advFilterName}</div>
+                <div title='Advanced filter applied.  Click on tab to view details.'
+                    style={{
+                        position: 'absolute',
+                        right: 2,
+                        borderLeft: '10px solid transparent',
+                        borderTop: '10px solid rgb(71, 138, 163)',
+                        position: 'absolute'
+                    }}/>
+            </div>
+        );
+    };
 
     return (
         <div className='TablePanelOptions'>
@@ -37,7 +58,7 @@ export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOpt
                     <ColumnOptions {...{tbl_id, tbl_ui_id, ctm_tbl_id, onChange}} />
                 </Tab>
                 {showAdvFilter &&
-                    <Tab name='Advanced Filter'>
+                    <Tab name={advFilterName} label={label()}>
                         <div style={{display: 'flex', flex: '1 1 0', position: 'relative'}}>
                             <SqlTableFilter {...{tbl_id, tbl_ui_id, onChange}} />
                         </div>
@@ -277,9 +298,10 @@ function getActiveInput(data, rowIdx, tbl_ui_id) {
 
 function makePrecisionRenderer(tbl_ui_id, ctm_tbl_id, onChange) {
     const tooltips = 'A string Tn where T is either F, E, G, HMS, or DMS\n' +
-        ' When T is F or E, n is the number of significant figures after the decimal point\n' +
-        ' When T is G, n is the number of significant digits\n' +
-        ' When T is HMS or DMS, n is ignored';
+        '- When T is F or E, n is the number of significant figures after the decimal point\n' +
+        '- When T is G, n is the number of significant digits\n' +
+        '- When T is HMS or DMS, n is ignored\n' +
+        'e.g. E5, F4, G6, or HMS';
 
     const onPrecision = (val, rowIdx,  data) => {
         const {nColumns, selCol} = getActiveInput(data, rowIdx, tbl_ui_id);

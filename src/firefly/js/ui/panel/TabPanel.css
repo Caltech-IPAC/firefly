@@ -22,6 +22,7 @@
     white-space: nowrap;
     overflow: hidden;
     box-sizing: border-box;
+    position: relative;
 }
 
 .TabPanel__Tab--selected {
