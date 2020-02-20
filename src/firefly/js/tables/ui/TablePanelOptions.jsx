@@ -49,6 +49,20 @@ export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOpt
         );
     };
 
+    const onReset = () => {
+        if (onOptionReset) {
+            onOptionReset();
+            const ctm = createColumnTableModel(tbl_id, tbl_ui_id);
+            ctm.tbl_id = ctm_tbl_id;
+            dispatchTableAddLocal(ctm, undefined, false);
+            setSqlFilter('', '');
+        }
+    };
+
+    const onClose = () => {
+        dispatchHideDialog(POPUP_DIALOG_ID);
+    };
+
     return (
         <div className='TablePanelOptions'>
             <Options {...{uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChange}} />
@@ -64,12 +78,20 @@ export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOpt
                         </div>
                     </Tab>
                 }
-                <Tab name='Meta'>
+                <Tab name='Table Meta'>
                     <div style={{width: '100%', height: '100%', overflow: 'auto'}}>
                         <MetaContent tbl_id={tbl_id}/>
                     </div>
                 </Tab>
             </StatefulTabs>
+            <div style={{margin: '5px 15px 0 0'}}>
+                <button type='button' className='button std' style={{marginRight: 5}}
+                        onClick={onReset}>Reset
+                </button>
+                <button type='button' className='button std'
+                        onClick={onClose}>Close
+                </button>
+            </div>
         </div>
     );
 });
@@ -112,20 +134,6 @@ function Options({uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChang
         }
     };
 
-    const onReset = () => {
-        if (onOptionReset) {
-            onOptionReset();
-            const ctm = createColumnTableModel(tbl_id, tbl_ui_id);
-            ctm.tbl_id = ctm_tbl_id;
-            dispatchTableAddLocal(ctm, undefined, false);
-            setSqlFilter('', '');
-        }
-    };
-
-    const onClose = () => {
-        dispatchHideDialog(POPUP_DIALOG_ID);
-    };
-
     const labelStyle = {display: 'inline-block', whiteSpace: 'nowrap', width: 50};
 
     return (
@@ -161,12 +169,6 @@ function Options({uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChang
                 />
                 }
             </div>
-            <div>
-                <button type='button' className='TablePanelOptions__button' onClick={onReset} style={{marginRight: 5}}
-                        title='Reset all options to defaults'>Reset</button>
-                <button type='button' className='TablePanelOptions__button' onClick={onClose} style={{marginRight: 5}}
-                        title='Close this dialog'>Close</button>
-            </div>
         </div>
     );
 }
@@ -175,8 +177,8 @@ function Options({uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChang
 const columns = [
     {name: 'name', fixed: true, width: 12},
     {name: 'filter', fixed: true, width: 10, sortable: false, filterable: false},
-    {name: 'format', fixed: true, width: 7, sortable: false, filterable: false},
-    {name: 'null_str', fixed: true, width: 7, sortable: false, filterable: false},
+    {name: 'format'},
+    {name: 'null_string'},
     {name: 'type'},
     {name: 'units'},
     {name: 'arraySize', width: 7},
@@ -228,8 +230,8 @@ export const ColumnOptions = React.memo(({tbl_id, tbl_ui_id, ctm_tbl_id, onChang
     // the rest of the state are kept in the source table ui data
     const renderers =  {
         filter:     {cellRenderer: makeFilterRenderer(tbl_id, ctm_tbl_id, onChange)},
-        format:  {cellRenderer: makePrecisionRenderer(tbl_ui_id, ctm_tbl_id, onChange)},
-        null_str:   {cellRenderer: makeNullStringRenderer(tbl_ui_id, ctm_tbl_id, onChange)}
+        // format:  {cellRenderer: makePrecisionRenderer(tbl_ui_id, ctm_tbl_id, onChange)},
+        // null_string:   {cellRenderer: makeNullStringRenderer(tbl_ui_id, ctm_tbl_id, onChange)}
     };
 
     return (
@@ -276,7 +278,7 @@ function createColumnTableModel(tbl_id, tbl_ui_id) {
     const ctm = {selectInfo: selectInfoCls.data,  tableData: {columns, data}, totalRows: data.length};
 
     // hide empty columns
-    ['arraySize', 'utype', 'UCD', 'links', 'description'].forEach((cname) => {
+    ['format', 'null_string', 'arraySize', 'utype', 'UCD', 'links', 'description'].forEach((cname) => {
         const cl = getColumnValues(ctm, cname).filter((v) => v);
         if ( cl.length === 0 ) {
             getColumn(ctm, cname).visibility = 'hidden';
@@ -364,6 +366,6 @@ function makeNullStringRenderer(tbl_ui_id, ctm_tbl_id, onChange) {
         onChange && onChange({columns: nColumns});
     };
 
-    return  inputColumnRenderer({tbl_id:ctm_tbl_id, cname: 'null_str', onChange:onNullString, style: cellStyle, tooltips});
+    return  inputColumnRenderer({tbl_id:ctm_tbl_id, cname: 'null_string', onChange:onNullString, style: cellStyle, tooltips});
 }
 

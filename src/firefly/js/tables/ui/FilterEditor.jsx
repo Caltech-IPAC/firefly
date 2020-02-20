@@ -26,6 +26,8 @@ import {dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 
+import RIGHT_ARROW from 'html/images/right-arrow-in-16x16.png';
+
 const wrapperStyle = {display: 'block', flexGrow: 0};
 const style = {display: 'block', width: '100%', resize: 'none', boxSizing: 'border-box'};
 
@@ -235,7 +237,7 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange}) {
     const treeNodes = cloneDeep(columns)
                         .filter( (c) => c.visibility !== 'hidden')
                         .sort( (c1,c2) => (c1.label || c1.name).localeCompare(c2.label || c2.name) )
-                        .map((c) => <TreeNode key={c.name} title={`${c.label || c.name} (${c.type || '---'})`} isLeaf={true}/>);
+                        .map((c) => <TreeNode style={{marginLeft: -10}} key={c.name} title={`  ${c.label || c.name} (${c.type || '---'})`} isLeaf={true}/>);
 
     const onApply = () => {
         const sqlVal = getFieldVal(groupKey, sqlKey);
@@ -251,7 +253,8 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange}) {
     };
 
     const colFilters = getFiltersAsSql(tbl_id);
-    const sqlLabel = colFilters ? 'Additional Constranints(SQL):' : 'Constranints(SQL):';
+    const sqlLabel = colFilters ? 'Additional Contraints (SQL):' : 'Constranints(SQL):';
+    const iconGen = () => <img width="14" height="14" src={RIGHT_ARROW}/> ;
 
     const errStyle = error ? {borderColor: 'red'} : {};
     return (
@@ -259,7 +262,7 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange}) {
             <SplitContent style={{display: 'flex', flexDirection: 'column'}}>
                 <b>Columns (sorted)</b>
                 <div  style={{overflow: 'auto', flexGrow: 1}}>
-                    <Tree defaultExpandAll showLine onSelect={onNodeClick}>
+                    <Tree defaultExpandAll showLine onSelect={onNodeClick} icon={iconGen} >
                         {treeNodes}
                     </Tree>
                 </div>
@@ -301,7 +304,7 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange}) {
                         <div style={{marginLeft: 5}}>
                             <div>Input should follow the syntax of an SQL WHERE clause.</div>
                             <div>Click on a Column name to insert the name into the SQL Filter input box.</div>
-                            <div style={{marginTop: 5}}>Standard SQL operators can be used where applicable.
+                            <div style={{marginTop: 5}}>Standard SQL-like operators can be used where applicable.
                                 Supported operators are:
                                 <span {...code}>{'  +, -, *, /, =, >, <, >=, <=, !=, LIKE, IN, IS NULL, IS NOT NULL'}</span>
                             </div>
@@ -317,8 +320,8 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange}) {
 
                         <h4>Sample Filters</h4>
                         <div style={{marginLeft: 5}}>
-                            <li><div {...code}>{'("ra" > 185 AND "ra" < 185.1) OR ("dec" > 15 AND "dec" < 15.1) AND "band" IN (1,2)'}</div></li>
-                            <li><div {...code}>{'POWER("v",2) / POWER("err",2) > 4 AND "band" = 3'}</div></li>
+                            <li style={{whiteSpace: 'nowrap'}}><div {...code}>{'("ra" > 185 AND "ra" < 185.1) OR ("dec" > 15 AND "dec" < 15.1) AND "band" IN (1,2)'}</div></li>
+                            <li style={{whiteSpace: 'nowrap'}}><div {...code}>{'POWER("v",2) / POWER("err",2) > 4 AND "band" = 3'}</div></li>
                         </div>
                     </div>
                 </div>
