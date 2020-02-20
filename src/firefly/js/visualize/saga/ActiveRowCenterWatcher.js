@@ -17,7 +17,7 @@ import {
 import {toDegrees} from '../VisUtil';
 import {CysConverter} from '../CsysConverter';
 import {dispatchPlotImage, dispatchUseTableAutoScroll} from '../ImagePlotCntlr';
-import {isColRadians} from '../../tables/TableUtil';
+import {isColRadians, isTableUsingRadians} from '../../tables/TableUtil';
 import {PlotAttribute} from '../PlotAttribute';
 import {isImage} from '../WebPlot';
 import {getAppOptions} from '../../core/AppDataCntlr';
@@ -129,6 +129,14 @@ function recenterImageActiveRow(tbl_id, force=false) {
     }
 }
 
+
+
+function toAngle(d, radianToDegree)  {
+    const v= Number(d);
+    return (!isNaN(v) && radianToDegree) ? v*180/Math.PI : v;
+}
+
+
 /**
  *
  * @param {TableModel|String} tableOrId
@@ -140,8 +148,9 @@ export function getRowCenterWorldPt(tableOrId) {
     const cenCol= findTableCenterColumns(tbl);
     if (!cenCol) return;
     const {lonCol,latCol,csys}= cenCol;
-    const lon= Number(getCellValue(tbl,tbl.highlightedRow, lonCol));
-    const lat= Number(getCellValue(tbl,tbl.highlightedRow, latCol));
+    const rad= isTableUsingRadians(tbl, [lonCol,latCol]);
+    const lon= toAngle(getCellValue(tbl,tbl.highlightedRow, lonCol),rad);
+    const lat= toAngle(getCellValue(tbl,tbl.highlightedRow, latCol),rad);
 
     const tmpPt= makeAnyPt(lon,lat,csys||CoordinateSys.EQ_J2000);
     if (tmpPt.type!==Point.W_PT) return tmpPt;

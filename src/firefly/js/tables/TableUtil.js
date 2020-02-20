@@ -1089,28 +1089,35 @@ export function uniqueTblUiId() {
 }
 /**
  *  This function provides a patch until we can reliably determine that the ra/dec columns use radians or degrees.
- * @param tableOrMeta the table object or the tableMeta object
+ * @param table the table model
  * @param {Array.<String>} columnNames
  * @memberof firefly.util.table
  * @func isTableUsingRadians
  *
  */
-export function isTableUsingRadians(tableOrMeta, columnNames) {
-    if (!tableOrMeta) return false;
-    const tableMeta= tableOrMeta.tableMeta || tableOrMeta;
-    const lsstRadians= Boolean(has(tableMeta, 'HIERARCH.AFW_TABLE_VERSION'));
-    if (lsstRadians) return true;
-    if (columnNames && tableOrMeta.tableMeta ) {
-        return columnNames.every( (cName) => isColRadians(tableOrMeta, cName));
+export function isTableUsingRadians(table, columnNames) {
+    if (!table && !table.isFetching) return false;
+    const {tableMeta,tableData}=  table;
+    if (isArray(columnNames) && tableData) {
+        if (columnNames.every( (cName) => isColRadians(table, cName))) return true;
+        if (columnNames.every( (cName) => isColDegree(table, cName))) return false;
     }
-    return false;
+     // it the columns down specify it then we will only return true for LSST tables
+    return Boolean(has(tableMeta, 'HIERARCH.AFW_TABLE_VERSION'));
 }
 
 export function isColRadians(table, colName) {
     if (!table) return false;
     const column= getColumn(table,colName);
-    const unitField= get(column,'units','degrees').toLowerCase();
+    const unitField= get(column,'units','').toLowerCase();
     return unitField.startsWith('rad');
+}
+
+export function isColDegree(table, colName) {
+    if (!table) return false;
+    const column= getColumn(table,colName);
+    const unitField= get(column,'units','').toLowerCase();
+    return unitField.startsWith('deg');
 }
 
 export function createErrorTbl(tbl_id, error) {
