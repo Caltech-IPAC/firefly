@@ -191,9 +191,12 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
     const ps3_0= parse.getValue(`PS${which}_0${altWcs}`, '');
     const ps3_1= parse.getValue(`PS${which}_1${altWcs}`, '');
     const ps3_2= parse.getValue(`PS${which}_2${altWcs}`, '');
-    const pv3_0= parse.getValue(`PV${which}_0${altWcs}`, '');
+    //pv3_1: EXTLEVEL, pv3_2: EXTVER, pv3_3: axis number associated with the coordinate array in ps3_1
+    //The pv3_i values are not used in our case, since we only handle the FITS with one axis related to TAB wavelength.
+    //We processed those values just in case there is need to handle the FITS with more than one TAB axes.
     const pv3_1= parse.getValue(`PV${which}_1${altWcs}`, '');
     const pv3_2= parse.getValue(`PV${which}_2${altWcs}`, '');
+    const pv3_3= parse.getValue(`PV${which}_3${altWcs}`, '');
 
     const {algorithm, wlType} = getAlgorithmAndType(ctype,N);
 
@@ -221,7 +224,7 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
         if (algorithm==='TAB') {
             const part1 = {
                 N, algorithm, ctype, restWAV, pc_3j, r_j,
-                ps3_0, ps3_1, ps3_2, pv3_0, pv3_1, pv3_2,
+                ps3_0, ps3_1, ps3_2, pv3_1, pv3_2,pv3_3,
                 s_3: isNaN(cdelt) ? 0 : cdelt,
                 lambda_r: isNaN(crval) ? 0 : crval,
                 wlTable
@@ -269,7 +272,7 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
 
     return {
         N, algorithm, ctype, restWAV, wlType, crpix, crval, cdelt, failReason, failWarning, units, pc_3j, r_j,
-        ps3_0, ps3_1, ps3_2, pv3_0, pv3_1, pv3_2,
+        ps3_0, ps3_1, ps3_2, pv3_1, pv3_2, pv3_3,
         s_3: isNaN(cdelt) ? 0 : cdelt,
         lambda_r: isNaN(crval) ? 0 : crval,
         wlTable

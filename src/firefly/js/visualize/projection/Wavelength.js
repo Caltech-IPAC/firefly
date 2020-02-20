@@ -227,7 +227,6 @@ const getArrayDataFromTable= (table, columnName) => {
     return undefined;
 };
 
-
 /**
  *
  * The pre-requirement is that the FITS has three axies, ra (1), dec(2) and wavelength (3).
