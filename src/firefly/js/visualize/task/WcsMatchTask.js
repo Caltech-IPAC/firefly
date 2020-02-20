@@ -190,7 +190,7 @@ export function matchImageToHips(hipsPv, imagePv) {
     const targetASpix= getArcSecPerPix(hipsPlot,hipsPlot.zoomFactor);
     if (Math.abs(getArcSecPerPix(imagePlot,hipsPlot.zoomFactor)-targetASpix) >.001) {
         const level= getZoomLevelForScale(imagePlot, targetASpix);
-        dispatchZoom({plotId:imagePlot.plotId, userZoomType:UserZoomTypes.LEVEL, level, actionScope:ActionScope.GROUP})
+        dispatchZoom({plotId:imagePlot.plotId, userZoomType:UserZoomTypes.LEVEL, level, actionScope:ActionScope.GROUP});
     }
 }
 
@@ -234,8 +234,9 @@ function syncPlotToLevelForWcsMatching(pv, masterPv, targetASpix) {
     // if the new level is only slightly different then use the target level
     const newZoomLevel= (Math.abs(targetLevel-currZoomLevel)<.01) ? currZoomLevel : targetLevel;
 
-    if (!isFlipYMatching(pv, masterPv)) dispatchFlip({plotId:pv.plotId, rematchAfterFlip:false,
-                                                           actionScope: ActionScope.SINGLE});
+    if (!isFlipYMatching(pv, masterPv)) {
+        dispatchFlip({plotId:pv.plotId, rematchAfterFlip:false, actionScope: ActionScope.SINGLE});
+    }
 
 
     if (!isRotationMatching(pv, masterPv)) rotateToMatch(pv, masterPv);

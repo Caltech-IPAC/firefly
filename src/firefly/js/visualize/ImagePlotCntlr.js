@@ -682,8 +682,8 @@ export function dispatchAbortHiPS({plotId, dispatcher= flux.process }) {
  * @param {WebPlotParams|WebPlotRequest} p.allSkyRequest - must be a allsky type request
  * @param {boolean} [p.plotAllSkyFirst= false] - if there is an all sky set up then plot that first
  * @param {number} [p.fovDegFallOver] - the size in degrees that the image will switch between hips and a image cutout
- * @param {number} [p.fovMaxFitsSize]- the max size the fits image service can support
- * @param {boolean} [p.autoConvertOnZoom]- convert between images and FITS on zoom
+ * @param {number} [p.fovMaxFitsSize] - the max size the fits image service can support
+ * @param {boolean} [p.autoConvertOnZoom] - convert between images and FITS on zoom
  * @param {string} [p.viewerId]
  * @param {string} [p.renderTreeId] - used only with multiple rendered tree, like slate in jupyter lab
  * @param {PVCreateOptions} [p.pvOptions] PlotView init Options
@@ -728,7 +728,7 @@ export function dispatchChangeHipsImageConversion({plotId, hipsImageConversionCh
  * @param {string} [p.hipsUrlRoot]
  * @param {CoordinateSys} [p.coordSys]
  * @param {WorldPt} [p.centerProjPt]
- * @param {boolean} [p.applyToGroup], apply to the whole group it is locked
+ * @param {boolean} [p.applyToGroup] apply to the whole group it is locked
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  */
 export function dispatchChangeHiPS({ plotId, hipsUrlRoot, coordSys, centerProjPt, cubeIdx,

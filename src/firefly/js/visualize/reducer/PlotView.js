@@ -145,7 +145,7 @@ export function makePlotView(plotId, req, pvOptions= {}) {
 function createPlotViewContextData(req, pvOptions={}) {
     const attributes= req.getAttributes();
     const plotViewCtx= {
-        userCanDeletePlots: get(pvOptions, 'userCanDeletePlots', true),
+        userCanDeletePlots: pvOptions?.userCanDeletePlots ?? true,
         annotationOps : req.getAnnotationOps(), // how titles are drawn
         rotateNorthLock : false,
         zoomLockingEnabled : false,

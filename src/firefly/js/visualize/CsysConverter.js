@@ -7,7 +7,7 @@ import VisUtil from './VisUtil.js';
 import {makeRoughGuesser} from './ImageBoundsData.js';
 import Point, {makeImageWorkSpacePt, makeImagePt,
                makeScreenPt, makeWorldPt, makeDevicePt, isValidPoint} from './Point.js';
-import {Matrix} from 'transformation-matrix-js';
+import {Matrix} from '../externalSource/transformation-matrix-js/matrix.js';
 import {getPixScaleDeg, isHiPS} from './WebPlot.js';
 import {makeFitsImagePt, makeZeroBasedImagePt} from './Point';
 

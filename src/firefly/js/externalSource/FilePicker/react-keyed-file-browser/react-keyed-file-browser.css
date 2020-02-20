@@ -81,7 +81,7 @@ div.rendered-react-keyed-file-browser div.files table {
           width: 20px;  /*width of icon */
           background-repeat: no-repeat;
           background-size: contain;
-          background-image: url("/images/icons-2014/20x20_folder.png");
+          background-image: url("~images/icons-2014/20x20_folder.png");
         }
 
   i.fa.fa-folder-open-o {
@@ -90,7 +90,7 @@ div.rendered-react-keyed-file-browser div.files table {
     width: 20px;  /*width of icon */
     background-repeat: no-repeat;
     background-size: contain;
-    background-image: url("/images/icons-2014/20x20_folder_open.png");
+    background-image: url("~images/icons-2014/20x20_folder_open.png");
   }
 
   i[class*=" fa-file-"] {
@@ -99,5 +99,5 @@ div.rendered-react-keyed-file-browser div.files table {
     width: 20px;  /*width of icon */
     background-repeat: no-repeat;
     background-size: contain;
-    background-image: url("/images/icons-2014/20x20_file.png");
+    background-image: url("~images/icons-2014/20x20_file.png");
   }

@@ -4,7 +4,7 @@
 
 import React, {useCallback, useEffect} from 'react';
 import PropTypes from 'prop-types';
-import FixedDataTable from 'fixed-data-table-2';
+import {Table,Column} from 'fixed-data-table-2';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {get, isEmpty} from 'lodash';
 
@@ -20,7 +20,6 @@ import {useStoreConnector} from '../../ui/SimpleComponent';
 import {dispatchTableUiUpdate} from '../TablesCntlr';
 import * as Cntlr from '../TablesCntlr';
 
-const {Table, Column} = FixedDataTable;
 const noDataMsg = 'No Data Found';
 const noDataFromFilter = 'No data match these criteria';
 

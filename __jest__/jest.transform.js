@@ -11,6 +11,5 @@ module.exports = require('babel-jest').createTransformer({
      ],
     plugins:[
         '@babel/plugin-transform-runtime',
-        '@babel/plugin-proposal-class-properties'
     ]
 });

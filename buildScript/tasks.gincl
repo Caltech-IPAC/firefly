@@ -119,6 +119,7 @@ task createVersionTag  {
         props.setProperty('BuildMajor', major)
         props.setProperty('BuildMinor', minor)
         props.setProperty('BuildRev', rev)
+        props.setProperty('ClientBuildEnv', project.hasProperty("env") ? project.env : "local")
         props.setProperty('BuildType', type)
         props.setProperty('BuildNumber', buildNum)
         props.setProperty('BuildDate', build_date)

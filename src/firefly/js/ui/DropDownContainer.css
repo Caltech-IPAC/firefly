@@ -20,7 +20,7 @@
 }
 
 .DD-ToolBar__footer {
-    background: url("/images/ipac_bar.jpg") repeat center center transparent;
+    background: url("~images/ipac_bar.jpg") repeat center center transparent;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -59,7 +59,7 @@
 
 .DD-ToolBar__footer--links ul li {
     margin-bottom: 5px;
-    background: url("/images/footer/bullet.png") 0 4px no-repeat;
+    background: url("~images/footer/bullet.png") 0 4px no-repeat;
     padding-left: 10px
 }
 

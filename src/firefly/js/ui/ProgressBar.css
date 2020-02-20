@@ -17,7 +17,7 @@
 
 
 .ProgressBar__bar {
-    background:#9CBFEE url(/images/progress-bg.gif) repeat-x left center;
+    background:#9CBFEE url(~images/progress-bg.gif) repeat-x left center;
     width: 50%;
     height: 100%;
 }

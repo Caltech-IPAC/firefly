@@ -7,7 +7,7 @@
  *
  */
 
-import React, {PureComponent} from 'react';
+import React, {useState,useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
@@ -115,54 +115,31 @@ function doDispatch(fieldGroup,  fieldKey){
 /**
  *  create a popup dialog
  */
-class MouseReadoutOptionDialog extends PureComponent {
+function MouseReadoutOptionDialog({groupKey,fieldKey,radioValue, isHiPS}) {
+		const [,setFields]= useState(FieldGroupUtils.getGroupFields(groupKey));
 
-	constructor(props) {
-		super(props);
-		this.state = {fields: FieldGroupUtils.getGroupFields(props.groupKey)};
+		useEffect(() => {
+			let enabled= true;
+			const unbinder= FieldGroupUtils.bindToStore(groupKey, (fields) => {
+				enabled && setFields(fields);
+			});
+			return () => {
+				unbinder();
+				enabled= false;
+			};
+		},[groupKey]);
 
-	}
-
-
-	componentWillUnmount() {
-
-		if (this.unbinder) this.unbinder();
-	}
-
-
-	componentDidMount() {
-
-		this.unbinder = FieldGroupUtils.bindToStore(this.props.groupKey, (fields) => {
-			this.setState({fields});
-		});
-	}
-
-	render() {
-		let form;
-		const {groupKey,fieldKey,radioValue, isHiPS}= this.props;
-
-		if (this.props.groupKey==='PIXEL_OPTION_FORM'){
-			form=(  <PixelSizeOptionDialogForm
-				    groupKey={groupKey}
-					fieldKey={fieldKey}
-					radioValue={radioValue}
-			/>);
+		if (groupKey==='PIXEL_OPTION_FORM'){
+			return (
+				<PixelSizeOptionDialogForm groupKey={groupKey} fieldKey={fieldKey} radioValue={radioValue} />
+			);
 		}
 		else {
-
-			form= ( <CoordinateOptionDialogForm
-				groupKey={groupKey}
-				fieldKey={fieldKey}
-				radioValue={radioValue}
-                optionList={isHiPS ? hipsCoordOptions : coordOptions}
-			/>);
+			return (
+				<CoordinateOptionDialogForm groupKey={groupKey} fieldKey={fieldKey} radioValue={radioValue}
+											optionList={isHiPS ? hipsCoordOptions : coordOptions} />
+			);
 		}
-		return form;
-
-
-	}
-
-
 }
 
 MouseReadoutOptionDialog.propTypes= {

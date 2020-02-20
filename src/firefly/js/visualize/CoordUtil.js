@@ -1,7 +1,7 @@
 /*eslint no-empty:0*/
 
 
-import numeral from 'numeral';
+import {sprintf} from '../externalSource/sprintf';
 
 /**
  *  This class provides conversion of user's
@@ -525,7 +525,7 @@ export const dd2sex = function (dangle, islat, isequ, precision=5) {
                 buf = signstr;
                 //df = NumberFormat.getFormat('00');
                 //buf += df.format(rhd);
-                buf += numeral(rhd).format('00');
+                buf += sprintf('%02d',rhd);
                 buf += 'd';
                 break;
 
@@ -544,7 +544,7 @@ export const dd2sex = function (dangle, islat, isequ, precision=5) {
                 buf += chd;
                 //df = NumberFormat.getFormat('00');
                 //buf += df.format(rm);
-                buf += numeral(rm).format('00');
+                buf += sprintf('%02d',rm);
                 buf += cm;
                 break;
 
@@ -568,10 +568,10 @@ export const dd2sex = function (dangle, islat, isequ, precision=5) {
                 buf += chd;
                 //df = NumberFormat.getFormat('00');
                 //buf += df.format(rm);
-                buf += numeral(rm).format('00');
+                buf += sprintf('%02d',rm);
                 buf += cm;
                 //buf += df.format(rs);
-                buf += numeral(rs).format('00');
+                buf += sprintf('%02d',rs);
                 buf += cs;
                 break;
 
@@ -602,17 +602,18 @@ export const dd2sex = function (dangle, islat, isequ, precision=5) {
                 buf += chd;
                 //df = NumberFormat.getFormat('00');
                 //buf += df.format(rm);
-                buf += numeral(rm).format('00');
+                buf += sprintf('%02d',rm);
                 buf += cm;
                 //buf += df.format(rs);
-                buf += numeral(rs).format('00');
+                buf += sprintf('%02d',rs);
                 buf += '.';
-                for (i = 0, fmtstr = ''; i < drfs; i++) {
-                    fmtstr += '0';
-                }
+                // for (i = 0, fmtstr = ''; i < drfs; i++) {
+                //     fmtstr += '0';
+                // }
                 //df = NumberFormat.getFormat(fmtstr);
                 //buf += df.format(rfs);
-                buf += numeral(rfs).format(fmtstr);
+                // buf += numeral(rfs).format(fmtstr);
+                buf += sprintf(`%0${drfs}d`,rfs);
                 buf += cs;
                 break;
         }
@@ -620,15 +621,7 @@ export const dd2sex = function (dangle, islat, isequ, precision=5) {
     else // form == FORM_DECIMAL_DEGREE or otherwise unrecognized
     {
         buf= (islat && dangle >= 0) ? '+' : '';
-        for (i = 0, fmtstr = '0.'; i < cPrecision; i++) {
-            fmtstr += '0';
-        }
-        //df = NumberFormat.getFormat(fmtstr);
-//      NumberFormat nf = NumberFormat.getInstance(Locale.US);
-//      df= (DecimalFormat)nf;
-//       df.setMaximumFractionDigits(cPrecision);
-//      buf += df.format(dangle);
-        buf += numeral(dangle).format(fmtstr);
+        buf += sprintf(`%.${cPrecision}f`,dangle);
         buf += 'd';
     }
 
