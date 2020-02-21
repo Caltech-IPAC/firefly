@@ -53,6 +53,7 @@ public class SearchServerCommands {
             treq.setPageSize(Integer.MAX_VALUE);
             treq.setParam(TableServerRequest.INCL_COLUMNS, params.getOptional(TableServerRequest.INCL_COLUMNS));
             treq.setFilters(StringUtils.asList(params.getOptional(TableServerRequest.FILTERS), ","));
+            treq.setSqlFilter(params.getOptional(TableServerRequest.SQL_FILTER));
             String sortInfo = params.getOptional(TableServerRequest.SORT_INFO);
             if (!StringUtils.isEmpty(sortInfo)) {
                 treq.setSortInfo(SortInfo.parse(sortInfo));

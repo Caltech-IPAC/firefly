@@ -397,7 +397,7 @@ var sex2dd = function (coordstr, islat, isequ) {
 
  *  @return String representation of angle
  */
-var dd2sex = function (dangle, islat, isequ, precision) {
+export const dd2sex = function (dangle, islat, isequ, precision=5) {
     var cPrecision;
     var form;
     var tmp, dfs;
@@ -417,9 +417,9 @@ var dd2sex = function (dangle, islat, isequ, precision) {
     var i;
     var buf;
 
-    if (precision) {
-        precision = 5;
-    }
+    // if (precision) {
+    //     precision = 5;
+    // }
     if (precision <= 0) {
         cPrecision = 0;
     }

@@ -162,8 +162,8 @@ public class TableTest extends ConfigTest {
         Assert.assertEquals("Ref", ra.get("ref"));
         Assert.assertEquals("MaxValue", ra.get("maxValue"));
         Assert.assertEquals("MinValue", ra.get("minValue"));
-        Assert.assertEquals("Format", ra.get("format"));
-        Assert.assertEquals("FmtDisp", ra.get("fmtDisp"));
+        Assert.assertEquals(null, ra.get("format"));        // due to FIREFLY-471:  when precision is set; clear format and fmtDisp
+        Assert.assertEquals(null, ra.get("fmtDisp"));       // due to FIREFLY-471:  when precision is set; clear format and fmtDisp
 
         JSONObject dec = (JSONObject) getPathValue(jsonTable, "tableData", "columns", "1");    // 2nd col.. dec
         Assert.assertEquals("ShortDescription", dec.get("desc"));        // testing old-meta ShortDescription

@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
+
 public class TableServerRequest extends ServerRequest implements Serializable, Cloneable {
 
     public static final String TBL_FILE_PATH = "tblFilePath";       // this meta if exists contains source of the data
@@ -25,6 +27,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
     public static final String TBL_ID = "tbl_id";
     public static final String TITLE = "title";
     public static final String FILTERS = "filters";
+    public static final String SQL_FILTER = "sqlFilter";
     public static final String SORT_INFO = "sortInfo";
     public static final String PAGE_SIZE = "pageSize";
     public static final String START_IDX = "startIdx";
@@ -32,13 +35,14 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
     public static final String FIXED_LENGTH = "fixedLength";
     public static final String META_INFO = "META_INFO";
     public static final String META_OPTIONS = "META_OPTIONS";
-    public static final List<String> SYS_PARAMS = Arrays.asList(REQUEST_CLASS,INCL_COLUMNS,SORT_INFO,FILTERS,PAGE_SIZE,START_IDX,FIXED_LENGTH,META_INFO,TBL_ID);
+    public static final List<String> SYS_PARAMS = Arrays.asList(REQUEST_CLASS,INCL_COLUMNS,SORT_INFO,FILTERS,SQL_FILTER,PAGE_SIZE,START_IDX,FIXED_LENGTH,META_INFO,TBL_ID);
     public static final String TBL_INDEX = "tbl_index";     // the table to show if it's a multi-table file.
     public static final String SELECT_INFO = "selectInfo";  // a property of META_INFO.  deserialize into SelectionInfo.java
 
     private int pageSize = -1;
     private int startIdx;
     private ArrayList<String> filters;
+    private String sqlFilter;
     private SelectionInfo selectInfo;
     private Map<String, String> metaInfo;
     private transient Map<String, String> metaOptions;               // options to apply for this request.  it will not persist nor returned to the client
@@ -163,6 +167,31 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
         }
     }
 
+    /**
+     * SQL where clause to be added to filters
+     * This is a string of op::sql, where op can be AND or OR with AND being the default if not found
+     * @param sqlFilter
+     */
+    public void setSqlFilter(String sqlFilter) {
+        String[] opSql = parseSqlFilter(sqlFilter);
+        this.sqlFilter = isEmpty(opSql[1]) ? null : sqlFilter;
+    }
+
+    public String getSqlFilter() {
+        return sqlFilter;
+    }
+
+    /**
+     * @return [op, sql] of this sqlFilter request.  op is default to AND if not given.
+     */
+    public static String[] parseSqlFilter(String sqlFilter) {
+        String s = sqlFilter == null ? "" : sqlFilter;
+        String[] parts = s.split("::", 2);
+        String sql = parts.length == 1 ? parts[0] : parts[1];
+        String op = parts.length == 1 ? "AND" : parts[0];
+        return new String[]{op, sql};
+    }
+
     public SelectionInfo getSelectInfo() {
         return selectInfo;
     }
@@ -177,6 +206,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
      */
     public void keepBaseParamOnly() {
         setFilters(null);
+        setSqlFilter(null);
         setPageSize(Integer.MAX_VALUE);
         setSortInfo(null);
         setSelectInfo(null);
@@ -199,6 +229,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
             TableServerRequest treq = (TableServerRequest) req;
             pageSize    = treq.pageSize;
             startIdx    = treq.startIdx;
+            sqlFilter   = treq.sqlFilter;
             filters     = treq.filters == null ? null : new ArrayList<>(treq.filters);
             metaInfo    = treq.metaInfo == null ? null : new HashMap<>(treq.metaInfo);
             metaOptions = treq.metaOptions == null ? null : new HashMap<>(treq.metaOptions);
@@ -252,7 +283,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
     }
 
     public static List<String> parseFilters(String s) {
-        if (StringUtils.isEmpty(s)) return null;
+        if (isEmpty(s)) return null;
         String[] filters = s.split(FILTER_SEP);
         return Arrays.asList(filters);
     }
@@ -286,6 +317,9 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
         TreeSet<Param> params = new TreeSet<>();
         if (filters != null && filters.size() > 0) {
             params.add(new Param(FILTERS, toFilterStr(filters)));
+        }
+        if (!isEmpty(sqlFilter)) {
+            params.add(new Param(SQL_FILTER, sqlFilter));
         }
         if (getSortInfo() != null) {
             params.add(new Param(SORT_INFO, getSortInfo().toString()));
@@ -335,6 +369,10 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
                 } else {
                     setFilters(parseFilters(s));
                 }
+                break;
+            }
+            case SQL_FILTER: {
+                setSqlFilter(param.getValue());
                 break;
             }
             case META_INFO: {

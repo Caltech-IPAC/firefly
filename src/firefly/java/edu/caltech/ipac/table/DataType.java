@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.table;
 
+import edu.caltech.ipac.astro.CoordUtil;
 import edu.caltech.ipac.util.HREF;
 import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONArray;
@@ -66,7 +67,7 @@ public class DataType implements Serializable, Cloneable {
     private static final List<String> FLOATING_TYPES = Arrays.asList(DOUBLE, REAL, FLOAT, S_DOUBLE, S_REAL, S_FLOAT);
     private static final List<String> INT_TYPES = Arrays.asList(INTEGER, LONG, S_INTEGER, S_LONG);
     public static final List<String> NUMERIC_TYPES = Stream.concat(FLOATING_TYPES.stream(), INT_TYPES.stream()).collect(Collectors.toList());
-    private static final Pattern precisiontPattern = Pattern.compile("([EFG]?)(\\d*)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern precisiontPattern = Pattern.compile("^(HMS|DMS|[EFG])?(\\d*)$", Pattern.CASE_INSENSITIVE);
 
 
     private       String keyName;
@@ -332,9 +333,9 @@ public class DataType implements Serializable, Cloneable {
      * fmtDisp		: A Java format string.  It can be used to format any type.  i.e.  "cost $%.2f"
      * format		: Same as fmtDisp
      * precision	: This only applies to floating point numbers.
-     *                A string Tn where T is either F, E, or G
+     *                A string Tn where T is either F, E, G, HMS, or DMS
      *                If T is not present, it defaults to F.
-     *                When T is F or E, n is the number of significant figures after the decimal point.
+     *                When T is F, E, HMS, or DMS, n is the number of significant figures after the decimal point.
      *                When T is G, n is the number of significant digits
      *
      * @param value         the value to be formatted
@@ -365,7 +366,7 @@ public class DataType implements Serializable, Cloneable {
         }
 
         // do escaping if requested
-        if (replaceCtrl && type == String.class) {
+        if (replaceCtrl && value instanceof String) {
             value = replaceCtrl((String)value);
         }
 
@@ -381,9 +382,17 @@ public class DataType implements Serializable, Cloneable {
             if (!isEmpty(prec)) {
                 String[] tp = StringUtils.groupMatch(precisiontPattern, prec);    // T in group 0, and precision in group 1.
                 if (tp != null) {
-                String c = isEmpty(tp[0]) || tp[0].equals("F") ? "f" : tp[0];
-                    String p = isEmpty(tp[1]) ? "" : "." + tp[1];
-                    return String.format("%" + p + c, value);
+                    String c = isEmpty(tp[0]) || tp[0].equals("F") ? "f" : tp[0];
+                    int p = isEmpty(tp[1]) ? 0 : Integer.parseInt(tp[1]);
+                    try {
+                        if (c.toUpperCase().equals("HMS")) {
+                            return CoordUtil.dd2sex(Double.parseDouble(String.valueOf(value)), false, true, 5);  // set to 5 to matches client's default
+                        } else if (c.toUpperCase().equals("DMS")) {
+                            return CoordUtil.dd2sex(Double.parseDouble(String.valueOf(value)), true, true, 5);   // set to 5 to matches client's default
+                        } else {
+                            return String.format("%" + "." + p + c, value);
+                        }
+                    } catch (Exception e) { return "NaN"; }
                 }
             }
         } else if (Date.class.isAssignableFrom(getDataType())) {

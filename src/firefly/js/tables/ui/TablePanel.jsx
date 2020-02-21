@@ -9,7 +9,7 @@ import shallowequal from 'shallowequal';
 
 import {flux} from '../../Firefly.js';
 import * as TblUtil from '../TableUtil.js';
-import {dispatchTableRemove, dispatchTblExpanded, dispatchTableFetch, dispatchTableAddLocal} from '../TablesCntlr.js';
+import {dispatchTableRemove, dispatchTblExpanded, dispatchTableFetch, dispatchTableAddLocal, dispatchTableFilter} from '../TablesCntlr.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
 import {TableInfo} from './TableInfo.jsx';
@@ -108,7 +108,8 @@ export class TablePanel extends PureComponent {
         this.tableConnector.onToggleTextView(!this.state.textView);
     }
     clearFilter() {
-        this.tableConnector.onFilter('');
+        const {tbl_id} = this.tableConnector;
+        dispatchTableFilter({tbl_id, filters: '', sqlFilter: ''});
     }
     toggleOptions() {
         this.tableConnector.onToggleOptions(!this.state.showOptions);
@@ -153,7 +154,7 @@ export class TablePanel extends PureComponent {
             .map((f) => f(this.state))
             .map( (c, idx) => get(c, 'props.key') ? c : React.cloneElement(c, {key: idx})); // insert key prop if missing
 
-        const showOptionsDialog = () => showTableOptionDialog(this.onOptionUpdate, this.onOptionReset, tbl_ui_id);
+        const showOptionsDialog = () => showTableOptionDialog(this.onOptionUpdate, this.onOptionReset, tbl_ui_id, tbl_id);
         const showInfoDialog = () => showTableInfoDialog(tbl_id);
 
         return (
@@ -229,7 +230,7 @@ export class TablePanel extends PureComponent {
     }
 }
 
-function showTableOptionDialog(onChange, onOptionReset, tbl_ui_id) {
+function showTableOptionDialog(onChange, onOptionReset, tbl_ui_id, tbl_id) {
 
     const content = (
          <div className='TablePanelOptionsWrapper'>
@@ -237,6 +238,7 @@ function showTableOptionDialog(onChange, onOptionReset, tbl_ui_id) {
                   onChange={onChange}
                   onOptionReset={onOptionReset}
                   tbl_ui_id={tbl_ui_id}
+                  tbl_id={tbl_id}
                />
          </div>
     );
@@ -316,25 +318,26 @@ TablePanel.defaultProps = {
     pageSize: 100
 };
 
-function MetaInfo({tbl_id}) {
+export function MetaInfo({tbl_id, style, isOpen=false}) {
     const contentStyle={display: 'flex', flexDirection: 'column', maxHeight: 200, overflow: 'auto', paddingBottom: 1};
     const wrapperStyle={width: '100%'};
 
-    const {keywords, links, params} = TblUtil.getTblById(tbl_id);
-
-    if (isEmpty(keywords) && isEmpty(links) && isEmpty(params) ) {
+    if (!TblUtil.hasAuxData(tbl_id)) {
         return null;
     }
+    const {keywords, links, params} = TblUtil.getTblById(tbl_id);
+
     return (
-        <div className='TablePanel__meta'>
+        <div className='TablePanel__meta' style={style}>
             { !isEmpty(keywords) &&
-            <CollapsiblePanel componentKey={tbl_id + '-meta'} header='Table Meta' {...{contentStyle, wrapperStyle}}>
+            <CollapsiblePanel componentKey={tbl_id + '-meta'} header='Table Meta' {...{isOpen, contentStyle, wrapperStyle}}>
                 {keywords.concat()                                             // make a copy so the original array does not mutate
-                    .sort(({key:k1}, {key:k2}) => k1.localeCompare(k2))        // sort it by key
+                    .filter( ({key}) => key)
+                    .sort(({key:k1}, {key:k2}) => (k1+'').localeCompare(k2+''))        // sort it by key
                     .map(({value, key}, idx) => {                              // map it into html elements
                         return (
                             <div key={'keywords-' + idx} style={{display: 'inline-flex'}}>
-                                <Keyword style={{maxWidth: 0}} label={key} value={value}/>
+                                <Keyword label={key} value={value}/>
                             </div>
                         );
                     })
@@ -342,7 +345,7 @@ function MetaInfo({tbl_id}) {
             </CollapsiblePanel>
             }
             { !isEmpty(params) &&
-            <CollapsiblePanel componentKey={tbl_id + '-params'} header='Table Params' {...{contentStyle, wrapperStyle}}>
+            <CollapsiblePanel componentKey={tbl_id + '-params'} header='Table Params' {...{isOpen, contentStyle, wrapperStyle}}>
                 {params.concat()                                                          // same logic as keywords, but sort by name
                     .sort(({name:k1}, {name:k2}) => k1.localeCompare(k2))
                     .map(({name, value, type='N/A'}, idx) => {
@@ -356,7 +359,7 @@ function MetaInfo({tbl_id}) {
             </CollapsiblePanel>
             }
             { !isEmpty(links) &&
-            <CollapsiblePanel componentKey={tbl_id + '-links'} header='Links' {...{contentStyle, wrapperStyle}}>
+            <CollapsiblePanel componentKey={tbl_id + '-links'} header='Links' {...{isOpen, contentStyle, wrapperStyle}}>
                 {links.map((l, idx) => {
                     const dispVal = l.value || l.href;
                     return (
@@ -379,7 +382,7 @@ function Keyword({style={}, label, value}) {
     return (
         <React.Fragment>
             <div className='keyword-label'>{label}</div>
-            <div style={{whiteSpace: 'nowrap', ...style}} className='keyword-value'>{value}</div>
+            <div title = {value} style={{whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', ...style}} className='keyword-value'>{value}</div>
         </React.Fragment>
     );
 }

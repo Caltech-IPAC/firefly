@@ -18,6 +18,8 @@ import java.io.File;
 import java.util.TreeSet;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.FILTERS;
+import static edu.caltech.ipac.firefly.data.TableServerRequest.SQL_FILTER;
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
  * This is a base class for processors which perform a task on the original table
@@ -115,6 +117,9 @@ public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
         TreeSet<Param> params = new TreeSet<>();
         if (sreq.getFilters() != null && sreq.getFilters().size() > 0) {
             params.add(new Param(FILTERS, TableServerRequest.toFilterStr(sreq.getFilters())));
+        }
+        if (!isEmpty(sreq.getSqlFilter())) {
+            params.add(new Param(SQL_FILTER, sreq.getSqlFilter()));
         }
         params.addAll(treq.getSearchParams());
         String id = StringUtils.toString(params, "|");

@@ -128,7 +128,6 @@ public class IpacTableUtil {
             consumeMeta(FILTERABLE_TAG, meta, dt, (v, c) -> c.setFilterable(StringUtils.getBoolean(v, true)));
             consumeMeta(SORT_BY_TAG, meta, dt, (v, c) -> c.setSortByCols(v));
             consumeMeta(ENUM_VALS_TAG, meta, dt, (v, c) -> c.setEnumVals(v));
-            consumeMeta(PRECISION_TAG, meta, dt, (v, c) -> c.setPrecision(v));
             consumeMeta(UCD_TAG, meta, dt, (v, c) -> c.setUCD(v));
             consumeMeta(UTYPE_TAG, meta, dt, (v, c) -> c.setUType(v));
             consumeMeta(REF_TAG, meta, dt, (v, c) -> c.setRef(v));
@@ -138,9 +137,15 @@ public class IpacTableUtil {
 
             consumeMeta(LINKS_TAG, meta, dt, (json, c) -> applyIfNotEmpty(toLinkInfos(json), infos -> c.setLinkInfos(infos)));
 
-            if (dt instanceof ParamInfo)
+            if (dt instanceof ParamInfo) {
                 consumeMeta(VALUE_TAG, meta, dt, (v, c) -> ((ParamInfo)c).setValue(v));
+            }
 
+            consumeMeta(PRECISION_TAG, meta, dt, (v, c) -> {
+                c.setPrecision(v);      // if precision is given as meta, use it because we want this to be the official method.  clear higher format precedences.
+                c.setFormat(null);
+                c.setFmtDisp(null);
+            });
         }
     }
 

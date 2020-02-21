@@ -40,17 +40,26 @@ export const NULL_TOKEN = '%NULL';          // need to match DbAdapter.NULL_TOKE
 // condition separator
 const COND_SEP = new RegExp('( and | or )', 'i');
 
+export function getFiltersAsSql(tbl_id) {
+    const filters = get(getTblById(tbl_id), 'request.filters', '').split(FILTER_SEP);
+    if (filters.length === 0) return;
+    else if (filters.length === 1) return filters[0];
+    else return filters.map( (f) => `(${f})`).join(' AND ');
+}
+
 /**
  * returns the number of individual filters
- * @param filterInfoStr
+ * @param request   table request
  * @returns {number}
  */
-export function getNumFilters(filterInfoStr) {
-    if (filterInfoStr) {
-        return filterInfoStr.split(new RegExp(` and | or |${FILTER_SEP}`, 'i')).length;
-    } else {
-        return 0;
+export function getNumFilters(request) {
+    const {filters, sqlFilter} = request || {};
+    let count = 0;
+    if (sqlFilter) count++;
+    if (filters) {
+        count += filters.split(new RegExp(` and | or |${FILTER_SEP}`, 'i')).length;
     }
+    return count;
 }
 
 
