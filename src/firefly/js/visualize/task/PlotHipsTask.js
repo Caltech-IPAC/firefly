@@ -4,18 +4,19 @@
 
 import {isEmpty} from 'lodash';
 import ImagePlotCntlr, {
-    dispatchAttributeChange,
     dispatchChangeCenterOfProjection,
-    dispatchChangeHiPS,
     dispatchPlotHiPS,
+    dispatchChangeHiPS,
+    dispatchAbortHiPS,
     dispatchPlotImage,
     dispatchPlotProgressUpdate,
     dispatchZoom,
     IMAGE_PLOT_KEY,
     visRoot,
-    WcsMatchType
+    WcsMatchType,
+    makeUniqueRequestKey
 } from '../ImagePlotCntlr.js';
-import {getArcSecPerPix, getZoomLevelForScale, UserZoomTypes} from '../ZoomUtil.js';
+import {UserZoomTypes} from '../ZoomUtil.js';
 import {WebPlot, isHiPS, isImage} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {fetchUrl, loadImage} from '../../util/WebUtil.js';
@@ -28,7 +29,6 @@ import {
     getFoV,
     getPlotViewById,
     primePlot,
-    getPlotViewAry
 } from '../PlotViewUtil.js';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 import {
@@ -43,12 +43,7 @@ import {
 import {addAllSkyCachedImage, findAllSkyCachedImage} from '../iv/HiPSTileCache.js';
 import {ZoomType} from '../ZoomType.js';
 import {CCUtil} from '../CsysConverter.js';
-import {
-    addDrawLayers,
-    determineViewerId,
-    ensureWPR,
-    getHipsImageConversion,
-} from './PlotImageTask.js';
+import { addDrawLayers, determineViewerId, ensureWPR, getHipsImageConversion, } from './PlotImageTask.js';
 import {
     dispatchAttachLayerToPlot,
     dispatchCreateDrawLayer,
@@ -63,10 +58,9 @@ import {resolveHiPSIvoURL} from '../HiPSListUtil.js';
 import {addNewMocLayer, isMOCFitsFromUploadAnalsysis, makeMocTableId, MOCInfo, UNIQCOL} from '../HiPSMocUtil.js';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
 import {doUpload} from '../../ui/FileUpload.jsx';
-import CoordinateSys from '../CoordSys.js';
 import {getRowCenterWorldPt} from '../saga/ActiveRowCenterWatcher';
 import {getActiveTableId} from '../../tables/TableUtil';
-import {dispatchAbortHiPS, makeUniqueRequestKey} from '../ImagePlotCntlr';
+import {matchHiPStoPlotView} from './WcsMatchTask';
 
 const PROXY= true;
 
@@ -262,7 +256,7 @@ async function makeHiPSPlot(rawAction, dispatcher) {
         let plot= WebPlot.makeWebPlotDataHIPS(plotId, wpRequest, hipsProperties, 'a hips plot', .0001, attributes, false);
         plot.proxyHips= PROXY;
 
-        createHiPSMocLayer(getPropertyItem(hipsProperties, 'ivoid'), wpRequest.getHipsRootUrl(), plot);
+        await createHiPSMocLayer(getPropertyItem(hipsProperties, 'ivoid'), wpRequest.getHipsRootUrl(), plot);
         if (currentPlots[plotId]!==requestKey) {
             hipsFail('hips plot expired or aborted');
             return;
@@ -403,7 +397,7 @@ export function makeImageOrHiPSAction(rawAction) {
         const groupId= getPlotGroupId(imageRequest, hipsRequest);
         const useImage= (plotAllSkyFirst && allSkyRequest) || (imageRequest.getWorldPt() &&
                                                               (size !== 0) && (size < fovDegFallOver));
-        let wpRequest= useImage ? imageRequest.makeCopy() : hipsRequest.makeCopy();
+        let wpRequest;
 
         if (useImage) {
             wpRequest= plotAllSkyFirst ? allSkyRequest.makeCopy() : imageRequest.makeCopy();
@@ -544,53 +538,6 @@ function prepFromImageConversion(pv, wpRequest) {
     dispatchAttachLayerToPlot(ImageOutline.TYPE_ID, plotId);
     const artAry= getDrawLayersByType(dlRoot(), Artifact.TYPE_ID);
     artAry.forEach( (a) => dispatchDetachLayerFromPlot(a.drawLayerId,plotId));
-}
-
-
-/**
- *
- * @param {VisRoot} visRoot
- * @param {PlotView} pv
- */
-export function matchHiPStoPlotView(visRoot, pv) {
-    const hipsViewerIds = getPlotViewAry(visRoot)
-        .filter((testPv) => isHiPS(primePlot(testPv)))
-        .map((h) => h.plotId);
-    matchHiPSToImage(pv, hipsViewerIds);
-}
-
-
-
-/**
- * Add add a image outline to some HiPS display and attempts to zoom to the same scale.
- * @param {PlotView} pv
- * @param {Array.<string>} hipsPVidAry
- */
-function matchHiPSToImage(pv, hipsPVidAry) {
-    if (!pv || isEmpty(hipsPVidAry)) return;
-    const attributes=  getCornersAttribute(pv);
-    const plot= primePlot(pv);
-    const wpCenter= CCUtil.getWorldCoords(plot,findCurrentCenterPoint(pv));
-    const dl = getDrawLayerByType(dlRoot(), ImageOutline.TYPE_ID);
-    if (!dl) dispatchCreateDrawLayer(ImageOutline.TYPE_ID);
-    const asPerPix= getArcSecPerPix(plot,plot.zoomFactor);
-    hipsPVidAry.forEach( (id) => {
-        Object.entries(attributes).forEach( (entry) => dispatchAttributeChange({
-            plotId:id, overlayColorScope:false, positionScope:false, attKey:entry[0], attValue:entry[1]}));
-        dispatchAttachLayerToPlot(ImageOutline.TYPE_ID, id);
-        dispatchChangeCenterOfProjection({plotId:id, centerProjPt:wpCenter});
-        //Since HiPs map only support JS2000 and Galactic coordinates, only the image is plotted with these two coordinates
-        //the change is dispatched. If not, do nothing
-        if (plot.imageCoordSys===CoordinateSys.EQ_J2000 || plot.imageCoordSys===CoordinateSys.GALACTIC) {
-            dispatchChangeHiPS({plotId: id, coordSys: plot.imageCoordSys});
-        }
-        const hipsPv= getPlotViewById(visRoot(), id);
-        const hipsPlot= primePlot(hipsPv);
-        const level= getZoomLevelForScale(hipsPlot,asPerPix);
-        if (Math.abs(getArcSecPerPix(hipsPlot, hipsPlot.zoomFactor)-asPerPix) >.001) {
-            dispatchZoom({ plotId:id, userZoomType: UserZoomTypes.LEVEL, level});
-        }
-    });
 }
 
 

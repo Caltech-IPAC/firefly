@@ -6,7 +6,7 @@ import {isString, isObject} from 'lodash';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE,TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
 import {visRoot, dispatchRecenter} from '../ImagePlotCntlr.js';
 import {getTblById, getCellValue} from '../../tables/TableUtil.js';
-import Point, {makeWorldPt, makeAnyPt} from '../Point.js';
+import Point, {makeAnyPt} from '../Point.js';
 import {findTableCenterColumns} from '../../util/VOAnalyzer.js';
 import {
     getActivePlotView,
@@ -14,10 +14,9 @@ import {
     isFullyOnScreen,
     primePlot, willFitOnScreenAtCurrentZoom
 } from '../PlotViewUtil';
-import {toDegrees} from '../VisUtil';
 import {CysConverter} from '../CsysConverter';
 import {dispatchPlotImage, dispatchUseTableAutoScroll} from '../ImagePlotCntlr';
-import {isColRadians, isTableUsingRadians} from '../../tables/TableUtil';
+import {isTableUsingRadians} from '../../tables/TableUtil';
 import {PlotAttribute} from '../PlotAttribute';
 import {isImage} from '../WebPlot';
 import {getAppOptions} from '../../core/AppDataCntlr';
@@ -132,8 +131,9 @@ function recenterImageActiveRow(tbl_id, force=false) {
 
 
 function toAngle(d, radianToDegree)  {
-    const v= Number(d);
-    return (!isNaN(v) && radianToDegree) ? v*180/Math.PI : v;
+    const v= Number(d ?? NaN);
+    if (isNaN(v)) return v;
+    return radianToDegree ? v*180/Math.PI : v;
 }
 
 
@@ -151,10 +151,8 @@ export function getRowCenterWorldPt(tableOrId) {
     const rad= isTableUsingRadians(tbl, [lonCol,latCol]);
     const lon= toAngle(getCellValue(tbl,tbl.highlightedRow, lonCol),rad);
     const lat= toAngle(getCellValue(tbl,tbl.highlightedRow, latCol),rad);
-
-    const tmpPt= makeAnyPt(lon,lat,csys||CoordinateSys.EQ_J2000);
-    if (tmpPt.type!==Point.W_PT) return tmpPt;
-    return makeWorldPt(isColRadians(tbl,lonCol)? toDegrees(lon) : lon, isColRadians(tbl,latCol)? toDegrees(lat): lat, csys);
+    if (isNaN(lon) || isNaN(lat)) return;
+    return makeAnyPt(lon,lat,csys||CoordinateSys.EQ_J2000);
 }
 
 function getTableModel(tableOrId) {

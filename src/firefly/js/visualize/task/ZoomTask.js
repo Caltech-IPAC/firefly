@@ -16,8 +16,7 @@ import {isImageViewerSingleLayout, getMultiViewRoot} from '../MultiViewCntlr.js'
 import WebPlotResult from '../WebPlotResult.js';
 import VisUtil from '../VisUtil.js';
 import {doHiPSImageConversionIfNecessary} from './PlotHipsTask.js';
-import {matchHiPStoPlotView} from './PlotHipsTask';
-import {matchImageToHips} from './WcsMatchTask';
+import {matchImageToHips, matchHiPStoPlotView} from './WcsMatchTask';
 
 
 const ZOOM_WAIT_MS= 1500; // 1.5 seconds

@@ -9,10 +9,21 @@ See Firefly docker guidelines [here](firefly-docker.md).
 - docker tag: `nightly`
 
 ##### _UI_
+- Tables now handle array type data ([Firefly-150](https://github.com/Caltech-IPAC/firefly/pull/922)
 - Table Options UI Improvements ([Firefly-471](https://github.com/Caltech-IPAC/firefly/pull/928))
   - New `Advanced Filter` tab enabling SQL-like filtering
   - New `Table Meta` tab showing meta information that was once not accessible
   - Added additional column's meta when available
+- WCS match Improvements ([Firefly-484](https://github.com/Caltech-IPAC/firefly/pull/937))
+  - When matching to HiPS, images will rotate, if necessary
+  - When HiPS matched to image - Firefly will change HiPS coordinate system if images has EQJ200 or Galactic rotated north up
+- Better layout of Layer dialog for catalogs overlays ([Firefly-395](https://github.com/Caltech-IPAC/firefly/pull/919))
+- Significant improvements in Data Products Viewing ([Firefly-460](https://github.com/Caltech-IPAC/firefly/pull/924))
+  - Can choose from any HDU in FITS
+  - Table HDUs are show as table and Charts
+  - Firefly now reads 1D FITS images and shows as a chart
+  - Choice of table with VO Tables
+  - PDF and TAR are recognized and downloadable.
 
 
 ### Version 2019.4

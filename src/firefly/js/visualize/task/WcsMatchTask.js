@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get} from 'lodash';
+import {isEmpty} from 'lodash';
 import {take} from 'redux-saga/effects';
 import ImagePlotCntlr, {
     ActionScope,
@@ -28,7 +28,12 @@ import {CCUtil} from '../CsysConverter.js';
 import {ZoomType} from '../ZoomType.js';
 import {makeScreenPt, pointEquals} from '../Point.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
-import {matchHiPStoPlotView} from './PlotHipsTask';
+import CoordinateSys from '../CoordSys';
+import {dispatchAttributeChange, visRoot} from '../ImagePlotCntlr';
+import {getCorners, getDrawLayerByType, getPlotViewAry} from '../PlotViewUtil';
+import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dlRoot} from '../DrawLayerCntlr';
+import ImageOutline from '../../drawingLayers/ImageOutline';
+import {isPlotRotatedNorth} from '../VisUtil';
 
 
 export function* watchForCompletedPlot(options, dispatch, getState) {
@@ -71,7 +76,7 @@ export function* watchForCompletedPlot(options, dispatch, getState) {
 export function wcsMatchActionCreator(action) {
     return (dispatcher, getState) => {
         let visRoot= getState()[IMAGE_PLOT_KEY];
-        const plotId= action.payload.plotId || visRoot.activePlotId || get(visRoot.plotViewAry, '0.plotId');
+        const plotId= action.payload.plotId || visRoot.activePlotId || visRoot.plotViewAry[0]?.plotId;
         const matchType= WcsMatchType.get(action.payload.matchType);
         const {lockMatch}= action.payload;
 
@@ -82,12 +87,11 @@ export function wcsMatchActionCreator(action) {
         }
         let masterPv= getPlotViewById(visRoot, plotId);
 
-        const width= get(masterPv,'viewDim.width',false);
-        const height= get(masterPv,'viewDim.height',false);
+        const width= masterPv?.viewDim?.width ?? false;
+        const height= masterPv?.viewDim?.height ?? false;
         const image= isImage(primePlot(masterPv));
         const hips= isHiPS(primePlot(masterPv));
 
-        // if (!matchType || !width  || !height) {
         if (image && lockMatch && (!width  || !height)) {
             dispatcher({
                 type: ImagePlotCntlr.WCS_MATCH,
@@ -177,7 +181,30 @@ export function wcsMatchActionCreator(action) {
 
 
 
-export function matchImageToHips(hipsPv, imagePv) {
+export const {matchImageToHips, matchHiPStoPlotView}= (() => {
+    let lock= false;
+
+    return {
+        matchImageToHips: (hipsPv, imagePv) => {
+            if (lock) return;
+            lock= true;
+            imageToHips(hipsPv,imagePv);
+            lock= false;
+        },
+
+        matchHiPStoPlotView: (visRoot, pv) => {
+            if (lock) return;
+            lock= true;
+            const hipsViewerIds = getPlotViewAry(visRoot)
+                .filter((testPv) => isHiPS(primePlot(testPv)))
+                .map((h) => h.plotId);
+            matchHiPSToImage(pv, hipsViewerIds);
+            lock= false;
+        }
+    };
+})();
+
+function imageToHips(hipsPv, imagePv) {
     const imagePlot= primePlot(imagePv);
     const hipsPlot= primePlot(hipsPv);
     if (!imagePlot || !hipsPlot) return;
@@ -192,7 +219,61 @@ export function matchImageToHips(hipsPv, imagePv) {
         const level= getZoomLevelForScale(imagePlot, targetASpix);
         dispatchZoom({plotId:imagePlot.plotId, userZoomType:UserZoomTypes.LEVEL, level, actionScope:ActionScope.GROUP});
     }
+
+    visRoot().plotViewAry.forEach( (iPv) => isImage(primePlot(iPv)) && rotateToMatch(iPv, hipsPv));
 }
+
+
+/**
+ * Add add a image outline to some HiPS display and attempts to zoom to the same scale.
+ * @param {PlotView} pv
+ * @param {Array.<string>} hipsPVidAry
+ */
+function matchHiPSToImage(pv, hipsPVidAry) {
+    if (!pv || isEmpty(hipsPVidAry)) return;
+    const attributes=  getCornersAttribute(pv);
+    const plot= primePlot(pv);
+    const wpCenter= CCUtil.getWorldCoords(plot,findCurrentCenterPoint(pv));
+    const dl = getDrawLayerByType(dlRoot(), ImageOutline.TYPE_ID);
+    if (!dl) dispatchCreateDrawLayer(ImageOutline.TYPE_ID);
+    const asPerPix= getArcSecPerPix(plot,plot.zoomFactor);
+    hipsPVidAry.forEach( (id) => {
+        Object.entries(attributes).forEach( (entry) => dispatchAttributeChange({
+            plotId:id, overlayColorScope:false, positionScope:false, attKey:entry[0], attValue:entry[1]}));
+        dispatchAttachLayerToPlot(ImageOutline.TYPE_ID, id);
+        dispatchChangeCenterOfProjection({plotId:id, centerProjPt:wpCenter});
+        //Since HiPs map only support JS2000 and Galactic coordinates, only the image is plotted with these two coordinates
+        //the change is dispatched. If not, do nothing
+        const jNorth= isPlotRotatedNorth(plot, CoordinateSys.EQ_J2000);
+        const gNorth= isPlotRotatedNorth(plot, CoordinateSys.GALACTIC);
+        if (jNorth || gNorth) {
+            const hpv= getPlotViewById(visRoot(),id);
+            if (!isRotationMatching(pv, hpv)) {
+                if (jNorth)      dispatchChangeHiPS({plotId: id, coordSys: CoordinateSys.EQ_J2000});
+                else if (gNorth) dispatchChangeHiPS({plotId: id, coordSys: CoordinateSys.GALACTIC});
+            }
+        }
+        const hipsPv= getPlotViewById(visRoot(), id);
+        const hipsPlot= primePlot(hipsPv);
+        const level= getZoomLevelForScale(hipsPlot,asPerPix);
+        if (Math.abs(getArcSecPerPix(hipsPlot, hipsPlot.zoomFactor)-asPerPix) >.001) {
+            dispatchZoom({ plotId:id, userZoomType: UserZoomTypes.LEVEL, level});
+        }
+    });
+}
+
+function getCornersAttribute(pv) {
+    const plot= primePlot(pv);
+    const cAry= getCorners(plot);
+    if (!cAry) return {};
+    return {
+        [PlotAttribute.OUTLINEIMAGE_BOUNDS]: cAry,
+        [PlotAttribute.OUTLINEIMAGE_TITLE]: plot.title
+    };
+}
+
+
+
 
 
 
