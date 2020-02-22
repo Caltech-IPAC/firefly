@@ -28,7 +28,6 @@ export class Drawer {
         this.drawingDef= null;
         this.data;
         this.highlightData;
-        this.drawConnect= null;
         this.selectedIndexes=[];
 
         this.plot= null;
@@ -58,8 +57,6 @@ export class Drawer {
         this.decimatedData= null;
     }
 
-
-    setPointConnector(connector) { this.drawConnect= connector; } // future use maybe
 
     setEnableDecimationDrawing(d) { this.decimate= d; } // future use maybe
 
@@ -324,7 +321,7 @@ export class Drawer {
             if (drawData.length>500) {
                 const offscreenCanvas= initOffScreenCanvas(canvas.width, canvas.height);
                 params= makeDrawingParams(offscreenCanvas, drawingDef,cc,drawData,
-                                         this.drawConnect, getMaxChunk(drawData,this.isPointData),
+                                         getMaxChunk(drawData,this.isPointData),
                                          this.deferredDrawingCompletedCB, canvas);
                 this.cancelRedraw();
                 this.drawingCanceler= makeDrawingDeferred(this,params);
@@ -335,7 +332,7 @@ export class Drawer {
             else {
                 this.clear();
                 params= makeDrawingParams(canvas, drawingDef,
-                                          cc,drawData,this.drawConnect, Number.MAX_SAFE_INTEGER);
+                                          cc,drawData,Number.MAX_SAFE_INTEGER);
                 this.doDrawing(params);
             }
         }
@@ -402,7 +399,6 @@ export class Drawer {
 
 
         if (!params.done) {
-            if (params.drawConnect) params.drawConnect.beginDrawing();
             const nextChunk= getNextChuck(params);
             if (nextChunk.optimize) {
                 drawChunkOptimized(nextChunk.drawList, params);
@@ -426,9 +422,6 @@ export class Drawer {
             }
             else {
                 params.canvas.style.visibility= 'visible';
-            }
-            if (params.drawConnect) {
-                params.drawConnect.endDrawing();
             }
             if (params.deferCnt && isFunction(params.deferredDrawingCompletedCB)) params.deferredDrawingCompletedCB();
         }
@@ -484,14 +477,13 @@ function nextPt(i,fuzzLevel, max) {
  * @param drawingDef
  * @param {CsysConverter} csysConv
  * @param data
- * @param drawConnect
  * @param {number} maxChunk
  * @param {Function} deferredDrawingCompletedCB - called when drawing has completed
  * @param copyToCanvas
  * @return {Object}
  */
 function makeDrawingParams(canvas, drawingDef, csysConv, data,
-                           drawConnect= null, maxChunk= Number.MAX_SAFE_INTEGER,
+                           maxChunk= Number.MAX_SAFE_INTEGER,
                            deferredDrawingCompletedCB=null, copyToCanvas) {
 
     const params= {
@@ -500,7 +492,6 @@ function makeDrawingParams(canvas, drawingDef, csysConv, data,
         csysConv,    //const
         data,    //const
         maxChunk,    //const
-        drawConnect,    //const
         iterator : data[Symbol.iterator](),
         startTime: Date.now(),    //const
         opCnt: 0, //only for debug
@@ -591,31 +582,6 @@ function shouldDrawObj(csysConv, obj) {
     return true;
 }
 
-/**
- *
- * @param ctx canvas object
- * @param def DrawingDef
- * @param csysConv web csysConv
- * @param dc drawConnector
- * @param obj DrawObj
- * @param lastObj DrawObj
- */
-function drawConnector(ctx, def, csysConv, dc, obj, lastObj) {
-    if (!obj && !lastObj) return;
-    if (csysConv) {
-        const wp1= csysConv.getWorldCoords(DrawOp.getCenterPt(lastObj));
-        const wp2= csysConv.getWorldCoords(DrawOp.getCenterPt(obj));
-        if (!csysConv.coordsWrap(wp1,wp2)) {
-            dc.draw(ctx,csysConv,def, wp1,wp2);
-        }
-    }
-    else {
-        if (DrawOp.getCenterPt(lastObj).type===Point.SPT && DrawOp.getCenterPt(obj).type===Point.SPT) {
-            dc.draw(ctx,def, DrawOp.getCenterPt(lastObj), DrawOp.getCenterPt(obj));
-        }
-    }
-}
-
 function drawChunkOptimized(drawList, params) {
     if (!drawList.length) return;
     const ctx=params.canvas.getContext('2d');
@@ -628,28 +594,20 @@ function drawChunkOptimized(drawList, params) {
 
 function drawChunkNormal(drawList, params) {
     let lastObj= null;
-    const {drawingDef,drawConnect,csysConv,vpPtM, canvas}= params;
+    const {drawingDef,csysConv,vpPtM, canvas}= params;
     const ctx=canvas.getContext('2d');
     for(const obj of drawList) {
-        if (drawConnect) { // in this case doDraw was already called
+        if (shouldDrawObj(csysConv,obj)) { // doDraw must be call when there is a connector
             drawObj(ctx, drawingDef, csysConv, obj,vpPtM, false);
         }
-        else  {
-            if (shouldDrawObj(csysConv,obj)) { // doDraw must be call when there is a connector
-                drawObj(ctx, drawingDef, csysConv, obj,vpPtM, false);
-                if (drawConnect) {
-                    drawConnector(ctx,drawingDef,csysConv,drawConnect,obj,lastObj);
-                }
-            }
-            lastObj= obj;
-        }
+        lastObj= obj;
     }
 }
 
 
 function getNextChuck(params) {
     const drawList= [];
-    let optimize= params.drawConnect?false:true;
+    let optimize= true;
     let objLineWidth;
     let objColor;
     const {drawingDef}= params;
@@ -663,21 +621,15 @@ function getNextChuck(params) {
     for(i= 0; (!params.next.done && i<params.maxChunk ); ) {
         obj= params.next.value;
         params.next= params.iterator.next();
-        if (!params.drawConnect) {
-            if (shouldDrawObj(params.csysConv, obj)) {
-                drawList.push(obj);
-                if (optimize) {
-                    objLineWidth= obj.lineWidth || lineWidth;
-                    objColor= obj.color || color;
-                    optimize= (DrawOp.usePathOptimization(obj,drawingDef) &&
-                               lineWidth===objLineWidth &&
-                               color===objColor);
-                }
-                i++;
-            }
-        }
-        else if (obj) {
+        if (shouldDrawObj(params.csysConv, obj)) {
             drawList.push(obj);
+            if (optimize) {
+                objLineWidth= obj.lineWidth || lineWidth;
+                objColor= obj.color || color;
+                optimize= (DrawOp.usePathOptimization(obj,drawingDef) &&
+                    lineWidth===objLineWidth &&
+                    color===objColor);
+            }
             i++;
         }
     }
