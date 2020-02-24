@@ -8,6 +8,13 @@ See Firefly docker guidelines [here](firefly-docker.md).
 
 - docker tag: `nightly`
 
+##### _UI_
+- Table Options UI Improvements ([Firefly-471](https://github.com/Caltech-IPAC/firefly/pull/928))
+  - New `Advanced Filter` tab enabling SQL-like filtering
+  - New `Table Meta` tab showing meta information that was once not accessible
+  - Added additional column's meta when available
+
+
 ### Version 2019.4
 
 ##### _Docker tags, releases and patches_
