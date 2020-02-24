@@ -252,6 +252,84 @@
     </script>
 </template>
 
+
+<template title="Orbital path" class="tpl" >
+    <div id="expected" >
+        <div>Orbital path
+            <ul class='expected-list'>
+                <li>file loaded from URL</li>
+            </ul>
+        </div>
+        <div><img style="width: 230px;" src="./images/orbital-path.png"></div>
+    </div>
+    <div id="actual" class="flow-h" style="width: 600px">
+        <div id='tables-1' class="box"></div>
+        <div id='coverageHere' class="box"></div>
+    </div>
+    <script>
+        function onFireflyLoaded(firefly) {
+            firefly.showCoverage('coverageHere', {gridOn:true});
+            //const  tblReq = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/wise-orbit-allsky.tbl',null,
+            const tblReq = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu.s3-us-west-2.amazonaws.com/staff/roby/demo/wise-orbit-allsky.tbl',null,
+                { pageSize: 15,
+                    META_INFO: {
+                        CENTER_COLUMN: 'ra_obs;dec_obs;EQJ2000',
+                        ORBITAL_PATH : 'TRUE'
+                    }
+                });
+            firefly.showTable('tables-1', tblReq);
+        }
+    </script>
+</template>
+
+
+
+<template title="MOST Orbital path of Pallas" class="tpl exclusive" >
+    <div id="expected" >
+        <div>Orbital path
+            <ul class='expected-list'>
+                <li>file loaded from URL</li>
+            </ul>
+        </div>
+        <div><img style="width: 230px;" src="./images/most-search-pallis-path.png"></div>
+    </div>
+    <div id="actual" class="flow-h" style="width: 600px">
+        <div id='tables-1' class="box"></div>
+        <div id='coverageHere' class="box"></div>
+    </div>
+    <script>
+        function onFireflyLoaded(firefly) {
+            firefly.showCoverage('coverageHere', {gridOn:true});
+            const tblReq = firefly.util.table.makeTblRequest('MOSQuery', 'MOST search of Pallas (2000002)',
+                {
+                    obj_naifid: '2000002', // (Pallas)
+                    url: 'https://irsasearchops.ipac.caltech.edu/cgi-bin/MOST/nph-most',
+                    catalog: 'wise_merge',
+                    table_name: 'orbital_path.tbl',
+                                 // the data range is: 2014 1 1 09:16:40.000 to 2017 3 3 19:03:20.000
+                                 // we probably want to update the search processor to take a date string
+                    obs_begin: '1388593000000',
+                    obs_end:   '1488593000000'
+                },
+                {
+                    pageSize: 15,
+                    META_INFO: {
+                        CENTER_COLUMN: 'ra_obj;dec_obj;EQJ2000',
+                        ORBITAL_PATH : 'TRUE'
+                    }
+
+                }
+            );
+            firefly.showTable('tables-1', tblReq);
+        }
+    </script>
+</template>
+
+
+
+
+
+
 <!-- this is where test cases will be attached-->
 <div id="tst-container"/>
 

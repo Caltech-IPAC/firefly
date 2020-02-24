@@ -403,7 +403,7 @@ function getRectangleCenterScreenPt(drawObj,plot,unitType) {
  * @param isCenter if the given point is the center of the rectangle
  * @param width  in arcsec
  * @param height in arcsec
- * @param plot
+ * @param {CysConverter} plot
  * @returns {{upperLeft: *, upperRight: *, lowerLeft: *, lowerRight: *}} corners in world coordinate
  */
 function getRectCorners(pt, isCenter, width, height, plot) {
@@ -446,7 +446,7 @@ const screenPixelToArcsec = (val, cc) => val * getScreenPixScaleArcSec(cc);
  * and the center of the rectangle
  *
  * @param wpt
- * @param plot
+ * @param {CysConverter} plot
  * @param isCenter
  * @param width
  * @param height
@@ -526,7 +526,7 @@ export function rectOnImage(wpt, isCenter, plot, width, height, unit, isOnWorld)
 /**
  * compute if any of the 4 corners of rect is in viewport
  * @param cornerAry world coordinate
- * @param plot
+ * @param {CysConverter} plot
  * @returns {boolean}
  */
 function cornerInView(cornerAry, plot) {
@@ -548,7 +548,7 @@ export function getValueInScreenPixel(plot, arcsecValue) {
  *
  * @param drawObj
  * @param ctx
- * @param plot
+ * @param {CysConverter} plot
  * @param drawParams
  * @param onlyAddToPath
  */
@@ -584,33 +584,40 @@ export function drawShape(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
  *
  * @param drawObj
  * @param ctx
- * @param plot
+ * @param {CysConverter} plot
  * @param drawParams
  * @param onlyAddToPath
  */
 function drawLine(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
-    const {pts, text, renderOptions, withArrow}= drawObj;
+    const {pts, text, renderOptions, withArrow, drawEvenIfWrapping}= drawObj;
     const {style, color, lineWidth, textLoc, fontSize}= drawParams;
 
-    let inView= false;
     const devPt0= plot.getDeviceCoords(pts[0]);
     const devPt1= plot.getDeviceCoords(pts[1]);
     if (!devPt0 || !devPt1) return;
 
-    if (lineCrossesRect(devPt0.x,devPt0.y,devPt1.x,devPt1.y,0,0,plot.viewDim.width,plot.viewDim.height)){
-        inView= true;
-        if (!onlyAddToPath || style===Style.HANDLED) {
-            DrawUtil.beginPath(ctx, color,lineWidth, renderOptions);
-        }
-        ctx.moveTo(devPt0.x, devPt0.y);
-        ctx.lineTo(devPt1.x, devPt1.y);
-        if (!onlyAddToPath || style===Style.HANDLED) DrawUtil.stroke(ctx);
-        if (withArrow) {
-            DrawUtil.drawArrowOnLine(ctx, devPt0, devPt1, color);
-        }
+    if (!drawEvenIfWrapping && plot.projection.isWrappingProjection()) {
+        const wpPt0= plot.getWorldCoords(pts[0]);
+        const wpPt1= plot.getWorldCoords(pts[1]);
+        if (wpPt0 && wpPt1 && plot.coordsWrap(wpPt0,wpPt1)) return;
     }
 
-    if (!isNil(text) && inView) {
+    const inView= lineCrossesRect(devPt0.x,devPt0.y,devPt1.x,devPt1.y,0,0,plot.viewDim.width,plot.viewDim.height);
+
+    if (!inView) return;
+
+    if (!onlyAddToPath || style===Style.HANDLED) {
+        DrawUtil.beginPath(ctx, color,lineWidth, renderOptions);
+    }
+    ctx.moveTo(devPt0.x, devPt0.y);
+    ctx.lineTo(devPt1.x, devPt1.y);
+    if (!onlyAddToPath || style===Style.HANDLED) DrawUtil.stroke(ctx);
+    if (withArrow) {
+        DrawUtil.drawArrowOnLine(ctx, devPt0, devPt1, color);
+    }
+
+
+    if (!isNil(text)) {
         if (textLoc === TextLocation.LINE_TOP_STACK) {
             const textLines = text.split('\n');
             textLines.forEach((oneText, idx) => {
@@ -625,7 +632,7 @@ function drawLine(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
         }
     }
 
-    if ([Style.HANDLED, Style.STARTHANDLED, Style.ENDHANDLED].includes(style) && inView) {
+    if ([Style.HANDLED, Style.STARTHANDLED, Style.ENDHANDLED].includes(style)) {
         const rAngle = VisUtil.computeSimpleSlopeAngle(devPt0, devPt1);
         const rOptions = {};
 
@@ -649,7 +656,7 @@ function drawLine(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
  *
  * @param drawObj
  * @param ctx
- * @param plot
+ * @param {CysConverter} plot
  * @param drawParams
  */
 function drawCircle(drawObj, ctx,  plot, drawParams) {
@@ -701,7 +708,7 @@ function drawCircle(drawObj, ctx,  plot, drawParams) {
 /**
  * @param drawObj
  * @param ctx
- * @param plot
+ * @param {CysConverter} plot
  * @param inPt
  * @param drawParams
  * @return {boolean} text is drawn or not
@@ -823,7 +830,7 @@ export function drawText(drawObj, ctx, plot, inPt, drawParams) {
  *
  * @param drawObj
  * @param ctx
- * @param plot
+ * @param {CysConverter} plot
  * @param drawParams
  * @param onlyAddToPath
  */
@@ -1003,7 +1010,7 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
  * draw ellipse
  * @param drawObj
  * @param ctx
- * @param plot
+ * @param {CysConverter} plot
  * @param drawParams
  * @param onlyAddToPath
  */
@@ -1102,7 +1109,7 @@ function drawEllipse(drawObj, ctx, plot, drawParams, onlyAddToPath) {
  * draw the object which contains drawObj array
  * @param drawObj
  * @param ctx
- * @param plot
+ * @param {CysConverter} plot
  * @param drawParams
  * @param onlyAddToPath
  */
@@ -1223,7 +1230,7 @@ function getEdgePtOnGreatCircleFromCenterTo(pt, plot) {
  * draw polygon - draw outline of the polygon or fill the polygon
  * @param drawObj
  * @param ctx
- * @param plot
+ * @param {CysConverter} plot
  * @param drawParams
  * @param onlyAddToPath
  */
@@ -1367,7 +1374,7 @@ function drawCompositeText(drawObj, ctx, plot, drawParams) {
 
 /**
  * locate text for circle, return the location in screen coordinate
- * @param plot
+ * @param {CysConverter} plot
  * @param textLoc
  * @param fontSize
  * @param centerPt
@@ -1403,7 +1410,7 @@ function makeTextLocationCircle(plot, textLoc, fontSize, centerPt, screenRadius)
 
 /**
  * locate text position for line in screen coordinate
- * @param plot
+ * @param {CysConverter} plot
  * @param textLoc
  * @param fontSize
  * @param inPt0
@@ -1508,7 +1515,7 @@ function makeTextLocationLine(plot, textLoc, fontSize, inPt0, inPt1, tIndex, dra
 
 /**
  * compute text location for rectangle in screen coordinate
- * @param plot
+ * @param {CysConverter} plot
  * @param textLoc
  * @param fontSize
  * @param centerPt
@@ -1551,7 +1558,7 @@ function makeTextLocationRectangle(plot, textLoc, fontSize, centerPt, width, hei
 
 /**
  * compute text location for ellipse in screen coordinate
- * @param plot
+ * @param {CysConverter} plot
  * @param textLoc
  * @param fontSize
  * @param centerPt
@@ -1645,7 +1652,7 @@ export function makeTextLocationComposite(cc, textLoc, fontSize, width, height, 
 
 /**
  * apt could be image or screen coordinate
- * @param plot
+ * @param {CysConverter} plot
  * @param pts
  * @param apt
  * @returns {*}
@@ -1680,7 +1687,7 @@ export function translateShapeTo(drawObj, plot, apt) {
 /**
  * rotate the obj around a center pt
  * @param drawObj
- * @param plot
+ * @param {CysConverter} plot
  * @param angle in screen coordinate direction, radian
  * @param worldPt
  * @returns {*}
@@ -1714,7 +1721,7 @@ export function rotateShapeAround(drawObj, plot, angle, worldPt) {
 
 /**
  * rotate an array of points around a center on image coordinate
- * @param plot
+ * @param {CysConverter} plot
  * @param pts
  * @param angle in screen coordinate direction, radian
  * @param wc
@@ -1749,7 +1756,7 @@ export function rotateAround(plot, pts, angle, wc) {
 /**
  * check if at least one corner of the covered area (in image coordinate) is within viewport
  * @param objArea
- * @param plot
+ * @param {CysConverter} plot
  * @returns {boolean}
  */
 function isAreaInView(objArea, plot) {
@@ -1775,7 +1782,7 @@ export function fontHeight (fontSize) {
 /**
  * calculate the length in screen coordinate
  * @param r
- * @param plot
+ * @param {CysConverter} plot
  * @param unitType
  * @returns {*}
  */
@@ -1801,7 +1808,7 @@ export function lengthToImagePixel(r, plot, unitType) {
 /**
  * calculate the length in screen coordinate
  * @param r
- * @param plot
+ * @param {CysConverter} plot
  * @param unitType
  * @returns {*}
  */
@@ -1828,7 +1835,7 @@ export function lengthToScreenPixel(r, plot, unitType) {
 /**
  * calculate the length in world coordinate
  * @param r
- * @param plot
+ * @param {CysConverter} plot
  * @param unitType
  * @returns {*}
  */

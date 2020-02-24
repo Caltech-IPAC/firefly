@@ -30,13 +30,14 @@ import {parseObsCoreRegion} from '../../util/ObsCoreSRegionParser.js';
 import {getAppOptions} from '../../core/AppDataCntlr';
 import {getSearchTarget} from './CatalogWatcher';
 import {MetaConst} from '../../data/MetaConst.js';
-import {isHiPS, isImage} from '../WebPlot';
+import {isHiPS} from '../WebPlot';
 import {PlotAttribute} from '../PlotAttribute.js';
-import {getDrawLayersByType, isDrawLayerVisible} from '../PlotViewUtil';
+import {isDrawLayerVisible} from '../PlotViewUtil';
 import SearchTarget from '../../drawingLayers/SearchTarget.js';
 import {darker} from '../../util/Color';
+import {isOrbitalPathTable} from '../../util/VOAnalyzer';
 
-export const CoverageType = new Enum(['X', 'BOX', 'REGION', 'ALL', 'GUESS']);
+export const CoverageType = new Enum(['X', 'BOX', 'REGION', 'ORBITAL_PATH', 'ALL', 'GUESS']);
 export const FitType=  new Enum (['WIDTH', 'WIDTH_HEIGHT']);
 
 const COVERAGE_TARGET = 'COVERAGE_TARGET';
@@ -285,14 +286,12 @@ function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, 
         }
         else {
             preparedTables[tbl_id] = 'WORKING';
+            if (isOrbitalPathTable(tbl_id)) req.sortInfo= undefined;
             doFetchTable(req).then(
                 (allRowsTable) => {
-                    // EMPTY_TBL
-                    // if (get(allRowsTable, 'tableData')) { // empty tables would have tableData.data undefined
                     if (get(allRowsTable, ['tableData', 'data'], []).length > 0) {
                         preparedTables[tbl_id] = allRowsTable;
                         const isRegion = isTableWithRegion(allRowsTable);
-                        //const isCatalog = findTableCenterColumns(allRowsTable);
 
                         tblCatIdMap[tbl_id] = (isRegion) ? [centerId(tbl_id), regionId(tbl_id)] : [tbl_id, searchTargetId(tbl_id)];
                         updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, preparedTables,
@@ -429,6 +428,7 @@ function computeSize(options, preparedTables, usesRadians) {
             const covType= getCoverageType(options,t);
             switch (covType) {
                 case CoverageType.X:
+                case CoverageType.ORBITAL_PATH:
                     ptAry= getPtAryFromTable(options,t, usesRadians);
                     break;
                 case CoverageType.BOX:
@@ -573,9 +573,10 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp, addV
             tableMeta,
             tableRequest: table.request,
             highlightedRow: table.highlightedRow,
-            catalog: dataType === CoverageType.X,
+            catalog: (dataType === CoverageType.X || dataType === CoverageType.ORBITAL_PATH),
             boxData: dataType !== CoverageType.X,
             dataType: dataType.key,
+            orbitalPath: dataType === CoverageType.ORBITAL_PATH,
             isFromRegion,
             columns,
             symbol: drawOp.symbol || lookupOption(options, 'symbol', cId),
@@ -591,6 +592,8 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp, addV
     if (covType === CoverageType.BOX) {
         createDrawLayer(tbl_id, covType, addVisible);
     } else if (covType === CoverageType.X) {
+        createDrawLayer(tbl_id, covType, addVisible);
+    } else if (covType === CoverageType.ORBITAL_PATH) {
         createDrawLayer(tbl_id, covType, addVisible);
     } else if (covType === CoverageType.REGION) {
         const layerType = [CoverageType.X, CoverageType.REGION];
@@ -634,6 +637,9 @@ function lookupOption(options, key, tbl_id) {
 }
 
 function getCoverageType(options,table) {
+
+    if (isOrbitalPathTable(table)) return CoverageType.ORBITAL_PATH;
+
     if (options.coverageType===CoverageType.GUESS ||
         options.coverageType===CoverageType.REGION ||
         options.coverageType===CoverageType.BOX ||
@@ -670,7 +676,7 @@ function getPtAryFromTable(options,table, usesRadians){
     const {lonIdx,latIdx,csys}= cDef;
     return get(table, 'tableData.data', [])
         .map( (row) =>
-            (row[lonIdx]!=='' && row[latIdx]!=='') ? makePt(row[lonIdx], row[latIdx], csys, usesRadians) : undefined )
+            (row[lonIdx] && row[latIdx]) ? makePt(row[lonIdx], row[latIdx], csys, usesRadians) : undefined )
         .filter( (v) => v);
 }
 
@@ -679,7 +685,7 @@ function getBoxAryFromTable(options,table, usesRadians){
     return get(table, 'tableData.data', [])
         .map( (row) => cDefAry
             .map( (cDef) =>
-                (row[cDef.lonIdx]!=='' && row[cDef.latIdx]!=='') ? makePt(row[cDef.lonIdx], row[cDef.latIdx], cDef.csys, usesRadians) : undefined))
+                (row[cDef.lonIdx] && row[cDef.latIdx]) ? makePt(row[cDef.lonIdx], row[cDef.latIdx], cDef.csys, usesRadians) : undefined))
         .filter( (row) => row.every( (v) => v));
 }
 

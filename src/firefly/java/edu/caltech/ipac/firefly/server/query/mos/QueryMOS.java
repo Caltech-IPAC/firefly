@@ -3,13 +3,10 @@
  */
 package edu.caltech.ipac.firefly.server.query.mos;
 
-import edu.caltech.ipac.table.io.IpacTableReader;
-import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.MOSRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
@@ -17,13 +14,13 @@ import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.util.Ref;
-import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
-import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.table.io.VoTableReader;
-import edu.caltech.ipac.util.cache.StringKey;
+import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 
@@ -67,8 +64,13 @@ public class QueryMOS extends IpacTablePartProcessor {
             String tblType = req.getParam(MOSRequest.TABLE_NAME);
             boolean headerOnly = isHeaderOnlyRequest(req);
 
-            String tblName = (tblType != null && tblType.equalsIgnoreCase(MOSRequest.ORBITAL_PATH_TABLE))
-                    ? ORBITAL_PATH_TABLE_NAME : RESULT_TABLE_NAME;
+            String tblName;
+            if (ORBITAL_PATH_TABLE_NAME.equals(tblType) || RESULT_TABLE_NAME.equals(tblType) ) {
+                tblName= tblType;
+            }
+            else {
+                tblName = (MOSRequest.ORBITAL_PATH_TABLE.equalsIgnoreCase(tblType)) ? ORBITAL_PATH_TABLE_NAME : RESULT_TABLE_NAME;
+            }
 
             DataGroup dg = doSearch(req, tblName, headerOnly);
             return headerOnly ? getOrbitalElements(dg) : dg;

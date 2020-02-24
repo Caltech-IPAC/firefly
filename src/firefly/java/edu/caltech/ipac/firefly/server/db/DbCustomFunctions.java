@@ -18,6 +18,7 @@ public class DbCustomFunctions {
     private static final String [] customFunctions = {
             "CREATE FUNCTION decimate_key(xVal DOUBLE, yVal DOUBLE, xMin DOUBLE, yMin DOUBLE, nX INT, nY INT, xUnit DOUBLE, yUnit DOUBLE)\n" +
                     "RETURNS CHAR VARYING(20)\n" +
+                    "RETURNS NULL ON NULL INPUT\n"+
                     "LANGUAGE JAVA DETERMINISTIC NO SQL\n" +
                     "EXTERNAL NAME 'CLASSPATH:edu.caltech.ipac.firefly.server.db.DbCustomFunctions.getDecimateKey'\n"
             ,

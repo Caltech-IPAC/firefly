@@ -39,6 +39,13 @@ public class MetaConst {
      */
     public static final String CATALOG_OVERLAY_TYPE = "CatalogOverlayType";
 
+    /**
+     * if defined this table container a moving object, setting this will override any catalog evaluation
+     * value can me true or false, if true then evaluate this table as a moving obj, if false then ignore
+     */
+    public static final String ORBITAL_PATH = "ORBITAL_PATH";
+
+
     /** @deprecated replaced by IMAGE_SOURCE_ID */
     @Deprecated
     public final static String DATASET_CONVERTER = "datasetInfoConverterId";

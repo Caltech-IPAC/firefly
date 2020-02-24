@@ -455,6 +455,7 @@ function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
     obj.fontWeight = 'bold';
     obj.textLoc=TextLocation.LINE_TOP_STACK;
     obj.texttBaseLine = 'middle';
+    obj.drawEvenIfWrapping= true;
     obj.supportedDrawingTypes=  (pref===PIXEL) ? DrawingType.ImageCoordsOnly : DrawingType.WcsCoordsOnly;
 
     if (!offsetCal) {
@@ -532,6 +533,7 @@ function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
         adj.fontSize = '16px';
         adj.fontWeight = 'bold';
         adj.offsetOnScreen = true;
+        obj.drawEvenIfWrapping= true;
         adj.supportedDrawingTypes=  (pref===PIXEL) ? DrawingType.ImageCoordsOnly : DrawingType.WcsCoordsOnly;
 
 
@@ -554,6 +556,7 @@ function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
         op.fontSize = '16px';
         op.fontWeight = 'bold';
         op.offsetOnScreen = true;
+        obj.drawEvenIfWrapping= true;
         op.supportedDrawingTypes=  (pref===PIXEL) ? DrawingType.ImageCoordsOnly : DrawingType.WcsCoordsOnly;
 
         // for HiPS image, op may not be perfectly vertical

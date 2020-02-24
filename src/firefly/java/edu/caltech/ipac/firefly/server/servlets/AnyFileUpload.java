@@ -104,8 +104,9 @@ public class AnyFileUpload extends BaseHttpServlet {
             String fname = (idx >= 0) ? fromUrl.substring(idx + 1) : fromUrl;
             fname = fname.contains("?") ? fname.substring(0, fname.indexOf("?")) : fname;       // don't save queryString as file name.  this will confuse reader expecting a url, like VoTableReader
             FileInfo status = LockingVisNetwork.retrieveURL(new URL(fromUrl));
+            int code= status.getResponseCode();
             File file= status.getFile();
-            if (status != null && !(status.getResponseCodeMsg().equals("OK"))) {
+            if (file!=null && code!=200 && code!=304) {
                 throw new Exception("invalid upload from URL: " + status.getResponseCodeMsg());
             }
             fileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(file), file, fname, null);

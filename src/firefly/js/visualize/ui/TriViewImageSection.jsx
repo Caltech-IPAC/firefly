@@ -21,6 +21,7 @@ import {REINIT_APP} from '../../core/AppDataCntlr.js';
 import {isCatalog, isMetaDataTable} from '../../util/VOAnalyzer.js';
 import {MetaDataMultiProductViewer} from './MetaDataMultiProductViewer';
 import {CoverageViewer} from './CoveraeViewer';
+import {isOrbitalPathTable} from '../../util/VOAnalyzer';
 
 
 /**
@@ -190,7 +191,7 @@ function handleNewTable(layoutInfo, action) {
     const isMeta = isMetaDataTable(tbl_id);
     
 
-    if ((isMeta || isCatalog(tbl_id)) && showTables ) {
+    if ((isMeta || isOrbitalPathTable(tbl_id) || isCatalog(tbl_id)) && showTables ) {
         if (!showFits) selectedTab = 'coverage';
         showFits= showFits || shouldShowFits();
         // coverageLockedOn= !showFits||coverageLockedOn;

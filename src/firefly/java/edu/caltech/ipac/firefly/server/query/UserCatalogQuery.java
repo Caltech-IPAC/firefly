@@ -8,12 +8,15 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.cache.UserCache;
+import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.server.ws.WsServerUtils;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.cache.StringKey;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,6 +55,19 @@ public class UserCatalogQuery extends IpacTablePartProcessor {
 
     @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
+        String filePath= request.getParam("filePath");
+        if (filePath!=null) {
+            UploadFileInfo uFi=(UploadFileInfo)UserCache.getInstance().get(new StringKey(filePath));
+            if (uFi!=null) {
+                String currentTitle= ((TableServerRequest) request).getMeta().get("title");
+                if (StringUtils.isEmpty(currentTitle)) {
+                    meta.setAttribute("title", uFi.getFileName());
+                }
+                else {
+                    meta.setAttribute("title", currentTitle.replace("${filename}",uFi.getFileName()));
+                }
+            }
+        }
         meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "TRUE");
         super.prepareTableMeta(meta, columns, request);
     }
