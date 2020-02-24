@@ -24,6 +24,8 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.SortedSet;
 
+import static edu.caltech.ipac.firefly.data.TableServerRequest.FF_SESSION_ID;
+
 /**
  * Date: Jun 5, 2009
  *
@@ -58,22 +60,11 @@ public interface SearchProcessor<Type> {
     static String getUniqueIDDef(TableServerRequest request) {
         RequestOwner ro = ServerContext.getRequestOwner();
         SortedSet<Param> params = request.getSearchParams();
-        params.add(new Param("sessID", ro.getRequestAgent().getSessId()));
+        params.add(new Param("sessID", request.getParam(FF_SESSION_ID)));
         if (ro.isAuthUser()) {
             params.add( new Param("userID", ro.getUserInfo().getLoginName()));
         }
         return StringUtils.toString(params, "|");
-    }
-
-    static void prepareTableMetaDef(TableMeta defaults, List<DataType> columns, ServerRequest request) {
-        if (defaults != null && request instanceof TableServerRequest) {
-            TableServerRequest tsreq = (TableServerRequest) request;
-            if (tsreq.getMeta() != null && tsreq.getMeta().size() > 0) {
-                for (String key : tsreq.getMeta().keySet()) {
-                    defaults.setAttribute(key, tsreq.getMeta(key));
-                }
-            }
-        }
     }
 
     static void logStats(String searchType, int rows, long fileSize, boolean fromCached, Object... params) {

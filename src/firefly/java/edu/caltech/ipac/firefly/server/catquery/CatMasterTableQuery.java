@@ -3,15 +3,14 @@
  */
 package edu.caltech.ipac.firefly.server.catquery;
 
+import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
+import edu.caltech.ipac.firefly.server.network.HttpServices;
+import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
+import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.io.IpacTableReader;
-import edu.caltech.ipac.table.query.DataGroupQueryStatement;
-import edu.caltech.ipac.table.query.InvalidStatementException;
-import edu.caltech.ipac.table.io.IpacTableException;
-import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.util.AppProperties;
@@ -19,13 +18,14 @@ import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.util.Iterator;
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+
+import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
 
 
 /**
@@ -35,110 +35,48 @@ import java.util.Iterator;
  * @version $Id: CatMasterTableQuery.java,v 1.20 2012/10/30 00:41:25 loi Exp $
  */
 @SearchProcessorImpl(id = "irsaCatalogMasterTable")
-public class CatMasterTableQuery extends IpacTablePartProcessor {
-
-    // debug - get file from jar (see below too)
-    //private static final String TEMP_MASTER_LOC= "edu/caltech/ipac/firefly/resources/master-irsa-cat-original.tbl";
+public class CatMasterTableQuery extends EmbeddedDbProcessor {
 
     private static final String MASTER_LOC = QueryUtil.makeUrlBase(BaseGator.DEF_HOST) + "/cgi-bin/Gator/nph-scan?mode=ascii";
-    private static final File ORIGINAL_FILE = new File(ServerContext.getPermWorkDir(), "master-irsa-cat-original.tbl");
-    private static final File MASTER_CAT_FILE = new File(ServerContext.getPermWorkDir(), "master-catalog.tbl");
     private static final String IRSA_HOST = AppProperties.getProperty("irsa.base.url", BaseGator.DEF_HOST);
     private static final String IRSA_BASE_URL = QueryUtil.makeUrlBase(IRSA_HOST);
 
-    private static void placeOriginal(String catalogUrl, File originalFile) throws IOException {
-        try {
-            URL url = new URL(catalogUrl);
-            URLDownload.getDataToFile(url, originalFile);
 
-        } catch (FailedRequestException e) {
-            throw new IOException(e.toString());
-        }
+    public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
+
+        AtomicReference<DataGroup> dgRef = new AtomicReference<>();
+        AtomicReference<DataAccessException> exRef = new AtomicReference<>();
+        HttpServices.getData(new HttpServiceInput(MASTER_LOC), method -> {
+            if (HttpServices.isOk(method)) {
+                try {
+                    dgRef.set(IpacTableReader.read(method.getResponseBodyAsStream()));
+                } catch (IOException e) {
+                    exRef.set(new DataAccessException("Unable to parse Master Table", e));
+                }
+            } else {
+                exRef.set(new DataAccessException("Exception while fetching Master Table: " + StringUtils.toString(req.getSearchParams())));
+            }
+        });
+
+        if (exRef.get() != null) throw exRef.get();
+
+        DataGroup dg = dgRef.get();
+
+        appendHostToUrls(dg, "moreinfo", "description");
+        makeIntoUrl(dg, "infourl", "info");
+        makeIntoUrl(dg, "ddlink", "Column Def");
+        return dg;
     }
 
-    private static File getMasterCatalogFile(TableServerRequest request) throws IOException, DataAccessException {
-        File retval;
-        try {
-            // pos column is added to indicate if the catalog contains position information.
-            String colNames = "projectshort, subtitle, description, server, catname, cols, nrows, coneradius, infourl, ddlink, pos";
-            File catOutFile = MASTER_CAT_FILE;
+    protected DataGroupPart getResultSet(TableServerRequest treq, File dbFile) throws DataAccessException {
 
-            // if hydra, check for additional catalogs
-            DataGroup dgExtra = null;
-            String projectId = request.getParam("projectId");
-//            if (!StringUtils.isEmpty(projectId)) {
-//                ProjectTag pTag = DynConfigManager.getInstance().getCachedProject(projectId);
-//                List<CatalogTag> cList = pTag.getCatalogs();
-//                for (CatalogTag cTag : cList) {
-//                    String fullCatalogUrl = cTag.getHost() + cTag.getCatalogUrl();
-//                    File catInFile = new File(ServerContext.getPermWorkDir(), cTag.getOriginalFilename());
-//                    placeOriginal(fullCatalogUrl, catInFile);
-//
-//                    catOutFile = new File(ServerContext.getPermWorkDir(), cTag.getMasterCatFilename());
-//
-//                    String selectStr =
-//                            "select col " +
-//                                    colNames + " " +
-//                                    "from " + catInFile.getPath() + " " +
-//                                    "with complete_header";
-//                    DataGroupQueryStatement statement = DataGroupQueryStatement.parseStatement(selectStr);
-//                    DataGroup dg = statement.execute();
-//
-//                    if (dgExtra == null) {
-//                        dgExtra = dg;
-//
-//                    } else {
-//                        // concat dg to dgExtra
-//                        Iterator<DataObject> iter = dg.iterator();
-//                        while (iter.hasNext()) {
-//                            dgExtra.add(iter.next());
-//                        }
-//                    }
-//                }
-//            }
+        String cols = Arrays.stream("projectshort,subtitle,description,server,catname,cols,nrows,coneradius,infourl,ddlink,pos"
+                            .split(",")).map(s -> "\"" + s + "\"").collect(Collectors.joining(","));    // enclosed in quotes
+        cols += ",'GatorQuery' as \"catSearchProcessor\",'GatorDD' as \"ddSearchProcessor\"";
 
-            // get all other catalog data
-            placeOriginal(MASTER_LOC, ORIGINAL_FILE);
-
-            String selectStr =
-                    "select col " +
-                            colNames + " " +
-                            "from " + ORIGINAL_FILE.getPath() + " " +
-                            "with complete_header";
-            DataGroupQueryStatement statement = DataGroupQueryStatement.parseStatement(selectStr);
-            DataGroup dg = statement.execute();
-
-            DataGroup outputDG;
-            if (dgExtra == null) {
-                outputDG= dg;
-
-            } else {
-                // concat dg to dgExtra
-                Iterator<DataObject> iter = dg.iterator();
-                while (iter.hasNext()) {
-                    dgExtra.add(iter.next());
-                }
-
-                outputDG= dgExtra;
-            }
-
-            // append hostname to relative path urls.
-            appendHostToUrls(outputDG, "moreinfo", "description");
-            makeIntoUrl(outputDG, "infourl", "info");
-            makeIntoUrl(outputDG, "ddlink", "Column Def");
-            addSearchProcessorCols(outputDG);
-            IpacTableWriter.save(catOutFile, outputDG);
-
-            retval = catOutFile;
-
-        } catch (IpacTableException e) {
-            throw new DataAccessException("Error parsing catalog file", e);
-
-        } catch (InvalidStatementException e) {
-            throw new DataAccessException("Error parsing catalog file", e);
-        }
-
-        return retval;
+        TableServerRequest tsr = (TableServerRequest) treq.cloneRequest();
+        tsr.setInclColumns(cols.split(","));
+        return EmbeddedDbUtil.execRequestQuery(tsr, dbFile, MAIN_DB_TBL);
     }
 
     private static String getValue(DataObject row, String colName) {
@@ -239,14 +177,5 @@ public class CatMasterTableQuery extends IpacTablePartProcessor {
 
         return retval;
     }
-
-    public static DataGroup getBaseGatorData(String originalFilename) throws IOException, DataAccessException {
-        return IpacTableReader.read(new File(ServerContext.getPermWorkDir(), originalFilename));
-    }
-
-    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-        return getMasterCatalogFile(request);
-    }
-
 }
 
