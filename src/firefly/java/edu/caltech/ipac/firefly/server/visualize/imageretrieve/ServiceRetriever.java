@@ -5,6 +5,7 @@ package edu.caltech.ipac.firefly.server.visualize.imageretrieve;
 
 import edu.caltech.ipac.astro.ibe.datasource.AtlasIbeDataSource;
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.server.query.ibe.IbeQueryArtifact;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -61,9 +62,9 @@ public class ServiceRetriever implements FileRetriever {
             case DSS: return getDssPlot(r);
             case SDSS: return getSloanDSSPlot(r);
             case WISE: return getWisePlot(r);
-            case AKARI:
             case ZTF: return getZtfPlot(r);
             case PTF: return getPtfPlot(r);
+            case AKARI:
             case SEIP:
             case ATLAS: return getAtlasPlot(r);
             case DSS_OR_IRIS: return getDSSorIris(r);
@@ -180,7 +181,7 @@ public class ServiceRetriever implements FileRetriever {
 
     private FileInfo getAtlasPlot(WebPlotRequest r) throws FailedRequestException {
         Circle circle = PlotServUtils.getRequestArea(r);
-        AtlasImageParams params = new AtlasImageParams();
+        AtlasImageParams params = new AtlasImageParams(r.getSurveyKey(), r.getParam("table"));
         params.setWorldPt(circle.getCenter());
         params.setBand(r.getSurveyBand());
         // New image search deals with atlas surveyKey formatted such as 'schema.table'

@@ -80,11 +80,11 @@ public class FinderChartRequestUtil {
      * Expected format :  metadata expected to be as "schema.table-band;title"
      */
     private final static String seipCombo[]={
-            "spitzer.seip_science:IRAC1;SEIP IRAC1 (2.4 microns);file_type='science' and fname like '%.mosaic.fits'",
-            "spitzer.seip_science:IRAC2;SEIP IRAC2 (2.4 microns);file_type='science' and fname like '%.mosaic.fits'",
-            "spitzer.seip_science:IRAC3;SEIP IRAC3 (2.4 microns);file_type='science' and fname like '%.mosaic.fits'",
-            "spitzer.seip_science:IRAC4;SEIP IRAC4 (2.4 microns);file_type='science' and fname like '%.mosaic.fits'",
-            "spitzer.seip_science:MIPS24;SEIP MIPS (2.4 microns);file_type='science' and fname like '%.mosaic.fits'"
+            "spitzer.seip_science:IRAC1; SEIP  irac1   (2.4 microns);file_type='science' and fname like '%.mosaic.fits'",
+            "spitzer.seip_science:IRAC2; SEIP irac2   (2.4 microns);file_type='science' and fname like '%.mosaic.fits'",
+            "spitzer.seip_science:IRAC3; SEIP irac3   (2.4 microns);file_type='science' and fname like '%.mosaic.fits'",
+            "spitzer.seip_science:IRAC4; SEIP irac4   (2.4 microns);file_type='science' and fname like '%.mosaic.fits'",
+            "spitzer.seip_science:MIPS24;SEIP  mips24 (2.4 microns);file_type='science' and fname like '%.mosaic.fits'"
     };
 
     /**
@@ -92,11 +92,13 @@ public class FinderChartRequestUtil {
      * THis is passed from the client
      * Expected format :  metadata expected to be as "schema.table-band;title"
      */
+
+    //TODO this is the DESC definetion, which is in consistence of the band name specified
     private final static String akariCombo[]={
-            "akari.akari_images:N60;FIS N60 (65 microns)",
-            "akari.akari_images:WideS;FIS WideS (90 microns)",
-            "akari.akari_images:WideL;FIS WideL (140 microns)",
-            "akari.akari_images:N160;FIS N160 (160 microns)"
+            "akari.akari_images:N60  ;FIS n60 (65 microns)",
+            "akari.akari_images:WideS;FIS wideS (90 microns)",
+            "akari.akari_images:WideL;FIS wideL (140 microns)",
+            "akari.akari_images:N160 ;FIS n160 (160 microns)"
     };
 
     private final static String sDssCombo[]={
@@ -161,7 +163,7 @@ public class FinderChartRequestUtil {
                 wpReq= WebPlotRequest.makeSloanDSSRequest(pt, getComboValue(key), radius);
                 break;
             case TWOMASS:
-                wpReq= WebPlotRequest.make2MASSRequest(pt, "asky", getComboValue(key),radius);
+                wpReq= WebPlotRequest.make2MASSRequest(pt, "asky",getComboValue(key),radius);
                 break;
             case AKARI:
             case SEIP:
@@ -189,7 +191,7 @@ public class FinderChartRequestUtil {
      */
     public static String extractSurveyKey(String metadata) {
         String sAry[] = metadata.split(regExAtlasKey);
-        return sAry[0];
+        return sAry[0].trim();
     }
 
     /**
@@ -198,7 +200,7 @@ public class FinderChartRequestUtil {
      */
     public static String extractSurveyKeyBand(String metadata) {
         String sAry[] = metadata.split(regExAtlasKey);
-        return sAry[1];
+        return sAry[1].trim();
     }
 
     /**
@@ -218,7 +220,7 @@ public class FinderChartRequestUtil {
      */
     public static String getComboValue(String combo) {
         String sAry[] = combo.split(regExSplitKey);
-        return sAry.length > 0 ? sAry[0] : combo;
+        return sAry.length > 0 ? sAry[0].trim() : combo;
     }
 
     /**
