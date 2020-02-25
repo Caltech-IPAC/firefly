@@ -11,8 +11,7 @@ import WebPlotResult from '../WebPlotResult.js';
 import {WebPlot} from '../WebPlot.js';
 import {makeCubeCtxAry, populateFromHeader} from './PlotImageTask';
 import {isHiPS, isImage} from '../WebPlot';
-import {matchHiPStoPlotView} from './PlotHipsTask';
-import {matchImageToHips} from './WcsMatchTask';
+import {matchHiPStoPlotView, matchImageToHips} from './WcsMatchTask';
 
 
 
@@ -33,27 +32,25 @@ export function flipActionCreator(rawAction) {
     };
 }
 
-
-export function recenterActionCreator(rawAction) {
-    return (dispatcher,getState) => {
+const dispatchAndMaybeMatch= (rawAction) => (dispatcher,getState) => {
         dispatcher(rawAction);
-        locateHiPSIfMatched(getState()[IMAGE_PLOT_KEY], rawAction.payload.plotId);
+        locateOtherIfMatched(getState()[IMAGE_PLOT_KEY], rawAction.payload.plotId);
     };
-}
 
 
-export function processScrollActionCreator(rawAction) {
-    return (dispatcher,getState) => {
-        dispatcher(rawAction);
-        locateHiPSIfMatched(getState()[IMAGE_PLOT_KEY], rawAction.payload.plotId);
-    };
-}
+export const recenterActionCreator= (rawAction) => dispatchAndMaybeMatch(rawAction);
+export const processScrollActionCreator= (rawAction) => dispatchAndMaybeMatch(rawAction);
+export const changeHiPSActionCreator= (rawAction) => dispatchAndMaybeMatch(rawAction);
+export const rotateActionCreator= (rawAction) => dispatchAndMaybeMatch(rawAction);
+
+
+
 
 /**
  * @param {VisRoot} vr
  * @param {String} plotId
  */
-function locateHiPSIfMatched(vr,plotId) {
+function locateOtherIfMatched(vr,plotId) {
     const pv = getPlotViewById(vr, plotId);
     if (vr.wcsMatchType !== WcsMatchType.Target && vr.wcsMatchType !== WcsMatchType.Standard) return;
     if (isImage(primePlot(pv))) matchHiPStoPlotView(vr, pv);

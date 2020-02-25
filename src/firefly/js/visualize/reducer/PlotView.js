@@ -95,10 +95,10 @@ export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignore
  * @typedef {Object} PVCreateOptions
  * Object used for creating the PlotView
  *
- * @prop {HipsImageConversionSettings} hipsImageConversion If object is defined and populated correctly then
+ * @prop {HipsImageConversionSettings} [hipsImageConversion] If object is defined and populated correctly then
  * the PlotView will convert between HiPS and Image
- * @prop {Object} menuItemKeys - defines which menu items shows on the toolbar
- * @prop {boolean} userCanDeletePlots - default to true, defines if a PlotView can be deleted by the user
+ * @prop {Object} [menuItemKeys] - defines which menu items shows on the toolbar
+ * @prop {boolean} [userCanDeletePlots] - default to true, defines if a PlotView can be deleted by the user
  */
 
 

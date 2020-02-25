@@ -6,7 +6,7 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {take} from 'redux-saga/effects';
-import {omit,pick, get} from 'lodash';
+import {omit,pick} from 'lodash';
 import shallowequal from 'shallowequal';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
@@ -21,11 +21,8 @@ import {isHiPS} from '../WebPlot.js';
 import {getPreference} from '../../core/AppDataCntlr';
 import {TARGET_LIST_PREF} from './ImageCenterDropDown';
 
-// import {deepDiff} from '../../util/WebUtil.js';
-
 const omList= ['plotViewAry'];
 const pvPickList= ['plotViewCtx','primeIdx', 'flipY'];
-const hipsUrl = 'hipsUrlRoot';
 
 
 
@@ -88,10 +85,10 @@ export class VisToolbar extends PureComponent {
         if (!needsUpdate) {
             const oldPlot = primePlot(oldPv);
             const newPlot = primePlot(newPv);
-            needsUpdate = get(oldPlot, 'zoomFactor') !== get(newPlot, 'zoomFactor');
+            needsUpdate = oldPlot?.zoomFactor !== newPlot?.zoomFactor;
 
             if (!needsUpdate && isHiPS(oldPlot) && isHiPS(newPlot)) {
-                needsUpdate = get(oldPlot,  hipsUrl) !== get(newPlot, hipsUrl);
+                needsUpdate = (oldPlot.hipsUrl !== newPlot.hipsUrl) || (oldPlot.imageCoordSys !== newPlot.imageCoordSys);
             }
         }
 
@@ -105,7 +102,6 @@ export class VisToolbar extends PureComponent {
         const {messageUnder, style}= this.props;
         const {visRoot,tip,dlCount, recentTargetAry}= this.state;
         return (
-
             <ToolTipCtx.Provider value={{tipOnCB: this.tipOn, tipOffCB: this.tipOff}}>
                 <VisToolbarViewWrapper visRoot={visRoot} toolTip={tip} dlCount={dlCount}
                                        messageUnder={messageUnder} style={style} recentTargetAry={recentTargetAry}/>

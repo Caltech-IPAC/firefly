@@ -20,6 +20,7 @@ import HelpIcon from './HelpIcon.jsx';
 import ROTATE_NORTH_OFF from 'html/images/icons-2014/RotateToNorth.png';
 import ROTATE_NORTH_ON from 'html/images/icons-2014/RotateToNorth-ON.png';
 import {hasWCSProjection} from '../visualize/PlotViewUtil';
+import {isImage} from '../visualize/WebPlot';
 
 const DIALOG_ID= 'fitsRotationDialog';
 
@@ -45,7 +46,7 @@ function FitsRotationImmediatePanel() {
     const [pv] = useStoreConnector(() => getActivePlotView(visRoot()));
 
     useEffect(() => {
-        !pv && dispatchHideDialog(DIALOG_ID);
+        (!pv || !isImage(primePlot(pv))) && dispatchHideDialog(DIALOG_ID);
     }, [pv]);
 
     const plot= primePlot(pv);

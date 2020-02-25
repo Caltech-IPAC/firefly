@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 import {getActivePlotView,
     primePlot,
@@ -10,7 +10,7 @@ import {getActivePlotView,
     hasOverlayColorLock,
     getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {findUnactivatedRelatedData} from '../RelatedDataUtil.js';
-import {dispatchRotate, dispatchFlip, dispatchRecenter,
+import {dispatchRotate, dispatchFlip,
         dispatchRestoreDefaults,dispatchOverlayColorLocking} from '../ImagePlotCntlr.js';
 import {RotateType} from '../PlotState.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
@@ -72,11 +72,11 @@ import MARKER from 'html/images/icons-2014/MarkerCirclesIcon_28x28.png';
 import {MatchLockDropDown} from './MatchLockDropDown';
 import {ImageCenterDropDown} from './ImageCenterDropDown';
 import {hasWCSProjection} from '../PlotViewUtil';
+import {dispatchChangeHiPS} from '../ImagePlotCntlr';
+import CoordinateSys from '../CoordSys';
 
 export const VIS_TOOLBAR_HEIGHT=34;
 export const VIS_TOOLBAR_V_HEIGHT=48;
-
-// let matchType= 'target'; //todo- temporary
 
 const tipStyle= {
     display: 'inline-block',
@@ -101,7 +101,7 @@ const tipStyle= {
  * @param p.dlCount drawing layer count
  * @param p.messageUnder put the help message under
  * @param p.style
- * @return {XML}
+ * @return {Component}
  */
 export function VisToolbarViewWrapper({visRoot,toolTip,dlCount, messageUnder, style= {}}) {
 
@@ -142,210 +142,208 @@ VisToolbarViewWrapper.propTypes= {
  * Vis Toolbar
  * @param visRoot visualization store root
  * @param toolTip tool tip to show
- * @return {XML}
+ * @return {Component}
  */
+export const VisToolbarView = memo( ({visRoot,dlCount}) => {
+    const rS= {
+        display: 'inline-block',
+        position: 'relative',
+        verticalAlign: 'top',
+        whiteSpace: 'nowrap'
+    };
+    const {apiToolsView}= visRoot;
+
+    const pv= getActivePlotView(visRoot);
+    const plot= primePlot(pv);
+    const image= !isHiPS(plot);
+    const hips= isHiPS(plot);
+    const plotGroupAry= visRoot.plotGroupAry;
+
+    const mi= pv ? pv.menuItemKeys : getDefMenuItemKeys();
+    const enabled= Boolean(plot);
+
+    let showRotateLocked= false;
+    if (plot) showRotateLocked = image ? pv.plotViewCtx.rotateNorthLock : plot.imageCoordSys===CoordinateSys.EQ_J2000;
 
 
-export class VisToolbarView extends PureComponent {
-    constructor(props) {
-        super(props);
-    }
-
-    render() {
-        const {visRoot,dlCount}= this.props;
-        const rS= {
-            display: 'inline-block',
-            position: 'relative',
-            verticalAlign: 'top',
-            whiteSpace: 'nowrap'
-        };
-        const {apiToolsView}= visRoot;
-
-        const pv= getActivePlotView(visRoot);
-        const plot= primePlot(pv);
-        const image= !isHiPS(plot);
-        const hips= isHiPS(plot);
-        const plotGroupAry= visRoot.plotGroupAry;
-
-        const mi= pv ? pv.menuItemKeys : getDefMenuItemKeys();
-        const enabled= Boolean(plot);
-
-        return (
-            <div style={rS}>
-                <ToolbarButton icon={SAVE}
-                               tip='Save the FITS file, PNG file, or save the overlays as a region'
-                               enabled={enabled}
-                               horizontal={true}
-                               visible={mi.fitsDownload}
-                               onClick={showFitsDownloadDialog.bind(null, 'Load Region')}/>
+    return (
+        <div style={rS}>
+            <ToolbarButton icon={SAVE}
+                           tip='Save the FITS file, PNG file, or save the overlays as a region'
+                           enabled={enabled}
+                           horizontal={true}
+                           visible={mi.fitsDownload}
+                           onClick={showFitsDownloadDialog.bind(null, 'Load Region')}/>
 
 
-                {apiToolsView && <ToolbarButton icon={NEW_IMAGE}
-                                             tip='Select a new image'
-                                             enabled={true}
-                                             horizontal={true}
-                                             visible={mi.imageSelect}
-                                             onClick={showImagePopup}/>}
+            {apiToolsView && <ToolbarButton icon={NEW_IMAGE}
+                                            tip='Select a new image'
+                                            enabled={true}
+                                            horizontal={true}
+                                            visible={mi.imageSelect}
+                                            onClick={showImagePopup}/>}
 
 
 
-                <ToolbarHorizontalSeparator/>
+            <ToolbarHorizontalSeparator/>
 
-                <ZoomButton plotView={pv} zoomType={ZoomType.UP} visible={mi.zoomUp}/>
-                <ZoomButton plotView={pv} zoomType={ZoomType.DOWN} visible={mi.zoomDown}/>
-                <ZoomButton plotView={pv} zoomType={ZoomType.ONE} visible={mi.zoomOriginal && image}/>
-                <ZoomButton plotView={pv} zoomType={ZoomType.FIT} visible={mi.zoomFit}/>
-                <ZoomButton plotView={pv} zoomType={ZoomType.FILL} visible={mi.zoomFill}/>
-                <ToolbarHorizontalSeparator/>
-
-
-                <DropDownToolbarButton icon={COLOR}
-                                       tip='Change the color table'
-                                       enabled={enabled} horizontal={true}
-                                       visible={image}
-                                       dropDown={<ColorTableDropDownView plotView={pv}/>} />
-
-                <DropDownToolbarButton icon={STRETCH}
-                                       tip='Quickly change the background image stretch'
-                                       enabled={enabled} horizontal={true}
-                                       visible={mi.stretchQuick && image}
-                                       dropDown={<StretchDropDownView plotView={pv}/>} />
+            <ZoomButton plotView={pv} zoomType={ZoomType.UP} visible={mi.zoomUp}/>
+            <ZoomButton plotView={pv} zoomType={ZoomType.DOWN} visible={mi.zoomDown}/>
+            <ZoomButton plotView={pv} zoomType={ZoomType.ONE} visible={mi.zoomOriginal && image}/>
+            <ZoomButton plotView={pv} zoomType={ZoomType.FIT} visible={mi.zoomFit}/>
+            <ZoomButton plotView={pv} zoomType={ZoomType.FILL} visible={mi.zoomFill}/>
+            <ToolbarHorizontalSeparator/>
 
 
-                {image && <ToolbarHorizontalSeparator/>}
-                
-                <ToolbarButton icon={ROTATE}
-                               tip='Rotate the image to any angle'
-                               enabled={enabled}
-                               horizontal={true}
-                               visible={mi.rotate && image}
-                               onClick={showFitsRotationDialog}/>
-                <SimpleLayerOnOffButton plotView={pv}
-                                        isIconOn={pv&&plot ? pv.plotViewCtx.rotateNorthLock : false }
-                                        tip='Rotate this image so that North is up'
-                                        enabled={hasWCSProjection(pv)}
-                                        iconOn={ROTATE_NORTH_ON}
-                                        iconOff={ROTATE_NORTH_OFF}
-                                        visible={mi.rotateNorth && image}
-                                        onClick={doRotateNorth}
-                />
+            <DropDownToolbarButton icon={COLOR}
+                                   tip='Change the color table'
+                                   enabled={enabled} horizontal={true}
+                                   visible={image}
+                                   dropDown={<ColorTableDropDownView plotView={pv}/>} />
 
-                <SimpleLayerOnOffButton plotView={pv}
-                                        isIconOn={pv ? pv.flipY : false }
-                                        tip='Flip the image on the Y Axis (i.e. Invert X)'
-                                        iconOn={FLIP_Y_ON}
-                                        iconOff={FLIP_Y}
-                                        visible={mi.flipImageY && image}
-                                        onClick={() => flipY(pv)}
-                />
+            <DropDownToolbarButton icon={STRETCH}
+                                   tip='Quickly change the background image stretch'
+                                   enabled={enabled} horizontal={true}
+                                   visible={mi.stretchQuick && image}
+                                   dropDown={<StretchDropDownView plotView={pv}/>} />
 
-                <ImageCenterDropDown visRoot={visRoot} visible={mi.recenter} mi={mi}/>
-                <ToolbarHorizontalSeparator/>
 
-                <SimpleLayerOnOffButton plotView={pv}
-                                        typeId={SelectArea.TYPE_ID}
-                                        tip='Select an area for cropping or statistics'
-                                        iconOn={getSelectedAreaIcon()}
-                                        iconOff={getSelectedAreaIcon(false)}
-                                        visible={mi.selectArea}
-                                        dropDown={<SelectAreaDropDownView plotView={pv} />} />
-                <SimpleLayerOnOffButton plotView={pv}
-                                        typeId={DistanceTool.TYPE_ID}
-                                        tip='Select, then click and drag to measure a distance on the image'
-                                        iconOn={DIST_ON}
-                                        iconOff={DIST_OFF}
-                                        visible={mi.distanceTool} />
+            {image && <ToolbarHorizontalSeparator/>}
 
-                <DropDownToolbarButton icon={MARKER}
-                                       tip='Overlay Markers and Instrument Footprints'
-                                       enabled={enabled} horizontal={true}
-                                       visible={mi.markerToolDD}
-                                       menuMaxWidth={580}
-                                       dropDown={<MarkerDropDownView plotView={pv}/>} />
-
-                <SimpleLayerOnOffButton plotView={pv}
-                                        typeId={NorthUpCompass.TYPE_ID}
-                                        tip='Show the directions of Equatorial J2000 North and East'
-                                        iconOn={COMPASS_ON}
-                                        iconOff={COMPASS_OFF}
-                                        visible={mi.northArrow}
-                />
-                <SimpleLayerOnOffButton plotView={pv}
-                                        typeId={WebGrid.TYPE_ID}
-                                        tip='Add grid layer to the image'
-                                        iconOn={GRID_ON}
-                                        iconOff={GRID_OFF}
-                                        plotTypeMustMatch={true}
-                                        visible={mi.grid}
-                />
-
-                <ToolbarButton icon={DS9_REGION}
-                               tip='Load a DS9 Region File'
-                               enabled={enabled}
-                               horizontal={true}
-                               visible={mi.ds9Region}
-                               onClick={showRegionFileUploadPanel}/>
-
-                <ToolbarButton icon={MASK}
-                               tip='Add mask to image'
-                               enabled={enabled}
-                               horizontal={true}
-                               visible={mi.maskOverlay && image}
-                               onClick={showMaskDialog}/>
+            <ToolbarButton icon={ROTATE}
+                           tip='Rotate the image to any angle'
+                           enabled={enabled}
+                           horizontal={true}
+                           visible={mi.rotate && image}
+                           onClick={showFitsRotationDialog}/>
 
 
 
-                <LayerButton pv={pv} dlCount={dlCount} visible={mi.layer}/>
 
-                <ToolbarHorizontalSeparator/>
+            <SimpleLayerOnOffButton plotView={pv}
+                                    isIconOn={showRotateLocked}
+                                    tip={`Rotate this ${image?'image': 'HiPS'} so that EQ J2000 North is up`}
+                                    enabled={hasWCSProjection(pv)}
+                                    iconOn={ROTATE_NORTH_ON}
+                                    iconOff={ROTATE_NORTH_OFF}
+                                    visible={mi.rotateNorth}
+                                    onClick={doRotateNorth}
+            />
+
+            <SimpleLayerOnOffButton plotView={pv}
+                                    isIconOn={pv ? pv.flipY : false }
+                                    tip='Flip the image on the Y Axis (i.e. Invert X)'
+                                    iconOn={FLIP_Y_ON}
+                                    iconOff={FLIP_Y}
+                                    visible={mi.flipImageY && image}
+                                    onClick={() => flipY(pv)}
+            />
+
+            <ImageCenterDropDown visRoot={visRoot} visible={mi.recenter} mi={mi}/>
+            <ToolbarHorizontalSeparator/>
+
+            <SimpleLayerOnOffButton plotView={pv}
+                                    typeId={SelectArea.TYPE_ID}
+                                    tip='Select an area for cropping or statistics'
+                                    iconOn={getSelectedAreaIcon()}
+                                    iconOff={getSelectedAreaIcon(false)}
+                                    visible={mi.selectArea}
+                                    dropDown={<SelectAreaDropDownView plotView={pv} />} />
+            <SimpleLayerOnOffButton plotView={pv}
+                                    typeId={DistanceTool.TYPE_ID}
+                                    tip='Select, then click and drag to measure a distance on the image'
+                                    iconOn={DIST_ON}
+                                    iconOff={DIST_OFF}
+                                    visible={mi.distanceTool} />
+
+            <DropDownToolbarButton icon={MARKER}
+                                   tip='Overlay Markers and Instrument Footprints'
+                                   enabled={enabled} horizontal={true}
+                                   visible={mi.markerToolDD}
+                                   menuMaxWidth={580}
+                                   dropDown={<MarkerDropDownView plotView={pv}/>} />
+
+            <SimpleLayerOnOffButton plotView={pv}
+                                    typeId={NorthUpCompass.TYPE_ID}
+                                    tip='Show the directions of Equatorial J2000 North and East'
+                                    iconOn={COMPASS_ON}
+                                    iconOff={COMPASS_OFF}
+                                    visible={mi.northArrow}
+            />
+            <SimpleLayerOnOffButton plotView={pv}
+                                    typeId={WebGrid.TYPE_ID}
+                                    tip='Add grid layer to the image'
+                                    iconOn={GRID_ON}
+                                    iconOff={GRID_OFF}
+                                    plotTypeMustMatch={true}
+                                    visible={mi.grid}
+            />
+
+            <ToolbarButton icon={DS9_REGION}
+                           tip='Load a DS9 Region File'
+                           enabled={enabled}
+                           horizontal={true}
+                           visible={mi.ds9Region}
+                           onClick={showRegionFileUploadPanel}/>
+
+            <ToolbarButton icon={MASK}
+                           tip='Add mask to image'
+                           enabled={enabled}
+                           horizontal={true}
+                           visible={mi.maskOverlay && image}
+                           onClick={showMaskDialog}/>
 
 
-                <ToolbarButton icon={CATALOG}
-                               tip='Show a catalog'
-                               enabled={enabled}
-                               horizontal={true}
-                               visible={mi.irsaCatalog}
-                               todo={true}
-                               onClick={() => console.log('todo- irsa catalog dialog')}/>
+
+            <LayerButton pv={pv} dlCount={dlCount} visible={mi.layer}/>
+
+            <ToolbarHorizontalSeparator/>
 
 
-                <ToolbarButton icon={RESTORE}
-                               tip='Restore to the defaults'
-                               enabled={enabled}
-                               horizontal={true}
-                               visible={mi.restore}
-                               onClick={() => dispatchRestoreDefaults({plotId:pv.plotId})}/>
-
-                <SimpleLayerOnOffButton plotView={pv}
-                                isIconOn={pv&&plot? isOverlayColorLocked(pv,plotGroupAry) : false }
-                                tip='Lock all images for color changes and overlays.'
-                                iconOn={LOCKED}
-                                iconOff={UNLOCKED}
-                                visible={mi.overlayColorLock}
-                                onClick={() => toggleOverlayColorLock(pv,plotGroupAry)}
-                                 />
-
-                <MatchLockDropDown visRoot={visRoot} enabled={enabled} visible={mi.matchLockDropDown} />
+            <ToolbarButton icon={CATALOG}
+                           tip='Show a catalog'
+                           enabled={enabled}
+                           horizontal={true}
+                           visible={mi.irsaCatalog}
+                           todo={true}
+                           onClick={() => console.log('todo- irsa catalog dialog')}/>
 
 
-                <ToolbarButton icon={FITS_HEADER}
-                               tip={image ? 'Show FITS header' : (hips ? 'Show HiPS properties' : '')}
-                               enabled={enabled}
-                               horizontal={true}
-                               visible={mi.directFileAccessData}
-                               onClick={image ? (element) => fitsHeaderView(pv, element ) : (hips ? (element) => HiPSPropertyView(pv, element) : null)}
-                               />
+            <ToolbarButton icon={RESTORE}
+                           tip='Restore to the defaults'
+                           enabled={enabled}
+                           horizontal={true}
+                           visible={mi.restore}
+                           onClick={() => dispatchRestoreDefaults({plotId:pv.plotId})}/>
 
-                <div style={{display:'inline-block', height:'100%', flex:'0 0 auto', marginLeft:'10px'}}>
-                    <HelpIcon
-                        helpId={'visualization.imageoptions'}/>
-                </div>
+            <SimpleLayerOnOffButton plotView={pv}
+                                    isIconOn={pv&&plot? isOverlayColorLocked(pv,plotGroupAry) : false }
+                                    tip='Lock all images for color changes and overlays.'
+                                    iconOn={LOCKED}
+                                    iconOff={UNLOCKED}
+                                    visible={mi.overlayColorLock}
+                                    onClick={() => toggleOverlayColorLock(pv,plotGroupAry)}
+            />
 
+            <MatchLockDropDown visRoot={visRoot} enabled={enabled} visible={mi.matchLockDropDown} />
+
+
+            <ToolbarButton icon={FITS_HEADER}
+                           tip={image ? 'Show FITS header' : (hips ? 'Show HiPS properties' : '')}
+                           enabled={enabled}
+                           horizontal={true}
+                           visible={mi.directFileAccessData}
+                           onClick={image ? (element) => fitsHeaderView(pv, element ) : (hips ? (element) => HiPSPropertyView(pv, element) : null)}
+            />
+
+            <div style={{display:'inline-block', height:'100%', flex:'0 0 auto', marginLeft:'10px'}}>
+                <HelpIcon
+                    helpId={'visualization.imageoptions'}/>
             </div>
-        );
 
-    }
-}
+        </div>
+    );
+});
 
 VisToolbarView.propTypes= {
     visRoot : PropTypes.object.isRequired,
@@ -353,8 +351,12 @@ VisToolbarView.propTypes= {
 };
 
 function doRotateNorth(pv,rotate) {
-    const rotateType= rotate?RotateType.NORTH:RotateType.UNROTATE;
-    dispatchRotate({plotId:pv.plotId, rotateType});
+    if (isHiPS(primePlot(pv))) {
+        dispatchChangeHiPS( {plotId:pv.plotId,  coordSys: rotate?CoordinateSys.EQ_J2000:CoordinateSys.GALACTIC});
+    }
+    else {
+        dispatchRotate({plotId:pv.plotId, rotateType:rotate?RotateType.NORTH:RotateType.UNROTATE});
+    }
 }
 
 function flipY(pv) {
@@ -362,10 +364,6 @@ function flipY(pv) {
 }
 
 
-
-// function showToolTip(toolTip) {
-//     return <div style={tipStyle}>{toolTip}</div>;
-// }
 
 function isOverlayColorLocked(pv,plotGroupAry){
     const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);

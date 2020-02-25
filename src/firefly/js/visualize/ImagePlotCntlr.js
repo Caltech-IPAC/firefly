@@ -27,7 +27,12 @@ import {colorChangeActionCreator, stretchChangeActionCreator, cropActionCreator}
 import {wcsMatchActionCreator} from './task/WcsMatchTask.js';
 import {autoPlayActionCreator, changePointSelectionActionCreator,
     restoreDefaultsActionCreator, deletePlotViewActionCreator} from './task/PlotAdminTask.js';
-import { flipActionCreator, processScrollActionCreator, recenterActionCreator } from './task/PlotChangeTask';
+import {
+    changeHiPSActionCreator,
+    flipActionCreator,
+    processScrollActionCreator,
+    recenterActionCreator, rotateActionCreator
+} from './task/PlotChangeTask';
 import {makeAbortHiPSAction} from './task/PlotHipsTask';
 
 /** enum can be 'COLLAPSE', 'GRID', 'SINGLE' */
@@ -282,7 +287,9 @@ function actionCreators() {
         [DELETE_PLOT_VIEW]: deletePlotViewActionCreator,
         [RECENTER]: recenterActionCreator,
         [PROCESS_SCROLL]: processScrollActionCreator,
+        [CHANGE_HIPS]: changeHiPSActionCreator,
         [FLIP]: flipActionCreator,
+        [ROTATE]: rotateActionCreator,
     };
 }
 
@@ -647,8 +654,8 @@ export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {},
  * @param {string} p.plotId
  * @param {WebPlotParams|WebPlotRequest} p.wpRequest
  * @param {HipsImageConversionSettings} [p.hipsImageConversion= undefined] if defined, use these parameter to
- * @param {string} p.viewerId
- * @param {PVCreateOptions} p.pvOptions PlotView init Options
+ * @param {string} [p.viewerId]
+ * @param {PVCreateOptions} [p.pvOptions] PlotView init Options
  * @param {Object} [p.attributes] meta data that is added the plot
  * @param {boolean} [p.setNewPlotAsActive] the last completed plot will be active
  * @param {boolean} [p.enableRestore= true] if true the original request is saved for restore

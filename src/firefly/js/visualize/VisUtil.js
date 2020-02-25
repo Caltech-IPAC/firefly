@@ -420,7 +420,7 @@ export function isRotationMatching(pv1, pv2) {
     else {
         const r1= getRotationAngle(p1) + pv1.rotation;
         const r2= getRotationAngle(p2) + pv2.rotation;
-        return Math.abs(r1-r2) < .9;
+        return Math.abs((r1 % 360) - (r2 % 360))  < .9;
     }
 }
 
@@ -434,17 +434,18 @@ function isNorthCountingRotation(pv) {
 /**
  * Is the image positioned so that north is up.
  * @param {WebPlot} plot
+ * @param {CoordinateSys} csys
  * @return {boolean}
  */
-export function isPlotNorth(plot) {
+export function isPlotNorth(plot, csys= CoordinateSys.EQ_J2000) {
     let retval= false;
     const ix = plot.dataWidth/ 2;
     const iy = plot.dataHeight/ 2;
     const cc= CysConverter.make(plot);
-    const wpt1 = cc.getWorldCoords(makeImageWorkSpacePt(ix, iy));
+    const wpt1 = cc.getWorldCoords(makeImageWorkSpacePt(ix, iy), csys);
     if (wpt1) {
         const cdelt1 = getPixScaleDeg(plot);
-        const wpt2 = makeWorldPt(wpt1.getLon(), wpt1.getLat() + (Math.abs(cdelt1) / plot.zoomFactor) * (5));
+        const wpt2 = makeWorldPt(wpt1.getLon(), wpt1.getLat() + (Math.abs(cdelt1) / plot.zoomFactor) * (5), csys);
         const spt1 = cc.getScreenCoords(wpt1);
         const spt2 = cc.getScreenCoords(wpt2);
         if (spt1 && spt2) {
@@ -452,6 +453,19 @@ export function isPlotNorth(plot) {
         }
     }
     return retval;
+}
+
+export function isPlotRotatedNorth(plot, csys= CoordinateSys.EQ_J2000) {
+    if (!plot) return false;
+    const cc= CysConverter.make(plot);
+    const wpt1 = cc.getWorldCoords(makeImageWorkSpacePt(plot.dataWidth/2, plot.dataHeight/2), csys);
+    if (!wpt1) return false;
+    const cdelt1 = getPixScaleDeg(plot);
+    const wpt2 = makeWorldPt(wpt1.getLon(), wpt1.getLat() + (Math.abs(cdelt1) / plot.zoomFactor) * (5), csys);
+    if (!wpt2) return false;
+    const dpt1 = cc.getDeviceCoords(wpt1);
+    const dpt2 = cc.getDeviceCoords(wpt2);
+    return Boolean(dpt1 && dpt2 && (Math.abs(dpt1.x-dpt2.x)  < .9) && dpt1.y > dpt2.y);
 }
 
 /**
@@ -1206,7 +1220,7 @@ export default {
     computeSimpleDistance,convert,convertToJ2000,
     computeCentralPointAndRadius, getPositionAngle, getNewPosition,
     getRotationAngle,getTranslateAndRotatePosition,
-    isPlotNorth, getEstimatedFullZoomFactor,
+    getEstimatedFullZoomFactor,
     intersects, contains, containsRec,containsCircle,
     getArrowCoords, calculatePosition, getCorners,
     makePt, getWorldPtRepresentation, getCenterPtOfPlot, toDegrees, convertAngle,
