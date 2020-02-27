@@ -179,6 +179,7 @@ function closeExpanded() {
     dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none);
 }
 const hasCatalogTable= (tblList) => tblList.some( (id) => isCatalog(id) );
+const hasOrbitalPathTable= (tblList) => tblList.some( (id) => isOrbitalPathTable(id) );
 const hasMetaTable= (tblList) => tblList.some( (id) => isMetaDataTable(id) );
 const findFirstMetaTable= (tblList) => tblList.find( (id) => isMetaDataTable(id) );
 const shouldShowFits= () => !isEmpty(getViewerItemIds(getMultiViewRoot(), DEFAULT_FITS_VIEWER_ID));
@@ -229,6 +230,7 @@ function onActiveTable (layoutInfo, action) {
 
     // check for catalog or meta images
     const anyHasCatalog= hasCatalogTable(tblList);
+    const hasOrbitalPath=  hasOrbitalPathTable(tblList);
     const anyHasMeta= hasMetaTable(tblList);
 
 
@@ -236,7 +238,7 @@ function onActiveTable (layoutInfo, action) {
     //     coverageLockedOn= anyHasCatalog || anyHasMeta;
     // }
 
-    if (anyHasCatalog || anyHasMeta) {
+    if (anyHasCatalog || anyHasMeta || hasOrbitalPath) {
         showCoverage = true;
         showImages = true;
     } else {
