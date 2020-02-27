@@ -17,6 +17,11 @@ import {hashCode} from '../../util/WebUtil.js';
 import {LO_VIEW, LO_MODE, dispatchSetLayoutMode, getExpandedMode} from '../../core/LayoutCntlr.js';
 import {CloseButton} from '../../ui/CloseButton.jsx';
 
+const updateTitles= (tables) => Object.entries(tables)
+    .reduce( (obj,[key,{title,tbl_id, ...tableInfo}]) => {
+        obj[key]= {...tableInfo, tbl_id, title:(TblUtil.getTblById(tbl_id)?.tableMeta?.title ?? title)};
+        return obj;
+    },{});
 
 export class TablesContainer extends PureComponent {
     constructor(props) {
@@ -41,7 +46,7 @@ export class TablesContainer extends PureComponent {
         }
         const {tables, layout, active} = TblUtil.getTableGroup(tbl_group) || {};
 
-        return {closeable, tbl_group, expandedMode, tables, tableOptions, layout, active};
+        return {closeable, tbl_group, expandedMode, tables:updateTitles(tables), tableOptions, layout, active};
     }
 
     storeUpdate() {
