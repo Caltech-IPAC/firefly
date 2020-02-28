@@ -287,7 +287,7 @@ function attachImageOutline(pv, dlAry) {
     }
 
     if (!isDrawLayerAttached(dl, pv.plotId)) {
-        dispatchAttachLayerToPlot(dl.drawLayerId, pv.plotId, true);
+        dispatchAttachLayerToPlot(dl.drawLayerId, pv.plotId, false);
     }
 }
 
