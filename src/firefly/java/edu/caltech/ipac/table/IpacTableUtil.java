@@ -64,12 +64,11 @@ public class IpacTableUtil {
             ensureKey(attribs, col.getKeyName(), col.getDesc(), DESC_TAG);
             ensureKey(attribs, col.getKeyName(), col.getFormat(), FORMAT_TAG);
             ensureKey(attribs, col.getKeyName(), col.getFmtDisp(), FORMAT_DISP_TAG);
-            if (!col.isSortable()) {
-                ensureKey(attribs, col.getKeyName(), "false", SORTABLE_TAG);
-            }
-            if (!col.isFilterable()) {
-                ensureKey(attribs, col.getKeyName(), "false", FILTERABLE_TAG);
-            }
+
+            if (!col.isSortable())   ensureKey(attribs, col.getKeyName(), "false", SORTABLE_TAG);
+            if (!col.isFilterable()) ensureKey(attribs, col.getKeyName(), "false", FILTERABLE_TAG);
+            if (col.isFixed())       ensureKey(attribs, col.getKeyName(), "true", FIXED_TAG);
+
             ensureKey(attribs, col.getKeyName(), col.getSortByCols(), SORT_BY_TAG);
             ensureKey(attribs, col.getKeyName(), col.getEnumVals(), ENUM_VALS_TAG);
             ensureKey(attribs, col.getKeyName(), col.getPrecision(), PRECISION_TAG);
@@ -126,6 +125,7 @@ public class IpacTableUtil {
             consumeMeta(FORMAT_DISP_TAG, meta, dt, (v, c) -> c.setFmtDisp(v));
             consumeMeta(SORTABLE_TAG, meta, dt, (v, c) -> c.setSortable(StringUtils.getBoolean(v, true)));
             consumeMeta(FILTERABLE_TAG, meta, dt, (v, c) -> c.setFilterable(StringUtils.getBoolean(v, true)));
+            consumeMeta(FIXED_TAG, meta, dt, (v, c) -> c.setFixed(StringUtils.getBoolean(v, false)));
             consumeMeta(SORT_BY_TAG, meta, dt, (v, c) -> c.setSortByCols(v));
             consumeMeta(ENUM_VALS_TAG, meta, dt, (v, c) -> c.setEnumVals(v));
             consumeMeta(UCD_TAG, meta, dt, (v, c) -> c.setUCD(v));

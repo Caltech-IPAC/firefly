@@ -81,6 +81,7 @@ public class DataType implements Serializable, Cloneable {
     private       int prefWidth;
     private       boolean sortable = true;
     private       boolean filterable = true;
+    private       boolean fixed = false;
     private       Visibility visibility = Visibility.show;   // show, hide, or hidden
     private       String format;           // format string used for formating
     private       String fmtDisp;          // format string for diplay ... this is deprecated
@@ -169,7 +170,6 @@ public class DataType implements Serializable, Cloneable {
     public String getUnits() {
         return units;
     }
-
     public void setUnits(String units) {
         this.units = units;
     }
@@ -177,7 +177,6 @@ public class DataType implements Serializable, Cloneable {
     public String getNullString() {
         return nullString == null ? "" : nullString;
     }
-
     public void setNullString(String nullString) {
         this.nullString = nullString;
     }
@@ -185,7 +184,6 @@ public class DataType implements Serializable, Cloneable {
     public String getDesc() {
         return desc;
     }
-
     public void setDesc(String desc) {
         this.desc = desc;
     }
@@ -193,7 +191,6 @@ public class DataType implements Serializable, Cloneable {
     public int getWidth() {
         return width;
     }
-
     public void setWidth(int width) {
         this.width = width;
     }
@@ -201,7 +198,6 @@ public class DataType implements Serializable, Cloneable {
     public int getPrefWidth() {
         return prefWidth;
     }
-
     public void setPrefWidth(int prefWidth) {
         this.prefWidth = prefWidth;
     }
@@ -209,23 +205,23 @@ public class DataType implements Serializable, Cloneable {
     public boolean isSortable() {
         return sortable;
     }
-
     public void setSortable(boolean sortable) {
         this.sortable = sortable;
     }
 
-    public boolean isFilterable() {
-        return filterable;
-    }
-
+    public boolean isFilterable() { return filterable;}
     public void setFilterable(boolean filterable) {
         this.filterable = filterable;
+    }
+
+    public boolean isFixed() { return fixed;}
+    public void setFixed(boolean fixed) {
+        this.fixed = fixed;
     }
 
     public Visibility getVisibility() {
         return visibility;
     }
-
     public void setVisibility(Visibility visibility) {
         this.visibility = visibility;
     }
@@ -233,7 +229,6 @@ public class DataType implements Serializable, Cloneable {
     public String getFormat() {
         return format;
     }
-
     public void setFormat(String format) {
         this.format = format;
     }
@@ -241,7 +236,6 @@ public class DataType implements Serializable, Cloneable {
     public String getFmtDisp() {
         return fmtDisp;
     }
-
     public void setFmtDisp(String fmtDisp) {
         this.fmtDisp = fmtDisp;
     }
@@ -249,7 +243,6 @@ public class DataType implements Serializable, Cloneable {
     public String getSortByCols() {
         return sortByCols;
     }
-
     public void setSortByCols(String sortByCols) {
         this.sortByCols = sortByCols;
     }
@@ -257,7 +250,6 @@ public class DataType implements Serializable, Cloneable {
     public void setID (String id) {
         this.ID = id;
     }
-
     public String getID () {
         return ID;
     }

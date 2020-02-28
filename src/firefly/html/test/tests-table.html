@@ -100,6 +100,68 @@
 </template>
 
 
+<template title="Column Meta" class="tpl">
+    <div id="expected" >
+        <div style="margin: 10px">
+            <h4>Show the usage of Column's meta</h4>
+            <p>
+                Best when viewed with source code
+            </p>
+            <p>
+                First table shows how column meta affect the outcome
+            </p>
+            <p>
+                Second table shows how it can be used as an API
+                when calling showTable
+            </p>
+        </div>
+    </div>
+    <div id="actual" style="display: inline-flex" class="box x3">
+        <div id="client" style="flex-grow: 1; margin-right: 2px"></div>
+        <div id="server" style="flex-grow: 1"></div>
+    </div>
+    <script>
+        function onFireflyLoaded(firefly) {
+
+            //-----------  client table -----------
+            const columns = [
+                {name: 'col_1', label: 'override name'},
+                {name: 'col_2_forced_width', width: 8},
+                {name: 'col_3_no-sort', sortable: false},
+                {name: 'col_4_no-filter', filterable: false},
+                {name: 'col_5_hidden', visibility: 'hidden'},
+                {name: 'col_6_fixed', fixed: true},
+                {name: 'col_7_right_align', align: 'right'},
+                {name: 'col_8_left_align', align: 'left'},
+                {name: 'col_9_center_align', align: 'center'},
+            ];
+
+            const data = [
+                columns.map( (c) => 'row_1'),
+                columns.map( (c) => 'row_2'),
+                columns.map( (c) => 'row_3'),
+            ];
+            const table = { tableData: { columns, data } };
+
+            firefly.showClientTable('client', table, {showFilters: true});
+
+
+            //-----------  using API with server-backed table --------------
+            const tblReq = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
+                { META_INFO: {
+                        "col.in_row_id.label": 'override name',
+                        "col.in_ra.label": 'forced_width',
+                        "col.in_ra.width": '8',
+                        "col.in_dec.label": 'fixed_col',
+                        "col.in_dec.fixed": 'true'
+                    }});
+            firefly.showTable('server', tblReq);
+
+
+        }
+    </script>
+</template>
+
 
 
 
