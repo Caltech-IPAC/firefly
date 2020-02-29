@@ -22,8 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
-import static edu.caltech.ipac.util.StringUtils.isEmpty;
+import static edu.caltech.ipac.util.StringUtils.*;
 
 /**
  * @author loi
@@ -355,6 +354,8 @@ public class JsonTableUtil {
                 c.put("sortable", false);
             if (!dt.isFilterable() || dt.isArrayType())     // disable filtering for data array type
                 c.put("filterable", false);
+
+            if (dt.isFixed())   c.put("fixed", true);
 
             applyIfNotEmpty(dt.getSortByCols(), v -> c.put("sortByCols", v));
             applyIfNotEmpty(dt.getEnumVals(), v -> c.put("enumVals", v));

@@ -253,12 +253,12 @@
     background-color: rgba(255,255,255,.8);
 }
 
-.TablePanel__no-access {
-    background-color: #ffe8e8;
+.TablePanel__no-access div {
+    background-color: #ffe8e8 !important;
 }
 
-.TablePanel__no-access--highlighted {
-    background-color: #ffc1c1;
+.TablePanel__no-access--highlighted div {
+    background-color: #ffc1c1 !important;
 }
 
 /** below are taken from FixedDataTable with some modifications */
@@ -620,7 +620,7 @@ body[dir="rtl"] .fixedDataTableColumnResizerLineLayout_main, .fixedDataTableColu
     top: 0
 }
 
-.fixedDataTableRowLayout_rowWrapper .tablePanel__Row_highlighted {
-    background-color: #ffe8bf /* #d3fad1 */
+.fixedDataTableRowLayout_rowWrapper .tablePanel__Row_highlighted div {
+    background-color: #ffe8bf !important; /* #d3fad1 */
 }
 

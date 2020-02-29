@@ -366,17 +366,17 @@ function tableAddLocal(action) {
 
 function fixClientTable(tableModel) {
 
-    if (!tableModel.origTableModel) {
-        tableModel = TblUtil.cloneClientTable(tableModel);
-    }
     if (!tableModel.tbl_id) {
         tableModel.tbl_id = get(tableModel, 'request.tbl_id') || TblUtil.uniqueTblId();
     }
-    if (tableModel.title) {
+    if (!tableModel.title) {
         tableModel.title  = get(tableModel, 'request.META_INFO.title') || 'untitled';
     }
-    if (tableModel.totalRows) {
-        tableModel.totalRows = get(tableModel, 'tableData.data.length', 0);
+
+    tableModel.totalRows = tableModel?.tableData?.data.length ?? 0;
+
+    if (!tableModel.origTableModel) {
+        tableModel = TblUtil.cloneClientTable(tableModel);
     }
 
     return tableModel;

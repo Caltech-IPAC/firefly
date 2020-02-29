@@ -37,6 +37,7 @@ public class TableMeta implements Serializable {
     public static final String FORMAT_DISP_TAG = "col.@.fmtDisp";
     public static final String SORTABLE_TAG = "col.@.sortable";
     public static final String FILTERABLE_TAG = "col.@.filterable";
+    public static final String FIXED_TAG = "col.@.fixed";
     public static final String SORT_BY_TAG = "col.@.sortByCols";
     public static final String ENUM_VALS_TAG = "col.@.enumVals";
     public static final String PRECISION_TAG = "col.@.precision";

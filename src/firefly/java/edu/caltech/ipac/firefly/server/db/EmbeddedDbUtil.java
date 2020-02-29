@@ -396,6 +396,7 @@ public class EmbeddedDbUtil {
                             dt.getVisibility().name(),
                             dt.isSortable(),
                             dt.isFilterable(),
+                            dt.isFixed(),
                             dt.getDesc(),
                             dt.getEnumVals(),
                             dt.getID(),
@@ -437,6 +438,7 @@ public class EmbeddedDbUtil {
                 applyIfNotEmpty(rs.getString("desc"), dtype::setDesc);
                 applyIfNotEmpty(rs.getBoolean("sortable"), dtype::setSortable);
                 applyIfNotEmpty(rs.getBoolean("filterable"), dtype::setFilterable);
+                applyIfNotEmpty(rs.getBoolean("fixed"), dtype::setFixed);
                 applyIfNotEmpty(rs.getString("enumVals"), dtype::setEnumVals);
                 applyIfNotEmpty(rs.getString("ID"), dtype::setID);
                 applyIfNotEmpty(rs.getString("precision"), dtype::setPrecision);
