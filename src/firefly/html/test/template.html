@@ -87,6 +87,15 @@
             container.classList.add('fullHeight');
         }
 
+        function copyClipboard() {
+            window.getSelection()
+                .selectAllChildren(
+                    document.getElementById('source-code-div')
+                );
+            document.execCommand('copy');
+            window.getSelection().removeAllRanges();
+        }
+
     </script>
 
 </head>
@@ -110,7 +119,8 @@
         </div>
         <div class="tpl-item-box">
             <div id="tpl-source-code-container">
-                <div id="source-code-div" class="source-code"/>
+                <div id="copy-source" onclick="copyClipboard()" title="Copy source code into clipboard">Copy</div>
+                <div id="source-code-div" class="source-code">
             </div>
         </div>
     </div>

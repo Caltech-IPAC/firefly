@@ -99,6 +99,49 @@
     </script>
 </template>
 
+<template title="Table events" class="tpl">
+    <div id="expected" >
+        <div style="margin: 10px">This is not a typical test; It's interactive.
+            To test it, you need to select or highlight the table's row to the right
+            and then verify the output.
+        </div>
+    </div>
+    <div id="actual" style="display: inline-flex" class="box x3">
+        <div id="tbl-div" style="width: 40%"></div>
+        <div id="payload" style="width: 60%; height: calc(100vh - 68px); overflow: auto; padding: 3px;
+                                 border: 1px solid #bbb; margin-left: 3px; white-space: pre;
+                                 background-color: white; font-size: smaller" >
+            Select or highlight table row to see action's details here
+        </div>
+    </div>
+    <script>
+        function onFireflyLoaded(firefly) {
+            tblReq = firefly.util.table.makeFileRequest(
+                "Table Events", 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl');
+            firefly.showTable('tbl-div', tblReq);
+
+            firefly.util.addActionListener(firefly.action.type.TABLE_HIGHLIGHT, handleHighlight);
+            // show how you can pass in additional params to the callback(handler) function
+            firefly.util.addActionListener(
+                    firefly.action.type.TABLE_SELECT, handleSelect, {divName: 'payload'});
+        }
+
+        function updateInfo(title, action, divName) {
+            // stringify does not work with Set.. inject custom logic
+            var msg = title + ": \n" + JSON.stringify(action.payload,
+                (n,v) => (v instanceof Set) ? Array.from(v).join() : v, 2);
+            document.getElementById(divName).innerHTML = msg;
+        }
+
+        function handleSelect(action, cState, params) {
+            updateInfo("Select Info", action, params.divName)
+        }
+
+        function handleHighlight(action) {
+            updateInfo("Highlight Info", action, 'payload')
+        }
+    </script>
+</template>
 
 <template title="Column Meta" class="tpl">
     <div id="expected" >

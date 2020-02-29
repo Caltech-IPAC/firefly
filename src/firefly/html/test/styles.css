@@ -165,3 +165,27 @@ ul.expected-list li{
 #tpl-popout {
     margin-left: 20px;
 }
+
+#copy-source {
+    position: sticky;
+    top: 2px;
+    left: 2px;
+    padding: 0 2px;
+    border: 1px solid #d8d8d8;
+    width: 36px;
+    border-radius: 4px;
+    background-color: #f1f1f1;
+    color: darkblue;
+}
+
+#copy-source:hover {
+    cursor: pointer;
+    background-color: #ababab;
+    border: 1px solid #828282;
+}
+
+#copy-source:active {
+    background-color: #ababab;
+    box-shadow: 0 2px #828282;
+    transform: translateY(2px);
+}

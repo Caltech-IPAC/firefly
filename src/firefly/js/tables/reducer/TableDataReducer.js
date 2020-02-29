@@ -28,48 +28,60 @@ export function dataReducer(state={data:{}}, action={}) {
 
 function handleTableUpdates(root, action) {
 
-    const {tbl_id, selectInfo} = action.payload;
+    const {tbl_id, selectInfo, highlightedRow} = action.payload;
+
+    const doSelect = () => {
+        if (selectInfo) {
+            const nroot = clientTableSelectionSync(root, tbl_id, selectInfo); // no change for non-client tables
+            return updateSet(nroot, [tbl_id, 'selectInfo'], selectInfo);
+        } else return root;
+    };
+
+    const doLoaded = () => {
+        const statusPath = [tbl_id, 'tableMeta', 'Loading-Status'];
+        if (get(root, statusPath, 'COMPLETED') !== 'COMPLETED') {
+            return updateSet(root, statusPath, 'COMPLETED');
+        } else return root;
+    };
+
+    const doHighlight = () => {
+        const updates = {[tbl_id] : {isFetching:false, tbl_id, highlightedRow}};
+        return TblUtil.smartMerge(root, updates);
+    };
+
+    const doUpdate = () => {
+        const updates = {[tbl_id] : {isFetching:false, ...action.payload}};
+        return TblUtil.smartMerge(root, updates);
+    };
+
+    const doFetch = () => {
+        const nTable = Object.assign({ isFetching: true, selectInfo: SelectInfo.newInstance({rowCount: 0}).data }, action.payload);
+        const origTableModel = get(root, [tbl_id, 'origTableModel']);
+        if (origTableModel) { nTable.origTableModel = origTableModel; }
+        return updateSet(root, [tbl_id], nTable);
+    };
+
+    const doReplace = () => {
+        const rowCount = action.payload.totalRows || get(action, 'payload.tableData.data.length', 0);
+        const nTable = Object.assign({ isFetching: false, selectInfo: SelectInfo.newInstance({rowCount}).data }, action.payload);
+        return updateSet(root, [tbl_id], nTable);
+    };
 
     switch (action.type) {
         case (Cntlr.TABLE_SELECT) :
-        {
-            if (selectInfo) {
-                const nroot = clientTableSelectionSync(root, tbl_id, selectInfo); // no change for non-client tables
-                return updateSet(nroot, [tbl_id, 'selectInfo'], selectInfo);
-            }
-            break;
-        }
+            return doSelect();
         case (Cntlr.TABLE_LOADED) :
-        {
-            const statusPath = [tbl_id, 'tableMeta', 'Loading-Status'];
-            if (get(root, statusPath, 'COMPLETED') !== 'COMPLETED') {
-                return updateSet(root, statusPath, 'COMPLETED');
-            }
-            break;
-        }
+            return doLoaded();
         case (Cntlr.TABLE_HIGHLIGHT)    :
+            return doHighlight();
         case (Cntlr.TABLE_UPDATE)       :
-        {
-            const updates = {[tbl_id] : {isFetching:false, ...action.payload}};
-            return TblUtil.smartMerge(root, updates);
-        }
+            return doUpdate();
         case (Cntlr.TABLE_FETCH)      :
-        {
-            const nTable = Object.assign({ isFetching: true, selectInfo: SelectInfo.newInstance({rowCount: 0}).data }, action.payload);
-            const origTableModel = get(root, [tbl_id, 'origTableModel']);
-            if (origTableModel) { nTable.origTableModel = origTableModel; }
-            return updateSet(root, [tbl_id], nTable);
-        }
+            return doFetch();
         case (Cntlr.TABLE_REPLACE)  :
-        {
-            const rowCount = action.payload.totalRows || get(action, 'payload.tableData.data.length', 0);
-            const nTable = Object.assign({ isFetching: false, selectInfo: SelectInfo.newInstance({rowCount}).data }, action.payload);
-            return updateSet(root, [tbl_id], nTable);
-        }
+            return doReplace();
         case (Cntlr.TABLE_REMOVE)  :
-        {
             return omit(root, [tbl_id]);
-        }
     }
     return root;
 }

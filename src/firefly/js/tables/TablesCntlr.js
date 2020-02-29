@@ -18,6 +18,7 @@ import {trackBackgroundJob, isSuccess, isDone, getErrMsg} from '../core/backgrou
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
 import {dispatchJobAdd} from '../core/background/BackgroundCntlr.js';
+import {getTblInfo} from './TableUtil';
 
 
 export const TABLE_SPACE_PATH = 'table_space';
@@ -426,6 +427,20 @@ function tblRemove(action) {
 }
 
 function highlightRow(action) {
+
+    const dispatchHighlight = (dispatch, tableModel) => {
+        const {tbl_id, highlightedRow, request, selectInfo} = getTblInfo(tableModel);
+        const cols = TblUtil.getAllColumns(tableModel);
+        const highlightedValues = TblUtil.getRowValues(tableModel, highlightedRow)
+                                .map( (v, idx) => [cols[idx]?.name, v])
+                                .reduce( (p, [k, v]) => {
+                                    p[k] = v;
+                                    return p;
+                                }, {});
+        const {ROW_IDX} = highlightedValues;
+        dispatch( {type:TABLE_HIGHLIGHT, payload: {tbl_id, highlightedRow, selectInfo, highlightedValues, ROW_IDX}} );
+    };
+
     return (dispatch) => {
         const {tbl_id, highlightedRow, request={}} = action.payload;
         TblUtil.fixRequest(request);
@@ -436,13 +451,15 @@ function highlightRow(action) {
         var tmpModel = TblUtil.smartMerge(tableModel, action.payload);
         const {hlRowIdx, startIdx, endIdx, pageSize} = TblUtil.getTblInfo(tmpModel);
         if (TblUtil.isTblDataAvail(startIdx, endIdx, tableModel)) {
-            dispatch(action);
+            const aTableModel = {...tableModel, highlightedRow};
+            dispatchHighlight(dispatch, aTableModel);
         } else {
             const request = cloneDeep(tableModel.request);
             if (request) {
                 Object.assign(request, {startIdx, pageSize});
                 TblUtil.doFetchTable(request, startIdx+hlRowIdx).then ( (tableModel) => {
-                    dispatch( {type:TABLE_HIGHLIGHT, payload: tableModel} );
+                    dispatch({type: TABLE_UPDATE, payload: tableModel});
+                    dispatchHighlight(dispatch, tableModel);
                 }).catch( (error) => {
                     dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Unable to load table. \n   ${error.message}`)});
                 });
