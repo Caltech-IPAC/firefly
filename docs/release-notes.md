@@ -24,7 +24,10 @@ See Firefly docker guidelines [here](firefly-docker.md).
   - Firefly now reads 1D FITS images and shows as a chart
   - Choice of table with VO Tables
   - PDF and TAR are recognized and downloadable.
-
+  
+##### _API_
+- Add fixed column feature to table API ([Firefly-442](https://github.com/Caltech-IPAC/firefly/pull/941)))
+  
 
 ### Version 2019.4
 
