@@ -127,13 +127,9 @@ export function cropActionCreator(rawAction) {
         const store= getState()[IMAGE_PLOT_KEY];
         const { plotId, imagePt1, imagePt2, cropMultiAll}= rawAction.payload;
         const plotView= getPlotViewById(store,plotId);
-        if (!plotView || !imagePt1 || !imagePt2) return;
-        const p= primePlot(plotView);
-        if (!p) return;
-        const vr= getState()[IMAGE_PLOT_KEY];
-        if (vr.wcsMatchType) dispatcher({ type: ImagePlotCntlr.WCS_MATCH, payload: {wcsMatchType:false} });
-
-        doCrop(dispatcher,plotView,imagePt1, imagePt2, cropMultiAll);
+        if (!plotView || !primePlot(plotView) || !imagePt1 || !imagePt2) return;
+        if (store.wcsMatchType) dispatchWcsMatch({plotId, matchType:false});
+        doCrop(dispatcher,plotView,imagePt1, imagePt2, cropMultiAll,store.wcsMatchType);
     };
 }
 
@@ -151,8 +147,9 @@ export function cropActionCreator(rawAction) {
  * @param imagePt1
  * @param imagePt2
  * @param cropMultiAll
+ * @param originalWcsMatchType
  */
-function doCrop(dispatcher,pv,imagePt1, imagePt2, cropMultiAll) {
+function doCrop(dispatcher,pv,imagePt1, imagePt2, cropMultiAll, originalWcsMatchType) {
 
     const makeSuccAction= (plotId, plotAry, overlayPlotViews) => ({
         type: ImagePlotCntlr.CROP,
@@ -165,10 +162,13 @@ function doCrop(dispatcher,pv,imagePt1, imagePt2, cropMultiAll) {
 
     dispatcher( { type: ImagePlotCntlr.CROP_START, payload: {plotId:pv.plotId, message:'Cropping...'} } );
     callCrop(getPlotStateAry(pv), imagePt1, imagePt2, cropMultiAll)
-    .then( (wpResult) => processPlotReplace(dispatcher,wpResult,pv,makeSuccAction, makeFailAction))
+        .then( (wpResult) => {
+            processPlotReplace(dispatcher,wpResult,pv,makeSuccAction, makeFailAction);
+            originalWcsMatchType && dispatchWcsMatch({plotId:pv.plotId, matchType:originalWcsMatchType});
+        })
         .catch ( (e) => { dispatcher(makeFailAction(pv.plotId) );
             logError(`plot error, rotate , plotId: ${pv.plotId}`, e);
-        });
+            });
 }
 
 

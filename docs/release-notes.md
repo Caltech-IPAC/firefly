@@ -24,7 +24,13 @@ See Firefly docker guidelines [here](firefly-docker.md).
   - Firefly now reads 1D FITS images and shows as a chart
   - Choice of table with VO Tables
   - PDF and TAR are recognized and downloadable.
-
+  
+  
+##### _Pull Request in this release_
+  
+  - [bug fixes](https://github.com/Caltech-IPAC/firefly/pulls?q=is%3Aclosed+is%3Apr+label%3Abug+milestone%3A2020.1)
+  - [All PRs](https://github.com/Caltech-IPAC/firefly/pulls?utf8=%E2%9C%93&q=is%3Aclosed+is%3Apr+)
+                        
 
 ### Version 2019.4
 
