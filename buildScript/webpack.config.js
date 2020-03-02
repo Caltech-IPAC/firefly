@@ -61,9 +61,8 @@ export default function makeWebpackConfig(config) {
     }
 
     const globals = {
-        'process.env'   : {NODE_ENV : JSON.stringify(config.env)},
-        NODE_ENV        : config.env,
         __PROPS__       : {
+            BUILD_ENV   : JSON.stringify(process.env.BUILD_ENV || 'local'),
             SCRIPT_NAME : JSON.stringify(script_names),
             MODULE_NAME : JSON.stringify(config.name)
         }

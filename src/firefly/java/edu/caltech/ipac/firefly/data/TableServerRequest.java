@@ -35,9 +35,10 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
     public static final String FIXED_LENGTH = "fixedLength";
     public static final String META_INFO = "META_INFO";
     public static final String META_OPTIONS = "META_OPTIONS";
-    public static final List<String> SYS_PARAMS = Arrays.asList(REQUEST_CLASS,INCL_COLUMNS,SORT_INFO,FILTERS,SQL_FILTER,PAGE_SIZE,START_IDX,FIXED_LENGTH,META_INFO,TBL_ID);
+    public static final String FF_SESSION_ID = "ffSessionId";
     public static final String TBL_INDEX = "tbl_index";     // the table to show if it's a multi-table file.
     public static final String SELECT_INFO = "selectInfo";  // a property of META_INFO.  deserialize into SelectionInfo.java
+    private static final List<String> SYS_PARAMS = Arrays.asList(REQUEST_CLASS,INCL_COLUMNS,SORT_INFO,FILTERS,SQL_FILTER,PAGE_SIZE,START_IDX,FIXED_LENGTH,META_INFO,TBL_ID, FF_SESSION_ID);
 
     private int pageSize = -1;
     private int startIdx;

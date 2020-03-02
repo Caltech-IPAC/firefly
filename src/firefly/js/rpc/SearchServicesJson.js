@@ -18,6 +18,7 @@ import {getTblById, getResultSetID, getResultSetRequest} from '../tables/TableUt
 import {MAX_ROW, DataTagMeta, getTblId, setResultSetID, setResultSetRequest, setSelectInfo} from '../tables/TableRequestUtil.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {getBackgroundJobs} from '../core/background/BackgroundUtil.js';
+import {getFireflySessionId} from '../Firefly.js';
 
 export const DownloadProgress= new Enum(['STARTING', 'WORKING', 'DONE', 'UNKNOWN', 'FAIL']);
 export const ScriptAttributes= new Enum(['URLsOnly', 'Unzip', 'Ditto', 'Curl', 'Wget', 'RemoveZip']);
@@ -42,7 +43,8 @@ export function fetchTable(tableRequest, hlRowIdx) {
 
     const def = {
         startIdx: 0,
-        pageSize : MAX_ROW
+        pageSize : MAX_ROW,
+        ffSessionId: getFireflySessionId(),
     };
     
     tableRequest = setupNewRequest(tableRequest, def);
