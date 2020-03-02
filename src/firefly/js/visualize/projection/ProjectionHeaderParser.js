@@ -133,6 +133,20 @@ export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
 	p.crota1 = parse.getDoubleValue('CROTA1'+altWcs, 0);
 	p.crota2 = parse.getDoubleValue('CROTA2'+altWcs, 0);
 
+    /**
+     * CTYPEi indicates the coordinate type and projection. According to the standard specified by the paper: Representations of world coordinates in FITS
+     * E. W. Greisen1 and M. R. Calabretta2 (paper I). The CTYPEn has linear and non-linear.  Non-linear coordinate systems will be signaled by CTYPEi
+     * in “4–3” form: the first four characters specify the coordinate type, the fifth character is a ’-’, and the remaining three characters
+     * specify an algorithm code for computing the world coordinate value, for example ’ABCD-XYZ’. We explicitly allow the
+     * possibility that the coordinate type may augment the algorithm code, for example ’FREQ-F2W’ and ’VRAD-F2W’ may denote
+     * somewhat different algorithms (see Paper III). Coordinate types with names of less than four characters are padded on the right
+     * with ’-’, and algorithm codes with less than three characters are padded on the right with blanks, for example ’RA---UV ’.
+     * However, we encourage the use of three-letter algorithm codes. Particular coordinate types and algorithm codes must be established by convention.
+     * CTYPEi values that are not in “4–3” form should be interpreted as linear axes. It is possible that there may be old FITS files with a linear axis for
+     * which CTYPEi is, by chance, in 4–3 form. However, it is very unlikely that it will match a recognized algorithm code (use of
+     * three-letter codes will reduce the chances). In such a case the axis should be treated as linear.
+     *
+     */
 	if (header['CTYPE1'+altWcs]) {
 	    p.ctype1 = parse.getValue('CTYPE1'+altWcs, '');
 	    p.ctype2 = parse.getValue('CTYPE2'+altWcs, '');
@@ -144,7 +158,7 @@ export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
         else {
             var ctype1End = endstr;
         }
-
+        //NON-LINEAR: ctypei=cccc-ppp, first four characters represent coordinate and the character 6-8 represents projection
 	    switch (ctype1End) {
             case '-TAN': p.maptype = GNOMONIC; break;
             case '-TPV': p.maptype = TPV; break;
@@ -161,8 +175,8 @@ export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
             case '':     p.maptype = LINEAR; break;
             default :    p.maptype = UNRECOGNIZED;
         }
-
-        if (ctype1_trim==='LINEAR') p.maptype = LINEAR;
+        // Either CTYPEi = 'LINEAR' or ctypei is defined but the value is not specified, default to linear
+        if (ctype1_trim==='' || ctype1_trim==='LINEAR') p.maptype = LINEAR;
 
         p.axes_reversed = startsWithAny(ctype1_trim, ['DEC','MM','GLAT','LAT','ELAT']);
 	}
@@ -381,7 +395,7 @@ function getFluxUnits(parse, zeroHeader) {
 function getCoordSys(params) {
     const {maptype, ctype1} = params;
 
-    if (maptype===PLATE) return EQ;
+    if (maptype===PLATE || maptype===LINEAR) return EQ;
     if (!ctype1) return -1;
 
     const s = ctype1.substring(0, 2);

@@ -121,13 +121,33 @@ public class ImageHeader implements Serializable
 	cdelt2 = header.getDoubleValue("CDELT2");
 	crota1 = header.getDoubleValue("CROTA1");
 	crota2 = header.getDoubleValue("CROTA2");
+
+	/**
+	 * CTYPEi indicates the coordinate type and projection. According to the standard specified by the paper: Representations of world coordinates in FITS
+	 * E. W. Greisen1 and M. R. Calabretta2 (paper I). The CTYPEn has linear and non-linear.  Non-linear coordinate systems will be signaled by CTYPEi
+	 * in “4–3” form: the first four characters specify the coordinate type, the fifth character is a ’-’, and the remaining three characters
+	 * specify an algorithm code for computing the world coordinate value, for example ’ABCD-XYZ’. We explicitly allow the
+	 * possibility that the coordinate type may augment the algorithm code, for example ’FREQ-F2W’ and ’VRAD-F2W’ may denote
+	 * somewhat different algorithms (see Paper III). Coordinate types with names of less than four characters are padded on the right
+	 * with ’-’, and algorithm codes with less than three characters are padded on the right with blanks, for example ’RA---UV ’.
+	 * However, we encourage the use of three-letter algorithm codes. Particular coordinate types and algorithm codes must be established by convention.
+	 * CTYPEi values that are not in “4–3” form should be interpreted as linear axes. It is possible that there may be old FITS files with a linear axis for
+	 * which CTYPEi is, by chance, in 4–3 form. However, it is very unlikely that it will match a recognized algorithm code (use of
+	 * three-letter codes will reduce the chances). In such a case the axis should be treated as linear.
+	 *
+	 */
 	if (header.containsKey("CTYPE1"))
 	{
 	    ctype1 = header.getStringValue("CTYPE1") + "        ";
 	    ctype2 = header.getStringValue("CTYPE2") + "        ";
 	    ctype1_trim = ctype1.trim();
 	    String ctype1_tail = ctype1.substring(4, 8);
-		if (ctype1_trim.indexOf("-TAN") >= 0)
+
+		// Either CTYPEi = 'LINEAR' or ctypei is defined but the value is not specified, default to linear
+	    if (ctype1_trim=="" || ctype1_trim.equalsIgnoreCase("LINEAR")){
+			maptype = Projection.LINEAR;
+		}
+		else if (ctype1_trim.indexOf("-TAN") >= 0)
 			maptype = Projection.GNOMONIC;
 		else if (ctype1_trim.indexOf("-TPV") >= 0) {
 			maptype = Projection.TPV;
@@ -649,7 +669,12 @@ public class ImageHeader implements Serializable
     {
 	int retval = -1;
 
-	if (ctype1 != null)
+	if (maptype == Projection.PLATE || maptype == Projection.LINEAR )
+			retval =  EQ;
+
+	//non-linear case
+	//CTYPEi the first four characters are:	RA-- and DEC-, GLON and GLAT, or ELON and ELAT, for equatorial, galactic, and ecliptic coordinates, respectively.
+		if (ctype1 != null)
 	{
 	    String s = ctype1.substring(0, 2);
 	    if (s.equals("RA"))
@@ -665,8 +690,7 @@ public class ImageHeader implements Serializable
 	    else if (s.equals("EL"))
 		retval =  EC;
 	}
-	if (maptype == Projection.PLATE)
-	    retval =  EQ;
+
 	return retval;
     }
 
