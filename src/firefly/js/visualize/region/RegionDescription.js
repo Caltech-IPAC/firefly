@@ -86,6 +86,7 @@ export function makeRegionsFromPlot(plot, bSeperateText = false)
     dlAry.forEach( (dl) => {
         const data = ['drawData', DataTypes.DATA];
         const drawObjs = dl.hasPerPlotData ? get(dl, [...data, plotId]) : get(dl, data);
+        if (isEmpty(drawObjs)) return;
 
         if (get(drawObjs, 'type') === MARKER_DATA_OBJ) {
             oneRegionDes = markerToRegion(drawObjs, plot, dl, bSeperateText);
