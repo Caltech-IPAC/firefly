@@ -29,7 +29,7 @@ Map a directory for direct file reading:
    - start firefly with - http://localhost/firefly/
 
 Write to logging directory outside of docker image:
-   > docker run -p 80:8080 -v /local/myLogDir:/usr/local/tomcat/logs --memory=8g --rm ipac/firefly:latest
+   > docker run -p 80:8080 -v /local/myLogDir:/usr/local/tomcat-base/logs --memory=8g --rm ipac/firefly:latest
    - start firefly with - http://localhost/firefly/
 
 View log file:
