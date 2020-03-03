@@ -253,7 +253,7 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange}) {
     };
 
     const colFilters = getFiltersAsSql(tbl_id);
-    const sqlLabel = colFilters ? 'Additional Contraints (SQL):' : 'Constranints(SQL):';
+    const sqlLabel = colFilters ? 'Additional Constraints (SQL):' : 'Constraints (SQL):';
     const iconGen = () => <img width="14" height="14" src={RIGHT_ARROW}/> ;
 
     const errStyle = error ? {borderColor: 'red'} : {};
