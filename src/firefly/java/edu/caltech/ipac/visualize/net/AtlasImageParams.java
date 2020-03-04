@@ -18,7 +18,11 @@ public class AtlasImageParams extends IrsaImageParams {
     private String xtraFilter = ""; // i.e fname like '%.mosaic.fits' or file_tye=science
     private String data_type = "image";
 
-    public AtlasImageParams() { super(ImageSourceTypes.ATLAS); }
+    public AtlasImageParams(String service, String table){
+        super(ImageSourceTypes.ATLAS);
+        this.schema = service;
+        this.table = table;
+    }
 
     public void setInstrument(String b) {
         this._instrument = b;
