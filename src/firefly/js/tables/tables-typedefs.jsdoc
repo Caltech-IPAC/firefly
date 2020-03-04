@@ -130,6 +130,33 @@
  */
 
 /**
+ * Table resources
+ * @typedef {object} RESOURCE
+ * @prop {string} ID     ID used to reference this LINK.
+ * @prop {string} name
+ * @prop {string} type
+ * @prop {string} utype
+ * @prop {PARAM[]} params   params if any
+ * @prop {GROUP[]} groups   groups if any
+ * @global
+ * @public
+ */
+
+/**
+ * Table group info
+ * @typedef {object} GROUP
+ * @prop {string} ID     ID used to reference this LINK.
+ * @prop {string} name
+ * @prop {string} ucd
+ * @prop {string} utype
+ * @prop {string} desc
+ * @prop {PARAM[]} params   params if any
+ *
+ * @global
+ * @public
+ */
+
+/**
  * The full list of meta info for this table.  It includes the original meta from source, comments, duplicates, and additional meta inserted
  * @typedef {object} TableKeywords
  * @prop {string} key  meta key

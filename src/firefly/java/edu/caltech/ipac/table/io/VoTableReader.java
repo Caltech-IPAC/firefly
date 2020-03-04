@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
@@ -75,11 +76,14 @@ public class VoTableReader {
 
         try {
             List<Integer> indicesList = indices == null ? null : CollectionUtil.asList(indices);
-            List<TableElement> tableAry = getAllTableElements( location, null);
+            VOElement docRoot = getVoTableRoot(location, null);
+            List<TableElement> tableAry = getAllTableElements(docRoot);
+            List<ResourceInfo> resources = getAllResources(docRoot);
             for (int i = 0; i < tableAry.size(); i++) {
                 if (indices == null || indices.length == 0 || indicesList.contains(i)) {
                     TableElement tableEl = tableAry.get(i);
                     DataGroup dg = convertToDataGroup(tableEl, new VOStarTable(tableEl), headerOnly);
+                    if (resources != null) dg.setResourceInfos(resources);
                     groups.add(dg);
                 }
             }
@@ -137,51 +141,82 @@ public class VoTableReader {
         return error;
     }
 
-    // get all <TABLE> from one votable file
-    private static List<TableElement> getAllTableElements(String location, StoragePolicy policy) throws IOException {
+    private static VOElement getVoTableRoot(String location, StoragePolicy policy) throws IOException {
 
-        // if location is a URL, download it first.
+        String voTablePath, url = null;
         try {
-            String url = new URL(location).toString();
+            url = new URL(location).toString();
+        } catch (MalformedURLException ex) { /* ok to ignore.  location may not be a URL */ }
+
+        if (url == null) {
+            voTablePath = location;
+        } else {
+            // location is a URL, download it first.
             File tmpFile = File.createTempFile("voreader-", ".xml", QueryUtil.getTempDir());
-            HttpServices.getData( HttpServiceInput.createWithCredential(url), tmpFile);
-            location = tmpFile.getPath();
-        } catch (MalformedURLException ex) {
-            // ok to ignore.  location may not be a URL
-        } catch (Exception e) {
-            LOG.error(e);
-            throw new IOException(e);
+            try {
+                HttpServices.getData( HttpServiceInput.createWithCredential(url), tmpFile);
+                voTablePath = tmpFile.getPath();
+            } catch (Exception e) {
+                tmpFile.delete();
+                LOG.error(e);
+                throw new IOException("Unable to fetch URL: "+ location + "\n" + e.getMessage(), e);
+            }
         }
 
-        VOElement root;
         try {
             policy = policy == null ? PREFER_MEMORY : policy;
             VOElementFactory voFactory =  new VOElementFactory();
             voFactory.setStoragePolicy(policy);
-            root = voFactory.makeVOElement(location);
+            return voFactory.makeVOElement(voTablePath);
         }  catch (SAXException | IOException e) {
-            throw new IOException("unable to parse "+ location + "\n" +
+            throw new IOException("Unable to parse VOTABLE from "+ location + "\n" +
                     e.getMessage(), e);
         }
+    }
+
+    // get all <TABLE> from one votable file
+    private static List<TableElement> getAllTableElements(VOElement docRoot) throws IOException {
 
         List<TableElement> tableAry = new ArrayList<>();
-        if (root != null) {
-            Arrays.stream(root.getChildrenByName("RESOURCE"))
-                    .forEach( res -> {
-                        Arrays.stream(res.getChildrenByName("TABLE"))
-                                .forEach(table -> tableAry.add((TableElement) table));
-                    });
+        if (docRoot == null) return tableAry;
+        Arrays.stream(docRoot.getChildrenByName("RESOURCE"))
+                .forEach( res -> {
+                    Arrays.stream(res.getChildrenByName("TABLE"))
+                            .forEach(table -> tableAry.add((TableElement) table));
+                });
 
-            if (tableAry.size() == 0) {
-                String error = getQueryStatusError(root);
-                if (error != null) {
-                    throw new IOException(error);
-                }
+        if (tableAry.size() == 0) {
+            String error = getQueryStatusError(docRoot);
+            if (error != null) {
+                throw new IOException(error);
             }
         }
-
         return tableAry;
     }
+
+    // get all non-table <RESOURCEs> from one votable file
+    private static List<ResourceInfo> getAllResources(VOElement docRoot) throws IOException {
+
+        if (docRoot == null) return null;
+
+        return Arrays.stream(docRoot.getChildrenByName("RESOURCE"))
+                .filter(res -> res.getChildrenByName("TABLE").length == 0)
+                .map( res -> {
+                    ResourceInfo ri = new ResourceInfo(res.getID(), res.getName(),
+                                            res.getAttribute("type"), res.getAttribute("utype"),
+                                            res.getDescription());
+                    List<ParamInfo> params = Arrays.stream(res.getChildrenByName("PARAM"))
+                            .map(VoTableReader::paramElToParamInfo).collect(Collectors.toList());
+                    if (params.size() > 0) ri.setParams(params);
+
+                    List<GroupInfo> groups = Arrays.stream(res.getChildrenByName("GROUP"))
+                            .map(VoTableReader::groupElToGroupInfo).collect(Collectors.toList());
+                    if (groups.size() > 0) ri.setGroups(groups);
+
+                    return ri;
+                }).collect(Collectors.toList());
+    }
+
 
     /**
      * convert votable content into DataGroup mainly by collecting TABLE elements and TABLE included metadata and data
@@ -422,8 +457,7 @@ public class VoTableReader {
     public static FileAnalysis.Report analyze(File infile, FileAnalysis.ReportType type) throws Exception {
 
         FileAnalysis.Report report = new FileAnalysis.Report(type, TableUtil.Format.VO_TABLE.name(), infile.length(), infile.getPath());
-        List<TableElement> tables = getAllTableElements(infile.getAbsolutePath(), null);
-        List<FileAnalysis.Part> parts = tablesToParts(tables);
+        List<FileAnalysis.Part> parts = tablesToParts(infile);
         parts.forEach(report::addPart);
 
         for(int i = 0; i < parts.size(); i++) {
@@ -437,6 +471,7 @@ public class VoTableReader {
                 applyIfNotEmpty(p.getGroupInfos(), details::setGroupInfos);
                 applyIfNotEmpty(p.getLinkInfos(), details::setLinkInfos);
                 applyIfNotEmpty(p.getParamInfos(), details::setParamInfos);
+                applyIfNotEmpty(p.getResourceInfos(), details::setResourceInfos);
                 parts.get(i).setDetails(details);
             } else {
                 parts.get(i).setDetails(null);      // remove table headers.. everything else is good
@@ -446,15 +481,21 @@ public class VoTableReader {
     }
 
     /**
-     * @param tables  a list of table element
+     * @param infile  input file to analyze
      * @return each Table as a part with details containing DataGroup without data
      */
-    private static List<FileAnalysis.Part> tablesToParts(List<TableElement> tables) {
+    private static List<FileAnalysis.Part> tablesToParts(File infile) throws Exception {
+
+        VOElement docRoot = getVoTableRoot(infile.getAbsolutePath(), null);
+        List<TableElement> tables = getAllTableElements(docRoot);
+        List<ResourceInfo> resources = getAllResources(docRoot);
+
         List<FileAnalysis.Part> parts = new ArrayList<>();
         tables.forEach(table -> {
             FileAnalysis.Part part = new FileAnalysis.Part(FileAnalysis.Type.Table);
             part.setIndex(parts.size());
-            DataGroup dg = getTableHeader((TableElement)table);
+            DataGroup dg = getTableHeader(table);
+            if (resources != null) dg.setResourceInfos(resources);
             String title = isEmpty(dg.getTitle()) ? "VOTable" : dg.getTitle().trim();
             part.setDetails(dg);
             part.setDesc(String.format("%s (%d cols x %s rows)", title, dg.getDataDefinitions().length, dg.size()));

@@ -355,7 +355,8 @@ public class EmbeddedDbUtil {
                         dg.size(),
                         dg.getGroupInfos(),
                         dg.getLinkInfos(),
-                        dg.getParamInfos()
+                        dg.getParamInfos(),
+                        dg.getResourceInfos()
                 });
         String insertDDSql = dbAdapter.insertAuxDataSql(tblName);
         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).batchUpdate(insertDDSql, data);
@@ -368,6 +369,7 @@ public class EmbeddedDbUtil {
                 dg.setLinkInfos((List<LinkInfo>) rs.getObject("links"));
                 dg.setGroupInfos((List<GroupInfo>) rs.getObject("groups"));
                 dg.setParamInfos((List<ParamInfo>) rs.getObject("params"));
+                dg.setResourceInfos((List<ResourceInfo>) rs.getObject("resources"));
             } while (rs.next());
         } catch (SQLException e) {
             logger.error(e);

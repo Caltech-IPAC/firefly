@@ -25,6 +25,7 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
     private List<GroupInfo> groups = new ArrayList<>();   // for <GROUP> under <TABLE> of VOTable
     private List<LinkInfo> links = new ArrayList<>();     // for <LINK> under <TABLE> of VOTable
     private List<ParamInfo> params = new ArrayList<>();  // for <PARAM> under <TABLE> of VOTABLE
+    private List<ResourceInfo> resources = new ArrayList<>();  // for <RESOURCE> in VOTABLE
     private transient DataType[] cachedColumnsAry = null;
     private transient int highlightedRow = -1;
 
@@ -346,6 +347,12 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
                     .filter(p -> p.getKeyName().equals(name))
                     .findAny()
                     .orElse(null);
+    }
+
+    public List<ResourceInfo> getResourceInfos() { return resources; }
+    public void setResourceInfos(List<ResourceInfo> resourceInfos) {
+        this.resources.clear();
+        this.resources.addAll(resourceInfos);
     }
 
     /**

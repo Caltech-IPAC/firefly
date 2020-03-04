@@ -189,6 +189,10 @@ public class TableUtil {
             treq.getMeta().forEach((k,v) -> {
                 if (k.equals(TableServerRequest.TITLE)) {
                     dg.setTitle(v);
+                }else if (k.equals(TableMeta.TBL_RESOURCES)) {
+                    dg.setResourceInfos(JsonTableUtil.toResourceInfos(v));
+                }else if (k.equals(TableMeta.TBL_LINKS)) {
+                    dg.setLinkInfos(JsonTableUtil.toLinkInfos(v));
                 } else {
                     dg.getTableMeta().setAttribute(k, v);
                 }

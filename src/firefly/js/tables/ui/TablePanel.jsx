@@ -20,7 +20,7 @@ import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {showTableDownloadDialog} from './TableSave.jsx';
-import {showOptionsPopup} from '../../ui/PopupUtil.jsx';
+import {showOptionsPopup, showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {BgMaskPanel} from '../../core/background/BgMaskPanel.jsx';
 import {CollapsiblePanel} from '../../ui/panel/CollapsiblePanel.jsx';
 
@@ -29,6 +29,7 @@ import {CollapsiblePanel} from '../../ui/panel/CollapsiblePanel.jsx';
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 import OPTIONS from 'html/images/icons-2014/24x24_GearsNEW.png';
+import {ObjectTree} from './ObjectTree.jsx';
 
 
 const TT_INFO = 'Show additional table info';
@@ -325,7 +326,7 @@ export function MetaInfo({tbl_id, style, isOpen=false}) {
     if (!TblUtil.hasAuxData(tbl_id)) {
         return null;
     }
-    const {keywords, links, params} = TblUtil.getTblById(tbl_id);
+    const {keywords, links, params, resources} = TblUtil.getTblById(tbl_id);
 
     return (
         <div className='TablePanel__meta' style={style}>
@@ -368,6 +369,26 @@ export function MetaInfo({tbl_id, style, isOpen=false}) {
                             { l.role && <Keyword label='role' value={l.role}/> }
                             { l.type && <Keyword label='type' value={l.type}/> }
                             <a style={{whiteSpace: 'nowrap', maxWidth: 300}} href={l.href} title={l.title || dispVal}>{dispVal}</a>
+                        </div>
+                    );
+                })
+                }
+            </CollapsiblePanel>
+            }
+            { !isEmpty(resources) &&
+            <CollapsiblePanel componentKey={tbl_id + '-resources'} header='Resources' {...{isOpen, contentStyle, wrapperStyle}}>
+                {resources.map((rs, idx) => {
+                    const showValue = () => showInfoPopup(
+                                <div style={{whiteSpace: 'pre'}}>
+                                    <ObjectTree data={rs} title={<b>Resource</b>} className='MetaInfo__tree'/>
+                                </div> );
+                    return (
+                        <div key={'keywords-' + idx} style={{display: 'inline-flex'}}>
+                            { rs.ID && <Keyword label='ID' value={rs.ID}/> }
+                            { rs.name && <Keyword label='name' value={rs.name}/> }
+                            { rs.type && <Keyword label='type' value={rs.type}/> }
+                            { rs.utype && <Keyword label='utype' value={rs.utype}/> }
+                            <a className='ff-href' onClick={showValue}> show value</a>
                         </div>
                     );
                 })
@@ -444,3 +465,5 @@ function TableError({tbl_id, message}) {
         </div>
     );
 }
+
+

@@ -109,6 +109,15 @@
     background-image: linear-gradient(#fff, #dcdcdc);
 }
 
+.MetaInfo__tree {
+    overflow: auto;
+    max-width: 400px;
+    max-height: 300px;
+    border: 1px solid #b3b3b3;
+    background-color: white;
+    padding: 5px 0;
+}
+
 .PagingBar__button {
     height: 16px;
     width: 16px;

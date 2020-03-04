@@ -112,6 +112,11 @@ public class JsonTableUtil {
         if (dataGroup.getParamInfos().size() > 0) {
             tableModel.put("params", toJsonParamInfos(dataGroup.getParamInfos()));
         }
+
+        if (dataGroup.getResourceInfos().size() > 0) {
+            tableModel.put("resources", toJsonResourceInfos(dataGroup.getResourceInfos()));
+        }
+
         tableModel.put("totalRows", dataGroup.size());
 
         return tableModel;
@@ -339,12 +344,12 @@ public class JsonTableUtil {
             if (dt.getWidth() > 0)
                 c.put("width", dt.getWidth());
 
-            applyIfNotEmpty(dt.getTypeDesc(), v -> c.put("type", v));
-            applyIfNotEmpty(dt.getUnits(), v -> c.put("units", v));
+            applyIfNotEmpty(dt.getTypeDesc(),   v -> c.put("type", v));
+            applyIfNotEmpty(dt.getUnits(),      v -> c.put("units", v));
             applyIfNotEmpty(dt.getNullString(), v -> c.put("nullString", v));
-            applyIfNotEmpty(dt.getDesc(), v -> c.put("desc", v));
-            applyIfNotEmpty(dt.getLabel(), v -> c.put("label", v));
-            applyIfNotEmpty(dt.getArraySize(), v -> c.put("arraySize", v));
+            applyIfNotEmpty(dt.getDesc(),       v -> c.put("desc", v));
+            applyIfNotEmpty(dt.getLabel(),      v -> c.put("label", v));
+            applyIfNotEmpty(dt.getArraySize(),  v -> c.put("arraySize", v));
 
             if (dt.getVisibility() != DataType.Visibility.show)
                 c.put("visibility", dt.getVisibility().name());
@@ -408,6 +413,34 @@ public class JsonTableUtil {
         return retval;
     }
 
+    /**
+     * The invert of #toJsonGroupInfos().  This convert the JSON groupInfos string into
+     * a List of GroupInfo.
+     * @param jsonGroupInfos     the string to parse into GroupInfo
+     * @return  a List of GroupInfo
+     */
+    public static List<GroupInfo> toGroupInfos(String jsonGroupInfos) {
+
+        List<GroupInfo> rval = new ArrayList<>();
+        if (!isEmpty(jsonGroupInfos)) {
+            JSONArray groups = (JSONArray) JSONValue.parse(jsonGroupInfos);
+            for (int i = 0; i < groups.size(); i++) {
+                JSONObject param = (JSONObject) groups.get(i);
+                GroupInfo groupInfo = new GroupInfo();
+                applyIfNotEmpty(param.get("ID"),    v -> groupInfo.setID(v.toString()));
+                applyIfNotEmpty(param.get("name"),  v -> groupInfo.setName(v.toString()));
+                applyIfNotEmpty(param.get("ucd"), v -> groupInfo.setUCD(v.toString()));
+                applyIfNotEmpty(param.get("utype"), v -> groupInfo.setUtype(v.toString()));
+                applyIfNotEmpty(param.get("desc"), v -> groupInfo.setDescription(v.toString()));
+
+                applyIfNotEmpty(param.get("params"), v -> groupInfo.setParamInfos(toParamInfos(v.toString())));
+                rval.add(groupInfo);
+            }
+            return rval;
+        }
+        return null;
+    }
+
     private static List<JSONObject> toJsonRefInfos(List<GroupInfo.RefInfo> refInfos) {
 
         return refInfos.stream().map(ref -> {
@@ -431,7 +464,92 @@ public class JsonTableUtil {
     }
 
     /**
-     * list of json object for a list of LinkInfo under table model
+     * The invert of #toJsonParamInfos().  This convert the JSON paramInfos string into
+     * a List of ParamInfo.
+     * @param jsonParamInfos     the string to parse into ParamInfo
+     * @return  a List of ParamInfo
+     */
+    public static List<ParamInfo> toParamInfos(String jsonParamInfos) {
+
+        List<ParamInfo> rval = new ArrayList<>();
+        if (!isEmpty(jsonParamInfos)) {
+            JSONArray params = (JSONArray) JSONValue.parse(jsonParamInfos);
+            for (int i = 0; i < params.size(); i++) {
+                JSONObject param = (JSONObject) params.get(i);
+                ParamInfo paramInfo = new ParamInfo();
+                applyIfNotEmpty(param.get("ID"),    v -> paramInfo.setID(v.toString()));
+                applyIfNotEmpty(param.get("type"),  v -> paramInfo.setDataType(DataType.descToType(v.toString())));
+                applyIfNotEmpty(param.get("unit"),  v -> paramInfo.setUnits(v.toString()));
+                applyIfNotEmpty(param.get("precision"), v -> paramInfo.setPrecision(v.toString()));
+                applyIfNotEmpty(param.get("width"), v -> paramInfo.setWidth( getInt(v, 0)));
+                applyIfNotEmpty(param.get("name"),  v -> paramInfo.setKeyName(v.toString()));
+                applyIfNotEmpty(param.get("ucd"),   v -> paramInfo.setUCD(v.toString()));
+                applyIfNotEmpty(param.get("utype"), v -> paramInfo.setUType(v.toString()));
+                applyIfNotEmpty(param.get("arraysize"), v -> paramInfo.setArraySize(v.toString()));
+                applyIfNotEmpty(param.get("ref"), v -> paramInfo.setRef(v.toString()));
+                applyIfNotEmpty(param.get("value"), v -> paramInfo.setValue(v.toString()));
+
+                applyIfNotEmpty(param.get("datatype"), v -> {
+                    paramInfo.setTypeDesc(v.toString());
+                    paramInfo.setDataType(DataType.descToType(v.toString()));
+                });
+                rval.add(paramInfo);
+            }
+            return rval;
+        }
+        return null;
+    }
+
+    /**
+     * converts ResourceInfo into JSON
+     * @param resourceInfos
+     * @return
+     */
+    public static List<JSONObject> toJsonResourceInfos(List<ResourceInfo> resourceInfos) {
+
+        return resourceInfos.stream().map(ri -> {
+            JSONObject json = new JSONObject();
+            applyIfNotEmpty(ri.getID(),     v -> json.put("ID", v));
+            applyIfNotEmpty(ri.getName(),   v -> json.put("name", v));
+            applyIfNotEmpty(ri.getType(),   v -> json.put("type", v));
+            applyIfNotEmpty(ri.getUtype(),  v -> json.put("utype", v));
+            if (ri.getGroups().size() > 0) json.put("groups", toJsonGroupInfos(ri.getGroups()));
+            if (ri.getParams().size() > 0) json.put("params", toJsonParamInfos(ri.getParams()));
+            return json;
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * The invert of #toJsonResourceInfos().  This convert the JSON resourceInfos string into
+     * a List of ResourceInfo.
+     * @param jsonResourceInfos     the string to parse into ResourceInfo
+     * @return  a List of ResourceInfo
+     */
+    public static List<ResourceInfo> toResourceInfos(String jsonResourceInfos) {
+
+        List<ResourceInfo> rval = new ArrayList<>();
+        if (!isEmpty(jsonResourceInfos)) {
+            JSONArray resources = (JSONArray) JSONValue.parse(jsonResourceInfos);
+            for (int i = 0; i < resources.size(); i++) {
+                JSONObject res = (JSONObject) resources.get(i);
+                ResourceInfo resourceInfo = new ResourceInfo();
+                applyIfNotEmpty(res.get("ID"),    v -> resourceInfo.setID(v.toString()));
+                applyIfNotEmpty(res.get("name"),  v -> resourceInfo.setName(v.toString()));
+                applyIfNotEmpty(res.get("type"), v -> resourceInfo.setType(v.toString()));
+                applyIfNotEmpty(res.get("utype"), v -> resourceInfo.setUtype(v.toString()));
+
+                applyIfNotEmpty(res.get("groups"), v -> resourceInfo.setGroups(toGroupInfos(v.toString())));
+                applyIfNotEmpty(res.get("params"), v -> resourceInfo.setParams(toParamInfos(v.toString())));
+
+                rval.add(resourceInfo);
+            }
+            return rval;
+        }
+        return null;
+    }
+
+    /**
+     * converts LinkInfo into JSON
      * @param linkInfos
      * @return
      */

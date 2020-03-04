@@ -206,6 +206,54 @@
 </template>
 
 
+<template title="Table Meta API" class="tpl">
+    <div id="expected" >
+        <div style="margin: 10px">
+            <h4>Show how to inject table meta using API</h4>
+            <p>
+                View source to see 2 links and 1 resource injected to table. <br>
+                Table Meta is from the original table.
+            </p>
+            <p>
+                Expand the category to see details. <br>
+                Click on 'show value' link under Resource to see the full Resource parameters.
+            </p>
+        </div>
+    </div>
+    <div id="actual"  class="box x3"/>
+    <script>
+        function onFireflyLoaded(firefly) {
+
+            //-----------  using API with server-backed table --------------
+            const tblReq = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
+                { META_INFO: {
+                        "tbl.resources": [ {
+                            type: 'meta',
+                            utype: 'adhoc:service',
+                            params: [{
+                                name: 'standardID',
+                                type: 'char',
+                                value: 'ivo://ivoa.net/std/DataLink#links-1.0'
+                            }],
+                            groups: [{
+                                name: 'inputParams',
+                                params: [{
+                                    name: 'ID',
+                                    type: 'char',
+                                    ref: 'primaryID'
+                                }]
+                            }],
+                        }],
+                        "tbl.links": [
+                            {href: "https://irsa.ipac.caltech.edu/?id="},
+                            {href: "http://ivoa.net/?id=${band}", value: 'ivoa-${band}'}
+                        ]
+                    }});
+            firefly.showTable('actual', tblReq, {showMetaInfo: true});
+        }
+    </script>
+</template>
+
 
 
 <!-- this is where test cases will be attached-->

@@ -72,7 +72,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
             ", isKeyword boolean" +
             ")";
 
-    private static final String AUX_DATA_INSERT_SQL = "insert into %s_aux values (?,?,?,?,?)";
+    private static final String AUX_DATA_INSERT_SQL = "insert into %s_aux values (?,?,?,?,?,?)";
     private static final String AUX_DATA_CREATE_SQL = "create table %s_aux "+
             "(" +
             "  title     varchar(64000)" +
@@ -80,6 +80,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
             ", groups    other" +                        // type 'other' is hsqldb specific.. serializable Java Object
             ", links     other" +
             ", params    other" +
+            ", resources other" +
             ")";
 
     public String createAuxDataSql(String forTable) { return String.format(AUX_DATA_CREATE_SQL, forTable);}
