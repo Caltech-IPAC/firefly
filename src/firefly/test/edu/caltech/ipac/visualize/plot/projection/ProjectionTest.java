@@ -220,12 +220,12 @@ public class ProjectionTest {
     public static void main(String[] args) throws Exception {
 
 
-          String path="/Users/zhang/hydra/cm/firefly_test_data/edu/caltech/ipac/visualize/plot/projection/";
-          //use either of these two when run in IntelliJ
-          /*"/Users/zhang/lsstDev/testingData/projectionTestingData/";
-           "/Users/zhang/hydra/cm/firefly_test_data/edu/caltech/ipac/visualize/plot/";
-           */
-       // String path = FileLoader.getDataPath(ProjectionTest.class);  //this does not work when run in IntelliJ
+       String path="/Users/zhang/hydra/cm/firefly_test_data/edu/caltech/ipac/visualize/plot/projection/";
+       //use either of these two when run in IntelliJ
+       // "Users/zhang/lsstDev/testingData/projectionTestingData/";
+       // "/Users/zhang/hydra/cm/firefly_test_data/edu/caltech/ipac/visualize/plot/";
+
+        // String path = FileLoader.getDataPath(ProjectionTest.class);  //this does not work when run in IntelliJ
         String[] fNames = {
                 "ztf-TPV.fits",
                 "1904-66_SFL.fits",                                      //SFL or GLS  SANSON-FLAMSTEED
@@ -235,8 +235,7 @@ public class ProjectionTest {
                 "m51.car.fits",                                         //CAR  CARTESIAN
                 "field1.fits",                                          //SIN  ORTHOGRAPHIC
                 "m51.sin.fits",                                         //SIN  ORTHOGRAPHIC
-//                 "file7.fits",                                           //Not FITS format
-//                "file7Downloaded.fits",
+//                 "file7.fits",                                        //Not FITS format
                 "SIP.fits",                                            //TAN--SIP  GNOMONIC
 //                "lsstsample1.fits",                                   //CEA  CYLINDRICAL EQUAL AREA
                 "allsky.fits",                                        //AIT (ATF is deprecated)   AITOFF
@@ -245,17 +244,49 @@ public class ProjectionTest {
 //                "cong_12_smo.fits"                                    //ARC  ZENITH EQUIDISTANT
         };
 
-        for (int i=0; i<fNames.length; i++) {
+       /* for (int i=0; i<fNames.length; i++) {
             try {
 
-                FitsHeaderToJson.writeImageHeaderProjectionToJson(path + fNames[i]);
+                FitsHeaderToJson.writeImageHeaderAndProjectionToJson(path + fNames[i]);
             }
             catch (FitsException e) {
                 System.out.println("========ERROR=========="+fNames[i]+"===============");
                 e.printStackTrace();
             }
 
+        }*/
+
+        /*
+          Jan. 21, 2020
+          This block below is added to do the Wavelength unit test.  The wavelength unit test is in javascript.
+          However, the test Json files have to be created using java because there is a java utility FitsHeaderToJson.
+          Using this utility, all test files can be converted to the required Json files.  The Wavelength.js is located
+          under the projection, thus, all test files are put in the same place
+          firefly_test_data/edu/caltech/ipac/visualize/plot/projection
+          NOTE: all test FITs files are simulated data.
+         */
+        String[] wlFileNames = {
+                "wavelengthLinear.fits",
+                "wavelengthLog.fits",
+                "wavelengthF2W.fits",
+               "wavelengthV2W.fits",
+               //"wavelengthTable.fits"
+        };
+
+        for (int i=0; i<wlFileNames.length; i++) {
+            try {
+
+                FitsHeaderToJson.writeHeaderToJson(path + wlFileNames[i], false);
+
+            }
+            catch (FitsException e) {
+                System.out.println("========ERROR=========="+wlFileNames[i]+"===============");
+                e.printStackTrace();
+            }
+
         }
+
+
 
     }
 }

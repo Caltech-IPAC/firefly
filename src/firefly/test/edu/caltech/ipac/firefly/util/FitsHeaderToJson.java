@@ -1,15 +1,20 @@
 package edu.caltech.ipac.firefly.util;
 
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.visualize.plot.*;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
 import nom.tam.fits.*;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
+import java.util.List;
 
 /**
  * Created by zhang on 6/21/16
@@ -30,141 +35,14 @@ public class FitsHeaderToJson {
 
             throw new FitsException (" hdu is null");
         }
+        //we only use the first HDU in the FITS for unit test, just for simplicity reason
         Header header = hdus[0].getHeader();
         ImageHeader imageHeader= new ImageHeader(header);
 
         return imageHeader;
     }
 
-    /**
-     * This method is create a JSONObject which contains a ImageHeader, Projection etc for any given Fits file.
-     * @param inputFitsFile
-     * @throws Exception
-     */
 
-    public static void writeImageHeaderProjectionToJson(String inputFitsFile) throws Exception {
-
-        Fits fits = new Fits(inputFitsFile);
-        JSONObject obj = new JSONObject();
-        String outJsonFile = inputFitsFile.substring(0, inputFitsFile.length()-5 ) + "Header.json";
-
-        obj.put("headerFileName", outJsonFile );
-        ImageHeader imageHeader = getImageHeader(fits);
-
-        //convert the ImageHeader object to jsonString
-        JSONObject imageHeaderObj = ConvertImageHeaderToJsonObject(imageHeader);
-        obj.put("header",imageHeaderObj);
-
-        /*the expected value is achieved when the test is written.  If the Java code changes and
-        the Assert is falling, the changes introduce the problem.
-        */
-        Projection projection = imageHeader.createProjection(CoordinateSys.EQ_J2000);
-
-        ProjectionPt imagePt = projection.getImageCoords( imageHeader.crval1, imageHeader.crval2);//RA and DEC at the center of the image
-        JSONObject imagePtJson = new JSONObject();
-        imagePtJson.put("x",imagePt.getX() );
-        imagePtJson.put("y",imagePt.getY() );
-        obj.put("expectedImagePt", imagePtJson);
-
-        WorldPt worldPt = projection.getWorldCoords(imagePt.getX(), imagePt.getY());
-        JSONObject worldPJson = new JSONObject();
-        worldPJson.put("x",worldPt.getX() );
-        worldPJson.put("y",worldPt.getY() );
-        obj.put("expectedImagePt", imagePtJson);
-        obj.put("expectedWorldPt",worldPJson);
-
-        try {
-            FileWriter file = new FileWriter(outJsonFile);
-            file.write(obj.toJSONString());
-            file.flush();
-            file.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    /**
-     * This method is to write both ImageHeader and Project information to one JSONObject and then save this JSONObject to a file.
-     * @param imageHeader
-     * @param projection
-     * @param outJsonFile
-     * @throws Exception
-     */
-    public static void writeImageHeaderProjectionToJson(ImageHeader imageHeader, Projection projection, String outJsonFile ) throws Exception {
-
-
-        JSONObject obj = new JSONObject();
-
-        obj.put("headerFileName", outJsonFile );
-
-        //convert the ImageHeader object to jsonString
-        JSONObject imageHeaderObj = ConvertImageHeaderToJsonObject(imageHeader);
-        obj.put("header",imageHeaderObj);
-
-
-        ProjectionPt imagePt = projection.getImageCoords( imageHeader.crval1, imageHeader.crval2);//RA and DEC at the center of the image
-        JSONObject imagePtJson = new JSONObject();
-        imagePtJson.put("x",imagePt.getX() );
-        imagePtJson.put("y",imagePt.getY() );
-        obj.put("expectedImagePt", imagePtJson);
-
-        WorldPt worldPt = projection.getWorldCoords(imagePt.getX(), imagePt.getY());
-        JSONObject worldPJson = new JSONObject();
-        worldPJson.put("x",worldPt.getX() );
-        worldPJson.put("y",worldPt.getY() );
-        obj.put("expectedImagePt", imagePtJson);
-        obj.put("expectedWorldPt",worldPJson);
-
-        try {
-            FileWriter file = new FileWriter(outJsonFile);
-            file.write(obj.toJSONString());
-            file.flush();
-            file.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    /**
-     * This method is to write the some important fields in Projection to JSONObject and then save to an output file
-     * @param imageHeader
-     * @param projection
-     * @param outJsonFile
-     * @throws Exception
-     */
-    public static void writeProjectionToJson(ImageHeader imageHeader, Projection projection, String outJsonFile ) throws Exception {
-
-
-        JSONObject obj = new JSONObject();
-
-        ProjectionPt imagePt = projection.getImageCoords( imageHeader.crval1, imageHeader.crval2);//RA and DEC at the center of the image
-        JSONObject imagePtJson = new JSONObject();
-        imagePtJson.put("x",imagePt.getX() );
-        imagePtJson.put("y",imagePt.getY() );
-        obj.put("expectedImagePt", imagePtJson);
-
-        WorldPt worldPt = projection.getWorldCoords(imagePt.getX(), imagePt.getY());
-        JSONObject worldPJson = new JSONObject();
-        worldPJson.put("x",worldPt.getX() );
-        worldPJson.put("y",worldPt.getY() );
-        obj.put("expectedImagePt", imagePtJson);
-        obj.put("expectedWorldPt",worldPJson);
-
-        try {
-            FileWriter file = new FileWriter(outJsonFile);
-            file.write(obj.toJSONString());
-            file.flush();
-            file.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
     /**
      * This method convert a JSONArray which is one dimensional array to java double array
      * @param jsonArray1d
@@ -282,17 +160,77 @@ public class FitsHeaderToJson {
 
     }
 
+    private static JSONObject addCardInfo( Header header, String[] headerKeys){
+        JSONObject jsonObj = new JSONObject();
+        for (int i=0; i< headerKeys.length; i++){
+            JSONObject obj = new JSONObject();
+            HeaderCard aCard= header.findCard( headerKeys[i]);
+            if(aCard!=null && aCard.getComment()!=null) {
+                obj.put("comment", aCard.getComment());
+            }
+
+            if(aCard!=null && aCard.getValue()!=null) {
+                obj.put("value", aCard.getValue());
+            }
+            jsonObj.put(headerKeys[i], obj);
+        }
+        return jsonObj;
+    }
+    /**
+     * This method processes the header and get the minimum set of key,value pairs out for wavelength calculation
+     * and save to Json object format
+     * @param header
+     * @return
+     * @throws Exception
+     */
+    public static JSONObject convertHeaderToWavelengthHeaderJson(Header header)  throws Exception {
+
+        //Class<?> objClass = obj.getClass();
+
+        int N = Math.max(header.getIntValue("naxis", -1), header.getIntValue("WCSAXES", -1));
+        if (N==-1) {
+            throw new IllegalArgumentException("This header does not contain proper N value for wavelength calcualtion");
+        }
+        String PCKey =  header.containsKey("CDELT3")?"PC3":"CD3";
+        String[] wlIntParamsKeys = {
+                "NAXIS",
+                "WCSAXES",
+                "WCSAXIS",
+                "RESTWAV",
+                "CRPIX1",
+                "CRPIX2",
+                "CRPIX3",
+                "CDELT3",
+                "CTYPE3",
+                "CRVAL3",
+                "CUNIT3",
+                "PS3_0",
+                "PS3_1",
+                "PS3_2",
+                "PV3_0",
+                "PV3_1",
+                "PV3_2",
+                PCKey +"_"+ 1,
+                PCKey +"_"+ 2,
+                PCKey +"_"+ 3,
+
+        };
+
+        return addCardInfo( header, wlIntParamsKeys);
+
+    }
     /**
      * This method convert the ImageHeader object to JSONObject
      * @param obj
      * @return
      * @throws Exception
      */
-    public static JSONObject ConvertImageHeaderToJsonObject(Object obj)  throws Exception {
+    public static JSONObject convertImageHeaderToJsonObject(Object obj)  throws Exception {
 
         JSONObject jsonObj = new JSONObject();
 
         Class<?> objClass = obj.getClass();
+
         //array containing Field objects reflecting all the accessible public fields of the
         //class or interface represented by this Class object
         Field[] fields = objClass.getFields();
@@ -322,18 +260,41 @@ public class FitsHeaderToJson {
     }
 
     /**
-     * This method writes the ImageHeader object to a Json file.
-     * @param imageHeader - an ImageHeader
-     * @param outJsonFile - output file (path +fileName.json)
+     * This method is create a JSONObject which contains a ImageHeader, Projection etc for any given Fits file.
+     * @param inputFitsFile
      * @throws Exception
      */
-    public static void writeImageHeaderToJson(ImageHeader imageHeader, String outJsonFile) throws Exception {
 
+    public static void writeImageHeaderAndProjectionToJson(String inputFitsFile) throws Exception {
 
+        Fits fits = new Fits(inputFitsFile);
         JSONObject obj = new JSONObject();
+        String outJsonFile = inputFitsFile.substring(0, inputFitsFile.length()-5 ) + "Header.json";
+
+        obj.put("headerFileName", outJsonFile );
+        ImageHeader imageHeader = getImageHeader(fits);
+
         //convert the ImageHeader object to jsonString
-        JSONObject imageHeaderObj = ConvertImageHeaderToJsonObject(imageHeader);
+        JSONObject imageHeaderObj = convertImageHeaderToJsonObject(imageHeader);
         obj.put("header",imageHeaderObj);
+
+        /*the expected value is achieved when the test is written.  If the Java code changes and
+        the Assert is falling, the changes introduce the problem.
+        */
+        Projection projection = imageHeader.createProjection(CoordinateSys.EQ_J2000);
+
+        ProjectionPt imagePt = projection.getImageCoords( imageHeader.crval1, imageHeader.crval2);//RA and DEC at the center of the image
+        JSONObject imagePtJson = new JSONObject();
+        imagePtJson.put("x",imagePt.getX() );
+        imagePtJson.put("y",imagePt.getY() );
+        obj.put("expectedImagePt", imagePtJson);
+
+        WorldPt worldPt = projection.getWorldCoords(imagePt.getX(), imagePt.getY());
+        JSONObject worldPJson = new JSONObject();
+        worldPJson.put("x",worldPt.getX() );
+        worldPJson.put("y",worldPt.getY() );
+        obj.put("expectedImagePt", imagePtJson);
+        obj.put("expectedWorldPt",worldPJson);
 
         try {
             FileWriter file = new FileWriter(outJsonFile);
@@ -347,5 +308,216 @@ public class FitsHeaderToJson {
 
     }
 
+
+
+    /**
+     *
+     * @param inputFitsFile
+     * @throws Exception
+     */
+    public static void writeProjectionToJson(String inputFitsFile ) throws Exception {
+
+        JSONObject obj = new JSONObject();
+
+        Fits fits = new Fits(inputFitsFile);
+        ImageHeader imageHeader =  getImageHeader(fits);
+        Projection projection = imageHeader.createProjection(CoordinateSys.EQ_J2000);
+        String outJsonFile = inputFitsFile.substring(0, inputFitsFile.length() - 5) + "Projection.json";
+        ProjectionPt imagePt = projection.getImageCoords( imageHeader.crval1, imageHeader.crval2);//RA and DEC at the center of the image
+        JSONObject imagePtJson = new JSONObject();
+        imagePtJson.put("x",imagePt.getX() );
+        imagePtJson.put("y",imagePt.getY() );
+        obj.put("expectedImagePt", imagePtJson);
+
+        WorldPt worldPt = projection.getWorldCoords(imagePt.getX(), imagePt.getY());
+        JSONObject worldPJson = new JSONObject();
+        worldPJson.put("x",worldPt.getX() );
+        worldPJson.put("y",worldPt.getY() );
+        obj.put("expectedImagePt", imagePtJson);
+        obj.put("expectedWorldPt",worldPJson);
+
+        try {
+            FileWriter file = new FileWriter(outJsonFile);
+            file.write(obj.toJSONString());
+            file.flush();
+            file.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+
+    /**
+     * This method is to write the required parameters for wavelength calculation in the header to json
+     * @throws Exception
+     */
+    public static void writeHeaderToJson(String inputFitsFile, boolean isImageHeader) throws Exception {
+
+        //use part of the input file to make an output file name
+        JSONObject jsonObject = new JSONObject();
+        String outJsonFile = inputFitsFile.substring(0, inputFitsFile.length()-5 ) + "Header.json";
+        //add the headerFileName in the output json file
+        jsonObject.put("headerFileName", outJsonFile );
+
+        //read FITs and Headers
+        Fits fits = new Fits(inputFitsFile);
+        BasicHDU[] hdu = fits.read();
+
+        //convert the ImageHeader object to jsonString
+        if (isImageHeader) {
+            writeHeaderToJson(jsonObject, new ImageHeader(hdu[0].getHeader()), outJsonFile, null);
+        }
+        else {
+            String ctype= hdu[0].getHeader().getStringValue("CTYPE3");
+            JSONObject wlTable=null;
+            if ("WAVE-TAB".equals(ctype)) {
+                wlTable = getWLTable(inputFitsFile, 1);
+            }
+            writeHeaderToJson(jsonObject, hdu[0].getHeader(), outJsonFile, wlTable );
+        }
+    }
+
+    public static JSONArray getTableDataJsonArray(DataType[] columns, DataGroup dg){
+
+        //NOTE: the TAB data stored as one row data array, so row index is 0.
+        float[][] colData=new float[2][];
+        for (int i=0; i<columns.length; i++){
+            colData[i] = (float[]) dg.getData(columns[i].getKeyName(), 0);
+        }
+
+        JSONArray col1DataArrJson = new JSONArray();
+        for (int i=0; i<colData[0].length; i++){
+            col1DataArrJson.add(colData[0][i]);
+        }
+
+        JSONArray col2DataArrJson = new JSONArray();
+        for (int i=0; i<colData[1].length; i++){
+            col2DataArrJson.add(colData[1][i]);
+        }
+
+        JSONArray dataJsonAry = new JSONArray();
+        dataJsonAry.add(col1DataArrJson);
+        dataJsonAry.add(col2DataArrJson);
+
+        return dataJsonAry;
+    }
+
+    public static JSONArray getColumnDefinitionAry(DataType[] columns){
+        JSONArray columnAryJson = new JSONArray();
+
+        for (int i=0; i<columns.length; i++){
+            JSONObject colObj = new JSONObject();
+            colObj.put("name", columns[i].getKeyName());
+            colObj.put("arraySize", columns[i].getArraySize());
+            colObj.put("type", columns[i].getTypeDesc());
+            columnAryJson.add(colObj);
+        }
+        return columnAryJson;
+    }
+    /**
+     *
+     * @param filePath
+     * @param tblIdx
+     * @return
+     */
+    public static JSONObject getWLTable(String filePath, int tblIdx){
+
+        DataGroup dg = FileLoader.loadIpacTable(filePath,  tblIdx);
+
+        DataType[] columns =dg.getDataDefinitions();
+        JSONArray columnAryJson = getColumnDefinitionAry(columns);
+
+
+        JSONArray dataJsonAry= getTableDataJsonArray(columns, dg);
+        JSONObject jsonObj = new JSONObject();
+        jsonObj.put("0", dataJsonAry);
+
+
+
+        JSONObject tableDataJson = new JSONObject();
+        tableDataJson.put("data", jsonObj);
+        tableDataJson.put("columns",columnAryJson );
+
+        JSONObject tableJsonObj = new JSONObject();
+        tableJsonObj.put("tableData", tableDataJson );
+
+
+        return tableJsonObj;
+
+    }
+
+    /**
+     *
+     * @param filePath
+     * @param inputFitsFile
+     * @param tblIdx
+     * @return
+     */
+    public static JSONObject getWLTable(String filePath, String inputFitsFile, int tblIdx){
+        String fitsFilePath = filePath + "/"+inputFitsFile;
+        return getWLTable(fitsFilePath, tblIdx);
+
+    }
+
+    /**
+     *
+     * @param cls
+     * @param inputFitsFile
+     * @param tblIdx
+     * @return
+     */
+    public static JSONObject getWLTable(Class cls, String inputFitsFile, int tblIdx){
+        String fitsFilePath = FileLoader.getDataPath(cls) + "/"+inputFitsFile;
+        return getWLTable(fitsFilePath, tblIdx);
+
+    }
+    /**
+     *
+     * @param aHeader-either an ImageHeader or a FITs header
+     * @param outJsonFile - output file
+     * @throws Exception
+     */
+    public static void writeHeaderToJson(JSONObject jsonObject, Object aHeader, String outJsonFile, JSONObject wlTable) throws Exception {
+
+
+        //convert the ImageHeader object to jsonString
+        JSONObject jsonHeader=null;
+        if (aHeader instanceof ImageHeader ){
+            jsonHeader = convertImageHeaderToJsonObject( aHeader);
+        }
+        else if (aHeader instanceof Header){
+            jsonHeader = convertHeaderToWavelengthHeaderJson ( (Header) aHeader);
+
+
+
+        }
+        jsonObject.put("header" ,jsonHeader );
+
+        if (wlTable !=null){
+            jsonObject.put("wlTable", wlTable);
+        }
+
+        try {
+            FileWriter file = new FileWriter(outJsonFile);
+            file.write(jsonObject.toJSONString());
+            file.flush();
+            file.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public static void main(String[] args) throws Exception {
+
+        String fileName = "wavelengthTable.fits";
+        String filePath = "/Users/zhang/hydra/cm/firefly_test_data/edu/caltech/ipac/visualize/plot/projection/";//run in intelliJ
+        //FileLoader.getDataPath(ProjectionTest.class); //run in command line, use this one
+        FitsHeaderToJson.writeHeaderToJson(filePath + fileName, false);
+
+    }
 
 }

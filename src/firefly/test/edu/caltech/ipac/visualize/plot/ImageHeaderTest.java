@@ -386,19 +386,10 @@ public class ImageHeaderTest  extends ConfigTest {
 
         for (int i=0; i<fitsFilesName.length;i++) {
             String inputFitsFile = FileLoader.getDataPath(ImageHeaderTest.class) + fitsFilesName[i];
-
-            Fits fits = new Fits(inputFitsFile);
-            FitsRead fitsRead0 = FitsReadFactory.createFitsReadArray(fits)[0];
-            Header header = fitsRead0.getHeader();
-            ImageHeader imageHeader = new ImageHeader(header);
-            String outJsonFile = inputFitsFile.substring(0, inputFitsFile.length() - 5) + "Header.json";
-            FitsHeaderToJson.writeImageHeaderToJson(imageHeader, outJsonFile);
-
+            FitsHeaderToJson.writeHeaderToJson(inputFitsFile, true);
 
             //create json file (using f3.fits) containing both the projection to save as a reference
-            Projection projection = imageHeader.createProjection(CoordinateSys.EQ_J2000);
-            outJsonFile = inputFitsFile.substring(0, inputFitsFile.length() - 5) + "Projection.json";
-            FitsHeaderToJson.writeProjectionToJson(imageHeader, projection, outJsonFile);
+            FitsHeaderToJson.writeProjectionToJson(inputFitsFile);
         }
 
 
@@ -411,14 +402,13 @@ public class ImageHeaderTest  extends ConfigTest {
         Fits inFits = new Fits(inFitsFile);
         FitsRead fitsRead0 = FitsReadFactory.createFitsReadArray(inFits)[0];
 
-
         ImageHDU imageHdu = (ImageHDU) fitsRead0.getHDU();
         Header headerSpot =fitsRead0.getHeader();
         int planeNumber = headerSpot.getIntValue("SPOT_PL", 0);
         int  extension_number = headerSpot.getIntValue("SPOT_EXT", -1);
         long HDUOffset = extension_number == -1? imageHdu.getFileOffset():headerSpot.getIntValue("SPOT_OFF", 0);
         ImageHeader imageHeaderWithSpot = new ImageHeader(headerSpot, HDUOffset, planeNumber);
-        FitsHeaderToJson.writeImageHeaderToJson(imageHeaderWithSpot, outJsonFileSpot);
+        FitsHeaderToJson.writeHeaderToJson(new JSONObject(), imageHeaderWithSpot, outJsonFileSpot,null);
 
 
     }

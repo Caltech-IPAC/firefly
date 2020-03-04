@@ -9,6 +9,7 @@ import { makeProjection} from '../Projection.js';
  *
  */
 const fs = require('fs');
+const path = require('path');
 
 const JAVA_TEST_DATA_PATH='firefly_test_data/edu/caltech/ipac/visualize/plot/projection/';
 
@@ -30,19 +31,25 @@ const projTypes = {
     TPV          : 1011
 };
 
-function getJsonFiles(dir){
+export function getJsonFiles(dir, isWL=false){
     const fileList = [];
 
     const files = fs.readdirSync(dir);
-    for(let i in files){
-        if (!files.hasOwnProperty(i)) continue;
-        const name = dir+'/'+files[i];
-        if (!fs.statSync(name).isDirectory() && name.endsWith('json') ){
-            fileList.push(name);
+    files.forEach( (file)=>{
+        //console.log('file='+file);
+        if (file.endsWith('json') ){
+            if (isWL===true && file.startsWith('wavelength') || isWL===false && !file.startsWith('wavelength') ){
+                fileList.push(dir+'/'+file);
+            }
+
         }
-    }
+
+    });
+
     return fileList;
+
 }
+
 describe('A test suite for projection.js', function () {
 
 
