@@ -47,7 +47,7 @@ export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignore
  * @prop {String} drawingSubGroupId, immutable
  * @peop {boolean} visible true when we draw the base image
  * @prop {WebPlot[]} plots all the plots that this plotView can show, usually the image in the fits file
- * @prop {String} plottingStatus, end user description of the what is doing on
+ * @prop {String} plottingStatusMsg, end user description of the what is doing on
  * @prop {String} serverCall, one of 'success', 'working', 'fail'
  * @prop {number} primeIdx, which of the plots array is active
  * @prop {number} scrollX scroll position X
@@ -116,7 +116,7 @@ export function makePlotView(plotId, req, pvOptions= {}) {
         plots:[],
         visible: true,
         request: req && req.makeCopy(),
-        plottingStatus:'Plotting...',
+        plottingStatusMsg:'Plotting...',
         serverCall:'success', // one of 'success', 'working', 'fail'
         primeIdx: -1,
         scrollX : -1,   // in ScreenCoords
@@ -251,7 +251,7 @@ export function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, newPlo
 
 
     if (pv.primeIdx<0 || pv.primeIdx>=pv.plots.length) pv.primeIdx=0;
-    pv.plottingStatus='';
+    pv.plottingStatusMsg='';
     pv.serverCall='success';
 
     PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, pv.plots[pv.primeIdx].plotState);

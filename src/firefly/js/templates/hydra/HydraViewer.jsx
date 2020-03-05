@@ -8,7 +8,8 @@ import PropTypes from 'prop-types';
 import {pickBy} from 'lodash';
 
 import {flux, firefly} from '../../Firefly.js';
-import {dispatchSetMenu, dispatchOnAppReady, getMenu, isAppReady, getSearchInfo} from '../../core/AppDataCntlr.js';
+import {dispatchSetMenu, dispatchOnAppReady, getMenu,
+    isAppReady, dispatchNotifyRemoteAppReady, getSearchInfo} from '../../core/AppDataCntlr.js';
 import {getLayouInfo, SHOW_DROPDOWN, LO_VIEW} from '../../core/LayoutCntlr.js';
 import {hydraManager} from './HydraManager';
 import {Menu} from '../../ui/Menu.jsx';
@@ -24,6 +25,7 @@ import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {warningDivId} from '../../ui/LostConnection';
 import {startTTFeatureWatchers} from '../common/ttFeatureWatchers.js';
 import {dispatchSetLayoutMode, LO_MODE} from '../../core/LayoutCntlr';
+import {} from '../../core/AppDataCntlr';
 
 
 export {META_VIEWER_ID as IMAGE_DATA_VIEWER_ID } from '../../visualize/MultiViewCntlr';
@@ -54,6 +56,7 @@ export class HydraViewer extends PureComponent {
     componentDidMount() {
         dispatchOnAppReady((state) => {
             onReady({state, menu: this.props.menu});
+            dispatchNotifyRemoteAppReady();
         });
         this.removeListener = flux.addListener(() => this.storeUpdate());
     }
@@ -128,6 +131,7 @@ function onReady({menu}) {
         const goto = getActionFromUrl() || {type: SHOW_DROPDOWN};
         if (goto) firefly.process(goto);
     }
+    dispatchNotifyRemoteAppReady();
 }
 
 

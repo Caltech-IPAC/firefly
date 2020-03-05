@@ -48,7 +48,7 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
     }
     const onTabSelect = (idx, id) => dispatchUpdateLayoutInfo({images:{selectedTab:id}});
     const table= getTblById(metaDataTableId);
-    const title= get(table,'title', '');
+    const title= table?.tableMeta?.title || table?.title || '';
     const metaTitle= `Data Product${title?': ' : ''}${title}`;
 
 

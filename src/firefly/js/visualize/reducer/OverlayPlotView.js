@@ -55,7 +55,7 @@ export function makeOverlayPlotView(imageOverlayId, plotId, title, imageNumber, 
         opacity: .58,
         plotCounter:0, // index of how many plots, used for making next ID
         fileKey,
-        plottingStatus:'',
+        plottingStatusMsg:'',
         serverCall:'success'
     };
 
@@ -69,7 +69,7 @@ export function replaceOverlayPlots(opv, plot) {
     opv.plotCounter++;
     opv.visible= true;
 
-    opv.plottingStatus='';
+    opv.plottingStatusMsg='';
     opv.serverCall='success';
 
     return opv;

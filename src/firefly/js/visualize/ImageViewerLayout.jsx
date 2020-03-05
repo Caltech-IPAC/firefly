@@ -429,15 +429,15 @@ function makeMessageArea(pv,plotShowing,onScreen, sizeViewable) {
 
     if (pv.serverCall==='working') {
         return (
-            <ImageViewerStatus message={pv.plottingStatus} working={true}
+            <ImageViewerStatus message={pv.plottingStatusMsg} working={true}
                                maskWaitTimeMS= {500} messageWaitTimeMS={1000}
                                useMessageAlpha={plotShowing}/>
             );
 
     }
-    else if (pv.plottingStatus) {
+    else if (pv.plottingStatusMsg) {
         return (
-            <ImageViewerStatus message={pv.plottingStatus} working={false}
+            <ImageViewerStatus message={pv.plottingStatusMsg} working={false}
                                useMessageAlpha={true} useButton={plotShowing}
                                buttonText='OK'
                                buttonCB={() => dispatchPlotProgressUpdate(pv.plotId,'',true, pv.request.getRequestKey())}

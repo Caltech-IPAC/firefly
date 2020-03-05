@@ -8,7 +8,8 @@ import PropTypes from 'prop-types';
 import {pickBy} from 'lodash';
 
 import {flux, firefly} from '../../Firefly.js';
-import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
+import {getMenu, isAppReady, dispatchSetMenu,
+    dispatchOnAppReady, dispatchNotifyRemoteAppReady} from '../../core/AppDataCntlr.js';
 import {LO_VIEW, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
 import {layoutManager} from './FireflyViewerManager.js';
 import {Menu} from '../../ui/Menu.jsx';
@@ -145,6 +146,7 @@ function onReady({menu, views, options={}}) {
         const goto = getActionFromUrl() || {type: SHOW_DROPDOWN};
         if (goto) firefly.process(goto);
     }
+    dispatchNotifyRemoteAppReady();
 }
 
 function BannerSection(props) {

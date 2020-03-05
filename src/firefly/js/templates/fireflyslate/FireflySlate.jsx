@@ -9,7 +9,8 @@ import {get, pickBy, isEmpty} from 'lodash';
 
 import {flux, firefly} from '../../Firefly.js';
 import {isDefined} from '../../util/WebUtil.js';
-import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
+import {getMenu, isAppReady, dispatchSetMenu,
+    dispatchOnAppReady, dispatchNotifyRemoteAppReady} from '../../core/AppDataCntlr.js';
 import {getLayouInfo, dispatchSetLayoutMode, getGridView, getGridViewColumns,
             SHOW_DROPDOWN, LO_MODE, LO_VIEW} from '../../core/LayoutCntlr.js';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
@@ -234,6 +235,7 @@ function onReady({menu}) {
         const goto = getActionFromUrl() || {type: SHOW_DROPDOWN};
         if (goto) firefly.process(goto);
     }
+    dispatchNotifyRemoteAppReady();
 }
 
 function BannerSection(props) {

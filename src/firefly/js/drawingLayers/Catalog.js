@@ -351,13 +351,14 @@ function computeBoxDrawLayer(drawLayer, tableData, columns) {
     const {angleInRadian:rad}= drawLayer;
 
     const drawData= get(tableData, 'data', []).map( (d) => {
+        if (!isArray(columns)) return;
         const fp= columns.map( (c) => {
             const lonIdx= findColIdx(tableData.columns, c.lonCol);
             const latIdx= findColIdx(tableData.columns, c.latCol);
             return makeWorldPt( toAngle(d[lonIdx],rad), toAngle(d[latIdx],rad), c.csys);
         });
         return FootprintObj.make([fp]);
-    });
+    }).filter( (fp) => fp);
     drawLayer.searchTarget && drawData.push(computeSearchTarget(drawLayer));
     return drawData;
 }
@@ -465,7 +466,7 @@ function computePointHighlightLayer(drawLayer, columns) {
 function computeBoxHighlightLayer(drawLayer, columns, highlightedRow) {
     const {tableData}= drawLayer;
     const d= tableData.data[highlightedRow];
-    if (!d) return null;
+    if (!d || !isArray(columns)) return null;
     const fp= columns.map( (c) => {
         const lonIdx= findColIdx(tableData.columns, c.lonCol);
         const latIdx= findColIdx(tableData.columns, c.latCol);

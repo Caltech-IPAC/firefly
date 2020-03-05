@@ -451,7 +451,7 @@
     </div>
     <div id="actual" style="width: 600px; display: flex; flex-direction: column">
         <ul style='margin: 0 0 0 5px;'>
-            <li><a href="javascript:loadTriView('galex.fits')">Load many tables Tri-View</a></li>
+            <li><a href="javascript:sendTablesToTriView()">Load many tables Tri-View</a></li>
         </ul>
 
     </div>
@@ -460,7 +460,7 @@
 
         function onFireflyLoaded(firefly) { }
 
-        function loadTriView() {
+        function sendTablesToTriView() {
             const v= firefly.getViewer();
             const reqUtil= firefly.util.table;
             const reqAry= [
@@ -507,9 +507,8 @@
                 ),
             ];
 
-            const sendAllRequest= (key) => reqAry.forEach( (r) => {
-                let idx= 0;
-                const tbl_id=`${r.META_INFO.tbl_id}--${key}--${(idx++)}`;
+            const sendAllRequest= (key) => reqAry.forEach( (r,idx) => {
+                const tbl_id=`${r.META_INFO.tbl_id}--${key}--${idx}`;
                 v.showTable({...r,tbl_id, META_INFO:{...r.META_INFO, tbl_id, title: `${key}-${r.META_INFO.title}`}})
             });
 

@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {uniqBy,unionBy, differenceBy, isEmpty} from 'lodash';
+import {uniqBy,differenceBy, isEmpty} from 'lodash';
 import Cntlr, {WcsMatchType} from '../ImagePlotCntlr.js';
 import {replacePlots, makePlotView, updatePlotViewScrollXY,
         findScrollPtToCenterImagePt, updateScrollToWcsMatch} from './PlotView.js';
@@ -14,7 +14,6 @@ import {CCUtil} from '../CsysConverter.js';
 import {getRotationAngle} from '../VisUtil.js';
 import {updateTransform} from '../PlotTransformUtils.js';
 import {makeImagePt} from '../Point.js';
-import {clone} from '../../util/WebUtil.js';
 import {isImage} from '../WebPlot';
 
 
@@ -82,7 +81,7 @@ export function reducer(state, action) {
 function updateDefaults(plotRequestDefaults, action) {
     const {plotId,wpRequest,wpRequestAry,redReq,greenReq, blueReq,threeColor, plotType, pvOptions}= action.payload;
     if (plotType==='hips') {
-        return clone(plotRequestDefaults, {[plotId]:{plotType:'hips',wpRequest,pvOptions}});
+        return {...plotRequestDefaults, [plotId]:{plotType:'hips',wpRequest,pvOptions}};
     }
     else if (plotType==='image') {
         if (wpRequestAry) {
@@ -90,13 +89,13 @@ function updateDefaults(plotRequestDefaults, action) {
                 obj[r.getPlotId()]={plotType:'image', wpRequest:r,pvOptions};
                 return obj;
             }, {});
-            return clone(plotRequestDefaults, newObj);
+            return {...plotRequestDefaults, ...newObj};
         }
         else {
             if (!wpRequest && !redReq && !greenReq && !blueReq) return plotRequestDefaults;
             return threeColor ?
-                clone(plotRequestDefaults, {[plotId]:{plotType:'threeColor',redReq,greenReq, blueReq,pvOptions}}) :
-                clone(plotRequestDefaults, {[plotId]:{plotType:'image',wpRequest,pvOptions}});
+                {...plotRequestDefaults, [plotId]:{plotType:'threeColor',redReq,greenReq, blueReq,pvOptions}} :
+                {...plotRequestDefaults, [plotId]:{plotType:'image',wpRequest,pvOptions}};
         }
     }
 }
@@ -106,7 +105,7 @@ function startPlot(state, action) {
     const plotRequestDefaults= action.payload.enableRestore && updateDefaults(state.plotRequestDefaults,action);
     const plotGroupAry= confirmPlotGroup(state.plotGroupAry,action);
     const plotViewAry= preNewPlotPrep(state.plotViewAry,action);
-    const retState= clone(state);
+    const retState= {...state};
     if (plotViewAry) retState.plotViewAry= plotViewAry;
     if (plotGroupAry) retState.plotGroupAry= plotGroupAry;
     if (plotRequestDefaults) retState.plotRequestDefaults= plotRequestDefaults;
@@ -130,7 +129,7 @@ function addHiPS(state,action, setActive= true, newPlot= true) {
         if ((pv.plotId!==plotId)) return pv;
         pv = replacePlots(pv, [plot], null, state.expandedMode, newPlot);
         pv.serverCall= 'success';
-        pv.plottingStatus= 'done';
+        pv.plottingStatusMsg= 'done';
         pv.rotation= 0;
         pv.flipY= false;
         pv.flipX= false;
@@ -144,9 +143,7 @@ function addHiPS(state,action, setActive= true, newPlot= true) {
     });
 
                      //todo: this is where parameter come from the request
-    const newState = clone(state, {prevActivePlotId, plotViewAry, activePlotId});
-
-    return newState;
+    return {...state, prevActivePlotId, plotViewAry, activePlotId};
 }
 
 
@@ -188,7 +185,7 @@ function addPlot(state,action, setActive, newPlot) {
 
     if (!mpwWcsPrimId) mpwWcsPrimId = activePlotId;
 
-    const newState = clone(state, {prevActivePlotId, plotViewAry, activePlotId, mpwWcsPrimId, processedTiles});
+    const newState = {...state, prevActivePlotId, plotViewAry, activePlotId, mpwWcsPrimId, processedTiles};
 
     if (wcsMatchType) {
         newState.plotViewAry = plotViewAry.map((pv) => updateForWcsMatching(newState, pv, mpwWcsPrimId));
@@ -249,10 +246,10 @@ function newOverlayPrep(state, action) {
     }
     else {
         oPvArray= pv.overlayPlotViews.map( (opv) => opv.imageOverlayId===imageOverlayId ?
-                             clone(overlayPv, {imageNumber, maskValue, color, drawingDef, plot:null} ) : opv);
+                             {...overlayPv, imageNumber, maskValue, color, drawingDef, plot:null} : opv);
     }
 
-    return clone(state, {plotViewAry:clonePvAry(state, plotId, {overlayPlotViews:oPvArray}) } );
+    return {...state, plotViewAry:clonePvAry(state, plotId, {overlayPlotViews:oPvArray})};
 }
 
 
@@ -263,11 +260,11 @@ function addOverlay(state, action) {
         if (pv.plotId!== plotId) return pv;
         const overlayPlotViews= pv.overlayPlotViews.map( (opv) => {
             if (opv.imageOverlayId!== imageOverlayId) return opv;
-            return replaceOverlayPlots(opv,clone(plot, {affTrans:pv.affTrans}));
+            return replaceOverlayPlots(opv,{...plot, affTrans:pv.affTrans});
         });
-        return clone(pv, {overlayPlotViews});
+        return {...pv, overlayPlotViews};
     });
-    return clone(state, {plotViewAry});
+    return {...state, plotViewAry};
 }
 
 
@@ -278,9 +275,9 @@ function removeOverlay(state, action) {
 
         const overlayPlotViews= deleteAll ? [] :
                                    pv.overlayPlotViews.filter( (opv) => opv.imageOverlayId!== imageOverlayId);
-        return clone(pv, {overlayPlotViews});
+        return {...pv, overlayPlotViews};
     });
-    return clone(state, {plotViewAry});
+    return {...state, plotViewAry};
 }
 
 
@@ -291,10 +288,10 @@ function plotOverlayFail(state,action) {
     const plotViewAry= state.plotViewAry.map( (pv) => {
         if (pv.plotId!==plotId) return pv;
         const overlayPlotViews= pv.overlayPlotViews.filter( (opv) => imageOverlayId!==opv.imageOverlayId);
-        return clone(pv, {overlayPlotViews, plottingStatus:'Overlay failed: '+detailFailReason, serverCall:'fail' });
+        return {...pv, overlayPlotViews, plottingStatusMsg:'Overlay failed: '+detailFailReason, serverCall:'fail' };
     });
 
-    return clone(state, {plotViewAry});
+    return {...state, plotViewAry};
 }
 
 function plotFail(state,action) {
@@ -302,8 +299,8 @@ function plotFail(state,action) {
     const {plotViewAry}= state;
     const plotView=  getPlotViewById(state,plotId);
     if (!plotView) return state;
-    const changes= {plottingStatus:description,serverCall:'fail' };
-    return clone(state,  {plotViewAry:clonePvAry(plotViewAry,plotId,changes)});
+    const changes= {plottingStatusMsg:description,serverCall:'fail' };
+    return {...state,  plotViewAry:clonePvAry(plotViewAry,plotId,changes)};
 }
 
 function hipsFail(state,action) {
@@ -311,8 +308,8 @@ function hipsFail(state,action) {
     const {plotViewAry}= state;
     const plotView=  getPlotViewById(state,plotId);
     if (!plotView) return state;
-    const changes= {plottingStatus:description,serverCall:'fail' };
-    return clone(state,  {plotViewAry:clonePvAry(plotViewAry,plotId,changes)});
+    const changes= {plottingStatusMsg:description,serverCall:'fail' };
+    return {...state,  plotViewAry:clonePvAry(plotViewAry,plotId,changes)};
 }
 
 
@@ -334,16 +331,18 @@ function preNewPlotPrep(plotViewAry,action) {
 
         const {hipsImageConversion}= payload;
         if (hipsImageConversion) {
-            pv.plotViewCtx= clone(pv.plotViewCtx, {hipsImageConversion});
+            pv.plotViewCtx= {...pv.plotViewCtx, hipsImageConversion};
         }
 
         if (req.getRotateNorth()) {
-            pv.plotViewCtx= clone(pv.plotViewCtx, {rotateNorthLock :true});
+            pv.plotViewCtx= {...pv.plotViewCtx, rotateNorthLock :true};
         }
+
+        pv.serverCall= 'working';
+        pv.plottingStatusMsg= 'Loading';
         return pv;
     });
 
-    // return unionBy(pvChangeAry,plotViewAry, 'plotId');
     const toAdd= differenceBy(pvChangeAry, plotViewAry, 'plotId');
     const originalAndReplaced= plotViewAry.map( (pv) => pvChangeAry.find( (tPv) => tPv.plotId===pv.plotId) || pv);
     return [...originalAndReplaced, ...toAdd];
@@ -353,13 +352,12 @@ function preNewPlotPrep(plotViewAry,action) {
 export function endServerCallFail(state,action) {
     const {plotId,message}= action.payload;
     const stat= {serverCall:'fail'};
-    if (typeof message === 'string') stat.plottingStatus= message;
-    return clone(state, {plotViewAry: clonePvAry(state.plotViewAry,plotId, stat)});
+    if (typeof message === 'string') stat.plottingStatusMsg= message;
+    return {...state, plotViewAry: clonePvAry(state.plotViewAry,plotId, stat)};
 }
 function workingServerCall(state,action) {
     const {plotId,message}= action.payload;
-    return clone(state, {plotViewAry:
-               clonePvAry(state.plotViewAry,plotId, {serverCall:'working', plottingStatus:message})});
+    return {...state, plotViewAry: clonePvAry(state.plotViewAry,plotId, {serverCall:'working', plottingStatusMsg:message})};
 }
 
 
