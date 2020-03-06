@@ -17,7 +17,7 @@
 
 <!-- define all of your tests below -->
 
-<template title="Slate Test" class="tpl sm">
+<template title="Remote API: Slate Test" class="tpl sm">
     <div id="expected" >
         <div>Click on each link in order
             <ul class='expected-list'>
@@ -303,7 +303,7 @@
 </template>
 
 
-<template title="Send to HiPS Viewer Test" class="tpl sm">
+<template title="Remote API: Tri-view: Send to HiPS Viewer Test" class="tpl sm">
     <div id="expected" >
         <div>Click on load six link...
             <ul class='expected-list'>
@@ -365,7 +365,7 @@
     </script>
 </template>
 
-<template title="Send MOC Viewer Test" class="tpl sm">
+<template title="Remote API: Tri-view: Send MOC Viewer Test" class="tpl sm">
     <div id="expected" >
         <div>Click to load a MOC
             <ul class='expected-list'>
@@ -400,6 +400,124 @@
     </script>
 </template>
 
+
+
+<template title="Remote API: Tri-View: load table" class="tpl sm">
+    <div id="expected" >
+        <div>Click to load table
+            <ul class='expected-list'>
+                <li>load one table to Tri-view</li>
+            </ul>
+        </div>
+        <div style='padding-top: 10px;'><img style="width: 230px;" src="./images/remote-API-triview-table.png"></div>
+        <div style='font-size:smaller;'>All 4 MOCS loaded</div>
+    </div>
+    <div id="actual" style="width: 600px; display: flex; flex-direction: column">
+        <ul style='margin: 0 0 0 5px;'>
+            <li><a href="javascript:loadTriView('galex.fits')">Load 1 table to Tri-View</a></li>
+        </ul>
+
+    </div>
+    <script>
+        resizeIframeToHeight('280px');
+
+        function onFireflyLoaded(firefly) { }
+
+        function loadTriView() {
+            const req = firefly.util.table.makeFileRequest('Test',
+                'http://web.ipac.caltech.edu.s3-us-west-2.amazonaws.com/staff/roby/demo/fp_2mass.fp_psc29179.tbl',
+                null,
+                {} );
+            firefly.getViewer().showTable(req);
+        }
+    </script>
+</template>
+
+<template title="Remote API: Tri-View: load many tabls" class="tpl sm">
+    <div id="expected" >
+        <div>Click to load tables</div>
+        <div>Should load with 10 tables table titles roots of:
+            <ul class='expected-list'>
+                <li>2mass file</li>
+                <li>wise file</li>
+                <li>orbital path </li>
+                <li>WISE cat</li>
+                <li>NedSearch</li>
+            </ul>
+            Tables will load in two set of five.
+            This test may be modified to send more sets if desired.
+        </div>
+
+    </div>
+    <div id="actual" style="width: 600px; display: flex; flex-direction: column">
+        <ul style='margin: 0 0 0 5px;'>
+            <li><a href="javascript:sendTablesToTriView()">Load many tables Tri-View</a></li>
+        </ul>
+
+    </div>
+    <script>
+        resizeIframeToHeight('280px');
+
+        function onFireflyLoaded(firefly) { }
+
+        function sendTablesToTriView() {
+            const v= firefly.getViewer();
+            const reqUtil= firefly.util.table;
+            const reqAry= [
+                reqUtil.makeFileRequest('2mass file',
+                    'http://web.ipac.caltech.edu.s3-us-west-2.amazonaws.com/staff/roby/demo/fp_2mass.fp_psc29179.tbl',
+                    null,
+                    {} ),
+
+                reqUtil.makeFileRequest('wise file',
+                    'http://web.ipac.caltech.edu.s3-us-west-2.amazonaws.com/staff/roby/demo/WiseDemoTable.tbl',
+                    null,
+                    {} ),
+
+                reqUtil.makeFileRequest('orbital path',
+                    'http://web.ipac.caltech.edu.s3-us-west-2.amazonaws.com/staff/roby/demo/wise-orbit-allsky.tbl',
+                    null,
+                    {
+                        META_INFO: {
+                            CENTER_COLUMN: 'ra_obs;dec_obs;EQJ2000',
+                            ORBITAL_PATH : 'TRUE'
+                        }
+
+                    } ),
+
+                reqUtil.makeIrsaCatalogRequest('WISE cat', 'WISE', 'allwise_p3as_psd',
+                    { position: '10.68479;41.26906;EQ_J2000',
+                        SearchMethod: 'Cone',
+                        radius: 100
+                    },
+                    { META_INFO: {CENTER_COLUMN: 'ra;dec;EQJ2000', CatalogOverlayType: 'IRSA'}}
+                ),
+
+                reqUtil.makeTblRequest('NedSearch', 'm8 (NED SCS 10)',
+                    { use: "catalog_overlay",
+                        UserTargetWorldPt: "270.92194;-24.38017;EQ_J2000;m8;ned",
+                        SearchMethod: "Cone",
+                        radius: "0.00278",
+                        providerName: "NED",
+                        accessUrl: "http://ned.ipac.caltech.edu/cgi-bin/NEDobjsearch?search_type=Near+Position+Search&of=xml_main&"
+                    },
+                    { sortInfo: "ASC,Object Name",
+                        META_INFO: {"col.Type.FmtDisp": "abc-%s"}
+                    }
+                ),
+            ];
+
+            const sendAllRequest= (key) => reqAry.forEach( (r,idx) => {
+                const tbl_id=`${r.META_INFO.tbl_id}--${key}--${idx}`;
+                v.showTable({...r,tbl_id, META_INFO:{...r.META_INFO, tbl_id, title: `${key}-${r.META_INFO.title}`}})
+            });
+
+            sendAllRequest('set1');
+            sendAllRequest('set2');
+
+        }
+    </script>
+</template>
 
 <!-- this is where test cases will be attached-->
 <div id="tst-container"/>

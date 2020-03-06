@@ -3,7 +3,7 @@
  */
 
 import update from 'immutability-helper';
-import {get, isEmpty,isUndefined, isArray, unionBy, isString} from 'lodash';
+import {isEmpty,isUndefined, isArray, unionBy, isString} from 'lodash';
 import Cntlr, {ExpandType, WcsMatchType, ActionScope} from '../ImagePlotCntlr.js';
 import {replacePlotView, replacePrimaryPlot, changePrimePlot, updatePlotViewScrollXY,
         findScrollPtToCenterImagePt, findScrollPtToPlaceOnDevPt,
@@ -14,38 +14,37 @@ import {PlotAttribute} from '../PlotAttribute.js';
 import {changeProjectionCenter} from '../HiPSUtil.js';
 import {logError, updateSet} from '../../util/WebUtil.js';
 import {CCUtil, CysConverter} from '../CsysConverter.js';
-import {convert, isPlotNorth, getRotationAngle, isRotationMatching} from '../VisUtil.js';
+import {convert, isPlotNorth, getRotationAngle, isRotationMatching,
+        getMatchingRotationAngle, isCsysDirMatching, isEastLeftOfNorth} from '../VisUtil';
 import {PlotPref} from './../PlotPref.js';
 import {primePlot,
-        clonePvAry,
-        clonePvAryWithPv,
-        applyToOnePvOrAll,
-        applyToOnePvOrOverlayGroup,
-        matchPlotViewByPositionGroup,
-        getPlotViewIdxById,
-        getPlotGroupIdxById,
-        getOverlayById,
-        findPlotGroup,
-        isInSameGroup,
-        findPlot,
-        getPlotViewById,
-        findCurrentCenterPoint,
-        getCenterOfProjection} from '../PlotViewUtil.js';
-import {makeImagePt, makeWorldPt, makeDevicePt} from '../Point.js';
+    clonePvAry,
+    clonePvAryWithPv,
+    applyToOnePvOrAll,
+    applyToOnePvOrOverlayGroup,
+    matchPlotViewByPositionGroup,
+    getPlotViewIdxById,
+    getPlotGroupIdxById,
+    getOverlayById,
+    findPlotGroup,
+    isInSameGroup,
+    findPlot,
+    getPlotViewById,
+    findCurrentCenterPoint,
+    getCenterOfProjection,
+    hasWCSProjection } from '../PlotViewUtil.js';
+import {parseAnyPt, makeImagePt, makeWorldPt, makeDevicePt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {RotateType} from '../PlotState.js';
 import {updateTransform} from '../PlotTransformUtils.js';
 import {WebPlotRequest} from '../WebPlotRequest.js';
-import {hasWCSProjection} from '../PlotViewUtil';
-import {getMatchingRotationAngle, isCsysDirMatching, isEastLeftOfNorth} from '../VisUtil';
-import {parseAnyPt, parseWorldPt} from '../Point';
 
 
 //============ EXPORTS ===========
 //============ EXPORTS ===========
 
 const isFitFill= (userZoomType) =>  (userZoomType===UserZoomTypes.FIT || userZoomType===UserZoomTypes.FILL);
-const clone = (obj,params={}) => Object.assign({},obj,params);
+const clone = (obj,params={}) => ({...obj,...params});
 
 /**
  * 
@@ -90,7 +89,6 @@ export function reducer(state, action) {
         case Cntlr.ZOOM_IMAGE  :
         case Cntlr.STRETCH_CHANGE  :
             retState= installTiles(state,action);
-            // todo: also process adding to history
             break;
         case Cntlr.UPDATE_VIEW_SIZE :
             retState= updateViewSize(state,action);
@@ -321,14 +319,14 @@ function processProjectionChange(state,action) {
 function changeHiPS(state,action) {
     const {plotId,hipsProperties, coordSys, hipsUrlRoot, cubeIdx, applyToGroup}= action.payload;
     let {centerProjPt}= action.payload;
-    let {plotViewAry, positionLock}= state;
+    let {plotViewAry}= state;
+    const {positionLock}= state;
 
     let pv= getPlotViewById(state, plotId);
     const originalPlot= primePlot(pv);
     if (!originalPlot) return state;
 
     let plot= clone(originalPlot);
-    const originalImageCoordSys= plot.imageCoordSys;
 
     // single plot stuff
 
@@ -336,8 +334,8 @@ function changeHiPS(state,action) {
     if (hipsProperties) {
         plot.hipsProperties= hipsProperties;
         plot.title= getHiPsTitleFromProperties(hipsProperties);
-        plot.cubeDepth= Number(get(hipsProperties, 'hips_cube_depth')) || 1;
-        plot.cubeIdx= Number(get(hipsProperties, 'hips_cube_firstframe')) || 0;
+        plot.cubeDepth= Number(hipsProperties?.hips_cube_depth) || 1;
+        plot.cubeIdx= Number(hipsProperties?.hips_cube_firstframe) || 0;
         plot= replaceHiPSProjectionUsingProperties(plot, hipsProperties, getCenterOfProjection(plot) );
         if (!centerProjPt) {
             centerProjPt= convert(getCenterOfProjection(originalPlot), plot.dataCoordSys);
@@ -349,7 +347,7 @@ function changeHiPS(state,action) {
     }
     pv= replacePrimaryPlot(pv, plot);
     pv.serverCall= 'success';
-    pv.plottingStatus= 'done';
+    pv.plottingStatusMsg= 'done';
     plotViewAry= replacePlotView(plotViewAry,pv);
 
     if (coordSys) {
@@ -504,7 +502,6 @@ function flipPv(pv, isY) {
  */
 function updateClientFlip(state,action) {
     const {plotId,isY,actionScope=ActionScope.GROUP }= action.payload;
-    const {plotGroupAry}= state;
     let   {plotViewAry}= state;
 
     const pv= getPlotViewById(state,plotId);
@@ -558,7 +555,7 @@ function updateViewSize(state,action) {
             pv= recenterPv(null, false)(pv);
         }
         else {
-            pv= centerImagePt ? updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv,centerImagePt)) : recenter((null,false)(pv));
+            pv= centerImagePt ? updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv,centerImagePt)) : recenterPv(null,false)(pv);
         }
 
         pv= updateTransform(pv);
@@ -614,11 +611,11 @@ function recenterUsingWcsMatch(state, pv, centerPt, centerOnImage=false, onlyIma
 
 /**
  * Center on the FIXED_TARGET attribute or the center of the plot or specified center point
- * @param {Point} centerPt center point
- * @param {boolean} only used if centerPt is not defined.  If true then the centering will be
+ * @param {Point||null|undefined} centerPt center point
+ * @param {boolean} centerOnImage - only used if centerPt is not defined.  If true then the centering will be
  *                  the center of the image.  If false, then the center point will be the
  *                  FIXED_TARGET attribute, if defined. Otherwise it will be the center of the image.
- * @return {{}} a new plot view
+ * @return {Function} a new plot view
  */
 
 function recenterPv(centerPt,  centerOnImage) {
@@ -697,13 +694,13 @@ function changeOverlayColorLocking(state,action) {
 function endServerCallFail(state,action) {
     const {plotId,message}= action.payload;
     const stat= {serverCall:'fail'};
-    if (typeof message === 'string') stat.plottingStatus= message;
+    if (isString(message)) stat.plottingStatusMsg= message;
     return clone(state,{plotViewAry:clonePvAry(state,plotId, stat)});
 }
 function workingServerCall(state,action) {
     const {plotId,message}= action.payload;
     return clone(state,{plotViewAry:clonePvAry(state,plotId,
-                           {serverCall:'working', plottingStatus:message})});
+                           {serverCall:'working', plottingStatusMsg:message})});
 }
 
 
@@ -745,7 +742,7 @@ function addProcessedTileData(state,action) {
     let {processedTiles}= state;
     const pv= getPlotViewById(state, plotId);
     if (!pv) return state;
-    const plot= imageOverlayId? get(getOverlayById(pv,imageOverlayId),'plot') : findPlot(pv, plotImageId);
+    const plot= imageOverlayId? getOverlayById(pv,imageOverlayId)?.plot : findPlot(pv, plotImageId);
     if (!plot) return state;
     if (plot.zoomFactor!==zoomFactor) return state;
 
@@ -770,17 +767,18 @@ function addProcessedTileData(state,action) {
 }
 
 function updatePlotProgress(state,action) {
-    const {plotId, message:plottingStatus, done, requestKey, callSuccess=true}= action.payload;
-    //console.log(`updatePlotProgress: plotId;${plotId}, message:${plottingStatus}, done:${done}`);
-    if (!plotId) return state;
+    const {plotId, message:plottingStatusMsg, done, requestKey, callSuccess=true, allowBackwardUpdates= false}= action.payload;
     const plotView=  getPlotViewById(state,plotId);
+
+    // validate the update
     if (!plotView) return state;
     if (requestKey!==plotView.request.getRequestKey()) return state;
-    if (plotView.plottingStatus===plottingStatus) return state;
+    if (plotView.plottingStatusMsg===plottingStatusMsg) return state;
+    if (!done && plotView.serverCall!=='working' && !allowBackwardUpdates) return state;
 
+    // do the update
     const serverCall= done ? callSuccess ? 'success' : 'fail' : 'working';
-
-    return clone(state,{plotViewAry:clonePvAry(state,plotId, {plottingStatus,serverCall})});
+    return clone(state,{plotViewAry:clonePvAry(state,plotId, {plottingStatusMsg,serverCall})});
 }
 
 function changeVisibility(state,action) {

@@ -3,13 +3,12 @@
  */
 
 import {get, map, isUndefined} from 'lodash';
-
 import {flux} from '../Firefly.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 import {appDataReducer, menuReducer, alertsReducer} from './AppDataReducers.js';
 import Point, {isValidPoint} from '../visualize/Point.js';
-import {getModuleName} from '../util/WebUtil.js';
-import {getProp} from '../util/WebUtil.js';
+import {getModuleName, getProp} from '../util/WebUtil.js';
+import {dispatchRemoteAction} from './JsonUtils';
 
 export const APP_DATA_PATH = 'app_data';
 export const COMMAND = 'COMMAND';
@@ -31,6 +30,7 @@ export const SET_ALERTS = `${APP_DATA_PATH}.setAlerts`;
 export const SET_USER_INFO = `${APP_DATA_PATH}.setUserInfo`;
 export const HELP_LOAD = `${APP_DATA_PATH}.helpLoad`;
 export const LOAD_SEARCHES = `${APP_DATA_PATH}.loadSearches`;
+export const NOTIFY_REMOTE_APP_READY = `${APP_DATA_PATH}.notifyRemoteAppReady`;
 
 /** fired when there's a connection is added/removed from this channel.  useful for tracking connections in channel, etc   */
 export const WS_CONN_UPDATED = `${APP_DATA_PATH}.wsConnUpdated`;
@@ -38,6 +38,8 @@ export const WS_CONN_UPDATED = `${APP_DATA_PATH}.wsConnUpdated`;
 /** grab focus */
 export const GRAB_WINDOW_FOCUS = `${APP_DATA_PATH}.grabFocus`;
 
+/** the extension to add to a channel string to make a viewer channel */
+const CHANNEL_VIEWER_EXTENSION = '__viewer';
 
 /** @type {SearchInfo} */
 const searchInfo = {};
@@ -143,6 +145,17 @@ export function dispatchUpdateAppData(appData) {
 }
 
 /**
+ * Notify other apps this app is ready
+ */
+export function dispatchNotifyRemoteAppReady() {
+    const channel= getWsChannel();
+    if (!channel) return;
+    const sourceChannel= channel.endsWith(CHANNEL_VIEWER_EXTENSION) ?
+        channel.substr(0,channel.lastIndexOf(CHANNEL_VIEWER_EXTENSION)) : channel;
+    dispatchRemoteAction(sourceChannel,{ type : NOTIFY_REMOTE_APP_READY, payload: {ready:true, viewerChannel:channel}});
+}
+
+/**
  * execute this callback when app is ready.
  * @param {function} callback
  */
@@ -156,6 +169,17 @@ export function dispatchOnAppReady(callback) {
 
 
 /*---------------------------- EXPORTED FUNCTIONS -----------------------------*/
+
+
+/**
+ * Give a channel string return a version the will be the channel for a viewer
+ * @param {String} channel
+ * @return {string}
+ */
+export function makeViewerChannel(channel) {
+    return channel + CHANNEL_VIEWER_EXTENSION;
+}
+
 export function isAppReady() {
     const {connId} = getWsInfo() || {};
     return connId && get(flux.getState(), [APP_DATA_PATH, 'isReady']);

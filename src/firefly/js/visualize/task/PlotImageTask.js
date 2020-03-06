@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {flatten, isArray, uniqueId, uniqBy, get, isEmpty} from 'lodash';
+import {flatten, isArray, uniqueId, uniqBy, isEmpty} from 'lodash';
 import {WebPlotRequest, GridOnStatus} from '../WebPlotRequest.js';
 import ImagePlotCntlr, {visRoot, makeUniqueRequestKey, IMAGE_PLOT_KEY} from '../ImagePlotCntlr.js';
 import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
@@ -38,13 +38,14 @@ import CsysConverter from '../CsysConverter';
 //======================================== Exported Functions =============================
 
 
-export function ensureWPR(inVal) {
-    if (isArray(inVal)) {
-        return inVal.map( (v) => WebPlotRequest.makeFromObj(v));
-    }
-    else {
-        return WebPlotRequest.makeFromObj(inVal);
-    }
+/**
+ * Attempt to make an WebPlotRequest from and Object or an array
+ * If an array is past make an array of WebPlotRequest if and Object is passed make a single WebPlotRequest
+ * @param {Object||Array} v - an object with WebPlotRequest keys or and array of objects
+ * @return {WebPlotRequest||Array.<WebPlotRequest>}
+ */
+export function ensureWPR(v) {
+    return isArray(v) ? v.map( (v) => WebPlotRequest.makeFromObj(v)) : WebPlotRequest.makeFromObj(v);
 }
 
 export function determineViewerId(viewerId, plotId) {
@@ -172,7 +173,7 @@ export function makePlotImageAction(rawAction) {
 
             payload.oldOverlayPlotViews= wpRequestAry
                 .map( (wpr) => getPlotViewById(vr,wpr.getPlotId()))
-                .filter( (pv) => get(pv, 'overlayPlotViews'))
+                .filter( (pv) => pv?.overlayPlotViews)
                 .reduce( (obj, pv) => {
                     obj[pv.plotId]= pv.overlayPlotViews;
                     return obj;
@@ -183,10 +184,6 @@ export function makePlotImageAction(rawAction) {
                 payload.wpRequestAry= payload.wpRequestAry.map( (wpr) => modifyRequestForWcsMatch(wcsPrim, wpr));
             }
         }
-
-        // if (!getDrawLayerByType(getDlAry(), ActiveTarget.TYPE_ID)) {
-        //     initBuildInDrawLayers();
-        // }
 
         payload.requestKey= requestKey;
         payload.plotType= 'image';
@@ -370,7 +367,7 @@ export function addDrawLayers(request, pv, plot) {
         dispatchAttachLayerToPlot(newDL.drawLayerId, pv.plotId, false);
     }
 
-    const displayFixedTarget = get(pv,'plotViewCtx.displayFixedTarget', false) && plot.attributes[PlotAttribute.FIXED_TARGET];
+    const displayFixedTarget = (pv?.plotViewCtx?.displayFixedTarget ?? false) && plot.attributes[PlotAttribute.FIXED_TARGET];
     const ftId= plotId + '--image-search-target';
     if (displayFixedTarget) {
         const wp= plot.attributes[PlotAttribute.FIXED_TARGET];

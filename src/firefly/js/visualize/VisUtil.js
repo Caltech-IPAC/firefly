@@ -529,8 +529,8 @@ export function getMatchingRotationAngle(masterPv, pv) {
 
 /**
  *
- * @param {plot} p1
- * @param {plot} p2
+ * @param {WebPlot} p1
+ * @param {WebPlot} p2
  * @return {boolean}
  */
 export function isCsysDirMatching(p1,p2) {

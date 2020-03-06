@@ -62,8 +62,8 @@ export function doJsonRequest(cmd, paramList, doPost=true) {
 
 /**
  *
- * @param channelId
- * @param action
+ * @param {String} channelId
+ * @param {Action} action
  */
 export function dispatchRemoteAction(channelId, action) {
     const params= {

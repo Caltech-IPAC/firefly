@@ -65,13 +65,13 @@ function makeModel(tbl_id,plotViewAry, expandedIds, oldModel) {
     const data= plotViewAry.map( (pv) => {
         const plot= primePlot(pv);
         const attributes= plot? plot.attributes : pv.request.getAttributes();
-        const {plotId, serverCall, plottingStatus,request}= pv;
+        const {plotId, serverCall, plottingStatusMsg,request}= pv;
         const title = plot ? plot.title :  request.getTitle() || 'failed image';
         const row= [];
         let stat;
         if (serverCall==='success') stat= 'Success';
         else if (serverCall==='fail') stat= 'Fail';
-        else stat= plottingStatus;
+        else stat= plottingStatusMsg;
         row[NAME_IDX]=title;
         row[PID_IDX]= plotId;
         row[STATUS]= stat;
@@ -154,7 +154,7 @@ function dialogComplete(tbl_id) {
 //     });
 // };
 
-const pvKeys= ['plotId', 'request', 'serverCall', 'plottingStatus'];
+const pvKeys= ['plotId', 'request', 'serverCall', 'plottingStatusMsg'];
 const plotKeys= ['plotImageId'];
 
 

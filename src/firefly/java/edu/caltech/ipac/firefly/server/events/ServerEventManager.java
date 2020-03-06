@@ -122,7 +122,7 @@ public class ServerEventManager {
                         delivered = true;
                     } catch (Exception e) {
                         // queue is bad..  release it.
-                        LOG.warn("Event queue is bad.. releasing it:" + queue.getQueueID());
+                        LOG.warn("Event queue is bad.. releasing it:" + queue.getQueueID(), "Exception: "+e.getMessage());
                         if (queue.getEventConnector() != null) {
                             queue.getEventConnector().close();
                         }

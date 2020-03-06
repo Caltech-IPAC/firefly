@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
 
 @ServerEndpoint(value = "/sticky/firefly/events")
@@ -105,7 +106,8 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
         }
         lock.lock();
         try {
-            session.getAsyncRemote().sendText(message);     // use async so it will timed out after WS_TIMEOUT is reached.
+            Future<Void> f= session.getAsyncRemote().sendText(message);     // use async so it will timed out after WS_TIMEOUT is reached.
+            f.get();                                                        // wait until websocket send completes, ignore the return
         } finally {
             lock.unlock();
         }

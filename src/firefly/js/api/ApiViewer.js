@@ -7,7 +7,6 @@
  * @public
  * @summary Build the interface to remotely communicate to the firefly viewer
  */
-import {take} from 'redux-saga/effects';
 import {isArray, get} from 'lodash';
 import Enum from 'enum';
 
@@ -24,12 +23,13 @@ import {dispatchChartAdd} from '../charts/ChartsCntlr.js';
 import {makeFileRequest}  from '../tables/TableRequestUtil.js';
 import {uniqueChartId} from '../charts/ChartUtil.js';
 import {getWsChannel, getWsConnId} from '../core/AppDataCntlr.js';
-import {getConnectionCount, WS_CONN_UPDATED, GRAB_WINDOW_FOCUS} from '../core/AppDataCntlr.js';
+import {getConnectionCount, WS_CONN_UPDATED, GRAB_WINDOW_FOCUS,
+    NOTIFY_REMOTE_APP_READY, makeViewerChannel} from '../core/AppDataCntlr.js';
 import {dispatchAddCell, dispatchEnableSpecialViewer, LO_VIEW} from '../core/LayoutCntlr.js';
-import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {modifyURLToFull} from '../util/BrowserUtil.js';
 import {DEFAULT_FITS_VIEWER_ID, DEFAULT_PLOT2D_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
+import {dispatchAddActionWatcher} from '../core/MasterSaga';
 
 
 
@@ -39,7 +39,6 @@ export const ViewerType= new Enum([
 ], { ignoreCase: true });
 
 
-const VIEWER_ID = '__viewer';
 let viewerWindow;
 
 let defaultViewerFile='';
@@ -93,7 +92,7 @@ export function getViewer(channel, file=defaultViewerFile, scriptUrl) {
         return getViewer && getViewer(channel, file);
     } else {
         // return currently loaded app's Viewer
-        channel = (channel || getWsChannel()) + VIEWER_ID;
+        channel = makeViewerChannel(channel || getWsChannel());
         const dispatch= (action) => dispatchRemoteAction(channel,action);
         const reinitViewer= () => dispatch({ type: REINIT_APP, payload: {}});
 
@@ -164,7 +163,7 @@ export function loadRemoteApi(scriptUrl) {
 function buildUtilPart(channel, file, dispatcher) {
     const openViewer= () => {
         doViewerOperation(channel,file);
-    }
+    };
 
     return {openViewer};
 }
@@ -389,25 +388,26 @@ function doViewerOperation(channel,file,f) {
         } else {
             dispatchRemoteAction(channel, {type:GRAB_WINDOW_FOCUS});
         }
-        f && f();
+        f?.();
     } else {
-        dispatchAddSaga(doOnWindowConnected, {channel, f});
-        // const url= `${getRootURL()}${file}?__wsch=${channel}`;
+        dispatchAddActionWatcher({
+            callback:windowReadyWatcher, actions:[WS_CONN_UPDATED, NOTIFY_REMOTE_APP_READY], params:{channel,f}
+        });
         const url= `${modifyURLToFull(file,getRootURL())}?${WSCH}=${channel}`;
         viewerWindow = window.open(url, channel);
     }
 }
 
-export function* doOnWindowConnected({channel, f}) {
-    let isLoaded = false;
-    while (!isLoaded) {
-        const action = yield take([WS_CONN_UPDATED]);
-        const cnt = get(action, ['payload', channel, 'length'], 0);
-        isLoaded = cnt > 0;
+export function windowReadyWatcher(action, cancelSelf, {channel, f, isLoaded= false, isReady=false}) {
+    const {type,payload={}}=action;
+    if (type===WS_CONN_UPDATED && payload[channel]?.length > 0) isLoaded = true;
+    if (type===NOTIFY_REMOTE_APP_READY && payload.viewerChannel===channel) isReady= true;
+
+    if (isLoaded && isReady) {
+        cancelSelf();
+        f?.();
     }
-    // Added a half second delay before ready to combat a race condition
-    // TODO: loi is going to look it it to determine if application it truly ready
-    setTimeout(() => f && f(), 500);
+    return {channel,f,isLoaded,isReady};
 }
 
 

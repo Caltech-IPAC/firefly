@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {has,isArray,omit} from 'lodash';
+import {has,isArray} from 'lodash';
 import Enum from 'enum';
 import {flux} from '../Firefly.js';
 import {ZoomType} from './ZoomType.js';
