@@ -180,6 +180,21 @@ export function wcsMatchActionCreator(action) {
 }
 
 
+/**
+ * @param {VisRoot} vr
+ * @param {String} plotId
+ */
+export function locateOtherIfMatched(vr,plotId) {
+    const pv = getPlotViewById(vr, plotId);
+    if (vr.wcsMatchType !== WcsMatchType.Target && vr.wcsMatchType !== WcsMatchType.Standard) return;
+    if (isImage(primePlot(pv))) matchHiPStoPlotView(vr, pv);
+    else if (isHiPS(primePlot(pv))) {
+        const imagePv= vr.plotViewAry.find( (aPv) => isImage(primePlot(aPv)));
+        matchImageToHips(pv, imagePv);
+    }
+}
+
+
 
 export const {matchImageToHips, matchHiPStoPlotView}= (() => {
     let lock= false;

@@ -287,7 +287,6 @@ function actionCreators() {
         [DELETE_PLOT_VIEW]: deletePlotViewActionCreator,
         [RECENTER]: recenterActionCreator,
         [PROCESS_SCROLL]: processScrollActionCreator,
-        [CHANGE_HIPS]: changeHiPSActionCreator,
         [FLIP]: flipActionCreator,
         [ROTATE]: rotateActionCreator,
     };

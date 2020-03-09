@@ -611,7 +611,7 @@ function recenterUsingWcsMatch(state, pv, centerPt, centerOnImage=false, onlyIma
 
 /**
  * Center on the FIXED_TARGET attribute or the center of the plot or specified center point
- * @param {Point||null|undefined} centerPt center point
+ * @param {Point|null|undefined} centerPt center point
  * @param {boolean} centerOnImage - only used if centerPt is not defined.  If true then the centering will be
  *                  the center of the image.  If false, then the center point will be the
  *                  FIXED_TARGET attribute, if defined. Otherwise it will be the center of the image.

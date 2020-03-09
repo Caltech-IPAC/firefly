@@ -259,6 +259,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
      * @return the serialize version of the class
      * @deprecated  use JSON format instead.  @see edu.caltech.ipac.table.JsonTableUtil#toJsonTableRequest
      */
+    @Deprecated
     public String toString() {
 
         StringBuffer str = new StringBuffer(super.toString());

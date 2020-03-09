@@ -60,7 +60,7 @@ import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
 import {doUpload} from '../../ui/FileUpload.jsx';
 import {getRowCenterWorldPt} from '../saga/ActiveRowCenterWatcher';
 import {getActiveTableId} from '../../tables/TableUtil';
-import {matchHiPStoPlotView} from './WcsMatchTask';
+import {locateOtherIfMatched, matchHiPStoPlotView} from './WcsMatchTask';
 
 const PROXY= true;
 
@@ -340,6 +340,7 @@ async function doHiPSChange(rawAction, dispatcher, getState) {
 
     if (!hipsUrlRoot) { // only change to some attributes, we are not replacing the HiPS source
         dispatcher( { type: ImagePlotCntlr.CHANGE_HIPS, payload });
+        locateOtherIfMatched(visRoot(),plotId);
         dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload });
         return;
     }
@@ -366,6 +367,7 @@ async function doHiPSChange(rawAction, dispatcher, getState) {
                 payload: {...payload, hipsUrlRoot, hipsProperties, coordSys: plot.imageCoordSys},
             });
         initCorrectCoordinateSys(getPlotViewById(visRoot(), plotId));
+        locateOtherIfMatched(visRoot(),plotId);
         dispatcher({type: ImagePlotCntlr.ANY_REPLOT, payload});
     } catch (error) {
         console.log(error);

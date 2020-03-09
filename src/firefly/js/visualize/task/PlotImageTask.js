@@ -41,8 +41,8 @@ import CsysConverter from '../CsysConverter';
 /**
  * Attempt to make an WebPlotRequest from and Object or an array
  * If an array is past make an array of WebPlotRequest if and Object is passed make a single WebPlotRequest
- * @param {Object||Array} v - an object with WebPlotRequest keys or and array of objects
- * @return {WebPlotRequest||Array.<WebPlotRequest>}
+ * @param {Object|Array} v - an object with WebPlotRequest keys or and array of objects
+ * @return {WebPlotRequest|Array.<WebPlotRequest>}
  */
 export function ensureWPR(v) {
     return isArray(v) ? v.map( (v) => WebPlotRequest.makeFromObj(v)) : WebPlotRequest.makeFromObj(v);
