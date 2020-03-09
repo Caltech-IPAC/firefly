@@ -61,9 +61,33 @@ export function distanceToolEndActionCreator(rawAction) {
         var {drawLayer, plotId}= rawAction.payload;
         dispatcher({type:DrawLayerCntlr.DT_END, payload:rawAction.payload} );
         drawLayer= getDrawLayerById(getState()[DRAWING_LAYER_KEY], drawLayer.drawLayerId);
-        
+        const srcPlot= primePlot(visRoot(),plotId);
+        const cc= CsysConverter.make(srcPlot);
+        const srcWorld = hasWCSProjection(cc);
+
         var sel= {pt0:drawLayer.firstPt,pt1:drawLayer.currentPt};
-        dispatchAttributeChange({plotId,attKey:PlotAttribute.ACTIVE_DISTANCE,attValue:sel});
+
+        drawLayer.plotIdAry.forEach( (pId) => {
+            if (pId===plotId) {
+                dispatchAttributeChange({plotId:pId, toAllPlotsInPlotView:false, overlayColorScope:false,
+                    attKey:PlotAttribute.ACTIVE_DISTANCE,attValue:sel,
+                });
+            }
+            else {
+                const p= primePlot(visRoot(),pId);
+                if (srcWorld && hasWCSProjection(p)) {
+                    const targetCC= CsysConverter.make(p);
+                    const pt0= targetCC.getImageCoords(cc.getWorldCoords(drawLayer.firstPt));
+                    const pt1= targetCC.getImageCoords(cc.getWorldCoords(drawLayer.currentPt));
+                    dispatchAttributeChange({plotId:pId, toAllPlotsInPlotView:false, overlayColorScope:false,
+                        attKey:PlotAttribute.ACTIVE_DISTANCE,attValue:{pt0,pt1},
+                    });
+                }
+            }
+
+        } );
+
+
     };
 }
 
@@ -175,11 +199,15 @@ function dealWithUnits(drawLayer,action) {
     var {plotIdAry}= action.payload;
     const plot= primePlot(visRoot(),plotIdAry[0]);
     var cc= CsysConverter.make(plot);
-    if (!cc) return null;
+    if (!cc || !plot) return null;
 
-    var drawAry= makeSelectObj(drawLayer.firstPt, drawLayer.currentPt, drawLayer.offsetCal,cc);
+    var selection = plot.attributes[PlotAttribute.ACTIVE_DISTANCE];
+    if (!selection) return null;
+    const {pt0,pt1}=selection;
 
-    return makeBaseReturnObj(plot,drawLayer.firstPt, drawLayer.currentPt,drawAry);
+    const drawAry= makeSelectObj(pt0,pt1, drawLayer.offsetCal,cc);
+
+    return makeBaseReturnObj(plot,pt0, pt1,drawAry);
 }
 
 function dealWithMods(drawLayer,action) {

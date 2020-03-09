@@ -2,16 +2,14 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get} from 'lodash';
 import {logError} from '../../util/WebUtil.js';
-import ImagePlotCntlr, {IMAGE_PLOT_KEY, WcsMatchType, dispatchWcsMatch} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {IMAGE_PLOT_KEY, dispatchWcsMatch} from '../ImagePlotCntlr.js';
 import {primePlot, getPlotViewById, operateOnOthersInOverlayColorGroup, getPlotStateAry} from '../PlotViewUtil.js';
 import {callCrop, callChangeColor, callRecomputeStretch} from '../../rpc/PlotServicesJson.js';
 import WebPlotResult from '../WebPlotResult.js';
 import {WebPlot} from '../WebPlot.js';
 import {makeCubeCtxAry, populateFromHeader} from './PlotImageTask';
-import {isHiPS, isImage} from '../WebPlot';
-import {matchHiPStoPlotView, matchImageToHips} from './WcsMatchTask';
+import {locateOtherIfMatched} from './WcsMatchTask';
 
 
 
@@ -40,25 +38,10 @@ const dispatchAndMaybeMatch= (rawAction) => (dispatcher,getState) => {
 
 export const recenterActionCreator= (rawAction) => dispatchAndMaybeMatch(rawAction);
 export const processScrollActionCreator= (rawAction) => dispatchAndMaybeMatch(rawAction);
-export const changeHiPSActionCreator= (rawAction) => dispatchAndMaybeMatch(rawAction);
 export const rotateActionCreator= (rawAction) => dispatchAndMaybeMatch(rawAction);
 
 
 
-
-/**
- * @param {VisRoot} vr
- * @param {String} plotId
- */
-function locateOtherIfMatched(vr,plotId) {
-    const pv = getPlotViewById(vr, plotId);
-    if (vr.wcsMatchType !== WcsMatchType.Target && vr.wcsMatchType !== WcsMatchType.Standard) return;
-    if (isImage(primePlot(pv))) matchHiPStoPlotView(vr, pv);
-    else if (isHiPS(primePlot(pv))) {
-        const imagePv= vr.plotViewAry.find( (aPv) => isImage(primePlot(aPv)));
-        matchImageToHips(pv, imagePv);
-    }
-}
 
 
 
@@ -281,7 +264,7 @@ function processPlotUpdate(dispatcher, getState, oldStore, plotId, result, succA
         const currentVisRoot= getState()[IMAGE_PLOT_KEY];
         const originalPlot= primePlot(oldStore,plotId);
         const plot= primePlot(currentVisRoot,plotId);
-        if (originalPlot.plotImageId!==get(plot,'plotImageId')) {
+        if (originalPlot.plotImageId!==plot?.plotImageId) {
             return; //abort: plot has been replaced since this update was started
         }
 
