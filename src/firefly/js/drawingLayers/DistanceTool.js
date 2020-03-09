@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isBoolean, isEmpty, get, isUndefined} from 'lodash';
+import {isBoolean, isEmpty, isUndefined} from 'lodash';
 import DrawLayerCntlr, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
 import {getPreference} from '../core/AppDataCntlr.js';
 import {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
@@ -101,22 +101,22 @@ export function distanceToolEndActionCreator(rawAction) {
  */
 function creator() {
 
-    var drawingDef= makeDrawingDef('red');
-    var pairs= {
+    const drawingDef= makeDrawingDef('red');
+    const pairs= {
         [MouseState.DRAG.key]: DrawLayerCntlr.DT_MOVE,
         [MouseState.DOWN.key]: DrawLayerCntlr.DT_START,
         [MouseState.UP.key]: DrawLayerCntlr.DT_END
     };
 
 
-    var exclusiveDef= { exclusiveOnDown: true, type : 'anywhere' };
+    const exclusiveDef= { exclusiveOnDown: true, type : 'anywhere' };
 
-    var actionTypes= [DrawLayerCntlr.DT_START,
+    const actionTypes= [DrawLayerCntlr.DT_START,
                       DrawLayerCntlr.DT_MOVE,
                       DrawLayerCntlr.DT_END];
 
     idCnt++;
-    var options= {
+    const options= {
         canUseMouse:true,
         canUserChangeColor: ColorChangeType.DYNAMIC,
         destroyWhenAllDetached: true
@@ -126,7 +126,7 @@ function creator() {
 }
 
 function onDetach(drawLayer,action) {
-    var {plotIdAry}= action.payload;
+    const {plotIdAry}= action.payload;
     plotIdAry.forEach( (plotId) => {
         const plot= primePlot(visRoot(),plotId);
         if (plot && plot.attributes[PlotAttribute.ACTIVE_DISTANCE]) {
@@ -141,9 +141,9 @@ function onDetach(drawLayer,action) {
 function getCursor(plotView, screenPt) {
     const plot= primePlot(plotView);
 
-    var ptAry= getPtAry(plot);
+    const ptAry= getPtAry(plot);
     if (!ptAry) return null;
-    var idx= findClosestPtIdx(ptAry,screenPt);
+    const idx= findClosestPtIdx(ptAry,screenPt);
     if (screenDistance(ptAry[idx],screenPt)<EDIT_DISTANCE) {
         return 'pointer';
     }
@@ -161,7 +161,7 @@ function getLayerChanges(drawLayer, action) {
         case DrawLayerCntlr.DT_END:
             return end(action);
         case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
-            if (isEmpty(get(drawLayer, ['drawData', 'data']))) {
+            if (isEmpty(drawLayer?.drawData?.data)) {
                 return attach();
             }
             break;
@@ -172,7 +172,6 @@ function getLayerChanges(drawLayer, action) {
 
     }
     return null;
-
 }
 
 /**
@@ -185,7 +184,7 @@ function getLayerChanges(drawLayer, action) {
  */
 function makeBaseReturnObj(plot,firstPt,currPt,drawAry )  {
 
-    var exclusiveDef= { exclusiveOnDown: true, type : 'vertexThenAnywhere' };
+    const exclusiveDef= { exclusiveOnDown: true, type : 'vertexThenAnywhere' };
 
     return {drawData:{data:drawAry},
             exclusiveDef,
@@ -196,12 +195,12 @@ function makeBaseReturnObj(plot,firstPt,currPt,drawAry )  {
 
 
 function dealWithUnits(drawLayer,action) {
-    var {plotIdAry}= action.payload;
+    const {plotIdAry}= action.payload;
     const plot= primePlot(visRoot(),plotIdAry[0]);
-    var cc= CsysConverter.make(plot);
+    const cc= CsysConverter.make(plot);
     if (!cc || !plot) return null;
 
-    var selection = plot.attributes[PlotAttribute.ACTIVE_DISTANCE];
+    const selection = plot.attributes[PlotAttribute.ACTIVE_DISTANCE];
     if (!selection) return null;
     const {pt0,pt1}=selection;
 
@@ -211,12 +210,15 @@ function dealWithUnits(drawLayer,action) {
 }
 
 function dealWithMods(drawLayer,action) {
-    var {changes,plotIdAry}= action.payload;
+    const {changes,plotIdAry}= action.payload;
     if (isBoolean(changes.offsetCal)) {
         const plot= primePlot(visRoot(),plotIdAry[0]);
-        var cc= CsysConverter.make(plot);
+        const cc= CsysConverter.make(plot);
         if (!cc) return null;
-        var drawAry= makeSelectObj(drawLayer.firstPt, drawLayer.currentPt, changes.offsetCal, cc);
+        const selection = plot.attributes[PlotAttribute.ACTIVE_DISTANCE];
+        if (!selection) return null;
+        const {pt0,pt1}=selection;
+        const drawAry= makeSelectObj(pt0,pt1, changes.offsetCal, cc);
         return Object.assign({offsetCal:changes.offsetCal},
                               makeBaseReturnObj(plot,drawLayer.firstPt, drawLayer.currentPt,drawAry));
     }
@@ -275,26 +277,25 @@ function getMode(plot) {
 }
 
 function start(drawLayer, action) {
-    var {imagePt,plotId,shiftDown}= action.payload;
-    var plot= primePlot(visRoot(),plotId);
-    var mode= getMode(plot);
+    const {imagePt,plotId,shiftDown}= action.payload;
+    const plot= primePlot(visRoot(),plotId);
+    const mode= getMode(plot);
     if (!plot) return;
-    var retObj= {};
+    let retObj= {};
     if (mode==='select' || shiftDown) {
         retObj= setupSelect(imagePt);
     }
     else if (mode==='edit') {
-        var ptAry= getPtAry(plot);
+        const ptAry= getPtAry(plot);
         if (!ptAry) return retObj;
 
-        var cc= CsysConverter.make(plot);
-        var spt= cc.getScreenCoords(imagePt);
-        var idx= findClosestPtIdx(ptAry,spt);
-        var testPt= cc.getScreenCoords(ptAry[idx]);
+        const cc= CsysConverter.make(plot);
+        const spt= cc.getScreenCoords(imagePt);
+        const idx= findClosestPtIdx(ptAry,spt);
+        const testPt= cc.getScreenCoords(ptAry[idx]);
         if (!testPt) return {};
 
         if (screenDistance(testPt,spt)<EDIT_DISTANCE) {   // swap the first and current point, redraw the distance tool
-            //var oppoIdx= idx===0 ? 1 : 0;
             retObj.moveHead = (idx === 1);
             retObj.firstPt= cc.getImageWorkSpaceCoords(ptAry[0]);
             retObj.currentPt= cc.getImageWorkSpaceCoords(ptAry[1]);
@@ -313,22 +314,22 @@ function start(drawLayer, action) {
 
 
 function drag(drawLayer,action) {
-    var {imagePt,plotId}= action.payload;
+    const {imagePt,plotId}= action.payload;
     const plot= primePlot(visRoot(),plotId);
-    var cc= CsysConverter.make(plot);
+    const cc= CsysConverter.make(plot);
     if (!cc) return;
 
     const newFirst = drawLayer.moveHead ? drawLayer.firstPt : imagePt;
     const newCurrent = drawLayer.moveHead ? imagePt : drawLayer.currentPt;
 
-    var drawAry= makeSelectObj(newFirst, newCurrent, drawLayer.offsetCal, cc);
+    const drawAry= makeSelectObj(newFirst, newCurrent, drawLayer.offsetCal, cc);
     return Object.assign({firstPt: newFirst, currentPt:newCurrent}, makeBaseReturnObj(plot,  newFirst, newCurrent,drawAry));
 }
 
 function end(action) {
-    var {plotId}= action.payload;
-    var mode= getMode(primePlot(visRoot(),plotId));
-    var retObj= {};
+    const {plotId}= action.payload;
+    const mode= getMode(primePlot(visRoot(),plotId));
+    const retObj= {};
     if (mode==='select') {
         retObj.helpLine= editHelpText;
     }
@@ -341,9 +342,9 @@ function setupSelect(imagePt) {
 }
 
 function findClosestPtIdx(ptAry, pt) {
-    var dist= Number.MAX_VALUE;
+    let dist= Number.MAX_VALUE;
     return ptAry.reduce( (idx,testPt,i) => {
-        var testDist= screenDistance(testPt,pt);
+        const testDist= screenDistance(testPt,pt);
         if (testDist<dist) {
             dist= testDist;
             idx= i;
@@ -537,8 +538,8 @@ function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
         const adjDist = computeDistance(lon1, lon2, cc, pref);
         const opDist = computeDistance(lat1, lat2, cc, pref);
 
-        const adj = ShapeDataObj.makeLine(lon1,lon2);
-        const op = ShapeDataObj.makeLine(lat1, lat2);
+        const adj = ShapeDataObj.makeLine(cc.getWorldCoords(lon1),cc.getWorldCoords(lon2));
+        const op = ShapeDataObj.makeLine(cc.getWorldCoords(lat1), cc.getWorldCoords(lat2));
 
         adj.lineWidth = LWIDTH;
         op.lineWidth = LWIDTH;
@@ -607,31 +608,13 @@ function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
 
 
 function getPtAry(plot) {
-    var sel= plot.attributes[PlotAttribute.ACTIVE_DISTANCE];
+    const sel= plot.attributes[PlotAttribute.ACTIVE_DISTANCE];
     if (!sel) return null;
     const cc = CsysConverter.make(plot);
 
-    var ptAry=[];
+    const ptAry=[];
     ptAry[0]= cc.getScreenCoords(sel.pt0);
     ptAry[1]= cc.getScreenCoords(sel.pt1);
     if (!ptAry[0] || !ptAry[1]) return null;
     return ptAry;
 }
-
-
-
-
-//////////////////////////////////////////////////
-//////////////////////////////////////////////////
-//////////////////////////////////////////////////
-
-
-
-
-
-
-
-
-
-
-
