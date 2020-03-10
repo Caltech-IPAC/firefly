@@ -478,7 +478,7 @@ function makeOverlayCoverageDrawing() {
             if (isCatalog(table) && options.ignoreCatalogs) return; // let the catalog watcher just handle the drawing overlays
 
             if (tblCatIdMap[tbl_id]) {
-                const searchTargetDL= getDrawLayerById(getDlAry(), searchTargetId(table.tbl_id));
+                const searchTargetDL= table && getDrawLayerById(getDlAry(), searchTargetId(table.tbl_id));
                 searchTargetDL && dispatchDestroyDrawLayer(searchTargetDL.drawLayerId);
 
                 tblCatIdMap[tbl_id].forEach((cId) => {
