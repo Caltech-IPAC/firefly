@@ -945,6 +945,9 @@ export class WebPlotRequest extends ServerRequest {
      */
     static parse(str) { return ServerRequest.parse(str, new WebPlotRequest()); }
 
+    /**
+     * @return {WebPlotRequest}
+     */
     makeCopy() {
         const retval = new WebPlotRequest();
         retval.copyFrom(this);

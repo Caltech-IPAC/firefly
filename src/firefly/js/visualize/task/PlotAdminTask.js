@@ -17,6 +17,9 @@ import {isImage} from '../WebPlot.js';
 import {RotateType} from '../PlotState.js';
 import {clone} from '../../util/WebUtil.js';
 import {detachSelectAreaRelatedLayers} from '../ui/SelectAreaDropDownView.jsx';
+import {getAppOptions} from '../../core/AppDataCntlr';
+import {onPlotComplete} from '../PlotViewUtil';
+import {WcsMatchType} from '../ImagePlotCntlr';
 
 export function autoPlayActionCreator(rawAction) {
     return (dispatcher) => {
@@ -95,6 +98,7 @@ export function restoreDefaultsActionCreator(rawAction) {
         const pv= getPlotViewById(vr,plotId);
 
         detachSelectAreaRelatedLayers(pv, true);
+        const {wcsMatchType:matchType, defNorthUpLock}= getAppOptions();
         applyToOnePvOrAll(positionLock, plotViewAry, plotId, false,
             (pv)=> {
                 if (vr.plotRequestDefaults[pv.plotId]) {
@@ -102,19 +106,31 @@ export function restoreDefaultsActionCreator(rawAction) {
                     const def= vr.plotRequestDefaults[pv.plotId];
                     const viewerId= findViewerWithItemId(getMultiViewRoot(), pv.plotId, IMAGE);
                     if (isImage(plot)) {
-                        if (pv.rotation) dispatchRotate({plotId: pv.plotId, rotateType: RotateType.UNROTATE,
-                                                                   actionScope:ActionScope.SINGLE});
+                        if (pv.rotation) {
+                            dispatchRotate({plotId: pv.plotId,
+                                rotateType: defNorthUpLock ? RotateType.NORTH : RotateType.UNROTATE,
+                                actionScope:ActionScope.SINGLE});
+                        }
                         if (pv.flipY) dispatchFlip({plotId: pv.plotId, actionScope:ActionScope.SINGLE});
                     }
                     switch (def.plotType) {
                         case 'threeColor' :
-                            dispatchPlotImage({plotId:pv.plotId,
-                                viewerId, wpRequest:[def.redReq,def.greenReq,def.blueReq],
+                            const rR= def?.wpRequest?.makeCopy();
+                            const bR= def?.wpRequest?.makeCopy();
+                            const gR= def?.wpRequest?.makeCopy();
+                            if (defNorthUpLock) {
+                                rR?.setRotateNorth(true);
+                                bR?.setRotateNorth(true);
+                                gR?.setRotateNorth(true);
+                            }
+                            dispatchPlotImage({plotId:pv.plotId, viewerId, wpRequest:[rR,bR,gR],
                                 threeColor:true, setNewPlotAsActive:false,
                                 useContextModifications:false, pvOptions:def.pvOptions});
                             break;
                         case 'image' :
-                            dispatchPlotImage({plotId:pv.plotId, wpRequest:def.wpRequest, setNewPlotAsActive:false,
+                            const r= def.wpRequest.makeCopy();
+                            if (defNorthUpLock) r.setRotateNorth(true);
+                            dispatchPlotImage({plotId:pv.plotId, wpRequest:r, setNewPlotAsActive:false,
                                 viewerId, useContextModifications:false, pvOptions:def.pvOptions});
                             break;
                         case 'hips' :
@@ -122,9 +138,18 @@ export function restoreDefaultsActionCreator(rawAction) {
                                 viewerId, pvOptions:def.pvOptions});
                             break;
                     }
+                    defNorthUpLock && dispatchRotate({plotId: pv.plotId,
+                        rotateType: RotateType.NORTH, actionScope:ActionScope.SINGLE});
                 }
             });
-        dispatchWcsMatch({plotId, matchType:false});
+
+        const lockMatch= Boolean(WcsMatchType.get(matchType));
+        dispatchWcsMatch({plotId, matchType, lockMatch});
+        if (defNorthUpLock && lockMatch) {
+            onPlotComplete(pv.plotId).then( (pv) => {
+                dispatchRotate({plotId: pv.plotId, rotateType: RotateType.NORTH, actionScope:ActionScope.GROUP});
+            });
+        }
     };
 }
 
