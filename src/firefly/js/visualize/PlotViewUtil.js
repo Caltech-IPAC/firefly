@@ -1026,20 +1026,24 @@ export function convertImageIdxToHDU(pv, imageIdx) {
 
 
 
-function watchViewDim(action, cancelSelf, {plotId,resolve,reject, failureAsReject,failActions}) {
+function watchViewDim(action, cancelSelf, {plotId,resolve,reject, failureAsReject,failActions, succActions, foundSuccComplete}) {
     if (!resolve) cancelSelf();
     if (action.payload.plotId!==plotId) return;
+    const {type}= action;
     const vr= visRoot();
     const pv= getPlotViewById(vr, plotId);
     const {width,height}= pv.viewDim;
-    if (failActions.includes(action.type)) {
+    if (failActions.includes(type)) {
         failureAsReject ? reject(Error(action)) : resolve();
         cancelSelf();
+        return;
     }
-    if (width && height && width>30 && height>30) {
+    if (succActions.includes(type)) foundSuccComplete= true;
+    if (foundSuccComplete && width && height && width>30 && height>30) {
         resolve(pv);
         cancelSelf();
     }
+    return {plotId,resolve,reject, failureAsReject,failActions, succActions, foundSuccComplete};
 }
 
 
@@ -1053,8 +1057,9 @@ function watchViewDim(action, cancelSelf, {plotId,resolve,reject, failureAsRejec
 export function onPlotComplete(plotId,failureAsReject= false) {
 
     const failActions= [ImagePlotCntlr.ABORT_HIPS,ImagePlotCntlr.PLOT_HIPS_FAIL, ImagePlotCntlr.PLOT_IMAGE_FAIL];
-    const succActions= [ImagePlotCntlr.PLOT_HIPS, ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.UPDATE_VIEW_SIZE];
-    const allCompleteActions= [...succActions,...failActions];
+    const succActions= [ImagePlotCntlr.PLOT_HIPS, ImagePlotCntlr.PLOT_IMAGE];
+    const watchActions= [...succActions,...failActions, ImagePlotCntlr.UPDATE_VIEW_SIZE];
+    const completeActions= [...succActions,...failActions];
     const pv= plotId && getPlotViewById(visRoot(), plotId);
     if (pv && pv.serverCall!=='working' && primePlot(pv) && pv.viewDim.width  && pv.viewDim.height) {
         if (pv.serverCall==='success') {
@@ -1067,9 +1072,9 @@ export function onPlotComplete(plotId,failureAsReject= false) {
 
     return new Promise((resolve,reject) => {
         dispatchAddActionWatcher({
-            actions:allCompleteActions,
+            actions:watchActions,
             callback:watchViewDim,
-            params:{plotId,resolve,reject, failureAsReject,failActions}}
+            params:{plotId,resolve,reject, failureAsReject,failActions, succActions}}
         );
     });
 

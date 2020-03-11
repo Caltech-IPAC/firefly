@@ -410,6 +410,7 @@ function rotatePvToMatch(pv, masterPv, rotateNorthLock) {
     if (isRotationMatching(pv,masterPv)) return pv;
     const masterPlot= primePlot(masterPv);
     const plot= primePlot(pv);
+    if (!masterPlot || !plot) return pv;
     if (getRotationAngle(masterPlot)!==getRotationAngle(plot)) rotateNorthLock= false;
     const csysDirMatching= isCsysDirMatching(plot,masterPlot);
     let rotation= getMatchingRotationAngle(masterPv,pv);

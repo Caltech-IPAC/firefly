@@ -299,7 +299,7 @@ export function modifyRequestForWcsMatch(pv, wpr) {
     const asPerPix= getArcSecPerPix(plot,plot.zoomFactor);
     newWpr.setRotateNorth(false);
     newWpr.setRotate(false);
-    if (isPlotNorth(plot)) {
+    if (isPlotRotatedNorth(plot)) {
         newWpr.setRotateNorth(true);
     }
     else {
