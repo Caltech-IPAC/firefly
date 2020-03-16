@@ -19,6 +19,12 @@ export const MetaConst = {
 
 
     /**
+     * For coverage or catalog, an overlay position to use for this table
+     */
+    OVERLAY_POSITION : 'OverlayPosition',
+
+
+    /**
      *
      * Meta entry that defines the corners of a object defined by a table row
      * like CENTER_COLUMN but each position separated by comma

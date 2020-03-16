@@ -326,6 +326,126 @@
 </template>
 
 
+<template title="reload coverage with different tables" class="tpl lg" >
+    <div id="expected" >
+        <ul class='expected-list'>
+            <li>Search each time "Next Search" is pressed (4 different searches)</li>
+            <li>The search target updates each time</li>
+            <li>Demos using OverlayPosition meta data</li>
+        </ul>
+    </div>
+    <div id="actual" class="flow-h" style="width: 600px">
+        <div style='display:flex; flex-direction:column; width:100%'>
+            <div id="title" style="height: 20px"></div>
+            <div id="box1" style="width: 100%; height: 100%; margin-top: 10px; margin-bottom: 10px; display: flex; justify-content: space-between">
+                <div id="objsearch_coverage" style="border: 1px solid blue; width: calc(50% - 8px); height: 100%; display:inline-block"></div>
+                <div id="objsearch_chart" style="border: 1px solid blue; width: calc(50% - 8px); height: 100%; display: inline-block"></div>
+            </div>
+            <div id="objsearch_table" style="border: 1px solid blue; width: calc(100% - 2px); height: 100%;"></div>
+            <button type="button" id="mocbut" style='height: 38px; padding: 2px'>Next Search </button>
+        </div>
+    </div>
+    <script>
+        function onFireflyLoaded(firefly) {
+            const urlList = {
+                "Equatorial": ["https://ned.ipac.caltech.edu/cgi-bin/objsearch?img_stamp=NO&of=xml_main&search_type=Near%20Position%20Search&" +
+                "coordinates=148.969687d%20%2B69.679383d&radius=1&in_csys=Equatorial&in_equinox=J2000&out_csys=Equatorial&out_equinox=J2000&" +
+                "obj_sort=Distance%20to%20search%20center&z_constraint=Unconstrained&z_unit=z&ot_include=ANY" +
+                "&nmp_op=ANY&hconst=67.8&omegam=0.308&omegav=0.692&wmap=4&corr_z=1&lon=148.969687d&lat=%2B69.679383d", "148.96968700;69.67938300;EQ_J2000", "RA;DEC;EQ_J2000"],
+                "Ecliptic": ["https://ned.ipac.caltech.edu/cgi-bin/objsearch?img_stamp=NO&of=xml_main&search_type=Near%20Position%20Search&" +
+                "coordinates=148.969687d%20%2B69.679383d&radius=1&in_csys=Ecliptic&in_equinox=J2000&out_csys=Ecliptic&out_equinox=J2000&" +
+                "obj_sort=Distance%20to%20search%20center&z_constraint=Unconstrained&z_unit=z&ot_include=ANY&" +
+                "nmp_op=ANY&hconst=67.8&omegam=0.308&omegav=0.692&wmap=4&corr_z=1&lon=148.969687d&lat=%2B69.679383d", "215.05313419;68.68408468;EQ_J2000", "LON.Ecl;LAT.Ecl;EC_J2000"],
+                "Galactic": ["https://ned.ipac.caltech.edu/cgi-bin/objsearch?img_stamp=NO&of=xml_main&search_type=Near%20Position%20Search&" +
+                "coordinates=148.969687d%20%2B69.679383d&radius=1&in_csys=Galactic&out_csys=Galactic&obj_sort=Distance%20to%20search%20center&" +
+                "z_constraint=Unconstrained&z_unit=z&ot_include=ANY&nmp_op=ANY&hconst=67.8&omegam=0.308&omegav=0.692&" +
+                "wmap=4&corr_z=1&lon=148.969687d&lat=%2B69.679383d", "180.44182261;44.85433960;EQ_J2000", "LON.Gal;LAT.Gal;GALACTIC"],
+                "Supergalactic": ["https://ned.ipac.caltech.edu/cgi-bin/objsearch?img_stamp=NO&of=xml_main&search_type=Near%20Position%20Search&" +
+                "coordinates=148.969687d%20%2B69.679383d&radius=1&in_csys=Supergalactic&out_csys=Supergalactic&obj_sort=Distance%20to%20search%20center&" +
+                "z_constraint=Unconstrained&z_unit=z&ot_include=ANY&nmp_op=ANY&hconst=67.8&omegam=0.308&omegav=0.692&" +
+                "wmap=4&corr_z=1&lon=148.969687d&lat=%2B69.679383d", "266.67862156;4.25436889;EQ_J2000", "LON.Sup.Gal;LAT.Sup.Gal;SUPERGALACTIC"]
+            };
+
+            const urls = ["Equatorial", "Ecliptic", "Galactic", "Supergalactic"];
+            let nextIndex = 0;
+
+            function showSearch(index) {
+                const url = urlList[urls[index]][0];
+                const overlayPos = urlList[urls[index]][1];
+                const centerCol = urlList[urls[index]][2];
+                const {makeFileRequest, onTableLoaded}= firefly.util.table;
+
+                const req = makeFileRequest("objsearch_table", url, url, {tbl_id: 'conesearch_table_id'});
+
+                req.position= overlayPos;
+                req.META_INFO.CENTER_COLUMN= centerCol;
+                req.META_INFO.OverlayPosition= overlayPos;
+
+
+                firefly.showTable('objsearch_table', req, {
+                    showTitle: false, selectable: true, removable: false, showUnits: true, showFilters: true,
+                    showToolbar: true, showPaging: true, pageSize: 100
+                });
+                const chart_data = {
+                    type: "fireflyHistogram",
+                    marker: {color: "red"},
+                    firefly: {
+                        tbl_id: req.tbl_id,
+                        options: {
+                            algorithm: "fixaedSizeBin",
+                            fixedBinSizeSelection: "numBins",
+                            numBins: 20,
+                            columnOrExpr: "Redshift"
+                        }
+                    }
+                };
+
+                const hist_layout = {
+                    xaxis: {
+                        title: "Redshift",
+                        showgrid: true,
+                        linewidth: 2,
+                        tickwidth: 2,
+                        tickmode: "auto",
+                        ticks: "inside",
+                        mirror: "allticks"
+                    },
+
+                    yaxis: {
+                        title: "Count",
+                        showgrid: true,
+                        linewidth: 2,
+                        tickwidth: 2,
+                        tickmode: "auto",
+                        ticks: "inside",
+                        mirror: "allticks"
+                    }
+                };
+
+                firefly.showCoverage('objsearch_coverage', {gridOn: true});
+                document.getElementById('title').innerHTML = 'search on ' + urls[index] + ', overlay position: ' + overlayPos;
+
+                onTableLoaded(req.tbl_id).then((tbl) => {
+                    firefly.showChart('objsearch_chart', {
+                        chartId: 'redshift',
+                        data: [chart_data],
+                        layout: hist_layout
+                    });
+                });
+            }
+
+            const showNext= () => {
+                const index = nextIndex % urls.length;
+                showSearch(index);
+                nextIndex++;
+            };
+            document.getElementById('mocbut').onclick = showNext;
+            setTimeout(showNext, 1000);
+
+
+        }
+    </script>
+</template>
 
 
 
