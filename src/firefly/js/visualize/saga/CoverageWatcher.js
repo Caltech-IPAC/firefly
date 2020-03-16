@@ -552,7 +552,7 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp, addV
     const {showCatalogSearchTarget}= getAppOptions();
     const {tbl_id}= table;
     const layersPanelLayoutId= 'catgroup-'+ table.tbl_id;
-    const searchTarget= showCatalogSearchTarget ? getSearchTarget(table.request,
+    const searchTarget= showCatalogSearchTarget ? getSearchTarget(undefined, table,
                                                    lookupOption(options, 'searchTarget', table.tbl_id),
                                                    lookupOption(options, 'overlayPosition', table.tbl_id)) : undefined;
 
@@ -750,7 +750,7 @@ function findPreferredHiPS(tbl_id,prevPreferredHipsSourceURL, optionHipsSourceUR
 function getCommonSearchTarget(tableAry,options) {
     const searchTargetAry= tableAry
         .filter((table) => table && table!=='WORKING')
-        .map ( (table) => getSearchTarget(table.request,
+        .map ( (table) => getSearchTarget(undefined, table,
                                               lookupOption(options, 'searchTarget', table.tbl_id),
                                               lookupOption(options, 'overlayPosition', table.tbl_id)));
     if (!searchTargetAry.length) return;

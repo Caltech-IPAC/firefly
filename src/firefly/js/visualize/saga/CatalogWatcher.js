@@ -24,6 +24,8 @@ import {CoordinateSys} from '../CoordSys.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import SearchTarget from '../../drawingLayers/SearchTarget.js';
 import {darker} from '../../util/Color.js';
+import {getMetaEntry} from '../../tables/TableUtil';
+import {MetaConst} from '../../data/MetaConst';
 
 
 /** @type {TableWatcherDef} */
@@ -158,7 +160,7 @@ function updateDrawingLayer(tbl_id, tableModel, tableRequest,
 
     const dl= getDrawLayerById(dlRoot(),tbl_id);
     const {showCatalogSearchTarget}= getAppOptions();
-    const searchTarget= showCatalogSearchTarget ? getSearchTarget(tableRequest) : undefined;
+    const searchTarget= showCatalogSearchTarget ? getSearchTarget(tableRequest,tableModel) : undefined;
     if (dl) { // update drawing layer
         dispatchModifyCustomField(tbl_id, {title, tableData, tableMeta, tableRequest,
                                            highlightedRow, selectInfo, columns,
@@ -215,9 +217,12 @@ function attachToCatalog(tbl_id, payload) {
 }
 
 
-export function getSearchTarget(r, searchTargetStr, overlayPositionStr) {
+export function getSearchTarget(r, tableModel, searchTargetStr, overlayPositionStr) {
+    if (!r) r= tableModel.request;
     if (searchTargetStr) return parseWorldPt(searchTargetStr);
     if (overlayPositionStr) return parseWorldPt(overlayPositionStr);
+    const pos= getMetaEntry(tableModel,MetaConst.OVERLAY_POSITION);
+    if (pos) return parseWorldPt(pos);
     if (r.UserTargetWorldPt) return parseWorldPt(r.UserTargetWorldPt);
     if (!r.QUERY) return;
     const regEx= /CIRCLE\s?\(.*\)/;
