@@ -373,6 +373,7 @@ public class JsonTableUtil {
             applyIfNotEmpty(dt.getMinValue(), v -> c.put("minValue", v));
             applyIfNotEmpty(dt.getFormat(), v -> c.put("format", v));
             applyIfNotEmpty(dt.getFmtDisp(), v -> c.put("fmtDisp", v));
+            applyIfNotEmpty(dt.getDataOptions(), v -> c.put("options", v));
 
 
             if (dt.getLinkInfos().size() > 0)
