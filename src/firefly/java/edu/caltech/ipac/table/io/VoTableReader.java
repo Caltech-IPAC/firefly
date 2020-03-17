@@ -11,6 +11,7 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.*;
 import edu.caltech.ipac.util.CollectionUtil;
+import edu.caltech.ipac.util.StringUtils;
 import org.xml.sax.SAXException;
 import uk.ac.starlink.table.*;
 import uk.ac.starlink.votable.*;
@@ -441,16 +442,31 @@ public class VoTableReader {
 
         applyIfNotEmpty(el.getAttribute("arraysize"), dt::setArraySize);
 
+        // handle VALUES and OPTIONS
+        VOElement values = el.getChildByName("VALUES");
+            if (values != null) {
+                applyIfNotEmpty(el.getAttribute("null"), dt::setNullString);
+                dt.setMaxValue(getChildValue(values, "MAX", "value"));
+                dt.setMinValue(getChildValue(values, "MIN", "value"));
+                String options = Arrays.stream(values.getChildrenByName("OPTION"))
+                        .map(o -> o.getAttribute("value"))
+                        .collect(Collectors.joining(","));
+                if (!StringUtils.isEmpty(options)) dt.setDataOptions(options);
+            }
+
         // add all links
         Arrays.stream(el.getChildrenByName("LINK"))
                 .forEach(lel -> dt.getLinkInfos().add(linkElToLinkInfo(lel)));
+
         return dt;
     }
 
+    public static String getChildValue(VOElement el, String childTagName, String attribName) {
+        VOElement c = el.getChildByName(childTagName);
+        return c == null ? null : c.getAttribute(attribName);
+    }
 
-
-
-//====================================================================
+    //====================================================================
 //  file analysis support
 //====================================================================
 

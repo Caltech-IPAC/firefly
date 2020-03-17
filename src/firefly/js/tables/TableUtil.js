@@ -1360,8 +1360,8 @@ export function getBooleanMetaEntry(tableOrId,metaKey,defVal= false) {
  * @returns {boolean}
  */
 export function hasAuxData(tbl_id) {
-    const {keywords, links, params} = getTblById(tbl_id);
-    return !isEmpty(keywords) || !isEmpty(links) || !isEmpty(params);
+    const {keywords, links, params, resources} = getTblById(tbl_id);
+    return !isEmpty(keywords) || !isEmpty(links) || !isEmpty(params) || !isEmpty(resources);
 }
 
 /*-------------------------------------private------------------------------------------------*/
