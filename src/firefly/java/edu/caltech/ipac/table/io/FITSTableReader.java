@@ -15,19 +15,26 @@ import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.FitsFactory;
 import nom.tam.fits.Header;
+import nom.tam.fits.HeaderCard;
 import nom.tam.fits.ImageData;
 import nom.tam.fits.ImageHDU;
 import nom.tam.fits.TableHDU;
 import nom.tam.fits.UndefinedHDU;
 import nom.tam.image.compression.hdu.CompressedImageHDU;
 import nom.tam.util.ArrayFuncs;
-import uk.ac.starlink.table.*;
+import uk.ac.starlink.fits.FitsStarTable;
+import uk.ac.starlink.table.ColumnInfo;
+import uk.ac.starlink.table.DefaultValueInfo;
+import uk.ac.starlink.table.DescribedValue;
+import uk.ac.starlink.table.StarTable;
+import uk.ac.starlink.table.TableFormatException;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -261,7 +268,7 @@ public final class FITSTableReader
             dg= getFitsImageAsTable(fits_filename,metaInfo, table_idx);
             if (dg==null) {
                 StarTable table = getStarTable(fits_filename, table_idx);
-                dg= convertStarTableToDataGroup(table, dataCols, headerCols, strategy);
+                if (table!=null) dg= convertStarTableToDataGroup(table, dataCols, headerCols, strategy);
             }
         }
         else { // if >0 then try to read it as a table first.
@@ -292,79 +299,88 @@ public final class FITSTableReader
                                                 int table_idx) throws FitsException, IOException {
 
         // todo try to read it as an image
-        BasicHDU[] parts = new Fits(fits_filename).read();
-        String val= (metaInfo!=null) ? metaInfo.get(MetaConst.IMAGE_AS_TABLE_COL_NAMES) : null;
-        String []colNames= (val!=null && val.length()>1) ? val.split(",") : new String[] {"index"};
-        if (table_idx < parts.length) {
-            BasicHDU hdu= parts[table_idx];
-            if (hdu instanceof TableHDU) return null;
-            if ((hdu instanceof ImageHDU) || (hdu instanceof CompressedImageHDU || hdu instanceof UndefinedHDU)) {
-                Header header = hdu.getHeader();
-                int naxis = header.getIntValue("NAXIS", -1);
-                if (naxis<1) return null;
-                int naxis1 = header.getIntValue("NAXIS1",-1);
-                if (naxis1<1) return null;
-                int naxis2 = header.getIntValue("NAXIS2",-1);
-                String desc = header.getStringValue("EXTNAME");
-                if (desc == null) desc = header.getStringValue("NAME");
-                if (desc == null) desc = "No Name";
-                ArrayList<DataType> dataTypes = new ArrayList<>();
-                DataType idxDT= new DataType(colNames[0], colNames[0], Integer.class);
-                dataTypes.add(idxDT);
+        Fits fits= null;
+        try {
+            fits = new Fits(fits_filename);
+            BasicHDU[] parts = fits.read();
+            String val = (metaInfo != null) ? metaInfo.get(MetaConst.IMAGE_AS_TABLE_COL_NAMES) : null;
+            String[] colNames = (val != null && val.length() > 1) ? val.split(",") : new String[]{"index"};
+            if (table_idx < parts.length) {
+                BasicHDU hdu = parts[table_idx];
+                if (hdu instanceof TableHDU) return null;
+                if ((hdu instanceof ImageHDU) || (hdu instanceof CompressedImageHDU || hdu instanceof UndefinedHDU)) {
+                    Header header = hdu.getHeader();
+                    int naxis = header.getIntValue("NAXIS", -1);
+                    if (naxis < 1) return null;
+                    int naxis1 = header.getIntValue("NAXIS1", -1);
+                    if (naxis1 < 1) return null;
+                    int naxis2 = header.getIntValue("NAXIS2", -1);
+                    String desc = header.getStringValue("EXTNAME");
+                    if (desc == null) desc = header.getStringValue("NAME");
+                    if (desc == null) desc = "No Name";
+                    ArrayList<DataType> dataTypes = new ArrayList<>();
+                    DataType idxDT = new DataType(colNames[0], colNames[0], Integer.class);
+                    dataTypes.add(idxDT);
 
-                if (is1dImage(hdu)) {
-                    double []data= FitsReadUtil.getImageHDUDataInDoubleArray(hdu);
-                    if (data==null) return null;
+                    if (is1dImage(hdu)) {
+                        double[] data = FitsReadUtil.getImageHDUDataInDoubleArray(hdu);
+                        if (data == null) return null;
 
-                    //------------- here -------------------
+                        //------------- here -------------------
 
-                    String cName= (colNames.length>1) ? colNames[1] : "data";
-                    DataType dataDT= new DataType(cName, cName, Double.class);
-                    dataTypes.add(dataDT);
-                    DataGroup dataGroup = new DataGroup(desc, dataTypes);
-                    for(int i=0;(i<data.length);i++) {
-                        DataObject aRow = new DataObject(dataGroup);
-                        aRow.setDataElement(idxDT, i);
-                        aRow.setDataElement(dataDT, data[i]);
-                        dataGroup.add(aRow);
-                    }
-                    dataGroup.trimToSize();
-                    return dataGroup;
-                }
-                else if (naxis==2 && naxis2>0) {
-                    double [][] data= null;
-                    if (naxis2 > 30) return null;
-                    if ((hdu instanceof ImageHDU) || (hdu instanceof CompressedImageHDU)) {
-                        ImageHDU imageHDU = (hdu instanceof CompressedImageHDU) ?
-                                ((CompressedImageHDU) hdu).asImageHDU() : (ImageHDU) hdu;
-                        ImageData imageDataObj = imageHDU.getData();
-                        data= (double[][])ArrayFuncs.convertArray(imageDataObj.getData(), Double.TYPE, true);
-                    }
-                    else if (hdu instanceof UndefinedHDU) {
-                        data= (double[][])ArrayFuncs.convertArray(hdu.getData().getData(), Double.TYPE, true);
-                    }
-                    if (data==null) return null;
-
-                    for(int i=0;(i<data.length);i++) {
-                        String cName= (i+1<colNames.length) ? colNames[i+1] :"data"+i;
-                        dataTypes.add(new DataType(cName, cName, Double.class));
-                    }
-
-                    DataGroup dataGroup = new DataGroup(desc, dataTypes);
-
-                    DataType [] dd;
-                    for (int row = 0; row < data[0].length; row++){
-                        DataObject aRow = new DataObject(dataGroup);
-                        dd= dataGroup.getDataDefinitions();
-                        aRow.setDataElement(dd[0], row);
-                        for (int dtIdx = 1; dtIdx < dd.length; dtIdx++) {
-                            aRow.setDataElement(dd[dtIdx], data[dtIdx-1][row]);
+                        String cName = (colNames.length > 1) ? colNames[1] : "data";
+                        DataType dataDT = new DataType(cName, cName, Double.class);
+                        dataTypes.add(dataDT);
+                        DataGroup dataGroup = new DataGroup(desc, dataTypes);
+                        for (int i = 0; (i < data.length); i++) {
+                            DataObject aRow = new DataObject(dataGroup);
+                            aRow.setDataElement(idxDT, i);
+                            aRow.setDataElement(dataDT, data[i]);
+                            dataGroup.add(aRow);
                         }
-                        dataGroup.add(aRow);
+                        dataGroup.trimToSize();
+                        return dataGroup;
+                    } else if (naxis == 2 && naxis2 > 0) {
+                        double[][] data = null;
+                        if (naxis2 > 30) return null;
+                        if ((hdu instanceof ImageHDU) || (hdu instanceof CompressedImageHDU)) {
+                            ImageHDU imageHDU = (hdu instanceof CompressedImageHDU) ?
+                                    ((CompressedImageHDU) hdu).asImageHDU() : (ImageHDU) hdu;
+                            ImageData imageDataObj = imageHDU.getData();
+                            data = (double[][]) ArrayFuncs.convertArray(imageDataObj.getData(), Double.TYPE, true);
+                        } else if (hdu instanceof UndefinedHDU) {
+                            data = (double[][]) ArrayFuncs.convertArray(hdu.getData().getData(), Double.TYPE, true);
+                        }
+                        if (data == null) return null;
+
+                        for (int i = 0; (i < data.length); i++) {
+                            String cName = (i + 1 < colNames.length) ? colNames[i + 1] : "data" + i;
+                            dataTypes.add(new DataType(cName, cName, Double.class));
+                        }
+
+                        DataGroup dataGroup = new DataGroup(desc, dataTypes);
+
+                        DataType[] dd;
+                        for (int row = 0; row < data[0].length; row++) {
+                            DataObject aRow = new DataObject(dataGroup);
+                            dd = dataGroup.getDataDefinitions();
+                            aRow.setDataElement(dd[0], row);
+                            for (int dtIdx = 1; dtIdx < dd.length; dtIdx++) {
+                                aRow.setDataElement(dd[dtIdx], data[dtIdx - 1][row]);
+                            }
+                            dataGroup.add(aRow);
+                        }
+                        dataGroup.trimToSize();
+                        return dataGroup;
                     }
-                    dataGroup.trimToSize();
-                    return dataGroup;
                 }
+            }
+        }
+        finally {
+            try {
+                if (fits!=null && fits.getStream()!=null) fits.getStream().close();
+            } catch (IOException e) {
+                // do nothing
             }
         }
         return null;
@@ -372,44 +388,72 @@ public final class FITSTableReader
     }
 
 
+    private static void logTableReadError(String fitsFilename, int tableIdx, String reason) {
+        logger.error("Unable to get table from fits file: " + fitsFilename +
+                ", HDU#: " + tableIdx + ", reason: "+reason);
+    }
+
     /**
      * Get a StarTable from a FITS file by giving table index, i.e. HDU number in FITS
-     * @param fits_filename
-     * @param table_idx
+     * @param fitsFilename
+     * @param tableIdx
      * @return one star table or none
      * @throws IOException
      */
 
-    public static StarTable getStarTable(String fits_filename, int table_idx) {
+    public static StarTable getStarTable(String fitsFilename, int tableIdx) {
 
         // disable long string for HeaderCard creation while collecting table with table_idx from StarTableFactory to work around
         // the exception error sent from nom.tam.fits.
 
-        StarTable retTbl = null;
-
         FitsFactory.useThreadLocalSettings(true);
         FitsFactory.setLongStringsEnabled(false);
+        Fits fits = null;
 
         try {
-            StarTableFactory stFactory = new StarTableFactory();
+            int tIdx = Math.max(tableIdx, 1); //todo - should be throw an error if zero is passed?
 
-            int tIdx = table_idx < 1 ? 1 : table_idx;
-
-            StarTable tbl = stFactory.makeStarTable(fits_filename + "#" + tIdx, "fits");
-
-            if (tbl != null) {
-                DescribedValue dValue = tbl.getParameterByName("ZIMAGE");   // check if 'BINTABLE' is actually compressed image HDU
-
-                if (dValue == null || dValue.getValue() != Boolean.TRUE) {
-                    retTbl = tbl;
-                }
+            fits = new Fits(fitsFilename);
+            BasicHDU<?>[] hdus = fits.read();
+            
+            if (tIdx>=hdus.length) {
+                logTableReadError(fitsFilename,tableIdx,"HDU does not exist, HDU count: "+ hdus.length);
+                return null;
             }
+
+            if (!(hdus[tIdx]instanceof TableHDU)) {
+                logTableReadError(fitsFilename,tableIdx,"HDU is not a table hdu");
+                return null;
+            }
+            TableHDU<?> hdu= (TableHDU<?>)hdus[tIdx];
+
+            String zValue= hdu.getHeader().containsKey("ZIMAGE") ? hdu.getHeader().getStringValue("ZIMAGE").toUpperCase() : "";
+            if (zValue.equals("T") || zValue.equals("TRUE")) {
+                logTableReadError(fitsFilename,tableIdx,"HDU is an compressed image stored at a table");
+                return null;
+            }
+
+            FitsStarTable starTable= new FitsStarTable(hdu);
+            Iterator<HeaderCard> i= hdu.getHeader().iterator();
+            for(HeaderCard card= i.next();i.hasNext(); card= i.next()) {
+                starTable.setParameter( new DescribedValue(
+                        new DefaultValueInfo(card.getKey(), String.class), card.getValue()) );
+            }
+
+            return starTable;
         } catch (Exception e) {
-            logger.error("unable to get table from fits file " + fits_filename + "from" + table_idx + ", reason: " + e.getMessage());
+            logTableReadError(fitsFilename,tableIdx,e.getMessage());
+        }
+        finally {
+            FitsFactory.useThreadLocalSettings(false);
+            try {
+                if (fits!=null && fits.getStream()!=null) fits.getStream().close();
+            } catch (IOException e) {
+                // do nothing
+            }
         }
 
-        FitsFactory.useThreadLocalSettings(false);
-        return retTbl;
+        return null;
     }
 
     /**
