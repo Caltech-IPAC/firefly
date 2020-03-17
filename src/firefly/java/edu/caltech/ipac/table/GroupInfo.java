@@ -12,15 +12,20 @@ public class GroupInfo implements Serializable, Cloneable{
     private String name;      // group name
     private String desc;      // group description
     private String ID;        // group ID
+    private String ucd;
+    private String utype;
     private List<ParamInfo> paramInfos = new ArrayList<>();    // params in this group
     private List<RefInfo> columnRefs = new ArrayList<>();      // referenced columns in form of RefInfo objects
     private List<RefInfo> paramRefs = new ArrayList<>();       // referenced ParamInfo in form of RefInfo objects
+
+    public GroupInfo() {}
 
     public GroupInfo(String name, String desc) {
         this.name = name;
         this.desc = desc;
     }
 
+    public void setName(String name) { this.name =  name;}
     public String getName() {
         return name;
     }
@@ -28,7 +33,6 @@ public class GroupInfo implements Serializable, Cloneable{
     public void setDescription(String desc) {
         this.desc = desc;
     }
-
     public String getDescription() {
         return desc;
     }
@@ -36,14 +40,28 @@ public class GroupInfo implements Serializable, Cloneable{
     public void setID(String id) {
         this.ID = id;
     }
-
     public String getID() {
         return ID;
+    }
+
+    public void setUCD(String ucd) {
+        this.ucd = ucd;
+    }
+    public String getUCD() {
+        return ucd;
+    }
+
+    public void setUtype(String utype) {
+        this.utype = utype;
+    }
+    public String getUtype() {
+        return utype;
     }
 
     public List<ParamInfo> getParamInfos() {
         return paramInfos;
     }
+    public void setParamInfos(List<ParamInfo> paramInfos) { this.paramInfos = paramInfos; }
 
     public List<RefInfo> getColumnRefs() { return columnRefs; }
     public void setColumnRefs(List<RefInfo> refs) {
@@ -74,8 +92,7 @@ public class GroupInfo implements Serializable, Cloneable{
     }
 
     public Object clone() throws CloneNotSupportedException {
-        GroupInfo gobj = new GroupInfo(name, desc);
-        gobj.ID = ID;
+        GroupInfo gobj = (GroupInfo) super.clone();
         gobj.paramInfos = new ArrayList<>(paramInfos);
         gobj.columnRefs = new ArrayList<>(columnRefs);
         gobj.paramRefs = new ArrayList<>(paramRefs);

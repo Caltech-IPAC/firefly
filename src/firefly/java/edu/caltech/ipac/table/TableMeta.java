@@ -50,6 +50,8 @@ public class TableMeta implements Serializable {
     public static final String LINKS_TAG = "col.@.links";
     public static final String ARY_SIZE_TAG = "col.@.arraySize";
 
+    public static final String TBL_RESOURCES = "tbl.resources";
+    public static final String TBL_LINKS = "tbl.links";
 
     public static final String RESULTSET_ID = "resultSetID";            // this meta if exists contains the ID of the resultset returned.
     public static final String RESULTSET_REQ = "resultSetRequest";      // this meta if exists contains the Request used to create this resultset.
