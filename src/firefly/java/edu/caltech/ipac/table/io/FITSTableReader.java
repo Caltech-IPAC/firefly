@@ -15,20 +15,26 @@ import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.FitsFactory;
 import nom.tam.fits.Header;
+import nom.tam.fits.HeaderCard;
 import nom.tam.fits.ImageData;
 import nom.tam.fits.ImageHDU;
 import nom.tam.fits.TableHDU;
 import nom.tam.fits.UndefinedHDU;
 import nom.tam.image.compression.hdu.CompressedImageHDU;
 import nom.tam.util.ArrayFuncs;
-import uk.ac.starlink.table.*;
 import uk.ac.starlink.fits.FitsStarTable;
+import uk.ac.starlink.table.ColumnInfo;
+import uk.ac.starlink.table.DefaultValueInfo;
+import uk.ac.starlink.table.DescribedValue;
+import uk.ac.starlink.table.StarTable;
+import uk.ac.starlink.table.TableFormatException;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -262,7 +268,7 @@ public final class FITSTableReader
             dg= getFitsImageAsTable(fits_filename,metaInfo, table_idx);
             if (dg==null) {
                 StarTable table = getStarTable(fits_filename, table_idx);
-                dg= convertStarTableToDataGroup(table, dataCols, headerCols, strategy);
+                if (table!=null) dg= convertStarTableToDataGroup(table, dataCols, headerCols, strategy);
             }
         }
         else { // if >0 then try to read it as a table first.
@@ -382,56 +388,64 @@ public final class FITSTableReader
     }
 
 
+    private static void logTableReadError(String fitsFilename, int tableIdx, String reason) {
+        logger.error("Unable to get table from fits file: " + fitsFilename +
+                ", HDU#: " + tableIdx + ", reason: "+reason);
+    }
+
     /**
      * Get a StarTable from a FITS file by giving table index, i.e. HDU number in FITS
-     * @param fits_filename
-     * @param table_idx
+     * @param fitsFilename
+     * @param tableIdx
      * @return one star table or none
      * @throws IOException
      */
 
-    public static StarTable getStarTable(String fits_filename, int table_idx) {
+    public static StarTable getStarTable(String fitsFilename, int tableIdx) {
 
         // disable long string for HeaderCard creation while collecting table with table_idx from StarTableFactory to work around
         // the exception error sent from nom.tam.fits.
-
-        StarTable retTbl = null;
 
         FitsFactory.useThreadLocalSettings(true);
         FitsFactory.setLongStringsEnabled(false);
         Fits fits = null;
 
         try {
-            StarTableFactory stFactory = new StarTableFactory();
-            StarTable tbl = null;
+            int tIdx = Math.max(tableIdx, 1); //todo - should be throw an error if zero is passed?
 
-            int tIdx = table_idx < 1 ? 1 : table_idx;
-
-            fits = new Fits(fits_filename);
-            BasicHDU[] parts = fits.read();
-            if (tIdx>=parts.length) {
-                logger.error("unable to get table from fits file " + fits_filename +
-                        "from" + table_idx + ", reason: HDU does not exist, HDU count: "+ parts.length);
+            fits = new Fits(fitsFilename);
+            BasicHDU<?>[] hdus = fits.read();
+            
+            if (tIdx>=hdus.length) {
+                logTableReadError(fitsFilename,tableIdx,"HDU does not exist, HDU count: "+ hdus.length);
                 return null;
             }
-            BasicHDU hdu= parts[tIdx];
-            if (hdu instanceof TableHDU) {
-                tbl= new FitsStarTable((TableHDU)parts[tIdx]);
-            }
-            else {
-                logger.error("unable to get table from fits file " + fits_filename +
-                        "from" + table_idx + ", reason: HDU is not a table hdu");
+
+            if (!(hdus[tIdx]instanceof TableHDU)) {
+                logTableReadError(fitsFilename,tableIdx,"HDU is not a table hdu");
                 return null;
             }
-            DescribedValue dValue = tbl.getParameterByName("ZIMAGE");   // check if 'BINTABLE' is actually compressed image HDU
+            TableHDU<?> hdu= (TableHDU<?>)hdus[tIdx];
 
-            if (dValue == null || dValue.getValue() != Boolean.TRUE) {
-                retTbl = tbl;
+            String zValue= hdu.getHeader().containsKey("ZIMAGE") ? hdu.getHeader().getStringValue("ZIMAGE").toUpperCase() : "";
+            if (zValue.equals("T") || zValue.equals("TRUE")) {
+                logTableReadError(fitsFilename,tableIdx,"HDU is an compressed image stored at a table");
+                return null;
             }
+
+            FitsStarTable starTable= new FitsStarTable(hdu);
+            Iterator<HeaderCard> i= hdu.getHeader().iterator();
+            for(HeaderCard card= i.next();i.hasNext(); card= i.next()) {
+                starTable.setParameter( new DescribedValue(
+                        new DefaultValueInfo(card.getKey(), String.class), card.getValue()) );
+            }
+
+            return starTable;
         } catch (Exception e) {
-            logger.error("unable to get table from fits file " + fits_filename + "from" + table_idx + ", reason: " + e.getMessage());
+            logTableReadError(fitsFilename,tableIdx,e.getMessage());
         }
         finally {
+            FitsFactory.useThreadLocalSettings(false);
             try {
                 if (fits!=null && fits.getStream()!=null) fits.getStream().close();
             } catch (IOException e) {
@@ -439,8 +453,7 @@ public final class FITSTableReader
             }
         }
 
-        FitsFactory.useThreadLocalSettings(false);
-        return retTbl;
+        return null;
     }
 
     /**
