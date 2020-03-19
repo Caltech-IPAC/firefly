@@ -343,7 +343,7 @@ export function changeActiveFileMenuItem(state,action) {
     const actIdx= fileMenu.menu.findIndex( (m) => m.menuKey===newActiveFileMenuKey);
     const fileMenuItem= fileMenu.menu[actIdx<0?0:actIdx];
 
-    const {activate,displayType,message}= fileMenuItem;
+    const {activate,displayType,message,chartTableDefOption}= fileMenuItem;
 
     dpData.activeFileMenuKeys={...activeFileMenuKeys, [fileMenu.activeItemLookupKey]:fileMenuItem.menuKey};
 
@@ -357,7 +357,7 @@ export function changeActiveFileMenuItem(state,action) {
     }
 
     const newFileMenu= {...fileMenu, activeFileMenuKey:newActiveFileMenuKey};
-    const newDisplayProduct= { ...selectedMenuDataProduct, displayType, activate, message, fileMenu:newFileMenu, activeMenuKey:menuKey};
+    const newDisplayProduct= { ...selectedMenuDataProduct, displayType, chartTableDefOption, activate, message, fileMenu:newFileMenu, activeMenuKey:menuKey};
     const newMenu= menu && menu.map( (menuItem) => (menuItem.menuKey!==menuKey) ? menuItem : newDisplayProduct );
     dpData.dataProducts= {...newDisplayProduct, menu:newMenu};
     return insertOrReplace(state,dpData);

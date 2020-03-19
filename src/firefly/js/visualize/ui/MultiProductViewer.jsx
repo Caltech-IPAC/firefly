@@ -17,7 +17,7 @@ import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {CompleteButton} from '../../ui/CompleteButton';
 import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
-import {DPtypes} from '../../metaConvert/DataProductsType';
+import {DPtypes, SHOW_CHART, SHOW_TABLE} from '../../metaConvert/DataProductsType';
 import {
     dataProductRoot,
     dispatchActivateFileMenuItem,
@@ -97,7 +97,7 @@ function getMakeDropdown(menu, fileMenu, dpId,activeMenuLookupKey) {
 
                 {hasFileMenu &&
                 <DropDownToolbarButton
-                    text={'In File'}
+                    text={'File Contents'}
                     tip='Other data in file'
                     enabled={true} horizontal={true}
                     visible={true}
@@ -113,9 +113,9 @@ function getMakeDropdown(menu, fileMenu, dpId,activeMenuLookupKey) {
     };
 }
 
-const SHOW_CHART='showChart';
-const SHOW_TABLE='showTable';
 const makeChartTableLookupKey= (activeItemLookupKey, fileMenuKey) => `${activeItemLookupKey}-charTable-${fileMenuKey}`;
+
+// const getActiveFileMenuDP= (fileMenu) => fileMenu?.menu.find( (m) => m.menuKey===fileMenu.activeFileMenuKey);
 
 export const MultiProductViewer= memo(({ viewerId='DataProductsType', metaDataTableId}) => {
 
@@ -126,7 +126,7 @@ export const MultiProductViewer= memo(({ viewerId='DataProductsType', metaDataTa
     const [dataProductsState, setDataProductsState] = useState(getDataProducts(dataProductRoot(),dpId));
     const {imageViewerId,chartViewerId,tableGroupViewerId}=  getActivateParams(dataProductRoot(),dpId);
     const {displayType='unsupported', menu,fileMenu,message,url, isWorkingState, menuKey,
-        activate,activeMenuLookupKey,singleDownload= false}= dataProductsState;
+        activate,activeMenuLookupKey,singleDownload= false, chartTableDefOption=SHOW_CHART}= dataProductsState;
 
 
     useEffect(() => {
@@ -209,10 +209,10 @@ export const MultiProductViewer= memo(({ viewerId='DataProductsType', metaDataTa
             result= (<MultiProductChartTable {...{dpId,makeDropDown,chartViewerId,whatToShow:SHOW_CHART}}/>);
             break;
         case DPtypes.CHART_TABLE :
-            const lookupKey= get(fileMenu,'activeItemLookupKey','');
+            const lookupKey= fileMenu?.activeItemLookupKey ?? '';
             const ctLookupKey= makeChartTableLookupKey(lookupKey,menuKey || getActiveFileMenuKey(dpId,fileMenu));
             const whatToShow= lookupKey ?
-                getActiveFileMenuKeyByKey(dpId,ctLookupKey) || SHOW_CHART: SHOW_CHART;
+                (getActiveFileMenuKeyByKey(dpId,ctLookupKey) || chartTableDefOption): chartTableDefOption;
             result= (<MultiProductChartTable {
                 ...{dpId,makeDropDown,chartViewerId,tableGroupViewerId,whatToShow,ctLookupKey,mayToggle:true}}/>);
             break;
@@ -244,12 +244,13 @@ MultiProductViewer.propTypes= {
 };
 
 const chartTableOptions= [
-    {label: 'Chart', value: SHOW_CHART},
-    {label: 'Table', value: SHOW_TABLE}
+    {label: 'Table', value: SHOW_TABLE},
+    {label: 'Chart', value: SHOW_CHART}
     ];
 
 function MultiProductChartTable({dpId,makeDropDown, chartViewerId,
-                                    tableGroupViewerId,whatToShow,ctLookupKey=undefined, mayToggle=false}) {
+                                    tableGroupViewerId,whatToShow,
+                                    ctLookupKey=undefined, mayToggle=false}) {
 
     const [ts, setTS] = useState(whatToShow);
     const [lookupKey, setLookKey] = useState(ctLookupKey);

@@ -110,30 +110,30 @@ export function createChartActivate(source, titleStr, activateParams, xAxis, yAx
             }
         };
 
-        const histogramParams= {
-            viewerId: chartViewerId,
-            groupId: chartViewerId,
-            chartId: chartId+'-hist',
-            data: [{
-                type: 'fireflyHistogram',
-                firefly: {
-                    tbl_id,
-                    options: {
-                        algorithm: 'fixedSizeBins',
-                        fixedBinSizeSelection: 'numBins',
-                        numBins: 30,
-                        columnOrExpr: yAxis,
-                    }
-                },
-
-            }],
-            layout: {
-                title: {text: titleStr},
-            }
-        };
+        // const histogramParams= {
+        //     viewerId: chartViewerId,
+        //     groupId: chartViewerId,
+        //     chartId: chartId+'-hist',
+        //     data: [{
+        //         type: 'fireflyHistogram',
+        //         firefly: {
+        //             tbl_id,
+        //             options: {
+        //                 algorithm: 'fixedSizeBins',
+        //                 fixedBinSizeSelection: 'numBins',
+        //                 numBins: 30,
+        //                 columnOrExpr: yAxis,
+        //             }
+        //         },
+        //
+        //     }],
+        //     layout: {
+        //         title: {text: titleStr},
+        //     }
+        // };
         onTableLoaded(tbl_id).then( () => {
             dispatchChartAdd(dispatchParams);
-            dispatchChartAdd(histogramParams);
+            // dispatchChartAdd(histogramParams);
         });
         return () => {
             dispatchTableRemove(tbl_id,false);
