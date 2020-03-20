@@ -76,7 +76,7 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
         if (paused) {
             paused= !Boolean(imView || dpView);
         }
-        if (!paused) updateDataProducts(tbl_id, activateParams);
+        if (!paused && getActiveTableId()===tbl_id) updateDataProducts(tbl_id, activateParams);
         initImage3ColorDisplayManagement(imageViewerId); //todo: 3 color not working
         return {paused};
     }

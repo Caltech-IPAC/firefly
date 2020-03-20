@@ -341,7 +341,7 @@ export function changeActiveFileMenuItem(state,action) {
 
 
     const actIdx= fileMenu.menu.findIndex( (m) => m.menuKey===newActiveFileMenuKey);
-    const fileMenuItem= fileMenu.menu[actIdx<0?0:actIdx];
+    const fileMenuItem= fileMenu.menu[actIdx<0? fileMenu.initialDefaultIndex: actIdx];
 
     const {activate,displayType,message,chartTableDefOption}= fileMenuItem;
 

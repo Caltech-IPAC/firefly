@@ -22,7 +22,7 @@ import {
     dataProductRoot, dispatchActivateFileMenuItem, dispatchUpdateActiveKey,
     dispatchUpdateDataProducts, getActiveFileMenuKeyByKey, getDataProducts
 } from './DataProductsCntlr';
-import {analyzePart, arrangeAnalysisMenu} from './PartAnalyzer';
+import {analyzePart, chooseDefaultEntry} from './PartAnalyzer';
 import {hasRowAccess} from '../tables/TableUtil';
 
 
@@ -274,12 +274,6 @@ function processAnalysisResult({table, row, request, activateParams, serverCache
     const useImagesFromPartAnalysis= parts.length>1;
 
 
-    // const hasOnlySingleAxisImages= Boolean(partAnalysis.every( (pa) => pa.imageSingleAxis));
-    // if (hasOnlySingleAxisImages) {
-    //     return dpdtMessageWithDownload('Cannot not display One-dimensional images (NAXIS==1)', 'download fits file', url);
-    // }
-    //
-
 
     const imageEntry= makeImages &&
         dpdtImage(`Image Data ${imageParts.length>1? ': All Images in File' :''}`,
@@ -296,22 +290,15 @@ function processAnalysisResult({table, row, request, activateParams, serverCache
         pAry.forEach( (r) => fileMenu.menu.push(r));
     });
 
-    // const oneDErr= partAnalysis.reduce( (str,pa,idx) => {
-    //     if (pa.imageSingleAxis) str+= `${str?', ':''}${idx}`;
-    //     return str;
-    // },'');
-    // if (oneDErr) fileMenu.menu.push(dpdtDownload(`Download Only, Ext ${oneDErr}: Cannot display One-dimensional images (NAXIS==1)`, url));
-
-    // fileMenu.menu= arrangeAnalysisMenu(fileMenu.menu,parts,fileFormat, dataTypeHint);
-
-
     fileMenu.menu.forEach( (m,idx) => m.menuKey= 'fm-'+idx);
+
+    fileMenu.initialDefaultIndex= chooseDefaultEntry(fileMenu.menu,parts,fileFormat, dataTypeHint);
 
     let actIdx=0;
     if (fileMenu.menu.length) {
         const lastActiveFieldItem= getActiveFileMenuKeyByKey(dpId,activeItemLookupKey);
         actIdx= fileMenu.menu.findIndex( (m) => m.menuKey===lastActiveFieldItem);
-        if (actIdx<0) actIdx= 0;
+        if (actIdx<0) actIdx= fileMenu.initialDefaultIndex;
     }
     else {// error case
         const msg= makeErrorMsg(parts,fileFormat);

@@ -53,42 +53,31 @@ export function analyzePart(part, request, table, row, fileFormat, serverCacheFi
     };
 }
 
-// todo - arrangeAnalysisMenu needs to have injection point for application specific analysis
 /**
- * Arrange the order of the menu array so that is show the most important stuff on the top
+ * Determine which entry should be the default
  * @param menu
  * @param parts
  * @param fileFormat
  * @param dataTypeHint
  * @return {Array}
  */
-export function arrangeAnalysisMenu(menu,parts,fileFormat, dataTypeHint) {
-    const imageEntry= menu.find( (m) => m.displayType===DPtypes.IMAGE);
-    if (imageEntry) {
-        menu= menu.filter( (m) => m.displayType!==DPtypes.IMAGE);
-    }
+export function chooseDefaultEntry(menu,parts,fileFormat, dataTypeHint) {
+    if (!menu || !menu.length) return undefined;
+    let defIndex= menu.findIndex( (m) => m.requestDefault);
+    if (defIndex > -1) return defIndex;
 
     switch (dataTypeHint) {
         case 'timeseries':
-            imageEntry && menu.push(imageEntry);
+            defIndex= menu.find( (m) => m.displayType===DPtypes.CHART);
             break;
         case 'spectrum':
-            const chartList= menu.filter( (m) => m.displayType===DPtypes.CHART);
-            const noCharts= menu.filter( (m) => m.displayType!==DPtypes.CHART);
-            if (chartList.length) {
-                menu= [...chartList,...noCharts];
-                imageEntry && menu.push(imageEntry);
-            }
-            else {
-                imageEntry && menu.unshift(imageEntry);
-            }
-            break;
-        default:
-            imageEntry && menu.unshift(imageEntry);
-            break;
+            defIndex= menu.find( (m) => m.displayType===DPtypes.CHART);
     }
-    return menu;
+    return defIndex > -1 ? defIndex : 0;
 }
+
+
+
 
 // todo - findAvailableTypesForAnalysisPart needs to have injection point for application specific analysis
 /**
