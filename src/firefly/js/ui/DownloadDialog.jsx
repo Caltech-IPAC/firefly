@@ -126,7 +126,7 @@ const newBgKey = () => 'DownloadOptionPanel-' + Date.now();
 
 export function DownloadOptionPanel (props) {
     const {groupKey, cutoutSize, help_id, children, style, title, tbl_id, dlParams, dataTag, updateSearchRequest=null, updateDownloadRequest=null} = props;
-    const { showZipStructure=true, showEmailNotify=true, showFileLocation=true, showTitle=true } = props;
+    const { cancelText='Cancel', showZipStructure=true, showEmailNotify=true, showFileLocation=true, showTitle=true } = props;
 
     const labelWidth = 110;
     const ttl = title || DOWNLOAD_DIALOG_ID;
@@ -190,6 +190,7 @@ export function DownloadOptionPanel (props) {
         <div style = {Object.assign({margin: '4px', position: 'relative', minWidth:400, height:'auto'}, style)}>
             <FormPanel
                 submitText = 'Prepare Download'
+                cancelText = {cancelText}
                 groupKey = {groupKey}
                 onSubmit = {onSubmit}
                 onCancel = {() => dispatchHideDialog(ttl)}
