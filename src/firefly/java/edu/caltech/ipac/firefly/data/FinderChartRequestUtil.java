@@ -95,10 +95,10 @@ public class FinderChartRequestUtil {
 
     //TODO this is the DESC definetion, which is in consistence of the band name specified
     private final static String akariCombo[]={
-            "akari.akari_images:N60  ;FIS n60 (65 microns)",
-            "akari.akari_images:WideS;FIS wideS (90 microns)",
-            "akari.akari_images:WideL;FIS wideL (140 microns)",
-            "akari.akari_images:N160 ;FIS n160 (160 microns)"
+            "akari.akari_images:N60  ;FIS n60 (65 microns);file_type='science'",
+            "akari.akari_images:WideS;FIS wideS (90 microns);file_type='science'",
+            "akari.akari_images:WideL;FIS wideL (140 microns);file_type='science'",
+            "akari.akari_images:N160 ;FIS n160 (160 microns);file_type='science'"
     };
 
     private final static String sDssCombo[]={

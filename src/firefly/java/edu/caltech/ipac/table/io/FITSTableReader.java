@@ -263,21 +263,40 @@ public final class FITSTableReader
                                                          int table_idx) throws FitsException, IOException {
 
 
-        DataGroup dg;
-        if (table_idx==0) { //FITS tables are not at 0, if at zero try to read it as an image first
-            dg= getFitsImageAsTable(fits_filename,metaInfo, table_idx);
-            if (dg==null) {
-                StarTable table = getStarTable(fits_filename, table_idx);
-                if (table!=null) dg= convertStarTableToDataGroup(table, dataCols, headerCols, strategy);
+        Fits fits= null;
+        try {
+            // disable long string for HeaderCard creation while collecting table with table_idx from StarTableFactory to work around
+            // the exception error sent from nom.tam.fits.
+            FitsFactory.useThreadLocalSettings(true);
+            FitsFactory.setLongStringsEnabled(false);
+            DataGroup dg;
+            if (table_idx==0) { //FITS tables are not at 0, if at zero try to read it as an image first
+                dg= getFitsImageAsTable(fits_filename,metaInfo, table_idx);
+                if (dg==null) {
+                    fits = new Fits(fits_filename);
+                    StarTable table = getStarTable(fits, fits_filename, table_idx);
+                    dg= convertStarTableToDataGroup(table, dataCols, headerCols, strategy);
+                }
+            }
+            else { // if >0 then try to read it as a table first.
+                fits = new Fits(fits_filename);
+                StarTable table = getStarTable(fits, fits_filename, table_idx);
+                dg=  (table!=null) ?
+                        convertStarTableToDataGroup(table, dataCols, headerCols, strategy) :
+                        getFitsImageAsTable(fits_filename,metaInfo, table_idx);
+            }
+            return dg;
+        } catch (FitsException|IOException e) {
+            logTableReadError(fits_filename,table_idx,e.getMessage());
+            throw e;
+        } finally {
+            FitsFactory.useThreadLocalSettings(false);
+            try {
+                if (fits!=null && fits.getStream()!=null) fits.getStream().close();
+            } catch (IOException e) {
+                // do nothing
             }
         }
-        else { // if >0 then try to read it as a table first.
-            StarTable table = getStarTable(fits_filename, table_idx);
-            dg=  (table!=null) ?
-                    convertStarTableToDataGroup(table, dataCols, headerCols, strategy) :
-                    getFitsImageAsTable(fits_filename,metaInfo, table_idx);
-        }
-        return dg;
     }
 
 
@@ -400,60 +419,38 @@ public final class FITSTableReader
      * @return one star table or none
      * @throws IOException
      */
+    public static StarTable getStarTable(Fits fits, String fitsFilename, int tableIdx) throws FitsException, IOException {
 
-    public static StarTable getStarTable(String fitsFilename, int tableIdx) {
 
-        // disable long string for HeaderCard creation while collecting table with table_idx from StarTableFactory to work around
-        // the exception error sent from nom.tam.fits.
+        int tIdx = Math.max(tableIdx, 1); //todo - should be throw an error if zero is passed?
 
-        FitsFactory.useThreadLocalSettings(true);
-        FitsFactory.setLongStringsEnabled(false);
-        Fits fits = null;
+        BasicHDU<?>[] hdus = fits.read();
 
-        try {
-            int tIdx = Math.max(tableIdx, 1); //todo - should be throw an error if zero is passed?
-
-            fits = new Fits(fitsFilename);
-            BasicHDU<?>[] hdus = fits.read();
-            
-            if (tIdx>=hdus.length) {
-                logTableReadError(fitsFilename,tableIdx,"HDU does not exist, HDU count: "+ hdus.length);
-                return null;
-            }
-
-            if (!(hdus[tIdx]instanceof TableHDU)) {
-                logTableReadError(fitsFilename,tableIdx,"HDU is not a table hdu");
-                return null;
-            }
-            TableHDU<?> hdu= (TableHDU<?>)hdus[tIdx];
-
-            String zValue= hdu.getHeader().containsKey("ZIMAGE") ? hdu.getHeader().getStringValue("ZIMAGE").toUpperCase() : "";
-            if (zValue.equals("T") || zValue.equals("TRUE")) {
-                logTableReadError(fitsFilename,tableIdx,"HDU is an compressed image stored at a table");
-                return null;
-            }
-
-            FitsStarTable starTable= new FitsStarTable(hdu);
-            Iterator<HeaderCard> i= hdu.getHeader().iterator();
-            for(HeaderCard card= i.next();i.hasNext(); card= i.next()) {
-                starTable.setParameter( new DescribedValue(
-                        new DefaultValueInfo(card.getKey(), String.class), card.getValue()) );
-            }
-
-            return starTable;
-        } catch (Exception e) {
-            logTableReadError(fitsFilename,tableIdx,e.getMessage());
-        }
-        finally {
-            FitsFactory.useThreadLocalSettings(false);
-            try {
-                if (fits!=null && fits.getStream()!=null) fits.getStream().close();
-            } catch (IOException e) {
-                // do nothing
-            }
+        if (tIdx>=hdus.length) {
+            logTableReadError(fitsFilename,tableIdx,"HDU does not exist, HDU count: "+ hdus.length);
+            return null;
         }
 
-        return null;
+        if (!(hdus[tIdx]instanceof TableHDU)) {
+            logTableReadError(fitsFilename,tableIdx,"HDU is not a table hdu");
+            return null;
+        }
+        TableHDU<?> hdu= (TableHDU<?>)hdus[tIdx];
+
+        String zValue= hdu.getHeader().containsKey("ZIMAGE") ? hdu.getHeader().getStringValue("ZIMAGE").toUpperCase() : "";
+        if (zValue.equals("T") || zValue.equals("TRUE")) {
+            logTableReadError(fitsFilename,tableIdx,"HDU is an compressed image stored at a table");
+            return null;
+        }
+
+        FitsStarTable starTable= new FitsStarTable(hdu);
+
+        Iterator<HeaderCard> i= hdu.getHeader().iterator();
+        for(HeaderCard card= i.next();i.hasNext(); card= i.next()) {
+            starTable.setParameter( new DescribedValue(
+                    new DefaultValueInfo(card.getKey(), String.class), card.getValue()) );
+        }
+        return starTable;
     }
 
     /**
@@ -495,6 +492,7 @@ public final class FITSTableReader
                                                         String strategy)
             throws FitsException, IllegalArgumentException, IOException {
 
+        if (table==null) return null;
         if (strategy == null) {
             strategy = DEFAULT;
         }
