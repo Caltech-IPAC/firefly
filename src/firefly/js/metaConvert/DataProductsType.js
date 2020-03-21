@@ -44,6 +44,7 @@ export const DPtypes= {
 
 export const SHOW_CHART='showChart';
 export const SHOW_TABLE='showTable';
+export const AUTO='auto';
 
 /**
  *

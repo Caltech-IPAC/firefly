@@ -1,20 +1,13 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {dpdtChart, dpdtChartTable, dpdtImage, dpdtTable, DPtypes, SHOW_CHART, SHOW_TABLE} from './DataProductsType';
-import {FileAnalysisType} from '../data/FileAnalysis';
-import {createChartActivate, createChartSingleRowArrayActivate, createTableActivate} from './converterUtils';
+import {isArray} from 'lodash';
+import {dpdtChartTable, dpdtImage, dpdtTable, DPtypes, SHOW_CHART, SHOW_TABLE, AUTO} from './DataProductsType';
+import {FileAnalysisType, UIEntry, UIRender} from '../data/FileAnalysis';
+import {RequestType} from '../visualize/RequestType.js';
+import {TitleOptions} from '../visualize/WebPlotRequest';
+import {createChartTableActivate, createChartSingleRowArrayActivate} from './converterUtils';
 import {createSingleImageActivate} from './ImageDataProductsUtil';
-
-
-
-
-// todo
-// todo - PartAnalyzer will eventually need to have some injected analysis
-//      - We should do this as we better understand the need
-// todo
-
-
 
 
 /**
@@ -33,24 +26,21 @@ import {createSingleImageActivate} from './ImageDataProductsUtil';
  */
 export function analyzePart(part, request, table, row, fileFormat, serverCacheFileKey, activateParams) {
 
-    const {type,desc, index}= part;
+    const {type,desc, fileLocationIndex}= part;
     const availableTypes= findAvailableTypesForAnalysisPart(part, fileFormat);
+    const fileOnServer= (part.convertedFileName) ? part.convertedFileName : serverCacheFileKey;
 
     const imageResult= availableTypes.includes(DPtypes.IMAGE) && type===FileAnalysisType.Image &&
-            analyzeImageResult(part, request, table, row, fileFormat, serverCacheFileKey,desc,activateParams,index);
+            analyzeImageResult(part, request, table, row, fileFormat, part.convertedFileName,desc,activateParams,fileLocationIndex);
 
-    const chartResult= availableTypes.includes(DPtypes.CHART) && analyzeChartResult(part, fileFormat, serverCacheFileKey,desc,activateParams,index);
+    const chartResult= availableTypes.includes(DPtypes.CHART) &&
+                   analyzeChartTableResult(false, part, fileFormat, fileOnServer,desc,activateParams,fileLocationIndex);
     const tableResult=
         availableTypes.includes(DPtypes.TABLE) &&
         (!chartResult || chartResult.displayType!==DPtypes.CHART_TABLE) &&
-        analyzeTableResult(part, fileFormat, serverCacheFileKey,desc,activateParams,index,chartResult);
+        analyzeChartTableResult(true, part, fileFormat, fileOnServer,desc,activateParams,fileLocationIndex);
 
-    return {
-        imageResult,
-        // imageSingleAxis:availableTypes.includes(DPtypes.IMAGE_SNGLE_AXIS),
-        tableResult,
-        chartResult
-    };
+    return { imageResult, tableResult, chartResult };
 }
 
 /**
@@ -77,9 +67,6 @@ export function chooseDefaultEntry(menu,parts,fileFormat, dataTypeHint) {
 }
 
 
-
-
-// todo - findAvailableTypesForAnalysisPart needs to have injection point for application specific analysis
 /**
  * Determine what type of displays are available for this part
  * @param part
@@ -124,85 +111,127 @@ const C_COL1= ['index','wave'];
 const C_COL2= ['flux','data','data1','data2'];
 
 
-// todo - analyzeChartResult needs to have injection point for application specific analysis
 /**
- *
+ * Return a object that specifieds the xy chart columns, the column names, and the column units
+ * Each property in the object is optional
+ * xCol and yCol is return it an appropriate one if found
+ * if table is a Fits image rendered as a table the cNames is always returned, cUnits is return if specified in the part
+ * if the table is a FITS table or some other type of table then the cNames and cUnits is never returned.
  * @param part
  * @param fileFormat
- * @param serverCacheFileKey
+ * @return {{xCol:string,yCol:string,cNames:Array.<String>,cUnits:Array.<String>}}
+ */
+function getTableChartColInfo(part, fileFormat) {
+    if (isImageAsTable(part,fileFormat)) {
+        let cNames= [];
+        const {tableColumnNames:overrideColNames, tableColumnUnits=[]}= part;
+        const colCnt= getImageAsTableColCount(part,fileFormat);
+        if (isArray(overrideColNames) && overrideColNames.length===colCnt) {
+            cNames= overrideColNames;
+        }
+        else {
+            for(let i=0; i<colCnt; i++) cNames.push(i===0?'naxis1_idx': `naxis1_data_${(i-1)}`);
+            if (colCnt===2) cNames[1]= 'DataLine';
+        }
+        const cUnits= cNames.length===tableColumnUnits.length ? tableColumnUnits : undefined;
+        return {xCol:cNames[0],yCol:cNames[1],cNames,cUnits};
+    }
+    else {
+        const tabColNames= getColumnNames(part,fileFormat);
+        if (!tabColNames || tabColNames.length<2) return {};
+        const xCol= tabColNames.find( (c) => C_COL1.includes(c.toLowerCase()));
+        const yCol= tabColNames.find( (c) => C_COL2.includes(c.toLowerCase()));
+        const rowsTotal= getRowCnt(part,fileFormat);
+        if (rowsTotal<1 || !xCol || !yCol) return {};
+        return {xCol,yCol};
+    }
+}
+
+function getTableDropTitleStr(title,part,fileFormat,tableOnly) {
+    const tOrCStr= tableOnly ? 'table' : 'table or chart';
+    if (fileFormat==='FITS') {
+        if (isImageAsTable(part,fileFormat)) {
+            const imageAsStr= getImageAsTableColCount(part,fileFormat)>2 ? 'image - show as ': 'image - 1D - show as ';
+            return `HDU #${part.index} (${imageAsStr}${tOrCStr}) ${title}`;
+        }
+        else {
+            return `HDU #${part.index} (${tOrCStr}) ${title}`;
+        }
+    }
+    else {
+        return `Part #${part.index} ${title}`;
+    }
+}
+
+
+/**
+ *
+ * @param {boolean} tableOnly
+ * @param {FileAnalysisPart} part
+ * @param fileFormat
+ * @param fileOnServer
  * @param title
  * @param activateParams
  * @param tbl_index
- * @return {DataProductsDisplayType}
+ * @return {DataProductsDisplayType|undefined}
  */
-function analyzeChartResult(part, fileFormat, serverCacheFileKey, title, activateParams, tbl_index) {
-    const imageAsTableColCnt= isImageAsTable(part,fileFormat) ? getImageAsTableColCount(part,fileFormat) : 0;
-    let imageAsStr= '';
-    if (imageAsTableColCnt>2) imageAsStr= 'image - show as ';
-    else if (imageAsTableColCnt===2) imageAsStr= 'image - 1D - show as ';
-    const ddTitleStr= fileFormat==='FITS' ? `HDU #${part.index} (${imageAsStr}table or chart) ${title}` : `Part #${part.index} ${title}`;
-    const cNames= imageAsTableColCnt ? [] : getColumnNames(part,fileFormat);
-    const rowsTotal= getRowCnt(part,fileFormat);
-    let xCol;
-    let yCol;
-    if (imageAsTableColCnt) {
-        for(let i=0; i<imageAsTableColCnt; i++) cNames.push(i===0?'naxis1_idx': `naxis1_data_${(i-1)}`);
+function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, title, activateParams, tbl_index=0) {
+    const {uiEntry,uiRender,chartParamsAry, defaultPart:requestDefault= false}= part;
+    if (uiEntry===UIEntry.UseSpecified) {
+        if (tableOnly && uiRender!==UIRender.Table) return undefined;
+        else if (uiRender!==UIRender.Chart) return undefined;
+    }
 
-        xCol= cNames[0];
-        yCol= cNames[1];
+
+    const ddTitleStr= getTableDropTitleStr(title,part,fileFormat,tableOnly);
+    const {xCol,yCol,cNames,cUnits}= getTableChartColInfo(part,fileFormat);
+
+
+    if (tableOnly) {
+        return dpdtTable(ddTitleStr,
+            createChartTableActivate(false, fileOnServer,title,activateParams,
+            undefined, tbl_index, cNames, cUnits),
+            undefined, {paIdx:tbl_index,requestDefault});
     }
     else {
-        if (!cNames || cNames.length<2) return;
-        const xCol= cNames.find( (c) => C_COL1.includes(c.toLowerCase()));
-        const yCol= cNames.find( (c) => C_COL2.includes(c.toLowerCase()));
-        if (rowsTotal<1 || !xCol || !yCol) return;
-    }
-
-
-    if (rowsTotal===1) {
-        return dpdtChartTable(ddTitleStr,
-            createChartSingleRowArrayActivate(serverCacheFileKey,'Row 1 Chart',activateParams,xCol,yCol,0,tbl_index),
-            undefined, {paIdx:tbl_index, charTableDefOption: SHOW_TABLE});
-    }
-    else if (imageAsTableColCnt===2) {
-        cNames[1]= 'DataLine';
-        return dpdtChartTable(ddTitleStr,
-            createChartActivate(serverCacheFileKey,title,activateParams,cNames[0],cNames[1],tbl_index,cNames),
-            undefined, {paIdx:tbl_index, chartTableDefOption: SHOW_CHART});
-
-    }
-    else {
-        return dpdtChartTable(ddTitleStr,
-                createChartActivate(serverCacheFileKey,title,activateParams,xCol,yCol,tbl_index,cNames),
-                undefined, {paIdx:tbl_index, chartTableDefOption: SHOW_TABLE});
+        if ( (!xCol || !yCol) && !chartParamsAry) return;
+        let {chartTableDefOption}= part;
+        if (getRowCnt(part,fileFormat)===1) {
+            if (chartTableDefOption===AUTO) chartTableDefOption= SHOW_TABLE;
+            return dpdtChartTable(ddTitleStr,
+                createChartSingleRowArrayActivate(fileOnServer,'Row 1 Chart',activateParams,xCol,yCol,0,tbl_index),
+                undefined, {paIdx:tbl_index, chartTableDefOption, requestDefault});
+        }
+        else {
+            const imageAsTableColCnt= isImageAsTable(part,fileFormat) ? getImageAsTableColCount(part,fileFormat) : 0;
+            const chartInfo= {xAxis:xCol, yAxis:yCol, chartParamsAry};
+            if (chartTableDefOption===AUTO) chartTableDefOption= imageAsTableColCnt===2 ? SHOW_CHART : SHOW_TABLE;
+            return dpdtChartTable(ddTitleStr,
+                createChartTableActivate(true, fileOnServer,title,activateParams,chartInfo,tbl_index,cNames,cUnits),
+                undefined, {paIdx:tbl_index, chartTableDefOption, requestDefault});
+        }
     }
 }
 
-
-
-/**
- *
- * @param part
- * @param fileFormat
- * @param serverCacheFileKey
- * @param title
- * @param {ActivateParams} activateParams
- * @param tbl_index
- * @return {DataProductsDisplayType}
- */
-function analyzeTableResult(part, fileFormat, serverCacheFileKey,title, activateParams, tbl_index) {
-    const ddTitleStr= fileFormat==='FITS' ? `HDU #${part.index} (table) ${title}` : `Part #${part.index} ${title}`;
-
-    return dpdtTable(ddTitleStr, createTableActivate(serverCacheFileKey,title,activateParams,tbl_index,false),
-        undefined, {paIdx:tbl_index});
-}
-
-function analyzeImageResult(part, request, table, row, fileFormat, serverCacheFileKey,title, activateParams, hduIdx) {
+function analyzeImageResult(part, request, table, row, fileFormat, fileOnServer,title, activateParams, hduIdx) {
+    if (part.uiEntry===UIEntry.UseSpecified && part.uiRender!==UIRender.Image) return undefined;
     const newReq= request.makeCopy();
+    let override= false;
+    if (fileOnServer) {
+        newReq.setRequestType(RequestType.FILE);
+        newReq.setFileName(fileOnServer);
+        newReq.setTitle(title);
+        newReq.setTitleOptions(TitleOptions.NONE);
+        override= true;
+    }
+    hduIdx ?? newReq.setMultiImageExts(hduIdx+'');
     const {imageViewerId}= activateParams;
-    newReq.setMultiImageExts(hduIdx+'');
-    return dpdtImage(`HDU #${hduIdx} (image) ${title}`,
-        createSingleImageActivate(newReq,imageViewerId,table.tbl_id,row),'image-'+0, {request:newReq});
+
+    const ddTitleStr= (part.uiEntry===UIEntry.UseSpecified || fileOnServer) ?
+                           `${title} (image)` :  `HDU #${hduIdx||0} (image) ${title}`;
+
+    return dpdtImage(ddTitleStr, createSingleImageActivate(newReq,imageViewerId,table.tbl_id,row),'image-'+0,
+        {request:newReq, override, requestDefault:Boolean(part.defaultPart)});
 }
 
 
@@ -225,7 +254,7 @@ function getHeadersThatStartsWith(header, part) {
         .map( (row) => row[2]);
 }
 
-export function getHeader(header, part) {
+function getHeader(header, part) {
     const data=part?.details?.tableData?.data;
     if (!data) return undefined;
     const foundRow= part.details.tableData.data.find( (row) => row[1].toLowerCase()===header.toLowerCase());
@@ -237,15 +266,24 @@ export function getHeader(header, part) {
 function getColumnNames(part, fileFormat) {
     if (fileFormat==='FITS') {
         const naxis= getIntHeader('NAXIS',part);
+        const {tableColumnNames}= part;
         if (naxis===1) {
-            return ['index', 'data'];
+            if (isArray(tableColumnNames) && tableColumnNames.length===2) {
+                return tableColumnNames;
+            }
+            else {
+                return ['index', 'data'];
+            }
         }
         else {
             const ttNamesAry= getHeadersThatStartsWith('TTYPE',part);
             if (ttNamesAry.length) return ttNamesAry;
             const naxis2= getIntHeader('NAXIS2',part,0);
             if (naxis2<=30) {
-                let dynHeaderNames= ['index'];
+                if (isArray(tableColumnNames) && tableColumnNames.length===naxis2+1) {
+                    return tableColumnNames;
+                }
+                const dynHeaderNames= ['index'];
                 for(let i=0;i<naxis2;i++) dynHeaderNames.push('data'+i);
                 return dynHeaderNames;
             }
@@ -256,16 +294,7 @@ function getColumnNames(part, fileFormat) {
     }
 }
 
-function isImageAsTable(part, fileFormat) {
-    if (part.type!==FileAnalysisType.Image) return false;
-    if (fileFormat !== 'FITS') return false;
-    if (is1DImage(part)) return true;
-    const naxis = getIntHeader('NAXIS', part);
-    if (naxis!==2) return false;
-    const naxis2= getIntHeader('NAXIS2',part,0);
-    if (naxis2>30) return false;
-    return true;
-}
+function isImageAsTable(part, fileFormat) { return getImageAsTableColCount(part,fileFormat) > 0; }
 
 function getImageAsTableColCount(part, fileFormat) {
     if (part.type!==FileAnalysisType.Image) return 0;
@@ -294,4 +323,3 @@ function getRowCnt(part, fileFormat) {
         }
     }
 }
-

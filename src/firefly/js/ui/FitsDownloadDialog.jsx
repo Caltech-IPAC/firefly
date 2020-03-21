@@ -42,7 +42,7 @@ import {INFO_POPUP, showInfoPopup} from './PopupUtil.jsx';
 import {getWorkspaceConfig} from '../visualize/WorkspaceCntlr.js';
 
 import HelpIcon from './HelpIcon.jsx';
-import {fetchUrl} from '../util/WebUtil';
+import {upload} from '../rpc/CoreServices.js';
 
 const STRING_SPLIT_TOKEN= '--STR--';
 const dialogWidth = 500;
@@ -766,14 +766,6 @@ function getHyphenatedName(str){
     return fName;
 }
 
-const UL_URL = `${getRootURL()}sticky/CmdSrv?${ServerParams.COMMAND}=${ServerParams.UPLOAD}`;
-
-function doUpload(file, params={}) {
-    params = Object.assign(params, {file});   // file should be the last param due to AnyFileUpload limitation
-    const options = {method: 'multipart', params};
-    return fetchUrl(UL_URL, options);
-}
-
 function makePngLocal(plotId, filename= 'a.png') {
     const canvas= makeImageCanvas(plotId);
 
@@ -800,7 +792,7 @@ function makePngWorkspace(plotId, path, filename= 'a.png') {
                 [WS_SERVER_PARAM.should_overwrite.key]: true
             };
 
-            return doUpload(blob, params).then( ({status, cacheKey}) => {
+            return upload(blob, false, params).then( ({status, cacheKey}) => {
             });
         }, 'image/png');
     }

@@ -33,10 +33,10 @@ import {encodeServerUrl, uniqueID} from '../util/WebUtil.js';
 import {fetchTable, queryTable, selectedValues} from '../rpc/SearchServicesJson.js';
 import {DEF_BASE_URL} from '../core/JsonUtils.js';
 import {ServerParams} from '../data/ServerParams.js';
-import {doUpload} from '../ui/FileUpload.jsx';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga.js';
 import {MetaConst} from '../data/MetaConst';
 import {toBoolean} from '../util/WebUtil';
+import {upload} from '../rpc/CoreServices.js';
 import {dd2sex} from '../visualize/CoordUtil.js';
 
 
@@ -907,7 +907,7 @@ export function getAsyncTableSourceUrl(tbl_ui_id, params) {
     const ipacTable = tableToIpac(getTblById(tbl_id));
     const blob = new Blob([ipacTable]);
     //const file = new File([new Blob([ipacTable])], filename);
-    return doUpload(blob).then( ({status, cacheKey}) => {
+    return upload(blob).then( ({status, cacheKey}) => {
         const request = makeFileRequest('save as text', cacheKey, null, {pageSize: MAX_ROW});
         return makeTableSourceUrl(columns, request, params);
     });

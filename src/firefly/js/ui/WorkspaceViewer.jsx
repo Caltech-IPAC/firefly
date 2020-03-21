@@ -34,6 +34,7 @@ const workspacePopupId = 'workspacePopupId';
 import LOADING from 'html/images/gxt/loading.gif';
 import ComponentCntlr from '../core/ComponentCntlr.js';
 import {isExistWorspaceFile} from '../visualize/WorkspaceCntlr';
+import {parseUploadResults} from '../rpc/CoreServices.js';
 
 /*-----------------------------------------------------------------------------------------*/
 /* core component as FilePicker wrapper
@@ -368,15 +369,7 @@ function doUploadWorkspace(file, params={}) {
     }
 
     return fetchUrl(UL_URL, options).then( (response) => {
-        return response.text().then((text) => {
-            // text is in format ${status}::${message}::${message}::${cacheKey}::${analysisResult}
-            let [status, message, cacheKey, analysisResult, ...rest] = text.split('::');
-            if (rest.length > 0) {
-                // there are '::' in the analysisReaults.. put it back
-                analysisResult = analysisResult + '::' + rest.join('::');
-            }
-            return {status, message, cacheKey, analysisResult};
-        });
+        return response.text().then((text) => parseUploadResults(text) );
     });
 }
 

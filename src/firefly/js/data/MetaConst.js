@@ -88,6 +88,11 @@ export const MetaConst = {
      */
     IMAGE_AS_TABLE_COL_NAMES: 'IMAGE_AS_TABLE_COL_NAMES',
 
+    /*
+     * comma separated names of the units to assign to the table when reading a fits image as a table.
+     */
+    IMAGE_AS_TABLE_UNITS: 'IMAGE_AS_TABLE_UNITS',
+
     /** the column name with the url or filename of the image data */
     DATA_SOURCE : 'DataSource',
 
@@ -116,6 +121,30 @@ export const MetaConst = {
     HIGHLIGHTED_ROW             : 'highlightedRow',                 // row to highlight on data fetch
     HIGHLIGHTED_ROW_BY_ROWIDX   : 'highlightedRowByRowIdx',         // row to highlight on data fetch based on original row index
 
+
+    /**
+     * The id of the file analyzer to call
+     * example - analyzerId: Sofia
+     */
+    ANALYZER_ID : 'AnalyzerId',
+
+    /**
+     * a list of columns, separated by commas, whose values will be send as parameter to the related DataProductAnalyzer
+     * The key will the the columns names, the values will the taken from the active row. Therefore the values
+     * will change as different rows are selected.
+     * example - analyzerColumns: Processing Level,Product Type,Bandpass
+     *
+     */
+    ANALYZER_COLUMNS : 'AnalyzerColumns',
+
+    /**
+     * a list of parameters, separated by commas, that will be send to the data product analyzer. The key/value pairs will be the same
+     * regardless of which row is selected.
+     * example - analyzerIdParams: instrument=FLITECAM,A=123
+     */
+    ANALYZER_PARAMS : 'AnalyzerParams',
+
+
     /** @deprecated use CENTER_COLUMN */
     CATALOG_COORD_COLS : 'CatalogCoordColumns',
 
@@ -124,5 +153,6 @@ export const MetaConst = {
 
     /** @deprecated replaced by IMAGE_SOURCE_ID */
     DATASET_CONVERTER : 'datasetInfoConverterId'
+
 
 };

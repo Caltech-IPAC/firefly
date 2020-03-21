@@ -98,7 +98,7 @@ public class ServerEventManager {
     }
 
     public static void addEventQueue(ServerEventQueue queue) {
-        Logger.briefInfo("create new Queue for: "+ queue.getQueueID() );
+        Logger.briefInfo("Channel: create new Queue for: "+ queue.getQueueID() );
         evQueueList.add(queue);
         repQueueList.setQueueListForNode(evQueueList);
     }

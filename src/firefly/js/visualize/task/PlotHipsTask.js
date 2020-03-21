@@ -57,10 +57,10 @@ import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
 import {resolveHiPSIvoURL} from '../HiPSListUtil.js';
 import {addNewMocLayer, isMOCFitsFromUploadAnalsysis, makeMocTableId, MOCInfo, UNIQCOL} from '../HiPSMocUtil.js';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
-import {doUpload} from '../../ui/FileUpload.jsx';
 import {getRowCenterWorldPt} from '../saga/ActiveRowCenterWatcher';
 import {getActiveTableId} from '../../tables/TableUtil';
 import {locateOtherIfMatched, matchHiPStoPlotView} from './WcsMatchTask';
+import {upload} from '../../rpc/CoreServices.js';
 
 const PROXY= true;
 
@@ -295,7 +295,7 @@ async function createHiPSMocLayer(ivoid, hipsUrl, plot, mocFile = 'Moc.fits') {
     }
 
     try {
-        const {status, cacheKey, analysisResult}=  await doUpload(mocUrl, {isFromURL: true, fileAnalysis: ()=>{}});
+        const {status, cacheKey, analysisResult}=  await upload(mocUrl, 'details');
         if (status === '200') {
             const report = JSON.parse(analysisResult) || {};
 

@@ -3,7 +3,7 @@
  */
 package edu.caltech.ipac.table.io;
 
-import edu.caltech.ipac.firefly.core.FileAnalysis;
+import edu.caltech.ipac.firefly.core.FileAnalysisReport;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
@@ -135,13 +135,13 @@ public final class IpacTableReader {
         return outData;
     }
 
-    public static FileAnalysis.Report analyze(File infile, FileAnalysis.ReportType type) throws IOException {
+    public static FileAnalysisReport analyze(File infile, FileAnalysisReport.ReportType type) throws IOException {
         IpacTableDef meta = IpacTableUtil.getMetaInfo(infile);
-        FileAnalysis.Report report = new FileAnalysis.Report(type, TableUtil.Format.IPACTABLE.name(), infile.length(), infile.getPath());
-        FileAnalysis.Part part = new FileAnalysis.Part(FileAnalysis.Type.Table, 0, String.format("IPAC Table (%d cols x %s rows)", meta.getCols().size(), meta.getRowCount()));
+        FileAnalysisReport report = new FileAnalysisReport(type, TableUtil.Format.IPACTABLE.name(), infile.length(), infile.getPath());
+        FileAnalysisReport.Part part = new FileAnalysisReport.Part(FileAnalysisReport.Type.Table, String.format("IPAC Table (%d cols x %s rows)", meta.getCols().size(), meta.getRowCount()));
         part.setTotalTableRows(meta.getRowCount());
         report.addPart(part);
-        if (type.equals(FileAnalysis.ReportType.Details)) {
+        if (type.equals(FileAnalysisReport.ReportType.Details)) {
             part.setDetails(TableUtil.getDetails(0, meta));
         }
         return report;

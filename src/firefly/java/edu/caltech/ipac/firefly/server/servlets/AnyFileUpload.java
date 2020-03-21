@@ -4,7 +4,9 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.core.FileAnalysis;
+import edu.caltech.ipac.firefly.core.FileAnalysisReport;
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.SrvParam;
@@ -31,18 +33,21 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Date: Feb 16, 2011
  *
  *  Possible Parameters:
  *  wcCmd
- *  URL
- *  webPlotRequest
+ *  URL - url string
+ *  webPlotRequest - serialized webPlotRequest string
  *  workspacePut
- *  filename
+ *  filename - string
  *  cacheKey
- *  fileAnalysis
+ *  fileAnalysis - one of "Brief", "Normal", "Details", "false"
+ *  analyzerId - id string of pass to file analysis, ignored f fileAnalysis is not specified
  *  >> posted file
  *
  * @author loi
@@ -54,12 +59,19 @@ public class AnyFileUpload extends BaseHttpServlet {
     private static final String CACHE_KEY = "cacheKey";
     private static final String WORKSPACE_PUT = "workspacePut";
     private static final String WS_CMD = "wsCmd";
+    public  static final String ANALYZER_ID = "analyzerId";
     /** load from a URL */
     private static final String URL = "URL";
     /** load from a WebPlotRequest */
     private static final String WEB_PLOT_REQUEST = "webPlotRequest";
     /** run file analysis and return an analysis json object */
     private static final String FILE_ANALYSIS= "fileAnalysis";
+
+    private static final List<String> allParams= Arrays.asList(
+            FILE_NAME, CACHE_KEY, WORKSPACE_PUT, WS_CMD, ANALYZER_ID, URL,
+            WEB_PLOT_REQUEST, FILE_ANALYSIS, ServerParams.COMMAND);
+
+
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
         doFileUpload(req, res);
@@ -153,10 +165,12 @@ public class AnyFileUpload extends BaseHttpServlet {
 
         String doAnalysis = sp.getOptional(FILE_ANALYSIS);
         if (doAnalysis != null && !doAnalysis.toLowerCase().equals("false")) {
+            String analyzerId = sp.getOptional(ANALYZER_ID);
             StopWatch.getInstance().start("doAnalysis");
 
-            FileAnalysis.ReportType  reportType = getReportType(doAnalysis);
-            FileAnalysis.Report report = FileAnalysis.analyze(fileInfo.getFile(), reportType);
+            FileAnalysisReport.ReportType reportType = getReportType(doAnalysis);
+            FileAnalysisReport report = FileAnalysis.analyze(fileInfo.getFile(), reportType,
+                                                               analyzerId,sp.getParamMapUsingExcludeList(allParams));
             report.setFileName(fileInfo.getFileName());
             returnVal = returnVal + "::" + FileAnalysis.toJsonString(report);   // appends the report to the end of the returned String
 
@@ -172,11 +186,11 @@ public class AnyFileUpload extends BaseHttpServlet {
 //====================================================================
 //
 //====================================================================
-    private static FileAnalysis.ReportType getReportType(String type) {
+    private static FileAnalysisReport.ReportType getReportType(String type) {
         try {
-            return FileAnalysis.ReportType.valueOf(type);
+            return FileAnalysisReport.ReportType.valueOf(type);
         } catch (Exception e) {
-            return FileAnalysis.ReportType.Details;
+            return FileAnalysisReport.ReportType.Details;
         }
 
     }

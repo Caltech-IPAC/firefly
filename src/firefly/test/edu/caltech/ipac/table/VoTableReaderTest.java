@@ -5,7 +5,7 @@ package edu.caltech.ipac.table;
 
 import edu.caltech.ipac.TestCategory;
 import edu.caltech.ipac.firefly.ConfigTest;
-import edu.caltech.ipac.firefly.core.FileAnalysis;
+import edu.caltech.ipac.firefly.core.FileAnalysisReport;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.util.FileLoader;
@@ -15,7 +15,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * @author loi
@@ -45,7 +44,7 @@ public class VoTableReaderTest extends ConfigTest {
         StopWatch.getInstance().start("perfTestMidSize").enable().setLogger(Logger.getLogger("console"));
         for(int i=0; i < 10; i++) {
             StopWatch.getInstance().start("getheader");
-            VoTableReader.analyze(midFile, FileAnalysis.ReportType.Details);
+            VoTableReader.analyze(midFile, FileAnalysisReport.ReportType.Details);
             StopWatch.getInstance().stop("getheader");
         }
         StopWatch.getInstance().printLog("getheader", StopWatch.Unit.SECONDS);
@@ -60,7 +59,7 @@ public class VoTableReaderTest extends ConfigTest {
         StopWatch.getInstance().start("perfTestLargeSize").enable().setLogger(Logger.getLogger("console"));
         for(int i=0; i < 10; i++) {
             StopWatch.getInstance().start("getheader");
-            VoTableReader.analyze(largeFile, FileAnalysis.ReportType.Details);
+            VoTableReader.analyze(largeFile, FileAnalysisReport.ReportType.Details);
             StopWatch.getInstance().stop("getheader");
         }
         StopWatch.getInstance().printLog("getheader", StopWatch.Unit.SECONDS);

@@ -322,8 +322,15 @@ public final class FITSTableReader
         try {
             fits = new Fits(fits_filename);
             BasicHDU[] parts = fits.read();
-            String val = (metaInfo != null) ? metaInfo.get(MetaConst.IMAGE_AS_TABLE_COL_NAMES) : null;
-            String[] colNames = (val != null && val.length() > 1) ? val.split(",") : new String[]{"index"};
+            String[] colNames= new String[]{"index"};
+            String[] colUnits= null;
+            if (metaInfo!=null) {
+                String colNameStr = metaInfo.get(MetaConst.IMAGE_AS_TABLE_COL_NAMES);
+                if (colNameStr != null && colNameStr.length() > 1) colNames =colNameStr.split(",");
+                String colUnitsStr = metaInfo.get(MetaConst.IMAGE_AS_TABLE_UNITS);
+                if (colUnitsStr != null && colUnitsStr.length() > 1) colUnits =colUnitsStr.split(",");
+            }
+
             if (table_idx < parts.length) {
                 BasicHDU hdu = parts[table_idx];
                 if (hdu instanceof TableHDU) return null;
@@ -339,6 +346,7 @@ public final class FITSTableReader
                     if (desc == null) desc = "No Name";
                     ArrayList<DataType> dataTypes = new ArrayList<>();
                     DataType idxDT = new DataType(colNames[0], colNames[0], Integer.class);
+                    if (colUnits!=null) idxDT.setUnits(colUnits[0]);
                     dataTypes.add(idxDT);
 
                     if (is1dImage(hdu)) {
@@ -349,6 +357,7 @@ public final class FITSTableReader
 
                         String cName = (colNames.length > 1) ? colNames[1] : "data";
                         DataType dataDT = new DataType(cName, cName, Double.class);
+                        if (colUnits!=null && colUnits.length>1) idxDT.setUnits(colUnits[1]);
                         dataTypes.add(dataDT);
                         DataGroup dataGroup = new DataGroup(desc, dataTypes);
                         for (int i = 0; (i < data.length); i++) {
@@ -373,8 +382,10 @@ public final class FITSTableReader
                         if (data == null) return null;
 
                         for (int i = 0; (i < data.length); i++) {
-                            String cName = (i + 1 < colNames.length) ? colNames[i + 1] : "data" + i;
-                            dataTypes.add(new DataType(cName, cName, Double.class));
+                            String cName = (i + 1 < colNames.length) ? colNames[i+1] : "data" + i;
+                            DataType dt= new DataType(cName, cName, Double.class);
+                            if (colUnits!=null && colUnits.length>i) dt.setUnits(colUnits[i+1]);
+                            dataTypes.add(dt);
                         }
 
                         DataGroup dataGroup = new DataGroup(desc, dataTypes);

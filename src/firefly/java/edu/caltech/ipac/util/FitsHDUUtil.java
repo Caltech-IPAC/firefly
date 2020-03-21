@@ -3,7 +3,7 @@
  */
 package edu.caltech.ipac.util;
 
-import edu.caltech.ipac.firefly.core.FileAnalysis;
+import edu.caltech.ipac.firefly.core.FileAnalysisReport;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static edu.caltech.ipac.firefly.core.FileAnalysis.Type.*;
+import static edu.caltech.ipac.firefly.core.FileAnalysisReport.Type.*;
 
 
 /**
@@ -38,50 +38,65 @@ import static edu.caltech.ipac.firefly.core.FileAnalysis.Type.*;
 public class FitsHDUUtil {
     private static final List<String> NAXIS_SET = Arrays.asList("naxis", "naxis1", "naxis2", "naxis3");
 
-    public static FileAnalysis.Report analyze(File infile, FileAnalysis.ReportType type) throws Exception {
-        FileAnalysis.Report report = new FileAnalysis.Report(type, TableUtil.Format.FITS.name(), infile.length(), infile.getPath());
+    public static FitsAnalysisReport analyze(File infile, FileAnalysisReport.ReportType type) throws Exception {
+        FileAnalysisReport report = new FileAnalysisReport(type, TableUtil.Format.FITS.name(), infile.length(), infile.getPath());
+        Header headerAry[];
 
-        BasicHDU[] parts = new Fits(infile).read();               // get the headers
-        for(int i = 0; i < parts.length; i++) {
-            FileAnalysis.Type ptype;
-            int naxis= parts[i].getHeader().getIntValue("NAXIS");
+        Fits fits = null;
+        try {
+            fits = new Fits(infile);
+            BasicHDU[] parts = new Fits(infile).read();               // get the headers
+            headerAry= new Header[parts.length];
+            for(int i = 0; i < parts.length; i++) {
+                FileAnalysisReport.Type ptype;
+                int naxis= parts[i].getHeader().getIntValue("NAXIS");
 
-            if (parts[i] instanceof CompressedImageHDU)  ptype= Image;
-            else if (parts[i] instanceof ImageHDU)  ptype= Image;
-            else if (parts[i] instanceof UndefinedHDU && naxis==1)  ptype= Image;
-            else if (parts[i] instanceof TableHDU)  ptype= Table;
-            else ptype= FileAnalysis.Type.Unknown;
+                if (parts[i] instanceof CompressedImageHDU)  ptype= Image;
+                else if (parts[i] instanceof ImageHDU)  ptype= Image;
+                else if (parts[i] instanceof UndefinedHDU && naxis==1)  ptype= Image;
+                else if (parts[i] instanceof TableHDU)  ptype= Table;
+                else ptype= FileAnalysisReport.Type.Unknown;
 
-            boolean isCompressed = (parts[i] instanceof CompressedImageHDU);
+                boolean isCompressed = (parts[i] instanceof CompressedImageHDU);
 
-            Header header = parts[i].getHeader();
+                Header header = parts[i].getHeader();
+                headerAry[i]= header;
 
-            if (ptype == Image && !hasGoodData(header)) {
-                ptype = HeaderOnly;
-            }
+                if (ptype == Image && !hasGoodData(header)) {
+                    ptype = HeaderOnly;
+                }
 
-            String desc = i == 0 ? "Primary" : null;
-            int totalTableRows= -1;
-            if (desc == null) desc = header.getStringValue("EXTNAME");
-            if (desc == null) desc = header.getStringValue("NAME");
-            if (desc == null) desc =  isCompressed ? "CompressedImage" : "NoName";
+                String desc = i == 0 ? "Primary" : null;
+                if (desc == null) desc = header.getStringValue("EXTNAME");
+                if (desc == null) desc = header.getStringValue("NAME");
+                if (desc == null) desc = isCompressed ? "CompressedImage" : "NoName";
 
-            if (ptype == Table) {
-                TableHDU tHdu = (TableHDU)(parts[i]);
-                desc = String.format("%s (%d cols x %d rows)", desc, tHdu.getNCols(), tHdu.getNRows());
-                totalTableRows= tHdu.getNRows();
-            }
-            FileAnalysis.Part part = new FileAnalysis.Part(ptype, i, desc);
-            if (totalTableRows>-1) part.setTotalTableRows(totalTableRows);
-            report.addPart(part);
+                FileAnalysisReport.Part part = new FileAnalysisReport.Part(ptype, desc);
+                part.setIndex(i);
+                part.setFileLocationIndex(i);
+                if (ptype == Table) {
+                    TableHDU<?> tHdu= (TableHDU<?>)parts[i];
+                    desc = String.format("%s (%d cols x %d rows)", desc, tHdu.getNCols(), tHdu.getNRows());
+                    part.setTotalTableRows(tHdu.getNRows());
+                    part.setDesc(desc);
+                }
+                report.addPart(part);
 
-            if (type == FileAnalysis.ReportType.Brief) {
-                break;
-            } else if (type == FileAnalysis.ReportType.Details) {
-                part.setDetails(getDetails(i, header));
+                if (type == FileAnalysisReport.ReportType.Brief) {
+                    break;
+                } else if (type == FileAnalysisReport.ReportType.Details) {
+                    part.setDetails(getDetails(i, header));
+                }
             }
         }
-        return report;
+        finally {
+            try {
+                if (fits!=null && fits.getStream()!=null) fits.getStream().close();
+            } catch (IOException e) {
+                // do nothing
+            }
+        }
+        return new FitsAnalysisReport(report,headerAry);
     }
 
     private static boolean hasGoodData(Header header) {
@@ -287,5 +302,18 @@ public class FitsHDUUtil {
         }
 
         return dg;
+    }
+
+    public static class FitsAnalysisReport {
+        final FileAnalysisReport report;
+        final Header[] headerAry;
+
+        public FitsAnalysisReport(FileAnalysisReport report, Header[] headerAry) {
+            this.report = report;
+            this.headerAry = headerAry;
+        }
+
+        public FileAnalysisReport getReport() { return report; }
+        public Header[] getHeaderAry() { return headerAry; }
     }
 }

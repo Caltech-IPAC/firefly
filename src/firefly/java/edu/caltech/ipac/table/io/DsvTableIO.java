@@ -3,7 +3,7 @@
  */
 package edu.caltech.ipac.table.io;
 
-import edu.caltech.ipac.firefly.core.FileAnalysis;
+import edu.caltech.ipac.firefly.core.FileAnalysisReport;
 import edu.caltech.ipac.table.IpacTableDef;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.DataGroup;
@@ -161,14 +161,14 @@ public class DsvTableIO {
         }
     }
 
-    public static FileAnalysis.Report analyze(File infile, CSVFormat csvFormat, FileAnalysis.ReportType type) throws IOException {
+    public static FileAnalysisReport analyze(File infile, CSVFormat csvFormat, FileAnalysisReport.ReportType type) throws IOException {
         DataGroup header = getHeader(infile, csvFormat);
         String format = (csvFormat == CSVFormat.TDF) ? TableUtil.Format.TSV.name() : TableUtil.Format.CSV.name();
-        FileAnalysis.Report report = new FileAnalysis.Report(type, format, infile.length(), infile.getPath());
-        FileAnalysis.Part part = new FileAnalysis.Part(FileAnalysis.Type.Table, 0, String.format("%s (%d cols x %s rows)", csvFormat.getClass().getSimpleName(), header.getDataDefinitions().length, header.size()));
+        FileAnalysisReport report = new FileAnalysisReport(type, format, infile.length(), infile.getPath());
+        FileAnalysisReport.Part part = new FileAnalysisReport.Part(FileAnalysisReport.Type.Table, String.format("%s (%d cols x %s rows)", csvFormat.getClass().getSimpleName(), header.getDataDefinitions().length, header.size()));
         part.setTotalTableRows(header.size());
         report.addPart(part);
-        if (type.equals(FileAnalysis.ReportType.Details)) {
+        if (type.equals(FileAnalysisReport.ReportType.Details)) {
             IpacTableDef meta = new IpacTableDef();
             meta.setCols(Arrays.asList(header.getDataDefinitions()));
             part.setDetails(TableUtil.getDetails(0, meta));

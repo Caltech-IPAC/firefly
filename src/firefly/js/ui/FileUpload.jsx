@@ -3,13 +3,10 @@ import PropTypes from 'prop-types';
 import {get, has, isFunction, isNil} from 'lodash';
 
 import {InputFieldView} from './InputFieldView.jsx';
-import {fetchUrl} from '../util/WebUtil.js';
-import {getRootURL} from '../util/BrowserUtil.js';
-import {ServerParams} from '../data/ServerParams.js';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 
 import LOADING from 'html/images/gxt/loading.gif';
-const UL_URL = `${getRootURL()}sticky/CmdSrv?${ServerParams.COMMAND}=${ServerParams.UPLOAD}`;
+import {upload} from '../rpc/CoreServices.js';
 
 
 function FileUploadView({fileType, isLoading, label, valid, wrapperStyle,  message, onChange, value, labelWidth,
@@ -163,7 +160,7 @@ function handleChange(ev, fireValueChange, type, fileAnalysis) {
 
 function makeDoUpload(file, type, isFromURL, fileAnalysis) {
     return () => {
-        return doUpload(file, {type, isFromURL, fileAnalysis}).then(({status, message, cacheKey, fileFormat, analysisResult}) => {
+        return doUpload(file, fileAnalysis, {type}).then(({status, message, cacheKey, fileFormat, analysisResult}) => {
             let valid = status === '200';
             if (valid) {        // json file is not supported currently
                 if (!isNil(fileFormat)) {
@@ -183,36 +180,13 @@ function makeDoUpload(file, type, isFromURL, fileAnalysis) {
     };
 }
 
-/**
- * post the data in
- * @param {File} file
- * @param {Object} params additional parameters if any
- * @returns {Promise.<{Object}>}  The returned object is : {status:string, message:string, cacheKey:string}
- */
-export function doUpload(file, params={}) {
-    if (!file && !params.webPlotRequest) return Promise.reject('Required file parameter not given');
+function doUpload(fileOrUrl, fileAnalysis, params={}) {
 
-    if (has(params, 'isFromURL') && params.isFromURL) {
-        params = Object.assign(params, {URL: file});
-    } else {
-        params = Object.assign(params, {file});   // file should be the last param due to AnyFileUpload limitation
-    }
-    const options = {method: 'multipart', params};
-
-    const faFunction= isFunction(params.fileAnalysis) && params.fileAnalysis;
+    const faFunction= isFunction(fileAnalysis) && fileAnalysis;
     faFunction && faFunction(true);
-    if (params.fileAnalysis) options.params.fileAnalysis = true;
-
-    return fetchUrl(UL_URL, options).then( (response) => {
-        return response.text().then( (text) => {
-            // text is in format ${status}::${message}::${message}::${cacheKey}::${analysisResult}
-            let [status, message, cacheKey, analysisResult, ...rest] = text.split('::');
-            if (rest.length > 0) {
-                // there are '::' in the analysisReaults.. put it back
-                analysisResult = analysisResult + '::' + rest.join('::');
-            }
-            faFunction && faFunction(false);
-            return {status, message, cacheKey, analysisResult};
-        });
+    if (fileAnalysis) fileAnalysis=true;
+    return upload(fileOrUrl, Boolean(fileAnalysis), params).then( (results) => {
+        faFunction && faFunction(false);
+        return results;
     });
 }
