@@ -224,6 +224,40 @@
     </script>
 </template>
 
+<template title="Load a MOC" style='height: 400px' class="tpl lg " >
+    <div id="expected" >
+        <div class="source-code indent-3">
+            - load a HiPS
+            - load a MOC from a URL
+            - set default color with alpha,
+            &nbsp;&nbsp;&nbsp;'rgba(255, 165, 0, 0.7)'
+            - set default style, 'fill'
+        </div>
+    </div>
+    <div id="actual" class="box x3"></div>
+    <script>
+        window.firefly= { options: { imageDisplayType: 'encapusulate' } };
+        function onFireflyLoaded(firefly) {
+            firefly.showHiPS('actual',
+                {plotId: 'hipstest',
+                 title: "A HiPS",
+                 WorldPt:'10.68479292;41.269065;EQ_J2000',
+                 hipsRootUrl: 'https://irsa.ipac.caltech.edu/data/hips/CDS/2MASS/Color',
+                 SizeInDeg: 180}
+            );
+
+            const req = firefly.util.table.makeFileRequest('a moc',
+                'https://irsa.ipac.caltech.edu/data/hips/CDS/SDSS/DR9/color/Moc.fits',
+                null,
+                {
+                    META_INFO: { DEFAULT_COLOR: 'rgba(255, 165, 0, 0.7)',
+                                 DEFAULT_STYLE: 'fill'
+                    }
+                } );
+            firefly.action.dispatchTableFetch(req);
+        }
+    </script>
+</template>
 
 
 <!-- this is where test cases will be attached-->

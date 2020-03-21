@@ -51,7 +51,7 @@ export const MetaConst = {
     /** default chart properties for this table */
     DEFAULT_CHART_DEF : 'defaultChartDef',
 
-    /** a string or html rgb color that can be set in metadata, use with catalog overlay */
+    /** a string or html rgb/rgba color that can be set in metadata, use with catalog overlay */
     DEFAULT_COLOR : 'DEFAULT_COLOR',
 
     /** a string to represent the drawing symbol
@@ -59,6 +59,10 @@ export const MetaConst = {
      */
     DEFAULT_SYMBOL : 'DEFAULT_SYMBOL',
 
+    /** a string to represent the drawing style, i.e. 'fill' or 'outline', for moc display
+     *
+     */
+    DEFAULT_STYLE: 'DEFAULT_STYLE',
     /**
      * a URL or IVO ID
      * If this table is a MOC or some other type of supported overlay, then load the PREFERRED_HIPS if there is

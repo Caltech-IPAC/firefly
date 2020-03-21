@@ -124,7 +124,10 @@ function creator(initPayload) {
 
 
     const preloadedTbl= tablePreloaded && getTblById(tbl_id);
-    drawingDef.color= get(preloadedTbl, ['tableMeta',MetaConst.DEFAULT_COLOR], color);
+    drawingDef.color = get(preloadedTbl, ['tableMeta',MetaConst.DEFAULT_COLOR], color);
+    const style = get(preloadedTbl, ['tableMeta',MetaConst.DEFAULT_STYLE], 'outline');
+    drawingDef.style = style === 'outline' ? Style.STANDARD : Style.FILL;
+
 
     const dl = DrawLayer.makeDrawLayer( id, TYPE_ID, get(initPayload, 'title', MocPrefix +id.replace('_moc', '')),
                                         options, drawingDef, actionTypes);
@@ -314,9 +317,11 @@ function updateMocData(dl, plotId) {
 
      if (isEmpty(updateStatus.newMocObj)) {    // find visible cells first
         const newMocObj = clone(mocObj);
+        const {style=Style.STANDARD} = dl.drawingDef || {};
+
         newMocObj.mocGroup = MocGroup.make(null, mocObj.mocGroup, plot);
         newMocObj.mocGroup.collectVisibleTilesFromMoc(plot, updateStatus.storedSidePoints);
-        newMocObj.style = get(dl, ['mocStyle', plotId], Style.STANDARD);
+        newMocObj.style = get(dl, ['mocStyle', plotId], style);
         updateStatus.newMocObj = newMocObj;
     } else if (updateStatus.newMocObj.mocGroup.isInCollection()) {
          const {mocGroup} = updateStatus.newMocObj;
@@ -410,7 +415,8 @@ function asyncComputeDrawData(drawLayer, action) {
         const {fillStyle, targetPlotId} = action.payload.changes;
         if (!fillStyle || !targetPlotId) return;
 
-        updateDrawLayer(changeMocDrawingStyle(drawLayer, get(mocStyle, [targetPlotId], Style.STANDARD), targetPlotId),
+        const {style=Style.STANDARD} = drawLayer.drawingDef || {};
+        updateDrawLayer(changeMocDrawingStyle(drawLayer, get(mocStyle, [targetPlotId], style), targetPlotId),
                         drawLayer, targetPlotId);
     } else {
         const {plotId, plotIdAry} = action.payload;
