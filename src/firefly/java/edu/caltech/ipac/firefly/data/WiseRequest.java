@@ -111,7 +111,7 @@ public class WiseRequest extends TableServerRequest {
             put(ALLSKY_4BAND,"allsky_4band_p1bs_psd");
             put(CRYO_3BAND,"allsky_3band_p1bs_psd");
             put(POSTCRYO,"allsky_2band_p1bs_psd");
-            put(NEOWISER,"neowiser_q1bs_psd");
+            put(NEOWISER,"neowiser_p1bs_psd");
             put(PASS1,"pass1_i1bs_psd_view");
             put(PASS2_4BAND,"pass2_4band_i1bs_psd_view");
             put(PASS2_3BAND,"pass2_3band_i1bs_psd_view");
@@ -121,8 +121,8 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR3,"neowiser_p1bs_psd");
             put(NEOWISER_YR4,"neowiser_p1bs_psd");
             put(NEOWISER_YR5,"neowiser_p1bs_psd");
-            put(NEOWISER_YR6,"neowiser_q1bs_psd");
-	    put(NEOWISER_YR7,"neowiser_i1bs_psd");
+            put(NEOWISER_YR6,"neowiser_p1bs_psd");
+            put (NEOWISER_YR7,"neowiser_i1bs_psd");
 
         }
     };
@@ -197,7 +197,7 @@ public class WiseRequest extends TableServerRequest {
             put(CRYO_3BAND+"|1b",   new String[]{"3band_p1bm_frm", "p1bs_psd"});
             put(CRYO_3BAND+"|3a",   new String[]{"3band_p3am_cdd", "p3as_psd"});  // currently they are different: p1bm_frm and p3am_cdd
             put(POSTCRYO+"|1b",  new String[]{"2band_p1bm_frm", "2band_p1bs_psd"});
-            put(MERGE+"|1b", new String[]{"merge_q1bm_frm", "merge_p1bs_psd"});
+            put(MERGE+"|1b", new String[]{"merge_p1bm_frm", "merge_p1bs_psd"});
             put(MERGE+"|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
             put(NEOWISER +"|1b", new String[]{"q1bm_frm", "p1bs_psd"});
 
