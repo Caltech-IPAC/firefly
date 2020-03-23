@@ -18,7 +18,7 @@ export const getUIComponent = (drawLayer,pv) => <HiPSMOCUI drawLayer={drawLayer}
 
 function HiPSMOCUI({drawLayer,pv}) {
     const {mocStyle={}} = drawLayer;
-    const style = get(mocStyle, [pv.plotId], get(drawLayer, ['drawingDef', 'style'], Style.STANDARD));
+    const style = mocStyle[pv.plotId] ?? drawLayer.drawingDef?.style ?? Style.STANDARD;
     const fillStyle = (!style || style.key === 'STANDARD') ? 'outline' : 'fill';
 
     return (

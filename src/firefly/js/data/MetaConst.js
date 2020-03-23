@@ -59,10 +59,9 @@ export const MetaConst = {
      */
     DEFAULT_SYMBOL : 'DEFAULT_SYMBOL',
 
-    /** a string to represent the drawing style, i.e. 'fill' or 'outline', for moc display
-     *
-     */
-    DEFAULT_STYLE: 'DEFAULT_STYLE',
+    /** a string to represent the drawing style for MOC display, 'outline' or 'fill' */
+    MOC_DEFAULT_STYLE: 'MOC_DEFAULT_STYLE',
+
     /**
      * a URL or IVO ID
      * If this table is a MOC or some other type of supported overlay, then load the PREFERRED_HIPS if there is

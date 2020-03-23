@@ -125,8 +125,9 @@ function creator(initPayload) {
 
     const preloadedTbl= tablePreloaded && getTblById(tbl_id);
     drawingDef.color = get(preloadedTbl, ['tableMeta',MetaConst.DEFAULT_COLOR], color);
-    const style = get(preloadedTbl, ['tableMeta',MetaConst.DEFAULT_STYLE], 'outline');
+    const style = preloadedTbl?.tableMeta?.[MetaConst.MOC_DEFAULT_STYLE] ?? 'outline';
     drawingDef.style = style === 'outline' ? Style.STANDARD : Style.FILL;
+
 
 
     const dl = DrawLayer.makeDrawLayer( id, TYPE_ID, get(initPayload, 'title', MocPrefix +id.replace('_moc', '')),
@@ -317,11 +318,10 @@ function updateMocData(dl, plotId) {
 
      if (isEmpty(updateStatus.newMocObj)) {    // find visible cells first
         const newMocObj = clone(mocObj);
-        const {style=Style.STANDARD} = dl.drawingDef || {};
 
         newMocObj.mocGroup = MocGroup.make(null, mocObj.mocGroup, plot);
         newMocObj.mocGroup.collectVisibleTilesFromMoc(plot, updateStatus.storedSidePoints);
-        newMocObj.style = get(dl, ['mocStyle', plotId], style);
+        newMocObj.style = dl?.mocStyle?.[plotId] ?? dl.drawingDef?.style ?? style.STANDARD;
         updateStatus.newMocObj = newMocObj;
     } else if (updateStatus.newMocObj.mocGroup.isInCollection()) {
          const {mocGroup} = updateStatus.newMocObj;
@@ -410,14 +410,15 @@ function asyncComputeDrawData(drawLayer, action) {
                        DrawLayerCntlr.MODIFY_CUSTOM_FIELD];
     if (!forAction.includes(action.type) || !drawLayer.mocObj) return;
 
-    const {mocStyle} = drawLayer;
+    const {mocStyle={}} = drawLayer;
     if (action.type === DrawLayerCntlr.MODIFY_CUSTOM_FIELD) {
         const {fillStyle, targetPlotId} = action.payload.changes;
         if (!fillStyle || !targetPlotId) return;
 
-        const {style=Style.STANDARD} = drawLayer.drawingDef || {};
-        updateDrawLayer(changeMocDrawingStyle(drawLayer, get(mocStyle, [targetPlotId], style), targetPlotId),
-                        drawLayer, targetPlotId);
+        updateDrawLayer(changeMocDrawingStyle(drawLayer,
+                                mocStyle?.[targetPlotId] ?? drawLayer.drawingDef?.style ?? Style.STANDARD,
+                                    targetPlotId),
+            drawLayer, targetPlotId);
     } else {
         const {plotId, plotIdAry} = action.payload;
         const {visiblePlotIdAry, updateStatusAry} = drawLayer;
