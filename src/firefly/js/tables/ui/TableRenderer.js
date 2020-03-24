@@ -4,7 +4,7 @@
 
 import React, {Component, PureComponent, useRef, useCallback} from 'react';
 import {Cell} from 'fixed-data-table-2';
-import {set, get, isEqual, pick} from 'lodash';
+import {set, get, isEqual, pick, omit} from 'lodash';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS, NULL_TOKEN} from '../FilterInfo.js';
 import {isColumnType, COL_TYPE, tblDropDownId, getTblById, getColumn, formatValue, getTypeLabel, getColumnIdx, getRowValues, getCellValue} from '../TableUtil.js';
@@ -279,6 +279,8 @@ export const LinkCell = React.memo((props) => {
     const val = getValue(props);
     const className = 'public_fixedDataTableCell_cellContent';
     let textAlign = col.align;
+    const backgroundColor = style.backgroundColor;
+    let mstyle = omit(style, 'backgroundColor');
     if (col.links) {
         const tableModel = getTblById(tbl_id);
         if (col.links.length === 1) {
@@ -288,7 +290,7 @@ export const LinkCell = React.memo((props) => {
             textAlign = textAlign || 'middle';
         }
         return (
-            <div className={className} style={{textAlign}}>
+            <div className={className} style={{textAlign, backgroundColor}}>
                 {
                     col.links.map( (link={}, idx) => {
                         const {href, title, value=val, action} = link;
@@ -296,7 +298,7 @@ export const LinkCell = React.memo((props) => {
                         const rvalue = resolveHRefVal(tableModel, value, absRowIdx);
                         const rhref = resolveHRefVal(tableModel, href, absRowIdx, val);
                         if (!rhref) return '';
-                        const mstyle = idx > 0 ? {marginLeft: 3, ...style} : style;
+                        mstyle = idx > 0 ? {marginLeft: 3, ...mstyle} : mstyle;
                         return (<ATag key={'ATag_' + idx} href={rhref}
                                       {...{value:rvalue, title, target, style:mstyle}}
                                 />);
@@ -307,8 +309,8 @@ export const LinkCell = React.memo((props) => {
     } else {
         textAlign = textAlign || isNumeric(val) ? 'right' : 'left';
         return (
-            <div className={className} style={{textAlign}}>
-                <ATag href={val} value={val} target='_blank' style={style}/>
+            <div className={className} style={{textAlign, backgroundColor}}>
+                <ATag href={val} value={val} target='_blank' style={mstyle}/>
             </div>
         );
     }

@@ -343,6 +343,8 @@
     padding: 3px;
     text-overflow: ellipsis;
     overflow: hidden;
+    height: 100%;
+    box-sizing: border-box;
 }
 
 .public_fixedDataTableCell_cellContent.right_align {
