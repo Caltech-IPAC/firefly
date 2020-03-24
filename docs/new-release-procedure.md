@@ -8,23 +8,23 @@
      - `BuildMinor =` _release of the year_
      - `BuildRev =` _patch #_
 
-1. **Update Release Notes**
-   - In the `rc-yyyy.x` branch, Edit the release notes and do the following:
+1. **Update Release Notes.**
+   In the `rc-yyyy.x` branch, edit the release notes and do the following (firefly/docs/release-notes.md):
    - Modify the note for the unreleased version to remove the `(unreleased, current development)` from the title
    - After looking at docker tags make sure all the important changes are included in the notes.
    - Start a new section for the next release, mark in the title with `(unreleased, current development)`
    - Make sure you edit the docker tags section of this release
+   - Update the "Pull Request for this release section", change the text and the URLs for all PR and bug fixes 
    
-1. **Merge and Push**
-   - merge the `rc-yyyy.m` branch back into `dev`
-   - push the `rc-yyyy.m` branch 
-   - wait to the final step to push def
    
-1. **Tag the release**
+1. **Commit, Tag**
+   - commit you changes
    - tag the `rc-yyyy.m` branch with the release  `release-yyyy.m.r`
    - _example:_ the second release from branch `rc-2020.2` with the git tagged with `release-2020.2.1`
    
-1. **Push tags to GitHub**: `git push origin --tags`   
+1. **Push to GitHub**: 
+   - push the rc: _example:_ `git push origin rc-2020.1`
+   - push the tags: `git push origin --tags`   
 
 1. **Build docker images**
    - Best to use Jenkins: http://irsawebdev5.ipac.caltech.edu:8100/view/k8s/job/k8s_firefly/build?delay=0sec
@@ -51,7 +51,8 @@
 1. **Publish a new release on Github.**
    - The text should use the [release-page-template.md](release-page-template.md)
 
-1. **Reset the Version in config to development**
+1. **Merge RR, Reset the Version in config to development, Push dev**
+   - merge rc into dev
    - In the `dev` branch, Edit `firefly/config/app.config` with the correct version.
    - Modify:
      - `BuildMajor =` _year_

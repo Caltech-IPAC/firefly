@@ -8,6 +8,14 @@ See Firefly docker guidelines [here](firefly-docker.md).
 
 - docker tag: `nightly`
 
+### Version 2020.1
+
+##### _Docker tags, releases and patches_
+
+- 2020.1 latest -  `release-2020.1`
+- 2020.1.0 - `release-2020.1.1` - original release
+
+
 ##### _UI_
 - Tables now handle array type data ([Firefly-150](https://github.com/Caltech-IPAC/firefly/pull/922)
 - Table Options UI Improvements ([Firefly-471](https://github.com/Caltech-IPAC/firefly/pull/928))
@@ -27,11 +35,13 @@ See Firefly docker guidelines [here](firefly-docker.md).
   
 ##### _API_
 - Add fixed column feature to table API ([Firefly-442](https://github.com/Caltech-IPAC/firefly/pull/941)))
-    
+- MOC overlay support setting the mode MOC_DEFAULT_STYLE to 'outline' or 'fill'
+- API examples are at the `firefly/test.html` endpoint
+
 ##### _Pull Request in this release_
   
   - [bug fixes](https://github.com/Caltech-IPAC/firefly/pulls?q=is%3Aclosed+is%3Apr+label%3Abug+milestone%3A2020.1)
-  - [All PRs](https://github.com/Caltech-IPAC/firefly/pulls?utf8=%E2%9C%93&q=is%3Aclosed+is%3Apr+)
+  - [All PRs](https://github.com/Caltech-IPAC/firefly/pulls?q=is%3Amerged+is%3Apr++milestone%3A2020.1+)
                         
 ### Version 2019.4
 
