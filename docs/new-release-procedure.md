@@ -18,7 +18,7 @@
    
    
 1. **Commit, Tag**
-   - commit you changes
+   - commit you changest
    - tag the `rc-yyyy.m` branch with the release  `release-yyyy.m.r`
    - _example:_ the second release from branch `rc-2020.2` with the git tagged with `release-2020.2.1`
    
@@ -50,10 +50,11 @@
    
 1. **Publish a new release on Github.**
    - The text should use the [release-page-template.md](release-page-template.md)
+   - After using the template, copy the most markdown (for this release only) from the release-notes.md
 
 1. **Merge RR, Reset the Version in config to development, Push dev**
    - merge rc into dev
-   - In the `dev` branch, Edit `firefly/config/app.config` with the correct version.
+   - In the `dev` branch, Edit `firefly/config/app.config` so that you are resetting 
    - Modify:
      - `BuildMajor =` _year_
      - `BuildMinor = -1`
