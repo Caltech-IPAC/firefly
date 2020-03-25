@@ -18,9 +18,10 @@
    
    
 1. **Commit, Tag**
-   - commit you changest
+   - commit you changes - _example message:_ "Release 2020.1.0: document updates"
    - tag the `rc-yyyy.m` branch with the release  `release-yyyy.m.r`
    - _example:_ the second release from branch `rc-2020.2` with the git tagged with `release-2020.2.1`
+   
    
 1. **Push to GitHub**: 
    - push the rc: _example:_ `git push origin rc-2020.1`
@@ -46,11 +47,11 @@
 1. **Edit docker hub instructions**
    - Go the the Firefly page on docker hub. https://cloud.docker.com/u/ipac/repository/docker/ipac/firefly
    - Edit the markdown to include the recent tags
-      
    
 1. **Publish a new release on Github.**
    - The text should use the [release-page-template.md](release-page-template.md)
-   - After using the template, copy the most markdown (for this release only) from the release-notes.md
+   - After using the template, copy the markdown (for this release only) from the release-notes.md
+   - paste markdown at the end of the template
 
 1. **Merge RR, Reset the Version in config to development, Push dev**
    - merge rc into dev
@@ -60,5 +61,6 @@
      - `BuildMinor = -1`
      - `BuildRev = 0`
    - add any improvements to this file
-   - commit and push dev
+   - commit and push dev, _example message_ - "Post 2020.1 release: dev clean up"
+``
 

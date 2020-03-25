@@ -13,7 +13,8 @@ See Firefly docker guidelines [here](firefly-docker.md).
 ##### _Docker tags, releases and patches_
 
 - 2020.1 latest -  `release-2020.1`
-- 2020.1.0 - `release-2020.1.1` - original release
+- 2020.1.0 - `release-2020.1.0` - original release
+- 2020.1.1 - `release-2020.1.1` - patch 1
 
 
 ##### _UI_
@@ -37,6 +38,10 @@ See Firefly docker guidelines [here](firefly-docker.md).
 - Add fixed column feature to table API ([Firefly-442](https://github.com/Caltech-IPAC/firefly/pull/941)))
 - MOC overlay support setting the mode MOC_DEFAULT_STYLE to 'outline' or 'fill'
 - API examples are at the `firefly/test.html` endpoint
+
+##### _Patches 2020.1_
+- 2020.1.1
+  -  fix fixed column cell transparency issue [Firefly-523](https://github.com/Caltech-IPAC/firefly/pull/955)
 
 ##### _Pull Request in this release_
   
