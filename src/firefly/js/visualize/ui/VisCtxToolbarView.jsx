@@ -675,12 +675,16 @@ export function MultiImageControllerView({plotView:pv}) {
         if (cIdx<0) cIdx= 0;
         length= plots.length;
         if (multiHdu) {
+            const hduNum= getHDU(plot);
             startStr= 'Image: ';
             if (plot.plotDesc) {
-                startStr= 'HDU: ';
+                startStr= `HDU (#${hduNum}): `;
                 hduDesc= `${plot.plotDesc || getHeader(plot,HdrConst.EXTNAME,'')}`;
+                tooltip+= `HDU: ${hduNum}, ${hduDesc}`;
             }
-            tooltip+= `HDU: ${getHDU(plot)}`;
+            else {
+                tooltip+= `HDU: ${hduNum}`;
+            }
         }
         if (plot.cubeIdx>-1) {
             tooltip+= `${multiHdu ? ', ':''} Cube: ${plot.cubeIdx+1}/${getCubePlaneCnt(pv,plot)}`;

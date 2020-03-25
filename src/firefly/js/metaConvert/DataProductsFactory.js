@@ -27,6 +27,7 @@ import {dpdtImage} from './DataProductsType';
 import {dispatchUpdateCustom} from '../visualize/MultiViewCntlr';
 import {getDataSourceColumn} from '../util/VOAnalyzer';
 import {getColumn, getMetaEntry} from '../tables/TableUtil';
+import {getAppOptions} from '../core/AppDataCntlr';
 
 const FILE= 'FILE';
 
@@ -152,145 +153,184 @@ function getRelatedDataProductWrapper(makeReq) {
  */
 
 
-/**
- * @type {Array.<DataProductsConvertType>}
- */
-export const converterTemplates = [
-    {
-        converterId : 'wise',
-        tableMatches: (table) => matchById(table,'wise'),
-        create : simpleCreate,
-        threeColor : true,
-        hasRelatedBands : true,
-        canGrid : true,
-        maxPlots : 12,
-        getSingleDataProduct: getSingleDataProductWrapper(makeWisePlotRequest),
-        getGridDataProduct: getGridDataProductWrapper(makeWisePlotRequest),
-        getRelatedDataProduct: getRelatedDataProductWrapper(makeWisePlotRequest),
-        threeColorBands : {
-            b1 : {color : Band.RED, title: 'Band 1'},
-            b2 : {color : Band.GREEN, title: 'Band 2'},
-            b3 : {color : null, title: 'Band 3'},
-            b4 : {color : Band.BLUE, title: 'Band 4'}
+
+
+function initConverterTemplates() {
+    /**
+     * @type {Array.<DataProductsConvertType>}
+     */
+    const originalConverterTemplates = [
+        {
+            converterId: 'wise',
+            tableMatches: (table) => matchById(table, 'wise'),
+            create: simpleCreate,
+            threeColor: true,
+            hasRelatedBands: true,
+            canGrid: true,
+            maxPlots: 12,
+            getSingleDataProduct: getSingleDataProductWrapper(makeWisePlotRequest),
+            getGridDataProduct: getGridDataProductWrapper(makeWisePlotRequest),
+            getRelatedDataProduct: getRelatedDataProductWrapper(makeWisePlotRequest),
+            threeColorBands: {
+                b1: {color: Band.RED, title: 'Band 1'},
+                b2: {color: Band.GREEN, title: 'Band 2'},
+                b3: {color: null, title: 'Band 3'},
+                b4: {color: Band.BLUE, title: 'Band 4'}
+            },
         },
-    },
-    {
-        converterId : 'atlas',
-        tableMatches: (table) => matchById(table,'atlas'),
-        create : simpleCreate,
-        hasRelatedBands : true,
-        canGrid : true,
-        maxPlots : 5,
-        getSingleDataProduct: getSingleDataProductWrapper(makeAtlasPlotRequest),
-        getGridDataProduct: getGridDataProductWrapper(makeAtlasPlotRequest),
-        getRelatedDataProduct: getRelatedDataProductWrapper(makeAtlasPlotRequest),
-    },
-    {
-        converterId : 'twomass',
-        tableMatches: (table) => matchById(table,'twomass'),
-        create : simpleCreate,
-        threeColor : true,
-        hasRelatedBands : true,
-        canGrid : true,
-        maxPlots : 12,
-        getSingleDataProduct: getSingleDataProductWrapper(make2MassPlotRequest),
-        getGridDataProduct: getGridDataProductWrapper(make2MassPlotRequest),
-        getRelatedDataProduct: getRelatedDataProductWrapper(make2MassPlotRequest),
-        threeColorBands : {
-            J : {color : Band.RED, title: 'J'},
-            H : {color : Band.GREEN, title: 'H'},
-            K : {color : Band.BLUE, title: 'K'}
+        {
+            converterId: 'atlas',
+            tableMatches: (table) => matchById(table, 'atlas'),
+            create: simpleCreate,
+            hasRelatedBands: true,
+            canGrid: true,
+            maxPlots: 5,
+            getSingleDataProduct: getSingleDataProductWrapper(makeAtlasPlotRequest),
+            getGridDataProduct: getGridDataProductWrapper(makeAtlasPlotRequest),
+            getRelatedDataProduct: getRelatedDataProductWrapper(makeAtlasPlotRequest),
+        },
+        {
+            converterId: 'twomass',
+            tableMatches: (table) => matchById(table, 'twomass'),
+            create: simpleCreate,
+            threeColor: true,
+            hasRelatedBands: true,
+            canGrid: true,
+            maxPlots: 12,
+            getSingleDataProduct: getSingleDataProductWrapper(make2MassPlotRequest),
+            getGridDataProduct: getGridDataProductWrapper(make2MassPlotRequest),
+            getRelatedDataProduct: getRelatedDataProductWrapper(make2MassPlotRequest),
+            threeColorBands: {
+                J: {color: Band.RED, title: 'J'},
+                H: {color: Band.GREEN, title: 'H'},
+                K: {color: Band.BLUE, title: 'K'}
+            }
+        },
+        {
+            converterId: 'ztf',
+            tableMatches: (table) => matchById(table, 'ztf'),
+            create: simpleCreate,
+            hasRelatedBands: false,
+            canGrid: true,
+            maxPlots: 12,
+            getSingleDataProduct: getSingleDataProductWrapper(makeZtfPlotRequest),
+            getGridDataProduct: getGridDataProductWrapper(makeZtfPlotRequest),
+            getRelatedDataProduct: getRelatedDataProductWrapper(makeZtfPlotRequest),
+        },
+        {
+            converterId: 'lsst_sdss',
+            tableMatches: (table) => matchById(table, 'lsst_sdss'),
+            create: simpleCreate,
+            threeColor: true,
+            hasRelatedBands: true,
+            canGrid: true,
+            maxPlots: 12,
+            getSingleDataProduct: getSingleDataProductWrapper(makeLsstSdssPlotRequest),
+            getGridDataProduct: getGridDataProductWrapper(makeLsstSdssPlotRequest),
+            getRelatedDataProduct: getRelatedDataProductWrapper(makeLsstSdssPlotRequest),
+            threeColorBands: {
+                u: {color: null, title: 'u'},
+                g: {color: Band.RED, title: 'g'},
+                r: {color: Band.GREEN, title: 'r'},
+                i: {color: null, title: 'i'},
+                z: {color: Band.BLUE, title: 'z'}
+            }
+        },
+        {
+            converterId: 'lsst_wise',
+            tableMatches: (table) => matchById(table, 'lsst_wise'),
+            create: simpleCreate,
+            threeColor: true,
+            hasRelatedBands: true,
+            canGrid: true,
+            maxPlots: 12,
+            getSingleDataProduct: getSingleDataProductWrapper(makeLsstWisePlotRequest),
+            getGridDataProduct: getGridDataProductWrapper(makeLsstWisePlotRequest),
+            getRelatedDataProduct: getRelatedDataProductWrapper(makeLsstWisePlotRequest),
+            threeColorBands: {
+                b1: {color: Band.RED, title: 'Band 1'},
+                b2: {color: Band.GREEN, title: 'Band 2'},
+                b3: {color: null, title: 'Band 3'},
+                b4: {color: Band.BLUE, title: 'Band 4'}
+            }
+        },
+        {
+            converterId: 'ObsCore',
+            tableMatches: hasObsCoreLikeDataProducts,
+            create: makeObsCoreConverter,
+            threeColor: false,
+            hasRelatedBands: false,
+            canGrid: true,
+            maxPlots: 8,
+            getSingleDataProduct: getObsCoreSingleDataProduct,
+            getGridDataProduct: getObsCoreGridDataProduct,
+            getRelatedDataProduct: () => Promise.reject('related data products not supported')
+        },
+        {
+            converterId: 'SimpleMoving',
+            tableMatches: () => false,
+            create: simpleCreate,
+            threeColor: false,
+            hasRelatedBands: false,
+            canGrid: false,
+            maxPlots: 12,
+            getSingleDataProduct: getSingleDataProductWrapper(makeRequestSimpleMoving),
+            getGridDataProduct: () => Promise.reject('grid not supported'),
+            getRelatedDataProduct: () => Promise.reject('related data products not supported')
+        },
+        {                            // this one should be last, it is the fallback
+            converterId: 'UNKNOWN',
+            tableMatches: findADataSourceColumn,
+            create: simpleCreate,
+            threeColor: false,
+            hasRelatedBands: false,
+            canGrid: true,
+            maxPlots: 3,
+            getSingleDataProduct: makeAnalysisGetSingleDataProduct(makeRequestForUnknown),
+            getGridDataProduct: makeAnalysisGetGridDataProduct(makeRequestForUnknown),
+            getRelatedDataProduct: () => Promise.reject('related data products not supported')
         }
-    },
-    {
-        converterId : 'ztf',
-        tableMatches: (table) => matchById(table,'ztf'),
-        create : simpleCreate,
-        hasRelatedBands : false,
-        canGrid : true,
-        maxPlots : 12,
-        getSingleDataProduct: getSingleDataProductWrapper(makeZtfPlotRequest),
-        getGridDataProduct: getGridDataProductWrapper(makeZtfPlotRequest),
-        getRelatedDataProduct: getRelatedDataProductWrapper(makeZtfPlotRequest),
-    },
-    {
-        converterId : 'lsst_sdss',
-        tableMatches: (table) => matchById(table,'lsst_sdss'),
-        create : simpleCreate,
-        threeColor : true,
-        hasRelatedBands : true,
-        canGrid : true,
-        maxPlots : 12,
-        getSingleDataProduct: getSingleDataProductWrapper(makeLsstSdssPlotRequest),
-        getGridDataProduct: getGridDataProductWrapper(makeLsstSdssPlotRequest),
-        getRelatedDataProduct: getRelatedDataProductWrapper(makeLsstSdssPlotRequest),
-        threeColorBands : {
-            u : {color : null, title: 'u'},
-            g : {color : Band.RED, title: 'g'},
-            r : {color : Band.GREEN, title: 'r'},
-            i : {color : null,  title: 'i'},
-            z : {color : Band.BLUE, title: 'z'}
-        }
-    },
-    {
-        converterId : 'lsst_wise',
-        tableMatches: (table) => matchById(table,'lsst_wise'),
-        create : simpleCreate,
-        threeColor : true,
-        hasRelatedBands : true,
-        canGrid : true,
-        maxPlots : 12,
-        getSingleDataProduct: getSingleDataProductWrapper(makeLsstWisePlotRequest),
-        getGridDataProduct: getGridDataProductWrapper(makeLsstWisePlotRequest),
-        getRelatedDataProduct: getRelatedDataProductWrapper(makeLsstWisePlotRequest),
-        threeColorBands : {
-            b1 : {color : Band.RED, title: 'Band 1'},
-            b2 : {color : Band.GREEN, title: 'Band 2'},
-            b3 : {color : null, title: 'Band 3'},
-            b4 : {color : Band.BLUE, title: 'Band 4'}
-        }
-    },
-    {
-        converterId : 'ObsCore',
-        tableMatches: hasObsCoreLikeDataProducts,
-        create : makeObsCoreConverter,
-        threeColor : false,
-        hasRelatedBands : false,
-        canGrid : true,
-        maxPlots : 8,
-        getSingleDataProduct: getObsCoreSingleDataProduct,
-        getGridDataProduct: getObsCoreGridDataProduct,
-        getRelatedDataProduct: () => Promise.reject('related data products not supported')
-    },
-    {
-        converterId : 'SimpleMoving',
-        tableMatches: () => false,
-        create : simpleCreate,
-        threeColor : false,
-        hasRelatedBands : false,
-        canGrid : false,
-        maxPlots : 12,
-        getSingleDataProduct: getSingleDataProductWrapper(makeRequestSimpleMoving),
-        getGridDataProduct: () => Promise.reject('grid not supported'),
-        getRelatedDataProduct: () => Promise.reject('related data products not supported')
-    },
-    {                            // this one should be last, it is the fallback
-        converterId : 'UNKNOWN',
-        tableMatches: findADataSourceColumn,
-        create : simpleCreate,
-        threeColor : false,
-        hasRelatedBands : false,
-        canGrid : true,
-        maxPlots : 3,
-        getSingleDataProduct: makeAnalysisGetSingleDataProduct(makeRequestForUnknown),
-        getGridDataProduct: makeAnalysisGetGridDataProduct(makeRequestForUnknown),
-        getRelatedDataProduct: () => Promise.reject('related data products not supported')
+    ];
+
+
+    const {factoryOverride} = getAppOptions()?.multiProducesViewer ?? {};
+    let converterTemplates = originalConverterTemplates;
+    if (isArray(factoryOverride)) {
+        converterTemplates = originalConverterTemplates.map((t) => {
+            const overTemp = factoryOverride.find((tTmp) => tTmp.converterId === t.converterId);
+            return overTemp ? {...t, ...overTemp} : t;
+        });
     }
-];
+    return converterTemplates;
+}
+
+
+
+
+
+export const {getConverterTemplates, addTemplate, addTemplateToEnd}= (() => {
+    let converterTemplates;
+
+        const getConverterTemplates= () => {
+            if (!converterTemplates) converterTemplates= initConverterTemplates();
+            return converterTemplates;
+        };
+        const addTemplate= (template) => {
+            getConverterTemplates();
+            converterTemplates.unshift(template);
+        };
+        const addTemplateToEnd= (template) => {
+            getConverterTemplates();
+            converterTemplates.push(template);
+        };
+
+        return {getConverterTemplates,addTemplate,addTemplateToEnd};
+})();
+
 
 
 export function initImage3ColorDisplayManagement(viewerId) {
-     const customEntry= converterTemplates.reduce( (newObj, template) => {
+     const customEntry= getConverterTemplates().reduce( (newObj, template) => {
         if (!template.threeColor) return newObj;
         newObj[template.converterId]= {...template.threeColorBands, threeColorVisible:false};
         return newObj;
@@ -306,7 +346,7 @@ export function initImage3ColorDisplayManagement(viewerId) {
  * @return {DataProductsConvertType}
  */
 export function defaultMakeDataProductsConverter(table) {
-    const t= converterTemplates.find( (template) => template.tableMatches(table) );
+    const t= getConverterTemplates().find( (template) => template.tableMatches(table) );
     return t && t.create(table,t);
 }
 /**
@@ -326,12 +366,6 @@ export const makeDataProductsConverter= (table) =>
     (overrideMakeDataProductsConverter && overrideMakeDataProductsConverter(table)) || defaultMakeDataProductsConverter(table);
 
 export const setOverrideDataProductsConverterFactory = (f) => overrideMakeDataProductsConverter= f;
-
-
-export function addTemplate(template) { converterTemplates.unshift(template); }
-
-export function addTemplateToEnd(template) { converterTemplates.push(template); }
-
 
 /**
  *  Support data the we don't know about

@@ -22,7 +22,7 @@ import {
     dataProductRoot, dispatchActivateFileMenuItem, dispatchUpdateActiveKey,
     dispatchUpdateDataProducts, getActiveFileMenuKeyByKey, getDataProducts
 } from './DataProductsCntlr';
-import {analyzePart, arrangeAnalysisMenu} from './PartAnalyzer';
+import {analyzePart, chooseDefaultEntry} from './PartAnalyzer';
 import {hasRowAccess} from '../tables/TableUtil';
 
 
@@ -268,19 +268,14 @@ function processAnalysisResult({table, row, request, activateParams, serverCache
 
 
 
-    const partAnalysis= parts.map( (p) => analyzePart(p,fileFormat, serverCacheFileKey,activateParams));
-    const imageParts= partAnalysis.filter( (pa) => pa.isImage);
-    const hasImages= imageParts.length>0;
-
-
-    const hasOnlySingleAxisImages= Boolean(partAnalysis.every( (pa) => pa.imageSingleAxis));
-    if (hasOnlySingleAxisImages) {
-        return dpdtMessageWithDownload('Cannot not display One-dimensional images (NAXIS==1)', 'download fits file', url);
-    }
+    const partAnalysis= parts.map( (p) => analyzePart(p,request, table, row, fileFormat, serverCacheFileKey,activateParams));
+    const imageParts= partAnalysis.filter( (pa) => pa.imageResult);
+    const makeImages= imageParts.length>1 || (imageParts.length===1 && parts.length===1);
+    const useImagesFromPartAnalysis= parts.length>1;
 
 
 
-    const imageEntry= hasImages &&
+    const imageEntry= makeImages &&
         dpdtImage(`Image Data ${imageParts.length>1? ': All Images in File' :''}`,
             createSingleImageActivate(request,imageViewerId,table.tbl_id,row),'image-'+0, {request});
 
@@ -288,35 +283,29 @@ function processAnalysisResult({table, row, request, activateParams, serverCache
     if (imageEntry) fileMenu.menu.push(imageEntry);
     partAnalysis.forEach( (pa) => {
         let pAry= [];
+        if (useImagesFromPartAnalysis && pa.imageResult) pAry= isArray(pa.imageResult) ? pa.imageResult : [pa.imageResult];
         if (pa.tableResult) pAry= isArray(pa.tableResult) ? pa.tableResult : [pa.tableResult];
         if (pa.chartResult) pAry= isArray(pa.chartResult) ? [...pAry,...pa.chartResult] : [...pAry,pa.chartResult];
 
         pAry.forEach( (r) => fileMenu.menu.push(r));
     });
 
-    const oneDErr= partAnalysis.reduce( (str,pa,idx) => {
-        if (pa.imageSingleAxis) str+= `${str?', ':''}${idx}`;
-        return str;
-    },'');
-    if (oneDErr) fileMenu.menu.push(dpdtDownload(`Download Only, Ext ${oneDErr}: Cannot display One-dimensional images (NAXIS==1)`, url));
-
-    fileMenu.menu= arrangeAnalysisMenu(fileMenu.menu,parts,fileFormat, dataTypeHint);
-
-
     fileMenu.menu.forEach( (m,idx) => m.menuKey= 'fm-'+idx);
+
+    fileMenu.initialDefaultIndex= chooseDefaultEntry(fileMenu.menu,parts,fileFormat, dataTypeHint);
 
     let actIdx=0;
     if (fileMenu.menu.length) {
         const lastActiveFieldItem= getActiveFileMenuKeyByKey(dpId,activeItemLookupKey);
         actIdx= fileMenu.menu.findIndex( (m) => m.menuKey===lastActiveFieldItem);
-        if (actIdx<0) actIdx= 0;
+        if (actIdx<0) actIdx= fileMenu.initialDefaultIndex;
     }
     else {// error case
         const msg= makeErrorMsg(parts,fileFormat);
         return dpdtMessageWithDownload(msg, 'Download File', url, fileFormat==='FITS'&&'FITS');
     }
     dispatchUpdateActiveKey({dpId, activeFileMenuKeyChanges:{[fileMenu.activeItemLookupKey]:fileMenu.menu[actIdx].menuKey}});
-    return {...fileMenu.menu[actIdx],fileMenu};
+    return {...fileMenu.menu[actIdx],fileMenu}; //todo add which one to activate, right now it will activate the first
 }
 
 

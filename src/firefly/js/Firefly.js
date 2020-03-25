@@ -26,6 +26,7 @@ import {init} from './rpc/CoreServices.js';
 import {getPropsWith, mergeObjectOnly, getProp, toBoolean} from './util/WebUtil.js';
 import {initLostConnectionWarning} from './ui/LostConnection.jsx';
 import {dispatchChangeTableAutoScroll, dispatchWcsMatch, visRoot} from './visualize/ImagePlotCntlr';
+import {makeAnalysisGetGridDataProduct, makeAnalysisGetSingleDataProduct} from './metaConvert/MultiProductFileAnalyzer';
 
 export const flux = reduxFlux;
 
@@ -139,6 +140,10 @@ const defFireflyOptions = {
     },
     coverage : {
         // TODO: need to define all options with defaults here.  used in FFEntryPoint.js
+    },
+    multiProducesViewer : {
+        factoryOverride: [
+        ]
     },
     tap : {
         services: [

@@ -20,7 +20,7 @@ import {getActivePlotView} from '../PlotViewUtil';
 import {visRoot} from '../ImagePlotCntlr';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx';
 import {useStoreConnector} from '../../ui/SimpleComponent';
-import {getActiveTableId, getBooleanMetaEntry, getTblById} from '../../tables/TableUtil';
+import {getActiveTableId, getBooleanMetaEntry, getTblById, getTblIdsByGroup} from '../../tables/TableUtil';
 import {hasCoverageData} from '../../util/VOAnalyzer';
 import {get} from 'lodash';
 import {getAppOptions} from '../../core/AppDataCntlr';
@@ -51,9 +51,10 @@ export function CoverageViewer({viewerId='coverageImages',insideFlex=true,
     const hasPlots = (getViewerItemIds(getMultiViewRoot(),viewerId).length===1 && pv);
     const {renderTreeId} = useContext(RenderTreeIdCtx);
     const forceShow= getBooleanMetaEntry(tbl_id,MetaConst.COVERAGE_SHOWING,false);
+    const tblHasCoverage= hasCoverageData(tbl_id);
 
 
-    if (hasPlots && (hasCoverageData(tbl_id) || forceShow)) {
+    if (hasPlots && (tblHasCoverage || forceShow)) {
         return (
             <MultiImageViewer viewerId={viewerId}
                               insideFlex={insideFlex}
@@ -63,7 +64,13 @@ export function CoverageViewer({viewerId='coverageImages',insideFlex=true,
         );
     }
     else {
-        const msg= (getTblById(tbl_id)?.isFetching) ? workingMessage : noCovMessage;
+        let msg= noCovMessage;
+        if (tblHasCoverage || getTblById(tbl_id)?.isFetching) {
+            msg= workingMessage;
+        }
+        else if (forceShow) {
+            msg= getTblIdsByGroup().some( (tbl_id) => hasCoverageData(tbl_id)) ? workingMessage : noCovMessage;
+        }
         return (
             <div style={{...{background: '#c8c8c8', paddingTop:35, width:'100%',textAlign:'center',fontSize:'14pt'},...noCovStyle}}>
                 {msg}</div>
