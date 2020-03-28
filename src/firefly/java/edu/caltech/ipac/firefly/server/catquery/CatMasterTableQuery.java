@@ -38,7 +38,7 @@ import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
 public class CatMasterTableQuery extends EmbeddedDbProcessor {
 
     private static final String MASTER_LOC = QueryUtil.makeUrlBase(BaseGator.DEF_HOST) + "/cgi-bin/Gator/nph-scan?mode=ascii";
-    private static final String IRSA_HOST = AppProperties.getProperty("irsa.base.url", BaseGator.DEF_HOST);
+    private static final String IRSA_HOST = AppProperties.getProperty("irsa.base.url", "https://irsa.ipac.caltech.edu");
     private static final String IRSA_BASE_URL = QueryUtil.makeUrlBase(IRSA_HOST);
 
 
