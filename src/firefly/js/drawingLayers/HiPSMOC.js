@@ -311,7 +311,7 @@ function changeMocDrawingColor(dl, pId) {
     const dObjs = get(dl.drawData, [DataTypes.DATA, pId],[]);
     return dObjs.map((oneObj) => {
         if (oneObj.fillColor && oneObj.fillColor != fillColor) {
-            return Object.assign({}, oneObj, {fillColor});
+            return {...oneObj, fillColor};
         } else {
             return oneObj;
         }
@@ -447,14 +447,14 @@ function asyncComputeDrawData(drawLayer, action) {
             drawLayer, targetPlotId);
     } else if (action.type === DrawLayerCntlr.CHANGE_DRAWING_DEF) {
         const {plotIdAry} = drawLayer;
-        const dd = Object.assign({}, drawLayer.drawData);
+        const dd = {...drawLayer.drawData};
 
         plotIdAry.forEach((pId) => {
             const newObjs = changeMocDrawingColor(drawLayer, pId);
             set(dd[DataTypes.DATA], [pId], newObjs);
         });
 
-        const newDrawLayer = clone(drawLayer, {drawData: dd});
+        const newDrawLayer = {...drawLayer, drawData: dd};
         dispatchUpdateDrawLayer(newDrawLayer);
     } else {
         const {plotId, plotIdAry} = action.payload;
