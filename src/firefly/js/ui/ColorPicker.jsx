@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
+import React, {useState} from 'react';
 import PropTypes from 'prop-types';
 import {dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {PopupPanel} from './PopupPanel.jsx';
@@ -25,14 +25,22 @@ export function showColorPickerDialog(color, callbackOnOKOnly, callbackOnBoth, c
 var lastEv;
 
 function ColorPickerWrapper ({callback,color,callbackOnOKOnly, callbackOnBoth}) {
+    const [currentColor, setCurrentColor] = useState(color);
+
+    const updateColor= (ev) => {
+        const {r,g,b,a}= ev.rgb;
+        setCurrentColor(`rgba(${r},${g},${b},${a})`);
+        callback(ev,false);
+    };
+
     return (
         <div>
             <SketchPicker
                          onChangeComplete={ (ev) => {
                              lastEv=ev;
-                             if (!callbackOnOKOnly) callback(ev, false);
+                             if (!callbackOnOKOnly) updateColor(ev);
                          } }
-                         color={color} />
+                         color={currentColor} />
             <CompleteButton onSuccess={() => callbackOnOKOnly||callbackOnBoth ? callback(lastEv,true): null}
                             dialogId='ColorPickerDialog'/>
         </div>
