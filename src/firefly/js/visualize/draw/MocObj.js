@@ -16,6 +16,7 @@ const MOC_OBJ= 'MOCObj';
 const DEFAULT_STYLE= Style.STANDARD;
 const DEF_WIDTH = 1;
 const MAX_MAPORDER = 25;
+const PTILE_OPACITY_RATIO = 0.5;
 
 /**
  * Draw one or more polygons defined in Multi-Order Coverage Map, MOC.
@@ -29,7 +30,7 @@ const MAX_MAPORDER = 25;
  * @return {object}
  */
 function make(cellNums, drawingDef) {
-    if (!cellNums && !cellNums.length) return null;
+    if (!cellNums || !cellNums.length) return null;
 
     const {style=DEFAULT_STYLE, color} = drawingDef || {};
     const obj = DrawObj.makeDrawObj();
@@ -117,7 +118,7 @@ const draw=  {
 	}
 };
 
-export default {make,draw, MOC_OBJ};
+export default {make,draw, MOC_OBJ, PTILE_OPACITY_RATIO};
 
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
@@ -586,7 +587,7 @@ export function createDrawObjsInMoc(mocObj, plot, startIdx, endIdx, storedSidePo
             //  drawObj.text = ''+ nuniq;
             drawObj.style = style;
             if (isParentTile) {       // this fill color is specifically for the round-up tile
-                drawObj.fillColor = rateOpacity(color, 0.5);
+                drawObj.fillColor = rateOpacity(color, PTILE_OPACITY_RATIO);
             }
             prev.push(drawObj);
         }

@@ -24,6 +24,7 @@ import {cloneRequest} from '../tables/TableRequestUtil';
 import {dispatchAddActionWatcher} from '../core/MasterSaga';
 import {MetaConst} from '../data/MetaConst';
 import {getNextColor} from '../visualize/draw/DrawingDef';
+import {rateOpacity} from '../util/Color.js';
 
 const ID= 'MOC_PLOT';
 const TYPE_ID= 'MOC_PLOT_TYPE';
@@ -267,6 +268,16 @@ function getLayerChanges(drawLayer, action) {
                 }
             }
             break;
+
+        case DrawLayerCntlr.CHANGE_DRAWING_DEF:   // from color change
+            const {color} = action.payload.drawingDef || {};
+            const newMocObj = createMocObj(drawLayer);
+
+            if (newMocObj && newMocObj.color != color) {
+                newMocObj.color = color;
+                return {mocObj: newMocObj};
+            }
+            break;
         default:
             return null;
     }
@@ -290,6 +301,21 @@ function changeMocDrawingStyle(dl, style, plotId) {
     const dObjs = get(dl.drawData, [DataTypes.DATA, plotId], []);
 
     return dObjs.map((oneObj) => Object.assign({}, oneObj, {style}));
+}
+
+function changeMocDrawingColor(dl, pId) {
+
+    const color = dl?.mocObj?.color ?? dl.drawingDef.color;
+    const fillColor = rateOpacity(color, MocObj.PTILE_OPACITY_RATIO);
+
+    const dObjs = get(dl.drawData, [DataTypes.DATA, pId],[]);
+    return dObjs.map((oneObj) => {
+        if (oneObj.fillColor && oneObj.fillColor != fillColor) {
+            return {...oneObj, fillColor};
+        } else {
+            return oneObj;
+        }
+    });
 }
 
 function removeTask(plotId, taskId) {
@@ -407,7 +433,7 @@ function abortUpdate(dl, updateStatusAry, pId, updateMethod = LayerUpdateMethod.
  */
 function asyncComputeDrawData(drawLayer, action) {
     const forAction = [ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION, ImagePlotCntlr.ANY_REPLOT,
-                       DrawLayerCntlr.MODIFY_CUSTOM_FIELD];
+                       DrawLayerCntlr.MODIFY_CUSTOM_FIELD, DrawLayerCntlr.CHANGE_DRAWING_DEF];
     if (!forAction.includes(action.type) || !drawLayer.mocObj) return;
 
     const {mocStyle={}} = drawLayer;
@@ -419,6 +445,17 @@ function asyncComputeDrawData(drawLayer, action) {
                                 mocStyle?.[targetPlotId] ?? drawLayer.drawingDef?.style ?? Style.STANDARD,
                                     targetPlotId),
             drawLayer, targetPlotId);
+    } else if (action.type === DrawLayerCntlr.CHANGE_DRAWING_DEF) {
+        const {plotIdAry} = drawLayer;
+        const dd = {...drawLayer.drawData};
+
+        plotIdAry.forEach((pId) => {
+            const newObjs = changeMocDrawingColor(drawLayer, pId);
+            set(dd[DataTypes.DATA], [pId], newObjs);
+        });
+
+        const newDrawLayer = {...drawLayer, drawData: dd};
+        dispatchUpdateDrawLayer(newDrawLayer);
     } else {
         const {plotId, plotIdAry} = action.payload;
         const {visiblePlotIdAry, updateStatusAry} = drawLayer;
