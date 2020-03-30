@@ -20,7 +20,9 @@
 1. **Commit, Tag**
    - commit you changes - _example message:_ "Release 2020.1.0: document updates"
    - tag the `rc-yyyy.m` branch with the release  `release-yyyy.m.r`
-   - _example:_ the second release from branch `rc-2020.2` with the git tagged with `release-2020.2.1`
+   - _example:_ 
+      - the second release from branch `rc-2020.2` with the git tagged with `release-2020.2.1`
+      - `git tag release-2020.2.1`
    
    
 1. **Push to GitHub**: 
