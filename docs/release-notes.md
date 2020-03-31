@@ -15,6 +15,7 @@ See Firefly docker guidelines [here](firefly-docker.md).
 - 2020.1 latest -  `release-2020.1`
 - 2020.1.0 - `release-2020.1.0` - original release
 - 2020.1.1 - `release-2020.1.1` - patch 1
+- 2020.1.2 - `release-2020.1.2` - patch 2
 
 
 ##### _UI_
@@ -38,6 +39,12 @@ See Firefly docker guidelines [here](firefly-docker.md).
 - Add fixed column feature to table API ([Firefly-442](https://github.com/Caltech-IPAC/firefly/pull/941)))
 - MOC overlay support setting the mode MOC_DEFAULT_STYLE to 'outline' or 'fill'
 - API examples are at the `firefly/test.html` endpoint
+
+
+##### _Patches 2020.2_
+- 2020.1.2
+  -  Fixed: MOC: update the fill color for round-up tiles [Firefly-526](https://github.com/Caltech-IPAC/firefly/pull/958)
+  -  Fixed: Color picker now updates when selection is changed [Firefly-529](https://github.com/Caltech-IPAC/firefly/pull/957)
 
 ##### _Patches 2020.1_
 - 2020.1.1
