@@ -372,6 +372,7 @@ div.rootStyle img {
     height: 48px;
     background: url('~images/no_internet.png');
     margin: 1px;
+    flex-shrink: 0;
 }
 
 .warning-div {
@@ -379,6 +380,7 @@ div.rootStyle img {
     z-index: 300;
     background-color: beige;
     margin: 2px;
+    font-size: 12px;
 }
 
 .warning-div.right {

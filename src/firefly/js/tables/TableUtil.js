@@ -21,6 +21,7 @@ import {
 } from 'lodash';
 import Enum from 'enum';
 
+import {getWsConnId} from '../core/AppDataCntlr.js';
 import {sprintf} from '../externalSource/sprintf.js';
 import {makeFileRequest, MAX_ROW} from './TableRequestUtil.js';
 import * as TblCntlr from './TablesCntlr.js';
@@ -34,7 +35,6 @@ import {DEF_BASE_URL} from '../core/JsonUtils.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {doUpload} from '../ui/FileUpload.jsx';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga.js';
-import {getWsConnId} from '../core/messaging/WebSocketClient.js';
 import {MetaConst} from '../data/MetaConst';
 import {toBoolean} from '../util/WebUtil';
 import {dd2sex} from '../visualize/CoordUtil.js';

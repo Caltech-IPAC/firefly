@@ -28,6 +28,8 @@ import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import MultiViewCntlr from '../visualize/MultiViewCntlr.js';
 import DataProductsCntlr from '../metaConvert/DataProductsCntlr';
 import ComponentCntlr, {DIALOG_OR_COMPONENT_KEY} from '../core/ComponentCntlr.js';
+import {showLostConnection} from '../ui/LostConnection.jsx';
+import {getOrCreateWsConn} from './messaging/WebSocketClient.js';
 
 
 
@@ -255,11 +257,11 @@ function bootstrap() {
  *
  *
  * @param {Action} rawAction
- * @returns {Promise}
  */
 function process(rawAction) {
     if (!redux) throw Error('firefly has not been bootstrapped');
 
+    getOrCreateWsConn().catch(() => showLostConnection());
     var ac = actionCreators.get(rawAction.type);
     if (!rawAction.payload) rawAction= Object.assign({},rawAction,{payload:{}});
     if (ac) {

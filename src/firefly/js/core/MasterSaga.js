@@ -6,10 +6,9 @@ import {flux} from '../Firefly.js';
 import {take, fork, spawn, cancel, put} from 'redux-saga/effects';
 import {isEmpty, get, isFunction, isUndefined, union, isArray, pick} from 'lodash';
 
-import {uniqueID} from '../util/WebUtil.js';
+import {uniqueID, logger} from '../util/WebUtil.js';
 import {TABLE_SEARCH} from '../tables/TablesCntlr.js';
 import {getTblIdsByGroup, onTableLoaded} from '../tables/TableUtil';
-import {isDebug} from '../util/WebUtil';
 import {TABLE_FETCH, TABLE_REMOVE} from '../tables/TablesCntlr';
 
 export const ADD_SAGA= 'MasterSaga.addSaga';
@@ -219,9 +218,9 @@ export function* masterSaga() {
                     const watcherSaga = createWatcherSaga({id, actions, callback, params, dispatch, getState});
                     const task = yield fork(watcherSaga, dispatch, getState);
                     watchers[id] = task;
-                    isDebug() && console.log(`watcher ${id} added.  #watcher: ${Object.keys(watchers).length}`);
+                    logger.info(`watcher ${id} added.  #watcher: ${Object.keys(watchers).length}`);
                 } else {
-                    console.error('Can not create action watcher: invalid actions or callback');
+                    logger.error('Can not create action watcher: invalid actions or callback');
                 }
                 break;
             }
@@ -231,7 +230,7 @@ export function* masterSaga() {
                 if (task) {
                     yield cancel(task);
                     Reflect.deleteProperty(watchers, id);
-                    isDebug() && console.log(`watcher ${id} cancelled.  #watcher: ${Object.keys(watchers).length}`);
+                    logger.info(`watcher ${id} cancelled.  #watcher: ${Object.keys(watchers).length}`);
                 }
                 break;
             }
@@ -372,7 +371,7 @@ function startTableTypeWatchersForTable(tbl_id, action, getDefList) {
     onTableLoaded(tbl_id).then( (table) => {
         table= get(table,'tableModel',table);
         if (!table || table.error ||  !table.totalRows) return;
-        if (isDebug()) console.log(`new loaded table: ${tbl_id}`);
+        logger.info(`new loaded table: ${tbl_id}`);
         const defList= getDefList();
         let excludeList=  [];
         let stopProp= false;

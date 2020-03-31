@@ -10,6 +10,7 @@
     <title>IRSA Viewer</title>
 
     <script>
+        var pOpts = window.firefly && window.firefly.options || {};
         window.firefly = {
             app: {
                 template: 'FireflyViewer',          // set to app mode, instead of api.
@@ -24,7 +25,7 @@
                     {label:'Example Js Dialog', action:'exampleDialog', type:'COMMAND'},
                 ],
             },
-            options : {
+            options : Object.assign(pOpts, {
                 MenuItemKeys: {maskOverlay:true},
                 catalogSpacialOp: 'polygonWhenPlotExist',
                 workspace : {showOptions: true},
@@ -53,7 +54,7 @@
                         SurveyKeyBand: '4'
                     }
                 }
-            }
+            })
         };
 
         function getMoreImagePanelDataTest() {

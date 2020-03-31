@@ -10,11 +10,12 @@
     <title>Firefly</title>
 
     <script>
+        var pOpts = window.firefly && window.firefly.options || {};
         window.firefly = {
             app: {
                 template: 'FireflyViewer'     // set to app mode, instead of api.
             },
-            options: {
+            options : Object.assign(pOpts, {
                 hips: {
                     readoutShowsPixel: true
                 },
@@ -27,7 +28,7 @@
                         SurveyKeyBand: '1'
                     }
                 }
-            }
+            })
         };
     </script>
     <script  type="text/javascript" src="firefly_loader.js"></script>

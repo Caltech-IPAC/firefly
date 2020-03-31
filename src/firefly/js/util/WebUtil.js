@@ -3,13 +3,13 @@
  */
 
 import shallowequal from 'shallowequal';
-import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil,
-        last, isPlainObject, forEach, fromPairs, mergeWith, isArray, truncate} from 'lodash';
+import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil, memoize,
+        last, isPlainObject, forEach, fromPairs, mergeWith, isArray, truncate, find} from 'lodash';
 
 import {getRootURL} from './BrowserUtil.js';
-import {getWsConnId, getWsChannel} from '../core/AppDataCntlr.js';
 import {getDownloadProgress, DownloadProgress} from '../rpc/SearchServicesJson.js';
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
+import {getOrCreateWsConn} from '../core/messaging/WebSocketClient.js';
 
 import update from 'immutability-helper';
 import {ServerParams} from '../data/ServerParams';
@@ -280,14 +280,21 @@ export function fetchUrl(url, options, doValidation= true, enableDefOptions= tru
         };
         options = Object.assign(req, options);
 
-        const headers = {
-            [WS_CHANNEL_HD]: getWsChannel(),
-            [WS_CONNID_HD]: getWsConnId(),
-            [REQUEST_WITH]: AJAX_REQUEST
-        };
-        options.headers = Object.assign(headers, options.headers);
+        return getOrCreateWsConn().then(({connId, channel}) => {
+            const headers = {
+                [WS_CHANNEL_HD]: channel,
+                [WS_CONNID_HD]: connId,
+                [REQUEST_WITH]: AJAX_REQUEST
+            };
+            options.headers = Object.assign(headers, options.headers);
+            return doFetchUrl(url, options, doValidation);
+        });
+    } else {
+        return doFetchUrl(url, options, doValidation);
     }
+}
 
+function doFetchUrl(url, options, doValidation) {
     if (options.params) {
         const params = toNameValuePairs(options.params);        // convert to name-value pairs if it's a simple object.
         if (options.method.toLowerCase() === 'get') {
@@ -299,7 +306,7 @@ export function fetchUrl(url, options, doValidation= true, enableDefOptions= tru
                 if (options.method.toLowerCase() === 'post') {
                     options.headers['Content-type'] = 'application/x-www-form-urlencoded';
                     options.body = params.map(({name, value=''}) => encodeURIComponent(name) + '=' + encodeURIComponent(value))
-                                    .join('&');
+                        .join('&');
                 } else if (options.method.toLowerCase() === 'multipart') {
                     options.method = 'post';
                     const data = new FormData();
@@ -313,6 +320,7 @@ export function fetchUrl(url, options, doValidation= true, enableDefOptions= tru
         }
     }
 
+    logger.tag('fetchUrl').debug({url, options});
     // do the actually fetch, then return a promise.
     return fetch(url, options)
         .then( (response) => {
@@ -325,6 +333,7 @@ export function fetchUrl(url, options, doValidation= true, enableDefOptions= tru
                 throw new Error(`Request failed with status ${response.status}: ${url}`);
             }
         });
+
 }
 
 export function logError(...message) {
@@ -466,12 +475,12 @@ export function downloadSimple(url) {
 
 
 export function parseUrl(url) {
-    const parser = document.createElement('a');
+    const parser = new URL(url);
     const pathAry = [];
-    parser.href = url;
 
-    // Convert query string to object
-    const searchObject = decodeParams(parser.search);
+    // Convert query string to object map with decoded key/value pairs
+    const searchObject = {};
+    parser.searchParams.forEach((val, key) => searchObject[key] = val);
 
     // Convert path string to object
     const paths = parser.pathname.split('/');
@@ -489,14 +498,9 @@ export function parseUrl(url) {
     const p = last(paths);
     const filename = p.includes(';') ? p.split(';')[0] : p;
 
-    return {
-        protocol: parser.protocol,
-        host: parser.host,
-        hostname: parser.hostname,
-        port: parser.port,
+    return {...parser,
         path: parser.pathname,
         search: parser.search.replace(/^\?/, ''),
-        hash: parser.hash,
         searchObject,
         filename,
         pathAry
@@ -878,3 +882,89 @@ export function hashCode(str) {
 export function isNumeric(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
 }
+
+
+/*------------------------------- Logger Implementation ----------------------------------
+Usage:  import {logger} from './WebUtils'
+logger comes with several logging functions.  Currently, they all will log to console.
+    error   : red with error icon
+    warn    : yellow with warn icon
+    info    : black
+    log     : same as info
+    debug   : black
+    trace   : print message plus a full stack trace
+
+    tag     : returns a new logger with the given tag appended to the current one.
+              tag is used for filtering.
+    isDebug : return true if debugging is enabled.  backward compatibility.
+              this is a lightweight check useful for avoiding execution of wasteful debugging logic
+              i.e.   logger.isDebug() && logger.debug(do-lots-of-work());
+
+Text messages and functions are prepended with its tag(s).
+If your message is an object, the object is sent to console with interactive tree UI.
+
+Don't forget, you want to do as little as possible when debug is not enabled.
+If you plan to tag your log, use:
+import {Logger} from './WebUtils';
+const logger = Logger('myTag');     // this saves one instantiation of Logger in memory.
+
+To enable debugging, set window.firefly.debug to one of the above levels.  They are in
+descending order.  For example, setting debug='warn' will only output warnings and above.
+For backward compatibility, setting debug=true will set level to 'info'.
+
+Set window.firefly.debugTags to filter/control what get logged.  This is a comma separated
+pattern of tags.  It will only log messages that tags matches at least one of the patterns.
+  For example, debugTags='Web,Table' will only show logs from WebSocket and Table.
+--------------------------------------------------------------------------------------------*/
+const debugLevel = memoize( () => {
+    const levels = ['error', 'warn', 'info', 'debug', 'trace'];
+    const debug = window?.firefly?.debug;
+    if (debug) {
+        let level =  levels.indexOf(debug);
+        level = level >= 0 ? level : 2;
+        if (level >= 0) console.log('debugLevel set at: ' + levels[level]);
+        return level;
+    }
+    return -1;
+}, () => window?.firefly?.debug + '');
+
+const debugTags = memoize( () => {
+    const tags = window?.firefly?.debugTags ?? '';
+    if (tags) console.log('debugTags set at: ' + tags);
+    return tags.split(',').map((s) => s.trim()).filter((t) => t);
+}, () => window?.firefly?.debugTags + '');
+
+function log(msg, {level=2, tag=''}) {
+    if (debugLevel() >=  level) {
+        const doLog = debugTags().length === 0 || find(debugTags(), (t) => !!tag.match(t));
+        if (doLog) {
+            if (typeof msg === 'object') {
+                console.log(tag ? tag + ': ==>' : '');
+            } else {
+                msg = tag ? `${tag}: ${msg}` : msg;
+            }
+            if (level === 0) console.error(msg);
+            if (level === 1) console.warn(msg);
+            if (level === 2) console.info(msg);
+            if (level === 3) console.debug(msg);
+            if (level === 4) console.trace(msg);
+        }
+    }
+};
+
+export function Logger(tag) {
+    const logger = (level) => (msg) => log(msg, {level, tag});
+    return {
+        isDebug: () => debugLevel() >= 0,
+        tag: (t) => Logger(tag ? `${tag}-${t}` : t),
+        error: logger(0),
+        warn:  logger(1),
+        info:  logger(2),
+        log:   logger(2),  // same as info
+        debug: logger(3),
+        trace: logger(4)   // this will print a full stack trace
+    };
+}
+
+export const logger = Logger();
+/*---------------------------------------------------------------------------------*/

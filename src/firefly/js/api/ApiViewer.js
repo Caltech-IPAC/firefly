@@ -7,7 +7,7 @@
  * @public
  * @summary Build the interface to remotely communicate to the firefly viewer
  */
-import {isArray, get} from 'lodash';
+import {isArray, get, set} from 'lodash';
 import Enum from 'enum';
 
 import {WSCH} from '../core/History.js';
@@ -16,7 +16,7 @@ import {getRootURL}  from '../util/BrowserUtil.js';
 import {dispatchRemoteAction}  from '../core/JsonUtils.js';
 import {dispatchPlotImage, dispatchPlotHiPS}  from '../visualize/ImagePlotCntlr.js';
 import {RequestType}  from '../visualize/RequestType.js';
-import {clone, logError, hashCode}  from '../util/WebUtil.js';
+import {clone, logError, hashCode, Logger}  from '../util/WebUtil.js';
 import {confirmPlotRequest,findInvalidWPRKeys}  from '../visualize/WebPlotRequest.js';
 import {dispatchTableSearch, dispatchTableFetch}  from '../tables/TablesCntlr.js';
 import {dispatchChartAdd} from '../charts/ChartsCntlr.js';
@@ -31,7 +31,7 @@ import {DEFAULT_FITS_VIEWER_ID, DEFAULT_PLOT2D_VIEWER_ID} from '../visualize/Mul
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga';
 
-
+const logger = Logger('ApiViewer');
 
 export const ViewerType= new Enum([
     'TriView',  // use what it in the title
@@ -395,6 +395,7 @@ function doViewerOperation(channel,file,f) {
         });
         const url= `${modifyURLToFull(file,getRootURL())}?${WSCH}=${channel}`;
         viewerWindow = window.open(url, channel);
+        set(viewerWindow, 'firefly.options.RequireWebSocketUptime', true);
     }
 }
 
@@ -405,6 +406,7 @@ export function windowReadyWatcher(action, cancelSelf, {channel, f, isLoaded= fa
 
     if (isLoaded && isReady) {
         cancelSelf();
+        logger.debug('viewer ready');
         f?.();
     }
     return {channel,f,isLoaded,isReady};

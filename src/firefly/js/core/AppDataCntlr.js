@@ -8,7 +8,8 @@ import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 import {appDataReducer, menuReducer, alertsReducer} from './AppDataReducers.js';
 import Point, {isValidPoint} from '../visualize/Point.js';
 import {getModuleName, getProp} from '../util/WebUtil.js';
-import {dispatchRemoteAction} from './JsonUtils';
+import {dispatchRemoteAction} from './JsonUtils.js';
+import {getWsConn} from '../core/messaging/WebSocketClient.js';
 
 export const APP_DATA_PATH = 'app_data';
 export const COMMAND = 'COMMAND';
@@ -181,8 +182,7 @@ export function makeViewerChannel(channel) {
 }
 
 export function isAppReady() {
-    const {connId} = getWsInfo() || {};
-    return connId && get(flux.getState(), [APP_DATA_PATH, 'isReady']);
+    return get(flux.getState(), [APP_DATA_PATH, 'isReady']);
 }
 
 export function getSearchInfo() {
@@ -216,7 +216,7 @@ export function getRootUrlPath() {
 }
 
 export function getAppOptions() {
-    return flux.getState()[APP_DATA_PATH].appOptions;
+    return flux.getState()[APP_DATA_PATH].appOptions || window?.firefly?.options;
 }
 
 export function getUserInfo() {
@@ -252,24 +252,19 @@ export const dispatchActiveTarget= function(wp,corners=undefined) {
 };
 
 /**
- * @returns {object}  websocket connection information.
- */
-export function getWsInfo() {
-    return get(flux.getState(), [APP_DATA_PATH, 'websocket']);
-}
-
-/**
+ * @param baseUrl   the baseUrl of the websocket connection.  Defaults to current location.
  * @returns {string}  the channel websocket is connected to.
  */
-export function getWsChannel() {
-    return get(flux.getState(), [APP_DATA_PATH, 'websocket', 'channel']);
+export function getWsChannel(baseUrl) {
+    return getWsConn(baseUrl)?.channel;;
 }
 
 /**
- * @returns {string}  the connection ID websocket is connected to.
+ * @param baseUrl   the baseUrl of the websocket connection.  Defaults to current location.
+ * @returns {string} the connection ID websocket is connected to.
  */
-export function getWsConnId() {
-    return get(flux.getState(), [APP_DATA_PATH, 'websocket', 'connId']);
+export function getWsConnId(baseUrl) {
+    return getWsConn(baseUrl)?.connId;;
 }
 
 

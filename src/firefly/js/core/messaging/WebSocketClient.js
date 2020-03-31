@@ -3,47 +3,73 @@
  */
 
 import {get, pickBy} from 'lodash';
-import {parseUrl, isDebug} from '../../util/WebUtil.js';
+import {parseUrl, Logger} from '../../util/WebUtil.js';
 import {WSCH} from '../History.js';
 import {getRootURL} from '../../util/BrowserUtil.js';
-import {dispatchUpdateAppData} from '../AppDataCntlr.js';
+import {getAppOptions} from '../AppDataCntlr.js';
+import {showLostConnection, hideLostConnection} from '../../ui/LostConnection.jsx';
 
 export const CH_ID = 'channelID';
 
-var wsConn;
-var pinger;
-var intervalId;
-
-var wsClient;
-
-
 /**
- * WebSocket client.
- * @typedef {object} WsClient
+ * A proxy to the underlining WebSocket connection
+ * @typedef {object} wsClient
  * @prop {function} send        function to send a message to the server.  see wsSend for parameters
  * @prop {function} addListener add a message listener.  This function will be called on all incoming message 'matches'
  *                              returns true.  see addListener for details.
- * @prop {object} listeners     a list of all the listeners.
- * @prop {string} channel       the channel websocket is connected to.
- * @prop {string} connId        the connection ID websocket is connected to.
+ * @prop {object}   listeners   a list of all the listeners.
+ * @prop {string}   channel     the channel websocket is connected to.
+ * @prop {string}   connId      the connection ID websocket is connected to.
+ * @prop {function} isConnected return true if connection active.
  */
+
+
+const conns = {};       // a map of active connections keyed by baseUrl
+const logger = Logger('WebSocket');
+
+export function getWsConn(baseUrl=getRootURL()) {
+    return conns[baseUrl] || {isConnected: ()=>false};
+}
 
 /**
- * @returns {WsClient}  return the active websocket client used.
+ * returns a WebSocketProxy for the given baseUrl, create if one does not exists
+ * @param baseUrl   the base URL to connect to
+ * @return {Promise}
  */
-export function getWsClient() { return wsClient; }
+export function getOrCreateWsConn(baseUrl=getRootURL()) {
+    const wsProxy = conns[baseUrl];
+    if (wsProxy) {
+        if (wsProxy.isConnected()) {
+            logger.debug(`getOrCreateWsConn -> existing connection: ${baseUrl} :: ${JSON.stringify(wsProxy)}`);
+            return Promise.resolve(wsProxy);
+        } else if (wsProxy.isConnecting) {
+            logger.debug('getOrCreateWsConn -> isConnecting ' + baseUrl);
+            return wsProxy.promise;
+        }
+    }
+    const p = new Promise( (resolve, reject) => {
+        const mResolve = (proxy) => {
+            conns[baseUrl] = proxy;
+            hideLostConnection();
+            resolve?.(proxy);
+        };
+        const mReject = (e) => {
+            Reflect.deleteProperty(conns, baseUrl);
+            reject?.(e);
+        };
+        logger.debug('getOrCreateWsConn -> create new connection ' + baseUrl);
+        makeWsConn(baseUrl, mResolve, mReject);
+    });
+    conns[baseUrl] = {isConnecting: true, isConnected: ()=>false, promise: p};
+    return p;
+}
 
-/**
- * @returns {string}  the channel websocket is connected to.
- */
-export function getWsChannel() { return wsClient && wsClient.channel; }
+const listeners = [];
 
-/**
- * @returns {string}  the connection ID websocket is connected to.
- */
-export function getWsConnId() { return wsClient && wsClient.connId; }
+function makeWsConn(baseUrl, resolve, reject) {
 
-export function wsConnect(callback, baseUrl=getRootURL()) {
+    const requireWs = getAppOptions()?.RequireWebSocketUptime;
+
     baseUrl = baseUrl.replace('https:', 'wss:').replace('http:', 'ws:');
 
     const urlInfo = parseUrl(document.location);
@@ -54,72 +80,26 @@ export function wsConnect(callback, baseUrl=getRootURL()) {
     }
     const wschParam = wsch ? `?${CH_ID}=${wsch}` : '';
     const wsUrl = `${baseUrl}sticky/firefly/events${wschParam}`;
-    console.log('Connecting to ' + wsUrl);
-    makeConnection(wsUrl);
-    pinger = makePinger(callback, wsUrl);
-}
 
-function makeConnection(wsUrl) {
-    get(wsConn, 'readyState') === WebSocket.OPEN && wsConn.close();
+    let pingerId, connectWhenOnline;
+    const wsConn = new WebSocket(wsUrl);
+    logger.info('connecting to ' + wsUrl);
 
-    wsConn = new WebSocket(wsUrl);
-    wsConn.onopen = onOpen;
-    wsConn.onerror = onError;
-    wsConn.onclose = onClose;
-    wsConn.onmessage = onMessage;
-}
-
-/**
- * @param {Object} p
- * @param p.name  - Event's name.  See edu.caltech.ipac.firefly.util.event.Name for a full list.
- * @param p.scope - One of 'SELF', 'CHANNEL', 'SERVER'.
- * @param p.dataType - One of 'JSON', 'BG_STATUS', 'STRING'.
- * @param p.data - String.
- */
-function wsSend({name='ping', scope, dataType, data}) {
-
-    if (name === 'ping') {
-        wsConn.send('');
-    } else {
-        const msg = JSON.stringify( pickBy({name, scope, dataType, data}));
-        wsConn.send(msg);
-    }
-}
-
-
-function onOpen() {}
-
-function onError(event) {
-    pinger && pinger.onError(event);
-}
-
-function onClose(e) {
-    console.log('WebSocket is closed: ' + JSON.stringify(e));
-}
-
-function onMessage(event) {
-    const eventData = event.data && JSON.parse(event.data);
-
-    if (eventData) {
-        // console.log('ws message: ' + JSON.stringify(eventData));
-        if (eventData.name === 'EVT_CONN_EST') {
-            // connection established.. doing handshake.
-            const [connId, channel] = [eventData.data.connID, eventData.data.channel];
-            pinger && pinger.onConnected(channel, connId);
+    /**
+     * @param {Object} p
+     * @param p.name  - Event's name.  See edu.caltech.ipac.firefly.util.event.Name for a full list.
+     * @param p.scope - One of 'SELF', 'CHANNEL', 'SERVER'.
+     * @param p.dataType - One of 'JSON', 'BG_STATUS', 'STRING'.
+     * @param p.data - String.
+     */
+    const send = ({name='ping', scope, dataType, data}) => {
+        if (name === 'ping') {
+            wsConn.send('');
         } else {
-            const {listeners=[]} = wsClient || {};
-            listeners.forEach( (l) => {
-                if (!l.matches || l.matches(eventData)) {
-                    l.onEvent(eventData);
-                }
-            });
+            const msg = JSON.stringify( pickBy({name, scope, dataType, data}));
+            wsConn.send(msg);
         }
-    }
-
-}
-
-function makeWsClient(channel, connId) {
-    const listeners = [];
+    };
 
     /**
      * add an event listener to this websocket client.
@@ -133,45 +113,73 @@ function makeWsClient(channel, connId) {
         listeners.push({matches, onEvent});
     };
 
-    return {send: wsSend, addListener, listeners, channel, connId};
-}
+    /**
+     * mplementation of requireWs feature.
+     * - ping every minute to keep connection from being closed by keep-alive settings.
+     * - if offline, try to reconnect when back online.
+     */
+    const requireWsImpl = () => {
+        connectWhenOnline && window.removeEventListener('offline', connectWhenOnline);
+        connectWhenOnline = () => {
+            logger.debug('offline detected -> adding connectWhenOnline');
+            window.addEventListener('online', () => {
+                window.removeEventListener('online', connectWhenOnline);
+                logger.debug('online detected -> attempting to re-connect');
+                getOrCreateWsConn().catch(() => showLostConnection());
+            });
+        };
+        window.addEventListener('offline', connectWhenOnline);
+        pingerId = setInterval(() => {
+            send({name: 'ping'});
+            logger.debug('keep-alive ping sent');
+        }, 30*1000);   // check every n * seconds
+    };
 
-function makePinger(onConnectCallback, wsUrl) {
+    const isConnected = () => wsConn.readyState === 1;      // 1 == OPEN
 
-    intervalId && clearInterval(intervalId);
+    const onMessage = (event) => {
+        const eventData = event.data && JSON.parse(event.data);
+        if (eventData) {
+            logger.tag('onMessage').debug(eventData);
+            if (eventData.name === 'EVT_CONN_EST') {
+                // connection established.. doing handshake.
+                const {connID:connId, channel}  = eventData.data;
+                resolve({connId, channel, isConnected, send, addListener});
 
-    let lastPing =  Date.now();
-
-    const check = (from='ping') => {
-
-        if (wsConn.readyState === WebSocket.OPEN) {
-
-            if ((Date.now() - lastPing) > 5*60*1000) {       // 5 mins ping keep-alive
-                lastPing = Date.now();
-                wsSend({});
-                isDebug() && console.log(`ping initiated from ${from} on: ${lastPing}`);
+                logger.info(`connected as (${connId} - ${channel})`);
+                if (requireWs) {
+                    requireWsImpl();
+                }
+            } else {
+                listeners.forEach( (l) => {
+                    if (!l.matches || l.matches(eventData)) {
+                        l.onEvent(eventData);
+                    }
+                });
             }
-        } else {
-            dispatchUpdateAppData({websocket: {isConnected: false}});
-            makeConnection(wsUrl);
+        }
+    };
+    const onClose = (msg) => {
+        pingerId && clearInterval(pingerId);
+        logger.warn(msg);
+        const _handler = () => {
+            logger.info('window focus detected, attempting to reconnect ');
+            window.removeEventListener('focus', _handler);
+            getOrCreateWsConn().catch(() => {} /* ignore */);
+        };
+        window.addEventListener('focus', _handler);
+        if (requireWs && window.navigator.onLine) {
+            showLostConnection();
         }
     };
 
-    const onConnected = (channel, connId) => {
-        console.log(`WebSocket connected.  connId:${connId} channel:${channel}`);
-        wsClient = makeWsClient(channel, connId);
-        dispatchUpdateAppData({websocket: {isConnected: true, channel, connId}});
-        onConnectCallback && onConnectCallback(wsClient);
+    wsConn.onmessage = onMessage;
+    wsConn.onopen = () => {};
+    wsConn.onerror = (e) => {
+        onClose('WebSocket onerror: ' + JSON.stringify(e));
+        reject?.(e);
     };
-
-    const onError = () => {
-        dispatchUpdateAppData({websocket: {isConnected: false}});
+    wsConn.onclose = (r) => {
+        onClose('WebSocket is closed: ' + JSON.stringify(r));
     };
-
-    intervalId = setInterval(check, 10*1000);   // check every n * seconds
-    window.addEventListener('online',  () => check('online'));
-    window.addEventListener('offline', () => check('offline'));
-
-    return {onError, check, onConnected};
-
 }
