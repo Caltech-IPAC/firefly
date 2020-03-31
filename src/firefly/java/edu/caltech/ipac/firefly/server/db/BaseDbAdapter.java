@@ -206,7 +206,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
 
         Class type = dataType.getDataType();
         if (type == null || String.class.isAssignableFrom(type)) {
-            return "longvarchar";                           // to ensure it can accommodate any length
+            return "varchar(4000000)";                           // to ensure it can accommodate any length
         } else if (Byte.class.isAssignableFrom(type)) {
             return "tinyint";
         } else if (Short.class.isAssignableFrom(type)) {
