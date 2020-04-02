@@ -101,8 +101,9 @@ public class AnyFileUpload extends BaseHttpServlet {
         } else if (fromUrl != null) {
             // from a URL.. get it
             int idx = fromUrl.lastIndexOf('/');
+            long fnameHash = System.currentTimeMillis();
             String fname = (idx >= 0) ? fromUrl.substring(idx + 1) : fromUrl;
-            fname = fname.contains("?") ? fname.substring(0, fname.indexOf("?")) : fname;       // don't save queryString as file name.  this will confuse reader expecting a url, like VoTableReader
+            fname = fname.contains("?") ? "Upload-"+fnameHash : fname;       // don't save queryString as file name.  this will confuse reader expecting a url, like VoTableReader
             FileInfo status = LockingVisNetwork.retrieveURL(new URL(fromUrl));
             int code= status.getResponseCode();
             File file= status.getFile();
