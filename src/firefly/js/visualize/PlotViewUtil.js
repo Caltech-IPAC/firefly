@@ -136,41 +136,31 @@ export function hasWCSProjection(ref) {
  * Return an array of plotId's that are in the plot group associated with the the pvOrId parameter.
  * @param {VisRoot} visRoot - root of the visualization object in store
  * @param pvOrId this parameter will take the plotId string or a plotView object
- * @param onlyIfPositionLocked
- * @param hasPlots
  * @returns {Array.<String>}
  */
-export function getPlotViewIdList(visRoot, pvOrId, onlyIfPositionLocked=true, hasPlots=false) {
+export function getPlotViewIdListByPositionLock(visRoot, pvOrId) {
     if (!pvOrId) return [];
-    const pv= (typeof pvOrId ==='string') ? getPlotViewById(visRoot,pvOrId) : pvOrId;
-    const locked= visRoot.positionLock;
-    if (!locked && onlyIfPositionLocked) return [pv.plotId];
-    const idList=  visRoot.plotViewAry.map( (pv) => pv.plotId);
-    if (!hasPlots) return idList;
-
-    return idList.filter( (id) => get(getPlotViewById(visRoot,id),'plots.length') );
+    const pv= isString(pvOrId) ? getPlotViewById(visRoot,pvOrId) : pvOrId;
+    if (!visRoot.positionLock) return [pv.plotId];
+    return visRoot.plotViewAry
+        .map( (pv) => pv.plotId)
+        .filter( (id) => get(getPlotViewById(visRoot,id),'plots.length') );
 }
-
 /**
  * Return an array of plotId's that are in the plot group associated with the the pvOrId parameter.
  * @param {VisRoot} visRoot - root of the visualization object in store
- * @param pvOrId this parameter will take the plotId string or a plotView object
- * @param onlyIfGroupLocked
- * @param hasPlots
+ * @param pvOrId this parameter will take the plotId string or a plotView objectgs
  * @returns {Array.<String>}
  */
-export function getPlotViewIdListInOverlayGroup(visRoot,pvOrId,onlyIfGroupLocked=true, hasPlots=false) {
+export function getPlotViewIdListInOverlayGroup(visRoot,pvOrId) {
     if (!pvOrId) return [];
     const pv= (typeof pvOrId ==='string') ? getPlotViewById(visRoot,pvOrId) : pvOrId;
     const gid= pv.plotGroupId;
     const group= getPlotGroupById(visRoot,gid);
-    const locked= hasOverlayColorLock(pv,group);
-    if (!locked && onlyIfGroupLocked) return [pv.plotId];
-    const idList=  visRoot.plotViewAry.filter( (pv) => pv.plotGroupId===gid).map( (pv) => pv.plotId);
-    if (!hasPlots) return idList;
-
-    return idList.filter( (id) => get(getPlotViewById(visRoot,id),'plots.length') );
+    if (!hasOverlayColorLock(pv,group) ) return [pv.plotId];
+    return  visRoot.plotViewAry.filter( (pv) => pv.plotGroupId===gid).map( (pv) => pv.plotId);
 }
+
 
 /**
  * return an array of plotIds that are all under visRoot and based on the overlay/color lock of the group associated
@@ -192,10 +182,11 @@ export function getAllPlotViewIdByOverlayLock(visRoot, pvOrId, hasPlots=false, p
         return [majorPv.plotId];
     } else {
         return visRoot.plotViewAry.filter((pv) => !hasPlots || get(pv, 'plots.length'))
-                                  .filter((pv) => !plotTypeMustMatch || isImage(primePlot(pv))===isImage(primePlot(majorPv)))
-                                  .map((pv) => pv.plotId);
+            .filter((pv) => !plotTypeMustMatch || isImage(primePlot(pv))===isImage(primePlot(majorPv)))
+            .map((pv) => pv.plotId);
     }
 }
+
 
 /**
  * Is this plotview the active one

@@ -17,7 +17,7 @@ import {PlotPref} from '../PlotPref.js';
 import {clone} from '../../util/WebUtil.js';
 import {makePostPlotTitle} from '../reducer/PlotTitle.js';
 import {dispatchAddViewerItems, getMultiViewRoot, findViewerWithItemId, EXPANDED_MODE_RESERVED, IMAGE, DEFAULT_FITS_VIEWER_ID} from '../MultiViewCntlr.js';
-import {getPlotViewById, getDrawLayerByType, getDrawLayersByType, getDrawLayerById, getPlotViewIdList} from '../PlotViewUtil.js';
+import {getPlotViewById, getDrawLayerByType, getDrawLayersByType, getDrawLayerById, getPlotViewIdListInOverlayGroup} from '../PlotViewUtil.js';
 import {enableMatchingRelatedData, enableRelatedDataLayer} from '../RelatedDataUtil.js';
 import {modifyRequestForWcsMatch} from './WcsMatchTask.js';
 import WebGrid from '../../drawingLayers/WebGrid.js';
@@ -598,7 +598,7 @@ function matchAndActivateOverlayPlotViewsByGroup(plotIdAry) {
         .map( (plotId) => getPlotViewById(visRoot(), plotId))
         .filter( (pv) => pv)
         .forEach( (pv) => {
-            const opvMatchArray= uniqBy(flatten(getPlotViewIdList(vr, pv.plotId)
+            const opvMatchArray= uniqBy(flatten(getPlotViewIdListInOverlayGroup(vr, pv.plotId)
                                                        .filter( (id) => id!== pv.plotId)
                                                        .map( (id) => getPlotViewById(vr,id))
                                                        .map( (gpv) => gpv.overlayPlotViews)),

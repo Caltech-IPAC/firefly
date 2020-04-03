@@ -6,7 +6,7 @@ import {getDS9Region} from '../../rpc/PlotServicesJson.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
 import DrawLayerCntrl, {dispatchCreateDrawLayer, dispatchDetachLayerFromPlot,
         dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
-import {getDrawLayerById, getPlotViewIdList} from '../PlotViewUtil.js';
+import {getDrawLayerById, getPlotViewIdListInOverlayGroup} from '../PlotViewUtil.js';
 import RegionPlot, {createNewRegionLayerId, getRegionLayerTitle} from '../../drawingLayers/RegionPlot.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {logError} from '../../util/WebUtil.js';
@@ -24,8 +24,7 @@ export const getPlotId = (plotId) => {
     //return (!plotId || (isArray(plotId)&&plotId.length === 0)) ? get(visRoot(), 'activePlotId') : plotId;
     if (!plotId || (isArray(plotId)&&plotId.length === 0)) {
         const pid = get(visRoot(), 'activePlotId');
-
-        return getPlotViewIdList(visRoot(), pid, false);
+        return getPlotViewIdListInOverlayGroup(visRoot(), pid);
     } else {
         return plotId;
     }

@@ -4,7 +4,7 @@
 
 import {flux} from '../Firefly.js';
 import Enum from 'enum';
-import {getPlotViewIdList, getPlotViewById, getDrawLayerById,
+import {getPlotViewIdListInOverlayGroup, getPlotViewById, getDrawLayerById,
           getConnectedPlotsIds, getAllPlotViewIdByOverlayLock} from './PlotViewUtil.js';
 import ImagePlotCntlr, {visRoot}  from './ImagePlotCntlr.js';
 import DrawLayerReducer from './reducer/DrawLayerReducer.js';
@@ -232,7 +232,7 @@ export function dispatchCreateDrawLayer(drawLayerTypeId, params={}) {
  *  @function dispatchChangeVisibility
  */
 export function dispatchChangeVisibility({id,visible, plotId, useGroup= true, subGroupId, matchTitle= false}) {
-    let plotIdAry= useGroup ? getPlotViewIdList(visRoot(), plotId) : [plotId];
+    let plotIdAry= useGroup ? getPlotViewIdListInOverlayGroup(visRoot(), plotId) : [plotId];
     if (subGroupId) {
         const vr= visRoot();
         plotIdAry= plotIdAry.filter( (plotId) => {
@@ -260,7 +260,7 @@ export function dispatchChangeVisibility({id,visible, plotId, useGroup= true, su
  *  @function dispatchChangeDrawingDef
  */
 export function dispatchChangeDrawingDef(id,drawingDef, plotId, matchTitle= false) {
-    const plotIdAry= getPlotViewIdList(visRoot(), plotId);
+    const plotIdAry= getPlotViewIdListInOverlayGroup(visRoot(), plotId);
 
     getDrawLayerIdAry(dlRoot(),id, matchTitle)
         .forEach( (drawLayerId) => {
@@ -280,7 +280,7 @@ export function dispatchChangeDrawingDef(id,drawingDef, plotId, matchTitle= fals
  */
 export function dispatchModifyCustomField(id,changes, plotId) {
 
-    const plotIdAry= getPlotViewIdList(visRoot(), plotId);
+    const plotIdAry= getPlotViewIdListInOverlayGroup(visRoot(), plotId);
 
     getDrawLayerIdAry(dlRoot(),id)
         .forEach( (drawLayerId) => {
@@ -306,7 +306,7 @@ export function dispatchUpdateDrawLayer(drawLayer) {
  */
 export function dispatchForceDrawLayerUpdate(id,plotId) {
 
-    const plotIdAry= getPlotViewIdList(visRoot(), plotId);
+    const plotIdAry= getPlotViewIdListInOverlayGroup(visRoot(), plotId);
 
     getDrawLayerIdAry(dlRoot(),id)
         .forEach( (drawLayerId) => {

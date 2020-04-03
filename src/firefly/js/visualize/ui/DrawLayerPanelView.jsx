@@ -92,11 +92,17 @@ function makePermInfo(pv,layers) {
 }
 
 function showAllLayers(layers, pv, visible) {
+
     pv.overlayPlotViews.forEach( (opv) => {
         setMaskVisibleInGroup(opv,visible);
     });
 
-    return layers.forEach( (dl) => {
+
+    let overlayLayers = layers.filter( (l)=>
+       l.drawLayerTypeId!==ImageRoot.TYPE_ID
+    );
+
+    return overlayLayers.forEach( (dl) => {
         changeVisible(dl, visible,pv.plotId );
     });
 }
@@ -305,6 +311,7 @@ function changeVisible(dl, visible, plotId) {
         }
 
     }
+
 }
 
 

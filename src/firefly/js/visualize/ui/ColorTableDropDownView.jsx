@@ -10,7 +10,7 @@ import {
     } from '../../ui/ToolbarButton.jsx';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {dispatchColorChange} from '../ImagePlotCntlr.js';
-import {primePlot, getPlotViewIdList, isThreeColor} from '../PlotViewUtil.js';
+import {primePlot, getPlotViewIdListInOverlayGroup, isThreeColor} from '../PlotViewUtil.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 
@@ -151,7 +151,7 @@ const isAllThreeColor= (vr,plotIdAry) => plotIdAry.every( (id) => isThreeColor(p
 
 function handleColorChange(pv,cbarId) {
     var vr= visRoot();
-    var plotIdAry= getPlotViewIdList(vr,pv);
+    var plotIdAry= getPlotViewIdListInOverlayGroup(vr,pv);
 
     if (isAllThreeColor(vr,plotIdAry)) {
         showInfoPopup('This is a three color plot, you can not change the color.', 'Color change not allowed');
