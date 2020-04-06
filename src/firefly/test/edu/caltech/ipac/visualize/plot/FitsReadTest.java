@@ -1,27 +1,20 @@
 package edu.caltech.ipac.visualize.plot;
 
-import edu.caltech.ipac.table.io.FITSTableReader;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.firefly.util.FitsValidation;
-import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsImageCube;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
 import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
-import edu.caltech.ipac.visualize.plot.plotdata.Wavelength;
 import nom.tam.fits.*;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.zip.DataFormatException;
+
 
 /**
  * Created by zhang on 12/9/16.
@@ -42,7 +35,9 @@ import java.util.zip.DataFormatException;
  *   Linear, the name will be waveLengthLinear.fits.  The input FITS will be testLinear.fits.  Both testing
  *   and result FITS files are located in Firefly_test_data under the same package structures.
  *
- *
+ *  3/23/2020
+ *  remove the unit tests for wavelength since the wavelength calculation and unit test are done in the UI.
+ *  
  */
 public class FitsReadTest extends FitsValidation {
     private Fits threeExtensionFits; //it has more than one extension
@@ -154,100 +149,6 @@ public class FitsReadTest extends FitsValidation {
         FitsRead calFitsRead0 = fic.getFitsReadMap().get(keys[0])[1];
         Fits  newFits = calFitsRead0.createNewFits();
         validateFits(expectedOutCubeFits, newFits);
-
-    }
-
-    private DataGroup loadResultTable(String algorithm) throws FitsException, IOException {
-        String retFitsName = "waveLength"+algorithm+".fits";
-        String inFitsName = FileLoader.getDataPath(FitsReadTest.class) + retFitsName;
-        String[] dataCols = {"WaveLength"};
-        DataGroup table = FITSTableReader.convertFitsToDataGroup(
-                inFitsName,
-                dataCols,
-                null,
-                FITSTableReader.EXPAND_BEST_FIT, 1);
-        return table;
-    }
-
-    private void validateWaveLengthResult(String algorithm, ArrayList<Double> ret ) throws FitsException, IOException, DataFormatException, PixelValueException {
-
-        double[] cResult = new double[ret.size()];
-        for (int i=0; i<ret.size(); i++){
-            cResult[i]=ret.get(i).doubleValue();
-        }
-
-        //load the expected results (the expected results were generated in FitsRead and saved to the FITS file
-        DataGroup table = loadResultTable(algorithm);
-        List<DataObject> list =  table.values();
-        double[] exResult = new double[list.size()];
-        for (int i=0; i<list.size(); i++){
-            exResult[i]= ( (Double) list.get(i).getDataElement("WaveLength")).doubleValue();
-        }
-        Assert.assertArrayEquals(exResult, cResult, delta);
-
-    }
-
-    private ArrayList<Double> calculateExpectedResult(Fits fits, FitsRead[] frArray)throws FitsException, IOException, DataFormatException, PixelValueException{
-
-        BasicHDU primaryHdu = fits.getHDU(0);
-        int naxis1 = primaryHdu.getHeader().getIntValue("NAXIS1");
-        int naxis2 = primaryHdu.getHeader().getIntValue("NAXIS2");
-        ArrayList<Double> cResult = new ArrayList<>();
-
-        ImagePt imagePt;
-        Wavelength wl= new Wavelength(frArray[0].getHeader(), frArray[0].getTableHDU());
-        for (int i = 0; i < naxis1; i++) {
-            for (int j = 0; j < naxis2; j++) {
-                imagePt = new ImagePt(i, j);
-                cResult.add(wl.getWaveLength(imagePt));
-            }
-
-        }
-        return cResult;
-    }
-
-    /**
-     * This is a unit test to test wavelength calculation using Table Lookup
-     * @throws FitsException
-     * @throws IOException
-     * @throws DataFormatException
-     * @throws PixelValueException
-     */
-    @Test
-    public void testGetWaveLengthTable()throws FitsException, IOException, DataFormatException, PixelValueException {
-
-        String inFitsName = "testTable.fits";
-        Fits fits = FileLoader.loadFits(FitsReadTest.class, inFitsName);
-        FitsRead[] frArray = FitsReadFactory.createFitsReadArray(fits);
-        ArrayList<Double> cResult = calculateExpectedResult(fits,frArray );
-        validateWaveLengthResult("Table", cResult);
-
-    }
-
-    private void testGetWaveLengthWCSKeyWord(String algorithm)throws FitsException, IOException, DataFormatException, PixelValueException {
-
-        String inFitsName = "test"+algorithm+".fits";
-        Fits fits = FileLoader.loadFits(FitsReadTest.class, inFitsName);
-        FitsRead[] frArray = FitsReadFactory.createFitsReadArray(fits);
-        ArrayList<Double> cResult = calculateExpectedResult(fits,frArray );
-        validateWaveLengthResult(algorithm, cResult);
-    }
-
-    /**
-     * This is a unit test to test wavelength calculations using Liner, Log and Non-linear algorithm
-     * @throws DataFormatException
-     * @throws FitsException
-     * @throws PixelValueException
-     * @throws IOException
-     */
-    @Test
-    public void testGetWaveLength() throws DataFormatException, FitsException, PixelValueException, IOException {
-
-        //Test Linear, Log and Nonlinear (F2W, V2W)
-        String[] algorithms = {"Linear", "Log", "F2W", "V2W"};
-        for (int i=0; i<algorithms.length; i++){
-            testGetWaveLengthWCSKeyWord(algorithms[i]);
-        }
 
     }
 
