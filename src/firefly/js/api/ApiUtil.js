@@ -3,13 +3,13 @@
  */
 
 
-import React, {Component} from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
-import {get,isArray,isElement,isEmpty,isString} from 'lodash';
-import {logErrorWithPrefix, isDebug} from '../util/WebUtil.js';
+import {isArray, isElement, isString} from 'lodash';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga.js';
-import {uniqueID} from '../util/WebUtil';
+import {Logger} from '../util/Logger.js';
 
+const logger = Logger('Firefly');
 // NOTE 
 // NOTE 
 //------------------------------------------------------------------------------------------
@@ -21,7 +21,7 @@ import {uniqueID} from '../util/WebUtil';
 /**
  * @public
  */
-export {fetchUrl, getBoolean, toBoolean, isDebug} from '../util/WebUtil.js';
+export {fetchUrl, getBoolean, toBoolean} from '../util/WebUtil.js';
 export {ServerParams} from  '../data/ServerParams.js';
 
 export {getWsConnId, getWsChannel} from '../core/AppDataCntlr.js';
@@ -38,9 +38,7 @@ export {startAsAppFromApi, getVersion} from '../Firefly.js';
  *
  */
 export function debug(...msg) {
-    if (isDebug() && !isEmpty(msg)) {
-        logErrorWithPrefix('Firefly:', ...msg);
-    }
+    logger.info(msg);
 }
 /**
  *

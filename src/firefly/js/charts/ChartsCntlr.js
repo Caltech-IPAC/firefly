@@ -6,7 +6,8 @@ import {cloneDeep, has, get, isArray, isEmpty, isString, isUndefined, omit, omit
 import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
-import {updateSet, updateObject, toBoolean, logger} from '../util/WebUtil.js';
+import {updateSet, updateObject, toBoolean} from '../util/WebUtil.js';
+import {Logger} from '../util/Logger.js';
 import {getTblById, getColumns, isFullyLoaded, COL_TYPE} from '../tables/TableUtil.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
@@ -51,7 +52,7 @@ const EMPTY_ARRAY = [];
 export default {actionCreators, reducers};
 
 let cleanupWatcherStarted = false;
-
+const logger = Logger('ChartsCntlr');
 
 function actionCreators() {
     return {

@@ -3,7 +3,8 @@
  */
 
 import {get, pickBy} from 'lodash';
-import {parseUrl, Logger} from '../../util/WebUtil.js';
+import {parseUrl} from '../../util/WebUtil.js';
+import {Logger} from '../../util/Logger.js';
 import {WSCH} from '../History.js';
 import {getRootURL} from '../../util/BrowserUtil.js';
 import {getAppOptions} from '../AppDataCntlr.js';
@@ -27,14 +28,19 @@ export const CH_ID = 'channelID';
 const conns = {};       // a map of active connections keyed by baseUrl
 const logger = Logger('WebSocket');
 
+/**
+ * returns a wsClient for the given baseUrl
+ * @param baseUrl   the base URL to connect to
+ * @return {Promise<wsClient>}
+ */
 export function getWsConn(baseUrl=getRootURL()) {
-    return conns[baseUrl] || {isConnected: ()=>false};
+    return conns[baseUrl] || {isConnected: ()=>false, isConnecting: false};
 }
 
 /**
- * returns a WebSocketProxy for the given baseUrl, create if one does not exists
+ * returns a wsClient for the given baseUrl, create if one does not exists
  * @param baseUrl   the base URL to connect to
- * @return {Promise}
+ * @return {Promise<wsClient>}
  */
 export function getOrCreateWsConn(baseUrl=getRootURL()) {
     const wsProxy = conns[baseUrl];
@@ -68,18 +74,14 @@ const listeners = [];
 
 function makeWsConn(baseUrl, resolve, reject) {
 
-    const requireWs = getAppOptions()?.RequireWebSocketUptime;
-
     baseUrl = baseUrl.replace('https:', 'wss:').replace('http:', 'ws:');
 
     const urlInfo = parseUrl(document.location);
-    let wsch = get(urlInfo,['searchObject', WSCH], ''); // get channel from url
-
-    if (!wsch && get(window,'firefly.wsch')) { // if not defined, try window.firefly
-        wsch= window.firefly.wsch;
-    }
+    const wsch = urlInfo.searchObject?.[WSCH] || window.firefly?.wsch;
     const wschParam = wsch ? `?${CH_ID}=${wsch}` : '';
     const wsUrl = `${baseUrl}sticky/firefly/events${wschParam}`;
+
+    const requireWs = getAppOptions()?.RequireWebSocketUptime ?? !!wsch;        // if flag is not set, defaults to true when wsch is given.
 
     let pingerId, connectWhenOnline;
     const wsConn = new WebSocket(wsUrl);

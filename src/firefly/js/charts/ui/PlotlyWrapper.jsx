@@ -9,7 +9,8 @@ import shallowequal from 'shallowequal';
 import {get, debounce, isEmpty, set, omit} from 'lodash';
 import {getPlotLy} from '../PlotlyConfig.js';
 import {getChartData, useChartRedraw, useScatterGL, usePlotlyReact} from '../ChartsCntlr.js';
-import {logError, deltas, flattenObject, logger} from '../../util/WebUtil.js';
+import {logError, deltas, flattenObject} from '../../util/WebUtil.js';
+import {logger} from '../../util/Logger.js';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import Enum from 'enum';
 

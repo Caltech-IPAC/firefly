@@ -216,7 +216,7 @@ export function getRootUrlPath() {
 }
 
 export function getAppOptions() {
-    return flux.getState()[APP_DATA_PATH].appOptions || window?.firefly?.options;
+    return flux.getState()[APP_DATA_PATH].appOptions || window.firefly?.options;
 }
 
 export function getUserInfo() {
@@ -256,7 +256,7 @@ export const dispatchActiveTarget= function(wp,corners=undefined) {
  * @returns {string}  the channel websocket is connected to.
  */
 export function getWsChannel(baseUrl) {
-    return getWsConn(baseUrl)?.channel;;
+    return getWsConn(baseUrl)?.channel;
 }
 
 /**
@@ -264,7 +264,7 @@ export function getWsChannel(baseUrl) {
  * @returns {string} the connection ID websocket is connected to.
  */
 export function getWsConnId(baseUrl) {
-    return getWsConn(baseUrl)?.connId;;
+    return getWsConn(baseUrl)?.connId;
 }
 
 

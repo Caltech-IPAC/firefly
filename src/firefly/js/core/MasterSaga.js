@@ -3,10 +3,11 @@
  */
 
 import {flux} from '../Firefly.js';
-import {take, fork, spawn, cancel, put} from 'redux-saga/effects';
+import {take, fork, spawn, cancel} from 'redux-saga/effects';
 import {isEmpty, get, isFunction, isUndefined, union, isArray, pick} from 'lodash';
 
-import {uniqueID, logger} from '../util/WebUtil.js';
+import {uniqueID} from '../util/WebUtil.js';
+import {Logger} from '../util/Logger.js';
 import {TABLE_SEARCH} from '../tables/TablesCntlr.js';
 import {getTblIdsByGroup, onTableLoaded} from '../tables/TableUtil';
 import {TABLE_FETCH, TABLE_REMOVE} from '../tables/TablesCntlr';
@@ -18,6 +19,7 @@ export const CANCEL_ALL_ACTION_WATCHER= 'MasterSaga.cancelAllActionWatcher';
 export const ADD_TABLE_TYPE_WATCHER= 'MasterSaga.addTableTypeWatcher';
 export const EDIT_TABLE_TYPE_WATCHER= 'MasterSaga.editTableTypeWatcher';
 
+const logger = Logger('MasterSaga');
 
 /**
  * 
