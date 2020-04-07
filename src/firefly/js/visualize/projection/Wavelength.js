@@ -182,7 +182,7 @@ function getWaveLengthLog(ipt, cubeIdx, wlData) {
  */
 function getWaveLengthNonLinear(ipt, cubeIdx, wlData) {
 
-    const {N,  r_j, pc_3j, s_3,  lambda_r, algorithm= 'F2W', restWAV=0}= wlData;
+    const {N,  r_j, pc_3j, s_3, lambda_r, algorithm= 'F2W', restWAV=0}= wlData;
     let lamda= NaN;
     const omega= getOmega(getPixelCoords(ipt,cubeIdx),  N, r_j, pc_3j, s_3);
 
@@ -231,23 +231,24 @@ const getArrayDataFromTable= (table, columnName) => {
  *
  * The pre-requirement is that the FITS has three axies, ra (1), dec(2) and wavelength (3).
  * Therefore the keyword for i referenced in the paper is 3
+ * ψm = xi + CRVALia: xi = omega, CRVALia = CRIVAL3=lambda_r
  * @param {ImagePt} ipt
  * @param {number} cubeIdx
  * @param {WaveLengthData} wlData
  * @param {Number} wlData.N
  * @param {Array.<number>} wlData.r_j
  * @param {Array.<number>} wlData.pc_3j
- * @param {Number} wlData.s_3
+ * @param {Number} wlData.s_3, s_3 is the value of CDELT3
  * @param {Number} wlData.lambda_r
  * @return {number}
  */
 function getWaveLengthTable(ipt, cubeIdx, wlData) {
 
 
-    const {N, r_j, pc_3j, s_3, cdelt, lambda_r, wlTable, ps3_1, ps3_2}= wlData;
+    const {N, r_j, pc_3j, s_3, lambda_r, wlTable, ps3_1, ps3_2}= wlData;
 
     const omega= getOmega(getPixelCoords(ipt,cubeIdx),  N, r_j, pc_3j, s_3);
-    const psi_m = !isNaN(cdelt)? lambda_r + cdelt* omega : lambda_r + omega;
+    const psi_m = lambda_r + omega;
     if (!wlTable) return NaN;
 
 
@@ -256,10 +257,20 @@ function getWaveLengthTable(ipt, cubeIdx, wlData) {
     if (!coordData) return NaN;
 
     const indexData =  getArrayDataFromTable(wlTable, ps3_2 || 'INDEX');
-    if (!indexData) return coordData[parseInt(Math.abs(psi_m)) ];
+
+    if (!indexData) {
+        //There is no Index table, the C_m is the direct search in the coordinate table
+        //In this case the condition 1<=k <=psi_m<k+1<=kMax does not apply in sofia case
+        return calculateC_m( psi_m,  coordData, coordData.length, false) ;
+    }
 
 
-    const gamma_m = calculateGamma_m(indexData, psi_m);
+    const sort = isSorted(indexData); //1:ascending, -1: descending, 0: not sorted
+    if (sort===0){
+        return NaN; //The vector index array has to be either ascending or descending
+    }
+    const gamma_m = calculateGamma_m(indexData, psi_m, sort);
+
     if (!isDefined(gamma_m)) return NaN;
 
     return calculateC_m( gamma_m,  coordData, indexData.length) ;
@@ -276,36 +287,61 @@ function getWaveLengthTable(ipt, cubeIdx, wlData) {
  * @param gamma_m
  * @param coordData
  * @param kMax
- * @returns {undefined}
+ * @param hasIndexTable
+ * @returns {*}
  */
-function calculateC_m(gamma_m,  coordData, kMax){
+function calculateC_m(gamma_m,  coordData, kMax, hasIndexTable=true){
 
-   let C_m = undefined;
-   if (kMax===1) {
-     C_m = coordData[0];
-   }
-   const kIndex = Math.floor(gamma_m);
-   if (kIndex>=0 && kIndex <= gamma_m && gamma_m < kIndex+1 && kIndex+1 <=kMax-1){
-       C_m = coordData[kIndex] + (gamma_m - kIndex-1) * (coordData[kIndex+1]-coordData[kIndex]);
-   }
-   else {
-     const inCoords = Array.from(new Array(coordData.length), (x,i) => i);
-     const linearInterpolator = LinearInterpolator(inCoords, coordData, true);
-     if (gamma_m>=0.5 && gamma_m<1) {
+    let C_m = undefined;
 
-       //linear extrapolation CoorData
-       const coordData_far_left = linearInterpolator(0.5);
-       C_m = coordData_far_left + gamma_m/(coordData[0]-coordData_far_left);
+    /*The value of gamma_m derived from ψm must lie in the range 0.5 ≤ gamma_m ≤ K + 0.5.
+    However, if the index array is not given, this seems does not apply.  In sofia data, it does not apply.
+    Thus, we can not use kIndex = Math.trunc(gamma_m).
+    * */
 
-     }
-     else  if( kMax <gamma_m && gamma_m <= kMax+ 0.5) {
-       //linear extrapolation CoorData
-       const coordData_far_right = linearInterpolator(kMax + 0.5);
-       C_m = coordData[kMax-1] + (gamma_m-kMax) /(coordData_far_right - coordData[kMax-1]);
+    if (kMax===1) {
+        const k =  Math.trunc(gamma_m);//integer part of the gamma_m
+        if (k===0) return coordData[0];
+    }
 
-     }
+    /*In the case of a single separable coordinate with 1 ≤ k ≤ gamma_m < k+1 ≤ kMax, the coordinate value is given by
+     Cm = Ck + (gamma_m − k) (Ck+1 − Ck)
+     Note: we use the index starting from 0, so we have to kIndex>=0.
+    */
+    let kIndex;
+    if (hasIndexTable){
+        /*1 ≤ k ≤ gamma_m < k+1 ≤ Kmax
+        gamma_m = k + (ψm − Ψk(/ (Ψk+1 − Ψk); The value of gamma_m derived from ψm must lie in the
+        range 0.5 ≤Υm ≤ K + 0.5.
+         */
+        kIndex = Math.trunc(gamma_m); //thus gamma_m>kIndex and gamma_m<kIndex+1
+    }
+    else {
+        const sort = isSorted(coordData); //1:ascending, -1: descending, 0: not sorted
+        if (sort === 0) {
+            coordData = coordData.sort((a, b) => { return a - b; }); //sort the data
+        }
+        kIndex = searchIndex(coordData, gamma_m, sort);
+    }
+    if (  (hasIndexTable  && kIndex>=0 && kIndex <= gamma_m && gamma_m < kIndex+1 && kIndex+1 <=kMax-1 ) ||
+          (!hasIndexTable && kIndex >= 0 && coordData[kIndex] <= gamma_m && gamma_m < coordData[kIndex + 1] && kIndex + 1 <= kMax - 1) ) {
+           C_m = coordData[kIndex] + (gamma_m - kIndex - 1) * (coordData[kIndex + 1] - coordData[kIndex]);
+    }
+    else {
+        const inCoords = Array.from(new Array(coordData.length), (x,i) => i);
+        const linearInterpolator = LinearInterpolator(inCoords, coordData, true);
+        if (!hasIndexTable && gamma_m<coordData[0] || hasIndexTable && gamma_m>=0.5 && gamma_m<1) {
+            //linear extrapolation CoorData next to the first coordinate point
+            const coordData_far_left = linearInterpolator(0.5);
+            return coordData_far_left + gamma_m * (coordData[0]-coordData_far_left);
+        }
+        else  if( ( !hasIndexTable && gamma_m>coordData[kMax-1]) || (hasIndexTable && kMax <gamma_m && gamma_m <= kMax+ 0.5) ) {
+            //linear extrapolation CoorData
+            const coordData_far_right = linearInterpolator(kMax + 0.5);
+            return coordData[kMax-1] + (gamma_m-kMax) * (coordData_far_right - coordData[kMax-1]);
 
-   }
+        }
+    }
    return C_m;
 }
 
@@ -316,7 +352,8 @@ function getGammaByInterpolation(psiIndex, psi_m, indexVec, sort){
         * psiIndex is found, however the following four cases, gamma_m is undefined and so is C_m
         */
     //case 1: Ψk+1=Ψk=Ψm, return undefined
-    if (indexVec[psiIndex]===indexVec[psiIndex+1] && indexVec[psiIndex]===psi_m) {
+    if (indexVec[psiIndex]===indexVec[psiIndex+1] && indexVec[psiIndex]===psi_m && psiIndex<indexVec.length-1 ||
+      psi_m===indexVec[0] && indexVec[0]===indexVec[1]) {
         return gamma_m;
     }
 
@@ -353,7 +390,7 @@ function getGammaByInterpolation(psiIndex, psi_m, indexVec, sort){
         return gamma_m;
     }
 }
-function getGammaByExtrarpolation(psiIndex, psi_m, indexVec, sort){
+function getGammaByExtrarpolation(psi_m, indexVec, sort){
     let gamma_m=undefined;
     const kMax = indexVec.length;
     const inCoords = Array.from(new Array(indexVec.length), (x,i) => i);
@@ -362,7 +399,6 @@ function getGammaByExtrarpolation(psiIndex, psi_m, indexVec, sort){
     const right = indexVec[kMax - 1] + (indexVec[kMax - 1] - indexVec[kMax - 2]) / 2;
 
     // When no psi_m is found in the vector psiIndex=-1),  we need to check if the gamma_m can be extrapolated.
-
     if (indexVec.length===1){
         /* When the indexVector's length  = 1 with ψm in the range Ψ1 − 0.5 ≤ ψm ≤ Ψ1 + 0.5 (noting that Ψ1
         * should be equal to 1 in this case) whence Υm = ψm
@@ -460,9 +496,9 @@ function getGammaByExtrarpolation(psiIndex, psi_m, indexVec, sort){
  * @param sort
  * @returns {*}
  */
-function calculateGamma_m(indexVec, psi_m, sort) {
+function calculateGamma_m(indexVec, psi_m,sort) {
 
-    const psiIndex = searchIndex(indexVec, psi_m, sort);
+    const psiIndex = searchIndex(indexVec, psi_m,sort);
 
 
 
@@ -476,11 +512,11 @@ function calculateGamma_m(indexVec, psi_m, sort) {
           Ψk ≤ ψm ≤ Ψk+1 for monotonically increasing index values or
           Ψk ≥ ψm ≥ Ψk+1 for monotonically decreasing index values for some k (here, we use psiIndex)
        */
-        return getGammaByInterpolation(psiIndex, psi_m, indexVec, sort);
+        return getGammaByInterpolation(psiIndex,psi_m, indexVec, sort);
     }
     else {
         // psiIndex=-1: no range found, the psi_m is outside of the indexVector's range
-       return getGammaByExtrarpolation(psiIndex, psi_m, indexVec, sort);
+       return getGammaByExtrarpolation(psi_m, indexVec, sort);
     }
 
 
@@ -512,23 +548,19 @@ function isSorted(intArray) {
   *
   * NOTE: the index in the algorthim is starting with 1, in Javascript, the index is starting from 0.
   *
-  * @param indexVec
+  * @param arrayData
   * @param psi_m
+  * @param sort
   * @returns {number}
   */
- function searchIndex(indexVec, psi_m) {
+ function searchIndex(arrayData, psi_m, sort) {
 
 
-    const sort = isSorted(indexVec); //1:ascending, -1: descending, 0: not sorted
-    if (sort===0){
-        return NaN; //The vector index array has to be either ascending or descending
-    }
-
-    for (let i=0; i<indexVec.length-1; i++){
-        if (sort===1 && indexVec[i]<=psi_m  && psi_m<=indexVec[i+1]){
+    for (let i=0; i<arrayData.length-1; i++){
+        if (sort===1 && arrayData[i]<=psi_m  && psi_m<=arrayData[i+1]){
             return i;
         }
-        if (sort===-1 && indexVec[i]>=psi_m && psi_m>=indexVec[i+1]){
+        if (sort===-1 && arrayData[i]>=psi_m && psi_m>=arrayData[i+1]){
             return i;
 
         }
@@ -587,7 +619,7 @@ function getPixelCoords(ipt, cubeIdx) {
  * naxis2, ctype2: dec, naxis3, ctype3 : wavelength
  * Thus, the k value referenced in the paper is 3 here
  *                      N
- *  omega  = x_3 = s_3* ∑ [ m3_j * (p_j - r_j) ]
+ *  omega  = x_3 = s_3* ∑ [ PC3_j * (p_j - r_j) ]
  *                      j=1
  *
  *  N: is the dimensionality of the WCS representation given by NAXIS or WCSAXES
@@ -597,13 +629,14 @@ function getPixelCoords(ipt, cubeIdx) {
  *  m3_j: is a linear transformation matrix given either by PC3_j or CD3_j
  *
  *
- * @param pixCoords
+ * @param pixCoords: pixel coordinates
  * @param {number} N
- * @param {Array.<number>} r_j
- * @param {Array.<number>} pc_3j
- * @param {Number} s_3
+ * @param {Array.<number>} r_j: r j are pixel coordinates of the reference point given by CRPIX j
+ * @param {Array.<number>} pc_3j: PC_3j matrix
+ * @param {Number} s_3: CDETl3 value
  * @return number
  */
+
 function getOmega(pixCoords, N,  r_j, pc_3j, s_3){
     //if (!pc_3j || !r_j ) return s_3*(pixCoords[0]+pixCoords[1]);
 

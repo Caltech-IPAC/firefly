@@ -225,8 +225,8 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
             const part1 = {
                 N, algorithm, ctype, restWAV, pc_3j, r_j,
                 ps3_0, ps3_1, ps3_2, pv3_1, pv3_2,pv3_3,
-                s_3: isNaN(cdelt) ? 0 : cdelt,
-                lambda_r: isNaN(crval) ? 0 : crval,
+                s_3:  cdelt,
+                lambda_r:  crval,
                 wlTable
             };
 
@@ -271,10 +271,10 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
 
 
     return {
-        N, algorithm, ctype, restWAV, wlType, crpix, crval, cdelt, failReason, failWarning, units, pc_3j, r_j,
+        N, algorithm, ctype, restWAV, wlType, crpix, crval, failReason, failWarning, units, pc_3j, r_j,
         ps3_0, ps3_1, ps3_2, pv3_1, pv3_2, pv3_3,
-        s_3: isNaN(cdelt) ? 0 : cdelt,
-        lambda_r: isNaN(crval) ? 0 : crval,
+        s_3: cdelt,
+        lambda_r:  crval,
         wlTable
     };
 }

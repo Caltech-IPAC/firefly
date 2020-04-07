@@ -372,6 +372,7 @@ function calculateExpectedTabWavelength( header, wlTable){
     let pixCoords, ipt, gamma_m;
 
     let wl=[];
+    let psiIdx, kIndex;
     for (let i=0; i<tabPointArray.length; i++){
         ipt = tabPointArray[i];
         pixCoords = getPixelCoordinates(ipt, header);
@@ -380,10 +381,10 @@ function calculateExpectedTabWavelength( header, wlTable){
         //console.log('omega='+omega);
         //psi_m = lambda_r + cdelt* omega;
         //console.log('psi_m='+psi_m);
-        gamma_m =pixIdxAry[i] + 1  + (psi_mAry[i] - indexVec[pixIdxAry[i]]) / (indexVec[pixIdxAry[i]+1] - indexVec[pixIdxAry[i]]);
-        const kIndex = Math.floor(gamma_m);
+        psiIdx = pixIdxAry[i];
+        gamma_m = psiIdx + 1  + (psi_mAry[i] - indexVec[psiIdx]) / (indexVec[psiIdx+1] - indexVec[psiIdx]);
+        kIndex = Math.floor(gamma_m);
         wl[i] =coords[kIndex] + (gamma_m - (kIndex+1) )* (coords[kIndex+1]-coords[kIndex]);
-
     }
 
     return wl;
