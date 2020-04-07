@@ -7,6 +7,7 @@ import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
 import {updateSet, updateObject, toBoolean} from '../util/WebUtil.js';
+import {Logger} from '../util/Logger.js';
 import {getTblById, getColumns, isFullyLoaded, COL_TYPE} from '../tables/TableUtil.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
@@ -50,10 +51,8 @@ const EMPTY_ARRAY = [];
 
 export default {actionCreators, reducers};
 
-const isDebug = () => get(window, 'firefly.debug', false);
-
 let cleanupWatcherStarted = false;
-
+const logger = Logger('ChartsCntlr');
 
 function actionCreators() {
     return {
@@ -634,7 +633,7 @@ function reduceData(state={}, action={}) {
                     mounted: nMounted,
                     ...rest
                 }, isUndefined));
-            isDebug() && console.log(`CHART_ADD ${chartId} #mounted ${nMounted}`);
+            logger.info(`CHART_ADD ${chartId} #mounted ${nMounted}`);
             return state;
         }
         case (CHART_UPDATE) :
@@ -664,7 +663,7 @@ function reduceData(state={}, action={}) {
         case (CHART_REMOVE)  :
         {
             const {chartId} = action.payload;
-            isDebug() && console.log('CHART_REMOVE '+chartId);
+            logger.info('CHART_REMOVE '+chartId);
             return omit(state, chartId);
         }
         case (CHART_MOUNTED) :
@@ -673,7 +672,7 @@ function reduceData(state={}, action={}) {
             if (has(state, chartId)) {
                 const n = get(state, [chartId,'mounted'], 0);
                 state = updateSet(state, [chartId,'mounted'], Number(n) + 1);
-                isDebug() && console.log(`CHART_MOUNTED ${chartId} #mounted ${state[chartId].mounted}`);
+                logger.info(`CHART_MOUNTED ${chartId} #mounted ${state[chartId].mounted}`);
             }
 
             return state;
@@ -688,7 +687,7 @@ function reduceData(state={}, action={}) {
                 } else {
                     logError(`CHART_UNMOUNT on unmounted chartId ${chartId}`);
                 }
-                isDebug() && console.log(`CHART_UNMOUNTED ${chartId} #mounted ${state[chartId].mounted}`);
+                logger.info(`CHART_UNMOUNTED ${chartId} #mounted ${state[chartId].mounted}`);
             }
             return state;
         }

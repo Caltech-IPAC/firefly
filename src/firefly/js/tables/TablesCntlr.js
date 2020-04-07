@@ -12,6 +12,7 @@ import {dataReducer} from './reducer/TableDataReducer.js';
 import {uiReducer} from './reducer/TableUiReducer.js';
 import {resultsReducer} from './reducer/TableResultsReducer.js';
 import {updateMerge, logError} from '../util/WebUtil.js';
+import {Logger} from '../util/Logger.js';
 import {FilterInfo} from './FilterInfo.js';
 import {selectedValues} from '../rpc/SearchServicesJson.js';
 import {trackBackgroundJob, isSuccess, isDone, getErrMsg} from '../core/background/BackgroundUtil.js';
@@ -126,7 +127,7 @@ export const TBL_UI_UPDATE = `${UI_PREFIX}.update`;
  */
 export const TBL_UI_EXPANDED = `${UI_PREFIX}.expanded`;
 
-
+const logger = Logger('TablesCntlr');
 
 export default {actionCreators, reducers};
 
@@ -617,7 +618,7 @@ function reducer(state=initState(), action={}) {
 
     if (action.type===REINIT_APP) return initState();
 
-    isDebug() && get(action, 'type','').includes(DATA_PREFIX) && (console.log(action.type + ': ' + get(action, 'payload.tbl_id')));
+    logger.isDebug() && get(action, 'type','').includes(DATA_PREFIX) && logger.info(action);
 
     const nstate = {...state};
     nstate.results = resultsReducer(nstate, action);
@@ -688,5 +689,3 @@ function asyncFetch(request, hlRowIdx, dispatch, tbl_id) {
             dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, error.message)});
         });
 }
-
-const isDebug = () => get(window, 'firefly.debug', false);

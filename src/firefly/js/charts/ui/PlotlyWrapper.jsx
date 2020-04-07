@@ -10,14 +10,13 @@ import {get, debounce, isEmpty, set, omit} from 'lodash';
 import {getPlotLy} from '../PlotlyConfig.js';
 import {getChartData, useChartRedraw, useScatterGL, usePlotlyReact} from '../ChartsCntlr.js';
 import {logError, deltas, flattenObject} from '../../util/WebUtil.js';
+import {logger} from '../../util/Logger.js';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import Enum from 'enum';
 
 const PLOTLY_BASE_ID= 'plotly-plot';
 const MASKING_DELAY= 400;
 let counter= 0;
-
-const isDebug = () => get(window, 'firefly.debug', false);
 
 export const RenderType= new Enum([ 'REACT', 'RESIZE', 'UPDATE', 'RESTYLE', 'RELAYOUT',
                                     'RESTYLE_AND_RELAYOUT', 'NEW_PLOT', 'PAUSE_DRAWING' ],
@@ -283,7 +282,7 @@ export class PlotlyWrapper extends Component {
                         break;
                 }
                 set(getChartData(chartId), 'lastUpdated', Date.now());
-                isDebug() && console.log(`${renderType.toString()} ${dataUpdateTraces} elapsed: ${Date.now() - now}`);
+                logger.info(`${renderType.toString()} ${dataUpdateTraces} elapsed: ${Date.now() - now}`);
             }
         } ).catch( (e) => {
             console.log('Plotly not loaded',e);

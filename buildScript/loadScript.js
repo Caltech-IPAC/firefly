@@ -5,6 +5,7 @@
 (function (loaderScript, bundleScript) {
     var scriptTag = document.createElement('script');
     scriptTag.type = 'text/javascript';
+    scriptTag.setAttribute('defer', 'defer');
 
     var getScriptURL = function(loader) {
         loader = loader || 'firefly_loader.js';

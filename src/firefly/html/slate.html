@@ -10,6 +10,7 @@
     <title>Firefly</title>
 
     <script>
+        var pOpts = window.firefly && window.firefly.options || {};
         window.firefly = {
             app: {
                 template: 'FireflySlate',
@@ -21,13 +22,13 @@
                 ],
                 showBgMonitor: false
             },
-            options : {
+            options : Object.assign(pOpts, {
                 MenuItemKeys: {maskOverlay:true},
                 catalogSpacialOp: 'polygonWhenPlotExist',
                 disableDefaultDropDown: true,
                 charts: {defaultDeletable: true},
                 readoutDefaultPref: {imageMouseReadout2:'zeroIP'}
-            }
+            })
         };
     </script>
     <script  type="text/javascript" src="firefly_loader.js"></script>

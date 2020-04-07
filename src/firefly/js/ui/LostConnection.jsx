@@ -5,8 +5,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import {get} from 'lodash';
-import {SimpleComponent} from './SimpleComponent.jsx';
-import {getWsInfo} from '../core/AppDataCntlr.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga';
 import {APP_UPDATE} from '../core/AppDataCntlr';
 
@@ -38,14 +36,7 @@ export function initLostConnectionWarning() {
     const onConnectionUpdate = (action) => {
         const {payload} = action || {};
         if (! get(payload, 'websocket.isConnected', true)) {
-            const divElements = document.querySelectorAll('[id^="fireflyLostConnWarn"]');
-            if (divElements) {
-                divElements.forEach( (div) => {
-                    ReactDOM.unmountComponentAtNode(div);        // in case one is already mounted.
-                    const decor = div.getAttribute('data-decor') || 'medium';
-                    ReactDOM.render(<LostConnection {...{decor}}/>, div);
-                });
-            }
+            showLostConnection();
         }
     };
 
@@ -53,35 +44,35 @@ export function initLostConnectionWarning() {
 
 }
 
-
-class LostConnection extends SimpleComponent {
-
-    getNextState() {
-        return getWsInfo();
+export function showLostConnection() {
+    const divElements = document.querySelectorAll('[id^="fireflyLostConnWarn"]');
+    if (divElements) {
+        divElements.forEach( (div) => {
+            ReactDOM.unmountComponentAtNode(div);        // in case one is already mounted.
+            const decor = div.getAttribute('data-decor') || 'medium';
+            ReactDOM.render(<LostConnection {...{decor}}/>, div);
+        });
     }
+}
 
-    render() {
-        const {isConnected=true} = this.state || {};
-        if (isConnected) return null;
-
-        const {decor} = this.props;
-        if (decor === 'full') {
-            return (
-                <div style={{display: 'inline-flex', alignItems: 'center', color: 'maroon'}}>
-                    <div className='lost-connection' style={{margin: '1px 5px'}}/>
-                    <div>
-                        You are no longer connected to the visualization server. <br/>
-                        This message will go away once your connection is restored.
-                    </div>
-                </div>
-            );
-        } else {
-            const clzName = decor === 'small' ? 'lost-connection--small' : 'lost-connection';
-            return (
-                <div className = {clzName}
-                     title = 'You are no longer connected to the visualization server. This icon will go away once your connection is restored.'/>
-            );
-        }
-
+export function hideLostConnection() {
+    const divElements = document.querySelectorAll('[id^="fireflyLostConnWarn"]');
+    if (divElements) {
+        divElements.forEach( (div) => {
+            ReactDOM.unmountComponentAtNode(div);
+        });
     }
+}
+
+function LostConnection ({decor}) {
+    const clzName = decor === 'small' ? 'lost-connection--small' : 'lost-connection';
+    const msg = 'You are no longer connected to the server. Try reloading the page to reconnect.';
+    if (decor !== 'full') return <div className = {clzName} title = {msg} />;
+
+    return (
+        <div style={{display: 'inline-flex', alignItems: 'center', color: 'maroon', width: 300}}>
+            <div className={clzName} style={{margin: '1px 5px'}}/>
+            <div> {msg}</div>
+        </div>
+    );
 }

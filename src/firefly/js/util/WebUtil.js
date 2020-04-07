@@ -3,13 +3,14 @@
  */
 
 import shallowequal from 'shallowequal';
-import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil,
-        last, isPlainObject, forEach, fromPairs, mergeWith, isArray, truncate} from 'lodash';
+import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil, memoize,
+        last, isPlainObject, forEach, fromPairs, mergeWith, isArray, truncate, find} from 'lodash';
 
 import {getRootURL} from './BrowserUtil.js';
-import {getWsConnId, getWsChannel} from '../core/AppDataCntlr.js';
 import {getDownloadProgress, DownloadProgress} from '../rpc/SearchServicesJson.js';
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
+import {getOrCreateWsConn} from '../core/messaging/WebSocketClient.js';
+import {logger} from './Logger.js';
 
 import update from 'immutability-helper';
 import {ServerParams} from '../data/ServerParams';
@@ -88,11 +89,6 @@ export function loadScript(scriptName) {
         });
     return loadPromise;
 }
-
-/**
- * Is in debug mode.. temporary util we come up with something better
- */
-export const isDebug = () => get(window, 'firefly.debug', false);
 
 /**
  * Create an image with a promise that resolves when the image is loaded
@@ -280,14 +276,21 @@ export function fetchUrl(url, options, doValidation= true, enableDefOptions= tru
         };
         options = Object.assign(req, options);
 
-        const headers = {
-            [WS_CHANNEL_HD]: getWsChannel(),
-            [WS_CONNID_HD]: getWsConnId(),
-            [REQUEST_WITH]: AJAX_REQUEST
-        };
-        options.headers = Object.assign(headers, options.headers);
+        return getOrCreateWsConn().then(({connId, channel}) => {
+            const headers = {
+                [WS_CHANNEL_HD]: channel,
+                [WS_CONNID_HD]: connId,
+                [REQUEST_WITH]: AJAX_REQUEST
+            };
+            options.headers = Object.assign(headers, options.headers);
+            return doFetchUrl(url, options, doValidation);
+        });
+    } else {
+        return doFetchUrl(url, options, doValidation);
     }
+}
 
+function doFetchUrl(url, options, doValidation) {
     if (options.params) {
         const params = toNameValuePairs(options.params);        // convert to name-value pairs if it's a simple object.
         if (options.method.toLowerCase() === 'get') {
@@ -299,7 +302,7 @@ export function fetchUrl(url, options, doValidation= true, enableDefOptions= tru
                 if (options.method.toLowerCase() === 'post') {
                     options.headers['Content-type'] = 'application/x-www-form-urlencoded';
                     options.body = params.map(({name, value=''}) => encodeURIComponent(name) + '=' + encodeURIComponent(value))
-                                    .join('&');
+                        .join('&');
                 } else if (options.method.toLowerCase() === 'multipart') {
                     options.method = 'post';
                     const data = new FormData();
@@ -313,6 +316,7 @@ export function fetchUrl(url, options, doValidation= true, enableDefOptions= tru
         }
     }
 
+    logger.tag('fetchUrl').debug({url, options});
     // do the actually fetch, then return a promise.
     return fetch(url, options)
         .then( (response) => {
@@ -325,29 +329,12 @@ export function fetchUrl(url, options, doValidation= true, enableDefOptions= tru
                 throw new Error(`Request failed with status ${response.status}: ${url}`);
             }
         });
+
 }
 
 export function logError(...message) {
     if (message) {
         message.forEach( (m) => console.log(has(m,'stack') ? m.stack : m) );
-    }
-}
-export function logErrorWithPrefix(prefix, ...message) {
-    if (message) {
-        message.forEach( (m,idx) => {
-            if (idx===0) {
-                if (!isObject(m)) {
-                    console.log(prefix);
-                    console.log(m);
-                }
-                else {
-                    console.log(`${prefix} ${m}`);
-                }
-            }
-            else {
-                console.log(m.stack ? m.stack : m);
-            }
-        } );
     }
 }
 
@@ -466,12 +453,12 @@ export function downloadSimple(url) {
 
 
 export function parseUrl(url) {
-    const parser = document.createElement('a');
+    const parser = new URL(url);
     const pathAry = [];
-    parser.href = url;
 
-    // Convert query string to object
-    const searchObject = decodeParams(parser.search);
+    // Convert query string to object map with decoded key/value pairs
+    const searchObject = {};
+    parser.searchParams.forEach((val, key) => searchObject[key] = val);
 
     // Convert path string to object
     const paths = parser.pathname.split('/');
@@ -489,14 +476,9 @@ export function parseUrl(url) {
     const p = last(paths);
     const filename = p.includes(';') ? p.split(';')[0] : p;
 
-    return {
-        protocol: parser.protocol,
-        host: parser.host,
-        hostname: parser.hostname,
-        port: parser.port,
+    return {...parser,
         path: parser.pathname,
         search: parser.search.replace(/^\?/, ''),
-        hash: parser.hash,
         searchObject,
         filename,
         pathAry

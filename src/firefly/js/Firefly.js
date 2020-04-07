@@ -20,13 +20,11 @@ import {dispatchChangeReadoutPrefs} from './visualize/MouseReadoutCntlr.js';
 import {showInfoPopup} from './ui/PopupUtil';
 
 import {reduxFlux} from './core/ReduxFlux.js';
-import {wsConnect} from './core/messaging/WebSocketClient.js';
+import {getOrCreateWsConn} from './core/messaging/WebSocketClient.js';
 import {ActionEventHandler} from './core/messaging/MessageHandlers.js';
 import {init} from './rpc/CoreServices.js';
 import {getPropsWith, mergeObjectOnly, getProp, toBoolean} from './util/WebUtil.js';
-import {initLostConnectionWarning} from './ui/LostConnection.jsx';
 import {dispatchChangeTableAutoScroll, dispatchWcsMatch, visRoot} from './visualize/ImagePlotCntlr';
-import {makeAnalysisGetGridDataProduct, makeAnalysisGetSingleDataProduct} from './metaConvert/MultiProductFileAnalyzer';
 
 export const flux = reduxFlux;
 
@@ -289,14 +287,12 @@ function bootstrap(props, options) {
 
         ensureUsrKey();
         // establish websocket connection first before doing anything else.
-        wsConnect((client) => {
+        getOrCreateWsConn().then((client) => {
             fireflyInit(props, options);
 
             client.addListener(ActionEventHandler);
             window.firefly.wsClient = client;
             init();    //TODO.. need to add spaName when we decide to support it.
-            initLostConnectionWarning();
-
             resolve && resolve();
         });
     }).then(() => {

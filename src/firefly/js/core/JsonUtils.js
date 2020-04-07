@@ -6,6 +6,7 @@ import {has} from 'lodash';
 import {getRootURL} from '../util/BrowserUtil.js';
 import {fetchUrl, toBoolean} from '../util/WebUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
+import {logger} from '../util/Logger.js';
 
 export const DEF_BASE_URL = getRootURL() + 'sticky/CmdSrv';
 
@@ -69,6 +70,7 @@ export function dispatchRemoteAction(channelId, action) {
     const params= {
         [ServerParams.CHANNEL_ID]: channelId,
         [ServerParams.ACTION]: JSON.stringify(action) };
+    logger.tag('dispatchRemote').debug(action);
     return doJsonRequest(ServerParams.VIS_PUSH_ACTION, params);
 }
 
