@@ -33,7 +33,7 @@ public class AtlasImageParams extends IrsaImageParams {
     }
 
     public String getUniqueString() {
-        return super.getUniqueString() + "-" + getSchema() + "-" + getTable() + "-" + getBand() + getSize();
+        return super.getUniqueString() + "-" + getSchema() + "-" + getTable() + "-" + getBand() + getSize()+ getXtraFilter().hashCode();
     }
 
     public String toString() {
