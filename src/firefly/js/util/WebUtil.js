@@ -309,7 +309,7 @@ function doFetchUrl(url, options, doValidation) {
                     params.forEach( ({name, value}) => {
                         data.append(name, value);
                     });
-                    options.boy = data;
+                    options.body = data;
                 }
                 Reflect.deleteProperty(options, 'params');
             }

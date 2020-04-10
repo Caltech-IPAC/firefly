@@ -160,7 +160,7 @@ function handleChange(ev, fireValueChange, type, fileAnalysis) {
 
 function makeDoUpload(file, type, isFromURL, fileAnalysis) {
     return () => {
-        return doUpload(file, fileAnalysis, {type}).then(({status, message, cacheKey, fileFormat, analysisResult}) => {
+        return doUpload(file, fileAnalysis, {}).then(({status, message, cacheKey, fileFormat, analysisResult}) => {
             let valid = status === '200';
             if (valid) {        // json file is not supported currently
                 if (!isNil(fileFormat)) {
