@@ -44,6 +44,27 @@ public class SrvParam {
         return paramMap;
     }
 
+    /**
+     * Return any parameters that are not in ignore list. If the parameter has more then one entry, only return the first
+     * @param ignoreList an array list of parameters to ignore
+     * @return a map of the parameters that we not ignored
+     */
+    public Map<String, String> getParamMapUsingExcludeList(List<String> ignoreList) {
+        Map<String,String> retMap= new HashMap<>();
+        for(Map.Entry<String,String[]> entry : this.paramMap.entrySet()) {
+            if (!ignoreList.contains(entry.getKey())) {
+                retMap.put(entry.getKey(),entry.getValue()[0]);
+            }
+        }
+//        retMap= this.paramMap.entrySet().stream().filter( entry -> !ignoreList.contains(entry.getKey()))
+//                .collect(Collectors.toMap(x -> x.getKey(), x -> x.getValue());
+        return retMap;
+    }
+//    public Map<String, String> getParamMapUsingExcludeList(List<String> ignoreList) {
+//        return this.paramMap.entrySet().stream().filter( entry -> !ignoreList.contains(entry.getKey()))
+//                .collect(Collectors.toMap(x -> x.getKey(), x -> x.getValue());
+//    }
+
     public static SrvParam makeSrvParamSimpleMap(Map<String, String> map) {
         Map<String, String[]> targetMap= new HashMap<>();
         for( Map.Entry<String,String> entry : map.entrySet()) {

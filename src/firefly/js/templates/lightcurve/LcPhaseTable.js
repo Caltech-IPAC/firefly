@@ -3,7 +3,6 @@
  */
 
 import {get, set, slice, isArray, isString, cloneDeep, pick, omit} from 'lodash';
-import {doUpload} from '../../ui/FileUpload.jsx';
 import {dispatchChartAdd} from '../../charts/ChartsCntlr.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
@@ -12,6 +11,7 @@ import {makeFileRequest} from '../../tables/TableRequestUtil.js';
 import {LC, getFullRawTable, getConverterId} from './LcManager.js';
 import {getLayouInfo} from '../../core/LayoutCntlr.js';
 import {getConverter, getYColMappings} from './LcConverterFactory.js';
+import {upload} from '../../rpc/CoreServices.js';
 
 
 const DEC_PHASE = 3;       // decimal digit
@@ -27,7 +27,7 @@ export function uploadPhaseTable(tbl, flux) {
     const blob = new Blob([ipacTable]);
     //const file = new File([new Blob([ipacTable])], `${tbl_id}.tbl`);
 
-    doUpload(blob).then(({status, cacheKey}) => {
+    upload(blob).then(({status, cacheKey}) => {
         const tReq = makeFileRequest(title, cacheKey, null,
                                      {tbl_id,
                                       sortInfo:sortInfoString(LC.PHASE_CNAME),

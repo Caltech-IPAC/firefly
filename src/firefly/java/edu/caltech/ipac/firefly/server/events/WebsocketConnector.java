@@ -38,6 +38,7 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
 
     private static final long WS_TIMEOUT = 30*1000;  // give up after 30 sec when sending msg
     private static final long WS_MAX_IDLE = 10*60*1000; // drop session when idled for over 10 mins.  keep-alive ping happens every 5 mins.
+    private static final String PREFIX= "Channel: WS";
 
     @OnOpen
     public void onOpen(final Session session) {
@@ -54,9 +55,9 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
             send(ServerEventQueue.convertToJson(connected));
             ServerEventManager.addEventQueue(eventQueue);
             onClientConnect(session.getId(), channelID, userKey);
-            LOG.trace("WS open:" + channelID + "-" + session.getId());
+            LOG.info(PREFIX+" open "+makeChannelStr(session));
         } catch (Exception e) {
-            LOG.error(e, "WS Unable to open websocket connection:" + session.getId());
+            LOG.error(e, PREFIX+" Unable to open websocket connection:" + makeChannelStr(session));
         }
     }
 
@@ -65,7 +66,7 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
         try {
 
             if (StringUtils.isEmpty(message)) {
-                LOG.trace(String.format("WS PING from (%s-%s)", channelID, session.getId()));
+                LOG.trace(PREFIX+" PING from "+makeChannelStr(session));
                 return;  // ignore empty messages
             }
 
@@ -77,23 +78,31 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
                 event.getTarget().setConnID(session.getId());
             }
             ServerEventManager.fireEvent(event);
-            LOG.trace(String.format("WS msg from (%s-%s): %s", channelID, session.getId(), message));
+            LOG.trace(String.format("%s msg from %s: %s", PREFIX, makeChannelStr(session), message));
         } catch (Exception e) {
-            LOG.error(e, "WS Error while interpreting incoming json message:" + message);
+            LOG.error(e, PREFIX+" Error while interpreting incoming json message:" + message);
         }
     }
 
     @OnError
     public void onError(Session session, Throwable throwable) {
-        LOG.info(String.format("WS error (%s-%s): %s", channelID, session.getId(), throwable.getMessage()));
-        onClose(session, new CloseReason(CloseReason.CloseCodes.UNEXPECTED_CONDITION, throwable.getMessage()));
+        LOG.trace(String.format("%s error %s: %s", PREFIX, makeChannelStr(session), throwable.getMessage()));
+        onClose(null, null);
     }
 
     @OnClose
     public void onClose(Session session, CloseReason closeReason) {
         ServerEventManager.removeEventQueue(eventQueue);
         updateClientConnections(CONN_UPDATED, channelID, userKey);
-        LOG.trace("WS closed:" + session.getId() + " - " + closeReason.getReasonPhrase());
+        if (closeReason!=null && session!=null) {
+            String reason= closeReason.getCloseCode().toString() +
+                    (closeReason.getReasonPhrase()!=null ? " - "+closeReason.getReasonPhrase() : "");
+
+            LOG.info(String.format("%s closed %s: %s", PREFIX, makeChannelStr(session), reason));
+        }
+        else {
+            LOG.trace(PREFIX+" closed (after onError)");
+        }
     }
 
 //====================================================================
@@ -166,6 +175,10 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
         ServerContext.getRequestOwner().setWsConnInfo(connId, channel);
         // notify clients within the same channel
         updateClientConnections(CONN_UPDATED, channel, userKey);
+    }
+
+    private String makeChannelStr(final Session session) {
+        return String.format("(%s_%s)", session.getId(),channelID);
     }
 
 }

@@ -3,8 +3,8 @@
  */
 
 import shallowequal from 'shallowequal';
-import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil, memoize,
-        last, isPlainObject, forEach, fromPairs, mergeWith, isArray, truncate, find} from 'lodash';
+import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil,
+        last, isPlainObject, forEach, fromPairs, mergeWith, isArray, truncate} from 'lodash';
 
 import {getRootURL} from './BrowserUtil.js';
 import {getDownloadProgress, DownloadProgress} from '../rpc/SearchServicesJson.js';
@@ -309,7 +309,7 @@ function doFetchUrl(url, options, doValidation) {
                     params.forEach( ({name, value}) => {
                         data.append(name, value);
                     });
-                    options.body = data;
+                    options.boy = data;
                 }
                 Reflect.deleteProperty(options, 'params');
             }

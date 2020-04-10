@@ -44,81 +44,81 @@ public class FileAnalysisTest extends ConfigTest {
 
         // brief reports only the bare minimum..  path, size, type and descriptions
         // The following tests is to ensure that all analyzers(fits, votable, ipactable, and csv/tsv) capture this information correctly
-        FileAnalysis.ReportType reportType = FileAnalysis.ReportType.Brief;
+        FileAnalysisReport.ReportType reportType = FileAnalysisReport.ReportType.Brief;
 
-        FileAnalysis.Report report= FileAnalysis.analyze(voTable, reportType);
-        assertEquals(FileAnalysis.ReportType.Brief, report.getType());
+        FileAnalysisReport report= FileAnalysis.analyze(voTable, reportType);
+        assertEquals(FileAnalysisReport.ReportType.Brief, report.getType());
         assertEquals(voTable.getPath(), report.getFilePath());
         assertEquals(voTable.length(), report.getFileSize());
         assertEquals(1, report.getParts().size());
-        assertEquals(FileAnalysis.Type.Table, report.getParts().get(0).getType());
+        assertEquals(FileAnalysisReport.Type.Table, report.getParts().get(0).getType());
         assertEquals("VOTable (271 cols x 5000 rows)", report.getParts().get(0).getDesc());
 
         report= FileAnalysis.analyze(ipacTable, reportType);
-        assertEquals(FileAnalysis.ReportType.Brief, report.getType());
+        assertEquals(FileAnalysisReport.ReportType.Brief, report.getType());
         assertEquals(ipacTable.getPath(), report.getFilePath());
         assertEquals(ipacTable.length(), report.getFileSize());
         assertEquals(1, report.getParts().size());
-        assertEquals(FileAnalysis.Type.Table, report.getParts().get(0).getType());
+        assertEquals(FileAnalysisReport.Type.Table, report.getParts().get(0).getType());
         assertEquals("IPAC Table (25 cols x 49933 rows)", report.getParts().get(0).getDesc());
 
         report= FileAnalysis.analyze(fitsTables, reportType);
-        assertEquals(FileAnalysis.ReportType.Brief, report.getType());
+        assertEquals(FileAnalysisReport.ReportType.Brief, report.getType());
         assertEquals(fitsTables.getPath(), report.getFilePath());
         assertEquals(fitsTables.length(), report.getFileSize());
         assertEquals(1, report.getParts().size());
-        assertEquals(FileAnalysis.Type.HeaderOnly, report.getParts().get(0).getType());
+        assertEquals(FileAnalysisReport.Type.HeaderOnly, report.getParts().get(0).getType());
         assertEquals("Primary", report.getParts().get(0).getDesc());
 
         report= FileAnalysis.analyze(multiImage, reportType);
-        assertEquals(FileAnalysis.ReportType.Brief, report.getType());
+        assertEquals(FileAnalysisReport.ReportType.Brief, report.getType());
         assertEquals(multiImage.getPath(), report.getFilePath());
         assertEquals(multiImage.length(), report.getFileSize());
         assertEquals(1, report.getParts().size());
-        assertEquals(FileAnalysis.Type.HeaderOnly, report.getParts().get(0).getType());
+        assertEquals(FileAnalysisReport.Type.HeaderOnly, report.getParts().get(0).getType());
         assertEquals("Primary", report.getParts().get(0).getDesc());
 
         report= FileAnalysis.analyze(csvTable, reportType);
-        assertEquals(FileAnalysis.ReportType.Brief, report.getType());
+        assertEquals(FileAnalysisReport.ReportType.Brief, report.getType());
         assertEquals(csvTable.getPath(), report.getFilePath());
         assertEquals(csvTable.length(), report.getFileSize());
         assertEquals(1, report.getParts().size());
-        assertEquals(FileAnalysis.Type.Table, report.getParts().get(0).getType());
+        assertEquals(FileAnalysisReport.Type.Table, report.getParts().get(0).getType());
         assertEquals("CSVFormat (6 cols x 1000 rows)", report.getParts().get(0).getDesc());
     }
 
     @Test
     public void testNormal() throws Exception {
         // normal reports on individual parts but without details
-        FileAnalysis.ReportType reportType = FileAnalysis.ReportType.Normal;
+        FileAnalysisReport.ReportType reportType = FileAnalysisReport.ReportType.Normal;
 
-        FileAnalysis.Report report= FileAnalysis.analyze(voTable, reportType);
-        assertEquals(FileAnalysis.ReportType.Normal, report.getType());
+        FileAnalysisReport report= FileAnalysis.analyze(voTable, reportType);
+        assertEquals(FileAnalysisReport.ReportType.Normal, report.getType());
         assertEquals(voTable.getPath(), report.getFilePath());
         assertEquals(voTable.length(), report.getFileSize());
         assertEquals(1, report.getParts().size());
-        assertEquals(FileAnalysis.Type.Table, report.getParts().get(0).getType());
+        assertEquals(FileAnalysisReport.Type.Table, report.getParts().get(0).getType());
         assertEquals("VOTable (271 cols x 5000 rows)", report.getParts().get(0).getDesc());
 
         File wNrows = FileLoader.resolveFile("/votable-samples/stilbinary.xml");                 // VOTable with nrows
         report= FileAnalysis.analyze(wNrows, reportType);
-        assertEquals(FileAnalysis.Type.Table, report.getParts().get(0).getType());
+        assertEquals(FileAnalysisReport.Type.Table, report.getParts().get(0).getType());
         assertEquals("Main Information Table for NED objects within 1.000 arcmin of object MESSIER 031 (17 cols x 165 rows)", report.getParts().get(0).getDesc());        // first table
 
         report= FileAnalysis.analyze(ipacTable, reportType);
-        assertEquals(FileAnalysis.ReportType.Normal, report.getType());
+        assertEquals(FileAnalysisReport.ReportType.Normal, report.getType());
         assertEquals(ipacTable.getPath(), report.getFilePath());
         assertEquals(ipacTable.length(), report.getFileSize());
         assertEquals(1, report.getParts().size());
-        assertEquals(FileAnalysis.Type.Table, report.getParts().get(0).getType());
+        assertEquals(FileAnalysisReport.Type.Table, report.getParts().get(0).getType());
         assertEquals("IPAC Table (25 cols x 49933 rows)", report.getParts().get(0).getDesc());
 
         report= FileAnalysis.analyze(csvTable, reportType);
-        assertEquals(FileAnalysis.ReportType.Normal, report.getType());
+        assertEquals(FileAnalysisReport.ReportType.Normal, report.getType());
         assertEquals(csvTable.getPath(), report.getFilePath());
         assertEquals(csvTable.length(), report.getFileSize());
         assertEquals(1, report.getParts().size());
-        assertEquals(FileAnalysis.Type.Table, report.getParts().get(0).getType());
+        assertEquals(FileAnalysisReport.Type.Table, report.getParts().get(0).getType());
         assertEquals("CSVFormat (6 cols x 1000 rows)", report.getParts().get(0).getDesc());
 
         // files with multiple parts
@@ -126,37 +126,37 @@ public class FileAnalysisTest extends ConfigTest {
         File multiVoTable = FileLoader.resolveFile("FileUpload-samples/VOTable/tabledata/multiTables_Ned.xml");    // VOTable with multiple parts
         report= FileAnalysis.analyze(multiVoTable, reportType);
         assertEquals(826, report.getParts().size());
-        assertEquals(FileAnalysis.Type.Table, report.getParts().get(0).getType());
+        assertEquals(FileAnalysisReport.Type.Table, report.getParts().get(0).getType());
         assertEquals("Main Information Table for NED objects within 1.000 arcmin of object MESSIER 031 (17 cols x 165 rows)", report.getParts().get(0).getDesc());       // first table
         assertEquals("Table of all names in NED for MESSIER 031 (2 cols x 49 rows)", report.getParts().get(1).getDesc());                                                // second table
         assertEquals("Table of External Links for the  SSTSL2 J004244.22+411708.6 (3 cols x 12 rows)", report.getParts().get(825).getDesc());                            // last table
 
         // mixed images and table in a fits file
         report= FileAnalysis.analyze(fitsTables, reportType);
-        assertEquals(FileAnalysis.ReportType.Normal, report.getType());
+        assertEquals(FileAnalysisReport.ReportType.Normal, report.getType());
         assertEquals(fitsTables.getPath(), report.getFilePath());
         assertEquals(fitsTables.length(), report.getFileSize());
         assertEquals(11, report.getParts().size());
-        assertEquals(FileAnalysis.Type.HeaderOnly, report.getParts().get(0).getType());
+        assertEquals(FileAnalysisReport.Type.HeaderOnly, report.getParts().get(0).getType());
         assertEquals("Primary", report.getParts().get(0).getDesc());
         assertEquals("NoName", report.getParts().get(1).getDesc());
 
-        assertEquals(FileAnalysis.Type.Table, report.getParts().get(4).getType());
+        assertEquals(FileAnalysisReport.Type.Table, report.getParts().get(4).getType());
         assertEquals("NoName (7 cols x 12 rows)", report.getParts().get(4).getDesc());
 
-        assertEquals(FileAnalysis.Type.Table, report.getParts().get(8).getType());
+        assertEquals(FileAnalysisReport.Type.Table, report.getParts().get(8).getType());
         assertEquals("NoName (3 cols x 4 rows)", report.getParts().get(8).getDesc());
 
-        assertEquals(FileAnalysis.Type.Table, report.getParts().get(10).getType());
+        assertEquals(FileAnalysisReport.Type.Table, report.getParts().get(10).getType());
         assertEquals("NoName (4 cols x 1 rows)", report.getParts().get(10).getDesc());
 
         // multiple images in a fits file
         report= FileAnalysis.analyze(multiImage, reportType);
-        assertEquals(FileAnalysis.ReportType.Normal, report.getType());
+        assertEquals(FileAnalysisReport.ReportType.Normal, report.getType());
         assertEquals(multiImage.getPath(), report.getFilePath());
         assertEquals(multiImage.length(), report.getFileSize());
         assertEquals(62, report.getParts().size());
-        assertEquals(FileAnalysis.Type.HeaderOnly, report.getParts().get(0).getType());
+        assertEquals(FileAnalysisReport.Type.HeaderOnly, report.getParts().get(0).getType());
         assertEquals("Primary", report.getParts().get(0).getDesc());
         assertEquals("NoName", report.getParts().get(1).getDesc());
         assertEquals("NoName", report.getParts().get(61).getDesc());
@@ -165,10 +165,10 @@ public class FileAnalysisTest extends ConfigTest {
     @Test
     public void testDetails() throws Exception {
         // details report on all of the above plus additional information like fits/image/table headers plus columns, links, and groups information if it's a table.
-        FileAnalysis.ReportType reportType = FileAnalysis.ReportType.Details;
+        FileAnalysisReport.ReportType reportType = FileAnalysisReport.ReportType.Details;
 
         // a VO table with one table... has headers
-        FileAnalysis.Report report= FileAnalysis.analyze(voTable, reportType);
+        FileAnalysisReport report= FileAnalysis.analyze(voTable, reportType);
         DataGroup details = report.getParts().get(0).getDetails();
         // test headers
         assertEquals("true", details.getAttribute("contains_lsst_footprints"));
@@ -245,23 +245,23 @@ public class FileAnalysisTest extends ConfigTest {
         StopWatch.getInstance().start("perfTestMidSize").enable().setLogger(Logger.getLogger("console"));
         for(int i=0; i < 10; i++) {
             StopWatch.getInstance().start("voTable");
-            FileAnalysis.analyze(voTable, FileAnalysis.ReportType.Details);
+            FileAnalysis.analyze(voTable, FileAnalysisReport.ReportType.Details);
             StopWatch.getInstance().stop("voTable");
 
             StopWatch.getInstance().start("ipacTable");
-            FileAnalysis.analyze(ipacTable, FileAnalysis.ReportType.Details);
+            FileAnalysis.analyze(ipacTable, FileAnalysisReport.ReportType.Details);
             StopWatch.getInstance().stop("ipacTable");
 
             StopWatch.getInstance().start("fitsTables");
-            FileAnalysis.analyze(fitsTables, FileAnalysis.ReportType.Details);
+            FileAnalysis.analyze(fitsTables, FileAnalysisReport.ReportType.Details);
             StopWatch.getInstance().stop("fitsTables");
 
             StopWatch.getInstance().start("multiImage");
-            FileAnalysis.analyze(multiImage, FileAnalysis.ReportType.Details);
+            FileAnalysis.analyze(multiImage, FileAnalysisReport.ReportType.Details);
             StopWatch.getInstance().stop("multiImage");
 
             StopWatch.getInstance().start("csvTable");
-            FileAnalysis.analyze(csvTable, FileAnalysis.ReportType.Details);
+            FileAnalysis.analyze(csvTable, FileAnalysisReport.ReportType.Details);
             StopWatch.getInstance().stop("csvTable");
         }
 

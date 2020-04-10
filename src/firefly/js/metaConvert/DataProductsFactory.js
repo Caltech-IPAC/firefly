@@ -293,7 +293,7 @@ function initConverterTemplates() {
     ];
 
 
-    const {factoryOverride} = getAppOptions()?.multiProducesViewer ?? {};
+    const {factoryOverride} = getAppOptions()?.dataProducts ?? {};
     let converterTemplates = originalConverterTemplates;
     if (isArray(factoryOverride)) {
         converterTemplates = originalConverterTemplates.map((t) => {

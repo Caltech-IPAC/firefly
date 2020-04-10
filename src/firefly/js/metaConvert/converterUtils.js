@@ -17,60 +17,57 @@ import {
 } from '../tables/TablesCntlr';
 import {MetaConst} from '../data/MetaConst';
 import {LC} from '../templates/lightcurve/LcManager';
-import {dispatchChartAdd, dispatchChartRemove} from '../charts/ChartsCntlr';
+import {dispatchChartAdd, dispatchChartRemove, dispatchChartTraceRemove} from '../charts/ChartsCntlr';
 import {getTblById, default as TblUtil, onTableLoaded} from '../tables/TableUtil';
+import {ChartType} from '../data/FileAnalysis';
 
 const getSetInSrByRow= (table,sr,rowNum) => (col) => {
     sr.setSafeParam(col.name, getCellValue(table,rowNum,col.name));
 };
 
 
-
-/**
- *
- * @param {String} source - a file on the server or a url
- * @param {String} titleStr
- * @param {ActivateParams} activateParams
- * @param {number} [tbl_index]
- * @param {boolean} [activateOnce] if true the only create this table id if it does not exist
- * @param {String} [tbl_id]
- * @return {function}
- */
-export function createTableActivate(source, titleStr, activateParams, tbl_index=0, activateOnce=false, tbl_id= 'part-result-tbl') {
-    return () => {
-        if (activateOnce && getTblById(tbl_id)) return;
-        const {tableGroupViewerId}= activateParams;
-        const dataTableReq= makeFileRequest(titleStr, source, undefined,
-            {
-                tbl_id,
-                tbl_index,
-                startIdx : 0,
-                pageSize : 100,
-                META_INFO : {
-                    [MetaConst.DATA_SOURCE] : 'false',
-                    [MetaConst.CATALOG_OVERLAY_TYPE]:'false'
-                }
-            });
-        dispatchTableSearch(dataTableReq,
-            {
-                logHistory: false,
-                removable:false,
-                tbl_group: tableGroupViewerId,
-                backgroundable: false,
-                showFilters: true,
-                showInfoButton: true
-            });
-        return () => {
-            dispatchTableRemove(tbl_id,false);
-        };
-    };
+export function createTableActivate(source, titleStr, activateParams, tbl_index=0) {
+    return createChartTableActivate(false, source, titleStr, activateParams,undefined,tbl_index);
 }
 
-export function createChartActivate(source, titleStr, activateParams, xAxis, yAxis, tbl_index=0,colNames= undefined,
-                                    chartId='part-result-chart',tbl_id= 'part-result-tbl') {
+const makeCommaSeparated= (strAry) => strAry.reduce( (str,d) => str? `${str},${d}` : d,'');
+
+
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} chartInfo
+ *
+ *
+ * @prop {string} xAxis
+ * @prop {string} yAxis
+ * @prop {ChartParams} chartParams
+ *
+ */
+
+
+/**
+ * Activate a chart and table
+ * @param {boolean} chartAndTable - true - both char and table, false - table only
+ * @param {String} source
+ * @param {String} titleStr - the title of the table or chart
+ * @param {ActivateParams} activateParams
+ * @param {ChartInfo} chartInfo
+ * @param {Number} tbl_index
+ * @param {Array.<String>} colNames - an array of column names
+ * @param {Array.<String>} colUnits - an array of types names
+ * @param {String} chartId
+ * @param {String} tbl_id
+ * @return {function} the activate function
+ */
+export function createChartTableActivate(chartAndTable,source, titleStr, activateParams, chartInfo={}, tbl_index=0,
+                                         colNames= undefined, colUnits= undefined,
+                                         chartId='part-result-chart', tbl_id= 'part-result-tbl') {
     return () => {
-        const {tableGroupViewerId, chartViewerId}= activateParams;
-        const colNamesStr= colNames && colNames.reduce( (str,d) => str? `${str},${d}` : d,'');
+        const {tableGroupViewerId}= activateParams;
+        const colNamesStr= colNames && makeCommaSeparated(colNames);
+        const colUnitsStr= colUnits && makeCommaSeparated(colUnits);
         const dataTableReq= makeFileRequest(titleStr, source, undefined,
             {
                 tbl_id,
@@ -83,6 +80,7 @@ export function createChartActivate(source, titleStr, activateParams, xAxis, yAx
                 }
             });
         if (colNamesStr) dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_COL_NAMES]=  colNamesStr;
+        if (colUnitsStr) dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_UNITS]=  colUnitsStr;
         dispatchTableSearch(dataTableReq,
             {
                 logHistory: false,
@@ -93,54 +91,102 @@ export function createChartActivate(source, titleStr, activateParams, xAxis, yAx
                 showInfoButton: true
             });
 
-        const dispatchParams= {
-            viewerId: chartViewerId,
-            groupId: chartViewerId,
-            chartId,
+        const dispatchCharts=  chartAndTable && makeChartObj(chartInfo,activateParams,titleStr,chartId,tbl_id);
+        onTableLoaded(tbl_id).then( () => {
+            dispatchCharts && dispatchCharts.forEach( (c) => dispatchChartAdd(c));
+        });
+        return () => {
+            dispatchTableRemove(tbl_id,false);
+            dispatchCharts && dispatchCharts.forEach( (c) => dispatchChartRemove(c.chartId));
+        };
+    };
+
+}
+
+function makeChartFromParams(tbl_id, chartParams, computeXAxis, computeYAxis,titleStr) {
+    const {layoutAdds=true, simpleChartType= ChartType.XYChart, simpleData=true, numBins=30, traces,
+        layout:passedLayout, xAxisColName, yAxisColName}= chartParams;
+
+
+    const defLayout= {
+        title: {text: titleStr}
+    };
+
+
+    if (simpleData && simpleChartType===ChartType.XYChart) {
+        defLayout.xaxis= {showgrid: true};
+        defLayout.yaxis= {showgrid: true, range: [0, undefined]};
+    }
+
+    let mode= 'lines+markers';
+    let layout= defLayout;
+    if (passedLayout) layout= layoutAdds ? {...defLayout, ...passedLayout} : passedLayout;
+    let data;
+
+    if (simpleData || !traces) {
+        if (simpleChartType===ChartType.XYChart) {
+            const x= xAxisColName ? `tables::${xAxisColName}` :`tables::${computeXAxis}`;
+            const y= yAxisColName ? `tables::${yAxisColName}`: `tables::${computeYAxis}`;
+            mode= chartParams.mode || mode;
+            data= [{tbl_id, x, y, mode}];
+        }
+        else if (simpleChartType===ChartType.Histogram) {
+            const columnOrExpr= yAxisColName || yAxisColName || computeYAxis || computeXAxis;
+            data= [{
+                type: 'fireflyHistogram',
+                firefly: {
+                    tbl_id,
+                    options: {
+                        algorithm: 'fixedSizeBins',
+                        fixedBinSizeSelection: 'numBins',
+                        numBins,
+                        columnOrExpr,
+                    }
+                },
+            }];
+        }
+    }
+    else {
+        data= traces;
+        data.forEach((t) => t.tbl_id= tbl_id);
+    }
+
+    return { data, layout};
+}
+
+
+
+function makeChartObj(chartInfo, activateParams, titleStr, chartId, tbl_id ) {
+
+    const {chartViewerId:viewerId}= activateParams;
+    const {chartParamsAry}= chartInfo;
+    const {xAxis, yAxis}= chartInfo;
+
+    if (chartParamsAry) {
+        let chartNum=1;
+        return chartParamsAry
+            .map((chartParams) => makeChartFromParams(tbl_id, chartParams, xAxis, yAxis, titleStr))
+            .map((dataLayout) => ({viewerId, groupId: viewerId, chartId: `${chartId}--${chartNum++}`, ...dataLayout}));
+    }
+    else {
+        return [ {
+            viewerId, groupId: viewerId, chartId,
             data: [{
-                tbl_id,
-                x: `tables::${xAxis}`,
-                y: `tables::${yAxis}`,
-                mode: 'lines+markers'
-            }],
+                    tbl_id,
+                    x: `tables::${xAxis}`,
+                    y: `tables::${yAxis}`,
+                    mode: 'lines+markers'
+                }],
             layout: {
                 title: {text: titleStr},
                 xaxis: {showgrid: true},
                 yaxis: {showgrid: true, range: [0, undefined]},
             }
-        };
-
-        // const histogramParams= {
-        //     viewerId: chartViewerId,
-        //     groupId: chartViewerId,
-        //     chartId: chartId+'-hist',
-        //     data: [{
-        //         type: 'fireflyHistogram',
-        //         firefly: {
-        //             tbl_id,
-        //             options: {
-        //                 algorithm: 'fixedSizeBins',
-        //                 fixedBinSizeSelection: 'numBins',
-        //                 numBins: 30,
-        //                 columnOrExpr: yAxis,
-        //             }
-        //         },
-        //
-        //     }],
-        //     layout: {
-        //         title: {text: titleStr},
-        //     }
-        // };
-        onTableLoaded(tbl_id).then( () => {
-            dispatchChartAdd(dispatchParams);
-            // dispatchChartAdd(histogramParams);
-        });
-        return () => {
-            dispatchTableRemove(tbl_id,false);
-        };
-    };
+        }];
+    }
 
 }
+
 
 export function createChartSingleRowArrayActivate(source, titleStr, activateParams,
                                                   xAxis, yAxis, tblRow= 0,tbl_index=0,

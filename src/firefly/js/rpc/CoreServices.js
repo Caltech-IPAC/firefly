@@ -3,9 +3,14 @@
  */
 
 
+import {isString} from 'lodash';
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest} from '../core/JsonUtils.js';
+import {getRootURL} from '../util/BrowserUtil';
+import {WebPlotRequest} from '../visualize/WebPlotRequest';
+import {fetchUrl} from '../util/WebUtil';
 
+const UL_URL = `${getRootURL()}sticky/CmdSrv?${ServerParams.COMMAND}=${ServerParams.UPLOAD}`;
 
 /**
  * tableRequest will be sent to the server as a json string.
@@ -25,3 +30,53 @@ export function logout() {
 export function init({spaName}={}) {
     return doJsonRequest(ServerParams.INIT_APP, {spaName});
 }
+
+
+
+
+/**
+ * Upload a URL, File, Blob, or WebPlotRequest to the server, using AnyFileUpload on the firefly server side.
+ * Determine how to upload based on what is passed. It may be called with a URL, Blob, File, or WebPlotRequest
+ * @param {WebPlotRequest|Blob|File|String} item - if string the interpret as a URL, if is an object and has WebPlotRequest function then
+ * interpret as a WebPlotRequest, Otherwise interpret as a file or blob
+ * @param {String|Boolean} fileAnalysis
+ * @param {Object} params - any extra parameters to the upload
+ * @return {Promise}
+ */
+export async function upload(item, fileAnalysis= false, params={}) {
+    const fetchParam= item && buildUploadParam(item);
+    if (!fetchParam) {
+        const msg= item ? 'Did not recognize item to upload: must be URL (String), File, Blob, or WebPlotRequest' :
+                          'item parameter not given';
+        return Promise.reject(Error(msg));
+    }
+        // put the fetchParam at the end, if it is a file or blob, it has to be the last param due to AnyFileUpload limitation
+    const r= await fetchUrl(UL_URL, {method: 'multipart', params:{...params,fileAnalysis,...fetchParam}});
+    return parseUploadResults(await r.text());
+}
+
+/**
+ * return the correct upload parameter based on the type that is passed
+ * @param {WebPlotRequest|Blob|File|String} item - the parameter to evaluate
+ * @return {Object|undefined} an object with the correct parameter to pass to the upload,
+ * or undefined if it is not the correct parameter type
+ */
+function buildUploadParam(item) {
+    if (isString(item)) return {URL: item};
+    else if (WebPlotRequest.isWPR(item)) return {webPlotRequest: item.toString()};
+    else if (item instanceof Blob)  return {file:item}; // handles blob or file
+}
+
+/**
+ * parse an upload result
+ * @param {String} text - the result text from the upload call
+ * @return {{cacheKey: String, analysisResult: Object, message: String, status: String}}
+ */
+export function parseUploadResults(text) {
+                     // text is in format ${status}::${message}::${message}::${cacheKey}::${analysisResult}
+    const [status, message, cacheKey, anaResultPart, ...rest] = text.split('::');
+                     // there are '::' in the analysisResults.. put it back
+    const analysisResult= (rest.length > 0) ? `${anaResultPart}::${rest.join('::')}` : anaResultPart;
+    return {status, message, cacheKey, analysisResult};
+}
+

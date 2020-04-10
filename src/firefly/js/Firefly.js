@@ -139,9 +139,13 @@ const defFireflyOptions = {
     coverage : {
         // TODO: need to define all options with defaults here.  used in FFEntryPoint.js
     },
-    multiProducesViewer : {
+    dataProducts : {
         factoryOverride: [
-        ]
+        ],
+        clientAnalysis: {
+            // xxxx : abcDataProductsAnalyzer
+
+        },
     },
     tap : {
         services: [

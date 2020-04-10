@@ -3,7 +3,7 @@
  */
 package edu.caltech.ipac.table.io;
 
-import edu.caltech.ipac.firefly.core.FileAnalysis;
+import edu.caltech.ipac.firefly.core.FileAnalysisReport;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
@@ -470,14 +470,14 @@ public class VoTableReader {
 //  file analysis support
 //====================================================================
 
-    public static FileAnalysis.Report analyze(File infile, FileAnalysis.ReportType type) throws Exception {
+    public static FileAnalysisReport analyze(File infile, FileAnalysisReport.ReportType type) throws Exception {
 
-        FileAnalysis.Report report = new FileAnalysis.Report(type, TableUtil.Format.VO_TABLE.name(), infile.length(), infile.getPath());
-        List<FileAnalysis.Part> parts = tablesToParts(infile);
+        FileAnalysisReport report = new FileAnalysisReport(type, TableUtil.Format.VO_TABLE.name(), infile.length(), infile.getPath());
+        List<FileAnalysisReport.Part> parts = tablesToParts(infile);
         parts.forEach(report::addPart);
 
         for(int i = 0; i < parts.size(); i++) {
-            if (type == FileAnalysis.ReportType.Details) {
+            if (type == FileAnalysisReport.ReportType.Details) {
                 // convert DataGroup headers into Report's details
                 DataGroup p = parts.get(i).getDetails();
                 IpacTableDef meta = new IpacTableDef();
@@ -500,16 +500,17 @@ public class VoTableReader {
      * @param infile  input file to analyze
      * @return each Table as a part with details containing DataGroup without data
      */
-    private static List<FileAnalysis.Part> tablesToParts(File infile) throws Exception {
+    private static List<FileAnalysisReport.Part> tablesToParts(File infile) throws Exception {
 
         VOElement docRoot = getVoTableRoot(infile.getAbsolutePath(), null);
         List<TableElement> tables = getAllTableElements(docRoot);
         List<ResourceInfo> resources = getAllResources(docRoot);
 
-        List<FileAnalysis.Part> parts = new ArrayList<>();
+        List<FileAnalysisReport.Part> parts = new ArrayList<>();
         tables.forEach(table -> {
-            FileAnalysis.Part part = new FileAnalysis.Part(FileAnalysis.Type.Table);
+            FileAnalysisReport.Part part = new FileAnalysisReport.Part(FileAnalysisReport.Type.Table);
             part.setIndex(parts.size());
+            part.setFileLocationIndex(parts.size());
             DataGroup dg = getTableHeader(table);
             if (resources != null) dg.setResourceInfos(resources);
             String title = isEmpty(dg.getTitle()) ? "VOTable" : dg.getTitle().trim();

@@ -1,6 +1,5 @@
 import {isArray,get} from 'lodash';
-import {doUpload} from '../ui/FileUpload';
-import {FileAnalysisType} from '../data/FileAnalysis';
+import {FileAnalysisType,UIEntry} from '../data/FileAnalysis';
 import {
     createGridImagesActivate,
     createSingleImageActivate
@@ -9,7 +8,6 @@ import {PlotAttribute} from '../visualize/PlotAttribute';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr';
 import {
-    dpdtDownload,
     dpdtImage,
     dpdtMessage,
     dpdtMessageWithDownload,
@@ -18,12 +16,15 @@ import {
     dpdtWorkingPromise,
 } from './DataProductsType';
 import {hashCode} from '../util/WebUtil';
+import {upload} from '../rpc/CoreServices.js';
 import {
     dataProductRoot, dispatchActivateFileMenuItem, dispatchUpdateActiveKey,
     dispatchUpdateDataProducts, getActiveFileMenuKeyByKey, getDataProducts
 } from './DataProductsCntlr';
 import {analyzePart, chooseDefaultEntry} from './PartAnalyzer';
-import {hasRowAccess} from '../tables/TableUtil';
+import {getMetaEntry, getTblRowAsObj, hasRowAccess} from '../tables/TableUtil';
+import {MetaConst} from '../data/MetaConst';
+import {getAppOptions} from '../core/AppDataCntlr';
 
 
 const uploadedCache= {};
@@ -153,7 +154,7 @@ const parseAnalysis= (serverCacheFileKey, analysisResult) =>
 
 
 /**
- *
+ * This is the core function to upload and analyze the data
  * @param obj
  * @param obj.table
  * @param obj.row
@@ -166,7 +167,7 @@ const parseAnalysis= (serverCacheFileKey, analysisResult) =>
  * @param obj.dispatchWorkingMessage
  * @return {Promise.<DataProductsDisplayType>}
  */
-function doUploadAndAnalysis({
+async function doUploadAndAnalysis({
                                  table,
                                  row,
                                  request,
@@ -179,9 +180,15 @@ function doUploadAndAnalysis({
                              }) {
 
     const {dpId}= activateParams;
-    const cacheKey= hashCode(request.toString());
 
 
+    /**
+     * Process the file analysis and possibly active an entry
+     * @param serverCacheFileKey
+     * @param fileFormat
+     * @param fileAnalysis
+     * @return {DataProductsDisplayType}
+     */
     const processAndActivate= (serverCacheFileKey, fileFormat, fileAnalysis) => {
         const {parts,fileName}= fileAnalysis;
         if (!parts || fileFormat==='UNKNOWN') return makeErrorResult('Could not parse file',fileName,serverCacheFileKey);
@@ -191,32 +198,80 @@ function doUploadAndAnalysis({
         return result;
     };
 
+
+    //-----
+    //----- if we have the analysis already cached then process it and return
+    //-----
+
+    const cacheKey= hashCode(request.toString());
     if (uploadedCache[cacheKey]) {
         const {serverCacheFileKey, fileFormat, fileAnalysis}= uploadedCache[cacheKey];
         const result= processAndActivate(serverCacheFileKey, fileFormat, fileAnalysis);
         return Promise.resolve(result);
     }
 
+    //-----
+    //----- setup and make the upload and analysis call - in a promise, process the analysis
+    //-----
     if (dispatchWorkingMessage) dispatchUpdateDataProducts(dpId, dpdtWorkingMessage(LOADING_MSG,request,{menuKey}));
     const url= request.getURL();
 
     url && dispatchAddActionWatcher({ id: url, actions:[ImagePlotCntlr.PLOT_PROGRESS_UPDATE],
         callback:watchForUploadUpdate, params:{url,dpId}});
 
-    return doUpload(undefined, {fileAnalysis:'Details',webPlotRequest:request.toString()})
-        .then(({status, message, cacheKey:serverCacheFileKey, fileFormat, analysisResult}) => {
-            url && dispatchCancelActionWatcher(url);
-            const fileAnalysis= parseAnalysis(serverCacheFileKey, analysisResult);
-            if (fileAnalysis) uploadedCache[cacheKey]= {serverCacheFileKey,fileFormat,fileAnalysis};
-            return processAndActivate(serverCacheFileKey, fileFormat, fileAnalysis);
-        })
-        .catch( (e) => {
-            url && dispatchCancelActionWatcher(url);
-            console.log('Call to Upload failed', e);
-            dispatchUpdateDataProducts(dpId, makeErrorResult(e.message));
-        });
 
+    try {
+        const {status, message, cacheKey:serverCacheFileKey, fileFormat, analysisResult}=
+                                    await upload(request, 'Details',getDataProductAnalysisParams(table));
+        url && dispatchCancelActionWatcher(url);
+        let fileAnalysis= parseAnalysis(serverCacheFileKey, analysisResult);
+        fileAnalysis= clientSideDataProductAnalysis(fileAnalysis);
+        if (fileAnalysis) uploadedCache[cacheKey]= {serverCacheFileKey,fileFormat,fileAnalysis};
+        return processAndActivate(serverCacheFileKey, fileFormat, fileAnalysis);
+    }
+    catch (e) {
+        url && dispatchCancelActionWatcher(url);
+        console.log('Call to Upload failed', e);
+        dispatchUpdateDataProducts(dpId, makeErrorResult(e.message));
+    }
 }
+
+function getDataProductAnalysisParams(table) {
+    const analyzerId= getMetaEntry(table, MetaConst.ANALYZER_ID);
+    if (!analyzerId) return {};
+    const paramsStr= getMetaEntry(table, MetaConst.ANALYZER_PARAMS);
+    let params= {};
+    let cParams= {};
+    if (paramsStr) {
+        const pAry= paramsStr.split(',').map( (s) => s.trim());
+        params= pAry.reduce((obj,p) => {
+            const kv= p.split('=',2).map( (s) => s.trim());
+            if (kv.length===2) obj[kv[0]]= kv[1];
+            return obj;
+        },{});
+    }
+    const colParamsStr= getMetaEntry(table, MetaConst.ANALYZER_COLUMNS);
+    if (colParamsStr) {
+        const cAry= colParamsStr.split(',').map( (s) => s.trim());
+        const rowObj= getTblRowAsObj(table);
+        cParams= cAry.reduce( (obj,key) => {
+            if (rowObj?.[key] !== undefined) obj[key]= rowObj[key];
+            return obj;
+        },{});
+    }
+    return {analyzerId, ...params, ...cParams};
+}
+
+function clientSideDataProductAnalysis(fileAnalysis) {
+    if (!fileAnalysis) return fileAnalysis;
+    const {dataProductsAnalyzerId, analyzerFound}= fileAnalysis;
+    if (analyzerFound || !dataProductsAnalyzerId) return fileAnalysis;
+    return getAppOptions().dataProducts?.clientAnalysis?.[dataProductsAnalyzerId]?.(fileAnalysis) || fileAnalysis;
+}
+
+
+
+
 
 function watchForUploadUpdate(action, cancelSelf, {url,dpId}) {
     const {requestKey,message}= action.payload;
@@ -252,7 +307,7 @@ function processAnalysisResult({table, row, request, activateParams, serverCache
     const activeItemLookupKey= hashCode(rStr);
 
 
-    const {parts,fileName,fileFormat, filePath}= fileAnalysis;
+    const {parts,fileName,fileFormat, filePath, disableAllImageOption= false}= fileAnalysis;
     if (!parts) return makeErrorResult('',fileName,serverCacheFileKey);
 
 
@@ -270,12 +325,14 @@ function processAnalysisResult({table, row, request, activateParams, serverCache
 
     const partAnalysis= parts.map( (p) => analyzePart(p,request, table, row, fileFormat, serverCacheFileKey,activateParams));
     const imageParts= partAnalysis.filter( (pa) => pa.imageResult);
-    const makeImages= imageParts.length>1 || (imageParts.length===1 && parts.length===1);
-    const useImagesFromPartAnalysis= parts.length>1;
+    let makeAllImageOption= !disableAllImageOption;
+    if (makeAllImageOption) makeAllImageOption= imageParts.length>1 || (imageParts.length===1 && parts.length===1);
+    if (makeAllImageOption) makeAllImageOption= imageParts.every( (ip) => !ip.imageResult.override);
+    const useImagesFromPartAnalysis= parts.length>1 || !makeAllImageOption;
 
 
 
-    const imageEntry= makeImages &&
+    const imageEntry= makeAllImageOption &&
         dpdtImage(`Image Data ${imageParts.length>1? ': All Images in File' :''}`,
             createSingleImageActivate(request,imageViewerId,table.tbl_id,row),'image-'+0, {request});
 

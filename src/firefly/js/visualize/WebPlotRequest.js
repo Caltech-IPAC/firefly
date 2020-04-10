@@ -1,5 +1,5 @@
 /* eslint prefer-template:0 */
-import {get, isString, isPlainObject, isArray, join, omit, pick} from 'lodash';
+import {get, isString, isPlainObject, isArray, join, omit, pick, isObject} from 'lodash';
 import Enum from 'enum';
 import {ServerRequest} from '../data/ServerRequest.js';
 import {RequestType} from './RequestType.js';
@@ -53,7 +53,7 @@ export const AnnotationOps= new Enum([  // note - this is not completely impleme
 export const GridOnStatus= new Enum(['FALSE','TRUE','TRUE_LABELS_FALSE'], { ignoreCase: true });
 
 export const DEFAULT_THUMBNAIL_SIZE= 70;
-const WEB_PLOT_REQUEST_CLASS= 'WebPlotRequest';
+export const WEB_PLOT_REQUEST_CLASS= 'WebPlotRequest';
 
 export const WPConst= {
     FILE : 'File',
@@ -944,6 +944,8 @@ export class WebPlotRequest extends ServerRequest {
      * @return (WebPlotRequest) the deserialized WebPlotRequest
      */
     static parse(str) { return ServerRequest.parse(str, new WebPlotRequest()); }
+
+    static isWPR(o) {return isObject(o) && o.getRequestClass?.()===WEB_PLOT_REQUEST_CLASS;}
 
     /**
      * @return {WebPlotRequest}
