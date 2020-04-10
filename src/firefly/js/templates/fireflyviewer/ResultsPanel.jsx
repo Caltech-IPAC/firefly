@@ -106,11 +106,11 @@ function resolveComponents(standard, imagePlot, xyPlot, tables) {
     if(standard.has(LO_VIEW.images)) {
         components.push(imagePlot);
     }
-    if(standard.has(LO_VIEW.tables)) {
-        components.push(tables);
-    }
     if(standard.has(LO_VIEW.xyPlots)) {
         components.push(xyPlot);
+    }
+    if(standard.has(LO_VIEW.tables)) {
+        components.push(tables);
     }
     return filter(components);  // only takes declared items
 }
