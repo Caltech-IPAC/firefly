@@ -770,7 +770,7 @@ task buildClient (dependsOn: loadConfig) {
 
 
 
-task warAll( dependsOn:[war, buildJsDoc] ) {
+task warAll( dependsOn:[war, buildJsDoc, onlinehelp] ) {
     description= 'Build the war file with JSDoc generated.'
     group = MAIN_GROUP
 }
@@ -845,7 +845,8 @@ task devMode (dependsOn: createVersionTag) {
 prepareWebapp.mustRunAfter loadConfig
 buildClient.mustRunAfter  prepareWebapp
 buildJsDoc.mustRunAfter   buildClient
-war.mustRunAfter          buildJsDoc
+onlinehelp.mustRunAfter   buildJsDoc
+war.mustRunAfter          onlinehelp
 deploy.mustRunAfter       war
 
 
