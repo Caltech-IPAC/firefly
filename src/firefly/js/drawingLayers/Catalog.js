@@ -192,7 +192,7 @@ function makeHighlightDeferred(drawLayer,plotId,screenPt) {
         const cc= CysConverter.make(plot);
         for(let i=0;(idx<data.length && i<maxChunk ); i++) {
             const obj= data[idx];
-            if (obj && obj.type!== ShapeDataObj.SHAPE_DATA_OBJ) {
+            if (obj) {
                 dist = DrawOp.getScreenDist(obj, cc, screenPt);
                 if (dist > -1 && dist < minDist) {
                     minDist = dist;
