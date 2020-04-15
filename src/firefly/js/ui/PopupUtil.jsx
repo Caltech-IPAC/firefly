@@ -74,10 +74,10 @@ export function showOptionsPopup({content, title='Options', modal = false, show=
  *
  * @param {string | object} content can be a string or a react component
  * @param {string} title
- * @param {boolean} isCopyable
+ * @param {boolean} [isCopyable] true or false, if undefined, then the default to true if it is a string
  * @return {object}
  */
-export function showInfoPopup(content, title='Information', isCopyable) {
+export function showInfoPopup(content, title='Information', isCopyable=undefined) {
     if (isUndefined(isCopyable)) isCopyable = isString(content);
     var results= (
         <PopupPanel title={title} >

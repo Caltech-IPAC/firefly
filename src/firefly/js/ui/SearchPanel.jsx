@@ -10,6 +10,7 @@ import {getSearchInfo} from '../core/AppDataCntlr.js';
 import {FormPanel} from './FormPanel.jsx';
 import {SimpleComponent} from './SimpleComponent.jsx';
 import {StatefulTabs, Tab} from './panel/TabPanel.jsx';
+import {makeSearchOnce} from '../util/WebUtil';
 
 export class SearchPanel extends SimpleComponent {
 
@@ -18,7 +19,7 @@ export class SearchPanel extends SimpleComponent {
     }
 
     render() {
-        const {style={}} = this.props;
+        const {style={}, initArgs={}} = this.props;
         const {activeSearch, groups, allSearchItems={}, flow='vertical', title} = this.state;
         const searchItem = allSearchItems[activeSearch];
 
@@ -27,7 +28,7 @@ export class SearchPanel extends SimpleComponent {
             return (
                 <div>
                     {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
-                    <SearchForm style={{height: 'auto'}} searchItem={searchItem} />
+                    <SearchForm style={{height: 'auto'}} searchItem={searchItem} initArgs={initArgs}/>
                 </div>
             );
         }
@@ -41,7 +42,7 @@ export class SearchPanel extends SimpleComponent {
                         {sideBar}
                         {searchItem &&
                         <div className='SearchPanel__form'>
-                            <SearchForm searchItem={searchItem} />
+                            <SearchForm searchItem={searchItem}  initArgs={initArgs}/>
                         </div>
                         }
                     </div>
@@ -53,7 +54,7 @@ export class SearchPanel extends SimpleComponent {
                 <div>
                     {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
                     <StatefulTabs componentKey={`SearchPanel_${title}`} onTabSelect={onTabSelect} resizable={true} useFlex={true} borderless={true} contentStyle={{backgroundColor: 'transparent'}}>
-                        {searchesAsTabs(allSearchItems)}
+                        {searchesAsTabs(allSearchItems, initArgs)}
                     </StatefulTabs>
                 </div>
             );
@@ -62,10 +63,11 @@ export class SearchPanel extends SimpleComponent {
 }
 
 SearchPanel.propTypes = {
-    style:  PropTypes.object
+    style:  PropTypes.object,
+    initArgs: PropTypes.object
 };
 
-function searchesAsTabs(allSearchItems) {
+function searchesAsTabs(allSearchItems, initArgs) {
 
     return allSearchItems &&
         Object.values(allSearchItems).map( (searchItem) => {
@@ -73,21 +75,28 @@ function searchesAsTabs(allSearchItems) {
             return  (
                 <Tab key={label} name={label}>
                     <div className='SearchPanel__form'>
-                        <SearchForm searchItem={searchItem} />
+                        <SearchForm searchItem={searchItem} initArgs={initArgs}/>
                     </div>
                 </Tab>
             );
         } );
 }
 
+const searchOnce= makeSearchOnce(); // setup options to immediately execute the search the first time
 
 
-function SearchForm({searchItem, style}) {
+function SearchForm({searchItem, style, initArgs}) {
     const {name, form} = searchItem;
     const {render:Render, ...rest} = form;
+
+    const saveClick= (clickFunc) => initArgs?.execute && searchOnce(true, clickFunc);
+
+
     return (
-        <FormPanel groupKey={name} style={style} {...rest}>
-            <Render {...{searchItem}} />
+        <FormPanel groupKey={name} style={style}
+                   getDoOnClickFunc={saveClick}
+                   {...rest}>
+            <Render {...{searchItem, initArgs}} />
         </FormPanel>
     );
 }

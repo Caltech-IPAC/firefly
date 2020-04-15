@@ -11,7 +11,7 @@ import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {isNil, get} from 'lodash';
 
-function handleFailfure() {
+function handleFailure() {
 
 }
 
@@ -47,7 +47,7 @@ function createSuccessHandler(action, params={}, title, onSubmit) {
 
 export const FormPanel = function (props) {
     const { children, onSuccess, onSubmit, onCancel=dispatchHideDropDown, onError, groupKey, groupsToUse,
-        action, params, title,
+        action, params, title, getDoOnClickFunc,
         submitText='Search',cancelText='Cancel', help_id, changeMasking,
         includeUnmounted=false, extraWidgets=[]} = props;
     let { style, inputStyle, submitBarStyle, buttonStyle} = props;
@@ -76,9 +76,10 @@ export const FormPanel = function (props) {
                         <CompleteButton style={{display: 'inline-block', marginRight: 10}}
                                         includeUnmounted={includeUnmounted}
                                         groupKey={groupKey}
+                                        getDoOnClickFunc={getDoOnClickFunc}
                                         groupsToUse={groupsToUse}
                                         onSuccess={onSuccess||createSuccessHandler(action, params, title, onSubmit)}
-                                        onFail={onError || handleFailfure}
+                                        onFail={onError || handleFailure}
                                         text = {submitText} changeMasking={changeMasking}
                         />
                         <button style={{display: 'inline-block'}} type='button' className='button std' onClick={onCancel}>{cancelText}</button>
@@ -114,7 +115,8 @@ FormPanel.propTypes = {
     help_id: PropTypes.string,
     changeMasking: PropTypes.func,
     includeUnmounted: PropTypes.bool,
-    extraWidgets: PropTypes.arrayOf(PropTypes.element)
+    extraWidgets: PropTypes.arrayOf(PropTypes.element),
+    getDoOnClickFunc: PropTypes.func
 };
 
 export function ExtraButton(props) {

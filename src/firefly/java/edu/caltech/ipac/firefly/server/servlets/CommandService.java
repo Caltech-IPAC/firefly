@@ -67,7 +67,7 @@ public class CommandService extends BaseHttpServlet {
             String cmd = sp.getCommandKey();
             ServerCommandAccess.HttpCommand command = ServerCommandAccess.getCommand(cmd);
             command.processRequest(req, res, sp);
-            Logger.briefDebug(String.format("CommandService: %s successfully completed in: %dms", cmd, System.currentTimeMillis() - start));
+            Logger.briefDebug(String.format("CommandService: %s : %dms", cmd, System.currentTimeMillis() - start));
         } catch (Exception ex) {
             LOGGER.error(ex);
             HashMap<String, String> errors = new HashMap<>();

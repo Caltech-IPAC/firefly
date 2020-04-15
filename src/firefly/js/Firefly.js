@@ -6,7 +6,7 @@
 import 'isomorphic-fetch';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {set, get, defer, once} from 'lodash';
+import {set, get, defer, once, isEmpty} from 'lodash';
 import 'styles/global.css';
 
 import {APP_LOAD, dispatchAppOptions, dispatchUpdateAppData} from './core/AppDataCntlr.js';
@@ -22,13 +22,18 @@ import {showInfoPopup} from './ui/PopupUtil';
 import {reduxFlux} from './core/ReduxFlux.js';
 import {getOrCreateWsConn} from './core/messaging/WebSocketClient.js';
 import {ActionEventHandler} from './core/messaging/MessageHandlers.js';
-import {init} from './rpc/CoreServices.js';
-import {getPropsWith, mergeObjectOnly, getProp, toBoolean} from './util/WebUtil.js';
+import {notifyServerAppInit} from './rpc/CoreServices.js';
+import {getPropsWith, mergeObjectOnly, getProp, toBoolean, documentReady} from './util/WebUtil.js';
 import {dispatchChangeTableAutoScroll, dispatchWcsMatch, visRoot} from './visualize/ImagePlotCntlr';
+import {Logger} from './util/Logger';
+import {evaluateWebApi, isUsingWebApi, WebApiStat} from './api/WebApi';
+import {WebApiHelpInfoPage} from './ui/WebApiHelpInfoPage';
+import {dispatchOnAppReady} from './core/AppDataCntlr';
 
 export const flux = reduxFlux;
 
 var initDone = false;
+const logger = Logger('Firefly-init');
 
 export const getFireflySessionId= once(() =>
     toBoolean(getProp('version.ExtendedCache')) ? 'KEEP_SESSION' : `FF-Session-${Date.now()}`);
@@ -170,89 +175,68 @@ const defFireflyOptions = {
 
 
 /**
- *
- * @param props
- * @param options
+ * add options to store and setup any options that need specific initialization
+ * @param {Object} options
  */
-function fireflyInit(props, options={}) {
-
-    if (initDone) return;
-
-    props = mergeObjectOnly(defAppProps, props);
-    props.renderTreeId= undefined; // in not API usages, renderTreeId is not used
-    options = mergeObjectOnly(defFireflyOptions, options);
-    const {template} = props;
-
-    const viewer = get(Templates, template);
-
-    const touch= false; // ToDo: determine if we are on a touch device
-    if (touch) {
-        React.initializeTouchEvents(true);
-    }
-
-    // setup application options
+function installOptions(options) {
+    // setup options
     dispatchAppOptions(options);
-    if (options.disableDefaultDropDown) {
-        dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
-    }
-    if (options.readoutDefaultPref) {
-        dispatchChangeReadoutPrefs(options.readoutDefaultPref);
-    }
-    if (options.wcsMatchType) {
-        dispatchWcsMatch({matchType:options.wcsMatchType, lockMatch:true});
-    }
+    options.disableDefaultDropDown && dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
+    options.readoutDefaultPref && dispatchChangeReadoutPrefs(options.readoutDefaultPref);
+    options.wcsMatchType && dispatchWcsMatch({matchType:options.wcsMatchType, lockMatch:true});
 
     if (options.imageScrollsToHighlightedTableRow!==visRoot().autoScrollToHighlightedTableRow) {
         dispatchChangeTableAutoScroll(options.imageScrollsToHighlightedTableRow);
     }
 
+}
+
+/**
+ *
+ * @param {AppProps} props
+ * @param {FireflyOptions} options
+ * @param {Array.<WebApiCommand>} webApiCommands
+ */
+function fireflyInit(props, options={}, webApiCommands) {
+
+    if (initDone) return;
+
+    props = mergeObjectOnly(defAppProps, props);
+    const viewer = Templates[props.template];
+
+    installOptions(mergeObjectOnly(defFireflyOptions, options));
+
     // initialize UI or API depending on entry mode.
     if (viewer) {
-        if (window.document.readyState==='complete' || window.document.readyState==='interactive') {
-            renderRoot(viewer, props);
-        }
-        else {
-            console.log('Waiting for document to finish loading');
-            window.addEventListener('load', () => renderRoot(viewer, props) ); // maybe could use: document.addEventListener('DOMContentLoaded'
-        }
-    } else {
+        props.renderTreeId= undefined; // in non API usages, renderTreeId is not used, this line is just for clarity
+        documentReady().then(() => renderRoot(viewer, props,webApiCommands));
+    }
+    else {
         initApi();
     }
-
     initDone = true;
 }
 
 /*
  *
  * @param {string} divId
- * @param {Object} props
- * @param {Object} options
- * @return {Object} return object has two properties unrender and render
+ * @param {AppProps} props
+ * @return {Object} return object has two functions {unrender:Function, render:Function}
  */
-export function startAsAppFromApi(divId, props={}, options={}) {
-    const defProps= {...defAppProps};
-    props = mergeObjectOnly(defProps, props);
-    props= {...props, ...{div:divId}};
-    const {template} = props;
-    const viewer = get(Templates, template);
-    options = mergeObjectOnly(defFireflyOptions, options);
-    dispatchAppOptions(options);
-    if (props.disableDefaultDropDown) {
-        dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
+export function startAsAppFromApi(divId, props={template: 'FireflySlate'}) {
+    const viewer = Templates[props.template];
+    if (!divId || !viewer) {
+        !divId  && logger.error('required: divId');
+        !viewer && logger.error(`required: props.template, must be one of ${Object.keys(Templates).join()}`);
+        return;
     }
-    if (props.readoutDefaultPref) {
-        dispatchChangeReadoutPrefs(options.readoutDefaultPref);
-    }
-    if (viewer) {
-        const element= document.getElementById(props.div);
-        const controlObj= {
-             unrender: () => ReactDOM.unmountComponentAtNode(element),
-             render: () => renderRoot(viewer, props)
-        };
-        controlObj.render();
-        return controlObj;
-    }
-
+    props = {...mergeObjectOnly({...defAppProps}, props), div:divId};
+    const controlObj= {
+        unrender: () => ReactDOM.unmountComponentAtNode(document.getElementById(divId)),
+        render: () => renderRoot(viewer, props)
+    };
+    controlObj.render();
+    return controlObj;
 }
 
 /**
@@ -276,15 +260,16 @@ export const firefly = {
  * boostrap Firefly api or application.
  * @param {AppProps} props - application properties
  * @param {FireflyOptions} options - startup options
+ * @param {Array.<WebApiCommand>} webApiCommands
  * @returns {Promise.<boolean>}
  */
-function bootstrap(props, options) {
+function bootstrap(props, options, webApiCommands) {
 
     // if initialized, don't run it again.
     if (window.firefly && window.firefly.initialized) return Promise.resolve();
 
     set(window, 'firefly.initialized', true);
-    return  new Promise((resolve) => {
+    return new Promise((resolve) => {
 
         flux.bootstrap();
         flux.process( {type : APP_LOAD} );  // setup initial store/state
@@ -292,12 +277,12 @@ function bootstrap(props, options) {
         ensureUsrKey();
         // establish websocket connection first before doing anything else.
         getOrCreateWsConn().then((client) => {
-            fireflyInit(props, options);
+            fireflyInit(props, options, webApiCommands);
 
             client.addListener(ActionEventHandler);
             window.firefly.wsClient = client;
-            init();    //TODO.. need to add spaName when we decide to support it.
-            resolve && resolve();
+            notifyServerAppInit({spaName:`${props.appTitle||''}--${props.template?props.template:'api'}`});
+            resolve?.();
         });
     }).then(() => {
         // when all is done.. mark app as 'ready'
@@ -305,14 +290,34 @@ function bootstrap(props, options) {
     });
 }
 
-function renderRoot(viewer, props) {
+function renderRoot(viewer, props, webApiCommands) {
     const e= document.getElementById(props.div);
-    if (e)  {
-        ReactDOM.render(React.createElement(viewer, props), e);
-    }
-    else {
+    if (!e) {
         showInfoPopup('HTML page is not setup correctly, Firefly cannot start.');
         console.log(`DOM Element "${props.div}" is not found in the document, Firefly cannot start.`);
+        return;
+    }
+
+    const doAppRender= () => ReactDOM.render(React.createElement(viewer, props), e);
+    isUsingWebApi(webApiCommands) ? handleWebApi(webApiCommands, e, doAppRender) : doAppRender();
+}
+
+
+function handleWebApi(webApiCommands, e, doAppRender) {
+    const {status, helpType, contextMessage, cmd, execute, params, badParams}= evaluateWebApi(webApiCommands);
+    switch (status) {
+        case WebApiStat.EXECUTE_API_CMD:
+            window.history.pushState('home', 'Home', new URL(window.location).pathname); // ?? is this necessary?
+            doAppRender();
+            dispatchOnAppReady(() =>  execute?.(cmd,params));
+            break;
+        case WebApiStat.SHOW_HELP:
+            ReactDOM.render( React.createElement(
+                WebApiHelpInfoPage, {helpType, contextMessage, cmd, params, webApiCommands, badParams}), e);
+            break;
+        default:
+            logger.error('Unexpect status, can\'t handle web api: '+ status);
+            break;
     }
 }
 

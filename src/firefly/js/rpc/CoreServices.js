@@ -27,7 +27,7 @@ export function logout() {
  *                         SPAs running out of one webapp
  * @returns {Promise}
  */
-export function init({spaName}={}) {
+export function notifyServerAppInit({spaName}={}) {
     return doJsonRequest(ServerParams.INIT_APP, {spaName});
 }
 

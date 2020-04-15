@@ -17,7 +17,7 @@ import {convert} from '../../visualize/VisUtil.js';
 import {primePlot, getActivePlotView} from '../../visualize/PlotViewUtil.js';
 import {PlotAttribute} from '../../visualize/PlotAttribute.js';
 import {visRoot} from '../../visualize/ImagePlotCntlr.js';
-import {renderPolygonDataArea,  calcCornerString, initRadiusArcSec} from '../CatalogSearchMethodType.jsx';
+import {renderPolygonDataArea,  calcCornerString} from '../CatalogSearchMethodType.jsx';
 import {clone} from '../../util/WebUtil.js';
 import {FieldGroupCollapsible} from '../panel/CollapsiblePanel.jsx';
 import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
@@ -32,7 +32,7 @@ import {tapHelpId} from './TableSelectViewPanel.jsx';
 import {ColsShape, ColumnFld, getColValidator} from '../../charts/ui/ColumnOrExpression';
 import {CheckboxGroupInputField} from '../CheckboxGroupInputField.jsx';
 
-const skey = 'TABLE_SEARCH_METHODS';
+export const skey = 'TABLE_SEARCH_METHODS';
 const Spatial = 'Spatial';
 const SpatialPanel = 'spatialSearchPanel';
 const SpatialCheck = 'spatialCheck';
@@ -121,7 +121,7 @@ const Width_Time_Wrapper = Width_Column + 30;
 export const SpattialPanelWidth = Math.max(Width_Time_Wrapper*2, SpatialWidth) + LabelWidth + 10;
 
 
-function Header({title, helpID='', checkID, message}) {
+function Header({title, helpID='', checkID, message, enabled=false}) {
     const tooltip = title + ' search is included in the query if checked';
     return (
         <div style={{display: 'inline-flex', alignItems: 'center'}} title={title + ' search'}>
@@ -130,7 +130,7 @@ function Header({title, helpID='', checkID, message}) {
                     key={checkID}
                     fieldKey={checkID}
                     initialState={{
-                        value: '',
+                        value: enabled ?title:'',
                         label: ''
                         }}
                     options={[{label:'', value: title}]}
@@ -205,9 +205,9 @@ export class TableSearchMethods extends PureComponent {
         return (
             <FieldGroup style={{height: '100%', overflow: 'auto'}}
                         groupKey={skey} keepState={true} reducerFunc={tapSearchMethodReducer(columnsModel)}>
-                <SpatialSearch {...{cols, groupKey, fields}} />
+                <SpatialSearch {...{cols, groupKey, fields, initArgs:this.props.initArgs}} />
                 <TemporalSearch {...{cols, groupKey, fields}} />
-                {false && <WavelengthSearch {...{cols, groupKey, fields}} />}
+                {false && <WavelengthSearch {...{cols, groupKey, fields, initArgs:this.props.initArgs}} />}
             </FieldGroup>
         );
     }
@@ -242,7 +242,8 @@ function changeDatePickerOpenStatus(loc) {
     };
 }
 
-function SpatialSearch({cols, groupKey, fields}) {
+function SpatialSearch({cols, groupKey, fields, initArgs={}}) {
+    const {WorldPt, radiusInArcSec}= initArgs;
     const showCenterColumns = () => {
         return (
             <div style={{marginLeft: LeftInSearch}}>
@@ -269,7 +270,7 @@ function SpatialSearch({cols, groupKey, fields}) {
             <div style={{display:'flex', flexDirection:'column', flexWrap:'no-wrap',
                          width: SpatialWidth, marginLeft: `${LabelWidth + LeftInSearch}px`, marginTop: 5}}>
                 {selectSpatialSearchMethod(groupKey, fields)}
-                {setSpatialSearchSize(fields)}
+                {setSpatialSearchSize(fields, radiusInArcSec)}
             </div>
         );
     };
@@ -278,7 +279,7 @@ function SpatialSearch({cols, groupKey, fields}) {
 
     return (
         <FieldGroupCollapsible header={<Header title={Spatial}  helpID={tapHelpId('spatial')}
-                                       checkID={SpatialCheck}   message={message}/>}
+                                       checkID={SpatialCheck}   message={message} enabled={Boolean(WorldPt)}/>}
                                initialState={{ value: 'open' }}
                                fieldKey={SpatialPanel}
                                wrapperStyle={{marginBottom: 15}}
@@ -384,7 +385,7 @@ TemporalSearch.propTypes = {
 
 
 
-function WavelengthSearch({cols, groupKey, fields}) {
+function WavelengthSearch({cols, groupKey, fields, initArgs={}}) {
     const showWavelengthColumns = () => {
         return (
             <div style={{marginLeft: LeftInSearch}}>
@@ -401,7 +402,8 @@ function WavelengthSearch({cols, groupKey, fields}) {
         );
     };
     return (
-        <FieldGroupCollapsible header={<Header title={Wavelength} helpID={tapHelpId('wavelength')} checkID={WavelengthCheck}/>}
+        <FieldGroupCollapsible header={<Header title={Wavelength} helpID={tapHelpId('wavelength')}
+                                               checkID={WavelengthCheck}/>}
                                initialState={{ value: 'closed' }}
                                fieldKey={WavelengthPanel}
                                headerStyle={HeaderFont}>
@@ -464,16 +466,17 @@ function renderTargetPanel(groupKey, fields) {
 /**
  * render the size area for each spatial search type
  * @param fields
+ * @param radiusInArcSec
  * @returns {*}
  */
-function setSpatialSearchSize(fields) {
+function setSpatialSearchSize(fields, radiusInArcSec) {
     const border = '1px solid #a3aeb9';
     const searchType = get(fields, [SpatialMethod, 'value'], TapSpatialSearchMethod.Cone.value);
 
     if (searchType === TapSpatialSearchMethod.Cone.value) {
         return (
             <div style={{border}}>
-                {radiusInField({})}
+                {radiusInField({radiusInArcSec})}
             </div>
         );
     } else if (searchType === TapSpatialSearchMethod.Polygon.value) {
@@ -495,10 +498,12 @@ function setSpatialSearchSize(fields) {
 
 /**
  * render size area for cone search
- * @param label
+ * @param p
+ * @param [p.label]
+ * @param [p.radiusInArcSec]
  * @returns {XML}
  */
-function radiusInField({label = getLabel(RadiusSize) }) {
+function radiusInField({label = getLabel(RadiusSize), radiusInArcSec=undefined }) {
     return (
         <SizeInputFields fieldKey={RadiusSize} showFeedback={true}
                          wrapperStyle={{padding:5, margin: '5px 0px 5px 0px'}}
@@ -506,7 +511,7 @@ function radiusInField({label = getLabel(RadiusSize) }) {
                                                unit: 'arcsec',
                                                labelWidth : 100,
                                                nullAllowed: true,
-                                               value: initRadiusArcSec(3600),
+                                               value: `${(radiusInArcSec||10)/3600}`,
                                                min: 1 / 3600,
                                                max: 100
                                            }}
@@ -515,7 +520,8 @@ function radiusInField({label = getLabel(RadiusSize) }) {
 }
 
 radiusInField.propTypes = {
-    label: PropTypes.string
+    label: PropTypes.string,
+    radiusInArcSec: PropTypes.number
 };
 
 
@@ -548,7 +554,7 @@ function makeSpatialConstraints(fields, columnsModel) {
     if (spatialMethod.value === TapSpatialSearchMethod.Cone.value) {
         const {coneSize} = fields;
         const worldPt = parseWorldPt(get(fields, [ServerParams.USER_TARGET_WORLD_PT, 'value']));
-        const size = coneSize.value;
+        const size = coneSize?.value;
 
         if (!worldPt || !size) {
             return retval;
@@ -560,7 +566,7 @@ function makeSpatialConstraints(fields, columnsModel) {
     } else if (spatialMethod.value === TapSpatialSearchMethod.Polygon.value) {
         const {polygoncoords} = fields;
 
-        if (!polygoncoords.value) {
+        if (!polygoncoords?.value) {
             return retval;
         }
 
@@ -1194,19 +1200,29 @@ function validateTemporalConstraints(fields, newFields, nullAllowed) {
 /**
  * pass the validity of the constraint entries on the checked search panel before forming the ADQL query
  * @param fields
+ * @param columnsModel - if passed the do even more validation
  * @returns {*}
  */
-function validateConstraints(fields) {
+export function validateConstraints(fields, columnsModel=undefined) {
     // spatial constraints
     let retval = {valid: true};
 
     if (isPanelChecked(Spatial, fields)) {
         retval = validateSpatialConstraints(fields);
+
+        if (columnsModel && retval.valid) {
+            const spacRet= makeSpatialConstraints(fields, columnsModel);
+            if (retval.valid) retval.valid= Boolean(spacRet.valid && spacRet.where);
+        }
         if (!retval.valid) return retval;
     }
 
     if (isPanelChecked(Temporal, fields)) {
         retval = validateTemporalConstraints(fields);
+        if (columnsModel && retval.valid) {
+            const temporalRet= makeTemporalConstraints(fields, columnsModel);
+            if (retval.valid) retval.valid= Boolean(temporalRet.valid && temporalRet.where);
+        }
     }
     return retval;
 }

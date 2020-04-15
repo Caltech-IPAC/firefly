@@ -27,6 +27,8 @@ import {dispatchHideDialog} from '../../core/ComponentCntlr';
 import {TableColumnsConstraints, TableColumnsConstraintsToolbar, tableColumnsConstraints} from './TableColumnsConstraints.jsx';
 import {RadioGroupInputField} from '../RadioGroupInputField';
 import {ValidationField} from '../ValidationField';
+import {skey, validateConstraints} from './TableSearchMethods';
+import {makeSearchOnce} from '../../util/WebUtil';
 
 
 import './TableSelectViewPanel.css';
@@ -40,18 +42,52 @@ import './TableSelectViewPanel.css';
 
 const gkey = 'TAP_SEARCH_PANEL';
 export const tapHelpId = (id) => `tapSearches.${id}`;
+let webApiAddedServices;
+
+
+const constraintInitArgs= ['WorldPt', 'radiusInArcSec']; // this should grow as we support more params in initArgs
+
+function validateAutoSearch(fields, initArgs) {
+    const {columnsModel} = getTapBrowserState();
+    if (columnsModel && getAdqlQuery(false)) {
+        const searchMethodFields= FieldGroupUtils.getGroupFields(skey);
+        if (searchMethodFields && validateConstraints(searchMethodFields, columnsModel).valid) {
+            const adqlFragment = tableSearchMethodsConstraints(columnsModel);
+            if (adqlFragment && adqlFragment.valid) {
+                const usesWhere= Object.keys(initArgs).find( (i) => constraintInitArgs.includes(i));
+                return usesWhere ? Boolean(adqlFragment.where) : true;
+            }
+        }
+    }
+    return false;
+}
+
+
+const searchOnce= makeSearchOnce(); // setup options to immediately execute the search the first time
 
 // on the left tap tables browser
 // on the bottom - column constraints
 export class TapSearchPanel extends PureComponent {
     constructor(props) {
         super(props);
-        const {serviceUrl=get(getTapServiceOptions(), [0, 'value']), ...others} = getTapBrowserState();
-        this.state = {serviceUrl, ...others};       // initialize state.. default serviceUrl if not given
+        let tapOps= getTapServiceOptions();
+        const {initArgs= {execute:false}}= props;
+        if (!initArgs.execute) searchOnce(true); // if not execute then mark as done, i.e. disable any auto searching
 
+
+
+        if (initArgs.service && !tapOps.find( (e) => e.value===initArgs.service)) {
+            webApiAddedServices= {label: initArgs.service, value: initArgs.service};
+            tapOps= getTapServiceOptions();
+        }
+        let defTapIdx= initArgs.service ? tapOps.findIndex( (t) => t.value ===initArgs.service) : 0;
+        defTapIdx= (defTapIdx>-1) ? defTapIdx: 0;
+        const {serviceUrl=get(tapOps, [defTapIdx, 'value']), ...others} = getTapBrowserState();
+        this.state = {serviceUrl, defTapIdx, ...others};       // initialize state.. default serviceUrl if not given
 
         this.populateAndEditAdql = this.populateAndEditAdql.bind(this);
         this.onTapServiceOptionSelect = this.onTapServiceOptionSelect.bind(this);
+        this.clickFunc= undefined;
     }
 
     componentDidMount() {
@@ -64,6 +100,9 @@ export class TapSearchPanel extends PureComponent {
                                 return org;
                             }, {});
                 this.setState(vals);
+
+                searchOnce(() => validateAutoSearch(fields,this.props.initArgs), this.clickFunc);
+
             }
         });
 
@@ -81,7 +120,8 @@ export class TapSearchPanel extends PureComponent {
     render() {
 
 
-        const {serviceUrl, selectBy='basic'} = this.state;
+        const {serviceUrl, defTapIdx, selectBy='basic'} = this.state;
+        const {initArgs={}}= this.props;
 
         const placeholder = serviceUrl ? `Using <${serviceUrl}>. Replace...` : 'Select TAP...';
 
@@ -112,11 +152,13 @@ export class TapSearchPanel extends PureComponent {
         if (selectBy === 'basic') extraWidgets.push(rightBtn);
 
         const style = {width: '100%'};
+        const tapOps= getTapServiceOptions();
 
         return (
             <div style={style}>
                 <FormPanel  inputStyle = {{display: 'flex', flexDirection: 'column', backgroundColor: 'transparent', padding: 'none', border: 'none'}}
                             groupKey={gkey}
+                            getDoOnClickFunc={(clickFunc) => this.clickFunc= clickFunc}
                             params={{hideOnInvalid: false}}
                             onSubmit={(request) => onSearchSubmit(request, serviceUrl)}
                             extraWidgets={extraWidgets}
@@ -134,12 +176,14 @@ export class TapSearchPanel extends PureComponent {
                             <div className='TapSearch__section--title'>1. TAP Service <HelpIcon helpId={tapHelpId('tapService')}/> </div>
                             <div style={{flexGrow: 1, marginRight: 3, maxWidth: 1000}}>
                                 <CreatableSelect
-                                    options={getTapServiceOptions()}
+                                    options={tapOps}
                                     isClearable={true}
                                     onChange={this.onTapServiceOptionSelect}
                                     placeholder={placeholder}
                                     theme={selectTheme}
                                     styles={commonSelectStyles}
+                                    value={initArgs.service}
+                                    defaultValue={tapOps[defTapIdx]}
                                 />
                             </div>
                         </div>
@@ -156,7 +200,7 @@ export class TapSearchPanel extends PureComponent {
                                 wrapperStyle={{alignSelf: 'center'}}
                             />
                         </div>
-                        {selectBy === 'basic' && <BasicUI  serviceUrl={serviceUrl}/>}
+                        {selectBy === 'basic' && <BasicUI  serviceUrl={serviceUrl} initArgs={initArgs}/>}
                         {selectBy === 'adql' && <AdqlUI fieldKey='adqlQuery' origFieldKey='adqlQueryOriginal' groupKey={gkey} serviceUrl={serviceUrl}/>}
 
                     </div>
@@ -223,7 +267,11 @@ class BasicUI extends PureComponent {
     constructor(props) {
         super(props);
 
+
+        const {initArgs={}}= props;
         this.state = Object.assign({error: undefined}, getTapBrowserState());
+        if (!this.state.schemaName) this.state.schemaName= initArgs.schema;
+        if (!this.state.tableName) this.state.tableName= initArgs.table;
         this.loadSchemas = this.loadSchemas.bind(this);
         this.loadTables = this.loadTables.bind(this);
         this.loadColumns = this.loadColumns.bind(this);
@@ -251,7 +299,7 @@ class BasicUI extends PureComponent {
 
     
     render() {
-        const {serviceUrl} = this.props;
+        const {serviceUrl, initArgs={}} = this.props;
         const {error, schemaOptions, tableOptions, schemaName, tableName, columnsModel}= this.state;
         const splitDef = SpattialPanelWidth+80;
         const splitMax = SpattialPanelWidth+80;
@@ -307,7 +355,7 @@ class BasicUI extends PureComponent {
                     <div className='expandable'>
                         <SplitPane split='vertical' maxSize={splitMax} mixSize={20} defaultSize={splitDef}>
                             <SplitContent>
-                                {columnsModel ?  <TableSearchMethods columnsModel={columnsModel}/>
+                                {columnsModel ?  <TableSearchMethods columnsModel={columnsModel} initArgs={initArgs}/>
                                     : <div className='loading-mask'/>
                                 }
                             </SplitContent>
@@ -477,7 +525,7 @@ function onSearchSubmit(request,serviceUrl) {
  * @property {string} message - error message, if invalid
  */
 
-function getAdqlQuery() {
+function getAdqlQuery(showErrors= true) {
     const fields = FieldGroupUtils.getGroupFields(gkey);
     const tableName = get(fields, ['tableName', 'value']);
     //const maxrec = get(fields, ['maxrec', 'value']);
@@ -496,7 +544,7 @@ function getAdqlQuery() {
 
     // table column constraints and column selections
     const adqlFragment = tableColumnsConstraints(columnsModel);
-    if (!adqlFragment.valid) {
+    if (!adqlFragment.valid && showErrors) {
         showInfoPopup(adqlFragment.message, 'Error');
         return null;
     }
@@ -580,11 +628,13 @@ function getTapServices() {
     if (!tapServices || !isArray(tapServices) || !tapServices.length) {
         tapServices = TAP_SERVICES;
     }
+    let retVal= [...tapServices];
     const additionalServices = get(getAppOptions(), 'tap.additional.services');
     if (additionalServices && isArray(additionalServices) && additionalServices.length) {
-        tapServices = [...additionalServices, ...TAP_SERVICES];
+        retVal = [...additionalServices, ...tapServices];
     }
-    return tapServices;
+    if (webApiAddedServices) retVal.push(webApiAddedServices);
+    return retVal;
 }
 
 function getTapServiceOptions() {
