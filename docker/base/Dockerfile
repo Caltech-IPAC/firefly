@@ -12,7 +12,7 @@ FROM tomcat:9.0-jdk11-openjdk
 # - add any other standard apt packages here
 # - this is a big part of the layer so do it early
 RUN apt-get update && apt-get install -y \
-        vim procps wget emacs-nox \
+        vim procps wget \
         && rm -rf /var/lib/apt/lists/*;
 
 
