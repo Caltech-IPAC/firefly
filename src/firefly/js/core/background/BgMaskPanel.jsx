@@ -5,7 +5,9 @@ import {get} from 'lodash';
 import {dispatchJobAdd} from './BackgroundCntlr.js';
 import {getComponentState} from '../../core/ComponentCntlr.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {Logger} from '../../util/Logger.js';
 
+const logger = Logger('BgMaskPanel');
 
 /**
  * This component uses ComponentCntlr state persistence.  It is keyed by the given props's componentKey.
@@ -27,6 +29,7 @@ export const BgMaskPanel = React.memo(({componentKey, style={}}) => {
     const parts = get(bgStatus, 'ITEMS.length', 0);
     const msg = 'Working...' + (parts > 1 ? ` part #${parts}` : '');
 
+    logger.debug(inProgress ? 'show' : 'hide');
     if (inProgress) {
         return (
             <div style={maskStyle}>

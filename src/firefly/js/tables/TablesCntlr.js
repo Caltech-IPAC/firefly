@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, set, omitBy, pickBy, pick, isNil, cloneDeep, findKey, isEqual, unset, merge, omit} from 'lodash';
+import {get, set, omitBy, pickBy, pick, isNil, cloneDeep, findKey, isEqual, unset, merge} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import * as TblUtil from './TableUtil.js';
@@ -127,7 +127,7 @@ export const TBL_UI_UPDATE = `${UI_PREFIX}.update`;
  */
 export const TBL_UI_EXPANDED = `${UI_PREFIX}.expanded`;
 
-const logger = Logger('TablesCntlr');
+const logger = Logger('Tables');
 
 export default {actionCreators, reducers};
 
@@ -487,7 +487,7 @@ function tableFetch(action) {
 
         dispatch( updateMerge(action, 'payload', {tbl_id}) );
 
-        TblUtil.onTableLoaded(tbl_id).then( (tableModel) => {
+        TblUtil.preTableLoaded(tbl_id).then( (tableModel) => {
             dispatchTableLoaded(Object.assign(TblUtil.getTblInfo(tableModel), {invokedBy: TABLE_FETCH}));
         });
 

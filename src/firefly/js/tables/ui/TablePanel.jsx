@@ -24,13 +24,14 @@ import {showOptionsPopup, showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {BgMaskPanel} from '../../core/background/BgMaskPanel.jsx';
 import {CollapsiblePanel} from '../../ui/panel/CollapsiblePanel.jsx';
 
-
 //import INFO from 'html/images/icons-2014/24x24_Info.png';
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 import OPTIONS from 'html/images/icons-2014/24x24_GearsNEW.png';
 import {ObjectTree} from './ObjectTree.jsx';
+import {Logger} from '../../util/Logger.js';
 
+const logger = Logger('Tables').tag('TablePanel');
 
 const TT_INFO = 'Show additional table info';
 const TT_OPTIONS = 'Edit Table Options';
@@ -139,9 +140,6 @@ export class TablePanel extends PureComponent {
         var {leftButtons, rightButtons} =  this.state;
         const {tbl_ui_id} = this.tableConnector;
 
-        if (error) return <TableError {...{error, tbl_id, message: error}}/>;
-        if (isEmpty(columns)) return <Loading {...{showTitle, tbl_id, title, removable, backgroundable}}/>;
-
         const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
         const viewIcoStyle = 'PanelToolbar__button ' + (textView ? 'tableView' : 'textView');
         const tableTopPos = showToolbar && (leftButtons && showTitle ? 41 : 29) || 0;
@@ -157,6 +155,12 @@ export class TablePanel extends PureComponent {
 
         const showOptionsDialog = () => showTableOptionDialog(this.onOptionUpdate, this.onOptionReset, tbl_ui_id, tbl_id);
         const showInfoDialog = () => showTableInfoDialog(tbl_id);
+
+        const tstate = getTableState(this.state);
+        logger.debug(`render.. state:[${tstate}] -- ${tbl_id}`);
+
+        if (tstate === 'ERROR')     return <TableError {...{error, tbl_id, message: error}}/>;
+        if (tstate === 'LOADING')   return <Loading {...{showTitle, tbl_id, title, removable, backgroundable}}/>;
 
         return (
             <div style={{ position: 'relative', width: '100%', height: '100%'}}>
@@ -230,6 +234,14 @@ export class TablePanel extends PureComponent {
         );
     }
 }
+
+function getTableState(state) {
+    const {error, columns} = state;
+    if (error) return 'ERROR';
+    if (isEmpty(columns)) return 'LOADING';
+    return 'OK';
+}
+
 
 function showTableOptionDialog(onChange, onOptionReset, tbl_ui_id, tbl_id) {
 

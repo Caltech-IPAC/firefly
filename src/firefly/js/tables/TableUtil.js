@@ -112,24 +112,23 @@ export function doFetchTable(tableRequest, hlRowIdx) {
 /**
  * return a promise of a tableModel for the given tbl_id.
  * @param {string} tbl_id the table ID to watch for.
+ * @param {string} cancelIfRemoved cancel watcher if table is removed.
  * @returns {Promise.<TableModel>}
  * @public
  * @func onTableLoad
  * @memberof firefly.util.table
  */
-export function onTableLoaded(tbl_id) {
-    if (isFullyLoaded(tbl_id)) {
-        return Promise.resolve(getTblById(tbl_id));
-    } else {
-        return new Promise((resolve) => {
-            dispatchAddActionWatcher({
-                actions:[TblCntlr.TABLE_UPDATE, TblCntlr.TABLE_REPLACE],
-                callback: doOnTblLoaded,
-                params: {tbl_id, resolve}
-            });
-        });
-    }
+export function onTableLoaded(tbl_id, cancelIfRemoved) {
+    return watchForTableLoaded(true, tbl_id, cancelIfRemoved);
 }
+
+/*
+ * similar to onTableLoaded but callback happens before TABLE_LOADED is fired
+ */
+export function preTableLoaded(tbl_id, cancelIfRemoved) {
+    return watchForTableLoaded(false, tbl_id, cancelIfRemoved);
+}
+
 
 /**
  * returns true is there is data within the given range.  this is needed because
@@ -1364,31 +1363,51 @@ export function hasAuxData(tbl_id) {
     return !isEmpty(keywords) || !isEmpty(links) || !isEmpty(params) || !isEmpty(resources);
 }
 
+/**
+ * returns true only if a table is successfully fetched, but does not contains any data.
+ * @param tbl_id
+ */
+export function hasNoData(tbl_id) {
+    const tableModel = getTblById(tbl_id);
+    return tableModel?.totalRows === 0;
+}
+
 /*-------------------------------------private------------------------------------------------*/
 
 /**
- * Action watcher callback for table update, which is invoked when
- * the table given by tbl_id is fully loaded.
- * @callback actionWatcherCallback
- * @param action  action that triggered this watcher
- * @param cancelSelf  function to cancel this watcher
- * @param params  parameters object
- * @param {string}   params.tbl_id  table id to watch
- * @param {function} params.resolve  callback to execute when table is loaded.
+ * @param afterLoaded   if true, watch for TABLE_LOADED, then resolve
+ * @param tbl_id        table to watch
+ * @param cancelIfRemoved  if true, cancel watcher if table is removed.
  */
-function doOnTblLoaded(action, cancelSelf, {tbl_id, resolve}) {
-    if (!resolve) cancelSelf();
+function watchForTableLoaded(afterLoaded, tbl_id, cancelIfRemoved=true) {
 
-    if (tbl_id === get(action, 'payload.tbl_id')) {
-        const tableModel = getTblById(tbl_id);
-        if (get(tableModel, 'error')) {
-            // there was an error loading this table.
-            resolve(createErrorTbl(tbl_id, tableModel.error));
-            cancelSelf();
-        } else if (isTableLoaded(tableModel) &&  get(tableModel, 'tableData.columns.length')) {
-            resolve(getTblInfoById(tbl_id));
-            cancelSelf();
-        }
+    if (isFullyLoaded(tbl_id)) {
+        return Promise.resolve(getTblById(tbl_id));
+    } else {
+        const actions = [ afterLoaded ? TblCntlr.TABLE_LOADED : TblCntlr.TABLE_UPDATE, TblCntlr.TABLE_REPLACE, TblCntlr.TABLE_REMOVE];
+        const callback = (action, cancelSelf, {resolve}) => {
+            if (!resolve) cancelSelf();
+
+            if (tbl_id === get(action, 'payload.tbl_id')) {
+                if ( action.type === TblCntlr.TABLE_REMOVE) {
+                    if (cancelIfRemoved) cancelSelf();
+                } else {
+                    const tableModel = getTblById(tbl_id);
+                    if (get(tableModel, 'error')) {
+                        // there was an error loading this table.
+                        resolve(createErrorTbl(tbl_id, tableModel.error));
+                        cancelSelf();
+                    } else if (isTableLoaded(tableModel) &&  get(tableModel, 'tableData.columns.length')) {
+                        resolve(getTblInfoById(tbl_id));
+                        cancelSelf();
+                    }
+                }
+            }
+        };
+
+        return new Promise((resolve) => {
+            dispatchAddActionWatcher({ actions, callback, params: {resolve}});
+        });
     }
 }
 

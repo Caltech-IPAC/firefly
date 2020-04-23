@@ -3,6 +3,7 @@
  */
 
 import {memoize, find} from 'lodash';
+import {sprintf} from '../externalSource/sprintf.js';
 
 /*------------------------------- Logger Implementation ----------------------------------
 
@@ -100,7 +101,8 @@ export const logger = Logger();
 
 const debugLevel = memoize( () => {
     const levels = ['error', 'warn', 'info', 'debug', 'trace'];
-    const debug = window.firefly?.debug;
+    let debug = window.firefly?.debug;
+    if (!debug && debugTags().length > 0) debug = 'debug';
     if (debug) {
         let level =  levels.indexOf(debug);
         level = level >= 0 ? level : 2;
@@ -108,7 +110,7 @@ const debugLevel = memoize( () => {
         return level;
     }
     return -1;
-}, () => window.firefly?.debug + '');
+}, () => window.firefly?.debug + '|' + window.firefly?.debugTags + '');
 
 
 
@@ -122,16 +124,19 @@ function log(msg, {level=2, tag=''}) {
     if (debugLevel() >=  level) {
         const doLog = debugTags().length === 0 || find(debugTags(), (t) => !!tag.match(t));
         if (doLog) {
+            const now = new Date();
+            const ts = '%c' + sprintf('%2s:%2d:%2d.%3d ', now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+
+            tag = tag ? tag + ':' : ':';
             if (typeof msg === 'object') {
-                console.log(tag ? tag + ': ==>' : '');
-            } else {
-                msg = tag ? `${tag}: ${msg}` : msg;
+                console.log(ts, 'color:maroon', tag, '==>');
             }
-            if (level === 0) console.error(msg);
-            if (level === 1) console.warn(msg);
-            if (level === 2) console.info(msg);
-            if (level === 3) console.debug(msg);
-            if (level === 4) console.trace(msg);
+
+            if (level === 0) console.error(ts, 'color:maroon', tag, msg);
+            if (level === 1) console.warn(ts, 'color:maroon', tag, msg);
+            if (level === 2) console.info(ts, 'color:maroon', tag, msg);
+            if (level === 3) console.debug(ts, 'color:maroon', tag, msg);
+            if (level === 4) console.trace(ts, 'color:maroon', tag, msg);
         }
     }
 };

@@ -19,6 +19,7 @@ import {MAX_ROW, DataTagMeta, getTblId, setResultSetID, setResultSetRequest, set
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {getBackgroundJobs} from '../core/background/BackgroundUtil.js';
 import {getFireflySessionId} from '../Firefly.js';
+import * as TblUtil from '../tables/TableUtil';
 
 export const DownloadProgress= new Enum(['STARTING', 'WORKING', 'DONE', 'UNKNOWN', 'FAIL']);
 export const ScriptAttributes= new Enum(['URLsOnly', 'Unzip', 'Ditto', 'Curl', 'Wget', 'RemoveZip']);
@@ -77,6 +78,8 @@ export function fetchTable(tableRequest, hlRowIdx) {
         } else if (!has(tableModel, 'highlightedRow')) {
             tableModel.highlightedRow = startIdx;
         }
+        tableModel.title = tableModel.tableMeta?.title ?? tableModel.title;
+
         return tableModel;
     });
 }
@@ -169,6 +172,8 @@ export function submitBackgroundSearch(request, clientRequest, waitMillis) {
     if (getBgEmail()) {
         request = set(request, ['META_INFO', ServerParams.EMAIL], getBgEmail());
     }
+    request.ffSessionId = request.ffSessionId ?? getFireflySessionId();
+
     // insert DataTag if not present
     if (!get(request, DataTagMeta)) {
         set(request, DataTagMeta, `${getModuleName()}-${request.id}`);

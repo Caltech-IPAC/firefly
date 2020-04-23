@@ -54,6 +54,8 @@
             }
             firefly.util.renderDOM("WS_popup", firefly.ui.WorkspacePickerPopup,{onComplete: onSelect});
             /*---------------------------------------------------------------*/
+
+            sourceChanges()
         }
 
 
@@ -69,22 +71,29 @@
             document.getElementById(tabId).style.display = "block";
         }
 
+        var request;
+        function removeTable() {
+            if (request) {
+                firefly.action.dispatchTableRemove(request.tbl_id)
+            }
+        }
         function showTable() {
             try {
-                var a = document.forms["a"]
-                var request;
-                if (a.fromWS.value) {
-                    request = firefly.util.table.makeIrsaWorkspaceRequest(a.fromWS.value);
-                } else if (a.wise.checked) {
+                const a = document.forms["a"]
+                const source = document.a.source.value
+
+                if (source === "byWise") {
                     request = firefly.util.table.makeIrsaCatalogRequest('allwise_p3as_psd', 'WISE', 'allwise_p3as_psd',
-                            {
-                                position: '148.9;68.8;EQ_J2000',
-                                SearchMethod: 'Cone',
-                                radius: 300
-                            });
-                } else {
+                        {
+                            position: '148.9;68.8;EQ_J2000',
+                            SearchMethod: 'Cone',
+                            radius: 300
+                        });
+                } else if (source === "byUrl") {
                     request = firefly.util.table.makeFileRequest(null, a.url.value, null,
-                            {META_INFO: {CENTER_COLUMN: 'crval1;crval2;EQJ2000'}});
+                        {META_INFO: {CENTER_COLUMN: 'crval1;crval2;EQJ2000'}});
+                } else {
+                    request = firefly.util.table.makeIrsaWorkspaceRequest(a.fromWS.value);
                 }
 
                 var params = {};
@@ -106,6 +115,13 @@
                 alert(e);
             }
         }
+
+        function sourceChanges() {
+            const source = document.a.source.value;
+            ['byUrl', 'byWise', 'byWS'].forEach(s => document.getElementById(s).style.display = "none");
+            document.getElementById(source).style.display = "initial"
+        }
+
     </script>
 
     <script  type="text/javascript" src="../firefly_loader.js"></script>
@@ -122,37 +138,40 @@
     <div>
         <form name="a">
             <div class="input-field">
-                <div style="margin-bottom: 10px"><b>Load table from first available source</b></div>
-                <div>
+                <div style="margin-bottom: 10px"><b>Source: </b>
+                    <input type="radio" name="source" value="byWise" checked onchange="sourceChanges()"> WISE catalog
+                    <input type="radio" name="source" value="byUrl" onchange="sourceChanges()"> URL
+                    <input type="radio" name="source" value="byWS" onclick="sourceChanges()"> Workspace
+                </div>
+                <div id="byWS" >
                     <div id="WS_popup"></div>
                     <input id="WS_input" name="fromWS" type="hidden"/>
                 </div>
-                <label> Use WISE catalog:
-                    <input name="wise" type="checkbox" checked/>
-                </label>
-                <label> URL:
+                <div id="byWise"> <li><i>Using a predefined WISE catalog</i></div>
+                <label id="byUrl"> URL:
                     <input name="url" value="http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl" size=60/>
                 </label>
             </div>
 
             <div class="input-field">
                 <label> Params</label>
-                <textarea id="params" name="params" rows="5" cols="70">{"sortInfo": "ASC,clon"}</textarea>
+                <textarea id="params" name="params" rows="5" cols="70" placeholder='{"sortInfo": "ASC,clon"}'></textarea>
             </div>
 
             <div class="input-field">
                 <label> META_INFO</label>
-                <textarea id="meta-info" name="meta-info" rows="5" cols="70">{"col.clon.PrefWidth": 100}</textarea>
+                <textarea id="meta-info" name="meta-info" rows="5" cols="70" placeholder='{"col.clon.PrefWidth": 100}'></textarea>
             </div>
 
             <div class="input-field">
                 <label> Options:</label>
-                <textarea name="options" rows="5" cols="70">{"pageSize": 100}</textarea>
+                <textarea name="options" rows="5" cols="70" placeholder='{"pageSize": 100}'></textarea>
             </div>
 
         </form>
-        <div class="input-field">
+        <div class="input-field" style="flex-direction: row">
             <button style="width: 100px" onclick="showTable()">Show Table</button>
+            <button style="width: 100px; margin-left: 5px" onclick="removeTable()">Remove Table</button>
         </div>
     </div>
 

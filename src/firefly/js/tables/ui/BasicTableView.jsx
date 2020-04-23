@@ -8,18 +8,18 @@ import {Table,Column} from 'fixed-data-table-2';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {get, isEmpty} from 'lodash';
 
-import {tableTextView, getTableUiById, getProprietaryInfo, getTblById, hasRowAccess, calcColumnWidths, uniqueTblUiId} from '../TableUtil.js';
+import {tableTextView, getTableUiById, getProprietaryInfo, getTblById, hasRowAccess, calcColumnWidths, uniqueTblUiId, hasNoData} from '../TableUtil.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
-import {TextCell, HeaderCell, SelectableHeader, SelectableCell} from './TableRenderer.js';
+import {TextCell, HeaderCell, SelectableHeader, SelectableCell, LinkCell} from './TableRenderer.js';
+import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {dispatchTableUiUpdate, TBL_UI_UPDATE} from '../TablesCntlr.js';
+import {Logger} from '../../util/Logger.js';
 
 import './TablePanel.css';
-import {LinkCell} from './TableRenderer';
-import {useStoreConnector} from '../../ui/SimpleComponent';
-import {dispatchTableUiUpdate} from '../TablesCntlr';
-import * as Cntlr from '../TablesCntlr';
 
+const logger = Logger('Tables').tag('BasicTable');
 const noDataMsg = 'No Data Found';
 const noDataFromFilter = 'No data match these criteria';
 
@@ -31,7 +31,7 @@ const BasicTableViewInternal = React.memo((props) => {
     const {width, height} = props.size;
     const {columns, data, hlRowIdx, showUnits, showTypes, showFilters, filterInfo, renderers,
             bgColor, selectable, selectInfoCls, sortInfo, callbacks, textView, rowHeight,
-            showMask, error, tbl_ui_id=uniqueTblUiId(), currentPage, startIdx=0, highlightedRowHandler} = props;
+            error, tbl_ui_id=uniqueTblUiId(), currentPage, startIdx=0, highlightedRowHandler} = props;
 
     const uiStates = getTableUiById(tbl_ui_id) || {};
     const {tbl_id, columnWidths, scrollLeft=0, scrollTop=0, triggeredBy} = uiStates;
@@ -68,49 +68,47 @@ const BasicTableViewInternal = React.memo((props) => {
         }
     });
 
-    if (!error && (isEmpty(columns) || isEmpty(columnWidths))) return (<div style={{top: 0}} className='loading-mask'/>);
-
     const makeColumnsProps = {columns, data, selectable, selectInfoCls, renderers, bgColor,
         columnWidths, filterInfo, sortInfo, showUnits, showTypes, showFilters,
         onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected, startIdx, tbl_id};
 
     const rowClassNameGetter = highlightedRowHandler || defHighlightedRowHandler(tbl_id, hlRowIdx, startIdx);
 
+
+    const tstate = getTableState(props, uiStates);
+    logger.debug(`render.. state:[${tstate}] -- ${tbl_id}`);
+
+    if (tstate === 'ERROR')   return  <div style={{padding: 10}}>{error}</div>;
+    if (tstate === 'LOADING') return <div style={{top: 0}} className='loading-mask'/>;
+
     const content = () => {
-        if (error) {
-            return <div style={{padding: 10}}>{error}</div>;
-        } else if (width === 0 || showMask || isEmpty(columns)) {
-            return <div/>;
-        } else if (textView) {
+        if (textView) {
             return <TextView { ...{columns, data, showUnits, width, height} }/>;
         } else {
             return (
-                <Table  rowHeight={rowHeight}
-                        headerHeight={headerHeight}
-                        rowsCount={data.length}
-                        isColumnResizing={false}
-                        onColumnResizeEndCallback={onColumnResize}
-                        onRowClick={(e, index) => callbacks.onRowHighlight && callbacks.onRowHighlight(index)}
-                        rowClassNameGetter={rowClassNameGetter}
-                        onScrollEnd={onScrollEnd}
-                        scrollTop = {adjScrollTop}
-                        scrollLeft={adjScrollLeft}
-                        width={width}
-                        height={height}>
+                <Table rowHeight={rowHeight}
+                       headerHeight={headerHeight}
+                       rowsCount={data.length}
+                       isColumnResizing={false}
+                       onColumnResizeEndCallback={onColumnResize}
+                       onRowClick={(e, index) => callbacks.onRowHighlight && callbacks.onRowHighlight(index)}
+                       rowClassNameGetter={rowClassNameGetter}
+                       onScrollEnd={onScrollEnd}
+                       scrollTop={adjScrollTop}
+                       scrollLeft={adjScrollLeft}
+                       width={width}
+                       height={height}>
 
-                    { makeColumns(makeColumnsProps) }
+                    {makeColumns(makeColumnsProps)}
                 </Table>
             );
         }
     };
 
     const status = () => {
-        if (!error) {
-            if (showMask) {
-                return <div style={{top: 0}} className='loading-mask'/>;
-            } else if (isEmpty(data)) {
-                return <div className='TablePanel_NoData'> {filterInfo ? noDataFromFilter : noDataMsg} </div>;
-            }
+        switch (tstate) {
+            case 'NO_DATA_FOUND':   return <div className='TablePanel_NoData'> {filterInfo ? noDataFromFilter : noDataMsg} </div>;
+            case 'META_ONLY':       return <div className='TablePanel_NoData'> Loading... </div>;
         }
         return null;
     };
@@ -181,6 +179,19 @@ export const BasicTableViewWithConnector = React.memo((props) => {
 });
 
 /*---------------------------------------------------------------------------*/
+
+function getTableState(props, uiStates) {
+    const {columns, error, data, size, showMask} = props;
+    const {tbl_id, columnWidths} = uiStates;
+
+    if (error) return 'ERROR';
+    if (showMask || isEmpty(columns) || size.width === 0 || isEmpty(columnWidths)) {
+        return 'LOADING';
+    }
+    if (hasNoData(tbl_id)) return 'NO_DATA_FOUND';
+    if (isEmpty(data)) return 'META_ONLY';
+    return 'OK';
+}
 
 function doScrollEnd(scrollLeft, scrollTop) {
     const {tbl_ui_id} = this;
@@ -284,7 +295,7 @@ function correctScrollLeftIfNeeded(totalColWidths, scrollLeft, width, triggeredB
 
     if (scrollLeft < 0) {
         return undefined;
-    } else if (scrollLeft > 0 && triggeredBy === Cntlr.TBL_UI_UPDATE) {
+    } else if (scrollLeft > 0 && triggeredBy === TBL_UI_UPDATE) {
         if (totalColWidths < width) {
             // if the total widths of the columns is less than the view's width, don't apply scrollLeft
             return undefined;

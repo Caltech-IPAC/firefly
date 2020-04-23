@@ -2,24 +2,23 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, isEmpty} from 'lodash';
+import {isEmpty} from 'lodash';
 import {ServerRequest} from '../data/ServerRequest.js';
 import {WebPlotRequest} from '../visualize/WebPlotRequest.js';
 import {ZoomType} from '../visualize/ZoomType.js';
 import {getCellValue, getTblInfo} from '../tables/TableUtil.js';
 import {makeFileRequest} from '../tables/TableRequestUtil';
 import {
-    dispatchTableFetch,
-    dispatchTableLoaded,
     dispatchTableRemove,
     dispatchTableSearch,
-    TABLE_FETCH
+    TBL_UI_EXPANDED
 } from '../tables/TablesCntlr';
 import {MetaConst} from '../data/MetaConst';
-import {LC} from '../templates/lightcurve/LcManager';
-import {dispatchChartAdd, dispatchChartRemove, dispatchChartTraceRemove} from '../charts/ChartsCntlr';
-import {getTblById, default as TblUtil, onTableLoaded} from '../tables/TableUtil';
+import {dispatchChartAdd, dispatchChartRemove} from '../charts/ChartsCntlr';
+import {getTblById, onTableLoaded} from '../tables/TableUtil';
 import {ChartType} from '../data/FileAnalysis';
+import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga';
+import {SET_LAYOUT_MODE, LO_MODE} from '../core/LayoutCntlr.js';
 
 const getSetInSrByRow= (table,sr,rowNum) => (col) => {
     sr.setSafeParam(col.name, getCellValue(table,rowNum,col.name));
@@ -65,6 +64,22 @@ export function createChartTableActivate(chartAndTable,source, titleStr, activat
                                          colNames= undefined, colUnits= undefined,
                                          chartId='part-result-chart', tbl_id= 'part-result-tbl') {
     return () => {
+
+
+        let noop = false;       // no-operation..  a way to bypass create/cleanup logic
+        const noopId = 'noop-' + tbl_id;
+        dispatchAddActionWatcher({
+            id: noopId,
+            actions:[TBL_UI_EXPANDED, SET_LAYOUT_MODE],
+            callback: (action) => {
+                const {tbl_id:cTblId, mode} = action.payload;
+                if (mode === LO_MODE.standard && noop) {
+                    noop = false;
+                } else if (action.type === TBL_UI_EXPANDED && cTblId === tbl_id) {
+                    noop = true;
+                }
+            }
+        });
         const {tableGroupViewerId}= activateParams;
         const colNamesStr= colNames && makeCommaSeparated(colNames);
         const colUnitsStr= colUnits && makeCommaSeparated(colUnits);
@@ -81,21 +96,27 @@ export function createChartTableActivate(chartAndTable,source, titleStr, activat
             });
         if (colNamesStr) dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_COL_NAMES]=  colNamesStr;
         if (colUnitsStr) dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_UNITS]=  colUnitsStr;
-        dispatchTableSearch(dataTableReq,
-            {
-                logHistory: false,
-                removable:false,
-                tbl_group: tableGroupViewerId,
-                backgroundable: false,
-                showFilters: true,
-                showInfoButton: true
-            });
 
         const dispatchCharts=  chartAndTable && makeChartObj(chartInfo,activateParams,titleStr,chartId,tbl_id);
-        onTableLoaded(tbl_id).then( () => {
-            dispatchCharts && dispatchCharts.forEach( (c) => dispatchChartAdd(c));
-        });
+        if (!noop) {
+            dispatchTableSearch(dataTableReq,
+                {
+                    logHistory: false,
+                    removable:false,
+                    tbl_group: tableGroupViewerId,
+                    backgroundable: false,
+                    showFilters: true,
+                    showInfoButton: true
+                });
+
+            onTableLoaded(tbl_id).then( () => {
+                dispatchCharts && dispatchCharts.forEach( (c) => dispatchChartAdd(c));
+            });
+        }
+
         return () => {
+            if (noop) return;
+            dispatchCancelActionWatcher(noopId);
             dispatchTableRemove(tbl_id,false);
             dispatchCharts && dispatchCharts.forEach( (c) => dispatchChartRemove(c.chartId));
         };
