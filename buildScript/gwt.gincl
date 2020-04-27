@@ -185,7 +185,7 @@ task devMode (dependsOn: loadConfig) {
       exec {
         workingDir = rootDir
         executable "npm"
-        args "install"
+        args "install", "--no-shrinkwrap"
       }
     }
 
