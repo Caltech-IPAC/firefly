@@ -112,21 +112,20 @@ export function doFetchTable(tableRequest, hlRowIdx) {
 /**
  * return a promise of a tableModel for the given tbl_id.
  * @param {string} tbl_id the table ID to watch for.
- * @param {string} cancelIfRemoved cancel watcher if table is removed.
  * @returns {Promise.<TableModel>}
  * @public
  * @func onTableLoad
  * @memberof firefly.util.table
  */
-export function onTableLoaded(tbl_id, cancelIfRemoved) {
-    return watchForTableLoaded(true, tbl_id, cancelIfRemoved);
+export function onTableLoaded(tbl_id) {
+    return watchForTableLoaded(true, tbl_id);
 }
 
 /*
  * similar to onTableLoaded but callback happens before TABLE_LOADED is fired
  */
-export function preTableLoaded(tbl_id, cancelIfRemoved) {
-    return watchForTableLoaded(false, tbl_id, cancelIfRemoved);
+export function preTableLoaded(tbl_id) {
+    return watchForTableLoaded(false, tbl_id);
 }
 
 
@@ -1377,9 +1376,8 @@ export function hasNoData(tbl_id) {
 /**
  * @param afterLoaded   if true, watch for TABLE_LOADED, then resolve
  * @param tbl_id        table to watch
- * @param cancelIfRemoved  if true, cancel watcher if table is removed.
  */
-function watchForTableLoaded(afterLoaded, tbl_id, cancelIfRemoved=true) {
+function watchForTableLoaded(afterLoaded, tbl_id) {
 
     if (isFullyLoaded(tbl_id)) {
         return Promise.resolve(getTblById(tbl_id));
@@ -1388,12 +1386,12 @@ function watchForTableLoaded(afterLoaded, tbl_id, cancelIfRemoved=true) {
         const callback = (action, cancelSelf, {resolve}) => {
             if (!resolve) cancelSelf();
 
-            if (tbl_id === get(action, 'payload.tbl_id')) {
+            if (tbl_id === action.payload?.tbl_id) {
                 if ( action.type === TblCntlr.TABLE_REMOVE) {
-                    if (cancelIfRemoved) cancelSelf();
+                    cancelSelf();
                 } else {
                     const tableModel = getTblById(tbl_id);
-                    if (get(tableModel, 'error')) {
+                    if (tableModel?.error) {
                         // there was an error loading this table.
                         resolve(createErrorTbl(tbl_id, tableModel.error));
                         cancelSelf();

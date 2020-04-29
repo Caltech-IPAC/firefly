@@ -3,7 +3,7 @@
  */
 
 import {memoize, find} from 'lodash';
-import {sprintf} from '../externalSource/sprintf.js';
+import moment from 'moment';
 
 /*------------------------------- Logger Implementation ----------------------------------
 
@@ -109,7 +109,7 @@ const debugLevel = memoize( () => {
         if (level >= 0) console.log('debugLevel set at: ' + levels[level]);
         return level;
     }
-    return -1;
+    return 1;
 }, () => window.firefly?.debug + '|' + window.firefly?.debugTags + '');
 
 
@@ -124,8 +124,7 @@ function log(msg, {level=2, tag=''}) {
     if (debugLevel() >=  level) {
         const doLog = debugTags().length === 0 || find(debugTags(), (t) => !!tag.match(t));
         if (doLog) {
-            const now = new Date();
-            const ts = '%c' + sprintf('%2s:%2d:%2d.%3d ', now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+            const ts = '%c' + moment(new Date()).format(moment.HTML5_FMT.TIME_MS);
 
             tag = tag ? tag + ':' : ':';
             if (typeof msg === 'object') {
