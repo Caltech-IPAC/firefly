@@ -162,6 +162,7 @@ public class FileAnalysisReport {
         private String desc;
         private int fileLocationIndex = -1;   // todo: populate: fits (hdu idx) or VO (table idx)
         private String convertedFileName= null; // only set if this entry is has a alternate file than the one analyzed
+        private String convertedFileFormat = null;
         private List<ChartParams> chartParams= null;
         private List<String> tableColumnNames= null; //only use for a fits image that is read as a table
         private List<String> tableColumnUnits= null; //only use for a fits image that is read as a table
@@ -203,6 +204,9 @@ public class FileAnalysisReport {
 
         public String getConvertedFileName() { return convertedFileName; }
         public void setConvertedFileName(String convertedFileName) { this.convertedFileName = convertedFileName; }
+
+        public String getConvertedFileFormat() { return convertedFileFormat; }
+        public void setConvertedFileFormat(String convertedFileFormat) { this.convertedFileFormat = convertedFileFormat; }
 
         public List<ChartParams> getChartParams() { return chartParams; }
         public void setChartParams(ChartParams chartParams) {
