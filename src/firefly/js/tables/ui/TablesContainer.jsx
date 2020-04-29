@@ -17,6 +17,11 @@ import {hashCode} from '../../util/WebUtil.js';
 import {LO_VIEW, LO_MODE, dispatchSetLayoutMode, getExpandedMode} from '../../core/LayoutCntlr.js';
 import {CloseButton} from '../../ui/CloseButton.jsx';
 
+import {Logger} from '../../util/Logger.js';
+
+const logger = Logger('Tables').tag('TablesContainer');
+
+// logic moved to SearchServicesJson.fetchTable because it was causing multiple render.
 function updateTitles(tables) {
     if (isEmpty(tables)) return tables;
     return Object.entries(tables).reduce( (obj,[key,{title,tbl_id, ...tableInfo}]) => {
@@ -32,10 +37,12 @@ export class TablesContainer extends PureComponent {
     }
 
     componentDidMount() {
+        logger.debug('mounted');
         this.removeListener= flux.addListener(() => this.storeUpdate());
     }
 
     componentWillUnmount() {
+        logger.debug('unmounted');
         this.removeListener && this.removeListener();
         this.isUnmounted = true;
     }
@@ -48,7 +55,7 @@ export class TablesContainer extends PureComponent {
         }
         const {tables, layout, active} = TblUtil.getTableGroup(tbl_group) || {};
 
-        return {closeable, tbl_group, expandedMode, tables:updateTitles(tables), tableOptions, layout, active};
+        return {closeable, tbl_group, expandedMode, tables, tableOptions, layout, active};
     }
 
     storeUpdate() {
@@ -59,6 +66,9 @@ export class TablesContainer extends PureComponent {
 
     render() {
         const {closeable, tbl_group, expandedMode, tables, tableOptions, layout, active, style} = this.state;
+
+        logger.debug('render... tbl_group: ' + tbl_group);
+
         if (expandedMode) {
             return <ExpandedView {...{active, tables, tableOptions, layout, expandedMode, closeable, tbl_group}} />;
         } else {

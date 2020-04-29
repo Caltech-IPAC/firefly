@@ -453,32 +453,32 @@ export function downloadSimple(url) {
 
 
 export function parseUrl(url) {
-    const parser = new URL(url);
-    const pathAry = [];
+    const {hash, host, hostname, href, origin, pathname, port, protocol, search, searchParams, username, password} = new URL(url);
 
     // Convert query string to object map with decoded key/value pairs
     const searchObject = {};
-    parser.searchParams.forEach((val, key) => searchObject[key] = val);
+    searchParams.forEach((val, key) => searchObject[key] = val);
 
-    // Convert path string to object
-    const paths = parser.pathname.split('/');
-    paths.forEach((v) => {
-        v.split(';').forEach( (pp, idx) => {
-            if (idx > 0) {
-                pp.split(',').forEach( (kvp) => {
-                    const kv = kvp.split('=').map((s) => s.trim()).map((s) => decodeURIComponent(s));
-                    pathAry[idx-1] = Object.assign(pathAry[idx-1] || {}, {path: v, [kv[0]]: kv[1]});
-                    }
-                );
-            }
-        });
+    const paths = pathname.replace(/^\//, '').split('/');
+    const filename = last(paths).split(';')[0];
+
+    // Convert paths into an array of [[path, {key:val}], [path, {key:val}], ...]
+    const pathAry = [];
+    paths.forEach((v, idx) => {
+        const [p, pval=''] = v.split(';');
+        const params = pval.split(',').reduce((pv, s='') => {
+                            if (s.length > 0) {
+                                const [k,v=''] = s.split('=');
+                                pv[k.trim()] = decodeURIComponent(v.trim());
+                            }
+                            return pv;
+                        }, {});
+        pathAry[idx] = [p, params];
     });
-    const p = last(paths);
-    const filename = p.includes(';') ? p.split(';')[0] : p;
 
-    return {...parser,
-        path: parser.pathname,
-        search: parser.search.replace(/^\?/, ''),
+    return {hash, host, hostname, href, origin, pathname, port, protocol, username, password,
+        path: pathname,
+        search: search.replace(/^\?/, ''),
         searchObject,
         filename,
         pathAry

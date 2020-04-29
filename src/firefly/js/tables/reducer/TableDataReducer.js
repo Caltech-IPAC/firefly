@@ -10,6 +10,9 @@ import {SelectInfo} from '../SelectInfo.js';
 import {getColByUCD, getColByUtype, getTblById, getColumn} from '../TableUtil.js';
 import {isObsCoreLike} from '../../util/VOAnalyzer.js';
 import {MetaConst} from '../../data/MetaConst.js';
+import {Logger} from '../../util/Logger.js';
+
+const logger = Logger('Tables');
 
 
 /*---------------------------- REDUCERS -----------------------------*/
@@ -50,8 +53,13 @@ function handleTableUpdates(root, action) {
     };
 
     const doUpdate = () => {
-        const updates = {[tbl_id] : {isFetching:false, ...action.payload}};
-        return TblUtil.smartMerge(root, updates);
+        if (TblUtil.getTblById(tbl_id)) {
+            const updates = {[tbl_id] : {isFetching:false, ...action.payload}};
+            return TblUtil.smartMerge(root, updates);
+        } else {
+            logger.debug('table update (skipped), table no longer exists');
+            return root;
+        }
     };
 
     const doFetch = () => {
