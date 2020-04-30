@@ -109,7 +109,10 @@ public class ServiceRetriever implements FileRetriever {
 
         SloanDssImageParams params = new SloanDssImageParams();
         params.setBand(band);
-        params.setSizeInDeg(sizeInDegrees);
+        //When the size is NaN, use the default size defined in SloanDssImageParams to get the full image
+        if (!Float.isNaN(sizeInDegrees)) {
+            params.setSizeInDeg(sizeInDegrees);
+        }
         params.setWorldPt(circle.getCenter());
         FileInfo fi = LockingVisNetwork.retrieve(params,
                 (p,f) -> SloanDssImageGetter.get((SloanDssImageParams) p,f));
