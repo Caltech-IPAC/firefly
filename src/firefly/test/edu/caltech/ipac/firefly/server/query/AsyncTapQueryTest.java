@@ -32,7 +32,7 @@ public class AsyncTapQueryTest extends ConfigTest {
 			DataGroup results = new AsyncTapQuery().fetchDataGroup(req);
 
 			Assert.assertTrue("has results", results.size() > 0);
-            Assert.assertEquals("number of cols", 127, results.getDataDefinitions().length);
+            Assert.assertEquals("number of cols", 64, results.getDataDefinitions().length);
 
 		} catch (Exception e) {
 			Assert.fail("testExecRequestQuery failed with exception: " + e.getMessage());
@@ -55,7 +55,7 @@ public class AsyncTapQueryTest extends ConfigTest {
 
         } catch (Exception e) {
             Assert.assertTrue("data access exception",e instanceof DataAccessException);
-            Assert.assertTrue(e.getMessage().startsWith("Invalid table"));
+            Assert.assertTrue(e.getMessage().contains("unknown table"));
         }
     }
 

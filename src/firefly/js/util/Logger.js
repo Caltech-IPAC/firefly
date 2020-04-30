@@ -125,11 +125,7 @@ function log(msg, {level=2, tag=''}) {
         const doLog = debugTags().length === 0 || find(debugTags(), (t) => !!tag.match(t));
         if (doLog) {
             const ts = '%c' + moment(new Date()).format(moment.HTML5_FMT.TIME_MS);
-
             tag = tag ? tag + ':' : ':';
-            if (typeof msg === 'object') {
-                console.log(ts, 'color:maroon', tag, '==>');
-            }
 
             if (level === 0) console.error(ts, 'color:maroon', tag, msg);
             if (level === 1) console.warn(ts, 'color:maroon', tag, msg);
