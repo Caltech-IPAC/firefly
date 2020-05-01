@@ -177,14 +177,15 @@ function getTableDropTitleStr(title,part,fileFormat,tableOnly) {
  */
 function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, title, activateParams, tbl_index=0) {
     const {uiEntry,uiRender,chartParamsAry, defaultPart:requestDefault= false}= part;
+    const partFormat= part.convertedFileFormat||fileFormat;
     if (uiEntry===UIEntry.UseSpecified) {
         if (tableOnly && uiRender!==UIRender.Table) return undefined;
         else if (uiRender!==UIRender.Chart) return undefined;
     }
 
 
-    const ddTitleStr= getTableDropTitleStr(title,part,fileFormat,tableOnly);
-    const {xCol,yCol,cNames,cUnits}= getTableChartColInfo(part,fileFormat);
+    const ddTitleStr= getTableDropTitleStr(title,part,partFormat,tableOnly);
+    const {xCol,yCol,cNames,cUnits}= getTableChartColInfo(part,partFormat);
 
 
     if (tableOnly) {
@@ -196,14 +197,14 @@ function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, titl
     else {
         if ( (!xCol || !yCol) && !chartParamsAry) return;
         let {chartTableDefOption}= part;
-        if (getRowCnt(part,fileFormat)===1) {
+        if (getRowCnt(part,partFormat)===1) {
             if (chartTableDefOption===AUTO) chartTableDefOption= SHOW_TABLE;
             return dpdtChartTable(ddTitleStr,
                 createChartSingleRowArrayActivate(fileOnServer,'Row 1 Chart',activateParams,xCol,yCol,0,tbl_index),
                 undefined, {paIdx:tbl_index, chartTableDefOption, requestDefault});
         }
         else {
-            const imageAsTableColCnt= isImageAsTable(part,fileFormat) ? getImageAsTableColCount(part,fileFormat) : 0;
+            const imageAsTableColCnt= isImageAsTable(part,partFormat) ? getImageAsTableColCount(part,partFormat) : 0;
             const chartInfo= {xAxis:xCol, yAxis:yCol, chartParamsAry};
             if (chartTableDefOption===AUTO) chartTableDefOption= imageAsTableColCnt===2 ? SHOW_CHART : SHOW_TABLE;
             return dpdtChartTable(ddTitleStr,

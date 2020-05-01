@@ -8,6 +8,7 @@ package edu.caltech.ipac.firefly.server.dpanalyze;
 
 import edu.caltech.ipac.firefly.core.FileAnalysisReport;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 import nom.tam.fits.Header;
@@ -78,6 +79,9 @@ public class Demo1Analyzer implements DataProductAnalyzer {
         //
         else if (code.equals("TAB2CH")) {
             retRep= demoCreate2Traces(inputReport,headerAry);
+        }
+        else if (code.equals("EM")) {
+            retRep= demoAddATable(inputReport,headerAry);
         }
 
 
@@ -266,5 +270,44 @@ public class Demo1Analyzer implements DataProductAnalyzer {
             }
         }
         return retRep;
+    }
+
+    private FileAnalysisReport demoAddATable(FileAnalysisReport inputReport, Header[] headerAry) {
+        try {
+
+            File f= new File(ServerContext.getUploadDir(),"cds-votable-samp.xml");
+            URL url = new URL("http://web.ipac.caltech.edu.s3-us-west-2.amazonaws.com/staff/ejoliet/demo/cds-votable-sample.xml");
+            URLDownload.getDataToFile(url, f);
+            FileAnalysisReport retRep= inputReport.copy();
+
+
+            FileAnalysisReport tempRep= VoTableReader.analyze(f, FileAnalysisReport.ReportType.Details);
+            FileAnalysisReport.Part tempPart= tempRep.getPart(0);
+            FileAnalysisReport.Part addPart= tempPart.copy();
+            addPart.setDesc("An extracted spectra ");
+            addPart.setFileLocationIndex(0);
+            addPart.setConvertedFileName(ServerContext.replaceWithPrefix(f));
+            addPart.setConvertedFileFormat(tempRep.getFormat());
+            addPart.setIndex(1);
+            addPart.setUiRender(FileAnalysisReport.UIRender.Chart);
+            addPart.setUiEntry(FileAnalysisReport.UIEntry.UseSpecified);
+            addPart.setChartTableDefOption(FileAnalysisReport.ChartTableDefOption.showChart);
+
+
+            FileAnalysisReport.ChartParams cp= new FileAnalysisReport.ChartParams();
+            cp.setxAxisColName("W1mag");
+            cp.setyAxisColName("W3mag");
+            cp.setMode("markers");
+            addPart.setChartParams(cp);
+
+
+
+
+            retRep.addPart(addPart);
+            return retRep;
+        } catch (Exception  e) {
+            e.printStackTrace();
+            return inputReport;
+        }
     }
 }

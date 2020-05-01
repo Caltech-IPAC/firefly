@@ -118,6 +118,7 @@ export const makeFileAnalysisPart= (index,fileLocationIndex=0) => (
  *  @prop {string} desc
  *  @prop {number} fileLocationIndex - either the FITS HDU number or some other location scheme
  *  @prop {string} [convertedFileName] - only set if this entry is has a alternate file than the one analyzed
+ *  @prop {string} [convertedFileFormat] - format string
  *  @prop {FileAnalysisChartParams} [chartParams]
  *  @prop {Array.<string>} [tableColumnNames] only use for a fits image that is read as a table
  *  @prop {Array.<string>} [tableColumnUnits] only use for a fits image that is read as a table

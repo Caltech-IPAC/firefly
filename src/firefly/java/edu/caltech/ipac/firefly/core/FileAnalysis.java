@@ -116,6 +116,7 @@ public class FileAnalysis {
                 putPartVal(h, p.getUiRender().name(), i, "uiRender");
                 putPartVal(h, p.getDesc(), i, "desc");
                 putPartVal(h, p.getConvertedFileName(),i,"convertedFileName");
+                putPartVal(h, p.getConvertedFileFormat(),i,"convertedFileFormat");
                 putPartVal(h, p.getTableColumnNames(),i,"tableColumnNames");
                 putPartVal(h, p.getTableColumnUnits(),i,"tableColumnUnits");
                 putPartVal(h, p.getChartTableDefOption().name(),i,"chartTableDefOption");
