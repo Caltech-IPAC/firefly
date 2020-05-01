@@ -7,7 +7,7 @@ import Cntlr, {WcsMatchType} from '../ImagePlotCntlr.js';
 import {replacePlots, makePlotView, updatePlotViewScrollXY,
         findScrollPtToCenterImagePt, updateScrollToWcsMatch} from './PlotView.js';
 import {makeOverlayPlotView, replaceOverlayPlots} from './OverlayPlotView.js';
-import {primePlot, getPlotViewById, clonePvAry, getOverlayById, getPlotViewIdList} from '../PlotViewUtil.js';
+import {primePlot, getPlotViewById, clonePvAry, getOverlayById,getPlotViewIdListByPositionLock} from '../PlotViewUtil.js';
 import PlotGroup from '../PlotGroup.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {CCUtil} from '../CsysConverter.js';
@@ -205,7 +205,7 @@ function updateForWcsMatching(visRoot, pv, mpwWcsPrimId) {
         pv= updateScrollToWcsMatch(visRoot.wcsMatchType, masterPv, pv);
     }
     else if (wcsMatchType===WcsMatchType.Target) {
-        if (getPlotViewIdList(visRoot,pv.plotId,true,true).length<2) {
+        if (getPlotViewIdListByPositionLock(visRoot,pv.plotId) ) {
             const ft=  plot.attributes[PlotAttribute.FIXED_TARGET];
             if (ft) {
                 const centerImagePt = CCUtil.getImageCoords(plot, ft);
