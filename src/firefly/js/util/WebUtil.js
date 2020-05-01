@@ -3,7 +3,7 @@
  */
 
 import shallowequal from 'shallowequal';
-import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil,
+import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil, isBoolean,
         last, isPlainObject, forEach, fromPairs, mergeWith, isArray, truncate} from 'lodash';
 
 import {getRootURL} from './BrowserUtil.js';
@@ -104,6 +104,16 @@ export function loadImage(src) {
     });
 }
 
+
+/**
+ * Return a promise that resolves when document is ready
+ * @return {Promise<void>}
+ */
+export function documentReady() {
+    return (window.document.readyState==='complete' || window.document.readyState==='interactive') ?
+        Promise.resolve() :
+        new Promise((resolve) => window.addEventListener('load', () => resolve() )); // maybe could use: document.addEventListener('DOMContentLoaded'
+}
 
 
 /**
@@ -679,6 +689,27 @@ export function mergeObjectOnly(target, sources) {
             }                
         }
     );
+}
+
+/**
+ *
+ * Return a function that will only do a search once.
+ * The function that takes 2 parameters, validateSearch:Function|boolean, doSearch:Function|undefined
+ * When validateSearch search returns true then doSearch is called and search is considered done.
+ * To mark the search as done without actually doing it then just pass true as first parameter
+ * makeSearchOnce is similar to lodash once but includes a validate as a way to make it done.
+ * Note that the execution of the doSearch function is deferred.
+ * @return {Function} a function with the signature f(validateSearch,doSearch)
+ */
+export function makeSearchOnce() {
+    let executionComplete= false;
+    return (validateSearch, doSearch) => {
+        if (executionComplete) return;
+        const valid= (isBoolean(validateSearch) && validateSearch) || (isFunction(validateSearch) && validateSearch());
+        if (!valid) return;
+        if (doSearch) setTimeout(doSearch,5);
+        executionComplete=true;
+    };
 }
 
 /**

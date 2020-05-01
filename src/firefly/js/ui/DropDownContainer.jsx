@@ -85,7 +85,7 @@ export class DropDownContainer extends Component {
     
     shouldComponentUpdate(nProps, nState) {
         const check = ['visible','selected'];
-        return !shallowequal(pick(nState, check), pick(this.state, check));
+        return !shallowequal(pick(nState, check), pick(this.state, check)) || this.props.initArgs!==nProps.initArgs;
    }
 
     storeUpdate() {
@@ -98,7 +98,7 @@ export class DropDownContainer extends Component {
     }
 
     render() {
-        const {footer, alerts} = this.props;
+        const {footer, alerts, initArgs={}} = this.props;
         const { visible, selected }= this.state;
         const {view, layout={}} = dropDownMap[selected] || {};
 
@@ -113,7 +113,7 @@ export class DropDownContainer extends Component {
                     {alerts || <Alerts />}
                     <div style={{flexGrow: 1, ...contentWrapStyle}}>
                         <div style={contentStyle} className='DD-ToolBar__content'>
-                            {view}
+                            {React.cloneElement(view, { initArgs } ) }
                         </div>
                     </div>
                     <div id='footer' className='DD-ToolBar__footer'>
@@ -133,7 +133,8 @@ DropDownContainer.propTypes = {
     selected: PropTypes.string,
     dropdownPanels: PropTypes.arrayOf(PropTypes.element),
     footer: PropTypes.node,
-    alerts: PropTypes.node
+    alerts: PropTypes.node,
+    initArgs: PropTypes.object
 };
 DropDownContainer.defaultProps = {
     visible: false

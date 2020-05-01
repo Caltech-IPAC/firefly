@@ -86,7 +86,7 @@ export class LcViewer extends PureComponent {
     render() {
         var {isReady, menu={}, appTitle, appIcon, altAppIcon, additionalTitleStyle, dropDown,
             dropdownPanels=[], footer, style, displayMode, missionEntries, fileLocation, error} = this.state;
-        const {visible, view} = dropDown || {};
+        const {visible, view, initArgs} = dropDown || {};
         const periodProps = {
             displayMode, timeColName: get(missionEntries, [LC.META_TIME_CNAME]),
             fluxColName: get(missionEntries, [LC.META_FLUX_CNAME])
@@ -140,6 +140,7 @@ export class LcViewer extends PureComponent {
                             footer={footer}
                             visible={!!visible}
                             selected={view}
+                            initArgs={initArgs}
                             {...{dropdownPanels} } />
                     </header>
                     <main>

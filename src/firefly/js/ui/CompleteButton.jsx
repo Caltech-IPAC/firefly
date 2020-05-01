@@ -61,7 +61,8 @@ function onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,groupsToUse, in
 export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
                           closeOnValid=true, dialogId,includeUnmounted= false,
                           groupsToUse= () => groupKey,
-                          style={}, innerStyle= {}, changeMasking, fireOnEnter= false}) {
+                          style={}, innerStyle= {}, changeMasking, fireOnEnter= false,
+                                    getDoOnClickFunc}) {
     const context= useContext(GroupKeyCtx);
     if (!groupKey && context) groupKey= context.groupKey;
     const onComplete = () => onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,
@@ -82,6 +83,9 @@ export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
         }
     }, []);
 
+    useEffect(() => {
+        getDoOnClickFunc?.( () => onComplete());
+    }, [getDoOnClickFunc]);
 
 
     return (
@@ -104,7 +108,8 @@ CompleteButton.propTypes= {
     innerStyle: PropTypes.object,
     includeUnmounted : PropTypes.bool,
     changeMasking: PropTypes.func,
-    fireOnEnter: PropTypes.bool
+    fireOnEnter: PropTypes.bool,
+    getDoOnClickFunc: PropTypes.func
 };
 
 export default CompleteButton;

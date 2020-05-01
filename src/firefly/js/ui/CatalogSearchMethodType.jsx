@@ -434,14 +434,15 @@ export const SpatialMethod = new Enum({
     {ignoreCase: true}
 );
 
-export const initRadiusArcSec = (max) => {
+export const initRadiusArcSecOLD = (max, def) => {
     if (max >= 10 / 3600) {
-        return parseFloat(10 / 3600).toString();
+        return ((def||10) / 3600).toString();
     } else {
-        return parseFloat(1 / 3600).toString();
+        return (1 / 3600).toString();
     }
 };
 
+export const arcSecInDegString = (def=undefined) => `${(def||10)/3600}`;
 
 
 function searchMethodTypeReducer(inFields, action) {
@@ -482,7 +483,7 @@ function fieldInit() {
     {
         conesize: {
             fieldKey: 'conesize',
-            value: initRadiusArcSec(3600),
+            value:  (10/3600)+'',
             unit: 'arcsec',
             min: 1 / 3600,
             max: 100

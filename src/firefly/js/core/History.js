@@ -13,7 +13,7 @@
  *  query_params: key/value pairs.  this is used to populate action.payload.
  */
 
-import {get, pick, omitBy, set} from 'lodash';
+import {get, pick, omitBy, set, isEmpty} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import {TABLE_SEARCH, LOG_HISTORY} from '../tables/TablesCntlr.js';
@@ -34,6 +34,10 @@ function logHistory (action, def) {
 const DEF_HANDLER = {
     actionToUrl: (action) => {
         return urlPrefix + `${ACTION}=${action.type}&` + encodeParams(action.payload);
+    },
+    urlToAction: (type,urlInfo) => {
+        const payload = omitBy(urlInfo.searchObject, (v,k) => k.startsWith && k.startsWith('__')) || {};
+        return {type, payload};
     }
 };
 
@@ -49,13 +53,43 @@ const tableSearchHandler = {
     actionToUrl: (action) => {
         const logHistory = get(action, ['payload', 'options', LOG_HISTORY], true);
         return logHistory && urlPrefix + `${ACTION}=${action.type}&` + encodeParams(action.payload);
-    }
+    },
+    urlToAction: DEF_HANDLER.urlToAction
 };
 
 const dropdownHandler = {
     actionToUrl: (action) => {
         const logHistory = get(action, 'payload.visible', true);
-        return logHistory ? urlPrefix + `${ACTION}=${action.type}&` + encodeParams(action.payload) : false;
+        if (!logHistory) return false;
+        const {view,initArgs}= action.payload;
+        let params={};
+        if (!isEmpty(initArgs)) {
+            params= Object.entries(initArgs).reduce((obj,[k,v]) => {
+                obj['initArgs.'+k]=v;
+                return obj;
+            },{view});
+        }
+        else if (view) {
+            params= {view};
+        }
+        return urlPrefix + `${ACTION}=${action.type}&` + encodeParams(params);
+    },
+    urlToAction: (type,urlInfo) => {
+        const prefix= 'initArgs';
+        const {payload} = DEF_HANDLER.urlToAction(type, urlInfo);
+        if (Object.keys(payload).find((k) => k.startsWith(prefix))) {
+            const startIdx= prefix.length+1;
+            const newPayload= Object.entries(payload).reduce(
+                (obj,[k,v]) =>{
+                    if (k.startsWith(prefix) ) obj.initArgs[k.substring(startIdx)]=v;
+                    else obj[k]= v;
+                    return obj;
+                },{initArgs:{}});
+            return {type,payload:newPayload};
+        }
+        else {
+            return {type,payload};
+        }
     }
 };
 
@@ -96,10 +130,10 @@ export function getActionFromUrl() {
     if (get(window, 'firefly.ignoreHistory', false)) return;
     const urlInfo = parseUrl(document.location);
     if (urlInfo.searchObject) {
-        var type = get(urlInfo,['searchObject', ACTION]);
+        const type = get(urlInfo,['searchObject', ACTION]);
         if (type) {
-            const payload = omitBy(urlInfo.searchObject, (v,k) => k.startsWith && k.startsWith('__')) || {};
-            return {type, payload};
+            const handler = customHistoryHandlers[type] || DEF_HANDLER;
+            return handler.urlToAction(type,urlInfo);
         }
     }
     return undefined;

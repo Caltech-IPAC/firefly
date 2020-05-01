@@ -25,6 +25,7 @@ public class AppServerCommands {
                     .forEach(BackgroundInfoCacher::fireBackgroundJobAdd);
             // update login status
             UserInfo userInfo = ServerContext.getRequestOwner().getUserInfo();
+            LOG.briefInfo("Init "+spaName);
             LOG.debug("User info for this client: " + userInfo);
             return "true";
         }

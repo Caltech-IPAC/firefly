@@ -97,6 +97,7 @@ export const WPConst= {
     URL_CHECK_FOR_NEWER: 'urlCheckForNewer',
     MASK_REQUIRED_WIDTH: 'MaskRequiredWidth',
     MASK_REQUIRED_HEIGHT: 'MaskRequiredHeight',
+    FILTER: 'filter',
 
 // keys - client side operations
     PREFERENCE_COLOR_KEY : PlotAttribute.PREFERENCE_COLOR_KEY,  //todo make this only a attribute
@@ -200,13 +201,7 @@ export class WebPlotRequest extends ServerRequest {
         const req = new WebPlotRequest(RequestType.FILE, 'Fits file: ' + fileName);
         req.setParam(WPConst.FILE, fileName);
         req.setTitleOptions(TitleOptions.FILE_NAME);
-        if (initZoomLevel) {
-            req.setParam(WPConst.INIT_ZOOM_LEVEL, initZoomLevel + '');
-        }
-        else {
-            req.setParam(WPConst.INIT_ZOOM_LEVEL, 1);
-            // req.setZoomType(ZoomType.TO_WIDTH); //todo fix when we can auto zoom to with: dm-4759
-        }
+        if (initZoomLevel) req.setParam(WPConst.INIT_ZOOM_LEVEL, initZoomLevel + '');
         return req;
     }
 
@@ -981,7 +976,7 @@ function cleanupObj(r) {
  * @return {String[]} an array of invalid keys
  */
 export function findInvalidWPRKeys(r) {
-    return [...Object.keys(r),plotAttKeys].filter( (k) => !Boolean(allKeys.get(k)));
+    return [...Object.keys(r),...plotAttKeys].filter( (k) => !Boolean(allKeys.get(k)));
 }
 
 /**

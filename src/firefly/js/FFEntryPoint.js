@@ -6,6 +6,7 @@
 import {get} from 'lodash';
 import {firefly} from './Firefly.js';
 import {mergeObjectOnly} from './util/WebUtil.js';
+import {getFireflyViewerWebApiCommands} from './api/webApiCommands/ViewerWebApiCommands';
 
 
 /**
@@ -41,5 +42,11 @@ var options = {
 
 props = mergeObjectOnly(props, get(window, 'firefly.app', {}));
 options = mergeObjectOnly(options, get(window, 'firefly.options', {}));
-firefly.bootstrap(props, options);
+const {template}= props;
+let apiCommands;
+
+if (template==='FireflyViewer' || template==='FireflySlate') apiCommands= getFireflyViewerWebApiCommands();
+else if (template==='LightCurveViewer') apiCommands= getFireflyViewerWebApiCommands(['table']); // todo add commands for time series viewer
+
+firefly.bootstrap(props, options, apiCommands);
 

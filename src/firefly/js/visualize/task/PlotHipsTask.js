@@ -127,13 +127,13 @@ function watchForHiPSViewDim(action, cancelSelf, params) {
         const plot= primePlot(pv);
         if (!plot) return;
         const wp= pv.request && pv.request.getWorldPt();
+        const otherPlot= lockedToOtherHiPS(vr,pv) && primePlot(getOtherLockedHiPS(vr,pv));
 
         if ((vr.wcsMatchType===WcsMatchType.Standard || vr.wcsMatchType===WcsMatchType.Target) &&
                                      isImage(primePlot(getPlotViewById(vr, vr.mpwWcsPrimId)))) {
             matchHiPStoPlotView(vr, getPlotViewById(vr, vr.mpwWcsPrimId));
         }
-        else if (!pv.request.getSizeInDeg() && !wp && lockedToOtherHiPS(vr,pv)) { //if nothing enter, match to existing HiPS
-            const otherPlot= primePlot(getOtherLockedHiPS(vr,pv));
+        else if (!pv.request.getSizeInDeg() && !wp && lockedToOtherHiPS(vr,pv) && otherPlot) { //if nothing enter, match to existing HiPS
             dispatchZoom({ plotId, userZoomType: UserZoomTypes.LEVEL, level:otherPlot.zoomFactor });
             const {centerWp}= getPointMaxSide(otherPlot, otherPlot.viewDim);
             dispatchChangeCenterOfProjection({plotId,centerProjPt:centerWp});

@@ -94,7 +94,7 @@ export class FireflySlate extends PureComponent {
                 dropdownPanels, footer, style, showViewsSwitch,
                 leftButtons, centerButtons, rightButtons} = this.state;
         const {expanded} = mode || {};
-        const {visible, view} = dropDown || {};
+        const {visible, view, initArgs} = dropDown || {};
         if (isDefined(this.props.showBgMonitor)) menu.showBgMonitor= this.props.showBgMonitor;
 
 
@@ -112,6 +112,7 @@ export class FireflySlate extends PureComponent {
                                 footer={footer}
                                 visible={!!visible}
                                 selected={view}
+                                initArgs={initArgs}
                                 {...{dropdownPanels} } />
                         </header>
                         <main style={{height:'100%'}}>
