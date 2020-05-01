@@ -8,7 +8,7 @@ public class SloanDssImageParams extends ImageServiceParams {
 
     public enum SDSSBand {u,g,r,i,z}
 
-    private float  _sizeInDeg = .1F;
+    private float  _sizeInDeg = 3.F; //SDSS measured over a 3 degree wide area according to http://cas.sdss.org/dr16/en/tools/getimg/getimghome.aspx
     private SDSSBand _band = SDSSBand.r;
     private int  _timeout  = 0;
     private boolean _queryKey= false;
