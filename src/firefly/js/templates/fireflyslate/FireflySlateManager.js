@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {filter, isEmpty, isArray, uniq} from 'lodash';
+import {filter, isEmpty, isArray, uniq, once} from 'lodash';
 
 import {startDataProductsWatcher} from '../../visualize/saga/DataProductsWatcher.js';
 import {startCoverageWatcher} from '../../visualize/saga/CoverageWatcher.js';
@@ -66,13 +66,13 @@ function layoutManager(action, cancelSelf, params) {
             newLayoutInfo = handlePlotDelete(newLayoutInfo, action, renderTreeId);
             break;
         case TBL_RESULTS_ADDED:
-            newLayoutInfo = handleNewTable(newLayoutInfo, action, renderTreeId);
+            newLayoutInfo = handleNewTable(newLayoutInfo, action, renderTreeId, params.groupIgnoreFilter);
             break;
         case TABLE_LOADED:
-            newLayoutInfo = handleTableLoaded(newLayoutInfo, action, renderTreeId);
+            newLayoutInfo = handleTableLoaded(newLayoutInfo, action, renderTreeId, params.groupIgnoreFilter);
             break;
         case TABLE_REMOVE:
-            newLayoutInfo = handleTableDelete(newLayoutInfo, action, renderTreeId);
+            newLayoutInfo = handleTableDelete(newLayoutInfo, action, renderTreeId, params.groupIgnoreFilter);
             break;
         case CHART_ADD:
             newLayoutInfo = handleNewChart(newLayoutInfo, action, renderTreeId);
@@ -101,7 +101,7 @@ function startSpecialViewerSaga(action, alreadyStarted) {
     switch (viewerType) {
 
         case SPECIAL_VIEWER.tableImageMeta:
-            startDataProductsWatcher({imageViewerId: cellId, paused:false});
+            startDataProductsWatcher({ dataTypeViewerId:cellId, dpId:cellId});
             break;
         case SPECIAL_VIEWER.coverageImage:
             startCoverageWatcher({viewerId:cellId, ignoreCatalogs:true, paused:false});
@@ -111,13 +111,13 @@ function startSpecialViewerSaga(action, alreadyStarted) {
     return cellId;
 }
 
-function handleNewTable(layoutInfo, action, renderTreeId) {
+function handleNewTable(layoutInfo, action, renderTreeId, groupIgnoreFilter) {
     const {tbl_id} = action.payload;
     const gridView= getGridView(layoutInfo, renderTreeId);
     const tbl_group= findGroupByTblId(tbl_id);
     if (tbl_group) {
         const item= gridView.find( (g) => g.cellId===tbl_group);
-        if (!item) {
+        if (!item && !tbl_group.includes(groupIgnoreFilter)) {
             const cell= getNextCell(gridView,2,1);
             dispatchAddCell({row:cell.row,col:cell.col,width:2,height:1,cellId:tbl_group,type:LO_VIEW.tables, renderTreeId});
         }
@@ -125,18 +125,22 @@ function handleNewTable(layoutInfo, action, renderTreeId) {
     return layoutInfo;
 }
 
-function handleTableLoaded(layoutInfo, action, renderTreeId) {
+function handleTableLoaded(layoutInfo, action, renderTreeId, groupIgnoreFilter) {
     const {tbl_id, invokedBy} = action.payload;
     const table= getTblById(tbl_id);
     if (table && invokedBy !== TABLE_SORT &&  !table.origTableModel) {
-        dispatchLoadTblStats(table.request);
+        const tbl_group= findGroupByTblId(tbl_id);
+        if (tbl_group && !tbl_group.includes(groupIgnoreFilter)) {
+            dispatchLoadTblStats(table.request);
+        }
     }
 }
 
-function handleTableDelete(layoutInfo, action, renderTreeId) {
+function handleTableDelete(layoutInfo, action, renderTreeId, groupIgnoreFilter) {
     const {tbl_group}= action.payload;
     const tblIdAry= getTblIdsByGroup(tbl_group);
     if (tbl_group && isEmpty(tblIdAry)) {
+        if (tbl_group.includes(groupIgnoreFilter)) return;
         dispatchRemoveCell({cellId:tbl_group, renderTreeId});
     }
 }
@@ -145,7 +149,8 @@ function handlePlotDelete(layoutInfo, action, renderTreeId) {
     const {viewerId}= action.payload;
     const itemAry= getViewerItemIds(getMultiViewRoot(), viewerId);
     if (isEmpty(itemAry)) {
-        dispatchRemoveCell({cellId:viewerId, renderTreeId});
+        const viewer=  getViewer(getMultiViewRoot(),viewerId);
+        if (!viewer.internallyManaged) dispatchRemoveCell({cellId:viewerId, renderTreeId});
     }
 }
 
@@ -153,7 +158,8 @@ function handleChartDelete(layoutInfo, action, renderTreeId) {
     const {viewerId}= action.payload;
     const itemAry= getViewerItemIds(getMultiViewRoot(), viewerId);
     if (isEmpty(itemAry)) {
-        dispatchRemoveCell({cellId:viewerId, renderTreeId});
+        const viewer=  getViewer(getMultiViewRoot(),viewerId);
+        if (!viewer.internallyManaged) dispatchRemoveCell({cellId:viewerId, renderTreeId});
     }
 }
 
@@ -182,8 +188,8 @@ function handleNewImage(layoutInfo, action, renderTreeId) {
     plotIdAry.forEach( (plotId) => {
         const viewerId= findViewerWithItemId(mvRoot, plotId, IMAGE);
         const viewer= viewerId && getViewer(mvRoot, viewerId);
-        console.log(`handleNewImage: ${renderTreeId}: v: ${viewer && viewer.renderTreeId}, p: ${payload.renderTreeId}`)
-        if (!viewer) return;
+        console.log(`handleNewImage: ${renderTreeId}: v: ${viewer && viewer.renderTreeId}, p: ${payload.renderTreeId}`);
+        if (!viewer || viewer.internallyManaged) return;
         if (isUnmatchingLayout(renderTreeId,viewer, payload)) return layoutInfo;
         if (viewer.customData.independentLayout) return;
         
@@ -224,6 +230,8 @@ function handleNewChart(layoutInfo, action, renderTreeId) {
     
     if (!item) {
         const cell= getNextCell(gridView,3,1);
+        const viewer= viewerId && getViewer(getMultiViewRoot(), viewerId);
+        if (!viewer || viewer.internallyManaged) return;
         dispatchAddCell({row:cell.row,col:cell.col,width:1,height:1,cellId:viewerId,type:LO_VIEW.xyPlots, renderTreeId});
     }
 

@@ -86,6 +86,7 @@ function initState() {
      * @prop {string} containerType - one of 'image', 'plot2d', 'wrapper'
      * @prop {boolean} mounted - if the react component using the store is mounted
      * @prop {Object|String} layoutDetail - may be any object, string, etc- Hint for the UI, can be any string but with 2 reserved  GRID_RELATED, GRID_FULL
+     * @prop {boolean} internallyManaged - this viewer is managed by other viewers
      * @prop {object} customData: {}
      *
      * @global
@@ -169,14 +170,15 @@ function initState() {
  * @param {boolean} mounted
  * @param {string} [renderTreeId] - used only with multiple rendered tree, like slate in jupyter lab
  * @param {string} [layout] - layout type - SINGLE or GRID, defaults to GRID
- * @param {boolean} reservedContainer
+ * @param {boolean} [reservedContainer]
+ * @param {boolean} [internallyManaged]
  */
 export function dispatchAddViewer(viewerId, canReceiveNewPlots, containerType, mounted=false, renderTreeId,
-                                  layout=GRID, reservedContainer=false) {
+                                  layout=GRID, reservedContainer=false, internallyManaged=false) {
     flux.process({
         type: ADD_VIEWER,
         payload: {viewerId, canReceiveNewPlots, containerType, mounted,
-            renderTreeId, lastActiveItemId:'', layout, reservedContainer}
+            renderTreeId, lastActiveItemId:'', layout, reservedContainer, internallyManaged}
     });
 }
 
@@ -532,7 +534,7 @@ function imageViewerCanAdd(state, viewerId, plotId) {
 function addViewer(state,payload) {
 
     const {viewerId,containerType, layout=GRID,canReceiveNewPlots=NewPlotMode.replace_only.key,
-             mounted=false, renderTreeId, reservedContainer}= payload;
+             mounted=false, renderTreeId, reservedContainer, internallyManaged}= payload;
     var   {lastActiveItemId} = payload;
     var entryInState = hasViewerId(state,viewerId);
 
@@ -548,7 +550,7 @@ function addViewer(state,payload) {
         // set default layout for the viewer with viewerId, META_VIEWER_ID, is full-grid type
         const layoutDetail = viewerId === META_VIEWER_ID ? GRID_FULL : undefined;
         const entry = {viewerId, containerType, canReceiveNewPlots, layout, mounted, itemIdAry: [], customData: {},
-                       lastActiveItemId, layoutDetail, renderTreeId, reservedContainer};
+                       lastActiveItemId, layoutDetail, renderTreeId, reservedContainer, internallyManaged};
         return [...state, entry];
     }
 }

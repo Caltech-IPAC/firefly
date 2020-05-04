@@ -131,8 +131,8 @@ export const MultiProductViewer= memo(({ viewerId='DataProductsType', metaDataTa
 
     useEffect(() => {
         dispatchAddViewer(viewerId, NewPlotMode.none, WRAPPER,true, renderTreeId, SINGLE);
-        dispatchAddViewer(imageViewerId, NewPlotMode.none, IMAGE,true, renderTreeId, SINGLE, true);
-        dispatchAddViewer(chartViewerId, NewPlotMode.none, PLOT2D,true, renderTreeId, GRID);
+        dispatchAddViewer(imageViewerId, NewPlotMode.none, IMAGE,true, renderTreeId, SINGLE, true,true);
+        dispatchAddViewer(chartViewerId, NewPlotMode.none, PLOT2D,true, renderTreeId, GRID, false, true);
         const removeFluxListener= flux.addListener(()=> {
             const newViewer= getViewer(getMultiViewRoot(),viewerId);
             if (newViewer!==viewer) setViewer(newViewer);

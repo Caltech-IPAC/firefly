@@ -230,7 +230,15 @@ export function startAsAppFromApi(divId, props={template: 'FireflySlate'}) {
         !viewer && logger.error(`required: props.template, must be one of ${Object.keys(Templates).join()}`);
         return;
     }
+
+    props.disableDefaultDropDown && dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
+    props.readoutDefaultPref && dispatchChangeReadoutPrefs(props.readoutDefaultPref);
+    props.wcsMatchType && dispatchWcsMatch({matchType:props.wcsMatchType, lockMatch:true});
+
+
+
     props = {...mergeObjectOnly({...defAppProps}, props), div:divId};
+    
     const controlObj= {
         unrender: () => ReactDOM.unmountComponentAtNode(document.getElementById(divId)),
         render: () => renderRoot(viewer, props)
