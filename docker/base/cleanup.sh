@@ -4,6 +4,7 @@
 
 # /usr/bin/find if testing locally
 find_cmd="/bin/find"
+echo "cleanup: started"
 
 function doCleanup() {
     workarea="${1}"

@@ -5,10 +5,11 @@
 # - modify the script line of the html files so that they will load
 # to test: http://localhost:<port>/local/
 #
-aWarFile=`ls ${CATALINA_BASE}/webapps/*.war | head -1 | awk '{print $1}'`
+aWarFile=`ls ${CATALINA_HOME}/webapps/*.war | head -1 | awk '{print $1}'`
 onlyWar=`echo ${aWarFile} | awk -F/ '{print $NF}'`
 dirEmpty=`find /local/www -maxdepth 0 -empty -exec echo true \;`
 if [ "$onlyWar" = "firefly.war" ] && [ "$dirEmpty" = "true" ]; then
+    echo "Alt Entry Point: beginning set up example"
     mkdir tmp-expand
     cd tmp-expand
     unzip -d . ${aWarFile} firefly.html slate.html firefly-dev.html
@@ -20,5 +21,5 @@ if [ "$onlyWar" = "firefly.war" ] && [ "$dirEmpty" = "true" ]; then
     cp {index,slate,firefly-dev}.html /local/www
     cd ..
     rm -r tmp-expand
-    echo "setting up example: index.html, slate.html, firefly-dev.html in /www/local"
+    echo "Alt Entry Point: setting up example: index.html, slate.html, firefly-dev.html in /www/local"
 fi
