@@ -64,26 +64,28 @@ function validateAutoSearch(fields, initArgs) {
 
 
 const searchOnce= makeSearchOnce(); // setup options to immediately execute the search the first time
+const initServiceOnce= makeSearchOnce(false); // call one time during first construction
 
 // on the left tap tables browser
 // on the bottom - column constraints
 export class TapSearchPanel extends PureComponent {
     constructor(props) {
         super(props);
-        let tapOps= getTapServiceOptions();
+        const tapOps= getTapServiceOptions();
         const {initArgs= {execute:false}}= props;
         if (!initArgs.execute) searchOnce(true); // if not execute then mark as done, i.e. disable any auto searching
 
+        const {value:defService}= getTapServiceOptions()?.[0] ?? {};
+        let {serviceUrl=defService, ...others} = getTapBrowserState();
+        initServiceOnce(true, () => {
+            if (initArgs.service) {
+                const listedEntry= tapOps.find( (e) => e.value===initArgs.service);
+                if (!listedEntry) webApiAddedServices = {label: initArgs.service, value: initArgs.service};
+                serviceUrl= initArgs.service;
+            }
+        });
+        this.state = {serviceUrl, ...others};       // initialize state.. default serviceUrl if not given
 
-
-        if (initArgs.service && !tapOps.find( (e) => e.value===initArgs.service)) {
-            webApiAddedServices= {label: initArgs.service, value: initArgs.service};
-            tapOps= getTapServiceOptions();
-        }
-        let defTapIdx= initArgs.service ? tapOps.findIndex( (t) => t.value ===initArgs.service) : 0;
-        defTapIdx= (defTapIdx>-1) ? defTapIdx: 0;
-        const {serviceUrl=get(tapOps, [defTapIdx, 'value']), ...others} = getTapBrowserState();
-        this.state = {serviceUrl, defTapIdx, ...others};       // initialize state.. default serviceUrl if not given
 
         this.populateAndEditAdql = this.populateAndEditAdql.bind(this);
         this.onTapServiceOptionSelect = this.onTapServiceOptionSelect.bind(this);
@@ -120,10 +122,11 @@ export class TapSearchPanel extends PureComponent {
     render() {
 
 
-        const {serviceUrl, defTapIdx, selectBy='basic'} = this.state;
+        const {serviceUrl, selectBy='basic'} = this.state;
         const {initArgs={}}= this.props;
-
-        const placeholder = serviceUrl ? `Using <${serviceUrl}>. Replace...` : 'Select TAP...';
+        const tapOps= getTapServiceOptions();
+        const serviceLabel= serviceUrl && tapOps.find( (e) => e.value===serviceUrl)?.label;
+        const placeholder = serviceUrl ? `Using <${serviceLabel||serviceUrl}>. Replace...` : 'Select TAP...';
 
         const rightBtn = selectBy === 'basic' ? (
             <ExtraButton key='editADQL'
@@ -152,7 +155,6 @@ export class TapSearchPanel extends PureComponent {
         if (selectBy === 'basic') extraWidgets.push(rightBtn);
 
         const style = {width: '100%'};
-        const tapOps= getTapServiceOptions();
 
         return (
             <div style={style}>
@@ -182,8 +184,6 @@ export class TapSearchPanel extends PureComponent {
                                     placeholder={placeholder}
                                     theme={selectTheme}
                                     styles={commonSelectStyles}
-                                    value={initArgs.service}
-                                    defaultValue={tapOps[defTapIdx]}
                                 />
                             </div>
                         </div>
@@ -436,7 +436,7 @@ class BasicUI extends PureComponent {
                     return {label, value: e};
                 });
 
-                this.setState({serviceUrl, tableOptions, tableName, columnsModel: undefined});
+                this.setState({serviceUrl, serviceLabel:undefined, tableOptions, tableName, columnsModel: undefined});
                 dispatchValueChange({groupKey: gkey, fieldKey: 'tableName', value: tableName});
             }
         });

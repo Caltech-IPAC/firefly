@@ -701,13 +701,13 @@ export function mergeObjectOnly(target, sources) {
  * Note that the execution of the doSearch function is deferred.
  * @return {Function} a function with the signature f(validateSearch,doSearch)
  */
-export function makeSearchOnce() {
+export function makeSearchOnce(defer=true) {
     let executionComplete= false;
     return (validateSearch, doSearch) => {
         if (executionComplete) return;
         const valid= (isBoolean(validateSearch) && validateSearch) || (isFunction(validateSearch) && validateSearch());
         if (!valid) return;
-        if (doSearch) setTimeout(doSearch,5);
+        if (doSearch) defer ? setTimeout(doSearch,5) : doSearch();
         executionComplete=true;
     };
 }
