@@ -10,6 +10,7 @@ import {allBandAry} from '../visualize/Band.js';
 import {getTblById} from '../tables/TableUtil.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {dispatchTableHighlight} from '../tables/TablesCntlr.js';
+import {isImageExpanded} from '../visualize/ImagePlotCntlr';
 
 
 
@@ -172,6 +173,7 @@ function replotImageDataProducts(activePlotId, imageViewerId, tbl_id, reqAry, th
     }
 
     return () => { // return the cleanup function
+        if (isImageExpanded(visRoot().expandedMode)) return;
         !isEmpty(wpRequestAry) && wpRequestAry.forEach( (wpR) => dispatchDeletePlotView({plotId:wpR.getPlotId()}) );
         plottingThree && dispatchDeletePlotView({plotId:threeCPlotId});
     };
