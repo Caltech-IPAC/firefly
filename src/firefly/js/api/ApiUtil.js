@@ -8,6 +8,7 @@ import ReactDOM from 'react-dom';
 import {isArray, isElement, isString} from 'lodash';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga.js';
 import {Logger} from '../util/Logger.js';
+import {uniqueID} from '../util/WebUtil';
 
 const logger = Logger('Firefly');
 // NOTE 

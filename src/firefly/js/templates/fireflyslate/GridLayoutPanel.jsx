@@ -187,9 +187,7 @@ function makeComponent(g) {
             return (
                 <div key={g.cellId} style={{flex: 'auto', display: 'flex'}} >
 
-                    <MultiProductViewer key={g.cellId}  viewerId={'DataProductsType'}
-                                        metaDataTableId={getActiveTableId()}
-                                        imageMetaViewerId={g.cellId}/>
+                    <MultiProductViewer key={g.cellId}  viewerId={g.cellId} metaDataTableId={getActiveTableId()} />
                 </div>
             );
             break;

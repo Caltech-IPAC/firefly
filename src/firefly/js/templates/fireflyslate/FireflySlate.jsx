@@ -55,7 +55,8 @@ export class FireflySlate extends PureComponent {
         super(props);
         this.state = this.getNextState();
         startTTFeatureWatchers();
-        this.stopLayoutManager= startLayoutManager(this.props.renderTreeId, {renderTreeId:this.props.renderTreeId});
+        this.stopLayoutManager= startLayoutManager(this.props.renderTreeId,
+            {renderTreeId:this.props.renderTreeId, groupIgnoreFilter:'DPC'});
 
     }
 
