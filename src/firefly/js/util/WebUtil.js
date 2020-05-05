@@ -213,30 +213,6 @@ export function encodeParams(params) {
         .join('&');     // combine the parts, separating them by '&'
 }
 
-/**
- * convert a queryStr into an Object.  This is an inverse of encodeParams.
- * It support Object whose value is another Object.
- * @param queryStr
- * @returns {*}
- */
-export function decodeParams(queryStr) {
-    const toVal = (s) => {
-        let val = s;
-        try {
-            val = JSON.parse(val);
-        } catch(e) {
-            val = isBooleanString(val) ? toBoolean(val) : val;
-        }
-        return val;
-    };
-
-    return  queryStr.replace(/^\?/, '')                     // remove prefex '?' if exists
-                    .split('&')                             // separate into param array
-                    .map((p) => p.split('=', 2))             // split into key/value pairs
-                    .map(([key, val='']) => [key.trim(), val.trim()] )   // trim key and values
-                    .map(([key, val]) => [key, toVal(decodeURIComponent(val))]) // decode and convert val
-                    .reduce((rval, [key, val]) => set(rval, [key], val), {}); // create a simple object of key/value.
-}
 
 
 /**
@@ -467,7 +443,13 @@ export function parseUrl(url) {
 
     // Convert query string to object map with decoded key/value pairs
     const searchObject = {};
-    searchParams.forEach((val, key) => searchObject[key] = val);
+    const parseVal = (val) => {
+        try {
+            val = JSON.parse(val);
+        } catch(e) {}
+         return isBooleanString(val) ? toBoolean(val) : val;
+    };
+    searchParams.forEach((val, key) => searchObject[key] =parseVal(val));
 
     const paths = pathname.replace(/^\//, '').split('/');
     const filename = last(paths).split(';')[0];
