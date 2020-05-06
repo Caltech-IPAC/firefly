@@ -57,7 +57,7 @@
 .TabPanel__Content--inside {
     border: 1px solid #ccc;
     background: white;
-    margin: 5px;
+    margin: 2px;
     display: flex;
     flex-grow: 1;
     position: relative;
