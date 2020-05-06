@@ -13,8 +13,8 @@ import './MouseReadout.css';
 import LOCKED from    'html/images/icons-2014/lock_20x20.png';
 import UNLOCKED from  'html/images/icons-2014/unlock_20x20.png';
 
-const rS = { cursor: 'pointer', width: 485, position: 'relative'};
-const rSMin = { cursor: 'pointer', padding: '2px 0 2px 3px' };
+const rS = { width: 485, position: 'relative'};
+const rSMin = { padding: '2px 0 2px 3px' };
 
 export function PopupMouseReadoutFull({readout, readoutData, showHealpixPixel=false}){
     const {threeColor, readoutType}= readoutData;
@@ -25,9 +25,11 @@ export function PopupMouseReadoutFull({readout, readoutData, showHealpixPixel=fa
     const {pixelSize, showPixelPrefChange, healpixPixelReadout, healpixNorderReadout}= displayEle;
     const fluxArray = getFluxInfo(readoutData);
     const hipsPixel= showHealpixPixel && isHiPS;
+    const showCopy= readout.lockByClick;
+    const gridClasses= `mouseReadoutPopupFullGrid ${showCopy?'mouseReadoutPopupFullGrid-withclip' :''}`;
 
     return (
-        <div className= 'mouseReadoutPopupFullGrid' style={rS}>
+        <div className={gridClasses} style={rS}>
             <CommonPopReadout {...{readout,displayEle}} />
             <DataReadoutItem lArea='pixSizeLabel' vArea='pixSizeValue'
                                         label={pixelSize.label} value={pixelSize.value} prefChangeFunc={showPixelPrefChange}/>
@@ -55,8 +57,10 @@ export function PopupMouseReadoutMinimal({readout,readoutData}){
     if (!readoutData || !readout) return (<div style={rSMin}/>);
     const displayEle= getNonFluxDisplayElements(readoutData.readoutItems,  readout.readoutPref,
                                                 readoutData.readoutType===HIPS_STANDARD_READOUT);
+    const showCopy= readout.lockByClick;
+    const gridClasses= `mouseReadoutPopupMinimalGrid ${showCopy?'mouseReadoutPopupMinimalGrid-withclip' :''}`;
     return (
-        <div className='mouseReadoutPopupMinimalGrid' style={rSMin}>
+        <div className={gridClasses} style={rSMin}>
             <CommonPopReadout {...{readout,displayEle}}/>
         </div>
     );
@@ -69,14 +73,19 @@ PopupMouseReadoutMinimal.propTypes = {
 
 function CommonPopReadout({readout,displayEle}) {
     const {readout1, readout2, showReadout1PrefChange, showReadout2PrefChange}= displayEle;
+    const showCopy= readout.lockByClick;
     return (
         <Fragment>
             <img style={{gridArea:'lockDialog'}} src= {readout.isLocked ? LOCKED:UNLOCKED}  title= 'Lock the readout panel visible'
                   onClick ={() => dispatchChangeLockUnlockByClick(!readout.isLocked)} />
-            <DataReadoutItem lArea='pixReadoutTopLabel' vArea='pixReadoutTopValue'
-                             label={readout1.label} value={readout1.value} prefChangeFunc={showReadout1PrefChange}/>
-            <DataReadoutItem lArea='pixReadoutBottomLabel' vArea='pixReadoutBottomValue'
-                             label={readout2.label} value={readout2.value} prefChangeFunc={showReadout2PrefChange}/>
+            <DataReadoutItem lArea='pixReadoutTopLabel' vArea='pixReadoutTopValue' cArea='clipboardIconTop'
+                             label={readout1.label} value={readout1.value}
+                             copyValue={readout1.copyValue} showCopy={showCopy}
+                             prefChangeFunc={showReadout1PrefChange}/>
+            <DataReadoutItem lArea='pixReadoutBottomLabel' vArea='pixReadoutBottomValue' cArea='clipboardIconBottom'
+                             label={readout2.label} value={readout2.value}
+                             copyValue={readout2.copyValue} showCopy={showCopy}
+                             prefChangeFunc={showReadout2PrefChange}/>
             <MouseReadoutLock gArea='lock' lockByClick={readout.lockByClick} />
         </Fragment>
     );

@@ -2,19 +2,18 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
+import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty} from 'lodash';
 import {makeScreenPt} from '../Point.js';
 import {MouseState} from '../VisMouseSync.js';
-import {makeImageFromTile,createImageUrl,isTileVisible} from './../iv/TileDrawHelper.jsx';
-import {isBlankImage} from '../WebPlot.js';
+import {makeImageFromTile,createImageUrl,isTileVisible} from '../iv/TileDrawHelper.jsx';
+import {isBlankImage, isHiPS} from '../WebPlot.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {makeThumbnailTransformCSS} from '../PlotTransformUtils.js';
-import {isHiPS} from '../WebPlot';
 
 
-var defStyle= {
+const defStyle= {
     width: 70,
     height: 70,
     display: 'inline-block',
@@ -24,29 +23,20 @@ var defStyle= {
 };
 
 const magMouse= [MouseState.DRAG_COMPONENT, MouseState.DRAG, MouseState.MOVE, MouseState.DOWN];
-const EMPTY= <div style={defStyle}></div>;
+const EMPTY= <div style={defStyle}/>;
 
-export function MagnifiedView({plotView:pv,size,mouseState}) {
-    if (!pv || !mouseState) return EMPTY;
+export const MagnifiedView= memo(({plotView:pv,size,mouseState}) => {
+    if (!pv || !mouseState?.screenPt) return EMPTY;
     const p= primePlot(pv);
-    if (isHiPS(p)) return EMPTY;
-    if (!p) return EMPTY;
-
+    if (!p || isHiPS(p) ) return EMPTY;
     if (!magMouse.includes(mouseState.mouseState)) return EMPTY;
 
-    var spt= mouseState.screenPt;
-
-    if (!spt) return EMPTY;
-
-    var s= Object.assign({},defStyle, {border: '1px solid rgb(187, 187, 187)'});
     return (
-        <div style={s}>
-            {showMag(spt,pv, p,size)}
+        <div style={{...defStyle, border: '1px solid rgb(187, 187, 187)'}}>
+            {showMag(mouseState.screenPt,pv, p,size)}
         </div>
     );
-}
-
-
+});
 
 MagnifiedView.propTypes= {
     plotView: PropTypes.object,
@@ -57,10 +47,10 @@ MagnifiedView.propTypes= {
 
 /**
  *
- * @param plot
- * @param spt
- * @param size
- * @return {*}
+ * @param {WebPlot} plot
+ * @param {Point} spt
+ * @param {number} size
+ * @return {Object}
  */
 function getImagesAt(plot, spt, size) {
 
@@ -68,7 +58,7 @@ function getImagesAt(plot, spt, size) {
 
     const scale= plot.zoomFactor / plot.plotState.getZoomLevel();
 
-    var tiles= plot.tileData.images
+    const tiles= plot.tileData.images
         .filter( (tile) => isTileVisible(tile,spt.x,spt.y,size,size,scale))
         .sort(compareFourTileSort);
 
@@ -80,7 +70,6 @@ function getImagesAt(plot, spt, size) {
 }
 
 
-
 /**
  * This Comparator is for the very specific case that you want to arrange 4 tiles in a specific order
  * @param o1
@@ -90,7 +79,6 @@ function getImagesAt(plot, spt, size) {
 function compareFourTileSort(o1, o2) {
     const {x:x1, y:y1}= o1;
     const {x:x2, y:y2}= o2;
-
     if (x1===x2) {
         if (y1===y2)      return 0;
         else if (y1 < y2) return -1;
@@ -100,19 +88,14 @@ function compareFourTileSort(o1, o2) {
     else return 1;
 }
 
-
-
 function showMag(spt,pv, plot,size) {
+    if (!plot || isBlankImage(plot) || plot.zoomFactor > 6) return false;
 
-    if (!plot) return false;
-    if (isBlankImage(plot)) return false;
-    if (plot.zoomFactor > 6) return false;
+    let x = spt.x - size / 2;
+    let y = spt.y - size / 2;
 
-    var x = spt.x - size / 2;
-    var y = spt.y - size / 2;
-
-    var {width:screenW, height:screenH }= plot.screenSize;
-    var sizeOffX;
+    const {width:screenW, height:screenH }= plot.screenSize;
+    let sizeOffX;
 
     if (x < 0) {
         x = 0;
@@ -125,7 +108,7 @@ function showMag(spt,pv, plot,size) {
     }
 
 
-    var sizeOffY;
+    let sizeOffY;
     if (y < 0) {
         y = 0;
         sizeOffY = spt.y;
@@ -141,11 +124,11 @@ function showMag(spt,pv, plot,size) {
     const {tiles,newX,newY} =getImagesAt(plot,makeScreenPt(x, y), size);
     if (isEmpty(tiles)) return false;
 
-    var pt1, pt2, pt3, pt4;
-    var [t1,t2,t3,t4]= tiles;
+    let pt2, pt3, pt4;
+    const [t1,t2,t3,t4]= tiles;
 
-    pt1= makeScreenPt(-2 * newX - sizeOffX, -2 * newY - sizeOffY);
-    var firstImage= makeImageFromTile(createImageUrl(plot,t1), pt1, t1.width, t1.height, 2);
+    const pt1= makeScreenPt(-2 * newX - sizeOffX, -2 * newY - sizeOffY);
+    const firstImage= makeImageFromTile(createImageUrl(plot,t1), pt1, t1.width, t1.height, 2);
 
     let results;
     if (tiles.length===1) {
@@ -182,10 +165,6 @@ function showMag(spt,pv, plot,size) {
         width: size,
         height: size,
     };
-    return (
-        <div style={style}>
-            {results}
-        </div>
-     );
+    return ( <div style={style}> {results} </div> );
 }
 

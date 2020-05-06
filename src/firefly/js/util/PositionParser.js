@@ -392,7 +392,7 @@ var makePositionParser = function(helper) {
     var SEQ = '^EQUATORIAL|^EQU|^EQ';
 
 
-    var COMBINE_SYS = '(^ECLIPTIC|^ECL|^EC|^EQUATORIAL|^EQU|^EQ)('+EJ2000+ '|' +E1950+ ')';
+    var COMBINE_SYS = '(^ECLIPTIC|^ECL|^EC|^EC_|^EQUATORIAL|^EQU|^EQ_|^EQ)('+EJ2000+ '|' +E1950+ ')';
     var ECL_1950 = '('+SECL +')('+E1950+ ')';
     var ECL_2000 = '('+SECL +')('+EJ2000+ ')';
 
@@ -406,20 +406,21 @@ var makePositionParser = function(helper) {
 
         if (s && array.length>0) {
             if (array.length===1 && matches(array[0],COMBINE_SYS)) {
-                if (array[0].toUpperCase().startsWith('EC')) {
+                const inCoord= array[0].toUpperCase()
+                if (inCoord.startsWith('EC') || inCoord.startsWith('EC_')) {
                     if (matches(array[0],ECL_1950)) {
                         retval='EC_B1950';
                     } else if (matches(array[0],ECL_2000)) {
                         retval='EC_J2000';
                     }
-                } else if (array[0].toUpperCase().startsWith('EQ')) {
+                } else if (inCoord.startsWith('EQ') || inCoord.startsWith('EQ_')) {
                     if (matches(array[0],EQ_1950)) {
                         retval='EQ_B1950';
                     } else if (matches(array[0],EQ_2000)) {
                         retval='EQ_J2000';
                     }
                 }
-            } else if (matches(array[0],'^EQUATORIAL$|^EQU$|^EQ$|^E$')) {
+            } else if (matches(array[0],'^EQUATORIAL$|^EQU$|^EQ$|^EQ_$|^E$')) {
                 if (array.length>1) {
                     if (matches(array[1], F1950)) {
                         retval='EQ_B1950';

@@ -2,13 +2,17 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Fragment,memo} from 'react';
+import React, {Fragment,memo, useState} from 'react';
 import {number,string,oneOfType,object,func,bool} from 'prop-types';
 import {get} from 'lodash';
 import {getNonFluxDisplayElements, getFluxInfo} from './MouseReadoutUIUtil.js';
 import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
-import {dispatchChangeLockByClick} from '../../visualize/MouseReadoutCntlr.js';
+import {dispatchChangeLockByClick} from '../MouseReadoutCntlr.js';
+import {copyToClipboard} from '../../util/WebUtil';
+import {ToolbarButton} from '../../ui/ToolbarButton';
 
+import CLIPBOARD from 'html/images/12x12_clipboard.png';
+import CHECKED from 'html/images/12x12_clipboard-checked.png';
 import './MouseReadout.css';
 
 
@@ -22,16 +26,20 @@ export function MouseReadout({readout, readoutData}){
     const displayEle= getNonFluxDisplayElements(readoutData.readoutItems,  readout.readoutPref, false);
     const {readout1, readout2, pixelSize, showReadout1PrefChange, showWavelengthFailed,
         showReadout2PrefChange, showPixelPrefChange, waveLength}= displayEle;
+    const showCopy= readout.lockByClick;
 
     const fluxArray = getFluxInfo(readoutData);
+    const gridClasses= `mouseReadoutImageGrid ${showCopy?'mouseReadoutImageGrid-withclip' :''} mouseReadoutDisplaySpace`;
 
     return (
-        <div className='mouseReadoutImageGrid mouseReadoutDisplaySpace'>
+        <div className={gridClasses}>
             <div style={{gridArea:'plotTitle', paddingLeft:4}}> {title}  </div>
 
-            <DataReadoutItem lArea='pixReadoutTopLabel' vArea='pixReadoutTopValue' label={readout1.label} value={readout1.value}
+            <DataReadoutItem lArea='pixReadoutTopLabel' vArea='pixReadoutTopValue' cArea='clipboardIconTop'
+                             label={readout1.label} value={readout1.value} copyValue={readout1.copyValue} showCopy={showCopy}
                              prefChangeFunc={showReadout1PrefChange}/>
-            <DataReadoutItem lArea='pixReadoutBottomLabel' vArea='pixReadoutBottomValue'  label={readout2.label} value={readout2.value}
+            <DataReadoutItem lArea='pixReadoutBottomLabel' vArea='pixReadoutBottomValue'  cArea='clipboardIconBottom'
+                             label={readout2.label} value={readout2.value} copyValue={readout2.copyValue} showCopy={showCopy}
                              prefChangeFunc={showReadout2PrefChange}/>
             <DataReadoutItem lArea='pixSizeLabel' vArea='pixSizeValue' label={pixelSize.label}
                              value={pixelSize.value} prefChangeFunc={showPixelPrefChange}/>
@@ -77,25 +85,73 @@ MouseReadoutLock.propTypes = {
 
 
 
-export const DataReadoutItem= memo(({lArea, vArea, labelStyle={}, valueStyle={},
-                                        label='', value='', prefChangeFunc=undefined}) => {
+export const DataReadoutItem= memo(({lArea, vArea, cArea, labelStyle={}, valueStyle={}, showCopy=false,
+                                        label='', value='', copyValue='', prefChangeFunc=undefined}) => {
     const lS= lArea ? {gridArea:lArea,...labelStyle} : labelStyle;
     const vS= vArea ? {gridArea:vArea,...valueStyle} : valueStyle;
+    const cS= cArea ? {gridArea:cArea, overflow:'hidden', height:13} : undefined;
     const labelClass= prefChangeFunc ? 'mouseReadoutLabel mouseReadoutClickLabel' : 'mouseReadoutLabel';
+    const copyTitle= `Copy to clipboard: ${copyValue||value}`;
+
+    let clipComponent= undefined;
+    if (cArea) {
+        clipComponent= (value && showCopy) ?
+            <CopyToClipboard style={cS} title={copyTitle} value={copyValue||value} /> : <div style={cS}/>;
+    }
+
+
     return (
         <Fragment>
             <div className={labelClass} style={lS} onClick={prefChangeFunc}>{label}</div>
             <div style={vS}> {value} </div>
+            {clipComponent}
         </Fragment>
     );
 });
 
 DataReadoutItem.propTypes = {
-    lArea:          string,   //  label grid Area used with css grid-template-areas
-    vArea:          string,   //  value grid Area used with css grid-template-areas
+    lArea:          string,   // label grid Area used with css grid-template-areas
+    vArea:          string,   // value grid Area used with css grid-template-areas
+    cArea:          string,   // clipboard grid Area used with css grid-template-areas
+    showCopy:       bool,     // show the copy icon
     labelStyle:     object,
     valueStyle:     object,
     label:          string,
     value:          oneOfType([number,string]),
+    copyValue:      string,   // for copy to clipboard, if specified, us this value other use value
     prefChangeFunc: func,
 };
+
+
+
+const buttonStyle= {
+    borderRadius:2,
+    backgroundColor:'rgba(255,255,255,.9',
+    border:'solid transparent',
+    borderWidth: '0 0 1px 0'
+};
+
+
+export function CopyToClipboard({value, title, style}) {
+    const [clipIcon, setClipIcon] = useState(CLIPBOARD);
+
+    const doCopy= (str) => {
+        copyToClipboard(str);
+        setTimeout( () => {
+            setClipIcon(CHECKED);
+            setTimeout( () => setClipIcon(CLIPBOARD),750);
+        }, 10);
+    };
+
+    return (
+        <div style={style}>
+            <ToolbarButton icon={clipIcon} tip={title} bgDark={true} style={buttonStyle}
+                           horizontal={true} onClick={() => doCopy(value)} />
+        </div>
+    );
+
+}
+
+
+
+
