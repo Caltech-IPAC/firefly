@@ -288,19 +288,16 @@ function grabWindowFocus() {
 function onlineHelpLoad( action )
 {
     return () => {
-        var url = getProp('help.base.url');
+        var url = getProp('help.base.url', '');
         var windowName = 'onlineHelp';
         var moduleName = getProp('help.subpath', getModuleName());
 
         if (moduleName) {
-            url +=  moduleName;
             windowName += '-' + moduleName;
         }
-
+        url = url.endsWith('/') ? url : url + '/';
         if (action.payload && action.payload.helpId) {
-            url += '/#id=' + action.payload.helpId;
-        } else {
-            url += '/';
+            url += '#id=' + action.payload.helpId;
         }
 
         if (url) {

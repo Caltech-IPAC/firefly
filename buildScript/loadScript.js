@@ -12,8 +12,9 @@
         var scripts = document.getElementsByTagName('script');
         var url = '/';
         for (var i = 0; (i < scripts.length); i++) {
-            if (scripts[i].src.indexOf(loader) > -1) {
-                url = scripts[i].src.replace(loader, '');
+            var idx = scripts[i].src.indexOf(loader);
+            if (idx >= 0) {
+                url = scripts[i].src.substring(0, idx);
             }
         }
         return url;

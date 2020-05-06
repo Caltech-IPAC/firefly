@@ -407,6 +407,14 @@ task jsTestDebug (dependsOn: [loadConfig]) {
     }
 }
 
+task init (overwrite: true) {
+    group = DEV_GROUP
+
+    doLast {
+            project.InitNode()
+    }
+}
+
 /**-----------------------------    docs   ---------------------------------**/
 
 task buildJsDoc (dependsOn: loadConfig) {
@@ -663,24 +671,19 @@ task dockerDelete (dependsOn: loadConfig){
         }
 }
 
-
-task onlinehelp (dependsOn: [loadConfig]) {
+task onlinehelp () {
     description = 'Bundled onlinehelp with the webapp'
     group = SUB_GROUP
-
+    ext.onlineHelpDir = null
     doLast {
-        exec {
-            workingDir onlinehelp_dir
-            commandLine 'gradle', ":${project['app-name']}:build"
-        }
-
-        new File("${warDir}/onlinehelp").mkdirs()
-        copy {
-            from zipTree("$onlinehelp_dir/build/dist/${project['app-name']}_help.zip")
-            into "${warDir}/onlinehelp"
+        if (onlineHelpDir != null) {
+            exec {
+                commandLine "gradle -Papp_name=${project.name} -b ${onlineHelpDir}/build.gradle build".split(" ")
+            }
         }
     }
 }
+
 
 
 /**--------------------------------------  misc ----------------------------------**/

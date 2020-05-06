@@ -22,6 +22,10 @@ jar {
   includes = ['edu/caltech/ipac/**/*']
 }
 
+onlinehelp {
+    onlineHelpDir = "$fireflyPath/src/onlinehelp/"
+}
+
 ext.appConfig = {
 
   FireflyTools.Advertise = ""
