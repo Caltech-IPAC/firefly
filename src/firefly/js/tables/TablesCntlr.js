@@ -510,7 +510,7 @@ function tableSort(action) {
 
             dispatch({type:TABLE_FETCH, payload: tableStub});
 
-            TblUtil.onTableLoaded(tbl_id).then( (tableModel) => {
+            TblUtil.preTableLoaded(tbl_id).then( (tableModel) => {
                 dispatchTableLoaded(Object.assign(TblUtil.getTblInfo(tableModel), {invokedBy: TABLE_SORT}));
                 dispatch(action);
             });
@@ -551,7 +551,7 @@ function tableFilter(action) {
 
             dispatch({type:TABLE_FETCH, payload: tableStub});
 
-            TblUtil.onTableLoaded(tbl_id).then( (tableModel) => {
+            TblUtil.preTableLoaded(tbl_id).then( (tableModel) => {
                 dispatchTableLoaded(Object.assign(TblUtil.getTblInfo(tableModel), {invokedBy: TABLE_FILTER}));
                 dispatch(action);
             });
