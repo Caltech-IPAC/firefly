@@ -73,15 +73,14 @@
     grid-template-columns :  60px 90px 80px 105px 74px 12px 160px 130px;
 }
 
+.mouseReadoutLabel {
+    cursor: default;
+    color: DarkGray;
+    justify-self: end;
+}
 
 .mouseReadoutClickLabel {
     cursor: pointer;
     text-decoration: underline;
     font-style: italic;
-}
-
-.mouseReadoutLabel {
-    cursor: default;
-    color: DarkGray;
-    justify-self: end;
 }

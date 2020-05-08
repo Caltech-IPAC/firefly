@@ -384,43 +384,43 @@ var makePositionParser = function(helper) {
         return retval;
     }
 
-    var F1950 = '^B1950$|^B195$|^B19$|^B1$|^B$';
-    var FJ2000 = '^J2000$|^J200$|^J20$|^J2$|^J$';
-    var EJ2000 = 'J2000$|J200$|J20$|J2$|J$';
-    var E1950 = 'B1950$|B195$|B19$|B1$|B$';
-    var SECL = '^ECLIPTIC|^ECL|^EC';
-    var SEQ = '^EQUATORIAL|^EQU|^EQ';
+    const F1950 = '^B1950$|^B195$|^B19$|^B1$|^B$';
+    const FJ2000 = '^J2000$|^J200$|^J20$|^J2$|^J$';
+    const EJ2000 = 'J2000$|J200$|J20$|J2$|J$';
+    const E1950 = 'B1950$|B195$|B19$|B1$|B$';
+    const SECL = '^ECLIPTIC|^ECL|^EC|^EC_|ECL_';
+    const SEQ = '^EQUATORIAL|^EQU|^EQ|^EQ_';
 
 
-    var COMBINE_SYS = '(^ECLIPTIC|^ECL|^EC|^EC_|^EQUATORIAL|^EQU|^EQ_|^EQ)('+EJ2000+ '|' +E1950+ ')';
-    var ECL_1950 = '('+SECL +')('+E1950+ ')';
-    var ECL_2000 = '('+SECL +')('+EJ2000+ ')';
+    const COMBINE_SYS = '(^ECLIPTIC|^ECL|^ECL_|^EC|^EC_|^EQUATORIAL|^EQU|^EQ_|^EQ)('+EJ2000+ '|' +E1950+ ')';
+    const ECL_1950 = '('+SECL +')('+E1950+ ')';
+    const ECL_2000 = '('+SECL +')('+EJ2000+ ')';
 
-    var EQ_1950 = '('+SEQ+')(' +E1950+ ')';
-    var EQ_2000 = '('+SEQ+')(' +EJ2000+ ')';
+    const EQ_1950 = '('+SEQ+')(' +E1950+ ')';
+    const EQ_2000 = '('+SEQ+')(' +EJ2000+ ')';
 
 
     function getvalidCoordSys(s) {
-        var retval='EQ_J2000';
-        var array = s.trim().split(' ');
+        let retval='EQ_J2000';
+        const array = s.trim().split(' ');
 
         if (s && array.length>0) {
-            if (array.length===1 && matches(array[0],COMBINE_SYS)) {
-                const inCoord= array[0].toUpperCase()
-                if (inCoord.startsWith('EC') || inCoord.startsWith('EC_')) {
+            const inCoord0= array[0].toUpperCase();
+            if (array.length===1 && matches(inCoord0,COMBINE_SYS)) {
+                if (inCoord0.startsWith('EC')) {
                     if (matches(array[0],ECL_1950)) {
                         retval='EC_B1950';
-                    } else if (matches(array[0],ECL_2000)) {
+                    } else if (matches(inCoord0,ECL_2000)) {
                         retval='EC_J2000';
                     }
-                } else if (inCoord.startsWith('EQ') || inCoord.startsWith('EQ_')) {
-                    if (matches(array[0],EQ_1950)) {
+                } else if (inCoord0.startsWith('EQ')) {
+                    if (matches(inCoord0,EQ_1950)) {
                         retval='EQ_B1950';
-                    } else if (matches(array[0],EQ_2000)) {
+                    } else if (matches(inCoord0,EQ_2000)) {
                         retval='EQ_J2000';
                     }
                 }
-            } else if (matches(array[0],'^EQUATORIAL$|^EQU$|^EQ$|^EQ_$|^E$')) {
+            } else if (matches(inCoord0,'^EQUATORIAL$|^EQU$|^EQ$|^EQ_$|^E$')) {
                 if (array.length>1) {
                     if (matches(array[1], F1950)) {
                         retval='EQ_B1950';
@@ -433,7 +433,7 @@ var makePositionParser = function(helper) {
                 } else {
                     retval='EQ_J2000';
                 }
-            } else if (matches(array[0],'^ECLIPTIC$|^ECL$|^EC$')) {
+            } else if (matches(inCoord0,'^ECLIPTIC$|^ECL$|^EC$|^EC_$|^ECL_$')) {
                 if (array.length>1) {
                     if (matches(array[1], F1950)) {
                         retval='EC_B1950';
@@ -446,11 +446,11 @@ var makePositionParser = function(helper) {
                 } else {
                     retval='EC_J2000';
                 }
-            } else if (matches(array[0],'^GALACTIC$|^GAL$|^GA$|^G$')) {
+            } else if (matches(inCoord0,'^GALACTIC$|^GAL$|^GA$|^G$')) {
                 retval='GALACTIC';
-            } else if (matches(array[0], FJ2000)) {
+            } else if (matches(inCoord0, FJ2000)) {
                 retval='EQ_J2000';
-            } else if (matches(array[0], F1950)) {
+            } else if (matches(inCoord0, F1950)) {
                 retval='EQ_B1950';
             } else {
                 retval=INVALID+' COORDINATE SYSTEM: '+s;
