@@ -225,7 +225,7 @@ function analyzeImageResult(part, request, table, row, fileFormat, fileOnServer,
         newReq.setTitleOptions(TitleOptions.NONE);
         override= true;
     }
-    hduIdx ?? newReq.setMultiImageExts(hduIdx+'');
+    hduIdx && newReq.setMultiImageExts(hduIdx+'');
     const {imageViewerId}= activateParams;
 
     const ddTitleStr= (part.uiEntry===UIEntry.UseSpecified || fileOnServer) ?
