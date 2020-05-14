@@ -379,6 +379,7 @@ export function addDrawLayers(request, pv, plot) {
                 newDL= dispatchCreateDrawLayer(SearchTarget.TYPE_ID,
                     {
                         drawLayerId: ftId,
+                        displayGroupId: 'AUTO_TARGET_OVERLAY',
                         plotId,
                         layersPanelLayoutId:plotId,
                         titlePrefix:isImage(plot)?'Image ':'HiPS '

@@ -253,5 +253,5 @@ function makeDrawLayer(drawLayerId,
         getCursor
     };
 
-    return Object.assign(drawLayer,options);
+    return {...drawLayer,...options};
 }
