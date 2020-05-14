@@ -35,7 +35,8 @@ public interface VOSpectraModel {
         //Y AXIS
         FLUX("flux", "Flux", Double.class,"phot.flux.density;em.MIR"), // unit should be replace by extractor
         //X AXIS
-        WAVELENGTH("wavelength", "Wavelength", Double.class,"em.wavenumber;em.MIR"),
+        WAVELENGTH("wavelength", "Wavelength", Double.class,"em.wl;em.MIR"),
+        WAVENUMBER("wavenumber", "Wavenumber", Double.class,"em.wavenumber;em.MIR"),
 //        FREQUENCY("wavelength", "Wavelength", Double.class),
         //ERRORs
         ERROR_FLUX("error", "Error", Double.class,"stat.error;phot.flux.density;em.MIR"),

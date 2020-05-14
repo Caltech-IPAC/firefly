@@ -96,7 +96,7 @@ public class SofiaSpectraModel implements VOSpectraModel {
         ),
         FIFILS("FIFI-LS"),
         HAWC("HAWC_PLUS"),
-        EXES("EXES",null, null,new VOSpectraModel.SPECTRA_FIELDS[]{SPECTRA_FIELDS.WAVELENGTH, SPECTRA_FIELDS.FLUX, SPECTRA_FIELDS.ERROR_FLUX, VOSpectraModel.SPECTRA_FIELDS.ATMOS_TRANSMISSION}),
+        EXES("EXES",null, null,new VOSpectraModel.SPECTRA_FIELDS[]{SPECTRA_FIELDS.WAVENUMBER, SPECTRA_FIELDS.FLUX, SPECTRA_FIELDS.ERROR_FLUX, VOSpectraModel.SPECTRA_FIELDS.ATMOS_TRANSMISSION}),
         FLITECAM("FLITECAM",null,null,new VOSpectraModel.SPECTRA_FIELDS[]{SPECTRA_FIELDS.WAVELENGTH, SPECTRA_FIELDS.FLUX, SPECTRA_FIELDS.ERROR_FLUX}),
         FPI("FPI_PLUS");
 
@@ -143,7 +143,7 @@ public class SofiaSpectraModel implements VOSpectraModel {
     public enum SpectraInstrument {
 
         FORCAST(SofiaSpectraModel.INSTRUMENTS.FORCAST, SPECTRA_FIELDS.WAVELENGTH, SPECTRA_FIELDS.FLUX),
-        EXES(SofiaSpectraModel.INSTRUMENTS.EXES, SPECTRA_FIELDS.WAVELENGTH, SPECTRA_FIELDS.FLUX),
+        EXES(SofiaSpectraModel.INSTRUMENTS.EXES, SPECTRA_FIELDS.WAVENUMBER, SPECTRA_FIELDS.FLUX),
         FLITECAM(SofiaSpectraModel.INSTRUMENTS.FLITECAM, SPECTRA_FIELDS.WAVELENGTH, SPECTRA_FIELDS.FLUX);
 
 
@@ -158,8 +158,20 @@ public class SofiaSpectraModel implements VOSpectraModel {
             this.instrument = inst;
         }
 
+        public static SpectraInstrument getInstrument(String inst) {
+            return valueOf(inst.toUpperCase());
+        }
+
         public SPECTRA_FIELDS[] getSpectraCols() {
             return this.instrument.getSpectraFields();
+        }
+
+        public SPECTRA_FIELDS getXaxis() {
+            return idxXaxis;
+        }
+
+        public SPECTRA_FIELDS getYaxis() {
+            return idxYaxis;
         }
     }
 }

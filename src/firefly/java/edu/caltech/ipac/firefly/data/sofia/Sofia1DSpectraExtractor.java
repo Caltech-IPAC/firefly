@@ -85,7 +85,12 @@ public class Sofia1DSpectraExtractor extends DataExtractUtil {
 
         // Populate units, ucds, utype?
         model.setUnits(VOSpectraModel.SPECTRA_FIELDS.FLUX, yu);
-        model.setUnits(VOSpectraModel.SPECTRA_FIELDS.WAVELENGTH, xu);
+        if(model.getMeta().get(VOSpectraModel.SPECTRA_FIELDS.WAVENUMBER.getKey())!=null) {
+            model.setUnits(VOSpectraModel.SPECTRA_FIELDS.WAVENUMBER, xu);//TODO where is the unit, no idea.Ask scientist/PI
+        }
+        if(model.getMeta().get(VOSpectraModel.SPECTRA_FIELDS.WAVELENGTH.getKey())!=null) {
+            model.setUnits(VOSpectraModel.SPECTRA_FIELDS.WAVELENGTH, xu);
+        }
         model.setUnits(VOSpectraModel.SPECTRA_FIELDS.ERROR_FLUX, yu);
         if(model.getMeta().get(VOSpectraModel.SPECTRA_FIELDS.ATMOS_TRANSMISSION.getKey())!=null) {
             model.setUnits(VOSpectraModel.SPECTRA_FIELDS.ATMOS_TRANSMISSION, "");//TODO where is the unit, no idea.Ask scientist/PI
