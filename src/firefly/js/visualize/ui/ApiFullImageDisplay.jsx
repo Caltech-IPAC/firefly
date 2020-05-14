@@ -68,7 +68,13 @@ export class ApiFullImageDisplay extends PureComponent {
                         display:'flex', flexWrap:'nowrap', flexDirection:'row', justifyContent: 'center'}}
                          className='banner-background'>
                         <div style={{display:'flex', flexDirection:'row', alignItems:'flex-end'}}>
-                            <VisHeaderView visRoot={visRoot} readoutData={readoutData} currMouseState={currMouseState} readout={readout}
+                            <VisHeaderView visRoot={visRoot} readoutData={readoutData}
+                                           currMouseState={currMouseState} readout={readout}
+                                           style={{
+                                               height: 34,
+                                               minHeight: 34,
+                                               padding: '2px 0 1px 0'
+                                           }}
                                            showHealpixPixel={showHealpixPixel}/>
                         </div>
                     </div>

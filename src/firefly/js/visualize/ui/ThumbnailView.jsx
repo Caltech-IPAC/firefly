@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React, {memo, useEffect, useRef, useState} from 'react';
 import PropTypes from 'prop-types';
 import {isPlotNorth,getCenterPtOfPlot} from '../VisUtil.js';
 import {encodeServerUrl} from '../../util/WebUtil.js';
@@ -14,7 +14,7 @@ import DirectionArrowDrawObj from '../draw/DirectionArrowDrawObj.js';
 import FootprintObj from '../draw/FootprintObj.js';
 import {COLOR_DRAW_1, COLOR_DRAW_2,Style} from '../draw/DrawingDef.js';
 import {primePlot} from '../PlotViewUtil.js';
-import {EventLayer} from './../iv/EventLayer.jsx';
+import {EventLayer} from '../iv/EventLayer.jsx';
 import {MouseState} from '../VisMouseSync.js';
 import {dispatchProcessScroll} from '../ImagePlotCntlr.js';
 import {makeMouseStatePayload,fireMouseCtxChange} from '../VisMouseSync.js';
@@ -23,87 +23,47 @@ import {findScrollPtToCenterImagePt} from '../reducer/PlotView.js';
 import {getPixScaleDeg, isHiPS} from '../WebPlot.js';
 
 
-export class ThumbnailView extends PureComponent {
+export const ThumbnailView = memo(({plotView:pv}) => {
+    const s= { width: 70, height: 70, display: 'inline-block', position: 'relative', overflow: 'hidden' };
 
-    constructor(props) {
-        super(props);
-        this.drawData= null;
-        this.getDrawData= this.getDrawData.bind(this);
-        this.onImageLoad= this.onImageLoad.bind(this);
-        this.eventCallBack= this.eventCallBack.bind(this);
-        this.setSimpleUpdateNotify= this.setSimpleUpdateNotify.bind(this);
-        this.updateFunc= null;
-        this.state= {imWidth:0,imHeight:0};
-    }
+    const [dim, setDim] = useState({imWidth:0,imHeight:0});
+    const dataRef = useRef({updateFunc:undefined, drawData:undefined});
+    useEffect(() => {
+       dataRef.current.updateFunc?.(dataRef.current.drawData);
+    }, [dataRef.current.drawData]);
 
-    getDrawData() {
-        return this.drawData;
-    }
+    const plot= primePlot(pv);
+    if (!plot?.tileData || isHiPS(plot)) return <div style={s}/>;
 
-    onImageLoad(e) {
-        if (e) {
-            e.onload= () => {
-                this.setState( () => ({imWidth: e.width, imHeight:e.height }));
-            };
-        }
-    }
+    s.border= '1px solid rgb(187, 187, 187)';
+    const {width,height}= plot.tileData.thumbnailImage;
+    dataRef.current.drawData= makeDrawing(pv,width,height);
 
-    setSimpleUpdateNotify(f) {
-        this.updateFunc=f;
-    }
+    const affTrans= makeTransform(0,0,0,0,pv.rotation, pv.flipX, pv.flipY,
+                                    {width:dim.imWidth || 70,height:dim.imHeight || 70});
 
-    componentDidUpdate() {
-        if (this.updateFunc) this.updateFunc(this.drawData);
-    }
-
-    eventCallBack(plotId,mouseState,pt) {
-        const {plotView:pv}= this.props;
-        const plot= primePlot(pv);
-        if (!plot || !plot.tileData) return;
+    const eventCallBack= (plotId,mouseState,pt) => {
+        if (!plot?.tileData) return;
         const {width,height}= plot.tileData.thumbnailImage;
         eventCB(mouseState,pt,pv,width,height);
-    }
-    
-    render() {
-        const {plotView:pv}= this.props;
-        const {imWidth,imHeight}= this.state;
+    };
 
-        const s= {
-            width: 70,
-            height: 70,
-            display: 'inline-block',
-            position: 'relative',
-            overflow: 'hidden'
-        };
+    const setSimpleUpdateNotify= (f) => dataRef.current.updateFunc= f;
+    const onImageLoad= (e) => e && (e.onload= () => setDim( {imWidth: e.width, imHeight:e.height }));
 
-        const plot= primePlot(pv);
-        if (!plot || !plot.tileData || isHiPS(plot)) return  <div style={s}/>;
+    return (
+        <div style={s}>
+            {makeImageTag(pv, onImageLoad)}
+            <DrawerComponent width={width} height={height} getDrawLayer={() => dataRef.current.drawData}
+                             setSimpleUpdateNotify={setSimpleUpdateNotify} />
+            <EventLayer width={width} height={height} transform={affTrans} eventCallback={eventCallBack} />
+        </div>
+    );
 
-        s.border= '1px solid rgb(187, 187, 187)';
-        const {width,height}= plot.tileData.thumbnailImage;
-        this.drawData= makeDrawing(pv,width,height);
+});
 
 
 
-        const w= imWidth || 70;
-        const h= imHeight || 70;
-
-        const affTrans= makeTransform(0,0,0,0,pv.rotation, pv.flipX, pv.flipY, {width:w,height:h});
-
-        return (
-            <div style={s}>
-                {makeImageTag(pv, this.onImageLoad)}
-                <DrawerComponent width={width} height={height} getDrawLayer={this.getDrawData}
-                                 setSimpleUpdateNotify={this.setSimpleUpdateNotify}
-                />
-                <EventLayer width={width} height={height}
-                            transform={affTrans}
-                            eventCallback={this.eventCallBack} />
-            </div>
-        );
-        
-    }
-}
 
 ThumbnailView.propTypes= {
     plotView: PropTypes.object
@@ -143,9 +103,7 @@ function updateMove(mouseState, pt,pv,width,height) {
 
 
 function scrollPlot(pt,pv,width,height) {
-
     const plot= primePlot(pv);
-
     const fact= plot.zoomFactor / getThumbZoomFact(plot,width,height);
     const cc= CysConverter.make(plot);
     const imPt= cc.getImageCoords(makeScreenPt(pt.x*fact, pt.y*fact));
@@ -169,10 +127,7 @@ function makeImageTag(pv, onImageLoad) {
 
     const imageURL=  encodeServerUrl(getRootURL() + 'sticky/FireFly_ImageDownload', params);
 
-    return (
-        <img src={imageURL} style={s} ref={onImageLoad} />
-    );
-
+    return <img src={imageURL} style={s} ref={onImageLoad} /> ;
 }
 
 function getThumbZoomFact(plot, thumbW, thumbH) {

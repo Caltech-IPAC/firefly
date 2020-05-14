@@ -6,7 +6,6 @@
     min-height: 32px;
     position: absolute;
     vertical-align: top;
-    cursor: pointer;
     white-space: nowrap;
     overflow: hidden;
 }
@@ -14,54 +13,74 @@
 .mouseReadoutImageGrid {
     display: grid;
     grid-column-gap: 3px;
-    grid-template-columns :  60px 90px 80px 105px 74px 160px 130px;
+    grid-row-gap: 5px;
+    grid-template-columns :  60px 90px 80px 105px 74px 0 160px  130px;
     grid-template-rows :  auto;
     grid-template-areas:
-            "greenLabel greenValue pixSizeLabel pixSizeValue pixReadoutTopLabel pixReadoutTopValue plotTitle"
-            "blueLabel blueValue redLabel redValue pixReadoutBottomLabel pixReadoutBottomValue lock";
+            "greenLabel greenValue pixSizeLabel pixSizeValue pixReadoutTopLabel clipboardIconTop pixReadoutTopValue plotTitle"
+            "blueLabel blueValue redLabel redValue pixReadoutBottomLabel clipboardIconBottom pixReadoutBottomValue lock";
+}
+
+.mouseReadoutImageGrid-withclip {
+    grid-template-columns :  60px 90px 80px 105px 74px 12px 160px  130px;
 }
 
 .mouseReadoutPopupMinimalGrid {
     display: grid;
     grid-column-gap: 3px;
-    grid-template-columns :  30px 70px 170px 130px;
+    grid-row-gap: 5px;
+    grid-template-columns :  30px 70px 0 170px 130px;
     grid-template-rows : 1.4em 1.4em;
     grid-template-areas:
-            "lockDialog pixReadoutTopLabel pixReadoutTopValue ."
-            "lockDialog pixReadoutBottomLabel pixReadoutBottomValue lock";
+            "lockDialog pixReadoutTopLabel clipboardIconTop pixReadoutTopValue ."
+            "lockDialog pixReadoutBottomLabel clipboardIconBottom pixReadoutBottomValue lock";
+}
+
+.mouseReadoutPopupMinimalGrid-withclip {
+    grid-template-columns :  30px 70px 12px 170px 130px;
 }
 
 .mouseReadoutPopupFullGrid {
     display: grid;
     grid-column-gap: 3px;
-    grid-template-columns:  30px 80px 80px 88px 170px;
+    grid-row-gap: 5px;
+    grid-template-columns:  30px 80px 80px 88px 0 170px;
     grid-template-rows : 1.4em 1.4em 1.4em 1.4em;
     grid-template-areas:
-            "lockDialog pixSizeLabel pixSizeValue pixReadoutTopLabel pixReadoutTopValue"
-            "lockDialog redLabel redValue pixReadoutBottomLabel pixReadoutBottomValue"
-            "lockDialog greenLabel greenValue blueLabel blueValue"
-            "lockDialog . lock . .";
+            "lockDialog pixSizeLabel pixSizeValue pixReadoutTopLabel clipboardIconTop pixReadoutTopValue"
+            "lockDialog redLabel redValue pixReadoutBottomLabel clipboardIconBottom pixReadoutBottomValue"
+            "lockDialog greenLabel greenValue blueLabel blueValue ."
+            "lockDialog . lock . . .";
 }
 
+.mouseReadoutPopupFullGrid-withclip {
+    grid-template-columns:  30px 80px 80px 88px 12px 170px;
+}
 
 
 .mouseReadoutHiPSGrid {
     display: grid;
     grid-column-gap: 3px;
-    grid-template-columns :  60px 90px 80px 105px 74px 160px 130px;
+    grid-row-gap: 5px;
+    grid-template-columns :  60px 90px 80px 105px 74px 0 160px 130px;
     grid-template-rows :  auto;
     grid-template-areas:
-            "nOrderLabel nOrderValue pixSizeLabel pixSizeValue pixReadoutTopLabel pixReadoutTopValue plotTitle"
-            "healpixPixelLabel healpixPixelValue empty empty pixReadoutBottomLabel pixReadoutBottomValue lock";
+            "nOrderLabel nOrderValue pixSizeLabel pixSizeValue pixReadoutTopLabel clipboardIconTop pixReadoutTopValue plotTitle"
+            "healpixPixelLabel healpixPixelValue empty empty pixReadoutBottomLabel clipboardIconBottom pixReadoutBottomValue lock";
 }
 
-
-.mouseReadoutClickLabel {
-    text-decoration: underline;
-    font-style: italic;
+.mouseReadoutHiPSGrid-withclip {
+    grid-template-columns :  60px 90px 80px 105px 74px 12px 160px 130px;
 }
 
 .mouseReadoutLabel {
+    cursor: default;
     color: DarkGray;
     justify-self: end;
+}
+
+.mouseReadoutClickLabel {
+    cursor: pointer;
+    text-decoration: underline;
+    font-style: italic;
 }

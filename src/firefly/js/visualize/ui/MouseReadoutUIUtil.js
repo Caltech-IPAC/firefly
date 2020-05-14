@@ -10,6 +10,7 @@ import CoordinateSys from '../CoordSys.js';
 import {showMouseReadoutOptionDialog} from './MouseReadoutOptionPopups.jsx';
 import {getFormattedWaveLengthUnits} from '../PlotViewUtil';
 import {showInfoPopup} from '../../ui/PopupUtil';
+import {findCoordSys} from '../CoordSys';
 
 
 const myFormat= (v,precision) => !isNaN(v) ? sprintf(`%.${precision}f`,v) : '';
@@ -41,18 +42,18 @@ export function getNonFluxDisplayElements(readoutItems, readoutPref, isHiPS= fal
     let showReadout1PrefChange, showReadout2PrefChange, showWavelengthFailed;
 
     if (isHiPS) {
-        readout1= {value:hipsMouseReadout1, label: labelMap[readoutPref.hipsMouseReadout1]};
-        readout2= {value:hipsMouseReadout2, label: labelMap[readoutPref.hipsMouseReadout2]};
+        readout1= {...hipsMouseReadout1, label: labelMap[readoutPref.hipsMouseReadout1]};
+        readout2= {...hipsMouseReadout2, label: labelMap[readoutPref.hipsMouseReadout2]};
         showReadout1PrefChange= () => showMouseReadoutOptionDialog('hipsMouseReadout1', readoutPref.hipsMouseReadout1);
         showReadout2PrefChange= () => showMouseReadoutOptionDialog('hipsMouseReadout2', readoutPref.hipsMouseReadout2);
-        healpixPixelReadout= {value:healpixPixel, label: labelMap.healpixPixel};
-        healpixNorderReadout= {value:healpixNorder, label: labelMap.healpixNorder};
+        healpixPixelReadout= {...healpixPixel, label: labelMap.healpixPixel};
+        healpixNorderReadout= {...healpixNorder, label: labelMap.healpixNorder};
     }
     else {
-        readout1= {value:imageMouseReadout1, label: labelMap[readoutPref.imageMouseReadout1]};
-        readout2= {value:imageMouseReadout2, label: labelMap[readoutPref.imageMouseReadout2]};
-        if (wl) {
-            waveLength= {value:wl, label:labelMap.wl};
+        readout1= {...imageMouseReadout1, label: labelMap[readoutPref.imageMouseReadout1]};
+        readout2= {...imageMouseReadout2, label: labelMap[readoutPref.imageMouseReadout2]};
+        if (wl?.value) {
+            waveLength= {...wl, label:labelMap.wl};
             showWavelengthFailed= readoutItems.wl.failReason ? () => showInfoPopup(readoutItems.wl.failReason) : undefined;
         }
         showReadout1PrefChange= () => showMouseReadoutOptionDialog('imageMouseReadout1', readoutPref.imageMouseReadout1);
@@ -62,7 +63,7 @@ export function getNonFluxDisplayElements(readoutItems, readoutPref, isHiPS= fal
     return {
         readout1, readout2, waveLength, showWavelengthFailed,
         showReadout1PrefChange, showReadout2PrefChange, healpixPixelReadout, healpixNorderReadout,
-        pixelSize: {value: pixelSize, label: labelMap[readoutPref.pixelSize]},
+        pixelSize: {...pixelSize, label: labelMap[readoutPref.pixelSize]},
         showPixelPrefChange:() => showMouseReadoutOptionDialog('pixelSize', readoutPref.pixelSize)
     };
 }
@@ -91,14 +92,14 @@ export function getNonFluxReadoutElements(readoutItems, readoutPref, isHiPS= fal
  */
 export function getReadoutElement(readoutItems, readoutKey) {
 
-    if (!readoutItems) return '';
+    if (!readoutItems) return {value:''};
 
     const wp= readoutItems?.worldPt?.value;
     switch (readoutKey) {
         case 'pixelSize':
-            return makePixelReturn(readoutItems.pixel);
+            return {value:makePixelReturn(readoutItems.pixel)};
         case 'sPixelSize':
-            return makePixelReturn(readoutItems.screenPixel);
+            return {value:makePixelReturn(readoutItems.screenPixel)};
         case 'eqj2000hms':
             return makeCoordReturn(wp, CoordinateSys.EQ_J2000, true);
         case 'eqj2000DCM' :
@@ -110,22 +111,22 @@ export function getReadoutElement(readoutItems, readoutKey) {
         case 'eqb1950' :
             return makeCoordReturn(wp, CoordinateSys.EQ_B1950, true);
         case 'fitsIP' :
-            return makeImagePtReturn(readoutItems?.fitsImagePt?.value);
+            return {value:makeImagePtReturn(readoutItems?.fitsImagePt?.value)};
         case 'zeroIP' :
-            return makeImagePtReturn(readoutItems?.zeroBasedImagePt?.value);
+            return {value:makeImagePtReturn(readoutItems?.zeroBasedImagePt?.value)};
         case 'healpixPixel' :
             const {healpixPixel}= readoutItems;
-            return (healpixPixel && healpixPixel.value) ? `${healpixPixel.value}` : '';
+            return {value: (healpixPixel && healpixPixel.value) ? `${healpixPixel.value}` : ''};
         case 'healpixNorder' :
             const {healpixNorder}= readoutItems;
-            return (healpixNorder && healpixNorder.value) ? `${healpixNorder.value}` : '';
+            return {value: (healpixNorder && healpixNorder.value) ? `${healpixNorder.value}` : ''};
         case 'wl' :
             const {wl}= readoutItems;
-            if (!wl) return;
-            return makeWLReturn(wl.value, getFormattedWaveLengthUnits(wl.unit));
+            if (!wl) return {value:undefined};
+            return {value:makeWLReturn(wl.value, getFormattedWaveLengthUnits(wl.unit))};
     }
 
-    return '';
+    return {value:''};
 }
 
 /**
@@ -168,16 +169,18 @@ export function getFluxInfo(sndReadout){
 
 
 function makeCoordReturn(wp, toCsys, hms= false) {
-    if (!wp) return '';
+    if (!wp) return {value:''};
     const p= VisUtil.convert(wp, toCsys);
+    let str;
     if (hms) {
         const hmsLon = CoordUtil.convertLonToString(p.getLon(), toCsys);
         const hmsLat = CoordUtil.convertLatToString(p.getLat(), toCsys);
-        return ` ${hmsLon}, ${hmsLat}`;
+        str= ` ${hmsLon}, ${hmsLat}`;
     }
     else {
-        return sprintf('%.7f, %.7f',p.getLon(), p.getLat());
+        str=  sprintf('%.7f, %.7f',p.getLon(), p.getLat());
     }
+    return {value:str, copyValue:`${str} ${toCsys.toString()}`};
 
 }
 

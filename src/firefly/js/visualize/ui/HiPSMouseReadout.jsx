@@ -21,8 +21,11 @@ export function HiPSMouseReadout({readout, readoutData, showHealpixPixel=true })
     const {readout1, readout2, pixelSize, showReadout1PrefChange,
          showReadout2PrefChange, showPixelPrefChange, healpixPixelReadout, healpixNorderReadout}= displayEle;
 
+    const showCopy= readout.lockByClick;
+    const gridClasses= `mouseReadoutHiPSGrid ${showCopy?'mouseReadoutHiPSGrid-withclip' :''} mouseReadoutDisplaySpace`;
+
     return (
-        <div className='mouseReadoutHiPSGrid mouseReadoutDisplaySpace'>
+        <div className={gridClasses}>
 
             {showHealpixPixel && <DataReadoutItem lArea='nOrderLabel' vArea='nOrderValue'
                                                   label={healpixNorderReadout.label}
@@ -31,10 +34,15 @@ export function HiPSMouseReadout({readout, readoutData, showHealpixPixel=true })
                                                   label={healpixPixelReadout.label}
                                                   value={healpixPixelReadout.value}/>}
 
-            <DataReadoutItem lArea='pixReadoutTopLabel' vArea='pixReadoutTopValue'
-                             label={readout1.label} value={readout1.value} prefChangeFunc={showReadout1PrefChange}/>
-            <DataReadoutItem lArea='pixReadoutBottomLabel' vArea='pixReadoutBottomValue'
-                             label={readout2.label} value={readout2.value} prefChangeFunc={showReadout2PrefChange}/>
+            <DataReadoutItem lArea='pixReadoutTopLabel' vArea='pixReadoutTopValue' cArea='clipboardIconTop'
+                             label={readout1.label} value={readout1.value} prefChangeFunc={showReadout1PrefChange}
+                             copyValue={readout1.copyValue} showCopy={showCopy}
+            />
+
+            <DataReadoutItem lArea='pixReadoutBottomLabel' vArea='pixReadoutBottomValue' cArea='clipboardIconBottom'
+                             label={readout2.label} value={readout2.value} prefChangeFunc={showReadout2PrefChange}
+                             copyValue={readout2.copyValue} showCopy={showCopy}
+            />
             <DataReadoutItem lArea='pixSizeLabel' vArea='pixSizeValue'
                              label={pixelSize.label} value={pixelSize.value} prefChangeFunc={showPixelPrefChange}/>
             <MouseReadoutLock gArea='lock' lockByClick={readout.lockByClick} />

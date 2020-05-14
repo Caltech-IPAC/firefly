@@ -292,18 +292,18 @@ function flipVisible(dl, plotId) {
  * @param {string} plotId
  */
 function changeVisible(dl, visible, plotId) {
-    const {drawLayerId, groupingScope, supportSubgroups}= dl;
+    const {displayGroupId, groupingScope, supportSubgroups}= dl;
     const pv= getPlotViewById(visRoot(),plotId);
     if (groupingScope===GroupingScope.GROUP || !supportSubgroups || !groupingScope || !pv || !pv.drawingSubGroupId)  {
-        dispatchChangeVisibility( {id:drawLayerId, visible,plotId, matchTitle:dl.titleMatching} );
+        dispatchChangeVisibility( {id:displayGroupId, visible,plotId, matchTitle:dl.titleMatching} );
     }
     else {
         switch (groupingScope) {
             case GroupingScope.SUBGROUP : // change all, then put only subgroup back
-                dispatchChangeVisibility({id:drawLayerId, visible,plotId,subGroupId:pv.drawingSubGroupId});
+                dispatchChangeVisibility({id:displayGroupId, visible,plotId,subGroupId:pv.drawingSubGroupId});
                 break;
             case GroupingScope.SINGLE : // change all, then put only image back
-                dispatchChangeVisibility({id:drawLayerId, visible,plotId, useGroup:false});
+                dispatchChangeVisibility({id:displayGroupId, visible,plotId, useGroup:false});
                 break;
             default :
                 console.log('DrawLayerPanelView.changeVisible show never happen');

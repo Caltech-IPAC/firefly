@@ -28,7 +28,7 @@ var idCnt=0;
 
 function creator(initPayload, presetDefaults) {
 
-    const {drawLayerId, plotId, layersPanelLayoutId, titlePrefix, searchTargetWP, color, canUserDelete=false}= initPayload;
+    const {drawLayerId, displayGroupId, plotId, layersPanelLayoutId, titlePrefix, searchTargetWP, color, canUserDelete=false}= initPayload;
     const drawingDef= {
         ...makeDrawingDef(color||'yellow', {lineWidth:1, size:10, fontWeight:'bolder', symbol: DrawSymbol.POINT_MARKER } ),
         ...presetDefaults};
@@ -37,6 +37,7 @@ function creator(initPayload, presetDefaults) {
 
     const options= {
         plotId,
+        displayGroupId,
         layersPanelLayoutId,
         titlePrefix,
         searchTargetWP,

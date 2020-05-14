@@ -9,7 +9,7 @@ import {visRoot} from '../ImagePlotCntlr.js';
 import {flux} from '../../Firefly.js';
 import {VisHeaderView} from './VisHeaderView.jsx';
 import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
-import {readoutRoot} from '../../visualize/MouseReadoutCntlr.js';
+import {readoutRoot} from '../MouseReadoutCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {addImageReadoutUpdateListener, lastMouseImageReadout, lastMouseCtx} from '../VisMouseSync.js';
 
@@ -57,6 +57,11 @@ export class ApiExpandedDisplay extends PureComponent {
                 <div style={{position: 'relative', marginBottom:'6px'}} className='banner-background'>
                     <VisHeaderView visRoot={visRoot} currMouseState={currMouseState}
                                    readoutData={readoutData} readout={readout}
+                                   style={{
+                                       height: 34,
+                                       minHeight: 34,
+                                       padding: '2px 0 1px 0'
+                                   }}
                                    showHealpixPixel={showHealpixPixel}/>
                 </div>
                 <div style={{flex: '1 1 auto', display:'flex'}}>

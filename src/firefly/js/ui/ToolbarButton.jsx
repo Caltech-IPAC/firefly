@@ -228,7 +228,7 @@ ToolbarButton.propTypes= {
 
 
 export function ToolbarHorizontalSeparator({top=0, style={}}) {
-    const s= {top, ...style}
+    const s= {top, ...style};
     return <div style={s} className='ff-horizontal-separator'/>;
 }
 

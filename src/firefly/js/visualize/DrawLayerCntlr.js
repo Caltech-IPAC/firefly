@@ -577,7 +577,7 @@ function getDrawLayerId(dlRoot,id) {
 /**
  *
  * @param dlRoot
- * @param id - drawLayerId or drawLayerTypeId
+ * @param id - drawLayerId or drawLayerTypeId or displayGroupId
  * @param matchTitles
  * @return {Array.<String>} the list of drawLayerIds
  */
@@ -585,7 +585,7 @@ function getDrawLayerIdAry(dlRoot,id, matchTitles= false) {
     const idAry= Array.isArray(id) ? id: [id];
     const dlAry= dlRoot.drawLayerAry
         .filter( (dl) => idAry
-            .filter( (id) => id===dl.drawLayerId || id===dl.drawLayerTypeId)
+            .filter( (id) => new Set([dl.drawLayerId,dl.drawLayerTypeId,dl.displayGroupId]).has(id))
             .length>0);
 
     let retDlAry= dlAry;

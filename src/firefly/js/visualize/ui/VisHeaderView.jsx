@@ -9,7 +9,7 @@ import {MagnifiedView} from './MagnifiedView.jsx';
 import {getActivePlotView, getPlotViewById} from '../PlotViewUtil.js';
 import {MouseReadout} from './MouseReadout.jsx';
 import {HiPSMouseReadout} from './HiPSMouseReadout';
-import {STANDARD_READOUT, HIPS_STANDARD_READOUT} from '../../visualize/MouseReadoutCntlr.js';
+import {STANDARD_READOUT, HIPS_STANDARD_READOUT} from '../MouseReadoutCntlr.js';
 
 
 const readoutUI = {
@@ -25,7 +25,6 @@ const rS= {
     display: 'inline-block',
     position: 'relative',
     verticalAlign: 'top',
-    cursor:'pointer',
     whiteSpace : 'nowrap',
     overflow : 'hidden'
 };
@@ -37,14 +36,14 @@ const rS= {
  * @param props.readoutData
  * @param props.showHealpixPixel
  */
-export function VisHeaderView({readout, readoutData, showHealpixPixel=false}) {
+export function VisHeaderView({readout, readoutData, showHealpixPixel=false, style={}}) {
 
     const ActiveReadoutUI= readoutData && readoutUI[readoutData.readoutType];
     if (!ActiveReadoutUI) return (<div style={rS}/>);
 
     return (
         <div style={{display:'inline-block', float:'right', whiteSpace:'nowrap'}}>
-            <div style={rS}>
+            <div style={{...rS, ...style}}>
                 <div style={{position:'absolute', color:'white'}}>
                     {ActiveReadoutUI && <ActiveReadoutUI readout={readout} readoutData={readoutData} showHealpixPixel={showHealpixPixel}/>}
                 </div>
@@ -56,7 +55,8 @@ export function VisHeaderView({readout, readoutData, showHealpixPixel=false}) {
 VisHeaderView.propTypes= {
     readout:  PropTypes.object.isRequired,
     readoutData:  PropTypes.object,
-    showHealpixPixel : PropTypes.bool
+    showHealpixPixel : PropTypes.bool,
+    style: PropTypes.number
 };
 
 
