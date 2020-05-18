@@ -64,23 +64,6 @@ export function callGetWebPlotGroup(reqAry,  requestKey) {
     return doJsonRequest(ServerParams.CREATE_PLOT_GROUP, paramList,true);
 }
 
-/**
- *
- * @deprecated
- * @param stateAry
- * @param rotate
- * @param angle
- * @param newZoomLevel
- */
-// export function callRotateToAngle(stateAry, rotate, angle, newZoomLevel) {
-//     var params = makeParamsWithStateAry(stateAry,false, [
-//                        {name: ServerParams.ROTATE, value: rotate + ''},
-//                        {name: ServerParams.ANGLE, value: angle + ''},
-//                        {name: ServerParams.ZOOM, value: newZoomLevel + ''},
-//                    ]);
-//     return doJsonRequest(ServerParams.ROTATE_ANGLE, params, true);
-// }
-
 
 export function callGetAreaStatistics(state, ipt1, ipt2, ipt3, ipt4, areaShape = SelectedShape.rect.key, rotation = 0) {
     var params= {

@@ -762,8 +762,7 @@ export class WebPlotRequest extends ServerRequest {
     setMultiImageExts(idxS) { this.setParam(WPConst.MULTI_IMAGE_EXTS, idxS); }
 
     /**
-     *
-     * @param gridOnStatus GridOnStatus
+     * @param {GridOnStatus|boolean} gridOnStatus GridOnStatus
      */
     setGridOn(gridOnStatus= GridOnStatus.FALSE) {
         const stat= GridOnStatus.get( String(gridOnStatus) );

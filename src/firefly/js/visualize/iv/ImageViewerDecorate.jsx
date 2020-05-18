@@ -3,14 +3,14 @@
  */
 
 
-import React, {Component} from 'react';
+import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
-import {get,isEmpty,omit,isFunction} from 'lodash';
+import {isEmpty,omit,isFunction} from 'lodash';
 import {getPlotGroupById}  from '../PlotGroup.js';
 import {ExpandType, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
-import {VisCtxToolbarView, canConvertHipsAndFits} from './../ui/VisCtxToolbarView.jsx';
-import {VisInlineToolbarView} from './../ui/VisInlineToolbarView.jsx';
+import {VisCtxToolbarView, canConvertHipsAndFits} from '../ui/VisCtxToolbarView';
+import {VisInlineToolbarView} from '../ui/VisInlineToolbarView';
 import {primePlot, isActivePlotView, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {ImageViewerLayout}  from '../ImageViewerLayout.jsx';
 import {isImage, isHiPS} from '../WebPlot.js';
@@ -19,12 +19,12 @@ import {AnnotationOps} from '../WebPlotRequest.js';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import {AREA_SELECT,LINE_SELECT,POINT} from '../../core/ExternalAccessUtils.js';
 import {PlotTitle, TitleType} from './PlotTitle.jsx';
-import './ImageViewerDecorate.css';
 import Catalog from '../../drawingLayers/Catalog.js';
 import LSSTFootprint from '../../drawingLayers/ImageLineBasedFootprint';
 import {DataTypes} from '../draw/DrawLayer.js';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {getNumFilters} from '../../tables/FilterInfo';
+import './ImageViewerDecorate.css';
 
 const EMPTY_ARRAY=[];
 
@@ -131,7 +131,7 @@ function contextToolbar(pv,dlAry,extensionList) {
         const selAry= extensionList.filter( (ext) => ext.extType===AREA_SELECT);
         const extensionAry= isEmpty(selAry) ? EMPTY_ARRAY : selAry;
         return (
-            <VisCtxToolbarView {...{plotView:pv, dlAry,  extensionAry,
+            <VisCtxToolbarView {...{plotView:pv, extensionAry,
                                     showSelectionTools:true, showCatSelect:select,
                                     showCatUnSelect:unselect,
                                     showFilter:filter, showClearFilter:clearFilter,
@@ -143,7 +143,7 @@ function contextToolbar(pv,dlAry,extensionList) {
         const distAry= extensionList.filter( (ext) => ext.extType===LINE_SELECT);
         if (!distAry.length && !showMulti && !hipsFits) return false;
         return (
-            <VisCtxToolbarView plotView={pv} dlAry={dlAry} extensionAry={isEmpty(distAry)?EMPTY_ARRAY:distAry}
+            <VisCtxToolbarView plotView={pv} extensionAry={isEmpty(distAry)?EMPTY_ARRAY:distAry}
                                showMultiImageController={showMulti}/>
         );
     }
@@ -151,13 +151,13 @@ function contextToolbar(pv,dlAry,extensionList) {
         const ptAry= extensionList.filter( (ext) => ext.extType===POINT);
         if (!ptAry.length && !showMulti && !hipsFits) return false;
         return (
-            <VisCtxToolbarView plotView={pv} dlAry={dlAry} extensionAry={isEmpty(ptAry)?EMPTY_ARRAY:ptAry}
+            <VisCtxToolbarView plotView={pv} extensionAry={isEmpty(ptAry)?EMPTY_ARRAY:ptAry}
                                showMultiImageController={showMulti}/>
         );
     }
     else if (showUnselect(pv, dlAry)) {
         return (
-            <VisCtxToolbarView {...{plotView:pv, dlAry,  extensionAry:EMPTY_ARRAY,
+            <VisCtxToolbarView {...{plotView:pv, extensionAry:EMPTY_ARRAY,
                 showCatUnSelect:true, showClearFilter:showClearFilter(pv,dlAry),
                 showMultiImageController:showMulti}}
             />
@@ -165,7 +165,7 @@ function contextToolbar(pv,dlAry,extensionList) {
     }
     else if (showClearFilter(pv,dlAry)) {
         return (
-            <VisCtxToolbarView {...{plotView:pv, dlAry,  extensionAry:EMPTY_ARRAY,
+            <VisCtxToolbarView {...{plotView:pv, extensionAry:EMPTY_ARRAY,
                 showClearFilter:true,
                 showMultiImageController:showMulti}}
             />
@@ -173,8 +173,7 @@ function contextToolbar(pv,dlAry,extensionList) {
     }
     else if (showMulti || hipsFits || isHiPS(plot)) {
         return (
-            <VisCtxToolbarView plotView={pv} dlAry={dlAry} extensionAry={EMPTY_ARRAY}
-                               showMultiImageController={showMulti}/>
+            <VisCtxToolbarView plotView={pv} extensionAry={EMPTY_ARRAY} showMultiImageController={showMulti}/>
         );
     }
     return false;
@@ -193,15 +192,13 @@ function makeInlineRightToolbar(visRoot,pv,dlAry,mousePlotId, handleInlineTools,
     if (!pv && tb && handleInlineTools) {
         return (
             <div style={style} className='iv-decorate-inline-toolbar-container'>
-                <VisInlineToolbarView pv={pv} dlAry={undefined} showLayer={false}
+                <VisInlineToolbarView pv={pv} showLayer={false}
                                       showExpand={false} showToolbarButton={true} showDelete ={false} />
             </div>
         );
 
     }
     if (!pv) return false;
-
-
     if (!useInlineToolbar) return false;
     if (isExpanded) {
         if (showDelete) {
@@ -209,7 +206,7 @@ function makeInlineRightToolbar(visRoot,pv,dlAry,mousePlotId, handleInlineTools,
 
                 <div className='iv-decorate-inline-toolbar-container'>
                     <VisInlineToolbarView
-                        pv={pv} dlAry={dlAry}
+                        pv={pv} dlCount={dlAry?.length}
                         showLayer={false} showExpand={false} showToolbarButton={false} showDelete ={true} />
                 </div>
             );
@@ -218,11 +215,11 @@ function makeInlineRightToolbar(visRoot,pv,dlAry,mousePlotId, handleInlineTools,
             return false;
         }
     }
-    const exVis= BrowserInfo.isTouchInput() || mousePlotId===pv.plotId;
+    const exVis= BrowserInfo.isTouchInput() || !mousePlotId || mousePlotId===pv.plotId;
     return (
         <div style={style} className='iv-decorate-inline-toolbar-container'>
             <VisInlineToolbarView
-                pv={pv} dlAry={dlAry}
+                pv={pv} dlAry={dlAry?.length}
                 showLayer={lVis && handleInlineTools}
                 showExpand={exVis && handleInlineTools}
                 showToolbarButton={tb && handleInlineTools}
@@ -230,154 +227,93 @@ function makeInlineRightToolbar(visRoot,pv,dlAry,mousePlotId, handleInlineTools,
                 />
         </div>
     );
-
-
-
 }
 
 function getBorderColor(pv,visRoot) {
     if (!pv && !pv.plotId) return 'rgba(0,0,0,.4)';
-
     if (isActivePlotView(visRoot,pv.plotId)) return 'orange';
-
     const group= getPlotGroupById(visRoot,pv.plotGroupId);
-
     if (group && group.overlayColorLock) return '#005da4';
     else return 'rgba(0,0,0,.4)';
 }
 
-/**
- *
- * @param pv
- * @param brief
- * @param workingIcon
- * @return {*}
- */
-function makeInlineTitle(pv, brief, workingIcon) {
-    return (
-        <PlotTitle brief={brief} titleType={TitleType.INLINE} plotView={pv} working={workingIcon}/>
-    );
-}
-
-/**
- *
- * @param pv
- * @param brief
- * @return {*}
- */
-function makeTitleLineHeader(pv, brief) {
-    return (
-        <PlotTitle brief={brief} titleType={TitleType.HEAD} plotView={pv} />
-    );
-}
 
 
 //===========================================================================
 //---------- React Components -----------------------------------------------
 //===========================================================================
 
-class ImageViewerDecorate extends Component {
-    constructor(props) {
-        super(props);
-        this.makeActive= this.makeActive.bind(this);
+const omitList= ['mousePlotId', 'size'];
+
+function arePropsEquals(props, np) {
+    if (props.size.width!==np.size.width || props.size.height!==np.size.height) return false;
+    if (!shallowequal(omit(np,omitList), omit(props,omitList))) return false;
+    const plotId= props.plotView?.plotId;
+    if (props.mousePlotId!==np.mousePlotId && (props.mousePlotId===plotId || np.mousePlotId===plotId)) return false;
+    return true;
+} //todo: look at closely for optimization
+
+
+
+const ImageViewerDecorate= memo((props) => {
+    const {plotView:pv,drawLayersAry,extensionList,visRoot,mousePlotId, handleInlineTools=true,workingIcon,
+        size:{width,height}, inlineTitle=true, aboveTitle= false }= props;
+
+    const showDelete= pv.plotViewCtx.userCanDeletePlots;
+    const ctxToolbar= contextToolbar(pv,drawLayersAry,extensionList);
+    const top= ctxToolbar?32:0;
+    const expandedToSingle= (visRoot.expandedMode===ExpandType.SINGLE);
+    const plot= primePlot(pv);
+    const iWidth= Math.max(expandedToSingle ? width : width-4,0);
+    const iHeight=Math.max(expandedToSingle ? height-top :height-5-top,0);
+
+    const brief= briefAnno.includes(pv.plotViewCtx.annotationOps);
+    const titleLineHeaderUI= (plot && aboveTitle) ?
+                <PlotTitle brief={brief} titleType={TitleType.HEAD} plotView={pv} /> : undefined;
+    const inlineTitleUI= (plot && inlineTitle) ?
+                <PlotTitle brief={brief} titleType={TitleType.INLINE} plotView={pv} working={workingIcon}/> : undefined;
+
+    const outerStyle= { width: '100%', height: '100%', overflow:'hidden', position:'relative'};
+
+    const innerStyle= {
+        width:'calc(100% - 4px)',
+        bottom: 0,
+        top: titleLineHeaderUI ? 20 : 0,
+        overflow: 'hidden',
+        position: 'absolute',
+        borderStyle: 'solid',
+        borderWidth: expandedToSingle ? '0 0 0 0' : '3px 2px 2px 2px',
+        borderColor: getBorderColor(pv,visRoot)
+    };
+
+    if (titleLineHeaderUI) {
+        outerStyle.boxShadow= 'inset 0 0 3px #000';
+        outerStyle.padding= '3px';
+        outerStyle.width='calc(100% - 6px)';
+        outerStyle.height='calc(100% - 6px)';
+        innerStyle.bottom= 2;
+        innerStyle.width= 'calc(100% - 10px)';
     }
 
-    shouldComponentUpdate(np) {
-        const {props:p}= this;
-        const omitList= ['mousePlotId'];
-        const update= !shallowequal(omit(np,omitList), omit(p,omitList) );
-        if (update) return true;
+    const makeActive= () => pv?.plotId && dispatchChangeActivePlotView(pv.plotId);
 
-        const plotId= get(p.plotView, 'plotId');
-        if (p.mousePlotId!==np.mousePlotId && (p.mousePlotId===plotId || np.mousePlotId===plotId)) return true;
-
-
-        return false;
-
-
-    } //todo: look at closely for optimization
-
-
-
-    makeActive() {
-        const plotId= get(this.props,'plotView.plotId');
-        if (plotId) dispatchChangeActivePlotView(plotId);
-    }
-
-    render() {
-        const {plotView:pv,drawLayersAry,extensionList,visRoot,mousePlotId,
-               handleInlineTools,workingIcon, size:{width,height},
-               inlineTitle=true, aboveTitle= false }= this.props;
-
-        const showDelete= pv.plotViewCtx.userCanDeletePlots;
-        const ctxToolbar= contextToolbar(pv,drawLayersAry,extensionList);
-        const top= ctxToolbar?32:0;
-        let titleLineHeaderUI= null;
-        let inlineTitleUI= null;
-        const {expandedMode}= visRoot;
-        const expandedToSingle= (expandedMode===ExpandType.SINGLE);
-        let iWidth= expandedToSingle ? width : width-4;
-        let iHeight=expandedToSingle ? height-top :height-5-top;
-        const plot= primePlot(pv);
-        if (iWidth<0) iWidth= 0;
-        if (iHeight<0) iHeight= 0;
-
-        if (plot) {
-            const brief= briefAnno.includes(pv.plotViewCtx.annotationOps);
-            titleLineHeaderUI= aboveTitle && makeTitleLineHeader(pv, brief);
-            inlineTitleUI= inlineTitle && makeInlineTitle(pv, brief, workingIcon);
-        }
-
-        const outerStyle= {
-            width: '100%',
-            height: '100%',
-            overflow:'hidden',
-            position:'relative',
-        };
-
-
-        const innerStyle= {
-            width:'calc(100% - 4px)',
-            bottom: 0,
-            top: titleLineHeaderUI ? 20 : 0,
-            overflow: 'hidden',
-            position: 'absolute',
-            borderStyle: 'solid',
-            borderWidth: expandedToSingle ? '0 0 0 0' : '3px 2px 2px 2px',
-            borderColor: getBorderColor(pv,visRoot)
-        };
-
-        if (titleLineHeaderUI) {
-            outerStyle.boxShadow= 'inset 0 0 3px #000';
-            outerStyle.padding= '3px';
-            outerStyle.width='calc(100% - 6px)';
-            outerStyle.height='calc(100% - 6px)';
-            innerStyle.bottom= 2;
-            innerStyle.width= 'calc(100% - 10px)';
-        }
-
-
-        return (
-            <div style={outerStyle} className='disable-select'
-                 onTouchStart={this.makeActive}
-                 onClick={this.makeActive} >
-                {titleLineHeaderUI}
-                <div className='image-viewer-decorate' style={innerStyle}>
-                    {ctxToolbar}
-                    <div style={{position: 'absolute', width:'100%', top, bottom:0}}>
-                        <ImageViewerLayout plotView={pv} drawLayersAry={drawLayersAry}
-                                                      width={iWidth} height={iHeight}
-                                                      externalWidth={width} externalHeight={height}/>
-                        {inlineTitleUI}
-                        {makeInlineRightToolbar(visRoot,pv,drawLayersAry,mousePlotId,handleInlineTools,showDelete)}
-                    </div>
+    return (
+        <div style={outerStyle} className='disable-select' onTouchStart={makeActive} onClick={makeActive} >
+            {titleLineHeaderUI}
+            <div className='image-viewer-decorate' style={innerStyle}>
+                {ctxToolbar}
+                <div style={{position: 'absolute', width:'100%', top, bottom:0}}>
+                    <ImageViewerLayout plotView={pv} drawLayersAry={drawLayersAry}
+                                       width={iWidth} height={iHeight}
+                                       externalWidth={width} externalHeight={height}/>
+                    {inlineTitleUI}
+                    {makeInlineRightToolbar(visRoot,pv,drawLayersAry,mousePlotId,handleInlineTools,showDelete)}
                 </div>
             </div>
+        </div>
         );
 
-    }
-
-}
+}, arePropsEquals);
 
 ImageViewerDecorate.propTypes= {
     plotView : PropTypes.object.isRequired,
@@ -392,12 +328,4 @@ ImageViewerDecorate.propTypes= {
     aboveTitle: PropTypes.bool
 };
 
-
-ImageViewerDecorate.defaultProps = {
-    handleInlineTools : true,
-    showDelete : false
-};
-
-
 export const ImageViewerView= wrapResizer(ImageViewerDecorate);
-

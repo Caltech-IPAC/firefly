@@ -371,6 +371,11 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
     const hipsRequest= initRequest(WebPlotRequest.makeHiPSRequest(preferredHipsSourceURL, null),
                        viewerId, PLOT_ID, overlayPosition, avgOfCenters);
     hipsRequest.setSizeInDeg(size);
+    if (options.gridOn) {
+        imageRequest.setGridOn(options.gridOn);
+        hipsRequest.setGridOn(options.gridOn);
+
+    }
 
     const tblIdAry= Object.keys(preparedTables).filter( (v) => !isString(preparedTables[v]));
 

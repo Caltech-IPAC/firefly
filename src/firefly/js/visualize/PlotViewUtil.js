@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {difference, flatten, get, has, isArray, isEmpty, isString, isUndefined, isObject,uniq} from 'lodash';
+import {difference, pick, flatten, get, has, isArray, isEmpty, isString, isUndefined, isObject,uniq} from 'lodash';
 import {getPlotGroupById} from './PlotGroup.js';
 import {makeDevicePt, makeImagePt, makeWorldPt, pointEquals} from './Point.js';
 import {clone} from '../util/WebUtil.js';
@@ -16,6 +16,7 @@ import {getNumberHeader, HdrConst} from './FitsHeaderUtil.js';
 import {computeBoundingBoxInDeviceCoordsForPlot, containsRec} from './VisUtil';
 import {dispatchAddActionWatcher} from '../core/MasterSaga';
 import ImagePlotCntlr, {visRoot} from './ImagePlotCntlr';
+import shallowequal from 'shallowequal';
 
 
 export const CANVAS_IMAGE_ID_START= 'image-';
@@ -202,7 +203,7 @@ export function isActivePlotView(visRoot,plotId) { return visRoot.activePlotId==
  * @return {PlotView} the active plot view
  */
 export function getActivePlotView(visRoot) {
-    return visRoot.plotViewAry.find( (pv) => pv.plotId===visRoot.activePlotId);
+    return visRoot?.plotViewAry.find( (pv) => pv.plotId===visRoot.activePlotId);
 }
 
 /**
@@ -761,6 +762,7 @@ export function getPvNewPlotIdAry(pvNewPlotInfoAry) {
  * @return {boolean}
  */
 export function isPlotIdInPvNewPlotInfoAry(pvNewPlotInfoAry, plotId) {
+    if (!pvNewPlotInfoAry || !plotId) return false;
     return pvNewPlotInfoAry.some( (npi) => npi.plotId===plotId);
 }
 
@@ -1149,3 +1151,63 @@ export const getPtWavelength= (plot, pt, cubeIdx) =>
           hasWLInfo(plot) && getWavelength(CCUtil.getImageCoords(plot,pt),cubeIdx,plot.wlData);
 
 
+
+/**
+ * Return true if the two PlotViews are equals except for scrolling parameters
+ * This code is written to be a efficient as possible
+ *    - by testing the mostly likely differences first.
+ *    - caching the last call
+ *    - don't check the fields that are considered immutable in the plotview or plot object
+ *    - don't check the fields that are more minor that will only change if a major field changes
+ *                - i.e. if the plotId is the same then the plotGroupId and drawingSubGroupId will be the same
+ *                - i.e. if plot.plotImageId is the same then dataWidth, dataHeight, some hips parameters will be the same
+ *
+ *  IMPORTANT - this function should be updated if plotView or WebPlot objects are updated
+ *
+ * @param {PlotView} pv1
+ * @param {PlotView} pv2
+ * @return {boolean}
+ */
+export const pvEqualExScroll= (() => {
+    let lastPv1, lastPv2;
+    let lastResult= false;
+    return (pv1,pv2) => {
+        if (pv1===lastPv1 && pv2===lastPv2) return lastResult;
+
+        lastPv1= pv1;
+        lastPv2= pv2;
+        if (pv1 === pv2) {
+            lastResult= true;
+            return true;
+        }
+        let result= true;
+        if (!pv1 || !pv2 ||
+            pv1.plotId !== pv2.plotId ||
+            pv1.primeIdx!==pv2.primeIdx &&
+            pv1.serverCall!==pv2.serverCall &&
+            pv1.plottingStatusMsg !== pv2.plottingStatusMsg) {
+            result= false;
+        }
+        if (result && pv1.plots !== pv2.plots) {
+            const p1 = primePlot(pv1);
+            const p2 = primePlot(pv2);
+            if (p1 !== p2) {
+                if (p1.plotImageId !== p2.plotImageId ||  //
+                    isHiPS(p1) !== isHiPS(p2) ||
+                    p1.attributes !== p2.attributes ||
+                    p1.screenSize !== p2.screenSize ||
+                    p1.zoomFactor !== p2.zoomFactor ||
+                    p1.imageCoordSys !== p2.imageCoordSys ||
+                    p1.plotState !== p2.plotState) result= false;
+            }
+        }
+        if (result && (
+            pv1.visible!==pv2.visible || pv1.request!==pv2.request ||
+            pv1.viewDim!==pv2.viewDim || pv1.menuItemKeys!==pv2.menuItemKeys ||
+            pv1.plotViewCtx!==pv2.plotViewCtx || pv1.rotation!==pv2.rotation ||
+            pv1.flipY!==pv2.flipY)) result= false;
+        if (result && !shallowequal(pv1.overlayPlotViews, pv2.overlayPlotViews)) result= false;
+        lastResult= result;
+        return result;
+    };
+})();

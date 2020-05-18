@@ -2,29 +2,29 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-
-import React, {PureComponent} from 'react';
+import React, {memo, useContext, useRef} from 'react';
 import PropTypes from 'prop-types';
-import './ToolbarButton.css';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
-import {DROP_DOWN_KEY} from './DropDownToolbarButton.jsx';
 import {ToolTipCtx} from '../visualize/ui/VisToolbar.jsx';
+import './ToolbarButton.css';
+import {DROP_DOWN_KEY} from './DropDownToolbarButton.jsx';
 import DROP_DOWN_ICON from 'html/images/dd-narrow.png';
 import CHECK_BOX from 'html/images/black_check-on_10x10.gif';
 
 
 export function makeBadge(cnt) {
-    var cName= `ff-badge ${cnt<10 ? 'badge-1-digit' : 'badge-2-digit'}`;
+    const cName= `ff-badge ${cnt<10 ? 'badge-1-digit' : 'badge-2-digit'}`;
     return <div className={cName}>{Math.trunc(cnt)}</div>;
 }
 
-export function makeDropDownIndicator(cnt) {
-    // return (<img className={'ff-dropDownIndicator'} src={DROP_DOWN_ICON}/>);
-    return (<img src={DROP_DOWN_ICON} style={{width:11, height:6, alignSelf: 'center'}}/>);
-}
+const checkBoxBaseStyle= {width: 10, height: 10, paddingRight: 4, alignSelf: 'center'};
 
+const makeCheckBox= (checkBoxOn, imageStyle= {}) => checkBoxOn ?
+            <img style={{...checkBoxBaseStyle, ...imageStyle}} src={CHECK_BOX}/> : <span style={{width:14}}/>;
 
-var todoStyle= {
+const makeDropDownIndicator= () => (<img src={DROP_DOWN_ICON} style={{width:11, height:6, alignSelf: 'center'}}/>);
+
+const todoStyle= {
     position : 'absolute',
     left  : 1,
     top  : 7,
@@ -33,20 +33,8 @@ var todoStyle= {
     background : 'rgba(245,0,255,.8)',
     borderRadius : '5px',
     whiteSpace : 'nowrap'
-
 };
-
-
-
-
-function handleClick(onClick, dropdownCB ,divElement) {
-    if (onClick) onClick(divElement);
-    dropdownCB ? dropdownCB(divElement) : dispatchHideDialog(DROP_DOWN_KEY);
-}
-
-
-
-
+const makeToDoTag= () => <div style={todoStyle}>ToDo</div>;
 
 /**
  *
@@ -65,140 +53,92 @@ function handleClick(onClick, dropdownCB ,divElement) {
  * @param tipOnCB
  * @param tipOffCB
  * @param lastTextItem
- * @param additionalStyle - a style to apply (deprecated)
  * @param style - a style to apply
  * @param todo show a todo message
- * @param ctx
  * @return {object}
  */
 
+export const ToolbarButton = memo((props) => {
+    const {
+        icon,text='',tip='',badgeCount=0,enabled=true, horizontal=true, bgDark= false, visible=true, active= false,
+        imageStyle={}, lastTextItem=false, todo= false, style={},
+        useDropDownIndicator= false, hasCheckBox=false, checkBoxOn=false,
+        tipOnCB, tipOffCB, dropDownCB, onClick} = props;
 
-export class ToolbarButton extends PureComponent {
-    constructor(props) {
-        super(props);
-        this.click= this.click.bind(this);
-        this.mouseOver= this.mouseOver.bind(this);
-        this.mouseOut= this.mouseOut.bind(this);
-        this.setupRef= this.setupRef.bind(this);
+    const tipCtx = useContext(ToolTipCtx);
+    const {current:divElementRef}= useRef({divElement:undefined});
+    if (!visible) return false;
+
+    const handleClick= () => {
+        onClick?.(divElementRef.divElement);
+        dropDownCB ? dropDownCB(divElementRef.divElement) : dispatchHideDialog(DROP_DOWN_KEY);
+    };
+
+    const mouseOver= () => tipOnCB ? tipOnCB(tip) : tipCtx?.tipOnCB?.(tip);
+    const mouseOut= () => tipOffCB ? tipOffCB() : tipCtx?.tipOffCB?.();
+    const setupRef  = (c) => divElementRef.divElement= c;
+
+    const baseStyle= { position: 'relative', display: (horizontal) ? 'inline-flex' : 'flex'};
+    let textCName= 'menuItemText';
+
+    const cName= `ff-MenuItem ${bgDark ? 'ff-MenuItem-dark' : 'ff-MenuItem-light'}`+
+        ` ${enabled ? '' : 'ff-MenuItem-disabled'} ${active ? 'ff-MenuItem-active':''}`;
+
+    if (horizontal && !icon) { //used for horizontal text only, this is usually a dropdown menu
+        const horizontalStyle= {
+            ...baseStyle,
+            height: 'calc(100% - 7px)',
+            verticalAlign: 'bottom',
+            fontSize: '10pt',
+            position: 'relative'
+        };
+        textCName= 'ff-menuItemHText';
+        return (
+            <div style={{display:'inline-block', height:'100%', flex:'0 0 auto' ,...style}}>
+                <div style={{ display:'inline-block', margin:'0 4px 0 4px', height: 'calc(100% - 7px)'}} />
+                <div title={tip} style={horizontalStyle} className={cName}
+                     ref={setupRef} onClick={handleClick} onMouseOver={mouseOver} onMouseOut={mouseOut}>
+                    <div className={textCName}>{text}</div>
+                    {useDropDownIndicator && makeDropDownIndicator()}
+                    {badgeCount>0 && makeBadge(badgeCount)}
+                    {todo && makeToDoTag()}
+                </div>
+                {lastTextItem &&
+                     <div style={{ display: 'inline-block', margin: '0 4px 0 4px', height: 'calc(100% - 7px)'}} />}
+            </div>
+        );
     }
-    click() {
-        var { dropDownCB, onClick} = this.props;
-        handleClick(onClick,dropDownCB,this.divElement);
-    }
-
-    mouseOver() {
-        var {tipOnCB,tip} = this.props;
-        if (!tipOnCB && this.context) tipOnCB= this.context.tipOnCB;
-        if (tipOnCB) tipOnCB(tip);
-    }
-
-    mouseOut() {
-        var {tipOffCB} = this.props;
-        if (!tipOffCB && this.context) tipOffCB= this.context.tipOffCB;
-        if (tipOffCB) tipOffCB();
-    }
-
-    setupRef(c) { this.divElement= c; }
-
-    render() {
-        const {
-            icon,text,tip,badgeCount=0,enabled=true,
-            horizontal=true, bgDark, visible=true, active,
-            imageStyle, lastTextItem=false, todo, additionalStyle, style={},
-            hasHorizontalLayoutSep, useDropDownIndicator,
-            hasCheckBox=false, checkBoxOn=false } = this.props;
-
-
-        var s= { position: 'relative'};
-        if (horizontal) {
-            s.display='inline-flex';
-        }
-        else {
-            s.display= 'flex';
-        }
-
-        var textCName= 'menuItemText';
-
-
-        // if (!visible) return <div style={s}></div>;
-        if (!visible) return false;
-        var cName= `ff-MenuItem ${bgDark ? 'ff-MenuItem-dark' : 'ff-MenuItem-light'}`+
-            ` ${enabled ? '' : 'ff-MenuItem-disabled'} ${active ? 'ff-MenuItem-active':''}`;
-
-        if (horizontal && !icon) {
-            s.height= 'calc(100% - 7px)';
-            s.verticalAlign= 'bottom';
-            s.fontSize= '10pt';
-            s.position= 'relative';
-            textCName= 'ff-menuItemHText';
-            const topStyle= Object.assign({}, {display:'inline-block', height:'100%', flex:'0 0 auto' },additionalStyle,style);
+    else {
+        if (icon&&text) {  // button in vertical style with both icon and text, least common case
             return (
-                <div style={topStyle}>
-                    <div style={{ display:'inline-block',
-                              margin:'0 4px 0 4px',
-                              height: 'calc(100% - 7px)',
-                              borderLeft : hasHorizontalLayoutSep ? '1px solid rgba(0,0,0,.6)':'none' }} />
-                    <div title={tip} style={s} className={cName}
-                         ref={this.setupRef}
-                         onClick={this.click} onMouseOver={this.mouseOver} onMouseOut={this.mouseOut}>
-                        <div className={textCName}>{text}</div>
-                        {useDropDownIndicator ? makeDropDownIndicator() : ''}
-                        {badgeCount ? makeBadge(badgeCount) : ''}
-                        {todo?<div style={todoStyle}>ToDo</div>:false}
+                <div title={tip} style={{display: 'flex', alignItems: 'center'}} className={cName}
+                     ref={setupRef} onClick={handleClick} onMouseOver={mouseOver} onMouseOut={mouseOut}>
+                    <div style= {{display:'flex', flexGrow:1, alignItems:'center'}} className={textCName}>
+                        <img style={imageStyle} src={icon} className={textCName}/>
+                        <span style={{paddingLeft:5, flexGrow:1}}>{text}</span>
                     </div>
-
-                    {lastTextItem ? <div style={{ display:'inline-block',
-                                              margin:'0 4px 0 4px',
-                                              height: 'calc(100% - 7px)',
-                                              borderLeft : hasHorizontalLayoutSep ? '1px solid rgba(0,0,0,.6)':'none'
-                                              }} /> : false}
+                    {badgeCount>0 && makeBadge(badgeCount)}
+                    {todo && makeToDoTag()}
                 </div>
             );
-
         }
-        else {
-            Object.assign(s,additionalStyle,style);
-            if (icon&&text) {  // button in vertical style with both icon and text
-                return (
-                    <div title={tip} style={{display: 'flex', alignItems: 'center'}} className={cName}
-                         ref={this.setupRef}
-                         onClick={this.click} onMouseOver={this.mouseOver} onMouseOut={this.mouseOut}>
-                        <div style= {{display:'flex', flexGrow:1, alignItems:'center'}} className={textCName}>
-                            <img style={imageStyle} src={icon} className={textCName}/>
-                            <span style={{paddingLeft:5, flexGrow:1}}>{text}</span>
-                        </div>
-                        {badgeCount ? makeBadge(badgeCount) : ''}
-                        {todo ? <div style={todoStyle}>ToDo</div> : false}
+        else { // this is the most common case - vertical text buttons or horizontal icons
+            return (
+                <div title={tip} style={{...baseStyle, flex: '0 0 auto', ...style}} className={cName}
+                     ref={setupRef} onClick={handleClick} onMouseOver={mouseOver} onMouseOut={mouseOut}>
+                    <div style={{flexGrow:1, display:'flex'}} className={textCName}>
+                        {hasCheckBox && makeCheckBox(checkBoxOn,imageStyle)}
+                        {icon ?
+                            <img style={{...imageStyle, flexGrow:1}} src={icon}/> :
+                            <div style={{flexGrow:1}} className={textCName}>{text}</div>}
                     </div>
-                );
-            } else {
-                s.flex= '0 0 auto';
-                let cb= '';
-                if (hasCheckBox) {
-                   cb= ( checkBoxOn ?
-                            <img style={{width: 10, height: 10, paddingRight: 4, alignSelf: 'center', ...imageStyle}}
-                                            src={CHECK_BOX}/> :
-                            <span style={{width:14}}/>
-                   );
-                }
-                return (
-                    <div title={tip} style={s} className={cName}
-                         ref={this.setupRef}
-                         onClick={this.click} onMouseOver={this.mouseOver} onMouseOut={this.mouseOut}>
-                        <div style={{flexGrow:1, display:'flex'}} className={textCName}>
-                            {hasCheckBox && cb}
-                            {icon ? <img style={{...imageStyle, flexGrow:1}} src={icon}/> : <div style={{flexGrow:1}} className={textCName}>{text}</div>}
-                        </div>
-                        {badgeCount ? makeBadge(badgeCount) : ''}
-                        {todo?<div style={todoStyle}>ToDo</div> : false}
-                    </div>
-                );
-            }
+                    {badgeCount>0 && makeBadge(badgeCount)}
+                    {todo && makeToDoTag()}
+                </div>
+            );
         }
     }
-}
-
-ToolbarButton.contextType = ToolTipCtx;
+} );
 
 ToolbarButton.propTypes= {
     icon : PropTypes.string,
@@ -208,22 +148,19 @@ ToolbarButton.propTypes= {
     enabled : PropTypes.bool,
     bgDark: PropTypes.bool,
     todo: PropTypes.bool,
-    useBorder : PropTypes.bool,
-    hasHorizontalLayoutSep: PropTypes.bool,
-    onClick : PropTypes.func,
     horizontal : PropTypes.bool,
     visible : PropTypes.bool,
     active : PropTypes.bool,
-    tipOnCB : PropTypes.func,
-    tipOffCB : PropTypes.func,
-    dropDownCB : PropTypes.func,
     imageStyle : PropTypes.object,
     lastTextItem : PropTypes.bool,
     useDropDownIndicator: PropTypes.bool,
-    additionalStyle : PropTypes.object,
     style : PropTypes.object,
     hasCheckBox: PropTypes.bool,
     checkBoxOn: PropTypes.bool,
+    onClick : PropTypes.func,
+    tipOnCB : PropTypes.func,
+    tipOffCB : PropTypes.func,
+    dropDownCB : PropTypes.func,
 };
 
 
@@ -231,20 +168,9 @@ export function ToolbarHorizontalSeparator({top=0, style={}}) {
     const s= {top, ...style};
     return <div style={s} className='ff-horizontal-separator'/>;
 }
-
-ToolbarHorizontalSeparator.propTypes= {
-    style:PropTypes.object,
-    top : PropTypes.number
-
-};
-
-
+ToolbarHorizontalSeparator.propTypes= { style:PropTypes.object, top : PropTypes.number };
 
 export function DropDownVerticalSeparator({useLine=false}) {
     return <div className={useLine? 'ff-vertical-line-separator' : 'ff-vertical-separator'}/>;
 }
-
-DropDownVerticalSeparator.propTypes= {
-    useLine: PropTypes.bool
-};
-
+DropDownVerticalSeparator.propTypes= { useLine: PropTypes.bool };

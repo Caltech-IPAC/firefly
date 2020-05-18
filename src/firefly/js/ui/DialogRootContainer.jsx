@@ -1,12 +1,12 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-import React, {PureComponent} from 'react';
+import React, {memo, useEffect, useState, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import {get, set} from 'lodash';
-import {PopupStoreConnection} from './PopupStoreConnection.jsx';
+import {dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr';
+import {flux} from '../Firefly';
 
 
 const DIALOG_DIV= 'dialogRootDiv';
@@ -16,11 +16,12 @@ const DEFAULT_ZINDEX= 200;
 
 export default {defineDialog, showTmpPopup};
 
-var dialogs= [];
-var tmpPopups= [];
-var tmpCount=0;
-var divElement;
+let dialogs= [];
+let tmpPopups= [];
+let tmpCount=0;
+let divElement;
 
+const init= () => divElement= createDiv({id: DIALOG_DIV});
 
 /**
  * locDir is a 2-digit number to indicate the location and direction of the drop-down.
@@ -68,7 +69,6 @@ class DropDown extends PureComponent {
 
     constructor(props) {
         super(props);
-
         this.state = getPos(props);
         this.hideDropDown = this.hideDropDown.bind(this);
     }
@@ -131,17 +131,14 @@ class DropDown extends PureComponent {
     }
 }
 
-
 function requestOnTop(key) {
     const topKey= dialogs.sort( (d1,d2) => d2.zIndex-d1.zIndex)[0].dialogId;
-    if (topKey!==key) {
-        dialogs= sortZIndex(dialogs,key);
-        reRender(dialogs,tmpPopups,requestOnTop);
-    }
+    if (topKey===key) return;
+    dialogs= sortZIndex(dialogs,key);
+    reRender(dialogs,tmpPopups,requestOnTop);
 }
 
 function computeZIndex(element ) {
-
     let zIndex, testZ;
     for(let e=element; (e); e= e.parentElement ) {
         testZ= Number(window.getComputedStyle(e).getPropertyValue('z-index'));
@@ -152,6 +149,23 @@ function computeZIndex(element ) {
 }
 
 
+const PopupStoreConnection= memo(({dialogId,popupPanel,requestOnTop,zIndex}) => {
+    const [visible, setVisible]= useState(false);
+    useEffect( () => {   // can't useStoreConnector, the flux listener is not added fast enough
+        setVisible(isDialogVisible(dialogId));
+        return flux.addListener(() => setVisible(isDialogVisible(dialogId)));
+    }, [] );
+    if (!visible) return false;
+    return React.cloneElement(popupPanel,
+        { visible, requestOnTop, dialogId, zIndex, requestToClose : () => dispatchHideDialog(dialogId) });
+});
+
+PopupStoreConnection.propTypes= {
+    popupPanel : PropTypes.object.isRequired,
+    dialogId   : PropTypes.string.isRequired,
+    requestOnTop : PropTypes.func,
+    zIndex : PropTypes.number.isRequired
+};
 
 /**
  * @param {string} dialogId
@@ -161,22 +175,16 @@ function computeZIndex(element ) {
 function defineDialog(dialogId, dialog, overElement) {
     if (!divElement) init();
     const idx= dialogs.findIndex((d) => d.dialogId===dialogId);
-    const rootZindex= overElement ? computeZIndex(overElement): DEFAULT_ZINDEX;
     const newD= {
         dialogId,
-        rootZindex,
+        rootZindex: overElement ? computeZIndex(overElement): DEFAULT_ZINDEX,
         component: <PopupStoreConnection popupPanel={dialog} dialogId={dialogId} zIndex={1}/>
     };
-    if (idx < 0) {
-        dialogs= [...dialogs,newD];
-    }
-    else {
-        dialogs[idx]= newD;
-    }
+    if (idx < 0) dialogs= [...dialogs,newD];
+    else dialogs[idx]= newD;
     dialogs= sortZIndex(dialogs,dialogId);
     reRender(dialogs,tmpPopups,requestOnTop);
 }
-
 
 /**
  * @param popup {object}
@@ -188,17 +196,11 @@ function showTmpPopup(popup) {
     tmpPopups= [...tmpPopups, {dialogId:id, component:popup}];
     reRender(dialogs,tmpPopups,requestOnTop);
     return () => {
-        if (tmpPopups.some( (p) => (p.dialogId==id))) {
-            tmpPopups= tmpPopups.filter( (p) => p.dialogId!=id);
+        if (tmpPopups.some( (p) => (p.dialogId===id))) {
+            tmpPopups= tmpPopups.filter( (p) => p.dialogId!==id);
             reRender(dialogs,tmpPopups,requestOnTop);
         }
     };
-}
-
-
-
-function init() {
-    divElement= createDiv({id: DIALOG_DIV});
 }
 
 function createDiv({id, appendTo=document.body, wrapperStyle={}}) {
@@ -208,53 +210,37 @@ function createDiv({id, appendTo=document.body, wrapperStyle={}}) {
     el.style.width= '0';
     el.style.height= '0';
     el.style.position = 'absolute';
-    el.style.left= 0;
-    el.style.top= 0;
-    Object.entries(wrapperStyle).forEach(([k,v]) => {
-        set(el.style, [k], v);
-    });
+    el.style.left= '0';
+    el.style.top= '0';
+    Object.entries(wrapperStyle).forEach(([k,v]) => set(el.style, [k], v));
     return el;
 }
 
 
-
-class DialogRootComponent extends PureComponent {
-
-    constructor(props) { super(props); }
-
-    render() {
-        const {dialogs,tmpPopups,requestOnTop}= this.props;
-        const dialogAry = dialogs
-            .filter( (d) => d.rootZindex===DEFAULT_ZINDEX)
-            .map( (d) =>
-                React.cloneElement(d.component,
-                    {
-                        key:d.dialogId,
-                        zIndex:d.zIndex,
-                        requestOnTop
-                    })
-            );
-        const otherDialogAry = dialogs
-            .filter( (d) => d.rootZindex<DEFAULT_ZINDEX)
-            .map( (d) => (
-                <div key= {d.dialogId} style={{position:'relative', zIndex:d.rootZindex}} className='rootStyle'>
-                    {React.cloneElement(d.component, { key:d.dialogId, zIndex:d.zIndex, requestOnTop })}
-                </div>
-            ));
-        const tmpPopupAry = tmpPopups.map( (p) => React.cloneElement(p.component,{key:p.dialogId}));
-        return (
-            <div>
-                {otherDialogAry}
-                <div style={{position:'relative', zIndex:DEFAULT_ZINDEX}} className='rootStyle'>
-                    {dialogAry}
-                    <div style={{position:'relative', zIndex:10}}>
-                        {tmpPopupAry}
-                    </div>
+const DialogRootComponent= memo(({dialogs,tmpPopups,requestOnTop}) =>{
+    const dialogAry = dialogs
+        .filter( (d) => d.rootZindex===DEFAULT_ZINDEX)
+        .map( (d) => React.cloneElement(d.component, { key:d.dialogId, zIndex:d.zIndex, requestOnTop }) );
+    const otherDialogAry = dialogs
+        .filter( (d) => d.rootZindex<DEFAULT_ZINDEX)
+        .map( (d) => (
+            <div key= {d.dialogId} style={{position:'relative', zIndex:d.rootZindex}} className='rootStyle'>
+                {React.cloneElement(d.component, { key:d.dialogId, zIndex:d.zIndex, requestOnTop })}
+            </div>
+        ));
+    const tmpPopupAry = tmpPopups.map( (p) => React.cloneElement(p.component,{key:p.dialogId}));
+    return (
+        <div>
+            {otherDialogAry}
+            <div style={{position:'relative', zIndex:DEFAULT_ZINDEX}} className='rootStyle'>
+                {dialogAry}
+                <div style={{position:'relative', zIndex:10}}>
+                    {tmpPopupAry}
                 </div>
             </div>
-            );
-    }
-}
+        </div>
+    );
+});
 
 DialogRootComponent.propTypes = {
     dialogs : PropTypes.array,
@@ -264,7 +250,6 @@ DialogRootComponent.propTypes = {
 
 
 /**
- *
  * @param dialogs
  * @param tmpPopups
  * @param requestOnTop
@@ -272,7 +257,6 @@ DialogRootComponent.propTypes = {
 function reRender(dialogs,tmpPopups,requestOnTop) {
     ReactDOM.render(<DialogRootComponent dialogs={dialogs} tmpPopups={tmpPopups} requestOnTop={requestOnTop}/>, divElement);
 }
-
 
 /**
  * Set the zindex for the active one is on top while maintaining the order of the others.
@@ -286,16 +270,13 @@ function reRender(dialogs,tmpPopups,requestOnTop) {
  * something more reasonable.
  */
 function sortZIndex(inDialogAry, topId) {
-    var max= inDialogAry.reduce((prev,d) => (d.zIndex &&d.zIndex>prev) ? d.zIndex : prev, 1);
+    let max= inDialogAry.reduce((prev,d) => (d.zIndex &&d.zIndex>prev) ? d.zIndex : prev, 1);
     if (max<inDialogAry.length) max= inDialogAry.length+1;
-    var retval= inDialogAry.map( (d,idx) => Object.assign({},d,{zIndex:d.dialogId===topId ? max+1 : (d.zIndex||idx+1) }));
+    const retval= inDialogAry.map( (d,idx) => Object.assign({},d,{zIndex:d.dialogId===topId ? max+1 : (d.zIndex||idx+1) }));
 
-    var min= retval.reduce((prev,d) => (d.zIndex &&d.zIndex<prev) ? d.zIndex : prev, Number.MAX_SAFE_INTEGER);
+    const min= retval.reduce((prev,d) => (d.zIndex &&d.zIndex<prev) ? d.zIndex : prev, Number.MAX_SAFE_INTEGER);
     if (retval.length>1 && min>10000) {
         inDialogAry.forEach( (d) => d.zIndex-=7000);
     }
     return retval;
 }
-
-
-

@@ -2,35 +2,17 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React, {memo, useRef} from 'react';
 import PropTypes from 'prop-types';
 
-
-
-function drawOnCanvas(c,drawIt) {
-    drawIt(c);
-}
-
-export class SimpleCanvas extends PureComponent {
-
-
-    constructor(props) {
-        super(props);
-        this.drawer= null;
-    }
-
-    setUpCanvas(c) {
-        this.canvas= c;
-        drawOnCanvas(c,this.props.drawIt);
-    }
-
-    render() {
-        const {width, height, id, backgroundColor}= this.props;
-        return (
-            <canvas width={width+''} height={height+''} id={id} style={{backgroundColor}} ref={(c) => this.setUpCanvas(c)}/>
-        );
-    }
-}
+export const SimpleCanvas= memo(({drawIt, width, height, id, backgroundColor}) => {
+    const {current:canvasRef} = useRef({canvas:undefined});
+    const setUpCanvas=(c) => {
+        canvasRef.canvas= c;
+        drawIt?.(c);
+    };
+    return ( <canvas width={width+''} height={height+''} id={id} style={{backgroundColor}} ref={setUpCanvas}/> );
+});
 
 SimpleCanvas.propTypes= {
     drawIt : PropTypes.func.isRequired,

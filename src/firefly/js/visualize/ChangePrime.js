@@ -2,16 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {take} from 'redux-saga/effects';
 import ImagePlotCntlr, {IMAGE_PLOT_KEY, dispatchZoom, dispatchProcessScroll} from './ImagePlotCntlr.js';
 import {getPlotViewById, primePlot} from './PlotViewUtil.js';
 import {getPixScaleArcSec, getScreenPixScaleArcSec} from './WebPlot.js';
-import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {UserZoomTypes, getZoomLevelForScale} from './ZoomUtil.js';
 import {CysConverter} from './CsysConverter.js';
 import {makeScreenPt} from './Point.js';
-
-
+import {dispatchAddActionWatcher} from '../core/MasterSaga';
 
 function matcher(oldP,newP) {
     return {
@@ -57,27 +54,17 @@ export function changePrime(rawAction, dispatcher, getState) {
     const newP= plots[newPrimeIdx];
     if (newPrimeIdx>=plots.length) return;
 
-
     const cc= CysConverter.make(primePlot(pv));
     const scrollToImagePt= cc.getImageCoords(makeScreenPt(pv.scrollX,pv.scrollY));
-
-
     dispatcher(rawAction);
-
     checkZoom(plotId,oldP, newP, scrollToImagePt,visRoot);
-
 }
 
-
-function* zoomCompleteSega({plotId,scrollToImagePt},dispatch,getState) {
-    while(true) {
-        const action= yield take([ImagePlotCntlr.ZOOM_IMAGE]);
-        const {plotId:testPlotId}= action.payload;
-        if (testPlotId===plotId) {
-            const visRoot= getState()[IMAGE_PLOT_KEY];
-            changeScrollToImagePt(visRoot,plotId,scrollToImagePt);
-            return;
-        }
+function zoomCompleteWatch(action, cancelSelf, {plotId,scrollToImagePt},dispatch,getState) {
+    if (action.payload.plotId===plotId) {
+        const visRoot= getState()[IMAGE_PLOT_KEY];
+        (action.type===ImagePlotCntlr.ZOOM_IMAGE) && changeScrollToImagePt(visRoot,plotId,scrollToImagePt);
+        cancelSelf();
     }
 }
 
@@ -87,6 +74,12 @@ function changeScrollToImagePt(visRoot, plotId, scrollToImagePt) {
     dispatchProcessScroll({plotId, scrollPt:cc.getScreenCoords(scrollToImagePt)});
 }
 
+const addWatcher= (plotId,scrollToImagePt) => dispatchAddActionWatcher( {
+    callback:zoomCompleteWatch,
+    params:{plotId,scrollToImagePt},
+    actions:[ImagePlotCntlr.ZOOM_IMAGE, ImagePlotCntlr.ZOOM_IMAGE_FAIL]
+});
+
 
 function checkZoom(plotId, oldP, newP, scrollToImagePt, visRoot) {
     const zoomOp= getZoomDecision(oldP,newP);
@@ -94,22 +87,12 @@ function checkZoom(plotId, oldP, newP, scrollToImagePt, visRoot) {
         if (zoomOp.zoomByScale) {
             const targetArcSecPix= getScreenPixScaleArcSec(oldP);
             const level= getZoomLevelForScale(newP,targetArcSecPix);
-            dispatchAddSaga(zoomCompleteSega,{plotId,scrollToImagePt});
-            dispatchZoom({
-                plotId,
-                userZoomType:UserZoomTypes.LEVEL,
-                maxCheck:false, 
-                level
-            });
+            addWatcher(plotId,scrollToImagePt);
+            dispatchZoom({ plotId, userZoomType:UserZoomTypes.LEVEL, maxCheck:false, level });
         }
         else {
-            dispatchAddSaga(zoomCompleteSega,{plotId,scrollToImagePt});
-            dispatchZoom({
-                plotId,
-                userZoomType:UserZoomTypes.LEVEL,
-                maxCheck:false, 
-                level:oldP.zoomFactor
-            });
+            addWatcher(plotId,scrollToImagePt);
+            dispatchZoom({ plotId, userZoomType:UserZoomTypes.LEVEL, maxCheck:false, level:oldP.zoomFactor });
         }
     }
     else {

@@ -139,7 +139,7 @@ export function ImageCenterDropDown({visRoot:vr, visible, mi}) {
             <DropDownSubMenu text={'Recent Positions'} visible={recentAry.length>0}>
                 {() =>
                     getRecentTargets().map( (t) => <ToolbarButton text={formatWorldPt(t)} tip={formatWorldPtToString(t)}
-                                                                  additionalStyle={{width:'100%'}}
+                                                                  style={{width:'100%'}}
                                                                   enabled={Boolean(plot)} horizontal={false} key={t.toString()}
                                                                   onClick={() => dispatchRecenter({plotId:pv.plotId, centerPt:t})} />)
                 }
@@ -152,7 +152,6 @@ export function ImageCenterDropDown({visRoot:vr, visible, mi}) {
         <DropDownToolbarButton icon={CENTER_DROP}
                                tip='Center images'
                                enabled={Boolean(plot)} horizontal={true} visible={visible}
-                               hasHorizontalLayoutSep={false}
                                useDropDownIndicator={true}
                                dropDown={dropDown}/>
 

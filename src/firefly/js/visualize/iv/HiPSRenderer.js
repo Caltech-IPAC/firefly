@@ -6,7 +6,7 @@ import {isNil, get} from 'lodash';
 import {retrieveAndProcessImage} from './ImageProcessor.js';
 import {drawOneHiPSTile} from './HiPSSingleTileRender.js';
 import {findTileCachedImage, addTileCachedImage, addFailedImage, isInFailTileCached} from './HiPSTileCache.js';
-import {dispatchAddTaskCount, dispatchRemoveTaskCount, makeTaskId } from '../../core/AppDataCntlr.js';
+import {dispatchAddTaskCount, dispatchRemoveTaskCount, makeTaskId, getTaskCount} from '../../core/AppDataCntlr.js';
 import {createImageUrl, createEmptyTile} from './TileDrawHelper.jsx';
 
 const emptyTileCanvas= createEmptyTile(512,512);
@@ -156,7 +156,7 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, tile
 
     const removeTask= () => {
         if (plotTaskId) {
-            setTimeout( () => dispatchRemoveTaskCount(plotView.plotId,plotTaskId) ,0);
+            setTimeout( () => getTaskCount(plotView.plotId) && dispatchRemoveTaskCount(plotView.plotId,plotTaskId) ,0);
         }
     };
 

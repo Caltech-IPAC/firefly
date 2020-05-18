@@ -149,7 +149,7 @@ function InlineRightToolbarWrapper({visRoot,pv,dlAry}){
     return (
         <div>
             <VisInlineToolbarView
-                pv={pv} dlAry={dlAry}
+                pv={pv} dlCount={dlAry?.length}
                 showLayer={lVis}
                 showExpand={true}
                 showToolbarButton={tb}

@@ -59,7 +59,6 @@ export const ThumbnailView = memo(({plotView:pv}) => {
             <EventLayer width={width} height={height} transform={affTrans} eventCallback={eventCallBack} />
         </div>
     );
-
 });
 
 

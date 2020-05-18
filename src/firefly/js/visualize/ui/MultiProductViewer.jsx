@@ -90,8 +90,7 @@ function getMakeDropdown(menu, fileMenu, dpId,activeMenuLookupKey) {
                        tip='Other data to display'
                        enabled={true} horizontal={true}
                        visible={true}
-                       additionalStyle={{paddingRight:20}}
-                       hasHorizontalLayoutSep={false}
+                       style={{paddingRight:20}}
                        useDropDownIndicator={true}
                        dropDown={<OtherOptionsDropDown {...{menu, dpId, activeMenuLookupKey}} />} /> }
 
@@ -101,8 +100,7 @@ function getMakeDropdown(menu, fileMenu, dpId,activeMenuLookupKey) {
                     tip='Other data in file'
                     enabled={true} horizontal={true}
                     visible={true}
-                    additionalStyle={{paddingRight:20}}
-                    hasHorizontalLayoutSep={false}
+                    style={{paddingRight:20}}
                     useDropDownIndicator={true}
                     dropDown={<FileMenuDropDown {...{fileMenu, dpId}} />} />
                 }

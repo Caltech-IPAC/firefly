@@ -85,7 +85,7 @@ export const extensionRemove= function(extensionId) {
 };
 
 
-export function makePlotSelectionExtActivateData(ext, pv, dlAry) {
+export function makePlotSelectionExtActivateData(ext, pv) {
     var plot= primePlot(pv);
     var cc= CysConverter.make(plot);
     var data= {

@@ -4,7 +4,7 @@
 
 
 
-import {isEmpty,isArray} from 'lodash';
+import {isEmpty,isArray, memoize} from 'lodash';
 import {RequestType} from './RequestType.js';
 import {clone} from '../util/WebUtil.js';
 import CoordinateSys from './CoordSys.js';
@@ -22,6 +22,7 @@ import {getImageCubeIdx} from './PlotViewUtil.js';
 import {parseWavelengthHeaderInfo} from './projection/WavelengthHeaderParser.js';
 import {geAtlProjectionIDs} from './FitsHeaderUtil.js';
 import {TAB} from './projection/Wavelength';
+import {getPlotViewAry, primePlot} from './PlotViewUtil';
 
 
 export const RDConst= {
@@ -571,27 +572,27 @@ export function clonePlotWithZoom(plot,zoomFactor) {
 }
 
 
-/**
- *
- * @param {WebPlot|CysConverter} plot
- * @return {number}
- */
-export function getScreenPixScaleArcSec(plot) {
-    if (!plot || !plot.projection || !isKnownType(plot)) return 0;
-    if (isImage(plot)) {
-        return plot.projection.getPixelScaleArcSec() / plot.zoomFactor;
-    }
-    else if (isHiPS(plot)) {
-        const pt00= makeWorldPt(0,0, plot.imageCoordSys);
-        const tmpPlot= changeProjectionCenter(plot, pt00);
-        const cc= CysConverter.make(tmpPlot);
-        const scrP= cc.getScreenCoords( pt00);
-        const pt2= cc.getWorldCoords( makeScreenPt(scrP.x-1, scrP.y), plot.imageCoordSys);
-        return Math.abs(0-pt2.x)*3600; // note have to use angular distance formula here, because of the location of the point
-    }
-    return 0;
-}
-
+export const getScreenPixScaleArcSec= (() => {
+    let lastPlot;
+    let lastResult;
+    return (plot) => {
+            if (!plot || !plot.projection || !isKnownType(plot)) return 0;
+            if (plot===lastPlot) return lastResult;
+            if (isImage(plot)) {
+                lastResult= plot.projection.getPixelScaleArcSec() / plot.zoomFactor;
+            }
+            else if (isHiPS(plot)) {
+                const pt00= makeWorldPt(0,0, plot.imageCoordSys);
+                const tmpPlot= changeProjectionCenter(plot, pt00);
+                const cc= CysConverter.make(tmpPlot);
+                const scrP= cc.getScreenCoords( pt00);
+                const pt2= cc.getWorldCoords( makeScreenPt(scrP.x-1, scrP.y), plot.imageCoordSys);
+                lastResult= Math.abs(0-pt2.x)*3600; // note have to use angular distance formula here, because of the location of the point
+            }
+            lastPlot= plot;
+            return lastResult;
+        };
+})();
 
 export function getFluxUnits(plot,band) {
     if (!plot || !band || !isImage(plot)) return '';
