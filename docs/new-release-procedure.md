@@ -11,7 +11,7 @@
 1. **Update Release Notes.**
    In the `rc-yyyy.x` branch, edit the release notes and do the following (firefly/docs/release-notes.md):
    - Modify the note for the unreleased version to remove the `(unreleased, current development)` from the title
-   - After looking at docker tags make sure all the important changes are included in the notes.
+   - After looking at milestone tags make sure all the important changes are included in the notes.
    - Start a new section for the next release, mark in the title with `(unreleased, current development)`
    - Make sure you edit the docker tags section of this release
    - Update the "Pull Request for this release section", change the text and the URLs for all PR and bug fixes 

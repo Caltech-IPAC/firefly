@@ -8,6 +8,36 @@ See Firefly docker guidelines [here](firefly-docker.md).
 
 - docker tag: `nightly`
 
+
+### Version 2020.2
+- 2020.2 latest -  `release-2020.2`
+- 2020.2.0 - `release-2020.1.0` - original release
+
+
+##### _UI_
+- when lock by click is on, there is an icon to copy coordinates  ([Firefly-548](https://github.com/Caltech-IPAC/firefly/pull/972)
+- Web API: _beta_- not this will change, only for evaluation  ([Firefly-572](https://github.com/Caltech-IPAC/firefly/pull/965)
+- Change tri-view Layout ([Firefly-533](https://github.com/Caltech-IPAC/firefly/pull/963)
+- Better management of Web Sockets  ([Firefly-521](https://github.com/Caltech-IPAC/firefly/pull/961)
+- Table filter comparison is not longer case insensitive  ([Firefly-502](https://github.com/Caltech-IPAC/firefly/pull/959)
+
+##### _Infrastructure_
+- Docker image is smaller  ([Firefly-547](https://github.com/Caltech-IPAC/firefly/pull/969)
+
+#### _Notable Bug Fixes_
+- Fixed, API: Jupyter lab startup is broken  ([Firefly-552](https://github.com/Caltech-IPAC/firefly/pull/970)
+- Fixed: Full SDSS not loading  ([IRSA-2673](https://github.com/Caltech-IPAC/firefly/pull/968)
+- Fixed: Image overlay grouping bugs ([IRSA-2651](https://github.com/Caltech-IPAC/firefly/pull/964)
+
+
+
+##### _Pull Request in this release_
+  
+  - [bug fixes](https://github.com/Caltech-IPAC/firefly/pulls?q=is%3Amerged+is%3Apr+milestone%3A2020.2+label%3Abug)
+  - [All PRs](https://github.com/Caltech-IPAC/firefly/pulls?q=is%3Amerged+is%3Apr+milestone%3A2020.2+)
+
+
+
 ### Version 2020.1
 
 ##### _Docker tags, releases and patches_
