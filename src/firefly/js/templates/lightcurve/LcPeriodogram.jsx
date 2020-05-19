@@ -210,7 +210,7 @@ export var startPeriodogramPopup = (groupKey) =>  {
                                 text={'Calculate'} />
                     </div>
                     <div style={{marginTop:17}}>
-                        <HelpIcon helpId={'findpTSV.pgramresults'}/>
+                        <HelpIcon helpId={'findpTSV.pgram'}/>
                     </div>
                 </div>
             </PopupPanel>);
