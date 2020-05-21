@@ -229,7 +229,7 @@ function UploadOptions({uploadSrc=fileId, isloading, isWsUpdating}) {
     if (uploadSrc === fileId) {
         return (
             <FileUpload
-                innerStyle={{width: 80}}
+                innerStyle={{width: 90}}
                 fileNameStyle={{marginLeft: 5, fontSize: 12}}
                 fieldKey={fileId}
                 fileAnalysis={onLoading}
