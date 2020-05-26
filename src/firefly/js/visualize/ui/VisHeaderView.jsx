@@ -20,8 +20,8 @@ const readoutUI = {
 const rS= {
     width: 700,
     minWidth:660,
-    height: 32,
-    minHeight:32,
+    height: 34,
+    minHeight:34,
     display: 'inline-block',
     position: 'relative',
     verticalAlign: 'top',

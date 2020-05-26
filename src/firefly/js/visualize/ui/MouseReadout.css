@@ -2,8 +2,8 @@
 .mouseReadoutDisplaySpace {
     width: 698px;
     min-width: 660px;
-    height: 32px;
-    min-height: 32px;
+    height: 34px;
+    min-height: 34px;
     position: absolute;
     vertical-align: top;
     white-space: nowrap;

@@ -72,7 +72,7 @@ export const MouseReadoutLock= memo(({gArea, style={}, lockByClick}) => {
 
                    }}
             />
-            Lock by click
+            <span style={{position:'relative', top:-2}}>Lock by click</span>
         </div>
     );
 });
