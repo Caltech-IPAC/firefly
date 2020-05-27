@@ -1,19 +1,28 @@
 package edu.caltech.ipac.firefly.server.dpanalyze;
 
+import edu.caltech.ipac.firefly.core.FileAnalysis;
 import edu.caltech.ipac.firefly.core.FileAnalysisReport;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.sofia.Sofia1DSpectraExtractor;
 import edu.caltech.ipac.firefly.data.sofia.SofiaSpectraModel;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.table.io.VoTableWriter;
+import edu.caltech.ipac.util.FitsHDUUtil;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
+import nom.tam.fits.FitsException;
 import nom.tam.fits.Header;
-
+import edu.caltech.ipac.firefly.data.sofia.SofiaFitsConverterUtil;
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
 
 import static edu.caltech.ipac.table.TableUtil.Format.VO_TABLE_TABLEDATA;
@@ -35,6 +44,7 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
         String code = params.getOrDefault("product_type", "");
         String level = params.getOrDefault("processing_level", "").toUpperCase();
         String inst = params.getOrDefault("instrument", "").toUpperCase();
+
         //
         // Add spectra extracted data from image
         //
@@ -59,9 +69,22 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
 
         if(isSpectra) return addingSpectraExtractedTableAPart(inputReport, inst);
 
+        if (inst.equals("FIFI-LS")) {
+            try {
+                return convertFIFIImage(inFile.getAbsolutePath());
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
         FileAnalysisReport retRep = inputReport.copy();
         return retRep;
     }
+
+
+
+
 
 
     /**
@@ -86,6 +109,37 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
             e.printStackTrace();
             return inputReport;
         }
+    }
+
+    /**
+     * This method is to convert the FIFI-LS data to standard WAVE-TAB format and then the converted FITs is displayed.
+     * @param inputFile
+     * @return
+     * @throws Exception
+     */
+    private FileAnalysisReport convertFIFIImage(String inputFile) throws Exception {
+        
+            //create a temp file to save the converted FITs file
+            //need to use unique name since the filename as a key stored in the cache
+            String[] strAry = inputFile.split("/");
+            File outputFile = new File(ServerContext.getUploadDir(), strAry[strAry.length-1]);
+
+            //save the converted FITs to the temp file
+            SofiaFitsConverterUtil.doConvertFits(inputFile,outputFile.getAbsolutePath());
+
+            //create a detail report for the newly created FITs file
+            FileAnalysisReport report  = (FitsHDUUtil.analyze(outputFile, FileAnalysisReport.ReportType.Details)).getReport();
+
+            List<FileAnalysisReport.Part> parts = report.getParts();
+            //assign the convertedFileName so it can be used
+            for (int i=0; i<parts.size();i++){
+                parts.get(i).setConvertedFileName(ServerContext.replaceWithPrefix(outputFile));
+            }
+            //delete the temp file once the application ends.
+            outputFile.deleteOnExit();
+            return report;
+
+
     }
 
     private FileAnalysisReport addingSpectraExtractedTableAPart(FileAnalysisReport inputReport, String inst) {
