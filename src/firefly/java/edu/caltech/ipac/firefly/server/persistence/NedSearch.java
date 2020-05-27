@@ -28,7 +28,7 @@ import java.net.URLEncoder;
 public class NedSearch extends QueryByConeSearchURL {
     private String NED_OBJECT_NAME = "Object Name";
     private String linkColName = "Details";
-    static String url = "http://ned.ipac.caltech.edu/cgi-bin/objsearch?objname=%s&extend=no&list_limit=5&img_stamp=YES";
+    static String url = "https://ned.ipac.caltech.edu/byname?objname=%s";
 
     @Override
     protected String getFilePrefix(TableServerRequest request) {
@@ -39,7 +39,6 @@ public class NedSearch extends QueryByConeSearchURL {
     @Override
     public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
         DataGroup resDg = super.fetchDataGroup(req);
-        String url = "http://ned.ipac.caltech.edu/cgi-bin/objsearch?objname=%s&extend=no&list_limit=5&img_stamp=YES";
 
         DataType linkNed = new DataType(linkColName, String.class);
         resDg.addDataDefinition(linkNed);
@@ -64,7 +63,7 @@ public class NedSearch extends QueryByConeSearchURL {
     }
 
     public static void main(String[] args) throws UnsupportedEncodingException {
-        String url = "http://ned.ipac.caltech.edu/cgi-bin/objsearch?objname=%s&extend=no&list_limit=5&img_stamp=YES";
+        String url = "http://ned.ipac.caltech.edu/byname?objname=%s&extend=no&list_limit=5&img_stamp=YES";
         String oname = URLEncoder.encode("SSTSL2 J034729.08+240618.6", "UTF-8");
         System.out.println(oname);
 
