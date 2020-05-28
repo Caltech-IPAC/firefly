@@ -1,15 +1,21 @@
 import React from 'react';
 import {useStoreConnector} from '../../ui/SimpleComponent';
-import {getActiveTableId, getTblInfoById, getCellValue} from '../../tables/TableUtil';
+import {getActiveTableId, getTblInfoById, getCellValue, getMetaEntry} from '../../tables/TableUtil';
 
 export function PngViewer() {
     const [tbl_id] = useStoreConnector(() => () => getActiveTableId());
-    const {tableMeta, tableModel} = getTblInfoById(tbl_id);
+    const {tableModel} = getTblInfoById(tbl_id);
+    if (!tableModel){
+        return null;
+    }
+    if(tableModel.isFetching){
+        return;
+    }
     const highlightedRow = tableModel? tableModel.highlightedRow: 0;
-    const PngSource = tableMeta.PngSource ? tableMeta.PngSource : '';
+    const PngSource= getMetaEntry(tbl_id, 'ImagePreview', '');
     const png_url = getCellValue(tableModel, highlightedRow, PngSource);
 
-    if (png_url && png_url.endsWith('.png')) {
+    if (png_url) {
         return (
             <div style={{
                 display: 'flex',
@@ -19,7 +25,7 @@ export function PngViewer() {
                 height: '100%'
             }}>
                 <div style={{overflow: 'auto', display: 'flex', justifyContent: 'center', alignItem: 'center'}}>
-                    <img src={png_url} alt={png_url} style={{maxWidth: '100%', flexGrow: 0, flexShrink: 0}}/>
+                    <img src={png_url} alt={`Preview not found: ${png_url}`} style={{maxWidth: '100%', flexGrow: 0, flexShrink: 0}}/>
                 </div>
             </div>
         );

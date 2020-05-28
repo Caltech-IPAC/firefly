@@ -97,7 +97,7 @@ export const MetaConst = {
     DATA_SOURCE : 'DataSource',
 
     /** column name includes the link to the PNG image preview */
-    PNG_SOURCE : 'PngSource',
+    IMAGE_PREVIEW : 'ImagePreview',
 
     /** a url for HiPS Image to use as the coverage - overrides firefly defaults */
     COVERAGE_HIPS : 'CoverageHiPS',
