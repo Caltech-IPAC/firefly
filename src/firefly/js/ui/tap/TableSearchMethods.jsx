@@ -77,7 +77,7 @@ const fieldsMap = {[Spatial]: {
                         [CenterLonColumns]: {label: 'Longitude Column'},
                         [CenterLatColumns]: {label: 'Latitude Column'},
                         [SpatialMethod]: {label: 'Search Method'},
-                        [ServerParams.USER_TARGET_WORLD_PT]: {label: 'Name or Position'},
+                        [ServerParams.USER_TARGET_WORLD_PT]: {label: 'Coordinates or Object Name'},
                         [RadiusSize]: {label: 'Radius'},
                         [PolygonCorners]:  {label: 'Coordinates'}},
                    [Temporal]: {

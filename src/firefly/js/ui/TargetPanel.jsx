@@ -17,7 +17,7 @@ import {isValidPoint, parseWorldPt} from '../visualize/Point.js';
 
 const TARGET= 'targetSource';
 const RESOLVER= 'resolverSource';
-const LABEL_DEFAULT='Name or Position:';
+const LABEL_DEFAULT='Coordinates or Object Name:';
 
 const nedThenSimbad= 'nedthensimbad';
 const simbadThenNed= 'simbadthenned';
@@ -42,6 +42,7 @@ class TargetPanelView extends PureComponent {
                                 value={value}
                                 tooltip='Enter a target'
                                 labelWidth={labelWidth}
+                                labelStyle={{paddingRight:'45px'}}
                             />);
         positionField = children ? (<div style={{display: 'flex'}}>{positionField} {children}</div>) : positionField;
 
@@ -224,7 +225,7 @@ function computeProps(viewProps, componentProps, fieldKey, groupKey) {
     return {
         ...viewProps,
         visible: true,
-        label: 'Name or Position:',
+        label: 'Coordinates or Object Name:',
         tooltip: 'Enter a target',
         value,
         feedback,

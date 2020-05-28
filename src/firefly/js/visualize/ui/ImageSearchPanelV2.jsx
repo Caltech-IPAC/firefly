@@ -399,7 +399,7 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect}) {
                 <div className='ImageSearch__section--title'>3. Select Target</div>
                 <div className='flex-full'>
                     <TargetPanel labelWidth={isHips?150:100} feedbackStyle={targetStyle}
-                                 label={isHips?'Name or Position (optional):' :'Name or Position:' }
+                                 label={isHips?'Coordinates or Object Name (optional):' :'Coordinates or Object Name:' }
                                  nullAllowed={true} />
                     <SizeInputFields fieldKey={sizeKey} showFeedback={true}
                                      feedbackStyle={sizeStyle}
