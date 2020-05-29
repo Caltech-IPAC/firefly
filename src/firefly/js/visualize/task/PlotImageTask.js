@@ -309,7 +309,7 @@ function continuePlotImageSuccess(dispatcher, payload, successAry, failAry) {
         dispatcher({type: ImagePlotCntlr.PLOT_IMAGE, payload: resultPayload});
         const plotIdAry = pvNewPlotInfoAry.map((info) => info.plotId);
         const filteredPlotIdAry= plotIdAry.filter( (id) => getPlotViewById(visRoot(),id));
-        dispatcher({type: ImagePlotCntlr.ANY_REPLOT, payload: {filteredPotIdAry: filteredPlotIdAry}});
+        dispatcher({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotIdAry:filteredPlotIdAry}});
 
         matchAndActivateOverlayPlotViewsByGroup(filteredPlotIdAry);
 

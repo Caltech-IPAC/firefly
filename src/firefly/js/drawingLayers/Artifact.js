@@ -3,7 +3,6 @@
  */
 
 
-import {take} from 'redux-saga/effects';
 import {get, isEmpty} from 'lodash';
 import {isPlotIdInPvNewPlotInfoAry,
          isDrawLayerVisible, getDrawLayerById, getPlotViewById} from '../visualize/PlotViewUtil.js';
@@ -19,8 +18,8 @@ import DrawLayerCntlr, {dlRoot, dispatchModifyCustomField} from '../visualize/Dr
 import {makeWorldPt} from '../visualize/Point.js';
 import {doFetchTable} from '../tables/TableUtil.js';
 import {getUIComponent} from './CatalogUI.jsx';
-import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {findTableCenterColumns} from '../util/VOAnalyzer.js';
+import {dispatchAddActionWatcher} from '../core/MasterSaga';
 
 const TYPE_ID= 'ARTIFACT_TYPE';
 
@@ -39,31 +38,26 @@ const defSymbolMap= {
 
 
 
-function* watchReplot({plotId, drawLayerId}) {
-    let keepChecking= true;
-    while (keepChecking) {
-        const action = yield take([ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_IMAGE_FAIL,
-                                 ImagePlotCntlr.DELETE_PLOT_VIEW, DrawLayerCntlr.DESTROY_DRAWING_LAYER]);
-        const {payload}= action;
-        switch (action.type) {
-            case ImagePlotCntlr.PLOT_IMAGE:
-                if (isPlotIdInPvNewPlotInfoAry(payload.pvNewPlotInfoAry, plotId)) {
-                    updateArtifactTable(plotId, drawLayerId);
-                }
-                break;
-            case ImagePlotCntlr.PLOT_IMAGE_FAIL:
-                if (payload.plotId===plotId) {
-                    dispatchModifyCustomField(drawLayerId, {tableModel:null});
-                }
-                break;
-            case ImagePlotCntlr.DELETE_PLOT_VIEW:
-                keepChecking= (payload.plotId!==plotId);
-                break;
-            case DrawLayerCntlr.DESTROY_DRAWING_LAYER:
-                keepChecking= (payload.drawLayerId!==drawLayerId);
-                break;
-        }
+function watchReplot(action, cancelSelf, params) {
+    const {payload}= action;
+    const {plotId, drawLayerId}= params;
+    switch (action.type) {
+        case ImagePlotCntlr.PLOT_IMAGE:
+            if (isPlotIdInPvNewPlotInfoAry(payload.pvNewPlotInfoAry, plotId)) {
+                updateArtifactTable(plotId, drawLayerId);
+            }
+            break;
+        case ImagePlotCntlr.PLOT_IMAGE_FAIL:
+            payload.plotId===plotId && dispatchModifyCustomField(drawLayerId, {tableModel:null});
+            break;
+        case ImagePlotCntlr.DELETE_PLOT_VIEW:
+            payload.plotId===plotId && cancelSelf();
+            break;
+        case DrawLayerCntlr.DESTROY_DRAWING_LAYER:
+            payload.drawLayerId===drawLayerId && cancelSelf();
+            break;
     }
+    return params;
 }
 
 
@@ -149,7 +143,12 @@ function creator(initPayload, presetDefaults) {
     dl.relatedDataId= relatedDataId;
     dl.angleInRadian= angleInRadian;
 
-    dispatchAddSaga(watchReplot, {drawLayerId:dl.drawLayerId, plotId});
+    dispatchAddActionWatcher({
+        callback:watchReplot,
+        params:{drawLayerId:dl.drawLayerId, plotId},
+        actions:[ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_IMAGE_FAIL,
+            ImagePlotCntlr.DELETE_PLOT_VIEW, DrawLayerCntlr.DESTROY_DRAWING_LAYER]
+    });
 
     return dl;
 }

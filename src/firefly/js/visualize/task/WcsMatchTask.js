@@ -3,7 +3,6 @@
  */
 
 import {isEmpty} from 'lodash';
-import {take} from 'redux-saga/effects';
 import ImagePlotCntlr, {
     ActionScope,
     dispatchFlip,
@@ -14,62 +13,55 @@ import ImagePlotCntlr, {
     dispatchZoom,
     dispatchChangeCenterOfProjection,
     dispatchChangeHiPS,
+    dispatchAttributeChange,
+    visRoot,
     IMAGE_PLOT_KEY,
     WcsMatchType
 } from '../ImagePlotCntlr.js';
-import {applyToOnePvOrAll, getPlotViewById, primePlot,
+import {applyToOnePvOrAll, getPlotViewById, primePlot, getCorners, getDrawLayerByType, getPlotViewAry,
                findCurrentCenterPoint, getCenterOfProjection, hasWCSProjection} from '../PlotViewUtil.js';
 import {isHiPS, isImage} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute';
-import {FullType, getRotationAngle, isEastLeftOfNorth, isPlotNorth, isRotationMatching, getMatchingRotationAngle} from '../VisUtil.js';
+import {FullType, getRotationAngle, isEastLeftOfNorth, isRotationMatching,
+    isPlotRotatedNorth, getMatchingRotationAngle} from '../VisUtil.js';
 import {getArcSecPerPix, getEstimatedFullZoomFactor, getZoomLevelForScale, UserZoomTypes} from '../ZoomUtil.js';
 import {RotateType} from '../PlotState.js';
 import {CCUtil} from '../CsysConverter.js';
 import {ZoomType} from '../ZoomType.js';
 import {makeScreenPt, pointEquals} from '../Point.js';
-import {dispatchAddSaga} from '../../core/MasterSaga.js';
 import CoordinateSys from '../CoordSys';
-import {dispatchAttributeChange, visRoot} from '../ImagePlotCntlr';
-import {getCorners, getDrawLayerByType, getPlotViewAry} from '../PlotViewUtil';
 import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dlRoot} from '../DrawLayerCntlr';
 import ImageOutline from '../../drawingLayers/ImageOutline';
-import {isPlotRotatedNorth} from '../VisUtil';
+import {dispatchAddActionWatcher} from '../../core/MasterSaga';
 
 
-export function* watchForCompletedPlot(options, dispatch, getState) {
 
+function watchForCompletedPlot(action, cancelSelf, params, dispatch, getState) {
 
-    let masterPlot;
-    let plot;
+    const {plotId, masterPlotId, wcsMatchType}= params;
 
-    while (!masterPlot || !plot) {
-        const action = yield take([ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_IMAGE_FAIL]);
-        const {plotId, masterPlotId, wcsMatchType}= options;
-
-        if (action.type===ImagePlotCntlr.PLOT_IMAGE_FAIL && action.payload.plotId===plotId) {
-            return;
-        }
-        const visRoot= getState()[IMAGE_PLOT_KEY];
-        masterPlot= primePlot(visRoot, masterPlotId);
-        plot= primePlot(visRoot, plotId);
-
-
-        if (masterPlot && plot) {
-            const masterPv= getPlotViewById(visRoot, masterPlotId);
-            const pv= getPlotViewById(visRoot, plotId);
-            const level = wcsMatchType===WcsMatchType.Standard  || wcsMatchType===WcsMatchType.Target ?
-                masterPlot.zoomFactor :
-                getEstimatedFullZoomFactor(primePlot(masterPv),masterPv.viewDim, FullType.WIDTH_HEIGHT);
-            const asPerPix= getArcSecPerPix(masterPlot,level);
-            if (wcsMatchType===WcsMatchType.Target) {
-                const ft=  masterPlot.attributes[PlotAttribute.FIXED_TARGET];
-                if (ft) dispatchRecenter({plotId:masterPv.plotId, centerPt:ft});
-            }
-            syncPlotToLevelForWcsMatching(pv, masterPv, asPerPix);
-            dispatchUpdateViewSize(pv.plotId);
-        }
+    if (action.type===ImagePlotCntlr.PLOT_IMAGE_FAIL) {
+        if (action.payload.plotId===plotId) cancelSelf();
+        return params;
     }
+    const visRoot= getState()[IMAGE_PLOT_KEY];
+    const masterPlot= primePlot(visRoot, masterPlotId);
+    const plot= primePlot(visRoot, plotId);
+    if (!masterPlot || !plot) return params;
 
+    const masterPv= getPlotViewById(visRoot, masterPlotId);
+    const pv= getPlotViewById(visRoot, plotId);
+    const level = wcsMatchType===WcsMatchType.Standard  || wcsMatchType===WcsMatchType.Target ?
+                         masterPlot.zoomFactor :
+                         getEstimatedFullZoomFactor(primePlot(masterPv),masterPv.viewDim, FullType.WIDTH_HEIGHT);
+    const asPerPix= getArcSecPerPix(masterPlot,level);
+    if (wcsMatchType===WcsMatchType.Target) {
+        const ft=  masterPlot.attributes[PlotAttribute.FIXED_TARGET];
+        if (ft) dispatchRecenter({plotId:masterPv.plotId, centerPt:ft});
+    }
+    syncPlotToLevelForWcsMatching(pv, masterPv, asPerPix);
+    dispatchUpdateViewSize(pv.plotId);
+    cancelSelf();
 }
 
 
@@ -100,7 +92,11 @@ export function wcsMatchActionCreator(action) {
             applyToOnePvOrAll(true, visRoot.plotViewAry, masterPv.plotId, false,
                 (pv) => {
                     if (masterPv.plotId!==pv.plotId) {
-                        dispatchAddSaga( watchForCompletedPlot, {plotId:pv.plotId, masterPlotId:plotId, wcsMatchType:matchType});
+                        dispatchAddActionWatcher( {
+                            callback: watchForCompletedPlot,
+                            params: {plotId:pv.plotId, masterPlotId:plotId, wcsMatchType:matchType},
+                            actions: [ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_IMAGE_FAIL]
+                        } );
                     }
                 }
             );

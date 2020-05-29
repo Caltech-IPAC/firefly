@@ -2,63 +2,33 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
-import {get} from 'lodash';
+import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 import {visRoot} from '../ImagePlotCntlr.js';
-import {flux} from '../../Firefly.js';
 import {VisHeaderView, VisPreview} from './VisHeaderView.jsx';
-import {lastMouseCtx} from '../VisMouseSync.js';
-import {readoutRoot} from '../../visualize/MouseReadoutCntlr.js';
+import {readoutRoot} from '../MouseReadoutCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
-import {addImageReadoutUpdateListener, lastMouseImageReadout} from '../VisMouseSync';
+import {lastMouseCtx, lastMouseImageReadout} from '../VisMouseSync';
+import {useMouseStoreConnector} from '../../ui/SimpleComponent';
 
-
-
-
-export class VisHeader extends PureComponent {
-    constructor(props) {
-        super(props);
-        const showHealpixPixel= get(getAppOptions(), 'hips.readoutShowsPixel');
-        this.state= {visRoot:visRoot(), currMouseState:lastMouseCtx(), readout:readoutRoot(), showHealpixPixel};
-    }
-
-    componentWillUnmount() {
-        if (this.removeListener) this.removeListener();
-        if (this.removeMouseListener) this.removeMouseListener();
-    }
-
-
-    componentDidMount() {
-        this.removeListener= flux.addListener(() => this.storeUpdate());
-        this.removeMouseListener= addImageReadoutUpdateListener(() => this.storeUpdate());
-    }
-
-    storeUpdate() {
-        const readout= readoutRoot();
-        const {currMouseState,readoutData}= this.state;
-        if (visRoot()!==this.state.visRoot || lastMouseImageReadout()!== readoutData || lastMouseCtx() !==currMouseState || readout!==this.state.readout) {
-            this.setState({visRoot:visRoot(), currMouseState:lastMouseCtx(),
-                           readoutData:lastMouseImageReadout(), readout});
-        }
-
-
-    }
-
-    render() {
-        const {showHeader=true, showPreview=true} = this.props; 
-        const {visRoot,currMouseState,readout, readoutData={}, showHealpixPixel}= this.state;
-        return (
-            <div>
-                {showHeader && <VisHeaderView {...{readout, readoutData, showHealpixPixel}}/>}
-                {showPreview && <VisPreview {...{visRoot, currMouseState}}/>}
-            </div>
-        );
-    }
+function makeState() {
+    return {vr:visRoot(), currMouseState:lastMouseCtx(), readoutData:lastMouseImageReadout(), readout:readoutRoot()};
 }
+
+export const VisHeader= memo( ({
+                     showHeader=true, showPreview=true, showHealpixPixel= getAppOptions().hips?.readoutShowsPixel}) =>{
+
+    const {vr, currMouseState,readout, readoutData}= useMouseStoreConnector(makeState);
+    return (
+        <div>
+            {showHeader && <VisHeaderView {...{readout, readoutData, showHealpixPixel:Boolean(showHealpixPixel)}}/>}
+            {showPreview && <VisPreview {...{visRoot:vr, currMouseState}}/>}
+        </div>
+    );
+});
 
 VisHeader.propTypes= {
     showHeader : PropTypes.bool,
-    showPreview :PropTypes.bool,
+    showPreview : PropTypes.bool,
+    showHealpixPixel : PropTypes.bool, // defaults to appOptions
 };
-

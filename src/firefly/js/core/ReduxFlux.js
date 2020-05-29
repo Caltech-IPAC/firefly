@@ -36,8 +36,8 @@ import {getOrCreateWsConn} from './messaging/WebSocketClient.js';
 //--- import Sagas
 import {imagePlotter} from '../visualize/saga/ImagePlotter.js';
 import {watchReadout} from '../visualize/saga/MouseReadoutWatch.js';
-import {watchForRelatedActions} from '../fieldGroup/FieldGroupCntlr.js';
-import {watchExtensionActions} from '../core/messaging/ExternalAccessWatcher.js';
+import {addFieldGroupRelatedWatcher} from '../fieldGroup/FieldGroupCntlr.js';
+import {addExtensionWatcher} from './messaging/ExternalAccessWatcher';
 
 
 
@@ -225,8 +225,8 @@ function createRedux() {
 function startCoreSagas() {
     dispatchAddSaga( imagePlotter);
     dispatchAddSaga( watchReadout);
-    dispatchAddSaga( watchForRelatedActions);
-    dispatchAddSaga( watchExtensionActions);
+    addFieldGroupRelatedWatcher();
+    addExtensionWatcher();
 }
 
 function bootstrap() {

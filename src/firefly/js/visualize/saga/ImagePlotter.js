@@ -191,7 +191,7 @@ function continueSinglePlotting(rawAction, dispatcher) {
     p.then( (wpResult) => processPlotImageSuccessResponse(dispatcher,rawAction.payload,wpResult) )
         .catch ( (e) => {
             dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_FAIL, payload: {plotId, error:e} } );
-            logError(`plot error, plotId: ${plotId}`, e);
+            logError(`plot error, ImagePlotter, plotId: ${plotId}`, e);
         });
 }
 

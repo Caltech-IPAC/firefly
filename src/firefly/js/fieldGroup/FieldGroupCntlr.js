@@ -3,11 +3,11 @@
  */
 
 import {flux} from '../Firefly.js';
-import {take} from 'redux-saga/effects';
 import {omit,get,isEqual} from 'lodash';
 import {clone} from '../util/WebUtil.js';
 import {revalidateFields} from './FieldGroupUtils.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
+import {dispatchAddActionWatcher} from '../core/MasterSaga';
 
 /**
  * Reducer for 'fieldGroup' key
@@ -222,30 +222,20 @@ function multiValueChangeActionCreator(rawAction) {
     };
 }
 
-//======================================== Saga =============================
-//======================================== Saga =============================
-//======================================== Saga =============================
+//======================================== Watcher =============================
+//======================================== Watcher =============================
+//======================================== Watcher =============================
 
+export const addFieldGroupRelatedWatcher= () => dispatchAddActionWatcher({callback:watchForRelatedActions, actions:'*'});
 
-export function* watchForRelatedActions(params, dispatcher, getState ) {
-    let action=  yield take();
-    let state;
-    while(true) {
-        state= getState()[FIELD_GROUP_KEY];
-        Object.keys(state).forEach((groupKey)=> {
-            const fg= state[groupKey];
-            if (fg.mounted && fg.actionTypes.includes(action.type)) {
-                dispatcher({type:RELATED_ACTION, payload:{fieldGroup:fg, originalAction:action}});
-            }
-        });
-
-        action=  yield take();
-    }
+function watchForRelatedActions(action, cancelSelf, params, dispatch, getState) {
+    const state= getState()[FIELD_GROUP_KEY];
+    Object.values(state).forEach((fg)=> {
+        if (fg.mounted && fg.actionTypes.includes(action.type)) {
+            dispatch({type:RELATED_ACTION, payload:{fieldGroup:fg, originalAction:action}});
+        }
+    });
 }
-
-
-
-
 
 //======================================== Reducer =============================
 //======================================== Reducer =============================

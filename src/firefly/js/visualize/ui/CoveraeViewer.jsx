@@ -50,7 +50,7 @@ export function CoverageViewer({viewerId='coverageImages',insideFlex=true,
 
     const hasPlots = (getViewerItemIds(getMultiViewRoot(),viewerId).length===1 && pv);
     const {renderTreeId} = useContext(RenderTreeIdCtx);
-    const forceShow= getBooleanMetaEntry(tbl_id,MetaConst.COVERAGE_SHOWING,false);
+    const forceShow= getBooleanMetaEntry(tbl_id,MetaConst.COVERAGE_SHOWING,false)
     const tblHasCoverage= hasCoverageData(tbl_id);
 
 

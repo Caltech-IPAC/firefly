@@ -193,13 +193,11 @@ DropDownToolbarButton.propTypes= {
     enabled : PropTypes.bool,
     bgDark: PropTypes.bool,
     todo: PropTypes.bool,
-    useBorder : PropTypes.bool,
     onClick : PropTypes.func,
     horizontal : PropTypes.bool,
     visible : PropTypes.bool,
     tipOnCB : PropTypes.func,
     tipOffCB : PropTypes.func,
-    hasHorizontalLayoutSep: PropTypes.bool,
     menuMaxWidth: PropTypes.number,
     dropDown : PropTypes.object.isRequired,
     useDropDownIndicator: PropTypes.bool

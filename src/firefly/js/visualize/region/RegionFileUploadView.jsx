@@ -146,7 +146,7 @@ class RegionUpload extends PureComponent {
                 <FieldGroup groupKey={rgUploadGroupKey}>
                     <FileUpload
                         wrapperStyle={{margin: '5px 0', width: 180}}
-                        innerStyle={{width: 80}}
+                        innerStyle={{width: 90}}
                         fieldKey={rgUploadFieldKey}
                         initialState={{
                             tooltip: 'Select a region file to upload',

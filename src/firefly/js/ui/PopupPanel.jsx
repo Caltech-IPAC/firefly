@@ -1,186 +1,65 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-import React, {PureComponent} from 'react';
+import React, {memo, useState, useEffect, useRef} from 'react';
+import Enum from 'enum';
 import PropTypes from 'prop-types';
 import {debounce} from 'lodash';
-import Enum from 'enum';
-import ReactDOM from 'react-dom';
-import {getPopupPosition, humanStart, humanMove, humanStop } from './PopupPanelHelper.js';
+import {getDefaultPopupPosition, humanStart, humanMove, humanStop} from './PopupPanelHelper.js';
 import './PopupPanel.css';
-
 import DEL_ICO from 'html/images/blue_delete_10x10.png';
-
 
 export const LayoutType= new Enum(['CENTER', 'TOP_EDGE_CENTER', 'TOP_CENTER', 'TOP_LEFT', 'TOP_RIGHT', 'NONE', 'USER_POSITION']);
 
-export class PopupPanel extends PureComponent {
+export const PopupPanel= memo((props) => {
+    const {title='', visible=true, layoutPosition=LayoutType.TOP_CENTER, closePromise, closeCallback, modal=false,
+        requestToClose, mouseInDialog, requestOnTop, dialogId, zIndex=0, children }= props;
+    const [{left,top}, setPos]= useState({left:0,top:0});
+    const [layout, setLayout]= useState(LayoutType.NONE);
+    const {current:ctxRef} = useRef({ mouseCtx: undefined, popupRef : undefined, titleBarRef: undefined});
 
-    constructor(props) {
-        super(props);
+    const updateLayoutPosition= () => {
+        setPos(getDefaultPopupPosition(ctxRef.popupRef,layoutPosition));
+        setLayout(layoutPosition);
+    };
 
-        this.state= {
-            activeLayoutType: LayoutType.NONE,
-            posX: 0,
-            posY: 0
-            };
-        this.browserResizeCallback= null;
-        this.mouseCtx= null;
-        this.popupRef = null;
-        this.titleBarRef= null;
-        this.moveCallback= null;
-        this.buttonUpCallback= null;
+    const askParentToClose= () => requestToClose?.();
+    const onMouseEnter= () => mouseInDialog?.(true);
+    const onMouseLeave= () => mouseInDialog?.(false);
 
-        this.updateLayoutPosition= this.updateLayoutPosition.bind(this);
-        this.askParentToClose= this.askParentToClose.bind(this);
-        this.dialogMoveStart= this.dialogMoveStart.bind(this);
-        this.dialogMove= this.dialogMove.bind(this);
-        this.dialogMoveEnd= this.dialogMoveEnd.bind(this);
-        this.onMouseEnter= this.onMouseEnter.bind(this);
-        this.onMouseLeave= this.onMouseLeave.bind(this);
-        this.renderAsTopHeader= this.renderAsTopHeader.bind(this);
-    }
+    const dialogMoveStart = (ev) => {
+        requestOnTop?.(dialogId);
+        ctxRef.mouseCtx= humanStart(ev,ctxRef.popupRef,ctxRef.titleBarRef);
+    };
+    const dialogMove = (ev) => {
+        const r = humanMove(ev,ctxRef.mouseCtx,ctxRef.titleBarRef);
+        r && setPos({left:r.left, top:r.top});
+    };
+    const dialogMoveEnd = (ev) => humanStop(ev, ctxRef.mouseCtx);
 
-
-
-    updateLayoutPosition() {
-        const e= ReactDOM.findDOMNode(this.popupRef);
-
-        const activeLayoutType = this.props.layoutPosition||LayoutType.TOP_CENTER;
-        setTimeout( () => {
-            const r= getPopupPosition(e,activeLayoutType);
-            this.setState({activeLayoutType, posX:r.left, posY:r.top });
-        },10);
-
-    }
-
-    componentWillUnmount() {
-        window.removeEventListener('resize', this.browserResizeCallback);
-        document.removeEventListener('mousemove', this.moveCallback);
-        document.removeEventListener('mouseup', this.buttonUpCallback);
-        if (this.props.closeCallback) this.props.closeCallback();
-    }
-
-
-    componentDidMount() {
-        const {visible}= this.props;
-        this.moveCallback= (ev)=> this.dialogMove(ev);
-        this.buttonUpCallback= (ev)=> this.dialogMoveEnd(ev);
-        this.browserResizeCallback= debounce(() => { this.updateLayoutPosition(); },150);
-        if (visible) this.updateLayoutPosition();
-        window.addEventListener('resize', this.browserResizeCallback);
-        document.addEventListener('mousemove', this.moveCallback);
-        document.addEventListener('mouseup', this.buttonUpCallback);
-        if (this.props.closePromise) {
-            this.props.closePromise.then(()=>  {
-                this.askParentToClose();
-            });
-        }
-    }
-
-    askParentToClose() {
-        if (this.props.requestToClose) this.props.requestToClose();
-    }
-
-    dialogMoveStart(ev)  {
-        const {requestOnTop,dialogId}= this.props;
-        requestOnTop && requestOnTop(dialogId);
-        const e= ReactDOM.findDOMNode(this.popupRef);
-        const titleBar= ReactDOM.findDOMNode(this.titleBarRef);
-        this.mouseCtx= humanStart(ev,e,titleBar);
-    }
-
-    dialogMove(ev)  {
-        if (this.mouseCtx) {
-            const titleBar= ReactDOM.findDOMNode(this.titleBarRef);
-            const r = humanMove(ev,this.mouseCtx,titleBar);
-            if (r) {
-                this.setState({posX:r.newX, posY:r.newY});
-            }
-        }
-    }
-
-    dialogMoveEnd(ev)  {
-        this.mouseCtx= humanStop(ev,this.mouseCtx);
-        this.mouseCtx= null;
-    }
-
-
-    onMouseEnter() {
-        this.props.mouseInDialog && this.props.mouseInDialog(true);
-    }
-
-    onMouseLeave() {
-        this.props.mouseInDialog && this.props.mouseInDialog(false);
-    }
-
-
-    renderAsTopHeader() {
-
-        const rootStyle= {
-            position: 'absolute',
-            visibility : this.state.activeLayoutType===LayoutType.NONE ? 'hidden' : 'visible',
-            left : this.state.posX,
-            top : this.state.posY
+    useEffect(() => {
+        setTimeout( updateLayoutPosition, 10);
+        const browserResizeCallback= debounce(updateLayoutPosition,150);
+        window.addEventListener('resize', browserResizeCallback);
+        document.addEventListener('mousemove', dialogMove);
+        document.addEventListener('mouseup', dialogMoveEnd);
+        closePromise?.then(()=> askParentToClose());
+        return () => {
+            window.removeEventListener('resize', browserResizeCallback);
+            document.removeEventListener('mousemove', dialogMove);
+            document.removeEventListener('mouseup', dialogMoveEnd);
+            closeCallback?.();
         };
+    },[]);
 
-
-        const title= this.props.title||'';
-
-        return (
-            <div style={{zIndex: this.props.zIndex, position:'relative'}}>
-                {this.props.modal && <div className='popup-panel-glass'/>}
-                <div ref={(c) => this.popupRef=c} style={rootStyle} className={'popup-panel-shadow enable-select'}
-                     onTouchStart={this.dialogMoveStart}
-                     onTouchMove={this.dialogMove}
-                     onTouchEnd={this.dialogMoveEnd}
-                     onMouseEnter={this.onMouseEnter}
-                     onMouseLeave={this.onMouseLeave} >
-                    <div className={'standard-border'}>
-                        <div style={{position:'relative', height:'16px', width:'100%', cursor:'default'}}
-                             className={'title-bar title-color popup-panel-title-background'}
-                            onTouchStart={this.dialogMoveStart}
-                            onTouchMove={this.dialogMove}
-                            onTouchEnd={this.dialogMoveEnd}
-                            onMouseDownCapture={this.dialogMoveStart}>
-                            <div ref={(c) => this.titleBarRef=c}
-                                 style= {{position:'absolute', left: 0, top: 0, bottom: 0, width:'100%', padding: '3px 0 3px 10px'}}
-                                 onMouseDownCapture={this.dialogMoveStart}
-                                 onTouchStart={this.dialogMoveStart}
-                                 onTouchMove={this.dialogMove}
-                                 onTouchEnd={this.dialogMoveEnd}
-                                 className={'title-label'} >
-                                <div className={'text-ellipsis'} style={{width:'80%', height: '100%'}}>
-                                    {title}
-                                </div>
-                            </div>
-                            <img className='popup-panel-header'
-                                 src= {DEL_ICO}
-                                 style= {{position:'absolute', right:0, top:0}}
-                                 onClick={this.askParentToClose} />
-
-                        </div>
-                        <div style={{display:'flex'}}>
-                            {this.props.children}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-
-    render() {
-        if (this.props.visible) {
-            return  this.renderAsTopHeader();
-        }
-        else {
-            return false;
-        }
-    }
-
-}
+    if (!visible) return false;
+    return (
+        <PopupHeaderTop {...{modal,zIndex,left,top,ctxRef,dialogMoveStart,dialogMoveEnd, onMouseEnter,onMouseLeave,
+            dialogMove,children,title,askParentToClose, visibility:layout===LayoutType.NONE ? 'hidden' : 'visible'}}>
+            {children}
+        </PopupHeaderTop>
+    );
+});
 
 PopupPanel.propTypes= {
     layoutPosition : PropTypes.object,
@@ -189,9 +68,42 @@ PopupPanel.propTypes= {
     requestToClose : PropTypes.func,
     requestOnTop : PropTypes.func,
     closeCallback : PropTypes.func,
-    visible : PropTypes.bool,
     dialogId : PropTypes.string,
     zIndex : PropTypes.number,
     mouseInDialog : PropTypes.func,
-    modal : PropTypes.bool
+    modal : PropTypes.bool,
+    visible : PropTypes.bool
 };
+
+function PopupHeaderTop({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart,dialogMoveEnd,
+                            onMouseEnter,onMouseLeave,dialogMove,children,title,askParentToClose}) {
+    return (
+        <div style={{zIndex, position:'relative'}}>
+            {modal && <div className='popup-panel-glass'/>}
+            <div ref={(c) => ctxRef.popupRef=c} style={{left, top, position: 'absolute', visibility}}
+                 className={'popup-panel-shadow enable-select'}
+                 onTouchStart={dialogMoveStart} onTouchMove={dialogMove}
+                 onTouchEnd={dialogMoveEnd} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} >
+                <div className={'standard-border'}>
+                    <div style={{position:'relative', height:'16px', width:'100%', cursor:'default'}}
+                         className={'title-bar title-color popup-panel-title-background'}
+                         onTouchStart={dialogMoveStart} onTouchMove={dialogMove}
+                         onTouchEnd={dialogMoveEnd} onMouseDownCapture={dialogMoveStart}>
+                        <div ref={(c) => ctxRef.titleBarRef=c}
+                             style= {{position:'absolute', left: 0, top: 0, bottom: 0, width:'100%', padding: '3px 0 3px 10px'}}
+                             onMouseDownCapture={dialogMoveStart} onTouchStart={dialogMoveStart}
+                             onTouchMove={dialogMove} onTouchEnd={dialogMoveEnd}
+                             className={'title-label'} >
+                            <div className={'text-ellipsis'} style={{width:'80%', height: '100%'}}>
+                                {title}
+                            </div>
+                        </div>
+                        <img className='popup-panel-header' src= {DEL_ICO}
+                             style= {{position:'absolute', right:0, top:0}} onClick={askParentToClose} />
+                    </div>
+                    <div style={{display:'flex'}}> {children} </div>
+                </div>
+            </div>
+        </div>
+    );
+}

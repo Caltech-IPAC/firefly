@@ -13,7 +13,7 @@ import FootprintObj from '../visualize/draw/FootprintObj.js';
 import {makeDrawingDef, getNextColor, releaseColor} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
-import DrawLayerCntlr, {SUBGROUP} from '../visualize/DrawLayerCntlr.js';
+import DrawLayerCntlr, {dlRoot, SUBGROUP} from '../visualize/DrawLayerCntlr.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import DrawOp from '../visualize/draw/DrawOp.js';
 import {makeWorldPt} from '../visualize/Point.js';
@@ -522,12 +522,12 @@ function computeSelectedIdxAry(drawLayer) {
 //---------------------------------------------------------------------
 
 
-export function selectCatalog(pv,dlAry) {
+export function selectCatalog(pv, dlAry= dlRoot().drawLayerAry) {
     const p= primePlot(pv);
     const sel= p.attributes[PlotAttribute.SELECTION];
     if (!sel) return;
     const catDlAry= getLayers(pv,dlAry);
-    const selectedShape = getSelectedShape(pv, dlAry);
+    const selectedShape = getSelectedShape(pv);
     if (catDlAry.length) {
         const tooBig= catDlAry.some( (dl) => dl.canSelect && dl.dataTooBigForSelection);
         if (tooBig) {
@@ -572,7 +572,7 @@ export function filterCatalog(pv,dlAry) {
     const catDlAry= getLayers(pv,dlAry);
     if (!catDlAry.length) return;
 
-    const selectedShape = getSelectedShape(pv, dlAry);
+    const selectedShape = getSelectedShape(pv);
     catDlAry.forEach((dl) => dl.canFilter && doFilter(dl,p,sel, selectedShape));
     detachSelectArea(pv);
 }
@@ -639,7 +639,7 @@ function getLayers(pv,dlAry) {
  * @param dlAry
  * @returns {*}
  */
-export function getSelectedShape(pv, dlAry) {
+export function getSelectedShape(pv, dlAry= dlRoot().drawLayerAry) {
     const selectAreaLayer = getAllDrawLayersForPlot(dlAry, pv.plotId,true)
                             .find( (dl) => dl.drawLayerTypeId===SelectArea.TYPE_ID);
 

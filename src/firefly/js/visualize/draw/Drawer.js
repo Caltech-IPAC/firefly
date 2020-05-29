@@ -3,9 +3,9 @@
  */
 
 
-import {get, isFunction, isEmpty, isArray, join} from 'lodash';
+import {get, isFunction, isEmpty, isArray} from 'lodash';
 import Point, {makeScreenPt,makeImagePt,pointEquals} from '../Point.js';
-import {dispatchAddTaskCount, dispatchRemoveTaskCount, makeTaskId } from '../../core/AppDataCntlr.js';
+import {dispatchAddTaskCount, dispatchRemoveTaskCount, makeTaskId, getTaskCount} from '../../core/AppDataCntlr.js';
 import BrowserInfo, {Browser} from '../../util/BrowserInfo.js';
 import DrawUtil from './DrawUtil.js';
 import Color from '../../util/Color.js';
@@ -432,7 +432,7 @@ export class Drawer {
     removeTask() {
         const {plot,plotTaskId}= this;
         if (plot && plotTaskId) {
-            setTimeout( () => dispatchRemoveTaskCount(plot.plotId,plotTaskId) ,0);
+            setTimeout( () => getTaskCount(plot.plotId) && dispatchRemoveTaskCount(plot.plotId,plotTaskId) ,0);
         }
     }
 

@@ -266,7 +266,7 @@ function zoomPlotIdNow(dispatcher,preZoomVisRoot,plotId,zoomLevel,isFullScreen,g
         .then( (wpResult) => processZoomSuccess(dispatcher,preZoomVisRoot,plotId,zoomLevel,wpResult,getState) )
         .catch ( (e) => {
             dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_FAIL, payload: {plotId, zoomLevel, error:e} } );
-            logError(`plot error, plotId: ${pv.plotId}`, e);
+            logError(`plot error, Zoom, plotId: ${pv.plotId}`, e);
         });
 }
 

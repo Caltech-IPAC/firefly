@@ -403,7 +403,3 @@ LayerButton.propTypes= {
     visible : PropTypes.bool.isRequired,
     dlCount : PropTypes.number.isRequired // must be here. We don't use directly but it forces an update
 };
-
-
-
-

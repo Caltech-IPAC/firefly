@@ -110,9 +110,9 @@ export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignore
  */
 export function makePlotView(plotId, req, pvOptions= {}) {
     const pv= {
-        plotId, // should never change
-        plotGroupId: req.getPlotGroupId(), //should never change
-        drawingSubGroupId: req.getDrawingSubGroupId(), //todo, string, this is an id, should never change
+        plotId, // immutable
+        plotGroupId: req.getPlotGroupId(), //immutable
+        drawingSubGroupId: req.getDrawingSubGroupId(), //immutable - todo, string, this is an id, should never change
         plots:[],
         visible: true,
         request: req && req.makeCopy(),

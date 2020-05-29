@@ -327,6 +327,7 @@ function changeHiPS(state,action) {
     if (!originalPlot) return state;
 
     let plot= clone(originalPlot);
+    let {plotViewCtx}= pv;
 
     // single plot stuff
 
@@ -345,9 +346,16 @@ function changeHiPS(state,action) {
     if (!isUndefined(cubeIdx) && plot.cubeDepth>1 && cubeIdx<plot.cubeDepth) {
         plot.cubeIdx= cubeIdx;
     }
+
+    if (hipsProperties || hipsUrlRoot || !isUndefined(cubeIdx)) {
+        plot.plotImageId= `${pv.plotId}--${pv.plotViewCtx.plotCounter}`;
+        plotViewCtx= {...plotViewCtx, plotCounter:plotViewCtx.plotCounter+1};
+    }
+
     pv= replacePrimaryPlot(pv, plot);
     pv.serverCall= 'success';
     pv.plottingStatusMsg= 'done';
+    pv.plotViewCtx= plotViewCtx;
     plotViewAry= replacePlotView(plotViewAry,pv);
 
     if (coordSys) {

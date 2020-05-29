@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PureComponent} from 'react';
+import React, {memo, Component, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {xor,isNil, isEmpty,get, isString, isFunction, throttle, isNumber, isArray} from 'lodash';
 import {flux} from '../Firefly.js';
@@ -14,7 +14,7 @@ import {plotMover} from './PlotTransformUtils.js';
 import {DrawerComponent}  from './draw/DrawerComponent.jsx';
 import {CysConverter}  from './CsysConverter.js';
 import {UserZoomTypes}  from './ZoomUtil.js';
-import {primePlot, plotInActiveGroup, getPlotViewById} from './PlotViewUtil.js';
+import {primePlot, getPlotViewById} from './PlotViewUtil.js';
 import {isImageViewerSingleLayout, getMultiViewRoot} from './MultiViewCntlr.js';
 import {contains, intersects} from './VisUtil.js';
 import BrowserInfo from '../util/BrowserInfo.js';
@@ -207,7 +207,7 @@ export class ImageViewerLayout extends PureComponent {
         const rootStyle= {left:0, top:0, bottom:0, right:0,
                            position:'absolute', marginRight: 'auto', marginLeft: 0 };
 
-        const drawLayersIdAry= drawLayersAry ? drawLayersAry.map( (dl) => dl.drawLayerId) : null;
+        const drawLayersIdAry= drawLayersAry ? drawLayersAry.map( (dl) => dl.drawLayerId) : undefined;
         const {cursor}= this.state;
         return (
             <div className='plot-view-scroll-view-window' style={rootStyle}>
@@ -403,23 +403,15 @@ function makeMessageArea(pv,plotShowing,onScreen, sizeViewable) {
         if (!onScreen) {
             return (
                 <ImageViewerStatus message={'Center Plot'} working={false}
-                                   useMessageAlpha={false}
-                                   useButton={true}
-                                   buttonText='Recenter'
-                                   buttonCB={() => dispatchRecenter({plotId:pv.plotId, centerOnImage:true}) }
-
-                />
+                                   useMessageAlpha={false} buttonText='Recenter'
+                                   buttonCB={() => dispatchRecenter({plotId:pv.plotId, centerOnImage:true}) } />
             );
         }
         else if (!sizeViewable) {
             return (
                 <ImageViewerStatus message={'Minimum zoom level exceeded'} working={false}
-                                   useMessageAlpha={false}
-                                   useButton={true}
-                                   buttonText='Zoom To Fit'
-                                   buttonCB={() => dispatchZoom({plotId:pv.plotId, userZoomType:UserZoomTypes.FIT}) }
-
-                />
+                                   useMessageAlpha={false} buttonText='Zoom To Fit'
+                                   buttonCB={() => dispatchZoom({plotId:pv.plotId, userZoomType:UserZoomTypes.FIT}) }/>
             );
         }
         else {
@@ -430,18 +422,15 @@ function makeMessageArea(pv,plotShowing,onScreen, sizeViewable) {
     if (pv.serverCall==='working') {
         return (
             <ImageViewerStatus message={pv.plottingStatusMsg} working={true}
-                               maskWaitTimeMS= {500} messageWaitTimeMS={1000}
-                               useMessageAlpha={plotShowing}/>
+                               maskWaitTimeMS= {500} messageWaitTimeMS={1000} useMessageAlpha={plotShowing}/>
             );
 
     }
     else if (pv.plottingStatusMsg) {
+        const buttonCB= plotShowing && (() => dispatchPlotProgressUpdate(pv.plotId,'',true, pv.request.getRequestKey()));
         return (
             <ImageViewerStatus message={pv.plottingStatusMsg} working={false}
-                               useMessageAlpha={true} useButton={plotShowing}
-                               buttonText='OK'
-                               buttonCB={() => dispatchPlotProgressUpdate(pv.plotId,'',true, pv.request.getRequestKey())}
-                               />
+                               useMessageAlpha={true} buttonText='OK' buttonCB={buttonCB} />
         );
     }
 }
@@ -528,48 +517,27 @@ function fireMouseEvent(drawLayer,mouseState,mouseStatePayload) {
 
 const getLayer= (list,drawLayerId) => list.find( (dl) => dl.drawLayerId===drawLayerId);
 
-// ------------ React component
+export const DrawingLayers= memo( ({plotView:pv, plot, drawLayersIdAry:dlIdAry}) =>{
+    if (isNil(pv.scrollX) || isNil(pv.scrollY)) return false;
+    const {width,height}= pv.viewDim;
+    const drawingAry= dlIdAry?.map( (dlId, idx) => (<DrawerComponent plot={plot} drawLayerId={dlId}
+                                                                  width={width} height={height}
+                                                                  idx={idx} key={dlId}/>) );
+    return (
+        <div className='drawingArea' style={{width, height, left:0, right:0, position:'absolute'}}>
+            {drawingAry}
+        </div>
+    );
 
-/**
- *
- */
-class DrawingLayers extends Component {
-
-    constructor(props) {
-        super(props);
-    }
-
-    shouldComponentUpdate(np) {
-        const p= this.props;
-        return np.plot!==p.plot || !isEmpty(xor(np.drawLayersIdAry,p.drawLayersIdAry)) ||
-              np.plotView.scrollX!==p.plotView.scrollX || np.plotView.scrollY!==p.plotView.scrollY;
-    }
-
-    render() {
-        const {plotView:pv, plot, drawLayersIdAry:dlIdAry}= this.props;
-        const {scrollX, scrollY}= pv;
-        const draw= !isNil(scrollX) && !isNil(scrollY);
-        if (!draw) return null;
-        let drawingAry= null;
-        const {width,height}= pv.viewDim;
-        if (dlIdAry) {
-            drawingAry= dlIdAry.map( (dlId, idx) => (<DrawerComponent plot={plot} drawLayerId={dlId}
-                                                                     width={width} height={height}
-                                                                     idx={idx} key={dlId}/>) );
-        }
-        return (
-            <div className='drawingArea'
-                 style={{width, height, left:0, right:0, position:'absolute'}} >
-                {drawingAry}
-            </div>
-        );
-        
-    }
-}
+},
+(p,np) => {
+    return np.plot===p.plot && isEmpty(xor(np.drawLayersIdAry,p.drawLayersIdAry)) &&
+        np.plotView.scrollX===p.plotView.scrollX && np.plotView.scrollY===p.plotView.scrollY;
+});
 
 DrawingLayers.propTypes= {
     plotView: PropTypes.object.isRequired,
     plot: PropTypes.object.isRequired,
-    drawLayersIdAry: PropTypes.array.isRequired
+    drawLayersIdAry: PropTypes.array
 };
 

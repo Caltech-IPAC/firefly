@@ -1,7 +1,8 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {take} from 'redux-saga/effects';
+import {get, set, has, isEmpty, isString, isArray} from 'lodash';
+import {flux} from '../Firefly.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
@@ -12,41 +13,31 @@ import {primePlot, getDrawLayerById,  getDrawLayersByType} from '../visualize/Pl
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import DrawOp from '../visualize/draw/DrawOp.js';
+import {dispatchAddActionWatcher} from '../core/MasterSaga';
 import DrawLayerCntlr, {DRAWING_LAYER_KEY,
                         dispatchDeleteRegionLayer,
                         dispatchSelectRegion,
                         dlRoot, getDlAry} from '../visualize/DrawLayerCntlr.js';
-import {get, set, has, isEmpty, isString, isArray} from 'lodash';
-import {dispatchAddSaga} from '../core/MasterSaga.js';
-import {flux} from '../Firefly.js';
 
 const ID= 'REGION_PLOT';
 const TYPE_ID= 'REGION_PLOT_TYPE';
 const factoryDef= makeFactoryDef(TYPE_ID, creator, getDrawData, getLayerChanges, null, null);
 export default {factoryDef, TYPE_ID};
 
-function* regionsRemoveSaga({id, plotId}, dispatch, getState) {
-        while (true) {
-            var action = yield take([DrawLayerCntlr.REGION_REMOVE_ENTRY,
-                                     DrawLayerCntlr.REGION_DELETE_LAYER,
-                                     DrawLayerCntlr.DETACH_LAYER_FROM_PLOT]);
-
-            if (action.payload.drawLayerId === id) {
-                var dl;
-                switch (action.type) {
-                    case  DrawLayerCntlr.REGION_REMOVE_ENTRY :
-                        dl = getDrawLayerById(getState()[DRAWING_LAYER_KEY], id);
-                        if (dl && isEmpty(get(dl, 'drawObjAry'))) {
-                            dispatchDeleteRegionLayer(id, plotId);
-                        }
-                        break;
-                    case DrawLayerCntlr.REGION_DELETE_LAYER:
-                    case DrawLayerCntlr.DETACH_LAYER_FROM_PLOT:
-                        return;
-                        break;
-                }
-            }
-        }
+function regionsRemoveWatcher(action, cancelSelf, params, dispatch, getState) {
+    const {id, plotId}= params;
+    if (action.payload.drawLayerId !== id) return params;
+    switch (action.type) {
+        case  DrawLayerCntlr.REGION_REMOVE_ENTRY :
+            const dl = getDrawLayerById(getState()[DRAWING_LAYER_KEY], id);
+            if (dl && isEmpty(dl?.drawObjAry)) dispatchDeleteRegionLayer(id, plotId);
+            break;
+        case DrawLayerCntlr.REGION_DELETE_LAYER:
+        case DrawLayerCntlr.DETACH_LAYER_FROM_PLOT:
+            cancelSelf();
+            break;
+    }
+    return params;
 }
 
 let idCnt = 0;
@@ -127,7 +118,12 @@ function creator(initPayload) {
     dl.highlightedRegion = get(initPayload, 'highlightedRegion', null);
     dl.selectMode = get(initPayload, 'selectMode');
 
-    dispatchAddSaga(regionsRemoveSaga, {id, plotId: get(initPayload, 'plotId')});
+    dispatchAddActionWatcher({
+        callback: regionsRemoveWatcher,
+        params: {id, plotId: initPayload?.plotId},
+        actions: [DrawLayerCntlr.REGION_REMOVE_ENTRY,
+            DrawLayerCntlr.REGION_DELETE_LAYER, DrawLayerCntlr.DETACH_LAYER_FROM_PLOT]
+    });
     return dl;
 }
 

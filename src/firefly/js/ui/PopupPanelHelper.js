@@ -65,38 +65,42 @@ const beginMove= function(popup, x, y) {
 };
 
 
+/**
+ * @param ctx
+ * @param x
+ * @param y
+ * @return {null|{top: number, left: number}}
+ */
 const doMove= function(ctx, x, y) {
     if (!ctx || !ctx.moving) return null;
     if (x<0) x= 0;
     if (y<0) y= 0;
-    if (ctx) {
-        var xDiff= x-ctx.originalMouseX;
-        var yDiff= y-ctx.originalMouseY;
-        var newX=ctx.originalX+xDiff;
-        var newY=ctx.originalY+yDiff;
-        if (newX+ctx.popup.offsetWidth>window.innerWidth+ window.scrollX ) {
-            newX= window.innerWidth+window.scrollX-ctx.popup.offsetWidth;
-        }
-        if (newX<2) newX=2;
-        if (newY+ctx.popup.offsetHeight>window.innerHeight + window.scrollY ) {
-            newY= window.innerHeight+window.scrollY-ctx.popup.offsetHeight;
-        }
-        if (newY<2) newY=2;
-
-        return {newX,newY};
-        //ctx.popup.style.left= newX+"px";
-        //ctx.popup.style.top= newY+"px";
+    const xDiff= x-ctx.originalMouseX;
+    const yDiff= y-ctx.originalMouseY;
+    let newX=ctx.originalX+xDiff;
+    let newY=ctx.originalY+yDiff;
+    if (newX+ctx.popup.offsetWidth+10>window.innerWidth+ window.scrollX ) {
+        newX= window.innerWidth+window.scrollX-ctx.popup.offsetWidth-10;
     }
-    return null;
+    if (newX<2) newX=2;
+    if (newY+ctx.popup.offsetHeight>window.innerHeight + window.scrollY ) {
+        newY= window.innerHeight+window.scrollY-ctx.popup.offsetHeight;
+    }
+    if (newY<2) newY=2;
+    return {left:newX,top:newY};
 };
 
 const endMove= function(ctx) {
     if (!ctx || !ctx.moving) return;
-    //ctx.popup.releaseCapture();
     ctx.moving= false;
 };
 
-export const getPopupPosition= function(e,layoutType) {
+/**
+ * @param {element} e
+ * @param layoutType
+ * @return {{top: number, left: number}}
+ */
+export const getDefaultPopupPosition= function(e, layoutType) {
 
     var left= 0;
     var top= 0;
@@ -177,7 +181,7 @@ export const humanStart= function(ev,popup,titleBar) {
 };
 
 export const humanMove= function(ev,ctx,titleBar) {
-    if (!ctx) return null;
+    if (!ctx) return undefined;
     setCursorShape(ctx.popup,titleBar,ev);
     var x= ev.clientX;
     var y= ev.clientY;

@@ -354,7 +354,7 @@ function getLayers(pv,dlAry) {
         .filter( (dl) => dl.drawLayerTypeId===TYPE_ID);
 }
 
-export function selectFootprint(pv, dlAry) {
+export function selectFootprint(pv, dlAry= dlRoot().drawLayerAry) {
     if (dlAry.length === 0) return;
 
     const footprintAry = getLayers(pv, dlAry);

@@ -1,6 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import {flux} from '../Firefly.js';
 import {doExtensionActivate} from './ExternalAccessUtils.js';
 import {POINT} from './ExternalAccessUtils.js';
 import {dispatchChangePointSelection} from '../visualize/ImagePlotCntlr.js';
@@ -10,7 +11,6 @@ const EXTENSION_REMOVE= 'ExternalAccessCntlr/extensionRemove';
 const EXTENSION_ACTIVATE= 'ExternalAccessCntlr/extensionActivate';
 
 const EXTERNAL_ACCESS_KEY= 'externalAccess';
-import {flux} from '../Firefly.js';
 
 const ALL_MPW= 'AllMpw';
 
