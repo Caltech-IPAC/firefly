@@ -1,0 +1,82 @@
+<!doctype html>
+<!--
+  ~ License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+  -->
+<html>
+<head>
+<!--
+template should replace:
+$url_firefly="https://irsa.ipac.caltech.edu/irsaviewer/firefly_loader.js"
+$urlHips
+$props (list of properties)
+
+FITS image request option should be also passed in
+$imageRequestNoWpt
+-->
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>HiPS::__urlHips</title>
+</head>
+
+<body>
+
+
+<div style="width: 500px; padding: 50px 0 0 20px;">
+    <br>
+    This page demos showing Firefly hips map from __urlHips
+    <br>
+    <div style="width: 700px; padding: 50px 0 0 20px;">
+
+        <div id="hipsDiv" style="flex-grow:1; height: 400px; margin: 10px;"></div>
+        <div>
+            <ul style="list-style-type: circle;">
+                __props
+            </ul>
+        </div>
+    </div>
+<div>
+
+<script type="text/javascript">
+    {
+        onFireflyLoaded= function(firefly) {
+
+            window.ffViewer= firefly.getViewer();
+
+            firefly.debug = true;
+
+            var util= firefly.util;
+            var ui= firefly.ui;
+            // util.image.initAutoReadout(ui.DefaultApiReadout,
+            //        {MouseReadoutComponent:ui.PopupMouseReadoutMinimal, showThumb:false,showMag:false});
+
+            //FITS option:
+             var imageRequestNoWpt = __fits_image;
+
+            var fovDegFallOver=.5;
+            var urlHips = '__urlHips';//http://alasky.u-strasbg.fr/AllWISE/RGB-W4-W2-W1';
+            // world point in image request
+            firefly.showImageOrHiPS(
+                'hipsDiv',
+                {
+                    plotId: 'aHipsID3',
+                    title     : 'HiPS',
+                    hipsRootUrl: urlHips,
+                    //SizeInDeg:.1
+                },
+
+                imageRequestNoWpt,
+                fovDegFallOver
+            );
+
+        };
+    }
+
+</script>
+
+
+<script  type="text/javascript" src="__url_firefly"></script>
+<!--    <script  type="text/javascript" src="../firefly_loader.js"></script>-->
+
+
