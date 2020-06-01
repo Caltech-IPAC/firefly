@@ -2,8 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
-import {get} from 'lodash';
+import React, {memo, useState} from 'react';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {CompleteButton} from '../../ui/CompleteButton.jsx';
@@ -18,10 +17,10 @@ import {ColorRGBHuePreservingPanel} from './ColorRGBHuePreservingPanel.jsx';
 import ImagePlotCntlr, {dispatchStretchChange, visRoot} from '../ImagePlotCntlr.js';
 import {primePlot, getActivePlotView} from '../PlotViewUtil.js';
 import { RangeValues, ZSCALE, STRETCH_ASINH}from '../RangeValues.js';
-import {flux} from '../../Firefly.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {isHiPS, isImage} from '../WebPlot';
+import {useStoreConnector} from '../../ui/SimpleComponent';
 import {FieldGroupTabs, Tab} from '../../ui/panel/TabPanel.jsx';
 
 import {RED_PANEL,
@@ -30,9 +29,6 @@ import {RED_PANEL,
     NO_BAND_PANEL,
     RGB_HUEPRESERVE_PANEL,
     colorPanelChange, rgbHuePreserveChange} from './ColorPanelReducer.js';
-
-
-
 
 
 
@@ -52,82 +48,43 @@ export function showColorDialog(element) {
     dispatchShowDialog('ColorStretchDialog');
 }
 
-class ColorDialog extends PureComponent {
 
-    constructor(props) {
-        super(props);
-        const plot= primePlot(visRoot());
-        const fields= FieldGroupUtils.getGroupFields(NO_BAND_PANEL);
-        const rFields= FieldGroupUtils.getGroupFields(RED_PANEL);
-        const gFields= FieldGroupUtils.getGroupFields(GREEN_PANEL);
-        const bFields= FieldGroupUtils.getGroupFields(BLUE_PANEL);
-        const rgbFields= FieldGroupUtils.getGroupFields(RGB_HUEPRESERVE_PANEL);
-        const isHuePreserving= Boolean(get(plot, 'plotState.bandStateAry.0.rangeValues.rgbPreserveHue'));
-        this.setHuePreserving = this.setHuePreserving.bind(this);
-        this.state= {plot, fields, rFields, gFields, bFields, rgbFields, isHuePreserving};
+function getStoreUpdate(oldS) {
+    const plot= primePlot(visRoot());
+    const fields= FieldGroupUtils.getGroupFields(NO_BAND_PANEL);
+    const rFields= FieldGroupUtils.getGroupFields(RED_PANEL);
+    const gFields= FieldGroupUtils.getGroupFields(GREEN_PANEL);
+    const bFields= FieldGroupUtils.getGroupFields(BLUE_PANEL);
+    const rgbFields= FieldGroupUtils.getGroupFields(RGB_HUEPRESERVE_PANEL);
+    const newState= {plot, fields, rFields, gFields, bFields, rgbFields}
+    if (!oldS) return newState;
+
+    if ( plot?.plotState!==oldS.plot?.plotState || fields!==oldS.fields ||
+        rFields!==oldS.rFields || gFields!==oldS.gFields || bFields!==oldS.bFields ||
+        rgbFields!==oldS.rgbFields) {
+        return newState;
     }
-    
-    componentWillUnmount() {
-        if (this.removeListener) this.removeListener();
-        this.iAmMounted= false;
-    }
-
-    componentDidMount() {
-        this.iAmMounted= true;
-        this.removeListener= flux.addListener(() => this.storeUpdate());
-
-    }
-
-    storeUpdate() {
-        const {state}= this;
-        const plot= primePlot(visRoot());
-
-        const fields= FieldGroupUtils.getGroupFields(NO_BAND_PANEL);
-        const rFields= FieldGroupUtils.getGroupFields(RED_PANEL);
-        const gFields= FieldGroupUtils.getGroupFields(GREEN_PANEL);
-        const bFields= FieldGroupUtils.getGroupFields(BLUE_PANEL);
-        const rgbFields= FieldGroupUtils.getGroupFields(RGB_HUEPRESERVE_PANEL);
-
-        if (get(plot,'plotState')!==get(state.plot,'plotState') || fields!==state.fields ||
-            rFields!==state.rFields || gFields!==state.gFields || bFields!==state.bFields ||
-            rgbFields!==state.rgbFields) {
-            this.setState({plot, fields, rFields, gFields, bFields, rgbFields});
-        }
-    }
-
-    setHuePreserving(val) {
-        this.setState({isHuePreserving: val});
-    }
-
-    render() {
-        const {plot,fields,rFields,gFields,bFields,rgbFields,isHuePreserving}= this.state;
-        if (!plot) return false;
-
-        if (isImage(plot)) {
-            const {plotState} = plot;
-            if (plotState.isThreeColor()) {
-                return renderThreeColorView(plot,rFields,gFields,bFields,rgbFields,isHuePreserving,this.setHuePreserving);
-            }
-            else {
-                return renderStandardView(plot,fields);
-            }
-        }
-        else if (isHiPS(plot)) {
-            return (
-                <div style={ {
-                    fontSize: '12pt',
-                    padding: 10,
-                    width: 350,
-                    textAlign: 'center',
-                    margin: '30px 0 30px 0'
-                }}>
-                    Cannot modify stretch for HiPS Image
-                </div>
-            );
-
-        }
-    }
+    return oldS;
 }
+
+export const ColorDialog= memo(() => {
+    const [{plot,fields,rFields,gFields,bFields,rgbFields}]= useStoreConnector(getStoreUpdate);
+    const [huePreserving, setHuePreserving]= useState(plot?.plotState.getRangeValues().rgbPreserveHue);
+    if (!plot) return false;
+
+    if (isImage(plot)) {
+        return plot.plotState.isThreeColor() ?
+            renderThreeColorView(plot,rFields,gFields,bFields,rgbFields,huePreserving,setHuePreserving) :
+            renderStandardView(plot,fields);
+    }
+    else if (isHiPS(plot)) {
+        return (
+            <div style={{ fontSize: '12pt', padding: 10, width: 350, textAlign: 'center', margin: '30px 0 30px 0' }}>
+                Cannot modify stretch for HiPS Image
+            </div>
+        );
+    }
+});
 
 function renderThreeColorView(plot, rFields, gFields, bFields, rgbFields, isHuePreservingSelected, setHuePreserving) {
     const {plotState} = plot;
@@ -147,7 +104,7 @@ function renderThreeColorView(plot, rFields, gFields, bFields, rgbFields, isHueP
     return (
         <div>
             {threeColorStretchMode}
-            {isHuePreservingSelected && renderHuePreservingThreeColorView(plot, rgbFields)}
+            {Boolean(isHuePreservingSelected) && renderHuePreservingThreeColorView(plot, rgbFields)}
             {!isHuePreservingSelected && renderStandardThreeColorView(plot, rFields, gFields, bFields)}
         </div>
     );

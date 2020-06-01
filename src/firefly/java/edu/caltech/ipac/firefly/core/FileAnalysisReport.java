@@ -28,8 +28,8 @@ public class FileAnalysisReport {
 
     public enum Type {Image, Table, Spectrum, HeaderOnly, PDF, TAR, Unknown}
     public enum UIRender {Table, Chart, Image, NotSpecified}
-    public enum UIEntry {UseSpecified, UseGuess, UseBoth}
-    public enum ChartTableDefOption {auto, showChart, showTable};
+    public enum UIEntry {UseSpecified, UseGuess, UseAll}
+    public enum ChartTableDefOption {auto, showChart, showTable, showImage};
 
 
 
@@ -95,18 +95,29 @@ public class FileAnalysisReport {
     public void replaceParts(List<Part> parts) {
         this.parts= new ArrayList<>(parts);
     }
+    public void insertPartAtTop(Part part) { insertPart(0,part); }
+
+    public void insertPart(int pos,Part part) {
+        if (parts == null) parts = new ArrayList<>();
+        parts.add(pos,part);
+    }
+
+    public void insertPartAfter(Part existingPart, Part newPart) {
+        if (parts == null) parts = new ArrayList<>();
+        int idx= parts.indexOf(existingPart);
+        if (idx==-1 || idx+1>=parts.size()) parts.add(newPart);
+        else parts.add(idx+1,newPart);
+
+
+    }
 
     public void addPart(Part part) {
         if (parts == null) parts = new ArrayList<>();
         parts.add(part);
     }
 
-    public void setPart(Part part, int i) {
-        if (i<parts.size()) parts.set(i,part);
-    }
-    public Part getPart(int i) {
-        return parts.get(i);
-    }
+    public void setPart(Part part, int i) { if (i<parts.size()) parts.set(i,part); }
+    public Part getPart(int i) { return parts.get(i); }
 
     public String getDataType() {
         if (dataType == null) {
@@ -157,7 +168,7 @@ public class FileAnalysisReport {
     public static class Part {
         private final Type type;
         private UIRender uiRender=UIRender.NotSpecified;
-        private UIEntry uiEntry= UIEntry.UseBoth;;
+        private UIEntry uiEntry= UIEntry.UseAll;;
         private int index= 0;
         private String desc;
         private int fileLocationIndex = -1;   // todo: populate: fits (hdu idx) or VO (table idx)
@@ -167,6 +178,7 @@ public class FileAnalysisReport {
         private List<String> tableColumnNames= null; //only use for a fits image that is read as a table
         private List<String> tableColumnUnits= null; //only use for a fits image that is read as a table
         private boolean defaultPart= false;
+        private boolean interpretedData= false;
         private DataGroup details;
         private ChartTableDefOption chartTableDefOption= ChartTableDefOption.auto;
         private int totalTableRows=-1;
@@ -224,6 +236,9 @@ public class FileAnalysisReport {
 
         public boolean isDefaultPart() { return defaultPart; }
         public void setDefaultPart(boolean defaultPart) { this.defaultPart = defaultPart; }
+
+        public boolean isInterpretedData() { return interpretedData; }
+        public void setInterpretedData(boolean interpretedData) { this.interpretedData = interpretedData; }
 
         public UIRender getUiRender() { return uiRender; }
         public void setUiRender(UIRender uiRender) { this.uiRender = uiRender; }

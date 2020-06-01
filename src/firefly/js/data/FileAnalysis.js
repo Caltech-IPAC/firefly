@@ -20,7 +20,7 @@ export const UIRender = {
 export const UIEntry=  {
     UseSpecified: 'UseSpecified',
     UseGuess: 'UseGuess',
-    UseBoth : 'UseBoth'
+    UseAll : 'UseAll'
 };
 
 
@@ -65,7 +65,7 @@ export const makeFileAnalysisPart= (index,fileLocationIndex=0) => (
     {
         index,
         fileLocationIndex,
-        uiEntry: UIEntry.UseBoth,
+        uiEntry: UIEntry.UseAll,
         uiRender: UIRender.NotSpecified,
         convertedFileName: undefined,
         chartParams: undefined,
@@ -123,7 +123,8 @@ export const makeFileAnalysisPart= (index,fileLocationIndex=0) => (
  *  @prop {Array.<string>} [tableColumnNames] only use for a fits image that is read as a table
  *  @prop {Array.<string>} [tableColumnUnits] only use for a fits image that is read as a table
  *  @prop {boolean} [defaultPart]
- *  @prop {string} chartTableDefOption - only used if there is a chart on of 'auto', 'showChart', 'showTable'
+ *  @prop {boolean} [interpretedData] - should be true if this is data that has been added to the original
+ *  @prop {string} chartTableDefOption - only used if there is a chart on of 'auto', 'showChart', 'showTable', 'showImage'
  *  @prop {TableModel} [details]
  *
  *

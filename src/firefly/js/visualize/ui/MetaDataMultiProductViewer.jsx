@@ -17,6 +17,6 @@ const startWatcher= once((dpId) => startDataProductsWatcher({ dataTypeViewerId:d
  * If you are have more that on MultiProductViewer you should lay the out directly
  */
 export const MetaDataMultiProductViewer= memo(({ dpId='DataProductsType', metaDataTableId, autoStartWatcher=true, }) => {
-    autoStartWatcher && startWatcher(dpId);
+    autoStartWatcher && setTimeout(() => startWatcher(dpId),5);
     return (<MultiProductViewer viewerId={dpId} metaDataTableId={metaDataTableId}/>);
 });

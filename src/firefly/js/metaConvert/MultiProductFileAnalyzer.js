@@ -1,9 +1,6 @@
-import {isArray,get} from 'lodash';
-import {FileAnalysisType,UIEntry} from '../data/FileAnalysis';
-import {
-    createGridImagesActivate,
-    createSingleImageActivate
-} from './ImageDataProductsUtil';
+import {get} from 'lodash';
+import {FileAnalysisType} from '../data/FileAnalysis';
+import { createGridImagesActivate, createSingleImageActivate } from './ImageDataProductsUtil';
 import {PlotAttribute} from '../visualize/PlotAttribute';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr';
@@ -84,7 +81,7 @@ function fileExtensionSingleProductAnalysis(request,idx=0) {
  */
 export function makeFileAnalysisActivate(table, row, request, positionWP, activateParams, menu, menuKey, dataTypeHint) {
     return () => {
-        doUploadAndAnalysis({
+        void doUploadAndAnalysis({
             table,row,request,activateParams,dataTypeHint,menu,menuKey, activateFirst:true,dispatchWorkingMessage:true });
     };
 }
@@ -139,7 +136,7 @@ export function makeAnalysisGetGridDataProduct(makeReq) {
                     return Promise.resolve( dpdtMessage('This product cannot be show in image grid',undefined, {gridNotSupported: true} ));
                 }
             })
-            .catch( (e) => {
+            .catch( () => {
                 return makeErrorResult();
             });
 
@@ -221,7 +218,7 @@ async function doUploadAndAnalysis({
 
 
     try {
-        const {status, message, cacheKey:serverCacheFileKey, fileFormat, analysisResult}=
+        const {cacheKey:serverCacheFileKey, fileFormat, analysisResult}=
                                     await upload(request, 'Details',getDataProductAnalysisParams(table));
         url && dispatchCancelActionWatcher(url);
         let fileAnalysis= parseAnalysis(serverCacheFileKey, analysisResult);
@@ -307,7 +304,7 @@ function processAnalysisResult({table, row, request, activateParams, serverCache
     const activeItemLookupKey= hashCode(rStr);
 
 
-    const {parts,fileName,fileFormat, filePath, disableAllImageOption= false}= fileAnalysis;
+    const {parts,fileName,fileFormat, disableAllImageOption= false}= fileAnalysis;
     if (!parts) return makeErrorResult('',fileName,serverCacheFileKey);
 
 
@@ -328,7 +325,9 @@ function processAnalysisResult({table, row, request, activateParams, serverCache
     let makeAllImageOption= !disableAllImageOption;
     if (makeAllImageOption) makeAllImageOption= imageParts.length>1 || (imageParts.length===1 && parts.length===1);
     if (makeAllImageOption) makeAllImageOption= imageParts.every( (ip) => !ip.imageResult.override);
-    const useImagesFromPartAnalysis= parts.length>1 || !makeAllImageOption;
+    const duoImageTableParts= partAnalysis.filter( (pa) => pa.imageResult && pa.tableResult);
+    if (makeAllImageOption && duoImageTableParts.length===1 && imageParts===1) makeAllImageOption= false;
+    const useImagesFromPartAnalysis= parts.length>1 || !makeAllImageOption || duoImageTableParts.length;
 
 
 
@@ -339,12 +338,13 @@ function processAnalysisResult({table, row, request, activateParams, serverCache
 
     if (imageEntry) fileMenu.menu.push(imageEntry);
     partAnalysis.forEach( (pa) => {
-        let pAry= [];
-        if (useImagesFromPartAnalysis && pa.imageResult) pAry= isArray(pa.imageResult) ? pa.imageResult : [pa.imageResult];
-        if (pa.tableResult) pAry= isArray(pa.tableResult) ? pa.tableResult : [pa.tableResult];
-        if (pa.chartResult) pAry= isArray(pa.chartResult) ? [...pAry,...pa.chartResult] : [...pAry,pa.chartResult];
-
-        pAry.forEach( (r) => fileMenu.menu.push(r));
+        if (pa.imageResult && pa.tableResult) {
+            fileMenu.menu.push({...pa.tableResult, imageActivate:pa.imageResult.activate});
+        }
+        else {
+            if (useImagesFromPartAnalysis && pa.imageResult) fileMenu.menu.push(pa.imageResult);
+            if (pa.tableResult) fileMenu.menu.push(pa.tableResult);
+        }
     });
 
     fileMenu.menu.forEach( (m,idx) => m.menuKey= 'fm-'+idx);
@@ -362,10 +362,8 @@ function processAnalysisResult({table, row, request, activateParams, serverCache
         return dpdtMessageWithDownload(msg, 'Download File', url, fileFormat==='FITS'&&'FITS');
     }
     dispatchUpdateActiveKey({dpId, activeFileMenuKeyChanges:{[fileMenu.activeItemLookupKey]:fileMenu.menu[actIdx].menuKey}});
-    return {...fileMenu.menu[actIdx],fileMenu}; //todo add which one to activate, right now it will activate the first
+    return {...fileMenu.menu[actIdx],fileMenu};
 }
-
-
 
 function makeErrorMsg(parts, fileFormat) {
     if (parts.every( (p) => p.type===FileAnalysisType.HeaderOnly) && fileFormat==='FITS') {

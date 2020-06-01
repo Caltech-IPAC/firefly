@@ -35,7 +35,7 @@ export const DPtypes= {
     IMAGE_SNGLE_AXIS: 'image-single-axis',
     TABLE: 'table',
     CHART: 'xyplot',
-    CHART_TABLE: 'chartTable',
+    CHOICE_CTI: 'chartTable',
     DOWNLOAD: 'download',
     PNG: 'png',
     ANALYZE: 'analyze',
@@ -44,6 +44,7 @@ export const DPtypes= {
 
 export const SHOW_CHART='showChart';
 export const SHOW_TABLE='showTable';
+export const SHOW_IMAGE='showImage';
 export const AUTO='auto';
 
 /**
@@ -150,7 +151,7 @@ export function dpdtChart(name, activate, menuKey='chart-0', extra={}) {
  * @return {DataProductsDisplayType}
  */
 export function dpdtChartTable(name, activate, menuKey='chart-table-0', extra={}) {
-    return { displayType:DPtypes.CHART_TABLE, name, activate, menuKey, ...extra};
+    return { displayType:DPtypes.CHOICE_CTI, name, activate, menuKey, ...extra};
 }
 
 /**
