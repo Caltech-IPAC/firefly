@@ -11,11 +11,9 @@ package edu.caltech.ipac.visualize.plot.plotdata;
  * Date: 03/24/15
  */
 
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.SUTDebug;
 import edu.caltech.ipac.visualize.plot.ImageHeader;
-import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
-import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
-import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
 import nom.tam.fits.*;
 import nom.tam.util.ArrayFuncs;
 import nom.tam.fits.ImageData;
@@ -28,11 +26,11 @@ import nom.tam.fits.HeaderCardException;
  *  FitsRead newFitsRead = flip.doFlip();
  */
 public class FlipXY {
-    private ImageHeader inImageHeader = null;
-    private Header inFitsHeader = null;
+    private ImageHeader inImageHeader;
+    private Header inFitsHeader;
     private int inNaxis1;
     private int inNaxis2;
-    private String direction = "yAxis";
+    private String direction;
     FitsRead fitsRead;
 
 
@@ -69,15 +67,24 @@ public class FlipXY {
      */
       public FitsRead doFlip()throws FitsException {
 
-        validate();
-        BasicHDU hdu = fitsRead.getHDU();
 
+          if (inFitsHeader == null) {
+
+              if (SUTDebug.isDebug()) {
+                  Logger.info("HDU null! (input image)");
+              }
+              throw new FitsException("HDU null! (input image)");
+          }
+
+          BasicHDU hdu = fitsRead.getHDU();
 
         int dim = getDataDimension();
-        //convert data to float to do the calculation
-        Object inData = ArrayFuncs.convertArray(hdu.getData().getData(), Float.TYPE);
 
-        Object fdata=null;
+        //convert the raw float data to array
+        Object inData = ArrayFuncs.curl(fitsRead.getRawFloatAry(), hdu.getAxes());
+
+        Object fdata;
+
         if (direction.equalsIgnoreCase("yAxis")) {
             fdata = doFlipInY(inData, dim);
         } else if (direction.equalsIgnoreCase("xAxis")) {
@@ -85,7 +92,9 @@ public class FlipXY {
         } else {
             throw new FitsException(
                     "Cannot flip a PLATE projection image");
+
         }
+
         //convert to the type to the same type as in the hdu
         Object data =  ArrayFuncs.convertArray(fdata, FitsRead.getDataType(hdu.getBitPix()), true);
         ImageData newImageData =  new ImageData(data);
@@ -102,27 +111,6 @@ public class FlipXY {
     }
 
     /**
-     * Validate the input fits header
-     * @throws FitsException
-     */
-    private void validate() throws FitsException {
-
-        if (inFitsHeader == null) {
-
-            if (SUTDebug.isDebug()) {
-                System.out.println("HDU null! (input image)");
-            }
-            throw new FitsException("HDU null! (input image)");
-        }
-
-        if (inFitsHeader.containsKey("PLTRAH")) {
-            throw new FitsException(
-                    "Cannot flip a PLATE projection image");
-        }
-
-    }
-
-    /**
      * Do the flip along yAxis (naxis1)
      * @param inData
      * @param dim
@@ -130,7 +118,7 @@ public class FlipXY {
      */
     private Object doFlipInY(Object inData, int dim) {
 
-        Object obj = null;
+           Object obj = null;
 
             switch (dim) {
                 case 2:
