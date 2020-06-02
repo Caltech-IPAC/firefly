@@ -113,7 +113,7 @@ export class DropDownContainer extends Component {
                     {alerts || <Alerts />}
                     <div style={{flexGrow: 1, ...contentWrapStyle}}>
                         <div style={contentStyle} className='DD-ToolBar__content'>
-                            {React.cloneElement(view, { initArgs } ) }
+                            {view && React.cloneElement(view, { initArgs } ) }
                         </div>
                     </div>
                     <div id='footer' className='DD-ToolBar__footer'>
