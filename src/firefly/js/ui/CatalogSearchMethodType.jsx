@@ -371,7 +371,7 @@ export function renderPolygonDataArea(imageCornerCalc) {
                     labelWidth={60}
                     alignment='horizontal'
                     initialState= {{
-                        tooltip: 'Choose how to init corners',
+                        tooltip: 'Choose corners of polygon',
                         label : 'Search area: ',
                         value: 'image'
                     }}
