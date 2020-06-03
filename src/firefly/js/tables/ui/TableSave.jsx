@@ -153,7 +153,11 @@ export function showTableDownloadDialog({tbl_id, tbl_ui_id}) {
 
 function TableDLReducer(tbl_id) {
     return (inFields, action) => {
-        const {request} = getTblById(tbl_id) || {};
+        const {request,tableMeta} = getTblById(tbl_id) || {};
+        const chooseFileNameSource= () => {
+            const fname= request?.META_INFO?.title ?? '';
+            return fname==='${filename}' ? tableMeta?.title : fname;
+        };
         const fixFileName = (fName) => {
 
             const tableFormat = inFields ? get(inFields, [fKeyDef.fileFormat.fKey, 'value'], 'ipac') : 'ipac';
@@ -181,12 +185,12 @@ function TableDLReducer(tbl_id) {
             set(defV, [fKeyDef.wsSelect.fKey, 'value'], '');
             set(defV, [fKeyDef.wsSelect.fKey, 'validator'], isWsFolder());
             set(defV, [fKeyDef.fileName.fKey, 'validator'], fileNameValidator(tblDownloadGroupKey));
-            set(defV, [fKeyDef.fileName.fKey, 'value'], fixFileName(get(request, 'META_INFO.title'), ''));
+            set(defV, [fKeyDef.fileName.fKey, 'value'], fixFileName(chooseFileNameSource()));
             return defV;
         } else {
             switch (action.type) {
                 case FieldGroupCntlr.MOUNT_FIELD_GROUP:
-                    const fName = fixFileName(get(request, 'META_INFO.title', ''));
+                    const fName = fixFileName(chooseFileNameSource());
 
                     inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'], fName);
                     break;
@@ -201,7 +205,7 @@ function TableDLReducer(tbl_id) {
                             inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'], fName);
                         }
                     } else if (action.payload.fieldKey === fKeyDef.fileFormat.fKey) {
-                        const fName = fixFileName(get(request, 'META_INFO.title', ''));
+                        const fName = fixFileName(chooseFileNameSource());
 
                         inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'], fName);
                     }
