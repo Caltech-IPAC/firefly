@@ -289,7 +289,7 @@ function activateMenuItem(state,action) {
     }
     dpData.activeMenuKeys= {...activeMenuKeys, [activeMenuLookupKey]:aMenuItem.menuKey};
 
-    const {activate,url, displayType}= aMenuItem;
+    const {activate,imageActivate, url, displayType}= aMenuItem;
 
     const requiresActivate= ACTIVATE_REQUIRED.includes(displayType);
     if (requiresActivate && !activate) {
@@ -303,8 +303,8 @@ function activateMenuItem(state,action) {
             case DPtypes.IMAGE:
             case DPtypes.TABLE:
             case DPtypes.CHART:
-            case DPtypes.CHART_TABLE:
-                dpData.dataProducts= {displayType, menuKey, menu, fileMenu, activeMenuKey:menuKey, activeMenuLookupKey, activate};
+            case DPtypes.CHOICE_CTI:
+                dpData.dataProducts= {displayType, menuKey, menu, fileMenu, activeMenuKey:menuKey, activeMenuLookupKey, activate, imageActivate};
                 break;
             case DPtypes.PNG:
                 dpData.dataProducts= {displayType, url, menuKey, menu, activeMenuKey:menuKey, activeMenuLookupKey};
@@ -321,7 +321,7 @@ function activateMenuItem(state,action) {
 }
 
 
-const FILE_MENU_REQUIRED= [DPtypes.IMAGE,DPtypes.TABLE,DPtypes.CHART_TABLE,DPtypes.CHART,DPtypes.MESSAGE];
+const FILE_MENU_REQUIRED= [DPtypes.IMAGE,DPtypes.TABLE,DPtypes.CHOICE_CTI,DPtypes.CHART,DPtypes.MESSAGE];
 
 export function changeActiveFileMenuItem(state,action) {
 
@@ -343,7 +343,7 @@ export function changeActiveFileMenuItem(state,action) {
     const actIdx= fileMenu.menu.findIndex( (m) => m.menuKey===newActiveFileMenuKey);
     const fileMenuItem= fileMenu.menu[actIdx<0? fileMenu.initialDefaultIndex: actIdx];
 
-    const {activate,displayType,message,chartTableDefOption}= fileMenuItem;
+    const {activate,imageActivate,displayType,message,chartTableDefOption}= fileMenuItem;
 
     dpData.activeFileMenuKeys={...activeFileMenuKeys, [fileMenu.activeItemLookupKey]:fileMenuItem.menuKey};
 
@@ -357,7 +357,8 @@ export function changeActiveFileMenuItem(state,action) {
     }
 
     const newFileMenu= {...fileMenu, activeFileMenuKey:newActiveFileMenuKey};
-    const newDisplayProduct= { ...selectedMenuDataProduct, displayType, chartTableDefOption, activate, message, fileMenu:newFileMenu, activeMenuKey:menuKey};
+    const newDisplayProduct= { ...selectedMenuDataProduct, displayType, chartTableDefOption, activate, imageActivate, message,
+        fileMenu:newFileMenu, activeMenuKey:menuKey};
     const newMenu= menu && menu.map( (menuItem) => (menuItem.menuKey!==menuKey) ? menuItem : newDisplayProduct );
     dpData.dataProducts= {...newDisplayProduct, menu:newMenu};
     return insertOrReplace(state,dpData);

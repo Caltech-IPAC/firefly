@@ -144,6 +144,7 @@ public class Demo1Analyzer implements DataProductAnalyzer {
             addPart.setUiRender(FileAnalysisReport.UIRender.Image);
             addPart.setUiEntry(FileAnalysisReport.UIEntry.UseSpecified);
             addPart.setConvertedFileName(ServerContext.replaceWithPrefix(f));
+            addPart.setInterpretedData(true);
             retRep.addPart(addPart);
             return retRep;
         } catch (MalformedURLException|FailedRequestException  e) {
@@ -166,7 +167,7 @@ public class Demo1Analyzer implements DataProductAnalyzer {
             boolean isImage= xtension==null || xtension.equalsIgnoreCase("IMAGE");
             if (naxis2>0 && naxis2<30 && isImage) {
                 part.setUiRender(FileAnalysisReport.UIRender.Chart);
-                part.setUiEntry(FileAnalysisReport.UIEntry.UseSpecified);
+                part.setUiEntry(FileAnalysisReport.UIEntry.UseAll);
                 List<String> cNames= new ArrayList<>(naxis2+1);
                 List<String> cUnits= new ArrayList<>(naxis2+1);
                 cNames.add("The_Index");
@@ -292,6 +293,7 @@ public class Demo1Analyzer implements DataProductAnalyzer {
             addPart.setUiRender(FileAnalysisReport.UIRender.Chart);
             addPart.setUiEntry(FileAnalysisReport.UIEntry.UseSpecified);
             addPart.setChartTableDefOption(FileAnalysisReport.ChartTableDefOption.showChart);
+            addPart.setInterpretedData(true);
 
 
             FileAnalysisReport.ChartParams cp= new FileAnalysisReport.ChartParams();

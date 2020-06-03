@@ -122,6 +122,7 @@ public class FileAnalysis {
                 putPartVal(h, p.getChartTableDefOption().name(),i,"chartTableDefOption");
                 if (p.getFileLocationIndex()>-1) putPartVal(h, p.getFileLocationIndex(),i,"fileLocationIndex");
                 if (p.isDefaultPart()) putPartVal(h,p.isDefaultPart(),i,"defaultPart");
+                if (p.isInterpretedData()) putPartVal(h,p.isInterpretedData(),i,"interpretedData");
                 if (p.getTotalTableRows()>-1) putPartVal(h, p.getTotalTableRows(), i, "totalTableRows");
                 if (!isEmpty(p.getDetails())) {
                     putPartVal(h, JsonTableUtil.toJsonDataGroup(p.getDetails(),true), i, "details");

@@ -2,11 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React, {memo, useState, useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {sprintf} from '../../externalSource/sprintf';
 import {debounce, get} from 'lodash';
-
+import {sprintf} from '../../externalSource/sprintf';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
@@ -15,12 +14,9 @@ import {callGetColorHistogram} from '../../rpc/PlotServicesJson.js';
 import {encodeServerUrl} from '../../util/WebUtil.js';
 import {formatFlux} from '../VisUtil.js';
 import {getRootURL} from '../../util/BrowserUtil.js';
-
 import {
-    PERCENTAGE,  ABSOLUTE,SIGMA,
-    STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL,
+    PERCENTAGE,  ABSOLUTE,SIGMA, STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL,
     STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from '../RangeValues.js';
-
 import {getFieldGroupResults, validateFieldGroup} from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchStretchChange, visRoot} from '../ImagePlotCntlr.js';
 import {getActivePlotView} from '../PlotViewUtil.js';
@@ -30,10 +26,12 @@ import {makeSerializedRv} from './ColorDialog.jsx';
 const LABEL_WIDTH= 105;
 const HIST_WIDTH= 340;
 const HIST_HEIGHT= 55;
+const maskWrapper= {position:'absolute', left:0, top:0, width:'100%', height:'100%' };
+const textPadding= {paddingBottom:3};
 const cbarImStyle= {width:'100%', height:10, padding: '0 2px 0 2px', boxSizing:'border-box' };
 
 const histImStyle= {
-    width:HIST_WIDTH, 
+    width:HIST_WIDTH,
     height:HIST_HEIGHT,
     margin: '2px auto 3px auto',
     boxSizing:'border-box',
@@ -42,45 +40,16 @@ const histImStyle= {
 };
 
 
-const maskWrapper= {
-    position:'absolute',
-    left:0,
-    top:0,
-    width:'100%',
-    height:'100%'
-};
+export const ColorBandPanel= memo(({fields,plot,band, groupKey}) => {
+    const [exit, setExit]= useState(true);
+    const [{dataHistUrl,cbarUrl, dataHistogram, dataBinMeanArray}, setDisplayState]= useState({});
+    const [histReadout, setHistReadout]= useState({histValue:0,histMean:0,histIdx:0});
+    const {plotId, plotState}= plot ?? {};
+    const doMask= false;
 
-
-
-const textPadding= {paddingBottom:3};
-
-export class ColorBandPanel extends PureComponent {
-
-    constructor(props) {
-        super(props);
-        this.state={exit:true};
-        this.handleReadout= this.handleReadout.bind(this);
-        this.mouseMove= this.mouseMove.bind(this);
-        this.mouseLeave= this.mouseLeave.bind(this);
-        this.bandReplot= debounce(getReplotFunc(props.groupKey, props.band), 600);
-        const {plot,band}= props;
-        this.initImages(plot,band);
-    }
-    
-    componentDidUpdate(prevProps) {
-        const {plot:nPlot}= this.props;
-        const {plot}= prevProps;
-        if (nPlot.plotId!==plot.plotId || nPlot.plotState!==plot.plotState) {
-            this.initImages(nPlot,this.props.band);
-        }
-        if (this.props.groupKey !== prevProps.groupKey) {
-            this.bandReplot= debounce(getReplotFunc(this.props.groupKey, this.props.band), 600);
-        }
-    }
-
-    initImages(plot,band) {
-
-        callGetColorHistogram(plot.plotState,band,HIST_WIDTH,HIST_HEIGHT)
+    useEffect(() => {
+        let mounted= true;
+        callGetColorHistogram(plotState,band,HIST_WIDTH,HIST_HEIGHT)
             .then(  (result) => {
                 const dataHistUrl= encodeServerUrl(getRootURL() + 'sticky/FireFly_ImageDownload',
                     { file: result.DataHistImageUrl, type: 'any' });
@@ -89,92 +58,44 @@ export class ColorBandPanel extends PureComponent {
                     { file: result.CBarImageUrl, type: 'any' });
                 const dataHistogram= result.DataHistogram;
                 const dataBinMeanArray= result.DataBinMeanArray;
-                this.setState({dataHistUrl,cbarUrl,dataHistogram,dataBinMeanArray});
+                mounted && setDisplayState({dataHistUrl,cbarUrl,dataHistogram,dataBinMeanArray});
             });
-    }
+        return () => void (mounted= false);
+    }, [plotId, plotState, groupKey, band] );
 
-    mouseMove(ev) {
-        const {offsetX:x}= ev;
-        const {dataHistogram,dataBinMeanArray}= this.state;
-        if (dataHistogram && dataBinMeanArray) {
-            const idx = Math.trunc((x * (dataHistogram.length / HIST_WIDTH)));
-            const histValue = dataHistogram[idx];
-            const histMean = dataBinMeanArray[idx];
-            this.setState({histIdx: idx, histValue, histMean, exit: false});
-        }
+    const mouseMove = (ev) => {
+        const {offsetX:x}= ev.nativeEvent;
+        if (!dataHistogram || !dataBinMeanArray) return;
+        const idx = Math.trunc((x * (dataHistogram.length / HIST_WIDTH)));
+        setHistReadout({histIdx: idx, histValue:dataHistogram[idx], histMean:dataBinMeanArray[idx]});
+        setExit(false);
+    };
 
-    }
-    mouseLeave() { this.setState({exit:true}); }
+    const bandReplot= debounce(getReplotFunc(groupKey, band), 600);
 
-    handleReadout(c) {
-        if (!c) return;
-        c.removeEventListener('mousemove', this.mouseMove);
-        c.removeEventListener('mouseleave', this.mouseLeave);
-        c.addEventListener('mousemove', this.mouseMove);
-        c.addEventListener('mouseleave', this.mouseLeave);
-    }
-
-    render() {
-        const {fields,plot,band}=this.props;
-        const {dataHistUrl,cbarUrl, histIdx, histValue,histMean,exit, doMask}=  this.state;
-
-
-
-        let panel;
-        if (fields) {
-            const {algorithm, zscale}=fields;
-            const a= Number.parseInt(algorithm.value);
-            if (a===STRETCH_ASINH) {
-                const renderRange = (isZscale) => {
-                    return isZscale ? renderZscale() : getUpperAndLowerFields();
-                };
-                panel= renderAsinH(fields, renderRange, this.bandReplot);
-            }
-            else if (a===STRETCH_POWERLAW_GAMMA) {
-                panel= renderGamma(fields);
-            }
-            else if (zscale.value==='zscale') {
-                panel= renderZscale();
-            }
-            else {
-                panel= renderStandard();
-            }
-        }
-        else {
-            panel= renderStandard();
-        }
-
-
-        return (
-                <div style={{minHeight:305, minWidth:360, padding:5, position:'relative'}}>
-                    <img style={histImStyle} src={dataHistUrl} key={dataHistUrl} ref={this.handleReadout}/>
-                    <ReadoutPanel 
-                        width={HIST_WIDTH}
-                        exit={exit}
-                        idx={histIdx}
-                        histValue={histValue}
-                        histMean={histMean}
-                        plot={plot}
-                        band={band}
-                    />
-                    <div style={{display:'table', margin:'auto auto'}}>
-                        {getStretchTypeField()}
-                    </div>
-
-                    {panel}
-
-                    <div style={{position:'absolute', bottom:5, left:5, right:5}}>
-                        <div>
-                            {suggestedValuesPanel( plot,band )}
-                        </div>
-                        {getZscaleCheckbox()}
-                        <img style={cbarImStyle} src={cbarUrl} key={cbarUrl}/>
-                    </div>
-                    {doMask && <div style={maskWrapper}> <div className='loading-mask'/> </div> }
+    return (
+        <div style={{minHeight:305, minWidth:360, padding:5, position:'relative'}}>
+            <img style={histImStyle} src={dataHistUrl} key={dataHistUrl}
+                 onMouseMove={mouseMove} onMouseLeave={() => setExit(true)} />
+            <ReadoutPanel
+                width={HIST_WIDTH} exit={exit} idx={histReadout.histIdx} histValue={histReadout.histValue}
+                histMean={histReadout.histMean} plot={plot} band={band}
+            />
+            <div style={{display:'table', margin:'auto auto'}}>
+                {getStretchTypeField()}
+            </div>
+            <ColorInput fields={fields} bandReplot={bandReplot}/>
+            <div style={{position:'absolute', bottom:5, left:5, right:5}}>
+                <div>
+                    {suggestedValuesPanel( plot,band )}
                 </div>
-            );
-    }
-}
+                {getZscaleCheckbox()}
+                <img style={cbarImStyle} src={cbarUrl} key={cbarUrl}/>
+            </div>
+            {doMask && <div style={maskWrapper}> <div className='loading-mask'/> </div> }
+       </div>
+   );
+});
 
 ColorBandPanel.propTypes= {
     groupKey : PropTypes.string.isRequired,
@@ -183,7 +104,15 @@ ColorBandPanel.propTypes= {
     fields : PropTypes.object.isRequired
 };
 
-
+function ColorInput({fields,bandReplot}) {
+    if (!fields) return renderStandard();
+    const a= Number.parseInt(fields.algorithm?.value);
+    const isZ= fields.zscale?.value==='zscale';
+    if (a===STRETCH_ASINH)  return renderAsinH(fields, isZ ? renderZscale() : getUpperAndLowerFields(), bandReplot);
+    else if (a===STRETCH_POWERLAW_GAMMA) return renderGamma(fields);
+    else if (isZ) return renderZscale();
+    else return renderStandard();
+}
 
 const readTopBaseStyle= { fontSize: '11px', paddingBottom:5, height:16 };
 const dataStyle= { color: 'red' };
@@ -191,8 +120,7 @@ const dataStyle= { color: 'red' };
 function suggestedValuesPanel( plot,band ) {
 
     const style= { fontSize: '11px', paddingBottom:5, height:16, whiteSpace: 'pre'};
-
-    const  fitsData= plot.webFitsData[band.value];
+    const fitsData= plot.webFitsData[band.value];
     const {dataMin, dataMax} = fitsData;
     const dataMaxStr = `Data Max: ${sprintf('%.6f',dataMax)} `;
     const dataMinStr = `Data Min: ${sprintf('%.6f', dataMin)}`;
@@ -237,10 +165,6 @@ ReadoutPanel.propTypes= {
     histMean :PropTypes.number,
     width :PropTypes.number
 };
-
-
-
-
 
 //===============================================================================
 //===============================================================================
@@ -349,21 +273,16 @@ function renderGamma(fields) {
     );
 }
 
-const asinhSliderMarks = {
- 0: '0', 5: '5', 10: '10', 15: '15', 20: '20'
-};
-
+const asinhSliderMarks = { 0: '0', 5: '5', 10: '10', 15: '15', 20: '20' };
 const ASINH_Q_MAX_SLIDE_VAL = 20;
 
 export function renderAsinH(fields, renderRange, replot, wrapperStyle={paddingBottom: 60}, qOnTop=false) {
-    const {zscale}= fields;
-    const range= renderRange(zscale.value==='zscale');
     const qvalue = get(fields, ['asinhQ', 'value'], Number.NaN);
     const label = `Q: ${Number.parseFloat(qvalue).toFixed(1)} `;
 
     return (
         <div style={wrapperStyle}>
-            {!qOnTop && range}
+            {!qOnTop && renderRange}
             <div style={{paddingTop: 5, paddingRight: 15, opacity: .4, textAlign: 'center'}}>
                 Q=0 for linear stretch;<br/> increase Q to make brighter features visible
             </div>
@@ -381,14 +300,12 @@ export function renderAsinH(fields, renderRange, replot, wrapperStyle={paddingBo
                          decimalDig={1}
                          onValueChange={replot}
             />
-            {qOnTop && range}
+            {qOnTop && renderRange}
         </div>
     );
 }
 
-
 function getReplotFunc(groupKey, band) {
-
     return (val) => {
         validateFieldGroup(groupKey).then((valid) => {
             if (valid) {

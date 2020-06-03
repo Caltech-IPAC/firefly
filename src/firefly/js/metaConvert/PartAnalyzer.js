@@ -9,7 +9,6 @@ import {TitleOptions} from '../visualize/WebPlotRequest';
 import {createChartTableActivate, createChartSingleRowArrayActivate} from './converterUtils';
 import {createSingleImageActivate} from './ImageDataProductsUtil';
 
-
 /**
  *
  * @param part
@@ -19,10 +18,7 @@ import {createSingleImageActivate} from './ImageDataProductsUtil';
  * @param fileFormat
  * @param serverCacheFileKey
  * @param activateParams
- * @return {{imageSingleAxis: boolean,
- *           isImage: boolean,
- *           tableResult: DataProductsDisplayType|Array.<DataProductsDisplayType>|undefined,
- *           chartResult: DataProductsDisplayType|Array.<DataProductsDisplayType>|undefined}}
+ * @return {{tableResult: DataProductsDisplayType|undefined, imageResult: DataProductsDisplayType|undefined}}
  */
 export function analyzePart(part, request, table, row, fileFormat, serverCacheFileKey, activateParams) {
 
@@ -33,14 +29,13 @@ export function analyzePart(part, request, table, row, fileFormat, serverCacheFi
     const imageResult= availableTypes.includes(DPtypes.IMAGE) && type===FileAnalysisType.Image &&
             analyzeImageResult(part, request, table, row, fileFormat, part.convertedFileName,desc,activateParams,fileLocationIndex);
 
-    const chartResult= availableTypes.includes(DPtypes.CHART) &&
+    let tableResult= availableTypes.includes(DPtypes.CHART) &&
                    analyzeChartTableResult(false, part, fileFormat, fileOnServer,desc,activateParams,fileLocationIndex);
-    const tableResult=
-        availableTypes.includes(DPtypes.TABLE) &&
-        (!chartResult || chartResult.displayType!==DPtypes.CHART_TABLE) &&
-        analyzeChartTableResult(true, part, fileFormat, fileOnServer,desc,activateParams,fileLocationIndex);
-
-    return { imageResult, tableResult, chartResult };
+    if (!tableResult) {
+        tableResult= availableTypes.includes(DPtypes.TABLE) &&
+            analyzeChartTableResult(true, part, fileFormat, fileOnServer,desc,activateParams,fileLocationIndex);
+    }
+    return {imageResult, tableResult};
 }
 
 /**
@@ -119,7 +114,7 @@ const C_COL2= ['flux','data','data1','data2'];
  * if the table is a FITS table or some other type of table then the cNames and cUnits is never returned.
  * @param part
  * @param fileFormat
- * @return {{xCol:string,yCol:string,cNames:Array.<String>,cUnits:Array.<String>}}
+ * @return {{xCol:string,yCol:string,cNames:Array.<String>,cUnits:Array.<String>}|{}}
  */
 function getTableChartColInfo(part, fileFormat) {
     if (isImageAsTable(part,fileFormat)) {
@@ -147,12 +142,22 @@ function getTableChartColInfo(part, fileFormat) {
     }
 }
 
+/**
+ *
+ * @param {String} title
+ * @param {FileAnalysisPart} part
+ * @param fileFormat
+ * @param tableOnly
+ * @return {string}
+ */
 function getTableDropTitleStr(title,part,fileFormat,tableOnly) {
-    const tOrCStr= tableOnly ? 'table' : 'table or chart';
+    if (part.interpretedData) return title;
     if (fileFormat==='FITS') {
+        const tOrCStr= tableOnly ? 'table' : 'table or chart';
         if (isImageAsTable(part,fileFormat)) {
-            const imageAsStr= getImageAsTableColCount(part,fileFormat)>2 ? 'image - show as ': 'image - 1D - show as ';
-            return `HDU #${part.index} (${imageAsStr}${tOrCStr}) ${title}`;
+            const twoD= getImageAsTableColCount(part,fileFormat)>2;
+            const imageAsStr=  twoD ? 'image - show as ': 'image - 1D - show as ';
+            return `HDU #${part.index} (${imageAsStr}${tOrCStr}${twoD? ' or image':''}) ${title}`;
         }
         else {
             return `HDU #${part.index} (${tOrCStr}) ${title}`;
@@ -176,17 +181,15 @@ function getTableDropTitleStr(title,part,fileFormat,tableOnly) {
  * @return {DataProductsDisplayType|undefined}
  */
 function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, title, activateParams, tbl_index=0) {
-    const {uiEntry,uiRender,chartParamsAry, defaultPart:requestDefault= false}= part;
+    const {uiEntry,uiRender,chartParamsAry, interpretedData=false, defaultPart:requestDefault= false}= part;
     const partFormat= part.convertedFileFormat||fileFormat;
     if (uiEntry===UIEntry.UseSpecified) {
         if (tableOnly && uiRender!==UIRender.Table) return undefined;
         else if (uiRender!==UIRender.Chart) return undefined;
     }
 
-
     const ddTitleStr= getTableDropTitleStr(title,part,partFormat,tableOnly);
     const {xCol,yCol,cNames,cUnits}= getTableChartColInfo(part,partFormat);
-
 
     if (tableOnly) {
         return dpdtTable(ddTitleStr,
@@ -201,7 +204,7 @@ function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, titl
             if (chartTableDefOption===AUTO) chartTableDefOption= SHOW_TABLE;
             return dpdtChartTable(ddTitleStr,
                 createChartSingleRowArrayActivate(fileOnServer,'Row 1 Chart',activateParams,xCol,yCol,0,tbl_index),
-                undefined, {paIdx:tbl_index, chartTableDefOption, requestDefault});
+                undefined, {paIdx:tbl_index, chartTableDefOption, interpretedData, requestDefault});
         }
         else {
             const imageAsTableColCnt= isImageAsTable(part,partFormat) ? getImageAsTableColCount(part,partFormat) : 0;
@@ -209,13 +212,14 @@ function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, titl
             if (chartTableDefOption===AUTO) chartTableDefOption= imageAsTableColCnt===2 ? SHOW_CHART : SHOW_TABLE;
             return dpdtChartTable(ddTitleStr,
                 createChartTableActivate(true, fileOnServer,title,activateParams,chartInfo,tbl_index,cNames,cUnits),
-                undefined, {paIdx:tbl_index, chartTableDefOption, requestDefault});
+                undefined, {paIdx:tbl_index, chartTableDefOption, interpretedData, requestDefault});
         }
     }
 }
 
 function analyzeImageResult(part, request, table, row, fileFormat, fileOnServer,title, activateParams, hduIdx) {
-    if (part.uiEntry===UIEntry.UseSpecified && part.uiRender!==UIRender.Image) return undefined;
+    const {interpretedData=false,uiEntry,uiRender, defaultPart=false}= part;
+    if (uiEntry===UIEntry.UseSpecified && uiRender!==UIRender.Image) return undefined;
     const newReq= request.makeCopy();
     let override= false;
     if (fileOnServer) {
@@ -228,11 +232,12 @@ function analyzeImageResult(part, request, table, row, fileFormat, fileOnServer,
     hduIdx && newReq.setMultiImageExts(hduIdx+'');
     const {imageViewerId}= activateParams;
 
-    const ddTitleStr= (part.uiEntry===UIEntry.UseSpecified || fileOnServer) ?
+    const ddTitleStr= (interpretedData || uiEntry===UIEntry.UseSpecified || fileOnServer) ?
                            `${title} (image)` :  `HDU #${hduIdx||0} (image) ${title}`;
 
-    return dpdtImage(ddTitleStr, createSingleImageActivate(newReq,imageViewerId,table.tbl_id,row),'image-'+0,
-        {request:newReq, override, requestDefault:Boolean(part.defaultPart)});
+    return dpdtImage(ddTitleStr,
+        createSingleImageActivate(newReq,imageViewerId,table.tbl_id,row),'image-'+0,
+        {request:newReq, override, interpretedData, requestDefault:Boolean(defaultPart)});
 }
 
 
@@ -256,13 +261,11 @@ function getHeadersThatStartsWith(header, part) {
 }
 
 function getHeader(header, part) {
-    const data=part?.details?.tableData?.data;
+    const data=part.details?.tableData?.data;
     if (!data) return undefined;
     const foundRow= part.details.tableData.data.find( (row) => row[1].toLowerCase()===header.toLowerCase());
     return foundRow && foundRow[2];
 }
-
-
 
 function getColumnNames(part, fileFormat) {
     if (fileFormat==='FITS') {
@@ -307,8 +310,6 @@ function getImageAsTableColCount(part, fileFormat) {
     if (naxis2>30) return 0;
     return naxis2+1;
 }
-
-
 
 function getRowCnt(part, fileFormat) {
     if (part.totalTableRows>0) return part.totalTableRows;
