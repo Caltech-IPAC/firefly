@@ -56,7 +56,7 @@ export function makeLsstSdssPlotRequest(table, rowIdx, cutoutSize) {
         wp = makeWorldPt(ra, decl, CoordinateSys.EQ_J2000);
     }
 
-    const title =scienceCcdId.substr(0, 4) + bandMap[filterName].toString() + scienceCcdId.substr(5, 10)+'-'+filterName+(cutoutSize ? ` size: ${cutoutSize}(arcmin)` : '');
+    const title =scienceCcdId.substr(0, 4) + bandMap[filterName].toString() + scienceCcdId.substr(5, 10)+'-'+filterName;
     const plot_desc = `lsst-sdss-${scienceCcdId}`;
 
     const r  = WebPlotRequest.makeProcessorRequest(sr, plot_desc);

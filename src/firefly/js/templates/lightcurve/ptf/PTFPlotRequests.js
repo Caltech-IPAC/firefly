@@ -74,7 +74,7 @@ export function getWebPlotRequestViaPTFIbe(tableModel, hlrow, cutoutSize, params
             sr.setParam('doCutout', 'true');
             sr.setParam('size', `${cutoutSizeInDeg}`);
             sr.setParam('subsize', `${cutoutSizeInDeg}`);
-            title ='PTF-' + pid + '-'+ band + (cutoutSize ? ` size: ${cutoutSize}(arcmin)` : '');
+            title ='PTF-' + pid + '-'+ band;
         }
 
         const reqParams = WebPlotRequest.makeProcessorRequest(sr, 'ptf');

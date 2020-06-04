@@ -69,7 +69,7 @@ export function getWebPlotRequestViaZTFIbe(tableModel, hlrow, cutoutSize, params
             sr.setParam('doCutout', 'true');
             sr.setParam('size', `${cutoutSizeInDeg}`);
             sr.setParam('subsize', `${cutoutSizeInDeg}`);
-            title += (cutoutSize ? ` size: ${cutoutSize}(arcmin)` : '');
+           // title += (cutoutSize ? ` size: ${cutoutSize}(arcmin)` : '');
         }
 
         const reqParams = WebPlotRequest.makeProcessorRequest(sr, 'ztf');

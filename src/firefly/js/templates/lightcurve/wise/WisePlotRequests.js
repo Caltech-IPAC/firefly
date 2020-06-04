@@ -136,7 +136,7 @@ export function getWebPlotRequestViaWISEIbe(tableModel, hlrow, cutoutSize, param
             sr.setParam('doCutout', 'true');
             sr.setParam('size', `${cutoutSizeInDeg}`);
             sr.setParam('subsize', `${cutoutSizeInDeg}`);
-            title = 'WISE-W' + band + '-' + tmpId + (cutoutSize ? ` size: ${cutoutSize}(arcmin)` : '');
+            title = 'WISE-W' + band + '-' + tmpId;
         }
 
         const reqParams = WebPlotRequest.makeProcessorRequest(sr, 'wise');

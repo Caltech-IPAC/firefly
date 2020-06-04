@@ -3,7 +3,7 @@
  */
 
 import {get, isNil} from 'lodash';
-import {TitleOptions} from '../../visualize/WebPlotRequest.js';
+import {TitleOptions, AnnotationOps} from '../../visualize/WebPlotRequest.js';
 import {logError} from '../../util/WebUtil.js';
 import {makePTFPlotRequest,getWebPlotRequestViaPTFIbe} from './ptf/PTFPlotRequests.js';
 import {getWebPlotRequestViaWISEIbe} from './wise/WisePlotRequests.js';
@@ -269,5 +269,6 @@ export function addCommonReqParams(inWpr,title,wp) {
     if(!isNil(wp)){
         retWpr.setOverlayPosition(wp);
     }
+    retWpr.setAnnotationOps(AnnotationOps.INLINE_BRIEF);
     return retWpr;
 }
