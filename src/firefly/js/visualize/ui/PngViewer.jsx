@@ -1,21 +1,23 @@
-import React from 'react';
+import React,{memo,useState} from 'react';
 import {useStoreConnector} from '../../ui/SimpleComponent';
-import {getActiveTableId, getTblInfoById, getCellValue, getMetaEntry} from '../../tables/TableUtil';
+import {getActiveTableId, getCellValue, getMetaEntry, getTblById} from '../../tables/TableUtil';
 
-export function PngViewer() {
-    const [tbl_id] = useStoreConnector(() => () => getActiveTableId());
-    const {tableModel} = getTblInfoById(tbl_id);
-    if (!tableModel){
-        return null;
+export const PngViewer = memo(()=> {
+    const [tbl_id, highlightedRow] = useStoreConnector(
+        () => getActiveTableId(),
+        () => getTblById(getActiveTableId()) ?. highlightedRow ?? -1
+    );
+    const tableModel = getTblById(tbl_id);
+    const [badUrl, setBadUrl] = useState(undefined);
+
+    if (!tableModel || highlightedRow <0 || tableModel.isFetching){
+        return noPreview();
     }
-    if(tableModel.isFetching){
-        return;
-    }
-    const highlightedRow = tableModel? tableModel.highlightedRow: 0;
+
     const PngSource= getMetaEntry(tbl_id, 'ImagePreview', '');
     const png_url = getCellValue(tableModel, highlightedRow, PngSource);
 
-    if (png_url) {
+    if (png_url && png_url !== badUrl) {
         return (
             <div style={{
                 display: 'flex',
@@ -25,15 +27,23 @@ export function PngViewer() {
                 height: '100%'
             }}>
                 <div style={{overflow: 'auto', display: 'flex', justifyContent: 'center', alignItem: 'center'}}>
-                    <img src={png_url} alt={`Preview not found: ${png_url}`} style={{maxWidth: '100%', flexGrow: 0, flexShrink: 0}}/>
+                    <img src={png_url} alt={`Preview not found: ${png_url}`}
+                         onError={()=>setBadUrl(png_url)}
+                         style={{maxWidth: '100%', flexGrow: 0, flexShrink: 0}}
+                    />
                 </div>
             </div>
         );
     }else{
-        return (
-            <div className='TablePanel_NoData'>
-                <p>No Preview Available</p>
-            </div>
-        );
+        return noPreview();
     }
-};
+});
+
+
+function noPreview() {
+    return (
+        <div className='TablePanel_NoData'>
+            <p>No Preview Available</p>
+        </div>
+    );
+}
