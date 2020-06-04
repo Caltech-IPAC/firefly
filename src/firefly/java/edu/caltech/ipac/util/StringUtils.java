@@ -896,7 +896,7 @@ public class StringUtils {
         return list;
     }
     public static List<String> parseStringList(String s,String token) {
-        return parseStringList(s,token,500);
+        return parseStringList(s,token,10000);
     }
 
     public static List<String> parseStringList(String s) {
