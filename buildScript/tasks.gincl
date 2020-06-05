@@ -678,7 +678,8 @@ task onlinehelp () {
     doLast {
         if (onlineHelpDir != null) {
             exec {
-                commandLine "gradle -Papp_name=${project.name} -b ${onlineHelpDir}/build.gradle build".split(" ")
+                workingDir onlineHelpDir
+                commandLine "gradle -PaltBuildDir=${buildDir}/war/onlinehelp ${project["app-name"]}:build".split(" ")
             }
         }
     }
