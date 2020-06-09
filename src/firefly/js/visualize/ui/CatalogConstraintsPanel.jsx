@@ -514,9 +514,9 @@ function handleOnTableChanged(params, fireValueChange) {
 
     if (isEmpty(selCols)) {
         errors = 'Invalid selection: no column is selected';
-    } else if (allSelected) {
+    } /*else if (allSelected) {
         selCols = '';
-    }
+    }*/
 
 
 
