@@ -86,9 +86,9 @@ export function makeThumbnailTransformCSS(rotation, flipX, flipY) {
 }
 
 function insertTransform(inPlotView, affTrans) {
+    const plot= primePlot(inPlotView);
     const pv= clone(inPlotView);
     const {plots}= pv;
-    const plot= primePlot(pv);
     pv.affTrans=  clone(affTrans);
     pv.plots= plots.map( (p) => p===plot ? clone(plot,{affTrans:pv.affTrans, viewDim:pv.viewDim}) : p);
     pv.overlayPlotViews= pv.overlayPlotViews.map( (opv) =>

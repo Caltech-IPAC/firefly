@@ -3,6 +3,7 @@ import {isString, isNumber, isNil, isObject, isArray} from 'lodash';
 import CoordinateSys from './CoordSys.js';
 import Resolver, {parseResolver} from '../astro/net/Resolver.js';
 import validator from 'validator';
+
 const SPT= 'ScreenPt';
 const IM_PT= 'ImagePt';
 const FITS_IM_PT= 'FitsImagePt';
@@ -14,8 +15,6 @@ const PROJ_PT= 'ProjectionPt';
 const OFFSET_PT= 'OffsetPt';
 
 const Point = {  SPT, IM_PT, IM_WS_PT, FITS_IM_PT, ZERO_BASED_IM_PT, DEV_PT, PROJ_PT, W_PT, OFFSET_PT};
-
-
 
 /**
  * @typedef {Object} Point
@@ -68,8 +67,6 @@ const Point = {  SPT, IM_PT, IM_WS_PT, FITS_IM_PT, ZERO_BASED_IM_PT, DEV_PT, PRO
  * @global
  */
 
-
-
 /**
  * @typedef {Object} ZeroBasedImagePt
  * @summary a point in Zero based image file coordinates, ca be offset by LTV1 and LTV2
@@ -79,7 +76,6 @@ const Point = {  SPT, IM_PT, IM_WS_PT, FITS_IM_PT, ZERO_BASED_IM_PT, DEV_PT, PRO
  * @public
  * @global
  */
-
 
 /**
  * @typedef {Object} WorldPt
@@ -180,9 +176,9 @@ export class WorldPt {
     getCoordSys() { return this.cSys; }
 
 
-    getResolver() { return this.resolver ? this.resolver : null; }
+    getResolver() { return this.resolver ? this.resolver : undefined; }
 
-    getObjName() { return (this.objName) ? this.objName : null; }
+    getObjName() { return (this.objName) ? this.objName : undefined; }
 
 
     /**
@@ -217,7 +213,7 @@ function stringAryToWorldPt(wpParts) {
     const len= wpParts.length;
     const x= Number(wpParts[0]);
     const y= Number(wpParts[1]);
-    if  (isNaN(x) || isNaN(y)) return null;
+    if  (isNaN(x) || isNaN(y)) return undefined;
 
     const csys= CoordinateSys.parse(wpParts[2]);
 
@@ -246,7 +242,10 @@ function stringAryToWorldPt(wpParts) {
  * @global
  */
 export function makeWorldPt(lon,lat,coordSys= undefined,objName= undefined,resolver= undefined) {
-    return new WorldPt(Number(lon),Number(lat),coordSys,objName,resolver) ;
+    const lonNum=Number(lon);
+    const latNum=Number(lat);
+    if (isNaN(lonNum) || isNaN(latNum)) return undefined;
+    return new WorldPt(lonNum,latNum,coordSys,objName,resolver);
 }
 
 
@@ -297,12 +296,9 @@ export const makeZeroBasedImagePt= (x,y) => Object.assign(new SimplePt(x,y), {ty
  * @param {number|string} x - the x, string is converted to number
  * @param {number|string} y - the y, string is converted to number
  * @memberof firefly.util.image
- * @return {Pt}
+ * @return {Point}
  */
 export const makeImageWorkSpacePt= (x,y) => Object.assign(new SimplePt(x,y), {type:IM_WS_PT});
-
-
-
 
 /**
  * @summary A point of the display image
@@ -338,16 +334,14 @@ export const makeOffsetPt= (x,y) => Object.assign(new SimplePt(x,y), {type:OFFSE
 
 
 /**
- * given an x,y, and a CoordinageSys object or string, make the correct type of point.
+ * given an x,y, and a CoordinateSys object or string, make the correct type of point.
  * @param {number} x
  * @param {number} y
  * @param {CoordinateSys|String} coordSys
  * @return {Point}
  */
 export function makeAnyPt(x,y,coordSys) {
-    const csys= (coordSys.isEquatorial && coordSys.getJsys && coordSys.getEquinox) ?
-                        coordSys  : CoordinateSys.parse(coordSys);
-
+    const csys= (coordSys?.getJsys && coordSys?.getEquinox) ? coordSys  : CoordinateSys.parse(coordSys);
     switch (csys) {
         case CoordinateSys.SCREEN_PIXEL:
         case CoordinateSys.UNDEFINED:    return makeScreenPt(x, y);
@@ -361,21 +355,14 @@ export function makeAnyPt(x,y,coordSys) {
 /**
  * given serialized point object return the appropriate point.
  * @param inStr
- * @return {Point|WorldPt|ScreenPt|ImagePt|ZeroBasedImagePt}
+ * @return {Point|WorldPt|ScreenPt|ImagePt|ZeroBasedImagePt|undefined}
  */
 export function parseAnyPt(inStr) {
     const wp= parseWorldPt(inStr);
     if (!wp) return;
-    const cSys= wp.cSys;
-
-    if (cSys===CoordinateSys.SCREEN_PIXEL || cSys===CoordinateSys.UNDEFINED ||
-        cSys===CoordinateSys.PIXEL || cSys===CoordinateSys.ZEROBASED ||
-        cSys===CoordinateSys.FITSPIXEL) {
-        return makeAnyPt(wp.x,wp.y,wp.cSys);
-    }
-    else {
-        return wp;
-    }
+    const {cSys}= wp;
+    return (cSys===CoordinateSys.SCREEN_PIXEL || cSys===CoordinateSys.UNDEFINED || cSys===CoordinateSys.PIXEL ||
+            cSys===CoordinateSys.ZEROBASED || cSys===CoordinateSys.FITSPIXEL) ? makeAnyPt(wp.x,wp.y,wp.cSys) : wp;
 }
 
 /**
@@ -411,20 +398,19 @@ export function pointEquals(p1,p2)  {
  * @global
  */
 export const parsePt= function(type, inStr) {
-    if (!inStr) return null;
+    if (!inStr) return undefined;
     const parts= inStr.split(';');
     if (parts.length===2 && validator.isFloat(parts[0]) && validator.isFloat(parts[1])) {
         const pt= new SimplePt(validator.toFloat(parts[0]), validator.toFloat(parts[1]));
         pt.type= type;
         return pt;
     }
-    return null;
+    return undefined;
 };
 
 export const parseImagePt = (inStr) => parsePt(IM_PT,inStr);
 export const parseImageWorkSpacePt = (inStr) => parsePt(IM_WS_PT,inStr);
 export const parseScreenPt= (inStr) => parsePt(SPT,inStr);
-
 
 
 /**
@@ -434,10 +420,10 @@ export const parseScreenPt= (inStr) => parsePt(SPT,inStr);
  */
 export const parseWorldPt = function (serializedWP) {
     if (isValidPoint(serializedWP)) return serializedWP;
-    if (!serializedWP || !isString(serializedWP)) return null;
+    if (!serializedWP || !isString(serializedWP)) return undefined;
 
     const sAry= serializedWP.split(';');
-    if (sAry.length<2 || sAry.length>5) return null;
+    if (sAry.length<2 || sAry.length>5) return undefined;
     return stringAryToWorldPt(sAry);
 };
 
@@ -448,8 +434,7 @@ const ptTypes= Object.values(Point);
  * @param {*} testPt - any value
  * @return {boolean} true if this point is valid
  */
-export const isValidPoint= (testPt) =>  Boolean(testPt &&
-                                                testPt.type && ptTypes.includes(testPt.type) &&
-                                                isNumber(testPt.x) && isNumber(testPt.y));
+export const isValidPoint= (testPt) =>  Boolean(testPt?.type && ptTypes.includes(testPt?.type) &&
+                                                isNumber(testPt?.x) && isNumber(testPt?.y));
 
 export default Point;

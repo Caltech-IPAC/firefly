@@ -1,12 +1,8 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-
-
-import {isEmpty,isArray, memoize} from 'lodash';
+import {isEmpty,isObject, isArray} from 'lodash';
 import {RequestType} from './RequestType.js';
-import {clone} from '../util/WebUtil.js';
 import CoordinateSys from './CoordSys.js';
 import {makeProjection, makeProjectionNew} from './projection/Projection.js';
 import PlotState from './PlotState.js';
@@ -22,7 +18,8 @@ import {getImageCubeIdx} from './PlotViewUtil.js';
 import {parseWavelengthHeaderInfo} from './projection/WavelengthHeaderParser.js';
 import {geAtlProjectionIDs} from './FitsHeaderUtil.js';
 import {TAB} from './projection/Wavelength';
-import {getPlotViewAry, primePlot} from './PlotViewUtil';
+import {memorizeLastCall} from '../util/WebUtil';
+import {makePlotStateShimForHiPS} from './PlotState';
 
 
 export const RDConst= {
@@ -37,7 +34,11 @@ const HIPS_DATA_WIDTH=  10000000000;
 const HIPS_DATA_HEIGHT= 10000000000;
 
 
-
+/**
+ *
+ * @param {HipsProperties} hipsProperties
+ * @return {string}
+ */
 export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_title || hipsProperties.label || 'HiPS';
 
 /**
@@ -177,6 +178,23 @@ export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_
  */
 
 
+/**
+ *
+ * @typedef {Object} HipsProperties
+ * This is some of the properties that are in the HiPS property file.  There can be anything, this is what we
+ * are using.
+ *
+ * @prop hips_initial_ra
+ * @prop hips_initial_dec
+ * @prop {string} label
+ * @prop coordsys
+ * @prop hips_cube_depth
+ * @prop hips_cube_firstframe
+ * @prop hips_frame
+ * @prop {string} obs_title
+ */
+
+
 const relatedIdRoot= '-Related-';
 
 export const isHiPS= (plot) => Boolean(plot?.plotType==='hips');
@@ -197,23 +215,23 @@ function makePlotTemplate(plotId, plotType, asOverlay, imageCoordSys) {
         plotType,
         imageCoordSys,
         asOverlay,
-        plotImageId     : plotId+'---NEEDS___INIT',
-        tileData    : undefined,
-        relatedData     : undefined,
-        plotState : undefined,
-        projection: undefined,
-        dataWidth : undefined,
+        plotImageId: plotId+'---NEEDS___INIT',
+        tileData   : undefined,
+        relatedData: undefined,
+        plotState  : undefined,
+        projection : undefined,
+        dataWidth  : undefined,
         dataHeight : undefined,
-        title : '',
-        plotDesc        : '',
-        dataDesc        : '',
-        webFitsData     : undefined,
+        title      : '',
+        plotDesc   : '',
+        dataDesc   : '',
+        webFitsData: undefined,
         //=== Mutable =====================
-        screenSize: {width:0, height:0},
-        zoomFactor: 1,
-        affTrans : undefined,
-        viewDim  : undefined,
-        attributes: undefined,
+        screenSize : {width:0, height:0},
+        zoomFactor : 1,
+        affTrans   : undefined,
+        viewDim    : undefined,
+        attributes : undefined,
 
         // a note about conversionCache - the caches (using a map) calls to convert WorldPt to ImagePt
         // have this here breaks the redux paradigm, however it still seems to be the best place. The cache
@@ -225,7 +243,6 @@ function makePlotTemplate(plotId, plotType, asOverlay, imageCoordSys) {
 
 
 function processAllSpacialAltWcs(header) {
-
     const availableAry= geAtlProjectionIDs(header);
     if (isEmpty(availableAry)) return {};
 
@@ -299,7 +316,7 @@ export const WebPlot= {
         const zf= plotState.getZoomLevel();
 
         // because of history we keep directFileAccessData in the plot state, however now we compute it on the client
-        // also- we need to keep a copy in plotState for backward compatability and in the plot to put in back in the plotState
+        // also- we need to keep a copy in plotState for backward compatibility and in the plot to put in back in the plotState
         // when a new one is generated
         for(let i= 0; (i<3); i++) {
             if (headerAry[i]) plotState.get(i).directFileAccessData= makeDirectFileAccessData(headerAry[i], cubeCtx?cubeCtx.cubePlane:-1);
@@ -337,10 +354,10 @@ export const WebPlot= {
             directFileAccessDataAry
             //=== End Mutable =====================
         };
-        plot= clone(plot, imagePlot);
+        plot= {...plot, ...imagePlot};
         plot.cubeIdx= getImageCubeIdx(plot);
         if (relatedData) {
-            plot.relatedData= relatedData.map( (d) => clone(d,{relatedDataId: plotId+relatedIdRoot+d.dataKey}));
+            plot.relatedData= relatedData.map( (d) => ({...d,relatedDataId: plotId+relatedIdRoot+d.dataKey}));
         }
 
         if ((!cubeCtx || cubeCtx.cubePlane===0) && wlData && wlData.failWarning)  {
@@ -354,33 +371,19 @@ export const WebPlot= {
      *
      * @param plotId
      * @param wpRequest
-     * @param hipsProperties
+     * @param {HipsProperties} hipsProperties
      * @param desc
      * @param zoomFactor
-     * @param attributes
+     * @param {PlotAttribute|object} attributes
      * @param asOverlay
      * @return {WebPlot} the new WebPlot object for HiPS
      */
     makeWebPlotDataHIPS(plotId, wpRequest, hipsProperties, desc, zoomFactor=1, attributes= {}, asOverlay= false) {
 
-        const plotState= PlotState.makePlotState();
-
-        const bandState= BandState.makeBandState();
-
-        bandState.plotRequestTmp= wpRequest;
-        bandState.rangeValuesSerialize = null; // todo
-        bandState.rangeValues= null; //todo
-        plotState.bandStateAry= [bandState,null,null];
-        plotState.ctxStr=null;
-        plotState.zoomLevel= 1;
-        plotState.threeColor= false;
-        plotState.colorTableId= 0;
-
-        const hipsCoordSys= getHiPSCoordSysFromProperties(hipsProperties);
+        const hipsCoordSys= makeHiPSCoordSys(hipsProperties);
         const lon= Number(hipsProperties.hips_initial_ra) || 0;
         const lat= Number(hipsProperties.hips_initial_dec) || 0;
         const projection= makeHiPSProjection(hipsCoordSys, lon,lat);
-
         const plot= makePlotTemplate(plotId,'hips',asOverlay, hipsCoordSys);
 
         const hipsPlot= {
@@ -391,7 +394,7 @@ export const WebPlot= {
             hipsProperties,
 
             /// other
-            plotState,
+            plotState: makePlotStateShimForHiPS(wpRequest),
             projection,
             allWCSMap: {'':projection},
             dataWidth: HIPS_DATA_WIDTH,
@@ -400,18 +403,16 @@ export const WebPlot= {
             title : getHiPsTitleFromProperties(hipsProperties),
             plotDesc        : desc,
             dataDesc        : hipsProperties.label || 'HiPS',
+            cubeDepth: Number(hipsProperties?.hips_cube_depth) || 1,
             //=== Mutable =====================
             screenSize: {width:HIPS_DATA_WIDTH*zoomFactor, height:HIPS_DATA_HEIGHT*zoomFactor},
-            cubeDepth: Number(hipsProperties?.hips_cube_depth) || 1,
             cubeIdx: Number(hipsProperties?.hips_cube_firstframe) || 0,
             zoomFactor,
             attributes,
-
             //=== End Mutable =====================
 
         };
-
-        return clone(plot, hipsPlot);
+        return {...plot, ...hipsPlot};
     },
 
 
@@ -420,7 +421,7 @@ export const WebPlot= {
      * @param {WebPlot} plot
      * @param {object} stateJson
      * @param {ImageTileData} tileData
-     * @return {*}
+     * @return {WebPlot}
      */
     setPlotState(plot,stateJson,tileData) {
         const plotState= PlotState.makePlotStateWithJson(stateJson);
@@ -440,8 +441,6 @@ export const WebPlot= {
         if (tileData) plot.tileData= tileData;
         return plot;
     },
-
-
 };
 
 
@@ -461,13 +460,17 @@ function makeHiPSProjection(coordinateSys, lon=0, lat=0) {
         crpix2: HIPS_DATA_HEIGHT*.5,
         crval1: lon,
         crval2: lat
-
     };
     return makeProjection({header, coorindateSys:coordinateSys.toString()});
 }
 
 
-function getHiPSCoordSysFromProperties(hipsProperties) {
+
+/**
+ * @param {HipsProperties} hipsProperties
+ * @return {CoordinateSys}
+ */
+function makeHiPSCoordSys(hipsProperties) {
     switch (hipsProperties.hips_frame) {
         case 'equatorial' : return CoordinateSys.EQ_J2000;
         case 'galactic' :   return CoordinateSys.GALACTIC;
@@ -483,25 +486,16 @@ function getHiPSCoordSysFromProperties(hipsProperties) {
     return CoordinateSys.GALACTIC;
 }
 
-function makeHiPSProjectionUsingProperties(hipsProperties, lon=0, lat=0) {
-    return makeHiPSProjection(getHiPSCoordSysFromProperties(hipsProperties), lon,lat);
-}
-
-
 /**
  * replace the hips projection if the coordinate system changes
  * @param {WebPlot} plot
- * @param hipsProperties
+ * @param {HipsProperties} hipsProperties
  * @param {WorldPt} wp
  */
 export function replaceHiPSProjectionUsingProperties(plot, hipsProperties, wp= makeWorldPt(0,0)) {
-    const projection= makeHiPSProjectionUsingProperties(hipsProperties, wp.x, wp.y);
-    const retPlot= clone(plot);
-    retPlot.imageCoordSys= projection.coordSys;
-    retPlot.dataCoordSys= projection.coordSys;
-    retPlot.projection= projection;
-    retPlot.allWCSMap= {'':projection};
-    return retPlot;
+    const projection= makeHiPSProjection(makeHiPSCoordSys(hipsProperties), wp.x, wp.y);
+    const {coordSys}= projection;
+    return { ...plot, imageCoordSys: coordSys, dataCoordSys: coordSys, projection, allWCSMap: {'':projection} };
 }
 
 /**
@@ -513,12 +507,8 @@ export function replaceHiPSProjectionUsingProperties(plot, hipsProperties, wp= m
 export function replaceHiPSProjection(plot, coordinateSys, wp= makeWorldPt(0,0)) {
     const newWp= convert(wp, coordinateSys);
     const projection= makeHiPSProjection(coordinateSys, newWp.x, newWp.y);
-    const retPlot= clone(plot);
-    retPlot.imageCoordSys= projection.coordSys;
     //note- the dataCoordSys stays the same
-    retPlot.projection= projection;
-    retPlot.allWCSMap= {'':projection};
-    return retPlot;
+    return { ...plot, imageCoordSys: projection.coordSys, projection, allWCSMap: {'':projection} };
 }
 
 
@@ -529,85 +519,56 @@ export function replaceHiPSProjection(plot, coordinateSys, wp= makeWorldPt(0,0))
  * @return {WebPlot}
  */
 export function replaceHeader(plot, header) {
-    const retPlot= clone(plot);
-    retPlot.conversionCache= new Map();
-    retPlot.projection= makeProjection({header:clone(header), coorindateSys:plot.projection.coordSys.toString()});
-    retPlot.allWCSMap= {'':retPlot.projection};
-    return retPlot;
+    const projection= makeProjection({header:{...header}, coorindateSys:plot.projection.coordSys.toString()});
+    return { ...plot, conversionCache: new Map(), projection, allWCSMap: {'':projection} };
 }
 
 /**
  * Return true if this is a WebPlot obj
- * @param obj
- * @return boolean
+ * @param {object} o
+ * @return boolean - true if this object is a WebPlot
  */
-export function isPlot(obj) {
-    return Boolean(obj && obj.plotType && obj.plotId && obj.plotImageId && obj.conversionCache);
-}
-
-
-
+export const isPlot= (o) => isObject(o) && Boolean(o.plotType && o.plotId && o.plotImageId && o.conversionCache);
 
 /**
+ * @deprecated - we are moving away from blank images. So this function will soon be unnecessary
  * Check if the plot is is a blank image
  * @param {WebPlot} plot - the plot
  * @return {boolean}
  */
-export function isBlankImage(plot) {
-    if (plot.plotState.isThreeColor()) return false;
-    const req= plot.plotState.getWebPlotRequest();
-    return (req && req.getRequestType()===RequestType.BLANK);
-}
+export const isBlankImage= (plot) =>
+        !plot?.plotState.isThreeColor() && plot?.plotState.getWebPlotRequest()?.getRequestType()===RequestType.BLANK;
 
 /**
- *
  * @param {WebPlot} plot
  * @param {number} zoomFactor
  * @return {WebPlot}
  */
-export function clonePlotWithZoom(plot,zoomFactor) {
-    if (!plot) return null;
-    const screenSize= {width:plot.dataWidth*zoomFactor, height:plot.dataHeight*zoomFactor};
-    return Object.assign({},plot,{zoomFactor,screenSize});
-}
+export const clonePlotWithZoom= (plot,zoomFactor) =>
+        plot && {...plot,zoomFactor,screenSize:{width:plot.dataWidth*zoomFactor, height:plot.dataHeight*zoomFactor}};
 
+export const getScreenPixScaleArcSec= memorizeLastCall((plot) => {
+    if (!plot || !plot.projection || !isKnownType(plot)) return 0;
+    if (isImage(plot)) {
+        return plot.projection.getPixelScaleArcSec() / plot.zoomFactor;
+    }
+    else if (isHiPS(plot)) {
+        const pt00= makeWorldPt(0,0, plot.imageCoordSys);
+        const tmpPlot= changeProjectionCenter(plot, pt00);
+        const cc= CysConverter.make(tmpPlot);
+        const scrP= cc.getScreenCoords( pt00);
+        const pt2= cc.getWorldCoords( makeScreenPt(scrP.x-1, scrP.y), plot.imageCoordSys);
+        return Math.abs(0-pt2.x)*3600; // note have to use angular distance formula here, because of the location of the point
+    }
+},8);
 
-export const getScreenPixScaleArcSec= (() => {
-    let lastPlot;
-    let lastResult;
-    return (plot) => {
-            if (!plot || !plot.projection || !isKnownType(plot)) return 0;
-            if (plot===lastPlot) return lastResult;
-            if (isImage(plot)) {
-                lastResult= plot.projection.getPixelScaleArcSec() / plot.zoomFactor;
-            }
-            else if (isHiPS(plot)) {
-                const pt00= makeWorldPt(0,0, plot.imageCoordSys);
-                const tmpPlot= changeProjectionCenter(plot, pt00);
-                const cc= CysConverter.make(tmpPlot);
-                const scrP= cc.getScreenCoords( pt00);
-                const pt2= cc.getWorldCoords( makeScreenPt(scrP.x-1, scrP.y), plot.imageCoordSys);
-                lastResult= Math.abs(0-pt2.x)*3600; // note have to use angular distance formula here, because of the location of the point
-            }
-            lastPlot= plot;
-            return lastResult;
-        };
-})();
-
-export function getFluxUnits(plot,band) {
-    if (!plot || !band || !isImage(plot)) return '';
-    return plot.fluxUnitAry[band.value];
-}
-
+export const getFluxUnits= (plot,band) => (!plot || !band || !isImage(plot)) ? '' : plot.fluxUnitAry[band.value];
 
 /**
- *
  * @param {WebPlot|CysConverter} plot
  * @return {number}
  */
-export function getPixScaleArcSec(plot) {
-    return getPixScaleDeg(plot)*3600;
-}
+export const getPixScaleArcSec= (plot) => getPixScaleDeg(plot)*3600;
 
 /**
  *
@@ -630,5 +591,3 @@ export function getPixScaleDeg(plot) {
     }
     return 0;
 }
-
-

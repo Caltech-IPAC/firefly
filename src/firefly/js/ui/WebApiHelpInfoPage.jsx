@@ -1,18 +1,15 @@
 
 
 import React, {Fragment} from 'react';
-import {isEmpty} from 'lodash';
-import {makeExample, WebApiHelpType} from '../api/WebApi';
+import {isEmpty,isObject,isArray} from 'lodash';
+import {getReservedParamKeyDesc, makeExample, ReservedParams, WebApiHelpType} from '../api/WebApi';
 
 import './WebApiHelpInfoPage.css';
 
 
 
 
-export function WebApiHelpInfoPage({helpType,contextMessage='',cmd,params,webApiCommands, badParams}) {
-
-
-
+export function WebApiHelpInfoPage({helpType,contextMessage='',cmd,params,webApiCommands, badParams, missingParams}) {
     let showContextMsg= false;
     let msg= '';
     let showAllHelp= false;
@@ -45,7 +42,8 @@ export function WebApiHelpInfoPage({helpType,contextMessage='',cmd,params,webApi
         <div style={{padding: '20px 0 20px 20px', backgroundColor: 'white'}}>
             <div style={{fontSize:'18pt', textAlign:'center'}}>{msg}</div>
             {!showAllHelp && <div>To See Overview Help: <a href={overviewUrl}> {overviewUrl}</a> </div>}
-            {!isEmpty(params) && <ParameterList params={{cmd, ...params}} url={window.location.href} badParams={badParams}/>}
+            {!isEmpty(params) && <ParameterList params={{cmd, ...params}} url={window.location.href}
+                                                badParams={badParams} missingParams={missingParams}/>}
             <div>{showContextMsg && contextMessage}</div>
             {showAllHelp && webApiCommands.map( (c) => <CommandOverview webApiCommand={c} key={c.cmd}/>)}
             {cmdEntry && <CommandOverview webApiCommand={cmdEntry} key={cmdEntry.cmd}/>}
@@ -53,9 +51,40 @@ export function WebApiHelpInfoPage({helpType,contextMessage='',cmd,params,webApi
     );
 }
 
+const pEntryLine= (k,v,key) => (
+    <Fragment key={key}>
+        <div className='webApiParamName'>{k||''}</div>
+        <div className='webApiDash'>{k?'-':''}</div>
+        <div className='webApiDesc'>{v}</div>
+    </Fragment>
+);
+
+function OverViewEntries({parameters}) {
+    const rpKeys= Object.keys(ReservedParams);
+    return Object.entries(parameters).map( ([k,v]) => {
+        let desc= v;
+        let rStr= '';
+        const keyStr= rpKeys.includes(k) ? getReservedParamKeyDesc(k) : k;
+        if (isObject(v)) {
+            desc= v.desc;
+            rStr= v.isRequired ? ' (required)' : '';
+        }
+
+        const firstLine= (kIn,vIn) => pEntryLine(kIn,`${vIn}${rStr}`,kIn+'-0');
+
+        if (isArray(v)) {
+            return v.map( (vEntry,idx) => idx===0 ? firstLine(keyStr,vEntry,v) : pEntryLine('',vEntry,keyStr+'-'+idx));
+        }
+        else {
+            return firstLine(keyStr,desc);
+        }
+    }).flat();
+}
+
 
 function CommandOverview({webApiCommand}) {
     const {overview, parameters, examples}= webApiCommand;
+
     return (
         <div style={{marginTop: 20}}>
             <div >
@@ -69,15 +98,7 @@ function CommandOverview({webApiCommand}) {
             <div style={{margin: '10px 0 0 20px'}}>
                 <div>Parameters:</div>
                 <div className='webApiParamsGrid'>
-                    {Object.entries(parameters).map( ([k,v]) => {
-                        return (
-                            <Fragment key={k} >
-                                <div className='webApiParamName'>{k}</div>
-                                <div className='webApiDash'> - </div>
-                                <div className='webApiDesc'>{v}</div>
-                            </Fragment>
-                        );
-                    })}
+                    <OverViewEntries parameters={parameters} />
                 </div>
             </div>
         </div>
@@ -133,9 +154,7 @@ function ShowExampleGroup({examples}) {
 }
 
 
-function ParameterList({params, url, badParams=[]}) {
-    // <div>{!isEmpty(params) ? JSON.stringify(params):''}</div>
-    return (
+const ParameterList = ({params, url, badParams=[], missingParams=[]})  => (
         <div style={{marginTop: 10}}>
             <span style={{fontStyle: 'italic', paddingRight: 10}}>URL:</span><span>{url}</span>
             <div className='webApiParamsGrid'>
@@ -147,14 +166,24 @@ function ParameterList({params, url, badParams=[]}) {
                         <Fragment key={k}>
                             <div className={cName}>{k}</div>
                             <div className='webApiDash'> = </div>
-                            <div className='webApiDesc'>{v}</div>
+                            <div className='webApiDesc'>{v.toString()}</div>
                         </Fragment>
                     );
                 })
                 }
             </div>
+            {!isEmpty(missingParams) &&
+                <div>
+                    <div style={{marginLeft: 20, fontSize: 'smaller'}}>Missing required parameters:</div>
+                        {missingParams.map( (p) => {
+                            const cName= 'webApiParamName webApiBadParam';
+                            return (
+                                <div style={{marginLeft:145}} className={cName}>{p}</div>
+                            );
+                        })
+                        }
+                </div>
+            }
         </div>
     );
-}
-
 

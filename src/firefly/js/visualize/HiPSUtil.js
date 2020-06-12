@@ -40,7 +40,7 @@ function getHealpixIndex(nside) {
 
 /**
  *
- * @param {WebPlot} plot
+ * @param {WebPlot|CysConverter} plot
  * @param {WorldPt} wp new center of projection
  */
 export function changeProjectionCenter(plot, wp) {

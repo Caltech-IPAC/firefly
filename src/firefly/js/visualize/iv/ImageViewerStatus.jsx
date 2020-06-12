@@ -33,6 +33,7 @@ export const ImageViewerStatus= memo(
 
     useEffect(() => {
         if (showing.messageShowing && showing.maskShowing) return;
+        if (messageWaitTimeMS===0 && !showing.messageShowing) setShowing({...showing,messageShowing:true});
         let alive= true;
         const timeOuts= [
             messageWaitTimeMS>0 && {name:'messageShowing', wait:messageWaitTimeMS},
@@ -45,7 +46,7 @@ export const ImageViewerStatus= memo(
             setShowing({...showing, [timeout.name]:true});
             timeOuts[0] && window.setTimeout( handleTimeout, timeOuts[0].wait);
         };
-        window.setTimeout( handleTimeout, timeOuts[0].wait);
+        timeOuts[0] && window.setTimeout( handleTimeout, timeOuts[0].wait);
         return () => void (alive= false);
     }, [messageWaitTimeMS, maskWaitTimeMS] );
 

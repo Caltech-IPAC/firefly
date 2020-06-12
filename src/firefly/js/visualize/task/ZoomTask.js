@@ -4,7 +4,7 @@
 
 import {get} from 'lodash';
 import {UserZoomTypes, getArcSecPerPix, getEstimatedFullZoomFactor,
-    getNextZoomLevel, getZoomLevelForScale} from '../ZoomUtil.js';
+    getNextZoomLevel, getZoomLevelForScale, FullType} from '../ZoomUtil.js';
 import {logError} from '../../util/WebUtil.js';
 import {isImage, isHiPS} from '../WebPlot.js';
 import ImagePlotCntlr, {ActionScope, IMAGE_PLOT_KEY, WcsMatchType,
@@ -14,7 +14,6 @@ import {getPlotViewById,primePlot,getPlotStateAry, operateOnOthersInPositionGrou
 import {callSetZoomLevel} from '../../rpc/PlotServicesJson.js';
 import {isImageViewerSingleLayout, getMultiViewRoot} from '../MultiViewCntlr.js';
 import WebPlotResult from '../WebPlotResult.js';
-import VisUtil from '../VisUtil.js';
 import {doHiPSImageConversionIfNecessary} from './PlotHipsTask.js';
 import {matchImageToHips, matchHiPStoPlotView} from './WcsMatchTask';
 
@@ -115,10 +114,10 @@ function evaluateZoomType(visRoot, pv, userZoomType, forceDelay, payloadLevel= 1
 
         if (dim.width && dim.height) {
             if (userZoomType===UserZoomTypes.FIT) {
-                level = getEstimatedFullZoomFactor(plot, dim, VisUtil.FullType.WIDTH_HEIGHT);
+                level = getEstimatedFullZoomFactor(plot, dim, FullType.WIDTH_HEIGHT);
             }
             else if (userZoomType===UserZoomTypes.FILL) {
-                level = getEstimatedFullZoomFactor(plot, dim, VisUtil.FullType.ONLY_WIDTH);
+                level = getEstimatedFullZoomFactor(plot, dim, FullType.ONLY_WIDTH);
             }
             else if (userZoomType===UserZoomTypes.WCS_MATCH_PREV) {
                 if (visRoot.prevActivePlotId) {
@@ -129,7 +128,7 @@ function evaluateZoomType(visRoot, pv, userZoomType, forceDelay, payloadLevel= 1
                                  getZoomLevelForScale(plot, asPerPix) : masterPlot.zoomFactor;
                 }
                 else { // just to a fit
-                    level = getEstimatedFullZoomFactor(plot, dim, VisUtil.FullType.WIDTH_HEIGHT);
+                    level = getEstimatedFullZoomFactor(plot, dim, FullType.WIDTH_HEIGHT);
                 }
             }
             validParams= true;

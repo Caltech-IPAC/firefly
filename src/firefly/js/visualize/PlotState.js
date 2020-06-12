@@ -295,6 +295,14 @@ export class PlotState {
 
 }
 
+export function makePlotStateShimForHiPS(wpRequest) {
+    const plotState= PlotState.makePlotState();
+    const bandState= BandState.makeBandState();
+    bandState.plotRequestTmp= wpRequest;
+    plotState.bandStateAry= [bandState,null,null];
+    return plotState;
+}
+
 
 export default PlotState;
 

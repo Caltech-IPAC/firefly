@@ -3,21 +3,17 @@
  */
 
 import React from 'react';
-import {isNil} from 'lodash';
 import {encodeServerUrl} from '../../util/WebUtil.js';
 import {makeHiPSTileUrl} from '../HiPSUtil.js';
-import {primePlot} from '../PlotViewUtil.js';
 import {getRootURL} from '../../util/BrowserUtil.js';
 import {CysConverter} from '../CsysConverter.js';
-import {makeTransform} from '../PlotTransformUtils.js';
 import {toRadians, contains, intersects, getBoundingBox} from '../VisUtil.js';
 import {makeDevicePt} from '../Point.js';
 import {isImage} from '../WebPlot.js';
+import {memorizeUsingMap} from '../../util/WebUtil';
 
 const BG_IMAGE= 'image-working-background-24x24.png';
 const BACKGROUND_STYLE = `url(+ ${BG_IMAGE} ) top left repeat`;
-
-
 
 /**
  *
@@ -169,8 +165,17 @@ export function createEmptyTile(w,h) {
 
 export function isQuadTileOnScreen(corners, viewDim) {
     if (corners.some ((scrC) => !scrC)) return false;
-    const {width,height}= viewDim;
+    return isQuadTileOnScreenCachable(
+        Math.round(corners[0].x),Math.round(corners[0].y),
+        Math.round(corners[1].x),Math.round(corners[1].y),
+        Math.round(corners[2].x),Math.round(corners[2].y),
+        Math.round(corners[3].x),Math.round(corners[3].y),
+        viewDim.width,viewDim.height);
 
+}
+
+const isQuadTileOnScreenCachable= memorizeUsingMap( (x1,y1,x2,y2,x3,y3,x4,y4, width,height) => {
+    const corners= [{x:x1,y:y1}, {x:x2,y:y2},{x:x3,y:y3},{x:x4,y:y4}];
     if (!corners.some ((scrC) => contains(0,0,width,height,scrC.x,scrC.y))) {
 
         const xAry= corners.map( (p) => p.x);
@@ -202,8 +207,7 @@ export function isQuadTileOnScreen(corners, viewDim) {
 
     }
     return true;
-
-}
+}, 10000);
 
 
 export function computeBounding(plot,w,h) {
@@ -225,26 +229,26 @@ export function computeBounding(plot,w,h) {
  * @param offsetX
  * @param offsetY
  */
-export function renderBoundBox(plotView, targetCanvas, color, offsetX, offsetY) {
-    window.requestAnimationFrame(() => {
-        const ctx= targetCanvas.getContext('2d');
-        ctx.save();
-        ctx.clearRect(0,0,targetCanvas.width, targetCanvas.height);
-        ctx.fillStyle = color;
-
-        const {scrollX, scrollY, flipX,flipY, viewDim, rotation}= plotView;
-        if (flipY) offsetX*=-1;
-        const plot= primePlot(plotView);
-        const {width,height}= plot.screenSize;
-
-        if (!isNil(plotView.scrollX) && !isNil(plotView.scrollY)) {
-            const affTrans= makeTransform(offsetX,offsetY, scrollX, scrollY, rotation, flipX, flipY, viewDim);
-            ctx.setTransform(affTrans.a, affTrans.b, affTrans.c, affTrans.d, affTrans.e, affTrans.f);
-            ctx.fillRect(0,0, width, height);
-        }
-        ctx.restore();
-    });
-}
-
-
-
+// export function renderBoundBox(plotView, targetCanvas, color, offsetX, offsetY) {
+//     window.requestAnimationFrame(() => {
+//         const ctx= targetCanvas.getContext('2d');
+//         ctx.save();
+//         ctx.clearRect(0,0,targetCanvas.width, targetCanvas.height);
+//         ctx.fillStyle = color;
+//
+//         const {scrollX, scrollY, flipX,flipY, viewDim, rotation}= plotView;
+//         if (flipY) offsetX*=-1;
+//         const plot= primePlot(plotView);
+//         const {width,height}= plot.screenSize;
+//
+//         if (!isNil(plotView.scrollX) && !isNil(plotView.scrollY)) {
+//             const affTrans= makeTransform(offsetX,offsetY, scrollX, scrollY, rotation, flipX, flipY, viewDim);
+//             ctx.setTransform(affTrans.a, affTrans.b, affTrans.c, affTrans.d, affTrans.e, affTrans.f);
+//             ctx.fillRect(0,0, width, height);
+//         }
+//         ctx.restore();
+//     });
+// }
+//
+//
+//

@@ -243,7 +243,7 @@ function changeDatePickerOpenStatus(loc) {
 }
 
 function SpatialSearch({cols, groupKey, fields, initArgs={}}) {
-    const {WorldPt, radiusInArcSec}= initArgs;
+    const {POSITION:worldPt, radiusInArcSec}= initArgs;
     const showCenterColumns = () => {
         return (
             <div style={{marginLeft: LeftInSearch}}>
@@ -279,7 +279,7 @@ function SpatialSearch({cols, groupKey, fields, initArgs={}}) {
 
     return (
         <FieldGroupCollapsible header={<Header title={Spatial}  helpID={tapHelpId('spatial')}
-                                       checkID={SpatialCheck}   message={message} enabled={Boolean(WorldPt)}/>}
+                                       checkID={SpatialCheck}   message={message} enabled={Boolean(worldPt)}/>}
                                initialState={{ value: 'open' }}
                                fieldKey={SpatialPanel}
                                wrapperStyle={{marginBottom: 15}}
@@ -295,7 +295,8 @@ function SpatialSearch({cols, groupKey, fields, initArgs={}}) {
 SpatialSearch.propTypes = {
     cols: ColsShape,
     groupKey: PropTypes.string,
-    fields: PropTypes.object
+    fields: PropTypes.object,
+    initArgs: PropTypes.object
 };
 
 

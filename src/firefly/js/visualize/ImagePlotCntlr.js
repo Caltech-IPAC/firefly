@@ -893,13 +893,14 @@ export function dispatchChangeActivePlotView(plotId) {
  * @param p.positionScope
  * @param p.attKey
  * @param p.attValue
+ * @param {Object} changes attribute changes, use if more than one
  * @param p.toAllPlotsInPlotView if a multiImageFits apply to all the images
  */
 export function dispatchAttributeChange({plotId,overlayColorScope=true,positionScope=false,
-                                            attKey,attValue,toAllPlotsInPlotView=true}) {
+                                            changes, attKey,attValue,toAllPlotsInPlotView=true}) {
     flux.process({
         type: CHANGE_PLOT_ATTRIBUTE,
-        payload: {plotId,attKey,attValue,overlayColorScope,positionScope, toAllPlotsInPlotView}
+        payload: {plotId,attKey,attValue,changes,overlayColorScope,positionScope, toAllPlotsInPlotView}
     });
 }
 

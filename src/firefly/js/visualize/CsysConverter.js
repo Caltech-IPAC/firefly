@@ -686,12 +686,14 @@ export class CysConverter {
 
 
 /**
- *
- * @param pt
- * @return {*}
  * @public
  * @memberof firefly.util.image.CCUtil
- *
+ * Return the same point using the WorldPt object.  the x,y value is the same but a world point is return with the
+ * proper coordinate system.  If a WorldPt is passed the same point is returned.
+ * <i>Important</i>: This method should not be used to convert between coordinate systems.
+ * Example- a ScreenPt with (1,2) will return as a WorldPt with (1,2)
+ * @param {Point} pt the point to translate
+ * @return WorldPt the World point with the coordinate system set
  */
 function getWorldPtRepresentation(pt) {
     if (!isValidPoint(pt)) return null;

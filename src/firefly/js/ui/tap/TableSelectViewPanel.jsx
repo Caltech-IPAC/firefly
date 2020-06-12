@@ -59,7 +59,7 @@ function validateAutoSearch(fields, initArgs) {
             }
         }
     }
-    return false;
+    return Boolean(initArgs.adql);
 }
 
 
@@ -77,19 +77,23 @@ export class TapSearchPanel extends PureComponent {
 
         const {value:defService}= getTapServiceOptions()?.[0] ?? {};
         let {serviceUrl=defService, ...others} = getTapBrowserState();
+        this.populateAndEditAdql = this.populateAndEditAdql.bind(this);
+        this.onTapServiceOptionSelect = this.onTapServiceOptionSelect.bind(this);
+        this.clickFunc= undefined;
+
         initServiceOnce(true, () => {
             if (initArgs.service) {
                 const listedEntry= tapOps.find( (e) => e.value===initArgs.service);
                 if (!listedEntry) webApiAddedServices = {label: initArgs.service, value: initArgs.service};
                 serviceUrl= initArgs.service;
             }
+            if (initArgs.adql) {
+                setTimeout(() => this.populateAndEditAdql(initArgs.adql), 5);
+            }
         });
         this.state = {serviceUrl, ...others};       // initialize state.. default serviceUrl if not given
 
 
-        this.populateAndEditAdql = this.populateAndEditAdql.bind(this);
-        this.onTapServiceOptionSelect = this.onTapServiceOptionSelect.bind(this);
-        this.clickFunc= undefined;
     }
 
     componentDidMount() {
@@ -103,7 +107,10 @@ export class TapSearchPanel extends PureComponent {
                             }, {});
                 this.setState(vals);
 
-                searchOnce(() => validateAutoSearch(fields,this.props.initArgs), this.clickFunc);
+                const {initArgs}= this.props;
+                searchOnce(
+                    () => validateAutoSearch(fields,initArgs),
+                    () => setTimeout(() => this.clickFunc(), 5));
 
             }
         });
@@ -127,6 +134,7 @@ export class TapSearchPanel extends PureComponent {
         const tapOps= getTapServiceOptions();
         const serviceLabel= serviceUrl && tapOps.find( (e) => e.value===serviceUrl)?.label;
         const placeholder = serviceUrl ? `Using <${serviceLabel||serviceUrl}>. Replace...` : 'Select TAP...';
+        const initMaxRec= Number(initArgs.MAXREC || (getAppOptions().tap?.defaultMaxrec ?? 50000));
 
         const rightBtn = selectBy === 'basic' ? (
             <ExtraButton key='editADQL'
@@ -140,7 +148,7 @@ export class TapSearchPanel extends PureComponent {
                              groupKey={gkey}
                              initialState= {{
                                  fieldKey: 'maxrec',
-                                 value: get(getAppOptions(), 'tap.defaultMaxrec', 50000),
+                                 value: initMaxRec,
                                  validator: intValidator(0, getMaxrecHardLimit(), 'Maximum number of rows'),
                                  tooltip: 'Maximum number of rows to return (via MAXREC)',
                                  label: 'Row Limit:',
@@ -227,8 +235,8 @@ export class TapSearchPanel extends PureComponent {
         }
     }
 
-    populateAndEditAdql() {
-        const adql = getAdqlQuery();
+    populateAndEditAdql(inAdql) {
+        const adql = inAdql ?? getAdqlQuery();
         if (adql) {
             //set adql and switch tab to ADQL
             dispatchMultiValueChange(gkey,

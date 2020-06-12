@@ -2,32 +2,26 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get} from 'lodash';
 import update from 'immutability-helper';
 import Enum from 'enum';
-import {PlotAttribute} from './../PlotAttribute.js';
-import {isImage} from '../WebPlot.js';
-import {clone} from '../../util/WebUtil.js';
-import {WPConst} from './../WebPlotRequest.js';
-import {makeScreenPt, makeDevicePt} from './../Point.js';
+import {PlotAttribute} from '../PlotAttribute';
+import {isImage, isHiPS} from '../WebPlot.js';
+import {WPConst} from '../WebPlotRequest';
+import {makeScreenPt, makeDevicePt, makeImagePt} from '../Point';
 import {getActiveTarget} from '../../core/AppDataCntlr.js';
-import VisUtil from './../VisUtil.js';
-import {getPlotViewById, matchPlotViewByPositionGroup, primePlot, findCurrentCenterPoint, findPlotGroup} from './../PlotViewUtil.js';
+import {getCenterPtOfPlot} from '../VisUtil.js';
+import {getPlotViewById, matchPlotViewByPositionGroup, primePlot, findCurrentCenterPoint} from '../PlotViewUtil.js';
 import {changeProjectionCenter} from '../HiPSUtil.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {ZoomType} from '../ZoomType.js';
-import {PlotPref} from './../PlotPref.js';
+import {PlotPref} from '../PlotPref.js';
 import {DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
-import {CCUtil, CysConverter} from './../CsysConverter.js';
+import {CCUtil, CysConverter} from '../CsysConverter.js';
 import {getDefMenuItemKeys} from '../MenuItemKeys.js';
 import {ExpandType, WcsMatchType} from '../ImagePlotCntlr.js';
 import {updateTransform, makeTransform} from '../PlotTransformUtils.js';
-import {isHiPS} from '../WebPlot.js';
-import {makeImagePt} from './../Point';
 
 export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignoreCase: true });
-
-
 
 /**
  * @global
@@ -130,7 +124,6 @@ export function makePlotView(plotId, req, pvOptions= {}) {
         flipY: false,
         flipX: false,
     };
-
     return pv;
 }
 
@@ -150,7 +143,7 @@ function createPlotViewContextData(req, pvOptions={}) {
         rotateNorthLock : false,
         zoomLockingEnabled : false,
         zoomLockingType: UserZoomTypes.FIT, // can be FIT or FILL
-        displayFixedTarget: get(pvOptions, 'displayFixedTarget',true),
+        displayFixedTarget: pvOptions?.displayFixedTarget ?? true,
         lastCollapsedZoomLevel: 0,
         preferenceColorKey: attributes[PlotAttribute.PREFERENCE_COLOR_KEY],
         defThumbnailSize: DEFAULT_THUMBNAIL_SIZE,
@@ -171,7 +164,7 @@ function createPlotViewContextData(req, pvOptions={}) {
 //todo - this function should determine which menuItem are visible and which are hidden
 // for now just return the default
 function makeMenuItemKeys(req,pvOptions,defMenuItemKeys) {
-    return Object.assign({},defMenuItemKeys, pvOptions.menuItemKeys);
+    return {...defMenuItemKeys, ...pvOptions.menuItemKeys};
 }
 
 /**
@@ -196,9 +189,7 @@ export function changePrimePlot(pv, nextIdx) {
     const {plots}= pv;
     if (!plots[nextIdx]) return pv;
     const currentScrollImPt= CCUtil.getImageCoords(primePlot(pv),makeScreenPt(pv.scrollX,pv.scrollY));
-    //=================
-
-    pv= Object.assign({},pv,{primeIdx:nextIdx});
+    pv= {...pv,primeIdx:nextIdx};
 
     const cc= CysConverter.make(plots[nextIdx]);
     if (cc.pointInData(currentScrollImPt)) {
@@ -207,8 +198,7 @@ export function changePrimePlot(pv, nextIdx) {
     else {
         pv= initScrollCenterPoint(pv);
     }
-    pv= updateTransform(pv);
-    return pv;
+    return updateTransform(pv);
 }
 
 /**
@@ -222,29 +212,27 @@ export function changePrimePlot(pv, nextIdx) {
  */
 export function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, newPlot) {
 
-    pv= clone(pv);
-    pv.plotViewCtx= clone(pv.plotViewCtx);
-
+    pv= {...pv, plotViewCtx:{...pv.plotViewCtx}};
 
     if (overlayPlotViews) {
         const oPlotAry= overlayPlotViews.map( (opv) => opv.plot);
         pv.overlayPlotViews= pv.overlayPlotViews.map( (opv) => {
             const plot= oPlotAry.find( (p) => p.plotId===opv.imageOverlayId);
-            return plot ? clone(opv, {plot}) : opv;
+            return plot ? {...opv, plot} : opv;
         });
     }
 
-    if (newPlot || get(pv, 'plots.length') !== plotAry.length) {
+    if (newPlot || pv.plots?.length !== plotAry.length) {
         pv.plots= plotAry;
     }
     else {
         const oldPlots= pv.plots;
-        pv.plots= plotAry.map( (p,idx) => clone(p, {relatedData:oldPlots[idx].relatedData}) );
+        pv.plots= plotAry.map( (p,idx) => ({...p, relatedData:oldPlots[idx].relatedData}) );
     }
 
 
     pv.plots.forEach( (plot) => {
-        plot.attributes= Object.assign({},plot.attributes, getNewAttributes(plot));
+        plot.attributes= {...plot.attributes, ...getNewAttributes(plot)};
         plot.plotImageId= `${pv.plotId}--${pv.plotViewCtx.plotCounter}`;
         pv.plotViewCtx.plotCounter++;
     });
@@ -277,19 +265,15 @@ export function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, newPlo
  */
 export function updatePlotViewScrollXY(plotView,newScrollPt) {
     if (!plotView) return plotView;
-    if (!newScrollPt) return Object.assign({},plotView, {scrollX:undefined, scrollY:undefined});
+    if (!newScrollPt) return {...plotView, scrollX:undefined, scrollY:undefined};
 
     const plot= primePlot(plotView);
     if (!plot) return plotView;
     const {scrollWidth,scrollHeight}= getScrollSize(plotView);
     if (!scrollWidth || !scrollHeight) return plotView;
 
-    const cc= CysConverter.make(plot);
-    newScrollPt= cc.getScreenCoords(newScrollPt);
-    const {x:newSx,y:newSy}= newScrollPt;
-
-    const newPlotView= Object.assign({},plotView, {scrollX:newSx, scrollY:newSy});
-    return updateTransform(newPlotView);
+    const {x:scrollX,y:scrollY}= CCUtil.getScreenCoords(plot,newScrollPt);
+    return updateTransform({...plotView, scrollX, scrollY});
 }
 
 
@@ -326,10 +310,8 @@ export function replacePrimaryPlot(plotView,primePlot) {
 export function updatePlotGroupScrollXY(visRoot, plotId,plotViewAry, plotGroupAry, newScrollPt) {
     const plotView= updatePlotViewScrollXY(getPlotViewById(plotViewAry, plotId), newScrollPt);
     plotViewAry= replacePlotView(plotViewAry, plotView);
-    if (get(visRoot,'positionLock')) {
-        plotViewAry= matchPlotViewByPositionGroup(visRoot, plotView,plotViewAry,false, makeScrollPosMatcher(plotView, visRoot));
-    }
-    return plotViewAry;
+    if (!visRoot?.positionLock) return plotViewAry;
+    return matchPlotViewByPositionGroup(visRoot, plotView,plotViewAry,false, makeScrollPosMatcher(plotView, visRoot));
 }
 
 /**
@@ -349,7 +331,6 @@ export function updateScrollToWcsMatch(wcsMatchType, masterPv, matchToPv) {
     return updatePlotViewScrollXY(matchToPv, newScrollPoint);
 }
 
-const PIXEL_MATCH_BY_CENTER= true;
 /**
  * Find a scroll point that the point puts the plot be scroll the to same wcs or target as the master plot
  * To use this function the plot view objects and the primary plot objects must all be defined.
@@ -412,21 +393,18 @@ function makeScrollPosMatcher(sourcePV, visRoot) {
     const percentY= (srcSy+srcSH/2) / srcScreenHeight;
 
     return (pv) => {
-        let retPV= pv;
         const plot= primePlot(pv);
-        if (plot) {
-            if (wcsMatchType) {
-                retPV= updateScrollToWcsMatch(visRoot.wcsMatchType, sourcePV, pv);
-            }
-            else {
-                const {screenSize:{width,height}}= plot;
-                const {scrollWidth:sw,scrollHeight:sh}= getScrollSize(pv);
-                const newSx= width*percentX - sw/2;
-                const newSy= height*percentY - sh/2;
-                retPV= updatePlotViewScrollXY(pv,makeScreenPt(newSx,newSy));
-            }
+        if (!plot) return pv;
+        if (wcsMatchType) {
+            return updateScrollToWcsMatch(visRoot.wcsMatchType, sourcePV, pv);
         }
-        return retPV;
+        else {
+            const {screenSize:{width,height}}= plot;
+            const {scrollWidth:sw,scrollHeight:sh}= getScrollSize(pv);
+            const newSx= width*percentX - sw/2;
+            const newSy= height*percentY - sh/2;
+            return updatePlotViewScrollXY(pv,makeScreenPt(newSx,newSy));
+        }
     };
 }
 
@@ -434,7 +412,7 @@ function makeScrollPosMatcher(sourcePV, visRoot) {
 
 /**
  *
- * @param {object} plot
+ * @param {WebPlot} plot
  * @return {{}}
  */
 function getNewAttributes(plot) {
@@ -457,7 +435,7 @@ function getNewAttributes(plot) {
         worldPt= getActiveTarget().worldPt;
     }
     else {
-        worldPt= VisUtil.getCenterPtOfPlot(plot);
+        worldPt= getCenterPtOfPlot(plot);
     }
 
     if (worldPt) {
@@ -471,10 +449,6 @@ function getNewAttributes(plot) {
 
     return attributes;
 }
-
-
-
-
 
 
 /**
@@ -543,10 +517,10 @@ export function findScrollPtToPlaceOnDevPt(pv, ipt, targetDevPtPos) {
     const cc= CysConverter.make(plot,altAffTrans);
 
     const point= cc.getScreenCoords(ipt);
-    if (!point) return null;
+    if (!point) return undefined;
 
     const target= cc.getScreenCoords(targetDevPtPos);
-    if (!target) return null;
+    if (!target) return undefined;
 
     const x= point.x - target.x;
     const y= point.y - target.y;

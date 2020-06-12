@@ -1,4 +1,3 @@
-import {matchesIgCase} from '../../util/StringUtils.js';
 import PositionParser from '../../util/PositionParser.js';
 import CoordinateSys from '../../visualize/CoordSys.js';
 import CoordUtil from '../../visualize/CoordUtil.js';
