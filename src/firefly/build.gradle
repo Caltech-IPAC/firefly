@@ -23,7 +23,7 @@ jar {
 }
 
 onlinehelp {
-    onlineHelpDir = "$fireflyPath/src/onlinehelp/"
+    onlineHelpDir = "$fireflyPath/../firefly-help/"
 }
 
 ext.appConfig = {
