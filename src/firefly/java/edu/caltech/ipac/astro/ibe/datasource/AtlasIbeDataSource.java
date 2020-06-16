@@ -198,7 +198,10 @@ public class AtlasIbeDataSource extends BaseIbeDataSource {
         if(getTableName().contains("lh_images")){
             dataParam.setFilePath(root.replace("lh_images","lh") + "/" + fname);
         }
-
+        // IRSA-3162, target example: 188.86008 +14.49636, ugly stuff to fix IRSA IBE file path not consistent in IBE2 API (Atlas)
+        if(getTableName().contains("lga_images")){
+            dataParam.setFilePath(root.replace("lga_images","lga") + "/" + fname);
+        }
         // check cutout params
         // look for ra_obj first - moving object search
         String subLon = pathInfo.get("ra_obj");
