@@ -34,7 +34,7 @@ public class FitsGenerator {
             "CRPIX2  =                 252.0 / LINE AXIS ORIGIN (PIXEL)                       ",
             "CTYPE2  = 'DEC--TAN'           /  DECREASES IN VALUE AS LINE INDEX              ",
             "COMMENT INCREASES  (GNOMONIC PROJECTION)                                        ",
-            "CDELT2  =        -3.333333E-02 / COORD VALUE INCREMENT DEG/PIXEL                ",
+            "CDELT2  =       1.0       / COORD VALUE INCREMENT DEG/PIXEL                ",
             "COMMENT AT ORIGIN ON LINE AXIS                                                  ",
             "CRVAL3  =              2.5E-05 / WAVELENGTH IN METERS                           ",
             "CRPIX3  =                   1.0                                                  ",
