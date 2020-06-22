@@ -8,15 +8,13 @@ import {replacePlots, makePlotView, updatePlotViewScrollXY,
         findScrollPtToCenterImagePt, updateScrollToWcsMatch} from './PlotView.js';
 import {makeOverlayPlotView, replaceOverlayPlots} from './OverlayPlotView.js';
 import {primePlot, getPlotViewById, clonePvAry, getOverlayById,getPlotViewIdListByPositionLock} from '../PlotViewUtil.js';
-import PlotGroup from '../PlotGroup.js';
+import {makePlotGroup} from '../PlotGroup.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {CCUtil} from '../CsysConverter.js';
 import {getRotationAngle} from '../VisUtil.js';
 import {updateTransform} from '../PlotTransformUtils.js';
 import {makeImagePt} from '../Point.js';
 import {isImage} from '../WebPlot';
-
-
 
 
 export function reducer(state, action) {
@@ -366,17 +364,11 @@ function confirmPlotGroup(plotGroupAry,action) {
 
     const newGrpAry= wpRequestAry
         .filter( (r) => !plotGroupExist(r.getPlotGroupId(),plotGroupAry))
-        .map( (r) => PlotGroup.makePlotGroup(r.getPlotGroupId(), r.isGroupLocked()));
+        .map( (r) => makePlotGroup(r.getPlotGroupId(), r.isGroupLocked()));
 
     return [...plotGroupAry,...uniqBy(newGrpAry, 'plotGroupId')];
 
 }
-
-
-// function pvExist(plotId, plotViewAry) {
-//     return (plotViewAry.some( (pv) => pv.plotId===plotId ));
-// }
-
 
 function plotGroupExist(plotGroupId, plotGroupAry) {
     return (plotGroupAry.some( (pg) => pg.plotGroupId===plotGroupId ));

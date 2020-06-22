@@ -11,7 +11,7 @@ import {Style} from './DrawingDef.js';
 import CsysConverter from '../CsysConverter.js';
 import {RegionValue, RegionDimension, RegionValueUnit, RegionType, regionPropsList} from '../region/Region.js';
 import {startRegionDes, setRegionPropertyDes, endRegionDes} from '../region/RegionDescription.js';
-import {SelectedShape} from '../../drawingLayers/SelectArea.js';
+import {SelectedShape} from '../../drawingLayers/SelectedShape';
 
 const SELECT_BOX= 'SelectBox';
 const DEFAULT_STYLE= Style.STANDARD;

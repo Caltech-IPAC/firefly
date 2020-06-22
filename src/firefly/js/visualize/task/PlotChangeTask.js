@@ -6,7 +6,7 @@ import {logError} from '../../util/WebUtil.js';
 import ImagePlotCntlr, {IMAGE_PLOT_KEY, dispatchWcsMatch} from '../ImagePlotCntlr.js';
 import {primePlot, getPlotViewById, operateOnOthersInOverlayColorGroup, getPlotStateAry} from '../PlotViewUtil.js';
 import {callCrop, callChangeColor, callRecomputeStretch} from '../../rpc/PlotServicesJson.js';
-import WebPlotResult from '../WebPlotResult.js';
+import {WebPlotResult} from '../WebPlotResult.js';
 import {WebPlot} from '../WebPlot.js';
 import {makeCubeCtxAry, populateFromHeader} from './PlotImageTask';
 import {locateOtherIfMatched} from './WcsMatchTask';

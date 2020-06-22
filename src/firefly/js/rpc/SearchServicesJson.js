@@ -9,9 +9,9 @@
 
 import {get, set, pickBy, cloneDeep, has, isUndefined} from 'lodash';
 import {ServerParams} from '../data/ServerParams.js';
-import {doJsonRequest, DEF_BASE_URL} from '../core/JsonUtils.js';
+import {doJsonRequest} from '../core/JsonUtils.js';
 import {getBgEmail} from '../core/background/BackgroundUtil.js';
-import {encodeUrl, download, getModuleName} from '../util/WebUtil.js';
+import {encodeUrl, getModuleName} from '../util/WebUtil.js';
 
 import Enum from 'enum';
 import {getTblById, getResultSetID, getResultSetRequest} from '../tables/TableUtil.js';
@@ -20,6 +20,8 @@ import {SelectInfo} from '../tables/SelectInfo.js';
 import {getBackgroundJobs} from '../core/background/BackgroundUtil.js';
 import {getFireflySessionId} from '../Firefly.js';
 import * as TblUtil from '../tables/TableUtil';
+import {download} from '../util/fetch';
+import {getCmdSrvURL} from '../util/WebUtil';
 
 export const DownloadProgress= new Enum(['STARTING', 'WORKING', 'DONE', 'UNKNOWN', 'FAIL']);
 export const ScriptAttributes= new Enum(['URLsOnly', 'Unzip', 'Ditto', 'Curl', 'Wget', 'RemoveZip']);
@@ -331,7 +333,7 @@ export function createDownloadScript(id, fname, dataSource, attributes) {
  * @param {string} p.dataSource
  */
 export function getDownloadScript({packageID, type, fname, dataSource}) {
-    const url = encodeUrl(DEF_BASE_URL, {packageID, type, fname, dataSource});
+    const url = encodeUrl(getCmdSrvURL(), {packageID, type, fname, dataSource});
     if (url) download(url);
 }
 

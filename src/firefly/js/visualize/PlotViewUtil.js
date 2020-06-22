@@ -1,21 +1,17 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {difference, flatten, has, isArray, isEmpty, isString, isUndefined, isObject,uniq} from 'lodash';
+import {flatten, has, isArray, isEmpty, isObject, isString, isUndefined, uniq} from 'lodash';
+import shallowequal from 'shallowequal';
 import {getPlotGroupById} from './PlotGroup.js';
 import {makeDevicePt, makeImagePt, makeWorldPt, pointEquals} from './Point.js';
-import {dispatchDestroyDrawLayer, getDlAry} from './DrawLayerCntlr.js';
 import {makeTransform} from './PlotTransformUtils.js';
 import CysConverter, {CCUtil} from './CsysConverter';
-import {computeDistance} from './VisUtil.js';
 import {isHiPS, isImage} from './WebPlot.js';
 import {isDefined, memorizeLastCall} from '../util/WebUtil';
 import {getWavelength, isWLAlgorithmImplemented, PLANE} from './projection/Wavelength.js';
 import {getNumberHeader, HdrConst} from './FitsHeaderUtil.js';
-import {computeBoundingBoxInDeviceCoordsForPlot, containsRec} from './VisUtil';
-import {dispatchAddActionWatcher} from '../core/MasterSaga';
-import ImagePlotCntlr, {visRoot} from './ImagePlotCntlr';
-import shallowequal from 'shallowequal';
+import {computeDistance, getRotationAngle, isCsysDirMatching, isEastLeftOfNorth, isPlotNorth} from './VisUtil';
 
 
 export const CANVAS_IMAGE_ID_START= 'image-';
@@ -89,17 +85,6 @@ export function getPlotGroupIdxById(ref,plotGroupId) {
     return plotGroupAry?.findIndex( (pg) => pg.plotGroupId===plotGroupId);
 }
 
-
-export function isFullyOnScreen(pv) {
-    const box=computeBoundingBoxInDeviceCoordsForPlot(pv);
-    if (!box) return false;
-    return containsRec(0,0,pv.viewDim.width+3, pv.viewDim.height+3, box.x,box.y,box.w,box.h);
-}
-
-export function willFitOnScreenAtCurrentZoom(pv) {
-    const {w,h}=computeBoundingBoxInDeviceCoordsForPlot(pv) ?? {};
-    return (pv.viewDim.width+3>=w && pv.viewDim.height+3>=h);
-}
 
 /**
  * @param {PlotView[]|PlotView|VisRoot|CysConverter|WebPlot} ref this can be the visRoot or the plotViewAry, or a plotView Object.
@@ -313,18 +298,6 @@ export function getDrawLayersByDisplayGroup(ref,displayGroupId) {
 }
 
 /**
- * UNTESTED - I think I will need this eventually
- * @param dl1Ary
- * @param dl2Ary
- * @return {boolean}
- */
-export function drawLayersDiffer(dl1Ary,dl2Ary) {
-    if (dl1Ary===dl2Ary) return false;
-    if (dl1Ary.length!==dl2Ary.length) return true;
-    return difference(dl1Ary,dl2Ary).length>0;
-}
-
-/**
  * True is the drawing layer is visible
  * @param {Object} dl the drawLayer
  * @param {string} plotId
@@ -345,12 +318,6 @@ export function getLayerTitle(plotId,dl) {
     return isObject(dl.title) ? dl.title[plotId] : dl.title;
 }
 
-
-export function deleteAllDrawLayers() {
-    (getDlAry() || [])
-        .filter((l) => l.drawLayerId)
-        .forEach((id) => dispatchDestroyDrawLayer(id));
-}
 
 //--------------------------------------------------------------
 //--------------------------------------------------------------
@@ -383,34 +350,10 @@ export function getPlotStateAry(pv) {
     return [...pvStateAry, ...overlayStates];
 }
 
-/**
- *
- * @param {object} pv
- * @param {object} plotGroup
- * @return {boolean}
- */
-// export function hasGroupLock(pv,plotGroup) {
-//     return Boolean(plotGroup && plotGroup.plotGroupId && plotGroup.overlayColorLock &&
-//                     pv && pv.plotGroupId===plotGroup.plotGroupId);
-// }
 
 export function hasOverlayColorLock(pv,plotGroup) {
     return Boolean(plotGroup && plotGroup.plotGroupId && plotGroup.overlayColorLock &&
         pv && pv.plotGroupId===plotGroup.plotGroupId);
-}
-
-
-/**
- * Check it two plot ids are in the same group
- * @param {VisRoot | PlotView[] } ref this can be the visRoot object or a plotViewAry array.
- * @param {string} plotId1 first plotId
- * @param {string} plotId2 second plotId
- * @return {boolean} true if in same group`
- */
-export function isInSameGroup(ref, plotId1, plotId2) {
-    const pv1= getPlotViewById(ref,plotId1);
-    const pv2= getPlotViewById(ref,plotId2);
-    return pv1.plotGroupId===pv2.plotGroupId;
 }
 
 /**
@@ -669,19 +612,6 @@ export function findCurrentCenterPoint(plotView,scrollX,scrollY) {
 }
 
 
-
-
-
-
-/**
- *
- * @param {Array.<PvNewPlotInfo>} pvNewPlotInfoAry
- * @return {Array.<String>}
- */
-export function getPvNewPlotIdAry(pvNewPlotInfoAry) {
-    return pvNewPlotInfoAry.map( (npi) => npi.plotId);
-}
-
 /**
  *
  * @param {Array.<PvNewPlotInfo>} pvNewPlotInfoAry
@@ -895,7 +825,7 @@ export const hasImageCubes = (pv) => getNumberOfCubesInPV(pv)>0;
  * @param {WebPlot} plot
  * @return {number} the plane index, -1 if not in a cube
  */
-export const getImageCubeIdx = (plot) => (plot && plot.cubeCtx) ? plot.cubeCtx.cubePlane : -1;
+export const getImageCubeIdx = (plot) => plot?.cubeCtx?.cubePlane ?? -1;
 
 
 /**
@@ -1108,58 +1038,47 @@ export const pvEqualExScroll= memorizeLastCall((pv1,pv2) => {
 //===============================================================
 
 
-function watchViewDim(action, cancelSelf, {plotId,resolve,reject, failureAsReject,failActions, succActions, foundSuccComplete}) {
-    if (!resolve) cancelSelf();
-    if (action.payload.plotId!==plotId) return;
-    const {type}= action;
-    const vr= visRoot();
-    const pv= getPlotViewById(vr, plotId);
-    const {width,height}= pv.viewDim;
-    if (failActions.includes(type)) {
-        failureAsReject ? reject(Error(action)) : resolve();
-        cancelSelf();
-        return;
-    }
-    if (succActions.includes(type)) foundSuccComplete= true;
-    if (foundSuccComplete && width && height && width>30 && height>30) {
-        resolve(pv);
-        cancelSelf();
-    }
-    return {plotId,resolve,reject, failureAsReject,failActions, succActions, foundSuccComplete};
-}
-
-
 
 /**
- * return promise to a loaded PlotView
- * @param plotId
- * @param failureAsReject - if true the call reject otherwise just resolve with an undefined
- * @return {Promise<PlotView>}
+ * Return true if the plot in both PlotViews are rotated the same
+ * @param {PlotView} pv1
+ * @param {PlotView} pv2
+ * @return {boolean}
  */
-export function onPlotComplete(plotId,failureAsReject= false) {
+export function isRotationMatching(pv1, pv2) {
+    const p1 = primePlot(pv1);
+    const p2 = primePlot(pv2);
 
-    const failActions= [ImagePlotCntlr.ABORT_HIPS,ImagePlotCntlr.PLOT_HIPS_FAIL, ImagePlotCntlr.PLOT_IMAGE_FAIL];
-    const succActions= [ImagePlotCntlr.PLOT_HIPS, ImagePlotCntlr.PLOT_IMAGE];
-    const watchActions= [...succActions,...failActions, ImagePlotCntlr.UPDATE_VIEW_SIZE];
-    const completeActions= [...succActions,...failActions];
-    const pv= plotId && getPlotViewById(visRoot(), plotId);
-    if (pv && pv.serverCall!=='working' && primePlot(pv) && pv.viewDim.width  && pv.viewDim.height) {
-        if (pv.serverCall==='success') {
-            return Promise.resolve(pv);
-        }
-        else {
-            return failureAsReject ? Promise.reject(pv) : Promise.resolve(pv);
-        }
-    }
-
-    return new Promise((resolve,reject) => {
-        dispatchAddActionWatcher({
-            actions:watchActions,
-            callback:watchViewDim,
-            params:{plotId,resolve,reject, failureAsReject,failActions, succActions}}
-        );
-    });
-
-
+    if (!p1 || !p2) return false;
+    if (isNorthCountingRotation(pv1, p1) && isNorthCountingRotation(pv2, p2)) return true;
+    const r1 = getRotationAngle(p1) + pv1.rotation;
+    const r2 = getRotationAngle(p2) + pv2.rotation;
+    return Math.abs((r1 % 360) - (r2 % 360)) < .9;
 }
 
+const isNorthCountingRotation = (pv, plot) => pv.plotViewCtx.rotateNorthLock || (isPlotNorth(plot) && !pv.rotation);
+
+/**
+ * return an angle that will rotate the pv to match the rotation of masterPv
+ * @param {PlotView} masterPv
+ * @param {PlotView} pv
+ * @return {number}
+ */
+export function getMatchingRotationAngle(masterPv, pv) {
+    const plot = primePlot(pv);
+    const masterPlot = primePlot(masterPv);
+    if (!plot || !masterPlot) return 0;
+    const masterRot = masterPv.rotation * (masterPv.flipY ? -1 : 1);
+    const rot = getRotationAngle(plot);
+    let targetRotation;
+    if (isEastLeftOfNorth(masterPlot)) {
+        targetRotation = ((getRotationAngle(masterPlot) + masterRot) - rot) * (masterPv.flipY ? 1 : -1);
+    } else {
+        targetRotation = ((getRotationAngle(masterPlot) + (360 - masterRot)) - rot) * (masterPv.flipY ? 1 : -1);
+
+    }
+    if (!isCsysDirMatching(plot, masterPlot)) targetRotation = 360 - targetRotation;
+    if (targetRotation < 0) targetRotation += 360;
+    if (targetRotation > 359) targetRotation %= 360;
+    return targetRotation;
+}

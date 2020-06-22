@@ -5,10 +5,9 @@
 import React from 'react';
 import {get, set} from 'lodash';
 import Enum from 'enum';
-import {download, updateSet} from '../../util/WebUtil.js';
+import {updateSet} from '../../util/WebUtil.js';
 import {getTblById, getAsyncTableSourceUrl, getTableSourceUrl} from '../TableUtil.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
-import {DEF_BASE_URL} from '../../core/JsonUtils.js';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../../core/ComponentCntlr.js';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {CompleteButton} from '../../ui/CompleteButton.jsx';
@@ -25,6 +24,8 @@ import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {getWorkspaceConfig} from '../../visualize/WorkspaceCntlr.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
+import {download} from '../../util/fetch';
+import {getCmdSrvURL} from '../../util/WebUtil';
 
 const fKeyDef = {
     fileName: {fKey: 'fileName', label: 'File name:'},
@@ -261,8 +262,7 @@ function resultSuccess(tbl_id, tbl_ui_id, popupId) {
 
         const downloadFile = (urlOrOp) => {
             if (isWorkspace()) {
-                doDownloadWorkspace(DEF_BASE_URL,
-                                    {params: urlOrOp});
+                doDownloadWorkspace(getCmdSrvURL(), {params: urlOrOp});
             } else {
                 download(urlOrOp);
             }

@@ -2,9 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {loadScript, logError} from '../util/WebUtil.js';
-import {getRootURL} from '../util/BrowserUtil.js';
-
+import {loadScript, logError, getRootURL} from '../util/WebUtil.js';
 
 const PLOTLY_SCRIPT= 'plotly-1.49.4.min.js';
 const LOAD_ERR_MSG= 'Load Failed: could not load Plotly';

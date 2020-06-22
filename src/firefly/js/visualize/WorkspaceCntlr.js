@@ -4,13 +4,12 @@
 
 import {flux} from '../Firefly.js';
 import {get, set, flattenDeep, isEmpty} from 'lodash';
-import {fetchUrl} from '../util/WebUtil.js';
-import {getRootURL} from '../util/BrowserUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {workspacePopupMsg} from '../ui/WorkspaceViewer.jsx';
 import Enum from 'enum';
-import {getProp, toBoolean, updateMerge, updateSet} from '../util/WebUtil.js';
+import {getCmdSrvURL, getProp, toBoolean, updateMerge, updateSet} from '../util/WebUtil.js';
 import {getAppOptions} from '../core/AppDataCntlr.js';
+import {fetchUrl} from '../util/fetch';
 
 export const WORKSPACE_PREFIX = 'WorkspaceCntlr';
 
@@ -27,7 +26,6 @@ export default {actionCreators, reducers };
 export const WS_HOME = 'WS_Home';
 export const WS_SERVER_PARAM = new Enum(['should_overwrite', 'currentrelpath', 'newpath']);
 
-const WS_URL = `${getRootURL()}sticky/CmdSrv`;
 
 function actionCreators() {
     return {
@@ -86,7 +84,7 @@ function movePath(action) {
 
             const options={params};
 
-            fetchUrl(WS_URL, options).then((response) => {
+            fetchUrl(getCmdSrvURL(), options).then((response) => {
                 response.json().then((value) => {
                     if (value.ok === 'true') {
                         set(action, ['payload', 'oldFile'], oldFile);
@@ -121,7 +119,7 @@ function deletePath(action) {
                              [WS_SERVER_PARAM.currentrelpath.key]: wsFile
             };
 
-            fetchUrl(WS_URL, {params}).then((response) => {
+            fetchUrl(getCmdSrvURL(), {params}).then((response) => {
                 response.json().then((value) => {
                     if (value.ok === 'true') {
                         set(action, ['payload', 'file'], wsFile);
@@ -159,7 +157,7 @@ function createPath(action) {
                                 [WS_SERVER_PARAM.currentrelpath.key]: wsPath
                 };
 
-                fetchUrl(WS_URL, {params}).then((response) => {
+                fetchUrl(getCmdSrvURL(), {params}).then((response) => {
                     response.json().then((value) => {
                         if (value.ok === 'true') {
                             set(action, ['payload', 'newPath'], value.result);
@@ -185,7 +183,7 @@ function getPathList(action) {
             const params = {[WS_SERVER_PARAM.currentrelpath.key]: '/',
                             [ServerParams.COMMAND]: ServerParams.WS_LIST};
 
-            fetchUrl(WS_URL, {params}).then((response) => {
+            fetchUrl(getCmdSrvURL(), {params}).then((response) => {
                 response.json().then( (value) => {
                     if (value.ok === 'true') {
                         set(action, ['payload', 'files'], value.result);
@@ -228,7 +226,7 @@ function updatePathList(action) {
                 [ServerParams.COMMAND]: ServerParams.WS_LIST
             };
 
-            fetchUrl(WS_URL, {params}).then((response) => {
+            fetchUrl(getCmdSrvURL(), {params}).then((response) => {
                 response.json().then((value) => {
                     doUpdate(value.result, value.status, value.statusCode);
                 });

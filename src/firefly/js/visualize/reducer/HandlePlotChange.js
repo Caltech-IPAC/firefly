@@ -9,14 +9,13 @@ import {replacePlotView, replacePrimaryPlot, changePrimePlot, updatePlotViewScro
         findScrollPtToCenterImagePt, findScrollPtToPlaceOnDevPt,
         updateScrollToWcsMatch, updatePlotGroupScrollXY} from './PlotView.js';
 import {WebPlot, clonePlotWithZoom, isHiPS, isImage,
-    replaceHiPSProjectionUsingProperties, replaceHiPSProjection, getHiPsTitleFromProperties} from '../WebPlot.js';
+    replaceHiPSProjectionUsingProperties, getHiPsTitleFromProperties} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
-import {changeProjectionCenter} from '../HiPSUtil.js';
+import {replaceHiPSProjection, changeProjectionCenter} from '../HiPSUtil.js';
 import {logError, updateSet} from '../../util/WebUtil.js';
 import {CCUtil, CysConverter} from '../CsysConverter.js';
-import {convert, isPlotNorth, getRotationAngle, isRotationMatching,
-        getMatchingRotationAngle, isCsysDirMatching, isEastLeftOfNorth} from '../VisUtil';
-import {PlotPref} from './../PlotPref.js';
+import {convert, isPlotNorth, getRotationAngle, isCsysDirMatching, isEastLeftOfNorth} from '../VisUtil';
+import {PlotPref} from '../PlotPref';
 import {primePlot,
     clonePvAry,
     clonePvAryWithPv,
@@ -27,11 +26,12 @@ import {primePlot,
     getPlotGroupIdxById,
     getOverlayById,
     findPlotGroup,
-    isInSameGroup,
     findPlot,
     getPlotViewById,
     findCurrentCenterPoint,
     getCenterOfProjection,
+    getMatchingRotationAngle,
+    isRotationMatching,
     hasWCSProjection } from '../PlotViewUtil.js';
 import {parseAnyPt, makeImagePt, makeWorldPt, makeDevicePt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
@@ -401,9 +401,8 @@ function processScroll(state,action) {
     let {plotViewAry, mpwWcsPrimId}= state;
     plotViewAry= updatePlotGroupScrollXY(state,plotId,plotViewAry, plotGroupAry,scrollPt);
 
-    if (wcsMatchType && isInSameGroup(state, plotId, mpwWcsPrimId)) {
-        mpwWcsPrimId= plotId;
-    }
+    if (wcsMatchType) mpwWcsPrimId= plotId;
+
     return Object.assign({},state,{plotViewAry, mpwWcsPrimId});
 }
 

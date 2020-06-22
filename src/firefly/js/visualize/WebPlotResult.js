@@ -1,11 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-
-
-
-const WebPlotResult= {
+export const WebPlotResult= {
 
     PLOT_CREATE : 'PlotCreate',
     PLOT_STATE : 'PlotState',
@@ -27,6 +23,3 @@ const WebPlotResult= {
     TITLE: 'Title',
     RESULT_ARY: 'resultAry',
 };
-
-export default WebPlotResult;
-

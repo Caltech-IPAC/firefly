@@ -31,11 +31,10 @@ import {SelectInfo} from './SelectInfo.js';
 import {flux} from '../Firefly.js';
 import {encodeServerUrl, uniqueID} from '../util/WebUtil.js';
 import {fetchTable, queryTable, selectedValues} from '../rpc/SearchServicesJson.js';
-import {DEF_BASE_URL} from '../core/JsonUtils.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga.js';
 import {MetaConst} from '../data/MetaConst';
-import {toBoolean} from '../util/WebUtil';
+import {getCmdSrvURL, toBoolean} from '../util/WebUtil';
 import {upload} from '../rpc/CoreServices.js';
 import {dd2sex} from '../visualize/CoordUtil.js';
 
@@ -947,7 +946,7 @@ function makeTableSourceUrl(columns, request, otherParams) {
     if (otherParams) {
         Object.assign(params, omitBy(otherParams, isNil));
     }
-    return wsCmd ? params : encodeServerUrl(DEF_BASE_URL, params);
+    return wsCmd ? params : encodeServerUrl(getCmdSrvURL(), params);
 }
 
 export function setHlRowByRowIdx(nreq, tableModel) {

@@ -3,14 +3,12 @@
  */
 
 import React from 'react';
-import {encodeServerUrl} from '../../util/WebUtil.js';
 import {makeHiPSTileUrl} from '../HiPSUtil.js';
-import {getRootURL} from '../../util/BrowserUtil.js';
 import {CysConverter} from '../CsysConverter.js';
 import {toRadians, contains, intersects, getBoundingBox} from '../VisUtil.js';
 import {makeDevicePt} from '../Point.js';
 import {isImage} from '../WebPlot.js';
-import {memorizeUsingMap} from '../../util/WebUtil';
+import {encodeServerUrl, getRootURL, memorizeUsingMap} from '../../util/WebUtil';
 
 const BG_IMAGE= 'image-working-background-24x24.png';
 const BACKGROUND_STYLE = `url(+ ${BG_IMAGE} ) top left repeat`;

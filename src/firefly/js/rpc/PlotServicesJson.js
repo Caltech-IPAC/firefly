@@ -9,7 +9,7 @@
 import {isArray} from 'lodash';
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest} from '../core/JsonUtils.js';
-import {SelectedShape} from '../drawingLayers/SelectArea.js';
+import {SelectedShape} from '../drawingLayers/SelectedShape';
 
 
 

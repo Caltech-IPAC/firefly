@@ -27,12 +27,7 @@ import {colorChangeActionCreator, stretchChangeActionCreator, cropActionCreator}
 import {wcsMatchActionCreator} from './task/WcsMatchTask.js';
 import {autoPlayActionCreator, changePointSelectionActionCreator,
     restoreDefaultsActionCreator, deletePlotViewActionCreator} from './task/PlotAdminTask.js';
-import {
-    changeHiPSActionCreator,
-    flipActionCreator,
-    processScrollActionCreator,
-    recenterActionCreator, rotateActionCreator
-} from './task/PlotChangeTask';
+import { flipActionCreator, processScrollActionCreator, recenterActionCreator, rotateActionCreator } from './task/PlotChangeTask';
 import {makeAbortHiPSAction} from './task/PlotHipsTask';
 
 /** enum can be 'COLLAPSE', 'GRID', 'SINGLE' */
@@ -893,7 +888,7 @@ export function dispatchChangeActivePlotView(plotId) {
  * @param p.positionScope
  * @param p.attKey
  * @param p.attValue
- * @param {Object} changes attribute changes, use if more than one
+ * @param {Object} p.changes attribute changes, use if more than one
  * @param p.toAllPlotsInPlotView if a multiImageFits apply to all the images
  */
 export function dispatchAttributeChange({plotId,overlayColorScope=true,positionScope=false,

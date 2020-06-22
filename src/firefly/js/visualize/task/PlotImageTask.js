@@ -14,7 +14,6 @@ import {PlotState} from '../PlotState.js';
 import {WPConst, DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
 import {Band} from '../Band.js';
 import {PlotPref} from '../PlotPref.js';
-import {clone} from '../../util/WebUtil.js';
 import {makePostPlotTitle} from '../reducer/PlotTitle.js';
 import {dispatchAddViewerItems, getMultiViewRoot, findViewerWithItemId, EXPANDED_MODE_RESERVED, IMAGE, DEFAULT_FITS_VIEWER_ID} from '../MultiViewCntlr.js';
 import {getPlotViewById, getDrawLayerByType, getDrawLayersByType, getDrawLayerById, getPlotViewIdListInOverlayGroup} from '../PlotViewUtil.js';
@@ -80,7 +79,7 @@ function makeSinglePlotPayload(vr, rawPayload, requestKey) {
     wpRequest= ensureWPR(wpRequest);
 
     const hipsImageConversion= getHipsImageConversion(rawPayload.hipsImageConversion);
-    if (hipsImageConversion) pvOptions= clone(pvOptions, {hipsImageConversion});
+    if (hipsImageConversion) pvOptions= {...pvOptions, hipsImageConversion};
 
     const req= getFirstReq(wpRequest);
 

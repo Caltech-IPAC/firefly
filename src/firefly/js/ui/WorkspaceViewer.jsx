@@ -17,14 +17,11 @@ import {CompleteButton} from './CompleteButton.jsx';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
 import {PopupPanel} from './PopupPanel.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
-import {fetchUrl} from '../util/WebUtil.js';
-import {getRootURL} from '../util/BrowserUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {showInfoPopup, INFO_POPUP} from './PopupUtil.jsx';
 import {HelpIcon} from './HelpIcon.jsx';
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 
-const UL_URL = `${getRootURL()}sticky/CmdSrv`;
 const HMargin = 15;
 const VMargin = 15;
 const workspacePopupGroup = 'workspacePopupGroup';
@@ -35,6 +32,8 @@ import LOADING from 'html/images/gxt/loading.gif';
 import ComponentCntlr from '../core/ComponentCntlr.js';
 import {isExistWorspaceFile} from '../visualize/WorkspaceCntlr';
 import {parseUploadResults} from '../rpc/CoreServices.js';
+import {fetchUrl} from '../util/fetch';
+import {getCmdSrvURL} from '../util/WebUtil';
 
 /*-----------------------------------------------------------------------------------------*/
 /* core component as FilePicker wrapper
@@ -368,7 +367,7 @@ function doUploadWorkspace(file, params={}) {
         options.params.fileAnalysis = true;
     }
 
-    return fetchUrl(UL_URL, options).then( (response) => {
+    return fetchUrl(getCmdSrvURL(), options).then( (response) => {
         return response.text().then((text) => parseUploadResults(text) );
     });
 }

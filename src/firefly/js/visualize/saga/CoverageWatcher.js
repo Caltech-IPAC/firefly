@@ -37,8 +37,8 @@ import SearchTarget from '../../drawingLayers/SearchTarget.js';
 import {darker} from '../../util/Color';
 import {isOrbitalPathTable} from '../../util/VOAnalyzer';
 
-export const CoverageType = new Enum(['X', 'BOX', 'REGION', 'ORBITAL_PATH', 'ALL', 'GUESS']);
-export const FitType=  new Enum (['WIDTH', 'WIDTH_HEIGHT']);
+const CoverageType = new Enum(['X', 'BOX', 'REGION', 'ORBITAL_PATH', 'ALL', 'GUESS']);
+const FitType=  new Enum (['WIDTH', 'WIDTH_HEIGHT']);
 
 const COVERAGE_TARGET = 'COVERAGE_TARGET';
 const COVERAGE_RADIUS = 'COVERAGE_RADIUS';

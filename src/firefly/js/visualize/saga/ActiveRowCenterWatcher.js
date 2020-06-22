@@ -8,12 +8,7 @@ import {visRoot, dispatchRecenter} from '../ImagePlotCntlr.js';
 import {getTblById, getCellValue} from '../../tables/TableUtil.js';
 import Point, {makeAnyPt} from '../Point.js';
 import {findTableCenterColumns} from '../../util/VOAnalyzer.js';
-import {
-    getActivePlotView,
-    hasWCSProjection,
-    isFullyOnScreen,
-    primePlot, willFitOnScreenAtCurrentZoom
-} from '../PlotViewUtil';
+import { getActivePlotView, hasWCSProjection, primePlot, } from '../PlotViewUtil';
 import {CysConverter} from '../CsysConverter';
 import {dispatchPlotImage, dispatchUseTableAutoScroll} from '../ImagePlotCntlr';
 import {isTableUsingRadians} from '../../tables/TableUtil';
@@ -21,8 +16,14 @@ import {PlotAttribute} from '../PlotAttribute';
 import {isImage} from '../WebPlot';
 import {getAppOptions} from '../../core/AppDataCntlr';
 import CoordinateSys from '../CoordSys';
+import {computeBoundingBoxInDeviceCoordsForPlot, isFullyOnScreen} from '../VisUtil';
 
 
+
+function willFitOnScreenAtCurrentZoom(pv) {
+    const {w,h}=computeBoundingBoxInDeviceCoordsForPlot(primePlot(pv)) ?? {};
+    return (pv.viewDim.width+3>=w && pv.viewDim.height+3>=h);
+}
 
 
 
@@ -83,7 +84,7 @@ function shouldRecenterSimple(pv,wp, force) {
     const plot= primePlot(pv);
     if (force) {
         if (!isImageAitoff(plot)) return true; // if not an image aitoff projection
-        return !(isFullyOnScreen(pv));
+        return !(isFullyOnScreen(plot,pv.viewDim));
     }
     if (!plot) return false;
     const cc= CysConverter.make(plot);

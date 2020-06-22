@@ -12,17 +12,17 @@
  */
 
 
-import {get, isUndefined, isNumber} from 'lodash';
-import {clone, encodeServerUrl} from '../util/WebUtil.js';
+import {get, isNumber, isUndefined} from 'lodash';
+import {encodeServerUrl, getRootURL} from '../util/WebUtil.js';
 import {CysConverter} from './CsysConverter.js';
-import {makeWorldPt, makeDevicePt} from './Point.js';
-import {SpatialVector, HealpixIndex, radecToPolar, ORDER_MAX} from '../externalSource/aladinProj/HealpixIndex.js';
+import {makeDevicePt, makeWorldPt} from './Point.js';
+import {HealpixIndex, ORDER_MAX, radecToPolar, SpatialVector} from '../externalSource/aladinProj/HealpixIndex.js';
 import {computeDistance, convert, toDegrees, toRadians} from './VisUtil.js';
-import {replaceHeader, getScreenPixScaleArcSec} from './WebPlot.js';
+import {getScreenPixScaleArcSec, replaceHeader} from './WebPlot.js';
 import {primePlot} from './PlotViewUtil.js';
 import CoordinateSys from './CoordSys';
-import {getRootURL} from '../util/BrowserUtil.js';
 import {getFireflySessionId} from '../Firefly';
+import {makeHiPSProjection} from './WebPlot';
 
 
 export const MAX_SUPPORTED_HIPS_LEVEL= ORDER_MAX-1;
@@ -46,7 +46,7 @@ function getHealpixIndex(nside) {
 export function changeProjectionCenter(plot, wp) {
     if (!plot) return undefined;
     wp= convert(wp, plot.projection.coordSys);
-    const header= clone(plot.projection.header, {crval1:wp.x, crval2:wp.y});
+    const header= {...plot.projection.header, crval1:wp.x, crval2:wp.y};
     return replaceHeader(plot,header);
 }
 
@@ -515,4 +515,17 @@ export function isTileInside(norder1, npix1, norder2, npix2) {
 
     return (npix1 >= base_npix) && (npix1 < (base_npix+subTotal));
 
+}
+
+/**
+ * replace the hips projection if the coordinate system changes
+ * @param {WebPlot} plot
+ * @param coordinateSys
+ * @param {WorldPt} wp
+ */
+export function replaceHiPSProjection(plot, coordinateSys, wp = makeWorldPt(0, 0)) {
+    const newWp = convert(wp, coordinateSys);
+    const projection = makeHiPSProjection(coordinateSys, newWp.x, newWp.y);
+    //note- the dataCoordSys stays the same
+    return {...plot, imageCoordSys: projection.coordSys, projection, allWCSMap: {'': projection}};
 }

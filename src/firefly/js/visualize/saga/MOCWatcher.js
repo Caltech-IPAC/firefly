@@ -6,7 +6,7 @@ import {dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {getTblById} from '../../tables/TableUtil.js';
 import {addNewMocLayer, getAppHiPSForMoc, isTableMOC} from '../HiPSMocUtil.js';
-import {getActivePlotView, getPlotViewAry, onPlotComplete, primePlot} from '../PlotViewUtil.js';
+import {getActivePlotView, getPlotViewAry, primePlot} from '../PlotViewUtil.js';
 import {genHiPSPlotId} from '../ui/ImageSearchPanelV2';
 import WebPlotRequest from '../WebPlotRequest.js';
 import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
@@ -14,6 +14,7 @@ import {dispatchPlotHiPS} from '../ImagePlotCntlr';
 import {MetaConst} from '../../data/MetaConst.js';
 import {isHiPS} from '../WebPlot.js';
 import {RequestType} from '../RequestType';
+import {onPlotComplete} from '../PlotCompleteMonitor';
 
 
 /** @type {TableWatcherDef} */

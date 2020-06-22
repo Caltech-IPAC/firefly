@@ -18,8 +18,8 @@ import {RotateType} from '../PlotState.js';
 import {clone} from '../../util/WebUtil.js';
 import {detachSelectAreaRelatedLayers} from '../ui/SelectAreaDropDownView.jsx';
 import {getAppOptions} from '../../core/AppDataCntlr';
-import {onPlotComplete} from '../PlotViewUtil';
 import {WcsMatchType} from '../ImagePlotCntlr';
+import {onPlotComplete} from '../PlotCompleteMonitor';
 
 export function autoPlayActionCreator(rawAction) {
     return (dispatcher) => {

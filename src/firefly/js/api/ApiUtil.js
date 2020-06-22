@@ -22,7 +22,8 @@ const logger = Logger('Firefly');
 /**
  * @public
  */
-export {fetchUrl, getBoolean, toBoolean} from '../util/WebUtil.js';
+export {getBoolean, toBoolean} from '../util/WebUtil.js';
+export {fetchUrl} from '../util/fetch';
 export {ServerParams} from  '../data/ServerParams.js';
 
 export {getWsConnId, getWsChannel} from '../core/AppDataCntlr.js';

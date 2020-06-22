@@ -2,14 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import CoordinateSys from './CoordSys.js';
-import {get} from 'lodash';
-import VisUtil from './VisUtil.js';
+import {convert, computeDistance} from './VisUtil.js';
 import {makeRoughGuesser} from './ImageBoundsData.js';
 import Point, {makeImageWorkSpacePt, makeImagePt,
-               makeScreenPt, makeWorldPt, makeDevicePt, isValidPoint} from './Point.js';
+    makeScreenPt, makeWorldPt, makeDevicePt,
+    isValidPoint, makeFitsImagePt, makeZeroBasedImagePt} from './Point.js';
 import {Matrix} from '../externalSource/transformation-matrix-js/matrix.js';
 import {getPixScaleDeg, isHiPS} from './WebPlot.js';
-import {makeFitsImagePt, makeZeroBasedImagePt} from './Point';
 
 
 function convertToCorrect(wp) {
@@ -298,13 +297,13 @@ export class CysConverter {
         let ltv1=0, ltv2=0;
         if (!header) return {ltv1,ltv2};
         const {LTV1,LTV2, CRVAL1A,CRVAL2A}= header;
-        if (!isNaN(Number(get(LTV1,'value'))) && !isNaN(Number(get(LTV2,'value')))) {
-            ltv1= Number(get(LTV1,'value'));
-            ltv2= Number(get(LTV2,'value'));
+        if (!isNaN(Number(LTV1?.value)) && !isNaN(Number(LTV2?.value))) {
+            ltv1= Number(LTV1.value);
+            ltv2= Number(LTV2.value);
         }
-        else if (!isNaN(Number(get(CRVAL1A,'value'))) && !isNaN(Number(get(CRVAL2A,'value')))) {
-            ltv1= -Number(get(CRVAL1A,'value'));
-            ltv2= -Number(get(CRVAL2A,'value'));
+        else if (!isNaN(Number(CRVAL1A?.value)) && !isNaN(Number(CRVAL2A?.value))) {
+            ltv1= -Number(CRVAL1A.value);
+            ltv2= -Number(CRVAL2A.value);
         }
         return {ltv1,ltv2};
     }
@@ -379,7 +378,7 @@ export class CysConverter {
             retval= this.conversionCache.get(checkedPt.toString() );
             if (!retval) {
                 if (this.imageCoordSys!==wpt.getCoordSys()) {
-                    wpt= VisUtil.convert(wpt,this.imageCoordSys);
+                    wpt= convert(wpt,this.imageCoordSys);
                 }
                 const projPt= this.projection.getImageCoords(wpt.getLon(),wpt.getLat());
                 retval= projPt ? makeImagePt( projPt.x+ 0.5 ,  projPt.y+ 0.5) : null;
@@ -540,7 +539,7 @@ export class CysConverter {
             else {
                 const originalWp= wpt;
                 if (this.imageCoordSys!==wpt.getCoordSys()) {
-                    wpt= VisUtil.convert(wpt,this.imageCoordSys);
+                    wpt= convert(wpt,this.imageCoordSys);
                 }
 
                 const  proj_pt= this.projection.getImageCoords(wpt.getLon(),wpt.getLat());
@@ -620,7 +619,7 @@ export class CysConverter {
                 retval= this.makeWorldPtFromIPt(this.getImageCoords(pt),outputCoordSys);
                 break;
             case Point.W_PT:
-                retval=  (outputCoordSys===pt.getCoordSys()) ? pt : VisUtil.convert(pt, outputCoordSys);
+                retval=  (outputCoordSys===pt.getCoordSys()) ? pt : convert(pt, outputCoordSys);
                 break;
         }
         return retval;
@@ -631,7 +630,7 @@ export class CysConverter {
         if (!ipt) return null;
         let wpt = this.projection.getWorldCoords(ipt.x - .5 ,ipt.y - .5);
         if (wpt && outputCoordSys!==wpt.getCoordSys()) {
-            wpt= VisUtil.convert(wpt, outputCoordSys);
+            wpt= convert(wpt, outputCoordSys);
         }
         return wpt;
     }
@@ -653,7 +652,7 @@ export class CysConverter {
 
         let retval= false;
         if (this.projection.isWrappingProjection()) {
-            const  worldDist= VisUtil.computeDistance(wp1, wp2);
+            const  worldDist= computeDistance(wp1, wp2);
             const pix= getPixScaleDeg(this);
             const value1= worldDist/pix;
 
