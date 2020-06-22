@@ -7,11 +7,12 @@ import {sprintf} from '../externalSource/sprintf';
 import {logError} from '../util/WebUtil.js';
 import {getPixScaleArcSec, isImage} from './WebPlot.js';
 import {PlotAttribute} from './PlotAttribute.js';
-import {primePlot, getFoV} from './PlotViewUtil.js';
-import VisUtil from './VisUtil.js';
+import {getFoV, primePlot} from './PlotViewUtil.js';
+import {convertAngle} from './VisUtil.js';
 
 
 export const levels= [.03125, .0625, .125,.25,.5, .75, 1,2,3, 4,5, 6, 7,8, 9, 10, 11, 12, 13, 14, 15, 16, 32];
+export const FullType = new Enum(['ONLY_WIDTH', 'WIDTH_HEIGHT', 'ONLY_HEIGHT', 'SMART']);
 
 // const hiPSLevelsOLD= [0.000000007445312,
 //                    0.00000000930664,
@@ -87,6 +88,7 @@ export function getNextZoomLevel(plot, zoomType) {
 }
 
 
+
 /**
  *
  * @param plot
@@ -100,10 +102,32 @@ export function getEstimatedFullZoomFactor(plot, screenDim, fullType, tryMinFact
 
     if (plot.attributes[PlotAttribute.EXPANDED_TO_FIT_TYPE]) {
         const s= plot.attributes[PlotAttribute.EXPANDED_TO_FIT_TYPE];
-        if (VisUtil.FullType.has(s)) overrideFullType= VisUtil.FullType.get(s);
+        if (FullType.has(s)) overrideFullType= FullType.get(s);
     }
-    return VisUtil.getEstimatedFullZoomFactor(overrideFullType, plot.dataWidth, plot.dataHeight,
+    return getEstimatedFullZoomFactorDetails(overrideFullType, plot.dataWidth, plot.dataHeight,
                                               width,height, tryMinFactor);
+}
+
+function getEstimatedFullZoomFactorDetails(fullType, dataWidth, dataHeight,
+                                           screenWidth, screenHeight, tryMinFactor=-1) {
+    let zFact;
+    if (fullType===FullType.ONLY_WIDTH || screenHeight <= 0 || dataHeight <= 0) {
+        zFact =  screenWidth /  dataWidth;
+    } else if (fullType===FullType.ONLY_HEIGHT || screenWidth <= 0 || dataWidth <= 0) {
+        zFact =  screenHeight /  dataHeight;
+    } else {
+        const zFactW =  screenWidth /  dataWidth;
+        const zFactH =  screenHeight /  dataHeight;
+        if (fullType===FullType.SMART) {
+            zFact = zFactW;
+            if (zFactW > Math.max(tryMinFactor, 2)) {
+                zFact = Math.min(zFactW, zFactH);
+            }
+        } else {
+            zFact = Math.min(zFactW, zFactH);
+        }
+    }
+    return zFact;
 }
 
 
@@ -168,10 +192,10 @@ export function makeFoVString(fov) {
     if (fov > 1.0) {
         fovFormatted= formatFOV(String.fromCharCode(176), fov);
     } else {
-        const fovMin = VisUtil.convertAngle('deg', 'arcmin', fov);
+        const fovMin = convertAngle('deg', 'arcmin', fov);
 
         fovFormatted= fovMin > 1.0 ? formatFOV("'", fovMin) :
-            formatFOV('"', VisUtil.convertAngle('arcmin', 'arcsec', fovMin));
+            formatFOV('"', convertAngle('arcmin', 'arcsec', fovMin));
     }
     return fovFormatted;
 }
@@ -191,5 +215,3 @@ export function getZoomDesc(pv) {
     return {fovFormatted,zoomLevelFormatted};
 
 }
-
-

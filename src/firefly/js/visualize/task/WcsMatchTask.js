@@ -22,9 +22,9 @@ import {applyToOnePvOrAll, getPlotViewById, primePlot, getCorners, getDrawLayerB
                findCurrentCenterPoint, getCenterOfProjection, hasWCSProjection} from '../PlotViewUtil.js';
 import {isHiPS, isImage} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute';
-import {FullType, getRotationAngle, isEastLeftOfNorth, isRotationMatching,
+import {getRotationAngle, isEastLeftOfNorth, isRotationMatching,
     isPlotRotatedNorth, getMatchingRotationAngle} from '../VisUtil.js';
-import {getArcSecPerPix, getEstimatedFullZoomFactor, getZoomLevelForScale, UserZoomTypes} from '../ZoomUtil.js';
+import {FullType, getArcSecPerPix, getEstimatedFullZoomFactor, getZoomLevelForScale, UserZoomTypes} from '../ZoomUtil.js';
 import {RotateType} from '../PlotState.js';
 import {CCUtil} from '../CsysConverter.js';
 import {ZoomType} from '../ZoomType.js';
@@ -33,6 +33,7 @@ import CoordinateSys from '../CoordSys';
 import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dlRoot} from '../DrawLayerCntlr';
 import ImageOutline from '../../drawingLayers/ImageOutline';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga';
+import {getConnectedPlotsIds} from '../PlotViewUtil';
 
 
 
@@ -247,11 +248,11 @@ function matchHiPSToImage(pv, hipsPVidAry) {
     const wpCenter= CCUtil.getWorldCoords(plot,findCurrentCenterPoint(pv));
     const dl = getDrawLayerByType(dlRoot(), ImageOutline.TYPE_ID);
     if (!dl) dispatchCreateDrawLayer(ImageOutline.TYPE_ID);
+    const connectPids= dl ? dl.plotIdAry : [];
     const asPerPix= getArcSecPerPix(plot,plot.zoomFactor);
     hipsPVidAry.forEach( (id) => {
-        Object.entries(attributes).forEach( (entry) => dispatchAttributeChange({
-            plotId:id, overlayColorScope:false, positionScope:false, attKey:entry[0], attValue:entry[1]}));
-        dispatchAttachLayerToPlot(ImageOutline.TYPE_ID, id);
+        dispatchAttributeChange({ plotId:id, overlayColorScope:false, positionScope:false, changes:attributes});
+        if (!connectPids.includes(id)) dispatchAttachLayerToPlot(ImageOutline.TYPE_ID, id);
         dispatchChangeCenterOfProjection({plotId:id, centerProjPt:wpCenter});
         //Since HiPs map only support JS2000 and Galactic coordinates, only the image is plotted with these two coordinates
         //the change is dispatched. If not, do nothing

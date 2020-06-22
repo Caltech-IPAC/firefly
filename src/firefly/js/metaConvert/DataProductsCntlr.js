@@ -2,7 +2,7 @@ import {flux} from '../Firefly';
 import {REINIT_APP} from '../core/AppDataCntlr';
 import {isArray, isObject,get} from 'lodash';
 import {dpdtMessage, DPtypes} from './DataProductsType';
-import {download, downloadSimple, encodeUrl} from '../util/WebUtil';
+import {download, encodeUrl} from '../util/WebUtil';
 import {getRootURL} from '../util/BrowserUtil';
 
 

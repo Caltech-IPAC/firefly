@@ -3,24 +3,19 @@
  */
 
 /**
- *
  * @author Trey, Booth and many more
  */
-
-
-import {isArray, isEmpty, flattenDeep, isUndefined} from 'lodash';
+import {flattenDeep, isArray, isEmpty} from 'lodash';
 import pointInPolygon from 'point-in-polygon';
-import Enum from 'enum';
 import CoordinateSys from './CoordSys.js';
 import {CCUtil, CysConverter} from './CsysConverter.js';
 import DrawOp from './draw/DrawOp.js';
 import {primePlot} from './PlotViewUtil.js';
 import {doConv} from '../astro/conv/CoordConv.js';
-import Point, {makeImageWorkSpacePt, makeImagePt, makeScreenPt,
-               makeWorldPt, makeDevicePt, isValidPoint, pointEquals} from './Point.js';
-import {getPixScaleDeg, getFluxUnits} from './WebPlot.js';
+import { makeDevicePt, makeImagePt, makeImageWorkSpacePt, makeScreenPt, makeWorldPt, pointEquals } from './Point.js';
+import {getPixScaleDeg} from './WebPlot.js';
 import {SelectedShape} from '../drawingLayers/SelectArea.js';
-
+import {memorizeUsingMap} from '../util/WebUtil';
 
 
 /** Constant for conversion Degrees => Radians */
@@ -30,9 +25,6 @@ export const RtoD = 180.0 / Math.PI;
 
 export const toDegrees = (angle) => angle * (180 / Math.PI);
 export const toRadians = (angle) => (angle * Math.PI) / 180;
-
-
-export const FullType= new Enum(['ONLY_WIDTH', 'WIDTH_HEIGHT', 'ONLY_HEIGHT', 'SMART']);
 
 
 //======================================================================
@@ -61,21 +53,25 @@ export const computeScreenDistance= function (x1, y1, x2, y2) {
  * @return {number}
  */
 export function computeDistance(p1, p2) {
-    const lon1Radius = p1.getLon() * DtoR;
-    const lon2Radius = p2.getLon() * DtoR;
-    const lat1Radius = p1.getLat() * DtoR;
-    const lat2Radius = p2.getLat() * DtoR;
+    return computeDistanceAngularDistance(p1.x, p1.y, p2.x, p2.y);
+}
+
+const computeDistanceAngularDistance= memorizeUsingMap( (lon1,lat1,lon2,lat2) => {
+    const lon1Radius = lon1 * DtoR;
+    const lon2Radius = lon2 * DtoR;
+    const lat1Radius = lat1 * DtoR;
+    const lat2Radius = lat2 * DtoR;
     let cosine = Math.cos(lat1Radius) * Math.cos(lat2Radius) *
-                 Math.cos(lon1Radius - lon2Radius) +
-                 Math.sin(lat1Radius) * Math.sin(lat2Radius);
+        Math.cos(lon1Radius - lon2Radius) +
+        Math.sin(lat1Radius) * Math.sin(lat2Radius);
 
     if (Math.abs(cosine) > 1.0) cosine = cosine / Math.abs(cosine);
     return RtoD * Math.acos(cosine);
-}
+}, 3000);
 
 /**
- * @param p1 {Pt}
- * @param p2 {Pt}
+ * @param {Point} p1
+ * @param {Point} p2
  * @return {number}
  */
 const computeSimpleDistance= function(p1, p2) {
@@ -88,25 +84,8 @@ const computeSimpleDistance= function(p1, p2) {
 const computeSimpleSlopeAngle = function (fromPt, toPt) {
     const dx = toPt.x - fromPt.x;
     const dy = toPt.y - fromPt.y;
-
     return Math.atan2(dy, dx);
 };
-
-/**
- * @summary Return a Imge point the represents the passed Image point with a distance in
- * World coordinates added to it.
- * @param {WebPlot} plot the plot
- * @param {ImagePt} pt the x and y coordinate in image coordinates
- * @param x the x distance away from the point in world coordinates
- * @param y the y distance away from the point in world coordinates
- * @return {ImagePt} the new point
- * @public
- */
-export function getDistanceCoords(plot, pt, x, y) {
-    if (!plot || !plot.projection) return undefined;
-    const scale= 1/getPixScaleDeg(plot);
-    return makeImagePt ( pt.x+(x * scale), pt.y+(y * scale) );
-}
 
 
 /**
@@ -114,7 +93,7 @@ export function getDistanceCoords(plot, pt, x, y) {
  *
  * @param {WorldPt} wpt the world point to convert
  * @param {CoordinateSys} to CoordSys, the coordinate system to convert to
- * @return WorldPt the world point in the new coordinate system
+ * @return {WorldPt} the world point in the new coordinate system
  */
 export function convert(wpt, to= CoordinateSys.EQ_J2000) {
     const from = wpt.getCoordSys();
@@ -128,7 +107,7 @@ export function convert(wpt, to= CoordinateSys.EQ_J2000) {
     return makeWorldPt(ll.lon, ll.lat, to);
 }
 
-function convertToJ2000(wpt) { return convert(wpt); }
+const convertToJ2000= (wpt) => convert(wpt);
 
 /**
  * Find an approximate central point and search radius for a group of positions
@@ -191,7 +170,7 @@ export function computeCentralPointAndRadius(inPoints) {
  * then again with group of points.  This allows us not to overweight a larger group when computing the center.
  *
  * @param {Array.<Array.<WorldPt>>} inPoints2dAry  a 2d array of world points. Each array represents a group of points
- * @return {{centralPoint:WorldPt, maxRadius:number, avgOfCenters:number}}
+ * @return {{centralPoint:WorldPt, maxRadius:number, avgOfCenters:WorldPt}}
  */
 export function computeCentralPtRadiusAverage(inPoints2dAry) {
 
@@ -240,7 +219,7 @@ export function getPositionAngle(ra0, dec0, ra, dec) {
     const cd = Math.cos(del);
     const cosda = Math.cos(alf - alf0);
     const cosd = sd0 * sd + cd0 * cd * cosda;
-    let dist = Math.acos(cosd);
+    const dist = Math.acos(cosd);
     let pa = 0.0;
     if (dist > 0.0000004) {
         sind = Math.sin(dist);
@@ -251,7 +230,7 @@ export function getPositionAngle(ra0, dec0, ra, dec) {
         pa = Math.acos(cospa) * RtoD;
         if (sinpa < 0.0) pa = 360.0 - (pa);
     }
-    dist *= RtoD;
+    // dist *= RtoD;
     if (dec0===90) pa = 180.0;
     if (dec0===-90) pa = 0.0;
 
@@ -386,8 +365,7 @@ const getNewPosition= function(ra, dec, dist, phi) {
 };
 
 
-export const getRotationAngle= function(plot) {
-    let retval = 0;
+export const getRotationAngle= (plot) => {
     const iWidth = plot.dataWidth;
     const iHeight = plot.dataHeight;
     const ix = iWidth / 2;
@@ -395,10 +373,8 @@ export const getRotationAngle= function(plot) {
     const cc= CysConverter.make(plot);
     const wptC = cc.getWorldCoords(makeImageWorkSpacePt(ix, iy));
     const wpt2 = cc.getWorldCoords(makeImageWorkSpacePt(ix, iy+iHeight/4));
-    if (wptC && wpt2) {
-        retval = getPositionAngle(wptC.getLon(), wptC.getLat(), wpt2.getLon(), wpt2.getLat());
-    }
-    return retval;
+    if (wptC && wpt2) return getPositionAngle(wptC.getLon(), wptC.getLat(), wpt2.getLon(), wpt2.getLat());
+    return 0;
 };
 
 
@@ -413,15 +389,10 @@ export function isRotationMatching(pv1, pv2) {
     const p2= primePlot(pv2);
 
     if (!p1 || !p2) return false;
-
-    if (isNorthCountingRotation(pv1) && isNorthCountingRotation(pv2)) {
-        return true;
-    }
-    else {
-        const r1= getRotationAngle(p1) + pv1.rotation;
-        const r2= getRotationAngle(p2) + pv2.rotation;
-        return Math.abs((r1 % 360) - (r2 % 360))  < .9;
-    }
+    if (isNorthCountingRotation(pv1) && isNorthCountingRotation(pv2)) return true;
+    const r1= getRotationAngle(p1) + pv1.rotation;
+    const r2= getRotationAngle(p2) + pv2.rotation;
+    return Math.abs((r1 % 360) - (r2 % 360))  < .9;
 }
 
 function isNorthCountingRotation(pv) {
@@ -438,21 +409,17 @@ function isNorthCountingRotation(pv) {
  * @return {boolean}
  */
 export function isPlotNorth(plot, csys= CoordinateSys.EQ_J2000) {
-    let retval= false;
     const ix = plot.dataWidth/ 2;
     const iy = plot.dataHeight/ 2;
     const cc= CysConverter.make(plot);
     const wpt1 = cc.getWorldCoords(makeImageWorkSpacePt(ix, iy), csys);
-    if (wpt1) {
-        const cdelt1 = getPixScaleDeg(plot);
-        const wpt2 = makeWorldPt(wpt1.getLon(), wpt1.getLat() + (Math.abs(cdelt1) / plot.zoomFactor) * (5), csys);
-        const spt1 = cc.getScreenCoords(wpt1);
-        const spt2 = cc.getScreenCoords(wpt2);
-        if (spt1 && spt2) {
-            retval = (spt1.x===spt2.x && spt1.y > spt2.y);
-        }
-    }
-    return retval;
+    if (!wpt1) return false;
+    const cdelt1 = getPixScaleDeg(plot);
+    const wpt2 = makeWorldPt(wpt1.getLon(), wpt1.getLat() + (Math.abs(cdelt1) / plot.zoomFactor) * (5), csys);
+    const spt1 = cc.getScreenCoords(wpt1);
+    const spt2 = cc.getScreenCoords(wpt2);
+    if (spt1 && spt2) return (spt1.x===spt2.x && spt1.y > spt2.y);
+    return false;
 }
 
 export function isPlotRotatedNorth(plot, csys= CoordinateSys.EQ_J2000) {
@@ -541,13 +508,10 @@ export function isCsysDirMatching(p1,p2) {
 function getAngleInDeg(cx,cy,x,y) {
     const ptX= Math.round(x)-Math.round(cx);
     const ptY= Math.round(y)-Math.round(cy);
-
-
     if (ptY===0) return ptX >= 0 ? 0 : 180;
     if (ptX===0) return ptY >= 0 ? 90 : 270;
     const angle= toDegrees(Math.atan(ptY / ptX));
-    const fullAngle= circleAngle(Math.abs(angle),ptX,ptY);
-    return fullAngle;
+    return circleAngle(Math.abs(angle),ptX,ptY);
 }
 
 function circleAngle(a,x,y) {
@@ -559,27 +523,6 @@ function circleAngle(a,x,y) {
 
 
 
-const getEstimatedFullZoomFactor= function(fullType, dataWidth, dataHeight,
-                                                  screenWidth, screenHeight, tryMinFactor=-1) {
-    let zFact;
-    if (fullType===FullType.ONLY_WIDTH || screenHeight <= 0 || dataHeight <= 0) {
-        zFact =  screenWidth /  dataWidth;
-    } else if (fullType===FullType.ONLY_HEIGHT || screenWidth <= 0 || dataWidth <= 0) {
-        zFact =  screenHeight /  dataHeight;
-    } else {
-        const zFactW =  screenWidth /  dataWidth;
-        const zFactH =  screenHeight /  dataHeight;
-        if (fullType===FullType.SMART) {
-            zFact = zFactW;
-            if (zFactW > Math.max(tryMinFactor, 2)) {
-                zFact = Math.min(zFactW, zFactH);
-            }
-        } else {
-            zFact = Math.min(zFactW, zFactH);
-        }
-    }
-    return zFact;
-};
 
 
 
@@ -707,6 +650,10 @@ export function getBoundingBox(ptAry) {
 }
 
 
+/**
+ * @param {PlotView} pv
+ * @return {{x, y, w: number, h: number}|undefined}
+ */
 export function computeBoundingBoxInDeviceCoordsForPlot(pv) {
     const plot= primePlot(pv);
     if (!plot) return;
@@ -805,7 +752,7 @@ function getSelectedPtsFromRect(selection, plot, objList) {
  * @return {WorldPt}
  */
 export function getCenterPtOfPlot(plot) {
-    if (!plot) return null;
+    if (!plot) return undefined;
     const ip= makeImagePt(plot.dataWidth/2,plot.dataHeight/2);
     return CCUtil.getWorldCoords(plot,ip);
 }
@@ -868,75 +815,6 @@ function calculatePosition(pos1, offsetRa, offsetDec ) {
     return makeWorldPt(ra2, dec2);
 }
 
-/**
- * Find the corners of a bounding box given the center and the radius
- * of a circle
- *
- * @param center WorldPt the center of the circle
- * @param radius  in arcsec
- * @return object with corners
- */
-const getCorners= function(center, radius) {
-    const posLeft = calculatePosition(center, +radius, 0.0);
-    const posRight = calculatePosition(center, -radius, 0.0);
-    const posUp = calculatePosition(center, 0.0, +radius);
-    const posDown = calculatePosition(center, 0.0, -radius);
-    const upperLeft = makeWorldPt(posLeft.getLon(), posUp.getLat());
-    const upperRight = makeWorldPt(posRight.getLon(), posUp.getLat());
-    const lowerLeft = makeWorldPt(posLeft.getLon(), posDown.getLat());
-    const lowerRight = makeWorldPt(posRight.getLon(), posDown.getLat());
-    return {upperLeft, upperRight, lowerLeft, lowerRight};
-};
-
-
-/**
- * Return the same point using the WorldPt object.  the x,y value is the same but a world point is return with the
- * proper coordinate system.  If a WorldPt is passed the same point is returned.
- * <i>Important</i>: This method should not be used to convert between coordinate systems.
- * Example- a ScreenPt with (1,2) will return as a WorldPt with (1,2)
- * @param pt the point to translate
- * @return WorldPt the World point with the coordinate system set
- */
-const getWorldPtRepresentation= function(pt) {
-    if (!isValidPoint(pt)) return null;
-
-    let retval= null;
-    switch (pt.type) {
-        case Point.IM_WS_PT:
-            retval= makeWorldPt(pt.x,pt.y, CoordinateSys.PIXEL);
-            break;
-        case Point.SPT:
-            retval= makeWorldPt(pt.x,pt.y, CoordinateSys.SCREEN_PIXEL);
-            break;
-        case Point.IM_PT:
-            retval= makeWorldPt(pt.x,pt.y, CoordinateSys.PIXEL);
-            break;
-        case Point.W_PT:
-            retval=  pt;
-            break;
-    }
-    return retval;
-};
-
-const makePt= function(type,  x, y) {
-    let retval= null;
-    switch (type) {
-        case Point.IM_WS_PT:
-            retval= makeImageWorkSpacePt(x,y);
-            break;
-        case Point.SPT:
-            retval= makeScreenPt(x,y);
-            break;
-        case Point.IM_PT:
-            retval= makeImagePt(x,y);
-            break;
-        case Point.W_PT:
-            retval= makeWorldPt(x,y);
-            break;
-    }
-    return retval;
-};
-
 export function isAngleUnit(unit) {
     return ['deg', 'degree', 'arcmin', 'arcsec', 'radian', 'rad'].includes(unit.toLowerCase());
 }
@@ -970,19 +848,6 @@ export function convertAngle(from, to, angle) {
         }
         return numAngle * Math.pow(60.0, (toIdx - fromIdx));
     }
-}
-
-
-export function formatFlux(value, plot, band) {
-    if (isUndefined(value)) return '';
-    return `${formatFluxValue(value)} ${getFluxUnits(plot,band)}`;
-}
-
-export function formatFluxValue(value) {
-    const absV= Math.abs(value);
-    return (absV>1000||absV<.01) ?
-        value.toExponential(6).replace('e+', 'E') :
-        value.toFixed(6);
 }
 
 /**
@@ -1048,7 +913,7 @@ export function getTopmostVisiblePoint(pv,xOff, yOff) {
  * return true if the image is completely covering the area passed. The width and height are in Device coordinate
  * system.
  * @param {PlotView} pv
- * @param {SimplePoint} pt
+ * @param {Point} pt
  * @param {number} width in device coordinates
  * @param {number} height in device coordinates
  * @return {boolean} true if covering
@@ -1216,16 +1081,8 @@ export function distanceToCircle(radius, pts, cc, pt) {
 }
 
 export default {
-    DtoR,RtoD,FullType,computeScreenDistance, computeDistance,
-    computeSimpleDistance,convert,convertToJ2000,
-    computeCentralPointAndRadius, getPositionAngle, getNewPosition,
-    getRotationAngle,getTranslateAndRotatePosition,
-    getEstimatedFullZoomFactor,
-    intersects, contains, containsRec,containsCircle,
-    getArrowCoords, calculatePosition, getCorners,
-    makePt, getWorldPtRepresentation, getCenterPtOfPlot, toDegrees, convertAngle,
-    distToLine, distanceToPolygon, distanceToCircle, computeSimpleSlopeAngle
+    computeScreenDistance, computeDistance, computeSimpleDistance,convert,
+    computeCentralPointAndRadius, getPositionAngle, getNewPosition, getRotationAngle,getTranslateAndRotatePosition,
+    intersects, contains, containsRec,containsCircle, getArrowCoords, calculatePosition,
+    convertAngle, distToLine, distanceToPolygon, distanceToCircle, computeSimpleSlopeAngle
 };
-
-
-

@@ -1,7 +1,7 @@
 /* eslint prefer-template:0 */
 import {makeWorldPt} from '../visualize/Point.js';
-import {crunch, polishString} from './StringUtils.js';
 import CoordinateSys from '../visualize/CoordSys.js';
+import {crunch} from './WebUtil';
 
 var PositionParsedInput={Name: 'Name', Position:'Position'};
 
@@ -515,6 +515,78 @@ var makePositionParser = function(helper) {
 
 
 };
+
+
+const polishString= (str) => str ? convertExtendedAscii(str) : str;
+
+const replaceAt= (str, index, replacement) =>
+                str.substr(0, index) + replacement+ str.substr(index + replacement.length);
+
+function convertExtendedAscii(sbOriginal) {
+    if (sbOriginal === null) {
+        return null;
+    }
+
+    let retval= sbOriginal;
+    let origCharAsInt;
+    for (let isb = 0; isb < retval.length; isb++) {
+
+        origCharAsInt = retval.charCodeAt(isb);
+        if (origCharAsInt<=255) {
+            switch (origCharAsInt) {
+                case 223:
+                case 224:
+                    retval = replaceAt(retval, isb, '"');
+                    break;
+                case 150:
+                case 151:
+                    retval = replaceAt(retval, isb, '-');
+                    break;
+                default:
+                    if (origCharAsInt>127) {
+                        retval = replaceAt(retval, isb, '?');
+                    }
+                    break;
+            }
+        }
+        else {
+            switch (retval.charAt(isb)) {
+                case '\u2018': // left single quote
+                case '\u2019': // right single quote
+                case '\u201A': // lower quotation mark
+                case '\u2039': // Single Left-Pointing Quotation Mark
+                case '\u203A': // Single right-Pointing Quotation Mark
+                    retval = replaceAt(retval, isb, '\'');
+                    break;
+
+                case '\u201C': // left double quote
+                case '\u201D': // right double quote
+                case '\u201E': // double low quotation mark
+                    retval = replaceAt(retval, isb, '"');
+                    break;
+
+                case '\u02DC':
+                    retval = replaceAt(retval, isb, '~');
+                    break;  // Small Tilde
+
+                case '\u2013': // En Dash
+                case '\u2014': // EM Dash
+                    retval = replaceAt(retval, isb, '-');
+                    break;
+
+                default:
+                    if (origCharAsInt>127) {
+                        retval = replaceAt(retval, isb, '?');
+                    }
+                    break;
+            }
+        }
+    }
+    return retval;
+}
+
+
+
 
 var PositionParser= {makePositionParser, PositionParsedInput};
 export default PositionParser;

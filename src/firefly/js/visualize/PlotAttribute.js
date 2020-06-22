@@ -1,5 +1,3 @@
-import {WPConst} from './WebPlotRequest';
-
 export const PlotAttribute= {
 
     MOVING_TARGET_CTX_ATTR:   'MOVING_TARGET_CTX_ATTR',

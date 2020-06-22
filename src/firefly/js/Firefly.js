@@ -312,7 +312,8 @@ function renderRoot(viewer, props, webApiCommands) {
 
 
 function handleWebApi(webApiCommands, e, doAppRender) {
-    const {status, helpType, contextMessage, cmd, execute, params, badParams}= evaluateWebApi(webApiCommands);
+    const {status, helpType, contextMessage, cmd, execute,
+        params, badParams, missingParams}= evaluateWebApi(webApiCommands);
     switch (status) {
         case WebApiStat.EXECUTE_API_CMD:
             window.history.pushState('home', 'Home', new URL(window.location).pathname); // ?? is this necessary?
@@ -320,8 +321,10 @@ function handleWebApi(webApiCommands, e, doAppRender) {
             dispatchOnAppReady(() =>  execute?.(cmd,params));
             break;
         case WebApiStat.SHOW_HELP:
-            ReactDOM.render( React.createElement(
-                WebApiHelpInfoPage, {helpType, contextMessage, cmd, params, webApiCommands, badParams}), e);
+            ReactDOM.render(
+                React.createElement(
+                    WebApiHelpInfoPage,
+                    {helpType, contextMessage, cmd, params, webApiCommands, badParams, missingParams}), e);
             break;
         default:
             logger.error('Unexpect status, can\'t handle web api: '+ status);

@@ -4,7 +4,7 @@
 
 import React, {memo, useState, useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {debounce, get} from 'lodash';
+import {debounce, get, isUndefined} from 'lodash';
 import {sprintf} from '../../externalSource/sprintf';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
@@ -12,7 +12,6 @@ import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
 import {RangeSlider} from '../../ui/RangeSlider.jsx';
 import {callGetColorHistogram} from '../../rpc/PlotServicesJson.js';
 import {encodeServerUrl} from '../../util/WebUtil.js';
-import {formatFlux} from '../VisUtil.js';
 import {getRootURL} from '../../util/BrowserUtil.js';
 import {
     PERCENTAGE,  ABSOLUTE,SIGMA, STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL,
@@ -21,6 +20,7 @@ import {getFieldGroupResults, validateFieldGroup} from '../../fieldGroup/FieldGr
 import {dispatchStretchChange, visRoot} from '../ImagePlotCntlr.js';
 import {getActivePlotView} from '../PlotViewUtil.js';
 import {makeSerializedRv} from './ColorDialog.jsx';
+import {getFluxUnits} from '../WebPlot';
 
 
 const LABEL_WIDTH= 105;
@@ -317,4 +317,11 @@ function getReplotFunc(groupKey, band) {
             }
         });
     };
+}
+
+const formatFlux= (value, plot, band) => isNaN(value) ? '' : `${formatFluxValue(value)} ${getFluxUnits(plot,band)}`;
+
+function formatFluxValue(value) {
+    const absV= Math.abs(value);
+    return (absV>1000||absV<.01) ? value.toExponential(6).replace('e+', 'E') : value.toFixed(6);
 }

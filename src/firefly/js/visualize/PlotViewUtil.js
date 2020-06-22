@@ -1,16 +1,15 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {difference, pick, flatten, get, has, isArray, isEmpty, isString, isUndefined, isObject,uniq} from 'lodash';
+import {difference, flatten, has, isArray, isEmpty, isString, isUndefined, isObject,uniq} from 'lodash';
 import {getPlotGroupById} from './PlotGroup.js';
 import {makeDevicePt, makeImagePt, makeWorldPt, pointEquals} from './Point.js';
-import {clone} from '../util/WebUtil.js';
 import {dispatchDestroyDrawLayer, getDlAry} from './DrawLayerCntlr.js';
 import {makeTransform} from './PlotTransformUtils.js';
 import CysConverter, {CCUtil} from './CsysConverter';
 import {computeDistance} from './VisUtil.js';
 import {isHiPS, isImage} from './WebPlot.js';
-import {isDefined} from '../util/WebUtil';
+import {isDefined, memorizeLastCall} from '../util/WebUtil';
 import {getWavelength, isWLAlgorithmImplemented, PLANE} from './projection/Wavelength.js';
 import {getNumberHeader, HdrConst} from './FitsHeaderUtil.js';
 import {computeBoundingBoxInDeviceCoordsForPlot, containsRec} from './VisUtil';
@@ -27,6 +26,7 @@ export const CANVAS_DL_ID_START= 'dl-';
  * @returns {PlotView[]}
  */
 export function getPlotViewAry(ref) {
+    if (!ref) return undefined;
     if (ref.plotViewAry && has(ref,'activePlotId')) { // I was passed the visRoot
         return ref.plotViewAry;
     }
@@ -40,11 +40,13 @@ export function getPlotViewAry(ref) {
  * a plotViewAry. plotId is ignored when passing a plotView.  It is optional when passed a visRoot. 
  * When plotId is not included with visRoot it uses the activePlotId.
  *
+ * last call results are cached, for optimizations, after 2000 calls cached calls are about 3 times faster.
+ *
  * @param {PlotView[]|PlotView|VisRoot} ref this can be the visRoot or the plotViewAry, or a plotView Object.
  * @param {string} [plotId] the plotId, required with plotViewAry, ignored for  plotView, optional with visRoot
  * @returns {WebPlot|undefined} the plot, or undefined if it is not found
  */
-export function primePlot(ref,plotId) {
+export const primePlot= memorizeLastCall( (ref,plotId) => {
     let pv;
     if (!ref) return;
     if (!isString(plotId)) plotId= '';
@@ -58,61 +60,45 @@ export function primePlot(ref,plotId) {
         pv= ref;
     }
     return (pv && pv.primeIdx>=0) ? pv.plots[pv.primeIdx] : undefined;
-}
+},4);
+
 
 
 /**
+ * get the PlotView by id
+ * last call results are cached, for optimizations, after 2000 calls cached calls are about 2 times faster.
+ * cache is hit about 1.5 times for every non-cache all
+ *
  * @param {VisRoot | PlotView[] } ref this can be the visRoot object or a plotViewAry array.
  * @param {string} plotId
+ *
  * @returns {PlotView|undefined} the plot view object, or undefined if it is not found
  */
-export function getPlotViewById(ref,plotId) {
+export const getPlotViewById= memorizeLastCall( (ref,plotId) =>{
     if (!plotId) return undefined;
     const plotViewAry= getPlotViewAry(ref);
     if (!plotViewAry) return undefined;
-
     return plotViewAry.find( (pv) => pv.plotId===plotId);
-}
+},4);
 
-export function getPlotViewIdxById(visRoot,plotId) {
-    if (!plotId) return null;
-    return visRoot.plotViewAry.findIndex( (pv) => pv.plotId===plotId);
-}
+export const getPlotViewIdxById= (ref,plotId) =>
+                    plotId && getPlotViewAry(ref)?.findIndex( (pv) => pv.plotId===plotId);
 
 export function getPlotGroupIdxById(ref,plotGroupId) {
-    if (!ref) return null;
-    const plotGroupAry= ref.plotGroupAry ? ref.plotGroupAry : ref;
-    return plotGroupAry.findIndex( (pg) => pg.plotGroupId===plotGroupId);
+    const plotGroupAry= ref?.plotGroupAry ? ref.plotGroupAry : ref;
+    return plotGroupAry?.findIndex( (pg) => pg.plotGroupId===plotGroupId);
 }
 
 
 export function isFullyOnScreen(pv) {
-    if (!pv) return false;
-    const {viewDim}= pv;
     const box=computeBoundingBoxInDeviceCoordsForPlot(pv);
     if (!box) return false;
-    return containsRec(0,0,viewDim.width+3, viewDim.height+3, box.x,box.y,box.w,box.h);
-
+    return containsRec(0,0,pv.viewDim.width+3, pv.viewDim.height+3, box.x,box.y,box.w,box.h);
 }
 
 export function willFitOnScreenAtCurrentZoom(pv) {
-    if (!pv) return false;
-    const {viewDim}= pv;
-    const box=computeBoundingBoxInDeviceCoordsForPlot(pv);
-    if (!box) return false;
-    return (viewDim.width+3>=box.w && viewDim.height+3>=box.h);
-
-}
-
-/**
- *
- * @param {Object | PlotView[]} ref visRoot or plotViewAry
- * @param [activePlotId]
- * @returns {PlotView[]}
- */
-export function expandedPlotViewAry(ref,activePlotId=null) {
-    const plotViewAry= getPlotViewAry(ref);
-    return plotViewAry.filter( (pv) => (pv.plotId===activePlotId || pv.plotViewCtx.inExpandedList));
+    const {w,h}=computeBoundingBoxInDeviceCoordsForPlot(pv) ?? {};
+    return (pv.viewDim.width+3>=w && pv.viewDim.height+3>=h);
 }
 
 /**
@@ -121,16 +107,8 @@ export function expandedPlotViewAry(ref,activePlotId=null) {
  */
 export function hasWCSProjection(ref) {
     if (!ref) return false;
-    let projection;
-    if (ref.projection) {
-        projection= ref.projection;
-    }
-    else  {
-        const p= primePlot(ref);
-        if (!p) return false;
-        projection= p.projection;
-    }
-    return projection.isSpecified() && projection.isImplemented();
+    const projection= ref.projection ?? primePlot(ref)?.projection;
+    return Boolean(projection?.isSpecified() && projection?.isImplemented());
 }
 
 /**
@@ -145,7 +123,7 @@ export function getPlotViewIdListByPositionLock(visRoot, pvOrId) {
     if (!visRoot.positionLock) return [pv.plotId];
     return visRoot.plotViewAry
         .map( (pv) => pv.plotId)
-        .filter( (id) => get(getPlotViewById(visRoot,id),'plots.length') );
+        .filter( (id) => getPlotViewById(visRoot,id)?.plots?.length );
 }
 /**
  * Return an array of plotId's that are in the plot group associated with the the pvOrId parameter.
@@ -182,7 +160,7 @@ export function getAllPlotViewIdByOverlayLock(visRoot, pvOrId, hasPlots=false, p
     if (!locked) {
         return [majorPv.plotId];
     } else {
-        return visRoot.plotViewAry.filter((pv) => !hasPlots || get(pv, 'plots.length'))
+        return visRoot.plotViewAry.filter((pv) => !hasPlots || pv.plots?.length)
             .filter((pv) => !plotTypeMustMatch || isImage(primePlot(pv))===isImage(primePlot(majorPv)))
             .map((pv) => pv.plotId);
     }
@@ -192,28 +170,25 @@ export function getAllPlotViewIdByOverlayLock(visRoot, pvOrId, hasPlots=false, p
 /**
  * Is this plotview the active one
  * @param {VisRoot} visRoot - root of the visualization object in store
- * @param plotId
+ * @param {string} plotId
  * @returns {boolean} is active, there will be only one active at a time
  */
-export function isActivePlotView(visRoot,plotId) { return visRoot.activePlotId===plotId; }
+export const isActivePlotView= (visRoot,plotId) => visRoot.activePlotId===plotId;
 
 /**
  * Get the active PlotView from the store
  * @param {VisRoot} visRoot - root of the visualization object in store
  * @return {PlotView} the active plot view
  */
-export function getActivePlotView(visRoot) {
-    return visRoot?.plotViewAry.find( (pv) => pv.plotId===visRoot.activePlotId);
-}
+export const getActivePlotView= (visRoot) => visRoot?.plotViewAry.find( (pv) => pv.plotId===visRoot.activePlotId);
 
 /**
  *
- * @param plotOrPv plot or plotView object.  if a plot view then it test the primePlot of the plotView
+ * @param {WebPlot|PlotView} plotOrPv plot or plotView object.  if a PlotView then it test the primePlot of the plotView
  * @return {boolean} true if three color false if not or plot is null
  */
 export function isThreeColor(plotOrPv) {
-    let plot= plotOrPv;
-    if (isPlotView(plotOrPv)) plot= primePlot(plotOrPv);
+    const plot= isPlotView(plotOrPv) ? primePlot(plotOrPv) : plotOrPv;
     return plot ? plot.plotState.isThreeColor() : false;
 }
 
@@ -222,22 +197,18 @@ export function isThreeColor(plotOrPv) {
  * @param obj
  * @return boolean
  */
-export function isPlotView(obj) {
-    return Boolean(obj && obj.plots && obj.plotId &&
-        obj.viewDim && obj.overlayPlotViews && obj.plotViewCtx);
-}
+export const isPlotView= (obj) =>
+           isObject(obj) && Boolean(obj.plots && obj.plotId && obj.viewDim && obj.overlayPlotViews && obj.plotViewCtx);
 
 
 /**
  *
- * @param {PlotView} plotView
+ * @param {PlotView} pv
  * @param {String} imageOverlayId
  * @return {OverlayPlotView|undefined}
  */
-export function getOverlayById(plotView, imageOverlayId) {
-    if (!plotView) return undefined;
-    return plotView.overlayPlotViews.find( (opv) => opv.imageOverlayId===imageOverlayId);
-}
+export const getOverlayById= (pv, imageOverlayId) =>
+                       pv?.overlayPlotViews.find( (opv) => opv.imageOverlayId===imageOverlayId);
 
 /**
  * Look for a cached image tile that has been reprocessed from the original. Match by plotId and the original
@@ -261,9 +232,8 @@ export function findProcessedTile(visRoot, plotId, originalUrlkey) {
  * @param imageOverlayId
  * @return {OverlayPlotView}
  */
-export function getOverlayByPvAndId(ref,plotId,imageOverlayId) {
-    return getOverlayById(getPlotViewById(ref,plotId),imageOverlayId);
-}
+export const getOverlayByPvAndId = (ref,plotId,imageOverlayId) =>
+                                   getOverlayById(getPlotViewById(ref,plotId),imageOverlayId);
 
 
 /**
@@ -293,7 +263,6 @@ export function getConnectedPlotsIds(ref, drawLayerId) {
     const dl= getDrawLayerById(dlAry,drawLayerId);
     return dl ? dl.plotIdAry : [];
 }
-
 
 
 /**
@@ -396,7 +365,7 @@ export function deleteAllDrawLayers() {
  * @param plotId
  */
 export function plotInActiveGroup(visRoot, plotId) {
-    if (!get(visRoot, 'activePlotId')) return false;
+    if (!visRoot?.activePlotId) return false;
     const pv= getPlotViewById(visRoot, plotId);
     const activePv= getPlotViewById(visRoot, visRoot.activePlotId);
     return (pv.plotGroupId===activePv.plotGroupId);
@@ -408,7 +377,7 @@ export function plotInActiveGroup(visRoot, plotId) {
  * @return {Array}
  */
 export function getPlotStateAry(pv) {
-    const overlayStates= pv.overlayPlotViews.map( (opv) => get(opv.plot,'plotState')).filter( (s) => s);
+    const overlayStates= pv.overlayPlotViews.map( (opv) => opv.plot?.plotState).filter( (s) => s);
     const p= primePlot(pv);
     const pvStateAry= p ? [p.plotState] : [];
     return [...pvStateAry, ...overlayStates];
@@ -471,7 +440,7 @@ export function getOnePvOrGroup(plotViewAry, plotId,plotGroup, forceAllInGroup= 
 }
 
 
-export const primePlotType= (pv) => get(primePlot(pv), 'plotType', 'image');
+export const primePlotType= (pv) => primePlot(pv)?.plotType ?? 'image';
 
 
 /**
@@ -594,12 +563,8 @@ export function applyToOnePvOrOverlayGroup(plotViewAry, plotId,plotGroup,matchAn
  * @param {Object} obj fields to replace
  * @return {Array.<PlotView>}
  */
-export function clonePvAry(ref, plotId, obj) {
-    const plotViewAry= getPlotViewAry(ref);
-    if (!plotViewAry) return null;
-
-    return plotViewAry.map( (pv) => pv.plotId===plotId ? clone(pv,obj) : pv);
-}
+export const clonePvAry= (ref, plotId, obj) =>
+              getPlotViewAry(ref)?.map( (pv) => pv.plotId===plotId ? {...pv,...obj} : pv);
 
 /**
  * make a new copy of the plotview array with the passed plotView replacing the old one
@@ -607,11 +572,8 @@ export function clonePvAry(ref, plotId, obj) {
  * @param {PlotView} plotView
  * @return {Array.<PlotView>}
  */
-export function clonePvAryWithPv(ref, plotView) {
-    const plotViewAry= getPlotViewAry(ref);
-    if (!plotViewAry) return null;
-    return plotViewAry.map( (pv) => pv.plotId===plotView.plotId ? plotView : pv);
-}
+export const clonePvAryWithPv= (ref, plotView) =>
+              getPlotViewAry(ref)?.map( (pv) => pv.plotId===plotView.plotId ? plotView : pv);
 
 /**
  * Find a plot by id in a PlotView
@@ -619,42 +581,7 @@ export function clonePvAryWithPv(ref, plotView) {
  * @param {string} plotImageId
  * @return {WebPlot}
  */
-export function findPlot(plotView, plotImageId) {
-    if (!plotView) return undefined;
-    return plotView.plots.find( (p) => plotImageId===p.plotImageId);
-}
-
-/**
- * Check if two PlotViews are equals by comparing
- * @param {PlotView} pv1
- * @param {PlotView} pv2
- * @param {Array.<String>} pvKeys
- * @param {Array.<String>} plotKeys
- */
-export function isPlotViewsEqual(pv1, pv2, pvKeys=[], plotKeys=[]) {
-    if (isEmpty(pvKeys)) return pv1===pv2;
-    const p1= primePlot(pv1);
-    const p2= primePlot(pv2);
-    if (Boolean(p1)!==Boolean(p2)) return false;
-
-    if (p1 && p2) {
-        if (isImage(p1) !== isImage(p1)) return false;
-        if (isEmpty(plotKeys)) {
-            if (p1 !== p2) return false;
-        } else {
-            const plotEqual = plotKeys.every((k) => p1[k] === p2[k]);
-            if (!plotEqual) return false;
-        }
-    }
-    return pvKeys.every( (k) => pv1[k]===pv2[k]);
-}
-
-export function isPlotViewArysEqual(pvAry1, pvAry2, pvKeys=[], plotKeys=[]) {
-    if (isEmpty(pvAry1) && isEmpty(pvAry1)) return true;
-    if (isEmpty(pvAry1)!==isEmpty(pvAry1)) return false;
-    if (pvAry1.length!==pvAry2.length) return false;
-    return pvAry1.every( (pv,idx) => isPlotViewsEqual(pv,pvAry2[idx], pvKeys, plotKeys));
-}
+export const findPlot= (plotView, plotImageId) => plotView?.plots.find( (p) => plotImageId===p.plotImageId);
 
 
 /**
@@ -862,9 +789,7 @@ export function getFoV(pv, alternateZoomFactor) {
  * @param {PlotView} pv
  * @return {boolean} true if there are cubes or images
  */
-export function isMultiImageFits(pv) {
-    return Boolean(isMultiHDUFits(pv) || getNumberOfCubesInPV(pv)>0);
-}
+export const isMultiImageFits= (pv) => Boolean(isMultiHDUFits(pv) || getNumberOfCubesInPV(pv)>0);
 
 /**
  * Does the image file have more than one HDU
@@ -1012,11 +937,175 @@ export function convertImageIdxToHDU(pv, imageIdx) {
     if (!isMultiImageFits(pv) || imageIdx>pv.plots.length-1) return {hduIdx:0, cubeIdx:undefined, isCube:false};
     const isCube=  isImageCube(pv.plots[imageIdx]);
     const startIndexes= getHduPlotStartIndexes(pv);
-     // startIndexes.findIndex( (i) => (i>=imageIdx) );
     const hduIdx=getHDUIndex(pv,pv.plots[imageIdx]);
     return {hduIdx, cubeIdx:isCube && imageIdx-startIndexes[hduIdx], isCube};
 }
 
+
+
+
+//=============================================================
+//=============================================================
+//---------- wavelength functions
+//=============================================================
+//=============================================================
+
+/**
+ * check to see if wavelength data is available
+ * Only CTYPEka = 'WAVE-ccc', exists, the hasWLInfo is true.
+ * If the wlType is not defined, it is a pure cube data
+ * @param {WebPlot} plot
+ * @return {boolean}
+ */
+export const hasWLInfo= (plot) =>
+           Boolean(plot && plot.wlData && isDefined(plot.wlData.wlType) && isWLAlgorithmImplemented(plot.wlData) );
+
+export const wavelengthInfoParsedSuccessfully= (plot) => hasWLInfo(plot) && !Boolean(plot.wlData.failReason);
+
+export const getWavelengthParseFailReason= (plot) => hasWLInfo(plot) && plot.wlData.failReason;
+
+/**
+ * check to see if wavelength data is available as the plain level (not pixel level) only
+ * @param {WebPlot} plot
+ * @return {boolean}
+ */
+export const hasPlaneOnlyWLInfo= (plot) => hasWLInfo(plot) && plot.wlData.algorithm===PLANE;
+
+export const hasPixelLevelWLInfo= (plot) => hasWLInfo(plot) && plot.wlData.algorithm!==PLANE;
+
+/**
+ * Return the units string
+ * @param plot
+ * @return {string}
+ */
+export function getWaveLengthUnits(plot) {
+    if (!plot || !hasWLInfo(plot)) return '';
+    return plot.wlData?.units ?? '';
+}
+
+
+const MICRON_SYMBOL= String.fromCharCode(0x03BC)+'m';
+
+/**
+ *
+ * @param {WebPlot|String} plotOrStr - pass a webplot to get the units from and the format or a string that will be formatted
+ * @param {boolean} anyPartOfStr - replace units with symbols in any part of a longer string
+ * @return {string}
+ */
+export function getFormattedWaveLengthUnits(plotOrStr, anyPartOfStr=false) {
+    const uStr= isString(plotOrStr) ? plotOrStr : getWaveLengthUnits(plotOrStr);
+    if (anyPartOfStr) {
+        return uStr.replace(new RegExp('microns|micron|um|micrometers','gi'),MICRON_SYMBOL);
+    }
+    else {
+        const u= uStr.toLowerCase();
+        return (u.startsWith('micron') || u==='um' || u==='micrometers') ? MICRON_SYMBOL : uStr;
+    }
+}
+
+/**
+ *
+ * @param {WebPlot} plot
+ * @param {Point} pt
+ * @param {number} cubeIdx
+ * @return {number}
+ */
+export const getPtWavelength= (plot, pt, cubeIdx) =>
+          hasWLInfo(plot) && getWavelength(CCUtil.getImageCoords(plot,pt),cubeIdx,plot.wlData);
+
+
+//=============================================================
+//=============================================================
+//---------- PlotView Equality functions
+//=============================================================
+//=============================================================
+
+/**
+ * Check if two PlotViews are equals by comparing only certain keys
+ * @param {PlotView} pv1
+ * @param {PlotView} pv2
+ * @param {Array.<String>} pvKeys
+ * @param {Array.<String>} plotKeys
+ */
+export function isPlotViewsEqual(pv1, pv2, pvKeys=[], plotKeys=[]) {
+    if (isEmpty(pvKeys)) return pv1===pv2;
+    const p1= primePlot(pv1);
+    const p2= primePlot(pv2);
+    if (Boolean(p1)!==Boolean(p2)) return false;
+
+    if (p1 && p2) {
+        if (isImage(p1) !== isImage(p1)) return false;
+        if (isEmpty(plotKeys)) {
+            if (p1 !== p2) return false;
+        } else {
+            const plotEqual = plotKeys.every((k) => p1[k] === p2[k]);
+            if (!plotEqual) return false;
+        }
+    }
+    return pvKeys.every( (k) => pv1[k]===pv2[k]);
+}
+
+export function isPlotViewArysEqual(pvAry1, pvAry2, pvKeys=[], plotKeys=[]) {
+    if (isEmpty(pvAry1) && isEmpty(pvAry1)) return true;
+    if (isEmpty(pvAry1)!==isEmpty(pvAry1)) return false;
+    if (pvAry1.length!==pvAry2.length) return false;
+    return pvAry1.every( (pv,idx) => isPlotViewsEqual(pv,pvAry2[idx], pvKeys, plotKeys));
+}
+
+
+/**
+ * Return true if the two PlotViews are equals except for scrolling parameters
+ * This code is written to be a efficient as possible
+ *    - by testing the mostly likely differences first.
+ *    - caching the last call
+ *    - don't check the fields that are considered immutable in the plotview or plot object
+ *    - don't check the fields that are more minor that will only change if a major field changes
+ *                - i.e. if the plotId is the same then the plotGroupId and drawingSubGroupId will be the same
+ *                - i.e. if plot.plotImageId is the same then dataWidth, dataHeight, some hips parameters will be the same
+ *
+ *  IMPORTANT - this function should be updated if plotView or WebPlot objects are updated
+ *
+ * @param {PlotView} pv1
+ * @param {PlotView} pv2
+ * @return {boolean}
+ */
+export const pvEqualExScroll= memorizeLastCall((pv1,pv2) => {
+    if (pv1 === pv2) return true;
+    let result= true;
+    if (!pv1 || !pv2 ||
+        pv1.plotId !== pv2.plotId ||
+        pv1.primeIdx!==pv2.primeIdx &&
+        pv1.serverCall!==pv2.serverCall &&
+        pv1.plottingStatusMsg !== pv2.plottingStatusMsg) {
+        result= false;
+    }
+    if (result && pv1.plots !== pv2.plots) {
+        const p1 = primePlot(pv1);
+        const p2 = primePlot(pv2);
+        if (p1 !== p2) {
+            if (p1.plotImageId !== p2.plotImageId ||  //
+                isHiPS(p1) !== isHiPS(p2) ||
+                p1.attributes !== p2.attributes ||
+                p1.screenSize !== p2.screenSize ||
+                p1.zoomFactor !== p2.zoomFactor ||
+                p1.imageCoordSys !== p2.imageCoordSys ||
+                p1.plotState !== p2.plotState) result= false;
+        }
+    }
+    if (result && (
+        pv1.visible!==pv2.visible || pv1.request!==pv2.request ||
+        pv1.viewDim!==pv2.viewDim || pv1.menuItemKeys!==pv2.menuItemKeys ||
+        pv1.plotViewCtx!==pv2.plotViewCtx || pv1.rotation!==pv2.rotation ||
+        pv1.flipY!==pv2.flipY)) result= false;
+    if (result && !shallowequal(pv1.overlayPlotViews, pv2.overlayPlotViews)) result= false;
+    return result;
+},4);
+
+
+
+//===============================================================
+//----------------       ----------------------------------------
+//===============================================================
 
 
 function watchViewDim(action, cancelSelf, {plotId,resolve,reject, failureAsReject,failActions, succActions, foundSuccComplete}) {
@@ -1074,140 +1163,3 @@ export function onPlotComplete(plotId,failureAsReject= false) {
 
 }
 
-
-//=============================================================
-//=============================================================
-//---------- Wavelength functions
-//=============================================================
-//=============================================================
-
-/**
- * check to see if wavelength data is available
- * Only CTYPEka = 'WAVE-ccc', exists, the hasWLInfo is true.
- * If the wlType is not defined, it is a pure cube data
- * @param {WebPlot} plot
- * @return {boolean}
- */
-export function hasWLInfo(plot) {
-    if (!plot) return false;
-    return Boolean(plot.wlData && isDefined(plot.wlData.wlType) && isWLAlgorithmImplemented(plot.wlData) );
-}
-
-export function wavelengthInfoParsedSuccessfully(plot) {
-    return hasWLInfo(plot) && !Boolean(plot.wlData.failReason);
-}
-
-export function getWavelengthParseFailReason(plot) {
-    return hasWLInfo(plot) && plot.wlData.failReason;
-}
-
-/**
- * check to see if wavelength data is available as the plain level (not pixel level) only
- * @param {WebPlot} plot
- * @return {boolean}
- */
-export const hasPlaneOnlyWLInfo= (plot) => hasWLInfo(plot) && plot.wlData.algorithm===PLANE;
-
-export const hasPixelLevelWLInfo= (plot) => hasWLInfo(plot) && plot.wlData.algorithm!==PLANE;
-
-/**
- * Return the units string
- * @param plot
- * @return {string}
- */
-export function getWaveLengthUnits(plot) {
-    if (!plot || !hasWLInfo(plot)) return '';
-    return get(plot, 'wlData.units','');
-}
-
-
-const MICRON_SYMBOL= String.fromCharCode(0x03BC)+'m';
-
-/**
- *
- * @param {WebPlot|String} plotOrStr - pass a webplot to get the units from and the format or a string that will be formatted
- * @param {boolean} anyPartOfStr - replace units with symbols in any part of a longer string
- * @return {string}
- */
-export function getFormattedWaveLengthUnits(plotOrStr, anyPartOfStr=false) {
-    const uStr= isString(plotOrStr) ? plotOrStr : getWaveLengthUnits(plotOrStr);
-    if (anyPartOfStr) {
-        return uStr.replace(new RegExp('microns|micron|um|micrometers','gi'),MICRON_SYMBOL);
-    }
-    else {
-        const u= uStr.toLowerCase();
-        return (u.startsWith('micron') || u==='um' || u==='micrometers') ? MICRON_SYMBOL : uStr;
-    }
-}
-
-/**
- *
- * @param {WebPlot} plot
- * @param {Point} pt
- * @param {number} cubeIdx
- * @return {number}
- */
-export const getPtWavelength= (plot, pt, cubeIdx) =>
-          hasWLInfo(plot) && getWavelength(CCUtil.getImageCoords(plot,pt),cubeIdx,plot.wlData);
-
-
-
-/**
- * Return true if the two PlotViews are equals except for scrolling parameters
- * This code is written to be a efficient as possible
- *    - by testing the mostly likely differences first.
- *    - caching the last call
- *    - don't check the fields that are considered immutable in the plotview or plot object
- *    - don't check the fields that are more minor that will only change if a major field changes
- *                - i.e. if the plotId is the same then the plotGroupId and drawingSubGroupId will be the same
- *                - i.e. if plot.plotImageId is the same then dataWidth, dataHeight, some hips parameters will be the same
- *
- *  IMPORTANT - this function should be updated if plotView or WebPlot objects are updated
- *
- * @param {PlotView} pv1
- * @param {PlotView} pv2
- * @return {boolean}
- */
-export const pvEqualExScroll= (() => {
-    let lastPv1, lastPv2;
-    let lastResult= false;
-    return (pv1,pv2) => {
-        if (pv1===lastPv1 && pv2===lastPv2) return lastResult;
-
-        lastPv1= pv1;
-        lastPv2= pv2;
-        if (pv1 === pv2) {
-            lastResult= true;
-            return true;
-        }
-        let result= true;
-        if (!pv1 || !pv2 ||
-            pv1.plotId !== pv2.plotId ||
-            pv1.primeIdx!==pv2.primeIdx &&
-            pv1.serverCall!==pv2.serverCall &&
-            pv1.plottingStatusMsg !== pv2.plottingStatusMsg) {
-            result= false;
-        }
-        if (result && pv1.plots !== pv2.plots) {
-            const p1 = primePlot(pv1);
-            const p2 = primePlot(pv2);
-            if (p1 !== p2) {
-                if (p1.plotImageId !== p2.plotImageId ||  //
-                    isHiPS(p1) !== isHiPS(p2) ||
-                    p1.attributes !== p2.attributes ||
-                    p1.screenSize !== p2.screenSize ||
-                    p1.zoomFactor !== p2.zoomFactor ||
-                    p1.imageCoordSys !== p2.imageCoordSys ||
-                    p1.plotState !== p2.plotState) result= false;
-            }
-        }
-        if (result && (
-            pv1.visible!==pv2.visible || pv1.request!==pv2.request ||
-            pv1.viewDim!==pv2.viewDim || pv1.menuItemKeys!==pv2.menuItemKeys ||
-            pv1.plotViewCtx!==pv2.plotViewCtx || pv1.rotation!==pv2.rotation ||
-            pv1.flipY!==pv2.flipY)) result= false;
-        if (result && !shallowequal(pv1.overlayPlotViews, pv2.overlayPlotViews)) result= false;
-        lastResult= result;
-        return result;
-    };
-})();

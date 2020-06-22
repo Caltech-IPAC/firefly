@@ -9,7 +9,7 @@ import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from '../Dra
 import {dispatchActiveTarget, getActiveTarget} from '../../core/AppDataCntlr.js';
 import {WebPlot, RDConst, isImage} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute';
-import VisUtils from '../VisUtil.js';
+import {getCenterPtOfPlot} from '../VisUtil.js';
 import {PlotState} from '../PlotState.js';
 import {WPConst, DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
 import {Band} from '../Band.js';
@@ -566,7 +566,7 @@ function updateActiveTarget(plot) {
         const circle = req.getRequestArea();
         if (req.getOverlayPosition())     activeTarget= req.getOverlayPosition();
         else if (circle && circle.center) activeTarget= circle.center;
-        else                              activeTarget= VisUtils.getCenterPtOfPlot(plot);
+        else                              activeTarget= getCenterPtOfPlot(plot);
 
     }
     if (activeTarget) dispatchActiveTarget(activeTarget);

@@ -55,12 +55,12 @@ const clone = (obj,params={}) => ({...obj,...params});
  */
 function replaceAtt(pv,att, toAll) {
     if (toAll) {
-        const plots= pv.plots.map( (p) => clone(p,{attributes:clone(p.attributes, att)}));
-        return clone(pv,{plots});
+        const plots= pv.plots.map( (p) => ({...p,attributes:{...p.attributes, ...att}}));
+        return {...pv,plots};
     }
     else {
         const p= primePlot(pv);
-        return replacePrimaryPlot(pv,clone(p,{attributes:clone(p.attributes, att)}));
+        return replacePrimaryPlot(pv,{...p,attributes:{...p.attributes, ...att}});
     }
 }
 
@@ -162,24 +162,26 @@ export function reducer(state, action) {
  * @return {VisRoot}
  */
 function changePlotAttribute(state,action) {
-    const {plotId,attKey,attValue,overlayColorScope,positionScope,toAllPlotsInPlotView}= action.payload;
+    const {plotId,attKey,attValue,changes={},overlayColorScope,positionScope,toAllPlotsInPlotView}= action.payload;
     let {plotViewAry}= state;
     const pv= getPlotViewById(state,plotId);
     const plot= primePlot(pv);
     if (!plot) return state;
+    const newAtts= {...changes};
+    if (attKey && attValue) newAtts[attKey]= attValue;
 
     if (positionScope) {
         plotViewAry= applyToOnePvOrAll(state.positionLock, plotViewAry, plotId, false,
-            (pv)=> replaceAtt(pv,{[attKey]:attValue},toAllPlotsInPlotView) );
+            (pv)=> replaceAtt(pv,newAtts,toAllPlotsInPlotView) );
     }
     else if (overlayColorScope) {
         const plotGroup= findPlotGroup(pv.plotGroupId,state.plotGroupAry);
         plotViewAry= applyToOnePvOrOverlayGroup(plotViewAry, plotId, plotGroup, false,
-            (pv)=> replaceAtt(pv,{[attKey]:attValue},toAllPlotsInPlotView) );
+            (pv)=> replaceAtt(pv,newAtts,toAllPlotsInPlotView) );
     }
     else {
         plotViewAry= applyToOnePvOrAll(false, plotViewAry, plotId, false,
-            (pv)=> replaceAtt(pv,{[attKey]:attValue},toAllPlotsInPlotView) );
+            (pv)=> replaceAtt(pv,newAtts,toAllPlotsInPlotView) );
     }
     return clone(state,{plotViewAry});
 }

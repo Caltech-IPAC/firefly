@@ -154,13 +154,6 @@ function addPlot(state,action, setActive, newPlot) {
     let {plotViewAry, activePlotId, prevActivePlotId, mpwWcsPrimId, processedTiles}= state;
     const {pvNewPlotInfoAry}= action.payload;
 
-    if (!pvNewPlotInfoAry) {
-        console.error(new Error(
-            `Deprecated payload send to handPlotChange.addPlot: type:${action.type}, plot not updated`));
-        return state;
-    }
-
-
     plotViewAry = plotViewAry.map((pv) => { // map has side effect of setting active plotId, and cleaning processedTiles
         const info = pvNewPlotInfoAry.find((i) => i.plotId === pv.plotId && (!i.requestKey || i.requestKey===pv.request.getRequestKey()));
         if (!info) return pv;

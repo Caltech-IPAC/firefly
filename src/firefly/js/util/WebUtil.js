@@ -1,20 +1,16 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
+import { forEach, fromPairs, get, has, isArray, isBoolean, isEqual, isFunction, isNil,
+    isObject, isPlainObject, last, mergeWith, omit, set, truncate, union} from 'lodash';
 import shallowequal from 'shallowequal';
-import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil, isBoolean,
-        last, isPlainObject, forEach, fromPairs, mergeWith, isArray, truncate} from 'lodash';
-
+import update from 'immutability-helper';
 import {getRootURL} from './BrowserUtil.js';
-import {getDownloadProgress, DownloadProgress} from '../rpc/SearchServicesJson.js';
+import {DownloadProgress, getDownloadProgress} from '../rpc/SearchServicesJson.js';
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
 import {getOrCreateWsConn} from '../core/messaging/WebSocketClient.js';
 import {logger} from './Logger.js';
-
-import update from 'immutability-helper';
 import {ServerParams} from '../data/ServerParams';
-
 
 const MEG          = 1048576;
 const GIG          = 1048576 * 1024;
@@ -29,16 +25,12 @@ export const WS_CONNID_HD  = 'FF-connID';
 
 
 var GLOBAL_PROPS;
+/*global __PROPS__*/        // this is defined at build-time.
+
 export function getProp(key, def) {
-    /*global __PROPS__*/        // this is defined at build-time.
     GLOBAL_PROPS = GLOBAL_PROPS || __PROPS__;
-    if (!GLOBAL_PROPS) return def;
-    return get(GLOBAL_PROPS, [key], def);
+    return GLOBAL_PROPS?.[key] ?? def;
 }
-
-
-
-export const isDefined= (x) => x!==undefined;
 
 /**
  * returns an object of key:value where keyPrefix is removed from the keys.  i.e
@@ -50,33 +42,27 @@ export const isDefined= (x) => x!==undefined;
  *      getPropsWith('version_')  => {a: a_val, b: b_val}
  * </code>
  * @param keyPrefix
- * @returns {*}
+ * @returns {object}
  */
 export function getPropsWith(keyPrefix) {
-    /*global __PROPS__*/        // this is defined at build-time.
     GLOBAL_PROPS = GLOBAL_PROPS || __PROPS__;
     if (!GLOBAL_PROPS) return {};
-    return Object.entries(GLOBAL_PROPS)
+    return Object.fromEntries(Object.entries(GLOBAL_PROPS)
         .filter(([k,]) => k.startsWith(keyPrefix))
-        .reduce((rval, [k,v]) => {
-            const prop = k.substring(keyPrefix.length);
-            rval[prop] = v;
-            return rval;
-        }, {});
+        .map( ([k,v]) => [k.substring(keyPrefix.length),v]));
 }
 
-export function getModuleName() {
-    return getProp('MODULE_NAME');
-}
+export const getModuleName= () => getProp('MODULE_NAME');
 
+export const isDefined= (x) => x!==undefined;
 
 /**
- * load a js script by dynamicly adding a script tag.
+ * load a js script by dynamically adding a script tag.
  * @param scriptName
  * @return {Promise} when the script is loaded or failed to load
  */
 export function loadScript(scriptName) {
-    const loadPromise= new Promise(
+    return new Promise(
         function(resolve, reject) {
             const head= document.getElementsByTagName('head')[0];
             const script= document.createElement('script');
@@ -87,7 +73,51 @@ export function loadScript(scriptName) {
             script.onload= (ev) => resolve(ev);
             script.onerror= (ev) => reject(ev);
         });
-    return loadPromise;
+}
+
+/**
+ * Create a function that caches last N (up to 20) function call results
+ * This is better for functions that take immutable objects. it compare every argument using ===
+ * This cache size has to be smaller (<29=0) since if must iterate though all the last results.
+ * @param fn - the function to wrap
+ * @param {number} [cacheSize=1] the number of saved calls with a maximum of 20
+ * @return {function}
+ */
+export function memorizeLastCall(fn, cacheSize=1) {
+    const lastCallCache= [];
+    const maxCache= Math.min(cacheSize,20);
+    return (...args) => {
+        const cachedEntry= lastCallCache.find( (result) => args.every( (a,idx) => a===result.args[idx]));
+        if (cachedEntry) return cachedEntry.retval;
+        const retval= fn(...args);
+        lastCallCache.unshift({args, retval});
+        if (lastCallCache.length>maxCache) lastCallCache.length=maxCache;
+        return retval;
+    };
+}
+
+/**
+ * Create a function that caches function call result
+ * This function is better use for call types that do heavy computations that take number or string as all the parameters.
+ * If you are wrapping a function that takes an object you should pass a makeKey function.
+ * @param fn - the function to wrap
+ * @param {number} [maxMapSize=5000] when the cache number goes over 5000 the map is cleared
+ * @param {function} [makeKey] - make a cache key from the function arguments call with the arguments as an array as makeKey(args). Defaults to calling joint on the arguments
+ *
+ * @param name
+ * @return {function}
+ */
+export function memorizeUsingMap(fn, maxMapSize=5000, makeKey= (args) => args.join(), name='') {
+    const cacheMap= new Map();
+    return (...args) => {
+        const key= makeKey(args);
+        let retval= cacheMap.get(key);
+        if (isDefined(retval)) return retval;
+        retval= fn(...args);
+        if (cacheMap.size>maxMapSize) cacheMap.clear();
+        cacheMap.set(key, retval);
+        return retval;
+    };
 }
 
 /**
@@ -163,7 +193,6 @@ export function loadCancelableImage(src) {
  * @return {string} encoded url
  */
 export const encodeUrl= function(url, params) {
-
     let rval = url.trim();
     if ( !rval.toLowerCase().startsWith('http') ) {
         rval = getRootURL() + rval;
@@ -214,7 +243,6 @@ export function encodeParams(params) {
 }
 
 
-
 /**
  * Returns a string where all characters that are not valid for a complete URL have been escaped.
  * Also, it will do URL rewriting for session tracking if necessary.
@@ -225,9 +253,7 @@ export function encodeParams(params) {
  *               delimiter characters.  Unlike url, delimiter characters will be encoded as well.
  * @return encoded url
  */
-export const encodeServerUrl= function(url, params) {
-    return encodeUrl(url, params);
-};
+export const encodeServerUrl= (url, params) => encodeUrl(url, params);
 
 /**
  * A wrapper for the underlying window.fetch function.
@@ -318,11 +344,7 @@ function doFetchUrl(url, options, doValidation) {
 
 }
 
-export function logError(...message) {
-    if (message) {
-        message.forEach( (m) => console.log(has(m,'stack') ? m.stack : m) );
-    }
-}
+export const logError= (...message) => message && message.forEach( (m) => console.log(has(m,'stack') ? m.stack : m) );
 
 /**
  * Copy the content of the string to the clipboard
@@ -383,17 +405,16 @@ export function downloadWithProgress(url, numTries=1000) {
 }
 
 export function downloadBlob(blob, filename) {
-    if (blob) {
-        window.URL = window.URL || window.webkitURL;
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = window.URL.createObjectURL(blob);
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(a.href);
-        document.body.removeChild(a);
-    }
+    if (!blob) return;
+    window.URL = window.URL || window.webkitURL;
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = window.URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(a.href);
+    document.body.removeChild(a);
 }
 
 function resolveFileName(resp) {
@@ -424,19 +445,18 @@ export function download(url, filename) {
 }
 
 
-export function downloadSimple(url) {
-    let nullFrame = document.getElementById('null_frame');
-    if (!nullFrame) {
-        nullFrame = document.createElement('iframe');
-        nullFrame.id = 'null_frame';
-        nullFrame.style.display = 'none';
-        nullFrame.style.width = '0px';
-        nullFrame.style.height = '0px';
-        document.body.appendChild(nullFrame);
-    }
-    nullFrame.src = url;
-}
-
+// export function downloadSimple(url) {
+//     let nullFrame = document.getElementById('null_frame');
+//     if (!nullFrame) return;
+//     nullFrame = document.createElement('iframe');
+//     nullFrame.id = 'null_frame';
+//     nullFrame.style.display = 'none';
+//     nullFrame.style.width = '0px';
+//     nullFrame.style.height = '0px';
+//     document.body.appendChild(nullFrame);
+//     nullFrame.src = url;
+// }
+//
 
 export function parseUrl(url) {
     const {hash, host, hostname, href, origin, pathname, port, protocol, search, searchParams, username, password} = new URL(url);
@@ -476,32 +496,27 @@ export function parseUrl(url) {
         pathAry
     };
 }
+
 export function getSizeAsString(size) {
     const  kStr= 'K';
     const  mStr= 'M';
     const  gStr= 'G';
 
-    let retval;
     if (size > 0 && size < (MEG)) {
-        retval= ((size / K)) + kStr;
+        return ((size / K)) + kStr;
     }
     else if (size >= (MEG) && size <  (2*GIG) ) {
         const megs = Math.round(size / MEG);
         const  remain=  Math.round(size % MEG);
         const decimal =  Math.round(remain / MEG_TENTH);
-        retval= megs +'.'+ decimal + mStr;
+        return megs +'.'+ decimal + mStr;
     }
     else if (size >= (2*GIG) ) {
         const  gigs =  Math.round(size / GIG);
         const remain=  Math.round(size % GIG);
         const decimal =  Math.round(remain / GIG_HUNDREDTH);
-        retval= gigs +'.'+ decimal + gStr;
+        return gigs +'.'+ decimal + gStr;
     }
-    return retval;
-}
-
-function isRequiredUpdateObject(o) {
-    return Array.isArray(o) || (o && o.constructor === Object.prototype.constructor);
 }
 
 /**
@@ -521,7 +536,7 @@ export function deepDiff(o1, o2, p, collapsed=false) {
         collapsed ? console.groupCollapsed(p) : console.group(p);
         if ([o1, o2].every(isFunction)) {
             notify('avoidable?');
-        } else if (![o1, o2].every(isRequiredUpdateObject)) {
+        } else if (![o1, o2].every((o) => Array.isArray(o) || (o?.constructor === Object.prototype.constructor))) {
             notify('required.');
         } else {
             const keys = union(Object.keys(o1), Object.keys(o2));
@@ -547,16 +562,11 @@ export function setCookie(name, value, options = {}) {
     let str = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
 
     if (isNil(value)) options.maxage = -1;
-
-    if (options.maxage) {
-        options.expires = new Date(+new Date() + options.maxage);
-    }
-
+    if (options.maxage) options.expires = new Date(+new Date() + options.maxage);
     if (options.path) str += '; path=' + options.path;
     if (options.domain) str += '; domain=' + options.domain;
     if (options.expires) str += '; expires=' + options.expires.toUTCString();
     if (options.secure) str += '; secure';
-
     document.cookie = str;
 }
 
@@ -588,12 +598,8 @@ function parseCookies(str) {
  * @param changes (Object): The changes to be made.
  * @return the updated object
  */
-export function updateObject(object, changes) {
-    if (changes) {
-        object = Object.entries(changes).reduce( (p, [k,v]) => updateSet(p, k, v), object);
-    }
-    return object;
-}
+export const updateObject = (object, changes) =>
+                changes ? Object.entries(changes).reduce( (p, [k,v]) => updateSet(p, k, v), object) : object;
 
 
 /**
@@ -681,6 +687,7 @@ export function mergeObjectOnly(target, sources) {
  * To mark the search as done without actually doing it then just pass true as first parameter
  * makeSearchOnce is similar to lodash once but includes a validate as a way to make it done.
  * Note that the execution of the doSearch function is deferred.
+ * @param {boolean } defer - if true run the search deferred
  * @return {Function} a function with the signature f(validateSearch,doSearch)
  */
 export function makeSearchOnce(defer=true) {
@@ -732,11 +739,10 @@ export function strictParseInt(value) {
  * @param object
  * @param prop
  * @param def
- * @returns {*}
+ * @returns {boolean}
  */
-export function getBoolean(object, prop, def=undefined) {
-    return toBoolean(object && object[prop], def);
-}
+export const getBoolean = (object, prop, def=undefined) => toBoolean(object && object[prop], def);
+
 
 /**
  * return true if val is boolean true, or 'true' case-insensitive
@@ -757,14 +763,12 @@ export function toBoolean(val, def=undefined) {
  * @param {string} replace - replacement string
  * @return {string} updated strign
  */
-export function replaceAll(str, find, replace) {
-    return str.replace(new RegExp(find, 'g'), replace);
-}
+export const replaceAll= (str, find, replace) => str.replace(new RegExp(find, 'g'), replace);
 
 /**
- * return true if val is 'true' or 'fase' case-insensitive
+ * return true if val is 'true' or 'false' case-insensitive
  * @param val the string value to check.
- * @returns {*}
+ * @returns {boolean}
  */
 export function isBooleanString(val) {
     const s = String(val).toLowerCase();
@@ -820,7 +824,6 @@ export function flattenObject(object, prefix='', testFunc=isPlainObject) {
 
 
 export function deltas(a, b, wrapArray=true) {
-
     const diff = (a1, b1, wrapArray) => {
         const r = {};
         doDiff(a1, b1, r, wrapArray);
@@ -870,6 +873,26 @@ export function hashCode(str) {
     return hash >>> 0;
 }
 
-export function isNumeric(n) {
-    return !isNaN(parseFloat(n)) && isFinite(n);
+export const isNumeric= (n) => !isNaN(parseFloat(n)) && isFinite(n);
+
+/**
+ * removes extra spaces from a string.
+ * <ul><li><code>" bbb    ccc  ddd"</code></li></ul>
+ * should become:
+ * <ul><li><code>aaa "bbb ccc ddd" eee</code></li></ul>
+ * @param {String} s
+ */
+export const crunch= (s = '') => s && s.replace(/[ \t\n\r\f]/g, ' ').trim().replace(/\s{2,}/g, ' ');
+
+export function matches(s, regExp, ignoreCase) {
+    if (isNil(s)) return false;
+    const re = ignoreCase ? new RegExp(regExp, 'i') : new RegExp(regExp);
+    const result = re.exec(s);
+    if (result===null || !result.length) return false;
+    for (let i = 0; (i < result.length); i++) {
+        if (s === result[i]) return true;
+    }
+    return false;
 }
+
+export const matchesIgCase= (s, regExp) => matches(s, regExp, true);
