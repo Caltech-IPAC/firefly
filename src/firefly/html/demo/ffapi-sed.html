@@ -4,7 +4,7 @@
   ~ License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
   -->
 
-<html>
+<html xmlns="http://www.w3.org/1999/html">
 
 <head>
     <meta charset="UTF-8">
@@ -23,31 +23,41 @@
     Sample SED Charts
     </h2>
 </div>
-
+<br/><br/>
+<span><b>case1</b> VizieR SED: showing data table with calculated/formated columns</span>
+<br/><br/>
 <div style="display: inline-flex">
     <div id="table3" style="width: 500px; height: 400px; border: solid 1px; margin: 2px"></div>
     <div id="sedchart3" style="width: 500px; height: 400px; border: solid 1px; margin: 2px"></div>
 </div>
+<br/><br/>
+<span><b>case2</b> VizieR SED: with Coordinate input</span>
 <br/><br/>
 <div style="display: inline-flex">
     <div id="table4" style="width: 500px; height: 400px; border: solid 1px; margin: 2px"></div>
     <div id="sedchart4" style="width: 500px; height: 400px; border: solid 1px; margin: 2px"></div>
 </div>
 <br/><br/>
+<span><b>case3 </b> Showing proper error message when no photometry data retrieved</span>
+<br/><br/>
 <div style="display: inline-flex">
     <div id="table5" style="width: 500px; height: 400px; border: solid 1px; margin: 2px"></div>
     <div id="sedchart5" style="width: 500px; height: 400px; border: solid 1px; margin: 2px"></div>
 </div>
 <br/><br/>
-<div id="table" style="width: 800px; height: 550px; border: solid 1px;"></div>
+<span><b>case4</b> NED SED 1</span>
 <br/><br/>
-<div id="sedchart" style="width: 800px; height: 550px; border: solid 1px;"></div>
+<div style="display: inline-flex">
+    <div id="table" style="width: 500px; height: 400px; border: solid 1px; margin: 2px"></div>
+    <div id="sedchart" style="width: 500px; height: 400px; border: solid 1px; margin: 2px"></div>
+</div>
 <br/><br/>
-
-<div id="table2" style="width: 800px; height: 550px; border: solid 1px;"></div>
+<span><b>case5</b> NED SED 2</span>
 <br/><br/>
-<div id="sedchart2" style="width: 800px; height: 550px; border: solid 1px;"></div>
-
+<div style="display: inline-flex">
+    <div id="table2" style="width: 500px; height: 400px; border: solid 1px; margin: 2px"></div>
+    <div id="sedchart2" style="width: 500px; height: 400px; border: solid 1px; margin: 2px"></div>
+</div>
 <br/><br/>
 
 <script type="text/javascript">
@@ -78,7 +88,7 @@
                 data: [{
                     name: 'SED: ARP-220',
                     tbl_id: tblId,
-                    //text: 'tables::"No."', // does not display - probably not needed, if chart and table are connected
+                    text: 'tables::"No."', // can set as any text you like
                     x: 'tables::log("Frequency")',
                     // error_x: {
                     //     // assuming error is a fifth of the Frequency
@@ -93,7 +103,12 @@
                     firefly: {
                         yMax: 'tables::log("Upper limit of Flux Density")'
                     },
-                    mode: 'markers'
+                    mode: 'markers',
+                    hovertemplate:
+                        "<b>%{text}</b><br><br>" +
+                        "%{xaxis.title.text}: %{x:.2f}<br>" +
+                        "%{yaxis.title.text}: %{y:.2f}<br>" +
+                        "<extra></extra>"
                 }],
                 layout: {
                     xaxis: {
@@ -101,7 +116,9 @@
                     },
                     yaxis: {
                         title: {text: 'log(F<sub><em>v</em></sub> [Jy])'},
-                    }
+                    },
+                    hovermode: "closest",
+                    hoverlabel: { bgcolor: "#FDF" },
                 }
             });
 
@@ -130,7 +147,11 @@
                     firefly: {
                         yMax: 'tables::NEDUpperLimit'
                     },
-                    mode: 'markers'
+                    mode: 'markers',
+                    hovertemplate:
+                        "%{xaxis.title.text}: %{x:.2e}<br>" +
+                        "%{yaxis.title.text}: %{y:.2e}<br>" +
+                        "<extra></extra>"
                 }],
                 layout: {
                     xaxis: {
@@ -140,17 +161,19 @@
                     yaxis: {
                         title: {text: 'F(v) [Jy]'},
                         type: 'log'
-                    }
+                    },
+                    hovermode: "closest",
+                    hoverlabel: { bgcolor: "#FFF" },
                 }
             });
 
-            // example: from VizieR for Simbad name set rs at 1 arcsec, and add a calculated colume
-            var inCols = '"_RAJ2000","_DEJ2000","_tabname","_sed_freq","_sed_flux","_sed_eflux","_sed_filter",2.998*power(10,14)/("_sed_freq"*power(10,9)) as "wavelength"';
+            // example: from VizieR for Simbad name set rs at 1 arcsec, and add two calculated columns and set data precision
+            var inCols = '"_RAJ2000","_DEJ2000","_tabname","_sed_freq","_sed_flux","_sed_eflux","_sed_filter",2.998*power(10,14)/("_sed_freq"*power(10,9)) as "wavelength",("_sed_flux")*("_sed_freq"*power(10,9)) as "VFv"';
             var tblReq3 = firefly.util.table.makeFileRequest(
-                'VisirR SED: HD878', // title
+                'VizieR SED: HD878', // title
                 'http://vizier.u-strasbg.fr/viz-bin/sed?-c=HD878&-c.rs=1',  // source
                 null,  // alt_source
-                {inclCols: inCols, META_INFO:{"col.wavelength.Precision":"E4"}, "pageSize":100} // options
+                {inclCols: inCols, META_INFO:{"col.wavelength.Precision":"E6", "col.VFv.Precision":"E5" }, "pageSize":100} // options
             );
             var tblId3 = tblReq3.tbl_id;
 
@@ -169,7 +192,11 @@
                     firefly: {
                         xTTLabelSrc: 'axis',
                         yTTLabelSrc: 'axis'
-                    }
+                    },
+                    hovertemplate:
+                        "%{xaxis.title.text}: %{x:.6e}<br>" +
+                        "%{yaxis.title.text}: %{y:.5e}<br>" +
+                        "<extra></extra>"
                 }],
                 layout: {
                     title: 'Spectral Energy Distribution from VizieR',
@@ -192,14 +219,15 @@
                          showgrid: true,
                          ticks: "inside",
                          mirror: "allticks"
-                     }
+                     },
+                 hovermode: "closest"
                 }
             });
 
             // Another example: from VizieR  for coordinates set rs at 5 arcsec
 
             var tblReq4 = firefly.util.table.makeFileRequest(
-                'VisirR SED: Coordinate test', // title
+                'VizieR SED: Coordinate test', // title
                 'http://vizier.u-strasbg.fr/viz-bin/sed?-c=187.2778914224,2.0523984558&-c.rs=5',  // source
                 null,  // alt_source
                 {META_INFO:{"col._ID.Visibility": "hide"}, "pageSize":100} // options
@@ -221,7 +249,11 @@
                     firefly: {
                         xTTLabelSrc: 'axis',
                         yTTLabelSrc: 'axis'
-                    }
+                    },
+                    hovertemplate:
+                        "%{xaxis.title.text}: %{x:.5e}<br>" +
+                        "%{yaxis.title.text}: %{y:.4e}<br>" +
+                        "<extra></extra>"
                 }],
                 layout: {
                     title: 'Spectral Energy Distribution from VizieR',
@@ -244,7 +276,10 @@
                      showgrid: true,
                      ticks: "inside",
                      mirror: "allticks"
-                     }
+                     },
+                     hovermode: "closest",
+                     hoverlabel: { bgcolor: "#FFF" }
+
                 }
             });
 
