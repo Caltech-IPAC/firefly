@@ -563,6 +563,11 @@ export function getTypeLabel(col={}) {
     }
 }
 
+export function parsenullValue(cal, val) {
+    "use strict";
+
+}
+
 /**
  * returns an array of all the values for a columns
  * @param {string} tbl_id
@@ -985,8 +990,13 @@ export function tableToIpac(tableModel) {
                 .filter( (ary) => ary)
                 .map( (ary) => '|' + ary.join('|') + '|')
                 .join('\n');
-    const dataStr = data.map( (row) => ' ' + row.map( (c, idx) => padEnd(c, colWidths[idx])).join(' ') + ' ' )
-                    .join('\n');
+
+    const dataStr = data.map((row) =>
+                    ' ' +
+                        columns.map((c, idx) =>
+                                padEnd(formatValue(c, row[idx]), colWidths[idx])
+                                .replace(/[^\x1F-\x7F]/g, '\xBF')).join(' ') +              // replace non-printable chars with (191 in LATIN-1) inverted '?'.  same logic as DataType.format()
+                    ' ').join('\n');
 
     return [meta, '\\', head, dataStr].join('\n');
 }
@@ -1085,7 +1095,7 @@ export function calcColumnWidths(columns, dataAry, {maxAryWidth=Number.MAX_SAFE_
             return width;
         }
         const cname = cv.label || cv.name;
-        width = Math.max(cname.length, get(cv, 'units.length', 0),  getTypeLabel(cv).length);
+        width = Math.max(cname.length, get(cv, 'units.length', 0),  getTypeLabel(cv).length, get(cv, 'nullString.length', 0));
         dataAry.forEach((row) => {
             const v = formatValue(columns[idx], row[idx]);
             width = Math.max(width, v.length);
