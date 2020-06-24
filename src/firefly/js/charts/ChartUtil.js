@@ -504,6 +504,10 @@ function tablesourcesEqual(newTS, oldTS) {
 
 
 function updateChartData(chartId, traceNum, tablesource, action={}) {
+    // Histogram doesn't update on a table sort event.
+    if (getChartData(chartId).fireflyData[0].dataType === 'fireflyHistogram'){
+        if (action.payload && action.payload.invokedBy === 'table.sort'){return;}
+    }
     // make sure the chart is not yet removed
     if (isEmpty(getChartData(chartId))) { return; }
     const {tbl_id, resultSetID, mappings} = tablesource;
