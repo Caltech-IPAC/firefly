@@ -563,11 +563,6 @@ export function getTypeLabel(col={}) {
     }
 }
 
-export function parsenullValue(cal, val) {
-    "use strict";
-
-}
-
 /**
  * returns an array of all the values for a columns
  * @param {string} tbl_id
