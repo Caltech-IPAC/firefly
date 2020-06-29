@@ -160,7 +160,7 @@ var makePositionFieldDef= function(properties) {
             resolver = wp.getResolver();
             var s;
 
-            if (name !==null && resolver !==null) {
+            if (name && resolver) {
                 s = ' <b>' + name + '</b>' +
                     ' <i>resolved by</i> ' + resolver.desc +
                     '<div  style=\"padding-top:6px;\">' +
