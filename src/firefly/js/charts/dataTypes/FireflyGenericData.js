@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, isArray, isUndefined, uniqueId, isNull} from 'lodash';
+import {get, isArray, isUndefined, uniqueId, isNil} from 'lodash';
 import {getTblById, getColumns, getColumn, doFetchTable, stripColumnNameQuotes} from '../../tables/TableUtil.js';
 import {cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData, getTraceSymbol, hasUpperLimits, hasLowerLimits} from '../ChartsCntlr.js';
@@ -348,9 +348,9 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
             const cval = isArray(colors) ? `<br> ${cTipLabel} = ${parseFloat(colors[idx])} ` : '';
             let   ul = '';
             if (annotations[idx]) {
-                if (!isNull(changes[`fireflyData.${traceNum}.yMax`][idx])) {
+                if (!isNil(changes[`fireflyData.${traceNum}.yMax`][idx])) {
                     ul = '<br> Upper Limit ';
-                } else if (!isNull(changes[`fireflyData.${traceNum}.yMin`][idx])) {
+                } else if (!isNil(changes[`fireflyData.${traceNum}.yMin`][idx])) {
                     ul = '<br> Lower Limit ';
                 }
             }
