@@ -15,19 +15,19 @@ See Firefly docker guidelines [here](firefly-docker.md).
 
 
 ##### _UI_
-- when lock by click is on, there is an icon to copy coordinates  ([Firefly-548](https://github.com/Caltech-IPAC/firefly/pull/972)
-- Web API: _beta_- not this will change, only for evaluation  ([Firefly-572](https://github.com/Caltech-IPAC/firefly/pull/965)
-- Change tri-view Layout ([Firefly-533](https://github.com/Caltech-IPAC/firefly/pull/963)
-- Better management of Web Sockets  ([Firefly-521](https://github.com/Caltech-IPAC/firefly/pull/961)
-- Table filter comparison is not longer case insensitive  ([Firefly-502](https://github.com/Caltech-IPAC/firefly/pull/959)
+- when lock by click is on, there is an icon to copy coordinates  ([Firefly-548](https://github.com/Caltech-IPAC/firefly/pull/972))
+- Web API: _beta_- not this will change, only for evaluation  ([Firefly-572](https://github.com/Caltech-IPAC/firefly/pull/965))
+- Change tri-view Layout ([Firefly-533](https://github.com/Caltech-IPAC/firefly/pull/963))
+- Better management of Web Sockets  ([Firefly-521](https://github.com/Caltech-IPAC/firefly/pull/961))
+- Table filter comparison is not longer case insensitive  ([Firefly-502](https://github.com/Caltech-IPAC/firefly/pull/959))
 
 ##### _Infrastructure_
-- Docker image is smaller  ([Firefly-547](https://github.com/Caltech-IPAC/firefly/pull/969)
+- Docker image is smaller  ([Firefly-547](https://github.com/Caltech-IPAC/firefly/pull/969))
 
 #### _Notable Bug Fixes_
-- Fixed, API: Jupyter lab startup is broken  ([Firefly-552](https://github.com/Caltech-IPAC/firefly/pull/970)
-- Fixed: Full SDSS not loading  ([IRSA-2673](https://github.com/Caltech-IPAC/firefly/pull/968)
-- Fixed: Image overlay grouping bugs ([IRSA-2651](https://github.com/Caltech-IPAC/firefly/pull/964)
+- Fixed, API: Jupyter lab startup is broken  ([Firefly-552](https://github.com/Caltech-IPAC/firefly/pull/970))
+- Fixed: Full SDSS not loading  ([IRSA-2673](https://github.com/Caltech-IPAC/firefly/pull/968))
+- Fixed: Image overlay grouping bugs ([IRSA-2651](https://github.com/Caltech-IPAC/firefly/pull/964))
 
 
 
@@ -49,7 +49,7 @@ See Firefly docker guidelines [here](firefly-docker.md).
 
 
 ##### _UI_
-- Tables now handle array type data ([Firefly-150](https://github.com/Caltech-IPAC/firefly/pull/922)
+- Tables now handle array type data ([Firefly-150](https://github.com/Caltech-IPAC/firefly/pull/922))
 - Table Options UI Improvements ([Firefly-471](https://github.com/Caltech-IPAC/firefly/pull/928))
   - New `Advanced Filter` tab enabling SQL-like filtering
   - New `Table Meta` tab showing meta information that was once not accessible
@@ -66,19 +66,19 @@ See Firefly docker guidelines [here](firefly-docker.md).
   - PDF and TAR are recognized and downloadable.
   
 ##### _API_
-- Add fixed column feature to table API ([Firefly-442](https://github.com/Caltech-IPAC/firefly/pull/941)))
+- Add fixed column feature to table API ([Firefly-442](https://github.com/Caltech-IPAC/firefly/pull/941))
 - MOC overlay support setting the mode MOC_DEFAULT_STYLE to 'outline' or 'fill'
 - API examples are at the `firefly/test.html` endpoint
 
 
 ##### _Patches 2020.2_
 - 2020.1.2
-  -  Fixed: MOC: update the fill color for round-up tiles [Firefly-526](https://github.com/Caltech-IPAC/firefly/pull/958)
-  -  Fixed: Color picker now updates when selection is changed [Firefly-529](https://github.com/Caltech-IPAC/firefly/pull/957)
+  -  Fixed: MOC: update the fill color for round-up tiles ([Firefly-526](https://github.com/Caltech-IPAC/firefly/pull/958))
+  -  Fixed: Color picker now updates when selection is changed ([Firefly-529](https://github.com/Caltech-IPAC/firefly/pull/957))
 
 ##### _Patches 2020.1_
 - 2020.1.1
-  -  fix fixed column cell transparency issue [Firefly-523](https://github.com/Caltech-IPAC/firefly/pull/955)
+  -  fix fixed column cell transparency issue ([Firefly-523](https://github.com/Caltech-IPAC/firefly/pull/955))
 
 ##### _Pull Request in this release_
   
@@ -124,7 +124,7 @@ This release is focused on bug fixes and stability.
 
 ##### _Patches 2019.3_
 - 2019.3.2
-  - Logging error improved [Firefly-434](https://github.com/Caltech-IPAC/firefly/pull/909)
+  - Logging error improved ([Firefly-434](https://github.com/Caltech-IPAC/firefly/pull/909))
   - fix pulldown for SOFIA footprint ([IRSA-3271](https://github.com/Caltech-IPAC/firefly/commit/1ebdd89e53c6efa293bc9cbfad3a689aabcfd5db))
   - Header popup panel was not updating as the FITS image changed ([IRSA-3272](https://github.com/Caltech-IPAC/firefly/pull/912))
   - Put back cube images ([Firefly-443](https://github.com/Caltech-IPAC/firefly/pull/913))
