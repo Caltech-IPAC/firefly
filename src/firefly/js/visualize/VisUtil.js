@@ -10,12 +10,11 @@ import pointInPolygon from 'point-in-polygon';
 import CoordinateSys from './CoordSys.js';
 import {CCUtil, CysConverter} from './CsysConverter.js';
 import DrawOp from './draw/DrawOp.js';
-import {primePlot} from './PlotViewUtil.js';
 import {doConv} from '../astro/conv/CoordConv.js';
-import { makeDevicePt, makeImagePt, makeImageWorkSpacePt, makeScreenPt, makeWorldPt, pointEquals } from './Point.js';
+import {makeDevicePt, makeImagePt, makeImageWorkSpacePt, makeScreenPt, makeWorldPt, pointEquals} from './Point.js';
 import {getPixScaleDeg} from './WebPlot.js';
-import {SelectedShape} from '../drawingLayers/SelectArea.js';
 import {memorizeUsingMap} from '../util/WebUtil';
+import {SelectedShape} from '../drawingLayers/SelectedShape';
 
 
 /** Constant for conversion Degrees => Radians */
@@ -52,9 +51,8 @@ export const computeScreenDistance= function (x1, y1, x2, y2) {
  * @param p2 WorldPt
  * @return {number}
  */
-export function computeDistance(p1, p2) {
-    return computeDistanceAngularDistance(p1.x, p1.y, p2.x, p2.y);
-}
+export const computeDistance= (p1, p2) => computeDistanceAngularDistance(p1.x, p1.y, p2.x, p2.y);
+
 
 const computeDistanceAngularDistance= memorizeUsingMap( (lon1,lat1,lon2,lat2) => {
     const lon1Radius = lon1 * DtoR;
@@ -331,6 +329,7 @@ export function getTranslateAndRotatePosition(referencePosition, rotatedReferenc
 
 /**
  * Compute new position given a position and a distance and position angle
+ * UNUSED - but keep around
  *
  * @param {number} ra   the equatorial RA in degrees of the first object
  * @param {number} dec  the equatorial DEC in degrees of the first object
@@ -377,29 +376,6 @@ export const getRotationAngle= (plot) => {
     return 0;
 };
 
-
-/**
- * Return true if the plot in both PlotViews are rotated the same
- * @param {PlotView} pv1
- * @param {PlotView} pv2
- * @return {boolean}
- */
-export function isRotationMatching(pv1, pv2) {
-    const p1= primePlot(pv1);
-    const p2= primePlot(pv2);
-
-    if (!p1 || !p2) return false;
-    if (isNorthCountingRotation(pv1) && isNorthCountingRotation(pv2)) return true;
-    const r1= getRotationAngle(p1) + pv1.rotation;
-    const r2= getRotationAngle(p2) + pv2.rotation;
-    return Math.abs((r1 % 360) - (r2 % 360))  < .9;
-}
-
-function isNorthCountingRotation(pv) {
-    const plot= primePlot(pv);
-    if (!plot) return false;
-    return (pv.plotViewCtx.rotateNorthLock || (isPlotNorth(plot) && !pv.rotation) );
-}
 
 
 /**
@@ -464,34 +440,8 @@ export function isEastLeftOfNorth(plot) {
 
     const angleN= getAngleInDeg(mx,my,impNorth.x,impNorth.y);
     const angleE= getAngleInDeg(mx,my,impE.x,impE.y);
-    
+
     return ((angleE-angleN) + 360)%360 < 180;
-}
-
-/**
- * return an angle that will rotate the pv to match the rotation of masterPv
- * @param masterPv
- * @param pv
- * @return {number}
- */
-export function getMatchingRotationAngle(masterPv, pv) {
-    const plot= primePlot(pv);
-    const masterPlot= primePlot(masterPv);
-    if (!plot || !masterPlot) return 0;
-    const masterRot= masterPv.rotation * (masterPv.flipY ? -1 : 1);
-    const rot=getRotationAngle(plot);
-    let targetRotation;
-    if (isEastLeftOfNorth(masterPlot)) {
-        targetRotation= ((getRotationAngle(masterPlot)+  masterRot)  - rot) * (masterPv.flipY ? 1 : -1);
-    }
-    else {
-        targetRotation= ((getRotationAngle(masterPlot)+  (360-masterRot))  - rot) * (masterPv.flipY ? 1 : -1);
-
-    }
-    if (!isCsysDirMatching(plot,masterPlot)) targetRotation= 360-targetRotation;
-    if (targetRotation<0) targetRotation+= 360;
-    if (targetRotation>359) targetRotation%= 360;
-    return targetRotation;
 }
 
 /**
@@ -500,9 +450,8 @@ export function getMatchingRotationAngle(masterPv, pv) {
  * @param {WebPlot} p2
  * @return {boolean}
  */
-export function isCsysDirMatching(p1,p2) {
-    return isEastLeftOfNorth(p1)===isEastLeftOfNorth(p2);
-}
+export const isCsysDirMatching= (p1,p2) => isEastLeftOfNorth(p1)===isEastLeftOfNorth(p2);
+
 
 
 function getAngleInDeg(cx,cy,x,y) {
@@ -637,7 +586,7 @@ const getArrowCoords= function(x1, y1, x2, y2) {
 /**
  * Get the bounding of of the array of points
  * @param {Array.<{x:number, y:number}>} ptAry
- * @return {{x, y, w: number, h: number}}
+ * @return {{x: number, y: number, w: number, h: number}}
  */
 export function getBoundingBox(ptAry) {
     const sortX= ptAry.map( (pt) => pt.x).sort( (v1,v2) => v1-v2);
@@ -651,11 +600,10 @@ export function getBoundingBox(ptAry) {
 
 
 /**
- * @param {PlotView} pv
- * @return {{x, y, w: number, h: number}|undefined}
+ * @param {WebPlot} plot
+ * @return {{x: number, y: number, w: number, h: number}|undefined}
  */
-export function computeBoundingBoxInDeviceCoordsForPlot(pv) {
-    const plot= primePlot(pv);
+export function computeBoundingBoxInDeviceCoordsForPlot(plot) {
     if (!plot) return;
     const {dataWidth:w,dataHeight:h}= plot;
     const cc= CysConverter.make(plot);
@@ -853,20 +801,19 @@ export function convertAngle(from, to, angle) {
 /**
  * find a point on the plot that is top and left but is still in view and on the image.
  * If the image is off the screen the return undefined.
- * @param {PlotView} pv
+ * @param {WebPlot} plot
+ * @param {object} viewDim
  * @param {number} xOff
  * @param {number} yOff
  * @return {DevicePt} the found point
  */
-export function getTopmostVisiblePoint(pv,xOff, yOff) {
-    const plot= primePlot(pv);
+export function getTopmostVisiblePoint(plot,viewDim,xOff, yOff) {
     const cc= CysConverter.make(plot);
     const ipt= cc.getImageCoords(makeDevicePt(xOff,yOff));
-    if (isImageCoveringArea(pv,ipt,2,2)) return ipt;
+    if (isImageCoveringArea(plot,ipt,2,2)) return ipt;
 
 
     const {dataWidth,dataHeight}= plot;
-    const {viewDim} = pv;
 
     const lineSegs= [
        {pt1: cc.getDeviceCoords(makeImagePt(0,0)), pt2: cc.getDeviceCoords(makeImagePt(dataWidth,0))},
@@ -912,15 +859,13 @@ export function getTopmostVisiblePoint(pv,xOff, yOff) {
 /**
  * return true if the image is completely covering the area passed. The width and height are in Device coordinate
  * system.
- * @param {PlotView} pv
+ * @param {WebPlot} plot
  * @param {Point} pt
  * @param {number} width in device coordinates
  * @param {number} height in device coordinates
  * @return {boolean} true if covering
  */
-export function isImageCoveringArea(pv,pt, width,height) {
-
-    const plot= primePlot(pv);
+export function isImageCoveringArea(plot,pt, width,height) {
     const cc= CysConverter.make(plot);
     pt= cc.getDeviceCoords(pt);
     const testPts= [
@@ -1080,9 +1025,17 @@ export function distanceToCircle(radius, pts, cc, pt) {
     return dist;
 }
 
+
+export function isFullyOnScreen(plot,viewDim) {
+    const box = computeBoundingBoxInDeviceCoordsForPlot(plot);
+    return Boolean(box) && containsRec(0, 0, viewDim.width + 3, viewDim.height + 3, box.x, box.y, box.w, box.h);
+}
+
+
 export default {
     computeScreenDistance, computeDistance, computeSimpleDistance,convert,
-    computeCentralPointAndRadius, getPositionAngle, getNewPosition, getRotationAngle,getTranslateAndRotatePosition,
+    computeCentralPointAndRadius, getPositionAngle, getRotationAngle,getTranslateAndRotatePosition,
     intersects, contains, containsRec,containsCircle, getArrowCoords, calculatePosition,
     convertAngle, distToLine, distanceToPolygon, distanceToCircle, computeSimpleSlopeAngle
 };
+

@@ -28,7 +28,7 @@ import {getTblById,getCellValue} from '../tables/TableUtil.js';
 import {getUIComponent, TableSelectOptions} from './CatalogUI.jsx';
 import {FilterInfo} from '../tables/FilterInfo.js';
 import DrawUtil from '../visualize/draw/DrawUtil.js';
-import SelectArea, {SelectedShape} from './SelectArea.js';
+import SelectArea from './SelectArea.js';
 import {detachSelectArea} from '../visualize/ui/SelectAreaDropDownView.jsx';
 import {CysConverter} from '../visualize/CsysConverter.js';
 import {parseObsCoreRegion} from '../util/ObsCoreSRegionParser.js';
@@ -36,6 +36,7 @@ import {darker} from '../util/Color';
 import {isDefined} from '../util/WebUtil';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj';
 import {getNumFilters} from '../tables/FilterInfo';
+import {SelectedShape} from './SelectedShape';
 
 
 const TYPE_ID= 'CATALOG_TYPE';

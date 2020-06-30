@@ -2,11 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, pickBy} from 'lodash';
-import {parseUrl} from '../../util/WebUtil.js';
+import {pickBy} from 'lodash';
+import {parseUrl, getRootURL} from '../../util/WebUtil.js';
 import {Logger} from '../../util/Logger.js';
 import {WSCH} from '../History.js';
-import {getRootURL} from '../../util/BrowserUtil.js';
 import {getAppOptions} from '../AppDataCntlr.js';
 import {showLostConnection, hideLostConnection} from '../../ui/LostConnection.jsx';
 

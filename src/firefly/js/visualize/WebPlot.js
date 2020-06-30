@@ -1,22 +1,17 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {isEmpty,isObject, isArray} from 'lodash';
+import {isArray, isEmpty, isObject} from 'lodash';
 import {RequestType} from './RequestType.js';
 import CoordinateSys from './CoordSys.js';
-import {makeProjection, makeProjectionNew} from './projection/Projection.js';
+import {makeProjection, makeProjectionNew, UNRECOGNIZED, UNSPECIFIED} from './projection/Projection.js';
 import PlotState from './PlotState.js';
-import BandState from './BandState.js';
-import {makeWorldPt, makeScreenPt} from './Point.js';
+import {makeScreenPt, makeWorldPt} from './Point.js';
 import {changeProjectionCenter} from './HiPSUtil.js';
 import {CysConverter} from './CsysConverter.js';
 import {makeImagePt} from './Point';
-import {convert} from './VisUtil.js';
-import {parseSpacialHeaderInfo, makeDirectFileAccessData} from './projection/ProjectionHeaderParser.js';
-import {UNSPECIFIED, UNRECOGNIZED } from './projection/Projection.js';
-import {getImageCubeIdx} from './PlotViewUtil.js';
+import {makeDirectFileAccessData, parseSpacialHeaderInfo} from './projection/ProjectionHeaderParser.js';
 import {parseWavelengthHeaderInfo} from './projection/WavelengthHeaderParser.js';
-import {geAtlProjectionIDs} from './FitsHeaderUtil.js';
 import {TAB} from './projection/Wavelength';
 import {memorizeLastCall} from '../util/WebUtil';
 import {makePlotStateShimForHiPS} from './PlotState';
@@ -241,9 +236,17 @@ function makePlotTemplate(plotId, plotType, asOverlay, imageCoordSys) {
     };
 }
 
+const alphabetAry= 'ABCDEFGHIJKLMNOPQRSTUVWZYZ'.split('');
+
+/**
+ * return an array of all the alt projections in this file.
+ * @param header
+ * @return {string[]}
+ */
+const getAtlProjectionIDs= (header) => alphabetAry.filter( (c) => header['CTYPE1'+c]);
 
 function processAllSpacialAltWcs(header) {
-    const availableAry= geAtlProjectionIDs(header);
+    const availableAry= getAtlProjectionIDs(header);
     if (isEmpty(availableAry)) return {};
 
     return availableAry.reduce( (obj, altChar) => {
@@ -263,7 +266,7 @@ function processAllSpacialAltWcs(header) {
 }
 
 function processAllWavelengthAltWcs(header,wlTable) {
-    const availableAry= geAtlProjectionIDs(header);
+    const availableAry= getAtlProjectionIDs(header);
     if (isEmpty(availableAry)) return {};
 
     return availableAry.reduce( (obj, altChar) => {
@@ -319,7 +322,7 @@ export const WebPlot= {
         // also- we need to keep a copy in plotState for backward compatibility and in the plot to put in back in the plotState
         // when a new one is generated
         for(let i= 0; (i<3); i++) {
-            if (headerAry[i]) plotState.get(i).directFileAccessData= makeDirectFileAccessData(headerAry[i], cubeCtx?cubeCtx.cubePlane:-1);
+            if (headerAry[i]) plotState.get(i).directFileAccessData= makeDirectFileAccessData(headerAry[i], cubeCtx?.cubePlane ?? -1);
         }
         const directFileAccessDataAry= plotState.bandStateAry.map( (bs) => bs.directFileAccessData);
 
@@ -351,11 +354,11 @@ export const WebPlot= {
             screenSize: {width:dataWidth*zf, height:dataHeight*zf},
             zoomFactor: zf,
             attributes,
-            directFileAccessDataAry
+            directFileAccessDataAry,
+            cubeIdx: cubeCtx?.cubePlane ?? -1,
             //=== End Mutable =====================
         };
         plot= {...plot, ...imagePlot};
-        plot.cubeIdx= getImageCubeIdx(plot);
         if (relatedData) {
             plot.relatedData= relatedData.map( (d) => ({...d,relatedDataId: plotId+relatedIdRoot+d.dataKey}));
         }
@@ -451,7 +454,7 @@ export const WebPlot= {
  * @param lat
  * @return {Projection}
  */
-function makeHiPSProjection(coordinateSys, lon=0, lat=0) {
+export function makeHiPSProjection(coordinateSys, lon=0, lat=0) {
     const header= {
         cdelt1: 180/HIPS_DATA_WIDTH,
         cdelt2: 180/HIPS_DATA_HEIGHT,
@@ -496,19 +499,6 @@ export function replaceHiPSProjectionUsingProperties(plot, hipsProperties, wp= m
     const projection= makeHiPSProjection(makeHiPSCoordSys(hipsProperties), wp.x, wp.y);
     const {coordSys}= projection;
     return { ...plot, imageCoordSys: coordSys, dataCoordSys: coordSys, projection, allWCSMap: {'':projection} };
-}
-
-/**
- * replace the hips projection if the coordinate system changes
- * @param {WebPlot} plot
- * @param coordinateSys
- * @param {WorldPt} wp
- */
-export function replaceHiPSProjection(plot, coordinateSys, wp= makeWorldPt(0,0)) {
-    const newWp= convert(wp, coordinateSys);
-    const projection= makeHiPSProjection(coordinateSys, newWp.x, newWp.y);
-    //note- the dataCoordSys stays the same
-    return { ...plot, imageCoordSys: projection.coordSys, projection, allWCSMap: {'':projection} };
 }
 
 

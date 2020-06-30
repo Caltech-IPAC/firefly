@@ -12,7 +12,6 @@ import Enum from 'enum';
 
 import {WSCH} from '../core/History.js';
 import {debug} from './ApiUtil.js';
-import {getRootURL}  from '../util/BrowserUtil.js';
 import {dispatchRemoteAction}  from '../core/JsonUtils.js';
 import {dispatchPlotImage, dispatchPlotHiPS}  from '../visualize/ImagePlotCntlr.js';
 import {RequestType}  from '../visualize/RequestType.js';
@@ -27,10 +26,10 @@ import {getWsChannel, getWsConnId} from '../core/AppDataCntlr.js';
 import {getConnectionCount, WS_CONN_UPDATED, GRAB_WINDOW_FOCUS,
     NOTIFY_REMOTE_APP_READY, makeViewerChannel} from '../core/AppDataCntlr.js';
 import {dispatchAddCell, dispatchEnableSpecialViewer, LO_VIEW} from '../core/LayoutCntlr.js';
-import {modifyURLToFull} from '../util/BrowserUtil.js';
 import {DEFAULT_FITS_VIEWER_ID, DEFAULT_PLOT2D_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga';
+import {getRootURL, modifyURLToFull} from '../util/WebUtil';
 
 const logger = Logger('ApiViewer');
 

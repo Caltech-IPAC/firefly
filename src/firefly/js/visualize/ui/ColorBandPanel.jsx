@@ -4,15 +4,14 @@
 
 import React, {memo, useState, useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {debounce, get, isUndefined} from 'lodash';
+import {debounce, get} from 'lodash';
 import {sprintf} from '../../externalSource/sprintf';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
 import {RangeSlider} from '../../ui/RangeSlider.jsx';
 import {callGetColorHistogram} from '../../rpc/PlotServicesJson.js';
-import {encodeServerUrl} from '../../util/WebUtil.js';
-import {getRootURL} from '../../util/BrowserUtil.js';
+import {encodeServerUrl, getRootURL} from '../../util/WebUtil.js';
 import {
     PERCENTAGE,  ABSOLUTE,SIGMA, STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL,
     STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from '../RangeValues.js';

@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {memo, Component, PureComponent} from 'react';
+import React, {memo, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {xor,isNil, isEmpty,get, isString, isFunction, throttle, isNumber, isArray} from 'lodash';
 import {flux} from '../Firefly.js';
@@ -10,7 +10,6 @@ import {ImageRender} from './iv/ImageRender.jsx';
 import {EventLayer} from './iv/EventLayer.jsx';
 import {ImageViewerStatus} from './iv/ImageViewerStatus.jsx';
 import {makeScreenPt, makeDevicePt} from './Point.js';
-import {plotMover} from './PlotTransformUtils.js';
 import {DrawerComponent}  from './draw/DrawerComponent.jsx';
 import {CysConverter}  from './CsysConverter.js';
 import {UserZoomTypes}  from './ZoomUtil.js';
@@ -32,6 +31,7 @@ import {
 import {fireMouseCtxChange, makeMouseStatePayload, MouseState} from './VisMouseSync.js';
 import {isHiPS, isImage} from './WebPlot.js';
 import Color from '../util/Color.js';
+import {plotMove} from './PlotMove';
 
 const DEFAULT_CURSOR= 'crosshair';
 
@@ -184,7 +184,7 @@ export class ImageViewerLayout extends PureComponent {
              case DOWN :
                  dispatchChangeActivePlotView(plotId);
                  const {scrollX, scrollY}= plotView;
-                 this.plotDrag= plotMover(screenX,screenY,makeScreenPt(scrollX,scrollY), mouseDownScreenPt, plotView);
+                 this.plotDrag= plotMove(screenX,screenY,makeScreenPt(scrollX,scrollY), mouseDownScreenPt, plotView);
                  break;
              case DRAG :
                  if (this.plotDrag) {

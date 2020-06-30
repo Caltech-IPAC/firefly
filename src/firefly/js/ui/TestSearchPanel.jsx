@@ -4,18 +4,18 @@
 
 import React from 'react';
 import {FormPanel} from './FormPanel.jsx';
-import {FieldGroup} from '../ui/FieldGroup.jsx';
-import {ValidationField} from '../ui/ValidationField.jsx';
-import {ListBoxInputField} from '../ui/ListBoxInputField.jsx';
+import {FieldGroup} from './FieldGroup';
+import {ValidationField} from './ValidationField';
+import {ListBoxInputField} from './ListBoxInputField';
 import Validate from '../util/Validate.js';
-import {download} from '../util/WebUtil.js';
-import {getRootURL} from '../util/BrowserUtil.js';
-import {FileUpload} from '../ui/FileUpload.jsx';
+import {FileUpload} from './FileUpload';
 
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 
 import {dispatchTableSearch} from '../tables/TablesCntlr.js';
 import {makeFileRequest} from '../tables/TableRequestUtil.js';
+import {download} from '../util/fetch';
+import {getRootURL} from '../util/WebUtil';
 
 
 export const TestSearchPanel = (props) => {

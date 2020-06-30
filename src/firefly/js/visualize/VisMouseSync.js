@@ -10,7 +10,6 @@ import {primePlot} from './PlotViewUtil.js';
 import {visRoot} from './ImagePlotCntlr.js';
 import {CysConverter} from './CsysConverter.js';
 import {isHiPS} from './WebPlot.js';
-import {getHealpixCornerTool} from './HiPSUtil.js';
 import {getHealpixPixel} from './HiPSUtil';
 import {STANDARD_READOUT} from './MouseReadoutCntlr';
 

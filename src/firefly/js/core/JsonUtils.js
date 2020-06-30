@@ -3,12 +3,11 @@
  */
 
 import {has} from 'lodash';
-import {getRootURL} from '../util/BrowserUtil.js';
-import {fetchUrl, toBoolean} from '../util/WebUtil.js';
+import {toBoolean} from '../util/WebUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {logger} from '../util/Logger.js';
-
-export const DEF_BASE_URL = getRootURL() + 'sticky/CmdSrv';
+import {fetchUrl} from '../util/fetch';
+import {getCmdSrvURL} from '../util/WebUtil';
 
 /**
  *
@@ -58,7 +57,7 @@ function jsonRequest(baseUrl, cmd, paramList, doPost) {
  * @return {Promise} a promise with the results
  */
 export function doJsonRequest(cmd, paramList, doPost=true) {
-    return jsonRequest(DEF_BASE_URL, cmd, paramList, doPost);
+    return jsonRequest(getCmdSrvURL(), cmd, paramList, doPost);
 }
 
 /**

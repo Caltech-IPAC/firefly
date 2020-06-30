@@ -9,13 +9,13 @@ import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import {dispatchShowDialog, dispatchHideDialog} from '../core/ComponentCntlr.js';
 import {createDownloadScript} from '../rpc/SearchServicesJson.js';
-import {download} from '../util/WebUtil.js';
 import {FormPanel} from './FormPanel.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {SCRIPT_ATTRIB} from '../core/background/BackgroundUtil.js';
+import {download} from '../util/fetch';
 
 
 const SCRIPT_DOWNLOAD_ID = 'Download Retrieval Script';

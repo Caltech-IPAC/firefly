@@ -4,12 +4,12 @@
 
 import {get, map, isUndefined} from 'lodash';
 import {flux} from '../Firefly.js';
-import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
+import {dispatchAddActionWatcher} from './MasterSaga';
 import {appDataReducer, menuReducer, alertsReducer} from './AppDataReducers.js';
 import Point, {isValidPoint} from '../visualize/Point.js';
 import {getModuleName, getProp} from '../util/WebUtil.js';
 import {dispatchRemoteAction} from './JsonUtils.js';
-import {getWsConn} from '../core/messaging/WebSocketClient.js';
+import {getWsConn} from './messaging/WebSocketClient';
 
 export const APP_DATA_PATH = 'app_data';
 export const COMMAND = 'COMMAND';

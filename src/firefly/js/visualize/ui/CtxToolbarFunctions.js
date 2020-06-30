@@ -37,7 +37,6 @@ import LSSTFootprint, {
     unselectFootprint
 } from '../../drawingLayers/ImageLineBasedFootprint';
 import {callGetAreaStatistics} from '../../rpc/PlotServicesJson';
-import {SelectedShape} from '../../drawingLayers/SelectArea';
 import {showImageAreaStatsPopup} from './ImageStatsPopup';
 import {logError} from '../../util/WebUtil';
 import CoordUtil from '../CoordUtil';
@@ -51,6 +50,7 @@ import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dlRoot} from '../Dra
 import {UserZoomTypes} from '../ZoomUtil';
 import {isHiPS, isImage} from '../WebPlot';
 import {findScrollPtToCenterImagePt} from '../reducer/PlotView';
+import {SelectedShape} from '../../drawingLayers/SelectedShape';
 
 
 

@@ -83,7 +83,7 @@ function makeCompass(plotId){
     // const dist = 60;
     const px = 30;
 
-    let sptStart= cc.getScreenCoords(getTopmostVisiblePoint(pv, 55, 75));
+    let sptStart= cc.getScreenCoords(getTopmostVisiblePoint(plot,pv.viewDim, 55, 75));
     if (!sptStart) return null;
 
 

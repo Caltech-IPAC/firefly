@@ -4,6 +4,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import {once} from 'lodash';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {ToolbarButton,
         DropDownVerticalSeparator} from '../../ui/ToolbarButton.jsx';
@@ -12,7 +13,7 @@ import {dispatchCreateDrawLayer,
         getDlAry,
         dispatchAttachLayerToPlot,
         dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
-import SelectArea, {SelectedShape} from '../../drawingLayers/SelectArea.js';
+import SelectArea from '../../drawingLayers/SelectArea.js';
 import ImageOutline from '../../drawingLayers/ImageOutline.js';
 
 import SELECT_RECT from 'html/images/icons-2014/Marquee.png';
@@ -20,10 +21,11 @@ import SELECT_RECT_ON from 'html/images/icons-2014/Marquee-ON.png';
 import SELECT_CIRCLE from 'html/images/icons-2014/28x28_Circle.png';
 import SELECT_CIRCLE_ON from 'html/images/icons-2014/28x28_Circle-ON.png';
 import SELECT_NONE from 'html/images/icons-2014/28x28_Rect_DD.png';
+import {SelectedShape} from '../../drawingLayers/SelectedShape';
 
 const NONSELECT = 'nonselect';
 
-export const selectAreaInfo = {
+const selectAreaInfo = once(() => ({
     [NONSELECT] : {
         typeId: '',
         iconId: SELECT_NONE,
@@ -47,14 +49,14 @@ export const selectAreaInfo = {
         tip: 'select elliptical area',
         params: {selectedShape: SelectedShape.circle.key, handleColor: 'white'}
     }
-};
+}));
 
 export function getSelectedAreaIcon(isSelected = true) {
 
     if (!isSelected) return SELECT_NONE;
     const drawLayer = getDrawLayerByType(getDlAry(), SelectArea.TYPE_ID);
     return  (drawLayer && drawLayer.selectedShape) ?
-             selectAreaInfo[drawLayer.selectedShape].iconId : SELECT_RECT;
+             selectAreaInfo()[drawLayer.selectedShape].iconId : SELECT_RECT;
 
 }
 
@@ -66,9 +68,9 @@ function updateSelect(pv, value, allPlots=true) {
 
 
         if (value !== NONSELECT) {
-            detachSelectAreaRelatedLayers( pv, allPlots, selectAreaInfo[value].typeId);
+            detachSelectAreaRelatedLayers( pv, allPlots, selectAreaInfo()[value].typeId);
             // create a new one
-            const dl = dispatchCreateDrawLayer(selectAreaInfo[value].typeId, selectAreaInfo[value].params);
+            const dl = dispatchCreateDrawLayer(selectAreaInfo()[value].typeId, selectAreaInfo()[value].params);
 
             // attach plot to the new one
             if (!isDrawLayerAttached(dl, pv.plotId)) {
@@ -123,11 +125,11 @@ export function SelectAreaDropDownView({plotView:pv, allPlots}) {
             const key = s.key;
             prev.push((
                 <ToolbarButton key={key}
-                               text={selectAreaInfo[key].label}
+                               text={selectAreaInfo()[key].label}
                                enabled={enabled}
                                horizontal={false}
-                               icon={selectAreaInfo[key].iconDropDown }
-                               tip={selectAreaInfo[key].tip}
+                               icon={selectAreaInfo()[key].iconDropDown }
+                               tip={selectAreaInfo()[key].tip}
                                onClick={updateSelect(pv, key, allPlots)}/>
             ));
             prev.push(<DropDownVerticalSeparator key={sep++}/>);

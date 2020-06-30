@@ -19,11 +19,11 @@ import ImagePlotCntlr, {
     WcsMatchType
 } from '../ImagePlotCntlr.js';
 import {applyToOnePvOrAll, getPlotViewById, primePlot, getCorners, getDrawLayerByType, getPlotViewAry,
-               findCurrentCenterPoint, getCenterOfProjection, hasWCSProjection} from '../PlotViewUtil.js';
+    getMatchingRotationAngle, isRotationMatching, findCurrentCenterPoint,
+    getCenterOfProjection, hasWCSProjection} from '../PlotViewUtil.js';
 import {isHiPS, isImage} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute';
-import {getRotationAngle, isEastLeftOfNorth, isRotationMatching,
-    isPlotRotatedNorth, getMatchingRotationAngle} from '../VisUtil.js';
+import {getRotationAngle, isEastLeftOfNorth, isPlotRotatedNorth} from '../VisUtil.js';
 import {FullType, getArcSecPerPix, getEstimatedFullZoomFactor, getZoomLevelForScale, UserZoomTypes} from '../ZoomUtil.js';
 import {RotateType} from '../PlotState.js';
 import {CCUtil} from '../CsysConverter.js';
@@ -33,7 +33,6 @@ import CoordinateSys from '../CoordSys';
 import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dlRoot} from '../DrawLayerCntlr';
 import ImageOutline from '../../drawingLayers/ImageOutline';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga';
-import {getConnectedPlotsIds} from '../PlotViewUtil';
 
 
 

@@ -1,29 +1,27 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {isEmpty, get} from 'lodash';
+import {get, isEmpty} from 'lodash';
+import Enum from 'enum';
 import DrawLayerCntlr, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
-import ImagePlotCntlr, {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
-import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
-import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
+import {dispatchAttributeChange, visRoot} from '../visualize/ImagePlotCntlr.js';
+import {makeDrawingDef, Style} from '../visualize/draw/DrawingDef.js';
+import DrawLayer, {ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import CsysConverter from '../visualize/CsysConverter.js';
-import Point, {makeScreenPt, makeDevicePt} from '../visualize/Point.js';
+import Point, {makeDevicePt, makeScreenPt} from '../visualize/Point.js';
 import BrowserInfo from '../util/BrowserInfo.js';
-import {getBoundingBox, computeScreenDistance} from '../visualize/VisUtil.js';
+import {computeScreenDistance, getBoundingBox} from '../visualize/VisUtil.js';
 import SelectBox from '../visualize/draw/SelectBox.js';
 import FootPrintObj from '../visualize/draw/FootprintObj.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
-import {getPlotViewById, primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
-import {Style} from '../visualize/draw/DrawingDef.js';
-//import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
+import {getDrawLayerById, getPlotViewById, primePlot} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
+import {SelectedShape} from './SelectedShape';
 
-import Enum from 'enum';
 
 const Corner = new Enum([ 'NE','NW','SE','SW' ]);
-export const SelectedShape = new Enum(['rect', 'circle']);
 
 
 const selHelpText= 'Click and drag to select an area.';

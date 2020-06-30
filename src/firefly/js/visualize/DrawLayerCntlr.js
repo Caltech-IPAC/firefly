@@ -4,28 +4,38 @@
 
 import {flux} from '../Firefly.js';
 import Enum from 'enum';
-import {getPlotViewIdListInOverlayGroup, getPlotViewById, getDrawLayerById,
-          getConnectedPlotsIds, getAllPlotViewIdByOverlayLock} from './PlotViewUtil.js';
-import ImagePlotCntlr, {visRoot}  from './ImagePlotCntlr.js';
+import {
+    getAllPlotViewIdByOverlayLock,
+    getConnectedPlotsIds,
+    getDrawLayerById,
+    getPlotViewById,
+    getPlotViewIdListInOverlayGroup
+} from './PlotViewUtil.js';
+import ImagePlotCntlr, {visRoot} from './ImagePlotCntlr.js';
 import DrawLayerReducer from './reducer/DrawLayerReducer.js';
-import {flatten, uniqBy, without,union,isEmpty} from 'lodash';
+import {flatten, isEmpty, union, uniqBy, without} from 'lodash';
 import {clone, toBoolean} from '../util/WebUtil.js';
 
 import {selectAreaEndActionCreator} from '../drawingLayers/SelectArea.js';
 import {distanceToolEndActionCreator} from '../drawingLayers/DistanceTool.js';
-import {markerToolStartActionCreator,
-        markerToolMoveActionCreator,
-        markerToolEndActionCreator,
-        markerToolCreateLayerActionCreator} from '../drawingLayers/MarkerTool.js';
+import {
+    markerToolCreateLayerActionCreator,
+    markerToolEndActionCreator,
+    markerToolMoveActionCreator,
+    markerToolStartActionCreator
+} from '../drawingLayers/MarkerTool.js';
 
-import {regionCreateLayerActionCreator,
-        regionDeleteLayerActionCreator,
-        regionUpdateEntryActionCreator} from './region/RegionTask.js';
+import {
+    regionCreateLayerActionCreator,
+    regionDeleteLayerActionCreator,
+    regionUpdateEntryActionCreator
+} from './region/RegionTask.js';
 
-import {footprintCreateLayerActionCreator,
-        footprintStartActionCreator,
-        footprintMoveActionCreator,
-        footprintEndActionCreator
+import {
+    footprintCreateLayerActionCreator,
+    footprintEndActionCreator,
+    footprintMoveActionCreator,
+    footprintStartActionCreator
 } from '../drawingLayers/FootprintTool.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 import {imageLineBasedfootprintActionCreator} from './task/LSSTFootprintTask.js';
@@ -182,15 +192,17 @@ export default {
     MARKER_START, MARKER_MOVE, MARKER_END, MARKER_CREATE,
     FOOTPRINT_CREATE, FOOTPRINT_START, FOOTPRINT_END, FOOTPRINT_MOVE,
     IMAGELINEBASEDFP_CREATE,
-    makeReducer,
     dispatchCreateDrawLayer,
-    dispatchCreateRegionLayer, dispatchDeleteRegionLayer,
-    dispatchAddRegionEntry, dispatchRemoveRegionEntry,
     dispatchCreateImageLineBasedFootprintLayer
 };
 
 
 
+export function deleteAllDrawLayers() {
+    (getDlAry() || [])
+        .filter((l) => l.drawLayerId)
+        .forEach((id) => dispatchDestroyDrawLayer(id));
+}
 
 
 /**

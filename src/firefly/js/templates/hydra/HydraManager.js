@@ -11,9 +11,9 @@ import {visRoot, dispatchDeletePlotView} from '../../visualize/ImagePlotCntlr.js
 import {removeTablesFromGroup, getAllTableGroupIds, smartMerge} from '../../tables/TableUtil.js';
 import {getSearchInfo} from '../../core/AppDataCntlr.js';
 import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
-import {deleteAllDrawLayers} from '../../visualize/PlotViewUtil.js';
 import {CHART_ADD} from '../../charts/ChartsCntlr.js';
 import {REPLACE_VIEWER_ITEMS} from '../../visualize/MultiViewCntlr.js';
+import {deleteAllDrawLayers} from '../../visualize/DrawLayerCntlr';
 
 /**
  * Configurable part of this template

@@ -51,14 +51,6 @@ export const HdrConst= {
 };
 
 
-const alphabetAry= 'ABCDEFGHIJKLMNOPQRSTUVWZYZ'.split('');
-
-/**
- * return an array of all the alt projections in this file.
- * @param header
- * @return {string[]}
- */
-export const geAtlProjectionIDs= (header) => alphabetAry.filter( (c) => header[HdrConst.CTYPE1+c]);
 
 
 export function makeHeaderParse(header, altWcs='') {

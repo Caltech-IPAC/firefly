@@ -5,8 +5,7 @@
 import React, {memo, useEffect, useRef, useState} from 'react';
 import PropTypes from 'prop-types';
 import {isPlotNorth,getCenterPtOfPlot} from '../VisUtil.js';
-import {encodeServerUrl} from '../../util/WebUtil.js';
-import {getRootURL} from '../../util/BrowserUtil.js';
+import {encodeServerUrl, getRootURL} from '../../util/WebUtil.js';
 import {DrawerComponent} from '../draw/DrawerComponent.jsx';
 import {makeScreenPt,makeWorldPt, makeDevicePt} from '../Point.js';
 import {CysConverter} from '../CsysConverter.js';

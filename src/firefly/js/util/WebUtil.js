@@ -1,16 +1,10 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import { forEach, fromPairs, get, has, isArray, isBoolean, isEqual, isFunction, isNil,
-    isObject, isPlainObject, last, mergeWith, omit, set, truncate, union} from 'lodash';
+import { forEach, fromPairs, get, has, isArray, isBoolean, isEqual, isFunction, isNil, isObject,
+    isPlainObject, last, mergeWith, omit, once, set, union } from 'lodash';
 import shallowequal from 'shallowequal';
 import update from 'immutability-helper';
-import {getRootURL} from './BrowserUtil.js';
-import {DownloadProgress, getDownloadProgress} from '../rpc/SearchServicesJson.js';
-import {showInfoPopup} from '../ui/PopupUtil.jsx';
-import {getOrCreateWsConn} from '../core/messaging/WebSocketClient.js';
-import {logger} from './Logger.js';
-import {ServerParams} from '../data/ServerParams';
 
 const MEG          = 1048576;
 const GIG          = 1048576 * 1024;
@@ -18,19 +12,26 @@ const MEG_TENTH    = MEG / 10;
 const GIG_HUNDREDTH= GIG / 100;
 const K            = 1024;
 
-export const REQUEST_WITH = 'X-Requested-With';
-export const AJAX_REQUEST = 'XMLHttpRequest';
-export const WS_CHANNEL_HD = 'FF-channel';
-export const WS_CONNID_HD  = 'FF-connID';
 
-
-var GLOBAL_PROPS;
 /*global __PROPS__*/        // this is defined at build-time.
+export const getGlobalProps= once( () => __PROPS__ ?? {});
 
-export function getProp(key, def) {
-    GLOBAL_PROPS = GLOBAL_PROPS || __PROPS__;
-    return GLOBAL_PROPS?.[key] ?? def;
-}
+export const getProp= (key, def) => getGlobalProps()[key] ?? def;
+
+const getScriptURL = once(() => {
+    const SCRIPT_NAME = getProp('SCRIPT_NAME');
+    return [...document.getElementsByTagName('script')]
+        .filter((s) => SCRIPT_NAME
+            .some((name) => s.src.indexOf(name) > -1))[0]?.src;
+});
+
+export const getRootURL = once(() => {
+    if (getProp('SCRIPT_NAME') === undefined) return '//localhost:8080/';
+    const workingURL = getScriptURL() || window.location.href;
+    return workingURL.substring(0, workingURL.lastIndexOf('/')) + '/';
+});
+
+export const getCmdSrvURL = () => `${getRootURL()}sticky/CmdSrv`;
 
 /**
  * returns an object of key:value where keyPrefix is removed from the keys.  i.e
@@ -45,14 +46,37 @@ export function getProp(key, def) {
  * @returns {object}
  */
 export function getPropsWith(keyPrefix) {
-    GLOBAL_PROPS = GLOBAL_PROPS || __PROPS__;
-    if (!GLOBAL_PROPS) return {};
-    return Object.fromEntries(Object.entries(GLOBAL_PROPS)
+    return Object.fromEntries(Object.entries(getGlobalProps())
         .filter(([k,]) => k.startsWith(keyPrefix))
         .map( ([k,v]) => [k.substring(keyPrefix.length),v]));
 }
 
 export const getModuleName= () => getProp('MODULE_NAME');
+
+
+/**
+ * given a partial url and a rootPath, create a full url, if not rootPath the use document.URL for the rootpath
+ * @param {string} url
+ * @param {string} rootPath
+ * @return {string}
+ */
+export function modifyURLToFull(url, rootPath) {
+    const docUrl = document.URL;
+    const lastSlash = docUrl.lastIndexOf('/');
+    if (!url && !rootPath) return (lastSlash === docUrl.indexOf('//') + 1) ? docUrl : docUrl.substring(0, lastSlash + 1);
+    if (!url) return rootPath;
+    if (isFull(url)) return url;
+    if (rootPath) return rootPath.endsWith('/') ? rootPath + url : rootPath + '/' + url;
+    if (lastSlash === docUrl.indexOf('//') + 1) return docUrl + '/' + url;
+    return docUrl.substring(0, lastSlash + 1) + url;
+}
+
+function isFull(url) {
+    const hPref = ['http', 'https', '/', 'file'];
+    url = url.toLowerCase();
+    return hPref.some((s) => url.startsWith(s));
+}
+
 
 export const isDefined= (x) => x!==undefined;
 
@@ -255,95 +279,6 @@ export function encodeParams(params) {
  */
 export const encodeServerUrl= (url, params) => encodeUrl(url, params);
 
-/**
- * A wrapper for the underlying window.fetch function.
- * see https://github.com/github/fetch for usage.
- * see https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API for current status on the API
- * see https://fetch.spec.whatwg.org/ for official standard
- *
- * This function applies default behaviors before fetching.
- *
- * @param {string} url the URL to connect
- * @param {Object} options
- * @param {Object} options.params a parameter map to send along with the request.  It does not need to
- *                                  be encoded.  Base on the method used, it will be handled internally.
- * @param {string} options.method can be one of get, post, or multipart
- *                                when 'multipart', it will post with 'multipart/form-data' encoding.
- * @param {boolean} doValidation
- * @param {boolean} [enableDefOptions= true]
- * @return {Promise} a promise of the response when successful, or reject with an Error.
- */
-export function fetchUrl(url, options, doValidation= true, enableDefOptions= true) {
-
-    if (!url) return;
-
-    // define defaults request options
-    options = options || {};
-
-    if (enableDefOptions) {
-        const req = { method: 'get',
-            mode: 'cors',
-            credentials: 'include',
-            cache: 'default'
-        };
-        options = Object.assign(req, options);
-
-        return getOrCreateWsConn().then(({connId, channel}) => {
-            const headers = {
-                [WS_CHANNEL_HD]: channel,
-                [WS_CONNID_HD]: connId,
-                [REQUEST_WITH]: AJAX_REQUEST
-            };
-            options.headers = Object.assign(headers, options.headers);
-            return doFetchUrl(url, options, doValidation);
-        });
-    } else {
-        return doFetchUrl(url, options, doValidation);
-    }
-}
-
-function doFetchUrl(url, options, doValidation) {
-    if (options.params) {
-        const params = toNameValuePairs(options.params);        // convert to name-value pairs if it's a simple object.
-        if (options.method.toLowerCase() === 'get') {
-            url = encodeUrl(url, params);
-        } else {
-            url = encodeUrl(url);
-            if (!options.body) {
-                // if 'post' but, body is not provided, add the parameters into the body.
-                if (options.method.toLowerCase() === 'post') {
-                    options.headers['Content-type'] = 'application/x-www-form-urlencoded';
-                    options.body = params.map(({name, value=''}) => encodeURIComponent(name) + '=' + encodeURIComponent(value))
-                        .join('&');
-                } else if (options.method.toLowerCase() === 'multipart') {
-                    options.method = 'post';
-                    const data = new FormData();
-                    params.forEach( ({name, value}) => {
-                        data.append(name, value);
-                    });
-                    options.body = data;
-                }
-                Reflect.deleteProperty(options, 'params');
-            }
-        }
-    }
-
-    logger.tag('fetchUrl').debug({url, options});
-    // do the actually fetch, then return a promise.
-    return fetch(url, options)
-        .then( (response) => {
-            if (!doValidation) return response;
-            if (response.ok) {
-                return response;
-            } else if(response.status === 401){
-                throw new Error('You are no longer logged in');
-            } else {
-                throw new Error(`Request failed with status ${response.status}: ${url}`);
-            }
-        });
-
-}
-
 export const logError= (...message) => message && message.forEach( (m) => console.log(has(m,'stack') ? m.stack : m) );
 
 /**
@@ -368,80 +303,6 @@ export function copyToClipboard(str) {
         document.getSelection().removeAllRanges();  // Unselect everything on the HTML document
         document.getSelection().addRange(selected); // Restore the original selection
     }
-}
-
-/**
- * @param {string} url  the url to download.  It should be based on AnyFileDownload
- * @param {number} [numTries=1000]  number of time to check for progress until giving up
- * @returns {Promise}  resolve is called on DONE and reject when FAIL.
- */
-export function downloadWithProgress(url, numTries=1000) {
-    return new Promise(function(resolve, reject) {
-        const {search} = parseUrl(url);
-        let cnt = 0;
-        const doIt = () => {
-            const interval = Math.min(5000, Math.pow(2, 2*cnt/10)*1000);  //gradually increase between 1 and 5 secs
-            console.log('Interval: ' + interval);
-            setTimeout(function () {
-                cnt++;
-                getDownloadProgress(search).then((v) => {
-                    if (DownloadProgress.DONE.is(v)) {
-                        resolve(v);
-                    } else if (DownloadProgress.FAIL.is(v)) {
-                        reject(v);
-                    } else {
-                        if (cnt < numTries) {
-                            doIt();
-                        } else {
-                            reject(`Number of tries(${numTries}) exceeded without results`);
-                        }
-                    }
-                });
-            }, interval);
-        };
-        doIt();
-        download(url);
-    });
-}
-
-export function downloadBlob(blob, filename) {
-    if (!blob) return;
-    window.URL = window.URL || window.webkitURL;
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = window.URL.createObjectURL(blob);
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(a.href);
-    document.body.removeChild(a);
-}
-
-function resolveFileName(resp) {
-    if (resp && resp.headers) {
-        const cd = resp.headers.get('Content-Disposition') || '';
-        const parts = cd.match(/.*filename=(.*)/);
-        if (parts && parts.length > 1) return parts[1];
-    }
-}
-
-export function download(url, filename) {
-    const {protocol, host, path, hash, searchObject={}} = parseUrl(url);
-    const cmd = searchObject[ServerParams.COMMAND];
-    url = cmd? `${protocol}//${host}${path}?${ServerParams.COMMAND}=${cmd}` + (hash ? '#' + hash : ''):      // add cmd into the url as a workaround for server-side code not supporting it
-        url;
-
-    const params = Object.fromEntries(
-                        Object.entries(searchObject)
-                              .map(([k, v]) => [k, (isPlainObject(v) ? JSON.stringify(v) : v)]) );          // convert object back into JSON if needed.
-
-    fetchUrl(url, {method: 'post', params})
-        .then((resp) => {
-            filename = filename || resolveFileName(resp);
-            return resp.blob(); })
-        .then( (blob) => {
-            downloadBlob(blob, filename); })
-        .catch(({message}) => showInfoPopup(truncate(message, {length: 200}), 'Unexpected error'));
 }
 
 

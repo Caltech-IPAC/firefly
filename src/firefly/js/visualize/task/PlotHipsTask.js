@@ -19,7 +19,7 @@ import ImagePlotCntlr, {
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {WebPlot, isHiPS, isImage} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
-import {fetchUrl, loadImage} from '../../util/WebUtil.js';
+import {loadImage} from '../../util/WebUtil.js';
 import {
     findCurrentCenterPoint,
     getCenterOfProjection,
@@ -61,6 +61,7 @@ import {getRowCenterWorldPt} from '../saga/ActiveRowCenterWatcher';
 import {getActiveTableId} from '../../tables/TableUtil';
 import {locateOtherIfMatched, matchHiPStoPlotView} from './WcsMatchTask';
 import {upload} from '../../rpc/CoreServices.js';
+import {fetchUrl} from '../../util/fetch';
 
 const PROXY= true;
 

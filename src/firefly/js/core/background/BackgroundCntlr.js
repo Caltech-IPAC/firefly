@@ -7,7 +7,7 @@ import {set, get, has, pick, isNil} from 'lodash';
 
 import {flux} from '../../Firefly.js';
 import {smartMerge} from '../../tables/TableUtil.js';
-import {updateDelete, updateSet, download, parseUrl} from '../../util/WebUtil.js';
+import {updateDelete, updateSet, parseUrl} from '../../util/WebUtil.js';
 import {showBackgroundMonitor} from './BackgroundMonitor.jsx';
 import {isSuccess, getDataTagMatcher} from './BackgroundUtil.js';
 import * as SearchServices from '../../rpc/SearchServicesJson.js';
@@ -19,7 +19,8 @@ import {WORKSPACE} from '../../ui/WorkspaceSelectPane.jsx';
 import {doDownloadWorkspace, validateFileName} from '../../ui/WorkspaceViewer.jsx';
 import {WS_SERVER_PARAM, getWorkspacePath, dispatchWorkspaceUpdate} from '../../visualize/WorkspaceCntlr.js';
 import {ServerParams} from '../../data/ServerParams.js';
-import {DEF_BASE_URL} from '../JsonUtils.js';
+import {download} from '../../util/fetch';
+import {getCmdSrvURL} from '../../util/WebUtil';
 
 export const BACKGROUND_PATH = 'background';
 
@@ -251,7 +252,7 @@ function sendToWorkspace(url, BaseFileName, wsSelect) {
         [WS_SERVER_PARAM.should_overwrite.key]: true
     };
 
-    doDownloadWorkspace(DEF_BASE_URL, {params});
+    doDownloadWorkspace(getCmdSrvURL(), {params});
 }
 
 function reducer(state={}, action={}) {

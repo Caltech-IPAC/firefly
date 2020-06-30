@@ -13,7 +13,7 @@ import {getPlotViewById,primePlot,getPlotStateAry, operateOnOthersInPositionGrou
     applyToOnePvOrAll} from '../PlotViewUtil.js';
 import {callSetZoomLevel} from '../../rpc/PlotServicesJson.js';
 import {isImageViewerSingleLayout, getMultiViewRoot} from '../MultiViewCntlr.js';
-import WebPlotResult from '../WebPlotResult.js';
+import {WebPlotResult} from '../WebPlotResult.js';
 import {doHiPSImageConversionIfNecessary} from './PlotHipsTask.js';
 import {matchImageToHips, matchHiPStoPlotView} from './WcsMatchTask';
 

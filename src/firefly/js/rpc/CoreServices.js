@@ -6,11 +6,11 @@
 import {isString} from 'lodash';
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest} from '../core/JsonUtils.js';
-import {getRootURL} from '../util/BrowserUtil';
 import {WebPlotRequest} from '../visualize/WebPlotRequest';
-import {fetchUrl} from '../util/WebUtil';
+import {fetchUrl} from '../util/fetch';
+import {getCmdSrvURL} from '../util/WebUtil';
 
-const UL_URL = `${getRootURL()}sticky/CmdSrv?${ServerParams.COMMAND}=${ServerParams.UPLOAD}`;
+const getUploadURL= () => `${getCmdSrvURL()}?${ServerParams.COMMAND}=${ServerParams.UPLOAD}`;
 
 /**
  * tableRequest will be sent to the server as a json string.
@@ -51,7 +51,7 @@ export async function upload(item, fileAnalysis= false, params={}) {
         return Promise.reject(Error(msg));
     }
         // put the fetchParam at the end, if it is a file or blob, it has to be the last param due to AnyFileUpload limitation
-    const r= await fetchUrl(UL_URL, {method: 'multipart', params:{...params,fileAnalysis,...fetchParam}});
+    const r= await fetchUrl(getUploadURL(), {method: 'multipart', params:{...params,fileAnalysis,...fetchParam}});
     return parseUploadResults(await r.text());
 }
 

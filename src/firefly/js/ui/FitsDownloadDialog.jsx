@@ -16,8 +16,7 @@ import PropTypes from 'prop-types';
 import {get, set, isEmpty} from 'lodash';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
-import {getRootURL} from '../util/BrowserUtil.js';
-import {download, downloadBlob, encodeUrl, updateSet} from '../util/WebUtil.js';
+import {getRootURL, getCmdSrvURL, encodeUrl, updateSet} from '../util/WebUtil.js';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
@@ -43,6 +42,7 @@ import {getWorkspaceConfig} from '../visualize/WorkspaceCntlr.js';
 
 import HelpIcon from './HelpIcon.jsx';
 import {upload} from '../rpc/CoreServices.js';
+import {download, downloadBlob} from '../util/fetch';
 
 const STRING_SPLIT_TOKEN= '--STR--';
 const dialogWidth = 500;
@@ -570,8 +570,7 @@ function resultsSuccess(request, plotView, popupId) {
     };
 
     const downloadFile = (params) => {
-        const url = isWorkspace() ? `${getRootURL()}sticky/CmdSrv`
-                                  : getRootURL() + 'servlet/Download';
+        const url = isWorkspace() ? getCmdSrvURL() : getRootURL() + 'servlet/Download';
 
         if (isWorkspace()) {
             doDownloadWorkspace(url, {params});

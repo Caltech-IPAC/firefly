@@ -14,7 +14,6 @@ import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {getBackgroundInfo, BG_STATE, isActive, isDone, isSuccess, emailSent, canCreateScript} from './BackgroundUtil.js';
 import {dispatchBgStatus, dispatchJobRemove, dispatchBgSetEmailInfo, dispatchJobCancel} from './BackgroundCntlr.js';
-import {downloadWithProgress} from '../../util/WebUtil.js';
 import {DownloadProgress} from '../../rpc/SearchServicesJson.js';
 import {showScriptDownloadDialog} from '../../ui/ScriptDownloadDialog.jsx';
 import {SimpleComponent} from '../../ui/SimpleComponent.jsx';
@@ -26,6 +25,7 @@ import DOWNLOAED from 'html/images/blue_check-on_10x10.gif';
 import FAILED from 'html/images/exclamation16x16.gif';
 
 import './BackgroundMonitor.css';
+import {downloadWithProgress} from '../../util/fetch';
 
 export function showBackgroundMonitor(show=true) {
     const content= (
