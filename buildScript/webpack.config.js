@@ -2,6 +2,7 @@
 
 import webpack from 'webpack';
 import Visualizer from 'webpack-visualizer-plugin';
+import TerserPlugin from 'terser-webpack-plugin';
 import path from 'path';
 import fs from 'fs';
 
@@ -203,6 +204,9 @@ export default function makeWebpackConfig(config) {
         target  : 'web',
         devtool : 'source-map',
         // optimization,
+        optimization: {
+            minimizer: [ new TerserPlugin({ terserOptions: {safari10: true} }) ]
+        },
         entry   : config.entry,
         resolve : {
             extensions : ['.js', '.jsx'],
