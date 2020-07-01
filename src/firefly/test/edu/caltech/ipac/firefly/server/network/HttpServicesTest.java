@@ -109,6 +109,7 @@ public class HttpServicesTest {
 	}
 
 	@Test
+	@Ignore
 	public void testRedirectData(){
 		input.setParam("url", GET_URL);  // redirect back to get
 		ByteArrayOutputStream results = new ByteArrayOutputStream();
@@ -120,6 +121,7 @@ public class HttpServicesTest {
 	}
 
 	@Test
+	@Ignore
 	public void testFollowRedirect(){
 		HttpServiceInput nInput = input.setRequestUrl(REDIRECT_URL)
 										.setParam("url", "http://www.acme.org")

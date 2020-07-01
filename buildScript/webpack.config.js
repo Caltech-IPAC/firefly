@@ -126,7 +126,7 @@ export default function makeWebpackConfig(config) {
                     ['@babel/preset-env',
                         {
                             targets: {
-                                browsers: ['safari >= 10', 'chrome >= 67', 'firefox >= 60', 'edge >= 16']
+                                browsers: ['safari >= 11', 'chrome >= 67', 'firefox >= 60', 'edge >= 16']
                             },
                             debug: false,//!ENV_PROD, uncomment this line to enable the debugger
                             modules: false,  // preserve application module style - in our case es6 modules
