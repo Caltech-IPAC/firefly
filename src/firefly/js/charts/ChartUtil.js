@@ -16,7 +16,7 @@ import shallowequal from 'shallowequal';
 
 import {getAppOptions} from '../core/AppDataCntlr.js';
 import {getTblById, isFullyLoaded, isColumnType, COL_TYPE, stripColumnNameQuotes, watchTableChanges} from '../tables/TableUtil.js';
-import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_SELECT} from '../tables/TablesCntlr.js';
+import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_SELECT, TABLE_SORT} from '../tables/TablesCntlr.js';
 import {dispatchLoadTblStats} from './TableStatsCntlr.js';
 import {dispatchChartUpdate, dispatchChartHighlighted, dispatchChartSelect, getChartData} from './ChartsCntlr.js';
 import {Expression} from '../util/expr/Expression.js';
@@ -504,10 +504,15 @@ function tablesourcesEqual(newTS, oldTS) {
 
 
 function updateChartData(chartId, traceNum, tablesource, action={}) {
-    // Histogram doesn't update on a table sort event.
-    if (getChartData(chartId).fireflyData[0].dataType === 'fireflyHistogram'){
-        if (action.payload && action.payload.invokedBy === 'table.sort'){return;}
+
+    // Only Scatter Plot does update on a table sort event.
+    if (action.type === TABLE_LOADED && action.payload.invokedBy === TABLE_SORT) {
+        const {data} = getChartData(chartId);
+        const traceType = get(data, [traceNum, 'type'], 'scatter');
+        if (!traceType.includes('scatter')) return;
     }
+
+
     // make sure the chart is not yet removed
     if (isEmpty(getChartData(chartId))) { return; }
     const {tbl_id, resultSetID, mappings} = tablesource;
