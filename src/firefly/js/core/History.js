@@ -97,10 +97,10 @@ const dropdownHandler = {
  * a map of all actions that should be in history
  * @type {{}}
  */
-const customHistoryHandlers = {
+const getCustomHistoryHandlers = () => ({
     [TABLE_SEARCH]: tableSearchHandler,
     [SHOW_DROPDOWN]: dropdownHandler
-};
+});
 
 var isHistoryEvent = false;
 
@@ -132,7 +132,7 @@ export function getActionFromUrl() {
     if (urlInfo.searchObject) {
         const type = get(urlInfo,['searchObject', ACTION]);
         if (type) {
-            const handler = customHistoryHandlers[type] || DEF_HANDLER;
+            const handler = getCustomHistoryHandlers()[type] || DEF_HANDLER;
             return handler.urlToAction(type,urlInfo);
         }
     }
@@ -142,7 +142,7 @@ export function getActionFromUrl() {
 export function recordHistory(action={}) {
     if (get(window, 'firefly.ignoreHistory', false) || isHistoryEvent) return;
 
-    let handler = customHistoryHandlers[action.type];
+    let handler = getCustomHistoryHandlers()[action.type];
     if (!handler) {
         if (logHistory(action, false)) {
             handler = DEF_HANDLER;

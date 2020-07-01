@@ -54,7 +54,7 @@ import {buildViewerApi} from './ApiViewer.js';
 // CSS
 import './ApiStyle.css';
 import {startTTFeatureWatchers} from '../templates/common/ttFeatureWatchers.js';
-import {activeRowCenterDef} from '../visualize/saga/ActiveRowCenterWatcher.js';
+import {getActiveRowCenterDef} from '../visualize/saga/ActiveRowCenterWatcher.js';
 import {urlLinkWatcherDef} from '../visualize/saga/UrlLinkWatcher.js';
 import {mocWatcherDef} from '../visualize/saga/MOCWatcher.js';
 
@@ -132,7 +132,7 @@ export function initApi() {
     dispatchOnAppReady(() => {
         window.onFireflyLoaded && window.onFireflyLoaded(firefly);
     });
-    startTTFeatureWatchers([urlLinkWatcherDef.id, activeRowCenterDef.id, mocWatcherDef.id]);
+    startTTFeatureWatchers([urlLinkWatcherDef.id, getActiveRowCenterDef().id, mocWatcherDef.id]);
     initExpandedView();
 }
 

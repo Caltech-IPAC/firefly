@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isString, isObject} from 'lodash';
+import {isString, isObject, once} from 'lodash';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE,TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
 import {visRoot, dispatchRecenter} from '../ImagePlotCntlr.js';
 import {getTblById, getCellValue} from '../../tables/TableUtil.js';
@@ -28,7 +28,7 @@ function willFitOnScreenAtCurrentZoom(pv) {
 
 
 /** type {TableWatcherDef} */
-export const activeRowCenterDef = {
+export const getActiveRowCenterDef= once(() => ({
     id : 'ActiveRowCenter',
     watcher : recenterImages,
     testTable : (table) => {
@@ -36,7 +36,7 @@ export const activeRowCenterDef = {
     },
     allowMultiples: false,
     actions: [TABLE_LOADED, TABLE_SELECT, TABLE_HIGHLIGHT, TABLE_UPDATE, TBL_RESULTS_ACTIVE, TABLE_REMOVE]
-};
+}));
 
 export function recenterImages(tbl_id, action, cancelSelf, params) {
 
