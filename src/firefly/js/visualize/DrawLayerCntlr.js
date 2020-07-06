@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 import Enum from 'enum';
 import {
     getAllPlotViewIdByOverlayLock,

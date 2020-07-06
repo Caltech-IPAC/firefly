@@ -10,7 +10,7 @@ import ImagePlotCntlr, {visRoot, ExpandType} from '../visualize/ImagePlotCntlr.j
 import {primePlot} from '../visualize/PlotViewUtil.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {DefaultApiReadout} from '../visualize/ui/DefaultApiReadout.jsx';
-import {reduxFlux} from '../core/ReduxFlux.js';
+import {getBootstrapRegistry} from '../core/BootstrapRegistry';
 import {PopupMouseReadoutFull} from '../visualize/ui/PopupMouseReadout.jsx';
 import DialogRootContainer from '../ui/DialogRootContainer.jsx';
 import {PopupPanel, LayoutType} from '../ui/PopupPanel.jsx';
@@ -88,7 +88,7 @@ var isInit= false;
  * @see DrawSymbol
  */
 export function setDrawLayerDefaults(drawLayerTypeId, defaults) {
-    reduxFlux.setDrawLayerDefaults(drawLayerTypeId, defaults);
+    getBootstrapRegistry().setDrawLayerDefaults(drawLayerTypeId, defaults);
 }
 
 /**

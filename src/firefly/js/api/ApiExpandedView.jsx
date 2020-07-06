@@ -3,7 +3,7 @@
  */
 
 import React, {PureComponent} from 'react';
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../charts/ui/ChartsContainer.jsx';
 import {ApiExpandedDisplay} from '../visualize/ui/ApiExpandedDisplay.jsx';

@@ -4,7 +4,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import {dispatchShowDialog, dispatchHideDialog} from '../core/ComponentCntlr.js';

@@ -3,7 +3,7 @@
  */
 
 import React, {PureComponent} from 'react';
-import {flux} from '../../Firefly.js';
+import {flux} from '../../core/ReduxFlux.js';
 import {WorkspaceViewField}  from '../../ui/WorkspaceViewer.jsx';
 import {initWorkspace, getWorkspaceList, isExistWorkspaceList} from '../WorkspaceCntlr.js';
 import {CompleteButton} from '../../ui/CompleteButton.jsx';

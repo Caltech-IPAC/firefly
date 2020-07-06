@@ -7,7 +7,7 @@ import './ChartPanel.css';
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, isUndefined} from 'lodash';
-import {flux} from '../../Firefly.js';
+import {flux} from '../../core/ReduxFlux.js';
 
 import {CloseButton} from '../../ui/CloseButton.jsx';
 import {ChartPanel} from './ChartPanel.jsx';

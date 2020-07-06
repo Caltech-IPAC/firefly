@@ -3,7 +3,7 @@
  */
 
 import {get,isFunction,hasIn,isBoolean} from 'lodash';
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 import {logError,clone} from '../util/WebUtil.js';
 import {smartMerge} from '../tables/TableUtil.js';
 import {FIELD_GROUP_KEY,dispatchValueChange,dispatchMultiValueChange} from './FieldGroupCntlr.js';

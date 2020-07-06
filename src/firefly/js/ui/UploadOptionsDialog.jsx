@@ -3,7 +3,7 @@
  */
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 import Enum from 'enum';
 import {get} from 'lodash';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';

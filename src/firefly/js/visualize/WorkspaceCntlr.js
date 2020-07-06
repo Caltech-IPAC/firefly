@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 import {get, set, flattenDeep, isEmpty} from 'lodash';
 import {ServerParams} from '../data/ServerParams.js';
 import {workspacePopupMsg} from '../ui/WorkspaceViewer.jsx';

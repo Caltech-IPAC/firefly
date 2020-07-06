@@ -3,7 +3,7 @@
  */
 import {get, set, omitBy, pickBy, pick, isNil, cloneDeep, findKey, isEqual, unset, merge} from 'lodash';
 
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 import * as TblUtil from './TableUtil.js';
 import {MAX_ROW} from './TableRequestUtil.js';
 import {submitBackgroundSearch} from '../rpc/SearchServicesJson.js';

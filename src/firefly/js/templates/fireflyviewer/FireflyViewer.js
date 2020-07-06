@@ -7,7 +7,7 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {pickBy} from 'lodash';
 
-import {flux, firefly} from '../../Firefly.js';
+import {flux} from '../../core/ReduxFlux.js';
 import {getMenu, isAppReady, dispatchSetMenu,
     dispatchOnAppReady, dispatchNotifyRemoteAppReady} from '../../core/AppDataCntlr.js';
 import {LO_VIEW, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
@@ -145,7 +145,7 @@ function onReady({menu, views, options={}}) {
     const {hasImages, hasTables, hasXyPlots} = getLayouInfo();
     if (!(hasImages || hasTables || hasXyPlots)) {
         const goto = getActionFromUrl() || {type: SHOW_DROPDOWN};
-        if (goto) firefly.process(goto);
+        if (goto) flux.process(goto);
     }
     dispatchNotifyRemoteAppReady();
 }

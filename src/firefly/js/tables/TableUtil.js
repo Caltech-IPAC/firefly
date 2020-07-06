@@ -28,7 +28,7 @@ import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
 import {FilterInfo, getNumFilters, FILTER_SEP} from './FilterInfo.js';
 import {SelectInfo} from './SelectInfo.js';
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 import {encodeServerUrl, uniqueID} from '../util/WebUtil.js';
 import {fetchTable, queryTable, selectedValues} from '../rpc/SearchServicesJson.js';
 import {ServerParams} from '../data/ServerParams.js';

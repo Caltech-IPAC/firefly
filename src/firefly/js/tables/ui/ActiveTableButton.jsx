@@ -6,7 +6,7 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
 
-import {flux} from '../../Firefly.js';
+import {flux} from '../../core/ReduxFlux.js';
 import {getTblInfoById, getActiveTableId} from '../TableUtil.js';
 
 /**

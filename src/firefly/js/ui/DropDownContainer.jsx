@@ -8,7 +8,8 @@ import shallowequal from 'shallowequal';
 import {get, pick, isEmpty} from 'lodash';
 
 import {getDropDownInfo} from '../core/LayoutCntlr.js';
-import {flux, getVersion} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
+import {getVersion} from '../Firefly.js';
 import {SearchPanel} from '../ui/SearchPanel.jsx';
 import {ImageSearchDropDown} from '../visualize/ui/ImageSearchPanelV2.jsx';
 import {TestSearchPanel} from '../ui/TestSearchPanel.jsx';

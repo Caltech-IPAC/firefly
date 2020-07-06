@@ -6,7 +6,7 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, get} from 'lodash';
 
-import {flux} from '../../Firefly.js';
+import {flux} from '../../core/ReduxFlux.js';
 import * as TblUtil from '../TableUtil.js';
 import {TablePanel} from './TablePanel.jsx';
 import {TabsView, Tab} from '../../ui/panel/TabPanel.jsx';

@@ -5,7 +5,7 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {pick} from 'lodash';
-import {flux} from '../../Firefly.js';
+import {flux} from '../../core/ReduxFlux.js';
 import {LO_VIEW, LO_MODE, getLayouInfo, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 import {ResultsPanel} from './ResultsPanel.jsx';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';

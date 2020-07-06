@@ -10,7 +10,7 @@ import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {getDlAry} from '../DrawLayerCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {DrawLayerPanelView} from './DrawLayerPanelView.jsx';
-import {flux} from '../../Firefly.js';
+import {flux} from '../../core/ReduxFlux.js';
 import {lastMouseImageReadout} from '../VisMouseSync';
 import {useMouseStoreConnector, useStoreConnector} from '../../ui/SimpleComponent';
 

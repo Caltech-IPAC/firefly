@@ -4,7 +4,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 import {HELP_LOAD} from '../core/AppDataCntlr.js';
 
 import largeHelp from 'html/images/icons-2014/Help.png';

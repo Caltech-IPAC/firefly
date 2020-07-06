@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import {get, set} from 'lodash';
 import {dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr';
-import {flux} from '../Firefly';
+import {flux} from '../core/ReduxFlux';
 
 
 const DIALOG_DIV= 'dialogRootDiv';

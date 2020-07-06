@@ -1,7 +1,7 @@
 import {PureComponent} from 'react';
 import { getColsByType, COL_TYPE} from '../../tables/TableUtil.js';
 import {getLayouInfo} from '../../core/LayoutCntlr.js';
-import {flux} from '../../Firefly.js';
+import {flux} from '../../core/ReduxFlux.js';
 import {get} from 'lodash';
 
 /**

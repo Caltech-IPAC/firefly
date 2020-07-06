@@ -5,7 +5,7 @@
 import {cloneDeep, has, get, isArray, isEmpty, isString, isUndefined, omit, omitBy, set, range, unset} from 'lodash';
 import shallowequal from 'shallowequal';
 
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 import {updateSet, updateObject, toBoolean} from '../util/WebUtil.js';
 import {Logger} from '../util/Logger.js';
 import {getTblById, getColumns, isFullyLoaded, COL_TYPE} from '../tables/TableUtil.js';

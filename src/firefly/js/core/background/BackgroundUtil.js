@@ -6,7 +6,7 @@ import {get, omit, isNil} from 'lodash';
 import Enum from 'enum';
 import {take} from 'redux-saga/effects';
 
-import {flux} from '../../Firefly.js';
+import {flux} from '../ReduxFlux';
 import {BACKGROUND_PATH} from './BackgroundCntlr.js';
 import {getModuleName} from '../../util/WebUtil.js';
 import {packageRequest} from '../../rpc/SearchServicesJson.js';

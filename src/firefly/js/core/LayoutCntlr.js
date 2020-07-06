@@ -6,7 +6,7 @@ import {take} from 'redux-saga/effects';
 
 import {get, isEqual, isEmpty, filter, pick, uniqBy} from 'lodash';
 import Enum from 'enum';
-import {flux} from '../Firefly.js';
+import {flux} from './ReduxFlux';
 import {clone} from '../util/WebUtil.js';
 import {smartMerge, getActiveTableId} from '../tables/TableUtil.js';
 import {getDropDownNames} from '../ui/Menu.jsx';

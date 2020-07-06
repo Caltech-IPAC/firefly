@@ -7,7 +7,7 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import uniqueId from 'lodash/uniqueId';
 import delay from 'lodash/delay';
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 import {DropDownMenuWrapper} from './DropDownMenu.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible, getDialogOwner} from '../core/ComponentCntlr.js';

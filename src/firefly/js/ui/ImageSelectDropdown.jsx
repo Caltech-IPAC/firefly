@@ -15,7 +15,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 import {visRoot } from '../visualize/ImagePlotCntlr.js';
 import {FormPanel} from './FormPanel.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';

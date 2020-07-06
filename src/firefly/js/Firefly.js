@@ -6,7 +6,7 @@
 import 'isomorphic-fetch';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {set, get, defer, once, isEmpty} from 'lodash';
+import {set, defer, once} from 'lodash';
 import 'styles/global.css';
 
 import {APP_LOAD, dispatchAppOptions, dispatchUpdateAppData} from './core/AppDataCntlr.js';
@@ -18,8 +18,7 @@ import {initApi} from './api/ApiBuild.js';
 import {dispatchUpdateLayoutInfo} from './core/LayoutCntlr.js';
 import {dispatchChangeReadoutPrefs} from './visualize/MouseReadoutCntlr.js';
 import {showInfoPopup} from './ui/PopupUtil';
-
-import {reduxFlux} from './core/ReduxFlux.js';
+import {bootstrapRedux, flux} from './core/ReduxFlux.js';
 import {getOrCreateWsConn} from './core/messaging/WebSocketClient.js';
 import {ActionEventHandler} from './core/messaging/MessageHandlers.js';
 import {notifyServerAppInit} from './rpc/CoreServices.js';
@@ -29,8 +28,10 @@ import {Logger} from './util/Logger';
 import {evaluateWebApi, isUsingWebApi, WebApiStat} from './api/WebApi';
 import {WebApiHelpInfoPage} from './ui/WebApiHelpInfoPage';
 import {dispatchOnAppReady} from './core/AppDataCntlr';
+import {getBootstrapRegistry} from './core/BootstrapRegistry';
+import {showLostConnection} from './ui/LostConnection';
+import {recordHistory} from './core/History';
 
-export const flux = reduxFlux;
 
 var initDone = false;
 const logger = Logger('Firefly-init');
@@ -257,9 +258,7 @@ export function getVersion() {
 
 
 export const firefly = {
-    bootstrap,
-    addListener: flux.addListener,
-    process: flux.process,
+    bootstrap
 };
 
 
@@ -279,7 +278,11 @@ function bootstrap(props, options, webApiCommands) {
     set(window, 'firefly.initialized', true);
     return new Promise((resolve) => {
 
-        flux.bootstrap();
+        bootstrapRedux(
+            getBootstrapRegistry(),
+            () => getOrCreateWsConn().catch(() => showLostConnection()),
+            (rawAction) => recordHistory(rawAction)
+        );
         flux.process( {type : APP_LOAD} );  // setup initial store/state
 
         ensureUsrKey();

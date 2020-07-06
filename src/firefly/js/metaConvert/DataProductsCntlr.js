@@ -1,4 +1,4 @@
-import {flux} from '../Firefly';
+import {flux} from '../core/ReduxFlux';
 import {REINIT_APP} from '../core/AppDataCntlr';
 import {isArray, isObject,get} from 'lodash';
 import {dpdtMessage, DPtypes} from './DataProductsType';

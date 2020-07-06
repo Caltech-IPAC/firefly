@@ -5,7 +5,7 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 import {dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {PopupPanel} from './PopupPanel.jsx';
 import {DrawSymbol} from '../visualize/draw/DrawSymbol.js';

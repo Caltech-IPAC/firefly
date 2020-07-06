@@ -1,4 +1,4 @@
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 
 import {get, has, omit} from 'lodash';
 

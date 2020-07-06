@@ -1,6 +1,6 @@
 import React,  {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {flux} from '../../Firefly.js';
+import {flux} from '../../core/ReduxFlux.js';
 import {get, set, isUndefined, has} from 'lodash';
 import Enum from 'enum';
 import FieldGroupUtils, {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';

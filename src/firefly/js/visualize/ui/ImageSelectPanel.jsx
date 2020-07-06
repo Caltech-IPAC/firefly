@@ -5,7 +5,7 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
-import {flux} from '../../Firefly.js';
+import {flux} from '../../core/ReduxFlux.js';
 import {visRoot } from '../ImagePlotCntlr.js';
 import {NewPlotMode, getAViewFromMultiView, findViewerWithItemId,
         getMultiViewRoot, getViewer, IMAGE} from '../MultiViewCntlr.js';

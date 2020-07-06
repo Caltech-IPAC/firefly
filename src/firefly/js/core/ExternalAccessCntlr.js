@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {flux} from '../Firefly.js';
+import {flux} from './ReduxFlux';
 import {doExtensionActivate} from './ExternalAccessUtils.js';
 import {POINT} from './ExternalAccessUtils.js';
 import {dispatchChangePointSelection} from '../visualize/ImagePlotCntlr.js';
