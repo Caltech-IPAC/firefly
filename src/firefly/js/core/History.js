@@ -61,7 +61,7 @@ const dropdownHandler = {
     actionToUrl: (action) => {
         const logHistory = get(action, 'payload.visible', true);
         if (!logHistory) return false;
-        const {view,initArgs}= action.payload;
+        const {view,initArgs}= action.payload ?? {};
         let params={};
         if (!isEmpty(initArgs)) {
             params= Object.entries(initArgs).reduce((obj,[k,v]) => {

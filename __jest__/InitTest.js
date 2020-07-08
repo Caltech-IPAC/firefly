@@ -1,6 +1,6 @@
 import * as jest from 'jest';
 import {bootstrapRedux} from '../src/firefly/js/core/ReduxFlux';
-import {getBootstrapRegistry} from '../src/firefly/js/core/BootstrapRegistry';
+import {getBootstrapRegistry} from '../src/firefly/js/core/BootstrapRegistry.js';
 
 
 jest.mock('firefly/Firefly.js', () => {
@@ -41,8 +41,4 @@ jest.mock('firefly/visualize/DrawLayerCntlr.js', () => {
     };
 });
 
-bootstrapRedux(
-    getBootstrapRegistry(),
-    () => '',
-    () => ''
-);
+bootstrapRedux( getBootstrapRegistry());

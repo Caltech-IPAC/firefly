@@ -4,51 +4,52 @@
 
 
 import {once} from 'lodash';
-import {createLogger} from 'redux-logger';
-import * as LayoutCntlr from './LayoutCntlr';
-import ExternalAccessCntlr from './ExternalAccessCntlr';
-import * as TableStatsCntlr from '../charts/TableStatsCntlr';
-import ComponentCntlr, {DIALOG_OR_COMPONENT_KEY} from './ComponentCntlr';
-import AppDataCntlr from './AppDataCntlr';
-import BackgroundCntlr from './background/BackgroundCntlr';
-import ImagePlotCntlr from '../visualize/ImagePlotCntlr';
-import FieldGroupCntlr, {addFieldGroupRelatedWatcher, MOUNT_COMPONENT} from '../fieldGroup/FieldGroupCntlr';
-import MouseReadoutCntlr from '../visualize/MouseReadoutCntlr';
-import TablesCntlr from '../tables/TablesCntlr';
-import DrawLayerCntlr from '../visualize/DrawLayerCntlr';
-import ChartsCntlrDef from '../charts/ChartsCntlr';
-import MultiViewCntlr from '../visualize/MultiViewCntlr';
-import WorkspaceCntlr from '../visualize/WorkspaceCntlr';
-import DataProductsCntlr from '../metaConvert/DataProductsCntlr';
-import {showExampleDialog} from '../ui/ExampleDialog';
-import DrawLayerFactory from '../visualize/draw/DrawLayerFactory';
-import FixedMarker from '../drawingLayers/FixedMarker';
-import SelectArea from '../drawingLayers/SelectArea';
-import DistanceTool from '../drawingLayers/DistanceTool';
-import PointSelection from '../drawingLayers/PointSelection';
-import StatsPoint from '../drawingLayers/StatsPoint';
-import NorthUpCompass from '../drawingLayers/NorthUpCompass';
-import ImageRoot from '../drawingLayers/ImageRoot';
-import SearchTarget from '../drawingLayers/SearchTarget';
-import Catalog from '../drawingLayers/Catalog';
-import Artifact from '../drawingLayers/Artifact';
-import WebGrid from '../drawingLayers/WebGrid';
-import RegionPlot from '../drawingLayers/RegionPlot';
-import MarkerTool from '../drawingLayers/MarkerTool';
-import FootprintTool from '../drawingLayers/FootprintTool';
-import HiPSGrid from '../drawingLayers/HiPSGrid';
-import HiPSMOC from '../drawingLayers/HiPSMOC';
-import ImageOutline from '../drawingLayers/ImageOutline';
-import ImageLineBasedFootprint from '../drawingLayers/ImageLineBasedFootprint';
-
-//--- import Sagas
-import {dispatchAddSaga, masterSaga} from './MasterSaga';
-import {imagePlotter} from '../visualize/saga/ImagePlotter';
-import {watchReadout} from '../visualize/saga/MouseReadoutWatch';
-import {addExtensionWatcher} from './messaging/ExternalAccessWatcher';
 import {applyMiddleware, combineReducers, createStore} from 'redux';
 import createSagaMiddleware from 'redux-saga';
 import thunkMiddleware from 'redux-thunk';
+import {createLogger} from 'redux-logger';
+
+import * as LayoutCntlr from './LayoutCntlr.js';
+import ExternalAccessCntlr from './ExternalAccessCntlr.js';
+import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
+import ComponentCntlr, {DIALOG_OR_COMPONENT_KEY} from './ComponentCntlr.js';
+import AppDataCntlr from './AppDataCntlr.js';
+import BackgroundCntlr from './background/BackgroundCntlr.js';
+import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
+import FieldGroupCntlr, {addFieldGroupRelatedWatcher, MOUNT_COMPONENT} from '../fieldGroup/FieldGroupCntlr.js';
+import MouseReadoutCntlr from '../visualize/MouseReadoutCntlr.js';
+import TablesCntlr from '../tables/TablesCntlr.js';
+import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
+import ChartsCntlrDef from '../charts/ChartsCntlr.js';
+import MultiViewCntlr from '../visualize/MultiViewCntlr.js';
+import WorkspaceCntlr from '../visualize/WorkspaceCntlr.js';
+import DataProductsCntlr from '../metaConvert/DataProductsCntlr.js';
+import {showExampleDialog} from '../ui/ExampleDialog.jsx';
+import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
+import FixedMarker from '../drawingLayers/FixedMarker.js';
+import SelectArea from '../drawingLayers/SelectArea.js';
+import DistanceTool from '../drawingLayers/DistanceTool.js';
+import PointSelection from '../drawingLayers/PointSelection.js';
+import StatsPoint from '../drawingLayers/StatsPoint.js';
+import NorthUpCompass from '../drawingLayers/NorthUpCompass.js';
+import ImageRoot from '../drawingLayers/ImageRoot.js';
+import SearchTarget from '../drawingLayers/SearchTarget.js';
+import Catalog from '../drawingLayers/Catalog.js';
+import Artifact from '../drawingLayers/Artifact.js';
+import WebGrid from '../drawingLayers/WebGrid.js';
+import RegionPlot from '../drawingLayers/RegionPlot.js';
+import MarkerTool from '../drawingLayers/MarkerTool.js';
+import FootprintTool from '../drawingLayers/FootprintTool.js';
+import HiPSGrid from '../drawingLayers/HiPSGrid.js';
+import HiPSMOC from '../drawingLayers/HiPSMOC.js';
+import ImageOutline from '../drawingLayers/ImageOutline.js';
+import ImageLineBasedFootprint from '../drawingLayers/ImageLineBasedFootprint.js';
+
+//--- import Sagas
+import {dispatchAddSaga, masterSaga} from './MasterSaga.js';
+import {imagePlotter} from '../visualize/saga/ImagePlotter.js';
+import {watchReadout} from '../visualize/saga/MouseReadoutWatch.js';
+import {addExtensionWatcher} from './messaging/ExternalAccessWatcher.js';
 
 
 const USE_LOGGING_MIDDLEWARE= false; // logging middleware is useful for debugging but we don't use if much
@@ -73,8 +74,28 @@ const USE_LOGGING_MIDDLEWARE= false; // logging middleware is useful for debuggi
  *
  */
 
+/**
+ * @typedef {Object} BootstrapRegistry
+ * Used for gathering all the reducers and drawing layers and starting redux
+ *
+ * @prop {Function} registerCntlr - register a controller
+ * @prop {Function} createRedux - create the redux instance
+ * @prop {Function} startCoreSagas - should only be called at init
+ * @prop {Function} registerCreator - register an action creator
+ * @prop {Function} registerReducer - register a reducer
+ * @prop {Function} getActionCreators - get the action creators maps
+ * @prop {Function} getDrawLayerFactory - get the drawing layer factory
+ * @prop {Function} registerDrawLayer -  register a drawing layer
+ * @prop {Function} setDrawLayerDefaults
+ * @prop {Function} createDrawLayer
+ *
+ */
 
 
+/**
+ * Get the bootstrap registry, one the first call the bootstrap registry will initalize
+ * @return {BootstrapRegistry}
+ */
 export const getBootstrapRegistry= once(() => {
     const actionCreators = new Map();
     const sagaMiddleware = createSagaMiddleware();
@@ -187,7 +208,7 @@ function getLogger() {
         return window.enableFireflyReduxLogging;
     };
 
-    const logFilter= (getState,action) => {
+    const logFilter= () => {
         return window.enableFireflyReduxLogging;
     };
 

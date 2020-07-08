@@ -22,15 +22,15 @@ import {bootstrapRedux, flux} from './core/ReduxFlux.js';
 import {getOrCreateWsConn} from './core/messaging/WebSocketClient.js';
 import {ActionEventHandler} from './core/messaging/MessageHandlers.js';
 import {notifyServerAppInit} from './rpc/CoreServices.js';
-import {getPropsWith, mergeObjectOnly, getProp, toBoolean, documentReady} from './util/WebUtil.js';
-import {dispatchChangeTableAutoScroll, dispatchWcsMatch, visRoot} from './visualize/ImagePlotCntlr';
-import {Logger} from './util/Logger';
-import {evaluateWebApi, isUsingWebApi, WebApiStat} from './api/WebApi';
-import {WebApiHelpInfoPage} from './ui/WebApiHelpInfoPage';
-import {dispatchOnAppReady} from './core/AppDataCntlr';
-import {getBootstrapRegistry} from './core/BootstrapRegistry';
-import {showLostConnection} from './ui/LostConnection';
-import {recordHistory} from './core/History';
+import {getPropsWith, mergeObjectOnly, getProp, toBoolean, documentReady,uuid} from './util/WebUtil.js';
+import {dispatchChangeTableAutoScroll, dispatchWcsMatch, visRoot} from './visualize/ImagePlotCntlr.js';
+import {Logger} from './util/Logger.js';
+import {evaluateWebApi, isUsingWebApi, WebApiStat} from './api/WebApi.js';
+import {WebApiHelpInfoPage} from './ui/WebApiHelpInfoPage.jsx';
+import {dispatchOnAppReady} from './core/AppDataCntlr.js';
+import {getBootstrapRegistry} from './core/BootstrapRegistry.js';
+import {showLostConnection} from './ui/LostConnection.jsx';
+import {recordHistory} from './core/History.js';
 
 
 var initDone = false;
@@ -264,7 +264,7 @@ export const firefly = {
 
 
 /**
- * boostrap Firefly api or application.
+ * bootstrap Firefly api or application.
  * @param {AppProps} props - application properties
  * @param {FireflyOptions} options - startup options
  * @param {Array.<WebApiCommand>} webApiCommands
@@ -272,17 +272,18 @@ export const firefly = {
  */
 function bootstrap(props, options, webApiCommands) {
 
-    // if initialized, don't run it again.
-    if (window.firefly && window.firefly.initialized) return Promise.resolve();
+    if (window?.firefly?.initialized) return Promise.resolve(); // if initialized, don't run it again.
 
     set(window, 'firefly.initialized', true);
     return new Promise((resolve) => {
 
-        bootstrapRedux(
-            getBootstrapRegistry(),
-            () => getOrCreateWsConn().catch(() => showLostConnection()),
-            (rawAction) => recordHistory(rawAction)
-        );
+        const processDecor= (process) => (rawAction) => {
+            getOrCreateWsConn().catch(() => showLostConnection());
+            process(rawAction);
+            recordHistory(rawAction);
+        };
+
+        bootstrapRedux( getBootstrapRegistry(), processDecor);
         flux.process( {type : APP_LOAD} );  // setup initial store/state
 
         ensureUsrKey();
@@ -305,7 +306,7 @@ function renderRoot(viewer, props, webApiCommands) {
     const e= document.getElementById(props.div);
     if (!e) {
         showInfoPopup('HTML page is not setup correctly, Firefly cannot start.');
-        console.log(`DOM Element "${props.div}" is not found in the document, Firefly cannot start.`);
+        logger.error(`DOM Element "${props.div}" is not found in the document, Firefly cannot start.`);
         return;
     }
 
@@ -335,8 +336,6 @@ function handleWebApi(webApiCommands, e, doAppRender) {
     }
 }
 
-
-
 function ensureUsrKey() {
     if (hasOldUsrKey()) {
         document.cookie = 'usrkey=;path=/;max-age=-1';
@@ -346,21 +345,6 @@ function ensureUsrKey() {
     if (!usrKey) {
         document.cookie = `usrkey=${uuid()};max-age=${3600 * 24 * 7 * 2}`;
     }
-}
-
-function uuid() {
-    var seed = Date.now();
-    if (window.performance && typeof window.performance.now === 'function') {
-        seed += performance.now();
-    }
-    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-        var r = (seed + Math.random() * 16) % 16 | 0;
-        seed = Math.floor(seed/16);
-
-        return (c === 'x' ? r : r & (0x3|0x8)).toString(16);
-    });
-
-    return uuid;
 }
 
 function hasOldUsrKey() {
