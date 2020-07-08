@@ -4,7 +4,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 import * as TblUtil from '../tables/TableUtil.js';
 import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
 import {singleTraceUI, getNumericCols} from '../charts/ChartUtil.js';

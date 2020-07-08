@@ -27,7 +27,7 @@ const getScriptURL = once(() => {
 
 export const getRootURL = once(() => {
     if (getProp('SCRIPT_NAME') === undefined) return '//localhost:8080/';
-    const workingURL = getScriptURL() || window.location.href;
+    const workingURL = getScriptURL() || window?.location.href;
     return workingURL.substring(0, workingURL.lastIndexOf('/')) + '/';
 });
 
@@ -131,7 +131,7 @@ export function memorizeLastCall(fn, cacheSize=1) {
  * @param name
  * @return {function}
  */
-export function memorizeUsingMap(fn, maxMapSize=5000, makeKey= (args) => args.join(), name='') {
+export function memorizeUsingMap(fn, maxMapSize=5000, makeKey= (args) => args.join()) {
     const cacheMap= new Map();
     return (...args) => {
         const key= makeKey(args);
@@ -164,9 +164,9 @@ export function loadImage(src) {
  * @return {Promise<void>}
  */
 export function documentReady() {
-    return (window.document.readyState==='complete' || window.document.readyState==='interactive') ?
+    return (window?.document.readyState==='complete' || window?.document.readyState==='interactive') ?
         Promise.resolve() :
-        new Promise((resolve) => window.addEventListener('load', () => resolve() )); // maybe could use: document.addEventListener('DOMContentLoaded'
+        new Promise((resolve) => window?.addEventListener('load', () => resolve() )); // maybe could use: document.addEventListener('DOMContentLoaded'
 }
 
 
@@ -647,7 +647,7 @@ export function uniqueID() {
  * @function
  */
 export const requestIdleCallback =
-    window.requestIdleCallback ||
+    window?.requestIdleCallback ||
     function (callback) {
         return setTimeout(() => {
             const start = Date.now();
@@ -658,7 +658,7 @@ export const requestIdleCallback =
         }, 1);
     };
 
-export const cancelIdleCallback = window.cancelIdleCallback || ((id) => clearTimeout(id));
+export const cancelIdleCallback = window?.cancelIdleCallback || ((id) => clearTimeout(id));
 
 /**
  *
@@ -757,3 +757,12 @@ export function matches(s, regExp, ignoreCase) {
 }
 
 export const matchesIgCase= (s, regExp) => matches(s, regExp, true);
+
+export function uuid() {
+    let seed = Date.now() + (window?.performance?.now?.() ?? '');
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,  (c) => {
+        const r = (seed + Math.random() * 16) % 16 | 0;
+        seed = Math.floor(seed/16);
+        return (c === 'x' ? r : r & (0x3|0x8)).toString(16);
+    });
+}

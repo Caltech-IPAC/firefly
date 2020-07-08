@@ -6,7 +6,7 @@ import {race,call} from 'redux-saga/effects';
 import {take} from 'redux-saga/effects';
 import Enum from 'enum';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 import ImagePlotCntlr, {dispatchRecenter, visRoot, ExpandType, WcsMatchType} from './ImagePlotCntlr.js';
 import {primePlot, getPlotViewById} from './PlotViewUtil.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';

@@ -7,7 +7,7 @@ import PropTypes from 'prop-types';
 import CanvasWrapper from './CanvasWrapper.jsx';
 import {getDrawLayerById} from '../PlotViewUtil.js';
 import {dlRoot} from '../DrawLayerCntlr.js';
-import {flux} from '../../Firefly.js';
+import {flux} from '../../core/ReduxFlux.js';
 
 
 const isVisible= (drawLayer,plotId) => drawLayer.visiblePlotIdAry.includes(plotId);

@@ -5,7 +5,7 @@
 import React, {memo, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {xor,isNil, isEmpty,get, isString, isFunction, throttle, isNumber, isArray} from 'lodash';
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 import {ImageRender} from './iv/ImageRender.jsx';
 import {EventLayer} from './iv/EventLayer.jsx';
 import {ImageViewerStatus} from './iv/ImageViewerStatus.jsx';
@@ -52,7 +52,7 @@ function updateZoom(plotId, paging) {
     if (!primePlot(pv)) return;
     if (!pv.plotViewCtx.zoomLockingEnabled) return;
 
-    let doZoom= false;
+    let doZoom;
     let actionScope= ActionScope.GROUP;
     if (!paging && vr.wcsMatchType && plotId!==vr.mpwWcsPrimId) {
         doZoom= false;
@@ -328,8 +328,7 @@ function isImageSizeViewable(plotView) {
     const plot= primePlot(plotView);
     if (!plot) return false;
     const {screenSize:{width,height}}= plot;
-    if (width>5 || height>5) return true;
-    return false;
+    return (width>5 || height>5);
 }
 
 
@@ -418,19 +417,19 @@ function makeMessageArea(pv,plotShowing,onScreen, sizeViewable) {
             return false;
         }
     }
-
-    if (pv.serverCall==='working') {
+    else if (pv.serverCall==='working') {
         return (
             <ImageViewerStatus message={pv.plottingStatusMsg} working={true}
                                maskWaitTimeMS= {500} messageWaitTimeMS={1000} useMessageAlpha={plotShowing}/>
             );
 
     }
-    else if (pv.plottingStatusMsg) {
-        const buttonCB= plotShowing && (() => dispatchPlotProgressUpdate(pv.plotId,'',true, pv.request.getRequestKey()));
+    else if (pv.serverCall==='fail') {
+        const buttonCB= plotShowing ?
+            () => dispatchPlotProgressUpdate(pv.plotId,'',true, pv.request.getRequestKey()) : undefined;
         return (
-            <ImageViewerStatus message={pv.plottingStatusMsg} working={false}
-                               useMessageAlpha={true} buttonText='OK' buttonCB={buttonCB} />
+            <ImageViewerStatus message={pv.plottingStatusMsg || 'Image Data Plot Fail'}
+                               working={false} useMessageAlpha={true} buttonText='OK' buttonCB={buttonCB} />
         );
     }
 }

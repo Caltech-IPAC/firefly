@@ -6,7 +6,7 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
 import {COMMAND, getMenu} from '../core/AppDataCntlr.js';
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 import {dispatchShowDropDown} from '../core/LayoutCntlr.js';
 import {BgMonitorButton} from '../core/background/BgMonitorButton.jsx';
 import {makeBadge} from './ToolbarButton.jsx';

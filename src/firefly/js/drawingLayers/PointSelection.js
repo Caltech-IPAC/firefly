@@ -14,7 +14,7 @@ import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 import {clone} from '../util/WebUtil.js';
 import {get, isEmpty} from 'lodash';
 

@@ -1,6 +1,6 @@
 import {PureComponent, useEffect, useState} from 'react';
 import shallowequal from 'shallowequal';
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 import {addImageReadoutUpdateListener} from '../visualize/VisMouseSync';
 
 export class SimpleComponent extends PureComponent {

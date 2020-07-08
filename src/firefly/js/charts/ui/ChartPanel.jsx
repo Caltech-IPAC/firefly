@@ -2,7 +2,7 @@ import './ChartPanel.css';
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
-import {flux} from '../../Firefly.js';
+import {flux} from '../../core/ReduxFlux.js';
 import {get, isEmpty, isUndefined} from 'lodash';
 import {singleTraceUI} from '../ChartUtil.js';
 import {PlotlyChartArea} from './PlotlyChartArea.jsx';

@@ -15,7 +15,7 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {pick, get, isEmpty, cloneDeep} from 'lodash';
 import SplitPane from 'react-split-pane';
-import {flux} from '../../Firefly.js';
+import {flux} from '../../core/ReduxFlux.js';
 import {LO_VIEW, getLayouInfo, dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';

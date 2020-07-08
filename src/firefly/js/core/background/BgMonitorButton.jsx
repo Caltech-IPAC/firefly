@@ -1,7 +1,7 @@
 import {PureComponent} from 'react';
 import {get} from 'lodash';
 
-import {flux} from '../../Firefly.js';
+import {flux} from '../ReduxFlux';
 import {getBackgroundInfo, isActive} from './BackgroundUtil.js';
 import {BG_MONITOR_SHOW} from './BackgroundCntlr.js';
 import {makeMenuItem} from '../../ui/Menu.jsx';

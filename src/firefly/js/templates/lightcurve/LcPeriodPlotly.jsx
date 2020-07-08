@@ -7,7 +7,7 @@ import PropTypes from 'prop-types';
 
 import {get, set,  pick,  debounce} from 'lodash';
 import SplitPane from 'react-split-pane';
-import {flux} from '../../Firefly.js';
+import {flux} from '../../core/ReduxFlux.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import {RangeSlider}  from '../../ui/RangeSlider.jsx';

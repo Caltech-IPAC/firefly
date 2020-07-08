@@ -15,7 +15,7 @@
 
 import {get, pick, omitBy, set, isEmpty} from 'lodash';
 
-import {flux} from '../Firefly.js';
+import {flux} from './ReduxFlux';
 import {TABLE_SEARCH, LOG_HISTORY} from '../tables/TablesCntlr.js';
 import {encodeParams, parseUrl} from '../util/WebUtil.js';
 import {SHOW_DROPDOWN} from './LayoutCntlr.js';
@@ -61,7 +61,7 @@ const dropdownHandler = {
     actionToUrl: (action) => {
         const logHistory = get(action, 'payload.visible', true);
         if (!logHistory) return false;
-        const {view,initArgs}= action.payload;
+        const {view,initArgs}= action.payload ?? {};
         let params={};
         if (!isEmpty(initArgs)) {
             params= Object.entries(initArgs).reduce((obj,[k,v]) => {

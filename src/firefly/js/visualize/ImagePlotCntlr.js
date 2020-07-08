@@ -4,7 +4,7 @@
 
 import {has,isArray} from 'lodash';
 import Enum from 'enum';
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 import {ZoomType} from './ZoomType.js';
 import {reducer as plotChangeReducer} from './reducer/HandlePlotChange.js';
 import {reducer as plotCreationReducer} from './reducer/HandlePlotCreation.js';

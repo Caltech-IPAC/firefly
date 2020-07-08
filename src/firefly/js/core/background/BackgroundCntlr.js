@@ -5,7 +5,7 @@
 import React from 'react';
 import {set, get, has, pick, isNil} from 'lodash';
 
-import {flux} from '../../Firefly.js';
+import {flux} from '../ReduxFlux';
 import {smartMerge} from '../../tables/TableUtil.js';
 import {updateDelete, updateSet, parseUrl} from '../../util/WebUtil.js';
 import {showBackgroundMonitor} from './BackgroundMonitor.jsx';

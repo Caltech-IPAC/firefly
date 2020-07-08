@@ -5,7 +5,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty,omit} from 'lodash';
-import {flux} from '../../Firefly.js';
+import {flux} from '../../core/ReduxFlux.js';
 import shallowequal from 'shallowequal';
 import {ImageMetaDataToolbarView} from './ImageMetaDataToolbarView.jsx';
 import {makeDataProductsConverter} from '../../metaConvert/DataProductsFactory.js';

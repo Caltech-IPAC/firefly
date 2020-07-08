@@ -5,7 +5,7 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {TextLocation} from '../visualize/draw/DrawingDef.js';
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 import {dispatchModifyCustomField, DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
 import {getDrawLayerById} from '../visualize/PlotViewUtil.js';
 import {addNewDrawLayer} from '../visualize/ui/MarkerDropDownView.jsx';

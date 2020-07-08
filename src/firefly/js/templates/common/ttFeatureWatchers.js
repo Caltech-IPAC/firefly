@@ -9,5 +9,5 @@ export function startTTFeatureWatchers(startIds=[mocWatcherDef.id, catalogWatche
     startIds.includes(mocWatcherDef.id) && dispatchAddTableTypeWatcherDef(mocWatcherDef);
     startIds.includes(catalogWatcherDef.id) && dispatchAddTableTypeWatcherDef(catalogWatcherDef);
     startIds.includes(urlLinkWatcherDef.id) && dispatchAddTableTypeWatcherDef(urlLinkWatcherDef);
-    startIds.includes(getActiveRowCenterDef.id) && dispatchAddTableTypeWatcherDef(getActiveRowCenterDef());
+    startIds.includes(getActiveRowCenterDef().id) && dispatchAddTableTypeWatcherDef(getActiveRowCenterDef());
 }

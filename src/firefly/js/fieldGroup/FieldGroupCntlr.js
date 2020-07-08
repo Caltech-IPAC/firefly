@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 import {omit,get,isEqual} from 'lodash';
 import {clone} from '../util/WebUtil.js';
 import {revalidateFields} from './FieldGroupUtils.js';

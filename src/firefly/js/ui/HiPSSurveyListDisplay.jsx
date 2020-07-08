@@ -1,6 +1,6 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {flux} from '../Firefly.js';
+import {flux} from '../core/ReduxFlux.js';
 import {isEmpty, get, isUndefined, isNull} from 'lodash';
 import {getTblById, getCellValue} from '../tables/TableUtil.js';
 import LOADING from 'html/images/gxt/loading.gif';

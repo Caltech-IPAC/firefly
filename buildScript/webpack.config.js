@@ -99,6 +99,7 @@ export default function makeWebpackConfig(config) {
     /*------------------------ PLUGINS -----------------------------*/
     const plugins = [
         new webpack.DefinePlugin(globals),
+        
     ];
     if (ENV_DEV_MODE) {
         plugins.push( dev_progress() );
@@ -139,6 +140,7 @@ export default function makeWebpackConfig(config) {
                 ],
                 plugins: [
                     '@babel/plugin-transform-runtime',
+                    'lodash'
                 ]
             }
         },

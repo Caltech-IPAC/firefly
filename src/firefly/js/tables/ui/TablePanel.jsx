@@ -7,7 +7,7 @@ import PropTypes from 'prop-types';
 import {isEmpty, truncate, get} from 'lodash';
 import shallowequal from 'shallowequal';
 
-import {flux} from '../../Firefly.js';
+import {flux} from '../../core/ReduxFlux.js';
 import * as TblUtil from '../TableUtil.js';
 import {dispatchTableRemove, dispatchTblExpanded, dispatchTableFetch, dispatchTableAddLocal, dispatchTableFilter} from '../TablesCntlr.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';

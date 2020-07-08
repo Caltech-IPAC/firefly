@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {flux} from '../Firefly.js';
+import {flux} from './ReduxFlux';
 import {take, fork, spawn, cancel} from 'redux-saga/effects';
 import {isEmpty, get, isFunction, isUndefined, union, isArray, pick} from 'lodash';
 

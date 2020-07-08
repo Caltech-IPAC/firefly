@@ -5,7 +5,7 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty,omit,get} from 'lodash';
-import {flux} from '../../Firefly.js';
+import {flux} from '../../core/ReduxFlux.js';
 import {NewPlotMode, dispatchAddViewer, dispatchViewerUnmounted,
         getMultiViewRoot, getViewer, getLayoutType, findViewerWithItemId, IMAGE} from '../MultiViewCntlr.js';
 import {MultiImageViewerView} from './MultiImageViewerView.jsx';

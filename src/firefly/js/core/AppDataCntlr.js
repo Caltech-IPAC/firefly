@@ -3,7 +3,7 @@
  */
 
 import {get, map, isUndefined} from 'lodash';
-import {flux} from '../Firefly.js';
+import {flux} from './ReduxFlux';
 import {dispatchAddActionWatcher} from './MasterSaga';
 import {appDataReducer, menuReducer, alertsReducer} from './AppDataReducers.js';
 import Point, {isValidPoint} from '../visualize/Point.js';

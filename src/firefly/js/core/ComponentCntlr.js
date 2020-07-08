@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {flux} from '../Firefly.js';
+import {flux} from './ReduxFlux';
 import {get} from 'lodash';
 import update from 'immutability-helper';
 import {REINIT_APP} from './AppDataCntlr.js';
