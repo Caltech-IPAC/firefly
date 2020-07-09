@@ -55,7 +55,7 @@ export function DrawLayerItemView({maxTitleChars, lastItem, deleteLayer,
                          width:'100%'
                          }} >
                 <div style={{display: 'flex', alignItems: 'center'}}>
-                    <input type='checkbox' style={{visibility: canUserHide?'visible':'hidden'}} checked={visible} onChange={() => changeVisible()} />
+                    <input type='checkbox' style={{visibility: canUserHide?'inherit':'hidden'}} checked={visible} onChange={() => changeVisible()} />
                     {getTitleTag(title,maxTitleChars, autoFormatTitle)}
                 </div>
                 <div style={{padding:'0 4px 0 5px', width: 180, display: 'flex', justifyContent: 'flex-end'}}>
@@ -134,7 +134,7 @@ function makeDelete(canUserDelete,deleteLayer) {
         display:'inline-block',
         whiteSpace: 'nowrap',
         marginLeft: mLeft*2+symbolSize,
-        visibility: canUserDelete ? 'visible' : 'hidden'
+        visibility: canUserDelete ? 'inherit' : 'hidden'
     };
     return (
         <div style={bStyWid}>
