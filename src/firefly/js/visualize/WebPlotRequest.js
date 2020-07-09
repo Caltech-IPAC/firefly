@@ -1,5 +1,5 @@
 /* eslint prefer-template:0 */
-import {get, isString, isPlainObject, isArray, join, omit, pick, isObject} from 'lodash';
+import {get, isString, isFunction, isPlainObject, isArray, join, omit, pick, isObject} from 'lodash';
 import Enum from 'enum';
 import {ServerRequest} from '../data/ServerRequest.js';
 import {RequestType} from './RequestType.js';
@@ -87,10 +87,8 @@ export const WPConst= {
     CROP_PT2 : 'CropPt2',
     CROP_WORLD_PT1 : 'CropWorldPt1',
     CROP_WORLD_PT2 : 'CropWorldPt2',
-    CONTINUE_ON_FAIL : 'ContinueOnFail',  // todo deprecate
     OBJECT_NAME : 'ObjectName',
     RESOLVER : 'Resolver',
-    PLOT_DESC_APPEND : 'PlotDescAppend', //todo deprecate
     PROGRESS_KEY : 'ProgressKey',
     FLIP_Y : 'FlipY',
     THUMBNAIL_SIZE : 'thumbnailSize',
@@ -101,7 +99,6 @@ export const WPConst= {
 
 // keys - client side operations
     PREFERENCE_COLOR_KEY : PlotAttribute.PREFERENCE_COLOR_KEY,  //todo make this only a attribute
-    ALLOW_IMAGE_SELECTION : 'AllowImageSelection',  //todo - not used, deprecate, set to true in examples but unused
     GRID_ON : 'GridOn',
     OVERLAY_POSITION : 'OverlayPosition',
     PLOT_GROUP_ID: 'plotGroupId',
@@ -137,6 +134,17 @@ const clientSideKeys = [WPConst.PREFERENCE_COLOR_KEY, WPConst.ALLOW_IMAGE_SELECT
          WPConst.DOWNLOAD_FILENAME_ROOT, WPConst.PLOT_ID, WPConst.GROUP_LOCKED, WPConst.OVERLAY_IDS
         ];
 
+
+let defColorTable= 0;
+
+export const setDefaultImageColorTable= (ct) => defColorTable=ct;
+export const getDefaultImageColorTable= () => defColorTable;
+
+const defParams= {
+    REQUEST_CLASS: WEB_PLOT_REQUEST_CLASS,
+    [WPConst.INIT_COLOR_TABLE]: getDefaultImageColorTable,
+};
+
 /**
  * @summary Web plot request. This object can be created by using the method of making survey request like *makexxxRequest*
  * and the method of setting the parameters.
@@ -150,10 +158,10 @@ const clientSideKeys = [WPConst.PREFERENCE_COLOR_KEY, WPConst.ALLOW_IMAGE_SELECT
 export class WebPlotRequest extends ServerRequest {
     constructor(type,userDesc,serviceType) {
         super(type);
-        if (type) this.setRequestType(type);
-        this.setRequestClass(WEB_PLOT_REQUEST_CLASS);
-        if (serviceType && serviceType!==ServiceType.UNKNOWN) this.setServiceType(serviceType);
-        if (userDesc) this.setParam(WPConst.USER_DESC, userDesc);
+        type && this.setRequestType(type);
+        (serviceType && serviceType!==ServiceType.UNKNOWN) && this.setServiceType(serviceType);
+        userDesc && this.setParam(WPConst.USER_DESC, userDesc);
+        Object.entries(defParams).forEach(([k,v]) => this.setParam(k,isFunction(v) ? v():v));
     }
 
 //======================================================================
@@ -434,9 +442,7 @@ export class WebPlotRequest extends ServerRequest {
     setInitialColorTable(id) { this.setParam(WPConst.INIT_COLOR_TABLE, id + ''); }
 
     /** * @return {int} color table id number */
-    getInitialColorTable() {
-        return this.getIntParam(WPConst.INIT_COLOR_TABLE,0);
-    }
+    getInitialColorTable() { return this.getIntParam(WPConst.INIT_COLOR_TABLE,defColorTable); }
 
     /**
      *
@@ -987,7 +993,7 @@ export function findInvalidWPRKeys(r) {
  * @param {Function} makePlotId make a plot id
  * @return {*}
  */
-export function confirmPlotRequest(request,global,fallbackGroupId,makePlotId) {
+export function confirmPlotRequest(request,global={},fallbackGroupId,makePlotId) {
     if (isArray(request)) {
         let locked= true;
         const idx= request.findIndex( (r) => r.plotId);
@@ -1004,10 +1010,10 @@ export function confirmPlotRequest(request,global,fallbackGroupId,makePlotId) {
             locked= false;
         }
 
-        return request.map( (r) => Object.assign({},global,r,{plotId,plotGroupId,GroupLocked:locked}));
+        return request.map( (r) => ({...global,...r,plotId,plotGroupId,GroupLocked:locked}));
     }
     else {
-        const r= Object.assign({}, global, request);
+        const r= {...global, ...request};
         if (!r.plotId) r.plotId= makePlotId();
         if (!r.plotGroupId) r.plotGroupId= fallbackGroupId;
         if (r.plotGroupId===fallbackGroupId) r.GroupLocked= false;
@@ -1022,7 +1028,7 @@ function makeDataOnlyRequestString(r) {
     r.setZoomToHeight(1);
     r.setRequestKey('');
     r.setInitialRangeValues();
-    r.setInitialColorTable(0);
+    r.setInitialColorTable(getDefaultImageColorTable());
     return r.toString();
 }
 

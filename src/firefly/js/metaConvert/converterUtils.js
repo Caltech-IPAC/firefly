@@ -4,7 +4,7 @@
 
 import {isEmpty} from 'lodash';
 import {ServerRequest} from '../data/ServerRequest.js';
-import {WebPlotRequest} from '../visualize/WebPlotRequest.js';
+import {getDefaultImageColorTable, WebPlotRequest} from '../visualize/WebPlotRequest.js';
 import {ZoomType} from '../visualize/ZoomType.js';
 import {getCellValue, getTblInfo} from '../tables/TableUtil.js';
 import {makeFileRequest} from '../tables/TableRequestUtil';
@@ -279,7 +279,7 @@ export function createChartSingleRowArrayActivate(source, titleStr, activatePara
  * @return {function} see below, function takes plotId, reqKey,title, rowNum, extranParams and returns a WebPlotRequest
  *
  */
-export function makeServerRequestBuilder(table, colToUse, headerParams, rv=null, colorTableId=0) {
+export function makeServerRequestBuilder(table, colToUse, headerParams, rv=null, colorTableId= getDefaultImageColorTable()) {
     /**
      * @param plotId - the plot id for the request
      * @param reqKey - search processor request key

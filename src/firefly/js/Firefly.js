@@ -31,6 +31,7 @@ import {dispatchOnAppReady} from './core/AppDataCntlr.js';
 import {getBootstrapRegistry} from './core/BootstrapRegistry.js';
 import {showLostConnection} from './ui/LostConnection.jsx';
 import {recordHistory} from './core/History.js';
+import {setDefaultImageColorTable} from './visualize/WebPlotRequest.js';
 
 
 var initDone = false;
@@ -142,6 +143,9 @@ const defFireflyOptions = {
         defHipsSources: {source: 'irsa', label: 'Featured'},
         mergedListPriority: 'irsa'
     },
+    image : {
+        defaultColorTable: 1,
+    },
     coverage : {
         // TODO: need to define all options with defaults here.  used in FFEntryPoint.js
     },
@@ -185,6 +189,7 @@ function installOptions(options) {
     options.disableDefaultDropDown && dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
     options.readoutDefaultPref && dispatchChangeReadoutPrefs(options.readoutDefaultPref);
     options.wcsMatchType && dispatchWcsMatch({matchType:options.wcsMatchType, lockMatch:true});
+    setDefaultImageColorTable(options.image?.defaultColorTable ?? 1);
 
     if (options.imageScrollsToHighlightedTableRow!==visRoot().autoScrollToHighlightedTableRow) {
         dispatchChangeTableAutoScroll(options.imageScrollsToHighlightedTableRow);
