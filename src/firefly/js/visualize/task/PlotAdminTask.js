@@ -19,7 +19,10 @@ import {clone} from '../../util/WebUtil.js';
 import {detachSelectAreaRelatedLayers} from '../ui/SelectAreaDropDownView.jsx';
 import {getAppOptions} from '../../core/AppDataCntlr';
 import {WcsMatchType} from '../ImagePlotCntlr';
+import {hasOverlayColorLock, findPlotGroup } from '../PlotViewUtil';
 import {onPlotComplete} from '../PlotCompleteMonitor';
+
+
 
 export function autoPlayActionCreator(rawAction) {
     return (dispatcher) => {
@@ -92,14 +95,16 @@ export function changePointSelectionActionCreator(rawAction) {
  */
 export function restoreDefaultsActionCreator(rawAction) {
     return (dispatcher, getState) => {
-        const vr= getState()[IMAGE_PLOT_KEY];
-        const {plotId}= rawAction.payload;
-        const {plotViewAry, positionLock}= vr;
-        const pv= getPlotViewById(vr,plotId);
+        const vr = getState()[IMAGE_PLOT_KEY];
+        const {plotId} = rawAction.payload;
+        const {plotViewAry, positionLock} = vr;
+        const pv = getPlotViewById(vr, plotId);
+        const plotGroup= findPlotGroup(pv.plotGroupId,vr.plotGroupAry);
+        const toAll =  hasOverlayColorLock(pv, plotGroup) | positionLock;
 
         detachSelectAreaRelatedLayers(pv, true);
         const {wcsMatchType:matchType, defNorthUpLock}= getAppOptions();
-        applyToOnePvOrAll(positionLock, plotViewAry, plotId, false,
+        applyToOnePvOrAll(toAll, plotViewAry, plotId, false,
             (pv)=> {
                 if (vr.plotRequestDefaults[pv.plotId]) {
                     const plot= primePlot(pv);

@@ -3,7 +3,7 @@
  */
 
 import {logError} from '../../util/WebUtil.js';
-import ImagePlotCntlr, {IMAGE_PLOT_KEY, dispatchWcsMatch} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {IMAGE_PLOT_KEY, dispatchWcsMatch, ActionScope} from '../ImagePlotCntlr.js';
 import {primePlot, getPlotViewById, operateOnOthersInOverlayColorGroup, getPlotStateAry} from '../PlotViewUtil.js';
 import {callCrop, callChangeColor, callRecomputeStretch} from '../../rpc/PlotServicesJson.js';
 import {WebPlotResult} from '../WebPlotResult.js';
@@ -57,16 +57,26 @@ export function colorChangeActionCreator(rawAction) {
         const pv= getPlotViewById(store,plotId);
         if (!pv) return;
 
-
-        if (!primePlot(pv).plotState.isThreeColor()) {
-            doColorChange(dispatcher,getState, store,plotId,cbarId);
-        }
-        operateOnOthersInOverlayColorGroup(store,pv, (pv) => {
-            const p= primePlot(pv);
-            if (p && !p.plotState.isThreeColor()) { // only do others that are not three color
-                doColorChange(dispatcher,getState, store,pv.plotId,cbarId);
+        if (rawAction.payload.actionScope===ActionScope.SINGLE){
+            if (!primePlot(pv).plotState.isThreeColor()) {
+                doColorChange(dispatcher,getState, store,plotId,cbarId);
             }
-        });
+        }
+        else {
+            //active plot
+            if (!primePlot(pv).plotState.isThreeColor()) {
+                doColorChange(dispatcher,getState, store,plotId,cbarId);
+            }
+            //all other plots
+            operateOnOthersInOverlayColorGroup(store,pv, (pv) => {
+                const p= primePlot(pv);
+                if (p && !p.plotState.isThreeColor()) { // only do others that are not three color
+                    doColorChange(dispatcher,getState, store,pv.plotId,cbarId);
+                }
+            });
+
+        }
+
 
     };
 
