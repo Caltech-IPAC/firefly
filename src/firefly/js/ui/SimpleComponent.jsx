@@ -2,6 +2,7 @@ import {PureComponent, useEffect, useState} from 'react';
 import shallowequal from 'shallowequal';
 import {flux} from '../core/ReduxFlux.js';
 import {addImageReadoutUpdateListener} from '../visualize/VisMouseSync';
+import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 
 export class SimpleComponent extends PureComponent {
     constructor(props) {
@@ -114,4 +115,18 @@ export function useMouseStoreConnector(makeState) {
 }
 
 
+export function useBindFieldGroupToStore(groupKey) {
+    let mounted= true;
+    const [fields, setFields] = useState({});
+    useEffect(() => {
+        const remover= FieldGroupUtils.bindToStore(groupKey, (f) => {
+            if (!shallowequal(f,fields) && mounted) setFields(f);
+        });
+        return () => {
+            mounted= false;
+            remover();
+        };
+    },[]);
+    return fields;
+}
 
