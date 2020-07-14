@@ -139,7 +139,7 @@ export class TapSearchPanel extends PureComponent {
         const rightBtn = selectBy === 'basic' ? (
             <ExtraButton key='editADQL'
                          text='Populate and edit ADQL'
-                         onClick={this.populateAndEditAdql}
+                         onClick={() => this.populateAndEditAdql()}
                          style={{marginLeft: 30}}
             /> ) : undefined;
         const maxrecFld = (
