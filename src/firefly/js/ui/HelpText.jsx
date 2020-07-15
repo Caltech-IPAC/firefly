@@ -7,13 +7,13 @@ import PropTypes from 'prop-types';
 import {flux} from '../core/ReduxFlux.js';
 import {HELP_LOAD} from '../core/AppDataCntlr.js';
 
-export function HelpText({helpId, linkText, linkStyle}) {
+export function HelpText({helpId, style, linkText, linkStyle}) {
 
 
     const onClick = () => flux.process({ type: HELP_LOAD, payload: {helpId} });
 
     return (
-        <div>
+        <div style={style}>
             <a href="#" className={linkStyle}
                  onClick={onClick}
                  >{linkText}</a>
@@ -22,6 +22,7 @@ export function HelpText({helpId, linkText, linkStyle}) {
 
 HelpText.propTypes = {
     helpId: PropTypes.string,
+    style: PropTypes.object,
     linkText: PropTypes.string,
     linkStyle: PropTypes.object
 };
