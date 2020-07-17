@@ -74,6 +74,7 @@
  * @prop {boolean}  showTables  show tables panel
  * @prop {boolean}  showXyPlots show charts panel
  * @prop {boolean}  showImages  show images panel
+ * @prop {boolean}  initLoadCompleted true when anything as been loaded once
  * @prop {Object.<string, GridViewData>} gridViewsData used only with the grid view, undefined for other views
  */
 

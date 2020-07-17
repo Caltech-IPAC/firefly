@@ -12,6 +12,7 @@ import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
 import {TriViewImageSection} from '../../visualize/ui/TriViewImageSection.jsx';
+import {AppInitLoadingMessage} from '../../ui/AppInitLoadingMessage.jsx';
 
 export class TriViewPanel extends PureComponent {
 
@@ -37,11 +38,13 @@ export class TriViewPanel extends PureComponent {
     }
 
     render() {
-        const {showViewsSwitch, leftButtons, centerButtons, rightButtons} = this.props;
+        const {showViewsSwitch, leftButtons, centerButtons, rightButtons, initLoadingMessage, initLoadCompleted} = this.props;
         const {title, mode, showTables, showImages, showXyPlots, images={}} = this.state;
         const {expanded, standard, closeable} = mode || {};
         const content = {};
         var visToolbar;
+
+        if (initLoadingMessage && !initLoadCompleted) return (<AppInitLoadingMessage message={initLoadingMessage}/>);
 
         if (showImages) {
             visToolbar = <VisToolbar key='res-vis-tb'/>;
@@ -87,7 +90,9 @@ TriViewPanel.propTypes = {
     showViewsSwitch: PropTypes.bool,
     leftButtons: PropTypes.arrayOf( PropTypes.func ),
     centerButtons: PropTypes.arrayOf( PropTypes.func ),
-    rightButtons: PropTypes.arrayOf( PropTypes.func )
+    rightButtons: PropTypes.arrayOf( PropTypes.func ),
+    initLoadingMessage:  PropTypes.string,
+    initLoadCompleted:  PropTypes.bool,
 };
 TriViewPanel.defaultProps = {
     showViewsSwitch: true
@@ -131,3 +136,4 @@ function searchDesc({viewSwitch, leftButtons, centerButtons, rightButtons}) {
        </div>
     );
 }
+

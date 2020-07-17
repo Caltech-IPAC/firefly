@@ -7,29 +7,25 @@
  * @public
  * @summary Build the interface to remotely communicate to the firefly viewer
  */
-import {isArray, get, set} from 'lodash';
+import {isArray, get, set,isFunction} from 'lodash';
 import Enum from 'enum';
-
 import {WSCH} from '../core/History.js';
 import {debug} from './ApiUtil.js';
 import {dispatchRemoteAction}  from '../core/JsonUtils.js';
 import {dispatchPlotImage, dispatchPlotHiPS}  from '../visualize/ImagePlotCntlr.js';
 import {RequestType}  from '../visualize/RequestType.js';
-import {clone, logError, hashCode}  from '../util/WebUtil.js';
+import {logError, hashCode, getRootURL, modifyURLToFull}  from '../util/WebUtil.js';
 import {Logger}  from '../util/Logger.js';
 import {confirmPlotRequest,findInvalidWPRKeys}  from '../visualize/WebPlotRequest.js';
 import {dispatchTableSearch, dispatchTableFetch}  from '../tables/TablesCntlr.js';
 import {dispatchChartAdd} from '../charts/ChartsCntlr.js';
 import {makeFileRequest}  from '../tables/TableRequestUtil.js';
 import {uniqueChartId} from '../charts/ChartUtil.js';
-import {getWsChannel, getWsConnId} from '../core/AppDataCntlr.js';
-import {getConnectionCount, WS_CONN_UPDATED, GRAB_WINDOW_FOCUS,
-    NOTIFY_REMOTE_APP_READY, makeViewerChannel} from '../core/AppDataCntlr.js';
+import {getWsChannel, getWsConnId, getConnectionCount, makeViewerChannel,
+    REINIT_APP, WS_CONN_UPDATED, GRAB_WINDOW_FOCUS, NOTIFY_REMOTE_APP_READY} from '../core/AppDataCntlr.js';
 import {dispatchAddCell, dispatchEnableSpecialViewer, LO_VIEW} from '../core/LayoutCntlr.js';
 import {DEFAULT_FITS_VIEWER_ID, DEFAULT_PLOT2D_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
-import {REINIT_APP} from '../core/AppDataCntlr.js';
-import {dispatchAddActionWatcher} from '../core/MasterSaga';
-import {getRootURL, modifyURLToFull} from '../util/WebUtil';
+import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 
 const logger = Logger('ApiViewer');
 
@@ -38,14 +34,8 @@ export const ViewerType= new Enum([
     'Grid' // use the plot description key
 ], { ignoreCase: true });
 
-
-let viewerWindow;
-
 let defaultViewerFile='';
 let defaultViewerType=ViewerType.TriView;
-
-
-
 
 /**
  * @returns {{getViewer: function, getExternalViewer: function}}
@@ -63,11 +53,8 @@ export function buildViewerApi() {
  */
 export function setViewerConfig(viewerType, htmlFile= '') {
     if (!htmlFile) {
-        if (viewerType===ViewerType.Grid) {
-            htmlFile= 'slate.html';
-        }
+        if (viewerType===ViewerType.Grid) htmlFile= 'slate.html';
     }
-
     defaultViewerType= viewerType;
     defaultViewerFile= htmlFile;
 }
@@ -101,19 +88,19 @@ export function getViewer(channel, file=defaultViewerFile, scriptUrl) {
          * @public
          * @namespace firefly.ApiViewer
          */
-        const viewer= Object.assign({dispatch, reinitViewer, channel},
-            buildImagePart(channel,file,dispatch),
-            buildTablePart(channel,file,dispatch),
-            buildChartPart(channel,file,dispatch),
-            buildUtilPart(channel,file),
-        );
+        const viewer= {dispatch, reinitViewer, channel,
+            ...buildImagePart(channel,file,dispatch),
+            ...buildTablePart(channel,file,dispatch),
+            ...buildChartPart(channel,file,dispatch),
+            ...buildUtilPart(channel,file)
+        };
 
 
         switch (defaultViewerType) { // add any additional API
             case ViewerType.TriView:
                 return viewer;
             case ViewerType.Grid:
-                return Object.assign({}, viewer, buildSlateControl(channel,file,dispatch));
+                return {...viewer, ...buildSlateControl(channel,file,dispatch)};
             default:
                 debug('Unknown viewer type: ${defaultViewerType}, returning TriView');
                 return viewer;
@@ -161,16 +148,11 @@ export function loadRemoteApi(scriptUrl) {
 }
 
 function buildUtilPart(channel, file, dispatcher) {
-    const openViewer= () => {
-        doViewerOperation(channel,file);
-    };
-
-    return {openViewer};
+    return {openViewer: () => doViewerOperation(channel,file)};
 }
 
 function buildSlateControl(channel,file,dispatcher) {
-
-
+    const viewOp= makeViewerOp(channel,file);
 
     /**
      *
@@ -181,9 +163,7 @@ function buildSlateControl(channel,file,dispatcher) {
      * @param {LO_VIEW} type must be 'tables', 'images' or 'xyPlots' (use 'xyPlots' for histograms)
      * @param {string} cellId
      */
-    const addCell= (row, col, width, height, type, cellId) => {
-
-        doViewerOperation(channel,file, () => {
+    const addCell= (row, col, width, height, type, cellId) => viewOp(() => {
             if (LO_VIEW.get(type)===LO_VIEW.tables) {
                 if (cellId!=='main') debug('for tables type is force to be "main"');
                 cellId= 'main';
@@ -191,12 +171,14 @@ function buildSlateControl(channel,file,dispatcher) {
             dispatchAddCell({row,col,width,height,type, cellId,dispatcher});
         });
 
-
-    };
-
-
-    // const enableSpecialViewer= (viewerType, cellId= undefined, tableGroup= 'main') =>
-    //     dispatchEnableSpecialViewer({viewerType, cellId:(cellId || `${viewerType}-${tableGroup}`), dispatcher});
+    /**
+     *
+     * @param {string} cellId  cell id to add to
+     * @param {string} [tableGroup] tableGroup to connect to, currently only main supported
+     */
+    const showCoverage = (cellId, tableGroup= 'main') => viewOp(() =>
+        dispatchEnableSpecialViewer({
+            viewerType:LO_VIEW.coverageImage, cellId:(cellId || `${LO_VIEW.coverageImage}-${tableGroup}`), dispatcher}));
 
 
     /**
@@ -204,36 +186,21 @@ function buildSlateControl(channel,file,dispatcher) {
      * @param {string} cellId  cell id to add to
      * @param {string} [tableGroup] tableGroup to connect to, currently only main supported
      */
-    const showCoverage = (cellId, tableGroup= 'main') => {
-        doViewerOperation(channel,file, () => {
-            dispatchEnableSpecialViewer({viewerType:LO_VIEW.coverageImage,
-                cellId:(cellId || `${LO_VIEW.coverageImage}-${tableGroup}`),
-                dispatcher});
-        });
-    };
-
-    /**
-     *
-     * @param {string} cellId  cell id to add to
-     * @param {string} [tableGroup] tableGroup to connect to, currently only main supported
-     */
-    const showImageMetaDataViewer = (cellId, tableGroup= 'main') => {
-        doViewerOperation(channel,file, () => {
+    const showImageMetaDataViewer = (cellId, tableGroup= 'main') => viewOp(() => {
             dispatchEnableSpecialViewer({
                 viewerType: LO_VIEW.tableImageMeta,
                 cellId: (cellId || `${LO_VIEW.tableImageMeta}-${tableGroup}`),
                 dispatcher
             });
         });
-    };
+
 
     return {addCell, showCoverage, showImageMetaDataViewer};
-
 }
 
 
 function buildImagePart(channel,file,dispatch) {
-
+    const viewOp= makeViewerOp(channel,file);
     let defP= {};
 
     /**
@@ -246,22 +213,15 @@ function buildImagePart(channel,file,dispatch) {
 
     /**
      * @summary show a image in the firefly viewer in another tab
-     * @param {WebPlotParams|WebPlotRequest} request The object contains parameters for web plot request
+     * @param {WebPlotParams|WebPlotRequest|Array.<WebPlotParams>} request The object contains parameters for web plot request
      * @param {String} viewerId
      * @memberof firefly.ApiViewer
      * @public
      */
-    const showImage= (request, viewerId) => {
-        doViewerOperation(channel,file, () => {
-            if (isArray(request)) {
-                request= request.map( (r) => clone(r,defP));
-            }
-            else {
-                request= clone(request,defP);
-            }
+    const showImage= (request, viewerId) => viewOp('Loading Image Data...', () => {
+            request= isArray(request) ? request.map( (r) => ({...r,...defP})) : {...request,...defP};
             plotRemoteImage(request,viewerId, dispatch);
         });
-    };
 
     /**
      * @summary show a HiPS in the firefly viewer in another tab
@@ -270,12 +230,8 @@ function buildImagePart(channel,file,dispatch) {
      * @memberof firefly.ApiViewer
      * @public
      */
-    const showHiPS= (request, viewerId) => {
-        doViewerOperation(channel,file, () => {
-            request= clone(request,defP);
-            plotRemoteHiPS(request,viewerId, dispatch);
-        });
-    };
+    const showHiPS= (request, viewerId) =>
+        viewOp('Loading HiPS Data...', () => plotRemoteHiPS({...request,defP},viewerId, dispatch));
 
     /**
      * @summary show a image in the firefly viewer in another tab, the file first then the url
@@ -286,54 +242,28 @@ function buildImagePart(channel,file,dispatch) {
      */
     const showImageFileOrUrl= (file,url) => showImage({file, url, Type : RequestType.TRY_FILE_THEN_URL});
 
-
-    //------- deprecated part ---------------------
-
-
-    const doDepPlot= (request, oldCall, newCall) => {
-        debug(`${oldCall} call it deprecated, use ${newCall} instead`);
-        showImage(request);
-    };
-
-    const plot= (request) => doDepPlot(request,'plot','showImage');
-
-    const plotURL= (url) =>  doDepPlot({url}, 'plotURL', `showImage({url: ${url} })`);
-    const plotFile= (file) =>  doDepPlot({file}, 'plotFile', `showImage({url: ${file} })`);
-    const plotFileOrURL= (file,url) => doDepPlot({file, url, Type : RequestType.TRY_FILE_THEN_URL},
-                                                  'plotFileOrURL', 'showImageFileOrUrl');
-
-    //------- End deprecated part ---------------------
-
-
-    return {showImage,showHiPS, showImageFileOrUrl,setDefaultParams, plot,plotURL,plotFile, plotFileOrURL};
+    return {showImage,showHiPS, showImageFileOrUrl,setDefaultParams};
 }
 
 
 function buildTablePart(channel,file,dispatch) {
 
+    const viewOp= makeViewerOp(channel,file, 'Loading Table...');
     /**
-     *
      * @param {Object} request
      * @param {TblOptions} options
      * @memberof firefly.ApiViewer
      * @public
      */
-    const showTable= (request, options)  => {
-        doViewerOperation(channel,file, () => {
-            dispatchTableSearch(request, options, dispatch);
-        });
-    };
+    const showTable= (request, options)  => viewOp(() => dispatchTableSearch(request, options, dispatch));
 
-    const fetchTable= (request, hlRowIdx) => {
-        doViewerOperation(channel,file, () => {
-            dispatchTableFetch(request, hlRowIdx, undefined, dispatch);
-        });
-    };
+    const fetchTable= (request, hlRowIdx) => viewOp(() => dispatchTableFetch(request, hlRowIdx, undefined, dispatch));
 
     return {showTable, fetchTable};
 }
 
 function buildChartPart(channel,file,dispatch) {
+    const viewOp= makeViewerOp(channel,file, 'Loading Chart...');
 
     /**
      * @summary Show a chart
@@ -342,13 +272,7 @@ function buildChartPart(channel,file,dispatch) {
      * @memberof firefly.ApiViewer
      * @public
      */
-    const showChart= (options, viewerId) => {
-        doViewerOperation(channel, file, () => {
-            plotRemoteChart(options, viewerId, dispatch);
-        });
-    };
-
-
+    const showChart= (options, viewerId) => viewOp(() => plotRemoteChart(options, viewerId, dispatch));
 
     /**
      * @summary Show XY Plot
@@ -357,11 +281,7 @@ function buildChartPart(channel,file,dispatch) {
      * @memberof firefly.ApiViewer
      * @public
      */
-    const showXYPlot= (xyPlotOptions, viewerId) => {
-        doViewerOperation(channel, file, () => {
-            plotRemoteXYPlot(xyPlotOptions, viewerId, dispatch);
-        });
-    };
+    const showXYPlot= (xyPlotOptions, viewerId) => viewOp(() => plotRemoteXYPlot(xyPlotOptions, viewerId, dispatch));
 
     /**
      * @summary Show Histogram
@@ -370,34 +290,45 @@ function buildChartPart(channel,file,dispatch) {
      * @memberof firefly.ApiViewer
      * @public
      */
-    const showHistogram= (histogramOptions, viewerId) => {
-        doViewerOperation(channel, file, () => {
-            plotRemoteHistogram(histogramOptions, viewerId, dispatch);
-        });
-    };
+    const showHistogram= (histogramOptions, viewerId) => viewOp('Loading Histogram...', () =>
+        plotRemoteHistogram(histogramOptions, viewerId, dispatch));
 
     return {showChart, showXYPlot, showHistogram};
 }
 
-
-function doViewerOperation(channel,file,f) {
-    const cnt = getConnectionCount(channel);
-    if (cnt > 0) {
-        if (viewerWindow){
-            viewerWindow.focus();
+const doViewerOperation= (() => {
+    let viewerWindow;
+    return (channel,file,initMsg, f) => {
+        const cnt = getConnectionCount(channel);
+        if (cnt > 0) {
+            viewerWindow ? viewerWindow.focus() : dispatchRemoteAction(channel, {type:GRAB_WINDOW_FOCUS});
+            f?.();
         } else {
-            dispatchRemoteAction(channel, {type:GRAB_WINDOW_FOCUS});
+            dispatchAddActionWatcher({
+                callback:windowReadyWatcher, actions:[WS_CONN_UPDATED, NOTIFY_REMOTE_APP_READY], params:{channel,f}
+            });
+            const url= `${modifyURLToFull(file,getRootURL())}?${WSCH}=${channel}`;
+            viewerWindow = window.open(url, channel);
+            set(viewerWindow, 'firefly.options.RequireWebSocketUptime', true);
+            initMsg && set(viewerWindow, 'firefly.options.initLoadingMessage', initMsg);
         }
-        f?.();
-    } else {
-        dispatchAddActionWatcher({
-            callback:windowReadyWatcher, actions:[WS_CONN_UPDATED, NOTIFY_REMOTE_APP_READY], params:{channel,f}
-        });
-        const url= `${modifyURLToFull(file,getRootURL())}?${WSCH}=${channel}`;
-        viewerWindow = window.open(url, channel);
-        set(viewerWindow, 'firefly.options.RequireWebSocketUptime', true);
-    }
-}
+    };
+})();
+
+
+/**
+ * return a wrapper function that calls doViewerOperation. The returned function may be called in one of two ways.
+ * f(message,function) or f(function)
+ * @param {string} channel
+ * @param {string} file
+ * @param {string} defMsg - the init loading message to pass to firefly
+ * @return {function} a function called with-  f(message,function) or f(function)
+ */
+const makeViewerOp= (channel,file,defMsg='') => (msgOrFunc,func) =>
+    isFunction(msgOrFunc) ?
+        doViewerOperation(channel,file,defMsg,msgOrFunc) :
+        doViewerOperation(channel,file,msgOrFunc, func);
+
 
 export function windowReadyWatcher(action, cancelSelf, {channel, f, isLoaded= false, isReady=false}) {
     const {type,payload={}}=action;
@@ -424,17 +355,15 @@ export function windowReadyWatcher(action, cancelSelf, {channel, f, isLoaded= fa
  * @param {Function} dispatch - dispatch function
  */
 function plotRemoteChart(params, viewerId, dispatch) {
-
-    const dispatchParams= clone({
-        groupId: viewerId || 'default',
-        viewerId:viewerId || DEFAULT_PLOT2D_VIEWER_ID,
-        chartId: params.chartId || uniqueChartId(),
-        chartType: 'plot.ly',
-        deletable: true,
-        dispatcher: dispatch
-    }, params);
-
-    dispatchChartAdd(dispatchParams);
+    dispatchChartAdd( {
+                groupId: viewerId || 'default',
+                viewerId:viewerId || DEFAULT_PLOT2D_VIEWER_ID,
+                chartId: params.chartId || uniqueChartId(),
+                chartType: 'plot.ly',
+                deletable: true,
+                dispatcher: dispatch,
+                ...params}
+    );
 }
 
 
@@ -456,7 +385,7 @@ function plotRemoteXYPlot(params, viewerId, dispatch) {
             );
             tblId = searchRequest.tbl_id;
             dispatchTableFetch(searchRequest, 0, undefined, dispatch);
-            params = Object.assign({}, params, {tbl_id: tblId});
+            params = {...params, tbl_id: tblId};
         } else {
             logError('Either tbl_id or source must be specified in the parameters');
             return;
@@ -491,7 +420,7 @@ function plotRemoteHistogram(params, viewerId, dispatch) {
             );
             tblId = searchRequest.tbl_id;
             dispatchTableFetch(searchRequest, 0, undefined, dispatch);
-            params = Object.assign({}, params, {tbl_id: tblId});
+            params = {...params, tbl_id: tblId};
         } else {
             logError('Either tbl_id or source must be specified in the parameters');
             return;
@@ -509,18 +438,10 @@ function plotRemoteHistogram(params, viewerId, dispatch) {
 }
 
 //================================================================
-//---------- Private Table functions
-//================================================================
-
-
-//================================================================
 //---------- Private Image functions
 //================================================================
 
-
-
 function plotRemoteImage(request, viewerId, dispatch) {
-
     const testR= Array.isArray(request) ? request : [request];
     testR.forEach( (r) => {
         const badList= findInvalidWPRKeys(r);
@@ -542,11 +463,7 @@ function plotRemoteHiPS(request, viewerId, dispatch) {
                       viewerId:viewerId || DEFAULT_FITS_VIEWER_ID, dispatcher:dispatch});
 }
 
-
-
-let plotCnt= 0;
-
-function makePlotId() {
-    plotCnt++;
-    return `apiPlot-${getWsConnId()}-${plotCnt}`;
-}
+const makePlotId = (() => {
+    let plotCnt= 1;
+    return () => `apiPlot-${getWsConnId()}-${plotCnt++}`;
+})();

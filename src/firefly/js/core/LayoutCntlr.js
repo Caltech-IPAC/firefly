@@ -14,7 +14,7 @@ import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 import {TBL_RESULTS_ADDED, TBL_RESULTS_REMOVE, TABLE_REMOVE} from '../tables/TablesCntlr.js';
 import {CHART_ADD, CHART_REMOVE} from '../charts/ChartsCntlr.js';
 import {REPLACE_VIEWER_ITEMS} from '../visualize/MultiViewCntlr.js';
-import {REINIT_APP} from '../core/AppDataCntlr.js';
+import {REINIT_APP} from './AppDataCntlr.js';
 import {getDefaultChartProps} from '../charts/ChartUtil.js';
 
 export const LAYOUT_PATH = 'layout';
@@ -242,7 +242,7 @@ export function getLayoutRoot() {
  * @returns {LayoutInfo} returns the layout information of the application
  */
 export function getLayouInfo() {
-    const layout = get(flux.getState(), 'layout', {});
+    const layout = get(flux.getState(), 'layout', {initLoadCompleted:false});
     const hasImages = get(flux.getState(), 'allPlots.plotViewAry.length') > 0;
     const hasTables = !isEmpty(get(flux.getState(), 'table_space.results.main.tables', {}));
     /*
@@ -254,7 +254,8 @@ export function getLayouInfo() {
     */
     // keep plot area in place if any table has a related chart
     const hasXyPlots = !isEmpty(get(flux.getState(), 'charts.data', {})) || (hasTables && !isEmpty(getDefaultChartProps(getActiveTableId())));
-    return clone(layout, {hasImages, hasTables, hasXyPlots});
+    return {...layout, hasImages, hasTables, hasXyPlots,
+                      initLoadCompleted:layout.initLoadCompleted||hasImages||hasTables||hasXyPlots};
 }
 
 function getSelView(state, dropDown) {

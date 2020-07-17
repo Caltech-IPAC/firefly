@@ -66,7 +66,8 @@ export class FireflyViewer extends PureComponent {
 
     componentDidMount() {
         dispatchOnAppReady((state) => {
-            onReady({state, menu: this.props.menu, views: this.props.views, options:this.props.options});
+            onReady({state, menu: this.props.menu, views: this.props.views,
+                options:this.props.options, initLoadingMessage:this.props.initLoadingMessage, initLoadCompleted:this.state.initLoadCompleted});
         });
         this.removeListener = flux.addListener(() => this.storeUpdate());
     }
@@ -80,7 +81,7 @@ export class FireflyViewer extends PureComponent {
     }
 
     render() {
-        const {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown, showUserInfo,
+        const {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown, showUserInfo, initLoadCompleted, initLoadingMessage,
                 dropdownPanels, views, footer, style, showViewsSwitch, leftButtons, centerButtons, rightButtons} = this.state;
         const {visible, view, initArgs} = dropDown || {};
 
@@ -101,7 +102,8 @@ export class FireflyViewer extends PureComponent {
                             {...{dropdownPanels} } />
                     </header>
                     <main>
-                        <DynamicResults {...{views, showViewsSwitch, leftButtons, centerButtons, rightButtons}}/>
+                        <DynamicResults {...{views, showViewsSwitch, leftButtons, centerButtons,
+                                             rightButtons, initLoadingMessage, initLoadCompleted}}/>
                     </main>
                 </div>
             );
@@ -130,6 +132,7 @@ FireflyViewer.propTypes = {
     centerButtons: PropTypes.arrayOf( PropTypes.func ),
     rightButtons: PropTypes.arrayOf( PropTypes.func ),
     options: PropTypes.object,
+    initLoadingMessage: PropTypes.string,
 };
 
 FireflyViewer.defaultProps = {
@@ -137,14 +140,15 @@ FireflyViewer.defaultProps = {
     views: 'images | tables | xyPlots'
 };
 
-function onReady({menu, views, options={}}) {
+function onReady({menu, views, options={}, initLoadingMessage, initLoadCompleted}) {
     if (menu) {
         const {backgroundMonitor= true}= options;
         dispatchSetMenu({menuItems: menu, showBgMonitor:backgroundMonitor});
     }
     const {hasImages, hasTables, hasXyPlots} = getLayouInfo();
     if (!(hasImages || hasTables || hasXyPlots)) {
-        const goto = getActionFromUrl() || {type: SHOW_DROPDOWN};
+        let goto = getActionFromUrl();
+        if (!goto) goto= (!initLoadingMessage || initLoadCompleted) && {type: SHOW_DROPDOWN};
         if (goto) flux.process(goto);
     }
     dispatchNotifyRemoteAppReady();
