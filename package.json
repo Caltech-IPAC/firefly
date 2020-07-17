@@ -12,6 +12,7 @@
     "core-js": "~3.6",
     "regenerator-runtime": "~0.13",
     "enum": "~2.5",
+    "slug": "~3.3.0",
     "immutability-helper": "~3.0",
     "isomorphic-fetch": "~2.2",
     "local-storage": "~1.4.2",

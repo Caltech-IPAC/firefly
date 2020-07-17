@@ -3,8 +3,10 @@
  */
 import { forEach, fromPairs, get, has, isArray, isBoolean, isEqual, isFunction, isNil, isObject,
     isPlainObject, last, mergeWith, omit, once, set, union } from 'lodash';
+import slug from 'slug';
 import shallowequal from 'shallowequal';
 import update from 'immutability-helper';
+
 
 const MEG          = 1048576;
 const GIG          = 1048576 * 1024;
@@ -127,8 +129,6 @@ export function memorizeLastCall(fn, cacheSize=1) {
  * @param fn - the function to wrap
  * @param {number} [maxMapSize=5000] when the cache number goes over 5000 the map is cleared
  * @param {function} [makeKey] - make a cache key from the function arguments call with the arguments as an array as makeKey(args). Defaults to calling joint on the arguments
- *
- * @param name
  * @return {function}
  */
 export function memorizeUsingMap(fn, maxMapSize=5000, makeKey= (args) => args.join()) {
@@ -765,4 +765,8 @@ export function uuid() {
         seed = Math.floor(seed/16);
         return (c === 'x' ? r : r & (0x3|0x8)).toString(16);
     });
+}
+
+export function toSlug(str, options=undefined) {
+    return slug(str,options);
 }

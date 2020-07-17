@@ -6,10 +6,10 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
 
-import {get, debounce, isEmpty, set, omit} from 'lodash';
+import {debounce, isEmpty, isString, set, omit} from 'lodash';
 import {getPlotLy} from '../PlotlyConfig.js';
 import {getChartData, useChartRedraw, useScatterGL, usePlotlyReact} from '../ChartsCntlr.js';
-import {logError, deltas, flattenObject} from '../../util/WebUtil.js';
+import {logError, deltas, flattenObject, toSlug, getModuleName} from '../../util/WebUtil.js';
 import {logger} from '../../util/Logger.js';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import Enum from 'enum';
@@ -46,6 +46,24 @@ function isSlowResize() {
     return BrowserInfo.isFirefox();
 }
 
+const getFilename= (chartDiv, chartId) => {
+    if (!chartDiv?.layout) return chartId;
+    const {layout}= chartDiv;
+    const type= chartDiv.data?.[0]?.type ?? '';
+
+    const preamble= chartDiv.data?.[0]?.type ? `${getModuleName()} ${type} chart `: `${getModuleName()} `;
+
+    if (isString(layout.title)) return preamble+layout.title;
+    if (isString(layout.title?.text)) return preamble+layout.title.text;
+
+    const xaxis= layout.xaxis?.title?.text;
+    const yaxis= layout.yaxis?.title?.text;
+
+    if (isString(xaxis) || isString(yaxis)) {
+        return `${preamble}${isString(xaxis)?xaxis:''} ${isString(yaxis)?yaxis:''}`;
+    }
+    return chartId;
+};
 
 export function downloadChart(chartId) {
     getPlotLy().then( (Plotly) => {
@@ -53,11 +71,8 @@ export function downloadChart(chartId) {
         const chartDivAll = document.querySelectorAll(`#${chartId}`);
         if (chartId && chartDivAll && chartDivAll.length > 0) {
             const chartDiv = chartDivAll[chartDivAll.length-1];
-            const filename = get(chartDiv, 'layout.title') || chartId;
-            Plotly.downloadImage(chartDiv, {
-                format: 'png',
-                filename
-            });
+            const filename= toSlug(getFilename(chartDiv,chartId));
+            Plotly.downloadImage(chartDiv, { format: 'png', filename});
         } else {
             logError(`Image download has failed for chart id ${chartId}`);
         }
@@ -175,7 +190,7 @@ export class PlotlyWrapper extends Component {
         const {lastUpdated} = getChartData(chartId);
 
         if (!useChartRedraw && lastUpdated && renderType ===  RenderType.NEW_PLOT && graphDiv.data) {
-            if (usePlotlyReact || (data || []).find((e) => get(e, 'type', '').endsWith('gl'))) {
+            if (usePlotlyReact || (data || []).find((e) => (e?.type ?? '').endsWith('gl'))) {
                 // use RenderType.REACT for scattergl plots to avoid creating new WebGL context
                 // there are two WebGL contexts per plotly div
                 renderType = RenderType.REACT;
@@ -213,7 +228,7 @@ export class PlotlyWrapper extends Component {
                     // if renderType is restyle, plotly render the inactive trace on top of the active trace
                     // for chart with type histogram2d or histogram2dcontour
                     if (renderType === RenderType.RESTYLE_AND_RELAYOUT || dataUpdate.length > 1 ||
-                        (data.find((d) => get(d, 'type', '').includes('histogram2d')))) {
+                        (data.find((d) => (d?.type ?? '').includes('histogram2d')))) {
                         renderType = RenderType.NEW_PLOT;
                     }
                 }
@@ -323,7 +338,7 @@ export class PlotlyWrapper extends Component {
         if (Array.isArray(dataUpdate)) {
             dataUpdate.forEach((v,idx) => this.restyle(div, Plotly, data, v, dataUpdateTraces[idx]));
         } else {
-            if (dataUpdateTraces >= get(div, 'data.length', 0)) {
+            if (dataUpdateTraces >= (div?.data?.length?? 0)) {
                 Plotly.addTraces(div, data[dataUpdateTraces]);      // addTraces structure is similar to newplot.. not updates
             } else {
                 Plotly.restyle(div, dataUpdate, dataUpdateTraces);
