@@ -4,11 +4,10 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {uniqBy, isEmpty} from 'lodash';
+import {isEmpty} from 'lodash';
 import {clone} from '../../util/WebUtil.js';
 import sizeMe from 'react-sizeme';
 import ReactGridLayout, {Responsive, WidthProvider} from 'react-grid-layout';
-import {ImageMetaDataToolbar} from '../../visualize/ui/ImageMetaDataToolbar.jsx';
 import {MultiImageViewer} from '../../visualize/ui/MultiImageViewer.jsx';
 import {MultiViewStandardToolbar} from '../../visualize/ui/MultiViewStandardToolbar.jsx';
 import {MultiChartViewer} from '../../charts/ui/MultiChartViewer.jsx';
@@ -128,7 +127,7 @@ class SlateView extends Component {
         return (
             <div className= 'GridLayoutPanel' style={{flex: '1 1 auto', overflow: 'auto'}}>
                 <Responsive width={width-14} cols={cols} rowHeight={this.rowHeight}
-                            verticalCompact={this.doCollapse}
+                            compactType={this.doCollapse? 'vertical' : null}
                             breakpoints={breakpoints} layouts={layouts} margin={[CELL_MARGIN,CELL_MARGIN]}
                             onLayoutChange={this.renderedLayoutUpdated}
                             onDragStart={this.dragStart}

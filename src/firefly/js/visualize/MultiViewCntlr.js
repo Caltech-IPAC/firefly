@@ -446,17 +446,16 @@ function imageViewerCanAdd(state, viewerId, plotId) {
 function addViewer(state,payload) {
     const {viewerId,containerType, layout=GRID,canReceiveNewPlots=NewPlotMode.replace_only.key,
              mounted=false, renderTreeId, reservedContainer, internallyManaged}= payload;
-    let {lastActiveItemId} = payload;
-    let entryInState = hasViewerId(state,viewerId);
+    const {lastActiveItemId} = payload;
 
-    if (entryInState) {
-        entryInState = Object.assign(entryInState, {canReceiveNewPlots, mounted, containerType});
+    if (hasViewerId(state,viewerId)) {
+        const foundViewer= getViewer(state,viewerId);
+        const updatedViewer = {...foundViewer, canReceiveNewPlots, mounted, containerType};
 
-        if (has(entryInState, 'lastActiveItemId')) {
-            lastActiveItemId = entryInState.lastActiveItemId ? entryInState.lastActiveItemId : entryInState?.itemIdAry?.[0] ?? '';
-            entryInState = Object.assign(entryInState, {lastActiveItemId});
+        if (has(updatedViewer, 'lastActiveItemId')) {
+            updatedViewer.lastActiveItemId = updatedViewer.lastActiveItemId ? updatedViewer.lastActiveItemId : (updatedViewer?.itemIdAry?.[0] ?? '');
         }
-        return [...state];
+        return state.map( (v) => v.viewerId===updatedViewer.viewerId ? updatedViewer : v);
     } else {
         // set default layout for the viewer with viewerId, META_VIEWER_ID, is full-grid type
         const layoutDetail = viewerId === META_VIEWER_ID ? GRID_FULL : undefined;

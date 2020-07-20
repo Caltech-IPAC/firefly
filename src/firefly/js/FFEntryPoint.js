@@ -20,6 +20,7 @@ import {getFireflyViewerWebApiCommands} from './api/webApiCommands/ViewerWebApiC
  */
 var props = {
     appTitle: 'Firefly',
+    initLoadingMessage: window?.firefly?.options?.initLoadingMessage
 };
 
 var options = {

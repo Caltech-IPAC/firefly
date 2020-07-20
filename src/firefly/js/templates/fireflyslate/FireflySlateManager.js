@@ -188,7 +188,7 @@ function handleNewImage(layoutInfo, action, renderTreeId) {
     plotIdAry.forEach( (plotId) => {
         const viewerId= findViewerWithItemId(mvRoot, plotId, IMAGE);
         const viewer= viewerId && getViewer(mvRoot, viewerId);
-        console.log(`handleNewImage: ${renderTreeId}: v: ${viewer && viewer.renderTreeId}, p: ${payload.renderTreeId}`);
+        // console.log(`handleNewImage: ${renderTreeId}: v: ${viewer && viewer.renderTreeId}, p: ${payload.renderTreeId}`);
         if (!viewer || viewer.internallyManaged) return;
         if (isUnmatchingLayout(renderTreeId,viewer, payload)) return layoutInfo;
         if (viewer.customData.independentLayout) return;
