@@ -141,7 +141,7 @@ export const setDefaultImageColorTable= (ct) => defColorTable=ct;
 export const getDefaultImageColorTable= () => defColorTable;
 
 const defParams= {
-    REQUEST_CLASS: WEB_PLOT_REQUEST_CLASS,
+    RequestClass: WEB_PLOT_REQUEST_CLASS,
     [WPConst.INIT_COLOR_TABLE]: getDefaultImageColorTable,
 };
 
