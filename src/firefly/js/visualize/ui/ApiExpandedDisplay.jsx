@@ -10,7 +10,7 @@ import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
 import {readoutRoot} from '../MouseReadoutCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {lastMouseImageReadout, lastMouseCtx} from '../VisMouseSync.js';
-import {useMouseStoreConnector} from '../../ui/SimpleComponent';
+import {useMouseStoreConnector} from './MouseStoreConnector.jsx';
 
 function makeState() {
     return {vr:visRoot(), currMouseState:lastMouseCtx(), readoutData:lastMouseImageReadout(), readout:readoutRoot()};

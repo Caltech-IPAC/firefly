@@ -380,6 +380,31 @@ public class VisServerOps {
         }
     }
 
+    public static float[] getFloatDataArray(PlotState state, Band band) {
+        try {
+            PlotServUtils.statsLog("floatAry");
+            ActiveCallCtx ctx = CtxControl.prepare(state);
+            ActiveFitsReadGroup frGroup= ctx.getFitsReadGroup();
+            FitsRead fr= frGroup.getFitsRead(band);
+            float [] float1d= fr.getRawFloatAry();
+            float [] flipped= new float[float1d.length];
+            int naxis1= fr.getNaxis1();
+            int naxis2= fr.getNaxis2();
+
+            int idx=0;
+            for (int y= naxis2-1; y>=0; y--) {
+                for (int x= 0; x<naxis1; x++) {
+                    flipped[idx]= float1d[y*naxis1+x];
+                    idx++;
+                }
+            }
+            return flipped;
+        } catch (Exception e) {
+//            return createError("on getFloatData", state, e);
+            return new float[] {};
+        }
+    }
+
     public static WebPlotResult recomputeStretch(PlotState state,
                                                  StretchData[] stretchData) {
         try {

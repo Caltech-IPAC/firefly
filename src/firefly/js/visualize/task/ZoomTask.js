@@ -6,7 +6,7 @@ import {get} from 'lodash';
 import {UserZoomTypes, getArcSecPerPix, getEstimatedFullZoomFactor,
     getNextZoomLevel, getZoomLevelForScale, FullType} from '../ZoomUtil.js';
 import {logger} from '../../util/Logger.js';
-import {isImage, isHiPS} from '../WebPlot.js';
+import {isImage, isHiPS, hasLocalRawData} from '../WebPlot.js';
 import ImagePlotCntlr, {ActionScope, IMAGE_PLOT_KEY, WcsMatchType,
                        dispatchUpdateViewSize, dispatchRecenter} from '../ImagePlotCntlr.js';
 import {getPlotViewById,primePlot,getPlotStateAry, operateOnOthersInPositionGroup,
@@ -16,6 +16,8 @@ import {isImageViewerSingleLayout, getMultiViewRoot} from '../MultiViewCntlr.js'
 import {WebPlotResult} from '../WebPlotResult.js';
 import {doHiPSImageConversionIfNecessary} from './PlotHipsTask.js';
 import {matchImageToHips, matchHiPStoPlotView} from './WcsMatchTask';
+import PlotState from '../PlotState.js';
+import {changeLocalRawDataZoom} from '../rawData/RawDataOps.js';
 
 
 const ZOOM_WAIT_MS= 1500; // 1.5 seconds
@@ -136,6 +138,8 @@ function evaluateZoomType(visRoot, pv, userZoomType, forceDelay, payloadLevel= 1
 
     }
 
+    if (hasLocalRawData(plot)) useDelay= false;
+
     return {level, isFullScreen, useDelay, validParams};
 }
 
@@ -198,6 +202,7 @@ function makeZoomLevelMatcher(dispatcher, visRoot, sourcePv,level,matchByScale,i
  */
 function doZoom(dispatcher,plot,zoomLevel,isFullScreen, zoomLockingEnabled, userZoomType,useDelay,getState) {
 
+    const localRawData=  hasLocalRawData(plot);
     const oldZoomLevel= plot.zoomFactor;
 
     const preZoomVisRoot= getState()[IMAGE_PLOT_KEY];
@@ -223,6 +228,11 @@ function doZoom(dispatcher,plot,zoomLevel,isFullScreen, zoomLockingEnabled, user
 
     if (isHiPS(plot) ) {
         dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotId} } );
+        return;
+    }
+
+    if (localRawData) {
+        processLocalZoom(dispatcher,plot,zoomLevel, isFullScreen);
         return;
     }
 
@@ -322,5 +332,37 @@ function processZoomSuccess(dispatcher, preZoomVisRoot, plotId, zoomLevel, resul
         dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_FAIL,
                       payload: {plotId, zoomLevel, error:Error('payload failed')} } );
     }
+}
+
+function processLocalZoom(dispatcher, plot, zoomLevel, isFullScreen) {
+
+    const {plotId}= plot;
+    const rawData= changeLocalRawDataZoom(plot,zoomLevel,isFullScreen);
+    //todo compute raw data for overlay plots by looping through
+
+
+
+    const overlayUpdateAry= [];
+
+
+    // const existingOverlayPlotViews = pv.overlayPlotViews.filter((opv) => opv.plot);
+
+    // resultAry.forEach( (r,i) => {
+    //     if (i===0) return;
+    //     overlayUpdateAry[i-1]= {
+    //         imageOverlayId: existingOverlayPlotViews[i-1].imageOverlayId,
+    //         overlayStateJson: r.data[WebPlotResult.PLOT_STATE],
+    //         overlayTiles: r.data[WebPlotResult.PLOT_IMAGES]
+    //     };
+    // });
+    dispatcher( {
+        type: ImagePlotCntlr.ZOOM_IMAGE,
+        payload: {
+            plotId,
+            primaryStateJson : PlotState.convertToJSON(rawData.plotState,true),
+            rawData,
+            overlayRawDataAry: undefined //todo need to compute this
+        }});
+    dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotIdAry:[plotId]}} );
 }
 

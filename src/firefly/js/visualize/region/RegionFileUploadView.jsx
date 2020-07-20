@@ -17,7 +17,7 @@ import CompleteButton from '../../ui/CompleteButton.jsx';
 import {dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {createNewRegionLayerId, getRegionLayerTitle} from '../../drawingLayers/RegionPlot.js';
-import {relocatable} from '../../drawingLayers/FootprintTool.js';
+import {relocatable} from '../../drawingLayers/FootprintLocatable.js';
 import {createNewFootprintLayerId, getFootprintLayerTitle} from '../../drawingLayers/FootprintTool.js';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
 

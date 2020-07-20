@@ -12,6 +12,7 @@ import {isDefined, memorizeLastCall} from '../util/WebUtil';
 import {getWavelength, isWLAlgorithmImplemented, PLANE} from './projection/Wavelength.js';
 import {getNumberHeader, HdrConst} from './FitsHeaderUtil.js';
 import {computeDistance, getRotationAngle, isCsysDirMatching, isEastLeftOfNorth, isPlotNorth} from './VisUtil';
+import {removeRawData} from './rawData/RawDataCache.js';
 
 
 export const CANVAS_IMAGE_ID_START= 'image-';
@@ -173,8 +174,9 @@ export const getActivePlotView= (visRoot) => visRoot?.plotViewAry.find( (pv) => 
  * @return {boolean} true if three color false if not or plot is null
  */
 export function isThreeColor(plotOrPv) {
+    if (!plotOrPv) return false;
     const plot= isPlotView(plotOrPv) ? primePlot(plotOrPv) : plotOrPv;
-    return plot ? plot.plotState.isThreeColor() : false;
+    return Boolean(plot?.plotState.isThreeColor())
 }
 
 /**
@@ -220,6 +222,9 @@ export function findProcessedTile(visRoot, plotId, originalUrlkey) {
 export const getOverlayByPvAndId = (ref,plotId,imageOverlayId) =>
                                    getOverlayById(getPlotViewById(ref,plotId),imageOverlayId);
 
+
+
+export const removeRawDataByPlotView= (pv) => pv?.plots.forEach( (p) => removeRawData(p.plotImageId));
 
 /**
  * construct an array of drawing layer from the store
@@ -1019,6 +1024,7 @@ export const pvEqualExScroll= memorizeLastCall((pv1,pv2) => {
                 p1.screenSize !== p2.screenSize ||
                 p1.zoomFactor !== p2.zoomFactor ||
                 p1.imageCoordSys !== p2.imageCoordSys ||
+                p1.localDataLoaded!==p2.localDataLoaded ||
                 p1.plotState !== p2.plotState) result= false;
         }
     }

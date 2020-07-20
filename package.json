@@ -64,6 +64,7 @@
     "request": "~2.88",
     "webpack": "~4.41",
     "webpack-cli": "~3.3",
+    "worker-loader": "^3.0",
     "babel-loader": "~8.0",
     "style-loader": "~1.1",
     "css-loader": "~3.4",

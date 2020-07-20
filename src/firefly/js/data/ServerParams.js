@@ -152,6 +152,7 @@ export const ServerParams = {
         LOG_OUT: 'CmdLogout',
         INIT_APP: 'CmdInitApp',
         GET_IMAGE_MASTER_DATA: 'getImageMasterData',
+        GET_FLOAT_DATA: 'getFloatData',
 
         VIS_PUSH_ALIVE_CHECK: 'pushAliveCheck',
         VIS_PUSH_ALIVE_COUNT: 'pushAliveCount',

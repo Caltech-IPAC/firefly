@@ -40,7 +40,7 @@ export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignore
  * @prop {String} plotGroupId, immutable
  * @prop {String} drawingSubGroupId, immutable
  * @peop {boolean} visible true when we draw the base image
- * @prop {WebPlot[]} plots all the plots that this plotView can show, usually the image in the fits file
+ * @prop {Array.<WebPlot>} plots all the plots that this plotView can show, usually the image in the fits file
  * @prop {String} plottingStatusMsg, end user description of the what is doing on
  * @prop {String} serverCall, one of 'success', 'working', 'fail'
  * @prop {number} primeIdx, which of the plots array is active

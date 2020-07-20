@@ -6,10 +6,13 @@
  * Date: 3/5/12
  */
 
-import {isArray} from 'lodash';
+import {has, isArray} from 'lodash';
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest} from '../core/JsonUtils.js';
 import {SelectedShape} from '../drawingLayers/SelectedShape';
+import {fetchUrl} from '../util/fetch.js';
+import {getCmdSrvURL, toBoolean} from '../util/WebUtil.js';
+import {isString} from 'dnd-core/lib/cjs/utils/discount_lodash.js';
 
 
 
@@ -30,6 +33,54 @@ export const callGetColorHistogram= function(state,band,width,height) {
 
     return doJsonRequest(ServerParams.HISTOGRAM, paramList, true);
 };
+
+/**
+ *
+ * @param state
+ * @param band
+ * @return {Promise}
+ */
+export async function callFloatData(state,band) {
+    const params= {
+        [ServerParams.COMMAND]: ServerParams.GET_FLOAT_DATA,
+        [ServerParams.STATE] : isString(state) ? state :state.toJson(false),
+        [ServerParams.BAND] : band.key
+    };
+    const options= {method: 'POST', params};
+
+    try {
+        const response= await fetchUrl(getCmdSrvURL(), options, false );
+        if (!response.ok) {
+            throw(new Error(`Error from Server for getFloatData: code: ${response.status}, text: ${response.statusText}`));
+        }
+        const arrayBuffer= await response.arrayBuffer();
+        // const data= new Float32Array(arrayBuffer);  // no longer doing it this way because of Endian issues
+
+
+        // const bdata= new Uint8Array(arrayBuffer);  // this would be good if I could find a way to do it inplace
+        // let holder;
+        // for (let i = 0; i<bdata.length; i+=4) {
+        //     holder = bdata[i];
+        //     bdata[i] = bdata[i+3];
+        //     bdata[i+3] = holder;
+        //     holder = bdata[i+1];
+        //     bdata[i+1] = bdata[i+2];
+        //     bdata[i+2] = holder;
+        // }
+        // const data= new Float32Array(arrayBuffer);
+
+        console.time('convert copy');
+        const dv= new DataView(arrayBuffer);
+        const data= new Float32Array(arrayBuffer.byteLength/4);
+        for(let i=0;i<data.length; i++) data[i]= dv.getFloat32(i*4);
+        console.timeEnd('convert copy');
+        console.log('data from callFloatData',data);
+        return data;
+    } catch (e) {
+        console.log('callFloatData failed');
+        console.log(e);
+    }
+}
 
 /**
  * @param {WebPlotRequest} redRequest

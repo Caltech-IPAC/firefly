@@ -161,6 +161,7 @@ public class ServerParams {
     public static final String VIS_PUSH_ALIVE_COUNT= "pushAliveCount";
     public static final String VIS_PUSH_ACTION= "pushAction";
     public static final String GET_IMAGE_MASTER_DATA= "getImageMasterData";
+    public static final String GET_FLOAT_DATA= "getFloatData";
 
     public static final String USER_TARGET_WORLD_PT = "UserTargetWorldPt";
 

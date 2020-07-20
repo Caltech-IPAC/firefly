@@ -14,6 +14,21 @@ const MEG_TENTH    = MEG / 10;
 const GIG_HUNDREDTH= GIG / 100;
 const K            = 1024;
 
+const globalObj= (() => {
+    try {
+        return window || self;
+    }
+    catch (e) {
+        try {
+            return self;
+        }
+        catch (e) {
+            return undefined;
+        }
+    }
+})();
+
+export const getGlobalObj= () => globalObj;
 
 /*global __PROPS__*/        // this is defined at build-time.
 export const getGlobalProps= once( () => __PROPS__ ?? {});
@@ -29,11 +44,20 @@ const getScriptURL = once(() => {
 
 export const getRootURL = once(() => {
     if (getProp('SCRIPT_NAME') === undefined) return '//localhost:8080/';
-    const workingURL = getScriptURL() || window?.location.href;
+    const workingURL = getScriptURL() || globalObj?.location.href;
     return workingURL.substring(0, workingURL.lastIndexOf('/')) + '/';
 });
 
 export const getCmdSrvURL = () => `${getRootURL()}sticky/CmdSrv`;
+export const getCmdSrvNoZipURL = () => `${getRootURL()}sticky/CmdSrvNoZip`;
+
+export const isGPUAvailableInWorker= once(() => Boolean(getGlobalObj().OffscreenCanvas));
+// export const isGPUAvailableInWorker= () => false;
+
+
+export const isImageBitmap= (b) => getGlobalObj().ImageBitmap && (b instanceof getGlobalObj().ImageBitmap);
+export const isOffscreenCanvas= (b) => getGlobalObj().OffscreenCanvas && (b instanceof getGlobalObj().OffscreenCanvas);
+
 
 /**
  * returns an object of key:value where keyPrefix is removed from the keys.  i.e
@@ -88,17 +112,22 @@ export const isDefined= (x) => x!==undefined;
  * @return {Promise} when the script is loaded or failed to load
  */
 export function loadScript(scriptName) {
-    return new Promise(
-        function(resolve, reject) {
-            const head= document.getElementsByTagName('head')[0];
-            const script= document.createElement('script');
-            script.type= 'text/javascript';
-            script.charset= 'utf-8';
-            script.src= scriptName;
-            head.appendChild(script);
-            script.onload= (ev) => resolve(ev);
-            script.onerror= (ev) => reject(ev);
-        });
+    if (getGlobalObj().document) {
+        return new Promise(
+            function(resolve, reject) {
+                const head= document.getElementsByTagName('head')[0];
+                const script= document.createElement('script');
+                script.type= 'text/javascript';
+                script.charset= 'utf-8';
+                script.src= scriptName;
+                head.appendChild(script);
+                script.onload= (ev) => resolve(ev);
+                script.onerror= (ev) => reject(ev);
+            });
+    }
+    else {
+        return Promise.resolve(getGlobalObj().importScripts(scriptName));
+    }
 }
 
 /**
@@ -646,7 +675,7 @@ export function uniqueID() {
  * @function
  */
 export const requestIdleCallback =
-    window?.requestIdleCallback ||
+    globalObj?.requestIdleCallback ||
     function (callback) {
         return setTimeout(() => {
             const start = Date.now();
@@ -657,7 +686,7 @@ export const requestIdleCallback =
         }, 1);
     };
 
-export const cancelIdleCallback = window?.cancelIdleCallback || ((id) => clearTimeout(id));
+export const cancelIdleCallback = globalObj?.cancelIdleCallback || ((id) => clearTimeout(id));
 
 /**
  *

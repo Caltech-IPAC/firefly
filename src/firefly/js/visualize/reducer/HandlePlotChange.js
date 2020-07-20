@@ -73,6 +73,20 @@ export function reducer(state, action) {
         case Cntlr.ZOOM_IMAGE_START  :
             retState= zoomStart(state, action);
             break;
+        /**
+         * @global
+         * @public
+         * @typedef {Object} ImageTile
+         * @summary a single image tile
+         *
+         * @prop {number} width - width of this tile
+         * @prop {number} height - height of this tile
+         * @prop {number} index - index of this tile
+         * @prop {string} url - file key to use in the service to retrieve this tile
+         * @prop {number} x - pixel offset of this tile
+         * @prop {number} y - pixel offset of this tile
+         *
+         */
 
 
         case Cntlr.STRETCH_CHANGE_START  :
@@ -146,8 +160,15 @@ export function reducer(state, action) {
             retState= addProcessedTileData(state,action);
             break;
 
+        case Cntlr.UPDATE_RAW_IMAGE_DATA:
+            retState= updateRawImageData(state,action);
+            break;
+
         case Cntlr.CHANGE_IMAGE_VISIBILITY:
             retState= changeVisibility(state,action);
+            break;
+        case Cntlr.REQUEST_LOCAL_DATA:
+            retState= requestLocalData(state,action);
             break;
 
         default:
@@ -242,7 +263,7 @@ function zoomStart(state, action) {
 
 function installTiles(state, action) {
     const {plotViewAry, mpwWcsPrimId, wcsMatchType}= state;
-    const {plotId, primaryStateJson,primaryTiles,overlayUpdateAry}= action.payload;
+    const {plotId, primaryStateJson,primaryTiles,overlayUpdateAry, rawData}= action.payload;
     let pv= getPlotViewById(state,plotId);
     let plot= primePlot(pv);
 
@@ -254,7 +275,7 @@ function installTiles(state, action) {
 
     pv= {...pv};
     pv.serverCall='success';
-    pv= replacePrimaryPlot(pv,WebPlot.setPlotState(plot,primaryStateJson,primaryTiles));
+    pv= replacePrimaryPlot(pv,WebPlot.setPlotState(plot,primaryStateJson,primaryTiles,rawData));
 
     if (wcsMatchType && mpwWcsPrimId!==plotId) {
         const masterPV= getPlotViewById(state, mpwWcsPrimId);
@@ -775,6 +796,24 @@ function addProcessedTileData(state,action) {
                                [...processedTiles, entry];
 
     return clone(state, {processedTiles});
+}
+
+function updateRawImageData(state, action) {
+    const {plotId, plotImageId, rawData}= action.payload;
+    const pv= getPlotViewById(state,plotId);
+    if (!pv) return state;
+    const plots= pv.plots.map( (p) => p.plotImageId===plotImageId ? {...p,rawData, localDataLoaded:true}: p);
+    const plotViewAry= replacePlotView(state.plotViewAry,{...pv,plots});
+    return {...state, plotViewAry};
+}
+
+function requestLocalData(state, action) {
+    const {plotImageId, plotId}= action.payload;
+    const pv= getPlotViewById(state,plotId);
+    if (!pv) return state;
+    const plots= pv.plots.map( (p) => p.plotImageId===plotImageId ? {...p,dataRequested:true}: p);
+    const plotViewAry= replacePlotView(state.plotViewAry,{...pv,plots});
+    return {...state, plotViewAry};
 }
 
 function updatePlotProgress(state,action) {

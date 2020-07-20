@@ -3,7 +3,7 @@
  */
 
 import {isString} from 'lodash';
-import {loadImage, loadCancelableImage, requestIdleCallback} from '../../util/WebUtil.js';
+import {loadCancelableImage, requestIdleCallback} from '../../util/WebUtil.js';
 
 /**
  * @global
@@ -21,21 +21,24 @@ import {loadImage, loadCancelableImage, requestIdleCallback} from '../../util/We
 
 /**
  *
- * @return {Promise} promise with new imageData
- */
-/**
- *
  * @param {ImageContainer|Object|String} imageData the current image data or a html image object or the source of the
  *                                       of an image to load
  * @param {Object} nextTileAttributes next state to process image
  * @param shouldProcess
  * @param processor
- * @return {Promise}
+ * @param localImageRetriever
+ * @return {Promise} promise with new imageData
  */
-export function retrieveAndProcessImage(imageData, nextTileAttributes, shouldProcess, processor) {
+export function retrieveAndProcessImage(imageData, nextTileAttributes, shouldProcess, processor, localImageRetriever) {
 
     if (!imageData) {
         return Promise.resolve(imageData);
+    }
+    else if (imageData?.local && localImageRetriever) {
+        const image=  imageData.image ? imageData.image : localImageRetriever(imageData);
+        // const image=  localImageRetriever(imageData);
+        const v=  modifyImage({image, tileAttributes:nextTileAttributes},nextTileAttributes,true, shouldProcess, processor);
+        return convertToReturn(v);
     }
     else if (isString(imageData)) {
         let {promise, cancelImageLoad}= loadCancelableImage(imageData);

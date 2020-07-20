@@ -3,7 +3,7 @@
  */
 
 //LZ 06/11/15 add arcsine and power law gamma parameters
-import validator from 'validator';
+import {isNumber, isString, isObject} from 'lodash';
 
 
 export const PERCENTAGE_STR = 'percent';
@@ -38,7 +38,6 @@ const alStrToConst = {
     powerlaw_gamma : STRETCH_POWERLAW_GAMMA,
 };
 
-const BYTE_MAX_VALUE= 127;
 
 const boundsStrToConst = {
     percent:  PERCENTAGE,
@@ -86,17 +85,6 @@ export class RangeValues {
     }
 
 
-    computeBiasAndContrast(data) {
-        let value = data>=0?data:(2*(BYTE_MAX_VALUE+1)+data);
-        const offset = (BYTE_MAX_VALUE*(this.bias-0.5)*-4);
-        const shift = (BYTE_MAX_VALUE*(1-this.contrast));
-
-        value = ( offset+(value*this.contrast)+shift );
-        if (value>(BYTE_MAX_VALUE*2)) value = BYTE_MAX_VALUE*2;
-        if (value<0) value = 0;
-
-        return value;
-    }
 
     /**
      * @return {RangeValues}
@@ -244,13 +232,19 @@ export class RangeValues {
      * @return {RangeValues}
      */
     static parse(sIn) {
-        if (!sIn) return null;
+        if (!sIn) return undefined;
+        if (isObject(sIn) &&
+            isNumber(sIn.lowerWhich) && isNumber(sIn.upperWhich) &&
+            isNumber(sIn.lowerValue) && isNumber(sIn.upperValue) && isNumber(sIn.algorithm)) {
+            return sIn;
+        }
+        if (!isString(sIn)) return undefined;
 
 
-        const params= sIn.split(',').map( (v) => validator.toFloat(v) );
+        const params= sIn.split(',').map( (v) => Number.parseFloat(v) );
         const valid= params.every( (v)=> typeof v !== 'undefined');
 
-        return valid ? new RangeValues(...params) : null;
+        return valid ? new RangeValues(...params) : undefined;
     }
 
     toJSON() {

@@ -100,8 +100,10 @@ export default function makeWebpackConfig(config) {
     /*------------------------ OUTPUT -----------------------------*/
     const out_path = ENV_DEV_MODE ? config.deploy_dir : config.dist;
     let filename = config.use_loader ? '[name]-dev.js' : '[name].js';
+    let workerFilename= '[name].worker.js';
     if (BUILD_ENV !== 'local') {
         filename = config.use_loader ? '[name]-[hash].js' : '[name].js';
+        workerFilename= '[name]-[hash].worker.js';
     }
     const output =  {filename, path: out_path};
 
@@ -151,6 +153,15 @@ export default function makeWebpackConfig(config) {
                     '@babel/plugin-transform-runtime',
                     'lodash'
                 ]
+            }
+        },
+        {
+            test    : /\.worker\.js$/,
+            loader: 'worker-loader',
+            options: {
+                publicPath: '/firefly/',
+                filename: workerFilename,
+                inline: 'fallback'
             }
         },
         {

@@ -11,11 +11,10 @@ import {getDrawLayerById} from '../visualize/PlotViewUtil.js';
 import {addNewDrawLayer} from '../visualize/ui/MarkerDropDownView.jsx';
 import {isNil, get} from 'lodash';
 
-export const getMarkerToolUIComponent = (drawLayer,pv) => <MarkerToolUI drawLayer={drawLayer} pv={pv}/>;
 //export const defaultMarkerTextLoc = TextLocation.CIRCLE_SE;
 export const defaultMarkerTextLoc = TextLocation.REGION_SE;
 
-class MarkerToolUI extends PureComponent {
+export class MarkerToolUI extends PureComponent {
     constructor(props) {
         super(props);
 
@@ -125,3 +124,4 @@ MarkerToolUI.propTypes= {
     drawLayer     : PropTypes.object.isRequired,
     pv            : PropTypes.object.isRequired
 };
+

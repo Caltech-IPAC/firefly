@@ -12,10 +12,9 @@ import PointSelection from '../../drawingLayers/PointSelection.js';
 import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer,
     dispatchDetachLayerFromPlot, DRAWING_LAYER_KEY} from '../DrawLayerCntlr.js';
 import { getPlotViewById, applyToOnePvOrAll, isDrawLayerAttached,
-    primePlot, getDrawLayerByType } from '../PlotViewUtil.js';
+    primePlot, getDrawLayerByType, removeRawDataByPlotView } from '../PlotViewUtil.js';
 import {isImage} from '../WebPlot.js';
 import {RotateType} from '../PlotState.js';
-import {clone} from '../../util/WebUtil.js';
 import {detachSelectAreaRelatedLayers} from '../ui/SelectAreaDropDownView.jsx';
 import {getAppOptions} from '../../core/AppDataCntlr';
 import {WcsMatchType} from '../ImagePlotCntlr';
@@ -165,11 +164,14 @@ export function restoreDefaultsActionCreator(rawAction) {
 export function deletePlotViewActionCreator(rawAction) {
     return (dispatcher, getState) => {
         const vr= getState()[IMAGE_PLOT_KEY];
-        const viewerId= findViewerWithItemId(getMultiViewRoot(), rawAction.payload.plotId, IMAGE);
+        const {payload}= rawAction;
+        const {plotId}= payload;
+        const viewerId= findViewerWithItemId(getMultiViewRoot(), plotId, IMAGE);
+        removeRawDataByPlotView(getPlotViewById(vr,plotId));
 
-        if (vr.wcsMatchType && !rawAction.payload.holdWcsMatch) {
+        if (vr.wcsMatchType && !payload.holdWcsMatch) {
             dispatcher({ type: ImagePlotCntlr.WCS_MATCH, payload: {wcsMatchType:false} });
         }
-        dispatcher({type:rawAction.type, payload: clone(rawAction.payload, {viewerId})} );
+        dispatcher({type:ImagePlotCntlr.DELETE_PLOT_VIEW, payload: {...payload, viewerId}});
     };
 }

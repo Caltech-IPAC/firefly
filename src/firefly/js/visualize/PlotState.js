@@ -227,10 +227,17 @@ export class PlotState {
         return JSON.stringify(PlotState.convertToJSON(this, includeDirectAccessData));
     }
 
+    copy() {
+        return PlotState.makePlotStateWithJson(PlotState.convertToJSON(this,true));
+    }
+
     static makePlotState() {
         return new PlotState();
     }
 
+    static parse(jsonStr) {
+        return PlotState.makePlotStateWithJson(JSON.parse(jsonStr));
+    }
 
     static makePlotStateWithJson(psJson) {
         if (!psJson) return null;

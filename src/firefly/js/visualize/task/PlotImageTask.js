@@ -16,7 +16,14 @@ import {Band} from '../Band.js';
 import {PlotPref} from '../PlotPref.js';
 import {makePostPlotTitle} from '../reducer/PlotTitle.js';
 import {dispatchAddViewerItems, getMultiViewRoot, findViewerWithItemId, EXPANDED_MODE_RESERVED, IMAGE, DEFAULT_FITS_VIEWER_ID} from '../MultiViewCntlr.js';
-import {getPlotViewById, getDrawLayerByType, getDrawLayersByType, getDrawLayerById, getPlotViewIdListInOverlayGroup} from '../PlotViewUtil.js';
+import {
+    getPlotViewById,
+    getDrawLayerByType,
+    getDrawLayersByType,
+    getDrawLayerById,
+    getPlotViewIdListInOverlayGroup,
+    removeRawDataByPlotView
+} from '../PlotViewUtil.js';
 import {enableMatchingRelatedData, enableRelatedDataLayer} from '../RelatedDataUtil.js';
 import {modifyRequestForWcsMatch} from './WcsMatchTask.js';
 import WebGrid from '../../drawingLayers/WebGrid.js';
@@ -146,6 +153,8 @@ export function makePlotImageAction(rawAction) {
 
         if (!wpRequestAry) {
             payload= makeSinglePlotPayload(vr, rawAction.payload, requestKey);
+            removeRawDataByPlotView(getPlotViewById(visRoot(),payload.plotId));
+
         }
         else {
             const {viewerId=DEFAULT_FITS_VIEWER_ID, attributes,
@@ -168,6 +177,7 @@ export function makePlotImageAction(rawAction) {
 
             payload.wpRequestAry= payload.wpRequestAry.map( (req) =>
                             addRequestKey(req,makeUniqueRequestKey('groupItemReqKey-'+req.getPlotId())));
+            payload.wpRequestAry.forEach( (r) => removeRawDataByPlotView(getPlotViewById(visRoot(),r.getPlotId())));
 
 
             payload.oldOverlayPlotViews= wpRequestAry
@@ -309,6 +319,21 @@ function continuePlotImageSuccess(dispatcher, payload, successAry, failAry) {
         const plotIdAry = pvNewPlotInfoAry.map((info) => info.plotId);
         const filteredPlotIdAry= plotIdAry.filter( (id) => getPlotViewById(visRoot(),id));
         dispatcher({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotIdAry:filteredPlotIdAry}});
+
+
+        // ..........................RAW DATA.......................................
+        // ----------------------------------------------
+        // ----------------------------------------------
+        // --------------------------experiment
+        // todo: need to figure out where is the best place to load image data and some test to determine if it should be loaded
+        // todo: for large image research load a decimated version for the image data
+
+        // pvNewPlotInfoAry.forEach( (info) => loadRawData(info.plotAry, dispatcher));
+
+        // ...END....................RAW DATA.......................................
+        // ...END....................experiment
+        // ..............................................
+        // ..............................................
 
         matchAndActivateOverlayPlotViewsByGroup(filteredPlotIdAry);
 

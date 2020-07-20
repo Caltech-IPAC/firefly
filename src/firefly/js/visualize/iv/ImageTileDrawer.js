@@ -9,7 +9,8 @@ import {primePlot, findProcessedTile} from '../PlotViewUtil.js';
 import {clone} from '../../util/WebUtil.js';
 import {retrieveAndProcessImage} from './ImageProcessor.js';
 import {dispatchAddProcessedTiles, visRoot} from '../ImagePlotCntlr.js';
-import {isImage} from '../WebPlot.js';
+import {hasLocalRawData, isImage} from '../WebPlot.js';
+import {drawScreenTileToMainCanvas} from '../rawData/RawDataOps.js';
 
 
 /**
@@ -19,7 +20,7 @@ import {isImage} from '../WebPlot.js';
  */
 export function initImageDrawer(targetCanvas) {
     let loadedImages= {
-        serverData: [],
+        tileDefAry: [],
         cachedImageData: [],
         used: []
     };
@@ -29,16 +30,20 @@ export function initImageDrawer(targetCanvas) {
     return (plot, opacity,plotView, tileProcessInfo= {shouldProcess:false}) => {
         if (!isImage(plot)) return;
         if (abortLastDraw) abortLastDraw();
-        const {tileData} = plot;
+        const local= hasLocalRawData(plot) && plot.rawData.localScreenTileDefList;
+
         const scale = plot.zoomFactor/ plot.plotState.getZoomLevel(); // note plotState contains the zoom level that tile where produced for.
 
-        if (tileData && loadedImages.serverData!==tileData.images) {
+        const tileDefAry= (local ? plot.rawData.localScreenTileDefList : plot.tileData.images);
+        // const newImage= tileDefAry!==loadedImages?.tileDefAry;
+
+        if (tileDefAry && loadedImages.tileDefAry!==tileDefAry) {
             loadedImages= {
                 plotId: plotView.plotId,
                 imageOverlayId: undefined,
                 plotImageId: plot.plotImageId,
                 tileZoomLevel: plot.plotState.getZoomLevel(),
-                serverData: tileData.images,
+                tileDefAry,
                 cachedImageData: [],
                 used: []
             };
@@ -54,14 +59,20 @@ export function initImageDrawer(targetCanvas) {
         const offsetX= boundingBox.x>0 ? boundingBox.x : 0;
         const offsetY= boundingBox.y>0 ? boundingBox.y : 0;
 
-        const tilesToLoad= tileData.images.filter( (tile) =>
+        const tilesToLoad= tileDefAry.filter( (tile) =>
             isTileVisible(tile,boundingBox.x,boundingBox.y,boundingBox.w,boundingBox.h,scale));
 
+        // const localImageRetriever= tilesToLoad[0]?.local && ((imageTile) => {
+        //     return getLocalScreenTile(plot,imageTile);
+        // });
+         const localImageRetriever= tilesToLoad[0]?.local && ((imageTile, canvas,x,y,w,h) => {
+            drawScreenTileToMainCanvas(plot,imageTile,canvas,x,y,w,h);
+        });
 
         const drawer= makeImageDrawer(plotView, plot, targetCanvas, tilesToLoad.length, loadedImages,
-            offsetX,offsetY, scale, opacity, tileProcessInfo);
+            offsetX,offsetY, scale, opacity, tileProcessInfo, localImageRetriever);
 
-        tilesToLoad.forEach( (tile) => drawer.drawTile(createImageUrl(plot,tile), tile) );
+        tilesToLoad.forEach( (tile) => drawer.drawTile(tile.local ? tile : createImageUrl(plot,tile), tile) );
         abortLastDraw= drawer.abort;
     };
 }
@@ -88,7 +99,7 @@ const noOp= { drawerTile : () => undefined, abort : () => undefined };
  * @return {function(*, *)}
  */
 function makeImageDrawer(plotView, plot, targetCanvas, totalCnt, loadedImages,
-                    offsetX,offsetY, scale, opacity, tileProcessInfo) {
+                    offsetX,offsetY, scale, opacity, tileProcessInfo, localImageRetriever) {
 
     if (!targetCanvas) return noOp;
 
@@ -98,7 +109,6 @@ function makeImageDrawer(plotView, plot, targetCanvas, totalCnt, loadedImages,
         });
         return noOp;
     }
-
 
     const offscreenCanvas = initOffScreenCanvas(plotView.viewDim);
 
@@ -114,12 +124,14 @@ function makeImageDrawer(plotView, plot, targetCanvas, totalCnt, loadedImages,
 
     const screenRenderParams= {plotView, plot, targetCanvas, offscreenCanvas, opacity, offsetX, offsetY};
 
-    return makeImageDrawTileObj(screenRenderParams, totalCnt, scale, loadedImages, !plot.asOverlay, tileProcessInfo);
+    return makeImageDrawTileObj(screenRenderParams, totalCnt, scale, loadedImages, !plot.asOverlay, tileProcessInfo, localImageRetriever);
 
 }
 
 
-function makeImageDrawTileObj(screenRenderParams, totalCnt, scale, loadedImages, isBaseImage, tileProcessInfo) {
+
+function makeImageDrawTileObj(screenRenderParams, totalCnt, scale, loadedImages,
+                              isBaseImage, tileProcessInfo, localImageRetriever) {
 
     let renderedCnt=0;
     let abortRender= false;
@@ -127,6 +139,27 @@ function makeImageDrawTileObj(screenRenderParams, totalCnt, scale, loadedImages,
     const {offscreenCanvas, offsetX, offsetY, plotView}= screenRenderParams;
     const offscreenCtx = offscreenCanvas.getContext('2d');
 
+    function drawToMainCanvas(image,x,y,w,h,tile) {
+        renderedCnt++;
+
+        if (abortRender) {
+            purgeLoadedImages(loadedImages);
+            return;
+        }
+        if (!image && tile?.local && localImageRetriever) {
+            localImageRetriever(tile,offscreenCanvas,x,y,w,h);
+        }
+        else {
+            offscreenCtx.drawImage(image, x, y, w, h);
+        }
+
+        if (renderedCnt === totalCnt) {
+            renderComplete= true;
+            renderToScreen(screenRenderParams);
+            purgeLoadedImages(loadedImages);
+        }
+
+    }
 
     return {
         drawTile(src, tile) {
@@ -138,38 +171,34 @@ function makeImageDrawTileObj(screenRenderParams, totalCnt, scale, loadedImages,
             // if (isBaseImage) drawEmptyRecTile(x,y,w,h,offscreenCtx,plotView);
 
             let tileData;
-            const tileIdx = loadedImages.serverData.findIndex((d) => d.url === tile.url);
+            const tileIdx = tile.local ? -1 : loadedImages.tileDefAry.findIndex((d) => d.local ? d.key===tile.key : d.url === tile.url);
             const storeTile= findProcessedTile(visRoot(), plotView.plotId, tile.url);
 
             if (loadedImages.cachedImageData[tileIdx]) tileData= loadedImages.cachedImageData[tileIdx];
-            else if (storeTile) {
-                tileData=storeTile;
-            }
+            else if (storeTile) tileData=storeTile;
             else tileData=src;
+            
 
             const {tileAttributes, shouldProcess, processor}= tileProcessInfo;
-            const {promise} = retrieveAndProcessImage(tileData, tileAttributes, shouldProcess, processor);
-            promise.then((imageData) => {
-                loadedImages.cachedImageData[tileIdx] = clone(loadedImages.serverData[tileIdx],
-                    {dataUrl:null, tileAttributes:imageData.tileAttributes, image:imageData.image});
 
-                loadedImages.used[tileIdx] = Date.now();
-                renderedCnt++;
+            if (tile.local && localImageRetriever) {
+                // const image= localImageRetriever(tile);
+                drawToMainCanvas(undefined,x,y,w,h,tile);
+            }
+            else {
+                const {promise} = retrieveAndProcessImage(tileData, tileAttributes, shouldProcess, processor, localImageRetriever);
+                promise.then((imageData) => {
+                    if (!tile.local) {
+                        loadedImages.cachedImageData[tileIdx] = clone(loadedImages.tileDefAry[tileIdx],
+                            {dataUrl:null, tileAttributes:imageData.tileAttributes, image:imageData.image});
+                        loadedImages.used[tileIdx] = Date.now();
+                    }
+                    drawToMainCanvas(imageData.image,x,y,w,h)
+                }).catch((e) => {
+                    console.log(e);
+                });
 
-                if (abortRender) {
-                    purgeLoadedImages(loadedImages);
-                    return;
-                }
-                offscreenCtx.drawImage(loadedImages.cachedImageData[tileIdx].image, x, y, w, h);
-
-                if (renderedCnt === totalCnt) {
-                    renderComplete= true;
-                    renderToScreen(screenRenderParams);
-                    purgeLoadedImages(loadedImages);
-                }
-            }).catch((e) => {
-                console.log(e);
-            });
+            }
         },
 
         abort()  {
@@ -216,7 +245,7 @@ function purgeLoadedImages(loadedImages) {
     const fiveSecAgo= Date.now()- (1000 * 5);
     const saveTileData= [];
     let saveCnt= 0;
-    for(i=0; (i<loadedImages.serverData.length); i++) {
+    for(i=0; (i<loadedImages.tileDefAry.length); i++) {
         if (loadedImages.used[i] && loadedImages.used[i] < fiveSecAgo) {
             if (loadedImages.cachedImageData[i]) {
                 saveTileData[saveCnt++]= loadedImages.cachedImageData[i];

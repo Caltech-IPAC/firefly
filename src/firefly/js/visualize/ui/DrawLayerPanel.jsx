@@ -12,7 +12,8 @@ import {visRoot} from '../ImagePlotCntlr.js';
 import {DrawLayerPanelView} from './DrawLayerPanelView.jsx';
 import {flux} from '../../core/ReduxFlux.js';
 import {lastMouseImageReadout} from '../VisMouseSync';
-import {useMouseStoreConnector, useStoreConnector} from '../../ui/SimpleComponent';
+import {useStoreConnector} from '../../ui/SimpleComponent';
+import {useMouseStoreConnector} from './MouseStoreConnector.jsx';
 
 export const DRAW_LAYER_POPUP= 'DrawLayerPopup';
 

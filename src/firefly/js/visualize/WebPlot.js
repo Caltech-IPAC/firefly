@@ -15,6 +15,7 @@ import {parseWavelengthHeaderInfo} from './projection/WavelengthHeaderParser.js'
 import {TAB} from './projection/Wavelength';
 import {memorizeLastCall} from '../util/WebUtil';
 import {makePlotStateShimForHiPS} from './PlotState';
+import {hasLocalRawDataInStore} from './rawData/RawDataOps.js';
 
 
 export const RDConst= {
@@ -81,8 +82,10 @@ export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_
  * @prop {Projection} projection - projection routines for this projections
  * @prop {Object} wlData - data object to wave length conversions, if defined then this conversion is available
  * @prop {Object} affTrans - the affine transform
+ * @prop {Array.<RawData>} rawData
  * @prop {{width:number, height:number}} viewDim  size of viewable area  (div size: offsetWidth & offsetHeight)
  * @prop {Array.<Object>} directFileAccessDataAry - object of parameters to get flux from the FITS file
+ * @prop {boolean} localDataLoaded
  *
  * @see PlotView
  */
@@ -98,14 +101,13 @@ export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_
  * @prop {string} relatedDataId - a globally unique id made from the plotId and the dataKey - this is added by the client and does
  * not come from the server
  * @prop {string} dataKey - should be a unique string key an array of plot of RelatedData, that is all
- * RelatedData array entries for a plot should have a unqiue dataKey
+ * RelatedData array entries for a plot should have a unique dataKey
  * @prop {string} dataType - one of 'IMAGE_OVERLAY', 'IMAGE_MASK', 'TABLE'
  * @prop {string} desc - user description of the data
  * @prop {Object.<string, string>} searchParams - map of search parameters to get the related data
  * @prop {Object.<string, string>} availableMask - only used for masks- key is the bit number, value is the description
  *
  */
-
 
 
 /**
@@ -119,6 +121,49 @@ export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_
  * @prop {string} url - file key to use in the service to retrieve this tile
  *
  */
+
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} HiPSTile
+ * @summary a single hips image tile
+ *  url computed by: NorderK/DirD/NpixN{.ext}
+ *  where
+ *  K= nOrder
+ *  N= tileNumber
+ *  D=(N/10000)*10000 (integer division)
+ *
+ * @prop {Array.<WorldPt>} corners (maybe) in worldPt
+ * @prop {Array.<DevicePt>} devPtCorners  (maybe) in screenPt (keep here?)
+ * @prop {string} url - root url (maybe, don't  know if necessary)
+ * @prop {number} nOrder (K)
+ * @prop {number} tileNumber (N)
+ *
+ */
+
+/** //todo this is not right for 3 color, float1d, processHeader, should be for each band
+ * @typedef {Object} RawData
+ *
+ * Notes - float1d and histogram should never change change.
+ * - stretchDataTiles need to change when range values changes (different stretch)
+ * - imageTileDataGroup should change when stretchDataTiles
+ * - when color table changes, we can reuse stretchDataTiles and imageTileDataGroup
+ *
+ * @prop {Float32Array} float1d
+ * @prop {HistogramData} histogram
+ * @prop {number} dataWidth
+ * @prop {number} dataHeight
+ * @prop {Array<Int8Array>} stretchedDataTiles
+ * @prop {Array<Int8Array>} color
+ * @prop {ThumbnailImage} thumbnailData
+ * @prop {Array.<{x:number,y:number,width:number,height:number,local:boolean}>} localScreenTileDefList
+ * @prop {number} datamin
+ * @prop {number} datamax
+ * @prop {Object} processHeader
+ * @prop {Object} imageTileDataGroup
+ */
+
 
 /**
  * @global
@@ -134,27 +179,6 @@ export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_
  * @prop {number} y - pixel offset of this tile
  *
  */
-
-/**
- * @global
- * @public
- * @typedef {Object} HiPSTile
- * @summary a single hips image tile
- *  url computed by: NorderK/DirD/NpixN{.ext}
- *  where
- *  K= nOrder
- *  N= tileNumber
- *  D=(N/10000)*10000 (integer division)
- *
- * @prop {Array.<WorldPt>} corners (maybe) in worldPt
- * @prop {Array.<devpt>} devPtCorners  (maybe) in screenPt (keep here?)
- * @prop {string} url - root url (maybe, don't  know if necessary)
- * @props {number} nOrder (K)
- * @props {number} tileNumber (N)
- *
- */
-
-
 
 
 /**
@@ -304,6 +328,7 @@ export const WebPlot= {
                                    [processHeader] :
                                     headerAry.map( (h,idx) => parseSpacialHeaderInfo(h,'',wpInit.zeroHeaderAry[idx]));
         const fluxUnitAry= processHeaderAry.map( (p) => p.fluxUnits);
+        const rawData= {bandData:processHeaderAry.map( (pH) => ({processHeader:pH, datamin: pH.datamin, datamax:pH.datamax}))};
 
 
         const wlRelated= relatedData && relatedData.find( (r) => r.dataType==='WAVELENGTH_TABLE_RESOLVED');
@@ -331,6 +356,7 @@ export const WebPlot= {
         const dataWidth= cubeCtx ? cubeCtx.dataWidth : wpInit.dataWidth;
         const dataHeight= cubeCtx ? cubeCtx.dataHeight : wpInit.dataHeight;
 
+        // noinspection JSUnresolvedVariable
         const imagePlot= {
             tileData    : wpInit.initImages,
             relatedData     : null,
@@ -351,10 +377,12 @@ export const WebPlot= {
             dataDesc        : wpInit.dataDesc,
             webFitsData     : isArray(wpInit.fitsData) ? wpInit.fitsData : [wpInit.fitsData],
             //=== Mutable =====================
-            screenSize: {width:dataWidth*zf, height:dataHeight*zf},
+            screenSize: {width:Math.trunc(dataWidth*zf), height:Math.trunc(dataHeight*zf)},
             zoomFactor: zf,
             attributes,
+            rawData,
             directFileAccessDataAry,
+            localDataLoaded: false,
             cubeIdx: cubeCtx?.cubePlane ?? -1,
             //=== End Mutable =====================
         };
@@ -423,10 +451,11 @@ export const WebPlot= {
      *
      * @param {WebPlot} plot
      * @param {object} stateJson
-     * @param {ImageTileData} tileData
+     * @param {ImageTileData} [tileData]
+     * @param {ImageTileData} [rawData]
      * @return {WebPlot}
      */
-    setPlotState(plot,stateJson,tileData) {
+    setPlotState(plot,stateJson,tileData,rawData) {
         const plotState= PlotState.makePlotStateWithJson(stateJson);
         const zf= plotState.getZoomLevel();
         const screenSize= {width:plot.dataWidth*zf, height:plot.dataHeight*zf};
@@ -442,6 +471,7 @@ export const WebPlot= {
 
         plot= {...plot,...{plotState, zoomFactor:zf,screenSize}};
         if (tileData) plot.tileData= tileData;
+        if (rawData) plot.rawData= {...plot.rawData, localScreenTileDefList:rawData.localScreenTileDefList};
         return plot;
     },
 };
@@ -520,6 +550,7 @@ export function replaceHeader(plot, header) {
  */
 export const isPlot= (o) => isObject(o) && Boolean(o.plotType && o.plotId && o.plotImageId && o.conversionCache);
 
+// noinspection JSUnresolvedVariable
 /**
  * @deprecated - we are moving away from blank images. So this function will soon be unnecessary
  * Check if the plot is is a blank image
@@ -581,3 +612,10 @@ export function getPixScaleDeg(plot) {
     }
     return 0;
 }
+
+export function hasLocalRawData(plot) {
+    return hasLocalRawDataInStore(plot);
+}
+
+
+

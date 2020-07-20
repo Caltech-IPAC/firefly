@@ -27,9 +27,10 @@ import {
     dispatchProcessScroll,
     dispatchChangeCenterOfProjection,
     dispatchChangeActivePlotView,
-    dispatchUpdateViewSize} from './ImagePlotCntlr.js';
+    dispatchUpdateViewSize, dispatchRequestLocalData
+} from './ImagePlotCntlr.js';
 import {fireMouseCtxChange, makeMouseStatePayload, MouseState} from './VisMouseSync.js';
-import {isHiPS, isImage} from './WebPlot.js';
+import {hasLocalRawData, isHiPS, isImage} from './WebPlot.js';
 import Color from '../util/Color.js';
 import {plotMove} from './PlotMove';
 
@@ -79,7 +80,7 @@ function updateZoom(plotId, paging) {
             plotId,
             userZoomType: (paging && vr.wcsMatchType) ? UserZoomTypes.WCS_MATCH_PREV : pv.plotViewCtx.zoomLockingType,
             zoomLockingEnabled: true,
-            forceDelay: true,
+            forceDelay: !hasLocalRawData(primePlot(pv)),
             actionScope
         });
     }
@@ -174,6 +175,10 @@ export class ImageViewerLayout extends PureComponent {
             }
         }
         fireMouseCtxChange(mouseStatePayload);  // this for anyone listening directly to the mouse
+
+        const plot= primePlot(plotView);
+        if (plot && !plot.dataRequested) dispatchRequestLocalData({plotId,plotImageId:plot.plotImageId});
+
     }
 
     scroll(plotView,mouseState,screenX,screenY, mouseDownScreenPt) {

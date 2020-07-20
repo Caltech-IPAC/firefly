@@ -15,10 +15,10 @@ package edu.caltech.ipac.firefly.server.rpc;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServCommand;
+import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.servlets.CommandService;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.firefly.server.visualize.VisJsonSerializer;
 import edu.caltech.ipac.firefly.server.visualize.VisServerOps;
 import edu.caltech.ipac.firefly.server.visualize.WebPlotResultSerializer;
@@ -30,12 +30,20 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import nom.tam.fits.FitsException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -141,6 +149,42 @@ public class VisServerCommands {
 
             WebPlotResult result = VisServerOps.setZoomLevel(stateAry, level, isFull);
             return WebPlotResultSerializer.createJson(result);
+        }
+    }
+
+
+
+    public static class FloatAryCmd extends ServerCommandAccess.HttpCommand {
+
+        public void processRequest(HttpServletRequest req, HttpServletResponse res, SrvParam sp) throws Exception {
+
+            PlotState state= sp.getState();
+            Band band = Band.parse(sp.getRequired(ServerParams.BAND));
+            float [] float1D= VisServerOps.getFloatDataArray(state,band);
+            res.setContentType("application/octet-stream");
+
+
+//            ServletOutputStream out = res.getOutputStream();
+//            DataOutputStream dos= new DataOutputStream(new BufferedOutputStream(out, (int)FileUtil.MEG));
+//            int len= float1D.length;
+//            for(int i=0; (i<len); i++) dos.writeFloat(float1D[i]);
+////            for(float f: float1D) dos.writeFloat(f);
+//
+//            dos.close();
+//            out.close();
+
+
+            ByteBuffer byteBuf = ByteBuffer.allocateDirect(float1D.length * Float.BYTES); //4 bytes per float
+            byteBuf.order(ByteOrder.nativeOrder());
+            byteBuf.order(ByteOrder.LITTLE_ENDIAN);
+            FloatBuffer buffer = byteBuf.asFloatBuffer();
+            buffer.put(float1D);
+            buffer.position(0);
+            WritableByteChannel chan= Channels.newChannel(res.getOutputStream());
+            chan.write(byteBuf);
+            chan.close();
+
+
         }
     }
 

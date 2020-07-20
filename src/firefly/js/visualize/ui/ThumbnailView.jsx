@@ -19,7 +19,9 @@ import {dispatchProcessScroll} from '../ImagePlotCntlr.js';
 import {makeMouseStatePayload,fireMouseCtxChange} from '../VisMouseSync.js';
 import {makeTransform,makeThumbnailTransformCSS} from '../PlotTransformUtils.js';
 import {findScrollPtToCenterImagePt} from '../reducer/PlotView.js';
-import {getPixScaleDeg, isHiPS} from '../WebPlot.js';
+import {getPixScaleDeg, hasLocalRawData, isHiPS} from '../WebPlot.js';
+import {getEntry} from '../rawData/RawDataCache.js';
+import {SimpleCanvas} from '../draw/SimpleCanvas.jsx';
 
 
 export const ThumbnailView = memo(({plotView:pv}) => {
@@ -117,15 +119,31 @@ function makeImageTag(pv, onImageLoad) {
     
     if (transFormCss) s.transform= transFormCss;
 
-    const params= {
-        file : url,
-        type : 'thumbnail',
-        state : plot.plotState.toJson(false)
-    };
+    let imageURL;
+    if (hasLocalRawData(plot)) {
+        // imageURL= getEntry(plot?.plotImageId)?.thumbnailEncodedImage;
+        const thumbnailCanvas= getEntry(plot?.plotImageId)?.thumbnailEncodedImage;
+        // return <img src={imageURL} style={s} ref={onImageLoad} /> ;
 
-    const imageURL=  encodeServerUrl(getRootURL() + 'sticky/FireFly_ImageDownload', params);
+        const drawOnCanvas= (targetCanvas) => {
+            targetCanvas && targetCanvas.getContext('2d').drawImage(thumbnailCanvas,0,0);
+        };
 
-    return <img src={imageURL} style={s} ref={onImageLoad} /> ;
+        return (<div style={s}>
+            <SimpleCanvas drawIt={drawOnCanvas} width={thumbnailCanvas.width} height={thumbnailCanvas.height}
+                          id={'thumbnail'}/>
+        </div>);
+    }
+    else {
+        const params= {
+            file : url,
+            type : 'thumbnail',
+            state : plot.plotState.toJson(false)
+        };
+        imageURL= encodeServerUrl(getRootURL() + 'sticky/FireFly_ImageDownload', params);
+        return <img src={imageURL} style={s} ref={onImageLoad} /> ;
+    }
+
 }
 
 function getThumbZoomFact(plot, thumbW, thumbH) {

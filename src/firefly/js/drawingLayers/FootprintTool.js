@@ -1,6 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import Enum from 'enum';
 import DrawLayerCntlr, {dlRoot, dispatchAttachLayerToPlot,
                         dispatchCreateDrawLayer, getDlAry} from '../visualize/DrawLayerCntlr.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
@@ -23,17 +24,19 @@ import {FootprintFactory} from '../visualize/draw/FootprintFactory.js';
 import {makeImagePt} from '../visualize/Point.js';
 import {get, set, isArray, has, isNil, isEmpty} from 'lodash';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
-import Enum from 'enum';
+import {relocatable} from './FootprintLocatable.js';
+import {MarkerToolUI} from './MarkerToolUI.jsx';
 
 
 const editHelpText='Click any part of the footprint and drag to move, click rotate handle and drag to rotate';
 const footprintInterval = 3000; // time interval for showing marker with handlers and no handlers
 
+export const getMarkerToolUIComponent = (drawLayer,pv) => <MarkerToolUI drawLayer={drawLayer} pv={pv}/>;
+
 const ID= 'OVERLAY_FOOTPRINT';
 const TYPE_ID= 'OVERLAY_FOOTPRINT_TYPE';
 const factoryDef= makeFactoryDef(TYPE_ID,creator,null,getLayerChanges,null, getFootprintToolUIComponent);
 const FootprintStatus = new Enum(['attached', 'select', 'attached_relocate', 'relocate', 'rotate']);
-export const relocatable = new Enum(['origin', 'center']);
 
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
 const  FPFilePrefix = '${footprintFile}';

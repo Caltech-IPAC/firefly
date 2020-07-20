@@ -2,24 +2,25 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {memo, useState} from 'react';
+import React, {memo, useState, useEffect, useRef} from 'react';
+import shallowequal from 'shallowequal';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {CompleteButton} from '../../ui/CompleteButton.jsx';
 import {Band} from '../Band.js';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
-import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
+import FieldGroupUtils, {getFieldGroupResults, validateFieldGroup} from '../../fieldGroup/FieldGroupUtils.js';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {dispatchInitFieldGroup} from '../../fieldGroup/FieldGroupCntlr.js';
 import {ColorBandPanel} from './ColorBandPanel.jsx';
 import {ColorRGBHuePreservingPanel} from './ColorRGBHuePreservingPanel.jsx';
 import ImagePlotCntlr, {dispatchStretchChange, visRoot} from '../ImagePlotCntlr.js';
-import {primePlot, getActivePlotView} from '../PlotViewUtil.js';
+import {primePlot, getActivePlotView, isThreeColor} from '../PlotViewUtil.js';
 import { RangeValues, ZSCALE, STRETCH_ASINH}from '../RangeValues.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
-import {isHiPS, isImage} from '../WebPlot';
+import {hasLocalRawData, isHiPS, isImage} from '../WebPlot';
 import {useStoreConnector} from '../../ui/SimpleComponent';
 import {FieldGroupTabs, Tab} from '../../ui/panel/TabPanel.jsx';
 
@@ -29,6 +30,7 @@ import {RED_PANEL,
     NO_BAND_PANEL,
     RGB_HUEPRESERVE_PANEL,
     colorPanelChange, rgbHuePreserveChange} from './ColorPanelReducer.js';
+import {debounce} from 'lodash';
 
 
 
@@ -56,7 +58,7 @@ function getStoreUpdate(oldS) {
     const gFields= FieldGroupUtils.getGroupFields(GREEN_PANEL);
     const bFields= FieldGroupUtils.getGroupFields(BLUE_PANEL);
     const rgbFields= FieldGroupUtils.getGroupFields(RGB_HUEPRESERVE_PANEL);
-    const newState= {plot, fields, rFields, gFields, bFields, rgbFields}
+    const newState= {plot, fields, rFields, gFields, bFields, rgbFields};
     if (!oldS) return newState;
 
     if ( plot?.plotState!==oldS.plot?.plotState || fields!==oldS.fields ||
@@ -67,13 +69,35 @@ function getStoreUpdate(oldS) {
     return oldS;
 }
 
+const doReplotStandard= debounce((request) => replotStandard(request), 600);
+
 export const ColorDialog= memo(() => {
     const [{plot,fields,rFields,gFields,bFields,rgbFields}]= useStoreConnector(getStoreUpdate);
     const [huePreserving, setHuePreserving]= useState(plot?.plotState.getRangeValues().rgbPreserveHue);
+    const localRawData= hasLocalRawData(plot);
+    const {current:lastResultsRef} = useRef({lastResults:undefined, init:true});
+    const threeColor= isThreeColor(plot);
+    useEffect( () => {
+        if (!localRawData) return;
+        if (threeColor) return;
+        const results = getFieldGroupResults(NO_BAND_PANEL);
+        const {upperRange, lowerRange}= results;
+        if (upperRange && lowerRange && !lastResultsRef.init && !shallowequal(results, lastResultsRef.lastResults)) {
+            lastResultsRef.lastResults = results;
+            validateFieldGroup(NO_BAND_PANEL).then((valid) => {
+                if (valid) {
+                    doReplotStandard(results);
+                }
+            });
+        }
+        lastResultsRef.init= false;
+    });
+
     if (!plot) return false;
 
+
     if (isImage(plot)) {
-        return plot.plotState.isThreeColor() ?
+        return threeColor ?
             renderThreeColorView(plot,rFields,gFields,bFields,rgbFields,huePreserving,setHuePreserving) :
             renderStandardView(plot,fields);
     }

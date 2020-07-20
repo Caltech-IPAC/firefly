@@ -56,7 +56,7 @@ VisHeaderView.propTypes= {
     readout:  PropTypes.object.isRequired,
     readoutData:  PropTypes.object,
     showHealpixPixel : PropTypes.bool,
-    style: PropTypes.number
+    style: PropTypes.object
 };
 
 
