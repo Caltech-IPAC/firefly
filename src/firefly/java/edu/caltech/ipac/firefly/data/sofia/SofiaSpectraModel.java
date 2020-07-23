@@ -13,7 +13,8 @@ import java.util.Map;
 public class SofiaSpectraModel implements VOSpectraModel {
 
     public static final SPECTRA_FIELDS[] defaultSofiaSpectraCols =
-            new VOSpectraModel.SPECTRA_FIELDS[]{SPECTRA_FIELDS.WAVELENGTH, SPECTRA_FIELDS.FLUX, SPECTRA_FIELDS.ERROR_FLUX, VOSpectraModel.SPECTRA_FIELDS.ATMOS_TRANSMISSION, SPECTRA_FIELDS.INST_RESP_CURVE}; // make an enum SPECTRA_COLS("Flux",unit,ucd,type)..?;
+            new VOSpectraModel.SPECTRA_FIELDS[]{SPECTRA_FIELDS.WAVELENGTH, SPECTRA_FIELDS.FLUX, SPECTRA_FIELDS.ERROR_FLUX, VOSpectraModel.SPECTRA_FIELDS.ATMOS_TRANSMISSION, SPECTRA_FIELDS.INST_RESP_CURVE,
+                    SPECTRA_FIELDS.FREQUENCY, SPECTRA_FIELDS.VELOCITY}; // make an enum SPECTRA_COLS("Flux",unit,ucd,type)..?;
 
     private final Map<String, DataType> voCols;
     private SPECTRA_FIELDS[] spectraCols;
@@ -83,7 +84,7 @@ public class SofiaSpectraModel implements VOSpectraModel {
      */
 
     public enum INSTRUMENTS {
-        GREAT("GREAT"),
+
         FORCAST("FORCAST",
                 new HashMap<String, String>() {{
                     put("IMAGING", "IMAGING");
@@ -96,9 +97,10 @@ public class SofiaSpectraModel implements VOSpectraModel {
         ),
         FIFILS("FIFI-LS"),
         HAWC("HAWC_PLUS"),
-        EXES("EXES",null, null,new VOSpectraModel.SPECTRA_FIELDS[]{SPECTRA_FIELDS.WAVENUMBER, SPECTRA_FIELDS.FLUX, SPECTRA_FIELDS.ERROR_FLUX, VOSpectraModel.SPECTRA_FIELDS.ATMOS_TRANSMISSION}),
+        EXES("EXES",null, null, new VOSpectraModel.SPECTRA_FIELDS[]{SPECTRA_FIELDS.WAVENUMBER, SPECTRA_FIELDS.FLUX, SPECTRA_FIELDS.ERROR_FLUX, VOSpectraModel.SPECTRA_FIELDS.ATMOS_TRANSMISSION}),
         FLITECAM("FLITECAM",null,null,new VOSpectraModel.SPECTRA_FIELDS[]{SPECTRA_FIELDS.WAVELENGTH, SPECTRA_FIELDS.FLUX, SPECTRA_FIELDS.ERROR_FLUX}),
-        FPI("FPI_PLUS");
+        FPI("FPI_PLUS"),
+        GREAT("GREAT", null, null,new  VOSpectraModel.SPECTRA_FIELDS[]{SPECTRA_FIELDS.FREQUENCY, SPECTRA_FIELDS.VELOCITY, SPECTRA_FIELDS.FLUX});
 
         private final SPECTRA_FIELDS[] spectraFields;
         private String name;
@@ -144,7 +146,9 @@ public class SofiaSpectraModel implements VOSpectraModel {
 
         FORCAST(SofiaSpectraModel.INSTRUMENTS.FORCAST, SPECTRA_FIELDS.WAVELENGTH, SPECTRA_FIELDS.FLUX),
         EXES(SofiaSpectraModel.INSTRUMENTS.EXES, SPECTRA_FIELDS.WAVENUMBER, SPECTRA_FIELDS.FLUX),
-        FLITECAM(SofiaSpectraModel.INSTRUMENTS.FLITECAM, SPECTRA_FIELDS.WAVELENGTH, SPECTRA_FIELDS.FLUX);
+        FLITECAM(SofiaSpectraModel.INSTRUMENTS.FLITECAM, SPECTRA_FIELDS.WAVELENGTH, SPECTRA_FIELDS.FLUX),
+        GREAT(SofiaSpectraModel.INSTRUMENTS.GREAT, SPECTRA_FIELDS.FREQUENCY, SPECTRA_FIELDS.FLUX);
+
 
 
         //GREAT, FIFILS... more complicated.

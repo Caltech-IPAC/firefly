@@ -1,27 +1,28 @@
 package edu.caltech.ipac.firefly.server.dpanalyze;
 
-import edu.caltech.ipac.firefly.core.FileAnalysis;
 import edu.caltech.ipac.firefly.core.FileAnalysisReport;
-import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.sofia.Sofia1DSpectraExtractor;
 import edu.caltech.ipac.firefly.data.sofia.SofiaSpectraModel;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.table.io.VoTableWriter;
 import edu.caltech.ipac.util.FitsHDUUtil;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
+import nom.tam.fits.BasicHDU;
+import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.Header;
 import edu.caltech.ipac.firefly.data.sofia.SofiaFitsConverterUtil;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -77,6 +78,18 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
                 e.printStackTrace();
             }
         }
+        if ( inst.equals("GREAT")){
+            try {
+                return convertToFrequencyParts(inputReport, inFile.getAbsolutePath());
+            } catch (FitsException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
 
         FileAnalysisReport retRep = inputReport.copy();
         return retRep;
@@ -125,7 +138,9 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
             File outputFile = new File(ServerContext.getUploadDir(), strAry[strAry.length-1]);
 
             //save the converted FITs to the temp file
-            SofiaFitsConverterUtil.doConvertFits(inputFile,outputFile.getAbsolutePath());
+
+            SofiaFitsConverterUtil.doConvertFits(inputFile, outputFile.getAbsolutePath());
+
 
             //create a detail report for the newly created FITs file
             FileAnalysisReport report  = (FitsHDUUtil.analyze(outputFile, FileAnalysisReport.ReportType.Details)).getReport();
@@ -141,6 +156,99 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
 
 
     }
+
+    /**
+     * This method is convert the image part of the GREAT to a table part
+     * @param inputReport
+     * @param inputFile
+     * @return
+     * @throws FitsException
+     * @throws IOException
+     */
+    private FileAnalysisReport convertToFrequencyParts(FileAnalysisReport inputReport, String inputFile) throws Exception {
+
+        Fits fits = new Fits(inputFile);
+        BasicHDU[] hdus= fits.read();
+        String[] strAry = inputFile.split("/");
+
+        FileAnalysisReport retRep = inputReport.copy();
+        String fitsFileNameRoot = strAry[strAry.length-1].split(".fits")[0];
+        FileAnalysisReport.Part[] parts=retRep.getParts().toArray(new FileAnalysisReport.Part[0]);
+
+        int partIndex=0;
+        for (int i=0; i<hdus.length; i++){
+            String fileName = fitsFileNameRoot+i;
+            partIndex++;
+            FileAnalysisReport.Part chartPart = makeChartPart(hdus[i], fileName,i, partIndex);
+            if (chartPart!=null) {
+                retRep.insertPartAfter(parts[i], chartPart);
+                partIndex++;
+
+            }
+        }
+        return retRep;
+    }
+
+    /**
+     * This method made the chart part for each imageHDU where it has a frequency defined in the header.
+     * It uses SofiaFitsConverterUtil class which is reading the FITs and converts to a DataGroup. The conversion
+     * algorithm and formula are described in SofiaFitsConverterUtil.
+     *
+     * @param hdu
+     * @param fileName
+     * @param hduIndex
+     * @param partIndex
+     * @return
+     * @throws Exception
+     */
+    private FileAnalysisReport.Part makeChartPart(BasicHDU hdu, String fileName, int hduIndex, int partIndex) throws Exception {
+        DataGroup dg = SofiaFitsConverterUtil.makeDataGroupFromHDU(hdu, fileName);
+        if (dg==null) return null;
+
+        File frequencyTable = new File(ServerContext.getUploadDir(), fileName +".xml");
+
+        VoTableWriter.save(frequencyTable, dg, VO_TABLE_TABLEDATA);
+        FileAnalysisReport  freqReport = VoTableReader.analyze(frequencyTable, FileAnalysisReport.ReportType.Details);
+        FileAnalysisReport.Part freqPart = freqReport.getPart(0);
+
+        freqPart.setDesc("Frequency Table Data in " + "HDU "+ hduIndex);
+        freqPart.setFileLocationIndex(0);
+        freqPart.setConvertedFileName(ServerContext.replaceWithPrefix(frequencyTable));
+        freqPart.setConvertedFileFormat(freqReport.getFormat());
+        freqPart.setIndex(partIndex); //set the index to the correct location in the part list
+        freqPart.setUiRender(FileAnalysisReport.UIRender.Chart);
+        freqPart.setUiEntry(FileAnalysisReport.UIEntry.UseAll);
+        freqPart.setChartTableDefOption(FileAnalysisReport.ChartTableDefOption.showChart);
+        freqPart.setInterpretedData(true);
+
+        FileAnalysisReport.ChartParams cp = getChartParm("GREAT", "markers", "");
+        freqPart.setChartParams(cp);
+
+        return freqPart;
+
+    }
+
+    /**
+     * Create a chart parameter to be used among the parts created.
+     * @param inst
+     * @param mode
+     * @param title
+     * @return
+     */
+    private FileAnalysisReport.ChartParams getChartParm(String inst, String mode, String title){
+        FileAnalysisReport.ChartParams cp= new FileAnalysisReport.ChartParams();
+        SofiaSpectraModel.SpectraInstrument instrument = SofiaSpectraModel.SpectraInstrument.getInstrument(inst);
+        String xCol = instrument.getXaxis().getKey();
+        String yCol = instrument.getYaxis().getKey();
+        cp.setxAxisColName(xCol);
+        cp.setyAxisColName(yCol);
+        //set the title instead of the default value stored in the part
+        if (title!=null) cp.addLayout(Collections.singletonMap("title",""));
+        cp.setMode(mode);
+        return cp;
+
+    }
+
 
     private FileAnalysisReport addingSpectraExtractedTableAPart(FileAnalysisReport inputReport, String inst) {
         try {
@@ -166,21 +274,14 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
             addPart.setConvertedFileFormat(tempRep.getFormat());
             addPart.setIndex(1);
             addPart.setUiRender(FileAnalysisReport.UIRender.Chart);
-            addPart.setUiEntry(FileAnalysisReport.UIEntry.UseAll);
-            addPart.setInterpretedData(true);
+            addPart.setUiEntry(FileAnalysisReport.UIEntry.UseSpecified);
             addPart.setChartTableDefOption(FileAnalysisReport.ChartTableDefOption.showChart);
             addPart.setDefaultPart(true);
 
             //TODO add error bars?
-            FileAnalysisReport.ChartParams cp = new FileAnalysisReport.ChartParams();
-            String xCol = instrument.getXaxis().getKey();
-            String yCol = instrument.getYaxis().getKey();
-            cp.setxAxisColName(xCol);
-            cp.setyAxisColName(yCol);
-            cp.setMode("lines+markers");
+            FileAnalysisReport.ChartParams cp = getChartParm(inst, "lines+markers", null);
             addPart.setChartParams(cp);
             retRep.addPart(addPart);
-
             return retRep;
         } catch (Exception e) {
             e.printStackTrace();
