@@ -4,6 +4,7 @@ import CoordUtil from '../../visualize/CoordUtil.js';
 import Point, {makeWorldPt} from '../../visualize/Point.js';
 
 import {sprintf} from '../../externalSource/sprintf';
+import {matchesIgCase} from '../../util/WebUtil.js';
 
 /**
  * Created by roby on 12/2/14.
