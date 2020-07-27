@@ -18,6 +18,7 @@ public class MOSRequest extends TableServerRequest { // extends WiseRequest {
     public final static String EPHEM_STEP         = "ephem_step";
     public final static String SEARCH_REGION_SIZE = "search_region_size";
     public final static String OBJ_TYPE           = "obj_type";
+    public final static String OBJ_TYPE_ELM        = "obj_type_elm";
     public final static String OUTPUT_MODE        = "output_mode";
     public final static String MPC_DATA           = "mpc_data";
     public final static String INPUT_TYPE         = "input_type";
@@ -98,6 +99,10 @@ public class MOSRequest extends TableServerRequest { // extends WiseRequest {
     }
     public String getObjType() { return getParam(OBJ_TYPE); }
 
+    public String getObjTypeElm() { return getParam(OBJ_TYPE_ELM); }
+    public void setObjTypeElm(String value) {
+            setParam(OBJ_TYPE_ELM, value);
+        }
 
     public void setOutputMode(String value) {
         setParam(OUTPUT_MODE, value);
