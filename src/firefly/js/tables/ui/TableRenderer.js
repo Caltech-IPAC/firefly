@@ -2,22 +2,22 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PureComponent, useRef, useCallback} from 'react';
+import React, {Component, PureComponent, useRef, useCallback, useState} from 'react';
 import {Cell} from 'fixed-data-table-2';
-import {set, get, isEqual, pick, omit} from 'lodash';
+import {set, get, isEqual, pick, omit, isEmpty} from 'lodash';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS, NULL_TOKEN} from '../FilterInfo.js';
 import {isColumnType, COL_TYPE, tblDropDownId, getTblById, getColumn, formatValue, getTypeLabel, getColumnIdx, getRowValues, getCellValue} from '../TableUtil.js';
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {SORT_ASC, UNSORTED} from '../SortInfo';
-import {toBoolean, isNumeric} from '../../util/WebUtil.js';
+import {toBoolean, isNumeric, copyToClipboard} from '../../util/WebUtil.js';
 
 import ASC_ICO from 'html/images/sort_asc.gif';
 import DESC_ICO from 'html/images/sort_desc.gif';
 import FILTER_SELECTED_ICO from 'html/images/icons-2014/16x16_Filter.png';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField';
-import {showDropDown, hideDropDown} from '../../ui/DialogRootContainer.jsx';
+import DialogRootContainer, {showDropDown, hideDropDown} from '../../ui/DialogRootContainer.jsx';
 import {FieldGroup} from '../../ui/FieldGroup';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
@@ -30,6 +30,8 @@ const html_regex = /<.+>/;
 const filterStyle = {width: '100%', boxSizing: 'border-box'};
 
 import infoIcon from 'html/images/info-icon.png';
+import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
+import {PopupPanel} from '../../ui/PopupPanel.jsx';
 
 const imageStubMap = {
     info: <img style={{width:'14px'}} src={infoIcon} alt='info'/>
@@ -46,39 +48,32 @@ function SortSymbol({sortDir}) {
     );
 };
 
-export class HeaderCell extends PureComponent {
-    constructor(props) {
-        super(props);
-    }
+export const HeaderCell = React.memo( ({col, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter, style, tbl_id}) => {
+    const {label, name, desc, sortByCols, sortable} = col || {};
+    const cdesc = desc || label || name;
+    const sortDir = SortInfo.parse(sortInfo).getDirection(name);
+    const sortCol = sortByCols || name;
+    const typeVal = getTypeLabel(col);
+    const unitsVal = col.units ? `(${col.units})`: '';
+    const className = toBoolean(sortable, true) ? 'clickable' : undefined;
 
-    render() {
-        const {col, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter, style, tbl_id} = this.props;
-        const {label, name, desc, sortByCols, sortable} = col || {};
-        const cdesc = desc || label || name;
-        const sortDir = SortInfo.parse(sortInfo).getDirection(name);
-        const sortCol = sortByCols || name;
-        const typeVal = getTypeLabel(col);
-        const unitsVal = col.units ? `(${col.units})`: '';
-        const className = toBoolean(sortable, true) ? 'clickable' : undefined;
-        
-        const onClick = toBoolean(sortable, true) ? () => onSort(sortCol) : () => showInfoPopup('This column is not sortable');
-        return (
-            <div style={style} title={cdesc} className='TablePanel__header'>
-                <div style={{height: '100%', width: '100%'}} className={className} onClick={onClick}>
-                    <div style={{display: 'inline-flex', width: '100%', justifyContent: 'center'}}>
-                        <div style={{textOverflow: 'ellipsis', overflow: 'hidden'}}>
-                            {label || name}
-                        </div>
-                        { sortDir !== UNSORTED && <SortSymbol sortDir={sortDir}/> }
+    const onClick = toBoolean(sortable, true) ? () => onSort(sortCol) : () => showInfoPopup('This column is not sortable');
+    return (
+        <div style={style} title={cdesc} className='TablePanel__header'>
+            <div style={{height: '100%', width: '100%'}} className={className} onClick={onClick}>
+                <div style={{display: 'inline-flex', width: '100%', justifyContent: 'center'}}>
+                    <div style={{textOverflow: 'ellipsis', overflow: 'hidden'}}>
+                        {label || name}
                     </div>
-                    {showUnits && <div style={{height: 11, fontWeight: 'normal'}}>{unitsVal}</div>}
-                    {showTypes && <div style={{height: 11, fontWeight: 'normal', fontStyle: 'italic'}}>{typeVal}</div>}
+                    { sortDir !== UNSORTED && <SortSymbol sortDir={sortDir}/> }
                 </div>
-                {showFilters && <Filter {...{cname:name, onFilter, filterInfo, tbl_id}}/>}
+                {showUnits && <div style={{height: 11, fontWeight: 'normal'}}>{unitsVal}</div>}
+                {showTypes && <div style={{height: 11, fontWeight: 'normal', fontStyle: 'italic'}}>{typeVal}</div>}
             </div>
-        );
-    }
-}
+            {showFilters && <Filter {...{cname:name, onFilter, filterInfo, tbl_id}}/>}
+        </div>
+    );
+});
 
 const blurEnter = ['blur','enter'];
 
@@ -232,87 +227,134 @@ export class SelectableCell extends Component {
 
 /*---------------------------- CELL RENDERERS ----------------------------*/
 
-function getValue({col, rowIndex, data, columnKey}) {
-    const val = get(data, [rowIndex, columnKey]);
-    return formatValue(col, val);
+/**
+ * returns cell related attributes for display {col, value, rvalues, text, isArray, textAlign, absRowIdx}
+ * @returns {{col, value, rvalues, text, isArray, textAlign, absRowIdx, tableModel}}
+ */
+function getCellInfo({col, rowIndex, data, columnKey, tbl_id, startIdx=0}) {
+    if (!col) return {};
+
+    const tableModel = getTblById(tbl_id);
+    const absRowIdx = rowIndex + startIdx;   // rowIndex is the index of the current page.  Add startIdx to get the absolute index of the row in the full table.
+    const value = get(data, [rowIndex, columnKey]);
+    const isArray = Array.isArray(value);
+    let text = formatValue(col, value);
+    let rvalues = [value];
+    let textAlign = col.align;
+
+    if (col.links) {
+        rvalues =  col.links.map( ({value:val}) => resolveHRefVal(tableModel, val, absRowIdx, value) );
+        text = rvalues.join(' ');
+    }
+    textAlign = textAlign || rvalues.length > 1 ? 'middle': isColumnType(col, COL_TYPE.NUMBER) ? 'right' : 'left';
+    return {col, value, rvalues, text, isArray, textAlign, absRowIdx, tableModel};
 }
 
-export class TextCell extends Component {
-    constructor(props) {
-        super(props);
-    }
+export function TextCell({columnKey, col, rowIndex, data, cellInfo}) {
+    const {value, text} = cellInfo || getCellInfo({columnKey, col, rowIndex, data});
+    return (value?.search && value.search(html_regex) >= 0) ? <div dangerouslySetInnerHTML={{__html: value}}/> : text;
+}
 
-    shouldComponentUpdate(nProps) {
-        return nProps.columnKey !== this.props.columnKey ||
-            nProps.rowIndex !== this.props.rowIndex ||
-            getValue(nProps) !== getValue(this.props);
-    }
 
-    // componentDidUpdate(prevProps) {
-    //     deepDiff({props: prevProps, state: prevState},
-    //         {props: this.props, state: this.state},
-    //         this.constructor.displayName);
-    // }
-    //
-    render() {
-        const {col={}, style, height} = this.props;
-        const isNumeric = isColumnType(col, COL_TYPE.NUMBER);
-        const lineHeight = height - 6 + 'px';  // 6 is the top/bottom padding.
-        const textAlign = col.align || (isNumeric ? 'right' : 'left');
+export function makeDefaultRenderer(col={}, tbl_id, startIdx) {
+    const Content = (col.type === 'location' || !isEmpty(col.links)) ? LinkCell : TextCell;
+    return (props) => <CellWrapper {...{...props, tbl_id, startIdx, Content}} />;
+}
 
-        let val = getValue(this.props);
-        val = (val && val.search && val.search(html_regex) >= 0) ? <div dangerouslySetInnerHTML={{__html: val}}/> : val;
 
-        return (
-            <div style={{textAlign, lineHeight, ...style}} className='public_fixedDataTableCell_cellContent'>{val}</div>
+/**
+ * A wrapper tag that handles default styles, textAlign, and actions.
+ */
+export const CellWrapper =  React.memo( (props) => {
+    const {tbl_id, startIdx, Content, style, columnKey, col, rowIndex, data, height, width} = props;
+    const dropDownID = 'actions--dropdown';
+    const popupID = 'actions--popup';
+
+    const [hasActions, setHasActions] = useState(false);
+    const actionsEl = useRef(null);
+    const cellInfo = getCellInfo({columnKey, col, rowIndex, data, tbl_id, startIdx});
+    const {textAlign, text} = cellInfo;
+
+    const onActionsClicked = (ev) => {
+        ev.stopPropagation();
+        showDropDown({id: dropDownID, content: dropDown, atElRef: actionsEl.current, locDir: 33, style: {marginLeft: -10},
+            wrapperStyle: {zIndex: 110}}); // 110 is the z-index of a dropdown
+    };
+
+    const copyCB = () => {
+        copyToClipboard(text);
+        hideDropDown(dropDownID);
+    };
+
+    const viewAsText = () => {
+        const popup = (
+            <PopupPanel title={'View as plain text'} >
+                <textarea readOnly className='Actions__popup' value={text} />
+            </PopupPanel>
         );
-    }
+        DialogRootContainer.defineDialog(popupID, popup);
+        dispatchShowDialog(popupID);
+        hideDropDown(dropDownID);
+    };
+
+    const dropDown =  (
+        <div className='Actions__dropdown'>
+            <div className='Actions__item' onClick={copyCB}>Copy to clipboard</div>
+            <div className='Actions__item' onClick={viewAsText}>View as plain text</div>
+        </div>
+    );
+    const lineHeight = height - 6 + 'px';  // 6 is the top/bottom padding.
+
+    const checkOverflow = (ev) => {
+        const c = ev?.currentTarget?.children?.[0] || {};
+        setHasActions(c.clientWidth < c.scrollWidth-6);  // account for paddings
+    };
+
+    return (
+        <div onMouseEnter={checkOverflow}
+             onMouseLeave={() => setHasActions(false)} style={{display: 'flex'}}>
+            <div style={{textAlign, lineHeight, ...style}} className='public_fixedDataTableCell_cellContent'>
+                <Content {...omit(props, 'Content')} cellInfo={cellInfo}/>
+            </div>
+            {hasActions && <div ref={actionsEl} className='Actions__anchor clickable' onClick={onActionsClicked} title='Display full cell contents'>&#x25cf;&#x25cf;&#x25cf;</div>}
+        </div>
+    );
+}, skipCellRender);
+
+function skipCellRender(prev={}, next={}) {
+    return prev.width === next.width &&
+        getCellInfo(prev)?.text === getCellInfo(next)?.text;
 }
+
 
 /**
  * @see {@link http://www.ivoa.net/documents/VOTable/20130920/REC-VOTable-1.3-20130920.html#ToC54}
  * LinkCell is implementing A.4 using link substitution based on A.1
  */
-export const LinkCell = React.memo((props) => {
-    const {tbl_id, col={}, rowIndex, style={}, startIdx} = props;
-    const absRowIdx = rowIndex + startIdx;              // rowIndex is the index of the current page.  Add startIdx to get the absolute index of the row in the full table.
-    const val = getValue(props);
-    const className = 'public_fixedDataTableCell_cellContent';
-    let textAlign = col.align;
-    const backgroundColor = style.backgroundColor;
+export const LinkCell = React.memo(({cellInfo, style, ...rest}) => {
+    const {absRowIdx, col, textAlign, rvalues, tableModel} = cellInfo || getCellInfo(rest);
     let mstyle = omit(style, 'backgroundColor');
     if (col.links) {
-        const tableModel = getTblById(tbl_id);
-        if (col.links.length === 1) {
-            const rval = resolveHRefVal(tableModel, get(col, 'links.0.value', val), absRowIdx);
-            textAlign = textAlign || isNumeric(rval) ? 'right' : 'left';
-        } else {
-            textAlign = textAlign || 'middle';
-        }
         return (
-            <div className={className} style={{textAlign, backgroundColor}}>
-                {
-                    col.links.map( (link={}, idx) => {
-                        const {href, title, value=val, action} = link;
-                        const target = action || '_blank';
-                        const rvalue = resolveHRefVal(tableModel, value, absRowIdx);
-                        const rhref = resolveHRefVal(tableModel, href, absRowIdx, val);
-                        if (!rhref) return '';
-                        mstyle = idx > 0 ? {marginLeft: 3, ...mstyle} : mstyle;
-                        return (<ATag key={'ATag_' + idx} href={rhref}
-                                      {...{value:rvalue, title, target, style:mstyle}}
-                                />);
-                    })
-                }
+            <div style={{textAlign, overflow: 'visible'}}>
+            {
+                col.links.map( (link={}, idx) => {
+                    const {href, title, action} = link;
+                    const target = action || '_blank';
+                    const rvalue = rvalues[idx];
+                    const rhref = resolveHRefVal(tableModel, href, absRowIdx, rvalue);
+                    if (!rhref) return '';
+                    mstyle = idx > 0 ? {marginLeft: 3, ...mstyle} : mstyle;
+                    return (<ATag key={'ATag_' + idx} href={rhref}
+                                  {...{value:rvalue, title, target, style:mstyle}}
+                            />);
+                })
+            }
             </div>
         );
     } else {
-        textAlign = textAlign || isNumeric(val) ? 'right' : 'left';
-        return (
-            <div className={className} style={{textAlign, backgroundColor}}>
-                <ATag href={val} value={val} target='_blank' style={mstyle}/>
-            </div>
-        );
+        const val = String(rvalues[0]);
+        return  <ATag href={val} value={val} target='_blank' style={mstyle}/>;
     }
 });
 
@@ -485,8 +527,6 @@ function makeChangeHandler (rowIndex, data, colIdx, tbl_id, cname, validator, on
         }
     };
 };
-
-
 
 
 const ATag = React.memo(({value='', title, href, target, style={}}) => {

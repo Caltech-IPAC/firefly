@@ -12,7 +12,7 @@ import {tableTextView, getTableUiById, getProprietaryInfo, getTblById, hasRowAcc
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
-import {TextCell, HeaderCell, SelectableHeader, SelectableCell, LinkCell} from './TableRenderer.js';
+import {TextCell, HeaderCell, SelectableHeader, SelectableCell, LinkCell, makeDefaultRenderer} from './TableRenderer.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {dispatchTableUiUpdate, TBL_UI_UPDATE} from '../TablesCntlr.js';
 import {Logger} from '../../util/Logger.js';
@@ -31,7 +31,7 @@ const BasicTableViewInternal = React.memo((props) => {
     const {width, height} = props.size;
     const {columns, data, hlRowIdx, showUnits, showTypes, showFilters, filterInfo, renderers,
             bgColor, selectable, selectInfoCls, sortInfo, callbacks, textView, rowHeight,
-            error, tbl_ui_id=uniqueTblUiId(), currentPage, startIdx=0, highlightedRowHandler} = props;
+            error, tbl_ui_id=uniqueTblUiId(), currentPage, startIdx=0, highlightedRowHandler, cellRenderers} = props;
 
     const uiStates = getTableUiById(tbl_ui_id) || {};
     const {tbl_id, columnWidths, scrollLeft=0, scrollTop=0, triggeredBy} = uiStates;
@@ -70,7 +70,7 @@ const BasicTableViewInternal = React.memo((props) => {
 
     const makeColumnsProps = {columns, data, selectable, selectInfoCls, renderers, bgColor,
         columnWidths, filterInfo, sortInfo, showUnits, showTypes, showFilters,
-        onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected, startIdx, tbl_id};
+        onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected, startIdx, cellRenderers, tbl_id};
 
     const rowClassNameGetter = highlightedRowHandler || defHighlightedRowHandler(tbl_id, hlRowIdx, startIdx);
 
@@ -335,11 +335,11 @@ function makeColumns (props) {
 
 
 function makeColumnTag(props, col, idx) {
-    const {data, columnWidths, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter, tbl_id, renderers, bgColor='white', startIdx} = props;
+    const {data, columnWidths, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter, tbl_id, renderers, bgColor='white', startIdx, cellRenderers} = props;
 
     if (col.visibility && col.visibility !== 'show') return false;
     const HeadRenderer = get(renderers, [col.name, 'headRenderer'], HeaderCell);
-    const CellRenderer = get(renderers, [col.name, 'cellRenderer'], getDefaultRenderer(col, tbl_id, startIdx));
+    const CellRenderer = get(renderers, [col.name, 'cellRenderer'], cellRenderers?.[idx] || makeDefaultRenderer(col,tbl_id, startIdx));
     const fixed = col.fixed || false;
     const style = col.fixed && {backgroundColor: bgColor};
     const {resizable=true} = col;
@@ -374,13 +374,5 @@ function makeSelColTag({selectable, onSelectAll, showUnits, showTypes, showFilte
             allowCellsRecycling={true}
         />
     );
-}
-
-function getDefaultRenderer(col={}, tbl_id, startIdx) {
-    if (col.type === 'location' || !isEmpty(col.links)) {
-        return ((props) => <LinkCell {...props} {...{tbl_id, col, startIdx}}/>);
-    }
-
-    return TextCell;
 }
 

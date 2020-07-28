@@ -2,12 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {has, get, isEmpty, cloneDeep, findKey, omit} from 'lodash';
+import {has, get, isEmpty, cloneDeep, findKey, omit, set} from 'lodash';
 
 import {updateSet, updateMerge} from '../../util/WebUtil.js';
 import * as Cntlr from '../TablesCntlr.js';
 import {getTblInfo, isTableLoaded, smartMerge, getAllColumns} from '../TableUtil.js';
 import {getNumFilters} from '../FilterInfo.js';
+import {makeDefaultRenderer} from '../ui/TableRenderer.js';
 
 
 /*---------------------------- REDUCERS -----------------------------*/
@@ -96,6 +97,13 @@ function uiStateReducer(ui, tableModel) {
         return get(ui, [ui_id, 'tbl_id']) === tbl_id;
     }).forEach( (tbl_ui_id) => {
         const columns = get(ui, [tbl_ui_id, 'columns']);
+
+        // create cellRenderers if not exist
+        if (!ui?.[tbl_ui_id]?.cellRenderers) {
+            tableModel?.tableData?.columns?.forEach((col,idx) => {
+                set(uiData, ['cellRenderers', idx], makeDefaultRenderer(col, tbl_id, startIdx));
+            });
+        }
         uiData.columns = ensureColumns({tableModel, columns});
 
         if (!isEmpty(columns) && get(tableModel, 'tableData.columns') && !hasSameCnames(tableModel, columns)) {
