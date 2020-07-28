@@ -166,7 +166,8 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
             addPart.setConvertedFileFormat(tempRep.getFormat());
             addPart.setIndex(1);
             addPart.setUiRender(FileAnalysisReport.UIRender.Chart);
-            addPart.setUiEntry(FileAnalysisReport.UIEntry.UseSpecified);
+            addPart.setUiEntry(FileAnalysisReport.UIEntry.UseAll);
+            addPart.setInterpretedData(true);
             addPart.setChartTableDefOption(FileAnalysisReport.ChartTableDefOption.showChart);
             addPart.setDefaultPart(true);
 
