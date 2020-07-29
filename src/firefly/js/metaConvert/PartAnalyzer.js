@@ -8,7 +8,7 @@ import {RequestType} from '../visualize/RequestType.js';
 import {TitleOptions} from '../visualize/WebPlotRequest';
 import {createChartTableActivate, createChartSingleRowArrayActivate} from './converterUtils';
 import {createSingleImageActivate} from './ImageDataProductsUtil';
-
+import {isEmpty} from 'lodash';
 /**
  *
  * @param part
@@ -24,6 +24,8 @@ export function analyzePart(part, request, table, row, fileFormat, serverCacheFi
 
     const {type,desc, fileLocationIndex}= part;
     const availableTypes= findAvailableTypesForAnalysisPart(part, fileFormat);
+    if (isEmpty(availableTypes)) return {imageResult:false, tableResult:false};
+
     const fileOnServer= (part.convertedFileName) ? part.convertedFileName : serverCacheFileKey;
 
     const imageResult= availableTypes.includes(DPtypes.IMAGE) && type===FileAnalysisType.Image &&
@@ -71,7 +73,7 @@ export function chooseDefaultEntry(menu,parts,fileFormat, dataTypeHint) {
 function findAvailableTypesForAnalysisPart(part, fileFormat) {
     const {type}= part;
     if (type===FileAnalysisType.HeaderOnly || type===FileAnalysisType.Unknown) return [];
-    if (type!==FileAnalysisType.Image || fileFormat!=='FITS' || is1DImage(part)) return [DPtypes.CHART,DPtypes.TABLE];
+    if (type!==FileAnalysisType.Image &&  fileFormat!=='FITS' &&  is1DImage(part) || type===FileAnalysisType.Table) return [DPtypes.CHART,DPtypes.TABLE];
     return (imageCouldBeTable(part)) ? [DPtypes.IMAGE,DPtypes.TABLE,DPtypes.CHART] : [DPtypes.IMAGE];
 }
 
