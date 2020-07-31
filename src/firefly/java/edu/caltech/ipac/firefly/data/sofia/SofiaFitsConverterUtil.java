@@ -1,11 +1,16 @@
 package edu.caltech.ipac.firefly.data.sofia;
 
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
+import edu.caltech.ipac.visualize.plot.ImageHeader;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
 import nom.tam.fits.*;
 import java.io.*;
 import java.net.URL;
+import java.util.ArrayList;
 
 
 public class SofiaFitsConverterUtil {
@@ -71,9 +76,10 @@ public class SofiaFitsConverterUtil {
 
     }
 
-    private static  BinaryTableHDU convertWaveTabHDU(BasicHDU hdu) throws FitsException {
 
-        //convert the data to float to do all the calculations
+
+
+    private static  BinaryTableHDU convertWaveTabHDU(BasicHDU hdu) throws FitsException {
 
         double[] coords = FitsReadUtil.getImageHDUDataInDoubleArray(hdu);
         Header header = hdu.getHeader();
@@ -155,6 +161,7 @@ public class SofiaFitsConverterUtil {
         return outFits;
 
     }
+
 
     /**
      * If the FITS is a wave-tab: 1. CTYPEi=WAVE-TAB or Lambda; 2: there is a HDU that has an EXTNAME="WAVELENGTH"
@@ -268,6 +275,158 @@ public class SofiaFitsConverterUtil {
         outFits.write(new DataOutputStream(stream));
 
     }
+
+    /**
+     * Each FITs file may define the FREQ axis differently.  This method is to find which naxis_ia is the FREQ axis.
+     * @param header
+     * @return
+     */
+    private static int  getFrequencyAxis(Header header){
+        int naxis = header.getIntValue("NAXIS", -1);
+        if (naxis>1){
+            for (int i=1; i<=naxis; i++){
+
+                String ctype = header.getStringValue("CTYPE"+ Integer.toString(i));
+                if (ctype.equalsIgnoreCase("FREQ")){
+                    return i;
+                }
+
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * The transformation formula is
+     *
+     *  velocity = C * [restFrequency - frequency) / restFrequency]
+     *  where C is the speed of light.
+     *  Reference :
+     *  Table 4 in "E. W. Greisen et al.: Representations of spectral coordinates in FITS"
+     * @param frequency
+     * @param header
+     * @return
+     */
+    private static double[] getVelocityArray(double[] frequency, Header header){
+        double restFreq = header.getDoubleValue("RESTFREQ");
+        double SPEED_LIGHT = 300000; //using unit km, 3*10^8 meter
+        double[] velocity = new double[ frequency.length];
+        for (int i=0; i<frequency.length; i++){
+            velocity[i] = SPEED_LIGHT * (restFreq  - frequency[i])/restFreq;
+        }
+        return velocity;
+    }
+
+    /**
+     *  Reference: "E. W. Greisen et al.: Representations of spectral coordinates in FITS"
+     *  frequency = restFrequency + cdet * ( pixel - crpix)
+     *  where the pc_ij = 0 when i!=j, thus, the frequency is independent of the other axes
+     * @param header
+     * @param freqAxis
+     * @return
+     */
+    private static double[] getFrequencyArray(Header header, int freqAxis){
+
+        int arrayLength =  header.getIntValue("NAXIS"+ freqAxis);
+        double restFreq = header.getDoubleValue("RESTFREQ");
+        double cdelt = header.getDoubleValue("CDELT"+freqAxis);
+        double crpix = header.getDoubleValue("CRPIX"+freqAxis);
+
+        double[] frequency = new double[arrayLength];
+        for (int i=0; i<arrayLength; i++){
+            frequency[i] = restFreq +  (i+1 - crpix )*cdelt;
+        }
+
+        return frequency;
+
+    }
+
+
+    /**
+     * This method is to create a DataGroup based on the FREQ definition in the HDU.  It first validates the HDU to see
+     * if it has the FREQ defined in the HDU header.
+     * The SofiaSpectraModel is used.  The SofiaSpectraModel defines the instrument "GREAT" and the data types that will
+     * be used in the DataGroup to be created.
+     * 
+     * @param hdu
+     * @param fileName
+     * @return
+     * @throws FitsException
+     */
+    public static DataGroup makeDataGroupFromHDU(BasicHDU hdu, String fileName) throws FitsException {
+
+        if (!isValidFrequencyHDU(hdu)) return null;
+        SofiaSpectraModel spectraModel =  new SofiaSpectraModel(SofiaSpectraModel.SpectraInstrument.GREAT);
+
+
+        Header header = hdu.getHeader();
+
+        double[] flux = FitsReadUtil.getImageHDUDataInDoubleArray(hdu);
+
+        if( header.containsKey("BSCALE")  &&  header.containsKey("BZERO")){
+            flux = FitsReadUtil.getPhysicalDataDouble(flux,  new ImageHeader(header) );
+        }
+
+
+        int freqAxis =  getFrequencyAxis(header);
+        double[] frequency = getFrequencyArray(header, freqAxis);
+
+        String fluxUnit= hdu.getBUnit();
+        spectraModel.setUnits(VOSpectraModel.SPECTRA_FIELDS.FLUX, fluxUnit);
+
+        String freqUnit = header.getStringValue("CUNIT"+freqAxis);
+
+        //since there is nothing in the HDU, hard code this for now
+        freqUnit= freqUnit!=null?freqUnit:"Hz";
+        spectraModel.setUnits(VOSpectraModel.SPECTRA_FIELDS.FREQUENCY,freqUnit );
+
+        double[] velocity=  getVelocityArray(frequency, header);
+        String velocityUnit = "km/s";
+        spectraModel.setUnits(VOSpectraModel.SPECTRA_FIELDS.VELOCITY, velocityUnit);
+
+        ArrayList<DataType>  dataTypes = new ArrayList<DataType>(spectraModel.getMeta().values());
+
+        DataGroup dataGroup = new DataGroup(fileName, dataTypes);
+        DataObject row = new DataObject(dataGroup);
+
+        for (int i=0; i<frequency.length; i++){
+            row.setDataElement(dataTypes.get(0), frequency[i] );
+            row.setDataElement(dataTypes.get(1), velocity[i] );
+            row.setDataElement(dataTypes.get(2), flux[i] );
+
+            dataGroup.add(row);
+        }
+       return dataGroup;
+    }
+
+
+    /**
+     * Currently this implementation only support the GREAT instrument with the following requirementn
+     *
+     *    It has a CTYPE  = FREQU
+     *    naxis2 = 1
+     *    naxis3 = 1
+     *    naxis4 (if exists)=1
+     *    The frequency is independent of other axis
+     * @param hdu
+     * @return
+     */
+    private static boolean isValidFrequencyHDU(BasicHDU hdu) {
+
+         Header header = hdu.getHeader();
+         int freqAxis =  getFrequencyAxis(header);
+         if (freqAxis==-1) return false;
+
+         int naxis = header.getIntValue("NAXIS");
+         for (int i=1; i<=naxis; i++){
+             int naxisVal= header.getIntValue(("NAXIS"+i));
+             if (i!=freqAxis && naxisVal!=1){
+                 return false;
+             }
+         }
+         return true;
+    }
+
     public static void main(String[] args) throws FitsException, IOException,  FailedRequestException {
         //test file input
         String inputPath = "/Users/zhang/IRSA_Dev/testingData/sofiaWaveTab/";///Users/zhang/lsstDev/testingData/sofiaWaveTab/

@@ -121,6 +121,15 @@ public class FitsReadUtil {
     }
 
 
+    public static double[] getPhysicalDataDouble(double[] double1d, ImageHeader imageHeader) {
+
+        double[] dData = new double[double1d.length];
+
+        for (int i = 0; i < double1d.length; i++) {
+            dData[i] = double1d[i] * (float) imageHeader.bscale + (float) imageHeader.bzero;
+        }
+        return dData;
+    }
 
     /** validation the FITS file
      If a FITS ﬁle contains multiple XTENSION HDUs (header-data units) with the speciﬁed EXTNAME, EXTLEVEL,and
