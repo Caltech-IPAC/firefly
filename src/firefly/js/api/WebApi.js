@@ -282,7 +282,7 @@ function convertReservedParams(inParams, parameters) {
                 degVal= Number(srVal.substring(0,srVal.length-1)) /60;
             }
             else if (srVal.endsWith('s') && !isNaN(Number(srVal.substring(0,srVal.length-1)))) {
-                degVal= Number(srVal.substring(0,srVal.length-1)) /360;
+                degVal= Number(srVal.substring(0,srVal.length-1)) /3600;
             }
             if (!isNaN(degVal)) {
                 Reflect.deleteProperty(outParams, srKey);
