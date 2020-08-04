@@ -6,7 +6,7 @@ import Enum from 'enum';
 import validator from 'validator';
 import DrawObj from './DrawObj';
 import DrawUtil from './DrawUtil';
-import VisUtil, {convertAngle, convert} from '../VisUtil.js';
+import VisUtil, {convertAngle, convert, lineCrossesRect, segmentIntersectRect} from '../VisUtil.js';
 import {TextLocation, Style, DEFAULT_FONT_SIZE} from './DrawingDef.js';
 import Point, {makeScreenPt, makeDevicePt, makeOffsetPt, makeWorldPt, makeImagePt, SimplePt} from '../Point.js';
 import {toRegion} from './ShapeToRegion.js';
@@ -18,7 +18,6 @@ import {visRoot} from '../ImagePlotCntlr.js';
 import {getPixScaleArcSec, getScreenPixScaleArcSec} from '../WebPlot.js';
 import {toRadians, toDegrees} from '../VisUtil.js';
 import {rateOpacity, maximizeOpacity} from '../../util/Color.js';
-import {lineCrossesRect} from '../VisUtil';
 
 const FONT_FALLBACK= ',sans-serif';
 
@@ -586,6 +585,132 @@ export function drawShape(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
             break;}
 }
 
+function boxIntersectRect(pts, plot, w, h, isCenter, sRect, renderOptions) {
+    let corners_rect = [];     // corners in device coordinate
+
+    if (isCenter) {
+        if (!sRect) return false;
+
+        for (let i = 0; i < 4; i++) {
+            let c_pt = plot.getDeviceCoords(sRect.corners[i]);
+
+            if (!c_pt) {
+                return false;
+            }
+            corners_rect.push(c_pt);
+        }
+    } else {
+        const pt = plot.getDeviceCoords(pts);
+        const corner_loc = [[0, 0], [1, 0], [1, 1], [0, 1]];
+        const {translation} = renderOptions || {};     // consider translation
+        const t_x = translation? translation.x : 0;
+        const t_y = translation? translation.y : 0;
+
+        for (let i = 0; i < 0; i++) {
+            let c_pt = plot.getDeviceCoords(makeDevicePt(corner_loc[i][0] * w + pt.x + t_x,
+                corner_loc[i][1] * h + pt.y + t_y));
+
+            if (!c_pt) {
+                return false;
+            }
+            corners_rect.push(c_pt);
+        }
+    }
+
+    // find if one corner is with null device coordinate
+    if (corners_rect.find((oneCorner) => !oneCorner)) {
+        return false;
+    }
+
+    // find if one corner is in view
+    if  (cornerInView(corners_rect, plot))  {
+        return true;
+    }
+
+    const x1 = 0;
+    const x2 = plot.viewDim.width;
+    const y1 = 0;
+    const y2 = plot.viewDim.height;
+    const view_two_corners = [makeDevicePt(x1, y1), makeDevicePt(x2, y2)];
+
+
+    // all corners are out of view, check if any side intersects the viewDim
+    for (let s = 0; s < 4; s++) {
+        const idx1 = s;
+        const idx2 = (s+1)%4;
+
+        if (segmentIntersectRect(corners_rect[idx1], corners_rect[idx2], view_two_corners)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+function circleIntersectRect(centerPt, circleRadius, plot, renderOptions) {
+    // radius (x - center_x)^2 + (y - center_y) ^2 = circleRadius^2
+    const center_dev = plot.getDeviceCoords(centerPt);
+    const rect_x1 = 0;
+    const rect_y1 = 0;
+    const rect_x2 = plot.viewDim.width;
+    const rect_y2 = plot.viewDim.height;
+    const {translation} = renderOptions || {};
+    const center_x_dev = center_dev.x + (translation ? translation.x : 0);
+    const center_y_dev = center_dev.y + (translation ? translation.y : 0);
+
+    const center_pt = makeDevicePt(center_x_dev, center_y_dev);
+    if (!center_pt) return false;
+
+    const rsquare = Math.pow(circleRadius, 2);
+
+    function diff_dist_to_center(x, y) {
+        return  Math.pow((x - center_pt.x), 2) + Math.pow((y - center_pt.y), 2) - rsquare;
+    }
+
+    let offset = 0.0;
+    let inside = 0;
+
+    for (let x of [rect_x1, rect_x2]) {
+        for (let y of [rect_y1, rect_y2]) {
+            const loc = diff_dist_to_center(x, y);
+
+            if (loc === 0.0) {   // circle outline interset the corner
+                return true;
+            }
+
+            const s = Math.abs(loc)/loc;   // 1.0 or -1.0
+            if (offset === 0.0) {
+                offset = s;
+            } else {
+                if (offset !== s) {   // current corner at different side of the circle from previous corner
+                    return true;
+                }
+            }
+            if (s < 0) {             // count the number of corners inside the circle
+                inside++;
+            }
+        }
+    }
+    // rect inside circle
+    if (inside === 4) {
+        return false;
+    }
+    // all corners are out of circle area. Check if the circle intersects with any side of the rectangle.
+    if (center_pt.x >= rect_x1 && center_pt.x <= rect_x2) {
+        if ((center_pt.y >= rect_y1 && center_pt.y <= rect_y2) ||
+            Math.abs(center_pt.y - rect_y1) <= circleRadius || Math.abs(center_pt.y - rect_y2) <= circleRadius) {
+            return true;
+        }
+    } else if (center_pt.y >= rect_y1 && center_pt.y <= rect_y2) {
+        if (Math.abs(center_pt.x - rect_x1) <= circleRadius || Math.abs(center_pt.x - rect_x2) <= circleRadius) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
 /**
  *
  * @param drawObj
@@ -672,6 +797,9 @@ function drawCircle(drawObj, ctx,  plot, drawParams) {
 
     let screenRadius= 1;
     let cenDevPt;
+    let inView = false;
+
+    const {width: vWidth, height: vHeight} = plot.viewDim;
 
     if (pts.length===1 && !isNil(radius)) {
         switch (unitType) {
@@ -683,7 +811,16 @@ function drawCircle(drawObj, ctx,  plot, drawParams) {
                 break;
         }
         cenDevPt= plot.getDeviceCoords(pts[0]);
-        if (plot.pointOnDisplay(cenDevPt)) {
+
+
+        if (!cenDevPt) {
+            return;
+        }
+
+        // check if center is within display area or circle intersect the display area
+        if (plot.pointOnDisplay(cenDevPt) ||
+            circleIntersectRect(pts[0], screenRadius, plot, renderOptions)) {
+            inView = true;
             DrawUtil.drawCircle(ctx,cenDevPt.x, cenDevPt.y,color, screenRadius, lineWidth, renderOptions,false);
         }
     }
@@ -691,21 +828,20 @@ function drawCircle(drawObj, ctx,  plot, drawParams) {
         const pt0= plot.getDeviceCoords(pts[0]);
         const pt1= plot.getDeviceCoords(pts[1]);
         if (!pt0 || !pt1) return;
-        if (plot.pointOnDisplay(pt0) || plot.pointOnDisplay(pt1)) {
 
-            const xDist= Math.abs(pt0.x-pt1.x)/2;
-            const yDist= Math.abs(pt0.y-pt1.y)/2;
-            screenRadius= Math.min(xDist,yDist);
+        cenDevPt = makeDevicePt((pt0.x+pt1.x)/2, (pt0.y+pt1.y)/2);
+        const xDist= Math.abs(pt0.x-pt1.x)/2;
+        const yDist= Math.abs(pt0.y-pt1.y)/2;
+        screenRadius= Math.min(xDist,yDist);
 
-            const x= Math.min(pt0.x,pt1.x) + Math.abs(pt0.x-pt1.x)/2;
-            const y= Math.min(pt0.y,pt1.y) + Math.abs(pt0.y-pt1.y)/2;
-            cenDevPt= makeDevicePt(x,y);
-
+        if (plot.pointOnDisplay(pt0) || plot.pointOnDisplay(pt1) || plot.pointOnDisplay(cenDevPt) ||
+            circleIntersectRect(cenDevPt, screenRadius, plot, renderOptions)) {
+            inView = true;
             DrawUtil.drawCircle(ctx,cenDevPt.x,cenDevPt.y,color, screenRadius, lineWidth, renderOptions,false );
         }
     }
 
-    if (cenDevPt && !isNil(text)) {
+    if (inView && !isNil(text)) {
         const textPt= makeTextLocationCircle(plot,textLoc, fontSize, cenDevPt, (screenRadius+lineWidth));
         drawText(drawObj, ctx, plot,textPt, drawParams);
     }
@@ -852,61 +988,76 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
     w = 0; h = 0; x = 0; y = 0;
     centerPt = null;
 
+    // one center point case
     if (pts.length===1 && !isNil(width) && !isNil(height)) {
         let rectAngle = 0.0;      // in radian
 
-        let sRect;
+        let sRect = null;
+        const devPt0 = plot ? plot.getDeviceCoords(pts[0]) : pts[0];
 
-        if (isCenter) {
+        if (!devPt0) {
+            return;
+        }
+
+        if (isCenter&&plot) {  // center and world coordinate: make the rectangle along the great circle of the globe
             sRect = rectOnImage(pts[0], isCenter, plot, width, height, unitType, isOnWorld);
         }
-        const devPt0 = plot ? plot.getDeviceCoords(pts[0]) : pts[0];
-        if (!plot || (!isCenter && plot.pointOnDisplay(devPt0)) ||
-                     (isCenter && sRect
-                               && ((centerInView&&plot.pointOnDisplay(devPt0))||
-                                   (sRect && cornerInView(sRect.corners, plot))))) {
-            inView = true;
+        //const devPt0 = plot ? plot.getDeviceCoords(pts[0]) : pts[0];
+        // get w, h, and angle in the unit of device coordinate
 
-            switch (unitType) {
-                case UnitType.PIXEL:
-                    if (isCenter) {
-                        w = sRect.width * plot.zoomFactor;
-                        h = sRect.height * plot.zoomFactor;
-                        rectAngle = -sRect.angle;
-                    } else {
-                        w = width;
-                        h = height;
-                    }
-                    break;
-                case UnitType.ARCSEC:
-                    if (isCenter) {      // center and in view
-                        w = sRect.width * plot.zoomFactor;
-                        h = sRect.height * plot.zoomFactor;
-
-                        // pt0 is the center
-                        rectAngle = -sRect.angle;
-                    } else {         // not center case
-                        w = getValueInScreenPixel(plot, width);
-                        h = getValueInScreenPixel(plot, height);
-                    }
-
-                    break;
-                case UnitType.IMAGE_PIXEL:
-                    if (isCenter) {
-                        w = sRect.width * plot.zoomFactor;
-                        h = sRect.height * plot.zoomFactor;
-                        rectAngle = -sRect.angle;
-                    } else {
-                        w = plot.zoomFactor * width;
-                        h = plot.zoomFactor * height;
-                     }
-                     break;
-                default:
+        switch (unitType) {
+            case UnitType.PIXEL:
+                if (isCenter && sRect) {
+                    w = sRect.width * plot.zoomFactor;
+                    h = sRect.height * plot.zoomFactor;
+                    rectAngle = -sRect.angle;
+                } else {
                     w = width;
                     h = height;
-            }
+                }
+                break;
+            case UnitType.ARCSEC:
+                if (isCenter && sRect) {      // center and in view
+                    w = sRect.width * plot.zoomFactor;
+                    h = sRect.height * plot.zoomFactor;
 
+                    // pt0 is the center
+                    rectAngle = -sRect.angle;
+                } else if (plot) {         // not center case
+                    w = getValueInScreenPixel(plot, width);
+                    h = getValueInScreenPixel(plot, height);
+                } else {
+                    w = width;
+                    h = height;
+                }
 
+                break;
+            case UnitType.IMAGE_PIXEL:
+                if (isCenter && sRect) {
+                    w = sRect.width * plot.zoomFactor;
+                    h = sRect.height * plot.zoomFactor;
+                    rectAngle = -sRect.angle;
+                } else if (plot) {
+                    w = plot.zoomFactor * width;
+                    h = plot.zoomFactor * height;
+                } else {
+                    w = width;
+                    h = height;
+                }
+                break;
+            default:
+                w = width;
+                h = height;
+        }
+
+        if (!plot || (!isCenter && plot.pointOnDisplay(devPt0)) ||
+                     (isCenter && sRect && centerInView && plot.pointOnDisplay(devPt0)) ||
+                     boxIntersectRect(pts[0], plot, w, h, isCenter, sRect, renderOptions)) {
+        //if ((!isCenter && plot.pointOnDisplay(devPt0)) ||
+        //             (isCenter && sRect
+        //                       && ((centerInView&&plot.pointOnDisplay(devPt0))||
+        //                           (sRect && cornerInView(sRect.corners, plot))))) {
+            inView = true;
 
             x = devPt0.x;   // x, y in device coordinates
             y = devPt0.y;
@@ -972,22 +1123,24 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
                 }
             }
         }
-
-    }
-    else {  // two corners case
+    } else {  // two corners case
         const dPt0 = plot ? plot.getDeviceCoords(pts[0]) : pts[0];
         const dPt1= plot ? plot.getDeviceCoords(pts[1]) : pts[1];
         if (!dPt0 || !dPt1) return;
-        if (plot && (!plot.pointOnDisplay(dPt0) && !plot.pointOnDisplay(dPt1))) return;
-
-
-        inView = true;
-        //todo here here here
 
         x = dPt0.x;
         y = dPt0.y;
         w = dPt1.x - x;
         h = dPt1.y - y;
+
+        if (plot && !boxIntersectRect(pts[0], plot, w, h, false, null, renderOptions)) {
+            return;
+        }
+
+        //if (plot && (!plot.pointOnDisplay(dPt0) && !plot.pointOnDisplay(dPt1))) return;
+
+        inView = true;
+
         if (style === Style.FILL) {
             DrawUtil.fillRec(ctx, color, x, y, w, h, renderOptions, color);
         } else {
@@ -1033,39 +1186,29 @@ function drawEllipse(drawObj, ctx, plot, drawParams, onlyAddToPath) {
 
     if ( pts.length ===1 && !isNil(radius1) && !isNil(radius2)) {
         pt0 = plot ? plot.getDeviceCoords(pts[0]) : pts[0];
+
+        if (!pt0) {
+            return;
+        }
         centerPt = pt0;
 
         if (plot) {
             const sRect = rectOnImage(pts[0], true, plot, radius1*2, radius2*2, unitType, isOnWorld);
+            if (!sRect) return;
 
-            if (!plot.pointOnDisplay(pt0) && !sRect && !cornerInView(sRect.corners, plot)) {
+            w = sRect.width * plot.zoomFactor/2;
+            h = sRect.height * plot.zoomFactor/2;
+            if (!boxIntersectRect(pts[0], plot, w, h, true, sRect, renderOptions)) {
+            // if (!plot.pointOnDisplay(pt0) && !sRect && !cornerInView(sRect.corners, plot)) {
                 inView = false;
             } else {
-                w = sRect.width * plot.zoomFactor/2;
-                h = sRect.height * plot.zoomFactor/2;
                 eAngle = -sRect.angle;
                 inView = true;
             }
         } else {
             inView = true;
-            switch (unitType) {
-                case UnitType.PIXEL:
-                    w = radius1;
-                    h = radius2;
-                    break;
-                case UnitType.ARCSEC:
-                    w = getValueInScreenPixel(plot, radius1);
-                    h = getValueInScreenPixel(plot, radius2);
-                    break;
-                case UnitType.IMAGE_PIXEL:
-                    w = plot.zoomFactor * radius1;
-                    h = plot.zoomFactor * radius2;
-                    break;
-                default:
-                    w = radius1;
-                    h = radius2;
-                    break;
-            }
+            w = radius1;
+            h = radius2;
         }
 
         if (inView) {

@@ -934,8 +934,74 @@ export function lineCrossesRect(segX1, segY1, segX2, segY2, x, y, w,h) {
         doSegmentsCross(segX1, segY1, segX2, segY2, x+w,y+h, x,y+h) ||
         doSegmentsCross(segX1, segY1, segX2, segY2, x,y+h, x,y)
     );
-
 }
+
+
+/*
+ * direction from a to b to c, pixels on device coordinate domain
+ * 0: collinear
+ * 1: clockwise
+ * 2: counterclockwise
+ */
+function direction(a, b, c) {
+    const d = (b.y - a.y) * (c.x - b.x) - (b.x - a.x) * (c.y - b.y);
+
+    if (d == 0) {
+        return 0;   // a, b, c collinear
+    } else {
+        return (d < 0) ? 2 : 1;
+    }
+}
+
+// check if pt is between between linePt1 and linePt2 assuming that all points are on the same line
+function onSameSegment(linePt1, linePt2, pt) {
+    return (pt.x >= Math.min(linePt1.x, linePt2.x)) && (pt.x <= Math.max(linePt1.x, linePt2.x)) &&
+        (pt.y >= Math.min(linePt1.y, linePt2.y)) && (pt.y <= Math.max(linePt1.y, linePt2.y));
+}
+
+// check if there is intersection between two segments
+function isTwoSegmentsIntersect(line1Pt1, line1Pt2, line2Pt1, line2Pt2) {
+    const dir1 = direction(line1Pt1, line1Pt2, line2Pt1);
+    const dir2 = direction(line1Pt1, line1Pt2, line2Pt2);
+    const dir3 = direction(line2Pt1, line2Pt2, line1Pt1);
+    const dir4 = direction(line2Pt1, line2Pt2, line1Pt2);
+
+    if (dir1 !== dir2 && dir3 !== dir4) return true;
+
+    if (dir1 == 0 && onSameSegment(line1Pt1, line1Pt2, line2Pt1)) return true;
+    if (dir2 == 0 && onSameSegment(line1Pt1, line1Pt2, line2Pt2)) return true;
+    if (dir3 == 0 && onSameSegment(line2Pt1, line2Pt2, line1Pt1)) return true;
+    if (dir4 == 0 && onSameSegment(line2Pt1, line2Pt2, line1Pt2)) return true;
+
+    return false;
+}
+
+// check if a segment intersects a view area (assume a non-slanted rectangular area)
+export function segmentIntersectRect(point1, point2,  view_corners) {
+    const xAry = view_corners.map((one_corner) => one_corner.x);
+    const yAry = view_corners.map((one_corner) => one_corner.y);
+    const x1 = Math.min(...xAry);
+    const x2 = Math.max(...xAry);
+    const y1 = Math.min(...yAry);
+    const y2 = Math.max(...yAry);
+
+    if ((point1.x >= x1 && point1.y >= y1 && point1.x <= x2 && point1.y <= y2) ||
+        (point2.x >= x1 && point2.y >= y1 && point2.x <= x2 && point2.y <= y2)) {
+        return true;
+    }
+
+
+    for (let s = 0; s < view_corners.length; s++) {
+        const next_s = (s + 1) % view_corners.length;
+
+        if (isTwoSegmentsIntersect(point1, point2, view_corners[s], view_corners[next_s])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
 
 /**
  * distance between point and line defined by two end points
@@ -1036,6 +1102,7 @@ export default {
     computeScreenDistance, computeDistance, computeSimpleDistance,convert,
     computeCentralPointAndRadius, getPositionAngle, getRotationAngle,getTranslateAndRotatePosition,
     intersects, contains, containsRec,containsCircle, getArrowCoords, calculatePosition,
-    convertAngle, distToLine, distanceToPolygon, distanceToCircle, computeSimpleSlopeAngle
+    convertAngle, distToLine, distanceToPolygon, distanceToCircle, computeSimpleSlopeAngle,
+    segmentIntersectRect
 };
 
