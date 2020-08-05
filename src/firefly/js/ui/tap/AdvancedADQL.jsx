@@ -100,7 +100,6 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
                     <div className='flex-full'>
                         <div style={{display: 'inline-flex', marginRight: 25, justifyContent: 'space-between', alignItems: 'center'}}>
                             <h3>ADQL Query:</h3>
-                            <label style={{display: 'flex', alignItems: 'center'}}> <input type='checkbox' ref={ffcn} defaultChecked={true} />Insert fully-qualified column names</label>
                             <div style={{display: 'inline-flux'}}>
                                 <button className='button std' title='Reset to the initial query' style={{height: 24, marginRight: 5}} onClick={onReset}>Reset</button>
                                 <button className='button std' title='Clear the query' style={{height: 24}} onClick={onClear}>Clear</button>
@@ -113,10 +112,11 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
                             tooltip='ADQL to submit to the selected TAP service'
                         />
                         <div style={{color: '#4c4c4c'}}>
-                            <h3>Schema Browser Hints</h3>
+                            <h3>Schema Browser Usage</h3>
                             <div style={{marginLeft: 5}}>
                                 <div>Click on a Table node to insert a default SELECT statement of that table into the Query input box.</div>
                                 <div>Click on a Column node to insert the column's name at the Query input box's cursor.</div>
+                                <label style={{display: 'flex', alignItems: 'center', marginLeft: 20}}> <input type='checkbox' ref={ffcn} defaultChecked={true} />Insert fully-qualified column names</label>
                             </div>
                             <h3>Popular Functions</h3>
                             <div style={{marginLeft: 5}}>
@@ -175,7 +175,7 @@ function expandTables(serviceUrl, title, treeData, eventKey, setTreeData) {
 }
 
 function expandColumns(serviceUrl, title, schema, treeData, eventKey, setTreeData) {
-    const tname = title.split('.').pop();       // takes only the last value of the table_name, because some includes schema
+    const tname = title;
     const key = cFetchKey;
     return loadTapColumns(serviceUrl, schema, title).then( (tm) => {
         if (cFetchKey === key) {
