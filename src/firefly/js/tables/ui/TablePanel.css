@@ -140,8 +140,8 @@
 }
 
 .Actions__popup {
-    min-width: 300px;
-    min-height: 200px;
+    min-width: 75px;
+    min-height: 75px;
     padding: 5px;
     overflow: auto;
     position: relative;

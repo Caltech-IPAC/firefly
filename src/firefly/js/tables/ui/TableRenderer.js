@@ -289,7 +289,7 @@ export const CellWrapper =  React.memo( (props) => {
     const viewAsText = () => {
         const popup = (
             <PopupPanel title={'View as plain text'} >
-                <textarea readOnly className='Actions__popup' value={text} />
+                <textarea readOnly className='Actions__popup' value={text} style={{width: 650, height: 125}}/>
             </PopupPanel>
         );
         DialogRootContainer.defineDialog(popupID, popup);
