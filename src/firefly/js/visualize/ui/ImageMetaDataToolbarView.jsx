@@ -68,6 +68,12 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds=
     const showMultiImageOps= converter.canGrid || converter.hasRelatedBands;
 
 
+    if (!makeDropDown && !showMultiImageOps && !converter.canGrid &&
+        !converter.hasRelatedBands && !showThreeColorButton && !(layoutType===SINGLE && viewerPlotIds.length>1) &&
+        !showPager && !handleInlineTools) {
+        return <div/>;
+    }
+
 
     return (
         <div style={toolsStyle}>
