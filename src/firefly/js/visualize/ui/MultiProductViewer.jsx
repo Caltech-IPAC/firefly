@@ -161,7 +161,7 @@ function MultiProductChoice({makeDropDown, chartViewerId, imageViewerId, metaDat
             return (
                 <div style={choiceTBStyle}>
                     {toolbar}
-                    {makeMultiImageViewer(imageViewerId,metaDataTableId,makeDropDown,ImageMetaDataToolbar)}
+                    {makeMultiImageViewer(imageViewerId,metaDataTableId,undefined,ImageMetaDataToolbar)}
                 </div>
             );
     }
@@ -233,7 +233,8 @@ const makeMultiImageViewer= (imageViewerId,metaDataTableId,makeDropDown, ImageMe
     <MultiImageViewer {...{
         viewerId:imageViewerId, insideFlex:true,
         canReceiveNewPlots: NewPlotMode.none.key, tableId:metaDataTableId, controlViewerMounting:false,
-        handleInlineToolsWhenSingle:false, makeDropDown, Toolbar:ImageMetaDataToolbar}} />);
+        handleInlineTools: Boolean(makeDropDown), handleInlineToolsWhenSingle:!Boolean(makeDropDown),
+        makeDropDown, Toolbar:ImageMetaDataToolbar}} />);
 
 
 function getMakeDropdown(menu, fileMenu, dpId,activeMenuLookupKey) {
