@@ -23,6 +23,7 @@ import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
+import edu.caltech.ipac.firefly.visualize.BandState;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
@@ -450,6 +451,7 @@ public class VisServerOps {
         try {
 
             Band bands[] = state.getBands();
+            BandState[] bandStateAry = state.getBandStateAry();
             WebPlotRequest cropRequest[] = new WebPlotRequest[bands.length];
 
             for (int i = 0; (i < bands.length); i++) {
@@ -462,6 +464,8 @@ public class VisServerOps {
                         ServerContext.getVisSessionDir());
 
                 Fits cropFits;
+
+
                 boolean saveCropFits = true;
                 if (state.isMultiImageFile(bands[i])) {
                     if (cropMultiAll) {
@@ -478,9 +482,20 @@ public class VisServerOps {
                                 (int) c2.getX(), (int) c2.getY());
                     }
                 } else {
+
                     Fits fits = new Fits(PlotStateUtil.getWorkingFitsFile(state, bands[i]));
-                    cropFits = CropFile.do_crop(fits, (int) c1.getX(), (int) c1.getY(),
-                            (int) c2.getX(), (int) c2.getY());
+
+                    String multiImageExtValue = bandStateAry[i].getWebPlotRequest().getMultiImageExts();
+                    int multiImageExt = multiImageExtValue!=null?Integer.parseInt(multiImageExtValue):0;
+
+                    if ( multiImageExt>0){
+                        cropFits = CropFile.do_crop(fits, multiImageExt, (int) c1.getX(), (int) c1.getY(),
+                                (int) c2.getX(), (int) c2.getY());
+                    }
+                    else {
+                        cropFits = CropFile.do_crop(fits, (int) c1.getX(), (int) c1.getY(),
+                                (int) c2.getX(), (int) c2.getY());
+                    }
                 }
 
                 FitsRead fr[] = FitsCacher.loadFits(cropFits, cropFile).getFitReadAry();
