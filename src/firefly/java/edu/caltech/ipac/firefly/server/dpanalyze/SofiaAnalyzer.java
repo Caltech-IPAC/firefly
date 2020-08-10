@@ -95,35 +95,6 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
         return retRep;
     }
 
-
-
-
-
-
-    /**
-     * how to replace the analysis file with another file
-     */
-    private FileAnalysisReport demoReplacingData(FileAnalysisReport inputReport) {
-        try {
-            File f = new File(ServerContext.getUploadDir(), "x.fits");
-            URL url = new URL("http://web.ipac.caltech.edu.s3-us-west-2.amazonaws.com/staff/roby/demo/wise-00.fits");
-            URLDownload.getDataToFile(url, f);
-            FileAnalysisReport retRep = inputReport.copy(false);
-            FileAnalysisReport.Part replacePart =
-                    new FileAnalysisReport.Part(FileAnalysisReport.Type.Image, "A image to replace");
-            replacePart.setFileLocationIndex(0);
-            replacePart.setDefaultPart(true);
-            replacePart.setUiRender(FileAnalysisReport.UIRender.Image);
-            replacePart.setUiEntry(FileAnalysisReport.UIEntry.UseSpecified);
-            replacePart.setConvertedFileName(ServerContext.replaceWithPrefix(f));
-            retRep.addPart(replacePart);
-            return retRep;
-        } catch (MalformedURLException | FailedRequestException e) {
-            e.printStackTrace();
-            return inputReport;
-        }
-    }
-
     /**
      * This method is to convert the FIFI-LS data to standard WAVE-TAB format and then the converted FITs is displayed.
      * @param inputFile
@@ -219,6 +190,7 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
         freqPart.setUiRender(FileAnalysisReport.UIRender.Chart);
         freqPart.setUiEntry(FileAnalysisReport.UIEntry.UseAll);
         freqPart.setChartTableDefOption(FileAnalysisReport.ChartTableDefOption.showChart);
+        freqPart.setDefaultPart(true);
         freqPart.setInterpretedData(true);
 
         FileAnalysisReport.ChartParams cp = getChartParm("GREAT", "markers", "");
@@ -277,7 +249,7 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
             addPart.setUiEntry(FileAnalysisReport.UIEntry.UseSpecified);
             addPart.setChartTableDefOption(FileAnalysisReport.ChartTableDefOption.showChart);
             addPart.setDefaultPart(true);
-
+            addPart.setInterpretedData(true);
             //TODO add error bars?
             FileAnalysisReport.ChartParams cp = getChartParm(inst, "lines+markers", null);
             addPart.setChartParams(cp);

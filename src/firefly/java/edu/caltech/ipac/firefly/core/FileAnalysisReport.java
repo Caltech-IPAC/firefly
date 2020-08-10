@@ -265,6 +265,7 @@ public class FileAnalysisReport {
             p.tableColumnNames= tableColumnNames!=null ? new ArrayList<>(tableColumnNames) : null;
             p.tableColumnUnits= tableColumnUnits!=null ? new ArrayList<>(tableColumnUnits) : null;
             p.defaultPart= defaultPart;
+            p.interpretedData = interpretedData;
             return p;
         }
     }
