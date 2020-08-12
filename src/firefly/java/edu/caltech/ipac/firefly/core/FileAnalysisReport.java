@@ -190,6 +190,9 @@ public class FileAnalysisReport {
         public Part(Type type, String desc) {
             this.type = type;
             this.desc = desc;
+            if (type.equals(Type.Image)){
+                setChartTableDefOption(ChartTableDefOption.showImage);
+            }
         }
 
         public Type getType() { return type; }

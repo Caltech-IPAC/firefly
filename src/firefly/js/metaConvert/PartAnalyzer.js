@@ -59,6 +59,7 @@ export function chooseDefaultEntry(menu,parts,fileFormat, dataTypeHint) {
             break;
         case 'spectrum':
             defIndex= menu.find( (m) => m.displayType===DPtypes.CHART);
+            break;
     }
     return defIndex > -1 ? defIndex : 0;
 }
