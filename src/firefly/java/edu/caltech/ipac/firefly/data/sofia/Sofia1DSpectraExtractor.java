@@ -107,10 +107,13 @@ public class Sofia1DSpectraExtractor extends DataExtractUtil {
         DataType[] dd;
 
         double[][] fdata = (double[][]) ArrayFuncs.convertArray(p.getKernel(), Double.TYPE, true);
+        if(fdata.length < 2) throw new FitsException("Data has less than 2 columns, this is not chartable as 1D spectra. data length is " + fdata.length);
         for (int row = 0; row < fdata[0].length; row++) {
             DataObject aRow = new DataObject(dataGroup);
             dd = dt.toArray(new DataType[dt.size()]);
             for (int dtIdx = 0; dtIdx < fdata.length; dtIdx++) {
+                //if the data has changed without notice, at least we pick up the old model unless there is less data than the model itself but at least 2 column should be present
+                if(dtIdx == dd.length) break;
                 aRow.setDataElement(dd[dtIdx], fdata[dtIdx][row]);
             }
             dataGroup.add(aRow);
