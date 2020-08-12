@@ -270,21 +270,27 @@ const draw=  {
 
     getCenterPt(drawObj) {
         const {pts}= drawObj;
+        const validPts = pts.filter( (pt) => pt!==null);
 
-        if (pts && pts.length > 0) {
+        if (validPts && validPts.length > 0) {
             let xSum = 0;
             let ySum = 0;
             let xTot = 0;
             let yTot = 0;
 
-            pts.forEach((wp) => {
-                xSum += wp.x;
-                ySum += wp.y;
-                xTot++;
-                yTot++;
+            validPts.forEach((wp) => {
+                if (wp!==null) {
+                    xSum += wp.x;
+                    ySum += wp.y;
+                    xTot++;
+                    yTot++;
+                }
+
             });
 
-            const type = pts[0].type;
+
+            const type = validPts[0].type;
+
             const x = xSum/xTot;
             const y = ySum/yTot;
 

@@ -260,9 +260,9 @@ public class CropFile {
         newHeader.addValue("NAXIS2", newNaxis2, null);
 
         float crpix1 = old_header.getFloatValue("CRPIX1", Float.NaN);
-        newHeader.addValue("CRPIX1", (crpix1 - minX), null);
+        if (!Float.isNaN(crpix1))newHeader.addValue("CRPIX1", (crpix1 - minX), null);
         float crpix2 = old_header.getFloatValue("CRPIX2", Float.NaN);
-        newHeader.addValue("CRPIX2", (crpix2 - minY), null);
+        if (!Float.isNaN(crpix2))newHeader.addValue("CRPIX2", (crpix2 - minY), null);
 
         if (newHeader.containsKey("PLTRAH")) {
 	        /* it's a PLATE projection  */
