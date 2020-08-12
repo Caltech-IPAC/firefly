@@ -73,8 +73,14 @@ export function chooseDefaultEntry(menu,parts,fileFormat, dataTypeHint) {
  */
 function findAvailableTypesForAnalysisPart(part, fileFormat) {
     const {type}= part;
+    const naxis= getIntHeader('NAXIS',part,0);
     if (type===FileAnalysisType.HeaderOnly || type===FileAnalysisType.Unknown) return [];
-    if (type!==FileAnalysisType.Image &&  fileFormat!=='FITS' &&  is1DImage(part) || type===FileAnalysisType.Table) return [DPtypes.CHART,DPtypes.TABLE];
+    if (type!==FileAnalysisType.Image &&  fileFormat!=='FITS' &&  is1DImage(part) || type===FileAnalysisType.Table ) return [DPtypes.CHART,DPtypes.TABLE];
+    if (type===FileAnalysisType.Image && naxis===1) {
+        part.chartTableDefOption=SHOW_CHART;
+        return [DPtypes.CHART,DPtypes.TABLE];
+    }
+
     return (imageCouldBeTable(part)) ? [DPtypes.IMAGE,DPtypes.TABLE,DPtypes.CHART] : [DPtypes.IMAGE];
 }
 
