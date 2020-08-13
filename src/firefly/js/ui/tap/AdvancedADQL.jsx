@@ -24,6 +24,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
 
     const [treeData, setTreeData] = useState([]);                               // using a useState hook
     const adqlEl = useRef(null);                                                // using a useRef hook
+    const ffcn = useRef(null);                                                  // using a useRef hook
 
     useEffect(() => {
         cFetchKey = Date.now();
@@ -45,11 +46,17 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
         const textArea = node && node.firstChild;
 
         const [key=''] = p;
-        const [type, , value] = key.split('--');
+        const [type, , tname, cname] = key.split('--');
+        const taVal = getUnselectedValue(textArea);
         if (type === 'table') {
-            insertNewLine(textArea, `SELECT TOP 1000 * FROM ${value}`, adqlKey, groupKey);
+            if (taVal) {
+                insertAtCursor(textArea, tname, adqlKey, groupKey);
+            } else {
+                dispatchValueChange({fieldKey: adqlKey, groupKey, value: `SELECT TOP 1000 * FROM ${tname}`, valid: true});
+            }
         } else if (type === 'column') {
-            insertAtCursor(textArea, `${value}`, adqlKey, groupKey);
+            const val = ffcn.current.checked ? `${tname}.${cname}` : cname;
+            insertAtCursor(textArea, val, adqlKey, groupKey);
         }
     };
 
@@ -105,10 +112,11 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
                             tooltip='ADQL to submit to the selected TAP service'
                         />
                         <div style={{color: '#4c4c4c'}}>
-                            <h3>Schema Browser Hints</h3>
+                            <h3>Schema Browser Usage</h3>
                             <div style={{marginLeft: 5}}>
                                 <div>Click on a Table node to insert a default SELECT statement of that table into the Query input box.</div>
                                 <div>Click on a Column node to insert the column's name at the Query input box's cursor.</div>
+                                <label style={{display: 'flex', alignItems: 'center', marginLeft: 20}}> <input type='checkbox' ref={ffcn} defaultChecked={true} />Insert fully-qualified column names</label>
                             </div>
                             <h3>Popular Functions</h3>
                             <div style={{marginLeft: 5}}>
@@ -167,7 +175,7 @@ function expandTables(serviceUrl, title, treeData, eventKey, setTreeData) {
 }
 
 function expandColumns(serviceUrl, title, schema, treeData, eventKey, setTreeData) {
-
+    const tname = title;
     const key = cFetchKey;
     return loadTapColumns(serviceUrl, schema, title).then( (tm) => {
         if (cFetchKey === key) {
@@ -175,7 +183,7 @@ function expandColumns(serviceUrl, title, schema, treeData, eventKey, setTreeDat
             const nidx = getColumnIdx(tm, 'column_name');
             const didx = getColumnIdx(tm, 'description');
             const cols = tableData.map( (row) => {
-                const colkey = `column--${key}--${row[nidx]}`;
+                const colkey = `column--${key}--${tname}--${row[nidx]}`;
                 const title = row[nidx] + (row[didx] ? ` (${row[didx]})` : '');
                 return {key: colkey, title, isLeaf: true};
             });
@@ -207,6 +215,13 @@ function convertToTreeNode(data) {
     });
 }
 
+export function getUnselectedValue (input) {
+    let val = input.value || '';
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    val = val.slice(0, start) + val.slice(end);
+    return val.trim();
+}
 
 export function insertAtCursor (input, textToInsert, fieldKey, groupKey) {
     const ovalue = input.value;
@@ -225,9 +240,4 @@ export function insertAtCursor (input, textToInsert, fieldKey, groupKey) {
         input.focus();
     });
 
-}
-
-export function insertNewLine (input, textToInsert, fieldKey, groupKey) {
-    const value = (input.value ? input.value + '\n' : '') + textToInsert;
-    dispatchValueChange({fieldKey, groupKey, value, valid: true});
 }
