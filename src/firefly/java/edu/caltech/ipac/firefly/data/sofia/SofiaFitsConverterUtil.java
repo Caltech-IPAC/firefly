@@ -213,7 +213,7 @@ public class SofiaFitsConverterUtil {
     public static  Fits convertToWaveTabFits(Fits inFits) throws FitsException, IOException {
         BasicHDU[] HDUs = inFits.read();
         if (!isWaveTabFits(HDUs)) {
-            throw new IllegalArgumentException("This is not a WAVE-TAB FITs");
+            throw new IllegalArgumentException("This is not a WAVE-TAB FITS, skipping analysis");
         }
         Fits outFits = new Fits();
         BinaryTableHDU bhdu;

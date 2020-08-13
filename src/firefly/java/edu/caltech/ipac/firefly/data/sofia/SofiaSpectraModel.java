@@ -93,7 +93,7 @@ public class SofiaSpectraModel implements VOSpectraModel {
                     put("SW", "SW");
                     put("LW", "LW");
                 }},
-                defaultSofiaSpectraCols
+                new VOSpectraModel.SPECTRA_FIELDS[]{SPECTRA_FIELDS.WAVELENGTH, SPECTRA_FIELDS.FLUX, SPECTRA_FIELDS.ERROR_FLUX, VOSpectraModel.SPECTRA_FIELDS.ATMOS_TRANSMISSION, SPECTRA_FIELDS.INST_RESP_CURVE}
         ),
         FIFILS("FIFI-LS"),
         HAWC("HAWC_PLUS"),

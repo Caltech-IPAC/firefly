@@ -70,7 +70,7 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
 
         if(isSpectra) return addingSpectraExtractedTableAPart(inputReport, inst);
 
-        if (inst.equals("FIFI-LS")) {
+        if (inst.equals("FIFI-LS") && level.equals("LEVEL_3") && code.equals("wavelength_resampled")) {
             try {
                 return convertFIFIImage(inFile.getAbsolutePath());
             }
@@ -78,7 +78,7 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
                 e.printStackTrace();
             }
         }
-        if ( inst.equals("GREAT")){
+        if ( inst.equals("GREAT") && level.equals("LEVEL_4")){
             try {
                 return convertToFrequencyParts(inputReport, inFile.getAbsolutePath());
             } catch (FitsException e) {
@@ -90,9 +90,7 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
             }
         }
 
-
-        FileAnalysisReport retRep = inputReport.copy();
-        return retRep;
+        return inputReport;
     }
 
     /**
@@ -149,6 +147,7 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
         int partIndex=0;
         for (int i=0; i<hdus.length; i++){
             String fileName = fitsFileNameRoot+i;
+            parts[i].setChartTableDefOption(FileAnalysisReport.ChartTableDefOption.showImage);
             partIndex++;
             FileAnalysisReport.Part chartPart = makeChartPart(hdus[i], fileName,i, partIndex);
             if (chartPart!=null) {
@@ -227,6 +226,10 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
             SofiaSpectraModel.SpectraInstrument instrument = SofiaSpectraModel.SpectraInstrument.getInstrument(inst);
             File spectra = extractSpectraTable(inputReport.getFilePath(), instrument);
             FileAnalysisReport retRep = inputReport.copy();
+            List<FileAnalysisReport.Part> partList = retRep.getParts();
+            for (FileAnalysisReport.Part p:partList) {
+                p.setChartTableDefOption(FileAnalysisReport.ChartTableDefOption.showImage);
+            }
             DataGroup dg = retRep.getPart(0).getDetails();
             String spectraName = "Extracted Data ";
             for (int i = 0; i <dg.size();i++) {
