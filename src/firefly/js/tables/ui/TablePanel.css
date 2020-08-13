@@ -109,6 +109,45 @@
     background-image: linear-gradient(#fff, #dcdcdc);
 }
 
+.Actions__anchor {
+    padding: 3px;
+    border: 1px solid #dadada;
+    background-color: #e8e8e8;
+    font-size: 9px;
+    color: #93aec5;
+    border-radius: 2px;
+    margin: 1px 1px 2px;
+}
+
+.Actions__dropdown {
+    display: flex;
+    flex-direction: column;
+    white-space: nowrap;
+    margin: 5px 0;
+}
+
+.Actions__item {
+    padding: 4px 8px;
+    margin: 3px 0;
+}
+
+.Actions__item:hover {
+    cursor: pointer;
+    background-color: #efefef;
+    margin: 2px 0;
+    border-top: 1px solid #e6e6e6;;
+    border-bottom: 1px solid #e6e6e6;;
+}
+
+.Actions__popup {
+    min-width: 75px;
+    min-height: 75px;
+    padding: 5px;
+    overflow: auto;
+    position: relative;
+    resize: both;
+}
+
 .MetaInfo__tree {
     overflow: auto;
     max-width: 400px;
@@ -341,9 +380,8 @@
     font-size: 11px;
     white-space: nowrap;
     padding: 3px;
-    text-overflow: ellipsis;
     overflow: hidden;
-    height: 100%;
+    width: 100%;
     box-sizing: border-box;
 }
 

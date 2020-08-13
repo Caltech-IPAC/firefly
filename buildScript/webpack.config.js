@@ -44,7 +44,7 @@ export default function makeWebpackConfig(config) {
         html_dir    : 'html',
         use_loader  : true,
         filename    : '[name]-dev.js',
-        deploy_dir  : (process.env.HYDRA_ROOT || '/hydra') + `/server/tomcat/webapps/${config.baseWarName}`,
+        deploy_dir  : (process.env.tomcat_home || '/hydra/server/tomcat') + `/webapps/${config.baseWarName}`,
         alias       : {
             firefly : path.resolve(config.firefly_dir, 'js'),
             styles : path.resolve(config.firefly_dir, 'html', 'css'),

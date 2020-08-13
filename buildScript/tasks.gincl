@@ -79,23 +79,29 @@ task loadConfig {
             configRepo.merge(ConfigRepo.parse(project.env, project.appConfig))
         }
 
-        project.ext.appConfigProps = configRepo.flatten();
-//    appConfigProps.each{ k, v -> println "${k} => ${v}" }
+        def props = configRepo.flatten();
+//        props.each{ k, v -> println "^^ ${k} => ${v}" }
 
         if (file("$rootDir/buildScript/build.config").exists()) {
-            def buildProps = ConfigRepo.parse(project.env, file("$rootDir/buildScript/build.config")).flatten()
-            buildProps.each { k, v -> project.ext.set(k,v)}
+            ConfigRepo.parse(project.env, file("$rootDir/buildScript/build.config"))
+                    .flatten().each { k, v -> props.put(k,v)}
         }
 
         if (file("$gradle.gradleUserHomeDir/build.config").exists()) {
             logger.info ">> loading user's build.config for env: $project.env"
-            def overrides = ConfigRepo.parse(project.env, file("$gradle.gradleUserHomeDir/build.config")).flatten()
-            overrides.each { k, v -> project.ext.set(k,v)}
+            ConfigRepo.parse(project.env, file("$gradle.gradleUserHomeDir/build.config"))
+                    .flatten().each { k, v -> props.put(k,v)}
         }
-        appConfigProps.putAll(project.ext.properties)
-        appConfigProps.putAll(System.properties)
-//    appConfigProps.each{ k, v -> println "${k} => ${v}" }
 
+        System.getenv().each { k,v ->
+            props.put(k,v)
+        }
+
+        project.ext.properties.each { k,v ->
+            props.put(k,v)
+        }
+
+        project.ext.appConfigProps = props
     }
 }
 
@@ -268,7 +274,9 @@ task deploy (dependsOn: [loadConfig]) {
     group = MAIN_GROUP
 
     doLast {
-        if (!project.hasProperty("tomcat_home")) {
+
+        def tomcat_home = appConfigProps.get("tomcat_home")
+        if (!file(tomcat_home).exists()) {
             throw ProjectConfigurationException("tomcat_home property is not found.")
         }
         if (!file("$war.destinationDir/${webapp.baseWarName}.war").exists()) {

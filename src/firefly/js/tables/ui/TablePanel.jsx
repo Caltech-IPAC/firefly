@@ -136,7 +136,7 @@ export class TablePanel extends PureComponent {
             showOptionButton, showPaging, showSave, showFilterButton,
             totalRows, showLoading, columns, showUnits, allowUnits, showTypes, showFilters, textView,
             tbl_id, error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask, showToggleTextView,
-            filterInfo, filterCount, sortInfo, data, backgroundable, highlightedRowHandler} = this.state;
+            filterInfo, filterCount, sortInfo, data, backgroundable, highlightedRowHandler, cellRenderers} = this.state;
         var {leftButtons, rightButtons} =  this.state;
         const {tbl_ui_id} = this.tableConnector;
 
@@ -218,7 +218,7 @@ export class TablePanel extends PureComponent {
                                 callbacks={tableConnector}
                                 { ...{columns, data, hlRowIdx, rowHeight, selectable, showUnits, allowUnits, showTypes, showFilters,
                                     selectInfoCls, filterInfo, sortInfo, textView, showMask, currentPage,
-                                    tableConnector, renderers, tbl_ui_id, highlightedRowHandler, startIdx} }
+                                    tableConnector, renderers, tbl_ui_id, highlightedRowHandler, startIdx, cellRenderers} }
                             />
                             {showOptionButton && !showToolbar &&
                             <img className='TablePanel__options--small'
