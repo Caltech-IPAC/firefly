@@ -88,13 +88,13 @@ function findAvailableTypesForAnalysisPart(part, fileFormat) {
 function imageCouldBeTable(part) {
     const naxis= getIntHeader('NAXIS',part,0);
     if (naxis<1) return false;
+    if (naxis===1) return true;
     const naxisAry= [];
     for(let i=0; i<naxis;i++) naxisAry[i]= getIntHeader(`NAXIS${i+1}`,part,0);
-    if (naxis===1) return true;
-    else if (naxis===2) return naxisAry[1]<=30;
+    if (naxis===2) return naxisAry[1]<=30;
     else {
         let couldBeTable= true;
-        for(let i=2; (i<naxis);i++) if (naxisAry[i]>1) couldBeTable= false;
+        for(let i=1; (i<naxis);i++) if (naxisAry[i]>1) couldBeTable= false;
         return couldBeTable;
     }
 }
@@ -102,9 +102,9 @@ function imageCouldBeTable(part) {
 function is1DImage(part) {
     const naxis= getIntHeader('NAXIS',part,0);
     if (naxis<1) return false;
+    if (naxis===1) return true;
     const naxisAry= [];
     for(let i=0; i<naxis;i++) naxisAry[i]= getIntHeader(`NAXIS${i+1}`,part,0);
-    if (naxis===1) return true;
     let is1DImage= true;
     for(let i=1; (i<naxis);i++) if (naxisAry[i]>1) is1DImage= false;
     return is1DImage;

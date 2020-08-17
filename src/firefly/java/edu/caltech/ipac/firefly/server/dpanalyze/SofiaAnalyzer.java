@@ -41,58 +41,67 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
                                           Map<String, String> params,
                                           Header[] headerAry) {
 
-
         String code = params.getOrDefault("product_type", "");
         String level = params.getOrDefault("processing_level", "").toUpperCase();
         String inst = params.getOrDefault("instrument", "").toUpperCase();
 
-        //
-        // Add spectra extracted data from image
-        //
-        boolean isSpectra = false;
-        if (inst.equals("FORCAST")) {
-            if (level.equals("LEVEL_2") && (code.equals("rspspec") || code.equals("mrgspec"))) { //params.containsKey("replace") && Boolean.parseBoolean(params.get("replace"))) {
-                isSpectra = true;
-            } else if (level.equals("LEVEL_3") && (code.equals("combspec") || code.equals("calspec"))) { //params.containsKey("replace") && Boolean.parseBoolean(params.get("replace"))) {
-                isSpectra = true;
-            }
-        } else if (inst.equals("EXES") && level.equals("LEVEL_3")) {
-            if (code.equals("mrgordspec") || code.equals("combspec") || code.equals("spec")) { //params.containsKey("replace") && Boolean.parseBoolean(params.get("replace"))) {
-                isSpectra = true;
-            }
-        } else if (inst.equals("FLITECAM")) {
-            if (level.equals("LEVEL_3") && (code.equals("calspec") || code.equals("combspec"))) { //params.containsKey("replace") && Boolean.parseBoolean(params.get("replace"))) {
-                isSpectra = true;
-            } else if(level.equals("LEVEL_2") && (code.equals("spec") || code.equals("rspspec"))){
-                isSpectra = true;
-            }
-        }
+        try {
+            switch (inst) {
+                case "FIFI-LS":
+                    if (level.equals("LEVEL_3") && code.equals("wavelength_resampled")) {
+                        return convertFIFIImage(inFile.getAbsolutePath());
+                    }
+                    break;
+                case "GREAT":
+                    if (level.equals("LEVEL_4")) {
+                        insertFrequencyParts(inputReport, inFile.getAbsolutePath());
+                    } else if (level.equals("LEVEL_1")){
+                        setReportDisplay(inputReport, FileAnalysisReport.ChartTableDefOption.showChart);
+                    }
+                    break;
+                default:
+                    if(isSpectra(inst, level, code)) addingSpectraExtractedTableAPart(inputReport, inst);
+                    break;
+              }
 
-        if(isSpectra) return addingSpectraExtractedTableAPart(inputReport, inst);
-
-        if (inst.equals("FIFI-LS") && level.equals("LEVEL_3") && code.equals("wavelength_resampled")) {
-            try {
-                return convertFIFIImage(inFile.getAbsolutePath());
-            }
-            catch (Exception e) {
-                e.printStackTrace();
-            }
         }
-        if ( inst.equals("GREAT") && level.equals("LEVEL_4")){
-            try {
-                return convertToFrequencyParts(inputReport, inFile.getAbsolutePath());
-            } catch (FitsException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        catch (Exception e) {
+            e.printStackTrace();
         }
 
         return inputReport;
     }
 
+    private boolean isSpectra(String inst, String level, String code){
+
+        if (inst.equals("FORCAST")) {
+            if (level.equals("LEVEL_2") && (code.equals("rspspec") || code.equals("mrgspec"))) { //params.containsKey("replace") && Boolean.parseBoolean(params.get("replace"))) {
+                return  true;
+            } else if (level.equals("LEVEL_3") && (code.equals("combspec") || code.equals("calspec"))) { //params.containsKey("replace") && Boolean.parseBoolean(params.get("replace"))) {
+                return  true;
+            }
+        } else if (inst.equals("EXES") && level.equals("LEVEL_3")) {
+            if (code.equals("mrgordspec") || code.equals("combspec") || code.equals("spec")) { //params.containsKey("replace") && Boolean.parseBoolean(params.get("replace"))) {
+                return  true;
+            }
+        } else if (inst.equals("FLITECAM")) {
+            if (level.equals("LEVEL_3") && (code.equals("calspec") || code.equals("combspec"))) { //params.containsKey("replace") && Boolean.parseBoolean(params.get("replace"))) {
+                return  true;
+            } else if(level.equals("LEVEL_2") && (code.equals("spec") || code.equals("rspspec"))){
+                return  true;
+            }
+        }
+        return false;
+    }
+    private void setReportDisplay(FileAnalysisReport report,FileAnalysisReport.ChartTableDefOption option ){
+
+        FileAnalysisReport.Part[] parts=report.getParts().toArray(new FileAnalysisReport.Part[0]);
+        for (int i=0; i<parts.length; i++){
+            parts[i].setChartTableDefOption(option);
+            report.setPart(parts[i], i);
+        }
+
+    }
     /**
      * This method is to convert the FIFI-LS data to standard WAVE-TAB format and then the converted FITs is displayed.
      * @param inputFile
@@ -107,7 +116,6 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
             File outputFile = new File(ServerContext.getUploadDir(), strAry[strAry.length-1]);
 
             //save the converted FITs to the temp file
-
             SofiaFitsConverterUtil.doConvertFits(inputFile, outputFile.getAbsolutePath());
 
 
@@ -134,29 +142,27 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
      * @throws FitsException
      * @throws IOException
      */
-    private FileAnalysisReport convertToFrequencyParts(FileAnalysisReport inputReport, String inputFile) throws Exception {
+    private void  insertFrequencyParts(FileAnalysisReport inputReport, String inputFile) throws Exception {
 
         Fits fits = new Fits(inputFile);
         BasicHDU[] hdus= fits.read();
         String[] strAry = inputFile.split("/");
 
-        FileAnalysisReport retRep = inputReport.copy();
         String fitsFileNameRoot = strAry[strAry.length-1].split(".fits")[0];
-        FileAnalysisReport.Part[] parts=retRep.getParts().toArray(new FileAnalysisReport.Part[0]);
+        FileAnalysisReport.Part[] parts=inputReport.getParts().toArray(new FileAnalysisReport.Part[0]);
 
         int partIndex=0;
         for (int i=0; i<hdus.length; i++){
             String fileName = fitsFileNameRoot+i;
-            parts[i].setChartTableDefOption(FileAnalysisReport.ChartTableDefOption.showImage);
             partIndex++;
             FileAnalysisReport.Part chartPart = makeChartPart(hdus[i], fileName,i, partIndex);
             if (chartPart!=null) {
-                retRep.insertPartAfter(parts[i], chartPart);
+                inputReport.insertPartAfter(parts[i], chartPart);
                 partIndex++;
 
             }
         }
-        return retRep;
+
     }
 
     /**
@@ -221,16 +227,12 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
     }
 
 
-    private FileAnalysisReport addingSpectraExtractedTableAPart(FileAnalysisReport inputReport, String inst) {
+    private void addingSpectraExtractedTableAPart(FileAnalysisReport inputReport, String inst) {
         try {
             SofiaSpectraModel.SpectraInstrument instrument = SofiaSpectraModel.SpectraInstrument.getInstrument(inst);
             File spectra = extractSpectraTable(inputReport.getFilePath(), instrument);
-            FileAnalysisReport retRep = inputReport.copy();
-            List<FileAnalysisReport.Part> partList = retRep.getParts();
-            for (FileAnalysisReport.Part p:partList) {
-                p.setChartTableDefOption(FileAnalysisReport.ChartTableDefOption.showImage);
-            }
-            DataGroup dg = retRep.getPart(0).getDetails();
+
+            DataGroup dg = inputReport.getPart(0).getDetails();
             String spectraName = "Extracted Data ";
             for (int i = 0; i <dg.size();i++) {
                 String key = (String) dg.getData("key", i);
@@ -256,12 +258,12 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
             //TODO add error bars?
             FileAnalysisReport.ChartParams cp = getChartParm(inst, "lines+markers", null);
             addPart.setChartParams(cp);
-            retRep.addPart(addPart);
-            return retRep;
+            inputReport.addPart(addPart);
+
         } catch (Exception e) {
             e.printStackTrace();
-            return inputReport;
         }
+
     }
 
     private File extractSpectraTable(String fitsPath, SofiaSpectraModel.SpectraInstrument instrument) throws Exception {
