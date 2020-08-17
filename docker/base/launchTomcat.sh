@@ -97,7 +97,7 @@ ${CATALINA_HOME}/sendLogsToConsole.sh &
 echo "launchTomcat.sh: Starting Tomcat"
 if [ "$DEBUG" = "true" ] ||[ "$DEBUG" = "t" ] ||[ "$DEBUG" = "1" ] ||  \
    [ "$DEBUG" = "TRUE" ] || [ "$DEBUG" = "True" ] || [ "$1" = "--debug" ]; then
-     exec ${CATALINA_HOME}/bin/catalina.sh jpda run
+    exec ${CATALINA_HOME}/bin/catalina.sh jpda ${START_MODE}
 else
-     exec ${CATALINA_HOME}/bin/catalina.sh run
+    exec ${CATALINA_HOME}/bin/catalina.sh ${START_MODE}
 fi

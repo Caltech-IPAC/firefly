@@ -22,6 +22,7 @@
 build/
 jars/build/
 .gradle/
+.docker-sync/
 
 
 # ignore javascript dependencies
