@@ -11,7 +11,7 @@ import {isColumnType, COL_TYPE, tblDropDownId, getTblById, getColumn, formatValu
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {SORT_ASC, UNSORTED} from '../SortInfo';
-import {toBoolean, isNumeric, copyToClipboard} from '../../util/WebUtil.js';
+import {toBoolean, copyToClipboard} from '../../util/WebUtil.js';
 
 import ASC_ICO from 'html/images/sort_asc.gif';
 import DESC_ICO from 'html/images/sort_desc.gif';
@@ -287,12 +287,7 @@ export const CellWrapper =  React.memo( (props) => {
     };
 
     const viewAsText = () => {
-        const popup = (
-            <PopupPanel title={'View as plain text'} >
-                <textarea readOnly className='Actions__popup' value={text} style={{width: 650, height: 125}}/>
-            </PopupPanel>
-        );
-        DialogRootContainer.defineDialog(popupID, popup);
+        DialogRootContainer.defineDialog(popupID, <ViewAsText text={text}/>);
         dispatchShowDialog(popupID);
         hideDropDown(dropDownID);
     };
@@ -326,6 +321,28 @@ function skipCellRender(prev={}, next={}) {
         getCellInfo(prev)?.text === getCellInfo(next)?.text;
 }
 
+
+function ViewAsText({text, ...rest}) {
+    const [textVal, setText] = useState(text);
+    const onChange = (e) => {
+        if (e?.target?.checked) {
+            setText(JSON.stringify(JSON.parse(text), null, 2, 2));
+        } else {
+            setText(text);
+        }
+    };
+    const label = 'Apply formatting so that it is easier to read';
+    return (
+        <PopupPanel title={'View as plain text'} style={{flexDirection: 'column'}} {...rest}>
+            <div style={{display: 'flex', alignItems: 'center'}}>
+                <input id='doFormat' type = 'checkbox' title = {label} onChange = {onChange}/>
+                <label htmlFor='doFormat' style={{verticalAlign: ''}}>{label}</label>
+            </div>
+            <textarea readOnly className='Actions__popup' value={textVal} style={{width: 650, height: 125}}/>
+        </PopupPanel>
+
+    );
+}
 
 /**
  * @see {@link http://www.ivoa.net/documents/VOTable/20130920/REC-VOTable-1.3-20130920.html#ToC54}
