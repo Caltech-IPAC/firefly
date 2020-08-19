@@ -33,7 +33,7 @@ public interface VOSpectraModel {
     //TODO add to this enum to cover more spectra content attributes
    enum SPECTRA_FIELDS {
         //Y AXIS
-        FLUX("flux", "Flux", Double.class,"phot.flux.density;em.MIR"), // unit should be replace by extractor
+        FLUX("Flux", "Flux", Double.class,"phot.flux.density;em.MIR"), // unit should be replace by extractor
         //X AXIS
         WAVELENGTH("wavelength", "Wavelength", Double.class,"em.wl;em.MIR"),
         WAVENUMBER("wavenumber", "Wavenumber", Double.class,"em.wavenumber;em.MIR"),
@@ -41,8 +41,8 @@ public interface VOSpectraModel {
         //ERRORs
         ERROR_FLUX("error", "Error", Double.class,"stat.error;phot.flux.density;em.MIR"),
         ATMOS_TRANSMISSION("transmission", "Transmission", Double.class,"phys.transmission;em.MIR"),
-        FREQUENCY ( "frequency", "Frequency", Double.class, "em.freq"),
-        VELOCITY ( "velocity", "VELOCITY", Double.class, "spect.dopplerVeloc.radio"),
+        FREQUENCY ( "Frequency", "Frequency", Double.class, "em.freq"),
+        VELOCITY ( "Velocity", "Velocity", Double.class, "spect.dopplerVeloc.radio"),
 
         INST_RESP_CURVE("response", "Response", Double.class,"instr.det;em.MIR") ;
 
@@ -73,7 +73,7 @@ public interface VOSpectraModel {
             return this.key;
         }
 
-        String getTitle() {
+        public String getTitle() {
             return this.label;
         }
 

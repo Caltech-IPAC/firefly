@@ -334,7 +334,7 @@ public class SofiaFitsConverterUtil {
 
         double[] frequency = new double[arrayLength];
         for (int i=0; i<arrayLength; i++){
-            frequency[i] = restFreq +  (i+1 - crpix )*cdelt;
+            frequency[i] = (restFreq +  (i+1 - crpix )*cdelt)/1.E12;
         }
 
         return frequency;
@@ -377,7 +377,7 @@ public class SofiaFitsConverterUtil {
         String freqUnit = header.getStringValue("CUNIT"+freqAxis);
 
         //since there is nothing in the HDU, hard code this for now
-        freqUnit= freqUnit!=null?freqUnit:"Hz";
+        freqUnit= freqUnit!=null?freqUnit:"THz";
         spectraModel.setUnits(VOSpectraModel.SPECTRA_FIELDS.FREQUENCY,freqUnit );
 
         double[] velocity=  getVelocityArray(frequency, header);
