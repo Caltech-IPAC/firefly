@@ -530,8 +530,8 @@ function periodogramSuccess(popupId, hideDropDown = false) {
             step_size: ssize ? ssize : undefined,
             peaks: get(request, [pKeyDef.peaks.fkey]),
             table_name: LC.PEAK_TABLE,
-            sortInfo: sortInfoString('SDE', false)                 // sort peak table by column SDE, descending
-        }, {tbl_id: LC.PEAK_TABLE, pageSize: parseInt(peak), inclCols : '"Peak", "Period", "Power", "SDE"'});   // period and power are reserved words in sql.. put them in quotes
+            sortInfo: sortInfoString('Power', false)                 // sort peak table by column SDE, descending
+        }, {tbl_id: LC.PEAK_TABLE, pageSize: parseInt(peak), inclCols : '"Peak", "Period", "Power"'});   // period and power are reserved words in sql.. put them in quotes
 
         var tReq = makeTblRequest('LightCurveProcessor', LC.PERIODOGRAM_TABLE, {
             original_table: srcFile,
