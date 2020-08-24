@@ -17,19 +17,22 @@ dependencies.
 
 #### Create source repositories
 
+In these examples, `cm` is used as a top-level directory for these repositories.  But, it does not need to be named `cm`.
+It can be named anything you want.
+
     mkdir cm && cd cm
     git clone https://github.com/Caltech-IPAC/firefly
     git clone https://github.com/Caltech-IPAC/firefly-help
 
 On macOS, only shared paths are accessible by Docker.  
-You can configure shared paths from `Docker -> Preferences... -> File Sharing.`  
+You can configure shared paths from `Docker -> Preferences... -> Resources -> File Sharing.`  
 See https://docs.docker.com/docker-for-mac/osxfs/#namespaces for more info.
 
 These paths are needed:
 
-`cm/`       : source files  
+`cm`       : source files  
 `~/.gradle` : `GRADLE_USER_HOME` directory.  This is used to inject build properties where needed.
-              This is a hidden file.  ⌘ CMD+⇧ SHIFT+. to reveal hidden files in Finder and Open/Save dialogs.
+              On the Mac, in the file selection box you can use `CMD + SHIFT + .` to see hidden files such as `.gradle`.
 
 #### docker-sync
 
@@ -38,7 +41,7 @@ upgrade, search for 'docker-syncXcode 11 on macOS 10.14' to find a workaround.
 
 To install as root.  
     
-    gem install docker-sync
+    sudo gem install docker-sync
 
 Creates and starts the sync containers for Firefly source.
 
@@ -59,7 +62,8 @@ When you are done with development, and wish to stop `docker-sync`.
 
 Builds, deploy and launches `dev mode`. Firefly is accessible at http://localhost:8000/firefly/ while it continues 
 to monitor client-side source code for changes.  Once changes are detected, it will recompile and deploy the updates.
-Normally, reloading the browser is enough to pull in the changes.  `ctrl-c` to exit.
+Normally, reloading the browser is enough to pull in the changes.  `ctrl-c` to exit.  
+If you made changes to server-side(java) code, you'll have to restart Dev-Mode.
     
     cd cm/firefly
     docker-compose up dev
@@ -80,14 +84,19 @@ Test requires Git LFS due to larger test data.  To setup, see https://developer.
 
     cd cm
     git clone https://github.com/lsst/firefly_test_data
+
+#### Cleanup
+
+`docker-compose up` does clean up itself upon exit.  Run `docker-compose down` to removes containers, networks, volumes, 
+and images created by up  
     
 
 ### Additional Information
 
 The Docker development environment image is created from Firefly's latest release image.  This ensure that
 it's always using the latest runtime env.  Upon first start, a `firefly-builder` image will be created locally.
-If any changes are made to `firefly/docker/builder/Dockerfile`, run `docker-compose build` to recreate the image.
-
+This process may take up to several minutes depending on your computer and network performance.  
+If any changes are made to `firefly/docker/builder/Dockerfile` or `ipac/firely`, run `docker-compose build` to recreate the image.
 
 #### Performance
 
@@ -97,3 +106,9 @@ installing npm packages locally.  Once this is done, following runs should be mu
 
 `.git` is a big directory.  To improve performance, it's excluded from `docker-sync`.  Due to this, `firefly` source 
 directory in the container will not be recognized as a `git` repos.  Functions that requires `git` commands is lost, i.e. version info.  
+
+
+#### Troubleshooting
+
+- Request timed out when starting `docker-compose`
+  First, try to cleanup by running `docker-compose down` and/or `dockery-sync clean`.  If all fails, restart Docker.
