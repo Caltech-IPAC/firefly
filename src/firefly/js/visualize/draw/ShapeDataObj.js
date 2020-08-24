@@ -628,9 +628,8 @@ function boxIntersectRect(pts, plot, w, h, isCenter, sRect, renderOptions) {
     }
 
     const x1 = 0;
-    const x2 = plot.viewDim.width;
     const y1 = 0;
-    const y2 = plot.viewDim.height;
+    const {width: x2, height: y2} = plot.viewDim;
     const view_two_corners = [makeDevicePt(x1, y1), makeDevicePt(x2, y2)];
 
 
@@ -652,8 +651,7 @@ function circleIntersectRect(centerPt, circleRadius, plot, renderOptions) {
     const center_dev = plot.getDeviceCoords(centerPt);
     const rect_x1 = 0;
     const rect_y1 = 0;
-    const rect_x2 = plot.viewDim.width;
-    const rect_y2 = plot.viewDim.height;
+    const {width: rect_x2, height: rect_y2} = plot.viewDim;
     const {translation} = renderOptions || {};
     const center_x_dev = center_dev.x + (translation ? translation.x : 0);
     const center_y_dev = center_dev.y + (translation ? translation.y : 0);
@@ -674,7 +672,7 @@ function circleIntersectRect(centerPt, circleRadius, plot, renderOptions) {
         for (let y of [rect_y1, rect_y2]) {
             const loc = diff_dist_to_center(x, y);
 
-            if (loc === 0.0) {   // circle outline interset the corner
+            if (loc === 0.0) {   // circle outline intersect the corner
                 return true;
             }
 
@@ -810,7 +808,7 @@ function drawCircle(drawObj, ctx,  plot, drawParams) {
             case UnitType.ARCSEC: screenRadius= getValueInScreenPixel(plot,radius);
                 break;
         }
-        cenDevPt= plot.getDeviceCoords(pts[0]);
+        cenDevPt= plot ? plot.getDeviceCoords(pts[0]) : pts[0];
 
 
         if (!cenDevPt) {
@@ -818,15 +816,15 @@ function drawCircle(drawObj, ctx,  plot, drawParams) {
         }
 
         // check if center is within display area or circle intersect the display area
-        if (plot.pointOnDisplay(cenDevPt) ||
+        if (!plot || plot.pointOnDisplay(cenDevPt) ||
             circleIntersectRect(pts[0], screenRadius, plot, renderOptions)) {
             inView = true;
             DrawUtil.drawCircle(ctx,cenDevPt.x, cenDevPt.y,color, screenRadius, lineWidth, renderOptions,false);
         }
     }
     else {
-        const pt0= plot.getDeviceCoords(pts[0]);
-        const pt1= plot.getDeviceCoords(pts[1]);
+        const pt0= plot ? plot.getDeviceCoords(pts[0]) : pts[0];
+        const pt1= plot ? plot.getDeviceCoords(pts[1]) : pts[1];
         if (!pt0 || !pt1) return;
 
         cenDevPt = makeDevicePt((pt0.x+pt1.x)/2, (pt0.y+pt1.y)/2);
@@ -834,7 +832,7 @@ function drawCircle(drawObj, ctx,  plot, drawParams) {
         const yDist= Math.abs(pt0.y-pt1.y)/2;
         screenRadius= Math.min(xDist,yDist);
 
-        if (plot.pointOnDisplay(pt0) || plot.pointOnDisplay(pt1) || plot.pointOnDisplay(cenDevPt) ||
+        if (!plot || plot.pointOnDisplay(pt0) || plot.pointOnDisplay(pt1) || plot.pointOnDisplay(cenDevPt) ||
             circleIntersectRect(cenDevPt, screenRadius, plot, renderOptions)) {
             inView = true;
             DrawUtil.drawCircle(ctx,cenDevPt.x,cenDevPt.y,color, screenRadius, lineWidth, renderOptions,false );

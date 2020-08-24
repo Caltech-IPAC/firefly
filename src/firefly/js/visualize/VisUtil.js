@@ -968,10 +968,10 @@ function isTwoSegmentsIntersect(line1Pt1, line1Pt2, line2Pt1, line2Pt2) {
 
     if (dir1 !== dir2 && dir3 !== dir4) return true;
 
-    if (dir1 == 0 && onSameSegment(line1Pt1, line1Pt2, line2Pt1)) return true;
-    if (dir2 == 0 && onSameSegment(line1Pt1, line1Pt2, line2Pt2)) return true;
-    if (dir3 == 0 && onSameSegment(line2Pt1, line2Pt2, line1Pt1)) return true;
-    if (dir4 == 0 && onSameSegment(line2Pt1, line2Pt2, line1Pt2)) return true;
+    if (dir1 === 0 && onSameSegment(line1Pt1, line1Pt2, line2Pt1)) return true;
+    if (dir2 === 0 && onSameSegment(line1Pt1, line1Pt2, line2Pt2)) return true;
+    if (dir3 === 0 && onSameSegment(line2Pt1, line2Pt2, line1Pt1)) return true;
+    if (dir4 === 0 && onSameSegment(line2Pt1, line2Pt2, line1Pt2)) return true;
 
     return false;
 }
@@ -1102,7 +1102,6 @@ export default {
     computeScreenDistance, computeDistance, computeSimpleDistance,convert,
     computeCentralPointAndRadius, getPositionAngle, getRotationAngle,getTranslateAndRotatePosition,
     intersects, contains, containsRec,containsCircle, getArrowCoords, calculatePosition,
-    convertAngle, distToLine, distanceToPolygon, distanceToCircle, computeSimpleSlopeAngle,
-    segmentIntersectRect
+    convertAngle, distToLine, distanceToPolygon, distanceToCircle, computeSimpleSlopeAngle
 };
 
