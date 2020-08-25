@@ -25,13 +25,13 @@ import {useStoreConnector} from './../../ui/SimpleComponent.jsx';
 import {resolveHRefVal} from '../../util/VOAnalyzer.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {dispatchTableUpdate} from '../../tables/TablesCntlr.js';
+import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
+import {PopupPanel} from '../../ui/PopupPanel.jsx';
+
+import infoIcon from 'html/images/info-icon.png';
 
 const html_regex = /<.+>/;
 const filterStyle = {width: '100%', boxSizing: 'border-box'};
-
-import infoIcon from 'html/images/info-icon.png';
-import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
-import {PopupPanel} from '../../ui/PopupPanel.jsx';
 
 const imageStubMap = {
     info: <img style={{width:'14px'}} src={infoIcon} alt='info'/>
@@ -323,7 +323,7 @@ function skipCellRender(prev={}, next={}) {
 
 
 function ViewAsText({text, ...rest}) {
-    const [textVal, setText] = useState(text);
+    const [textVal=text, setText] = useState();
     const onChange = (e) => {
         if (e?.target?.checked) {
             setText(JSON.stringify(JSON.parse(text), null, 2, 2));
