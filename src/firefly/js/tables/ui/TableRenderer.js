@@ -323,14 +323,18 @@ function skipCellRender(prev={}, next={}) {
 
 
 function ViewAsText({text, ...rest}) {
-    const [textVal=text, setText] = useState();
+    const [doFmt, setDoFmt] = useState(false);
+
     const onChange = (e) => {
-        if (e?.target?.checked) {
-            setText(JSON.stringify(JSON.parse(text), null, 2, 2));
-        } else {
-            setText(text);
-        }
+        setDoFmt(e.target.checked);
     };
+
+    if (doFmt && text.match(/^\[.+\]$|^{.+}$/)) {
+        try {
+            text = JSON.stringify(JSON.parse(text), null, 2, 2);
+        } catch (e) {}      // if text is not JSON, just show as is.
+    }
+
     const label = 'Apply formatting so that it is easier to read';
     return (
         <PopupPanel title={'View as plain text'} style={{flexDirection: 'column'}} {...rest}>
@@ -338,7 +342,7 @@ function ViewAsText({text, ...rest}) {
                 <input id='doFormat' type = 'checkbox' title = {label} onChange = {onChange}/>
                 <label htmlFor='doFormat' style={{verticalAlign: ''}}>{label}</label>
             </div>
-            <textarea readOnly className='Actions__popup' value={textVal} style={{width: 650, height: 125}}/>
+            <textarea readOnly className='Actions__popup' value={text} style={{width: 650, height: 125}}/>
         </PopupPanel>
 
     );
