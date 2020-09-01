@@ -13,7 +13,7 @@ export const LayoutType= new Enum(['CENTER', 'TOP_EDGE_CENTER', 'TOP_CENTER', 'T
 
 export const PopupPanel= memo((props) => {
     const {title='', visible=true, layoutPosition=LayoutType.TOP_CENTER, closePromise, closeCallback, modal=false,
-        requestToClose, mouseInDialog, requestOnTop, dialogId, zIndex=0, children }= props;
+        requestToClose, mouseInDialog, requestOnTop, dialogId, zIndex=0, children, style }= props;
     const [{left,top}, setPos]= useState({left:0,top:0});
     const [layout, setLayout]= useState(LayoutType.NONE);
     const {current:ctxRef} = useRef({ mouseCtx: undefined, popupRef : undefined, titleBarRef: undefined});
@@ -54,7 +54,7 @@ export const PopupPanel= memo((props) => {
 
     if (!visible) return false;
     return (
-        <PopupHeaderTop {...{modal,zIndex,left,top,ctxRef,dialogMoveStart,dialogMoveEnd, onMouseEnter,onMouseLeave,
+        <PopupHeaderTop {...{modal,zIndex,left,top,ctxRef,dialogMoveStart,dialogMoveEnd, onMouseEnter,onMouseLeave, style,
             dialogMove,children,title,askParentToClose, visibility:layout===LayoutType.NONE ? 'hidden' : 'visible'}}>
             {children}
         </PopupHeaderTop>
@@ -72,11 +72,12 @@ PopupPanel.propTypes= {
     zIndex : PropTypes.number,
     mouseInDialog : PropTypes.func,
     modal : PropTypes.bool,
-    visible : PropTypes.bool
+    visible : PropTypes.bool,
+    style : PropTypes.object
 };
 
 function PopupHeaderTop({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart,dialogMoveEnd,
-                            onMouseEnter,onMouseLeave,dialogMove,children,title,askParentToClose}) {
+                            onMouseEnter,onMouseLeave,dialogMove,children,title,askParentToClose, style}) {
     return (
         <div style={{zIndex, position:'relative'}}>
             {modal && <div className='popup-panel-glass'/>}
@@ -101,7 +102,7 @@ function PopupHeaderTop({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart
                         <img className='popup-panel-header' src= {DEL_ICO}
                              style= {{position:'absolute', right:0, top:0}} onClick={askParentToClose} />
                     </div>
-                    <div style={{display:'flex'}}> {children} </div>
+                    <div style={{display:'flex', ...style}}> {children} </div>
                 </div>
             </div>
         </div>

@@ -92,14 +92,42 @@ public final class FITSTableReader
 
     public static void main(String[] args)
     {
-        if (args.length != 2)
-        {
-            usage();
-        }
-        String fits_filename = args[0];
-        String ipac_filename = args[1];
+//        if (args.length != 2)
+//        {
+//            usage();
+//        }
+
+        Class bcls = new String("test").getClass();
+        Class cls = bcls.isArray() ? bcls.getComponentType() : null;
 
         FITSTableReader fits_to_ipac = new FITSTableReader();
+
+        String fits_filename = "/Users/ejoliet/devspace/branch/dev/firefly/test-array.fits";//args[0];
+
+        Fits fits = null;
+        try {
+            fits = new Fits(fits_filename);
+            StarTable table = getStarTable(fits, fits_filename, 1);
+            DataGroup data = FITSTableReader.convertFitsToDataGroup(fits_filename, null, null, null, 1);
+
+            int columnCount = table.getColumnCount();
+            for (int a= 0; a<columnCount;a++) {
+                ColumnInfo columnInfo = table.getColumnInfo(a);
+                int[] shape = columnInfo.getShape();
+                System.out.println(columnInfo.getName() + " shape length " + shape.length);
+            }
+        } catch (FitsException | IOException e) {
+            e.printStackTrace();
+        }
+
+
+
+
+
+
+        System.exit(0);
+        String ipac_filename = args[1];
+
 
         String strategy = EXPAND_BEST_FIT;
         //String strategy = EXPAND_REPEAT;
@@ -561,7 +589,7 @@ public final class FITSTableReader
                 DataType dt = dataGroup.getDataDefinitions()[dtIdx];
                 ColumnInfo colInfo = colAry[dtIdx];
                 int colIdx = colIdxMap.get(colInfo);
-                Object data =  dt.getDataType()==String.class ? table.getCell(rowIdx, colIdx)+"" :  table.getCell(rowIdx, colIdx);
+                Object data =  table.getCell(rowIdx, colIdx);
                 aRow.setDataElement(dt, data);
             }
             dataGroup.add(aRow);
@@ -623,7 +651,10 @@ public final class FITSTableReader
         }
 
         if (colInfo.isArray()) {
-            int[] shape = colInfo.getShape();
+            // FitsStarTable from starlink has an issue, TDIM values are not trimed before parsing into integer, hence Shape always int[]{-1}
+            // Using here our own getter to overcome this problem (TOPCAT is showing the same problem in the UI)
+            int[] shape = getShape(table, colIdx);
+
             if (shape != null) {
                 String arraySize = Arrays.stream(shape)
                                         .mapToObj(d -> d > 0 ? d+"" : "*")
@@ -637,6 +668,32 @@ public final class FITSTableReader
         dataType.setDesc(desc);
 
         return dataType;
+    }
+
+    private static int[] getShape(StarTable table, int colIdx) {
+
+        DescribedValue td = table.getParameterByName("TDIM" + (colIdx+1));
+        String tdim = td == null ? null : td.getValue().toString();
+        if (tdim != null) {
+            tdim = tdim.trim();
+            if (tdim.charAt(0) == '(' && tdim.charAt(tdim.length() - 1) == ')') {
+                tdim = tdim.substring(1, tdim.length() - 1).trim();
+                String[] sdims = tdim.split(",");
+                if (sdims.length > 0) {
+                    try {
+                        int[] dims = new int[sdims.length];
+
+                        for (int i = 0; i < sdims.length; ++i) {
+                            dims[i] = Integer.parseInt(sdims[i].trim());
+                        }
+
+                        return dims;
+                    } catch (NumberFormatException var20) {
+                    }
+                }
+            }
+        }
+        return new int[]{-1};
     }
 
     private static String getParam(StarTable table, String key) {
