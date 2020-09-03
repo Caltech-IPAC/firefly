@@ -255,6 +255,46 @@
 </template>
 
 
+<template title="Predefined Cell Renderers" class="tpl">
+    <div id="expected" >
+        <div style="overflow: auto hidden;height: 245px">
+            <img src="images/cell-renderer.png" style="margin-bottom: 5px"/>
+            <div style="height: 100%; white-space: nowrap">
+                Using predefined cell renderer
+                <li>first, a number with upper and lower bounds</li>
+                <li>second, a number with +- interval</li>
+                <li>third, band rendered as an image with desc</li>
+                <li>last, crval rendered as a link</li>
+            </div>
+        </div>
+    </div>
+    <div id="actual"  class="box x3"/>
+    <script>
+        function onFireflyLoaded(firefly) {
+
+            //-----------  using API with server-backed table --------------
+            const tblReq = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
+                { META_INFO: {
+                        "col.in_row_id.visibility":  'hidden',
+
+                        "col.in_ra.label":  'in_ra +band -1',
+                        "col.in_ra.cellRenderer":  'NumberRange::upper=${band},lower=${in_row_id}, ustyle=color:green, lstyle=color:red',
+
+                        "col.in_dec.label": 'in_dec +/- band',
+                        "col.in_dec.cellRenderer": 'NumberRange::upper=${band}',
+
+                        "col.band.label":  'band as image',
+                        "col.band.cellRenderer": 'ImageCell::src=https://irsa.ipac.caltech.edu/onlinehelp/irsaviewer/img/help.png, before=info, after=details',
+
+                        "col.crval1.label": 'crval1 as link',
+                        "col.crval1.cellRenderer": 'ATag::href=http://ivoa.net/?id=${band}',
+                    }});
+            firefly.showTable('actual', tblReq, {rowHeight: 40});
+        }
+    </script>
+</template>
+
+
 
 <!-- this is where test cases will be attached-->
 <div id="tst-container"/>

@@ -117,6 +117,7 @@ public class TableTest extends ConfigTest {
                 "\\col.ra.minValue = MinValue\n" +
                 "\\col.ra.maxValue = MaxValue\n" +
                 "\\col.dec.ShortDescription = ShortDescription\n" +
+                "\\col.dec.cellRenderer = NumberRange:: lower=-1, upper=3\n" +
                 "\\\n" +
                 "|ra         |dec       |\n" +
                 "|double     |double    |\n" +
@@ -167,6 +168,7 @@ public class TableTest extends ConfigTest {
 
         JSONObject dec = (JSONObject) getPathValue(jsonTable, "tableData", "columns", "1");    // 2nd col.. dec
         Assert.assertEquals("ShortDescription", dec.get("desc"));        // testing old-meta ShortDescription
+        Assert.assertEquals("NumberRange:: lower=-1, upper=3", dec.get("cellRenderer"));
     }
 
 

@@ -78,6 +78,7 @@ public class IpacTableUtil {
             ensureKey(attribs, col.getKeyName(), col.getMinValue(), MIN_VALUE_TAG);
             ensureKey(attribs, col.getKeyName(), col.getMaxValue(), MAX_VALUE_TAG);
             ensureKey(attribs, col.getKeyName(), col.getArraySize(), ARY_SIZE_TAG);
+            ensureKey(attribs, col.getKeyName(), col.getCellRenderer(), CELL_RENDERER);
             if (col instanceof ParamInfo) {
                 ensureKey(attribs, col.getKeyName(), ((ParamInfo)col).getValue(), VALUE_TAG);
             }
@@ -134,6 +135,7 @@ public class IpacTableUtil {
             consumeMeta(MIN_VALUE_TAG, meta, dt, (v, c) -> c.setMinValue(v));
             consumeMeta(MAX_VALUE_TAG, meta, dt, (v, c) -> c.setMaxValue(v));
             consumeMeta(ARY_SIZE_TAG, meta, dt, (v, c) -> c.setArraySize(v));
+            consumeMeta(CELL_RENDERER, meta, dt, (v, c) -> c.setCellRenderer(v));
 
             consumeMeta(LINKS_TAG, meta, dt, (json, c) -> applyIfNotEmpty(toLinkInfos(json), infos -> c.setLinkInfos(infos)));
 

@@ -96,6 +96,7 @@ public class DataType implements Serializable, Cloneable {
     private       String maxValue = "";
     private       String minValue = "";
     private       String dataOptions;
+    private       String cellRenderer;      // use custom predefined cell renderer.  See TableRenderer.js for usage.
 
     /**
      * follows section 2.2. of the "VOTable Format Definition" convention where arraySize can be
@@ -317,6 +318,10 @@ public class DataType implements Serializable, Cloneable {
     public String getArraySize() { return arraySize; }
 
     public void setArraySize(String arraySize) { this.arraySize = arraySize; }
+
+    public String getCellRenderer() { return cellRenderer; }
+
+    public void setCellRenderer(String cellRenderer) { this.cellRenderer = cellRenderer; }
 
     /**
      * Firefly has 3 metas that affect the formatting of the column's data.  They are

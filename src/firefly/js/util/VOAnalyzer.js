@@ -1131,7 +1131,7 @@ export const findTargetName = (columns) => columns.find( (c) => DEFAULT_TNAME_OP
  * @param defval        the field's value, or cell data.  Append field's value to href, if no substitution is needed.
  * @returns {string}    the resolved href after subsitution
  */
-export function resolveHRefVal(tableModel, href='', rowIdx, defval='') {
+export function applyLinkSub(tableModel, href='', rowIdx, defval='') {
     const vars = href.match(/\${[\w -.]+}/g);
     if (vars) {
         let rhref = href;

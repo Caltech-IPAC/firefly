@@ -12,7 +12,15 @@ import {tableTextView, getTableUiById, getProprietaryInfo, getTblById, hasRowAcc
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
-import {TextCell, HeaderCell, SelectableHeader, SelectableCell, LinkCell, makeDefaultRenderer} from './TableRenderer.js';
+import {
+    TextCell,
+    HeaderCell,
+    SelectableHeader,
+    SelectableCell,
+    LinkCell,
+    makeDefaultRenderer,
+    CellWrapper
+} from './TableRenderer.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {dispatchTableUiUpdate, TBL_UI_UPDATE} from '../TablesCntlr.js';
 import {Logger} from '../../util/Logger.js';
@@ -344,15 +352,18 @@ function makeColumnTag(props, col, idx) {
     const style = col.fixed && {backgroundColor: bgColor};
     const {resizable=true} = col;
 
+    const cell = ({height, width, columnKey, rowIndex}) =>
+                    <CellWrapper {...{height, width, columnKey, rowIndex, style, data, col, colIdx:idx, tbl_id, startIdx, CellRenderer}} />;
     return (
         <Column
             key={col.name}
             columnKey={idx}
             header={<HeadRenderer {...{col, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter, tbl_id}} />}
-            cell={<CellRenderer {...{style, data, tbl_id, col, colIdx:idx}} />}
+            cell={cell}
             fixed={fixed}
             width={columnWidths[idx]}
             isResizable={resizable}
+            isReorderable={true}
             allowCellsRecycling={true}
         />
     );
