@@ -5,7 +5,6 @@
 import {TitleOptions} from '../WebPlotRequest.js';
 import {RequestType} from '../RequestType.js';
 import {PlotAttribute} from '../PlotAttribute';
-
 /**
  *
  * @param {WebPlot} plot
@@ -13,6 +12,10 @@ import {PlotAttribute} from '../PlotAttribute';
  * @return {String} the title
  */
 export function makePostPlotTitle(plot,r){
+
+
+    if (plot.plotState.isThreeColor()) return '3-color';
+
     let title= r.getTitle();
     const titleOps= r.getTitleOptions();
     const {attributes}= plot;
