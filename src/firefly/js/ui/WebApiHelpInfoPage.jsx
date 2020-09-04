@@ -15,7 +15,7 @@ export function WebApiHelpInfoPage({helpType,contextMessage='',cmd,params,webApi
     let showAllHelp= false;
     switch (helpType) {
         case WebApiHelpType.OVERVIEW_HELP:
-            msg = 'Web API Overview Help';
+            msg = 'Web API Help';
             showAllHelp= true;
             break;
         case  WebApiHelpType.COMMAND_NOT_FOUND:
