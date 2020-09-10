@@ -1,0 +1,30 @@
+version: '3'
+services:
+  dev:
+    image: ipac/firefly-builder
+    build: ./docker/builder
+    ports:
+      - "8000:8080"                 # Tomcat HTTP port
+      - "5050:5050"                 # Debugger's port
+    volumes:
+      - firefly-src:/cm/firefly:nocopy
+      - ../firefly-help:/cm/firefly-help
+      - ~/.gradle:/gradle_home      # default host's GRADLE_USER_HOME directory.  Change this if you override it.
+    environment:
+      env: dev
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    command: ["/bin/bash", "-c", "gradle -p /cm/firefly :fi:bAAD && /usr/local/tomcat/launchTomcat.sh && gradle -p /cm/firefly :fi:dev"]
+  test:
+    image: ipac/firefly-builder
+    build: ./docker/builder
+    volumes:
+      - firefly-src:/cm/firefly:nocopy
+      - ../firefly_test_data:/cm/firefly_test_data
+      - ~/.gradle:/gradle_home      # default host's GRADLE_USER_HOME directory.  Change this if you override it.
+    environment:
+      env: dev
+    command: ["/bin/bash", "-c", "gradle -p /cm/firefly :fi:test"]
+
+volumes:
+  firefly-src:
+    external: true

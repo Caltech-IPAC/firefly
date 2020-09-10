@@ -4,7 +4,6 @@ ext.buildRoot = findProperty("buildRoot") ?: "${rootDir}/build"
 project.buildDir = findProperty('altBuildDir') ?: "${buildRoot}/${project['app-name']}"            // allow for an alternate build directory
 ext.distDir = "${buildRoot}/dist"
 ext.warDir = "${buildDir}/war"
-ext.onlinehelp_dir = "${rootDir}/../irsa-ife-onlinehelp/"
 ext['launch.page'] = ext['app-name'] + ".html"
 
 jar.destinationDir = file ("$rootDir/jars/build")
@@ -210,14 +209,16 @@ ext.NODE = { ...cmd ->
         commandLine cmd
         for (String key : project.appConfigProps.keySet()) {
             if (key.startsWith('__$')) {
-                environment (key, project.appConfigProps[key])
-//        println ">>   " + key + " = " + project.appConfigProps[key]
+                def rkey = key.replace('__$', 'FF___').replaceAll('\\.', '___')   // some chars are not allowed in Docker's env.  escape, to be resolved later
+                environment rkey, project.appConfigProps[key]
+                // rintln "<<<<>>  " + rkey + " = " + project.appConfigProps[key]
             }
         }
         // load version info as JS global
         for (String key : versionInfo.keySet()) {
-            environment ('__$version.'+key, versionInfo[key])
-//      println ">>   " + '__$version.'+key + " = " + versionInfo[key]
+            def rkey = ('__$version.'+key).replace('__$', 'FF___').replaceAll('\\.', '___')   // some chars are not allowed in Docker's env.  escape, to be resolved later
+            environment rkey, versionInfo[key]
+            // println "<<<<>>  ${rkey} = " + versionInfo[key]
         }
     }
     return res;
@@ -245,16 +246,16 @@ ext.publishDocs = { docsDir, product ->
     }
 
     def res = exec {
-        environment 'LTD_MASON_BUILD': 'true'
-        environment 'LTD_MASON_PRODUCT': product
-        environment 'LTD_MASON_AWS_ID': 'AKIAJRVDEID2GE6GLL7Q'
-        environment 'LTD_MASON_AWS_SECRET': project.appConfigProps['LTD_MASON_AWS_SECRET']
-        environment 'LTD_KEEPER_URL': 'https://keeper.lsst.codes'
-        environment 'LTD_KEEPER_USER': 'firefly'
-        environment 'LTD_KEEPER_PASSWORD': project.appConfigProps['LTD_KEEPER_PASSWORD']
-        environment 'TRAVIS_PULL_REQUEST': 'false'
-        environment 'TRAVIS_REPO_SLUG': 'Caltech-IPAC/firefly'
-        environment 'TRAVIS_BRANCH': branch
+        environment 'LTD_MASON_BUILD', 'true'
+        environment 'LTD_MASON_PRODUCT', product
+        environment 'LTD_MASON_AWS_ID', 'AKIAJRVDEID2GE6GLL7Q'
+        environment 'LTD_MASON_AWS_SECRET', project.appConfigProps['LTD_MASON_AWS_SECRET']
+        environment 'LTD_KEEPER_URL', 'https://keeper.lsst.codes'
+        environment 'LTD_KEEPER_USER', 'firefly'
+        environment 'LTD_KEEPER_PASSWORD', project.appConfigProps['LTD_KEEPER_PASSWORD']
+        environment 'TRAVIS_PULL_REQUEST', 'false'
+        environment 'TRAVIS_REPO_SLUG', 'Caltech-IPAC/firefly'
+        environment 'TRAVIS_BRANCH', branch
         commandLine "ltd-mason-travis", "--html-dir", docsDir
     }
     return res

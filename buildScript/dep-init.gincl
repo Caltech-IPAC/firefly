@@ -29,6 +29,7 @@ Path node_modules = Paths.get("${rootDir.path}/node_modules");
 if (!Files.exists(node_modules)) {
     try {
 // creates node_module symlink
+        Files.deleteIfExists(node_modules)
         Files.createSymbolicLink(node_modules, target_node_module);
     } catch (Exception ex) {
         System.err.println(ex);
@@ -39,6 +40,7 @@ Path pjson = Paths.get("${rootDir.path}/package.json");
 if (!Files.exists(pjson)) {
     try {
 // creates package.json symlink
+        Files.deleteIfExists(pjson)
         Path target_pjson = Paths.get("${fireflyPath}/package.json");
         Files.createSymbolicLink(pjson, target_pjson);
     } catch (Exception ex) {
@@ -50,6 +52,7 @@ Path lockf = Paths.get("${rootDir.path}/yarn.lock");
 if (!Files.exists(lockf)) {
     try {
 // creates yarn.lock symlink
+        Files.deleteIfExists(lockf)
         Path target_lockf = Paths.get("${fireflyPath}/yarn.lock");
         Files.createSymbolicLink(lockf, target_lockf);
     } catch (Exception ex) {
@@ -61,6 +64,7 @@ Path test_config = Paths.get("${rootDir.path}/config/test");
 if (!Files.exists(test_config)) {
     try {
 // creates config/test symlink
+        Files.deleteIfExists(test_config)
         Files.createSymbolicLink(test_config, Paths.get("${fireflyPath}/config/test"));
     } catch (Exception ex) {
         System.err.println(ex);
@@ -71,6 +75,7 @@ Path jest = Paths.get("${rootDir.path}/__jest__");
 if (!Files.exists(jest)) {
     try {
 // creates __jest__ symlink
+        Files.deleteIfExists(jest)
         Path target_jest = Paths.get("${fireflyPath}/__jest__");
         Files.createSymbolicLink(jest, target_jest);
     } catch (Exception ex) {

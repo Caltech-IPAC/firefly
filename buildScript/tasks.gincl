@@ -152,44 +152,28 @@ task prepareWebapp (type:Copy, dependsOn: [loadConfig, createVersionTag]) {
     // should rerun this everytime.  properties could be modified from external files.
     outputs.upToDateWhen { false }
 
-    from("${project.buildDir}/version.tag") {
-        into 'WEB-INF/config'
+    into warDir
+
+    into('WEB-INF/config') {
+        from ("${project.buildDir}/version.tag")
+        from ("$rootDir/config/") {include '*.prop', '*.xml', 'ignore_sizeof.txt', '*.properties'}
+        from ('config') {exclude "web.xml"}
     }
-    from("$rootDir/config/") {
-        include '*.prop', '*.xml', 'ignore_sizeof.txt', '*.properties'
-        into 'WEB-INF/config'
+
+    into('WEB-INF/classes') {
+        from("$rootDir/config/") {include 'logging.properties'}
     }
-    from("$rootDir/config/") {
-        include 'logging.properties'
-        into 'WEB-INF/classes'
-    }
-    from("$rootDir/config/web.xml") {
-        into "WEB-INF"
-    }
-    from("$rootDir/config") {
-        include "context.xml"
-        into 'META-INF'
-    }
-    // override context.xml if present
-    from("config/") {
-        include "context.xml"
-        into 'META-INF'
-    }
-    from("config/web.xml") {
-        into "WEB-INF"
-    }
-    from("config/") {
-        exclude "web.xml"
-        into 'WEB-INF/config'
+
+    into('WEB-INF') {
+        from("$rootDir/config") {include 'web.xml', 'context.xml'}
+        from('config') {include 'web.xml', 'context.xml'}
     }
 
     // translate the *.html files.
-    from("html/") {
-        include "*.html"
-    }
-    into warDir
+    from("html/") { include "*.html"}
 
     doFirst {
+
         // copy the content of html to war
         copy {
             from ("html/") { include '**/*' }
@@ -415,7 +399,7 @@ task jsTestDebug (dependsOn: [loadConfig]) {
     }
 }
 
-task init (overwrite: true) {
+task init () {
     group = DEV_GROUP
 
     doLast {

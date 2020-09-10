@@ -1,0 +1,6 @@
+version: "2"
+syncs:
+  firefly-src:
+    notify_terminal: true
+    src: './'
+    sync_excludes: ['.git', '.idea', 'node_modules']

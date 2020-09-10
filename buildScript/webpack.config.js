@@ -74,12 +74,15 @@ export default function makeWebpackConfig(config) {
 
     };
 
-    // add all of the env that starts with '__$' as global props
-    Object.keys(process.env).filter((k) => k.startsWith('__$')).forEach((k) => {
-        globals.__PROPS__[k.substring(3)] = JSON.stringify(process.env[k]);
+    // add all of the env that starts with 'FF___' as global props
+    Object.keys(process.env).filter((k) => k.startsWith('FF___')).forEach((k) => {
+        const rkey = k.substring(5).replace(/___/g, '.');
+        globals.__PROPS__[rkey] = JSON.stringify(process.env[k]);
+        // console.log('<<<<>> ' + rkey + ': ' +  process.env[k]);
+
     });
 
-    const ENV_DEV_MODE= config.env === 'development' && process.env.DEBUG;
+    const ENV_DEV_MODE= process.env.DEV_MODE;
     const ENV_PROD    = config.env !== 'development';
     const ENV_DEV     = process.env.BUILD_ENV==='dev';
 
