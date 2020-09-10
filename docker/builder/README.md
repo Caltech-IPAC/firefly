@@ -87,9 +87,10 @@ Test requires Git LFS due to larger test data.  To setup, see https://developer.
 
 #### Cleanup
 
-`docker-compose up` does clean up itself upon exit.  Run `docker-compose down` to removes containers, networks, volumes, 
+`docker-compose up` does not clean up itself upon exit.  Run `docker-compose down` to removes containers, networks, volumes, 
 and images created by up  
     
+
 
 ### Additional Information
 
@@ -112,3 +113,11 @@ directory in the container will not be recognized as a `git` repos.  Functions t
 
 - Request timed out when starting `docker-compose`
   First, try to cleanup by running `docker-compose down` and/or `dockery-sync clean`.  If all fails, restart Docker.
+
+- `> Task :firefly:buildClient UP-TO-DATE`  
+  At times, the files may get out-of-sync and gradle thinks there's nothing to build.  Try removing `firefly/build` directory, 
+  then `docker-sync clean` -> `docker-sync start` to start fresh.
+
+- When none of the above works, do a total teardown then start over.  
+  `docker-compose down` -> `docker-sync clean` -> remove `firefly/build` `firefly/jars/build` -> restart docker  
+  then, `docker-sync start` -> `docker-compose up`
