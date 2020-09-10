@@ -221,6 +221,8 @@ public class JsonTableUtil {
                     case "double":
                         obj = Arrays.asList(ArrayUtils.toObject((double[]) obj));
                         break;
+                    default:
+                        obj = Arrays.asList((Object[])obj);
                 }
             } else {
                 // if it's an object we have a mapper for, return the mapper
