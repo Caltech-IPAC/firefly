@@ -28,6 +28,17 @@ process.traceDeprecation = true;
  */
 export default function makeWebpackConfig(config) {
 
+    const ENV_DEV_MODE= process.env.DEV_MODE;
+    const BUILD_ENV   = process.env.BUILD_ENV;
+
+    if (!process.env.NODE_ENV) {
+        process.env.NODE_ENV = (BUILD_ENV === 'local') ? 'development' : 'production';
+    }
+
+    console.log('ENV_DEV_MODE: ' + ENV_DEV_MODE);
+    console.log('BUILD_ENV   : ' + BUILD_ENV);
+    console.log('NODE_ENV    : ' + process.env.NODE_ENV);
+
     if (config.doFirst) config.doFirst(config);
 
     // setting defaults
@@ -38,7 +49,6 @@ export default function makeWebpackConfig(config) {
     config.baseWarName = config.baseWarName || config.name; 
 
     const def_config = {
-        env         : process.env.NODE_ENV || 'development',
         dist        : process.env.WP_BUILD_DIR || path.resolve(config.project, `build/${config.name}/war`),
         do_lint     : process.env.DO_LINT || process.env.DO_LINT_STRICT || false,
         html_dir    : 'html',
@@ -82,10 +92,6 @@ export default function makeWebpackConfig(config) {
 
     });
 
-    const ENV_DEV_MODE= process.env.DEV_MODE;
-    const ENV_PROD    = config.env !== 'development';
-    const ENV_DEV     = process.env.BUILD_ENV==='dev';
-
     /*
      * creating the webpackConfig based on the project's config for webpack to work on.
      *
@@ -94,7 +100,7 @@ export default function makeWebpackConfig(config) {
     /*------------------------ OUTPUT -----------------------------*/
     const out_path = ENV_DEV_MODE ? config.deploy_dir : config.dist;
     let filename = config.use_loader ? '[name]-dev.js' : '[name].js';
-    if (ENV_PROD) {
+    if (BUILD_ENV !== 'local') {
         filename = config.use_loader ? '[name]-[hash].js' : '[name].js';
     }
     const output =  {filename, path: out_path};
@@ -107,7 +113,7 @@ export default function makeWebpackConfig(config) {
     if (ENV_DEV_MODE) {
         plugins.push( dev_progress() );
     }
-    if (ENV_DEV) {
+    if (BUILD_ENV === 'dev') {
         plugins.push( new Visualizer({filename: './package-stats.html'}) );
     }
 
@@ -133,7 +139,7 @@ export default function makeWebpackConfig(config) {
                             targets: {
                                 browsers: ['safari >= 11', 'chrome >= 67', 'firefox >= 60', 'edge >= 16']
                             },
-                            debug: false,//!ENV_PROD, uncomment this line to enable the debugger
+                            debug: false,//
                             modules: false,  // preserve application module style - in our case es6 modules
                             useBuiltIns : 'usage',
                             corejs: 3
@@ -204,8 +210,7 @@ export default function makeWebpackConfig(config) {
 
     const webpack_config = {
         name    : config.name,
-        // mode    : 'none',
-        mode    : ENV_PROD ? 'production' : 'development',
+        mode    : process.env.NODE_ENV,
         target  : 'web',
         devtool : 'source-map',
         // optimization,
@@ -256,10 +261,10 @@ export default function makeWebpackConfig(config) {
 
 
 
-function firefly_loader(loadScript, outpath, debug=true) {
+function firefly_loader(loadScript, outpath, devMode) {
     return function () {
         this.hooks.done.tap('done', function (stats) {
-            const hash = debug ? 'dev' : stats.hash;
+            const hash = devMode ? 'dev' : stats.hash;
             //var cxt_name = stats.compilation.name;
 
             let content = fs.readFileSync(loadScript);

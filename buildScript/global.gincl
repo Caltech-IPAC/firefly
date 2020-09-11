@@ -204,7 +204,6 @@ ext.NODE = { ...cmd ->
     def res = exec {
         environment 'WP_BUILD_DIR': wpBuildDir
         environment 'tomcat_home': project.appConfigProps['tomcat_home']
-        environment 'NODE_ENV': (project.env == 'local' ? 'development' : 'production')
         environment 'BUILD_ENV': project.env
         commandLine cmd
         for (String key : project.appConfigProps.keySet()) {
