@@ -76,6 +76,7 @@
  * @prop {string} maxValue  maximum value.
  * @prop {string} minValue  minimum value.
  * @prop {LINK[]} links     links if any.
+ * @prop {string} cellRenderer  use custom predefined cell renderer.  See TableRenderer.js for usage.
  *
  * @global
  * @public

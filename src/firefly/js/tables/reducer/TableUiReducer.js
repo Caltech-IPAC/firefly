@@ -101,7 +101,7 @@ function uiStateReducer(ui, tableModel) {
         // create cellRenderers if not exist
         if (!ui?.[tbl_ui_id]?.cellRenderers) {
             tableModel?.tableData?.columns?.forEach((col,idx) => {
-                set(uiData, ['cellRenderers', idx], makeDefaultRenderer(col, tbl_id, startIdx));
+                set(uiData, ['cellRenderers', idx], makeDefaultRenderer(col));
             });
         }
         uiData.columns = ensureColumns({tableModel, columns});

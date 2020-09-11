@@ -49,6 +49,7 @@ public class TableMeta implements Serializable {
     public static final String VALUE_TAG = "col.@.value";
     public static final String LINKS_TAG = "col.@.links";
     public static final String ARY_SIZE_TAG = "col.@.arraySize";
+    public static final String CELL_RENDERER = "col.@.cellRenderer";
 
     public static final String TBL_RESOURCES = "tbl.resources";
     public static final String TBL_LINKS = "tbl.links";

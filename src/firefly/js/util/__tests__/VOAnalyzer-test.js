@@ -1,7 +1,7 @@
 // import initTest from '../InitTest.js';
 
 import {reject} from 'lodash';
-import {findTableCenterColumns, isCatalog, hasCoverageData, isMetaDataTable, resolveHRefVal} from '../VOAnalyzer';
+import {findTableCenterColumns, isCatalog, hasCoverageData, isMetaDataTable, applyLinkSub} from '../VOAnalyzer';
 import {SelectInfo} from '../../tables/SelectInfo';
 
 
@@ -539,7 +539,7 @@ describe('VOAnalyzer:', () => {
     /**
      * guessing column name; ra/dec or lon/lat
      */
-    test('resolveHRefVal', () => {
+    test('applyLinkSub', () => {
 
         const tableModel = {
                 tableData: {
@@ -553,11 +553,11 @@ describe('VOAnalyzer:', () => {
             };
 
         // no substitution, simply append value to end of href
-        let result = resolveHRefVal(tableModel, 'https://acme.org/abc?p=', 1, 'b-2');
+        let result = applyLinkSub(tableModel, 'https://acme.org/abc?p=', 1, 'b-2');
         expect(result).toBe('https://acme.org/abc?p=b-2');
 
         // substituting values from column a and c into the href
-        result = resolveHRefVal(tableModel, 'https://acme.org/abc?x=${a}&y=${c}', 1, 'b-2');
+        result = applyLinkSub(tableModel, 'https://acme.org/abc?x=${a}&y=${c}', 1, 'b-2');
         expect(result).toBe('https://acme.org/abc?x=a-2&y=c-2');
 
     });

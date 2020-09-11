@@ -4,7 +4,7 @@
 
 import React, {Component, PureComponent, useRef, useCallback, useState} from 'react';
 import {Cell} from 'fixed-data-table-2';
-import {set, get, isEqual, pick, omit, isEmpty} from 'lodash';
+import {set, get, isEqual, pick, omit, isEmpty, isString, toNumber} from 'lodash';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS, NULL_TOKEN} from '../FilterInfo.js';
 import {isColumnType, COL_TYPE, tblDropDownId, getTblById, getColumn, formatValue, getTypeLabel, getColumnIdx, getRowValues, getCellValue} from '../TableUtil.js';
@@ -22,13 +22,14 @@ import {FieldGroup} from '../../ui/FieldGroup';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {useStoreConnector} from './../../ui/SimpleComponent.jsx';
-import {resolveHRefVal} from '../../util/VOAnalyzer.js';
+import {applyLinkSub, applyTokenSub} from '../../util/VOAnalyzer.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {dispatchTableUpdate} from '../../tables/TablesCntlr.js';
-import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
+import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 
 import infoIcon from 'html/images/info-icon.png';
+import {dd2sex} from '../../visualize/CoordUtil.js';
 
 const html_regex = /<.+>/;
 const filterStyle = {width: '100%', boxSizing: 'border-box'};
@@ -243,22 +244,38 @@ function getCellInfo({col, rowIndex, data, columnKey, tbl_id, startIdx=0}) {
     let textAlign = col.align;
 
     if (col.links) {
-        rvalues =  col.links.map( ({value:val}) => resolveHRefVal(tableModel, val, absRowIdx, value) );
+        rvalues =  col.links.map( ({value:val}) => applyTokenSub(tableModel, val, absRowIdx, value) );
         text = rvalues.join(' ');
     }
     textAlign = textAlign || rvalues.length > 1 ? 'middle': isColumnType(col, COL_TYPE.NUMBER) ? 'right' : 'left';
     return {col, value, rvalues, text, isArray, textAlign, absRowIdx, tableModel};
 }
 
-export function TextCell({columnKey, col, rowIndex, data, cellInfo}) {
-    const {value, text} = cellInfo || getCellInfo({columnKey, col, rowIndex, data});
-    return (value?.search && value.search(html_regex) >= 0) ? <div dangerouslySetInnerHTML={{__html: value}}/> : text;
+/**
+ * Translate a string in this format into an object with properties.
+ * p1=val1, p2=val2, [...p3=val3]
+ * @param s  input string
+ * @returns {object}
+ */
+function getPropsFromStr(s='') {
+    return s.trim()
+            .split(',')
+            .reduce( (acc, cur) => {
+                const [, k='',v=''] = cur.trim().match(/([^=]+)=(.*)/);
+                if (k) acc[k.trim()] = v.trim();
+                return acc;
+            }, {});
 }
 
-
-export function makeDefaultRenderer(col={}, tbl_id, startIdx) {
-    const Content = (col.type === 'location' || !isEmpty(col.links)) ? LinkCell : TextCell;
-    return (props) => <CellWrapper {...{...props, tbl_id, startIdx, Content}} />;
+export function makeDefaultRenderer(col={}) {
+    let renderer = (col.type === 'location' || !isEmpty(col.links)) ? LinkCell : TextCell;
+    if (col.cellRenderer) {
+        const [name='', propsStr] = col.cellRenderer.split('::');
+        const XRef = RendererXRef[name.trim()];
+        const XRefProps = getPropsFromStr(propsStr.trim());
+        renderer = XRef ? (props) => <XRef {...{...props, ...XRefProps}}/> : renderer;
+    }
+    return renderer;
 }
 
 
@@ -266,7 +283,7 @@ export function makeDefaultRenderer(col={}, tbl_id, startIdx) {
  * A wrapper tag that handles default styles, textAlign, and actions.
  */
 export const CellWrapper =  React.memo( (props) => {
-    const {tbl_id, startIdx, Content, style, columnKey, col, rowIndex, data, height, width} = props;
+    const {tbl_id, startIdx, CellRenderer, style, columnKey, col, rowIndex, data, height, width} = props;
     const dropDownID = 'actions--dropdown';
     const popupID = 'actions--popup';
 
@@ -309,7 +326,7 @@ export const CellWrapper =  React.memo( (props) => {
         <div onMouseEnter={checkOverflow}
              onMouseLeave={() => setHasActions(false)} style={{display: 'flex'}}>
             <div style={{textAlign, lineHeight, ...style}} className='public_fixedDataTableCell_cellContent'>
-                <Content {...omit(props, 'Content')} cellInfo={cellInfo}/>
+                <CellRenderer {...omit(props, 'Content')} cellInfo={cellInfo}/>
             </div>
             {hasActions && <div ref={actionsEl} className='Actions__anchor clickable' onClick={onActionsClicked} title='Display full cell contents'>&#x25cf;&#x25cf;&#x25cf;</div>}
         </div>
@@ -363,11 +380,11 @@ export const LinkCell = React.memo(({cellInfo, style, ...rest}) => {
                     const {href, title, action} = link;
                     const target = action || '_blank';
                     const rvalue = rvalues[idx];
-                    const rhref = resolveHRefVal(tableModel, href, absRowIdx, rvalue);
+                    const rhref = applyLinkSub(tableModel, href, absRowIdx, rvalue);
                     if (!rhref) return '';
                     mstyle = idx > 0 ? {marginLeft: 3, ...mstyle} : mstyle;
                     return (<ATag key={'ATag_' + idx} href={rhref}
-                                  {...{value:rvalue, title, target, style:mstyle}}
+                                  {...{label:rvalue, title, target, style:mstyle}}
                             />);
                 })
             }
@@ -375,18 +392,10 @@ export const LinkCell = React.memo(({cellInfo, style, ...rest}) => {
         );
     } else {
         const val = String(rvalues[0]);
-        return  <ATag href={val} value={val} target='_blank' style={mstyle}/>;
+        return  <ATag href={val} label={val} target='_blank' style={mstyle}/>;
     }
 });
 
-
-/**
- * @param {{rowIndex,data,colIdx}}
- * Image cell renderer.  It will use the cell value as the image source.
- */
-export const ImageCell = ({rowIndex, data, colIdx}) => (
-    <img src={get(data, [rowIndex, colIdx],'undef')}/>
-);
 
 /**
  * creates a link cell renderer using the cell data as href.
@@ -549,14 +558,189 @@ function makeChangeHandler (rowIndex, data, colIdx, tbl_id, cname, validator, on
     };
 };
 
+/**
+ */
 
-const ATag = React.memo(({value='', title, href, target, style={}}) => {
-    const [,imgStubKey] = value.match(/<img +data-src='(\w+)' *\/>/i) || [];
+/**
+ * Predefined cell renderers
+ *
+ * Usage when given as a column's property:
+ *   col.<col-name>.cellRenderer = <renderer-name>:: <key1=val1>, <key2=val2>, <key3=val3>, ...
+ *
+ *   An example of a NumberRange renderer applied to a 'dist' column
+ *
+ *   <pre><code><font size=-3>
+ * col.dist.cellRenderer = NumRange::base=val, upper=val, lower=val, ustyle=color:green;font-style:italic
+ *   </font></code></pre>
+ *
+ *    `val` may contains token that can be substitute by values from other columns.
+ *
+ * see `A.1 link substitution` for syntax
+ *
+ * {@link http://www.ivoa.net/documents/VOTable/20130920/REC-VOTable-1.3-20130920.html#ToC54}
+ *
+ * @public
+ * @namespace firefly.ui.table.renderers
+ */
 
-    if (imgStubKey) {
-        value = imageStubMap[imgStubKey] || <img data-src={imgStubKey}/>;   // if a src is given but, not found.. show bad img.
+
+/**
+ * A number with upper and lower bounds, displaying 3 values in the form or [base +upper -lower] or [base +- val] if only one of upper or lower exists.
+ * @param p         parameters
+ * @param [p.base]    base value, defaults to cell value if not given
+ * @param [p.upper]   upper value
+ * @param [p.lower]   lower value
+ * @param [p.style]   a style object or string to apply to the container
+ * @param [p.lstyle]  a style object or string to apply to the lower value
+ * @param [p.ustyle]  a style object or string to apply to the upper value
+ * @return React.element
+ *
+ * @public
+ * @func NumberRange
+ * @memberof firefly.ui.table.renderers
+ */
+export const NumberRange = React.memo(({cellInfo, base, upper, lower, style={}, lstyle, ustyle, ...rest}) => {
+    const {absRowIdx, tableModel, value} = cellInfo || getCellInfo(rest);
+
+    const baseVal  = applyTokenSub(tableModel, base, absRowIdx, value);
+    const upperVal = upper && applyTokenSub(tableModel, upper, absRowIdx);
+    const lowerVal = lower && applyTokenSub(tableModel, lower, absRowIdx);
+    let delta = <div>&#177; {upperVal || lowerVal || 0}</div>;
+    style = isString(style) ? parseStyles(style) : style;
+    lstyle = isString(lstyle) ? parseStyles(lstyle) : lstyle;
+    ustyle = isString(ustyle) ? parseStyles(ustyle) : ustyle;
+
+    if (upperVal && lowerVal) {
+        delta = (
+            <div className='CellRenderer__numrange'>
+                <div style={ustyle}>+{upperVal}</div>
+                <div style={lstyle}>-{lowerVal}</div>
+            </div>
+        );
     }
 
-    return <a {...{title, href, target, style}}> {value} </a>;
+    return (
+        <div style={{display: 'inline-flex', ...style}}>
+            <div style={{marginRight: 5}}>{baseVal}</div>
+            {delta}
+        </div>
+    );
 });
 
+/**
+ * An image with optional before and after description.
+ * @param p             parameters
+ * @param [p.src]       url source of the image, defaults to cell value if not given
+ * @param [p.style]     a style object or string to apply to the cell
+ * @param [p.alt]       alternate text for an image, if the image cannot be displayed. Defaults to cell value if not given
+ * @param [p.before]    text before the image
+ * @param [p.after]     text after the image
+ * @return React.element
+ *
+ * @public
+ * @func ImageCell
+ * @memberof firefly.ui.table.renderers
+ */
+export const ImageCell = React.memo(({cellInfo, style={}, alt, src, before, after, ...rest}) => {
+    const {absRowIdx, tableModel, value} = cellInfo || getCellInfo(rest);
+    src  = applyTokenSub(tableModel, src, absRowIdx, value);
+    alt = alt || value;
+    before  = applyTokenSub(tableModel, before, absRowIdx);
+    after   = applyTokenSub(tableModel, after, absRowIdx);
+    style = isString(style) ? parseStyles(style) : style;
+    src  = applyTokenSub(tableModel, src, absRowIdx, value);
+    return (<div style={{display: 'inline-flex', ...style}}>
+        {before && <div>{before}</div>}
+        <img style={{margin: 3}} src={src} alt={alt} />
+        {after && <div>{after}</div>}
+    </div>);
+});
+
+/**
+ * An anchor <a> tag
+ * @param p             parameters
+ * @param [p.href]      url to link to
+ * @param [p.label]     text to display as a link
+ * @param [p.title]     description to show on mouse over
+ * @param [p.target]    name of the window to open in
+ * @param [p.style]     a style object or string to apply to the cell
+ * @return React.element
+ *
+ * @public
+ * @func ATag
+ * @memberof firefly.ui.table.renderers
+ */
+export const ATag = React.memo(({cellInfo, label, title, href, target, style={}, ...rest}) => {
+    const {absRowIdx, tableModel, text} = cellInfo || getCellInfo(rest);
+    label  = applyTokenSub(tableModel, label, absRowIdx, text) + '';
+    href  = applyTokenSub(tableModel, href, absRowIdx, text);
+    style = isString(style) ? parseStyles(style) : style;
+
+    const [,imgStubKey] = label.match(/<img +data-src='(\w+)' *\/>/i) || [];
+
+    if (imgStubKey) {
+        label = imageStubMap[imgStubKey] || <img data-src={imgStubKey}/>;   // if a src is given but, not found.. show bad img.
+    }
+
+    return <a {...{title, href, target, style}}> {label} </a>;
+});
+
+export const TextCell = React.memo(({cellInfo, text, ...rest}) => {
+    const {absRowIdx, tableModel, value, text:fmtVal} = cellInfo || getCellInfo(rest);
+    text  = applyTokenSub(tableModel, text, absRowIdx, fmtVal);
+    return (value?.search && value.search(html_regex) >= 0) ? <div dangerouslySetInnerHTML={{__html: value}}/> : text;
+});
+
+/**
+ * An anchor <a> tag
+ * @param p             parameters
+ * @param [p.hms]       HMS value
+ * @param [p.dms]       DMS value
+ * @param [p.style]     a style object or string to apply to the cell
+ * @return React.element
+ *
+ * @public
+ * @func CoordCell
+ * @memberof firefly.ui.table.renderers
+ */
+export const CoordCell = React.memo(({cellInfo, hms, dms, style, ...rest}) => {
+    const {absRowIdx, tableModel, value} = cellInfo || getCellInfo(rest);
+    hms = toNumber(applyTokenSub(tableModel, hms, absRowIdx));
+    dms = toNumber(applyTokenSub(tableModel, dms, absRowIdx));
+    style = isString(style) ? parseStyles(style) : style;
+
+    hms = isNaN(hms) ? '' : dd2sex(hms, false, true);
+    dms = isNaN(dms) ? '' : dd2sex(dms, true, true);
+    const text = [hms, dms].filter((v) => v).join(' ') || value;
+    return style ? <div style={style}>{text}</div> : text;
+});
+
+
+export const RendererXRef = {
+    NumberRange,
+    CoordCell,
+    ImageCell,
+    ATag
+};
+
+
+
+/**
+ * Parses a string of inline styles into a javascript object with casing for react
+ * @param {string} styles
+ * @returns {Object}
+ */
+const parseStyles = (styles='') =>  {
+    return styles
+        .split(';')
+        .filter((style) => style.split(':')[0] && style.split(':')[1])
+        .map((style) => [
+            style.split(':')[0].trim().replace(/^-ms-/, 'ms-').replace(/-./g, c => c.substr(1).toUpperCase()),
+            style.split(':').slice(1).join(':').trim()
+        ])
+        .reduce((styleObj, style) => ({
+            ...styleObj,
+            [style[0]]: style[1],
+        }), {});
+    // some
+};
