@@ -257,15 +257,16 @@
 
 <template title="Predefined Cell Renderers" class="tpl">
     <div id="expected" >
-        <div style="overflow: auto hidden;height: 245px">
-            <img src="images/cell-renderer.png" style="margin-bottom: 5px"/>
-            <div style="height: 100%; white-space: nowrap">
-                Using predefined cell renderer
-                <li>first, a number with upper and lower bounds</li>
-                <li>second, a number with +- interval</li>
-                <li>third, band rendered as an image with desc</li>
-                <li>last, crval rendered as a link</li>
+        <div style="overflow: auto hidden;height: 245px;display: inline-flex">
+            <div style="height: 100%; white-space: nowrap;line-height: 40px;margin-right: 14px;">
+                <li>number: upper and lower bounds</li>
+                <li>number: with +- interval</li>
+                <li>band as an image with desc</li>
+                <li>crval in sexigestimal format</li>
+                <li>crval2 as link</li>
+                <li>ra1 in HMS format</li>
             </div>
+            <img src="images/cell-renderer.png" style="margin-bottom: 5px"/>
         </div>
     </div>
     <div id="actual"  class="box x3"/>
@@ -284,10 +285,20 @@
                         "col.in_dec.cellRenderer": 'NumberRange::upper=${band}',
 
                         "col.band.label":  'band as image',
-                        "col.band.cellRenderer": 'ImageCell::src=https://irsa.ipac.caltech.edu/onlinehelp/irsaviewer/img/help.png, before=info, after=details',
+                        "col.band.cellRenderer": 'ImageCell::src=https://irsa.ipac.caltech.edu/onlinehelp/irsaviewer/img/help.png, before=${band}, after=details',
 
-                        "col.crval1.label": 'crval1 as link',
-                        "col.crval1.cellRenderer": 'ATag::href=http://ivoa.net/?id=${band}',
+                        "col.crval1.label": 'crval1 crval2',
+                        "col.crval1.width": 20,
+                        "col.crval1.cellRenderer": 'CoordCell::hms=${crval1},dms=${crval2}',
+
+                        "col.crval2.label": 'crval2 as link',
+                        "col.crval2.cellRenderer": 'ATag::href=http://ivoa.net/?id=${crval2}',
+
+                        "col.ra1.label": 'ra1 as HMS',
+                        "col.ra1.cellRenderer": 'CoordCell::hms=${ra1},style=color:green;font-style:italic',
+                        "col.dec1.label": 'dec1 as DMS',
+                        "col.dec1.cellRenderer": 'CoordCell::dms=${dec1},style=color:red',
+
                     }});
             firefly.showTable('actual', tblReq, {rowHeight: 40});
         }

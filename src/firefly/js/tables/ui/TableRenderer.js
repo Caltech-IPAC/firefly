@@ -4,7 +4,7 @@
 
 import React, {Component, PureComponent, useRef, useCallback, useState} from 'react';
 import {Cell} from 'fixed-data-table-2';
-import {set, get, isEqual, pick, omit, isEmpty, isString} from 'lodash';
+import {set, get, isEqual, pick, omit, isEmpty, isString, toNumber} from 'lodash';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS, NULL_TOKEN} from '../FilterInfo.js';
 import {isColumnType, COL_TYPE, tblDropDownId, getTblById, getColumn, formatValue, getTypeLabel, getColumnIdx, getRowValues, getCellValue} from '../TableUtil.js';
@@ -22,13 +22,14 @@ import {FieldGroup} from '../../ui/FieldGroup';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {useStoreConnector} from './../../ui/SimpleComponent.jsx';
-import {applyLinkSub} from '../../util/VOAnalyzer.js';
+import {applyLinkSub, applyTokenSub} from '../../util/VOAnalyzer.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {dispatchTableUpdate} from '../../tables/TablesCntlr.js';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 
 import infoIcon from 'html/images/info-icon.png';
+import {dd2sex} from '../../visualize/CoordUtil.js';
 
 const html_regex = /<.+>/;
 const filterStyle = {width: '100%', boxSizing: 'border-box'};
@@ -243,7 +244,7 @@ function getCellInfo({col, rowIndex, data, columnKey, tbl_id, startIdx=0}) {
     let textAlign = col.align;
 
     if (col.links) {
-        rvalues =  col.links.map( ({value:val}) => applyLinkSub(tableModel, val, absRowIdx, value) );
+        rvalues =  col.links.map( ({value:val}) => applyTokenSub(tableModel, val, absRowIdx, value) );
         text = rvalues.join(' ');
     }
     textAlign = textAlign || rvalues.length > 1 ? 'middle': isColumnType(col, COL_TYPE.NUMBER) ? 'right' : 'left';
@@ -260,8 +261,8 @@ function getPropsFromStr(s='') {
     return s.trim()
             .split(',')
             .reduce( (acc, cur) => {
-                const [k='',v=''] = cur.trim().split('=');
-                acc[k.trim()] = v.trim();
+                const [, k='',v=''] = cur.trim().match(/([^=]+)=(.*)/);
+                if (k) acc[k.trim()] = v.trim();
                 return acc;
             }, {});
 }
@@ -601,9 +602,9 @@ function makeChangeHandler (rowIndex, data, colIdx, tbl_id, cname, validator, on
 export const NumberRange = React.memo(({cellInfo, base, upper, lower, style={}, lstyle, ustyle, ...rest}) => {
     const {absRowIdx, tableModel, value} = cellInfo || getCellInfo(rest);
 
-    const baseVal  = applyLinkSub(tableModel, base, absRowIdx, value);
-    const upperVal = upper && applyLinkSub(tableModel, upper, absRowIdx);
-    const lowerVal = lower && applyLinkSub(tableModel, lower, absRowIdx);
+    const baseVal  = applyTokenSub(tableModel, base, absRowIdx, value);
+    const upperVal = upper && applyTokenSub(tableModel, upper, absRowIdx);
+    const lowerVal = lower && applyTokenSub(tableModel, lower, absRowIdx);
     let delta = <div>&#177; {upperVal || lowerVal || 0}</div>;
     style = isString(style) ? parseStyles(style) : style;
     lstyle = isString(lstyle) ? parseStyles(lstyle) : lstyle;
@@ -642,12 +643,12 @@ export const NumberRange = React.memo(({cellInfo, base, upper, lower, style={}, 
  */
 export const ImageCell = React.memo(({cellInfo, style={}, alt, src, before, after, ...rest}) => {
     const {absRowIdx, tableModel, value} = cellInfo || getCellInfo(rest);
-    src  = applyLinkSub(tableModel, src || value, absRowIdx);
+    src  = applyTokenSub(tableModel, src, absRowIdx, value);
     alt = alt || value;
-    before  = before && applyLinkSub(tableModel, before, absRowIdx);
-    after   = after && applyLinkSub(tableModel, after, absRowIdx);
+    before  = applyTokenSub(tableModel, before, absRowIdx);
+    after   = applyTokenSub(tableModel, after, absRowIdx);
     style = isString(style) ? parseStyles(style) : style;
-    src  = applyLinkSub(tableModel, src || value, absRowIdx);
+    src  = applyTokenSub(tableModel, src, absRowIdx, value);
     return (<div style={{display: 'inline-flex', ...style}}>
         {before && <div>{before}</div>}
         <img style={{margin: 3}} src={src} alt={alt} />
@@ -669,10 +670,10 @@ export const ImageCell = React.memo(({cellInfo, style={}, alt, src, before, afte
  * @func ATag
  * @memberof firefly.ui.table.renderers
  */
-export const ATag = React.memo(({cellInfo, label='', title, href, target, style={}, ...rest}) => {
+export const ATag = React.memo(({cellInfo, label, title, href, target, style={}, ...rest}) => {
     const {absRowIdx, tableModel, text} = cellInfo || getCellInfo(rest);
-    label  = applyLinkSub(tableModel, label || text, absRowIdx);
-    href  = applyLinkSub(tableModel, href || text, absRowIdx);
+    label  = applyTokenSub(tableModel, label, absRowIdx, text) + '';
+    href  = applyTokenSub(tableModel, href, absRowIdx, text);
     style = isString(style) ? parseStyles(style) : style;
 
     const [,imgStubKey] = label.match(/<img +data-src='(\w+)' *\/>/i) || [];
@@ -686,13 +687,38 @@ export const ATag = React.memo(({cellInfo, label='', title, href, target, style=
 
 export const TextCell = React.memo(({cellInfo, text, ...rest}) => {
     const {absRowIdx, tableModel, value, text:fmtVal} = cellInfo || getCellInfo(rest);
-    text  = applyLinkSub(tableModel, text, absRowIdx, fmtVal);
+    text  = applyTokenSub(tableModel, text, absRowIdx, fmtVal);
     return (value?.search && value.search(html_regex) >= 0) ? <div dangerouslySetInnerHTML={{__html: value}}/> : text;
+});
+
+/**
+ * An anchor <a> tag
+ * @param p             parameters
+ * @param [p.hms]       HMS value
+ * @param [p.dms]       DMS value
+ * @param [p.style]     a style object or string to apply to the cell
+ * @return React.element
+ *
+ * @public
+ * @func CoordCell
+ * @memberof firefly.ui.table.renderers
+ */
+export const CoordCell = React.memo(({cellInfo, hms, dms, style, ...rest}) => {
+    const {absRowIdx, tableModel, value} = cellInfo || getCellInfo(rest);
+    hms = toNumber(applyTokenSub(tableModel, hms, absRowIdx));
+    dms = toNumber(applyTokenSub(tableModel, dms, absRowIdx));
+    style = isString(style) ? parseStyles(style) : style;
+
+    hms = isNaN(hms) ? '' : dd2sex(hms, false, true);
+    dms = isNaN(dms) ? '' : dd2sex(dms, true, true);
+    const text = [hms, dms].filter((v) => v).join(' ') || value;
+    return style ? <div style={style}>{text}</div> : text;
 });
 
 
 export const RendererXRef = {
     NumberRange,
+    CoordCell,
     ImageCell,
     ATag
 };

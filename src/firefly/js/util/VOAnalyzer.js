@@ -1132,21 +1132,39 @@ export const findTargetName = (columns) => columns.find( (c) => DEFAULT_TNAME_OP
  * @returns {string}    the resolved href after subsitution
  */
 export function applyLinkSub(tableModel, href='', rowIdx, defval='') {
-    const vars = href.match(/\${[\w -.]+}/g);
+    const rhref = applyTokenSub(tableModel, href, rowIdx, defval);
+    if (rhref === defval) {
+        return '';      // no href
+    } else if (rhref === href) {
+        return href + defval;       // no substitution given, append defval to the url.  set A.1
+    }
+    return rhref;
+}
+
+/**
+ * applies token substitution if any.  If the resulting value is nullish, return the def val.
+ * @see {@link http://www.ivoa.net/documents/VOTable/20130920/REC-VOTable-1.3-20130920.html#ToC54}
+ * A.1 link substitution
+ * @param tableModel    table model with data and columns info
+ * @param val           the value to resolve
+ * @param rowIdx        row index to be resolved
+ * @param def           default value, if
+ * @returns {string}    the resolved href after subsitution
+ */
+export function applyTokenSub(tableModel, val='', rowIdx, def) {
+    const vars = val.match && val.match(/\${[\w -.]+}/g);
+    let rval = val;
     if (vars) {
-        let rhref = href;
         vars.forEach((v) => {
             const [,cname] = v.match(/\${([\w -.]+)}/) || [];
             const col = getColumnByID(tableModel, cname) || getColumn(tableModel, cname);
-            const rval = col ? getCellValue(tableModel, rowIdx, col.name) : '';  // if the variable cannot be resolved, return empty string
-            rhref = rhref.replace(v, rval);
+            const cval = col ? getCellValue(tableModel, rowIdx, col.name) : '';  // if the variable cannot be resolved, return empty string
+            rval = rval.replace(v, cval);
         });
-        return rhref;
-    } else {
-        return href + defval;
     }
-
+    return rval ? rval : rval === 0 ? 0 : def;
 }
+
 
 /**
  * Guess if this table has enough ObsCore attributes to be considered an ObsCore table.
