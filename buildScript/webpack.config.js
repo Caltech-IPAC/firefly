@@ -120,7 +120,7 @@ export default function makeWebpackConfig(config) {
     if (config.use_loader) {
         plugins.push(
             firefly_loader(path.resolve(config.firefly_dir, '../../buildScript/loadScript.js'),
-                out_path, ENV_DEV_MODE)
+                out_path, BUILD_ENV === 'local')
         );
     }
 
@@ -261,10 +261,10 @@ export default function makeWebpackConfig(config) {
 
 
 
-function firefly_loader(loadScript, outpath, devMode) {
+function firefly_loader(loadScript, outpath, isLocal) {
     return function () {
         this.hooks.done.tap('done', function (stats) {
-            const hash = devMode ? 'dev' : stats.hash;
+            const hash = isLocal ? 'dev' : stats.hash;
             //var cxt_name = stats.compilation.name;
 
             let content = fs.readFileSync(loadScript);
