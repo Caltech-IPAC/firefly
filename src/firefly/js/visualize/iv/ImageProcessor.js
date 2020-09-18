@@ -26,19 +26,12 @@ import {loadCancelableImage, requestIdleCallback} from '../../util/WebUtil.js';
  * @param {Object} nextTileAttributes next state to process image
  * @param shouldProcess
  * @param processor
- * @param localImageRetriever
  * @return {Promise} promise with new imageData
  */
-export function retrieveAndProcessImage(imageData, nextTileAttributes, shouldProcess, processor, localImageRetriever) {
+export function retrieveAndProcessImage(imageData, nextTileAttributes, shouldProcess, processor) {
 
     if (!imageData) {
         return Promise.resolve(imageData);
-    }
-    else if (imageData?.local && localImageRetriever) {
-        const image=  imageData.image ? imageData.image : localImageRetriever(imageData);
-        // const image=  localImageRetriever(imageData);
-        const v=  modifyImage({image, tileAttributes:nextTileAttributes},nextTileAttributes,true, shouldProcess, processor);
-        return convertToReturn(v);
     }
     else if (isString(imageData)) {
         let {promise, cancelImageLoad}= loadCancelableImage(imageData);

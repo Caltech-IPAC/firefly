@@ -21,8 +21,12 @@ import {RawDataThreadActions} from '../../threadWorker/WorkerThreadActions.js';
  * @prop {Object} processHeader
  * @prop {Object} imageTileDataGroup
  * @prop {Array.<Canvas>} rawDataTiles
+ * @prop {number} loadingCnt - number of times this is loading, it should be 0,1,2
  */
 
+export const FULL= 'FULL';
+export const STRETCH_ONLY= 'STRETCH_ONLY';
+export const CLEARED= 'CLEARED';
 
 
 export const {addRawDataToCache, getEntry, removeRawData}= (() => {
@@ -35,16 +39,18 @@ export const {addRawDataToCache, getEntry, removeRawData}= (() => {
      * @param processHeader
      * @param workerKey
      * @param band
+     * @param dataType
      */
-    const addRawDataToCache= (plotImageId, processHeader, workerKey, band= Band.NO_BAND) => {
+    const addRawDataToCache= (plotImageId, processHeader, workerKey, band= Band.NO_BAND, dataType=FULL) => {
         const bandEntry= {processHeader, rawTileDataAry:[], thumbnailEncodedImage: undefined};
         const entry= rawDataStore.find( (e) => e.plotImageId===plotImageId);
         if (entry) {
             entry[band.key]= bandEntry;
             entry.workerKey= workerKey;
+            entry.dataType= dataType;
         }
         else {
-            rawDataStore.push({plotImageId, [band.key]:bandEntry, workerKey});
+            rawDataStore.push({plotImageId, [band.key]:bandEntry, workerKey, dataType, loadingCnt:0});
         }
     };
 

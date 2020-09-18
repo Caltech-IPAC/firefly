@@ -8,8 +8,8 @@ import {isEmpty} from 'lodash';
 import {makeScreenPt} from '../Point.js';
 import {MouseState} from '../VisMouseSync.js';
 import {makeImageFromTile,createImageUrl,isTileVisible} from '../iv/TileDrawHelper.jsx';
-import {hasLocalRawData, isBlankImage, isHiPS} from '../WebPlot.js';
-import {primePlot} from '../PlotViewUtil.js';
+import {isBlankImage, isHiPS} from '../WebPlot.js';
+import {hasLocalStretchByteData, primePlot} from '../PlotViewUtil.js';
 import {makeThumbnailTransformCSS} from '../PlotTransformUtils.js';
 import {getLocalScreenTileAtZoom} from '../rawData/RawDataOps.js';
 import {SimpleCanvas} from '../draw/SimpleCanvas.jsx';
@@ -56,7 +56,7 @@ MagnifiedView.propTypes= {
  */
 function getImagesAt(plot, spt, size) {
 
-    if (!plot.tileData) return {};
+    if (!plot.tileData?.images) return {};
 
     const scale= plot.zoomFactor / plot.plotState.getZoomLevel();
 
@@ -120,7 +120,7 @@ function showMag(spt,pv, plot,size) {
         sizeOffY = size / 2;
     }
 
-    return hasLocalRawData(plot) ?
+    return hasLocalStretchByteData(plot) ?
         showMagUsingLocal(x,y,pv,plot,size,sizeOffX,sizeOffY) :
         showMagUsingRemote(x,y,pv,plot,size,sizeOffX,sizeOffY);
 

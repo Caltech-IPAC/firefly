@@ -2,24 +2,29 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {isNumber} from 'lodash';
 import {logger} from '../../util/Logger.js';
-import ImagePlotCntlr, {IMAGE_PLOT_KEY, dispatchWcsMatch, ActionScope, visRoot} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, { IMAGE_PLOT_KEY, dispatchWcsMatch, ActionScope, visRoot} from '../ImagePlotCntlr.js';
 import {
     primePlot,
     getPlotViewById,
     operateOnOthersInOverlayColorGroup,
     getPlotStateAry,
-    isThreeColor, findPlot
+    isThreeColor, findPlot, canLoadStretchData, hasClearedByteData, hasLocalStretchByteData, hasLocalRawData
 } from '../PlotViewUtil.js';
 import {callCrop, callChangeColor, callRecomputeStretch} from '../../rpc/PlotServicesJson.js';
 import {WebPlotResult} from '../WebPlotResult.js';
-import {hasLocalRawData, WebPlot} from '../WebPlot.js';
+import {WebPlot} from '../WebPlot.js';
 import {makeCubeCtxAry, populateFromHeader} from './PlotImageTask';
 import {locateOtherIfMatched} from './WcsMatchTask';
 import {PlotAttribute} from '../PlotAttribute.js';
 import PlotState from '../PlotState.js';
 import {RangeValues} from '../RangeValues.js';
-import {changeLocalRawDataColor, loadRawData, stretchRawData} from '../rawData/RawDataOps.js';
+import {
+    clearLocalStretchData,
+    loadStretchData, queueChangeLocalRawDataColor,
+    stretchRawData
+} from '../rawData/RawDataOps.js';
 import {dispatchAddTaskCount, dispatchRemoveTaskCount} from '../../core/AppDataCntlr.js';
 import {Band} from '../Band.js';
 
@@ -30,12 +35,19 @@ import {Band} from '../Band.js';
 
 export function requestLocalDataActionCreator(rawAction) {
     return (dispatcher,getState) => {
-        const {plotId, plotImageId}=rawAction.payload;
+        const {plotId, plotImageId, dataRequested}=rawAction.payload;
         const pv= getPlotViewById(visRoot(),plotId);
         const plot= findPlot(pv,plotImageId);
-        if (!plot || plot.dataRequested) return;
+        if (!canLoadStretchData(plot)) return;
+        if (dataRequested===false) {
+            dispatcher(rawAction);
+            return;
+        }
+        if (plot.dataRequested) return;
         dispatcher(rawAction);
-        loadRawData(plot,dispatcher);
+        // loadRawData(plot,dispatcher);
+        // loadRawData(plot,dispatcher);
+        loadStretchData(plot,dispatcher);
     };
 }
 
@@ -79,38 +91,70 @@ export function makeTaskId() {
 export function colorChangeActionCreator(rawAction) {
     return (dispatcher,getState) => {
         const store= getState()[IMAGE_PLOT_KEY];
-        const {plotId,cbarId}= rawAction.payload;
+        const {plotId,cbarId,bias,contrast, useRed=true, useGreen=true, useBlue=true}= rawAction.payload;
         const pv= getPlotViewById(store,plotId);
         const plot= primePlot(pv);
+        let biasToUse= .5;
+        let contrastToUse=1;
+        const basePlotThreeColor= isThreeColor(pv);
+        if (isNumber(bias)) {
+            biasToUse= (bias>1) ? 1 : bias < 0 ? 0 : bias;
+        }
+        if (isNumber(contrast)) {
+            contrastToUse= (contrast>10) ? 10 : contrast < 0 ? 0 : contrast;
+        }
         if (!pv) return;
 
+        const aType= ImagePlotCntlr.STRETCH_CHANGE;
         if (rawAction.payload.actionScope===ActionScope.SINGLE){
+            const local=hasLocalStretchByteData(plot);
+            const taskId= makeTaskId();
             if (!isThreeColor(plot)) {
-                const local=hasLocalRawData(plot);
-                const taskId= makeTaskId();
                 local && dispatchAddTaskCount(plot.plotId,taskId, true);
-                local ? processPlotUpdateLocal(dispatcher, plotId, taskId, changeLocalRawDataColor(plot,cbarId), ImagePlotCntlr.STRETCH_CHANGE) :
-                        doColorChange(dispatcher,getState, store,plotId,cbarId);
+                local ?
+                    queueChangeLocalRawDataColor(plot,cbarId,biasToUse,contrastToUse, undefined, makeOnComplete(dispatcher, plotId, taskId,aType)) :
+                    doColorChange(dispatcher,getState, store,plotId,cbarId);
+            }
+            else {
+                if (!local) return;
+                queueChangeLocalRawDataColor(plot,0,biasToUse,contrastToUse, {useRed,useGreen,useBlue},
+                    makeOnComplete(dispatcher, plotId, taskId,aType));
+
+
             }
         }
         else {
-            //active plot
+            const taskId= makeTaskId();
+            const local=hasLocalStretchByteData(plot);
             if (!isThreeColor(plot)) {
-                const taskId= makeTaskId();
-                const local=hasLocalRawData(plot);
                 local && dispatchAddTaskCount(plot.plotId,taskId, true);
-                local ? processPlotUpdateLocal(dispatcher, plotId, taskId, changeLocalRawDataColor(plot,cbarId), ImagePlotCntlr.STRETCH_CHANGE) :
-                        doColorChange(dispatcher,getState, store,plotId,cbarId);
+                local ?
+                    queueChangeLocalRawDataColor(plot,cbarId,biasToUse,contrastToUse, undefined, makeOnComplete(dispatcher, plotId, taskId,aType)) :
+                    doColorChange(dispatcher,getState, store,plotId,cbarId);
                 //all other plots
+            }
+            else {
+                if (!local) return;
+                queueChangeLocalRawDataColor(plot,0,biasToUse,contrastToUse, {useRed,useGreen,useBlue},
+                    makeOnComplete(dispatcher, plotId, taskId,aType));
             }
             operateOnOthersInOverlayColorGroup(store,pv, (pv) => {
                 const p= primePlot(pv);
-                if (p && !isThreeColor(p)) { // only do others that are not three color
-                    const local=hasLocalRawData(p);
-                    const taskId= makeTaskId();
+                if (!p) return;
+                if (isThreeColor(p)!==basePlotThreeColor) return;
+                const local=hasLocalStretchByteData(p);
+                const taskId= makeTaskId();
+                if (!isThreeColor(p)) { // only do others that are not three color
                     local && dispatchAddTaskCount(p.plotId,taskId, true);
-                    local ? processPlotUpdateLocal(dispatcher, pv.plotId, taskId, changeLocalRawDataColor(p,cbarId), ImagePlotCntlr.STRETCH_CHANGE) :
-                            doColorChange(dispatcher,getState, store,pv.plotId,cbarId);
+                    local ?
+                        queueChangeLocalRawDataColor(p,cbarId,biasToUse,contrastToUse, undefined, makeOnComplete(dispatcher, pv.plotId, taskId, aType)) :
+                        doColorChange(dispatcher,getState, store,pv.plotId,cbarId);
+                }
+                else {
+                    if (!local) return;
+                    queueChangeLocalRawDataColor(p,0,biasToUse,contrastToUse, {useRed,useGreen,useBlue},
+                        makeOnComplete(dispatcher, pv.plotId, taskId, aType));
+
                 }
             });
 
@@ -131,37 +175,41 @@ export function stretchChangeActionCreator(rawAction) {
     return (dispatcher,getState) => {
         const store= getState()[IMAGE_PLOT_KEY];
         const {plotId,stretchData}= rawAction.payload;
-        const pv= getPlotViewById(store,plotId);
-        const plot= primePlot(pv);
-        if (!plot || !pv || !stretchData) return;
-
-
-        const threeColor= isThreeColor(plot);
+        const plotView= getPlotViewById(store,plotId);
+        const plot= primePlot(plotView);
+        if (!plot || !plotView || !stretchData) return;
 
         const rvAry= [];
         stretchData.forEach( (sdE) => {
             rvAry[Band.get(sdE.band).value]= RangeValues.parse(stretchData[0].rv);
         });
 
-        const taskId= makeTaskId();
-        const local=hasLocalRawData(plot);
-        local && dispatchAddTaskCount(plot.plotId,taskId, true);
-        local ? processPlotUpdateLocal(dispatcher, plotId, taskId, stretchRawData(plot,rvAry), ImagePlotCntlr.STRETCH_CHANGE) :
-                doStretchServerCall(dispatcher,getState, store,plotId,stretchData);
 
-
-        operateOnOthersInOverlayColorGroup(store,pv, (pv) => {
-            const p= primePlot(pv);
-            if (isThreeColor(p)===threeColor) { // only do others that are similar
+        const doStretch= async (stretchPlot) => {
+            if (!stretchPlot) return;
+            const {plotId}= stretchPlot;
+            if (hasLocalRawData(stretchPlot)) {
                 const taskId= makeTaskId();
-                const local=hasLocalRawData(p);
-                local && dispatchAddTaskCount(p.plotId,taskId, true);
-                local ? processPlotUpdateLocal(dispatcher, pv.plotId, taskId, stretchRawData(p,rvAry), ImagePlotCntlr.STRETCH_CHANGE) :
-                        doStretchServerCall(dispatcher,getState, store,pv.plotId,stretchData);
+                dispatchAddTaskCount(plotId,taskId, true);
+                processPlotUpdateLocal(dispatcher, plotId, taskId, stretchRawData(stretchPlot,rvAry), ImagePlotCntlr.STRETCH_CHANGE);
             }
-        });
+            else if (hasLocalStretchByteData(stretchPlot) || hasClearedByteData(stretchPlot)){
+                clearLocalStretchData(stretchPlot);
+                await doStretchServerCall(dispatcher,getState, store,plotId,stretchData);
+            }
+            else {
+                doStretchServerCall(dispatcher,getState, store,plotId,stretchData);
+            }
+        };
+
+
+        const threeColor= isThreeColor(plotView);
+        doStretch(plot,dispatcher,getState,store,stretchData);
+        operateOnOthersInOverlayColorGroup(store,plotView, (pv) =>
+             (isThreeColor(pv)===threeColor) && doStretch(primePlot(pv),dispatcher,getState,store,stretchData));// only do others that are similar
     };
 }
+
 
 
 /**
@@ -219,11 +267,11 @@ function doCrop(dispatcher,pv,imagePt1, imagePt2, cropMultiAll, originalWcsMatch
 
 
 
-function doStretchServerCall(dispatcher,getState, store,plotId,stretchData) {
+async function doStretchServerCall(dispatcher,getState, store,plotId,stretchData) {
 
     const plot= primePlot(store,plotId);
     dispatcher( { type: ImagePlotCntlr.STRETCH_CHANGE_START, payload: {plotId, message:'Changing Stretch...'} } );
-    callRecomputeStretch(plot.plotState,stretchData)
+    return callRecomputeStretch(plot.plotState,stretchData)
         .then( (wpResult) => processPlotUpdateServer(dispatcher,getState, store, plotId,wpResult,
                                    ImagePlotCntlr.STRETCH_CHANGE, ImagePlotCntlr.STRETCH_CHANGE_FAIL) )
         .catch ( (e) => {
@@ -352,14 +400,31 @@ function processPlotUpdateServer(dispatcher, getState, oldStore, plotId, result,
 
 function processPlotUpdateLocal(dispatcher, plotId, taskId, rawDataPromise, succActionType) {
     rawDataPromise.then( (rawData) => {
-        dispatchRemoveTaskCount(plotId,taskId);
-        dispatcher( {
-            type: succActionType,
-            payload: {
-                plotId,
-                primaryStateJson : PlotState.convertToJSON(rawData.plotState,true),
-                rawData
-            }});
-        dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotIdAry:[plotId]}} );
+        plotUpdateLocal(dispatcher, plotId, taskId, succActionType, rawData);
     });
+}
+
+
+function makeOnComplete(dispatcher, plotId, taskId, succActionType)  {
+    return (abort, rawData) => {
+        if (abort) {
+            dispatchRemoveTaskCount(plotId,taskId);
+            return;
+        }
+        plotUpdateLocal(dispatcher, plotId, taskId, succActionType, rawData);
+    };
+}
+
+function plotUpdateLocal(dispatcher, plotId, taskId, succActionType, rawData) {
+    dispatchRemoveTaskCount(plotId,taskId);
+    dispatcher( {
+        type: succActionType,
+        payload: {
+            plotId,
+            primaryStateJson : PlotState.convertToJSON(rawData.plotState,true),
+            bias: rawData.bias,
+            contrast : rawData.contrast,
+            ...rawData.bandUse
+        }});
+    dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotIdAry:[plotId]}} );
 }

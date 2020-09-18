@@ -54,10 +54,10 @@ public class TargetNetwork {
                 retval= null;
                 break;
             case NONE :
-                throw new FailedRequestException("Cannot resolved: resolver set to NONE");
+                throw new FailedRequestException("Cannot resolved: resolver set to CLEARED");
             default:
                 retval= null;
-                Assert.argTst(false, "resolver must be NED, Simbad, or NONE");
+                Assert.argTst(false, "resolver must be NED, Simbad, or CLEARED");
                 break;
         }
         return retval;

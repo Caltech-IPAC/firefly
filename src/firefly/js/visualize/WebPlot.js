@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {isArray, isEmpty, isObject} from 'lodash';
+import {isArray, isBoolean, isEmpty, isNumber, isObject} from 'lodash';
 import {RequestType} from './RequestType.js';
 import CoordinateSys from './CoordSys.js';
 import {makeProjection, makeProjectionNew, UNRECOGNIZED, UNSPECIFIED} from './projection/Projection.js';
@@ -15,7 +15,6 @@ import {parseWavelengthHeaderInfo} from './projection/WavelengthHeaderParser.js'
 import {TAB} from './projection/Wavelength';
 import {memorizeLastCall} from '../util/WebUtil';
 import {makePlotStateShimForHiPS} from './PlotState';
-import {hasLocalRawDataInStore} from './rawData/RawDataOps.js';
 
 
 export const RDConst= {
@@ -36,12 +35,6 @@ const HIPS_DATA_HEIGHT= 10000000000;
  * @return {string}
  */
 export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_title || hipsProperties.label || 'HiPS';
-
-/**
- * FITS headers keys
- * todo: add more headers
- */
-
 
 
 /**
@@ -85,7 +78,6 @@ export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_
  * @prop {Array.<RawData>} rawData
  * @prop {{width:number, height:number}} viewDim  size of viewable area  (div size: offsetWidth & offsetHeight)
  * @prop {Array.<Object>} directFileAccessDataAry - object of parameters to get flux from the FITS file
- * @prop {boolean} localDataLoaded
  *
  * @see PlotView
  */
@@ -142,41 +134,28 @@ export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_
  *
  */
 
-/** //todo this is not right for 3 color, float1d, processHeader, should be for each band
+/** // todo - this is mostly wrong, I need to clean it up
  * @typedef {Object} RawData
  *
- * Notes - float1d and histogram should never change change.
- * - stretchDataTiles need to change when range values changes (different stretch)
- * - imageTileDataGroup should change when stretchDataTiles
- * - when color table changes, we can reuse stretchDataTiles and imageTileDataGroup
- *
- * @prop {Float32Array} float1d
- * @prop {HistogramData} histogram
- * @prop {number} dataWidth
- * @prop {number} dataHeight
- * @prop {Array<Int8Array>} stretchedDataTiles
- * @prop {Array<Int8Array>} color
  * @prop {ThumbnailImage} thumbnailData
- * @prop {Array.<{x:number,y:number,width:number,height:number,local:boolean}>} localScreenTileDefList
+ * @prop {Array.<ScreenTileDef>} localScreenTileDefList
  * @prop {number} datamin
  * @prop {number} datamax
  * @prop {Object} processHeader
  * @prop {Object} imageTileDataGroup
  */
 
-
 /**
- * @global
- * @public
- * @typedef {Object} ImageTile
- * @summary a single image tile
- *
+ * @typedef ScreenTileDef
+ * @summary a single screen tile
+ * @prop {number} x - pixel offset of this tile
+ * @prop {number} y - pixel offset of this tile
  * @prop {number} width - width of this tile
  * @prop {number} height - height of this tile
  * @prop {number} index - index of this tile
+ * @prop {boolean} local - true if generated locally or false it tile is retrieved with url
  * @prop {string} url - file key to use in the service to retrieve this tile
- * @prop {number} x - pixel offset of this tile
- * @prop {number} y - pixel offset of this tile
+ * @prop {string} key
  *
  */
 
@@ -328,7 +307,10 @@ export const WebPlot= {
                                    [processHeader] :
                                     headerAry.map( (h,idx) => parseSpacialHeaderInfo(h,'',wpInit.zeroHeaderAry[idx]));
         const fluxUnitAry= processHeaderAry.map( (p) => p.fluxUnits);
-        const rawData= {bandData:processHeaderAry.map( (pH) => ({processHeader:pH, datamin: pH.datamin, datamax:pH.datamax}))};
+        const rawData= {
+            useRed: true, useGreen: true, useBlue:true,
+            bandData:processHeaderAry.map( (pH) => ({processHeader:pH, datamin: pH.datamin, datamax:pH.datamax, bias:.5,contrast:1}))
+        };
 
 
         const wlRelated= relatedData && relatedData.find( (r) => r.dataType==='WAVELENGTH_TABLE_RESOLVED');
@@ -382,7 +364,7 @@ export const WebPlot= {
             attributes,
             rawData,
             directFileAccessDataAry,
-            localDataLoaded: false,
+            dataRequested: false,
             cubeIdx: cubeCtx?.cubePlane ?? -1,
             //=== End Mutable =====================
         };
@@ -453,9 +435,14 @@ export const WebPlot= {
      * @param {object} stateJson
      * @param {ImageTileData} [tileData]
      * @param {ImageTileData} [rawData]
+     * @param {Number} [bias]
+     * @param {Number} [contrast]
+     * @param {boolean|undefined} useRed
+     * @param {boolean|undefined} useGreen
+     * @param {boolean|undefined} useBlue
      * @return {WebPlot}
      */
-    setPlotState(plot,stateJson,tileData,rawData) {
+    replacePlotValues(plot, stateJson, tileData, rawData, bias, contrast, useRed,useGreen, useBlue) {
         const plotState= PlotState.makePlotStateWithJson(stateJson);
         const zf= plotState.getZoomLevel();
         const screenSize= {width:plot.dataWidth*zf, height:plot.dataHeight*zf};
@@ -472,6 +459,18 @@ export const WebPlot= {
         plot= {...plot,...{plotState, zoomFactor:zf,screenSize}};
         if (tileData) plot.tileData= tileData;
         if (rawData) plot.rawData= {...plot.rawData, localScreenTileDefList:rawData.localScreenTileDefList};
+
+        if (isNumber(bias) || isNumber(contrast)) {
+            const {bandData:oldBandData}= plot.rawData;
+            const bandData= oldBandData.map( (entry)  => ({...entry,
+                bias:  isNumber(bias) ? bias : entry.bias,
+                contrast:  isNumber(contrast) ? contrast : entry.contrast,
+            }));
+            plot.rawData= {...plot.rawData,bandData};
+        }
+        if (isBoolean(useRed) && isBoolean(useGreen) && isBoolean(useBlue) && plot.plotState.isThreeColor()) {
+            plot.rawData= {...plot.rawData,useRed,useGreen,useBlue};
+        }
         return plot;
     },
 };
@@ -611,10 +610,6 @@ export function getPixScaleDeg(plot) {
         return Math.abs(0-pt2.x);
     }
     return 0;
-}
-
-export function hasLocalRawData(plot) {
-    return hasLocalRawDataInStore(plot);
 }
 
 

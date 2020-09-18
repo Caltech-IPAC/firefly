@@ -1,9 +1,11 @@
-import Worker from './RawData.worker.js';
+import Worker from './firefly-thread.worker.js';
 import {uniqueId} from 'lodash';
-import {WorkerSim} from './WorkerSim.js';
+// import {WorkerSim} from './WorkerSim.js';
+import {Logger} from '../util/Logger.js';
 
 
-const WORKER_COUNT= 3;
+const logger= Logger('WorkerAccess');
+const WORKER_COUNT= 6;
 const workerKeys= [];
 for(let i=0; (i<WORKER_COUNT); i++) workerKeys.push(`worker-${i}`);
 let nextWorkerKey= 0;
@@ -21,38 +23,40 @@ const promiseMap= new Map();
  * @public
  */
 
-const USE_SIM= false;
+// const USE_SIM= false;
 
 export function initWorkerContext() {
     new Worker().terminate();
 }
 
 function makeWorker(workerKey) {
-    console.time(workerKey);
-    const worker= USE_SIM ? WorkerSim : new Worker();
-    console.timeEnd(workerKey);
+    const worker= new Worker();
     worker.onmessage= (ev) => {
         const {success,callKey}= ev.data;
         if (promiseMap.has(callKey)) {
             const pResponse= promiseMap.get(callKey);
-            success ? pResponse.resolve(ev.data) : pResponse.reject(ev.data.error);
+            success ? pResponse.resolve(ev.data) : pResponse.reject(ev.data);
             promiseMap.delete(callKey);
         }
         else {
-            console.log('could not find callKey: ' + callKey);
+            logger.error('could not find callKey: ' + callKey);
         }
     };
     worker.onmessageerror= () => {
-        console.log(`get an message error in worker: ${workerKey}`);
+        logger.error(`get an message error in worker: ${workerKey}`);
     };
     worker.onerror= (err) => {
-        console.log(`get an error in worker: ${workerKey}`,err);
+        logger.error(`get an error in worker: ${workerKey}`,err);
         workerMap.delete(workerKey); // worker died
     };
     return worker;
 }
 
 function getWorker(workerKey) {
+    if (!workerKeys.includes(workerKey)) {
+        logger.error(`workerKey must be one of: ${workerKeys.join()}`);
+        return;
+    }
     if (!workerMap.has(workerKey)) {
         const w= makeWorker(workerKey);
         workerMap.set(workerKey,w);
@@ -80,7 +84,7 @@ export function postToWorker(action) {
 export function getNextWorkerKey() {
     const workerKey= workerKeys[nextWorkerKey];
     nextWorkerKey++;
-    nextWorkerKey=  (nextWorkerKey+1) % workerKeys.length;
+    nextWorkerKey=  (nextWorkerKey) % workerKeys.length;
     return workerKey;
 }
 

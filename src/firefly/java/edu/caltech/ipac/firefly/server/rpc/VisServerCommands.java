@@ -188,6 +188,23 @@ public class VisServerCommands {
         }
     }
 
+    public static class ByteAryCmd extends ServerCommandAccess.HttpCommand {
+
+        public void processRequest(HttpServletRequest req, HttpServletResponse res, SrvParam sp) throws Exception {
+
+            PlotState state= sp.getState();
+            int tileSize = sp.getRequiredInt(ServerParams.TILE_SIZE);
+            byte [] byte1D= VisServerOps.getByteStretchArray(state,tileSize);
+            res.setContentType("application/octet-stream");
+
+            ByteBuffer byteBuf = ByteBuffer.wrap(byte1D);
+            byteBuf.position(0);
+            WritableByteChannel chan= Channels.newChannel(res.getOutputStream());
+            chan.write(byteBuf);
+            chan.close();
+        }
+    }
+
 
     public static class StretchCmd extends ServCommand {
 

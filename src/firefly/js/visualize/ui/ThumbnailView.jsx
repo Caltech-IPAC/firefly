@@ -12,14 +12,14 @@ import {CysConverter} from '../CsysConverter.js';
 import DirectionArrowDrawObj from '../draw/DirectionArrowDrawObj.js';
 import FootprintObj from '../draw/FootprintObj.js';
 import {COLOR_DRAW_1, COLOR_DRAW_2,Style} from '../draw/DrawingDef.js';
-import {primePlot} from '../PlotViewUtil.js';
+import {hasLocalStretchByteData, primePlot} from '../PlotViewUtil.js';
 import {EventLayer} from '../iv/EventLayer.jsx';
 import {MouseState} from '../VisMouseSync.js';
 import {dispatchProcessScroll} from '../ImagePlotCntlr.js';
 import {makeMouseStatePayload,fireMouseCtxChange} from '../VisMouseSync.js';
 import {makeTransform,makeThumbnailTransformCSS} from '../PlotTransformUtils.js';
 import {findScrollPtToCenterImagePt} from '../reducer/PlotView.js';
-import {getPixScaleDeg, hasLocalRawData, isHiPS} from '../WebPlot.js';
+import {getPixScaleDeg, isHiPS} from '../WebPlot.js';
 import {getEntry} from '../rawData/RawDataCache.js';
 import {SimpleCanvas} from '../draw/SimpleCanvas.jsx';
 
@@ -120,13 +120,14 @@ function makeImageTag(pv, onImageLoad) {
     if (transFormCss) s.transform= transFormCss;
 
     let imageURL;
-    if (hasLocalRawData(plot)) {
-        // imageURL= getEntry(plot?.plotImageId)?.thumbnailEncodedImage;
+    if (hasLocalStretchByteData(plot)) {
         const thumbnailCanvas= getEntry(plot?.plotImageId)?.thumbnailEncodedImage;
-        // return <img src={imageURL} style={s} ref={onImageLoad} /> ;
 
         const drawOnCanvas= (targetCanvas) => {
-            targetCanvas && targetCanvas.getContext('2d').drawImage(thumbnailCanvas,0,0);
+            if (!targetCanvas) return;
+            const ctx= targetCanvas.getContext('2d');
+            ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+            ctx.drawImage(thumbnailCanvas,0,0);
         };
 
         return (<div style={s}>

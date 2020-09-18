@@ -3,14 +3,15 @@
  */
 
 import React from 'react';
+import {throttle} from 'lodash';
 import PropTypes from 'prop-types';
-import { primePlot} from '../PlotViewUtil.js';
+import {getActivePlotView, isThreeColor, primePlot} from '../PlotViewUtil.js';
 import { RangeValues} from '../RangeValues.js';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {
     ToolbarButton,
     DropDownVerticalSeparator} from '../../ui/ToolbarButton.jsx';
-import {dispatchStretchChange} from '../ImagePlotCntlr.js';
+import {dispatchColorChange, dispatchStretchChange, visRoot} from '../ImagePlotCntlr.js';
 import {
     PERCENTAGE,
     ZSCALE,
@@ -25,6 +26,8 @@ import {
     STRETCH_POWERLAW_GAMMA,
 } from '../RangeValues.js';
 import {showColorDialog} from './ColorDialog.jsx';
+import {RangeSliderView} from '../../ui/RangeSliderView.jsx';
+import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 
 
 
@@ -94,10 +97,29 @@ function stretchByType(pv,currRV,sType,min,max,asinhQ) {
     changeStretch(pv,newRv);
 }
 
+const changeBiasContrast= throttle((plot,bias,contrast) => {
+    if (isThreeColor(plot)) return;
+    dispatchColorChange({
+        plotId:plot.plotId,
+        cbarId: plot.plotState.getColorTableId(),
+        bias,
+        contrast
+    });
+},300);
 
-export function StretchDropDownView({plotView:pv, toolbarElement}) {
+const biasMarks = { 30: '.3', 40:'.4', 50:'.5', 60:'.6', 70:'.7' };
+const contrastMarks = { 0: '0', 5:'.5', 10:'1', 15:'1.5',  20:'2' };
+
+
+export function StretchDropDownView({toolbarElement}) {
+    const [pv] = useStoreConnector(() => getActivePlotView(visRoot()));
     const enabled= pv ? true : false;
-    const rv= primePlot(pv).plotState.getRangeValues();
+    const plot= primePlot(pv);
+    const rv= plot.plotState.getRangeValues();
+    const {bias,contrast}= plot.rawData.bandData[0];
+    const biasInt= Math.trunc(bias*100);
+    const contrastInt= Math.trunc(contrast*10);
+    const threeColor= isThreeColor(plot);
     return (
         <SingleColumnMenu>
             <ToolbarButton text='Color stretch...'

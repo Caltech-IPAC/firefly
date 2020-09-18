@@ -16,8 +16,7 @@ import {
     getScreenPixScaleArcSec,
     isImage,
     isHiPS,
-    getFluxUnits,
-    hasLocalRawData
+    getFluxUnits
 } from '../WebPlot.js';
 import {getPlotTilePixelAngSize} from '../HiPSUtil.js';
 import {mouseUpdatePromise, fireMouseReadoutChange} from '../VisMouseSync';
@@ -26,14 +25,14 @@ import {
     getImageCubeIdx,
     getPtWavelength, getWavelengthParseFailReason,
     getWaveLengthUnits, hasPixelLevelWLInfo, hasPlaneOnlyWLInfo,
-    isImageCube, wavelengthInfoParsedSuccessfully, isThreeColor
+    isImageCube, wavelengthInfoParsedSuccessfully, isThreeColor, hasLocalRawData
 } from '../PlotViewUtil';
 import {getNumberHeader, HdrConst} from '../FitsHeaderUtil.js';
 import {getFluxDirect} from '../rawData/RawDataOps.js';
 
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const REMOTE_PAUSE_DELAY= 30;
+const PAUSE_DELAY= 30;
 const LOCAL_PAUSE_DELAY= 30;
 
 
@@ -111,7 +110,7 @@ function* processAsyncDataImmediate(plotView, worldPt, screenPt, imagePt, threeC
 
 function* processAsyncDataDelayed(plotView, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder) {
     const plot= primePlot(plotView);
-    const mousePausedRaceWinner = yield race({ mouseCtx: call(mouseUpdatePromise), timer: call(delay, hasLocalRawData(plot) ? LOCAL_PAUSE_DELAY :REMOTE_PAUSE_DELAY) });
+    const mousePausedRaceWinner = yield race({ mouseCtx: call(mouseUpdatePromise), timer: call(delay, hasLocalRawData(plot) ? LOCAL_PAUSE_DELAY :PAUSE_DELAY) });
 
     if (mousePausedRaceWinner.mouseCtx) return mousePausedRaceWinner.mouseCtx;
 

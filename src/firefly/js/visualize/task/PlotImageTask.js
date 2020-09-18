@@ -4,7 +4,12 @@
 
 import {flatten, isArray, uniqueId, uniqBy, isEmpty} from 'lodash';
 import {WebPlotRequest, GridOnStatus} from '../WebPlotRequest.js';
-import ImagePlotCntlr, {visRoot, makeUniqueRequestKey, IMAGE_PLOT_KEY} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {
+    visRoot,
+    makeUniqueRequestKey,
+    IMAGE_PLOT_KEY,
+    dispatchRequestLocalData
+} from '../ImagePlotCntlr.js';
 import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
 import {dispatchActiveTarget, getActiveTarget} from '../../core/AppDataCntlr.js';
 import {WebPlot, RDConst, isImage} from '../WebPlot.js';
@@ -22,7 +27,7 @@ import {
     getDrawLayersByType,
     getDrawLayerById,
     getPlotViewIdListInOverlayGroup,
-    removeRawDataByPlotView
+    removeRawDataByPlotView, canLoadStretchDataDirect
 } from '../PlotViewUtil.js';
 import {enableMatchingRelatedData, enableRelatedDataLayer} from '../RelatedDataUtil.js';
 import {modifyRequestForWcsMatch} from './WcsMatchTask.js';
@@ -315,25 +320,18 @@ function continuePlotImageSuccess(dispatcher, payload, successAry, failAry) {
     if (successAry.length) {
         const pvNewPlotInfoAry= successAry.map( (r) => handleSuccessfulCall(r.data.PlotCreate, r.data.PlotCreateHeader,payload, r.data.requestKey) );
         const resultPayload= Object.assign({},payload, {pvNewPlotInfoAry});
+
+        pvNewPlotInfoAry.forEach( ({plotAry}) => { // images are small enough, clear the png tiles then images will load direct
+            const realPlotAry = isArray(plotAry) ? plotAry : [plotAry];
+            realPlotAry.forEach((p) => {
+                if (canLoadStretchDataDirect(p)) p.tileData = undefined;
+            });
+        });
+
         dispatcher({type: ImagePlotCntlr.PLOT_IMAGE, payload: resultPayload});
         const plotIdAry = pvNewPlotInfoAry.map((info) => info.plotId);
         const filteredPlotIdAry= plotIdAry.filter( (id) => getPlotViewById(visRoot(),id));
         dispatcher({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotIdAry:filteredPlotIdAry}});
-
-
-        // ..........................RAW DATA.......................................
-        // ----------------------------------------------
-        // ----------------------------------------------
-        // --------------------------experiment
-        // todo: need to figure out where is the best place to load image data and some test to determine if it should be loaded
-        // todo: for large image research load a decimated version for the image data
-
-        // pvNewPlotInfoAry.forEach( (info) => loadRawData(info.plotAry, dispatcher));
-
-        // ...END....................RAW DATA.......................................
-        // ...END....................experiment
-        // ..............................................
-        // ..............................................
 
         matchAndActivateOverlayPlotViewsByGroup(filteredPlotIdAry);
 
@@ -346,8 +344,6 @@ function continuePlotImageSuccess(dispatcher, payload, successAry, failAry) {
                     addDrawLayers(p.plotState.getWebPlotRequest(), pv, p);
                     if (p.attributes[PlotAttribute.INIT_CENTER]) dispatchRecenter({plotId:p.plotId});
                 } ));
-
-
 
         //todo- this this plot is in a group and locked, make a unique list of all the drawing layers in the group and add to new
 

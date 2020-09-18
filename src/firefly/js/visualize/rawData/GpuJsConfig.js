@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {loadScript, logError, getRootURL, getGlobalObj} from '../../util/WebUtil.js';
+import {loadScript, getRootURL, getGlobalObj} from '../../util/WebUtil.js';
 
 const GPU_JS_SCRIPT= 'gpu-browser.min-2.10.0.js';
 const LOAD_ERR_MSG= 'Load Failed: could not load gpu.js';
@@ -27,7 +27,7 @@ function initGpuJsRetriever(loadNow) {
                 if (loadedGpuJs) {
                     waitingResolvers.forEach((r) => r(loadedGpuJs));
                 } else {
-                    logError(`GPU object is not available after ${script} is loaded`);
+                    console.log(`GPU object is not available after ${script} is loaded`);
                     const err= Error(LOAD_ERR_MSG);
                     loadedGpuJsFailed= true;
                     waitingRejectors.forEach( (r) => r(err));

@@ -13,6 +13,8 @@ import {getWavelength, isWLAlgorithmImplemented, PLANE} from './projection/Wavel
 import {getNumberHeader, HdrConst} from './FitsHeaderUtil.js';
 import {computeDistance, getRotationAngle, isCsysDirMatching, isEastLeftOfNorth, isPlotNorth} from './VisUtil';
 import {removeRawData} from './rawData/RawDataCache.js';
+import {MAX_DIRECT_IMAGE_SIZE, MAX_RAW_IMAGE_SIZE} from './rawData/RawDataCommon.js';
+import {hasClearedDataInStore, hasLocalRawDataInStore, hasLocalStretchByteDataInStore} from './rawData/RawDataOps.js';
 
 
 export const CANVAS_IMAGE_ID_START= 'image-';
@@ -1024,7 +1026,8 @@ export const pvEqualExScroll= memorizeLastCall((pv1,pv2) => {
                 p1.screenSize !== p2.screenSize ||
                 p1.zoomFactor !== p2.zoomFactor ||
                 p1.imageCoordSys !== p2.imageCoordSys ||
-                p1.localDataLoaded!==p2.localDataLoaded ||
+                p1.dataRequested!==p2.dataRequested ||
+                p1.rawData!==p2.rawData ||
                 p1.plotState !== p2.plotState) result= false;
         }
     }
@@ -1087,4 +1090,41 @@ export function getMatchingRotationAngle(masterPv, pv) {
     if (targetRotation < 0) targetRotation += 360;
     if (targetRotation > 359) targetRotation %= 360;
     return targetRotation;
+}
+
+export function canLoadStretchData(plot) {
+    if (!plot || !isImage(plot)) return false;
+    return (plot.dataWidth*plot.dataHeight) < MAX_RAW_IMAGE_SIZE;
+}
+
+export function canLoadStretchDataDirect(plot) {
+    if (!plot || !isImage(plot)) return false;
+    const size= (plot.dataWidth*plot.dataHeight);
+    return size<Math.min(MAX_RAW_IMAGE_SIZE,MAX_DIRECT_IMAGE_SIZE);
+}
+
+export function isAllStretchDataLoadable(vr) {
+    return getPlotViewAry(vr)
+        .map( (pv) => primePlot(pv))
+        .filter( (p) => isImage(p))
+        .every( (p) => canLoadStretchData(p));
+}
+
+export function hasLocalRawData(plot) {
+    return hasLocalRawDataInStore(plot);
+}
+
+export function hasLocalStretchByteData(plot) {
+    return hasLocalStretchByteDataInStore(plot);
+}
+
+export function hasClearedByteData(plot) {
+    return hasClearedDataInStore(plot);
+}
+
+export function isAllStretchDataLoaded(vr) {
+    return getPlotViewAry(vr)
+        .map( (pv) => primePlot(pv))
+        .filter( (p) => isImage(p))
+        .every( (p) => hasLocalStretchByteData(p));
 }

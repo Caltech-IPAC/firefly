@@ -6,11 +6,13 @@ import {get} from 'lodash';
 import {UserZoomTypes, getArcSecPerPix, getEstimatedFullZoomFactor,
     getNextZoomLevel, getZoomLevelForScale, FullType} from '../ZoomUtil.js';
 import {logger} from '../../util/Logger.js';
-import {isImage, isHiPS, hasLocalRawData} from '../WebPlot.js';
+import {isImage, isHiPS} from '../WebPlot.js';
 import ImagePlotCntlr, {ActionScope, IMAGE_PLOT_KEY, WcsMatchType,
                        dispatchUpdateViewSize, dispatchRecenter} from '../ImagePlotCntlr.js';
-import {getPlotViewById,primePlot,getPlotStateAry, operateOnOthersInPositionGroup,
-    applyToOnePvOrAll} from '../PlotViewUtil.js';
+import {
+    getPlotViewById, primePlot, getPlotStateAry, operateOnOthersInPositionGroup,
+    applyToOnePvOrAll, hasLocalStretchByteData
+} from '../PlotViewUtil.js';
 import {callSetZoomLevel} from '../../rpc/PlotServicesJson.js';
 import {isImageViewerSingleLayout, getMultiViewRoot} from '../MultiViewCntlr.js';
 import {WebPlotResult} from '../WebPlotResult.js';
@@ -138,7 +140,7 @@ function evaluateZoomType(visRoot, pv, userZoomType, forceDelay, payloadLevel= 1
 
     }
 
-    if (hasLocalRawData(plot)) useDelay= false;
+    if (hasLocalStretchByteData(plot)) useDelay= false;
 
     return {level, isFullScreen, useDelay, validParams};
 }
@@ -202,7 +204,7 @@ function makeZoomLevelMatcher(dispatcher, visRoot, sourcePv,level,matchByScale,i
  */
 function doZoom(dispatcher,plot,zoomLevel,isFullScreen, zoomLockingEnabled, userZoomType,useDelay,getState) {
 
-    const localRawData=  hasLocalRawData(plot);
+    const localRawData=  hasLocalStretchByteData(plot);
     const oldZoomLevel= plot.zoomFactor;
 
     const preZoomVisRoot= getState()[IMAGE_PLOT_KEY];

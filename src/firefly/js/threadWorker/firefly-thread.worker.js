@@ -1,10 +1,11 @@
 import {doRawDataWork} from '../visualize/rawData/ManageRawDataThread.js';
+import {getGlobalObj} from '../util/WebUtil.js';
 import {RawDataThreadActions} from './WorkerThreadActions.js';
 
 
 const rdActionList= Object.keys(RawDataThreadActions);
 
-onmessage= (event) => {
+getGlobalObj().onmessage= (event) => {
     const action= event.data;
     const {callKey,type}= action;
     try {

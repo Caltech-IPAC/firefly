@@ -2,13 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {isPlainObject, truncate} from 'lodash';
-import {getOrCreateWsConn} from '../core/messaging/WebSocketClient';
-import {ServerParams} from '../data/ServerParams';
-import {showInfoPopup} from '../ui/PopupUtil';
-import {DownloadProgress, getDownloadProgress} from '../rpc/SearchServicesJson';
-import {AJAX_REQUEST, doFetchUrl, REQUEST_WITH, WS_CHANNEL_HD, WS_CONNID_HD} from './lowerLevelFetch.js';
-import {logger} from './Logger';
-import {parseUrl} from './WebUtil';
+import {getOrCreateWsConn} from '../core/messaging/WebSocketClient.js';
+import {ServerParams} from '../data/ServerParams.js';
+import {showInfoPopup} from '../ui/PopupUtil.jsx';
+import {DownloadProgress, getDownloadProgress} from '../rpc/SearchServicesJson.js';
+import {logger} from './Logger.js';
+import {parseUrl, AJAX_REQUEST, lowLevelDoFetch, REQUEST_WITH, WS_CHANNEL_HD, WS_CONNID_HD} from './WebUtil.js';
 
 
 /**
@@ -34,7 +33,7 @@ export async function fetchUrl(url, options={}, doValidation = true, enableDefOp
     if (!url) return;
 
     // define defaults request options
-    if (!enableDefOptions) return doFetchUrl(url, options, doValidation, logger);
+    if (!enableDefOptions) return lowLevelDoFetch(url, options, doValidation, logger);
     const {connId, channel}= await getOrCreateWsConn();
     const optionsWithDef= {
         method: 'get',
@@ -49,7 +48,7 @@ export async function fetchUrl(url, options={}, doValidation = true, enableDefOp
             ...options.headers
         }
     };
-    return doFetchUrl(url, optionsWithDef, doValidation);
+    return lowLevelDoFetch(url, optionsWithDef, doValidation, logger?.tag('fetchUrl').debug);
 }
 
 

@@ -1,6 +1,9 @@
 import {doRawDataWork} from '../visualize/rawData/ManageRawDataThread.js';
 import {RawDataThreadActions} from './WorkerThreadActions.js';
 
+/**
+ * WorkerSim is a debugging tool used simulate worker code but running in the the main thread
+ */
 
 
 const rdActionList= Object.keys(RawDataThreadActions);

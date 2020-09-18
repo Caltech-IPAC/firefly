@@ -3,13 +3,14 @@
  */
 
 import React, {Component} from 'react';
+import slug from 'slug';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
 
-import {debounce, isEmpty, isString, set, omit} from 'lodash';
+import {debounce, isEmpty, isString, set, omit, forEach, isPlainObject} from 'lodash';
 import {getPlotLy} from '../PlotlyConfig.js';
 import {getChartData, useChartRedraw, useScatterGL, usePlotlyReact} from '../ChartsCntlr.js';
-import {deltas, flattenObject, toSlug, getModuleName} from '../../util/WebUtil.js';
+import {flattenObject, getModuleName} from '../../util/WebUtil.js';
 import {logger} from '../../util/Logger.js';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import Enum from 'enum';
@@ -21,6 +22,45 @@ let counter= 0;
 export const RenderType= new Enum([ 'REACT', 'RESIZE', 'UPDATE', 'RESTYLE', 'RELAYOUT',
                                     'RESTYLE_AND_RELAYOUT', 'NEW_PLOT', 'PAUSE_DRAWING' ],
              { ignoreCase: true });
+
+
+function removeEmpties(o) {
+    for (const k in o) {
+        if (!o[k] || !isPlainObject(o[k])) {
+            continue; // If null or not an object, skip to the next iteration
+        }
+        // The property is an object
+        removeEmpties(o[k]); // <-- Make a recursive call on the nested object
+        if (Object.keys(o[k]).length === 0) {
+            delete o[k]; // The object had no properties, so delete that property
+        }
+    }
+}
+
+function deltas(a, b, wrapArray=true) {
+    const diff = (a1, b1, wrapArray) => {
+        const r = {};
+        doDiff(a1, b1, r, wrapArray);
+        return r;
+    };
+
+    const doDiff = (a2, b2, r, wrapArray) => {
+        forEach(a2, function(v, k) {
+            // already checked this or equal or original has no value...
+            if (b2 && (r.hasOwnProperty(k) || shallowequal(b2[k], v))) return;
+            // but what if it returns an empty object? still attach?
+            r[k] = b2 && isPlainObject(v) ? diff(v, b2[k], wrapArray) : v;
+            if (wrapArray && Array.isArray(r[k])) {
+                r[k] = [r[k]];
+            }
+        });
+    };
+
+    const rval = diff(a, b, wrapArray);
+    removeEmpties(rval);
+    return rval;
+}
+
 
 
 const defaultConfig= {
@@ -71,7 +111,7 @@ export function downloadChart(chartId) {
         const chartDivAll = document.querySelectorAll(`#${chartId}`);
         if (chartId && chartDivAll && chartDivAll.length > 0) {
             const chartDiv = chartDivAll[chartDivAll.length-1];
-            const filename= toSlug(getFilename(chartDiv,chartId));
+            const filename= slug(getFilename(chartDiv,chartId));
             Plotly.downloadImage(chartDiv, { format: 'png', filename});
         } else {
             logger.error(`Image download has failed for chart id ${chartId}`);

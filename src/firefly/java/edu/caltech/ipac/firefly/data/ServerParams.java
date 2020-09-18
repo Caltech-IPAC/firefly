@@ -162,6 +162,7 @@ public class ServerParams {
     public static final String VIS_PUSH_ACTION= "pushAction";
     public static final String GET_IMAGE_MASTER_DATA= "getImageMasterData";
     public static final String GET_FLOAT_DATA= "getFloatData";
+    public static final String GET_BYTE_DATA= "getStretchedByteData";
 
     public static final String USER_TARGET_WORLD_PT = "UserTargetWorldPt";
 
@@ -175,6 +176,7 @@ public class ServerParams {
 
     public static final String INIT_APP = "CmdInitApp";
     public static final String LOGOUT = "CmdLogout";
+    public static final String TILE_SIZE = "tileSize";
 
     //Workspaces
     public static final String WS_LIST = "wsList"; // Gets the list of content/files

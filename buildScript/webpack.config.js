@@ -159,7 +159,7 @@ export default function makeWebpackConfig(config) {
             test    : /\.worker\.js$/,
             loader: 'worker-loader',
             options: {
-                publicPath: '/firefly/',
+                // publicPath: '/firefly/',
                 filename: workerFilename,
                 inline: 'fallback'
             }

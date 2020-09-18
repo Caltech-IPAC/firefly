@@ -8,8 +8,8 @@ import PropTypes from 'prop-types';
 import Enum from 'enum';
 import {sprintf} from '../../externalSource/sprintf';
 import {getZoomDesc} from '../ZoomUtil.js';
-import {primePlot} from '../PlotViewUtil.js';
-import {hasLocalRawData, isImage} from '../WebPlot.js';
+import {hasLocalStretchByteData, primePlot} from '../PlotViewUtil.js';
+import {isImage} from '../WebPlot.js';
 import {hasWCSProjection, pvEqualExScroll} from '../PlotViewUtil';
 
 import './PlotTitle.css';
@@ -21,7 +21,7 @@ export const PlotTitle= memo(({plotView:pv, titleType, brief, working}) => {
         let styleName= '';
         const plot= primePlot(pv);
         const world= hasWCSProjection(plot);
-        const local= hasLocalRawData(plot);
+        const local= hasLocalStretchByteData(plot);
         const image= isImage(plot);
         switch (titleType) {
             case TitleType.INLINE:   styleName= 'plot-title-inline-title-container';  break;

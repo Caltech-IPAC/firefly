@@ -81,7 +81,7 @@ export class ImageRender extends Component {
 
         const scale = plot.zoomFactor/ plot.plotState.getZoomLevel();
         const style = Object.assign({}, containerStyle, {width, height});
-        if (tileData && scale < .5 && tileData.images.length > 5) { // only does check for image plots
+        if (tileData && scale < .5 && tileData.images?.length > 5) { // only does check for image plots
             return false;
         }
         else {

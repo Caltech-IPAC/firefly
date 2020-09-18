@@ -8,6 +8,7 @@ import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.plotdata.ImageStretch;
 import edu.caltech.ipac.visualize.plot.plotdata.RGBIntensity;
+import nom.tam.fits.Header;
 
 import java.awt.*;
 import java.awt.color.ColorSpace;
@@ -37,6 +38,8 @@ public class ImageData implements Serializable {
     private BufferedImage bufferedImage;
     private boolean imageOutOfDate = true;
     private ImageMask[] imageMasks=null;
+    private byte[] saveStandardStretch;
+    private byte[][] save3CStretch;
 
     private final ImageType imageType;
     private final RangeValues rangeValuesAry[];
@@ -232,4 +235,41 @@ public class ImageData implements Serializable {
         }
         imageOutOfDate =false;
     }
+
+
+    public byte[][] stretch3Color(float [][] float1dAry, ImageHeader [] imHeadAry, Histogram[] histAry, Header header, RGBIntensity rgbIntensity) {
+        byte[][] pixelDataAry= new byte[3][];
+        for(int i=0;i<3; i++) {
+            pixelDataAry[i]= new byte[this.width * this.height];
+        }
+
+        ImageStretch.stretchPixels3Color(rangeValuesAry, float1dAry, pixelDataAry, imHeadAry, histAry,
+                rgbIntensity, x, lastPixel, y, lastLine );
+        return pixelDataAry;
+    }
+
+
+    public byte[] stretch8bit(final float [] float1d, final Header header, final Histogram histogram) {
+        final ImageHeader imHead= new ImageHeader(header) ;
+        byte [] byteAry= new byte[this.width * this.height];
+        ImageStretch.stretchPixels8Bit(rangeValuesAry[Band.NO_BAND.getIdx()],
+                float1d, byteAry,
+                imHead,  histogram,
+                x, lastPixel, y, lastLine );
+        return byteAry;
+    }
+
+    public void stretch8bitAndSave(final float [] float1d, final Header header, final Histogram histogram) {
+        this.saveStandardStretch = stretch8bit(float1d,header,histogram);
+    }
+
+    public byte[] getSavedStandardStretch() { return this.saveStandardStretch; }
+
+    public void stretch3ColorAndSave(float [][] float1dAry, ImageHeader [] imHeadAry, Histogram[] histAry,
+                                  Header header, RGBIntensity rgbIntensity) {
+        this.save3CStretch = stretch3Color(float1dAry,imHeadAry,histAry,header,rgbIntensity);
+    }
+
+    public byte[][] getSaved3CStretch() { return this.save3CStretch; }
 }
+

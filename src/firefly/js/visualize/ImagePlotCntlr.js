@@ -410,6 +410,12 @@ export function dispatchChangeImageVisibility({plotId, visible, dispatcher= flux
  * @param {Object}  obj
  * @param {string} obj.plotId
  * @param {number} obj.cbarId must be in the range, 0 - 21, each number represents different colorbar
+ * @param {number} obj.bias bias betwee 0 - 1, .5 is no bias
+ * @param {number} obj.contrast bias between 0 - 2, .1 is no contrast
+ * @param {boolean} obj.useRed use this band, only use with 3 color
+ * @param {boolean} obj.useGreen use this band, only use with 3 color
+ * @param {boolean} obj.useBlue use this band, only use with 3 color
+ *
  * @param {string|ActionScope} [obj.actionScope] default to group
  * @param {Function} [obj.dispatcher] only for special dispatching uses such as remote
  *
@@ -418,8 +424,10 @@ export function dispatchChangeImageVisibility({plotId, visible, dispatcher= flux
  * @function dispatchColorChange
  * @memberof firefly.action
  */
-export function dispatchColorChange({plotId, cbarId, actionScope=ActionScope.GROUP, dispatcher= flux.process} ) {
-    dispatcher({ type: COLOR_CHANGE, payload: { plotId, cbarId, actionScope }});
+export function dispatchColorChange({plotId, cbarId, bias, contrast,
+                                        useRed=true, useGreen=true, useBlue=true,
+                                        actionScope=ActionScope.GROUP, dispatcher= flux.process} ) {
+    dispatcher({ type: COLOR_CHANGE, payload: { plotId, cbarId, bias, contrast, useRed, useGreen, useBlue, actionScope }});
 }
 
 /**
@@ -925,8 +933,8 @@ export function dispatchUseTableAutoScroll(useAutoScroll) {
     flux.process({ type: USE_TABLE_AUTO_SCROLL, payload: {useAutoScroll} });
 }
 
-export function dispatchRequestLocalData({plotId, plotImageId}) {
-    flux.process({ type: REQUEST_LOCAL_DATA, payload: {plotId,plotImageId} });
+export function dispatchRequestLocalData({plotId, plotImageId, dataRequested=true}) {
+    flux.process({ type: REQUEST_LOCAL_DATA, payload: {plotId,plotImageId, dataRequested} });
 }
 
 /**
