@@ -125,7 +125,7 @@ const chartTableOptions= [
     {label: 'Table', value: SHOW_TABLE},
     {label: 'Chart', value: SHOW_CHART}
     ];
-const imageOp= {label: 'image', value: SHOW_IMAGE};
+const imageOp= {label: 'Image', value: SHOW_IMAGE};
 
 const choiceTBStyle= {display:'flex', flexDirection: 'column', background: '#c8c8c8', width:'100%', height:'100%'};
 const chartChoiceTBStyle= { width:'100%', height:'calc(100% - 30px)', background: '#c8c8c8'};
