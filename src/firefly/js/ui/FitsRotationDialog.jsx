@@ -59,7 +59,10 @@ function FitsRotationImmediatePanel() {
         const angle= Number(rotation);
         if (!validator(angle).valid) return;
         const rotateType= angle?RotateType.ANGLE:RotateType.UNROTATE;
-        dispatchRotate({plotId:plot.plotId, rotateType, angle} );
+                           // note on: (currRotation-angle)===6 ?  currRotation : angle
+                           // work around for a bug here with rc-slider, in certain cases on mouse up it will give a value 6 less
+                           // if the slider width is changed this adjustment will have to be different
+        dispatchRotate({plotId:plot.plotId, rotateType, angle: (currRotation-angle)===6 ?  currRotation : angle} );
     };
 
     const doRotateNorth= (rNorth) =>
