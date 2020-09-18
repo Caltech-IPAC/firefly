@@ -1,12 +1,37 @@
 # Release Notes
 
-Firefly builds and the notes for using running it are on the [Docker Page](https://hub.docker.com/r/ipac/firefly).
+Firefly builds and the notes for running it are on the [Docker Page](https://hub.docker.com/r/ipac/firefly).
 
 See Firefly docker guidelines [here](firefly-docker.md).
 
 ### Version _next_ (unreleased, current development)
 
 - docker tag: `nightly`
+
+
+### Version 2020.3
+- 2020.3 latest -  `release-2020.3`
+- 2020.3.0 - `release-2020.3.0` - original release
+
+##### _Notes_
+- This release contains many bugs fixes and focuses on stability
+- Less lines of source than last release
+
+##### _UI_
+- Long table cell entries are handled better  ([Firefly-595](https://github.com/Caltech-IPAC/firefly/pull/1005))
+- Small enhancements to TAP browser schema  ([Firefly-596](https://github.com/Caltech-IPAC/firefly/pull/999))
+- Web API production ready ([Firefly-568](https://github.com/Caltech-IPAC/firefly/pull/987))
+- Data products view production ready([Firefly-524](https://github.com/Caltech-IPAC/firefly/pull/979))
+
+
+##### _API_
+- Firefly Viewer will show a loading message started from the API ([Firefly-505](https://github.com/Caltech-IPAC/firefly/pull/1000))
+
+
+##### _Pull Request in this release_
+  - [bug fixes](https://github.com/Caltech-IPAC/firefly/pulls?q=is%3Apr+milestone%3A2020.3+label%3Abug)
+  - [All PRs](https://github.com/Caltech-IPAC/firefly/pulls?q=is%3Apr++milestone%3A2020.3+)
+
 
 
 ### Version 2020.2
