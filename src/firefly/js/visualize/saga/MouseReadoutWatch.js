@@ -24,7 +24,7 @@ import {
 
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const PAUSE_DELAY= 100;
+const PAUSE_DELAY= 30;
 
 
 /**

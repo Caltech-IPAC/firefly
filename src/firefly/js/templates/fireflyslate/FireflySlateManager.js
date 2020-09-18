@@ -229,10 +229,11 @@ function handleNewChart(layoutInfo, action, renderTreeId) {
     }
     
     if (!item) {
-        const cell= getNextCell(gridView,3,1);
+        const cell= getNextCell(gridView,2,2);
         const viewer= viewerId && getViewer(getMultiViewRoot(), viewerId);
-        if (!viewer || viewer.internallyManaged) return;
-        dispatchAddCell({row:cell.row,col:cell.col,width:1,height:1,cellId:viewerId,type:LO_VIEW.xyPlots, renderTreeId});
+        if (viewer || viewer?.internallyManaged) return;
+
+        dispatchAddCell({row:cell.row,col:cell.col,width:2,height:2,cellId:viewerId,type:LO_VIEW.xyPlots, renderTreeId});
     }
 
     return layoutInfo;
