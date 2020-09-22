@@ -8,7 +8,7 @@ import {once} from 'lodash';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {ToolbarButton,
         DropDownVerticalSeparator} from '../../ui/ToolbarButton.jsx';
-import {getDrawLayerByType, getDrawLayersByType, isDrawLayerAttached } from '../PlotViewUtil.js';
+import {getDrawLayerByType, getDrawLayersByType, getPlotViewAry, isDrawLayerAttached} from '../PlotViewUtil.js';
 import {dispatchCreateDrawLayer,
         getDlAry,
         dispatchAttachLayerToPlot,
@@ -22,6 +22,7 @@ import SELECT_CIRCLE from 'html/images/icons-2014/28x28_Circle.png';
 import SELECT_CIRCLE_ON from 'html/images/icons-2014/28x28_Circle-ON.png';
 import SELECT_NONE from 'html/images/icons-2014/28x28_Rect_DD.png';
 import {SelectedShape} from '../../drawingLayers/SelectedShape';
+import {visRoot} from '../ImagePlotCntlr.js';
 
 const NONSELECT = 'nonselect';
 
@@ -69,6 +70,7 @@ function updateSelect(pv, value, allPlots=true) {
 
         if (value !== NONSELECT) {
             detachSelectAreaRelatedLayers( pv, allPlots, selectAreaInfo()[value].typeId);
+            detachSelectArea(pv);
             // create a new one
             const dl = dispatchCreateDrawLayer(selectAreaInfo()[value].typeId, selectAreaInfo()[value].params);
 
@@ -93,9 +95,7 @@ export function detachSelectArea(pv, allPlots = true, id = SelectArea.TYPE_ID) {
     const dlAry = getDrawLayersByType(getDlAry(), id);
 
     dlAry.forEach((dl) => {
-        if (isDrawLayerAttached(dl, pv.plotId)) {
-            dispatchDetachLayerFromPlot(dl.drawLayerId, pv.plotId, allPlots, dl.destroyWhenAllDetached);
-        }
+        dispatchDetachLayerFromPlot(dl.drawLayerId, getPlotViewAry(visRoot()).map( (pv) => pv.plotId), allPlots, dl.destroyWhenAllDetached);
     });
 }
 

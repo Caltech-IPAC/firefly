@@ -10,6 +10,7 @@ import {WebPlotResult} from '../WebPlotResult.js';
 import {WebPlot} from '../WebPlot.js';
 import {makeCubeCtxAry, populateFromHeader} from './PlotImageTask';
 import {locateOtherIfMatched} from './WcsMatchTask';
+import {PlotAttribute} from '../PlotAttribute.js';
 
 
 
@@ -214,7 +215,7 @@ function processPlotReplace(dispatcher, result, pv, makeSuccessAction, makeFailA
             const {PlotCreateHeader:plotCreateHeader, PlotCreate:plotCreate}=resultAry[0].data;
             populateFromHeader(plotCreateHeader, plotCreate);
             const cubeCtxAry= makeCubeCtxAry(plotCreate);
-            let plotAry = plotCreate.map((pc,idx) => makePlot(pc, plotCreateHeader, pv, cubeCtxAry[idx]));
+            let plotAry = plotCreate.map((pc,idx) => makeCroppedPlot(pc, plotCreateHeader, pv, cubeCtxAry[idx]));
             if (plotAry.length===1 && pv.plots.length>1) {
                 const newP= plotAry[0];
                 plotAry= pv.plots.map( (p,idx) => idx===pv.primeIdx ? newP : p);
@@ -251,9 +252,13 @@ function getResultAry(result) {
 }
 
 
-function makePlot(pc,plotCreateHeader, pv, cubeCtx) {
+function makeCroppedPlot(pc,plotCreateHeader, pv, cubeCtx) {
     const oldPlot= primePlot(pv);
-    const plot= WebPlot.makeWebPlotData(pv.plotId, pc, oldPlot.attributes, false, cubeCtx);
+    const plot= WebPlot.makeWebPlotData(pv.plotId, pc,
+        {...oldPlot.attributes,
+            [PlotAttribute.IMAGE_BOUNDS_SELECTION]:undefined,
+            [PlotAttribute.SELECTION]: undefined},
+    false, cubeCtx);
     plot.title= oldPlot.title;
     return plot;
 }
