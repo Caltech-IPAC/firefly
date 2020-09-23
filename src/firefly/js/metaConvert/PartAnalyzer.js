@@ -162,11 +162,11 @@ function getTableChartColInfo(part, fileFormat) {
 function getTableDropTitleStr(title,part,fileFormat,tableOnly) {
     if (part.interpretedData) return title;
     if (fileFormat==='FITS') {
-        const tOrCStr= tableOnly ? 'table' : '';
+        const tOrCStr= tableOnly ? 'table' : 'table or chart';
         if (isImageAsTable(part,fileFormat)) {
             const twoD= getImageAsTableColCount(part,fileFormat)>2;
-            const imageAsStr=  twoD ? 'image - show as ': '1D image';
-            return `HDU #${part.index} (${imageAsStr}${tOrCStr}${twoD? ' or image':''})`;
+            const imageAsStr=  twoD ? '2D image - show as ': '1D image - show as ';
+            return `HDU #${part.index} (${imageAsStr}${tOrCStr}${twoD? ' or image':''}) ${title}`;
         }
         else {
             return `HDU #${part.index} (${tOrCStr}) ${title}`;
