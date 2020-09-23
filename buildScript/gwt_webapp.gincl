@@ -148,6 +148,13 @@ war {
 
   doFirst {
     archiveName = "${webapp.baseWarName}.war"
+
+    // workaround for duplicate fits.io in still.jar:  ensure classes are taken from fits_io.jar
+    copy{
+      from(zipTree("${fireflyPath}/jars/fits-io/fits_io.jar"))
+      into("${gwt.warDir}/WEB-INF/classes")
+      exclude "**/*.java"
+    }
   }
 }
 

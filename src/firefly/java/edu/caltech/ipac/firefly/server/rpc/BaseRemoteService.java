@@ -7,6 +7,8 @@ import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.server.rpc.RPC;
 import com.google.gwt.user.server.rpc.RPCRequest;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
+import com.google.gwt.user.server.rpc.SerializationPolicy;
+import com.google.gwt.user.server.rpc.SerializationPolicyLoader;
 import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.servlets.BaseHttpServlet;
@@ -16,9 +18,12 @@ import edu.caltech.ipac.firefly.server.util.VersionUtil;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
+import java.text.ParseException;
 
 /**
  * @author tatianag
@@ -46,6 +51,10 @@ public class BaseRemoteService extends RemoteServiceServlet {
         }
     }
 
+    @Override
+    protected SerializationPolicy doGetSerializationPolicy(HttpServletRequest request, String moduleBaseURL, String strongName) {
+        return BaseRemoteService.loadSerializationPolicy(this, request, moduleBaseURL, strongName);
+    }
 
     @Override
     public String processCall(String payload) throws SerializationException {
@@ -102,6 +111,44 @@ public class BaseRemoteService extends RemoteServiceServlet {
         return this.getClass().getSimpleName() +"." +
                         (req == null ? "unknown" : req.getMethod().getName());
 
+    }
+
+    /**
+     * customize serialization policy to allow proxying from different path
+     */
+    private static SerializationPolicy loadSerializationPolicy(HttpServlet servlet,
+                                   HttpServletRequest request, String moduleBaseURL, String strongName) {
+        // The serialization policy path depends only by context path
+        SerializationPolicy serializationPolicy = null;
+        String contextRelativePath = "/";
+        String serializationPolicyFilePath = SerializationPolicyLoader.getSerializationPolicyFileName(
+                contextRelativePath + strongName);
+        // Open the RPC resource file and read its contents.
+        InputStream is = servlet.getServletContext().getResourceAsStream(serializationPolicyFilePath);
+        try {
+            if (is != null) {
+                try {
+                    serializationPolicy = SerializationPolicyLoader.loadFromStream(is,null);
+                } catch (ParseException e) {
+                    servlet.log("ERROR: Failed to parse the policy file '" + serializationPolicyFilePath + "'", e);
+                } catch (IOException e) {
+                    servlet.log("ERROR: Could not read the policy file '" + serializationPolicyFilePath + "'", e);
+                }
+            } else {
+                String message = "ERROR: The serialization policy file '" + serializationPolicyFilePath
+                                    + "' was not found; did you forget to include it in this deployment?";
+                servlet.log(message);
+            }
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    // Ignore this error
+                }
+            }
+        }
+        return serializationPolicy;
     }
 
 }
