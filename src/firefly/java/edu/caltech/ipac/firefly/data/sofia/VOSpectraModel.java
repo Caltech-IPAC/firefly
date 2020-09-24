@@ -35,16 +35,16 @@ public interface VOSpectraModel {
         //Y AXIS
         FLUX("Flux", "Flux", Double.class,"phot.flux.density;em.MIR"), // unit should be replace by extractor
         //X AXIS
-        WAVELENGTH("wavelength", "Wavelength", Double.class,"em.wl;em.MIR"),
-        WAVENUMBER("wavenumber", "Wavenumber", Double.class,"em.wavenumber;em.MIR"),
+        WAVELENGTH("Wavelength", "Wavelength", Double.class,"em.wl;em.MIR"),
+        WAVENUMBER("Wavenumber", "Wavenumber", Double.class,"em.wavenumber;em.MIR"),
 //        FREQUENCY("wavelength", "Wavelength", Double.class),
         //ERRORs
-        ERROR_FLUX("error", "Error", Double.class,"stat.error;phot.flux.density;em.MIR"),
-        ATMOS_TRANSMISSION("transmission", "Transmission", Double.class,"phys.transmission;em.MIR"),
+        ERROR_FLUX("Error", "Error", Double.class,"stat.error;phot.flux.density;em.MIR"),
+        ATMOS_TRANSMISSION("Transmission", "Transmission", Double.class,"phys.transmission;em.MIR"),
         FREQUENCY ( "Frequency", "Frequency", Double.class, "em.freq"),
         VELOCITY ( "Velocity", "Velocity", Double.class, "spect.dopplerVeloc.radio"),
 
-        INST_RESP_CURVE("response", "Response", Double.class,"instr.det;em.MIR") ;
+        INST_RESP_CURVE("Response", "Response", Double.class,"instr.det;em.MIR") ;
 
         // ORDERS...
         String key;
