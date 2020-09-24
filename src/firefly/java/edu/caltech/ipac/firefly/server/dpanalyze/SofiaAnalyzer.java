@@ -187,7 +187,7 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
         FileAnalysisReport  freqReport = VoTableReader.analyze(frequencyTable, FileAnalysisReport.ReportType.Details);
         FileAnalysisReport.Part freqPart = freqReport.getPart(0);
 
-        freqPart.setDesc("Frequency Table Data in " + "HDU "+ hduIndex);
+        freqPart.setDesc("Spectrum in " + "HDU "+ hduIndex + " (table or chart)");
         freqPart.setFileLocationIndex(0);
         freqPart.setConvertedFileName(ServerContext.replaceWithPrefix(frequencyTable));
         freqPart.setConvertedFileFormat(freqReport.getFormat());
