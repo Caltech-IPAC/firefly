@@ -232,16 +232,16 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
             SofiaSpectraModel.SpectraInstrument instrument = SofiaSpectraModel.SpectraInstrument.getInstrument(inst);
             File spectra = extractSpectraTable(inputReport.getFilePath(), instrument);
 
-            DataGroup dg = inputReport.getPart(0).getDetails();
-            String spectraName = "Extracted Data ";
-            for (int i = 0; i <dg.size();i++) {
-                String key = (String) dg.getData("key", i);
-                if(key.equals("FILENAME")){
-                    String tmpName = (String) dg.getData("value", i);
-                    spectraName += tmpName.substring(0,tmpName.lastIndexOf("."));
-                    break;
-                }
-            }
+            String spectraName = "Extracted Data";
+//            DataGroup dg = inputReport.getPart(0).getDetails();
+//            for (int i = 0; i <dg.size();i++) {
+//                String key = (String) dg.getData("key", i);
+//                if(key.equals("FILENAME")){
+//                    String tmpName = (String) dg.getData("value", i);
+//                    spectraName += tmpName.substring(0,tmpName.lastIndexOf("."));
+//                    break;
+//                }
+//            }
             FileAnalysisReport tempRep = VoTableReader.analyze(spectra, FileAnalysisReport.ReportType.Details);
             FileAnalysisReport.Part tempPart = tempRep.getPart(0);
             FileAnalysisReport.Part addPart = tempPart.copy();
