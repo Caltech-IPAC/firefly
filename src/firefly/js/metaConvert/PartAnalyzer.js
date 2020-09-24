@@ -160,6 +160,7 @@ function getTableChartColInfo(part, fileFormat) {
  * @return {string}
  */
 function getTableDropTitleStr(title,part,fileFormat,tableOnly) {
+    if (title==='NoName' || !title) title='';
     if (part.interpretedData) return title;
     if (fileFormat==='FITS') {
         const tOrCStr= tableOnly ? 'table' : 'table or chart';
