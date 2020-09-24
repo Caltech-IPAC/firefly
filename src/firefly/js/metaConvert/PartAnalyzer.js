@@ -125,7 +125,7 @@ const C_COL2= ['flux','data','data1','data2'];
  * @param fileFormat
  * @return {{xCol:string,yCol:string,cNames:Array.<String>,cUnits:Array.<String>}|{}}
  */
-function getTableChartColInfo(part, fileFormat) {
+function getTableChartColInfo(title, part, fileFormat) {
     if (isImageAsTable(part,fileFormat)) {
         let cNames= [];
         const {tableColumnNames:overrideColNames, tableColumnUnits=[]}= part;
@@ -135,7 +135,7 @@ function getTableChartColInfo(part, fileFormat) {
         }
         else {
             for(let i=0; i<colCnt; i++) cNames.push(i===0?'naxis1_idx': `naxis1_data_${(i-1)}`);
-            if (colCnt===2) cNames[1]= 'DataLine';
+            if (colCnt===2) cNames[1]= title;
         }
         const cUnits= cNames.length===tableColumnUnits.length ? tableColumnUnits : undefined;
         return {xCol:cNames[0],yCol:cNames[1],cNames,cUnits};
@@ -199,7 +199,7 @@ function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, titl
     }
 
     const ddTitleStr= getTableDropTitleStr(title,part,partFormat,tableOnly);
-    const {xCol,yCol,cNames,cUnits}= getTableChartColInfo(part,partFormat);
+    const {xCol,yCol,cNames,cUnits}= getTableChartColInfo(title, part, partFormat);
 
     if (tableOnly) {
         return dpdtTable(ddTitleStr,
