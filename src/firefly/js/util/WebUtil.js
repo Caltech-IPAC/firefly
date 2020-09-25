@@ -6,6 +6,8 @@ import { forEach, fromPairs, get, has, isArray, isBoolean, isEqual, isFunction, 
 import slug from 'slug';
 import shallowequal from 'shallowequal';
 import update from 'immutability-helper';
+import {logger} from './Logger.js';
+
 
 
 const MEG          = 1048576;
@@ -279,7 +281,9 @@ export function encodeParams(params) {
  */
 export const encodeServerUrl= (url, params) => encodeUrl(url, params);
 
-export const logError= (...message) => message && message.forEach( (m) => console.log(has(m,'stack') ? m.stack : m) );
+export const logError= (...message) => {
+    message?.forEach?.( (m) => logger.error(m));
+};
 
 /**
  * Copy the content of the string to the clipboard
@@ -320,7 +324,8 @@ export function copyToClipboard(str) {
 //
 
 export function parseUrl(url) {
-    const {hash, host, hostname, href, origin, pathname, port, protocol, search, searchParams, username, password} = new URL(url);
+    const base = document?.baseURI || '';       // base is only used when url is relative, otherwise ignore.
+    const {hash, host, hostname, href, origin, pathname, port, protocol, search, searchParams, username, password} = new URL(url, base);
 
     // Convert query string to object map with decoded key/value pairs
     const searchObject = {};

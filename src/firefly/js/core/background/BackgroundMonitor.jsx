@@ -94,9 +94,10 @@ class BgFooter extends PureComponent {
         const {help_id = 'basics.bgmon', email=''} = this.props;
         const enableEmail = isNil(this.props.enableEmail) ? !!email : this.props.enableEmail;
         const toggleEnableEmail = (e) => {
-            const enableEmail = e.target.checked;
-            const email = enableEmail ? email : '';
-            dispatchBgSetEmailInfo({email, enableEmail});
+            const checked = e.target.checked;
+            const m_email = checked ? email : '';
+            dispatchBgSetEmailInfo({email: m_email, enableEmail: checked});
+
         };
         return (
             <div className='BGMon__footer' key='bgMonFooter'>

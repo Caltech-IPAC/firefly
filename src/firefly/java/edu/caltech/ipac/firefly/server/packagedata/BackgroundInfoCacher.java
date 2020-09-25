@@ -5,6 +5,7 @@ package edu.caltech.ipac.firefly.server.packagedata;
 
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
+import edu.caltech.ipac.firefly.core.background.JobAttributes;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.query.BackgroundEnv;
@@ -96,6 +97,14 @@ public class BackgroundInfoCacher {
     public void setStatus(BackgroundStatus bgStat) {
         BackgroundInfo info= getInfo();
         if (info!=null) {
+            // A temporary bgStat is created when BackgroundEnv.backgroundProcess exit without a status.
+            // any info saved to that instance of bgStat need to be merged back to this one.
+            BackgroundStatus cStatus = getStatus();
+            if (cStatus != null) {
+                if (cStatus.hasAttribute(JobAttributes.CanSendEmail)) {
+                    bgStat.addAttribute(JobAttributes.CanSendEmail);
+                }
+            }
             info.setBgStat(bgStat);
             updateInfo(info);
         }
