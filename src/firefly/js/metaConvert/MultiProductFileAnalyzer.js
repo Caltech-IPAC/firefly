@@ -324,7 +324,7 @@ function processAnalysisResult({table, row, request, activateParams, serverCache
     const imageParts= partAnalysis.filter( (pa) => pa.imageResult);
     let makeAllImageOption= !disableAllImageOption;
     if (makeAllImageOption) makeAllImageOption= imageParts.length>1 || (imageParts.length===1 && parts.length===1);
-    if (makeAllImageOption) makeAllImageOption= imageParts.every( (ip) => !ip.imageResult.override);
+    if (makeAllImageOption) makeAllImageOption= !(imageParts.every( (ip) => ip.imageResult.override));
     const duoImageTableParts= partAnalysis.filter( (pa) => pa.imageResult && pa.tableResult);
     if (makeAllImageOption && duoImageTableParts.length===1 && imageParts===1) makeAllImageOption= false;
     const useImagesFromPartAnalysis= parts.length>1 || !makeAllImageOption || duoImageTableParts.length;
