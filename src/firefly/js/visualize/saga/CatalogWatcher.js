@@ -13,7 +13,7 @@ import {serializeDecimateInfo} from '../../tables/Decimate.js';
 import {getDrawLayerById, getPlotViewById} from '../PlotViewUtil.js';
 import {dlRoot} from '../DrawLayerCntlr.js';
 import Catalog from '../../drawingLayers/Catalog.js';
-import {logError} from '../../util/WebUtil.js';
+import {logger} from '../../util/Logger.js';
 import {getMaxScatterRows} from '../../charts/ChartUtil.js';
 import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
 import {parseWorldPt} from '../Point.js';
@@ -147,7 +147,7 @@ function handleCatalogUpdate(tbl_id) {
         }
     ).catch(
         (reason) => {
-            logError(`Failed to catalog plot data: ${reason}`, reason);
+            logger.error(`Failed to catalog plot data: ${reason}`, reason);
         }
     );
 }

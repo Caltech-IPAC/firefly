@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {loadScript, logError, getRootURL} from '../util/WebUtil.js';
+import {loadScript, getRootURL} from '../util/WebUtil.js';
+import {logger} from '../util/Logger.js';
 
 const PLOTLY_SCRIPT= 'plotly-1.49.4.min.js';
 const LOAD_ERR_MSG= 'Load Failed: could not load Plotly';
@@ -27,7 +28,7 @@ function initPlotLyRetriever(loadNow) {
                 if (loadedPlotly) {
                     waitingResolvers.forEach((r) => r(loadedPlotly));
                 } else {
-                    logError(`Plotly object is not available after ${script} is loaded`);
+                    logger.error(`Plotly object is not available after ${script} is loaded`);
                     const err= Error(LOAD_ERR_MSG);
                     loadedPlotlyFailed= true;
                     waitingRejectors.forEach( (r) => r(err));

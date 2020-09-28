@@ -11,7 +11,6 @@ import {Logger} from '../util/Logger.js';
 import {getTblById, getColumns, isFullyLoaded, COL_TYPE} from '../tables/TableUtil.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
-import {logError} from '../util/WebUtil.js';
 import {DEFAULT_PLOT2D_VIEWER_ID, dispatchAddViewerItems, dispatchUpdateCustom, dispatchRemoveViewerItems,
     getMultiViewRoot, getViewer} from '../visualize/MultiViewCntlr.js';
 import {applyDefaults, flattenAnnotations, formatColExpr, getPointIdx, getRowIdx, handleTableSourceConnections, clearChartConn, newTraceFrom,
@@ -685,7 +684,7 @@ function reduceData(state={}, action={}) {
                 if (n > 0) {
                     state = updateSet(state, [chartId, 'mounted'], Number(n) - 1);
                 } else {
-                    logError(`CHART_UNMOUNT on unmounted chartId ${chartId}`);
+                    logger.error(`CHART_UNMOUNT on unmounted chartId ${chartId}`);
                 }
                 logger.info(`CHART_UNMOUNTED ${chartId} #mounted ${state[chartId].mounted}`);
             }
@@ -894,7 +893,7 @@ export function dispatchError(chartId, traceNum, reason) {
         message = `No data available${forTrace}`;
         reasonStr = '';
     } else {
-        logError(`${message}: ${reason}`);
+        logger.error(`${message}: ${reason}`);
         reasonStr = '';
     }
     const changes = {};

@@ -7,18 +7,19 @@ import { RegionType, RegionCsys, RegionValueUnit, regionPropsList,
          getRegionType, getRegionCoordSys, getRegionPointType, makeRegionFont, makeRegion,
          makeRegionPoint, makeRegionText, makeRegionBox, makeRegionBoxAnnulus,
          makeRegionAnnulus, makeRegionCircle, makeRegionEllipse, makeRegionEllipseAnnulus,
-         makeRegionLine, makeRegionPolygon, setRegionPropDefault} from './Region.js';
+         makeRegionLine, makeRegionPolygon} from './Region.js';
 import validator from 'validator';
 import CoordUtil from '../CoordUtil.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {makeWorldPt, makeImagePt} from '../Point.js';
 import {convertAngle} from '../VisUtil.js';
-import {logError, clone} from '../../util/WebUtil.js';
+import {clone} from '../../util/WebUtil.js';
 import CysConverter from '../CsysConverter.js';
 
 
 import {set, unset, has, get, isEmpty} from 'lodash';
 import Enum from 'enum';
+import {logger} from '../../util/Logger.js';
 
 const CoordType = new Enum(['lon', 'lat']);
 const defaultCoord = RegionCsys.PHYSICAL;
@@ -34,11 +35,11 @@ var RegionParseError = {
 
 function outputError(rg, rgStr, bReport = 1) {
     if (rg.type === RegionType.message || rg.message) {
-        if (bReport) logError(rg.message);
+        if (bReport) logger.error(rg.message);
     } else if (!rg.options) {
-        if (bReport) logError(`[invalid region: no options created]: '${rgStr}'`);
+        if (bReport) logger.error(`[invalid region: no options created]: '${rgStr}'`);
     } else if (rg.type === RegionType.undefined ) {
-        if (bReport) logError(`[invalid region: undefined region type] '${rgStr}'`);
+        if (bReport) logger.error(`[invalid region: undefined region type] '${rgStr}'`);
     } else {
         return 0;   // no error
     }

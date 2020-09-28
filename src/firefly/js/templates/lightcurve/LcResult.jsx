@@ -32,7 +32,7 @@ import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {getTblById, doFetchTable, isTblDataAvail} from '../../tables/TableUtil.js';
 import {MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchMultiValueChange, dispatchRestoreDefaults}  from '../../fieldGroup/FieldGroupCntlr.js';
-import {logError} from '../../util/WebUtil.js';
+import {logger} from '../../util/Logger.js';
 import {getConverter, getMissionName,  DL_DATA_TAG} from './LcConverterFactory.js';
 import {convertAngle} from '../../visualize/VisUtil.js';
 
@@ -361,7 +361,7 @@ function updateFullRawTable(callback) {
                 }
             ).catch(
                 (reason) => {
-                    logError(`Failed to get full raw table: ${reason}`, reason);
+                    logger.error(`Failed to get full raw table: ${reason}`, reason);
                 }
             );
        }

@@ -9,7 +9,7 @@ import DrawLayerCntrl, {dispatchCreateDrawLayer, dispatchDetachLayerFromPlot,
 import {getDrawLayerById, getPlotViewIdListInOverlayGroup} from '../PlotViewUtil.js';
 import RegionPlot, {createNewRegionLayerId, getRegionLayerTitle} from '../../drawingLayers/RegionPlot.js';
 import {visRoot} from '../ImagePlotCntlr.js';
-import {logError} from '../../util/WebUtil.js';
+import {logger} from '../../util/Logger.js';
 import {has, isArray, isEmpty, get, isNil} from 'lodash';
 
 const regionDrawLayerId = RegionPlot.TYPE_ID;
@@ -159,5 +159,5 @@ export function regionUpdateEntryActionCreator(rawAction) {
 }
 
 function reportError(errMsg) {
-    logError(errMsg);
+    logger.error(errMsg);
 }

@@ -7,7 +7,7 @@ import {get, isEmpty} from 'lodash';
 import {isPlotIdInPvNewPlotInfoAry,
          isDrawLayerVisible, getDrawLayerById, getPlotViewById} from '../visualize/PlotViewUtil.js';
 import {getRelatedDataById} from '../visualize/RelatedDataUtil.js';
-import {clone, logError} from '../util/WebUtil.js';
+import {clone} from '../util/WebUtil.js';
 import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
 import PointDataObj from '../visualize/draw/PointDataObj.js';
 import {DrawSymbol} from '../visualize/draw/DrawSymbol.js';
@@ -20,6 +20,7 @@ import {doFetchTable} from '../tables/TableUtil.js';
 import {getUIComponent} from './CatalogUI.jsx';
 import {findTableCenterColumns} from '../util/VOAnalyzer.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga';
+import {logger} from '../util/Logger.js';
 
 const TYPE_ID= 'ARTIFACT_TYPE';
 
@@ -93,7 +94,7 @@ function retrieveArtifactsTable(drawLayer) {
         }
     ).catch(
         (reason) => {
-            logError(`Failed retried artifact data: ${reason}`, reason);
+            logger.error(`Failed retried artifact data: ${reason}`, reason);
         }
     );
 }

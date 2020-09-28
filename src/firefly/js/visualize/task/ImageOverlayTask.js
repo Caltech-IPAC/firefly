@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {get} from 'lodash';
-import {logError} from '../../util/WebUtil.js';
+import {logger} from '../../util/Logger.js';
 import ImagePlotCntlr, {makeUniqueRequestKey, IMAGE_PLOT_KEY, dispatchPlotMask, dispatchZoom, dispatchPlotMaskLazyLoad} from '../ImagePlotCntlr.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {primePlot, getOverlayByPvAndId, getPlotViewById, getOverlayById} from '../PlotViewUtil.js';
@@ -127,7 +127,7 @@ function maskCall(vr, dispatcher, payload) {
 
     callGetWebPlot(maskRequest).then( (wpResult) => processMaskSuccessResponse(dispatcher,payload,wpResult) )
         .catch ( (e) => {
-            logError(`plot mask error, plotId: ${payload.plotId}`, e);
+            logger.error(`plot mask error, plotId: ${payload.plotId}`, e);
         });
 }
 

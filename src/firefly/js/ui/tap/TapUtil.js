@@ -1,11 +1,12 @@
 import {get} from 'lodash';
-import {logError} from '../../util/WebUtil.js';
+import {Logger} from '../../util/Logger.js';
 import {makeFileRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {doFetchTable, getColumnIdx, sortTableData} from '../../tables/TableUtil.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 import {getProp, hashCode} from '../../util/WebUtil.js';
 
+const logger = Logger('TapUtil');
 const qFragment = '/sync?REQUEST=doQuery&LANG=ADQL&';
 export const HeaderFont={fontSize: 12, fontWeight: 'bold', alignItems: 'center'};
 
@@ -53,7 +54,7 @@ export function loadTapSchemas(serviceUrl) {
     return doFetchTable(request).then((tableModel) => {
         if (tableModel.error) {
             tableModel.error = `Failed to get schemas for ${serviceUrl}: ${tableModel.error}`;
-            logError(tableModel.error);
+            logger.error(tableModel.error);
         } else if (tableModel.tableData) {
             // check if schema_index column is present
             // if it is, sort tabledata by schema_index
@@ -71,7 +72,7 @@ export function loadTapSchemas(serviceUrl) {
     }).catch((reason) => {
         const message = get(reason, 'message', reason);
         const error = `Failed to get schemas for ${serviceUrl}: ${message}`;
-        logError(error);
+        logger.error(error);
         return {error};
     });
 }
@@ -84,7 +85,7 @@ export function loadTapTables(serviceUrl, schemaName) {
     return doFetchTable(request).then((tableModel) => {
         if (tableModel.error) {
             tableModel.error = `Failed to get tables for ${serviceUrl} schema ${schemaName}: ${tableModel.error}`;
-            logError(tableModel.error);
+            logger.error(tableModel.error);
         } else if (tableModel.tableData) {
             // check if table_index column is present
             // if it is, sort tabledata by table_index
@@ -93,18 +94,18 @@ export function loadTapTables(serviceUrl, schemaName) {
             }
             if (getColumnIdx(tableModel, 'table_name') < 0) {
                 tableModel.error = `Invalid tables returned for ${serviceUrl} schema ${schemaName}`;
-                logError(tableModel.error);
+                logger.error(tableModel.error);
             }
         } else {
             tableModel.error = `No tables available for ${serviceUrl} schema ${schemaName}`;
-            logError(tableModel.error);
+            logger.error(tableModel.error);
         }
         return tableModel;
 
     }).catch((reason) => {
         const message = get(reason, 'message', reason);
         const error = `Failed to get tables for ${serviceUrl} schema ${schemaName}: ${message}`;
-        logError(error);
+        logger.error(error);
         return {error};
     });
 }
@@ -122,7 +123,7 @@ export function loadTapColumns(serviceUrl, schemaName, tableName) {
     return doFetchTable(request).then((tableModel) => {
         if (tableModel.error) {
             tableModel.error = `Failed to get columns for ${serviceUrl} schema ${schemaName}: ${tableModel.error}`;
-            logError(tableModel.error);
+            logger.error(tableModel.error);
         } else if (tableModel.tableData) {
             // check if column_index column is present
             // if it is, sort tabledata by column_index
@@ -131,18 +132,18 @@ export function loadTapColumns(serviceUrl, schemaName, tableName) {
             }
             if (getColumnIdx(tableModel, 'column_name') < 0) {
                 tableModel.error = `Invalid columns table returned for ${serviceUrl} schema ${schemaName} table ${tableName}`;
-                logError(tableModel.error);
+                logger.error(tableModel.error);
             }
         } else {
             tableModel.error = `No columns available for ${serviceUrl} schema ${schemaName} table ${tableName}`;
-            logError(tableModel.error);
+            logger.error(tableModel.error);
         }
         return tableModel;
 
     }).catch((reason) => {
         const message = get(reason, 'message', reason);
         const error = `Failed to get columns for ${serviceUrl} schema ${schemaName} table ${tableName}: ${message}`;
-        logError(error);
+        logger.error(error);
         return {error};
     });
 }

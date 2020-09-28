@@ -11,7 +11,7 @@ import shallowequal from 'shallowequal';
 import {dataReducer} from './reducer/TableDataReducer.js';
 import {uiReducer} from './reducer/TableUiReducer.js';
 import {resultsReducer} from './reducer/TableResultsReducer.js';
-import {updateMerge, logError} from '../util/WebUtil.js';
+import {updateMerge} from '../util/WebUtil.js';
 import {Logger} from '../util/Logger.js';
 import {FilterInfo} from './FilterInfo.js';
 import {selectedValues} from '../rpc/SearchServicesJson.js';
@@ -649,7 +649,7 @@ function syncFetch(request, hlRowIdx, dispatch, tbl_id) {
             try {
                 dispatch({type:TABLE_UPDATE, payload: tableModel});
             } catch (e) {
-                logError(e.stack);
+                logger.error(e.stack);
             }
         }).catch((error) => {
             dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, error.message)});

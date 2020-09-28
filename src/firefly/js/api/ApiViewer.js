@@ -14,7 +14,7 @@ import {debug} from './ApiUtil.js';
 import {dispatchRemoteAction}  from '../core/JsonUtils.js';
 import {dispatchPlotImage, dispatchPlotHiPS}  from '../visualize/ImagePlotCntlr.js';
 import {RequestType}  from '../visualize/RequestType.js';
-import {logError, hashCode, getRootURL, modifyURLToFull}  from '../util/WebUtil.js';
+import {hashCode, getRootURL, modifyURLToFull}  from '../util/WebUtil.js';
 import {Logger}  from '../util/Logger.js';
 import {confirmPlotRequest,findInvalidWPRKeys}  from '../visualize/WebPlotRequest.js';
 import {dispatchTableSearch, dispatchTableFetch}  from '../tables/TablesCntlr.js';
@@ -387,7 +387,7 @@ function plotRemoteXYPlot(params, viewerId, dispatch) {
             dispatchTableFetch(searchRequest, 0, undefined, dispatch);
             params = {...params, tbl_id: tblId};
         } else {
-            logError('Either tbl_id or source must be specified in the parameters');
+            logger.error('Either tbl_id or source must be specified in the parameters');
             return;
         }
     }
@@ -422,7 +422,7 @@ function plotRemoteHistogram(params, viewerId, dispatch) {
             dispatchTableFetch(searchRequest, 0, undefined, dispatch);
             params = {...params, tbl_id: tblId};
         } else {
-            logError('Either tbl_id or source must be specified in the parameters');
+            logger.error('Either tbl_id or source must be specified in the parameters');
             return;
         }
     }

@@ -9,7 +9,7 @@ import {primePlot, getPlotViewById} from '../PlotViewUtil.js';
 import {Tabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../../core/ComponentCntlr.js';
-import {logError} from '../../util/WebUtil.js';
+import {logger} from '../../util/Logger.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {getSizeAsString} from '../../util/WebUtil.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
@@ -352,7 +352,7 @@ export function fitsHeaderView(plotView,element) {
     if (resultTable) {
         showFitsHeaderPopup(plot, resultTable, element);
     } else {
-        logError(`fitsHeader error: ${plot.plotId}`);
+        logger.error(`fitsHeader error: ${plot.plotId}`);
     }
 
 }
