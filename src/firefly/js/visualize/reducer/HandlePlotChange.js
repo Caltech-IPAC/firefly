@@ -168,7 +168,7 @@ function changePlotAttribute(state,action) {
     const plot= primePlot(pv);
     if (!plot) return state;
     const newAtts= {...changes};
-    if (attKey && attValue) newAtts[attKey]= attValue;
+    if (attKey) newAtts[attKey]= attValue;
 
     if (positionScope) {
         plotViewAry= applyToOnePvOrAll(state.positionLock, plotViewAry, plotId, false,
