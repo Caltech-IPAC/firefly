@@ -150,10 +150,15 @@ export function getFluxInfo(sndReadout){
     const fluxArray= fluxObj.map( ({value,unit,title,precision}) => {
         let fluxValue= value;
         if (!isNaN(value )) {
-            const min = Number('0.'+'0'.repeat(precision-1)+'1');
-            fluxValue = (Math.abs(value) < 1000  &&Math.abs(value)>min ) ?
-                `${myFormat(value, precision)}` :
-                value.toExponential(6).replace('e+', 'E');
+            if (precision) {
+                const min = Number('0.'+'0'.repeat(precision-1)+'1');
+                fluxValue = (Math.abs(value) < 1000  &&Math.abs(value)>min ) ?
+                    `${myFormat(value, precision)}` :
+                    value.toExponential(6).replace('e+', 'E');
+            }
+            else {
+                fluxValue= `${Math.trunc(value)}`;
+            }
             if (unit && !isNaN(value)) fluxValue+= ` ${unit}`;
         }
 
