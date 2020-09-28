@@ -26,7 +26,8 @@ const getSetInSrByRow= (table,sr,rowNum) => (col) => {
 
 
 export function createTableActivate(source, titleStr, activateParams, tbl_index=0) {
-    return createChartTableActivate(false, source, titleStr, activateParams,undefined,tbl_index);
+
+    return createChartTableActivate(false, source, {titleStr, showChartTitle:true}, activateParams,undefined,tbl_index);
 }
 
 const makeCommaSeparated= (strAry) => strAry.reduce( (str,d) => str? `${str},${d}` : d,'');
@@ -50,7 +51,7 @@ const makeCommaSeparated= (strAry) => strAry.reduce( (str,d) => str? `${str},${d
  * Activate a chart and table
  * @param {boolean} chartAndTable - true - both char and table, false - table only
  * @param {String} source
- * @param {String} titleStr - the title of the table or chart
+ * @param {titleInfo} an object that has a titleStr and showchartTile properties
  * @param {ActivateParams} activateParams
  * @param {ChartInfo} chartInfo
  * @param {Number} tbl_index
@@ -60,7 +61,8 @@ const makeCommaSeparated= (strAry) => strAry.reduce( (str,d) => str? `${str},${d
  * @param {String} tbl_id
  * @return {function} the activate function
  */
-export function createChartTableActivate(chartAndTable,source, titleStr, activateParams, chartInfo={}, tbl_index=0,
+
+export function createChartTableActivate(chartAndTable,source, titleInfo, activateParams, chartInfo={}, tbl_index=0,
                                          colNames= undefined, colUnits= undefined,
                                          chartId='part-result-chart', tbl_id= 'part-result-tbl') {
     return () => {
@@ -83,7 +85,7 @@ export function createChartTableActivate(chartAndTable,source, titleStr, activat
         const {tableGroupViewerId}= activateParams;
         const colNamesStr= colNames && makeCommaSeparated(colNames);
         const colUnitsStr= colUnits && makeCommaSeparated(colUnits);
-        const dataTableReq= makeFileRequest(titleStr, source, undefined,
+        const dataTableReq= makeFileRequest(titleInfo.titleStr, source, undefined,
             {
                 tbl_id,
                 tbl_index,
@@ -97,7 +99,7 @@ export function createChartTableActivate(chartAndTable,source, titleStr, activat
         if (colNamesStr) dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_COL_NAMES]=  colNamesStr;
         if (colUnitsStr) dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_UNITS]=  colUnitsStr;
 
-        const dispatchCharts=  chartAndTable && makeChartObj(chartInfo,activateParams,titleStr,chartId,tbl_id);
+        const dispatchCharts=  chartAndTable && makeChartObj(chartInfo, activateParams,titleInfo,chartId,tbl_id);
         if (!noop) {
             dispatchTableSearch(dataTableReq,
                 {
@@ -177,16 +179,22 @@ function makeChartFromParams(tbl_id, chartParams, computeXAxis, computeYAxis,tit
 
 
 
-function makeChartObj(chartInfo, activateParams, titleStr, chartId, tbl_id ) {
+function makeChartObj(chartInfo,  activateParams, titleInfo, chartId, tbl_id ) {
 
     const {chartViewerId:viewerId}= activateParams;
     const {chartParamsAry}= chartInfo;
     const {xAxis, yAxis}= chartInfo;
 
+    /* The table and chart title is the part's desc field. When the HDU does not have extname defined, the desc in the
+     part is not defined.  In such case, the title is defined in PartAnalyzer is 'table_'+ HDU-index.  In order to change
+     the table name to this title and now show the same title in the chart,  the titleInfo object is introduced. It tells
+     if the showChartTitle or not.  if showChartTitle is false, the chart title is removed. 
+     */
+    const chartTitle= titleInfo.showChartTitle ?titleInfo.titleStr:'';
     if (chartParamsAry) {
         let chartNum=1;
         return chartParamsAry
-            .map((chartParams) => makeChartFromParams(tbl_id, chartParams, xAxis, yAxis, titleStr))
+            .map((chartParams) => makeChartFromParams(tbl_id, chartParams, xAxis, yAxis, chartTitle))
             .map((dataLayout) => ({viewerId, groupId: viewerId, chartId: `${chartId}--${chartNum++}`, ...dataLayout}));
     }
     else {
@@ -199,7 +207,7 @@ function makeChartObj(chartInfo, activateParams, titleStr, chartId, tbl_id ) {
                     mode: 'lines+markers'
                 }],
             layout: {
-                title: {text: titleStr},
+                title: {text: chartTitle},
                 xaxis: {showgrid: true},
                 yaxis: {showgrid: true, range: [0, undefined]},
             }
