@@ -352,7 +352,7 @@ function ViewAsText({text, ...rest}) {
         } catch (e) {}      // if text is not JSON, just show as is.
     }
 
-    const label = 'Apply formatting so that it is easier to read';
+    const label = 'View with formatting';
     return (
         <PopupPanel title={'View as plain text'} style={{flexDirection: 'column'}} {...rest}>
             <div style={{display: 'flex', alignItems: 'center'}}>
