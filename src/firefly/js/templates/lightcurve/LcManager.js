@@ -8,7 +8,7 @@ import {SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo,
 import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, TABLE_SEARCH, TABLE_FETCH,
         dispatchTableRemove, dispatchTableHighlight, dispatchTableFetch, dispatchTableSort} from '../../tables/TablesCntlr.js';
 import {getCellValue, getTblById, getTblIdsByGroup, getActiveTableId, smartMerge, getColumnIdx, removeTablesFromGroup} from '../../tables/TableUtil.js';
-import {updateSet, updateMerge, logError} from '../../util/WebUtil.js';
+import {updateSet, updateMerge} from '../../util/WebUtil.js';
 import ImagePlotCntlr, {dispatchPlotImage, visRoot, dispatchDeletePlotView,
         dispatchChangeActivePlotView,
         WcsMatchType, dispatchWcsMatch} from '../../visualize/ImagePlotCntlr.js';
@@ -24,6 +24,7 @@ import {sortInfoString} from '../../tables/SortInfo.js';
 import {makeMissionEntries, keepHighlightedRowSynced} from './LcUtil.jsx';
 import {dispatchMountFieldGroup} from '../../fieldGroup/FieldGroupCntlr.js';
 import {dispatchChartAdd} from '../../charts/ChartsCntlr.js';
+import {logger} from '../../util/Logger.js';
 
 
 
@@ -497,7 +498,7 @@ function handleRawTableLoad(layoutInfo, tblId) {
     const {converterData, missionEntries} = makeMissionEntries(rawTable.tableMeta);
 
     if (!converterData) {
-        logError('Unknown mission or no converter');
+        logger.error('Unknown mission or no converter');
         newLayoutInfo = updateSet(layoutInfo, 'error', 'Unknown mission or no converter');
     }
 
@@ -508,7 +509,7 @@ function handleRawTableLoad(layoutInfo, tblId) {
         }
     }
     if (rawTable.error) {
-        logError('Table load error: ' + rawTable.error);
+        logger.error('Table load error: ' + rawTable.error);
         return updateSet(layoutInfo, 'error', rawTable.error);
     }
 

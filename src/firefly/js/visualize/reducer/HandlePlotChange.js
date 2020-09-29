@@ -12,7 +12,7 @@ import {WebPlot, clonePlotWithZoom, isHiPS, isImage,
     replaceHiPSProjectionUsingProperties, getHiPsTitleFromProperties} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {replaceHiPSProjection, changeProjectionCenter} from '../HiPSUtil.js';
-import {logError, updateSet} from '../../util/WebUtil.js';
+import {updateSet} from '../../util/WebUtil.js';
 import {CCUtil, CysConverter} from '../CsysConverter.js';
 import {convert, isPlotNorth, getRotationAngle, isCsysDirMatching, isEastLeftOfNorth} from '../VisUtil';
 import {PlotPref} from '../PlotPref';
@@ -38,6 +38,7 @@ import {UserZoomTypes} from '../ZoomUtil.js';
 import {RotateType} from '../PlotState.js';
 import {updateTransform} from '../PlotTransformUtils.js';
 import {WebPlotRequest} from '../WebPlotRequest.js';
+import {logger} from '../../util/Logger.js';
 
 
 //============ EXPORTS ===========
@@ -246,7 +247,7 @@ function installTiles(state, action) {
     let plot= primePlot(pv);
 
     if (!plot || !primaryStateJson) {
-        logError('primePlot undefined or primaryStateJson is not set.', new Error());
+        logger.error('primePlot undefined or primaryStateJson is not set.', new Error());
         console.log('installTiles: state, action', state, action);
         return state;
     }

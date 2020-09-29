@@ -6,7 +6,7 @@ import {Style} from '../draw/DrawingDef.js';
 import {primePlot, getDrawLayerById} from '../PlotViewUtil.js';
 import {dispatchCreateDrawLayer, getDlAry, dispatchAttachLayerToPlot, dispatchModifyCustomField,
                         dispatchDestroyDrawLayer} from '../DrawLayerCntlr.js';
-import {logError, clone} from '../../util/WebUtil.js';
+import {clone} from '../../util/WebUtil.js';
 import {ImageLineBasedObj} from '../draw/ImageLineBasedObj.js';
 import ImagePlotCntlr, {visRoot, dispatchPlotImage} from '../ImagePlotCntlr.js';
 import {makeTblRequest, cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
@@ -19,6 +19,7 @@ import {getTblById, doFetchTable, getColumnIdx, getColumn} from '../../tables/Ta
 import LSSTFootprint from '../../drawingLayers/ImageLineBasedFootprint';
 import {convertAngle, isAngleUnit} from '../VisUtil.js';
 import {findTableCenterColumns} from '../../util/VOAnalyzer.js';
+import {logger} from '../../util/Logger.js';
 
 
 export const isLsstFootprintTable = (tableModel) => {
@@ -79,7 +80,7 @@ export function imageLineBasedfootprintActionCreator(action) {
         let   tbl_id;
 
         if (!drawLayerId) {
-            logError('no lsst drawlayer id specified');
+            logger.error('no lsst drawlayer id specified');
             return;
         }
 
@@ -93,7 +94,7 @@ export function imageLineBasedfootprintActionCreator(action) {
         }
 
         if (!imagePlotId) {
-            logError('no lsst image for footprint overlay');
+            logger.error('no lsst image for footprint overlay');
             return;
         }
 
@@ -298,7 +299,7 @@ function getFootprintDataFromTable(tableModel) {
         }
     ).catch(
         (reason) => {
-            logError(`Failed to lsst footprint data: ${reason}`, reason);
+            logger.error(`Failed to lsst footprint data: ${reason}`, reason);
         }
     );
 }
@@ -430,7 +431,7 @@ function handleFootprintUpdate(tbl_id, drawLayerId, plotId) {
         initFootprint(fpData, drawLayerId, tbl_id, plotId, null);
     }).catch (
         (reason) => {
-            logError(reason);
+            logger.error(reason);
         }
     );
 }

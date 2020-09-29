@@ -3,8 +3,8 @@ import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import {get, isArray, isUndefined, debounce} from 'lodash';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
+import {logger} from '../util/Logger.js';
 
-import {logError} from '../util/WebUtil.js';
 
 import {InputFieldView} from './InputFieldView.jsx';
 import './SuggestBoxInputField.css';
@@ -146,7 +146,7 @@ export class SuggestBoxInputFieldView extends PureComponent {
             } else {
                 if (this.state.isOpen) this.setState({isOpen: false, suggestions: []});
             }
-        }).catch((err) => logError(err));
+        }).catch((err) => logger.error(err));
     }
 
 

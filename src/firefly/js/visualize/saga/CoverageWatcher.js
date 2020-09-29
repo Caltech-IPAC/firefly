@@ -17,7 +17,7 @@ import {serializeDecimateInfo} from '../../tables/Decimate.js';
 import {DrawSymbol} from '../draw/DrawSymbol.js';
 import {computeCentralPtRadiusAverage, toDegrees} from '../VisUtil.js';
 import {makeWorldPt, pointEquals} from '../Point.js';
-import {logError} from '../../util/WebUtil.js';
+import {logger} from '../../util/Logger.js';
 import {getCornersColumns} from '../../tables/TableInfoUtil.js';
 import {dispatchCreateDrawLayer,dispatchDestroyDrawLayer, dispatchModifyCustomField,
                          dispatchAttachLayerToPlot, getDlAry} from '../DrawLayerCntlr.js';
@@ -302,14 +302,13 @@ function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, 
                 (reason) => {
                     preparedTables[tbl_id] = undefined;
                     tblCatIdMap[tbl_id] = undefined;
-                    logError(`Failed to catalog plot data: ${reason}`, reason);
+                    logger.error(`Failed to catalog plot data: ${reason}`, reason);
                 }
             );
 
         }
     } catch (e) {
-        logError('Error updating coverage');
-        console.log(e);
+        logger.error('Error updating coverage', e);
     }
 }
 

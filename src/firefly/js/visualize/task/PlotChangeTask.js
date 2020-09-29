@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {logError} from '../../util/WebUtil.js';
+import {logger} from '../../util/Logger.js';
 import ImagePlotCntlr, {IMAGE_PLOT_KEY, dispatchWcsMatch, ActionScope} from '../ImagePlotCntlr.js';
 import {primePlot, getPlotViewById, operateOnOthersInOverlayColorGroup, getPlotStateAry} from '../PlotViewUtil.js';
 import {callCrop, callChangeColor, callRecomputeStretch} from '../../rpc/PlotServicesJson.js';
@@ -161,7 +161,7 @@ function doCrop(dispatcher,pv,imagePt1, imagePt2, cropMultiAll, originalWcsMatch
             originalWcsMatchType && dispatchWcsMatch({plotId:pv.plotId, matchType:originalWcsMatchType});
         })
         .catch ( (e) => { dispatcher(makeFailAction(pv.plotId) );
-            logError(`plot error, rotate , plotId: ${pv.plotId}`, e);
+            logger.error(`plot error, rotate , plotId: ${pv.plotId}`, e);
             });
 }
 
@@ -177,7 +177,7 @@ function doStretch(dispatcher,getState, store,plotId,stretchData) {
         .catch ( (e) => {
             dispatcher( { type: ImagePlotCntlr.STRETCH_CHANGE_FAIL, 
                           payload: {plotId, message: 'Stretch Failed', stretchData, error:e} } );
-            logError(`plot error, stretch change, plotId: ${plot.plotId}`, e);
+            logger.error(`plot error, stretch change, plotId: ${plot.plotId}`, e);
         });
 }
 
@@ -193,7 +193,7 @@ function doColorChange(dispatcher,getState, store,plotId,cbarId) {
         .catch ( (e) => {
             dispatcher( { type: ImagePlotCntlr.COLOR_CHANGE_FAIL, 
                           payload: {plotId, message: 'Color change Failed', cbarId, error:e} } );
-            logError(`plot error, color change, plotId: ${plot.plotId}`, e);
+            logger.error(`plot error, color change, plotId: ${plot.plotId}`, e);
         });
 }
 

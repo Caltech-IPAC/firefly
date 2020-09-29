@@ -38,7 +38,7 @@ import LSSTFootprint, {
 } from '../../drawingLayers/ImageLineBasedFootprint';
 import {callGetAreaStatistics} from '../../rpc/PlotServicesJson';
 import {showImageAreaStatsPopup} from './ImageStatsPopup';
-import {logError} from '../../util/WebUtil';
+import {logger} from '../../util/Logger.js';
 import CoordUtil from '../CoordUtil';
 import {isImageOverlayLayersActive} from '../RelatedDataUtil';
 import {showInfoPopup} from '../../ui/PopupUtil';
@@ -89,7 +89,7 @@ export function stats(pv) {
             showImageAreaStatsPopup(p.title, tblData, pv.plotId);
         })
         .catch ( (e) => {
-            logError(`error, stat , plotId: ${p.plotId}`, e);
+            logger.error(`error, stat , plotId: ${p.plotId}`, e);
         });
 }
 

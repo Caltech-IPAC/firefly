@@ -8,7 +8,7 @@ import {modifyRequest, processPlotImageSuccessResponse} from '../task/PlotImageT
 import {callGetWebPlot, callGetWebPlotGroup, callGetWebPlot3Color} from '../../rpc/PlotServicesJson.js';
 import {getPlotViewById} from '../PlotViewUtil.js';
 import {Band} from '../Band.js';
-import {logError} from '../../util/WebUtil.js';
+import {logger} from '../../util/Logger.js';
 
 
 
@@ -191,7 +191,7 @@ function continueSinglePlotting(rawAction, dispatcher) {
     p.then( (wpResult) => processPlotImageSuccessResponse(dispatcher,rawAction.payload,wpResult) )
         .catch ( (e) => {
             dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_FAIL, payload: {plotId, error:e} } );
-            logError(`plot error, ImagePlotter, plotId: ${plotId}`, e);
+            logger.error(`plot error, ImagePlotter, plotId: ${plotId}`, e);
         });
 }
 
@@ -208,7 +208,7 @@ function continueGroupPlotting(rawAction, dispatcher) {
         .then( (wpResult) => processPlotImageSuccessResponse(dispatcher,rawAction.payload,wpResult) )
         .catch ( (e) => {
             dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_FAIL, payload: {wpRequestAry, error:e} } );
-            logError('plot group error', e);
+            logger.error('plot group error', e);
         });
 }
 

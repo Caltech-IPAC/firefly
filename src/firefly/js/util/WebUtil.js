@@ -279,8 +279,6 @@ export function encodeParams(params) {
  */
 export const encodeServerUrl= (url, params) => encodeUrl(url, params);
 
-export const logError= (...message) => message && message.forEach( (m) => console.log(has(m,'stack') ? m.stack : m) );
-
 /**
  * Copy the content of the string to the clipboard
  * @param str
@@ -320,7 +318,8 @@ export function copyToClipboard(str) {
 //
 
 export function parseUrl(url) {
-    const {hash, host, hostname, href, origin, pathname, port, protocol, search, searchParams, username, password} = new URL(url);
+    const base = document?.baseURI || '';       // base is only used when url is relative, otherwise ignore.
+    const {hash, host, hostname, href, origin, pathname, port, protocol, search, searchParams, username, password} = new URL(url, base);
 
     // Convert query string to object map with decoded key/value pairs
     const searchObject = {};

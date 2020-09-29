@@ -5,7 +5,7 @@
 import {get} from 'lodash';
 import {UserZoomTypes, getArcSecPerPix, getEstimatedFullZoomFactor,
     getNextZoomLevel, getZoomLevelForScale, FullType} from '../ZoomUtil.js';
-import {logError} from '../../util/WebUtil.js';
+import {logger} from '../../util/Logger.js';
 import {isImage, isHiPS} from '../WebPlot.js';
 import ImagePlotCntlr, {ActionScope, IMAGE_PLOT_KEY, WcsMatchType,
                        dispatchUpdateViewSize, dispatchRecenter} from '../ImagePlotCntlr.js';
@@ -265,7 +265,7 @@ function zoomPlotIdNow(dispatcher,preZoomVisRoot,plotId,zoomLevel,isFullScreen,g
         .then( (wpResult) => processZoomSuccess(dispatcher,preZoomVisRoot,plotId,zoomLevel,wpResult,getState) )
         .catch ( (e) => {
             dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_FAIL, payload: {plotId, zoomLevel, error:e} } );
-            logError(`plot error, Zoom, plotId: ${pv.plotId}`, e);
+            logger.error(`plot error, Zoom, plotId: ${pv.plotId}`, e);
         });
 }
 

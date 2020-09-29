@@ -9,7 +9,7 @@ import shallowequal from 'shallowequal';
 import {debounce, isEmpty, isString, set, omit} from 'lodash';
 import {getPlotLy} from '../PlotlyConfig.js';
 import {getChartData, useChartRedraw, useScatterGL, usePlotlyReact} from '../ChartsCntlr.js';
-import {logError, deltas, flattenObject, toSlug, getModuleName} from '../../util/WebUtil.js';
+import {deltas, flattenObject, toSlug, getModuleName} from '../../util/WebUtil.js';
 import {logger} from '../../util/Logger.js';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import Enum from 'enum';
@@ -74,7 +74,7 @@ export function downloadChart(chartId) {
             const filename= toSlug(getFilename(chartDiv,chartId));
             Plotly.downloadImage(chartDiv, { format: 'png', filename});
         } else {
-            logError(`Image download has failed for chart id ${chartId}`);
+            logger.error(`Image download has failed for chart id ${chartId}`);
         }
     });
 }

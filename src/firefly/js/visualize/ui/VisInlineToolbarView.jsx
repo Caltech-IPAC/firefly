@@ -70,6 +70,6 @@ VisInlineToolbarView.propTypes= {
     showExpand : PropTypes.bool,
     expandGrid : PropTypes.bool,
     showDelete : PropTypes.bool,
-    help_id : PropTypes.bool,
+    help_id : PropTypes.string,
     showToolbarButton : PropTypes.bool
 };

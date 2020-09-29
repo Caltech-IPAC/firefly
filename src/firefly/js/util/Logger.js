@@ -9,7 +9,7 @@ import moment from 'moment';
 
 -- A typical use case:
 
-    import {Logger} from './WebUtils.js'
+    import {Logger} from './Logger.js'
     const logger = Logger('a-tag');
 
     logger.info('a-message')
@@ -20,7 +20,7 @@ import moment from 'moment';
 
 
 -- If you don't want to tag your messages, simply import logger directly:
-    import {logger} from './WebUtils.js'
+    import {logger} from './Logger.js'
 
     logger.info('useful info')
     logger.tag('something').error('unexpected error', error);   // adding a tag for this one message.  a bit wasteful, since a new Logger is created for this one message.

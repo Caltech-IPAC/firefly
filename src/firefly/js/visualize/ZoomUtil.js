@@ -4,7 +4,7 @@
 
 import Enum from 'enum';
 import {sprintf} from '../externalSource/sprintf';
-import {logError} from '../util/WebUtil.js';
+import {logger} from '../util/Logger.js';
 import {getPixScaleArcSec, isImage} from './WebPlot.js';
 import {PlotAttribute} from './PlotAttribute.js';
 import {getFoV, primePlot} from './PlotViewUtil.js';
@@ -82,7 +82,7 @@ export function getNextZoomLevel(plot, zoomType) {
         }
     }
     else {
-        logError('unsupported zoomType');
+        logger.error('unsupported zoomType');
     }
     return newLevel;
 }

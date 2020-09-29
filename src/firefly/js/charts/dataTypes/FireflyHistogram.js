@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {get, identity, isArray, isUndefined, uniqueId} from 'lodash';
-import {logError} from '../../util/WebUtil.js';
+import {logger} from '../../util/Logger.js';
 import {COL_TYPE, getColumn, getColumns, getTblById, doFetchTable, stripColumnNameQuotes} from '../../tables/TableUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
@@ -186,27 +186,27 @@ function validateData(histogramData, logScale) {
         if (histogramData) {
             for (var i = 0; i < histogramData.length; i++) {
                 if (histogramData[i].length < 3) {
-                    logError(`Invalid histogram data in row ${i} [${histogramData[i]}]`);
+                    logger.error(`Invalid histogram data in row ${i} [${histogramData[i]}]`);
                     valid = false;
                 } else if (histogramData[i][1]>histogramData[i][2]) {
-                    logError(`Histogram data row ${i}: minimum is more than maximum. [${histogramData[i]}]`);
+                    logger.error(`Histogram data row ${i}: minimum is more than maximum. [${histogramData[i]}]`);
                     valid=false;
                 } else if (histogramData[i+1] && Math.abs(histogramData[i][2]-histogramData[i+1][1])>1000*Number.EPSILON &&
                     histogramData[i][2]>histogramData[i+1][1]) {
-                    logError(`Histogram data row ${i}: bin range overlaps the following row. [${histogramData[i]}]`);
+                    logger.error(`Histogram data row ${i}: bin range overlaps the following row. [${histogramData[i]}]`);
                     valid=false;
                 } else if (histogramData[i][0] < 0) {
-                    logError(`Histogram data row ${i} count is less than zero, ${histogramData[i][0]}`);
+                    logger.error(`Histogram data row ${i} count is less than zero, ${histogramData[i][0]}`);
                     valid=false;
                 }
             }
             if (logScale && histogramData[0][1]<=0) {
-                logError('Unable to plot histogram: zero or subzero values on logarithmic scale');
+                logger.error('Unable to plot histogram: zero or subzero values on logarithmic scale');
                 valid = false;
             }
         }
     } catch (e) {
-        logError(`Invalid data passed to Histogram: ${e}`);
+        logger.error(`Invalid data passed to Histogram: ${e}`);
         valid = false;
     }
     return valid;

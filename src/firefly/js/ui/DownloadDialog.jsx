@@ -297,16 +297,16 @@ export function EmailNotification({style}) {
     const [{email, enableEmail}] = useStoreConnector(getBgEmailInfo);
 
     const toggleEnableEmail = (e) => {
-        const enableEmail = e.target.checked;
-        const email = enableEmail ? email : '';
-        dispatchBgSetEmailInfo({email, enableEmail});
+        const checked = e.target.checked;
+        const m_email = checked ? email : '';
+        dispatchBgSetEmailInfo({email: m_email, enableEmail: checked});
     };
 
-    const onEmailChanged = useCallback((v) => {
+    const onEmailChanged = (v) => {
         if (get(v, 'valid')) {
             if (email !== v.value) dispatchBgSetEmailInfo({email: v.value});
         }
-    }, [email]);
+    };
 
     return (
         <div style={style}>

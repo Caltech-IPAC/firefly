@@ -18,7 +18,7 @@ import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {MAX_ROW} from '../tables/TableRequestUtil.js';
 import {dispatchAddTaskCount, dispatchRemoveTaskCount, makeTaskId } from '../core/AppDataCntlr.js';
 import {doFetchTable} from '../tables/TableUtil';
-import {logError} from '../util/WebUtil';
+import {logger} from '../util/Logger.js';
 import {dispatchModifyCustomField, getDlAry} from '../visualize/DrawLayerCntlr';
 import {cloneRequest} from '../tables/TableRequestUtil';
 import {dispatchAddActionWatcher} from '../core/MasterSaga';
@@ -79,7 +79,7 @@ function loadMocFitsWatcher(action, cancelSelf, params, dispatch, getState) {
                 }
             ).catch(
                 (reason) => {
-                    logError(`Failed to MOC table: ${reason}`, reason);
+                    logger.error(`Failed to MOC table: ${reason}`, reason);
                 }
             );
 

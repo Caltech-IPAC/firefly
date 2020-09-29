@@ -4,8 +4,8 @@
 
 import {get, isNil} from 'lodash';
 import {TitleOptions, AnnotationOps} from '../../visualize/WebPlotRequest.js';
-import {logError} from '../../util/WebUtil.js';
-import {makePTFPlotRequest,getWebPlotRequestViaPTFIbe} from './ptf/PTFPlotRequests.js';
+import {logger} from '../../util/Logger.js';
+import {getWebPlotRequestViaPTFIbe} from './ptf/PTFPlotRequests.js';
 import {getWebPlotRequestViaWISEIbe} from './wise/WisePlotRequests.js';
 import {makeLsstSdssPlotRequest} from './lsst_sdss/LsstSdssPlotRequests.js';
 import {makeURLPlotRequest} from './generic/DefaultPlotRequests.js';
@@ -19,7 +19,7 @@ import {ZTFSettingBox, ztfOnNewRawTable, ztfOnFieldUpdate, ztfRawTableRequest, i
 import {getWebPlotRequestViaZTFIbe} from './ztf/ZTFPlotRequests.js';
 
 import {LC} from './LcManager.js';
-import {getColumnIdx, getTblInfoById} from '../../tables/TableUtil';
+import {getTblInfoById} from '../../tables/TableUtil';
 import {PlotAttribute} from '../../visualize/PlotAttribute';
 
 export const DL_DATA_TAG = 'timeseries-package';
@@ -231,7 +231,7 @@ export function getAllConverterIds() {
 export function getConverter(converterId = UNKNOWN_MISSION) {
     const converter = converters[converterId];
     if (!converter) {
-        logError(`Unable to find dataset converter ${converterId}`);
+        logger.error(`Unable to find dataset converter ${converterId}`);
         return;
     }
     return converter;
