@@ -36,7 +36,7 @@ See Firefly docker guidelines [here](firefly-docker.md).
 
 ### Version 2020.2
 - 2020.2 latest -  `release-2020.2`
-- 2020.2.0 - `release-2020.1.0` - original release
+- 2020.2.0 - `release-2020.2.0` - original release
 
 
 ##### _UI_
