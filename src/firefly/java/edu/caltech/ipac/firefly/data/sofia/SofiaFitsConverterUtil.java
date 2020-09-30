@@ -53,7 +53,7 @@ public class SofiaFitsConverterUtil {
         //PS3_0 is the EXTNAME in the BinaryTableHDU
         header.addLine(new HeaderCard( "PS3_0", waveTableName, "WAVE-TAB binary table name (added by Sofia)"));
         //PS3_1 is the column name for the coordinate array
-        header.addLine(new HeaderCard( "PS3_1", "COORDS", "WAVE-TAB Coordinate (added by Sofia)"));
+        header.addLine(new HeaderCard( "PS3_1", "wavelength", "WAVE-TAB Coordinate (added by Sofia)"));
         header.addLine(new HeaderCard( "PS3_3", 1, "axis number for the Coordinate (added by Sofia)"));
         //If the wavelength is depending on the axes, the PC3_j (j=1, 2, 3) have to be defined.  By default, PC3_3 is 1.
         if (!header.containsKey("PC3_1")) {
@@ -89,7 +89,7 @@ public class SofiaFitsConverterUtil {
 
         BinaryTable tbl = BinaryTableHDU.encapsulate(cols);
         Header hdr = BinaryTableHDU.manufactureHeader(tbl);
-        hdr.addValue("TTYPE1", "COORDS", "number of table fields (added by Sofia)");
+        hdr.addValue("TTYPE1", "wavelength", "number of table fields (added by Sofia)");
         hdr.addValue("EXTNAME", header.getStringValue("EXTNAME"), "wavelength table name from the original image header (added by Sofia)");
 
         return new BinaryTableHDU(hdr, tbl);

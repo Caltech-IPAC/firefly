@@ -109,7 +109,8 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
      * @throws Exception
      */
     private FileAnalysisReport convertFIFIImage(String inputFile) throws Exception {
-        
+
+             BasicHDU[] HDUs = new Fits(inputFile).read();
             //create a temp file to save the converted FITs file
             //need to use unique name since the filename as a key stored in the cache
             String[] strAry = inputFile.split("/");
@@ -123,9 +124,15 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
             FileAnalysisReport report  = (FitsHDUUtil.analyze(outputFile, FileAnalysisReport.ReportType.Details)).getReport();
 
             List<FileAnalysisReport.Part> parts = report.getParts();
-            //assign the convertedFileName so it can be used
+            //assign the convertedFileName to the part that is changed
             for (int i=0; i<parts.size();i++){
-                parts.get(i).setConvertedFileName(ServerContext.replaceWithPrefix(outputFile));
+                Header header = HDUs[i].getHeader();
+                if (header.containsKey("EXTNAME")) {
+                    String extName = header.getStringValue("EXTNAME").toUpperCase();
+                    if (extName.equalsIgnoreCase("flux") || extName.equalsIgnoreCase("wavelength")) {
+                        parts.get(i).setConvertedFileName(ServerContext.replaceWithPrefix(outputFile));
+                    }
+                }
             }
             //delete the temp file once the application ends.
             outputFile.deleteOnExit();
