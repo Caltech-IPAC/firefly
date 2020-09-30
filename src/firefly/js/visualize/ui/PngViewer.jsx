@@ -29,7 +29,7 @@ export const PngViewer = memo(()=> {
                 <div style={{overflow: 'auto', display: 'flex', justifyContent: 'center', alignItem: 'center'}}>
                     <img src={png_url} alt={`Preview not found: ${png_url}`}
                          onError={()=>setBadUrl(png_url)}
-                         style={{maxWidth: '100%', flexGrow: 0, flexShrink: 0}}
+                         style={{width:'100%', objectFit:'contain', flexGrow: 0, flexShrink: 0}}
                     />
                 </div>
             </div>
