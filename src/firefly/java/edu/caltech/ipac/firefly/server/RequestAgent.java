@@ -162,7 +162,7 @@ public class RequestAgent {
 
             String remoteIP = getHeader("X-Forwarded-For", request.getRemoteAddr());
             String proto = getHeader("X-Forwarded-Proto", request.getScheme());
-            String host = request.getServerName();
+            String host = getHeader("X-Forwarded-Host", request.getServerName());
             String serverPort = getHeader("X-Forwarded-Port", String.valueOf(request.getServerPort()));
             serverPort = serverPort.equals("80") || serverPort.equals("443") ? "" : ":" + serverPort;
             String contextPath = getPath(request);
