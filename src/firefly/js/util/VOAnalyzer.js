@@ -1152,6 +1152,11 @@ export function applyLinkSub(tableModel, href='', rowIdx, defval='') {
  * @returns {string}    the resolved href after subsitution
  */
 export function applyTokenSub(tableModel, val='', rowIdx, def) {
+
+    if (!val) {
+        return def;
+    }
+
     const vars = val.match && val.match(/\${[\w -.]+}/g);
     let rval = val;
     if (vars) {
