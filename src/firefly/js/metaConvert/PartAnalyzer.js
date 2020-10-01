@@ -9,6 +9,7 @@ import {TitleOptions} from '../visualize/WebPlotRequest';
 import {createChartTableActivate, createChartSingleRowArrayActivate} from './converterUtils';
 import {createSingleImageActivate} from './ImageDataProductsUtil';
 import {isEmpty} from 'lodash';
+
 /**
  *
  * @param part
@@ -121,11 +122,12 @@ const C_COL2= ['flux','data','data1','data2'];
  * xCol and yCol is return it an appropriate one if found
  * if table is a Fits image rendered as a table the cNames is always returned, cUnits is return if specified in the part
  * if the table is a FITS table or some other type of table then the cNames and cUnits is never returned.
+ * @param title
  * @param part
  * @param fileFormat
  * @return {{xCol:string,yCol:string,cNames:Array.<String>,cUnits:Array.<String>}|{}}
  */
-function getTableChartColInfo(part, fileFormat) {
+function getTableChartColInfo(title, part, fileFormat) {
     if (isImageAsTable(part,fileFormat)) {
         let cNames= [];
         const {tableColumnNames:overrideColNames, tableColumnUnits=[]}= part;
@@ -135,7 +137,7 @@ function getTableChartColInfo(part, fileFormat) {
         }
         else {
             for(let i=0; i<colCnt; i++) cNames.push(i===0?'naxis1_idx': `naxis1_data_${(i-1)}`);
-            if (colCnt===2) cNames[1]= 'DataLine';
+            if (colCnt===2) cNames[1]= !title? 'pixel value':title;
         }
         const cUnits= cNames.length===tableColumnUnits.length ? tableColumnUnits : undefined;
         return {xCol:cNames[0],yCol:cNames[1],cNames,cUnits};
@@ -160,6 +162,7 @@ function getTableChartColInfo(part, fileFormat) {
  * @return {string}
  */
 function getTableDropTitleStr(title,part,fileFormat,tableOnly) {
+    if (!title) title='';
     if (part.interpretedData) return title;
     if (fileFormat==='FITS') {
         const tOrCStr= tableOnly ? 'table' : 'table or chart';
@@ -198,16 +201,26 @@ function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, titl
     }
 
     const ddTitleStr= getTableDropTitleStr(title,part,partFormat,tableOnly);
-    const {xCol,yCol,cNames,cUnits}= getTableChartColInfo(part,partFormat);
+    const {xCol,yCol,cNames,cUnits}= getTableChartColInfo(title, part, partFormat);
+
+    //define title for table and chart
+    let titleInfo={titleStr:title, showChartTitle:true};
+    if (!title){
+        titleInfo.titleStr=`table_${part.index}`;
+        titleInfo.showChartTitle=false;
+    }
 
     if (tableOnly) {
         return dpdtTable(ddTitleStr,
-            createChartTableActivate(false, fileOnServer,title,activateParams,
+            createChartTableActivate(false, fileOnServer,titleInfo,activateParams,
             undefined, tbl_index, cNames, cUnits),
             undefined, {paIdx:tbl_index,requestDefault});
     }
     else {
+
         if ( (!xCol || !yCol) && !chartParamsAry) return;
+
+
         let {chartTableDefOption}= part;
         if (getRowCnt(part,partFormat)===1) {
             if (chartTableDefOption===AUTO) chartTableDefOption= SHOW_TABLE;
@@ -220,7 +233,7 @@ function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, titl
             const chartInfo= {xAxis:xCol, yAxis:yCol, chartParamsAry};
             if (chartTableDefOption===AUTO) chartTableDefOption= imageAsTableColCnt===2 ? SHOW_CHART : SHOW_TABLE;
             return dpdtChartTable(ddTitleStr,
-                createChartTableActivate(true, fileOnServer,title,activateParams,chartInfo,tbl_index,cNames,cUnits),
+                createChartTableActivate(true, fileOnServer,titleInfo,activateParams,chartInfo,tbl_index,cNames,cUnits),
                 undefined, {paIdx:tbl_index, chartTableDefOption, interpretedData, requestDefault});
         }
     }

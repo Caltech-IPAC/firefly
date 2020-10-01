@@ -66,17 +66,23 @@ public class FitsHDUUtil {
                     ptype = HeaderOnly;
                 }
 
-                String desc = i == 0 ? "Primary" : null;
+                String desc=null;
                 if (desc == null) desc = header.getStringValue("EXTNAME");
                 if (desc == null) desc = header.getStringValue("NAME");
-                if (desc == null) desc = isCompressed ? "CompressedImage" : "NoName";
+                if (desc == null && isCompressed) desc = "CompressedImage";
+
 
                 FileAnalysisReport.Part part = new FileAnalysisReport.Part(ptype, desc);
                 part.setIndex(i);
                 part.setFileLocationIndex(i);
                 if (ptype == Table) {
                     TableHDU<?> tHdu= (TableHDU<?>)parts[i];
-                    desc = String.format("%s (%d cols x %d rows)", desc, tHdu.getNCols(), tHdu.getNRows());
+                    if (desc!=null) {
+                        desc = String.format("%s (%d cols x %d rows)", desc, tHdu.getNCols(), tHdu.getNRows());
+                    }
+                    else {
+                        desc = String.format(" %d cols x %d rows ",  tHdu.getNCols(), tHdu.getNRows());
+                    }
                     part.setTotalTableRows(tHdu.getNRows());
                     part.setDesc(desc);
                 }
