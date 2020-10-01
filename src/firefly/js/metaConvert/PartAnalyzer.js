@@ -244,9 +244,9 @@ function analyzeImageResult(part, request, table, row, fileFormat, fileOnServer,
     if (uiEntry===UIEntry.UseSpecified && uiRender!==UIRender.Image) return undefined;
     const newReq= request.makeCopy();
     let override= false;
-    if (fileOnServer) {
+    if (part.convertedFileName) {
         newReq.setRequestType(RequestType.FILE);
-        newReq.setFileName(fileOnServer);
+        newReq.setFileName(part.convertedFileName);
         newReq.setTitle(title);
         newReq.setTitleOptions(TitleOptions.NONE);
         override= true;
