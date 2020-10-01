@@ -243,6 +243,13 @@ public class PixelValue {
 		/*if (Double.isNaN(retval))
 		    throw new PixelValueException("No flux available");*/
 		break;
+		case 64:
+		bytes_per_pixel = 8;
+		file_pointer = data_offset + pixel_offset * bytes_per_pixel;
+		fits_file.seek(file_pointer);
+		file_value = fits_file.readLong();
+		retval = file_value * bscale + bzero;
+		break;
 	    default:
 		retval = Double.NaN;
 		break;

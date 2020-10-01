@@ -21,6 +21,7 @@ import {
     getWaveLengthUnits, hasPixelLevelWLInfo, hasPlaneOnlyWLInfo,
     isImageCube, wavelengthInfoParsedSuccessfully
 } from '../PlotViewUtil';
+import {getNumberHeader, HdrConst} from '../FitsHeaderUtil.js';
 
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -243,6 +244,14 @@ function makeImagePlotAsyncReadout(plotView, worldPt, screenPt, imagePt, threeCo
 }
 
 
+
+function isFluxInt(plot,band) {
+    const h= plot.headerAry[band.value];
+    if (!h) return false;
+    const bp= getNumberHeader(h,HdrConst.BITPIX);
+    return (bp>0);
+}
+
 /**
  *
  * @param readout
@@ -257,11 +266,14 @@ function makeReadoutWithFlux(readout, plot, fluxResult,threeColor) {
     const labels= getFluxLabels(plot);
     if (threeColor) {
         const bands = plot.plotState.getBands();
-        bands.forEach( (b,idx) =>
-            readout[b.key+'Flux']= makeValueReadoutItem(labels[idx], fluxData?.[idx]?.value,fluxData?.[idx]?.unit, 6 ));
+        bands.forEach( (b,idx) => {
+            const isInt= isFluxInt(plot,b);
+            readout[b.key+'Flux']= makeValueReadoutItem(labels[idx], fluxData?.[idx]?.value,fluxData?.[idx]?.unit, isInt?0:6 );
+        });
     }
     else {
-        readout.nobandFlux= makeValueReadoutItem(labels[0], fluxData?.[0]?.value,fluxData?.[0]?.unit, 6);
+        const isInt= isFluxInt(plot,Band.NO_BAND);
+        readout.nobandFlux= makeValueReadoutItem(labels[0], fluxData?.[0]?.value,fluxData?.[0]?.unit, isInt?0:6);
     }
     if (fluxData) {
         const oIdx= fluxData.findIndex( (d) => d.imageOverlay);
