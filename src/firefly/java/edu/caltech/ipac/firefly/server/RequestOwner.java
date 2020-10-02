@@ -195,10 +195,6 @@ public class RequestOwner implements Cloneable {
         return ro;
     }
 
-    public String getProtocol() {
-        return requestAgent.getProtocol();
-    }
-
     public String getBaseUrl() {
         return requestAgent.getBaseUrl();
     }
@@ -207,11 +203,7 @@ public class RequestOwner implements Cloneable {
      * return host url including protocol
      */
     public String getHostUrl() {
-        return (getProtocol().toLowerCase().startsWith("https") ? "https" : "http") + "://" + getHost();
-    }
-
-    public String getHost() {
-        return requestAgent.getHost();
+        return requestAgent.getHostUrl();
     }
 
 //====================================================================

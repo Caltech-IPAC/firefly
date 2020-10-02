@@ -406,19 +406,19 @@ export const LinkCell = React.memo(({cellInfo, style, ...rest}) => {
  */
 export const createLinkCell = ({hrefColIdx, value}) => {
 
-    return ({rowIndex, data, colIdx, ...CellProps}) => {
+    return ({rowIndex, data, colIdx, height, width, columnKey}) => {
         hrefColIdx = hrefColIdx || colIdx;
         const href = get(data, [rowIndex, hrefColIdx], 'undef');
         const val = value || get(data, [rowIndex, colIdx], 'undef');
         if (href === 'undef' || href === '#') {
             return (
-                <Cell {...CellProps}>
+                <Cell {...{rowIndex, height, width, columnKey}}>
                     {val}
                 </Cell>
             );
         } else {
             return (
-                <Cell {...CellProps}>
+                <Cell {...{rowIndex, height, width, columnKey}}>
                     <a target='_blank' href={href}>{val}</a>
                 </Cell>
             );
