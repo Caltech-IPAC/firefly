@@ -1153,7 +1153,7 @@ export function applyLinkSub(tableModel, href='', rowIdx, defval='') {
  */
 export function applyTokenSub(tableModel, val='', rowIdx, def) {
 
-    const vars = val?.match?.(/${[\w -.]+}/g);
+    const vars = val?.match?.(/\${[\w -.]+}/g);
     let rval = val;
     if (vars) {
         vars.forEach((v) => {
