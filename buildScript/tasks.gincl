@@ -295,6 +295,7 @@ task checkoutFirefly (dependsOn: [loadConfig]) {
             throw new GradleException("Unable to resolve tag/branch name.  Tag can be defined as a 'firefly.tag.name' property or in a file referenced by a 'firefly.tag.file' property")
         }
         doExec fireflyPath, 'git', 'checkout', tag_name
+        doExec fireflyPath, 'git', 'reset', '--hard'
     }
 }
 
