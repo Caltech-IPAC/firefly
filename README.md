@@ -38,9 +38,9 @@ Firefly shows 2D graphs interactively so that a user can read the data point val
 ## Branches
 There are several branches the this repository.  Here are the ones that you should care about.
 
- - rc-YYYY.N: the next release caniddate branch.  This is generally the most stable branch.
- - dev: this branch could be updated every day. It is the active development branch. It is not stable. Nightly builds are performed.
- - firefly-xxx-reason, IRSA-xxx: Those branches are temporary for development feature branches and are associated with corresponding tickets in IPAC Jira.
+ - rc-YYYY.N: The next release candidate branch.  This is generally the most stable branch.
+ - dev: This branch could be updated every day. It is the active development branch. It is not stable. Nightly builds are performed.
+ - firefly-xxx-reason, IRSA-xxx: These branches are temporary development feature branches and are associated with corresponding tickets in IPAC Jira.
  - master: No longer regularly updated and should not be used by anyone.
 
 
