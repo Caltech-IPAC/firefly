@@ -1,6 +1,6 @@
 # Release Notes
 
-Firefly builds and the notes for running it are on the [Docker Page](https://hub.docker.com/r/ipac/firefly).
+You can find Firefly builds and the notes for running Firefly are on the [Docker Page](https://hub.docker.com/r/ipac/firefly).
 
 See Firefly docker guidelines [here](firefly-docker.md).
 
@@ -16,16 +16,20 @@ See Firefly docker guidelines [here](firefly-docker.md).
 ##### _Notes_
 - This release contains many bugs fixes and focuses on stability
 - Less lines of source than last release
+- Some significant table updates
+- Data Products viewer and Web API are now production ready
 
 ##### _UI_
 - Long table cell entries are handled better  ([Firefly-595](https://github.com/Caltech-IPAC/firefly/pull/1005))
 - Small enhancements to TAP browser schema  ([Firefly-596](https://github.com/Caltech-IPAC/firefly/pull/999))
 - Web API production ready ([Firefly-568](https://github.com/Caltech-IPAC/firefly/pull/987))
 - Data products view production ready([Firefly-524](https://github.com/Caltech-IPAC/firefly/pull/979))
+- Predefined Cell renders ([Firefly-574](https://github.com/Caltech-IPAC/firefly/pull/1015)) 
 
 
 ##### _API_
 - Firefly Viewer will show a loading message started from the API ([Firefly-505](https://github.com/Caltech-IPAC/firefly/pull/1000))
+- Predefined Cell renders ([Firefly-574](https://github.com/Caltech-IPAC/firefly/pull/1015)) 
 
 
 ##### _Pull Request in this release_
