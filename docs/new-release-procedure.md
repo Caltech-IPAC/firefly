@@ -41,9 +41,12 @@
    - start docker on your laptop
    - `docker pull ipac/firefly:release-yyyy.m.r`
    - `docker run --rm  -p 8090:8080 -m 4G --name firefly ipac/firefly:release-yyyy.m.r`
-   - `http://localhost:8090/firefly/`
-   - bring up version information, confirm build date and version
-   - test one of the new features
+   - Look at the main page: 
+     - http://localhost:8090/firefly/
+     - bring up version information, confirm build date and version
+     - test one of the new features
+   - Look at test pages
+     - http://localhost:8090/firefly/test
    
 1. **Merge RR, Reset the Version in config to development, Push dev**
    - merge rc into dev
