@@ -34,6 +34,11 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
+ * Display server's information, i.e. jvm, ehcache, counters, packaging queue, messaging status, event queue, embeded db
+ *
+ * optional parameters:
+ *  headers=true    : show request headers, including JWT if exists
+ *
  * Date: Jun 3, 2009
  *
  * @author loi
@@ -43,8 +48,7 @@ public class ServerStatus extends BaseHttpServlet {
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
 
-        boolean showHeaders = Boolean.valueOf(req.getParameter("headers"));
-        String jwt = req.getParameter("jwt");
+        boolean showHeaders = Boolean.parseBoolean(req.getParameter("headers"));
 
         res.addHeader("content-type", "text/plain");
         PrintWriter writer = res.getWriter();
@@ -71,7 +75,7 @@ public class ServerStatus extends BaseHttpServlet {
 
             if (showHeaders) {
                 skip(writer);
-                showHeaders(writer, req, jwt);
+                showHeaders(writer, req);
             }
 
 
@@ -185,7 +189,7 @@ public class ServerStatus extends BaseHttpServlet {
         w.println(StringUtils.toString(PackagingController.getInstance().getStatus(), "\n"));
     }
 
-    private static void showHeaders(PrintWriter w, HttpServletRequest req, String jwt) {
+    private static void showHeaders(PrintWriter w, HttpServletRequest req) {
 
         w.println("Request Headers");
         w.println("---------------");
@@ -196,6 +200,7 @@ public class ServerStatus extends BaseHttpServlet {
             w.println(String.format("    %s: %s", name, value));
         }
 
+        String jwt = req.getParameter("jwt");
         if (!StringUtils.isEmpty(jwt)) {
             // these are JWT tokens
             skip(w);
@@ -223,55 +228,4 @@ public class ServerStatus extends BaseHttpServlet {
             );
         }
     }
-
-
-//====================================================================
-//  not used... should remove
-//====================================================================
-
-    boolean isTestRunning = false;
-    private void testSharedCache() {
-
-        if (!isTestRunning) {
-            isTestRunning = true;
-            new Thread(new Runnable(){
-                public void run() {
-                    // test shared cache
-                    Runtime runtime = Runtime.getRuntime();
-
-                    System.out.println("Beginning:");
-                    System.out.println("----------------------------");
-                    System.out.print("max:" + runtime.maxMemory() / 1024);
-                    System.out.print("    alloc:" + runtime.totalMemory()/1024);
-                    System.out.println("    free:" + runtime.freeMemory()/1024);
-                    System.out.println("----------------------------");
-                    Cache testcache = edu.caltech.ipac.util.cache.CacheManager.getCache(Cache.TYPE_VIS_SHARED_MEM);
-                    for (int i = 0; i < 1000; i++) {
-                        double[] data = new double[1000000];
-                        Arrays.fill(data, 12F);
-                        testcache.put(new StringKey(System.currentTimeMillis()), data);
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e) {}
-
-                        System.out.println("after " + i + ":");
-                        System.out.println("----------------------------");
-                        System.out.print("max:" + runtime.maxMemory() / 1024);
-                        System.out.print("    alloc:" + runtime.totalMemory() / 1024);
-                        System.out.println("    free:" + runtime.freeMemory() / 1024);
-                        System.out.println("----------------------------");
-                        System.out.flush();
-                    }
-                    System.out.println("End");
-                    System.out.println("----------------------------");
-                    System.out.print("max:" + runtime.maxMemory()/1024);
-                    System.out.print("    alloc:" + runtime.totalMemory()/1024);
-                    System.out.println("    free:" + runtime.freeMemory()/1024);
-                    System.out.println("----------------------------");
-                }
-            }).start();
-        }
-
-    }
-
 }

@@ -148,16 +148,6 @@ public class RequestAgent {
             this.request = request;
             this.response = response;
 
-            /*
-            LOG.info("---------- HEADERS -----------");
-            Enumeration<String> itr = request.getHeaderNames();
-            while (itr.hasMoreElements()) {
-                String h = itr.nextElement();
-                LOG.info(h + ": " + request.getHeader(h));
-            }
-            LOG.info("-------------------------------");
-             */
-
             // getting the base url including the application path is a bit tricky when behind reverse proxy(ies)
             URL referer = null;
 
@@ -207,13 +197,6 @@ public class RequestAgent {
             setRemoteIP(remoteIP);
             setSessId(request.getSession(true).getId());
 
-            /*
-            LOG.info("baseUrl: " + baseUrl);
-            LOG.info("hostUrl: " + hostUrl);
-            LOG.info("requestUrl: " + requestUrl);
-            LOG.info("contextPath: " + contextPath);
-            LOG.info("remoteIP: " + remoteIP);
-             */
         }
 
         @Override
