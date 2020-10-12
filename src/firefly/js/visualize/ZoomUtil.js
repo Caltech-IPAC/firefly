@@ -11,7 +11,8 @@ import {getFoV, primePlot} from './PlotViewUtil.js';
 import {convertAngle} from './VisUtil.js';
 
 
-export const levels= [.03125, .0625, .125,.25,.5, .75, 1,2,3, 4,5, 6, 7,8, 9, 10, 11, 12, 13, 14, 15, 16, 32];
+export const levels= [.03125, .0625, .125,.1,.25,.3, .4, .5, .75, .8, .9, 1, 1.25, 1.5,2, 2.5,3, 3.5,
+                         4,5, 6, 7,8, 9, 10, 11, 12, 13, 14, 15, 16, 18,20,22,24,28, 32];
 export const FullType = new Enum(['ONLY_WIDTH', 'WIDTH_HEIGHT', 'ONLY_HEIGHT', 'SMART']);
 
 // const hiPSLevelsOLD= [0.000000007445312,

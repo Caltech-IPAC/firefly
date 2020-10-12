@@ -10,7 +10,7 @@ import {getActivePlotView, getPlotViewById} from '../PlotViewUtil.js';
 import {ThumbnailView} from './ThumbnailView.jsx';
 import {MagnifiedView} from './MagnifiedView.jsx';
 import {lastMouseImageReadout, lastMouseCtx} from '../VisMouseSync';
-import {useMouseStoreConnector} from '../../ui/SimpleComponent';
+import {useMouseStoreConnector} from './MouseStoreConnector.jsx';
 
 const style= {
     display: 'inline-block',

@@ -27,7 +27,7 @@ export const ServiceType= new Enum(['IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'M
                                               { ignoreCase: true });
 /**
  * @summary title options
- * @description can be 'NONE', 'PLOT_DESC', 'FILE_NAME', 'HEADER_KEY', 'PLOT_DESC_PLUS', 'SERVICE_OBS_DATE'
+ * @description can be 'CLEARED', 'PLOT_DESC', 'FILE_NAME', 'HEADER_KEY', 'PLOT_DESC_PLUS', 'SERVICE_OBS_DATE'
  * @public
  * @global
  */

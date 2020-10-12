@@ -78,6 +78,10 @@
         <servlet-name>FireFly CommandService</servlet-name>
         <url-pattern>/sticky/CmdSrv</url-pattern>
     </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>FireFly CommandService</servlet-name>
+        <url-pattern>/sticky/CmdSrvNoZip</url-pattern>
+    </servlet-mapping>
 
     <servlet>
         <servlet-name>H2Console</servlet-name>

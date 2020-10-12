@@ -35,7 +35,7 @@ public class PlotImages implements Serializable,
 //======================================================================
 //----------------------- Constructors ---------------------------------
 //======================================================================
-    public PlotImages() {this("NONE", 10, 0 , 0, 1F); }
+    public PlotImages() {this("CLEARED", 10, 0 , 0, 1F); }
 
     public PlotImages(String templateName, int size, int screenWidth, int screenHeight, float zfact) {
         _templateName= templateName;

@@ -4,7 +4,12 @@
 
 import {flatten, isArray, uniqueId, uniqBy, isEmpty} from 'lodash';
 import {WebPlotRequest, GridOnStatus} from '../WebPlotRequest.js';
-import ImagePlotCntlr, {visRoot, makeUniqueRequestKey, IMAGE_PLOT_KEY} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {
+    visRoot,
+    makeUniqueRequestKey,
+    IMAGE_PLOT_KEY,
+    dispatchRequestLocalData
+} from '../ImagePlotCntlr.js';
 import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
 import {dispatchActiveTarget, getActiveTarget} from '../../core/AppDataCntlr.js';
 import {WebPlot, RDConst, isImage} from '../WebPlot.js';
@@ -16,7 +21,14 @@ import {Band} from '../Band.js';
 import {PlotPref} from '../PlotPref.js';
 import {makePostPlotTitle} from '../reducer/PlotTitle.js';
 import {dispatchAddViewerItems, getMultiViewRoot, findViewerWithItemId, EXPANDED_MODE_RESERVED, IMAGE, DEFAULT_FITS_VIEWER_ID} from '../MultiViewCntlr.js';
-import {getPlotViewById, getDrawLayerByType, getDrawLayersByType, getDrawLayerById, getPlotViewIdListInOverlayGroup} from '../PlotViewUtil.js';
+import {
+    getPlotViewById,
+    getDrawLayerByType,
+    getDrawLayersByType,
+    getDrawLayerById,
+    getPlotViewIdListInOverlayGroup,
+    removeRawDataByPlotView, canLoadStretchDataDirect
+} from '../PlotViewUtil.js';
 import {enableMatchingRelatedData, enableRelatedDataLayer} from '../RelatedDataUtil.js';
 import {modifyRequestForWcsMatch} from './WcsMatchTask.js';
 import WebGrid from '../../drawingLayers/WebGrid.js';
@@ -146,6 +158,8 @@ export function makePlotImageAction(rawAction) {
 
         if (!wpRequestAry) {
             payload= makeSinglePlotPayload(vr, rawAction.payload, requestKey);
+            removeRawDataByPlotView(getPlotViewById(visRoot(),payload.plotId));
+
         }
         else {
             const {viewerId=DEFAULT_FITS_VIEWER_ID, attributes,
@@ -168,6 +182,7 @@ export function makePlotImageAction(rawAction) {
 
             payload.wpRequestAry= payload.wpRequestAry.map( (req) =>
                             addRequestKey(req,makeUniqueRequestKey('groupItemReqKey-'+req.getPlotId())));
+            payload.wpRequestAry.forEach( (r) => removeRawDataByPlotView(getPlotViewById(visRoot(),r.getPlotId())));
 
 
             payload.oldOverlayPlotViews= wpRequestAry
@@ -305,6 +320,14 @@ function continuePlotImageSuccess(dispatcher, payload, successAry, failAry) {
     if (successAry.length) {
         const pvNewPlotInfoAry= successAry.map( (r) => handleSuccessfulCall(r.data.PlotCreate, r.data.PlotCreateHeader,payload, r.data.requestKey) );
         const resultPayload= Object.assign({},payload, {pvNewPlotInfoAry});
+
+        pvNewPlotInfoAry.forEach( ({plotAry}) => { // images are small enough, clear the png tiles then images will load direct
+            const realPlotAry = isArray(plotAry) ? plotAry : [plotAry];
+            realPlotAry.forEach((p) => {
+                if (canLoadStretchDataDirect(p)) p.tileData = undefined;
+            });
+        });
+
         dispatcher({type: ImagePlotCntlr.PLOT_IMAGE, payload: resultPayload});
         const plotIdAry = pvNewPlotInfoAry.map((info) => info.plotId);
         const filteredPlotIdAry= plotIdAry.filter( (id) => getPlotViewById(visRoot(),id));
@@ -321,8 +344,6 @@ function continuePlotImageSuccess(dispatcher, payload, successAry, failAry) {
                     addDrawLayers(p.plotState.getWebPlotRequest(), pv, p);
                     if (p.attributes[PlotAttribute.INIT_CENTER]) dispatchRecenter({plotId:p.plotId});
                 } ));
-
-
 
         //todo- this this plot is in a group and locked, make a unique list of all the drawing layers in the group and add to new
 

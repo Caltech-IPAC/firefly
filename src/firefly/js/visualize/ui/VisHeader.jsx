@@ -9,7 +9,7 @@ import {VisHeaderView, VisPreview} from './VisHeaderView.jsx';
 import {readoutRoot} from '../MouseReadoutCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {lastMouseCtx, lastMouseImageReadout} from '../VisMouseSync';
-import {useMouseStoreConnector} from '../../ui/SimpleComponent';
+import {useMouseStoreConnector} from './MouseStoreConnector.jsx';
 
 function makeState() {
     return {vr:visRoot(), currMouseState:lastMouseCtx(), readoutData:lastMouseImageReadout(), readout:readoutRoot()};

@@ -16,7 +16,7 @@ import {NewPlotMode} from '../MultiViewCntlr.js';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 import {primePlot} from '../PlotViewUtil';
 import {isImage} from '../WebPlot';
-import {useMouseStoreConnector} from '../../ui/SimpleComponent';
+import {useMouseStoreConnector} from './MouseStoreConnector.jsx';
 
 
 function makeState() {

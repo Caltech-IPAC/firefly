@@ -163,6 +163,10 @@ public class ImageDataGroup implements Iterable<ImageData> {
             id.markImageOutOfDate();
         }
     }
+    public void recomputeStretch(FitsRead[] fitsReadAry, int idx, RangeValues rangeValues, int colorTableId) {
+        setColorTableId(colorTableId);
+        recomputeStretch(fitsReadAry,idx,rangeValues);
+    }
 
     public void recomputeStretch(FitsRead[] fitsReadAry, int idx, RangeValues rangeValues) {
         boolean setRGBIntensity = false;

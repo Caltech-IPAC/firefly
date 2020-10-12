@@ -12,7 +12,7 @@ import {CysConverter} from '../CsysConverter.js';
 import DirectionArrowDrawObj from '../draw/DirectionArrowDrawObj.js';
 import FootprintObj from '../draw/FootprintObj.js';
 import {COLOR_DRAW_1, COLOR_DRAW_2,Style} from '../draw/DrawingDef.js';
-import {primePlot} from '../PlotViewUtil.js';
+import {hasLocalStretchByteData, primePlot} from '../PlotViewUtil.js';
 import {EventLayer} from '../iv/EventLayer.jsx';
 import {MouseState} from '../VisMouseSync.js';
 import {dispatchProcessScroll} from '../ImagePlotCntlr.js';
@@ -20,6 +20,8 @@ import {makeMouseStatePayload,fireMouseCtxChange} from '../VisMouseSync.js';
 import {makeTransform,makeThumbnailTransformCSS} from '../PlotTransformUtils.js';
 import {findScrollPtToCenterImagePt} from '../reducer/PlotView.js';
 import {getPixScaleDeg, isHiPS} from '../WebPlot.js';
+import {getEntry} from '../rawData/RawDataCache.js';
+import {SimpleCanvas} from '../draw/SimpleCanvas.jsx';
 
 
 export const ThumbnailView = memo(({plotView:pv}) => {
@@ -117,15 +119,32 @@ function makeImageTag(pv, onImageLoad) {
     
     if (transFormCss) s.transform= transFormCss;
 
-    const params= {
-        file : url,
-        type : 'thumbnail',
-        state : plot.plotState.toJson(false)
-    };
+    let imageURL;
+    if (hasLocalStretchByteData(plot)) {
+        const thumbnailCanvas= getEntry(plot?.plotImageId)?.thumbnailEncodedImage;
 
-    const imageURL=  encodeServerUrl(getRootURL() + 'sticky/FireFly_ImageDownload', params);
+        const drawOnCanvas= (targetCanvas) => {
+            if (!targetCanvas) return;
+            const ctx= targetCanvas.getContext('2d');
+            ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+            ctx.drawImage(thumbnailCanvas,0,0);
+        };
 
-    return <img src={imageURL} style={s} ref={onImageLoad} /> ;
+        return (<div style={s}>
+            <SimpleCanvas drawIt={drawOnCanvas} width={thumbnailCanvas.width} height={thumbnailCanvas.height}
+                          id={'thumbnail'}/>
+        </div>);
+    }
+    else {
+        const params= {
+            file : url,
+            type : 'thumbnail',
+            state : plot.plotState.toJson(false)
+        };
+        imageURL= encodeServerUrl(getRootURL() + 'sticky/FireFly_ImageDownload', params);
+        return <img src={imageURL} style={s} ref={onImageLoad} /> ;
+    }
+
 }
 
 function getThumbZoomFact(plot, thumbW, thumbH) {

@@ -9,8 +9,8 @@ import {Matrix} from '../../externalSource/transformation-matrix-js/matrix';
 
 const style={left:0,top:0,right:0, bottom:0,position:'absolute'};
 
-function fireEvent(ev,transform, plotId,mouseState, eventCallback) {
-    ev.preventDefault();
+function fireEvent(ev,transform, plotId,mouseState, eventCallback, doPreventDefault= true) {
+    if (doPreventDefault) ev.preventDefault();
     ev.stopPropagation();
     const {screenX, screenY, offsetX, offsetY}= ev.nativeEvent;
     const trans= Matrix.from(transform).inverse();
@@ -98,12 +98,17 @@ export const EventLayer = memo( ({transform,plotId, eventCallback}) => {
         fireEvent(ev,transform,plotId,MouseState.DOWN, eventCallback);
     };
 
+    const onWheel= (ev) => {
+        if (!ev.deltaY) return;
+        fireEvent(ev,transform,plotId,ev.deltaY>0 ? MouseState.WHEEL_UP : MouseState.WHEEL_DOWN, eventCallback, false);
+    };
+
     return (
         <div className='event-layer' style={style} ref={(c) => eRef.element=c}
              onClick={onClick} onDoubleClick={onDoubleClick} onMouseDownCapture={onMouseDown}
              onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}
              onMouseMoveCapture={onMouseMove} onTouchCancel={onTouchCancel}
-             onTouchEnd={onTouchEnd} onTouchMove={onTouchMove} onTouchStart={onTouchStart}
+             onTouchEnd={onTouchEnd} onTouchMove={onTouchMove} onTouchStart={onTouchStart} onWheel={onWheel}
         />
     );
 });

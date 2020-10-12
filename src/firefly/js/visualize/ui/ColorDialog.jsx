@@ -56,7 +56,7 @@ function getStoreUpdate(oldS) {
     const gFields= FieldGroupUtils.getGroupFields(GREEN_PANEL);
     const bFields= FieldGroupUtils.getGroupFields(BLUE_PANEL);
     const rgbFields= FieldGroupUtils.getGroupFields(RGB_HUEPRESERVE_PANEL);
-    const newState= {plot, fields, rFields, gFields, bFields, rgbFields}
+    const newState= {plot, fields, rFields, gFields, bFields, rgbFields};
     if (!oldS) return newState;
 
     if ( plot?.plotState!==oldS.plot?.plotState || fields!==oldS.fields ||

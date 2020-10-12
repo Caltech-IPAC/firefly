@@ -1,8 +1,6 @@
-
 import {isString, isNumber, isNil, isObject, isArray} from 'lodash';
 import CoordinateSys from './CoordSys.js';
 import Resolver, {parseResolver} from '../astro/net/Resolver.js';
-import validator from 'validator';
 
 const SPT= 'ScreenPt';
 const IM_PT= 'ImagePt';
@@ -400,8 +398,10 @@ export function pointEquals(p1,p2)  {
 export const parsePt= function(type, inStr) {
     if (!inStr) return undefined;
     const parts= inStr.split(';');
-    if (parts.length===2 && validator.isFloat(parts[0]) && validator.isFloat(parts[1])) {
-        const pt= new SimplePt(validator.toFloat(parts[0]), validator.toFloat(parts[1]));
+    const p0Num= Number(parts[0]);
+    const p1Num= Number(parts[1]);
+    if (parts.length===2 && !isNaN(p0Num) && !isNaN(p1Num)) {
+        const pt= new SimplePt(p0Num, p1Num);
         pt.type= type;
         return pt;
     }

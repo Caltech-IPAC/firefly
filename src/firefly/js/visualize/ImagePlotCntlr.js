@@ -23,7 +23,12 @@ import {makePlotImageAction} from './task/PlotImageTask.js';
 import {makePlotHiPSAction, makeChangeHiPSAction, makeImageOrHiPSAction} from './task/PlotHipsTask.js';
 import {plotImageMaskActionCreator, plotImageMaskLazyActionCreator,
         overlayPlotChangeAttributeActionCreator} from './task/ImageOverlayTask.js';
-import {colorChangeActionCreator, stretchChangeActionCreator, cropActionCreator} from './task/PlotChangeTask.js';
+import {
+    colorChangeActionCreator,
+    stretchChangeActionCreator,
+    cropActionCreator,
+    requestLocalDataActionCreator
+} from './task/PlotChangeTask.js';
 import {wcsMatchActionCreator} from './task/WcsMatchTask.js';
 import {autoPlayActionCreator, changePointSelectionActionCreator,
     restoreDefaultsActionCreator, deletePlotViewActionCreator} from './task/PlotAdminTask.js';
@@ -128,6 +133,7 @@ const CHANGE_MOUSE_READOUT_MODE=`${PLOTS_PREFIX}.changeMouseReadoutMode`;
 /** Action Type: delete a plotView */
 const DELETE_PLOT_VIEW=`${PLOTS_PREFIX}.deletePlotView`;
 
+const UPDATE_RAW_IMAGE_DATA= `${PLOTS_PREFIX}.updatePlotImageData`;
 
 const PLOT_MASK_START= `${PLOTS_PREFIX}.plotMaskStart`;
 /** Action Type: add a mask image*/
@@ -139,6 +145,7 @@ const OVERLAY_PLOT_CHANGE_ATTRIBUTES=`${PLOTS_PREFIX}.overlayPlotChangeAttribute
 const CHANGE_HIPS_IMAGE_CONVERSION=`${PLOTS_PREFIX}.changeHipsImageConversion`;
 const CHANGE_TABLE_AUTO_SCROLL=`${PLOTS_PREFIX}.changeTableAutoScroll`;
 const USE_TABLE_AUTO_SCROLL=`${PLOTS_PREFIX}.useTableAutoScroll`;
+const REQUEST_LOCAL_DATA=`${PLOTS_PREFIX}.requestLocalData`;
 
 const WCS_MATCH=`${PLOTS_PREFIX}.wcsMatch`;
 
@@ -284,6 +291,7 @@ function actionCreators() {
         [PROCESS_SCROLL]: processScrollActionCreator,
         [FLIP]: flipActionCreator,
         [ROTATE]: rotateActionCreator,
+        [REQUEST_LOCAL_DATA]: requestLocalDataActionCreator,
     };
 }
 
@@ -298,9 +306,9 @@ export default {
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL, RECENTER, OVERLAY_COLOR_LOCKING, POSITION_LOCKING,
     RESTORE_DEFAULTS, CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,
     DELETE_PLOT_VIEW, CHANGE_ACTIVE_PLOT_VIEW, CHANGE_PRIME_PLOT, CHANGE_IMAGE_VISIBILITY,
-    PLOT_MASK, PLOT_MASK_START, PLOT_MASK_FAIL, PLOT_MASK_LAZY_LOAD, DELETE_OVERLAY_PLOT,
+    PLOT_MASK, PLOT_MASK_START, PLOT_MASK_FAIL, PLOT_MASK_LAZY_LOAD, DELETE_OVERLAY_PLOT, UPDATE_RAW_IMAGE_DATA,
     OVERLAY_PLOT_CHANGE_ATTRIBUTES, WCS_MATCH, ADD_PROCESSED_TILES, API_TOOLS_VIEW, CHANGE_MOUSE_READOUT_MODE,
-    CHANGE_HIPS_IMAGE_CONVERSION, CHANGE_TABLE_AUTO_SCROLL, USE_TABLE_AUTO_SCROLL
+    CHANGE_HIPS_IMAGE_CONVERSION, CHANGE_TABLE_AUTO_SCROLL, USE_TABLE_AUTO_SCROLL,REQUEST_LOCAL_DATA
 };
 
 const KEY_ROOT= 'progress-';
@@ -402,6 +410,12 @@ export function dispatchChangeImageVisibility({plotId, visible, dispatcher= flux
  * @param {Object}  obj
  * @param {string} obj.plotId
  * @param {number} obj.cbarId must be in the range, 0 - 21, each number represents different colorbar
+ * @param {number} obj.bias bias betwee 0 - 1, .5 is no bias
+ * @param {number} obj.contrast bias between 0 - 2, .1 is no contrast
+ * @param {boolean} obj.useRed use this band, only use with 3 color
+ * @param {boolean} obj.useGreen use this band, only use with 3 color
+ * @param {boolean} obj.useBlue use this band, only use with 3 color
+ *
  * @param {string|ActionScope} [obj.actionScope] default to group
  * @param {Function} [obj.dispatcher] only for special dispatching uses such as remote
  *
@@ -410,8 +424,10 @@ export function dispatchChangeImageVisibility({plotId, visible, dispatcher= flux
  * @function dispatchColorChange
  * @memberof firefly.action
  */
-export function dispatchColorChange({plotId, cbarId, actionScope=ActionScope.GROUP, dispatcher= flux.process} ) {
-    dispatcher({ type: COLOR_CHANGE, payload: { plotId, cbarId, actionScope }});
+export function dispatchColorChange({plotId, cbarId, bias, contrast,
+                                        useRed=true, useGreen=true, useBlue=true,
+                                        actionScope=ActionScope.GROUP, dispatcher= flux.process} ) {
+    dispatcher({ type: COLOR_CHANGE, payload: { plotId, cbarId, bias, contrast, useRed, useGreen, useBlue, actionScope }});
 }
 
 /**
@@ -917,6 +933,10 @@ export function dispatchUseTableAutoScroll(useAutoScroll) {
     flux.process({ type: USE_TABLE_AUTO_SCROLL, payload: {useAutoScroll} });
 }
 
+export function dispatchRequestLocalData({plotId, plotImageId, dataRequested=true}) {
+    flux.process({ type: REQUEST_LOCAL_DATA, payload: {plotId,plotImageId, dataRequested} });
+}
+
 /**
  *
  * @param {ExpandType|boolean} expandedMode the mode to change to, it true the expand and match the last one,
@@ -1012,7 +1032,8 @@ const changeActions= convertToIdentityObj([
     CHANGE_PLOT_ATTRIBUTE, COLOR_CHANGE, COLOR_CHANGE_START, COLOR_CHANGE_FAIL, ROTATE, FLIP,
     STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL, RECENTER, OVERLAY_COLOR_LOCKING, POSITION_LOCKING,
     PLOT_PROGRESS_UPDATE, OVERLAY_PLOT_CHANGE_ATTRIBUTES, CHANGE_PRIME_PLOT, CHANGE_CENTER_OF_PROJECTION,
-    CHANGE_HIPS, ADD_PROCESSED_TILES, CHANGE_HIPS_IMAGE_CONVERSION, CHANGE_IMAGE_VISIBILITY
+    CHANGE_HIPS, ADD_PROCESSED_TILES, CHANGE_HIPS_IMAGE_CONVERSION, CHANGE_IMAGE_VISIBILITY, UPDATE_RAW_IMAGE_DATA,
+    REQUEST_LOCAL_DATA
 ]);
 
 const adminActions= convertToIdentityObj([

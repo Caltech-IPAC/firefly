@@ -11,6 +11,7 @@ import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.visualize.Band;
+import edu.caltech.ipac.firefly.visualize.BandState;
 import edu.caltech.ipac.firefly.visualize.ClientFitsHeader;
 import edu.caltech.ipac.firefly.visualize.CreatorResults;
 import edu.caltech.ipac.firefly.visualize.FileAndHeaderInfo;
@@ -23,7 +24,6 @@ import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
-import edu.caltech.ipac.firefly.visualize.BandState;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
@@ -32,6 +32,7 @@ import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.RegionFactory;
 import edu.caltech.ipac.util.RegionParser;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.UTCTimeUtil;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.StringKey;
@@ -69,7 +70,15 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.ColorModel;
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -380,6 +389,46 @@ public class VisServerOps {
         }
     }
 
+
+    public static float[] getFloatDataArray(PlotState state, Band band) {
+        try {
+            long start = System.currentTimeMillis();
+            ActiveCallCtx ctx = CtxControl.prepare(state);
+            ActiveFitsReadGroup frGroup= ctx.getFitsReadGroup();
+            FitsRead fr= frGroup.getFitsRead(band);
+            float [] float1d= fr.getRawFloatAry();
+            float [] flip1d= DirectStretchUtils.flipFloatArray(float1d,fr.getNaxis1(), fr.getNaxis2());
+            long elapse = System.currentTimeMillis() - start;
+            PlotServUtils.statsLog("floatAry",
+                    "total-MB", ((float)(flip1d.length*4)) / StringUtils.MEG,
+                    "Type", state.isThreeColor() ? "3 Color: "+band.toString() : "Standard",
+                    "Time", UTCTimeUtil.getHMSFromMills(elapse));
+            return flip1d;
+        } catch (Exception e) {
+            return new float[] {};
+        }
+    }
+
+
+
+    public static byte[] getByteStretchArray(PlotState state, int tileSize) {
+        try {
+            long start = System.currentTimeMillis();
+            ActiveCallCtx ctx = CtxControl.prepare(state);
+            ActiveFitsReadGroup frGroup= ctx.getFitsReadGroup();
+            byte [] byte1d= DirectStretchUtils.getStretchData(state,frGroup,tileSize);
+            long elapse = System.currentTimeMillis() - start;
+            PlotServUtils.statsLog("byteAry",
+                    "total-MB", (float)byte1d.length / StringUtils.MEG,
+                    "Type", state.isThreeColor() ? "3 Color" : "Standard",
+                    "Time", UTCTimeUtil.getHMSFromMills(elapse));
+            return byte1d;
+        } catch (Exception e) {
+            return new byte[] {};
+        }
+
+    }
+
     public static WebPlotResult recomputeStretch(PlotState state,
                                                  StretchData[] stretchData) {
         try {
@@ -389,7 +438,7 @@ public class VisServerOps {
             WebPlotResult retval = new WebPlotResult(ctx.getKey());
             ImagePlot plot = ctx.getPlot();
             if (stretchData.length == 1 && stretchData[0].getBand() == NO_BAND) {
-                plot.getHistogramOps(Band.NO_BAND, ctx.getFitsReadGroup()).recomputeStretch(stretchData[0].getRangeValues());
+                plot.getHistogramOps(Band.NO_BAND, ctx.getFitsReadGroup()).recomputeStretch(stretchData[0].getRangeValues(), state.getColorTableId());
                 state.setRangeValues(stretchData[0].getRangeValues(), Band.NO_BAND);
                 retval.putResult(WebPlotResult.PLOT_STATE, state);
                 images = reviseImageFile(state, ctx, plot, ctx.getFitsReadGroup());

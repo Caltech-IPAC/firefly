@@ -10,7 +10,8 @@ import {ToolbarButton,
 import { dispatchCreateMarkerLayer, dispatchCreateFootprintLayer } from '../DrawLayerCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {FootprintFactory, FootprintList,  SOFIA_INSTRUMENTS} from '../draw/FootprintFactory.js';
-import { createNewFootprintLayerId, getFootprintLayerTitle, relocatable} from '../../drawingLayers/FootprintTool.js';
+import { createNewFootprintLayerId, getFootprintLayerTitle} from '../../drawingLayers/FootprintTool.js';
+import {relocatable} from '../../drawingLayers/FootprintLocatable.js';
 import {has, get} from 'lodash';
 let idCntM = 0;
 let idCntF = 0;

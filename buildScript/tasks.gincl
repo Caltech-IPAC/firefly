@@ -183,7 +183,10 @@ task prepareWebapp (type:Copy, dependsOn: [loadConfig, createVersionTag]) {
         // to avoid storing multiple copies of plotly library under project html
         // copy minimized plotly from firefly
         copy {
-            from ("$fireflyPath/src/firefly/html/") { include 'plotly*min.js' }
+            from ("$fireflyPath/src/firefly/html/") {
+                include 'plotly*min.js'
+                include 'gpu-browser*min*.js'
+                }
             into warDir
         }
 

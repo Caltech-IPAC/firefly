@@ -2,17 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {isPlainObject, truncate} from 'lodash';
-import {getOrCreateWsConn} from '../core/messaging/WebSocketClient';
-import {ServerParams} from '../data/ServerParams';
-import {showInfoPopup} from '../ui/PopupUtil';
-import {DownloadProgress, getDownloadProgress} from '../rpc/SearchServicesJson';
-import {logger} from './Logger';
-import {encodeUrl, parseUrl, toNameValuePairs} from './WebUtil';
+import {getOrCreateWsConn} from '../core/messaging/WebSocketClient.js';
+import {ServerParams} from '../data/ServerParams.js';
+import {showInfoPopup} from '../ui/PopupUtil.jsx';
+import {DownloadProgress, getDownloadProgress} from '../rpc/SearchServicesJson.js';
+import {logger} from './Logger.js';
+import {parseUrl, AJAX_REQUEST, lowLevelDoFetch, REQUEST_WITH, WS_CHANNEL_HD, WS_CONNID_HD} from './WebUtil.js';
 
-export const REQUEST_WITH = 'X-Requested-With';
-export const AJAX_REQUEST = 'XMLHttpRequest';
-export const WS_CHANNEL_HD = 'FF-channel';
-export const WS_CONNID_HD = 'FF-connID';
 
 /**
  * A wrapper for the underlying window.fetch function.
@@ -37,7 +33,7 @@ export async function fetchUrl(url, options={}, doValidation = true, enableDefOp
     if (!url) return;
 
     // define defaults request options
-    if (!enableDefOptions) return doFetchUrl(url, options, doValidation);
+    if (!enableDefOptions) return lowLevelDoFetch(url, options, doValidation, logger);
     const {connId, channel}= await getOrCreateWsConn();
     const optionsWithDef= {
         method: 'get',
@@ -52,42 +48,9 @@ export async function fetchUrl(url, options={}, doValidation = true, enableDefOp
             ...options.headers
         }
     };
-    return doFetchUrl(url, optionsWithDef, doValidation);
+    return lowLevelDoFetch(url, optionsWithDef, doValidation, logger?.tag('fetchUrl').debug);
 }
 
-async function doFetchUrl(url, options, doValidation) {
-    if (options.params) {
-        const params = toNameValuePairs(options.params);        // convert to name-value pairs if it's a simple object.
-        if (options.method.toLowerCase() === 'get') {
-            url = encodeUrl(url, params);
-        } else {
-            url = encodeUrl(url);
-            if (!options.body) {
-                // if 'post' but, body is not provided, add the parameters into the body.
-                if (options.method.toLowerCase() === 'post') {
-                    options.headers['Content-type'] = 'application/x-www-form-urlencoded';
-                    options.body = params.map(({name, value = ''}) => encodeURIComponent(name) + '=' + encodeURIComponent(value))
-                        .join('&');
-                } else if (options.method.toLowerCase() === 'multipart') {
-                    options.method = 'post';
-                    const data = new FormData();
-                    params.forEach(({name, value}) => {
-                        data.append(name, value);
-                    });
-                    options.body = data;
-                }
-                Reflect.deleteProperty(options, 'params');
-            }
-        }
-    }
-
-    logger.tag('fetchUrl').debug({url, options});
-                       // do the actually fetch, then return a promise.
-    const response= await fetch(url, options);
-    if (!doValidation || response.ok) return response;
-    else if (response.status === 401) throw new Error('You are no longer logged in');
-    else throw new Error(`Request failed with status ${response.status}: ${url}`);
-}
 
 /**
  * @param {string} url  the url to download.  It should be based on AnyFileDownload

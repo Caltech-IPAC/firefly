@@ -14,7 +14,7 @@ import {getHealpixPixel} from './HiPSUtil';
 import {STANDARD_READOUT} from './MouseReadoutCntlr';
 
 export const MouseState= new Enum(['NONE', 'ENTER', 'EXIT', 'DOWN', 'UP',
-    'DRAG_COMPONENT', 'DRAG', 'MOVE', 'CLICK',
+    'DRAG_COMPONENT', 'DRAG', 'MOVE', 'CLICK', 'WHEEL_UP', 'WHEEL_DOWN',
     'DOUBLE_CLICK']);
 
 var lastCtx = {

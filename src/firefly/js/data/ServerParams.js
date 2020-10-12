@@ -152,10 +152,13 @@ export const ServerParams = {
         LOG_OUT: 'CmdLogout',
         INIT_APP: 'CmdInitApp',
         GET_IMAGE_MASTER_DATA: 'getImageMasterData',
+        GET_FLOAT_DATA: 'getFloatData',
+        GET_BYTE_DATA: 'getStretchedByteData',
 
         VIS_PUSH_ALIVE_CHECK: 'pushAliveCheck',
         VIS_PUSH_ALIVE_COUNT: 'pushAliveCount',
         VIS_PUSH_ACTION: 'pushAction',
+        TILE_SIZE: 'tileSize',
 
 
         USER_TARGET_WORLD_PT : 'UserTargetWorldPt',

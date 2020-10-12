@@ -66,7 +66,7 @@ public class LocalFSWorkspace implements WorkspaceManager {
         } else if (propFound.equals(PROPS.ROOT_DIR)) {
             propVal = getWsHome();
         } else if (propFound.equals(PROPS.AUTH)) {
-            propVal = "NONE";
+            propVal = "CLEARED";
         } else if (propFound.equals(PROPS.PROTOCOL)) {
             propVal = PROTOCOL.WEBDAV.name();
         }

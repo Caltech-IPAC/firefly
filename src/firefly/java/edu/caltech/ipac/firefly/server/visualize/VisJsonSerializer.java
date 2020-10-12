@@ -447,15 +447,41 @@ public class VisJsonSerializer {
     }
 
     private static int getInt(JSONObject j, String key) throws IllegalArgumentException, ClassCastException {
-        Number n= (Number)j.get(key);
-        if (n==null) throw new IllegalArgumentException(key + " must exist");
-        return n.intValue();
+        Object o= j.get(key);
+        Number n;
+        if (o==null) throw new IllegalArgumentException(key + " must exist");
+        if (o instanceof Number) {
+            n= (Number)j.get(key);
+            return n.intValue();
+        }
+        else if (o instanceof String) {
+            try {
+                return Integer.parseInt((String)o);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException(key + " must exist, could not be parsed to an Integer, value: "+o.toString());
+            }
+        }
+        else {
+            throw new IllegalArgumentException(key + " must exist");
+        }
     }
 
     private static int getInt(JSONObject j, String key, int defValue) throws IllegalArgumentException, ClassCastException {
-        Number n= (Number)j.get(key);
-        if (n==null) return defValue;
-        return n.intValue();
+        Object o= j.get(key);
+        if (o==null) return defValue;
+        if (o instanceof Number) {
+            return ((Number)o).intValue();
+        }
+        else if (o instanceof String) {
+            try {
+                return Integer.parseInt((String) o);
+            } catch (NumberFormatException e) {
+                return defValue;
+            }
+        }
+        else {
+            return defValue;
+        }
     }
 
     private static float getFloat(JSONObject j, String key) throws IllegalArgumentException, ClassCastException {

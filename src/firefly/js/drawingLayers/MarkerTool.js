@@ -14,7 +14,6 @@ import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {getWorldOrImage, makeMarker, findClosestIndex,  updateFootprintTranslate, updateMarkerSize,
         updateFootprintDrawobjText, updateFootprintOutline,  lengthSizeUnit, isOutlineBoxOriginal,
         MARKER_DISTANCE, MarkerType, ROTATE_BOX, MARKER_SIZE} from '../visualize/draw/MarkerFootprintObj.js';
-import {getMarkerToolUIComponent} from './MarkerToolUI.jsx';
 import {getDrawobjArea} from '../visualize/draw/ShapeHighlight.js';
 import ShapeDataObj, {lengthToScreenPixel, lengthToImagePixel} from '../visualize/draw/ShapeDataObj.js';
 import {makeDevicePt, makeImagePt} from '../visualize/Point.js';
@@ -23,9 +22,11 @@ import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 import {get, set, has, isArray, isEmpty} from 'lodash';
 import Enum from 'enum';
 import {hasWCSProjection} from '../visualize/PlotViewUtil';
+import {MarkerToolUI} from './MarkerToolUI.jsx';
 
 const editHelpText='Click the marker and drag to move, click corner and drag to resize';
 
+export const getMarkerToolUIComponent = (drawLayer,pv) => <MarkerToolUI drawLayer={drawLayer} pv={pv}/>;
 
 const ID= 'OVERLAY_MARKER';
 const TYPE_ID= 'OVERLAY_MARKER_TYPE';

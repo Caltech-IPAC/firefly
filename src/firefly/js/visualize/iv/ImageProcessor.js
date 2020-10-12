@@ -3,7 +3,7 @@
  */
 
 import {isString} from 'lodash';
-import {loadImage, loadCancelableImage, requestIdleCallback} from '../../util/WebUtil.js';
+import {loadCancelableImage, requestIdleCallback} from '../../util/WebUtil.js';
 
 /**
  * @global
@@ -21,16 +21,12 @@ import {loadImage, loadCancelableImage, requestIdleCallback} from '../../util/We
 
 /**
  *
- * @return {Promise} promise with new imageData
- */
-/**
- *
  * @param {ImageContainer|Object|String} imageData the current image data or a html image object or the source of the
  *                                       of an image to load
  * @param {Object} nextTileAttributes next state to process image
  * @param shouldProcess
  * @param processor
- * @return {Promise}
+ * @return {Promise} promise with new imageData
  */
 export function retrieveAndProcessImage(imageData, nextTileAttributes, shouldProcess, processor) {
 

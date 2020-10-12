@@ -9,8 +9,10 @@ import {makeScreenPt} from '../Point.js';
 import {MouseState} from '../VisMouseSync.js';
 import {makeImageFromTile,createImageUrl,isTileVisible} from '../iv/TileDrawHelper.jsx';
 import {isBlankImage, isHiPS} from '../WebPlot.js';
-import {primePlot} from '../PlotViewUtil.js';
+import {hasLocalStretchByteData, primePlot} from '../PlotViewUtil.js';
 import {makeThumbnailTransformCSS} from '../PlotTransformUtils.js';
+import {getLocalScreenTileAtZoom} from '../rawData/RawDataOps.js';
+import {SimpleCanvas} from '../draw/SimpleCanvas.jsx';
 
 
 const defStyle= {
@@ -22,14 +24,14 @@ const defStyle= {
     border: '1px solid transparent'
 };
 
-const magMouse= [MouseState.DRAG_COMPONENT, MouseState.DRAG, MouseState.MOVE, MouseState.DOWN];
+const magMouse= [MouseState.DRAG_COMPONENT.key, MouseState.DRAG.key, MouseState.MOVE.key, MouseState.DOWN.key];
 const EMPTY= <div style={defStyle}/>;
 
 export const MagnifiedView= memo(({plotView:pv,size,mouseState}) => {
     if (!pv || !mouseState?.screenPt) return EMPTY;
     const p= primePlot(pv);
     if (!p || isHiPS(p) ) return EMPTY;
-    if (!magMouse.includes(mouseState.mouseState)) return EMPTY;
+    if (!magMouse.includes(mouseState.mouseState?.key)) return EMPTY;
 
     return (
         <div style={{...defStyle, border: '1px solid rgb(187, 187, 187)'}}>
@@ -54,7 +56,7 @@ MagnifiedView.propTypes= {
  */
 function getImagesAt(plot, spt, size) {
 
-    if (!plot.tileData) return {};
+    if (!plot.tileData?.images) return {};
 
     const scale= plot.zoomFactor / plot.plotState.getZoomLevel();
 
@@ -91,11 +93,12 @@ function compareFourTileSort(o1, o2) {
 function showMag(spt,pv, plot,size) {
     if (!plot || isBlankImage(plot) || plot.zoomFactor > 6) return false;
 
-    let x = spt.x - size / 2;
-    let y = spt.y - size / 2;
 
     const {width:screenW, height:screenH }= plot.screenSize;
-    let sizeOffX;
+    let sizeOffX, sizeOffY;
+
+    let x = spt.x - size / 2;
+    let y = spt.y - size / 2;
 
     if (x < 0) {
         x = 0;
@@ -107,8 +110,6 @@ function showMag(spt,pv, plot,size) {
         sizeOffX = size / 2;
     }
 
-
-    let sizeOffY;
     if (y < 0) {
         y = 0;
         sizeOffY = spt.y;
@@ -119,8 +120,58 @@ function showMag(spt,pv, plot,size) {
         sizeOffY = size / 2;
     }
 
+    return hasLocalStretchByteData(plot) ?
+        showMagUsingLocal(x,y,pv,plot,size,sizeOffX,sizeOffY) :
+        showMagUsingRemote(x,y,pv,plot,size,sizeOffX,sizeOffY);
 
+}
 
+function showMagUsingLocal(x,y,pv, plot,size,sizeOffX,sizeOffY) {
+    const style= {
+        transform :makeThumbnailTransformCSS(pv.rotation,pv.flipX, pv.flipY),
+        width: size,
+        height: size,
+        position: 'relative'
+    };
+    const magFactor=2;
+    const magCanvas= getLocalScreenTileAtZoom(plot,(x*magFactor+sizeOffX),(y*magFactor+sizeOffY),size,size,plot.zoomFactor*magFactor);
+    if (!magCanvas) return <div/>;
+    // const dataUrl=  magCanvas.toDataURL();
+
+    const drawOnCanvas= (targetCanvas) => {
+        targetCanvas && targetCanvas.getContext('2d').drawImage(magCanvas,0,0);
+    };
+
+    // const s= { position : 'absolute', left : 0, top : 0};
+    return (
+        <div style={style}>
+            <SimpleCanvas drawIt={drawOnCanvas} width={size} height={size}
+                          id={'magnifier'}/>
+        </div>
+    );
+}
+
+// function showMagUsingLocal(x,y,pv, plot,size,sizeOffX,sizeOffY) {
+//     const style= {
+//         transform :makeThumbnailTransformCSS(pv.rotation,pv.flipX, pv.flipY),
+//         width: size,
+//         height: size,
+//         position: 'relative'
+//     };
+//     const magFactor=2;
+//     const magCanvas= getLocalScreenTileAtZoom(plot,(x*magFactor+sizeOffX),(y*magFactor+sizeOffY),size,size,plot.zoomFactor*magFactor);
+//     if (!magCanvas) return <div/>;
+//     const dataUrl=  magCanvas.toDataURL();
+//
+//     const s= { position : 'absolute', left : 0, top : 0};
+//     return (
+//         <div style={style}>
+//             <img src={dataUrl} style={s}/>
+//         </div>
+//     );
+// }
+
+function showMagUsingRemote(x,y,pv, plot,size,sizeOffX,sizeOffY) {
     const {tiles,newX,newY} =getImagesAt(plot,makeScreenPt(x, y), size);
     if (isEmpty(tiles)) return false;
 
@@ -167,4 +218,3 @@ function showMag(spt,pv, plot,size) {
     };
     return ( <div style={style}> {results} </div> );
 }
-

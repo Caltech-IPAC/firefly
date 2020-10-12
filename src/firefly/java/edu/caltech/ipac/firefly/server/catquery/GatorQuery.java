@@ -91,7 +91,7 @@ public class GatorQuery extends BaseGator {
     protected static final String GP_SPATIAL_CONE = "&spatial=Cone";
     protected static final String GP_SPATIAL_BOX = "&spatial=Box";
     protected static final String GP_SPATIAL_POLY = "&spatial=Polygon";
-    protected static final String GP_SPATIAL_NONE = "&spatial=NONE";
+    protected static final String GP_SPATIAL_NONE = "&spatial=CLEARED";
     protected static final String GP_SPATIAL = "spatial";
     protected static final String GP_DBMS20 = "&dbms=20";
     protected static final String UPLOAD = "Upload";

@@ -32,6 +32,7 @@ import {getBootstrapRegistry} from './core/BootstrapRegistry.js';
 import {showLostConnection} from './ui/LostConnection.jsx';
 import {recordHistory} from './core/History.js';
 import {setDefaultImageColorTable} from './visualize/WebPlotRequest.js';
+import {initWorkerContext} from './threadWorker/WorkerAccess.js';
 
 
 var initDone = false;
@@ -304,6 +305,7 @@ function bootstrap(props, options, webApiCommands) {
     }).then(() => {
         // when all is done.. mark app as 'ready'
         defer(() => dispatchUpdateAppData({isReady: true}));
+        initWorkerContext();
     });
 }
 

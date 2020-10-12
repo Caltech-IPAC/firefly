@@ -2,11 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import React, {memo,useState} from 'react';
+import slug from 'slug';
 import PropTypes from 'prop-types';
 import {set, isEmpty, capitalize} from 'lodash';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
-import {getRootURL, getCmdSrvURL, encodeUrl, updateSet, toSlug} from '../util/WebUtil.js';
+import {getRootURL, getCmdSrvURL, encodeUrl, updateSet} from '../util/WebUtil.js';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
@@ -315,7 +316,7 @@ function resultsSuccess(request, plotView, popupId) {
 
 function makeFileName(plot, band, ext= 'fits') {
     const req = plot.plotState.getWebPlotRequest(band);
-    if (req.getDownloadFileNameRoot()) return toSlug(req.getDownloadFileNameRoot())+ `.${ext}`;
+    if (req.getDownloadFileNameRoot()) return slug(req.getDownloadFileNameRoot())+ `.${ext}`;
     switch (req.getRequestType()) {
         case RequestType.SERVICE:              return makeServiceFileName(req,plot, band,ext);
         case RequestType.FILE:                 return makeTitleFileName(plot, band, ext);
@@ -334,11 +335,11 @@ function makeServiceFileName(req,plot, band, ext= 'fits') {
     const sBand= req.getSurveyBand()??'';
     return (!st || st===ServiceType.UNKNOWN) ?
         makeTitleFileName(plot, band, ext) :
-        toSlug(`${st.key.toLowerCase()}-${req.getSurveyKey()} ${sBand}`)+  `.${ext}`;
+        slug(`${st.key.toLowerCase()}-${req.getSurveyKey()} ${sBand}`)+  `.${ext}`;
 }
 
 const makeTitleFileName= (plot, band, ext= 'fits') =>
-            toSlug(band!==Band.NO_BAND ? `${plot.title} ${band}` : plot.title)+ `.${ext}` ;
+            slug(band!==Band.NO_BAND ? `${plot.title} ${band}` : plot.title)+ `.${ext}` ;
 
 const makePngLocal= (plotId, filename= 'a.png') =>
             makeImageCanvas(plotId)?.toBlob( (blob) => downloadBlob(blob, filename) , 'image/png');

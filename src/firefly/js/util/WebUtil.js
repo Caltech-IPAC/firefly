@@ -1,19 +1,43 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import { forEach, fromPairs, get, has, isArray, isBoolean, isEqual, isFunction, isNil, isObject,
+
+/**
+ * !!!!!!! IMPORTANT !!!!!!!!!!!
+ * WebUtil should try to keep imports limited. Since it is used in workers. It should not import anything from
+ * firefly. It may do import from external packages such as lodash and immutability-helper below
+ */
+
+import { fromPairs, get, has, isArray, isBoolean, isEqual, isFunction, isNil, isObject,
     isPlainObject, last, mergeWith, omit, once, set, union } from 'lodash';
-import slug from 'slug';
-import shallowequal from 'shallowequal';
 import update from 'immutability-helper';
 
+export const REQUEST_WITH = 'X-Requested-With';
+export const AJAX_REQUEST = 'XMLHttpRequest';
+export const WS_CHANNEL_HD = 'FF-channel';
+export const WS_CONNID_HD = 'FF-connID';
 
-const MEG          = 1048576;
-const GIG          = 1048576 * 1024;
+export const MEG          = 1048576;
+export const GIG          = 1048576 * 1024;
 const MEG_TENTH    = MEG / 10;
 const GIG_HUNDREDTH= GIG / 100;
-const K            = 1024;
+export const K            = 1024;
 
+const globalObj= (() => {
+    try {
+        return window || self;
+    }
+    catch (e) {
+        try {
+            return self;
+        }
+        catch (e) {
+            return undefined;
+        }
+    }
+})();
+
+export const getGlobalObj= () => globalObj;
 
 /*global __PROPS__*/        // this is defined at build-time.
 export const getGlobalProps= once( () => __PROPS__ ?? {});
@@ -29,11 +53,26 @@ const getScriptURL = once(() => {
 
 export const getRootURL = once(() => {
     if (getProp('SCRIPT_NAME') === undefined) return '//localhost:8080/';
-    const workingURL = getScriptURL() || window?.location.href;
+    const workingURL = getScriptURL() || globalObj?.location.href;
     return workingURL.substring(0, workingURL.lastIndexOf('/')) + '/';
 });
 
 export const getCmdSrvURL = () => `${getRootURL()}sticky/CmdSrv`;
+export const getCmdSrvNoZipURL = () => `${getRootURL()}sticky/CmdSrvNoZip`;
+
+export const isGPUAvailableInWorker= once(() => Boolean(getGlobalObj().OffscreenCanvas));
+// export const isGPUAvailableInWorker= () => false;
+
+
+export const isImageBitmap= (b) => getGlobalObj().ImageBitmap && (b instanceof getGlobalObj().ImageBitmap);
+export const isOffscreenCanvas= (b) => getGlobalObj().OffscreenCanvas && (b instanceof getGlobalObj().OffscreenCanvas);
+
+export function createCanvas(width,height) {
+    const c = document.createElement('canvas');
+    c.width = width;
+    c.height = height;
+    return c;
+}
 
 /**
  * returns an object of key:value where keyPrefix is removed from the keys.  i.e
@@ -88,17 +127,22 @@ export const isDefined= (x) => x!==undefined;
  * @return {Promise} when the script is loaded or failed to load
  */
 export function loadScript(scriptName) {
-    return new Promise(
-        function(resolve, reject) {
-            const head= document.getElementsByTagName('head')[0];
-            const script= document.createElement('script');
-            script.type= 'text/javascript';
-            script.charset= 'utf-8';
-            script.src= scriptName;
-            head.appendChild(script);
-            script.onload= (ev) => resolve(ev);
-            script.onerror= (ev) => reject(ev);
-        });
+    if (getGlobalObj().document) {
+        return new Promise(
+            function(resolve, reject) {
+                const head= document.getElementsByTagName('head')[0];
+                const script= document.createElement('script');
+                script.type= 'text/javascript';
+                script.charset= 'utf-8';
+                script.src= scriptName;
+                head.appendChild(script);
+                script.onload= (ev) => resolve(ev);
+                script.onerror= (ev) => reject(ev);
+            });
+    }
+    else {
+        return Promise.resolve(getGlobalObj().importScripts(scriptName));
+    }
 }
 
 /**
@@ -646,7 +690,7 @@ export function uniqueID() {
  * @function
  */
 export const requestIdleCallback =
-    window?.requestIdleCallback ||
+    globalObj?.requestIdleCallback ||
     function (callback) {
         return setTimeout(() => {
             const start = Date.now();
@@ -657,7 +701,7 @@ export const requestIdleCallback =
         }, 1);
     };
 
-export const cancelIdleCallback = window?.cancelIdleCallback || ((id) => clearTimeout(id));
+export const cancelIdleCallback = globalObj?.cancelIdleCallback || ((id) => clearTimeout(id));
 
 /**
  *
@@ -683,42 +727,7 @@ export function flattenObject(object, prefix='', testFunc=isPlainObject) {
 }
 
 
-export function deltas(a, b, wrapArray=true) {
-    const diff = (a1, b1, wrapArray) => {
-        const r = {};
-        doDiff(a1, b1, r, wrapArray);
-        return r;
-    };
 
-    const doDiff = (a2, b2, r, wrapArray) => {
-        forEach(a2, function(v, k) {
-            // already checked this or equal or original has no value...
-            if (b2 && (r.hasOwnProperty(k) || shallowequal(b2[k], v))) return;
-            // but what if it returns an empty object? still attach?
-            r[k] = b2 && isPlainObject(v) ? diff(v, b2[k], wrapArray) : v;
-            if (wrapArray && Array.isArray(r[k])) {
-                r[k] = [r[k]];
-            }
-        });
-    };
-
-    const rval = diff(a, b, wrapArray);
-    removeEmpties(rval);
-    return rval;
-}
-
-function removeEmpties(o) {
-    for (const k in o) {
-        if (!o[k] || !isPlainObject(o[k])) {
-            continue; // If null or not an object, skip to the next iteration
-        }
-        // The property is an object
-        removeEmpties(o[k]); // <-- Make a recursive call on the nested object
-        if (Object.keys(o[k]).length === 0) {
-            delete o[k]; // The object had no properties, so delete that property
-        }
-    }
-}
 
 export function hashCode(str) {
     let hash = 5381;
@@ -766,6 +775,48 @@ export function uuid() {
     });
 }
 
-export function toSlug(str, options=undefined) {
-    return slug(str,options);
+/**
+ * File is safe to use from a WebWorker
+ */
+
+/**
+ * Unless you have reason don't call this function directly, call fetchUrl in fetch.js
+ * @param {String} url
+ * @param {Object} options
+ * @param {boolean} doValidation
+ * @param loggerFunc
+ * @return {Promise<Response>}
+ */
+export async function lowLevelDoFetch(url, options, doValidation, loggerFunc) {
+    if (options.params) {
+        const params = toNameValuePairs(options.params);        // convert to name-value pairs if it's a simple object.
+        if (options.method.toLowerCase() === 'get') {
+            url = encodeUrl(url, params);
+        } else {
+            url = encodeUrl(url);
+            if (!options.body) {
+                // if 'post' but, body is not provided, add the parameters into the body.
+                if (options.method.toLowerCase() === 'post') {
+                    options.headers['Content-type'] = 'application/x-www-form-urlencoded';
+                    options.body = params.map(({name, value = ''}) => encodeURIComponent(name) + '=' + encodeURIComponent(value))
+                        .join('&');
+                } else if (options.method.toLowerCase() === 'multipart') {
+                    options.method = 'post';
+                    const data = new FormData();
+                    params.forEach(({name, value}) => {
+                        data.append(name, value);
+                    });
+                    options.body = data;
+                }
+                Reflect.deleteProperty(options, 'params');
+            }
+        }
+    }
+
+    loggerFunc?.({url, options});
+    // do the actually fetch, then return a promise.
+    const response= await fetch(url, options);
+    if (!doValidation || response.ok) return response;
+    else if (response.status === 401) throw new Error('You are no longer logged in');
+    else throw new Error(`Request failed with status ${response.status}: ${url}`);
 }

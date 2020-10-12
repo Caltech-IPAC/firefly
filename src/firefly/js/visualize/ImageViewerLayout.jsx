@@ -13,7 +13,7 @@ import {makeScreenPt, makeDevicePt} from './Point.js';
 import {DrawerComponent}  from './draw/DrawerComponent.jsx';
 import {CysConverter}  from './CsysConverter.js';
 import {UserZoomTypes}  from './ZoomUtil.js';
-import {primePlot, getPlotViewById} from './PlotViewUtil.js';
+import {primePlot, getPlotViewById, hasLocalStretchByteData} from './PlotViewUtil.js';
 import {isImageViewerSingleLayout, getMultiViewRoot} from './MultiViewCntlr.js';
 import {contains, intersects} from './VisUtil.js';
 import BrowserInfo from '../util/BrowserInfo.js';
@@ -27,7 +27,8 @@ import {
     dispatchProcessScroll,
     dispatchChangeCenterOfProjection,
     dispatchChangeActivePlotView,
-    dispatchUpdateViewSize} from './ImagePlotCntlr.js';
+    dispatchUpdateViewSize, dispatchRequestLocalData
+} from './ImagePlotCntlr.js';
 import {fireMouseCtxChange, makeMouseStatePayload, MouseState} from './VisMouseSync.js';
 import {isHiPS, isImage} from './WebPlot.js';
 import Color from '../util/Color.js';
@@ -39,6 +40,8 @@ const {MOVE,DOWN,DRAG,UP, DRAG_COMPONENT, EXIT, ENTER}= MouseState;
 
 const draggingOrReleasing = (ms) => ms===DRAG || ms===DRAG_COMPONENT || ms===UP || ms===EXIT || ms===ENTER;
 
+
+const dispatchZoomThrottled= throttle((params) => dispatchZoom(params), 60, {leading:true, trailing:true});
 
 /**
  * when a resize happens and zoom locking is enable then we need to start a zoom level change
@@ -79,7 +82,7 @@ function updateZoom(plotId, paging) {
             plotId,
             userZoomType: (paging && vr.wcsMatchType) ? UserZoomTypes.WCS_MATCH_PREV : pv.plotViewCtx.zoomLockingType,
             zoomLockingEnabled: true,
-            forceDelay: true,
+            forceDelay: !hasLocalStretchByteData(primePlot(pv)),
             actionScope
         });
     }
@@ -95,6 +98,15 @@ const rootStyle= {
     overflow:'hidden'
 };
 
+function getDataIfNecessary(pv) {
+    const plot= primePlot(pv);
+    if (!plot || plot.dataRequested) return;
+    const {viewDim:{width,height}}= pv;
+    if (!width || !height) return;
+    const {plotImageId,plotId}= plot;
+    dispatchRequestLocalData({plotId,plotImageId});
+}
+
 export class ImageViewerLayout extends PureComponent {
 
     constructor(props) {
@@ -109,6 +121,7 @@ export class ImageViewerLayout extends PureComponent {
         const {width,height, plotView:pv}= this.props;
         this.previousDim= makePrevDim(this.props);
         if (width && height) {
+            getDataIfNecessary(pv);
             dispatchUpdateViewSize(pv.plotId,width,height);
         }
         if (primePlot(pv)) {
@@ -123,7 +136,7 @@ export class ImageViewerLayout extends PureComponent {
         if (!pv || !width || !height) return;
 
         const {viewDim}= pv;
-        // if (width!==viewDim.width || height!==viewDim.height || prevWidth!==width || prevHeight!==height ) {
+        getDataIfNecessary(pv);
         if (prevWidth!==width || prevHeight!==height || (!viewDim.width && !viewDim.height && width && height)) {
             dispatchUpdateViewSize(pv.plotId,width,height); // case: any resizing
 
@@ -153,6 +166,12 @@ export class ImageViewerLayout extends PureComponent {
             const dl= getLayer(drawLayersAry,this.mouseOwnerLayerId);
             fireMouseEvent(dl,mouseState,mouseStatePayload);
         }
+        else if (mouseState===MouseState.WHEEL_UP) {
+            dispatchZoomThrottled({plotId, userZoomType:UserZoomTypes.UP });
+        }
+        else if (mouseState===MouseState.WHEEL_DOWN) {
+            dispatchZoomThrottled({plotId, userZoomType:UserZoomTypes.DOWN });
+        }
         else {
             const ownerCandidate= findMouseOwner(list,primePlot(plotView),screenPt);         // see if anyone can own that mouse
             this.mouseOwnerLayerId = DOWN.is(mouseState) && ownerCandidate ? ownerCandidate.drawLayerId : null;   // can only happen on mouseDown
@@ -174,6 +193,7 @@ export class ImageViewerLayout extends PureComponent {
             }
         }
         fireMouseCtxChange(mouseStatePayload);  // this for anyone listening directly to the mouse
+
     }
 
     scroll(plotView,mouseState,screenX,screenY, mouseDownScreenPt) {
