@@ -7,45 +7,109 @@ export const getGPUOps= once((GPU) => {
 
     const gpu= new GPU({mode:'gpu'});
 
-    const standRawDataTileGPU = gpu.createKernel(function(pixelAry, colorModel,height, contrast, offsetShift) {
-        const pixel= pixelAry[height-this.thread.y][this.thread.x];
-        if (pixel!==255) {
-            let pixelIdx= pixel*3;
-            if (offsetShift!==0) {
-                const newPixel = Math.floor( offsetShift+(pixel*contrast));
-                pixelIdx= (newPixel > 254) ? 762 : (newPixel<0) ? 0 : newPixel*3;
+
+    const standardFunc= Function('pixelAry', 'colorModel','height', 'contrast', 'offsetShift', `
+            const pixel= pixelAry[height-this.thread.y][this.thread.x];
+            if (pixel!==255) {
+                let pixelIdx= pixel*3;
+                if (offsetShift!==0) {
+                    const newPixel = Math.floor( offsetShift+(pixel*contrast));
+                    if (newPixel>254) pixelIdx= 762;
+                    else if (newPixel<0) pixelIdx= 0;
+                    else pixelIdx= newPixel*3;
+                }
+                this.color( colorModel[pixelIdx]/255, colorModel[pixelIdx+1]/255, colorModel[pixelIdx+2]/255);
             }
-            this.color( colorModel[pixelIdx]/255, colorModel[pixelIdx+1]/255, colorModel[pixelIdx+2]/255);
+            else {
+                this.color( 0,0,0);
+            }`);
+
+
+    // function(pixelAry, colorModel,height, contrast, offsetShift) {
+    //         const pixel= pixelAry[height-this.thread.y][this.thread.x];
+    //         if (pixel!==255) {
+    //             let pixelIdx= pixel*3;
+    //             if (offsetShift!==0) {
+    //                 const newPixel = Math.floor( offsetShift+(pixel*contrast));
+    //                 if (newPixel>254) pixelIdx= 762;
+    //                 else if (newPixel<0) pixelIdx= 0;
+    //                 else pixelIdx= newPixel*3;
+    //             }
+    //             this.color( colorModel[pixelIdx]/255, colorModel[pixelIdx+1]/255, colorModel[pixelIdx+2]/255);
+    //         }
+    //         else {
+    //             this.color( 0,0,0);
+    //         }
+    //
+    const standRawDataTileGPU = gpu.createKernel(standardFunc,{graphical:true, dynamicOutput:true, dynamicArguments:true, tactic: 'speed'});
+    
+
+    // const standRawDataTileGPU = gpu.createKernel(function(pixelAry, colorModel,height, contrast, offsetShift) {
+    //     const pixel= pixelAry[height-this.thread.y][this.thread.x];
+    //     if (pixel!==255) {
+    //         let pixelIdx= pixel*3;
+    //         if (offsetShift!==0) {
+    //             const newPixel = Math.floor( offsetShift+(pixel*contrast));
+    //             if (newPixel>254) pixelIdx= 762;
+    //             else if (newPixel<0) pixelIdx= 0;
+    //             else pixelIdx= newPixel*3;
+    //             // pixelIdx= (newPixel > 254) ? 762 : (newPixel<0) ? 0 : newPixel*3;
+    //         }
+    //         this.color( colorModel[pixelIdx]/255, colorModel[pixelIdx+1]/255, colorModel[pixelIdx+2]/255);
+    //     }
+    //     else {
+    //         this.color( 0,0,0);
+    //     }
+    // },{graphical:true, dynamicOutput:true, dynamicArguments:true, tactic: 'speed'});
+
+
+    const threeCFunc= Function(
+        'redAry', 'greenAry', 'blueAry', 'useR', 'useG', 'useB', 'contrast', 'offsetShift', 'width','height',
+    `const idx= (height - this.thread.y) * width + this.thread.x;
+    let r= useR ? redAry[idx] : 0;
+    let g= useG ? greenAry[idx] : 0;
+    let b= useB ? blueAry[idx] : 0;
+    if (offsetShift!==0) {
+        if (r!==0) {
+            r= Math.floor( offsetShift+(r*contrast));
+            r= (r > 254) ? 254 : (r<0) ? 0 : r;
         }
-        else {
-            this.color( 0,0,0);
+        if (g!==0) {
+            g= Math.floor( offsetShift+(g*contrast));
+            g= (g > 254) ? 254 : (g<0) ? 0 : g;
         }
-    },{graphical:true, dynamicOutput:true, dynamicArguments:true, tactic: 'speed'});
-
-
-    const threeCRawDataTileGPU = gpu.createKernel(function(redAry, greenAry, blueAry, useR, useG, useB, contrast, offsetShift, width,height) {
-        const idx= (height - this.thread.y) * width + this.thread.x;
-        let r= useR ? redAry[idx] : 0;
-        let g= useG ? greenAry[idx] : 0;
-        let b= useB ? blueAry[idx] : 0;
-        if (offsetShift!==0) {
-            if (r!==0) {
-                r= Math.floor( offsetShift+(r*contrast));
-                r= (r > 254) ? 254 : (r<0) ? 0 : r;
-            }
-            if (g!==0) {
-                g= Math.floor( offsetShift+(g*contrast));
-                g= (g > 254) ? 254 : (g<0) ? 0 : g;
-            }
-            if (b!==0) {
-                b= Math.floor( offsetShift+(b*contrast));
-                b= (b > 254) ? 254 : (b<0) ? 0 : b;
-            }
+        if (b!==0) {
+            b= Math.floor( offsetShift+(b*contrast));
+            b= (b > 254) ? 254 : (b<0) ? 0 : b;
         }
-        this.color( r/255, g/255, b/255, 1);
-    },{graphical:true, dynamicOutput:true, dynamicArguments:true, tactic: 'speed'});
+    }
+    this.color( r/255, g/255, b/255, 1);` );
 
 
+    const threeCRawDataTileGPU = gpu.createKernel(threeCFunc,{graphical:true, dynamicOutput:true, dynamicArguments:true, tactic: 'speed'});
+
+
+    // const threeCRawDataTileGPU = gpu.createKernel(function(redAry, greenAry, blueAry, useR, useG, useB, contrast, offsetShift, width,height) {
+    //     const idx= (height - this.thread.y) * width + this.thread.x;
+    //     let r= useR ? redAry[idx] : 0;
+    //     let g= useG ? greenAry[idx] : 0;
+    //     let b= useB ? blueAry[idx] : 0;
+    //     if (offsetShift!==0) {
+    //         if (r!==0) {
+    //             r= Math.floor( offsetShift+(r*contrast));
+    //             r= (r > 254) ? 254 : (r<0) ? 0 : r;
+    //         }
+    //         if (g!==0) {
+    //             g= Math.floor( offsetShift+(g*contrast));
+    //             g= (g > 254) ? 254 : (g<0) ? 0 : g;
+    //         }
+    //         if (b!==0) {
+    //             b= Math.floor( offsetShift+(b*contrast));
+    //             b= (b > 254) ? 254 : (b<0) ? 0 : b;
+    //         }
+    //     }
+    //     this.color( r/255, g/255, b/255, 1);
+    // },{graphical:true, dynamicOutput:true, dynamicArguments:true, tactic: 'speed'});
     async function createTransitionalTileWithGPU(inData, colorModel, isThreeColor, bias=.5, contrast=1, bandUse) {
         const canvas= createTileWithGPU(inData,colorModel,isThreeColor, bias,contrast, bandUse);
 
@@ -59,7 +123,6 @@ export const getGPUOps= once((GPU) => {
         }
     }
 
-
     const get8BitAry= (a) => isArrayBuffer(a) ? new Uint8ClampedArray(a) : a;
 
     /**
@@ -67,6 +130,9 @@ export const getGPUOps= once((GPU) => {
      * @param {RawTileData} inData
      * @param colorModel
      * @param isThreeColor
+     * @param bias
+     * @param contrast
+     * @param bandUse
      * @return {HTMLCanvasElement|OffscreenCanvas}
      */
     function createTileWithGPU(inData, colorModel, isThreeColor, bias=.5, contrast=1, bandUse) {
