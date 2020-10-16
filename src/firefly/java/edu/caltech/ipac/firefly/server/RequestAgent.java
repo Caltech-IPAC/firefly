@@ -10,6 +10,9 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,19 +29,17 @@ import java.util.Map;
 public class RequestAgent {
 
     private Map<String, Cookie> cookies;
-    private String protocol;
-    private String host;
-    private String requestUrl;
-    private String baseUrl;
+    private String requestUrl;      // the request url
+    private String baseUrl;         // the url up to the the app's path
+    private String hostUrl;         // the url up to the host name including port
     private String remoteIP;
     private String sessId;
     private String contextPath;
 
     public RequestAgent() {}
 
-    public RequestAgent(Map<String, Cookie> cookies, String protocol, String requestUrl, String baseUrl, String remoteIP, String sessId, String contextPath) {
+    public RequestAgent(Map<String, Cookie> cookies, String hostUrl, String requestUrl, String baseUrl, String remoteIP, String sessId, String contextPath) {
         this.cookies = cookies;
-        this.protocol = protocol;
         this.requestUrl = requestUrl;
         this.baseUrl = baseUrl;
         this.remoteIP = remoteIP;
@@ -61,24 +62,16 @@ public class RequestAgent {
         return sessId;
     }
 
-    public void setSessId(String sessId) {
+    void setSessId(String sessId) {
         this.sessId = sessId;
     }
 
     public String getContextPath() { return contextPath; }
-    public void setContextPath(String contextPath) { this.contextPath = contextPath; };
+    void setContextPath(String contextPath) { this.contextPath = contextPath; };
 
-    public String getProtocol() {
-        return protocol;
-    }
+    public String getHostUrl() { return hostUrl;}
 
-    void setProtocol(String protocol) {
-        this.protocol = protocol;
-    }
-
-    public String getHost() { return host;}
-
-    public void setHost(String host) { this.host = host;}
+    void setHostUrl(String hostUrl) { this.hostUrl = hostUrl;}
 
     public String getRequestUrl() {
         return requestUrl;
@@ -133,9 +126,9 @@ public class RequestAgent {
     }
 
 
-    //====================================================================
-    //  Authentication section
-    //====================================================================
+//====================================================================
+//  Authentication section
+//====================================================================
     public String getAuthKey() { return null; }
 
 
@@ -155,29 +148,55 @@ public class RequestAgent {
             this.request = request;
             this.response = response;
 
-            // getting the correct info behind a reverse proxy or load balancer that terminates the SSL is a bit tricky
-            // because the requests are forwarded to the servlet container as plain http with some of the header modified
-            // attempt to reconstruct what the original request url component should be
-            // proto://host:port/uri?queryString
+            // getting the base url including the application path is a bit tricky when behind reverse proxy(ies)
+            URL referer = null;
 
-            String remoteIP = getHeader("X-Forwarded-For", request.getRemoteAddr());
-            String proto = getHeader("X-Forwarded-Proto", request.getScheme());
-            String host = getHeader("X-Forwarded-Host", request.getServerName());
-            String serverPort = getHeader("X-Forwarded-Port", String.valueOf(request.getServerPort()));
-            serverPort = serverPort.equals("80") || serverPort.equals("443") ? "" : ":" + serverPort;
-            String contextPath = getPath(request);
-            String uri =  getHeader("X-Original-URI", request.getRequestURI());
+            try {
+                String url = getHeader("Referer", getHeader("Origin"));
+                referer = new URL(url);
+            } catch (MalformedURLException e) {}
 
-            String baseUrl = String.format("%s://%s%s%s/", proto, host, serverPort, contextPath);
-            String requestUrl = String.format("%s://%s%s%s", proto, host, serverPort, uri);
+            String proto = referer != null ? referer.getProtocol() : getHeader("X-Forwarded-Proto", request.getScheme());
+            String host  = referer != null ? referer.getHost()     : getHeader("X-Forwarded-Server", getHeader("X-Forwarded-Host", request.getServerName()));
+            String port  = referer != null && referer.getPort() > 0 ? referer.getPort()+""  : getHeader("X-Forwarded-Port", String.valueOf(request.getServerPort()));
+            port = port.matches("443|80") ? "" : ":" + port;
 
+            String contextPath = getHeader("X-Forwarded-Path");
+            if (contextPath == null && referer != null) {
+                contextPath = referer.getPath();
+                int idx = contextPath.lastIndexOf("/");
+                if (idx > 0) {
+                    contextPath = contextPath.substring(0, idx);
+                }
+            }
+            if (StringUtils.isEmpty(contextPath)) {
+                contextPath = request.getContextPath();
+            }
+
+            String hostUrl = String.format("%s://%s%s", proto, host, port);
+            String baseUrl = hostUrl + contextPath;
+            baseUrl = baseUrl.endsWith("/") ? baseUrl :  baseUrl + "/";
+
+            String requestUrl =  getHeader("X-Original-URI");
+            if (requestUrl == null) {
+                String queryStr = request.getQueryString() == null ? "" : "?" + request.getQueryString();
+                String path = request.getRequestURI();
+                if (!contextPath.equals(request.getContextPath())) {
+                    path = path.replace(request.getContextPath(), contextPath);
+                }
+                requestUrl = path + queryStr;
+            }
+            requestUrl = requestUrl.startsWith(proto) ? requestUrl : hostUrl + requestUrl;
+
+            String remoteIP = getHeader("x-original-forwarded-for", getHeader("X-Forwarded-For", request.getRemoteAddr()));
+
+            setBaseUrl(baseUrl);
+            setHostUrl(hostUrl);
+            setRequestUrl(requestUrl);
             setContextPath(contextPath);
             setRemoteIP(remoteIP);
-            setProtocol(proto);
-            setHost(host);
-            setRequestUrl(requestUrl);
-            setBaseUrl(baseUrl);
             setSessId(request.getSession(true).getId());
+
         }
 
         @Override
@@ -215,28 +234,6 @@ public class RequestAgent {
                 return def;
             }
         }
-
-        /**
-         * Finding the "context" path behind a reverse proxy is very tricky.
-         * For that reason, if it's proxied to a path that does not end with the same context as the app server,
-         * then the header X-Forwarded-Path has to define what that value is.
-         * Otherwise, it will try to resolve is using the header X-Original-URI.
-         * If both are missing, it will assume the context is the same as what's deployed on the app server
-         */
-        private String getPath(HttpServletRequest request) {
-            String path = request.getHeader("X-Forwarded-Path");
-            if (path == null) {
-                path = request.getHeader("X-Original-URI");
-                if (path != null) {
-                    path = path.substring(0, path.indexOf(request.getContextPath()) + request.getContextPath().length());
-                }
-            }
-            if (path == null) {
-                path = request.getContextPath();
-            }
-            return path;
-        }
-
 
         @Override
         public void sendRedirect(String url) {

@@ -517,6 +517,7 @@ public class JsonTableUtil {
             applyIfNotEmpty(ri.getName(),   v -> json.put("name", v));
             applyIfNotEmpty(ri.getType(),   v -> json.put("type", v));
             applyIfNotEmpty(ri.getUtype(),  v -> json.put("utype", v));
+            applyIfNotEmpty(ri.getDesc(),  v -> json.put("desc", v));
             if (ri.getGroups().size() > 0) json.put("groups", toJsonGroupInfos(ri.getGroups()));
             if (ri.getParams().size() > 0) json.put("params", toJsonParamInfos(ri.getParams()));
             return json;
@@ -541,6 +542,7 @@ public class JsonTableUtil {
                 applyIfNotEmpty(res.get("name"),  v -> resourceInfo.setName(v.toString()));
                 applyIfNotEmpty(res.get("type"), v -> resourceInfo.setType(v.toString()));
                 applyIfNotEmpty(res.get("utype"), v -> resourceInfo.setUtype(v.toString()));
+                applyIfNotEmpty(res.get("desc"), v -> resourceInfo.setDesc(v.toString()));
 
                 applyIfNotEmpty(res.get("groups"), v -> resourceInfo.setGroups(toGroupInfos(v.toString())));
                 applyIfNotEmpty(res.get("params"), v -> resourceInfo.setParams(toParamInfos(v.toString())));
