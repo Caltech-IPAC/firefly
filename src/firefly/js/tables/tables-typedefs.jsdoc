@@ -138,6 +138,7 @@
  * @prop {string} name
  * @prop {string} type
  * @prop {string} utype
+ * @prop {string} desc
  * @prop {PARAM[]} params   params if any
  * @prop {GROUP[]} groups   groups if any
  * @global

@@ -24,13 +24,19 @@ import javax.servlet.http.HttpServletResponse;
 public class HealthCheck extends BaseHttpServlet {
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
-
-        // memory check
-        int mem = Math.max(Math.min(StringUtils.getInt(req.getParameter("mem"), 5), 1024), 1);
-        byte[] b = new byte[mem * 1024 * 1024];
-        Runtime rt= Runtime.getRuntime();
-        Logger.debug(String.format("HealthCheck(Used/Max/Allocated): %s/%s/%s",
-                            FileUtil.getSizeAsString(rt.totalMemory() - rt.freeMemory()),
-                            FileUtil.getSizeAsString(rt.maxMemory()), FileUtil.getSizeAsString(b.length)));
+        byte[] alloc = null;
+        try {
+            // memory check
+            int mem = Math.max(Math.min(StringUtils.getInt(req.getParameter("mem"), 5), 1024), 1);
+            alloc = new byte[mem * 1024 * 1024];
+        } catch (OutOfMemoryError oome) {
+            Logger.error(oome, "Encountered OutOfMemory during memory check");
+            throw oome;
+        } finally {
+            Runtime rt= Runtime.getRuntime();
+            Logger.debug(String.format("HealthCheck(Used/Max/Allocated): %s/%s/%s",
+                    FileUtil.getSizeAsString(rt.totalMemory() - rt.freeMemory()),
+                    FileUtil.getSizeAsString(rt.maxMemory()), alloc == null ? "null" : FileUtil.getSizeAsString(alloc.length)));
+        }
     }
 }
