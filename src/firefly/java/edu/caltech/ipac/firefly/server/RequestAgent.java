@@ -12,6 +12,9 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,11 +31,23 @@ import java.util.Map;
 public class RequestAgent {
 
     private Map<String, String> cookies;
-    private String protocol;
-    private String requestUrl;
-    private String baseUrl;
+    private String requestUrl;      // the request url
+    private String baseUrl;         // the url up to the the app's path
+    private String hostUrl;         // the url up to the host name including port
     private String remoteIP;
+    private String sessId;
     private String contextPath;
+
+    public RequestAgent() {}
+
+    public RequestAgent(Map<String, String> cookies, String hostUrl, String requestUrl, String baseUrl, String remoteIP, String sessId, String contextPath) {
+        this.cookies = cookies;
+        this.requestUrl = requestUrl;
+        this.baseUrl = baseUrl;
+        this.remoteIP = remoteIP;
+        this.sessId = sessId;
+        this.contextPath = contextPath;
+    }
 
     public void setCookies(Map<String, String> cookies) {
         this.cookies = cookies;
@@ -45,30 +60,32 @@ public class RequestAgent {
         return cookies;
     }
 
-    public String getProtocol() {
-        return protocol;
+    public String getSessId() {
+        return sessId;
+    }
+
+    void setSessId(String sessId) {
+        this.sessId = sessId;
     }
 
     public String getContextPath() { return contextPath; }
-    public void setContextPath(String contextPath) { this.contextPath = contextPath; };
+    void setContextPath(String contextPath) { this.contextPath = contextPath; };
 
-    public void setProtocol(String protocol) {
-        this.protocol = protocol;
-    }
+    public String getHostUrl() { return hostUrl;}
+
+    void setHostUrl(String hostUrl) { this.hostUrl = hostUrl;}
 
     public String getRequestUrl() {
         return requestUrl;
     }
 
-    public void setRequestUrl(String requestUrl) {
+    void setRequestUrl(String requestUrl) {
         this.requestUrl = requestUrl;
     }
 
-    public String getBaseUrl() {
-        return baseUrl;
-    }
+    public String getBaseUrl() { return baseUrl; }
 
-    public void setBaseUrl(String baseUrl) {
+    void setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
     }
 
@@ -76,13 +93,13 @@ public class RequestAgent {
         return remoteIP;
     }
 
-    public void setRemoteIP(String remoteIP) {
+    void setRemoteIP(String remoteIP) {
         this.remoteIP = remoteIP;
     }
 
     public void sendCookie(Cookie cookie) {}
 
-    public String getCookie(String name) {
+    String getCookie(String name) {
         return getCookies().get(name);
     }
 
@@ -101,13 +118,13 @@ public class RequestAgent {
     public void sendRedirect(String url) {}
 
     protected Map<String, String> extractCookies() {
-        return new HashMap<String, String>(0);
+        return new HashMap<>(0);
     }
 
 
-    //====================================================================
-    //  Authentication section
-    //====================================================================
+//====================================================================
+//  Authentication section
+//====================================================================
     public String getAuthKey() { return null; }
     public String getAuthToken() { return null;}
     public UserInfo getUserInfo() { return null; }
@@ -132,29 +149,67 @@ public class RequestAgent {
             this.request = request;
             this.response = response;
 
-            String remoteIP = getHeader("X-Forwarded-For", request.getRemoteAddr());
-            String scheme = getHeader("X-Forwarded-Proto", request.getHeader("Referer"));
-            scheme = StringUtils.isEmpty(scheme) ? request.getScheme().toLowerCase() : scheme;
-            scheme = scheme.toLowerCase().startsWith("https") ? "https" : "http";
+            // getting the base url including the application path is a bit tricky when behind reverse proxy(ies)
+            URL referer = null;
 
-            String serverName = request.getServerName();
-            int serverPort = request.getServerPort();
-            String serverPortDesc = serverPort == 80 || serverPort == 443 ? "" : ":" + serverPort;
-            String contextPath = getPath(request);
+            try {
+                String url = getHeader("Referer", getHeader("Origin"));
+                referer = new URL(url);
+            } catch (MalformedURLException e) {}
 
-            String baseUrl = String.format("%s://%s%s%s/", scheme, serverName, serverPortDesc, contextPath);
-            String requestUrl = String.format("%s://%s%s%s", scheme, serverName, serverPortDesc, request.getRequestURI());
+            String proto = referer != null ? referer.getProtocol() : getHeader("X-Forwarded-Proto", request.getScheme());
+            String host  = referer != null ? referer.getHost()     : getHeader("X-Forwarded-Server", getHeader("X-Forwarded-Host", request.getServerName()));
+            String port  = referer != null && referer.getPort() > 0 ? referer.getPort()+""  : getHeader("X-Forwarded-Port", String.valueOf(request.getServerPort()));
+            port = port.matches("443|80") ? "" : ":" + port;
 
+            String contextPath = getHeader("X-Forwarded-Path");
+            if (contextPath == null && referer != null) {
+                contextPath = referer.getPath();
+                int idx = contextPath.lastIndexOf("/");
+                if (idx > 0) {
+                    contextPath = contextPath.substring(0, idx);
+                }
+            }
+            if (StringUtils.isEmpty(contextPath)) {
+                contextPath = request.getContextPath();
+            }
+
+            String hostUrl = String.format("%s://%s%s", proto, host, port);
+            String baseUrl = hostUrl + contextPath;
+            baseUrl = baseUrl.endsWith("/") ? baseUrl :  baseUrl + "/";
+
+            String requestUrl =  getHeader("X-Original-URI");
+            if (requestUrl == null) {
+                String queryStr = request.getQueryString() == null ? "" : "?" + request.getQueryString();
+                String path = request.getRequestURI();
+                if (!contextPath.equals(request.getContextPath())) {
+                    path = path.replace(request.getContextPath(), contextPath);
+                }
+                requestUrl = path + queryStr;
+            }
+            requestUrl = requestUrl.startsWith(proto) ? requestUrl : hostUrl + requestUrl;
+
+            String remoteIP = getHeader("x-original-forwarded-for", getHeader("X-Forwarded-For", request.getRemoteAddr()));
+
+            setBaseUrl(baseUrl);
+            setHostUrl(hostUrl);
+            setRequestUrl(requestUrl);
             setContextPath(contextPath);
             setRemoteIP(remoteIP);
-            setProtocol(scheme);
-            setRequestUrl(requestUrl);
-            setBaseUrl(baseUrl);
+            setSessId(request.getSession(true).getId());
+
+            /*
+            LOG.info("baseUrl: " + baseUrl);
+            LOG.info("hostUrl: " + hostUrl);
+            LOG.info("requestUrl: " + requestUrl);
+            LOG.info("contextPath: " + contextPath);
+            LOG.info("remoteIP: " + remoteIP);
+             */
         }
 
         @Override
         protected Map<String, String> extractCookies() {
-            HashMap<String, String> cookies = new HashMap<String, String>();
+            HashMap<String, String> cookies = new HashMap<>();
             if (request != null) {
                 if (request.getCookies() != null) {
                     for (javax.servlet.http.Cookie c : request.getCookies()) {
@@ -187,21 +242,6 @@ public class RequestAgent {
                 return def;
             }
         }
-
-        private String getPath(HttpServletRequest request) {
-            String path = request.getHeader("X-Forwarded-Path");
-            if (path == null) {
-                path = request.getHeader("x-original-uri");
-                if (path != null) {
-                    path = path.substring(0, path.indexOf(request.getContextPath()) + request.getContextPath().length());
-                }
-            }
-            if (path == null) {
-                path = request.getContextPath();
-            }
-            return path;
-        }
-
 
         @Override
         public void sendRedirect(String url) {

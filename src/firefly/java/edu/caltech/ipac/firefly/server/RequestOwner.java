@@ -191,10 +191,6 @@ public class RequestOwner implements Cloneable {
         return ro;
     }
 
-    public String getProtocol() {
-        return requestAgent.getProtocol();
-    }
-
     public String getReferrer() {
         return referrer;
     }
@@ -207,7 +203,7 @@ public class RequestOwner implements Cloneable {
      * return host url including protocol
      */
     public String getHostUrl() {
-        return (getProtocol().startsWith("https") ? "https" : "http") + "://" + getHost();
+        return requestAgent.getHostUrl();
     }
 
     public boolean isCrossSite() {
