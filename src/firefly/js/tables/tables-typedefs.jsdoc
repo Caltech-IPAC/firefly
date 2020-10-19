@@ -28,9 +28,10 @@
  * @prop {object}   selectInfo  selection information.  use SelectInfo.newInstance take advantage of helper's functions.
  * @prop {boolean}  isFetching  true if data is being fetched and not ready for display.
  * @prop {string}   error       error message if the request fail to create a table.
- * @prop {Group[]} groups    groups is any.
- * @prop {Link[]}  links     links is any.
- * @prop {PARAM[]} params    params is any.
+ * @prop {Group[]} groups    groups if any.
+ * @prop {Link[]}  links     links if any.
+ * @prop {PARAM[]} params    params if any.
+ * @prop {RESOURCE[]} resources resources if any.
  *
  * @global
  * @public
