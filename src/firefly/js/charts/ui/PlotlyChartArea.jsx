@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {flux} from '../../core/ReduxFlux.js';
-import {get, set} from 'lodash';
+import {get, set, cloneDeep} from 'lodash';
 import shallowequal from 'shallowequal';
 import {PlotlyWrapper} from './PlotlyWrapper.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
@@ -148,7 +148,8 @@ export class PlotlyChartArea extends Component {
             }
         }
         const {chartWidth, chartHeight} = calculateChartSize(widthPx, heightPx, xyratio, stretch);
-        const playout = Object.assign({showlegend}, adjustLayout(layout), {width: chartWidth, height: chartHeight, annotations});
+        //const playout = Object.assign({showlegend}, adjustLayout(layout), {width: chartWidth, height: chartHeight, annotations});
+        const playout = cloneDeep(Object.assign({showlegend}, adjustLayout(layout), {width: chartWidth, height: chartHeight, annotations}))
 
         const style = {float: 'left'};
         if (chartWidth > widthPx || chartHeight > heightPx) {
