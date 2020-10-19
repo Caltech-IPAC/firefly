@@ -88,7 +88,7 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, tile
 
             const tileSize= tile.tileSize || imageData.image.width;
             drawOneHiPSTile(offscreenCtx, imageData.image, tile.devPtCorners,
-                tileSize, {x:tile.dx,y:tile.dy}, true, tile.nside);
+                tileSize, {x:tile.dx,y:tile.dy}, tile.nside);
 
 
             if (doRenderNow()) renderToScreen();
@@ -97,7 +97,7 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, tile
         }).catch(() => {
             renderedCnt++;
             if (abortRender) return;
-            drawOneHiPSTile(offscreenCtx, emptyTileCanvas, tile.devPtCorners, 512, {x:tile.dx,y:tile.dy}, true, tile.nside);
+            drawOneHiPSTile(offscreenCtx, emptyTileCanvas, tile.devPtCorners, 512, {x:tile.dx,y:tile.dy}, tile.nside);
             addFailedImage(src);
             if (doRenderNow()) {
                 removeTask();
@@ -118,7 +118,7 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, tile
         if (image) {
             const tileSize= tile.tileSize || image.width;
             drawOneHiPSTile(offscreenCtx, image, tile.devPtCorners,
-                tileSize, {x:tile.dx,y:tile.dy}, true, tile.nside);
+                tileSize, {x:tile.dx,y:tile.dy}, tile.nside);
         }
         renderedCnt++;
         if (renderedCnt === totalCnt) {

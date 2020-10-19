@@ -348,9 +348,9 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
             const cval = isArray(colors) ? `<br> ${cTipLabel} = ${parseFloat(colors[idx])} ` : '';
             let   ul = '';
             if (annotations[idx]) {
-                if (!isNil(changes[`fireflyData.${traceNum}.yMax`][idx])) {
+                if (!isNil(changes[`fireflyData.${traceNum}.yMax`]?.[idx])) {
                     ul = '<br> Upper Limit ';
-                } else if (!isNil(changes[`fireflyData.${traceNum}.yMin`][idx])) {
+                } else if (!isNil(changes[`fireflyData.${traceNum}.yMin`]?.[idx])) {
                     ul = '<br> Lower Limit ';
                 }
             }

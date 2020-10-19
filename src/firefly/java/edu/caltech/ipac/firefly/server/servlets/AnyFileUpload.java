@@ -106,86 +106,101 @@ public class AnyFileUpload extends BaseHttpServlet {
         String wsCmd = sp.getOptional(WS_CMD);
         String fromUrl = sp.getOptional(URL);
         WebPlotRequest fromWPR= sp.getOptionalWebPlotRequest(WEB_PLOT_REQUEST);
+        String analysisType = sp.getOptional(FILE_ANALYSIS);
+        boolean analyzeFile= analysisType != null && !analysisType.toLowerCase().equals("false");
+        int responseCode= 200;
 
-        if (wsCmd != null) {
-            // from workspace.. get the file using workspace api
-            fileInfo = getFileFromWorkspace(sp);
-        } else if (fromUrl != null) {
-            // from a URL.. get it
-            int idx = fromUrl.lastIndexOf('/');
-            long fnameHash = System.currentTimeMillis();
-            String fname = (idx >= 0) ? fromUrl.substring(idx + 1) : fromUrl;
-            fname = fname.contains("?") ? "Upload-"+fnameHash : fname;       // don't save queryString as file name.  this will confuse reader expecting a url, like VoTableReader
-            FileInfo status = LockingVisNetwork.retrieveURL(new URL(fromUrl));
-            int code= status.getResponseCode();
-            File file= status.getFile();
-            if (file!=null && code!=200 && code!=304) {
-                throw new Exception("invalid upload from URL: " + status.getResponseCodeMsg());
+        try {
+            if (wsCmd != null) {
+                // from workspace.. get the file using workspace api
+                fileInfo = getFileFromWorkspace(sp);
+            } else if (fromUrl != null) {
+                // from a URL.. get it
+                int idx = fromUrl.lastIndexOf('/');
+                long fnameHash = System.currentTimeMillis();
+                String fname = (idx >= 0) ? fromUrl.substring(idx + 1) : fromUrl;
+                fname = fname.contains("?") ? "Upload-"+fnameHash : fname;       // don't save queryString as file name.  this will confuse reader expecting a url, like VoTableReader
+                FileInfo status = LockingVisNetwork.retrieveURL(new URL(fromUrl));
+                int code= status.getResponseCode();
+                File file= status.getFile();
+                if (file!=null && code!=200 && code!=304) {
+                    throw new Exception("invalid upload from URL: " + status.getResponseCodeMsg());
+                }
+                fileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(file), file, fname, null);
+
+            } else if (fromWPR!= null) {
+                FileRetriever retrieve = ImageFileRetrieverFactory.getRetriever(fromWPR);
+                if (retrieve==null) throw new Exception("Could not determine how to retrieve file");
+                FileInfo fi = retrieve.getFile(fromWPR,false);
+                responseCode= fi.getResponseCode();
+                File file= fi.getFile();
+                fileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(file), file, file.getName(), fi.getContentType());
+            } else if (uploadedItem != null) {
+                // it's a stream from multipart.. write it to disk
+                String name = uploadedItem.getName();
+                File tmpFile = File.createTempFile("upload_", "_" + name, ServerContext.getUploadDir());
+                FileUtil.writeToFile(uploadedItem.openStream(), tmpFile);
+                fileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(tmpFile), tmpFile, name, uploadedItem.getContentType());
             }
-            fileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(file), file, fname, null);
 
-        } else if (fromWPR!= null) {
-            FileRetriever retrieve = ImageFileRetrieverFactory.getRetriever(fromWPR);
-            if (retrieve==null) throw new Exception("Could not determine how to retrieve file");
-            FileInfo fi = retrieve.getFile(fromWPR);
-            File file= fi.getFile();
-            fileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(file), file, file.getName(), null);
-        } else if (uploadedItem != null) {
-            // it's a stream from multipart.. write it to disk
-            String name = uploadedItem.getName();
-            File tmpFile = File.createTempFile("upload_", "_" + name, ServerContext.getUploadDir());
-            FileUtil.writeToFile(uploadedItem.openStream(), tmpFile);
-            fileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(tmpFile), tmpFile, name, uploadedItem.getContentType());
+            if (FileUtil.isGZipFile(fileInfo.getFile())) {
+                File f= fileInfo.getFile();
+                String name= f.getName()+".gz";
+                File gzFile= new File(f.getParentFile(),name);
+                f.renameTo(gzFile);
+                FileUtil.gUnzipFile(gzFile,f,10240);
+            }
+
+            /// -- check if going all the way to workspace
+            if (sp.getOptionalBoolean(WORKSPACE_PUT, false) && responseCode==200) {
+                WsServerParams params1 = WsServerCommands.convertToWsServerParams(sp);
+                WsServerCommands.utils.putFile(params1 ,fileInfo.getFile() );
+            }
+
+            // modify file name if requested
+            StringUtils.applyIfNotEmpty(sp.getOptional(FILE_NAME), fileInfo::setFileName);
+
+            // save info in a cache for downstream use
+            String fileCacheKey = sp.getOptional(CACHE_KEY);
+            fileCacheKey = fileCacheKey == null ? fileInfo.getPname() : fileCacheKey;
+            UserCache.getInstance().put(new StringKey(fileCacheKey), fileInfo);
+
+            // returns the fileCacheKey
+            String returnVal = fileCacheKey;
+
+            if (analyzeFile) {
+                String analyzerId = sp.getOptional(ANALYZER_ID);
+                StopWatch.getInstance().start("doAnalysis");
+
+                FileAnalysisReport.ReportType reportType = getReportType(analysisType);
+                FileAnalysisReport report = FileAnalysis.analyze(
+                        fileInfo.getFile(), reportType, analyzerId,
+                        sp.getParamMapUsingExcludeList(allParams),
+                        responseCode, fileInfo.getContentType());
+                report.setFileName(fileInfo.getFileName());
+                returnVal = returnVal + "::" + FileAnalysis.toJsonString(report);   // appends the report to the end of the returned String
+
+                StopWatch.getInstance().printLog("doAnalysis");
+            }
+            else if (responseCode>=400) {
+                throw new Exception("Upload failed with response code: "+ responseCode);
+            }
+
+            sendReturnMsg(res, 200, null, returnVal);
+            Counters.getInstance().increment(Counters.Category.Upload, fileInfo.getContentType());
+
+            StopWatch.getInstance().printLog("doFileUpload");
+        } catch (IOException|FailedRequestException e) {
+            if (!analyzeFile) throw new IOException("Upload Fail: " +e.getMessage());
+            FileAnalysisReport report= FileAnalysis.makeReportFromException(e);
+            sendReturnMsg(res, 200, null, "NONE::" + FileAnalysis.toJsonString(report));
         }
-
-        if (FileUtil.isGZipFile(fileInfo.getFile())) {
-            File f= fileInfo.getFile();
-            String name= f.getName()+".gz";
-            File gzFile= new File(f.getParentFile(),name);
-            f.renameTo(gzFile);
-            FileUtil.gUnzipFile(gzFile,f,10240);
-        }
-
-        /// -- check if going all the way to workspace
-        if (sp.getOptionalBoolean(WORKSPACE_PUT, false)) {
-            WsServerParams params1 = WsServerCommands.convertToWsServerParams(sp);
-            WsServerCommands.utils.putFile(params1 ,fileInfo.getFile() );
-        }
-
-        // modify file name if requested
-        StringUtils.applyIfNotEmpty(sp.getOptional(FILE_NAME), fileInfo::setFileName);
-
-        // save info in a cache for downstream use
-        String fileCacheKey = sp.getOptional(CACHE_KEY);
-        fileCacheKey = fileCacheKey == null ? fileInfo.getPname() : fileCacheKey;
-        UserCache.getInstance().put(new StringKey(fileCacheKey), fileInfo);
-
-        // returns the fileCacheKey
-        String returnVal = fileCacheKey;
-
-        String doAnalysis = sp.getOptional(FILE_ANALYSIS);
-        if (doAnalysis != null && !doAnalysis.toLowerCase().equals("false")) {
-            String analyzerId = sp.getOptional(ANALYZER_ID);
-            StopWatch.getInstance().start("doAnalysis");
-
-            FileAnalysisReport.ReportType reportType = getReportType(doAnalysis);
-            FileAnalysisReport report = FileAnalysis.analyze(fileInfo.getFile(), reportType,
-                                                               analyzerId,sp.getParamMapUsingExcludeList(allParams));
-            report.setFileName(fileInfo.getFileName());
-            returnVal = returnVal + "::" + FileAnalysis.toJsonString(report);   // appends the report to the end of the returned String
-
-            StopWatch.getInstance().printLog("doAnalysis");
-        }
-
-        sendReturnMsg(res, 200, null, returnVal);
-        Counters.getInstance().increment(Counters.Category.Upload, fileInfo.getContentType());
-
-        StopWatch.getInstance().printLog("doFileUpload");
     }
 
 //====================================================================
 //
 //====================================================================
+
     private static FileAnalysisReport.ReportType getReportType(String type) {
         try {
             return FileAnalysisReport.ReportType.valueOf(type);

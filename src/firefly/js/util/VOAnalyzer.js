@@ -4,7 +4,15 @@
 
 import {get, has, isArray, isEmpty, isObject, isString, intersection} from 'lodash';
 import Enum from 'enum';
-import {getColumn, getColumnIdx, getColumnValues, getColumns, getTblById, getCellValue, getColumnByID} from '../tables/TableUtil.js';
+import { getColumn,
+    getColumnIdx,
+    getColumnValues,
+    getColumns,
+    getTblById,
+    getCellValue,
+    getColumnByID,
+    columnIDToName
+} from '../tables/TableUtil.js';
 import {getCornersColumns} from '../tables/TableInfoUtil.js';
 import {MetaConst} from '../data/MetaConst.js';
 import {CoordinateSys} from '../visualize/CoordSys.js';
@@ -13,6 +21,10 @@ import {getBooleanMetaEntry, getMetaEntry} from '../tables/TableUtil';
 
 
 export const UCDCoord = new Enum(['eq', 'ecliptic', 'galactic']);
+
+// known service IDs from service descriptor's standardId field (so far just one)
+export const DATALINK_SERVICE= 'ivo://ivoa.net/std/DataLink';
+
 
 const obsPrefix = 'obscore:';
 const ColNameIdx = 0;
@@ -606,7 +618,7 @@ class TableRecognizer {
     }
     /**
      * return region column by checking column name or UCD values
-     * @returns {null|ColDescription}
+     * @returns {null|RegionColDescription}
      */
     getVODefinedRegionColumn() {
          return this.getRegionColumnOnUCD() ||
@@ -664,18 +676,17 @@ export function findTableRegionColumn(table) {
  */
 export function findTableAccessURLColumn(table) {
     const urlCol = getObsCoreTableColumn(table, 'access_url');
-    return isEmpty(urlCol) ? null : urlCol;
+    return isEmpty(urlCol) ? undefined : urlCol;
 }
 
 /**
  * Given a TableModel or a table id return a table model
  * @param {TableModel|String} tableOrId - a table model or a table id
- * @return {TableModel}
+ * @return {TableModel|undefined} return the table model if found or undefined
  */
 function getTableModel(tableOrId) {
     if (isString(tableOrId)) return getTblById(tableOrId);  // was passed a table Id
     if (isObject(tableOrId)) return tableOrId;
-    return undefined;
 }
 
 
@@ -916,7 +927,7 @@ export function hasCoverageData(tableOrId) {
 
 /**
  * Guess if this table contains image meta data. It contains image meta data if IMAGE_SOURCE_ID is defined
- * or a DATA_SOURCE column name is defined
+ * or a DATA_SOURCE column name is defined, or it is an obscore table, or it has service descriptors
  * @param {TableModel|String} tableOrId - a table model or a table id
  * @return {boolean} true if there is image meta data
  * @see MetaConst.DATA_SOURCE
@@ -924,18 +935,20 @@ export function hasCoverageData(tableOrId) {
  */
 export function isMetaDataTable(tableOrId) {
     const table= getTableModel(tableOrId);
-    // const dataSourceUpper = MetaConst.DATA_SOURCE.toUpperCase();
     if (isEmpty(table)) return false;
     const {tableMeta, totalRows} = table;
     if (!tableMeta || !totalRows) return false;
 
-    // const dsCol = Object.keys(tableMeta).find((key) => key.toUpperCase() === dataSourceUpper);
-    // if (dsCol && tableMeta[dsCol].toLocaleLowerCase()==='false') return false;
-    const dsCol= getDataSourceColumn(table);
-    if (dsCol===false) return false;  // if the meta data specifically disables any data sources it will be set to false
+    const dataSourceColumn= getDataSourceColumn(table);
+    if (dataSourceColumn===false) return false;  // DataSource meta data may be specifically set to false, if so disable all metadata processing
 
-    return Boolean(tableMeta[MetaConst.IMAGE_SOURCE_ID] || tableMeta[MetaConst.DATASET_CONVERTER] ||
-        dsCol || hasObsCoreLikeDataProducts(table) || isTableWithRegion(tableOrId));
+    return Boolean(
+        tableMeta[MetaConst.IMAGE_SOURCE_ID] ||
+        tableMeta[MetaConst.DATASET_CONVERTER] ||
+        dataSourceColumn ||
+        hasObsCoreLikeDataProducts(table) ||
+        hasServiceDescriptors(table) ||
+        isTableWithRegion(tableOrId));
 }
 
 
@@ -994,6 +1007,91 @@ export function hasObsCoreLikeDataProducts(tableOrId) {
 
 
 /**
+ * @global
+ * @public
+ * @typedef {Object} ServiceDescriptorInputParam
+ *
+ * @prop UCD
+ * @prop [arraySize] - might be a number if size of an array, or '*', or number if as length of string
+ * @prop name - param name
+ * @prop {string} type - one of - 'char', 'double', 'float', 'int'
+ * @prop [ref]
+ * @prop {boolean} optionalParam
+ * @prop [colName]
+ * @prop {string} value
+ * @prop {String} [minValue] - might be a single value or an array of numbers, look at arraySize and type
+ * @prop {String} [maxValue] - might be a single value or an array of numbers, look at arraySize and type
+ * @prop {String} [options] - a set of options in one string, separated by commas 'op1,op2,op3'
+ */
+
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} ServiceDescriptorDef
+ *
+ * @summary The service descriptor info extracted from the table meta data
+ *
+ * @prop {string} title
+ * @prop {string} accessURL
+ * @prop {string} standardID
+ * @prop {string} value
+ * @prop {boolean} allowsInput - use may change the parameter
+ * @prop {boolean} inputRequired - user must enter something
+ * @prop {Array.<ServiceDescriptorInputParam>} urlParams
+ */
+
+/**
+ * determine is a service descriptor is a datalink service descriptor
+ * @param {ServiceDescriptorDef} sd
+ * @return {boolean}
+ */
+export const isDataLinkServiceDesc= (sd) => false && sd?.standardID.includes(DATALINK_SERVICE); //todo - remove the false after irsa fixes it's service
+
+/**
+ * return true if there are service descriptor blocks in this table, false otherwise
+ * @param {TableModel|String} tableOrId - a table model or a table id
+ * @return {boolean} true if there are service descriptors
+ */
+export const hasServiceDescriptors= (tableOrId) => Boolean(getServiceDescriptors(tableOrId));
+
+/**
+ * return a list of service descriptors found in the table or false
+ * @param {String|TableModel} tableOrId
+ * @return {Array.<ServiceDescriptorDef>|false}
+ */
+export function getServiceDescriptors(tableOrId) {
+    const table= getTableModel(tableOrId);
+    if (!table || !isArray(table.resources)) return false;
+    const sResources= table.resources.filter(
+        (r) => r.type?.toLowerCase()==='meta' &&
+               r.utype?.toLowerCase()==='adhoc:service' &&
+               r.params.some( (p) => (p.name==='accessURL' && p.value)));
+    if (!sResources.length) return false;
+    const sdAry= sResources.map( ({desc,params,ID,groups}, idx) => (
+        {
+            ID,
+            title: desc ?? 'Service Descriptor '+idx,
+            accessURL: params.find( ({name}) => name==='accessURL')?.value,
+            standardID: params.find( ({name}) => name==='standardID')?.value,
+            urlParams: groups
+                .find( (g) => g.name==='inputParams')
+                ?.params.map( (p) => {
+                    const optionalParam= !p.ref && !p.value && !p.options;
+                    return {...p,
+                        colName: columnIDToName(table,p.ref),
+                        optionalParam,
+                        allowsInput: !p.ref,
+                        inputRequired: !p.ref && !p.value && !optionalParam
+                    };
+                }),
+        }
+    ));
+    return sdAry.length ? sdAry : false;
+}
+
+
+/**
  * return access_format cell data
  * @param {TableModel|String} tableOrId - a table model or a table id
  * @param rowIdx
@@ -1045,29 +1143,21 @@ export function isFormatDataLink(tableOrId, rowIdx) {
 
 
 /**
- *
- * @param {TableModel|string} originTableOrId
- * @param {TableModel} dataLinkTable
- * @param {string} filterStr a string to filter out content_type of the results by
- * @param {number} maxSize if defined, don't return anything greater then max size
- * @return {Array.<{url, contentType, size, semantics}>} return an array of objects with url and contentType keys
+ * @param {TableModel} dataLinkTable - a TableModel that is a datalink call result
+ * @return {Array.<{url, contentType, size, semantics, serviceDefRef}>} array of object with important data link info
  */
-export function getDataLinkAccessUrls(originTableOrId, dataLinkTable, filterStr='', maxSize=0 ) {
-    const originTable= getTableModel(originTableOrId);
-    const data= get(dataLinkTable, 'tableData.data', []);
-    if (!data.length) return [];
-    const urlOptions= get(dataLinkTable, 'tableData.data', []).map( (row,idx) => {
-        const url= getCellValue(dataLinkTable,idx,'access_url' );
-        const contentType= getCellValue(dataLinkTable,idx,'content_type' ) ||'';
-        const size= Number(getCellValue(dataLinkTable,idx,'content_length' ));
-        const semantics= getCellValue(dataLinkTable,idx,'semantics' );
-        return {url,contentType, size, semantics  };
-    }).filter( ({url}) => url && (url.startsWith('http') || url.startsWith('ftp')) );
-    return filterStr||maxSize ?
-        urlOptions.filter( ({contentType,size}) =>
-            contentType.toLowerCase()
-                .includes(filterStr) && (maxSize===0 || size<=maxSize )) :
-        urlOptions;
+export function getDataLinkData(dataLinkTable) {
+    return (dataLinkTable?.tableData?.data ?? [])
+        .map( (row,idx) =>
+            ({
+                url: getCellValue(dataLinkTable,idx,'access_url' ),
+                contentType: getCellValue(dataLinkTable,idx,'content_type' ) ||'',
+                size: Number(getCellValue(dataLinkTable,idx,'content_length' )),
+                semantics: getCellValue(dataLinkTable,idx,'semantics' ),
+                serviceDefRef: getCellValue(dataLinkTable,idx,'service_def' ),
+            }))
+        .filter( ({url, serviceDefRef}) =>
+            serviceDefRef || url?.startsWith('http') || url?.startsWith('ftp') );
 }
 
 const DEFAULT_TNAME_OPTIONS = [

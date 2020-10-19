@@ -115,6 +115,11 @@ function is1DImage(part) {
 const C_COL1= ['index','wave'];
 const C_COL2= ['flux','data','data1','data2'];
 
+const TS_C_COL1= ['mjd'];
+const TS_C_COL2= ['mag'];
+
+const SPACITAL_C_COL1= ['ra','lon', 'c_ra', 'ra1'];
+const SPACITAL_C_COL2= ['dec','lat','c_dec','dec1'];
 
 /**
  * Return a object that specifieds the xy chart columns, the column names, and the column units
@@ -140,16 +145,27 @@ function getTableChartColInfo(title, part, fileFormat) {
             if (colCnt===2) cNames[1]= !title? 'pixel value':title;
         }
         const cUnits= cNames.length===tableColumnUnits.length ? tableColumnUnits : undefined;
-        return {xCol:cNames[0],yCol:cNames[1],cNames,cUnits};
+        return {xCol:cNames[0],yCol:cNames[1],cNames,cUnits, connectPoints:false};
     }
     else {
         const tabColNames= getColumnNames(part,fileFormat);
         if (!tabColNames || tabColNames.length<2) return {};
-        const xCol= tabColNames.find( (c) => C_COL1.includes(c.toLowerCase()));
-        const yCol= tabColNames.find( (c) => C_COL2.includes(c.toLowerCase()));
+        let xCol= tabColNames.find( (c) => C_COL1.includes(c.toLowerCase()));
+        let yCol= tabColNames.find( (c) => C_COL2.includes(c.toLowerCase()));
+        let connectPoints= true;
+        if (!xCol || !yCol) {
+            xCol= tabColNames.find( (c) => TS_C_COL1.includes(c.toLowerCase()));
+            yCol= tabColNames.find( (c) => TS_C_COL2.includes(c.toLowerCase()));
+            connectPoints= false;
+        }
+        if (!xCol || !yCol) {
+            xCol= tabColNames.find( (c) => SPACITAL_C_COL1.includes(c.toLowerCase()));
+            yCol= tabColNames.find( (c) => SPACITAL_C_COL2.includes(c.toLowerCase()));
+            connectPoints= false;
+        }
         const rowsTotal= getRowCnt(part,fileFormat);
         if (rowsTotal<1 || !xCol || !yCol) return {};
-        return {xCol,yCol};
+        return {xCol,yCol, connectPoints};
     }
 }
 
@@ -201,7 +217,7 @@ function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, titl
     }
 
     const ddTitleStr= getTableDropTitleStr(title,part,partFormat,tableOnly);
-    const {xCol,yCol,cNames,cUnits}= getTableChartColInfo(title, part, partFormat);
+    const {xCol,yCol,cNames,cUnits,connectPoints}= getTableChartColInfo(title, part, partFormat);
 
     //define title for table and chart
     let titleInfo={titleStr:title, showChartTitle:true};
@@ -212,8 +228,7 @@ function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, titl
 
     if (tableOnly) {
         return dpdtTable(ddTitleStr,
-            createChartTableActivate(false, fileOnServer,titleInfo,activateParams,
-            undefined, tbl_index, cNames, cUnits),
+            createChartTableActivate(false, fileOnServer,titleInfo,activateParams, undefined, tbl_index, cNames, cUnits),
             undefined, {paIdx:tbl_index,requestDefault});
     }
     else {
@@ -233,7 +248,7 @@ function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, titl
             const chartInfo= {xAxis:xCol, yAxis:yCol, chartParamsAry};
             if (chartTableDefOption===AUTO) chartTableDefOption= imageAsTableColCnt===2 ? SHOW_CHART : SHOW_TABLE;
             return dpdtChartTable(ddTitleStr,
-                createChartTableActivate(true, fileOnServer,titleInfo,activateParams,chartInfo,tbl_index,cNames,cUnits),
+                createChartTableActivate(true, fileOnServer,titleInfo,activateParams,chartInfo,tbl_index,cNames,cUnits,connectPoints),
                 undefined, {paIdx:tbl_index, chartTableDefOption, interpretedData, requestDefault});
         }
     }

@@ -7,8 +7,10 @@ import {UserZoomTypes, getArcSecPerPix, getEstimatedFullZoomFactor,
     getNextZoomLevel, getZoomLevelForScale, FullType} from '../ZoomUtil.js';
 import {logger} from '../../util/Logger.js';
 import {isImage, isHiPS} from '../WebPlot.js';
-import ImagePlotCntlr, {ActionScope, IMAGE_PLOT_KEY, WcsMatchType,
-                       dispatchUpdateViewSize, dispatchRecenter} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {
+    ActionScope, IMAGE_PLOT_KEY, WcsMatchType,
+    dispatchUpdateViewSize, dispatchRecenter, dispatchChangeCenterOfProjection
+} from '../ImagePlotCntlr.js';
 import {
     getPlotViewById, primePlot, getPlotStateAry, operateOnOthersInPositionGroup,
     applyToOnePvOrAll, hasLocalStretchByteData
@@ -20,6 +22,8 @@ import {doHiPSImageConversionIfNecessary} from './PlotHipsTask.js';
 import {matchImageToHips, matchHiPStoPlotView} from './WcsMatchTask';
 import PlotState from '../PlotState.js';
 import {changeLocalRawDataZoom} from '../rawData/RawDataOps.js';
+import {findHipsCenProjToPlaceWptOnDevPt} from '../reducer/PlotView.js';
+import {CCUtil} from '../CsysConverter.js';
 
 
 const ZOOM_WAIT_MS= 1500; // 1.5 seconds
@@ -38,7 +42,7 @@ let zoomTimers= [];
 export function zoomActionCreator(rawAction) {
     return (dispatcher, getState) => {
 
-        const {plotId,zoomLockingEnabled= false,forceDelay=false, level:payloadLevel}= rawAction.payload;
+        const {plotId,zoomLockingEnabled= false,forceDelay=false, level:payloadLevel, devicePt}= rawAction.payload;
         let {userZoomType,actionScope= ActionScope.GROUP}= rawAction.payload;
         userZoomType= UserZoomTypes.get(userZoomType);
         actionScope= ActionScope.get(actionScope);
@@ -67,12 +71,12 @@ export function zoomActionCreator(rawAction) {
 
 
         visRoot= getState()[IMAGE_PLOT_KEY];
-        if (zoomActive) doZoom(dispatcher,plot,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay,getState);
+        if (zoomActive) doZoom(dispatcher,plot,level,isFullScreen,zoomLockingEnabled,userZoomType,devicePt,useDelay,getState);
         if (actionScope===ActionScope.GROUP) {
             const {wcsMatchType}= visRoot;
             const matchByScale= (wcsMatchType!==WcsMatchType.Pixel && wcsMatchType!==WcsMatchType.PixelCenter);
             const matchFunc= makeZoomLevelMatcher(dispatcher, visRoot,pv,level,matchByScale, isFullScreen,
-                                                   zoomLockingEnabled,userZoomType,useDelay, getState);
+                                                   zoomLockingEnabled,userZoomType,devicePt, useDelay, getState);
             operateOnOthersInPositionGroup(getState()[IMAGE_PLOT_KEY],pv, matchFunc);
         }
         alignWCS(getState,pv);
@@ -169,7 +173,7 @@ function alignWCS(getState, pv) {
 
 
 function makeZoomLevelMatcher(dispatcher, visRoot, sourcePv,level,matchByScale,isFullScreen,
-                              zoomLockingEnabled,userZoomType,useDelay,getState) {
+                              zoomLockingEnabled,userZoomType,devicePt,useDelay,getState) {
     const selectedPlot= primePlot(sourcePv);
     const targetArcSecPix= matchByScale && getArcSecPerPix(selectedPlot, level);
 
@@ -184,7 +188,7 @@ function makeZoomLevelMatcher(dispatcher, visRoot, sourcePv,level,matchByScale,i
             // if the new level is only slightly different then use the target level
            newZoomLevel= (!plotLevel || (Math.abs(plotLevel-level)<.01)) ? level : plotLevel;
         }
-        doZoom(dispatcher,plot,newZoomLevel,isFullScreen,zoomLockingEnabled,userZoomType,useDelay,getState);
+        doZoom(dispatcher,plot,newZoomLevel,isFullScreen,zoomLockingEnabled,userZoomType,devicePt,useDelay,getState);
     };
 }
 
@@ -199,13 +203,15 @@ function makeZoomLevelMatcher(dispatcher, visRoot, sourcePv,level,matchByScale,i
  * @param {boolean} isFullScreen
  * @param {boolean} zoomLockingEnabled
  * @param {UserZoomType} userZoomType
+ * @param {DevicePt} devicePt
  * @param {boolean} useDelay
  * @param {Function} getState
  */
-function doZoom(dispatcher,plot,zoomLevel,isFullScreen, zoomLockingEnabled, userZoomType,useDelay,getState) {
+function doZoom(dispatcher,plot,zoomLevel,isFullScreen, zoomLockingEnabled, userZoomType,devicePt,useDelay,getState) {
 
     const localRawData=  hasLocalStretchByteData(plot);
     const oldZoomLevel= plot.zoomFactor;
+    const hips= isHiPS(plot);
 
     const preZoomVisRoot= getState()[IMAGE_PLOT_KEY];
 
@@ -215,9 +221,17 @@ function doZoom(dispatcher,plot,zoomLevel,isFullScreen, zoomLockingEnabled, user
     //-----------------------------------------------------------------
     // Part 1: do initial zoom and check for plot type and conversion
     //-----------------------------------------------------------------
+
+
+    let wptBeforeZoom;
+    if (hips && devicePt) {
+        wptBeforeZoom= CCUtil.getWorldCoords(plot,devicePt);
+    }
+
+
     const {plotId}= plot;
     dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_START,
-                  payload:{plotId,zoomLevel, zoomLockingEnabled,userZoomType} } );
+                  payload:{plotId,zoomLevel, zoomLockingEnabled,userZoomType, devicePt} } );
 
 
     const pv= getPlotViewById(preZoomVisRoot,plotId);
@@ -228,7 +242,13 @@ function doZoom(dispatcher,plot,zoomLevel,isFullScreen, zoomLockingEnabled, user
     }
 
 
-    if (isHiPS(plot) ) {
+    if (hips) {
+        if (devicePt) {
+            const postZoomVisRoot= getState()[IMAGE_PLOT_KEY];
+            const postPv= getPlotViewById(postZoomVisRoot,plotId);
+            const centerProjPt= findHipsCenProjToPlaceWptOnDevPt(postPv,wptBeforeZoom,devicePt);
+            dispatchChangeCenterOfProjection({plotId,centerProjPt});
+        }
         dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotId} } );
         return;
     }
@@ -340,23 +360,6 @@ function processLocalZoom(dispatcher, plot, zoomLevel, isFullScreen) {
 
     const {plotId}= plot;
     const rawData= changeLocalRawDataZoom(plot,zoomLevel,isFullScreen);
-    //todo compute raw data for overlay plots by looping through
-
-
-
-    const overlayUpdateAry= [];
-
-
-    // const existingOverlayPlotViews = pv.overlayPlotViews.filter((opv) => opv.plot);
-
-    // resultAry.forEach( (r,i) => {
-    //     if (i===0) return;
-    //     overlayUpdateAry[i-1]= {
-    //         imageOverlayId: existingOverlayPlotViews[i-1].imageOverlayId,
-    //         overlayStateJson: r.data[WebPlotResult.PLOT_STATE],
-    //         overlayTiles: r.data[WebPlotResult.PLOT_IMAGES]
-    //     };
-    // });
     dispatcher( {
         type: ImagePlotCntlr.ZOOM_IMAGE,
         payload: {

@@ -7,6 +7,7 @@ import {get} from 'lodash';
 import {firefly} from './Firefly.js';
 import {mergeObjectOnly} from './util/WebUtil.js';
 import {getFireflyViewerWebApiCommands} from './api/webApiCommands/ViewerWebApiCommands';
+import {getLcCommands} from './api/webApiCommands/LcWebApiCommands.js';
 
 
 /**
@@ -47,7 +48,7 @@ const {template}= props;
 let apiCommands;
 
 if (template==='FireflyViewer' || template==='FireflySlate') apiCommands= getFireflyViewerWebApiCommands();
-else if (template==='LightCurveViewer') apiCommands= getFireflyViewerWebApiCommands(['table']); // todo add commands for time series viewer
+else if (template==='LightCurveViewer') apiCommands= getLcCommands();
 
 firefly.bootstrap(props, options, apiCommands);
 

@@ -48,6 +48,10 @@ public class URLFileRetriever implements FileRetriever {
             Arrays.asList(FileUtil.FITS, FileUtil.GZ, "tar", FileUtil.PDF, "votable", "tbl", "csv", "tsv");
 
     public FileInfo getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {
+       return getFile(request,true);
+    }
+
+    public FileInfo getFile(WebPlotRequest request, boolean handleAllErrors) throws FailedRequestException, GeomException, SecurityException {
         FileInfo fitsFileInfo;
         String urlStr = request.getURL();
         if (urlStr.toLowerCase().startsWith("file:///")) {
@@ -85,7 +89,7 @@ public class URLFileRetriever implements FileRetriever {
             fitsFileInfo = LockingVisNetwork.retrieveURL(params);
 
             int responseCode= fitsFileInfo.getResponseCode();
-            if (responseCode>=400) {
+            if (responseCode>=400 && handleAllErrors) {
                 throw new FailedRequestException(fitsFileInfo.getResponseCodeMsg());
             }
 

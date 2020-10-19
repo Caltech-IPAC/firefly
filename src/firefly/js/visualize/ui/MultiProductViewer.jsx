@@ -17,13 +17,25 @@ import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {DPtypes, SHOW_CHART, SHOW_TABLE, SHOW_IMAGE} from '../../metaConvert/DataProductsType';
 import {
-    dataProductRoot, dispatchActivateFileMenuItem, dispatchActivateMenuItem,
-    getActiveFileMenuKey, getActiveMenuKey, getDataProducts,
-    doDownload, getActiveFileMenuKeyByKey,
-    dispatchUpdateActiveKey, dispatchInitDataProducts, getActivateParams, isInitDataProducts
+    dataProductRoot,
+    dispatchActivateFileMenuItem,
+    dispatchActivateMenuItem,
+    getActiveFileMenuKey,
+    getActiveMenuKey,
+    getDataProducts,
+    doDownload,
+    getActiveFileMenuKeyByKey,
+    dispatchUpdateActiveKey,
+    dispatchInitDataProducts,
+    getActivateParams,
+    isInitDataProducts,
+    getSearchParams,
+    dispatchSetSearchParams, dispatchUpdateDataProducts
 } from '../../metaConvert/DataProductsCntlr';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView';
 import {dispatchChangeActivePlotView} from '../ImagePlotCntlr';
+import {ActivateMenu} from './ActivateMenu.jsx';
+import {getServiceParamsAry} from '../../metaConvert/DataProductsCntlr.js';
 
 
 
@@ -47,14 +59,27 @@ const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId})
     const {renderTreeId} = useContext(RenderTreeIdCtx);
     const [currentCTIChoice, setCurrentCTIChoice] = useState(undefined);
     const [lookupKey, setLookKey] = useState(undefined);
-    const [dataProductsState]= useStoreConnector( (old) => {
+    // const [activateParams, setActivateParams]= useState(undefined);
+    const [dataProductsState, serviceParamsAry]= useStoreConnector(
+        (old) => {
             const newDp= getDataProducts(dataProductRoot(),dpId)||{};
             return (!old || (newDp!==old && newDp.displayType && newDp.displayType!==DPtypes.DOWNLOAD)) ? newDp : old;
-        });
+        },
+        () => getServiceParamsAry(dataProductRoot(),dpId)
+    );
+
 
     const {imageViewerId,chartViewerId,tableGroupViewerId}=  getActivateParams(dataProductRoot(),dpId);
-    const {displayType='unsupported', menu,fileMenu,message,url, isWorkingState, menuKey,
-        activeMenuLookupKey,singleDownload= false, chartTableDefOption=SHOW_CHART, imageActivate}= dataProductsState;
+
+    const {displayType='unsupported', menu,fileMenu,
+        message,url, isWorkingState, menuKey,
+        activeMenuLookupKey,singleDownload= false,
+        chartTableDefOption=SHOW_CHART, imageActivate,
+        allowsInput=false, serDefParams= undefined}= dataProductsState;
+
+    const searchParams= getSearchParams(serviceParamsAry,activeMenuLookupKey,menuKey);
+
+
     let {activate}= dataProductsState;
 
     useEffect(() => {
@@ -84,20 +109,52 @@ const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId})
     }, [displayType,initCTIChoice,ctLookupKey]);
 
     useEffect(() => {
-        const deActivate= activate?.();
+        if (allowsInput && !searchParams) return;
+        const deActivate= activate?.(menu,searchParams);
         return () => isFunction(deActivate) && deActivate();
-    }, [activate]);
+    }, [activate,searchParams,allowsInput]);
 
-    const makeDropDown= (!singleDownload || menu.length>1) && getMakeDropdown(menu,fileMenu,dpId, activeMenuLookupKey);
+
+
+    const resetAllSearchParams= () => menu?.forEach( (entry) =>
+            getSearchParams(serviceParamsAry,activeMenuLookupKey,entry.menuKey) && dispatchSetSearchParams(
+                                        { dpId, activeMenuLookupKey, menuKey:entry.menuKey, params: undefined }));
+
+    const doResetButton= displayType!==DPtypes.ANALYZE && !isWorkingState && Boolean(searchParams || serDefParams?.some( (sdp) => !sdp.ref));
+    // const doResetButton= Boolean(searchParams);
+
+    const makeDropDown=
+        getMakeDropdown(dpId, dataProductsState, !singleDownload && menu?.length>1, doResetButton, resetAllSearchParams);
 
     switch (displayType) {
         case DPtypes.IMAGE :
             return makeMultiImageViewer(imageViewerId,metaDataTableId,makeDropDown,ImageMetaDataToolbar);
         case DPtypes.ANALYZE :
+            if (allowsInput && !searchParams) {
+                return (<ActivateMenu
+                    {...{
+                        serDefParams,
+                        setSearchParams: (params) => dispatchSetSearchParams({dpId,activeMenuLookupKey,menuKey,params}),
+                        title:dataProductsState.name,
+                        makeDropDown,
+                        }} />);
+            }
+            else {
+                return (<ProductMessage {...{menu, singleDownload, makeDropDown, isWorkingState, message}}/>);
+            }
         case DPtypes.MESSAGE :
         case DPtypes.PROMISE :
-            return (<ProductMessage {...{menu, singleDownload, makeDropDown, isWorkingState, message}} />);
-        case DPtypes.TABLE :
+            if (dataProductsState.complexMessage) { //todo
+                                                  // make this work
+                return (<ComplexMessage {...{menu, makeDropDown, message,
+                    detailMsgAry:dataProductsState.detailMsgAry, badUrl:dataProductsState.badUrl,
+                    resetMenuKey:dataProductsState.resetMenuKey, dpId, activeMenuLookupKey, doResetButton }} />);
+
+            }
+            else {
+                return (<ProductMessage {...{menu, singleDownload, makeDropDown, isWorkingState, message}} />);
+            }
+            case DPtypes.TABLE :
             return (<MultiProductChoice {...{dpId,makeDropDown,tableGroupViewerId,whatToShow:SHOW_TABLE}}/>);
         case DPtypes.CHART :
             return (<MultiProductChoice {...{dpId,makeDropDown,chartViewerId,whatToShow:SHOW_CHART}}/>);
@@ -191,13 +248,41 @@ function ProductMessage({menu, singleDownload, makeDropDown, isWorkingState, mes
     );
 }
 
+function ComplexMessage({menu, makeDropDown, message, resetMenuKey, dpId,activeMenuLookupKey, doResetButton, detailMsgAry=[], badUrl}) {
+    return (
+        <div style={{display:'flex', flexDirection: 'column', background: '#c8c8c8', width:'100%', height:'100%'}}>
+            <div style={{height:menu?30:0}}>
+                {makeDropDown && makeDropDown?.()}
+            </div>
+            <div style={{display:'flex', flexDirection: 'column', alignSelf:'center', paddingTop:40}}>
+                <div style={{alignSelf:'center', fontSize:'14pt', paddingBottom:10}}>{message}</div>
+                {detailMsgAry.map( (m) => (<div style={{alignSelf:'center', fontSize:'12pt', paddingTop:5}} key={m}>{m}</div>))}
+                {badUrl &&
+                <div style={{alignSelf:'left', fontSize:'12pt', paddingTop:5, maxWidth:200}}>
+                    <span style={{whiteSpace:'nowrap', paddingRight: 5}}>Failed URL:</span>
+                    <a href={badUrl} target={'badURLTarget'}>
+                        <span style={{fontSize: '10pt'}}> {badUrl} </span>
+                    </a>
+                </div>
+                }
+            </div>
+            {doResetButton && <CompleteButton style={{alignSelf:'center', paddingTop:25 }} text={'Reset'}
+                                              onSuccess={() => {
+                                dispatchSetSearchParams({ dpId, activeMenuLookupKey, menuKey:resetMenuKey, params: undefined });
+                                dispatchActivateMenuItem(dpId,resetMenuKey);
+                                // console.log('do reset');
+                            }}/>}
+        </div>
+    );
+}
+
 const ProductPNG = ( {makeDropDown, url}) => (
     <div style={{display:'flex', flexDirection: 'column', background: '#c8c8c8', width:'100%', height:'100%'}}>
         {makeDropDown &&  <div style={{height:30, width:'100%'}}>
             {makeDropDown()}
         </div>}
         <div style={{overflow:'auto', display:'flex', justifyContent: 'center', alignItem:'center'}}>
-            <img src={url} alt={url} style={{maxWidth:'100%', flexGrow:0, flexShrink:0 }}/>
+            <img src={url} alt={url} style={{maxWidth:'100%', flexGrow:0, flexShrink:0, objectFit: 'contain' }}/>
         </div>
     </div> );
 
@@ -216,15 +301,21 @@ const FileMenuDropDown= ({fileMenu, dpId}) => (
 FileMenuDropDown.propTypes= { dpId : string, fileMenu : object};
 
 
-const OtherOptionsDropDown= ({menu, dpId, activeMenuLookupKey}) => (
+const OtherOptionsDropDown= ({menu, dpId, activeMenuLookupKey, resetAllSearchParams}) => {
+    console.log(`otheroptionsDropDown: ${getActiveMenuKey(dpId,activeMenuLookupKey)}`);
+    return (
         <SingleColumnMenu>
             {menu.map( (menuItem, idx) => (
-                    <ToolbarButton text={menuItem.name} tip={`${menuItem.semantics} - ${menuItem.url}`}
-                                   enabled={true} horizontal={false} key={'otherOptions-'+idx} hasCheckBox={true}
-                                   checkBoxOn={menuItem.menuKey===getActiveMenuKey(dpId, activeMenuLookupKey)}
-                                   onClick={() => dispatchActivateMenuItem(dpId,menuItem.menuKey) }/> )
+                <ToolbarButton text={menuItem.name} tip={`${menuItem.semantics} - ${menuItem.url}`}
+                               enabled={true} horizontal={false} key={'otherOptions-'+idx} hasCheckBox={true}
+                               checkBoxOn={menuItem.menuKey===getActiveMenuKey(dpId, activeMenuLookupKey)}
+                               onClick={() => {
+                                   resetAllSearchParams();
+                                   dispatchActivateMenuItem(dpId,menuItem.menuKey);
+                               } }/> )
             )}
         </SingleColumnMenu> );
+}
 
 OtherOptionsDropDown.propTypes= { dpId : string, menu : array, activeMenuLookupKey : string, };
 
@@ -237,10 +328,20 @@ const makeMultiImageViewer= (imageViewerId,metaDataTableId,makeDropDown, ImageMe
         makeDropDown, Toolbar:ImageMetaDataToolbar}} />);
 
 
-function getMakeDropdown(menu, fileMenu, dpId,activeMenuLookupKey) {
+/**
+ *
+ * @param {String} dpId
+ * @param {DataProductState} dataProductState
+ * @param {boolean} showMenu - true to show the Menu
+ * @param {boolean} showRedoSearchButton - true to show the button
+ * @param {Function} resetAllSearchParams - function that will reset all the search param input to undefined
+ * @return {function|undefined} function to create the drapdown menu
+ */
+function getMakeDropdown(dpId, dataProductState, showMenu, showRedoSearchButton, resetAllSearchParams) {
+    const {menu,fileMenu,activeMenuLookupKey, menuKey, analysisActivateFunc, originalTitle}= dataProductState;
     const hasFileMenu= get(fileMenu,'menu.length',0)>1;
-    const hasMenu= menu && menu.length>0;
-    if (!hasMenu && !hasFileMenu) return undefined;
+    const hasMenu= showMenu && menu && menu.length>0;
+    if (!hasMenu && !hasFileMenu && !showRedoSearchButton) return undefined;
     return () => (
             <div style={{display:'flex', flexDirection:'row'}}>
                 {!hasMenu ? <div style={{width: 50,height:1 }}/> :
@@ -251,7 +352,7 @@ function getMakeDropdown(menu, fileMenu, dpId,activeMenuLookupKey) {
                         visible={true}
                         style={{paddingRight:20}}
                         useDropDownIndicator={true}
-                        dropDown={<OtherOptionsDropDown {...{menu, dpId, activeMenuLookupKey}} />} /> }
+                        dropDown={<OtherOptionsDropDown {...{menu, dpId, activeMenuLookupKey, resetAllSearchParams}} />} /> }
 
                 {hasFileMenu &&
                 <DropDownToolbarButton
@@ -262,6 +363,16 @@ function getMakeDropdown(menu, fileMenu, dpId,activeMenuLookupKey) {
                     style={{paddingRight:20}}
                     useDropDownIndicator={true}
                     dropDown={<FileMenuDropDown {...{fileMenu, dpId}} />} />
+                }
+                {showRedoSearchButton && analysisActivateFunc &&
+                    <ToolbarButton
+                        text='Redo Search' tip={'Redo Search'} horizontal={true}
+                        onClick={() => {
+                            dispatchSetSearchParams({ dpId, activeMenuLookupKey, menuKey, params: undefined });
+                            dispatchUpdateDataProducts(dpId, {...dataProductState, allowsInput: true,
+                                name: originalTitle,
+                                displayType:DPtypes.ANALYZE, activate:analysisActivateFunc});
+                        }} />
                 }
             </div>
         );

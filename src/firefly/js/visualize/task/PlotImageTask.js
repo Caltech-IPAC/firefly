@@ -8,7 +8,6 @@ import ImagePlotCntlr, {
     visRoot,
     makeUniqueRequestKey,
     IMAGE_PLOT_KEY,
-    dispatchRequestLocalData
 } from '../ImagePlotCntlr.js';
 import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
 import {dispatchActiveTarget, getActiveTarget} from '../../core/AppDataCntlr.js';

@@ -1,4 +1,4 @@
-import {getDataLinkAccessUrls, getObsCoreAccessURL, getObsCoreProdType} from '../util/VOAnalyzer';
+import {getDataLinkData, getObsCoreAccessURL, getObsCoreProdType, getServiceDescriptors} from '../util/VOAnalyzer';
 import {
     dpdtAnalyze,
     dpdtDownload,
@@ -13,10 +13,9 @@ import {createTableActivate} from './converterUtils';
 import {makeFileAnalysisActivate} from './MultiProductFileAnalyzer';
 import {createSingleImageActivate} from './ImageDataProductsUtil';
 import {dispatchUpdateActiveKey, getActiveMenuKey} from './DataProductsCntlr';
+import {GIG} from '../util/WebUtil.js';
 
-const analysisTypes= ['fits', 'cube', 'table', 'spectrum', 'auxiliary'];
 
-const GIG= 1048576 * 1024;
 
 
 /**
@@ -24,19 +23,22 @@ const GIG= 1048576 * 1024;
  * @param {TableModel} sourceTable
  * @param {number} row
  * @param {TableModel} datalinkTable
- * @param {WorldPt} positionWP
+ * @param {WorldPt|undefined} positionWP
  * @param {ActivateParams} activateParams
- * @param {String} titleStr
  * @param {Function} makeReq
+ * @param additionalServiceDescMenuList
  * @param {boolean} doFileAnalysis
  * @return {DataProductsDisplayType}
  */
-export function processDatalinkTable(sourceTable, row, datalinkTable, positionWP, activateParams, titleStr, makeReq, doFileAnalysis=true) {
+export function processDatalinkTable(sourceTable, row, datalinkTable, positionWP, activateParams,
+                                     makeReq, additionalServiceDescMenuList, doFileAnalysis=true) {
     const dataSource= getObsCoreAccessURL(sourceTable,row);
-    const dataLinkData= getDataLinkAccessUrls(sourceTable, datalinkTable);
+    const dataLinkData= getDataLinkData(datalinkTable);
     const prodType= (getObsCoreProdType(sourceTable,row) || '').toLocaleLowerCase();
+    const descriptors= getServiceDescriptors(datalinkTable);
     const menu=  dataLinkData.length &&
-         createDataLinkMenuRet(dataSource,dataLinkData,positionWP, sourceTable, row, activateParams,makeReq,prodType,doFileAnalysis);
+         createDataLinkMenuRet(dataSource,dataLinkData,positionWP, sourceTable, row, activateParams,
+             makeReq,prodType,descriptors, additionalServiceDescMenuList, doFileAnalysis);
 
     const hasData= menu.length>0;
     const canShow= menu.length>0 && menu.some( (m) => m.displayType!==DPtypes.DOWNLOAD && m.size<GIG);
@@ -48,7 +50,7 @@ export function processDatalinkTable(sourceTable, row, datalinkTable, positionWP
         const activeMenuKey= getActiveMenuKey(dpId, dataSource);
         let index= menu.findIndex( (m) => m.menuKey===activeMenuKey);
         if (index<0) index= 0;
-        dispatchUpdateActiveKey({dpId, activeMenuKeyChanges:{[dataSource]:menu[index].menuKey}});
+        dispatchUpdateActiveKey({dpId, activeMenuKeyChanges:{[activeMenuLookupKey]:menu[index].menuKey}});
         return dpdtFromMenu(menu,index,dataSource);
     }
 
@@ -100,61 +102,109 @@ function convertAllToDownload(menu) {
 }
 
 
-
-
-
-
-function createDataLinkMenuRet(dataSource, dataLinkData, positionWP, sourceTable, row, activateParams, makeReq, prodType, doFileAnalysis) {
+/**
+ *
+ * @param dataSource
+ * @param dataLinkData
+ * @param {WorldPt} positionWP
+ * @param {TableModel} sourceTable
+ * @param {number} row
+ * @param {ActivateParams} activateParams
+ * @param makeReq
+ * @param prodType
+ * @param {Array.<DataProductsDisplayType>} [additionalServiceDescMenuList]
+ * @param {Array.<ServiceDescriptorDef>} [descriptors]
+ * @param doFileAnalysis
+ * @return {Array.<DataProductsDisplayType>}
+ */
+function createDataLinkMenuRet(dataSource, dataLinkData, positionWP, sourceTable, row, activateParams, makeReq,
+                               prodType, descriptors, additionalServiceDescMenuList, doFileAnalysis=true) {
     const auxTot= dataLinkData.filter( (e) => e.semantics==='#auxiliary').length;
     let auxCnt=0;
     let primeCnt=0;
-    const originalMenu= dataLinkData.reduce( (resultAry,e,idx) => {
-        const ct= e.contentType.toLowerCase();
+    const menu=[];
+    dataLinkData.forEach( (e,idx) => {
+        const contentType= e.contentType.toLowerCase();
         const name= makeName(e.semantics, e.url, auxTot, auxCnt, primeCnt);
-        const {semantics,size,url}= e;
+        const {semantics,size,url, serviceDefRef}= e;
         const activeMenuLookupKey= dataSource;
+        const menuKey= 'dlt-'+idx;
+        let menuEntry;
 
-        if (ct.includes('tar')|| ct.includes('gz')) {
-            let fileType;
-            if (ct.includes('tar')) fileType= 'tar';
-            if (ct.includes('gz')) fileType= 'gzip';
-            resultAry.push(dpdtDownload('Download file: '+name,url,'dlt-'+idx,fileType,{semantics, size, activeMenuLookupKey}));
-        }
-        else if (ct.includes('jpeg') || ct.includes('png') || ct.includes('jpg') || ct.includes('gig')) {
-            resultAry.push(dpdtPNG('Show PNG image: '+name,url,'dlt-'+idx,{semantics, size, activeMenuLookupKey}));
-        }
-        else if (e.size>GIG) {
-            resultAry.push( dpdtDownload('Download FITS: '+name + '(too large to show)',url,'dlt-'+idx,'fits',{semantics, size, activeMenuLookupKey}));
-        }
-        else if (ct==='' || analysisTypes.find( (a) => ct.includes(a))) {
-            if (doFileAnalysis) {
-                resultAry.push( dpdtAnalyze('Show: '+name,undefined,url,'dlt-'+idx,{semantics, size, activeMenuLookupKey}));
-            }
-            else {
-                const dpdt= createGuessDataType(name,'guess-'+idx,url,ct,makeReq,semantics, activateParams, positionWP,sourceTable,row,size);
-                dpdt && resultAry.push(dpdt);
+        if (serviceDefRef) {
+            const servDesc= descriptors.find( ({ID}) => ID===serviceDefRef);
+            if (servDesc) {
+                const {title,accessURL,standardID,urlParams, ID}= servDesc;
+                const request= makeReq(accessURL,positionWP,title);
+                const allowsInput=urlParams.some( (p) => p.allowsInput);
+                const activate= makeFileAnalysisActivate(sourceTable,row, request, positionWP,activateParams,menuKey,
+                                       undefined, urlParams, name);
+                menuEntry= dpdtAnalyze(`Show: ${name} ${allowsInput?' (Input Required)':''}` ,
+                    activate,accessURL,urlParams,menuKey,
+                    {activeMenuLookupKey,request, allowsInput,
+                        standardID, ID, semantics,size});
             }
         }
+        else if (url) {
+            if (isDownloadType(contentType)) {
+                let fileType;
+                if (contentType.includes('tar')) fileType= 'tar';
+                if (contentType.includes('gz')) fileType= 'gzip';
+                menuEntry= dpdtDownload('Download file: '+name,url,menuKey,fileType,{semantics, size, activeMenuLookupKey});
+            }
+            else if (isImageType(contentType)) {
+                menuEntry= dpdtPNG('Show PNG image: '+name,url,menuKey,{semantics, size, activeMenuLookupKey});
+            }
+            else if (isTooBig(size)) {
+                menuEntry= dpdtDownload('Download: '+name + '(too large to show)',url,menuKey,'fits',{semantics, size, activeMenuLookupKey});
+            }
+            else if (isAnalysisType(contentType)) {
+                if (doFileAnalysis) {
+                    const request= makeReq(url,positionWP,name);
+                    const activate= makeFileAnalysisActivate(sourceTable,row, request, positionWP,activateParams,menuKey, prodType);
+                    menuEntry= dpdtAnalyze('Show: '+name,activate,url,undefined, menuKey,{semantics, size, activeMenuLookupKey,request});
+                }
+                else {
+                    menuEntry= createGuessDataType(name,menuKey,url,contentType,makeReq,semantics, activateParams, positionWP,sourceTable,row,size);
+                }
+            }
+        }
+        menuEntry && menu.push(menuEntry);
         if (e.semantics==='#auxiliary') auxCnt++;
         if (e.semantics==='#this') primeCnt++;
-        return resultAry;
-    }, []);
-
-    let     newMenu= originalMenu.sort((s1,s2) => s1.semantics==='#this' ? -1 : 0);
-    newMenu= newMenu.sort((s1,s2) => s1.name==='(#this)' ? -1 : 0);
-
-
-    const menuWithDL= [...newMenu, ...addDataLinkEntries(dataSource,activateParams)];
-    newMenu.forEach( (m,idx) => {
-        if (m.displayType===DPtypes.ANALYZE) {
-            const request= makeReq(m.url,positionWP,m.name);
-            m.activate= makeFileAnalysisActivate(sourceTable,row, request,
-                positionWP,activateParams,menuWithDL,m.menuKey, prodType);
-            m.request= request;
-        }
     });
-    return newMenu;
+    if (additionalServiceDescMenuList) {
+        menu.push(...additionalServiceDescMenuList);
+    }
+
+    menu.push(...addDataLinkEntries(dataSource,activateParams));
+    return menu
+        .sort(({semantics:sem1,name:n1},{semantics:sem2,name:n2}) => {
+            if (sem1==='#this') {
+                if (sem2==='#this') {
+                    if (n1?.includes('(#this)')) return -1;
+                    else if (n2?.includes('(#this)')) return 1;
+                    else if (n1<n2) return -1;
+                    else if (n1>n2) return 1;
+                    else return 0;
+                }
+                else return -1;
+            }
+            else {
+                return 0;
+            }
+        })
+        .sort((s1) => s1.name==='(#this)' ? -1 : 0);
 }
+
+
+
+const analysisTypes= ['fits', 'cube', 'table', 'spectrum', 'auxiliary'];
+
+const isImageType= (ct) => (ct.includes('jpeg') || ct.includes('png') || ct.includes('jpg') || ct.includes('gig'));
+const isDownloadType= (ct) => ct.includes('tar') || ct.includes('gz') || ct.includes('octet-stream');
+const isAnalysisType= (ct) => (ct==='' || analysisTypes.some( (a) => ct.includes(a)));
+const isTooBig= (size) => size>GIG;
 
 function makeName(s='', url, auxTot, autCnt, primeCnt=0) {
     let name= (s==='#this' && primeCnt>0) ? '#this '+primeCnt  : s;
@@ -193,10 +243,10 @@ export function createGuessDataType(name, menuKey, url,ct,makeReq, semantics, ac
             createTableActivate(url, semantics, activateParams),
             menuKey,{url,semantics,size} );
     }
-    else if (ct.includes('jpeg') || ct.includes('png') || ct.includes('jpg') || ct.includes('gig')) {
+    else if (isImageType(ct)) {
         return dpdtPNG(name,url,menuKey,{semantics});
     }
-    else if (ct.includes('tar')|| ct.includes('gz')) {
+    else if (isDownloadType(ct)) {
         let fileType;
         if (ct.includes('tar')) fileType= 'tar';
         if (ct.includes('gz')) fileType= 'gzip';

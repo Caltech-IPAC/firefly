@@ -1,7 +1,7 @@
 import {isArray, isArrayBuffer, uniqueId} from 'lodash';
 import {allBandAry, Band} from '../Band.js';
 import {contains, intersects} from '../VisUtil.js';
-import {getPlotViewById, isThreeColor, primePlot} from '../PlotViewUtil.js';
+import {findPlot, getPlotViewById, isThreeColor, primePlot} from '../PlotViewUtil.js';
 import {createCanvas, isGPUAvailableInWorker, isImageBitmap} from '../../util/WebUtil.js';
 import ImagePlotCntlr, {dispatchRequestLocalData, visRoot} from '../ImagePlotCntlr.js';
 import {PlotState} from '../PlotState.js';
@@ -367,7 +367,8 @@ async function loadStandardStretchData( plot, checkForPlotUpdate, workerKey) {
         let latestPlot;
         let continueLoading;
         if (checkForPlotUpdate) {
-            latestPlot = primePlot(visRoot(), plotId);
+            const latestPlotView= getPlotViewById(visRoot(),plot.plotId);
+            latestPlot= findPlot(latestPlotView,plot.plotImageId);
             if (!latestPlot) return;
             const {plotState} = latestPlot;
             continueLoading = plotState.getBands().every((b) => plotState.getRangeValues(b)?.toJSON() === plot.plotState.getRangeValues(b)?.toJSON());
@@ -449,6 +450,8 @@ async function load3ColorRawData( plot, workerKey) {
     if (!latestPlot) return;
     const stretchResult= await postToWorker(makeStretchAction(latestPlot, Band.NO_BAND,workerKey));
     latestPlot= primePlot(visRoot(),plot.plotId);
+    const latestPlotView= getPlotViewById(visRoot(),plot.plotId);
+    latestPlot= findPlot(latestPlotView,plot.plotImageId);
     if (!latestPlot) return;
     return completeLoad(latestPlot,stretchResult);
 }

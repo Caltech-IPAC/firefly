@@ -224,7 +224,7 @@ function changeLocking(state,action) {
 
 function zoomStart(state, action) {
     const {wcsMatchType, plotViewAry, expandedMode, mpwWcsPrimId}= state;
-    const {plotId, zoomLevel, userZoomType, zoomLockingEnabled}= action.payload;
+    const {plotId, zoomLevel, userZoomType, zoomLockingEnabled, devicePt}= action.payload;
     const pvIdx=getPlotViewIdxById(state,plotId);
     const plot= pvIdx>-1 ? primePlot(plotViewAry[pvIdx]) : null;
     if (!plot) return state;
@@ -238,8 +238,8 @@ function zoomStart(state, action) {
 
     // update zoom factor and scroll position
     const centerImagePt= isFitFill(userZoomType) ?
-                          makeImagePt(plot.dataWidth/2, plot.dataHeight/2) :
-                          findCurrentCenterPoint(pv);
+                          makeImagePt(plot.dataWidth/2, plot.dataHeight/2) : findCurrentCenterPoint(pv);
+    const mouseOverImagePt= devicePt && CCUtil.getImageCoords(plot,devicePt);
 
     pv= replacePrimaryPlot(pv,clonePlotWithZoom(plot,zoomLevel));
 
@@ -249,7 +249,15 @@ function zoomStart(state, action) {
         pv= updateScrollToWcsMatch(state.wcsMatchType, masterPv, pv);
     }
     else {
-        pv= updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv,centerImagePt));
+        if (isImage(plot)) {
+            pv= updatePlotViewScrollXY(pv,
+                devicePt ? findScrollPtToPlaceOnDevPt(pv, mouseOverImagePt,devicePt) :
+                findScrollPtToCenterImagePt(pv,centerImagePt));
+
+        }
+        else {
+            pv= updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv,centerImagePt));
+        }
     }
 
 

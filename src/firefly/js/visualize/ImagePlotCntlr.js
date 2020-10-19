@@ -827,6 +827,7 @@ export function dispatchOverlayPlotChangeAttributes({plotId,imageOverlayId, attr
  * @param {boolean} [p.forceDelay]
  * @param {number} [p.level] the level to zoom to, used only userZoomType 'LEVEL'
  * @param {string|ActionScope} [p.actionScope] default to group
+ * @param {DevicePt} devicePt
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  *
  * @public
@@ -848,13 +849,13 @@ export function dispatchOverlayPlotChangeAttributes({plotId,imageOverlayId, attr
  * action.dispatchZoom({plotId:’myplot’, userZoomType:’LEVEL’, level: zlevel, forceDelay: true }};
  */
 export function dispatchZoom({plotId, userZoomType, maxCheck= true,
-                             zoomLockingEnabled=false, forceDelay=false, level,
+                             zoomLockingEnabled=false, forceDelay=false, level, devicePt,
                              actionScope=ActionScope.GROUP,
                              dispatcher= flux.process} ) {
     dispatcher({
         type: ZOOM_IMAGE,
         payload :{
-            plotId, userZoomType, actionScope, maxCheck, zoomLockingEnabled, forceDelay, level
+            plotId, userZoomType, actionScope, maxCheck, zoomLockingEnabled, forceDelay, level, devicePt
         }});
 }
 

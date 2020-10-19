@@ -742,74 +742,69 @@ export function getCurrentColorModel() {
 	return defaultColorModel;
 }
 
-export const getColorModelNEW= memorizeLastCall((colorTableId) => {
-	let old_dn, old_red, old_green, old_blue;
-	let offset;
-	let k;
 
-	//palette: 3 bytes per color * 256 colors = 768 bytes in length
-	// const paletteData = new Uint8Array(768);
-	const paletteData = Array(256)
-	const id= String(colorTableId);
-	const ct= getColorTableMap()[id];
-
-	if (id==='file') console.log('file color tables not yet supported');
-
-	if (!ct) {
-		console.log('ColorTable ERROR: no color table with the ID = ' + id);
-		return [];
-	}
-
-	k = 0;
-	let dn      = ct[k];
-	let red     = ct[k+1];
-	let green   = ct[k+2];
-	let blue    = ct[k+3];
-	k+=4;
-
-	while(true) {
-		old_dn = dn;
-		old_red = red;
-		old_green = green;
-		old_blue = blue;
-
-		if (k>=ct.length) break;
-		dn      = ct[k];
-		red     = ct[k+1];
-		green   = ct[k+2];
-		blue    = ct[k+3];
-		k+=4;
-
-		const inc= (dn > old_dn) ? 1 : -1;
-
-		for(let kk = old_dn; kk !== dn; kk += inc) {
-			if(kk>=0 && kk<=255) {
-				offset =  (kk-old_dn) / (dn-old_dn);
-				paletteData[kk]=Uint8ClampedArray.of(
-					(old_red   + Math.trunc(offset*(red   - old_red  ))),
-					(old_green + Math.trunc(offset*(green - old_green))),
-					(old_blue  + Math.trunc(offset*(blue  - old_blue ))),
-				);
-			}
-		}
-	}
-
-	if(old_dn>=0 && old_dn<=255)
-	{
-		// paletteData[3*old_dn] =  old_red;
-		// paletteData[3*old_dn+1] =  old_green;
-		// paletteData[3*old_dn+2] =  old_blue;
-		paletteData[old_dn]= Uint8ClampedArray.of(old_red,old_green,old_blue);
-	}
-	/* DEBUG set top color = red */
-	// paletteData[3*255] = 255;
-	// paletteData[3*255 + 1] = 0;
-	// paletteData[3*255 + 2] = 0;
-	paletteData[255]= Uint8ClampedArray.of(255,0,0);
-	/* END DEBUG */
-	return paletteData;
-});
-
+// export const getColorModel= memorizeLastCall((colorTableId) => {
+// 	let old_dn, old_red, old_green, old_blue;
+// 	let offset;
+// 	let k;
+//
+// 	//palette: 3 bytes per color * 256 colors = 768 bytes in length
+// 	const paletteData = new Uint8Array(768);
+// 	const id= String(colorTableId);
+// 	const ct= getColorTableMap()[id];
+//
+// 	if (id==='file') console.log('file color tables not yet supported');
+//
+// 	if (!ct) {
+// 		console.log('ColorTable ERROR: no color table with the ID = ' + id);
+// 		return [];
+// 	}
+//
+// 	k = 0;
+// 	let dn      = ct[k];
+// 	let red     = ct[k+1];
+// 	let green   = ct[k+2];
+// 	let blue    = ct[k+3];
+// 	k+=4;
+//
+// 	while(true) {
+// 		old_dn = dn;
+// 		old_red = red;
+// 		old_green = green;
+// 		old_blue = blue;
+//
+// 		if (k>=ct.length) break;
+// 		dn      = ct[k];
+// 		red     = ct[k+1];
+// 		green   = ct[k+2];
+// 		blue    = ct[k+3];
+// 		k+=4;
+//
+// 		const inc= (dn > old_dn) ? 1 : -1;
+//
+// 		for(let kk = old_dn; kk !== dn; kk += inc) {
+// 			if(kk>=0 && kk<=255) {
+// 				offset =  (kk-old_dn) / (dn-old_dn);
+// 				paletteData[3*kk] = (old_red   + Math.trunc(offset*(red   - old_red  )));
+// 				paletteData[3*kk+1] = (old_green + Math.trunc(offset*(green - old_green)));
+// 				paletteData[3*kk+2] = (old_blue  + Math.trunc(offset*(blue  - old_blue )));
+// 			}
+// 		}
+// 	}
+//
+// 	if(old_dn>=0 && old_dn<=255)
+// 	{
+// 		paletteData[3*old_dn] =  old_red;
+// 		paletteData[3*old_dn+1] =  old_green;
+// 		paletteData[3*old_dn+2] =  old_blue;
+// 	}
+// 	/* DEBUG set top color = red */
+// 	paletteData[3*255] = 255;
+// 	paletteData[3*255 + 1] = 0;
+// 	paletteData[3*255 + 2] = 0;
+// 	/* END DEBUG */
+// 	return paletteData;
+// });
 
 export const getColorModel= memorizeLastCall((colorTableId) => {
 	let old_dn, old_red, old_green, old_blue;
@@ -817,7 +812,7 @@ export const getColorModel= memorizeLastCall((colorTableId) => {
 	let k;
 
 	//palette: 3 bytes per color * 256 colors = 768 bytes in length
-	const paletteData = new Uint8Array(768);
+	const paletteData = new Float32Array(768);
 	const id= String(colorTableId);
 	const ct= getColorTableMap()[id];
 
@@ -853,21 +848,21 @@ export const getColorModel= memorizeLastCall((colorTableId) => {
 		for(let kk = old_dn; kk !== dn; kk += inc) {
 			if(kk>=0 && kk<=255) {
 				offset =  (kk-old_dn) / (dn-old_dn);
-				paletteData[3*kk] = (old_red   + Math.trunc(offset*(red   - old_red  )));
-				paletteData[3*kk+1] = (old_green + Math.trunc(offset*(green - old_green)));
-				paletteData[3*kk+2] = (old_blue  + Math.trunc(offset*(blue  - old_blue )));
+				paletteData[3*kk] = (old_red   + Math.trunc(offset*(red   - old_red  )))/255;
+				paletteData[3*kk+1] = (old_green + Math.trunc(offset*(green - old_green)))/255;
+				paletteData[3*kk+2] = (old_blue  + Math.trunc(offset*(blue  - old_blue )))/255;
 			}
 		}
 	}
 
 	if(old_dn>=0 && old_dn<=255)
 	{
-		paletteData[3*old_dn] =  old_red;
-		paletteData[3*old_dn+1] =  old_green;
-		paletteData[3*old_dn+2] =  old_blue;
+		paletteData[3*old_dn] =  old_red/255;
+		paletteData[3*old_dn+1] =  old_green/255;
+		paletteData[3*old_dn+2] =  old_blue/255;
 	}
 	/* DEBUG set top color = red */
-	paletteData[3*255] = 255;
+	paletteData[3*255] = 255/255;
 	paletteData[3*255 + 1] = 0;
 	paletteData[3*255 + 2] = 0;
 	/* END DEBUG */
