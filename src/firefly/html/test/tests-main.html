@@ -146,6 +146,23 @@
     </script>
 </template>
 
+<template title="Custom Online-Help URL" class="tpl sm">
+    <div id="expected" >
+        Click table's Help(?) icon and it should take you to "https://irsa.ipac.caltech.edu/onlinehelp/irsaviewer/"
+    </div>
+    <div id="actual" class="box x3"/>
+    <script>
+        function onFireflyLoaded(firefly) {
+            firefly.action.dispatchAppOptions({"help.base.url": "https://irsa.ipac.caltech.edu/onlinehelp/irsaviewer/"});
+
+            const columns = [{name: 'Greetings'}];
+            const data = [["Hello, World!"]];
+            const table = { tableData: { columns, data }, title: "Custom Help"};
+            firefly.showClientTable('actual', table, {help_id: "https://irsa.ipac.caltech.edu/onlinehelp/irsaviewer/"});
+        }
+    </script>
+</template>
+
 <template title="Two table coverage" class="tpl" >
     <div id="expected" >
         <div>Both tables cover similar area, HiPS coverage

@@ -13,6 +13,13 @@
                     const scpt = c.querySelector('script');
                     renderTest(cnt++, expected, actual, scpt, test, Boolean(exclusiveTest.length));
                 });
+
+        const testId = window.location.hash.substring(1);
+        if (testId) {
+            setTimeout(function() {
+                window.scrollTo(0,document.getElementById(testId).offsetTop);
+            }, 2000);
+        }
     };
 
 

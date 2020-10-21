@@ -288,7 +288,7 @@ function grabWindowFocus() {
 function onlineHelpLoad( action )
 {
     return () => {
-        var url = getProp('help.base.url', '');
+        var url = getAppOptions()?.['help.base.url'] || getProp('help.base.url', '');
         var windowName = 'onlineHelp';
         var moduleName = getProp('help.subpath', getModuleName());
 
