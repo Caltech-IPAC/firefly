@@ -380,9 +380,9 @@ public class SofiaFitsConverterUtil {
         freqUnit= freqUnit!=null?freqUnit:"THz";
         spectraModel.setUnits(VOSpectraModel.SPECTRA_FIELDS.FREQUENCY,freqUnit );
 
-        double[] velocity=  getVelocityArray(frequency, header);
-        String velocityUnit = "km/s";
-        spectraModel.setUnits(VOSpectraModel.SPECTRA_FIELDS.VELOCITY, velocityUnit);
+//        double[] velocity=  getVelocityArray(frequency, header);
+//        String velocityUnit = "km/s";
+//        spectraModel.setUnits(VOSpectraModel.SPECTRA_FIELDS.VELOCITY, velocityUnit);
 
         ArrayList<DataType>  dataTypes = new ArrayList<DataType>(spectraModel.getMeta().values());
 
@@ -390,9 +390,10 @@ public class SofiaFitsConverterUtil {
         DataObject row = new DataObject(dataGroup);
 
         for (int i=0; i<frequency.length; i++){
-            row.setDataElement(dataTypes.get(0), frequency[i] );
-            row.setDataElement(dataTypes.get(1), velocity[i] );
-            row.setDataElement(dataTypes.get(2), flux[i] );
+            int u = 0;
+            row.setDataElement(dataTypes.get(u++), frequency[i] );
+//            row.setDataElement(dataTypes.get(u++), velocity[i] );
+            row.setDataElement(dataTypes.get(u++), flux[i] );
 
             dataGroup.add(row);
         }
