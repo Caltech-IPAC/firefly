@@ -16,6 +16,8 @@
    - Make sure you edit the docker tags section of this release
    - Update the "Pull Request for this release section", change the text and the URLs for all PR and bug fixes 
    
+1. **Ensure release passes Test**
+   - `gradle :firefly:test`
    
 1. **Commit, Tag**
    - commit you changes - _example message:_ "Release 2020.1.0: document updates"
@@ -28,10 +30,12 @@
    - push the rc: _example:_ `git push origin rc-2020.1`
    - push the tags: `git push origin --tags`   
 
-1. **Build docker images**
-   - Best to use Jenkins: http://irsawebdev5.ipac.caltech.edu:8100/view/k8s/job/k8s_firefly/build?delay=0sec
+1. **Build docker images and deploy it to IRSA Kubernetes**
+   - Best to use Jenkins: http://irsawebdev5.ipac.caltech.edu:8100/view/IRSA%20k8s/job/ikc_firefly/build
    - Build the docker with the following docker tags: `rc-yyyy.m`, `release-yyyy.m`,`release-yyyy.m.r`, `latest` 
    - _example:_ from the example above the release would be built with: `rc-2020.2`, `release-2020.2`,`release-2020.2.1`, `latest`
+   - `ACTION`: Select 'both'  
+   - `DEPLOY_ENV`: Select 'ops' to have this release deploy to fireflyops.ipac.caltech.edu
    - _notes:_ 
        - the `rc-yyyy.m` docker tag does not represent the release, it is just the most recent build of the branch
        - the `release-yyyy.m` docker tag always represents the latest release of the version
