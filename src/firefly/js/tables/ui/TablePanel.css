@@ -14,11 +14,11 @@
 
 .TablePanel_NoData {
     position: absolute;
-    top: 45px;
+    top: 60px;
     z-index: 1;
     color: gray;
     font-size: large;
-    height: calc(100% - 45px);
+    height: calc(100% - 60px);
     width: 100%;
     display: flex;
     justify-content: center;
