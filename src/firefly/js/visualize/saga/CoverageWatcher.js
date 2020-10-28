@@ -3,7 +3,7 @@
  */
 
 import Enum from 'enum';
-import {get,isEmpty,isObject, isString, flattenDeep, values, isUndefined} from 'lodash';
+import {get, isEmpty, isObject, isString, flattenDeep, values, isUndefined, isNil} from 'lodash';
 import {WebPlotRequest, TitleOptions} from '../WebPlotRequest.js';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE,
         TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
@@ -36,6 +36,7 @@ import {isDrawLayerVisible} from '../PlotViewUtil';
 import SearchTarget from '../../drawingLayers/SearchTarget.js';
 import {darker} from '../../util/Color';
 import {isOrbitalPathTable} from '../../util/VOAnalyzer';
+import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 
 const CoverageType = new Enum(['X', 'BOX', 'REGION', 'ORBITAL_PATH', 'ALL', 'GUESS']);
 const FitType=  new Enum (['WIDTH', 'WIDTH_HEIGHT']);
@@ -100,6 +101,8 @@ const defOptions= {
     paused: true
 };
 
+export const COVERAGE_WATCH_CID= 'COVERAGE_WATCH_CID';
+export const COVERAGE_FAIL= 'fail';
 
 const overlayCoverageDrawing= makeOverlayCoverageDrawing();
 
@@ -202,6 +205,7 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
             if (!isEmpty(preparedTables)) {
                 sharedData.preferredHipsSourceURL= findPreferredHiPS(tbl_id, sharedData.preferredHipsSourceURL, options.hipsSourceURL, preparedTables[tbl_id]);
                 updateCoverage(getActiveTableId(), viewerId, preparedTables, options, tblCatIdMap, sharedData.preferredHipsSourceURL, payload.tbl_id);
+                removeTableComponentStateStatus(payload.tbl_id);
             }
             cancelSelf();
             break;
@@ -328,6 +332,9 @@ function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, 
  */
 function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, preparedTables,
                                 usesRadians, tblCatIdMap, preferredHipsSourceURL, deletedTblId ) {
+
+
+
     const {maxRadius, avgOfCenters}= computeSize(options, preparedTables, usesRadians);
 
     // EMPTY_TBL
@@ -336,7 +343,10 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
     //     overlayCoverageDrawing(preparedTables, options, tblCatIdMap);
     //     return;
     // }
-    if (!avgOfCenters || maxRadius<=0) return;
+    if (!avgOfCenters || maxRadius<=0) {
+        updateTableComponentStateStatus(tbl_id,COVERAGE_FAIL);
+        return;
+    }
 
     const plot= primePlot(visRoot(), PLOT_ID);
 
@@ -393,6 +403,27 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
         pvOptions: {userCanDeletePlots:false, displayFixedTarget:false},
         attributes,
     });
+    updateTableComponentStateStatus(tbl_id,'success');
+}
+
+
+
+function updateTableComponentStateStatus(tbl_id, status) {
+    const covState= getComponentState(COVERAGE_WATCH_CID, []);
+    const tblEntry= covState.find( (entry) => (entry.tbl_id===tbl_id));
+    let newCovState;
+    if (tblEntry) {
+        newCovState=  covState.map( (entry) => (entry.tbl_id===tbl_id) ? {tbl_id,status} : entry);
+    }
+    else {
+        newCovState= [...covState,{tbl_id,status}];
+    }
+    dispatchComponentStateChange(COVERAGE_WATCH_CID, newCovState);
+}
+
+function removeTableComponentStateStatus(tbl_id) {
+    const covState= getComponentState(COVERAGE_WATCH_CID,[]);
+    dispatchComponentStateChange(COVERAGE_WATCH_CID, covState.filter( (entry) => entry.tbl_id!==tbl_id));
 }
 
 /**
@@ -654,12 +685,14 @@ function getCoverageType(options,table) {
     return options.coverageType;
 }
 
+const isValidNum= (n) => !isNil(n) && !isNaN(Number(n));
+
 function hasCorners(options, table) {
     const cornerColumns= getCornersColumns(table);
     if (isEmpty(cornerColumns)) return false;
     const tblData = get(table, 'tableData.data', []);
     const dataCnt= tblData.reduce( (tot, row) =>
-        cornerColumns.every( (cDef) => row[cDef.lonIdx]!=='' && row[cDef.latIdx]!=='') ? tot+1 : tot
+        cornerColumns.every( (cDef) => isValidNum(row[cDef.lonIdx]) && isValidNum(row[cDef.lonIdx]) ) ? tot+1 : tot
     ,0);
     return dataCnt > 0;
 }
@@ -680,7 +713,7 @@ function getPtAryFromTable(options,table, usesRadians){
     const {lonIdx,latIdx,csys}= cDef;
     return get(table, 'tableData.data', [])
         .map( (row) =>
-            (row[lonIdx] && row[latIdx]) ? makePt(row[lonIdx], row[latIdx], csys, usesRadians) : undefined )
+            (isValidNum(row[lonIdx]) && isValidNum(row[latIdx])) ? makePt(row[lonIdx], row[latIdx], csys, usesRadians) : undefined )
         .filter( (v) => v);
 }
 
@@ -689,7 +722,7 @@ function getBoxAryFromTable(options,table, usesRadians){
     return get(table, 'tableData.data', [])
         .map( (row) => cDefAry
             .map( (cDef) =>
-                (row[cDef.lonIdx] && row[cDef.latIdx]) ? makePt(row[cDef.lonIdx], row[cDef.latIdx], cDef.csys, usesRadians) : undefined))
+                (isValidNum(row[cDef.lonIdx]) && isValidNum(row[cDef.latIdx])) ? makePt(row[cDef.lonIdx], row[cDef.latIdx], cDef.csys, usesRadians) : undefined))
         .filter( (row) => row.every( (v) => v));
 }
 

@@ -31,7 +31,7 @@ import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import infoIcon from 'html/images/info-icon.png';
 import {dd2sex} from '../../visualize/CoordUtil.js';
 
-const html_regex = /<.+>/;
+const html_regex = /^<.+>$/;                    // A very limited check.  Will limit or remove the use of embedded HTML in the future
 const filterStyle = {width: '100%', boxSizing: 'border-box'};
 
 const imageStubMap = {
@@ -688,7 +688,7 @@ export const ATag = React.memo(({cellInfo, label, title, href, target, style={},
 export const TextCell = React.memo(({cellInfo, text, ...rest}) => {
     const {absRowIdx, tableModel, value, text:fmtVal} = cellInfo || getCellInfo(rest);
     text  = applyTokenSub(tableModel, text, absRowIdx, fmtVal);
-    return (value?.search && value.search(html_regex) >= 0) ? <div dangerouslySetInnerHTML={{__html: value}}/> : text;
+    return (text?.search && text.search(html_regex) >= 0) ? <div dangerouslySetInnerHTML={{__html: text}}/> : text;
 });
 
 /**
