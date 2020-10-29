@@ -1,11 +1,28 @@
-FROM tomcat:9.0-jdk11-openjdk
-
+# Description:
+# A tomcat application server running as UID 91(tomcat) by default.
+# It's designed to support running as a different user via -u or --user param.
+#
 #-----------------------------------------------------------------------------
 # To build: docker build -t ipac/firefly --build-arg IMAGE_NAME=ipac/firefly .
 # For help in running: docker run --rm  ipac/firefly --help
 #-----------------------------------------------------------------------------
+#
+# Below are predefined directories Firefly uses during runtime.
+# Mount these directories to an external volume or to the host filesystem if you would like it
+# to persists beyond the container's lifecycle.
+#
+# Firefly mountPaths:
+# /firefly/config           : used to override application properties
+# /firefly/workarea         : work area for temporary files
+# /firefly/shared-workarea  : work area for files that are shared between multiple instances of the application
+# /firefly/logs             : logs directory
+# /firefly/logs/statistics  : directory for statistics logs
+# /firefly/alerts           : alerts monitor will watch this directory for application alerts
+# /external                 : default external data directory visible to Firefly
 
-# Support single server deployments
+
+FROM tomcat:9.0-jdk11-openjdk
+
 
 # - add packages: vim, wget, etc
 # - add any other standard apt packages here
@@ -15,24 +32,15 @@ RUN apt-get update && apt-get install -y \
         vim procps wget \
         && rm -rf /var/lib/apt/lists/*;
 
-# First set of environment variable
-#        - create catalina_base directory .. so tomcat can run as non-root
-#        - These environment varibles are not really made to be overridden
-#           they can be but are mostly for setup
-#        - work dir and config dir might be overridden if they were used in a mounted volume
-#           in the case make sure the directories exist
-#        - BUILD_TIME_NAME - container has access to the image name, used for help only
-# Second set of environment variable
-# These are the users replaceable ones, basicly runtime arguments
+# These are the users replaceable environment variables, basically runtime arguments
 #          MIN_JVM_SIZE and MAX_JVM_SIZE can be used to set the min and max JVM side
 #          - If MAX_JVM_SIZE is not set, the memory is autosized to the memory available to the container.
 #          - Set the available memory on the command line with --memory="4g"
 #          - You can change MAX_RAM_PERCENT on the command line with -e "MAX_RAM_PERCENT=80"
 #          - also- User name and password to use admin
 #          - FIREFLY_OPTS could be used to pass any properties
-ENV CATALINA_HOME=/usr/local/tomcat \
-    EXTERNAL_MOUNT_POINT=/external \
-    MAX_JVM_SIZE=\
+
+ENV MAX_JVM_SIZE='' \
     MIN_JVM_SIZE=1G \
     INIT_RAM_PERCENT=10\
     MAX_RAM_PERCENT=93\
@@ -55,44 +63,37 @@ ENV CATALINA_HOME=/usr/local/tomcat \
 ARG IMAGE_NAME=''
 
 ENV JPDA_ADDRESS=*:5050 \
-    CATALINA_PID=${CATALINA_HOME}/bin/catalina.pid \
-    SERVER_CONFIG_DIR=${CATALINA_HOME}/firefly-config \
-    FIREFLY_WORK_DIR=${CATALINA_HOME}/firefly-work \
-    FIREFLY_SHARED_WORK_DIR='' \
-    VISUALIZE_FITS_SEARCH_PATH=${EXTERNAL_MOUNT_POINT} \
+    VISUALIZE_FITS_SEARCH_PATH='' \
     BUILD_TIME_NAME=${IMAGE_NAME} \
     START_MODE=run
 
 WORKDIR ${CATALINA_HOME}
 
 # set up directory protections, copy stuff around, add tomcat user and group
-RUN mkdir -p bin conf conf/Catalina/localhost lib logs temp webapps work /local/www && \
-    chmod +rw ${CATALINA_HOME}/conf/* && \
-    chmod 777 /local /local/www conf && \
-    chmod -R +rX ${CATALINA_HOME} &&\
-    groupadd -g 91 tomcat && \
-    useradd -r -u 91 -g tomcat tomcat
+RUN mkdir -p conf/Catalina/localhost /local/www /firefly/config /firefly/workarea /firefly/shared-workarea /firefly/logs/statistics /firefly/alerts &&  \
+    rm -r logs && ln -s /firefly/logs logs &&  \
+    chmod -R 777 /firefly && \
+    chmod 777 webapps temp work /local /local/www conf && \
+    chmod +rw conf/*
 
 # These are the file that are executed at startup: start tomcat, logging, help, etc
 COPY *.sh *.txt ${CATALINA_HOME}/
 
 # Tomcat config files, tomcat-users is for the admin username and password
 # context.xml set delegate to true for we can use the classpath of tomcat
-COPY tomcat-users.xml context.xml  ${CATALINA_HOME}/conf/
-COPY local.xml ${CATALINA_HOME}/conf/Catalina/localhost
+COPY tomcat-users.xml context.xml  conf/
+COPY local.xml conf/Catalina/localhost
 
 # Make directories, make scripts executable, save old tomcat config files, remove unwanted apps
 # increase max header size to avoid failing on large auth token
-RUN chmod +x ${CATALINA_HOME}/*.sh; \
-    mkdir -p ${SERVER_CONFIG_DIR} ${FIREFLY_WORK_DIR} ${EXTERNAL_MOUNT_POINT}; \
-    chmod 777 bin conf lib logs temp webapps work ${CATALINA_HOME} ${SERVER_CONFIG_DIR} ${FIREFLY_WORK_DIR}; \
-    mv ${CATALINA_HOME}/conf/tomcat-users.xml ${CATALINA_HOME}/conf/tomcat-users.xml.in; \
+RUN chmod +x *.sh; \
+    mv conf/tomcat-users.xml conf/tomcat-users.xml.in; \
     sed -i 's/Connector port="8080"/Connector maxHttpHeaderSize="24576" port="8080"/g' ${CATALINA_HOME}/conf/server.xml
 
 # 8080 - http,  5050 - debug
 EXPOSE 8080 5050
 
-USER tomcat:tomcat
+USER 91:91
 
 #copy all wars, typically there should only be one
 COPY *.war ${CATALINA_HOME}/webapps/

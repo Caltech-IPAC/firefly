@@ -78,6 +78,7 @@ public class ServerContext {
     private static final String WORK_DIR_PROP = "work.directory";
     private static final String SHARED_WORK_DIR_PROP= "shared.work.directory";
     public static final String VIS_SEARCH_PATH= "visualize.fits.search.path";
+    public static final String STATS_LOG_DIR= "stats.log.dir";
 
 
     private static RequestOwnerThreadLocal owner = new RequestOwnerThreadLocal();
@@ -167,7 +168,11 @@ public class ServerContext {
         // initializes log4j
         File cfg = getConfigFile("log4j.properties");
         if (cfg.canRead()) {
-            System.out.println("Initializing Log4J using file:" + cfg.getAbsolutePath());
+            String statsDir = AppProperties.getProperty(STATS_LOG_DIR);
+            if (!StringUtils.isEmpty(statsDir)) {
+                initDir(new File(statsDir));
+            }
+            System.out.println(String.format("Initializing Log4J using file: %s  => %s", cfg.getAbsolutePath(), statsDir));
             PropertyConfigurator.configureAndWatch(cfg.getAbsolutePath());
         }
 
