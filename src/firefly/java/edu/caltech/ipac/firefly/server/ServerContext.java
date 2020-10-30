@@ -11,6 +11,7 @@ import edu.caltech.ipac.firefly.server.util.VersionUtil;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Assert;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.CacheManager;
 import nom.tam.fits.FitsFactory;
@@ -100,7 +101,7 @@ public class ServerContext {
     private volatile static String CACHE_PATH_STR;
     private volatile static String IRSA_ROOT_PATH_STR;
 
-
+    public static final String ACCESS_TEST_EXT= "access.test";
 
 
     private static final Logger.LoggerImpl log= Logger.getLogger();
@@ -209,6 +210,13 @@ public class ServerContext {
         if (!StringUtils.isEmpty(sharedWorkDirRoot)) {
             sharedWorkingDirFile= initDir(new File(sharedWorkDirRoot));
             setSharedWorkingDir(new File(sharedWorkingDirFile, contextName));
+            try {
+                File f= new File(getSharedWorkingDir(), FileUtil.getHostname()+"."+ACCESS_TEST_EXT);
+                if (f.canWrite()) f.delete();
+                f.createNewFile();
+            } catch (IOException e) {
+                Logger.error("Could not create a test file in "+ getSharedWorkingDir().toString());
+            }
         }
 
 
@@ -334,6 +342,16 @@ public class ServerContext {
         return initDir(workingDir);
     }
 
+
+    /**
+     * Don't use this call, it does not guarantee a safe dir
+     * @return File the original requested SharedWorkingDirRequested, may not be a good directory
+     */
+    public static File getSharedWorkingDirRequested() {
+        return sharedWorkingDir;
+    }
+
+
     public static File getSharedWorkingDir() {
         if (sharedWorkingDir==null) return getWorkingDir();
         initDir(sharedWorkingDir);
@@ -349,6 +367,9 @@ public class ServerContext {
 
     public static void setSharedWorkingDir(File sharedWorkDir) {
         sharedWorkingDir = sharedWorkDir;
+        if (!sharedWorkingDir.canWrite()) {
+            Logger.getLogger().error("Cannot write to Shared Worked Dir: " + sharedWorkDir.toString());
+        }
     }
 
     public static File getHiPSDir() {
