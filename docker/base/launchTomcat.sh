@@ -20,7 +20,7 @@ echo "!!============================================================"
 echo "!!============================================================"
 echo -e "!!============================================================\n\n"
 
-echo "========== Information:  you can set environment varible using -e on docker run line =====  "
+echo "========== Information:  you can set environment variable using -e on docker run line =====  "
 echo 
 echo "Using Environment Variables: \n"
 echo "        Description                  Name                       Value"
@@ -45,13 +45,15 @@ echo "        8080 - http"
 echo "        5050 - debug"
 echo
 echo "Volume Mount Points: "
-echo "    /firefly/config           : used to override application properties"
+echo "    /firefly/logs             : logs directory"
 echo "    /firefly/workarea         : work area for temporary files"
 echo "    /firefly/shared-workarea  : work area for files that are shared between multiple instances of the application"
-echo "    /firefly/logs             : logs directory"
+echo "    /external                 : default external data directory visible to Firefly"
+echo
+echo "  Less used:"
+echo "    /firefly/config           : used to override application properties"
 echo "    /firefly/logs/statistics  : directory for statistics logs"
 echo "    /firefly/alerts           : alerts monitor will watch this directory for application alerts"
-echo "    /external                 : default external data directory visible to Firefly"
 echo
 echo "Command line options: "
 echo "        --help  : show help message, examples, stop"
