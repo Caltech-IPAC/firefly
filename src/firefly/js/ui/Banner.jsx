@@ -47,7 +47,10 @@ Banner.propTypes= {
     readout: PropTypes.object,
     appIcon: PropTypes.string,
     visPreview: PropTypes.object,
-    appTitle: PropTypes.string,
+    appTitle: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.element
+    ]),
     additionalTitleStyle: PropTypes.object,
     showUserInfo: PropTypes.bool,
 };
