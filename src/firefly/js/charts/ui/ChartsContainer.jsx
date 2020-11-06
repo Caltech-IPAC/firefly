@@ -65,11 +65,15 @@ function ensureDefaultChart(tbl_id) {
     }
 }
 
-function doUpdateViewer(viewerId, tblGroup, chartId) {
+function doUpdateViewer(viewerId, tblGroup, chartId, useOnlyChartsInViewer) {
+    const currentIds = getViewerItemIds(getMultiViewRoot(), viewerId);
+    if (useOnlyChartsInViewer) {
+        dispatchUpdateCustom(viewerId, {activeItemId: currentIds[0]});
+        return;
+    }
     const tblId = getActiveTableId(tblGroup);
     const chartIds = [];
     chartIds.push(...getChartIdsInGroup(tblId), ...getChartIdsInGroup('default'));
-    const currentIds = getViewerItemIds(getMultiViewRoot(), viewerId);
     if (!isEqual(chartIds, currentIds)) {
         dispatchRemoveViewerItems(viewerId, currentIds);
         dispatchAddViewerItems(viewerId, chartIds, PLOT2D);
@@ -100,7 +104,7 @@ export class ChartsContainer extends PureComponent {
     }
 
     componentDidMount() {
-        const {viewerId=DEFAULT_PLOT2D_VIEWER_ID, tbl_group, addDefaultChart, chartId} = this.props;
+        const {viewerId=DEFAULT_PLOT2D_VIEWER_ID, tbl_group, addDefaultChart, chartId, useOnlyChartsInViewer} = this.props;
         if (tbl_group) {
             if (addDefaultChart) {
                 const tbl_id = getActiveTableId(tbl_group);
@@ -110,11 +114,13 @@ export class ChartsContainer extends PureComponent {
             }
             // make sure the viewer is updated with related charts on start
             // important when we use external viewer
-            doUpdateViewer(viewerId, tbl_group, chartId);
+            doUpdateViewer(viewerId, tbl_group, chartId, useOnlyChartsInViewer);
         }
 
-        const monitor = watchTblGroup(viewerId, tbl_group, addDefaultChart);
-        this.removeMonitor = monitor();
+        if (!useOnlyChartsInViewer) {
+            const monitor = watchTblGroup(viewerId, tbl_group, addDefaultChart, useOnlyChartsInViewer);
+            this.removeMonitor = monitor();
+        }
     }
 
     componentWillUnmount() {
@@ -166,7 +172,8 @@ ChartsContainer.propTypes = {
     viewerId : PropTypes.string,
     tbl_group : PropTypes.string,
     addDefaultChart : PropTypes.bool,
-    noChartToolbar : PropTypes.bool
+    noChartToolbar : PropTypes.bool,
+    useOnlyChartsInViewer :PropTypes.bool
 };
 
 function ExpandedView(props) {

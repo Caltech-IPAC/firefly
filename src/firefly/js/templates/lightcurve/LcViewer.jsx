@@ -119,12 +119,21 @@ export class LcViewer extends PureComponent {
             }
         };
 
+        const topStyle = {fontSize:'18pt', display:'flex', flexDirection:'column', alignItems:'flex-end'};
+        const subStyle = {fontSize: '11pt', fontWeight: 100};
+
+
         let title = appTitle ? appTitle : DEFAULT_TITLE; // use default title when appTitle is undefined or ''
         if (displayMode && displayMode.startsWith('period')) {
-            title += ': Period Finder';
-
+            title = (<div style={topStyle}>
+                        <div>{title}</div>
+                        <div style={subStyle}>(Period Finder)</div>
+                     </div>);
         } else if(displayMode && !displayMode.startsWith('period')){
-            title += ': Viewer';
+            title = (<div style={topStyle}>
+                         <div>{title}</div>
+                         <div style={subStyle}>(Viewer)</div>
+                     </div>);
         }
         if (!isReady) {
             return (<div style={{top: 0}} className='loading-mask'/>);

@@ -26,6 +26,8 @@ import {warningDivId} from '../../ui/LostConnection';
 import {startTTFeatureWatchers} from '../common/ttFeatureWatchers.js';
 import {dispatchSetLayoutMode, LO_MODE} from '../../core/LayoutCntlr';
 import {} from '../../core/AppDataCntlr';
+import {getExpandedChartProps} from '../../charts/ChartsCntlr.js';
+import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
 
 
 export {META_VIEWER_ID as IMAGE_DATA_VIEWER_ID } from '../../visualize/MultiViewCntlr';
@@ -175,10 +177,14 @@ function showExpandedView ({expanded}) {
                          tableOptions={{help_id:'main1TSV.table'}}/>
                 );
     } else if (expanded === LO_VIEW.xyPlots) {
+        const {expandedViewerId}= getExpandedChartProps();
+        const chartExpandedMode= expanded===LO_VIEW.xyPlots;
         view = (<ChartsContainer closeable={true}
                                  tbl_group='main'
                                  addDefaultChart={true}
-                         expandedMode={expanded===LO_VIEW.xyPlots}/>
+                                 viewerId={chartExpandedMode ? expandedViewerId : undefined}
+                                 useOnlyChartsInViewer={chartExpandedMode && expandedViewerId!==DEFAULT_PLOT2D_VIEWER_ID}
+                                 expandedMode={chartExpandedMode}/>
                 );
     } else {
         view = (

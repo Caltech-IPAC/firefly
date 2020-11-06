@@ -4,11 +4,13 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.messaging.Messenger;
+import edu.caltech.ipac.firefly.server.Counters;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.packagedata.PackagingController;
-import edu.caltech.ipac.firefly.server.Counters;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CachePeerProviderFactory;
@@ -21,6 +23,7 @@ import net.sf.ehcache.statistics.StatisticsGateway;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.rmi.RemoteException;
@@ -28,10 +31,14 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static edu.caltech.ipac.firefly.server.ServerContext.ACCESS_TEST_EXT;
+
 
 /**
  * Display server's information, i.e. jvm, ehcache, counters, packaging queue, messaging status, event queue, embeded db
@@ -54,6 +61,9 @@ public class ServerStatus extends BaseHttpServlet {
         PrintWriter writer = res.getWriter();
         try {
             showCountStatus(writer);
+            skip(writer);
+
+            showWorkAreaStatus(writer);
             skip(writer);
 
             showPackagingStatus(writer);
@@ -171,6 +181,50 @@ public class ServerStatus extends BaseHttpServlet {
 
     private static void showCountStatus(PrintWriter w) {
         w.println(StringUtils.toString(Counters.getInstance().reportStatus(), "\n"));
+    }
+
+
+    private static void showWorkAreaStatus(PrintWriter w) {
+        w.println("Work Areas");
+        w.println("  - Internal: " + ServerContext.getWorkingDir().toString());
+        File sharedDir= ServerContext.getSharedWorkingDir();
+        if (sharedDir.equals(ServerContext.getWorkingDir())) {
+            File sharedDirRequested= ServerContext.getSharedWorkingDirRequested();
+            if (sharedDirRequested!=null && !sharedDirRequested.canWrite()) {
+                w.println("  - Shared working dir does not have write access, using Internal work area");
+                w.println("  - Shared (failed): " + ServerContext.getSharedWorkingDirRequested());
+            }
+            else {
+                w.println("  - No Shared work area defined.");
+            }
+        }
+        else {
+            w.println("  - Shared:   " + sharedDir.toString());
+            File [] matchFiles= FileUtil.listFilesWithExtension(sharedDir, ACCESS_TEST_EXT);
+            if (matchFiles.length==0) return;
+            int maxLen= 5;
+            Arrays.sort(matchFiles, (f1,f2) -> (int)(f2.lastModified()-f1.lastModified()));
+            w.println("              Most recent host using the shared working directory:");
+            int len= Math.min(maxLen,matchFiles.length);
+            for(int i=0; (i<len); i++) {
+                File f= matchFiles[i];
+                String hostname= f.getName().substring(0,f.getName().length()- ACCESS_TEST_EXT.length()-1);
+                String detailStr= hostname.equals(FileUtil.getHostname()) ? "(self) " : "";
+                if (isDocker(hostname)) detailStr+= "(probably Docker)";
+                w.println(String.format( "%19s%-20s  --  %s %s",
+                        "- ", hostname, new Date(f.lastModified()).toString(), detailStr ));
+            }
+            if (matchFiles.length>maxLen) w.println("              and " + (matchFiles.length-maxLen) + " more");
+        }
+    }
+
+    private static boolean isDocker(String hostname) {
+        try {
+            Long.parseLong(hostname, 16);
+            return true;
+        } catch (NumberFormatException ignored) {
+            return false;
+        }
     }
 
     private static void showEventsStatus(PrintWriter w) {

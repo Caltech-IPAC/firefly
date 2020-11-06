@@ -13,6 +13,8 @@ import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
 import {TriViewImageSection} from '../../visualize/ui/TriViewImageSection.jsx';
 import {AppInitLoadingMessage} from '../../ui/AppInitLoadingMessage.jsx';
+import {getExpandedChartProps} from '../../charts/ChartsCntlr.js';
+import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
 
 export class TriViewPanel extends PureComponent {
 
@@ -54,10 +56,14 @@ export class TriViewPanel extends PureComponent {
                                                       {...images}  />);
         }
         if (showXyPlots) {
+            const chartExpandedMode= expanded===LO_VIEW.xyPlots;
+            const {expandedViewerId}= getExpandedChartProps();
             content.xyPlot = (<ChartsContainer key='res-xyplots'
                                                closeable={closeable}
-                                               expandedMode={expanded===LO_VIEW.xyPlots}
+                                               expandedMode={chartExpandedMode}
+                                               viewerId={chartExpandedMode ? expandedViewerId : DEFAULT_PLOT2D_VIEWER_ID}
                                                tbl_group='main'
+                                               useOnlyChartsInViewer={chartExpandedMode && expandedViewerId!==DEFAULT_PLOT2D_VIEWER_ID}
                                                addDefaultChart={true}/>);
         }
         if (showTables) {

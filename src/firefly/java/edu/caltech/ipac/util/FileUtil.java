@@ -74,6 +74,8 @@ public class FileUtil
 
     public enum ConvertTo {MEG,GIG,K}
 
+    private static String hostNameReturn= null;
+
   private final static String  ADD_START= "---";
 
     /**
@@ -749,6 +751,7 @@ public class FileUtil
     }
 
     public static String getHostname() {
+        if (hostNameReturn!=null) return hostNameReturn;
         String retHost= "UNKNOWN_HOST";
         try {
             String host= InetAddress.getLocalHost().getHostName();
@@ -774,6 +777,7 @@ public class FileUtil
         } catch (UnknownHostException e) {
             retHost= "UNKNOWN_HOST";
         }
+        hostNameReturn= retHost;
         return retHost;
     }
 
