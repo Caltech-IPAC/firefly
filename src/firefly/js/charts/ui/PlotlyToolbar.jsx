@@ -14,6 +14,7 @@ import {showOptionsPopup} from '../../ui/PopupUtil.jsx';
 import {showChartsDialog} from './ChartSelectPanel.jsx';
 import {FilterEditorWrapper} from './FilterEditorWrapper.jsx';
 import {isScatter2d} from '../ChartUtil.js';
+import {findViewerWithItemId, getMultiViewRoot, PLOT2D} from '../../visualize/MultiViewCntlr.js';
 
 
 export function PlotlyToolbar({chartId, expandable, expandedMode, showMultiTrace}) {
@@ -345,9 +346,10 @@ function OptionsBtn({style={}, chartId,  showMultiTrace}) {
 }
 
 
-function ExpandBtn({style={}, chartId}) {
+function ExpandBtn({style={}, chartId} ){
+    const expandedViewerId= findViewerWithItemId(getMultiViewRoot(), chartId,PLOT2D);
     return (
-        <div style={style} onClick={() => {   dispatchChartExpanded(chartId);
+        <div style={style} onClick={() => {   dispatchChartExpanded({chartId, expandedViewerId});
                                               dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.xyPlots);
                                           }}
              title='Expand this panel to take up a larger area'
