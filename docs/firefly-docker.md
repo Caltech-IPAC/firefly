@@ -1,26 +1,31 @@
-Firefly from docker
+Firefly from Docker
 ----------------------- 
 
 #### Docker:
 
 - Firefly is containerized and can be pulled from docker
 - Docker images allow users to run software from a container that has the required software stack.
-- Documentation about docker can be found here: https://www.docker.com
+- Documentation about Docker can be found here: https://www.docker.com
 
 
 #### How to run Firefly from a docker image?
 
-To run latest/nightly dev:
+To run latest or nightly dev:
 
-`docker run -p 8090:8080 --memory=8g --rm ipac/firefly:nightly`
+- `docker run -p 8090:8080  -m 4g --rm ipac/firefly:latest`
+- `docker run -p 8090:8080 -m 4g --rm ipac/firefly:nightly`
 
-See tags here: https://hub.docker.com/r/ipac/firefly/tags
 
 Then, for example, 
-- access Firefly tests from the browser with http://localhost:8090/firefly/test/
-- Import and use Firefly API into your HTML using:
+- Access Firefly with: http://localhost:8090/firefly/
+- JavaScript API
+  - Import and use the JavaScript Firefly API embedded into your HTML using:
+     - `<script  type="text/javascript" src="http://localhost:8090/firefly/firefly_loader.js"></script>`
+  - Examples of using the JS API are on the test page: http://localhost:8090/firefly/test/
+  - [Documentation Here](./firefly-api-overview.md)
 
-`<script  type="text/javascript" src="http://localhost:8090/firefly/firefly_loader.js"></script>`
 
-More advanced command line here: [firefly/docker/base/start-examples.txt](../docker/base/start-examples.txt)
 
+More advanced Docker start commands: Go to do Firefly Docker page: https://hub.docker.com/r/ipac/firefly
+
+See all tags here: https://hub.docker.com/r/ipac/firefly/tags

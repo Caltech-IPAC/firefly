@@ -1,14 +1,10 @@
-# Release Notes
+# Firefly Release Notes
 
-You can find Firefly builds and the notes for running Firefly are on the [Docker Page](https://hub.docker.com/r/ipac/firefly).
+- You can find Firefly builds and the notes for running Firefly are on the [Docker Page](https://hub.docker.com/r/ipac/firefly).
+- See Firefly docker guidelines [here](firefly-docker.md).
+- To Access current (unstable) development - (Version _next_, unreleased) use docker tag: `nightly`
 
-See Firefly docker guidelines [here](firefly-docker.md).
-
-##### To Access current development - (Version _next_, unreleased)
-
-- docker tag: `nightly`
-
-# Firefly Releases
+# Releases
 
 ### Version 2020.3
 - October 2020
@@ -39,7 +35,15 @@ See Firefly docker guidelines [here](firefly-docker.md).
 
 ##### _Patches 2020.3_
 - 2020.3.1
-  -  Many small bug fixes and regression issues
+  - Docker startup simplified when mapping directories ([Simplfy Docker file](https://github.com/Caltech-IPAC/firefly/pull/1038)) 
+  - Many small bug fixes and regression issues:
+     [IRSA-3757](https://github.com/Caltech-IPAC/firefly/pull/1040),
+     [IRSA-3729](https://github.com/Caltech-IPAC/firefly/pull/1039),
+     [IRSA-3771](https://github.com/Caltech-IPAC/firefly/pull/1037),
+     [Firefly-676](https://github.com/Caltech-IPAC/firefly/pull/1036),
+     [Firefly-674](https://github.com/Caltech-IPAC/firefly/pull/1035),
+     [Firefly-670](https://github.com/Caltech-IPAC/firefly/pull/1034),
+     [Firefly-525](https://github.com/Caltech-IPAC/firefly/pull/1033)
 
 ##### _Pull Request in this release_
   - [bug fixes](https://github.com/Caltech-IPAC/firefly/pulls?q=is%3Apr+milestone%3A2020.3+label%3Abug)
