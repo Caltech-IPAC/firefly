@@ -14,11 +14,11 @@ import {
     TBL_UI_EXPANDED
 } from '../tables/TablesCntlr';
 import {MetaConst} from '../data/MetaConst';
-import {dispatchChartAdd, dispatchChartRemove} from '../charts/ChartsCntlr';
+import {dispatchChartAdd, dispatchChartRemove, CHART_UI_EXPANDED} from '../charts/ChartsCntlr';
 import {getTblById, onTableLoaded} from '../tables/TableUtil';
 import {ChartType} from '../data/FileAnalysis';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga';
-import {SET_LAYOUT_MODE, LO_MODE} from '../core/LayoutCntlr.js';
+import {SET_LAYOUT_MODE, LO_MODE, LO_VIEW} from '../core/LayoutCntlr.js';
 
 const getSetInSrByRow= (table,sr,rowNum) => (col) => {
     sr.setSafeParam(col.name, getCellValue(table,rowNum,col.name));
@@ -46,12 +46,63 @@ const makeCommaSeparated= (strAry) => strAry.reduce( (str,d) => str? `${str},${d
  *
  */
 
+const loadedTablesIds= new Map();
+
+function isTableChartNormalViewAction(payload, type) {
+    const {mode, view, tbl_id} = payload;
+    if (type !== SET_LAYOUT_MODE) return false;
+    const normal = mode === LO_MODE.expanded && (view === LO_VIEW.none || (view !== LO_VIEW.tables && view !== LO_VIEW.xyPlots));
+    if (normal) return true;
+    return (mode === LO_MODE.standard && loadedTablesIds.has(tbl_id));
+}
+
+function makeTableRequest(source, titleInfo, tbl_id, tbl_index, colNames, colUnits) {
+    const colNamesStr= colNames && makeCommaSeparated(colNames);
+    const colUnitsStr= colUnits && makeCommaSeparated(colUnits);
+    const dataTableReq= makeFileRequest(titleInfo.titleStr, source, undefined,
+        {
+            tbl_id,
+            tbl_index,
+            startIdx : 0,
+            pageSize : 100,
+            META_INFO : {
+                [MetaConst.DATA_SOURCE] : 'false',
+                [MetaConst.CATALOG_OVERLAY_TYPE]:'false'
+            }
+        });
+    if (colNamesStr) dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_COL_NAMES]=  colNamesStr;
+    if (colUnitsStr) dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_UNITS]=  colUnitsStr;
+    return dataTableReq;
+}
+
+function loadTableAndCharts(dataTableReq, tbl_id, tableGroupViewerId, dispatchCharts, noopId) {
+    dispatchTableSearch(dataTableReq,
+        {
+            logHistory: false,
+            removable:false,
+            tbl_group: tableGroupViewerId,
+            backgroundable: false,
+            showFilters: true,
+            showInfoButton: true
+        });
+
+    onTableLoaded(tbl_id).then( () => {
+        dispatchCharts && dispatchCharts.forEach( (c) => dispatchChartAdd(c));
+    });
+
+    return () => {
+        dispatchCancelActionWatcher(noopId);
+        dispatchTableRemove(tbl_id,false);
+        dispatchCharts && dispatchCharts.forEach( (c) => dispatchChartRemove(c.chartId));
+    };
+}
+
 
 /**
  * Activate a chart and table
  * @param {boolean} chartAndTable - true - both char and table, false - table only
  * @param {String} source
- * @param {titleInfo} an object that has a titleStr and showchartTile properties
+ * @param {Object} titleInfo an object that has a titleStr and showchartTile properties
  * @param {ActivateParams} activateParams
  * @param {ChartInfo} chartInfo
  * @param {Number} tbl_index
@@ -61,70 +112,54 @@ const makeCommaSeparated= (strAry) => strAry.reduce( (str,d) => str? `${str},${d
  * @param {String} tbl_id
  * @return {function} the activate function
  */
-
 export function createChartTableActivate(chartAndTable,source, titleInfo, activateParams, chartInfo={}, tbl_index=0,
                                          colNames= undefined, colUnits= undefined,
                                          chartId='part-result-chart', tbl_id= 'part-result-tbl') {
     return () => {
-
-
-        let noop = false;       // no-operation..  a way to bypass create/cleanup logic
-        const noopId = 'noop-' + tbl_id;
-        dispatchAddActionWatcher({
-            id: noopId,
-            actions:[TBL_UI_EXPANDED, SET_LAYOUT_MODE],
-            callback: (action) => {
-                const {tbl_id:cTblId, mode} = action.payload;
-                if (mode === LO_MODE.standard && noop) {
-                    noop = false;
-                } else if (action.type === TBL_UI_EXPANDED && cTblId === tbl_id) {
-                    noop = true;
-                }
-            }
-        });
-        const {tableGroupViewerId}= activateParams;
-        const colNamesStr= colNames && makeCommaSeparated(colNames);
-        const colUnitsStr= colUnits && makeCommaSeparated(colUnits);
-        const dataTableReq= makeFileRequest(titleInfo.titleStr, source, undefined,
-            {
-                tbl_id,
-                tbl_index,
-                startIdx : 0,
-                pageSize : 100,
-                META_INFO : {
-                    [MetaConst.DATA_SOURCE] : 'false',
-                    [MetaConst.CATALOG_OVERLAY_TYPE]:'false'
-                }
-            });
-        if (colNamesStr) dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_COL_NAMES]=  colNamesStr;
-        if (colUnitsStr) dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_UNITS]=  colUnitsStr;
-
         const dispatchCharts=  chartAndTable && makeChartObj(chartInfo, activateParams,titleInfo,chartId,tbl_id);
-        if (!noop) {
-            dispatchTableSearch(dataTableReq,
-                {
-                    logHistory: false,
-                    removable:false,
-                    tbl_group: tableGroupViewerId,
-                    backgroundable: false,
-                    showFilters: true,
-                    showInfoButton: true
-                });
+        const dataTableReq= makeTableRequest(source,titleInfo,tbl_id,tbl_index,colNames,colUnits);
+        const savedRequest= loadedTablesIds.has(tbl_id) && JSON.stringify(loadedTablesIds.get(tbl_id)?.request);
 
-            onTableLoaded(tbl_id).then( () => {
-                dispatchCharts && dispatchCharts.forEach( (c) => dispatchChartAdd(c));
+        if (savedRequest!==JSON.stringify(dataTableReq)) {
+            const allChartIds= chartAndTable ? dispatchCharts.map( (c) => c.chartId) : [];
+            const noopId = 'noop-' + tbl_id;
+            dispatchAddActionWatcher({
+                id: noopId,
+                actions:[TBL_UI_EXPANDED, SET_LAYOUT_MODE, CHART_UI_EXPANDED],
+                callback: ({payload,type}) => {
+                    const tableInfo= loadedTablesIds.get(tbl_id);
+                    if (isTableChartNormalViewAction(payload,type) && loadedTablesIds.has(tbl_id)) {
+                        tableInfo.defereCleanup=true;
+                    } else if (type === CHART_UI_EXPANDED && allChartIds?.includes(payload.chartId)) {
+                        tableInfo.doCleanup=false;
+                        tableInfo.defereCleanup=false;
+                    } else if (type === TBL_UI_EXPANDED && payload.tbl_id === tbl_id) {
+                        tableInfo.doCleanup=false;
+                        tableInfo.defereCleanup=false;
+                    }
+                }
             });
+
+            const {tableGroupViewerId}= activateParams;
+            const cleanupFunc= loadTableAndCharts(dataTableReq,tbl_id,tableGroupViewerId,dispatchCharts, noopId);
+            loadedTablesIds.set(tbl_id, {request:dataTableReq, doCleanup:true, deferCleanup:false, cleanupFunc});
         }
 
         return () => {
-            if (noop) return;
-            dispatchCancelActionWatcher(noopId);
-            dispatchTableRemove(tbl_id,false);
-            dispatchCharts && dispatchCharts.forEach( (c) => dispatchChartRemove(c.chartId));
+            const tableInfo= loadedTablesIds.get(tbl_id);
+            if (tableInfo.doCleanup) {
+                tableInfo.cleanupFunc();
+                loadedTablesIds.delete(tbl_id);
+            }
+            else if (tableInfo.defereCleanup) {
+                tableInfo.doCleanup= true;
+            }
         };
     };
-
 }
+
+
+
 
 function makeChartFromParams(tbl_id, chartParams, computeXAxis, computeYAxis,titleStr) {
     const {layoutAdds=true, simpleChartType= ChartType.XYChart, simpleData=true, numBins=30, traces,
