@@ -137,29 +137,30 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
                             </div>
                             <h3>Popular Functions</h3>
                             <div style={{marginLeft: 5}}>
-                                <div><span {...code}>{'TOP n                   '}</span>{': Limit the results to n number of records'}</div>
-                                <div><span {...code}>{'ORDER BY [ASC/DESC]     '}</span>{': Used for sorting'}</div>
-                                <br/>
-                                <div {...code}>{"POINT('coordinate system', right ascension, declination)"}</div>
-                                <div {...code}>{"CIRCLE('coordinate system',right ascension center, declination center, radius)"}</div>
-                                <div {...code}>{"BOX('coordinate system', right ascension center, declination center, width, height)"}</div>
-                                <div {...code}>{"POLYGON('coordinate system', coordinate point 1, coordinate point 2, coordinate point 3...)"}</div>
-                                <div {...code}>{'DISTANCE(point1, point2)'}</div>
-                                <div {...code}>{'CONTAINS(region1, region2)'}</div>
-                                <div {...code}>{'INTERSECTS(region1, region2)'}</div>
+                                <pre><code {...code}>{(`\
+                                    TOP n  -- Limit the results to n number of records
+                                    ORDER BY [ASC/DESC] -- Used for sorting
+                                    POINT('<coordinate system>', RIGHT_ASCENSION, DECLINATION)
+                                    CIRCLE('<coordinate system>', RIGHT_ASCENSION_CENTER, DECLINATION_CENTER, RADIUS)
+                                    BOX('<coordinate system>', RIGHT_ASCENSION_CENTER, DECLINATION_CENTER, WIDTH, HEIGHT)
+                                    POLYGON('<coordinate system>', POINT1, POINT2, POINT3...)
+                                    DISTANCE(POINT1, POINT2)
+                                    CONTAINS(REGION1, REGION2)
+                                    INTERSECTS(REGION1, REGION2)`).replace(/    +/g, '')
+                                    }</code></pre>
                             </div>
 
                             <h3>Sample Queries</h3>
                             <div style={{marginLeft: 5}}>
                                 <div          >{'A 1 degree cone search around M101 would be:'}</div>
-                                <div {...code}>{"SELECT * FROM fp_psc WHERE CONTAINS(POINT('J2000',ra,dec),CIRCLE('J2000',210.80225,54.34894,1.0))=1"}</div>
+                                <code {...code}>{"SELECT * FROM fp_psc WHERE CONTAINS(POINT('J2000', ra, dec), CIRCLE('J2000', 210.80225, 54.34894, 1.0))=1"}</code>
                                 <br/>
                                 <div          >{'A 1 degree by 1 degree box around M101 would be:'}</div>
-                                <div {...code}>{"SELECT * FROM fp_psc WHERE CONTAINS(POINT('J2000',ra,dec),BOX('J2000',210.80225,54.34894,1.0,1.0))=1"}</div>
+                                <code {...code}>{"SELECT * FROM fp_psc WHERE CONTAINS(POINT('J2000', ra, dec), BOX('J2000', 210.80225, 54.34894, 1.0, 1.0))=1"}</code>
                                 <br/>
                                 <div          >{'A triangle search around M101 would be:'}</div>
-                                <div {...code}>{`SELECT * FROM fp_psc WHERE CONTAINS(POINT('J2000',ra,dec),
-                  POLYGON('J2000',209.80225,53.34894,209.80225,55.34894,211.80225,54.34894))=1`}</div>
+                                <code {...code}>{`SELECT * FROM fp_psc WHERE CONTAINS(POINT('J2000', ra, dec),
+                  POLYGON('J2000', 209.80225, 53.34894, 209.80225, 55.34894, 211.80225, 54.34894))=1`}</code>
                             </div>
                         </div>
                     </div>
