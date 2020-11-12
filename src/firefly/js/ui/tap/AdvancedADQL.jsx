@@ -18,6 +18,8 @@ import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 
 import Prism from "prismjs";
+// bliss is needed for prism-live
+import "blissfuljs";
 import '../../externalSource/prismLive/prism-sql.js';
 import '../../externalSource/prismLive/prism-live.js';
 

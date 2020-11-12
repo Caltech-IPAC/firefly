@@ -1796,6 +1796,11 @@ bl@~0.9.4:
   dependencies:
     readable-stream "~1.0.26"
 
+blissfuljs@~1.0:
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/blissfuljs/-/blissfuljs-1.0.6.tgz#1dc392e1bf4f8586917d59538b6942adf5dcfb57"
+  integrity sha512-w3Y8lLCxEbJLHaz6heiWuy06igu1mW4VAtOxUwd1CWyVxY3WcsnTm9F9MLQaEcn2ru9S4OWpkbE6WJfFL6rjjg==
+
 bluebird@^3.5.5, bluebird@^3.7.2:
   version "3.7.2"
   resolved "https://registry.yarnpkg.com/bluebird/-/bluebird-3.7.2.tgz#9f229c15be272454ffa973ace0dbee79a1b0c36f"
