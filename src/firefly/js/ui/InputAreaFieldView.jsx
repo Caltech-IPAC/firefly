@@ -88,16 +88,17 @@ export class InputAreaFieldView extends PureComponent {
     render() {
         var {hasFocus}= this.state;
         var {visible,label,tooltip,rows,cols,labelWidth,value,style,wrapperStyle,labelStyle,
-             valid,size,onChange, onBlur, onKeyPress, showWarning, message, type, placeholder, additionalClasses}= this.props;
+             valid,size,onChange, onBlur, onKeyPress, showWarning, message, type, placeholder, additionalClasses, idName}= this.props;
         if (!visible) return null;
         wrapperStyle = Object.assign({whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block'}, wrapperStyle);
         return (
             <div style={wrapperStyle}>
                 {label && <InputFieldLabel labelStyle={labelStyle} label={label} tooltip={tooltip} labelWidth={labelWidth}/> }
-                <textarea style={Object.assign({display:'inline-block', backgroundColor: 'white'}, style)}
+                <textarea style={Object.assign({display:'inline-block'}, style)}
                           rows={rows}
                           cols={cols}
                           className={computeStyle(valid,hasFocus,additionalClasses)}
+                          id={idName}
                        onChange={(ev) => onChange ? onChange(ev) : null}
                        onFocus={ () => !hasFocus ? this.setState({hasFocus:true, infoPopup:false}) : ''}
                        onBlur={ (ev) => {
@@ -138,7 +139,8 @@ InputAreaFieldView.propTypes= {
     rows: PropTypes.number,
     cols: PropTypes.number,
     placeholder: PropTypes.string,
-    additionalClasses: PropTypes.string
+    additionalClasses: PropTypes.string,
+    idName: PropTypes.string
 };
 
 InputAreaFieldView.defaultProps= {
@@ -148,7 +150,8 @@ InputAreaFieldView.defaultProps= {
     message: '',
     type: 'text',
     rows:10,
-    cols:50
+    cols:50,
+    idName: ''
 };
 
 export const propTypes = InputAreaFieldView.propTypes;

@@ -17,7 +17,14 @@ import {getColumnIdx} from '../../tables/TableUtil.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 
-const code = {style: {color: 'green', whiteSpace: 'pre', fontFamily: 'monospace'}};
+import Prism from "prismjs";
+import '../../externalSource/prismLive/prism-sql.js';
+import '../../externalSource/prismLive/prism-live.js';
+
+import '../../externalSource/prismLive/prism.css';
+import '../../externalSource/prismLive/prism-live.css';
+
+const code = {className: "language-sql"};
 var cFetchKey = Date.now();
 
 export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={}}) {
@@ -40,10 +47,18 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
         // reload TAP schema when serviceUrl changes
     }, [serviceUrl]);
 
-    const onSelect = (p) => {
-
+    useEffect(() => {
+        // We need to get prism-live to adopt to the textarea
         const node = ReactDOM.findDOMNode(adqlEl.current);
         const textArea = node && node.firstChild;
+        // highlight help text too
+        Prism.highlightAll();
+        // adopt textArea
+        new Prism.Live(textArea);
+    }, []);
+
+    const onSelect = (p) => {
+        const textArea = document.getElementById("adqlEditor");
 
         const [key=''] = p;
         const [type, , tname, cname] = key.split('--');
@@ -107,9 +122,11 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
                         </div>
                         <InputAreaFieldConnected
                             ref={adqlEl}
-                            style={{width: 'calc(100% - 30px)', resize: 'none'}} rows={10}
+                            style={{backgroundColor: 'transparent'}}
                             fieldKey={adqlKey}
                             tooltip='ADQL to submit to the selected TAP service'
+                            additionalClasses='prism-live language-sql'
+                            idName='adqlEditor'
                         />
                         <div style={{color: '#4c4c4c'}}>
                             <h3>Schema Browser Usage</h3>
