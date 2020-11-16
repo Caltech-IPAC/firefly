@@ -26,6 +26,7 @@ The non-react dependencies do not change much.
 - react-select
 - react-sizeme
 - react-split-pane
+- prismjs
 
 ##### Non- UI:
 - enum
