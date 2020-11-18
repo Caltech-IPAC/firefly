@@ -34,6 +34,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
     const [treeData, setTreeData] = useState([]);                               // using a useState hook
     const adqlEl = useRef(null);                                                // using a useRef hook
     const ffcn = useRef(null);                                                  // using a useRef hook
+    const prismLiveRef = useRef(null);
 
     useEffect(() => {
         cFetchKey = Date.now();
@@ -50,13 +51,12 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
     }, [serviceUrl]);
 
     useEffect(() => {
-        // We need to get prism-live to adopt to the textarea
-        const node = ReactDOM.findDOMNode(adqlEl.current);
-        const textArea = node && node.firstChild;
-        // highlight help text too
+        // highlight help text/code snippets
         Prism.highlightAll();
+        // We need to get prism-live to adopt to the textarea
+        const textArea = ReactDOM.findDOMNode(adqlEl.current)?.firstChild;
         // adopt textArea
-        new Prism.Live(textArea);
+        prismLiveRef.current = new Prism.Live(textArea);
     }, []);
 
     const onSelect = (p) => {
@@ -67,13 +67,13 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
         const taVal = getUnselectedValue(textArea);
         if (type === 'table') {
             if (taVal) {
-                insertAtCursor(textArea, tname, adqlKey, groupKey);
+                insertAtCursor(textArea, tname, adqlKey, groupKey, prismLiveRef.current);
             } else {
                 dispatchValueChange({fieldKey: adqlKey, groupKey, value: `SELECT TOP 1000 * FROM ${tname}`, valid: true});
             }
         } else if (type === 'column') {
             const val = ffcn.current.checked ? `${tname}.${cname}` : cname;
-            insertAtCursor(textArea, val, adqlKey, groupKey);
+            insertAtCursor(textArea, val, adqlKey, groupKey, prismLiveRef.current);
         }
     };
 
@@ -243,7 +243,7 @@ export function getUnselectedValue (input) {
     return val.trim();
 }
 
-export function insertAtCursor (input, textToInsert, fieldKey, groupKey) {
+export function insertAtCursor (input, textToInsert, fieldKey, groupKey, prismLive) {
     const ovalue = input.value;
 
     // save selection start and end position
@@ -260,4 +260,6 @@ export function insertAtCursor (input, textToInsert, fieldKey, groupKey) {
         input.focus();
     });
 
+    // trigger prismLive style sync
+    window.setTimeout( () => prismLive.syncStyles(), 10);
 }
