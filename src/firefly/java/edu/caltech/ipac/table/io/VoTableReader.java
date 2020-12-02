@@ -437,6 +437,8 @@ public class VoTableReader {
         applyIfNotEmpty(el.getAttribute("type"), v -> {
             if (v.equals("hidden")) {       // mentioned in appendix A.1(LINK substitutions)
                 dt.setVisibility(DataType.Visibility.hidden);
+            }else if (v.equals("location")) {       // mentioned in appendix A.4(FIELDs as Data Pointers)
+                dt.setTypeDesc(v);
             }
         });
 
