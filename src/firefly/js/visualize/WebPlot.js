@@ -420,6 +420,10 @@ export const WebPlot= {
             //=== Mutable =====================
             screenSize: {width:HIPS_DATA_WIDTH*zoomFactor, height:HIPS_DATA_HEIGHT*zoomFactor},
             cubeIdx: Number(hipsProperties?.hips_cube_firstframe) || 0,
+            rawData: {
+                useRed: true, useGreen: true, useBlue:true,
+                bandData:[{bias:.5,contrast:1},undefined,undefined]
+            },
             zoomFactor,
             attributes,
             //=== End Mutable =====================

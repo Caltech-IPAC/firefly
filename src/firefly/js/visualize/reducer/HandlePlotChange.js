@@ -3,7 +3,7 @@
  */
 
 import update from 'immutability-helper';
-import {isEmpty, isUndefined, isArray, unionBy, isString} from 'lodash';
+import {isEmpty, isUndefined, isArray, unionBy, isString, isNumber} from 'lodash';
 import Cntlr, {ExpandType, WcsMatchType, ActionScope} from '../ImagePlotCntlr.js';
 import {replacePlotView, replacePrimaryPlot, changePrimePlot, updatePlotViewScrollXY,
         findScrollPtToCenterImagePt, findScrollPtToPlaceOnDevPt,
@@ -37,7 +37,7 @@ import {
 } from '../PlotViewUtil.js';
 import {parseAnyPt, makeImagePt, makeWorldPt, makeDevicePt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
-import {RotateType} from '../PlotState.js';
+import PlotState, {RotateType} from '../PlotState.js';
 import {updateTransform} from '../PlotTransformUtils.js';
 import {WebPlotRequest} from '../WebPlotRequest.js';
 import {logger} from '../../util/Logger.js';
@@ -278,10 +278,28 @@ function installTiles(state, action) {
     let pv= getPlotViewById(state,plotId);
     let plot= primePlot(pv);
 
+
+
     if (!plot || !primaryStateJson) {
         logger.error('primePlot undefined or primaryStateJson is not set.', new Error());
         console.log('installTiles: state, action', state, action);
         return state;
+    }
+
+    if (isHiPS(plot)) {
+        const plotState= PlotState.makePlotStateWithJson(primaryStateJson);
+        const newPlot= {...plot,plotState};
+
+        if (isNumber(bias) || isNumber(contrast)) {
+            const {bandData:oldBandData}= newPlot.rawData;
+            const bandData= oldBandData.map( (entry)  => ({...entry,
+                bias:  isNumber(bias) ? bias : entry.bias,
+                contrast:  isNumber(contrast) ? contrast : entry.contrast,
+            }));
+            newPlot.rawData= {...plot.rawData,bandData};
+        }
+        pv= replacePrimaryPlot(pv, newPlot);
+        return {...state, plotViewAry : replacePlotView(plotViewAry,pv)};
     }
 
     pv= {...pv};

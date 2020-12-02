@@ -16,15 +16,18 @@ import {Matrix} from '../../externalSource/transformation-matrix-js/matrix';
  */
 export function drawOneHiPSTile(ctx, img, cornersAry, tileSize, offset, norder) {
 
-    const delta = norder<=3 ? 0.2 : 0;
-    const triangles= window.firefly?.hipsTriangles ?? 4;
+    // const delta = norder<=3 ? 0.2 : 0;
+    const delta = 0;
+    // const triangles= window.firefly?.hipsTriangles ?? 4;
+    const triangles= tileSize < 80 ? 2 : 4;
+    const correction= tileSize < 80 ? .05 : tileSize < 150 ? .03 : .01;
 
     if (triangles===2) {
         const triangle1= [{x:tileSize-delta, y:tileSize-delta}, {x:tileSize-delta, y:delta}, {x:delta, y:tileSize-delta}];
         const triangle2= [ {x:tileSize-delta, y:delta}, {x:delta, y:tileSize-delta}, {x:delta, y:delta} ];
 
-        drawTexturedTriangle(ctx, img, offset, ...triangle1, cornersAry[0], cornersAry[1], cornersAry[3]);
-        drawTexturedTriangle(ctx, img,offset, ...triangle2, cornersAry[1], cornersAry[3], cornersAry[2]);
+        drawTexturedTriangle(ctx, img, offset, ...triangle1, cornersAry[0], cornersAry[1], cornersAry[3], correction);
+        drawTexturedTriangle(ctx, img,offset, ...triangle2, cornersAry[1], cornersAry[3], cornersAry[2], correction);
     }
     else if (triangles===4) {
         const mp=tileSize/2;
@@ -37,16 +40,14 @@ export function drawOneHiPSTile(ctx, img, cornersAry, tileSize, offset, norder) 
         const triangle3= [{x:delta, y:tileSize-delta}, {x:mp-delta, y:mp-delta}, {x:delta, y:delta}];
         const triangle4= [{x:tileSize-delta, y:tileSize-delta}, {x:mp-delta, y:mp-delta}, {x:delta, y:tileSize-delta}];
 
-        drawTexturedTriangle(ctx, img, offset, ...triangle1, cornersAry[0], cPt, cornersAry[1]);
-        drawTexturedTriangle(ctx, img, offset, ...triangle2, cornersAry[1], cPt, cornersAry[2]);
-        drawTexturedTriangle(ctx, img, offset, ...triangle3, cornersAry[3], cPt, cornersAry[2]);
-        drawTexturedTriangle(ctx, img, offset, ...triangle4, cornersAry[0], cPt, cornersAry[3]);
+        drawTexturedTriangle(ctx, img, offset, ...triangle1, cornersAry[0], cPt, cornersAry[1], correction);
+        drawTexturedTriangle(ctx, img, offset, ...triangle2, cornersAry[1], cPt, cornersAry[2], correction);
+        drawTexturedTriangle(ctx, img, offset, ...triangle3, cornersAry[3], cPt, cornersAry[2], correction);
+        drawTexturedTriangle(ctx, img, offset, ...triangle4, cornersAry[0], cPt, cornersAry[3], correction);
     }
 }
 
-const scaleCoeff = 0.02;
-const correction = 0.01;
-const applyC= (v,c) => ((1+correction) * v - c * correction);
+const scaleCoeff = 0.01;
 
 /**
  * Reproject and draw the part of the image defined by triangle source point 0,1,2 to triangle pt 0,1,2 of the destination image
@@ -67,14 +68,15 @@ const applyC= (v,c) => ((1+correction) * v - c * correction);
  * @param {Point} pt0 - destination point 0
  * @param {Point} pt1 - destination point 1
  * @param {Point} pt2 - destination point 2
- * @param {boolean} applyCorrection
+ * @param {number} correction
  */
 function drawTexturedTriangle(ctx, img, offset,
-                              s0, s1, s2, {x:x0, y:y0}, {x:x1, y:y1}, {x:x2, y:y2}, applyCorrection= true) {
+                              s0, s1, s2, {x:x0, y:y0}, {x:x1, y:y1}, {x:x2, y:y2}, correction= .01) {
     const xc = (x0 + x1 + x2) / 3;
     const yc = (y0 + y1 + y2) / 3;
 
-    const tgtAry= applyCorrection ?
+    const applyC= (v,c) => ((1+correction) * v - c * correction);
+    const tgtAry= correction ?
         [ applyC(x0,xc), applyC(y0,yc), applyC(x1,xc), applyC(y1,yc), applyC(x2,xc), applyC(y2,yc)] :
         [x0,y0,x1,y1,x2,y2];
 

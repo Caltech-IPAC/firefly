@@ -68,7 +68,8 @@ export const isImageBitmap= (b) => getGlobalObj().ImageBitmap && (b instanceof g
 export const isOffscreenCanvas= (b) => getGlobalObj().OffscreenCanvas && (b instanceof getGlobalObj().OffscreenCanvas);
 
 export function createCanvas(width,height) {
-    const c = document.createElement('canvas');
+    const global= getGlobalObj();
+    const c = global.document ? global.document.createElement('canvas') : new OffscreenCanvas(w,h);
     c.width = width;
     c.height = height;
     return c;

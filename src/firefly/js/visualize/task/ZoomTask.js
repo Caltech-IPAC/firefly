@@ -75,8 +75,9 @@ export function zoomActionCreator(rawAction) {
         if (actionScope===ActionScope.GROUP) {
             const {wcsMatchType}= visRoot;
             const matchByScale= (wcsMatchType!==WcsMatchType.Pixel && wcsMatchType!==WcsMatchType.PixelCenter);
+            const devPt= isHiPS(plot) ? undefined : devicePt;
             const matchFunc= makeZoomLevelMatcher(dispatcher, visRoot,pv,level,matchByScale, isFullScreen,
-                                                   zoomLockingEnabled,userZoomType,devicePt, useDelay, getState);
+                                                   zoomLockingEnabled,userZoomType,devPt, useDelay, getState);
             operateOnOthersInPositionGroup(getState()[IMAGE_PLOT_KEY],pv, matchFunc);
         }
         alignWCS(getState,pv);

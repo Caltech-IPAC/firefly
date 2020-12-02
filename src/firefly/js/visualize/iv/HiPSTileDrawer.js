@@ -10,25 +10,33 @@ import {loadImage} from '../../util/WebUtil.js';
 import {CysConverter} from '../CsysConverter.js';
 import {findAllSkyCachedImage, findTileCachedImage, addAllSkyCachedImage} from './HiPSTileCache.js';
 import {makeHipsRenderer} from './HiPSRenderer.js';
-import {isHiPS, isImage} from '../WebPlot';
+import {isHiPS} from '../WebPlot';
+import {getHipsColorOps} from './HipsColor.js';
+import {makeDevicePt, makeWorldPt} from '../Point.js';
+import {getColorModel} from '../rawData/rawAlgorithm/ColorTable.js';
 
 
 const noOp= { drawerTile : () => undefined, abort : () => undefined };
 
-
+const colorId = (plot) => {
+    const id= Number(plot.plotState.getColorTableId());
+    return isNaN(id) ? -1 : id;
+};
 
 export const DrawTiming= new Enum(['IMMEDIATE','ASYNC', 'DELAY']);
 
 /**
  * Return a function that should be called on every render to draw the image
  * @param targetCanvas
+ * @param GPU
  * @return {*}
  */
-export function createHiPSDrawer(targetCanvas) {
+export function createHiPSDrawer(targetCanvas, GPU) {
     if (!targetCanvas) return () => undefined;
     let abortLastDraw= null;
     let lastDrawNorder= 0;
     let lastFov;
+    const hipsColorOps= getHipsColorOps(GPU);
 
 
     return (plot, opacity,plotView, tileProcessInfo= {shouldProcess:false}) => {
@@ -42,26 +50,44 @@ export function createHiPSDrawer(targetCanvas) {
         const {fov,centerWp}= getPointMaxSide(plot,viewDim);
         const tilesToLoad= findCellOnScreen(plot,viewDim,norder, fov, centerWp);
         let drawTiming= DrawTiming.ASYNC;
+        const {bias,contrast}= plot.rawData.bandData[0];
+        const colorTableId= colorId(plot);
+        let doDrawTransitionalImage= false;
 
-        if (useAllSky || tilesToLoad.every( (tile)=> findTileCachedImage(createImageUrl(plot,tile))) ) { // any case with all the tiles
+        if (useAllSky) {
             drawTiming= DrawTiming.IMMEDIATE;
         }
+        else if (tilesToLoad.every( (tile)=> findTileCachedImage(createImageUrl(plot,tile))) ) { // any case with all the tiles
+            if (colorTableId>=1) {
+                if (tilesToLoad.every( (tile)=> findTileCachedImage(createImageUrl(plot,tile),colorTableId,bias,contrast))) {
+                    drawTiming= DrawTiming.IMMEDIATE;
+                }
+                else {
+                    drawTiming= DrawTiming.ASYNC;
+                }
+            }
+            else {
+                drawTiming= DrawTiming.IMMEDIATE;
+            }
+        }
         else if (fovEqual(fov, lastFov)) { // scroll case
-            drawTiming= DrawTiming.ASYNC; // in a zoom case, slow down drawing a little, to allow to the user click multiple times
+            doDrawTransitionalImage= true;
+            drawTiming= DrawTiming.ASYNC;
             transitionNorder= lastDrawNorder-1;// for scroll transitionNorder needs to be set one back
         }
         else { // zoom or resize case, in a zoom or resize case, slow down drawing, to allow to use to finish
+            doDrawTransitionalImage= true;
             drawTiming= DrawTiming.DELAY;
             transitionNorder= lastDrawNorder;
         }
 
-        if (drawTiming!==DrawTiming.IMMEDIATE) {
-            drawTransitionalImage(fov,centerWp,targetCanvas,plot, plotView,norder, transitionNorder,
+        if (doDrawTransitionalImage) {
+            drawTransitionalImage(fov,centerWp,targetCanvas,plot, plotView,norder, transitionNorder, hipsColorOps,
                 opacity, tileProcessInfo, tilesToLoad);
         }
 
         const offscreenCanvas = makeOffScreenCanvas(plotView,plot,drawTiming!==DrawTiming.IMMEDIATE);
-        abortLastDraw= drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, tilesToLoad, useAllSky,
+        abortLastDraw= drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, hipsColorOps, tilesToLoad, useAllSky,
             opacity, tileProcessInfo, drawTiming);
         lastDrawNorder= norder;
         lastFov= fov;
@@ -78,22 +104,25 @@ export function createHiPSDrawer(targetCanvas) {
  * @param plotView
  * @param norder
  * @param transitionNorder
+ * @param hipsColorOps
  * @param opacity
  * @param tileProcessInfo
  * @param finalTileToLoad
  */
 function drawTransitionalImage(fov, centerWp, targetCanvas, plot, plotView,
-                               norder, transitionNorder, opacity, tileProcessInfo, finalTileToLoad) {
+                               norder, transitionNorder, hipsColorOps, opacity, tileProcessInfo, finalTileToLoad) {
     const {viewDim}= plotView;
     let tilesToLoad;
+    const {bias,contrast}= plot.rawData.bandData[0];
+    const colorTableId= colorId(plot);
     if (norder<=3) { // norder is always 3, need to fix this if
           // draw the level 2 all sky and then draw on top what ever part of the full resolution level 3 tiles that are in cache
         const tilesToLoad2= findCellOnScreen(plot,viewDim,2, fov, centerWp);
         const tilesToLoad3= findCellOnScreen(plot,viewDim,3, fov, centerWp);
         const offscreenCanvas = makeOffScreenCanvas(plotView,plot,false);
-        drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, 2, tilesToLoad2, true,
+        drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, 2, hipsColorOps, tilesToLoad2, true,
             opacity, tileProcessInfo, DrawTiming.IMMEDIATE, false);
-        drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, 3, tilesToLoad3, false,
+        drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, 3, hipsColorOps, tilesToLoad3, false,
             opacity, tileProcessInfo, DrawTiming.IMMEDIATE);
     }
     else {
@@ -102,16 +131,16 @@ function drawTransitionalImage(fov, centerWp, targetCanvas, plot, plotView,
         // find some lower resolution norder to draw, as long as there is at least one tile available in cache, us it.
         for( let testNorder= transitionNorder; (testNorder>=3 && lookMore); testNorder--) {
             tilesToLoad= findCellOnScreen(plot,viewDim,testNorder, fov, centerWp);
-            const hasSomeTiles= tilesToLoad.some( (tile)=> findTileCachedImage(createImageUrl(plot,tile)));
+            const hasSomeTiles= tilesToLoad.some( (tile)=> findTileCachedImage(createImageUrl(plot,tile),colorTableId,bias,contrast));
             if (hasSomeTiles || testNorder===3) { // if there are tiles or we need to do the allsky
-                drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, testNorder, tilesToLoad, testNorder===3,
+                drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, testNorder, hipsColorOps, tilesToLoad, testNorder===3,
                     opacity, tileProcessInfo, DrawTiming.IMMEDIATE, false);
                 lookMore= false;
                 // console.log(`draw transi: transitionNorder: ${transitionNorder}, testNorder: ${testNorder}`);
             }
         }
         // draw what ever part of the nornder tiles that are in cache on top
-        drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, finalTileToLoad, false,
+        drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, hipsColorOps, finalTileToLoad, false,
             opacity, tileProcessInfo, DrawTiming.IMMEDIATE);
     }
 }
@@ -149,14 +178,22 @@ function findCellOnScreen(plot, viewDim, norder, fov,centerWp) {
     const cc= CysConverter.make(plot);
 
     const retCells= [];
+    let badCnt;
     let devPtCorners;
-                   // this function is performance sensitive, use for loops instead of map and filter
+    const centerDevPt= cc.getDeviceCoords(centerWp);
+    // this function is performance sensitive, use for loops instead of map and filter
     for(let i= 0; (i<cells.length); i++) {
         devPtCorners= [];
+        badCnt=0;
         for(let j=0; (j<cells[i].wpCorners.length); j++)  {
             devPtCorners[j]= cc.getDeviceCoords(cells[i].wpCorners[j]);
-            if (!devPtCorners[j]) break;
+            if (!devPtCorners[j]) {
+                badCnt++;
+                if (badCnt>2) break;
+            }
         }
+        if (badCnt===1) devPtCorners= shim1DevPtCorner(devPtCorners,centerDevPt, viewDim);
+        else if (badCnt===2) devPtCorners= shim2DevPtCorner(devPtCorners,centerDevPt, viewDim);
         if (isQuadTileOnScreen(devPtCorners, viewDim)) {
             retCells.push({devPtCorners, tileNumber:cells[i].ipix, dx:0, dy:0, nside: norder});
         }
@@ -164,6 +201,62 @@ function findCellOnScreen(plot, viewDim, norder, fov,centerWp) {
     return retCells;
 }
 
+
+function shim1DevPtCorner(devPtCorners,centerDevPt, viewDim) {
+    const {width,height}= viewDim;
+    const cX= centerDevPt.x;
+    const avgY= devPtCorners.reduce( (sum, pt) => pt ? sum+pt.y : sum,0)/(devPtCorners.length-1);
+    const maxX= devPtCorners.reduce( (max, pt) => pt ? Math.abs(cX-pt.x) > Math.abs(cX-max) ? pt.x : max : max ,cX);
+    let y= avgY;
+    if (y<50) y=1;
+    else if (y>height-50) y=height;
+    let x= maxX;
+    if (x<50) x=1;
+    else if (x>width-50) x=width;
+    return devPtCorners.map( (pt) => pt ? pt : makeDevicePt(x,y));
+}
+
+function shim2DevPtCorner(devPtCorners,centerDevPt, viewDim) {
+    const {width,height}= viewDim;
+    const cY= centerDevPt.y;
+
+    const avgX= devPtCorners.reduce( (sum, pt) => pt ? sum+pt.x : sum,0)/(devPtCorners.length-2);
+    const maxY= devPtCorners.reduce( (max, pt) => pt ? Math.abs(cY-pt.y) > Math.abs(cY-max) ? pt.y : max : max ,cY);
+
+    let y= maxY;
+    if (y<50) y=1;
+    else if (y>height-50) y=height;
+    let xToUse= avgX-10;
+    return devPtCorners.map( (pt) => {
+        if (pt) return pt;
+        let x= xToUse;
+        if (x<50) x=1;
+        else if (x>width-50) x=width;
+        const retPt= makeDevicePt(xToUse,y);
+        xToUse+=20;
+        return retPt;
+    });
+}
+
+
+// ---------- does not work
+// function shimCorners(cc,wpCorners, centerWp, devPtCorners) {
+//     const aDiff= (c,a) => Math.min( Math.abs(c-a), (360 - (c-a)) % 360);
+//     const cenRa= centerWp.x;
+//     return devPtCorners.map( (pt,idx) => {
+//         if (pt) return pt;
+//         const wp= wpCorners[idx];
+//
+//         const ra= wp.x;
+//         const diff= aDiff(cenRa,ra);
+//         const adjust= diff- 90.1;
+//         const newRa = Math.abs(cenRa-ra) > (360 - (cenRa-ra)) % 360 ? ra+adjust : ra-adjust;
+//         const newWp= makeWorldPt(newRa,wp.y, wp.cSys);
+//         const centerDevPt= cc.getDeviceCoords(newWp);
+//         console.log(wp, centerDevPt, newWp);
+//         return centerDevPt;
+//     });
+// }
 
 
 
@@ -174,6 +267,7 @@ function findCellOnScreen(plot, viewDim, norder, fov,centerWp) {
  * @param plot
  * @param plotView
  * @param norder
+ * @param hipsColorOps
  * @param tilesToLoad
  * @param useAllSky
  * @param opacity
@@ -181,7 +275,7 @@ function findCellOnScreen(plot, viewDim, norder, fov,centerWp) {
  * @param drawTiming
  * @param screenRenderEnabled
  */
-function drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, tilesToLoad, useAllSky, opacity, tileProcessInfo,
+function drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, hipsColorOps, tilesToLoad, useAllSky, opacity, tileProcessInfo,
                      drawTiming= DrawTiming.ASYNC, screenRenderEnabled= true) {
     const {viewDim}= plotView;
     const rootPlot= primePlot(plotView); // bounding box should us main plot not overlay plot
@@ -192,11 +286,28 @@ function drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, tile
     if (!targetCanvas) return noOp;
     const screenRenderParams= {plotView, plot, targetCanvas, offscreenCanvas, opacity, offsetX, offsetY};
     const drawer= makeHipsRenderer(screenRenderParams, tilesToLoad.length, !plot.asOverlay,
-                                   tileProcessInfo, screenRenderEnabled);
+                                   tileProcessInfo, screenRenderEnabled, hipsColorOps);
     
     if (useAllSky) {
         const allSkyURL= makeHiPSAllSkyUrlFromPlot(plot);
-        let cachedAllSkyImage= findAllSkyCachedImage(allSkyURL);
+        let cachedAllSkyImage;
+        //=======================
+        //======================= color experiment
+        //=======================
+        const ctId= colorId(plot);
+        const {bias,contrast}= plot.rawData.bandData[0];
+        cachedAllSkyImage= findAllSkyCachedImage(allSkyURL,ctId,bias,contrast);
+        if (ctId!==-1 && !cachedAllSkyImage) {
+            cachedAllSkyImage= findAllSkyCachedImage(allSkyURL);
+            if (cachedAllSkyImage) {
+                const coloredImage= hipsColorOps.changeHiPSColor(cachedAllSkyImage.order3,ctId,bias,contrast);
+                addAllSkyCachedImage(allSkyURL, coloredImage,ctId,bias,contrast);
+                cachedAllSkyImage= findAllSkyCachedImage(allSkyURL,ctId,bias,contrast);
+            }
+        }
+        //=======================
+        //======================= end color experiment
+        //=======================
         if (cachedAllSkyImage) {
             drawer.drawAllSky(norder, cachedAllSkyImage, tilesToLoad);
         }
@@ -205,7 +316,11 @@ function drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, tile
                 .then( (allSkyImage) =>
                 {
                     addAllSkyCachedImage(allSkyURL, allSkyImage);
-                    cachedAllSkyImage= findAllSkyCachedImage(allSkyURL);
+                    if (ctId!==-1) {
+                        allSkyImage= hipsColorOps.changeHiPSColor(allSkyImage,ctId,bias,contrast);
+                        addAllSkyCachedImage(allSkyURL, allSkyImage,ctId,bias,contrast);
+                    }
+                    cachedAllSkyImage= findAllSkyCachedImage(allSkyURL,ctId,bias,contrast);
                     drawer.drawAllSky(norder, cachedAllSkyImage, tilesToLoad);
                 })
                 .catch( () => {
@@ -240,11 +355,21 @@ function drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, tile
  */
 function makeOffScreenCanvas(plotView, plot, overlayTransparent) {
 
+
+
+    const colorTableId= colorId(plot);
+    let backgroundColor= [0,0,0];
+    if (colorTableId>-1) {
+        const cm= getColorModel(colorTableId);
+        backgroundColor=[Math.trunc(cm[0]*255),Math.trunc(cm[1]*255),Math.trunc(cm[2]*255)];
+    }
+
     const offscreenCanvas = initOffScreenCanvas(plotView.viewDim);
     const offscreenCtx = offscreenCanvas.getContext('2d');
 
     const {viewDim:{width,height}}=  plotView;
 
+    const [r,g,b]= backgroundColor;
     offscreenCtx.fillStyle = overlayTransparent ? 'rgba(0,0,0,0)'  : 'rgba(227,227,227,1)';
     // offscreenCtx.fillRect(0, 0, width, height);
 
@@ -261,7 +386,7 @@ function makeOffScreenCanvas(plotView, plot, overlayTransparent) {
         offscreenCtx.closePath();
         offscreenCtx.clip();
     }
-    offscreenCtx.fillStyle = overlayTransparent ? 'rgba(0,0,0,0)'  : 'rgba(0,0,0,1)';
+    offscreenCtx.fillStyle = overlayTransparent ? 'rgba(0,0,0,0)'  : `rgba(${r},${g},${b},1)`;
     offscreenCtx.fillRect(0, 0, width, height);
     return offscreenCanvas;
 }

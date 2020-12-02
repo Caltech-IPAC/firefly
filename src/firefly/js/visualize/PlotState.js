@@ -307,6 +307,7 @@ export function makePlotStateShimForHiPS(wpRequest) {
     const bandState= BandState.makeBandState();
     bandState.plotRequestTmp= wpRequest;
     plotState.bandStateAry= [bandState,null,null];
+    plotState.colorTableId=-1;
     return plotState;
 }
 
