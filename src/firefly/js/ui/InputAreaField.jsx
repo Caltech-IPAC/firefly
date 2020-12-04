@@ -40,6 +40,8 @@ InputAreaFieldConnected.propTypes = {
     validator: PropTypes.func,
     initialState: PropTypes.shape({
         value: PropTypes.string,
-    })
+    }),
+    additionalClasses: PropTypes.string,
+    idName: PropTypes.string,
 };
 

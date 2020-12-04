@@ -9,12 +9,13 @@ import EXCLAMATION from 'html/images/exclamation16x16.gif';
 
 
 
-function computeStyle(valid,hasFocus) {
+function computeStyle(valid,hasFocus,additionalClasses) {
+    let extraClasses = " " + (additionalClasses || "");
     if (!valid) {
-        return 'ff-inputfield-view-error';
+        return 'ff-inputfield-view-error' + extraClasses;
     }
     else {
-        return hasFocus ? 'ff-inputfield-view-focus' : 'ff-inputfield-view-valid';
+        return (hasFocus ? 'ff-inputfield-view-focus' : 'ff-inputfield-view-valid') + extraClasses;
     }
 }
 
@@ -87,16 +88,17 @@ export class InputAreaFieldView extends PureComponent {
     render() {
         var {hasFocus}= this.state;
         var {visible,label,tooltip,rows,cols,labelWidth,value,style,wrapperStyle,labelStyle,
-             valid,size,onChange, onBlur, onKeyPress, showWarning, message, type, placeholder}= this.props;
+             valid,size,onChange, onBlur, onKeyPress, showWarning, message, type, placeholder, additionalClasses, idName}= this.props;
         if (!visible) return null;
         wrapperStyle = Object.assign({whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block'}, wrapperStyle);
         return (
             <div style={wrapperStyle}>
                 {label && <InputFieldLabel labelStyle={labelStyle} label={label} tooltip={tooltip} labelWidth={labelWidth}/> }
-                <textarea style={Object.assign({display:'inline-block', backgroundColor: 'white'}, style)}
+                <textarea style={Object.assign({display:'inline-block'}, style)}
                           rows={rows}
                           cols={cols}
-                          className={computeStyle(valid,hasFocus)}
+                          className={computeStyle(valid,hasFocus,additionalClasses)}
+                          id={idName}
                        onChange={(ev) => onChange ? onChange(ev) : null}
                        onFocus={ () => !hasFocus ? this.setState({hasFocus:true, infoPopup:false}) : ''}
                        onBlur={ (ev) => {
@@ -136,7 +138,9 @@ InputAreaFieldView.propTypes= {
     type: PropTypes.string,
     rows: PropTypes.number,
     cols: PropTypes.number,
-    placeholder: PropTypes.string
+    placeholder: PropTypes.string,
+    additionalClasses: PropTypes.string,
+    idName: PropTypes.string
 };
 
 InputAreaFieldView.defaultProps= {
@@ -146,7 +150,8 @@ InputAreaFieldView.defaultProps= {
     message: '',
     type: 'text',
     rows:10,
-    cols:50
+    cols:50,
+    idName: ''
 };
 
 export const propTypes = InputAreaFieldView.propTypes;
