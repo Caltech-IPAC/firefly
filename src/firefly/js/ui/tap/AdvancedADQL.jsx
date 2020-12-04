@@ -70,6 +70,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
                 insertAtCursor(textArea, tname, adqlKey, groupKey, prismLiveRef.current);
             } else {
                 dispatchValueChange({fieldKey: adqlKey, groupKey, value: `SELECT TOP 1000 * FROM ${tname}`, valid: true});
+                window.setTimeout( () => prismLiveRef.current.syncStyles?.(), 10);
             }
         } else if (type === 'column') {
             const val = ffcn.current.checked ? `${tname}.${cname}` : cname;
@@ -93,11 +94,15 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
 
     const onClear = () => {
         dispatchValueChange({fieldKey:adqlKey, groupKey, value: '', valid: true});
+        // trigger prismLive style sync
+        window.setTimeout( () => prismLiveRef.current.syncStyles?.(), 10);
     };
 
     const onReset = () => {
         const value = getFieldVal(groupKey, defAdqlKey, '');
         dispatchValueChange({fieldKey:adqlKey, groupKey, value, valid: true});
+        // trigger prismLive style sync
+        window.setTimeout( () => prismLiveRef.current.syncStyles?.(), 10);
     };
 
     const treeNodes = convertToTreeNode(treeData);
