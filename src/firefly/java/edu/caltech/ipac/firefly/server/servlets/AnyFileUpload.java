@@ -101,7 +101,8 @@ public class AnyFileUpload extends BaseHttpServlet {
         }
 
         // handle upload file request.. results in saved as an UploadFileInfo
-        UploadFileInfo fileInfo = null;
+        UploadFileInfo uploadFileInfo = null;
+        FileInfo statusFileInfo= null;
 
         String wsCmd = sp.getOptional(WS_CMD);
         String fromUrl = sp.getOptional(URL);
@@ -113,38 +114,40 @@ public class AnyFileUpload extends BaseHttpServlet {
         try {
             if (wsCmd != null) {
                 // from workspace.. get the file using workspace api
-                fileInfo = getFileFromWorkspace(sp);
+                uploadFileInfo = getFileFromWorkspace(sp);
+                statusFileInfo= new FileInfo(uploadFileInfo.getFile());
             } else if (fromUrl != null) {
                 // from a URL.. get it
                 int idx = fromUrl.lastIndexOf('/');
                 long fnameHash = System.currentTimeMillis();
                 String fname = (idx >= 0) ? fromUrl.substring(idx + 1) : fromUrl;
                 fname = fname.contains("?") ? "Upload-"+fnameHash : fname;       // don't save queryString as file name.  this will confuse reader expecting a url, like VoTableReader
-                FileInfo status = LockingVisNetwork.retrieveURL(new URL(fromUrl));
-                int code= status.getResponseCode();
-                File file= status.getFile();
+                statusFileInfo = LockingVisNetwork.retrieveURL(new URL(fromUrl));
+                int code= statusFileInfo.getResponseCode();
+                File file= statusFileInfo.getFile();
                 if (file!=null && code!=200 && code!=304) {
-                    throw new Exception("invalid upload from URL: " + status.getResponseCodeMsg());
+                    throw new Exception("invalid upload from URL: " + statusFileInfo.getResponseCodeMsg());
                 }
-                fileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(file), file, fname, null);
+                uploadFileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(file), file, fname, null);
 
             } else if (fromWPR!= null) {
                 FileRetriever retrieve = ImageFileRetrieverFactory.getRetriever(fromWPR);
                 if (retrieve==null) throw new Exception("Could not determine how to retrieve file");
-                FileInfo fi = retrieve.getFile(fromWPR,false);
-                responseCode= fi.getResponseCode();
-                File file= fi.getFile();
-                fileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(file), file, file.getName(), fi.getContentType());
+                statusFileInfo = retrieve.getFile(fromWPR,false);
+                responseCode= statusFileInfo.getResponseCode();
+                File file= statusFileInfo.getFile();
+                uploadFileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(file), file, file.getName(), statusFileInfo.getContentType());
             } else if (uploadedItem != null) {
                 // it's a stream from multipart.. write it to disk
                 String name = uploadedItem.getName();
                 File tmpFile = File.createTempFile("upload_", "_" + name, ServerContext.getUploadDir());
                 FileUtil.writeToFile(uploadedItem.openStream(), tmpFile);
-                fileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(tmpFile), tmpFile, name, uploadedItem.getContentType());
+                uploadFileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(tmpFile), tmpFile, name, uploadedItem.getContentType());
+                statusFileInfo= new FileInfo(uploadFileInfo.getFile());
             }
 
-            if (FileUtil.isGZipFile(fileInfo.getFile())) {
-                File f= fileInfo.getFile();
+            if (FileUtil.isGZipFile(uploadFileInfo.getFile())) {
+                File f= uploadFileInfo.getFile();
                 String name= f.getName()+".gz";
                 File gzFile= new File(f.getParentFile(),name);
                 f.renameTo(gzFile);
@@ -154,30 +157,30 @@ public class AnyFileUpload extends BaseHttpServlet {
             /// -- check if going all the way to workspace
             if (sp.getOptionalBoolean(WORKSPACE_PUT, false) && responseCode==200) {
                 WsServerParams params1 = WsServerCommands.convertToWsServerParams(sp);
-                WsServerCommands.utils.putFile(params1 ,fileInfo.getFile() );
+                WsServerCommands.utils.putFile(params1 ,uploadFileInfo.getFile() );
             }
 
             // modify file name if requested
-            StringUtils.applyIfNotEmpty(sp.getOptional(FILE_NAME), fileInfo::setFileName);
+            StringUtils.applyIfNotEmpty(sp.getOptional(FILE_NAME), uploadFileInfo::setFileName);
 
             // save info in a cache for downstream use
             String fileCacheKey = sp.getOptional(CACHE_KEY);
-            fileCacheKey = fileCacheKey == null ? fileInfo.getPname() : fileCacheKey;
-            UserCache.getInstance().put(new StringKey(fileCacheKey), fileInfo);
+            fileCacheKey = fileCacheKey == null ? uploadFileInfo.getPname() : fileCacheKey;
+            UserCache.getInstance().put(new StringKey(fileCacheKey), uploadFileInfo);
 
             // returns the fileCacheKey
             String returnVal = fileCacheKey;
 
             if (analyzeFile) {
+                if (statusFileInfo==null) statusFileInfo= new FileInfo(uploadFileInfo.getFile());
                 String analyzerId = sp.getOptional(ANALYZER_ID);
                 StopWatch.getInstance().start("doAnalysis");
 
                 FileAnalysisReport.ReportType reportType = getReportType(analysisType);
                 FileAnalysisReport report = FileAnalysis.analyze(
-                        fileInfo.getFile(), reportType, analyzerId,
-                        sp.getParamMapUsingExcludeList(allParams),
-                        responseCode, fileInfo.getContentType());
-                report.setFileName(fileInfo.getFileName());
+                        statusFileInfo, reportType, analyzerId,
+                        sp.getParamMapUsingExcludeList(allParams));
+                report.setFileName(uploadFileInfo.getFileName());
                 returnVal = returnVal + "::" + FileAnalysis.toJsonString(report);   // appends the report to the end of the returned String
 
                 StopWatch.getInstance().printLog("doAnalysis");
@@ -187,7 +190,7 @@ public class AnyFileUpload extends BaseHttpServlet {
             }
 
             sendReturnMsg(res, 200, null, returnVal);
-            Counters.getInstance().increment(Counters.Category.Upload, fileInfo.getContentType());
+            Counters.getInstance().increment(Counters.Category.Upload, uploadFileInfo.getContentType());
 
             StopWatch.getInstance().printLog("doFileUpload");
         } catch (IOException|FailedRequestException e) {

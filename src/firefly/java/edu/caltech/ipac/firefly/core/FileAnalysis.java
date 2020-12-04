@@ -4,6 +4,7 @@
 
 package edu.caltech.ipac.firefly.core;
 
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.messaging.JsonHelper;
 import edu.caltech.ipac.firefly.server.dpanalyze.DataProductAnalyzer;
 import edu.caltech.ipac.firefly.server.dpanalyze.DataProductAnalyzerFactory;
@@ -36,20 +37,18 @@ import static edu.caltech.ipac.util.StringUtils.isEmpty;
 public class FileAnalysis {
 
     public static FileAnalysisReport analyze(File infile, FileAnalysisReport.ReportType type) throws Exception {
-        return analyze(infile,type,null,Collections.emptyMap());
-    }
-    public static FileAnalysisReport analyze(File infile, FileAnalysisReport.ReportType type, String analyzerId, Map<String,String> params) throws Exception {
-       return analyze(infile,type,analyzerId,params,200,null);
+        return analyze(new FileInfo(infile),type,null,Collections.emptyMap());
     }
 
-    public static FileAnalysisReport analyze(File infile,
+    public static FileAnalysisReport analyze(FileInfo fileInfo,
                                              FileAnalysisReport.ReportType type,
                                              String analyzerId,
-                                             Map<String,String> params,
-                                             int responseCode,
-                                             String contentType ) throws Exception {
+                                             Map<String,String> params) throws Exception {
 
         FileAnalysisReport.ReportType mtype = type == FileAnalysisReport.ReportType.Brief ? FileAnalysisReport.ReportType.Normal : type;
+        File infile= fileInfo.getFile();
+        int responseCode= fileInfo.getResponseCode();
+        String contentType= fileInfo.getContentType();
 
         Format format = TableUtil.guessFormat(infile);
         FileAnalysisReport report= null;

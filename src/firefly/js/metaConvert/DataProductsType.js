@@ -39,6 +39,7 @@ export const DPtypes= {
     CHART: 'xyplot',
     CHOICE_CTI: 'chartTable',
     DOWNLOAD: 'download',
+    DOWNLOAD_MENU_ITEM: 'download-menu-item',
     PNG: 'png',
     ANALYZE: 'analyze',
 };
@@ -104,11 +105,12 @@ export const dpdtSendToBrowser= (url, extra={}) => {
  * @param {String} titleStr download title str
  * @param {String} url download url
  * @param {String} [fileType]
+ * @param {Object} [extra] - all values in this object are added to the DataProjectType Object
  * @return {DataProductsDisplayType}
  */
-export const dpdtMessageWithDownload= (message,titleStr, url,fileType=undefined) => {
+export const dpdtMessageWithDownload= (message,titleStr, url,fileType=undefined, extra={}) => {
     const singleDownload= Boolean(titleStr && url);
-    return dpdtMessage(message,singleDownload ?[dpdtDownload(titleStr,url,'download-0',fileType)] : undefined,{singleDownload} );
+    return dpdtMessage(message,singleDownload ?[dpdtDownload(titleStr,url,'download-0',fileType)] : undefined,{singleDownload,...extra} );
 };
 
 export const dpdtMessageWithError= (message,detailMsgAry) => {
@@ -189,6 +191,12 @@ export function dpdtAnalyze(name, activate, url, serDefParams, menuKey='analyze-
 export function dpdtDownload(name, url, menuKey='download-0', fileType, extra={}) {
     return { displayType:DPtypes.DOWNLOAD, name, url, menuKey, fileType, ...extra};
 }
+
+export function dpdtDownloadMenuItem(name, url, menuKey='download-0', fileType, extra={}) {
+    return { displayType:DPtypes.DOWNLOAD_MENU_ITEM, name, url, menuKey, singleDownload: true, fileType, ...extra};
+}
+
+
 
 /**
  *

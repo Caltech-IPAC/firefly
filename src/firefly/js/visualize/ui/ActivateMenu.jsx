@@ -12,6 +12,7 @@ import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 
 const GROUP_KEY= 'ActivateMenu';
 
+const titleStyle= {width: '100%', textAlign:'center', padding:'10px 0 5px 0', fontSize:'larger', fontWeight:'bold'};
 
 export const ActivateMenu= memo(({ serDefParams, setSearchParams, title, makeDropDown}) => {
 
@@ -24,10 +25,11 @@ export const ActivateMenu= memo(({ serDefParams, setSearchParams, title, makeDro
         <div>
             {makeDropDown?.()}
             <div style={{padding: '5px 5px 5px 5px'}}>
+                <div style= {titleStyle}> {title} </div>
                 <FieldGroup groupKey={GROUP_KEY} validatorFunc={null} keepState={false}>
                     {makeActivateInput(serDefParams)}
                 </FieldGroup>
-                <CompleteButton style={{padding: '10px 0 0 0'}} onSuccess={loadParams} text={'Load - '+title} groupKey={GROUP_KEY} />
+                <CompleteButton style={{padding: '20px 0 0 0'}} onSuccess={loadParams} text={'Submit'} groupKey={GROUP_KEY} />
             </div>
         </div>
     );
@@ -55,15 +57,17 @@ function makeActivateInput(serDefParams) {
             if (options) {
                 const fieldOps = options.split(',').map( (op) => ({label:op,value:op}));
                 return (
-                    <RadioGroupInputField
-                        key={name}
-                        initialState= {{
-                            value: fieldOps[0],
-                            tooltip,
-                            label: {name}
-                        }}
-                        options={fieldOps} alignment='vertical' fieldKey={name} groupKey={GROUP_KEY}/>
-                    );
+                    <div key={name} style={{paddingTop:16}}>
+                        <RadioGroupInputField
+                            key={name}
+                            initialState= {{
+                                value: fieldOps[0].value,
+                                tooltip,
+                                label: name
+                            }}
+                            options={fieldOps} alignment='vertical' fieldKey={name} groupKey={GROUP_KEY}/>
+                    </div>
+                );
             }
             else {
                 return (

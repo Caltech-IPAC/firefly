@@ -8,6 +8,7 @@ import edu.caltech.ipac.astro.net.HorizonsEphPairs;
 import edu.caltech.ipac.astro.net.Resolver;
 import edu.caltech.ipac.firefly.core.FileAnalysis;
 import edu.caltech.ipac.firefly.core.FileAnalysisReport;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.SrvParam;
@@ -16,6 +17,7 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -110,7 +112,7 @@ public class ResolveServerCommands {
                 FileAnalysisReport.ReportType reportType = StringUtils.isEmpty(rtype) ? FileAnalysisReport.ReportType.Brief : FileAnalysisReport.ReportType.valueOf(rtype);   // defaults to Brief
 
                 FileAnalysisReport report = FileAnalysis.analyze(
-                        new File(infile), reportType,
+                        new FileInfo(new File(infile)), reportType,
                         sp.getOptional(ANALYZER_ID),
                         sp.getParamMapUsingExcludeList(Arrays.asList("filePath","reportType")));
                 return FileAnalysis.toJsonString(report);

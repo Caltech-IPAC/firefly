@@ -354,6 +354,9 @@ function activateMenuItem(state,action) {
             case DPtypes.DOWNLOAD:
                 dpData.dataProducts= {displayType, name, url, menuKey, menu, activeMenuKey:menuKey, activeMenuLookupKey};
                 break;
+            case DPtypes.DOWNLOAD_MENU_ITEM:
+                dpData.dataProducts= {displayType, name, url, menuKey, menu, activeMenuKey:menuKey, singleDownload: true, activeMenuLookupKey};
+                break;
             case DPtypes.ANALYZE:
                 dpData.dataProducts= {displayType, name, menuKey, menu, activeMenuKey:menuKey, activate,
                                       allowsInput, serDefParams, activeMenuLookupKey, originalTitle};

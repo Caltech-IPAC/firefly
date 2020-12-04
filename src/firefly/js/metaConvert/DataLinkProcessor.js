@@ -14,6 +14,7 @@ import {makeFileAnalysisActivate} from './MultiProductFileAnalyzer';
 import {createSingleImageActivate} from './ImageDataProductsUtil';
 import {dispatchUpdateActiveKey, getActiveMenuKey} from './DataProductsCntlr';
 import {GIG} from '../util/WebUtil.js';
+import {dpdtDownloadMenuItem, dpdtMessageWithDownload} from './DataProductsType.js';
 
 
 
@@ -101,6 +102,8 @@ function convertAllToDownload(menu) {
     }).filter( (d) => d.displayType);
 }
 
+const isThisSem= (semantics) => semantics==='#this';
+const isAuxSem= (semantics) => semantics==='#auxiliary';
 
 /**
  *
@@ -150,7 +153,9 @@ function createDataLinkMenuRet(dataSource, dataLinkData, positionWP, sourceTable
                 let fileType;
                 if (contentType.includes('tar')) fileType= 'tar';
                 if (contentType.includes('gz')) fileType= 'gzip';
-                menuEntry= dpdtDownload('Download file: '+name,url,menuKey,fileType,{semantics, size, activeMenuLookupKey});
+                menuEntry= isThisSem(semantics) ?
+                    dpdtDownloadMenuItem('Download file: '+name,url,menuKey,fileType,{semantics, size, activeMenuLookupKey}) :
+                    dpdtDownload('Download file: '+name,url,menuKey,fileType,{semantics, size, activeMenuLookupKey});
             }
             else if (isImageType(contentType)) {
                 menuEntry= dpdtPNG('Show PNG image: '+name,url,menuKey,{semantics, size, activeMenuLookupKey});
@@ -170,8 +175,8 @@ function createDataLinkMenuRet(dataSource, dataLinkData, positionWP, sourceTable
             }
         }
         menuEntry && menu.push(menuEntry);
-        if (e.semantics==='#auxiliary') auxCnt++;
-        if (e.semantics==='#this') primeCnt++;
+        if (isAuxSem(e.semantics)) auxCnt++;
+        if (isThisSem(e.semantics)) primeCnt++;
     });
     if (additionalServiceDescMenuList) {
         menu.push(...additionalServiceDescMenuList);
@@ -180,8 +185,8 @@ function createDataLinkMenuRet(dataSource, dataLinkData, positionWP, sourceTable
     menu.push(...addDataLinkEntries(dataSource,activateParams));
     return menu
         .sort(({semantics:sem1,name:n1},{semantics:sem2,name:n2}) => {
-            if (sem1==='#this') {
-                if (sem2==='#this') {
+            if (isThisSem(sem1)) {
+                if (isThisSem(sem2)) {
                     if (n1?.includes('(#this)')) return -1;
                     else if (n2?.includes('(#this)')) return 1;
                     else if (n1<n2) return -1;
