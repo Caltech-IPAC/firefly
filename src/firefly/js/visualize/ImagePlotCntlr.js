@@ -745,12 +745,13 @@ export function dispatchChangeHipsImageConversion({plotId, hipsImageConversionCh
  * @param {string} [p.hipsUrlRoot]
  * @param {CoordinateSys} [p.coordSys]
  * @param {WorldPt} [p.centerProjPt]
+ * @param {String} [p.blankColor] set the background color of the hips if is is a blank hips
  * @param {boolean} [p.applyToGroup] apply to the whole group it is locked
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  */
-export function dispatchChangeHiPS({ plotId, hipsUrlRoot, coordSys, centerProjPt, cubeIdx,
+export function dispatchChangeHiPS({ plotId, hipsUrlRoot, coordSys, centerProjPt, cubeIdx, blankColor,
                                        applyToGroup=true, dispatcher= flux.process }) {
-    dispatcher( { type: CHANGE_HIPS, payload: {plotId, hipsUrlRoot, coordSys, cubeIdx, applyToGroup, centerProjPt} });
+    dispatcher( { type: CHANGE_HIPS, payload: {plotId, hipsUrlRoot, coordSys, cubeIdx, applyToGroup, centerProjPt, blankColor} });
 }
 
 

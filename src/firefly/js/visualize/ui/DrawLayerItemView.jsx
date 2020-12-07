@@ -4,6 +4,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import {isFunction} from 'lodash';
 import {getMinMaxWidth, makeColorChange, makeShape} from './DrawLayerUIComponents';
 
 
@@ -79,7 +80,8 @@ DrawLayerItemView.propTypes= {
     visible        : PropTypes.bool.isRequired,
     canUserChangeColor : PropTypes.any.isRequired,
     color          : PropTypes.string.isRequired,
-    title          : PropTypes.node.isRequired,
+    // title          : PropTypes.oneOf([PropTypes.node.isRequired, PropTypes.func.isRequired]),
+    title          : PropTypes.any.isRequired,
     helpLine       : PropTypes.string.isRequired,
     canUserDelete  : PropTypes.bool.isRequired,
     canUserHide    : PropTypes.bool,
@@ -95,7 +97,9 @@ DrawLayerItemView.propTypes= {
 
 
 function getTitleTag(title, maxTitleChars, autoFormatTitle) {
-    if (!autoFormatTitle) return title;
+    if (!autoFormatTitle) {
+        return isFunction(title) ? title() : title;
+    }
     const {minW,maxW}= getMinMaxWidth(maxTitleChars);
 
     const tStyle= {

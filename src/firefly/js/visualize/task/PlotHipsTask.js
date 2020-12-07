@@ -17,7 +17,7 @@ import ImagePlotCntlr, {
     makeUniqueRequestKey
 } from '../ImagePlotCntlr.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
-import {WebPlot, isHiPS, isImage} from '../WebPlot.js';
+import {WebPlot, isHiPS, isImage, isBlankHiPSURL} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {getRootURL, loadImage} from '../../util/WebUtil.js';
 import {
@@ -159,7 +159,7 @@ function watchForHiPSViewDim(action, cancelSelf, params) {
 
 
         initCorrectCoordinateSys(pv);
-        addDrawLayers(pv.request, pv, plot);
+        addDrawLayers(pv.request, pv, plot); //todo for blank
 
         cancelSelf();
     }
@@ -222,8 +222,9 @@ async function makeHiPSPlot(rawAction, dispatcher) {
     const {payload}= rawAction;
     const {plotId, attributes, pvOptions, renderTreeId}= payload;
     const wpRequest= ensureWPR(payload.wpRequest);
+    const blank= isBlankHiPSURL(wpRequest.getHipsRootUrl());
 
-    const newPayload= {...payload, wpRequest, plotType:'hips', wpRequestAry:[wpRequest], renderTreeId};
+    const newPayload= {...payload, wpRequest, plotType:'hips', wpRequestAry:[wpRequest], renderTreeId, pvOptions};
     newPayload.viewerId= determineViewerId(payload.viewerId, plotId);
     const hipsImageConversion= getHipsImageConversion(payload.hipsImageConversion);
     if (hipsImageConversion) newPayload.pvOptions= {...pvOptions, hipsImageConversion};
@@ -256,10 +257,12 @@ async function makeHiPSPlot(rawAction, dispatcher) {
         }
         const str= await result.text();
         const hipsProperties= parseProperties(str);
-        let plot= WebPlot.makeWebPlotDataHIPS(plotId, wpRequest, hipsProperties, 'a hips plot', .0001, attributes, false);
+        let plot= WebPlot.makeWebPlotDataHIPS(plotId, wpRequest, hipsProperties, attributes, false, blank);
         plot.proxyHips= PROXY;
 
-        await createHiPSMocLayer(getPropertyItem(hipsProperties, 'ivoid'), wpRequest.getHipsRootUrl(), plot);
+        if (!blank) {
+            await createHiPSMocLayer(getPropertyItem(hipsProperties, 'ivoid'), wpRequest.getHipsRootUrl(), plot);
+        }
         if (currentPlots[plotId]!==requestKey) {
             // hipsFail('hips plot expired or aborted');
             console.log('hips plot expired or aborted');
@@ -338,13 +341,16 @@ async function doHiPSChange(rawAction, dispatcher, getState) {
     if (!width || !height) return;
 
 
+    const blank= hipsUrlRoot ? isBlankHiPSURL(hipsUrlRoot) : plot.blank;
+    
     const url= makeHipsUrl(`${hipsUrlRoot}/properties`, true);
 
 
     if (!hipsUrlRoot) { // only change to some attributes, we are not replacing the HiPS source
-        dispatcher( { type: ImagePlotCntlr.CHANGE_HIPS, payload });
+        const newPayload= {...payload, blank}
+        dispatcher( { type: ImagePlotCntlr.CHANGE_HIPS, payload:newPayload });
         locateOtherIfMatched(visRoot(),plotId);
-        dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload });
+        dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:newPayload });
         return;
     }
 
@@ -367,7 +373,7 @@ async function doHiPSChange(rawAction, dispatcher, getState) {
         dispatcher(
             {
                 type: ImagePlotCntlr.CHANGE_HIPS,
-                payload: {...payload, hipsUrlRoot, hipsProperties, coordSys: plot.imageCoordSys},
+                payload: {...payload, hipsUrlRoot, hipsProperties, coordSys: plot.imageCoordSys, blank},
             });
         initCorrectCoordinateSys(getPlotViewById(visRoot(), plotId));
         locateOtherIfMatched(visRoot(),plotId);

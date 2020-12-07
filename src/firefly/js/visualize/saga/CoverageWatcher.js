@@ -7,7 +7,7 @@ import {get, isEmpty, isObject, isString, flattenDeep, values, isUndefined, isNi
 import {WebPlotRequest, TitleOptions} from '../WebPlotRequest.js';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE,
         TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
-import ImagePlotCntlr, {visRoot, dispatchDeletePlotView, dispatchPlotImageOrHiPS} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, { visRoot, dispatchDeletePlotView, dispatchPlotImageOrHiPS, dispatchPlotHiPS } from '../ImagePlotCntlr.js';
 import {primePlot, getDrawLayerById} from '../PlotViewUtil.js';
 import {REINIT_APP} from '../../core/AppDataCntlr.js';
 import {doFetchTable, getTblById, getActiveTableId, getTableInGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
@@ -30,7 +30,7 @@ import {parseObsCoreRegion} from '../../util/ObsCoreSRegionParser.js';
 import {getAppOptions} from '../../core/AppDataCntlr';
 import {getSearchTarget} from './CatalogWatcher';
 import {MetaConst} from '../../data/MetaConst.js';
-import {isHiPS} from '../WebPlot';
+import {isBlankHiPSURL, isHiPS} from '../WebPlot';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {isDrawLayerVisible} from '../PlotViewUtil';
 import SearchTarget from '../../drawingLayers/SearchTarget.js';
@@ -358,6 +358,7 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
     overlayCoverageDrawing(preparedTables, options, tblCatIdMap, deletedTblId||table.tbl_id);
 
     if (deletedTblId) return;
+    const blankHips= isBlankHiPSURL(preferredHipsSourceURL);
 
     const commonSearchTarget= getCommonSearchTarget(Object.values(preparedTables),options);
 
@@ -367,7 +368,7 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
     let plotAllSkyFirst= false;
     let allSkyRequest= null;
     const size= Math.max(maxRadius*2.2, fovDegMinSize);
-    if (size>160) {
+    if (size>160 && !blankHips) {
         allSkyRequest= WebPlotRequest.makeAllSkyPlotRequest();
         allSkyRequest.setTitleOptions(TitleOptions.PLOT_DESC);
         allSkyRequest= initRequest(allSkyRequest, viewerId, PLOT_ID, overlayPosition);
@@ -397,12 +398,20 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
     };
     if (commonSearchTarget) attributes[PlotAttribute.CENTER_ON_FIXED_TARGET]= commonSearchTarget;
 
-    dispatchPlotImageOrHiPS({
-        plotId: PLOT_ID, viewerId, hipsRequest, imageRequest, allSkyRequest,
-        fovDegFallOver, fovMaxFitsSize, autoConvertOnZoom, plotAllSkyFirst,
-        pvOptions: {userCanDeletePlots:false, displayFixedTarget:false},
-        attributes,
-    });
+    if (blankHips) {
+        dispatchPlotHiPS({plotId: PLOT_ID, viewerId, wpRequest:hipsRequest, attributes,
+            pvOptions: {userCanDeletePlots:false, displayFixedTarget:false}
+        });
+    }
+    else {
+        dispatchPlotImageOrHiPS({
+            plotId: PLOT_ID, viewerId, hipsRequest, imageRequest, allSkyRequest,
+            fovDegFallOver, fovMaxFitsSize, autoConvertOnZoom, plotAllSkyFirst,
+            pvOptions: {userCanDeletePlots:false, displayFixedTarget:false},
+            attributes,
+        });
+
+    }
     updateTableComponentStateStatus(tbl_id,'success');
 }
 

@@ -8,7 +8,7 @@ import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {getPlotViewById, primePlot} from '../visualize/PlotViewUtil';
-import {dispatchChangeImageVisibility, visRoot} from '../visualize/ImagePlotCntlr';
+import {dispatchChangeHiPS, dispatchChangeImageVisibility, visRoot} from '../visualize/ImagePlotCntlr';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr';
 import {isHiPS, isImage} from '../visualize/WebPlot';
 
@@ -21,8 +21,6 @@ export default {factoryDef, TYPE_ID}; // every draw layer must default export wi
 
 var idCnt=0;
 
-const precision4Digit = '0.0000';
-
 function onVisibilityChange(drawLayer,action) {
     dispatchChangeImageVisibility({plotId:drawLayer.plotId,visible:action.payload.visible});
 }
@@ -30,12 +28,13 @@ function onVisibilityChange(drawLayer,action) {
 
 function creator(initPayload, presetDefaults) {
 
+    const {plotId, layersPanelLayoutId}= initPayload;
+    const plot= primePlot(visRoot(),plotId);
     const drawingDef= {
-        ...makeDrawingDef('yellow', {fontWeight:'bolder'} ),
+        ...makeDrawingDef(plot.blankColor??'yellow', {fontWeight:'bolder'} ),
         ...presetDefaults};
     idCnt++;
 
-    const {plotId, layersPanelLayoutId}= initPayload;
 
 
     const options= {
@@ -44,7 +43,7 @@ function creator(initPayload, presetDefaults) {
         searchTargetVisible: true,
         isPointData:false,
         autoFormatTitle:false,
-        canUserChangeColor: ColorChangeType.DISABLE,
+        canUserChangeColor: ColorChangeType.DISABLE, //todo change infrastruct to support a onColorChange
         destroyWhenAllDetached: true,
         canUserDelete: false,
     };
@@ -52,16 +51,22 @@ function creator(initPayload, presetDefaults) {
 }
 
 function getLayerChanges(drawLayer, action) {
+    const {payload,type}= action;
     const {plotId}= drawLayer;
     if (!plotId) return null;
     const pv= getPlotViewById(visRoot(),plotId);
     const plot= primePlot(pv);
     if (!pv || !plot) return null;
-    switch (action.type) {
+    const canUserHide= !plot.blank;
+    const canUserChangeColor= plot.blank ? ColorChangeType.DYNAMIC : ColorChangeType.DISABLE;
+    if (isHiPS(plot) && payload.drawingDef?.color && plot.blankColor !== payload.drawingDef.color) {
+        setTimeout(() => dispatchChangeHiPS({plotId,blankColor:payload.drawingDef.color}), 5);
+    }
+    switch (type) {
         case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
-            return { title: getTitle(pv, plot, drawLayer), };
+            return { title: getTitle(pv, plot, drawLayer), canUserHide, canUserChangeColor};
         default:
-            return { title:getTitle(pv, plot, drawLayer)};
+            return { title: getTitle(pv, plot, drawLayer), canUserHide, canUserChangeColor};
     }
     return undefined;
 }
@@ -74,24 +79,28 @@ function getTitle(pv, plot, drawLayer) {
     const showSize= Boolean(r.getSizeInDeg() && isImage(plot) );
     const titleEmLen= Math.min(plot.title.length+2,24);
     const minWidth= showSize || !drawLayer.isPointData ? (titleEmLen+6)+'em' : titleEmLen+'em';
-    return (
-        <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            width: 100,
-            minWidth,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis'
-        } }
-             title={plot.title}>
-            <div>{plot.title}</div>
-            <div style={{paddingLeft: 10, fontSize:'80%'}}>{`${isHiPS(plot) ? 'HiPS' : 'Image'}${showSize?',':''}`}</div>
-            {showSize &&
-                     <div  style={{paddingLeft: 5, fontSize:'80%'}}>
-                         {`Search Size: ${sprintf('%.4f',r.getSizeInDeg())}${String.fromCharCode(176)}`}
-                     </div>
-            }
-        </div>
-    );
+    const {blank=false}= plot;
+    const hipsStr= blank ? '': 'HiPS';
+    return () => {
+       return  (
+            <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                width: 100,
+                minWidth,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+            } }
+                 title={plot.title}>
+                <div>{blank?'Blank HiPS': plot.title}</div>
+                <div style={{paddingLeft: 10, fontSize:'80%'}}>{`${isHiPS(plot) ? hipsStr : 'Image'}${showSize?',':''}`}</div>
+                {showSize &&
+                <div  style={{paddingLeft: 5, fontSize:'80%'}}>
+                    {`Search Size: ${sprintf('%.4f',r.getSizeInDeg())}${String.fromCharCode(176)}`}
+                </div>
+                }
+            </div>
+        );
+    };
 }
 
