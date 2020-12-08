@@ -2,14 +2,24 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isNil, get} from 'lodash';
+import {isNil} from 'lodash';
 import {retrieveAndProcessImage} from './ImageProcessor.js';
 import {drawOneHiPSTile} from './HiPSSingleTileRender.js';
-import {findTileCachedImage, addTileCachedImage, addFailedImage, isInFailTileCached} from './HiPSTileCache.js';
+import {
+    findTileCachedImage,
+    addTileCachedImage,
+    addFailedImage,
+    isInFailTileCached,
+} from './HiPSTileCache.js';
 import {dispatchAddTaskCount, dispatchRemoveTaskCount, makeTaskId, getTaskCount} from '../../core/AppDataCntlr.js';
 import {createImageUrl, createEmptyTile} from './TileDrawHelper.jsx';
 
 const emptyTileCanvas= createEmptyTile(512,512);
+
+const colorId = (plot) => {
+    const id= Number(plot.plotState.getColorTableId());
+    return isNaN(id) ? -1 : id;
+};
 
 /**
  * The object that can render a HiPS to the screen.
@@ -19,9 +29,10 @@ const emptyTileCanvas= createEmptyTile(512,512);
  * @param isBaseImage
  * @param tileProcessInfo
  * @param screenRenderEnabled
+ * @param hipsColorOps
  * @return {{drawTile(*=, *=): undefined, drawTileImmediate(*=, *, *=): void, abort(): void}}
  */
-export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, tileProcessInfo, screenRenderEnabled) {
+export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, tileProcessInfo, screenRenderEnabled, hipsColorOps) {
 
     let renderedCnt=0;
     let abortRender= false;
@@ -42,14 +53,26 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, tile
      * draw a single tile async (retrieve image and draw tile)
      * @param src
      * @param {HiPSDeviceTileData} tile
+     * @param colorTableId
+     * @param bias
+     * @param contrast
      */
-    const drawTileAsync= (src, tile) => {
+    const drawTileAsync= (src, tile, colorTableId,bias,contrast) => {
         if (abortRender) return;
         let inCache;
         let tileData;
         let emptyTile;
 
-        const cachedTile= findTileCachedImage(src);
+        let cachedTile= findTileCachedImage(src,colorTableId,bias,contrast);
+        if (colorTableId!==-1 && !cachedTile) {
+            cachedTile= findTileCachedImage(src);
+            if (cachedTile) {
+                const coloredImage= hipsColorOps.changeHiPSColor(cachedTile.image,colorTableId,bias,contrast);
+                addTileCachedImage(src, coloredImage,colorTableId,bias,contrast);
+                cachedTile= findTileCachedImage(src,colorTableId,bias,contrast);
+            }
+        }
+
         if (!firstRenderTime) firstRenderTime= Date.now();
         if (cachedTile) {
             tileData=  cachedTile.image;
@@ -83,12 +106,23 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, tile
         p.then((imageData) => {
             renderedCnt++;
 
-            if (!inCache && !emptyTile) addTileCachedImage(src, imageData);
+            let image;
+            if (!inCache && !emptyTile) {
+                image= imageData.image;
+                addTileCachedImage(src, image);
+                if (colorTableId!==-1) {
+                    image= hipsColorOps.changeHiPSColor(image,colorTableId,bias,contrast);
+                    addTileCachedImage(src, image,colorTableId,bias,contrast);
+                }
+
+            }
+            else {
+                image= imageData instanceof HTMLCanvasElement ? imageData : imageData.image;
+            }
             if (abortRender) return;
 
-            const tileSize= tile.tileSize || imageData.image.width;
-            drawOneHiPSTile(offscreenCtx, imageData.image, tile.devPtCorners,
-                tileSize, {x:tile.dx,y:tile.dy}, true, tile.nside);
+            const tileSize= tile.tileSize || image.width;
+            drawOneHiPSTile(offscreenCtx, image, tile.devPtCorners, tileSize, {x:tile.dx,y:tile.dy}, tile.nside);
 
 
             if (doRenderNow()) renderToScreen();
@@ -97,7 +131,7 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, tile
         }).catch(() => {
             renderedCnt++;
             if (abortRender) return;
-            drawOneHiPSTile(offscreenCtx, emptyTileCanvas, tile.devPtCorners, 512, {x:tile.dx,y:tile.dy}, true, tile.nside);
+            drawOneHiPSTile(offscreenCtx, emptyTileCanvas, tile.devPtCorners, 512, {x:tile.dx,y:tile.dy}, tile.nside);
             addFailedImage(src);
             if (doRenderNow()) {
                 removeTask();
@@ -113,12 +147,12 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, tile
      * @param {HiPSDeviceTileData} tile
      * @param allskyImage
      */
-    const drawTileImmediate= (src, tile, allskyImage) => {
-        const image= allskyImage || get(findTileCachedImage(src),'image.image');
+    const drawTileImmediate= (src, tile, allskyImage, colorTableId, bias, contrast) => {
+        const image= allskyImage || findTileCachedImage(src, colorTableId, bias, contrast)?.image;
         if (image) {
             const tileSize= tile.tileSize || image.width;
             drawOneHiPSTile(offscreenCtx, image, tile.devPtCorners,
-                tileSize, {x:tile.dx,y:tile.dy}, true, tile.nside);
+                tileSize, {x:tile.dx,y:tile.dy}, tile.nside);
         }
         renderedCnt++;
         if (renderedCnt === totalCnt) {
@@ -180,7 +214,9 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, tile
             setTimeout( () => {
                 if (!abortRender && !renderComplete) dispatchAddTaskCount(plot.plotId,plotTaskId, true);
             }, 500);
-            tilesToLoad.forEach( (tile) => drawTileAsync(createImageUrl(plot,tile), tile) );
+            const {bias,contrast}= plot.rawData.bandData[0];
+            const colorTableId= colorId(plot);
+            tilesToLoad.forEach( (tile) => drawTileAsync(createImageUrl(plot,tile), tile, colorTableId,bias,contrast) );
         },
 
         /**
@@ -191,8 +227,10 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, tile
          */
         drawAllTilesImmediate(tilesToLoad, plot) {
             if (abortRender) return;
+            const {bias,contrast}= plot.rawData.bandData[0];
+            const colorTableId= colorId(plot);
             for(let i=0; i<tilesToLoad.length; i++) { // do a classic for loop to increase the fps by 3 or 4
-                drawTileImmediate(createImageUrl(plot, tilesToLoad[i]), tilesToLoad[i]);
+                drawTileImmediate(createImageUrl(plot, tilesToLoad[i]), tilesToLoad[i], undefined, colorTableId, bias, contrast);
             }
         },
 

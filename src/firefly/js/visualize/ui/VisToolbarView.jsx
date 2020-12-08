@@ -198,7 +198,7 @@ export const VisToolbarView = memo( ({visRoot,dlCount}) => {
             <DropDownToolbarButton icon={COLOR}
                                    tip='Change the color table'
                                    enabled={enabled} horizontal={true}
-                                   visible={image}
+                                   visible={true}
                                    dropDown={<ColorTableDropDownView plotView={pv}/>} />
 
             <DropDownToolbarButton icon={STRETCH}

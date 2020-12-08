@@ -386,7 +386,7 @@ public class URLDownload {
             netCopy(in, out, conn, maxFileSize, dl);
 
             long elapse = System.currentTimeMillis() - start;
-            outFileData = new FileInfo(f, suggested, responseCode, ResponseMessage.getHttpResponseMessage(responseCode));
+            outFileData = new FileInfo(f, suggested, responseCode, ResponseMessage.getHttpResponseMessage(responseCode), contentType );
             logDownload(outFileData, conn.getURL().toString(), elapse );
 
             if (responseCode>=300 && responseCode<400) {

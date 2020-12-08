@@ -10,6 +10,7 @@
  * @prop {String} [url] - required if display type is 'png' or 'download'
  * @prop {String} [message] - required it type is 'message' or 'promise'
  * @prop {String} [name]
+ * @prop {WebPlotRequest} [request]
  * @prop {boolean} [isWorkingState] - if defined this means we are in a transitive/loading state. expect regular updates
  * @prop {Promise} [promise] - required it type is 'promise'
  * @prop {Array.<DataProductsDisplayType>|undefined} menu - if defined, then menu to display
@@ -30,6 +31,7 @@
 
 export const DPtypes= {
     MESSAGE: 'message',
+    SEND_TO_BROWSER: 'send-to-browser',
     PROMISE: 'promise',
     IMAGE: 'image',
     IMAGE_SNGLE_AXIS: 'image-single-axis',
@@ -37,6 +39,7 @@ export const DPtypes= {
     CHART: 'xyplot',
     CHOICE_CTI: 'chartTable',
     DOWNLOAD: 'download',
+    DOWNLOAD_MENU_ITEM: 'download-menu-item',
     PNG: 'png',
     ANALYZE: 'analyze',
 };
@@ -92,6 +95,9 @@ export function dpdtWorkingPromise(message,promise,request=undefined, extra={}, 
     };
 }
 
+export const dpdtSendToBrowser= (url, extra={}) => {
+    return {displayType:DPtypes.SEND_TO_BROWSER, url, ...extra};
+}
 
 /**
  *
@@ -99,11 +105,16 @@ export function dpdtWorkingPromise(message,promise,request=undefined, extra={}, 
  * @param {String} titleStr download title str
  * @param {String} url download url
  * @param {String} [fileType]
+ * @param {Object} [extra] - all values in this object are added to the DataProjectType Object
  * @return {DataProductsDisplayType}
  */
-export const dpdtMessageWithDownload= (message,titleStr, url,fileType=undefined) => {
+export const dpdtMessageWithDownload= (message,titleStr, url,fileType=undefined, extra={}) => {
     const singleDownload= Boolean(titleStr && url);
-    return dpdtMessage(message,singleDownload ?[dpdtDownload(titleStr,url,'download-0',fileType)] : undefined,{singleDownload} );
+    return dpdtMessage(message,singleDownload ?[dpdtDownload(titleStr,url,'download-0',fileType)] : undefined,{singleDownload,...extra} );
+};
+
+export const dpdtMessageWithError= (message,detailMsgAry) => {
+    return dpdtMessage(message,undefined,{complexMessage:true, detailMsgAry} );
 };
 
 /**
@@ -159,12 +170,13 @@ export function dpdtChartTable(name, activate, menuKey='chart-table-0', extra={}
  * @param {string} name
  * @param {Function} activate
  * @param {String} url
+ * @param {Object} serDefParams
  * @param {number|string} menuKey
  * @param {Object} extra - all values in this object are added to the DataProjectType Object
  * @return {DataProductsDisplayType}
  */
-export function dpdtAnalyze(name, activate, url, menuKey='analyze-0', extra={}) {
-    return { displayType:DPtypes.ANALYZE, name, url, activate, menuKey, ...extra};
+export function dpdtAnalyze(name, activate, url, serDefParams, menuKey='analyze-0', extra={}) {
+    return { displayType:DPtypes.ANALYZE, name, url, activate, serDefParams, menuKey, ...extra};
 }
 
 /**
@@ -179,6 +191,12 @@ export function dpdtAnalyze(name, activate, url, menuKey='analyze-0', extra={}) 
 export function dpdtDownload(name, url, menuKey='download-0', fileType, extra={}) {
     return { displayType:DPtypes.DOWNLOAD, name, url, menuKey, fileType, ...extra};
 }
+
+export function dpdtDownloadMenuItem(name, url, menuKey='download-0', fileType, extra={}) {
+    return { displayType:DPtypes.DOWNLOAD_MENU_ITEM, name, url, menuKey, singleDownload: true, fileType, ...extra};
+}
+
+
 
 /**
  *
@@ -198,8 +216,9 @@ export function dpdtPNG(name, url, menuKey='png-0', extra={}) {
  * @param {Array.<DataProductsDisplayType>} menu
  * @param {number} activeIdx
  * @param {String} activeMenuLookupKey
+ * @param {boolean} keepSingleMenu
  * @return {DataProductsDisplayType}
  */
-export function dpdtFromMenu(menu,activeIdx,activeMenuLookupKey) {
-    return {...menu[activeIdx], activeMenuLookupKey, menu:menu.length>1?menu:[]};
+export function dpdtFromMenu(menu,activeIdx,activeMenuLookupKey, keepSingleMenu=false) {
+    return {...menu[activeIdx], activeMenuLookupKey, menu: (menu.length>1||keepSingleMenu)?menu:[]};
 }

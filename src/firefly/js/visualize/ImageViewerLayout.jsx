@@ -11,7 +11,7 @@ import {EventLayer} from './iv/EventLayer.jsx';
 import {ImageViewerStatus} from './iv/ImageViewerStatus.jsx';
 import {makeScreenPt, makeDevicePt} from './Point.js';
 import {DrawerComponent}  from './draw/DrawerComponent.jsx';
-import {CysConverter}  from './CsysConverter.js';
+import {CCUtil, CysConverter} from './CsysConverter.js';
 import {UserZoomTypes}  from './ZoomUtil.js';
 import {primePlot, getPlotViewById, hasLocalStretchByteData} from './PlotViewUtil.js';
 import {isImageViewerSingleLayout, getMultiViewRoot} from './MultiViewCntlr.js';
@@ -167,10 +167,13 @@ export class ImageViewerLayout extends PureComponent {
             fireMouseEvent(dl,mouseState,mouseStatePayload);
         }
         else if (mouseState===MouseState.WHEEL_UP) {
-            dispatchZoomThrottled({plotId, userZoomType:UserZoomTypes.UP });
+
+            const devicePt= CCUtil.getDeviceCoords(primePlot(plotView),screenPt);
+            dispatchZoomThrottled({plotId, userZoomType:UserZoomTypes.UP, devicePt });
         }
         else if (mouseState===MouseState.WHEEL_DOWN) {
-            dispatchZoomThrottled({plotId, userZoomType:UserZoomTypes.DOWN });
+            const devicePt= CCUtil.getDeviceCoords(primePlot(plotView),screenPt);
+            dispatchZoomThrottled({plotId, userZoomType:UserZoomTypes.DOWN , devicePt});
         }
         else {
             const ownerCandidate= findMouseOwner(list,primePlot(plotView),screenPt);         // see if anyone can own that mouse

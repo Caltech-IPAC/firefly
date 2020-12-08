@@ -13,4 +13,8 @@ import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
  */
 public interface FileRetriever {
     FileInfo getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException;
+    default FileInfo getFile(WebPlotRequest request, boolean handleAllErrors)
+            throws FailedRequestException, GeomException, SecurityException {
+        return getFile(request);
+    }
 }

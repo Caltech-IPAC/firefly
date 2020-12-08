@@ -10,6 +10,8 @@ import {createHiPSDrawer} from './HiPSTileDrawer.js';
 import {isImage} from '../WebPlot.js';
 import {CANVAS_IMAGE_ID_START} from '../PlotViewUtil.js';
 import {primePlot} from '../PlotViewUtil';
+import {getGpuJs, getGpuJsImmediate} from '../rawData/GpuJsConfig.js';
+import {getRootURL} from '../../util/WebUtil.js';
 
 const BG_IMAGE= 'image-working-background-24x24.png';
 const BACKGROUND_STYLE = `url(+ ${BG_IMAGE} ) top left repeat`;
@@ -30,9 +32,14 @@ const containerStyle={position:'absolute',
  * @param {WebPlot} plot
  * @return {*}
  */
-export function initTileDrawer(targetCanvas, plot) {
+function initTileDrawer(targetCanvas, plot) {
     if (!targetCanvas) return () => undefined;
-    return isImage(plot) ? initImageDrawer(targetCanvas) : createHiPSDrawer(targetCanvas);
+    if (isImage(plot)) {
+        return initImageDrawer(targetCanvas);
+    }
+    else {
+        return createHiPSDrawer(targetCanvas, getGpuJsImmediate());
+    }
 }
 
 

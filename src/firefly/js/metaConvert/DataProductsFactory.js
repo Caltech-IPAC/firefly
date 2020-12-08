@@ -15,8 +15,12 @@ import {getCellValue} from '../tables/TableUtil.js';
 import {makeWorldPt, parseWorldPt} from '../visualize/Point.js';
 import {MetaConst} from '../data/MetaConst.js';
 import {CoordinateSys} from '../visualize/CoordSys.js';
-import {hasObsCoreLikeDataProducts} from '../util/VOAnalyzer.js';
-import {makeObsCoreConverter, getObsCoreSingleDataProduct, getObsCoreGridDataProduct} from './ObsCoreConverter.js';
+import {hasObsCoreLikeDataProducts, hasServiceDescriptors} from '../util/VOAnalyzer.js';
+import {
+    makeObsCoreConverter,
+    getObsCoreGridDataProduct,
+    getObsCoreDataProduct
+} from './ObsCoreConverter.js';
 import {
     createGridImagesActivate,
     createRelatedDataGridActivate,
@@ -28,6 +32,7 @@ import {dispatchUpdateCustom} from '../visualize/MultiViewCntlr';
 import {getDataSourceColumn} from '../util/VOAnalyzer';
 import {getColumn, getMetaEntry} from '../tables/TableUtil';
 import {getAppOptions} from '../core/AppDataCntlr';
+import {getServiceDescSingleDataProduct} from './ServDescConverter.js';
 
 const FILE= 'FILE';
 
@@ -262,8 +267,20 @@ function initConverterTemplates() {
             hasRelatedBands: false,
             canGrid: true,
             maxPlots: 8,
-            getSingleDataProduct: getObsCoreSingleDataProduct,
+            getSingleDataProduct: getObsCoreDataProduct,
             getGridDataProduct: getObsCoreGridDataProduct,
+            getRelatedDataProduct: () => Promise.reject('related data products not supported')
+        },
+        {
+            converterId: 'ServiceDescriptors',
+            tableMatches: hasServiceDescriptors,
+            create: simpleCreate,
+            threeColor: false,
+            hasRelatedBands: false,
+            canGrid: false,
+            maxPlots: 1,
+            getSingleDataProduct: getServiceDescSingleDataProduct,
+            getGridDataProduct: null,
             getRelatedDataProduct: () => Promise.reject('related data products not supported')
         },
         {
@@ -311,20 +328,20 @@ function initConverterTemplates() {
 export const {getConverterTemplates, addTemplate, addTemplateToEnd}= (() => {
     let converterTemplates;
 
-        const getConverterTemplates= () => {
-            if (!converterTemplates) converterTemplates= initConverterTemplates();
-            return converterTemplates;
-        };
-        const addTemplate= (template) => {
-            getConverterTemplates();
-            converterTemplates.unshift(template);
-        };
-        const addTemplateToEnd= (template) => {
-            getConverterTemplates();
-            converterTemplates.push(template);
-        };
+    const getConverterTemplates= () => {
+        if (!converterTemplates) converterTemplates= initConverterTemplates();
+        return converterTemplates;
+    };
+    const addTemplate= (template) => {
+        getConverterTemplates();
+        converterTemplates.unshift(template);
+    };
+    const addTemplateToEnd= (template) => {
+        getConverterTemplates();
+        converterTemplates.push(template);
+    };
 
-        return {getConverterTemplates,addTemplate,addTemplateToEnd};
+    return {getConverterTemplates,addTemplate,addTemplateToEnd};
 })();
 
 

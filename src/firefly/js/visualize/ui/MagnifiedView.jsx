@@ -139,7 +139,10 @@ function showMagUsingLocal(x,y,pv, plot,size,sizeOffX,sizeOffY) {
     // const dataUrl=  magCanvas.toDataURL();
 
     const drawOnCanvas= (targetCanvas) => {
-        targetCanvas && targetCanvas.getContext('2d').drawImage(magCanvas,0,0);
+        if (!targetCanvas) return;
+        const ctx= targetCanvas.getContext('2d');
+        ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+        targetCanvas.getContext('2d').drawImage(magCanvas,0,0);
     };
 
     // const s= { position : 'absolute', left : 0, top : 0};

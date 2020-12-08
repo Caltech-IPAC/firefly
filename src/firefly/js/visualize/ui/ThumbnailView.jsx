@@ -34,10 +34,10 @@ export const ThumbnailView = memo(({plotView:pv}) => {
     }, [dataRef.current.drawData]);
 
     const plot= primePlot(pv);
-    if (!plot?.tileData || isHiPS(plot)) return <div style={s}/>;
+    if ( (!plot?.tileData && !hasLocalStretchByteData(plot)) || isHiPS(plot)) return <div style={s}/>;
 
     s.border= '1px solid rgb(187, 187, 187)';
-    const {width,height}= plot.tileData.thumbnailImage;
+    const {width=70,height=70}= plot.tileData?.thumbnailImage ?? {};
     dataRef.current.drawData= makeDrawing(pv,width,height);
 
     const affTrans= makeTransform(0,0,0,0,pv.rotation, pv.flipX, pv.flipY,
@@ -113,7 +113,7 @@ function scrollPlot(pt,pv,width,height) {
 
 function makeImageTag(pv, onImageLoad) {
     const plot= primePlot(pv);
-    const {url,width,height}= plot.tileData.thumbnailImage;
+    const {url, width=70,height=70}= plot.tileData?.thumbnailImage ?? {};
     const s= { position : 'absolute', left : 0, top : 0, width, height };
     const transFormCss= makeThumbnailTransformCSS(pv.rotation,pv.flipX, pv.flipY);
     

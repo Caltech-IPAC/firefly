@@ -453,7 +453,7 @@ function getSearchRadiusInRadians(fov) {
 function filterAllSky(centerWp, cells) {
     return cells.filter( (cell) =>{
         const {wpCorners}= cell;
-        return (computeDistance(centerWp, wpCorners[0]) <90);
+        return (computeDistance(centerWp, wpCorners[0]) <100 || computeDistance(centerWp, wpCorners[2]) <100);
     });
 }
 

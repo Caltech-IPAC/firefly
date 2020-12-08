@@ -7,7 +7,10 @@ export const FileAnalysisType = {
     HeaderOnly: 'HeaderOnly',
     PDF: 'PDF',
     TAR: 'TAR',
-    Unknown: 'Unknown',
+    ErrorResponse: 'ErrorResponse',
+    LoadInBrowser: 'LoadInBrowser',
+    Unknown: 'UNKNOWN',
+    HTML: 'HTML',
 };
 
 export const UIRender = {

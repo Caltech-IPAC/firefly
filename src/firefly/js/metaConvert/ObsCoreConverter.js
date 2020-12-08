@@ -1,7 +1,12 @@
-import {get} from 'lodash';
+import {get, isEmpty} from 'lodash';
 import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
 import {getCellValue, doFetchTable, hasRowAccess} from '../tables/TableUtil.js';
-import {getObsCoreAccessURL, getObsCoreProdType} from '../util/VOAnalyzer.js';
+import {
+    getObsCoreAccessURL,
+    getObsCoreProdType,
+    getServiceDescriptors,
+    isDataLinkServiceDesc
+} from '../util/VOAnalyzer.js';
 import {
     getObsCoreProdTypeCol,
     isFormatDataLink,
@@ -12,8 +17,10 @@ import {makeFileRequest} from '../tables/TableRequestUtil';
 import {ZoomType} from '../visualize/ZoomType.js';
 import {createGridImagesActivate} from './ImageDataProductsUtil.js';
 import {makeAnalysisGetSingleDataProduct} from './MultiProductFileAnalyzer';
-import { dpdtImage, dpdtMessage, dpdtMessageWithDownload, DPtypes, } from './DataProductsType';
+import {dpdtFromMenu, dpdtImage, dpdtMessage, dpdtMessageWithDownload, DPtypes,} from './DataProductsType';
 import {createGuessDataType, processDatalinkTable} from './DataLinkProcessor';
+import {createServDescMenuRet} from './ServDescConverter.js';
+import {dispatchUpdateActiveKey} from './DataProductsCntlr.js';
 
 const GIG= 1048576 * 1024;
 
@@ -58,7 +65,7 @@ export function makeObsCoreConverter(table,converterTemplate) {
  * @return {Promise.<DataProductsDisplayType>}
  */
 export function getObsCoreGridDataProduct(table, plotRows, activateParams) {
-    const pAry= plotRows.map( (pR) => getObsCoreSingleDataProduct(table,pR.row,activateParams,false));
+    const pAry= plotRows.map( (pR) => getObsCoreSingleDataProduct(table,pR.row,activateParams,undefined,false));
     return Promise.all(pAry).then ( (resultAry) => {
         const {imageViewerId}= activateParams;
         const requestAry= resultAry
@@ -73,38 +80,77 @@ export function getObsCoreGridDataProduct(table, plotRows, activateParams) {
 }
 
 
+
+export function getObsCoreDataProduct(table, row, activateParams, doFileAnalysis= true) {
+    let descriptors= getServiceDescriptors(table);
+    descriptors= descriptors && descriptors.filter( (dDesc) => !isDataLinkServiceDesc(dDesc));
+
+    if (isEmpty(descriptors)) {
+        return getObsCoreSingleDataProduct(table, row, activateParams, undefined, doFileAnalysis);
+    }
+
+    const positionWP= makeWorldPtUsingCenterColumns(table,row);
+    const activeMenuLookupKey= `${descriptors[0].accessURL}--${table.tbl_id}--${row}`;
+    let serDescMenu= createServDescMenuRet(descriptors,positionWP,table,row,activateParams,makeObsCoreRequest,activeMenuLookupKey);
+
+    serDescMenu= serDescMenu.map( (m) =>
+        ({...m,
+            semantics: m.semantics ?? '#additional-service-descriptor',
+            size: m.size ?? 0,
+        }));
+
+    return getObsCoreSingleDataProduct(table, row, activateParams, serDescMenu, doFileAnalysis);
+}
+
+
+
 /**
  * Support ObsCore single product
  * @param table
  * @param row
  * @param {ActivateParams} activateParams
+ * @param {Array.<DataProductsDisplayType>} serviceDescMenuList
  * @param {boolean} doFileAnalysis - if true the build a menu if possible
  * @return {Promise.<DataProductsDisplayType>}
  */
-export function getObsCoreSingleDataProduct(table, row, activateParams, doFileAnalysis= true) {
+export async function getObsCoreSingleDataProduct(table, row, activateParams, serviceDescMenuList, doFileAnalysis= true) {
 
     const {size,titleStr,dataSource,prodType,isVoTable,isDataLink}= getObsCoreRowMetaInfo(table,row);
 
-    if (!dataSource || (isVoTable && !isDataLink)) return Promise.resolve(dpdtMessage(`${prodType} is not supported`));
-    if (!hasRowAccess(table, row)) return Promise.resolve(dpdtMessage('You do not have access to these data.'));
-
-
+    if (!dataSource || (isVoTable && !isDataLink)) return dpdtMessage(`${prodType} is not supported`);
+    if (!hasRowAccess(table, row)) return dpdtMessage('You do not have access to these data.');
     const positionWP= makeWorldPtUsingCenterColumns(table,row);
 
     if (isDataLink) {
-        return doFetchTable(makeFileRequest('dl table', dataSource))
-            .then( (datalinkTable) =>
-                processDatalinkTable(table,row,datalinkTable,positionWP,activateParams,titleStr, makeObsCoreRequest, doFileAnalysis) )
-            .catch( (reason) =>
-                dpdtMessageWithDownload(`No data to display: Could not retrieve datalink data, ${reason}`, 'Download File: '+titleStr, dataSource)
-        );
+        try {
+            const datalinkTable= await doFetchTable(makeFileRequest('dl table', dataSource));
+            return processDatalinkTable(table,row,datalinkTable,positionWP,activateParams, makeObsCoreRequest, serviceDescMenuList, doFileAnalysis);
+        } catch (reason) {
+                                  //todo - what about if when the data link fetch fails but there is a serviceDescMenuList - what to do? does it matter?
+            dpdtMessageWithDownload(`No data to display: Could not retrieve datalink data, ${reason}`, 'Download File: '+titleStr, dataSource);
+        }
     }
     else {
-        if (size>GIG) return Promise.resolve(dpdtMessageWithDownload('Data is too large to load', 'Download File: '+titleStr, dataSource));
-        return doFileAnalysis ?
-            makeAnalysisGetSingleDataProduct(() => makeObsCoreRequest(dataSource, positionWP, titleStr))(table,row,activateParams,prodType) :
-            createGuessDataType(titleStr,'guess-0',dataSource,prodType,makeObsCoreRequest,undefined,activateParams, positionWP,table,row,size);
+        if (size>GIG) return dpdtMessageWithDownload('Data is too large to load', 'Download File: '+titleStr, dataSource);
+        if (doFileAnalysis) {
+            const analyzerFunc= makeAnalysisGetSingleDataProduct(() => makeObsCoreRequest(dataSource, positionWP, titleStr));
+            const result= await analyzerFunc(table,row,activateParams,prodType);
+            return singleResultWithServiceDesc(activateParams.dpId, result, size, serviceDescMenuList);
+        }
+        else {
+            const result= createGuessDataType(titleStr,'guess-0',dataSource,prodType,makeObsCoreRequest,undefined,activateParams, positionWP,table,row,size);
+            return singleResultWithServiceDesc(activateParams.dpId, result,size, serviceDescMenuList);
+        }
     }
+}
+
+function singleResultWithServiceDesc(dpId, primResult, size, serviceDescMenuList) {
+    if (!serviceDescMenuList) return primResult;
+    const activeMenuLookupKey= serviceDescMenuList[0].activeMenuLookupKey;
+    primResult= { ...primResult, semantics: primResult.semantics ?? '#this', size, activeMenuLookupKey};
+    const menu= [primResult, ...serviceDescMenuList];
+    dispatchUpdateActiveKey({dpId, activeMenuKeyChanges:{[activeMenuLookupKey]:menu[0].menuKey}});
+    return dpdtFromMenu(menu,0,activeMenuLookupKey,true);
 }
 
 
@@ -133,7 +179,7 @@ function getObsCoreRowMetaInfo(table,row) {
  * @param titleStr
  * @return {undefined|WebPlotRequest}
  */
-function makeObsCoreRequest(dataSource, positionWP, titleStr) {
+export function makeObsCoreRequest(dataSource, positionWP, titleStr) {
     if (!dataSource) return undefined;
 
     const r = WebPlotRequest.makeURLPlotRequest(dataSource, 'DataProduct');

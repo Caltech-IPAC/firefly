@@ -162,6 +162,17 @@ public class AnyFileDownload extends BaseHttpServlet {
             res.setStatus(304);
             return;
         }
+
+        if (fi.getExternalName()!=null && fi.getExternalName().length()>2) {
+            String ext = FileUtil.getExtension(fileName);
+            if (ext.length() > 4 || ext.length() < 3 || fileName.indexOf('&') > -1 || fileName.indexOf('=') > -1) {
+                String ftest = fi.getExternalName();
+                if (ftest.startsWith("\"")) ftest = ftest.substring(1);
+                if (ftest.endsWith("\"")) ftest = ftest.substring(0, ftest.length() - 1);
+                fileName = ftest;
+            }
+        }
+
         if (fullBody) {
             String local= sp.getOptional(RETURN_PARAM);
             String retFileStr= (local!=null) ? local : fileName;

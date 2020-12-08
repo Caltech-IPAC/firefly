@@ -527,3 +527,14 @@ export function findScrollPtToPlaceOnDevPt(pv, ipt, targetDevPtPos) {
 
     return makeScreenPt(pv.flipY ? -x : x,pv.flipX ? -y : y);
 }
+
+
+export function findHipsCenProjToPlaceWptOnDevPt(pv, wpt, targetDevPtPos) {
+    const plot= primePlot(pv);
+    const cc= CysConverter.make(plot);
+    const {viewDim:{width,height}}= plot;
+    const offX= targetDevPtPos.x-width/2;
+    const offY= targetDevPtPos.y-height/2;
+    const tarAsDevPt= cc.getDeviceCoords(wpt);
+    return cc.getWorldCoords(makeDevicePt(tarAsDevPt.x-offX, tarAsDevPt.y-offY));
+}

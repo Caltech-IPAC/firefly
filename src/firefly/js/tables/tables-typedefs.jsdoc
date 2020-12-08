@@ -19,6 +19,7 @@
  * @typedef {object} TableModel
  * @prop {string}   tbl_id    unique ID of this table.
  * @prop {string}   title     title, used on label.
+ * @prop {Object} resources votable resources
  * @prop {TableRequest} request  the request used to create this table
  * @prop {TableKeywords} keywords  a list of all meta from the original source, including comments and duplicates
  * @prop {TableMeta} tableMeta     additional meta added and keywords as key/value pair.  comments and duplicates are no longer here.

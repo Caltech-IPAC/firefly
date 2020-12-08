@@ -14,7 +14,7 @@ import {
 } from '../PlotViewUtil.js';
 import {callCrop, callChangeColor, callRecomputeStretch} from '../../rpc/PlotServicesJson.js';
 import {WebPlotResult} from '../WebPlotResult.js';
-import {WebPlot} from '../WebPlot.js';
+import {isHiPS, WebPlot} from '../WebPlot.js';
 import {makeCubeCtxAry, populateFromHeader} from './PlotImageTask';
 import {locateOtherIfMatched} from './WcsMatchTask';
 import {PlotAttribute} from '../PlotAttribute.js';
@@ -94,8 +94,12 @@ export function colorChangeActionCreator(rawAction) {
         const {plotId,cbarId,bias,contrast, useRed=true, useGreen=true, useBlue=true}= rawAction.payload;
         const pv= getPlotViewById(store,plotId);
         const plot= primePlot(pv);
+
         let biasToUse= .5;
         let contrastToUse=1;
+
+
+
         const basePlotThreeColor= isThreeColor(pv);
         if (isNumber(bias)) {
             biasToUse= (bias>1) ? 1 : bias < 0 ? 0 : bias;
@@ -104,6 +108,14 @@ export function colorChangeActionCreator(rawAction) {
             contrastToUse= (contrast>10) ? 10 : contrast < 0 ? 0 : contrast;
         }
         if (!pv) return;
+
+
+
+        if (isHiPS(plot)) {
+            colorChangeHiPS(store, dispatcher, plotId, cbarId, biasToUse,contrastToUse, rawAction.payload.actionScope);
+            return;
+        }
+
 
         const aType= ImagePlotCntlr.STRETCH_CHANGE;
         if (rawAction.payload.actionScope===ActionScope.SINGLE){
@@ -164,6 +176,39 @@ export function colorChangeActionCreator(rawAction) {
     };
 
 }
+
+
+function colorChangeHiPS(store, dispatcher, plotId, cbarId, biasToUse,contrastToUse, actionScope) {
+
+    const doDispatch= (plotId, oldPlotState) => {
+        const newPlotState= oldPlotState.copy();
+        newPlotState.colorTableId = cbarId;
+        dispatcher( {
+            type:ImagePlotCntlr.COLOR_CHANGE,
+            payload: {
+                plotId,
+                primaryStateJson : PlotState.convertToJSON(newPlotState,true),
+                bias: biasToUse,
+                contrast : contrastToUse
+            }});
+        dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotIdAry:[plotId]}} );
+    };
+
+    const pv= getPlotViewById(store,plotId);
+    const plot= primePlot(pv);
+    doDispatch(plotId,plot.plotState);
+    if (actionScope!==ActionScope.SINGLE){
+        operateOnOthersInOverlayColorGroup(store, pv, (pv) => {
+            const plot= primePlot(pv);
+            doDispatch(plot.plotId,plot.plotState);
+        });
+    }
+}
+
+
+
+
+
 
 
 /**

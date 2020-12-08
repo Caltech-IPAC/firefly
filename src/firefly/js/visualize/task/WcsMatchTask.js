@@ -197,6 +197,7 @@ export const {matchImageToHips, matchHiPStoPlotView}= (() => {
 
     return {
         matchImageToHips: (hipsPv, imagePv) => {
+            if (isHiPS(primePlot(imagePv))) return;
             if (lock) return;
             lock= true;
             imageToHips(hipsPv,imagePv);

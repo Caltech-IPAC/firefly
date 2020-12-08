@@ -33,6 +33,9 @@ export function retrieveAndProcessImage(imageData, nextTileAttributes, shouldPro
     if (!imageData) {
         return Promise.resolve(imageData);
     }
+    else if (imageData instanceof HTMLCanvasElement) {
+        return {promise:Promise.resolve(imageData)};
+    }
     else if (isString(imageData)) {
         let {promise, cancelImageLoad}= loadCancelableImage(imageData);
 

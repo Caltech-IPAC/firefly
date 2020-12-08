@@ -7,10 +7,10 @@ import ImagePlotCntlr from '../visualize/ImagePlotCntlr';
 import {
     dpdtImage,
     dpdtMessage,
-    dpdtMessageWithDownload,
+    dpdtMessageWithDownload, dpdtMessageWithError,
     dpdtPNG,
     dpdtWorkingMessage,
-    dpdtWorkingPromise,
+    dpdtWorkingPromise, DPtypes,
 } from './DataProductsType';
 import {hashCode} from '../util/WebUtil';
 import {upload} from '../rpc/CoreServices.js';
@@ -19,9 +19,11 @@ import {
     dispatchUpdateDataProducts, getActiveFileMenuKeyByKey, getDataProducts
 } from './DataProductsCntlr';
 import {analyzePart, chooseDefaultEntry} from './PartAnalyzer';
-import {getMetaEntry, getTblRowAsObj, hasRowAccess} from '../tables/TableUtil';
+import {getCellValue, getMetaEntry, getTblRowAsObj, hasRowAccess} from '../tables/TableUtil';
 import {MetaConst} from '../data/MetaConst';
 import {getAppOptions} from '../core/AppDataCntlr';
+import {isDefined} from '../util/WebUtil.js';
+import {dpdtSendToBrowser} from './DataProductsType.js';
 
 
 const uploadedCache= {};
@@ -74,16 +76,21 @@ function fileExtensionSingleProductAnalysis(request,idx=0) {
  * @param request
  * @param positionWP
  * @param activateParams
- * @param menu
  * @param menuKey
  * @param dataTypeHint
+ * @param serDefParams
+ * @param originalTitle
  * @return {function}
  */
-export function makeFileAnalysisActivate(table, row, request, positionWP, activateParams, menu, menuKey, dataTypeHint) {
-    return () => {
+export function makeFileAnalysisActivate(table, row, request, positionWP, activateParams, menuKey, dataTypeHint, serDefParams, originalTitle) {
+    const analysisActivateFunc= (menu, userInputParams) => {
         void doUploadAndAnalysis({
-            table,row,request,activateParams,dataTypeHint,menu,menuKey, activateFirst:true,dispatchWorkingMessage:true });
+            table,row,request,activateParams,dataTypeHint,
+            menu,menuKey, activateResult:true,dispatchWorkingMessage:true,
+            serDefParams, userInputParams, analysisActivateFunc,
+            originalTitle});
     };
+    return analysisActivateFunc;
 }
 
 /**
@@ -150,6 +157,24 @@ const parseAnalysis= (serverCacheFileKey, analysisResult) =>
                             serverCacheFileKey && analysisResult && JSON.parse(analysisResult);
 
 
+function doActivateResult(result, menu,menuKey,dpId, serDefParams) {
+    if (result.displayType===DPtypes.MESSAGE && !result.singleDownload) {
+        result.menu= menu;
+        result.resetMenuKey= menuKey;
+        dispatchUpdateDataProducts(dpId, result);
+    }
+    else if (result.displayType===DPtypes.MESSAGE) {
+        dispatchUpdateDataProducts(dpId, result);
+    }
+    else if (result.displayType===DPtypes.SEND_TO_BROWSER) {
+        window.open(result.url, '_blank');
+        dispatchUpdateDataProducts(dpId, dpdtMessage('Loaded in new tab',menu,{complexMessage:true, menuKey, resetMenuKey:menuKey, serDefParams}));
+    }
+    else {
+        dispatchActivateFileMenuItem({dpId,fileMenu:result.fileMenu,menu,currentMenuKey:menuKey});
+    }
+}
+
 /**
  * This is the core function to upload and analyze the data
  * @param obj
@@ -160,8 +185,9 @@ const parseAnalysis= (serverCacheFileKey, analysisResult) =>
  * @param obj.dataTypeHint
  * @param obj.menu
  * @param obj.menuKey
- * @param obj.activateFirst
+ * @param obj.activateResult
  * @param obj.dispatchWorkingMessage
+ * @param obj.analysisActivateFunc
  * @return {Promise.<DataProductsDisplayType>}
  */
 async function doUploadAndAnalysis({
@@ -172,8 +198,12 @@ async function doUploadAndAnalysis({
                                  dataTypeHint='',
                                  menu=undefined,
                                  menuKey= undefined,
-                                 activateFirst=false,
-                                 dispatchWorkingMessage= false
+                                 activateResult=false,
+                                 dispatchWorkingMessage= false,
+                                 serDefParams,
+                                 userInputParams,
+                                 analysisActivateFunc,
+                                 originalTitle,
                              }) {
 
     const {dpId}= activateParams;
@@ -190,29 +220,44 @@ async function doUploadAndAnalysis({
         const {parts,fileName}= fileAnalysis;
         if (!parts || fileFormat==='UNKNOWN') return makeErrorResult('Could not parse file',fileName,serverCacheFileKey);
 
-        const result= processAnalysisResult({ table, row, request, activateParams, serverCacheFileKey, fileAnalysis, dataTypeHint });
-        activateFirst  && dispatchActivateFileMenuItem({dpId,fileMenu:result.fileMenu,menu,currentMenuKey:menuKey});
+        const result= processAnalysisResult({ table, row, request, activateParams, serverCacheFileKey,
+                                              fileAnalysis, dataTypeHint, analysisActivateFunc, serDefParams,
+                                              originalTitle});
+        activateResult && doActivateResult(result, menu,menuKey,dpId, serDefParams);
         return result;
     };
+
+
+
+    //-----
+    //----- setup and make the upload and analysis call - in a promise, process the analysis
+    //-----
+    if (dispatchWorkingMessage) dispatchUpdateDataProducts(dpId, dpdtWorkingMessage(LOADING_MSG,request,{menuKey}));
+    if (request.getURL() && (serDefParams || userInputParams)) {
+        request= request.makeCopy();
+        const sendParams={};
+        serDefParams?.filter( ({value}) => isDefined(value)).forEach( ({name,value}) => sendParams[name]= value);
+        serDefParams?.filter( ({ref}) => ref).forEach( (p) => sendParams[p.name]= getCellValue(table, row, p.colName));
+        userInputParams && Object.entries(userInputParams).forEach( ([k,v]) => v && (sendParams[k]= v) );
+        const newUrl= new URL(request.getURL());
+
+        Object.entries(sendParams).forEach( ([k,v]) => newUrl.searchParams.append(k,v));
+        request.setURL(newUrl.toString());
+    }
 
 
     //-----
     //----- if we have the analysis already cached then process it and return
     //-----
 
-    const cacheKey= hashCode(request.toString());
-    if (uploadedCache[cacheKey]) {
+    const cacheKey= hashCode(request.toString() + (userInputParams? JSON.stringify(userInputParams):''));
+    if (uploadedCache[cacheKey] && uploadedCache[cacheKey].dataTypes!==FileAnalysisType.ErrorResponse) {
         const {serverCacheFileKey, fileFormat, fileAnalysis}= uploadedCache[cacheKey];
         const result= processAndActivate(serverCacheFileKey, fileFormat, fileAnalysis);
         return Promise.resolve(result);
     }
 
-    //-----
-    //----- setup and make the upload and analysis call - in a promise, process the analysis
-    //-----
-    if (dispatchWorkingMessage) dispatchUpdateDataProducts(dpId, dpdtWorkingMessage(LOADING_MSG,request,{menuKey}));
     const url= request.getURL();
-
     url && dispatchAddActionWatcher({ id: url, actions:[ImagePlotCntlr.PLOT_PROGRESS_UPDATE],
         callback:watchForUploadUpdate, params:{url,dpId}});
 
@@ -294,9 +339,12 @@ function makeErrorResult(message, fileName,url) {
  * @param obj.serverCacheFileKey
  * @param obj.fileAnalysis
  * @param obj.dataTypeHint
+ * @param obj.analysisActivateFunc
  * @return {DataProductsDisplayType}
  */
-function processAnalysisResult({table, row, request, activateParams, serverCacheFileKey, fileAnalysis, dataTypeHint}) {
+function processAnalysisResult({table, row, request, activateParams,
+                                   serverCacheFileKey, fileAnalysis, dataTypeHint,
+                                   analysisActivateFunc, serDefParams, originalTitle}) {
 
 
     const {imageViewerId, dpId}= activateParams;
@@ -311,12 +359,26 @@ function processAnalysisResult({table, row, request, activateParams, serverCache
     const fileMenu= {fileAnalysis, menu:[],activeItemLookupKey, activeItemLookupKeyOrigin:rStr};
 
     const url= request.getURL() || serverCacheFileKey;
-    if (fileFormat===FileAnalysisType.PDF) {
-        return dpdtMessageWithDownload('Cannot not display PDF file, you may only download it', 'Download PDF File', url);
+
+    switch (fileFormat) {
+        case FileAnalysisType.PDF:
+            return dpdtMessageWithDownload('Cannot not display PDF file, you may only download it', 'Download PDF File', url);
+        case FileAnalysisType.TAR:
+            return dpdtMessageWithDownload('Cannot not display Tar file, you may only download it', 'Download Tar File', url);
+        case FileAnalysisType.HTML:
+            return dpdtSendToBrowser(url, {serDefParams});
+        case FileAnalysisType.Unknown:
+            if (parts[0]?.type===FileAnalysisType.ErrorResponse) {
+                const url= request.getURL();
+                const m= dpdtMessageWithError(parts[0].desc);
+                m.serDefParams= serDefParams;
+                m.badUrl= url;
+                return m;
+            }
+            break;
     }
-    if (fileFormat===FileAnalysisType.TAR) {
-        return dpdtMessageWithDownload('Cannot not display Tar file, you may only download it', 'Download Tar File', url);
-    }
+
+
 
 
 
@@ -347,7 +409,12 @@ function processAnalysisResult({table, row, request, activateParams, serverCache
         }
     });
 
-    fileMenu.menu.forEach( (m,idx) => m.menuKey= 'fm-'+idx);
+    fileMenu.menu.forEach( (m,idx) => {
+        m.menuKey= 'fm-'+idx;
+        m.analysisActivateFunc= analysisActivateFunc;
+        m.serDefParams= serDefParams;
+        m.originalTitle= originalTitle;
+    });
 
     fileMenu.initialDefaultIndex= chooseDefaultEntry(fileMenu.menu,parts,fileFormat, dataTypeHint);
 

@@ -108,15 +108,16 @@ function loadTableAndCharts(dataTableReq, tbl_id, tableGroupViewerId, dispatchCh
  * @param {Number} tbl_index
  * @param {Array.<String>} colNames - an array of column names
  * @param {Array.<String>} colUnits - an array of types names
+ * @param {boolean} connectPoints if a default scatter chart then connect the points
  * @param {String} chartId
  * @param {String} tbl_id
  * @return {function} the activate function
  */
 export function createChartTableActivate(chartAndTable,source, titleInfo, activateParams, chartInfo={}, tbl_index=0,
-                                         colNames= undefined, colUnits= undefined,
+                                         colNames= undefined, colUnits= undefined, connectPoints=true,
                                          chartId='part-result-chart', tbl_id= 'part-result-tbl') {
     return () => {
-        const dispatchCharts=  chartAndTable && makeChartObj(chartInfo, activateParams,titleInfo,chartId,tbl_id);
+        const dispatchCharts=  chartAndTable && makeChartObj(chartInfo, activateParams,titleInfo,connectPoints,chartId,tbl_id);
         const dataTableReq= makeTableRequest(source,titleInfo,tbl_id,tbl_index,colNames,colUnits);
         const savedRequest= loadedTablesIds.has(tbl_id) && JSON.stringify(loadedTablesIds.get(tbl_id)?.request);
 
@@ -214,7 +215,7 @@ function makeChartFromParams(tbl_id, chartParams, computeXAxis, computeYAxis,tit
 
 
 
-function makeChartObj(chartInfo,  activateParams, titleInfo, chartId, tbl_id ) {
+function makeChartObj(chartInfo,  activateParams, titleInfo, connectPoints, chartId, tbl_id ) {
 
     const {chartViewerId:viewerId}= activateParams;
     const {chartParamsAry}= chartInfo;
@@ -239,7 +240,7 @@ function makeChartObj(chartInfo,  activateParams, titleInfo, chartId, tbl_id ) {
                     tbl_id,
                     x: `tables::${xAxis}`,
                     y: `tables::${yAxis}`,
-                    mode: 'lines+markers'
+                    mode: connectPoints ? 'lines+markers' : 'markers',
                 }],
             layout: {
                 title: {text: chartTitle},

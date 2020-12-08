@@ -4,20 +4,18 @@
 
 import React, {useState, useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {
-    ToolbarButton,
-    DropDownVerticalSeparator,
-    } from '../../ui/ToolbarButton.jsx';
+import {throttle} from 'lodash';
+import { ToolbarButton, DropDownVerticalSeparator, } from '../../ui/ToolbarButton.jsx';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {dispatchColorChange} from '../ImagePlotCntlr.js';
-import {
-    primePlot,
+import { primePlot,
     getPlotViewIdListInOverlayGroup,
     isThreeColor,
     getActivePlotView,
     isAllStretchDataLoadable, isAllStretchDataLoaded
 } from '../PlotViewUtil.js';
 import {visRoot} from '../ImagePlotCntlr.js';
+import {isHiPS, isImage} from '../WebPlot.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {Band} from '../Band.js';
 
@@ -46,7 +44,6 @@ import ColorTable20 from 'html/images/cbar/ct-20-staircase-ds9.png';
 import ColorTable21 from 'html/images/cbar/ct-21-color-ds9.png';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {RangeSliderView} from '../../ui/RangeSliderView.jsx';
-import {throttle} from 'lodash';
 
 //=================================
 
@@ -75,6 +72,7 @@ const colorTables=[
     { id: 21, icon: ColorTable21, tip: 'Color (ds9)' }
 ];
 
+const hipsColorTables=[ { id: -1,  icon: undefined, tip:'Original' }, ...colorTables, ];
 
 
 //====================================
@@ -139,6 +137,10 @@ const contrastMarks = { 0: '0', 5:'5', 10:'1', 15:'1.5',  20:'2'};
 const maskWrapper= { position:'absolute', left:0, top:0, width:'100%', height:'100%' };
 
 
+const dispatchColorChangeThrottled= throttle((param) => {
+    dispatchColorChange(param);
+}, 500);
+
 const AdvancedColorPanel= ({pv:pvFromProp}) => {
     const [allLoaded] = useStoreConnector(() => isAllStretchDataLoaded(visRoot()));
     const [bias,setBias]= useState( () => primePlot(pvFromProp)?.rawData.bandData[0].bias);
@@ -152,6 +154,7 @@ const AdvancedColorPanel= ({pv:pvFromProp}) => {
     const biasInt= Math.trunc(bias*100);
     const contrastInt= Math.trunc(contrast*10);
     const threeColor= isThreeColor(pvFromProp);
+    const image= isImage(plot);
 
     useEffect(() => {
         const plot= primePlot(pvFromProp);
@@ -169,18 +172,22 @@ const AdvancedColorPanel= ({pv:pvFromProp}) => {
         setUseRed(useRed);
         setUseGreen(useGreen);
         setUseBlue(useBlue);
-        dispatchColorChange({
-            plotId:plot.plotId,
-            cbarId: colorTableId,
-            bias,
-            contrast,
-            useRed, useBlue, useGreen,
-        });
+        const colorChangeParam=  {
+                        plotId:plot.plotId,
+                        cbarId: colorTableId,
+                        bias,
+                        contrast,
+                        useRed, useBlue, useGreen,
+                    };
+        image ? dispatchColorChange(colorChangeParam) : dispatchColorChangeThrottled(colorChangeParam);
     };
 
+    const ctArray= (image? colorTables : hipsColorTables)
+
     const makeItems= () =>
-        colorTables.map( (ct) =>
+        ctArray.map( (ct) =>
             (<ToolbarButton icon={ct.icon} tip={ct.tip} style={{padding: '2px 0 2px 0'}}
+                            text={ct.icon ? undefined : 'Default Color Map' }
                             enabled={true} horizontal={false} key={ct.id}
                             hasCheckBox={true} checkBoxOn={colorTableId===ct.id}
                             imageStyle={{height:8}}
@@ -197,12 +204,12 @@ const AdvancedColorPanel= ({pv:pvFromProp}) => {
                 <div style={{padding: '5px 0 0 0'}}>Color Bar</div>
                 <RangeSliderView {...{
                     wrapperStyle:{paddingTop: 7, width: 200},
-                    min:0,max:21, step:1,vertical:false, marks:ctMarks,
+                    min:image?0:-1,max:21, step:1,vertical:false, marks:ctMarks,
                     defaultValue:colorTableId, slideValue:colorTableId,
                     handleChange:(v) => changeBiasContrastColor(v, bias,contrast)}} />
 
             </div>
-            <div style={{display:'flex', flexDirection: 'column', alignItems: 'center'}}>
+            {colorTableId!==-1 ? <div style={{display:'flex', flexDirection: 'column', alignItems: 'center'}}>
                 <div style={{padding: '30px 0 0 0'}}>Bias</div>
                 <RangeSliderView {...{
                     wrapperStyle:{paddingTop: 7, width: 200},
@@ -210,15 +217,15 @@ const AdvancedColorPanel= ({pv:pvFromProp}) => {
                     defaultValue:biasInt, slideValue:biasInt,
                     handleChange:(v) => changeBiasContrastColor(colorTableId, v/100,contrast)}} />
 
-            </div>
-            <div style={{display:'flex', flexDirection: 'column', alignItems: 'center'}}>
+            </div> : <div/>}
+            {colorTableId!==-1 ? <div style={{display:'flex', flexDirection: 'column', alignItems: 'center'}}>
                 <div style={{padding: '30px 0 0 0'}}>Contrast</div>
                 <RangeSliderView {...{
                     wrapperStyle:{paddingTop: 7, width: 200},
                     min:0,max:20, step:1,vertical:false, marks:contrastMarks,
                     defaultValue:contrastInt, slideValue:contrastInt,
                     handleChange:(v) => changeBiasContrastColor(colorTableId, bias,v/10)}} />
-            </div>
+            </div> : <div/>}
             {!allLoaded && makeMask() }
         </div>
     );

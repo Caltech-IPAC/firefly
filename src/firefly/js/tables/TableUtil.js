@@ -371,6 +371,13 @@ export function getColumn(tableModel, colName) {
     }
 }
 
+
+export function columnIDToName(tableModel, ID) {
+    if (!tableModel || !ID) return undefined;
+    return getAllColumns(tableModel)?.find((col) => col.ID === ID)?.name;
+}
+
+
 /**
  * returns column information for the given ID.
  * @param {TableModel} tableModel

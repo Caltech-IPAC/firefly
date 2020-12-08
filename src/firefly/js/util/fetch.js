@@ -94,11 +94,17 @@ export function downloadBlob(blob, filename) {
     document.body.removeChild(a);
 }
 
+/**
+ * return the filename from the Content-Disposition header or undefined
+ * @param resp - fetch response
+ * @return {string|undefined}
+ */
 function resolveFileName(resp) {
     if (resp && resp.headers) {
         const cd = resp.headers.get('Content-Disposition') || '';
         const parts = cd.match(/.*filename=(.*)/);
-        if (parts && parts.length > 1) return parts[1];
+        const possibleName= (parts && parts.length > 1) ? parts[1] : undefined;
+        return possibleName?.indexOf('?')>4 ? possibleName.split('?')[0] : possibleName;
     }
 }
 

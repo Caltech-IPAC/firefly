@@ -19,7 +19,7 @@ import ImagePlotCntlr, {
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {WebPlot, isHiPS, isImage} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
-import {loadImage} from '../../util/WebUtil.js';
+import {getRootURL, loadImage} from '../../util/WebUtil.js';
 import {
     findCurrentCenterPoint,
     getCenterOfProjection,
@@ -62,6 +62,7 @@ import {getActiveTableId} from '../../tables/TableUtil';
 import {locateOtherIfMatched, matchHiPStoPlotView} from './WcsMatchTask';
 import {upload} from '../../rpc/CoreServices.js';
 import {fetchUrl} from '../../util/fetch';
+import {getGpuJs} from '../rawData/GpuJsConfig.js';
 
 const PROXY= true;
 
@@ -265,6 +266,7 @@ async function makeHiPSPlot(rawAction, dispatcher) {
             return;
         }
         plot= await addAllSky(plot);
+        const GPU= await getGpuJs(getRootURL());
         createHiPSGridLayer();
         dispatchAddActionWatcher({
             actions:[ImagePlotCntlr.PLOT_HIPS, ImagePlotCntlr.UPDATE_VIEW_SIZE],
