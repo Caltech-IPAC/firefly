@@ -31,7 +31,7 @@ function creator(initPayload, presetDefaults) {
     const {plotId, layersPanelLayoutId}= initPayload;
     const plot= primePlot(visRoot(),plotId);
     const drawingDef= {
-        ...makeDrawingDef(plot.blankColor??'yellow', {fontWeight:'bolder'} ),
+        ...makeDrawingDef(plot?.blankColor??'yellow', {fontWeight:'bolder'} ),
         ...presetDefaults};
     idCnt++;
 
@@ -92,7 +92,7 @@ function getTitle(pv, plot, drawLayer) {
                 textOverflow: 'ellipsis'
             } }
                  title={plot.title}>
-                <div>{blank?'Blank HiPS': plot.title}</div>
+                <div>{plot.title}</div>
                 <div style={{paddingLeft: 10, fontSize:'80%'}}>{`${isHiPS(plot) ? hipsStr : 'Image'}${showSize?',':''}`}</div>
                 {showSize &&
                 <div  style={{paddingLeft: 5, fontSize:'80%'}}>

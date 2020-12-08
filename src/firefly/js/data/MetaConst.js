@@ -102,6 +102,9 @@ export const MetaConst = {
     /** a url for HiPS Image to use as the coverage - overrides firefly defaults */
     COVERAGE_HIPS : 'CoverageHiPS',
 
+    /** if y,t,true,yes the treat then recognized this table to have simulated data */
+    SIMULATED_TABLE: 'SIMULATED_TABLE',
+
     /**
      * if true, Show the coverage display even it this table does not have coverage information
      * if false, treat this table as it has no coverage

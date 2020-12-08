@@ -65,7 +65,7 @@ export function* watchReadout() {
 
         const plotView= getPlotViewById(visRoot(), plotId);
         const plot= primePlot(plotView);
-        const threeColor= plot.plotState.threeColor;
+        const threeColor= plot?.plotState?.threeColor;
         if (isPayloadNeeded(mouseState,lockByClick)) {
             if (plot) {
                 const readoutItems= makeImmediateReadout(plot, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder);

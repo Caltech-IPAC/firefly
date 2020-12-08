@@ -10,7 +10,14 @@ import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE,
 import ImagePlotCntlr, { visRoot, dispatchDeletePlotView, dispatchPlotImageOrHiPS, dispatchPlotHiPS } from '../ImagePlotCntlr.js';
 import {primePlot, getDrawLayerById} from '../PlotViewUtil.js';
 import {REINIT_APP} from '../../core/AppDataCntlr.js';
-import {doFetchTable, getTblById, getActiveTableId, getTableInGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
+import {
+    doFetchTable,
+    getTblById,
+    getActiveTableId,
+    getTableInGroup,
+    isTableUsingRadians,
+    getMetaEntry, getBooleanMetaEntry
+} from '../../tables/TableUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW } from '../../tables/TableRequestUtil.js';
 import MultiViewCntlr, {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
@@ -30,7 +37,7 @@ import {parseObsCoreRegion} from '../../util/ObsCoreSRegionParser.js';
 import {getAppOptions} from '../../core/AppDataCntlr';
 import {getSearchTarget} from './CatalogWatcher';
 import {MetaConst} from '../../data/MetaConst.js';
-import {isBlankHiPSURL, isHiPS} from '../WebPlot';
+import {BLANK_HIPS_URL, isBlankHiPSURL, isHiPS} from '../WebPlot';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {isDrawLayerVisible} from '../PlotViewUtil';
 import SearchTarget from '../../drawingLayers/SearchTarget.js';
@@ -781,7 +788,10 @@ function findPreferredHiPS(tbl_id,prevPreferredHipsSourceURL, optionHipsSourceUR
     const table = getTblById(tbl_id);
     if (!table || table.isFetching) return optionHipsSourceURL;
     if (!preparedTable) { // if a new table then the meta takes precedence
-        if (table && table.tableMeta[MetaConst.COVERAGE_HIPS]) return table.tableMeta[MetaConst.COVERAGE_HIPS];
+        const sim= getBooleanMetaEntry(table, MetaConst.SIMULATED_TABLE, false);
+        const covHips= getMetaEntry(table,MetaConst.COVERAGE_HIPS);
+        if (covHips) return covHips;
+        if (sim) return BLANK_HIPS_URL;
     }
     const plot= primePlot(visRoot(), PLOT_ID);
     if (isHiPS(plot)) {

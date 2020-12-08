@@ -16,6 +16,7 @@ import {TAB} from './projection/Wavelength';
 import {memorizeLastCall} from '../util/WebUtil';
 import {makePlotStateShimForHiPS} from './PlotState';
 
+export const BLANK_HIPS_URL= 'blank';
 
 export const RDConst= {
     IMAGE_OVERLAY: 'IMAGE_OVERLAY',
@@ -27,6 +28,7 @@ export const RDConst= {
 
 const HIPS_DATA_WIDTH=  10000000000;
 const HIPS_DATA_HEIGHT= 10000000000;
+
 
 
 /**
@@ -620,4 +622,4 @@ export function getPixScaleDeg(plot) {
     return 0;
 }
 
-export const isBlankHiPSURL= (url) => url.toLowerCase()==='blank';
+export const isBlankHiPSURL= (url) => url.toLowerCase()===BLANK_HIPS_URL;

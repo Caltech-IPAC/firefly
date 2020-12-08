@@ -131,7 +131,7 @@
     </script>
 </template>
 
-<template title="blank hips" class="tpl" >
+<template title="blank hips" class="tpl" id='blank-hips' >
     <div id="expected" style="position: relative" >
         <img style="position: absolute; left: 2px" src="./images/blank_coverage.png"/>
         <div class="source-code indent-3" style="position: absolute; bottom: 0; left: 0">
@@ -162,7 +162,7 @@
                     SearchMethod: 'Cone',
                     radius: 200
                 },
-                { META_INFO: {CENTER_COLUMN: 'ra;dec;EQJ2000', CatalogOverlayType: 'IRSA', CoverageHiPS:'blank'}}
+                { META_INFO: {CENTER_COLUMN: 'ra;dec;EQJ2000', CatalogOverlayType: 'IRSA', SIMULATED_TABLE:'y'}}
             );
 
             firefly.showTable('gatorTable', table1Data,

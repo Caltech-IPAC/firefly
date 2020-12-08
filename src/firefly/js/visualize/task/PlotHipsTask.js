@@ -258,6 +258,7 @@ async function makeHiPSPlot(rawAction, dispatcher) {
         const str= await result.text();
         const hipsProperties= parseProperties(str);
         let plot= WebPlot.makeWebPlotDataHIPS(plotId, wpRequest, hipsProperties, attributes, false, blank);
+        if (blank) plot.title= 'Blank HiPS Projection';
         plot.proxyHips= PROXY;
 
         if (!blank) {

@@ -26,6 +26,8 @@
             t.querySelector('.tpl-expected').appendChild(document.importNode(t_vars.expected, true));
             t.querySelector('.tpl-actual').appendChild(document.importNode(t_vars.actual, true));
             t.querySelector('#tpl-title').innerHTML = t_vars.title;
+            const a= t.querySelector('.tpl-more-anchor')
+            if (a) a.text= window.template.onlyUsingExclusive ? 'All test' : 'Only test '+ window.template.testNum;
             t_vars.className && t_vars.className.split(/\s/g).forEach(function (c) {
                 c= c.trim();
                 c && t.querySelector('.tpl-test-container').classList.add(c);
@@ -87,6 +89,18 @@
             container.classList.add('fullHeight');
         }
 
+        function executeLink(templateTitle,num, onlyUsingExclusive) {
+            console.log(window.parent.document.location.href)
+            const url= new URL(window.parent.document.location.href);
+            if (onlyUsingExclusive) {
+                window.parent.document.location.href= url.origin+url.pathname;
+            }
+            else {
+                url.searchParams.append('test', templateTitle);
+                window.parent.document.location.href= url.toString();
+            }
+        }
+
         function copyClipboard() {
             window.getSelection()
                 .selectAllChildren(
@@ -104,9 +118,16 @@
 
 
 <template id="test_template">
-    <div style="display: inline-flex">
-        <div id="tpl-title"></div>
-        <a id="tpl-popout" onclick="popout()" href="javascript:void(0)">expand</a>
+    <div>
+        <div style="display: inline-flex">
+            <div id="tpl-title"></div>
+            <a id="tpl-popout" onclick="popout()" href="javascript:void(0)">expand</a>
+        </div>
+        <div style="display: inline-flex; padding-left:20px;">
+            <a class="tpl-more-anchor"
+               onclick="executeLink(window.template.templateTitle, window.template.testNum, window.template.onlyUsingExclusive)"
+               href="javascript:void(0)">show</a>
+        </div>
     </div>
     <div class="tpl-test-container">
         <div  class="tpl-item-box">
