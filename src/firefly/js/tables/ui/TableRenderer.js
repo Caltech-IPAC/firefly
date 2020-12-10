@@ -324,7 +324,7 @@ export const CellWrapper =  React.memo( (props) => {
 
     return (
         <div onMouseEnter={checkOverflow}
-             onMouseLeave={() => setHasActions(false)} style={{display: 'flex'}}>
+             onMouseLeave={() => setHasActions(false)} style={{display: 'flex', height: '100%'}}>
             <div style={{textAlign, lineHeight, ...style}} className='public_fixedDataTableCell_cellContent'>
                 <CellRenderer {...omit(props, 'Content')} cellInfo={cellInfo}/>
             </div>
