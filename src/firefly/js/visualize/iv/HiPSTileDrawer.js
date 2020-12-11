@@ -15,6 +15,7 @@ import {isHiPS} from '../WebPlot';
 import {getHipsColorOps} from './HipsColor.js';
 import {makeDevicePt, makeWorldPt} from '../Point.js';
 import {getColorModel} from '../rawData/rawAlgorithm/ColorTable.js';
+import {brighter, darker} from 'firefly/util/Color.js';
 
 
 const noOp= { drawerTile : () => undefined, abort : () => undefined };
@@ -366,14 +367,16 @@ function makeOffScreenCanvas(plotView, plot, overlayTransparent) {
     const {viewDim:{width,height}}=  plotView;
 
     const {fov, centerDevPt}= getPointMaxSide(plot,plotView.viewDim);
+
+    const altDevRadius= plotView.viewDim.width/2 + plotView.scrollX - 4;
     if (fov>=180) {
-        const altDevRadius= plotView.viewDim.width/2 + plotView.scrollX;
+        // const altDevRadius= plotView.viewDim.width/2 + plotView.scrollX;
         ctx.fillStyle = 'rgba(227,227,227,1)';
         ctx.fillRect(0, 0, width, height);
         ctx.save();
         ctx.beginPath();
         ctx.lineWidth= 5;
-        ctx.arc(centerDevPt.x, centerDevPt.y, altDevRadius-4, 0, 2*Math.PI, false);
+        ctx.arc(centerDevPt.x, centerDevPt.y, altDevRadius, 0, 2*Math.PI, false);
         ctx.closePath();
         ctx.clip();
     }
@@ -383,6 +386,16 @@ function makeOffScreenCanvas(plotView, plot, overlayTransparent) {
     }
     else if (plot.blank) {
         ctx.fillStyle= plot.blankColor;
+        if (fov>=180) {
+            const brightC = brighter(plot.blankColor);
+            const darkerC = darker(plot.blankColor);
+            const gradient = ctx.createRadialGradient(centerDevPt.x, centerDevPt.y, 5, centerDevPt.x, centerDevPt.y, altDevRadius);
+            // gradient.addColorStop(0, plot.blankColor);
+            gradient.addColorStop(0, brightC);
+            gradient.addColorStop(.8, darkerC);
+            gradient.addColorStop(1, darker(darkerC));
+            ctx.fillStyle = gradient;
+        }
     }
     else if (colorId(plot)===-1) {
         ctx.fillStyle = 'rgba(0,0,0,1)';

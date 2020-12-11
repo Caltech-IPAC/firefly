@@ -17,6 +17,7 @@ import {memorizeLastCall} from '../util/WebUtil';
 import {makePlotStateShimForHiPS} from './PlotState';
 
 export const BLANK_HIPS_URL= 'blank';
+export const DEFAULT_BLANK_HIPS_TITLE= 'Blank HiPS Projection';
 
 export const RDConst= {
     IMAGE_OVERLAY: 'IMAGE_OVERLAY',
@@ -387,28 +388,30 @@ export const WebPlot= {
     /**
      *
      * @param plotId
+     * @param {String} hipsUrlRoot - the url of the hips repository
      * @param wpRequest
      * @param {HipsProperties} hipsProperties
      * @param {PlotAttribute|object} attributes
-     * @param asOverlay
-     * @param blank
+     * @param {boolean} proxyHips - if true use the proxy (firefly server) to get the hips tailes
      * @return {WebPlot} the new WebPlot object for HiPS
      */
-    makeWebPlotDataHIPS(plotId, wpRequest, hipsProperties, attributes= {}, asOverlay= false, blank=false) {
+    makeWebPlotDataHIPS(plotId, hipsUrlRoot, wpRequest, hipsProperties, attributes= {}, proxyHips) {
 
+        const blank= isBlankHiPSURL(wpRequest.getHipsRootUrl());
         const hipsCoordSys= makeHiPSCoordSys(hipsProperties);
-        const lon= Number(hipsProperties.hips_initial_ra) || 0;
-        const lat= Number(hipsProperties.hips_initial_dec) || 0;
+        const lon= blank ? 0 : Number(hipsProperties.hips_initial_ra) || 0;
+        const lat= blank ? 0 : Number(hipsProperties.hips_initial_dec) || 0;
         const projection= makeHiPSProjection(hipsCoordSys, lon,lat);
-        const plot= makePlotTemplate(plotId,'hips',asOverlay, hipsCoordSys);
+        const plot= makePlotTemplate(plotId,'hips',false, hipsCoordSys);
         const zoomFactor= .0001;
 
         const hipsPlot= {
             //HiPS specific
             nside: 3,
-            hipsUrlRoot: wpRequest.getHipsRootUrl(),
+            hipsUrlRoot,
             dataCoordSys : hipsCoordSys,
             hipsProperties,
+            proxyHips,
 
             /// other
             plotState: makePlotStateShimForHiPS(wpRequest),
@@ -417,11 +420,11 @@ export const WebPlot= {
             dataWidth: HIPS_DATA_WIDTH,
             dataHeight: HIPS_DATA_HEIGHT,
 
-            title : getHiPsTitleFromProperties(hipsProperties),
+            title : blank ? DEFAULT_BLANK_HIPS_TITLE : getHiPsTitleFromProperties(hipsProperties),
             plotDesc: 'a hips plot',
             dataDesc        : hipsProperties.label || 'HiPS',
             blank,
-            blankColor: 'rgba(1,1,1,1)',
+            blankColor: 'rgba(55,55,55,1)',
             cubeDepth: Number(hipsProperties?.hips_cube_depth) || 1,
             //=== Mutable =====================
             screenSize: {width:HIPS_DATA_WIDTH*zoomFactor, height:HIPS_DATA_HEIGHT*zoomFactor},

@@ -69,6 +69,12 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
         }
 
         try {
+            HiPSMasterListEntry blankEntry= new HiPSMasterListEntry();
+            blankEntry.set(PARAMS.SOURCE.getKey(), "irsa");
+            blankEntry.set(PARAMS.URL.getKey(), "blank");
+            blankEntry.set(PARAMS.TITLE.getKey(), "Blank HiPS Projection");
+            blankEntry.set(PARAMS.TYPE.getKey(), ServerParams.IMAGE);
+            allSourceData.add(blankEntry);
 
             for (String source : workingSources) {
                 HiPSMasterListSourceType hipsls = sources.get(source);

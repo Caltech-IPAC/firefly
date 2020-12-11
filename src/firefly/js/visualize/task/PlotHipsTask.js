@@ -141,7 +141,7 @@ function watchForHiPSViewDim(action, cancelSelf, params) {
             dispatchChangeCenterOfProjection({plotId,centerProjPt:centerWp});
         }
         else {
-            let size= pv.request.getSizeInDeg()  || Number(plot.hipsProperties.hips_initial_fov) || 180;
+            let size= pv.request.getSizeInDeg()  || (plot.blank? 180 : Number(plot.hipsProperties.hips_initial_fov)) || 180;
 
             if (size) {
                 if (size<.00027 || size>70) { // if size is really small (<1 arcsec) or big then do a fill, small size is probably an error
@@ -235,34 +235,30 @@ async function makeHiPSPlot(rawAction, dispatcher) {
                                            payload:{ description: 'HiPS display failed: '+ errStr, plotId, wpRequest } });
 
     try {
-        let url= await resolveHiPSIvoURL(wpRequest.getHipsRootUrl());
-        wpRequest.setHipsRootUrl(url);
+        const resolvedHipsRootUrl= await resolveHiPSIvoURL(wpRequest.getHipsRootUrl());
         if (currentPlots[plotId]!==requestKey) {
             // hipsFail('hips plot expired or aborted');
             console.log('hips plot expired or aborted');
             return;
         }
         dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_START,payload:newPayload} );
-        if (!url) {
+        if (!resolvedHipsRootUrl) {
             hipsFail('Empty URL');
             return;
         }
 
         dispatchPlotProgressUpdate(plotId, 'Retrieving Info', false, null);
-        url= makeHipsUrl(`${url}/properties`, PROXY);
-        const result= await fetchUrl(url, {}, true, PROXY);
+        const result= await fetchUrl(makeHipsUrl(`${resolvedHipsRootUrl}/properties`, PROXY), {}, true, PROXY);
         if (!result.text) {
             hipsFail('Could not retrieve HiPS properties file');
             return;
         }
         const str= await result.text();
         const hipsProperties= parseProperties(str);
-        let plot= WebPlot.makeWebPlotDataHIPS(plotId, wpRequest, hipsProperties, attributes, false, blank);
-        if (blank) plot.title= 'Blank HiPS Projection';
-        plot.proxyHips= PROXY;
+        let plot= WebPlot.makeWebPlotDataHIPS(plotId, resolvedHipsRootUrl, wpRequest, hipsProperties, attributes, PROXY);
 
         if (!blank) {
-            await createHiPSMocLayer(getPropertyItem(hipsProperties, 'ivoid'), wpRequest.getHipsRootUrl(), plot);
+            await createHiPSMocLayer(getPropertyItem(hipsProperties, 'ivoid'), resolvedHipsRootUrl, plot);
         }
         if (currentPlots[plotId]!==requestKey) {
             // hipsFail('hips plot expired or aborted');
@@ -331,24 +327,19 @@ function createHiPSGridLayer() {
 async function doHiPSChange(rawAction, dispatcher, getState) {
 
     const {payload}= rawAction;
-    let {hipsUrlRoot}= payload;
+    const {hipsUrlRoot:inHipsUrlRoot}= payload;
     const {plotId}= payload;
 
-    hipsUrlRoot= resolveHiPSConstant(hipsUrlRoot);
+    const hipsUrlRoot= resolveHiPSConstant(inHipsUrlRoot);
     const pv= getPlotViewById(getState()[IMAGE_PLOT_KEY], plotId);
     const plot= primePlot(pv);
     if (!plot) return;
     const {width,height}= pv.viewDim;
     if (!width || !height) return;
-
-
-    const blank= hipsUrlRoot ? isBlankHiPSURL(hipsUrlRoot) : plot.blank;
-    
-    const url= makeHipsUrl(`${hipsUrlRoot}/properties`, true);
-
+    const blank= inHipsUrlRoot ? isBlankHiPSURL(inHipsUrlRoot) : plot.blank;
 
     if (!hipsUrlRoot) { // only change to some attributes, we are not replacing the HiPS source
-        const newPayload= {...payload, blank}
+        const newPayload= {...payload, blank};
         dispatcher( { type: ImagePlotCntlr.CHANGE_HIPS, payload:newPayload });
         locateOtherIfMatched(visRoot(),plotId);
         dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:newPayload });
@@ -357,6 +348,10 @@ async function doHiPSChange(rawAction, dispatcher, getState) {
 
     const hipsChangeFailP=(reason) =>
         dispatchPlotProgressUpdate(plotId, 'Failed to change HiPS display',true, pv.request.getRequestKey(), false);
+
+    const resolvedHipsRootUrl= await resolveHiPSIvoURL(hipsUrlRoot);
+
+    const url= makeHipsUrl(`${resolvedHipsRootUrl}/properties`, true);
 
     dispatchPlotProgressUpdate(plotId, 'Retrieving Info', false, null);
     try {
@@ -370,7 +365,7 @@ async function doHiPSChange(rawAction, dispatcher, getState) {
         }
         const s = await result.text();
         const hipsProperties = parseProperties(s);
-        await addAllSkyUsingProperties(hipsProperties, hipsUrlRoot, plotId, true);
+        await addAllSkyUsingProperties(hipsProperties, resolvedHipsRootUrl, plotId, true);
         dispatcher(
             {
                 type: ImagePlotCntlr.CHANGE_HIPS,

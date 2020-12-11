@@ -1,7 +1,7 @@
 import {get, isArray, isEmpty} from 'lodash';
 import Enum from 'enum';
 import {getAppOptions} from '../core/AppDataCntlr.js';
-import {getTblById, isTableLoaded} from '../tables/TableUtil.js';
+import {getCellValue, getTblById, isTableLoaded} from '../tables/TableUtil.js';
 import {dispatchTableFetch, dispatchTableHighlight} from '../tables/TablesCntlr.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {getColumnIdx} from '../tables/TableUtil.js';
@@ -160,12 +160,23 @@ export function loadHiPSSurverysWithHighlight({dataTypes, id, sources=getDefHiPS
                                   ivoOrUrl, columnName = IVO_ID_COL}) {
     getHiPSSurveysTable(dataTypes, id, sources)
         .then((tableModel) => {
+
+            const highlightAfterBlank= () =>
+                (isBlankHiPSURL(getCellValue(tableModel,0,columnName))) && dispatchTableHighlight(tableModel.tbl_id, 1);
+
+
             if (ivoOrUrl && tableModel && tableModel.tableData) {
                 const hIdx = indexInHiPSSurveys(tableModel, ivoOrUrl, columnName);
 
                 if (hIdx >= 0 && hIdx !== tableModel.highlightedRow) {
                     dispatchTableHighlight(tableModel.tbl_id, hIdx);
                 }
+                else {
+                    highlightAfterBlank();
+                }
+            }
+            else {
+                highlightAfterBlank();
             }
         });
 }
