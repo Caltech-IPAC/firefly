@@ -72,7 +72,7 @@ public class DssImageGetter {
                                          String         cgiapp, 
                                          DssImageParams params) {
        String retval;
-       retval=  "http://" +
+       retval=  "https://" +
                server.getHost() + ":" + server.getPort() + cgiapp    +
                "?r="         + params.getRaJ2000String()  +
                "&d="         + params.getDecJ2000String() +

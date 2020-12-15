@@ -83,7 +83,7 @@ public class SloanDssImageGetter {
                                           String cgiapp,
                                           SloanDssImageParams params) {
         String retval;
-        retval = "http://" + server.getHost() + ":" + server.getPort() + cgiapp +
+        retval = "https://" + server.getHost() + ":" + server.getPort() + cgiapp +
                 "?POS=" + params.getRaJ2000String() + "," + params.getDecJ2000String() +
                 "&size=" + params.getSizeInDeg() +
                 "&bandpass=" + params.getBand().toString().toLowerCase() +

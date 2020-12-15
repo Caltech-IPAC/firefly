@@ -7,8 +7,10 @@
 # Releases
 
 ### Version 2020.3
+- 2020.3.3 (December 2020)
+  - docker tag: `latest`, `release-2020.3.3`, `release-2020.3`
 - 2020.3.2 (December 2020)
-    - docker tag: `latest`, `release-2020.3.2`, `release-2020.3`
+    - docker tag: `release-2020.3.2`
 - 2020.3.1 (October 2020)
     - docker tag: `release-2020.3.1`
     - patch #1 (see [patches](#patches-20203))
@@ -35,6 +37,8 @@
 - Predefined Cell renders ([Firefly-574](https://github.com/Caltech-IPAC/firefly/pull/1015)) 
 
 ##### _Patches 2020.3_
+- 2020.3.3
+     - Fixed: for DSS and SDSS now using the `https` server
 - 2020.3.2
      - Fixed: regression bug with [Firefly-523](https://github.com/Caltech-IPAC/firefly/pull/955)
      - Fixed: small logging cleanup fix
