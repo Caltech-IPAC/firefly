@@ -1,4 +1,4 @@
-import React, {PureComponent, Fragment} from 'react';
+import React, {PureComponent, Fragment, useState, useEffect, useRef} from 'react';
 import SplitPane from 'react-split-pane';
 
 import {SplitContent} from '../panel/DockLayoutPanel';
@@ -271,202 +271,205 @@ function AdqlUI({serviceUrl}) {
     );
 }
 
-class BasicUI extends PureComponent {
-    constructor(props) {
-        super(props);
+function useStateRef(initialState){
+    const [state, setState] = useState(initialState);
+    const stateRef = useRef(initialState);
 
+    useEffect(() => {
+        stateRef.current = state;
+    }, [state]);
+    return [state, stateRef, setState];
+}
 
-        const {initArgs={}}= props;
-        this.state = Object.assign({error: undefined}, getTapBrowserState());
-        if (!this.state.schemaName) this.state.schemaName= initArgs.schema;
-        if (!this.state.tableName) this.state.tableName= initArgs.table;
-        this.loadSchemas = this.loadSchemas.bind(this);
-        this.loadTables = this.loadTables.bind(this);
-        this.loadColumns = this.loadColumns.bind(this);
-    }
+function BasicUI(props) {
+    const tapFluxState = getTapBrowserState();
+    // const isObsTap = props.obsTap !== undefined ? props.obsTap : false;
+    const [error, setError] = useState(undefined);
+    const [serviceUrl, serviceUrlRef, setServiceUrl] = useStateRef(tapFluxState.serviceUrl || props.serviceUrl);
+    const [schemaName, schemaRef, setSchemaName] = useStateRef(tapFluxState.schemaName || props.initArgs.schema);
+    const [tableName, tableRef, setTableName] = useStateRef(tapFluxState.tableName || props.initArgs.table);
+    const [schemaOptions, setSchemaOptions] = useState();
+    const [tableOptions, setTableOptions] = useState();
+    const [columnsModel, setColumnsModel] = useState();
 
-    componentDidMount() {
-        const {serviceUrl, schemaOptions, schemaName, tableName} = this.state;
-        if (!schemaOptions || (serviceUrl !== this.props.serviceUrl)) {
-            this.loadSchemas(this.props.serviceUrl, schemaName, tableName);
-        }
-        this.iAmMounted = true;
-    }
+    const splitDef = SpattialPanelWidth+80;
+    const splitMax = SpattialPanelWidth+80;
 
-    componentDidUpdate(prevProps) {
-        if (this.props.serviceUrl !== prevProps.serviceUrl) {
-            this.loadSchemas(this.props.serviceUrl);
-        }
-    }
-
-    componentWillUnmount() {
-        this.iAmMounted = false;
-        const {schemaOptions, schemaName, tableOptions, tableName, columnsModel} = this.state;
-        setTapBrowserState({serviceUrl: this.props.serviceUrl, schemaOptions, schemaName, tableOptions, tableName, columnsModel});
-    }
-
-    
-    render() {
-        const {serviceUrl, initArgs={}} = this.props;
-        const {error, schemaOptions, tableOptions, schemaName, tableName, columnsModel}= this.state;
-        const splitDef = SpattialPanelWidth+80;
-        const splitMax = SpattialPanelWidth+80;
-
-        if (error) {
-            return (
-                <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '10px 5px'}}>
-                    <b>Error:</b>
-                    <pre style={{margin: '7px 0', whiteSpace: 'pre-wrap'}}>{error}</pre>
-                </div>
-            );
-        }
-
-        // need to set initialState on list fields so that the initial value that is not the first index
-        // is set correctly after unmount and mount
-        return (
-            <Fragment>
-                <div className='TapSearch__section'>
-                    <div className='TapSearch__section--title'>3. Select Table <HelpIcon helpId={tapHelpId('selectTable')}/> </div>
-                    <div style={{display: 'inline-flex', width: '100%', marginRight: 3, maxWidth: 1000}}>
-                        <div style={{flexGrow: 1}}>
-                            <NameSelect type='Schema'
-                                        options={schemaOptions}
-                                        value={schemaName}
-                                        onSelect = {(selectedTapSchema) => {
-                                            this.loadTables(serviceUrl, selectedTapSchema);
-                                        }}
-                            />
-                        </div>
-                        <div style={{width: 10}}/>
-                        <div style={{flexGrow: 1}}>
-                            <NameSelectField
-                                fieldKey='tableName'
-                                type='Table'
-                                options={tableOptions}
-                                initialState= {{value:tableName}}
-                                onSelect = {(selectedTapTable) => {
-                                    this.loadColumns(serviceUrl, schemaName, selectedTapTable);
-                                }}
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                <div className='TapSearch__section' style={{flexDirection: 'column', flexGrow: 1}}>
-                    <div style={{ display: 'inline-flex', width: 'calc(100% - 3px)', justifyContent: 'space-between'}}>
-                        <div className='TapSearch__section--title'>4. Select Constraints <HelpIcon helpId={tapHelpId('constraints')}/> </div>
-                        <TableColumnsConstraintsToolbar key={tableName}
-                                                        tableName={tableName}
-                                                        columnsModel={columnsModel}
-                        />
-                    </div>
-                    <div className='expandable'>
-                        <SplitPane split='vertical' maxSize={splitMax} mixSize={20} defaultSize={splitDef}>
-                            <SplitContent>
-                                {columnsModel ?  <TableSearchMethods columnsModel={columnsModel} initArgs={initArgs}/>
-                                    : <div className='loading-mask'/>
-                                }
-                            </SplitContent>
-                            <SplitContent>
-                                { columnsModel ?
-                                    <TableColumnsConstraints
-                                        key={tableName}
-                                        fieldKey={'tableconstraints'}
-                                        columnsModel={columnsModel}
-                                    />
-                                    : <div className='loading-mask'/>
-
-                                }
-                            </SplitContent>
-                        </SplitPane>
-                    </div>
-                </div>
-
-            </Fragment>
-        );
-    }
-
-    loadSchemas(serviceUrl, schemaName=undefined, tableName=undefined) {
-        this.setState({error: undefined, schemaOptions: undefined, schemaName: undefined,
-            tableOptions: undefined, tableName: undefined, columnsModel: undefined});
+    const loadSchemas = (requestServiceUrl, requestSchemaName=undefined, requestTableName=undefined) => {
+        setError(undefined)
+        setSchemaOptions(undefined)
+        setTableName(undefined)
+        setTableOptions(undefined)
+        setColumnsModel(undefined)
         dispatchValueChange({groupKey: gkey, fieldKey: 'tableName', value: undefined});
 
-        loadTapSchemas(serviceUrl).then((tableModel) => {
-            if (this.props.serviceUrl !== serviceUrl || !this.iAmMounted) {
-                // no action if another TAP service is now used
+        loadTapSchemas(requestServiceUrl).then((tableModel) => {
+            if (serviceUrlRef.current !== requestServiceUrl) {
+                // stale request which won't reflect UI state if processed
                 return;
             }
             if (tableModel.error) {
-                this.setState({error: tableModel.error});
+                setError(tableModel.error)
             } else  {
                 const schemas = getColumnValues(tableModel, 'schema_name');
-                const schemaDescriptions = getColumnValues(tableModel, 'description');
-
-                if (schemas.length > 0) {
-                    if (!schemaName || !schemas.includes(schemaName)) { schemaName = schemas[0]; }
-                    this.loadTables(serviceUrl, schemaName, tableName);
-                } else {
-                    schemaName = undefined;
+                if(!(schemas.length > 0)){
+                    requestSchemaName = undefined;
                 }
-
+                // Discover first schema name
+                if (!requestSchemaName || !schemas.includes(requestSchemaName)) {
+                    requestSchemaName = schemas[0];
+                }
+                if (requestTableName) {
+                    setTableName(requestTableName)
+                }
+                const schemaDescriptions = getColumnValues(tableModel, 'description');
                 const schemaOptions = schemas.map((e, i) => {
                     const label = schemaDescriptions[i] ? schemaDescriptions[i] : `[${e}]`;
                     return {label, value: e};
                 });
-
-                this.setState({schemaOptions, schemaName});
+                setSchemaName(requestSchemaName)
+                setSchemaOptions(schemaOptions)
             }
         });
     }
 
-    loadTables(serviceUrl, schemaName, tableName) {
-        this.setState({schemaName, tableOptions: undefined, tableName: undefined, columnsModel: undefined});
+    const loadTables = (requestServiceUrl, requestSchemaName, requestTableName) => {
+        // even if we have the new values - clear the current state
+        setTableName(undefined)
+        setTableOptions(undefined)
+        setColumnsModel(undefined)
         dispatchValueChange({groupKey: gkey, fieldKey: 'tableName', value: undefined});
 
-        loadTapTables(serviceUrl, schemaName).then((tableModel) => {
-            if (this.props.serviceUrl !== serviceUrl || this.state.schemaName !== schemaName || !this.iAmMounted) {
-                // no action if another TAP service or schema are now used
+        loadTapTables(requestServiceUrl, requestSchemaName).then((tableModel) => {
+            if (serviceUrlRef.current !== requestServiceUrl || schemaRef.current !== requestSchemaName){
+                // Processing a stale request - skip
                 return;
             }
             if (!tableModel.error) {
                 const tables = getColumnValues(tableModel, 'table_name');
-                const tableDescriptions = getColumnValues(tableModel, 'description');
-
-                if (tables.length > 0) {
-                    if (!tableName || !tables.includes(tableName)) { tableName = tables[0]; }
-                    this.loadColumns(serviceUrl, schemaName, tableName);
-                } else {
-                    tableName = undefined;
+                if (!(tables.length > 0)) {
+                    requestTableName = undefined;
                 }
-
+                if (!requestTableName || !tables.includes(requestTableName)) {
+                    requestTableName = tables[0];
+                }
+                const tableDescriptions = getColumnValues(tableModel, 'description');
                 const tableOptions = tables.map((e, i) => {
                     const label = tableDescriptions[i] ? tableDescriptions[i] : `[${e}]`;
                     return {label, value: e};
                 });
-
-                this.setState({serviceUrl, serviceLabel:undefined, tableOptions, tableName, columnsModel: undefined});
-                dispatchValueChange({groupKey: gkey, fieldKey: 'tableName', value: tableName});
+                setTableName(requestTableName)
+                setTableOptions(tableOptions)
+                dispatchValueChange({groupKey: gkey, fieldKey: 'tableName', value: requestTableName});
             }
         });
     }
 
-    loadColumns(serviceUrl, schemaName, tableName) {
-        this.setState({tableName, columnsModel: undefined});
-
-        loadTapColumns(serviceUrl, schemaName, tableName).then((columnsModel) => {
-
-            if (this.props.serviceUrl !== serviceUrl || this.state.schemaName !== schemaName ||
-                this.state.tableName !== tableName || !this.iAmMounted) {
-                // no action if another TAP service or schema or table are now used
+    const loadColumns = (requestServiceUrl, requestSchemaName, requestTableName) => {
+        if(columnsModel){
+            setColumnsModel(undefined)
+        }
+        loadTapColumns(requestServiceUrl, requestSchemaName, requestTableName).then((columnsModel) => {
+            if (serviceUrlRef.current !== requestServiceUrl || schemaRef.current !== requestSchemaName || tableRef.current !== requestTableName){
+                // processing a stale request
                 return;
             }
-
-            setTapBrowserState({serviceUrl, schemaOptions: this.state.schemaOptions, schemaName,
-                tableOptions: this.state.tableOptions, tableName, columnsModel});
-            this.setState({columnsModel});
+            setColumnsModel(columnsModel)
+            setTapBrowserState({serviceUrl: requestServiceUrl, schemaName: requestSchemaName, schemaOptions: schemaOptions,
+                tableName: requestTableName, tableOptions: tableOptions, columnsModel: columnsModel});
         });
     }
+    useEffect(() => {
+        // properties changes due to changes in TapSearchPanel
+        if(props.serviceUrl !== serviceUrl) {
+            setServiceUrl(props.serviceUrl)
+        }
+    });
 
+    useEffect(() => {
+        serviceUrl && loadSchemas(serviceUrl, schemaName, tableName);
+    }, [serviceUrl]);
+
+    useEffect(() => {
+        schemaName && loadTables(serviceUrl, schemaName, tableName);
+    }, [schemaName]);
+
+    useEffect(() => {
+        tableName && loadColumns(serviceUrl, schemaName, tableName);
+    }, [tableName]);
+
+    if (error) {
+        return (
+            <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '10px 5px'}}>
+                <b>Error:</b>
+                <pre style={{margin: '7px 0', whiteSpace: 'pre-wrap'}}>{error}</pre>
+            </div>
+        );
+    }
+
+    // need to set initialState on list fields so that the initial value that is not the first index
+    // is set correctly after unmount and mount
+    return (
+        <Fragment>
+            <div className='TapSearch__section'>
+                <div className='TapSearch__section--title'>3. Select Table <HelpIcon helpId={tapHelpId('selectTable')}/> </div>
+                <div style={{display: 'inline-flex', width: '100%', marginRight: 3, maxWidth: 1000}}>
+                    <div style={{flexGrow: 1}}>
+                        <NameSelect type='Schema'
+                                    options={schemaOptions}
+                                    value={schemaName}
+                                    onSelect = {(selectedTapSchema) => {
+                                        setSchemaName(selectedTapSchema)
+                                    }}
+                        />s
+                    </div>
+                    <div style={{width: 10}}/>
+                    <div style={{flexGrow: 1}}>
+                        <NameSelectField
+                            fieldKey='tableName'
+                            type='Table'
+                            options={tableOptions}
+                            initialState= {{value:tableName}}
+                            onSelect = {(selectedTapTable) => {
+                                setTableName(selectedTapTable);
+                            }}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div className='TapSearch__section' style={{flexDirection: 'column', flexGrow: 1}}>
+                <div style={{ display: 'inline-flex', width: 'calc(100% - 3px)', justifyContent: 'space-between'}}>
+                    <div className='TapSearch__section--title'>4. Select Constraints <HelpIcon helpId={tapHelpId('constraints')}/> </div>
+                    <TableColumnsConstraintsToolbar key={tableName}
+                                                    tableName={tableName}
+                                                    columnsModel={columnsModel}
+                    />
+                </div>
+                <div className='expandable'>
+                    <SplitPane split='vertical' maxSize={splitMax} mixSize={20} defaultSize={splitDef}>
+                        <SplitContent>
+                            {columnsModel ?  <TableSearchMethods initArgs={props.initArgs}/>
+                                : <div className='loading-mask'/>
+                            }
+                        </SplitContent>
+                        <SplitContent>
+                            { columnsModel ?
+                                <TableColumnsConstraints
+                                    key={tableName}
+                                    fieldKey={'tableconstraints'}
+                                    columnsModel={columnsModel}
+                                />
+                                : <div className='loading-mask'/>
+
+                            }
+                        </SplitContent>
+                    </SplitPane>
+                </div>
+            </div>
+
+        </Fragment>
+    )
 }
 
 
