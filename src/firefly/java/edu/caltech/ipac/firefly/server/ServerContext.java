@@ -214,6 +214,7 @@ public class ServerContext {
                 File f= new File(getSharedWorkingDir(), FileUtil.getHostname()+"."+ACCESS_TEST_EXT);
                 if (f.canWrite()) f.delete();
                 f.createNewFile();
+                f.deleteOnExit();
             } catch (IOException e) {
                 Logger.error("Could not create a test file in "+ getSharedWorkingDir().toString());
             }

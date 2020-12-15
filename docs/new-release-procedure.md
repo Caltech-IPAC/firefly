@@ -10,9 +10,8 @@
 
 1. **Update Release Notes.**
    In the `rc-yyyy.x` branch, edit the release notes and do the following (firefly/docs/release-notes.md):
-   - Modify the note for the unreleased version to remove the `(unreleased, current development)` from the title
+    - Start a new section for this release
    - After looking at milestone tags make sure all the important changes are included in the notes.
-   - Start a new section for the next release, mark in the title with `(unreleased, current development)`
    - Make sure you edit the docker tags section of this release
    - Update the "Pull Request for this release section", change the text and the URLs for all PR and bug fixes 
    
@@ -20,7 +19,7 @@
    - `gradle :firefly:test`
    
 1. **Commit, Tag**
-   - commit you changes - _example message:_ "Release 2020.1.0: document updates"
+   - commit your changes - _example message:_ "Release 2020.1.0: document updates"
    - tag the `rc-yyyy.m` branch with the release  `release-yyyy.m.r`
    - _example:_ 
       - the second release from branch `rc-2020.2` with the git tagged with `release-2020.2.1`

@@ -7,15 +7,16 @@
 # Releases
 
 ### Version 2020.3
-- October 2020
-- 2020.3.1   
-    - docker tag: `latest`, `release-2020.3.1`
+- 2020.3.2 (December 2020)
+    - docker tag: `latest`, `release-2020.3.2`, `release-2020.3`
+- 2020.3.1 (October 2020)
+    - docker tag: `release-2020.3.1`
     - patch #1 (see [patches](#patches-20203))
-- 2020.3.0  
+- 2020.3.0  (October 2020)
      - docker tag: `release-2020.3.0` 
      - original release
 
-##### _Notes_
+### _Notes_
 - This release contains many bugs fixes and focuses on stability
 - Less lines of source than last release
 - Some significant table updates
@@ -34,6 +35,10 @@
 - Predefined Cell renders ([Firefly-574](https://github.com/Caltech-IPAC/firefly/pull/1015)) 
 
 ##### _Patches 2020.3_
+- 2020.3.2
+     - Fixed: regression bug with [Firefly-523](https://github.com/Caltech-IPAC/firefly/pull/955)
+     - Fixed: small logging cleanup fix
+     - Fixed: for coverage, gridOn option not working for HiPS
 - 2020.3.1
   - Docker startup simplified when mapping directories ([Simplfy Docker file](https://github.com/Caltech-IPAC/firefly/pull/1038)) 
   - Many small bug fixes and regression issues:
