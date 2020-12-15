@@ -55,6 +55,49 @@
                 image : {
                     defaultColorTable : 5
                 },
+                tapObsCore: {
+                    filterDefinitions: [
+                        {
+                            name: 'LSSTCam',
+                            options: [
+                                {label: 'u', value : '367', title: '367nm central value'},
+                                {label: 'g', value : '483', title: '483nm central value'},
+                                {label: 'r', value : '622', title: '622nm central value'},
+                                {label: 'i', value : '755', title: '755nm central value'},
+                                {label: 'z', value : '869', title: '869nm central value'},
+                                {label: 'y', value : '971', title: '971nm central value'},
+                            ],
+                        },
+                        {
+                            name: 'WISE',
+                            options: [
+                                {label: 'W1', value : '3353', title:'3.353 micron central value'},
+                                {label: 'W2', value : '4603', title:'4.603 micron central value'},
+                                {label: 'W3', value : '11561', title:'11.561 micron central value'},
+                                {label: 'W4', value : '22088', title:'22.088 micron central value'},
+                            ]
+                        },
+                    ],
+                    obsCoreCalibrationLevel: {
+                        tooltip: 'Calibration ',
+                        helptext: '1 is raw data; 2 is PVIs; 3 selects difference images and coadds',
+                        level: {
+                            1: {title: 'For Rubin: Raw Data'},
+                            2: {title: 'For Rubin: PVIs'},
+                            3: {title: 'For Rubin: Difference Images and Coadds'},
+                        },
+                    },
+                    obsCoreInstrumentName: {
+                        tooltip: 'LSSTCam, LSSTComCam',
+                        placeholder: 'e.g. LSSTCam',
+                    },
+                    obsCoreSubType: {
+                        tooltip: 'Butler Dataset Type (raw, calexp, etc..)',
+                        placeholder: 'e.g. calexp',
+                        helptext: 'Butler Repo Dataset type',
+                    },
+                    debug: true,
+                },
                 coverage : { // example of using DSS and wise combination for coverage (not that anyone would want to combination)
                     hipsSourceURL : 'http://alasky.u-strasbg.fr/DSS/DSSColor', // url
                     imageSourceParams: {
