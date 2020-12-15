@@ -433,7 +433,7 @@ export function addDrawLayers(request, pv, plot) {
     });
 
 
-    if (request.getGridOn()!==GridOnStatus.FALSE && isImage(plot)) {
+    if (request.getGridOn()!==GridOnStatus.FALSE) {
         const dl = getDrawLayerByType(dlRoot(), WebGrid.TYPE_ID);
         const useLabels= request.getGridOn()===GridOnStatus.TRUE;
         if (!dl) dispatchCreateDrawLayer(WebGrid.TYPE_ID, {useLabels});
