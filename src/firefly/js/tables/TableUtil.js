@@ -1359,8 +1359,7 @@ export function getMetaEntry(tableOrId,metaKey,defVal= undefined) {
  * @return {boolean} value or the meta data or the defVal
  */
 export function getBooleanMetaEntry(tableOrId,metaKey,defVal= false) {
-    const v= getMetaEntry(tableOrId,metaKey,undefined);
-    return (v!==undefined) ? toBoolean(v,Boolean(defVal)) : Boolean(defVal);
+    return toBoolean(getMetaEntry(tableOrId,metaKey,undefined),Boolean(defVal),['true','t','yes','y']);
 }
 
 /**

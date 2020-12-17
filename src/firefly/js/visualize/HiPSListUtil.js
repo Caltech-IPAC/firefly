@@ -1,13 +1,14 @@
 import {get, isArray, isEmpty} from 'lodash';
 import Enum from 'enum';
 import {getAppOptions} from '../core/AppDataCntlr.js';
-import {getTblById, isTableLoaded} from '../tables/TableUtil.js';
+import {getCellValue, getTblById, isTableLoaded} from '../tables/TableUtil.js';
 import {dispatchTableFetch, dispatchTableHighlight} from '../tables/TablesCntlr.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {getColumnIdx} from '../tables/TableUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 import {TABLE_LOADED} from '../tables/TablesCntlr';
+import {isBlankHiPSURL} from './WebPlot.js';
 
 export const HiPSId = 'hips';
 export const HiPSDataType= new Enum([ 'image', 'cube', 'catalog'], { ignoreCase: true });
@@ -17,6 +18,7 @@ export const HiPSSources = ServerParams.IRSA + ',' + ServerParams.CDS;
 const HiPSSurvey = 'HiPS_Surveys_';
 export const IVO_ID_COL= 'CreatorID';
 export const URL_COL= 'Url';
+const BLANK_HIPS_URL= 'ivo://CDS/P/2MASS/color';
 
 export function makeHiPSSurveysTableName(hipsId, sources) {
     const nHipsId = updateHiPSId(hipsId||HiPSId, (sources===ServerParams.ALL ? HiPSSources : sources));
@@ -158,12 +160,23 @@ export function loadHiPSSurverysWithHighlight({dataTypes, id, sources=getDefHiPS
                                   ivoOrUrl, columnName = IVO_ID_COL}) {
     getHiPSSurveysTable(dataTypes, id, sources)
         .then((tableModel) => {
+
+            const highlightAfterBlank= () =>
+                (isBlankHiPSURL(getCellValue(tableModel,0,columnName))) && dispatchTableHighlight(tableModel.tbl_id, 1);
+
+
             if (ivoOrUrl && tableModel && tableModel.tableData) {
                 const hIdx = indexInHiPSSurveys(tableModel, ivoOrUrl, columnName);
 
                 if (hIdx >= 0 && hIdx !== tableModel.highlightedRow) {
                     dispatchTableHighlight(tableModel.tbl_id, hIdx);
                 }
+                else {
+                    highlightAfterBlank();
+                }
+            }
+            else {
+                highlightAfterBlank();
             }
         });
 }
@@ -197,7 +210,7 @@ export function getHiPSSurveysTable(dataTypes, id, sources= getHiPSSources()) {
 export function resolveHiPSIvoURL(ivoOrUrl) {
     if (!ivoOrUrl) return Promise.reject(new Error('empty url'));
     if (ivoOrUrl.startsWith('http')) return Promise.resolve(ivoOrUrl);
-
+    if (isBlankHiPSURL(ivoOrUrl)) ivoOrUrl= BLANK_HIPS_URL;
 
     return getHiPSSurveysTable([HiPSDataType.image, HiPSDataType.cube], 'hipsResolveTable')
         .then( (tableModel) => {

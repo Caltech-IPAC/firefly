@@ -3,6 +3,7 @@
  */
 
 import Enum from 'enum';
+import {isString} from 'lodash';
 import {createImageUrl,initOffScreenCanvas, computeBounding, isQuadTileOnScreen} from './TileDrawHelper.jsx';
 import {primePlot} from '../PlotViewUtil.js';
 import {getVisibleHiPSCells, getPointMaxSide, getHiPSNorderlevel, makeHiPSAllSkyUrlFromPlot} from '../HiPSUtil.js';
@@ -14,6 +15,7 @@ import {isHiPS} from '../WebPlot';
 import {getHipsColorOps} from './HipsColor.js';
 import {makeDevicePt, makeWorldPt} from '../Point.js';
 import {getColorModel} from '../rawData/rawAlgorithm/ColorTable.js';
+import {brighter, darker} from 'firefly/util/Color.js';
 
 
 const noOp= { drawerTile : () => undefined, abort : () => undefined };
@@ -53,8 +55,9 @@ export function createHiPSDrawer(targetCanvas, GPU) {
         const {bias,contrast}= plot.rawData.bandData[0];
         const colorTableId= colorId(plot);
         let doDrawTransitionalImage= false;
+        const {blank}= plot;
 
-        if (useAllSky) {
+        if (useAllSky || blank) {
             drawTiming= DrawTiming.IMMEDIATE;
         }
         else if (tilesToLoad.every( (tile)=> findTileCachedImage(createImageUrl(plot,tile))) ) { // any case with all the tiles
@@ -287,6 +290,10 @@ function drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, hips
     const screenRenderParams= {plotView, plot, targetCanvas, offscreenCanvas, opacity, offsetX, offsetY};
     const drawer= makeHipsRenderer(screenRenderParams, tilesToLoad.length, !plot.asOverlay,
                                    tileProcessInfo, screenRenderEnabled, hipsColorOps);
+    if (plot.blank) {
+        drawer.renderToScreen();
+        return drawer.abort; // this abort function will any async promise calls stop before they draw
+    }
     
     if (useAllSky) {
         const allSkyURL= makeHiPSAllSkyUrlFromPlot(plot);
@@ -354,39 +361,50 @@ function drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, hips
  * @param overlayTransparent
  */
 function makeOffScreenCanvas(plotView, plot, overlayTransparent) {
-
-
-
-    const colorTableId= colorId(plot);
-    let backgroundColor= [0,0,0];
-    if (colorTableId>-1) {
-        const cm= getColorModel(colorTableId);
-        backgroundColor=[Math.trunc(cm[0]*255),Math.trunc(cm[1]*255),Math.trunc(cm[2]*255)];
-    }
-
     const offscreenCanvas = initOffScreenCanvas(plotView.viewDim);
-    const offscreenCtx = offscreenCanvas.getContext('2d');
+    const ctx = offscreenCanvas.getContext('2d');
 
     const {viewDim:{width,height}}=  plotView;
 
-    const [r,g,b]= backgroundColor;
-    offscreenCtx.fillStyle = overlayTransparent ? 'rgba(0,0,0,0)'  : 'rgba(227,227,227,1)';
-    // offscreenCtx.fillRect(0, 0, width, height);
-
-
     const {fov, centerDevPt}= getPointMaxSide(plot,plotView.viewDim);
+
+    const altDevRadius= plotView.viewDim.width/2 + plotView.scrollX - 4;
     if (fov>=180) {
-        const altDevRadius= plotView.viewDim.width/2 + plotView.scrollX;
-        offscreenCtx.fillStyle = 'rgba(227,227,227,1)';
-        offscreenCtx.fillRect(0, 0, width, height);
-        offscreenCtx.save();
-        offscreenCtx.beginPath();
-        offscreenCtx.lineWidth= 5;
-        offscreenCtx.arc(centerDevPt.x, centerDevPt.y, altDevRadius-4, 0, 2*Math.PI, false);
-        offscreenCtx.closePath();
-        offscreenCtx.clip();
+        // const altDevRadius= plotView.viewDim.width/2 + plotView.scrollX;
+        ctx.fillStyle = 'rgba(227,227,227,1)';
+        ctx.fillRect(0, 0, width, height);
+        ctx.save();
+        ctx.beginPath();
+        ctx.lineWidth= 5;
+        ctx.arc(centerDevPt.x, centerDevPt.y, altDevRadius, 0, 2*Math.PI, false);
+        ctx.closePath();
+        ctx.clip();
     }
-    offscreenCtx.fillStyle = overlayTransparent ? 'rgba(0,0,0,0)'  : `rgba(${r},${g},${b},1)`;
-    offscreenCtx.fillRect(0, 0, width, height);
+
+    if (overlayTransparent) {
+        ctx.fillStyle = 'rgba(0,0,0,0)';
+    }
+    else if (plot.blank) {
+        ctx.fillStyle= plot.blankColor;
+        if (fov>=180) {
+            const brightC = brighter(plot.blankColor);
+            const darkerC = darker(plot.blankColor);
+            const gradient = ctx.createRadialGradient(centerDevPt.x, centerDevPt.y, 5, centerDevPt.x, centerDevPt.y, altDevRadius);
+            // gradient.addColorStop(0, plot.blankColor);
+            gradient.addColorStop(0, brightC);
+            gradient.addColorStop(.8, darkerC);
+            gradient.addColorStop(1, darker(darkerC));
+            ctx.fillStyle = gradient;
+        }
+    }
+    else if (colorId(plot)===-1) {
+        ctx.fillStyle = 'rgba(0,0,0,1)';
+    }
+    else {
+        const cm= getColorModel(colorId(plot));
+        const [r,g,b]=[Math.trunc(cm[0]*255),Math.trunc(cm[1]*255),Math.trunc(cm[2]*255)];
+        ctx.fillStyle = `rgba(${r},${g},${b},1)`;
+    }
+    ctx.fillRect(0, 0, width, height);
     return offscreenCanvas;
 }

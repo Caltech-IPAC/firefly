@@ -131,6 +131,61 @@
     </script>
 </template>
 
+<template title="blank hips" class="tpl" id='blank-hips' >
+    <div id="expected" style="position: relative" >
+        <img style="position: absolute; left: 2px" src="./images/blank_coverage.png"/>
+        <div class="source-code indent-3" style="position: absolute; bottom: 0; left: 0">
+            - hips coverage should be blank
+            - try zooming in and out
+            - use layer dialog to change background color
+        </div>
+    </div>
+    <div id="actual" class="flow-h">
+        <div id="gatorTable" class="box"></div>
+        <div id="gatorCoverage" class="box"></div>
+        <div id="gatorXy" class="box"></div>
+    </div>
+    <script>
+        irsaviewer_init();
+
+        onFireflyLoaded = function (firefly) {
+
+            firefly.util.image.initAutoReadout(
+                firefly.ui.DefaultApiReadout,
+                { MouseReadoutComponent:firefly.ui.PopupMouseReadoutMinimal,
+                    showThumb:false,
+                    showMag:false
+                }
+            );
+            const table1Data = firefly.util.table.makeIrsaCatalogRequest('WISE catalog', 'WISE', 'allwise_p3as_psd',
+                { position: '10.68479;41.26906;EQ_J2000',
+                    SearchMethod: 'Cone',
+                    radius: 200
+                },
+                { META_INFO: {CENTER_COLUMN: 'ra;dec;EQJ2000', CatalogOverlayType: 'IRSA', SIMULATED_TABLE:'y'}}
+            );
+
+            firefly.showTable('gatorTable', table1Data,
+                { removable: false,
+                    showTitle:false,
+                    showUnits: true,
+                    showFilters: false,
+                    selectable: false,
+                    expandable: true,
+                    help_id: 'tables'
+                }
+            );
+
+            firefly.showCoverage('gatorCoverage', {gridOn:'FALSE'});
+
+            firefly.addXYPlot('gatorXy', {tbl_id: table1Data.tbl_id,
+                xOptions: 'flip',
+                help_id: 'visualization.xyplotViewer'});
+
+        }
+    </script>
+</template>
+
 
 <template title="IRSA 4 targets 200 arcsec" class="tpl xl " >
     <div id="expected" style="position: relative" >

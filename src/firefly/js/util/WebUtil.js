@@ -8,7 +8,7 @@
  * firefly. It may do import from external packages such as lodash and immutability-helper below
  */
 
-import { fromPairs, get, has, isArray, isBoolean, isEqual, isFunction, isNil, isObject,
+import { fromPairs, get, has, isArray, isUndefined, isBoolean, isEqual, isFunction, isNil, isObject,
     isPlainObject, last, mergeWith, omit, once, set, union } from 'lodash';
 import update from 'immutability-helper';
 
@@ -653,12 +653,14 @@ export const getBoolean = (object, prop, def=undefined) => toBoolean(object && o
  * return true if val is boolean true, or 'true' case-insensitive
  * @param val the value to convert.
  * @param def return def if val is undefined
- * @returns {*}
+ * @param {Array.<String>} [trueList] - a case-insensitive list of string the will parse to true, default is just ['true']
+ * @returns {boolean}
  */
-export function toBoolean(val, def=undefined) {
-    return val === undefined ? def :
-        typeof val === 'boolean'? val :
-        String(val).toLowerCase() === 'true';
+export function toBoolean(val, def=undefined, trueList=['true']) {
+    if (isUndefined(val)) return Boolean(def);
+    if (isBoolean(val)) return val;
+    const lower= trueList.map( (s) => s.toLowerCase());
+    return lower.includes(String(val).toLowerCase());
 }
 
 /**

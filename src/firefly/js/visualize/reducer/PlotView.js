@@ -93,6 +93,7 @@ export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignore
  * the PlotView will convert between HiPS and Image
  * @prop {Object} [menuItemKeys] - defines which menu items shows on the toolbar
  * @prop {boolean} [userCanDeletePlots] - default to true, defines if a PlotView can be deleted by the user
+ * @prop {boolean} [visible] - default to true, defines if a PlotView image layer is visible after it is created
  */
 
 
@@ -108,7 +109,7 @@ export function makePlotView(plotId, req, pvOptions= {}) {
         plotGroupId: req.getPlotGroupId(), //immutable
         drawingSubGroupId: req.getDrawingSubGroupId(), //immutable - todo, string, this is an id, should never change
         plots:[],
-        visible: true,
+        visible: pvOptions.visible ?? true,
         request: req && req.makeCopy(),
         plottingStatusMsg:'Plotting...',
         serverCall:'success', // one of 'success', 'working', 'fail'

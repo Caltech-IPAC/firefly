@@ -32,14 +32,29 @@ const colours = {
 };
 
 
-function toRGBA(/* String */ color, /* Number */ alpha) {
-    const num = parseInt(color[0]==='#' ? color.substr(1) : color, 16);
-    return [num >> 16, num >> 8 & 255, num & 255, alpha];
+function toRGBA(/* String */ color, /* Number */ alpha=1) {
+    if (color.startsWith('rgb')) {
+        const cStrAry= color.substring(color.indexOf('(')+1, color.indexOf(')')).split(',');
+        const intColor= cStrAry.map( (s) => Number(s));
+        if (cStrAry.some( (n) => isNaN(n))) return [0,0,0,1];
+        return intColor;
+    }
+    else {
+        const num = parseInt(color[0]==='#' ? color.substr(1) : color, 16);
+        return [num >> 16, num >> 8 & 255, num & 255, alpha];
+    }
 }
 
 function toRGB(/* String */ color) {
-    const  num = parseInt(color[0]==='#' ? color.substr(1) : color, 16);
-    return [num >> 16, num >> 8 & 255, num & 255];
+    if (color.startsWith('rgb')) {
+        const intColor= toRGBA(color);
+        intColor.length=3;
+        return intColor;
+    }
+    else {
+        const  num = parseInt(color[0]==='#' ? color.substr(1) : color, 16);
+        return [num >> 16, num >> 8 & 255, num & 255];
+    }
 }
 
 function toHex (/* Number */ red, /* Number */ green, /* Number */ blue) {
@@ -52,19 +67,19 @@ function max0(v) {return Math.max(Math.trunc(v), 0);}
 
 export function brighter(colorStr,factor= .7) {
     if (!colorStr) return undefined;
-    var rgb= toRGB(colorStr);
-    var r = rgb[0];
-    var g = rgb[1];
-    var b = rgb[2];
+    const rgb= toRGB(colorStr);
+    let r = rgb[0];
+    let g = rgb[1];
+    let b = rgb[2];
 
     /* From 2D group:
      * 1. black.brighter() should return grey
      * 2. applying brighter to blue will always return blue, brighter
      * 3. non pure color (non zero rgb) will eventually return white
      */
-    var i = 1.0/(1.0-factor);
-    if ( r == 0 && g == 0 && b == 0) {
-        return toHex(min255(i/factor), min255(i/factor), min255(i/factor) ); }
+    const i = 1.0/(1.0-factor);
+    if ( r=== 0 && g=== 0 && b=== 0) {
+        return '#' + toHex(min255(i/factor), min255(i/factor), min255(i/factor) ); }
     if ( r > 0 && r < i ) r = i;
     if ( g > 0 && g < i ) g = i;
     if ( b > 0 && b < i ) b = i;
@@ -89,10 +104,10 @@ export function brighter(colorStr,factor= .7) {
  */
 export function darker(colorStr, factor=.7) {
     if (!colorStr) return undefined;
-    var rgb= toRGB(colorStr);
-    var r = rgb[0];
-    var g = rgb[1];
-    var b = rgb[2];
+    const rgb= toRGB(colorStr);
+    const r = rgb[0];
+    const g = rgb[1];
+    const b = rgb[2];
     return '#'+toHex(max0(r *factor), max0(g *factor), max0(b *factor));
 }
 
@@ -105,18 +120,18 @@ export function darker(colorStr, factor=.7) {
  * @return {*}
  */
 function makeSimpleColorMap(baseColor, mapSize, reverse=false) {
-    var c=[];
+    let c=[];
     if (mapSize<=1) {
         return [baseColor];
     }
     if (validator.isHexColor(baseColor)) {
         if (mapSize>10) mapSize= 10;
 
-        var baseIdx= mapSize/5;
+        let baseIdx= mapSize/5;
 
-        var rgb= toRGB(baseColor);
-        var maxCnt= 0;
-        var minCnt= 0;
+        const rgb= toRGB(baseColor);
+        let maxCnt= 0;
+        let minCnt= 0;
         rgb.forEach( (idx) => {
             if (idx>250) maxCnt++;
             if (idx<5)   minCnt++;
@@ -125,16 +140,16 @@ function makeSimpleColorMap(baseColor, mapSize, reverse=false) {
         if ((maxCnt===1 && minCnt===2) ||(maxCnt===2 && minCnt===1) || maxCnt===3) {
             baseIdx= mapSize-1;
         }
-        else if (minCnt==3) {
+        else if (minCnt===3) {
             baseIdx= 0;
         }
 
 
         c= [];
-        var factor= (mapSize>5) ? .9 : .85;
+        const factor= (mapSize>5) ? .9 : .85;
 
         c[baseIdx]= baseColor;
-        var i;
+        let i;
         for(i= baseIdx+1; (i<mapSize); i++) {
             c[i]= brighter(c[i-1],factor);
         }
@@ -143,7 +158,7 @@ function makeSimpleColorMap(baseColor, mapSize, reverse=false) {
         }
 
         if (reverse && c.length>1) {
-            var cRev= [];
+            const cRev= [];
             i= c.length-1;
             c.forEach((entry) => cRev[i--]= entry);
             c= cRev;
@@ -164,7 +179,7 @@ const [LUMI, CONTRAST, HSP] = [0, 1, 2];
  */
 export function getRGBA(color) {
     const rgbKey = ['rgba(', 'rgb(', '#'];
-    var rgbStr = rgbKey.find((k) => {
+    let rgbStr = rgbKey.find((k) => {
         return color.includes(k);
     });
 
@@ -176,7 +191,7 @@ export function getRGBA(color) {
         rgbStr = '#';
     }
 
-    var rgba = [];
+    let rgba;
     if (rgbStr === '#') {
         rgba = toRGB(color.slice(1));
     } else {
@@ -222,22 +237,22 @@ export function maximizeOpacity(color) {
  * @returns {*}
  */
 function getBWBackground(color, method = LUMI) {
-    var weight;
-    var th;
-    var luma;
+    let weight;
+    let th;
+    let luma;
 
     const rgba = getRGBA(color);
     if (!rgba) {
         return 'rgba(255, 255, 255, 1.0)';
     }
 
-    var linearLuma = (w) => {
+    const linearLuma = (w) => {
         return [R, G, B].reduce((lum, c) => {
             lum += w[c] * rgba[c];
             return lum;
         }, 0.0);
     };
-    var squareLuma = (w) => {
+    const squareLuma = (w) => {
         return [R, G, B].reduce((lum, c) => {
             lum += w[c] * rgba[c] * rgba[c];
             return lum;
@@ -277,18 +292,18 @@ function getBWBackground(color, method = LUMI) {
  * @returns {*}
  */
 function getComplementaryColor(color) {
-    var rgba = getRGBA(color);
+    const rgba = getRGBA(color);
 
     if (!rgba)  return 'rgba(201, 201, 201, 1.0)';   //'#e3e3e3'
-    var rgb = rgba.slice(0, 3);
+    let rgb = rgba.slice(0, 3);
 
-    var RGB2HSV = (rgb) =>
+    const RGB2HSV = (rgb) =>
     {
-        var hsv = {};
-        var maxV = Math.max(...rgb);
-        var minV = Math.min(...rgb);
+        const hsv = {};
+        const maxV = Math.max(...rgb);
+        const minV = Math.min(...rgb);
 
-        var dif = maxV - minV;
+        const dif = maxV - minV;
 
         hsv.saturation = (maxV === 0.0) ? 0 : (100.0 * dif / maxV);
         if (hsv.saturation === 0) {
@@ -307,9 +322,9 @@ function getComplementaryColor(color) {
         return hsv;
     };
 
-    var HSV2RGB = (hsv) => {
-        var rgb = [0, 0, 0];
-        var toRGB = (rgb, r, g, b) => {
+    const HSV2RGB = (hsv) => {
+        let rgb = [0, 0, 0];
+        const toRGB = (rgb, r, g, b) => {
             rgb[R] = r;
             rgb[G] = g;
             rgb[B] = b;
@@ -317,7 +332,7 @@ function getComplementaryColor(color) {
         };
 
         if (hsv.saturation === 0) {
-            var v = Math.round(hsv.value*2.55);
+            let v = Math.round(hsv.value*2.55);
 
             if (hsv.hue === 180.0) {
                 v = 255 - v;
@@ -329,12 +344,12 @@ function getComplementaryColor(color) {
             hsv.value /= 100.0;
 
 
-            let i = Math.floor(hsv.hue);
-            let f = hsv.hue - i;
-            let a = hsv.value * (1.0 - hsv.saturation);
-            let b = hsv.value * (1.0 - hsv.saturation * f);
-            let c = hsv.value * (1.0 - hsv.saturation * (1-f));
-            let d = hsv.value;
+            const i = Math.floor(hsv.hue);
+            const f = hsv.hue - i;
+            const a = hsv.value * (1.0 - hsv.saturation);
+            const b = hsv.value * (1.0 - hsv.saturation * f);
+            const c = hsv.value * (1.0 - hsv.saturation * (1-f));
+            const d = hsv.value;
             switch(i) {
                 case 0:
                     rgb = toRGB(rgb, d, c, a);
@@ -362,7 +377,7 @@ function getComplementaryColor(color) {
         return rgb;
     };
 
-    var HueShift  = (h, s)  => {
+    const HueShift  = (h, s)  => {
         h += s;
 
         while (h >= 360.0) {
@@ -374,7 +389,7 @@ function getComplementaryColor(color) {
         return h;
     };
 
-    var tmphsv = RGB2HSV(rgb);
+    const tmphsv = RGB2HSV(rgb);
     tmphsv.hue = HueShift(tmphsv.hue, 180.0);
     rgb = HSV2RGB(tmphsv);
 

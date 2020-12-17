@@ -200,6 +200,7 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, tile
     //  this object has not properties, just functions to render
     //  ------------------------------------------------------------
     return {
+        renderToScreen,
 
         /**
          *

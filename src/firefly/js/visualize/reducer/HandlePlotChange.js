@@ -8,8 +8,10 @@ import Cntlr, {ExpandType, WcsMatchType, ActionScope} from '../ImagePlotCntlr.js
 import {replacePlotView, replacePrimaryPlot, changePrimePlot, updatePlotViewScrollXY,
         findScrollPtToCenterImagePt, findScrollPtToPlaceOnDevPt,
         updateScrollToWcsMatch, updatePlotGroupScrollXY} from './PlotView.js';
-import {WebPlot, clonePlotWithZoom, isHiPS, isImage,
-    replaceHiPSProjectionUsingProperties, getHiPsTitleFromProperties} from '../WebPlot.js';
+import {
+    WebPlot, clonePlotWithZoom, isHiPS, isImage,
+    replaceHiPSProjectionUsingProperties, getHiPsTitleFromProperties, DEFAULT_BLANK_HIPS_TITLE
+} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {replaceHiPSProjection, changeProjectionCenter} from '../HiPSUtil.js';
 import {updateSet} from '../../util/WebUtil.js';
@@ -372,7 +374,7 @@ function processProjectionChange(state,action) {
  * @return {VisRoot}
  */
 function changeHiPS(state,action) {
-    const {plotId,hipsProperties, coordSys, hipsUrlRoot, cubeIdx, applyToGroup}= action.payload;
+    const {plotId,hipsProperties, coordSys, hipsUrlRoot, cubeIdx, applyToGroup, blank= false, blankColor}= action.payload;
     let {centerProjPt}= action.payload;
     let {plotViewAry}= state;
     const {positionLock}= state;
@@ -381,15 +383,20 @@ function changeHiPS(state,action) {
     const originalPlot= primePlot(pv);
     if (!originalPlot) return state;
 
-    let plot= clone(originalPlot);
+    let plot= {...originalPlot};
     let {plotViewCtx}= pv;
 
     // single plot stuff
 
-    if (hipsUrlRoot) plot.hipsUrlRoot= hipsUrlRoot;
+    if (hipsUrlRoot) {
+        plot.hipsUrlRoot= hipsUrlRoot;
+        plot.blank= blank;
+    }
+
+
     if (hipsProperties) {
         plot.hipsProperties= hipsProperties;
-        plot.title= getHiPsTitleFromProperties(hipsProperties);
+        plot.title= plot.blank ? DEFAULT_BLANK_HIPS_TITLE : getHiPsTitleFromProperties(hipsProperties);
         plot.cubeDepth= Number(hipsProperties?.hips_cube_depth) || 1;
         plot.cubeIdx= Number(hipsProperties?.hips_cube_firstframe) || 0;
         plot= replaceHiPSProjectionUsingProperties(plot, hipsProperties, getCenterOfProjection(plot) );
@@ -401,6 +408,7 @@ function changeHiPS(state,action) {
     if (!isUndefined(cubeIdx) && plot.cubeDepth>1 && cubeIdx<plot.cubeDepth) {
         plot.cubeIdx= cubeIdx;
     }
+    if (!isUndefined(blankColor)) plot.blankColor= blankColor
 
     if (hipsProperties || hipsUrlRoot || !isUndefined(cubeIdx)) {
         plot.plotImageId= `${pv.plotId}--${pv.plotViewCtx.plotCounter}`;

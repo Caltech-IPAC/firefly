@@ -1027,6 +1027,7 @@ export const pvEqualExScroll= memorizeLastCall((pv1,pv2) => {
                 p1.zoomFactor !== p2.zoomFactor ||
                 p1.imageCoordSys !== p2.imageCoordSys ||
                 p1.dataRequested!==p2.dataRequested ||
+                p1.blankColor!==p2.blankColor ||
                 p1.rawData!==p2.rawData ||
                 p1.plotState !== p2.plotState) result= false;
         }
