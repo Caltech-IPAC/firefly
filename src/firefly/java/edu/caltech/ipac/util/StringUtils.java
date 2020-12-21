@@ -912,6 +912,15 @@ public class StringUtils {
         return combineList(STRING_SPLIT_TOKEN,sList);
     }
 
+
+    public static String getShortClassName(String className) {
+        java.util.StringTokenizer st= new java.util.StringTokenizer(className, ".");
+        int len= st.countTokens();
+        for(int i= 0; (i<len-1); st.nextToken(), i++);
+        return st.nextToken();
+    }
+
+
     //=========================================================================================
     //---------- End HandSerialize support methods---------------------------------------------
     //=========================================================================================

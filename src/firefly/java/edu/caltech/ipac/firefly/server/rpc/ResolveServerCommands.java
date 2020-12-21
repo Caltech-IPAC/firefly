@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.server.rpc;
 
 import edu.caltech.ipac.astro.net.HorizonsEphPairs;
 import edu.caltech.ipac.astro.net.Resolver;
+import edu.caltech.ipac.astro.net.TargetNetwork;
 import edu.caltech.ipac.firefly.core.FileAnalysis;
 import edu.caltech.ipac.firefly.core.FileAnalysisReport;
 import edu.caltech.ipac.firefly.data.FileInfo;
@@ -44,8 +45,9 @@ public class ResolveServerCommands {
             try {
                 resolver= (resStr!=null) ? Resolver.parse(resStr) : Resolver.NedThenSimbad;
                 if (resolver==null) resolver= Resolver.NedThenSimbad;
-                ResolvedWorldPt wp= new TargetServicesImpl().resolveName(name, resolver);
 
+                ResolvedWorldPt wp= TargetNetwork.resolveToWorldPt(name,resolver);
+                if (wp==null) throw new Exception("Could not resolve");
                 result.put("data", wp.toString());
                 result.put("success", "true");
                 wrapperAry.add(result);
@@ -72,7 +74,7 @@ public class ResolveServerCommands {
             JSONObject result = new JSONObject();
 
             try {
-                HorizonsEphPairs.HorizonsResults[] horizons_results = HorizonsEphPairs.lowlevelGetEphInfo(sp.getRequired(ServerParams.OBJ_NAME));
+                HorizonsEphPairs.HorizonsResults[] horizons_results = TargetNetwork.getEphInfo(sp.getRequired(ServerParams.OBJ_NAME));
 
                 Map<String, Integer> values = new HashMap<>();
                 for (HorizonsEphPairs.HorizonsResults element : horizons_results) {

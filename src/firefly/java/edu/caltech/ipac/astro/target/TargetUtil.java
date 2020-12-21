@@ -5,6 +5,7 @@ package edu.caltech.ipac.astro.target;
 
 
 import edu.caltech.ipac.astro.CoordException;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.astro.CoordUtil;
 import edu.caltech.ipac.astro.conv.CoordConv;
 import edu.caltech.ipac.astro.conv.LonLat;
@@ -34,7 +35,6 @@ public class TargetUtil {
 
    public static String convertLonToString(double lon, boolean isEquatorial )
                    throws CoordException {
-       int convertionType= isEquatorial ? 2 : 0;
        return CoordUtil.dd2sex(lon, false, isEquatorial, 5);
     }
 
@@ -44,37 +44,20 @@ public class TargetUtil {
         return CoordUtil.dd2sex(lat, true, isEquatorial, 5);
     }
 
-   public static double convertStringToLon(String        hms,
-                                      CoordinateSys coordSystem )
-                                                  throws CoordException {
-       boolean eq= coordSystem.isEquatorial();
-       return CoordUtil.sex2dd(hms,false, eq);
-   }
-
-   public static double convertStringToLat(String        dms,
-                                           CoordinateSys coordSystem )
-                                                  throws CoordException {
-       boolean eq= coordSystem.isEquatorial();
-       return CoordUtil.sex2dd(dms,true, eq);
-   }
-
-    public static String convertLonToString(double lon, edu.caltech.ipac.visualize.plot.CoordinateSys coordSystem) throws CoordException {
+    public static String convertLonToString(double lon, CoordinateSys coordSystem) throws CoordException {
         return convertLonToString(lon,coordSystem.isEquatorial());
     }
-    public static double convertStringToLon(String        hms,
-                                            edu.caltech.ipac.visualize.plot.CoordinateSys coordSystem ) throws CoordException {
+    public static double convertStringToLon(String        hms, CoordinateSys coordSystem ) throws CoordException {
         boolean eq= coordSystem.isEquatorial();
         return CoordUtil.sex2dd(hms,false, eq);
     }
 
-    public static String convertLatToString(double        lat,
-                                            edu.caltech.ipac.visualize.plot.CoordinateSys coordSystem )
+    public static String convertLatToString(double        lat, CoordinateSys coordSystem )
             throws CoordException {
         return convertLatToString(lat,coordSystem.isEquatorial());
     }
 
-    public static double convertStringToLat(String        dms,
-                                            edu.caltech.ipac.visualize.plot.CoordinateSys coordSystem ) throws CoordException {
+    public static double convertStringToLat(String        dms, CoordinateSys coordSystem ) throws CoordException {
         boolean eq= coordSystem.isEquatorial();
         return CoordUtil.sex2dd(dms,true, eq);
     }
@@ -175,7 +158,7 @@ public class TargetUtil {
                                        inP.getLon(), inP.getLat(),
                                        out_sys, out_year, tobs);
            if (coordSystem.equals(CoordinateSys.EQ_J2000)) {
-               outPm= PositionJ2000.DEFAULT_PM;
+               outPm= new ProperMotion(0,0);
            }
            outP=new Position(ret.getLon(), ret.getLat(), outPm,
                              coordSystem, outEpoch);

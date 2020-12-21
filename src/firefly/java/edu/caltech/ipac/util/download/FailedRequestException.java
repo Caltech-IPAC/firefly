@@ -9,9 +9,8 @@ package edu.caltech.ipac.util.download;
  * @version $Id: FailedRequestException.java,v 1.4 2011/05/17 23:48:33 roby Exp $
  */
 public class FailedRequestException extends Exception {
-
-    static public final String SERVICE_FAILED=  "Service Failed";
-    private String detailMessage;
+    private final String detailMessage;
+    private int responseCode= -1;
 
     /**
      * Create a new FailedRequestException Exception.
@@ -19,6 +18,17 @@ public class FailedRequestException extends Exception {
      */
     public FailedRequestException(String userMessage) {
         this(userMessage, "", null);
+    }
+
+    /**
+     * Create a new FailedRequestException Exception.
+     * @param userMessage the error message.
+     * @param detailMessage the user message
+     * @param responseCode the http(s) response code if it exist otherwise -1
+     */
+    public FailedRequestException(String userMessage, String detailMessage, int responseCode) {
+        this(userMessage, detailMessage, null);
+        this.responseCode= responseCode;
     }
 
     /**
@@ -40,6 +50,17 @@ public class FailedRequestException extends Exception {
     }
 
     /**
+     * Create a new FailedRequestException Exception. The detail message will be the cause message
+     * @param mess the error message.
+     * @param e the original Exception
+     * @param responseCode the http(s) response code if it exist otherwise -1
+     */
+    public FailedRequestException(String mess, Throwable e, int responseCode) {
+        this(mess,e);
+        this.responseCode= responseCode;
+    }
+
+    /**
      * Create a new FailedRequestException Exception.
      * @param mess the error message.
      * @param detailMessage the user message
@@ -50,8 +71,7 @@ public class FailedRequestException extends Exception {
         this.detailMessage = detailMessage;
     }
 
-
-    public String     getUserMessage()       { return getMessage(); }
-    public String     getDetailMessage()     { return detailMessage; }
-
+    public String getUserMessage()       { return getMessage(); }
+    public String getDetailMessage()     { return detailMessage; }
+    public int    getResponseCode()     { return responseCode; }
 }

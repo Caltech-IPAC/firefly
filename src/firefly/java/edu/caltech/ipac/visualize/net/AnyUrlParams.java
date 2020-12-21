@@ -14,16 +14,16 @@ import java.util.List;
 import java.util.Map;
 
 public class AnyUrlParams extends BaseNetParams {
-    private static int MAX_LENGTH = 30;
-    private URL _url;
-    private Map<String,String> cookies= null;
+    private final static int MAX_LENGTH = 30;
+    private final URL _url;
+    private final Map<String,String> cookies= new HashMap<>();
     private String _loginName= null;
     private String _securityCookie= null;
     private boolean _checkForNewer= false;
     private List<String> _localFileExtensions = null;
     private String _desc = null;
     private File _dir = null; // if null, the use the default dir
-    private static long _maxSizeToDownload= 0L;
+    private long _maxSizeToDownload= 0L;
     private HttpServiceInput addtlInfo;
 
 
@@ -53,7 +53,7 @@ public class AnyUrlParams extends BaseNetParams {
             loginName= "-"+ _loginName;
         }
 
-        if (_securityCookie!=null && cookies!=null && cookies.containsKey(_securityCookie))  {
+        if (cookies.containsKey(_securityCookie))  {
             securCookie= "-"+ cookies.get(_securityCookie);
         }
 
@@ -63,10 +63,6 @@ public class AnyUrlParams extends BaseNetParams {
         String addtlKeys = addtlInfo == null ? "" : addtlInfo.getDesc();
         int originalHashCode = (_url.getHost() + loginName + baseKey + addtlKeys).hashCode();
         baseKey= baseKey.replaceAll("[ :\\[\\]\\/\\\\|\\*\\?\\+<>]", "");
-
-
-
-
         if (baseKey.length()>MAX_LENGTH) {
             baseKey= baseKey.substring(0,MAX_LENGTH);
         }
@@ -103,16 +99,7 @@ public class AnyUrlParams extends BaseNetParams {
     public void setCheckForNewer(boolean check) { _checkForNewer= check; }
     public boolean getCheckForNewer() { return _checkForNewer; }
 
-    public boolean isCompressedFileName() {
-        return getUniqueString().toLowerCase().endsWith(FileUtil.GZ);
-    }
-
-    public void addCookie(String key, String value) {
-        if (cookies==null) {
-            cookies= new HashMap<String, String>(31);
-        }
-        cookies.put(key,value);
-    }
+    public void addCookie(String key, String value) { cookies.put(key,value); }
 
 
     public Map<String, String> getHeaders() {
@@ -120,29 +107,21 @@ public class AnyUrlParams extends BaseNetParams {
     }
 
     public Map<String,String> getCookies() {
-        Map<String,String> retval = new HashMap<>();
-        if (cookies != null ) {
-            retval.putAll(cookies);
-        }
-        if (addtlInfo != null && addtlInfo.getCookies() != null) {
-            retval.putAll(addtlInfo.getCookies());
-        }
+        Map<String,String> retval = new HashMap<>(cookies);
+        if (addtlInfo != null && addtlInfo.getCookies() != null) retval.putAll(addtlInfo.getCookies());
         return retval;
     }
 
     public String getAllCookiesAsString() {
-        String retval= null;
-        if (cookies!=null) {
-            StringBuilder sb= new StringBuilder(200);
-            for(Map.Entry<String,String> entry : cookies.entrySet()) {
-                if (sb.length()>0) sb.append("; ");
-                sb.append(entry.getKey());
-                sb.append("=");
-                sb.append(entry.getValue());
-            }
-            retval= sb.toString();
+        if (cookies.size()==0) return null;
+        StringBuilder sb= new StringBuilder(200);
+        for(Map.Entry<String,String> entry : cookies.entrySet()) {
+            if (sb.length()>0) sb.append("; ");
+            sb.append(entry.getKey());
+            sb.append("=");
+            sb.append(entry.getValue());
         }
-        return retval;
+        return sb.toString();
     }
 
     public void setLocalFileExtensions(List<String> extList) { _localFileExtensions = extList; }

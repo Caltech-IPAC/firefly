@@ -6,20 +6,12 @@ package edu.caltech.ipac.astro.target;
 
 import java.io.Serializable;
 
-public final class ProperMotion implements Serializable, Cloneable {
+public final class ProperMotion implements Serializable {
 
-    /**
-     * Proper motion in RA [arcsec/yr] 
-     */
     private final float lonPm;
-
-    /**
-     * Proper motion in Dec [arcsec/yr]
-     */
     private final float latPm;
 
     /**
-     *
      * @param lonPm Proper motion in lon [arcsec/yr]
      * @param latPm Proper motion in lat [arcsec/yr]
      */
@@ -28,28 +20,18 @@ public final class ProperMotion implements Serializable, Cloneable {
         this.latPm = latPm;
     }
 
-    /**
-     * Proper motion in Lon [arcsec/yr]
-     */
+    /** * Proper motion in Lon [arcsec/yr] */
     public float getLonPm() { return lonPm; }
 
-    /**
-     * Proper motion in Lat [arcsec/yr]
-     */
+    /** * Proper motion in Lat [arcsec/yr] */
     public float getLatPm() { return latPm; }
 
     public boolean equals(Object o) {
-       boolean retval= false;
-
-       if (o==this) {
-            retval= true;
-       }
-       else if (o!=null && o instanceof ProperMotion) {
+       if (o==this) return true;
+       if (o instanceof ProperMotion) {
            ProperMotion pm= (ProperMotion)o;
-           retval=  ( lonPm == pm.lonPm && latPm == pm.latPm);
+           return ( lonPm == pm.lonPm && latPm == pm.latPm);
        }
-       return retval;
+       return false;
     }
-
-    public Object clone() { return new ProperMotion(lonPm, latPm); }
 }

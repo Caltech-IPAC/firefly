@@ -34,7 +34,7 @@ public class IbeImageGetter {
 
     static final String NaN = "NaN";
     static final String NULL = "null";
-    public static File get(ImageServiceParams params) throws FailedRequestException, IOException {
+    public static FileInfo get(ImageServiceParams params) throws FailedRequestException, IOException {
         boolean isWise= false;
 
 
@@ -136,8 +136,7 @@ public class IbeImageGetter {
                   dataParam.setCutout(true, params.getRaJ2000String() + "," + params.getDecJ2000String(), sizeStr);
               }
               dataParam.setDoZip(true);
-              FileInfo result= ibe.getData(dataParam,null);
-              return new File(result.getInternalFilename());
+              return ibe.getData(dataParam,null);
           }
           else {
               throw new FailedRequestException(count>1?"Too many results from "+params.getType():"Area not covered in "+params.getType());
@@ -149,20 +148,4 @@ public class IbeImageGetter {
 
     }
 
-
-
-   public static void main(String args[]) {
-//       WiseImageParams params= new WiseImageParams();
-//       params.setSize(.33F);
-//       params.setBand("1");
-//       params.setBand(WiseImageParams.WISE_3A);
-//       params.setRaJ2000(10.672);
-//       params.setDecJ2000(41.259);
-//       try {
-//           lowlevelGetIbeImage(params, new File("./a.fits.gz"), null);
-//       }
-//       catch (Exception e) {
-//           System.out.println(e);
-//       }
-   }
 }

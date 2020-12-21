@@ -3,10 +3,9 @@
  */
 package edu.caltech.ipac.astro.net;
 
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.HostPort;
-import edu.caltech.ipac.util.download.NetworkManager;
 import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.BufferedReader;
@@ -16,14 +15,18 @@ import java.io.StringReader;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Booth Hartley
  * @version $Id: HorizonsEphPairs.java,v 1.12 2012/03/13 22:23:02 roby Exp $
  */
 public class HorizonsEphPairs {
+
+    public static final String horizonsServer = AppProperties.getProperty("horizons.host", "https://ssd.jpl.nasa.gov");
 
     private static final String PARSE_ERROR= "Error Parsing Name Resolver results";
 
@@ -37,8 +40,7 @@ public class HorizonsEphPairs {
 
 
 
-    public static HorizonsResults[] lowlevelGetEphInfo(String idOrName)
-            throws FailedRequestException {
+    public static HorizonsResults[] lowlevelGetEphInfo(String idOrName) throws FailedRequestException {
 
         boolean isName = true;
         HorizonsResults retval[] = null;
@@ -70,28 +72,16 @@ public class HorizonsEphPairs {
             }
         }
 
-        HostPort server = NetworkManager.getInstance().getServer(
-                NetworkManager.HORIZONS_NAIF);
-
-        StringBuffer data = new StringBuffer(100);
+        Map<String,String> data = new HashMap<>();
 
         try {
-            data.append(URLEncoder.encode("OPTION", "UTF-8"));
-            data.append("=");
-            data.append(URLEncoder.encode("Look up", "UTF-8"));
-            data.append("&");
-            data.append(URLEncoder.encode("OBJECT", "UTF-8"));
-            data.append("=");
-            data.append(URLEncoder.encode(idOrName, "UTF-8"));
+            data.put("OPTION", "Look up");
+            data.put("OBJECT",URLEncoder.encode(idOrName));
 
-
-            //String data = URLEncoder.encode("OBJECT", "UTF-8") + "=" +
-            //              URLEncoder.encode(idOrName, "UTF-8");
-            String urlStr = "https://" +
-                    server.getHost() + ":" + server.getPort() + CGI_CMD;
+            String urlStr = horizonsServer + CGI_CMD;
             URL url = new URL(urlStr);
             String line;
-            String result = URLDownload.getStringFromURLUsingPost(url, data.toString(), null);
+            String result = URLDownload.getDataFromURL(url, data,null,null).getResultAsString();
             BufferedReader rd = new BufferedReader(new StringReader(result));
 
 

@@ -5,14 +5,10 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.cache.Cache;
-import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.download.CacheHelper;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 /**
@@ -53,19 +49,7 @@ public class VisContext {
     static public void init() {
         if (!_initialized) {
             System.setProperty("java.awt.headless", "true");
-
-            Logger.LoggerImpl log= Logger.getLogger();
-
-            File cacheDir= ServerContext.getVisCacheDir();
-
-            Cache objCache= CacheManager.getCache(Cache.TYPE_PERM_LARGE);
-            Cache fileCache=  CacheManager.getCache(Cache.TYPE_PERM_FILE);
-
-            CacheHelper.setFileCache(fileCache);
-            CacheHelper.setObjectCache(objCache);
-            CacheHelper.setCacheDir(cacheDir);
-            CacheHelper.setSupportsLifespan(true);
-
+            CacheHelper.setCacheDir(ServerContext.getVisCacheDir());
             _initialized= true;
         }
 

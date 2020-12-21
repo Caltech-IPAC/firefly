@@ -119,7 +119,7 @@ public class ZipHandler {
                 URL url = new URL(filename);
                 Map<String, String> cookies = fi.getRequestInfo() != null ? fi.getRequestInfo().getCookies() : null;
                 Map<String, String> headers = fi.getRequestInfo() != null ? fi.getRequestInfo().getHeaders() : null;
-                URLConnection uc = URLDownload.makeConnection(url, cookies, headers, false);
+                URLConnection uc = URLDownload.makeConnection(url, cookies, headers);
                 uc.setRequestProperty("Accept", "text/plain");
 
                 if (fi.hasFileNameResolver()) {

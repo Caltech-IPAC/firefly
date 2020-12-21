@@ -6,8 +6,6 @@ package edu.caltech.ipac.visualize.draw;
 import edu.caltech.ipac.astro.CoordException;
 import edu.caltech.ipac.astro.target.TargetUtil;
 import edu.caltech.ipac.firefly.visualize.Band;
-import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.util.SUTDebug;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImageHeader;
@@ -21,7 +19,7 @@ import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 
-import java.awt.*;
+import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -35,24 +33,15 @@ import java.util.HashMap;
  * Moved from spot-common AreaStatisticsDialog
  */
 public class AreaStatisticsUtil {
-
-
-
-    public enum WhichReadout {LEFT, RIGHT }
     public enum WhichDir {LON, LAT }
     public enum ReadoutMode {HMS, DECIMAL }
-    private static NumberFormat  _nf   = NumberFormat.getInstance();// OK for i18n
-    private static NumberFormat  _nfExp= NumberFormat.getInstance();// OK for i18n
-
+    private static final NumberFormat  _nf   = NumberFormat.getInstance();// OK for i18n
 
     public enum AreaBand {
         RED(Band.RED, "red"),
         GREEN(Band.GREEN, "green"),
         BLUE(Band.BLUE, "blue"),
         NO_BAND(Band.NO_BAND, "") ;
-
-        Band getBand() { return _band;}
-        String getLabel() {return _label;}
 
         AreaBand(Band band, String label) {
             _band = band;
@@ -70,49 +59,18 @@ public class AreaStatisticsUtil {
     // will be displayed as a number of JTextPanes
     // positioned using 4x3 GridLayout
 
-    // define rows of GridLayout
-    private static final int MAX = 0;
-    private static final int MIN = 1;
-    private static final int CENTROID = 2;
-    private static final int FW_CENTROID = 3;
-    private static final int [] rows = {MAX, MIN, CENTROID, FW_CENTROID};
-    //private static final String [] names = {"MAX", "MIN", "FC", "FWC"};
 
-    // define columns of GridLayout
-    private static final int NAME = 0;
-    private static final int WORLD_COORD = 1;
-    private static final int IMAGE_COORD = 2;
-    private static final int [] columns = {NAME, WORLD_COORD, IMAGE_COORD};
-
-    // define mean, standard deviation, and integrated flux fields, displayed in the head
-    private static final int MEAN = 0;
-    private static final int STDEV = 1;
-    private static final int INTEGRATED_FLUX = 2;
-    private static final int [] hcolumns = {MEAN, STDEV, INTEGRATED_FLUX};
-
-    // text fields
-
-
-
-    public static String formatPosHtml(WhichReadout which, Plot plot, ImageWorkSpacePt ip) {
-//        return "todo: fixe";
-        return formatReadoutByImagePt(which, plot, ip, "<br>");
-    }
-
-    private static String formatPos(WhichReadout which, Plot plot, ImageWorkSpacePt ip) {
-//        return "todo: fixe";
-        return formatReadoutByImagePt(which, plot, ip, ", ");
+    public static String formatPosHtml(Plot plot, ImageWorkSpacePt ip) {
+        return formatReadoutByImagePt(plot, ip, "<br>");
     }
 
 
-    public static String formatReadoutByImagePt(WhichReadout which,
-				 Plot plot, ImageWorkSpacePt ipt, String separator) {
+    public static String formatReadoutByImagePt(Plot plot, ImageWorkSpacePt ipt, String separator) {
         String retval;
         try {
             Point2D screenPt = null;
             ReadoutMode readoutMode = ReadoutMode.HMS;
             CoordinateSys coordSys= CoordinateSys.EQ_J2000;
-            if (coordSys == null)  coordSys= plot.getCoordinatesOfPlot();
             if (coordSys.equals(CoordinateSys.SCREEN_PIXEL)) {
                 screenPt = plot.getScreenCoords(ipt);
             }
@@ -154,7 +112,6 @@ public class AreaStatisticsUtil {
                     retStr= getDecimalXY(getValue(degPt,dir), dir, coordSys);
                 }
                 else {
-                    Assert.tst(false);
                     retStr= null;
                 }
             } catch (ProjectionException pe) {
@@ -175,9 +132,6 @@ public class AreaStatisticsUtil {
         else if (dir==WhichDir.LAT) {
             desc= coordSys.getlatShortDesc();
         }
-        else {
-            Assert.tst(false);
-        }
         return desc + _nf.format(val);
     }
 
@@ -193,7 +147,6 @@ public class AreaStatisticsUtil {
                         TargetUtil.convertLatToString(val, coordSys.isEquatorial());
             }
             else {
-                Assert.tst(false);
                 retStr= null;
             }
         } catch (CoordException ce) {
@@ -213,7 +166,6 @@ public class AreaStatisticsUtil {
             val= pt.getY();
         }
         else {
-            Assert.tst(false);
             val= 0;
         }
         return val;
@@ -228,7 +180,6 @@ public class AreaStatisticsUtil {
             val= pt.getY();
         }
         else {
-            Assert.tst(false);
             val= 0;
         }
         return val;
@@ -269,23 +220,6 @@ public class AreaStatisticsUtil {
 
 
 
-    class PlotListItem {
-        ImagePlot _plot;
-        AreaBand _band;
-
-        public PlotListItem(ImagePlot plot, AreaBand band) {
-            this._plot = plot;
-            this._band = band;
-        }
-
-        ImagePlot getPlot() {return this._plot;}
-        AreaBand getBand() {return this._band; }
-
-        boolean equals(PlotListItem pli) {
-            return pli != null && pli.getPlot() == this._plot &&
-                    pli.getBand().getBand() == this._band.getBand();
-        }
-    }
 
     private static boolean rotatedEllipseContains(Ellipse2D.Double shape, double x, double y, double rAngle) {
         double nAngle = Math.PI*2 - rAngle;
@@ -374,7 +308,6 @@ public class AreaStatisticsUtil {
                     } else {
                         flux = plot.getFlux(frGroup, selectedBand, new ImageWorkSpacePt(x, y));
                     }
-                    //if (SUTDebug.isDebug()) System.out.println("x = "+x+";   y = "+y);
                     if (Double.isNaN(flux))
                     {
                         continue;
@@ -429,7 +362,6 @@ public class AreaStatisticsUtil {
 
         // pixel area in steradian
 	double pixelArea =  Math.abs(imageHdr.cdelt1*DtoR*imageHdr.cdelt2*DtoR);
-	if (SUTDebug.isDebug()) System.out.println("pixelArea (STER)="+pixelArea);
 	//double integratedFlux = nPixels*pixelArea*fluxSum;
 	// Schuyler: avoid double counting the number of pixels, which is already implicitly included in fluxSum
 	double integratedFlux = pixelArea*fluxSum;

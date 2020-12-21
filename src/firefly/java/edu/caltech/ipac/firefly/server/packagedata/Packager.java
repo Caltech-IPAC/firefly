@@ -3,30 +3,30 @@
  */
 package edu.caltech.ipac.firefly.server.packagedata;
 
-import edu.caltech.ipac.firefly.data.FileInfo;
-import edu.caltech.ipac.firefly.server.ws.WsServerParams;
-import edu.caltech.ipac.firefly.server.ws.WsServerUtils;
-import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.core.background.JobAttributes;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.ws.WsServerParams;
+import edu.caltech.ipac.firefly.server.ws.WsServerUtils;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -187,21 +187,24 @@ public class Packager {
             //------------
             if (filename.contains("://")) {
                 Map<String, String> cookies = fileInfo.getRequestInfo() != null ? fileInfo.getRequestInfo().getCookies() : null;
-                Map<String, String> headers = fileInfo.getRequestInfo() != null ? fileInfo.getRequestInfo().getHeaders() : null;
-                URLConnection uc = URLDownload.makeConnection(new URL(filename), cookies, headers, false);
-                uc.setRequestProperty("Accept", "text/plain");
+                Map<String, String> headers = fileInfo.getRequestInfo() != null ? fileInfo.getRequestInfo().getHeaders() : new HashMap<>();
+                Map<String, String> addedHeaders= new HashMap<>(headers) ;
+                addedHeaders.put("Accept", "text/plain");
+                File tempFile = makeSingleTargetFile(stagingDir,fileInfo.getExternalName());
+                targetFile= tempFile;
+                URL url= new URL(filename);
+                FileInfo resultInfo= URLDownload.getDataToFile(url, tempFile, cookies, headers, null, false, false, 0L);
+
                 if (fileInfo.hasFileNameResolver()) {
-                    String suggestedFilename = URLDownload.getSugestedFileName(uc);
+                    String suggestedFilename = resultInfo.getExternalName();
                     if (StringUtils.isEmpty(suggestedFilename)) {
-                        String path = uc.getURL().getPath();
+                        String path = url.getPath();
                         suggestedFilename = path.substring(path.lastIndexOf("/"));
                     }
                     fileInfo.setExternalName(fileInfo.resolveFileName(suggestedFilename));
                     targetFile= makeSingleTargetFile(stagingDir,fileInfo.getExternalName());
-                } else {
-                    targetFile = makeSingleTargetFile(stagingDir,fileInfo.getExternalName());
+                    tempFile.renameTo(targetFile);
                 }
-                URLDownload.getDataToFile(uc, targetFile, false);
             }
             else {
                 targetFile = makeSingleTargetFile(stagingDir,fileInfo.getExternalName());

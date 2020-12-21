@@ -16,8 +16,9 @@ function makeState() {
 }
 
 export const VisHeader= memo( ({
-                     showHeader=true, showPreview=true, showHealpixPixel= getAppOptions().hips?.readoutShowsPixel}) =>{
+                     showHeader=true, showPreview=true, showHealpixPixel}) =>{
 
+    showHealpixPixel= showHealpixPixel ?? getAppOptions()?.hips?.readoutShowsPixel;
     const {vr, currMouseState,readout, readoutData}= useMouseStoreConnector(makeState);
     return (
         <div>

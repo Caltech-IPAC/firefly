@@ -6,12 +6,13 @@ package edu.caltech.ipac.astro.target;
 
 import edu.caltech.ipac.astro.CoordException;
 import edu.caltech.ipac.astro.CoordUtil;
-import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.Assert;
+import edu.caltech.ipac.util.ComparisonUtil;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
 
 import java.io.Serializable;
 
-class Position implements Location, Serializable, Cloneable {
+class Position implements Serializable {
 
     public static final float EPOCH2000= 2000.0F;
     public static final float EPOCH1950= 1950.0F;
@@ -131,11 +132,6 @@ class Position implements Location, Serializable, Cloneable {
      * 
      */
     public CoordinateSys getCoordSystem() { return coordSystem; }
-
-    /**
-     * Implementation of the Cloneable method
-     */
-    public Object clone() { return new Position(this); }
 
 
 

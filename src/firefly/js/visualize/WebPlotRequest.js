@@ -19,11 +19,11 @@ const DEFAULT_HIPS_OVERLAYS= ['ACTIVE_TARGET_TYPE','POINT_SELECTION_TYPE', 'NORT
 
 /**
  * @summary service type
- * @description can be 'IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'DSS_OR_IRIS', 'WISE', 'ATLAS','ZTF', 'PTF', 'UNKNOWN'
+ * @description can be 'IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'WISE', 'ATLAS','ZTF', 'PTF', 'UNKNOWN'
  * @public
  * @global
  */
-export const ServiceType= new Enum(['IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'DSS_OR_IRIS', 'WISE', 'ATLAS', 'ZTF', 'PTF', 'UNKNOWN'],
+export const ServiceType= new Enum(['IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'WISE', 'ATLAS', 'ZTF', 'PTF', 'UNKNOWN'],
                                               { ignoreCase: true });
 /**
  * @summary title options
@@ -368,7 +368,7 @@ export class WebPlotRequest extends ServerRequest {
     static makeAtlasRequest(wp, survey, band, filter, sizeInDeg) {
         const req = this.makePlotServiceReq(ServiceType.ATLAS, wp, survey, sizeInDeg, survey + ',' + band);
         req.setParam(WPConst.SURVEY_KEY, survey);
-        req.setParam('filter', filter); //Needed for the query but not for fetching the data (see QueryIBE metadata)
+        req.setParam(WPConst.FILTER, filter); //Needed for the query but not for fetching the data (see QueryIBE metadata)
         req.setParam(WPConst.SURVEY_KEY_BAND, band + '');
         return req;
     }

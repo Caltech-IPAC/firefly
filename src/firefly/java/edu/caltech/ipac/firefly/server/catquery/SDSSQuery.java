@@ -3,41 +3,57 @@
  */
 package edu.caltech.ipac.firefly.server.catquery;
 
-import edu.caltech.ipac.table.IpacTableUtil;
-import edu.caltech.ipac.table.io.IpacTableReader;
-import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
-import edu.caltech.ipac.firefly.data.*;
+import edu.caltech.ipac.firefly.data.CatalogRequest;
+import edu.caltech.ipac.firefly.data.SDSSRequest;
+import edu.caltech.ipac.firefly.data.ServerParams;
+import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
-import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.query.DataGroupQuery;
-import edu.caltech.ipac.table.DataObject;
-import edu.caltech.ipac.table.DataType;
-import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.table.io.DsvTableIO;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
-import edu.caltech.ipac.util.*;
-import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.table.TableMeta;
+import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.table.io.DsvTableIO;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableWriter;
+import edu.caltech.ipac.table.query.DataGroupQuery;
+import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 import org.apache.commons.csv.CSVFormat;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.URLEncoder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * @author tatianag
@@ -109,13 +125,8 @@ public class SDSSQuery extends IpacTablePartProcessor {
             File csv = createFile(request, ".csv");
             String uploadFname = request.getParam(SDSSRequest.FILE_NAME);
             if (StringUtils.isEmpty(uploadFname)) {
-
-                URL url = createGetURL(request);
-
-                URLConnection conn = URLDownload.makeConnection(url);
-                conn.setRequestProperty("Accept", "*/*");
-
-                URLDownload.getDataToFile(conn, csv);
+                URLDownload.getDataToFile(createGetURL(request), csv, null,
+                        Collections.singletonMap("Accept", "*/*"));
             } else {
                 File uploadFile = ServerContext.convertToFile(uploadFname);
                 File sdssUFile;
@@ -410,22 +421,22 @@ public class SDSSQuery extends IpacTablePartProcessor {
         return String.valueOf(row.getDataElement(cname));
     }
 
-    public static void main(String [] args) {
-        String url = "http://skyserver.sdss3.org/dr10/en/tools/search/x_sql.aspx?format=csv&cmd=SELECT%20p.objId,p.run,p.rerun,p.camcol,p.field,mjd,distance%20FROM%20PhotoObj%20as%20p%20JOIN%20dbo.fGetNearbyObjEq(185.0,-0.5,1)%20AS%20R%20ON%20P.objID=R.objID%20ORDER%20BY%20distance";
-        URLConnection conn;
-        try {
-            conn = URLDownload.makeConnection(new URL(url));
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
-        conn.setRequestProperty("Accept", "text/plain");
-
-        try {
-            URLDownload.getDataToFile(conn, new File("/tmp/a.csv"));
-        } catch (FailedRequestException e) {
-            e.printStackTrace();
-        }
-
-    }
+//    public static void main(String [] args) {
+//        String url = "http://skyserver.sdss3.org/dr10/en/tools/search/x_sql.aspx?format=csv&cmd=SELECT%20p.objId,p.run,p.rerun,p.camcol,p.field,mjd,distance%20FROM%20PhotoObj%20as%20p%20JOIN%20dbo.fGetNearbyObjEq(185.0,-0.5,1)%20AS%20R%20ON%20P.objID=R.objID%20ORDER%20BY%20distance";
+//        URLConnection conn;
+//        try {
+//            conn = URLDownload.makeConnection(new URL(url));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            return;
+//        }
+//        conn.setRequestProperty("Accept", "text/plain");
+//
+//        try {
+//            URLDownload.getDataToFile(conn, new File("/tmp/a.csv"));
+//        } catch (FailedRequestException e) {
+//            e.printStackTrace();
+//        }
+//
+//    }
 }

@@ -9,20 +9,19 @@ package edu.caltech.ipac.firefly.server.rpc;
  */
 
 
-import edu.caltech.ipac.firefly.server.ServCommand;
-import edu.caltech.ipac.firefly.server.SrvParam;
-import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.data.ServerParams;
+import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
+import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.File;
 import java.net.URL;
-import java.util.Map;
 
 /**
  * @author Trey Roby
@@ -48,7 +47,7 @@ public class JsonDataCommands {
                     outfile= File.createTempFile("irsa-toobar", ".js", ServerContext.getPermWorkDir());
                     cache.put(urlKey, outfile);
                 }
-                URLDownload.getDataToFile(new URL(url), outfile, null, null, null, false, true, 0);
+                URLDownload.getDataToFile(new URL(url), outfile);
             } catch (Exception e) {
                 outfile= null;
                 cache.put(urlKey,null);

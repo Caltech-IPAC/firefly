@@ -730,7 +730,6 @@ public class ImagePlot extends Plot implements Serializable {
            _projection= new ImageHeader(fr.getHeader()).createProjection();
            setZoomTo(getInitialZoomLevel());
            plotGroup.addToPlotted();
-           firePlotStatusNewPlot();
        } catch (OutOfMemoryError e) {
            freeResources();
            FitsException fitsE= new FitsException("Out Of Memory");

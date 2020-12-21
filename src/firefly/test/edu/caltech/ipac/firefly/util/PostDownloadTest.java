@@ -33,8 +33,7 @@ public class PostDownloadTest extends ConfigTest {
             // Download sample raw table to local unit test
             tmpRawTable = File.createTempFile("raw-temp-", ".tbl", new File("."));
             URL demo = new URL("http://web.ipac.caltech.edu/staff/ejoliet/demo/AllWISE-MEP-m82-2targets-10arsecs.tbl");
-            URLConnection uc = URLDownload.makeConnection(demo);
-            URLDownload.getDataToFile(uc, tmpRawTable);
+            URLDownload.getDataToFile(demo, tmpRawTable);
             tmpRawTable.deleteOnExit();
         } catch (IOException e) {
             LOG.error(e);

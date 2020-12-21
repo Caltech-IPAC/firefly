@@ -4,13 +4,13 @@
 package edu.caltech.ipac.visualize.net;
 
 
-import edu.caltech.ipac.util.Assert;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.io.VoTableReader;
+import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.CacheHelper;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.HostPort;
-import edu.caltech.ipac.util.download.NetworkManager;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
-import java.net.URLConnection;
 
 /**
  * @author Trey Roby
@@ -27,48 +26,29 @@ import java.net.URLConnection;
  */
 public class SloanDssImageGetter {
 
-    public static File get(SloanDssImageParams params, File outFile) throws FailedRequestException,
-                                                                            IOException {
-        NetworkManager manager = NetworkManager.getInstance();
-        HostPort server = manager.getServer(NetworkManager.SDSS_SERVER);
-        Assert.tst(server);
+    private static final String server = AppProperties.getProperty("sdss.host", "https://cas.sdss.org");
+    private static final String cgiapp = "/vo/dr7siap/siap.asmx/getSiapInfo";
 
-        String req = makeSDssRequest(server, "/vo/dr7siap/siap.asmx/getSiapInfo", params);
-
+    public static FileInfo get(SloanDssImageParams params, File outFile) throws FailedRequestException, IOException {
         try {
+            String req = makeSDssRequest(params);
             SloanDssImageParams qParam= params.makeQueryKey();
-            File f= CacheHelper.getFile(qParam);
-            if (f == null)  {          // if not in cache
-                URL url = new URL(req);
-                URLConnection conn = url.openConnection();
-                if (params.getTimeout() != 0) conn.setReadTimeout(params.getTimeout());
-                int statusCode = conn.getHeaderFieldInt("Status Code",200);
-
-                URLDownload.logHeader(conn);
-
-                if (statusCode!=200) {
-                    String htmlErr = URLDownload.getStringFromOpenURL(conn, null);
-                    throw new FailedRequestException(
-                            htmlErr,
-                            "The SDss server is reporting an error", null);
-                }
-                String newfile= qParam.getUniqueString() + ".xml";
-                f= CacheHelper.makeFile(newfile);
-                URLDownload.getDataToFile(conn, f);
+            File  f= CacheHelper.makeFile(qParam.getUniqueString() + ".xml");
+            FileInfo fi= URLDownload.getDataToFile(new URL(req), f);
+            if (fi.getResponseCode()!=200) {
+                String htmlErr= f.canRead() ? FileUtil.readFile(f) : "Sloan DSS Image Error";
+                throw new FailedRequestException( htmlErr, "The SDss server is reporting an error", null);
             }
-            DataGroup dgAry[]= VoTableReader.voToDataGroups(f.getAbsolutePath());
+            DataGroup[] dgAry= VoTableReader.voToDataGroups(f.getAbsolutePath());
             DataGroup dataGroup= dgAry[0];
             if (dataGroup.size() >0) {
-                String urlString= (String)dataGroup.get(0).getDataElement("url");
-                URLDownload.getDataToFile(new URL(urlString), outFile, true);
-                return outFile;
+                URLDownload.getDataToFile(new URL((String)dataGroup.get(0).getDataElement("url")), outFile);
+                return new FileInfo(outFile);
             }
             else {
                 throw new FailedRequestException("SDSS: Area not covered",
-                                                "votable returned not results, probably area is not covered: ");
+                        "votable returned not results, probably area is not covered: ");
             }
-
-
         } catch (SocketTimeoutException timeOutE) {
             if (outFile.exists() && outFile.canWrite()) outFile.delete();
             throw timeOutE;
@@ -78,17 +58,12 @@ public class SloanDssImageGetter {
 
     }
 
-
-    private static String makeSDssRequest(HostPort server,
-                                          String cgiapp,
-                                          SloanDssImageParams params) {
-        String retval;
-        retval = "https://" + server.getHost() + ":" + server.getPort() + cgiapp +
+    private static String makeSDssRequest(SloanDssImageParams params) {
+        return server + cgiapp +
                 "?POS=" + params.getRaJ2000String() + "," + params.getDecJ2000String() +
                 "&size=" + params.getSizeInDeg() +
                 "&bandpass=" + params.getBand().toString().toLowerCase() +
                 "&format=image/fits";
-        return retval;
     }
 
 

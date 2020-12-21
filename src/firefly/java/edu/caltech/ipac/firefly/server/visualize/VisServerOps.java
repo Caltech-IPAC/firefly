@@ -90,8 +90,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.visualize.Band.NO_BAND;
-import static edu.caltech.ipac.visualize.draw.AreaStatisticsUtil.WhichReadout.LEFT;
-import static edu.caltech.ipac.visualize.draw.AreaStatisticsUtil.WhichReadout.RIGHT;
 
 
 /**
@@ -792,23 +790,23 @@ public class VisServerOps {
 
                 Metric max = metrics.get(Metrics.MAX);
                 ImageWorkSpacePt maxIp = max.getImageWorkSpacePt();
-                html = AreaStatisticsUtil.formatPosHtml(LEFT, plot, maxIp);
-                html = html + token + AreaStatisticsUtil.formatPosHtml(RIGHT, plot, maxIp);
+                html = AreaStatisticsUtil.formatPosHtml(plot, maxIp);
+                html = html + token + AreaStatisticsUtil.formatPosHtml(plot, maxIp);
 
                 Metric min = metrics.get(Metrics.MIN);
                 ImageWorkSpacePt minIp = min.getImageWorkSpacePt();
-                html = html + token + AreaStatisticsUtil.formatPosHtml(LEFT, plot, minIp);
-                html = html + token + AreaStatisticsUtil.formatPosHtml(RIGHT, plot, minIp);
+                html = html + token + AreaStatisticsUtil.formatPosHtml(plot, minIp);
+                html = html + token + AreaStatisticsUtil.formatPosHtml(plot, minIp);
 
                 Metric centroid = metrics.get(Metrics.CENTROID);
                 ImageWorkSpacePt centroidIp = centroid.getImageWorkSpacePt();
-                html = html + token + AreaStatisticsUtil.formatPosHtml(LEFT, plot, centroidIp);
-                html = html + token + AreaStatisticsUtil.formatPosHtml(RIGHT, plot, centroidIp);
+                html = html + token + AreaStatisticsUtil.formatPosHtml(plot, centroidIp);
+                html = html + token + AreaStatisticsUtil.formatPosHtml(plot, centroidIp);
 
                 Metric fwCentroid = metrics.get(Metrics.FW_CENTROID);
                 ImageWorkSpacePt fwCentroidIp = fwCentroid.getImageWorkSpacePt();
-                html = html + token + AreaStatisticsUtil.formatPosHtml(LEFT, plot, fwCentroidIp);
-                html = html + token + AreaStatisticsUtil.formatPosHtml(RIGHT, plot, fwCentroidIp);
+                html = html + token + AreaStatisticsUtil.formatPosHtml(plot, fwCentroidIp);
+                html = html + token + AreaStatisticsUtil.formatPosHtml(plot, fwCentroidIp);
 
                 //Add Lon and Lat strings for WorldPt conversion on the client
                 Pt pt;
@@ -1414,7 +1412,13 @@ public class VisServerOps {
             _log.info(logMsg + ": " + VisContext.PLOT_ABORTED);
         }
         else {
-            _log.warn(e, messages.toArray(new String[messages.size()]));
+            if (e.getMessage().toLowerCase().indexOf("area not covered")>=0) {
+                messages.add(e.getMessage());
+                _log.info( messages.toArray(new String[0]));
+            }
+            else {
+                _log.warn(e, messages.toArray(new String[0]));
+            }
         }
 
 

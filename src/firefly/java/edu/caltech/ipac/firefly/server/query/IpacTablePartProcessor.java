@@ -4,31 +4,37 @@
 package edu.caltech.ipac.firefly.server.query;
 
 
-import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
-import edu.caltech.ipac.table.IpacTableUtil;
-import edu.caltech.ipac.table.io.IpacTableReader;
-import edu.caltech.ipac.table.query.DataGroupQueryStatement;
-import edu.caltech.ipac.table.query.InvalidStatementException;
-import edu.caltech.ipac.table.io.IpacTableException;
-import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.core.SearchDescResolver;
-import edu.caltech.ipac.firefly.data.*;
-import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.DataGroupPart;
-import edu.caltech.ipac.table.TableUtil;
-import edu.caltech.ipac.table.DataObject;
-import edu.caltech.ipac.table.DataType;
-import edu.caltech.ipac.table.query.FilterHanlder;
-import edu.caltech.ipac.table.IpacTableDef;
-import edu.caltech.ipac.table.TableMeta;
+import edu.caltech.ipac.firefly.data.DecimateInfo;
+import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.SortInfo;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.PrivateCache;
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
-import edu.caltech.ipac.util.*;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.IpacTableDef;
+import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.table.TableMeta;
+import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableWriter;
+import edu.caltech.ipac.table.query.DataGroupQueryStatement;
+import edu.caltech.ipac.table.query.FilterHanlder;
+import edu.caltech.ipac.table.query.InvalidStatementException;
+import edu.caltech.ipac.util.CollectionUtil;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
@@ -36,14 +42,29 @@ import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 import org.apache.commons.httpclient.HttpStatus;
 
-import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.URL;
-import java.net.URLConnection;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static edu.caltech.ipac.firefly.data.TableServerRequest.*;
+import static edu.caltech.ipac.firefly.data.TableServerRequest.FILTERS;
+import static edu.caltech.ipac.firefly.data.TableServerRequest.FIXED_LENGTH;
+import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
+import static edu.caltech.ipac.firefly.data.TableServerRequest.META_INFO;
+import static edu.caltech.ipac.firefly.data.TableServerRequest.PAGE_SIZE;
+import static edu.caltech.ipac.firefly.data.TableServerRequest.SORT_INFO;
+import static edu.caltech.ipac.firefly.data.TableServerRequest.START_IDX;
+import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_ID;
 
 
 /**
@@ -81,33 +102,15 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     }
 
     public void downloadFile(URL url, File outFile) throws IOException, EndUserException {
-        URLConnection conn = null;
         try {
             HttpServiceInput inputs = HttpServiceInput.createWithCredential(url.toString());
-            conn = URLDownload.makeConnection(url, inputs.getCookies(), inputs.getHeaders(), false);
-            conn.setRequestProperty("Accept", "*/*");
-            URLDownload.getDataToFile(conn, outFile);
-
-        } catch (MalformedURLException e) {
-            LOGGER.error(e, "Bad URL");
-            throw makeException(e, "Query Failed - bad url.");
-
+            Map<String,String> headers= new HashMap<>();
+            if (inputs.getHeaders()!=null) headers.putAll(inputs.getHeaders());
+            headers.put("Accept", "*/*");
+            URLDownload.getDataToFile(url, outFile,null, headers);
         } catch (FailedRequestException e) {
-            LOGGER.error(e, e.toString());
-            if (conn instanceof HttpURLConnection) {
-                HttpURLConnection httpConn = (HttpURLConnection) conn;
-                int respCode = httpConn.getResponseCode();
-                String desc = respCode == 200 ? e.getMessage() : HttpStatus.getStatusText(respCode);
-                throw new EndUserException("Search Failed: " + desc, e.getDetailMessage(), e);
-            } else {
-                throw makeException(e, "Query Failed - network error.");
-            }
-        } catch (IOException e) {
-            if (conn != null && conn instanceof HttpURLConnection) {
-                HttpURLConnection httpConn = (HttpURLConnection) conn;
-                int respCode = httpConn.getResponseCode();
-                String desc = respCode == 200 ? e.getMessage() : HttpStatus.getStatusText(respCode);
-                throw new EndUserException("Search Failed: " + desc, e.getMessage(), e);
+            if (e.getResponseCode() > -1) {
+                throw new EndUserException("Search Failed: " + HttpStatus.getStatusText(e.getResponseCode()), e.getDetailMessage(), e);
             } else {
                 throw makeException(e, "Query Failed - network error.");
             }

@@ -65,6 +65,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String SURVEY_KEY = "SurveyKey";
     public static final String SURVEY_KEY_ALT = "SurveyKeyAlt";
     public static final String SURVEY_KEY_BAND = "SurveyKeyBand";
+    public static final String FILTER = "filter";
     public static final String TYPE = "Type";
     public static final String ZOOM_TYPE = "ZoomType";
     public static final String SERVICE = "Service";
@@ -379,7 +380,7 @@ public class WebPlotRequest extends ServerRequest {
 
     // TODO this is actually coupled with edu.caltech.ipac.firefly.data.FinderChartRequestUtil.ImageSet.ImageSet and so we need to add imageset here although SEIP, AKARI are using ATLAS services.
     public enum
-            ServiceType {IRIS, SEIP, AKARI, ATLAS, ISSA, DSS, SDSS, TWOMASS, MSX, DSS_OR_IRIS, WISE, ZTF, PTF, UNKNOWN}
+            ServiceType {IRIS, SEIP, AKARI, ATLAS, ISSA, DSS, SDSS, TWOMASS, MSX, WISE, ZTF, PTF, UNKNOWN}
 
     /**
      * @param wp
@@ -403,16 +404,6 @@ public class WebPlotRequest extends ServerRequest {
         // TODO drawingSubGroupId TO BE SET OUTSIDE here! ATLAS has many dataset and it will depend on the app to group those images, example: See ImageSelectPanelResult.js, Finderrchart...
         //req.setDrawingSubGroupId(survey.split(".")[1]); // 'spitzer.seip_science'
         return req;
-    }
-    //======================== DSS or IRIS =====================================
-
-    public static WebPlotRequest makeDSSOrIRISRequest(WorldPt wp,
-                                                      String dssSurvey,
-                                                      String IssaSurvey,
-                                                      float sizeInDeg) {
-        WebPlotRequest r = makePlotServiceReq(ServiceType.DSS_OR_IRIS, wp, dssSurvey, sizeInDeg);
-        r.setSurveyKeyAlt(IssaSurvey);
-        return r;
     }
 
     //======================== All Sky =====================================
@@ -912,9 +903,9 @@ public class WebPlotRequest extends ServerRequest {
         return getParam(SURVEY_KEY_ALT);
     }
 
-    public String getSurveyBand() {
-        return getParam(SURVEY_KEY_BAND);
-    }
+    public String getSurveyBand() { return getParam(SURVEY_KEY_BAND); }
+
+    public void setSurveyBand(String band) { setParam(SURVEY_KEY_BAND,band); }
 
 //======================================================================
 //----------------------- Object & Area Settings -----------------------
