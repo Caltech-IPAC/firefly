@@ -134,21 +134,17 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
 
                 //HttpURLConnection conn = (HttpURLConnection) URLDownload.makeConnection(url);
                 HttpServiceInput inputs = HttpServiceInput.createWithCredential(url.toString());
-                HttpURLConnection conn = (HttpURLConnection)URLDownload.makeConnection(url, inputs.getCookies(), inputs.getHeaders(), false);
-
-                // set connect timeout in milliseconds
-                conn.setConnectTimeout(10000);
                 if (res == null) {
                     // URLDownload throws FailedRequestException for statuses from 300 inclusive to 400 exclusive,
                     // need to check for other failures
-                    FileInfo finfo = URLDownload.getDataToFile(conn, nFile, null, false, true, false, Long.MAX_VALUE);
+                    FileInfo finfo = URLDownload.getDataToFile(url, nFile, inputs.getCookies(), inputs.getHeaders());
                     checkForFailures(finfo);
                     res = nFile;
                     getCache().put(key, res);
                 } else if (checkForUpdates) {
                     FileUtil.writeStringToFile(nFile, "workaround");
                     nFile.setLastModified(res.lastModified());
-                    FileInfo finfo = URLDownload.getDataToFile(conn, nFile, null, false, true, true, Long.MAX_VALUE);
+                    FileInfo finfo = URLDownload.getDataToFile(url, nFile, inputs.getCookies(), inputs.getHeaders(), null, false, true, 0);
                     if (finfo.getResponseCode() != HttpURLConnection.HTTP_NOT_MODIFIED) {
                         checkForFailures(finfo);
                         res = nFile;

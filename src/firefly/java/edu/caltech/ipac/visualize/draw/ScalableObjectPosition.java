@@ -47,19 +47,6 @@ public class ScalableObjectPosition {
       return _viewObject;
    }
 
-   /**
-    * Set the position of a scalable object on a plot.
-    * @param p set the position on this plot
-    * @param ra the ra in J2000
-    * @param dec the dec in J2000
-    */
-   public void setPosition(Plot p, double ra, double dec) {
-      PlotInfo pInfo= _plotMap.get(p);
-      Assert.tst(pInfo);
-      pInfo._pt= new WorldPt(ra,dec); 
-      pInfo._positionSet= true;
-   }
-
     public WorldPt getPosition(Plot p) {
         PlotInfo pInfo= _plotMap.get(p);
         Assert.tst(pInfo);
@@ -75,14 +62,6 @@ public class ScalableObjectPosition {
       for(PlotInfo pInfo: _plotMap.values()) {
           pInfo._pt= new WorldPt(ra,dec);
           pInfo._pt2= null;
-          pInfo._positionSet= true;
-      }
-   }
-
-   public void setScanPosition(WorldPt wpt, WorldPt wpt2) {
-      for(PlotInfo pInfo: _plotMap.values()) {
-          pInfo._pt= wpt;
-          pInfo._pt2= wpt2;
           pInfo._positionSet= true;
       }
    }
@@ -152,20 +131,6 @@ public class ScalableObjectPosition {
    public void repair(Plot p) {
       PlotInfo pInfo= _plotMap.get(p);
       Assert.tst(pInfo);
-//      p.repair(pInfo._repairArea);
-   }
-
-   /**
-    * repair (redraw) all the plots this ScalableObject is drawn on
-    */
-   public void repair() {
-      Plot plot;
-      PlotInfo pInfo;
-      for(Map.Entry<Plot,PlotInfo> entry: _plotMap.entrySet()) {
-          plot= (Plot)entry.getKey();
-          pInfo= (PlotInfo)entry.getValue();
-//          plot.repair(pInfo._repairArea);
-      }
    }
 
    /**
@@ -179,16 +144,6 @@ public class ScalableObjectPosition {
       pInfo._showing= enabled;
    }
 
-   /**
-    * is this ScalableObject enabled/disabled for a given plot
-    * @param p the plot in question
-    * @return boolean true if enabled, false if disabled
-    */
-   public boolean isEnabledForPlot(Plot p) { 
-      PlotInfo pInfo= _plotMap.get(p);
-      Assert.tst(pInfo);
-      return pInfo._showing;
-   }
 
    /**
     * Enable this ScalableObject 
@@ -209,15 +164,6 @@ public class ScalableObjectPosition {
        }
    }
 
-   public void removePlotView(PlotContainer container) {
-       Plot p;
-       Iterator  j= container.iterator();
-       while(j.hasNext()) {
-          p= (Plot)j.next();
-          removePlot(p);
-       }
-   }
-
 
 //===================================================================
 //------------------------- Private Methods -------------------------
@@ -230,14 +176,6 @@ public class ScalableObjectPosition {
         _plotMap.put(p, new PlotInfo());
    }
 
-   /**
-    * remove a plot to draw on
-    * @param p the plot to remove
-    */
-   private void removePlot(Plot p) {
-       PlotInfo pInfo= _plotMap.get(p);
-       _plotMap.remove(p);
-   }
 //===================================================================
 //------------------------- Private Inner class ---------------------
 //===================================================================

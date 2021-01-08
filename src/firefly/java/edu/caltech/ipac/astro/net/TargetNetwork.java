@@ -3,154 +3,64 @@
  */
 package edu.caltech.ipac.astro.net;
 
-import edu.caltech.ipac.astro.target.NedAttribute;
-import edu.caltech.ipac.astro.target.PTFAttribute;
-import edu.caltech.ipac.astro.target.PositionJ2000;
-import edu.caltech.ipac.astro.target.SimbadAttribute;
-import edu.caltech.ipac.util.download.CacheHelper;
+import edu.caltech.ipac.util.cache.Cache;
+import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 
-import javax.swing.JFrame;
+import static edu.caltech.ipac.astro.net.Resolver.NONE;
+import static edu.caltech.ipac.astro.net.Resolver.UNKNOWN;
 
 /*
- * This is the new class that all the Target related network request 
- * go through.  It is a static class that uses 
- * client.net.NetCache to determine if it
- * can get a request from the cache or it has to go to the network.
- * There is one public method here for each network request the 
- * the visualization package does.  When we add a new type of 
- * request we will add new methods here.
+ * This is the class that all the Name resolving related network request
+ * go through. It provides caching for previous successful calls
  */
 public class TargetNetwork {
 
-
     public final static int TWO_MONTHS= 60 * 86400;
+    private final static Cache objCache= CacheManager.getCache(Cache.TYPE_PERM_LARGE);
 
-    public static ResolvedWorldPt resolveToWorldPt(String objName, Resolver resolver) throws FailedRequestException {
-        ResolvedWorldPt retval;
-        PositionJ2000 pos;
-        switch (resolver) {
-            case NED :
-                pos= getNedPosition( new NedParams(objName)).getPosition();
-                retval= new ResolvedWorldPt(pos.getLon(), pos.getLat(),objName,Resolver.NED);
-                break;
-            case Simbad :
-                pos= getSimbadPosition( new SimbadParams(objName)).getPosition();
-                retval= new ResolvedWorldPt(pos.getLon(), pos.getLat(), objName, Resolver.Simbad);
-                break;
-            case SimbadThenNed :
-                retval= getSimbadThenNed(objName);
-                break;
-            case NedThenSimbad :
-                retval= getNedThenSimbad(objName);
-                break;
-            case PTF :
-                pos= getPtfPosition(new PTFParams(objName)).getPosition();
-                retval= new ResolvedWorldPt(pos.getLon(), pos.getLat(), objName, Resolver.PTF);
-                break;
-            case Smart :
-                retval= null;
-                break;
-            case NONE :
-                throw new FailedRequestException("Cannot resolved: resolver set to CLEARED");
-            default:
-                retval= null;
-                Assert.argTst(false, "resolver must be NED, Simbad, or CLEARED");
-                break;
+    public static ResolvedWorldPt resolveToWorldPt(String objName, Resolver resolver) {
+        if (resolver==null || resolver==UNKNOWN || resolver==NONE) {
+            throw new IllegalArgumentException("resolver must be NED, Simbad, SimbadThenNed, NedThenSimbad, or PTF");
         }
-        return retval;
+        ResolvedWorldPt wp;
+        for(Resolver r : resolver.getConcertResolvers()) {
+            switch (r) {
+                case NED : wp= resolve(objName, r, NedNameResolver::resolveName); break;
+                case Simbad : wp=  resolve(objName, r, SimbadNameResolver::resolveName); break;
+                case PTF: wp= resolve(objName, r, PTFNameResolver::resolveName); break;
+                default: wp= null;
+            }
+            if (wp!=null) return wp;
+        }
+        return null;
     }
 
-
-    public static ResolvedWorldPt getNedThenSimbad(String objName) throws FailedRequestException {
-        ResolvedWorldPt wp= null;
-        try {
-            PositionJ2000 pos= getNedPosition( new NedParams(objName)).getPosition();
-            if (pos!=null) wp= new ResolvedWorldPt(pos.getLon(), pos.getLat(), objName, Resolver.NED);
-        } catch (FailedRequestException e) {
-            wp= null;
-        }
-        if (wp==null)  {
-            PositionJ2000 pos= getSimbadPosition( new SimbadParams(objName)).getPosition();
-            if (pos!=null) wp= new ResolvedWorldPt(pos.getLon(), pos.getLat(), objName, Resolver.Simbad);
-        }
-        return wp;
-    }
-
-    public static ResolvedWorldPt getSimbadThenNed(String objName) throws FailedRequestException {
-        ResolvedWorldPt wp= null;
-        try {
-            PositionJ2000 pos= getSimbadPosition(new SimbadParams(objName)).getPosition();
-            if (pos!=null) wp= new ResolvedWorldPt(pos.getLon(), pos.getLat(), objName, Resolver.Simbad);
-        } catch (FailedRequestException e) {
-            wp= null;
-        }
-        if (wp==null) {
-            PositionJ2000 pos= getNedPosition(new NedParams(objName)).getPosition();
-            if (pos!=null) wp= new ResolvedWorldPt(pos.getLon(), pos.getLat(), objName, Resolver.NED);
-        }
-        return wp;
-    }
-
-   public static NedAttribute getNedPosition(NedParams params)
-                                               throws FailedRequestException {
-      NedAttribute na= (NedAttribute) CacheHelper.getObj(params);
-      if (na==null)  {          // if not in cache
-          PositionJ2000 pos= NedNameResolver.getPositionVOTable(params.getName());
-          na= new NedAttribute(pos);
-         CacheHelper.putObj(params,na);
-      }
-      return na;
-   }
-
-   public static SimbadAttribute getSimbadPosition(SimbadParams params)
-                                               throws FailedRequestException {
-       SimbadAttribute sa= (SimbadAttribute)CacheHelper.getObj(params);
-       if (sa == null)  {          // if not in cache
-           sa = SimbadNameResolver.lowlevelNameResolver(params.getName());
-           CacheHelper.putObj(params,sa);
-       }
-       return sa;
-   }
-
-    public static PTFAttribute getPtfPosition(PTFParams params) throws FailedRequestException {
-        PTFAttribute pa= (PTFAttribute)CacheHelper.getObj(params);
-        if (pa == null)  {          // if not in cache
-            pa = PTFNameResolver.lowlevelNameResolver(params.getName());
-            CacheHelper.putObj(params,pa);
-        }
-        return pa;
-    }
-
-   public static HorizonsEphPairs.HorizonsResults[]
-                   getEphIDInfo(String name, boolean showError, JFrame f)
-                                 throws FailedRequestException{
-       return getEphInfo(name,showError,f);
-   }
-
-    public static HorizonsEphPairs.HorizonsResults[]
-                getEphNameInfo(String id, boolean showError, JFrame f) throws FailedRequestException {
-        return getEphInfo(id,showError, f);
-    }
-
-
-    private static HorizonsEphPairs.HorizonsResults[]
-                   getEphInfo(String nameOrId, boolean showError, JFrame f)
-                                     throws FailedRequestException {
-        HorizonsEphPairs.HorizonsResults res[];
+    public static HorizonsEphPairs.HorizonsResults[] getEphInfo(String nameOrId) throws FailedRequestException {
+        HorizonsEphPairs.HorizonsResults[] res;
         HorizonsParams params= new HorizonsParams(nameOrId);
-        res= (HorizonsEphPairs.HorizonsResults[])CacheHelper.getObj(params);
+        res= (HorizonsEphPairs.HorizonsResults[])objCache.get(params);
         if (res==null) {
             res= HorizonsEphPairs.lowlevelGetEphInfo(nameOrId);
-
-            CacheHelper.putObj(params,res,TWO_MONTHS);
+            objCache.put(params,res,TWO_MONTHS);
         }
         return res;
     }
 
+    private interface ResolveCaller { ResolveResult callNetworkResolver(String objName) throws FailedRequestException; }
 
-
-
+    private static ResolvedWorldPt resolve(String objName, Resolver resolver, ResolveCaller r) {
+        try {
+            ResolverParams params= new ResolverParams(objName,resolver);
+            ResolveResult a= (ResolveResult) objCache.get(params);
+            if (a == null)  {          // if not in cache
+                a = r.callNetworkResolver(objName);
+                objCache.put(params,a, TWO_MONTHS);
+            }
+            return (a!=null) ? a.getWorldPt() : null;
+        } catch (FailedRequestException e) {
+            return null;
+        }
+    }
 }

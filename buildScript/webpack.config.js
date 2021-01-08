@@ -139,7 +139,7 @@ export default function makeWebpackConfig(config) {
                     ['@babel/preset-env',
                         {
                             targets: {
-                                browsers: ['safari >= 11', 'chrome >= 67', 'firefox >= 60', 'edge >= 16']
+                                browsers: ['safari >= 12', 'chrome >= 81', 'firefox >= 79', 'edge >= 83']
                             },
                             debug: false,//
                             modules: false,  // preserve application module style - in our case es6 modules

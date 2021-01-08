@@ -74,6 +74,7 @@ public class JsonHelper {
                 current = ((Map)current).get(p);
             }
         }
+        if (current==null) return def;
         return (T) current;
     }
 

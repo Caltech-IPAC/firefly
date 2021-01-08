@@ -3,20 +3,16 @@
  */
 package edu.caltech.ipac.visualize.net;
 
-
-import edu.caltech.ipac.util.Assert;
+import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.HostPort;
-import edu.caltech.ipac.util.download.NetworkManager;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.SocketTimeoutException;
 import java.net.URL;
-import java.net.URLConnection;
 
 /**
  * @author Trey Roby
@@ -24,56 +20,26 @@ import java.net.URLConnection;
  */
 public class DssImageGetter {
 
+    private static final String server = AppProperties.getProperty("dss.host", "https://archive.stsci.edu");
+    private static final String cgiapp= "/cgi-bin/dss_search";
 
-    public static File get(DssImageParams params, File outFile) throws FailedRequestException,
-                                                                       IOException {
-
-      String cgiapp= null;
-      String req   = null;
-      NetworkManager manager= NetworkManager.getInstance();
-      HostPort server= manager.getServer(NetworkManager.DSS_SERVER);
-      Assert.tst(server);
-
-       cgiapp= "/cgi-bin/dss_search";
-       req= makeDssRequest(server, cgiapp, params);
-
-
-      try  {
-         URL             url  = new URL(req);
-         URLConnection   conn = url.openConnection();
-          if (params.getTimeout()!=0) conn.setReadTimeout(params.getTimeout());
-         String contentType = conn.getContentType();
-
-         URLDownload.logHeader(conn);
-
-         if (contentType != null && contentType.startsWith("text/")) {
-               throw new FailedRequestException(
-                         "DSS service failed",
-                         "The Dss server is reporting an error- " +
-                         "the DSS error message was displayed to the user.");
-         }
-
-
-         URLDownload.getDataToFile(conn, outFile);
-         return outFile;
-
-      } catch (SocketTimeoutException timeOutE){
-          if (outFile.exists() && outFile.canWrite()) {
-              outFile.delete();
-          }
-          throw new FailedRequestException( "DSS service timeout", "Timeout", timeOutE);
-      } catch (MalformedURLException me){
-          throw new FailedRequestException( "Invalid URL", "Details in exception", me );
-      }
+    public static FileInfo get(DssImageParams params, File outFile) throws FailedRequestException, IOException {
+        try  {
+            FileInfo fi= URLDownload.getDataToFile(new URL(makeDssRequest(params)), outFile);
+            if (fi.getContentType()!= null && fi.getContentType().startsWith("text/")) {
+                outFile.delete();
+                throw new FailedRequestException( "DSS service failed",
+                    "The Dss server is reporting an error, the error text is in the file, status- " + fi.getResponseCode() );
+            }
+            return fi;
+        } catch (MalformedURLException me){
+            throw new FailedRequestException( "Invalid URL", "Details in exception", me );
+        }
     }
 
 
-    private static String makeDssRequest(HostPort       server,
-                                         String         cgiapp, 
-                                         DssImageParams params) {
-       String retval;
-       retval=  "https://" +
-               server.getHost() + ":" + server.getPort() + cgiapp    +
+    private static String makeDssRequest(DssImageParams params) {
+       return server + cgiapp    +
                "?r="         + params.getRaJ2000String()  +
                "&d="         + params.getDecJ2000String() +
                "&e=J2000&h=" + params.getHeight()         +
@@ -81,7 +47,6 @@ public class DssImageGetter {
                "&f=FITS&v="  + params.getSurvey()         +
                "&s=ON"       +
                "&c=gz";
-       return retval;
     }
 
 

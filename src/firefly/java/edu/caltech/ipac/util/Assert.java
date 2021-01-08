@@ -131,7 +131,7 @@ public class Assert {
             _logger.log("Assert.showMessage: this should never happen");
             System.exit(1);
         }
-        String cName= ServerStringUtil.getShortClassName(ste.getClassName());
+        String cName= StringUtils.getShortClassName(ste.getClassName());
         outList.add(START_STR);
         outList.add(pad(mType) );
         outList.add(pad("!! Class:  " + cName)              );

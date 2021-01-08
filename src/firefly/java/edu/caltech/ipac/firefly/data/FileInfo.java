@@ -15,15 +15,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static edu.caltech.ipac.firefly.data.HttpResultInfo.CONTENT_TYPE;
+import static edu.caltech.ipac.firefly.data.HttpResultInfo.EXTERNAL_NAME;
+import static edu.caltech.ipac.firefly.data.HttpResultInfo.RESPONSE_CODE;
+import static edu.caltech.ipac.firefly.data.HttpResultInfo.RESPONSE_CODE_MSG;
+import static edu.caltech.ipac.firefly.data.HttpResultInfo.SIZE_IN_BYTES;
+
+
 public class FileInfo implements HasAccessInfo, Serializable, CacheKey {
 
     public static final String INTERNAL_NAME= "internalName";
-    public static final String EXTERNAL_NAME= "externalName";
-    public static final String RESPONSE_CODE = "responseCode";
-    public static final String RESPONSE_CODE_MSG = "responseCodeMsg";
     public static final String FILE_DOWNLOADED= "fileDownloaded";
-    public static final String CONTENT_TYPE= "contentType";
-    public static final String SIZE_IN_BYTES= "sizeInBytes";
     public static final String DESC="desc";
     public static final String BLANK="blank";
     public static final String HAS_ACCESS="hasAccess";
@@ -51,15 +53,15 @@ public class FileInfo implements HasAccessInfo, Serializable, CacheKey {
         setSizeInBytes(sizeInBytes);
     }
 
-    public FileInfo(String internalFilename, FileNameResolver resolver, long sizeInBytes) {
-        setInternalName(internalFilename);
-        setSizeInBytes(sizeInBytes);
-        this.resolver = resolver;
-    }
-
+//    public FileInfo(String internalFilename, FileNameResolver resolver, long sizeInBytes) {
+//        setInternalName(internalFilename);
+//        setSizeInBytes(sizeInBytes);
+//        this.resolver = resolver;
+//    }
+//
     public FileInfo(File file, String desc) { this(file, null, desc, 200, "OK", null); }
 
-    public FileInfo(File file) { this(file, file.getName(), 200, "OK"); }
+    public FileInfo(File file) { this(file, file.getName(), 200, ResponseMessage.getHttpResponseMessage(200)); }
 
 
     public FileInfo(File file, String externalName, int responseCode, String responseCodeMsg, String contentType) {
@@ -71,8 +73,9 @@ public class FileInfo implements HasAccessInfo, Serializable, CacheKey {
     }
 
 
-    public FileInfo(File file, int responseCode) {
-        this(file, file!=null?file.getName():"", responseCode, ResponseMessage.getHttpResponseMessage(responseCode));
+    public FileInfo(int responseCode) {
+        this(null,"", responseCode, ResponseMessage.getHttpResponseMessage(responseCode));
+
     }
 
     private FileInfo(File file, String externalName, String desc, int responseCode, String responseCodeMsg, String contentType) {

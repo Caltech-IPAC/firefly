@@ -20,6 +20,13 @@ public class CoordinateSys implements Serializable {
     // =====================================================================
     // --------------- Constants for the parse Method ----------
     // =====================================================================
+    public static final String  EQUATORIAL_NAME = "Equatorial";
+    public static final String  GALACTIC_NAME   = "Galactic";
+    public static final String  ECLIPTIC_NAME   = "Ecliptic";
+    public static final String J2000_DESC = "J2000";
+    public static final String B1950_DESC = "B1950";
+
+
 
     public final static String EQ_J2000_STR = "EQ_J2000";
     public final static String EQ_B1950_STR = "EQ_B1950";
@@ -125,12 +132,12 @@ public class CoordinateSys implements Serializable {
     // ------------------------ Private Variables --------------------------
     // =====================================================================
 
-    private int _jsys;
-    private double _equinox;
-    private String _jsysDesc;
-    private String _lonShortDesc;
-    private String _latShortDesc;
-    private String _shortDesc;
+    private final int _jsys;
+    private final double _equinox;
+    private final String _jsysDesc;
+    private final String _lonShortDesc;
+    private final String _latShortDesc;
+    private final String _shortDesc;
 
     public CoordinateSys(int jsys,
                          double equinox,
@@ -286,6 +293,11 @@ public class CoordinateSys implements Serializable {
     public static boolean isWorld(CoordinateSys csys) {
         return !csys.equals(PIXEL) &&  !csys.equals(SCREEN_PIXEL) &&  !csys.equals(UNDEFINED);
     }
+
+    public double getEquinoxYear() {
+        return this._equinox;
+    }
+
 }
 
 

@@ -1,6 +1,0 @@
-
-HorizonsEphPairs.desc.Name= Ephemeris Name Resolver
-HorizonsEphPairs.build.Name= Building Ephemeris File
-HorizonsEphPairs.loading.Name= Downloading Ephemeris File
-
-HorizonsEphPairs.parse.Error= Error Parsing Name Resolver results

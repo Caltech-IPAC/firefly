@@ -4,8 +4,8 @@
 package edu.caltech.ipac.astro.target;
 
 import edu.caltech.ipac.astro.CoordException;
-import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.ComparisonUtil;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
 
 /**
  * This subclass of Position add three things to Postion
@@ -17,83 +17,37 @@ import edu.caltech.ipac.util.ComparisonUtil;
  */
 public final class PositionJ2000 extends Position {
 
-    public final static ProperMotion DEFAULT_PM= new ProperMotion(0,0);
+    private final static ProperMotion DEFAULT_PM= new ProperMotion(0,0);
 
-    private final UserPosition userEnteredPos;
+    private String userRaStr= null;
+    private String userDecStr= null;
 
     /**
      * @param ra ra in degrees
      * @param dec dec in degrees
      */
     public PositionJ2000( double ra, double dec) {
-        this(ra,dec,DEFAULT_PM);
-    }
-
-    /**
-     * @param ra ra in degrees
-     * @param dec dec in degrees
-     * @param pm the proper motion, null if position contains no proper motion
-     */
-    public PositionJ2000( double        ra,
-                          double        dec,
-                          ProperMotion  pm) {
-        super(ra,dec, pm==null? DEFAULT_PM : pm,
-              CoordinateSys.EQ_J2000, EPOCH2000);
-        Assert.argTst(pm!=null, "Proper Motion should not be null with J2000");
-        userEnteredPos = null;
+        super(ra,dec,DEFAULT_PM, CoordinateSys.EQ_J2000, EPOCH2000);
     }
 
 
-
-    /**
-     * Construct a Position based on a position in another coordinate system.
-     * Do the convertion to a J2000. Save this position for access later.
-     * @param userEnteredPos the position in another coordinate system
-     */
-    public PositionJ2000(UserPosition userEnteredPos) {
-       super( TargetUtil.convertTo(userEnteredPos, CoordinateSys.EQ_J2000) );
-       this.userEnteredPos = userEnteredPos;
+    public PositionJ2000(String raStr, String decStr, ProperMotion pm, CoordinateSys coordSys, float epoch) throws CoordException {
+        super( TargetUtil.convertTo( new Position(
+                TargetUtil.convertStringToLon(raStr, coordSys),
+                TargetUtil.convertStringToLat(decStr, coordSys),
+                pm, coordSys, epoch), CoordinateSys.EQ_J2000));
+        this.userRaStr= raStr;
+        this.userDecStr= raStr;
     }
 
-    /**
-     * Construct a Position based on a position in another coordinate system.
-     * Do the convertion to a J2000. Save this position for access later.
-     * @param pos the position in another coordinate system
-     */
-    public PositionJ2000(Position pos) {
-       super( TargetUtil.convertTo(pos, CoordinateSys.EQ_J2000) );
-       UserPosition up= null;
-       try {
-           up= new UserPosition(pos.convertLonToString(),
-                                pos.convertLatToString(),
-                                pos.getProperMotion(), pos.getCoordSystem(),
-                                pos.getEpoch());
-       } catch (CoordException e) { }
-       userEnteredPos = up;
-    }
+    public String getCoordAtString() {
+        if (userRaStr!=null && userDecStr!=null) {
+            return userRaStr+","+userDecStr;
+        }
+        else {
+            return getLon()+"d"+","+getLat()+"d";
+        }
 
-
-    /**
-     * Get the Position that this PositionJ2000 was constructed with.  If it
-     * was not constructed with a UserPosition or a Position with form another
-     * coordinate system then return a UserPosition that is in J2000
-     * @return UserPosition the user position that was used to construct this
-     *                      PositionJ2000 or a generated UserPosition
-     */
-    public UserPosition getUserEnteredPosition() {
-       UserPosition retval= userEnteredPos;
-       if (retval==null) {
-           try {
-               retval= new UserPosition( getLon()+"d", getLat()+"d",
-                                         getProperMotion(),
-                                         CoordinateSys.EQ_J2000, EPOCH2000);
-           } catch (CoordException e) {
-               Assert.tst(false,
-                 "It should not be posible to get to this point in the code.");
-               retval= null;
-           }
-       }
-       return retval;
     }
 
     /**
@@ -108,42 +62,24 @@ public final class PositionJ2000 extends Position {
     public double getDec() { return getLat(); }
 
 
-    public Object clone() {
-       PositionJ2000 retval= null;
-       if ( userEnteredPos ==null) {
-           retval= new PositionJ2000(getLon(), getLat(),  getProperMotion());
-       }
-       else {
-           retval= new PositionJ2000(userEnteredPos);
-       }
-       return retval;
-    }
-
-
-    
-
     public boolean equals(Object o) {
        boolean retval= false;
 
        if (o==this) {
           retval= true;
        }
-       else if (o!=null && o instanceof PositionJ2000) {
-          retval= super.equals(o);
-          if (retval) {
-                PositionJ2000 p= (PositionJ2000)o;
-                retval= ComparisonUtil.equals( getUserEnteredPosition(),
-                                                p.getUserEnteredPosition());
-          }
-
+       else if (o instanceof PositionJ2000) {
+           retval= super.equals(o);
+           if (retval) {
+               PositionJ2000 p= (PositionJ2000)o;
+               return (ComparisonUtil.equals(userRaStr,p.userDecStr) && ComparisonUtil.equals(userDecStr,p.userDecStr));
+           }
        }
        return retval;
     };
 
     public String toString() {
-       return "J2000 Position: \n" + super.toString() + 
-              "\nOriginal User Postion: \n" + 
-              getUserEnteredPosition().toString();
+       return "J2000 Position: " + super.toString();
 
     }
 }

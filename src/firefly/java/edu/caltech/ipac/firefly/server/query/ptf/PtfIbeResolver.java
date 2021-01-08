@@ -7,21 +7,19 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.table.io.IpacTableReader;
-import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Utility class to get metadata from PTF pids using IBE API.
@@ -63,9 +61,7 @@ public class PtfIbeResolver {
         File tempFile = getTempFile();
         try {
             URL url = createURL(pid);
-            URLConnection aconn = URLDownload.makeConnection(url, getAddtlInputs(url.toString()).getCookies(), getAddtlInputs(url.toString()).getHeaders(), false);
-            aconn.setRequestProperty("Accept", "*/*");
-            URLDownload.getDataToFile(aconn, tempFile);
+            URLDownload.getDataToFile(url, tempFile);
         } catch (Exception e) {
             log.error(e);
         }

@@ -3,108 +3,61 @@
  */
 package edu.caltech.ipac.astro.target;
 
+import edu.caltech.ipac.astro.CoordException;
 import edu.caltech.ipac.util.ComparisonUtil;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
+import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  */
-public class TargetFixedSingle extends    Target
-                               implements Cloneable, Serializable {
-    // class variable definitions //
+public class TargetFixedSingle implements Serializable {
 
-    /**
-     * observation position
-     * @serial
-     */
-    private PositionJ2000 position;
-
-    public TargetFixedSingle() {
-       this(null,null);
-    }
+    private final String name;
+    private final PositionJ2000 position;
 
     public TargetFixedSingle( String name, PositionJ2000 position) {
-        super(name);
+        this.name= name;
         this.position = position;
     }
 
 
-
-    /**
-     * Returns 'type' value -- target type: "Fixed Single" (max 32 chars)
-     */
-    public String getType() {
-        return "Fixed Single";
+    public TargetFixedSingle(String name, String raStr, String decStr, ProperMotion pm, CoordinateSys coordSys, float epoch) throws CoordException {
+        this(name, new PositionJ2000(raStr,decStr,pm,coordSys,epoch));
     }
+
+
+    public TargetFixedSingle( String name, WorldPt wpt) {
+        this.name= name;
+        this.position= new PositionJ2000(wpt.getLon(), wpt.getLat());
+    }
+
+
+    public String getName() { return name; }
 
     /**
      * Returns 'coords' value -- 
      * target coordinates (for user reference) (max 32 chars)
      */
-    public String getCoords() {
-        String retval= "";
-        if (position !=null) {
-           retval = position.getUserEnteredPosition().getUserLonStr()+","+
-                    position.getUserEnteredPosition().getUserLatStr();
-        }
-        return retval;
-    }
-
-    /**
-     * Get the position of the target
-     */
-    public PositionJ2000 getPosition() {
-        return position;
-    }
-
-    /**
-     * Set the position of the target
-     */
-    public void setPosition( PositionJ2000 position ) {
-        this.position = position;
-    }
-
-    /**
-     * Returns target equinox entered by user
-     */
-    public String getCoordSysDescription() {
-        String retval= null;
-        if (position !=null) {
-           retval=
-              position.getUserEnteredPosition().getCoordSystem().toString();
-        }
-        return retval;
-    }
-
-    
-    public Iterator locationIterator() {
-        List<Location> l= new ArrayList<Location>(1);
-        l.add(position);
-        return l.iterator();
-    }
+    public String getCoords() { return (position !=null) ? position.getCoordAtString() : ""; }
 
 
-    /**
-     * Implementation of the cloneable interface
-     */
-    public Object clone() {
-        TargetFixedSingle t= new TargetFixedSingle(getName(), position);
-//        TargetUtil.cloneAllAttributes(this,t);
-        return t;
-    }
+    public String convertLonToString() { return position.convertLonToString(); }
+    public String convertLatToString() { return position.convertLatToString(); }
+
+
+    public WorldPt getWorldPt() { return new WorldPt(position.getRa(), position.getDec(), position.getCoordSystem()); }
 
     public boolean equals(Object o) {
        boolean retval= false;
        if (o==this) {
           retval= true;
        }
-       else if (o!=null && o instanceof TargetFixedSingle) {
+       else if (o instanceof TargetFixedSingle) {
           TargetFixedSingle t= (TargetFixedSingle)o;
           if (super.equals(t)) {
-              retval= ComparisonUtil.equals(position, t.position);
+              retval= ComparisonUtil.equals(position, t.position) && ComparisonUtil.equals(name,t.name);
           }
        }
        return retval;

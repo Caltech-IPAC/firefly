@@ -33,15 +33,14 @@ import java.util.Objects;
  */
 public class LockingVisNetwork {
 
-    private static final Map<BaseNetParams, Object> _activeRequest =
-            Collections.synchronizedMap(new HashMap<BaseNetParams, Object>());
+    private static final Map<BaseNetParams, Object> _activeRequest = Collections.synchronizedMap(new HashMap<>());
 
     public static FileInfo retrieveURL(AnyUrlParams params) throws FailedRequestException {
-        return lockingRetrieve(params, false, null);
+        return lockingRetrieve(params, null);
     }
 
     public static FileInfo retrieve(ImageServiceParams params, ServiceCaller svcCaller) throws FailedRequestException {
-        return lockingRetrieve(params, false, svcCaller);
+        return lockingRetrieve(params, svcCaller);
     }
 
     public static FileInfo retrieveURL(URL url) throws FailedRequestException {
@@ -55,7 +54,7 @@ public class LockingVisNetwork {
 //----------------------- Private Methods ------------------------------
 //======================================================================
 
-    private static FileInfo lockingRetrieve(BaseNetParams params, boolean unzip, ServiceCaller svcCaller) throws FailedRequestException {
+    private static FileInfo lockingRetrieve(BaseNetParams params, ServiceCaller svcCaller) throws FailedRequestException {
         Objects.requireNonNull(params);
         confirmParamsType(params);
         FileInfo retval;
@@ -64,16 +63,12 @@ public class LockingVisNetwork {
             synchronized (lockKey) {
                 DownloadListener dl = null;
                 if (params.getStatusKey() != null) { // todo: the download listener has very specific behavior
-                                                     // todo: it could be generalized by passing a DownloadListener
+                                                     //       it could be generalized by passing a DownloadListener
                     dl = new DownloadProgress(params.getStatusKey(), params.getPlotid());
                 }
-                FileInfo fd= (params instanceof AnyUrlParams) ?
+                retval= (params instanceof AnyUrlParams) ?
                         retrieveURL((AnyUrlParams)params, dl) :
                         retrieveService((ImageServiceParams) params, dl, svcCaller);
-
-                if (unzip) retval= new FileInfo(unzip(fd.getFile()),fd.getExternalName(),fd.getResponseCode(), fd.getResponseCodeMsg());
-                else       retval= fd;
-
             }
         } catch (IOException | SecurityException e) {
             throw ResponseMessage.simplifyNetworkCallException(e);
@@ -89,24 +84,13 @@ public class LockingVisNetwork {
         }
     }
 
-
-    private static File unzip(File f) throws IOException, FailedRequestException {
-        File retval = f;
-        if (FileUtil.getExtension(f).equalsIgnoreCase(FileUtil.GZ)) {
-            if (!FileUtil.computeUnzipFileName(f).canRead()) {
-                retval = FileUtil.gUnzipFile(f);
-            }
-        }
-        return retval;
-    }
-
     private static FileInfo retrieveService(ImageServiceParams params, DownloadListener dl, ServiceCaller svcCaller) throws IOException, FailedRequestException {
-        File f= CacheHelper.getFile(params);
-        if (f == null)  {
-            f= svcCaller.retrieve(params,CacheHelper.makeFitsFile(params));
-            CacheHelper.putFile(params,f);
+        FileInfo fileInfo= CacheHelper.getFileInfo(params);
+        if (fileInfo == null)  {
+            fileInfo= svcCaller.retrieve(params,CacheHelper.makeFitsFile(params));
+            CacheHelper.putFileInfo(params,fileInfo);
         }
-        return new FileInfo(f);
+        return fileInfo;
     }
 
     //======================================
@@ -121,14 +105,14 @@ public class LockingVisNetwork {
      * @throws FailedRequestException when request fails
      */
     private static FileInfo retrieveURL(AnyUrlParams params, DownloadListener dl) throws FailedRequestException {
-        FileInfo fileInfo= CacheHelper.getFileData(params);
+        FileInfo fileInfo= CacheHelper.getFileInfo(params);
         if (fileInfo!=null && !params.getCheckForNewer()) return fileInfo;
 
         try {
             File fileName= (fileInfo==null) ? CacheHelper.makeFile(params.getFileDir(), params.getUniqueString()) : fileInfo.getFile();
             fileInfo= URLDownload.getDataToFile(params.getURL(), fileName, params.getCookies(), params.getHeaders(),
-                                                dl, false,true, params.getMaxSizeToDownload());
-            if (fileInfo.getResponseCode()==200) CacheHelper.putFile(params,fileInfo);
+                                                dl, true, true, params.getMaxSizeToDownload());
+            if (fileInfo.getResponseCode()==200) CacheHelper.putFileInfo(params,fileInfo);
             return fileInfo;
         } catch (Exception e) {
             Logger.warn(e.toString());
@@ -137,7 +121,7 @@ public class LockingVisNetwork {
     }
 
     public interface ServiceCaller {
-        File retrieve(ImageServiceParams p, File suggestedFile) throws  IOException, FailedRequestException;
+        FileInfo retrieve(ImageServiceParams p, File suggestedFile) throws  IOException, FailedRequestException;
     }
 
 

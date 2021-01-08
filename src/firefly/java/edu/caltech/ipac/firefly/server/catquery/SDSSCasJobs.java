@@ -17,6 +17,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Collections;
 import java.util.Date;
 
 /**
@@ -184,11 +185,8 @@ public class SDSSCasJobs {
                 }
                 if (j.getOutputLoc() != null) {
                     try {
-                        URL url = new URL(j.getOutputLoc());
-                        URLConnection conn = URLDownload.makeConnection(url);
-                        conn.setRequestProperty("Accept", "*/*");
-
-                        URLDownload.getDataToFile(conn, outFile);
+                        URLDownload.getDataToFile(new URL(j.getOutputLoc()), outFile, null,
+                                Collections.singletonMap("Accept", "*/*"));
                     } catch (Exception e) {
                         throw new EndUserException("SDSS CasJob query failed",
                                 "Unable to get to download results from url "+j.getOutputLoc());

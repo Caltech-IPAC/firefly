@@ -46,6 +46,25 @@ public class CollectionUtil {
         }
     }
 
+
+    private static void addToStringMap(Map<String,String> map, String [] sAry) {
+        for(int i=0; i<sAry.length; i+=2) {
+            String v= (i+1)<sAry.length ? sAry[i+1] : null;
+            map.put(sAry[i],v);
+        }
+    }
+
+    public static Map<String,String> stringMap(String ...sAry) {
+        Map<String,String> map= new HashMap<>();
+        addToStringMap(map, sAry);
+        return map;
+    }
+    public static Map<String,String> stringMap(Map<String,String> inMap, String ...sAry) {
+        Map<String,String> map= clone(inMap);
+        addToStringMap(map, sAry);
+        return map;
+    }
+
     /**
      * Return the value of the array at the given idx
      * @param ary   The source array

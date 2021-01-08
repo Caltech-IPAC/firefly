@@ -3,34 +3,38 @@
  */
 package edu.caltech.ipac.firefly.server.util;
 
-import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.table.IpacTableUtil;
-import edu.caltech.ipac.table.TableMeta;
-import edu.caltech.ipac.table.query.DataGroupQueryStatement;
-import edu.caltech.ipac.astro.net.NedParams;
-import edu.caltech.ipac.astro.net.SimbadParams;
+import edu.caltech.ipac.astro.net.Resolver;
 import edu.caltech.ipac.astro.net.TargetNetwork;
 import edu.caltech.ipac.astro.target.IpacTableTargetsParser;
-import edu.caltech.ipac.astro.target.NedAttribute;
-import edu.caltech.ipac.astro.target.PositionJ2000;
-import edu.caltech.ipac.astro.target.SimbadAttribute;
-import edu.caltech.ipac.astro.target.Target;
 import edu.caltech.ipac.astro.target.TargetFixedSingle;
-import edu.caltech.ipac.astro.target.TargetList;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.core.background.PackageProgress;
-import edu.caltech.ipac.firefly.data.*;
+import edu.caltech.ipac.firefly.data.CatalogRequest;
+import edu.caltech.ipac.firefly.data.DecimateInfo;
+import edu.caltech.ipac.firefly.data.DownloadRequest;
+import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.SortInfo;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.SelectionInfo;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.query.DataGroupQuery;
-import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.IpacTableUtil;
 import edu.caltech.ipac.table.JsonTableUtil;
-import edu.caltech.ipac.util.*;
+import edu.caltech.ipac.table.TableMeta;
+import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.table.query.DataGroupQuery;
+import edu.caltech.ipac.table.query.DataGroupQueryStatement;
+import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.CollectionUtil;
+import edu.caltech.ipac.util.DataObjectUtil;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.decimate.DecimateKey;
+import edu.caltech.ipac.visualize.plot.WorldPt;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.util.URIUtil;
 import org.json.simple.JSONArray;
@@ -40,10 +44,20 @@ import org.json.simple.parser.ParseException;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.*;
+import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.ACTIVE_REQUEST_CNT;
+import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.ITEMS;
+import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.MESSAGE_CNT;
+import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.PACKAGE_CNT;
+import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.RESPONSE_CNT;
+import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.TOTAL_BYTES;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_ID;
 
 /**
@@ -427,9 +441,8 @@ public class QueryUtil {
 //     * @throws DataAccessException
 //     * @throws IOException
 //     */
-    public static List<TargetFixedSingle> getTargetList(File ufile)
-            throws DataAccessException, IOException {
-        TargetList targetList = new TargetList();
+    public static List<TargetFixedSingle> getTargetList(File ufile) throws DataAccessException{
+        List<TargetFixedSingle> targetList = new ArrayList<>(50);
         String parsingErrors = "";
         ArrayList<TargetFixedSingle> targets = new ArrayList<TargetFixedSingle>();
         final String OBJ_NAME = "objname";
@@ -465,14 +478,12 @@ public class QueryUtil {
             }
             if (targetList.size()==0) throw createEndUserException("Unable to uploaded file:" + ufile.getName());
 
-            for (Target t: targetList) {
+            for (TargetFixedSingle t: targetList) {
                 //check for invalid targets
                 if(t.getCoords() == null || t.getCoords().length() < 1){
                     parsingErrors = parsingErrors + "Invalid Target: " + t.getName() + "<br>";
                 } else {
-                    if (t instanceof TargetFixedSingle) {
-                        targets.add((TargetFixedSingle)t);
-                    }
+                    targets.add(t);
                 }
             }
 
@@ -540,17 +551,11 @@ public class QueryUtil {
                 for (DataType dt : newCols) {
                     if (dt.getKeyName().equals(RA) || dt.getKeyName().equals(DEC)) {
                         if (doNameResolve && nrow.getDataElement(dt) == null) {
-                            PositionJ2000 pos = null;
                             Object objname = row.getDataElement(sourceCName);
-                            NedAttribute na = TargetNetwork.getNedPosition(new NedParams(String.valueOf(objname)));
-                            pos = na.getPosition();
-                            if (pos == null) {
-                                SimbadAttribute sa = TargetNetwork.getSimbadPosition(new SimbadParams(String.valueOf(objname)));
-                                pos = sa.getPosition();
-                            }
-                            if (pos != null) {
-                                nrow.setDataElement(newdg.getDataDefintion(RA), pos.getLon());
-                                nrow.setDataElement(newdg.getDataDefintion(DEC), pos.getLat());
+                            WorldPt wp= TargetNetwork.resolveToWorldPt(String.valueOf(objname), Resolver.NedThenSimbad);
+                            if (wp != null) {
+                                nrow.setDataElement(newdg.getDataDefintion(RA), wp.getLon());
+                                nrow.setDataElement(newdg.getDataDefintion(DEC), wp.getLat());
                             }
                         } else {
                             if (row.containsKey(dt.getKeyName())) {

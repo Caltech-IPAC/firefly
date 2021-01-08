@@ -3,12 +3,15 @@
  */
 package edu.caltech.ipac.astro.target;
 
-import edu.caltech.ipac.astro.net.NedParams;
-import edu.caltech.ipac.astro.net.SimbadParams;
+import edu.caltech.ipac.astro.net.Resolver;
 import edu.caltech.ipac.astro.net.TargetNetwork;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
+import edu.caltech.ipac.visualize.plot.WorldPt;
+
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA. User: tlau Date: Nov 17, 2011 Time: 5:19:29 PM To change this template use File | Settings
@@ -28,13 +31,12 @@ public class IpacTableTargetsParser {
      * @param nedThenSimbad true if use NED then SIMBAD
      * @throws Exception while parsing
      */
-    public static void parseTargets(DataGroup dg, TargetList targets, boolean nedThenSimbad) throws Exception {
+    public static void parseTargets(DataGroup dg, List<TargetFixedSingle> targets, boolean nedThenSimbad) throws Exception {
         /*
             derived from FixedSingleTargetParser.parseTargets(BufferedReader in, TargetList targets)
          */
 
         float epoch = 2000.0F;
-        ProperMotion pm = null;
         int errorsFound = 0;
         StringBuffer errorBuffer = new StringBuffer();
         String coord_system = CoordinateSys.EQUATORIAL_NAME;
@@ -62,25 +64,17 @@ public class IpacTableTargetsParser {
         }
 
 
+        Resolver resolver = nedThenSimbad ? Resolver.NedThenSimbad : Resolver.SimbadThenNed;
         for (DataObject dataObject : dg.values()) {
             if (ra != null) raStr = getValidString(dataObject, ra, true);
             if (dec != null) decStr = getValidString(dataObject, dec, true);
             if (name != null) nameStr = getValidString(dataObject, name);
 
             if (raStr != null && decStr != null) {
-                targets.addTarget(new TargetFixedSingle(nameStr, new PositionJ2000(
-                        new UserPosition(raStr, decStr, pm, coordSys, epoch))));
+                targets.add(new TargetFixedSingle(nameStr, raStr, decStr, null, coordSys, epoch));
             } else if (name != null && nameStr != null) {
-                PositionJ2000 pos = null;
-                if (nedThenSimbad) {
-                    NedAttribute na = TargetNetwork.getNedPosition(new NedParams(nameStr));
-                    pos = na.getPosition();
-                }
-                if (pos == null) {
-                    SimbadAttribute na = TargetNetwork.getSimbadPosition(new SimbadParams(nameStr));
-                    pos = na.getPosition();
-                }
-                targets.addTarget(new TargetFixedSingle(nameStr, pos));
+                WorldPt wp= TargetNetwork.resolveToWorldPt(nameStr, resolver);
+                targets.add(new TargetFixedSingle(nameStr, wp));
             } else {
                 errorBuffer.append("Unable to parse target: [");
                 for (Object o : dataObject.getData()) {

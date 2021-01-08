@@ -45,14 +45,14 @@ public class HiPSRetrieve {
                     }
                     else {
                         retFile.delete();
-                        return new FileInfo(null, rCode);
+                        return new FileInfo(rCode);
                     }
                 case 304:
                     return fi;
                 default:
                     if (retFile!=null)  retFile.delete();
-                    if (rCode==404 && imageRequest(retFile)) return new FileInfo(null, 204);
-                    else return new FileInfo(null, rCode);
+                    if (rCode==404 && imageRequest(retFile)) return new FileInfo(204);
+                    else return new FileInfo(rCode);
             }
         } catch (MalformedURLException | FailedRequestException e) {
             return new FileInfo(null, null, 404, e.toString());

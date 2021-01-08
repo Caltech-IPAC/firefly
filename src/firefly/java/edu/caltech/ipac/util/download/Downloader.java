@@ -16,7 +16,6 @@ import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URLConnection;
 import java.util.Date;
 
 /**
@@ -28,29 +27,15 @@ public class Downloader {
 
     private DataInputStream _in;
     private OutputStream _out;
-    private Object _downloadObj;
-    private long _downloadSize;
+    private final long _downloadSize;
     private long _maxDownloadSize= 0L;
     private DownloadListener downloadListener= null;
     private static final int BUFFER_SIZE = FileUtil.BUFFER_SIZE;
 
-
-
-
-    public Downloader(DataInputStream in,
-                      OutputStream out,
-                      URLConnection conn,
-                      Object downloadObj) {
-        Assert.argTst(out != null && in != null && conn != null,
-                      "in, out, and conn cannot be null");
+    public Downloader(DataInputStream in, OutputStream out, long contentLength) {
         _in = in;
         _out = out;
-        _downloadObj = downloadObj;
-        _downloadSize = conn!=null? conn.getContentLength() : 0;
-    }
-
-    public Downloader(DataInputStream in, OutputStream out, URLConnection conn) {
-        this(in, out, conn, null);
+        _downloadSize = contentLength;
     }
 
     public void setMaxDownloadSize(long maxDownloadSize) { _maxDownloadSize= maxDownloadSize; }
@@ -67,7 +52,7 @@ public class Downloader {
         String outStr;
         Date startDate = null;
         TimeStats timeStats = null;
-        int informInc = (int) (10* FileUtil.MEG) / BUFFER_SIZE;
+        int informInc = (int)(100 * FileUtil.K);
         long totalRead = 0;
         boolean elapseIncreased = false;
         long lastElapse = 0;
@@ -83,8 +68,7 @@ public class Downloader {
             } else {
                 outStr = "Starting download";
             }
-            fireDownloadListeners(0, total, null, outStr,
-                                  _downloadObj, ListenerCall.START);
+            fireDownloadListeners(0, total, null, outStr, ListenerCall.START);
 
             int read;
             byte[] buffer = new byte[BUFFER_SIZE];
@@ -107,9 +91,7 @@ public class Downloader {
                                 "URL does not have a content length header but the " +
                                         "downloaded data exceeded the max size of " +_maxDownloadSize);
                     }
-                    fireDownloadListeners(totalRead, total, timeStats,
-                            outStr, _downloadObj,
-                            ListenerCall.INCREMENT);
+                    fireDownloadListeners(totalRead, total, timeStats, outStr, ListenerCall.INCREMENT);
                     if (!elapseIncreased) {
                         if (lastElapse == timeStats.elapseSec) {
                             elapseIncreased = true;
@@ -129,13 +111,11 @@ public class Downloader {
             FileUtil.silentClose(_out);
             if (totalRead > 0) {
                 outStr = "Download Completed.";
-                fireDownloadListeners(total, total, timeStats, outStr,
-                                      _downloadObj, ListenerCall.DONE);
+                fireDownloadListeners(total, total, timeStats, outStr, ListenerCall.DONE);
             }
         }
         _out = null;
         _in = null;
-        //_conn            = null;
     }
 
 //=====================================================================
@@ -173,11 +153,11 @@ public class Downloader {
             long sec= milliSec / 1000;
 
             if (sec < 3300) {
-                if (sec <=5)                     retval= "Less than 5 sec";
-                else if (sec <=30)               retval= "Less than 30 sec";
-                else if (sec <=45)               retval= "Less than a minute";
-                else if (sec < 75 && sec > 45)   retval= "About a minute";
-                else                     retval= "About " + sec/60 + " minutes";
+                if (sec <=5)       retval= "Less than 5 sec";
+                else if (sec <=30) retval= "Less than 30 sec";
+                else if (sec <=45) retval= "Less than a minute";
+                else if (sec < 75) retval= "About a minute";
+                else               retval= "About " + sec/60 + " minutes";
             }
             else {
                 float hour= sec / 3600F;
@@ -211,7 +191,6 @@ public class Downloader {
                                          long max,
                                          TimeStats timeStats,
                                          String mess,
-                                         Object downloadObj,
                                          ListenerCall type) {
         if (downloadListener==null) return;
         DownloadEvent ev;
@@ -221,9 +200,9 @@ public class Downloader {
                                    timeStats.remainSec,
                                    timeStats.elapseStr,
                                    timeStats.remainingStr,
-                                   downloadObj, mess);
+                                   mess);
         } else {
-            ev = new DownloadEvent(this, current, max, downloadObj, mess);
+            ev = new DownloadEvent(this, current, max, 0, 0, "", "", mess);
         }
         switch (type) {
             case INCREMENT:

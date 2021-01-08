@@ -17,6 +17,7 @@ import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.URLDownload;
 import org.json.simple.JSONArray;
@@ -30,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.Map;
 
 /**
  * Base class for LSSTCatalogSearch and LSSTLightCurveQuery
@@ -88,7 +90,8 @@ public abstract class LSSTQuery extends EmbeddedDbProcessor {
 
     DataGroup  getDataFromURL(TableServerRequest request) throws Exception {
 
-        String sql = "QUERY=" + URLEncoder.encode(buildSqlQueryString(request),"UTF-8");
+        String sql =  URLEncoder.encode(buildSqlQueryString(request),"UTF-8");
+        Map<String,String> postData= CollectionUtil.stringMap("QUERY",sql);
         _log.briefDebug("Executing SQL query: " + sql);
         File file = createTempFile(request, ".json");
 
@@ -96,7 +99,7 @@ public abstract class LSSTQuery extends EmbeddedDbProcessor {
         inputs.setHeader("Accept", "application/json");
 
         long cTime = System.currentTimeMillis();
-        FileInfo fileData = URLDownload.getDataToFileUsingPost(new URL(getDbservURL()),  sql, inputs.getCookies(), inputs.getHeaders(), file, null, timeout);
+        FileInfo fileData = URLDownload.getDataToFileUsingPost(new URL(getDbservURL()),  postData, inputs.getCookies(), inputs.getHeaders(), file, null, timeout);
         _log.briefDebug("SQL query took " + (System.currentTimeMillis() - cTime) + "ms");
 
         if (fileData.getResponseCode() >= 400) {

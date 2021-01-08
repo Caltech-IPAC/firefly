@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.visualize.draw;
 
-import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImagePt;
@@ -17,20 +16,15 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 
 public class VectorObject implements ShapeObject {
 
     private FixedObjectGroup _pts;
     private Map<Plot,PlotInfo>  _plotMap    = new HashMap<Plot,PlotInfo>(20);
-    private List<VectorDataListener> _dataListeners=
-        new ArrayList<VectorDataListener>(2);
     private LineShape        _line;
     private StringShape      _stringShape= new StringShape(2,StringShape.SE);
     private boolean          _show   = true;
@@ -53,14 +47,6 @@ public class VectorObject implements ShapeObject {
     public LineShape   getLineShape()   { return _line; }
     public StringShape getStringShape() { return _stringShape; }
 
-
-
-    public void setEnabled(boolean show){
-        _show= show;
-        doRepair(0,_pts.size()-1, null);
-    }
-
-    public boolean  isEnabled()             { return _show;}
 
     public void drawOnPlot(Plot p, Graphics2D g2) {
         if (_show) {
@@ -182,11 +168,6 @@ public class VectorObject implements ShapeObject {
         for(Plot p : container) addPlot(p);
     }
 
-    public void removePlotView(PlotContainer container) {
-        for(Plot p : container) removePlot(p);
-    }
-
-
     public WorldPt getWorldPt(int i) {
         Assert.argTst(_pts.isWorldCoordSys(),"This Vector Object does not " +
                       "support World Coordinates, " +
@@ -224,73 +205,8 @@ public class VectorObject implements ShapeObject {
             }
             updatePoints(idx,pt);
             doRepair(beginIdx, endIdx, oldpts);
-            fireVectorChanged();
-        }
+       }
     }
-
-    public void setCoordinateSys(CoordinateSys csys) {
-        if (_pts.isWorldCoordSys()) {
-            int len= _pts.size();
-            _csys= csys;
-            FixedObject fo;
-            WorldPt pt;
-            for(int i= 0; (i<len); i++) {
-                fo= _pts.get(i);
-                pt= Plot.convert( fo.getPosition(), csys);
-                fo.setPosition(pt);
-            }
-        }
-        else {
-            Logger.warn("This Vector Object only " +
-                        "supports Image coordinates, " +
-                        "you must constuct the vector with WorldPt " +
-                        "coordinates to use this method.");
-        }
-    }
-
-    //===================================================================
-    //----------------------- Add / Remove Listener Methods -------------
-    //===================================================================
-
-    /**
-     * Add a VectorDataListener.
-     * @param l the listener
-     */
-    public void addVectorDataListener(VectorDataListener l) {
-        _dataListeners.add(l);
-    }
-    /**
-     * Remove a PlotViewStatusListener.
-     * @param l the listener
-     */
-    public void removeVectorDataListener(VectorDataListener l) {
-        _dataListeners.remove(l);
-    }
-
-    /**
-     * Compute distance in degrees between end points of this vector object
-     */
-    public double computeDistance() {
-        final double    DtoR      = Math.PI/180.0;
-        final double    RtoD      = 180.0/Math.PI;
-
-        WorldPt p1 = getWorldPt(0);
-        WorldPt p2 = getWorldPt(1);
-        double lon1Radius  = p1.getLon() * DtoR;
-        double lon2Radius  = p2.getLon() * DtoR;
-        double lat1Radius  = p1.getLat() * DtoR;
-        double lat2Radius  = p2.getLat() * DtoR;
-        double cosine =
-            Math.cos(lat1Radius)*Math.cos(lat2Radius)*
-            Math.cos(lon1Radius-lon2Radius)
-            + Math.sin(lat1Radius)*Math.sin(lat2Radius);
-
-        if (Math.abs(cosine) > 1.0)
-            cosine = cosine/Math.abs(cosine);
-        double distance = RtoD*Math.acos(cosine);
-        return distance;
-    }
-
 
     //===================================================================
     //------------------------- Private / Protected Methods -------------
@@ -378,21 +294,6 @@ public class VectorObject implements ShapeObject {
         }
     }
 
-
-    /**
-     * fire the <code>VectorDataListener</code>s.
-     */
-    protected void fireVectorChanged() {
-        List<VectorDataListener> newlist;
-        VectorDataEvent ev= new VectorDataEvent(this);
-        synchronized (this) {
-            newlist = new Vector<VectorDataListener>(_dataListeners);
-        }
-
-        for(VectorDataListener listener: newlist) {
-            listener.dataChanged(ev);
-        }
-    }
 
     //===================================================================
     //------------------------- Factory methods -------------------------

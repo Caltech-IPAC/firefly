@@ -106,10 +106,7 @@ public class QueryMOS extends IpacTablePartProcessor {
                 Runnable r = new Runnable() {
                     public void run() {
                         try {
-//                                    HttpServices.getDataViaUrl(createURL(req, true), catOverlayFile.getSource());
-                            URLConnection aconn = URLDownload.makeConnection(createURL(req, true));
-                            aconn.setRequestProperty("Accept", "*/*");
-                            URLDownload.getDataToFile(aconn, catOverlayFile.getSource());
+                            URLDownload.getDataToFile(createURL(req, true), catOverlayFile.getSource());
                         } catch (Exception e) {
                             _log.error(e);
                         }
@@ -118,13 +115,10 @@ public class QueryMOS extends IpacTablePartProcessor {
                 catSearchTread = new Thread(r);
                 catSearchTread.start();
             }
-// workaround for MOS service bug when launching 2 simultaneously.
-Thread.sleep(1000);
+            // workaround for MOS service bug when launching 2 simultaneously.
+            Thread.sleep(1000);
             File votable = makeFileName(req);
-            conn = URLDownload.makeConnection(url);
-            conn.setRequestProperty("Accept", "*/*");
-
-            URLDownload.getDataToFile(conn, votable);
+            URLDownload.getDataToFile(url, votable);
 
             if (catSearchTread != null) {
                 catSearchTread.join();

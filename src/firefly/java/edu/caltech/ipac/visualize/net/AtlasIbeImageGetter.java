@@ -4,18 +4,17 @@
 package edu.caltech.ipac.visualize.net;
 
 
-import edu.caltech.ipac.table.io.IpacTableException;
-import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataParam;
 import edu.caltech.ipac.astro.ibe.IbeDataSource;
 import edu.caltech.ipac.astro.ibe.IbeQueryParam;
 import edu.caltech.ipac.astro.ibe.datasource.AtlasIbeDataSource;
 import edu.caltech.ipac.firefly.data.FileInfo;
-import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.download.CacheHelper;
 import edu.caltech.ipac.util.download.FailedRequestException;
 
@@ -28,10 +27,10 @@ import java.util.Map;
  * @author Trey Roby
  * @version $Id: DssImageGetter.java,v 1.9 2012/08/21 21:30:41 roby Exp $
  */
-public class AtlasImageGetter {
+public class AtlasIbeImageGetter {
 
 
-    public static File get(ImageServiceParams params) throws FailedRequestException, IOException {
+    public static FileInfo get(ImageServiceParams params) throws FailedRequestException, IOException {
 
         try {
             String sizeStr = null;
@@ -90,8 +89,7 @@ public class AtlasImageGetter {
                     dataParam.setCutout(true, params.getRaJ2000String() + "," + params.getDecJ2000String(), sizeStr);
                 }
                 dataParam.setDoZip(true);
-                FileInfo result = ibe.getData(dataParam, null);
-                return new File(result.getInternalFilename());
+                return ibe.getData(dataParam, null);
             } else {
                 throw new FailedRequestException("Area not covered "+errorMsg);
             }

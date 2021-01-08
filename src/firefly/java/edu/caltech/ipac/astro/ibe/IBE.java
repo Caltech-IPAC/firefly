@@ -3,15 +3,15 @@
  */
 package edu.caltech.ipac.astro.ibe;
 
-import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
-import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.astro.ibe.datasource.AtlasIbeDataSource;
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.URLFileInfoProcessor;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.DownloadListener;
 import edu.caltech.ipac.util.download.FailedRequestException;
@@ -21,7 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
+import java.util.Collections;
 import java.util.Map;
 
 import static edu.caltech.ipac.astro.ibe.BaseIbeDataSource.addUrlParam;
@@ -172,14 +172,8 @@ public class IBE {
 
 
     private void downloadViaUrlToFile(URL url, File results) throws IOException {
-        downloadViaUrlToFile(url, results, null);
-    }
-
-    private void downloadViaUrlToFile(URL url, File results, DownloadListener dl) throws IOException {
         try {
-            URLConnection uc = URLDownload.makeConnection(url);
-            uc.setRequestProperty("Accept", "text/plain");
-            URLDownload.getDataToFile(uc, results, dl);
+            URLDownload.getDataToFile(url, results, null, Collections.singletonMap("Accept", "text/plain"));
         } catch (FailedRequestException e) {
             throw new IOException(e.getUserMessage(), e);
         }

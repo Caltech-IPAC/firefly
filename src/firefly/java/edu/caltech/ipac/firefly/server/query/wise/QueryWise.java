@@ -3,15 +3,11 @@
  */
 package edu.caltech.ipac.firefly.server.query.wise;
 
-import edu.caltech.ipac.table.io.IpacTableException;
-import edu.caltech.ipac.table.io.IpacTableReader;
-import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.WiseRequest;
-import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IBESearchProcessor;
@@ -23,11 +19,15 @@ import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
-import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.query.DataGroupQuery;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.TableMeta;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableWriter;
+import edu.caltech.ipac.table.query.DataGroupQuery;
+import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -47,6 +47,7 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -131,9 +132,7 @@ public class QueryWise extends IBESearchProcessor {
                 }
 
             } else {
-                conn = URLDownload.makeConnection(url);
-                conn.setRequestProperty("Accept", "*/*");
-                URLDownload.getDataToFile(conn, outFile);
+                URLDownload.getDataToFile(url, outFile, null, Collections.singletonMap("Accept", "*/*"));
             }
 
             // do we need to join the results with an uploaded table?

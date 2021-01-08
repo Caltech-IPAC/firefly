@@ -9,7 +9,7 @@ task wsdl {
     println "compiling wsdl..."
   }
   doLast {
-    ['simbad.wsdl', 'VizieRBeta.wsdl', 'VizieR.wsdl', 'VORegistrySTSCI.wsdl', 'SDSSCasJobs.wsdl'].each() { file ->
+    ['SDSSCasJobs.wsdl'].each() { file ->
       javaexec {
         classpath sourceSets.main.compileClasspath
         main = 'org.apache.axis.wsdl.WSDL2Java'

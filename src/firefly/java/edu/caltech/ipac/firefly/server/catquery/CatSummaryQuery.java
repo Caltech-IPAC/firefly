@@ -70,13 +70,13 @@ public class CatSummaryQuery  extends IpacTablePartProcessor {
         
         try {
 
-            URLConnection conn = URLDownload.makeConnection(url);
+            URLConnection conn = URLDownload.makeConnection(url, null, null);
             conn.addRequestProperty("accept", "*/*");
             ByteArrayOutputStream baos = new  ByteArrayOutputStream();
             DataInputStream in= new DataInputStream(new BufferedInputStream(
                         conn.getInputStream()));
             URLDownload.logHeader(conn);
-            URLDownload.netCopy(in, baos, conn, null);
+            URLDownload.netCopy(in, baos, conn, 0, null);
             String jsonContent = baos.toString();
             HashMap<String, Integer> keyValues = parse(jsonContent);
             DataType setType = new DataType("set", String.class);

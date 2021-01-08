@@ -37,7 +37,6 @@ public class StringShape {
     private int   _offsetDist;
     private int   _offsetDir;
     private Font  _font;
-    private Double _distance = null;
     private boolean _backDraw= true;
     private boolean useRegionCalc = false;
 
@@ -195,57 +194,6 @@ public class StringShape {
         Point2D retval= null;
         int yoffset= 0;
         int xoffset= 0;
-        /*switch (_offsetDir) {
-          case CENTER: 
-               break;
-          case NORTH : 
-               yoffset+= (-1 * _offsetDist);
-               break;
-          case SOUTH : 
-               yoffset+= _offsetDist;
-               break;
-          case EAST  : 
-               xoffset+= (-3 * _offsetDist);
-               break;
-          case WEST  : 
-               xoffset+= _offsetDist;
-               break;
-          case NE    : 
-               xoffset+= (-3 * _offsetDist);
-               yoffset+= (-1 * _offsetDist);
-               break;
-          case SE    : 
-               xoffset+= (-3 * _offsetDist);
-               yoffset+= _offsetDist;
-               break;
-          case NW    : 
-               xoffset+= _offsetDist;
-               yoffset+= (-1 * _offsetDist);
-               break;
-          case SW    : 
-               xoffset+= _offsetDist;
-               yoffset+= _offsetDist;
-               break;
-          default    :
-               Assert.stop();
-               break;
-        }
-        xoffset+= _offsetDist;
-        yoffset+= _offsetDist;
-        if (_offsetDir==SOUTH || _offsetDir==SE || _offsetDir==SW) {
-               yoffset+= dim.height;
-        }
-        if (_offsetDir==EAST || _offsetDir==SE || _offsetDir==NE) {
-                xoffset-= dim.width;
-        }
-        if ((xoffset + pt.getX()) < 0) xoffset = (-1 * (int)pt.getX());
-        if ((yoffset + pt.getY()-dim.getHeight()) < 0) yoffset = (int)(dim.getHeight() - pt.getY() + _offsetDist);
-        if (bounds != null) {
-            if ((xoffset + pt.getX() + dim.getWidth()) > bounds.getWidth())
-                xoffset = (int)(bounds.getWidth()-dim.getWidth() - pt.getX() - 3*_offsetDist);
-            if ((yoffset + pt.getY() + dim.getHeight()) > bounds.getHeight())
-                yoffset = (int)(bounds.getHeight()-dim.getHeight() - pt.getY());
-        }*/
         xoffset = 2*_offsetDist;
         yoffset = -2*_offsetDist;
 

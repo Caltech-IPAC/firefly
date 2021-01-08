@@ -6,22 +6,25 @@
 package edu.caltech.ipac.firefly.server.visualize.hips;
 
 import edu.caltech.ipac.firefly.data.ServerParams;
-import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.DataObject;
-import edu.caltech.ipac.table.DataType;
-import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
+import edu.caltech.ipac.firefly.server.query.ParamDoc;
+import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.hips.HiPSMasterListEntry.PARAMS;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.LinkInfo;
 
-import java.util.*;
 import java.io.IOException;
-
-import static edu.caltech.ipac.visualize.VisConstants.INFO_ICON_STUB;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Cindy Wang
@@ -32,6 +35,7 @@ import static edu.caltech.ipac.visualize.VisConstants.INFO_ICON_STUB;
          @ParamDoc(name = ServerParams.SORT_ORDER, desc = "HiPS order, source based")
         })
 public class HiPSMasterList extends EmbeddedDbProcessor {
+    public final static String INFO_ICON_STUB = "<img data-src='info'/>";
     public static String[] HiPSDataType = new String[]{ServerParams.IMAGE,
                                                        ServerParams.CUBE,
                                                        ServerParams.CATALOG};

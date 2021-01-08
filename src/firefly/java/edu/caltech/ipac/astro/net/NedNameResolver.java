@@ -3,93 +3,47 @@
  */
 package edu.caltech.ipac.astro.net;
 
-import edu.caltech.ipac.astro.target.PositionJ2000;
-import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.messaging.JsonHelper;
+import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.HostPort;
-import edu.caltech.ipac.util.download.NetworkManager;
 import edu.caltech.ipac.util.download.URLDownload;
-import edu.caltech.ipac.visualize.draw.FixedObject;
-import edu.caltech.ipac.visualize.draw.FixedObjectGroup;
-import edu.caltech.ipac.visualize.draw.FixedObjectGroupUtils;
-import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.visualize.plot.Plot;
-import edu.caltech.ipac.visualize.plot.WorldPt;
-import org.apache.xmlbeans.XmlOptions;
-import org.usVo.xml.voTable.VOTABLEDocument;
+import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 
+import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
-import java.util.HashMap;
-
+import java.util.Map;
 
 /**
- * @author Xiuqin Wu, based on Trey Roby's CoordConvert
+ * NED name resolver. Rewritten in 2021 for new NED service.
+ * @see <a href="https://ned.ipac.caltech.edu/Documents/Guides/Interface/ObjectLookup">NED API Reference</a>
  */
 public class NedNameResolver {
+    private static final String SERVER = AppProperties.getProperty("ned.host", "https://ned.ipac.caltech.edu");
+    private static final String NED_URL_STR= SERVER + "/srs/ObjectLookup";
+    private static final String POST_TEMPLATE = "{\"name\":{\"v\":\"%s\"}}";
 
-    private static final String CGI_CMD="/cgi-bin/nph-objsearch?extend=no&out_csys=Equatorial&out_equinox=J2000.0&obj_sort=RA+or+Longitude&of=xml_main&zv_breaker=30000.0&list_limit=1&img_stamp=NO&objname=";
-
-
-    public static PositionJ2000 getPositionVOTable(String objname) throws FailedRequestException {
-        PositionJ2000 pos = null;
-        Logger.info("Requesting name resolution for \"" + objname + "\"...");
-
-        HostPort hp = NetworkManager.getInstance().getServer(
-                NetworkManager.NED_SERVER);
-
+    public static ResolveResult resolveName(String objName) throws FailedRequestException {
         try {
-
-
-            String urlStr = "https://" + hp.getHost() + ":" + hp.getPort() + CGI_CMD + URLEncoder.encode(objname, "UTF-8");
-            System.out.printf("url: %s%n", urlStr);
-
-            URL url = new URL(urlStr);
-            URLConnection conn = URLDownload.makeConnection(url);
-            // set connect and read timeout in milliseconds
-            conn.setConnectTimeout(10000);
-            conn.setReadTimeout(10000);
-            
-            String data = URLDownload.getStringFromOpenURL(conn, null);
-            // System.out.println(data);
-
-            XmlOptions xmlOptions = new XmlOptions();
-            HashMap<String, String> substituteNamespaceList =
-                    new HashMap<String, String>();
-            substituteNamespaceList.put("", "http://us-vo.org/xml/VOTable.xsd");
-            xmlOptions.setLoadSubstituteNamespaces(substituteNamespaceList);
-            xmlOptions.setSavePrettyPrint();
-            xmlOptions.setSavePrettyPrintIndent(4);
-
-            //VOTABLEDocument voTableDoc = parseVoTable(data, xmlOptions);
-            VOTABLEDocument voTableDoc = VOTABLEDocument.Factory.parse(
-                    data,xmlOptions);
-//        PrintWriter outF= new PrintWriter(new File("vo.dat"));
-//        outF.println(voTableDoc.toString());
-
-            //System.out.println(voTableDoc.toString());
-
-            //nedResult = NedVOTableParser.makeNedResult(voTableDoc);
-
-            FixedObjectGroup fixGroup = FixedObjectGroupUtils.makeFixedObjectGroup(voTableDoc);
-            if (fixGroup.size() >0) {
-                FixedObject fixedObj = fixGroup.get(0);
-                WorldPt wpt = Plot.convert(fixedObj.getPosition(), CoordinateSys.EQ_J2000);
-                pos = new PositionJ2000(wpt.getLon(), wpt.getLat());
-            }
-            else
-                throw new FailedRequestException("NED did not find the object: " +objname,
-                        "NED could not resolve the input object name: " +objname);
-
-        } catch (java.net.SocketTimeoutException ste) {
-            throw new FailedRequestException("NED name resolver: connection timed out.");
-        } catch (Exception e) {
-            throw new FailedRequestException("NED did not find the object: " +objname,
-                    "NED could not resolve the input object name: " +objname, e);
+            Map<String,String> postData= CollectionUtil.stringMap("json",String.format(POST_TEMPLATE, objName));
+            String jsonStr= URLDownload.getDataFromURL(new URL(NED_URL_STR),postData , null, null).getResultAsString();
+            JsonHelper helper= JsonHelper.parse(jsonStr);
+            long resultCode= helper.getValue(0L, "ResultCode");
+            if (resultCode != 2 && resultCode != 3) throw makeEx(objName, "resultCode="+resultCode,null);
+            double ra= helper.getValue(Double.NaN, "Preferred", "Position", "RA");
+            double dec= helper.getValue(Double.NaN, "Preferred", "Position", "Dec");
+            if (checkNaN(ra,dec)) throw makeEx(objName,"ra or dec is not parsable",null);
+            return new ResolveResult(Resolver.NED, objName, new ResolvedWorldPt(ra, dec,objName,Resolver.NED));
+        } catch (MalformedURLException e) {
+            throw makeEx(objName, "Could not build NED URL: " + NED_URL_STR,e);
+        } catch (IllegalArgumentException e) {
+            throw makeEx(objName, "Unexpected result data- not JSON",e);
         }
-
-
-        return pos;
     }
+
+    private static FailedRequestException makeEx(String objName, String detailStr, Exception e) {
+        return new FailedRequestException("NED did not find the object: "+ objName,detailStr, e);
+    }
+    private static boolean checkNaN(double ra,double dec) {return Double.isNaN(ra) || Double.isNaN(dec);}
+
 }

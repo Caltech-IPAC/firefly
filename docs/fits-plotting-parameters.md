@@ -42,7 +42,7 @@ If you specify `URL` and it is relative then one of two things happen:
 
 | Service Parameter | Description |
 | --------- | ----------- |
-| `Service` | Available services are: `IRIS`, `ISSA`, `DSS`, `SDSS`, `TWOMASS`, `MSX`, `DSS_OR_IRIS`, `WISE`. Required if `Type=='SERVICE'` or if you want to use a service. |
+| `Service` | Available services are: `IRIS`, `ISSA`, `DSS`, `SDSS`, `TWOMASS`, `MSX`, `WISE`. Required if `Type=='SERVICE'` or if you want to use a service. |
 | `ObjectName` | the object name that can be looked up by NED or Simbad |
 | `Resolver` | The object name resolver to use, options are: `NED`, `Simbad`, `NedThenSimbad`, `SimbadThenNed`, `PTF` |
 | `SizeInDeg` | The radius or side (in degrees) depending of the service type, used with `Type=='SERVICE'` |

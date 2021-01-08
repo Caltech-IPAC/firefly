@@ -11,7 +11,6 @@ import edu.caltech.ipac.firefly.server.visualize.PlotServUtils;
 import edu.caltech.ipac.firefly.server.visualize.VisJsonSerializer;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.download.URLDownload;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -35,7 +34,8 @@ public class ImageDownload extends BaseHttpServlet {
     private static final String TYPE_THUMBNAIL= "thumbnail";
     private static final String TYPE_ANY = "any";
     private static final int MAX_AGE= 86400; // 1 day in seconds
-    private static final SimpleDateFormat _dateFormatter=new SimpleDateFormat(URLDownload.PATTERN_RFC1123);
+    private static final String PATTERN_RFC1123 = "EEE, dd MMM yyyy HH:mm:ss zzz";
+    private static final SimpleDateFormat _dateFormatter=new SimpleDateFormat(PATTERN_RFC1123);
 
     static {
         _dateFormatter.setTimeZone(TimeZone.getTimeZone("GMT"));

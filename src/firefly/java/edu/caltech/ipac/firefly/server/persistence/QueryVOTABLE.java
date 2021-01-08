@@ -14,6 +14,7 @@ import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.table.io.VoTableReader;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 
@@ -108,16 +109,9 @@ public abstract class QueryVOTABLE extends IpacTablePartProcessor {
         //File outFile = createFile(req, ".xml");
         File outFile = File.createTempFile(filePrefix, ".xml", ServerContext.getPermWorkDir());
         try {
-            conn = URLDownload.makeConnection(url);
-            conn.setRequestProperty("Accept", "*/*");
+            URLDownload.getDataToFile(url, outFile);
 
-            URLDownload.getDataToFile(conn, outFile);
-
-        } catch (MalformedURLException e) {
-            _log.error(e, "Bad URL");
-            throw makeException(e, "query failed - bad url.");
-
-        } catch (IOException e) {
+        } catch (FailedRequestException e) {
             _log.error(e, e.toString());
             throw makeException(e, "query failed - network error.");
 

@@ -6,14 +6,12 @@ package edu.caltech.ipac.visualize.plot;
 import edu.caltech.ipac.astro.conv.CoordConv;
 import edu.caltech.ipac.astro.conv.LonLat;
 
-import java.awt.Point;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -45,8 +43,6 @@ public abstract class Plot {
      */
     public static final int DOWN = 2;
 
-    private   List<NewPlotNotificationListener> _plotStatus      =
-                                      new ArrayList<NewPlotNotificationListener>(4);
     private   float               _zFactor         = 2.0F;
     private   String              _plotDesc;
     private   String              _shortPlotDesc;
@@ -598,19 +594,6 @@ public abstract class Plot {
        return retval;
     }
 
-   // ===================================================================
-   // -------------------- public Listener Methods ----------------------
-   // ===================================================================
-
-
-    public void addPlotStatusListener(NewPlotNotificationListener l) {
-       _plotStatus.add(l);
-    }
-    public void removePlotStatusListener(NewPlotNotificationListener l) {
-       _plotStatus.remove(l);
-    }
-
-
 
    // =======================================================================
    // ------------------    Private / Protected / Package Methods   ---------
@@ -629,16 +612,6 @@ public abstract class Plot {
      */
    protected void setTransform(AffineTransform trans) {
        _plotGroup.setTransform(trans);
-   }
-
-
-   protected void firePlotStatusNewPlot() {
-        List<NewPlotNotificationListener> newlist;
-        NewPlotNotificationEvent    e= new NewPlotNotificationEvent(this);
-        newlist = new ArrayList<>(_plotStatus);
-        for(NewPlotNotificationListener listener: newlist) {
-            listener.newPlot(e);
-        }
    }
 
 }

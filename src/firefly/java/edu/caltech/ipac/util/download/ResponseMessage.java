@@ -25,6 +25,7 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
 /**
+ *
  * @author Trey Roby
  */
 public class ResponseMessage {
@@ -39,6 +40,7 @@ public class ResponseMessage {
             case  204 : return "No Content";
             case  205 : return "Reset Content";
             case  206 : return "Partial Content";
+            case  207 : return "Multi-Status";
             case  300 : return "Multiple Choices";
             case  301 : return "Moved Permanently";
             case  302 : return "Found";
@@ -64,12 +66,18 @@ public class ResponseMessage {
             case  415 : return "Unsupported Media Type";
             case  416 : return "Requested range not satisfiable";
             case  417 : return "Expectation Failed";
+            case  419 : return "Insufficient Space On Resource";
+            case  420 : return "Method Failure";
+            case  422 : return "Unprocessable Entity";
+            case  423 : return "Locked";
+            case  424 : return "Failed Dependency";
             case  500 : return "Internal Server Error";
             case  501 : return "Not Implemented";
             case  502 : return "Bad Gateway";
             case  503 : return "Service Unavailable";
             case  504 : return "Gateway Time-out";
             case  505 : return "HTTP Version not supported";
+            case  507 : return "Insufficient Storage";
             default:    return "Error in retrieving file";
         }
         

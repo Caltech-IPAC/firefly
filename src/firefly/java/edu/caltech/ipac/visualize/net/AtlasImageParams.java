@@ -3,11 +3,13 @@
  */
 package edu.caltech.ipac.visualize.net;
 
+import edu.caltech.ipac.util.Assert;
+
 /**
  * Should take care of Atlas IBE which metadata is relying on band_name, schema name, file_type and table name
  * principal is a column that serves to distinguish between main image to display and otheres, among a file_type
  */
-public class AtlasImageParams extends IrsaImageParams {
+public class AtlasImageParams extends ImageServiceParams {
 
     // This example is for SEIP
     private String file_type = "science"; // i.e for spitzer but bare in mind that can change from schema to another
@@ -17,12 +19,44 @@ public class AtlasImageParams extends IrsaImageParams {
     private String table = "seip_science";
     private String xtraFilter = ""; // i.e fname like '%.mosaic.fits' or file_tye=science
     private String data_type = "image";
+    private String _band= "12";
+    private float  _size= 5.0F;
 
     public AtlasImageParams(String service, String table){
         super(ImageSourceTypes.ATLAS);
         this.schema = service;
         this.table = table;
     }
+
+    public String getUniqueStringStart() {
+        String retval= null;
+        switch (getType()) {
+            case ISSA :
+                retval= "Issa-" + super.toString() + _band + _size;
+                break;
+            case TWOMASS :
+                retval= "2mass-" + super.toString() + _band + _size;
+                break;
+            case MSX :
+                retval= "msx-" + super.toString() + _band + _size;
+                break;
+            case IRIS :
+                retval= "iris-" + super.toString() + _band + _size;
+                break;
+            case ATLAS:
+                retval = "atlas-"+ super.toString();
+                break;
+            default :
+                Assert.tst(false); break;
+        }
+        return retval;
+    }
+
+    public void   setBand(String b)     { _band= b; }
+    public void   setSize(float s)      { _size= s; }
+    public String getBand()             { return _band; }
+    public float  getSize()             { return _size; }
+
 
     public void setInstrument(String b) {
         this._instrument = b;
@@ -33,7 +67,7 @@ public class AtlasImageParams extends IrsaImageParams {
     }
 
     public String getUniqueString() {
-        return super.getUniqueString() + "-" + getSchema() + "-" + getTable() + "-" + getBand() + getSize()+ (getXtraFilter()!=null?getXtraFilter().hashCode():"");
+        return getUniqueStringStart() + "-" + getSchema() + "-" + getTable() + "-" + getBand() + getSize()+ (getXtraFilter()!=null?getXtraFilter().hashCode():"");
     }
 
     public String toString() {
