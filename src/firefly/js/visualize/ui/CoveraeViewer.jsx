@@ -6,8 +6,8 @@ import {get,once} from 'lodash';
 import PropTypes from 'prop-types';
 import {MultiImageViewer} from './MultiImageViewer';
 import {
-    dispatchAddViewer, dispatchViewerUnmounted, getMultiViewRoot,
-    getViewerItemIds, IMAGE, NewPlotMode, SINGLE, } from '../MultiViewCntlr';
+    dispatchAddViewer, dispatchViewerUnmounted, getMultiViewRoot, getViewer, IMAGE, NewPlotMode, SINGLE,
+} from '../MultiViewCntlr';
 import {COVERAGE_WATCH_CID, startCoverageWatcher, COVERAGE_FAIL} from '../saga/CoverageWatcher.js';
 import {MultiViewStandardToolbar} from './MultiViewStandardToolbar';
 import {getActivePlotView} from '../PlotViewUtil';
@@ -44,7 +44,9 @@ export function CoverageViewer({viewerId='coverageImages',insideFlex=true, noCov
         return () => dispatchViewerUnmounted(viewerId);
     }, [viewerId]);
 
-    const hasPlots = (getViewerItemIds(getMultiViewRoot(),viewerId).length===1 && pv);
+
+
+    const hasPlots = Boolean(getViewer(getMultiViewRoot(), viewerId)?.itemIdAry.length);
     const {renderTreeId} = useContext(RenderTreeIdCtx);
     const forceShow= getBooleanMetaEntry(tbl_id,MetaConst.COVERAGE_SHOWING,false);
     const tblHasCoverage= hasCoverageData(tbl_id);
