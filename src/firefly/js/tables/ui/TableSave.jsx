@@ -157,7 +157,7 @@ function TableDLReducer(tbl_id) {
         const {request,tableMeta} = getTblById(tbl_id) || {};
         const chooseFileNameSource= () => {
             const fname= request?.META_INFO?.title ?? '';
-            return fname==='${filename}' ? tableMeta?.title : fname;
+            return tableMeta?.title || fname;
         };
         const fixFileName = (fName) => {
 

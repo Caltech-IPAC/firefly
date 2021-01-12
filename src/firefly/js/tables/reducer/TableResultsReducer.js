@@ -34,7 +34,10 @@ export function resultsReducer(state={results:{}}, action={}) {
         case Cntlr.TABLE_REMOVE    :
         case Cntlr.TBL_RESULTS_REMOVE    :
             return removeTable(root, action);
-        
+
+        case Cntlr.TABLE_UPDATE   :
+            return updateTableInfo(root, action);
+
         default:
             return root;
     }
@@ -51,4 +54,16 @@ function removeTable(root, action) {
     return root;
 }
 
+function updateTableInfo(root, action) {
+
+    const {tbl_id, title, tableMeta, request} = action.payload;
+    const mtitle = title ?? tableMeta?.title ?? request?.META_INFO?.title;
+    Object.keys(root).forEach( (tbl_group) => {
+        if (has(root, [tbl_group, 'tables', tbl_id])) {
+            root = updateSet(root, [tbl_group, 'tables', tbl_id, 'title'], mtitle);
+        }
+    });
+
+    return root;
+}
 /*---------------------------- DISPATCHERS -----------------------------*/

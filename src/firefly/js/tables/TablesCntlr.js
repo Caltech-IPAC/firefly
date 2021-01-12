@@ -390,7 +390,6 @@ function tblResultsAdded(action) {
         if (!action.err) {
             var {tbl_id, title, options={}, tbl_ui_id} = action.payload;
 
-            title = title || tbl_id;
             options = Object.assign({tbl_group: 'main', removable: true, setAsActive:true}, options);
             const pageSize = get(options, 'pageSize');
             if ( pageSize && !Number.isInteger(pageSize)) {

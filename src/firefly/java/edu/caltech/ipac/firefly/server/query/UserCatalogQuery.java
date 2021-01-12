@@ -59,13 +59,7 @@ public class UserCatalogQuery extends IpacTablePartProcessor {
         if (filePath!=null) {
             UploadFileInfo uFi=(UploadFileInfo)UserCache.getInstance().get(new StringKey(filePath));
             if (uFi!=null) {
-                String currentTitle= ((TableServerRequest) request).getMeta().get("title");
-                if (StringUtils.isEmpty(currentTitle)) {
-                    meta.setAttribute("title", uFi.getFileName());
-                }
-                else {
-                    meta.setAttribute("title", currentTitle.replace("${filename}",uFi.getFileName()));
-                }
+                meta.setAttribute("title", uFi.getFileName());
             }
         }
         meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "TRUE");
