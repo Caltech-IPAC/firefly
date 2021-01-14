@@ -39,6 +39,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
     useEffect(() => {
         cFetchKey = Date.now();
         const key = cFetchKey;
+        // reload TAP schema when serviceUrl changes
         loadTapSchemas(serviceUrl).then((tm) => {
             if (key === cFetchKey) {
                 const tableData = get(tm, 'tableData.data', []);
@@ -47,7 +48,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
                 setTreeData(treeData);
             }
         });
-        // reload TAP schema when serviceUrl changes
+        window.setTimeout( () => prismLiveRef.current.syncStyles?.(), 10);
     }, [serviceUrl]);
 
     useEffect(() => {
