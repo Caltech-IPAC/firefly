@@ -82,7 +82,7 @@ export class CatalogSelectViewPanel extends PureComponent {
                 <FormPanel
                     width='auto' height='auto'
                     groupKey={[gkey, gkeySpacial]}
-                    onSubmit={(request) => onSearchSubmit(request)}
+                    onSuccess={(request) => onSearchSubmit(request)}
                     onError={(request) => onSearchFail(request)}
                     params={{hideOnInvalid: false}}
                     onCancel={hideSearchPanel}>
@@ -294,7 +294,7 @@ function doVoSearch(request, providerName = '') {
 
 function doLoadTable(request) {
     const fileLocation = get(request, 'fileLocation', LOCALFILE);
-    var tReq = makeTblRequest('userCatalogFromFile', '${filename}', {
+    var tReq = makeTblRequest('userCatalogFromFile', '', {
         filePath: ( fileLocation === LOCALFILE) ? request.fileUpload : request.workspaceUpload,
         sourceFrom: fileLocation
     });

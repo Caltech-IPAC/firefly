@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, set, unset, cloneDeep, omit, omitBy, isNil} from 'lodash';
+import {get, set, unset, cloneDeep, omit, omitBy, isNil, pickBy} from 'lodash';
 
 import {uniqueTblId} from './TableUtil.js';
 import {Keys} from '../core/background/BackgroundStatus.js';
@@ -28,9 +28,9 @@ export const DataTagMeta = ['META_INFO', Keys.DATA_TAG]; // a tag describing the
  */
 export function makeTblRequest(id, title, params={}, options={}) {
     var req = {startIdx: 0, pageSize: 100};
-    title = title || id;
+    title = title ?? id;
     const tbl_id = options.tbl_id || uniqueTblId();
-    var META_INFO = Object.assign(options.META_INFO || {}, {title, tbl_id});
+    var META_INFO = pickBy(Object.assign(options.META_INFO || {}, {title, tbl_id}));
     options = omit(options, 'tbl_id');
     return omitBy(Object.assign(req, options, params, {META_INFO, tbl_id, id}), isNil);
 }
@@ -50,10 +50,10 @@ export function makeTblRequest(id, title, params={}, options={}) {
 export function makeFileRequest(title, source, alt_source, options={}) {
     const id = 'IpacTableFromSource';
     var req = {startIdx: 0, pageSize: 100};
-    title = title || source;
+    title = title ?? source;
     const tbl_id = options.tbl_id || uniqueTblId();
     options = omit(options, 'tbl_id');
-    var META_INFO = Object.assign(options.META_INFO || {}, {title, tbl_id});
+    var META_INFO = pickBy(Object.assign(options.META_INFO || {}, {title, tbl_id}));
     return omitBy(Object.assign(req, options, {source, alt_source, META_INFO, tbl_id, id}), isNil);
 }
 
@@ -123,12 +123,12 @@ export function makeIrsaWorkspaceRequest(source, title, options={}) {
  */
 export function makeIrsaCatalogRequest(title, project, catalog, params={}, options={}) {
     var req = {startIdx: 0, pageSize: 100};
-    title = title || catalog;
+    title = title ?? catalog;
     const tbl_id = options.tbl_id || uniqueTblId();
     const id = 'GatorQuery';
     const UserTargetWorldPt = params.UserTargetWorldPt || params.position;  // may need to convert to worldpt.
     const catalogProject = project;
-    var META_INFO = Object.assign(options.META_INFO || {}, {title, tbl_id});
+    var META_INFO = pickBy(Object.assign(options.META_INFO || {}, {title, tbl_id}));
 
     options = omit(options, 'tbl_id');
     params = omit(params, 'position');
@@ -150,13 +150,13 @@ export function makeIrsaCatalogRequest(title, project, catalog, params={}, optio
 export function makeLsstCatalogRequest(title, project, catalog, params={}, options={}) {
     const req = {startIdx: 0, pageSize: 100};
 
-    title = title || catalog;
+    title = title ?? catalog;
     const tbl_id = options.tbl_id || uniqueTblId();
     const id = get(params, 'SearchMethod')==='Table'?'LSSTMultiObjectSearch':'LSSTCatalogSearch';
     const UserTargetWorldPt = params.UserTargetWorldPt || params.position;  // may need to convert to worldpt.
     const table_name = catalog;
     const meta_table = catalog;
-    const META_INFO = Object.assign(options.META_INFO || {}, {title, tbl_id});
+    const META_INFO = pickBy(Object.assign(options.META_INFO || {}, {title, tbl_id}));
 
 
     options = omit(options, 'tbl_id');
