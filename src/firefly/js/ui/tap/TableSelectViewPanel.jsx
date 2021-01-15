@@ -421,7 +421,7 @@ function BasicUI(props) {
                                     onSelect = {(selectedTapSchema) => {
                                         setSchemaName(selectedTapSchema)
                                     }}
-                        />s
+                        />
                     </div>
                     <div style={{width: 10}}/>
                     <div style={{flexGrow: 1}}>
@@ -449,7 +449,7 @@ function BasicUI(props) {
                 <div className='expandable'>
                     <SplitPane split='vertical' maxSize={splitMax} mixSize={20} defaultSize={splitDef}>
                         <SplitContent>
-                            {columnsModel ?  <TableSearchMethods initArgs={props.initArgs}/>
+                            {columnsModel ?  <TableSearchMethods columnsModel={columnsModel} initArgs={props.initArgs}/>
                                 : <div className='loading-mask'/>
                             }
                         </SplitContent>
