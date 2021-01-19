@@ -602,7 +602,7 @@ const TAP_SERVICES = [
         query: 'SELECT TOP 10000 * FROM ivoa.ObsCore WHERE CONTAINS(POINT(\'ICRS\', s_ra, s_dec),CIRCLE(\'ICRS\', 10.68479, 41.26906, 0.028))=1'
     },
     {
-        label: 'GAIA https://gea.esac.esa.int/tap-server/tap',
+        label: 'Gaia https://gea.esac.esa.int/tap-server/tap',
         value: 'https://gea.esac.esa.int/tap-server/tap',
         query: 'SELECT TOP 5000 * FROM gaiadr2.gaia_source'
     },

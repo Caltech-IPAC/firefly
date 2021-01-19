@@ -100,7 +100,7 @@
     </script>
 </template>
 
-<template title="GAIA tap search" class="tpl sm">
+<template title="Gaia tap search" class="tpl sm">
     <div id="expected">
         Table successfully loaded
         <ul class='expected-list'>
@@ -111,7 +111,7 @@
     <div id="actual" class="box x3"></div>
     <script>
         onFireflyLoaded = function (firefly) {
-            tblReq = firefly.util.table.makeTblRequest('AsyncTapQuery', 'GAIA tap search',
+            tblReq = firefly.util.table.makeTblRequest('AsyncTapQuery', 'Gaia tap search',
                 { serviceUrl: "http://gea.esac.esa.int/tap-server/tap",
                   QUERY: "SELECT TOP 3 * FROM gaiadr2.gaia_source",
                 });

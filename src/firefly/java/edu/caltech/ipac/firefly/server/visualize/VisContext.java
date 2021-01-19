@@ -94,10 +94,10 @@ public class VisContext {
         footprintMap.put("JWST_NIRCAM", "footprint/Footprint_JWST.reg");
         footprintMap.put("JWST_NIS",    "footprint/Footprint_JWST.reg");
         footprintMap.put("JWST_NIRSPEC","footprint/Footprint_JWST.reg");
-        footprintMap.put("SPITZER",     "footprint/Footprint_SPITZER.reg" );
-        footprintMap.put("SPITZER_IRAC36", "footprint/Footprint_SPITZER.reg");
-        footprintMap.put("SPITZER_IRAC45", "footprint/Footprint_SPITZER.reg");
-        footprintMap.put("WFIRST",      "footprint/Footprint_WFIRST.reg");
+        footprintMap.put("Spitzer",     "footprint/Footprint_SPITZER.reg" );
+        footprintMap.put("Spitzer_IRAC36", "footprint/Footprint_SPITZER.reg");
+        footprintMap.put("Spitzer_IRAC45", "footprint/Footprint_SPITZER.reg");
+        footprintMap.put("Roman",      "footprint/Footprint_Roman.reg");
         footprintMap.put("SOFIA",      "footprint/Footprint_SOFIA.reg");
         footprintMap.put("SOFIA_FORCAST_IMG",      "footprint/Footprint_SOFIA.reg");
         footprintMap.put("SOFIA_FIFI-LS_Blue",      "footprint/Footprint_SOFIA.reg");

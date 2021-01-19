@@ -97,7 +97,7 @@ export function MarkerDropDownView({plotView:pv}) {
                     const items = instruments.map((inst) => footprintCmdJSX(inst, fp, inst));
 
                     //SPITZER doesn't have any full footprint to overlay, skip
-                    if (fpDesc && fp !== 'SPITZER'  &&  fp!== 'SOFIA'){
+                    if (fpDesc && fp !== 'Spitzer'  &&  fp!== 'SOFIA'){
                         items.splice(0, 0, footprintCmdJSX('All', fp));  // add to the beginning of the array.
                     }
 

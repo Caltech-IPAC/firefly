@@ -538,7 +538,7 @@ export function dispatchCreateMarkerLayer(markerId, layerTitle, plotId = [], att
 /**
  * Footprint Info.  The data object containing footprint info.
  * @typedef {object} footprintInfo
- * @prop {string} footprint - name of footprint project, such as 'HST', 'WFIRST', etc. or footprint file at the server
+ * @prop {string} footprint - name of footprint project, such as 'HST', 'Roman', etc. or footprint file at the server
  * @prop {string} instrument - name of instrument for the footprint
  * @prop {string} relocateBy - name of instrument for the footprint from the server, method of relocation for the uploaded footprint
  * @prop {string} fromFile - filename, not including the extension, of the uploaded file

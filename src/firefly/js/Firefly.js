@@ -169,7 +169,7 @@ const defFireflyOptions = {
                 value: 'https://archives.esac.esa.int/hsa/whsa-tap-server/tap' },
             { label: 'CADC https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap',
                 value: 'https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap' },
-            { label: 'GAIA https://gea.esac.esa.int/tap-server/tap',
+            { label: 'Gaia https://gea.esac.esa.int/tap-server/tap',
                 value: 'https://gea.esac.esa.int/tap-server/tap' },
             { label: 'GAVO http://dc.g-vo.org/tap',
                 value: 'http://dc.g-vo.org/tap'},
