@@ -15,6 +15,7 @@ public class GroupInfo implements Serializable, Cloneable{
     private String ucd;
     private String utype;
     private List<ParamInfo> paramInfos = new ArrayList<>();    // params in this group
+    private List<GroupInfo> groupInfos = new ArrayList<>();    // nested groups
     private List<RefInfo> columnRefs = new ArrayList<>();      // referenced columns in form of RefInfo objects
     private List<RefInfo> paramRefs = new ArrayList<>();       // referenced ParamInfo in form of RefInfo objects
 
@@ -63,6 +64,11 @@ public class GroupInfo implements Serializable, Cloneable{
     }
     public void setParamInfos(List<ParamInfo> paramInfos) { this.paramInfos = paramInfos; }
 
+    public List<GroupInfo> getGroupInfos() {
+        return groupInfos;
+    }
+    public void setGroupInfos(List<GroupInfo> groupInfos) { this.groupInfos = groupInfos; }
+
     public List<RefInfo> getColumnRefs() { return columnRefs; }
     public void setColumnRefs(List<RefInfo> refs) {
         columnRefs.clear();
@@ -94,6 +100,7 @@ public class GroupInfo implements Serializable, Cloneable{
     public Object clone() throws CloneNotSupportedException {
         GroupInfo gobj = (GroupInfo) super.clone();
         gobj.paramInfos = new ArrayList<>(paramInfos);
+        gobj.groupInfos = new ArrayList<>(groupInfos);
         gobj.columnRefs = new ArrayList<>(columnRefs);
         gobj.paramRefs = new ArrayList<>(paramRefs);
         return gobj;
@@ -120,6 +127,8 @@ public class GroupInfo implements Serializable, Cloneable{
         private String ucd;
         private String utype;
 
+        public RefInfo() {}
+
         public RefInfo(String ref, String ucd, String utype) {
             this.ref = ref;
             this.ucd = ucd;
@@ -129,14 +138,17 @@ public class GroupInfo implements Serializable, Cloneable{
         public String getRef() {
             return ref;
         }
+        public void setRef(String ref) { this.ref = ref;}
 
         public String getUcd() {
             return ucd;
         }
+        public void setUcd(String ucd) { this.ucd = ucd; }
 
         public String getUtype() {
             return utype;
         }
+        public void setUtype(String utype) { this.utype = utype; }
 
         public Object clone() throws CloneNotSupportedException {
             return super.clone();

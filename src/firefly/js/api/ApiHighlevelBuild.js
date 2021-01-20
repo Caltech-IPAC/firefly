@@ -135,6 +135,7 @@ function doShowClientTable(llApi, targetDiv, tableModel, options={}) {
 }
 
 function buildTablePart(llApi) {
+    const {dispatchTableFetch}= llApi.action;
 
     /**
      * @global
@@ -181,6 +182,13 @@ function buildTablePart(llApi) {
      */
     const showTable = (targetDiv, request, options)  => doShowTable(llApi, targetDiv, request, options);
 
+    /**
+     * Fetch and store the table data without displaying it.
+     * @param {TableRequest} request   table request to fetch
+     * @memberof firefly
+     * @public
+     */
+    const fetchTable = (request)  => dispatchTableFetch(request);
 
     /**
      * Render the tableModel into the given div
@@ -193,7 +201,7 @@ function buildTablePart(llApi) {
     const showClientTable = (targetDiv, tableModel, options)  => doShowClientTable(llApi, targetDiv, tableModel, options);
 
 
-    return {showTable, showClientTable};
+    return {showTable, showClientTable, fetchTable};
 }
 
 /*---------------------------- TABLE PART >----------------------------*/

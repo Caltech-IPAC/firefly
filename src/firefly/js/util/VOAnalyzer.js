@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, has, isArray, isEmpty, isObject, isString, intersection} from 'lodash';
+import {get, has, isArray, isEmpty, isObject, isString, intersection, pickBy} from 'lodash';
 import Enum from 'enum';
 import { getColumn,
     getColumnIdx,
@@ -11,7 +11,8 @@ import { getColumn,
     getTblById,
     getCellValue,
     getColumnByID,
-    columnIDToName
+    columnIDToName,
+    getColumnByRef
 } from '../tables/TableUtil.js';
 import {getCornersColumns} from '../tables/TableInfoUtil.js';
 import {MetaConst} from '../data/MetaConst.js';
@@ -1248,7 +1249,7 @@ export function applyTokenSub(tableModel, val='', rowIdx, def) {
     if (vars) {
         vars.forEach((v) => {
             const [,cname] = v.match(/\${([\w -.]+)}/) || [];
-            const col = getColumnByID(tableModel, cname) || getColumn(tableModel, cname);
+            const col = getColumnByRef(tableModel, cname);
             const cval = col ? getCellValue(tableModel, rowIdx, col.name) : '';  // if the variable cannot be resolved, return empty string
             rval = rval.replace(v, cval);
         });
@@ -1272,4 +1273,131 @@ export function isObsCoreLike(tableModel) {
     };
     const v = intersection(cols.map( (c) => c.name), OBSTAP_CNAMES);
     return v.length > 2;
+}
+
+
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} SpectrumDM - spectrum data model information:  https://ivoa.net/documents/SpectrumDM/20111120/REC-SpectrumDM-1.1-20111120.pdf
+ * @prop {DataAxis}  spectralAxis
+ * @prop {DataAxis}  fluxAxis
+ * @prop {DataAxis}  timeAxis
+ * @prop {string}    orderID
+ */
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} DataAxis - spectrum data axis.. can be one of FluxAxis, TimeAxis, or SpectralAxis
+ * @prop {string}  value                 Spectral axis column name
+ * @prop {string}  [unit]
+ * @prop {string}  [ucd]
+ * @prop {string}  [statError]
+ * @prop {string}  [statErrLow]
+ * @prop {string}  [statErrHigh]
+ * @prop {string}  [binSize]
+ * @prop {string}  [binLow]
+ * @prop {string}  [binHigh]
+ */
+
+const spectralAxisPrefix = ['spec:Spectrum.Data.SpectralAxis', 'spec:Data.SpectralAxis'];
+const fluxAxisPrefix = ['spec:Spectrum.Data.FluxAxis', 'spec:Data.FluxAxis'];
+const timeAxisPrefix = ['spec:Spectrum.Data.TimeAxis', 'spec:Data.TimeAxis'];
+const orderIDPrefix = ['spec:Spectrum.Data.OrderID', 'spec:Data.OrderID'];
+const dataAxis = {
+    value: 'Value',
+    statError: 'Accuracy.StatError',
+    statErrLow: 'Accuracy.StatErrLow',
+    statErrHigh: 'Accuracy.StatErrHigh',
+    binSize: 'Accuracy.BinSize',
+    binLow: 'Accuracy.BinLow',
+    binHigh: 'Accuracy.BinHigh'
+};
+
+/**
+ *
+ * @param tableModel
+ * @returns {SpectrumDM}
+ */
+export function getSpectrumDM(tableModel) {
+
+    if (tableModel?.tableMeta?.utype !== 'spec:Spectrum') return;
+
+    const findAxisData = (prefix) => {
+        const data = {};
+        Object.entries(dataAxis).forEach(([key, utype]) => {
+            const col = findColByUtype(tableModel, prefix, utype);
+            if (col) {
+                data[key] = col.name;
+                if (key === 'value') {      // defaults to column's attribs if not given as params
+                    data.ucd = findParamByUtype(tableModel, prefix, 'UCD')?.value || col.UCD;
+                    data.unit = findParamByUtype(tableModel, prefix, 'Unit')?.value || col.units;
+                }
+            }
+        });
+
+        return data;
+    };
+
+    const spectralAxis  = findAxisData(spectralAxisPrefix);
+    const fluxAxis      = findAxisData(fluxAxisPrefix);
+    const timeAxis      = findAxisData(timeAxisPrefix);
+    const orderID       = findColByUtype(tableModel, orderIDPrefix);
+
+    return pickBy({spectralAxis, fluxAxis, timeAxis, orderID}, (a) => !isEmpty(a));      // return axis only if it has data
+}
+
+function findColByUtype(tableModel, prefixes, suffix) {
+
+    const cols = allRefCols(tableModel, tableModel?.groups) || [];
+    for(const p of prefixes) {
+        const utype = p + (suffix ? '.' + suffix: '');
+        const col =  cols.find( (c) => c?.utype?.toLowerCase() === utype.toLowerCase());
+        if (col) return col;
+    }
+}
+
+function findParamByUtype(tableModel, prefixes, suffix) {
+
+    const params = allParams(tableModel?.groups) || [];
+    for(const p of prefixes) {
+        const utype = p + (suffix ? '.' + suffix: '');
+        const param =  params.find( (c) => c?.utype?.toLowerCase() === utype.toLowerCase());
+        if (param) return param;
+    }
+}
+
+function allRefCols(tableModel, groups) {
+    if (!Array.isArray(groups)) return ;
+    let cols = [];
+    for (const g of groups) {
+        cols = cols.concat( g?.columnRefs?.map((r) => {
+            const col = getColumnByRef(tableModel, r?.ref);
+            if (col) {
+                if (r?.utype) col.utype = r.utype;
+                if (r?.UCD)   col.UCD = r.UCD;
+            }
+            return col;
+        }) || [] );
+        if (g?.groups) {
+            cols = cols.concat( allRefCols(tableModel, g.groups) );
+        }
+    }
+    return cols;
+}
+
+function allParams(groups) {
+    if (!Array.isArray(groups)) return ;
+    let params = [];
+    for (const g of groups) {
+        if (Array.isArray(g?.params)) {
+            params = params.concat( g.params );
+        }
+        if (g?.groups) {
+            params = params.concat( allParams(g.groups) );
+        }
+    }
+    return params;
 }

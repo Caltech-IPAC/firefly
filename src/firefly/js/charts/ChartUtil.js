@@ -10,12 +10,12 @@
 
 import {
     assign, flatten, get, uniqueId, isArray, isEmpty, range, set, isObject, isString, pick, cloneDeep, merge, has,
-    isUndefined
+    isUndefined, pickBy
 } from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {getAppOptions} from '../core/AppDataCntlr.js';
-import {getTblById, isFullyLoaded, isColumnType, COL_TYPE, stripColumnNameQuotes, watchTableChanges} from '../tables/TableUtil.js';
+import {getTblById, isFullyLoaded, isTableLoaded, isColumnType, COL_TYPE, stripColumnNameQuotes, watchTableChanges} from '../tables/TableUtil.js';
 import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_SELECT, TABLE_SORT} from '../tables/TablesCntlr.js';
 import {dispatchLoadTblStats} from './TableStatsCntlr.js';
 import {dispatchChartUpdate, dispatchChartHighlighted, dispatchChartSelect, getChartData} from './ChartsCntlr.js';
@@ -29,7 +29,7 @@ import {getTraceTSEntries as genericTSGetter} from './dataTypes/FireflyGenericDa
 import Color from '../util/Color.js';
 import {MetaConst} from '../data/MetaConst';
 import {ALL_COLORSCALE_NAMES, colorscaleNameToVal} from './Colorscale.js';
-import {findTableCenterColumns} from '../util/VOAnalyzer.js';
+import {findTableCenterColumns, getSpectrumDM} from '../util/VOAnalyzer.js';
 
 export const DEFAULT_ALPHA = 0.5;
 
@@ -905,14 +905,12 @@ function getDefaultColorAttributes(traceData, type, idx) {
 
 export function getDefaultChartProps(tbl_id) {
 
-    if (!isFullyLoaded(tbl_id)) { return; }
-
     const tblModel = getTblById(tbl_id);
-    const {tableMeta, tableData, totalRows}= getTblById(tbl_id);
+    const {tableMeta, tableData, totalRows} = tblModel || {};
 
-    if (!totalRows) {
-        return;
-    }
+    // ignore if not loaded or no-data
+    if (!isTableLoaded(tblModel) || !totalRows)  return;
+
 
     // default chart props can be set in a table attribute
     const defaultChartDef = tableMeta[MetaConst.DEFAULT_CHART_DEF];
@@ -922,82 +920,129 @@ export function getDefaultChartProps(tbl_id) {
         return defaultChartProps;
     }
 
+    // for spectra, use custom spectraviwer ..
+    const spectrumDM = getSpectrumDM(tblModel);
+    if (!isEmpty(spectrumDM)) return sedPlot({tbl_id, spectrumDM});
+
+
+    let xCol, yCol;
     // for catalogs use lon and lat columns
     const centerColumns = findTableCenterColumns(tblModel);
-    let isCatalog = get(tblModel, 'totalRows') && centerColumns;
-    let xCol = undefined, yCol = undefined;
-
-    if (isCatalog) {
-        xCol = colWithName(tableData.columns, get(centerColumns, 'lonCol'));
-        yCol = colWithName(tableData.columns, get(centerColumns, 'latCol'));
-        if (!xCol || !yCol) {
-            isCatalog = false;
-        }
+    xCol = centerColumns?.lonCol;
+    yCol = centerColumns?.latCol;
+    if (xCol && yCol) {
+        return genericXYChart({tbl_id, xCol, yCol, xOptions: 'flip'});
     }
 
     //otherwise use the first one-two numeric columns
-    if (!isCatalog) {
-        const numericCols = getNumericCols(tableData.columns);
-        if (numericCols.length > 1) {
-            xCol = numericCols[0];
-            yCol = numericCols[1];
-        } else if (numericCols.length > 0) {
-            xCol = numericCols[0];
-            yCol = numericCols[0];
-        }
-    }
-
-    if (xCol && yCol)  {
-        // non-alphanumeric column names should be quoted in expressions
-        const xColName = quoteNonAlphanumeric(xCol.name);
-        const yColName = quoteNonAlphanumeric(yCol.name);
-        
-        if (xColName === yColName) {
-            // if only one numeric column is available, do histogram
-            const chartData = {
-                data: [{
-                    type: 'fireflyHistogram',
-                    firefly: {
-                        tbl_id,
-                        options: {
-                            algorithm: 'fixedSizeBins',
-                            fixedBinSizeSelection: 'numBins',
-                            numBins: 20,
-                            columnOrExpr: `${xColName}`
-                        }
-                    },
-                    name: `${xColName}`
-                }]
-            };
-            return chartData;
-        } else {
-            // scatter that converts into heatmap and back depending on the number of points
-            const colorscaleName = 'GreySeq';
-            const colorscale = colorscaleNameToVal(colorscaleName);
-            const chartData = {
-                data: [{
-                    tbl_id,
-                    type: totalRows >= getMinScatterGLRows() ? 'scattergl' : 'scatter',
-                    mode: 'markers',
-                    x: xCol && `tables::${xColName}`,
-                    y: yCol && `tables::${yColName}`,
-                    colorscale,
-                    firefly: {
-                        scatterOrHeatmap: true,
-                        colorscale: colorscaleName
-                    }
-                }],
-                layout: {
-                    xaxis: {
-                        autorange: isCatalog ? 'reversed' : 'true'
-                    },
-                    yaxis: {showgrid: false}
-                }
-            };
-            return chartData;
-        }
-    } else {
-        return {};
+    const numericCols = getNumericCols(tableData.columns);
+    if (numericCols?.length > 0) {
+        xCol = numericCols[0]?.name;
+        yCol = numericCols.length > 1 ? numericCols[1]?.name : xCol;
+        return genericXYChart({tbl_id, xCol, yCol});
     }
 }
 
+function genericXYChart({tbl_id, xCol, yCol, xOptions}) {
+    if (xCol === yCol) {
+        return fireflyHistogram({tbl_id, xCol});
+    } else {
+        return scatterOrHeatmap({tbl_id, xCol, yCol, xOptions});
+    }
+}
+
+function fireflyHistogram({tbl_id, xCol}) {
+    const xColName = quoteNonAlphanumeric(xCol);
+    return {
+        data: [{
+            type: 'fireflyHistogram',
+            firefly: {
+                tbl_id,
+                options: {
+                    algorithm: 'fixedSizeBins',
+                    fixedBinSizeSelection: 'numBins',
+                    numBins: 20,
+                    columnOrExpr: `${xColName}`
+                }
+            },
+            name: `${xColName}`
+        }]
+    };
+}
+
+function scatterOrHeatmap({tbl_id, xCol, yCol, xOptions}) {
+    const {totalRows} = getTblById(tbl_id) || {};
+
+    const xColName = quoteNonAlphanumeric(xCol);
+    const yColName = quoteNonAlphanumeric(yCol);
+    // scatter that converts into heatmap and back depending on the number of points
+    const colorscaleName = 'GreySeq';
+    const colorscale = colorscaleNameToVal(colorscaleName);
+    const autorange = xOptions?.includes('flip') ? 'reversed' : 'true';
+
+    return {
+        data: [{
+            tbl_id,
+            type: totalRows >= getMinScatterGLRows() ? 'scattergl' : 'scatter',
+            mode: 'markers',
+            x: xCol && `tables::${xColName}`,
+            y: yCol && `tables::${yColName}`,
+            colorscale,
+            firefly: {
+                scatterOrHeatmap: true,
+                colorscale: colorscaleName
+            }
+        }],
+        layout: {
+            xaxis: {autorange},
+            yaxis: {showgrid: false}
+        }
+    };
+
+}
+
+function sedPlot({tbl_id, spectrumDM}) {
+    const {totalRows} = getTblById(tbl_id) || {};
+
+    const error = ({statError, statErrLow, statErrHigh}) => {
+        let arrayminus = statErrLow || statError;
+        let array = statErrHigh || statError;
+
+        if (array === arrayminus) arrayminus = undefined;
+        arrayminus  = arrayminus && `tables::${arrayminus}`;
+        array       = array && `tables::${array}`;
+
+        return pickBy({arrayminus, array});
+    };
+
+    const type = totalRows >= getMinScatterGLRows() ? 'scattergl' : 'scatter';
+
+    const {spectralAxis, fluxAxis} = spectrumDM || {};
+
+    const xColName = quoteNonAlphanumeric(spectralAxis?.value);
+    const yColName = quoteNonAlphanumeric(fluxAxis?.value);
+
+    const x = xColName && `tables::${xColName}`;
+    const y = yColName && `tables::${yColName}`;
+    const error_x = error(spectralAxis || {});
+    const error_y = error(fluxAxis || {});
+
+    const xLabel = spectralAxis?.unit ? `v [${spectralAxis?.unit}]` : 'v';
+    const yLabel = fluxAxis?.unit ? `Fv [${fluxAxis?.unit}]` : 'Fv';
+
+    const firefly = { dataType: 'SED' };
+
+    return {
+        data: [ pickBy({tbl_id, type, x, y, error_x, error_y, firefly, mode: 'markers'}, (a) => !isEmpty(a))],
+        layout: {
+            xaxis: {
+                title: xLabel,
+                type: 'log'
+            },
+            yaxis: {
+                title: yLabel,
+                type: 'log'
+            }
+        }
+    };
+}

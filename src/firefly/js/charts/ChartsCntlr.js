@@ -18,7 +18,7 @@ import {applyDefaults, flattenAnnotations, formatColExpr, getPointIdx, getRowIdx
 import {FilterInfo} from '../tables/FilterInfo.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {REINIT_APP, getAppOptions} from '../core/AppDataCntlr.js';
-import {makeHistogramParams, makeXYPlotParams} from './ChartUtil.js';
+import {makeHistogramParams, makeXYPlotParams, getDefaultChartProps} from './ChartUtil.js';
 import {adjustColorbars, hasFireflyColorbar} from './dataTypes/FireflyHeatmap.js';
 
 export const CHART_SPACE_PATH = 'charts';
@@ -257,7 +257,9 @@ function chartAdd(action) {
             const {tbl_id} = params;
 
             const doChartAdd = (p) => {
-                const chartData = chartType === 'scatter' ? makeXYPlotParams(p) : makeHistogramParams(p);
+                const chartData = chartType === 'scatter' ? makeXYPlotParams(p)
+                                : chartType === 'histogram' ? makeHistogramParams(p)
+                                : getDefaultChartProps(tbl_id);
                 if (chartData) {
                     dispatchChartAdd({chartId, ...chartData, ...rest});
                 }
@@ -506,7 +508,7 @@ function handleFireflyTraceTypes(payload) {
         data.forEach((d) => {
             if (isFireflyType(d.type)) {
                 const fd = get(d, 'firefly', {});
-                fd.dataType = d.type;
+                if (!fd.dataType) fd.dataType = d.type;     // use data.type if not defined.
                 fireflyData.push(fd);
                 plotlyData.push(omit(d, ['firefly']));
             } else {

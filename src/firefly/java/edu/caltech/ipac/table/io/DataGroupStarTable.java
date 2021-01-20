@@ -10,6 +10,7 @@ import static edu.caltech.ipac.util.StringUtils.isEmpty;
 import edu.caltech.ipac.firefly.server.util.Logger;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.net.URL;
@@ -55,6 +56,16 @@ public class DataGroupStarTable extends RandomStarTable {
         return dataGroup.getAttribute(TableMeta.NAME);
     }
 
+    @Override
+    public List getParameters() {
+        List list = super.getParameters();
+        String utype = dataGroup.getAttribute(TableMeta.UTYPE);
+        if (!StringUtils.isEmpty(utype)) {
+            list = list == null ? new ArrayList() : list;
+            list.add(new DescribedValue(new DefaultValueInfo(VOStarTable.UTYPE_INFO), utype));
+        }
+        return list;
+    }
 
 //====================================================================
 //  internal helper functions

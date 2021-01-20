@@ -98,7 +98,7 @@ export class Errors extends PureComponent {
                     groupKey={groupKey}
                 />
                 <div style={{paddingLeft: 10}}>
-                    {(errType==='sym') && this.renderErrFld({fldPath:errorFieldKey(activeTrace, axis), name:`${axisU} Error`})}
+                    {(errType==='sym') && this.renderErrFld({fldPath:errorFieldKey(activeTrace, axis), label: ' ', labelWidth: 6, name:`${axisU} Error`})}
                     {(errType==='asym') && this.renderErrFld({fldPath:errorFieldKey(activeTrace, axis), label: '\u2191', name:`${axisU} Upper Error`})}
                     {(errType==='asym') && this.renderErrFld({fldPath:errorMinusFieldKey(activeTrace, axis), label: '\u2193', name:`${axisU} Lower Error`})}
                 </div>

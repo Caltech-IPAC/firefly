@@ -18,6 +18,7 @@ import {isScatter2d} from '../ChartUtil.js';
 import {BasicOptions} from './options/BasicOptions.jsx';
 import {ScatterOptions} from './options/ScatterOptions.jsx';
 import {HeatmapOptions} from './options/HeatmapOptions.jsx';
+import {SedOptions} from './options/SpectrumOptions.jsx';
 import {FireflyHistogramOptions} from './options/FireflyHistogramOptions.jsx';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
@@ -314,6 +315,8 @@ export function getOptionsUI(chartId) {
     // when the data arrive
     if (dataType === 'fireflyHistogram') {
         return FireflyHistogramOptions;
+    } else if (dataType === 'SED') {
+        return SedOptions;
     } else if (dataType === 'fireflyHeatmap') {
         if (get(fireflyData, [activeTrace, 'scatterOrHeatmap']) && isScatter2d(type)) {
             return ScatterOptions;

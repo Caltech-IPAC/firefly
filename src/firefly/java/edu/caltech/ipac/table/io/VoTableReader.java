@@ -372,6 +372,8 @@ public class VoTableReader {
 
         GroupInfo gObj = new GroupInfo(name, desc);
         applyIfNotEmpty(group.getAttribute(ID), gObj::setID);
+        applyIfNotEmpty(group.getAttribute(UCD), gObj::setUCD);
+        applyIfNotEmpty(group.getAttribute(UTYPE), gObj::setUtype);
 
         // add FIELDref
         Arrays.stream(group.getChildrenByName("FIELDref"))
@@ -382,8 +384,12 @@ public class VoTableReader {
                 .forEach(pEl -> gObj.getParamRefs().add(refElToRefInfo(pEl)));
 
         // add PARAMs
+        Arrays.stream(group.getChildrenByName("GROUP"))
+            .forEach(gEl -> gObj.getGroupInfos().add(groupElToGroupInfo(gEl)));
+
+        // add GROUPs
         Arrays.stream(group.getChildrenByName("PARAM"))
-            .forEach(pEl -> gObj.getParamInfos().add(paramElToParamInfo(pEl)));
+                .forEach(pEl -> gObj.getParamInfos().add(paramElToParamInfo(pEl)));
 
         return gObj;
     }

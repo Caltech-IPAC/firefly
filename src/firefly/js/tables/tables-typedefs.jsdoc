@@ -96,12 +96,14 @@
 /**
  * Table group info
  * @typedef {object} Group
- * @prop {string} ID     ID used to reference this group.
- * @prop {string} name   href of this group.
- * @prop {string} desc   description
+ * @prop {string} ID        ID used to reference this group.
+ * @prop {string} name      href of this group.
+ * @prop {string} desc      description
+ * @prop {string} UCD       UCD, see VOTable
+ * @prop {string} utype     utype, see VOTable
  * @prop {PARAM[]} params   params if any
- * @prop {REF[]} paramRefs   reference to params
- * @prop {REF[]} columnRefs   reference to columns
+ * @prop {REF[]} paramRefs  reference to params
+ * @prop {REF[]} columnRefs reference to columns
  *
  * @global
  * @public
