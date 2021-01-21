@@ -3,7 +3,7 @@
 # Cleanup script for Firefly app
 
 # /usr/bin/find if testing locally
-find_cmd="/bin/find"
+find_cmd="/usr/bin/find"
 echo "cleanup: started"
 
 function doCleanup() {
