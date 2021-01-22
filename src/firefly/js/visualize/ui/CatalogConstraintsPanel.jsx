@@ -133,16 +133,17 @@ export class CatalogConstraintsPanel extends PureComponent {
         }
 
         return (
-            <div style={{padding:'0 0 5px'}}>
+            <div style={{padding:'0 0 5px', height:'100%', display:'flex', flexDirection:'column', alignItems:'stretch'}}>
                 <div
                     style={{display:'flex', flexDirection:'column',
+                            height:'100%',
                             margin:'0px 10px 5px 5px', padding:'0px 5px',
                             border:'1px solid #a3aeb9'}}>
                     <div style={{display:'flex', flexDirection:'row', padding:'5px 5px 0'}}>
                         {!error && showFormType && formTypeList()}
                         {!error && resetButton()}
                     </div>
-                    <div>
+                    <div style={{flex: '1 1 auto', display:'flex', flexDirection:'column' }}>
                         <TablePanelConnected {...{tableModel, fieldKey}} />
                         {!error && renderSqlArea()}
                     </div>
@@ -393,8 +394,7 @@ class ConstraintPanel extends PureComponent {
         const totalCol = columns ? (columns.length-1) : 0;
 
         return (
-            <div style={{display:'inline-block',
-                width: 'calc(100% - 10px)', height: '170px', padding: '5px 5px'}}>
+            <div style={{display:'inline-block', flex: '1 1 auto', padding: '5px 5px'}}>
                 <div style={{ position: 'relative', width: '100%', height: '100%'}}>
                     <div className='TablePanel'>
                         <div className={'TablePanel__wrapper--border'}>
@@ -571,30 +571,30 @@ const inputFieldValidator = (filterString) => {
 function renderSqlArea() {
     //m31, cone search 10', w3snr>7 and (w2mpro-w3mpro)>1.5 on wise source catalog = 361
     return (
-        <div style={{margin: '2px 0'}}>
+        <div style={{padding: '5px 0 0 5px', display:'flex', flexDirection:'column'}}>
+            <div style={{paddingBottom:'3px'}}>Additional constraints (SQL)</div>
             <InputAreaFieldConnected fieldKey='txtareasql'
-                                     wrapperStyle={{padding: 5}}
+                                     wrapperStyle={{display:'flex'}}
                                      style={{
                                                 overflow: 'auto',
-                                                display: 'flex',
                                                 alignItems: 'center',
                                                 height: '20px',
                                                 maxHeight: '100px',
-                                                width: '97%',
-                                                maxWidth: '1000px'
+                                                width: '100%',
                                             }}
                                      initialState={{
                                                 tooltip: 'Enter SQL additional constraints here',
-                                                labelWidth: 70
+                                                // labelWidth: 70
                                             }}
-                                     label='Additional constraints (SQL):'
             />
-            <em>Ex: w3snr&gt;7 and (w2mpro-w3mpro)&gt;1.5 and ra&gt;102.3 and ra&lt;112.3 and dec&lt;-5.5 and
-                dec&gt;
-                -15.5</em><br />
-            (source_id_mf = '1861p075_ac51-002577')
-            <br />
-            <code style={{align: 'center', color: 'red'}}>The format for date type is yyyy-mm-dd</code>
+            <div style={{lineHeight: '10pt', paddingTop:'3px'}}>
+                <em>Ex: w3snr&gt;7 and (w2mpro-w3mpro)&gt;1.5 and ra&gt;102.3 and ra&lt;112.3 and dec&lt;-5.5 and
+                    dec&gt;
+                    -15.5</em><br />
+                (source_id_mf = '1861p075_ac51-002577')
+                <br />
+                <code style={{align: 'center', color: 'red'}}>The format for date type is yyyy-mm-dd</code>
+            </div>
         </div>
     );
 }

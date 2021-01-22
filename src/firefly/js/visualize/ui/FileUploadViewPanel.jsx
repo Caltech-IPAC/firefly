@@ -83,8 +83,10 @@ export function FileUploadViewPanel() {
 
 
     return (
-        <div style={{position: 'relative'}}>
-            <FieldGroup groupKey={panelKey} keepState={true}>
+        <div style={{position: 'relative', height: '100%', display: 'flex', alignItems: 'stretch',
+            flexDirection: 'column' }}>
+            <FieldGroup groupKey={panelKey} keepState={true} style={{height:'100%',
+                display: 'flex', alignItems: 'stretch', flexDirection: 'column'}}>
                 <div className='FileUpload'>
                     <div className='FileUpload__input'>
                         <RadioGroupInputField
@@ -93,7 +95,9 @@ export function FileUploadViewPanel() {
                             alignment={'horizontal'}
                             options={uploadMethod}
                             wrapperStyle={{fontWeight: 'bold', fontSize: 12}}/>
-                        <UploadOptions {...{uploadSrc, isLoading, isWsUpdating}}/>
+                            <div style={{paddingTop: '10px'}}>
+                                <UploadOptions {...{uploadSrc, isLoading, isWsUpdating}}/>
+                            </div>
                     </div>
                     <FileAnalysis {...{report, summaryModel, detailsModel}}/>
                     <ImageDisplayOption/>
@@ -106,7 +110,7 @@ export function FileUploadViewPanel() {
 
 export function resultFail() {
     showInfoPopup('One or more fields are invalid', 'Validation Error');
-};
+}
 
 export function resultSuccess(request) {
     const fileCacheKey = getFileCacheKey();
@@ -305,7 +309,18 @@ const FileAnalysis = React.memo( ({report, summaryModel, detailsModel}) => {
             </div>
         );
     }
-    return null;
+    else {
+        const liStyle= {listStyleType:'circle'};
+        return (<div style={{color:'gray', margin:'20px 0 0 200px', fontSize:'larger', lineHeight:'1.3em'}}>
+            You can Load of the following types of files:
+            <ul>
+                <li style={liStyle}>Custom catalog in IPAC, CSV, TSV, VOTABLE, or FITS table format.</li>
+                <li style={liStyle}>Any FITS file with tables or images</li>
+                <li style={liStyle}>A MOC FITS file</li>
+            </ul>
+        </div>);
+
+    }
 });
 
 

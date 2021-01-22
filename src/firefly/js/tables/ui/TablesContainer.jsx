@@ -55,7 +55,7 @@ export class TablesContainer extends PureComponent {
         }
         const {tables, layout, active} = TblUtil.getTableGroup(tbl_group) || {};
 
-        return {closeable, tbl_group, expandedMode, tables, tableOptions, layout, active};
+        return {closeable, tbl_group, expandedMode, tables:updateTitles(tables), tableOptions, layout, active};
     }
 
     storeUpdate() {

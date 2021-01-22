@@ -1,9 +1,9 @@
 /*right list of table with catalog names to be selected*/
 .catalogtable {
-    height: 200px;
-    width: 375px;
+    /*height: 200px;*/
+    /*width: 375px;*/
     overflow: auto;
-    border: 1px solid #a3aeb9;
+    border: 1px solid rgba(0,0,0,.1);
     margin-left: 5px;
 }
 

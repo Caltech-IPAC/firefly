@@ -2,45 +2,43 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 import {SimpleComponent} from './SimpleComponent.jsx';
 import {getUserInfo} from '../core/AppDataCntlr.js';
 import {logout} from '../rpc/CoreServices.js';
+import {getVersionInfoStr, showFullVersionInfoDialog} from '../ui/DropDownContainer.jsx';
 import './Banner.css';
 
+const getVersionTipStr= (appTitle) => `${appTitle?appTitle+' ':''}Version:\n${getVersionInfoStr(true)}`;
 
-export class Banner extends PureComponent {
-
-    constructor(props) {
-        super(props);
-    }
-
-    render() {
-        const {menu, readout, appIcon, visPreview, appTitle, additionalTitleStyle = {marginLeft:'10px'}, showUserInfo=false} = this.props;
-
-        return (
-            <div className='banner__main'>
-                <div className='banner__left'>
-                    {appIcon ? <img src={appIcon}/> : <div style={{width: 75}}/>}
-                </div>
-                <div className='banner__middle'>
-                    <div className='banner__middle--readout'>
-                        <div className='banner__middle--title' style={additionalTitleStyle}>{appTitle}</div>
-                        {readout}
-                    </div>
-                    <div className='banner__middle--menu'>
-                        {menu}
-                    </div>
-                </div>
-                <div className='banner__right'>
-                    {visPreview}
-                </div>
-                {showUserInfo && <UserInfo />}
+export const Banner = memo( ({menu, readout, appIcon, visPreview, appTitle, additionalTitleStyle = {},
+                                 showUserInfo=false, enableVersionDialog= false }) => {
+    return (
+        <div className='banner__main'>
+            <div className='banner__left'>
+                {appIcon ?
+                    <img src={appIcon}
+                         onClick={() => enableVersionDialog && showFullVersionInfoDialog(appTitle) }
+                         title={enableVersionDialog ? getVersionTipStr(appTitle) : ''}/> :
+                    <div style={{width: 75}}/>}
             </div>
-        );
-    }
-}
+            <div className='banner__middle'>
+                <div className='banner__middle--readout'>
+                    <div className='banner__middle--title' style={{marginLeft:'10px', ...additionalTitleStyle}}>{appTitle}</div>
+                    {readout}
+                </div>
+                <div className='banner__middle--menu'>
+                    {menu}
+                </div>
+            </div>
+            <div className='banner__right'>
+                {visPreview}
+            </div>
+            {showUserInfo && <UserInfo/>}
+        </div>
+    );
+});
 
 Banner.propTypes= {
     menu: PropTypes.object,
@@ -53,11 +51,12 @@ Banner.propTypes= {
     ]),
     additionalTitleStyle: PropTypes.object,
     showUserInfo: PropTypes.bool,
+    enableVersionDialog: PropTypes.bool,
 };
 
 
 
-export class UserInfo extends SimpleComponent {
+class UserInfo extends SimpleComponent {
 
     getNextState(np) {
         return getUserInfo() || {};

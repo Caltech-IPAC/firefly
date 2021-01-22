@@ -16,16 +16,22 @@
                 template: 'FireflyViewer',          // set to app mode, instead of api.
                 menu: [
                     {label:'Images', action:'ImageSelectDropDownCmd'},
-                    {label:'Catalogs', action:'IrsaCatalogDropDown'},
                     {label:'Charts', action:'ChartSelectDropDownCmd'},
                     {label:'Upload', action: 'FileUploadDropDownCmd'},
                     {label:'Workspace', action: 'WorkspaceDropDownCmd'},
+                    {label:'TAP & IRSA Searches', action: 'MultiTableSearchCmd'},
                     {label:'Test Searches', action:'TestSearches'},
-                    {label:'TAP Searches', action: 'TAPSearch'},
+                    // {label:'TAP Searches', action: 'TAPSearch'},
                     {label:'Example Js Dialog', action:'exampleDialog', type:'COMMAND'},
                 ],
             },
             options : Object.assign(pOpts, {
+                multiTableSearchCmdOptions: [
+                    {id: 'tap', title: 'TAP Searches'},
+                    {id: 'irsacat', title: 'IRSA Catalogs'},
+                    {id: 'vocat'},
+                    {id: 'nedcat'}
+                ],
                 MenuItemKeys: {maskOverlay:true},
                 catalogSpacialOp: 'polygonWhenPlotExist',
                 workspace : {showOptions: true},

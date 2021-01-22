@@ -37,14 +37,17 @@ export class FileUploadDropdown extends PureComponent {
 
     render() {
         return (
-            <div style={{padding: 10}}>
+            <div style={{width: '100%'}}>
                 <FormPanel
+                    width='auto' height='auto'
                     groupKey={panelKey}
                     onSubmit={resultSuccess}
                     onError={resultFail}
                     onCancel={hideSearchPanel}
                     params={{hideOnInvalid: false}}
                     changeMasking={this.changeMasking}
+                    submitText={'Load'}
+                    submitBarStyle={{padding: '2px 3px 3px'}}
                     help_id={helpId}
                 >
                     <FileUploadViewPanel/>

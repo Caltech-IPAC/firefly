@@ -129,7 +129,7 @@ export const ToolbarButton = memo((props) => {
                     <div style={{flexGrow:1, display:'flex'}} className={textCName}>
                         {hasCheckBox && makeCheckBox(checkBoxOn,imageStyle)}
                         {icon ?
-                            <img style={{...imageStyle, flexGrow:1}} src={icon}/> :
+                            <img style={{flexGrow:1, ...imageStyle}} src={icon}/> :
                             <div style={{flexGrow:1}} className={textCName}>{text}</div>}
                     </div>
                     {badgeCount>0 && makeBadge(badgeCount)}

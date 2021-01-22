@@ -18,7 +18,7 @@ import {LO_MODE, LO_VIEW, dispatchSetLayoutMode, dispatchUpdateLayoutInfo, getLa
 import ImagePlotCntlr, {visRoot} from '../../visualize/ImagePlotCntlr.js';
 import {TABLE_LOADED, TBL_RESULTS_ACTIVE, TBL_RESULTS_ADDED} from '../../tables/TablesCntlr.js';
 import {REINIT_APP} from '../../core/AppDataCntlr.js';
-import {isCatalog, isMetaDataTable} from '../../util/VOAnalyzer.js';
+import {hasCoverageData, isCatalog, isMetaDataTable} from '../../util/VOAnalyzer.js';
 import {MetaDataMultiProductViewer} from './MetaDataMultiProductViewer';
 import {CoverageViewer} from './CoveraeViewer';
 import {isOrbitalPathTable} from '../../util/VOAnalyzer';
@@ -190,9 +190,9 @@ function handleNewTable(layoutInfo, action) {
     let {showImages} = layoutInfo;
     let {coverageLockedOn, showFits, showMeta, showCoverage, selectedTab, metaDataTableId} = images;
     const isMeta = isMetaDataTable(tbl_id);
-    
 
-    if ((isMeta || isOrbitalPathTable(tbl_id) || isCatalog(tbl_id)) && showTables ) {
+
+    if ((isMeta || hasCoverageData(tbl_id)|| isOrbitalPathTable(tbl_id) || isCatalog(tbl_id)) && showTables ) {
         if (!showFits) selectedTab = 'coverage';
         showFits= showFits || shouldShowFits();
         // coverageLockedOn= !showFits||coverageLockedOn;

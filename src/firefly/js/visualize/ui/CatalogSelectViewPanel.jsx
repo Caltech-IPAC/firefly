@@ -9,27 +9,21 @@ import { get, merge, isEmpty, isFunction, set} from 'lodash';
 import {updateMerge} from '../../util/WebUtil.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {doFetchTable} from '../../tables/TableUtil.js';
-import {makeTblRequest, makeIrsaCatalogRequest, makeVOCatalogRequest, DataTagMeta} from '../../tables/TableRequestUtil.js';
+import {makeIrsaCatalogRequest, DataTagMeta} from '../../tables/TableRequestUtil.js';
 import {CatalogTableListField} from './CatalogTableListField.jsx';
 import {CatalogConstraintsPanel} from './CatalogConstraintsPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
-import {FieldGroupTabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {ServerParams} from '../../data/ServerParams.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
-import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {CatalogSearchMethodType, SpatialMethod} from '../../ui/CatalogSearchMethodType.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {parseWorldPt} from '../../visualize/Point.js';
-import {VoSearchPanel} from '../../ui/VoSearchPanel.jsx';
-import {NedSearchPanel} from '../../ui/NedSearchPanel.jsx';
 import {convertAngle} from '../VisUtil.js';
 import {masterTableFilter} from './IrsaMasterTableFilters.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
-import {UploadOptionsDialog, LOCALFILE} from '../../ui/UploadOptionsDialog.jsx';
-import {getWorkspaceConfig} from '../WorkspaceCntlr.js';
 
 import './CatalogTableListField.css';
 import './CatalogSelectViewPanel.css';
@@ -37,16 +31,15 @@ import './CatalogSelectViewPanel.css';
 /**
  * group key for fieldgroup comp
  */
-export const gkey = 'CATALOG_PANEL';
+export const irsaCatalogGroupKey = 'CATALOG_PANEL';
 export const gkeySpacial = 'CATALOG_PANEL_spacial';
 export const initRadiusArcSec = (10 / 3600) + '';
 
 const RADIUS_COL = '7';
 const COLDEF1 = 9;
 const COLDEF2 = 8;
-const dropdownName = 'IrsaCatalogDropDown';
+const dropdownName = 'MultiTableSearchCmd';
 const constraintskey = 'inputconstraint';
-const voProviders = [{name: 'NED', id: 'NedSearch'}];
 
 /**
  * Globally scoped here, master table, columns object
@@ -58,17 +51,17 @@ export class CatalogSelectViewPanel extends PureComponent {
 
     constructor(props) {
         super(props);
-        this.state = {fields: FieldGroupUtils.getGroupFields(gkey)};
+        this.state = {fields: FieldGroupUtils.getGroupFields(irsaCatalogGroupKey)};
     }
 
     componentWillUnmount() {
         this.iAmMounted = false;
-        if (this.unbinder) this.unbinder();
+        if (this.unbiner) this.unbinder();
     }
 
     componentDidMount() {
         this.iAmMounted = true;
-        this.unbinder = FieldGroupUtils.bindToStore(gkey, (fields) => {
+        this.unbinder = FieldGroupUtils.bindToStore(irsaCatalogGroupKey, (fields) => {
             if (fields !== this.state.fields && this.iAmMounted) {
                 this.setState({fields});
             }
@@ -78,13 +71,15 @@ export class CatalogSelectViewPanel extends PureComponent {
     render() {
         var {fields}= this.state;
         return (
-            <div>
+            <div style={{width:'100%'}}>
                 <FormPanel
                     width='auto' height='auto'
-                    groupKey={[gkey, gkeySpacial]}
+                    groupKey={[irsaCatalogGroupKey, gkeySpacial]}
                     onSuccess={(request) => onSearchSubmit(request)}
                     onError={(request) => onSearchFail(request)}
                     params={{hideOnInvalid: false}}
+                    buttonStyle={{justifyContent: 'left'}} submitBarStyle={{padding: '2px 3px 3px'}}
+                    help_id={'basics.catalogs'}
                     onCancel={hideSearchPanel}>
                     <CatalogSelectView fields={fields}/>
                 </FormPanel>
@@ -116,42 +111,26 @@ function onSearchSubmit(request) {
         showInfoPopup('Error: Master table was not loaded.');
         return false;
     }
-    if (request[gkey].Tabs === 'catalog') {
-        const spacPart= request[gkeySpacial] || {};
-        const {spatial} = spacPart;
-        const wp = parseWorldPt(spacPart[ServerParams.USER_TARGET_WORLD_PT]);
-        if (!wp && (spatial === SpatialMethod.Cone.value
-            || spatial === SpatialMethod.Box.value
-            || spatial === SpatialMethod.Elliptical.value)) {
-            showInfoPopup('Target is required');
-            return false;
-        }
-        if (validateConstraints(gkey)) {
-            doCatalog(request);
-        }
-    }
-    else if (request[gkey].Tabs === 'loadcat') {
-        doLoadTable(request[gkey]);
-    }
-    else if (request[gkey].Tabs === 'vosearch') {
-        doVoSearch(request[gkey],'');
-    }
-    else if (request[gkey].Tabs === 'nedsearch') {
-        doVoSearch(request[gkey], 'NED');
-    }
-    else {
-        showInfoPopup('Request not supported');
+    const spacPart= request[gkeySpacial] || {};
+    const {spatial} = spacPart;
+    const wp = parseWorldPt(spacPart[ServerParams.USER_TARGET_WORLD_PT]);
+    if (!wp && (spatial === SpatialMethod.Cone.value
+        || spatial === SpatialMethod.Box.value
+        || spatial === SpatialMethod.Elliptical.value)) {
+        showInfoPopup('Target is required');
         return false;
+    }
+    if (validateConstraints(irsaCatalogGroupKey)) {
+        doCatalog(request);
     }
     return true;
 }
-function hideSearchPanel() {
-    dispatchHideDropDown();
-}
+
+const hideSearchPanel= () => dispatchHideDropDown();
 
 function doCatalog(request) {
 
-    const catPart= request[gkey];
+    const catPart= request[irsaCatalogGroupKey];
     const spacPart= request[gkeySpacial] || {};
     const {catalog, project, cattable}= catPart;
     const {spatial='AllSky'}= spacPart;  // if there is no 'spatial' field (catalog with no position information case)
@@ -211,7 +190,7 @@ function doCatalog(request) {
         tReq.polygon = spacPart.polygoncoords;
     }
 
-    const {tableconstraints} = FieldGroupUtils.getGroupFields(gkey);
+    const {tableconstraints} = FieldGroupUtils.getGroupFields(irsaCatalogGroupKey);
     const sql = tableconstraints.value;
     tReq.constraints = '';
     let addAnd = false;
@@ -220,7 +199,7 @@ function doCatalog(request) {
         addAnd = true;
     }
 
-    const {txtareasql} = FieldGroupUtils.getGroupFields(gkey);
+    const {txtareasql} = FieldGroupUtils.getGroupFields(irsaCatalogGroupKey);
     const sqlTxt = txtareasql.value.trim();
     if (sqlTxt.length > 0) {
         tReq.constraints += (addAnd ? ' AND ' : '') + validateSql(sqlTxt);
@@ -252,53 +231,6 @@ export function validateSql(sqlTxt) {
         sqlTxt = sqlTxt.substring(0, sqlTxt.length - 3).trim();
     }
     return sqlTxt;
-}
-
-/**
- * VO search using 'ConeSearchByURL' search processor
- * N.B.: radius in degree!
- * @param request
- * @param providerName serves to distinguish between any user input SCS provider and specific provider such as 'NED'
- */
-function doVoSearch(request, providerName = '') {
-    //VO url that work http://vizier.u-strasbg.fr/viz-bin/votable/-A?-source=J/A+A/402/549
-    let radius;//arcsec
-    let accessUrl;//.replace('&', 'URL_PARAM_SEP');
-    const wp = parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);
-    const nameUsed = wp.getObjName() || wp.toString();
-    let name;
-    let conesize;
-
-    if(providerName === 'NED'){
-        accessUrl = 'http://ned.ipac.caltech.edu/cgi-bin/NEDobjsearch?search_type=Near+Position+Search&of=xml_main&';//http://vo.ned.ipac.caltech.edu/services/sia?TARGET='
-        conesize = request.nedconesize;
-        radius = convertAngle('deg', 'arcsec', conesize);
-        name = `${nameUsed} (NED SCS ${radius}")`;
-    }else{
-        accessUrl = request.vourl.trim();//.replace('&', 'URL_PARAM_SEP');
-        conesize = request.conesize;
-        radius = convertAngle('deg', 'arcsec', conesize);
-        name = `${nameUsed} (VO SCS ${radius}")`;
-    }
-    var tReq = makeVOCatalogRequest(name,
-        {
-            [ServerParams.USER_TARGET_WORLD_PT]: request[ServerParams.USER_TARGET_WORLD_PT],
-            SearchMethod: 'Cone',
-            radius: conesize, //degree!
-            providerName,
-            accessUrl
-        }
-    );
-    dispatchTableSearch(tReq, {backgroundable:true});
-}
-
-function doLoadTable(request) {
-    const fileLocation = get(request, 'fileLocation', LOCALFILE);
-    var tReq = makeTblRequest('userCatalogFromFile', '', {
-        filePath: ( fileLocation === LOCALFILE) ? request.fileUpload : request.workspaceUpload,
-        sourceFrom: fileLocation
-    });
-    dispatchTableSearch(tReq);
 }
 
 /**
@@ -422,57 +354,21 @@ class CatalogSelectView extends PureComponent {
         const {master={}} = this.state;
         if (isEmpty(master)) {
             return (
-                <div style={{position: 'relative'}}>
+                <div style={{position: 'relative', width:'100%', height:'100%'}}>
                     <div className='loading-mask'/>
                 </div>
             );
         }
-        const tabWrapper = {padding:5, minWidth:950, minHeight:200};
+        const tabWrapper = {padding:5, height:'100%'};
 
         return (
-            <FieldGroup groupKey={gkey}
+            <FieldGroup groupKey={irsaCatalogGroupKey}
                         reducerFunc={userChangeDispatch()}
+                        style={{display:'flex', alignItems:'stretch', flexDirection:'column', height:'100%'}}
                         keepState={true}>
-                <FieldGroupTabs initialState={{ value:'catalog' }} fieldKey='Tabs' resizable={true}>
-                    <Tab name='Search Catalogs' id='catalog'>
-                        <div style={tabWrapper}>
-                            <CatalogDDList {...this.props} {...this.state} />
-                        </div>
-                    </Tab>
-                    <Tab name='Load Catalog' id='loadcat'>
-                        <div style={tabWrapper}>
-                            <div style={{width:750, height:'calc(100% - 40px)', padding: 20, display: 'flex', flexDirection:'column', justifyContent: 'space-between'}}>
-                                <div style={{width: '70%'}}>
-                                    <UploadOptionsDialog fromGroupKey={gkey}
-                                                         preloadWsFile={false}
-                                                         fieldKeys={{local: 'fileUpload',
-                                                                    workspace: 'workspaceUpload',
-                                                                    location: 'fileLocation'}}
-                                                         workspace={getWorkspaceConfig()}
-                                                         tooltips={{local: 'Select an IPAC catalog table file to upload',
-                                                         workspace: 'Select an IPAC catalog table file from workspace to upload'}}/>
-                                    <div>
-                                        <em style={{color:'gray'}}>Custom catalog in IPAC, CSV, TSV, VOTABLE, or FITS table format</em>
-                                    </div>
-                                 </div>
-                                <div style={{display:'flex',flexDirection:'column', alignItems:'flex-end'}}>
-                                    <HelpIcon
-                                        helpId={'catalogs.owncatalogs'}/>
-                                </div>
-                            </div>
-                        </div>
-                    </Tab>
-                    <Tab name='VO Catalog' id='vosearch'>
-                        <div style={tabWrapper}>
-                            <VoSearchPanel fieldKey='vopanel'/>
-                        </div>
-                    </Tab>
-                    <Tab name='NED' id='nedsearch'>
-                        <div style={tabWrapper}>
-                            <NedSearchPanel fieldKey='nedpanel'/>
-                        </div>
-                    </Tab>
-                </FieldGroupTabs>
+                <div style={tabWrapper}>
+                    <CatalogDDList {...this.props} {...this.state} />
+                </div>
             </FieldGroup>
 
         );
@@ -483,7 +379,7 @@ class CatalogSelectView extends PureComponent {
  * Reducer from field group component, should return updated project and sub-project updated
  * @returns {Function} reducer to change fields when user interact with the dialog
  */
-var userChangeDispatch = function () {
+function userChangeDispatch() {
 
     return (inFields, action) => {
 
@@ -570,25 +466,7 @@ var userChangeDispatch = function () {
         }
         return inFields;
     };
-};
-
-/*
-function cleanFilterRestrictions(inFields) {
-    //Object.keys(inFields).forEach((k) => {
-    //
-    //        if (k.startsWith(constraintskey)) {
-    //            const v = get(inFields, `${k}.value`, '');
-    //            if (v.length > 0) {
-    //                inFields = updateMerge(inFields, k, {value: ''});
-    //            }
-    //        }
-    //    }
-    //);
-    //reset text area:
-    inFields = updateMerge(inFields, 'txtareasql', {value: ''});
-    return inFields;
 }
-*/
 
 /**
  * Return the project elements such as label, value and project is present in each
@@ -649,34 +527,25 @@ class CatalogDDList extends PureComponent {
 
         //const {selProj, selCat} = this.props;
 
-        const selProj = get(FieldGroupUtils.getGroupFields(gkey), 'project.value', selProject0);
-        const selCat = get(FieldGroupUtils.getGroupFields(gkey), 'catalog.value', selCat0);
+        const selProj = get(FieldGroupUtils.getGroupFields(irsaCatalogGroupKey), 'project.value', selProject0);
+        const selCat = get(FieldGroupUtils.getGroupFields(irsaCatalogGroupKey), 'catalog.value', selCat0);
 
-        //if (!isEmpty(selCat) && !isEmpty(selProj)) {
-        //    selCat0 = selCat;
-        //    selProject0 = selProj;
-        //}
-        // Build option list for project,  sub-project and catalog table based on the selected or initial value of project and sub-project
 
         const {master, fields} = this.props;
         const optProjects = getProjectOptions(master.catmaster);
         const optList = getSubProjectOptions(catmaster, selProj);
         const catTable = getCatalogOptions(catmaster, selProj, selCat).option;
 
-
-        //HERE HERE HERE
         const currentIdx = get(fields, 'cattable.indexClicked', 0);
         const radius = parseFloat(catTable[currentIdx].cat[RADIUS_COL]);
         const coneMax= radius / 3600;
         const boxMax= coneMax*2;
 
-        //HERE HERE HERE
-
-        let catname0 = get(FieldGroupUtils.getGroupFields(gkey), 'cattable.value', catTable[0].value);
+        let catname0 = get(FieldGroupUtils.getGroupFields(irsaCatalogGroupKey), 'cattable.value', catTable[0].value);
         if(isEmpty(catname0)){
             catname0 = catTable[0].value;
         }
-        const ddform = get(FieldGroupUtils.getGroupFields(gkey), 'ddform.value', 'true');
+        const ddform = get(FieldGroupUtils.getGroupFields(irsaCatalogGroupKey), 'ddform.value', 'true');
         const shortdd = ddform === 'true' ? 'short' : 'long';
         const tbl_id = `${catname0}-${shortdd}-dd-table-constraint`;
 
@@ -694,7 +563,7 @@ class CatalogDDList extends PureComponent {
         const withPos = (get(catTable, [currentIdx, 'cat', POS_COL]) || 'y').includes('y');
 
         return (
-            <div>
+            <div style={{display:'flex', flexDirection: 'column', height:'100%'}}>
                 <div className='catalogpanel'>
                     <div className='ddselectors' style={catPanelStyle}>
                         <ListBoxInputField fieldKey='project'
@@ -734,23 +603,19 @@ class CatalogDDList extends PureComponent {
                 {/*
                  <div style={{display:'flex', flexDirection:'row', padding:'20px', border:'1px solid #a3aeb9'}}>
                  */}
-                <div className='ddtable'>
+                <div className='ddtable' >
                     <CatalogConstraintsPanel fieldKey={'tableconstraints'}
                                              constraintskey={constraintskey}
                                              catname={catname0}
                                              dd_short={ddform}
                                              tbl_id={tbl_id}
-                                             groupKey={gkey}
+                                             groupKey={irsaCatalogGroupKey}
                                              createDDRequest={()=>{
                                                 return {id: 'GatorDD', catalog: catname0, short: shortdd};
                                              }}
                     />
                 </div>
                 {/*</div>*/}
-                <div style={{display:'flex',flexDirection:'column', alignItems:'flex-end'}}>
-                    <HelpIcon
-                        helpId={'basics.catalogs'}/>
-                </div>
             </div>
         );
     }
@@ -818,17 +683,6 @@ function fieldInit() {
             fieldKey: 'ddform',
             value: 'true'
         },
-        'vourl': {
-            fieldKey: 'vourl',
-            value: ''
-        },
-        'fileLocation': {
-            fieldKey: 'fileLocation',
-            label: 'Table file location:',
-            labelWidth: 100,
-            value: LOCALFILE
-        }
-
     }
     );
 }

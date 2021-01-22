@@ -23,6 +23,7 @@ function inGroup(e, groupKey) {
 
 function validUpdate(valid,onSuccess,onFail,closeOnValid,groupKey,dialogId, groupsToUse, includeUnmounted= false) {
     var funcToCall = valid ? onSuccess : onFail;
+    let continueValid= true;
 
     if (Array.isArray(groupKey)) {
         const groupsToValidate= groupsToUse();
@@ -34,10 +35,12 @@ function validUpdate(valid,onSuccess,onFail,closeOnValid,groupKey,dialogId, grou
     }
     else {
         var request = getFieldGroupResults(groupKey,includeUnmounted);
-        if (funcToCall) funcToCall(request);
+        if (funcToCall) continueValid= funcToCall(request);
     }
 
-    if (valid && dialogId && closeOnValid) dispatchHideDialog(dialogId);
+    const stillValid= valid && (continueValid ?? true)
+
+    if (stillValid && dialogId && closeOnValid) dispatchHideDialog(dialogId);
 }
 
 function onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,groupsToUse, includeUnmounted, changeMasking) {

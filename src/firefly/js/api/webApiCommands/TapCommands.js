@@ -1,5 +1,5 @@
 import {makeExamples, ReservedParams} from '../WebApi';
-import {dispatchActiveTarget} from '../../core/AppDataCntlr';
+import {dispatchActiveTarget, getAppOptions} from '../../core/AppDataCntlr';
 import {dispatchShowDropDown} from '../../core/LayoutCntlr';
 
 
@@ -108,7 +108,8 @@ function showTapPanel(cmd,inParams) {
         params.radiusInArcSec= params[ReservedParams.SR.name] * 3600;
         Reflect.deleteProperty(params, ReservedParams.SR.name);
     }
-    dispatchShowDropDown({view:'TAPSearch', initArgs:params});
+    const view= getAppOptions()?.multiTableSearchCmdOptions?.find( ({id}) => id==='tap') ? 'MultiTableSearchCmd' : 'TAPSearch';
+    dispatchShowDropDown({view, initArgs:{...params, defaultSelectedId:'tap'}});
 }
 
 export function getTapCommands() {

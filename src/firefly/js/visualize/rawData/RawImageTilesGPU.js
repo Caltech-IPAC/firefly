@@ -1,6 +1,6 @@
 // import {GPU} from 'gpu.js';
 import {getGlobalObj} from '../../util/WebUtil.js';
-import {isArrayBuffer, once} from 'lodash';
+import {isArrayBuffer, once, isArray} from 'lodash';
 import {TILE_SIZE} from './RawDataCommon.js';
 
 export const getGPUOps= once((GPU) => {
@@ -40,56 +40,48 @@ export const getGPUOps= once((GPU) => {
 
     const standRawDataTileGPU = gpu.createKernel(standardFunc,{graphical:true, dynamicOutput:true, dynamicArguments:true, tactic: 'speed'});
     
-
-    const threeCFunc= Function(
-        'redAry', 'greenAry', 'blueAry', 'useR', 'useG', 'useB', 'contrast', 'offsetShift', 'width','height', `
-            const idx= (height - this.thread.y) * width + this.thread.x;
-            let r= useR ? redAry[idx] : 0;
-            let g= useG ? greenAry[idx] : 0;
-            let b= useB ? blueAry[idx] : 0;
-            if (offsetShift!==0) {
-                if (r!==0) {
-                    r= Math.floor( offsetShift+(r*contrast));
-                    r= (r > 254) ? 254 : (r<0) ? 0 : r;
-                }
-                if (g!==0) {
-                    g= Math.floor( offsetShift+(g*contrast));
-                    g= (g > 254) ? 254 : (g<0) ? 0 : g;
-                }
-                if (b!==0) {
-                    b= Math.floor( offsetShift+(b*contrast));
-                    b= (b > 254) ? 254 : (b<0) ? 0 : b;
-                }
-            }
-            this.color( r/255, g/255, b/255, 1);`
+    const threeCFunc = Function(
+        'redAry', 'greenAry', 'blueAry', 'use', 'contrast', 'offsetShift', 'width','height', `
+        const idx= (height - this.thread.y) * width + this.thread.x;
+        let r= use[0]===1 ? redAry[idx] : 0;
+        let g= use[1]===1 ? greenAry[idx] : 0;
+        let b= use[2]===1 ? blueAry[idx] : 0;
+        if (r!==0 && offsetShift[0]!==0) {
+            r= Math.floor( offsetShift[0]+(r*contrast[0]));
+            r= (r > 254) ? 254 : (r<0) ? 0 : r;
+        }
+        if (g!==0 && offsetShift[1]!==0) {
+            g= Math.floor( offsetShift[1]+(g*contrast[1]));
+            g= (g > 254) ? 254 : (g<0) ? 0 : g;
+        }
+        if (b!==0&& offsetShift[2]!==0) {
+            b= Math.floor( offsetShift[2]+(b*contrast[2]));
+            b= (b > 254) ? 254 : (b<0) ? 0 : b;
+        }
+        this.color( r/255, g/255, b/255, 1);`
     );
 
-
-    const threeCRawDataTileGPU = gpu.createKernel(threeCFunc,{graphical:true, dynamicOutput:true, dynamicArguments:true, tactic: 'speed'});
-
-
-    // const threeCFunc = function(redAry, greenAry, blueAry, useR, useG, useB, contrast, offsetShift, width,height) {
+    // const threeCFuncX = function(redAry, greenAry, blueAry, use, contrast, offsetShift, width,height) {
     //     const idx= (height - this.thread.y) * width + this.thread.x;
-    //     let r= useR ? redAry[idx] : 0;
-    //     let g= useG ? greenAry[idx] : 0;
-    //     let b= useB ? blueAry[idx] : 0;
-    //     if (offsetShift!==0) {
-    //         if (r!==0) {
-    //             r= Math.floor( offsetShift+(r*contrast));
-    //             r= (r > 254) ? 254 : (r<0) ? 0 : r;
-    //         }
-    //         if (g!==0) {
-    //             g= Math.floor( offsetShift+(g*contrast));
-    //             g= (g > 254) ? 254 : (g<0) ? 0 : g;
-    //         }
-    //         if (b!==0) {
-    //             b= Math.floor( offsetShift+(b*contrast));
-    //             b= (b > 254) ? 254 : (b<0) ? 0 : b;
-    //         }
+    //     let r= use[0]===1 ? redAry[idx] : 0;
+    //     let g= use[1]===1 ? greenAry[idx] : 0;
+    //     let b= use[2]===1 ? blueAry[idx] : 0;
+    //     if (r!==0 && offsetShift[0]!==0) {
+    //         r= Math.floor( offsetShift[0]+(r*contrast[0]));
+    //         r= (r > 254) ? 254 : (r<0) ? 0 : r;
+    //     }
+    //     if (g!==0 && offsetShift[1]!==0) {
+    //         g= Math.floor( offsetShift[1]+(g*contrast[1]));
+    //         g= (g > 254) ? 254 : (g<0) ? 0 : g;
+    //     }
+    //     if (b!==0&& offsetShift[2]!==0) {
+    //         b= Math.floor( offsetShift[2]+(b*contrast[2]));
+    //         b= (b > 254) ? 254 : (b<0) ? 0 : b;
     //     }
     //     this.color( r/255, g/255, b/255, 1);
     // };
 
+    const threeCRawDataTileGPU = gpu.createKernel(threeCFunc,{graphical:true, dynamicOutput:true, dynamicArguments:true, tactic: 'speed'});
 
     async function createTransitionalTileWithGPU(inData, colorModel, isThreeColor, bias=.5, contrast=1, bandUse) {
         const canvas= createTileWithGPU(inData,colorModel,isThreeColor, bias,contrast, bandUse);
@@ -140,18 +132,30 @@ export const getGPUOps= once((GPU) => {
     }
 
 
-    function createRawDataTile3CRGBDataGPU(pixelDataAry, width,height,bias=.5, contrast=1, bandUse={}) {
+    function createRawDataTile3CRGBDataGPU(pixelDataAry, width,height,bias=[.5,.5,.5], contrast=[1,1,1], bandUse={}) {
         const {useRed=true,useGreen=true,useBlue=true}= bandUse;
-        const offset = (127*(bias-0.5)*-4);
-        const shift = (127*(1-contrast));
+
+        if (!isArray(bias)) bias= [.5,.5,.5];
+        if (!isArray(contrast)) contrast= [1,1,1];
+        const offsetShift= new Float32Array(3);
+        const contrast32= new Float32Array(3);
+        for(let i=0;i<3; i++) {
+            const offset = (127*(bias[i]-0.5)*-4);
+            const shift = (127*(1-contrast[i]));
+            offsetShift[i]= offset+shift;
+            contrast32[i]= contrast[i];
+        }
+
         threeCRawDataTileGPU.setOutput([width,height]);
+        const use= new Uint8ClampedArray(
+            [pixelDataAry[0]&&useRed?1:0, pixelDataAry[1]&&useGreen?1:0, pixelDataAry[2]&&useBlue?1:0]);
         threeCRawDataTileGPU(
             pixelDataAry[0]||new Uint8ClampedArray(1),
             pixelDataAry[1]||new Uint8ClampedArray(1),
             pixelDataAry[2]||new Uint8ClampedArray(1),
-            Boolean(pixelDataAry[0]&&useRed), Boolean(pixelDataAry[1]&&useGreen), Boolean(pixelDataAry[2]&&useBlue),
-            contrast,
-            offset+shift,
+            use,
+            contrast32,
+            offsetShift,
             width,height);
         return makeRetData(threeCRawDataTileGPU.canvas, width, height);
     }

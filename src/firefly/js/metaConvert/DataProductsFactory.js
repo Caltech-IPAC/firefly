@@ -35,6 +35,7 @@ import {getAppOptions} from '../core/AppDataCntlr';
 import {getServiceDescSingleDataProduct} from './ServDescConverter.js';
 
 const FILE= 'FILE';
+const DEFAULT_CONVERTER_ID= 'DEFAULT_CONVERTER';
 
 
 function matchById(table,id)  {
@@ -296,7 +297,7 @@ function initConverterTemplates() {
             getRelatedDataProduct: () => Promise.reject('related data products not supported')
         },
         {                            // this one should be last, it is the fallback
-            converterId: 'UNKNOWN',
+            converterId: DEFAULT_CONVERTER_ID,
             tableMatches: findADataSourceColumn,
             create: simpleCreate,
             threeColor: false,
@@ -325,7 +326,7 @@ function initConverterTemplates() {
 
 
 
-export const {getConverterTemplates, addTemplate, addTemplateToEnd}= (() => {
+export const {getConverterTemplates, addTemplate, addTemplateToEnd, removeTemplate, removeAllButDefaultConverter}= (() => {
     let converterTemplates;
 
     const getConverterTemplates= () => {
@@ -340,8 +341,16 @@ export const {getConverterTemplates, addTemplate, addTemplateToEnd}= (() => {
         getConverterTemplates();
         converterTemplates.push(template);
     };
+    const removeTemplate= (id) => {
+        const originTemp= getConverterTemplates();
+        converterTemplates= originTemp.filter( ({converterId}) => converterId!==id);
+    };
+    const removeAllButDefaultConverter= () => {
+        const originTemp= getConverterTemplates();
+        converterTemplates= originTemp.filter( ({converterId}) => converterId!==DEFAULT_CONVERTER_ID);
+    };
 
-    return {getConverterTemplates,addTemplate,addTemplateToEnd};
+    return {getConverterTemplates,addTemplate,addTemplateToEnd,removeTemplate,removeAllButDefaultConverter};
 })();
 
 

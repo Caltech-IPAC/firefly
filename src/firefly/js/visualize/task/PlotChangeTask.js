@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isNumber} from 'lodash';
+import {isNumber, isArray} from 'lodash';
 import {logger} from '../../util/Logger.js';
 import ImagePlotCntlr, { IMAGE_PLOT_KEY, dispatchWcsMatch, ActionScope, visRoot} from '../ImagePlotCntlr.js';
 import {
@@ -94,22 +94,22 @@ export function colorChangeActionCreator(rawAction) {
         const {plotId,cbarId,bias,contrast, useRed=true, useGreen=true, useBlue=true}= rawAction.payload;
         const pv= getPlotViewById(store,plotId);
         const plot= primePlot(pv);
-
-        let biasToUse= .5;
-        let contrastToUse=1;
-
-
-
         const basePlotThreeColor= isThreeColor(pv);
-        if (isNumber(bias)) {
-            biasToUse= (bias>1) ? 1 : bias < 0 ? 0 : bias;
-        }
-        if (isNumber(contrast)) {
-            contrastToUse= (contrast>10) ? 10 : contrast < 0 ? 0 : contrast;
-        }
+
+        let biasToUse= basePlotThreeColor ? [.5,.5,.5] : .5;
+        let contrastToUse=basePlotThreeColor ? [1,1,1] : 1;
+
         if (!pv) return;
 
 
+        if (basePlotThreeColor) {
+            if (isArray(bias)) biasToUse= bias.map( (b) => (b>1) ? 1 : b< 0 ? 0 : b);
+            if (isArray(contrast)) contrastToUse= contrast.map( (c) => (c>10) ? 10 : c< 0 ? 0 : c);
+        }
+        else {
+            if (isNumber(bias)) biasToUse= (bias>1) ? 1 : bias < 0 ? 0 : bias;
+            if (isNumber(contrast)) contrastToUse= (contrast>10) ? 10 : contrast < 0 ? 0 : contrast;
+        }
 
         if (isHiPS(plot)) {
             colorChangeHiPS(store, dispatcher, plotId, cbarId, biasToUse,contrastToUse, rawAction.payload.actionScope);
