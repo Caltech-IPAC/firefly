@@ -184,7 +184,7 @@ export class TapSearchPanel extends PureComponent {
 
                         <div className='TapSearch__section'>
                             <div className='TapSearch__section--title'>1. TAP Service <HelpIcon helpId={tapHelpId('tapService')}/> </div>
-                            <div style={{flexGrow: 1, marginRight: 3, maxWidth: 1000}}>
+                            <div style={{flexGrow: 1, marginRight: 3, maxWidth: 1000, zIndex: 9999}}>
                                 <CreatableSelect
                                     options={tapOps}
                                     isClearable={true}
