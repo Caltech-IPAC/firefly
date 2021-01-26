@@ -68,14 +68,38 @@ public class WiseRequest extends TableServerRequest {
     public final static String NEOWISER_YR3 = "neowiser_yr3";
     public final static String NEOWISER_YR4 = "neowiser_yr4";
     public final static String NEOWISER_YR5 = "neowiser_yr5";
-    public final static String NEOWISER_YR6 = "neowiser_yr6";       //year6 ended not public yet
-    public final static String NEOWISER_YR7 = "neowiser_yr7";       //this is the on-going yr7 internal neowiser
+    public final static String NEOWISER_YR6 = "neowiser_yr6";
+    public final static String NEOWISER_YR7 = "neowiser_yr7";
+    public final static String NEOWISER_YR8 = "neowiser_yr8";       //this is the on-going yr internal neowiser
     public final static String PASS2_4BAND = "pass2-4band";
     public final static String PASS2_3BAND = "pass2-3band";
     public final static String PASS2_2BAND = "pass2-2band";
 
     public static final String PUBLIC_RELEASE = "wise_public_release";
+    public final static Map<String,String> CATALOG_MAP = new HashMap<String,String>(){
+        {
+            put(PRELIM,"prelim_p1bs_psd");
+            put(PRELIM_POSTCRYO,"prelim_2band_p1bs_psd");
+            put(ALLWISE_MULTIBAND,"allwise_p3as_psd");
+            put(ALLSKY_4BAND,"allsky_4band_p1bs_psd");
+            put(CRYO_3BAND,"allsky_3band_p1bs_psd");
+            put(POSTCRYO,"allsky_2band_p1bs_psd");
+            put(NEOWISER,"neowiser_p1bs_psd");
+            put(PASS1,"pass1_i1bs_psd_view");
+            put(PASS2_4BAND,"pass2_4band_i1bs_psd_view");
+            put(PASS2_3BAND,"pass2_3band_i1bs_psd_view");
+            put(PASS2_2BAND, "pass2_2band_i1bs_psd_view");
+            put(NEOWISER_YR1,"neowiser_p1bs_psd");
+            put(NEOWISER_YR2,"neowiser_p1bs_psd");
+            put(NEOWISER_YR3,"neowiser_p1bs_psd");
+            put(NEOWISER_YR4,"neowiser_p1bs_psd");
+            put(NEOWISER_YR5,"neowiser_p1bs_psd");
+            put(NEOWISER_YR6,"neowiser_p1bs_psd");
+            put(NEOWISER_YR7,"neowiser_p1bs_psd");      //to be changed when year 7 goes public
+            put(NEOWISER_YR8,"neowiser_i1bs_psd");
 
+        }
+    };
     private final static Map<String,String> IMAGE_SET_DESC = new HashMap<String,String>(){
         {
             put(PRELIM,"Preliminary Release");
@@ -96,37 +120,40 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR5,"NEOWISER YR5 (2 Bands)");
             put(NEOWISER_YR6,"NEOWISER YR6 (2 Bands)");
             put(NEOWISER_YR7,"NEOWISER YR7 (2 Bands)");
+            put(NEOWISER_YR8,"NEOWISER YR8 (2 Bands)");
             put(PASS2_4BAND,"Pass 2 (4 Bands)");
             put(PASS2_3BAND,"Pass 2 (3 Bands)");
             put(PASS2_2BAND, "Pass 2 (2 Bands)");
         }
     };
-
-
-    public final static Map<String,String> CATALOG_MAP = new HashMap<String,String>(){
+    // MOS Catalogs
+    // It's easier to remember updating them if we keep all dataset dependent stuff here
+    private final static Map<String,String> MOS_CATALOGS = new HashMap<String,String>(){
         {
-            put(PRELIM,"prelim_p1bs_psd");
-            put(PRELIM_POSTCRYO,"prelim_2band_p1bs_psd");
-            put(ALLWISE_MULTIBAND,"allwise_p3as_psd");
-            put(ALLSKY_4BAND,"allsky_4band_p1bs_psd");
-            put(CRYO_3BAND,"allsky_3band_p1bs_psd");
-            put(POSTCRYO,"allsky_2band_p1bs_psd");
-            put(NEOWISER,"neowiser_p1bs_psd");
-            put(PASS1,"pass1_i1bs_psd_view");
-            put(PASS2_4BAND,"pass2_4band_i1bs_psd_view");
-            put(PASS2_3BAND,"pass2_3band_i1bs_psd_view");
-            put(PASS2_2BAND, "pass2_2band_i1bs_psd_view");
-            put(NEOWISER_YR1,"neowiser_p1bs_psd");
-            put(NEOWISER_YR2,"neowiser_p1bs_psd");
-            put(NEOWISER_YR3,"neowiser_p1bs_psd");
-            put(NEOWISER_YR4,"neowiser_p1bs_psd");
-            put(NEOWISER_YR5,"neowiser_p1bs_psd");
-            put(NEOWISER_YR6,"neowiser_p1bs_psd");
-            put (NEOWISER_YR7,"neowiser_i1bs_psd");
+            put(PRELIM,"wise_prelim");
+            put(PRELIM_POSTCRYO,"wise_prelim_2band");
+            put(ALLWISE_MULTIBAND,"wise_allwise");
+            put(ALLSKY_4BAND,"wise_allsky_4band");
+            put(CRYO_3BAND,"wise_allsky_3band");
+            put(POSTCRYO,"wise_allsky_2band");
+            put(MERGE,"wise_merge");
+            put(MERGE_INT,"wise_merge_int");
+            put(NEOWISER,"wise_neowiser");
+            put(PASS1,"wise_pass1");
+            put(PASS2_4BAND,"wise_pass2_4band");
+            put(PASS2_3BAND,"wise_pass2_3band");
+            put(PASS2_2BAND, "wise_pass2_2band");
+            put(NEOWISER_YR1,"wise_neowiser_yr1");
+            put(NEOWISER_YR2,"wise_neowiser_yr2");
+            put(NEOWISER_YR3,"wise_neowiser_yr3");
+            put(NEOWISER_YR4,"wise_neowiser_yr4");
+            put(NEOWISER_YR5,"wise_neowiser_yr5");
+            put(NEOWISER_YR6,"wise_neowiser_yr6");
+            put(NEOWISER_YR7,"wise_neowiser_yr7");
+            put(NEOWISER_YR8,"wise_neowiser_yr8");
 
         }
     };
-
     // Scan ID ranges from Roc Cutri:
     // prelim 00936a - 04125a
     // pass 1 all 00712a - 12514a
@@ -153,35 +180,8 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR4, new Integer[]{77590, 88733}); // 77590b is the first scan for yr4 and 88733a is the last scan
             put(NEOWISER_YR5, new Integer[]{88734, 99799}); // 88734a is the first scan for yr5
             put(NEOWISER_YR6, new Integer[]{1090, 12253}); // 01090r is the first scan for yr6 , 12253r is the last scan
-            put(NEOWISER_YR7, new Integer[]{12254, 99999}); // 12254r is the first scan for yr7
-        }
-    };
-
-    // MOS Catalogs
-    // It's easier to remember updating them if we keep all dataset dependent stuff here
-    private final static Map<String,String> MOS_CATALOGS = new HashMap<String,String>(){
-        {
-            put(PRELIM,"wise_prelim");
-            put(PRELIM_POSTCRYO,"wise_prelim_2band");
-            put(ALLWISE_MULTIBAND,"wise_allwise");
-            put(ALLSKY_4BAND,"wise_allsky_4band");
-            put(CRYO_3BAND,"wise_allsky_3band");
-            put(POSTCRYO,"wise_allsky_2band");
-            put(MERGE,"wise_merge");
-            put(MERGE_INT,"wise_merge_int");
-            put(NEOWISER,"wise_neowiser");
-            put(PASS1,"wise_pass1");
-            put(PASS2_4BAND,"wise_pass2_4band");
-            put(PASS2_3BAND,"wise_pass2_3band");
-            put(PASS2_2BAND, "wise_pass2_2band");
-            put(NEOWISER_YR1,"wise_neowiser_yr1");
-            put(NEOWISER_YR2,"wise_neowiser_yr2");
-            put(NEOWISER_YR3,"wise_neowiser_yr3");
-            put(NEOWISER_YR4,"wise_neowiser_yr4");
-            put(NEOWISER_YR5,"wise_neowiser_yr5");
-            put(NEOWISER_YR6,"wise_neowiser_yr6");
-            put(NEOWISER_YR7,"wise_neowiser_yr7");
-
+            put(NEOWISER_YR7, new Integer[]{12254, 23446}); // 12254r is the first scan for yr7, 23446r is the last scan
+            put(NEOWISER_YR8, new Integer[]{23447, 99999}); // 23447r is the first scan for yr8
         }
     };
     // mappings of the dataset selected to the wise table and table source values.
@@ -211,7 +211,8 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR4 +"|1b", new String[]{"yr4_p1bm_frm", "yr4_p1bs_psd"});
             put(NEOWISER_YR5 +"|1b", new String[]{"yr5_p1bm_frm", "yr5_p1bs_psd"});
             put(NEOWISER_YR6 +"|1b", new String[]{"yr6_p1bm_frm", "yr6_p1bs_psd"});  
-            put(NEOWISER_YR7 +"|1b", new String[]{"yr7_i1bm_frm", "yr7_i1bs_psd"});  // TODO: check
+            put(NEOWISER_YR7 +"|1b", new String[]{"yr7_i1bm_frm", "yr7_p1bs_psd"});  // TODO: to change when yaer 7 goes public
+            put(NEOWISER_YR8 +"|1b", new String[]{"yr8_i1bm_frm", "yr8_i1bs_psd"});  // TODO: check
             put(MERGE_INT+"|1b", new String[]{"merge_i1bm_frm", "merge_i1bs_psd"});
             put(MERGE_INT+"|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
             put(PASS2_4BAND+"|1b", new String[]{"4band_i1bm_frm", "4band_i1bs_psd"});
@@ -527,8 +528,10 @@ public class WiseRequest extends TableServerRequest {
                 return new String[]{NEOWISER_YR5};
             } else if (scanID.contains("r,s,t,u,v,w") && (scanNum >= 1090 && scanNum <= 12253)) {
                 return new String[]{NEOWISER_YR6};
-            } else if (scanID.contains("r,s,t,u,v,w") && scanNum >= 12254) {
+            } else if (scanID.contains("r,s,t,u,v,w") && scanNum >= 12254 && scanNum <= 23446) {
                 return new String[]{NEOWISER_YR7};
+            } else if (scanID.contains("r,s,t,u,v,w") && scanNum >= 23447) {
+                return new String[]{NEOWISER_YR8};
             }
             if (scanNum < SCANID_MAP.get(PASS2_4BAND)[1] ||
                     (scanNum == SCANID_MAP.get(PASS2_4BAND)[1] && scanID.trim().endsWith("a"))) {
