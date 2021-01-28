@@ -3,7 +3,7 @@
  */
 
 import {updateSet, updateDelete} from '../../util/WebUtil.js';
-import {set, get, has} from 'lodash';
+import {set, isNil, has} from 'lodash';
 
 import * as Cntlr from '../TablesCntlr.js';
 import * as TblUtil from '../TableUtil.js';
@@ -60,7 +60,9 @@ function updateTableInfo(root, action) {
     const mtitle = title ?? tableMeta?.title ?? request?.META_INFO?.title;
     Object.keys(root).forEach( (tbl_group) => {
         if (has(root, [tbl_group, 'tables', tbl_id])) {
-            root = updateSet(root, [tbl_group, 'tables', tbl_id, 'title'], mtitle);
+            if (!isNil(mtitle)) {               // only update if title updated.
+                root = updateSet(root, [tbl_group, 'tables', tbl_id, 'title'], mtitle);
+            }
         }
     });
 
