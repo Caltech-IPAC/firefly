@@ -13,10 +13,8 @@ import {getVersion} from '../Firefly.js';
 import {SearchPanel} from '../ui/SearchPanel.jsx';
 import {ImageSearchDropDown} from '../visualize/ui/ImageSearchPanelV2.jsx';
 import {TestSearchPanel} from '../ui/TestSearchPanel.jsx';
-import {TapSearchPanel} from './tap/TableSelectViewPanel.jsx';
 import {TestQueriesPanel} from '../ui/TestQueriesPanel.jsx';
 import {ChartSelectDropdown} from '../ui/ChartSelectDropdown.jsx';
-import {CatalogSelectViewPanel} from '../visualize/ui/CatalogSelectViewPanel.jsx';
 import {LSSTCatalogSelectViewPanel} from '../visualize/ui/LSSTCatalogSelectViewPanel.jsx';
 import {FileUploadDropdown} from '../ui/FileUploadDropdown.jsx';
 import {WorkspaceDropdown} from '../ui/WorkspaceDropdown.jsx';
@@ -24,22 +22,31 @@ import {getAlerts} from '../core/AppDataCntlr.js';
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
 
 import './DropDownContainer.css';
+import {MultiSearchPanel} from 'firefly/ui/MultiSearchPanel.jsx';
+import {TapSearchPanel} from 'firefly/ui/tap/TapSearchRootPanel.jsx';
 
-const flexGrowWithMax = {width: '100%', maxWidth: 1200};
+const flexGrowWithMax = {width: '100%', maxWidth: 1400};
+
+export const irsaStandMultiOptions= [
+    {id: 'irsacat', title:'IRSA'},
+    {id: 'upload'},
+    {id: 'vocat'},
+    {id: 'tap', title:'TAP Searches'},
+    {id: 'nedcat'}];
 
 export const dropDownMap = {
     Search: {view: <SearchPanel />},
-    TestSearch: {view: <TestSearchPanel />},
-    TestSearches: {view: <TestQueriesPanel />},
-    TAPSearch: {view: <TapSearchPanel />, layout: {width: '100%'}},
-    ImageSearchPanelV2: {view: <ImageSearchDropDown />, layout: flexGrowWithMax},
     ImageSelectDropDownCmd: {view: <ImageSearchDropDown />, layout: flexGrowWithMax},
     ImageSelectDropDownSlateCmd: {view: <ImageSearchDropDown gridSupport={true} />, layout: flexGrowWithMax},
     ChartSelectDropDownCmd: {view: <ChartSelectDropdown />},
-    IrsaCatalogDropDown: {view: <CatalogSelectViewPanel />},
+    TAPSearch: {view: <TapSearchPanel/>, layout: {width: '100%'}},
+    MultiTableSearchCmd: {view: <MultiSearchPanel/>,  layout: {width: '100%'}},
     LsstCatalogDropDown: {view: <LSSTCatalogSelectViewPanel />},
-    FileUploadDropDownCmd: {view: <FileUploadDropdown />},
+    FileUploadDropDownCmd: {view: <FileUploadDropdown />, layout: {width: '100%'}},
     WorkspaceDropDownCmd: {view: <WorkspaceDropdown />},
+    // --- testing
+    TestSearch: {view: <TestSearchPanel />},
+    TestSearches: {view: <TestQueriesPanel />},
 };
 
 
@@ -120,7 +127,7 @@ export class DropDownContainer extends Component {
                     <div id='footer' className='DD-ToolBar__footer'>
                         {footer}
                         <div className='DD-ToolBar__version'>
-                            <VersionInfo versionInfo={getVersion()}/>
+                            <VersionInfo/>
                         </div>
                     </div>
                 </div>
@@ -141,19 +148,19 @@ DropDownContainer.defaultProps = {
     visible: false
 };
 
-function VersionInfo({versionInfo={}}) {
-    const {BuildMajor, BuildMinor, BuildRev, BuildType, BuildDate} = versionInfo;
-    const showFullInfo = () => showInfoPopup(versionInfoFull(versionInfo), 'Version Information');
 
+export const showFullVersionInfoDialog = (title='') => showInfoPopup(versionInfoFull(getVersion()), `${title} Version Information`);
+
+
+export function getVersionInfoStr(includeBuiltOnDate) {
+    const {BuildMajor, BuildMinor, BuildRev, BuildType, BuildDate} = getVersion();
     let version = `v${BuildMajor}.${Number(BuildMinor)===-1?'Next':BuildMinor}`;
     version += BuildRev !== '0' ? `.${BuildRev}` : '';
     version += BuildType === 'Final' ? '' : `_${BuildType}`;
-    const builtOn = ` Built On: ${BuildDate}`;
-    return (
-        <div onClick={showFullInfo}>{version + builtOn}</div>
-    );
-
+    return includeBuiltOnDate ? version + ` Built On: ${BuildDate}`: version;
 }
+
+const VersionInfo= ()  => <div onClick={() => showFullVersionInfoDialog()}>{getVersionInfoStr(true)}</div>;
 
 function versionInfoFull({BuildMajor, BuildMinor, BuildRev, BuildNumber, BuildType, BuildTime, BuildTag, BuildCommit, BuildCommitFirefly}) {
     let version = `v${BuildMajor}.${Number(BuildMinor)===-1?'Next':BuildMinor}`;

@@ -64,8 +64,9 @@ export const LcViewer = memo((props) => {
         return shallowequal(oldState,newState) ? oldState : newState;
     });
 
-    const {isReady, menu={}, appTitle, appIcon, altAppIcon, additionalTitleStyle, dropDown,
+    const {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown,
         dropdownPanels=[], footer, style, displayMode, missionEntries, fileLocation, error} = storeState;
+    const {additionalTitleStyle} = props;
 
     if (!isReady) return (<div style={{top: 0}} className='loading-mask'/>);
 

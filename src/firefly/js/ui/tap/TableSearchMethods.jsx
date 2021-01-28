@@ -26,9 +26,8 @@ import {validateMJD, validateDateTime, convertISOToMJD, convertMJDToISO, DateTim
 import {TimePanel, isShowHelp, formFeedback} from '../TimePanel.jsx';
 import {showInfoPopup, showOptionsPopup, POPUP_DIALOG_ID} from '../PopupUtil.jsx';
 import {isDialogVisible} from '../../core/ComponentCntlr.js';
-import {getColumnAttribute, HeaderFont, MJD, ISO} from './TapUtil.js';
+import {getColumnAttribute, tapHelpId, HeaderFont, MJD, ISO} from './TapUtil.js';
 import {HelpIcon} from '../HelpIcon.jsx';
-import {tapHelpId} from './TableSelectViewPanel.jsx';
 import {ColsShape, ColumnFld, getColValidator} from '../../charts/ui/ColumnOrExpression';
 import {CheckboxGroupInputField} from '../CheckboxGroupInputField.jsx';
 

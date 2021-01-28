@@ -2,22 +2,29 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {useState, useEffect} from 'react';
+import React, {Fragment, useState, useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {throttle} from 'lodash';
+import {throttle, isArray, isNumber} from 'lodash';
 import { ToolbarButton, DropDownVerticalSeparator, } from '../../ui/ToolbarButton.jsx';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {dispatchColorChange} from '../ImagePlotCntlr.js';
-import { primePlot,
+import {
+    primePlot,
     getPlotViewIdListInOverlayGroup,
     isThreeColor,
     getActivePlotView,
-    isAllStretchDataLoadable, isAllStretchDataLoaded
+    isAllStretchDataLoadable, isAllStretchDataLoaded, getPlotViewById
 } from '../PlotViewUtil.js';
 import {visRoot} from '../ImagePlotCntlr.js';
-import {isHiPS, isImage} from '../WebPlot.js';
+import {isImage} from '../WebPlot.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {Band} from '../Band.js';
+import {LayoutType, PopupPanel} from 'firefly/ui/PopupPanel.jsx';
+import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {RangeSliderView} from '../../ui/RangeSliderView.jsx';
+import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
+import {dispatchHideDialog, dispatchShowDialog} from 'firefly/core/ComponentCntlr.js';
+import {DROP_DOWN_KEY} from 'firefly/ui/DropDownToolbarButton.jsx';
 
 
 import ColorTable0 from 'html/images/cbar/ct-0-gray.png';
@@ -42,10 +49,11 @@ import ColorTable18 from 'html/images/cbar/ct-18-rainbow-ds9.png';
 import ColorTable19 from 'html/images/cbar/ct-19-standard-ds9.png';
 import ColorTable20 from 'html/images/cbar/ct-20-staircase-ds9.png';
 import ColorTable21 from 'html/images/cbar/ct-21-color-ds9.png';
-import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {RangeSliderView} from '../../ui/RangeSliderView.jsx';
+import Arrow from 'html/images/popout-arrow_12x12.png';
 
 //=================================
+
+const POPOUT_ID= 'AdvancedColorPopout';
 
 const colorTables=[
     { id: 0,  icon: ColorTable0, tip:'Gray Scale' },
@@ -74,45 +82,19 @@ const colorTables=[
 
 const hipsColorTables=[ { id: -1,  icon: undefined, tip:'Original' }, ...colorTables, ];
 
-
-//====================================
-
-// function makeItems(pv,ctAry) {
-//     const id= Number(primePlot(pv).plotState.getColorTableId());
-//     return ctAry.map( (ct,cbarIdx) => {
-//         return (
-//             <ToolbarButton icon={ct.icon} tip={ct.tip} style={{padding: '2px 0 2px 0'}}
-//                            enabled={true} horizontal={false} key={cbarIdx}
-//                            hasCheckBox={true} checkBoxOn={id===ct.id}
-//                            onClick={() => handleColorChange(pv,cbarIdx)}/>
-//         );
-//     });
-// }
-//
-
 const isAllThreeColor= (vr,plotIdAry) => plotIdAry.every( (id) => isThreeColor(primePlot(vr,id)));
 
-const handleColorChange= (pv,cbarId, bias= .5, contrast= 1) => {
+const handleColorChange= (plot,cbarId, bias= .5, contrast= 1) => {
     const vr= visRoot();
-    const plotIdAry= getPlotViewIdListInOverlayGroup(vr,pv);
+    const plotIdAry= getPlotViewIdListInOverlayGroup(vr,plot.plotId);
 
     if (isAllThreeColor(vr,plotIdAry)) {
         showInfoPopup('This is a three color plot, you can not change the color.', 'Color change not allowed');
     }
     else {
-        dispatchColorChange({plotId:pv.plotId,cbarId, bias, contrast});
+        dispatchColorChange({plotId:plot.plotId,cbarId, bias, contrast});
     }
 };
-
-
-// export function ColorTableDropDownView({plotView:pv}) {
-//     return (
-//         <SingleColumnMenu>
-//             {makeItems(pv,colorTables)}
-//         </SingleColumnMenu>
-//         );
-//
-// }
 
 const makeMask= () => (
     <div style={maskWrapper}>
@@ -133,7 +115,6 @@ const makeMask= () => (
 const ctMarks = { 0:'0', 3:'3', 6:'6', 9:'9', 12:'12', 15:'15', 18:'18', 21:'21'};
 const biasMarks = {20:'.2', 30: '.3', 40:'.4', 50:'.5', 60:'.6', 70:'.7', 80:'.8' };
 const contrastMarks = { 0: '0', 5:'5', 10:'1', 15:'1.5',  20:'2'};
-
 const maskWrapper= { position:'absolute', left:0, top:0, width:'100%', height:'100%' };
 
 
@@ -141,33 +122,73 @@ const dispatchColorChangeThrottled= throttle((param) => {
     dispatchColorChange(param);
 }, 500);
 
-const AdvancedColorPanel= ({pv:pvFromProp}) => {
+
+function getBias(plot) {
+    const bias= plot?.rawData?.bandData[0].bias;
+    if (isThreeColor(plot)) {
+        return isArray(bias) ? bias : [.5,.5,.5];
+    }
+    else {
+        return isNumber(bias) ? bias : .5;
+    }
+}
+
+function getContrast(plot) {
+    const contrast= plot?.rawData?.bandData[0].contrast;
+    if (isThreeColor(plot)) {
+        return isArray(contrast) ? contrast : [1,1,1];
+    }
+    else {
+        return isNumber(contrast) ? contrast : 1;
+    }
+}
+
+const AdvancedColorPanel= ({allowPopout}) => {
+    const [plot]= useStoreConnector( () => primePlot(visRoot()));
     const [allLoaded] = useStoreConnector(() => isAllStretchDataLoaded(visRoot()));
-    const [bias,setBias]= useState( () => primePlot(pvFromProp)?.rawData.bandData[0].bias);
-    const [contrast,setContrast]= useState( () => primePlot(pvFromProp)?.rawData.bandData[0].contrast);
-    const [colorTableId,setColorTableId]= useState( () => Number(primePlot(pvFromProp)?.plotState.getColorTableId()));
-    const [useRed,setUseRed]= useState( () => primePlot(pvFromProp)?.rawData.useRed);
-    const [useGreen,setUseGreen]= useState( () => primePlot(pvFromProp)?.rawData.useGreen);
-    const [useBlue,setUseBlue]= useState( () => primePlot(pvFromProp)?.rawData.useBlue);
-    const plot= primePlot(pvFromProp);
-    const {plotState}= plot;
-    const biasInt= Math.trunc(bias*100);
-    const contrastInt= Math.trunc(contrast*10);
-    const threeColor= isThreeColor(pvFromProp);
+    const [bias,setBias]= useState( () => getBias(plot));
+    const [contrast,setContrast]= useState( () => getContrast(plot));
+    const [colorTableId,setColorTableId]= useState( () => Number(plot?.plotState.getColorTableId()));
+    const [useRed,setUseRed]= useState( () => plot?.rawData.useRed);
+    const [useGreen,setUseGreen]= useState( () => plot?.rawData.useGreen);
+    const [useBlue,setUseBlue]= useState( () => plot?.rawData.useBlue);
+    const threeColor= isThreeColor(plot);
+
+    const biasInt= isArray(bias) ? bias.map( (b) => Math.trunc(b*100))  : Math.trunc(bias*100);
+    const contrastInt= isArray(contrast) ? contrast.map( (c) => Math.trunc(c*10)) : Math.trunc(contrast*10);
     const image= isImage(plot);
+    const plotId= plot?.plotId;
 
     useEffect(() => {
-        const plot= primePlot(pvFromProp);
-        const {bias:b,contrast:c}= plot.rawData.bandData[0];
+        if (!plot) return;
+        const b= getBias(plot);
+        const c= getContrast(plot);
         setBias(b);
         setContrast(c);
-        setColorTableId(Number(plotState.getColorTableId()));
-    }, [pvFromProp]);
+        setColorTableId(Number(plot.plotState.getColorTableId()));
+    }, [plotId]);
 
-    const changeBiasContrastColor= (colorTableId,bias,contrast,useRed=true, useGreen=true, useBlue=true) => {
+    if (!plot) return <div/>
+
+    const {plotState}= plot;
+    const changeBiasContrastColor= (colorTableId, newBias, newContrast, useRed=true, useGreen=true, useBlue=true, band= Band.NO_BAND) => {
         if (!plot) return;
-        setBias(bias);
-        setContrast(contrast);
+        let newBiasAry=[];
+        let newContrastAry=[];
+
+        if (band!==Band.NO_BAND) {
+            newBiasAry= [...bias];
+            newBiasAry[band.value]= newBias;
+            newContrastAry= [...contrast];
+            newContrastAry[band.value]= newContrast;
+            setBias(newBiasAry);
+            setContrast(newContrastAry);
+        }
+        else {
+            setBias(newBias);
+            setContrast(newContrast);
+        }
+
         setColorTableId(Number(colorTableId));
         setUseRed(useRed);
         setUseGreen(useGreen);
@@ -175,14 +196,14 @@ const AdvancedColorPanel= ({pv:pvFromProp}) => {
         const colorChangeParam=  {
                         plotId:plot.plotId,
                         cbarId: colorTableId,
-                        bias,
-                        contrast,
+                        bias: band===Band.NO_BAND ? newBias : newBiasAry,
+                        contrast: band===Band.NO_BAND ? newContrast : newContrastAry,
                         useRed, useBlue, useGreen,
                     };
         image ? dispatchColorChange(colorChangeParam) : dispatchColorChangeThrottled(colorChangeParam);
     };
 
-    const ctArray= (image? colorTables : hipsColorTables)
+    const ctArray= (image? colorTables : hipsColorTables);
 
     const makeItems= () =>
         ctArray.map( (ct) =>
@@ -191,7 +212,7 @@ const AdvancedColorPanel= ({pv:pvFromProp}) => {
                             enabled={true} horizontal={false} key={ct.id}
                             hasCheckBox={true} checkBoxOn={colorTableId===ct.id}
                             imageStyle={{height:8}}
-                            onClick={() => handleColorChange(pvFromProp,ct.id)}/>) );
+                            onClick={() => handleColorChange(plot,ct.id)}/>) );
 
 
     const allLoadAble= isAllStretchDataLoadable(visRoot());
@@ -245,47 +266,81 @@ const AdvancedColorPanel= ({pv:pvFromProp}) => {
                            hasCheckBox={true} checkBoxOn={useBlue}
                            onClick={() => changeBiasContrastColor(colorTableId,bias,contrast,useRed,useGreen,!useBlue)}/>}
             <DropDownVerticalSeparator useLine={true}/>
-            <div style={{width: 230, height: 120}}>
-                <div style={{display:'flex', flexDirection: 'column', alignItems: 'center'}}>
-                    <div style={{padding: '5px 0 0 0'}}>Bias</div>
-                    <RangeSliderView {...{
-                        wrapperStyle:{paddingTop: 7, width: 200},
-                        min:20,max:80, step:1,vertical:false, marks:biasMarks,
-                        defaultValue:biasInt, slideValue:biasInt,
-                        handleChange:(v) => changeBiasContrastColor(colorTableId, v/100,contrast,useRed,useGreen,useBlue)}} />
-
-                </div>
-                <div style={{display:'flex', flexDirection: 'column', alignItems: 'center'}}>
-                    <div style={{padding: '30px 0 0 0'}}>Contrast</div>
-                    <RangeSliderView {...{
-                        wrapperStyle:{paddingTop: 7, width: 200},
-                        min:0,max:20, step:1,vertical:false, marks:contrastMarks,
-                        defaultValue:contrastInt, slideValue:contrastInt,
-                        handleChange:(v) => changeBiasContrastColor(colorTableId, bias,v/10, useRed,useGreen,useBlue)}} />
-                </div>
+            <div style={{width: 230, height: 126 * plotState.getBands().length}}>
+                        {
+                            plotState.getBands().map( (b, idx) => (
+                                <Fragment key={b.key}>
+                                    <div style={{display:'flex', flexDirection: 'column', alignItems: 'center'}}>
+                                        <div style={{margin: `${idx?'40':'5'}px 0 0 0`, paddingTop:idx?5:0, textAlign:'center', alignSelf:'stretch', borderTop:`1px solid rgba(0,0,0,${idx?'.1':'0'}`}}>
+                                            <span style={{color:b.key}}>{b.key}</span> Bias
+                                        </div>
+                                        <RangeSliderView {...{
+                                            wrapperStyle:{paddingTop: 7, width: 200},
+                                            min:20,max:80, step:1,vertical:false, marks:biasMarks,
+                                            defaultValue:biasInt[b.value], slideValue:biasInt[b.value],
+                                            handleChange:(v) => changeBiasContrastColor(colorTableId, v/100,contrast[b.value],useRed,useGreen,useBlue,b)}} />
+                                    </div>
+                                    <div style={{display:'flex', flexDirection: 'column', alignItems: 'center'}}>
+                                        <div style={{padding: '30px 0 0 0'}}><span style={{color:b.key}}>{b.key}</span> Contrast</div>
+                                        <RangeSliderView {...{
+                                            wrapperStyle:{paddingTop: 7, width: 200},
+                                            min:0,max:20, step:1,vertical:false, marks:contrastMarks,
+                                            defaultValue:contrastInt[b.value], slideValue:contrastInt[b.value],
+                                                        handleChange:(v) => changeBiasContrastColor(colorTableId, bias[b.value],v/10, useRed,useGreen,useBlue,b)}} />
+                                    </div>
+                                </Fragment>
+                            ))
+                        }
             </div>
             {!allLoaded && makeMask() }
         </div>
-);
+    );
 
 
 
     return (
         <SingleColumnMenu>
+            {allowPopout &&
+                <div style={{flex:'0 0 auto', display:'flex', flexDirection:'column', alignItems:'flex-end', height:12}}>
+                    <img className='ff-MenuItem-light' onClick={convertToPopoutColorPanel}
+                         style={{width:12, height:12, border: '1px solid rgba(0,0,0,.1)', borderRadius: '3px', zIndex:1 }} src={Arrow}/>
+                </div>
+            }
             {!threeColor && makeItems()}
-            {allLoadAble && <DropDownVerticalSeparator useLine={true}/>}
+            {allLoadAble && !threeColor && <DropDownVerticalSeparator useLine={true}/>}
             {allLoadAble && !threeColor && makeAdvancedStandardFeatures()}
             {allLoadAble && threeColor && makeAdvanced3CFeatures()}
         </SingleColumnMenu>
     );
 };
 
-export const ColorTableDropDownView= ({plotView:pv}) => {
-    return (
-        <AdvancedColorPanel pv={pv}/>
-    );
+export const ColorTableDropDownView= () => {
+    dispatchHideDialog(POPOUT_ID);
+    return ( <AdvancedColorPanel allowPopout={true}/> );
 };
 
 ColorTableDropDownView.propTypes= {
     plotView : PropTypes.object
 };
+
+function convertToPopoutColorPanel() {
+    showColorDialog();
+    dispatchHideDialog(DROP_DOWN_KEY);
+}
+
+export function showColorDialog() {
+    const content= (
+        <PopupPanel title={'Modify Color'} layoutPosition={LayoutType.TOP_RIGHT}>
+            <PopoutColorPanel/>
+        </PopupPanel>
+    );
+    DialogRootContainer.defineDialog(POPOUT_ID, content);
+    dispatchShowDialog(POPOUT_ID);
+}
+
+
+function PopoutColorPanel() {
+    const [pv]= useStoreConnector( () => getActivePlotView(visRoot()));
+    if (!primePlot(pv)) return <div/>;
+    return <AdvancedColorPanel allowPopout={false}/>;
+}

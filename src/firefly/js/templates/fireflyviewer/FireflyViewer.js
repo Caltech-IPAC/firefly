@@ -162,6 +162,7 @@ function BannerSection(props) {
             visPreview={<VisHeader showHeader={false}/> }
             readout={<VisHeader showPreview={false}/> }
             appIcon={appIcon}
+            enableVersionDialog={true}
             {...rest}
         />
     );

@@ -5,7 +5,7 @@
 import React, {memo, useEffect, useState, useCallback} from 'react';
 import PropTypes from 'prop-types';
 import sizeMe from 'react-sizeme';
-import {get, omit} from 'lodash';
+import {omit, isString} from 'lodash';
 
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 import {useFieldGroupConnector} from '../FieldGroupConnector.jsx';
@@ -20,7 +20,7 @@ import './TabPanel.css';
  */
 
 const TabsHeaderInternal = React.memo((props) => {
-    const {children, resizable, headerStyle={}, size} = props;
+    const {children, resizable, headerStyle={}, size, label} = props;
 
     const {width:widthPx} = size;
     const numTabs = children.length;
@@ -35,9 +35,12 @@ const TabsHeaderInternal = React.memo((props) => {
             return React.cloneElement(child, {maxTitleWidth});
         });
     }
-    const style = Object.assign({flexShrink: 0, height: 20}, headerStyle);
+    const style = {display: 'flex', flexShrink: 0, height: 20, ...headerStyle};
+    const layoutLabel= isString(label) ? <div style={{padding: '0 10px 0 5px'}}>{label}</div> : label;
+
     return (
         <div style={style}>
+            {label && layoutLabel}
             {(widthPx||!resizable) ? <ul className='TabPanel__Tabs'>
                 {sizedChildren}
             </ul> : <div/>}
@@ -48,6 +51,7 @@ const TabsHeaderInternal = React.memo((props) => {
 TabsHeaderInternal.propTypes= {
     resizable: PropTypes.bool,
     headerStyle: PropTypes.object,
+    label: PropTypes.node,
     size: PropTypes.object.isRequired
 };
 
@@ -61,7 +65,7 @@ const TabsHeader= sizeMe({refreshRate: 16})(TabsHeaderInternal);
 /*----------------------------- exported components ----------------------------------*/
 
 export const Tab = React.memo( (props) => {
-    const {name, label, selected, onSelect, removable, onTabRemove, id, maxTitleWidth} = props;
+    const {name, label, selected, onSelect, removable, onTabRemove, id, maxTitleWidth, style={}} = props;
 
     let tabClassName = 'TabPanel__Tab' ;
     if (selected) {
@@ -73,7 +77,7 @@ export const Tab = React.memo( (props) => {
 
     return (
         <li className={tabClassName} onClick={() => !selected && onSelect(id,name)}>
-            <div style={{height: '100%'}}>
+            <div style={{height: '100%', ...style}}>
                 <div style={{...textStyle, height: '100%'}} className='text-ellipsis' title={name}>
                     {tabTitle}
                 </div>
@@ -98,7 +102,8 @@ Tab.propTypes= {
     onSelect: PropTypes.func, // private - called whenever the tab is clicked
     removable: PropTypes.bool,
     onTabRemove: PropTypes.func,
-    maxTitleWidth: PropTypes.number
+    maxTitleWidth: PropTypes.number,
+    style: PropTypes.object,
 };
 
 Tab.defaultProps= { selected: false };
@@ -111,14 +116,15 @@ Tab.defaultProps= { selected: false };
  */
 export const TabsView = React.memo((props) => {
 
-    const {children, onTabSelect, defaultSelected, useFlex, resizable, borderless, style={}, headerStyle, contentStyle={}} = props;
+    const {children, onTabSelect, defaultSelected, useFlex, resizable, borderless,
+        style={}, headerStyle, contentStyle={}, label} = props;
 
     const onSelect = useCallback( (index,id,name) => {
         onTabSelect && onTabSelect(index,id,name);
     }, []);
 
     const childrenAry = React.Children.toArray(children);         // this returns only valid children excluding undefined and false values.
-    const selectedIdx = Number.isInteger(defaultSelected) ? defaultSelected : childrenAry.findIndex((c) => get(c, 'props.id') === defaultSelected);    // convert defaultSelected to idx if it's an ID
+    const selectedIdx = Number.isInteger(defaultSelected) ? defaultSelected : childrenAry.findIndex((c) => c?.props?.id === defaultSelected);    // convert defaultSelected to idx if it's an ID
 
     const headers = childrenAry.map((child, index) => {
         return React.cloneElement(child, {
@@ -138,7 +144,7 @@ export const TabsView = React.memo((props) => {
 
     return (
         <div style={{display: 'flex', flexDirection: 'column', overflow: 'hidden', ...style}}>
-            <TabsHeader {...{resizable, headerStyle}}>{headers}</TabsHeader>
+            <TabsHeader {...{resizable, headerStyle, label}}>{headers}</TabsHeader>
             <div style={contentStyle} className={contentClsName}>
                 {(content) ? content : ''}
             </div>
@@ -156,7 +162,8 @@ TabsView.propTypes = {
     style: PropTypes.object,
     headerStyle: PropTypes.object,
     contentStyle: PropTypes.object,
-    borderless: PropTypes.bool
+    borderless: PropTypes.bool,
+    label: PropTypes.node
 };
 
 TabsView.defaultProps= {
@@ -200,7 +207,7 @@ export const StatefulTabs = React.memo( (props) => {
     const {children=[], defaultSelected=0, onTabSelect, componentKey} = props;
 
     let [selectedIdx = defaultSelected] = useStoreConnector( () => {
-        return get(getComponentState(componentKey), 'selectedIdx');
+        return getComponentState(componentKey)?.selectedIdx;
     });
 
     const onSelect = useCallback( (index,id,name) => {

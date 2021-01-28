@@ -29,6 +29,11 @@
 
 .ddtable {
     max-width: 100%;
+    min-height: 250px;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
 }
 
 .expand-dd-table:hover + .ddtable { /* Uses the adjacent sibling selector */

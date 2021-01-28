@@ -107,16 +107,24 @@ const defAppProps = {
 
     menu: [
         {label:'Images', action:'ImageSelectDropDownCmd'},
-        {label:'Catalogs', action:'IrsaCatalogDropDown'},
-        {label:'TAP Searches', action: 'TAPSearch'},
+        {label:'TAP/Table Searches', action: 'MultiTableSearchCmd'},
+        // {label:'Tap Searches', action: 'TAPSearch'},
+        // {label:'Classic Searches', action: 'MultiTableSearchCmd'},
         {label:'Charts', action:'ChartSelectDropDownCmd'},
         {label:'Upload', action: 'FileUploadDropDownCmd'},
-        //{label:'Workspace', action: 'WorkspaceDropDownCmd'}
     ],
 };
 
+const tapEntry= (label,url) => ({ label: `${url}`, value: url, labelOnly:label});
+
 /** @type {FireflyOptions} */
 const defFireflyOptions = {
+    multiTableSearchCmdOptions: [
+        {id: 'tap', title: 'TAP Searches'},
+        {id: 'irsacat', title: 'IRSA Catalogs'},
+        {id: 'vocat'},
+        {id: 'nedcat'}
+    ],
     MenuItemKeys: {},
     imageTabs: undefined,
     irsaCatalogFilter: undefined,
@@ -161,20 +169,20 @@ const defFireflyOptions = {
     },
     tap : {
         services: [
-            { label: 'IRSA https://irsa.ipac.caltech.edu/TAP',
-                value: 'https://irsa.ipac.caltech.edu/TAP' },
-            { label: 'NED https://ned.ipac.caltech.edu/tap',
-                value: 'https://ned.ipac.caltech.edu/tap/' },
-            { label: 'HSA https://archives.esac.esa.int/hsa/whsa-tap-server/tap',
-                value: 'https://archives.esac.esa.int/hsa/whsa-tap-server/tap' },
-            { label: 'CADC https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap',
-                value: 'https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap' },
-            { label: 'Gaia https://gea.esac.esa.int/tap-server/tap',
-                value: 'https://gea.esac.esa.int/tap-server/tap' },
-            { label: 'GAVO http://dc.g-vo.org/tap',
-                value: 'http://dc.g-vo.org/tap'},
-            { label: 'MAST https://vao.stsci.edu/CAOMTAP/TapService.aspx',
-                value: 'https://vao.stsci.edu/CAOMTAP/TapService.aspx' }
+            tapEntry('IRSA', 'https://irsa.ipac.caltech.edu/TAP'),
+            tapEntry('NED', 'https://ned.ipac.caltech.edu/tap/'),
+            tapEntry('NASA Exoplanet Archive', 'https://exoplanetarchive.ipac.caltech.edu/TAP/'),
+            // KOA?
+            tapEntry('HEASARC', 'https://heasarc.gsfc.nasa.gov/xamin/vo/tap'),
+            tapEntry('MAST Images', 'https://vao.stsci.edu/CAOMTAP/TapService.aspx'),
+            tapEntry('CADC', 'https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap'),
+            // CDS???
+            tapEntry('VisieR (CDS)', 'http://tapvizier.u-strasbg.fr/TAPVizieR/tap/'),
+            tapEntry('Simbad (CDS)', 'https://simbad.u-strasbg.fr/simbad/sim-tap'),
+            // ESA
+            tapEntry('Gaia', 'https://gea.esac.esa.int/tap-server/tap'),
+            tapEntry('GAVO', 'http://dc.g-vo.org/tap'),
+            tapEntry('HSA',  'https://archives.esac.esa.int/hsa/whsa-tap-server/tap'),
         ],
         defaultMaxrec: 50000
     }
@@ -298,7 +306,7 @@ function bootstrap(props, options, webApiCommands) {
         getOrCreateWsConn().then((client) => {
             fireflyInit(props, options, webApiCommands);
 
-            client.addListener(ActionEventHandler);
+            client.addListener(ActionEventHandler)
             window.firefly.wsClient = client;
             notifyServerAppInit({spaName:`${props.appTitle||''}--${props.template?props.template:'api'}`});
             resolve?.();

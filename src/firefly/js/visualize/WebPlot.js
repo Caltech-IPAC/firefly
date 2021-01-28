@@ -473,11 +473,11 @@ export const WebPlot= {
         if (tileData) plot.tileData= tileData;
         if (rawData) plot.rawData= {...plot.rawData, localScreenTileDefList:rawData.localScreenTileDefList};
 
-        if (isNumber(bias) || isNumber(contrast)) {
+        if (isNumber(bias) || isNumber(contrast) || isArray(bias) || isArray(contrast) ) {
             const {bandData:oldBandData}= plot.rawData;
             const bandData= oldBandData.map( (entry)  => ({...entry,
-                bias:  isNumber(bias) ? bias : entry.bias,
-                contrast:  isNumber(contrast) ? contrast : entry.contrast,
+                bias:  isNumber(bias) || isArray(bias) ? bias : entry.bias,
+                contrast:  isNumber(contrast) || isArray(contrast)? contrast : entry.contrast,
             }));
             plot.rawData= {...plot.rawData,bandData};
         }

@@ -1,4 +1,3 @@
-import {get} from 'lodash';
 import {Logger} from '../../util/Logger.js';
 import {makeFileRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {doFetchTable, getColumnIdx, sortTableData} from '../../tables/TableUtil.js';
@@ -23,6 +22,8 @@ export function getMaxrecHardLimit() {
         return defaultValue;
     }
 }
+
+export const tapHelpId = (id) => `tapSearches.${id}`;
 
 export function getTapBrowserState() {
     const tapBrowserState = getComponentState(tapBrowserComponentKey);
@@ -70,8 +71,7 @@ export function loadTapSchemas(serviceUrl) {
         return tableModel;
 
     }).catch((reason) => {
-        const message = get(reason, 'message', reason);
-        const error = `Failed to get schemas for ${serviceUrl}: ${message}`;
+        const error = `Failed to get schemas for ${serviceUrl}: ${reason?.message ?? reason}`;
         logger.error(error);
         return {error};
     });
@@ -103,8 +103,7 @@ export function loadTapTables(serviceUrl, schemaName) {
         return tableModel;
 
     }).catch((reason) => {
-        const message = get(reason, 'message', reason);
-        const error = `Failed to get tables for ${serviceUrl} schema ${schemaName}: ${message}`;
+        const error = `Failed to get tables for ${serviceUrl} schema ${schemaName}: ${reason?.message ?? reason}`;
         logger.error(error);
         return {error};
     });
@@ -141,8 +140,7 @@ export function loadTapColumns(serviceUrl, schemaName, tableName) {
         return tableModel;
 
     }).catch((reason) => {
-        const message = get(reason, 'message', reason);
-        const error = `Failed to get columns for ${serviceUrl} schema ${schemaName} table ${tableName}: ${message}`;
+        const error = `Failed to get columns for ${serviceUrl} schema ${schemaName} table ${tableName}: ${reason?.message ?? reason}`;
         logger.error(error);
         return {error};
     });
@@ -162,7 +160,7 @@ export function getColumnAttribute(columnsModel, colName, attrName) {
         return;
     }
 
-    const targetRow = get(columnsModel, ['tableData', 'data'], []).find((oneRow) => {
+    const targetRow = columnsModel?.tableData?.data?.find((oneRow) => {
         return (oneRow[nameIdx] === colName);
     });
 
@@ -173,3 +171,62 @@ export function getColumnAttribute(columnsModel, colName, attrName) {
     return targetRow[attrIdx];
 }
 
+export const TAP_SERVICES_FALLBACK = [
+    {
+        label: 'https://irsa.ipac.caltech.edu/TAP',
+        value: 'https://irsa.ipac.caltech.edu/TAP',
+        labelOnly: 'IRSA',
+        query: 'SELECT * FROM fp_psc WHERE CONTAINS(POINT(\'ICRS\',ra,dec),CIRCLE(\'ICRS\',210.80225,54.34894,1.0))=1'
+    },
+    {
+        label: 'https://ned.ipac.caltech.edu/tap',
+        value: 'https://ned.ipac.caltech.edu/tap/',
+        labelOnly: '',
+        query: 'SELECT * FROM public.ned_objdir WHERE CONTAINS(POINT(\'ICRS\',ra,dec),CIRCLE(\'ICRS\',210.80225,54.34894,0.01))=1'
+    },
+    {
+        label: 'NASA Exoplanet Archive https://exoplanetarchive.ipac.caltech.edu/TAP/',
+        value: 'https://exoplanetarchive.ipac.caltech.edu/TAP/',
+        labelOnly: 'NED',
+    },
+    {
+        label: 'https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap',
+        value: 'https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap',
+        labelOnly: 'CADC',
+        query: 'SELECT TOP 10000 * FROM ivoa.ObsCore WHERE CONTAINS(POINT(\'ICRS\', s_ra, s_dec),CIRCLE(\'ICRS\', 10.68479, 41.26906, 0.028))=1'
+    },
+    {
+        label: 'https://gea.esac.esa.int/tap-server/tap',
+        value: 'https://gea.esac.esa.int/tap-server/tap',
+        labelOnly: 'GAIA',
+        query: 'SELECT TOP 5000 * FROM gaiadr2.gaia_source'
+    },
+    {
+        label: 'https://vao.stsci.edu/CAOMTAP/TapService.aspx',
+        value: 'https://vao.stsci.edu/CAOMTAP/TapService.aspx',
+        labelOnly: 'MAST',
+        query: 'SELECT * FROM ivoa.obscore WHERE CONTAINS(POINT(\'ICRS\',s_ra,s_dec),CIRCLE(\'ICRS\',32.69,-51.01,1.0))=1'
+    },
+    {
+        label: 'http://atoavo.atnf.csiro.au/tap',
+        value: 'http://atoavo.atnf.csiro.au/tap',
+        labelOnly: 'CASDA',
+        query: 'SELECT * FROM ivoa.obscore WHERE CONTAINS(POINT(\'ICRS\',s_ra,s_dec),CIRCLE(\'ICRS\',32.69,-51.01,1.0))=1'
+    },
+    {
+        label: 'lsp-stable https://lsst-lsp-stable.ncsa.illinois.edu/api/tap',
+        value: 'https://lsst-lsp-stable.ncsa.illinois.edu/api/tap',
+        labelOnly: 'LSST',
+        query: 'SELECT * FROM wise_00.allwise_p3as_psd '+
+            'WHERE CONTAINS(POINT(\'ICRS\', ra, decl),'+
+            'POLYGON(\'ICRS\', 9.4999, -1.18268, 9.4361, -1.18269, 9.4361, -1.11891, 9.4999, -1.1189))=1'
+    },
+    {
+        label: 'lsp-int https://lsst-lsp-int.ncsa.illinois.edu/api/tap',
+        value: 'https://lsst-lsp-int.ncsa.illinois.edu/api/tap',
+        labelOnly: 'LSST',
+        query: 'SELECT * FROM wise_00.allwise_p3as_psd '+
+            'WHERE CONTAINS(POINT(\'ICRS\', ra, decl),'+
+            'POLYGON(\'ICRS\', 9.4999, -1.18268, 9.4361, -1.18269, 9.4361, -1.11891, 9.4999, -1.1189))=1'
+    }
+];

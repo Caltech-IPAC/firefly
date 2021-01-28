@@ -2,92 +2,37 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React from 'react';
 import {TargetPanel} from '../ui/TargetPanel.jsx';
 import {SizeInputFields} from './SizeInputField.jsx';
 import {ValidationField} from './ValidationField.jsx';
-import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
-import {ListBoxInputField} from './ListBoxInputField.jsx';
-import {gkey} from '../visualize/ui/CatalogSelectViewPanel.jsx';
-import {HelpIcon} from '../ui/HelpIcon.jsx';
 
 import './VoSearchPanel.css';
 
-export class VoSearchPanel extends PureComponent {
-
-    constructor(props) {
-        super(props);
-    }
-
-    componentWillUnmount() {
-        if (this.removeListener) this.removeListener();
-        this.iAmMounted = false;
-    }
-
-    componentDidMount() {
-        this.iAmMounted = true;
-        this.removeListener = FieldGroupUtils.bindToStore(gkey, (fields) => {
-            if (this.iAmMounted) this.setState(fields);
-        });
-    }
-
-    render() {
-        const fields = this.state;
-        return (
-            <div className='vopanel__wrapper'>
-                <div className='vopanel'>
-                    <div>
-                        {targetPanelArea()}
-                    </div>
-                    <div style={{height: 60}}>
-                        { sizeArea()}
-                    </div>
-                    <div style={{marginTop: 20}}>
-                        { voSearchArea() }
-                        <div style={{padding:'20px 0 20px 0'}}>
-                            <a target='_blank' href='http://vao.stsci.edu/directory/'>Find Astronomical Data
-                                Resources </a>
-                        </div>
-                    </div>
+export const VoSearchPanel = () =>(
+        <div className='vopanel__wrapper'>
+            <div className='vopanel'>
+                <div>
+                    <TargetPanel labelWidth={100} nullAllowed={false}/>
                 </div>
-                <div style={{display:'flex',flexDirection:'column', alignItems:'flex-end'}}>
-                    <HelpIcon
-                        helpId={'catalogs.vo'}/>
+                <div style={{height: 60}}>
+                    <SizeInputFields fieldKey='conesize' showFeedback={true} label='Radius:'
+                                     initialState={{
+                                         value: (500/3600)+'', unit: 'arcsec', min:  1/3600, max:  1,
+                                         tooltip: 'Please select an option'}}/>
+                </div>
+                <div style={{marginTop: 20, display:'flex', flexDirection: 'column'}}>
+                    <VOSearchArea />
+                    <a style={{padding:'20px 0 20px 0'}} target='_blank' href='http://vao.stsci.edu/directory/'>Find Astronomical Data Resources </a>
                 </div>
             </div>
-        );
-
-    }
-
-}
-
-function targetPanelArea() {
-    return (
-        <div >
-            <TargetPanel groupKey={gkey} labelWidth={100}/>
         </div>
     );
-}
 
-var sizeArea = () => {
-    return (
-        <SizeInputFields fieldKey='conesize' showFeedback={true}
-                         initialState={{
-                                           value: parseFloat(500/3600).toString(),
-                                           tooltip: 'Please select an option',
-                                           unit: 'arcsec',
-                                           min:  1/3600,
-                                           max:  1
-                                 }}
-                         label='Radius:'
-        />
-    );
-};
 
-var voSearchArea = () => {
-    return (
+const VOSearchArea = () => (
         <ValidationField
-            fieldKey='vourl'
+            fieldKey='vourl' size={60} actOn={['blur','enter']} wrapperStyle={{margin: '5px 0'}}
             initialState={{
                               fieldKey: 'vourl',
                               value: '',
@@ -95,22 +40,6 @@ var voSearchArea = () => {
                               label:'Cone Search URL:',
                               labelWidth : 100,
                               nullAllowed:false,
-                              /*validator: {urlValidator}*/
                           }}
-            size={60}
-            placeholder='Ex. https://irsa.ipac.caltech.edu/SCS?table=allwise_p3as_psd&'
-            actOn={['blur','enter']}
-            wrapperStyle={{margin: '5px 0'}}
-        />
+            placeholder='Ex. https://irsa.ipac.caltech.edu/SCS?table=allwise_p3as_psd&' />
     );
-};
-
-function urlValidator(val) {
-    //Check value that match
-    const regEx = new RegExp('#\b(([\w-]+://?|www[.])[^\s()<>]+(?:\([\w\d]+\)|([^[:punct:]\s]|/)))#iS');
-    let valid = true;//isValid...
-    if (!regEx.test(val)) {
-        valid = false;
-    }
-    return {valid, value: val, message: 'VO cone search should be a well-defined URL string'};
-}

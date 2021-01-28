@@ -88,7 +88,6 @@ function formatGroupLabel(data) {
     return (
         <div style={groupStyles}>
             <span>{data.options.length} {data.label} </span>
-            {false && <span>(todo: browser)</span>}
         </div>
     );
 }

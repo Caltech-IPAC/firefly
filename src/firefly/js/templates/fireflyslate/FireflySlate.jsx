@@ -167,7 +167,7 @@ const EmptyMessage= () => (
         </div> );
 
 const BannerSection= ({menu, appIcon, ...rest}) => (
-    <Banner {...{key:'banner', appIcon,...rest,
+    <Banner {...{key:'banner', appIcon, enableVersionDialog:true, ...rest,
         menu: <Menu menu={menu}/>,
         visPreview: <VisHeader showHeader={false}/>,
         readout: <VisHeader showPreview={false}/>,
