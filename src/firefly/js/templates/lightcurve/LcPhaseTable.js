@@ -14,7 +14,7 @@ import {getConverter, getYColMappings} from './LcConverterFactory.js';
 import {upload} from '../../rpc/CoreServices.js';
 
 
-const DEC_PHASE = 3;       // decimal digit
+const DEC_PHASE = 5;       // decimal digit
 
 /**
  * @summary upload phase table with the column arranged as needed
@@ -122,7 +122,7 @@ function addPhaseToTable(tbl, timeName, tzero, period) {
 
     var tPF = {tableData: cloneDeep(tbl.tableData),
                tableMeta: cloneDeep(tbl.tableMeta),
-               tbl_id, title};
+               tbl_id, title, META_INFO:{'col.phase.precision': 'F5'}};
     tPF.tableMeta = omit(tPF.tableMeta, ['source', 'resultSetID', 'sortInfo']);
 
     var phaseC = {desc: 'number of period elapsed since starting time.',

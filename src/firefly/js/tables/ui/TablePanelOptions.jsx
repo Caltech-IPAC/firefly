@@ -42,8 +42,7 @@ export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOpt
                         position: 'absolute',
                         right: 2,
                         borderLeft: '10px solid transparent',
-                        borderTop: '10px solid rgb(71, 138, 163)',
-                        position: 'absolute'
+                        borderTop: '10px solid rgb(71, 138, 163)'
                     }}/>
             </div>
         );

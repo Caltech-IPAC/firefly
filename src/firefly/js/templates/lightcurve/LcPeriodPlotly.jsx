@@ -61,8 +61,8 @@ const fKeyDef = {
 };
 
 const STEP = 1;            // step for slider
-const DEC_PHASE = 3;       // decimal digit
-const PERIOD_MIN = 0;      // set the period min value at 0, validation for period is larger than 0
+const DEC_PHASE = 5;       // decimal digit
+const PERIOD_MIN = 0.0;      // set the period min value at 0, validation for period is larger than 0
 
 // defValues used to keep the initial values for parameters in phase finding field group
 // time: time column
