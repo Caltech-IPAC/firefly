@@ -11,7 +11,6 @@ import {ExtraButton, FormPanel} from 'firefly/ui/FormPanel.jsx';
 import {ValidationField} from 'firefly/ui/ValidationField.jsx';
 import {intValidator} from 'firefly/util/Validate.js';
 import {FieldGroup} from 'firefly/ui/FieldGroup.jsx';
-import {HelpIcon} from 'firefly/ui/HelpIcon.jsx';
 import CreatableSelect from 'react-select/creatable/dist/react-select.esm.js';
 import {RadioGroupInputField} from 'firefly/ui/RadioGroupInputField.jsx';
 import {makeTblRequest, setNoCache} from 'firefly/tables/TableRequestUtil.js';
@@ -24,7 +23,7 @@ import {tableColumnsConstraints} from 'firefly/ui/tap/TableColumnsConstraints.js
 import {skey, tableSearchMethodsConstraints, validateConstraints} from 'firefly/ui/tap/TableSearchMethods.jsx';
 import {commonSelectStyles, selectTheme} from 'firefly/ui/tap/Select.jsx';
 import {getMaxrecHardLimit, getTapBrowserState, tapHelpId, TAP_SERVICES_FALLBACK} from 'firefly/ui/tap/TapUtil.js';
-import { gkey, AdqlUI, BasicUI} from 'firefly/ui/tap/TableSelectViewPanel.jsx';
+import { gkey, SectionTitle, AdqlUI, BasicUI} from 'firefly/ui/tap/TableSelectViewPanel.jsx';
 
 
 
@@ -150,8 +149,6 @@ const tableSelectStyleEnhancedTemplate= {
 const makePlaceHolderBeforeStyle= (l) =>
     ({ ...extStyles, content: `"Using ${l}"`, height: 10, width: `${(l.length+7)*.6}em`});
 
-const SectionTitle= ({title,helpId}) => (
-    <div className='TapSearch__section--title'>{title}<HelpIcon helpId={tapHelpId(helpId)}/></div>);
 
 
 function TapSearchPanelComponents({initArgs, serviceUrl, onTapServiceOptionSelect, tapOps, titleOn=true, selectBy}) {
@@ -169,7 +166,7 @@ function TapSearchPanelComponents({initArgs, serviceUrl, onTapServiceOptionSelec
             <div className='TapSearch'>
                 {titleOn && <div className='TapSearch__title'>TAP Searches</div>}
                 <div className='TapSearch__section'>
-                    <SectionTitle title='1. TAP Service ' helpId='tapService'/>
+                    <SectionTitle title='1. Select TAP Service ' helpId='tapService'/>
                     <div style={{flexGrow: 1, marginRight: 3, maxWidth: 1000,  zIndex: 9999}}>
                         <CreatableSelect
                             options={tapOps} isClearable={true} onChange={onTapServiceOptionSelect}
@@ -183,10 +180,12 @@ function TapSearchPanelComponents({initArgs, serviceUrl, onTapServiceOptionSelec
                         fieldKey = 'selectBy'
                         initialState = {{
                             defaultValue: 'basic',
-                            options: [{label: 'Single Table', value: 'basic'}, {label: 'ADQL', value: 'adql'}],
+                            options: [
+                                {label: 'Single Table (UI assisted) ', value: 'basic'},
+                                {label: 'Edit ADQL (advanced)', value: 'adql'}
+                            ],
                             tooltip: 'Please select an interface type to use'
                         }}
-                        wrapperStyle={{alignSelf: 'center'}}
                     />
                 </div>
                 {selectBy === 'basic' && <BasicUI  serviceUrl={serviceUrl} initArgs={initArgs}/>}
@@ -227,7 +226,7 @@ function populateAndEditAdql(inAdql) {
 }
 
 const hasElements= (a) => Boolean(isArray(a) && a?.length);
-const getTapServiceOptions= () => getTapServices().map(({label,value,labelOnly})=>({label, value, labelOnly}));
+const getTapServiceOptions= () => getTapServices().map(({label,value})=>({label:value, value, labelOnly:label}));
 
 function getTapServices() {
     const tapServices = getAppOptions()?.tap?.services;

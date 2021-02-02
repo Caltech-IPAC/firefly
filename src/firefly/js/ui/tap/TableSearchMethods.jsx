@@ -68,7 +68,7 @@ const PanelMessage = 'panelMessage';
 const LeftInSearch = 8;
 const LabelWidth = 106;
 const LableSaptail = 100;
-const SpatialWidth = 400;
+const SpatialWidth = 440;
 
 const fieldsMap = {[Spatial]: {
                         [SpatialPanel]: {label: Spatial},
@@ -1236,7 +1236,7 @@ function fieldInit(columnsTable) {
             [CenterLonColumns]: {
                 fieldKey: CenterLonColumns,
                 value: centerColObj.lon,
-                tooltip: 'Center longitude column for spatial search',
+                tooltip: 'Table column that specifies longitude position',
                 label: getLabel(CenterLonColumns, ':'),
                 labelWidth: LabelWidth,
                 validator: getColValidator(cols, false, false)
@@ -1244,7 +1244,7 @@ function fieldInit(columnsTable) {
             [CenterLatColumns]: {
                 fieldKey: CenterLatColumns,
                 value: centerColObj.lat,
-                tooltip: 'Center latitude column for spatial search',
+                tooltip: 'Table column that specifies latitude position',
                 label: getLabel(CenterLatColumns, ':'),
                 labelWidth: LabelWidth,
                 validator: getColValidator(cols, false, false)

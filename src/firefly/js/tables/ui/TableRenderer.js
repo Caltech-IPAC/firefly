@@ -450,7 +450,7 @@ export const createInputCell = (tooltips, size = 10, validator, onChange, style)
             return null;
         } else {
             return (
-                <div style={{padding: 2}}>
+                <div style={{padding: '0 2px 0 2px', marginTop:'-2px'}}>
                     <InputField
                         validator={(v) => validator(v, data, rowIndex, colIdx)}
                         tooltip={tooltips}

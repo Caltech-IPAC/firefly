@@ -29,10 +29,11 @@ const flexGrowWithMax = {width: '100%', maxWidth: 1400};
 
 export const irsaStandMultiOptions= [
     {id: 'irsacat', title:'IRSA'},
+    {id: 'nedcat'},
     {id: 'upload'},
-    {id: 'vocat'},
     {id: 'tap', title:'TAP Searches'},
-    {id: 'nedcat'}];
+    {id: 'vocat'},
+];
 
 export const dropDownMap = {
     Search: {view: <SearchPanel />},

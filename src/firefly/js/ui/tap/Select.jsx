@@ -12,15 +12,8 @@ export const commonSelectStyles = {
             height: '100%'
         }
     ),
-    singleValue: () => {
-        return {
-            color: 'black',
-            marginLeft: 2,
-            marginRight: 2,
-            maxWidth: 'calc(100% - 8px)',
-            position: 'absolute'
-        };
-    }
+    singleValue: () =>
+        ( { color: 'black', marginLeft: 2, marginRight: 2, maxWidth: 'calc(100% - 8px)', position: 'absolute' })
 };
 
 export const selectTheme = (theme) => ({
@@ -34,44 +27,39 @@ export const selectTheme = (theme) => ({
       }});
 
 // LoadingIndicator component
-const LoadingIndicator = () => {
-  return (
-      <img style={{width: 20, height: 20, padding: 5}} src={LOADING}/>
-  );
-};
+const LoadingIndicator = () => ( <img style={{width: 20, height: 20, padding: 5}} src={LOADING}/> );
+const addTarget= (s) => (s.indexOf('<a ')<0) ? s : s.replace('<a ', `<a target='tapOpen' `);
+const cleanUp= (s) => addTarget(truncate(s, {length: 140}));
 
 // Option component
-const SelectOption = ({chidren,...props}) => {
-        const {data} = props;
-        const html = `<b>${data.value}</b><br/>${data.label}`;
-        const v = {__html: html};
-        return (
-            <components.Option {...props}>
-                <div dangerouslySetInnerHTML={v}/>
-            </components.Option>
-        );
+const SelectOption = (props) => {
+    const {data} = props;
+    return (
+        <components.Option {...props}>
+            <div>
+                <b>{data.value}</b>
+                <div dangerouslySetInnerHTML={{__html: `${cleanUp(data.label)}`}}/>
+            </div>
+        </components.Option>
+    );
 };
 
-function getSelectSingleValueComponent(type) {
-    return ({children, ...props}) => {
+const getSelectSingleValueComponent= (type,internalHeight) =>
+    (props) => {
         const {data, options} = props;
-        if (options && options.length > 0) {
-            const html = `<b style="font-size: 9pt">${type}: ${data.value}</b><br/>${truncate(data.label, {length: 140})}`;
-            const v = {__html: html};
-            // use whiteSpace attribute to wrap the text and collapse the whitespace
-            // without it the text does not wrap
-            return (
-                <components.SingleValue {...props}>
-                    <div style={{whiteSpace: 'normal'}}
-                         dangerouslySetInnerHTML={v}
-                    />
-                </components.SingleValue>
-            );
-        } else {
-            return null;
-        }
+        if (!options?.length) return null;
+        return (
+            <components.SingleValue {...props}>
+                <div style={{whiteSpace: 'normal', height: internalHeight}} >
+                    <div style={{paddingBottom: 5}}>
+                        <span style={{paddingRight: 5}}>{type}: </span>
+                        <b style={{fontSize: '9pt'}}> {data.value} </b>
+                    </div>
+                    <div dangerouslySetInnerHTML={{__html: `${cleanUp(data.label)}`}}/>
+                </div>
+            </components.SingleValue>
+        );
     };
-}
 
 const groupStyles = {
     display: 'flex',
@@ -92,18 +80,18 @@ function formatGroupLabel(data) {
     );
 }
 
-export function NameSelect({options, value, onSelect, type, selectProps={}}) {
-    const selectStyles = Object.assign({
-            valueContainer: (styles) => (
-                { ...styles, height: 50 }),
-        }, commonSelectStyles);
+export function NameSelect({options, value, onSelect, typeDesc, typeDescPlural, selectProps={}, internalHeight='45px'}) {
+    const selectStyles = {
+        valueContainer: (styles) => ( { ...styles, height: 55 }),
+        ...commonSelectStyles
+    };
 
-    const placeholder = value ? `${type} <${value}>. Replace...` : `Select ${type}...`;
+    const placeholder = value ? `${typeDesc} <${value}>. Replace...` : `Select ${typeDesc}...`;
 
     let groupedOptions = [];
     if (options && options.length > 0) {
         const nOpts = options.length;
-        const groupLabel = `${type}${(nOpts>1?'s':'')}`;
+        const groupLabel = `${nOpts>1?typeDescPlural:typeDesc}`;
         groupedOptions = [{
             label: groupLabel,
             options
@@ -111,8 +99,8 @@ export function NameSelect({options, value, onSelect, type, selectProps={}}) {
     }
 
     return (
-        <Select key={`select${type}`}
-                components={{ LoadingIndicator, Option: SelectOption, SingleValue: getSelectSingleValueComponent(type) }}
+        <Select key={`select${typeDesc}`}
+                components={{ LoadingIndicator, Option: SelectOption, SingleValue: getSelectSingleValueComponent(typeDesc,internalHeight) }}
                 isLoading={!options}
                 formatGroupLabel={formatGroupLabel}
                 options={groupedOptions}
@@ -147,10 +135,11 @@ NameSelectField.propTypes = {
     groupKey : PropTypes.string,
     options: PropTypes.array,
     onSelect: PropTypes.func,
-    type: PropTypes.string,
+    typeDesc: PropTypes.string,
+    typeDescPlural: PropTypes.string,
     selectProps: PropTypes.object,
+    internalHeight: PropTypes.string,
     initialState: PropTypes.shape({
         value: PropTypes.string,
     })
 };
-

@@ -97,6 +97,7 @@ export class InputAreaFieldView extends PureComponent {
                 <textarea style={Object.assign({display:'inline-block'}, style)}
                           rows={rows}
                           cols={cols}
+                          spellCheck={false}
                           className={computeStyle(valid,hasFocus,additionalClasses)}
                           id={idName}
                        onChange={(ev) => onChange ? onChange(ev) : null}

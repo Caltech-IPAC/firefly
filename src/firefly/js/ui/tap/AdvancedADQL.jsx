@@ -17,16 +17,16 @@ import {getColumnIdx} from '../../tables/TableUtil.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 
-import Prism from "prismjs";
+import Prism from 'prismjs';
 // bliss is needed for prism-live
-import "blissfuljs";
+import 'blissfuljs';
 import '../../externalSource/prismLive/prism-sql.js';
 import '../../externalSource/prismLive/prism-live.js';
 
 import '../../externalSource/prismLive/prism.css';
 import '../../externalSource/prismLive/prism-live.css';
 
-const code = {className: "language-sql"};
+const code = {className: 'language-sql'};
 var cFetchKey = Date.now();
 
 export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={}}) {
@@ -61,7 +61,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
     }, []);
 
     const onSelect = (p) => {
-        const textArea = document.getElementById("adqlEditor");
+        const textArea = document.getElementById('adqlEditor');
 
         const [key=''] = p;
         const [type, , tname, cname] = key.split('--');
@@ -112,7 +112,8 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
     return (
             <SplitPane split='vertical' defaultSize={200} style={{position: 'relative', ...style}}>
                 <SplitContent style={{display: 'flex', flexDirection: 'column'}}>
-                    <b>Schema -> Table -> Column</b>
+                    <div style={{fontWeight: 'bold', paddingBottom:5, textAlign:'center'}}>Schema Browser</div>
+                    <div style={{textAlign:'center', paddingBottom:2, }}>Schema -> Table -> Column</div>
                     <div  style={{overflow: 'auto', flexGrow: 1}}>
                         <Tree defaultExpandAll showLine selectedKeys={[]} loadData={onLoadData} onSelect={onSelect}>
                             {treeNodes}

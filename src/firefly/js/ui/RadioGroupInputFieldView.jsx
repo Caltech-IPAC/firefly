@@ -8,7 +8,7 @@ function makeRadioGroup(options,alignment ,value,onChange,tooltip, labelStyle) {
 
     return options.map((option) => (
         <span key={option.value}>
-            <div style={{display:'inline-block'}} title={option.tooltip || tooltip}>
+            <div style={{display:'inline-flex', flexDirection:'row', alignItems:'center'}} title={option.tooltip || tooltip}>
                 <input type='radio'
                        title={tooltip}
                        value={option.value}

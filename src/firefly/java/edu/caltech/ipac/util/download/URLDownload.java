@@ -270,6 +270,7 @@ public class URLDownload {
         try {
             FileInfo outFileData;
             Map<String,List<String>> sendHeaders= null;
+            long start = System.currentTimeMillis();
             try {
                 if (timeoutInSec>0) {
                     conn.setConnectTimeout(timeoutInSec * 1000);//Sets a specified timeout value, in milliseconds
@@ -295,7 +296,6 @@ public class URLDownload {
             //------
             logHeader(postData, conn, sendHeaders);
             validFileSize(conn, maxFileSize);
-            long start = System.currentTimeMillis();
             netCopy(makeAnyInStream(conn,uncompress), makeOutStream(outfile), conn, maxFileSize, dl);
             long elapse = System.currentTimeMillis() - start;
             int responseCode= getResponseCode(conn);
