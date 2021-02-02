@@ -29,7 +29,7 @@ export function uploadPhaseTable(tbl, flux) {
 
     upload(blob).then(({status, cacheKey}) => {
         const tReq = makeFileRequest(title, cacheKey, null,
-                                     {tbl_id,
+                                     {tbl_id,  META_INFO:{'col.phase.precision': 'F5'},
                                       sortInfo:sortInfoString(LC.PHASE_CNAME),
                                       pageSize: LC.TABLE_PAGESIZE
                                      });
