@@ -245,10 +245,12 @@ export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
 	    if ( (p.cdelt1) && (p.cdelt2) ) p.cd1_1 = undefined;
 	}
 
-	if (!isNaN(p.crval2) && !isNaN(p.crval1) && !isNaN(p.crpix1) && !isNaN(p.crpix2) && (p.maptype !== UNRECOGNIZED) &&
-		( parse.isDefinedHeaderList(CD1_1_HEADERS) || parse.isDefinedHeaderList(CD1_2_HEADERS) ||
-          parse.isDefinedHeaderList(CD2_1_HEADERS) || parse.isDefinedHeaderList(CD2_2_HEADERS) ) ) {
-	    if (p.axes_reversed) {
+    if (!isNaN(p.crval2) && !isNaN(p.crval1) && !isNaN(p.crpix1) && !isNaN(p.crpix2) && (p.maptype !== UNRECOGNIZED) &&
+        ( parse.isDefinedHeaderList(CD1_1_HEADERS) || parse.isDefinedHeaderList(CD1_2_HEADERS) ||
+            parse.isDefinedHeaderList(CD2_1_HEADERS) || parse.isDefinedHeaderList(CD2_2_HEADERS) ||
+            isDefined(p.pc1_1) || isDefined(p.pc1_2) || isDefined(p.pc2_1) || isDefined(p.pc2_2)
+        ) ) {
+        if (p.axes_reversed) {
             let temp = p.crval1;
             p.crval1 = p.crval2;
             p.crval2 = temp;
