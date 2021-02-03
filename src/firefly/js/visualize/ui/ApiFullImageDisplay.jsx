@@ -23,11 +23,9 @@ function makeState() {
     return {vr:visRoot(), currMouseState:lastMouseCtx(), readoutData:lastMouseImageReadout(), readout:readoutRoot()};
 }
 
-export const ApiFullImageDisplay= memo(
-    ({closeFunc, viewerId, renderTreeId, showHealpixPixel= getAppOptions()?.hips?.readoutShowsPixel}) => {
-
+export const ApiFullImageDisplay= memo(({closeFunc, viewerId, renderTreeId, showHealpixPixel}) => {
+    const showHP= showHealpixPixel ??getAppOptions()?.hips?.readoutShowsPixel;
     const {vr,currMouseState, readout, readoutData}= useMouseStoreConnector(makeState);
-    const plot= primePlot(vr);
     return (
         <RenderTreeIdCtx.Provider value={{renderTreeId}}>
             <div style={{width:'100%', height:'100%', display:'flex', flexWrap:'nowrap',
@@ -43,7 +41,7 @@ export const ApiFullImageDisplay= memo(
                                            minHeight: 34,
                                            padding: '2px 0 1px 0'
                                        }}
-                                       showHealpixPixel={showHealpixPixel}/>
+                                       showHealpixPixel={showHP}/>
                     </div>
                 </div>
                 <div>
@@ -55,7 +53,7 @@ export const ApiFullImageDisplay= memo(
                                       canReceiveNewPlots={NewPlotMode.create_replace.key}
                                       Toolbar={MultiViewStandardToolbar}/>
                 </div>
-                {isImage(plot) &&
+                {isImage(primePlot(vr)) &&
                 <div style={{display:'flex', flexDirection:'row', alignItems:'flex-end', position: 'absolute',
                     bottom: 3, right: 4, borderTop: '2px ridge', borderLeft: '2px ridge'
                 }} >

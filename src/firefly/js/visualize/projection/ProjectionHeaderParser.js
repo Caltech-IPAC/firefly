@@ -210,10 +210,10 @@ export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
 	if ((!parse.isDefinedHeaderList(CD1_1_HEADERS)) && (!parse.isDefinedHeaderList(CD1_2_HEADERS) ) &&
 	    (!parse.isDefinedHeaderList(CD2_1_HEADERS) ) && (!parse.isDefinedHeaderList(CD2_2_HEADERS) )) {
 	    /* no CD matrix values in header - look for PC matrix values */
-	    if (isDefined(p.pc1_1) ) p.cd1_1 = p.cdelt1 * p.pc1_1;
-	    if (isDefined(p.pc1_2) ) p.cd1_2 = p.cdelt1 * p.pc1_2;
-	    if (isDefined(p.pc2_1) ) p.cd2_1 = p.cdelt2 * p.pc2_1;
-	    if (isDefined(p.pc2_2) ) p.cd2_2 = p.cdelt2 * p.pc2_2;
+	    if (isFinite(p.pc1_1) ) p.cd1_1 = p.cdelt1 * p.pc1_1;
+	    if (isFinite(p.pc1_2) ) p.cd1_2 = p.cdelt1 * p.pc1_2;
+	    if (isFinite(p.pc2_1) ) p.cd2_1 = p.cdelt2 * p.pc2_1;
+	    if (isFinite(p.pc2_2) ) p.cd2_2 = p.cdelt2 * p.pc2_2;
 	}
 
 	if (p.maptype===TPV) {
@@ -247,8 +247,8 @@ export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
 
     if (!isNaN(p.crval2) && !isNaN(p.crval1) && !isNaN(p.crpix1) && !isNaN(p.crpix2) && (p.maptype !== UNRECOGNIZED) &&
         ( parse.isDefinedHeaderList(CD1_1_HEADERS) || parse.isDefinedHeaderList(CD1_2_HEADERS) ||
-            parse.isDefinedHeaderList(CD2_1_HEADERS) || parse.isDefinedHeaderList(CD2_2_HEADERS) ||
-            isDefined(p.pc1_1) || isDefined(p.pc1_2) || isDefined(p.pc2_1) || isDefined(p.pc2_2)
+          parse.isDefinedHeaderList(CD2_1_HEADERS) || parse.isDefinedHeaderList(CD2_2_HEADERS) ||
+            isFinite(p.pc1_1) || isFinite(p.pc1_2) || isFinite(p.pc2_1) || isFinite(p.pc2_2)
         ) ) {
         if (p.axes_reversed) {
             let temp = p.crval1;

@@ -246,6 +246,7 @@ function matchHiPSToImage(pv, hipsPVidAry) {
     const attributes=  getCornersAttribute(pv);
     const plot= primePlot(pv);
     const wpCenter= CCUtil.getWorldCoords(plot,findCurrentCenterPoint(pv));
+    if (!wpCenter) return;
     const dl = getDrawLayerByType(dlRoot(), ImageOutline.TYPE_ID);
     if (!dl) dispatchCreateDrawLayer(ImageOutline.TYPE_ID);
     const connectPids= dl ? dl.plotIdAry : [];
