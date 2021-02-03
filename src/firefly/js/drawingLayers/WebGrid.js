@@ -7,7 +7,7 @@
 
 import  {get, isBoolean, isEmpty} from 'lodash';
 import {clone} from '../util/WebUtil.js';
-import {visRoot} from '../visualize/ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import CsysConverter from '../visualize/CsysConverter.js';
@@ -16,10 +16,10 @@ import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {getUIComponent} from './WebGridUI.jsx';
 import { makeGridDrawData } from './ComputeWebGridData.js';
 import {isImage} from '../visualize/WebPlot.js';
- import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
+import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import {getPreference} from '../core/AppDataCntlr.js';
+import {flux} from '../core/ReduxFlux.js';
 import CoordinateSys from '../visualize/CoordSys.js';
-import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 
 
 export const COORDINATE_PREFERENCE = 'coordinate';
@@ -38,6 +38,7 @@ const  coordinateArray = [
 
 const ID= 'WEB_GRID';
 const TYPE_ID= 'WEB_GRID_TYPE';
+const UPDATE_GRID= 'Grid.UpdateGrid'; // a 'private' action just for grid, dispatch by grid
 const factoryDef= makeFactoryDef(TYPE_ID,creator, getDrawData,getLayerChanges, null,getUIComponent);
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
 /**
@@ -64,7 +65,7 @@ function creator(params) {
         destroyWhenAllDetached: true
     };
     
-    return DrawLayer.makeDrawLayer( id, TYPE_ID, 'grid', options , drawingDef);
+    return DrawLayer.makeDrawLayer( id, TYPE_ID, 'grid', options , drawingDef, [ImagePlotCntlr.UPDATE_VIEW_SIZE, UPDATE_GRID ]);
 }
 
  /**
@@ -112,6 +113,12 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
                  return {drawData};
              }
              break;
+         case ImagePlotCntlr.UPDATE_VIEW_SIZE:
+             setTimeout(() => {
+                 flux.process({ type: UPDATE_GRID, payload: { plotId: action.payload.plotId}});
+             });
+             break;
+         case UPDATE_GRID:
          case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
              if (drawLayer.drawData.data ) {
                  const data = Object.keys(drawLayer.drawData.data).reduce((d, plotId) => {

@@ -391,7 +391,7 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
     if (options.gridOn) {
         imageRequest.setGridOn(options.gridOn);
         hipsRequest.setGridOn(options.gridOn);
-
+        allSkyRequest?.setGridOn(options.gridOn);
     }
 
     const tblIdAry= Object.keys(preparedTables).filter( (v) => !isString(preparedTables[v]));
