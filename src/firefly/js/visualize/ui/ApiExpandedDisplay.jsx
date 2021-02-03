@@ -16,9 +16,9 @@ function makeState() {
     return {vr:visRoot(), currMouseState:lastMouseCtx(), readoutData:lastMouseImageReadout(), readout:readoutRoot()};
 }
 
-export const ApiExpandedDisplay= memo(
-    ({closeFunc=undefined, viewerId, showHealpixPixel= getAppOptions()?.hips?.readoutShowsPixel}) => {
+export const ApiExpandedDisplay= memo( ({closeFunc=undefined, viewerId, showHealpixPixel}) => {
 
+    const showHP= showHealpixPixel ??getAppOptions()?.hips?.readoutShowsPixel;
     const {vr,currMouseState, readout, readoutData}= useMouseStoreConnector(makeState);
 
     return (
@@ -32,7 +32,7 @@ export const ApiExpandedDisplay= memo(
                                    minHeight: 34,
                                    padding: '2px 0 1px 0'
                                }}
-                               showHealpixPixel={showHealpixPixel}/>
+                               showHealpixPixel={showHP}/>
             </div>
             <div style={{flex: '1 1 auto', display:'flex'}}>
                 <ImageExpandedMode   {...{key:'results-plots-expanded', closeFunc, viewerId}}/>
