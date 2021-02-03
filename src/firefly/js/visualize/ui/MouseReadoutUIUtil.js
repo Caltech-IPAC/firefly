@@ -19,6 +19,8 @@ const myFormat= (v,precision) => !isNaN(v) ? sprintf(`%.${precision}f`,v) : '';
 const labelMap = {
     eqj2000hms: 'EQ-J2000:',
     eqj2000DCM: 'EQ-J2000:',
+    eclJ2000: 'ECL-J2000:',
+    eclB1950: 'ECL-B1950:',
     galactic: 'Gal:',
     eqb1950: 'Eq-B1950:',
     fitsIP: 'Image Pixel:',
@@ -110,6 +112,10 @@ export function getReadoutElement(readoutItems, readoutKey) {
             return makeCoordReturn(wp, CoordinateSys.SUPERGALACTIC);
         case 'eqb1950' :
             return makeCoordReturn(wp, CoordinateSys.EQ_B1950, true);
+        case 'eclJ2000' :
+            return makeCoordReturn(wp, CoordinateSys.ECL_J2000, false);
+        case 'eclB1950' :
+            return makeCoordReturn(wp, CoordinateSys.ECL_B1950, false);
         case 'fitsIP' :
             return {value:makeImagePtReturn(readoutItems?.fitsImagePt?.value)};
         case 'zeroIP' :

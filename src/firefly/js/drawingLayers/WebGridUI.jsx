@@ -14,10 +14,10 @@ import {COORDINATE_PREFERENCE} from './WebGrid.js';
 export const getUIComponent = (drawLayer,pv) => < WebGridUI drawLayer={drawLayer} pv={pv}/>;
 
 const coordinateOptionArray = [
-    {label:'Eq. J2000',         value:'eq2000hms'},
-    {label: 'Eq. J2000 Decimal',value:'eq2000dcm'},
-    {label: 'Eq. B1950',        value:'eqb1950hms'},
-    {label:'Eq. B1950 Decimal', value:'eqb1950dcm'},
+    {label:'Equatorial J2000',         value:'eq2000hms'},
+    {label: 'Equatorial J2000 Decimal',value:'eq2000dcm'},
+    {label: 'Equatorial B1950',        value:'eqb1950hms'},
+    {label:'Equatorial B1950 Decimal', value:'eqb1950dcm'},
     {label:'Galactic',          value:'galactic'},
     {label: 'Super Galactic',   value:'superGalactic'},
     {label:'Ecliptic J2000',    value:'epj2000'},
