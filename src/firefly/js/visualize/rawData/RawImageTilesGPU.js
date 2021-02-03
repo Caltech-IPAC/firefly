@@ -9,7 +9,7 @@ export const getGPUOps= once((GPU) => {
 
 
     const standardFunc= Function('pixelAry', 'colorModel','height', 'contrast', 'offsetShift', `
-            const pixel= pixelAry[height-this.thread.y][this.thread.x];
+            const pixel= pixelAry[height-this.thread.y-1][this.thread.x];
             if (pixel!==255) {
                 let pixelIdx= pixel*3;
                 if (offsetShift!==0) {
@@ -25,7 +25,7 @@ export const getGPUOps= once((GPU) => {
 
 
     // const standardFunc= function(pixelAry, colorModel,height, contrast, offsetShift) {
-    //         const pixel= pixelAry[height-this.thread.y][this.thread.x];
+    //         const pixel= pixelAry[height-this.thread.y-1][this.thread.x];
     //         if (pixel!==255) {
     //             let pixelIdx= pixel*3;
     //             if (offsetShift!==0) {
@@ -42,7 +42,7 @@ export const getGPUOps= once((GPU) => {
     
     const threeCFunc = Function(
         'redAry', 'greenAry', 'blueAry', 'use', 'contrast', 'offsetShift', 'width','height', `
-        const idx= (height - this.thread.y) * width + this.thread.x;
+        const idx= (height - this.thread.y-1) * width + this.thread.x;
         let r= use[0]===1 ? redAry[idx] : 0;
         let g= use[1]===1 ? greenAry[idx] : 0;
         let b= use[2]===1 ? blueAry[idx] : 0;
@@ -62,7 +62,7 @@ export const getGPUOps= once((GPU) => {
     );
 
     // const threeCFuncX = function(redAry, greenAry, blueAry, use, contrast, offsetShift, width,height) {
-    //     const idx= (height - this.thread.y) * width + this.thread.x;
+    //     const idx= (height - this.thread.y-1) * width + this.thread.x;
     //     let r= use[0]===1 ? redAry[idx] : 0;
     //     let g= use[1]===1 ? greenAry[idx] : 0;
     //     let b= use[2]===1 ? blueAry[idx] : 0;

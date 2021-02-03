@@ -98,7 +98,7 @@ function writeToCanvas(ctx, zf, rawTileDataAry,x,y,width,height) {
             id= rawTileDataAry[i];
             drawX= Math.trunc( ((id.x/TILE_SIZE)*step) - x);
             drawY= Math.trunc( ((id.y/TILE_SIZE)*step) - y);
-            ctx.drawImage(id.rawImageTile,0,0,id.width,id.height,drawX,drawY+ (1*zf), id.width*zf, id.height*zf);
+            ctx.drawImage(id.rawImageTile,0,0,id.width,id.height,drawX,drawY, id.width*zf, id.height*zf);
         }
     }
 }
