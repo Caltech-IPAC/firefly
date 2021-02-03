@@ -26,6 +26,7 @@ const coordOptions= [
 	{label: 'EQ J2000 decimal', value: 'eqj2000DCM' },
 	{label: 'Galactic', value: 'galactic'},
 	{label: 'EQ B1950', value: 'eqb1950'},
+	{label: 'ECL J2000', value: 'eclJ2000'},
 	{label: 'FITS Image Pixel', value: 'fitsIP'},
     {label: 'Zero based Image Pixel', value: 'zeroIP'}
 ];
@@ -35,6 +36,7 @@ const hipsCoordOptions= [
     {label: 'EQ J2000 decimal', value: 'eqj2000DCM' },
     {label: 'Galactic', value: 'galactic'},
     {label: 'EQ B1950', value: 'eqb1950'},
+	{label: 'ECL J2000', value: 'eclJ2000'},
 ];
 
 
@@ -51,35 +53,19 @@ const groupKeys={
 	pixelSize: 'PIXEL_OPTION_FORM'
 };
 
-const leftColumn = { display: 'inline-block', paddingLeft:80, verticalAlign:'middle', paddingBottom:75};
+const leftColumn = {paddingLeft:20};
+const rightColumn = {paddingLeft:18};
+const dialogStyle = { minWidth : 300, minHeight: 100 , padding:10, display:'flex', alignItems:'center'};
 
-const rightColumn = {display: 'inline-block',  paddingLeft:18};
 
-const dialogStyle = { minWidth : 300, minHeight: 100 , padding:5};
-
-/**
- *
- * @param {string} fieldKey - a key for the field group
- * @param {string} radioValue - a option value of the radio group
- * @returns {XML}
- */
-function getDialogBuilder(fieldKey, radioValue) {
-	//name a groupKey based on the input fieldKey
-	const groupKey = groupKeys[fieldKey];
-
+export function showMouseReadoutOptionDialog(fieldKey,radioValue) {
 	const popup = (
 		<PopupPanel title={'Choose Option'}  >
-			<MouseReadoutOptionDialog groupKey={groupKey} fieldKey={fieldKey}
+			<MouseReadoutOptionDialog groupKey={groupKeys[fieldKey]} fieldKey={fieldKey}
 									  radioValue={radioValue} isHiPS={isHiPS(primePlot(visRoot()))}/>
 		</PopupPanel>
 	);
 	DialogRootContainer.defineDialog(fieldKey, popup);
-	return popup;
-}
-
-export function showMouseReadoutOptionDialog(fieldKey,radioValue) {
-
-	getDialogBuilder(fieldKey, radioValue);
 	dispatchShowDialog(fieldKey);
 }
 
@@ -110,8 +96,8 @@ function doDispatch(fieldGroup,  fieldKey){
 
 		dispatchHideDialog(fieldKey);
 	},0);
-
 }
+
 /**
  *  create a popup dialog
  */
@@ -129,17 +115,11 @@ function MouseReadoutOptionDialog({groupKey,fieldKey,radioValue, isHiPS}) {
 			};
 		},[groupKey]);
 
-		if (groupKey==='PIXEL_OPTION_FORM'){
-			return (
-				<PixelSizeOptionDialogForm groupKey={groupKey} fieldKey={fieldKey} radioValue={radioValue} />
-			);
-		}
-		else {
-			return (
+		return ( groupKey==='PIXEL_OPTION_FORM' ?
+				<PixelSizeOptionDialogForm groupKey={groupKey} fieldKey={fieldKey} radioValue={radioValue} /> :
 				<CoordinateOptionDialogForm groupKey={groupKey} fieldKey={fieldKey} radioValue={radioValue}
 											optionList={isHiPS ? hipsCoordOptions : coordOptions} />
-			);
-		}
+		);
 }
 
 MouseReadoutOptionDialog.propTypes= {
@@ -149,27 +129,17 @@ MouseReadoutOptionDialog.propTypes= {
     isHiPS: PropTypes.bool.isRequired
 };
 
-
-// ------------ React component
-function CoordinateOptionDialogForm({ groupKey,fieldKey,radioValue, optionList}) {
-
-
-	return (
-
+const CoordinateOptionDialogForm= ({ groupKey,fieldKey,radioValue, optionList}) => (
 		<FieldGroup groupKey={groupKey} keepState={false}>
 			<div style={ dialogStyle} onClick={ () => doDispatch(groupKey, fieldKey) } >
-					<div style={leftColumn} title='Please select an option'> Options</div>
-			     	{renderCoordinateRadioGroup(rightColumn,fieldKey,radioValue, optionList)}
+				<div style={leftColumn} title='Please select an option'> Readout Options</div>
+				<RadioGroupInputField
+					wrapperStyle={rightColumn} options={optionList} alignment={'vertical'} fieldKey={fieldKey}
+					initialState={{ tooltip: 'Please select an option', value:radioValue }} />
 			</div>
-
 		</FieldGroup>
-
 	);
 
-}
-/**
- * property of the CoordinateOptionDialogForm
- */
 CoordinateOptionDialogForm.propTypes= {
 	groupKey:  PropTypes.string.isRequired,
 	fieldKey:  PropTypes.string,
@@ -177,55 +147,19 @@ CoordinateOptionDialogForm.propTypes= {
 	optionList: PropTypes.arrayOf(PropTypes.object).isRequired
 };
 
-
-function renderCoordinateRadioGroup(rightColumn,fieldKey, radioValue, optionList ){
-	return(
-		<div style={rightColumn} >
+const PixelSizeOptionDialogForm= ( {groupKey,fieldKey, radioValue} ) => (
+	<FieldGroup groupKey={groupKey} keepState={false}>
+		<div style={ dialogStyle} onClick={ () => doDispatch(groupKey, fieldKey) }>
+			<div style={leftColumn} title='Please select an option'> Pixel Options</div>
 			<RadioGroupInputField
-                initialState={{
-                    tooltip: 'Please select an option',
-                    value:radioValue
-                }}
-				options={optionList}
-				alignment={'vertical'}
-				fieldKey={fieldKey}
-			/>
+				initialState={{ tooltip: 'Please select an option', value:radioValue }}
+				wrapperStyle={rightColumn} options={ pixelOptions } alignment={'vertical'} fieldKey={fieldKey} />
 		</div>
-	);
-}
-
-
-// ------------ React component
-function PixelSizeOptionDialogForm( {groupKey,fieldKey, radioValue} ) {
-
-
-	return (
-		<FieldGroup groupKey={groupKey} keepState={false}>
-			<div style={ dialogStyle} onClick={ () => doDispatch(groupKey, fieldKey) }>
-				<div style={leftColumn} title='Please select an option'> Options</div>
-				<div style={rightColumn}>
-					<RadioGroupInputField
-						initialState={{
-                                    tooltip: 'Please select an option',
-                                    //move the label as a InputFieldLabel
-                                     value:radioValue
-                                   }}
-						options={ pixelOptions }
-						alignment={'vertical'}
-						fieldKey={fieldKey}
-					/>
-				</div>
-
-			</div>
-
-		</FieldGroup>
-	);
-
-}
+	</FieldGroup>
+);
 
 PixelSizeOptionDialogForm.propTypes= {
 	groupKey: PropTypes.string.isRequired,
 	radioValue: PropTypes.string.isRequired,
 	fieldKey: PropTypes.string
 };
-
