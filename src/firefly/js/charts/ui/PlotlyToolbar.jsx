@@ -374,7 +374,7 @@ function ActiveTraceSelect({style={}, chartId, activeTrace}) {
 function FilterSelection({style={}, chartId}) {
     return (
         <div style={style} onClick={() => dispatchChartFilterSelection({chartId})}
-             title='Filter in the selected points'
+             title='Filter on the selected points'
              className='ChartToolbar__filter'/>
     );
 }
