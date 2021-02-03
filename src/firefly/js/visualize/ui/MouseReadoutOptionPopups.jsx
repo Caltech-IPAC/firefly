@@ -22,21 +22,23 @@ import {isHiPS} from '../WebPlot.js';
 
 //define the labels and values for the radio options
 const coordOptions= [
-	{label: 'EQ J2000 HMS', value: 'eqj2000hms'},
-	{label: 'EQ J2000 decimal', value: 'eqj2000DCM' },
+	{label: 'Equatorial J2000 HMS', value: 'eqj2000hms'},
+	{label: 'Equatorial J2000 decimal', value: 'eqj2000DCM' },
 	{label: 'Galactic', value: 'galactic'},
-	{label: 'EQ B1950', value: 'eqb1950'},
-	{label: 'ECL J2000', value: 'eclJ2000'},
+	{label: 'Equatorial B1950', value: 'eqb1950'},
+	{label: 'Ecliptic J2000', value: 'eclJ2000'},
+	{label: 'Ecliptic B1950', value: 'eclB1950'},
 	{label: 'FITS Image Pixel', value: 'fitsIP'},
     {label: 'Zero based Image Pixel', value: 'zeroIP'}
 ];
 
 const hipsCoordOptions= [
-    {label: 'EQ J2000 HMS', value: 'eqj2000hms'},
-    {label: 'EQ J2000 decimal', value: 'eqj2000DCM' },
+    {label: 'Equatorial J2000 HMS', value: 'eqj2000hms'},
+    {label: 'Equatorial J2000 decimal', value: 'eqj2000DCM' },
     {label: 'Galactic', value: 'galactic'},
-    {label: 'EQ B1950', value: 'eqb1950'},
-	{label: 'ECL J2000', value: 'eclJ2000'},
+    {label: 'Equatorial B1950', value: 'eqb1950'},
+	{label: 'Ecliptic J2000', value: 'eclJ2000'},
+	{label: 'Ecliptic B1950', value: 'eclB1950'},
 ];
 
 
