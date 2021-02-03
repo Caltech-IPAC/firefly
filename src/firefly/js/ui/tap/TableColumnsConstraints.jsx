@@ -34,7 +34,8 @@ export function TableColumnsConstraintsToolbar({columnsModel}) {
 
     const {error} = tableModel || {};
 
-    if (isEmpty(tableModel)) {
+    const totalColumns= tableModel?.tableData?.data?.length ?? 0;
+    if (isEmpty(tableModel) || !totalColumns) {
         return <div/>;
     }
 
@@ -50,6 +51,7 @@ export function TableColumnsConstraintsToolbar({columnsModel}) {
         );
     };
 
+
     return (
         <div style={{display:'inline-flex', padding:'0 0 2px', height: 20, alignSelf: 'center'}}>
             {!error && filterCount > 0 &&
@@ -58,9 +60,10 @@ export function TableColumnsConstraintsToolbar({columnsModel}) {
                     onClick={() => dispatchTableFilter({tbl_id: tableModel.tbl_id, filters: ''})}>
                 Remove <span style={{color: 'blue'}}>{filterCount} filter{filterCount>1?'s':''}</span>
             </button>}
+            <span style={{alignSelf: 'center', padding: '0 5px 0 5px'}}>Column Constraints / Output Column Selection - </span>
             {selectedCount > 0 &&
             <span style={{color: 'blue', alignSelf: 'center', padding: '0 5px 0 5px'}} title='Number of columns to be selected'>
-                {selectedCount} columns
+                {selectedCount} of {totalColumns} columns selected
             </span>}
             {!error && resetButton()}
         </div>

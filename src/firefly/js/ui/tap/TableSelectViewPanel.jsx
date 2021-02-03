@@ -32,6 +32,9 @@ import './TableSelectViewPanel.css';
 
 export const gkey = 'TAP_SEARCH_PANEL';
 
+export const SectionTitle= ({title,helpId}) => (
+    <div className='TapSearch__section--title'>{title}<HelpIcon helpId={tapHelpId(helpId)}/></div>);
+
 export function AdqlUI({serviceUrl}) {
 
     return (
@@ -78,11 +81,11 @@ export function BasicUI(props) {
     const splitMax = SpattialPanelWidth+80;
 
     const loadSchemas = (requestServiceUrl, requestSchemaName=undefined, requestTableName=undefined) => {
-        setError(undefined)
-        setSchemaOptions(undefined)
-        setTableName(undefined)
-        setTableOptions(undefined)
-        setColumnsModel(undefined)
+        setError(undefined);
+        setSchemaOptions(undefined);
+        setTableName(undefined);
+        setTableOptions(undefined);
+        setColumnsModel(undefined);
         dispatchValueChange({groupKey: gkey, fieldKey: 'tableName', value: undefined});
 
         loadTapSchemas(requestServiceUrl).then((tableModel) => {
@@ -91,7 +94,7 @@ export function BasicUI(props) {
                 return;
             }
             if (tableModel.error) {
-                setError(tableModel.error)
+                setError(tableModel.error);
             } else  {
                 const schemas = getColumnValues(tableModel, 'schema_name');
                 if(!(schemas.length > 0)){
@@ -102,24 +105,24 @@ export function BasicUI(props) {
                     requestSchemaName = schemas[0];
                 }
                 if (requestTableName) {
-                    setTableName(requestTableName)
+                    setTableName(requestTableName);
                 }
                 const schemaDescriptions = getColumnValues(tableModel, 'description');
                 const schemaOptions = schemas.map((e, i) => {
                     const label = schemaDescriptions[i] ? schemaDescriptions[i] : `[${e}]`;
                     return {label, value: e};
                 });
-                setSchemaName(requestSchemaName)
-                setSchemaOptions(schemaOptions)
+                setSchemaName(requestSchemaName);
+                setSchemaOptions(schemaOptions);
             }
         });
-    }
+    };
 
     const loadTables = (requestServiceUrl, requestSchemaName, requestTableName) => {
         // even if we have the new values - clear the current state
-        setTableName(undefined)
-        setTableOptions(undefined)
-        setColumnsModel(undefined)
+        setTableName(undefined);
+        setTableOptions(undefined);
+        setColumnsModel(undefined);
         dispatchValueChange({groupKey: gkey, fieldKey: 'tableName', value: undefined});
 
         loadTapTables(requestServiceUrl, requestSchemaName).then((tableModel) => {
@@ -140,31 +143,31 @@ export function BasicUI(props) {
                     const label = tableDescriptions[i] ? tableDescriptions[i] : `[${e}]`;
                     return {label, value: e};
                 });
-                setTableName(requestTableName)
-                setTableOptions(tableOptions)
+                setTableName(requestTableName);
+                setTableOptions(tableOptions);
                 dispatchValueChange({groupKey: gkey, fieldKey: 'tableName', value: requestTableName});
             }
         });
-    }
+    };
 
     const loadColumns = (requestServiceUrl, requestSchemaName, requestTableName) => {
         if(columnsModel){
-            setColumnsModel(undefined)
+            setColumnsModel(undefined);
         }
         loadTapColumns(requestServiceUrl, requestSchemaName, requestTableName).then((columnsModel) => {
             if (serviceUrlRef.current !== requestServiceUrl || schemaRef.current !== requestSchemaName || tableRef.current !== requestTableName){
                 // processing a stale request
                 return;
             }
-            setColumnsModel(columnsModel)
-            setTapBrowserState({serviceUrl: requestServiceUrl, schemaName: requestSchemaName, schemaOptions: schemaOptions,
-                tableName: requestTableName, tableOptions: tableOptions, columnsModel: columnsModel});
+            setColumnsModel(columnsModel);
+            setTapBrowserState({serviceUrl: requestServiceUrl, schemaName: requestSchemaName, schemaOptions,
+                tableName: requestTableName, tableOptions, columnsModel});
         });
-    }
+    };
     useEffect(() => {
         // properties changes due to changes in TapSearchPanel
         if(props.serviceUrl !== serviceUrl) {
-            setServiceUrl(props.serviceUrl)
+            setServiceUrl(props.serviceUrl);
         }
     });
 
@@ -194,14 +197,16 @@ export function BasicUI(props) {
     return (
         <Fragment>
             <div className='TapSearch__section'>
-                <div className='TapSearch__section--title'>3. Select Table <HelpIcon helpId={tapHelpId('selectTable')}/> </div>
+                <SectionTitle title='3. Select Table' helpId='selectTable'/>
                 <div style={{display: 'inline-flex', width: '100%', marginRight: 3, maxWidth: 1000}}>
                     <div style={{flexGrow: 1}}>
-                        <NameSelect type='Schema'
+                        <NameSelect typeDesc='Table Collection (Schema)'
+                                    typeDescPlural='Table Collections (Schemas)'
                                     options={schemaOptions}
                                     value={schemaName}
+                                    internalHeight={'45px'}
                                     onSelect = {(selectedTapSchema) => {
-                                        setSchemaName(selectedTapSchema)
+                                        setSchemaName(selectedTapSchema);
                                     }}
                         />
                     </div>
@@ -209,7 +214,8 @@ export function BasicUI(props) {
                     <div style={{flexGrow: 1}}>
                         <NameSelectField
                             fieldKey='tableName'
-                            type='Table'
+                            typeDesc='Table'
+                            typeDescPlural='Tables'
                             options={tableOptions}
                             initialState= {{value:tableName}}
                             onSelect = {(selectedTapTable) => {
@@ -222,7 +228,7 @@ export function BasicUI(props) {
 
             <div className='TapSearch__section' style={{flexDirection: 'column', flexGrow: 1}}>
                 <div style={{ display: 'inline-flex', width: 'calc(100% - 3px)', justifyContent: 'space-between'}}>
-                    <div className='TapSearch__section--title'>4. Select Constraints <HelpIcon helpId={tapHelpId('constraints')}/> </div>
+                    <div className='TapSearch__section--title'>4. Enter Constraints <HelpIcon helpId={tapHelpId('constraints')}/> </div>
                     <TableColumnsConstraintsToolbar key={tableName}
                                                     tableName={tableName}
                                                     columnsModel={columnsModel}
@@ -251,7 +257,7 @@ export function BasicUI(props) {
             </div>
 
         </Fragment>
-    )
+    );
 }
 
 

@@ -28,7 +28,7 @@
     transition: box-shadow .3s ease-in-out;
     background-color: white;
     border-radius: 2px;
-    padding: 6px 2px 4px 2px;
+    padding: 6px 2px 6px 2px;
     margin: 2px 4px;
     outline: none;
     width: calc(100% - 8px);
@@ -51,8 +51,9 @@
     color: #005da4;
     font-size: larger;
     font-weight: bold;
-    padding: 5px;
+    padding-left: 5px;
     width: 175px;
+    height: 100%;
     white-space: nowrap;
     flex-shrink: 0;
 }
