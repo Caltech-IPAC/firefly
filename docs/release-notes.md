@@ -6,9 +6,47 @@
 
 # Releases
 
+### Version 2021.1
+- 2021.1.0  (February 2021)
+  - docker tag: `latest`, `release-2020.3`, `release-2021.1.0`
+  - original release
+
+
+### _Notes_
+- This release contains many bugs fixes and new features
+- FITS Image and HiPS visualizer have some significant performance improvements 
+   - Zoom 
+   - Color change
+   - Bias and Contrast control
+   - Mouse wheel zoom control
+- First production release of TAP Search panel
+- Less lines of java source than last release
+
+##### _UI_
+- FITS performance improvements and significant color improvements ([Firefly-646](https://github.com/Caltech-IPAC/firefly/pull/1016))
+- Syntax Highlighting of ADQL ([PR](https://github.com/Caltech-IPAC/firefly/pull/1041))
+- Service Descriptor Support ([Firefly-677](https://github.com/Caltech-IPAC/firefly/pull/1042))
+- Blank HiPS projection for drawing ([Firefly-688](https://github.com/Caltech-IPAC/firefly/pull/1043))
+- Ecliptic readout ([Firefly-567](https://github.com/Caltech-IPAC/firefly/pull/1058))
+
+##### _Other_ 
+- Supported Browsers ([Firefly-690](https://github.com/Caltech-IPAC/firefly/pull/1046))
+  - safari >= 12
+  - chrome >= 81
+  - firefox >= 79
+  - edge >= 83
+
+
+##### _Pull Request in this release_
+- [bug fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2021.1+label%3abug)
+- [all prs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2021.1+)
+
+
+
+
 ### Version 2020.3
 - 2020.3.3 (December 2020)
-  - docker tag: `latest`, `release-2020.3.3`, `release-2020.3`
+    - docker tag: `release-2020.3.3`, `release-2020.3`
 - 2020.3.2 (December 2020)
     - docker tag: `release-2020.3.2`
 - 2020.3.1 (October 2020)
@@ -18,11 +56,11 @@
      - docker tag: `release-2020.3.0` 
      - original release
 
-### _Notes_
-- This release contains many bugs fixes and focuses on stability
-- Less lines of source than last release
-- Some significant table updates
-- Data Products viewer and Web API are now production ready
+### _notes_
+- this release contains many bugs fixes and focuses on stability
+- less lines of source than last release
+- some significant table updates
+- data products viewer and web api are now production ready
 
 ##### _UI_
 - Long table cell entries are handled better  ([Firefly-595](https://github.com/Caltech-IPAC/firefly/pull/1005))
