@@ -13,7 +13,6 @@ package edu.caltech.ipac.firefly.server.rpc;
  */
 
 import edu.caltech.ipac.firefly.data.ServerParams;
-import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import edu.caltech.ipac.firefly.server.SrvParam;
@@ -29,10 +28,7 @@ import edu.caltech.ipac.firefly.visualize.StretchData;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
-import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.visualize.plot.ImagePt;
-import nom.tam.fits.FitsException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -45,7 +41,6 @@ import java.nio.FloatBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -236,16 +231,16 @@ public class VisServerCommands {
         }
     }
 
-    public static class RemoveBandCmd extends ServCommand {
-
-        public String doCommand(SrvParam sp) throws IllegalArgumentException {
-            
-            PlotState state= sp.getState();
-            Band band = Band.parse(sp.getRequired(ServerParams.BAND));
-            WebPlotResult result = VisServerOps.deleteColorBand(state, band);
-            return WebPlotResultSerializer.createJson(result);
-        }
-    }
+//    public static class RemoveBandCmd extends ServCommand {
+//
+//        public String doCommand(SrvParam sp) throws IllegalArgumentException {
+//
+//            PlotState state= sp.getState();
+//            Band band = Band.parse(sp.getRequired(ServerParams.BAND));
+//            WebPlotResult result = VisServerOps.deleteColorBand(state, band);
+//            return WebPlotResultSerializer.createJson(result);
+//        }
+//    }
 
 
     public static class ChangeColor extends ServCommand {
@@ -306,28 +301,28 @@ public class VisServerCommands {
   * DM-4494
    */
 
-    public static class FitsHeader extends ServCommand  {
-
-       public String doCommand(SrvParam sp) throws IllegalArgumentException, FitsException, IOException {
-
-
-            String tableID = sp.getParamMap().get("tableId")[0];
-
-
-            //TableServerRequest req=TableServerRequest.parse(sp.getRequired(ServerParams.FITS_HEADER));
-            PlotState state= sp.getState();
-
-           HashMap<String, DataGroup> dataGroupMap = VisServerOps.getFitsHeader(state, tableID);
-
-           TableServerRequest treq = new TableServerRequest("fitsHeaderTale");
-           treq.setPageSize(Integer.MAX_VALUE);
-           return JsonTableUtil.toJsonTableModelMap(dataGroupMap, treq).toJSONString();
-
-
-        }
-
-
-    }
+//    public static class FitsHeader extends ServCommand  {
+//
+//       public String doCommand(SrvParam sp) throws IllegalArgumentException, FitsException, IOException {
+//
+//
+//            String tableID = sp.getParamMap().get("tableId")[0];
+//
+//
+//            //TableServerRequest req=TableServerRequest.parse(sp.getRequired(ServerParams.FITS_HEADER));
+//            PlotState state= sp.getState();
+//
+//           HashMap<String, DataGroup> dataGroupMap = VisServerOps.getFitsHeader(state, tableID);
+//
+//           TableServerRequest treq = new TableServerRequest("fitsHeaderTale");
+//           treq.setPageSize(Integer.MAX_VALUE);
+//           return JsonTableUtil.toJsonTableModelMap(dataGroupMap, treq).toJSONString();
+//
+//
+//        }
+//
+//
+//    }
     public static class GetImagePng extends ServCommand {
 
         public String doCommand(SrvParam sp) throws IllegalArgumentException {
@@ -379,9 +374,7 @@ public class VisServerCommands {
             
             PlotState state= sp.getState();
             Band band= Band.parse(sp.getRequired(ServerParams.BAND));
-            int width= sp.getRequiredInt(ServerParams.WIDTH);
-            int height= sp.getRequiredInt(ServerParams.HEIGHT);
-            WebPlotResult result = VisServerOps.getColorHistogram(state, band, width, height);
+            WebPlotResult result = VisServerOps.getColorHistogram(state, band);
 
             return WebPlotResultSerializer.createJson(result);
         }

@@ -98,7 +98,7 @@ export function hideInfoPopup() {
 function makeContent(content, isCopyable) {
     return (
         <div style={{padding:5}}>
-            <div style={{minWidth:190, maxWidth: 400, padding:10, fontSize:'120%', overflow: 'hidden'}}
+            <div style={{minWidth:350, maxWidth: 400, padding:'10px 10px 15px 10px', fontSize:'120%', overflow: 'hidden'}}
                  className={isCopyable ? 'popup-panel-textcopyable' : ''}>
                 {content}
             </div>

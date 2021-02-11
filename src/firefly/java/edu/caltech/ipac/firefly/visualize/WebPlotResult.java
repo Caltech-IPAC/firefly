@@ -29,6 +29,7 @@ public class WebPlotResult implements Iterable<Map.Entry<String,Object>> {
     public static final String RAW_DATA_SET= "RawDataSet";
     public static final String DATA_HISTOGRAM= "DataHistogram";
     public static final String DATA_BIN_MEAN_ARRAY= "DataBinMeanArray";
+    public static final String DATA_BIN_COLOR_IDX= "DataBinColorIdx";
     public static final String DATA_HIST_IMAGE_URL= "DataHistImageUrl";
     public static final String CBAR_IMAGE_URL= "CBarImageUrl";
     public static final String IMAGE_FILE_NAME = "ImageFileName";

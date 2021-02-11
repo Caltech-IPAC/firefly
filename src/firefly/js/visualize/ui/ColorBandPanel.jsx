@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {memo, useState, useEffect} from 'react';
+import React, {memo, useState, useEffect, useRef} from 'react';
 import PropTypes from 'prop-types';
 import {debounce, get} from 'lodash';
 import {sprintf} from '../../externalSource/sprintf';
@@ -17,9 +17,15 @@ import {
     STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from '../RangeValues.js';
 import {getFieldGroupResults, validateFieldGroup} from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchStretchChange, visRoot} from '../ImagePlotCntlr.js';
-import {getActivePlotView} from '../PlotViewUtil.js';
+import {getActivePlotView, isThreeColor} from '../PlotViewUtil.js';
 import {makeSerializedRv} from './ColorDialog.jsx';
 import {getFluxUnits} from '../WebPlot';
+import {SimpleCanvas} from 'firefly/visualize/draw/SimpleCanvas.jsx';
+import {
+    getColorModel,
+    makeColorHistImage,
+    makeColorTableImage
+} from 'firefly/visualize/rawData/rawAlgorithm/ColorTable.js';
 
 
 const LABEL_WIDTH= 105;
@@ -41,25 +47,35 @@ const histImStyle= {
 
 export const ColorBandPanel= memo(({fields,plot,band, groupKey}) => {
     const [exit, setExit]= useState(true);
-    const [{dataHistUrl,cbarUrl, dataHistogram, dataBinMeanArray}, setDisplayState]= useState({});
+    const [{dataHistogram, dataBinMeanArray, dataBinColorIdx}, setDisplayState]= useState({});
     const [histReadout, setHistReadout]= useState({histValue:0,histMean:0,histIdx:0});
     const {plotId, plotState}= plot ?? {};
     const doMask= false;
+    const {current:lastProps} = useRef({ rvStr:'',plotId:'',groupKey:'',band:'' });
 
     useEffect(() => {
         let mounted= true;
-        callGetColorHistogram(plotState,band,HIST_WIDTH,HIST_HEIGHT)
-            .then(  (result) => {
-                const dataHistUrl= encodeServerUrl(getRootURL() + 'sticky/FireFly_ImageDownload',
-                    { file: result.DataHistImageUrl, type: 'any' });
+        const retFunc= () => void (mounted= false);
+        if (plot.plotState.getRangeValues(band).toString()===lastProps.rvStr &&
+            lastProps.plotId===plotId && lastProps.groupKey===groupKey && lastProps.band===band ) {
+            return retFunc;
+        }
+        callGetColorHistogram(plotState,band).then(  (result) => {
+            const dataHistUrl= encodeServerUrl(getRootURL() + 'sticky/FireFly_ImageDownload',
+                { file: result.DataHistImageUrl, type: 'any' });
 
-                const cbarUrl= encodeServerUrl(getRootURL() + 'sticky/FireFly_ImageDownload',
-                    { file: result.CBarImageUrl, type: 'any' });
-                const dataHistogram= result.DataHistogram;
-                const dataBinMeanArray= result.DataBinMeanArray;
-                mounted && setDisplayState({dataHistUrl,cbarUrl,dataHistogram,dataBinMeanArray});
-            });
-        return () => void (mounted= false);
+            const cbarUrl= encodeServerUrl(getRootURL() + 'sticky/FireFly_ImageDownload',
+                { file: result.CBarImageUrl, type: 'any' });
+            const dataHistogram= result.DataHistogram;
+            const dataBinMeanArray= result.DataBinMeanArray;
+            const dataBinColorIdx= result.DataBinColorIdx;
+            lastProps.rvStr= plot.plotState.getRangeValues(band).toString();
+            lastProps.plotId= plotId;
+            lastProps.groupKey=groupKey;
+            lastProps.band= band;
+            mounted && setDisplayState({dataHistUrl,cbarUrl,dataHistogram,dataBinMeanArray, dataBinColorIdx});
+        });
+        return retFunc;
     }, [plotId, plotState, groupKey, band] );
 
     const mouseMove = (ev) => {
@@ -72,10 +88,16 @@ export const ColorBandPanel= memo(({fields,plot,band, groupKey}) => {
 
     const bandReplot= debounce(getReplotFunc(groupKey, band), 600);
 
+    const ctOrBand= isThreeColor(plot)?band:getColorModel(plot.plotState.colorTableId);
+    const cbarUrl= makeColorTableImage(ctOrBand, 300,10).toDataURL('image/png');
+    const dataHistUrl= dataHistogram && dataBinColorIdx &&
+        makeColorHistImage(ctOrBand, Number(plot.plotState.colorTableId),
+            HIST_WIDTH,HIST_HEIGHT,dataHistogram,dataBinColorIdx).toDataURL('image/png');
+
     return (
         <div style={{minHeight:305, minWidth:360, padding:5, position:'relative'}}>
-            <img style={histImStyle} src={dataHistUrl} key={dataHistUrl}
-                 onMouseMove={mouseMove} onMouseLeave={() => setExit(true)} />
+            {dataHistUrl && <img style={histImStyle} src={dataHistUrl} key={dataHistUrl}
+                 onMouseMove={mouseMove} onMouseLeave={() => setExit(true)} />}
             <ReadoutPanel
                 width={HIST_WIDTH} exit={exit} idx={histReadout.histIdx} histValue={histReadout.histValue}
                 histMean={histReadout.histMean} plot={plot} band={band}

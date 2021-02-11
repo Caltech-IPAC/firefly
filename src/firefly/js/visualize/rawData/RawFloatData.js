@@ -38,7 +38,7 @@ export async function fetchRawDataArray(payload) {
         // console.timeEnd(`fetch ${plotImageId}`);
         const elapse= Date.now()-start;
         const mbPerSec= (float1d.length*4/MEG) / (elapse/1000);
-        console.log(`${plotImageId}: ${getSizeAsString(float1d.length*4)}, ${elapse} ms, MB/Sec: ${mbPerSec}`);
+        // console.log(`${plotImageId}: ${getSizeAsString(float1d.length*4)}, ${elapse} ms, MB/Sec: ${mbPerSec}`);
         return {data:true};
     }
     catch (e) {

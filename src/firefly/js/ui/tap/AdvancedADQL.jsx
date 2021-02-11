@@ -28,6 +28,7 @@ import '../../externalSource/prismLive/prism-live.css';
 
 const code = {className: 'language-sql'};
 var cFetchKey = Date.now();
+const SB_TIP= 'Clicking on a table or column name below will insert it into the ADQL Query field to the right';
 
 export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={}}) {
 
@@ -109,11 +110,12 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
     const treeNodes = convertToTreeNode(treeData);
 
 
+
     return (
             <SplitPane split='vertical' defaultSize={200} style={{position: 'relative', ...style}}>
                 <SplitContent style={{display: 'flex', flexDirection: 'column'}}>
-                    <div style={{fontWeight: 'bold', paddingBottom:5, textAlign:'center'}}>Schema Browser</div>
-                    <div style={{textAlign:'center', paddingBottom:2, }}>Schema -> Table -> Column</div>
+                    <div style={{fontWeight: 'bold', paddingBottom:5, textAlign:'center'}} title={SB_TIP}>Schema Browser</div>
+                    <div style={{textAlign:'center', paddingBottom:2, }} title={SB_TIP}>Schema -> Table -> Column</div>
                     <div  style={{overflow: 'auto', flexGrow: 1}}>
                         <Tree defaultExpandAll showLine selectedKeys={[]} loadData={onLoadData} onSelect={onSelect}>
                             {treeNodes}
@@ -138,11 +140,9 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
                             idName='adqlEditor'
                         />
                         <div style={{color: '#4c4c4c'}}>
-                            <h3>Schema Browser Usage</h3>
-                            <div style={{marginLeft: 5}}>
-                                <div>Click on a Table node to insert a default SELECT statement of that table into the Query input box.</div>
-                                <div>Click on a Column node to insert the column's name at the Query input box's cursor.</div>
-                                <label style={{display: 'flex', alignItems: 'center', marginLeft: 20}}> <input type='checkbox' ref={ffcn} defaultChecked={true} />Insert fully-qualified column names</label>
+                            <div style={{marginLeft: 5, lineHeight:'2em'}}>
+                                <div>Type ADQL text; you can use the Schema Browser on the left to insert table and column names.</div>
+                                <label style={{display: 'flex', alignItems: 'center', marginLeft: 20}}> <input type='checkbox' ref={ffcn} defaultChecked={true} />Insert fully-qualified column names (recommended for table joins)</label>
                             </div>
                             <h3>Popular Functions</h3>
                             <div style={{marginLeft: 5}}>
@@ -160,16 +160,19 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
                             </div>
 
                             <h3>Sample Queries</h3>
-                            <div style={{marginLeft: 5}}>
-                                <div          >{'A 1 degree cone search around M101 would be:'}</div>
+                            <div style={{marginLeft: 5, lineHeight: '1.4em'}}>
+                                <div          >{'From the IRSA TAP service, a 1 degree cone search of the 2MASS point source catalog around M101 would be:'}</div>
                                 <code {...code}>{"SELECT * FROM fp_psc WHERE CONTAINS(POINT('J2000', ra, dec), CIRCLE('J2000', 210.80225, 54.34894, 1.0))=1"}</code>
-                                <br/>
-                                <div          >{'A 1 degree by 1 degree box around M101 would be:'}</div>
-                                <code {...code}>{"SELECT * FROM fp_psc WHERE CONTAINS(POINT('J2000', ra, dec), BOX('J2000', 210.80225, 54.34894, 1.0, 1.0))=1"}</code>
-                                <br/>
-                                <div          >{'A triangle search around M101 would be:'}</div>
-                                <code {...code}>{`SELECT * FROM fp_psc WHERE CONTAINS(POINT('J2000', ra, dec),
-                  POLYGON('J2000', 209.80225, 53.34894, 209.80225, 55.34894, 211.80225, 54.34894))=1`}</code>
+                                <br style={{paddingBottom: 6 }}/>
+                                <div          >{'From the Gaia TAP service, a 1 degree by 1 degree box of the Gaia data release 3 point source catalog around M101 would be:'}</div>
+                                <code {...code}>{"SELECT * FROM gaiaedr3.gaia_source WHERE CONTAINS(POINT('ICRS', ra, dec), BOX('ICRS', 210.80225, 54.34894, 1.0, 1.0))=1"}</code>
+                                <br style={{paddingBottom: 6 }}/>
+                                <div          >{'From the IRSA TAP service, a triangle search of the AllWISE point source catalog around M101 would be:'}</div>
+                                <code {...code}>{`SELECT designation,ra,dec,w2mpro FROM allwise_p3as_psd WHERE CONTAINS(POINT('J2000', ra, dec), 
+                                POLYGON('J2000', 209.80225, 54.34894, 209.80225, 55.34894, 210.80225, 54.34894))=1`}</code>
+                            </div>
+                            <div style={{margin:'7px 0 0 2px'}}>
+                                These examples may not be directly usable in any TAP service you have selected.
                             </div>
                         </div>
                     </div>

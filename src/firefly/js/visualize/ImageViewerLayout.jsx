@@ -337,12 +337,12 @@ function isImageOnScreen(plotView) {
     ];
 
     let found=  devAsScreenAry.some( (pt) =>
-                   contains(0,0,screenSize.width, screenSize.height,pt.x,pt.y)  ||
-                   intersects(0,0,screenSize.width, screenSize.height,pt.x,pt.y,1,1));
+        pt && (contains(0,0,screenSize.width, screenSize.height,pt.x,pt.y)  ||
+        intersects(0,0,screenSize.width, screenSize.height,pt.x,pt.y,1,1)));
 
     if (!found) {
-        found= screenAsDevAry.some( (pt) => contains(0,0,viewDim.width, viewDim.height,pt.x,pt.y) ||
-                                            intersects(0,0,viewDim.width, viewDim.height,pt.x,pt.y,1,1));
+        found= screenAsDevAry.some( (pt) => pt && (contains(0,0,viewDim.width, viewDim.height,pt.x,pt.y) ||
+                                            intersects(0,0,viewDim.width, viewDim.height,pt.x,pt.y,1,1)));
     }
     return found;
 }

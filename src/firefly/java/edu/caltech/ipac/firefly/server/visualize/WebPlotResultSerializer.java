@@ -113,6 +113,12 @@ public class WebPlotResultSerializer {
                 for(double v : dAry) ary.add(v);
                 map.put(WebPlotResult.DATA_BIN_MEAN_ARRAY, ary);
             }
+            if (res.containsKey(WebPlotResult.DATA_BIN_COLOR_IDX)) {
+                byte bAry[] = (byte[]) res.getResult(WebPlotResult.DATA_BIN_COLOR_IDX);
+                JSONArray ary = new JSONArray();
+                for(byte b : bAry) ary.add(b);
+                map.put(WebPlotResult.DATA_BIN_COLOR_IDX, ary);
+            }
             if (res.containsKey(WebPlotResult.BAND_INFO)) {
                 BandInfo bi= (BandInfo)res.getResult(WebPlotResult.BAND_INFO);
                 map.put(WebPlotResult.BAND_INFO, bandInfoDeepSerialize(bi));

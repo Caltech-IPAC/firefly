@@ -9,17 +9,20 @@ import edu.caltech.ipac.table.io.DsvTableIO;
 import edu.caltech.ipac.table.io.FITSTableReader;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.io.VoTableReader;
+import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.csv.CSVFormat;
 
-import java.util.*;
-import java.lang.reflect.Array;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.StringReader;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -31,6 +34,10 @@ import java.util.stream.Collectors;
  * @version $Id: DataGroupReader.java,v 1.13 2012/11/05 18:59:59 loi Exp $
  */
 public class TableUtil {
+
+    private static final String[] regStartWith= new String [] {
+          "circle", "box", "diamond", "cross", "x", "arrow", "annulus", "point", "polygon",
+            "j2000", "galactic", "image", "physical", "global", "boxcircle"};
 
     public static DataGroup readAnyFormat(File inf) throws IOException {
         return readAnyFormat(inf, 0, null);
@@ -61,6 +68,17 @@ public class TableUtil {
         }
     }
 
+
+
+    private static boolean isRegLine(String line) {
+        if (StringUtils.isEmpty(line)) return false;
+        line= StringUtils.trim(line).toLowerCase();
+        for(String sw : regStartWith) {
+            if (line.startsWith(sw)) return true;
+        }
+        return false;
+    }
+
     public static Format guessFormat(File inf) throws IOException {
 
         int readAhead = 10;
@@ -82,6 +100,8 @@ public class TableUtil {
 
             int[][] counts = new int[readAhead][2];
             int csvIdx = 0, tsvIdx = 1;
+            int regionTextCnt= 0;
+            if (isRegLine(line))  regionTextCnt++;
             while (line != null && row < readAhead) {
                 if (line.startsWith("|") || line.startsWith("\\")) {
                     return Format.IPACTABLE;
@@ -95,8 +115,11 @@ public class TableUtil {
                 } else if (line.startsWith("<VOTABLE") ||
                         (line.contains("<?xml") && line.contains("<VOTABLE "))) {
                     return Format.VO_TABLE;
-                } else if (row==0 && line.toLowerCase().indexOf("pdf")>0) {
+                } else if (row == 0 && line.toLowerCase().indexOf("pdf") > 0) {
                     return Format.PDF;
+                } else if (isRegLine(line)) {
+                    regionTextCnt++;
+                    if (regionTextCnt>5) return Format.REGION;
                 }
 
                 counts[row][csvIdx] = getColCount(CSVFormat.DEFAULT, line);
@@ -104,6 +127,7 @@ public class TableUtil {
                 row++;
                 line = reader.readLine();
             }
+            if (row<readAhead && regionTextCnt>1) return Format.REGION;
             // check csv
             int c = counts[0][csvIdx];
             boolean cMatch = c > 0;
@@ -275,7 +299,7 @@ public class TableUtil {
     public enum Format { TSV(CSVFormat.TDF, ".tsv"), CSV(CSVFormat.DEFAULT, ".csv"), IPACTABLE(".tbl"), UNKNOWN(null),
                          FIXEDTARGETS(".tbl"), FITS(".fits"), JSON(".json"), PDF(".pdf"), TAR(".tar"), HTML(".html"),
                          VO_TABLE(".xml"), VO_TABLE_TABLEDATA(".vot"), VO_TABLE_BINARY(".vot"), VO_TABLE_BINARY2(".vot"),
-                         VO_TABLE_FITS(".vot");
+                         VO_TABLE_FITS(".vot"), REGION(".reg");
         public CSVFormat type;
         String fileNameExt;
         Format(String ext) {this.fileNameExt = ext;}

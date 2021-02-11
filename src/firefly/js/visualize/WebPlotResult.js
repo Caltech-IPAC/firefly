@@ -11,6 +11,7 @@ export const WebPlotResult= {
     FLUX_VALUE: 'FluxValue',
     DATA_HISTOGRAM: 'DataHistogram',
     DATA_BIN_MEAN_ARRAY: 'DataBinMeanArray',
+    DATA_BIN_COLOR_IDX: 'DataBinColorIdx',
     DATA_HIST_IMAGE_URL: 'DataHistImageUrl',
     CBAR_IMAGE_URL: 'CBarImageUrl',
     IMAGE_FILE_NAME : 'ImageFileName',

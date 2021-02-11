@@ -41,7 +41,7 @@ function getStoreState(oldState) {
     const newPv= getActivePlotView(vr);
     const recentTargetAry= getPreference(TARGET_LIST_PREF, []);
     const dlCount= activePlotId ?
-            getAllDrawLayersForPlot(getDlAry(),activePlotId).length + newPv.overlayPlotViews.length : 0;
+            getAllDrawLayersForPlot(getDlAry(),activePlotId).length + (newPv?.overlayPlotViews?.length??0)  : 0;
 
     const newState= {visRoot:vr, dlCount, recentTargetAry};
     if (!oldState) return newState;

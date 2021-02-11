@@ -113,9 +113,11 @@ const makeMask= () => (
     </div> );
 
 const ctMarks = { 0:'0', 3:'3', 6:'6', 9:'9', 12:'12', 15:'15', 18:'18', 21:'21'};
-const biasMarks = {20:'.2', 30: '.3', 40:'.4', 50:'.5', 60:'.6', 70:'.7', 80:'.8' };
+const biasMarks = {8:'.2', 12: '.3', 16:'.4', 20:'.5', 24:'.6', 28:'.7', 32:'.8' };
 const contrastMarks = { 0: '0', 5:'5', 10:'1', 15:'1.5',  20:'2'};
 const maskWrapper= { position:'absolute', left:0, top:0, width:'100%', height:'100%' };
+
+// const markToBias= (v) =>
 
 
 const dispatchColorChangeThrottled= throttle((param) => {
@@ -144,7 +146,9 @@ function getContrast(plot) {
 }
 
 const AdvancedColorPanel= ({allowPopout}) => {
-    const [plot]= useStoreConnector( () => primePlot(visRoot()));
+    const [plot]= useStoreConnector( () => {
+        return primePlot(visRoot());
+    });
     const [allLoaded] = useStoreConnector(() => isAllStretchDataLoaded(visRoot()));
     const [bias,setBias]= useState( () => getBias(plot));
     const [contrast,setContrast]= useState( () => getContrast(plot));
@@ -154,7 +158,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
     const [useBlue,setUseBlue]= useState( () => plot?.rawData.useBlue);
     const threeColor= isThreeColor(plot);
 
-    const biasInt= isArray(bias) ? bias.map( (b) => Math.trunc(b*100))  : Math.trunc(bias*100);
+    const biasInt= isArray(bias) ? bias.map( (b) => Math.trunc(b*100))  : Math.trunc(bias*40);
     const contrastInt= isArray(contrast) ? contrast.map( (c) => Math.trunc(c*10)) : Math.trunc(contrast*10);
     const image= isImage(plot);
     const plotId= plot?.plotId;
@@ -212,7 +216,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
                             enabled={true} horizontal={false} key={ct.id}
                             hasCheckBox={true} checkBoxOn={colorTableId===ct.id}
                             imageStyle={{height:8}}
-                            onClick={() => handleColorChange(plot,ct.id)}/>) );
+                            onClick={() => changeBiasContrastColor(ct.id, bias,contrast)}/>) );
 
 
     const allLoadAble= isAllStretchDataLoadable(visRoot());
@@ -234,9 +238,9 @@ const AdvancedColorPanel= ({allowPopout}) => {
                 <div style={{padding: '30px 0 0 0'}}>Bias</div>
                 <RangeSliderView {...{
                     wrapperStyle:{paddingTop: 7, width: 200},
-                    min:20,max:80, step:1,vertical:false, marks:biasMarks,
+                    min:8,max:32, step:1,vertical:false, marks:biasMarks,
                     defaultValue:biasInt, slideValue:biasInt,
-                    handleChange:(v) => changeBiasContrastColor(colorTableId, v/100,contrast)}} />
+                    handleChange:(v) => changeBiasContrastColor(colorTableId, v/40,contrast)}} />
 
             </div> : <div/>}
             {colorTableId!==-1 ? <div style={{display:'flex', flexDirection: 'column', alignItems: 'center'}}>
@@ -276,9 +280,9 @@ const AdvancedColorPanel= ({allowPopout}) => {
                                         </div>
                                         <RangeSliderView {...{
                                             wrapperStyle:{paddingTop: 7, width: 200},
-                                            min:20,max:80, step:1,vertical:false, marks:biasMarks,
+                                            min:8,max:32, step:1,vertical:false, marks:biasMarks,
                                             defaultValue:biasInt[b.value], slideValue:biasInt[b.value],
-                                            handleChange:(v) => changeBiasContrastColor(colorTableId, v/100,contrast[b.value],useRed,useGreen,useBlue,b)}} />
+                                            handleChange:(v) => changeBiasContrastColor(colorTableId, v/40,contrast[b.value],useRed,useGreen,useBlue,b)}} />
                                     </div>
                                     <div style={{display:'flex', flexDirection: 'column', alignItems: 'center'}}>
                                         <div style={{padding: '30px 0 0 0'}}><span style={{color:b.key}}>{b.key}</span> Contrast</div>
