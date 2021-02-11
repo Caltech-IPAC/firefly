@@ -347,7 +347,7 @@ export const {getConverterTemplates, addTemplate, addTemplateToEnd, removeTempla
     };
     const removeAllButDefaultConverter= () => {
         const originTemp= getConverterTemplates();
-        converterTemplates= originTemp.filter( ({converterId}) => converterId!==DEFAULT_CONVERTER_ID);
+        converterTemplates= originTemp.filter( ({converterId}) => converterId===DEFAULT_CONVERTER_ID);
     };
 
     return {getConverterTemplates,addTemplate,addTemplateToEnd,removeTemplate,removeAllButDefaultConverter};
