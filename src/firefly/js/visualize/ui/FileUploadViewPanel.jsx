@@ -183,6 +183,7 @@ function getNextState() {
     // because this value is stored in different fields.. so we have to check on what options were selected to determine the active value
     const fieldState = getField(panelKey, getLoadingFieldName()) || {};
     const {analysisResult, message} = fieldState;
+    let modelToUseForDetails= getTblById(SUMMARY_TBL_ID)?? currentSummaryModel;
 
     if (message) {
         return {message, report:undefined, summaryModel:undefined, detailsModel:undefined};
@@ -207,6 +208,7 @@ function getNextState() {
                 totalRows: data.length,
                 tableData: {columns, data}
             };
+            modelToUseForDetails= currentSummaryModel;
 
             const firstExtWithData = parts.findIndex((p) => !p.type.includes('HeaderOnly'));
             if (firstExtWithData >= 0) {
@@ -217,7 +219,7 @@ function getNextState() {
 
         }
     }
-    let detailsModel = getDetailsModel( getTblById(SUMMARY_TBL_ID) ?? currentSummaryModel,currentReport);
+    let detailsModel = getDetailsModel( modelToUseForDetails,currentReport);
     if (shallowequal(detailsModel, currentDetailsModel)) {
         detailsModel = currentDetailsModel;
     }
@@ -232,7 +234,7 @@ function getDetailsModel(tableModel, report) {
     const partNum = getCellValue(tableModel, highlightedRow, 'Index');
     const type = getCellValue(tableModel, highlightedRow, 'Type');
     if (type===UNKNOWN_FORMAT) return undefined;
-    const details = report?.parts?.[partNum].details;
+    const details = report?.parts?.[partNum]?.details;
     if (details) details.tbl_id = DETAILS_TBL_ID;
     return details;
 }
