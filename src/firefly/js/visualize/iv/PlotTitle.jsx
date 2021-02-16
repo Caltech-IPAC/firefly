@@ -35,7 +35,7 @@ export const PlotTitle= memo(({plotView:pv, titleType, brief, working}) => {
             const dataLoaded= local ? '\nLocal Data' : '\nDistributed Data';
             tooltip+= `\nZoom Level: ${zlRet.zoomLevelFormatted}${dataLoaded}`;
         }
-        const style= (image && local) ? {backgroundColor : 'rgba(255,255,255,.3)'} : {};
+        // const style= (image && local) ? {backgroundColor : 'rgba(255,255,255,.3)'} : {};
         let rotString;
         if (pv.rotation) {
             if (pv.plotViewCtx.rotateNorthLock) {
@@ -50,7 +50,7 @@ export const PlotTitle= memo(({plotView:pv, titleType, brief, working}) => {
 
 
         return (
-            <div className={styleName} title={tooltip} style={style}>
+            <div className={styleName} title={tooltip} >
                 <div className='plot-title-title'>{plot.title}</div>
                 {!brief ? <div className='plot-title-zoom'><div title={tooltip} dangerouslySetInnerHTML={{__html:zlStr}}/> </div> : ''}
                 {!brief && rotString ? <div title={tooltip} className='plot-title-rotation'>{rotString}</div> : ''}

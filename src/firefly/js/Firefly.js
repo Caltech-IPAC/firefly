@@ -177,7 +177,7 @@ const defFireflyOptions = {
             tapEntry('MAST Images', 'https://vao.stsci.edu/CAOMTAP/TapService.aspx'),
             tapEntry('CADC', 'https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap'),
             // CDS???
-            tapEntry('VisieR (CDS)', 'http://tapvizier.u-strasbg.fr/TAPVizieR/tap/'),
+            tapEntry('VizieR (CDS)', 'http://tapvizier.u-strasbg.fr/TAPVizieR/tap/'),
             tapEntry('Simbad (CDS)', 'https://simbad.u-strasbg.fr/simbad/sim-tap'),
             // more ESA??
             tapEntry('Gaia', 'https://gea.esac.esa.int/tap-server/tap'),

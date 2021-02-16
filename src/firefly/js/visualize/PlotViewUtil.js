@@ -122,6 +122,7 @@ export function getPlotViewIdListByPositionLock(visRoot, pvOrId) {
 export function getPlotViewIdListInOverlayGroup(visRoot,pvOrId) {
     if (!pvOrId) return [];
     const pv= (typeof pvOrId ==='string') ? getPlotViewById(visRoot,pvOrId) : pvOrId;
+    if (!pv) return [];
     const gid= pv.plotGroupId;
     const group= getPlotGroupById(visRoot,gid);
     if (!hasOverlayColorLock(pv,group) ) return [pv.plotId];

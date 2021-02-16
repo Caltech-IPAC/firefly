@@ -812,7 +812,15 @@ function tapSearchMethodReducer(columnsModel) {
                 [TimeFrom, TimeTo].forEach((timeKey, idx) => {
                     const showHelp = isShowHelp(timeInfos[idx][ISO].value, timeInfos[idx][MJD].value);
                     const feedback = formFeedback(timeInfos[idx][ISO].value, timeInfos[idx][MJD].value);
-                    const tooltip = `'${idx === FROM ? 'from' : 'to'}' time in ${timeMode} mode`;
+                    let tooltip
+                    // const tooltip = `'${idx === FROM ? 'from' : 'to'}' time in ${timeMode} mode`;
+
+                    if (timeMode==='iso') {
+                        tooltip= `${idx===FROM?'From:':'To:'} select ISO 8601 time format (e.g., 2021-03-20)`;
+                    }
+                    else {
+                        tooltip= `${idx===FROM?'From:':'To:'} Select Modified Julian Date time format (e.g., 59293.1)`;
+                    }
 
                     rFields[timeKey] = clone(inFields[timeKey], { value: timeInfos[idx][timeMode].value,
                         valid: timeInfos[idx][timeMode].valid,
@@ -1291,7 +1299,7 @@ function fieldInit(columnsTable) {
             [TimeOptions]: {
                 fieldKey: TimeOptions,
                 value: ISO,
-                tooltip: 'Select time mode'
+                tooltip:  'Choose between:\nISO 8601 time format (e.g., 2021-03-20)\nor\nModified Julian Date time format (e.g., 59293.1)'
             },
             [MJDFrom]: {
                 fieldKey: MJDFrom,
@@ -1305,13 +1313,13 @@ function fieldInit(columnsTable) {
                 fieldKey: TimeFrom,
                 value: '',
                 validator: timeValidator,
-                tooltip:  "'from' time in iso mode"
+                tooltip:  'From: Select ISO 8601 time format (e.g., 2021-03-20)',
             },
             [TimeTo]:{
                 fieldKey: TimeTo,
                 value: '',
                 validator: timeValidator,
-                tooltip: "'to' time in iso mode"
+                tooltip: 'To: Select ISO 8601 time format (e.g., 2021-03-20)'
             }
         }
     );

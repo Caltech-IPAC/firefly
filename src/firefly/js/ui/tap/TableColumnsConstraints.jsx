@@ -42,11 +42,11 @@ export function TableColumnsConstraintsToolbar({columnsModel}) {
     const resetButton = () => {
         return (
             <button style={{padding: '0 5px 0 5px', margin: '0 2px 0 5px'}}
-                    title='Reset table below to the default'
+                    title='Reset Column Selections & Constraints to the default columns and no constraints'
                     onClick={ () => {
                         const tblModel = reorganizeTableModel(columnsModel, COLS_TO_DISPLAY_FIRST, true);
                         dispatchTableAddLocal(tblModel, {}, false);
-                    }}>Reset
+                    }}>Reset Column Selections & Constraints
             </button>
         );
     };
@@ -60,7 +60,6 @@ export function TableColumnsConstraintsToolbar({columnsModel}) {
                     onClick={() => dispatchTableFilter({tbl_id: tableModel.tbl_id, filters: ''})}>
                 Remove <span style={{color: 'blue'}}>{filterCount} filter{filterCount>1?'s':''}</span>
             </button>}
-            <span style={{alignSelf: 'center', padding: '0 5px 0 5px'}}>Column Constraints / Output Column Selection - </span>
             {selectedCount > 0 &&
             <span style={{color: 'blue', alignSelf: 'center', padding: '0 5px 0 5px'}} title='Number of columns to be selected'>
                 {selectedCount} of {totalColumns} columns selected

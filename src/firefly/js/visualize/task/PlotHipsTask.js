@@ -125,10 +125,10 @@ function watchForHiPSViewDim(action, cancelSelf, params) {
     const vr= visRoot();
     const pv= getPlotViewById(vr, plotId);
     const {width,height}= pv.viewDim;
+    const wp= pv.request && pv.request.getWorldPt();
     if (width && height && width>30 && height>30) {
         const plot= primePlot(pv);
         if (!plot) return;
-        const wp= pv.request && pv.request.getWorldPt();
         const otherPlot= lockedToOtherHiPS(vr,pv) && primePlot(getOtherLockedHiPS(vr,pv));
 
         if ((vr.wcsMatchType===WcsMatchType.Standard || vr.wcsMatchType===WcsMatchType.Target) &&

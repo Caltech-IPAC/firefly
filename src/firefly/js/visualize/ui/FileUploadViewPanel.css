@@ -3,7 +3,8 @@
     height: 100%;
     padding: 0 10px;
     display: flex;
-    flex-direction: column;}
+    flex-direction: column;
+}
 
 .FileUpload__input {
     margin: 10px 0 0 200px;

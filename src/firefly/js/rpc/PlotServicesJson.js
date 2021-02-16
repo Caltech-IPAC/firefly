@@ -20,17 +20,12 @@ import {isString} from 'dnd-core/lib/cjs/utils/discount_lodash.js';
  *
  * @param state
  * @param band
- * @param width
- * @param height
  * @return {Promise}
  */
-export const callGetColorHistogram= function(state,band,width,height) {
+export const callGetColorHistogram= function(state,band) {
     var paramList = [];
     paramList.push({name:ServerParams.STATE, value: state.toJson(false)});
-    paramList.push({name:ServerParams.WIDTH, value: width+''});
-    paramList.push({name:ServerParams.HEIGHT, value: height+''});
     paramList.push({name:ServerParams.BAND, value: band.key});
-
     return doJsonRequest(ServerParams.HISTOGRAM, paramList, true);
 };
 

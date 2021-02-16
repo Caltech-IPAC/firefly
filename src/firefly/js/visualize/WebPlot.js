@@ -364,7 +364,7 @@ export const WebPlot= {
             dataDesc        : wpInit.dataDesc,
             webFitsData     : isArray(wpInit.fitsData) ? wpInit.fitsData : [wpInit.fitsData],
             //=== Mutable =====================
-            screenSize: {width:Math.trunc(dataWidth*zf), height:Math.trunc(dataHeight*zf)},
+            screenSize: {width:Math.trunc(dataWidth*zf)||1, height:Math.trunc(dataHeight*zf)||1},
             zoomFactor: zf,
             attributes,
             rawData,

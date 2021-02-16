@@ -365,6 +365,8 @@ function processAnalysisResult({table, row, request, activateParams,
             return dpdtMessageWithDownload('Cannot not display PDF file, you may only download it', 'Download PDF File', url);
         case FileAnalysisType.TAR:
             return dpdtMessageWithDownload('Cannot not display Tar file, you may only download it', 'Download Tar File', url);
+        case FileAnalysisType.REGION:
+            return dpdtMessageWithDownload('Cannot not display Region file, you may only download it', 'Download Region File', url);
         case FileAnalysisType.HTML:
             return dpdtSendToBrowser(url, {serDefParams});
         case FileAnalysisType.Unknown:

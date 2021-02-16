@@ -10,6 +10,8 @@ import {dispatchHideDialog} from '../core/ComponentCntlr.js';
 import {GroupKeyCtx} from './FieldGroup';
 
 
+export const NONE='COMPLETE-BUTTON-NO-CONTEXT';
+
 function inGroup(e, groupKey) {
     for(;e; e= e.parentElement) {
         if (e.getAttribute('groupkey')===groupKey) {
@@ -38,7 +40,7 @@ function validUpdate(valid,onSuccess,onFail,closeOnValid,groupKey,dialogId, grou
         if (funcToCall) continueValid= funcToCall(request);
     }
 
-    const stillValid= valid && (continueValid ?? true)
+    const stillValid= valid && (continueValid ?? true);
 
     if (stillValid && dialogId && closeOnValid) dispatchHideDialog(dialogId);
 }
@@ -68,6 +70,7 @@ export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
                                     getDoOnClickFunc}) {
     const context= useContext(GroupKeyCtx);
     if (!groupKey && context) groupKey= context.groupKey;
+    if (groupKey===NONE) groupKey= undefined;
     const onComplete = () => onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,
                                       groupsToUse, includeUnmounted,changeMasking);
 

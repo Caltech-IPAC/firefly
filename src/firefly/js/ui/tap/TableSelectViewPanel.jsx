@@ -25,6 +25,9 @@ import './TableSelectViewPanel.css';
 
 
 
+const SCHEMA_TIP= 'Select a table collection (TAP ‘schema’); type to search the schema names and descriptions.';
+const TABLE_TIP= 'Select a table; type to search the table names and descriptions.';
+const SCH_TAB_TITLE_TIP= 'Select a table collection (TAP ‘schema’), then select a table';
 
 /**
  * group key for fieldgroup comp
@@ -32,8 +35,8 @@ import './TableSelectViewPanel.css';
 
 export const gkey = 'TAP_SEARCH_PANEL';
 
-export const SectionTitle= ({title,helpId}) => (
-    <div className='TapSearch__section--title'>{title}<HelpIcon helpId={tapHelpId(helpId)}/></div>);
+export const SectionTitle= ({title,helpId,tip}) => (
+    <div className='TapSearch__section--title' title={tip}>{title}<HelpIcon helpId={tapHelpId(helpId)}/></div>);
 
 export function AdqlUI({serviceUrl}) {
 
@@ -197,9 +200,9 @@ export function BasicUI(props) {
     return (
         <Fragment>
             <div className='TapSearch__section'>
-                <SectionTitle title='3. Select Table' helpId='selectTable'/>
+                <SectionTitle title='3. Select Table' helpId='selectTable' tip={SCH_TAB_TITLE_TIP}/>
                 <div style={{display: 'inline-flex', width: '100%', marginRight: 3, maxWidth: 1000}}>
-                    <div style={{flexGrow: 1}}>
+                    <div style={{flexGrow: 1}} title={SCHEMA_TIP}>
                         <NameSelect typeDesc='Table Collection (Schema)'
                                     typeDescPlural='Table Collections (Schemas)'
                                     options={schemaOptions}
@@ -211,7 +214,7 @@ export function BasicUI(props) {
                         />
                     </div>
                     <div style={{width: 10}}/>
-                    <div style={{flexGrow: 1}}>
+                    <div style={{flexGrow: 1}} title={TABLE_TIP}>
                         <NameSelectField
                             fieldKey='tableName'
                             typeDesc='Table'
@@ -243,11 +246,14 @@ export function BasicUI(props) {
                         </SplitContent>
                         <SplitContent>
                             { columnsModel ?
-                                <TableColumnsConstraints
-                                    key={tableName}
-                                    fieldKey={'tableconstraints'}
-                                    columnsModel={columnsModel}
-                                />
+                                <div style={{height:'100%', display:'flex', flexDirection:'column'}}>
+                                    <div style={{paddingBottom:4, fontWeight:'bold', marginTop:'-1px'}}>Output Column Selection and Constraints</div>
+                                    <TableColumnsConstraints
+                                        key={tableName}
+                                        fieldKey={'tableconstraints'}
+                                        columnsModel={columnsModel}
+                                    />
+                                </div>
                                 : <div className='loading-mask'/>
 
                             }
