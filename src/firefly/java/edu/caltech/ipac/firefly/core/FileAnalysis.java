@@ -86,6 +86,9 @@ public class FileAnalysis {
             case TAR:
                 report =  analyzeTAR(infile, mtype);
                 break;
+            case REGION:
+                report =  analyzeRegion(infile,mtype);
+                break;
             default:
                 report = new FileAnalysisReport(type, Format.UNKNOWN.name(), infile.length(), infile.getAbsolutePath());
         }
@@ -193,6 +196,12 @@ public class FileAnalysis {
     public static FileAnalysisReport analyzeTAR(File infile, FileAnalysisReport.ReportType type) {
         FileAnalysisReport report = new FileAnalysisReport(type, TableUtil.Format.TAR.name(), infile.length(), infile.getPath());
         report.addPart(new FileAnalysisReport.Part(FileAnalysisReport.Type.TAR, "TAR File"));
+        return report;
+    }
+
+    public static FileAnalysisReport analyzeRegion(File infile, FileAnalysisReport.ReportType type) {
+        FileAnalysisReport report = new FileAnalysisReport(type, Format.REGION.name(), infile.length(), infile.getPath());
+        report.addPart(new FileAnalysisReport.Part(FileAnalysisReport.Type.REGION, "Region File"));
         return report;
     }
 

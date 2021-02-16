@@ -98,7 +98,7 @@ export const ServerParams = {
         CREATE_PLOT_GROUP : 'CmdCreatePlotGroup',
         ZOOM : 'CmdZoom',
         STRETCH : 'CmdStretch',
-        REMOVE_BAND : 'CmdRemoveBand',
+        // REMOVE_BAND : 'CmdRemoveBand',
         CHANGE_COLOR : 'CmdChangeColor',
         ROTATE_NORTH : 'CmdRotateNorth',
         ROTATE_ANGLE : 'CmdRotateAngle',
@@ -109,7 +109,7 @@ export const ServerParams = {
         CROP : 'CmdCrop',
         STAT : 'CmdStat',
         HEADER : 'CmdHeader',
-        FITS_HEADER:'CmdFitsHeader', //LZ DM DM-4494
+        // FITS_HEADER:'CmdFitsHeader', //LZ DM DM-4494
         DELETE : 'CmdDelete',
         USER_KEY : 'CmdUserKey',
         VERSION : 'CmdVersion',

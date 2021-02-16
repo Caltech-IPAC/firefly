@@ -108,7 +108,7 @@ async function fetchByteDataArray(payload) {
         const elapse= Date.now()-start;
         const totalLen= allTileAry.reduce((total,tile) => total+tile.length, 0);
         const mbPerSec= (totalLen/MEG) / (elapse/1000);
-        console.debug(`${plotImageId}: ${getSizeAsString(totalLen)}, ${elapse} ms, MB/Sec: ${mbPerSec}`);
+        // console.debug(`${plotImageId}: ${getSizeAsString(totalLen)}, ${elapse} ms, MB/Sec: ${mbPerSec}`);
         const result= {rawTileDataGroup:retRawTileDataGroup, plotStateSerialized};
         const transferable= getTransferable(result);
         return {data:result, transferable};

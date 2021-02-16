@@ -114,7 +114,7 @@ public class ServerParams {
     public static final String CREATE_PLOT_GROUP = "CmdCreatePlotGroup";
     public static final String ZOOM = "CmdZoom";
     public static final String STRETCH = "CmdStretch";
-    public static final String REMOVE_BAND = "CmdRemoveBand";
+//    public static final String REMOVE_BAND = "CmdRemoveBand";
     public static final String CHANGE_COLOR = "CmdChangeColor";
     public static final String ROTATE_NORTH = "CmdRotateNorth";
     public static final String ROTATE_ANGLE = "CmdRotateAngle";
@@ -125,7 +125,7 @@ public class ServerParams {
     public static final String CROP = "CmdCrop";
     public static final String STAT = "CmdStat";
     public static final String HEADER = "CmdHeader";
-    public static final String FITS_HEADER = "CmdFitsHeader";  //LZ 3/21/16  DM-4494
+//    public static final String FITS_HEADER = "CmdFitsHeader";  //LZ 3/21/16  DM-4494
 
     public static final String DELETE = "CmdDelete";
     public static final String JSON_DATA = "JsonData";

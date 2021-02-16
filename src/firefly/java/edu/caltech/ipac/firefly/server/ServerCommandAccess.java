@@ -45,13 +45,13 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.CREATE_PLOT_GROUP,  new VisServerCommands.GetWebPlotGroupCmd());
         _cmdMap.put(ServerParams.ZOOM,         new VisServerCommands.ZoomCmd());
         _cmdMap.put(ServerParams.STRETCH,      new VisServerCommands.StretchCmd());
-        _cmdMap.put(ServerParams.REMOVE_BAND,  new VisServerCommands.RemoveBandCmd());
+//        _cmdMap.put(ServerParams.REMOVE_BAND,  new VisServerCommands.RemoveBandCmd());
         _cmdMap.put(ServerParams.CHANGE_COLOR, new VisServerCommands.ChangeColor());
         _cmdMap.put(ServerParams.DELETE,       new VisServerCommands.DeletePlot());
         _cmdMap.put(ServerParams.CROP,         new VisServerCommands.Crop());
         _cmdMap.put(ServerParams.HISTOGRAM,    new VisServerCommands.ColorHistogram());
         _cmdMap.put(ServerParams.STAT,         new VisServerCommands.AreaStat());
-        _cmdMap.put(ServerParams.FITS_HEADER,  new VisServerCommands.FitsHeader());   //LZ 3/21/16  DM-4494
+//        _cmdMap.put(ServerParams.FITS_HEADER,  new VisServerCommands.FitsHeader());   //LZ 3/21/16  DM-4494
         _cmdMap.put(ServerParams.GET_FLOAT_DATA,  new VisServerCommands.FloatAryCmd());
         _cmdMap.put(ServerParams.GET_BYTE_DATA,  new VisServerCommands.ByteAryCmd());
 
