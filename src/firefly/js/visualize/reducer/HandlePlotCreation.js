@@ -2,12 +2,19 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {uniqBy,differenceBy, isEmpty} from 'lodash';
+import {uniqBy, differenceBy, isEmpty, isNumber, isString} from 'lodash';
 import Cntlr, {WcsMatchType} from '../ImagePlotCntlr.js';
 import {replacePlots, makePlotView, updatePlotViewScrollXY,
         findScrollPtToCenterImagePt, updateScrollToWcsMatch} from './PlotView.js';
 import {makeOverlayPlotView, replaceOverlayPlots} from './OverlayPlotView.js';
-import {primePlot, getPlotViewById, clonePvAry, getOverlayById,getPlotViewIdListByPositionLock} from '../PlotViewUtil.js';
+import {
+    primePlot,
+    getPlotViewById,
+    clonePvAry,
+    getOverlayById,
+    getPlotViewIdListByPositionLock,
+    hasImageCubes, getCubePlaneCnt, getHDU
+} from '../PlotViewUtil.js';
 import {makePlotGroup} from '../PlotGroup.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {CCUtil} from '../CsysConverter.js';
@@ -171,6 +178,17 @@ function addPlot(state,action, setActive, newPlot) {
             pv= updateTransform(pv);
         }
         processedTiles= processedTiles.filter( (d) => d.plotId!==pv.plotId); // remove old client tile data
+
+        if (hasImageCubes(pv)) {
+            const firstCubePlotIdx= pv.plots.findIndex( (p) => p.cubeIdx>-1);
+            const cnt= getCubePlaneCnt(pv, pv.plots[firstCubePlotIdx]);
+            const frameIdx= getFirstFrameFromAttribute(pv,cnt);
+
+            if (frameIdx>0) {
+                const idx= pv.plots.findIndex( (p) => frameIdx===p.cubeIdx);
+                if (idx>-1) pv.primeIdx=idx;
+            }
+        }
         return pv;
     });
 
@@ -381,3 +399,17 @@ function getRequestAry(obj) {
     return rKey ? [obj[rKey]] : null;
 }
 
+function getFirstFrameFromAttribute(pv,totFrames) {
+    const first=  pv?.request?.getAttributes()?.[PlotAttribute.CUBE_FIRST_FRAME] ?? 0;
+    if (first===0) return 0;
+    if (isNumber(first)) {
+        const frame= Math.trunc(first);
+        if (frame<totFrames) return frame;
+    }
+    if (isString(first)) {
+        const num= parseInt(first);
+        const frame= first.endsWith('%') ? Math.trunc( (totFrames-1) * (num/100)) : Math.trunc(num);
+        if (frame<totFrames) return frame;
+    }
+    return 0;
+}

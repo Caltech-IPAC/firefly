@@ -936,7 +936,6 @@ public class VisServerOps {
 
 
     public static WebPlotResult getColorHistogram(PlotState state, Band band) {
-        WebPlotResult retval;
         try {
             ActiveCallCtx ctx = CtxControl.prepare(state);
             ImagePlot plot = ctx.getPlot();
@@ -948,19 +947,19 @@ public class VisServerOps {
             double [] meanDataAry = new double[dHist.length];
             for (int i = 0; i < meanDataAry.length; i++) meanDataAry[i] = hOps.getMeanValueFromBin(hist, i);
 
-            retval = new WebPlotResult(ctx.getKey());
+            WebPlotResult retval = new WebPlotResult(ctx.getKey());
             retval.putResult(WebPlotResult.DATA_HISTOGRAM, dHist);
             retval.putResult(WebPlotResult.DATA_BIN_MEAN_ARRAY, meanDataAry);
             retval.putResult(WebPlotResult.DATA_BIN_COLOR_IDX, dHistColors);
             counters.incrementVis("getColorHistogram");
+            return retval;
 
         } catch (Exception e) {
-            retval = createError("on getColorHistogram", state, e);
+            return createError("on getColorHistogram", state, e);
         } catch (Throwable e) {
-            retval = null;
             e.printStackTrace();
+            return null;
         }
-        return retval;
     }
 
 

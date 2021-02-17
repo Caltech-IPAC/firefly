@@ -2,8 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
-import {get} from 'lodash';
+import React from 'react';
 import PropTypes from 'prop-types';
 import {TargetPanel} from './TargetPanel.jsx';
 import {InputGroup} from './InputGroup.jsx';
@@ -20,13 +19,13 @@ import {dispatchMultiValueChange, dispatchRestoreDefaults, VALUE_CHANGE} from '.
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import {showModal} from './PopupUtil.jsx';
-import FieldGroupUtils, {revalidateFields} from '../fieldGroup/FieldGroupUtils';
 import {updateSet} from '../util/WebUtil.js';
 
 import {CollapsiblePanel} from './panel/CollapsiblePanel.jsx';
 import {StatefulTabs, Tab,FieldGroupTabs} from './panel/TabPanel.jsx';
 import {dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {NaifidPanel} from './NaifidPanel.jsx';
+import {useBindFieldGroupToStore} from 'firefly/ui/SimpleComponent.jsx';
 
 
 
@@ -172,7 +171,7 @@ function masterDependentReducer(inFields, action) {
         };
     }
     else {
-        if (get(action, 'type') === VALUE_CHANGE) {
+        if (action?.type === VALUE_CHANGE) {
             // update the options and value in the dependent radio group
             // based on the value of master radio group
             const {fieldKey, value} = action.payload;
@@ -203,41 +202,29 @@ function FieldGroupWithMasterDependent() {
 
 
 /// test
-export class AllTest extends PureComponent {
-
-
-    constructor(props) {
-        super(props);
-    }
-
-    render() {
-        return (
-            <div style={{padding:'5px', minWidth: 480}}>
-                <div>
-                    <StatefulTabs componentKey='exampleOuterTabs' defaultSelected={0} useFlex={true}>
-                        <Tab name='First'>
-                            <FieldGroupTest />
-                        </Tab>
-                        <Tab name='Second'>
-                            <div style={{minWidth: 300, minHeight: 150}}>
-                                <CollapsiblePanel componentKey='exampleHistogramCollapsible' isOpen={true} header='Sample Histogram'>
-                                    {createSampleHistogram()}
-                                </CollapsiblePanel>
-                            </div>
-                        </Tab>
-                        <Tab name='Third'>
-                            <div style={{minWidth: 300, minHeight: 150}}>
-                                <FieldGroupWithMasterDependent />
-                            </div>
-                        </Tab>
-                    </StatefulTabs>
-                </div>
-
+const AllTest= () => (
+        <div style={{padding:'5px', minWidth: 480}}>
+            <div>
+                <StatefulTabs componentKey='exampleOuterTabs' defaultSelected={0} useFlex={true}>
+                    <Tab name='First'>
+                        <FieldGroupTest />
+                    </Tab>
+                    <Tab name='Second'>
+                        <div style={{minWidth: 300, minHeight: 150}}>
+                            <CollapsiblePanel componentKey='exampleHistogramCollapsible' isOpen={true} header='Sample Histogram'>
+                                {createSampleHistogram()}
+                            </CollapsiblePanel>
+                        </div>
+                    </Tab>
+                    <Tab name='Third'>
+                        <div style={{minWidth: 300, minHeight: 150}}>
+                            <FieldGroupWithMasterDependent />
+                        </div>
+                    </Tab>
+                </StatefulTabs>
             </div>
-
-        );
-    }
-}
+        </div>
+    );
 
 function createSampleHistogram() {
     const {x=[], y=[], binWidth=[]} = {};
@@ -280,35 +267,10 @@ function createSampleHistogram() {
 
 }
 
-class FieldGroupTest extends PureComponent {
-
-    constructor(props)  {
-        super(props);
-        this.state = {fields:FieldGroupUtils.getGroupFields('DEMO_FORM')};
-    }
-
-    componentWillUnmount() {
-        this.iAmMounted= false;
-        if (this.unbinder) this.unbinder();
-    }
-
-
-    componentDidMount() {
-        this.iAmMounted= true;
-        this.unbinder= FieldGroupUtils.bindToStore('DEMO_FORM', (fields) => {
-            if (fields!==this.state.fields && this.iAmMounted) {
-                this.setState({fields});
-            }
-        });
-    }
-
-    render() {
-        var {fields}= this.state;
-        // if (!fields) return false;
-        return <FieldGroupTestView fields={fields} />;
-    }
-
-}
+const FieldGroupTest= () => {
+    const fields=useBindFieldGroupToStore('DEMO_FORM');
+    return <FieldGroupTestView fields={fields} />;
+};
 
 // initValues={{extraData:'asdf'}}
 
@@ -327,12 +289,28 @@ const defaultExamples = <div style={{display : 'inline-block'}}>
 
 function FieldGroupTestView ({fields}) {
 
-    var hide= false;
+    var hide = false;
     if (fields) {
-        const {radioGrpFld}= fields;
-        hide= (radioGrpFld && radioGrpFld.value==='opt2');
+        const {radioGrpFld} = fields;
+        hide = (radioGrpFld && radioGrpFld.value === 'opt2');
     }
-    var field1= makeField1(hide);
+    var field1 = makeField1(hide);
+
+
+    const tabX3CheckBoxOps= [
+        {label: 'Carrots', value: 'C'},
+        {label: 'Squash', value: 'S'},
+        {label: 'Green Beans', value: 'G'},
+        {label: 'Peas', value: 'P'}
+    ];
+    if (fields.fieldInTabX3?.value > 30 ) tabX3CheckBoxOps.push({label: 'Tomatoes', value: 'T'});
+    else if (fields.fieldInTabX3?.value < 23 ) tabX3CheckBoxOps[0].label='Carrots!!!!';
+
+
+
+
+
+
 
     const validSuggestions = [];
     for (var i=1; i<100; i++) { validSuggestions.push(...[`w${i}mpro`, `w${i}mprosig`, `w${i}snr`]); }
@@ -439,28 +417,16 @@ function FieldGroupTestView ({fields}) {
                     <Tab name='X 3' id='x3'>
                         <div>
                             <ValidationField fieldKey='fieldInTabX3'
-                                             initialState= {{
-                                                 fieldKey: 'fieldInTabX3',
-                                                 value: '25',
-                                                 validator: Validate.intRange.bind(null, 22, 33, 'Tab Test Field 22-33'),
-                                                 tooltip: 'more tipping',
-                                                 label : 'tab test field:',
-                                                 labelWidth : 100
-                                             }} />
-                            <div style={{paddingTop: 10}}></div>
-                            <CheckboxGroupInputField
-                                initialState= {{
-                                    value: '_all_',
-                                    tooltip: 'Please select some boxes',
-                                    label : 'Checkbox Group:' }}
-                                options={[
-                                    {label: 'Carrots', value: 'C'},
-                                    {label: 'Squash', value: 'S'},
-                                    {label: 'Green Beans', value: 'G'},
-                                    {label: 'Peas', value: 'P'}
-                                ]}
-                                fieldKey='checkBoxGrpFldAgain'
+                                             tooltip= 'more tipping' label= 'tab test field:' labelWidth ={100}
+                                             validator= {Validate.intRange.bind(null, 11, 55, 'Tab Test Field 11-55')}
+                                             initialState= {{ value: 25}}
                             />
+                            <div style={{padding: '10px 0 5px 0', fontSize:'smaller'}}>
+                                if you enter a number over 30 you will get another checkbox, also try less than 23</div>
+                            <CheckboxGroupInputField fieldKey='checkBoxGrpFldAgain'
+                                                     tooltip= 'Please select some boxes' label='Checkbox Group:'
+                                                     options={tabX3CheckBoxOps}
+                                                     initialState= {{value: 'C,S,P'}} />
                         </div>
                     </Tab>
                 </FieldGroupTabs>

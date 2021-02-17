@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {memo, PureComponent} from 'react';
+import React, {memo, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
 import {parseTarget, getFeedback, formatPosForTextField} from './TargetPanelWorker.js';
@@ -22,54 +22,40 @@ const LABEL_DEFAULT='Coordinates or Object Name:';
 const nedThenSimbad= 'nedthensimbad';
 const simbadThenNed= 'simbadthenned';
 
-class TargetPanelView extends PureComponent {
+const TargetPanelView = (props) =>{
+    const {showHelp, feedback, valid, message, onChange, value,
+        labelWidth, children, resolver, feedbackStyle, showResolveSourceOp= true, showExample= true,
+        examples, label= LABEL_DEFAULT, onUnmountCB}= props;
 
-    componentWillUnmount() {
-        const {onUnmountCB}= this.props;
-        if (onUnmountCB) onUnmountCB(this.props);
-    }
+    useEffect(() => () => onUnmountCB(props),[]);
 
-    render() {
-        const {showHelp, feedback, valid, message, onChange, value,
-            labelWidth, children, resolver, feedbackStyle, showResolveSourceOp= true, showExample= true,
-            examples, label= LABEL_DEFAULT}= this.props;
-        let positionField = (<InputFieldView
-                                valid={valid}
-                                visible= {true}
-                                message={message}
-                                onChange={(ev) => onChange(ev.target.value, TARGET)}
-                                label={label}
-                                value={value}
-                                tooltip='Enter a target'
-                                labelWidth={labelWidth}
-                                labelStyle={{paddingRight:'45px'}}
-                            />);
-        positionField = children ? (<div style={{display: 'flex'}}>{positionField} {children}</div>) : positionField;
+    const positionField = (
+        <InputFieldView valid={valid} visible= {true} message={message}
+            onChange={(ev) => onChange(ev.target.value, TARGET)}
+            label={label} value={value} tooltip='Enter a target'
+            labelWidth={labelWidth} labelStyle={{paddingRight:'45px'}}
+        />);
+    const positionInput = children ? (<div style={{display: 'flex'}}>{positionField} {children}</div>) : positionField;
 
-        return (
-            <div>
-                <div style= {{display: 'flex'}}>
-                    {positionField}
-                    {showResolveSourceOp && <ListBoxInputFieldView
-                        options={[{label: 'Try NED then Simbad', value: nedThenSimbad},
-                               {label: 'Try Simbad then NED', value: simbadThenNed}
-                              ]}
-                        value={resolver}
-                        onChange={(ev) => onChange(ev.target.value, RESOLVER)}
-                        multiple={false}
-                        tooltip='Select which name resolver'
-                        label=''
-                        labelWidth={3}
-                        wrapperStyle={{}}
-                    />}
-                </div>
-                {(showExample || !showHelp) &&
-                        <TargetFeedback {...{showHelp, feedback, style:feedbackStyle, examples}}/>
-                }
+    return (
+        <div>
+            <div style= {{display: 'flex'}}>
+                {positionInput}
+                {showResolveSourceOp &&
+                <ListBoxInputFieldView
+                    options={[
+                        {label: 'Try NED then Simbad', value: nedThenSimbad},
+                        {label: 'Try Simbad then NED', value: simbadThenNed}
+                    ]}
+                    onChange={(ev) => onChange(ev.target.value, RESOLVER)}
+                    value={resolver} multiple={false}
+                    tooltip='Select which name resolver' label='' labelWidth={3} wrapperStyle={{}}
+                />}
             </div>
-        );
-    }
-}
+            {(showExample || !showHelp) && <TargetFeedback {...{showHelp, feedback, style:feedbackStyle, examples}}/> }
+        </div>
+    );
+};
 
 
 TargetPanelView.propTypes = {

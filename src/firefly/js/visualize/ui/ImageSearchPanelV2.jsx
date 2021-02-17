@@ -431,7 +431,7 @@ function HiPSSelect({groupKey}) {
     return (
         <div className='flex-full' style={{width: '100%', position: 'relative'}}>
             <div style={{position: 'absolute', top: 0, bottom: 0, left: 0, right: 0}}>
-                <HiPSImageSelect style={{height: '100%'}} wrapperStyle={{height: '100%'}} key={`ImageSelect_${groupKey}`} {...{groupKey}} />
+                <HiPSImageSelect groupKey={groupKey} />
             </div>
         </div>
     );
