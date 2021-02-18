@@ -8,7 +8,7 @@
 
 ### Version 2021.1
 - 2021.1.0  (February 2021)
-  - docker tag: `latest`, `release-2020.3`, `release-2021.1.0`
+  - docker tag: `latest`, `release-2021.1`, `release-2021.1.0`
   - original release
 
 
