@@ -66,6 +66,7 @@ export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_
  * @prop {Object} serverImage, immutable
  * @prop {String} title - the title
  * @prop {{cubePlane,cubeHeaderAry}} cubeCtx
+ * @prop {number} cubeIdx
  * @prop {PlotState} plotState - the plot state, immutable
  * @prop {number} dataWidth - the width of the image data
  * @prop {number} dataHeight - the height of the image data

@@ -47,7 +47,7 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.STRETCH,      new VisServerCommands.StretchCmd());
 //        _cmdMap.put(ServerParams.REMOVE_BAND,  new VisServerCommands.RemoveBandCmd());
         _cmdMap.put(ServerParams.CHANGE_COLOR, new VisServerCommands.ChangeColor());
-        _cmdMap.put(ServerParams.DELETE,       new VisServerCommands.DeletePlot());
+//        _cmdMap.put(ServerParams.DELETE,       new VisServerCommands.DeletePlot());
         _cmdMap.put(ServerParams.CROP,         new VisServerCommands.Crop());
         _cmdMap.put(ServerParams.HISTOGRAM,    new VisServerCommands.ColorHistogram());
         _cmdMap.put(ServerParams.STAT,         new VisServerCommands.AreaStat());
@@ -55,9 +55,9 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.GET_FLOAT_DATA,  new VisServerCommands.FloatAryCmd());
         _cmdMap.put(ServerParams.GET_BYTE_DATA,  new VisServerCommands.ByteAryCmd());
 
-        _cmdMap.put(ServerParams.IMAGE_PNG,    new VisServerCommands.GetImagePng());
-        _cmdMap.put(ServerParams.IMAGE_PNG_REG,    new VisServerCommands.GetImagePngWithRegion());
-        _cmdMap.put(ServerParams.PROGRESS,     new VisServerCommands.GetProgress());
+//        _cmdMap.put(ServerParams.IMAGE_PNG,    new VisServerCommands.GetImagePng());
+//        _cmdMap.put(ServerParams.IMAGE_PNG_REG,    new VisServerCommands.GetImagePngWithRegion());
+//        _cmdMap.put(ServerParams.PROGRESS,     new VisServerCommands.GetProgress());
         _cmdMap.put(ServerParams.DS9_REGION,   new VisServerCommands.DS9Region());
         _cmdMap.put(ServerParams.SAVE_DS9_REGION,      new VisServerCommands.SaveDS9Region());
         _cmdMap.put(ServerParams.ADD_SAVED_REQUEST,    new VisServerCommands.AddSavedRequest());

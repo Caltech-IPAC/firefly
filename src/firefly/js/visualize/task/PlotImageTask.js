@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {flatten, isArray, uniqueId, uniqBy, isEmpty} from 'lodash';
+import {flatten, isArray, uniqueId, uniqBy, isEmpty, isNumber, isString} from 'lodash';
 import {WebPlotRequest, GridOnStatus} from '../WebPlotRequest.js';
 import ImagePlotCntlr, {
     visRoot,
@@ -26,7 +26,7 @@ import {
     getDrawLayersByType,
     getDrawLayerById,
     getPlotViewIdListInOverlayGroup,
-    removeRawDataByPlotView, canLoadStretchDataDirect
+    removeRawDataByPlotView, canLoadStretchDataDirect, isImageCube
 } from '../PlotViewUtil.js';
 import {enableMatchingRelatedData, enableRelatedDataLayer} from '../RelatedDataUtil.js';
 import {modifyRequestForWcsMatch} from './WcsMatchTask.js';
@@ -626,3 +626,4 @@ function matchAndActivateOverlayPlotViewsByGroup(plotIdAry) {
             enableMatchingRelatedData(pv,opvMatchArray);
         });
 }
+

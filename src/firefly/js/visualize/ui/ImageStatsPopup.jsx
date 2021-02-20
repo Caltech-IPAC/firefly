@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React, {useState} from 'react';
 import PropTypes from 'prop-types';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
@@ -156,7 +156,7 @@ ImageStatsTab.propTypes= {
 
 function ImageAreaStatsSummary({statsSummary})
 {
-    var summaryRows = statsSummary.map((summaryLine, index) => (
+    const summaryRows = statsSummary.map((summaryLine, index) => (
             <tr key={index}>
                 <td> {summaryLine[0] + ':'} </td>
                 <td> {summaryLine[1]}</td>
@@ -220,117 +220,79 @@ ImageAreaStatsTable.propTypes = {
     plotId: PropTypes.string
 };
 
+
+
+
+const rowStates = {
+    hover: {
+        backgroundColor: '#d3fad1',
+        cursor: 'text'
+    },
+
+    nohover: {
+        backgroundColor: 'transparent',
+        cursor: 'default'
+    },
+
+    title: {
+        backgroundColor: '#888888',
+        textAlign: 'center'
+    }
+};
+
+
 /**
  * component of stats table row
- * @param {array} statsRow containing title, position and value.
- * @param {string} plotId
- * @returns {XML}
- *
  */
+const ImageAreaStatsTableRow= ({isTitle,statsRow, plotId}) => {
+    const [hover,setHover]= useState(() => false);
 
-class ImageAreaStatsTableRow extends PureComponent {
-
-    constructor(props) {
-        super(props);
-
-        this.state = {  hover: false };
-
-        this.rowStates = {
-            hover: {
-                backgroundColor: '#d3fad1',
-                cursor: 'text'
-            },
-
-            nohover: {
-                backgroundColor: 'transparent',
-                cursor: 'default'
-            },
-
-            title: {
-                backgroundColor: '#888888',
-                textAlign: 'center'
-            }
-        };
-    }
-
-    onMouseHover() {
-        if (this.props.isTitle) {
-            return;
-        }
-
-        this.setState({hover: true});
+    const onMouseHover= () => {
+        if (isTitle) return;
+        setHover(true);
 
         const dl = getDrawLayerByType(getDlAry(), typeId);
-        const {statsRow:{worldPt}, plotId} = this.props;
-        //const {worldPt} = this.props.statsRow;
+        if (!dl) dispatchCreateDrawLayer(typeId);
 
-        if (!dl) {
-            dispatchCreateDrawLayer(typeId);
-        }
 
         if (!isDrawLayerAttached(dl, plotId)) {
             dispatchAttachLayerToPlot(typeId, plotId);
         }
-
+        const {worldPt}= statsRow;
         dispatchModifyCustomField(typeId, {worldPt}, plotId);
-    }
+    };
 
-    onMouseOut() {
-        if (this.props.isTitle) {
-            return;
-        }
-
-        this.setState({hover: false});
-
-        const {plotId} = this.props;
+    const onMouseOut= () => {
+        if (isTitle) return;
+        setHover(false);
         const dl = getDrawLayerByType(getDlAry(), typeId);
-
         if (isDrawLayerAttached(dl, plotId)) {
             dispatchModifyCustomField(typeId, {}, plotId);
         }
-    }
+    };
 
-    render() {
-        var trS;
+    let trS;
+    if (isTitle) trS = rowStates.title;
+    else trS = hover ? rowStates.hover : rowStates.nohover;
 
-        if (this.props.isTitle) {
-            trS = this.rowStates.title;
+
+    const tableCells = statsRow.cells.map( (cell, index) => {
+        const newline = '\n';
+        const dS = {  border: '1px solid black', padding: 5  };
+
+        // cell contains newline (ex. RA:..\n DEC:...)
+        if (cell.includes(newline)) {
+            const br = cell.split(newline).map((line, id) => <span key={id}>{line}<br/></span>);
+            return ( <td key={index} style={dS}> { br } </td> );
         } else {
-            trS = this.state.hover ? this.rowStates.hover : this.rowStates.nohover;
+            return ( <td key={index} style={dS}> {cell} </td> );
         }
+    });
 
-        var tableCells = this.props.statsRow.cells.map( (cell, index) => {
-            const newline = '\n';
-            var dS = {  border: '1px solid black',
-                        padding: 5  };
-
-            // cell contains newline (ex. RA:..\n DEC:...)
-            if (cell.includes(newline)) {
-                var br = cell.split(newline).map((line, id) => <span key={id}>{line}<br/></span>);
-
-                return (
-                    <td key={index} style={dS}>
-                        { br }
-                    </td>
-                );
-            } else {
-                return (
-                    <td key={index} style={dS}>
-                        {cell}
-                    </td>
-                );
-            }
-        });
-
-        return (
-            <tr style={trS}
-                onMouseOver={this.onMouseHover.bind(this)}
-                onMouseOut={this.onMouseOut.bind(this)}>
-                {tableCells}
-            </tr>
-        );
-    }
-}
+    return (
+        <tr style={trS} onMouseOver={onMouseHover} onMouseOut={onMouseOut}> {tableCells} </tr>
+    );
+};
 
 ImageAreaStatsTableRow.propTypes={
     statsRow: PropTypes.shape({
@@ -349,13 +311,9 @@ ImageAreaStatsTableRow.propTypes={
  * @constructor
  */
 
-function ImageAreaStatsClose ({closeButton='Close', plotId} )
-{
-    var tbS = {textAlign: 'right', width: tableW};
-
-    return (
+const ImageAreaStatsClose= ({closeButton='Close', plotId} ) => (
         <div style={rS}>
-            <table style={tbS}>
+            <table style={{textAlign: 'right', width: tableW}}>
                 <colgroup>
                     <col style={{width: '92%'}}/>
                     <col style={{width: '8%'}}/>
@@ -377,7 +335,6 @@ function ImageAreaStatsClose ({closeButton='Close', plotId} )
             </table>
         </div>
     );
-}
 
 ImageAreaStatsClose.propTypes={
     closeButton: PropTypes.string,

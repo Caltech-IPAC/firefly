@@ -19,7 +19,7 @@ export function CheckboxGroupInputFieldView({fieldKey, onChange, label, tooltip,
                                              options, alignment, value , wrapperStyle}) {
     const style = Object.assign({whiteSpace:'nowrap'}, wrapperStyle);
     return (
-        <div style={style}>
+        <div style={style} title={tooltip}>
             {label && <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth} />}
             {options.map( (option) => {
                 return (

@@ -1,7 +1,8 @@
 import {PureComponent, useEffect, useState} from 'react';
+import {isArray, isString, pick, isEmpty} from 'lodash';
 import shallowequal from 'shallowequal';
 import {flux} from '../core/ReduxFlux.js';
-import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
+import FieldGroupUtils, {getFldValue, getGroupFields} from '../fieldGroup/FieldGroupUtils.js';
 
 export class SimpleComponent extends PureComponent {
     constructor(props) {
@@ -83,10 +84,9 @@ export function useStoreConnector(...stateGetters) {
     return rval;
 }
 
-
 export function useBindFieldGroupToStore(groupKey) {
     let mounted= true;
-    const [fields, setFields] = useState({});
+    const [fields, setFields] = useState(() => getGroupFields(groupKey));
     useEffect(() => {
         const remover= FieldGroupUtils.bindToStore(groupKey, (f) => {
             if (!shallowequal(f,fields) && mounted) setFields(f);
@@ -99,4 +99,29 @@ export function useBindFieldGroupToStore(groupKey) {
     return fields;
 }
 
+/**
+ * This hook will return a object of fields values. {[fieldName]:value}
+ * @param {String} groupKey - the field group to check for
+ * @param {String|Array.<String>} [fieldKeys] - an array of keys to check for or a single single key to check for
+ * @return {{}}
+ */
+export function useFieldGroupValues(groupKey,fieldKeys) {
+    const keyList= isArray(fieldKeys) ? fieldKeys : isString(fieldKeys) ? [fieldKeys] : [];
+    let mounted= true;
+    const stateObj= keyList.reduce( (obj,k) => {
+        const [value,set]= useState(() => getFldValue(getGroupFields(groupKey),k));
+        obj[k]={value,set};
+        return obj;
+    },{});
 
+    useEffect(() => {
+        const remover= FieldGroupUtils.bindToStore(groupKey, (updatedFields) => {
+            mounted && keyList.forEach( (k) => stateObj[k].set( getFldValue(updatedFields,k)));
+        });
+        return () => {
+            mounted= false;
+            remover();
+        };
+    },[]);
+    return Object.fromEntries(Object.entries(stateObj).map( ([k,{value}]) => [k,value] ));
+}

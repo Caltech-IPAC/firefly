@@ -154,12 +154,12 @@ export function getReducerFunc(groupKey) {
  * @param {string} groupKey
  * @return {object}
  */
-function getGroupFields(groupKey) {
+export function getGroupFields(groupKey) {
     const groupState= getFieldGroupState(groupKey);
     return groupState?groupState.fields:null;
 }
 
-function getFldValue(fields, fldName, defval=undefined) {
+export function getFldValue(fields, fldName, defval=undefined) {
     return (fields? get(fields, [fldName, 'value'], defval) : defval);
 }
 
