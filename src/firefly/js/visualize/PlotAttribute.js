@@ -17,6 +17,12 @@ export const PlotAttribute= {
     FIXED_TARGET: 'FIXED_TARGET',
 
     /**
+     * This may be a number or a string. If the string ends with a % it uses the percentage to get the initial plane
+     * i.e  4 or '56' or '20%'
+     */
+    CUBE_FIRST_FRAME: 'CUBE_FIRST_FRAME',
+
+    /**
      * a WorldPt
      * if defined overrides FIXED_TARGET.
      */

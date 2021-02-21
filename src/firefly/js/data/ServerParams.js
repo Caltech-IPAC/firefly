@@ -1,7 +1,6 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
 export const ServerParams = {
         COMMAND : 'cmd',
         DO_JSONP : 'doJsonp',
@@ -92,32 +91,23 @@ export const ServerParams = {
         ROTATION : 'rotation',
 
         // commands
-        FILE_FLUX : 'CmdFileFlux',
         FILE_FLUX_JSON : 'CmdFileFluxJson',
         CREATE_PLOT : 'CmdCreatePlot',
         CREATE_PLOT_GROUP : 'CmdCreatePlotGroup',
         ZOOM : 'CmdZoom',
         STRETCH : 'CmdStretch',
-        REMOVE_BAND : 'CmdRemoveBand',
         CHANGE_COLOR : 'CmdChangeColor',
-        ROTATE_NORTH : 'CmdRotateNorth',
-        ROTATE_ANGLE : 'CmdRotateAngle',
         FLIP_Y : 'CmdFlipY',
         HISTOGRAM : 'CmdHistogram',
-        IMAGE_PNG : 'CmdImagePng',
-        IMAGE_PNG_REG : 'CmdImagePngReg',
         CROP : 'CmdCrop',
         STAT : 'CmdStat',
-        HEADER : 'CmdHeader',
-        FITS_HEADER:'CmdFitsHeader', //LZ DM DM-4494
-        DELETE : 'CmdDelete',
         USER_KEY : 'CmdUserKey',
         VERSION : 'CmdVersion',
         RAW_DATA_SET : 'RawDataSet',
         JSON_DATA : 'JsonData',
         RESOLVE_NAME: 'CmdResolveName',
         RESOLVE_NAIFID: 'CmdResolveNaifid',
-        PROGRESS : 'CmdProgress',
+        // PROGRESS : 'CmdProgress',
         SUB_BACKGROUND_SEARCH: 'subBackgroundSearch',
         GET_STATUS: 'status',
         REMOVE_JOB: 'removeBgJob',
@@ -135,9 +125,7 @@ export const ServerParams = {
         DS9_REGION: 'ds9Region',
         SAVE_DS9_REGION: 'saveDS9Region',
         ADD_SAVED_REQUEST: 'addSavedRequest',
-        // GET_ALL_SAVED_REQUEST: 'getAllSavedRequest',
         TITLE: 'Title',
-        //JSON_DEEP: 'jsonDeep',
         JSON_SEARCH: 'jsonSearch',
         CLIENT_IS_NORTH: 'clientIsNorth',
         CLIENT_ROT_ANGLE: 'clientRotAngle',
@@ -159,11 +147,7 @@ export const ServerParams = {
         VIS_PUSH_ALIVE_COUNT: 'pushAliveCount',
         VIS_PUSH_ACTION: 'pushAction',
         TILE_SIZE: 'tileSize',
-
-
         USER_TARGET_WORLD_PT : 'UserTargetWorldPt',
-
-
         WS_LIST : 'wsList',
         WS_GET_FILE : 'wsGet',
         WS_UPLOAD_FILE : 'wsUpload', // to get the path of the file uploaded into firefly server from WS

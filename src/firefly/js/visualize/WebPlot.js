@@ -66,6 +66,7 @@ export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_
  * @prop {Object} serverImage, immutable
  * @prop {String} title - the title
  * @prop {{cubePlane,cubeHeaderAry}} cubeCtx
+ * @prop {number} cubeIdx
  * @prop {PlotState} plotState - the plot state, immutable
  * @prop {number} dataWidth - the width of the image data
  * @prop {number} dataHeight - the height of the image data
@@ -364,7 +365,7 @@ export const WebPlot= {
             dataDesc        : wpInit.dataDesc,
             webFitsData     : isArray(wpInit.fitsData) ? wpInit.fitsData : [wpInit.fitsData],
             //=== Mutable =====================
-            screenSize: {width:Math.trunc(dataWidth*zf), height:Math.trunc(dataHeight*zf)},
+            screenSize: {width:Math.trunc(dataWidth*zf)||1, height:Math.trunc(dataHeight*zf)||1},
             zoomFactor: zf,
             attributes,
             rawData,

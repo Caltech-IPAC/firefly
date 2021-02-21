@@ -31,7 +31,7 @@ export const irsaStandMultiOptions= [
     {id: 'irsacat', title:'IRSA'},
     {id: 'nedcat'},
     {id: 'upload'},
-    {id: 'tap', title:'TAP Searches'},
+    {id: 'tap', title:'VO TAP Search'},
     {id: 'vocat'},
 ];
 

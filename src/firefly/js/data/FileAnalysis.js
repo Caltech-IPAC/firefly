@@ -11,6 +11,7 @@ export const FileAnalysisType = {
     LoadInBrowser: 'LoadInBrowser',
     Unknown: 'UNKNOWN',
     HTML: 'HTML',
+    REGION: 'REGION'
 };
 
 export const UIRender = {
@@ -37,6 +38,7 @@ export const Format= {
     JSON: 'JSON',
     PDF: 'PDF',
     TAR: 'TAR',
+    REGION: 'REGION',
     VO_TABLE: 'VO_TABLE',
     VO_TABLE_TABLEDATA: 'VO_TABLE_TABLEDATA',
     VO_TABLE_BINARY: 'VO_TABLE_BINARY',

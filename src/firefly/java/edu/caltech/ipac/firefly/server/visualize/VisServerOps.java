@@ -41,8 +41,6 @@ import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.util.dd.RegionFileElement;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.draw.AreaStatisticsUtil;
-import edu.caltech.ipac.visualize.draw.ColorDisplay;
-import edu.caltech.ipac.visualize.draw.HistogramDisplay;
 import edu.caltech.ipac.visualize.draw.Metric;
 import edu.caltech.ipac.visualize.draw.Metrics;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
@@ -69,7 +67,6 @@ import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.ColorModel;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -938,100 +935,31 @@ public class VisServerOps {
     }
 
 
-    public static WebPlotResult getColorHistogram(PlotState state,
-                                                  Band band,
-                                                  int width,
-                                                  int height) {
-        WebPlotResult retval;
-        int dHist[];
-        byte dHistColors[];
-        Color bgColor = new Color(181, 181, 181);
-        HistogramOps hOps;
-
+    public static WebPlotResult getColorHistogram(PlotState state, Band band) {
         try {
             ActiveCallCtx ctx = CtxControl.prepare(state);
             ImagePlot plot = ctx.getPlot();
-            if (band == NO_BAND) {
-                hOps = plot.getHistogramOps(NO_BAND, ctx.getFitsReadGroup());
-                int id = plot.getImageData().getColorTableId();
-                if (id == 0 || id == 1) bgColor = new Color(0xCC, 0xCC, 0x99);
-            } else {
-                hOps = plot.getHistogramOps(band, ctx.getFitsReadGroup());
-            }
+            HistogramOps hOps = plot.getHistogramOps(band, ctx.getFitsReadGroup());
             Histogram hist = hOps.getDataHistogram();
 
-            dHist = hist.getHistogramArray();
-            dHistColors = hOps.getDataHistogramColors(hist, state.getRangeValues(band));
+            int[] dHist = hist.getHistogramArray();
+            byte[] dHistColors = hOps.getDataHistogramColors(hist, state.getRangeValues(band));
+            double [] meanDataAry = new double[dHist.length];
+            for (int i = 0; i < meanDataAry.length; i++) meanDataAry[i] = hOps.getMeanValueFromBin(hist, i);
 
-            double meanDataAry[] = new double[dHist.length];
-            for (int i = 0; i < meanDataAry.length; i++) {
-                meanDataAry[i] = hOps.getMeanValueFromBin(hist, i);
-            }
-
-
-            boolean three = plot.isThreeColor();
-            ColorModel newColorModel = plot.getImageData().getColorModel();
-
-
-            HistogramDisplay dataHD = new HistogramDisplay();
-            dataHD.setScaleOn2ndValue(true);
-            dataHD.setSize(width, height);
-            dataHD.setHistogramArray(dHist, dHistColors, newColorModel);
-            if (three) {
-                dataHD.setColorBand(band);
-            }
-            dataHD.setBottomSize(4);
-
-            ColorDisplay colorBarC = new ColorDisplay();
-            colorBarC.setSize(width, 10);
-            if (plot.isThreeColor()) {
-                Color color;
-                switch (band) {
-                    case RED:
-                        color = Color.red;
-                        break;
-                    case GREEN:
-                        color = Color.green;
-                        break;
-                    case BLUE:
-                        color = Color.blue;
-                        break;
-                    default:
-                        color = null;
-                        break;
-                }
-                colorBarC.setColor(color);
-            } else {
-                colorBarC.setColor(newColorModel);
-            }
-
-
-            String templateName = ctx.getImages().getTemplateName();
-            String bandDesc = (band != Band.NO_BAND) ? band.toString() + "-" : "";
-            String dataFname = templateName + "-dataHist-" + bandDesc + System.currentTimeMillis() + ".png";
-            String cbarFname = templateName + "-colorbar-" + bandDesc + System.currentTimeMillis() + ".png";
-
-
-            File dir = ServerContext.getVisSessionDir();
-
-
-            File dataFile = PlotServUtils.createHistImage(dataHD, dataHD, dir, bgColor, dataFname);
-            File cbarFile = PlotServUtils.createHistImage(colorBarC, colorBarC, dir, bgColor, cbarFname);
-
-            retval = new WebPlotResult(ctx.getKey());
+            WebPlotResult retval = new WebPlotResult(ctx.getKey());
             retval.putResult(WebPlotResult.DATA_HISTOGRAM, dHist);
             retval.putResult(WebPlotResult.DATA_BIN_MEAN_ARRAY, meanDataAry);
-            retval.putResult(WebPlotResult.DATA_HIST_IMAGE_URL, ServerContext.replaceWithPrefix(dataFile));
-            retval.putResult(WebPlotResult.CBAR_IMAGE_URL, ServerContext.replaceWithPrefix(cbarFile));
-            counters.incrementVis("Color change");
+            retval.putResult(WebPlotResult.DATA_BIN_COLOR_IDX, dHistColors);
+            counters.incrementVis("getColorHistogram");
+            return retval;
 
         } catch (Exception e) {
-            retval = createError("on getColorHistogram", state, e);
+            return createError("on getColorHistogram", state, e);
         } catch (Throwable e) {
-            retval = null;
             e.printStackTrace();
+            return null;
         }
-        return retval;
     }
 
 

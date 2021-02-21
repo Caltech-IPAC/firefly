@@ -1,0 +1,74 @@
+<!doctype html>
+
+<!--
+  ~ License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+  -->
+
+<html>
+
+<head>
+    <title>Firefly main tests</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="text/javascript" src="template_loader.js"></script>
+</head>
+
+<body>
+
+<!-- define all of your tests below -->
+
+
+
+<template title="Image cube idx" class="tpl" >
+    <div id="expected" style="position: relative" >
+        <div class="source-code indent-3" style="position: absolute; bottom: 0; left: 0">
+            show a cube with middle start idx
+        </div>
+    </div>
+    <div id="actual" class="flow-h">
+        <div id="cube-image" class="box"></div>
+    </div>
+    <script>
+        onFireflyLoaded = function (firefly) {
+
+            const req= {
+                plotGroupId : 'myGroup',
+                url: 'http://web.ipac.caltech.edu/staff/roby/many-images/mips_IER_7735552_ier600_A24_P24_10s.cal.fits',
+                cube_first_frame: '50%'
+            };
+
+            firefly.showImage( 'cube-image',req);
+        }
+    </script>
+</template>
+
+<template title="Image cube idx" class="tpl" >
+    <div id="expected" style="position: relative" >
+        <div class="source-code indent-3" style="position: absolute; bottom: 0; left: 0">
+            show a cube start index 55
+        </div>
+    </div>
+    <div id="actual" class="flow-h">
+        <div id="cube-image" class="box"></div>
+    </div>
+    <script>
+        onFireflyLoaded = function (firefly) {
+
+            const req= {
+                plotGroupId : 'myGroup',
+                url: 'http://web.ipac.caltech.edu/staff/roby/many-images/cube-3rd-non-spaccial-F0203_FI_IFS_8700025_RED_WXY_100017-200143.fits',
+                cube_first_frame: '55'
+            };
+
+            firefly.showImage( 'cube-image',req);
+        }
+    </script>
+</template>
+
+
+
+
+<!-- this is where test cases will be attached-->
+<div id="tst-container"/>
+
+
+</body>

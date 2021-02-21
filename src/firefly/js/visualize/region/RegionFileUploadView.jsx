@@ -5,8 +5,7 @@
 /**
  * This Object contains the specifications of the DS9 region
  */
-import React, {PureComponent} from 'react';
-import {get} from 'lodash';
+import React, {useState} from 'react';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {dispatchCreateRegionLayer, dispatchCreateFootprintLayer} from '../DrawLayerCntlr.js';
@@ -38,30 +37,27 @@ export function showRegionFileUploadPanel(divElement, popTitle='Load DS9 Region 
 
 
 function regionFileNameFromDisplay(file) {
-    const dispVal = file ? get(FieldGroupUtils.getGroupFields(rgUploadGroupKey), [rgUploadFieldKey, 'displayValue']) : '';
+    const dispVal = file ? FieldGroupUtils.getGroupFields(rgUploadGroupKey)?.[rgUploadFieldKey]?.displayValue : '';
     return dispVal ? dispVal.split(/(\\|\/)/g).pop() : '';
 }
 
 /**
  * get region json from server, convert json into Region objects and make RegionPlot DrawLayer
  * @param request
- * @param rgComp
+ * @param setUpload
+ * @param setMessage
  */
-function uploadAndProcessRegion(request, rgComp) {
+function uploadAndProcessRegion(request, setUpload, setMessage) {
     const [FieldKeyErr] = ['no region file uploaded yet'];
 
-     const regionFile = get(request, rgUploadFieldKey);
+     const regionFile = request?.[rgUploadFieldKey];
 
      const setStatus = (file, regionAry, message)  => {
-            const s = {upload: (!!file || !!regionAry),  message};
-
-
-            if (rgComp) {
-                rgComp.setState(s);
-            }
+            setUpload?.(!!file || !!regionAry);
+            setMessage?.(message);
 
             if (file || regionAry) {
-                const relocateBy = get(request, relocatableKey);
+                const relocateBy = request?.[relocatableKey];
                 const fileName = regionFileNameFromDisplay(file);
                 const absFileName = !fileName ? '' : (fileName.includes('.') ? fileName.slice(0, fileName.lastIndexOf('.')) : fileName);
 
@@ -124,61 +120,42 @@ function uploadAndProcessRegion(request, rgComp) {
 /**
  * popup panel for upload region file
  */
-class RegionUpload extends PureComponent {
+const RegionUpload= () => {
 
-    constructor(props) {
-        super(props);
-        this.state = {
-            upload: true // upload fail
-        };
-        this.onUpload = this.onUpload.bind(this);
-    }
+    const [upload, setUpload]= useState(() => true);
+    const [message, setMessage]= useState(() => '');
+    return (
+        <div style={{padding: 10, width: 380}}>
+            <FieldGroup groupKey={rgUploadGroupKey}>
+                <FileUpload
+                    wrapperStyle={{margin: '5px 0', width: 180}} innerStyle={{width: 90}}
+                    fieldKey={rgUploadFieldKey}
+                    tooltip='Select a region file to upload' label='Upload File:'
+                    fileNameStyle={{marginLeft: 0, width: 200, height: 16, fontSize: 12, verticalAlign: 'middle'}}
+                />
+                <CheckboxGroupInputField
+                    fieldKey={relocatableKey}
+                    options={[{label: 'treat as relocatable', value: relocatable.origin.key}]}
+                    alignment={'horizontal'}
+                    wrapperStyle={{textAligh: 'left'}}
+                    tooltip='treat the regions movable'
+                    initialState={{ value: '' }}
+                />
 
-    onUpload(request) {
-        uploadAndProcessRegion(request, this);
-    }
+                <div style={{color: 'red', height: 15}}>
+                    {!upload && ( (message && `*${message}`) || '*region error')}
+                </div>
 
-    render() {
-        const relocateOptions = [{label: 'treat as relocatable', value: relocatable.origin.key}];
-
-        return (
-            <div style={{padding: 10, width: 380}}>
-                <FieldGroup groupKey={rgUploadGroupKey}>
-                    <FileUpload
-                        wrapperStyle={{margin: '5px 0', width: 180}}
-                        innerStyle={{width: 90}}
-                        fieldKey={rgUploadFieldKey}
-                        initialState={{
-                            tooltip: 'Select a region file to upload',
-                            label: 'Upload File:'}}
-                        fileNameStyle={{marginLeft: 0, width: 200, height: 16, fontSize: 12, verticalAlign: 'middle'}}
-                    />
-                    <CheckboxGroupInputField
-                        fieldKey={relocatableKey}
-                        options={relocateOptions}
-                        alignment={'horizontal'}
-                        wrapperStyle={{textAligh: 'left'}}
-                        initialState={{
-                            tooltip: 'treat the regions movable',
-                            value: ''
-                        }}
-                    />
-
-                    <div style={{color: 'red', height: 15}}>
-                        {!this.state.upload && ( (this.state.message && `*${this.state.message}`) || '*region error')}
-                    </div>
-
-                    <div style={{marginTop: 40}}>
-                        <CompleteButton
-                            dialogId={popupId}
-                            groupKey={rgUploadGroupKey}
-                            onSuccess={this.onUpload}
-                            closeOnValid={false}
-                            text={'Draw'}/>
-                    </div>
-                </FieldGroup>
-            </div>
-        );
-    }
-}
+                <div style={{marginTop: 40}}>
+                    <CompleteButton
+                        dialogId={popupId}
+                        groupKey={rgUploadGroupKey}
+                        onSuccess={(request) => uploadAndProcessRegion(request, setUpload, setMessage)}
+                        closeOnValid={false}
+                        text={'Draw'}/>
+                </div>
+            </FieldGroup>
+        </div>
+    );
+};
 

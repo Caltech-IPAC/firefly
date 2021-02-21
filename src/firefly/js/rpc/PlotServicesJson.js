@@ -6,33 +6,11 @@
  * Date: 3/5/12
  */
 
-import {has, isArray} from 'lodash';
+import {isArray} from 'lodash';
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest} from '../core/JsonUtils.js';
 import {SelectedShape} from '../drawingLayers/SelectedShape';
-import {fetchUrl} from '../util/fetch.js';
-import {getCmdSrvURL, toBoolean} from '../util/WebUtil.js';
-import {isString} from 'dnd-core/lib/cjs/utils/discount_lodash.js';
 
-
-
-/**
- *
- * @param state
- * @param band
- * @param width
- * @param height
- * @return {Promise}
- */
-export const callGetColorHistogram= function(state,band,width,height) {
-    var paramList = [];
-    paramList.push({name:ServerParams.STATE, value: state.toJson(false)});
-    paramList.push({name:ServerParams.WIDTH, value: width+''});
-    paramList.push({name:ServerParams.HEIGHT, value: height+''});
-    paramList.push({name:ServerParams.BAND, value: band.key});
-
-    return doJsonRequest(ServerParams.HISTOGRAM, paramList, true);
-};
 
 /**
  *
@@ -40,47 +18,9 @@ export const callGetColorHistogram= function(state,band,width,height) {
  * @param band
  * @return {Promise}
  */
-export async function callFloatData(state,band) {
-    const params= {
-        [ServerParams.COMMAND]: ServerParams.GET_FLOAT_DATA,
-        [ServerParams.STATE] : isString(state) ? state :state.toJson(false),
-        [ServerParams.BAND] : band.key
-    };
-    const options= {method: 'POST', params};
-
-    try {
-        const response= await fetchUrl(getCmdSrvURL(), options, false );
-        if (!response.ok) {
-            throw(new Error(`Error from Server for getFloatData: code: ${response.status}, text: ${response.statusText}`));
-        }
-        const arrayBuffer= await response.arrayBuffer();
-        // const data= new Float32Array(arrayBuffer);  // no longer doing it this way because of Endian issues
-
-
-        // const bdata= new Uint8Array(arrayBuffer);  // this would be good if I could find a way to do it inplace
-        // let holder;
-        // for (let i = 0; i<bdata.length; i+=4) {
-        //     holder = bdata[i];
-        //     bdata[i] = bdata[i+3];
-        //     bdata[i+3] = holder;
-        //     holder = bdata[i+1];
-        //     bdata[i+1] = bdata[i+2];
-        //     bdata[i+2] = holder;
-        // }
-        // const data= new Float32Array(arrayBuffer);
-
-        console.time('convert copy');
-        const dv= new DataView(arrayBuffer);
-        const data= new Float32Array(arrayBuffer.byteLength/4);
-        for(let i=0;i<data.length; i++) data[i]= dv.getFloat32(i*4);
-        console.timeEnd('convert copy');
-        console.log('data from callFloatData',data);
-        return data;
-    } catch (e) {
-        console.log('callFloatData failed');
-        console.log(e);
-    }
-}
+export const callGetColorHistogram= (state,band) =>
+    doJsonRequest(ServerParams.HISTOGRAM,
+        {[ServerParams.STATE] : state.toJson(false), [ServerParams.BAND]: band.key}, true);
 
 /**
  * @param {WebPlotRequest} redRequest
@@ -89,45 +29,38 @@ export async function callFloatData(state,band) {
  * @return {Promise}
  */
 export function callGetWebPlot3Color(redRequest, greenRequest, blueRequest) {
-    var paramList = [];
-    if (redRequest) paramList.push({name:ServerParams.RED_REQUEST, value:redRequest.toString()});
-    if (greenRequest) paramList.push({name:ServerParams.GREEN_REQUEST, value:greenRequest.toString()});
-    if (blueRequest) paramList.push({name:ServerParams.BLUE_REQUEST, value:blueRequest.toString()});
-    return doJsonRequest(ServerParams.CREATE_PLOT, paramList, true);
-};
+    const params= {};
+    if (redRequest) params[ServerParams.RED_REQUEST]= redRequest.toString();
+    if (greenRequest) params[ServerParams.GREEN_REQUEST]= greenRequest.toString();
+    if (blueRequest) params[ServerParams.BLUE_REQUEST]= blueRequest.toString();
+    return doJsonRequest(ServerParams.CREATE_PLOT, params, true);
+}
 
 /**
  * @param {WebPlotRequest} request
  * @return {Promise}
  */
-export function callGetWebPlot(request) {
-    var paramList = [{name: ServerParams.NOBAND_REQUEST, value:request.toString()}];
-    return doJsonRequest(ServerParams.CREATE_PLOT, paramList,true);
-};
+export const callGetWebPlot= (request) =>
+      doJsonRequest(ServerParams.CREATE_PLOT, {[ServerParams.NOBAND_REQUEST]: request.toString()},true);
 
 export function callGetWebPlotGroup(reqAry,  requestKey) {
-    var paramList = {};
-    paramList[ServerParams.PROGRESS_KEY]= requestKey;
-    paramList= reqAry.reduce( (obj,req, idx) => {
+    const paramList= reqAry.reduce( (obj,req, idx) => {
         obj[ServerParams.REQUEST+idx]= req.toString();
         return obj;
-    }, paramList);
+    }, {[ServerParams.PROGRESS_KEY]: requestKey});
     return doJsonRequest(ServerParams.CREATE_PLOT_GROUP, paramList,true);
 }
 
 
-export function callGetAreaStatistics(state, ipt1, ipt2, ipt3, ipt4, areaShape = SelectedShape.rect.key, rotation = 0) {
-    var params= {
-        [ServerParams.STATE]: state.toJson(false),
-        [ServerParams.PT1]: ipt1.toString(),
-        [ServerParams.PT2]: ipt2.toString(),
-        [ServerParams.PT3]: ipt3.toString(),
-        [ServerParams.PT4]: ipt4.toString(),
-        [ServerParams.GEOSHAPE]: areaShape,
-        [ServerParams.ROTATION]: rotation
-    };
-    return doJsonRequest(ServerParams.STAT, params, true);
-}
+export const callGetAreaStatistics= (state, ipt1, ipt2, ipt3, ipt4, areaShape = SelectedShape.rect.key, rotation = 0) =>
+   doJsonRequest(ServerParams.STAT, {
+                [ServerParams.STATE]: state.toJson(false),
+                [ServerParams.PT1]: ipt1.toString(),
+                [ServerParams.PT2]: ipt2.toString(),
+                [ServerParams.PT3]: ipt3.toString(),
+                [ServerParams.PT4]: ipt4.toString(),
+                [ServerParams.GEOSHAPE]: areaShape,
+                [ServerParams.ROTATION]: rotation }, true);
 
 
 /**
@@ -137,7 +70,7 @@ export function callGetAreaStatistics(state, ipt1, ipt2, ipt3, ipt4, areaShape =
  * @param {boolean} isFullScreen hint, will only make on file
  */
 export function callSetZoomLevel(stateAry, level, isFullScreen) {
-    var params= makeParamsWithStateAry(stateAry,false, [
+    const params= makeParamsWithStateAry(stateAry,false, [
         {name:ServerParams.LEVEL, value:level},
         {name:ServerParams.FULL_SCREEN, value : isFullScreen},
     ]);
@@ -146,7 +79,7 @@ export function callSetZoomLevel(stateAry, level, isFullScreen) {
 
 
 export function callChangeColor(state, colorTableId) {
-    var params= [
+    const params= [
         {name:ServerParams.STATE, value: state.toJson(false)},
         {name:ServerParams.COLOR_IDX, value:colorTableId}
     ];
@@ -155,46 +88,22 @@ export function callChangeColor(state, colorTableId) {
 
 
 export function callRecomputeStretch(state, stretchDataAry) {
-    var params= {
-        [ServerParams.STATE]: state.toJson(false),
-    };
+    const params= { [ServerParams.STATE]: state.toJson(false)};
     stretchDataAry.forEach( (sd,idx) => params[ServerParams.STRETCH_DATA+idx]=  JSON.stringify(sd));
     return doJsonRequest(ServerParams.STRETCH, params, true);
 }
 
-
-
 export function callCrop(stateAry, corner1ImagePt, corner2ImagePt, cropMultiAll) {
-
-    var params= makeParamsWithStateAry(stateAry,false, [
+    const params= makeParamsWithStateAry(stateAry,false, [
         {name:ServerParams.PT1, value: corner1ImagePt.toString()},
         {name:ServerParams.PT2, value: corner2ImagePt.toString()},
         {name:ServerParams.CRO_MULTI_ALL, value: cropMultiAll +''}
     ]);
-    
     return doJsonRequest(ServerParams.CROP, params, true);
-    
 }
-//LZ 3/22/16 DM-4494
-/*
-export  function  callGetFitsHeaderInfo(plotState, tableId) {
-
-    var params ={ [ServerParams.STATE]: plotState.toJson(false),
-        tableId
-    };
-
-    var result = doJsonRequest(ServerParams.FITS_HEADER, params, true);
-    return result;//doJsonRequest(ServerParams.FITS_HEADER, params);
-}
-*/
-
 
 export function callGetFileFlux(stateAry, pt) {
-
-    const params =  makeParamsWithStateAry(stateAry,true, [
-        {name: [ServerParams.PT], value: pt.toString()}
-    ]);
-
+    const params =  makeParamsWithStateAry(stateAry,true, [ {name: [ServerParams.PT], value: pt.toString()} ]);
     return doJsonRequest(ServerParams.FILE_FLUX_JSON, params,true);
 }
 
@@ -216,57 +125,29 @@ export function callGetImageMasterData(imageSources, projectSortOrder='') {
                 true);
 }
 
-export function getDS9Region(fileKey) {
+export const getDS9Region= (fileKey) =>
+    doJsonRequest(ServerParams.DS9_REGION, { [ServerParams.FILE_KEY]: fileKey}, true);
 
-    const params= {
-        [ServerParams.FILE_KEY]: fileKey,
-    };
-    return doJsonRequest(ServerParams.DS9_REGION, params, true);
-}
+export const saveDS9RegionFile= (regionData) =>
+    doJsonRequest(ServerParams.SAVE_DS9_REGION, { [ServerParams.REGION_DATA]: regionData}, true);
 
 
-export function saveDS9RegionFile(regionData) {
-
-    const params= {
-        [ServerParams.REGION_DATA]: regionData,
-    };
-    return doJsonRequest(ServerParams.SAVE_DS9_REGION, params, true);
-}
 
 
 /**
- *
- * @deprecated
- * @param state
- * @param regionData
- * @param clientIsNorth
- * @param clientRotAngle
- * @param clientFlipY
+ * @param stateAry
+ * @param includeDirectAccessData
+ * @param otherParams
  * @return {Promise}
  */
-export function getImagePng(state, regionData, clientIsNorth, clientRotAngle, clientFlipY) {
-
-
-    const params= {
-        [ServerParams.STATE]: state.toJson(),
-        [ServerParams.REGION_DATA]: regionData,
-        [ServerParams.CLIENT_IS_NORTH]: clientIsNorth,
-        [ServerParams.CLIENT_ROT_ANGLE]: clientRotAngle,
-        [ServerParams.CLIENT_FlIP_Y]: clientFlipY,
-    };
-    return doJsonRequest(ServerParams.IMAGE_PNG_REG, params, true);
-}
-
 function makeParamsWithStateAry(stateAry, includeDirectAccessData, otherParams=[]) {
     return [
         ...makeStateParamAry(stateAry,includeDirectAccessData),
         ...otherParams,
     ];
-
 }
 
 /**
- *
  * @param {Array} startAry
  * @param {boolean} includeDirectAccessData
  * @return {Array}
@@ -276,4 +157,3 @@ function makeStateParamAry(startAry, includeDirectAccessData= true) {
         return {name:'state'+idx, value: s.toJson(includeDirectAccessData) };
     } );
 }
-

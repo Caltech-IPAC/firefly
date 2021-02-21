@@ -20,7 +20,7 @@ const multiSearchComponents= [
     },
     {
         id: 'tap',
-        title: 'TAP Searches',
+        title: 'VO TAP Searches',
         tip: 'Query Virtual Observatory Table Access Protocol Services',
         Component: ({initArgs}) => <TapSearchPanel initArgs={initArgs} titleOn={false} />
     },
@@ -38,7 +38,7 @@ const multiSearchComponents= [
     },
     {
         id: 'vocat',
-        title: 'Simple Cone Search (SCS)',
+        title: 'VO SCS Search',
         tip: 'Query Virtual Observatory Simple Cone Search Services',
         Component: ClassicVOCatalogPanel
     },

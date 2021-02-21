@@ -8,7 +8,7 @@
 
 ### Version 2021.1
 - 2021.1.0  (February 2021)
-  - docker tag: `latest`, `release-2020.3`, `release-2021.1.0`
+  - docker tag: `latest`, `release-2021.1`, `release-2021.1.0`
   - original release
 
 
@@ -20,6 +20,7 @@
    - Bias and Contrast control
    - Mouse wheel zoom control
 - First production release of TAP Search panel
+- First production release of the upload anything panel, improved UI, now supports regions
 - Less lines of java source than last release
 
 ##### _UI_
@@ -28,6 +29,7 @@
 - Service Descriptor Support ([Firefly-677](https://github.com/Caltech-IPAC/firefly/pull/1042))
 - Blank HiPS projection for drawing ([Firefly-688](https://github.com/Caltech-IPAC/firefly/pull/1043))
 - Ecliptic readout ([Firefly-567](https://github.com/Caltech-IPAC/firefly/pull/1058))
+- Upload panel improvements (https://github.com/Caltech-IPAC/firefly/pull/1059)
 
 ##### _Other_ 
 - Supported Browsers ([Firefly-690](https://github.com/Caltech-IPAC/firefly/pull/1046))

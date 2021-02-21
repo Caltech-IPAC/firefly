@@ -79,7 +79,8 @@ export function zoomPlotPerViewSize(plotId) {
 
 
 export function resetImageFullGridActivePlot(tbl_id, plotIdAry) {
-    if (!tbl_id || isEmpty(plotIdAry)) return;
+    if (!tbl_id || isEmpty(plotIdAry)) return
+
     const {highlightedRow = 0} = getTblById(tbl_id)||{};
     const vr = visRoot();
 

@@ -158,7 +158,8 @@ export function memorizeLastCall(fn, cacheSize=1) {
     const lastCallCache= [];
     const maxCache= Math.min(cacheSize,20);
     return (...args) => {
-        const cachedEntry= lastCallCache.find( (result) => args.every( (a,idx) => a===result.args[idx]));
+        const cachedEntry= lastCallCache
+            .find( (result) => args.length===result.args.length && args.every( (a,idx) => a===result.args[idx]));
         if (cachedEntry) return cachedEntry.retval;
         const retval= fn(...args);
         lastCallCache.unshift({args, retval});
@@ -408,7 +409,7 @@ export function getSizeAsString(size) {
     const  gStr= 'G';
 
     if (size > 0 && size < (MEG)) {
-        return ((size / K)) + kStr;
+        return (Math.round(size / K)) + kStr;
     }
     else if (size >= (MEG) && size <  (2*GIG) ) {
         const megs = Math.round(size / MEG);

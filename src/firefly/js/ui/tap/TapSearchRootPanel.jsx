@@ -27,6 +27,7 @@ import { gkey, SectionTitle, AdqlUI, BasicUI} from 'firefly/ui/tap/TableSelectVi
 
 
 
+const SERVICE_TIP= 'Select a TAP service, or type to enter the URL of any other TAP service';
 
 //-------------
 //-------------
@@ -165,8 +166,8 @@ function TapSearchPanelComponents({initArgs, serviceUrl, onTapServiceOptionSelec
         <FieldGroup groupKey={gkey} keepState={true} style={{flexGrow: 1, display: 'flex'}}>
             <div className='TapSearch'>
                 {titleOn && <div className='TapSearch__title'>TAP Searches</div>}
-                <div className='TapSearch__section'>
-                    <SectionTitle title='1. Select TAP Service ' helpId='tapService'/>
+                <div className='TapSearch__section' title={SERVICE_TIP}>
+                    <SectionTitle title='1. Select TAP Service ' helpId='tapService' tip={SERVICE_TIP}/>
                     <div style={{flexGrow: 1, marginRight: 3, maxWidth: 1000,  zIndex: 9999}}>
                         <CreatableSelect
                             options={tapOps} isClearable={true} onChange={onTapServiceOptionSelect}
@@ -174,7 +175,7 @@ function TapSearchPanelComponents({initArgs, serviceUrl, onTapServiceOptionSelec
                     </div>
                 </div>
 
-                <div className='TapSearch__section'>
+                <div className='TapSearch__section' >
                     <SectionTitle title='2. Select Query Type  ' helpId='selectBy'/>
                     <RadioGroupInputField
                         fieldKey = 'selectBy'
