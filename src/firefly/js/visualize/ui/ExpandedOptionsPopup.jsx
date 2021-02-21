@@ -8,7 +8,7 @@ import {useStoreConnector} from '../../ui/SimpleComponent';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
-import {visRoot, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
+import {visRoot, dispatchChangeActivePlotView, dispatchDeletePlotView} from '../ImagePlotCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {getMultiViewRoot,getExpandedViewerItemIds,dispatchReplaceViewerItems,
                              EXPANDED_MODE_RESERVED, IMAGE} from '../MultiViewCntlr.js';
@@ -146,13 +146,21 @@ function dialogComplete(tbl_id) {
     dispatchReplaceViewerItems(EXPANDED_MODE_RESERVED, plotIdAry, IMAGE);
 }
 
-// const deleteFailedNEW= () => {
-//     getPlotViewAry(visRoot()).forEach( (pv) => {
-//         if (pv.serverCall==='fail') {
-//             dispatchDeletePlotView({plotId:pv.plotId}) ;
-//         }
-//     });
-// };
+ const deleteFailedNEW= () => {
+     getPlotViewAry(visRoot()).forEach( (pv) => {
+         if (pv.serverCall==='fail'){
+             dispatchDeletePlotView({plotId:pv.plotId}) ;
+         }
+     });
+ };
+
+ const RemoveSelected= () => {
+     getPlotViewAry(visRoot()).forEach( (pv) => {
+         /*if (pv.serverCall==='fail'){
+             dispatchDeletePlotView({plotId:pv.plotId}) ;
+         }*/
+     });
+ }
 
 const pvKeys= ['plotId', 'request', 'serverCall', 'plottingStatusMsg'];
 const plotKeys= ['plotImageId'];
@@ -201,20 +209,20 @@ function ImageViewOptionsPanel() {
     //     dispatchReplaceViewerItems(EXPANDED_MODE_RESERVED, plotIdAry, IMAGE);
     // };
     //
-    // const deleteFailed= () => {
-    //     plotViewAry.forEach( (pv) => {
-    //         if (pv.serverCall==='fail') {
-    //             dispatchDeletePlotView({plotId:pv.plotId}) ;
-    //         }
-    //     });
-    // };
-    //
+    /* const deleteFailed= () => {
+         plotViewAry.forEach( (pv) => {
+             if (pv.serverCall==='fail') {
+                 dispatchDeletePlotView({plotId:pv.plotId}) ;
+             }
+         });
+     };*/
 
-    // const deleteFailedButton= () => (
-    //     <button type='button' className='button std hl'
-    //             onClick={() => deleteFailedNEW()}>Delete Failed
-    //     </button>
-    // );
+
+     const deleteFailedButton= () => (
+         <button type='button' className='button std hl'
+                 onClick={() => deleteFailedNEW()}>Delete Failed
+         </button>
+     );
 
 
     return (
@@ -225,6 +233,7 @@ function ImageViewOptionsPanel() {
                 <div className='TablePanel'>
                     <div className={'TablePanel__wrapper--border'}>
                         <div className='TablePanel__table' style={{top: 0}}>
+                            {deleteFailedButton}
                             <TablePanel
                                 tbl_ui_id={tbl_ui_id}
                                 tableModel={model}
@@ -248,11 +257,28 @@ function ImageViewOptionsPanel() {
             </div>
 
 
-            <div style={{display:'flex', justifyContent:'space-between'}}>
+            <div style={{display:'flex', /*justifyContent:'space-between'*/}}>
                 <CompleteButton
-                    style={{padding : 5}} text={'Done'}
+                    style={{padding : 5, marginRight : '50%'}} text={'Done'}
                     onSuccess={() => dialogComplete(model.tbl_id)}
                     dialogId='ExpandedOptionsPopup' />
+
+
+                <div style={{display:'flex', padding:5}}>
+                    <button type='button' className='button std hl'
+                            onClick={() => RemoveSelected()}>Remove Selected
+                    </button>
+
+                </div>
+
+
+                <div style={{display:'flex', padding:5}}>
+                    <button type='button' className='button std hl'
+                            onClick={() => deleteFailedNEW()}>Delete Failed
+                    </button>
+
+                </div>
+
                 <HelpIcon helpId={'visualization.loaded-images'} style={{padding:'8px 9px 0 0'}}/>
             </div>
         </div>
