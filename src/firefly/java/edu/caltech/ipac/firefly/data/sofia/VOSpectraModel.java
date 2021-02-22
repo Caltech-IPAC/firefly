@@ -1,7 +1,9 @@
 package edu.caltech.ipac.firefly.data.sofia;
 
 import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.ResourceInfo;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -13,6 +15,12 @@ import java.util.Map;
  * IVOA docs: http://www.ivoa.net/documents/index.html
  */
 public interface VOSpectraModel {
+
+
+    //Group utype to define spectra viewer axis
+    static String SPECTRAL_AXIS_UTYPE = "spec:Data.SpectralAxis";
+    static String FLUX_AXIS_UTYPE = "spec:Data.FluxAxis";
+    String SPECTRADM_UTYPE = "spec:Spectrum";
 
 
     // TODO
@@ -33,18 +41,18 @@ public interface VOSpectraModel {
     //TODO add to this enum to cover more spectra content attributes
    enum SPECTRA_FIELDS {
         //Y AXIS
-        FLUX("Flux", "Flux", Double.class,"phot.flux.density;em.MIR"), // unit should be replace by extractor
+        FLUX("Flux", "Flux", Double.class,"phot.flux.density;em.MIR", "spec:Spectrum.Data.FluxAxis.Value"), // unit should be replace by extractor
         //X AXIS
-        WAVELENGTH("Wavelength", "Wavelength", Double.class,"em.wl;em.MIR"),
-        WAVENUMBER("Wavenumber", "Wavenumber", Double.class,"em.wavenumber;em.MIR"),
+        WAVELENGTH("Wavelength", "Wavelength", Double.class,"em.wl;em.MIR", "spec:Spectrum.Data.SpectralAxis.Value"),
+        WAVENUMBER("Wavenumber", "Wavenumber", Double.class,"em.wavenumber;em.MIR","spec:Spectrum.Data.SpectralAxis.Value"),
 //        FREQUENCY("wavelength", "Wavelength", Double.class),
         //ERRORs
-        ERROR_FLUX("Error", "Error", Double.class,"stat.error;phot.flux.density;em.MIR"),
-        ATMOS_TRANSMISSION("Transmission", "Transmission", Double.class,"phys.transmission;em.MIR"),
-        FREQUENCY ( "Frequency", "Frequency", Double.class, "em.freq"),
-        VELOCITY ( "Velocity", "Velocity", Double.class, "spect.dopplerVeloc.radio"),
+        ERROR_FLUX("Error", "Error", Double.class,"stat.error;phot.flux.density;em.MIR","spec:Spectrum.Data.FluxAxis.Accuracy.StatError"),
+        ATMOS_TRANSMISSION("Transmission", "Transmission", Double.class,"phys.transmission;em.MIR",""),
+        FREQUENCY ( "Frequency", "Frequency", Double.class, "em.freq","spec:Spectrum.Data.SpectralAxis.Value"),
+        VELOCITY ( "Velocity", "Velocity", Double.class, "spect.dopplerVeloc.radio","spec:Spectrum.Data.SpectralAxis.Value"),
 
-        INST_RESP_CURVE("Response", "Response", Double.class,"instr.det;em.MIR") ;
+        INST_RESP_CURVE("Response", "Response", Double.class,"instr.det;em.MIR","") ;
 
         // ORDERS...
         String key;
@@ -52,13 +60,10 @@ public interface VOSpectraModel {
         Class metaClass;
         String description, units, utype, ucd; // ref?, ID? group (see vizier tables)
 
-        SPECTRA_FIELDS(String key, String label, Class c) {
-            this(key, label, c, null, null, null, null);
+        SPECTRA_FIELDS(String key, String label, Class c, String ucd, String utype) {
+            this(key, label, c, null, ucd, utype, null);
         }
-        SPECTRA_FIELDS(String key, String label, Class c, String ucd) {
-            this(key, label, c, null, null, ucd, null);
-        }
-        SPECTRA_FIELDS(String key, String label, Class c, String des, String units, String ucd, String utype) {
+        SPECTRA_FIELDS(String key, String label, Class c, String units, String ucd, String utype, String des) {
             this.key = key;
             this.label = label;
             this.metaClass = c;

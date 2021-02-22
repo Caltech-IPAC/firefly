@@ -1,10 +1,9 @@
 package edu.caltech.ipac.firefly.data.sofia;
 
 import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.ResourceInfo;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Define SOFIA spectra model in terms of VO fields
@@ -19,10 +18,6 @@ public class SofiaSpectraModel implements VOSpectraModel {
     private final Map<String, DataType> voCols;
     private SPECTRA_FIELDS[] spectraCols;
 
-    public SofiaSpectraModel() {
-        this(defaultSofiaSpectraCols);
-    }
-
     /**
      * Define spectra model with specific columns
      * Constructor with particular data type fields
@@ -31,7 +26,6 @@ public class SofiaSpectraModel implements VOSpectraModel {
      */
     public SofiaSpectraModel(VOSpectraModel.SPECTRA_FIELDS[] fields) {
         spectraCols = fields;
-
         voCols = new LinkedHashMap<>(); //Keep order of the column default set above, important to extract the data rom images row as SOFIA model defined.
         for (SPECTRA_FIELDS param : spectraCols) {
             DataType dt = new DataType(param.getKey(), param.getTitle(), param.getMetaClass());

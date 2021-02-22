@@ -217,6 +217,8 @@ public class TableUtil {
                     dg.setResourceInfos(JsonTableUtil.toResourceInfos(v));
                 }else if (k.equals(TableMeta.TBL_LINKS)) {
                     dg.setLinkInfos(JsonTableUtil.toLinkInfos(v));
+                }else if (k.equals(TableMeta.TBL_GROUPS)) {
+                    dg.setGroupInfos(JsonTableUtil.toGroupInfos(v));
                 } else {
                     dg.getTableMeta().setAttribute(k, v);
                 }

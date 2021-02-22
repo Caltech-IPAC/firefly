@@ -235,22 +235,25 @@ public class VoTableWriter {
 
         private String xmlGROUP(GroupInfo gInfo) {
             String params = xmlPARAMs(gInfo.getParamInfos());
+            String groups = xmlGROUPs(gInfo.getGroupInfos());
             String paramRefs = xmlPARAMrefs(gInfo.getParamRefs());
             String fieldRefs = xmlFIELDrefs(gInfo.getColumnRefs());
             String descriptionTag = tagElement(tagDesc, gInfo.getDescription());
             String groupElement = "<GROUP" + elementAtt(TableMeta.ID, gInfo.getID()) +
-                                             elementAtt(TableMeta.NAME, gInfo.getName()) + ">\n" +
+                                             elementAtt(TableMeta.NAME, gInfo.getName()) +
+                                             elementAtt(TableMeta.UTYPE, gInfo.getUtype()) +
+                                             elementAtt(TableMeta.UCD, gInfo.getUCD()) + ">\n" +
                                   (isEmpty(descriptionTag) ? "" : descriptionTag+"\n") +
                                   (isEmpty(fieldRefs) ? "" : fieldRefs+"\n") +
                                   (isEmpty(params) ? "" : params+"\n") +
+                                  (isEmpty(groups) ? "" : groups+"\n") +
                                   (isEmpty(paramRefs) ? "" : paramRefs + "\n") +
                                   "</GROUP>";
 
             return groupElement;
         }
 
-        public String xmlGROUPs() {
-            List<GroupInfo> groups = dataGroup.getGroupInfos();
+        public String xmlGROUPs(List<GroupInfo> groups) {
 
             return groups.stream()
                          .map( (oneGroup -> xmlGROUP(oneGroup)))
@@ -349,7 +352,7 @@ public class VoTableWriter {
                 /* Now add our additional info */
                 DataGroupXML dgXML = new DataGroupXML( dataGroup);
                 outputElement(writer, dgXML.xmlDESCRIPTION());     // DESCRIPTION tag
-                outputElement(writer, dgXML.xmlGROUPs());          // GROUP
+                outputElement(writer, dgXML.xmlGROUPs(dataGroup.getGroupInfos()));          // GROUP
                 outputElement(writer, dgXML.xmlPARAMs(dataGroup.getParamInfos())); // PARAM
                 outputElement(writer, dgXML.xmlLINKs(dataGroup.getLinkInfos()));
 
