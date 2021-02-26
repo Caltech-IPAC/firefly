@@ -4,6 +4,9 @@ import {get, isUndefined, pick} from 'lodash';
 
 import {BasicOptionFields} from './BasicOptions.jsx';
 import {getChartData, getTraceSymbol} from '../../ChartsCntlr.js';
+import {COL_TYPE, getColumns, getTblById} from '../../../tables/TableUtil.js';
+import {getSpectrumDM} from '../../../util/VOAnalyzer.js';
+import {getUnitInfo, getUnitConvExpr} from '../../dataTypes/FireflySpectrum.js';
 
 import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
 import {getColValStats} from '../../TableStatsCntlr.js';
@@ -29,7 +32,7 @@ export function SedOptions ({chartId, tbl_id, activeTrace, showMultiTrace, group
     tbl_id = get(tablesource, 'tbl_id') || tbl_id;
 
     return(
-        <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={false} reducerFunc={spectrumReducer({chartId, activeTrace})}>
+        <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={false} reducerFunc={spectrumReducer({chartId, activeTrace, tbl_id})}>
 
             <div className='FieldGroup__vertical'>
                 <ListBoxInputField fieldKey={`data.${activeTrace}.mode`} options={[{label: 'points', value:'markers'}, {label: 'connected points', value:'lines+markers'}]}/>
@@ -51,26 +54,33 @@ export function SedOptions ({chartId, tbl_id, activeTrace, showMultiTrace, group
 export function SpectrumOptions({chartId, tablesource={}, activeTrace, groupKey}) {
     // _tables.  is prefixed the fieldKey.  it will be replaced with 'tables::val' on submitChanges.
     const tbl_id = get(tablesource, 'tbl_id');
+    const {spectralAxis, fluxAxis} = getSpectrumDM(getTblById(tbl_id)) || {};
+
     const colValStats = getColValStats(tbl_id);
     if (!colValStats) { return null; }
-    const xProps = {fldPath:`_tables.data.${activeTrace}.x`, label: 'Spectral axis column(X):', name: 'X', nullAllowed: false, colValStats, groupKey, ...fieldProps};
-    const yProps = {fldPath:`_tables.data.${activeTrace}.y`, label: 'Flux axis column(Y):', name: 'Y', nullAllowed: false, colValStats, groupKey, ...fieldProps};
+    const xProps = {readonly: true, fldPath:`_tables.data.${activeTrace}.x`, label: 'Spectral axis column(X):', name: 'X', nullAllowed: false, colValStats, groupKey, ...fieldProps};
+    const yProps = {readonly: true, fldPath:`_tables.data.${activeTrace}.y`, label: 'Flux axis column(Y):', name: 'Y', nullAllowed: false, colValStats, groupKey, ...fieldProps};
     const xMaxProps = {fldPath:`_tables.fireflyData.${activeTrace}.xMax`, label: 'Spectral axis upper limit column:', name: 'Upper Limit', nullAllowed: true, colValStats, groupKey, ...fieldProps};
     const xMinProps = {fldPath:`_tables.fireflyData.${activeTrace}.xMin`, label: 'Spectral axis lower limit column:', name: 'Lower Limit', nullAllowed: true, colValStats, groupKey, ...fieldProps};
     const yMaxProps = {fldPath:`_tables.fireflyData.${activeTrace}.yMax`, label: 'Flux axis upper limit column:', name: 'Upper Limit', nullAllowed: true, colValStats, groupKey, ...fieldProps};
     const yMinProps = {fldPath:`_tables.fireflyData.${activeTrace}.yMin`, label: 'Flux axis lower limit column:', name: 'Lower Limit', nullAllowed: true, colValStats, groupKey, ...fieldProps};
 
+    const hasXerrors = spectralAxis.statError || spectralAxis.statErrLow || spectralAxis.statErrHigh;
+    const hasYerrors = fluxAxis.statError || fluxAxis.statErrLow || fluxAxis.statErrHigh;
+
     return (
         <div className='FieldGroup__vertical'>
             <ColumnOrExpression {...xProps}/>
-            <Errors {...{axis: 'x', groupKey, colValStats, activeTrace, ...fieldProps, labelWidth: 75}}/>
+            {hasXerrors && <Errors {...{axis: 'x', readonly: true, groupKey, colValStats, activeTrace, ...fieldProps, labelWidth: 75}}/>}
             <ColumnOrExpression {...xMaxProps}/>
             <ColumnOrExpression {...xMinProps}/>
+            <Units {...{activeTrace, spectralAxis}}/>
             <br/>
             <ColumnOrExpression {...yProps}/>
-            <Errors {...{axis:'y', groupKey, colValStats, activeTrace, ...fieldProps, labelWidth: 75}}/>
+            {hasYerrors && <Errors {...{axis: 'y', readonly: true, groupKey, colValStats, activeTrace, ...fieldProps, labelWidth: 75}}/>}
             <ColumnOrExpression {...yMaxProps}/>
             <ColumnOrExpression {...yMinProps}/>
+            <Units {...{activeTrace, fluxAxis}}/>
         </div>
     );
 }
@@ -84,12 +94,13 @@ SpectrumOptions.propTypes = {
 };
 
 
-export function spectrumReducer({chartId, activeTrace}) {
+export function spectrumReducer({chartId, activeTrace, tbl_id}) {
     const scatterReducer = fieldReducer({chartId, activeTrace});
 
+    const {spectralAxis={}, fluxAxis={}} = getSpectrumDM(getTblById(tbl_id)) || {};
+
     const getFields = () => {
-        const chartData = getChartData(chartId);
-        const {tablesources={}} = chartData;
+        const {fireflyData, tablesources = {}} = getChartData(chartId);
         const tablesourceMappings = get(tablesources[activeTrace], 'mappings');
 
         const fields = {
@@ -103,9 +114,35 @@ export function spectrumReducer({chartId, activeTrace}) {
                 value: get(tablesourceMappings, `fireflyData.${activeTrace}.xMin`, ''),
                 ...fieldProps
             },
+            [`fireflyData.${activeTrace}.xUnit`]: {
+                fieldKey: `fireflyData.${activeTrace}.xUnit`,
+                value: get(fireflyData, `${activeTrace}.xUnit`) || spectralAxis.unit,
+                ...fieldProps
+            },
+            [`fireflyData.${activeTrace}.yUnit`]: {
+                fieldKey: `fireflyData.${activeTrace}.yUnit`,
+                value: get(fireflyData, `${activeTrace}.yUnit`) || fluxAxis.unit,
+                ...fieldProps
+            },
             ...scatterReducer(null)
         };
         return fields;
+    };
+
+    const updateErrors = (inFields, axisType, value) => {
+        const errCname = inFields[errorFieldKey(activeTrace, axisType)];
+        const errMinusCname = inFields[errorMinusFieldKey(activeTrace, axisType)];
+        const axis = axisType === 'x' ? spectralAxis : fluxAxis;
+
+        if (errCname) {
+            const convVal = getUnitConvExpr({cname: axis.statErrHigh || axis.statError, from: axis.unit, to: value});
+            inFields = updateSet(inFields, [errorFieldKey(activeTrace, axisType), 'value'], convVal);
+        }
+        if (errMinusCname) {
+            const convVal = getUnitConvExpr({cname: axis.statErrLow, from: axis.unit, to: value});
+            inFields = updateSet(inFields, [errorMinusFieldKey(activeTrace, axisType), 'value'], convVal);
+        }
+        return inFields;
     };
 
     return (inFields, action) => {
@@ -126,8 +163,38 @@ export function spectrumReducer({chartId, activeTrace}) {
                     inFields = updateSet(inFields, [errorMinusFieldKey(activeTrace, `${a}`), 'value'], undefined);
                 }
             });
+
+            if (fieldKey === `fireflyData.${activeTrace}.xUnit`) {
+                const xLabel = getUnitInfo(value, true).label;
+                const colOrExpr = getUnitConvExpr({cname: spectralAxis.value, from: spectralAxis.unit, to: value});
+                inFields = updateSet(inFields, [`_tables.data.${activeTrace}.x`, 'value'], colOrExpr);
+                inFields = updateSet(inFields, ['layout.xaxis.title.text', 'value'], xLabel);
+                inFields = updateErrors(inFields, 'x', value);
+            }
+            if (fieldKey === `fireflyData.${activeTrace}.yUnit`) {
+                const yLabel = getUnitInfo(value, false).label;
+                const colOrExpr = getUnitConvExpr({cname: fluxAxis.value, from: fluxAxis.unit, to: value});
+                inFields = updateSet(inFields, [`_tables.data.${activeTrace}.y`, 'value'], colOrExpr);
+                inFields = updateSet(inFields, ['layout.yaxis.title.text', 'value'], yLabel);
+                inFields = updateErrors(inFields, 'y', value);
+            }
         }
         return inFields;
 
     };
+}
+
+
+function Units({activeTrace, spectralAxis, fluxAxis}) {
+
+    const value = spectralAxis?.unit || fluxAxis?.unit;
+    const unitProp = spectralAxis ? 'xUnit' : 'yUnit';
+    const label = spectralAxis ? 'Spectral axis units:' : 'Flux axis units:';
+    const options = getUnitInfo(value)?.options;
+    if (!options) return null;
+
+    return (
+        <ListBoxInputField fieldKey={`fireflyData.${activeTrace}.${unitProp}`} label={label}  options={options}/>
+    );
+
 }

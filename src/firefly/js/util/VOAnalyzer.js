@@ -1340,11 +1340,24 @@ export function getSpectrumDM(tableModel) {
 
         return data;
     };
+    const fixStatErr = (axis) => {
+        if (!axis) return;
+        const {statError, statErrLow, statErrHigh} = axis;
+        if (statError) {
+            axis.statErrLow = axis.statErrHigh = undefined;         // if statError is defined, ignore low/high
+        } else if (!statErrLow !== !statErrHigh) {                  // logical xor equivalent
+            statErrLow = statErrLow || 0.0;
+            axis.statError = statErrLow || statErrHigh;             // if only 1 of the low/high is given, treat it as statError
+        }
+    };
 
     const spectralAxis  = findAxisData(spectralAxisPrefix);
     const fluxAxis      = findAxisData(fluxAxisPrefix);
     const timeAxis      = findAxisData(timeAxisPrefix);
     const orderID       = findColByUtype(tableModel, orderIDPrefix);
+
+    fixStatErr(spectralAxis);
+    fixStatErr(fluxAxis);
 
     return pickBy({spectralAxis, fluxAxis, timeAxis, orderID}, (a) => !isEmpty(a));      // return axis only if it has data
 }

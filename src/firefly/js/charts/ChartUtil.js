@@ -30,6 +30,7 @@ import Color from '../util/Color.js';
 import {MetaConst} from '../data/MetaConst';
 import {ALL_COLORSCALE_NAMES, colorscaleNameToVal} from './Colorscale.js';
 import {findTableCenterColumns, getSpectrumDM} from '../util/VOAnalyzer.js';
+import {getUnitInfo} from './dataTypes/FireflySpectrum.js';
 
 export const DEFAULT_ALPHA = 0.5;
 
@@ -922,7 +923,7 @@ export function getDefaultChartProps(tbl_id) {
 
     // for spectra, use custom spectraviwer ..
     const spectrumDM = getSpectrumDM(tblModel);
-    if (!isEmpty(spectrumDM)) return sedPlot({tbl_id, spectrumDM});
+    if (!isEmpty(spectrumDM)) return spectrumPlot({tbl_id, spectrumDM});
 
 
     let xCol, yCol;
@@ -1001,34 +1002,30 @@ function scatterOrHeatmap({tbl_id, xCol, yCol, xOptions}) {
 
 }
 
-function sedPlot({tbl_id, spectrumDM}) {
+function spectrumPlot({tbl_id, spectrumDM}) {
     const {totalRows} = getTblById(tbl_id) || {};
 
     const error = ({statError, statErrLow, statErrHigh}) => {
-        let arrayminus = statErrLow || statError;
+        const arrayminus  = statErrLow && `tables::${statErrLow}`;
         let array = statErrHigh || statError;
-
-        if (array === arrayminus) arrayminus = undefined;
-        arrayminus  = arrayminus && `tables::${arrayminus}`;
-        array       = array && `tables::${array}`;
-
+        array = array && `tables::${array}`;
         return pickBy({arrayminus, array});
     };
 
     const type = totalRows >= getMinScatterGLRows() ? 'scattergl' : 'scatter';
 
-    const {spectralAxis, fluxAxis} = spectrumDM || {};
+    const {spectralAxis={}, fluxAxis={}} = spectrumDM || {};
 
-    const xColName = quoteNonAlphanumeric(spectralAxis?.value);
-    const yColName = quoteNonAlphanumeric(fluxAxis?.value);
+    const xColName = quoteNonAlphanumeric(spectralAxis.value);
+    const yColName = quoteNonAlphanumeric(fluxAxis.value);
 
     const x = xColName && `tables::${xColName}`;
     const y = yColName && `tables::${yColName}`;
-    const error_x = error(spectralAxis || {});
-    const error_y = error(fluxAxis || {});
+    const error_x = error(spectralAxis);
+    const error_y = error(fluxAxis);
 
-    const xLabel = spectralAxis?.unit ? `v [${spectralAxis?.unit}]` : 'v';
-    const yLabel = fluxAxis?.unit ? `Fv [${fluxAxis?.unit}]` : 'Fv';
+    const xLabel = getUnitInfo(spectralAxis.unit, true)?.label;
+    const yLabel = getUnitInfo(fluxAxis.unit, false)?.label;
 
     const firefly = { dataType: 'SED' };
 
