@@ -9,6 +9,7 @@ package edu.caltech.ipac.firefly.server;
  */
 
 
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -146,6 +147,9 @@ public class Counters {
         retList.add("Overview");
         addToList(retList,"Hostname", HOST_NAME);
         addToList(retList, "Up time", elapse);
+        addToList(retList, "Client Base URL", ServerContext.getRequestOwner().getBaseUrl());
+        addToList(retList, "SSO_SERVICES_URL", AppProperties.getProperty("sso.server.url"));
+        addToList(retList, "Auth Token", ServerContext.getRequestOwner().getAuthToken());
         retList.add("");
         addMemoryStatus(retList);
 

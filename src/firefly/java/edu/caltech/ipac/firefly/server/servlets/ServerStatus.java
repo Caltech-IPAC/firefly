@@ -21,8 +21,12 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.PrintWriter;
 import java.rmi.RemoteException;
 import java.util.Arrays;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Date: Jun 3, 2009
@@ -33,6 +37,8 @@ import java.util.Map;
 public class ServerStatus extends BaseHttpServlet {
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
+
+        boolean showHeaders = Boolean.parseBoolean(req.getParameter("headers"));
 
         res.addHeader("content-type", "text/plain");
         PrintWriter writer = res.getWriter();
@@ -50,6 +56,16 @@ public class ServerStatus extends BaseHttpServlet {
 
             displayCacheInfo(writer, prov.getEhcacheManager());
             displayCacheInfo(writer, prov.getSharedManager());
+
+            if (showHeaders) {
+                skip(writer);
+                showHeaders(writer, req);
+            }
+
+            // show optional parameters
+            writer.println("\n\nAvailable Parameters");
+            writer.println(    "--------------------");
+            writer.println("headers=[true|false]        Display all request's headers");
 
         } finally {
             writer.flush();
@@ -118,6 +134,48 @@ public class ServerStatus extends BaseHttpServlet {
         w.println("Packaging Controller Information");
         w.println(StringUtils.toString(PackagingController.getInstance().getStatus(), "\n"));
     }
+
+    private static void showHeaders(PrintWriter w, HttpServletRequest req) {
+
+        w.println("Request Headers");
+        w.println("---------------");
+        Enumeration<String> headerNames = req.getHeaderNames();
+        while (headerNames.hasMoreElements()) {
+            String name = headerNames.nextElement();
+            String value = Collections.list(req.getHeaders(name)).stream().collect(Collectors.joining(", "));
+            w.println(String.format("    %s: %s", name, value));
+        }
+
+        String jwt = req.getParameter("jwt");
+        if (!StringUtils.isEmpty(jwt)) {
+            // these are JWT tokens
+            skip(w);
+            w.println("  Expanding JWT tokens: " + jwt);
+            Arrays.stream(jwt.split(","))
+                    .forEach((header) -> {
+                                w.println("  " + header + "---->");
+                                String idTokenBase64 = req.getHeader(header);
+                                if (!StringUtils.isEmpty(idTokenBase64)) {
+                                    try {
+                                        String[] parts = idTokenBase64.split("\\.");        // 3-part: [how_signed:claims:signature]
+                                        if (parts.length == 3) {
+                                            w.println("      JWT:" + parts[1]);
+                                            String jwtString = new String(Base64.getDecoder().decode(parts[1]));
+                                            w.println(jwtString);
+                                        } else {
+                                            w.println("      not valid JWT:" + idTokenBase64);
+                                        }
+                                    } catch (Exception e) {
+                                        w.println("      not valid JWT:" + idTokenBase64);
+                                        w.println(e.getMessage());
+                                    }
+                                }
+                            }
+                    );
+        }
+    }
+
+
 
     boolean isTestRunning = false;
     private void testSharedCache() {
