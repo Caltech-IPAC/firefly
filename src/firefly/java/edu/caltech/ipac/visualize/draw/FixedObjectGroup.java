@@ -217,6 +217,7 @@ public class FixedObjectGroup implements Serializable, Iterable<FixedObject> {
 //======================================================================
 
     private void addPlot(Plot p) {
+        getPlots().add(new PlotInfo(p) ); // needs to add to empty slot
         if (p.isPlotted()) computeImageTransform(p);
     }
 
