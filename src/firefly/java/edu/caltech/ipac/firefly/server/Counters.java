@@ -9,6 +9,8 @@ package edu.caltech.ipac.firefly.server;
  */
 
 
+import edu.caltech.ipac.firefly.server.security.SsoAdapter;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -146,6 +148,10 @@ public class Counters {
         retList.add("Overview");
         addToList(retList,"Hostname", HOST_NAME);
         addToList(retList, "Up time", elapse);
+        addToList(retList, "Client Base URL", ServerContext.getRequestOwner().getBaseUrl());
+        SsoAdapter ssoAdapter = ServerContext.getRequestOwner().getSsoAdapter();
+        addToList(retList, "Login URL", ssoAdapter == null ? "n/a" : ssoAdapter.getLoginUrl(""));
+        addToList(retList, "Auth Token", (ssoAdapter != null && ssoAdapter.getAuthToken() != null) ? ssoAdapter.getAuthToken().getId() : null);
         retList.add("");
         addMemoryStatus(retList);
 

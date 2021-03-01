@@ -88,6 +88,10 @@ public class ServerStatus extends BaseHttpServlet {
                 showHeaders(writer, req);
             }
 
+            // show optional parameters
+            writer.println("\n\nAvailable Parameters");
+            writer.println(    "--------------------");
+            writer.println("headers=[true|false]        Display all request's headers");
 
         } finally {
             writer.flush();
