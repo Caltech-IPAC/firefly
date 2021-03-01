@@ -406,8 +406,11 @@ public class JsonTableUtil {
             applyIfNotEmpty(gInfo.getName(),        v -> json.put("name", v));
             applyIfNotEmpty(gInfo.getDescription(), v -> json.put("desc", v));
             applyIfNotEmpty(gInfo.getID(),          v -> json.put("ID", v));
+            applyIfNotEmpty(gInfo.getUCD(),          v -> json.put("UCD", v));
+            applyIfNotEmpty(gInfo.getUtype(),          v -> json.put("utype", v));
 
             if (gInfo.getParamInfos().size() > 0)   json.put("params", toJsonParamInfos(gInfo.getParamInfos()));
+            if (gInfo.getGroupInfos().size() > 0)   json.put("groups", toJsonGroupInfos(gInfo.getGroupInfos()));
             if (gInfo.getParamRefs().size() > 0)    json.put("paramRefs", toJsonRefInfos(gInfo.getParamRefs()));
             if (gInfo.getColumnRefs().size() > 0)   json.put("columnRefs", toJsonRefInfos(gInfo.getColumnRefs()));
 
@@ -438,12 +441,40 @@ public class JsonTableUtil {
                 applyIfNotEmpty(param.get("desc"), v -> groupInfo.setDescription(v.toString()));
 
                 applyIfNotEmpty(param.get("params"), v -> groupInfo.setParamInfos(toParamInfos(v.toString())));
+                applyIfNotEmpty(param.get("groups"), v -> groupInfo.setGroupInfos(toGroupInfos(v.toString())));
+                applyIfNotEmpty(param.get("paramRefs"), v -> groupInfo.setParamRefs(toRefInfos(v.toString())));
+                applyIfNotEmpty(param.get("columnRefs"), v -> groupInfo.setColumnRefs(toRefInfos(v.toString())));
                 rval.add(groupInfo);
             }
             return rval;
         }
         return null;
     }
+
+    /**
+     * The invert of #toJsonParamInfos().  This convert the JSON paramInfos string into
+     * a List of ParamInfo.
+     * @param jsonRefInfos     the string to parse into RefInfo
+     * @return  a List of ParamInfo
+     */
+    public static List<GroupInfo.RefInfo> toRefInfos(String jsonRefInfos) {
+
+        List<GroupInfo.RefInfo> rval = new ArrayList<>();
+        if (!isEmpty(jsonRefInfos)) {
+            JSONArray params = (JSONArray) JSONValue.parse(jsonRefInfos);
+            for (int i = 0; i < params.size(); i++) {
+                JSONObject param = (JSONObject) params.get(i);
+                GroupInfo.RefInfo refInfo = new GroupInfo.RefInfo();
+                applyIfNotEmpty(param.get("ref"),    v -> refInfo.setRef(v.toString()));
+                applyIfNotEmpty(param.get("UCD"),    v -> refInfo.setUcd(v.toString()));
+                applyIfNotEmpty(param.get("utype"),  v -> refInfo.setUtype(v.toString()));
+                rval.add(refInfo);
+            }
+            return rval;
+        }
+        return null;
+    }
+
 
     private static List<JSONObject> toJsonRefInfos(List<GroupInfo.RefInfo> refInfos) {
 

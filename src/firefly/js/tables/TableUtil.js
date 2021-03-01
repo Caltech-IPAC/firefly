@@ -379,7 +379,7 @@ export function columnIDToName(tableModel, ID) {
 
 
 /**
- * returns column information for the given ID.
+ * returns column information for the given ID.  This function searches all columns, including hidden ones.
  * @param {TableModel} tableModel
  * @param {string} ID
  * @returns {TableColumn}
@@ -388,12 +388,23 @@ export function columnIDToName(tableModel, ID) {
  * @memberof firefly.util.table
  */
 export function getColumnByID(tableModel, ID) {
-    const colIdx = getColumns(tableModel).findIndex((col) => col.ID === ID);
-    if (colIdx >= 0) {
-        return get(tableModel, `tableData.columns.${colIdx}`);
-    }
+    return getAllColumns(tableModel).find((c) => c.ID === ID);
 }
 
+/**
+ * returns column information for the given ref.  This function searches all columns, including hidden ones.
+ * It will first try to match ref with ID.  If not found, it will return the first column with matching name.
+ * @param {TableModel} tableModel
+ * @param {string} ref      matches a column ID or name, in that order.
+ * @returns {TableColumn}
+ * @public
+ * @func getColumnByRef
+ * @memberof firefly.util.table
+ */
+export function getColumnByRef(tableModel, ref) {
+    return getColumnByID(tableModel, ref) ||
+            getAllColumns(tableModel).find((c) => c.name === ref);
+}
 
 export function getFilterCount(tableModel) {
     const request = get(tableModel, 'request');

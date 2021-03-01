@@ -338,7 +338,7 @@ export function MetaInfo({tbl_id, style, isOpen=false}) {
     if (!TblUtil.hasAuxData(tbl_id)) {
         return null;
     }
-    const {keywords, links, params, resources} = TblUtil.getTblById(tbl_id);
+    const {keywords, links, params, resources, groups} = TblUtil.getTblById(tbl_id);
 
     return (
         <div className='TablePanel__meta' style={style}>
@@ -362,48 +362,68 @@ export function MetaInfo({tbl_id, style, isOpen=false}) {
                 {params.concat()                                                          // same logic as keywords, but sort by name
                     .sort(({name:k1}, {name:k2}) => k1.localeCompare(k2))
                     .map(({name, value, type='N/A'}, idx) => {
-                    return (
-                        <div key={'keywords-' + idx} style={{display: 'inline-flex'}}>
-                            <Keyword label={`${name}(${type})`} value={value}/>
-                        </div>
-                    );
-                })
+                        return (
+                            <div key={'params-' + idx} style={{display: 'inline-flex'}}>
+                                <Keyword label={`${name}(${type})`} value={value}/>
+                            </div>
+                        );
+                    })
+                }
+            </CollapsiblePanel>
+            }
+            { !isEmpty(groups) &&
+            <CollapsiblePanel componentKey={tbl_id + '-groups'} header='Groups' {...{isOpen, contentStyle, wrapperStyle}}>
+                {groups.map((rs, idx) => {
+                        const showValue = () => showInfoPopup(
+                            <div style={{whiteSpace: 'pre'}}>
+                                <ObjectTree data={rs} title={<b>Group</b>} className='MetaInfo__tree'/>
+                            </div> );
+                        return (
+                            <div key={'groups-' + idx} style={{display: 'inline-flex'}}>
+                                { rs.ID && <Keyword label='ID' value={rs.ID}/> }
+                                { rs.name && <Keyword label='name' value={rs.name}/> }
+                                { rs.UCD && <Keyword label='UCD' value={rs.UCD}/> }
+                                { rs.utype && <Keyword label='utype' value={rs.utype}/> }
+                                <a className='ff-href' onClick={showValue}> show value</a>
+                            </div>
+                        );
+                    })
                 }
             </CollapsiblePanel>
             }
             { !isEmpty(links) &&
             <CollapsiblePanel componentKey={tbl_id + '-links'} header='Links' {...{isOpen, contentStyle, wrapperStyle}}>
                 {links.map((l, idx) => {
-                    const dispVal = l.value || l.href;
-                    return (
-                        <div key={'keywords-' + idx} style={{display: 'inline-flex'}}>
-                            { l.ID && <Keyword label='ID' value={l.ID}/> }
-                            { l.role && <Keyword label='role' value={l.role}/> }
-                            { l.type && <Keyword label='type' value={l.type}/> }
-                            <a style={{whiteSpace: 'nowrap', maxWidth: 300}} href={l.href} title={l.title || dispVal}>{dispVal}</a>
-                        </div>
-                    );
-                })
+                        const dispVal = l.value || l.href;
+                        return (
+                            <div key={'links-' + idx} style={{display: 'inline-flex'}}>
+                                { l.ID && <Keyword label='ID' value={l.ID}/> }
+                                { l.role && <Keyword label='role' value={l.role}/> }
+                                { l.type && <Keyword label='type' value={l.type}/> }
+                                <a style={{whiteSpace: 'nowrap', maxWidth: 300}} href={l.href} title={l.title || dispVal}>{dispVal}</a>
+                            </div>
+                        );
+                    })
                 }
             </CollapsiblePanel>
             }
             { !isEmpty(resources) &&
             <CollapsiblePanel componentKey={tbl_id + '-resources'} header='Resources' {...{isOpen, contentStyle, wrapperStyle}}>
                 {resources.map((rs, idx) => {
-                    const showValue = () => showInfoPopup(
-                                <div style={{whiteSpace: 'pre'}}>
-                                    <ObjectTree data={rs} title={<b>Resource</b>} className='MetaInfo__tree'/>
-                                </div> );
-                    return (
-                        <div key={'keywords-' + idx} style={{display: 'inline-flex'}}>
-                            { rs.ID && <Keyword label='ID' value={rs.ID}/> }
-                            { rs.name && <Keyword label='name' value={rs.name}/> }
-                            { rs.type && <Keyword label='type' value={rs.type}/> }
-                            { rs.utype && <Keyword label='utype' value={rs.utype}/> }
-                            <a className='ff-href' onClick={showValue}> show value</a>
-                        </div>
-                    );
-                })
+                        const showValue = () => showInfoPopup(
+                                    <div style={{whiteSpace: 'pre'}}>
+                                        <ObjectTree data={rs} title={<b>Resource</b>} className='MetaInfo__tree'/>
+                                    </div> );
+                        return (
+                            <div key={'resources-' + idx} style={{display: 'inline-flex'}}>
+                                { rs.ID && <Keyword label='ID' value={rs.ID}/> }
+                                { rs.name && <Keyword label='name' value={rs.name}/> }
+                                { rs.type && <Keyword label='type' value={rs.type}/> }
+                                { rs.utype && <Keyword label='utype' value={rs.utype}/> }
+                                <a className='ff-href' onClick={showValue}> show value</a>
+                            </div>
+                        );
+                    })
                 }
             </CollapsiblePanel>
             }

@@ -3,6 +3,7 @@ package edu.caltech.ipac.firefly.data.sofia;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.GroupInfo;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.ImageHeader;
@@ -11,6 +12,10 @@ import nom.tam.fits.*;
 import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
+
+import static edu.caltech.ipac.firefly.data.sofia.VOSpectraModel.FLUX_AXIS_UTYPE;
+import static edu.caltech.ipac.firefly.data.sofia.VOSpectraModel.SPECTRAL_AXIS_UTYPE;
 
 
 public class SofiaFitsConverterUtil {
@@ -397,9 +402,61 @@ public class SofiaFitsConverterUtil {
 
             dataGroup.add(row);
         }
-       return dataGroup;
+        dataGroup.getTableMeta().setAttribute("utype",VOSpectraModel.SPECTRADM_UTYPE);
+
+        setFluxAxisGroups(dataGroup);
+        setSpectralAxisGroups(dataGroup);
+
+
+        return dataGroup;
     }
 
+    /*
+        Set as
+
+        <GROUP utype="spec:Data.SpectralAxis">
+            <FIELDref ref="Wavelength"/>
+        </GROUP>
+         */
+    private static void setSpectralAxisGroups(DataGroup dataGroup) {
+        GroupInfo spectralGroup = new GroupInfo();
+        spectralGroup.setUtype(SPECTRAL_AXIS_UTYPE);
+
+        List<GroupInfo.RefInfo> columnRefs = new ArrayList<>();
+
+        GroupInfo.RefInfo spectralAxisRef = new GroupInfo.RefInfo();
+        spectralAxisRef.setRef(VOSpectraModel.SPECTRA_FIELDS.FREQUENCY.getKey());
+        columnRefs.add(spectralAxisRef);
+
+        spectralGroup.setColumnRefs(columnRefs);
+
+        List<GroupInfo> groupInfos = dataGroup.getGroupInfos();
+        groupInfos.add(spectralGroup);
+    }
+
+    /*
+    Set as:
+
+    <GROUP utype="spec:Data.FluxAxis">
+        <FIELDref ref="Flux"/>
+	<FIELDref ref="Error"/>
+    </GROUP>
+     */
+    private static void setFluxAxisGroups(DataGroup dataGroup) {
+        GroupInfo spectralGroup = new GroupInfo();
+        spectralGroup.setUtype(FLUX_AXIS_UTYPE);
+
+        List<GroupInfo.RefInfo> columnRefs = new ArrayList<>();
+
+        GroupInfo.RefInfo fluxAxisRef = new GroupInfo.RefInfo();
+        fluxAxisRef.setRef(VOSpectraModel.SPECTRA_FIELDS.FLUX.getKey());
+        columnRefs.add(fluxAxisRef);
+
+        spectralGroup.setColumnRefs(columnRefs);
+
+        List<GroupInfo> groupInfos = dataGroup.getGroupInfos();
+        groupInfos.add(spectralGroup);
+    }
 
     /**
      * Currently this implementation only support the GREAT instrument with the following requirementn

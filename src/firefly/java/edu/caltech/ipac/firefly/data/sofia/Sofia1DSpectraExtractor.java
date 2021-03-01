@@ -3,9 +3,7 @@ package edu.caltech.ipac.firefly.data.sofia;
 import edu.caltech.ipac.firefly.core.FileAnalysisReport;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.DataObject;
-import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.*;
 import edu.caltech.ipac.table.io.VoTableWriter;
 import edu.caltech.ipac.util.FitsHDUUtil;
 import edu.caltech.ipac.util.download.URLDownload;
@@ -23,7 +21,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
+import static edu.caltech.ipac.firefly.data.sofia.VOSpectraModel.*;
 import static edu.caltech.ipac.table.TableUtil.Format.VO_TABLE_TABLEDATA;
 
 /**
@@ -120,9 +120,73 @@ public class Sofia1DSpectraExtractor extends DataExtractUtil {
         }
 
         dataGroup.trimToSize();
+
+        setFluxAxisGroups(dataGroup);
+        setSpectralAxisGroups(dataGroup);
+
+
+        TableMeta tableMeta = dataGroup.getTableMeta();
+        tableMeta.setAttribute("utype", SPECTRADM_UTYPE);
+
+        dataGroup.setTableMeta(tableMeta);
         return dataGroup;
 
         //return new SofiaSpectra(new SofiaSpectra.Axis(fdata[0], xunit), new SofiaSpectra.Axis(fdata[1], yunit));
+    }
+
+    /*
+    Set as
+
+    <GROUP utype="spec:Data.SpectralAxis">
+        <FIELDref ref="Wavelength"/>
+    </GROUP>
+     */
+    private void setSpectralAxisGroups(DataGroup dataGroup) {
+        GroupInfo spectralGroup = new GroupInfo();
+        spectralGroup.setUtype(SPECTRAL_AXIS_UTYPE);
+
+        List<GroupInfo.RefInfo> columnRefs = new ArrayList<>();
+
+        GroupInfo.RefInfo spectralAxisRef = new GroupInfo.RefInfo();
+        spectralAxisRef.setRef(SPECTRA_FIELDS.WAVELENGTH.getKey());
+        columnRefs.add(spectralAxisRef);
+        GroupInfo.RefInfo spectralAxisRefWavenumber = new GroupInfo.RefInfo();
+        spectralAxisRef.setRef(SPECTRA_FIELDS.WAVENUMBER.getKey());
+        columnRefs.add(spectralAxisRefWavenumber);
+
+        spectralGroup.setColumnRefs(columnRefs);
+
+        List<GroupInfo> groupInfos = dataGroup.getGroupInfos();
+        groupInfos.add(spectralGroup);
+    }
+
+    /*
+    Set as:
+
+    <GROUP utype="spec:Data.FluxAxis">
+        <FIELDref ref="Flux"/>
+	<FIELDref ref="Error"/>
+    </GROUP>
+     */
+    private void setFluxAxisGroups(DataGroup dataGroup) {
+        GroupInfo spectralGroup = new GroupInfo();
+        spectralGroup.setUtype(FLUX_AXIS_UTYPE);
+
+        List<GroupInfo.RefInfo> columnRefs = new ArrayList<>();
+
+        GroupInfo.RefInfo fluxAxisRef = new GroupInfo.RefInfo();
+        fluxAxisRef.setRef(VOSpectraModel.SPECTRA_FIELDS.FLUX.getKey());
+        columnRefs.add(fluxAxisRef);
+
+
+        GroupInfo.RefInfo fluxErrorRef = new GroupInfo.RefInfo();
+        fluxErrorRef.setRef(VOSpectraModel.SPECTRA_FIELDS.ERROR_FLUX.getKey());
+        columnRefs.add(fluxErrorRef);
+
+        spectralGroup.setColumnRefs(columnRefs);
+
+        List<GroupInfo> groupInfos = dataGroup.getGroupInfos();
+        groupInfos.add(spectralGroup);
     }
 
     public boolean isSpectra(String key, String value) {
