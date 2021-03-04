@@ -22,7 +22,7 @@ process.traceDeprecation = true;
  * @param {string}  [config.project]  project name
  * @param {string}  [config.filename]  name of the generated JS script.
  * @param {string}  [config.baseWarName]  name of the the war file base, defaults to config.name
- * @param {function}  [config.doFirst]  execute with the original config param if given.
+ * @param {function}  [config.doFirst]  execute with the original config param if given.;
  * @param {function}  [config.doLast]   execute with the created webpack_config param if given.
  * @returns {Object} a webpack config object.
  */
@@ -53,6 +53,7 @@ export default function makeWebpackConfig(config) {
         do_lint     : process.env.DO_LINT || process.env.DO_LINT_STRICT || false,
         html_dir    : 'html',
         use_loader  : true,
+        loaderPostfix: '_loader.js',
         filename    : '[name]-dev.js',
         deploy_dir  : (process.env.tomcat_home || '/hydra/server/tomcat') + `/webapps/${config.baseWarName}`,
         alias       : {
@@ -65,13 +66,15 @@ export default function makeWebpackConfig(config) {
 
     config.alias = Object.assign(def_config.alias, config.alias);
     config = Object.assign(def_config, config);
+    const nameRoot= Object.keys(config.entry)[0];
 
     let script_names = [];
     if (config.use_loader) {
-        script_names = ['firefly_loader.js'];
+        script_names = [getLoadScript(nameRoot,config.loaderPostfix)];
     } else {
         Object.keys(config.entry).forEach( (v) => {
             script_names.push(v + '.js');
+
         });
     }
 
@@ -106,6 +109,7 @@ export default function makeWebpackConfig(config) {
         workerFilename= '[name]-[hash].worker.js';
     }
     const output =  {filename, path: out_path};
+    console.log('output:',output);
 
     /*------------------------ PLUGINS -----------------------------*/
     const plugins = [
@@ -121,8 +125,9 @@ export default function makeWebpackConfig(config) {
 
     if (config.use_loader) {
         plugins.push(
-            firefly_loader(path.resolve(config.firefly_dir, '../../buildScript/loadScript.js'),
-                out_path, BUILD_ENV === 'local')
+            firefly_loader(
+                path.resolve(config.firefly_dir, '../../buildScript/loadScript.js'),
+                out_path, nameRoot, config.loaderPostfix, BUILD_ENV === 'local')
         );
     }
 
@@ -149,38 +154,24 @@ export default function makeWebpackConfig(config) {
                     ],
                     '@babel/preset-react'
                 ],
-                plugins: [
-                    '@babel/plugin-transform-runtime',
-                    'lodash'
-                ]
+                plugins: [ '@babel/plugin-transform-runtime', 'lodash' ]
             }
         },
         {
             test    : /\.worker\.js$/,
             loader: 'worker-loader',
             options: {
-                // publicPath: '/firefly/',
                 filename: workerFilename,
                 inline: 'fallback'
             }
         },
         {
             test    : /\.css$/,
-            use: [
-                {
-                    loader: 'style-loader'
-                },
-                {
-                    loader: 'css-loader'
-                    // loader: `css-loader?root=${path.resolve(config.firefly_dir, 'html')}`,
-                },
-            ]
+            use: [ { loader: 'style-loader' }, { loader: 'css-loader' }]
         },
         {
             test: /\.(png|jpg|gif)$/,
-            use: [{
-                loader: `url-loader?root=${path.resolve(config.firefly_dir, 'html')}`,
-            }]
+            use: [{ loader: `url-loader?root=${path.resolve(config.firefly_dir, 'html')}`}]
         }
     ];
 
@@ -270,19 +261,22 @@ export default function makeWebpackConfig(config) {
 //webpackConfig.plugins.push(commonChunkPlugin);
 
 
+const getLoadScript= (nameRoot, loaderPostfix) => `${nameRoot}${loaderPostfix}`;
 
 
-function firefly_loader(loadScript, outpath, isLocal) {
-    return function () {
-        this.hooks.done.tap('done', function (stats) {
-            const hash = isLocal ? 'dev' : stats.hash;
-            //var cxt_name = stats.compilation.name;
+function firefly_loader(loadScript, outpath, nameRoot, loaderPostfix, isLocal) {
+    return function ()  {
+        this.hooks.done.tap('done',
+            (stats) => {
+                const hash = isLocal ? 'dev' : stats.hash;
+                //var cxt_name = stats.compilation.name;
 
-            let content = fs.readFileSync(loadScript);
-            content = content.toString().replace('/*PARAMS_HERE*/', `'firefly_loader.js', 'firefly-${hash}.js'`);
-            const loader = path.join(outpath, 'firefly_loader.js');
-            fs.writeFileSync(loader, content);
-        });
+                const loaderScript= getLoadScript(nameRoot,loaderPostfix);
+                let content = fs.readFileSync(loadScript);
+                content = content.toString().replace('/*PARAMS_HERE*/', `'${loaderScript}', '${nameRoot}-${hash}.js'`);
+                const loader = path.join(outpath, loaderScript);
+                fs.writeFileSync(loader, content);
+            });
     };
 }
 

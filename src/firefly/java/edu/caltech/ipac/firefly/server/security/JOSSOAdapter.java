@@ -235,7 +235,12 @@ public class JOSSOAdapter implements SsoAdapter {
     }
 
     public String getLoginUrl(String backTo) {
-        return JossoUtil.makeAuthCheckUrl(backTo);
+//        return JossoUtil.makeAuthCheckUrl(backTo);
+        return JossoUtil.makeLoginUrl(backTo);
+    }
+
+    public String getProfileUrl(String backTo) {
+        return SSO_PROFILE_URL;
     }
 
     public void setAuthCredential(HttpServiceInput inputs) {

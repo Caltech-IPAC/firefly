@@ -1,21 +1,16 @@
 package edu.caltech.ipac.firefly.server.security;
 
-import edu.caltech.ipac.firefly.data.userdata.RoleList;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.StringUtils;
-import org.apache.http.HttpResponse;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
@@ -74,6 +69,8 @@ public interface SsoAdapter {
     default String getLoginUrl(String backTo) {return null;}
 
     default String getLogoutUrl(String backTo) {return null;}
+
+    default String getProfileUrl(String backTo) {return null;}
     /**
      * set the require info to identify the current logged in user
      * when making an http request to external services.

@@ -68,7 +68,6 @@ public class ServerParams {
     public static final String FILE_KEY = "fileKey";
     public static final String REGION_DATA = "regionData";
     public static final String ROWS = "rows";
-    public static final String STATIC_JSON_DATA = "staticJsonData";
     public static final String REQUESTED_DATA_SET = "RequestedDataSet";
     public static final String DATA_TYPE= "DataType";
     public static final String DATA= "Data";
@@ -114,24 +113,17 @@ public class ServerParams {
     public static final String CREATE_PLOT_GROUP = "CmdCreatePlotGroup";
     public static final String ZOOM = "CmdZoom";
     public static final String STRETCH = "CmdStretch";
-//    public static final String REMOVE_BAND = "CmdRemoveBand";
     public static final String CHANGE_COLOR = "CmdChangeColor";
-//    public static final String ROTATE_NORTH = "CmdRotateNorth";
-//    public static final String ROTATE_ANGLE = "CmdRotateAngle";
     public static final String FLIP_Y = "CmdFlipY";
     public static final String HISTOGRAM = "CmdHistogram";
-//    public static final String IMAGE_PNG = "CmdImagePng";
-//    public static final String IMAGE_PNG_REG = "CmdImagePngReg";
     public static final String CROP = "CmdCrop";
     public static final String STAT = "CmdStat";
-//    public static final String HEADER = "CmdHeader";
-//    public static final String FITS_HEADER = "CmdFitsHeader";  //LZ 3/21/16  DM-4494
+    public static final String GET_USER_INFO = "CmdGetUserInfo";
+    public static final String GET_ALERTS = "CmdAlerts";
 
-//    public static final String DELETE = "CmdDelete";
     public static final String JSON_DATA = "JsonData";
     public static final String RESOLVE_NAME= "CmdResolveName";
     public static final String RESOLVE_NAIFID = "CmdResolveNaifid";
-//    public static final String PROGRESS = "CmdProgress";
     public static final String SUB_BACKGROUND_SEARCH= "subBackgroundSearch";
     public static final String GET_STATUS= "status";
     public static final String ADD_JOB = "addBgJob";
@@ -149,7 +141,6 @@ public class ServerParams {
     public static final String DS9_REGION= "ds9Region";
     public static final String SAVE_DS9_REGION= "saveDS9Region";
     public static final String ADD_SAVED_REQUEST= "addSavedRequest";
-//    public static final String GET_ALL_SAVED_REQUEST= "getAllSavedRequest";
     public static final String TITLE= "Title";
     public static final String JSON_DEEP= "jsonDeep";
     public static final String CLIENT_IS_NORTH= "clientIsNorth";
@@ -177,6 +168,7 @@ public class ServerParams {
     public static final String INIT_APP = "CmdInitApp";
     public static final String LOGOUT = "CmdLogout";
     public static final String TILE_SIZE = "tileSize";
+    public static final String BACK_TO_URL= "backToUrl";
 
     //Workspaces
     public static final String WS_LIST = "wsList"; // Gets the list of content/files
