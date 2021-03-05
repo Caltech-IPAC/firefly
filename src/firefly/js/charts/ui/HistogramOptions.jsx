@@ -176,8 +176,8 @@ export class HistogramOptions extends Component {
 
     shouldComponentUpdate(np, ns) {
 
-        return this.props.groupKey !== np.groupKey || this.props.colValStats !== np.colValStats ||
-            this.props.histogramParams !== np.histogramParams ||
+        return this.props.activeTrace !== np.activeTrace || this.props.groupKey !== np.groupKey ||
+            this.props.colValStats !== np.colValStats || this.props.histogramParams !== np.histogramParams ||
             FieldGroupUtils.getFldValue(this.state.fields, 'algorithm') !== FieldGroupUtils.getFldValue(ns.fields, 'algorithm') ||
             FieldGroupUtils.getFldValue(this.state.fields, 'fixedBinSizeSelection') !== FieldGroupUtils.getFldValue(ns.fields, 'fixedBinSizeSelection');
 
@@ -298,7 +298,7 @@ export class HistogramOptions extends Component {
         // set minimum height to fit full height suggest box,
         // to avoid width change due to scroll bar appearing when full height suggest box is rendered
         return (
-            <div style={{padding:'0 5px'}}>
+            <div>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={false}
                             reducerFunc={columnNameReducer(colValStats,basicFieldsReducer)}>
 
@@ -410,6 +410,7 @@ function renderFixedBinSizeOptions(groupKey, histogramParams, disabled){
 
 HistogramOptions.propTypes = {
     groupKey: PropTypes.string.isRequired,
+    activeTrace: PropTypes.number,
     colValStats: PropTypes.arrayOf(PropTypes.instanceOf(ColValuesStatistics)).isRequired,
     histogramParams: histogramParamsShape,
     fixedAlgorithm: PropTypes.bool,

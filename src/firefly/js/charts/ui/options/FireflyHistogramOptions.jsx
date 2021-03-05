@@ -1,40 +1,45 @@
 import React from 'react';
-import {get, isUndefined, set} from 'lodash';
+import {get, set} from 'lodash';
 
-import {BasicOptionFields, basicFieldReducer, submitChanges} from './BasicOptions.jsx';
+import {LayoutOptions, basicFieldReducer, submitChanges, basicOptions} from './BasicOptions.jsx';
 import {HistogramOptions} from '../HistogramOptions.jsx';
 import {getChartData} from '../../ChartsCntlr.js';
 
-import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
+import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
 import {getColValStats} from '../../TableStatsCntlr.js';
+import {getChartProps} from '../../ChartUtil.js';
+import {FieldGroupCollapsible} from '../../../ui/panel/CollapsiblePanel.jsx';
 
-export class FireflyHistogramOptions extends SimpleComponent {
+export function FireflyHistogramOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey}) {
 
-    getNextState() {
-        const {chartId} = this.props;
-        const {activeTrace:cActiveTrace=0} = getChartData(chartId);
-        // activeTrace is passed via property, when used from NewTracePanel
-        const activeTrace = isUndefined(this.props.activeTrace) ? cActiveTrace : this.props.activeTrace;
-        return {activeTrace};
-    }
+    const [activeTrace] = useStoreConnector(() => {
+        return pActiveTrace ?? getChartData(chartId)?.activeTrace;
+    });
 
-    render() {
-        const {chartId, tbl_id:tblIdProp, showMultiTrace} = this.props;
-        const {tablesources, activeTrace:cActiveTrace=0} = getChartData(chartId);
-        const activeTrace = isUndefined(this.props.activeTrace) ? cActiveTrace : this.props.activeTrace;
-        const groupKey = this.props.groupKey || `${chartId}-ffhist-${activeTrace}`;
-        const tablesource = get(tablesources, [cActiveTrace], tblIdProp && {tbl_id: tblIdProp});
-        const tbl_id = get(tablesource, 'tbl_id');
-        const colValStats = getColValStats(tbl_id);
+    groupKey = groupKey || `${chartId}-ffhist-${activeTrace}`;
+    const {tbl_id, noColor, multiTrace} = getChartProps(chartId, ptbl_id, activeTrace);
+    const colValStats = getColValStats(tbl_id);
 
-        const histogramParams = toHistogramOptions(chartId, activeTrace);
+    const histogramParams = toHistogramOptions(chartId, activeTrace);
+    const {Name, Color} = basicOptions({activeTrace, tbl_id, chartId, groupKey, fieldProps:{labelWidth: 60}});
 
-        const basicFields = <BasicOptionFields {...{activeTrace, groupKey, xNoLog: true, showMultiTrace}}/>;
-        const basicFieldsReducer = basicFieldReducer({chartId, activeTrace});
-        return colValStats ?
-            <HistogramOptions {...{key: activeTrace, groupKey, histogramParams, colValStats, basicFields, basicFieldsReducer}}/> :
-            'Loading...';
-    }
+    const basicFields = (
+        <div style={{margin: '5px 0 0 -22px'}}>
+            { (multiTrace || !noColor) &&
+                <FieldGroupCollapsible  header='Trace Options' initialState= {{ value:'closed' }} fieldKey='traceOptions'>
+                    {multiTrace && <Name/>}
+                    {!noColor && <Color/>}
+                </FieldGroupCollapsible>
+            }
+            <LayoutOptions {...{activeTrace, tbl_id, chartId, groupKey, xNoLog: true, noXY: false}}/>
+        </div>
+    );
+    const basicFieldsReducer = basicFieldReducer({chartId, activeTrace});
+    basicFieldsReducer.ver = chartId+activeTrace;
+
+    return colValStats ?
+        <HistogramOptions {...{activeTrace, groupKey, histogramParams, colValStats, basicFields, basicFieldsReducer}}/> :
+        'Loading...';
 }
 
 export function submitChangesFFHistogram({chartId, activeTrace, fields, tbl_id, renderTreeId}) {

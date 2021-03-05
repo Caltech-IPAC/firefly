@@ -14,6 +14,7 @@ import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.DecimateInfo;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -68,6 +69,7 @@ import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_ID;
  */
 public class QueryUtil {
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
+    public static final String SEARCH_REQUEST = "searchRequest";
 
     private static final int DECI_DEF_MAX_POINTS = AppProperties.getIntProperty("decimation.def.max.points", 100000);
     public static final int DECI_ENABLE_SIZE = AppProperties.getIntProperty("decimation.enable.size", 5000);
@@ -912,6 +914,18 @@ public class QueryUtil {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static TableServerRequest getSearchRequest(TableServerRequest treq) throws DataAccessException {
+        String searchRequestJson = treq.getParam(SEARCH_REQUEST);
+        if (searchRequestJson == null) {
+            throw new DataAccessException("Bad Request: " + SEARCH_REQUEST + " is missing");
+        }
+        TableServerRequest sreq = convertToServerRequest(searchRequestJson);
+        if (sreq.getRequestId() == null) {
+            throw new DataAccessException("Bad Request: " + SEARCH_REQUEST + " must contain " + ServerParams.ID);
+        }
+        return sreq;
     }
 
     private static class SamplePoint {

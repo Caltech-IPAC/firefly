@@ -67,7 +67,6 @@ export class ChartSelectDropdown extends PureComponent {
 
     render() {
         const {tblId} = this.state;
-        const showMultiTrace = !singleTraceUI();
 
         let noChartReason='';
         if (tblId) {
@@ -87,7 +86,6 @@ export class ChartSelectDropdown extends PureComponent {
                     tbl_id: tblId,
                     chartId: getActiveViewerItemId(DEFAULT_PLOT2D_VIEWER_ID),
                     chartAction: CHART_ADDNEW,
-                    showMultiTrace,
                     hideDialog: ()=>dispatchHideDropDown()}}/>
             );
         } else {

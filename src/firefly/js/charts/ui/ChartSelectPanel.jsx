@@ -1,24 +1,20 @@
-import React, {PureComponent} from 'react';
+import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {get, pick, uniqueId} from 'lodash';
+import {get} from 'lodash';
+import shallowequal from 'shallowequal';
+
 import {FormPanel} from './../../ui/FormPanel.jsx';
-import {dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
-import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../../core/MasterSaga.js';
-
-import {getReducerFunc} from '../../fieldGroup/FieldGroupUtils.js';
-
+import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {RadioGroupInputFieldView} from './../../ui/RadioGroupInputFieldView.jsx';
-import {SimpleComponent} from './../../ui/SimpleComponent.jsx';
-import {CHART_UPDATE, dataLoadedUpdate, getChartData, dispatchChartTraceRemove} from '../ChartsCntlr.js';
+import {SimpleComponent, useStoreConnector} from './../../ui/SimpleComponent.jsx';
+import {getChartData, dispatchChartTraceRemove, dispatchChartUpdate} from '../ChartsCntlr.js';
 import {NewTracePanel, getNewTraceType, getSubmitChangesFunc, addNewTrace} from './options/NewTracePanel.jsx';
-
 import {PopupPanel} from './../../ui/PopupPanel.jsx';
-
-import {isScatter2d} from '../ChartUtil.js';
-import {BasicOptions} from './options/BasicOptions.jsx';
+import {isSpectralOrder, isScatter2d} from '../ChartUtil.js';
+import {basicOptions, BasicOptions} from './options/BasicOptions.jsx';
 import {ScatterOptions} from './options/ScatterOptions.jsx';
 import {HeatmapOptions} from './options/HeatmapOptions.jsx';
-import {SedOptions} from './options/SpectrumOptions.jsx';
+import {SpectrumOptions} from './options/SpectrumOptions.jsx';
 import {FireflyHistogramOptions} from './options/FireflyHistogramOptions.jsx';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
@@ -34,17 +30,20 @@ function getChartActions({chartId, tbl_id}) {
     const chartActions = [];
     if (chartId) {
         const {data=[], viewerId} = getChartData(chartId);
+
         if (data.length > 0) {
             // can modify active trace
             chartActions.push(CHART_TRACE_MODIFY);
-            if (data.length > 1) {
+            if (data.length > 1 && !isSpectralOrder(chartId)) {
                 // can remove active trace
                 chartActions.push(CHART_TRACE_REMOVE);
             }
         }
         if (tbl_id) {
-            // can add trace
-            chartActions.push(CHART_TRACE_ADDNEW);
+            if (!isSpectralOrder(chartId)) {
+                // can add trace
+                chartActions.push(CHART_TRACE_ADDNEW);
+            }
 
             // TODO: adding charts to non-default viewer does not work from charts options dialog
             // to be able to add charts to any viewer, we need to pass viewerId to addNewTrace
@@ -124,7 +123,7 @@ export class ChartSelectPanel extends SimpleComponent {
     }
 
     render() {
-        const {tbl_id, chartId, inputStyle={}, hideDialog, showMultiTrace} = this.props;
+        const {tbl_id, chartId, inputStyle={}, hideDialog} = this.props;
         const {renderTreeId}= this.context;
 
         const chartActions = getChartActions({chartId, tbl_id});
@@ -144,8 +143,8 @@ export class ChartSelectPanel extends SimpleComponent {
                     onCancel={hideDialog}
                     inputStyle = {inputStyle}
                     changeMasking={this.changeMasking}>
-                    {showMultiTrace && <ChartAction {...{chartActions, chartAction, chartActionChanged}}/>}
-                    <ChartActionOptions {...{chartAction, tbl_id, chartId, groupKey, hideDialog,showMultiTrace}}/>
+                    <ChartAction {...{chartId, chartActions, chartAction, chartActionChanged}}/>
+                    <ChartActionOptions {...{chartAction, tbl_id, chartId, groupKey, hideDialog}}/>
                 </FormPanel>
             </div>
         );
@@ -157,18 +156,14 @@ ChartSelectPanel.propTypes = {
     chartId: PropTypes.string,
     chartAction: PropTypes.string, // suggested chart action
     hideDialog: PropTypes.func,
-    inputStyle: PropTypes.object,
-    showMultiTrace:PropTypes.bool
-};
-ChartSelectPanel.defaultProps = {
-    showMultiTrace: true,
-
+    inputStyle: PropTypes.object
 };
 ChartSelectPanel.contextType= RenderTreeIdCtx;
 
-function ChartAction(props) {
+function ChartAction({chartId, chartActions, chartAction, chartActionChanged}) {
 
-    const {chartActions, chartAction, chartActionChanged} = props;
+    const [activeTrace=0] = useStoreConnector(() => getChartData(chartId)?.activeTrace);
+    const {ChooseTrace} = basicOptions({chartId, activeTrace});
 
     const options = [];
 
@@ -176,10 +171,10 @@ function ChartAction(props) {
         options.push({label: 'Add New Chart', value: CHART_ADDNEW});
     }
     if (chartActions.includes(CHART_TRACE_ADDNEW)) {
-        options.push({label: 'Add New Trace', value: CHART_TRACE_ADDNEW});
+        options.push({label: 'Overplot New Trace', value: CHART_TRACE_ADDNEW});
     }
     if (chartActions.includes(CHART_TRACE_MODIFY)) {
-        options.push({label: 'Modify Active Trace', value: CHART_TRACE_MODIFY});
+        options.push({label: 'Modify Trace', value: CHART_TRACE_MODIFY});
     }
     if (chartActions.includes(CHART_TRACE_REMOVE)) {
         options.push({label: 'Remove Active Trace', value: CHART_TRACE_REMOVE});
@@ -196,13 +191,16 @@ function ChartAction(props) {
         };
 
         return (
-            <RadioGroupInputFieldView
-                options={options}
-                alignment={'horizontal'}
-                value={chartAction}
-                onChange={onChartActionChange}
-                wrapperStyle={{padding: 5}}
-            />
+            <div style={{marginTop:-10}}>
+                <RadioGroupInputFieldView
+                    options={options}
+                    alignment={'horizontal'}
+                    value={chartAction}
+                    onChange={onChartActionChange}
+                    wrapperStyle={{padding: 5}}
+                />
+                <ChooseTrace style={{marginLeft: 11}}/>
+            </div>
         );
     }
 }
@@ -214,18 +212,18 @@ ChartAction.propTypes = {
 };
 
 function ChartActionOptions(props) {
-    const {chartAction, tbl_id, chartId:chartIdProp, groupKey, hideDialog, showMultiTrace} = props;
+    const {chartAction, tbl_id, chartId:chartIdProp, groupKey, hideDialog} = props;
 
 
     const chartId = chartAction === CHART_ADDNEW ? undefined : chartIdProp;
 
     if (chartAction === CHART_ADDNEW || chartAction === CHART_TRACE_ADDNEW) {
-        return (<NewTracePanel key={chartAction} {...{groupKey, tbl_id, chartId, hideDialog, showMultiTrace}}/>);
+        return (<NewTracePanel key={chartAction} {...{groupKey, tbl_id, chartId, hideDialog}}/>);
     }
     if (chartAction === CHART_TRACE_MODIFY) {
         return (
-            <div style={{padding: 10}}>
-                <SyncedOptionsUI {...{chartId, groupKey, showMultiTrace}}/>
+            <div style={{padding: 10, maxHeight: 600, overflow: 'auto', borderBottom: 'solid 1px #cccccc', borderTop: 'solid 1px #cccccc'}}>
+                <SyncedOptionsUI {...{chartId, groupKey}}/>
             </div>
         );
     } else if (chartAction === CHART_TRACE_REMOVE) {
@@ -249,54 +247,47 @@ ChartActionOptions.propTypes = {
     hideDialog: PropTypes.func
 };
 
-/**
- * Action watcher callback: watch chart data updates, and sync options with the store
- * Some options (ex. default axes titles) are updated with the data.
- * At this point options fields should be reset.
- * @callback actionWatcherCallback
- * @param action
- * @param cancelSelf
- * @param params
- * @param params.chartId
- * @param params.groupId
- */
-function watchChartDataChange(action, cancelSelf, params) {
-    const {chartId:actionChartId, changes={}} = action.payload;
-    const {chartId, groupKey} = params;
-    //options should be synced when data are received: fireflyData.traceNum.isLoading is switched to false
-    if (actionChartId === chartId && dataLoadedUpdate(changes)) {
-        const reducerFunc = getReducerFunc(params.groupKey);
-        const flds = reducerFunc && reducerFunc(null);
-        if (flds) {
-            const fldAry = Object.values(flds).map((v) => pick(v, ['fieldKey', 'value']));
-            dispatchMultiValueChange(groupKey, fldAry);
+function SyncedOptionsUI (props) {
+    // based on chartData, determine what options to display
+
+    const {chartId, groupKey} = props;
+    const [{useSpectrum, dataType, type, activeTrace}] = useStoreConnector.bind({comparator: shallowequal})(() =>  {
+        const {data, fireflyData, activeTrace=0} = getChartData(chartId);
+        const dataType = fireflyData?.[activeTrace]?.dataType;
+        const fval = getFieldVal(groupKey, `fireflyData.${activeTrace}.useSpectrum`);
+        const useSpectrum = fval ?? fireflyData?.[activeTrace]?.useSpectrum;
+        const type = get(data, [activeTrace, 'type'], 'scatter');
+        return {useSpectrum, dataType, type, activeTrace};
+    });
+    const {fireflyData} = getChartData(chartId);
+
+    useEffect( ()=> {
+        if (useSpectrum !== fireflyData?.[activeTrace]?.useSpectrum) {
+            dispatchChartUpdate({chartId, changes: {[`fireflyData.${activeTrace}.useSpectrum`]: useSpectrum}});
         }
-    }
-}
+    }, [useSpectrum, activeTrace, chartId, fireflyData]);
 
-class SyncedOptionsUI extends PureComponent {
-
-    componentDidMount() {
-        const {chartId, groupKey} = this.props;
-        if (chartId && groupKey) {
-            this.watcherId = uniqueId('syncChartOpts');
-            dispatchAddActionWatcher({id: this.watcherId,
-                actions:[CHART_UPDATE],
-                callback: watchChartDataChange,
-                params: {chartId, groupKey}});
+    // check firefly types first -
+    // trace type for them is populated
+    // when the data arrive
+    if (dataType === 'fireflyHistogram') {
+        return <FireflyHistogramOptions {...props}/>;
+    } else if (useSpectrum) {
+        return <SpectrumOptions {...props}/>;
+    } else if (dataType === 'fireflyHeatmap') {
+        if (get(fireflyData, [activeTrace, 'scatterOrHeatmap']) && isScatter2d(type)) {
+            return <ScatterOptions {...props}/>;
+        } else {
+            return <HeatmapOptions {...props}/>;
         }
-    }
-
-    componentWillUnmount() {
-        if (this.watcherId) {
-            dispatchCancelActionWatcher(this.watcherId);
+    } else if (isScatter2d(type)) {
+        return <ScatterOptions {...props}/>;
+    } else {
+        if (get(fireflyData, [activeTrace, 'scatterOrHeatmap']) && type === 'heatmap') {
+            return <HeatmapOptions {...props}/>;
+        } else {
+            return <BasicOptions {...props}/>;
         }
-    }
-
-    render() {
-        const {chartId} = this.props;
-        const OptionsUI = getOptionsUI(chartId);
-        return (<OptionsUI {...this.props}/>);
     }
 }
 
@@ -305,41 +296,11 @@ SyncedOptionsUI.propTypes = {
     groupKey: PropTypes.string
 };
 
-export function getOptionsUI(chartId) {
-    // based on chartData, determine what options to display
-    const {data, fireflyData, activeTrace=0} = getChartData(chartId);
-    const type = get(data, [activeTrace, 'type'], 'scatter');
-    const dataType = get(fireflyData, [activeTrace, 'dataType'], '');
-    // check firefly types first -
-    // trace type for them is populated
-    // when the data arrive
-    if (dataType === 'fireflyHistogram') {
-        return FireflyHistogramOptions;
-    } else if (dataType === 'SED') {
-        return SedOptions;
-    } else if (dataType === 'fireflyHeatmap') {
-        if (get(fireflyData, [activeTrace, 'scatterOrHeatmap']) && isScatter2d(type)) {
-            return ScatterOptions;
-        } else {
-            return HeatmapOptions;
-        }
-    } else if (isScatter2d(type)) {
-        return ScatterOptions;
-    } else {
-        if (get(fireflyData, [activeTrace, 'scatterOrHeatmap']) && type === 'heatmap') {
-            return HeatmapOptions;
-        } else {
-            return BasicOptions;
-        }
-    }
-}
-
 /**
  * Creates and shows the modal dialog with chart options.
  * @param {string} chartId
- * @param {boolean} showMultiTrace
  */
-export function showChartsDialog(chartId,  showMultiTrace) {
+export function showChartsDialog(chartId) {
     const {data, fireflyData, activeTrace} = getChartData(chartId);
     const tbl_id = get(data, `${activeTrace}.tbl_id`) || get(fireflyData, `${activeTrace}.tbl_id`);
 
@@ -350,8 +311,7 @@ export function showChartsDialog(chartId,  showMultiTrace) {
                 tbl_id,
                 chartId,
                 chartAction: CHART_TRACE_MODIFY,
-                inputStyle: {backgroundColor:'none'},
-                showMultiTrace,
+                inputStyle: {backgroundColor:'none', padding: 3, border: 'none', borderBottom: 'solid 1px #a5a5a'},
                 hideDialog: ()=>dispatchHideDialog(popupId)}}/>
         </PopupPanel>
     );

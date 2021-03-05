@@ -1,10 +1,10 @@
-import React, {Component} from 'react';
+import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {isArray, get, isUndefined, isEmpty, reverse, set} from 'lodash';
 
 import {dispatchChartUpdate, dispatchChartAdd, getChartData} from '../../ChartsCntlr.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
-import FieldGroupUtils, {getFieldVal} from '../../../fieldGroup/FieldGroupUtils.js';
+import {getFieldVal, getField} from '../../../fieldGroup/FieldGroupUtils.js';
 import {dispatchValueChange, VALUE_CHANGE, MULTI_VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
 import {FieldGroupCollapsible} from '../../../ui/panel/CollapsiblePanel.jsx';
 
@@ -14,22 +14,18 @@ import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {RadioGroupInputField} from '../../../ui/RadioGroupInputField.jsx';
 import {CheckboxGroupInputField} from '../../../ui/CheckboxGroupInputField.jsx';
 
-import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
+import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
 import {updateSet} from '../../../util/WebUtil.js';
 import {hideColSelectPopup} from '../ColSelectView.jsx';
 import {addColorbarChanges} from '../../dataTypes/FireflyHeatmap.js';
-import {getColumnType, getTblById} from '../../../tables/TableUtil.js';
-import {getColValStats} from '../../TableStatsCntlr.js';
-import {getColValidator} from '../ColumnOrExpression.jsx';
-import {uniqueChartId, TRACE_COLORS, toRGBA, colorsOnTypes} from '../../ChartUtil.js';
+import {uniqueChartId, TRACE_COLORS, toRGBA, colorsOnTypes, getChartProps} from '../../ChartUtil.js';
 import {colorscaleNameToVal} from '../../Colorscale.js';
 import {DEFAULT_PLOT2D_VIEWER_ID} from '../../../visualize/MultiViewCntlr.js';
 
 import MAGNIFYING_GLASS from 'html/images/icons-2014/magnifyingGlass.png';
 import {ToolbarButton} from '../../../ui/ToolbarButton.jsx';
+import {ActiveTraceSelect} from '../PlotlyToolbar.jsx';
 
-const fieldProps = {labelWidth: 50, size: 25};
-const boundariesFieldProps = {labelWidth: 35, size: 10};
 export const helpStyle = {fontStyle: 'italic', color: '#808080', paddingBottom: 10};
 const xyratioFldName = 'fireflyLayout.xyratio';
 
@@ -70,201 +66,46 @@ function getOptions(a, layout) {
     return opts.toString();
 }
 
-/**
- * @param type - Plotly chart type
- */
-export function hasMarkerColor(type) {
-    return type.startsWith('scatter') || ['histogram', 'box', 'bar', 'plotcloud'].includes(type);
-}
-
-/*
- * check if the trace is not 3d-like chart or pie and has x and y defined
-*/
-function hasNoXY(type, tablesource) {
-    if (type.endsWith('3d') || ['pie', 'surface', 'bar', 'area'].includes(type)) return true;
-
-    return (!get(tablesource, ['mappings', 'x']) || !get(tablesource, ['mappings', 'y']));
-}
-
 function findViewerId(viewerId= DEFAULT_PLOT2D_VIEWER_ID, renderTreeId= undefined) {
     if (viewerId===DEFAULT_PLOT2D_VIEWER_ID && renderTreeId) return `${viewerId}_${renderTreeId}`;
     return viewerId;
 }
 
-function isNonNumColumn(tbl_id, colExp) {
-    const numTypes = ['double', 'd', 'long', 'l', 'int', 'i', 'float', 'f'];
-    const colType = getColumnType(getTblById(tbl_id), colExp);
+export function BasicOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey}) {
+    
+    const [activeTrace] = useStoreConnector(() => {
+        return pActiveTrace ?? getChartData(chartId)?.activeTrace ?? 0;
+    });
+    useEffect(() => {
+       return () => hideColSelectPopup();
+    }, []);
 
-    if (colType) {
-        return !numTypes.includes(colType);
-    } else {
-        const colValidator = getColValidator(getColValStats(tbl_id));
-        const {valid} = colValidator(colExp);
+    const fieldProps = {labelWidth: 60, size: 25};
+    const {noColor, tbl_id, multiTrace} = getChartProps(chartId, ptbl_id, activeTrace);
+    const {Name, Color} = basicOptions({activeTrace, tbl_id, chartId, groupKey, fieldProps});
+    const reducerFunc = basicFieldReducer({chartId, activeTrace});
+    reducerFunc.ver = chartId+activeTrace;
 
-        return !valid;
-    }
-}
-
-export class BasicOptions extends SimpleComponent {
-
-    getNextState() {
-        const {chartId} = this.props;
-        const {activeTrace=0} = getChartData(chartId);
-        return {activeTrace};
-    }
-
-    render() {
-        const {chartId, tbl_Id:tblIdProp, showMultiTrace, groupKey} = this.props;
-        const {activeTrace=0} = this.state;
-        const {tablesources, data={}} = getChartData(chartId);
-        const tablesource = get(tablesources, [activeTrace], tblIdProp ? {tbl_id: tblIdProp} : undefined);
-        const tbl_id = get(tablesource, 'tbl_id');
-        const type = get(data, `${activeTrace}.type`, 'scatter');
-        const noColor = !hasMarkerColor(type);
-        const noXY = hasNoXY(type, tablesource);
-        const isXNotNumeric = noXY ? undefined : isNonNumColumn(tbl_id, get(tablesource, ['mappings', 'x'], ''));
-        const isYNotNumeric = noXY ? undefined : isNonNumColumn(tbl_id, get(tablesource, ['mappings', 'y'], ''));
-        const xNoLog = type.includes('histogram') ? true : undefined;          // histogram2d or histogram2dcontour
-        const yNoLog = type.includes('histogram') ? true : undefined;
-
-        //<OptionTopBar {...{groupKey, activeTrace, chartId, tbl_id}}/>
-        return (
-            <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey}
-                        reducerFunc={basicFieldReducer({chartId, activeTrace})}>
-                <BasicOptionFields {...{activeTrace, groupKey, noColor, noXY, isXNotNumeric, isYNotNumeric, xNoLog, yNoLog,showMultiTrace}}/>
-            </FieldGroup>
-        );
-    }
-}
-//TODO on Monday, check if showMultiTrace is needed, it works for all cases both chart and xyPlot
-export function basicFieldReducer({chartId, activeTrace, showMultiTrace=true}) {
-
-    const getFields = () => {
-        const {data, layout={}, fireflyLayout = {}} = getChartData(chartId);
-        let color = get(data, `${activeTrace}.marker.color`, '');
-        color = Array.isArray(color) ? '' : color;
-
-        const commonfields = {
-            ['layout.showlegend']: {
-                fieldKey: 'layout.showlegend',
-                value: get(layout, 'showlegend', ''),
-                tooltip: 'Show legend',
-                label: 'Legend:',
-                ...fieldProps
-            },
-            ['layout.xaxis.title.text']: {
-                fieldKey: 'layout.xaxis.title.text',
-                value: get(layout, 'xaxis.title.text'),
-                tooltip: 'X axis label',
-                label: 'X Label:',
-                ...fieldProps
-            },
-            ['__xreset']: {  // invisible helper field
-                fieldKey: '__xreset',
-                value: ''
-            },
-            ['__xoptions']: {
-                fieldKey: '__xoptions',
-                value: getOptions('x', layout),
-                tooltip: 'X axis options',
-                label: 'Options:',
-                ...fieldProps
-            },
-            ['layout.yaxis.title.text']: {
-                fieldKey: 'layout.yaxis.title.text',
-                value: get(layout, 'yaxis.title.text'),
-                tooltip: 'Y axis label',
-                label: 'Y Label:',
-                ...fieldProps
-            },
-            ['__yreset']: { // invisible helper field
-                fieldKey: '__yreset',
-                value: ''
-            },
-            ['__yoptions']: {
-                fieldKey: '__yoptions',
-                value: getOptions('y', layout),
-                tooltip: 'Y axis options',
-                label: 'Options:',
-                ...fieldProps
-            },
-            ['fireflyLayout.xaxis.min']: {
-                fieldKey: 'fireflyLayout.xaxis.min',
-                value: get(fireflyLayout, 'xaxis.min'),
-                validator: (val) => Validate.isFloat('X Min', val),
-                tooltip: 'Minimum X value',
-                label: 'X Min:',
-                ...boundariesFieldProps
-            },
-            ['fireflyLayout.xaxis.max']: {
-                fieldKey: 'fireflyLayout.xaxis.max',
-                value: get(fireflyLayout, 'xaxis.max'),
-                validator: (val) => Validate.isFloat('X Max', val),
-                tooltip: 'Maximum X value',
-                label: 'X Max:',
-                ...boundariesFieldProps
-            },
-            ['fireflyLayout.yaxis.min']: {
-                fieldKey: 'fireflyLayout.yaxis.min',
-                value: get(fireflyLayout, 'yaxis.min'),
-                validator: (val) => Validate.isFloat('Y Min', val),
-                tooltip: 'Minimum Y value',
-                label: 'Y Min:',
-                ...boundariesFieldProps
-            },
-            ['fireflyLayout.yaxis.max']: {
-                fieldKey: 'fireflyLayout.yaxis.max',
-                value: get(fireflyLayout, 'yaxis.max'),
-                validator: (val) => Validate.isFloat('Y Max', val),
-                tooltip: 'Maximum Y value',
-                label: 'Y Max:',
-                ...boundariesFieldProps
-            },
-            [xyratioFldName]: {
-                fieldKey: xyratioFldName,
-                value: get(fireflyLayout, 'xyratio'),
-                validator: Validate.floatRange.bind(null, 0.1, 10, 1, 'X/Y ratio'),
-                tooltip: 'X/Y ratio',
-                label: 'X/Y ratio:',
-                labelWidth: 50
-            },
-            ['fireflyLayout.stretch']: {
-                fieldKey: 'fireflyLayout.stretch',
-                value: get(fireflyLayout, 'stretch', 'fit'),
-                tooltip: 'Should the plot fit into the available space or fill the available width?',
-                label: 'Stretch to:',
-                labelWidth: 50
+    return (
+        <FieldGroup className='FieldGroup__vertical' style={{margin: '5px 0 0 -22px'}} keepState={false} groupKey={groupKey}
+                    reducerFunc={reducerFunc}>
+            { (multiTrace || !noColor) &&
+                <FieldGroupCollapsible  header='Trace Options' initialState= {{ value:'closed' }} fieldKey='traceOptions'>
+                    {multiTrace && <Name/>}
+                    {!noColor && <Color/>}
+                </FieldGroupCollapsible>
             }
-        };
+            <LayoutOptions {...{activeTrace, tbl_id, chartId, groupKey}}/>
+        </FieldGroup>
+    );
+}
 
-        const extraFields = showMultiTrace ? {
-            [`data.${activeTrace}.name`]: {
-                fieldKey: `data.${activeTrace}.name`,
-                value: get(data, `${activeTrace}.name`, ''),
-                tooltip: 'The name of this new series',
-                label: 'Name:',
-                ...fieldProps
-            },
-            [`data.${activeTrace}.marker.color`]: {
-                fieldKey: `data.${activeTrace}.marker.color`,
-                value: color,
-                tooltip: 'Set series color',
-                label: 'Color:',
-                ...fieldProps
-            },
-            ['layout.title.text']: {
-                fieldKey: 'layout.title.text',
-                value: get(layout, 'title.text'),
-                tooltip: 'Plot title',
-                label: 'Plot title:',
-                ...fieldProps
-            },
-        } : {};
-        return Object.assign({}, commonfields, extraFields);
-    };
+export function basicFieldReducer({chartId, activeTrace}) {
+
     return (inFields, action) => {
         if (!inFields) {
-            return getFields();
+            return ;
+            // return Object.fromEntries( Object.values(options).map((f) => f.field));
         } else {
             let fieldKey = undefined;
             if (action.type === VALUE_CHANGE) {
@@ -316,153 +157,108 @@ export function basicFieldReducer({chartId, activeTrace, showMultiTrace=true}) {
 }
 
 
-export class BasicOptionFields extends Component {
+export function LayoutOptions({activeTrace, tbl_id, chartId, groupKey, fieldProps={}, noXY, xNoLog, noTitle,
+                                  XaxisTitle, YaxisTitle, ...more}) {
 
-    constructor(props) {
-        super(props);
-        this.state = {
-            displayStretchOptions : Boolean(getFieldVal(props.groupKey, xyratioFldName))
-        };
-        this.setStretchOptionsVisibility = this.setStretchOptionsVisibility.bind(this);
-    }
+    fieldProps = {labelWidth: 60, size: 25, ...fieldProps};
+    const {Title, XaxisTitle:pXaxisTitle, YaxisTitle:pYaxisTitle, Xoptions, Yoptions, Xyratio, Stretch, Xreset, Yreset} = basicOptions({activeTrace, tbl_id, chartId, groupKey, fieldProps, noXY, xNoLog, ...more});
+    XaxisTitle = XaxisTitle || pXaxisTitle;
+    YaxisTitle = YaxisTitle || pYaxisTitle;
 
-    setStretchOptionsVisibility(displayStretchOptions) {
-        if (this.iAmMounted && displayStretchOptions  !== this.state.displayStretchOptions) {
-            this.setState({displayStretchOptions});
-        }
-    }
+    return (
+        <FieldGroupCollapsible  header='Layout Options' initialState= {{ value:'closed' }} fieldKey='layoutOptions'>
+            <div className='FieldGroup__vertical'>
+                <Title/>
+                {!noXY && <div>
+                    <XaxisTitle/>
+                    <Xoptions/>
+                    <br/>
+                    <YaxisTitle/>
+                    <Yoptions/>
+                    <br/>
+                    <PlotBoundaries {...{chartId, groupKey, activeTrace, tbl_id, fieldProps}}/>
+                </div>}
+                <XyRatio {...{groupKey, Xyratio, Stretch, xNoLog}}/>
 
-    componentWillUnmount() {
-        this.iAmMounted= false;
-        if (this.unbinder) this.unbinder();
-        hideColSelectPopup();
-    }
-
-    componentDidMount() {
-        this.unbinder = FieldGroupUtils.bindToStore(this.props.groupKey,
-            (fields) => {
-                this.setStretchOptionsVisibility(Boolean(get(fields, [xyratioFldName, 'value']) && get(fields, [xyratioFldName, 'valid'])));
-            });
-        this.iAmMounted= true;
-    }
-
-    render() {
-        const {activeTrace, groupKey, align='vertical', noColor, noXY, xNoLog, yNoLog, isXNotNumeric, isYNotNumeric, showMultiTrace} = this.props;
-
-        // TODO: need color input field
-        const colorFldPath = `data.${activeTrace}.marker.color`;
-
-        // do not show XY ratio and axes ranges for fireflyHistogram
-        const showAll = showMultiTrace || !xNoLog;
-
-        return (
-            <FieldGroupCollapsible  header='Layout Options'
-                                    initialState= {{ value:'closed' }}
-                                    fieldKey='layoutOptions'>
-                <div className={`FieldGroup__${align}`}>
-                    {showMultiTrace && <ValidationField fieldKey={`data.${activeTrace}.name`}/>}
-                    {showMultiTrace && !noColor && <div style={{whiteSpace: 'nowrap'}}>
-                        <ValidationField inline={true} fieldKey={colorFldPath}/>
-                        <div
-                            style={{display: 'inline-block', paddingLeft: 2, verticalAlign: 'top'}}
-                            title='Select trace color'
-                            onClick={() => showColorPickerDialog(getFieldVal(groupKey, colorFldPath), true, false,
-                                (ev) => {
-                                    const {r, g, b, a} = ev.rgb;
-                                    const rgbStr = `rgba(${r},${g},${b},${a})`;
-                                    dispatchValueChange({fieldKey: colorFldPath, groupKey, value: rgbStr, valid: true});
-                                }, groupKey)}>
-                            <ToolbarButton icon={MAGNIFYING_GLASS}/>
-                        </div>
-                    </div>
-                    }
-
-                    {showMultiTrace &&  <div> <br/><ValidationField fieldKey={'layout.title.text'}/><br/></div>}
-
-
-                    {/* checkboxgroup is not working right when there's only 1 .. will add in later
-                     <CheckboxGroupInputField fieldKey={'layout.showlegend'}/>
-                     */}
-
-                    {!noXY && <div>
-
-                        <ValidationField fieldKey={'layout.xaxis.title.text'}/>
-                        <CheckboxGroupInputField fieldKey='__xoptions'
-                                                 options={xNoLog || isXNotNumeric ? X_AXIS_OPTIONS_NOLOG : X_AXIS_OPTIONS}/>
-                        <br/>
-                        <ValidationField fieldKey={'layout.yaxis.title.text'}/>
-                        <CheckboxGroupInputField fieldKey='__yoptions'
-                                                 options={yNoLog || isYNotNumeric ? Y_AXIS_OPTIONS_NOLOG : Y_AXIS_OPTIONS}/>
-                        {showAll &&<div>
-                            <br/>
-
-                            <div style={helpStyle}>
-                                Set plot boundaries if different from data range.
-                            </div>
-                            {isXNotNumeric ? false :
-                                <div style={{display: 'flex', flexDirection: 'row', padding: '5px 15px 0'}}>
-                                    <div style={{paddingRight: 5}}>
-                                        <ValidationField fieldKey={'fireflyLayout.xaxis.min'}/>
-                                    </div>
-                                    <div style={{paddingRight: 5}}>
-                                        <ValidationField fieldKey={'fireflyLayout.xaxis.max'}/>
-                                    </div>
-                                </div>}
-                            {isYNotNumeric ? false :
-                                <div style={{display: 'flex', flexDirection: 'row', padding: '0px 15px 15px'}}>
-                                    <div style={{paddingRight: 5}}>
-                                        <ValidationField fieldKey={'fireflyLayout.yaxis.min'}/>
-                                    </div>
-                                    <div style={{paddingRight: 5}}>
-                                        <ValidationField fieldKey={'fireflyLayout.yaxis.max'}/>
-                                    </div>
-                                </div>
-                            }
-                        </div>}
-                    </div>}
-                    {showAll && <div>
-                        <div style={helpStyle}>
-                            Enter display aspect ratio below.<br/>
-                            Leave it blank to use all available space.<br/>
-                        </div>
-                        <div style={{display: 'flex', flexDirection: 'row', padding: '5px 5px 5px 0'}}>
-                            <div style={{paddingRight: 5}}>
-                                <ValidationField style={{width:15}} fieldKey={xyratioFldName}/>
-                            </div>
-                            {this.state.displayStretchOptions && <div style={{paddingRight: 5}}>
-                                <RadioGroupInputField fieldKey={'fireflyLayout.stretch'}
-                                                      alignment='horizontal'
-                                                      options={[
-                                                          {label: 'height', value: 'fit'},
-                                                          {label: 'width', value: 'fill'}
-                                                      ]}/>
-                            </div>}
-                        </div>
-                    </div>}
-
-                    <div style={{overflow: 'hidden', height: 0, width: 0}}>
-                        <ValidationField fieldKey='__xreset'/>
-                        <ValidationField fieldKey='__yreset'/>
-                    </div>
+                <div style={{overflow: 'hidden', height: 0, width: 0}}>
+                    <Xreset/>
+                    <Yreset/>
                 </div>
-            </FieldGroupCollapsible>
-        );
-    }
+            </div>
+        </FieldGroupCollapsible>
+    );
 }
 
-BasicOptionFields.propTypes = {
+LayoutOptions.propTypes = {
+    activeTrace: PropTypes.number,
+    tbl_id: PropTypes.string,
     chartId: PropTypes.string,
     groupKey: PropTypes.string.isRequired,
-    activeTrace: PropTypes.number.isRequired,
-    align: PropTypes.oneOf(['vertical', 'horizontal']),
-    noColor: PropTypes.bool,
-    xNoLog: PropTypes.bool,
-    yNoLog: PropTypes.bool,
-    noXY: PropTypes.bool,
-    isXNotNumeric: PropTypes.bool,
-    isYNotNumeric: PropTypes.bool,
-    showMultiTrace: PropTypes.bool
+    fieldProps: PropTypes.object,       // fieldProps to apply to all fields
+    noXY: PropTypes.bool,               // don't show XY fields.
+    xNoLog: PropTypes.bool,             // no Log option for x axis
+    XaxisTitle: PropTypes.func,         // x axis title override
+    YaxisTitle: PropTypes.func          // y axis title override
 };
+
+export function PlotBoundaries({activeTrace:pActiveTrace, tbl_id, chartId, groupKey, fieldProps, isXNotNumeric, isYNotNumeric}) {
+    const {activeTrace, ...rest} = getChartProps(chartId, tbl_id, pActiveTrace);
+    isXNotNumeric = isXNotNumeric ?? rest.isXNotNumeric;
+    isYNotNumeric = isYNotNumeric ?? rest.isYNotNumeric;
+    const {XaxisMin, XaxisMax, YaxisMin, YaxisMax} = basicOptions({activeTrace, chartId, groupKey, fieldProps, isXNotNumeric, isYNotNumeric});
+    return (
+        <div>
+            <div style={helpStyle}>
+                Set plot boundaries if different from data range.
+            </div>
+            {isXNotNumeric ? false :
+                <div style={{display: 'flex', flexDirection: 'row', padding: '5px 15px 0'}}>
+                    <div style={{paddingRight: 5}}>
+                        <XaxisMin/>
+                    </div>
+                    <div style={{paddingRight: 5}}>
+                        <XaxisMax/>
+                    </div>
+                </div>}
+            {isYNotNumeric ? false :
+                <div style={{display: 'flex', flexDirection: 'row', padding: '0px 15px 15px'}}>
+                    <div style={{paddingRight: 5}}>
+                        <YaxisMin/>
+                    </div>
+                    <div style={{paddingRight: 5}}>
+                        <YaxisMax/>
+                    </div>
+                </div>
+            }
+        </div>
+    );
+}
+
+function XyRatio({groupKey, Xyratio, Stretch, xNoLog}) {
+
+    const [showStretch] = useStoreConnector(() => {
+        const {value, valid} = getField(groupKey, xyratioFldName) || {};
+        return !!value && valid;
+    });
+
+    if (xNoLog) return null;
+    return (
+        <div>
+            <div style={helpStyle}>
+                Enter display aspect ratio below.<br/>
+                Leave it blank to use all available space.<br/>
+            </div>
+            <div style={{display: 'flex', flexDirection: 'row', padding: '5px 5px 5px 0'}}>
+                <div style={{paddingRight: 5}}>
+                    <Xyratio/>
+                </div>
+                {showStretch && <div style={{paddingRight: 5}}>
+                    <Stretch/>
+                </div>}
+            </div>
+        </div>
+    );
+}
 
 
 /**
@@ -495,7 +291,7 @@ export function submitChanges({chartId, fields, tbl_id, renderTreeId}) {
 
                     // helper hidden fields __xreset and __yreset keep track of whether x and y have changed
                     // if this field is set, we'd like to clear range
-                    let range = !fields[`__${a}reset`] && get(layout, `${a}axis.range`);
+                    const range = !fields[`__${a}reset`] && get(layout, `${a}axis.range`);
 
                     if (opts.includes('flip')) {
                         if (range) {
@@ -630,6 +426,7 @@ function adjustAxesRange(layout, changes) {
     });
 }
 
+
 /**
  * Get range for a plotly axis
  * Plotly requires range to be reversed if the axis is reversed,
@@ -657,3 +454,116 @@ function filterOptions(options, opts) {
     return opts.filter((opt) => options.includes(opt) || options.includes('_all_')).toString();
 }
 
+
+
+
+export function basicOptions ({activeTrace:pActiveTrace, chartId, tbl_id, groupKey, fieldProps={}, isXNotNumeric, isYNotNumeric, xNoLog, yNoLog}) {
+    const {activeTrace, data, layout, fireflyLayout, color, ...rest} = getChartProps(chartId, tbl_id, pActiveTrace);
+    xNoLog = xNoLog ?? rest.xNoLog;
+    yNoLog = yNoLog ?? rest.yNoLog;
+    isXNotNumeric = isXNotNumeric ?? rest.isXNotNumeric;
+    isYNotNumeric = isYNotNumeric ?? rest.isYNotNumeric;
+
+    const boundariesFieldProps = {labelWidth: 35, size: 10};
+
+    return {
+        ShowLegend: (props={}) => (<CheckboxGroupInputField fieldKey={'layout.showlegend'}
+                                         initialState= {{value: get(layout, 'showlegend', 'true')}}
+                                         tooltip='Show legend'
+                                         label='Legend:'
+                                         options={[{label: 'Show legend:', value: 'true'}]} {...fieldProps} {...props}/>),
+        XaxisTitle: (props={}) => (<ValidationField fieldKey={'layout.xaxis.title.text'}
+                                         initialState= {{value: get(layout, 'xaxis.title.text')}}
+                                         tooltip='X axis label'
+                                         label='X Label:' {...fieldProps} {...props}/>),
+        Xreset: (props={}) => (<ValidationField fieldKey='__xreset' initialState={{value:''}} {...fieldProps} {...props}/>),
+        Xoptions: (props={}) => (<CheckboxGroupInputField fieldKey='__xoptions'
+                                 initialState= {{value: getOptions('x', layout)}}
+                                 tooltip='X axis options'
+                                 label='Options:'
+                                 options={xNoLog || isXNotNumeric ? X_AXIS_OPTIONS_NOLOG : X_AXIS_OPTIONS} {...fieldProps} {...props}/>),
+        YaxisTitle: (props={}) => (<ValidationField fieldKey={'layout.yaxis.title.text'}
+                                     initialState= {{value: get(layout, 'yaxis.title.text')}}
+                                     tooltip='Y axis label'
+                                     label='Y Label:' {...fieldProps} {...props}/>),
+        Yreset: (props={}) => (<ValidationField fieldKey='__yreset' initialState={{value:''}} {...fieldProps} {...props}/>),
+        Yoptions: (props={}) => (<CheckboxGroupInputField fieldKey='__yoptions'
+                                    initialState= {{value: getOptions('y', layout)}}
+                                    tooltip='Y axis options'
+                                    label='Options:'
+                                    options={yNoLog || isYNotNumeric ? Y_AXIS_OPTIONS_NOLOG : Y_AXIS_OPTIONS} {...fieldProps} {...props}/>),
+        XaxisMin: (props={}) => (<ValidationField fieldKey={'fireflyLayout.xaxis.min'}
+                                    initialState= {{value: get(fireflyLayout, 'xaxis.min')}}
+                                    validator={(val) => Validate.isFloat('X Min', val)}
+                                    tooltip='Minimum X value'
+                                    label='X Min:' {...boundariesFieldProps} {...boundariesFieldProps} {...props}/>),
+        XaxisMax: (props={}) => (<ValidationField fieldKey={'fireflyLayout.xaxis.max'}
+                                    initialState= {{value: get(fireflyLayout, 'xaxis.max')}}
+                                    validator={(val) => Validate.isFloat('X Max', val)}
+                                    tooltip='Maximum X value'
+                                    label='X Max:' {...boundariesFieldProps} {...boundariesFieldProps} {...props}/>),
+        YaxisMin:  (props={}) => (<ValidationField fieldKey={'fireflyLayout.yaxis.min'}
+                                    initialState= {{value: get(fireflyLayout, 'yaxis.min')}}
+                                    validator={(val) => Validate.isFloat('Y Min', val)}
+                                    tooltip='Minimum Y value'
+                                    label='Y Min:' {...boundariesFieldProps} {...boundariesFieldProps} {...props}/>),
+        YaxisMax:  (props={}) => (<ValidationField fieldKey={'fireflyLayout.yaxis.max'}
+                                    initialState= {{value: get(fireflyLayout, 'yaxis.max')}}
+                                    validator={(val) => Validate.isFloat('Y Max', val)}
+                                    tooltip='Maximum Y value'
+                                    label='Y Max:' {...boundariesFieldProps} {...props}/>),
+        Xyratio:  (props={}) => (<ValidationField style={{width: 15}} fieldKey={xyratioFldName}
+                                     initialState= {{value: get(fireflyLayout, 'xyratio')}}
+                                     validator={Validate.floatRange.bind(null, 0.1, 10, 1, 'X/Y ratio')}
+                                     tooltip='X/Y ratio'
+                                     label='X/Y ratio:'
+                                     labelWidth={50} {...fieldProps} {...props}/>),
+        Stretch:  (props={}) => (<RadioGroupInputField
+                                    fieldKey={'fireflyLayout.stretch'}
+                                    alignment='horizontal'
+                                    initialState= {{value: get(fireflyLayout, 'stretch', 'fit')}}
+                                    tooltip='Should the plot fit into the available space or fill the available width?'
+                                    label='Stretch to:'
+                                    labelWidth={50}
+                                    options={[ {label: 'height', value: 'fit'}, {label: 'width', value: 'fill'}]} {...fieldProps} {...props}/>),
+        Name:  (props={}) => (<ValidationField fieldKey={`data.${activeTrace}.name`}
+                                     initialState= {{value: get(data, `${activeTrace}.name`, '')}}
+                                     tooltip='The name of this new series'
+                                     label='Name:' {...fieldProps} {...props}/>),
+        Color:  (props={}) => (
+                    <div style={{display: 'inlineFlux'}}>
+                        <ValidationField inline={true} fieldKey={`data.${activeTrace}.marker.color`}
+                                         initialState= {{value: color}}
+                                         tooltip='Set series color'
+                                         label='Color:' {...fieldProps} {...props}/>
+                        <div style={{display: 'inline-block', paddingLeft: 2, verticalAlign: 'top'}}
+                            title='Select trace color'
+                            onClick={() => showColorPickerDialog(getFieldVal(groupKey, `data.${activeTrace}.marker.color`), true, false,
+                            (ev) => {
+                                    if (ev) {
+                                        const {r, g, b, a} = ev.rgb;
+                                        const rgbStr = `rgba(${r},${g},${b},${a})`;
+                                        dispatchValueChange({fieldKey: `data.${activeTrace}.marker.color`, groupKey, value: rgbStr, valid: true});
+                                    }
+                                }, groupKey)}>
+                            <ToolbarButton icon={MAGNIFYING_GLASS}/>
+                        </div>
+                    </div>),
+        Title:  (props={}) => ( <ValidationField fieldKey={'layout.title.text'}
+                                 initialState= {{value: get(layout, 'title.text')}}
+                                 tooltip='Chart title'
+                                 label='Chart title:' {...fieldProps} {...props}/>),
+        ChooseTrace: ({style={}, ...props}) => {
+            if (!data || data.length < 2) return null;
+            return (
+                <div style={{display: 'inline-flex', alignItems: 'center', marginBottom: 5, ...style}}>
+                    <div>Choose Trace: </div>
+                    <ActiveTraceSelect style={{marginLeft: 10, backgroundColor: '#dadada', borderColor: '#cacaca', width: 'unset', minWidth: 50}}
+                                      chartId={chartId}
+                                      activeTrace={activeTrace}
+                                      {...props}/>
+                </div>
+            );
+        },
+    };
+};

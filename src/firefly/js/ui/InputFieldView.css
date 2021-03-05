@@ -34,3 +34,9 @@
 .firefly-inputfield-view-error-msg {
     padding : 3px;
 }
+
+.ff-inputfield-view-readonly {
+    width: auto;
+    height: auto;
+    padding : 1px;
+}

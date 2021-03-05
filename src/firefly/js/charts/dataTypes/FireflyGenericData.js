@@ -3,7 +3,7 @@
  */
 import {get, isArray, isUndefined, uniqueId, isNil} from 'lodash';
 import {getTblById, getColumns, getColumn, doFetchTable, stripColumnNameQuotes} from '../../tables/TableUtil.js';
-import {cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
+import {cloneRequest, makeSubQueryRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData, getTraceSymbol, hasUpperLimits, hasLowerLimits} from '../ChartsCntlr.js';
 import {formatColExpr, getDataChangesForMappings, updateHighlighted, updateSelected, isScatter2d, getMaxScatterRows, getMinScatterGLRows} from '../ChartUtil.js';
 import {getTraceTSEntries as heatmapTSGetter} from './FireflyHeatmap.js';
@@ -42,19 +42,20 @@ export function getTraceTSEntries({traceTS, chartId, traceNum}) {
     }
 }
 
-function fetchData(chartId, traceNum, tablesource) {
+async function fetchData(chartId, traceNum, tablesource) {
 
     const {tbl_id, mappings} = tablesource;
-    if (!mappings) { return; }
+    if (!mappings) {
+        return;
+    }
 
     const originalTableModel = getTblById(tbl_id);
-    const {request, highlightedRow, selectInfo, totalRows} = originalTableModel;
+    const {highlightedRow, selectInfo, totalRows} = originalTableModel;
+    const {fireflyData} = getChartData(chartId);
 
     if (totalRows > getMaxScatterRows()) {
-        const chartData = getChartData(chartId);
         // scatterOrHeatmap attribute is set when a heatmap trace is used to represent a scatter
-        const scatterOrHeatmap = get(chartData, `fireflyData.${traceNum}.scatterOrHeatmap`);
-        if (scatterOrHeatmap) {
+        if (fireflyData?.[traceNum]?.scatterOrHeatmap) {
             // if the number of rows is above a threshhold,
             // heatmap chart should be produced
             const {options: heatmapOptions, fetchData: heatmapFetchData} = heatmapTSGetter({
@@ -66,59 +67,62 @@ function fetchData(chartId, traceNum, tablesource) {
             return heatmapFetchData(chartId, traceNum, heatmapTS);
         }
     }
-    
+
+    const sreq = createChartTblRequest(chartId, traceNum, tablesource);
+
+    const tableModel = await doFetchTable(sreq).catch((reason) => {
+        dispatchError(chartId, traceNum, reason);
+    });
+
+    if (tableModel.error) {
+        return dispatchError(chartId, traceNum, tableModel.error);
+    }
+
+    if (tableModel.tableData && tableModel.tableData.data) {
+        const changes = getDataChangesForMappings({tableModel, mappings, traceNum});
+
+        // extra changes based on trace type
+        addOtherChanges({changes, chartId, traceNum, tablesource, tableModel: originalTableModel});
+
+        dispatchChartUpdate({chartId, changes});
+        updateHighlighted(chartId, traceNum, highlightedRow);
+        updateSelected(chartId, selectInfo);
+    } else {
+        dispatchError(chartId, traceNum, 'No data');
+    }
+}
+
+export function createChartTblRequest(chartId, traceNum, tablesource) {
+
+    const {tbl_id, mappings} = tablesource;
+    const originalTableModel = getTblById(tbl_id);
+    const {request} = originalTableModel;
+    const {fireflyData} = getChartData(chartId);
+
     const colNames = getColumns(originalTableModel).map((c) => c.name);
 
     // default behavior
-    const sreq = cloneRequest(request, {
+    let sreq = cloneRequest(request, {
         startIdx: 0,
         pageSize: MAX_ROW,
-        inclCols: Object.entries(mappings).
-        filter(([k,v]) => !numberOrArrayProps.includes(k) || Number.isNaN(parseFloat(v))).
-        map(([k,v]) => {
+        inclCols: Object.entries(mappings).filter(([k, v]) => !numberOrArrayProps.includes(k) || Number.isNaN(parseFloat(v))).map(([k, v]) => {
             // we'd like expression columns to be named as the paths to trace data arrays, ex. data[0].x
             // otherwise use column names to preserve original column attributes (type, format, etc.)
             const asStr = colNames.includes(v) || colNames.includes(stripColumnNameQuotes(v)) ? '' :
-                k.startsWith('firefly') ? ` as "${k}"` :` as "data.${traceNum}.${k}"`;
+                k.startsWith('firefly') ? ` as "${k}"` : ` as "data.${traceNum}.${k}"`;
             return `${formatColExpr({colOrExpr: v, quoted: true, colNames})}${asStr}`;
-        }).
-        filter((c, i, a) => a.indexOf(c) === i). // remove duplicates
+        }).filter((c, i, a) => a.indexOf(c) === i).// remove duplicates
         join(', ')    // allows to use the same columns, ex. "w1" as "x", "w1" as "marker.color"
-    });
-
-    const sreqTblId = uniqueId(request.tbl_id);
-    sreq.META_INFO.tbl_id = sreqTblId;
-    sreq.tbl_id = sreqTblId;
-
-    doFetchTable(sreq).then(
-        (tableModel) => {
-            if (tableModel.error) {
-                dispatchError(chartId, traceNum, tableModel.error);
-                return;
-            }
-
-            if (tableModel.tableData && tableModel.tableData.data) {
-                const changes = getDataChangesForMappings({tableModel, mappings, traceNum});
-
-                // extra changes based on trace type
-                addOtherChanges({changes, chartId, traceNum, tablesource, tableModel: originalTableModel});
-
-                dispatchChartUpdate({chartId, changes});
-                updateHighlighted(chartId, traceNum, highlightedRow);
-                updateSelected(chartId, selectInfo);
-            } else {
-                dispatchError(chartId, traceNum, 'No data');
-            }
-        }
-    ).catch(
-        (reason) => {
-            dispatchError(chartId, traceNum, reason);
-        }
-    );
+    }, true);
+    if (fireflyData?.[traceNum]?.filters) {
+        const inclCols = (sreq.inclCols ? sreq.inclCols + ',' : '') + '"ROW_NUM" as "ORIG_IDX"';
+        sreq = makeSubQueryRequest(request, sreq.title, sreq.params,{filters: fireflyData?.[traceNum].filters, inclCols, pageSize: MAX_ROW});
+    }
+    return sreq;
 }
 
 
-function addOtherChanges({changes, chartId, traceNum, tablesource, tableModel}) {
+export function addOtherChanges({changes, chartId, traceNum, tablesource, tableModel}) {
     const chartData = getChartData(chartId);
     const type = get(chartData, `data.${traceNum}.type`, 'scatter');
     let scatter2d = isScatter2d(type);
@@ -153,7 +157,7 @@ function addOtherChanges({changes, chartId, traceNum, tablesource, tableModel}) 
  * @param p.tablesource
  * @param p.tableModel - original table model
  */
-function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}) {
+export function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}) {
 
     const {mappings} = tablesource;
     const xColumn = getColumn(tableModel, stripColumnNameQuotes(get(mappings, 'x')));

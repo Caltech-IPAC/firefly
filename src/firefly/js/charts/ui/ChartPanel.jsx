@@ -35,7 +35,6 @@ class ChartPanelView extends PureComponent {
     render() {
         const {chartId, chartData, deletable:deletableProp, expandable, expandedMode, Toolbar, showToolbar, showChart, glass} = this.props;
         const deletable = isUndefined(get(chartData, 'deletable')) ? deletableProp : get(chartData, 'deletable');
-        const showMultiTrace = !singleTraceUI();
 
         if (isEmpty(chartData) || isUndefined(Toolbar)) {
             return (
@@ -52,7 +51,7 @@ class ChartPanelView extends PureComponent {
                 return (
                     <div className='ChartPanel__container'>
                         <div className='ChartPanel__wrapper'>
-                            <Toolbar {...{chartId, expandable, expandedMode, showMultiTrace}}/>
+                            <Toolbar {...{chartId, expandable, expandedMode}}/>
                             <div className='ChartPanel__chartarea--withToolbar'>
                                 <ResizableChartArea
                                     {...Object.assign({}, this.props, {errors})} />
@@ -89,7 +88,7 @@ class ChartPanelView extends PureComponent {
             // toolbar only
             return (
                 <div className='ChartPanel__chartarea'>
-                    <Toolbar {...{chartId, expandable, expandedMode, showMultiTrace}}/>
+                    <Toolbar {...{chartId, expandable, expandedMode}}/>
                 </div>
             );
         }

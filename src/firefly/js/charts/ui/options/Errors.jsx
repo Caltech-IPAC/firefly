@@ -6,6 +6,9 @@ import FieldGroupUtils, {getFieldVal} from '../../../fieldGroup/FieldGroupUtils.
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
 import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
 import ColValuesStatistics from '../../ColValuesStatistics.js';
+import {getChartProps} from '../../ChartUtil.js';
+import {getColValStats} from '../../TableStatsCntlr.js';
+import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
 
 
 export const ERR_TYPE_OPTIONS = [
@@ -117,3 +120,79 @@ Errors.propTypes = {
     labelWidth: PropTypes.number,
     readonly: PropTypes.bool
 };
+
+
+
+export function Error_X({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey, error, errorMinus, labelWidth, readonly}) {
+    const chartProps = getChartProps(chartId, ptbl_id, pActiveTrace);
+    const {tbl_id, activeTrace, mappings} = chartProps;
+    const fldName = errorTypeFieldKey(activeTrace, 'x');
+    const defType = get(chartProps, fldName, getDefaultErrorType(chartProps, activeTrace, 'x'));
+    error = error || get(mappings, [activeTrace, 'error_x.array'], '');
+    errorMinus = errorMinus || get(mappings, [activeTrace, 'error_x.arrayminus'], '');
+    const colValStats = getColValStats(tbl_id);
+
+    const [type] = useStoreConnector(() => getFieldVal(groupKey, fldName, defType));
+
+    return <Error {...{axis: 'x', groupKey, colValStats, activeTrace, type, error, errorMinus, labelWidth, readonly}}/>;
+}
+
+export function Error_Y({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey, error, errorMinus, labelWidth, readonly}) {
+    const chartProps = getChartProps(chartId, ptbl_id, pActiveTrace);
+    const {tbl_id, activeTrace, mappings} = chartProps;
+    const fldName = errorTypeFieldKey(activeTrace, 'y');
+    const defType = get(chartProps, fldName, getDefaultErrorType(chartProps, activeTrace, 'y'));
+    error = error || get(mappings, ['error_y.array'], '');
+    errorMinus = errorMinus || get(mappings, ['error_y.arrayminus'], '');
+    const colValStats = getColValStats(tbl_id);
+
+    const [type] = useStoreConnector(() => getFieldVal(groupKey, fldName, defType));
+
+    return <Error {...{axis: 'y', groupKey, colValStats, activeTrace, type, error, errorMinus, labelWidth, readonly}}/>;
+}
+
+Error_X.propTypes = Error_Y.propTypes = {
+    activeTrace: PropTypes.number,
+    tbl_id: PropTypes.string,
+    groupKey: PropTypes.string.isRequired,
+    chartId: PropTypes.string,
+    error: PropTypes.string,
+    errorMinus: PropTypes.string,
+    labelWidth: PropTypes.number,
+    readonly: PropTypes.bool
+};
+
+
+
+function Error({axis, groupKey, colValStats, activeTrace, type, error, errorMinus, labelWidth, readonly}) {
+
+    const ErrFld = ({path, ...rest}) => {
+        const props = {groupKey, colValStats, readonly, fldPath:path(activeTrace, axis), labelWidth:5, nullAllowed:true, ...rest};
+        return  (<ColumnOrExpression {...props}/>);
+    };
+
+    const axisU = axis.toUpperCase();
+    labelWidth -= type==='asym' ? 10 : 0;
+
+    return (
+        <div style={{display: 'flex', alignItems: 'center', paddinngTop: 3}}>
+            <ListBoxInputField
+                initialState= {{
+                    value: type,
+                    tooltip: 'Select type of the errors',
+                    label: 'Error:',
+                }}
+                labelWidth={labelWidth}
+                options={ERR_TYPE_OPTIONS}
+                fieldKey={errorTypeFieldKey(activeTrace, axis)}
+                groupKey={groupKey}
+                readonly={readonly}
+            />
+            <div style={{paddingLeft: 10}}>
+                {(type==='sym')  && <ErrFld name={`${axisU} Error`}       initValue={error}      path={errorFieldKey} label='' labelWidth={6}/>}
+                {(type==='asym') && <ErrFld name={`${axisU} Upper Error`} initValue={error}      path={errorFieldKey} label={'\u2191'}/>}
+                {(type==='asym') && <ErrFld name={`${axisU} Lower Error`} initValue={errorMinus} path={errorMinusFieldKey} label={'\u2193'}/>}
+            </div>
+        </div>
+    );
+}

@@ -145,6 +145,7 @@ public class HttpServices {
         try {
             String url = input.getRequestUrl();
             if (isEmpty(url))  throw new FileNotFoundException("Missing URL parameter");
+            input.setFollowRedirect(false);                                                 // post are not allowed to follow redirect
             HttpMethod method = executeMethod(new PostMethod(url), input, handler);
             return Status.getStatus(method);
         } catch (IOException e) {
@@ -202,11 +203,9 @@ public class HttpServices {
 
             handleParams(method, input.getParams(), input.getFiles());
 
-            int status = httpClient.executeMethod(method);
-            if ( ( !isOk(method) || (isRedirected(method) && input.isFollowRedirect())) ) {
-                // logs bad requests
-                LOG.error("HTTP request failed with status:" + status + "\n" + getDetailDesc(method, input));
-            }
+            httpClient.executeMethod(method);
+
+            logErrors(method, input);
 
             if (handler != null) {
                 handler.handleResponse(method);
@@ -406,6 +405,20 @@ public class HttpServices {
                             .forEach( (e) -> args.add(new NameValuePair(e.getKey(), e.getValue())) );
                     method.setQueryString(args.toArray(new NameValuePair[0]));
                 }
+            }
+        }
+    }
+
+    private static void logErrors(HttpMethod method, HttpServiceInput input) {
+        int status = method.getStatusCode();
+        if(!isOk(method)) {
+            // logs bad requests
+            if (isRedirected(method)) {
+                if (input.isFollowRedirect()) {
+                    LOG.error("Failed to follow redirect:" + status + "\n" + getDetailDesc(method, input));
+                }
+            } else {
+                LOG.error("HTTP request failed with status:" + status + "\n" + getDetailDesc(method, input));
             }
         }
     }

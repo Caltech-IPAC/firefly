@@ -10,7 +10,9 @@ import shallowequal from 'shallowequal';
 import {dispatchMountFieldGroup, MOUNT_FIELD_GROUP} from '../fieldGroup/FieldGroupCntlr.js';
 import {getFieldGroupState} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
+import {Logger} from '../util/Logger.js';
 
+const logger = Logger('FieldGroup');
 
 /**
  * Watch for an unmount for a field group this is marked as mounted. Then we immediately do a mount.
@@ -63,9 +65,11 @@ export class FieldGroup extends Component {
         if (shallowequal(this.props, nextProps)) return false;
         const wrapperGroupKey= nextContext;
         const {groupKey, reducerFunc, keepState, actionTypes}= nextProps;
-        if (this.props.groupKey!==groupKey) {// support change the groupKey property on the form without unmounting
+        // added check for 'reducerFunc.ver' to re-register if needed.  Should revisit this for a better solution
+        if (this.props.groupKey!==groupKey || this.props?.reducerFunc?.ver !== reducerFunc?.ver) {// support change the groupKey property on the form without unmounting
             dispatchMountFieldGroup(groupKey, false);
             dispatchMountFieldGroup(groupKey, true, keepState, null, reducerFunc, actionTypes, wrapperGroupKey);
+            if (this.props.reducerFunc !== reducerFunc) logger.log('!!reducerFunc changed: ' + groupKey);
         }
         return true;
     }

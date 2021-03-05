@@ -239,7 +239,7 @@ function getChanges({tableModel, tablesource, chartId, traceNum}) {
         // colorbar.title is causing hover text display issues in Firefox
         // see https://github.com/plotly/plotly.js/issues/2003
         if (!BrowserInfo.isFirefox()) {
-            if (singleTraceUI() || (data && data.length===1)) {
+            if (singleTraceUI() || (data?.length===1)) {
                 changes[`data.${traceNum}.colorbar.title.text`] = 'pts';
             } else {
                 changes[`data.${traceNum}.colorbar.title.text`] = get(data, `${traceNum}.name`, 'pts');

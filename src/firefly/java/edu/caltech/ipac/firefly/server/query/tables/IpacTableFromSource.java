@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_INDEX;
+import static edu.caltech.ipac.firefly.server.util.QueryUtil.SEARCH_REQUEST;
 import static edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource.PROC_ID;
 
 
@@ -48,7 +49,6 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
     private static final String TBL_TYPE = "tblType";
     private static final String TYPE_CATALOG = "catalog";
     private static final String URL_CHECK_FOR_NEWER = WebPlotRequest.URL_CHECK_FOR_NEWER;
-    private static final String SEARCH_REQUEST = "searchRequest";
 
 
     public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
