@@ -3,7 +3,6 @@ package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.io.IpacTableWriter;
-import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.DbInstance;
@@ -21,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
+import static edu.caltech.ipac.firefly.server.util.QueryUtil.SEARCH_REQUEST;
 
 /**
  * Created by zhang on 10/14/15.
@@ -43,7 +43,7 @@ public class StatisticsProcessor extends TableFunctionProcessor {
     }
 
     protected DataGroup fetchData(TableServerRequest treq, File dbFile, DbAdapter dbAdapter) throws DataAccessException {
-        TableServerRequest sreq = getSearchRequest(treq);
+        TableServerRequest sreq = QueryUtil.getSearchRequest(treq);
         EmbeddedDbProcessor proc = getSearchProcessor(sreq);
         String origDataTblName = proc.getResultSetID(sreq);
         // check to see if a resultset table exists... if not, use orginal data table.
@@ -106,7 +106,6 @@ public class StatisticsProcessor extends TableFunctionProcessor {
 
 @Deprecated
 class StatisticsProcessorOld extends IpacTablePartProcessor {
-    private static final String SEARCH_REQUEST = "searchRequest";
     private static DataType[] columns = new DataType[]{
             new DataType("columnName", String.class),
             new DataType("description", String.class),
@@ -316,20 +315,12 @@ class StatisticsProcessorOld extends IpacTablePartProcessor {
      */
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
-        String searchRequestJson = request.getParam(SEARCH_REQUEST);
-        if (searchRequestJson == null) {
-            throw new DataAccessException("Unable to get statistics: " + SEARCH_REQUEST + " is missing");
-        }
-        TableServerRequest sReq = QueryUtil.convertToServerRequest(searchRequestJson);
-
-        if (sReq.getRequestId() == null) {
-            throw new DataAccessException("Unable to get statistics: " + SEARCH_REQUEST + " must contain " + ServerParams.ID);
-        }
+        TableServerRequest sReq = QueryUtil.getSearchRequest(request);
         sReq.setPageSize(Integer.MAX_VALUE);
         sReq.setStartIndex(0);
         DataGroup sourceDataGroup = new SearchManager().getDataGroup(sReq).getData();
         DataGroup statisticsDataGroup = createTableStatistic(sourceDataGroup);
-        statisticsDataGroup.addAttribute("searchRequest", sReq.toString());
+        statisticsDataGroup.addAttribute(SEARCH_REQUEST, sReq.toString());
         File statisticsFile = createFile(request);
         IpacTableWriter.save(statisticsFile, statisticsDataGroup);
         return statisticsFile;

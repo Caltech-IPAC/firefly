@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, has, isArray, isEmpty, isObject, isString, intersection, pickBy} from 'lodash';
+import {get, has, isArray, isEmpty, isObject, isString, intersection, pickBy, unset} from 'lodash';
 import Enum from 'enum';
 import { getColumn,
     getColumnIdx,
@@ -1286,36 +1286,38 @@ export function isObsCoreLike(tableModel) {
  * @prop {DataAxis}  spectralAxis
  * @prop {DataAxis}  fluxAxis
  * @prop {DataAxis}  timeAxis
- * @prop {string}    orderID
+ * @prop {string}    fluxAxisOrder
  */
 
 /**
  * @global
  * @public
  * @typedef {Object} DataAxis - spectrum data axis.. can be one of FluxAxis, TimeAxis, or SpectralAxis
- * @prop {string}  value                 Spectral axis column name
+ * @prop {string}  value                 column name containing the axis values
  * @prop {string}  [unit]
  * @prop {string}  [ucd]
  * @prop {string}  [statError]
  * @prop {string}  [statErrLow]
  * @prop {string}  [statErrHigh]
- * @prop {string}  [binSize]
- * @prop {string}  [binLow]
- * @prop {string}  [binHigh]
+ * @prop {string}  [lowerLimit]
+ * @prop {string}  [upperLimit]
+ * @prop {string}  [order]
  */
 
 const spectralAxisPrefix = ['spec:Spectrum.Data.SpectralAxis', 'spec:Data.SpectralAxis'];
-const fluxAxisPrefix = ['spec:Spectrum.Data.FluxAxis', 'spec:Data.FluxAxis'];
+const fluxAxisPrefix = ['spec:Spectrum.Data.FluxAxis', 'spec:Data.FluxAxis', 'ipac:Spectrum.Data.FluxAxis'];
 const timeAxisPrefix = ['spec:Spectrum.Data.TimeAxis', 'spec:Data.TimeAxis'];
-const orderIDPrefix = ['spec:Spectrum.Data.OrderID', 'spec:Data.OrderID'];
 const dataAxis = {
     value: 'Value',
     statError: 'Accuracy.StatError',
     statErrLow: 'Accuracy.StatErrLow',
     statErrHigh: 'Accuracy.StatErrHigh',
-    binSize: 'Accuracy.BinSize',
+    upperLimit: 'Accuracy.UpperLimit',
+    lowerLimit: 'Accuracy.LowerLimit',
     binLow: 'Accuracy.BinLow',
-    binHigh: 'Accuracy.BinHigh'
+    binHigh: 'Accuracy.BinHigh',
+    // binSize: 'Accuracy.BinSize',
+    order: 'Order'
 };
 
 /**
@@ -1342,26 +1344,32 @@ export function getSpectrumDM(tableModel) {
 
         return data;
     };
-    const fixStatErr = (axis) => {
+    const fixStatErr = (axis, isSpectral) => {
         if (!axis) return;
         const {statError, statErrLow, statErrHigh} = axis;
         if (statError) {
             axis.statErrLow = axis.statErrHigh = undefined;         // if statError is defined, ignore low/high
-        } else if (!statErrLow !== !statErrHigh) {                  // logical xor equivalent
-            statErrLow = statErrLow || 0.0;
-            axis.statError = statErrLow || statErrHigh;             // if only 1 of the low/high is given, treat it as statError
+        } else if (!statErrLow !== !statErrHigh) {                  // logical xor equivalent (only one with value)
+            axis.statError = statErrLow || statErrHigh;             // treat it as statError
+            axis.statErrLow = axis.statErrHigh = undefined;
+        }
+        if (isSpectral) {
+            unset(axis, 'upperLimit');
+            unset(axis, 'lowerLimit');
+        } else {
+            unset(axis, 'binHigh');
+            unset(axis, 'binLow');
         }
     };
 
     const spectralAxis  = findAxisData(spectralAxisPrefix);
     const fluxAxis      = findAxisData(fluxAxisPrefix);
     const timeAxis      = findAxisData(timeAxisPrefix);
-    const orderID       = findColByUtype(tableModel, orderIDPrefix);
 
-    fixStatErr(spectralAxis);
-    fixStatErr(fluxAxis);
+    fixStatErr(spectralAxis, true);
+    fixStatErr(fluxAxis, false);
 
-    return pickBy({spectralAxis, fluxAxis, timeAxis, orderID}, (a) => !isEmpty(a));      // return axis only if it has data
+    return pickBy({spectralAxis, fluxAxis, timeAxis}, (a) => !isEmpty(a));      // return axis only if it has data
 }
 
 function findColByUtype(tableModel, prefixes, suffix) {

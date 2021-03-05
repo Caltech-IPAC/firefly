@@ -1333,6 +1333,7 @@ export function makeBgKey(tbl_id) {
  * @returns {*}
  */
 export function stripColumnNameQuotes(s) {
+    if (!s) return ;
     const newS = s.replace(/^"(.+)"$/, '$1');
     return newS.includes('"') ? s : newS;
 }

@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, set, unset, cloneDeep, omit, omitBy, isNil, pickBy} from 'lodash';
+import {get, set, unset, cloneDeep, omit, omitBy, isNil, pickBy, uniqueId} from 'lodash';
 
 import {uniqueTblId} from './TableUtil.js';
 import {Keys} from '../core/background/BackgroundStatus.js';
@@ -194,16 +194,23 @@ const voProviders = {'NED':'NedSearch'};
 
 /**
  * create a deep clone of the given request.  tbl_id is removed from the cloned request.
- * @param {TableRequest} request  the original request to clone
- * @param {Object} params   additional parameters to add to the cloned request
+ * @param {TableRequest}        request  the original request to clone
+ * @param {Object} params       additional parameters to add to the cloned request
+ * @param {boolean} createTblId when true, create a new unique tbl_id for this request
  * @returns {TableRequest}
  * @public
  * @func cloneRequest
  * @memberof firefly.util.table
  */
-export function cloneRequest(request, params = {}) {
+export function cloneRequest(request, params = {}, createTblId) {
     const req = cloneDeep(omit(request, 'tbl_id'));
-    unset(req, 'META_INFO.tbl_id');
+    if (createTblId) {
+        const tbl_id = uniqueId(request.tbl_id);
+        req.META_INFO.tbl_id = tbl_id;
+        req.tbl_id = tbl_id;
+    } else {
+        unset(req, 'META_INFO.tbl_id');
+    }
     return Object.assign(req, params);
 }
 
@@ -221,6 +228,24 @@ export function cloneRequest(request, params = {}) {
  */
 export function makeTableFunctionRequest(searchRequest, id, title, params={}, options={}) {
     const req = makeTblRequest(id, title, params, options);
+    req.searchRequest = JSON.stringify(searchRequest);
+    return req;
+}
+
+
+/**
+ * create a request which will perform a sub query on the given searchRequest
+ * @param {TableRequest} searchRequest  required. the table's request this function should operate on
+ * @param {string} [title]              title to display with this table.
+ * @param {object} [params]             the parameters to include with this request.
+ * @param {TableRequest} [options]      more options.  see TableRequest for details.
+ * @returns {TableRequest}
+ * @public
+ * @func makeSubQueryRequest
+ * @memberof firefly.util.table
+ */
+export function makeSubQueryRequest(searchRequest, title, params={}, options={}) {
+    const req = makeTblRequest('SubQueryProcessor', title, params, options);
     req.searchRequest = JSON.stringify(searchRequest);
     return req;
 }

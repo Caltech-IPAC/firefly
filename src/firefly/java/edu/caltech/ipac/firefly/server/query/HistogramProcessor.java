@@ -1,7 +1,6 @@
 package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.data.Param;
-import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.DataGroup;
@@ -19,6 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
+import static edu.caltech.ipac.firefly.server.util.QueryUtil.SEARCH_REQUEST;
 
 
 /**
@@ -40,7 +40,6 @@ import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
 @SearchProcessorImpl(id = "HistogramProcessor")
 public class HistogramProcessor extends IpacTablePartProcessor {
 
-    private static final String SEARCH_REQUEST = "searchRequest";
     private static DataType[] columns = new DataType[]{
         new DataType("numInBin", Long.class),
         new DataType("binMin", Double.class),
@@ -113,16 +112,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
 
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
-        String searchRequestJson = request.getParam(SEARCH_REQUEST);
-        if (searchRequestJson == null) {
-            throw new DataAccessException("Unable to get histogram: " + SEARCH_REQUEST + " is missing");
-        }
-
-        TableServerRequest sReq = QueryUtil.convertToServerRequest(searchRequestJson);
-
-        if (sReq.getRequestId() == null) {
-            throw new DataAccessException("Unable to get histogram: " + SEARCH_REQUEST + " must contain " + ServerParams.ID);
-        }
+        TableServerRequest sReq = QueryUtil.getSearchRequest(request);
         getParameters(request);
 
         // get the relevant data
@@ -142,7 +132,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         DataGroup sourceDataGroup = sourceData.getData();
         double[] columnData = getColumnData(sourceDataGroup);
         DataGroup histogramDataGroup = createHistogramTable(columnData);
-        histogramDataGroup.addAttribute("searchRequest", sReq.toString());
+        histogramDataGroup.addAttribute(SEARCH_REQUEST, sReq.toString());
 
         File histogramFile = createFile(request);
         IpacTableWriter.save(histogramFile, histogramDataGroup);

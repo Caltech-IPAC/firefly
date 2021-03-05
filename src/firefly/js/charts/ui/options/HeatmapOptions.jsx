@@ -1,5 +1,5 @@
 import React from 'react';
-import {get, isArray, isUndefined} from 'lodash';
+import {get} from 'lodash';
 
 import {getChartData} from '../../ChartsCntlr.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
@@ -9,41 +9,41 @@ import {intValidator} from '../../../util/Validate.js';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
 import {CheckboxGroupInputField} from '../../../ui/CheckboxGroupInputField.jsx';
-import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
-import {BasicOptionFields, basicFieldReducer, helpStyle, submitChanges} from './BasicOptions.jsx';
+import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
+import {LayoutOptions, basicFieldReducer, helpStyle, submitChanges, basicOptions} from './BasicOptions.jsx';
 import {getColValStats} from '../../TableStatsCntlr.js';
 import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
 import {ALL_COLORSCALE_NAMES, PlotlyCS} from '../../Colorscale.js';
+import {getChartProps} from '../../ChartUtil.js';
+import {FieldGroupCollapsible} from '../../../ui/panel/CollapsiblePanel.jsx';
 
 
 
 const fieldProps = {labelWidth: 62, size: 15};
 
-export class HeatmapOptions extends SimpleComponent {
+export function HeatmapOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey}) {
 
-    getNextState() {
-        const {chartId} = this.props;
-        const {activeTrace:cActiveTrace=0} = getChartData(chartId);
-        // activeTrace is passed via property, when used from NewTracePanel
-        const activeTrace = isUndefined(this.props.activeTrace) ? cActiveTrace : this.props.activeTrace;
-        return {activeTrace};
-    }
+    const [activeTrace] = useStoreConnector(() => {
+        return  pActiveTrace ?? getChartData(chartId)?.activeTrace;
+    });
+    groupKey = groupKey || `${chartId}-heatmap-${activeTrace}`;
+    const {tablesource, tbl_id, multiTrace} = getChartProps(chartId, ptbl_id, activeTrace);
+    const {Name} = basicOptions({activeTrace, tbl_id, chartId, groupKey, fieldProps:{labelWidth: 60}});
 
-    render() {
-        const {chartId, tbl_id:tblIdProp, showMultiTrace} = this.props;
-        const {tablesources, activeTrace:cActiveTrace=0} = getChartData(chartId);
-        const activeTrace = isUndefined(this.props.activeTrace) ? cActiveTrace : this.props.activeTrace;
-        const groupKey = this.props.groupKey || `${chartId}-heatmap-${activeTrace}`;
-        const tablesource = get(tablesources, [cActiveTrace], tblIdProp && {tbl_id: tblIdProp});
-
-        return (
-            <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
-                {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey}}/>}
-                <br/>
-                <BasicOptionFields {...{activeTrace, groupKey, noColor: true, showMultiTrace}}/>
-            </FieldGroup>
-        );
-    }
+    return (
+        <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
+            {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey}}/>}
+            <br/>
+            <div style={{margin: '5px 0 0 -22px'}}>
+                { (multiTrace) &&
+                <FieldGroupCollapsible  header='Trace Options' initialState= {{ value:'closed' }} fieldKey='traceOptions'>
+                    {multiTrace && <Name/>}
+                </FieldGroupCollapsible>
+                }
+                <LayoutOptions {...{activeTrace, tbl_id, chartId, groupKey, noColor: true}}/>
+            </div>
+        </FieldGroup>
+    );
 }
 
 export function fieldReducer({chartId, activeTrace}) {

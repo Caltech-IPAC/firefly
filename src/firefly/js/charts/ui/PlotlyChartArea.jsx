@@ -1,13 +1,13 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {flux} from '../../core/ReduxFlux.js';
-import {get, set, cloneDeep} from 'lodash';
+import {cloneDeep, get, set} from 'lodash';
 import shallowequal from 'shallowequal';
 import {PlotlyWrapper} from './PlotlyWrapper.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 
-import {dispatchChartUpdate, dispatchChartHighlighted, getAnnotations, getChartData, usePlotlyReact} from '../ChartsCntlr.js';
-import {flattenAnnotations, isScatter2d, handleTableSourceConnections, clearChartConn} from '../ChartUtil.js';
+import {dispatchChartHighlighted, dispatchChartUpdate, dispatchSetActiveTrace, getAnnotations, getChartData, usePlotlyReact} from '../ChartsCntlr.js';
+import {clearChartConn, flattenAnnotations, handleTableSourceConnections, isFluxAxisOrder, isScatter2d} from '../ChartUtil.js';
 
 const X_TICKLBL_PX = 60;
 const TITLE_PX = 30;
@@ -57,7 +57,11 @@ export class PlotlyChartArea extends Component {
         const {widthPx, heightPx, chartId} = np;
         const propsEqual = widthPx === this.props.widthPx && heightPx === this.props.heightPx && chartId === this.props.chartId;
         const stateEqual = shallowequal(ns, this.state);
-        return !(propsEqual && stateEqual);
+        if (!(propsEqual && stateEqual)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     componentDidMount() {
@@ -78,7 +82,8 @@ export class PlotlyChartArea extends Component {
     getNextState() {
         const {chartId} = this.props;
         const {data, fireflyData=[], highlighted, layout, fireflyLayout={}, selected, activeTrace} = getChartData(chartId);
-        return  {data, isLoading: fireflyData.some((e)=>get(e, 'isLoading')), highlighted, selected, layout, activeTrace, xyratio: fireflyLayout.xyratio, stretch: fireflyLayout.stretch};
+        const {fluxAxisOrder, useSpectrum} = fireflyData?.[activeTrace] || {};
+        return  {data, isLoading: fireflyData.some((e)=>get(e, 'isLoading')), highlighted, selected, layout, activeTrace, xyratio: fireflyLayout.xyratio, stretch: fireflyLayout.stretch, fluxAxisOrder, useSpectrum};
     }
 
     storeUpdate() {
@@ -98,7 +103,7 @@ export class PlotlyChartArea extends Component {
 
     render() {
         const {widthPx, heightPx, } = this.props;
-        const {data=[], isLoading, highlighted, selected, layout={}, activeTrace=0, xyratio, stretch} = this.state;
+        const {data=[], isLoading, highlighted, selected, layout={}, activeTrace=0, xyratio, stretch, fluxAxisOrder, useSpectrum} = this.state;
         if (isLoading) {
             return (
                 <div style={{position: 'relative', width: '100%', height: '100%'}}>
@@ -206,17 +211,21 @@ function onClick(chartId) {
     return (evData) => {
         // for scatter, points array has one element, for the top trace only,
         // we should have active trace, its related selected, and its highlight traces on top
-        const {activeTrace=0, curveNumberMap} = getChartData(chartId);
+        let {activeTrace=0, curveNumberMap, fireflyData } = getChartData(chartId);
         const curveNumber = get(evData.points, `${0}.curveNumber`);
         const highlighted = get(evData.points, `${0}.pointNumber`);
         const curveName = get(evData.points, `${0}.data.name`);
 
         const traceNum = curveNumber >= curveNumberMap.length ? curveNumber : curveNumberMap[curveNumber];
+        if (traceNum !== activeTrace && traceNum < curveNumberMap.length) {
+            activeTrace = traceNum;
+            dispatchSetActiveTrace({chartId, activeTrace});
+        }
 
         // traceNum is related to any of trace data or SELECTED trace or HIGHLIGHTED trace
         // if traceNUm is between [0, curveNumberMap.length-1], then curveNumber is mapped to one of the trace data
         // if traceNum is greater than curveNumberMap.length-1, then curveNumber is mapped to either SELECTED trace or HIGHLIGHTED trace
-        if (traceNum === activeTrace || traceNum === curveNumberMap.length ) {
+        if (traceNum === activeTrace || traceNum === curveNumberMap.length) {
             dispatchChartHighlighted({
                 chartId,
                 traceNum,
@@ -242,13 +251,12 @@ function onSelect(chartId) {
             const [xMin, xMax] = get(evData, 'range.x', []);
             const [yMin, yMax] = get(evData, 'range.y', []);
             if (xMin !== xMax && yMin !== yMax && curveNumberMap) {
-                points = get(evData, 'points', []).filter((o) => {
-                    return curveNumberMap[o.curveNumber] === activeTrace;
-                }).map((o) => {
-                    return o.pointNumber;
-                });
+                points = get(evData, 'points', []);
+                if (!isFluxAxisOrder(chartId)) {
+                    points.filter((o) => curveNumberMap[o.curveNumber] === activeTrace);
+                }
+                points = points.map((o) => [o.pointNumber, curveNumberMap[o.curveNumber]]);
             }
-
             if (points) {
                 const {data, activeTrace=0} = getChartData(chartId);
                 const type = get(data, [activeTrace, 'type'], 'scatter');
