@@ -3,8 +3,9 @@
  */
 
 import React, {memo} from 'react';
+import shallowequal from 'shallowequal';
 import PropTypes from 'prop-types';
-import {SimpleComponent} from './SimpleComponent.jsx';
+import {useStoreConnector} from './SimpleComponent.jsx';
 import {getUserInfo} from '../core/AppDataCntlr.js';
 import {logout} from '../rpc/CoreServices.js';
 import {getVersionInfoStr, showFullVersionInfoDialog} from '../ui/DropDownContainer.jsx';
@@ -55,32 +56,32 @@ Banner.propTypes= {
 };
 
 
+const UserInfo= memo(() => {
+    const [userInfo]= useStoreConnector(
+        (prev) => {
+            const userInfo= getUserInfo();
+            if (!prev) return userInfo || {};
+            return shallowequal(prev,userInfo) ? prev : userInfo;
+        });
 
-class UserInfo extends SimpleComponent {
+    const {loginName='Guest', firstName='', lastName='', login_url, logout_url} = userInfo;
+    const isGuest = loginName === 'Guest';
+    const onLogin = () => login_url && (window.location = login_url);
+    const onLogout = () => {
+        if (logout_url) window.location = logout_url;
+        logout();
+    };
 
-    getNextState(np) {
-        return getUserInfo() || {};
-    }
+    const fn= (firstName && firstName.trim().toLowerCase()!=='null') ? firstName : '';
+    const ln= (lastName && lastName.trim().toLowerCase()!=='null') ? lastName : '';
 
-    render() {
-        const {loginName='Guest', firstName, lastName, login_url, logout_url} = this.state || {};
-        const isGuest = loginName === 'Guest';
-        const onLogin = () => login_url && (window.location = login_url);
-        const onLogout = () => {
-            if (logout_url) {
-                window.location = logout_url;
-            }
-            logout();
-        };
+    const displayName = (fn || ln) ? `${fn} ${ln}` : loginName;
 
-        const displayName = firstName || lastName ? `${firstName} ${lastName}` : loginName;
-
-        return (
-            <div className='banner__user-info'>
-                <span>{displayName}</span>
-                {!isGuest && <div className='banner__user-info--links' onClick={onLogout}>Logout</div>}
-                {isGuest && <div className='banner__user-info--links' onClick={onLogin}>Login</div>}
-            </div>
-        );
-    }
-}
+    return (
+        <div className='banner__user-info'>
+            <span>{displayName}</span>
+            {!isGuest && <div className='banner__user-info--links' onClick={onLogout}>Logout</div>}
+            {isGuest && <div className='banner__user-info--links' onClick={onLogin}>Login</div>}
+        </div>
+    );
+});

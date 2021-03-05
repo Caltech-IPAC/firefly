@@ -22,7 +22,7 @@ process.traceDeprecation = true;
  * @param {string}  [config.project]  project name
  * @param {string}  [config.filename]  name of the generated JS script.
  * @param {string}  [config.baseWarName]  name of the the war file base, defaults to config.name
- * @param {function}  [config.doFirst]  execute with the original config param if given.;
+ * @param {function}  [config.doFirst]  execute with the original config param if given.
  * @param {function}  [config.doLast]   execute with the created webpack_config param if given.
  * @returns {Object} a webpack config object.
  */
@@ -74,7 +74,6 @@ export default function makeWebpackConfig(config) {
     } else {
         Object.keys(config.entry).forEach( (v) => {
             script_names.push(v + '.js');
-
         });
     }
 
@@ -109,7 +108,6 @@ export default function makeWebpackConfig(config) {
         workerFilename= '[name]-[hash].worker.js';
     }
     const output =  {filename, path: out_path};
-    console.log('output:',output);
 
     /*------------------------ PLUGINS -----------------------------*/
     const plugins = [
