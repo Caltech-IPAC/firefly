@@ -103,7 +103,7 @@ function getValueOnSuggestion(cols, canBeExpression=true) {
     };
 }
 
-export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,labelWidth=30,name,tooltip,nullAllowed}) {
+export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,labelWidth=30,name,tooltip,nullAllowed, readonly}) {
     return (
         <ColumnFld
             cols={colValStats.map((c)=>{return {name: c.name, units: c.unit, type: c.type, desc: c.descr};})}
@@ -111,7 +111,7 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
             initValue={get(params, fldPath)}
             canBeExpression={true}
             tooltip={`Column or expression for ${tooltip ? tooltip : name}.${EXPRESSION_TTIPS}`}
-            {...{groupKey, label, labelWidth, name, nullAllowed}} />
+            {...{groupKey, label, labelWidth, name, nullAllowed, readonly}} />
     );
 }
 
@@ -124,11 +124,12 @@ ColumnOrExpression.propTypes = {
     labelWidth: PropTypes.number,
     name: PropTypes.string.isRequired,
     tooltip: PropTypes.string,
-    nullAllowed: PropTypes.bool
+    nullAllowed: PropTypes.bool,
+    readonly: PropTypes.bool
 };
 
 export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidth, tooltip='Table column',
-                           name, nullAllowed, canBeExpression=false, inputStyle}) {
+                           name, nullAllowed, canBeExpression=false, inputStyle, readonly}) {
     const value = initValue || getFieldVal(groupKey, fieldKey);
     const colValidator = getColValidator(cols, !nullAllowed, canBeExpression);
     const {valid=true, message=''} = value ? colValidator(value) : {};
@@ -160,12 +161,15 @@ export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidt
                 groupKey={groupKey}
                 {...labelProps}
                 inputStyle={inputStyle}
+                readonly={readonly}
             />
-            <div style={{display: 'inline-block', cursor:'pointer', paddingLeft: 2, verticalAlign: 'top'}}
+            {!readonly &&
+            <div style={{display: 'inline-block', cursor: 'pointer', paddingLeft: 2, verticalAlign: 'top'}}
                  title={`Select ${name} column`}
-                 onClick={() => showColSelectPopup(cols, onColSelected,`Choose ${name}`,'OK',val)}>
+                 onClick={() => showColSelectPopup(cols, onColSelected, `Choose ${name}`, 'OK', val)}>
                 <ToolbarButton icon={MAGNIFYING_GLASS}/>
             </div>
+            }
         </div>
     );
 }
@@ -181,6 +185,7 @@ ColumnFld.propTypes = {
     tooltip: PropTypes.string,
     nullAllowed: PropTypes.bool,
     canBeExpression: PropTypes.bool,
-    inputStyle: PropTypes.object
+    inputStyle: PropTypes.object,
+    readonly: PropTypes.bool
 };
 

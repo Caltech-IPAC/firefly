@@ -12,6 +12,7 @@ import {getTraceTSEntries as genericTsGetter} from './FireflyGenericData.js';
 
 import {toMaxFixed, getDecimalPlaces} from '../../util/MathUtil.js';
 import Color from '../../util/Color.js';
+import {sprintf} from '../../externalSource/sprintf.js';
 
 //const HIST_DEC = 6;
 
@@ -284,3 +285,4 @@ function createXY(data, binColor) { // removed '#d1d1d1' to use default colors
         return xy;
     }, emptyData);
 }
+

@@ -80,7 +80,7 @@ export class Errors extends PureComponent {
 
 
     render() {
-        const {groupKey, axis, activeTrace=0, labelWidth=30} = this.props;
+        const {groupKey, axis, activeTrace=0, labelWidth=30, readonly} = this.props;
         const errType = this.state.selectedErrType;
         const axisU = axis.toUpperCase();
 
@@ -96,11 +96,12 @@ export class Errors extends PureComponent {
                     options={ERR_TYPE_OPTIONS}
                     fieldKey={errorTypeFieldKey(activeTrace, axis)}
                     groupKey={groupKey}
+                    readonly={readonly}
                 />
                 <div style={{paddingLeft: 10}}>
-                    {(errType==='sym') && this.renderErrFld({fldPath:errorFieldKey(activeTrace, axis), label: ' ', labelWidth: 6, name:`${axisU} Error`})}
-                    {(errType==='asym') && this.renderErrFld({fldPath:errorFieldKey(activeTrace, axis), label: '\u2191', name:`${axisU} Upper Error`})}
-                    {(errType==='asym') && this.renderErrFld({fldPath:errorMinusFieldKey(activeTrace, axis), label: '\u2193', name:`${axisU} Lower Error`})}
+                    {(errType==='sym') && this.renderErrFld({fldPath:errorFieldKey(activeTrace, axis), label: ' ', labelWidth: 6, name:`${axisU} Error`, readonly})}
+                    {(errType==='asym') && this.renderErrFld({fldPath:errorFieldKey(activeTrace, axis), label: '\u2191', name:`${axisU} Upper Error`, readonly})}
+                    {(errType==='asym') && this.renderErrFld({fldPath:errorMinusFieldKey(activeTrace, axis), label: '\u2193', name:`${axisU} Lower Error`, readonly})}
                 </div>
             </div>
         );
@@ -113,5 +114,6 @@ Errors.propTypes = {
     colValStats: PropTypes.arrayOf(PropTypes.instanceOf(ColValuesStatistics)).isRequired,
     axis: PropTypes.string.isRequired,
     activeTrace: PropTypes.number,
-    labelWidth: PropTypes.number
+    labelWidth: PropTypes.number,
+    readonly: PropTypes.bool
 };

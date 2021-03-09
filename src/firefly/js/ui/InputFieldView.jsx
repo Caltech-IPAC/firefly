@@ -88,7 +88,7 @@ export class InputFieldView extends PureComponent {
     render() {
         var {hasFocus}= this.state;
         var {visible,disabled, label,tooltip,labelWidth,value,style,wrapperStyle,labelStyle,
-             valid,size,onChange, onBlur, onKeyPress, onKeyDown, onKeyUp, showWarning, message, type, placeholder, form='__ignore'}= this.props;
+             valid,size,onChange, onBlur, onKeyPress, onKeyDown, onKeyUp, showWarning, message, type, placeholder, form='__ignore', readonly}= this.props;
         if (!visible) return null;
         wrapperStyle = Object.assign({whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block'}, wrapperStyle);
         // form to relate this input field to.
@@ -113,6 +113,7 @@ export class InputFieldView extends PureComponent {
                        onKeyDown={(ev) => onKeyDown && onKeyDown(ev,currValue)}
                        onKeyUp={(ev) => onKeyUp && onKeyUp(ev)}
                        value={currValue}
+                       disabled={readonly}
                        title={ (!showWarning && !valid) ? message : tooltip}
                        {...pickBy({size, type, disabled, placeholder, form})}
                 />
@@ -144,7 +145,8 @@ InputFieldView.propTypes= {
     showWarning : bool,
     type: string,
     placeholder: string,
-    form: string
+    form: string,
+    readonly: bool
 };
 
 InputFieldView.defaultProps= {
@@ -152,7 +154,8 @@ InputFieldView.defaultProps= {
     valid : true,
     visible : true,
     message: '',
-    type: 'text'
+    type: 'text',
+    readonly: false
 };
 
 export const propTypes = InputFieldView.propTypes;

@@ -19,7 +19,7 @@ const convertValue= (value,options) => (!value) ? get(options, [0, 'value']) : v
 
 
 export function ListBoxInputFieldView({inline, value, onChange, fieldKey, options,
-                                       multiple, labelWidth, tooltip, label, wrapperStyle, selectStyle}) {
+                                       multiple, labelWidth, tooltip, label, wrapperStyle, selectStyle, readonly=false}) {
 
     var vAry= getCurrentValueArr(value);
     const style = Object.assign({whiteSpace:'nowrap', display: inline?'inline-block':'block'}, wrapperStyle);
@@ -31,6 +31,7 @@ export function ListBoxInputFieldView({inline, value, onChange, fieldKey, option
                     style={selectStyle}
                     multiple={multiple}
                     onChange={onChange}
+                    disabled={readonly}
                     value={multiple ? vAry : value}>
                 {options.map(( (option) => {
                     const optLabel = option.label || option.value;
@@ -62,7 +63,8 @@ ListBoxInputFieldView.propTypes= {
     tooltip:  PropTypes.string,
     labelWidth : PropTypes.number,
     selectStyle: PropTypes.object,
-    wrapperStyle: PropTypes.object
+    wrapperStyle: PropTypes.object,
+    readonly: PropTypes.bool
 };
 
 function handleOnChange(ev, params, fireValueChange) {
@@ -119,6 +121,7 @@ ListBoxInputField.propTypes= {
     inline : PropTypes.bool,
     options : PropTypes.array,
     multiple : PropTypes.bool,
-    labelWidth : PropTypes.number
+    labelWidth : PropTypes.number,
+    readonly: PropTypes.bool
 };
 
