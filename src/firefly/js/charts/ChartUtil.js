@@ -30,7 +30,7 @@ import Color from '../util/Color.js';
 import {MetaConst} from '../data/MetaConst';
 import {ALL_COLORSCALE_NAMES, colorscaleNameToVal} from './Colorscale.js';
 import {findTableCenterColumns, getSpectrumDM} from '../util/VOAnalyzer.js';
-import {getUnitInfo} from './dataTypes/FireflySpectrum.js';
+import {getUnitInfo} from './dataTypes/SpectrumUnitConversion.js';
 
 export const DEFAULT_ALPHA = 0.5;
 

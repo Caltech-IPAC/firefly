@@ -3,16 +3,16 @@ import PropTypes from 'prop-types';
 import {get, isUndefined, pick} from 'lodash';
 
 import {BasicOptionFields} from './BasicOptions.jsx';
-import {getChartData, getTraceSymbol} from '../../ChartsCntlr.js';
-import {COL_TYPE, getColumns, getTblById} from '../../../tables/TableUtil.js';
+import {getChartData} from '../../ChartsCntlr.js';
+import {getTblById} from '../../../tables/TableUtil.js';
 import {getSpectrumDM} from '../../../util/VOAnalyzer.js';
-import {getUnitInfo, getUnitConvExpr} from '../../dataTypes/FireflySpectrum.js';
+import {getUnitInfo, getUnitConvExpr} from '../../dataTypes/SpectrumUnitConversion.js';
 
 import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
 import {getColValStats} from '../../TableStatsCntlr.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
-import {errorFieldKey, errorMinusFieldKey, Errors, errorTypeFieldKey, getDefaultErrorType} from './Errors.jsx';
+import {errorFieldKey, errorMinusFieldKey, Errors, errorTypeFieldKey} from './Errors.jsx';
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
 import {fieldReducer} from './ScatterOptions.jsx';
 import {VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
