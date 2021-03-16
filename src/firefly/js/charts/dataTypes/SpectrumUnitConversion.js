@@ -65,6 +65,10 @@ const UnitXref = {
             label: '𝛎*F𝛎 [%s]'
         }
     },
+
+    // Unit Conversions follow
+    // "outer" layer is the unit you *have*; "inner" layer is the unit you *want*
+
     // frequency
     Hz : {
         Hz  : '%s',
@@ -86,9 +90,9 @@ const UnitXref = {
     },
     GHz : {
         Hz  : '%s * 1000000000.0',
-        KHz : '%s / 1000.0',
-        MHz : '%s / 1000000.0',
-        GHz : '%s / 1000000.0'
+        KHz : '%s * 1000000.0',
+        MHz : '%s * 1000.0',
+        GHz : '%s'
     },
     // wavelength
     um : {
@@ -109,10 +113,10 @@ const UnitXref = {
     //  flux density
     'W/m^2/Hz' : {
         'W/m^2/Hz' : '%s',
-        Jy : '%s / 1.0E+26',
+        Jy : '%s * 1.0E+26',
     },
     Jy : {
-        'W/m^2/Hz' : '%s * 1.0E+26',
+        'W/m^2/Hz' : '%s / 1.0E+26',
         Jy : '%s',
     },
     //  inband flux
@@ -126,5 +130,3 @@ const UnitXref = {
     }
 
 };
-
-
