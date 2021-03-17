@@ -211,8 +211,8 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR4 +"|1b", new String[]{"yr4_p1bm_frm", "yr4_p1bs_psd"});
             put(NEOWISER_YR5 +"|1b", new String[]{"yr5_p1bm_frm", "yr5_p1bs_psd"});
             put(NEOWISER_YR6 +"|1b", new String[]{"yr6_p1bm_frm", "yr6_p1bs_psd"});  
-            put(NEOWISER_YR7 +"|1b", new String[]{"yr7_i1bm_frm", "yr7_p1bs_psd"});  // TODO: to change when yaer 7 goes public
-            put(NEOWISER_YR8 +"|1b", new String[]{"yr8_i1bm_frm", "yr8_i1bs_psd"});  // TODO: check
+            put(NEOWISER_YR7 +"|1b", new String[]{"yr7_p1bm_frm", "yr7_p1bs_psd"});  //  yr7 goes public March 2021
+            put(NEOWISER_YR8 +"|1b", new String[]{"yr8_i1bm_frm", "yr8_i1bs_psd"});  //  yr8 internal for iwise
             put(MERGE_INT+"|1b", new String[]{"merge_i1bm_frm", "merge_i1bs_psd"});
             put(MERGE_INT+"|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
             put(PASS2_4BAND+"|1b", new String[]{"4band_i1bm_frm", "4band_i1bs_psd"});
