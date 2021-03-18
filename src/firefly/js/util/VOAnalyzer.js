@@ -1223,12 +1223,18 @@ export const findTargetName = (columns) => columns.find( (c) => DEFAULT_TNAME_OP
  * @returns {string}    the resolved href after subsitution
  */
 export function applyLinkSub(tableModel, href='', rowIdx, defval='') {
-    const rhref = applyTokenSub(tableModel, href, rowIdx, defval);
+    let rhref = applyTokenSub(tableModel, href, rowIdx, defval);
     if (rhref === defval) {
-        return '';      // no href
+        rhref = '';      // no href
     } else if (rhref === href) {
-        return href + defval;       // no substitution given, append defval to the url.  set A.1
+        rhref = href + defval;       // no substitution given, append defval to the url.  set A.1
     }
+    // encode the href if needed
+    const base = 'https://fake.me';        // base is only used when url is relative, otherwise it will get a parse error.
+    const {href:chref} = new URL(rhref, base);        // chref contains href that's encoded, but fully qualified
+    rhref = rhref.toLowerCase().match(/^http(s)?:\/\//) ? chref :
+            rhref.startsWith('/') ? chref.replace(base, '') :       // remove base if it were used.
+            chref.replace(base, '').substring(1);
     return rhref;
 }
 

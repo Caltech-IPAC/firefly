@@ -547,7 +547,7 @@ describe('VOAnalyzer:', () => {
                     data: [
                         ['a-1', 'b-1', 'b-1'],
                         ['a-2', 'b-2', 'c-2'],
-                        ['a-3', 'b-3', 'c-3'],
+                        ['a-3', '/api/getImg?p=360\'180"&radius=3"&desc=my fav', 'https://acme.org/abc?x=360\'180"'],
                     ],
                 }
             };
@@ -560,6 +560,13 @@ describe('VOAnalyzer:', () => {
         result = applyLinkSub(tableModel, 'https://acme.org/abc?x=${a}&y=${c}', 1, 'b-2');
         expect(result).toBe('https://acme.org/abc?x=a-2&y=c-2');
 
+        // auto-encode href with absolute url
+        result = applyLinkSub(tableModel, '${c}', 2, 'failed');
+        expect(result).toBe('https://acme.org/abc?x=360%27180%22');
+
+        // auto-encode href with relative url
+        result = applyLinkSub(tableModel, '${b}', 2, 'failed');
+        expect(result).toBe('/api/getImg?p=360%27180%22&radius=3%22&desc=my%20fav');
     });
 
 });
