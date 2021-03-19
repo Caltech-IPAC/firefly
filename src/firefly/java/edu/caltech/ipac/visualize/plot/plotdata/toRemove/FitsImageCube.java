@@ -2,13 +2,15 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-package edu.caltech.ipac.visualize.plot.plotdata;
+package edu.caltech.ipac.visualize.plot.plotdata.toRemove;
 
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.PixelValueException;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
@@ -25,6 +27,10 @@ import java.util.Map;
 import java.util.zip.DataFormatException;
 
 /**
+ * Updated - 3/10/2021 - We are not using this file, but I am going to keep it around for awhile because is might
+ * have code we want to reference or port to JS
+ *
+ *
  * Created by Yi Mei on 7/23/15.
  * FitsImageCube handles FITS image cube files. Save the data in a map: the keys are extension names, the values are FitsRead[].
  * Provide a getter to return the map.
@@ -106,18 +112,19 @@ public class FitsImageCube {
     }
     private BasicHDU[] getHduPair (BasicHDU[] HDUs,String wcs3Name, String ps3_0Name, Header header, int j) throws HeaderCardException {
 
-        //Wavelength calculation needs the pixel's coordinates.
-        if (wcs3Name.toUpperCase().startsWith("WAVE") || wcs3Name.toUpperCase().startsWith("AWAV")){
-
-            //go through the HDUs array to find the BinaryTableHDU that matches the ps3_0Name
-            BasicHDU tableHdu = FitsReadUtil.getBinaryTableHdu(HDUs, ps3_0Name);
-            if (tableHdu!=null){
-                BasicHDU[] hduArr = {HDUs[j], tableHdu};
-                return hduArr;
-            }
-        }
-        BasicHDU[] hduArr = {HDUs[j]};
-        return hduArr;
+//        //Wavelength calculation needs the pixel's coordinates.
+//        if (wcs3Name.toUpperCase().startsWith("WAVE") || wcs3Name.toUpperCase().startsWith("AWAV")){
+//
+//            //go through the HDUs array to find the BinaryTableHDU that matches the ps3_0Name
+//            BasicHDU tableHdu = FitsReadUtil.getBinaryTableHdu(HDUs, ps3_0Name);
+//            if (tableHdu!=null){
+//                BasicHDU[] hduArr = {HDUs[j], tableHdu};
+//                return hduArr;
+//            }
+//        }
+//        BasicHDU[] hduArr = {HDUs[j]};
+//        return hduArr;
+        return null;
     }
 
     private boolean isImageCube(BasicHDU hdu)  {
@@ -200,44 +207,50 @@ public class FitsImageCube {
      */
     private DataObject getDataRow (DataGroup dg, DataType[] dataTypes, FitsRead fitsRead, ImagePt imagePt, int pixPosition) throws DataFormatException, FitsException, PixelValueException, IOException {
 
-        DataObject dataObject = new DataObject(dg);
-        Header header = fitsRead.getHeader();
-
-        Wavelength wl= new Wavelength(fitsRead.getHeader(), fitsRead.getTableHDU());
-        for (int i=0; i<dataTypes.length; i++){
-
-            if (i==0 ) {
-                if (dataTypes[i].getKeyName().equalsIgnoreCase("wavelength")) {
-                    //Use WCS keywords information in the header to calculate the wavelength
-                    double waveLengthVal = wl.getWaveLength(imagePt);
-
-                    // Set the image data value at the zth image and the imagePt to the second value of the dataObj:
-                    dataObject.setDataElement(dataTypes[i], waveLengthVal);
-                } else {
-                    // Get the value of the 3rd WCS (eg. wavelength) at zth image:
-                    double wcs3Min = header.getDoubleValue("CRVAL3", Double.NaN);
-                    double wcs3Delt = header.getDoubleValue("CDELT3", Double.NaN);
-                    double wcs3Val;
-                    if (!Double.isNaN(wcs3Min) && !Double.isNaN(wcs3Delt)) {
-                        wcs3Val = wcs3Min + wcs3Delt * pixPosition;
-                    } else {
-                        // if not enough wcs3 information, use the index:
-                        wcs3Val = pixPosition;
-                    }
-
-                    // Set the 3rd WCS value at the zth image to the first value of the dataObj:
-                    dataObject.setDataElement(dataTypes[i], wcs3Val);
-                }
-            }
-            else {
-                // Get the image value at the zth image and the imagePt:
-                double imgVal = fitsRead.getFlux(imagePt);
-
-                // Set the image data value at the zth image and the imagePt to the second value of the dataObj:
-                dataObject.setDataElement(dataTypes[i], imgVal);
-            }
-        }
-        return dataObject;
+        // ----------------
+        // note - this was commented out because fits read is no longer including a table HDU
+        // this will be handled differently in the future
+        // ----------------
+        //
+//        DataObject dataObject = new DataObject(dg);
+//        Header header = fitsRead.getHeader();
+//
+//        Wavelength wl= new Wavelength(fitsRead.getHeader(), fitsRead.getTableHDU());
+//        for (int i=0; i<dataTypes.length; i++){
+//
+//            if (i==0 ) {
+//                if (dataTypes[i].getKeyName().equalsIgnoreCase("wavelength")) {
+//                    //Use WCS keywords information in the header to calculate the wavelength
+//                    double waveLengthVal = wl.getWaveLength(imagePt);
+//
+//                    // Set the image data value at the zth image and the imagePt to the second value of the dataObj:
+//                    dataObject.setDataElement(dataTypes[i], waveLengthVal);
+//                } else {
+//                    // Get the value of the 3rd WCS (eg. wavelength) at zth image:
+//                    double wcs3Min = header.getDoubleValue("CRVAL3", Double.NaN);
+//                    double wcs3Delt = header.getDoubleValue("CDELT3", Double.NaN);
+//                    double wcs3Val;
+//                    if (!Double.isNaN(wcs3Min) && !Double.isNaN(wcs3Delt)) {
+//                        wcs3Val = wcs3Min + wcs3Delt * pixPosition;
+//                    } else {
+//                        // if not enough wcs3 information, use the index:
+//                        wcs3Val = pixPosition;
+//                    }
+//
+//                    // Set the 3rd WCS value at the zth image to the first value of the dataObj:
+//                    dataObject.setDataElement(dataTypes[i], wcs3Val);
+//                }
+//            }
+//            else {
+//                // Get the image value at the zth image and the imagePt:
+//                double imgVal = fitsRead.getFlux(imagePt);
+//
+//                // Set the image data value at the zth image and the imagePt to the second value of the dataObj:
+//                dataObject.setDataElement(dataTypes[i], imgVal);
+//            }
+//        }
+//        return dataObject;
+        return null;
     }
 
 

@@ -1,20 +1,12 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
 package edu.caltech.ipac.firefly.server.visualize;
-/**
- * User: roby
- * Date: 5/4/15
- * Time: 3:40 PM
- */
-
 
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.util.Assert;
 
 import java.io.File;
 import java.util.Map;
@@ -48,24 +40,6 @@ public class PlotStateUtil {
         return state;
     }
 
-    public static PlotState create(WebPlotRequest req[], PlotState initializerState) {
-        PlotState state= new PlotState();
-        boolean threeC= initializerState.isThreeColor();
-        state.setThreeColor(threeC);
-        state.setMultiImageAction(threeC ? PlotState.MultiImageAction.USE_FIRST : PlotState.MultiImageAction.USE_ALL);
-
-        state.setContextString(CtxControl.makeCachedCtx());
-        for(PlotState.Operation op : initializerState.getOperations()) {
-            state.addOperation(op);
-        }
-        initState(state, req, initializerState);
-        CtxControl.getPlotCtx(state.getContextString()).setPlotState(state);
-        for(Band band : initializerState.getBands()) {
-            state.setOriginalFitsFileStr(initializerState.getOriginalFitsFileStr(band), band);
-        }
-        return state;
-    }
-
     public static void initRequestFromState(WebPlotRequest req, PlotState oldState, Band band) {
         req.setInitialRangeValues(oldState.getRangeValues(band));
         req.setInitialColorTable(oldState.getColorTableId());
@@ -76,20 +50,6 @@ public class PlotStateUtil {
             req.setMaskBits(req.getMaskBits());
             req.setMaskColors(req.getMaskColors().toArray(new String[3]));
         }
-    }
-
-
-    private static void initState(PlotState state, WebPlotRequest req[], PlotState initializerState) {
-        Band bands[]= initializerState.getBands();
-        Assert.argTst(req.length == bands.length,
-                      "there must be the same number of WebPlotRequest as there are bands in the initializerState");
-        for(int i= 0; (i<bands.length); i++) {
-            state.setWebPlotRequest(req[i],bands[i]);
-            state.setRangeValues(initializerState.getRangeValues(bands[i]), bands[i]);
-        }
-        state.setNewPlot(false);
-        state.setColorTableId(initializerState.getColorTableId());
-        state.setZoomLevel(initializerState.getZoomLevel());
     }
 
     public static File getWorkingFitsFile(PlotState state, Band band) {

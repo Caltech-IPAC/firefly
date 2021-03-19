@@ -3,15 +3,16 @@ package edu.caltech.ipac.visualize.plot;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.firefly.util.FitsValidation;
-import edu.caltech.ipac.visualize.plot.plotdata.FitsImageCube;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
 import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
-import nom.tam.fits.*;
+import nom.tam.fits.Fits;
+import nom.tam.fits.FitsException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -142,16 +143,16 @@ public class FitsReadTest extends FitsValidation {
     }
 
     //@Test //TODO disable it for now until the Cube work finishes
-    public void testCreateFitsImageCube() throws FitsException, IOException {
-
-        FitsImageCube fic = FitsReadFactory.createFitsImageCube(inCubeFits);
-        Object[] keys = fic.getMapKeys();
-        FitsRead calFitsRead0 = fic.getFitsReadMap().get(keys[0])[1];
-        Fits  newFits = calFitsRead0.createNewFits();
-        validateFits(expectedOutCubeFits, newFits);
-
-    }
-
+//    public void testCreateFitsImageCube() throws FitsException, IOException {
+//
+//        FitsImageCube fic = FitsReadFactory.createFitsImageCube(inCubeFits);
+//        Object[] keys = fic.getMapKeys();
+//        FitsRead calFitsRead0 = fic.getFitsReadMap().get(keys[0])[1];
+//        Fits  newFits = calFitsRead0.createNewFits();
+//        validateFits(expectedOutCubeFits, newFits);
+//
+//    }
+//
 
     @Test
     public void testCreateFitsReadRotatedFromNorth(){
@@ -208,15 +209,15 @@ public class FitsReadTest extends FitsValidation {
         frRotaionAngleNotfromNorth.writeSimpleFitsFile(fo);
         fo.close();
 
-        String cubeFitsName="cube1.fits";
-        String outCubeFitsName=dataPath+"/cube1_out.fits";
-        Fits  inCubeFits = FileLoader.loadFits(FitsReadTest.class, cubeFitsName);
-        FitsImageCube fic = FitsReadFactory.createFitsImageCube(inCubeFits);
-        Object[] keys = fic.getMapKeys();
-        FitsRead cubeFitsRead0 = fic.getFitsReadMap().get(keys[0])[1];
-         fo = new java.io.FileOutputStream( outCubeFitsName);
-        cubeFitsRead0.writeSimpleFitsFile(fo);
-        fo.close();
+//        String cubeFitsName="cube1.fits";
+//        String outCubeFitsName=dataPath+"/cube1_out.fits";
+//        Fits  inCubeFits = FileLoader.loadFits(FitsReadTest.class, cubeFitsName);
+//        FitsImageCube fic = FitsReadFactory.createFitsImageCube(inCubeFits);
+//        Object[] keys = fic.getMapKeys();
+//        FitsRead cubeFitsRead0 = fic.getFitsReadMap().get(keys[0])[1];
+//         fo = new java.io.FileOutputStream( outCubeFitsName);
+//        cubeFitsRead0.writeSimpleFitsFile(fo);
+//        fo.close();
 
     }
 

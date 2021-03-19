@@ -103,8 +103,10 @@ public class RGBIntensity {
         double [] slowAry = new double[3];
         for(int i=0; i<3; i++) {
             blankPxValAry[i]= imageHeaderAry[i].blank_value;
-            slowAry[i] = getSlow(rangeValuesAry[i], float1dAry[i], imageHeaderAry[i], histAry[i]);
-            slowAry[i] = getScaled(slowAry[i], imageHeaderAry[i], rangeValuesAry[i]);
+            ImageHeader iH= imageHeaderAry[i];
+            slowAry[i] = getSlow(rangeValuesAry[i], float1dAry[i], histAry[i], iH.bzero, iH.bscale, iH.naxis1,
+                                               iH.naxis2, iH.bitpix, iH.blank_value);
+            slowAry[i] = getScaled(slowAry[i], iH, rangeValuesAry[i]);
         }
         float [] intensity = new float[float1dAry[0].length];
         Arrays.fill(intensity, Float.NaN);
@@ -132,7 +134,9 @@ public class RGBIntensity {
             // for zscale only: calculate z1 and z2 for intensity
             // use the last image header, because after reprojection, bzero and bscale are removed in green and blue
             // zscale parameters are shared between range values, no matter range values which to use
-            Zscale.ZscaleRetval zscale_retval = getZscaleValue(intensity, imageHeaderAry[2], rangeValuesAry[0]);
+            ImageHeader ih= imageHeaderAry[2];
+            Zscale.ZscaleRetval zscale_retval = getZscaleValue(intensity, ih.naxis1, ih.naxis2,
+                    ih.bitpix, ih.blank_value,rangeValuesAry[0]);
             _intensityLow = zscale_retval.getZ1();
             _intensityHigh = zscale_retval.getZ2();
         } else {

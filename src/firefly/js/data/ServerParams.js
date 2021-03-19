@@ -126,7 +126,6 @@ export const ServerParams = {
         CREATE_DOWNLOAD_SCRIPT: 'createDownoadScript',
         DS9_REGION: 'ds9Region',
         SAVE_DS9_REGION: 'saveDS9Region',
-        ADD_SAVED_REQUEST: 'addSavedRequest',
         TITLE: 'Title',
         JSON_SEARCH: 'jsonSearch',
         CLIENT_IS_NORTH: 'clientIsNorth',

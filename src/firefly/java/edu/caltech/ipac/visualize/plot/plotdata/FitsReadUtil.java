@@ -8,93 +8,54 @@
 
 package edu.caltech.ipac.visualize.plot.plotdata;
 
-import edu.caltech.ipac.util.SUTDebug;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImageHeader;
 import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
-import edu.caltech.ipac.visualize.plot.projection.Projection;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.BinaryTableHDU;
+import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.Header;
 import nom.tam.fits.HeaderCard;
 import nom.tam.fits.HeaderCardException;
 import nom.tam.fits.ImageData;
 import nom.tam.fits.ImageHDU;
+import nom.tam.fits.PaddingException;
 import nom.tam.fits.UndefinedData;
 import nom.tam.fits.UndefinedHDU;
 import nom.tam.image.compression.hdu.CompressedImageHDU;
 import nom.tam.util.ArrayFuncs;
 import nom.tam.util.Cursor;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 
 /**
- * LZ June 2018
  * Since the FitsRead class is heavily used, it is better to keep it shorter.  Thus, I moved many methods
  * to this Utility class, FitsReadUtil.java.   This class contains the public static methods which are
- * purely used by FitsRead.
- *
- *
+ * mostly used by FitsRead.
  */
 public class FitsReadUtil {
 
-    /**
-     * This method is to check if the BasicHDU array contains a BinaryTableHDU. The BinaryTableHDU's
-     * header has to have a "EXTNAME" keyword and its value has to be the same as the primary header
-     * under the key PS3_0.
-     * @param extName - String, the value of PS3_0 keyword defined in the primary header
-     * @param HDUs
-     * @return
-     */
-    public static BinaryTableHDU getBinaryTableHdu(BasicHDU[] HDUs, String extName){
-
-
-        //The extName in the TAB lookup table's header has to match the same name stored
-        //in Image Header's PS3_0.
-        for (int i = 0; i < HDUs.length; i++) {
-            if (  HDUs[i] instanceof BinaryTableHDU  &&
-                    extName.equalsIgnoreCase(HDUs[i].getHeader().getStringValue("EXTNAME")) ) {
-
-                return (BinaryTableHDU) HDUs[i];
-            }
-
-        }
-
-        return null;
-    }
-
-
-    //    public boolean isSameProjection(FitsRead secondFitsread, ImageHeader H1) {
-//        boolean result = false;
-//
-//        //ImageHeader H1 = getImageHeader();
-//        ImageHeader H2 = secondFitsread.getImageHeader();
-//
-//        if (H1.maptype == H2.maptype) {
-//            if (H1.maptype == Projection.PLATE) {
-//                result = checkPlate(H1, H2);
-//            } else {
-//                result = checkOther(H1, H2);
-//            }
-//        }
-//        return result;
-//    }
-
+    public static final String SPOT_HS= "SPOT_HS";
+    public static final String SPOT_EXT= "SPOT_EXT";
+    public static final String SPOT_OFF= "SPOT_OFF";
+    public static final String SPOT_BP= "SPOT_BP";
+    public static final String SPOT_PL= "SPOT_PL";
 
     public static ImageData getImageData(BasicHDU refHdu, float[] float1d) throws FitsException {
         Header header = refHdu.getHeader();
         int naxis1 = header.getIntValue("NAXIS1");
         int naxis2 = header.getIntValue("NAXIS2");
-        int dims2[] = new int[]{naxis1, naxis2};
+        int [] dims2 = new int[]{naxis1, naxis2};
         float [][]  fdata =  (float[][]) ArrayFuncs.curl(float1d,dims2);
-        Object data =ArrayFuncs.convertArray(fdata,FitsRead.getDataType(refHdu.getBitPix()), true);
-        ImageData imageData= new ImageData(data);
-        return imageData;
+        Object data =ArrayFuncs.convertArray(fdata,getDataType(refHdu.getBitPix()), true);
+        return new ImageData(data);
     }
 
 
@@ -201,7 +162,7 @@ public class FitsReadUtil {
 
     }
 
-    public static ArrayList<BasicHDU> getImageHDUList(BasicHDU[] HDUs) throws FitsException {
+    public static BasicHDU [] getImageHDUArray(BasicHDU[] HDUs) throws FitsException {
         ArrayList<BasicHDU> HDUList = new ArrayList<>();
 
         String delayedExceptionMsg = null; // the exception can be ignored if HDUList size is greater than 0
@@ -243,8 +204,6 @@ public class FitsReadUtil {
 
                 int naxis3 = header.getIntValue("NAXIS3", -1);
                 if ((naxis > 2) && (naxis3 > 1)) { //it is a cube data
-                    if (SUTDebug.isDebug())
-                        System.out.println("GOT A FITS CUBE");
                     BasicHDU[] splitHDUs = splitFitsCube( hdu);
                     /* for each plane of cube */
                     Collections.addAll(HDUList, splitHDUs);
@@ -261,19 +220,19 @@ public class FitsReadUtil {
         if (HDUList.size() == 0 && delayedExceptionMsg != null ) {
             throw new FitsException(delayedExceptionMsg);
         }
-
-        return HDUList;
+        return HDUList.toArray(new BasicHDU[0]);
     }
+
 
     private static void insertPositionIntoHeader(Header header, int pos, long hduOffset) throws FitsException {
         if (hduOffset<0) hduOffset= 0;
         if (pos<0) pos= 0;
         long headerSize= header.getOriginalSize()>0 ? header.getOriginalSize() : header.getSize();
         int bitpix = header.getIntValue("BITPIX", -1);
-        header.addLine(new HeaderCard( "SPOT_HS", headerSize, "Header block size on disk (added by Firefly)"));
-        header.addLine(new HeaderCard( "SPOT_EXT", pos, "Extension Number (added by Firefly)"));
-        header.addLine(new HeaderCard( "SPOT_OFF", hduOffset, "Extension Offset (added by Firefly)"));
-        header.addLine(new HeaderCard( "SPOT_BP", bitpix, "Original Bitpix value (added by Firefly)"));
+        header.addLine(new HeaderCard( SPOT_HS, headerSize, "Header block size on disk (added by Firefly)"));
+        header.addLine(new HeaderCard( SPOT_EXT, pos, "Extension Number (added by Firefly)"));
+        header.addLine(new HeaderCard( SPOT_OFF, hduOffset, "Extension Offset (added by Firefly)"));
+        header.addLine(new HeaderCard( SPOT_BP, bitpix, "Original Bitpix value (added by Firefly)"));
         header.resetOriginalSize();
     }
 
@@ -287,7 +246,7 @@ public class FitsReadUtil {
             //set the header pointer to the BITPIX location to add the new key. Without calling this line, the pointer is point
             //to the end of the Header, the SPOT_PL is added after the "END" key, which leads the image loading failure. 
             hduList[i].getHeader().getIntValue("BITPIX", -1);
-            hduList[i].getHeader().addLine(new HeaderCard("SPOT_PL", i, "Plane of FITS cube (added by Firefly)"));
+            hduList[i].getHeader().addLine(new HeaderCard(SPOT_PL, i, "Plane of FITS cube (added by Firefly)"));
             hduList[i].getHeader().resetOriginalSize();
 
         }
@@ -331,11 +290,11 @@ public class FitsReadUtil {
     /**
      * a new reference header is created
      *
-     * @param geom
-     * @param fitsRead
-     * @param positionAngle
-     * @param coordinateSys
-     * @return
+     * @param geom Geom object
+     * @param fitsRead FitsRead object
+     * @param positionAngle angle
+     * @param coordinateSys coordinate sys
+     * @return  ref header
      * @throws FitsException
      * @throws IOException
      * @throws GeomException
@@ -376,36 +335,21 @@ public class FitsReadUtil {
     /**
      * Get the world point location
      *
-     * @param imageHeader
+     * @param imHeader
      * @param aCoordinateSys
      * @return
      * @throws FitsException
      */
-    private  static WorldPt getWorldPt(ImageHeader imageHeader, CoordinateSys aCoordinateSys) throws FitsException {
-        CoordinateSys inCoordinateSys = CoordinateSys.makeCoordinateSys(
-                imageHeader.getJsys(), imageHeader.file_equinox);
-        Projection proj = imageHeader.createProjection(inCoordinateSys);
-
-
-        double centerX = (imageHeader.naxis1 + 1.0) / 2.0;
-        double centerY = (imageHeader.naxis2 + 1.0) / 2.0;
-
-        WorldPt worldPt;
+    private static WorldPt getWorldPt(ImageHeader imHeader, CoordinateSys aCoordinateSys) throws FitsException {
         try {
-            worldPt = proj.getWorldCoords(centerX - 1, centerY - 1);
-
+            CoordinateSys inCoordinateSys = CoordinateSys.makeCoordinateSys( imHeader.getJsys(), imHeader.file_equinox);
+            double centerX = (imHeader.naxis1 + 1.0) / 2.0;
+            double centerY = (imHeader.naxis2 + 1.0) / 2.0;
+            WorldPt worldPt = imHeader.createProjection(inCoordinateSys).getWorldCoords(centerX-1, centerY-1);
+            return Plot.convert(worldPt, aCoordinateSys);
         } catch (ProjectionException pe) {
-            if (SUTDebug.isDebug()) {
-                System.out.println("got ProjectionException: " + pe.getMessage());
-            }
-            throw new FitsException("Could not rotate image.\n -  got ProjectionException: " + pe.getMessage());
+            throw new FitsException("Could not rotate image: got ProjectionException: " + pe.getMessage());
         }
-
-
-        if (!aCoordinateSys.equals(imageHeader.getCoordSys())) {
-            worldPt = Plot.convert(worldPt, aCoordinateSys);
-        }
-        return worldPt;
     }
 
 
@@ -452,42 +396,6 @@ public class FitsReadUtil {
         }
     }
 
-
-    private boolean isTableHDUValid(BinaryTableHDU tableHDU){
-
-        int nCols = tableHDU.getNCols();
-        int nRow = tableHDU.getNRows();
-        if (nCols==0 || nCols>2 || nRow==0 || nRow>1) {
-            return false;
-        }
-        return true;
-    }
-
-    public static float[] getImageHDUDataInFloatArrayOLD(BasicHDU inHDU) throws FitsException{
-        
-        ImageHDU imageHDU;
-        if (inHDU instanceof ImageHDU) {
-            imageHDU = (ImageHDU) inHDU;
-        }
-        else if (inHDU instanceof CompressedImageHDU) {
-            imageHDU = ((CompressedImageHDU) inHDU).asImageHDU();
-        }
-        else {
-            throw new FitsException("hdu much be a ImageHDU or a CompressedImageHDU");
-        }
-        Header header= imageHDU.getHeader();
-        double cdelt2 = header.getDoubleValue("CDELT2");
-        int naxis1 = header.getIntValue("NAXIS1");
-        int naxis2 = header.getIntValue("NAXIS2");
-
-         float[]  float1d =
-                         (float[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(imageHDU.getData().getData(), Float.TYPE, true));
-
-         /* pixels are upside down - reverse them in y */
-         if (cdelt2 < 0) float1d = reversePixData(naxis1, naxis2, float1d);
-         return float1d;
-     }
-
     public static float[] getImageHDUDataInFloatArray(BasicHDU inHDU) throws FitsException {
 
         ImageHDU imageHDU;
@@ -529,9 +437,9 @@ public class FitsReadUtil {
     /**
      * This returns a 1d array of double.  This is not interchangable with getImageHDUDataInFloatArray. It is used
      * mostly for tables and if not as efficent.
-     * @param inHDU
-     * @return
-     * @throws FitsException
+     * @param inHDU the fits hdu
+     * @return an array
+     * @throws FitsException if failed
      */
     public static double[] getImageHDUDataInDoubleArray(BasicHDU inHDU) throws FitsException {
 
@@ -573,5 +481,37 @@ public class FitsReadUtil {
         return float1d;
     }
 
+
+    public static void writeFitsFile(OutputStream stream, FitsRead[] fitsReadAry, Fits refFits) throws FitsException, IOException{
+        Fits output_fits = new Fits();
+        for(FitsRead fr : fitsReadAry) {
+            BasicHDU  refHdu = refFits.getHDU(0);
+            ImageHDU imageHDU = new ImageHDU(refHdu.getHeader(),  FitsReadUtil.getImageData(refHdu, fr.getDataFloat()) );
+            output_fits.addHDU(imageHDU);
+        }
+        output_fits.write(new DataOutputStream(stream));
+    }
+
+    public static BasicHDU[] readHDUs(Fits fits)  throws FitsException {
+        try {
+            return fits.read();
+        }
+        catch (PaddingException pe) {
+            fits.addHDU(pe.getTruncatedHDU());
+            return fits.read();
+        }
+    }
+
+    public static Class getDataType(int bitPix){
+        switch (bitPix){
+            case 8: return Byte.TYPE;
+            case 16: return Short.TYPE;
+            case 32: return Integer.TYPE;
+            case 64: return Long.TYPE;
+            case -32: return  Float.TYPE;
+            case -64: return  Double.TYPE;
+            default: return null;
+        }
+    }
 
 }

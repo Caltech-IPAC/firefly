@@ -120,6 +120,26 @@ public class URLDownload {
         }
     }
 
+    public static ConnCtx makeConnectionCtx(URL url,
+                                              Map<String, String> cookies,
+                                              Map<String, String> requestHeaders) throws IOException {
+          URLConnection conn= makeConnection(url,cookies,requestHeaders);
+          return new ConnCtx(url, cookies, requestHeaders, conn);
+      }
+
+      private static class ConnCtx {
+          public final URL url;
+          public final Map<String, String> cookies;
+          public final Map<String, String> requestHeaders;
+          public final URLConnection conn;
+          public ConnCtx( URL url, Map<String, String> cookies, Map<String, String> requestHeaders, URLConnection conn) {
+              this.url= url;
+              this.cookies= cookies;
+              this.requestHeaders= requestHeaders;
+              this.conn= conn;
+          }
+      }
+
     private static void addCookiesToConnection(URLConnection conn, Map<String, String> cookies) {
         if (!(conn instanceof HttpURLConnection) || cookies == null) return;
         StringBuilder sb = new StringBuilder(200);

@@ -264,7 +264,9 @@ function isFluxInt(plot,band) {
     const h= plot.headerAry[band.value];
     if (!h) return false;
     const bp= getNumberHeader(h,HdrConst.BITPIX);
-    return (bp>0);
+    const bscale= getNumberHeader(h,HdrConst.BSCALE);
+    if (isNaN(bscale)) return false;
+    return (bp>0) && Number.isInteger(bscale);
 }
 
 /**

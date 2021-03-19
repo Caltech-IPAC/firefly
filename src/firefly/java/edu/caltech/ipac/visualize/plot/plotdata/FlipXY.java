@@ -96,7 +96,7 @@ public class FlipXY {
         }
 
         //convert to the type to the same type as in the hdu
-        Object data =  ArrayFuncs.convertArray(fdata, FitsRead.getDataType(hdu.getBitPix()), true);
+        Object data =  ArrayFuncs.convertArray(fdata, FitsReadUtil.getDataType(hdu.getBitPix()), true);
         ImageData newImageData =  new ImageData(data);
         //clone the inFitsRead header and then modify it
         Header outFitsHeader = getOutFitsHeader();
@@ -237,7 +237,8 @@ public class FlipXY {
      */
     private Header getOutFitsHeader() throws HeaderCardException {
 
-        Header outFitsHeader = FitsRead.cloneHeader(inFitsHeader);
+        Header outFitsHeader = FitsReadUtil.cloneHeaderFrom(inFitsHeader);
+        outFitsHeader.resetOriginalSize();
         outFitsHeader.addValue("CRPIX1",
                 inImageHeader.naxis1 - inImageHeader.crpix1 + 1, null);
 

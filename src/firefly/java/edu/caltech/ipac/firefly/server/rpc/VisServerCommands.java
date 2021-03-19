@@ -1,10 +1,6 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
 package edu.caltech.ipac.firefly.server.rpc;
 /**
  * User: roby
@@ -74,10 +70,6 @@ public class VisServerCommands {
                     data.put("overlay-"+(i-1), res[resultCnt++]);
                 }
             }
-
-
-//            data.put("success", true);
-
             JSONArray wrapperAry= new JSONArray();
             obj.put("data", data);
             wrapperAry.add(obj);
@@ -328,16 +320,6 @@ public class VisServerCommands {
         }
     }
 
-    public static class AddSavedRequest extends ServCommand {
-
-        public String doCommand(SrvParam sp) throws IllegalArgumentException {
-            String saveKey = sp.getRequired(ServerParams.SAVE_KEY);
-            WebPlotRequest req= WebPlotRequest.parse(sp.getRequired(ServerParams.REQUEST));
-            VisServerOps.addSavedRequest(saveKey,req);
-            return "";
-        }
-    }
-
     public static class GetMasterImageData extends ServCommand {
 
         public String doCommand(SrvParam sp) throws IllegalArgumentException {
@@ -361,111 +343,6 @@ public class VisServerCommands {
         }
     }
 
-
-//    public static class FitsHeader extends ServCommand  {
-//
-//       public String doCommand(SrvParam sp) throws IllegalArgumentException, FitsException, IOException {
-//
-//
-//            String tableID = sp.getParamMap().get("tableId")[0];
-//
-//
-//            //TableServerRequest req=TableServerRequest.parse(sp.getRequired(ServerParams.FITS_HEADER));
-//            PlotState state= sp.getState();
-//
-//           HashMap<String, DataGroup> dataGroupMap = VisServerOps.getFitsHeader(state, tableID);
-//
-//           TableServerRequest treq = new TableServerRequest("fitsHeaderTale");
-//           treq.setPageSize(Integer.MAX_VALUE);
-//           return JsonTableUtil.toJsonTableModelMap(dataGroupMap, treq).toJSONString();
-//
-//
-//        }
-//
-//
-//    }
-//    public static class GetImagePng extends ServCommand {
-//
-//        public String doCommand(SrvParam sp) throws IllegalArgumentException {
-//
-//            PlotState state= sp.getState();
-//            String drawInfoStrAry[] = sp.getParamMap().get(ServerParams.DRAW_INFO);
-//            List<StaticDrawInfo> drawInfoList;
-//            try {
-//                if (drawInfoStrAry != null && drawInfoStrAry.length > 0) {
-//                    drawInfoList = new ArrayList<>(drawInfoStrAry.length);
-//                    for (String s : drawInfoStrAry) {
-//                        StaticDrawInfo drawInfo = StaticDrawInfo.parse(s);
-//                        if (s != null) drawInfoList.add(drawInfo);
-//                    }
-//                } else {
-//                    throw new IllegalArgumentException("missing parameters");
-//                }
-//            } catch (IllegalArgumentException e) {
-//                throw new IllegalArgumentException("parameters in wrong format");
-//            }
-//
-//            if (drawInfoList.size() == 0) {
-//                throw new IllegalArgumentException("parameters in wrong format");
-//            }
-//
-//            WebPlotResult result = VisServerOps.getImagePng(state, drawInfoList);
-//            return WebPlotResultSerializer.createJson(result);
-//        }
-//    }
-
-//    public static class GetImagePngWithRegion extends ServCommand {
-//
-//        public String doCommand(SrvParam sp) throws IllegalArgumentException {
-//
-//            PlotState state= sp.getState();
-//            String data = sp.getRequired(ServerParams.REGION_DATA);
-//            boolean isNorth = sp.getRequiredBoolean(ServerParams.CLIENT_IS_NORTH);
-//            int rotAngle = (int)sp.getRequiredFloat(ServerParams.CLIENT_ROT_ANGLE);
-//            boolean flipY = sp.getRequiredBoolean(ServerParams.CLIENT_FlIP_Y);
-//            WebPlotResult result = VisServerOps.getImagePngWithRegion(state, data,isNorth,rotAngle,flipY);
-//            return WebPlotResultSerializer.createJson(result);
-//        }
-//    }
-//    public static class RemoveBandCmd extends ServCommand {
-//
-//        public String doCommand(SrvParam sp) throws IllegalArgumentException {
-//
-//            PlotState state= sp.getState();
-//            Band band = Band.parse(sp.getRequired(ServerParams.BAND));
-//            WebPlotResult result = VisServerOps.deleteColorBand(state, band);
-//            return WebPlotResultSerializer.createJson(result);
-//        }
-//    }
-
-
-//    public static class DeletePlot extends ServCommand {
-    //
-    //        public String doCommand(SrvParam sp) throws IllegalArgumentException {
-    //            String ctxStr = sp.getRequired(ServerParams.CTXSTR);
-    //            VisServerOps.deletePlot(ctxStr);
-    //            return "";
-    //        }
-    //    }
-    //
-
-
-    //    public static class GetProgress extends ServCommand {
-    //
-    //        public String doCommand(SrvParam sp) throws IllegalArgumentException {
-    //            String key = sp.getRequired(ServerParams.PROGRESS_KEY);
-    //            WebPlotResult result= VisServerOps.checkPlotProgress(key);
-    //            return WebPlotResultSerializer.createJson(result);
-  //        }
-  //    }
-//    public static class GetAllSavedRequest extends ServCommand {
-//
-//        public String doCommand(SrvParam sp) throws IllegalArgumentException {
-//            String saveKey = sp.getRequired(ServerParams.SAVE_KEY);
-//            WebPlotResult result= VisServerOps.getAllSavedRequest(saveKey);
-//            return WebPlotResultSerializer.createJson(result);
-//        }
-//    }
 
 }
 

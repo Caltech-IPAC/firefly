@@ -349,7 +349,7 @@ public final class FITSTableReader
         Fits fits= null;
         try {
             fits = new Fits(fits_filename);
-            BasicHDU[] parts = fits.read();
+            BasicHDU[] parts = FitsReadUtil.readHDUs(fits);
             String[] colNames= new String[]{"index"};
             String[] colUnits= null;
             if (metaInfo!=null) {

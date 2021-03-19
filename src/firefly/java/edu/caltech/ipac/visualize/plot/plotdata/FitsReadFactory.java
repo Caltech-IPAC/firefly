@@ -1,20 +1,8 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
-
 package edu.caltech.ipac.visualize.plot.plotdata;
-/**
- * User: roby
- * Date: 7/16/18
- * Time: 3:28 PM
- */
 
-
-import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.SUTDebug;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
@@ -23,14 +11,12 @@ import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
 import nom.tam.fits.BasicHDU;
-import nom.tam.fits.BinaryTableHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.Header;
 import nom.tam.fits.ImageHDU;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 /**
  * @author Trey Roby
@@ -38,87 +24,9 @@ import java.util.ArrayList;
 public class FitsReadFactory {
 
     public static final String NO_IMAGE_HDU_MSG= "FITS file does not contain image data";
+    public static final String NO_IMAGE_HDU_ONLY_HEAD= "FITS file contains not image data only a 'Header Only' HDU";
     public static final String NO_IMAGE_HDU_MSG_ONLY_TABLE= "FITS file does not contain image data, only table data";
     public static final String BAD_FORMAT_MSG="Invalid FITS file format";
-
-    /**
-     *
-     * Create the FitsRead array.  According to TAB lookup table's value to decide which FitsRead
-     * constructor is used.
-     *
-     * @param imageHDUs
-     * @param tableHDUs
-     * @param zeroHeader
-     * @param clearHdu
-     * @return
-     * @throws FitsException
-     */
-    private static FitsRead[] getFitsReadArray(BasicHDU[]  imageHDUs, BasicHDU[] tableHDUs,
-                                               Header zeroHeader, boolean clearHdu)throws FitsException{
-
-        FitsRead[] fitsReadAry = new FitsRead[imageHDUs.length];
-        for (int i = 0; i < imageHDUs.length; i++) {
-            BinaryTableHDU bHdu=null;
-            String extName = imageHDUs[i].getHeader().getStringValue("PS3_0");
-            if (extName!=null) {
-                if (!FitsReadUtil.isLookupTableValid(tableHDUs, extName)) {
-                    Logger.info("The wavelength by table look up can not be calculated " +
-                            "because the look up table is invalid.  The FITS should only have one Table extension with" +
-                            "'EXTNAME' specified");
-                }
-                bHdu = FitsReadUtil.getBinaryTableHdu(tableHDUs, extName);
-            }
-            fitsReadAry[i] = bHdu!=null?
-                    new FitsRead(imageHDUs[i], bHdu, zeroHeader, clearHdu) :
-                    new FitsRead(imageHDUs[i], zeroHeader, clearHdu);
-        }
-        return fitsReadAry;
-    }
-
-    /**
-     * This method is added to handle the case that the spectra lookup table is in the separated FITS file
-     * @param imageFits
-     * @param tableFits
-     * @return
-     * @throws FitsException
-     * @throws IOException
-     */
-    public static FitsRead[] createFitsReadArray(Fits imageFits, Fits tableFits) throws FitsException, IOException {
-
-        //get all the Header Data Unit from the image FITS file
-        BasicHDU[] HDUs = imageFits.read();
-
-        if (HDUs == null) throw new FitsException(BAD_FORMAT_MSG);
-
-        ArrayList<BasicHDU> HDUList = FitsReadUtil.getImageHDUList(HDUs);
-
-        if (HDUList.size() == 0) { //The FITS file does not have any Image
-            String msg= (HDUs.length>1) ? NO_IMAGE_HDU_MSG_ONLY_TABLE : NO_IMAGE_HDU_MSG;
-            throw new FitsException(msg);
-        }
-
-        //Get the TAB look up Binary Table HDU
-        BasicHDU[] tblHDUs = tableFits.read();
-        if (tblHDUs == null) {
-            // Error: file doesn't seem to have any HDUs!
-            throw new FitsException(BAD_FORMAT_MSG);
-        }
-
-        Header zeroHeader= getZeroHeader(HDUs);
-        return getFitsReadArray(HDUList.toArray(new BasicHDU[0]), tblHDUs, zeroHeader, false);
-    }
-
-    /**
-     *
-     * @param fits
-     * @return
-     * @throws FitsException
-     */
-    public static FitsRead[] createFitsReadArray(Fits fits) throws FitsException {
-
-        return createFitsReadArray(fits,false);
-
-    }
 
     /**
      * read a fits with extensions or cube data to create a list of the FistRead object
@@ -127,18 +35,8 @@ public class FitsReadFactory {
      * @return
      * @throws FitsException
      */
-    public static FitsRead[] createFitsReadArray(Fits fits, boolean clearHdu)
-            throws FitsException {
-
-        //get all the Header Data Unit from the fits file
-        BasicHDU[] HDUs = fits.read();
-
-        if (HDUs == null) {
-            throw new FitsException(BAD_FORMAT_MSG);
-        }
-
-        return createFitsReadArray(HDUs,clearHdu);
-
+    public static FitsRead[] createFitsReadArray(Fits fits) throws FitsException {
+        return createFitsReadArray(fits.read(),false);
     }
 
     /**
@@ -147,39 +45,34 @@ public class FitsReadFactory {
      * @return
      * @throws FitsException
      */
-    public static FitsRead[] createFitsReadArray( BasicHDU[] HDUs, boolean clearHdu)
-            throws FitsException {
-
-
+    public static FitsRead[] createFitsReadArray( BasicHDU[] HDUs, boolean clearHdu) throws FitsException {
         if (HDUs == null) throw new FitsException(BAD_FORMAT_MSG);
 
-
-        ArrayList<BasicHDU> HDUList = FitsReadUtil.getImageHDUList(HDUs);
-
-        Header zeroHeader= getZeroHeader(HDUs);
-        return getFitsReadArray( HDUList.toArray(new BasicHDU[0]), HDUs, zeroHeader, clearHdu);
-
+        BasicHDU [] imageHDUs= FitsReadUtil.getImageHDUArray(HDUs);
+        Header zeroHeader= getZeroHeader(HDUs) ;
+        confirmHasImageData(imageHDUs,HDUs);
+        FitsRead[] fitsReadAry = new FitsRead[imageHDUs.length];
+        for (int i = 0; i < imageHDUs.length; i++) fitsReadAry[i] =new FitsRead(imageHDUs[i], zeroHeader, clearHdu);
+        return fitsReadAry;
     }
 
     private static Header getZeroHeader(BasicHDU[] HDUs) {
-        Header zeroHeader= null;
         if (HDUs.length>1 && (HDUs[0] instanceof ImageHDU) && HDUs[0].getHeader().getIntValue("NAXIS", -1)==0) {
-            zeroHeader= HDUs[0].getHeader();
+            return HDUs[0].getHeader();
         }
-        return zeroHeader;
-
+        return null;
     }
 
-    /**
-     * This method will return a FitsImageCube object
-     * This method is added in parallel as createFitsReadArray
-     * @param fits
-     * @return
-     * @throws FitsException
-     */
-    public static FitsImageCube createFitsImageCube(Fits fits)throws FitsException {
-
-        return new FitsImageCube(fits);
+    private static void confirmHasImageData(BasicHDU[] imageHDUs, BasicHDU[] HDUs) throws FitsException {
+        if (imageHDUs.length == 0) { //The FITS file does not have any Image data
+            if (HDUs.length>1) {
+                throw new FitsException(NO_IMAGE_HDU_MSG_ONLY_TABLE);
+            }
+            else {
+                boolean onlyZero= HDUs.length==1 && getZeroHeader(HDUs)!=null;
+                throw new FitsException((onlyZero) ? NO_IMAGE_HDU_ONLY_HEAD : NO_IMAGE_HDU_MSG);
+            }
+        }
     }
 
     /**
@@ -188,12 +81,8 @@ public class FitsReadFactory {
      * @param aFitsReader FitsRead object for the input image
      * @return FitsRead object for the new, flipped image
      */
-
     public static FitsRead createFitsReadFlipLR(FitsRead aFitsReader) throws FitsException{
-
         return new FlipXY(aFitsReader,"yAxis").doFlip();
-
-
     }
 
     /**
@@ -202,9 +91,7 @@ public class FitsReadFactory {
      * @param fitsReader FitsRead object for the input image
      * @return FitsRead object for the new, rotated image
      */
-
-    public static FitsRead createFitsReadNorthUp(FitsRead fitsReader)
-            throws FitsException, IOException, GeomException {
+    public static FitsRead createFitsReadNorthUp(FitsRead fitsReader) throws FitsException, IOException, GeomException {
         return (createFitsReadPositionAngle(fitsReader, 0.0, CoordinateSys.EQ_J2000));
     }
 
@@ -214,7 +101,6 @@ public class FitsReadFactory {
      * @param aFitsReader FitsRead object for the input image
      * @return FitsRead object for the new, rotated image
      */
-
     public static FitsRead createFitsReadNorthUpGalactic(FitsRead aFitsReader)
             throws FitsException, IOException, GeomException {
         return (createFitsReadPositionAngle(aFitsReader, 0.0, CoordinateSys.GALACTIC));
@@ -263,16 +149,11 @@ public class FitsReadFactory {
             }
             throw new FitsException("Could not rotate image.\n -  got ProjectionException: " + pe.getMessage());
         }
-
     }
 
     public static FitsRead createFitsReadWithGeom(FitsRead aFitsRead,
                                                   FitsRead aRefFitsRead,
-                                                  boolean aDoscale) throws
-            FitsException,
-            IOException,
-            GeomException {
-
+                                                  boolean aDoscale) throws FitsException, IOException, GeomException {
         //update the input aFitsRead only if the aRefFitsRead is not null
         if (aRefFitsRead != null) {
             ImageHeader refHeader = new ImageHeader(aRefFitsRead.getHeader());

@@ -1,23 +1,13 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
-
 package edu.caltech.ipac.firefly.server.visualize.fitseval;
-/**
- * User: roby
- * Date: 7/5/18
- * Time: 9:31 AM
- */
-
 
 import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
@@ -32,11 +22,11 @@ import java.util.List;
  */
 public class FitsEvaluation {
 
-    public static interface Eval {
+    public interface Eval {
         List<RelatedData> evaluate(File f, FitsRead[] frAry, BasicHDU[] HDUs, int fitsReadIndex, int hduIndex, WebPlotRequest req);
     }
 
-    static private List<Eval> evalList= new ArrayList<>();
+    static final private List<Eval> evalList= new ArrayList<>();
 
     static {
         evalList.add(new MaskEval());
@@ -49,9 +39,9 @@ public class FitsEvaluation {
 
     public static FitsDataEval readAndEvaluate(Fits fits, File f, boolean clearHdu, WebPlotRequest req) throws FitsException  {
         try  {
-            BasicHDU[] HDUs = fits.read();
+            BasicHDU[] HDUs= FitsReadUtil.readHDUs(fits);
             if (HDUs == null || HDUs.length==0) throw new FitsException("Bad format in FITS file");
-            FitsRead frAry[] = FitsReadFactory.createFitsReadArray(HDUs, clearHdu);
+            FitsRead[] frAry = FitsReadFactory.createFitsReadArray(HDUs, clearHdu);
             FitsDataEval fitsDataEval= new FitsDataEval(frAry);
             if (HDUs.length >1) { // Do evaluation
                 for(int i= 0; i<frAry.length; i++) {
@@ -70,9 +60,7 @@ public class FitsEvaluation {
         } finally {
             try {
                 if (fits!=null && fits.getStream()!=null) fits.getStream().close();
-            } catch (IOException e) {
-                // do nothing
-            }
+            } catch (IOException ignore) { }
         }
     }
 

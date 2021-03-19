@@ -8,6 +8,7 @@ import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
@@ -45,7 +46,7 @@ public class FitsHDUUtil {
         Fits fits = null;
         try {
             fits = new Fits(infile);
-            BasicHDU[] parts = new Fits(infile).read();               // get the headers
+            BasicHDU[] parts = FitsReadUtil.readHDUs(fits);
             headerAry= new Header[parts.length];
             for(int i = 0; i < parts.length; i++) {
                 FileAnalysisReport.Type ptype;

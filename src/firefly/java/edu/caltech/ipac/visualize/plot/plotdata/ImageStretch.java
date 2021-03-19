@@ -5,6 +5,7 @@
 package edu.caltech.ipac.visualize.plot.plotdata;
 
 
+import nom.tam.fits.Header;
 import edu.caltech.ipac.visualize.plot.Histogram;
 import edu.caltech.ipac.visualize.plot.ImageHeader;
 import edu.caltech.ipac.visualize.plot.ImageMask;
@@ -27,15 +28,15 @@ public class ImageStretch {
     public static void stretchPixels8Bit(RangeValues rangeValues,
                                          float[] float1d,
                                          byte[] pixelData,
-                                         ImageHeader imageHeader,
+                                         ImageHeader iH,
                                          Histogram hist,
                                          int startPixel,
                                          int lastPixel,
                                          int startLine,
                                          int lastLine ) {
-        double slow = getSlow(rangeValues, float1d, imageHeader, hist);
-        double shigh = getShigh(rangeValues, float1d, imageHeader, hist);
-        stretchPixelsByBand(startPixel, lastPixel, startLine, lastLine, imageHeader.naxis1, hist,
+        double slow = getSlow(rangeValues, float1d, hist, iH.bzero, iH.bscale, iH.naxis1, iH.naxis2, iH.bitpix, iH.blank_value);
+        double shigh = getShigh(rangeValues, float1d, hist, iH.bzero, iH.bscale, iH.naxis1, iH.naxis2, iH.bitpix, iH.blank_value);
+        stretchPixelsByBand(startPixel, lastPixel, startLine, lastLine, iH.naxis1, hist,
                 (byte)255, float1d, pixelData, rangeValues,slow,shigh);
     }
 
@@ -61,9 +62,10 @@ public class ImageStretch {
         else {
             for(int i=0; (i<float1dAry.length); i++) {
                 if (float1dAry[i]!=null) {
-                    double slow = getSlow(rangeValuesAry[i], float1dAry[i], imageHeaderAry[i], histAry[i]);
-                    double shigh = getShigh(rangeValuesAry[i], float1dAry[i], imageHeaderAry[i], histAry[i]);
-                    stretchPixelsByBand(startPixel, lastPixel, startLine, lastLine,imageHeaderAry[i].naxis1, histAry[i],
+                    ImageHeader iH= imageHeaderAry[i];
+                    double slow = getSlow(rangeValuesAry[i], float1dAry[i], histAry[i], iH.bzero, iH.bscale, iH.naxis1, iH.naxis2, iH.bitpix, iH.blank_value);
+                    double shigh = getShigh(rangeValuesAry[i], float1dAry[i], histAry[i], iH.bzero, iH.bscale, iH.naxis1, iH.naxis2, iH.bitpix, iH.blank_value);
+                    stretchPixelsByBand(startPixel, lastPixel, startLine, lastLine,iH.naxis1, histAry[i],
                             (byte)0, float1dAry[i], pixelDataAry[i], rangeValuesAry[i],slow,shigh);
                 }
                 else {
@@ -99,8 +101,9 @@ public class ImageStretch {
         double blankPxValAry[] = new double[3];
         double [] slowAry = new double[3];
         for(int i=0; i<3; i++) {
-            blankPxValAry[i]= imageHeaderAry[i].blank_value;
-            slowAry[i] = getSlow(rangeValuesAry[i], float1dAry[i], imageHeaderAry[i], histAry[i]);
+            ImageHeader iH= imageHeaderAry[i];
+            blankPxValAry[i]= iH.blank_value;
+            slowAry[i] = getSlow(rangeValuesAry[i], float1dAry[i], histAry[i], iH.bzero, iH.bscale, iH.naxis1, iH.naxis2, iH.bitpix, iH.blank_value);
             slowAry[i] = getScaled(slowAry[i], imageHeaderAry[i], rangeValuesAry[i]);
         }
 
@@ -241,24 +244,30 @@ public class ImageStretch {
     /**
      * Displayed flux value
      * @param raw_dn raw value
-     * @param imageHeader image header
+     * @param header image header
      * @return flux value to display
      */
-    public static double getFlux(double  raw_dn, ImageHeader imageHeader){
-        if ((raw_dn == imageHeader.blank_value) || (Double.isNaN(raw_dn))) {
-            //throw new PixelValueException("No flux available");
+    public static double getFluxPalomar(double  raw_dn, double blank_value, Header header) {
+        if ((raw_dn == blank_value) || (Double.isNaN(raw_dn))) {
             return Double.NaN;
         }
+        double exptime = header.getDoubleValue(ImageHeader.EXPTIME, 0.0);
+        double imagezpt = header.getDoubleValue(ImageHeader.IMAGEZPT, 0.0);
+        double airmass = header.getDoubleValue(ImageHeader.AIRMASS, 0.0);
+        double extinct = header.getDoubleValue(ImageHeader.EXTINCT, 0.0);
+        return  -2.5 * .43429 * Math.log(raw_dn / exptime) + imagezpt + extinct * airmass;
+        /* .43429 changes from natural log to common log */
+    }
 
-        if (imageHeader.origin.startsWith("Palomar Transient Factory")) {
-            return  -2.5 * .43429 * Math.log(raw_dn / imageHeader.exptime) +
-                    imageHeader.imagezpt +
-                    imageHeader.extinct * imageHeader.airmass;
-            /* .43429 changes from natural log to common log */
-        } else {
-            return raw_dn * imageHeader.bscale + imageHeader.bzero;
+
+
+
+
+    public static double getFluxStandard(double  raw_dn, double blank_value, double bscale, double bzero){
+        if ((raw_dn == blank_value) || (Double.isNaN(raw_dn))) {
+            return Double.NaN;
         }
-
+        return raw_dn * bscale + bzero;
     }
 
     private static void stretchPixelsUsingOtherAlgorithms(int startPixel,
@@ -559,7 +568,9 @@ public class ImageStretch {
      *
      * @return array of byte (4096 elements)
      */
-    public static byte[] getHistColors(Histogram hist, RangeValues rangeValues, float[] float1d, ImageHeader imageHeader) {
+    public static byte[] getHistColors(Histogram hist, RangeValues rangeValues, float[] float1d,
+                                       double bzero, double bscale, int naxis1, int naxis2,
+                                       int bitpix, double blank_value) {
 
         //calling stretch_pixel to calculate pixeldata, pixelhist
         byte[] pixeldata = new byte[4096];
@@ -570,18 +581,17 @@ public class ImageStretch {
             hist_bin_values[i] = (float) hist.getDNfromBin(i);
         }
 
-        double slow = getSlow(rangeValues, float1d, imageHeader,hist);
-        double shigh = getShigh(rangeValues, float1d, imageHeader, hist);
+        double slow = getSlow(rangeValues, float1d, hist, bzero, bscale, naxis1, naxis2, bitpix, blank_value);
+        double shigh = getShigh(rangeValues, float1d, hist, bzero, bscale, naxis1, naxis2, bitpix, blank_value);
 
         int start_pixel = 0;
         int last_pixel = 4095;
         int start_line = 0;
         int last_line = 0;
-        int naxis1 = 1;
         byte blank_pixel_value = 0;
 
         stretchPixelsByBand(start_pixel, last_pixel,
-                start_line, last_line, naxis1, hist,
+                start_line, last_line, 1, hist,
                 blank_pixel_value, hist_bin_values,
                 pixeldata,  rangeValues, slow, shigh);
 
