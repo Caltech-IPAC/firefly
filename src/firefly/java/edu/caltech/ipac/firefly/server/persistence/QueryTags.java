@@ -4,13 +4,14 @@
 package edu.caltech.ipac.firefly.server.persistence;
 
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.userdata.UserInfo;
+import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.DbInstance;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
 import edu.caltech.ipac.firefly.server.query.Query;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.firefly.server.rpc.UserServicesImpl;
 import edu.caltech.ipac.table.DataGroup;
 
 /**
@@ -33,11 +34,24 @@ public class QueryTags  extends EmbeddedDbProcessor implements Query {
     }
 
     public Object[] getSqlParams(TableServerRequest request) {
-        String createdBy = UserServicesImpl.getCreatedBy();
+        String createdBy = getCreatedBy();
         return new Object[]{createdBy, ServerContext.getAppName()};
     }
 
     public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
         return executeQuery(req);
     }
+
+
+    /**
+     * resolve the 'createdBy' value depending on the status of the current user.
+     *
+     * @return String which is either loginName or guest user key
+     */
+    private static String getCreatedBy() {
+        RequestOwner requestOwner = ServerContext.getRequestOwner();
+        UserInfo userInfo = requestOwner.getUserInfo();
+        return userInfo.isGuestUser() ? requestOwner.getUserKey() : userInfo.getLoginName();
+    }
+
 }

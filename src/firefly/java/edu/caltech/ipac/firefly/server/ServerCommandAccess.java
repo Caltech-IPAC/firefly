@@ -10,12 +10,11 @@ package edu.caltech.ipac.firefly.server;
 
 
 import edu.caltech.ipac.firefly.data.ServerParams;
-import edu.caltech.ipac.firefly.server.rpc.JsonDataCommands;
+import edu.caltech.ipac.firefly.server.query.SearchServerCommands;
 import edu.caltech.ipac.firefly.server.rpc.PushCommands;
 import edu.caltech.ipac.firefly.server.rpc.ResolveServerCommands;
 import edu.caltech.ipac.firefly.server.rpc.VisServerCommands;
 import edu.caltech.ipac.firefly.server.servlets.HttpServCommands;
-import edu.caltech.ipac.firefly.server.query.SearchServerCommands;
 import edu.caltech.ipac.firefly.server.ws.WsServerCommands;
 
 import javax.servlet.http.HttpServletRequest;
@@ -33,7 +32,7 @@ import java.util.Map;
 public class ServerCommandAccess {
 
 
-    private static Map<String, HttpCommand> _cmdMap = new HashMap<>();
+    private static final Map<String, HttpCommand> _cmdMap = new HashMap<>();
 
     static {
         initCommand();
@@ -45,19 +44,13 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.CREATE_PLOT_GROUP,  new VisServerCommands.GetWebPlotGroupCmd());
         _cmdMap.put(ServerParams.ZOOM,         new VisServerCommands.ZoomCmd());
         _cmdMap.put(ServerParams.STRETCH,      new VisServerCommands.StretchCmd());
-//        _cmdMap.put(ServerParams.REMOVE_BAND,  new VisServerCommands.RemoveBandCmd());
         _cmdMap.put(ServerParams.CHANGE_COLOR, new VisServerCommands.ChangeColor());
-//        _cmdMap.put(ServerParams.DELETE,       new VisServerCommands.DeletePlot());
         _cmdMap.put(ServerParams.CROP,         new VisServerCommands.Crop());
         _cmdMap.put(ServerParams.HISTOGRAM,    new VisServerCommands.ColorHistogram());
         _cmdMap.put(ServerParams.STAT,         new VisServerCommands.AreaStat());
-//        _cmdMap.put(ServerParams.FITS_HEADER,  new VisServerCommands.FitsHeader());   //LZ 3/21/16  DM-4494
         _cmdMap.put(ServerParams.GET_FLOAT_DATA,  new VisServerCommands.FloatAryCmd());
         _cmdMap.put(ServerParams.GET_BYTE_DATA,  new VisServerCommands.ByteAryCmd());
 
-//        _cmdMap.put(ServerParams.IMAGE_PNG,    new VisServerCommands.GetImagePng());
-//        _cmdMap.put(ServerParams.IMAGE_PNG_REG,    new VisServerCommands.GetImagePngWithRegion());
-//        _cmdMap.put(ServerParams.PROGRESS,     new VisServerCommands.GetProgress());
         _cmdMap.put(ServerParams.DS9_REGION,   new VisServerCommands.DS9Region());
         _cmdMap.put(ServerParams.SAVE_DS9_REGION,      new VisServerCommands.SaveDS9Region());
         _cmdMap.put(ServerParams.ADD_SAVED_REQUEST,    new VisServerCommands.AddSavedRequest());
@@ -66,7 +59,7 @@ public class ServerCommandAccess {
         //Workspaces
         _cmdMap.put(ServerParams.WS_LIST,               new WsServerCommands.WsList());
         _cmdMap.put(ServerParams.WS_GET_FILE,           new WsServerCommands.WsGetFile());
-        _cmdMap.put(ServerParams.WS_UPLOAD_FILE,           new WsServerCommands.WsUploadFile());
+        _cmdMap.put(ServerParams.WS_UPLOAD_FILE,        new WsServerCommands.WsUploadFile());
         _cmdMap.put(ServerParams.WS_DELETE_FILE,        new WsServerCommands.WsDeleteFile());
         _cmdMap.put(ServerParams.WS_MOVE_FILE,          new WsServerCommands.WsMoveFile());
         _cmdMap.put(ServerParams.WS_GET_METADATA,       new WsServerCommands.WsGetMeta());
@@ -106,11 +99,11 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.VIS_PUSH_ALIVE_COUNT,   new PushCommands.PushAliveCount());
         _cmdMap.put(ServerParams.VIS_PUSH_ACTION,        new PushCommands.PushAction());
 
-        _cmdMap.put(ServerParams.LOGOUT,        new AppServerCommands.Logout());
-        _cmdMap.put(ServerParams.INIT_APP,      new AppServerCommands.InitApp());
+        _cmdMap.put(ServerParams.INIT_APP,               new AppServerCommands.InitApp());
+        _cmdMap.put(ServerParams.LOGOUT,                 new AppServerCommands.Logout());
+        _cmdMap.put(ServerParams.GET_USER_INFO,          new AppServerCommands.GetUserInfo());
+        _cmdMap.put(ServerParams.GET_ALERTS,             new AppServerCommands.GetAlerts());
 
-        // maybe temporary
-        _cmdMap.put(ServerParams.STATIC_JSON_DATA,           new JsonDataCommands.StaticJsonData());
     }
 
     public static HttpCommand getCommand(String cmd) {
@@ -121,11 +114,5 @@ public class ServerCommandAccess {
         abstract public void processRequest(HttpServletRequest req, HttpServletResponse res, SrvParam sp) throws Exception;
     }
 
-
-    /*
-        // 1 hard one left
-    public WebPlotResult getTableData(WebPlotRequest request) { }
-
-    */
 }
 

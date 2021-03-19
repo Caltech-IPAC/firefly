@@ -30,7 +30,7 @@ public class AlertsMonitor {
      * check for alerts
      * @param forceSend  if true, send alerts regardless
      */
-    public static void checkAlerts(boolean forceSend) {
+    public static Alert checkAlerts(boolean forceSend) {
         long lastMod = alerts == null ? 0 : alerts.getLastModDate();
         File[] files = alertDir.listFiles(file -> file.isFile() && !file.isHidden());
         long mod = Math.max(lastMod, alertDir.lastModified());
@@ -55,6 +55,7 @@ public class AlertsMonitor {
         } else  if (forceSend && alerts != null) {
             sendAlerts(alerts);
         }
+        return alerts;
     }
 
     public static void startMonitor() {

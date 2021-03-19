@@ -73,7 +73,6 @@ public class ServerContext {
     private static final int PFX_TOTAL_CHAR= 3;
     private static boolean FITS_SECURITY;
     private static final Map<File, Long> _visSessionDirs= new ConcurrentHashMap<>(617);
-    private static boolean DEBUG_MODE;
     private static final String CONFIG_DIR = "server_config_dir";
     private static final String CACHEMANAGER_DISABLED_PROP = "CacheManager.disabled";
     private static final String WORK_DIR_PROP = "work.directory";
@@ -131,7 +130,7 @@ public class ServerContext {
             SearchProcessorFactory.init();
 
             // alerts monitoring
-            AlertsMonitor.startMonitor();
+            if (AppProperties.getBooleanProperty("alerts.monitorAlerts",true)) AlertsMonitor.startMonitor();
 
             // init fits read global settting
             FitsFactory.setAllowTerminalJunk(true);
@@ -221,15 +220,10 @@ public class ServerContext {
         }
 
 
-
-
-
-        DEBUG_MODE = AppProperties.getBooleanProperty("debug.mode", false);
-
         Logger.info("",
                 "CACHE_PROVIDER : " + EhcacheProvider.class.getName(),
                 "WORK_DIR       : " + getWorkingDir(),
-                "DEBUG_MODE     : " + DEBUG_MODE,
+                "DEBUG_MODE     : " + AppProperties.getBooleanProperty("debug.mode", false),
                 "Available Cores: " + getAvailableCores() );
 
          if (!getWorkingDir().equals(getSharedWorkingDir())) {

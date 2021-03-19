@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.core;
 
 import edu.caltech.ipac.util.Base64;
+import edu.caltech.ipac.util.StringUtils;
 
 /**
  * Date: Jun 15, 2010
@@ -30,6 +31,11 @@ public class JossoUtil {
             JossoUtil.jossoServerUrl = jossoServerUrl;
             JossoUtil.userProfileUrl = userProfileUrl;
         }
+    }
+
+    public static String makeLoginUrl(String backTo) {
+        String backToUrl = StringUtils.isEmpty(backTo) ? "" : "?" + BACK_TO_KEY + "=" + backTo;
+        return jossoServerUrl + LOGIN_URL + backToUrl;
     }
 
     public static String makeAuthCheckUrl(String backTo) {
