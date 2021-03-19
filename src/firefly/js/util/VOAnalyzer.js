@@ -1219,15 +1219,14 @@ export const findTargetName = (columns) => columns.find( (c) => DEFAULT_TNAME_OP
  * @param tableModel    table model with data and columns info
  * @param href          the href value of the LINK
  * @param rowIdx        row index to be resolved
- * @param defval        the field's value, or cell data.  Append field's value to href, if no substitution is needed.
+ * @param fval          the field's value, or cell data.  Append field's value to href, if no substitution is needed.
  * @returns {string}    the resolved href after subsitution
  */
-export function applyLinkSub(tableModel, href='', rowIdx, defval='') {
-    const rhref = applyTokenSub(tableModel, href, rowIdx, defval);
-    if (rhref === defval) {
-        return '';      // no href
-    } else if (rhref === href) {
-        return href + defval;       // no substitution given, append defval to the url.  set A.1
+export function applyLinkSub(tableModel, href='', rowIdx, fval='') {
+    if (href) fval = encodeURIComponent(fval);                  // if href is given, then we assume fval is a value token and not a full url.
+    const rhref = applyTokenSub(tableModel, href, rowIdx, '', true);
+    if (rhref === href) {
+        return fval ? href + fval : '';       // no substitution given, append defval to the url.  set A.1
     }
     return rhref;
 }
@@ -1239,10 +1238,11 @@ export function applyLinkSub(tableModel, href='', rowIdx, defval='') {
  * @param tableModel    table model with data and columns info
  * @param val           the value to resolve
  * @param rowIdx        row index to be resolved
- * @param def           default value, if
+ * @param def           return value if val is nullish
+ * @param encode        apply url encode to val if true.  default to false
  * @returns {string}    the resolved href after subsitution
  */
-export function applyTokenSub(tableModel, val='', rowIdx, def) {
+export function applyTokenSub(tableModel, val='', rowIdx, def, encode=false) {
 
     const vars = val?.match?.(/\${[\w -.]+}/g);
     let rval = val;
@@ -1250,7 +1250,8 @@ export function applyTokenSub(tableModel, val='', rowIdx, def) {
         vars.forEach((v) => {
             const [,cname] = v.match(/\${([\w -.]+)}/) || [];
             const col = getColumnByRef(tableModel, cname);
-            const cval = col ? getCellValue(tableModel, rowIdx, col.name) : '';  // if the variable cannot be resolved, return empty string
+            let cval = col ? getCellValue(tableModel, rowIdx, col.name) : '';  // if the variable cannot be resolved, return empty string
+            if (encode) cval = encodeURIComponent(cval);
             rval = rval.replace(v, cval);
         });
     }
