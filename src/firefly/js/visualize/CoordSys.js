@@ -18,6 +18,7 @@ export const ECLIPTIC_J   = 13;
  * @description value is one of the following constants; EQ_J2000, EQ_B2000, EQ_B1950, GALACTIC,
  * SUPERGALACTIC, ECL_J2000, ECL_B1950, PIXEL, SCREEN_PIXEL, UNDEFINED,
  *
+ * @prop isEquatorial
  * @global
  * @public
  */

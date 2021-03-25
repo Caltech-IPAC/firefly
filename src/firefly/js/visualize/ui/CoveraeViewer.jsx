@@ -22,8 +22,10 @@ import {getComponentState} from '../../core/ComponentCntlr.js';
 
 
 const startWatcher= once((viewerId) => {
-    const coverageOps= get(getAppOptions(), 'coverage',{});
-    startCoverageWatcher({...coverageOps, viewerId, ignoreCatalogs:true});
+    setTimeout(() => {
+        const coverageOps= get(getAppOptions(), 'coverage',{});
+        startCoverageWatcher({...coverageOps, viewerId, ignoreCatalogs:true});
+    },1);
 });
 
 const isCoverageFail= (covState,tbl_id) => covState.find( (e) => e.tbl_id===tbl_id)?.status===COVERAGE_FAIL;
@@ -33,9 +35,10 @@ export function CoverageViewer({viewerId='coverageImages',insideFlex=true, noCov
                                 workingMessage='Working...', noCovStyle={}}) {
 
     startWatcher(viewerId);
-    const [pv,tbl_id,covState] = useStoreConnector(
+    const [pv,tbl_id,isFetching,covState] = useStoreConnector(
         () => getActivePlotView(visRoot()),
         () => getActiveTableId(),
+        () => getTblById(getActiveTableId())?.isFetching ?? false,
         () => getComponentState(COVERAGE_WATCH_CID,[]));
 
 
@@ -63,7 +66,7 @@ export function CoverageViewer({viewerId='coverageImages',insideFlex=true, noCov
     }
     else {
         let msg= noCovMessage;
-        if (tblHasCoverage || getTblById(tbl_id)?.isFetching) {
+        if (tblHasCoverage || isFetching) {
             msg= isCoverageFail(covState,tbl_id) ? noCovMessage : workingMessage;
         }
         else if (forceShow) {

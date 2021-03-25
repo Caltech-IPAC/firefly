@@ -42,7 +42,7 @@ let zoomTimers= [];
 export function zoomActionCreator(rawAction) {
     return (dispatcher, getState) => {
 
-        const {plotId,zoomLockingEnabled= false,forceDelay=false, level:payloadLevel, devicePt}= rawAction.payload;
+        const {plotId,zoomLockingEnabled= false,forceDelay=false, level:payloadLevel, devicePt, upDownPercent}= rawAction.payload;
         let {userZoomType,actionScope= ActionScope.GROUP}= rawAction.payload;
         userZoomType= UserZoomTypes.get(userZoomType);
         actionScope= ActionScope.get(actionScope);
@@ -53,7 +53,7 @@ export function zoomActionCreator(rawAction) {
 
 
         const {level, isFullScreen, useDelay, validParams}=
-                      evaluateZoomType(visRoot,pv,userZoomType,forceDelay,payloadLevel);
+                      evaluateZoomType(visRoot,pv,userZoomType,forceDelay,payloadLevel,upDownPercent);
 
         if (!validParams) {
             dispatcher( {
@@ -93,9 +93,10 @@ export function zoomActionCreator(rawAction) {
  * @param {UserZoomTypes} userZoomType
  * @param {boolean} forceDelay
  * @param {number} payloadLevel
+ * @param {number} [p.upDownPercent] value between 0 and 1 - 1 is 100% of the next step up or down
  * @return {{level: number, isFullScreen: boolean, useDelay: boolean, validParams: boolean}}
  */
-function evaluateZoomType(visRoot, pv, userZoomType, forceDelay, payloadLevel= 1) {
+function evaluateZoomType(visRoot, pv, userZoomType, forceDelay, payloadLevel= 1, upDownPercent=1) {
 
     let level;
     let isFullScreen;
@@ -110,7 +111,7 @@ function evaluateZoomType(visRoot, pv, userZoomType, forceDelay, payloadLevel= 1
         validParams= true;
     }
     else if ([UserZoomTypes.UP,UserZoomTypes.DOWN,UserZoomTypes.ONE].includes(userZoomType)) {
-        level= getNextZoomLevel(plot,userZoomType);
+        level= getNextZoomLevel(plot,userZoomType, upDownPercent);
         isFullScreen= false;
         useDelay= true;
         validParams= true;
@@ -247,8 +248,10 @@ function doZoom(dispatcher,plot,zoomLevel,isFullScreen, zoomLockingEnabled, user
         if (devicePt) {
             const postZoomVisRoot= getState()[IMAGE_PLOT_KEY];
             const postPv= getPlotViewById(postZoomVisRoot,plotId);
-            const centerProjPt= findHipsCenProjToPlaceWptOnDevPt(postPv,wptBeforeZoom,devicePt);
-            dispatchChangeCenterOfProjection({plotId,centerProjPt});
+            if (wptBeforeZoom) {
+                const centerProjPt= findHipsCenProjToPlaceWptOnDevPt(postPv,wptBeforeZoom,devicePt);
+                centerProjPt && dispatchChangeCenterOfProjection({plotId,centerProjPt});
+            }
         }
         dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotId} } );
         return;

@@ -93,16 +93,17 @@ function reducer(state=initState, action={}) {
 }
 
 const addExtension= function(state, action) {
-    var {extension}= action.payload;
+    const {extension}= action.payload;
     const {extensionList}= state;
-    var newAry;
-    if (extensionList.find( (e) => e.id===extension.id)) {
-        newAry= extensionList.map( (e) => e.id===extension.id ? extension : e);
-    }
-    else {
-        newAry= [...state.extensionList, extension];
-    }
-    return Object.assign({}, state, {extensionList:newAry});
+
+    const matchExt= (e) =>
+        (e.id===extension.id ||
+        (e.plotId===extension.plotId && e.extType===extension.extType &&
+            e.title===extension.title && e.shortcutKey===extension.shortcutKey));
+
+    const newAry= extensionList.find(matchExt) ?
+        extensionList.map( (e) => matchExt(e) ? extension : e) : [...state.extensionList, extension];
+    return {...state, extensionList:newAry};
 };
 
 const removeExtension= function(state, action) {

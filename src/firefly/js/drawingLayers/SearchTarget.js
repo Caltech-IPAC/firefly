@@ -11,13 +11,15 @@ import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {getActivePlotView, getPlotViewById, primePlot} from '../visualize/PlotViewUtil';
-import {visRoot} from '../visualize/ImagePlotCntlr';
+import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {formatWorldPt} from '../visualize/ui/WorldPtFormat.jsx';
 import {FixedPtControl} from './CatalogUI.jsx';
+import {flux} from 'firefly/core/ReduxFlux.js';
 
 const ID= 'SEARCH_TARGET';
 const TYPE_ID= 'SEARCH_TARGET_TYPE';
+const UPDATE_SEARCH_TARGET= 'SearchTarget.UpdateSearchTarget'; // a 'private' action just for grid, dispatch by grid
 
 const factoryDef= makeFactoryDef(TYPE_ID,creator,getDrawData,getLayerChanges);
 
@@ -47,7 +49,7 @@ function creator(initPayload, presetDefaults) {
         canUserChangeColor: ColorChangeType.DYNAMIC,
         canUserDelete
     };
-    return DrawLayer.makeDrawLayer(drawLayerId || `${ID}-${idCnt}`,TYPE_ID, {}, options, drawingDef);
+    return DrawLayer.makeDrawLayer(drawLayerId || `${ID}-${idCnt}`,TYPE_ID, {}, options, drawingDef, [ImagePlotCntlr.RECENTER, UPDATE_SEARCH_TARGET]);
 }
 
 function getLayerChanges(drawLayer, action) {
@@ -58,7 +60,11 @@ function getLayerChanges(drawLayer, action) {
         pv= getPlotViewById(visRoot(),plotId);
         plot= primePlot(pv);
     }
-    return { title:getTitle(pv, plot, drawLayer)};
+    const drawData=  (action.type===UPDATE_SEARCH_TARGET) ? undefined : drawLayer.drawData;
+    if (action.type===ImagePlotCntlr.RECENTER) {
+        setTimeout(() => { flux.process({ type: UPDATE_SEARCH_TARGET, payload: { plotId}}); },1);
+    }
+    return { title:getTitle(pv, plot, drawLayer), drawData};
 }
 
 

@@ -567,14 +567,17 @@ export function dispatchChangeCenterOfProjection({plotId,centerProjPt, dispatche
  * @param {boolean} p.centerOnImage only used if centerPt is not defined.  If true then the centering will be
  *                                  the center of the image.  If false, then the center point will be the
  *                                  FIXED_TARGET attribute, if defined. Otherwise it will be the center of the image.
+ * @param {boolean} [updateFixedTarget] if true and centerPt is a worldPt, it will update the
+ *                                  FIXED_TARGET attribute on the plot
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  *
  * @public
  * @function dispatchRecenter
  * @memberof firefly.action
  */
-export function dispatchRecenter({plotId, centerPt= undefined, centerOnImage=false, dispatcher= flux.process}) {
-    dispatcher({type: RECENTER, payload: {plotId, centerPt, centerOnImage} });
+export function dispatchRecenter({plotId, centerPt= undefined, centerOnImage=false,
+                                     updateFixedTarget= false, dispatcher= flux.process}) {
+    dispatcher({type: RECENTER, payload: {plotId, centerPt, centerOnImage, updateFixedTarget} });
 }
 
 /**
@@ -827,6 +830,7 @@ export function dispatchOverlayPlotChangeAttributes({plotId,imageOverlayId, attr
  * @param {boolean} [p.zoomLockingEnabled]
  * @param {boolean} [p.forceDelay]
  * @param {number} [p.level] the level to zoom to, used only userZoomType 'LEVEL'
+ * @param {number} [p.upDownPercent] value between 0 and 1 - 1 is 100% of the next step up or down
  * @param {string|ActionScope} [p.actionScope] default to group
  * @param {DevicePt} devicePt
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
@@ -849,14 +853,14 @@ export function dispatchOverlayPlotChangeAttributes({plotId,imageOverlayId, attr
  * // Example of zoom to level, if you are connected to a widget that is changing  the level fast, zlevel is the varible with the zoom level
  * action.dispatchZoom({plotId:’myplot’, userZoomType:’LEVEL’, level: zlevel, forceDelay: true }};
  */
-export function dispatchZoom({plotId, userZoomType, maxCheck= true,
+export function dispatchZoom({plotId, userZoomType, maxCheck= true, upDownPercent=1,
                              zoomLockingEnabled=false, forceDelay=false, level, devicePt,
                              actionScope=ActionScope.GROUP,
                              dispatcher= flux.process} ) {
     dispatcher({
         type: ZOOM_IMAGE,
         payload :{
-            plotId, userZoomType, actionScope, maxCheck, zoomLockingEnabled, forceDelay, level, devicePt
+            plotId, userZoomType, actionScope, maxCheck, zoomLockingEnabled, forceDelay, level, devicePt, upDownPercent,
         }});
 }
 

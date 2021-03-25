@@ -41,7 +41,7 @@ const {MOVE,DOWN,DRAG,UP, DRAG_COMPONENT, EXIT, ENTER}= MouseState;
 const draggingOrReleasing = (ms) => ms===DRAG || ms===DRAG_COMPONENT || ms===UP || ms===EXIT || ms===ENTER;
 
 
-const dispatchZoomThrottled= throttle((params) => dispatchZoom(params), 60, {leading:true, trailing:true});
+const dispatchZoomThrottled= throttle((params) => dispatchZoom(params), 30, {leading:true, trailing:true});
 
 /**
  * when a resize happens and zoom locking is enable then we need to start a zoom level change
@@ -156,7 +156,7 @@ export class ImageViewerLayout extends PureComponent {
         }
     }
 
-    eventCB(plotId,mouseState,screenPt,screenX,screenY) {
+    eventCB(plotId,mouseState,screenPt,screenX,screenY,nativeEv) {
         const {drawLayersAry,plotView}= this.props;
         const mouseStatePayload= makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY);
         const list= drawLayersAry.filter( (dl) => dl.visiblePlotIdAry.includes(plotView.plotId) &&
@@ -167,13 +167,14 @@ export class ImageViewerLayout extends PureComponent {
             fireMouseEvent(dl,mouseState,mouseStatePayload);
         }
         else if (mouseState===MouseState.WHEEL_UP) {
-
             const devicePt= CCUtil.getDeviceCoords(primePlot(plotView),screenPt);
-            dispatchZoomThrottled({plotId, userZoomType:UserZoomTypes.UP, devicePt });
+            dispatchZoomThrottled({plotId, userZoomType:UserZoomTypes.DOWN, devicePt,
+                upDownPercent:Math.abs(nativeEv.wheelDeltaY)%120===0?1:.4 });
         }
         else if (mouseState===MouseState.WHEEL_DOWN) {
             const devicePt= CCUtil.getDeviceCoords(primePlot(plotView),screenPt);
-            dispatchZoomThrottled({plotId, userZoomType:UserZoomTypes.DOWN , devicePt});
+            dispatchZoomThrottled({plotId, userZoomType:UserZoomTypes.UP , devicePt,
+                upDownPercent:Math.abs(nativeEv.wheelDeltaY)%120===0?1:.3 } );
         }
         else {
             const ownerCandidate= findMouseOwner(list,primePlot(plotView),screenPt);         // see if anyone can own that mouse

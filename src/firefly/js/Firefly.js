@@ -172,7 +172,7 @@ const defFireflyOptions = {
             tapEntry('IRSA', 'https://irsa.ipac.caltech.edu/TAP'),
             tapEntry('NED', 'https://ned.ipac.caltech.edu/tap/'),
             tapEntry('NASA Exoplanet Archive', 'https://exoplanetarchive.ipac.caltech.edu/TAP/'),
-            // KOA?
+            tapEntry('KOA', 'https://koa.ipac.caltech.edu/TAP/'),
             tapEntry('HEASARC', 'https://heasarc.gsfc.nasa.gov/xamin/vo/tap'),
             tapEntry('MAST Images', 'https://vao.stsci.edu/CAOMTAP/TapService.aspx'),
             tapEntry('CADC', 'https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap'),

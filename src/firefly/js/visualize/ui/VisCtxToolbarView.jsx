@@ -6,7 +6,7 @@ import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, isString} from 'lodash';
 import {
-    primePlot,getPlotViewById, isMultiHDUFits, getCubePlaneCnt, getHDU,
+    primePlot,getPlotViewById, isMultiHDUFits, getCubePlaneCnt, getHDU, getActivePlotView,
     convertHDUIdxToImageIdx, convertImageIdxToHDU, getFormattedWaveLengthUnits,
     getHDUCount, getHDUIndex, getPtWavelength, hasPlaneOnlyWLInfo, isImageCube } from '../PlotViewUtil.js';
 import {getHeader} from '../FitsHeaderUtil.js';
@@ -59,10 +59,14 @@ function makeExtensionButtons(extensionAry,pv) {
     return extensionAry.map( (ext,idx) => {
             return (
                 <ToolbarButton icon={ext.imageUrl} text={ext.title}
-                               tip={ext.toolTip} key={ext.id}
+                               tip={ext.toolTip} key={ext.id} shortcutKey={ext.shortcutKey}
                                horizontal={true} enabled={true}
                                lastTextItem={idx===(extensionAry.length-1)}
-                               onClick={() => dispatchExtensionActivate(ext,makePlotSelectionExtActivateData(ext,pv))}/>
+                               onClick={() => {
+                                   if (getActivePlotView(visRoot())?.plotId===pv.plotId) {
+                                       dispatchExtensionActivate(ext,makePlotSelectionExtActivateData(ext,pv));
+                                   }
+                               }}/>
                 );
         }
     );
@@ -239,9 +243,6 @@ export const VisCtxToolbarView= memo((props) => {
             <ToolbarButton icon={CROP} tip='Crop the image to the selected area'
                            horizontal={true} onClick={() => crop(pv)}/>}
 
-            {showSelectionTools && image &&
-            <ToolbarButton icon={STATISTICS} tip='Show statistics for the selected area'
-                           horizontal={true} onClick={() => stats(pv)}/>}
 
             {showCatSelect &&
             <ToolbarButton icon={SELECTED} tip='Mark data in area as selected'
@@ -263,10 +264,15 @@ export const VisCtxToolbarView= memo((props) => {
             <ToolbarButton icon={SELECTED_ZOOM} tip='Zoom to fit selected area'
                            horizontal={true}
                            onClick={() => zoomIntoSelection(pv)}/>}
-
+                           
             { showSelectionTools &&
             <ToolbarButton icon={SELECTED_RECENTER} tip='Recenter image to selected area'
                            horizontal={true} onClick={() => recenterToSelection(pv)}/>}
+                           
+            {showSelectionTools && image &&
+            <ToolbarButton icon={STATISTICS} tip='Show statistics for the selected area'
+                           horizontal={true} onClick={() => stats(pv)}/>}
+
 
             {makeExtensionButtons(extensionAry,pv)}
 

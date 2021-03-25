@@ -33,7 +33,7 @@ export async function fetchUrl(url, options={}, doValidation = true, enableDefOp
     if (!url) return;
 
     // define defaults request options
-    if (!enableDefOptions) return lowLevelDoFetch(url, options, doValidation, logger);
+    if (!enableDefOptions) return lowLevelDoFetch(url, options, doValidation, logger?.tag('fetchUrl').debug);
     const {connId, channel}= await getOrCreateWsConn();
     const optionsWithDef= {
         method: 'get',

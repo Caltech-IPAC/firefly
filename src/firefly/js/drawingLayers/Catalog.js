@@ -292,10 +292,6 @@ function computeDrawLayer(drawLayer, tableData, columns) {
     return objs;
 }
 
-function toAngle(d, radianToDegree)  {
-    const v= Number(d);
-    return (!isNaN(v) && radianToDegree) ? v*180/Math.PI : v;
-}
 
 function computeSearchTarget(drawLayer) {
     if (!drawLayer.searchTarget || !drawLayer.searchTargetVisible) return;
@@ -311,11 +307,11 @@ function computePointDrawLayer(drawLayer, tableData, columns) {
 
     const lonIdx= findColIdx(tableData.columns, columns.lonCol);
     const latIdx= findColIdx(tableData.columns, columns.latCol);
-    const {angleInRadian:rad, orbitalPath}= drawLayer;
+    const {angleInRadian, orbitalPath}= drawLayer;
     if (lonIdx<0 || latIdx<0) return null;
     const dataArray= tableData?.data ?? [];
 
-    const makeWp= (d) => makeWorldPt(toAngle(d[lonIdx],rad), toAngle(d[latIdx],rad), columns.csys);
+    const makeWp= (d) => makeWorldPt(d[lonIdx],d[latIdx],columns.csys,true, angleInRadian,)
     let drawData= [];
 
 
@@ -348,14 +344,14 @@ function computePointDrawLayer(drawLayer, tableData, columns) {
 
 
 function computeBoxDrawLayer(drawLayer, tableData, columns) {
-    const {angleInRadian:rad}= drawLayer;
+    const {angleInRadian=false}= drawLayer;
 
     const drawData= get(tableData, 'data', []).map( (d) => {
         if (!isArray(columns)) return;
         const fp= columns.map( (c) => {
             const lonIdx= findColIdx(tableData.columns, c.lonCol);
             const latIdx= findColIdx(tableData.columns, c.latCol);
-            return makeWorldPt( toAngle(d[lonIdx],rad), toAngle(d[latIdx],rad), c.csys);
+            return makeWorldPt(d[lonIdx],d[latIdx],c.csys,true,angleInRadian);
         });
         return FootprintObj.make([fp]);
     }).filter( (fp) => fp);
@@ -448,12 +444,12 @@ function computePointHighlightLayer(drawLayer, columns) {
     }
 
 
-    const {angleInRadian:rad}= drawLayer;
+    const {angleInRadian=false}= drawLayer;
     const raStr= getCellValue(tbl,drawLayer.highlightedRow, columns.lonCol);
     const decStr= getCellValue(tbl,drawLayer.highlightedRow, columns.latCol);
     if (!raStr || !decStr) return null;
 
-    const wp= makeWorldPt( toAngle(raStr,rad), toAngle(decStr, rad), columns.csys);
+    const wp= makeWorldPt( raStr, decStr, columns.csys, true, angleInRadian);
     const s = drawLayer.drawingDef.size || 5;
     const s2 = DrawUtil.getSymbolSizeBasedOn(DrawSymbol.X, Object.assign({}, drawLayer.drawingDef, {size: s}));
     const obj= PointDataObj.make(wp, s, drawLayer.drawingDef.symbol);
@@ -464,13 +460,13 @@ function computePointHighlightLayer(drawLayer, columns) {
 }
 
 function computeBoxHighlightLayer(drawLayer, columns, highlightedRow) {
-    const {tableData}= drawLayer;
+    const {tableData, angleInRadian=false}= drawLayer;
     const d= tableData.data[highlightedRow];
     if (!d || !isArray(columns)) return null;
     const fp= columns.map( (c) => {
         const lonIdx= findColIdx(tableData.columns, c.lonCol);
         const latIdx= findColIdx(tableData.columns, c.latCol);
-        return makeWorldPt( d[lonIdx], d[latIdx], c.csys);
+        return makeWorldPt( d[lonIdx], d[latIdx], c.csys, true, angleInRadian);
     });
     const fpObj= FootprintObj.make([fp]);
     fpObj.lineWidth= 3;
