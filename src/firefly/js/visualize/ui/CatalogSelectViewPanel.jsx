@@ -74,6 +74,7 @@ export class CatalogSelectViewPanel extends PureComponent {
             <div style={{width:'100%'}}>
                 <FormPanel
                     width='auto' height='auto'
+                    style={{width:'100%', height:'100%'}}
                     groupKey={[irsaCatalogGroupKey, gkeySpacial]}
                     onSuccess={(request) => onSearchSubmit(request)}
                     onError={(request) => onSearchFail(request)}
@@ -550,7 +551,7 @@ class CatalogDDList extends PureComponent {
         const tbl_id = `${catname0}-${shortdd}-dd-table-constraint`;
 
         const {cols} = master;
-        const catPanelStyle = {height: 350};
+        const catPanelStyle = {height: 300};
 
         const polygonDefWhenPlot= get(getAppOptions(), 'catalogSpacialOp')==='polygonWhenPlotExist';
 
