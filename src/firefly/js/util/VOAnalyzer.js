@@ -1247,6 +1247,7 @@ export function applyTokenSub(tableModel, val='', rowIdx, def, encode=false) {
     const vars = val?.match?.(/\${[\w -.]+}/g);
     let rval = val;
     if (vars) {
+        encode = encode && (vars[0] !== val);
         vars.forEach((v) => {
             const [,cname] = v.match(/\${([\w -.]+)}/) || [];
             const col = getColumnByRef(tableModel, cname);
