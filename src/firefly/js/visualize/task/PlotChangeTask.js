@@ -21,7 +21,6 @@ import {PlotAttribute} from '../PlotAttribute.js';
 import PlotState from '../PlotState.js';
 import {RangeValues} from '../RangeValues.js';
 import {
-    clearLocalStretchData,
     loadStretchData, queueChangeLocalRawDataColor,
     stretchRawData
 } from '../rawData/RawDataOps.js';
@@ -117,7 +116,7 @@ export function colorChangeActionCreator(rawAction) {
         }
 
 
-        const aType= ImagePlotCntlr.STRETCH_CHANGE;
+        const aType= ImagePlotCntlr.COLOR_CHANGE;
         if (rawAction.payload.actionScope===ActionScope.SINGLE){
             const local=hasLocalStretchByteData(plot);
             const taskId= makeTaskId();
@@ -239,7 +238,6 @@ export function stretchChangeActionCreator(rawAction) {
                 processPlotUpdateLocal(dispatcher, plotId, taskId, stretchRawData(stretchPlot,rvAry), ImagePlotCntlr.STRETCH_CHANGE);
             }
             else if (hasLocalStretchByteData(stretchPlot) || hasClearedByteData(stretchPlot)){
-                clearLocalStretchData(stretchPlot);
                 await doStretchServerCall(dispatcher,getState, store,plotId,stretchData);
             }
             else {

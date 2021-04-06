@@ -105,9 +105,9 @@ export const EventLayer = memo( ({transform,plotId, eventCallback}) => {
     };
 
     useEffect( () => {
-        eRef.element.addEventListener('wheel', onWheel);
-        return () => eRef.element.removeEventListener('wheel', onWheel);
-    });
+        eRef.element?.addEventListener('wheel', onWheel);
+        return () => eRef.element?.removeEventListener('wheel', onWheel);
+    }, [eRef.element, transform,plotId, eventCallback]);
 
     return (
         <div className='event-layer' style={style}

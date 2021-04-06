@@ -306,7 +306,7 @@ function bootstrap(props, options, webApiCommands) {
         getOrCreateWsConn().then((client) => {
             fireflyInit(props, options, webApiCommands);
 
-            client.addListener(ActionEventHandler)
+            client.addListener(ActionEventHandler);
             window.firefly.wsClient = client;
             notifyServerAppInit({spaName:`${props.appTitle||''}--${props.template?props.template:'api'}`});
             resolve?.();

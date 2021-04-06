@@ -275,6 +275,7 @@ function zoomStart(state, action) {
 
 function installTiles(state, action) {
     const {plotViewAry, mpwWcsPrimId, wcsMatchType}= state;
+    const clearLocal= action.type===Cntlr.STRETCH_CHANGE;
     const {plotId, primaryStateJson,primaryTiles,overlayUpdateAry,
         rawData,bias,contrast, useRed, useGreen, useBlue}= action.payload;
     let pv= getPlotViewById(state,plotId);
@@ -333,6 +334,7 @@ function installTiles(state, action) {
     }
 
     plot= primePlot(pv); // get the updated on
+    if (clearLocal) plot.dataRequested= false;
     PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, plot.plotState);
     const processedTiles= state.processedTiles.filter( (d) => d.plotId!==plotId); // remove old client tile data
 
@@ -408,7 +410,7 @@ function changeHiPS(state,action) {
     if (!isUndefined(cubeIdx) && plot.cubeDepth>1 && cubeIdx<plot.cubeDepth) {
         plot.cubeIdx= cubeIdx;
     }
-    if (!isUndefined(blankColor)) plot.blankColor= blankColor
+    if (!isUndefined(blankColor)) plot.blankColor= blankColor;
 
     if (hipsProperties || hipsUrlRoot || !isUndefined(cubeIdx)) {
         plot.plotImageId= `${pv.plotId}--${pv.plotViewCtx.plotCounter}`;
