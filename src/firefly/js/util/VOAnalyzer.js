@@ -1223,8 +1223,9 @@ export const findTargetName = (columns) => columns.find( (c) => DEFAULT_TNAME_OP
  * @returns {string}    the resolved href after subsitution
  */
 export function applyLinkSub(tableModel, href='', rowIdx, fval='') {
-    if (href) fval = encodeURIComponent(fval);                  // if href is given, then we assume fval is a value token and not a full url.
-    const rhref = applyTokenSub(tableModel, href, rowIdx, '', true);
+    const encode = !!href && !href.match(/^\${[\w -.]+}$/g);      // don't encode if href is blank or consists of exact one token.
+    if (encode) fval = encodeURIComponent(fval);                // if encoding is needed, then fval needs to be encoded.
+    const rhref = applyTokenSub(tableModel, href, rowIdx, '', encode);
     if (rhref === href) {
         return fval ? href + fval : '';       // no substitution given, append defval to the url.  set A.1
     }
