@@ -37,7 +37,7 @@ import {
     isRotationMatching,
     hasWCSProjection, canLoadStretchDataDirect
 } from '../PlotViewUtil.js';
-import {parseAnyPt, makeImagePt, makeWorldPt, makeDevicePt} from '../Point.js';
+import Point, {parseAnyPt, makeImagePt, makeWorldPt, makeDevicePt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import PlotState, {RotateType} from '../PlotState.js';
 import {updateTransform} from '../PlotTransformUtils.js';
@@ -275,6 +275,7 @@ function zoomStart(state, action) {
 
 function installTiles(state, action) {
     const {plotViewAry, mpwWcsPrimId, wcsMatchType}= state;
+    const clearLocal= action.type===Cntlr.STRETCH_CHANGE;
     const {plotId, primaryStateJson,primaryTiles,overlayUpdateAry,
         rawData,bias,contrast, useRed, useGreen, useBlue}= action.payload;
     let pv= getPlotViewById(state,plotId);
@@ -333,6 +334,7 @@ function installTiles(state, action) {
     }
 
     plot= primePlot(pv); // get the updated on
+    if (clearLocal) plot.dataRequested= false;
     PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, plot.plotState);
     const processedTiles= state.processedTiles.filter( (d) => d.plotId!==plotId); // remove old client tile data
 
@@ -408,7 +410,7 @@ function changeHiPS(state,action) {
     if (!isUndefined(cubeIdx) && plot.cubeDepth>1 && cubeIdx<plot.cubeDepth) {
         plot.cubeIdx= cubeIdx;
     }
-    if (!isUndefined(blankColor)) plot.blankColor= blankColor
+    if (!isUndefined(blankColor)) plot.blankColor= blankColor;
 
     if (hipsProperties || hipsUrlRoot || !isUndefined(cubeIdx)) {
         plot.plotImageId= `${pv.plotId}--${pv.plotViewCtx.plotCounter}`;
@@ -645,16 +647,17 @@ function updateViewSize(state,action) {
  * @return {VisRoot}
  */
 function recenter(state,action) {
-    const {plotId, centerPt, centerOnImage }= action.payload;
+    const {plotId, centerPt, centerOnImage, updateFixedTarget= false}= action.payload;
     const {wcsMatchType}= state;
     const pv= getPlotViewById(state,plotId);
 
     let plotViewAry;
     if (wcsMatchType) {
-        plotViewAry= recenterUsingWcsMatch(state,pv,centerPt,centerOnImage);
+        plotViewAry= recenterUsingWcsMatch(state,pv,centerPt,centerOnImage, false, updateFixedTarget);
     }
     else {
-        plotViewAry= applyToOnePvOrAll(state.positionLock, state.plotViewAry,plotId,false, recenterPv(centerPt, centerOnImage));
+        plotViewAry= applyToOnePvOrAll(state.positionLock, state.plotViewAry,plotId,false,
+            recenterPv(centerPt, centerOnImage, updateFixedTarget));
     }
 
 
@@ -662,10 +665,10 @@ function recenter(state,action) {
 }
 
 
-function recenterUsingWcsMatch(state, pv, centerPt, centerOnImage=false, onlyImages= false) {
+function recenterUsingWcsMatch(state, pv, centerPt, centerOnImage=false, onlyImages= false, updateFixedTarget= false) {
     const {wcsMatchType}= state;
     let   {plotViewAry}= state;
-    const newPv= recenterPv(centerPt, centerOnImage)(pv);
+    const newPv= recenterPv(centerPt, centerOnImage, updateFixedTarget)(pv);
     plotViewAry= replacePlotView(plotViewAry, newPv);
     plotViewAry= matchPlotViewByPositionGroup(state, newPv, plotViewAry, false, (pv) => {
         if (onlyImages && isHiPS(primePlot(pv))) return pv;
@@ -673,7 +676,7 @@ function recenterUsingWcsMatch(state, pv, centerPt, centerOnImage=false, onlyIma
             return updateScrollToWcsMatch(wcsMatchType, newPv, pv);
         }
         else {
-            return recenterPv(centerPt, centerOnImage)(pv);
+            return recenterPv(centerPt, centerOnImage, updateFixedTarget)(pv);
         }
     } );
     return plotViewAry;
@@ -686,10 +689,11 @@ function recenterUsingWcsMatch(state, pv, centerPt, centerOnImage=false, onlyIma
  * @param {boolean} centerOnImage - only used if centerPt is not defined.  If true then the centering will be
  *                  the center of the image.  If false, then the center point will be the
  *                  FIXED_TARGET attribute, if defined. Otherwise it will be the center of the image.
+ * @param {boolean} updateFixedTarget if true the PlotAttribute.FIXED_TARGET will but updated to this point
  * @return {Function} a new plot view
  */
 
-function recenterPv(centerPt,  centerOnImage) {
+function recenterPv(centerPt,  centerOnImage, updateFixedTarget= false) {
     return (pv) => {
         const plot = primePlot(pv);
         if (!plot) return pv;
@@ -707,14 +711,21 @@ function recenterPv(centerPt,  centerOnImage) {
         }
 
         if (isImage(primePlot(pv))) {
-            return updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv, centerImagePt));
+            const newPv= updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv, centerImagePt));
+            if (!updateFixedTarget || centerPt.type!==Point.W_PT) return newPv;
+            const newPlot= {...primePlot(pv), attributes:{...plot.attributes,[PlotAttribute.FIXED_TARGET]:centerPt}};
+            return replacePrimaryPlot(newPv,newPlot);
         }
         else {
             let cp;
             if (centerPt) cp= CCUtil.getWorldCoords(plot,centerPt);
             if (!cp) cp= plot.attributes[PlotAttribute.FIXED_TARGET];
             if (!cp) cp= makeWorldPt(0,0,plot.imageCoordSys);
-            return replacePrimaryPlot(pv, changeProjectionCenter(plot,cp));
+            const newPlot= changeProjectionCenter(plot,cp);
+            if (updateFixedTarget || centerPt.type===Point.W_PT) {
+                newPlot.attributes= {...newPlot.attributes, [PlotAttribute.FIXED_TARGET]:centerPt};
+            }
+            return replacePrimaryPlot(pv, newPlot);
         }
 
     };

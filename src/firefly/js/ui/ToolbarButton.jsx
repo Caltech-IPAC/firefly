@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {memo, useContext, useRef} from 'react';
+import React, {memo, useContext, useRef, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
 import {ToolTipCtx} from '../visualize/ui/VisToolbar.jsx';
@@ -10,6 +10,7 @@ import './ToolbarButton.css';
 import {DROP_DOWN_KEY} from './DropDownToolbarButton.jsx';
 import DROP_DOWN_ICON from 'html/images/dd-narrow.png';
 import CHECK_BOX from 'html/images/black_check-on_10x10.gif';
+import BrowserInfo, {Platform} from 'firefly/util/BrowserInfo.js';
 
 
 export function makeBadge(cnt) {
@@ -36,6 +37,37 @@ const todoStyle= {
 };
 const makeToDoTag= () => <div style={todoStyle}>ToDo</div>;
 
+
+const NO_SHORT= {hasShortcut:false};
+
+function getShortCutInfo(shortcutKey) {
+    if (!shortcutKey) return NO_SHORT;
+    shortcutKey= shortcutKey.trim();
+    const requiresCtrl= shortcutKey.toLowerCase().startsWith('ctrl-');
+    const requiresMeta= shortcutKey.toLowerCase().startsWith('meta-');
+    if ((requiresCtrl || requiresMeta) && shortcutKey.length!==6) return NO_SHORT;
+    else if (!requiresCtrl && !requiresMeta && shortcutKey.length!==1) return NO_SHORT;
+    const testKey= (requiresCtrl || requiresMeta) ? shortcutKey[5] : shortcutKey[0];
+    return {ctrl:requiresCtrl, meta:requiresMeta, key:testKey, hasShortcut:true};
+}
+
+function makeTextLabel(text,shortcutKey) {
+    if (!text) return '';
+    const {meta,key,hasShortcut}= getShortCutInfo(shortcutKey)
+    if (!hasShortcut) return text;
+    if (hasShortcut && meta && BrowserInfo.isPlatform(Platform.MAC)) {
+        shortcutKey= String.fromCharCode(0x2318) + '-'+key;
+    }
+    return (
+        <span>
+            {text}
+            <span style={{fontSize : 'smaller'}}>
+                {` (${shortcutKey})`}
+            </span>
+        </span>
+    );
+}
+
 /**
  *
  * @param icon icon to display
@@ -57,22 +89,35 @@ const makeToDoTag= () => <div style={todoStyle}>ToDo</div>;
  * @param todo show a todo message
  * @return {object}
  */
-
 export const ToolbarButton = memo((props) => {
     const {
         icon,text='',tip='',badgeCount=0,enabled=true, horizontal=true, bgDark= false, visible=true, active= false,
-        imageStyle={}, lastTextItem=false, todo= false, style={},
+        imageStyle={}, lastTextItem=false, todo= false, style={}, shortcutKey='',
         useDropDownIndicator= false, hasCheckBox=false, checkBoxOn=false,
         tipOnCB, tipOffCB, dropDownCB, onClick} = props;
 
     const tipCtx = useContext(ToolTipCtx);
     const {current:divElementRef}= useRef({divElement:undefined});
-    if (!visible) return false;
+
 
     const handleClick= () => {
         onClick?.(divElementRef.divElement);
         dropDownCB ? dropDownCB(divElementRef.divElement) : dispatchHideDialog(DROP_DOWN_KEY);
     };
+
+    useEffect( () => {
+        const {cnrl,meta,key,hasShortcut}= getShortCutInfo(shortcutKey)
+        if (!hasShortcut) return;
+        const listener= (ev) => {
+            if (cnrl && !ev.ctrlKey) return;
+            if (meta && !ev.metaKey) return;
+            ev.key===key && handleClick();
+        };
+        window.document.addEventListener('keydown', listener);
+        return () => window.document.removeEventListener('keydown', listener);
+    });
+    if (!visible) return false;
+
 
     const mouseOver= () => tipOnCB ? tipOnCB(tip) : tipCtx?.tipOnCB?.(tip);
     const mouseOut= () => tipOffCB ? tipOffCB() : tipCtx?.tipOffCB?.();
@@ -86,19 +131,20 @@ export const ToolbarButton = memo((props) => {
 
     if (horizontal && !icon) { //used for horizontal text only, this is usually a dropdown menu
         const horizontalStyle= {
-            ...baseStyle,
-            height: 'calc(100% - 7px)',
             verticalAlign: 'bottom',
             fontSize: '10pt',
-            position: 'relative'
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            borderRadius: 5
         };
         textCName= 'ff-menuItemHText';
         return (
-            <div style={{display:'inline-block', height:'100%', flex:'0 0 auto' ,...style}}>
-                <div style={{ display:'inline-block', margin:'0 4px 0 4px', height: 'calc(100% - 7px)'}} />
+            <div style={{display:'flex', height:'100%', flex:'0 0 auto' ,...style}}>
+                <div style={{ display:'inline-block', margin:'0 4px 0 4px'}} />
                 <div title={tip} style={horizontalStyle} className={cName}
                      ref={setupRef} onClick={handleClick} onMouseOver={mouseOver} onMouseOut={mouseOut}>
-                    <div className={textCName}>{text}</div>
+                    <div className={textCName}>{makeTextLabel(text,shortcutKey)}</div>
                     {useDropDownIndicator && makeDropDownIndicator()}
                     {badgeCount>0 && makeBadge(badgeCount)}
                     {todo && makeToDoTag()}
@@ -115,7 +161,7 @@ export const ToolbarButton = memo((props) => {
                      ref={setupRef} onClick={handleClick} onMouseOver={mouseOver} onMouseOut={mouseOut}>
                     <div style= {{display:'flex', flexGrow:1, alignItems:'center'}} className={textCName}>
                         <img style={imageStyle} src={icon} className={textCName}/>
-                        <span style={{paddingLeft:5, flexGrow:1}}>{text}</span>
+                        <span style={{paddingLeft:5, flexGrow:1}}>{makeTextLabel(text,shortcutKey)}</span>
                     </div>
                     {badgeCount>0 && makeBadge(badgeCount)}
                     {todo && makeToDoTag()}
@@ -130,7 +176,7 @@ export const ToolbarButton = memo((props) => {
                         {hasCheckBox && makeCheckBox(checkBoxOn,imageStyle)}
                         {icon ?
                             <img style={{flexGrow:1, ...imageStyle}} src={icon}/> :
-                            <div style={{flexGrow:1}} className={textCName}>{text}</div>}
+                            <div style={{flexGrow:1}} className={textCName}>{makeTextLabel(text,shortcutKey)}</div>}
                     </div>
                     {badgeCount>0 && makeBadge(badgeCount)}
                     {todo && makeToDoTag()}
@@ -144,6 +190,8 @@ ToolbarButton.propTypes= {
     icon : PropTypes.string,
     text : PropTypes.node,
     tip : PropTypes.string,
+    shortcutKey : PropTypes.string,
+    shortcutHelp : PropTypes.bool,
     badgeCount : PropTypes.number,
     enabled : PropTypes.bool,
     bgDark: PropTypes.bool,

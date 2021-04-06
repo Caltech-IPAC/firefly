@@ -394,9 +394,9 @@ class ConstraintPanel extends PureComponent {
         const totalCol = columns ? (columns.length-1) : 0;
 
         return (
-            <div style={{display:'inline-block', flex: '1 1 auto', padding: '5px 5px'}}>
-                <div style={{ position: 'relative', width: '100%', height: '100%'}}>
-                    <div className='TablePanel'>
+            <div style={{display:'flex', flex: '1 1 auto', padding: '5px 5px'}}>
+                <div style={{ display:'flex', flex: '1 1 auto', position: 'relative', width: '100%', height: '100%'}}>
+                    <div className='TablePanel' style={{minHeight:180, flex: '1 1 auto'}}>
                         <div className={'TablePanel__wrapper--border'}>
                             <div className='TablePanel__table' style={{top: 0}}>
                                 <BasicTableViewWithConnector

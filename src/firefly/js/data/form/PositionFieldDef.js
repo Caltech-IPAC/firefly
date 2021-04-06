@@ -1,7 +1,7 @@
 import PositionParser from '../../util/PositionParser.js';
 import CoordinateSys from '../../visualize/CoordSys.js';
 import CoordUtil from '../../visualize/CoordUtil.js';
-import Point, {makeWorldPt} from '../../visualize/Point.js';
+import Point, {makeResolvedWorldPt, makeWorldPt} from '../../visualize/Point.js';
 
 import {sprintf} from '../../externalSource/sprintf';
 import {matchesIgCase} from '../../util/WebUtil.js';
@@ -153,7 +153,7 @@ var makePositionFieldDef= function(properties) {
                 }
             }
             if (retval ===null) {
-                retval = formatTargetForHelp(makeWorldPt(wp.getLon, wp.getLat(), wp.getCoordSys(), name, resolver));
+                retval = formatTargetForHelp(makeResolvedWorldPt(makeWorldPt(wp.getLon, wp.getLat(), wp.getCoordSys()), name, resolver));
             }
         }
         else {

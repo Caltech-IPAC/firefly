@@ -49,7 +49,8 @@ export {startDataProductsWatcher} from '../visualize/saga/DataProductsWatcher.js
 export {getSelectedRegion} from '../drawingLayers/RegionPlot.js';
 
 export {extensionAdd, extensionRemove} from '../core/ExternalAccessUtils.js';
-export {makeWorldPt, makeScreenPt, makeImagePt, parsePt} from '../visualize/Point.js';
+export {makeWorldPt, makeScreenPt, makeImagePt, parsePt, parseAnyPt, parseWorldPt } from '../visualize/Point.js';
+export {CoordinateSys} from '../visualize/CoordSys.js';
 
 export {IMAGE, NewPlotMode} from '../visualize/MultiViewCntlr';
 

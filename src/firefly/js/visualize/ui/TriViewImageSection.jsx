@@ -178,7 +178,7 @@ function layoutHandler(action, cancelSelf) {
 function closeExpanded() {
     dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none);
 }
-const hasCatalogTable= (tblList) => tblList.some( (id) => isCatalog(id) );
+const hasCoverageTable= (tblList) => tblList.some( (id) => hasCoverageData(id) );
 const hasOrbitalPathTable= (tblList) => tblList.some( (id) => isOrbitalPathTable(id) );
 const hasMetaTable= (tblList) => tblList.some( (id) => isMetaDataTable(id) );
 const findFirstMetaTable= (tblList) => tblList.find( (id) => isMetaDataTable(id) );
@@ -229,7 +229,7 @@ function onActiveTable (layoutInfo, action) {
     if (isEmpty(tblList)) return smartMerge(layoutInfo, {showImages});
 
     // check for catalog or meta images
-    const anyHasCatalog= hasCatalogTable(tblList);
+    const anyHasCoverage= hasCoverageTable(tblList);
     const hasOrbitalPath=  hasOrbitalPathTable(tblList);
     const anyHasMeta= hasMetaTable(tblList);
 
@@ -238,7 +238,7 @@ function onActiveTable (layoutInfo, action) {
     //     coverageLockedOn= anyHasCatalog || anyHasMeta;
     // }
 
-    if (anyHasCatalog || anyHasMeta || hasOrbitalPath) {
+    if (anyHasCoverage || anyHasMeta || hasOrbitalPath) {
         showCoverage = true;
         showImages = true;
     } else {

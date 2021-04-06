@@ -12,11 +12,12 @@ const style={left:0,top:0,right:0, bottom:0,position:'absolute'};
 function fireEvent(ev,transform, plotId,mouseState, eventCallback, doPreventDefault= true) {
     if (doPreventDefault) ev.preventDefault();
     ev.stopPropagation();
-    const {screenX, screenY, offsetX, offsetY}= ev.nativeEvent;
+    const nativeEvent= ev.nativeEvent ? ev.nativeEvent : ev;
+    const {screenX, screenY, offsetX, offsetY}= nativeEvent;
     const trans= Matrix.from(transform).inverse();
     const tmpScreenPt= trans.applyToPoint(offsetX,offsetY);
     const spt= makeScreenPt(tmpScreenPt.x,tmpScreenPt.y);
-    eventCallback(plotId,mouseState,spt,screenX,screenY);
+    eventCallback(plotId,mouseState,spt,screenX,screenY,nativeEvent);
 }
 
 function fireDocEvent(element, nativeEv,transform, plotId,mouseState, eventCallback) {
@@ -29,7 +30,7 @@ function fireDocEvent(element, nativeEv,transform, plotId,mouseState, eventCallb
     const trans= Matrix.from(transform).inverse();
     const tmpScreenPt= trans.applyToPoint(compOffX, compOffY);
     const spt= makeScreenPt(tmpScreenPt.x,tmpScreenPt.y);
-    eventCallback(plotId,mouseState,spt,screenX,screenY);
+    eventCallback(plotId,mouseState,spt,screenX,screenY,nativeEv);
 }
 
 export const EventLayer = memo( ({transform,plotId, eventCallback}) => {
@@ -100,15 +101,21 @@ export const EventLayer = memo( ({transform,plotId, eventCallback}) => {
 
     const onWheel= (ev) => {
         if (!ev.deltaY) return;
-        fireEvent(ev,transform,plotId,ev.deltaY>0 ? MouseState.WHEEL_UP : MouseState.WHEEL_DOWN, eventCallback, false);
+        fireEvent(ev,transform,plotId,ev.deltaY>0 ? MouseState.WHEEL_UP : MouseState.WHEEL_DOWN, eventCallback, true);
     };
 
+    useEffect( () => {
+        eRef.element?.addEventListener('wheel', onWheel);
+        return () => eRef.element?.removeEventListener('wheel', onWheel);
+    }, [eRef.element, transform,plotId, eventCallback]);
+
     return (
-        <div className='event-layer' style={style} ref={(c) => eRef.element=c}
+        <div className='event-layer' style={style}
+             ref={ (c) => eRef.element=c}
              onClick={onClick} onDoubleClick={onDoubleClick} onMouseDownCapture={onMouseDown}
              onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}
              onMouseMoveCapture={onMouseMove} onTouchCancel={onTouchCancel}
-             onTouchEnd={onTouchEnd} onTouchMove={onTouchMove} onTouchStart={onTouchStart} onWheel={onWheel}
+             onTouchEnd={onTouchEnd} onTouchMove={onTouchMove} onTouchStart={onTouchStart}
         />
     );
 });

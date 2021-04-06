@@ -22,7 +22,7 @@ import {cloneRequest, makeTableFunctionRequest, MAX_ROW } from '../../tables/Tab
 import MultiViewCntlr, {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
 import {DrawSymbol} from '../draw/DrawSymbol.js';
-import {computeCentralPtRadiusAverage, toDegrees} from '../VisUtil.js';
+import {computeCentralPtRadiusAverage} from '../VisUtil.js';
 import {makeWorldPt, pointEquals} from '../Point.js';
 import {logger} from '../../util/Logger.js';
 import {getCornersColumns} from '../../tables/TableInfoUtil.js';
@@ -110,6 +110,7 @@ const defOptions= {
 
 export const COVERAGE_WATCH_CID= 'COVERAGE_WATCH_CID';
 export const COVERAGE_FAIL= 'fail';
+export const TABLE_EMPTY= 'fail';
 
 const overlayCoverageDrawing= makeOverlayCoverageDrawing();
 
@@ -461,8 +462,6 @@ function initRequest(r,viewerId,plotId, overlayPos, wp) {
     return r;
 }
 
-
-
 /**
  *
  * @param {CoverageOptions} options
@@ -486,13 +485,12 @@ function computeSize(options, preparedTables, usesRadians) {
                     ptAry= getBoxAryFromTable(options,t, usesRadians);
                     break;
                 case CoverageType.REGION:
-                    ptAry = getRegionAryFromTable(options, t, usesRadians);
+                    ptAry = getRegionAryFromTable(options, t);
                     break;
 
             }
             return flattenDeep(ptAry);
     } );
-
     return computeCentralPtRadiusAverage(testAry);
 }
 
@@ -713,23 +711,12 @@ function hasCorners(options, table) {
     return dataCnt > 0;
 }
 
-
-function toAngle(d, radianToDegree)  {
-    const v= Number(d);
-    return (!isNaN(v) && radianToDegree) ? toDegrees(v): v;
-}
-
-function makePt(lonStr,latStr, csys, radianToDegree) {
-    return makeWorldPt(toAngle(lonStr,radianToDegree), toAngle(latStr, radianToDegree), csys);
-}
-
 function getPtAryFromTable(options,table, usesRadians){
     const cDef= findTableCenterColumns(table);
     if (isEmpty(cDef)) return [];
     const {lonIdx,latIdx,csys}= cDef;
     return get(table, 'tableData.data', [])
-        .map( (row) =>
-            (isValidNum(row[lonIdx]) && isValidNum(row[latIdx])) ? makePt(row[lonIdx], row[latIdx], csys, usesRadians) : undefined )
+        .map( (row) => makeWorldPt(row[lonIdx], row[latIdx], csys, true, usesRadians))
         .filter( (v) => v);
 }
 
@@ -737,13 +724,12 @@ function getBoxAryFromTable(options,table, usesRadians){
     const cDefAry= getCornersColumns(table);
     return get(table, 'tableData.data', [])
         .map( (row) => cDefAry
-            .map( (cDef) =>
-                (isValidNum(row[cDef.lonIdx]) && isValidNum(row[cDef.latIdx])) ? makePt(row[cDef.lonIdx], row[cDef.latIdx], cDef.csys, usesRadians) : undefined))
+            .map( (cDef) => makeWorldPt(row[cDef.lonIdx], row[cDef.latIdx], cDef.csys, true, usesRadians) ))
         .filter( (row) => row.every( (v) => v));
 }
 
 
-function getRegionAryFromTable(options, table, usesRadians) {
+function getRegionAryFromTable(options, table) {
     const rCol = findTableRegionColumn(table);
 
     return get(table, 'tableData.data', [])

@@ -1,6 +1,8 @@
 import {isString, isNumber, isNil, isObject, isArray} from 'lodash';
 import CoordinateSys from './CoordSys.js';
 import Resolver, {parseResolver} from '../astro/net/Resolver.js';
+import CoordUtil from 'firefly/visualize/CoordUtil.js';
+import {memorizeLastCall} from 'firefly/util/WebUtil.js';
 
 const SPT= 'ScreenPt';
 const IM_PT= 'ImagePt';
@@ -104,8 +106,8 @@ export class SimplePt {
             this.y= Number(objOrX.y);
         }
         else {
-            this.x= Number(objOrX);
-            this.y= Number(y);
+            this.x= toNum(objOrX);
+            this.y= toNum(y);
         }
         if (forceToInt) {
             this.x= Math.trunc(this.x);
@@ -221,7 +223,20 @@ function stringAryToWorldPt(wpParts) {
     if (len===2 || len===3) return makeWorldPt(x,y,csys);
 
     const resolver= wpParts[4] ? parseResolver(wpParts[4]) : Resolver.UNKNOWN;
-    return makeWorldPt(x,y,csys, wpParts[3], resolver);
+    return makeResolvedWorldPt(makeWorldPt(x,y,csys), wpParts[3], resolver);
+}
+
+const toDeg= (angle) => angle * (180 / Math.PI);
+
+/**
+ * return a number give a number or a string
+ * @param {number|string|undefined|null} v
+ * @return {number} converted to a number
+ */
+function toNum(v) {
+    if (isNil(v)) return NaN;
+    if (isString(v) && !v) return NaN;
+    return Number(v);
 }
 
 /**
@@ -229,23 +244,40 @@ function stringAryToWorldPt(wpParts) {
  * @param {number|string} lon - longitude in degrees, strings are converted to numbers
  * @param {number|string} lat - latitude in degrees, strings are converted to numbers
  * @param {CoordinateSys} [coordSys] - The coordinate system of this worldPt
- *
- * @param {String} [objName] -  object name used to create this worldPt
- * @param [resolver] - the resolver used to create this worldPt
+ * @param {boolean} [detectHMS] - if lon and lat are in sexagesimal, convert to number
+ *                              coordinate system must equatorial
+ * @param {boolean} [angleInRadian] - if true then convert to degrees
  * @return {WorldPt}
- *
  *
  * @function makeWorldPt
  * @public
  * @global
  */
-export function makeWorldPt(lon,lat,coordSys= undefined,objName= undefined,resolver= undefined) {
-    const lonNum=Number(lon);
-    const latNum=Number(lat);
-    if (isNaN(lonNum) || isNaN(latNum)) return undefined;
-    return new WorldPt(lonNum,latNum,coordSys,objName,resolver);
-}
+export const makeWorldPt=
+    memorizeLastCall((lon, lat, coordSys= CoordinateSys.EQ_J2000, detectHMS= false, angleInRadian= false) =>{
+    let lonNum=toNum(lon);
+    let latNum=toNum(lat);
+    if (isNaN(lonNum) || isNaN(latNum)) {
+        if (!detectHMS) return undefined;
+        if (isString(lon) && isString(lat) && coordSys.isEquatorial()) {
+            lonNum= CoordUtil.convertStringToLon(lon,CoordinateSys.EQ_J2000);
+            latNum= CoordUtil.convertStringToLat(lat,CoordinateSys.EQ_J2000);
+        }
+        if (isNaN(lonNum) || isNaN(latNum)) return undefined;
+    }
+    return new WorldPt( angleInRadian ? toDeg(lonNum): lonNum, angleInRadian ? toDeg(latNum): latNum, coordSys);
+});
 
+/**
+ * Create a new world point with the object name and resolver defined
+ * @param {WorldPt} wp
+ * @param {String} objName -  object name used to create this worldPt
+ * @param [resolver] - the resolver used to create this worldPt
+ * @return {WorldPt}
+ */
+export function makeResolvedWorldPt(wp,objName,resolver=Resolver.UNKNOWN) {
+    return new WorldPt(wp.x,wp.y,wp.cSys,objName,resolver);
+}
 
 /**
  * @summary A point in the image file
@@ -346,7 +378,7 @@ export function makeAnyPt(x,y,coordSys) {
         case CoordinateSys.PIXEL:        return makeImagePt(x, y);
         case CoordinateSys.ZEROBASED:    return makeZeroBasedImagePt(x, y);
         case CoordinateSys.FITSPIXEL:    return makeFitsImagePt(x, y);
-        default:                         return makeWorldPt(x,y,coordSys);
+        default:                         return makeWorldPt(x,y,coordSys,true);
     }
 }
 
