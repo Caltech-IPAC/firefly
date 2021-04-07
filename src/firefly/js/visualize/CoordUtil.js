@@ -1,6 +1,8 @@
 /*eslint no-empty:0*/
 /*eslint quotes:0*/
 import {sprintf} from '../externalSource/sprintf';
+import {CoordinateSys} from './CoordSys.js';
+import {isDigit} from 'firefly/util/MathUtil.js';
 
 /**
  *  This class provides conversion of user's
@@ -30,7 +32,6 @@ const MIN_SEC_TOO_BIG = 'Greater than 60 minutes or seconds';
 const INVALID_SEPARATOR = 'Invalid input';
 
 
-const isDigit = (c) => (!!c.trim() && (c > -1));
 
 /**
  * @param coordstr
@@ -266,6 +267,62 @@ export const dd2sex = function (dangle, islat, isequ, precision=5) {
         sprintf('%02d',rm) + 'm' +
         sprintf('%02d',rs) + '.' + sprintf(`%0${secPrecision}d`,rfs) + 's';
 };
+
+
+
+function makeSecStr(s) {
+    if (s.length<5) return '';
+    const secPart= s.substring(4);
+    if (s.length===5 || s.length===6 || s.includes('.')) return secPart;
+    return secPart.substring(0,2) +'.' + secPart.substring(2);
+}
+
+function coordSysFromFirstChar(c) {
+    switch (c.toLowerCase()) {
+        case 'g' : return CoordinateSys.GALACTIC;
+        case 'f' :
+        case 'j' : return CoordinateSys.EQ_J2000;
+        case 'b' : return CoordinateSys.EQ_B1950;
+        default:   return CoordinateSys.EQ_J2000;
+    }
+}
+
+/**
+ *
+ * @param s
+ * return {{lon:number,lat:number,cSys:CoordinateSys}|false}
+ */
+export function parseDBIdToCoord(s) {
+    if (!s) return false;
+    if (!(['g','f','j','b'].includes(s[0].toLowerCase())) && !isDigit(s[0])) return false;
+    if (!s.includes('-') && !s.includes('+')) return false;
+    if (s.includes(' ')) return false;
+    const firstChar= s[0].toUpperCase();
+    const start= isDigit(s[0]) ? 0 : 1;
+    const realS= start===0 ? s : s.substring(1);
+    const sAry= realS.split(/[+ ,-]/);
+    if (sAry.length!==2) return false;
+    if (!Number(sAry[0]) || !Number(sAry[1])) return false;
+    const sign= realS.includes('+') ? 1 : -1;
+    const cSys= coordSysFromFirstChar(firstChar);
+    if (cSys===CoordinateSys.GALACTIC) {
+        const glon= Number(sAry[0]);
+        const glat= Number(sAry[1])*sign;
+        if (glon<=360 && glat<=Math.abs(180)) return {lon:glon,lat:glat,cSys};
+        return false;
+    }
+    const [lonStr,latStr]= sAry;
+    if (lonStr.length<4 || latStr.length<4) return false;
+
+    const lon= `${lonStr[0]}${lonStr[1]}:${lonStr[2]}${lonStr[3]}:${makeSecStr(lonStr)}`;
+    const lat= `${sign>0?'+':'-'}${latStr[0]}${latStr[1]}:${latStr[2]}${latStr[3]}:${makeSecStr(latStr)}`;
+    try {
+        return {lon:convertStringToLon(lon, cSys),lat:convertStringToLat(lat, cSys),cSys};
+    }
+    catch (e) {
+        return false;
+    }
+}
 
 function cSeparator(str) {
     if (!str) return ' ';

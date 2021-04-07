@@ -5,7 +5,8 @@
 import React, {memo, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
-import {parseTarget, getFeedback, formatPosForTextField} from './TargetPanelWorker.js';
+import {parseTarget} from './TargetPanelWorker.js';
+import {formatPosForTextField, formatTargetForHelp} from './PositionFieldDef.js';
 import {TargetFeedback} from './TargetFeedback.jsx';
 import {InputFieldView} from './InputFieldView.jsx';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
@@ -203,7 +204,7 @@ function computeProps(viewProps, componentProps, fieldKey, groupKey) {
     const wp= parseWorldPt(wpStr);
 
     if (isValidPoint(wp) && !value) {
-        feedback= getFeedback(wp);
+        feedback= formatTargetForHelp(wp);
         value= wp.objName || formatPosForTextField(wp);
         showHelp= false;
     }
