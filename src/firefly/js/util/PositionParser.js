@@ -1,532 +1,419 @@
 /* eslint prefer-template:0 */
 import {makeWorldPt} from '../visualize/Point.js';
 import CoordinateSys from '../visualize/CoordSys.js';
-import {crunch} from './WebUtil';
+import {crunch, matchesIgCase} from './WebUtil';
+import CoordUtil, {parseDBIdToCoord} from 'firefly/visualize/CoordUtil.js';
 
-var PositionParsedInput={Name: 'Name', Position:'Position'};
+export const PositionParsedInputType={Name: 'Name', Position:'Position', DB_ID:'DB_ID'};
 
-var makePositionParser = function(helper) {
+const DEFAULT_COORD_SYS = 'equ j2000';
+const INVALID = 'invalid';
 
-    var retPP= {};
 
-    var DEFAULT_COORD_SYS = 'equ j2000';
-    var RA = 'ra';
-    var DEC = 'dec';
-    var COORDINATE_SYS = 'coordsys';
-    var INVALID = 'invalid';
-    var _ra = null;
-    var _dec = null;
-    var _coordSys = null;
-    var _objName = null;
-    var _inputType= PositionParsedInput.Position;
-    var isValid= false;
+/**
+ * parse the given string into the resolver.
+ * Returns true if the string is a valid position.
+ * @param s
+ * @return {*}
+ */
+export function parsePosition(s) {
 
-    if (helper === null) {
-        helper = {
-            convertStringToLon() { return NaN; },
-            convertStringToLat() { return NaN; },
-            resolveName() { return null; },
-            matchesIgnoreCase() { return false; }
-        };
+    let ra;
+    let dec;
+    let coordSys;
+    let objName;
+    let inputType= PositionParsedInputType.Position;
+    let valid= false;
+    let raParseErr='';
+    let decParseErr='';
+    let position;
+    s= s?.trim();
+    if (!s) return {valid};
+
+    s= crunch(s);
+    s= polishString(s); //remove non-standard-ASCII characters.
+    inputType= determineType(s);
+    if (inputType ===PositionParsedInputType.Name) {
+        objName= s;
+        valid = s.length>1;
     }
-
-    /**
-     * parse the given string into the resolver.
-     * Returns true if the string is a valid position.
-     * @param s
-     * @return {*}
-     */
-    retPP.parse= function(s) {
-
-        isValid = false;
-        _ra = null;
-        _dec = null;
-        _objName = null;
-        _coordSys = null;
-
-        if (s) {
-            s= crunch(s);
-            s= polishString(s); //remove non-standard-ASCII characters.
-            _inputType= determineType(s);
-            if (_inputType ===PositionParsedInput.Name) {
-                if (s.trim().length>1) {
-                    _objName= s;
-                    isValid = true;
-                }
-            } else {
-                const map= getPositionMap(s);
-                _coordSys= getCoordSysFromString(map[COORDINATE_SYS]);
-                _ra = map[RA];
-                _dec = map[DEC];
-                const validRa = !isNaN(retPP.getRa());
-                const validDec = !isNaN(retPP.getDec());
-                // determineType uses the first string to decide if the input is a position or object name.
-                // "12 mus" (a valid object name in NED) would be classified as a position.
-                if (!validDec) {
-                    _inputType = PositionParsedInput.Name;
-                    _objName= s;
-                    isValid = true;
-                } else {
-                    isValid = retPP.getCoordSys() !== CoordinateSys.UNDEFINED && validRa && validDec;
-                }
-            }
+    else if (inputType ===PositionParsedInputType.DB_ID) {
+        const r= parseDBIdToCoord(s);
+        if (r) {
+            ra= ra= r.lon;
+            dec= dec= r.lat;
+            coordSys= r.cSys;
+            valid= true;
+            position= makeWorldPt(r.lon,r.lat,coordSys);
         }
-
-        return isValid;
-    };
-
-    retPP.getInputType= function() {
-        return _inputType;
-    };
-
-    retPP.isValid= function() {
-        return isValid;
-    };
-
-    retPP.getRa= function() {
-        var v = isNaN(_ra) ? _ra : _ra + 'd';
-        return helper.convertStringToLon(v, _coordSys);
-    };
-
-    retPP.getDec= function() {
-        var v = isNaN(_dec) ? _dec : _dec + 'd';
-        return helper.convertStringToLat(v, _coordSys);
-    };
-
-    retPP.getRAParseError = function() {
-        return helper.getRAError();
-    };
-
-    retPP.getDECParseError = function () {
-        return helper.getDECError();
-    };
-
-    retPP.getRaString= function() {
-        return _ra;
-    };
-
-    retPP.getDecString= function() {
-        return _dec;
-    };
-
-    /**
-     * returns CoordinateSys.UNDEFINED if it's a bad coordinate system.
-     * @return {CoordinateSys} - CoordinateSys object
-     */
-    retPP.getCoordSys= function() {
-        return _coordSys === null ? CoordinateSys.UNDEFINED : _coordSys;
-    };
-
-    function getCoordSysFromString(s) {
-        return !s ? null : CoordinateSys.parse(s);
     }
-
-    retPP.getObjName= function() {
-        return _objName;
-    };
-
-    retPP.setObjName= function(objName) {
-        isValid = true;
-        _inputType = PositionParsedInput.Name;
-        _objName = objName;
-    };
-
-    retPP.getPosition= function() {
-        if (!isValid) {
-            return null;
-        }
-        var wp = null;
-        if (retPP.getInputType()===PositionParsedInput.Name) {
-            wp = helper.resolveName(retPP.getObjName());
-        } else {
-            wp = makeWorldPt( retPP.getRa(), retPP.getDec(), retPP.getCoordSys());
-        }
-        return wp;
-    };
-
-    // -------------------- static methods --------------------
-
-
-    function getPositionMap(text) {
-        var map = {};
+    else {
+        const {raStr,decStr,csysStr}= parseAndConvertToMeta(s);
+        coordSys= getCoordSysFromString(csysStr);
+        let validRa= true;
+        let validDec= true;
         try {
-            var array;
-            var parsedText= parseAndConvertToMeta(text).split('&');
-            for(var i=0; (i<parsedText.length); i++) {
-                array = parsedText[i].split('=');
-                if (array.length>1) {
-                    map[array[0]]= array[1];
-                }
-            }
+            ra=  CoordUtil.convertStringToLon(raStr, coordSys);
         } catch (e) {
-            // do nothing - parse failed
+            raParseErr = e;
+            validRa = false;
         }
-        return map;
-    }
-
-    function parseAndConvertToMeta(text) {
-        var numericList = [];
-        var alphabetList = [];
-        var retval;
-        var idx;
-
-        //1. convert string to Ra&DEC&{CoordSys} format
-        var ra='';
-        var dec='';
-        var coordSys='';
-        var i;
-        var item;
-
-        if (text.indexOf(',')>-1) {
-            // Ra, DEC {Coord-Sys} case
-            var values = text.split(',');
-            ra = values[0];
-            if (values.length>1) {
-                var aVal= values[1].split(/[ ]|[,]/);
-                for (i=0; (i<aVal.length); i++) {
-                    item= aVal[i];
-                    if (item.length>0) {
-                        if (isNaN(item)) {
-                            alphabetList.push(item);
-                        } else {
-                            numericList.push(item);
-                        }
-                    }
-                }
-                if (numericList.length>0) {
-                    for (i=0; (i<numericList.length); i++) {
-                        dec += (numericList[i] + ' ');
-                    }
-                    for (i=0; (i<alphabetList.length); i++) {
-                        coordSys += (alphabetList[i]+' ');
-                    }
-                } else {
-                    if (alphabetList.length===1) {
-                        dec = alphabetList[0];
-                        coordSys = DEFAULT_COORD_SYS;
-                    } else if (alphabetList.length>1){
-                        for (i=0; (i<alphabetList.length); i++) {
-                            if (i) {
-                                coordSys +=(alphabetList[i]+' ');
-                            }
-                            else {
-                                dec = alphabetList[i];
-                            }
-                        }
-                    }
-
-                }
-            }
+        try {
+            dec= CoordUtil.convertStringToLat(decStr, coordSys);
+        } catch (e) {
+            decParseErr = e;
+            validDec = false;
+        }
+        // determineType uses the first string to decide if the input is a position or object name.
+        // "12 mus" (a valid object name in NED) would be classified as a position.
+        if (!validDec) {
+            inputType = PositionParsedInputType.Name;
+            objName= s;
+            valid = true;
         } else {
-            // Ra DEC {coordSys} case (no comma)
-            var tokenAry= text.split(' ');
-            var token;
-            for (i=0; (i<tokenAry.length); i++) {
-                token= tokenAry[i];
-                if (token.length>0) {
-                    if (isNaN(token)) {
-                        alphabetList.push(token);
+            valid = coordSys !== CoordinateSys.UNDEFINED && validRa && validDec;
+            if (valid) position= makeWorldPt(ra,dec,coordSys);
+        }
+
+    }
+    return { valid, coordSys, inputType, raParseErr, decParseErr, ra, dec, objName, position };
+}
+
+// -------------------- static methods --------------------
+
+
+function parseAndConvertToMeta(text) {
+    const numericList = [];
+    const alphabetList = [];
+    let idx;
+
+    //1. convert string to Ra&DEC&{CoordSys} format
+    let ra='';
+    let dec='';
+    let coordSys='';
+    let i;
+    let item;
+
+    if (text.indexOf(',')>-1) {
+        // Ra, DEC {Coord-Sys} case
+        const values = text.split(',');
+        ra = values[0];
+        if (values.length>1) {
+            var aVal= values[1].split(/[ ]|[,]/);
+            for (i=0; (i<aVal.length); i++) {
+                item= aVal[i];
+                if (item.length>0) {
+                    if (isNaN(item)) {
+                        alphabetList.push(item);
                     } else {
-                        numericList.push(token);
+                        numericList.push(item);
                     }
                 }
             }
             if (numericList.length>0) {
-                //so we have more than one numeric strings, divide numeric strings
-                //list in half, first half = ra, second half = dec.
-                if (numericList.length===2) {
-                    ra = numericList[0];
-                    dec = numericList[1];
-
-                } else if (numericList.length>2) {
-                    idx=0;
-                    for (i=0; (i<numericList.length); i++) {
-                        item= numericList[i];
-                        if ((idx++)*2<numericList.length) {
-                            ra += (item + ' ');
-                        } else {
-                            dec += (item + ' ');
-                        }
-                    }
-                } else if (numericList.length===1) {
-                    ra= tokenAry[0];
-                    if (tokenAry.length>1) {
-                        dec= tokenAry[1];
-                    }
+                for (i=0; (i<numericList.length); i++) {
+                    dec += (numericList[i] + ' ');
                 }
-
-                if (tokenAry.length>=3) {
-                    for (i=0; (i<alphabetList.length); i++) {
-                        coordSys += (alphabetList[i]+' ');
-                    }
+                for (i=0; (i<alphabetList.length); i++) {
+                    coordSys += (alphabetList[i]+' ');
                 }
             } else {
-                // Ra and DEC are non-numeric strings
-                if (alphabetList.length>0) {
-                    idx =0;
-                    ra = '';
-                    dec = '';
-                    coordSys = '';
-                    var array;
+                if (alphabetList.length===1) {
+                    dec = alphabetList[0];
+                    coordSys = DEFAULT_COORD_SYS;
+                } else if (alphabetList.length>1){
                     for (i=0; (i<alphabetList.length); i++) {
-                        item= alphabetList[i];
-                        if (idx===0) {
-                            if (item.indexOf('+')>0) {
-                                // 0042443+411608 case
-                                array = item.split('+');
-                                ra = array[0];
-                                dec = array[1];
-
-                                if (!isNaN(ra)) {
-                                    ra = convertRa(ra);
-                                }
-                                if (!isNaN(dec)) {
-                                    dec = convertDEC(dec);
-                                }
-                            } else if (item.indexOf('-')>0) {
-                                // 0042443-411608 case
-                                array = item.split('-');
-                                ra = array[0];
-                                dec = '-'+array[1];
-
-                                if (!isNaN(ra)) {
-                                    ra = convertRa(ra);
-                                }
-                                if (!isNaN(dec)) {
-                                    dec = convertDEC(dec);
-                                }
-                            } else {
-                                ra = item;
-                            }
-                        } else {
-                            if (dec.length===0) {
-                                dec = item;
-                            }
-                            else {
-                                coordSys += (item+' ');
-                            }
+                        if (i) {
+                            coordSys +=(alphabetList[i]+' ');
                         }
-                        idx++;
+                        else {
+                            dec = alphabetList[i];
+                        }
                     }
+                }
+
+            }
+        }
+    } else {
+        // Ra DEC {coordSys} case (no comma)
+        const tokenAry= text.split(' ');
+        let token;
+        for (i=0; (i<tokenAry.length); i++) {
+            token= tokenAry[i];
+            if (token.length>0) {
+                if (isNaN(token)) {
+                    alphabetList.push(token);
+                } else {
+                    numericList.push(token);
                 }
             }
         }
-        ra = ra.trim();
-        dec = dec.trim();
-        coordSys = getvalidCoordSys(coordSys);
-        if (coordSys.length===0) {
-            coordSys = DEFAULT_COORD_SYS;
-        }
-        retval = RA+'='+ra + '&'+DEC+'=' + dec +'&'+COORDINATE_SYS+'='+coordSys.trim();
-        return retval;
-    }
+        if (numericList.length>0) {
+            //so we have more than one numeric strings, divide numeric strings
+            //list in half, first half = ra, second half = dec.
+            if (numericList.length===2) {
+                ra = numericList[0];
+                dec = numericList[1];
 
+            } else if (numericList.length>2) {
+                idx=0;
+                for (i=0; (i<numericList.length); i++) {
+                    item= numericList[i];
+                    if ((idx++)*2<numericList.length) {
+                        ra += (item + ' ');
+                    } else {
+                        dec += (item + ' ');
+                    }
+                }
+            } else if (numericList.length===1) {
+                ra= tokenAry[0];
+                if (tokenAry.length>1) {
+                    dec= tokenAry[1];
+                }
+            }
 
-    function convertRa(s) {
-        var retval;
-        var hms= ['','',''];
-        var i;
-        var c;
-
-        var idx=0;
-        for(i=0; (i< s.length); i++) {
-            c= s.charAt(i);
-            if (hms[idx].length>=2) {
-                if (idx < (hms.length-1)) {
+            if (tokenAry.length>=3) {
+                for (i=0; (i<alphabetList.length); i++) {
+                    coordSys += (alphabetList[i]+' ');
+                }
+            }
+        } else {
+            // Ra and DEC are non-numeric strings
+            if (alphabetList.length>0) {
+                idx =0;
+                ra = '';
+                dec = '';
+                coordSys = '';
+                let array;
+                for (i=0; (i<alphabetList.length); i++) {
+                    item= alphabetList[i];
+                    if (idx===0) {
+                        if (item.indexOf('+')>0) {
+                            // 0042443+411608 case
+                            array = item.split('+');
+                            ra = array[0];
+                            dec = array[1];
+                            if (!isNaN(ra)) ra = convertRa(ra);
+                            if (!isNaN(dec)) dec = convertDEC(dec);
+                        } else if (item.indexOf('-')>0) {
+                            // 0042443-411608 case
+                            array = item.split('-');
+                            ra = array[0];
+                            dec = '-'+array[1];
+                            if (!isNaN(ra)) ra = convertRa(ra);
+                            if (!isNaN(dec)) dec = convertDEC(dec);
+                        } else {
+                            ra = item;
+                        }
+                    } else {
+                        if (dec.length===0) {
+                            dec = item;
+                        }
+                        else {
+                            coordSys += (item+' ');
+                        }
+                    }
                     idx++;
                 }
             }
-            hms[idx] += c;
         }
+    }
+    coordSys = getvalidCoordSys(coordSys);
+    if (coordSys.length===0) coordSys = DEFAULT_COORD_SYS;
+    return {raStr:ra.trim(), decStr:dec.trim(), csysStr:coordSys};
+}
 
-        for (i=0; (i<hms.length-1); i++) {
-            if (!hms[i].length) {
-                hms[i] = '0';
+
+function convertRa(s) {
+    const hms= ['','',''];
+    let i;
+    let c;
+
+    let idx=0;
+    for(i=0; (i< s.length); i++) {
+        c= s.charAt(i);
+        if (hms[idx].length>=2) {
+            if (idx < (hms.length-1)) {
+                idx++;
             }
         }
-        if (hms[2].length>2) {
-            hms[2] = hms[2].substring(0,2)+'.'+hms[2].substring(2);
-        }
-        retval = hms[0]+' '+hms[1]+' '+hms[2];
-        return retval;
+        hms[idx] += c;
     }
 
-    function convertDEC(s) {
-        var retval;
-        var dms= ['','',''];
-        var i;
-        var c;
+    for (i=0; (i<hms.length-1); i++) {
+        if (!hms[i].length) {
+            hms[i] = '0';
+        }
+    }
+    if (hms[2].length>2) {
+        hms[2] = hms[2].substring(0,2)+'.'+hms[2].substring(2);
+    }
+    return hms[0]+' '+hms[1]+' '+hms[2];
+}
 
-        var idx=0;
-        for(i=0; (i< s.length); i++) {
-            c= s.charAt(i);
-            if (idx < (dms.length-1)) {
-                if (idx===0 && ((dms[idx].startsWith('+')) || (dms[idx].startsWith('-')))) {
-                    if (dms[idx].length>2) {
-                        idx++;
-                    }
-                } else if (dms[idx].length>=2) {
+function convertDEC(s) {
+    const dms= ['','',''];
+    let i;
+    let c;
+
+    let idx=0;
+    for(i=0; (i< s.length); i++) {
+        c= s.charAt(i);
+        if (idx < (dms.length-1)) {
+            if (idx===0 && ((dms[idx].startsWith('+')) || (dms[idx].startsWith('-')))) {
+                if (dms[idx].length>2) {
                     idx++;
                 }
-            }
-            dms[idx] += c;
-        }
-
-        for (i=0; (i<dms.length-1); i++) {
-            if (!dms[i].length) {
-                dms[i] = '0';
+            } else if (dms[idx].length>=2) {
+                idx++;
             }
         }
-        if (dms[2].length>2) {
-            dms[2] = dms[2].substring(0,2)+'.'+dms[2].substring(2);
-        }
-        retval = dms[0]+' '+dms[1]+' '+dms[2];
-        return retval;
+        dms[idx] += c;
     }
 
-    const F1950 = '^B1950$|^B195$|^B19$|^B1$|^B$';
-    const FJ2000 = '^J2000$|^J200$|^J20$|^J2$|^J$';
-    const EJ2000 = 'J2000$|J200$|J20$|J2$|J$';
-    const E1950 = 'B1950$|B195$|B19$|B1$|B$';
-    const SECL = '^ECLIPTIC|^ECL|^EC|^EC_|ECL_';
-    const SEQ = '^EQUATORIAL|^EQU|^EQ|^EQ_';
+    for (i=0; (i<dms.length-1); i++) {
+        if (!dms[i].length) {
+            dms[i] = '0';
+        }
+    }
+    if (dms[2].length>2) {
+        dms[2] = dms[2].substring(0,2)+'.'+dms[2].substring(2);
+    }
+    return dms[0]+' '+dms[1]+' '+dms[2];
+}
+
+const F1950 = '^B1950$|^B195$|^B19$|^B1$|^B$';
+const FJ2000 = '^J2000$|^J200$|^J20$|^J2$|^J$';
+const EJ2000 = 'J2000$|J200$|J20$|J2$|J$';
+const E1950 = 'B1950$|B195$|B19$|B1$|B$';
+const SECL = '^ECLIPTIC|^ECL|^EC|^EC_|ECL_';
+const SEQ = '^EQUATORIAL|^EQU|^EQ|^EQ_';
 
 
-    const COMBINE_SYS = '(^ECLIPTIC|^ECL|^ECL_|^EC|^EC_|^EQUATORIAL|^EQU|^EQ_|^EQ)('+EJ2000+ '|' +E1950+ ')';
-    const ECL_1950 = '('+SECL +')('+E1950+ ')';
-    const ECL_2000 = '('+SECL +')('+EJ2000+ ')';
+const COMBINE_SYS = '(^ECLIPTIC|^ECL|^ECL_|^EC|^EC_|^EQUATORIAL|^EQU|^EQ_|^EQ)('+EJ2000+ '|' +E1950+ ')';
+const ECL_1950 = '('+SECL +')('+E1950+ ')';
+const ECL_2000 = '('+SECL +')('+EJ2000+ ')';
 
-    const EQ_1950 = '('+SEQ+')(' +E1950+ ')';
-    const EQ_2000 = '('+SEQ+')(' +EJ2000+ ')';
+const EQ_1950 = '('+SEQ+')(' +E1950+ ')';
+const EQ_2000 = '('+SEQ+')(' +EJ2000+ ')';
 
 
-    function getvalidCoordSys(s) {
-        let retval='EQ_J2000';
-        const array = s.trim().split(' ');
-
-        if (s && array.length>0) {
-            const inCoord0= array[0].toUpperCase();
-            if (array.length===1 && matches(inCoord0,COMBINE_SYS)) {
-                if (inCoord0.startsWith('EC')) {
-                    if (matches(array[0],ECL_1950)) {
-                        retval='EC_B1950';
-                    } else if (matches(inCoord0,ECL_2000)) {
-                        retval='EC_J2000';
-                    }
-                } else if (inCoord0.startsWith('EQ')) {
-                    if (matches(inCoord0,EQ_1950)) {
-                        retval='EQ_B1950';
-                    } else if (matches(inCoord0,EQ_2000)) {
-                        retval='EQ_J2000';
-                    }
-                }
-            } else if (matches(inCoord0,'^EQUATORIAL$|^EQU$|^EQ$|^EQ_$|^E$')) {
-                if (array.length>1) {
-                    if (matches(array[1], F1950)) {
-                        retval='EQ_B1950';
-                    } else if (matches(array[1], FJ2000)) {
-                        retval='EQ_J2000';
-                    }
-                    else {
-                        retval=INVALID+' COORDINATE SYSTEM: '+s;
-                    }
-                } else {
-                    retval='EQ_J2000';
-                }
-            } else if (matches(inCoord0,'^ECLIPTIC$|^ECL$|^EC$|^EC_$|^ECL_$')) {
-                if (array.length>1) {
-                    if (matches(array[1], F1950)) {
-                        retval='EC_B1950';
-                    } else if (matches(array[1], FJ2000)) {
-                        retval='EC_J2000';
-                    }
-                    else {
-                        retval=INVALID+' COORDINATE SYSTEM: '+s;
-                    }
-                } else {
-                    retval='EC_J2000';
-                }
-            } else if (matches(inCoord0,'^GALACTIC$|^GAL$|^GA$|^G$')) {
-                retval='GALACTIC';
-            } else if (matches(inCoord0, FJ2000)) {
-                retval='EQ_J2000';
-            } else if (matches(inCoord0, F1950)) {
-                retval='EQ_B1950';
-            } else {
-                retval=INVALID+' COORDINATE SYSTEM: '+s;
+function getvalidCoordSys(s) {
+    const array = s.trim().split(' ');
+    if (!s || array.length===0 ) return 'EQ_J2000';
+    const inCoord0= array[0].toUpperCase();
+    if (array.length===1 && matches(inCoord0,COMBINE_SYS)) {
+        if (inCoord0.startsWith('EC')) {
+            if (matches(array[0],ECL_1950)) {
+                return 'EC_B1950';
+            } else if (matches(inCoord0,ECL_2000)) {
+                return 'EC_J2000';
+            }
+        } else if (inCoord0.startsWith('EQ')) {
+            if (matches(inCoord0,EQ_1950)) {
+                return 'EQ_B1950';
+            } else if (matches(inCoord0,EQ_2000)) {
+                return 'EQ_J2000';
             }
         }
-        return retval;
-    }
-
-
-    function matches(s, regExp) {
-        return helper.matchesIgnoreCase(s, regExp);
-    }
-
-
-    /**
-     * Determine the type of input.
-     * The input is a position if any of the following test are true
-     * <ul>
-     * <li>name: the first character is not a digit, a '+', or a decimal point
-     * <li>position: first string is numeric or is a parse-able lon
-     * </ul>
-     * @param s the crunched input string
-     * @return the Input type
-     */
-    function determineType(s) {
-        var retval;
-        var firstChar= s.charAt(0);
-        var firstStr= '';
-        var sAry;
-
-        if (s.length>=2) {
-            if (s.startsWith('-') || s.startsWith('+')) {
-                sAry= s.substring(1).split(/[+ ,-]/);
-                firstStr= s.charAt(0) + ((sAry.length>0) ? sAry[0] : '');
-
+    } else if (matches(inCoord0,'^EQUATORIAL$|^EQU$|^EQ$|^EQ_$|^E$')) {
+        if (array.length>1) {
+            if (matches(array[1], F1950)) {
+                return 'EQ_B1950';
+            } else if (matches(array[1], FJ2000)) {
+                return 'EQ_J2000';
             }
             else {
-                sAry= s.split(/[+ ,-]/);
-                if (sAry.length>0) {
-                    firstStr= sAry[0];
-                }
+                return INVALID+' COORDINATE SYSTEM: '+s.trim();
             }
+        } else {
+            return 'EQ_J2000';
         }
+    } else if (matches(inCoord0,'^ECLIPTIC$|^ECL$|^EC$|^EC_$|^ECL_$')) {
+        if (array.length>1) {
+            if (matches(array[1], F1950)) {
+                return 'EC_B1950';
+            } else if (matches(array[1], FJ2000)) {
+                return 'EC_J2000';
+            }
+            else {
+                return INVALID+' COORDINATE SYSTEM: '+s.trim();
+            }
+        } else {
+            return 'EC_J2000';
+        }
+    } else if (matches(inCoord0,'^GALACTIC$|^GAL$|^GA$|^G$')) {
+        return 'GALACTIC';
+    } else if (matches(inCoord0, FJ2000)) {
+        return 'EQ_J2000';
+    } else if (matches(inCoord0, F1950)) {
+        return 'EQ_B1950';
+    } else {
+        return INVALID+' COORDINATE SYSTEM: '+s.trim();
+    }
+}
 
+function stringToLon(s, coordSys) {
+    try {
+        return CoordUtil.convertStringToLon(s, coordSys);
+    } catch (e) {
+        return NaN;
+    }
+}
 
-        if (s.length<2) {
-            retval= PositionParsedInput.Name;
+/**
+ * Determine the type of input.
+ * The input is a position if any of the following test are true
+ * <ul>
+ * <li>name: the first character is not a digit, a '+', or a decimal point
+ * <li>position: first string is numeric or is a parse-able lon
+ * </ul>
+ * @param s the crunched input string
+ * @return the Input type
+ */
+function determineType(s) {
+    const firstChar= s.charAt(0);
+    let firstStr= '';
+    let sAry;
+
+    if (s.length>=2) {
+        if (s.startsWith('-') || s.startsWith('+')) {
+            sAry= s.substring(1).split(/[+ ,-]/);
+            firstStr= s.charAt(0) + ((sAry.length>0) ? sAry[0] : '');
+
         }
-        else if (isNaN(firstChar) && firstChar!=='+' && firstChar!=='-' && firstChar!=='.') {
-            retval= PositionParsedInput.Name;
-        }
-        else if (!isNaN(firstStr) || !isNaN(helper.convertStringToLon(firstStr,CoordinateSys.EQ_J2000))) {
-            retval= PositionParsedInput.Position;
+        else if (parseDBIdToCoord(s)) {
+            return PositionParsedInputType.DB_ID;
         }
         else {
-            retval= PositionParsedInput.Name;
+            sAry= s.split(/[+ ,-]/);
+            if (sAry.length>0) firstStr= sAry[0];
         }
-        return retval;
     }
 
-    return retPP;
+    if (s.length<2) {
+        return PositionParsedInputType.Name;
+    }
+    else if (isNaN(firstChar) && firstChar!=='+' && firstChar!=='-' && firstChar!=='.') {
+        return PositionParsedInputType.Name;
+    }
+    else if (!isNaN(firstStr) || !isNaN(stringToLon(firstStr,CoordinateSys.EQ_J2000))) {
+        return PositionParsedInputType.Position;
+    }
+    else {
+        return PositionParsedInputType.Name;
+    }
+}
 
 
-};
 
-
+const matches= (s, regExp) => matchesIgCase(s, regExp);
+const getCoordSysFromString= (s) => !s ? null : CoordinateSys.parse(s);
 const polishString= (str) => str ? convertExtendedAscii(str) : str;
-
-const replaceAt= (str, index, replacement) =>
-                str.substr(0, index) + replacement+ str.substr(index + replacement.length);
+const replaceAt= (str, index, replacement) => str.substr(0, index) + replacement+ str.substr(index + replacement.length);
 
 function convertExtendedAscii(sbOriginal) {
-    if (sbOriginal === null) {
-        return null;
-    }
-
+    if (!sbOriginal) return '';
     let retval= sbOriginal;
     let origCharAsInt;
     for (let isb = 0; isb < retval.length; isb++) {
@@ -584,11 +471,3 @@ function convertExtendedAscii(sbOriginal) {
     }
     return retval;
 }
-
-
-
-
-var PositionParser= {makePositionParser, PositionParsedInput};
-export default PositionParser;
-
-

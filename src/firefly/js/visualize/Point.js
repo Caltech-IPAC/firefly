@@ -85,7 +85,7 @@ const Point = {  SPT, IM_PT, IM_WS_PT, FITS_IM_PT, ZERO_BASED_IM_PT, DEV_PT, PRO
  * @prop {String} type constant must be 'WorldPt'
  * @prop {CoordinateSys} cSys - the coordinate system constant
  * @prop {String} objName - the object name the was used for name resolution, may not be defined
- * @prop {Resolver} objName - the resolver used to create this worldPt, may not be defined
+ * @prop {Resolver} resolver - the resolver used to create this worldPt, may not be defined
  *
  * @public
  * @global

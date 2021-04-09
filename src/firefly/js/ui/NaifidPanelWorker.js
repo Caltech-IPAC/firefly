@@ -8,10 +8,6 @@ import {getCmdSrvURL, toBoolean} from '../util/WebUtil';
 import {fetchUrl} from '../util/fetch';
 
 
-export {formatPosForTextField} from '../data/form/PositionFieldDef.js';
-
-
-
 function makeResolverPromise(objName) {
     let ignoreSearchResults= null;
     let aborted= false;
