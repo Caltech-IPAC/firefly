@@ -316,6 +316,9 @@ public class URLDownload {
 
     private static String postDataToString(Map<String,String> postData) {
         StringBuilder sBuff= new StringBuilder();
+        if (postData.size()==1 && postData.get("")!=null) {
+            return postData.get("");
+        }
         for(Map.Entry<String,String> entry : postData.entrySet()) {
             if (sBuff.length()>0) sBuff.append("&");
             sBuff.append(entry.getKey()).append("=").append(entry.getValue());
@@ -327,7 +330,9 @@ public class URLDownload {
         if (!(conn instanceof HttpURLConnection) || postData==null) return;
         String postStr= postDataToString(postData);
         ((HttpURLConnection)conn).setRequestMethod("POST");
-        conn.setRequestProperty( "Content-Type", "application/x-www-form-urlencoded" );
+        if (conn.getRequestProperty("Content-Type")==null) {
+            conn.setRequestProperty( "Content-Type", "application/x-www-form-urlencoded" );
+        }
         conn.setRequestProperty( "Content-Length", String.valueOf(postStr.length()));
         conn.setDoOutput(true);
         OutputStream os = conn.getOutputStream();
