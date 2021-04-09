@@ -12,6 +12,7 @@ import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -22,11 +23,12 @@ public class NedNameResolver {
     private static final String SERVER = AppProperties.getProperty("ned.host", "https://ned.ipac.caltech.edu");
     private static final String NED_URL_STR= SERVER + "/srs/ObjectLookup";
     private static final String POST_TEMPLATE = "{\"name\":{\"v\":\"%s\"}}";
+    private static final Map<String,String> header = Collections.singletonMap("Content-Type", "application/json");
 
     public static ResolveResult resolveName(String objName) throws FailedRequestException {
         try {
-            Map<String,String> postData= CollectionUtil.stringMap("json",String.format(POST_TEMPLATE, objName));
-            String jsonStr= URLDownload.getDataFromURL(new URL(NED_URL_STR),postData , null, null).getResultAsString();
+            Map<String,String> postData= CollectionUtil.stringMap("",String.format(POST_TEMPLATE, objName));
+            String jsonStr= URLDownload.getDataFromURL(new URL(NED_URL_STR),postData , null,header).getResultAsString();
             JsonHelper helper= JsonHelper.parse(jsonStr);
             long resultCode= helper.getValue(0L, "ResultCode");
             if (resultCode != 2 && resultCode != 3) throw makeEx(objName, "resultCode="+resultCode,null);
