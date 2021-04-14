@@ -138,7 +138,7 @@ public class CropAndCenter  {
         float cnpix1 = headerIn.getFloatValue("CNPIX1",Float.NaN);
         float cnpix2 = headerIn.getFloatValue("CNPIX2",Float.NaN);
 
-        if (headerIn.containsKey("PLTRAH")) {
+        if (headerIn.containsKey("PLTRAH") && !headerIn.containsKey("CTYPE1")) {
 
             /* it's a PLATE projection */
             newHeader.addValue("CNPIX1" , cnpix1 + min_x, null);

@@ -264,7 +264,7 @@ public class CropFile {
         float crpix2 = old_header.getFloatValue("CRPIX2", Float.NaN);
         if (!Float.isNaN(crpix2))newHeader.addValue("CRPIX2", (crpix2 - minY), null);
 
-        if (newHeader.containsKey("PLTRAH")) {
+        if (newHeader.containsKey("PLTRAH") && !newHeader.containsKey("CTYPE1")) {
 	        /* it's a PLATE projection  */
             double x_pixel_offset, y_pixel_offset;
 

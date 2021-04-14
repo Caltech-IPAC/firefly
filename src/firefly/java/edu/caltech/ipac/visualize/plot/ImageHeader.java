@@ -555,7 +555,7 @@ public class ImageHeader implements Serializable
     }
 
 	/* now do Digital Sky Survey plate solution coefficients */
-	if  (header.containsKey("PLTRAH"))
+        if (header.containsKey("PLTRAH") && !header.containsKey("CTYPE1"))
 	{
 	    if (SUTDebug.isDebug())
 		System.out.println("ITS a PLATE projection");
