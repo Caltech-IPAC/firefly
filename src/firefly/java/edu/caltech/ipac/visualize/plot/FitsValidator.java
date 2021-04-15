@@ -65,7 +65,7 @@ public class FitsValidator {
 
     public static void validateProjection(Header header) throws FitsException {
 	// accept DSS PLATE projection
-	if (!header.containsKey("PLTRAH"))
+        if (!header.containsKey("PLTRAH") || header.containsKey("CTYPE1"))
 	{
 	// accept old DeepSky grid 
 	if (!header.containsKey("DSKYGRID")) 

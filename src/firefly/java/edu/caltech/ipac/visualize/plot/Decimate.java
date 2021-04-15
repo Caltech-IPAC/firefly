@@ -301,7 +301,7 @@ public class Decimate {
 
     }
 
-    if (new_header.containsKey("PLTRAH"))
+    if (new_header.containsKey("PLTRAH") && !new_header.containsKey("CTYPE1"))
     {
 	/* it's a PLATE projection  */
 	double x_pixel_offset, y_pixel_offset;
