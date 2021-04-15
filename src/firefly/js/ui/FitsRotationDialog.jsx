@@ -116,7 +116,7 @@ function FitsRotationImmediatePanel() {
             <div style={{textAlign:'center', display:'flex', justifyContent:'space-between', padding: '0 16px'}}>
                 <CompleteButton text='Close' dialogId={DIALOG_ID} />
                 <div style={{ textAlign:'center', marginBottom: 20}}>
-                    <HelpIcon helpId={'visualization.imageoptions'} />
+                    <HelpIcon helpId={'visualization.rotate'} />
                 </div>
             </div>
         </div>

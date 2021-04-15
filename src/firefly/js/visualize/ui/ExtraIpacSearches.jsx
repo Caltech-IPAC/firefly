@@ -53,13 +53,13 @@ export const ClassicCatalogUploadPanel= () => (
 );
 
 export const ClassicVOCatalogPanel= () => (
-    <FormTemplate groupKey='VO_CLASSIC' onSuccess={(request) => doVoSearch(request)} help_id='catalogs.vo' >
+    <FormTemplate groupKey='VO_CLASSIC' onSuccess={(request) => doVoSearch(request)} help_id='catalogs.voscs' >
         <VoSearchPanel fieldKey='vopanel'/>
     </FormTemplate>
 );
 
 export const ClassicNedSearchPanel= () => (
-    <FormTemplate groupKey='NED_CLASSIC' onSuccess={(request) => doVoSearch(request,'NED')} help_id= 'catalogs.ned'>
+    <FormTemplate groupKey='NED_CLASSIC' onSuccess={(request) => doVoSearch(request,'NED')} help_id= 'catalogs.nedcatalogs'>
         <NedSearchPanel/>
     </FormTemplate>
 );

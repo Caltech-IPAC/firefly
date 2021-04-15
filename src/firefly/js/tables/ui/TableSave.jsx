@@ -137,7 +137,7 @@ export function showTableDownloadDialog({tbl_id, tbl_ui_id}) {
                                 </div>
                             </div>
                             <div style={{ textAlign:'right', marginRight: 10}}>
-                                <HelpIcon helpId={'tablesCST.header'}/>
+                                <HelpIcon helpId={'tables.save'}/>
                             </div>
                         </div>
                     </div>

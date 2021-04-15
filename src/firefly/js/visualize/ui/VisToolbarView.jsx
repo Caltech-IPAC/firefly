@@ -338,7 +338,7 @@ export const VisToolbarView = memo( ({visRoot,dlCount}) => {
 
             <div style={{display:'inline-block', height:'100%', flex:'0 0 auto', marginLeft:'10px'}}>
                 <HelpIcon
-                    helpId={'visualization.imageoptions'}/>
+                    helpId={'visualization.toolbar'}/>
             </div>
 
         </div>

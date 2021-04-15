@@ -80,7 +80,7 @@ export class CatalogSelectViewPanel extends PureComponent {
                     onError={(request) => onSearchFail(request)}
                     params={{hideOnInvalid: false}}
                     buttonStyle={{justifyContent: 'left'}} submitBarStyle={{padding: '2px 3px 3px'}}
-                    help_id={'basics.catalogs'}
+                    help_id={'catalogs'}
                     onCancel={hideSearchPanel}>
                     <CatalogSelectView fields={fields}/>
                 </FormPanel>
