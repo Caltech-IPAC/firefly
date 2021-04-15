@@ -71,7 +71,7 @@ public class FlipLR
 		    throw new FitsException("HDU null! (input image)");
 		}
 
-                if (in_fits_header.containsKey("PLTRAH") && !in_fits_header.containsKey("CTYPE1")) {
+                if (in_fits_header.containsKey("PLTRAH") && !in_fits_header.containsKey("CTYPE1")) 
 		{
 		    throw new FitsException(
 			"Cannot flip a PLATE projection image");
