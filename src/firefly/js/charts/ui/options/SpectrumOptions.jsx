@@ -14,7 +14,7 @@ import {fieldReducer, submitChangesScatter, scatterInputs, ScatterCommonOptions}
 import {VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
 import {updateSet} from '../../../util/WebUtil.js';
 import {isSpectralOrder, getChartProps} from '../../ChartUtil.js';
-import {basicFieldReducer, basicOptions, LayoutOptions} from './BasicOptions.jsx';
+import {basicOptions, LayoutOptions} from './BasicOptions.jsx';
 import {getSpectrumProps} from '../../dataTypes/FireflySpectrum.js';
 
 
