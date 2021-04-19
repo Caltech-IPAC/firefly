@@ -9,7 +9,7 @@ import {makeTransform} from './PlotTransformUtils.js';
 import CysConverter, {CCUtil} from './CsysConverter';
 import {isHiPS, isImage} from './WebPlot.js';
 import {isDefined, memorizeLastCall} from '../util/WebUtil';
-import {getWavelength, isWLAlgorithmImplemented, PLANE} from './projection/Wavelength.js';
+import {getWavelength, isWLAlgorithmImplemented, getVrad, isVRADAlgorithmImplemented, PLANE} from './projection/Wavelength.js';
 import {getNumberHeader, HdrConst} from './FitsHeaderUtil.js';
 import {computeDistance, getRotationAngle, isCsysDirMatching, isEastLeftOfNorth, isPlotNorth} from './VisUtil';
 import {removeRawData} from './rawData/RawDataCache.js';
@@ -179,7 +179,7 @@ export const getActivePlotView= (visRoot) => visRoot?.plotViewAry.find( (pv) => 
 export function isThreeColor(plotOrPv) {
     if (!plotOrPv) return false;
     const plot= isPlotView(plotOrPv) ? primePlot(plotOrPv) : plotOrPv;
-    return Boolean(plot?.plotState.isThreeColor())
+    return Boolean(plot?.plotState.isThreeColor());
 }
 
 /**
@@ -885,13 +885,15 @@ export function convertImageIdxToHDU(pv, imageIdx) {
 //=============================================================
 //=============================================================
 //---------- wavelength functions
+//---------- in general spectral cord fits functions
 //=============================================================
 //=============================================================
 
 /**
- * check to see if wavelength data is available
+ * check to see if wavelength/radio velocity/frequency data is available
  * Only CTYPEka = 'WAVE-ccc', exists, the hasWLInfo is true.
- * If the wlType is not defined, it is a pure cube data
+ * also check if vrad data is available, when CTYPE# = 'VRAS-xxx', hasVRADInfo is true.
+ * If the wlType or vradType is not defined, it is a pure cube data
  * @param {WebPlot} plot
  * @return {boolean}
  */
@@ -903,6 +905,18 @@ export const wavelengthInfoParsedSuccessfully= (plot) => hasWLInfo(plot) && !Boo
 export const getWavelengthParseFailReason= (plot) => hasWLInfo(plot) && plot.wlData.failReason;
 
 /**
+ * also check if vrad data is available, when CTYPE# = 'VRAS-xxx', hasVRADInfo is true.
+ * @param {WebPlot} plot
+ * @returns {boolean}
+ */
+export const hasVRADInfo= (plot) =>
+           Boolean(plot && plot.wlData && isDefined(plot.vradData.vradType) && isVRADAlgorithmImplemented(plot.vradData) );
+
+export const vradInfoParsedSuccessfully= (plot) => hasVRADInfo(plot) && !Boolean(plot.vradData.failReason);
+
+export const getVradParseFailReason= (plot) => hasVRADInfo(plot) && plot.vradData.failReason;
+
+/**
  * check to see if wavelength data is available as the plain level (not pixel level) only
  * @param {WebPlot} plot
  * @return {boolean}
@@ -911,6 +925,8 @@ export const hasPlaneOnlyWLInfo= (plot) => hasWLInfo(plot) && plot.wlData.algori
 
 export const hasPixelLevelWLInfo= (plot) => hasWLInfo(plot) && plot.wlData.algorithm!==PLANE;
 
+export const hasPlaneOnlyVRADInfo= (plot) => hasVRADInfo(plot) && plot.vradData.algorithm===PLANE;
+
 /**
  * Return the units string
  * @param plot
@@ -918,6 +934,9 @@ export const hasPixelLevelWLInfo= (plot) => hasWLInfo(plot) && plot.wlData.algor
  */
 export function getWaveLengthUnits(plot) {
     if (!plot || !hasWLInfo(plot)) return '';
+    /*if (plot.header.CTYPE3==='VRAD') {
+        return plot.wlData.units= 'km/s';
+    }*/
     return plot.wlData?.units ?? '';
 }
 
@@ -951,6 +970,15 @@ export function getFormattedWaveLengthUnits(plotOrStr, anyPartOfStr=false) {
 export const getPtWavelength= (plot, pt, cubeIdx) =>
           hasWLInfo(plot) && getWavelength(CCUtil.getImageCoords(plot,pt),cubeIdx,plot.wlData);
 
+/**
+ *
+ * @param {WebPlot} plot
+ * @param {Point} pt
+ * @param {number} cubeIdx
+ * @return {number}
+ */
+export const getPtVrad= (plot, pt, cubeIdx) =>
+          hasVRADInfo(plot) && getVrad(CCUtil.getImageCoords(plot,pt),cubeIdx,plot.vradData);
 
 //=============================================================
 //=============================================================

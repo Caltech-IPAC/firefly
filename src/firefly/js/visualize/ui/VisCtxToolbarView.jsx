@@ -8,7 +8,8 @@ import {isEmpty, isString} from 'lodash';
 import {
     primePlot,getPlotViewById, isMultiHDUFits, getCubePlaneCnt, getHDU, getActivePlotView,
     convertHDUIdxToImageIdx, convertImageIdxToHDU, getFormattedWaveLengthUnits,
-    getHDUCount, getHDUIndex, getPtWavelength, hasPlaneOnlyWLInfo, isImageCube } from '../PlotViewUtil.js';
+    getHDUCount, getHDUIndex, getPtWavelength, hasPlaneOnlyWLInfo, hasPlaneOnlyVRADInfo, isImageCube, getPtVrad
+} from '../PlotViewUtil.js';
 import {getHeader} from '../FitsHeaderUtil.js';
 import {isHiPS, isImage} from '../WebPlot.js';
 import {HdrConst} from '../FitsHeaderUtil.js';
@@ -264,11 +265,11 @@ export const VisCtxToolbarView= memo((props) => {
             <ToolbarButton icon={SELECTED_ZOOM} tip='Zoom to fit selected area'
                            horizontal={true}
                            onClick={() => zoomIntoSelection(pv)}/>}
-                           
+
             { showSelectionTools &&
             <ToolbarButton icon={SELECTED_RECENTER} tip='Recenter image to selected area'
                            horizontal={true} onClick={() => recenterToSelection(pv)}/>}
-                           
+
             {showSelectionTools && image &&
             <ToolbarButton icon={STATISTICS} tip='Show statistics for the selected area'
                            horizontal={true} onClick={() => stats(pv)}/>}
@@ -332,6 +333,7 @@ export function MultiImageControllerView({plotView:pv}) {
     let cIdx;
     let length;
     let wlStr= '';
+    let vradStr= '';
     let startStr;
     const  cube= isImageCube(plot) || !image;
     const multiHdu= isMultiHDUFits(pv);
