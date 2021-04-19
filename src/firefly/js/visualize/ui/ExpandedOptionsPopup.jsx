@@ -17,7 +17,7 @@ import {
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {TablePanel} from '../../tables/ui/TablePanel';
 import {dispatchTableAddLocal, TABLE_SORT} from '../../tables/TablesCntlr';
-import {getTblById, processRequest, watchTableChanges} from '../../tables/TableUtil';
+import {getTblById, getTblInfoById, getSelectedData, processRequest, watchTableChanges} from '../../tables/TableUtil';
 import {getFormattedWaveLengthUnits, getPlotViewAry, getPlotViewById, isPlotViewArysEqual} from '../PlotViewUtil';
 import {PlotAttribute} from '../PlotAttribute';
 import {TABLE_LOADED, TABLE_FILTER, TABLE_FILTER_SELROW} from '../../tables/TablesCntlr';
@@ -30,9 +30,6 @@ import {TABLE_SELECT} from '../../tables/TablesCntlr';
 
 const TABLE_ID = 'active-image-view-list-table';
 
-
-function addListener() {
-}
 
 
 export function showExpandedOptionsPopup(plotViewAry) {
@@ -162,41 +159,19 @@ const deleteFailedNEW = () => {
     });
 };
 
-let selectedRows;
-let allSelected = false;
 
 const RemoveSelected = () => {
-    if (selectedRows) {
-        if (allSelected) {
-            getPlotViewAry(visRoot()).forEach((pv) => {
-                    dispatchDeletePlotView({plotId: pv.plotId});
-                }
-            );
-        } else {
-            let idx = 0;
-            getPlotViewAry(visRoot()).forEach((pv) => {
-                if (selectedRows.has(idx)) {
-                    dispatchDeletePlotView({plotId: pv.plotId});
-                }
-                idx++;
-            });
-            selectedRows.clear();
-        }
-    }
+    const selectedPlotIds = getSelectedPlotIds();
+    selectedPlotIds.forEach((plotId) => {
+        dispatchDeletePlotView({plotId});
+    });
 }
 
 
-function updateInfo(title, action, divName) {
-    if (action.payload.selectInfo.selectAll) {
-        allSelected = true;
-    } else {
-        selectedRows = action.payload.selectInfo.exceptions;
-    }
-}
-
-
-function handleSelect(action, cState, params) {
-    updateInfo("Select Info", action, params.divName)
+function getSelectedPlotIds(){
+    const {tableModel, selectInfo} = getTblInfoById(TABLE_ID);
+    return selectInfo.selectAll ? tableModel.tableData.data.map((row) => row[2]) : Array.from(selectInfo.exceptions).map((idx)=>
+        tableModel.tableData.data[idx][2]);
 }
 
 
@@ -263,7 +238,7 @@ function ImageViewOptionsPanel() {
         </button>
     );
 
-    addActionListener(TABLE_SELECT, handleSelect, {divName: 'TablePanel__table'});
+    //addActionListener(TABLE_SELECT, handleSelect, {divName: 'TablePanel__table'});
 
     return (
         <div style={{
