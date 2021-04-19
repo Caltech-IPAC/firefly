@@ -905,16 +905,18 @@ export const wavelengthInfoParsedSuccessfully= (plot) => hasWLInfo(plot) && !Boo
 export const getWavelengthParseFailReason= (plot) => hasWLInfo(plot) && plot.wlData.failReason;
 
 /**
- * also check if vrad data is available, when CTYPE# = 'VRAS-xxx', hasVRADInfo is true.
+ * also check if vrad data is available, when CTYPE# = 'VRAD-xxx', hasVRADInfo is true.
  * @param {WebPlot} plot
  * @returns {boolean}
  */
+/*
 export const hasVRADInfo= (plot) =>
            Boolean(plot && plot.wlData && isDefined(plot.vradData.vradType) && isVRADAlgorithmImplemented(plot.vradData) );
 
 export const vradInfoParsedSuccessfully= (plot) => hasVRADInfo(plot) && !Boolean(plot.vradData.failReason);
 
 export const getVradParseFailReason= (plot) => hasVRADInfo(plot) && plot.vradData.failReason;
+*/
 
 /**
  * check to see if wavelength data is available as the plain level (not pixel level) only
@@ -925,7 +927,7 @@ export const hasPlaneOnlyWLInfo= (plot) => hasWLInfo(plot) && plot.wlData.algori
 
 export const hasPixelLevelWLInfo= (plot) => hasWLInfo(plot) && plot.wlData.algorithm!==PLANE;
 
-export const hasPlaneOnlyVRADInfo= (plot) => hasVRADInfo(plot) && plot.vradData.algorithm===PLANE;
+//export const hasPlaneOnlyVRADInfo= (plot) => hasVRADInfo(plot) && plot.vradData.algorithm===PLANE;
 
 /**
  * Return the units string
@@ -977,8 +979,8 @@ export const getPtWavelength= (plot, pt, cubeIdx) =>
  * @param {number} cubeIdx
  * @return {number}
  */
-export const getPtVrad= (plot, pt, cubeIdx) =>
-          hasVRADInfo(plot) && getVrad(CCUtil.getImageCoords(plot,pt),cubeIdx,plot.vradData);
+//export const getPtVrad= (plot, pt, cubeIdx) =>
+//          hasVRADInfo(plot) && getVrad(CCUtil.getImageCoords(plot,pt),cubeIdx,plot.vradData);
 
 //=============================================================
 //=============================================================

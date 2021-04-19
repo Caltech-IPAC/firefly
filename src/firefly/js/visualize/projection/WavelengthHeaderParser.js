@@ -446,6 +446,9 @@ function getAlgorithmAndType(ctype3){
     else if (ctype3.startsWith('LAMBDA')) {
         wlType= WAVE;
         algorithm=LINEAR;
+    } else if (ctype3.startsWith('VRAD')) {
+        wlType = VRAD;
+        algorithm=PLANE;
     }
     return {algorithm,wlType};
 }
