@@ -166,7 +166,7 @@ export function LayoutOptions({activeTrace, tbl_id, chartId, groupKey, fieldProp
     YaxisTitle = YaxisTitle || pYaxisTitle;
 
     return (
-        <FieldGroupCollapsible  header='Layout Options' initialState= {{ value:'closed' }} fieldKey='layoutOptions'>
+        <FieldGroupCollapsible  header='Chart Options' initialState= {{ value:'closed' }} fieldKey='layoutOptions'>
             <div className='FieldGroup__vertical'>
                 <Title/>
                 {!noXY && <div>

@@ -34,8 +34,8 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
     const {UseSpectrum, X, Xmax, Xmin, Y, Ymax, Ymin, Yerrors, Xerrors, Mode} = scatterInputs({activeTrace, tbl_id, chartId, groupKey, fieldProps});
     const {XaxisTitle, YaxisTitle} = basicOptions({activeTrace, tbl_id, chartId, groupKey, fieldProps});
 
-    const reducerFunc = spectrumReducer({chartId, activeTrace, tbl_id, groupKey});
-    reducerFunc.ver = chartId+activeTrace+tbl_id+groupKey;
+    const reducerFunc = spectrumReducer({chartId, activeTrace, tbl_id});
+    reducerFunc.ver = chartId+activeTrace+tbl_id;
 
     return(
         <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={false} reducerFunc={reducerFunc}>
@@ -71,8 +71,8 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
 }
 
 
-export function spectrumReducer({chartId, activeTrace, tbl_id, groupKey}) {
-    const scatterReducer = fieldReducer({chartId, activeTrace, groupKey, tbl_id});
+export function spectrumReducer({chartId, activeTrace, tbl_id}) {
+    const scatterReducer = fieldReducer({chartId, activeTrace, tbl_id});
     const {fireflyData, data, spectralAxis, fluxAxis} = getChartProps(chartId, tbl_id, activeTrace);
 
     return (inFields, action) => {
