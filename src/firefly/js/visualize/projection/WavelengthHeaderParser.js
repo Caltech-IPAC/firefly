@@ -320,25 +320,20 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
 
 /**
  * NOTE:
- *   pc_3j, means the the wavelength axis is 3.  In fact, the wavelength can be in any axis.
- *   Which means which axis has the wavelength
+ *   pc_3j, means the the wavelength axis is 3.
+ *
  * @param parse
  * @param altWcs
  * @param which
  * @param pc_3j_key
- * @param wlTable
+ * @param vradTable
  * @returns {*}
  */
-function calculateVradParams(parse, altWcs, which, pc_3j_key,wlTable) {
+function calculateVradParams(parse, altWcs, which, pc_3j_key,vradTable) {
 
     /*
-    * Base on the reference: A&A 395, 1061-1075 (2002) DOI: 10.1051/0004-6361:20021326
-    * Representations of world coordinates in FITS E. W. Greisen.  The default values
-    * defined below:
-    * CDELT i	1.0
-    * CTYPE i	' ' (i.e. a linear undefined axis)
-    * CUNIT i	' ' (i.e. undefined)
-    * NOTE: i is the which variable here.
+    * Only consider VRAD plane case for now
+    * the pc_3j_key, vradTalble not used in Plane case
     */
     const ctype= parse.getValue(`CTYPE${which}${altWcs}`, ' ');
     const crpix= parse.getDoubleValue(`CRPIX${which}${altWcs}`, 0.0);
@@ -377,17 +372,6 @@ function calculateVradParams(parse, altWcs, which, pc_3j_key,wlTable) {
     }
 
     //If it is a cube plane FITS, plot and display the VRAD at each plane
-    /*if (canDoPlaneCalc && nAxis===3  &&  isVR) {
-        /!* There are two cases for wavelength planes:
-        *  The FITs has vrad planes, and the algorithm is LINEAR
-        *
-        *!/
-        const algorithmForLinear = isVR? algorithm: PLANE;
-        //const vradType = whichType;
-        const units = 'km/s';
-        const ret = makeSimplePlaneBased(crpix, crval, cdelt,nAxis, algorithmForLinear, vradType, units, 'use PLANE since is cube and parameters missing');
-            return ret;
-    }*/
 
 
     //Plot and display the wavelength as one of the mouse readout only if the FITs header
@@ -403,7 +387,8 @@ function calculateVradParams(parse, altWcs, which, pc_3j_key,wlTable) {
 
     /*Adding other VRAD algorithm and conversions here
     *
-    * */
+    *
+    */
 }
 
 function makeSimplePlaneBased(crpix,crval, cdelt, nAxis,algorithm, wlType, units, reason) {
@@ -445,10 +430,10 @@ function getAlgorithmAndType(ctype3){
     }
     else if (ctype3.startsWith('LAMBDA')) {
         wlType= WAVE;
-        algorithm=LINEAR;
+        algorithm= LINEAR;
     } else if (ctype3.startsWith('VRAD')) {
-        wlType = VRAD;
-        algorithm=PLANE;
+        wlType= VRAD;
+        algorithm= PLANE;
     }
     return {algorithm,wlType};
 }

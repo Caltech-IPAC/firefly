@@ -160,18 +160,7 @@ function getWaveLengthLinear(ipt, cubeIdx, wlData) {
     return lambda_r + getOmega(getPixelCoords(ipt,cubeIdx),  N, r_j, pc_3j, s_3);
 }
 
-/**
- * Note that CTYPE3R= 'VRAD' indicates that the conversion between frequency and radio velocity is linear.
- * @param ipt
- * @param cubeIdx
- * @param vradData
- */
-/*function getVradLinear(ipt, cubeIdx, vradData) {
-    const {crpix, crval, cdelt} = vradData;
-    //pixel count starts from 1 to naxisn
-    const vrad = crval + ( cubeIdx + 1  - crpix ) * cdelt;
-    return vrad;
-}*/
+// Add other VRAD conversion and algorithem here
 
 /**
  *

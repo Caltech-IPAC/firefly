@@ -50,7 +50,6 @@ import SELECTED_ZOOM from 'html/images/icons-2014/ZoomFitToSelectedSpace.png';
 import SELECTED_RECENTER from 'html/images/icons-2014/RecenterImage-selection.png';
 import {pvEqualExScroll} from '../PlotViewUtil';
 import shallowequal from 'shallowequal';
-//import {getVrad} from 'firefly/visualize/projection/Wavelength';
 
 
 
@@ -334,7 +333,7 @@ export function MultiImageControllerView({plotView:pv}) {
     let cIdx;
     let length;
     let wlStr= '';
-    let vradStr= '';
+    //let vradStr= '';
     let startStr;
     const  cube= isImageCube(plot) || !image;
     const multiHdu= isMultiHDUFits(pv);
@@ -361,11 +360,7 @@ export function MultiImageControllerView({plotView:pv}) {
                 const wl= doFormat(getPtWavelength(plot,null, plot.cubeIdx),4);
                 const unitStr= getFormattedWaveLengthUnits(plot);
                 wlStr= `${wl} ${unitStr}`;
-            } /*else if (hasPlaneOnlyVRADInfo(plot)) {
-                const vrad =doFormat(getPtVrad(plot, null, plot.cubeIdx), 2);
-                const unitStr= 'km/s';
-                vradStr=`${vrad} ${unitStr}`;
-            }*/
+            }
         }
         tooltip+= `, Image Count: ${cIdx+1} / ${length}`;
     }

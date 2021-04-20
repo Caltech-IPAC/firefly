@@ -936,9 +936,6 @@ export const hasPixelLevelWLInfo= (plot) => hasWLInfo(plot) && plot.wlData.algor
  */
 export function getWaveLengthUnits(plot) {
     if (!plot || !hasWLInfo(plot)) return '';
-    /*if (plot.header.CTYPE3==='VRAD') {
-        return plot.wlData.units= 'km/s';
-    }*/
     return plot.wlData?.units ?? '';
 }
 
