@@ -20,6 +20,7 @@ export const FileUploadDropdown= () =>{
                 width='auto' height='auto' groupKey={panelKey} onSubmit={resultSuccess}
                 onError={resultFail} onCancel={dispatchHideDropDown} params={{hideOnInvalid: false}}
                 changeMasking={changeMasking} submitText={'Load'}
+                inputStyle={{height:'100%'}}
                 submitBarStyle={{padding: '2px 3px 3px'}} help_id={helpId}>
                 <FileUploadViewPanel/>
             </FormPanel>
