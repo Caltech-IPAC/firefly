@@ -256,7 +256,11 @@ export function startAsAppFromApi(divId, props={template: 'FireflySlate'}) {
     props = {...mergeObjectOnly({...defAppProps}, props), div:divId};
     
     const controlObj= {
-        unrender: () => ReactDOM.unmountComponentAtNode(document.getElementById(divId)),
+        unrender: () => {
+                const e= document.getElementById(divId);
+                if (!e) return;
+                ReactDOM.unmountComponentAtNode(e);
+        },
         render: () => renderRoot(viewer, props)
     };
     controlObj.render();

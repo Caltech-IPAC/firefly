@@ -48,6 +48,7 @@ ENV MAX_JVM_SIZE='' \
     ADMIN_USER=admin\
     ADMIN_PASSWORD=replaceMe \
     DEBUG=false \
+    CLEANUP_INTERVAL=36h \
     FIREFLY_OPTS=''
 
 # ----------------------------------------------------------
