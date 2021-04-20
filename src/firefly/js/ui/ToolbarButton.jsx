@@ -92,7 +92,7 @@ function makeTextLabel(text,shortcutKey) {
 export const ToolbarButton = memo((props) => {
     const {
         icon,text='',tip='',badgeCount=0,enabled=true, horizontal=true, bgDark= false, visible=true, active= false,
-        imageStyle={}, lastTextItem=false, todo= false, style={}, shortcutKey='',
+        imageStyle={}, lastTextItem=false, todo= false, style={}, shortcutKey='', useBorder=false,
         useDropDownIndicator= false, hasCheckBox=false, checkBoxOn=false,
         tipOnCB, tipOffCB, dropDownCB, onClick} = props;
 
@@ -139,12 +139,13 @@ export const ToolbarButton = memo((props) => {
             borderRadius: 5
         };
         textCName= 'ff-menuItemHText';
+        const htextBorder= {border: useBorder ? '1px solid rgba(0,0,0,.2)' : 'none' };
         return (
             <div style={{display:'flex', height:'100%', flex:'0 0 auto' ,...style}}>
                 <div style={{ display:'inline-block', margin:'0 4px 0 4px'}} />
                 <div title={tip} style={horizontalStyle} className={cName}
                      ref={setupRef} onClick={handleClick} onMouseOver={mouseOver} onMouseOut={mouseOut}>
-                    <div className={textCName}>{makeTextLabel(text,shortcutKey)}</div>
+                    <div className={textCName} style={htextBorder}>{makeTextLabel(text,shortcutKey)}</div>
                     {useDropDownIndicator && makeDropDownIndicator()}
                     {badgeCount>0 && makeBadge(badgeCount)}
                     {todo && makeToDoTag()}
@@ -192,6 +193,7 @@ ToolbarButton.propTypes= {
     tip : PropTypes.string,
     shortcutKey : PropTypes.string,
     shortcutHelp : PropTypes.bool,
+    useBorder : PropTypes.bool,
     badgeCount : PropTypes.number,
     enabled : PropTypes.bool,
     bgDark: PropTypes.bool,

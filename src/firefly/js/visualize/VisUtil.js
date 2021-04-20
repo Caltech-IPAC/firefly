@@ -1011,6 +1011,7 @@ export function segmentIntersectRect(point1, point2,  view_corners) {
  * @returns {number}
  */
 export function distToLine(pts, cc, pt) {
+    if (!pt || !pts || !pts[0] || !pts[1]) return NaN;
     const spt = cc ? cc.getScreenCoords(pt) : makeScreenPt(pt.x, pt.y);
     const pt0 = cc ? cc.getScreenCoords(pts[0]) : makeScreenPt(pts[0].x, pts[0].y);
     const pt1 = cc ? cc.getScreenCoords(pts[1]) : makeScreenPt(pts[1].x, pts[1].y);

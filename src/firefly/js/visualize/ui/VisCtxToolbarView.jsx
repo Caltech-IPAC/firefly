@@ -60,7 +60,7 @@ function makeExtensionButtons(extensionAry,pv) {
             return (
                 <ToolbarButton icon={ext.imageUrl} text={ext.title}
                                tip={ext.toolTip} key={ext.id} shortcutKey={ext.shortcutKey}
-                               horizontal={true} enabled={true}
+                               horizontal={true} enabled={true} useBorder={true}
                                lastTextItem={idx===(extensionAry.length-1)}
                                onClick={() => {
                                    if (getActivePlotView(visRoot())?.plotId===pv.plotId) {
