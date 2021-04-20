@@ -2,7 +2,7 @@ import React from 'react';
 
 import {get} from 'lodash';
 import {getChartData} from '../../ChartsCntlr.js';
-import {getNewTraceDefaults} from '../../ChartUtil.js';
+import {getNewTraceDefaults, hasMarkerColor} from '../../ChartUtil.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
@@ -10,14 +10,15 @@ import {getFieldVal} from '../../../fieldGroup/FieldGroupUtils.js';
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
 import {ScatterOptions, submitChangesScatter} from './ScatterOptions.jsx';
 import {HeatmapOptions, submitChangesHeatmap} from './HeatmapOptions.jsx';
+import {submitChangesSpectrum} from './SpectrumOptions.jsx';
 import {FireflyHistogramOptions, submitChangesFFHistogram} from './FireflyHistogramOptions.jsx';
-import {BasicOptionFields, basicFieldReducer, submitChanges, hasMarkerColor} from './BasicOptions.jsx';
+import {LayoutOptions, basicFieldReducer, submitChanges} from './BasicOptions.jsx';
 
 const fieldProps = {labelWidth: 62, size: 15};
 
 export function getSubmitChangesFunc(traceType, fireflyType) {
     const type = fireflyType || traceType;
-    
+
     switch(type) {
         case 'scatterOrHeatmap':
             if (traceType === 'heatmap') {
@@ -25,6 +26,8 @@ export function getSubmitChangesFunc(traceType, fireflyType) {
             } else {
                 return submitChangesScatter;
             }
+        case 'spectrum':
+            return submitChangesSpectrum;
         case 'scatter':
         case 'scattergl':
             return submitChangesScatter;
@@ -37,22 +40,22 @@ export function getSubmitChangesFunc(traceType, fireflyType) {
     }
 }
 
-function getOptionsComponent({traceType, chartId, activeTrace, groupKey, tbl_id,showMultiTrace}) {
+function getOptionsComponent({traceType, chartId, activeTrace, groupKey, tbl_id}) {
     const noColor = !hasMarkerColor(traceType);
     switch(traceType) {
         case 'scatter':
         case 'scattergl':
-            return (<ScatterOptions {...{chartId, activeTrace, groupKey, tbl_id, showMultiTrace}}/>);
+            return (<ScatterOptions {...{chartId, activeTrace, groupKey, tbl_id}}/>);
         case 'fireflyHeatmap':
-            return (<HeatmapOptions {...{chartId, activeTrace, groupKey, tbl_id, showMultiTrace}}/>);
+            return (<HeatmapOptions {...{chartId, activeTrace, groupKey, tbl_id}}/>);
         case 'fireflyHistogram':
-            return (<FireflyHistogramOptions {...{chartId, activeTrace, groupKey, tbl_id, showMultiTrace}}/>);
+            return (<FireflyHistogramOptions {...{chartId, activeTrace, groupKey, tbl_id}}/>);
         default:
             return (
                 <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
                     <ValidationField fieldKey={`_tables.data.${activeTrace}.x`}/>
                     <ValidationField fieldKey={`_tables.data.${activeTrace}.y`}/>
-                    <BasicOptionFields {...{activeTrace, groupKey, noColor}}/>
+                    <LayoutOptions {...{chartId, activeTrace, groupKey, tbl_id, noColor}}/>
                 </FieldGroup>
             );
     }
@@ -92,12 +95,12 @@ export class NewTracePanel extends SimpleComponent {
     }
 
     render() {
-        const {tbl_id, chartId, groupKey,showMultiTrace} = this.props;
+        const {tbl_id, chartId, groupKey} = this.props;
         const {activeTrace, type} = this.state;
 
         return (
-            <div style={{padding: 10}}>
-                <FieldGroup className='FieldGroup__vertical' style={{padding: 5}} keepState={true} groupKey='new-trace'>
+            <div style={{padding: 10, maxHeight: 550, overflow: 'auto', borderBottom: 'solid 1px #cccccc', borderTop: 'solid 1px #cccccc'}}>
+                <FieldGroup className='FieldGroup__vertical' keepState={true} groupKey='new-trace'>
                     <ListBoxInputField fieldKey='type' tooltip='Select plot type' label='Plot Type:'
                         options={[
                             {label: 'Scatter', value: 'scatter'},
@@ -107,7 +110,7 @@ export class NewTracePanel extends SimpleComponent {
                         {...fieldProps} />
                 </FieldGroup>
                 <br/>
-                {getOptionsComponent({traceType:type, chartId, activeTrace, groupKey, tbl_id,showMultiTrace})}
+                {getOptionsComponent({traceType:type, chartId, activeTrace, groupKey, tbl_id})}
 
             </div>
         );

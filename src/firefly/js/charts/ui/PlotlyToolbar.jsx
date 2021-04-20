@@ -17,14 +17,14 @@ import {isScatter2d} from '../ChartUtil.js';
 import {findViewerWithItemId, getMultiViewRoot, PLOT2D} from '../../visualize/MultiViewCntlr.js';
 
 
-export function PlotlyToolbar({chartId, expandable, expandedMode, showMultiTrace}) {
+export function PlotlyToolbar({chartId, expandable, expandedMode}) {
     const {activeTrace} = getChartData(chartId);
-    const ToolbarUI = getToolbarUI(chartId, activeTrace, showMultiTrace);
+    const ToolbarUI = getToolbarUI(chartId, activeTrace);
     return (
         <div className={`PanelToolbar ChartPanel__toolbar ${expandedMode?'ChartPanel__toolbar--offsetLeft':''}`}>
             <div className='PanelToolbar__group'/>
             <div className='PanelToolbar__group'>
-                <ToolbarUI {...{chartId, expandable, showMultiTrace}}/>
+                <ToolbarUI {...{chartId, expandable}}/>
                 </div>
         </div>
     );
@@ -33,13 +33,10 @@ export function PlotlyToolbar({chartId, expandable, expandedMode, showMultiTrace
 PlotlyToolbar.propTypes = {
     chartId: PropTypes.string,
     expandable: PropTypes.bool,
-    expandedMode: PropTypes.bool,
-    showMultiTrace:PropTypes.bool
+    expandedMode: PropTypes.bool
 };
 
-function getToolbarUI(chartId, activeTrace=0, showMultiTrace) {
-
-    if (!showMultiTrace) { return SingleTraceUIToolbar; }
+function getToolbarUI(chartId, activeTrace=0) {
 
     const {data} =  getChartData(chartId);
     const type = get(data, [activeTrace, 'type'], 'scatter');
@@ -79,7 +76,7 @@ class SingleTraceUIToolbar extends SimpleComponent {
                 <div className='ChartToolbar__buttons'>
                     <ResetZoomBtn style={{marginLeft: 10}} {...{chartId}} />
                     <SaveBtn {...{chartId}} />
-                    <OptionsBtn {...{chartId, showMultiTrace: false }} />
+                    <OptionsBtn {...{chartId}} />
                     {expandable && <ExpandBtn {...{chartId}} />}
                 </div>
                 { help_id && <div className='ChartToolbar__help'> <HelpIcon helpId={help_id} /> </div>}
@@ -337,9 +334,9 @@ function FiltersBtn({style={}, chartId}) {
     );
 }
 
-function OptionsBtn({style={}, chartId,  showMultiTrace}) {
+function OptionsBtn({style={}, chartId}) {
     return (
-        <div style={style} onClick={() => showChartsDialog(chartId,  showMultiTrace)}
+        <div style={style} onClick={() => showChartsDialog(chartId)}
              title='Chart options and tools'
              className='ChartToolbar__options'/>
     );
@@ -357,7 +354,7 @@ function ExpandBtn({style={}, chartId} ){
     );
 }
 
-function ActiveTraceSelect({style={}, chartId, activeTrace}) {
+export function ActiveTraceSelect({style={}, chartId, activeTrace}) {
     const {data} = getChartData(chartId) || [];
     const selected = get(data, [activeTrace, 'name']) || `trace ${activeTrace}`;
     if (!data || data.length < 2) return null;

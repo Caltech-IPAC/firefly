@@ -103,12 +103,12 @@ function getValueOnSuggestion(cols, canBeExpression=true) {
     };
 }
 
-export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,labelWidth=30,name,tooltip,nullAllowed, readonly}) {
+export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,labelWidth=30,name,tooltip,nullAllowed,readonly,initValue}) {
     return (
         <ColumnFld
             cols={colValStats.map((c)=>{return {name: c.name, units: c.unit, type: c.type, desc: c.descr};})}
             fieldKey={fldPath}
-            initValue={get(params, fldPath)}
+            initValue={initValue || get(params, fldPath)}
             canBeExpression={true}
             tooltip={`Column or expression for ${tooltip ? tooltip : name}.${EXPRESSION_TTIPS}`}
             {...{groupKey, label, labelWidth, name, nullAllowed, readonly}} />
@@ -125,7 +125,8 @@ ColumnOrExpression.propTypes = {
     name: PropTypes.string.isRequired,
     tooltip: PropTypes.string,
     nullAllowed: PropTypes.bool,
-    readonly: PropTypes.bool
+    readonly: PropTypes.bool,
+    initValue: PropTypes.string
 };
 
 export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidth, tooltip='Table column',

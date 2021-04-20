@@ -2,7 +2,6 @@ package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.Param;
-import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.DbInstance;
@@ -26,7 +25,6 @@ import static edu.caltech.ipac.util.StringUtils.isEmpty;
  * and then save the results into the original table's database.
  */
 public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
-    public static final String SEARCH_REQUEST = "searchRequest";
 
     @Override
     public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
@@ -46,7 +44,7 @@ public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
     @Override
     public File getDbFile(TableServerRequest treq) {
         try {
-            TableServerRequest sreq = getSearchRequest(treq);
+            TableServerRequest sreq = QueryUtil.getSearchRequest(treq);
             return getSearchProcessor(sreq).getDbFile(sreq);
         } catch (DataAccessException e) {
             // should not happen
@@ -66,7 +64,7 @@ public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
      */
     @Override
     public FileInfo ingestDataIntoDb(TableServerRequest treq, File dbFile) throws DataAccessException {
-        TableServerRequest sreq = getSearchRequest(treq);
+        TableServerRequest sreq = QueryUtil.getSearchRequest(treq);
         sreq.setPageSize(1);  // set to small number it's not used.
         new SearchManager().getDataGroup(sreq).getData();
         return new FileInfo(getDbFile(treq));
@@ -93,18 +91,6 @@ public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
         return EmbeddedDbUtil.execRequestQuery(treq, dbFile, resTblName);
     }
 
-    protected TableServerRequest getSearchRequest(TableServerRequest treq) throws DataAccessException {
-        String searchRequestJson = treq.getParam(SEARCH_REQUEST);
-        if (searchRequestJson == null) {
-            throw new DataAccessException("Action failed: " + SEARCH_REQUEST + " is missing");
-        }
-        TableServerRequest sreq = QueryUtil.convertToServerRequest(searchRequestJson);
-        if (sreq.getRequestId() == null) {
-            throw new DataAccessException("Action failed: " + SEARCH_REQUEST + " must contain " + ServerParams.ID);
-        }
-        return sreq;
-    }
-
     /**
      * returns the table name of the resultset.  the same request should return the same table name so that it
      * does not need to be recreated.
@@ -113,7 +99,7 @@ public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
      * @throws DataAccessException
      */
     protected String getResultSetTable(TableServerRequest treq) throws DataAccessException {
-        TableServerRequest sreq = getSearchRequest(treq);
+        TableServerRequest sreq = QueryUtil.getSearchRequest(treq);
         TreeSet<Param> params = new TreeSet<>();
         if (sreq.getFilters() != null && sreq.getFilters().size() > 0) {
             params.add(new Param(FILTERS, TableServerRequest.toFilterStr(sreq.getFilters())));

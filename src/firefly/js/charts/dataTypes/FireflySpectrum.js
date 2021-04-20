@@ -1,288 +1,147 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, identity, isArray, isUndefined, uniqueId} from 'lodash';
-import {logger} from '../../util/Logger.js';
-import {COL_TYPE, getColumn, getColumns, getTblById, doFetchTable, stripColumnNameQuotes} from '../../tables/TableUtil.js';
-import {cloneRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
-import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
-import {formatColExpr} from '../ChartUtil.js';
-import {getTraceTSEntries as genericTsGetter} from './FireflyGenericData.js';
+import {isEmpty, pickBy, cloneDeep, set} from 'lodash';
+
+import {getTblById, getColumn, doFetchTable, getColumnIdx} from '../../tables/TableUtil.js';
+import {dispatchChartUpdate, dispatchError} from '../ChartsCntlr.js';
+import {getDataChangesForMappings, updateHighlighted, updateSelected, getMinScatterGLRows, isSpectralOrder} from '../ChartUtil.js';
+import {addOtherChanges, createChartTblRequest, getTraceTSEntries as genericTSGetter} from './FireflyGenericData.js';
+
+import {quoteNonAlphanumeric} from '../../util/expr/Variable.js';
+import {getUnitInfo} from './SpectrumUnitConversion.js';
+import {getSpectrumDM} from '../../util/VOAnalyzer.js';
+
+export const spectrumType = 'spectrum';
 
 
-import {toMaxFixed, getDecimalPlaces} from '../../util/MathUtil.js';
-import Color from '../../util/Color.js';
-import {sprintf} from '../../externalSource/sprintf.js';
-
-//const HIST_DEC = 6;
 
 /**
- * This function creates table source entries to get aggregated firefly histogram data from the server
- * @param p
- * @param p.traceTS
- * @param p.chartId
- * @param p.traceNum
- * @returns {{options: {}, fetchData: fetchData}}
+ * This function creates table source entries to get plotly chart data from the server
+ * For the non-firefly plotly chart types
+ * @param traceTS
+ * @returns {{options: *, fetchData: fetchData}}
  */
 export function getTraceTSEntries({traceTS, chartId, traceNum}) {
 
-    const {fireflyData, layout} = getChartData(chartId) || {};
-    const {orderCName} = get(fireflyData, `${traceNum}.options`);
+    const traceEntry = genericTSGetter({traceTS, chartId, traceNum});
+    if (isEmpty(traceEntry)) return {};
 
-    if (!orderCName) return genericTsGetter({traceTS, chartId, traceNum});  // when there's no order, can use generic getter
-
-
-    const options = {orderCName};
-
-
-    // server call parameters
-    if (get(layout, 'xaxis.type') === 'log') {
-        options.columnExpression = 'lg('+histogramParams.columnOrExpr+')';
+    if (!isSpectralOrder(chartId)) {
+        return {options: traceEntry.options, fetchData:traceEntry.fetchData};
     }
-    if (histogramParams.fixedBinSizeSelection) { // fixed size bins
-        options.fixedBinSizeSelection=histogramParams.fixedBinSizeSelection;
-        if (histogramParams.fixedBinSizeSelection==='numBins'){
-            options.binSize =  histogramParams.numBins;
-        }else{
-            options.binSize =  histogramParams.binWidth;
-        }
-    }
-    if (histogramParams.falsePositiveRate) {  // variable size bins using Bayesian Blocks
-        options.falsePositiveRate = histogramParams.falsePositiveRate;
-    }
-    if (histogramParams.minCutoff) {
-        options.min = histogramParams.minCutoff;
-    }
-    if (histogramParams.maxCutoff) {
-        options.max = histogramParams.maxCutoff;
-    }
+    return {options: traceEntry.options, fetchData};
 
-    return {options, fetchData};
 }
 
-function fetchData(chartId, traceNum, tablesource) {
-    const {tbl_id, options} = tablesource;
+async function fetchData(chartId, traceNum, tablesource) {
 
-    const tableModel = getTblById(tbl_id);
-    const numericCols = getColumns(tableModel, COL_TYPE.NUMBER).map((c) => c.name);
+    const {tbl_id, mappings} = tablesource;
+    if (!mappings) {
+        return;
+    }
 
-    const {request} = tableModel;
-    const valueColName = 'columnExpression';
-    const sreq = cloneRequest(request, {
-        startIdx: 0,
-        pageSize: MAX_ROW,
-        inclCols: `${formatColExpr({colOrExpr:options.columnExpression, quoted: true, colNames: numericCols})} as "${valueColName}"`,
-        sortInfo: `ASC,"${valueColName}"`
+    const originalTableModel = getTblById(tbl_id);
+    const {highlightedRow, selectInfo} = originalTableModel;
+
+    const sreq = createChartTblRequest(chartId, traceNum, tablesource);
+    // set(sreq, 'inclCols', (sreq.inclCols + ', "ROW_IDX"');
+
+    const tableModel = await doFetchTable(sreq).catch((reason) => {
+        dispatchError(chartId, traceNum, reason);
     });
-    const sreqTblId = uniqueId(request.tbl_id);
-    sreq.META_INFO.tbl_id = sreqTblId;
-    sreq.tbl_id = sreqTblId;
 
-    const req = makeTableFunctionRequest(sreq, 'HistogramProcessor', 'histogram', {sortedColData: true, pageSize: MAX_ROW});
-
-    Object.entries(options).forEach(([k,v]) => req[k] = v);
-    req['columnName'] = valueColName;
-
-    doFetchTable(req).then(
-        (tableModel) => {
-
-            if (tableModel.error) {
-                dispatchError(chartId, traceNum, tableModel.error);
-                return;
-            } else if (!get(tableModel, 'tableData.data')) {
-                dispatchError(chartId, traceNum, 'No data');
-                return;
-            }
-
-            let histogramData = [];
-            const tblData = get(tableModel, 'tableData.data');
-            if (tblData) {
-                // if logarithmic values were requested, convert the returned exponents back
-                var toNumber = get(options, 'x', '').includes('log') ?
-                    (val, i)=> {
-                        // first col is n, next two are the boundaries of the bin
-                        return (i === 0) ? Number(val) : Math.pow(10, Number(val));
-                    } : (val)=>Number(val);
-                var nrow, lastIdx;
-                histogramData = tblData.reduce((data, arow, i) => {
-                    nrow = arow.map(toNumber);
-                    lastIdx = data.length - 1;
-                    if (i > 0 && data[lastIdx][1] === nrow[1]) {
-                        //collapse bins when two bins are the same because of precision loss
-                        // (ex. large long on server side truncated to float)
-                        data[lastIdx] = [data[lastIdx][0] + nrow[0], data[lastIdx][1], nrow[2]];
-                    } else {
-                        data.push(nrow);
-                    }
-                    return data;
-                }, []);
-
-            }
-            const {data, layout={}} = getChartData(chartId);
-            let binColor = get(data, `${traceNum}.marker.color`);
-            if (isArray(binColor)) binColor = binColor[0];
-            const changes = getChanges({histogramData, binColor, traceNum});
-
-            // set default title if it's the first trace
-            // and no title is set by the user
-            if (data && data.length===1) {
-                const xAxisLabel = get(layout, 'xaxis.title.text');
-                if (!xAxisLabel) {
-                    // default axis label for the first trace
-                    let xLabel = get(options, 'columnExpression', '');
-                    const xColumn = getColumn(getTblById(tbl_id), xLabel);
-                    const xUnit = get(xColumn, 'units', '');
-                    //remove surrounding quotes, if any
-                    if (xLabel.startsWith('"')) { xLabel = stripColumnNameQuotes(xLabel); }
-                    changes['layout.xaxis.title.text'] = xLabel + (xUnit ? ` (${xUnit})` : '');
-                }
-                const yAxisLabel = get(layout, 'yaxis.title.text');
-                if (!yAxisLabel) {
-                    changes['layout.yaxis.title.text'] = 'Number';
-                }
-            }
-
-            if (!layout.barmode) {
-                // use overlay mode for Plotly charts, based on bars
-                // this is to make sure plotly histogram displays fine with firefly histogram
-                changes['layout.barmode'] = 'overlay';
-            }
-            changes[`fireflyData.${traceNum}.isLoading`] = false;
-
-            dispatchChartUpdate({chartId, changes});
-        }
-    ).catch(
-        (reason) => {
-            dispatchError(chartId, traceNum, reason);
-        }
-    );
-}
-
-
-function getChanges({histogramData, binColor, traceNum}) {
-    var {x, y, binWidth, color, text, colorScale, borderColor} = createXY(histogramData, binColor);
-    const changes = {};
-    changes[`data.${traceNum}.type`] = 'bar'; // using bar chart to display firefly histogram
-    changes[`data.${traceNum}.x`] = x;
-    changes[`data.${traceNum}.y`] = y;
-    changes[`data.${traceNum}.width`] = binWidth;
-    changes[`data.${traceNum}.marker.color`] = color;
-    changes[`data.${traceNum}.marker.colorscale`] = colorScale;
-    changes[`data.${traceNum}.marker.line`] = {width: 1, color: borderColor};
-    changes[`data.${traceNum}.hovertext`] = text;
-    changes[`data.${traceNum}.hoverinfo`] = 'text';
-    return changes;
-}
-
-/*
- * Expecting an 2 dimensional array of numbers
- * each row is an array of 3 values:
- * [0] number of points in a bin,
- * [1] minimum of a bin
- * [2] maximum of a bin
- */
-function validateData(histogramData, logScale) {
-    if (!histogramData) { return false; }
-    let valid = true;
-    try {
-        histogramData.sort(function(row1, row2){
-            // [1] is minimum bin edge
-            return row1[1]-row2[1];
-        });
-        if (histogramData) {
-            for (var i = 0; i < histogramData.length; i++) {
-                if (histogramData[i].length < 3) {
-                    logger.error(`Invalid histogram data in row ${i} [${histogramData[i]}]`);
-                    valid = false;
-                } else if (histogramData[i][1]>histogramData[i][2]) {
-                    logger.error(`Histogram data row ${i}: minimum is more than maximum. [${histogramData[i]}]`);
-                    valid=false;
-                } else if (histogramData[i+1] && Math.abs(histogramData[i][2]-histogramData[i+1][1])>1000*Number.EPSILON &&
-                    histogramData[i][2]>histogramData[i+1][1]) {
-                    logger.error(`Histogram data row ${i}: bin range overlaps the following row. [${histogramData[i]}]`);
-                    valid=false;
-                } else if (histogramData[i][0] < 0) {
-                    logger.error(`Histogram data row ${i} count is less than zero, ${histogramData[i][0]}`);
-                    valid=false;
-                }
-            }
-            if (logScale && histogramData[0][1]<=0) {
-                logger.error('Unable to plot histogram: zero or subzero values on logarithmic scale');
-                valid = false;
-            }
-        }
-    } catch (e) {
-        logger.error(`Invalid data passed to Histogram: ${e}`);
-        valid = false;
+    if (tableModel.error) {
+        return dispatchError(chartId, traceNum, tableModel.error);
     }
-    return valid;
-}
 
-function createXY(data, binColor) { // removed '#d1d1d1' to use default colors
-    var  emptyData = {
-        x: [], y: [], text:[], borderColor: '',  binWidth: [], color: [], colorScale: []
-    };
+    if (tableModel?.tableData?.data) {
+        const changes = getDataChangesForMappings({tableModel, mappings, traceNum});
 
-    if (!validateData(data)) {
-        emptyData.valid = false;
-        return emptyData;
+        // extra changes based on trace type
+        addOtherChanges({changes, chartId, traceNum, tablesource, tableModel: originalTableModel});
+
+        // add row_idx to pointIdx mappings
+        const origIdx = getColumnIdx(tableModel, 'ORIG_IDX');
+        const rowIdx = tableModel.tableData.data.map((row) => row[origIdx]);
+        set(changes, [`data.${traceNum}.firefly.rowIdx`], rowIdx);
+
+        dispatchChartUpdate({chartId, changes});
+        updateHighlighted(chartId, traceNum, highlightedRow);
+        updateSelected(chartId, selectInfo);
     } else {
-        emptyData.valid = true;
+        dispatchError(chartId, traceNum, 'No data');
     }
-
-    //const getRGBAStr = (rgbStr, a) => {
-    //    return Color.toRGBAString(Color.toRGBA(rgbStr.slice(1), a));
-    //};
-
-    //const lightColor = getRGBAStr(Color.shadeColor(binColor, 0.2), A);
-    emptyData.color = binColor; // for multiple traces changing alternating colors are confusing
-    emptyData.borderColor = binColor && binColor === '#000000' ? Color.shadeColor(binColor, 0.5) : 'black';
-    //emptyData.colorScale = [[0, getRGBAStr(binColor, A)], [1, lightColor]];
-
-    // compute bin width for the bin has the same xMin & xMan
-    var startW = data.length && data[data.length-1][2] - data[0][1];
-    if (startW === 0.0) startW = 1.0;
-
-    var   minWidth = data.find((row) => {return row[1]===row[2];}) ?
-                        data.reduce((prev, d) => {
-                            if (d[1] !== d[2]) {
-                                const dist = (d[2] - d[1])/2;
-
-                                if (dist < prev) {
-                                    prev = dist;
-                                }
-                            }
-                            return prev;
-                        }, startW*0.02) : 1.0;
-
-    //var lastX = data[0][1]-1.0;
-    //var prevColor = 0;
-
-    var addBin = (xySeries, x1, x2, y) => {
-        const xVal = (x1 + x2) / 2;
-
-        xySeries.x.push(xVal);
-        xySeries.y.push(y);
-        const binWidth = x1 === x2 ? minWidth: x2-x1;
-        xySeries.binWidth.push(binWidth);
-
-        //prevColor = (x1 <= lastX) ? (prevColor+1)%2 : 0;  // when two bars are next to each other, color is changed
-        //xySeries.color.push(prevColor);
-
-        const numDecimalPlaces = getDecimalPlaces(binWidth, 3);
-        const doFmt = isUndefined(numDecimalPlaces) ? identity : (n) => toMaxFixed(n, numDecimalPlaces);
-        
-        xySeries.text.push(
-            `<span> ${x1 !== x2 ? '<b>Bin center: </b>' + doFmt(xVal) + '<br>' : ''}` +
-            `${x1 !== x2 ? '<b>Range: </b>' + doFmt(x1) + ' to ' + doFmt(x2) + '<br>' : ''}` +
-            `<b>Count:</b> ${y}</span>`);
-
-        //lastX = x2;
-    };
-
-    return data.reduce((xy, oneData) => {
-        addBin(xy, oneData[1], oneData[2], oneData[0]);
-        return xy;
-    }, emptyData);
 }
 
+
+
+export function spectrumPlot({tbl_id, spectrumDM}) {
+    const tableModel = getTblById(tbl_id);
+    const type = tableModel?.totalRows >= getMinScatterGLRows() ? 'scattergl' : 'scatter';
+
+    const {xLabel, yLabel,  xUnit, yUnit, spectralAxis, mode, ...more} = getSpectrumProps(tbl_id, spectrumDM);
+
+    // append tables:: to these props
+    const {x, y, xErrArray, xErrArrayMinus, yErrArray, yErrArrayMinus, xMax, xMin, yMax, yMin} = Object.fromEntries(Object.entries(more).map( ([k,v]) => [k, v && `tables::${v}`]));
+
+    const error_x = pickBy({array: xErrArray, arrayminus: xErrArrayMinus});
+    const error_y = pickBy({array: yErrArray, arrayminus: yErrArrayMinus});
+
+    const firefly = { dataType: spectrumType, useSpectrum: 'true', xMax, xMin, yMax, yMin, xUnit, yUnit};
+    const data = [ pickBy({tbl_id, type, x, y, error_x, error_y, firefly, mode}, (a) => !isEmpty(a))];
+
+    const layout = {
+        xaxis: {
+            title: xLabel,
+        },
+        yaxis: {
+            title: yLabel,
+        }
+    };
+
+    if (spectralAxis.order) {
+        const orderCol = getColumn(tableModel, spectralAxis.order);
+        const orig = data.pop();
+        orderCol?.enumVals?.split(',').forEach((v) => {
+            const order = cloneDeep(orig);
+            set(order, 'name', v);
+            set(order, 'mode', 'lines+markers');
+            set(order, 'firefly.spectralOrder', spectralAxis.order);
+            set(order, 'firefly.filters', `"${orderCol.name}" = '${v}'`);
+            data.push(order);
+        });
+        set(layout, 'legend.title.text', spectralAxis.order);
+    }
+
+    return {data, layout};
+}
+
+export function getSpectrumProps(tbl_id, spectrumDM) {
+
+    spectrumDM = spectrumDM || getSpectrumDM(getTblById(tbl_id));
+    const {spectralAxis={}, fluxAxis={}, isSED} = spectrumDM || {};
+
+    const x = quoteNonAlphanumeric(spectralAxis.value);
+    const y = quoteNonAlphanumeric(fluxAxis.value);
+
+    const xErrArray = spectralAxis.statErrHigh || spectralAxis.statError;
+    const xErrArrayMinus = spectralAxis.statErrLow;
+    const yErrArray = fluxAxis.statErrHigh || fluxAxis.statError;
+    const yErrArrayMinus = fluxAxis.statErrLow;
+    const xMax = spectralAxis.binHigh;
+    const xMin = spectralAxis.binLow;
+    const yMax = fluxAxis.upperLimit;
+    const yMin = fluxAxis.lowerLimit;
+
+    const xUnit = spectralAxis.unit;
+    const yUnit = fluxAxis.unit;
+
+    const xLabel = getUnitInfo(spectralAxis.unit, true)?.label;
+    const yLabel = getUnitInfo(fluxAxis.unit, false)?.label;
+
+    const mode = isSED ? 'markers' : 'lines+markers';
+
+    return {spectralAxis, fluxAxis, mode, x, y, xErrArray, xErrArrayMinus, yErrArray, yErrArrayMinus,
+            xMax, xMin, yMax, yMin, xUnit, yUnit, xLabel, yLabel, isSED};
+}

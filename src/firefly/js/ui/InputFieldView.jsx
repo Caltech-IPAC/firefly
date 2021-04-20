@@ -10,11 +10,12 @@ import EXCLAMATION from 'html/images/exclamation16x16.gif';
 
 
 
-function computeStyle(valid,hasFocus) {
+function computeStyle(valid,hasFocus,readonly) {
     if (!valid) {
         return 'ff-inputfield-view-error';
-    }
-    else {
+    } else if(readonly) {
+        return 'ff-inputfield-view-readonly';
+    } else {
         return hasFocus ? 'ff-inputfield-view-focus' : 'ff-inputfield-view-valid';
     }
 }
@@ -102,7 +103,7 @@ export class InputFieldView extends PureComponent {
             <div style={wrapperStyle}>
                 {label && <InputFieldLabel labelStyle={labelStyle} label={label} tooltip={tooltip} labelWidth={labelWidth}/> }
                 <input style={Object.assign({display:'inline-block'}, style)}
-                       className={computeStyle(valid,hasFocus)}
+                       className={computeStyle(valid,hasFocus, readonly)}
                        onChange={(ev) => onChange ? onChange(ev) : null}
                        onFocus={ () => !hasFocus ? this.setState({hasFocus:true, infoPopup:false}) : ''}
                        onBlur={ (ev) => {

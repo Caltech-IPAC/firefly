@@ -13,8 +13,9 @@ import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {DEFAULT_PLOT2D_VIEWER_ID, dispatchAddViewerItems, dispatchUpdateCustom, dispatchRemoveViewerItems,
     getMultiViewRoot, getViewer} from '../visualize/MultiViewCntlr.js';
-import {applyDefaults, flattenAnnotations, formatColExpr, getPointIdx, getRowIdx, handleTableSourceConnections, clearChartConn, newTraceFrom,
-        setupTableWatcher, HIGHLIGHTED_PROPS, SELECTED_PROPS, TBL_SRC_PATTERN} from './ChartUtil.js';
+import {applyDefaults, flattenAnnotations, formatColExpr, getPointIdx, getRowIdx, handleTableSourceConnections,
+        clearChartConn, newTraceFrom, setupTableWatcher, HIGHLIGHTED_PROPS, SELECTED_PROPS, TBL_SRC_PATTERN,
+        getSelIndexes, isSpectralOrder, combineAllTraceFrom} from './ChartUtil.js';
 import {FilterInfo} from '../tables/FilterInfo.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {REINIT_APP, getAppOptions} from '../core/AppDataCntlr.js';
@@ -397,18 +398,21 @@ function chartSelect(action) {
             const {totalRows} = getTblById(tbl_id);
             const selectInfoCls = SelectInfo.newInstance({rowCount: totalRows});
 
-            selIndexes.forEach((idx) => {
-                selectInfoCls.setRowSelect(getRowIdx(data[activeTrace], idx), true);
-            });
+            selIndexes.forEach(([ptIdx, traceIdx]) => selectInfoCls.setRowSelect(getRowIdx(data[traceIdx], ptIdx), true));
             TablesCntlr.dispatchTableSelect(tbl_id, selectInfoCls.data);
         }
         // avoid updating chart twice
         // don't update before table select
         if (!chartTrigger) {
             const hasSelected = !isEmpty(selIndexes);
-            const traceAnnotations = get(fireflyData, `${activeTrace}.annotations`);
-            selected = newTraceFrom(data[activeTrace], selIndexes, SELECTED_PROPS, traceAnnotations);
-            dispatchChartUpdate({chartId, changes: {hasSelected, selected, selection: undefined}});
+            if (isSpectralOrder(chartId)) {
+                selected = combineAllTraceFrom(chartId, selIndexes, SELECTED_PROPS);
+                dispatchChartUpdate({chartId, changes: {hasSelected, selected, selection: undefined}});
+            } else {
+                const traceAnnotations = get(fireflyData, `${activeTrace}.annotations`);
+                selected = newTraceFrom(data[activeTrace], selIndexes.map((s) => s[0]), SELECTED_PROPS, traceAnnotations);
+                dispatchChartUpdate({chartId, changes: {hasSelected, selected, selection: undefined}});
+            }
         }
     };
 }
@@ -460,12 +464,12 @@ function setActiveTrace(action) {
     return (dispatch) => {
         const {chartId, activeTrace} = action.payload;
         const {data, fireflyData, tablesources, curveNumberMap} = getChartData(chartId);
-        const changes = getActiveTraceChanges({activeTrace, data, fireflyData, tablesources, curveNumberMap});
+        const changes = getActiveTraceChanges({chartId, activeTrace, data, fireflyData, tablesources, curveNumberMap});
         dispatchChartUpdate({chartId, changes});
     };
 }
 
-function getActiveTraceChanges({activeTrace, data, fireflyData, tablesources, curveNumberMap}) {
+function getActiveTraceChanges({chartId, activeTrace, data, fireflyData, tablesources, curveNumberMap}) {
     const tbl_id = get(tablesources, [activeTrace, 'tbl_id']);
     let selected = undefined;
     let highlighted = undefined;
@@ -475,9 +479,14 @@ function getActiveTraceChanges({activeTrace, data, fireflyData, tablesources, cu
         const traceAnnotations = get(fireflyData, `${activeTrace}.annotations`);
         if (selectInfo) {
             const selectInfoCls = SelectInfo.newInstance(selectInfo);
-            const selIndexes = Array.from(selectInfoCls.getSelected()).map((e)=>getPointIdx(data[activeTrace], e));
+            const selIndexes = getSelIndexes(data, selectInfoCls, activeTrace);
             if (selIndexes.length > 0) {
-                selected = newTraceFrom(data[activeTrace], selIndexes, SELECTED_PROPS, traceAnnotations);
+                if (isSpectralOrder(chartId)) {
+                    selected = combineAllTraceFrom(chartId, selIndexes, SELECTED_PROPS);
+                } else {
+                    const traceAnnotations = get(fireflyData, `${activeTrace}.annotations`);
+                    selected = newTraceFrom(data[activeTrace], selIndexes.map((s) => s[0]), SELECTED_PROPS, traceAnnotations);
+                }
             }
         }
         highlighted = newTraceFrom(data[activeTrace], [getPointIdx(data[activeTrace], highlightedRow)], HIGHLIGHTED_PROPS, traceAnnotations);

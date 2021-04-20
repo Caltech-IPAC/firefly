@@ -547,7 +547,7 @@
                 null,  // alt_source
                 { filters: '"NED Units" like \'Jy\'',
                   META_INFO: {
-                    utype: 'spec:Spectrum',             // indicate this is a SpectrumDM table
+                    utype: 'ipac:Spectrum.SED',             // indicate this is an IPAC SED SpectrumDM table
                     'tbl.groups': [
                         {   name: 'Data.SpectralAxis', utype: 'spec:Data.SpectralAxis',                     // define SpectralAxis
                             columnRefs: [{ref: 'Frequency', utype: 'spec:Data.SpectralAxis.Value'}]
@@ -565,7 +565,7 @@
             );
 
             firefly.showTable('table-div', tblReq);
-            firefly.showXYPlot('chart-div', {tbl_id: tblReq.tbl_id, chartType: 'auto'});
+            firefly.showXYPlot('chart-div', {tbl_id: tblReq.tbl_id, chartType: 'auto', xOptions: 'log', yOptions: 'grid,log'});
         }
     </script>
 </template>

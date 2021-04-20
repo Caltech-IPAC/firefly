@@ -1,15 +1,16 @@
 import React from 'react';
-import {get, isUndefined} from 'lodash';
+import {get} from 'lodash';
 
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
-import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
-import {BasicOptionFields, basicFieldReducer} from './BasicOptions.jsx';
+import {LayoutOptions, basicFieldReducer, basicOptions} from './BasicOptions.jsx';
 import {getChartData} from '../../ChartsCntlr.js';
 
-import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
-import {getColValStats} from '../../TableStatsCntlr.js';
+import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
+import {scatterInputs} from './ScatterOptions.jsx';
+import {getChartProps} from '../../ChartUtil.js';
+import {FieldGroupCollapsible} from '../../../ui/panel/CollapsiblePanel.jsx';
 
 const fieldProps = {labelWidth: 62, size: 15};
 
@@ -18,38 +19,42 @@ const fieldProps = {labelWidth: 62, size: 15};
  * Plotly histogram does not display well with firefly histogram, which is using Plotly bar chart
  * Known issues: shen shown with firefly histogram, Plotly histogram shows as lines or does not show at all
  */
-export class HistogramOptions extends SimpleComponent {
+export function HistogramOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey}) {
 
-    getNextState() {
-        const {chartId} = this.props;
-        const {activeTrace:cActiveTrace=0} = getChartData(chartId);
-        // activeTrace is passed via property, when used from NewTracePanel
-        const activeTrace = isUndefined(this.props.activeTrace) ? cActiveTrace : this.props.activeTrace;
-        return {activeTrace};
-    }
+    const [activeTrace] = useStoreConnector(() => {
+        return pActiveTrace ?? getChartData(chartId)?.activeTrace;
+    });
 
-    render() {
-        const {chartId, tbl_id:tblIdProp} = this.props;
-        const {tablesources, activeTrace:cActiveTrace=0} = getChartData(chartId);
-        const activeTrace = isUndefined(this.props.activeTrace) ? cActiveTrace : this.props.activeTrace;
-        const groupKey = this.props.groupKey || `${chartId}-ffhist-${activeTrace}`;
-        const tablesource = get(tablesources, [cActiveTrace], tblIdProp && {tbl_id: tblIdProp});
-        const tbl_id = get(tablesource, 'tbl_id');
-        const colValStats = getColValStats(tbl_id);
-        const xProps = {fldPath:`_tables.data.${activeTrace}.x`, label: 'X:', name: 'X', nullAllowed: false, colValStats, groupKey, labelWidth: 62};
-        return (
-            <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
-                    <ColumnOrExpression {...xProps}/>
-                    <ListBoxInputField fieldKey={`data.${activeTrace}.histfunc`} options={[{value:'count'}, {value:'sum'}, {value:'avg'}, {value:'min'}, {value:'max'}]}/>
-                    <ValidationField fieldKey={`data.${activeTrace}.nbinsx`}/>
-                    <ValidationField fieldKey={`data.${activeTrace}.xbins.size`}/>
-                    <ValidationField fieldKey={`data.${activeTrace}.xbins.start`}/>
-                    <ValidationField fieldKey={`data.${activeTrace}.xbins.end`}/>
-                    <br/>
-                    <BasicOptionFields {...{activeTrace, groupKey}}/>
-                </FieldGroup>
-        );
-    }
+    groupKey = groupKey || `${chartId}-ffhist-${activeTrace}`;
+    const {tbl_id, multiTrace, noColor} = getChartProps(chartId, ptbl_id, activeTrace);
+
+    const {X} = scatterInputs({activeTrace, tbl_id, chartId, groupKey, fieldProps:{labelWidth: 62}});
+    const {Name, Color} = basicOptions({activeTrace, tbl_id, chartId, groupKey, fieldProps:{labelWidth: 60}});
+    const reducerFunc = fieldReducer({chartId, activeTrace});
+    reducerFunc.ver = chartId+activeTrace;
+
+    return (
+        <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={reducerFunc}>
+            <X/>
+            <ListBoxInputField fieldKey={`data.${activeTrace}.histfunc`} options={[{value:'count'}, {value:'sum'}, {value:'avg'}, {value:'min'}, {value:'max'}]}/>
+            <ValidationField fieldKey={`data.${activeTrace}.nbinsx`}/>
+            <ValidationField fieldKey={`data.${activeTrace}.xbins.size`}/>
+            <ValidationField fieldKey={`data.${activeTrace}.xbins.start`}/>
+            <ValidationField fieldKey={`data.${activeTrace}.xbins.end`}/>
+            <br/>
+
+            <div style={{margin: '5px 0 0 -22px'}}>
+                { (multiTrace || !noColor) &&
+                <FieldGroupCollapsible  header='Trace Options' initialState= {{ value:'closed' }} fieldKey='traceOptions'>
+                    {multiTrace && <Name/>}
+                    {!noColor && <Color/>}
+                </FieldGroupCollapsible>
+                }
+                <LayoutOptions {...{activeTrace, tbl_id, chartId, groupKey}}/>
+            </div>
+
+        </FieldGroup>
+    );
 }
 
 export function fieldReducer({chartId, activeTrace}) {

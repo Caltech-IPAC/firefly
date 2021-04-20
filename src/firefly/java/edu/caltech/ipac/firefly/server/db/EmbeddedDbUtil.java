@@ -467,7 +467,7 @@ public class EmbeddedDbUtil {
         ResultSetMetaData rsmd = rs.getMetaData();
         List<DataType> cols = new ArrayList<>();
         for (int i = 1; i <= rsmd.getColumnCount(); i++) {
-            String cname = rsmd.getColumnName(i);
+            String cname = rsmd.getColumnLabel(i);
             Class type = convertToClass(rsmd.getColumnType(i), dbInstance);
             DataType dt = new DataType(cname, type);
             cols.add(dt);
@@ -476,7 +476,7 @@ public class EmbeddedDbUtil {
     }
 
 
-//====================================================================
+    //====================================================================
 //  privates functions
 //====================================================================
 
