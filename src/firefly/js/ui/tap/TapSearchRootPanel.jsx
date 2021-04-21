@@ -20,7 +20,7 @@ import {dispatchHideDialog} from 'firefly/core/ComponentCntlr.js';
 import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr.js';
 
 import {tableColumnsConstraints} from 'firefly/ui/tap/TableColumnsConstraints.jsx';
-import {skey, tableSearchMethodsConstraints, validateConstraints} from 'firefly/ui/tap/TableSearchMethods.jsx';
+import {skey, tableSearchMethodsConstraints} from 'firefly/ui/tap/TableSearchMethods.jsx';
 import {commonSelectStyles, selectTheme} from 'firefly/ui/tap/Select.jsx';
 import {getMaxrecHardLimit, getTapBrowserState, tapHelpId, TAP_SERVICES_FALLBACK} from 'firefly/ui/tap/TapUtil.js';
 import { gkey, SectionTitle, AdqlUI, BasicUI} from 'firefly/ui/tap/TableSelectViewPanel.jsx';
@@ -59,7 +59,7 @@ function validateAutoSearch(fields, initArgs) {
     const {columnsModel} = getTapBrowserState();
     if (columnsModel && getAdqlQuery(false)) {
         const searchMethodFields= FieldGroupUtils.getGroupFields(skey);
-        if (searchMethodFields && validateConstraints(searchMethodFields, columnsModel).valid) {
+        if (searchMethodFields) {
             const adqlFragment = tableSearchMethodsConstraints(columnsModel);
             if (adqlFragment && adqlFragment.valid) {
                 const constraintInitArgs= ['WorldPt', 'radiusInArcSec']; // this should grow as we support more params in initArgs
@@ -91,8 +91,11 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
     const tapOps= getTapServiceOptions();
     const {current:clickFuncRef} = useRef({clickFunc:undefined});
     const [selectBy, setSelectBy]= useState('basic');
+    const [obsCoreTables, setObsCoreTables] = useState();
     const [serviceUrl, setServiceUrl]= useState(() => getInitServiceUrl(initArgs,tapOps));
     activateInitArgsAdqlOnce(initArgs);
+
+    const obsCoreEnabled = obsCoreTables?.length > 0;
 
     const onTapServiceOptionSelect= (selectedOption) => {
         if (!selectedOption) return;
@@ -103,11 +106,14 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
             ]
         );
         setServiceUrl(selectedOption.value);
+        setObsCoreTables(undefined);
     };
 
     useEffect(() => {
         return FieldGroupUtils.bindToStore( gkey, (fields) => {
             setSelectBy(getFieldVal(gkey,'selectBy',selectBy));
+            const obsCoreTables = getTapBrowserState().obsCoreTables;
+            setObsCoreTables(obsCoreTables);
             searchFromAPIOnce( () => validateAutoSearch(fields,initArgs), () => setTimeout(() => clickFuncRef.clickFunc?.(), 5));
         });
     }, []);
@@ -124,7 +130,7 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
                         submitBarStyle={{padding: '2px 3px 3px'}}
                         help_id = {tapHelpId('form')} >
                 <TapSearchPanelComponents {...{
-                    initArgs, selectBy, serviceUrl, onTapServiceOptionSelect, titleOn, tapOps}} />
+                    initArgs, selectBy, serviceUrl, onTapServiceOptionSelect, titleOn, tapOps, obsCoreEnabled}} />
             </FormPanel>
         </div>
     );
@@ -152,7 +158,7 @@ const makePlaceHolderBeforeStyle= (l) =>
 
 
 
-function TapSearchPanelComponents({initArgs, serviceUrl, onTapServiceOptionSelect, tapOps, titleOn=true, selectBy}) {
+function TapSearchPanelComponents({initArgs, serviceUrl, onTapServiceOptionSelect, tapOps, titleOn=true, selectBy, obsCoreEnabled}) {
 
     const label= (serviceUrl && (tapOps.find( (e) => e.value===serviceUrl)?.labelOnly)) || '';
     const placeholder = serviceUrl ? `${serviceUrl} - Replace...` : 'Select TAP...';
@@ -161,6 +167,23 @@ function TapSearchPanelComponents({initArgs, serviceUrl, onTapServiceOptionSelec
         ...tableSelectStyleEnhancedTemplate,
         placeholder: (provided) => ({ ...provided, ':before': makePlaceHolderBeforeStyle(label) })
     };
+
+    const options = [
+        {label: 'Single Table (UI assisted) ', value: 'basic', tooltip: 'Search a single table using a GUI query builder'},
+        {label: 'Edit ADQL (advanced)', value: 'adql', tooltip: 'Enter or edit directly an ADQL query; supports complex queries including JOINs'}
+    ];
+
+    if (obsCoreEnabled) {
+        options.push({label: 'Image Search (ObsTAP)', value: 'obscore', tooltip: 'Search the ObsTAP image metadata on this service with a specialized GUI query builder'});
+    }
+
+    let queryTypeEpilogue = '';
+    if (selectBy === 'obscore') {
+        // This component does not know the actual name of the table, but it is guaranteed
+        // that name.toLowerCase() === 'ivoa.ObsCore'.toLowerCase()
+        queryTypeEpilogue =
+            <div style={{display: 'inline-flex', marginTop: '4px'}}>(Searching the <pre style={{margin: '0px .5em'}}>ivoa.ObsCore</pre> table on this service...)</div>;
+    }
 
     return (
         <FieldGroup groupKey={gkey} keepState={true} style={{flexGrow: 1, display: 'flex'}}>
@@ -181,15 +204,15 @@ function TapSearchPanelComponents({initArgs, serviceUrl, onTapServiceOptionSelec
                         fieldKey = 'selectBy'
                         initialState = {{
                             defaultValue: 'basic',
-                            options: [
-                                {label: 'Single Table (UI assisted) ', value: 'basic'},
-                                {label: 'Edit ADQL (advanced)', value: 'adql'}
-                            ],
+                            options: options,
                             tooltip: 'Please select an interface type to use'
                         }}
+                        options = {options}
+                        wrapperStyle={{alignSelf: 'center'}}
                     />
+                    {queryTypeEpilogue}
                 </div>
-                {selectBy === 'basic' && <BasicUI  serviceUrl={serviceUrl} initArgs={initArgs}/>}
+                {(selectBy === 'basic' || selectBy === 'obscore') && <BasicUI  serviceUrl={serviceUrl} selectBy={selectBy} initArgs={initArgs}/>}
                 {selectBy === 'adql' && <AdqlUI serviceUrl={serviceUrl}/>}
             </div>
         </FieldGroup>
@@ -207,7 +230,7 @@ function makeExtraWidgets(initArgs, selectBy) {
                          wrapperStyle={{marginLeft: 30, height: '100%', alignSelf: 'center'}}
                          style={{height: 17, width: 70}} />)
         ];
-    if (selectBy==='basic') {
+    if (selectBy==='basic' || selectBy==='obscore') {
         extraWidgets.push( (<ExtraButton key='editADQL' text='Populate and edit ADQL'
                                          onClick={() => populateAndEditAdql()} style={{marginLeft: 30}} />));
     }

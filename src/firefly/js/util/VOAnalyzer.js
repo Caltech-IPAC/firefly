@@ -78,6 +78,18 @@ const OBSTAP_OPTIONAL_CNAMES = [
 
 const OBSTAP_CNAMES = OBSTAPCOLUMNS.map((row) => row[ColNameIdx]).concat( OBSTAP_OPTIONAL_CNAMES);
 
+// Columns required for heuristic matching
+const OBSTAP_MATCH_COLUMNS = [
+    's_region',
+    't_min',
+    't_max',
+    'em_min',
+    'em_max',
+    'calib_level',
+    'dataproduct_type',
+    'obs_collection',
+];
+
 function getObsTabColEntry(title) {
     const e= OBSTAPCOLUMNS.find( (entry) => entry[ColNameIdx]===title);
     return e && {name:e[ColNameIdx], ucd: e[UcdColIdx], utype: e[UtypeColIdx]};
@@ -1429,4 +1441,28 @@ function allParams(groups) {
         }
     }
     return params;
+}
+
+/**
+ * Based on scheman name, table name, and column names - determine if this
+ * is ObsCore-like enough for different ObsCore/ObsTAP widgets.
+ * @param schemaName
+ * @param tableName
+ * @param columnsModel
+ * @returns {boolean}
+ */
+export function matchesObsCoreHeuristic(schemaName, tableName, columnsModel) {
+    if (tableName?.toLowerCase() === 'ivoa.obscore'){
+        return true;
+    }
+    if (schemaName?.toLowerCase() === 'ivoa' && tableName?.toLowerCase() === 'obscore') {
+        return true;
+    }
+    if (columnsModel) {
+        const column_names = getColumnValues(columnsModel, 'column_name');
+        return OBSTAP_MATCH_COLUMNS.every((columnName) => {
+            return column_names.indexOf(columnName) >= 0;
+        });
+    }
+    return false;
 }

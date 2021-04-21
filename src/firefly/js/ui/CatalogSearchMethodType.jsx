@@ -339,7 +339,9 @@ function sizeArea(groupKey, searchType, imageCornerCalc) {
     }
 }
 
-export function renderPolygonDataArea(imageCornerCalc) {
+export function renderPolygonDataArea(imageCornerCalc, labelWidth, labelStyle, wrapperStyle) {
+    wrapperStyle = {padding: 5, display: 'flex', ...wrapperStyle};
+
     let cornerTypeOps=
         [
             {label: 'Image', value: 'image'},
@@ -381,13 +383,15 @@ export function renderPolygonDataArea(imageCornerCalc) {
                 }
             </div>
             <InputAreaFieldConnected fieldKey='polygoncoords'
-                                     wrapperStyle={{padding:5}}
+                                     wrapperStyle={wrapperStyle}
                                      style={{overflow:'auto',height:'65px', maxHeight:'200px', width:'220px', maxWidth:'300px'}}
                                      initialState={{
                                                tooltip:'Enter polygon coordinates search',
                                                labelWidth:70
                                             }}
                                      label='Coordinates:'
+                                     labelStyle={labelStyle}
+                                     labelWidth={labelWidth}
                                      tooltip='Enter polygon coordinates search'
             />
             <ul>

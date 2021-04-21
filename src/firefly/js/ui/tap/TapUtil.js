@@ -4,6 +4,7 @@ import {doFetchTable, getColumnIdx, sortTableData} from '../../tables/TableUtil.
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 import {getProp, hashCode} from '../../util/WebUtil.js';
+import {get, isUndefined} from 'lodash';
 
 const logger = Logger('TapUtil');
 const qFragment = '/sync?REQUEST=doQuery&LANG=ADQL&';
@@ -27,14 +28,16 @@ export const tapHelpId = (id) => `tapSearches.${id}`;
 
 export function getTapBrowserState() {
     const tapBrowserState = getComponentState(tapBrowserComponentKey);
-    const {serviceUrl, schemaOptions, schemaName, tableOptions, tableName, columnsModel} = tapBrowserState || {};
-    return {serviceUrl, schemaOptions, schemaName, tableOptions, tableName, columnsModel};
+    const {serviceUrl, schemaOptions, schemaName, tableOptions, tableName, columnsModel, obsCoreEnabled, obsCoreTables} = tapBrowserState || {};
+    return {serviceUrl, schemaOptions, schemaName, tableOptions, tableName, columnsModel, obsCoreEnabled, obsCoreTables};
 }
 
 export function setTapBrowserState({serviceUrl, schemaOptions=undefined, schemaName=undefined,
-                                       tableOptions=undefined, tableName=undefined, columnsModel=undefined}) {
+                                       tableOptions=undefined, tableName=undefined, columnsModel=undefined,
+                                       obsCoreEnabled= false, obsCoreTables=undefined}) {
     dispatchComponentStateChange(tapBrowserComponentKey,
-        {serviceUrl, schemaOptions, schemaName, tableOptions, tableName, columnsModel});
+        {serviceUrl, schemaOptions, schemaName, tableOptions, tableName, columnsModel,
+            obsCoreEnabled, obsCoreTables});
 }
 
 export function updateTapBrowserState(updates) {
@@ -72,6 +75,48 @@ export function loadTapSchemas(serviceUrl) {
 
     }).catch((reason) => {
         const error = `Failed to get schemas for ${serviceUrl}: ${reason?.message ?? reason}`;
+        logger.error(error);
+        return {error};
+    });
+}
+
+export function loadObsCoreSchemaTables(serviceUrl) {
+
+    const url = serviceUrl + qFragment + 'QUERY=SELECT+s.schema_name,+t.table_name+FROM+TAP_SCHEMA.schemas+s+JOIN+TAP_SCHEMA.tables+t+on+(s.schema_name=t.schema_name)+JOIN+TAP_SCHEMA.columns+c+on+(t.table_name=c.table_name+and+c.column_name+in+(\'s_region\',+\'t_min\',+\'t_max\',+\'em_min\',+\'em_max\',+\'calib_level\',+\'dataproduct_type\',+\'obs_collection\'))+GROUP+BY+s.schema_name,+t.table_name+HAVING+count(c.column_name)=8';
+    const request = makeFileRequest('schemas', url, null, {pageSize: MAX_ROW});
+
+    return doFetchTable(request).then((tableModel) => {
+        if (tableModel.error) {
+            tableModel.error = `Failed to get ObsCore tables for ${serviceUrl}: ${tableModel.error}`;
+            logger.error(tableModel.error);
+        } else if (tableModel?.tableData?.data) {
+            if (getColumnIdx(tableModel, 'schema_name') < 0) {
+                tableModel.error = 'Invalid ObsCore discovery result';
+            }
+            // check if ivoa.ObsCore table is present
+            // if it is, use that as the primary table.
+            /* For ordering results, ideally we could also order by schema_index, if the column exists,
+               but we would need to do a `s.*` in the select list, which not all ADQL implementations like,
+               since the column appears optional.
+               */
+            var colIdx = getColumnIdx(tableModel, 'table_name');
+            tableModel.tableData.data.sort((r1, r2) => {
+                let [s1, s2] = [r1[colIdx], r2[colIdx]];
+                s1 = s1 === '' ? '\u0002' : s1 === null ? '\u0001' : isUndefined(s1) ? '\u0000' : s1;
+                s2 = s2 === '' ? '\u0002' : s2 === null ? '\u0001' : isUndefined(s2) ? '\u0000' : s2;
+                if(s1.toLowerCase() === 'ivoa.obscore') {
+                    return -1;
+                }
+                return (s1 > s2 ? 1 : -1);
+            });
+        } else {
+            logger.debug(`no obsCore tables found for ${serviceUrl}`);
+        }
+        return tableModel;
+
+    }).catch((reason) => {
+        const message = get(reason, 'message', reason);
+        const error = `Failed to get ObsCore-like tables for ${serviceUrl}: ${message}`;
         logger.error(error);
         return {error};
     });
