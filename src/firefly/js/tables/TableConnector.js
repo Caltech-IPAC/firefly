@@ -102,7 +102,7 @@ export class TableConnector {
         TblCntlr.dispatchTableUiUpdate(changes);
     }
 
-    onOptionUpdate({pageSize, columns, showUnits, showTypes, showFilters, sortInfo, filterInfo, sqlFilter}) {
+    onOptionUpdate({pageSize, columns, showUnits, showTypes, showFilters, sortInfo, filterInfo, sqlFilter, resetColWidth}) {
         if (pageSize) {
             this.onPageSizeChange(pageSize);
         }
@@ -133,6 +133,8 @@ export class TableConnector {
             }
         }
 
+        if (resetColWidth) changes.columnWidths = undefined;
+
         if (!isEmpty(changes)) {
             changes.tbl_ui_id = this.tbl_ui_id;
             TblCntlr.dispatchTableUiUpdate(changes);
@@ -144,7 +146,7 @@ export class TableConnector {
         var {showUnits, showTypes, showFilters, pageSize} = this.orig || {};
         
         pageSize = get(ctable, 'request.pageSize') !== pageSize ? pageSize : undefined;
-        this.onOptionUpdate({pageSize,
+        this.onOptionUpdate({pageSize, resetColWidth: true,
                         columns: cloneDeep(get(ctable, 'tableData.columns', [])),
                         showUnits, showTypes, showFilters});
 

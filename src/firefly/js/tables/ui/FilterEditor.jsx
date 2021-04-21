@@ -291,7 +291,7 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange}) {
                     </div>
                     <InputAreaFieldConnected
                         ref={sqlEl}
-                        style={{width: 'calc(100% - 9px)', resize: 'none', ...errStyle}} rows={7}
+                        style={{width: 'calc(100% - 9px)', resize: 'none', backgroundColor: 'white', ...errStyle}} rows={7}
                         validator={FilterInfo.validator.bind(null,columns)}
                         groupKey={groupKey}
                         fieldKey={sqlKey}

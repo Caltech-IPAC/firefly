@@ -244,7 +244,7 @@ export const ColumnOptions = React.memo(({tbl_id, tbl_ui_id, ctm_tbl_id, onChang
                 showOptionButton = {false}
                 showFilters={true}
                 selectable = {true}
-                rowHeight = {24}
+                rowHeight = {27}
                 highlightedRowHandler = {()=>undefined}
             />
         </div>
