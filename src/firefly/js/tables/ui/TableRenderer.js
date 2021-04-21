@@ -269,11 +269,15 @@ function getPropsFromStr(s='') {
 
 export function makeDefaultRenderer(col={}) {
     let renderer = (col.type === 'location' || !isEmpty(col.links)) ? LinkCell : TextCell;
+    renderer.allowActions = true;
     if (col.cellRenderer) {
-        const [name='', propsStr] = col.cellRenderer.split('::');
+        const [name='', propsStr] = col.cellRenderer?.split('::');
         const XRef = RendererXRef[name.trim()];
-        const XRefProps = getPropsFromStr(propsStr.trim());
-        renderer = XRef ? (props) => <XRef {...{...props, ...XRefProps}}/> : renderer;
+        if (XRef) {
+            const XRefProps = getPropsFromStr(propsStr.trim());
+            renderer = (props) => <XRef {...{...props, ...XRefProps}}/>;
+            renderer.allowActions = false;
+        }
     }
     return renderer;
 }
@@ -318,8 +322,10 @@ export const CellWrapper =  React.memo( (props) => {
     const lineHeight = height - 6 + 'px';  // 6 is the top/bottom padding.
 
     const checkOverflow = (ev) => {
-        const c = ev?.currentTarget?.children?.[0] || {};
-        setHasActions(c.clientWidth < c.scrollWidth-6);  // account for paddings
+        if (CellRenderer.allowActions) {
+            const c = ev?.currentTarget?.children?.[0] || {};
+            setHasActions(c.clientWidth < c.scrollWidth-6);  // account for paddings
+        }
     };
 
     return (
@@ -486,7 +492,7 @@ export const inputColumnRenderer = ({tbl_id, cname, tooltips, style={}, isReadOn
             return <div style={{width: '100%', height: '100%', ...style}}>{val}</div>;
         } else {
             return (
-                <div style={{padding: 2, ...style}}>
+                <div style={{...style}}>
                     <InputField
                         validator={ validator && ((v) => validator(v, data, rowIndex, colIdx))}
                         tooltip={tooltips}
@@ -692,7 +698,7 @@ export const TextCell = React.memo(({cellInfo, text, ...rest}) => {
 });
 
 /**
- * An anchor <a> tag
+ * Custom coordinate cell rendering
  * @param p             parameters
  * @param [p.hms]       HMS value
  * @param [p.dms]       DMS value

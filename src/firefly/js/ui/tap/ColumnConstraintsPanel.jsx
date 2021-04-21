@@ -42,7 +42,7 @@ export function ColumnConstraintsPanel({tableModel, style}) {
                                 selectable={true}
                                 showOptionButton={true}
                                 border= {false}
-                                rowHeight={23}
+                                rowHeight={24}
                                 renderers={{
                                     //name: { cellRenderer: createLinkCell({hrefColIdx: totalCol})},
                                     constraints: { cellRenderer: newInputCell}

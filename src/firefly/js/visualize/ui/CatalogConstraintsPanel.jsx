@@ -409,6 +409,7 @@ class ConstraintPanel extends PureComponent {
                                     currentPage={1}
                                     key={tableModel.tbl_id}
                                     error={tableModel.error}
+                                    rowHeight={24}
                                     callbacks={{
                                         onRowSelect: updateRowSelected(tableModel.tbl_id, onTableChanged),
                                         onSelectAll: updateRowSelected(tableModel.tbl_id, onTableChanged)

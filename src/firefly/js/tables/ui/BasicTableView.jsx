@@ -362,6 +362,7 @@ function makeColumnTag(props, col, idx) {
             cell={cell}
             fixed={fixed}
             width={columnWidths[idx]}
+            minWidth={5}
             isResizable={resizable}
             isReorderable={true}
             allowCellsRecycling={true}
