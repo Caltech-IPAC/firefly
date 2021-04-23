@@ -76,6 +76,11 @@ public class DirectStretchUtils {
 
 
             RangeValues rv= state.getRangeValues();
+            RangeValues[] rvAry= new RangeValues[] {
+                    state.getRangeValues(Band.RED),
+                    state.getRangeValues(Band.GREEN),
+                    state.getRangeValues(Band.BLUE)
+            };
             RGBIntensity rgbIntensity = new RGBIntensity();
             boolean useIntensity= false;
             if (rv.rgbPreserveHue() && bands.length==3) {
@@ -96,6 +101,7 @@ public class DirectStretchUtils {
                     idx= (i*yPanels) +j;
                     imageDataAry[idx]= new ImageData(ImageData.ImageType.TYPE_24_BIT,
                             0,state.getRangeValues(), tileSize*i,tileSize*j, width, height);
+                    if (!rv.rgbPreserveHue()) imageDataAry[idx].setRangeValuesAry(rvAry);
                     imageDataAry[idx].stretch3ColorAndSave(float1dAry,imHeadAry,histAry,fr.getHeader(), useIntensity?rgbIntensity:null);
                 }
             }
