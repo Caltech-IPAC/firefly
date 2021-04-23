@@ -312,6 +312,7 @@ public class JOSSOAdapter implements SsoAdapter {
         }
         SSOIdentityManagerWSLocator idManLoc = new SSOIdentityManagerWSLocator();
         idManLoc.setSSOIdentityManagerSoapEndpointAddress(ssoServicesUrl + "services/SSOIdentityManagerSoap");
+        LOGGER.briefDebug("JOSSO IdentityManager endpoint:" + ssoServicesUrl + "services/SSOIdentityManagerSoap");
         return idManLoc;
     }
 
@@ -322,6 +323,7 @@ public class JOSSOAdapter implements SsoAdapter {
         }
         SSOIdentityProviderWSLocator idProvLoc = new SSOIdentityProviderWSLocator();
         idProvLoc.setSSOIdentityProviderSoapEndpointAddress(ssoServicesUrl + "services/SSOIdentityProviderSoap");
+        LOGGER.briefDebug("JOSSO IdentityProvider endpoint:" + ssoServicesUrl + "services/SSOIdentityProviderSoap");
         return idProvLoc;
     }
 
@@ -332,6 +334,7 @@ public class JOSSOAdapter implements SsoAdapter {
         }
         SSOSessionManagerWSLocator idSessLoc = new SSOSessionManagerWSLocator();
         idSessLoc.setSSOSessionManagerSoapEndpointAddress(ssoServicesUrl + "services/SSOSessionManagerSoap");
+        LOGGER.briefDebug("JOSSO SessionManager endpoint:" + ssoServicesUrl + "services/SSOSessionManagerSoap");
         return idSessLoc;
     }
 

@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {flux} from '../../core/ReduxFlux.js';
-import {cloneDeep, get, set} from 'lodash';
+import {get, set, cloneDeep} from 'lodash';
 import shallowequal from 'shallowequal';
 import {PlotlyWrapper} from './PlotlyWrapper.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
@@ -57,11 +57,7 @@ export class PlotlyChartArea extends Component {
         const {widthPx, heightPx, chartId} = np;
         const propsEqual = widthPx === this.props.widthPx && heightPx === this.props.heightPx && chartId === this.props.chartId;
         const stateEqual = shallowequal(ns, this.state);
-        if (!(propsEqual && stateEqual)) {
-            return true;
-        } else {
-            return false;
-        }
+        return !(propsEqual && stateEqual);
     }
 
     componentDidMount() {
@@ -82,9 +78,7 @@ export class PlotlyChartArea extends Component {
     getNextState() {
         const {chartId} = this.props;
         const {data, fireflyData=[], highlighted, layout, fireflyLayout={}, selected, activeTrace} = getChartData(chartId);
-        const {spectralOrder, useSpectrum} = fireflyData?.[activeTrace] || {};
-        return  {data, isLoading: fireflyData.some((e)=>get(e, 'isLoading')), highlighted, selected, layout, activeTrace, xyratio:
-                 fireflyLayout.xyratio, stretch: fireflyLayout.stretch, spectralOrder, useSpectrum};
+        return  {data, isLoading: fireflyData.some((e)=>get(e, 'isLoading')), highlighted, selected, layout, activeTrace, xyratio: fireflyLayout.xyratio, stretch: fireflyLayout.stretch};
     }
 
     storeUpdate() {
@@ -212,7 +206,7 @@ function onClick(chartId) {
     return (evData) => {
         // for scatter, points array has one element, for the top trace only,
         // we should have active trace, its related selected, and its highlight traces on top
-        let {activeTrace=0, curveNumberMap, fireflyData } = getChartData(chartId);
+        const {activeTrace=0, curveNumberMap} = getChartData(chartId);
         const curveNumber = get(evData.points, `${0}.curveNumber`);
         const highlighted = get(evData.points, `${0}.pointNumber`);
         const curveName = get(evData.points, `${0}.data.name`);
