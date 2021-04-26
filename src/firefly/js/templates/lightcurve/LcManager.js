@@ -460,8 +460,7 @@ function clearResults(layoutInfo) {
     clearLcImages();
 
     if (has(layoutInfo, [LC.MISSION_DATA])) {
-        dispatchMountFieldGroup(getViewerGroupKey(get(layoutInfo, LC.MISSION_DATA)), false, false,
-            null, null, [], undefined, true);
+        dispatchMountFieldGroup(getViewerGroupKey(get(layoutInfo, LC.MISSION_DATA)), false, false);
     }
     return smartMerge(layoutInfo, {
         showImages: false,

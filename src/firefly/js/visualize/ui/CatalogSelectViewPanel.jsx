@@ -33,7 +33,6 @@ import './CatalogSelectViewPanel.css';
  */
 export const irsaCatalogGroupKey = 'CATALOG_PANEL';
 export const gkeySpacial = 'CATALOG_PANEL_spacial';
-export const initRadiusArcSec = (10 / 3600) + '';
 
 const RADIUS_COL = '7';
 const COLDEF1 = 9;
@@ -201,7 +200,7 @@ function doCatalog(request) {
     }
 
     const {txtareasql} = FieldGroupUtils.getGroupFields(irsaCatalogGroupKey);
-    const sqlTxt = txtareasql.value.trim();
+    const sqlTxt = txtareasql.value?.trim() ?? '';
     if (sqlTxt.length > 0) {
         tReq.constraints += (addAnd ? ' AND ' : '') + validateSql(sqlTxt);
     }
@@ -439,16 +438,16 @@ function userChangeDispatch() {
                 //
                 // }
 
-                const radius = parseFloat(catTable[currentIdx].cat[RADIUS_COL]);
+                // const radius = parseFloat(catTable[currentIdx].cat[RADIUS_COL]);
                 const coldef = catTable[currentIdx].cat[COLDEF1] === 'null' ? catTable[currentIdx].cat[COLDEF2] : catTable[currentIdx].cat[COLDEF1];
                 inFields = updateMerge(inFields, 'cattable', {
                     indexClicked: currentIdx,
                     value: catTable[currentIdx].value,
                     coldef
                 });
-                inFields = updateMerge(inFields, 'conesize', {
-                    max: sizeFactor * radius / 3600
-                });
+                // inFields = updateMerge(inFields, 'conesize', {
+                //     max: sizeFactor * radius / 3600
+                // });
 
                 const catname = get(inFields, 'cattable.value', '');
                 const formsel = get(inFields, 'ddform.value', 'true');
@@ -657,28 +656,10 @@ function fieldInit() {
             coldef: catmaster[0].catalogs[0].option[0].cat[COLDEF1],
             indexClicked: 0
         },
-        'conesize': {
-            fieldKey: 'conesize',
-            value: initRadiusArcSec,
-            unit: 'arcsec',
-            min: 1 / 3600,
-            max: parseInt(catmaster[0].catalogs[0].option[0].cat[RADIUS_COL]) / 3600
-        },
-        'nedconesize': {
-            fieldKey: 'nedconesize',
-            value: initRadiusArcSec,
-            unit: 'arcsec',
-            min: 1 / 3600,
-            max: 5
-        },
         'tableconstraints': {
             fieldKey: 'tableconstraints',
             value: {constraints: '', selcols: '', errorConstraints: ''},
             tbl_id: ''
-        },
-        'txtareasql': {
-            fieldKey: 'txtareasql',
-            value: ''
         },
         'ddform': {
             fieldKey: 'ddform',

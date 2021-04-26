@@ -58,9 +58,10 @@ function hasNewKeys(infoRef,fieldKey,groupKey) {
 }
 
 function doGetInitialState(groupKey, initialState,  props, confirmValueOnInit= defaultConfirmValue) {
-    const {fieldKey, forceReinit}= props;
+    const {fieldKey}= props;
+    const {keepState=false}= getFieldGroupState(groupKey) ?? {};
     const storeField= get(FieldGroupUtils.getGroupFields(groupKey), [fieldKey]);
-    const initS= forceReinit ? (initialState ||  storeField || {}) : (storeField || initialState || {});
+    const initS= !keepState ? (initialState ||  storeField || {}) : (storeField || initialState || {});
     return {...initS, value: confirmValueOnInit(initS.value,props,initialState)};
 }
 
@@ -158,10 +159,9 @@ export const useFieldGroupConnector= (props) => {
         }
     }
 
-    const getInitialState= () => doingInit ?
-        doGetInitialState(groupKey, initialState,  props, (confirmValueOnInit||confirmValue))
-        : undefined;
-    const [fieldState, setFieldState] = useState(getInitialState());
+    const getInitialState= () => doGetInitialState(groupKey, initialState,  props, (confirmValueOnInit||confirmValue));
+
+    const [fieldState, setFieldState] = useState(() => getInitialState());
 
     const fireValueChange= (payload) => dispatchValueChange({...payload, fieldKey,groupKey});
     const value= confirmValue ? confirmValue(fieldState.value,props,fieldState) : fieldState.value;
@@ -169,17 +169,31 @@ export const useFieldGroupConnector= (props) => {
     const effectChangeAry= [fieldKey, groupKey, fieldState];
     if (confirmValue) effectChangeAry.push(value); // only need to watch value in this case
 
+
     useEffect(() => {
         if (doingInit) {  // called the first time or when fieldKey or groupKey change
             let value= fieldState.value;
+            let newInitState= initialState;
             if (hasNewKeys(infoRef,fieldKey,groupKey)) { // if field and group key changed, whole thing must reinit
                 const {prevFieldKey, prevGroupKey}= infoRef.current;
                 dispatchMountComponent( prevGroupKey, prevFieldKey, false );
                 const initFieldState= getInitialState();
                 setFieldState(initFieldState);
                 value= initFieldState.value;
+                newInitState= initFieldState;
             }
-            dispatchMountComponent( groupKey, fieldKey, true, value, initialState );
+            else {
+                const initFieldState= getInitialState();
+                const groupState = getFieldGroupState(groupKey);
+                const s = groupState?.fields?.[fieldKey];
+                const {keepState= false}= groupState;
+                if (s) {
+                    const rest= omit(s, ['fieldKey', 'groupKey', 'mounted']);
+                    newInitState= keepState  ? {...initFieldState, ...rest} : {...rest, ...initFieldState};
+                    setFieldState(newInitState);
+                }
+            }
+            dispatchMountComponent( groupKey, fieldKey, true, value, newInitState );
             infoRef.current={prevFieldKey: fieldKey, prevGroupKey: groupKey};
         }
         else if (confirmValue) {// in this case the value might have been updated during the render

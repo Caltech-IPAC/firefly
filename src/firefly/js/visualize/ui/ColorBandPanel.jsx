@@ -16,7 +16,7 @@ import {
     PERCENTAGE,  ABSOLUTE,SIGMA, STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL,
     STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from '../RangeValues.js';
 import {getFieldGroupResults, validateFieldGroup} from '../../fieldGroup/FieldGroupUtils.js';
-import {dispatchStretchChange, visRoot} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {dispatchStretchChange, visRoot} from '../ImagePlotCntlr.js';
 import {getActivePlotView, isThreeColor} from '../PlotViewUtil.js';
 import {makeSerializedRv} from './ColorDialog.jsx';
 import {getFluxUnits} from '../WebPlot';
@@ -26,6 +26,8 @@ import {
     makeColorHistImage,
     makeColorTableImage
 } from 'firefly/visualize/rawData/rawAlgorithm/ColorTable.js';
+import {useWatcher} from 'firefly/ui/SimpleComponent.jsx';
+import {dispatchForceFieldGroupReducer} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 
 
 const LABEL_WIDTH= 105;
@@ -52,6 +54,16 @@ export const ColorBandPanel= memo(({fields,plot,band, groupKey}) => {
     const {plotId, plotState}= plot ?? {};
     const doMask= false;
     const {current:lastProps} = useRef({ rvStr:'',plotId:'',groupKey:'',band:'' });
+
+    useEffect(() => {
+        dispatchForceFieldGroupReducer(groupKey);
+    },[]);
+
+    useWatcher([ImagePlotCntlr.ANY_REPLOT, ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW],
+        (action) => {
+            dispatchForceFieldGroupReducer(groupKey, action);
+        }
+     );
 
     useEffect(() => {
         let mounted= true;
@@ -122,7 +134,7 @@ ColorBandPanel.propTypes= {
     groupKey : PropTypes.string.isRequired,
     band : PropTypes.object.isRequired,
     plot : PropTypes.object.isRequired,
-    fields : PropTypes.object.isRequired
+    fields : PropTypes.object
 };
 
 function ColorInput({fields,bandReplot}) {

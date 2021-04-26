@@ -16,7 +16,7 @@ import ComponentCntlr, {DIALOG_OR_COMPONENT_KEY} from './ComponentCntlr.js';
 import AppDataCntlr from './AppDataCntlr.js';
 import BackgroundCntlr from './background/BackgroundCntlr.js';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
-import FieldGroupCntlr, {addFieldGroupRelatedWatcher, MOUNT_COMPONENT} from '../fieldGroup/FieldGroupCntlr.js';
+import FieldGroupCntlr, {MOUNT_COMPONENT} from '../fieldGroup/FieldGroupCntlr.js';
 import MouseReadoutCntlr from '../visualize/MouseReadoutCntlr.js';
 import TablesCntlr from '../tables/TablesCntlr.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
@@ -125,7 +125,6 @@ export const getBootstrapRegistry= once(() => {
         sagaMiddleware.run(masterSaga);
         dispatchAddSaga( imagePlotter);
         dispatchAddSaga( watchReadout);
-        addFieldGroupRelatedWatcher();
         addExtensionWatcher();
     };
 

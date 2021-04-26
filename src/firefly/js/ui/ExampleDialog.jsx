@@ -6,7 +6,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {TargetPanel} from './TargetPanel.jsx';
 import {InputGroup} from './InputGroup.jsx';
-import Validate from '../util/Validate.js';
+import Validate, {intValidator} from '../util/Validate.js';
 import {ValidationField} from './ValidationField.jsx';
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
@@ -26,6 +26,7 @@ import {StatefulTabs, Tab,FieldGroupTabs} from './panel/TabPanel.jsx';
 import {dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {NaifidPanel} from './NaifidPanel.jsx';
 import {useBindFieldGroupToStore} from 'firefly/ui/SimpleComponent.jsx';
+import {getGroupFields} from 'firefly/fieldGroup/FieldGroupUtils.js';
 
 
 
@@ -76,13 +77,6 @@ const defValues= {
         tooltip: 'Please enter an email',
         label: 'Email:'
     },
-    low: {
-        fieldKey: 'low',
-        value: '1',
-        validator: Validate.intRange.bind(null, 1, 100, 'low field'),
-        tooltip: 'this is a tip for low field',
-        label: 'Low Field:'
-    },
     high: {
         fieldKey: 'high',
         value: '3',
@@ -116,7 +110,7 @@ function exDialogReducer(inFields, action) {
         return defValues;
     }
     else {
-        let {low,high}= inFields;
+        let {low={valid:false},high}= inFields;
         // inFields= revalidateFields(inFields);
         if (!low.valid || !high.valid) {
             return inFields;
@@ -286,6 +280,10 @@ const defaultExamples = <div style={{display : 'inline-block'}}>
     {makeSpan(5)}  '20h27m36.3467s +40d01m21.649s Equ B1950'
 </div>;
 
+let lowDefValue=2;
+let lowKey= 'abc';
+
+
 function FieldGroupTestView ({fields={}}) {
 
     var hide = false;
@@ -295,6 +293,13 @@ function FieldGroupTestView ({fields={}}) {
     }
     var field1 = makeField1(hide);
 
+    const lowField= getGroupFields('DEMO_FORM')?.low;
+    const highField= getGroupFields('DEMO_FORM')?.high;
+    if (Number(highField?.value)===100) {
+        lowDefValue=50;
+        lowKey='newLowKey';
+    }
+    console.log(lowField);
 
     const tabX3CheckBoxOps= [
         {label: 'Carrots', value: 'C'},
@@ -311,11 +316,12 @@ function FieldGroupTestView ({fields={}}) {
 
 
 
+
     const validSuggestions = [];
     for (var i=1; i<100; i++) { validSuggestions.push(...[`w${i}mpro`, `w${i}mprosig`, `w${i}snr`]); }
 
     return (
-        <FieldGroup style= {{padding:5}} groupKey={'DEMO_FORM'} initValues={{extraData:'asdf',field1:'4'}}
+        <FieldGroup style= {{padding:5}} groupKey={'DEMO_FORM'}
                     reducerFunc={exDialogReducer} keepState={true}>
             <InputGroup labelWidth={110}>
                 <TargetPanel examples={defaultExamples} />
@@ -353,7 +359,16 @@ function FieldGroupTestView ({fields={}}) {
                                      labelWidth : 100
                                  }} />
                 <ValidationField fieldKey='field4'/>
-                <ValidationField fieldKey='low'/>
+                <ValidationField fieldKey='low'
+                                 key={lowKey}
+                                 initialState= {{
+                                     value: lowDefValue,
+                                     validator: intValidator(1, 100, 'low field')
+                                 }}
+                                 tooltip='this is a tip for low field'
+                                 label= 'Low Field:'
+
+                />
                 <ValidationField fieldKey='high'/>
                 
                 <br/>

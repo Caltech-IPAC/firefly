@@ -11,7 +11,6 @@ import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
-import {dispatchInitFieldGroup} from '../../fieldGroup/FieldGroupCntlr.js';
 import {ColorBandPanel} from './ColorBandPanel.jsx';
 import {ColorRGBHuePreservingPanel} from './ColorRGBHuePreservingPanel.jsx';
 import ImagePlotCntlr, {dispatchStretchChange, visRoot} from '../ImagePlotCntlr.js';
@@ -31,20 +30,15 @@ import {RED_PANEL,
     colorPanelChange, rgbHuePreserveChange} from './ColorPanelReducer.js';
 
 
+const colorPanelReducer= colorPanelChange(Band.NO_BAND);
+const colorPanelRedReducer= colorPanelChange(Band.RED);
+const colorPanelGreenReducer= colorPanelChange(Band.GREEN);
+const colorPanelBlueReducer= colorPanelChange(Band.BLUE);
+const rgbHuePreserveReducer= rgbHuePreserveChange([Band.RED, Band.GREEN, Band.BLUE]);
 
 export function showColorDialog(element) {
-    const content= (
-        <PopupPanel title={'Modify Color Stretch'} >
-            <ColorDialog />
-        </PopupPanel>
-    );
+    const content= <PopupPanel title={'Modify Color Stretch'} > <ColorDialog /> </PopupPanel>;
     DialogRootContainer.defineDialog('ColorStretchDialog', content, element);
-    const watchActions= [ImagePlotCntlr.ANY_REPLOT, ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW];
-    dispatchInitFieldGroup( NO_BAND_PANEL, true, null, colorPanelChange(Band.NO_BAND), watchActions);
-    dispatchInitFieldGroup( RED_PANEL, true, null, colorPanelChange(Band.RED), watchActions);
-    dispatchInitFieldGroup( GREEN_PANEL, true, null, colorPanelChange(Band.GREEN), watchActions);
-    dispatchInitFieldGroup( BLUE_PANEL, true, null, colorPanelChange(Band.BLUE), watchActions);
-    dispatchInitFieldGroup( RGB_HUEPRESERVE_PANEL, true, null, rgbHuePreserveChange([Band.RED, Band.GREEN, Band.BLUE]), watchActions);
     dispatchShowDialog('ColorStretchDialog');
 }
 
@@ -114,7 +108,7 @@ function renderHuePreservingThreeColorView(plot,rgbFields) {
     const groupKey = RGB_HUEPRESERVE_PANEL;
     return (
         <div style={{paddingTop:4}}>
-            <FieldGroup groupKey={groupKey} keepState={false}>
+            <FieldGroup groupKey={groupKey} keepState={false} reducerFunc={rgbHuePreserveReducer} >
                 <ColorRGBHuePreservingPanel {...{plot, rgbFields, groupKey}}/>
                 <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
                     <CompleteButton
@@ -144,7 +138,7 @@ function renderStandardThreeColorView(plot,rFields,gFields,bFields) {
                 <FieldGroupTabs initialState= {{ value:'red' }} fieldKey='colorTabs'>
                     {plotState.isBandUsed(Band.RED) &&
                     <Tab name='Red' id='red'>
-                        <FieldGroup groupKey={RED_PANEL} keepState={true} >
+                        <FieldGroup groupKey={RED_PANEL} keepState={true} reducerFunc={colorPanelRedReducer}>
                             <ColorBandPanel groupKey={RED_PANEL} band={Band.RED} fields={rFields}
                                             plot={plot} key={Band.RED.key}/>
                         </FieldGroup>
@@ -153,7 +147,7 @@ function renderStandardThreeColorView(plot,rFields,gFields,bFields) {
 
                     {plotState.isBandUsed(Band.GREEN) &&
                     <Tab name='Green' id='green'>
-                        <FieldGroup groupKey={GREEN_PANEL} keepState={true} >
+                        <FieldGroup groupKey={GREEN_PANEL} keepState={true} reducerFunc={colorPanelGreenReducer} >
                             <ColorBandPanel groupKey={GREEN_PANEL} band={Band.GREEN} fields={gFields}
                                             plot={plot} key={Band.GREEN.key}/>
                         </FieldGroup>
@@ -162,7 +156,7 @@ function renderStandardThreeColorView(plot,rFields,gFields,bFields) {
 
                     {plotState.isBandUsed(Band.BLUE) &&
                     <Tab name='Blue' id='blue'>
-                        <FieldGroup groupKey={BLUE_PANEL} keepState={true} >
+                        <FieldGroup groupKey={BLUE_PANEL} keepState={true}  reducerFunc={colorPanelBlueReducer} >
                             <ColorBandPanel groupKey={BLUE_PANEL} band={Band.BLUE} fields={bFields}
                                             plot={plot} key={Band.BLUE.key}/>
                         </FieldGroup>
@@ -192,7 +186,7 @@ function renderStandardView(plot,fields) {
 
     return (
         <div>
-            <FieldGroup groupKey={NO_BAND_PANEL} keepState={true} >
+            <FieldGroup groupKey={NO_BAND_PANEL} keepState={true}  reducerFunc={colorPanelReducer} >
                 <ColorBandPanel groupKey={NO_BAND_PANEL} band={Band.NO_BAND} fields={fields} plot={plot}/>
                 <CompleteButton
                     closeOnValid={false}
@@ -212,11 +206,11 @@ function replot(usedBands=null) {
 
     return (request)=> {
 
+        const defReq= request.redPanel || request.greenPanel || request.bluePanel
         if (request.colorDialogTabs) {
 
             replot3Color(
-                request.redPanel, request.greenPanel,
-                request.bluePanel,
+                request.redPanel||defReq, request.greenPanel||defReq, request.bluePanel||defReq,
                 request.colorDialogTabs.colorTabs, usedBands);
         } else {
             replotStandard(request);

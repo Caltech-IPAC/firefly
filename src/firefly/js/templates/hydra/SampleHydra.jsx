@@ -97,7 +97,7 @@ const sampleSearches = [group1, group2];
 function WiseForm ({searchItem}) {
     const groupKey = searchItem.name;
     return (
-        <FieldGroup key={groupKey} groupKey={groupKey} validatorFunc={null} keepState={true}>
+        <FieldGroup key={groupKey} groupKey={groupKey} keepState={true}>
             <h3 style={{textAlign:'center'}}> {searchItem.desc} </h3>
 
             <div style={{padding:'5px 0 5px 0'}}>

@@ -299,7 +299,7 @@ export class HistogramOptions extends Component {
         // to avoid width change due to scroll bar appearing when full height suggest box is rendered
         return (
             <div>
-                <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={false}
+                <FieldGroup groupKey={groupKey} keepState={false}
                             reducerFunc={columnNameReducer(colValStats,basicFieldsReducer)}>
 
                     <ColumnOrExpression {...xProps}/>

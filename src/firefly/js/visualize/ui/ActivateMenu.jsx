@@ -26,7 +26,7 @@ export const ActivateMenu= memo(({ serDefParams, setSearchParams, title, makeDro
             {makeDropDown?.()}
             <div style={{padding: '5px 5px 5px 5px'}}>
                 <div style= {titleStyle}> {title} </div>
-                <FieldGroup groupKey={GROUP_KEY} validatorFunc={null} keepState={false}>
+                <FieldGroup groupKey={GROUP_KEY} keepState={false}>
                     {makeActivateInput(serDefParams)}
                 </FieldGroup>
                 <CompleteButton style={{padding: '20px 0 0 0'}} onSuccess={loadParams} text={'Submit'} groupKey={GROUP_KEY} />
