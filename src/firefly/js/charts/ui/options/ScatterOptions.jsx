@@ -33,8 +33,8 @@ const fieldProps = {labelWidth: 60, size: 15};
  * @returns {*}
  */
 export function yLimitUI() {
-    const upperLimitUI =  get(getAppOptions(), 'charts.upperLimitUI', true);
-    return upperLimitUI || get(getAppOptions(), 'charts.yLimitUI', true);
+    const upperLimitUI =  get(getAppOptions(), 'charts.upperLimitUI', false);
+    return upperLimitUI || get(getAppOptions(), 'charts.yLimitUI', false);
 }
 
 /**

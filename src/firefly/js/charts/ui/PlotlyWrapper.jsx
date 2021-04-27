@@ -64,6 +64,7 @@ function deltas(a, b, wrapArray=true) {
 
 
 const defaultConfig= {
+    doubleClick: false,
     scrollZoom: true,
     displaylogo: false,
     displayModeBar: false,
