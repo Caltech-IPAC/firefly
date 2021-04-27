@@ -27,19 +27,16 @@ var lastEv;
 function ColorPickerWrapper ({callback,color,callbackOnOKOnly, callbackOnBoth}) {
     const [currentColor, setCurrentColor] = useState(color);
 
-    const updateColor= (ev) => {
+    const onChange = (ev) => {
+        lastEv=ev;
         const {r,g,b,a}= ev.rgb;
         setCurrentColor(`rgba(${r},${g},${b},${a})`);
-        callback(ev,false);
+        if (!callbackOnOKOnly && callback) callback(ev,false);
     };
 
     return (
         <div>
-            <SketchPicker
-                         onChangeComplete={ (ev) => {
-                             lastEv=ev;
-                             if (!callbackOnOKOnly) updateColor(ev);
-                         } }
+            <SketchPicker onChange={onChange}
                          color={currentColor} />
             <CompleteButton onSuccess={() => callbackOnOKOnly||callbackOnBoth ? callback(lastEv,true): null}
                             dialogId='ColorPickerDialog'/>
