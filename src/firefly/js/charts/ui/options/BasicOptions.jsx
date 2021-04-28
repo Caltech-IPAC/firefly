@@ -543,7 +543,7 @@ export function basicOptions ({activeTrace:pActiveTrace, chartId, tbl_id, groupK
                                         const rgbStr = `rgba(${r},${g},${b},${a})`;
                                         dispatchValueChange({fieldKey: `data.${activeTrace}.marker.color`, groupKey, value: rgbStr, valid: true});
                                     }
-                                }, groupKey)}>
+                                }, groupKey, 'plots.colorpicker', .5)}>
                             <ToolbarButton icon={MAGNIFYING_GLASS}/>
                         </div>
                     </div>),
