@@ -28,7 +28,7 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
     const {xErrArray, yErrArray, xMax, xMin, yMax, yMin} = getSpectrumProps(tbl_id);
 
     const wideLabel = xMax || xMin || yMax || yMin;
-    const fieldProps = {labelWidth: (wideLabel ? 155 : 116), size: 15};
+    const fieldProps = {labelWidth: (wideLabel ? 155 : 116), size: 20};
 
     const {Xunit, Yunit} = spectrumInputs({activeTrace, tbl_id, chartId, groupKey, fieldProps});
     const {UseSpectrum, X, Xmax, Xmin, Y, Ymax, Ymin, Yerrors, Xerrors, Mode} = scatterInputs({activeTrace, tbl_id, chartId, groupKey, fieldProps});
@@ -59,7 +59,7 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
             </div>
 
             <div style={{margin: '5px 0 0 -22px'}}>
-                <ScatterCommonOptions{...{activeTrace, tbl_id, chartId, groupKey, fieldProps: {labelWidth: 60, size: 15}}}/>
+                <ScatterCommonOptions{...{activeTrace, tbl_id, chartId, groupKey, fieldProps: {labelWidth: 60, size: 20}}}/>
                 <LayoutOptions {...{activeTrace, tbl_id, chartId, groupKey}}
                                XaxisTitle={() => <XaxisTitle readonly={true} labelWidth={60}/>}
                                YaxisTitle={() => <YaxisTitle readonly={true} labelWidth={60}/>}

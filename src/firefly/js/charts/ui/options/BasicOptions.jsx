@@ -332,9 +332,7 @@ export function submitChanges({chartId, fields, tbl_id, renderTreeId}) {
             if (!v) {
                 // make sure color is set to default - otherwise active trace change changes the color of the trace
                 // after using colormap option, the color might not be set
-                if (!fields[`_tables.data.${traceNum}.marker.color`]) {
-                    changes[k] = toRGBA(TRACE_COLORS[traceNum]);
-                }
+                v = fields[`_tables.data.${traceNum}.marker.color`] ? undefined : toRGBA(TRACE_COLORS[traceNum]);
             } else {
                 if (fields[`_tables.data.${traceNum}.marker.color`]) {
                     // do not set color, if using color map
