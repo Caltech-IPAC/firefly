@@ -17,11 +17,11 @@ const DEF_PRESET_COLORS= ['#D0021B', '#F5A623', '#F8E71C', '#8B572A', '#7ED321',
     '#9013FE', '#4A90E2', '#50E3C2', '#B8E986', '#000000', '#4A4A4A', '#9B9B9B', '#FFFFFF'];
 
 const dialogTip=
-`Choose color:
-- color from the swatches at the bottom
-- or choose a color graphically
-- or specify your own by choosing a red, green, and blue (0-255) and alpha percent
-- or enter a RGB Hex color (the RBG hex does not include alpha)`;
+`Choose a color:
+- graphically
+- as an RGB hex color code (does not support alpha)
+- by entering RGB values (0-255) and an alpha in percent (0-100)
+- from the swatches at the bottom`;
 
 
 export function showColorPickerDialog(color, callbackOnOKOnly, callbackOnBoth, cb, Id = '',
