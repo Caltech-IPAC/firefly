@@ -30,7 +30,7 @@
    - push the tags: `git push origin --tags`   
 
 1. **Build docker images and deploy it to IRSA Kubernetes**
-   - Best to use Jenkins: http://irsawebdev5.ipac.caltech.edu:8100/view/IRSA%20k8s/job/ikc_firefly/build
+   - Best to use Jenkins: https://irsawebdev5.ipac.caltech.edu:8443/view/IRSA%20k8s/job/ikc_firefly/build
    - Build the docker with the following docker tags: `rc-yyyy.m`, `release-yyyy.m`,`release-yyyy.m.r`, `latest` 
    - _example:_ from the example above the release would be built with: `rc-2020.2`, `release-2020.2`,`release-2020.2.1`, `latest`
    - `ACTION`: Select 'both'  

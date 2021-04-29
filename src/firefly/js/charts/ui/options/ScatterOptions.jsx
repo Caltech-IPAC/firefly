@@ -26,15 +26,15 @@ import {CheckboxGroupInputField} from '../../../ui/CheckboxGroupInputField.jsx';
 import {getFieldVal} from '../../../fieldGroup/FieldGroupUtils.js';
 
 
-const fieldProps = {labelWidth: 60, size: 15};
+const fieldProps = {labelWidth: 60, size: 20};
 
 /**
  * Should we display Upper Limit field under Y?
  * @returns {*}
  */
 export function yLimitUI() {
-    const upperLimitUI =  get(getAppOptions(), 'charts.upperLimitUI', true);
-    return upperLimitUI || get(getAppOptions(), 'charts.yLimitUI', true);
+    const upperLimitUI =  get(getAppOptions(), 'charts.upperLimitUI', false);
+    return upperLimitUI || get(getAppOptions(), 'charts.yLimitUI', false);
 }
 
 /**
@@ -135,14 +135,12 @@ export function fieldReducer({chartId, activeTrace, tbl_id}) {
         const {data} = chartData;
 
         if (type === VALUE_CHANGE) {
-            if (fieldKey.endsWith('marker.color') && value.length === 1) {
-                if (fieldKey.startsWith('_tables')) {
-                    const colorKey = Object.keys(inFields).find((k) => k.match(/data.+.marker.color$/)) || '';
-                    if (colorKey) inFields = updateSet(inFields, [colorKey, 'value'], '');     // blanks out color when a color map is entered
-                } else {
-                    const colorMapKey = Object.keys(inFields).find((k) => k.match(/_tables.+.marker.color$/)) || '';
-                    if (colorMapKey) inFields = updateSet(inFields, [colorMapKey, 'value'], '');   // blanks out color map when a color is entered
-                }
+            const colorKey = `data.${activeTrace}.marker.color`;
+            const colorMapKey = `_tables.data.${activeTrace}.marker.color`;
+            if (fieldKey === colorKey && value) {
+                if (inFields[colorMapKey]?.value) inFields = updateSet(inFields, [colorMapKey, 'value'], '');    // blanks out color map when a color is entered
+            } else if (fieldKey === colorMapKey && value) {
+                if (inFields[colorKey]?.value) inFields = updateSet(inFields, [colorKey, 'value'], '');          // blanks out color when a color map is entered
             }
             // when field changes, clear error fields
             ['x','y'].forEach((a) => {
