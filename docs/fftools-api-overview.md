@@ -20,8 +20,9 @@ Firefly tools also allows you to expand certain components and receive events ba
  - [Receive events](#getting-events) from these context menus and from any overlay data plotted .
 
 
-###Starting Firefly Tools in JavaScript
-Getting started with firefly tools involves three basic steps.
+### Starting Firefly Tools in JavaScript
+
+Getting started with Firefly Tools involves three basic steps.
 
  1. Load the javascript file `fftools.nocache.js`
  2. Define some divs in you html document where you will load the viewer widgets.
@@ -59,7 +60,7 @@ This is all best explained with a code example. This examples creates a div with
 
  
 
-###FITS Visualization
+### FITS Visualization
 
 A FITS `ImageViewer` is created or referenced by calling the following methods:
 
@@ -92,7 +93,7 @@ A FITS `ImageViewer` is created or referenced by calling the following methods:
 
 
 
-#####**ImageViewer.plot() method**
+##### **ImageViewer.plot() method**
 
 | Parameter  | Description |
 | ---------- | ----------- |
@@ -130,21 +131,21 @@ iv.plot( {  "Type"      : "SERVICE",
 ```
 
 
-#####**ImageViewer.plotURL() method**
+##### **ImageViewer.plotURL() method**
 
 | Parameter  | Description |
 | ---------- | ----------- |
 | url     | string with the url of a FITS image to plot, all other parameters are defaulted, (see ImageViewer.setDefaultParams)|
 
 
-#####**ImageViewer.plotFile() method**
+##### **ImageViewer.plotFile() method**
 
 | Parameter  | Description |
 | ---------- | ----------- |
 | file     | string with full path of a FITS file on the server to plot, all other parameters are defaulted, (see ImageViewer.setDefaultParams)|
 
 
-#####**ImageViewer.plotFileOrURL()** method
+##### **ImageViewer.plotFileOrURL()** method
 
 This shortcut method can be used when there are two ways to access the same file but for some reason the local access is not always available.
 It will try the file first then the URL. All other parameters are defaulted, (see ImageViewer.setDefaultParams)
@@ -155,7 +156,7 @@ It will try the file first then the URL. All other parameters are defaulted, (se
 | url     | string with the url of a FITS image file to plot |
 
 
-#####**ImageViewer.setDefaultParams()** method
+##### **ImageViewer.setDefaultParams()** method
 
 
 Set parameters that will apply to call future FITS plots. See the documentation on `plot()` for defaults.
@@ -166,7 +167,7 @@ Set parameters that will apply to call future FITS plots. See the documentation 
 
 
 
-####**ExternalViewer** and **ExpandedViewer** 
+#### **ExternalViewer** and **ExpandedViewer** 
 
 `firefly.getExternalViewer()` - Get access to the Firefly tools viewer.  The firefly tools viewer will run in a browser tab or window.  It is used to plot an image.
  
@@ -184,9 +185,9 @@ Both viewers have the same methods as `ImageViewer`.
 
 See the **ImageViewer** for the details of each method.
 
-####Region Support
+#### Region Support
 
-#####**firefly.overlayRegionData()** method
+##### **firefly.overlayRegionData()** method
 
 `firefly.overlayRegionData(regionData, regionLayerId, title, plotId)` - overlay region data on an image plot with the given id
 
@@ -198,7 +199,7 @@ See the **ImageViewer** for the details of each method.
 | plotId | string | a string uniquely describing the plot |
 
 
-#####**firefly.removeRegionData()** method
+##### **firefly.removeRegionData()** method
 
 `firefly.removeRegionData(regionData, regionLayerId)` - remove region data from the given region layer
 
@@ -252,7 +253,7 @@ function onFireflyLoaded() {
 
 #### Utilities
 
-#####**firefly.serializeRangeValues()** method
+##### **firefly.serializeRangeValues()** method
 
 `firefly.serializeRangeValues(stretchType,lowerValue,upperValue,algorithm)` - serialize a stretch request into a string, for use with the "RangeValues" parameter
 
@@ -276,14 +277,14 @@ iv.plot( {  'Type'      : 'SERVICE',
 ```
 
 
-#####**Other Utility Methods for FITS visualization** 
+##### **Other Utility Methods for FITS visualization** 
 
 | Method  | parameters | Description |
 | ------- | ---------- | ----------- |
 |firefly.setGlobalDefaultParams(params) | a object literal such as ImageViewer.plot() uses |set global fallback params for every image plotting call |
 |firefly.setRootPath(rootURLPath) |the root URL to be prepended to any relative URL. |sets the root path for any relative URL. If this method has not been called then relative URLs use the page's root.|
 
-#####**Tracking the mouse on the FITS Viewer** 
+##### **Tracking the mouse on the FITS Viewer** 
 
 The following example will plot a fits image then add a callback to get the mouse readout and log it to the console.
 
@@ -314,7 +315,7 @@ actions.extensionAdd(mouseReadoutExt);
 
 
 
-###Table Visualization
+### Table Visualization
 
 Usage: firefly.showTable(parameters, div)
 
@@ -363,7 +364,7 @@ The Table tools currently supports the following file formats:
  - TSV - first row should be column header
  - FITS Tables
 
-###XY Plot Visualization
+### XY Plot Visualization
 
 Usage: firefly.showPlot(parameters, div)
 
@@ -409,7 +410,7 @@ XY Plot supports the same table formats as Table does:
  - TSV - first row should be column headers
  - FITS Tables
 
-###Histogram Visualization
+### Histogram Visualization
 
 Usage: firefly.showHistogram((parameters, div)
 
@@ -470,12 +471,12 @@ firefly.showHistogram(
 
 
 
-###Adding Context Extensions to FITS viewer
+### Adding Context Extensions to FITS viewer
 
 Context extensions make it possible to add user-defined actions on certain operations. When an extension is added, FITS viewer will present an extra menu item in the context menu of the operation, on which the extension is defined. These are the operations on which context extensions can be added:
 
   - Area Select (square)
-  -  Line Select
+  - Line Select
   - Point Select
   - Circle Select (*coming soon*)
 
@@ -528,11 +529,11 @@ callback function takes one parameter,  an object literal, the fields vary depen
 
 
 
-###Getting Events
+### Getting Events
 
 *todo put event docs here*
 
-###Connecting FITS Viewers to table
+### Connecting FITS Viewers to table
 
 If you have created a table, and that table has image metadata so that a line in the table references a fits file, then you can connect a FITS ImageViewer to the table.
 
@@ -570,7 +571,7 @@ firefly.addDataViewer( {'DataSource'  : 'URL',
                                    'previewHere' );
 ```
 
-###Connecting Coverage plot to table
+### Connecting Coverage plot to table
 
 `firefly.addCoveragePlot(params, div)` - add a coverage plot to a div
 
@@ -615,7 +616,7 @@ firefly.addCoveragePlot({"QUERY_ID" : "tableHere",
 ```                                     
 
 
-###Connecting XY Viewers to table
+### Connecting XY Viewers to table
 
 `firefly.addXYPlot(params, div)` - add an XY Plot to a div
 
@@ -644,6 +645,6 @@ firefly.addXYPlot({"QUERY_ID" : "tableHere",
                    "yCol" : "band"}, "xyPlotHere" );
 ```
 
-###More Code Examples
+### More Code Examples
 
 [see fftools-api-code-examples.md](fftools-api-code-examples.md)

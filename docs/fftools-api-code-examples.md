@@ -1,7 +1,8 @@
 ## Code Examples Using Firefly Tools
 
-###Starting Firefly Tools in JavaScript
-Firefly Tools are loaded when you load`fftools.nocache.js` from a server of your choice. For example, to load Firefly Tools from your local server, include the following declaration in your HTML file:
+### Starting Firefly Tools in JavaScript
+
+Firefly Tools are loaded when you load `fftools.nocache.js` from a server of your choice. For example, to load Firefly Tools from your local server, include the following declaration in your HTML file:
 
 ```html
  <script type="text/javascript" language="javascript" src="http://localhost:8080/fftools/fftools.nocache.js">   
@@ -33,6 +34,7 @@ function onFireflyLoaded() {
 ```
 
 #### Example 2
+
 It is very easy to plot a table. The table can be used by itself or you can attach an image viewer to the table. The source for the table tool can be an IPAC table, a CSV, or a TSV file.
 
 The following examples creates a side-by-side HTML layout.  The table is plotted in the `<div>` id `table2Here` and the related image is plotting in the `<div>`  id `previewHere`. The table contains a column with the URL of an image related for that row. Every time the user clicks on a row the image will update.
@@ -57,6 +59,7 @@ The following examples creates a side-by-side HTML layout.  The table is plotted
 ```
 
 #### Example 3
+
 Using a similar approach you can create a coverage plot from a table that has columns with the four corners of each image. The HTML `<div>` declaration is omitted for brevity.
 
 
@@ -78,6 +81,7 @@ Using a similar approach you can create a coverage plot from a table that has co
 
 
 #### Example 4
+
 In this example, we create four image viewers. Each belong to the same group `wise-group`. We then set some global parameters so all the plots display the same. Now we plot each of the four images by specifying the URL of the FITS file. By doing this, all the plotting controls will work on all four images simultaneously. 
 
 
