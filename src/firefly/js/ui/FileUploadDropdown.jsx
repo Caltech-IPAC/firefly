@@ -6,14 +6,15 @@ import React, {useState} from 'react';
 import {FormPanel} from './FormPanel.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 import {panelKey, FileUploadViewPanel, resultSuccess, resultFail} from '../visualize/ui/FileUploadViewPanel.jsx';
+import {getAppOptions} from 'firefly/api/ApiUtil.js';
 
 const dropdownName = 'FileUploadDropDownCmd';
-const helpId = 'basics.searching';
 
 const maskWrapper= { position:'absolute', left:0, top:0, width:'100%', height:'100%' };
 
 export const FileUploadDropdown= () =>{
     const [doMask, changeMasking]= useState(() => false);
+    const helpId = getAppOptions()?.uploadPanelHelpId ?? 'basics.searching';
     return (
         <div style={{width: '100%'}}>
             <FormPanel

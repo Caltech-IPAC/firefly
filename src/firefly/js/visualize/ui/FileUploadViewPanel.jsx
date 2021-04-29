@@ -21,7 +21,7 @@ import {makeFileRequest} from '../../tables/TableRequestUtil.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
 import WebPlotRequest from '../WebPlotRequest.js';
-import {dispatchPlotHiPS, dispatchPlotImage, visRoot} from '../ImagePlotCntlr.js';
+import {dispatchPlotImage, visRoot} from '../ImagePlotCntlr.js';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
@@ -44,7 +44,7 @@ import {FileAnalysisType, Format} from '../../data/FileAnalysis';
 import {dispatchValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 import {CompleteButton,NONE} from 'firefly/ui/CompleteButton.jsx';
 import {createNewRegionLayerId} from 'firefly/drawingLayers/RegionPlot.js';
-import {PLOT_ID} from 'firefly/visualize/saga/CoverageWatcher.js';
+import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
 
 
 export const panelKey = 'FileUploadAnalysis';
@@ -65,6 +65,14 @@ const SUPPORTED_TYPES=[
     FileAnalysisType.Spectrum,
     FileAnalysisType.REGION,
 ];
+
+const TABLES_ONLY_SUPPORTED_TYPES=[
+    FileAnalysisType.Table,
+];
+
+
+const isTablesOnly= () => getAppOptions()?.uploadPanelLimit==='tablesOnly';
+
 
 const uploadOptions = 'uploadOptions';
 
@@ -87,6 +95,8 @@ export function FileUploadViewPanel() {
             dispatchComponentStateChange(panelKey, {isLoading: false});
         }
     });
+
+    const tablesOnly= isTablesOnly();
 
     const workspace = getWorkspaceConfig();
     const uploadMethod = [{value: FILE_ID, label: 'Upload file'},
@@ -117,7 +127,7 @@ export function FileUploadViewPanel() {
                                 {report && <CompleteButton text='Clear File' groupKey={NONE} onSuccess={() =>clearReport()}/> }
                             </div>
                     </div>
-                    <FileAnalysis {...{report, summaryModel, detailsModel}}/>
+                    <FileAnalysis {...{report, summaryModel, detailsModel,tablesOnly}}/>
                     <ImageDisplayOption/>
                 </div>
             </FieldGroup>
@@ -134,18 +144,49 @@ const getPartCnt= () => currentReport?.parts?.length ?? 1;
 const getFirstPartType= () => currentSummaryModel?.tableData.data[0]?.[1];
 const getFileFormat= () => currentReport?.fileFormat;
 const isRegion= () => getFirstPartType()===FileAnalysisType.REGION;
-const isSupported= () => getFirstPartType() && (SUPPORTED_TYPES.includes(getFirstPartType()) || getFileFormat()===Format.FITS);
+
+function isSinglePartFileSupported() {
+    const supportedTypes= isTablesOnly() ? TABLES_ONLY_SUPPORTED_TYPES : SUPPORTED_TYPES;
+    return getFirstPartType() && (supportedTypes.includes(getFirstPartType()));
+}
+
+function isFileSupported() {
+    return getFirstPartType() && (SUPPORTED_TYPES.includes(getFirstPartType()) || getFileFormat()===Format.FITS);
+}
 
 
+function getFirstExtWithData(parts) {
+    return isTablesOnly() ?
+        parts.findIndex((p) => p.type.includes(FileAnalysisType.Table)) :
+        parts.findIndex((p) => !p.type.includes(FileAnalysisType.HeaderOnly));
+}
+
+
+
+function tablesOnlyResultSuccess() {
+    const tableIndices = getSelectedRows(FileAnalysisType.Table);
+    const imageIndices = getSelectedRows(FileAnalysisType.Image);
+
+    if (tableIndices.length>0) {
+        imageIndices.length>0 && showInfoPopup('Only loading the tables, ignoring the images.');
+        sendTableRequest(tableIndices, getFileCacheKey());
+        return true;
+    }
+    else {
+        showInfoPopup('You may only upload tables.');
+        return false;
+    }
+}
 
 
 export function resultSuccess(request) {
+    if (isTablesOnly()) return tablesOnlyResultSuccess();
     const fileCacheKey = getFileCacheKey();
 
-    const tableIndices = getSelectedRows('Table');
-    const imageIndices = getSelectedRows('Image');
+    const tableIndices = getSelectedRows(FileAnalysisType.Table);
+    const imageIndices = getSelectedRows(FileAnalysisType.Image);
 
-    if (!isSupported()) {
+    if (!isFileSupported()) {
         showInfoPopup(`File type of ${getFirstPartType()} is not supported.`);
         return false;
     }
@@ -210,11 +251,12 @@ function getNextState() {
             };
             modelToUseForDetails= currentSummaryModel;
 
-            const firstExtWithData = parts.findIndex((p) => !p.type.includes('HeaderOnly'));
+            const firstExtWithData= getFirstExtWithData(parts);
             if (firstExtWithData >= 0) {
                 const selectInfo = SelectInfo.newInstance({rowCount: data.length});
                 selectInfo.setRowSelect(firstExtWithData, true);        // default select first extension/part with data
                 currentSummaryModel.selectInfo = selectInfo.data;
+                modelToUseForDetails.highlightedRow= firstExtWithData;
             }
 
         }
@@ -337,7 +379,7 @@ function AnalysisTable({summaryModel, detailsModel, report}) {
     );
 }
 
-function SingleDataSet({type, desc, detailsModel, report, supported=isSupported()}) {
+function SingleDataSet({type, desc, detailsModel, report, supported=isSinglePartFileSupported()}) {
     const showDetails= supported && detailsModel;
     return (
         <div style={{display:'flex', flex:'1 1 auto', justifyContent: showDetails?'start':'center'}}>
@@ -375,18 +417,24 @@ function Details({detailsModel}) {
 }
 
 
-const FileAnalysis = React.memo( ({report, summaryModel, detailsModel}) => {
-    const isUnknownFormat = get(report, 'fileFormat') === UNKNOWN_FORMAT;
-    const tableArea = isUnknownFormat ?
-        <div style={{flexGrow: 1, marginTop: 40, textAlign:'center', fontSize: 'larger', color: 'red'}}>
-            Error: Unrecognized Format
-        </div> :
-        <AnalysisTable {...{summaryModel, detailsModel, report}} />;
+function getTableArea(report, summaryModel, detailsModel) {
+    if (report?.fileFormat === UNKNOWN_FORMAT) {
+        return (
+            <div style={{flexGrow: 1, marginTop: 40, textAlign:'center', fontSize: 'larger', color: 'red'}}>
+                Error: Unrecognized Format
+            </div>
+        );
+    }
+    return <AnalysisTable {...{summaryModel, detailsModel, report}} />;
+}
+
+
+const FileAnalysis = React.memo( ({report, summaryModel, detailsModel, tablesOnly}) => {
     if (report) {
         return (
             <div className='FileUpload__report'>
                 {summaryModel.tableData.data.length>1 && <AnalysisInfo report={report} />}
-                {tableArea}
+                {getTableArea(report, summaryModel, detailsModel)}
             </div>
         );
     }
@@ -396,9 +444,9 @@ const FileAnalysis = React.memo( ({report, summaryModel, detailsModel}) => {
             You can load any of the following types of files:
             <ul>
                 <li style={liStyle}>Custom catalog in IPAC, CSV, TSV, VOTABLE, or FITS table format</li>
-                <li style={liStyle}>Any FITS file with tables or images (including multiple HDUs)</li>
-                <li style={liStyle}>A Region file</li>
-                <li style={liStyle}>A MOC FITS file</li>
+                {!tablesOnly && <li style={liStyle}>Any FITS file with tables or images (including multiple HDUs)</li>}
+                {!tablesOnly && <li style={liStyle}>A Region file</li> }
+                {!tablesOnly && <li style={liStyle}>A MOC FITS file</li> }
             </ul>
         </div>);
 
@@ -428,17 +476,7 @@ function getSelectedRows(type) {
 function sendRegionRequest(fileCacheKey) {
     const drawLayerId = createNewRegionLayerId();
     const title= currentReport.fileName ?? 'Region File';
-    // if (!getPlotViewAry(visRoot())?.length) {
-    //     const wpRequest= WebPlotRequest.makeHiPSRequest('ivo://CDS/P/2MASS/color');
-    //     const {viewerId=''} = getAViewFromMultiView(getMultiViewRoot(), IMAGE) || {};
-    //     dispatchPlotHiPS({plotId: PLOT_ID, viewerId, wpRequest, pvOptions: {displayFixedTarget:false} });
-    //     setTimeout(() => {
-    //         dispatchCreateRegionLayer(drawLayerId, title, fileCacheKey, null);
-    //     }, 2000);
-    // }
-    // else {
-        dispatchCreateRegionLayer(drawLayerId, title, fileCacheKey, null);
-    // }
+    dispatchCreateRegionLayer(drawLayerId, title, fileCacheKey, null);
     if (!getPlotViewAry(visRoot())?.length) {
         showInfoPopup('The region file is loaded but you will not be able to see it until you load an image (FITS or HiPS)', 'Warning');
     }
