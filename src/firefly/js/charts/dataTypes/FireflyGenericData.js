@@ -105,7 +105,7 @@ export function createChartTblRequest(chartId, traceNum, tablesource) {
     let sreq = cloneRequest(request, {
         startIdx: 0,
         pageSize: MAX_ROW,
-        inclCols: Object.entries(mappings).filter(([k, v]) => !numberOrArrayProps.includes(k) || Number.isNaN(parseFloat(v))).map(([k, v]) => {
+        inclCols: Object.entries(mappings).filter(([k, v]) => !(numberOrArrayProps.includes(k) && !isNaN(v))).map(([k, v]) => {   // if field can be a number and is a number, then skip
             // we'd like expression columns to be named as the paths to trace data arrays, ex. data[0].x
             // otherwise use column names to preserve original column attributes (type, format, etc.)
             const asStr = colNames.includes(v) || colNames.includes(stripColumnNameQuotes(v)) ? '' :
