@@ -272,7 +272,6 @@ const FieldGroupTest= () => {
     return <FieldGroupTestView fields={fields} />;
 };
 
-// initValues={{extraData:'asdf'}}
 
 const makeSpan= (w) => <span style={{paddingLeft: `${w}px`}}/>;
 
@@ -287,7 +286,7 @@ const defaultExamples = <div style={{display : 'inline-block'}}>
     {makeSpan(5)}  '20h27m36.3467s +40d01m21.649s Equ B1950'
 </div>;
 
-function FieldGroupTestView ({fields}) {
+function FieldGroupTestView ({fields={}}) {
 
     var hide = false;
     if (fields) {
