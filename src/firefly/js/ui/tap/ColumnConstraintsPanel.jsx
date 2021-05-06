@@ -93,10 +93,12 @@ export function getTableConstraints(tbl_id) {
 
     // collect the names of all selected columns
     let allSelected = true;
+    let selcolsArray = [];
     let selcolsFragment = tbl_data.reduce((prev, d, idx) => {
             if ((sel_info.selectAll && (!sel_info.exceptions.has(idx))) ||
                 (!sel_info.selectAll && (sel_info.exceptions.has(idx)))) {
                 prev += d[0] + ',';
+                selcolsArray.push(d[0]);
             } else {
                 allSelected = false;
             }
@@ -107,7 +109,7 @@ export function getTableConstraints(tbl_id) {
         selcolsFragment = '';
     }
 
-    return {whereFragment, selcolsFragment, errors, filters};
+    return {whereFragment, selcolsFragment, errors, filters, selcolsArray};
 }
 
 /**
