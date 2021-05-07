@@ -215,5 +215,5 @@ export function tableColumnsConstraints(columnsModel) {
     const colsToSelect = selcolsFragment.lastIndexOf(',') > 0 ?
         selcolsFragment.substring(0, selcolsFragment.lastIndexOf(',')) : selcolsFragment;
 
-    return {valid: true, where: whereFragment, selcols: (colsToSelect.length > 0) ? colsToSelect : ''};
+    return {valid: true, where: whereFragment, selcols: (colsToSelect.length > 0) ? colsToSelect : '', selcolsArray: tableconstraints.selcolsArray};
 }
