@@ -492,7 +492,9 @@ function findADataSourceColumn(table) {
 
 function findTableMetaEntry(table,ids) {
     const testIdAry= isArray(ids) ? ids : [ids];
-    return testIdAry.find( (key) => getMetaEntry(table,key));
+    const id= testIdAry.find( (key) => getMetaEntry(table,key));
+    if (!id) return;
+    return getMetaEntry(table,id);
 }
 
 

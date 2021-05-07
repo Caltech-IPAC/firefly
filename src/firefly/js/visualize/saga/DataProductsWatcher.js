@@ -279,7 +279,7 @@ function removeAllProducts(activateParams, tbl_id) {
     if (activeTblId===tbl_id || !isMetaDataTable(activeTblId)) {
         const inViewerIds= getViewerItemIds(getMultiViewRoot(), imageViewerId);
         inViewerIds.forEach( (plotId) => dispatchDeletePlotView({plotId}));
-        dispatchUpdateDataProducts(dpId,dpdtMessage('No Data Products'));
+        dispatchUpdateDataProducts(dpId,dpdtMessage('No Data Products', undefined, {noProductsAvailable:true}));
     }
 }
 

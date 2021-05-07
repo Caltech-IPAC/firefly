@@ -13,14 +13,16 @@ const closeExpanded= () => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)
 /**
  * A wrapper component for MultiImageViewer where expended mode is supported.
  */
-export function MultiProductViewerContainer({ metaDataTableId, imageExpandedMode=false, closeable=true, insideFlex=false}) {
-    
+export function MultiProductViewerContainer({ metaDataTableId, imageExpandedMode=false,
+                                              closeable=true, insideFlex=false,
+                                              noProductMessage= 'No Data Products Available'}) {
+
     if (imageExpandedMode) {
         return  ( <ImageExpandedMode key='results-plots-expanded' insideFlex = {insideFlex}
                         closeFunc={closeable ? closeExpanded : null}/>
                 );
     } else {
-        return ( <MetaDataMultiProductViewer metaDataTableId={metaDataTableId} /> );
+        return ( <MetaDataMultiProductViewer metaDataTableId={metaDataTableId} noProductMessage={noProductMessage}/> );
     }
 }
 

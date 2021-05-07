@@ -55,7 +55,7 @@ MultiProductViewer.propTypes= {
 };
 
 
-const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId}) => {
+const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId, noProductMessage}) => {
     const {renderTreeId} = useContext(RenderTreeIdCtx);
     const [currentCTIChoice, setCurrentCTIChoice] = useState(undefined);
     const [lookupKey, setLookKey] = useState(undefined);
@@ -75,7 +75,7 @@ const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId})
         message,url, isWorkingState, menuKey,
         activeMenuLookupKey,singleDownload= false,
         chartTableDefOption=SHOW_CHART, imageActivate,
-        allowsInput=false, serDefParams= undefined}= dataProductsState;
+        allowsInput=false, serDefParams= undefined, noProductsAvailable=false}= dataProductsState;
 
     const searchParams= getSearchParams(serviceParamsAry,activeMenuLookupKey,menuKey);
 
@@ -111,7 +111,11 @@ const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId})
     useEffect(() => {
         if (allowsInput && !searchParams) return;
         const deActivate= activate?.(menu,searchParams);
-        return () => isFunction(deActivate) && deActivate();
+        return () => isFunction(deActivate) &&
+            deActivate( {
+                nextDisplayType:displayType,
+                nextMetaDataTableId:metaDataTableId
+            });
     }, [activate,searchParams,allowsInput]);
 
 
@@ -147,15 +151,15 @@ const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId})
             }
         case DPtypes.MESSAGE :
         case DPtypes.PROMISE :
-            if (dataProductsState.complexMessage) { //todo
-                                                  // make this work
+            if (dataProductsState.complexMessage) {
                 return (<ComplexMessage {...{menu, makeDropDown, message,
                     detailMsgAry:dataProductsState.detailMsgAry, badUrl:dataProductsState.badUrl,
                     resetMenuKey:dataProductsState.resetMenuKey, dpId, activeMenuLookupKey, doResetButton }} />);
 
             }
             else {
-                return (<ProductMessage {...{menu, singleDownload, makeDropDown, isWorkingState, message}} />);
+                const useMessage= noProductsAvailable && noProductMessage ? noProductMessage : message;
+                return (<ProductMessage {...{menu, singleDownload, makeDropDown, isWorkingState, message:useMessage}} />);
             }
         case DPtypes.DOWNLOAD_MENU_ITEM :
             return (<ProductMessage {...{menu, singleDownload, makeDropDown, isWorkingState:false, message}} />);
@@ -176,7 +180,13 @@ const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId})
         case DPtypes.PNG :
             return (<ProductPNG {...{makeDropDown, url}}/>);
     }
-    return (<div/>);
+
+    if (noProductMessage) {
+        return (<ProductMessage {...{menu, singleDownload, makeDropDown, isWorkingState, message:noProductMessage}} />);
+    }
+    else {
+        return (<div/>);
+    }
 });
 
 
@@ -320,7 +330,7 @@ const OtherOptionsDropDown= ({menu, dpId, activeMenuLookupKey, resetAllSearchPar
                                } }/> )
             )}
         </SingleColumnMenu> );
-}
+};
 
 OtherOptionsDropDown.propTypes= { dpId : string, menu : array, activeMenuLookupKey : string, };
 
