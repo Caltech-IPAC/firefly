@@ -1,4 +1,4 @@
-import {get, isEmpty} from 'lodash';
+import {get, isEmpty, uniqueId} from 'lodash';
 import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
 import {getCellValue, doFetchTable, hasRowAccess} from '../tables/TableUtil.js';
 import {
@@ -191,7 +191,7 @@ export function makeObsCoreRequest(dataSource, positionWP, titleStr) {
     else {
         r.setTitleOptions(TitleOptions.FILE_NAME);
     }
-    r.setPlotId(dataSource);
+    r.setPlotId(uniqueId('obscore-'));
     if (positionWP) r.setOverlayPosition(positionWP);
 
     return r;

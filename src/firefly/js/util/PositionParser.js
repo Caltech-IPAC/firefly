@@ -53,13 +53,13 @@ export function parsePosition(s) {
         let validRa= true;
         let validDec= true;
         try {
-            ra=  CoordUtil.convertStringToLon(raStr, coordSys);
+            ra=  isNaN(Number(raStr)) ? CoordUtil.convertStringToLon(raStr, coordSys) : Number(raStr);
         } catch (e) {
             raParseErr = e;
             validRa = false;
         }
         try {
-            dec= CoordUtil.convertStringToLat(decStr, coordSys);
+            dec= isNaN(Number(decStr)) ? CoordUtil.convertStringToLat(decStr, coordSys) : Number(decStr);
         } catch (e) {
             decParseErr = e;
             validDec = false;

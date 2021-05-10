@@ -238,7 +238,7 @@ export const TableSearchMethods = FunctionalTableSearchMethods;
 function SpatialSearch({cols, columnsModel, groupKey, fields, initArgs={}, obsCoreEnabled, useConstraintReducer, useFieldGroupReducer}) {
     const panelTitle = !obsCoreEnabled ? Spatial : 'Location';
     const panelValue = Spatial;
-    const panelPrefix = getPanelPrefix(Spatial);
+    const panelPrefix = getPanelPrefix(panelTitle);
     const {POSITION:worldPt, radiusInArcSec}= initArgs;
     const [spatialMethod, setSpatialMethod] = useState(TapSpatialSearchMethod.Cone.value);
     const [spatialRegionOperation, setSpatialRegionOperation] = useState('contains_shape');
@@ -342,7 +342,7 @@ function SpatialSearch({cols, columnsModel, groupKey, fields, initArgs={}, obsCo
                             {label: 'Observation boundary contains shape', value: 'contains_shape'},
                             {label: 'Observation boundary is contained by shape', value: 'contained_by_shape'},
                             {label: 'Observation boundary intersects shape', value: 'intersects'},
-                            {label: 'central point (s_ra, s_dec) is contained by shape', value: 'center_contained'},
+                            {label: 'Central point (s_ra, s_dec) is contained by shape', value: 'center_contained'},
                         ]}
                     initialState={{
                         value: 'contains_shape'

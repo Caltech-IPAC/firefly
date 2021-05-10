@@ -42,7 +42,7 @@ public class ImageData implements Serializable {
     private byte[][] save3CStretch;
 
     private final ImageType imageType;
-    private final RangeValues rangeValuesAry[];
+    private final RangeValues[] rangeValuesAry;
     private final int x;
     private final int y;
     private final int width;
@@ -152,6 +152,13 @@ public class ImageData implements Serializable {
         rangeValuesAry[idx] = updatedRangeValues;
     }
 
+    public void setRangeValuesAry(RangeValues[] rvAry) {
+        for(int i= 0; i<3; i++) {
+            if (i<rvAry.length && rvAry[i]!=null) {
+                this.rangeValuesAry[i]= rvAry[i];
+            }
+        }
+    }
 
 
    // Testing Mask 07/16/16 LZ

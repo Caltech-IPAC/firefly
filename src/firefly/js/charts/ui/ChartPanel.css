@@ -179,4 +179,7 @@
 .ChartToolbar__clear-selected {
     background-image: url("~images/icons-2014/24x24_CheckmarkOff_Circle.png");
 }
-
+/* hide the popup doubleclick tooltips since we turned it off */
+div.plotly-notifier {
+    visibility: hidden;
+}

@@ -266,6 +266,7 @@ export function BasicUI(props) {
                             value={tableName}
                             onSelect={(selectedTapTable) => {
                                 setTableName(selectedTapTable);
+                                dispatchValueChange({groupKey: gkey, fieldKey: 'tableName', value: selectedTapTable});
                             }}
                         />
                     </div>

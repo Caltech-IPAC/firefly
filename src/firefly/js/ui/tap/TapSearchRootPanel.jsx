@@ -28,6 +28,7 @@ import { gkey, SectionTitle, AdqlUI, BasicUI} from 'firefly/ui/tap/TableSelectVi
 
 
 const SERVICE_TIP= 'Select a TAP service, or type to enter the URL of any other TAP service';
+const ADQL_LINE_LENGTH = 100;
 
 //-------------
 //-------------
@@ -338,7 +339,24 @@ function getAdqlQuery(showErrors= true) {
     if (adqlFragment.where) {
         constraints += (addAnd ? ' AND ' : '') + `(${adqlFragment.where})`;
     }
-    const selcols = adqlFragment.selcols || '*';
+    let selcols = adqlFragment.selcols || '*';
+
+    // If the line is long, rebuild the line from array of column names
+    // breaking at ADQL_LINE_LENGTH
+    if (selcols.length > ADQL_LINE_LENGTH) {
+        selcols = '';
+        let line = adqlFragment.selcolsArray[0];
+        const colsCopy = adqlFragment.selcolsArray.slice(1);
+        colsCopy.forEach((value) => {
+            const nextColumn = ',' + value;
+            if ((line + nextColumn).length > ADQL_LINE_LENGTH){
+                selcols += line + '\n';
+                line = '    ';
+            }
+            line += nextColumn;
+        });
+        selcols += line;
+    }
 
     if (constraints) {
         constraints = `WHERE ${constraints}`;
@@ -347,5 +365,5 @@ function getAdqlQuery(showErrors= true) {
     // if we use TOP  when maxrec is set `${maxrec ? `TOP ${maxrec} `:''}`,
     // overflow indicator will not be included with the results
     // and we will not know if the results were truncated
-    return `SELECT ${selcols} FROM ${tableName} ${constraints}`;
+    return `SELECT ${selcols} \nFROM ${tableName} \n${constraints}`;
 }
