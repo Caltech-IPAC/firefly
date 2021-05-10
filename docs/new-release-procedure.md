@@ -51,7 +51,7 @@
    - Look at test pages
      - http://localhost:8090/firefly/test
    
-1. **Merge RR, Reset the Version in config to development, Push dev**
+1. **Merge RC, Reset the Version in config to development, Push dev**
    - merge rc into dev
    - In the `dev` branch, Edit `firefly/config/app.config` so that you are resetting 
    - Modify:
