@@ -14,19 +14,21 @@
 - TAP search panel have substantial enhancements for ObsCore searches
 - First release for the Spectral Viewing mode for charts
 - Target panel recognizes new type of ra/dec input
-- Docker now support setting the cleanup internal
+- Charting UI has had substantial clean up and bug fixes
+- Docker container now supports setting the cleanup interval (`docker run --rm ipac/firefly:latest --help`)
 
 
 ##### _UI_
 - Spectral Viewer ([Firefly-691](https://github.com/Caltech-IPAC/firefly/pull/1079))
 - TAP ObsCore search ([PR](https://github.com/Caltech-IPAC/firefly/pull/1073))
 - KOA added to List of TAP services ([PR](https://github.com/Caltech-IPAC/firefly/pull/1069))
+- Charting UI improvements ([PR](https://github.com/Caltech-IPAC/firefly/pull/1082))
 
 ##### _Other_ 
 - Docker cleanup interval ([Firefly-737](https://github.com/Caltech-IPAC/firefly/pull/1076))
 
 ##### _API_ 
-- coverage can handle tables with HMS columns ([Firefly-678](https://github.com/Caltech-IPAC/firefly/pull/1069))
+- Coverage can handle tables with HMS columns ([Firefly-678](https://github.com/Caltech-IPAC/firefly/pull/1069))
 
 ##### _Pull Request in this release_
 - [Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2021.2+label%3abug)

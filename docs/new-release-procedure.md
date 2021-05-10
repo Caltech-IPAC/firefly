@@ -19,20 +19,20 @@
    - `gradle :firefly:test`
    
 1. **Commit, Tag**
-   - commit your changes - _example message:_ "Release 2020.1.0: document updates"
+   - commit your changes - _example message:_ "Release 2021.1.0: document updates"
    - tag the `rc-yyyy.m` branch with the release  `release-yyyy.m.r`
    - _example:_ 
-      - the second release from branch `rc-2020.2` with the git tagged with `release-2020.2.1`
-      - `git tag release-2020.2.1`
+      - the second release from branch `rc-2021.2` with the git tagged with `release-2021.2.1`
+      - `git tag release-2021.2.1`
    
 1. **Push to GitHub**: 
-   - push the rc: _example:_ `git push origin rc-2020.1`
+   - push the rc: _example:_ `git push origin rc-2021.1`
    - push the tags: `git push origin --tags`   
 
 1. **Build docker images and deploy it to IRSA Kubernetes**
    - Best to use Jenkins: https://irsawebdev5.ipac.caltech.edu:8443/view/IRSA%20k8s/job/ikc_firefly/build
    - Build the docker with the following docker tags: `rc-yyyy.m`, `release-yyyy.m`,`release-yyyy.m.r`, `latest` 
-   - _example:_ from the example above the release would be built with: `rc-2020.2`, `release-2020.2`,`release-2020.2.1`, `latest`
+   - _example:_ from the example above the release would be built with: `rc-2021.2`, `release-2021.2`,`release-2021.2.1`, `latest`
    - `ACTION`: Select 'both'  
    - `DEPLOY_ENV`: Select 'ops' to have this release deploy to fireflyops.ipac.caltech.edu
    - _notes:_ 
@@ -59,7 +59,7 @@
      - `BuildMinor = -1`
      - `BuildRev = 0`
    - add any improvements to this file
-   - commit and push dev, _example message_ - "Post 2020.1 release: dev clean up"
+   - commit and push dev, _example message_ - "Post 2021.1 release: dev clean up"
    
 1. **Edit docker hub instructions**
    - Go the the Firefly page on docker hub. https://cloud.docker.com/u/ipac/repository/docker/ipac/firefly
