@@ -163,7 +163,7 @@ const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
     const [{pv,plot,hasOperation,threeC,colors,currentFileNames}]= useState(getInitState);
     const fields=useBindFieldGroupToStore(groupKey);
     const band = threeC ? getFieldVal(groupKey, 'threeBandColor', colors[0]) : Band.NO_BAND.key;
-    const currentType = isImage(plot) ? (fields.fileType?.value ?? 'fits') : 'png';
+    const currentType = isImage(plot) ? (fields?.fileType?.value ?? 'fits') : 'png';
     const fileName = (currentType === 'fits') ? currentFileNames[band] : currentFileNames[currentType];
     const totalChildren = (isWs ? 3 : 2) +  (hasOperation ? 1 : 0) + (threeC ? 1 : 0);// fileType + save as + (fileLocation)
     const childH = (totalChildren*(20+mTOP));
