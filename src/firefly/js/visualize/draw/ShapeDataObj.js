@@ -855,6 +855,8 @@ function drawCircle(drawObj, ctx,  plot, drawParams) {
  */
 export function drawText(drawObj, ctx, plot, inPt, drawParams) {
     if (!inPt) return false;
+    const pv = getPlotViewById(visRoot(), plot.plotId);
+    if (!pv) return false;
     
     const {text, textOffset, renderOptions, rotationAngle, isLonLine, textBaseline= 'top',
            textAngle=0, offsetOnScreen=false}= drawObj;
@@ -862,7 +864,6 @@ export function drawText(drawObj, ctx, plot, inPt, drawParams) {
     //the angle of the grid line
     let angle=0;
     let pvAngle=undefined;
-    const pv = getPlotViewById(visRoot(), plot.plotId);
 
     if (rotationAngle){
         const lineAngle = parseFloat( rotationAngle.substring(0,  rotationAngle.length-3));

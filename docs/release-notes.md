@@ -5,8 +5,10 @@
 - To Access current (unstable) development - (Version _next_, unreleased) use docker tag: `nightly`
 
 ## Version 2021.2
+- 2021.2.1 (May 2021)
+  - docker tag: `latest`, `release-2021.2`, `release-2021.2.1`
 - 2021.2.0  (May 2021)
-  - docker tag: `latest`, `release-2021.2`, `release-2021.2.0`
+  - docker tag: `release-2021.2.0`
   - original release
     
 ### _Notes_
@@ -29,6 +31,11 @@
 
 ##### _API_ 
 - Coverage can handle tables with HMS columns ([Firefly-678](https://github.com/Caltech-IPAC/firefly/pull/1069))
+
+##### _Patches 2021.2_
+- 2021.2.1
+  - Fixed: save image dialog failing to appear
+
 
 ##### _Pull Request in this release_
 - [Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2021.2+label%3abug)
@@ -67,7 +74,6 @@
   - chrome >= 81
   - firefox >= 79
   - edge >= 83
-
 
 ##### _Pull Request in this release_
 - [bug fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2021.1+label%3abug)
