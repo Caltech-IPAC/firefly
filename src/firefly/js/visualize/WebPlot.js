@@ -12,7 +12,6 @@ import {CysConverter} from './CsysConverter.js';
 import {makeImagePt} from './Point';
 import {makeDirectFileAccessData, parseSpacialHeaderInfo} from './projection/ProjectionHeaderParser.js';
 import {parseWavelengthHeaderInfo} from './projection/WavelengthHeaderParser.js';
-//import {parseAllSpectralHeaderInfo} from './projection/SpectraHeaderParser';
 import {TAB} from './projection/Wavelength';
 import {memorizeLastCall} from '../util/WebUtil';
 import {makePlotStateShimForHiPS} from './PlotState';
@@ -287,17 +286,6 @@ function processAllWavelengthAltWcs(header,wlTable) {
         return obj;
     }, {});
 }
-
-/*function processAllSpectralAltWcs(header,spectralTable) {
-    const availableAry= getAtlProjectionIDs(header);
-    if (isEmpty(availableAry)) return {};
-
-    return availableAry.reduce( (obj, altChar) => {
-        const spectralData= parseAllSpeHeaderInfo(header, altChar, undefined, spectralTable);
-        if (spectralData) obj[altChar]= spectralData;
-        return obj;
-    }, {});
-}*/
 
 
 /**

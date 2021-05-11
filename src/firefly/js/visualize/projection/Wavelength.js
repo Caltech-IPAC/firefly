@@ -69,22 +69,13 @@ const wlTypes= {
     },
 };
 
-/*const vradTypes= {
-    [PLANE] : {
-        getVrad : getVradPlane,
-        implemented : true,
-    },
-};*/
-
 
 export function getWavelength(pt, cubeIdx, wlData) {
     const {algorithm, wlType}= wlData;
     if (wlTypes[algorithm] && wlTypes[algorithm].implemented && wlTypes[algorithm].getWaveLength) {
         const wl=  wlTypes[algorithm].getWaveLength(pt,cubeIdx,wlData);
-        //const vrad= wlTypes[algorithm].getVrad(pt,cubeIdx,wlData);
         if (wlType===WAVE || wlType===VRAD) return wl;
         if (wlType===AWAV) return convertAirToVacuum(wl);
-        //if (wlType===VRAD) return getWavelengthPlane(wl);
         return wl;
     }
 }
@@ -100,28 +91,6 @@ export function isWLAlgorithmImplemented(wlData) {
     const {algorithm}= wlData;
     return wlTypes[algorithm].implemented;
 }
-
-
-/*export function getVrad(ipt, cubeIdx, wl) {
-    const {algorithm, wlType}= vradData;
-    if (wlTypes[algorithm] && wlTypes[algorithm].implemented && wlTypes[algorithm].getVrad) {
-        const vrad=  wlTypes[algorithm].getVrad(ipt,cubeIdx,vradData);
-        if (wlType===VRAD) return vrad;
-        return vrad;
-    }
-}*/
-
-/*function getVradPlane(ipt, cubeIdx, vradData) {
-    const {crpix, crval, cdelt} = vradData;
-    //pixel count starts from 1 to naxisn
-    const vrad = crval + ( cubeIdx + 1  - Math.round(crpix) ) * cdelt;
-    return vrad;
-}
-
-export function isVRADAlgorithmImplemented(vradData) {
-    const {algorithm}= vradData;
-    return vradTypes[algorithm].implemented;
-}*/
 
 /**
  *  calculate the air wavelength and then convert to vacuum wavelength

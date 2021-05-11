@@ -161,7 +161,7 @@ function isWaveLength(ctype, pc_3j){
 }
 
 function isVrad(ctype){
-    if (ctype.trim()==='') return false;
+    if (!ctype.trim()) return false;
 
     const sArray= ctype.split('-');
 
@@ -169,12 +169,32 @@ function isVrad(ctype){
     //If no such information, and it is not a "TAB", thus there is no dependency.  The wavelength will not
     // be displayed in the mouse readout.
 
-    if ( (sArray[0]==='VRAD' )){
-        return true;
-    }
-    return false;
+    /*if ( (sArray[0]==='VRAD' )){
+            return true;
+        }
+        return false;*/
+    return (sArray[0]==='VRAD');
 }
 
+/**
+ * NOTE:
+ *
+ * Get the key Spectra headers 
+ * @param parse
+ * @param altWcs
+ * @param which
+ * @returns {*}
+ */
+function getCoreSpectralHeaders(parse,altWcs,which) {
+    let ctype, crpix, crval, cdelt, units, nAxis, N;
+    ctype= parse.getValue(`CTYPE${which}${altWcs}`, ' ');
+    crpix= parse.getDoubleValue(`CRPIX${which}${altWcs}`, 0.0);
+    crval= parse.getDoubleValue(`CRVAL${which}${altWcs}`, 0.0);
+    cdelt= parse.getDoubleValue(`CDELT${which}${altWcs}`, 1.0);
+    nAxis= parse.getIntValue('NAXIS'+altWcs);
+    N= parse.getIntOneOfValue(['WCSAXES', 'WCSAXIS', 'NAXIS'], -1);
+    return {ctype, crpix, crval, cdelt, nAxis, N};
+}
 /**
  * NOTE:
  *   pc_3j, means the the wavelength axis is 3.  In fact, the wavelength can be in any axis.
@@ -197,14 +217,9 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
     * CUNIT i	' ' (i.e. undefined)
     * NOTE: i is the which variable here.
     */
-    const ctype= parse.getValue(`CTYPE${which}${altWcs}`, ' ');
-    const crpix= parse.getDoubleValue(`CRPIX${which}${altWcs}`, 0.0);
-    const crval= parse.getDoubleValue(`CRVAL${which}${altWcs}`, 0.0);
-    const cdelt= parse.getDoubleValue(`CDELT${which}${altWcs}`, 1.0);
+    const { ctype, crpix, crval, cdelt, nAxis, N}= getCoreSpectralHeaders(parse,altWcs,which);
     const units= parse.getValue(`CUNIT${which}${altWcs}`, '');
     const restWAV= parse.getDoubleValue('RESTWAV'+altWcs, 0);
-    const nAxis= parse.getIntValue('NAXIS'+altWcs);
-    const N= parse.getIntOneOfValue(['WCSAXES', 'WCSAXIS', 'NAXIS'], -1);
     let pc_3j = parse.getDoubleAry(`${pc_3j_key}${which}_`,altWcs,1,N, undefined);
     let r_j = parse.getDoubleAry('CRPIX',altWcs,1,N, undefined);
 
@@ -262,20 +277,6 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
         }
 
     }
-
-    //If it is a cube plane FITS, plot and display the VRAD at each plane
-    /*if (canDoPlaneCalc && nAxis===3  &&  isVR) {
-        /!* There are two cases for wavelength planes:
-        *  The FITs has vrad planes, and the algorithm is LINEAR
-        *
-        *!/
-        const algorithmForLinear = isVR? algorithm: PLANE;
-        //const vradType = whichType;
-        const units = 'km/s';
-        const ret = makeSimplePlaneBased(crpix, crval, cdelt,nAxis, algorithmForLinear, vradType, units, 'use PLANE since is cube and parameters missing');
-            return ret;
-    }*/
-
 
     //Plot and display the wavelength as one of the mouse readout only if the FITs header
     //contains the required parameters and the wavelength is depending on the image axes.
@@ -335,36 +336,16 @@ function calculateVradParams(parse, altWcs, which, pc_3j_key,vradTable) {
     * Only consider VRAD plane case for now
     * the pc_3j_key, vradTalble not used in Plane case
     */
-    const ctype= parse.getValue(`CTYPE${which}${altWcs}`, ' ');
-    const crpix= parse.getDoubleValue(`CRPIX${which}${altWcs}`, 0.0);
-    const crval= parse.getDoubleValue(`CRVAL${which}${altWcs}`, 0.0);
-    const cdelt= parse.getDoubleValue(`CDELT${which}${altWcs}`, 1.0);
+    const { ctype, crpix, crval, cdelt, nAxis, N}= getCoreSpectralHeaders(parse,altWcs,which);
     const units= parse.getValue(`CUNIT${which}${altWcs}`, 'm/s');
-    const nAxis= parse.getIntValue('NAXIS'+altWcs);
-    const N= parse.getIntOneOfValue(['WCSAXES', 'WCSAXIS', 'NAXIS'], -1);
-
     const {algorithm, wlType} = getAlgorithmAndType(ctype,N);
 
-
     const canDoPlaneCalc= allGoodValues(crpix,crval,cdelt && nAxis===3 ) ;
-
-    //We only support the standard format in the FITs header.  The standard means the CTYPEka='WAVE-ccc" where
-    //ccc can be 'F2W', 'V2W', 'LOG', 'TAB' or empty that means linear. If the header does not have this kind
-    // CTYPEka defined, we check if it is a spectra cube.  If it is a spectra cube,and it is independent of the
-    // images we display the wavelength at each plane.  If it is a spectra cube and it is wavelength is depending on
-    // the image coordinates, we display the wavelength at the mouse readout at each plane.
-    // This is to check if the ctype is WAVE and the wavelength depends on the two-dimension image coordinates.
 
     const isVR = isVrad(ctype);
 
     //If it is a cube plane FITS, plot and display the Vrad at each plane
     if (canDoPlaneCalc && nAxis===3) {
-        /* There are two cases for wavelength planes:
-        *  1. The FITs has wavelength planes, and each plane has the same wavelength, ie. the third axis
-        *     is wavelength.  Then the algorithm is PLANE
-        *  2. The FITs has wavelength planes,and the wavelength on each plane is changing with the image point
-        *     position.  For example, the algorithm is TAB.
-        */
         const algorithmForPlane = isVrad? algorithm: PLANE;
         const ret = makeSimplePlaneBased(crpix, crval, cdelt,nAxis, algorithmForPlane, wlType, units, 'use PLANE since is cube and parameters missing');
 
@@ -372,21 +353,9 @@ function calculateVradParams(parse, altWcs, which, pc_3j_key,vradTable) {
     }
 
     //If it is a cube plane FITS, plot and display the VRAD at each plane
-
-
-    //Plot and display the wavelength as one of the mouse readout only if the FITs header
-    //contains the required parameters and the wavelength is depending on the image axes.
-    /* We don't show the wavelength in the mouse readout in following three situations:
-     *  1. Algorithm is not defined
-     *  2. wlType is not defined or the type is not supported
-     *  3. The FITs file is not wavelength type (may be plane)
-     *
-     */
     if (!algorithm || !wlType  || !isVR) return;
 
-
     /*Adding other VRAD algorithm and conversions here
-    *
     *
     */
 }
@@ -412,7 +381,7 @@ function makeSimplePlaneBased(crpix,crval, cdelt, nAxis,algorithm, wlType, units
  * @return {{algorithm:string,wlType:string}}
  */
 function getAlgorithmAndType(ctype3){
-    //let wlType, vradType, algorithm;
+    // let wlType, vradType, algorithm;
     // It is temporary to include Vrad under wlType
     // need to do generic spectral header parser
     let wlType, algorithm;
