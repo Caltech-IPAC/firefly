@@ -8,25 +8,22 @@ import {makeWebPlotRequestViaZtfIbe} from 'firefly/templates/lightcurve/ztf/IbeZ
 const rangeValues= RangeValues.makeRV({which:SIGMA, lowerValue:-2, upperValue:10, algorithm:STRETCH_LINEAR});
 
 
-function makeZtfRequest(plotId, table, row, size, subsize) {
-    const req= makeWebPlotRequestViaZtfIbe(table,row, size, subsize);
-    req.setPlotId(plotId);
-    req.setInitialRangeValues(rangeValues);
-    return req;
-}
-
-
 export function makeZtfPlotRequest(table, row, includeSingle, includeStandard) {
-    const pid = getCellValue(table, row, 'pid');
-    const nid = getCellValue(table, row, 'nid');
-    const expid = getCellValue(table, row, 'expid');
-    const plotId= `ztf-${pid}-${nid}-${expid}`;
 
+    const makeReq= (pid) => {
+        const req= makeWebPlotRequestViaZtfIbe(table,row, table.request.size, table.request.subsize);
+        req.setPlotId(pid);
+        req.setInitialRangeValues(rangeValues);
+        return req;
+    };
+    const val= (cell) => getCellValue(table, row, cell);
+    
+    const plotId= `ztf-${val('field')}-${val('filtercode')}-${val('filefracday') ?? val('rfid')}`;
     const retval= {};
-    if (includeSingle) retval.single= makeZtfRequest(plotId, table,row, table.request.size, table.request.subsize);
+    if (includeSingle) retval.single= makeReq(plotId);
     if (includeStandard) {
-        retval.standard= [ makeZtfRequest(`group-1-${plotId}`,table,row, table.request.size, table.request.subsize) ];
-        retval.highlightPlotId= 0;
+        retval.standard= [ makeReq(`group-1-${plotId}`) ];
+        retval.highlightPlotId= retval.standard[0];
     }
     return retval;
 }
