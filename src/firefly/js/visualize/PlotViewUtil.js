@@ -179,7 +179,7 @@ export const getActivePlotView= (visRoot) => visRoot?.plotViewAry.find( (pv) => 
 export function isThreeColor(plotOrPv) {
     if (!plotOrPv) return false;
     const plot= isPlotView(plotOrPv) ? primePlot(plotOrPv) : plotOrPv;
-    return Boolean(plot?.plotState.isThreeColor())
+    return Boolean(plot?.plotState.isThreeColor());
 }
 
 /**

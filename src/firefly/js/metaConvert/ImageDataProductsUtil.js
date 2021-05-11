@@ -1,16 +1,23 @@
 
 import {union,get,isEmpty,difference} from 'lodash';
-import {dispatchReplaceViewerItems, getViewerItemIds, getMultiViewRoot, isImageViewerSingleLayout} from '../visualize/MultiViewCntlr.js';
+import {
+    dispatchReplaceViewerItems,
+    getViewerItemIds,
+    getMultiViewRoot,
+    isImageViewerSingleLayout,
+    getLayoutType, GRID
+} from '../visualize/MultiViewCntlr.js';
 import {dispatchPlotImage, dispatchDeletePlotView, visRoot, dispatchZoom,
     dispatchPlotGroup, dispatchChangeActivePlotView} from '../visualize/ImagePlotCntlr.js';
 import {isImageDataRequestedEqual} from '../visualize/WebPlotRequest.js';
-import {getPlotViewById, primePlot} from '../visualize/PlotViewUtil.js';
+import {getPlotViewAry, getPlotViewById, primePlot} from '../visualize/PlotViewUtil.js';
 import {UserZoomTypes} from '../visualize/ZoomUtil.js';
 import {allBandAry} from '../visualize/Band.js';
 import {getTblById} from '../tables/TableUtil.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {dispatchTableHighlight} from '../tables/TablesCntlr.js';
 import {isImageExpanded} from '../visualize/ImagePlotCntlr';
+import {DPtypes} from 'firefly/metaConvert/DataProductsType.js';
 
 
 
@@ -172,10 +179,18 @@ function replotImageDataProducts(activePlotId, imageViewerId, tbl_id, reqAry, th
                 });
         }
     }
+    // const layoutType= getLayoutType(getMultiViewRoot(),imageViewerId);
 
-    return () => { // return the cleanup function
+    return ({nextDisplayType, nextMetaDataTableId}) => { // return the cleanup function
         if (isImageExpanded(visRoot().expandedMode)) return;
-        !isEmpty(wpRequestAry) && wpRequestAry.forEach( (wpR) => dispatchDeletePlotView({plotId:wpR.getPlotId()}) );
+        const layoutType= getLayoutType(getMultiViewRoot(),imageViewerId);
+        if (nextDisplayType===DPtypes.IMAGE && layoutType===GRID && tbl_id===nextMetaDataTableId) {
+            return;
+        }
+        // !isEmpty(wpRequestAry) && wpRequestAry.forEach( (wpR) => dispatchDeletePlotView({plotId:wpR.getPlotId()}) );
+        getPlotViewAry(visRoot())
+            .filter( (pv) => pv.plotGroupId===groupId)
+            .forEach( (pv) => dispatchDeletePlotView({plotId:pv.plotId}) );
         plottingThree && dispatchDeletePlotView({plotId:threeCPlotId});
     };
 }

@@ -30,6 +30,8 @@ const startWatcher= once((viewerId) => {
 
 const isCoverageFail= (covState,tbl_id) => covState.find( (e) => e.tbl_id===tbl_id)?.status===COVERAGE_FAIL;
 
+const getActiveOrFirstTblId= () => getActiveTableId() || getTblIdsByGroup()[0];
+
 
 export function CoverageViewer({viewerId='coverageImages',insideFlex=true, noCovMessage='No Coverage Available',
                                 workingMessage='Working...', noCovStyle={}}) {
@@ -37,8 +39,8 @@ export function CoverageViewer({viewerId='coverageImages',insideFlex=true, noCov
     startWatcher(viewerId);
     const [pv,tbl_id,isFetching,covState] = useStoreConnector(
         () => getActivePlotView(visRoot()),
-        () => getActiveTableId(),
-        () => getTblById(getActiveTableId())?.isFetching ?? false,
+        () => getActiveOrFirstTblId(),
+        () => getTblById(getActiveOrFirstTblId())?.isFetching ?? false,
         () => getComponentState(COVERAGE_WATCH_CID,[]));
 
 
