@@ -79,6 +79,8 @@ export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_
  * @prop {Dimension} screenSize - width/height in screen pixels
  * @prop {Projection} projection - projection routines for this projections
  * @prop {Object} wlData - data object to wave length conversions, if defined then this conversion is available
+ * @prop {Object} vradData - data object to vrad conversions, if defined then this conversion is available
+ * @prop {Object} spectralData - data object to spectral wcs conversions, if defined then this conversion is available
  * @prop {Object} affTrans - the affine transform
  * @prop {Array.<RawData>} rawData
  * @prop {{width:number, height:number}} viewDim  size of viewable area  (div size: offsetWidth & offsetHeight)

@@ -9,7 +9,7 @@ import {makeTransform} from './PlotTransformUtils.js';
 import CysConverter, {CCUtil} from './CsysConverter';
 import {isHiPS, isImage} from './WebPlot.js';
 import {isDefined, memorizeLastCall} from '../util/WebUtil';
-import {getWavelength, isWLAlgorithmImplemented, PLANE} from './projection/Wavelength.js';
+import {getWavelength, isWLAlgorithmImplemented, getVrad, isVRADAlgorithmImplemented, PLANE} from './projection/Wavelength.js';
 import {getNumberHeader, HdrConst} from './FitsHeaderUtil.js';
 import {computeDistance, getRotationAngle, isCsysDirMatching, isEastLeftOfNorth, isPlotNorth} from './VisUtil';
 import {removeRawData} from './rawData/RawDataCache.js';
@@ -885,13 +885,15 @@ export function convertImageIdxToHDU(pv, imageIdx) {
 //=============================================================
 //=============================================================
 //---------- wavelength functions
+//---------- in general spectral cord fits functions
 //=============================================================
 //=============================================================
 
 /**
- * check to see if wavelength data is available
+ * check to see if wavelength/radio velocity/frequency data is available
  * Only CTYPEka = 'WAVE-ccc', exists, the hasWLInfo is true.
- * If the wlType is not defined, it is a pure cube data
+ * also check if vrad data is available, when CTYPE# = 'VRAD-xxx', hasVRADInfo is true.
+ * If the wlType or vradType is not defined, it is a pure cube data
  * @param {WebPlot} plot
  * @return {boolean}
  */

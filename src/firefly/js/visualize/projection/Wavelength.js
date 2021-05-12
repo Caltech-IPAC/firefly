@@ -17,8 +17,9 @@ export const V2W = 'V2W';
 export const TAB = 'TAB';
 
 
-export const WAVE= 'WAVE';
-export const AWAV= 'AWAV';
+export const WAVE = 'WAVE';
+export const AWAV = 'AWAV';
+export const VRAD = 'VRAD';
 
 
 /**
@@ -65,7 +66,7 @@ const wlTypes= {
     [TAB] : {
         getWaveLength : getWaveLengthTable,
         implemented : true,
-    }
+    },
 };
 
 
@@ -73,7 +74,7 @@ export function getWavelength(pt, cubeIdx, wlData) {
     const {algorithm, wlType}= wlData;
     if (wlTypes[algorithm] && wlTypes[algorithm].implemented && wlTypes[algorithm].getWaveLength) {
         const wl=  wlTypes[algorithm].getWaveLength(pt,cubeIdx,wlData);
-        if (wlType===WAVE) return wl;
+        if (wlType===WAVE || wlType===VRAD) return wl;
         if (wlType===AWAV) return convertAirToVacuum(wl);
         return wl;
     }
@@ -82,7 +83,7 @@ export function getWavelength(pt, cubeIdx, wlData) {
 function getWaveLengthPlane(ipt, cubeIdx, wlData) {
     const {crpix, crval, cdelt} = wlData;
     //pixel count starts from 1 to naxisn
-    const wl = crval + ( cubeIdx + 1  - crpix ) * cdelt;
+    const wl = crval + ( cubeIdx + 1  - Math.round(crpix) ) * cdelt;
     return wl;
 }
 
@@ -127,6 +128,8 @@ function getWaveLengthLinear(ipt, cubeIdx, wlData) {
     const {N,  r_j, pc_3j, s_3,  lambda_r}= wlData;
     return lambda_r + getOmega(getPixelCoords(ipt,cubeIdx),  N, r_j, pc_3j, s_3);
 }
+
+// Add other VRAD conversion and algorithem here
 
 /**
  *

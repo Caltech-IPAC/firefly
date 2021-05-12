@@ -3,19 +3,27 @@
  */
 
 import {makeDoubleHeaderParse} from '../FitsHeaderUtil.js';
-import {AWAV, F2W, LINEAR, LOG, PLANE, TAB, V2W, WAVE} from './Wavelength.js';
+import {AWAV, F2W, LINEAR, LOG, PLANE, TAB, V2W, WAVE,VRAD} from './Wavelength.js';
 
 export function parseWavelengthHeaderInfo(header, altWcs='', zeroHeader, wlTable) {
     const parse= makeDoubleHeaderParse(header, zeroHeader, altWcs);
     const which= altWcs?'1':getWCSAXES(parse);
+    const whatType= parse.getValue(`CTYPE${which}${altWcs}`, ' ');
     const mijMatrixKeyRoot = getPC_ijKey(parse,which);
     if (!mijMatrixKeyRoot) return; //When both PC i_j and CD i_j are present, we don't show the wavelength
-    return calculateWavelengthParams(parse,altWcs,which,mijMatrixKeyRoot, wlTable);
+    if (whatType===WAVE) {
+        return calculateWavelengthParams(parse, altWcs, which, mijMatrixKeyRoot, wlTable);
+    } else if (whatType===VRAD) {
+        return calculateVradParams(parse, altWcs, which, mijMatrixKeyRoot, wlTable);
+    }
+    //return calculateWavelengthParams(parse,altWcs,which,mijMatrixKeyRoot,wlTable);
 }
 
 
 const isWaveParseDependent = (algorithm) => algorithm===LINEAR || algorithm===LOG  || algorithm===F2W  ||
                                             algorithm===V2W  || algorithm===TAB;
+
+const isVradParseDependent = (algorithm) => algorithm===LINEAR;
 
 const allGoodValues= (...numbers)  => numbers.every((n) => !isNaN(n));
 
@@ -151,6 +159,33 @@ function isWaveLength(ctype, pc_3j){
     return false;
 
 }
+
+function isVrad(ctype){
+    if (!ctype.trim()) return false;
+
+    const sArray= ctype.split('-');
+    return (sArray[0]==='VRAD');
+}
+
+/**
+ * NOTE:
+ *
+ * Get the key Spectra headers 
+ * @param parse
+ * @param altWcs
+ * @param which
+ * @returns {*}
+ */
+function getCoreSpectralHeaders(parse,altWcs,which) {
+    let ctype, crpix, crval, cdelt, units, nAxis, N;
+    ctype= parse.getValue(`CTYPE${which}${altWcs}`, ' ');
+    crpix= parse.getDoubleValue(`CRPIX${which}${altWcs}`, 0.0);
+    crval= parse.getDoubleValue(`CRVAL${which}${altWcs}`, 0.0);
+    cdelt= parse.getDoubleValue(`CDELT${which}${altWcs}`, 1.0);
+    nAxis= parse.getIntValue('NAXIS'+altWcs);
+    N= parse.getIntOneOfValue(['WCSAXES', 'WCSAXIS', 'NAXIS'], -1);
+    return {ctype, crpix, crval, cdelt, nAxis, N};
+}
 /**
  * NOTE:
  *   pc_3j, means the the wavelength axis is 3.  In fact, the wavelength can be in any axis.
@@ -173,14 +208,9 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
     * CUNIT i	' ' (i.e. undefined)
     * NOTE: i is the which variable here.
     */
-    const ctype= parse.getValue(`CTYPE${which}${altWcs}`, ' ');
-    const crpix= parse.getDoubleValue(`CRPIX${which}${altWcs}`, 0.0);
-    const crval= parse.getDoubleValue(`CRVAL${which}${altWcs}`, 0.0);
-    const cdelt= parse.getDoubleValue(`CDELT${which}${altWcs}`, 1.0);
+    const { ctype, crpix, crval, cdelt, nAxis, N}= getCoreSpectralHeaders(parse,altWcs,which);
     const units= parse.getValue(`CUNIT${which}${altWcs}`, '');
     const restWAV= parse.getDoubleValue('RESTWAV'+altWcs, 0);
-    const nAxis= parse.getIntValue('NAXIS'+altWcs);
-    const N= parse.getIntOneOfValue(['WCSAXES', 'WCSAXIS', 'NAXIS'], -1);
     let pc_3j = parse.getDoubleAry(`${pc_3j_key}${which}_`,altWcs,1,N, undefined);
     let r_j = parse.getDoubleAry('CRPIX',altWcs,1,N, undefined);
 
@@ -220,6 +250,7 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
         *     position.  For example, the algorithm is TAB.
         */
         const algorithmForPlane = isWL? algorithm: PLANE;
+        //const wlType = whichType;
         const ret = makeSimplePlaneBased(crpix, crval, cdelt,nAxis, algorithmForPlane, wlType, units, 'use PLANE since is cube and parameters missing');
         if (algorithm==='TAB') {
             const part1 = {
@@ -279,6 +310,47 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
     };
 }
 
+/**
+ * NOTE:
+ *   pc_3j, means the the wavelength axis is 3.
+ *
+ * @param parse
+ * @param altWcs
+ * @param which
+ * @param pc_3j_key
+ * @param vradTable
+ * @returns {*}
+ */
+function calculateVradParams(parse, altWcs, which, pc_3j_key,vradTable) {
+
+    /*
+    * Only consider VRAD plane case for now
+    * the pc_3j_key, vradTalble not used in Plane case
+    */
+    const { ctype, crpix, crval, cdelt, nAxis, N}= getCoreSpectralHeaders(parse,altWcs,which);
+    const units= parse.getValue(`CUNIT${which}${altWcs}`, 'm/s');
+    const {algorithm, wlType} = getAlgorithmAndType(ctype,N);
+
+    const canDoPlaneCalc= allGoodValues(crpix,crval,cdelt && nAxis===3 ) ;
+
+    const isVR = isVrad(ctype);
+
+    //If it is a cube plane FITS, plot and display the Vrad at each plane
+    if (canDoPlaneCalc && nAxis===3) {
+        const algorithmForPlane = isVrad? algorithm: PLANE;
+        const ret = makeSimplePlaneBased(crpix, crval, cdelt,nAxis, algorithmForPlane, wlType, units, 'use PLANE since is cube and parameters missing');
+
+        return ret;
+    }
+
+    //If it is a cube plane FITS, plot and display the VRAD at each plane
+    if (!algorithm || !wlType  || !isVR) return;
+
+    /*Adding other VRAD algorithm and conversions here
+    *
+    */
+}
+
 function makeSimplePlaneBased(crpix,crval, cdelt, nAxis,algorithm, wlType, units, reason) {
     if (allGoodValues(crpix,crval,cdelt) && nAxis===3 ) {
         //return {algorithm: PLANE, wlType: wlType || WAVE, crpix, crval, cdelt, units, reason};
@@ -300,6 +372,9 @@ function makeSimplePlaneBased(crpix,crval, cdelt, nAxis,algorithm, wlType, units
  * @return {{algorithm:string,wlType:string}}
  */
 function getAlgorithmAndType(ctype3){
+    // let wlType, vradType, algorithm;
+    // It is temporary to include Vrad under wlType
+    // need to do generic spectral header parser
     let wlType, algorithm;
     if (!ctype3.trim()) return {algorithm:undefined,wlType:undefined};
     ctype3= ctype3.toUpperCase();
@@ -315,7 +390,10 @@ function getAlgorithmAndType(ctype3){
     }
     else if (ctype3.startsWith('LAMBDA')) {
         wlType= WAVE;
-        algorithm=LINEAR;
+        algorithm= LINEAR;
+    } else if (ctype3.startsWith('VRAD')) {
+        wlType= VRAD;
+        algorithm= PLANE;
     }
     return {algorithm,wlType};
 }
