@@ -164,15 +164,6 @@ function isVrad(ctype){
     if (!ctype.trim()) return false;
 
     const sArray= ctype.split('-');
-
-    //The header has the axis dependency information, ie. pc_31 (naxis1) or pc_32 (naxis2) are defined.
-    //If no such information, and it is not a "TAB", thus there is no dependency.  The wavelength will not
-    // be displayed in the mouse readout.
-
-    /*if ( (sArray[0]==='VRAD' )){
-            return true;
-        }
-        return false;*/
     return (sArray[0]==='VRAD');
 }
 
