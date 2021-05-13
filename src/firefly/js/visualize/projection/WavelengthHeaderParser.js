@@ -11,7 +11,7 @@ export function parseWavelengthHeaderInfo(header, altWcs='', zeroHeader, wlTable
     const whatType= parse.getValue(`CTYPE${which}${altWcs}`, ' ');
     const mijMatrixKeyRoot = getPC_ijKey(parse,which);
     if (!mijMatrixKeyRoot) return; //When both PC i_j and CD i_j are present, we don't show the wavelength
-    if (whatType===WAVE) {
+    if (whatType.startsWith("WAVE")) {
         return calculateWavelengthParams(parse, altWcs, which, mijMatrixKeyRoot, wlTable);
     } else if (whatType===VRAD) {
         return calculateVradParams(parse, altWcs, which, mijMatrixKeyRoot, wlTable);
