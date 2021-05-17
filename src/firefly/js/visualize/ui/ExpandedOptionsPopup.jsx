@@ -24,8 +24,6 @@ import {TABLE_LOADED, TABLE_FILTER, TABLE_FILTER_SELROW} from '../../tables/Tabl
 import {getViewerItemIds} from '../MultiViewCntlr';
 import {HelpIcon} from '../../ui/HelpIcon';
 import {SelectInfo} from '../../tables/SelectInfo';
-import {addActionListener} from '../../api/ApiUtil';
-import {TABLE_SELECT} from '../../tables/TablesCntlr';
 
 
 const TABLE_ID = 'active-image-view-list-table';
@@ -43,7 +41,7 @@ export function showExpandedOptionsPopup(plotViewAry) {
 }
 
 
-const [NAME_IDX, WAVE_LENGTH_UM, PID_IDX, STATUS, PROJ_TYPE_DESC, WAVE_TYPE, DATA_HELP_URL] = [0, 1, 2, 3, 4, 5, 6];
+const [NAME_IDX, WAVE_LENGTH_UM, PID_IDX, STATUS, PROJ_TYPE_DESC, WAVE_TYPE, DATA_HELP_URL, ROW_IDX] = [0, 1, 2, 3, 4, 5, 6, 7];
 
 const columnsTemplate = [];
 columnsTemplate[NAME_IDX] = {name: 'Name', type: 'char', width: 22};
@@ -57,7 +55,6 @@ columnsTemplate[WAVE_LENGTH_UM] = {
     width: 10,
     units: getFormattedWaveLengthUnits('um')
 };
-// columnsTemplate[DATA_HELP_URL]= {name: 'Help', type: 'location', width: 35};
 columnsTemplate[DATA_HELP_URL] = {name: 'Help', type: 'location', width: 7, links: [{href: '${Help}', value: 'help'}]};
 
 
@@ -151,7 +148,7 @@ function dialogComplete(tbl_id) {
     dispatchReplaceViewerItems(EXPANDED_MODE_RESERVED, plotIdAry, IMAGE);
 }
 
-const deleteFailedNEW = () => {
+const deleteFailed = () => {
     getPlotViewAry(visRoot()).forEach((pv) => {
         if (pv.serverCall === 'fail') {
             dispatchDeletePlotView({plotId: pv.plotId});
@@ -160,7 +157,7 @@ const deleteFailedNEW = () => {
 };
 
 
-const RemoveSelected = () => {
+const removeSelected = () => {
     const selectedPlotIds = getSelectedPlotIds();
     selectedPlotIds.forEach((plotId) => {
         dispatchDeletePlotView({plotId});
@@ -172,10 +169,10 @@ function getSelectedPlotIds(){
     const {tableModel, selectInfo} = getTblInfoById(TABLE_ID);
 
     return selectInfo.selectAll ?
-        tableModel.tableData.data.map(row => !selectInfo.exceptions.has(parseInt(row[7])) ? row[2] : '')
+        tableModel.tableData.data.map(row => !selectInfo.exceptions.has(parseInt(row[ROW_IDX])) ? row[PID_IDX] : '')
         :
-        Array.from(selectInfo.exceptions).map(idx =>
-            tableModel.tableData.data[idx][2])
+        Array.from(selectInfo.exceptions).map((idx) =>
+            tableModel.tableData.data[idx][2]);
 }
 
 
@@ -214,35 +211,14 @@ function ImageViewOptionsPanel() {
     }, [plotViewAry, expandedIds]);
 
     if (!model) return null;
-    //const someFailed= plotViewAry.some( (pv) => pv.serverCall==='fail');
-
-    // const hideFailed= () => {
-    //     if (isEmpty(plotViewAry)) return;
-    //     const plotIdAry= plotViewAry
-    //         .filter( (pv) => pv.serverCall!=='fail')
-    //         .map( (pv) => pv.plotId);
-    //     if (!plotIdAry.includes(visRoot().activePlotId)) {
-    //         dispatchChangeActivePlotView(plotIdAry[0]);
-    //     }
-    //     dispatchReplaceViewerItems(EXPANDED_MODE_RESERVED, plotIdAry, IMAGE);
-    // };
-    //
-    /* const deleteFailed= () => {
-         plotViewAry.forEach( (pv) => {
-             if (pv.serverCall==='fail') {
-                 dispatchDeletePlotView({plotId:pv.plotId}) ;
-             }
-         });
-     };*/
 
 
-    const deleteFailedButton = () => (
+    const DeleteFailedButton = () => (
         <button type='button' className='button std hl'
-                onClick={() => deleteFailedNEW()}>Delete Failed
+                onClick={() => deleteFailed()}>Delete Failed
         </button>
     );
 
-    //addActionListener(TABLE_SELECT, handleSelect, {divName: 'TablePanel__table'});
 
     return (
         <div style={{
@@ -254,7 +230,7 @@ function ImageViewOptionsPanel() {
                 <div className='TablePanel'>
                     <div className={'TablePanel__wrapper--border'}>
                         <div className='TablePanel__table' style={{top: 0}}>
-                            {deleteFailedButton}
+                            <DeleteFailedButton />
                             <TablePanel
                                 tbl_ui_id={tbl_ui_id}
                                 tableModel={model}
@@ -278,7 +254,7 @@ function ImageViewOptionsPanel() {
             </div>
 
 
-            <div style={{display: 'flex', /*justifyContent:'space-between'*/}}>
+            <div style={{display: 'flex'}}>
                 <CompleteButton
                     style={{padding: 5, marginRight: '50%'}} text={'Done'}
                     onSuccess={() => dialogComplete(model.tbl_id)}
@@ -287,17 +263,15 @@ function ImageViewOptionsPanel() {
 
                 <div style={{display: 'flex', padding: 5}}>
                     <button type='button' className='button std hl'
-                            onClick={() => RemoveSelected()}>Remove Selected
+                            onClick={() => removeSelected()}>Remove Selected
                     </button>
-
                 </div>
 
 
                 <div style={{display: 'flex', padding: 5}}>
                     <button type='button' className='button std hl'
-                            onClick={() => deleteFailedNEW()}>Delete Failed
+                            onClick={() => deleteFailed()}>Delete Failed
                     </button>
-
                 </div>
 
                 <HelpIcon helpId={'visualization.loaded-images'} style={{padding: '8px 9px 0 0'}}/>
