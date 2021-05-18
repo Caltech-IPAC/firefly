@@ -121,6 +121,12 @@ const noticeCss = {
     textAlign: 'center'
 };
 
+const preTitleCss = {
+    padding: 3,
+    marginBottom: 10,
+    whiteSpace: 'wrap',
+};
+
 let dlTitleIdx = 0;
 const newBgKey = () => 'DownloadOptionPanel-' + Date.now();
 
@@ -185,7 +191,10 @@ export function DownloadOptionPanel (props) {
     };
 
     const dlTitle = get(dlParams, 'TitlePrefix', 'Download') + '-' + dlTitleIdx;
-
+    // IRSA-3944: SOFIA required a message to guide the user before downloading AOR such as:
+    // 'All levels associated with this AOR will be downloaded. To download individual data products, go to the relevant instrument tab.'
+    // PreTitleMessage can be added to the dlParams from the parent and passed here (FIREFLY-723)
+    const preTitleMessage = get(dlParams, 'PreTitleMessage', '')
     return (
         <div style = {Object.assign({margin: '4px', position: 'relative', minWidth:400, height:'auto'}, style)}>
             <FormPanel
@@ -197,6 +206,7 @@ export function DownloadOptionPanel (props) {
                 help_id  = {help_id}>
                 <FieldGroup groupKey={groupKey} keepState={true}>
                     {showWarnings && <div style={noticeCss}>This table contains proprietary data. Only data to which you have access will be downloaded.</div>}
+                    {preTitleMessage && <div style={preTitleCss}>{preTitleMessage}</div>}
                     <div className='FieldGroup__vertical--more'>
                         {showTitle && <TitleField {...{labelWidth, value:dlTitle }}/>}
 
