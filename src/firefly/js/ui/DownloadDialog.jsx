@@ -52,6 +52,7 @@ const DOWNLOAD_DIALOG_ID = 'Download Options';
  *                     FilePrefix: 'WISE_Files',
  *                     BaseFileName: 'WISE_Files',
  *                     DataSource: 'WISE images',
+ *                     PreTitleMessage:'Message to appear above Title field'
  *                     FileGroupProcessor: 'LightCurveFileGroupsProcessor'
  *                 }}>
  *             <ValidationField
@@ -64,6 +65,9 @@ const DOWNLOAD_DIALOG_ID = 'Download Options';
  *         </DownloadOptionPanel>
  *     </DownloadButton>
  * </code>
+ * IRSA-3944: SOFIA required a message to guide the user before downloading AOR such as:
+ * 'All levels associated with this AOR will be downloaded.'
+ * PreTitleMessage can be added to the dlParams from the parent and passed here (FIREFLY-723)
  * @param props
  * @returns {*}
  */
@@ -119,6 +123,12 @@ const noticeCss = {
     marginBottom: 10,
     whiteSpace: 'nowrap',
     textAlign: 'center'
+};
+
+const preTitleCss = {
+    padding: 3,
+    marginBottom: 10,
+    whiteSpace: 'wrap',
 };
 
 let dlTitleIdx = 0;
@@ -185,7 +195,7 @@ export function DownloadOptionPanel (props) {
     };
 
     const dlTitle = get(dlParams, 'TitlePrefix', 'Download') + '-' + dlTitleIdx;
-
+    const preTitleMessage = dlParams?.PreTitleMessage ?? '';
     return (
         <div style = {Object.assign({margin: '4px', position: 'relative', minWidth:400, height:'auto'}, style)}>
             <FormPanel
@@ -197,6 +207,7 @@ export function DownloadOptionPanel (props) {
                 help_id  = {help_id}>
                 <FieldGroup groupKey={groupKey} keepState={true}>
                     {showWarnings && <div style={noticeCss}>This table contains proprietary data. Only data to which you have access will be downloaded.</div>}
+                    {preTitleMessage && <div style={preTitleCss}>{preTitleMessage}</div>}
                     <div className='FieldGroup__vertical--more'>
                         {showTitle && <TitleField {...{labelWidth, value:dlTitle }}/>}
 
