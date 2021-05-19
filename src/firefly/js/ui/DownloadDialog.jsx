@@ -52,6 +52,7 @@ const DOWNLOAD_DIALOG_ID = 'Download Options';
  *                     FilePrefix: 'WISE_Files',
  *                     BaseFileName: 'WISE_Files',
  *                     DataSource: 'WISE images',
+ *                     PreTitleMessage:'Message to appear above Title field'
  *                     FileGroupProcessor: 'LightCurveFileGroupsProcessor'
  *                 }}>
  *             <ValidationField
@@ -64,6 +65,9 @@ const DOWNLOAD_DIALOG_ID = 'Download Options';
  *         </DownloadOptionPanel>
  *     </DownloadButton>
  * </code>
+ * IRSA-3944: SOFIA required a message to guide the user before downloading AOR such as:
+ * 'All levels associated with this AOR will be downloaded.'
+ * PreTitleMessage can be added to the dlParams from the parent and passed here (FIREFLY-723)
  * @param props
  * @returns {*}
  */
@@ -191,10 +195,7 @@ export function DownloadOptionPanel (props) {
     };
 
     const dlTitle = get(dlParams, 'TitlePrefix', 'Download') + '-' + dlTitleIdx;
-    // IRSA-3944: SOFIA required a message to guide the user before downloading AOR such as:
-    // 'All levels associated with this AOR will be downloaded. To download individual data products, go to the relevant instrument tab.'
-    // PreTitleMessage can be added to the dlParams from the parent and passed here (FIREFLY-723)
-    const preTitleMessage = get(dlParams, 'PreTitleMessage', '')
+    const preTitleMessage = dlParams?.PreTitleMessage ?? '';
     return (
         <div style = {Object.assign({margin: '4px', position: 'relative', minWidth:400, height:'auto'}, style)}>
             <FormPanel
