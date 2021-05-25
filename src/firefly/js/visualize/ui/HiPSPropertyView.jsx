@@ -106,7 +106,7 @@ function renderCloseAndHelpButtons(popupId){
             />
         </div>
         <div style={helpIdStyle}>
-            <HelpIcon helpId={'visualization.hipsViewer'}/>
+            <HelpIcon helpId={'tables'}/>
         </div>
     </div>
 );

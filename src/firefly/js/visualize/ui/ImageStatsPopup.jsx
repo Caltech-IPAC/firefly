@@ -23,7 +23,7 @@ import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 
 
 const popupId = 'ImageAreaStatsPopup';
-const helpId = 'visualization.fitsViewer';
+const helpId = 'visualization.selectregion';
 const typeId = StatsPoint.TYPE_ID;
 const noBand = 'NO_BAND';
 

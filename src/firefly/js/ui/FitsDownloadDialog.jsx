@@ -182,7 +182,7 @@ const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
                                     onFail={resultsFail} />
                     <CompleteButton text='Cancel' groupKey='' onSuccess={() => closePopup(popupId)} />
                 </div>
-                <HelpIcon helpId={'visualization.imageoptions'}/>
+                <HelpIcon helpId={'visualization.saveimage'}/>
             </div>
         </FieldGroup>
     );
