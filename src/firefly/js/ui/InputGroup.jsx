@@ -4,11 +4,10 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {get} from 'lodash';
 
 export function InputGroup({labelWidth,children, className, style }) {
-    const elements =  React.Children.map(children,function(inChild) {
-                if (get(inChild, 'type.propTypes.labelWidth')) {
+    const elements =  React.Children.map(children,(inChild) => {
+                if (inChild?.type?.propTypes?.labelWidth) {
                     return React.cloneElement(inChild, {labelWidth});
                 } else {
                     return inChild;
