@@ -4,24 +4,24 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {get} from 'lodash';
 
-export function InputGroup({labelWidth,children, verticalSpace=5 }) {
-    const elements =  React.Children.map(children,function(inChild) {
-                if (get(inChild, 'type.propTypes.labelWidth')) {
+export function InputGroup({labelWidth,children, className, style }) {
+    const elements =  React.Children.map(children,(inChild) => {
+                if (inChild?.type?.propTypes?.labelWidth) {
                     return React.cloneElement(inChild, {labelWidth});
                 } else {
                     return inChild;
                 }
             });
     return (
-        <div>{elements}</div>
+        <div className={className} style={style}>{elements}</div>
     );
 }
 
 InputGroup.propTypes= {
     labelWidth   : PropTypes.number.isRequired,
-    verticalSpace : PropTypes.number,
+    className : PropTypes.string,
+    style : PropTypes.object
 };
 
 
