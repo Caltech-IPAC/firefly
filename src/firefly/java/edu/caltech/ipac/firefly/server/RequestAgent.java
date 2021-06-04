@@ -149,29 +149,11 @@ public class RequestAgent {
             this.response = response;
 
             // getting the base url including the application path is a bit tricky when behind reverse proxy(ies)
-            URL referer = null;
-
-            try {
-                String url = getHeader("Referer", getHeader("Origin"));
-                referer = new URL(url);
-            } catch (MalformedURLException e) {}
-
-            String proto = referer != null ? referer.getProtocol() : getHeader("X-Forwarded-Proto", request.getScheme());
-            String host  = referer != null ? referer.getHost()     : getHeader("X-Forwarded-Server", getHeader("X-Forwarded-Host", request.getServerName()));
-            String port  = referer != null && referer.getPort() > 0 ? referer.getPort()+""  : getHeader("X-Forwarded-Port", String.valueOf(request.getServerPort()));
+            String proto = getHeader("X-Forwarded-Proto", request.getScheme());
+            String host  = getHeader("X-Forwarded-Server", getHeader("X-Forwarded-Host", request.getServerName()));
+            String port  = getHeader("X-Forwarded-Port", String.valueOf(request.getServerPort()));
             port = port.matches("443|80") ? "" : ":" + port;
-
-            String contextPath = getHeader("X-Forwarded-Path");
-            if (contextPath == null && referer != null) {
-                contextPath = referer.getPath();
-                int idx = contextPath.lastIndexOf("/");
-                if (idx > 0) {
-                    contextPath = contextPath.substring(0, idx);
-                }
-            }
-            if (StringUtils.isEmpty(contextPath)) {
-                contextPath = request.getContextPath();
-            }
+            String contextPath = getHeader("X-Forwarded-Path", request.getContextPath());
 
             String hostUrl = String.format("%s://%s%s", proto, host, port);
             String baseUrl = hostUrl + contextPath;
