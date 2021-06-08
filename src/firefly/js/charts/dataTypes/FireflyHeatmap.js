@@ -68,7 +68,7 @@ function fetchData(chartId, traceNum, tablesource) {
     const totalRows= get(tableModel, 'totalRows');
     if (scatterOrHeatmap && totalRows <= getMaxScatterRows()) {
         const {options:scatterOptions, fetchData:scatterFetchData} = genericTSGetter({traceTS:tablesource, chartId, traceNum});
-        const scatterTS = Object.assign({}, tablesource, {options: scatterOptions});
+        const scatterTS = Object.assign({}, tablesource, {options: {...options, ...scatterOptions}});       // need to save heatmap options in case it's switched back
         return scatterFetchData(chartId, traceNum, scatterTS);
     }
 
