@@ -215,7 +215,7 @@ export function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, newPlo
 
     pv= {...pv, plotViewCtx:{...pv.plotViewCtx}};
 
-    if (overlayPlotViews) {
+    if (overlayPlotViews?.length) {
         const oPlotAry= overlayPlotViews.map( (opv) => opv.plot);
         pv.overlayPlotViews= pv.overlayPlotViews.map( (opv) => {
             const plot= oPlotAry.find( (p) => p.plotId===opv.imageOverlayId);

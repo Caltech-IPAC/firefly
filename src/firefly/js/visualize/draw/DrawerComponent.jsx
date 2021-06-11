@@ -10,7 +10,7 @@ import {dlRoot} from '../DrawLayerCntlr.js';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 
 
-const isVisible= (drawLayer,plotId) => drawLayer.visiblePlotIdAry.includes(plotId);
+const isVisible= (drawLayer,plotId) => drawLayer?.visiblePlotIdAry.includes(plotId);
 
 function findDrawLayerInStore(prevDrawLayer, drawLayerId) {
     if (!drawLayerId) return undefined;

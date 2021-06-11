@@ -1014,8 +1014,8 @@ export const pvEqualExScroll= memorizeLastCall((pv1,pv2) => {
     let result= true;
     if (!pv1 || !pv2 ||
         pv1.plotId !== pv2.plotId ||
-        pv1.primeIdx!==pv2.primeIdx &&
-        pv1.serverCall!==pv2.serverCall &&
+        pv1.primeIdx!==pv2.primeIdx ||
+        pv1.serverCall!==pv2.serverCall ||
         pv1.plottingStatusMsg !== pv2.plottingStatusMsg) {
         result= false;
     }
@@ -1026,7 +1026,7 @@ export const pvEqualExScroll= memorizeLastCall((pv1,pv2) => {
             if (p1.plotImageId !== p2.plotImageId ||  //
                 isHiPS(p1) !== isHiPS(p2) ||
                 p1.attributes !== p2.attributes ||
-                p1.screenSize !== p2.screenSize ||
+                !shallowequal(p1.screenSize,p2.screenSize) ||
                 p1.zoomFactor !== p2.zoomFactor ||
                 p1.imageCoordSys !== p2.imageCoordSys ||
                 p1.dataRequested!==p2.dataRequested ||

@@ -104,6 +104,7 @@ export const ImageViewer= memo( ({showWhenExpanded=false, plotId, handleInlineTo
     );
 });
 
+ImageViewer.displayName= 'ImageViewer';
 ImageViewer.propTypes= {
     plotId : PropTypes.string.isRequired,
     showWhenExpanded : PropTypes.bool,

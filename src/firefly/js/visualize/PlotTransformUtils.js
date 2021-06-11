@@ -73,8 +73,10 @@ function insertTransform(inPlotView, affTrans) {
     const {plots}= pv;
     pv.affTrans=  {...affTrans};
     pv.plots= plots.map( (p) => p===plot ? {...plot,affTrans:pv.affTrans, viewDim:pv.viewDim} : p);
-    pv.overlayPlotViews= pv.overlayPlotViews.map( (opv) =>
-                                       opv?.plot ? updateSet(opv, 'plot.affTrans', pv.affTrans) :opv);
+    if (pv.overlayPlotViews?.length) {
+        pv.overlayPlotViews= pv.overlayPlotViews.map( (opv) =>
+            opv?.plot ? updateSet(opv, 'plot.affTrans', pv.affTrans) :opv);
+    }
     return pv;
 }
 

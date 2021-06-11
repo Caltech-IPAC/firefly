@@ -5,8 +5,10 @@
 - To Access current (unstable) development - (Version _next_, unreleased) use docker tag: `nightly`
 
 ## Version 2021.2
+- 2021.2.2 (June 2021)
+  - docker tag: `latest`, `release-2021.2`, `release-2021.2.2`
 - 2021.2.1 (May 2021)
-  - docker tag: `latest`, `release-2021.2`, `release-2021.2.1`
+  - docker tag: `release-2021.2.1`
 - 2021.2.0  (May 2021)
   - docker tag: `release-2021.2.0`
   - original release
@@ -35,6 +37,10 @@
 ##### _Patches 2021.2_
 - 2021.2.1
   - Fixed: save image dialog failing to appear
+- 2021.2.2
+  - Fixed: mouse wheel / trackpad scrolling performance issue ([Firefly-793](https://github.com/Caltech-IPAC/firefly/pull/1098))
+  - Fixed: Handle redirects when retrieving TAP errors ([DM-30073](https://github.com/Caltech-IPAC/firefly/pull/1092))
+  - Fixed: problem is misusing the referer header
 
 
 ##### _Pull Request in this release_
