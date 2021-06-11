@@ -2,11 +2,11 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {memo, useEffect, useRef} from 'react';
+import React, {memo, useState, useEffect, useRef} from 'react';
 import PropTypes from 'prop-types';
 import {omit} from 'lodash';
 import shallowequal from 'shallowequal';
-import {getPlotViewById, getAllDrawLayersForPlot, pvEqualForRender} from '../PlotViewUtil.js';
+import {getPlotViewById,getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {ImageViewerView} from './ImageViewerDecorate.jsx';
 import {visRoot, ExpandType} from '../ImagePlotCntlr.js';
 import {extensionRoot} from '../../core/ExternalAccessCntlr.js';
@@ -17,7 +17,7 @@ import {useStoreConnector} from '../../ui/SimpleComponent';
 import {dlRoot} from '../DrawLayerCntlr';
 
 
-const visRootOmitList= ['plotViewAry','activePlotId', 'processedTiles', 'plotRequestDefaults'];
+const omitList= ['plotViewAry','activePlotId'];
 
 function hasVisRootChanged(plotId,newVisRoot,oldVisRoot) {
     if (newVisRoot===oldVisRoot) return false;
@@ -26,16 +26,14 @@ function hasVisRootChanged(plotId,newVisRoot,oldVisRoot) {
         (newVisRoot.activePlotId===plotId || oldVisRoot.activePlotId===plotId)) {
         return true;
     }
-
-    if (!pvEqualForRender(getPlotViewById(oldVisRoot,plotId),getPlotViewById(newVisRoot,plotId))) return true;
-    return !shallowequal(omit(newVisRoot,visRootOmitList), omit(oldVisRoot,visRootOmitList));  // compare certain keys in visRoot
+    if (getPlotViewById(newVisRoot,plotId)!==getPlotViewById(oldVisRoot,plotId)) return true;
+    return !shallowequal(omit(newVisRoot,omitList), omit(oldVisRoot,omitList));  // compare certain keys in visRoot
 }
 
 function hasStateChanged(plotId, newState,oldState) {
     if (!oldState) return true;
     if (newState===oldState) return false;
-    if (newState?.plotView?.localZoomStart) return false;
-    // if (!shallowequal(newState.drawLayersAry,oldState.drawLayersAry)) return true;
+    if (!shallowequal(newState.drawLayersAry,oldState.drawLayersAry)) return true;
     if (newState.extRoot!==oldState.extRoot || newState.taskCount!==oldState.taskCount) return true;
     return hasVisRootChanged(plotId,newState.vr,oldState.vr);
 }
@@ -65,21 +63,21 @@ const TEN_SECONDS= 10000;
 
 export const ImageViewer= memo( ({showWhenExpanded=false, plotId, handleInlineTools=true, inlineTitle, aboveTitle}) => {
 
-    const {current:mouseRef} = useRef({mousePlotId:undefined});
+    const [mousePlotId, setMousePlotId] = useState(lastMouseCtx().plotId);
     const [{plotView,vr,drawLayersAry,taskCount}] = useStoreConnector( (oldState) => getStoreState(plotId,oldState) );
     const {current:timeoutRef} = useRef({timeId:undefined});
 
     useEffect(() => {
         let alive= true;
         const removeListener= addImageMouseListener((mState) => {
-            mouseRef.mousePlotId= mState.plotId;
+            setMousePlotId(mState.plotId);
             timeoutRef.timeId && clearTimeout(timeoutRef.timeId);
             timeoutRef.timeId= undefined;
-            if (mState.mouseState!==MouseState.EXIT || mouseRef.mousePlotId!==plotId) return;
+            if (mState.mouseState!==MouseState.EXIT || mousePlotId!==plotId) return;
             timeoutRef.timeId= setTimeout(
                     () => {
                         timeoutRef.timeId= undefined;
-                        if (alive && lastMouseCtx().plotId===plotId) mouseRef.mousePlotId= undefined;
+                        if (alive && lastMouseCtx().plotId===plotId) setMousePlotId(undefined);
                     }, TEN_SECONDS); // 10 seconds
         });
         return () => {
@@ -87,7 +85,7 @@ export const ImageViewer= memo( ({showWhenExpanded=false, plotId, handleInlineTo
             timeoutRef.timeId && clearTimeout(timeoutRef.timeId);
             removeListener();
         };
-    }, [plotId]);
+    }, [mousePlotId, plotId]);
 
 
     if (!showWhenExpanded  && vr.expandedMode!==ExpandType.COLLAPSE) return false;
@@ -97,7 +95,7 @@ export const ImageViewer= memo( ({showWhenExpanded=false, plotId, handleInlineTo
         <ImageViewerView plotView={plotView}
                          drawLayersAry={drawLayersAry}
                          visRoot={vr}
-                         mousePlotId={mouseRef.mousePlotId}
+                         mousePlotId={mousePlotId}
                          handleInlineTools={handleInlineTools}
                          inlineTitle={inlineTitle}
                          aboveTitle={aboveTitle}

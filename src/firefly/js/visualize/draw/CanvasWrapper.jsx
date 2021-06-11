@@ -4,9 +4,7 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {pick} from 'lodash';
 import {Drawer} from './Drawer.js';
-import shallowequal from 'shallowequal';
 import {makeDrawingDef} from './DrawingDef.js';
 import {CANVAS_DL_ID_START} from '../PlotViewUtil.js';
 
@@ -90,7 +88,6 @@ export function makeDummyDrawLayer(drawData) {
     };
 }
 
-const pickList= ['drawData','drawingDef', 'plotIdAry', 'visiblePlotIdAry'];
 
 class CanvasWrapper extends Component {
 
@@ -121,14 +118,8 @@ class CanvasWrapper extends Component {
     updateDrawLayer(props,force=false) {
         const {plot,drawLayer,width,height,getDrawLayer}= props;
         let dl= getDrawLayer ? getDrawLayer() : drawLayer;
-        if (!force &&
-            Math.floor(width)===this.lastWidth && Math.floor(height)===this.lastHeight &&
-            shallowequal(pick(dl,pickList),pick(this.lastDrawLayer,pickList))) {
-            return;
-        }
+        if (!force && dl===this.lastDrawLayer) return;
         this.lastDrawLayer= dl;
-        this.lastWidth= Math.floor(width);
-        this.lastHeight= Math.floor(height);
         if (Array.isArray(dl)) dl= makeDummyDrawLayer(dl);
 
         window.requestAnimationFrame(() => {
