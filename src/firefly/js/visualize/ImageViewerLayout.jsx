@@ -3,6 +3,7 @@
  */
 
 import React, {memo, PureComponent} from 'react';
+import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import {xor,isNil, isEmpty,get, isString, isFunction, throttle, isNumber, isArray} from 'lodash';
 import {flux} from '../core/ReduxFlux.js';
@@ -13,7 +14,7 @@ import {makeScreenPt, makeDevicePt} from './Point.js';
 import {DrawerComponent}  from './draw/DrawerComponent.jsx';
 import {CCUtil, CysConverter} from './CsysConverter.js';
 import {UserZoomTypes}  from './ZoomUtil.js';
-import {primePlot, getPlotViewById, hasLocalStretchByteData} from './PlotViewUtil.js';
+import {primePlot, getPlotViewById, hasLocalStretchByteData, isActivePlotView} from './PlotViewUtil.js';
 import {isImageViewerSingleLayout, getMultiViewRoot} from './MultiViewCntlr.js';
 import {contains, intersects} from './VisUtil.js';
 import BrowserInfo from '../util/BrowserInfo.js';
@@ -33,6 +34,7 @@ import {fireMouseCtxChange, makeMouseStatePayload, MouseState} from './VisMouseS
 import {isHiPS, isImage} from './WebPlot.js';
 import Color from '../util/Color.js';
 import {plotMove} from './PlotMove';
+import {getAppOptions} from 'firefly/api/ApiUtil.js';
 
 const DEFAULT_CURSOR= 'crosshair';
 
@@ -40,8 +42,49 @@ const {MOVE,DOWN,DRAG,UP, DRAG_COMPONENT, EXIT, ENTER}= MouseState;
 
 const draggingOrReleasing = (ms) => ms===DRAG || ms===DRAG_COMPONENT || ms===UP || ms===EXIT || ms===ENTER;
 
+const isWheel= (mouseState) => mouseState===MouseState.WHEEL_DOWN || mouseState===MouseState.WHEEL_UP;
 
-const dispatchZoomThrottled= throttle((params) => dispatchZoom(params), 30, {leading:true, trailing:true});
+const zoomThrottle= throttle( (params) => {
+    ReactDOM.unstable_batchedUpdates(() => dispatchZoom(params) );
+}, 2, {trailing:false});
+
+
+const zoomFromWheelOrTrackpad= (usingMouseWheel, params) => {
+    usingMouseWheel ?
+        ReactDOM.unstable_batchedUpdates(() => dispatchZoom(params) ) :
+        zoomThrottle(params);
+};
+
+function handleScrollWheelEvent(plotView, mouseState, screenPt, nativeEv) {
+    const userZoomType= mouseState===MouseState.WHEEL_DOWN ? UserZoomTypes.UP : UserZoomTypes.DOWN;
+    nativeEv.preventDefault();
+    const plot= primePlot(plotView) ?? {};
+    const {screenSize}= plot;
+    const {viewDim}= plotView ?? {};
+    const smallImage=
+        isImage(plot) && screenSize?.width < viewDim?.width && screenSize?.height < viewDim?.height;
+    let useDevPt= true;
+    let devicePt= CCUtil.getDeviceCoords(primePlot(plotView),screenPt);
+    if (userZoomType===UserZoomTypes.DOWN) {
+        useDevPt= !smallImage;
+    }
+    else if (userZoomType===UserZoomTypes.UP) {
+        if (smallImage) {
+            const cc= CysConverter.make(plot);
+            useDevPt= cc.pointInPlot(devicePt);
+        }
+        else {
+            useDevPt= true;
+        }
+    }
+    if (!useDevPt) devicePt= undefined;
+
+    const usingMouseWheel= Math.abs(nativeEv.wheelDeltaY)%120 === 0;
+    zoomFromWheelOrTrackpad(usingMouseWheel,
+        {plotId:plotView?.plotId, userZoomType, devicePt, upDownPercent:Math.abs(nativeEv.wheelDeltaY)%120===0?1:.7 } );
+
+}
+
 
 /**
  * when a resize happens and zoom locking is enable then we need to start a zoom level change
@@ -156,25 +199,22 @@ export class ImageViewerLayout extends PureComponent {
         }
     }
 
+
     eventCB(plotId,mouseState,screenPt,screenX,screenY,nativeEv) {
         const {drawLayersAry,plotView}= this.props;
         const mouseStatePayload= makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY);
         const list= drawLayersAry.filter( (dl) => dl.visiblePlotIdAry.includes(plotView.plotId) &&
                                                 get(dl,['mouseEventMap',mouseState.key],false) );
 
+
         if (this.mouseOwnerLayerId && draggingOrReleasing(mouseState)) { // use layer from the mouseDown
             const dl= getLayer(drawLayersAry,this.mouseOwnerLayerId);
             fireMouseEvent(dl,mouseState,mouseStatePayload);
         }
-        else if (mouseState===MouseState.WHEEL_UP) {
-            const devicePt= CCUtil.getDeviceCoords(primePlot(plotView),screenPt);
-            dispatchZoomThrottled({plotId, userZoomType:UserZoomTypes.DOWN, devicePt,
-                upDownPercent:Math.abs(nativeEv.wheelDeltaY)%120===0?1:.4 });
-        }
-        else if (mouseState===MouseState.WHEEL_DOWN) {
-            const devicePt= CCUtil.getDeviceCoords(primePlot(plotView),screenPt);
-            dispatchZoomThrottled({plotId, userZoomType:UserZoomTypes.UP , devicePt,
-                upDownPercent:Math.abs(nativeEv.wheelDeltaY)%120===0?1:.3 } );
+        else if (isWheel(mouseState)) {
+            if (!isActivePlotView(visRoot(),plotId) && getAppOptions()?.wheelScrollRequiresImageActive) return;
+            handleScrollWheelEvent(plotView,mouseState,screenPt,nativeEv);
+            return;
         }
         else {
             const ownerCandidate= findMouseOwner(list,primePlot(plotView),screenPt);         // see if anyone can own that mouse

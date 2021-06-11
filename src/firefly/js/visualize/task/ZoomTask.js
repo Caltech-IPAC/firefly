@@ -232,8 +232,10 @@ function doZoom(dispatcher,plot,zoomLevel,isFullScreen, zoomLockingEnabled, user
 
 
     const {plotId}= plot;
-    dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_START,
-                  payload:{plotId,zoomLevel, zoomLockingEnabled,userZoomType, devicePt} } );
+    if (!localRawData) {
+        dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_START,
+            payload:{plotId,zoomLevel, zoomLockingEnabled,userZoomType, devicePt} } );
+    }
 
 
     const pv= getPlotViewById(preZoomVisRoot,plotId);
@@ -258,7 +260,7 @@ function doZoom(dispatcher,plot,zoomLevel,isFullScreen, zoomLockingEnabled, user
     }
 
     if (localRawData) {
-        processLocalZoom(dispatcher,plot,zoomLevel, isFullScreen);
+        processLocalZoom(dispatcher,plot,zoomLevel, isFullScreen, userZoomType, zoomLockingEnabled, devicePt);
         return;
     }
 
@@ -360,13 +362,14 @@ function processZoomSuccess(dispatcher, preZoomVisRoot, plotId, zoomLevel, resul
     }
 }
 
-function processLocalZoom(dispatcher, plot, zoomLevel, isFullScreen) {
+function processLocalZoom(dispatcher, plot, zoomLevel, isFullScreen, userZoomType, zoomLockingEnabled, devicePt) {
 
     const {plotId}= plot;
     const rawData= changeLocalRawDataZoom(plot,zoomLevel,isFullScreen);
     dispatcher( {
         type: ImagePlotCntlr.ZOOM_IMAGE,
         payload: {
+            zoomLevel, zoomLockingEnabled,userZoomType, devicePt, localRawData:true,
             plotId,
             primaryStateJson : PlotState.convertToJSON(rawData.plotState,true),
             rawData,

@@ -100,9 +100,14 @@ export function reducer(state, action) {
         
         
         case Cntlr.ZOOM_IMAGE_FAIL  :
+            retState= zoomFail(state,action);
+            break;
         case Cntlr.STRETCH_CHANGE_FAIL:
         case Cntlr.COLOR_CHANGE_FAIL:
             retState= endServerCallFail(state,action);
+            break;
+        case Cntlr.ZOOM_IMAGE  :
+            retState= zoomImage(state,action);
             break;
         case Cntlr.COLOR_CHANGE  :
         case Cntlr.ZOOM_IMAGE  :
@@ -226,7 +231,7 @@ function changeLocking(state,action) {
 
 function zoomStart(state, action) {
     const {wcsMatchType, plotViewAry, expandedMode, mpwWcsPrimId}= state;
-    const {plotId, zoomLevel, userZoomType, zoomLockingEnabled, devicePt}= action.payload;
+    const {plotId, zoomLevel, userZoomType, zoomLockingEnabled, devicePt, localRawData}= action.payload;
     const pvIdx=getPlotViewIdxById(state,plotId);
     const plot= pvIdx>-1 ? primePlot(plotViewAry[pvIdx]) : null;
     if (!plot) return state;
@@ -255,6 +260,7 @@ function zoomStart(state, action) {
             pv= updatePlotViewScrollXY(pv,
                 devicePt ? findScrollPtToPlaceOnDevPt(pv, mouseOverImagePt,devicePt) :
                 findScrollPtToCenterImagePt(pv,centerImagePt));
+            if (localRawData) pv.localZoomStart= true;
 
         }
         else {
@@ -263,14 +269,22 @@ function zoomStart(state, action) {
     }
 
 
-    pv.overlayPlotViews= pv.overlayPlotViews.map( (oPv) =>
-                     clone(oPv, {plot:clonePlotWithZoom(oPv.plot,zoomLevel)}) );
+    if (pv.overlayPlotViews?.length) {
+        pv.overlayPlotViews= pv.overlayPlotViews.map( (oPv) =>
+            clone(oPv, {plot:clonePlotWithZoom(oPv.plot,zoomLevel)}) );
+    }
 
 
     // return new state
     return update(state, { plotViewAry : {
                   [pvIdx]: {$set: update(pv, {plotViewCtx: {$merge: newCtx}
         }) } }});
+}
+
+function zoomImage(state,action) {
+    const {rawData}= action.payload;
+    const newState= rawData ? zoomStart(state, action): state;
+    return installTiles(newState,action);
 }
 
 function installTiles(state, action) {
@@ -310,6 +324,7 @@ function installTiles(state, action) {
     const tileData= canLoadStretchDataDirect(plot) ? undefined : primaryTiles;
     pv= replacePrimaryPlot(pv,
         WebPlot.replacePlotValues(plot,primaryStateJson,tileData,rawData,bias,contrast,useRed,useGreen,useBlue));
+    if (rawData) pv.localZoomStart= false;
 
     if (wcsMatchType && mpwWcsPrimId!==plotId) {
         const masterPV= getPlotViewById(state, mpwWcsPrimId);
@@ -770,6 +785,12 @@ function changeOverlayColorLocking(state,action) {
     if (pgIdx < 0) return state;
     state= updateSet(state, ['plotGroupAry',pgIdx,'overlayColorLock'], overlayColorLock);
     return state;
+}
+
+function zoomFail(state,action) {
+    const {plotId}= action.payload;
+    const newState= {...state, plotViewAry: clonePvAry(state,plotId, {localZoomStart:false}) };
+    return endServerCallFail(newState,action);
 }
 
 

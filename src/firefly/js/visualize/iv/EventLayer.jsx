@@ -101,7 +101,7 @@ export const EventLayer = memo( ({transform,plotId, eventCallback}) => {
 
     const onWheel= (ev) => {
         if (!ev.deltaY) return;
-        fireEvent(ev,transform,plotId,ev.deltaY>0 ? MouseState.WHEEL_UP : MouseState.WHEEL_DOWN, eventCallback, true);
+        fireEvent(ev,transform,plotId,ev.deltaY>0 ? MouseState.WHEEL_UP : MouseState.WHEEL_DOWN, eventCallback, false);
     };
 
     useEffect( () => {
