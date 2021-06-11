@@ -199,11 +199,27 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
             String errorUrl = baseJobUrl + "/error";
 
             Ref<String> err = new Ref<>();
-            HttpServices.Status status = HttpServices.getData(HttpServiceInput.createWithCredential(errorUrl),
-                    (method -> err.setSource(getErrResp(method, errorUrl)))
-            );
+            HttpServiceInput input = HttpServiceInput.createWithCredential(errorUrl)
+                .setFollowRedirect(false);
+            HttpServices.Status status = HttpServices.getData(input, (method -> {
+                try {
+                    if (HttpServices.isOk(method)) {
+                        err.setSource(getErrResp(method, errorUrl));
+                    } else if (HttpServices.isRedirected(method)) {
+                        String location = HttpServices.getResHeader(method, "Location", null);
+                        if (location != null) {
+                            HttpServices.getData(HttpServiceInput.createWithCredential(location),
+                                (redirectMethod -> err.setSource(getErrResp(redirectMethod, errorUrl))));
+                        } else {
+                            throw new RuntimeException("Request redirected without a location header");
+                        }
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e.getMessage());
+                }
+            }));
             if (status.isError()) {
-                return "Unable to get error from "+baseJobUrl+" "+status.getErrMsg();
+                return "Unable to get error from "+errorUrl+" "+status.getErrMsg();
             }
             return err.getSource();
         }
