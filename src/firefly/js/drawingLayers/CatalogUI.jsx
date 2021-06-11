@@ -249,7 +249,7 @@ export function FixedPtControl({pv, wp, style={}}) {
 
             <ToolbarButton icon={CENTER} tip={'Center on this position'}
                            horizontal={true}
-                           onClick={() => dispatchRecenter({plotId:pv.plotId, centerPt:wp}) } />
+                           onClick={() => pv && dispatchRecenter({plotId:pv.plotId, centerPt:wp}) } />
 
         </div>
     );
@@ -257,7 +257,7 @@ export function FixedPtControl({pv, wp, style={}}) {
 }
 
 FixedPtControl.propTypes= {
-    pv : PropTypes.object.isRequired,
+    pv : PropTypes.object,
     wp : PropTypes.object.isRequired,
     style : PropTypes.object
 };

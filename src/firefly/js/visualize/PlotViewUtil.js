@@ -1012,8 +1012,8 @@ export const pvEqualExScroll= memorizeLastCall((pv1,pv2) => {
     let result= true;
     if (!pv1 || !pv2 ||
         pv1.plotId !== pv2.plotId ||
-        pv1.primeIdx!==pv2.primeIdx &&
-        pv1.serverCall!==pv2.serverCall &&
+        pv1.primeIdx!==pv2.primeIdx ||
+        pv1.serverCall!==pv2.serverCall ||
         pv1.plottingStatusMsg !== pv2.plottingStatusMsg) {
         result= false;
     }
@@ -1024,7 +1024,7 @@ export const pvEqualExScroll= memorizeLastCall((pv1,pv2) => {
             if (p1.plotImageId !== p2.plotImageId ||  //
                 isHiPS(p1) !== isHiPS(p2) ||
                 p1.attributes !== p2.attributes ||
-                p1.screenSize !== p2.screenSize ||
+                !shallowequal(p1.screenSize,p2.screenSize) ||
                 p1.zoomFactor !== p2.zoomFactor ||
                 p1.imageCoordSys !== p2.imageCoordSys ||
                 p1.dataRequested!==p2.dataRequested ||
@@ -1042,6 +1042,45 @@ export const pvEqualExScroll= memorizeLastCall((pv1,pv2) => {
     return result;
 },4);
 
+export const pvEqualForRender= (pv1,pv2) => {
+    if (pv1 === pv2) return true;
+    let result= true;
+    if (!pv1 || !pv2 ||
+        pv1.plotId !== pv2.plotId ||
+        pv1.primeIdx!==pv2.primeIdx ||
+        pv1.serverCall!==pv2.serverCall ||
+        pv1.visible!==pv2.visible ||
+        pv1.scrollX!==pv2.scrollX ||
+        pv1.scrollY!==pv2.scrollY ||
+        pv1.rotation!==pv2.rotation ||
+        pv1.flipY!==pv2.flipY ||
+        pv1.flipX!==pv2.flipX ||
+        !shallowequal(pv1.viewDim,pv2.viewDim) ||
+        !shallowequal(pv1.affTrans,pv2.affTrans) ||
+        pv1.plottingStatusMsg !== pv2.plottingStatusMsg) {
+        result= false;
+    }
+    if (result && pv1.plots !== pv2.plots) {
+        const p1 = primePlot(pv1);
+        const p2 = primePlot(pv2);
+        if (p1 !== p2) {
+            if (p1.plotImageId !== p2.plotImageId ||  //
+                isHiPS(p1) !== isHiPS(p2) ||
+                p1.attributes !== p2.attributes ||
+                p1.zoomFactor !== p2.zoomFactor ||
+                p1.imageCoordSys !== p2.imageCoordSys ||
+                p1.dataRequested!==p2.dataRequested ||
+                p1.blankColor!==p2.blankColor ||
+                p1.dataWidth!==p2.dataWidth ||
+                p1.dataHeight!==p2.dataHeight ||
+                !shallowequal(p1.screenSize,p2.screenSize) ||
+                p1.rawData!==p2.rawData ||
+                p1.plotState !== p2.plotState) result= false;
+        }
+    }
+    if (result && !shallowequal(pv1.overlayPlotViews, pv2.overlayPlotViews)) result= false;
+    return result;
+};
 
 
 //===============================================================
