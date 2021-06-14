@@ -280,9 +280,10 @@ export function dispatchTblResultsAdded(tbl_id, title, options, tbl_ui_id) {
 /**
  * Remove table UI from the results area.
  * @param {string} tbl_id     table id
+ * @param {boolean} [fireActiveTableChanged=true]  true to fire TBL_RESULTS_ACTIVE when applicable.
  */
-export function dispatchTblResultsRemove(tbl_id) {
-    flux.process( {type: TBL_RESULTS_REMOVE, payload: {tbl_id}});
+export function dispatchTblResultsRemove(tbl_id, fireActiveTableChanged=true) {
+    flux.process( {type: TBL_RESULTS_REMOVE, payload: {tbl_id, fireActiveTableChanged}});
 }
 
 /**
