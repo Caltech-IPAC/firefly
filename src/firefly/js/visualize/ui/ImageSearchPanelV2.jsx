@@ -334,7 +334,7 @@ function ImageType({}) {
         <FieldGroup className='ImageSearch__section' groupKey={FG_KEYS.main} keepState={true}>
             <div className='ImageSearch__section--title'>1. Choose Image Type</div>
             <RadioGroupInputField
-                initialState= {{ defaultValue: 'singleChannel',
+                initialState= {{ value: 'singleChannel',
                              tooltip: 'Please select the image type'}}
                 options={ options }
                 fieldKey={ FD_KEYS.type }

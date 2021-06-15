@@ -255,7 +255,10 @@ function radiusInField({label = 'Radius:'}) {
                          initialState={{
                                                unit: 'arcsec',
                                                labelWidth : 100,
-                                               nullAllowed: false
+                                               nullAllowed: false,
+                                               value:  (10/3600)+'',
+                                               min: 1 / 3600,
+                                               max: 100
                                            }}
                          label={label}/>
     );
@@ -438,65 +441,26 @@ export const SpatialMethod = new Enum({
     {ignoreCase: true}
 );
 
-export const initRadiusArcSecOLD = (max, def) => {
-    if (max >= 10 / 3600) {
-        return ((def||10) / 3600).toString();
-    } else {
-        return (1 / 3600).toString();
-    }
-};
-
-export const arcSecInDegString = (def=undefined) => `${(def||10)/3600}`;
-
-
 function searchMethodTypeReducer(inFields, action) {
-    if (!inFields)  {
-        return fieldInit();
+    if (!inFields)  return {};
+    const {fieldKey}= action.payload;
+    const rFields= clone(inFields);
+    if (action.type===VALUE_CHANGE && fieldKey==='polygoncoords') {
+        rFields.imageCornerCalc= {...inFields.imageCornerCalc, value:'user'};
     }
     else {
-        const {fieldKey}= action.payload;
-        const rFields= clone(inFields);
-        if (action.type===VALUE_CHANGE && fieldKey==='polygoncoords') {
-            rFields.imageCornerCalc= clone(inFields.imageCornerCalc, {value:'user'});
-        }
-        else {
-            const cornerCalcV= get(inFields.imageCornerCalc, 'value', 'user');
-            const pv= getActivePlotView(visRoot());
-
-
-            if (pv && (cornerCalcV==='image' || cornerCalcV==='viewport' || cornerCalcV==='area-selection')) {
-                const plot = primePlot(pv);
-
-                if (plot) {
-                    const sel = plot.attributes[PlotAttribute.SELECTION];
-                    if (!sel && cornerCalcV === 'area-selection') {
-                        rFields.imageCornerCalc = clone(inFields.imageCornerCalc, {value: 'image'});
-                    }
-                    const {value:cornerCalcV2}= rFields.imageCornerCalc;
-                    const v = calcCornerString(pv, cornerCalcV2);
-                    rFields.polygoncoords = clone(inFields.polygoncoords, {value: v});
-                }
+        const cornerCalcV= inFields.imageCornerCalc?.value ?? 'image';
+        const pv= getActivePlotView(visRoot());
+        const plot = primePlot(pv);
+        if (plot && (cornerCalcV==='image' || cornerCalcV==='viewport' || cornerCalcV==='area-selection')) {
+            const sel = plot.attributes[PlotAttribute.SELECTION];
+            if (!sel && cornerCalcV === 'area-selection') {
+                rFields.imageCornerCalc = {...inFields.imageCornerCalc, value: 'image'};
             }
+            const cornerCalcV2= rFields.imageCornerCalc?.value ?? 'image';
+            const v = calcCornerString(pv, cornerCalcV2);
+            rFields.polygoncoords = {...inFields.polygoncoords, value: v};
         }
-        return rFields;
     }
-}
-
-function fieldInit() {
-    return (
-    {
-        conesize: {
-            fieldKey: 'conesize',
-            value:  (10/3600)+'',
-            unit: 'arcsec',
-            min: 1 / 3600,
-            max: 100
-        },
-        imageCornerCalc: {
-            fieldKey: 'imageCornerCalc',
-            value: 'image'
-        }
-
-    }
-    );
+    return rFields;
 }

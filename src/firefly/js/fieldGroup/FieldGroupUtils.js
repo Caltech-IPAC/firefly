@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get,isFunction,hasIn,isBoolean} from 'lodash';
+import {get,isFunction,hasIn,isBoolean, isEmpty} from 'lodash';
 import {flux} from '../core/ReduxFlux.js';
 import {clone} from '../util/WebUtil.js';
 import {smartMerge} from '../tables/TableUtil.js';
@@ -130,35 +130,25 @@ export function getFieldGroupResults(groupKey,includeUnmounted=false) {
  * @param {string} groupKey
  * @return {object}
  */
-export function getFieldGroupState(groupKey) {
-    const fieldGroupMap= flux.getState()[FIELD_GROUP_KEY];
-    return fieldGroupMap[groupKey] ? fieldGroupMap[groupKey] : null;
-}
+export const getFieldGroupState= (groupKey) => flux.getState()[FIELD_GROUP_KEY]?.[groupKey];
+
+export const isFieldGroupMounted = (groupKey) => getFieldGroupState(groupKey)?.isMounted
 
 export function getFieldVal(groupKey, fldName, defval=undefined) {
     return get(getGroupFields(groupKey), [fldName, 'value'], defval);
 }
 
-export function getField(groupKey, fldName) {
-    return get(getGroupFields(groupKey), fldName);
-}
+export const getField= (groupKey, fldName) => getGroupFields(groupKey)?.[fldName];
 
-export function getReducerFunc(groupKey) {
-    const groupState= getFieldGroupState(groupKey);
-    return get(groupState, 'reducerFunc');
-}
-
+export const getReducerFunc= (groupKey) => getFieldGroupState(groupKey)?.reducerFunc;
 /**
  * Get the group fields for a key
- *
  * @param {string} groupKey
  * @return {object}
  */
 export const getGroupFields= (groupKey) => getFieldGroupState(groupKey)?.fields ?? {};
 
-export function getFldValue(fields, fldName, defval=undefined) {
-    return (fields? get(fields, [fldName, 'value'], defval) : defval);
-}
+export const getFldValue= (fields, fldName, defval=undefined) => fields?.[fldName]?.value ?? defval;
 
 /**
  *
@@ -168,10 +158,11 @@ export function getFldValue(fields, fldName, defval=undefined) {
  * @return {function} a function that will unbind the store, should be called on componentWillUnmount
  */
 function bindToStore(groupKey, stateUpdaterFunc) {
-    const storeListenerRemove= flux.addListener( () => {
+    return flux.addListener( () => {
+        const fields= getGroupFields(groupKey);
+        if (isEmpty(fields)) return;
         stateUpdaterFunc(getGroupFields(groupKey));
-    });
-    return storeListenerRemove;
+    } );
 }
 
 

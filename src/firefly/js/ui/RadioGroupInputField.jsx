@@ -8,7 +8,7 @@ import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 const assureValue= (props) => {
     const {value,options, defaultValue}= props;
     if (value) return value;
-    return isUndefined(defaultValue) ? options[0].value : defaultValue;
+    return isUndefined(defaultValue) ? options?.[0].value : defaultValue;
 };
 
 function handleOnChange(ev, params, fireValueChange) {
@@ -21,7 +21,7 @@ function handleOnChange(ev, params, fireValueChange) {
 
 function checkForUndefined(v,props) {
     const {options=[], defaultValue, isGrouped=false} = props;
-    const optionContain = (v) => v && options.find((op) => op.value === v);
+    const optionContain = (v) => Boolean(v && options.find((op) => op.value === v));
     if (isEmpty(options) || optionContain(v) || isGrouped) {
         return v;
     } else {
@@ -31,7 +31,9 @@ function checkForUndefined(v,props) {
 
 export const RadioGroupInputField= memo( (props) => {
     const {viewProps, fireValueChange}=  useFieldGroupConnector({...props, confirmValue:checkForUndefined});
-    const newProps= {...viewProps,  value: assureValue(viewProps)};
+    const value= assureValue(viewProps);
+    if (isUndefined(value)) return <div/>;
+    const newProps= {...viewProps,  value};
     return <RadioGroupInputFieldView {...newProps}
                                      onChange={(ev) => handleOnChange(ev,viewProps, fireValueChange)}/> ;
 });

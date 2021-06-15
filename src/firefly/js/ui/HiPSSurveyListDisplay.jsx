@@ -282,7 +282,7 @@ export class HiPSSurveyListSelection extends PureComponent {
 
         return (
             <div style={wrapperStyle}>
-                <FieldGroup groupKey={gKeyHiPSPanel} validatorFunc={null} keepState={true}
+                <FieldGroup groupKey={gKeyHiPSPanel} keepState={true}
                             reducerFunc={fieldReducer(hipsSources)}
                             style={{height: '100%', width: '100%'}}>
                    <div style={{height: 20, width: '100%'}}>

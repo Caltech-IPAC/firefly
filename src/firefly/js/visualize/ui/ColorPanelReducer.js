@@ -4,7 +4,7 @@
 
 import {get} from 'lodash';
 import Validate from '../../util/Validate.js';
-import FieldGroupCntlr, {INIT_FIELD_GROUP} from '../../fieldGroup/FieldGroupCntlr.js';
+import FieldGroupCntlr, {FORCE_FIELD_GROUP_REDUCER, INIT_FIELD_GROUP} from '../../fieldGroup/FieldGroupCntlr.js';
 import ImagePlotCntlr from '../ImagePlotCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
@@ -66,6 +66,7 @@ function computeColorPanelState(fields, plottedRV, fitsData, band, action) {
 
         case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
         case INIT_FIELD_GROUP:
+        case FORCE_FIELD_GROUP_REDUCER:
         case ImagePlotCntlr.ANY_REPLOT:
             if (!plottedRV && !fitsData) return fields;
             // no update if hue-preserving
@@ -409,6 +410,7 @@ export function computeHuePreservePanelState(fields, plottedRVAry, fitsDataAry, 
             if (!valid) return fields;
             return syncFieldsHuePreserve(fields,makeHuePreserveRangeValuesFromFields(fields),fitsDataAry);
 
+        case FORCE_FIELD_GROUP_REDUCER:
         case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
         case INIT_FIELD_GROUP:
         case ImagePlotCntlr.ANY_REPLOT:

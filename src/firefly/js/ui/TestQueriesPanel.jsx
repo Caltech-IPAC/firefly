@@ -69,7 +69,7 @@ export class TestQueriesPanel extends PureComponent {
                     groupKey='TEST_CAT_PANEL'
                     onSubmit={(request) => onSearchSubmit(request)}
                     onCancel={hideSearchPanel}>
-                    <FieldGroup groupKey='TEST_CAT_PANEL' validatorFunc={null} keepState={true}>
+                    <FieldGroup groupKey='TEST_CAT_PANEL' keepState={true}>
                         <div style={{padding:'5px 0 5px 0'}}>
                             <TargetPanel/>
                         </div>

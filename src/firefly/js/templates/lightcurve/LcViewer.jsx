@@ -235,7 +235,7 @@ export const UploadPanel = ({initArgs}) =>{
             <FormPanel
                 groupKey={vFileKey} onSubmit={(request) => onSearchSubmit(request)} onCancel={dispatchHideDropDown}
                 submitText={'Upload'} help_id={'loadingTSV'}>
-                <FieldGroup groupKey={vFileKey} validatorFunc={null} keepState={true}>
+                <FieldGroup groupKey={vFileKey} keepState={true}>
                     <div style={{padding:5 }}>
                         <div style={{padding:5 }}>
                             {showUploadLocation()}

@@ -1,8 +1,9 @@
 import {PureComponent, useEffect, useState} from 'react';
-import {isArray, isString, pick, isEmpty} from 'lodash';
+import {isArray, isString, uniqueId} from 'lodash';
 import shallowequal from 'shallowequal';
 import {flux} from '../core/ReduxFlux.js';
 import FieldGroupUtils, {getFldValue, getGroupFields} from '../fieldGroup/FieldGroupUtils.js';
+import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
 
 export class SimpleComponent extends PureComponent {
     constructor(props) {
@@ -96,7 +97,7 @@ export function useBindFieldGroupToStore(groupKey) {
             remover();
         };
     },[]);
-    return fields;
+    return fields || undefined;
 }
 
 /**
@@ -124,4 +125,20 @@ export function useFieldGroupValues(groupKey,fieldKeys) {
         };
     },[]);
     return Object.fromEntries(Object.entries(stateObj).map( ([k,{value}]) => [k,value] ));
+}
+
+
+export function useWatcher(actions, callback, params) {
+   const id= uniqueId('use-watcher');
+   useEffect(() => {
+       dispatchAddActionWatcher({
+           id, actions, params,
+           callback:(action, cancelSelf, params, dispatch, getState) => {
+               callback(action, cancelSelf, params, dispatch, getState);
+           },
+       });
+       return () => {
+           dispatchCancelActionWatcher(id);
+       };
+   },[]);
 }

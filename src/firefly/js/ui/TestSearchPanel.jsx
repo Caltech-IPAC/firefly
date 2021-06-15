@@ -29,7 +29,7 @@ export const TestSearchPanel = (props) => {
                 <p>
                     <input type='button' name='dowload' value='Download Sample File' onClick={doFileDownload} />
                 </p>
-                <FieldGroup groupKey='TBL_BY_URL_PANEL' validatorFunc={null} keepState={true}>
+                <FieldGroup groupKey='TBL_BY_URL_PANEL' keepState={true}>
                     <ValidationField style={{width:500}}
                                      fieldKey='srcTable'
                                      initialState= {{
