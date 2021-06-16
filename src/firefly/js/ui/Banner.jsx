@@ -57,10 +57,10 @@ Banner.propTypes= {
 
 
 const UserInfo= memo(() => {
-    const [userInfo]= useStoreConnector(
+    const [userInfo={}]= useStoreConnector(
         (prev) => {
             const userInfo= getUserInfo();
-            if (!prev) return userInfo || {};
+            if (!prev) return userInfo;
             return shallowequal(prev,userInfo) ? prev : userInfo;
         });
 
