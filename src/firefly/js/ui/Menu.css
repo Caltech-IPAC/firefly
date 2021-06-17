@@ -90,7 +90,7 @@
     font-style: italic;
     font-weight: normal;
     color: #005da4;
-    padding: 3px;
+    padding: 5px 3px;
 }
 
 .SearchPanel__searchItem:before {
