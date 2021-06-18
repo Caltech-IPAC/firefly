@@ -137,7 +137,7 @@ const defFireflyOptions = {
     wcsMatchType: false,
     imageScrollsToHighlightedTableRow: true,
     imageScrollsToActiveTableOnLoadOrSelect: true,
-    'help.base.url': undefined,
+    'help.base.url': undefined,                     // this overrides property set during build time.
 
     charts: {
         defaultDeletable: undefined, // by default if there are more than one chart in container, all charts are deletable

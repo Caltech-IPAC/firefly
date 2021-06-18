@@ -148,17 +148,20 @@
 
 <template title="Custom Online-Help URL" class="tpl sm">
     <div id="expected" >
-        Click table's Help(?) icon and it should take you to "https://irsa.ipac.caltech.edu/onlinehelp/irsaviewer/"
+        Click table's Help(?) icon and it should take you to "https://irsa.ipac.caltech.edu/onlinehelp/irsaviewer/#id=tables"
+        instead of firefly's help.
     </div>
     <div id="actual" class="box x3"/>
     <script>
         function onFireflyLoaded(firefly) {
+            // override 'help.base.url', all help links will go to irsaviewer's help instead of firefly's.
             firefly.action.dispatchAppOptions({"help.base.url": "https://irsa.ipac.caltech.edu/onlinehelp/irsaviewer/"});
 
             const columns = [{name: 'Greetings'}];
             const data = [["Hello, World!"]];
             const table = { tableData: { columns, data }, title: "Custom Help"};
-            firefly.showClientTable('actual', table, {help_id: "https://irsa.ipac.caltech.edu/onlinehelp/irsaviewer/"});
+            // for testing, add {help_id: "tables"} to put a help icon into the toolbar linking it to help topic 'tables'
+            firefly.showClientTable('actual', table, {help_id: "tables"});
         }
     </script>
 </template>
