@@ -55,35 +55,6 @@ const zoomFromWheelOrTrackpad= (usingMouseWheel, params) => {
         zoomThrottle(params);
 };
 
-function handleScrollWheelEvent(plotView, mouseState, screenPt, nativeEv) {
-    const userZoomType= mouseState===MouseState.WHEEL_DOWN ? UserZoomTypes.UP : UserZoomTypes.DOWN;
-    nativeEv.preventDefault();
-    const plot= primePlot(plotView) ?? {};
-    const {screenSize}= plot;
-    const {viewDim}= plotView ?? {};
-    const smallImage=
-        isImage(plot) && screenSize?.width < viewDim?.width && screenSize?.height < viewDim?.height;
-    let useDevPt= true;
-    let devicePt= CCUtil.getDeviceCoords(primePlot(plotView),screenPt);
-    if (userZoomType===UserZoomTypes.DOWN) {
-        useDevPt= !smallImage;
-    }
-    else if (userZoomType===UserZoomTypes.UP) {
-        if (smallImage) {
-            const cc= CysConverter.make(plot);
-            useDevPt= cc.pointInPlot(devicePt);
-        }
-        else {
-            useDevPt= true;
-        }
-    }
-    if (!useDevPt) devicePt= undefined;
-
-    const usingMouseWheel= Math.abs(nativeEv.wheelDeltaY)%120 === 0;
-    zoomFromWheelOrTrackpad(usingMouseWheel,
-        {plotId:plotView?.plotId, userZoomType, devicePt, upDownPercent:Math.abs(nativeEv.wheelDeltaY)%120===0?1:.7 } );
-
-}
 
 
 /**
@@ -199,6 +170,42 @@ export class ImageViewerLayout extends PureComponent {
         }
     }
 
+    handleScrollWheelEvent(plotView, mouseState, screenPt, nativeEv) {
+
+        if (!this.mouseWheelDevicePt) {
+            this.mouseWheelDevicePt= CCUtil.getDeviceCoords(primePlot(plotView),screenPt);
+            this.mouseWheelTimeoutId= setTimeout(() => {
+                this.mouseWheelDevicePt= undefined;
+            }, 200);
+        }
+        else {
+            clearTimeout(this.mouseWheelTimeoutId);
+            this.mouseWheelTimeoutId= setTimeout(() => {
+                this.mouseWheelDevicePt= undefined;
+            }, 200);
+        }
+
+
+        const userZoomType= mouseState===MouseState.WHEEL_DOWN ? UserZoomTypes.UP : UserZoomTypes.DOWN;
+        nativeEv.preventDefault();
+        const plot= primePlot(plotView) ?? {};
+        const {screenSize}= plot;
+        const {viewDim}= plotView ?? {};
+        const smallImage=
+            isImage(plot) && screenSize?.width < viewDim?.width && screenSize?.height < viewDim?.height;
+        let useDevPt= true;
+        if (smallImage) {
+            const cc= CysConverter.make(plot);
+            useDevPt= cc.pointInPlot(this.mouseWheelDevicePt);
+        }
+
+        const usingMouseWheel= Math.abs(nativeEv.wheelDeltaY)%120 === 0;
+
+        zoomFromWheelOrTrackpad(usingMouseWheel,
+            {plotId:plotView?.plotId, userZoomType, devicePt: useDevPt ? this.mouseWheelDevicePt : undefined,
+                upDownPercent:Math.abs(nativeEv.wheelDeltaY)%120===0?1:  isHiPS(plot)? .2 : .5 } );
+
+    }
 
     eventCB(plotId,mouseState,screenPt,screenX,screenY,nativeEv) {
         const {drawLayersAry,plotView}= this.props;
@@ -213,7 +220,7 @@ export class ImageViewerLayout extends PureComponent {
         }
         else if (isWheel(mouseState)) {
             if (!isActivePlotView(visRoot(),plotId) && getAppOptions()?.wheelScrollRequiresImageActive) return;
-            handleScrollWheelEvent(plotView,mouseState,screenPt,nativeEv);
+            this.handleScrollWheelEvent(plotView,mouseState,screenPt,nativeEv);
             return;
         }
         else {
