@@ -5,8 +5,10 @@
 - To Access current (unstable) development - (Version _next_, unreleased) use docker tag: `nightly`
 
 ## Version 2021.2
+- 2021.2.3 (June 2021)
+  - docker tag: `latest`, `release-2021.2`, `release-2021.2.3`
 - 2021.2.2 (June 2021)
-  - docker tag: `latest`, `release-2021.2`, `release-2021.2.2`
+  - docker tag: `release-2021.2.2`
 - 2021.2.1 (May 2021)
   - docker tag: `release-2021.2.1`
 - 2021.2.0  (May 2021)
@@ -41,9 +43,11 @@
   - Fixed: mouse wheel / trackpad scrolling performance issue ([Firefly-793](https://github.com/Caltech-IPAC/firefly/pull/1098))
   - Fixed: Handle redirects when retrieving TAP errors ([DM-30073](https://github.com/Caltech-IPAC/firefly/pull/1092))
   - Fixed: problem is misusing the referer header
-- 2021.2.X
+- 2021.2.3
   - Fixed: initialization of userInfo object
   - Fixed: further refinement to error handling when retrieving TAP error documents
+  - Fixed: Simbad name resolution issue ([Firefly-797](https://github.com/Caltech-IPAC/firefly/pull/1103))
+  - Fixed: Mouse zoom not working correctly ([Firefly-803](https://github.com/Caltech-IPAC/firefly/pull/1103))
 
 
 ##### _Pull Request in this release_
