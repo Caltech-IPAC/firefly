@@ -7,9 +7,9 @@ import Enum from 'enum';
 import {PlotAttribute} from '../PlotAttribute';
 import {isImage, isHiPS} from '../WebPlot.js';
 import {WPConst} from '../WebPlotRequest';
-import {makeScreenPt, makeDevicePt, makeImagePt} from '../Point';
+import {makeScreenPt, makeDevicePt, makeImagePt, makeWorldPt} from '../Point';
 import {getActiveTarget} from '../../core/AppDataCntlr.js';
-import {getCenterPtOfPlot} from '../VisUtil.js';
+import { getCenterPtOfPlot, getLatDist, getLonDist } from '../VisUtil.js';
 import {getPlotViewById, matchPlotViewByPositionGroup, primePlot, findCurrentCenterPoint} from '../PlotViewUtil.js';
 import {changeProjectionCenter} from '../HiPSUtil.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
@@ -539,3 +539,42 @@ export function findHipsCenProjToPlaceWptOnDevPt(pv, wpt, targetDevPtPos) {
     const tarAsDevPt= cc.getDeviceCoords(wpt);
     return cc.getWorldCoords(makeDevicePt(tarAsDevPt.x-offX, tarAsDevPt.y-offY));
 }
+export function findHipsCenProjToPlaceWptOnDevPtNEW(pv, wpt, targetDevPtPos) {
+    const plot= primePlot(pv);
+    const cc= CysConverter.make(plot);
+    const {viewDim:{width,height}}= plot;
+    const offX= targetDevPtPos.x-width/2;
+    const offY= targetDevPtPos.y-height/2;
+    // const tarAsDevPt= cc.getDeviceCoords(wpt);
+    const centerDevPt= makeDevicePt(targetDevPtPos.x-offX, targetDevPtPos.y-offY);
+
+    const wp1= cc.getWorldCoords(targetDevPtPos);
+    const wp2= cc.getWorldCoords(centerDevPt);
+    if (!wp1 || !wp2) return undefined;
+    const lonDist= getLonDist(wp1.x,wp2.x);
+    const latDist= getLatDist(wp1.y,wp2.y);
+    const newCenterWp= makeWorldPt(wpt.x+lonDist,wpt.y+latDist, wpt.cSys);
+    // const newCenterWp= calculatePosition(wpt, lonDist, latDist);
+    return newCenterWp;
+}
+
+// export function findHipsCenProjToPlaceWptOnDevPtNEW2(pv, wpt, targetDevPtPos) {
+//     const plot= primePlot(pv);
+//     const cc= CysConverter.make(plot);
+//     const {viewDim:{width,height}}= plot;
+//     const offX= targetDevPtPos.x-width/2;
+//     const offY= targetDevPtPos.y-height/2;
+//     // const tarAsDevPt= cc.getDeviceCoords(wpt);
+//     const centerDevPt= makeDevicePt(targetDevPtPos.x-offX, targetDevPtPos.y-offY);
+//
+//     const wp1= cc.getWorldCoords(targetDevPtPos);
+//     const wp2= cc.getWorldCoords(centerDevPt);
+//     if (!wp1 || !wp2) return undefined;
+//     // const lonDist= computeDistanceAngularDistance(wp1.x, wp1.y, wp2.x, wp1.y);
+//     // const latDist= computeDistanceAngularDistance(wp1.x, wp1.y, wp1.x, wp2.y);
+//     // const lonDist= getLonDist(wp1.x,wp2.x);
+//     // const latDist= getLatDist(wp1.y,wp2.y);
+//     const newCenterWp= makeWorldPt(wpt.x+lonDist,wpt.y+latDist, wpt.cSys);
+//     // const newCenterWp= calculatePosition(wpt, lonDist, latDist);
+//     return newCenterWp;
+// }

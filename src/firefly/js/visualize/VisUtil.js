@@ -86,6 +86,24 @@ const computeSimpleSlopeAngle = function (fromPt, toPt) {
 };
 
 
+export function getLonDist(lon1,lon2) {
+    if (lon1>lon2) {
+        const diff= lon1-lon2;
+        if (diff<=180) return -diff;
+        else return ( (360-lon1) - lon2);
+    }
+    else {
+        const diff= lon2-lon1;
+        if (diff<=180) return diff;
+        else return -1*( (360-lon2) - lon1);
+
+    }
+}
+
+export function getLatDist(lat1,lat2) {
+    return -1*(lat1-lat2);
+}
+
 /**
  * Convert from one coordinate system to another.
  *

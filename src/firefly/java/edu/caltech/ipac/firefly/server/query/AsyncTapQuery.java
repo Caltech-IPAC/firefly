@@ -52,7 +52,7 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
         if (maxrec > -1) { inputs.setParam("MAXREC", Integer.toString(maxrec)); }
         inputs.setParam("LANG", lang); // in tap 1.0, lang param is required
         inputs.setParam("request", "doQuery"); // in tap 1.0, request param is required
-        
+
         AsyncTapJob asyncTap = new AsyncTapJob();
         HttpServices.postData(inputs, (method -> {
             String location = HttpServices.getResHeader(method, "Location", null);
@@ -64,7 +64,7 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
                 asyncTap.setErrorMsg("Failed to submit async job to " + serviceUrl);
             }
         }));
-        
+
         if (asyncTap.getPhase() == AsyncJob.Phase.PENDING) {
             HttpServices.postData(HttpServiceInput.createWithCredential(asyncTap.baseJobUrl + "/phase").setParam("PHASE", "RUN"));
         }
@@ -107,7 +107,7 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
         } catch (DataAccessException e) {
             errMsg = e.getMessage();
         } catch (Exception e) {
-            errMsg = "Unable to get error from " + errorUrl;
+            errMsg = "Unknown error retrieving error document from "+errorUrl;
         }
         return errMsg;
     }
@@ -208,19 +208,21 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
                     } else if (HttpServices.isRedirected(method)) {
                         String location = HttpServices.getResHeader(method, "Location", null);
                         if (location != null) {
-                            HttpServices.getData(HttpServiceInput.createWithCredential(location),
+                            HttpServices.Status redirectStatus = HttpServices.getData(HttpServiceInput.createWithCredential(location),
                                 (redirectMethod -> err.setSource(getErrResp(redirectMethod, errorUrl))));
+                            if (redirectStatus.isError()) {
+                                err.setSource("Error retrieving redirected error document from "+location+": "+redirectStatus.getErrMsg());
+                            }
                         } else {
-                            throw new RuntimeException("Request redirected without a location header");
+                            throw new RuntimeException("Error document request redirected without a location header");
                         }
+                    } else {
+                        err.setSource("Error retrieving error document from "+errorUrl+": "+method.getStatusText());
                     }
                 } catch (Exception e) {
                     throw new RuntimeException(e.getMessage());
                 }
             }));
-            if (status.isError()) {
-                return "Unable to get error from "+errorUrl+" "+status.getErrMsg();
-            }
             return err.getSource();
         }
 
@@ -248,14 +250,3 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
 
     }
 }
-
-
-
-
-
-
-
-
-
-
-
