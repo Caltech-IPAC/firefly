@@ -41,6 +41,9 @@
   - Fixed: mouse wheel / trackpad scrolling performance issue ([Firefly-793](https://github.com/Caltech-IPAC/firefly/pull/1098))
   - Fixed: Handle redirects when retrieving TAP errors ([DM-30073](https://github.com/Caltech-IPAC/firefly/pull/1092))
   - Fixed: problem is misusing the referer header
+- 2021.2.X
+  - Fixed: initialization of userInfo object
+  - Fixed: further refinement to error handling when retrieving TAP error documents
 
 
 ##### _Pull Request in this release_
