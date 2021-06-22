@@ -62,9 +62,9 @@ describe('TableUtil: ', () => {
         expect(TblUtil.isColumnType(char3, TblUtil.COL_TYPE.TEXT)).toBe(true);
         expect(TblUtil.isColumnType(char4, TblUtil.COL_TYPE.TEXT)).toBe(true);
 
-        expect(TblUtil.isColumnType(char1, TblUtil.COL_TYPE.ALL)).toBe(true);
-        expect(TblUtil.isColumnType(int1, TblUtil.COL_TYPE.ALL)).toBe(true);
-        expect(TblUtil.isColumnType(float1, TblUtil.COL_TYPE.ALL)).toBe(true);
+        expect(TblUtil.isColumnType(char1, TblUtil.COL_TYPE.ANY)).toBe(true);
+        expect(TblUtil.isColumnType(int1, TblUtil.COL_TYPE.ANY)).toBe(true);
+        expect(TblUtil.isColumnType(float1, TblUtil.COL_TYPE.ANY)).toBe(true);
 
         expect(TblUtil.isColumnType(int1, TblUtil.COL_TYPE.NUMBER)).toBe(true);
         expect(TblUtil.isColumnType(float1, TblUtil.COL_TYPE.NUMBER)).toBe(true);

@@ -50,14 +50,17 @@ const local = {
 };
 export default local;
 
-export const COL_TYPE = new Enum(['ALL', 'NUMBER', 'TEXT', 'INT', 'FLOAT']);
+const TEXT  = ['char', 'c', 's', 'str'];
+const INT   = ['long', 'l', 'int', 'i'];
+const FLOAT = ['double', 'd', 'float', 'f'];
+const BOOL  = ['boolean','bool'];
+const DATE  = ['date'];
+const NUMBER= [...INT, ...FLOAT];
+const USE_STRING = [...TEXT, ...DATE];
 
-const colTypes = {
-    [COL_TYPE.TEXT]:    ['char', 'c', 's', 'str'],
-    [COL_TYPE.INT]:     ['long', 'l', 'int', 'i'],
-    [COL_TYPE.FLOAT]:   ['double', 'd', 'float', 'f'],
-    [COL_TYPE.NUMBER]:  ['long', 'l', 'int', 'i', 'double', 'd', 'float', 'f'],
-};
+// export const COL_TYPE = new Enum(['ALL', 'NUMBER', 'TEXT', 'INT', 'FLOAT']);
+export const COL_TYPE = new Enum({ANY:[],TEXT, INT, FLOAT, BOOL, DATE, NUMBER, USE_STRING});
+
 
 /**
  * @param {TableColumn} col
@@ -67,7 +70,7 @@ const colTypes = {
 export function isColumnType(col={}, type) {
     const flg = '_t-' + type.key;       // for efficiency
     if (!has(col, flg)) {
-        col[flg] = !colTypes[type] || isOfType(col.type, type);
+        col[flg] = isOfType(col.type, type);
     }
     return col[flg];
 }
@@ -79,7 +82,7 @@ export function isColumnType(col={}, type) {
  * @returns {boolean}
  */
 export function isOfType(s, type) {
-    return colTypes[type].includes(s);
+    return type === COL_TYPE.ANY || COL_TYPE[type].value.includes(s);
 }
 
 export function isClientTable(tbl_id) {
@@ -1244,13 +1247,13 @@ export function monitorChanges(actions, accept, callback, watcherId) {
  * @summary returns the non-hidden columns of the given table.  If type is given, it
  * will only return columns that match type.
  * @param {TableModel} tableModel
- * @param {COL_TYPE} type  one of predefined COL_TYPE.  defaults to 'ALL'.
+ * @param {COL_TYPE} type  one of predefined COL_TYPE.  defaults to 'ANY'.
  * @returns {Array<TableColumn>}
  * @public
  * @memberof firefly.util.table
  * @func getColumns
  */
-export function getColumns(tableModel, type=COL_TYPE.ALL) {
+export function getColumns(tableModel, type=COL_TYPE.ANY) {
     return getColsByType(getAllColumns(tableModel), type);
 }
 
@@ -1269,10 +1272,10 @@ export function getAllColumns(tableModel) {
 /**
  * @summary returns only the non-hidden columns matching the given type.
  * @param {Array<TableColumn>} tblColumns
- * @param {COL_TYPE} type  one of predefined COL_TYPE.  defaults to 'ALL'.
+ * @param {COL_TYPE} type  one of predefined COL_TYPE.  defaults to 'ANY'.
  * @returns {Array<TableColumn>}
  */
-export function getColsByType(tblColumns=[], type=COL_TYPE.ALL) {
+export function getColsByType(tblColumns=[], type=COL_TYPE.ANY) {
     return tblColumns.filter((col) =>
                 get(col, 'visibility') !== 'hidden' &&
                 isColumnType(col, type));

@@ -145,9 +145,9 @@ function EnumSelect({col, tbl_id, filterInfoCls, onFilter}) {
         let value = getFieldVal(groupKey, fieldKey);
         if (value) {
             value = value.split(',').map((s) => s === '%EMPTY' ? '' : s).join();           // convert %EMPTY back into ''
-            value = isColumnType(col, COL_TYPE.NUMBER) ? value :
-                    value.split(',')
-                         .map((s) => `'${s.trim()}'`).join(',');
+            if (isColumnType(col, COL_TYPE.TEXT)) {
+                value = value.split(',').map((s) => `'${s.trim()}'`).join(',');
+            }
             value = `IN (${value})`;
         }
         onFilter({fieldKey: name, valid: true, value});
