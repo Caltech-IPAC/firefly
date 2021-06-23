@@ -47,13 +47,12 @@ public class ZtfRefimsFileRetrieve extends URLFileInfoProcessor {
         return  getFilePath_ref(field,filtercode,ccdid,qid, type);
 
     }
-
-    // example: http://irsadev:6001/search/ztf/dev_refims/ztf_ref_img?
+    
     public static String getBaseURL(ServerRequest sr) {
-        String host = sr.getSafeParam("host");
-        String schemaGroup = sr.getSafeParam("schemaGroup");
+        String host = sr.getSafeParam("host") != null ? sr.getSafeParam("host") : ZtfFileRetrieve.IBE_HOST;
+        String schemaGroup = sr.getSafeParam("schemaGroup")!= null ? sr.getSafeParam("schemaGroup"):"ztf";
         String schema = sr.getSafeParam("schema");
-        String table = sr.getSafeParam("table");
+        String table = sr.getSafeParam("ProductLevel")!= null ? sr.getSafeParam("ProductLevel"):"ref";
 
         return QueryUtil.makeUrlBase(host) + "/data/" + schemaGroup + "/" + schema + "/" + table + "/";
     }

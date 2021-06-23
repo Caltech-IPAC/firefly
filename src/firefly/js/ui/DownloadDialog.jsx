@@ -144,8 +144,13 @@ export function DownloadOptionPanel (props) {
 
     const onSubmit = useCallback((formInputs={}) => {
 
-        let {request,  selectInfo} = getTblById(tbl_id);
+        const {request,  selectInfo} = getTblById(tbl_id);
         const {FileGroupProcessor} = dlParams;
+
+        const selectInfoCls = SelectInfo.newInstance(selectInfo);
+        if (!selectInfoCls.getSelectedCount()) {
+            return showInfoPopup('You have not chosen any data to download', 'No Data Selected');
+        }
 
         formInputs.wsSelect = formInputs.wsSelect && formInputs.wsSelect.replace(WS_HOME, '');
         //make a download request
