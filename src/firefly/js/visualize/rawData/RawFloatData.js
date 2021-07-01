@@ -127,7 +127,7 @@ async function changeLocalRawDataStretch(plotImageId, dataWidth, dataHeight, plo
         plotState.bandStateAry[bIdx].rangeValuesSerialize = rv.toJSON();
     }
     const {retRawTileDataGroup, localRawTileDataGroup}=
-        await populateRawImagePixelDataInWorker(rawTileDataGroup, plotState.getColorTableId(), threeColor, .5, 1, rootUrl);
+        await populateRawImagePixelDataInWorker(rawTileDataGroup, plotState.getColorTableId(), threeColor, false, '', .5, 1, rootUrl);
     entry.rawTileDataGroup= localRawTileDataGroup;
 
 

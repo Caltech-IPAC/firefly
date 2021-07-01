@@ -406,12 +406,12 @@ public class VisServerOps {
 
 
 
-    public static byte[] getByteStretchArray(PlotState state, int tileSize) {
+    public static byte[] getByteStretchArray(PlotState state, int tileSize, boolean mask, long maskBits) {
         try {
             long start = System.currentTimeMillis();
             ActiveCallCtx ctx = CtxControl.prepare(state);
             ActiveFitsReadGroup frGroup= ctx.getFitsReadGroup();
-            byte [] byte1d= DirectStretchUtils.getStretchData(state,frGroup,tileSize);
+            byte [] byte1d= DirectStretchUtils.getStretchData(state,frGroup,tileSize,mask, maskBits);
             long elapse = System.currentTimeMillis() - start;
             PlotServUtils.statsLog("byteAry",
                     "total-MB", (float)byte1d.length / StringUtils.MEG,

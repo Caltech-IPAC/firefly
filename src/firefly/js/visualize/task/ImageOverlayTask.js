@@ -1,11 +1,15 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get} from 'lodash';
 import {logger} from '../../util/Logger.js';
 import ImagePlotCntlr, {makeUniqueRequestKey, IMAGE_PLOT_KEY, dispatchPlotMask, dispatchZoom, dispatchPlotMaskLazyLoad} from '../ImagePlotCntlr.js';
-import {UserZoomTypes} from '../ZoomUtil.js';
-import {primePlot, getOverlayByPvAndId, getPlotViewById, getOverlayById} from '../PlotViewUtil.js';
+import {
+    primePlot,
+    getOverlayByPvAndId,
+    getPlotViewById,
+    getOverlayById,
+    hasLocalStretchByteData, canLoadStretchDataDirect
+} from '../PlotViewUtil.js';
 import {PlotState} from '../PlotState.js';
 import {RequestType} from '../RequestType.js';
 import {ZoomType} from '../ZoomType.js';
@@ -15,6 +19,7 @@ import {callGetWebPlot} from '../../rpc/PlotServicesJson.js';
 import {populateFromHeader} from './PlotImageTask';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga';
 import {isPlotIdInPvNewPlotInfoAry} from '../PlotViewUtil';
+import {changeLocalMaskColor} from 'firefly/visualize/rawData/RawDataOps.js';
 
 const colorList= [
     '#FF0000','#00FF00', '#0000FF', '#91D33D',
@@ -133,33 +138,25 @@ function maskCall(vr, dispatcher, payload) {
 
 export function overlayPlotChangeAttributeActionCreator(rawAction) {
     return (dispatcher,getStore) => {
-        dispatcher(rawAction);
-        if (rawAction.payload.doReplot) {
-            const {plotId,imageOverlayId}= rawAction.payload;
-            var vr= getStore()[IMAGE_PLOT_KEY];
-            var opv= getOverlayByPvAndId(vr,plotId, imageOverlayId);
-            if (!opv) return;
-            const {imageNumber,color, maskValue, title}= opv;
-            var fileKey;
-            if (opv.plot) {
-                const wpr= opv.plot.plotState.getWebPlotRequest();
-                if (wpr.getRequestType()===RequestType.FILE || wpr.getFileName()) {
-                    fileKey= wpr.getFileName();
+
+        let dispatchHandled= false;
+        const {plotId,imageOverlayId}= rawAction.payload;
+        if (rawAction.payload.attributes?.colorAttributes?.color && imageOverlayId) {
+            const vr= getStore()[IMAGE_PLOT_KEY];
+            const opv= getOverlayByPvAndId(vr,plotId, imageOverlayId);
+            if (opv)  {
+                const {color}= rawAction.payload.attributes.colorAttributes;
+                if (opv.colorAttributes.color!==color && hasLocalStretchByteData(opv.plot)) {
+                    dispatchHandled= true;
+                    changeLocalMaskColor(opv.plot,color)
+                        .then( () => dispatcher(rawAction) );
                 }
             }
-            dispatchPlotMask({plotId,imageOverlayId, fileKey, maskValue, imageNumber, color, title});
-
-            vr= getStore()[IMAGE_PLOT_KEY];
-            opv= getOverlayByPvAndId(vr,plotId, imageOverlayId);
-            const plot= primePlot();
-            if (plot && get(opv, 'plot.zoomFactor') !== plot.zoomFactor) {
-               dispatchZoom({
-                   plotId:plot.plotId,
-                   UserZoomType:UserZoomTypes.LEVEL,
-                   level: plot.zoomFactor
-               });
-            }
         }
+
+       !dispatchHandled && dispatcher(rawAction);
+        
+        // note - rawAction.payload.doReplot - is deprecated
     };
 }
 
@@ -218,6 +215,7 @@ function processMaskSuccessResponse(dispatcher, payload, result) {
         // const imageOverlayId= WebPlotRequest.parse(result.PlotCreateHeader.plotRequestSerialize).getPlotId();
 
         var plot= WebPlot.makeWebPlotData(imageOverlayId, PlotCreate[0], {}, true);
+        if (canLoadStretchDataDirect(plot,true)) plot.tileData = undefined;
         const resultPayload= clone(payload, {plot});
         dispatcher({type: ImagePlotCntlr.PLOT_MASK, payload: resultPayload});
     }

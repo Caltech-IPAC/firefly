@@ -13,10 +13,14 @@ import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.Histogram;
 import edu.caltech.ipac.visualize.plot.ImageData;
 import edu.caltech.ipac.visualize.plot.ImageHeader;
+import edu.caltech.ipac.visualize.plot.ImageMask;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.plotdata.RGBIntensity;
 
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -38,7 +42,8 @@ public class DirectStretchUtils {
         return flipped;
     }
 
-    public static byte [] getStretchData(PlotState state,  ActiveFitsReadGroup frGroup, int tileSize) throws InterruptedException {
+    public static byte [] getStretchData(PlotState state,  ActiveFitsReadGroup frGroup, int tileSize, boolean mask, long maskBits)
+            throws InterruptedException {
 
         FitsRead fr= frGroup.getFitsRead(state.firstBand());
         int totWidth= fr.getNaxis1();
@@ -116,6 +121,41 @@ public class DirectStretchUtils {
                         bPos+=tmpByte3CAry[bandIdx].length;
                     }
                 }
+            }
+
+        }
+        else if (mask) {
+            float [] float1d= fr.getRawFloatAry();
+            final float [] flip1d= flipFloatArray(float1d,totWidth,totHeight);
+            byte1d= new byte[flip1d.length];
+
+            List<ImageMask> masksList=  new ArrayList<ImageMask>();
+            for(int j= 0; (j<31); j++) {
+                if (((maskBits>>j) & 1) != 0) {
+                    masksList.add(new ImageMask(j,Color.RED));
+                }
+            }
+            ImageMask[] maskAry= masksList.toArray(new ImageMask[0]);
+
+
+            for(int i= 0; i<xPanels; i++) {
+                for(int j= 0; j<yPanels; j++) {
+                    int width= (i<xPanels-1) ? tileSize : ((totWidth-1) % tileSize + 1);
+                    int height= (j<yPanels-1) ? tileSize : ((totHeight-1) % tileSize + 1);
+                    idx= (i*yPanels) +j;
+                    imageDataAry[idx]= new ImageData( maskAry,
+                            state.getRangeValues(), tileSize*i,tileSize*j, width, height);
+                    ImageData im= imageDataAry[idx];
+
+                    executor.execute(() -> im.stretchMaskAndSave(flip1d,fr.getNaxis1()));
+                }
+            }
+            executor.shutdown();
+            normalTermination= executor.awaitTermination(600, TimeUnit.SECONDS);
+            for (ImageData imageData : imageDataAry) {
+                byte[] tmpByteAry = imageData.getSavedStandardStretch();
+                System.arraycopy(tmpByteAry, 0, byte1d, bPos, tmpByteAry.length);
+                bPos += tmpByteAry.length;
             }
 
         }

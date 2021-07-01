@@ -99,9 +99,12 @@ export function makeLoadAction(plot, band, workerKey) {
  * @param {WebPlot} plot
  * @param plotState
  * @param {String} workerKey
+ * @param {boolean} mask
+ * @param {number} maskBits
+ * @param {string} maskColor
  * @return {WorkerAction}
  */
-export function makeRetrieveStretchByteDataAction(plot, plotState, workerKey) {
+export function makeRetrieveStretchByteDataAction(plot, plotState, mask, maskBits, maskColor, workerKey) {
     const {plotImageId} = plot;
     const b = plot.plotState.firstBand();
     const {processHeader} = plot.rawData.bandData[b.value];
@@ -113,6 +116,9 @@ export function makeRetrieveStretchByteDataAction(plot, plotState, workerKey) {
         workerKey,
         payload: {
             plotImageId,
+            mask,
+            maskBits,
+            maskColor,
             dataWidth: plot.dataWidth,
             dataHeight: plot.dataHeight,
             plotStateSerialized: plotState.toJson(false),

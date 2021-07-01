@@ -1,12 +1,12 @@
 // import {GPU} from 'gpu.js';
-import {getGlobalObj} from '../../util/WebUtil.js';
+import {createCanvas, getGlobalObj} from '../../util/WebUtil.js';
 import {isArrayBuffer, once, isArray} from 'lodash';
 import {TILE_SIZE} from './RawDataCommon.js';
+import {toRGB} from 'firefly/util/Color.js';
 
 export const getGPUOps= once((GPU) => {
 
     const gpu= new GPU({mode:'gpu'});
-
 
     const standardFunc= Function('pixelAry', 'colorModel','height', 'contrast', 'offsetShift', `
             const pixel= pixelAry[height-this.thread.y-1][this.thread.x];
@@ -83,8 +83,8 @@ export const getGPUOps= once((GPU) => {
 
     const threeCRawDataTileGPU = gpu.createKernel(threeCFunc,{graphical:true, dynamicOutput:true, dynamicArguments:true, tactic: 'speed'});
 
-    async function createTransitionalTileWithGPU(inData, colorModel, isThreeColor, bias=.5, contrast=1, bandUse) {
-        const canvas= createTileWithGPU(inData,colorModel,isThreeColor, bias,contrast, bandUse);
+    async function createTransitionalTileWithGPU(inData, colorModel, isThreeColor, mask, maskColor, bias=.5, contrast=1, bandUse) {
+        const canvas= createTileWithGPU(inData,colorModel,isThreeColor, mask, maskColor, bias,contrast, bandUse);
 
         const g= getGlobalObj();
         if (!g.document && g.createImageBitmap) {
@@ -103,17 +103,19 @@ export const getGPUOps= once((GPU) => {
      * @param {RawTileData} inData
      * @param colorModel
      * @param isThreeColor
+     * @param {boolean} mask
+     * @param {string} maskColor
      * @param bias
      * @param contrast
      * @param bandUse
      * @return {HTMLCanvasElement|OffscreenCanvas}
      */
-    function createTileWithGPU(inData, colorModel, isThreeColor, bias=.5, contrast=1, bandUse) {
+    function createTileWithGPU(inData, colorModel, isThreeColor, mask= false, maskColor='', bias=.5, contrast=1, bandUse) {
         const {width,height, pixelData3C, pixelDataStandard}= inData;
 
-        return isThreeColor ?
-            createRawDataTile3CRGBDataGPU(pixelData3C.map( (a) => a && get8BitAry(a)), width,height,bias,contrast,bandUse) :
-            createRawDataTileImageRGBDataGPU(colorModel, get8BitAry(pixelDataStandard), width,height,bias,contrast);
+        if (isThreeColor) return createRawDataTile3CRGBDataGPU(pixelData3C.map( (a) => a && get8BitAry(a)), width,height,bias,contrast,bandUse);
+        if (mask) return createRawDataTileImage(maskColor, get8BitAry(pixelDataStandard), width,height);
+        return createRawDataTileImageRGBDataGPU(colorModel, get8BitAry(pixelDataStandard), width,height,bias,contrast);
     }
 
     function createRawDataTileImageRGBDataGPU(colorModel, pixelData, width,height,bias=.5, contrast=1) {
@@ -129,6 +131,40 @@ export const getGPUOps= once((GPU) => {
             offset+shift,
            );
         return makeRetData(standRawDataTileGPU.canvas, width, height);
+    }
+
+    /**
+     * Create a mask canvas tile
+     * @param {String} maskColor
+     * @param pixelData - each byte in pixelData represents 8 pixels, so the data is compressed into bits
+     * @param {number} width
+     * @param {number} height
+     * @return {HTMLCanvasElement}
+     */
+    function createRawDataTileImage(maskColor, pixelData, width,height) {
+        const [red,green,blue]= toRGB(maskColor);
+        const imData= new ImageData(width,height);
+        const data= imData.data;
+        const len= data.length;
+        let pixBit;
+        let pixDataIdx;
+        for(let i= 0; i<len; i+=4) {
+            pixDataIdx= Math.trunc(Math.trunc(i/4)/8);
+            pixBit=  pixelData[pixDataIdx] &  (1 << (Math.trunc(i/4) % 8)) ;
+            if (!pixBit) {
+                data[i]= red;
+                data[i+1]= green;
+                data[i+2]= blue;
+                data[i+3]= 255;
+            }
+            else {
+                data[i]= data[i+1]= data[i+2]= data[i+3]= 0;
+            }
+        }
+        const alphaCanvas= createCanvas(width,height);
+        alphaCanvas.getContext('2d').clearRect(0,0,width,height);
+        alphaCanvas.getContext('2d').putImageData(imData,0,0);
+        return alphaCanvas;
     }
 
 

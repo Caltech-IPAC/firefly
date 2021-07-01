@@ -45,7 +45,7 @@ function toRGBA(/* String */ color, /* Number */ alpha=1) {
     }
 }
 
-function toRGB(/* String */ color) {
+export function toRGB(/* String */ color) {
     if (color.startsWith('rgb')) {
         const intColor= toRGBA(color);
         intColor.length=3;

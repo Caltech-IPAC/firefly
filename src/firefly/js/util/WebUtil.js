@@ -69,7 +69,7 @@ export const isOffscreenCanvas= (b) => getGlobalObj().OffscreenCanvas && (b inst
 
 export function createCanvas(width,height) {
     const global= getGlobalObj();
-    const c = global.document ? global.document.createElement('canvas') : new OffscreenCanvas(w,h);
+    const c = global.document ? global.document.createElement('canvas') : new OffscreenCanvas(width,height);
     c.width = width;
     c.height = height;
     return c;
