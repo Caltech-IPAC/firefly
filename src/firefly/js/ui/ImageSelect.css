@@ -18,24 +18,40 @@
     color: saddlebrown;
     font-style: italic;
     font-size: smaller;
-    padding: 0 4px 2px;
+    padding-top: 1px;
 }
 
 .ImageSelect__title {
     font-weight: bold;
-    padding: 4px;
+}
+
+.ImageSelect__action {
+    display: inline-flex;
+    justify-content: space-between;
+    padding-bottom: 3px;
 }
 
 .ImageSelect__toolbar {
     flex-grow: 0;
     background-color: #f5f5f5;
-    height: 15px;
+    height: 36px;
     min-height: 15px;
     padding: 3px 6px;
-    display: inline-flex;
-    justify-content: space-between;
+    display: flex;
+    flex-direction: column;
 }
 
+.ImageSelect__toolbar--popup {
+    position: absolute;
+    width: calc(100% - 6px);
+    top: 30px;
+    box-sizing: border-box;
+    border: 1px solid #bbbaba;
+    box-shadow: 0 2px 2px #dedede;
+    padding: 1px 6px;
+    height: 38px;
+    margin-left: -1px;
+}
 
 .FilterPanel {
     flex-grow: 0;
