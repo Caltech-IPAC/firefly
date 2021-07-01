@@ -271,5 +271,5 @@ export function insertAtCursor (input, textToInsert, fieldKey, groupKey, prismLi
     });
 
     // trigger prismLive style sync
-    window.setTimeout( () => prismLive.syncStyles(), 10);
+    prismLive && window.setTimeout( () => prismLive.syncStyles(), 10);
 }

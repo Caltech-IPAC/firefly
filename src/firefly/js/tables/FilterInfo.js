@@ -137,13 +137,8 @@ export class FilterInfo {
                 for (let i = 0; i < parts.length; i += 2) {
                     const [cname, op, val] = parseInput(parts[i]);
                     if (cname) {
-                        let isNumeric = false;
-                        if (columns) {
-                            const col = columns.find((c) => c.name === cname);
-                            // assume all expressions are numeric
-                            isNumeric = !col || isColumnType(col, COL_TYPE.NUMBER);
-                        }
-                        parts[i] = `${cname} ${autoCorrectCondition(op + ' ' + val, isNumeric)}`;
+                        const col = columns?.find((c) => c.name === cname);
+                        parts[i] = `${cname} ${autoCorrectCondition(op + ' ' + val, col)}`;
                     }
                 }
                 return parts.join('');
@@ -388,11 +383,11 @@ function likeToRegexp(text) {
  * @returns {string}
  */
 function autoCorrectConditions(conditions, tbl_id, cname) {
-    const isNumeric = isColumnType(getColumn(getTblById(tbl_id), cname), COL_TYPE.NUMBER);
+    const col = getColumn(getTblById(tbl_id), cname);
     if (conditions) {
         const parts = conditions.split(COND_SEP);
         for (let i = 0; i < parts.length; i += 2) {                       // separate them into parts
-                parts[i] = autoCorrectCondition(parts[i], isNumeric);       // auto correct if needed
+                parts[i] = autoCorrectCondition(parts[i], col);        // auto correct if needed
         }
         return parts.join('');                                              // put them back
     } else {
@@ -420,11 +415,13 @@ function autoCorrectConditions(conditions, tbl_id, cname) {
  *              ex: =abc => ='abc' after auto-correction for text column
  *                  =abc => =abc   after auto-correction for numeric column
  *
- * @param v
- * @param isNumeric
+ * @param v     filter expression
+ * @param col   column to operate on
  * @returns {*}
  */
-function autoCorrectCondition(v, isNumeric=false) {
+function autoCorrectCondition(v, col) {
+
+    const useQuote = col && isColumnType(col, COL_TYPE.USE_STRING);
 
     const encloseByQuote = (txt, quote="'") => {
         return `${quote}${txt}${quote}`;
@@ -439,7 +436,7 @@ function autoCorrectCondition(v, isNumeric=false) {
     // empty string or string with no value
     if (!op && !val) return v.trim();
 
-    op = op ? op.toLowerCase() : (isNumeric ? '=' : 'like');      // no operator is treated as 'like'
+    op = op ? op.toLowerCase() : (useQuote ? 'like' : '=');      // no operator is treated as 'like'
 
     switch (op) {
         case 'like':
@@ -453,7 +450,7 @@ function autoCorrectCondition(v, isNumeric=false) {
             let valList = val.match(/^\((.*)\)$/) ? val.substring(1, val.length-1) : val;
 
             valList = valList.split(',').map((s) => {
-                return isNumeric ? s : encloseString(s.trim());
+                return useQuote ? encloseString(s.trim()) : s;
             }).join(', ');
 
             val = `(${valList})`;
@@ -464,7 +461,7 @@ function autoCorrectCondition(v, isNumeric=false) {
         case '<':
         case '>=':
         case '<=':
-            val = isNumeric && !isNaN(val) ? val : encloseString(val);
+            val = useQuote ? encloseString(val) : val;
             break;
         case 'is':
         case 'is not':

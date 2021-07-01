@@ -184,7 +184,7 @@ export const useFieldGroupConnector= (props) => {
             }
             else {
                 const initFieldState= getInitialState();
-                const groupState = getFieldGroupState(groupKey);
+                const groupState = getFieldGroupState(groupKey) || {};
                 const s = groupState?.fields?.[fieldKey];
                 const {keepState= false}= groupState;
                 if (s) {
