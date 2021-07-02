@@ -111,7 +111,7 @@ describe('A test suite for expr/Expression.js', function () {
          expect(se).toHaveProperty('details');
          expect(se).toHaveProperty('where');
          expect(se).toHaveProperty('why');
-         console.log(se);
+         // console.log(se);
      });
 
     it('invalid expression', function () {
@@ -122,7 +122,7 @@ describe('A test suite for expr/Expression.js', function () {
         expect(se).toHaveProperty('details');
         expect(se).toHaveProperty('where');
         expect(se).toHaveProperty('why');
-        console.log(se);
+        // console.log(se);
     });
 
 
