@@ -195,7 +195,7 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
         col.setWidth(4);
         col.setFilterable(false);
         col.setSortable(false);
-        col.setLinkInfos(Collections.singletonList(new LinkInfo(null, INFO_ICON_STUB, null, "link to HiPS properties", null, null, null)));
+        col.setLinkInfos(Collections.singletonList(new LinkInfo(null, INFO_ICON_STUB, "${Properties}", "link to HiPS properties", null, null, null)));
     }
 
     private static DataGroup createTableDataFromListEntry(List<HiPSMasterListEntry> hipsMaps) {

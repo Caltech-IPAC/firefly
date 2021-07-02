@@ -65,6 +65,8 @@ export const ServerParams = {
         SCROLL_Y: 'scrollY',
         ZOOM_FACTOR: 'zoomFactor',
         RANGE_VALUES: 'rangeValues',
+        MASK_DATA: 'maskData',
+        MASK_BITS: 'maskBits',
 
         EXT_TYPE: 'extType',
         IMAGE: 'image',

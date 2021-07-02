@@ -61,14 +61,25 @@ async function doColorChange(payload) {
 }
 
 
+function convertToBits(ary) {
+    const retAry= new Uint8ClampedArray(Math.trunc(ary.length/8)+1);
+    const len= ary.length;
+    for(let i=0;(i<len);i++) {
+        if (ary[i]) {
+            retAry[Math.trunc(i / 8)] = retAry[Math.trunc(i / 8)] | (1 << (i % 8));
+        }
+    }
+    return retAry;
+}
 
 async function fetchByteDataArray(payload) {
     const {plotImageId,plotStateSerialized, plotState, processHeader, dataWidth, dataHeight,
-        bias, contrast, cmdSrvUrl, rootUrl} = payload;
+        bias, contrast, cmdSrvUrl, rootUrl, mask= false, maskBits=0, maskColor=''} = payload;
 
     try {
         const start= Date.now();
-        const allTileAry= await callStretchedByteData(plotImageId, plotStateSerialized, plotState, dataWidth,dataHeight, cmdSrvUrl);
+        const allTileAry= await callStretchedByteData(plotImageId, plotStateSerialized, plotState,
+            dataWidth,dataHeight, mask, maskBits, cmdSrvUrl);
         const rawTileDataGroup= createRawTileDataGroup(dataWidth,dataHeight);
         if (plotState.isThreeColor()) {
             const bands= plotState.getBands();
@@ -92,7 +103,12 @@ async function fetchByteDataArray(payload) {
             }
         }
         else {
-            rawTileDataGroup.rawTileDataAry.forEach( (rt,idx) => rt.pixelDataStandard= allTileAry[idx]);
+            if (mask) {
+                rawTileDataGroup.rawTileDataAry.forEach( (rt,idx) => rt.pixelDataStandard= convertToBits(allTileAry[idx]));
+            }
+            else {
+                rawTileDataGroup.rawTileDataAry.forEach( (rt,idx) => rt.pixelDataStandard= allTileAry[idx]);
+            }
         }
         let entry= getEntry(plotImageId);
         if (!entry) {
@@ -100,7 +116,8 @@ async function fetchByteDataArray(payload) {
             entry= getEntry(plotImageId);
         }
         const {retRawTileDataGroup, localRawTileDataGroup}=
-                await populateRawImagePixelDataInWorker(rawTileDataGroup, plotState.colorTableId, plotState.isThreeColor(), bias, contrast, {}, rootUrl);
+                await populateRawImagePixelDataInWorker(rawTileDataGroup, plotState.colorTableId, plotState.isThreeColor(),
+                                                        mask, maskColor, bias, contrast, {}, rootUrl);
         entry.rawTileDataGroup= localRawTileDataGroup;
 
 
@@ -120,12 +137,14 @@ async function fetchByteDataArray(payload) {
 }
 
 
-export async function callStretchedByteData(plotImageId,plotStateSerialized,plotState, dataWidth,dataHeight,cmdSrvUrl) {
+export async function callStretchedByteData(plotImageId,plotStateSerialized,plotState, dataWidth,dataHeight,mask,maskBits,cmdSrvUrl) {
 
     const options=  makeFetchOptions(plotImageId, {
         [ServerParams.COMMAND]: ServerParams.GET_BYTE_DATA,
         [ServerParams.STATE] : plotStateSerialized,
         [ServerParams.TILE_SIZE] : TILE_SIZE,
+        [ServerParams.MASK_DATA] : mask,
+        [ServerParams.MASK_BITS] : maskBits,
 
     });
 
@@ -184,7 +203,8 @@ async function changeLocalRawDataColor(plotImageId, colorTableId, threeColor, bi
     const newPlotState = plotState.copy();
     newPlotState.colorTableId = colorTableId;
     const {retRawTileDataGroup, localRawTileDataGroup}=
-        await populateRawImagePixelDataInWorker(entry.rawTileDataGroup, colorTableId, threeColor, bias, contrast, bandUse, rootUrl);
+        await populateRawImagePixelDataInWorker(entry.rawTileDataGroup, colorTableId, threeColor, false, '',
+            bias, contrast, bandUse, rootUrl);
     entry.rawTileDataGroup= localRawTileDataGroup;
     return {rawTileDataGroup:retRawTileDataGroup, plotStateSerialized: newPlotState.toJson(false)};
 }

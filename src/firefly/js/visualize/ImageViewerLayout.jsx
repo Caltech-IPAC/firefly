@@ -112,13 +112,29 @@ const rootStyle= {
     overflow:'hidden'
 };
 
-function getDataIfNecessary(pv) {
+function getPlotImageToRequest(pv) {
     const plot= primePlot(pv);
-    if (!plot || plot.dataRequested) return;
+    if (!plot) return undefined;
     const {viewDim:{width,height}}= pv;
-    if (!width || !height) return;
-    const {plotImageId,plotId}= plot;
-    dispatchRequestLocalData({plotId,plotImageId});
+    if (!width || !height) return undefined;
+    if (plot.dataRequested && !pv.overlayPlotViews?.length) return undefined;
+    if (!plot.dataRequested) return {plotImageId:plot.plotImageId};
+    if (pv.overlayPlotViews?.length) {
+        const overPv= pv.overlayPlotViews.find( (oPv) => oPv?.plot?.dataRequested===false);
+        if (!overPv) return undefined;
+        return {plotImageId:overPv.plot.plotImageId, imageOverlayId:overPv.imageOverlayId};
+    }
+    return undefined;
+
+}
+
+function getDataIfNecessary(pv) {
+    const result= getPlotImageToRequest(pv);
+    if (!result) return;
+    const plot= primePlot(pv);
+    if (!plot) return;
+    const {plotId}= plot;
+    dispatchRequestLocalData({plotId,plotImageId:result.plotImageId, imageOverlayId:result.imageOverlayId});
 }
 
 export class ImageViewerLayout extends PureComponent {

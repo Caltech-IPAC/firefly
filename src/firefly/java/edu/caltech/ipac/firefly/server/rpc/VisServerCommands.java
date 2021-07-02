@@ -187,8 +187,10 @@ public class VisServerCommands {
         public void processRequest(HttpServletRequest req, HttpServletResponse res, SrvParam sp) throws Exception {
 
             PlotState state= sp.getState();
+            boolean mask= sp.getOptionalBoolean(ServerParams.MASK_DATA,false);
+            int maskBits= sp.getOptionalInt(ServerParams.MASK_BITS,0);
             int tileSize = sp.getRequiredInt(ServerParams.TILE_SIZE);
-            byte [] byte1D= VisServerOps.getByteStretchArray(state,tileSize);
+            byte [] byte1D= VisServerOps.getByteStretchArray(state,tileSize,mask,maskBits);
             res.setContentType("application/octet-stream");
 
             ByteBuffer byteBuf = ByteBuffer.wrap(byte1D);

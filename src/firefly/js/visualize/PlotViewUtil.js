@@ -13,7 +13,7 @@ import {getWavelength, isWLAlgorithmImplemented, PLANE} from './projection/Wavel
 import {getNumberHeader, HdrConst} from './FitsHeaderUtil.js';
 import {computeDistance, getRotationAngle, isCsysDirMatching, isEastLeftOfNorth, isPlotNorth} from './VisUtil';
 import {removeRawData} from './rawData/RawDataCache.js';
-import {MAX_DIRECT_IMAGE_SIZE, MAX_RAW_IMAGE_SIZE} from './rawData/RawDataCommon.js';
+import {MAX_DIRECT_IMAGE_SIZE, MAX_DIRECT_MASK_IMAGE_SIZE, MAX_RAW_IMAGE_SIZE} from './rawData/RawDataCommon.js';
 import {hasClearedDataInStore, hasLocalRawDataInStore, hasLocalStretchByteDataInStore} from './rawData/RawDataOps.js';
 
 
@@ -227,7 +227,10 @@ export const getOverlayByPvAndId = (ref,plotId,imageOverlayId) =>
 
 
 
-export const removeRawDataByPlotView= (pv) => pv?.plots.forEach( (p) => removeRawData(p.plotImageId));
+export function removeRawDataByPlotView(pv) {
+    pv?.plots.forEach( (p) => removeRawData(p.plotImageId));
+    pv?.overlayPlotViews?.forEach( (oPv) => oPv?.plot?.plotImageId && removeRawData(oPv.plot.plotImageId) );
+}
 
 /**
  * construct an array of drawing layer from the store
@@ -1099,10 +1102,12 @@ export function canLoadStretchData(plot) {
     return (plot.dataWidth*plot.dataHeight) < MAX_RAW_IMAGE_SIZE;
 }
 
-export function canLoadStretchDataDirect(plot) {
+export function canLoadStretchDataDirect(plot, mask=false) {
     if (!plot || !isImage(plot)) return false;
     const size= (plot.dataWidth*plot.dataHeight);
-    return size<Math.min(MAX_RAW_IMAGE_SIZE,MAX_DIRECT_IMAGE_SIZE);
+    return mask ?
+        size<Math.min(MAX_RAW_IMAGE_SIZE,MAX_DIRECT_MASK_IMAGE_SIZE)  :
+        size<Math.min(MAX_RAW_IMAGE_SIZE,MAX_DIRECT_IMAGE_SIZE);
 }
 
 export function isAllStretchDataLoadable(vr) {

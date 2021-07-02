@@ -5,8 +5,10 @@
 - To Access current (unstable) development - (Version _next_, unreleased) use docker tag: `nightly`
 
 ## Version 2021.2
+- 2021.2.4 (July 2021)
+  - docker tag: `latest`, `release-2021.2`, `release-2021.2.4`
 - 2021.2.3 (June 2021)
-  - docker tag: `latest`, `release-2021.2`, `release-2021.2.3`
+  - docker tag: `release-2021.2.3`
 - 2021.2.2 (June 2021)
   - docker tag: `release-2021.2.2`
 - 2021.2.1 (May 2021)
@@ -48,6 +50,11 @@
   - Fixed: further refinement to error handling when retrieving TAP error documents
   - Fixed: Simbad name resolution issue ([Firefly-797](https://github.com/Caltech-IPAC/firefly/pull/1103))
   - Fixed: Mouse zoom not working correctly ([Firefly-803](https://github.com/Caltech-IPAC/firefly/pull/1103))
+- 2021.2.4
+  - Fixed: Image mask not zooming correctly ([Firefly-810](https://github.com/Caltech-IPAC/firefly/pull/1106))
+  - Fixed: HiPS select table _i_ link not working ([Firefly-819](https://github.com/Caltech-IPAC/firefly/pull/1106))
+  - Fixed: bias slider not working in 3 color mode ([PR](https://github.com/Caltech-IPAC/firefly/pull/1106))
+  - Fixed: boolean table filters not working ([Firefly-805](https://github.com/Caltech-IPAC/firefly/pull/1104))
 
 
 ##### _Pull Request in this release_
@@ -58,7 +65,7 @@
 
 ## Version 2021.1
 - 2021.1.0  (February 2021)
-  - docker tag: `latest`, `release-2021.1`, `release-2021.1.0`
+  - docker tag: `release-2021.1`, `release-2021.1.0`
   - original release
 
 

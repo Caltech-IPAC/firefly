@@ -110,7 +110,6 @@ export function reducer(state, action) {
             retState= zoomImage(state,action);
             break;
         case Cntlr.COLOR_CHANGE  :
-        case Cntlr.ZOOM_IMAGE  :
         case Cntlr.STRETCH_CHANGE  :
             retState= installTiles(state,action);
             break;
@@ -870,20 +869,49 @@ function addProcessedTileData(state,action) {
 }
 
 function updateRawImageData(state, action) {
-    const {plotId, plotImageId, rawData}= action.payload;
+    const {plotId, plotImageId, imageOverlayId, rawData}= action.payload;
     const pv= getPlotViewById(state,plotId);
     if (!pv) return state;
-    const plots= pv.plots.map( (p) => p.plotImageId===plotImageId ? {...p,rawData}: p);
-    const plotViewAry= replacePlotView(state.plotViewAry,{...pv,plots});
+    let updatedPv;
+
+    if (imageOverlayId) {
+        const overlayPlotViews= pv.overlayPlotViews?.map( (oPv) => {
+            if (oPv?.plot?.plotImageId!==plotImageId) return oPv;
+            oPv.plot= {...oPv.plot,rawData};
+            return oPv;
+        });
+        updatedPv= {...pv, overlayPlotViews};
+    }
+    else {
+        const plots= pv.plots.map( (p) => p.plotImageId===plotImageId ? {...p,rawData}: p);
+        updatedPv= {...pv,plots};
+    }
+
+    const plotViewAry= replacePlotView(state.plotViewAry,updatedPv);
     return {...state, plotViewAry};
 }
 
 function requestLocalData(state, action) {
-    const {plotImageId, plotId, dataRequested=true}= action.payload;
+    const {plotImageId, plotId, dataRequested=true, imageOverlayId}= action.payload;
     const pv= getPlotViewById(state,plotId);
     if (!pv) return state;
-    const plots= pv.plots.map( (p) => p.plotImageId===plotImageId ? {...p,dataRequested}: p);
-    const plotViewAry= replacePlotView(state.plotViewAry,{...pv,plots});
+    let updatedPv;
+    if (imageOverlayId) {
+        const overlayPlotViews= pv.overlayPlotViews.map( (oPv) => {
+            if (oPv?.plot?.plotImageId!==plotImageId) return oPv;
+            oPv.plot= {...oPv.plot,dataRequested};
+            return oPv;
+        });
+        updatedPv= {...pv, overlayPlotViews};
+    }
+    else {
+        const plots= pv.plots.map( (p) => p.plotImageId===plotImageId ? {...p,dataRequested}: p);
+        updatedPv= {...pv,plots};
+    }
+
+
+
+    const plotViewAry= replacePlotView(state.plotViewAry,updatedPv);
     return {...state, plotViewAry};
 }
 
