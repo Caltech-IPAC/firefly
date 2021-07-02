@@ -158,7 +158,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
     const [useBlue,setUseBlue]= useState( () => plot?.rawData.useBlue);
     const threeColor= isThreeColor(plot);
 
-    const biasInt= isArray(bias) ? bias.map( (b) => Math.trunc(b*100))  : Math.trunc(bias*40);
+    const biasInt= isArray(bias) ? bias.map( (b) => Math.trunc(b*40))  : Math.trunc(bias*40);
     const contrastInt= isArray(contrast) ? contrast.map( (c) => Math.trunc(c*10)) : Math.trunc(contrast*10);
     const image= isImage(plot);
     const plotId= plot?.plotId;

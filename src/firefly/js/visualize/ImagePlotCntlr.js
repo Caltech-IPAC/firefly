@@ -939,8 +939,8 @@ export function dispatchUseTableAutoScroll(useAutoScroll) {
     flux.process({ type: USE_TABLE_AUTO_SCROLL, payload: {useAutoScroll} });
 }
 
-export function dispatchRequestLocalData({plotId, plotImageId, dataRequested=true}) {
-    flux.process({ type: REQUEST_LOCAL_DATA, payload: {plotId,plotImageId, dataRequested} });
+export function dispatchRequestLocalData({plotId, plotImageId, imageOverlayId, dataRequested=true}) {
+    flux.process({ type: REQUEST_LOCAL_DATA, payload: {plotId,plotImageId, dataRequested, imageOverlayId} });
 }
 
 /**

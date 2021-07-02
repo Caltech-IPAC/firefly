@@ -1,7 +1,7 @@
 import {isArray, isArrayBuffer, uniqueId} from 'lodash';
 import {allBandAry, Band} from '../Band.js';
 import {contains, intersects} from '../VisUtil.js';
-import {findPlot, getPlotViewById, isThreeColor, primePlot} from '../PlotViewUtil.js';
+import {findPlot, getOverlayById, getPlotViewById, isThreeColor, primePlot} from '../PlotViewUtil.js';
 import {createCanvas, isGPUAvailableInWorker, isImageBitmap} from '../../util/WebUtil.js';
 import ImagePlotCntlr, {dispatchRequestLocalData, visRoot} from '../ImagePlotCntlr.js';
 import {PlotState} from '../PlotState.js';
@@ -39,16 +39,17 @@ function createTileFromImageData(buffer, width,height) {
 
 
 
-function* rawTileGenerator(rawTileDataGroup, colorTableId, bias, contrast, bandUse, GPU) {
+function* rawTileGenerator(rawTileDataGroup, colorTableId, mask, maskColor, bias, contrast, bandUse, GPU) {
     const {rawTileDataAry}= rawTileDataGroup;
     const newRawTileDataAry= [];
+    const gpu= getGPUOps(GPU);
     for(let i=0; (i<rawTileDataAry.length);i++) {
         const inData= rawTileDataAry[i];
         const {pixelData3C, pixelDataStandard,workerTmpTile, width,height, rawImageTile }= rawTileDataAry[i];
         let tile;
 
         if (isArrayBuffer(pixelDataStandard) || pixelData3C?.some( (a) => isArrayBuffer(a)) ) {
-            tile= getGPUOps(GPU).createTileWithGPU(rawTileDataAry[i],getColorModel(colorTableId),isArray(pixelData3C), bias, contrast,bandUse);
+            tile= gpu.createTileWithGPU(rawTileDataAry[i],getColorModel(colorTableId),isArray(pixelData3C), mask, maskColor, bias, contrast,bandUse);
         }
         else {
             tile= createTileFromImageData(workerTmpTile, width,height);
@@ -60,10 +61,10 @@ function* rawTileGenerator(rawTileDataGroup, colorTableId, bias, contrast, bandU
 }
 
 
-async function populateTilesAsync(rawTileDataGroup, colorTableId,bias,contrast, bandUse) {
+async function populateTilesAsync(rawTileDataGroup, colorTableId,mask, maskColor, bias,contrast, bandUse) {
     const chunkSize= 5;
     const GPU= await getGpuJs();
-    const gen= rawTileGenerator(rawTileDataGroup,colorTableId, bias, contrast, bandUse, GPU);
+    const gen= rawTileGenerator(rawTileDataGroup,colorTableId, mask, maskColor, bias, contrast, bandUse, GPU);
     return new Promise((resolve, reject) => {
         const id= setInterval( () => {
 
@@ -235,7 +236,7 @@ export async function changeLocalRawDataColor(plot, colorTableId, bias, contrast
         plotStateSerialized= newPlotState.toJson(false);
         rawTileDataGroup= entry.rawTileDataGroup;
     }
-    entry.rawTileDataGroup = await populateTilesAsync(rawTileDataGroup, colorTableId, bias,contrast, bandUse);
+    entry.rawTileDataGroup = await populateTilesAsync(rawTileDataGroup, colorTableId, undefined, undefined, bias,contrast, bandUse);
     entry.thumbnailEncodedImage = makeThumbnailCanvas(plot);
     entry.colorChangingInProgress= false;
     const localScreenTileDefList = getLocalScreenTileDefList();
@@ -259,6 +260,14 @@ export function changeLocalRawDataZoom(plot, zoomFactor) {
     if (!getEntry(plot.plotImageId)) return;
     const newPlotState = plot.plotState.copy();
     newPlotState.zoomLevel = zoomFactor;
+    return {localScreenTileDefList: getLocalScreenTileDefList(), plotState: newPlotState};
+}
+
+export async function changeLocalMaskColor(plot, maskColor) {
+    if (!getEntry(plot.plotImageId)) return;
+    const newPlotState = plot.plotState.copy();
+    const entry = getEntry(plot.plotImageId);
+    entry.rawTileDataGroup = await populateTilesAsync(entry.rawTileDataGroup, 0,  true, maskColor);
     return {localScreenTileDefList: getLocalScreenTileDefList(), plotState: newPlotState};
 }
 
@@ -316,17 +325,23 @@ export function clearLocalStretchData(plot) {
 }
 
 
-
-
-export function loadStretchData(plotOrAry, dispatcher) {
-    const plotAry= isArray(plotOrAry) ? plotOrAry : [plotOrAry];
+export function loadStretchData(pv, plot, dispatcher) {
+    const plotAry= [plot];
 
     plotAry.forEach(  (p) => {
         const workerKey= getEntry(p.plotImageId)?.workerKey ?? getNextWorkerKey();
-        const {plotImageId, plotId}= p;
-        loadStandardStretchData(p, true, workerKey)
+        const {plotImageId}= p;
+        const imageOverlayId= p.plotId!==pv.plotId ? p.plotId : undefined; // i have an overlay image
+        const mask= Boolean(imageOverlayId);
+        const oPv= mask ? getOverlayById(pv,imageOverlayId) : undefined;
+        const maskColor= mask ? oPv?.colorAttributes.color : undefined;
+        const maskBits= mask ? oPv?.maskValue : undefined;
+        loadStandardStretchData(p, !mask, mask, maskColor, maskBits, workerKey)
             .then( (rawData) =>
-                rawData && dispatcher({type: ImagePlotCntlr.UPDATE_RAW_IMAGE_DATA, payload:{plotId, plotImageId, rawData}})
+                rawData && dispatcher({
+                    type: ImagePlotCntlr.UPDATE_RAW_IMAGE_DATA,
+                    payload:{plotId:pv.plotId, imageOverlayId, plotImageId, rawData
+                    }})
         );
     });
 }
@@ -344,7 +359,7 @@ export async function stretchRawData(plot, rvAry) {
 }
 
 
-async function loadStandardStretchData( plot, checkForPlotUpdate, workerKey) {
+async function loadStandardStretchData( plot, checkForPlotUpdate, mask, maskColor, maskBits, workerKey) {
     const {processHeader} = plot.rawData.bandData[0];
     const {plotImageId, plotId}= plot;
     let entry = getEntry(plotImageId);
@@ -360,7 +375,8 @@ async function loadStandardStretchData( plot, checkForPlotUpdate, workerKey) {
     }
     entry.loadingCnt++;
     try {
-        const stretchResult = await postToWorker(makeRetrieveStretchByteDataAction(plot, plot.plotState, workerKey));
+        const stretchResult = await postToWorker(
+            makeRetrieveStretchByteDataAction(plot, plot.plotState, mask, maskBits, maskColor, workerKey));
         entry.loadingCnt--;
         if (!stretchResult.success) return;
 
@@ -374,13 +390,13 @@ async function loadStandardStretchData( plot, checkForPlotUpdate, workerKey) {
             continueLoading = plotState.getBands().every((b) => plotState.getRangeValues(b)?.toJSON() === plot.plotState.getRangeValues(b)?.toJSON());
         }
         else {
-            latestPlot= plot;
             continueLoading= true;
+            latestPlot= plot;
         }
 
         if (continueLoading) {
             entry.dataType = STRETCH_ONLY;
-            return completeLoad(latestPlot, stretchResult);
+            return mask ?  completeMaskLoad(latestPlot, stretchResult, maskColor) : completeLoad(latestPlot, stretchResult); //todo - get mask color
         } else {
             clearLocalStretchData(latestPlot);
         }
@@ -405,6 +421,17 @@ async function completeLoad(plot, stretchResult) {
     const localScreenTileDefList = getLocalScreenTileDefList();
     return {...plot.rawData, plotState, localScreenTileDefList};
 }
+
+
+async function completeMaskLoad(plot, stretchResult, maskColor) {
+    const {rawTileDataGroup, plotStateSerialized} = stretchResult;
+    const plotState = PlotState.parse(plotStateSerialized);
+    const entry = getEntry(plot.plotImageId);
+    entry.rawTileDataGroup = await populateTilesAsync(rawTileDataGroup, 0,  true, maskColor);
+    const localScreenTileDefList = getLocalScreenTileDefList();
+    return {...plot.rawData, plotState, localScreenTileDefList};
+}
+
 
 
 

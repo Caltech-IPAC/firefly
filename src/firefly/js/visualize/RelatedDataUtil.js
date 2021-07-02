@@ -171,7 +171,7 @@ function addMaskLayer(pv, maskNumber, hdu, fileKey, relatedData) {
     const title= makeMaskTitle(maskNumber, relatedData.availableMask);
 
     dispatchPlotMask({plotId:pv.plotId,
-        imageOverlayId:`${maskIdRoot}_#${maskNumber}_${maskCnt}`,
+        imageOverlayId:`${pv.plotId}-${maskIdRoot}_#${maskNumber}_${maskCnt}`,
         fileKey, maskNumber, maskValue:Math.pow(2,Number(maskNumber)),
         uiCanAugmentTitle:false, imageNumber:hdu, title,
         relatedDataId, lazyLoad:true});

@@ -10,7 +10,13 @@ import {
     getPlotViewById,
     operateOnOthersInOverlayColorGroup,
     getPlotStateAry,
-    isThreeColor, findPlot, canLoadStretchData, hasClearedByteData, hasLocalStretchByteData, hasLocalRawData
+    isThreeColor,
+    findPlot,
+    canLoadStretchData,
+    hasClearedByteData,
+    hasLocalStretchByteData,
+    hasLocalRawData,
+    getOverlayById
 } from '../PlotViewUtil.js';
 import {callCrop, callChangeColor, callRecomputeStretch} from '../../rpc/PlotServicesJson.js';
 import {WebPlotResult} from '../WebPlotResult.js';
@@ -34,9 +40,9 @@ import {Band} from '../Band.js';
 
 export function requestLocalDataActionCreator(rawAction) {
     return (dispatcher,getState) => {
-        const {plotId, plotImageId, dataRequested}=rawAction.payload;
+        const {plotId, plotImageId, dataRequested= true, imageOverlayId}=rawAction.payload;
         const pv= getPlotViewById(visRoot(),plotId);
-        const plot= findPlot(pv,plotImageId);
+        const plot= imageOverlayId ? getOverlayById(pv,imageOverlayId)?.plot : findPlot(pv,plotImageId);
         if (!canLoadStretchData(plot)) return;
         if (dataRequested===false) {
             dispatcher(rawAction);
@@ -45,8 +51,7 @@ export function requestLocalDataActionCreator(rawAction) {
         if (plot.dataRequested) return;
         dispatcher(rawAction);
         // loadRawData(plot,dispatcher);
-        // loadRawData(plot,dispatcher);
-        loadStretchData(plot,dispatcher);
+        loadStretchData(pv, plot,dispatcher);
     };
 }
 

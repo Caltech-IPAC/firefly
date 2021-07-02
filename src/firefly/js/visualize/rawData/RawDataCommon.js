@@ -16,19 +16,20 @@ const abortControllers= new Map(); // map of imagePlotId and AbortController
 export const TILE_SIZE = 3000;
 export const MAX_RAW_IMAGE_SIZE = 400*MEG; // 400 megs
 export const MAX_DIRECT_IMAGE_SIZE= 250*K;
+export const MAX_DIRECT_MASK_IMAGE_SIZE= 200*MEG;
 const USE_GPU = true;
 
-async function populateRawTileDataArray(rawTileDataAry, colorModel, isThreeColor, bias, contrast, bandUse, rootUrl) {
+async function populateRawTileDataArray(rawTileDataAry, colorModel, isThreeColor, mask, maskColor, bias, contrast, bandUse, rootUrl) {
     const GPU = USE_GPU ? await getGpuJs(rootUrl) : undefined;
     const createTransitionalTile = USE_GPU ? getGPUOps(GPU).createTransitionalTileWithGPU : createTransitionalTileWithCPU;
-    const presult = rawTileDataAry.map((id) => createTransitionalTile(id, colorModel, isThreeColor, bias, contrast, bandUse));
+    const presult = rawTileDataAry.map((id) => createTransitionalTile(id, colorModel, isThreeColor, mask, maskColor, bias, contrast, bandUse));
     return await Promise.all(presult);
 }
 
-export async function populateRawImagePixelDataInWorker(rawTileDataGroup, colorTableId, isThreeColor, bias, contrast, bandUse, rootUrl) {
-    if (isGPUAvailableInWorker()) {
+export async function populateRawImagePixelDataInWorker(rawTileDataGroup, colorTableId, isThreeColor, mask, maskColor, bias, contrast, bandUse, rootUrl) {
+    if (isGPUAvailableInWorker() && !mask) {
         const colorModel = getColorModel(colorTableId);
-        const rawTileDataAry = await populateRawTileDataArray(rawTileDataGroup.rawTileDataAry, colorModel, isThreeColor, bias, contrast, bandUse, rootUrl);
+        const rawTileDataAry = await populateRawTileDataArray(rawTileDataGroup.rawTileDataAry, colorModel, isThreeColor,  mask, maskColor, bias, contrast, bandUse, rootUrl);
 
 
         const localRawTileDataGroup = {...rawTileDataGroup, rawTileDataAry, colorTableId};

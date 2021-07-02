@@ -266,8 +266,22 @@ public class ImageData implements Serializable {
         return byteAry;
     }
 
+    public byte[] stretchMask(final float [] float1d, final int naxis1) {
+        byte [] byteAry= new byte[this.width * this.height];
+        byte blank_pixel_value = (byte) 255;
+        int[] pixelhist = new int[256];
+
+        ImageStretch.stretchPixelsForMask(x, lastPixel, y, lastLine, naxis1,
+                blank_pixel_value, float1d, byteAry, pixelhist, imageMasks);
+        return byteAry;
+    }
+
     public void stretch8bitAndSave(final float [] float1d, final Header header, final Histogram histogram) {
         this.saveStandardStretch = stretch8bit(float1d,header,histogram);
+    }
+
+    public void stretchMaskAndSave(final float [] float1d, final int naxis1) {
+        this.saveStandardStretch = stretchMask(float1d,naxis1);
     }
 
     public byte[] getSavedStandardStretch() { return this.saveStandardStretch; }

@@ -257,7 +257,7 @@ function modifyMaskColor(opv) {
                     attributes:{colorAttributes,opacity:a}});
             });
 
-        });
+        }, '', '', .58);
 }
 
 function modifyShape(dl, plotId) {
