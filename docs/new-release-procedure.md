@@ -33,6 +33,7 @@
    - Best to use Jenkins: https://irsawebdev5.ipac.caltech.edu:8443/view/IRSA%20k8s/job/ikc_firefly/build
    - Build the docker with the following docker tags: `rc-yyyy.m`, `release-yyyy.m`,`release-yyyy.m.r`, `latest` 
    - _example:_ from the example above the release would be built with: `rc-2021.2`, `release-2021.2`,`release-2021.2.1`, `latest`
+   - `BUILD_ENV`: Select 'ops'
    - `ACTION`: Select 'both'  
    - `DEPLOY_ENV`: Select 'ops' to have this release deploy to fireflyops.ipac.caltech.edu
    - _notes:_ 
