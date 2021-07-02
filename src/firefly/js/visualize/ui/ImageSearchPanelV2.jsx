@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent, useContext} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import {get, includes, isNil, isString} from 'lodash';
 import {FormPanel} from '../../ui/FormPanel.jsx';
@@ -15,7 +15,7 @@ import {StatefulTabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
-import FieldGroupUtils, {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
+import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {parseWorldPt} from '../../visualize/Point.js';
 import WebPlotRequest, {WPConst} from '../../visualize/WebPlotRequest.js';
 import {dispatchPlotImage, visRoot, dispatchPlotHiPS} from '../../visualize/ImagePlotCntlr.js';
@@ -44,6 +44,7 @@ import {MetaConst} from '../../data/MetaConst';
 import {isDefined} from '../../util/WebUtil';
 import VisUtil from '../VisUtil';
 import CoordinateSys from '../CoordSys';
+import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 
 
 const FG_KEYS = {
@@ -61,6 +62,7 @@ const FD_KEYS = {
 };
 
 var imageMasterData;        // latest imageMasterData retrieved from server
+const scrollDivId = 'ImageSearchScroll';
 
 // set 20 as the maximum plot
 function* getHiPSPlotId() {
@@ -114,25 +116,27 @@ function getContexInfo(renderTreeId) {
 /* search panel used in drop-down                                                          */
 /*-----------------------------------------------------------------------------------------*/
 
-function ImageSearchPanel({resizable=true, onSubmit, gridSupport = false, multiSelect, submitText, onCancel=dispatchHideDropDown}) {
+function ImageSearchPanel({resizable=true, onSubmit, gridSupport = false, multiSelect, submitText, onCancel=dispatchHideDropDown, noScroll}) {
     const archiveName =  get(getAppOptions(), 'ImageSearch.archiveName');
     const resize = {resize: 'both', overflow: 'hidden', paddingBottom: 5};
     const dim = {height: 600, width: 725, minHeight: 600, minWidth: 725};
     const style = resizable ? {...dim, ...resize} : {width: '100%'};
+
+    const [imageType]= useStoreConnector(() => getFieldVal(FG_KEYS.main, FD_KEYS.type));
 
     return (
         <div style={style}>
             <FormPanel  inputStyle = {{display: 'flex', flexDirection: 'column', backgroundColor: 'transparent', padding: 'none', border: 'none'}}
                         submitBarStyle = {{flexShrink: 0, padding: '0 4px 3px'}}
                         groupKey = {Object.values(FG_KEYS)} includeUnmounted={true}
-                        groupsToUse={getGroupsToValidate}
+                        groupsToUse={() => getGroupsToValidate(imageType)}
                         params = {{hideOnInvalid: false}}
                         submitText={submitText}
                         onSubmit = {onSubmit}
                         onError = {searchFailed}
                         onCancel = {onCancel}
                         help_id = {'basics.searching'}>
-                <ImageSearchPanelV2 {...{multiSelect, archiveName}}/>
+                <ImageSearchPanelV2 {...{multiSelect, archiveName, noScroll}}/>
                 {gridSupport && <GridSupport/>}
             </FormPanel>
         </div>
@@ -173,7 +177,7 @@ export function showImageSelPanel(popTitle, renderTreeId) {
 
     const popup = (
         <PopupPanel title={popTitle}>
-            <ImageSearchPanel {...{resizable:true, gridSupport:false, submitText: 'Load', onSubmit, onCancel, multiSelect}}/>
+            <ImageSearchPanel {...{resizable:true, gridSupport:false, submitText: 'Load', onSubmit, onCancel, multiSelect, noScroll:true}}/>
         </PopupPanel>
     );
 
@@ -182,92 +186,71 @@ export function showImageSelPanel(popTitle, renderTreeId) {
 }
 /*-----------------------------------------------------------------------------------------*/
 
-
-function  isThreeColorImgType() {
-    return getFieldVal(FG_KEYS.main, FD_KEYS.type) === 'threeColor';
+function isImageType(imageType=getFieldVal(FG_KEYS.main, FD_KEYS.type)) {
+    const isThreeColorImgType = imageType === 'threeColor';
+    const isHipsImgType = imageType === 'hipsImage';
+    const isSingleChannelImgType = !isThreeColorImgType && !isHipsImgType;
+    return {isThreeColorImgType, isHipsImgType, isSingleChannelImgType};
 }
 
-function  isHipsImgType() {
-    return getFieldVal(FG_KEYS.main, FD_KEYS.type) === 'hipsImage';
-}
+function getGroupsToValidate(imageType) {
+    const {isThreeColorImgType, isHipsImgType, isSingleChannelImgType} = isImageType(imageType);
 
-function isSingleChannelImgType() {
-    return (!isThreeColorImgType() && !isHipsImgType());
-}
-
-function getGroupsToValidate() {
-    if (isThreeColorImgType()) return [FG_KEYS.main,FG_KEYS.red,FG_KEYS.green,FG_KEYS.blue];
-    else if (isHipsImgType()) return [FG_KEYS.main,FG_KEYS.hips];
-    else if (isSingleChannelImgType()) return [FG_KEYS.main,FG_KEYS.single];
+    if (isThreeColorImgType) return [FG_KEYS.main,FG_KEYS.red,FG_KEYS.green,FG_KEYS.blue];
+    else if (isHipsImgType) return [FG_KEYS.main,FG_KEYS.hips];
+    else if (isSingleChannelImgType) return [FG_KEYS.main,FG_KEYS.single];
     else return Object.values(FG_KEYS);
 }
 
 /**
  *
  */
-export class ImageSearchPanelV2 extends PureComponent {
+function ImageSearchPanelV2 ({archiveName='Search', title='Image Search', multiSelect=true, noScroll}) {
 
-    constructor(props) {
-        super(props);
-        this.state= {   imageMasterData: undefined,
-                        showError: false
-                    };
-    }
+    const [, setImageMasterData] = useState(() => imageMasterData);
+    const [showError=false, setShowError] = useState();
 
-    componentWillUnmount() {
-        if (this.removeListeners) this.removeListeners.forEach( (rl) => rl());
-        this.iAmMounted= false;
-    }
-
-    componentDidMount() {
-        this.iAmMounted = true;
-        this.removeListeners = Object.values(FG_KEYS)
-            .map( (key) => FieldGroupUtils.bindToStore(key, (fields) => {
-                if (this.iAmMounted && fields) this.setState({[key]: fields});
-            }));
-        getImageMasterData()
-            .then( (newImageMasterData) => {
-                if (this.iAmMounted) {
-                    imageMasterData = newImageMasterData;
-                    this.setState({imageMasterData});
-                }
+    useEffect( ()=> {
+        getImageMasterData().then( (newImageMasterData) => {
+                imageMasterData = newImageMasterData;
+                setImageMasterData(imageMasterData);
             }).catch( (e) => {
                 console.error(e);
-                this.iAmMounted && this.setState({showError:true});
+                setShowError(true);
             });
-    }
+    }, []);
 
-    render() {
-        const {archiveName='Search', title='Image Search'}= this.props;
-        let {multiSelect=true} = this.props;
-        const {imageMasterData, showError= false}= this.state;
-        const isThreeColor = isThreeColorImgType();
+    const [imageType]= useStoreConnector(() => getFieldVal(FG_KEYS.main, FD_KEYS.type));
+    const {isThreeColorImgType, isHipsImgType, isSingleChannelImgType} = isImageType(imageType);
 
-        multiSelect = !isThreeColor && multiSelect;
+    multiSelect = !isThreeColorImgType && multiSelect;
 
-        if (showError) {
-            return (
-                <div style={{width:500}}>
-                    <div style={{ padding: '50px 0 50px 0', textAlign: 'center', fontSize: '20pt' }}>
-                        Error loading image search meta data
-                    </div>
+    const pStyle = noScroll ? {} : {overflow: 'auto', height: 1};
+
+    if (showError) {
+        return (
+            <div style={{width:500}}>
+                <div style={{ padding: '50px 0 50px 0', textAlign: 'center', fontSize: '20pt' }}>
+                    Error loading image search meta data
                 </div>
-            );
-        } else if (imageMasterData) {
-            return (
-                <div className='flex-full'>
-                    <div className='ImageSearch__title'>{title}</div>
+            </div>
+        );
+    } else if (imageMasterData) {
+        return (
+            <div className='flex-full' style={{position: 'relative'}}>
+                <div className='ImageSearch__title'>{title}</div>
+                <div className='flex-full' style={pStyle} id={scrollDivId}>
                     <ImageType/>
-                    {isThreeColor &&
-                          <ThreeColor {...{imageMasterData:imageMasterData.filter( (md) => (!md.dataType || md.dataType==='image')), multiSelect, archiveName}}/>}
-                    {isSingleChannelImgType() && <SingleChannel {...{groupKey: FG_KEYS.single,
-                                                                 imageMasterData, multiSelect, archiveName}}/>}
-                    {isHipsImgType() && <HiPSImage {...{groupKey: FG_KEYS.hips,  archiveName}}/>}
+                    {isThreeColorImgType &&
+                    <ThreeColor {...{imageMasterData:imageMasterData.filter( (md) => (!md.dataType || md.dataType==='image')), multiSelect, archiveName, noScroll}}/>}
+                    {isSingleChannelImgType && <SingleChannel {...{groupKey: FG_KEYS.single,
+                        imageMasterData, multiSelect, archiveName, noScroll}}/>}
+                    {isHipsImgType && <HiPSImage {...{imageMasterData, groupKey: FG_KEYS.hips,  archiveName}}/>}
                 </div>
-            );
-        } else {
-            return <div className='ImageSearch__mask'> <div className='loading-mask'/> </div>;
-        }
+            </div>
+        );
+    } else {
+        return <div className='ImageSearch__mask'> <div className='loading-mask'/> </div>;
     }
 }
 
@@ -277,18 +260,17 @@ ImageSearchPanelV2.propTypes = {
     multiSelect: PropTypes.bool
 };
 
-function SingleChannel({groupKey, imageMasterData, multiSelect, archiveName}) {
+function SingleChannel({groupKey, imageMasterData, multiSelect, archiveName, noScroll}) {
     return (
         <div className='flex-full'>
             <FieldGroup className='flex-full' groupKey={groupKey} reducerFunc={mainReducer} keepState={true}>
-                <ImageSource {...{groupKey, imageMasterData, multiSelect, archiveName}}/>
+                <ImageSource {...{groupKey, imageMasterData, multiSelect, archiveName, noScroll}}/>
             </FieldGroup>
         </div>
     );
 }
 
-function ThreeColor({imageMasterData, multiSelect, archiveName}) {
-
+function ThreeColor({imageMasterData, multiSelect, archiveName, noScroll}) {
     return (
         <div className='flex-full' style={{marginTop: 5}}>
             <StatefulTabs componentKey='ImageSearchPanelV2' resizable={false} useFlex={true} borderless={true}
@@ -296,24 +278,24 @@ function ThreeColor({imageMasterData, multiSelect, archiveName}) {
                   contentStyle={{backgroundColor: 'rgb(202, 202, 202)', paddingBottom: 2}}
                   headerStyle={{display:'inline-flex', marginLeft: 185}}>
                 <Tab key='ImageSearchRed' name='red' label={<div style={{width:40, color:'red'}}>Red</div>}>
-                    <SingleChannel {...{groupKey: FG_KEYS.red, imageMasterData, multiSelect, archiveName}}/>
+                    <SingleChannel {...{key: FG_KEYS.red, groupKey: FG_KEYS.red, imageMasterData, multiSelect, archiveName, noScroll}}/>
                 </Tab>
                 <Tab key='ImageSearchGreen' name='green' label={<div style={{width:40, color:'green'}}>Green</div>}>
-                    <SingleChannel {...{groupKey: FG_KEYS.green, imageMasterData, multiSelect, archiveName}}/>
+                    <SingleChannel {...{key: FG_KEYS.green, groupKey: FG_KEYS.green, imageMasterData, multiSelect, archiveName, noScroll}}/>
                 </Tab>
                 <Tab key='ImageSearchBlue' name='blue' label={<div style={{width:40, color:'blue'}}>Blue</div>}>
-                    <SingleChannel {...{groupKey: FG_KEYS.blue, imageMasterData, multiSelect, archiveName}}/>
+                    <SingleChannel {...{key: FG_KEYS.blue, groupKey: FG_KEYS.blue, imageMasterData, multiSelect, archiveName, noScroll}}/>
                 </Tab>
             </StatefulTabs>
         </div>
     );
 }
 
-function HiPSImage({groupKey, archiveName}) {
+function HiPSImage({groupKey, archiveName, imageMasterData}) {
     return (
         <div className='flex-full' style={{flexGrow: 1}}>
             <FieldGroup className='flex-full' groupKey={groupKey} reducerFunc={mainReducer} keepState={true}>
-                <ImageSource {...{groupKey, archiveName}}/>
+                <ImageSource {...{groupKey, archiveName, imageMasterData}}/>
             </FieldGroup>
         </div>
     );
@@ -344,13 +326,19 @@ function ImageType({}) {
 }
 
 
-function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archive'}) {
-    const isThreeColor = isThreeColorImgType();
-    const isHips = isHipsImgType();
+function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archive', noScroll}) {
+
+    const [imageType]= useStoreConnector(() => getFieldVal(FG_KEYS.main, FD_KEYS.type));
+    const {isThreeColorImgType, isHipsImgType} = isImageType(imageType);
+
+    const defaultValue = isThreeColorImgType ? 'none' : 'archive';
+    const [imageSource] = useStoreConnector(() => getFieldVal(groupKey, FD_KEYS.source, defaultValue));
+
+
     const options = [   {label: archiveName, value: 'archive'},
                         {label: 'URL', value: 'url'}];
 
-    if (!isHips) {   // additional sources for non-Hips options
+    if (!isHipsImgType) {   // additional sources for non-Hips options
         options.splice(1, 0, {label: 'Use my image', value: 'upload'});
 
         if (getWorkspaceConfig()) {
@@ -358,9 +346,7 @@ function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archi
         }
     }
 
-    isThreeColor && (options.push({label: 'None', value: 'none'}));
-    const defaultValue = isThreeColor ? 'none' : 'archive';
-    const imageSource = getFieldVal(groupKey, FD_KEYS.source, defaultValue);
+    isThreeColorImgType && (options.push({label: 'None', value: 'none'}));
 
     return (
         <div className='flex-full'>
@@ -372,19 +358,19 @@ function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archi
                     options = {options}
                     fieldKey = { FD_KEYS.source }/>
             </div>
-            {imageSource === 'url'  && (isHips ? <SelectArchive {...{groupKey}}/> : <SelectUrl />)}
-            {imageSource === 'archive'  && <SelectArchive {...{groupKey, imageMasterData, multiSelect}}/>}
+            {imageSource === 'url'  && (isHipsImgType ? <SelectArchive {...{groupKey, imageMasterData, multiSelect, isHipsImgType, noScroll}}/> : <SelectUrl />)}
+            {imageSource === 'archive'  && <SelectArchive {...{groupKey, imageMasterData, multiSelect, isHipsImgType, noScroll}}/>}
             {imageSource === 'upload' && <SelectUpload />}
             {imageSource === ServerParams.IS_WS && <SelectWorkspace />}
         </div>
     );
 }
 
-function SelectArchive({groupKey,  imageMasterData, multiSelect}) {
+function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, noScroll}) {
     const title = '4. Select Data Set';
     const targetStyle = {height: 40, width: 450};
     const sizeStyle = {margin: '-5px 0 0 36px'};
-    const isHips = isHipsImgType();
+    const isHips = isHipsImgType;
     const sizeLabel = isHips ? 'Field of view (optional):' : 'Cutout size (leave blank for full size):';
     const sizeKey = isHips ? 'sizeFov' : 'conesize';
     const minSize = isHips ? 9/3600 : 1/3600;
@@ -419,7 +405,7 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect}) {
             <div className='ImageSearch__section' style={{ display: 'flex', flexDirection: 'column', padding: 'unset', flexShrink: 1, flexGrow: 1}}>
                 <div className='ImageSearch__section--title'>4. Select Data Set</div>
                 {!isHips ?
-                <ImageSelect style={{flexGrow: 1, width: '100%'}} key={`ImageSelect_${groupKey}`} {...{groupKey, title, addChangeListener, imageMasterData, multiSelect}} /> :
+                <ImageSelect style={{flexGrow: 1, width: '100%'}} key={`ImageSelect_${groupKey}`} {...{groupKey, title, addChangeListener, imageMasterData, multiSelect, scrollDivId: !noScroll && scrollDivId}} /> :
                 <HiPSSelect groupKey={groupKey} />
                     }
             </div>
@@ -555,9 +541,9 @@ function getHipsValidateInfo(request) {
 }
 
 function validateInput(allFields) {
-    if (isHipsImgType()) {
+    if (isImageType()?.isHipsImgType) {
         return getHipsValidateInfo(get(allFields, FG_KEYS.hips));
-    } else if (isThreeColorImgType()) {
+    } else if (isImageType()?.isThreeColorImgType) {
         const resps = [FG_KEYS.red, FG_KEYS.green, FG_KEYS.blue].map((band) => {
                         const req = get(allFields, band);
                         if (get(req, FD_KEYS.source, 'none') === 'none') {
@@ -621,7 +607,7 @@ function doImageSearch({ imageMasterData, request, plotId, plotGroupId, viewerId
     }
 
     // hips
-    if (isHipsImgType()) {
+    if (isImageType()?.isHipsImgType) {
         if (!plotId) {
             plotId = genHiPSPlotId.next().value;
         }
@@ -633,7 +619,7 @@ function doImageSearch({ imageMasterData, request, plotId, plotGroupId, viewerId
             pvOptions,
         });
 
-    } else if  (isThreeColorImgType()){       // three color
+    } else if  (isImageType()?.isThreeColorImgType){       // three color
         const redReq = get(request, FG_KEYS.red);
         const greenReq = get(request, FG_KEYS.green);
         const blueReq = get(request, FG_KEYS.blue);

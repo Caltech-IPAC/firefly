@@ -41,23 +41,31 @@ const PROJ_PREFIX = 'PROJ_ALL_';
  *      - the state of these boxes are persistent and is not affected by filtering
  */
 
-export function ImageSelect({style, imageMasterData, groupKey, multiSelect=true, addChangeListener}) {
+export function ImageSelect({style, imageMasterData, groupKey, multiSelect=true, addChangeListener, scrollDivId}) {
+
+    const [toolbarClz='ImageSelect__toolbar', setToolbarClz] = useState();
 
     useEffect(() => {
         addChangeListener && addChangeListener('ImageSelect', fieldsReducer(imageMasterData, groupKey));
-    }, [addChangeListener, imageMasterData, groupKey]);
+        if (scrollDivId) {
+            document.getElementById(scrollDivId).onscroll = (e) => {
+                setToolbarClz('ImageSelect__toolbar' + (e.target.scrollTop > 230 ?  ' ImageSelect__toolbar--popup' : ''));
+            };
+        }
+    }, [addChangeListener, imageMasterData, groupKey, scrollDivId]);
 
     imageMasterData.forEach((d)=> {
         ['missionId', 'project', 'subProject'].forEach((k) => d[k] = d[k] || '');
     });
 
     const [filteredImageData] = useStoreConnector.bind({comparator: shallowequal})(() => getFilteredImageData(imageMasterData, groupKey));
-    const [lastMod, setLastMod] = useState({lastMod:new Date().getTime()});
+    const [, setLastMod] = useState(new Date().getTime());
+    const pStyle = scrollDivId ? {flexGrow: 1, display: 'flex'} : {flexGrow: 1, display: 'flex', height: 1};
 
     return (
         <div style={style} className='ImageSelect'>
-            <ToolBar className='ImageSelect__toolbar' {...{filteredImageData, groupKey, onChange: () => setLastMod({lastMod:new Date().getTime()})}}/>
-            <div style={{flexGrow: 1, display: 'flex', height: 1}}>
+            <ToolBar className={toolbarClz} {...{filteredImageData, groupKey, onChange: () => setLastMod(new Date().getTime())}}/>
+            <div style={pStyle}>
                 <div className='ImageSelect__panels' style={{marginRight: 3, flexGrow: 0}}>
                     <FilterPanel {...{imageMasterData, groupKey}}/>
                 </div>
@@ -76,7 +84,8 @@ ImageSelect.propTypes = {
     // a function so this component can handle field change event from reducing function.
     addChangeListener: PropTypes.func.isRequired,
     style: PropTypes.object,
-    multiSelect: PropTypes.bool
+    multiSelect: PropTypes.bool,
+    scrollDivId: PropTypes.string           // this component is inside a scroll div
 };
 
 const toFilterSelectAry = (groupKey, s) => getFieldVal(groupKey, `Filter_${s}`, '').split(',').map((d) => d.trim()).filter((d) => d);
@@ -150,7 +159,7 @@ function isAllSelected(filteredImageData, inFields, proj) {
 
 }
 
-function ToolBar({filteredImageData, groupKey, onChange}) {
+function ToolBar({className, filteredImageData, groupKey, onChange}) {
     const projects= uniqBy(filteredImageData, 'project').map( (d) => d.project);
     const setDSListMode = (flg) => {
         projects.forEach((k) => dispatchComponentStateChange(k, {isOpen:flg}));
@@ -165,33 +174,51 @@ function ToolBar({filteredImageData, groupKey, onChange}) {
             dispatchMultiValueChange(groupKey, fields);
         }
     };
+    const calcFilter = () => Object.values(FieldGroupUtils.getGroupFields(groupKey))
+        .filter( (f) => get(f, 'fieldKey','').startsWith(FILTER_PREFIX))
+        .filter( (f) => get(f, 'value'))                                    // look for only selected fields
+        .map( (f) => f.value).join();                                       // get the value of the selected fields
+
+    const calcSelect = () => Object.values(FieldGroupUtils.getGroupFields(groupKey))
+        .filter( (f) => get(f, 'fieldKey','').startsWith(IMG_PREFIX))
+        .filter( (f) => get(f, 'value'))                                    // look for only selected fields
+        .map( (f) => f.options.filter( (o) => f.value.includes(o.value))
+            .map((o) => o.label).join() )                 // takes the label of the selected field
+        .join();
+
+    const [allFilter, allSelect] = useStoreConnector(calcFilter,calcSelect);
 
     return (
-        <div className='ImageSelect__toolbar'>
-            <div>
-                &bull;<a style={{marginRight: 7}} className='ff-href' onClick={() => clearFields([FILTER_PREFIX])}>Clear Filters</a>
+        <div className={className}>
+            <div style={{display: 'inline-flex', flexGrow: 1}}>
+                <div style={{width: 155}}>
+                    <div className='ImageSelect__title'>Filter By:</div>
+                    <div className='ImageSelect__info'>{pretty(allFilter, 25)}</div>
+                </div>
+                <div>
+                    <div className='ImageSelect__title'>Selection:</div>
+                    <div className='ImageSelect__info'>{pretty(allSelect, 100)}</div>
+                </div>
             </div>
-            <div>
-                &bull;<a style={{marginRight: 7}} className='ff-href' onClick={() => clearFields([IMG_PREFIX, PROJ_PREFIX])}>Clear Selections</a>
-                &bull;<a style={{marginRight: 7}} className='ff-href' onClick={() => setDSListMode(true)}>Expand All</a>
-                &bull;<a className='ff-href' onClick={() => setDSListMode(false)}>Collapse All</a>
+            <div className='ImageSelect__action'>
+                <div>
+                    &bull;<a style={{marginRight: 7}} className='ff-href' onClick={() => clearFields([FILTER_PREFIX])}>Clear Filters</a>
+                </div>
+                <div>
+                    &bull;<a style={{marginRight: 7}} className='ff-href' onClick={() => clearFields([IMG_PREFIX, PROJ_PREFIX])}>Clear Selections</a>
+                    &bull;<a style={{marginRight: 7}} className='ff-href' onClick={() => setDSListMode(true)}>Expand All</a>
+                    &bull;<a className='ff-href' onClick={() => setDSListMode(false)}>Collapse All</a>
+                </div>
             </div>
         </div>
     );
 }
 
 /*--------------------------- Filter Panel ---------------------------------------------*/
-function FilterPanel({imageMasterData, groupKey, onChange}) {
-    const allSelect = Object.values(FieldGroupUtils.getGroupFields(groupKey))
-        .filter( (f) => get(f, 'fieldKey','').startsWith(FILTER_PREFIX))
-        .filter( (f) => get(f, 'value'))                                    // look for only selected fields
-        .map( (f) => f.value).join();                                       // get the value of the selected fields
-
+function FilterPanel({imageMasterData}) {
     return(
         <div className='FilterPanel'>
-            <div className='ImageSelect__title'>Filter By:</div>
-            <div className='ImageSelect__info'>{pretty(allSelect, 25)}</div>
-            <FilterPanelView {...{onChange, imageMasterData}}/>
+            <FilterPanelView {...{imageMasterData}}/>
         </div>
     );
 }
@@ -233,7 +260,7 @@ function getBandList(imageMasterData){
   return  sortBy(waveInfo, 'wavelength');
 
 }
-function FilterPanelView({onChange, imageMasterData}) {
+function FilterPanelView({imageMasterData}) {
 
     const forSummary = uniqBy(imageMasterData, (t) => `${t.missionId};${t.project}`);
     const missions = toFilterSummary(forSummary, 'missionId', 'missionId');
@@ -245,66 +272,56 @@ function FilterPanelView({onChange, imageMasterData}) {
     return (
         <div className='FilterPanel__view'>
             <CollapsiblePanel componentKey='missionFilter' header='MISSION:' isOpen={true}>
-                <FilterSelect {...{onChange, type:'mission', dataList: missions}}/>
+                <FilterSelect {...{type:'mission', dataList: missions}}/>
             </CollapsiblePanel>
             <CollapsiblePanel componentKey='projectTypesFilter' header='PROJECT TYPE:' isOpen={true}>
-                <FilterSelect {...{onChange, type:'projectType', dataList: projectTypes}}/>
+                <FilterSelect {...{type:'projectType', dataList: projectTypes}}/>
             </CollapsiblePanel>
             <CollapsiblePanel componentKey='waveTypesFilter' header='BAND:' isOpen={true}>
-                <FilterSelect {...{onChange, type:'waveType', dataList: waveType}}/>
+                <FilterSelect {...{type:'waveType', dataList: waveType}}/>
             </CollapsiblePanel>
         </div>
     );
 }
 
 /**
- *
- * @param {function} onChange
- * @param {string}   type
- * @param {object[]} dataList
- * @param {string}   dataList.name  ID
- * @param {string}   dataList.label desc
- * @param {number}   dataList.count
+ * @param {object}   p
+ * @param {string}   p.type
+ * @param {object[]} p.dataList
+ * @param {number}   p.maxShown
  */
-class FilterSelect extends PureComponent {
-    constructor(props) {
-        super(props);
-        this.state = {showExpanded: false};
-    }
+function FilterSelect ({type, dataList, maxShown=6}) {
+    const [showExpanded, setShowExpanded] = useState(false);
 
-    render() {
-        const {type, dataList, onChange, maxShown=6} = this.props;
-        const {showExpanded} = this.state;
-        const fieldKey= `Filter_${type}`;
-        const options = toFilterOptions(dataList);
-        const hasMore = maxShown < options.length && !showExpanded;
-        const dispOptions = showExpanded ? options : options.slice(0, maxShown);
-        const hasLess = dispOptions.length > maxShown;
+    const fieldKey= `Filter_${type}`;
+    const options = toFilterOptions(dataList);
+    const hasMore = maxShown < options.length && !showExpanded;
+    const dispOptions = showExpanded ? options : options.slice(0, maxShown);
+    const hasLess = dispOptions.length > maxShown;
 
-        return (
-            <div className='FilterPanel__item--std'>
-                <CheckboxGroupInputField
-                    key={fieldKey}
-                    fieldKey={fieldKey}
-                    initialState={{ options: dispOptions,
-                                    value: '',   // workaround for _all_ for now
-                                    tooltip: 'Please select some boxes',
-                                    label : '' }}
-                    options={dispOptions}
-                    alignment='vertical'
-                    labelWidth={35}
-                    wrapperStyle={{whiteSpace: 'nowrap'}}
-                />
+    return (
+        <div className='FilterPanel__item--std'>
+            <CheckboxGroupInputField
+                key={fieldKey}
+                fieldKey={fieldKey}
+                initialState={{ options: dispOptions,
+                                value: '',   // workaround for _all_ for now
+                                tooltip: 'Please select some boxes',
+                                label : '' }}
+                options={dispOptions}
+                alignment='vertical'
+                labelWidth={35}
+                wrapperStyle={{whiteSpace: 'nowrap'}}
+            />
 
-                { hasMore && <a className='ff-href' style={{paddingLeft: 20, fontWeight: 'bold'}}
-                                onClick={() => this.setState({showExpanded: true})}>more</a>
-                }
-                { hasLess && <a className='ff-href' style={{paddingLeft: 20, fontWeight: 'bold'}}
-                                onClick={() => this.setState({showExpanded: false})}>less</a>
-                }
-            </div>
-        );
-    }
+            { hasMore && <a className='ff-href' style={{paddingLeft: 20, fontWeight: 'bold'}}
+                            onClick={() => setShowExpanded(true)}>more</a>
+            }
+            { hasLess && <a className='ff-href' style={{paddingLeft: 20, fontWeight: 'bold'}}
+                            onClick={() => setShowExpanded(false)}>less</a>
+            }
+        </div>
+    );
 }
 
 // save in case we want to do it this way
@@ -333,15 +350,9 @@ const toFilterSummary = (master, key, desc) => Object.entries(countBy(master, (d
 
 /*--------------------------- Data Product List ---------------------------------------*/
 
-function DataProductList({filteredImageData, groupKey, multiSelect, onChange}) {
+function DataProductList({filteredImageData, groupKey, multiSelect}) {
     const projects= uniqBy(filteredImageData, 'project').map( (d) => d.project);
 
-    const allSelect = Object.values(FieldGroupUtils.getGroupFields(groupKey))
-                            .filter( (f) => get(f, 'fieldKey','').startsWith(IMG_PREFIX))
-                            .filter( (f) => get(f, 'value'))                                    // look for only selected fields
-                            .map( (f) => f.options.filter( (o) => f.value.includes(o.value))
-                                                  .map((o) => o.label).join() )                 // takes the label of the selected field
-                            .join();
     let content;
     if (projects.length > 0) {
         content = projects.map((p) => <DataProduct key={p} {...{groupKey, project:p, filteredImageData, multiSelect}}/>);
@@ -355,8 +366,6 @@ function DataProductList({filteredImageData, groupKey, multiSelect, onChange}) {
 
     return (
         <div className='DataProductList'>
-            <div className='ImageSelect__title'>Selection:</div>
-            <div className='ImageSelect__info'>{pretty(allSelect, 100)}</div>
             <div className='DataProductList__view'>{content}</div>
         </div>
     );
