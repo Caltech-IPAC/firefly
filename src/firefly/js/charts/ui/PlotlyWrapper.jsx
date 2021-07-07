@@ -3,17 +3,17 @@
  */
 
 import React, {Component} from 'react';
-import slug from 'slug';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
 
-import {debounce, isEmpty, isString, set, omit, forEach, isPlainObject} from 'lodash';
+import {debounce, isEmpty, set, omit, forEach, isPlainObject} from 'lodash';
 import {getPlotLy} from '../PlotlyConfig.js';
 import {getChartData, useChartRedraw, useScatterGL, usePlotlyReact} from '../ChartsCntlr.js';
-import {flattenObject, getModuleName} from '../../util/WebUtil.js';
+import {flattenObject} from '../../util/WebUtil.js';
 import {logger} from '../../util/Logger.js';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import Enum from 'enum';
+import {showPlotLySaveDialog} from 'firefly/charts/ui/PlotlySaveDialog.jsx';
 
 const PLOTLY_BASE_ID= 'plotly-plot';
 const MASKING_DELAY= 400;
@@ -87,37 +87,16 @@ function isSlowResize() {
     return BrowserInfo.isFirefox();
 }
 
-const getFilename= (chartDiv, chartId) => {
-    if (!chartDiv?.layout) return chartId;
-    const {layout}= chartDiv;
-    const type= chartDiv.data?.[0]?.type ?? '';
-
-    const preamble= chartDiv.data?.[0]?.type ? `${getModuleName()} ${type} chart `: `${getModuleName()} `;
-
-    if (isString(layout.title)) return preamble+layout.title;
-    if (isString(layout.title?.text)) return preamble+layout.title.text;
-
-    const xaxis= layout.xaxis?.title?.text;
-    const yaxis= layout.yaxis?.title?.text;
-
-    if (isString(xaxis) || isString(yaxis)) {
-        return `${preamble}${isString(xaxis)?xaxis:''} ${isString(yaxis)?yaxis:''}`;
+export async function downloadChart(chartId) {
+    const Plotly= await getPlotLy();
+    // in API we can have same chart unexpanded and expanded
+    const chartDivAll = document.querySelectorAll(`#${chartId}`);
+    if (chartId && chartDivAll && chartDivAll.length > 0) {
+        const chartDiv = chartDivAll[chartDivAll.length-1];
+        showPlotLySaveDialog(Plotly,chartDiv,chartId);
+    } else {
+        logger.error(`Image download has failed for chart id ${chartId}`);
     }
-    return chartId;
-};
-
-export function downloadChart(chartId) {
-    getPlotLy().then( (Plotly) => {
-        // in API we can have same chart unexpanded and expanded
-        const chartDivAll = document.querySelectorAll(`#${chartId}`);
-        if (chartId && chartDivAll && chartDivAll.length > 0) {
-            const chartDiv = chartDivAll[chartDivAll.length-1];
-            const filename= slug(getFilename(chartDiv,chartId));
-            Plotly.downloadImage(chartDiv, { format: 'png', filename});
-        } else {
-            logger.error(`Image download has failed for chart id ${chartId}`);
-        }
-    });
 }
 
 export class PlotlyWrapper extends Component {

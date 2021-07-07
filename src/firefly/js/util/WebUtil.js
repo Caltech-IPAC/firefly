@@ -673,6 +673,20 @@ export function toBoolean(val, def=undefined, trueList=['true']) {
  */
 export const replaceAll= (str, find, replace) => str.replace(new RegExp(find, 'g'), replace);
 
+
+/**
+ * replace or add and extension to a filename
+ * @param {string} filename
+ * @param {string} ext
+ * @return {string} the new filename
+ */
+export function replaceExt(filename='unknown-file',ext) {
+    if (filename.endsWith('.'+ext)) return filename;
+    const idx= filename.lastIndexOf('.');
+    return (idx>-1) ? filename.substring(0,idx)+'.'+ext : filename+'.'+ext;
+}
+
+
 /**
  * return true if val is 'true' or 'false' case-insensitive
  * @param val the string value to check.
