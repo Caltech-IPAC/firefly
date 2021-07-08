@@ -109,7 +109,7 @@ export function resolveHiPSIvoURL(ivoOrUrl) {
     };
 
     if (FULL_HIPS_TABLE) {
-        return Promise.resolve(findInTable());
+        return Promise.resolve(findInTable(FULL_HIPS_TABLE));
     } else {
         const request = makeHiPSRequest();
         return doFetchTable(request).then( (tableModel) => {
