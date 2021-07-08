@@ -20,9 +20,8 @@ import {dispatchChangePrimePlot, dispatchChangeHiPS,
     dispatchChangeHipsImageConversion, visRoot} from '../ImagePlotCntlr.js';
 import {makePlotSelectionExtActivateData} from '../../core/ExternalAccessUtils.js';
 import {ListBoxInputFieldView} from '../../ui/ListBoxInputField';
-import {showHiPSSurverysPopup} from '../../ui/HiPSSurveyListDisplay.jsx';
+import {showHiPSSurverysPopup} from '../../ui/HiPSImageSelect.jsx';
 import {CoordinateSys} from '../CoordSys.js';
-import {HiPSId} from '../HiPSListUtil.js';
 import {convertToHiPS, convertToImage, doHiPSImageConversionIfNecessary} from '../task/PlotHipsTask.js';
 import {RequestType} from '../RequestType.js';
 import {StateInputField} from '../../ui/StatedInputfield.jsx';
@@ -141,27 +140,18 @@ HipsFitsConvertButton.propTypes= { pv : PropTypes.object.isRequired};
 
 // Auto-transition
 
-function makeHiPSImageTable(pv, surveysId) {
-    const plot= primePlot(pv);
-    if (!plot) return null;
-
-    const inputEntry = () => {
-        return (
+function makeHiPSImageTable(pv) {
+    if (!primePlot(pv)) return null;
+    return (
+        <div style={{display:'flex'}}>
             <div style={{margin: '0 5px 0 4px'}}>
                 <input  type='button'
                         value='Change HiPS'
                         title={'Choose a different HiPS Survey'}
-                        onClick={()=>showHiPSSurverysPopup(primePlot(pv)?.hipsUrlRoot, pv, surveysId)} />
+                        onClick={()=>showHiPSSurverysPopup(pv)} />
             </div>
-        );
-    };
-
-    return (
-        <div style={{display:'flex'}}>
-            {inputEntry()}
         </div>
     );
-
 }
 
 
@@ -279,7 +269,7 @@ export const VisCtxToolbarView= memo((props) => {
 
             {canConvertHF && <HipsFitsConvertButton pv={pv}/>}
             {hips && <HiPSCoordSelect plotId={plot?.plotId} imageCoordSys={plot?.imageCoordSys}/>}
-            {hips && makeHiPSImageTable(pv, HiPSId)}
+            {hips && makeHiPSImageTable(pv)}
         </div>
     );
     },

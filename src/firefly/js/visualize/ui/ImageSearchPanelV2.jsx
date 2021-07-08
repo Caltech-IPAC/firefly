@@ -31,9 +31,8 @@ import {getPlotViewById} from '../PlotViewUtil.js';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {getWorkspaceConfig} from '../WorkspaceCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
-import {getAppHiPSConfig} from '../HiPSListUtil.js';
-import {HiPSImageSelect, makeHiPSWebPlotRequest} from '../../ui/HiPSImageSelect.jsx';
-import {sourcesPerChecked} from '../../ui/HiPSSurveyListDisplay.jsx';
+import {useForImageSearch} from '../HiPSListUtil.js';
+import {HiPSImageSelect, makeHiPSWebPlotRequest, getHipsUrl} from '../../ui/HiPSImageSelect.jsx';
 
 import './ImageSearchPanelV2.css';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
@@ -309,7 +308,7 @@ function ImageType({}) {
     const options = [  {label: 'View FITS Images', value: 'singleChannel'},
                      {label: 'Create 3-Color Composite', value: 'threeColor'}];
 
-    if (getAppHiPSConfig()) {
+    if (useForImageSearch()) {
         options.push({label: 'View HiPS Images', value: 'hipsImage'});
     }
     return (
@@ -402,23 +401,13 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, 
                     />
                 </div>
             </div>
-            <div className='ImageSearch__section' style={{ display: 'flex', flexDirection: 'column', padding: 'unset', flexShrink: 1, flexGrow: 1}}>
-                <div className='ImageSearch__section--title'>4. Select Data Set</div>
-                {!isHips ?
-                <ImageSelect style={{flexGrow: 1, width: '100%'}} key={`ImageSelect_${groupKey}`} {...{groupKey, title, addChangeListener, imageMasterData, multiSelect, scrollDivId: !noScroll && scrollDivId}} /> :
-                <HiPSSelect groupKey={groupKey} />
-                    }
-            </div>
-        </div>
-    );
-}
-
-function HiPSSelect({groupKey}) {
-    return (
-        <div className='flex-full' style={{width: '100%', position: 'relative'}}>
-            <div style={{position: 'absolute', top: 0, bottom: 0, left: 0, right: 0}}>
-                <HiPSImageSelect groupKey={groupKey} />
-            </div>
+            {isHips ?
+                <HiPSImageSelect groupKey={groupKey} /> :
+                <div className='ImageSearch__section' style={{ display: 'flex', flexDirection: 'column', padding: 'unset', flexShrink: 1, flexGrow: 1}}>
+                    <div className='ImageSearch__section--title'>4. Select Data Set</div>
+                    <ImageSelect style={{flexGrow: 1, width: '100%'}} key={`ImageSelect_${groupKey}`} {...{groupKey, title, addChangeListener, imageMasterData, multiSelect, scrollDivId: !noScroll && scrollDivId}} />
+                </div>
+            }
         </div>
     );
 }
@@ -481,8 +470,7 @@ function onSearchSubmit({request, gridSupport, plotId, plotGroupId, viewerId, re
         showInfoPopup(validInfo.message);
         return false;
     }
-    doImageSearch({imageMasterData, request, gridSupport, plotId, plotGroupId, viewerId, renderTreeId});
-    return true;
+    return doImageSearch({imageMasterData, request, gridSupport, plotId, plotGroupId, viewerId, renderTreeId});
 }
 
 function searchFailed(request) {
@@ -534,8 +522,8 @@ function getHipsValidateInfo(request) {
         if (isNil(request.txURL) || (!request.txURL.trim())){
             return ({valid:false, message:'invalid URL'});
         }
-    } else if (!sourcesPerChecked()) {
-        return ({valied: false, message: 'No HiPS source selected'});
+    } else if (!getHipsUrl()) {
+        return ({valid: false, message: 'No HiPS source selected'});
     }
     return {valid:true, message: 'success'};
 }
@@ -612,13 +600,10 @@ function doImageSearch({ imageMasterData, request, plotId, plotGroupId, viewerId
             plotId = genHiPSPlotId.next().value;
         }
         const wpRequest = makeHiPSWebPlotRequest(get(request, FG_KEYS.hips), plotId, plotGroupId);
-        wpRequest && dispatchPlotHiPS({
-            plotId,
-            viewerId,
-            wpRequest,
-            pvOptions,
-        });
-
+        if (wpRequest) {
+            dispatchPlotHiPS({ plotId, viewerId, wpRequest, pvOptions});
+            return true;
+        }
     } else if  (isImageType()?.isThreeColorImgType){       // three color
         const redReq = get(request, FG_KEYS.red);
         const greenReq = get(request, FG_KEYS.green);
@@ -632,19 +617,21 @@ function doImageSearch({ imageMasterData, request, plotId, plotGroupId, viewerId
             } else { wpSet.push(undefined); }
         });
         dispatchPlotImage({threeColor:true, wpRequest: wpSet, viewerId, renderTreeId, pvOptions});
-
+        return true;
     } else {                       // single channel
         const reqAry = makeRequests(get(request, FG_KEYS.single), imageMasterData, plotId, plotGroupId);
         reqAry.forEach( (r) => {
             if (r.dataType==='image' || r.dataType==='cube') {
                 dispatchPlotImage({wpRequest:r.request, viewerId,renderTreeId,pvOptions});
+                return true;
             }
             else if (r.dataType==='table') {
                 dispatchTableSearch(r.request, {backgroundable:true, showFilters:true, removable:true });
+                return true;
             }
-
         });
     }
+    return false;
 }
 
 
