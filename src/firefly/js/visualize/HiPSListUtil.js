@@ -111,7 +111,7 @@ export function resolveHiPSIvoURL(ivoOrUrl) {
     if (FULL_HIPS_TABLE) {
         return Promise.resolve(findInTable());
     } else {
-        const request = makeHiPSRequest(undefined, );
+        const request = makeHiPSRequest();
         return doFetchTable(request).then( (tableModel) => {
             FULL_HIPS_TABLE = tableModel;
             return findInTable(tableModel);
