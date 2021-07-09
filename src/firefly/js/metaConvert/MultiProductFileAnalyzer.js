@@ -329,6 +329,14 @@ function makeErrorResult(message, fileName,url) {
     return dpdtMessageWithDownload(`No displayable data available for this row${message?': '+message:''}`, fileName&&'Download: '+fileName, url);
 }
 
+function makeAllImageEntry(request, parts, imageViewerId,  tbl_id, row, imagePartsLength) {
+    const newReq= request.makeCopy();
+    parts.forEach( (p) => Object.entries(p.additionalImageParams ?? {} )
+            .forEach(([k,v]) => newReq.setParam(k,v)));
+    return dpdtImage(`Image Data ${imagePartsLength>1? ': All Images in File' :''}`,
+        createSingleImageActivate(newReq,imageViewerId,tbl_id,row),'image-'+0, {request});
+}
+
 /**
  *
  * @param obj
@@ -396,9 +404,7 @@ function processAnalysisResult({table, row, request, activateParams,
 
 
     const imageEntry= makeAllImageOption &&
-        dpdtImage(`Image Data ${imageParts.length>1? ': All Images in File' :''}`,
-            createSingleImageActivate(request,imageViewerId,table.tbl_id,row),'image-'+0, {request});
-
+        makeAllImageEntry(request,parts,imageViewerId,table.tbl_id,row,imageParts.length);
 
     if (imageEntry) fileMenu.menu.push(imageEntry);
     partAnalysis.forEach( (pa) => {
