@@ -2,26 +2,20 @@ package edu.caltech.ipac.firefly.server.dpanalyze;
 
 import edu.caltech.ipac.firefly.core.FileAnalysisReport;
 import edu.caltech.ipac.firefly.data.sofia.Sofia1DSpectraExtractor;
+import edu.caltech.ipac.firefly.data.sofia.SofiaFitsConverterUtil;
 import edu.caltech.ipac.firefly.data.sofia.SofiaSpectraModel;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.io.IpacTableReader;
-import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.table.io.VoTableWriter;
 import edu.caltech.ipac.util.FitsHDUUtil;
-import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.URLDownload;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.Header;
-import edu.caltech.ipac.firefly.data.sofia.SofiaFitsConverterUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +38,7 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
         String code = params.getOrDefault("product_type", "");
         String level = params.getOrDefault("processing_level", "").toUpperCase();
         String inst = params.getOrDefault("instrument", "").toUpperCase();
+        inputReport.setAdditionalImageParams(Collections.singletonMap("CUBE_FIRST_FRAME","50%"));
 
         try {
             switch (inst) {

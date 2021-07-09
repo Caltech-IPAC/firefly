@@ -266,6 +266,7 @@ function analyzeImageResult(part, request, table, row, fileFormat, fileOnServer,
         newReq.setTitleOptions(TitleOptions.NONE);
         override= true;
     }
+    Object.entries(part.additionalImageParams ?? {}).forEach(([k,v]) => newReq.setParam(k,v));
     hduIdx && newReq.setMultiImageExts(hduIdx+'');
     const {imageViewerId}= activateParams;
 

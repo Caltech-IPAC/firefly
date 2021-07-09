@@ -8,7 +8,6 @@ package edu.caltech.ipac.firefly.core;
 
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.util.StringUtils;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,6 +42,8 @@ public class FileAnalysisReport {
     private boolean disableAllImagesOption = false;
     private String dataProductsAnalyzerId;
     private boolean analyzerFound= false;
+    private Map<String,String> additionalImageParams;
+
 
     public FileAnalysisReport(ReportType type, String fileFormat, long fileSize, String filePath) {
         this.type = type;
@@ -136,6 +137,18 @@ public class FileAnalysisReport {
     }
 
 
+    public void setAdditionalImageParams(Map<String,String> additionalImageParams){
+        this.additionalImageParams = additionalImageParams;
+    }
+
+
+    public Map<String, String> getAdditionalImageParams(){
+        return this.additionalImageParams;
+    }
+
+
+
+
     public FileAnalysisReport copy() { return copy(true); }
 
     public FileAnalysisReport copy(boolean includeParts) {
@@ -143,6 +156,7 @@ public class FileAnalysisReport {
         r.fileName= this.fileName;
         if (includeParts) r.parts= parts.stream().map(Part::copy).collect(Collectors.toList());
         r.dataType= this.dataType;
+        r.additionalImageParams = this.additionalImageParams;
         return r;
     }
 
