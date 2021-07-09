@@ -238,7 +238,7 @@ async function makeHiPSPlot(rawAction, dispatcher) {
         const resolvedHipsRootUrl= await resolveHiPSIvoURL(wpRequest.getHipsRootUrl());
         if (currentPlots[plotId]!==requestKey) {
             // hipsFail('hips plot expired or aborted');
-            console.log('hips plot expired or aborted');
+            // console.log('hips plot expired or aborted');
             return;
         }
         dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_START,payload:newPayload} );
@@ -262,7 +262,7 @@ async function makeHiPSPlot(rawAction, dispatcher) {
         }
         if (currentPlots[plotId]!==requestKey) {
             // hipsFail('hips plot expired or aborted');
-            console.log('hips plot expired or aborted');
+            // console.log('hips plot expired or aborted');
             return;
         }
         plot= await addAllSky(plot);

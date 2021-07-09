@@ -112,6 +112,7 @@ export function getLatDist(lat1,lat2) {
  * @return {WorldPt} the world point in the new coordinate system
  */
 export function convert(wpt, to= CoordinateSys.EQ_J2000) {
+    if (wpt) return;
     const from = wpt.getCoordSys();
     if (!to || from===to) return wpt;
 

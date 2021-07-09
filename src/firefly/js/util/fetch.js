@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {isPlainObject, truncate} from 'lodash';
+import slug from 'slug';
 import {getOrCreateWsConn} from '../core/messaging/WebSocketClient.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
@@ -124,4 +125,26 @@ export async function download(url, filename) {
     } catch ({message}) {
         showInfoPopup(truncate(message, {length: 200}), 'Unexpected error');
     }
+}
+
+
+/**
+ * create the default download filename
+ * @param {String} root - should be one of 'image', 'HiPS', 'table', 'chart'  (we can add to this list as appropriate)
+ * @param {String} [title] - the title associated with the visualizer, if falsy then the name is build without a title
+ * @param {String} [ext] - the extensionn (without the dot). i.e. 'fits', 'png', 'cvs', etc
+ * @return {string}
+ */
+export function makeDefaultDownloadFileName(root= 'unknown', title='', ext= 'png') {
+    const MAX_SAVE_FILE_LENGTH= 50;
+    const DOT_SUB= 'DOTDOTDOTDOTDOT';
+    const US_SUB= 'UNDERSCOREUNDERSCOREUNDERSCORE';
+    const dotExt= '.'  + ext;
+    const base= title ? `${root}_${title}` : root;
+    let filename=  (base.length<=MAX_SAVE_FILE_LENGTH) ? base : base.substring(0,MAX_SAVE_FILE_LENGTH);
+    filename= filename.toLowerCase().endsWith(dotExt) ? filename.substring(0,filename.length-dotExt.length) : filename;
+    const tmpF= filename.replaceAll('.',DOT_SUB).replaceAll('_',US_SUB);
+    const slugTmpF= slug(tmpF, {lower:false});
+    filename= slugTmpF.replaceAll(DOT_SUB, '.').replaceAll(US_SUB,'_');
+    return filename+dotExt;
 }
