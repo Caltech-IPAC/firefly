@@ -24,6 +24,7 @@ import {dispatchHideDialog, dispatchShowDialog} from '../core/ComponentCntlr.js'
 import {FormPanel} from './FormPanel.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
 import {primePlot} from '../visualize/PlotViewUtil.js';
+import {BLANK_HIPS_URL} from '../visualize/WebPlot.js';
 
 const useSource = 'useSource';
 let activeHipsTblId;
@@ -106,7 +107,9 @@ export function showHiPSSurverysPopup(pv=visRoot()) {
 export function getHipsUrl() {
     const tableModel = getTblById(activeHipsTblId);
     const {highlightedRow} = tableModel;
-    return getCellValue(tableModel, highlightedRow, URL_COL)?.trim();
+    // blank hips is empty-space in the table.  this is done so the info icon is not shown.
+    // however, it should be treated as BLANK_HIPS_URL
+    return getCellValue(tableModel, highlightedRow, URL_COL)?.trim() || BLANK_HIPS_URL;
 }
 
 function SourceSelect() {
