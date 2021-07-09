@@ -17,7 +17,6 @@ import nom.tam.fits.Header;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -39,9 +38,7 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
         String code = params.getOrDefault("product_type", "");
         String level = params.getOrDefault("processing_level", "").toUpperCase();
         String inst = params.getOrDefault("instrument", "").toUpperCase();
-        Map<String, String> additionalParams = new HashMap<>();
-        additionalParams.put("CUBE_FIRST_FRAME","50%");
-        inputReport.setAdditionalImageParams(additionalParams);
+        inputReport.setAdditionalImageParams(Collections.singletonMap("CUBE_FIRST_FRAME","50%"));
 
         try {
             switch (inst) {
