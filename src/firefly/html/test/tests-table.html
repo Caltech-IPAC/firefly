@@ -44,6 +44,30 @@
     </script>
 </template>
 
+<template title="ATLAS result table example" class="tpl">
+    <div id="expected" >
+        <div style="margin-bottom: 10px">Atlas table including link of image cutout to be launched in a new tab</div>
+    </div>
+    <div id="actual"  class="box x3"/>
+    <script>
+        function onFireflyLoaded(firefly) {
+            //ATLAS code setup:
+            window.extViewer = firefly.getViewer();
+            //ATLAS type of settings, play with it to set title ID for each images in the request showImage({'title':'...', url:' '}:
+            extViewer.setDefaultParams({
+                "TITLE_OPTIONS": "FILE_NAME",
+                "ZoomType"     : "TO_WIDTH",
+                "ColorTable"   : "1",
+                "PreTitle"     : "AKARI",
+                "PostTitle"    :  "317.778844 56.472079 eq J2000",
+                "overlayPosition"    :  "317.77884;+56.47208;EQ_J2000",
+            }) ;
+            tblReq1 = firefly.util.table.makeFileRequest('ATLAS', 'https://raw.githubusercontent.com/ejoliet/playground/master/data/FIREFLY-566-atlas-example-cutout-image.tbl',null);
+            firefly.showTable('actual', tblReq1);
+        }
+    </script>
+</template>
+
 <template title="Proprietary Data Display" class="tpl">
     <div id="expected" >
         <div style="margin-bottom: 10px">Set <b>band</b> as a data_rights columns. Values that will resolve to true are: 'public', 'secure', '1', 'true', 't'</div>

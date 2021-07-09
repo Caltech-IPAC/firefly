@@ -64,7 +64,27 @@
     </script>
 </template>
 
+<template title="Show Image with title" class="tpl" >
+    <div id="expected" style="position: relative" >
+        <div class="source-code indent-3" style="position: absolute; bottom: 0; left: 0">
+            show image with title 'Image Title Here'
+        </div>
+    </div>
+    <div id="actual" class="flow-h">
+        <div id="show-image" class="box"></div>
+    </div>
+    <script>
+        onFireflyLoaded = function (firefly) {
 
+            const req= {
+                url: 'https://irsa.ipac.caltech.edu/cgi-bin/Subimage/nph-subimage?origfile=/irsadata/AKARI//images/N60/l000.85_b+65.00_ecl_6deg_N60_sigma.fits&ra=317.778840&dec=56.472080&xsize=2.000000',
+                Title: 'Image Title Here'
+            };
+
+            firefly.showImage( 'show-image',req);
+        }
+    </script>
+</template>
 
 
 <!-- this is where test cases will be attached-->
