@@ -103,7 +103,7 @@ export function makeGridDrawData (plot,  cc, useLabels, numOfGridLines=11){
     const centerWpt = convert(centerWp,csys);
 
 
-    if (width > 0 && height >0) {
+    if (centerWpt && width > 0 && height >0) {
         const bounds = new Rectangle(0, 0, width, height);
 
         const {xLines, yLines, labels} = plot.plotType==='hips'?computeHipGridLines(cc, csys,screenWidth, numOfGridLines, labelFormat,plot,fov, centerWpt)
