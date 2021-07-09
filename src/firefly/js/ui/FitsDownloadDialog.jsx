@@ -2,12 +2,11 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import React, {memo,useState} from 'react';
-import slug from 'slug';
 import PropTypes from 'prop-types';
 import {set, isEmpty, capitalize} from 'lodash';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
-import {getRootURL, getCmdSrvURL, encodeUrl, updateSet} from '../util/WebUtil.js';
+import {getRootURL, getCmdSrvURL, encodeUrl, updateSet, replaceExt} from '../util/WebUtil.js';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
@@ -17,8 +16,6 @@ import FieldGroupUtils, {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
 import {primePlot, getActivePlotView, getAllCanvasLayersForPlot, isThreeColor} from '../visualize/PlotViewUtil.js';
 import {Band} from '../visualize/Band.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
-import {RequestType} from '../visualize/RequestType.js';
-import {ServiceType} from '../visualize/WebPlotRequest.js';
 import {isImage} from '../visualize/WebPlot.js';
 import {makeRegionsFromPlot} from '../visualize/region/RegionDescription.js';
 import {saveDS9RegionFile} from '../rpc/PlotServicesJson.js';
@@ -30,7 +27,7 @@ import {ServerParams} from '../data/ServerParams.js';
 import {INFO_POPUP, showInfoPopup} from './PopupUtil.jsx';
 import {getWorkspaceConfig} from '../visualize/WorkspaceCntlr.js';
 import {upload} from '../rpc/CoreServices.js';
-import {download, downloadBlob} from '../util/fetch.js';
+import {download, downloadBlob, makeDefaultDownloadFileName} from '../util/fetch.js';
 import {useBindFieldGroupToStore} from './SimpleComponent.jsx';
 
 import HelpIcon from './HelpIcon.jsx';
@@ -40,7 +37,6 @@ const dialogWidth = 500;
 const dialogHeightWS = 500;
 const dialogHeightLOCAL = 400;
 const mTOP = 10;
-const crtFileNameKey = 'currentFileNames';
 const dialogPopupId = 'fitsDownloadDialog';
 const fitsDownGroup = 'FITS_DOWNLOAD_FORM';
 const labelWidth = 100;
@@ -118,7 +114,7 @@ const renderOperationOption= () => (
         </div> );
 
 function renderThreeBand(colors) {
-    const ft = FieldGroupUtils.getGroupFields('FITS_DOWNLOAD_FORM')?.fileType?.value;
+    const ft = FieldGroupUtils.getGroupFields(fitsDownGroup)?.fileType?.value;
     if (ft==='png' || ft==='reg') return false;
     return (
         <div style={{display: 'flex', marginTop: mTOP}}>
@@ -127,13 +123,6 @@ function renderThreeBand(colors) {
             </div>
         </div> );
 }
-
-const getFileNames= (plot,colors) => (
-    { ...Object.fromEntries(colors.map((c) => [c,makeFileName(plot, Band.get(c))])),
-        [Band.NO_BAND.key]: makeFileName(plot, Band.get(colors[0])),
-        png : makeFileName(plot, Band.get(colors[0]), 'png'),
-        reg:  makeFileName(plot, Band.get(colors[0]), 'reg'),
-    });
 
 const makeFileOptions= (plot,colors,hasOperation) => (
     <div>
@@ -153,28 +142,24 @@ function getInitState()  {
     return {
         plot, pv, colors,
         threeC: isThreeColor(plot),
-        currentFileNames: getFileNames(plot, colors),
         hasOperation: plot.plotState.hasOperation(Operation.CROP) && !plot.plotState.hasOperation(Operation.ROTATE),
     };
 }
 
-
 const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
-    const [{pv,plot,hasOperation,threeC,colors,currentFileNames}]= useState(getInitState);
-    const fields=useBindFieldGroupToStore(groupKey);
+    const [{pv,plot,hasOperation,threeC,colors}]= useState(getInitState);
+    useBindFieldGroupToStore(groupKey); // this will force a rerender when anything changes
     const band = threeC ? getFieldVal(groupKey, 'threeBandColor', colors[0]) : Band.NO_BAND.key;
-    const currentType = isImage(plot) ? (fields?.fileType?.value ?? 'fits') : 'png';
-    const fileName = (currentType === 'fits') ? currentFileNames[band] : currentFileNames[currentType];
     const totalChildren = (isWs ? 3 : 2) +  (hasOperation ? 1 : 0) + (threeC ? 1 : 0);// fileType + save as + (fileLocation)
     const childH = (totalChildren*(20+mTOP));
 
     return (
-        <FieldGroup style={{height: 'calc(100% - 10px)', width: '100%'}} groupKey={groupKey} keepState={false}
-                    reducerFunc={makeFitsDLReducer(band, fileName, currentFileNames)}>
+        <FieldGroup style={{height: 'calc(100% - 10px)', width: '100%'}} groupKey={groupKey}
+                    reducerFunc={makeFitsDLReducer(plot,band)}>
             <div style={{boxSizing: 'border-box', paddingLeft:5, paddingRight:5, width: '100%', height: 'calc(100% - 70px)'}}>
                 <DownloadOptionsDialog {...{
                     fromGroupKey:groupKey, workspace:isWs, children: makeFileOptions(plot,colors,hasOperation),
-                    fileName, labelWidth, dialogWidth:'100%', dialogHeight:`calc(100% - ${childH}pt)` }}/>
+                    labelWidth, dialogWidth:'100%', dialogHeight:`calc(100% - ${childH}pt)` }}/>
             </div>
             <div style={{display:'flex', width:'calc(100% - 20px)', margin: '20px 10px 10px 10px', justifyContent:'space-between'}}>
                 <div style={{display:'flex', width:'30%', justifyContent:'space-around'}}>
@@ -194,46 +179,56 @@ FitsDownloadDialogForm.propTypes = {
     isWs: PropTypes.oneOfType([PropTypes.bool, PropTypes.string])
 };
 
-function makeFitsDLReducer(band, fileName, currentFileNames) {
+function makeFitsDLReducer(plot, band) {
     return (inFields, action) => {
         if (!inFields) {
             const defV = {...defValues};
             set(defV, [fKeyDef.colorBand.fKey, 'value'], (band !== Band.NO_BAND.key) ? band : '');
-            set(defV, [fKeyDef.fileName.fKey, 'value'], fileName);
+            set(defV, [fKeyDef.fileName.fKey, 'value'], makeFileName(plot,band,'fits'));
             set(defV, [fKeyDef.wsSelect.fKey, 'value'], '');
             set(defV, [fKeyDef.wsSelect.fKey, 'validator'], isWsFolder());
             set(defV, [fKeyDef.fileName.fKey, 'validator'], fileNameValidator());
-            set(defV, [crtFileNameKey, 'value'], currentFileNames);
             return defV;
         }
         const {fieldKey,value}= action.payload;
         const fType = inFields[fKeyDef.fileType.fKey]?.value;
-        const fileKey= (fType === 'fits') ? (inFields[fKeyDef.colorBand.fKey]?.value || Band.NO_BAND.key) : fType;
         switch (action.type) {
             case FieldGroupCntlr.VALUE_CHANGE:
-                if (fieldKey === fKeyDef.colorBand.fKey || fieldKey === fKeyDef.fileType.fKey) {
-                    inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'],
-                        inFields[crtFileNameKey]?.value?.[fileKey]);
-
-                } else if (fieldKey === fKeyDef.fileName.fKey) {
-                    inFields = updateSet(inFields, [crtFileNameKey, 'value', fileKey], value);
-                } else if (fieldKey === fKeyDef.wsSelect.fKey) {
+                if (fieldKey === fKeyDef.wsSelect.fKey) {
                     // change the filename if a file is selected from the file picker
                     if (value && isValidWSFolder(value, false).valid) {
                         const fName = value.substring(value.lastIndexOf('/') + 1);
                         inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'], fName);
                     }
                 }
+                else {
+                    let fileName;
+                    if (!isThreeColor(plot)) {
+                        fileName= replaceExt(inFields.fileName.value,fType);
+                    }
+                    else {
+                        fileName= matchPossibleDefaultNames(plot,inFields.fileName?.value) ?
+                            makeFileName(plot,inFields.threeBandColor?.value,fType) :
+                            replaceExt(inFields.fileName.value,fType);
+                    }
+                    inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'], fileName);
+                }
                 break;
             case FieldGroupCntlr.MOUNT_FIELD_GROUP:
                 inFields = updateSet(inFields, [fKeyDef.colorBand.fKey, 'value'],
                     ((band !== Band.NO_BAND.key) ? band : ''));
-                inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'], fileName);
-                inFields = updateSet(inFields, [crtFileNameKey, 'value'], currentFileNames);
+                inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'], makeFileName(plot,band,fType));
                 break;
         }
         return {...inFields};
     };
+}
+
+function matchPossibleDefaultNames(plot,fileName) {
+    const possibleRoots= [makeFileName(plot,Band.NO_BAND.key, 'fits'), makeFileName(plot,Band.RED.key, 'fits'),
+                          makeFileName(plot,Band.GREEN.key, 'fits'), makeFileName(plot,Band.BLUE.key, 'fits')]
+        .map( (f) => f.substring(0,f.lastIndexOf('.fits')));
+    return possibleRoots.includes(fileName.substring(0,fileName.lastIndexOf('.')));
 }
 
 function resultsFail(request={}) {
@@ -314,32 +309,19 @@ function resultsSuccess(request, plotView, popupId) {
     }
 }
 
-function makeFileName(plot, band, ext= 'fits') {
+function makeFileName(plot, band='NO_BAND', ext= 'fits') {
     const req = plot.plotState.getWebPlotRequest(band);
-    if (req.getDownloadFileNameRoot()) return slug(req.getDownloadFileNameRoot())+ `.${ext}`;
-    switch (req.getRequestType()) {
-        case RequestType.SERVICE:              return makeServiceFileName(req,plot, band,ext);
-        case RequestType.FILE:                 return makeTitleFileName(plot, band, ext);
-        case RequestType.URL:                  return makeTitleFileName(plot, band, ext);
-        case RequestType.ALL_SKY:              return 'allsky.fits';
-        case RequestType.BLANK:                return 'blank.fits';
-        case RequestType.PROCESSOR:            return makeTitleFileName(plot, band, ext);
-        case RequestType.RAWDATASET_PROCESSOR: return makeTitleFileName(plot, band, ext);
-        case RequestType.TRY_FILE_THEN_URL:    return makeTitleFileName(plot, band, ext);
-        default:                               return makeTitleFileName(plot, band, ext);
+    let root = isImage(plot) ? 'image' : 'HiPS';
+    if (isImage(plot) && isThreeColor(plot) && ext==='fits') {
+        switch (band.toUpperCase()) {
+            case Band.RED.key: root= 'image-red'; break;
+            case Band.GREEN.key: root= 'image-green'; break;
+            case Band.BLUE.key: root= 'image-blue'; break;
+        }
     }
+    const title= req.getDownloadFileNameRoot() ? req.getDownloadFileNameRoot() : plot.title;
+    return makeDefaultDownloadFileName(root, title, ext);
 }
-
-function makeServiceFileName(req,plot, band, ext= 'fits') {
-    const st= req.getServiceType();
-    const sBand= req.getSurveyBand()??'';
-    return (!st || st===ServiceType.UNKNOWN) ?
-        makeTitleFileName(plot, band, ext) :
-        slug(`${st.key.toLowerCase()}-${req.getSurveyKey()} ${sBand}`)+  `.${ext}`;
-}
-
-const makeTitleFileName= (plot, band, ext= 'fits') =>
-            slug(band!==Band.NO_BAND ? `${plot.title} ${band}` : plot.title)+ `.${ext}` ;
 
 const makePngLocal= (plotId, filename= 'a.png') =>
             makeImageCanvas(plotId)?.toBlob( (blob) => downloadBlob(blob, filename) , 'image/png');

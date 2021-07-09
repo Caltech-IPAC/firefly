@@ -5,7 +5,7 @@
 import React from 'react';
 import {get, set} from 'lodash';
 import Enum from 'enum';
-import {updateSet} from '../../util/WebUtil.js';
+import {replaceExt, updateSet} from '../../util/WebUtil.js';
 import {getTblById, getAsyncTableSourceUrl, getTableSourceUrl} from '../TableUtil.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../../core/ComponentCntlr.js';
@@ -24,7 +24,7 @@ import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {getWorkspaceConfig} from '../../visualize/WorkspaceCntlr.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
-import {download} from '../../util/fetch';
+import {download, makeDefaultDownloadFileName} from '../../util/fetch';
 import {getCmdSrvURL} from '../../util/WebUtil';
 
 const fKeyDef = {
@@ -47,6 +47,16 @@ const tableFormats = new Enum({ipac: 'IPAC Table (.tbl)',
                                //'votable-fits-href': 'votable-fits-href: External FITS-format VOTable',
                                //'fits': 'fits: FITS table'
                              });
+const tableFormatsExt = {
+    ipac: 'tbl',
+    csv: 'csv',
+    tsv: 'tsv',
+    'votable-tabledata': 'vot',
+    'votable-binary2-inline': 'vot',
+    'votable-fits-inline': 'vot',
+};
+
+
 const labelWidth = 100;
 const defValues = {
     [fKeyDef.fileName.fKey]: Object.assign(getTypeData(fKeyDef.fileName.fKey, '',
@@ -112,7 +122,7 @@ export function showTableDownloadDialog({tbl_id, tbl_ui_id}) {
                     <div style={{...popupPanelResizableStyle, height: adHeight, minHeight}}>
                         <FieldGroup style={{ boxSizing: 'border-box', paddingLeft:5, paddingRight:5,
                                              height: 'calc(100% - 70px)', width: '100%'}}
-                                    groupKey={tblDownloadGroupKey} keepState={true}
+                                    groupKey={tblDownloadGroupKey}
                                     reducerFunc={TableDLReducer(tbl_id)}>
                             <DownloadOptionsDialog fromGroupKey={tblDownloadGroupKey}
                                                    children={fileFormatOptions()}
@@ -159,26 +169,14 @@ function TableDLReducer(tbl_id) {
             const fname= request?.META_INFO?.title ?? '';
             return tableMeta?.title || fname;
         };
-        const fixFileName = (fName) => {
 
+
+        const getExt= () => {
             const tableFormat = inFields ? get(inFields, [fKeyDef.fileFormat.fKey, 'value'], 'ipac') : 'ipac';
-
-            fName = fName.replace(/\s/g, '')            // remove space
-                .replace(/\)$/, '')            // remove trailing )
-                .replace(/[\(|\)]/g, '-')      // replace ( & ) to be '-'
-                .replace(/:/g, '_')            // replace ':' to be '_'
-                .replace(/\'{2}/, 'asec')      // replace '' to be 'asec'
-                .replace(/\.([0-9]+)/g, 'p$1') // replace decimal point before number to be 'p'
-                .replace(/\./g, '_');          // replace decimal point to be '_'
-
-
-            if (fName && tableFormat && tableFormat.includes('votable')) {
-                const prefix = ['binary2', 'binary', 'fits'].find((f) => tableFormat.includes(f));
-                fName += (prefix ? '-'+prefix : '');
-            }
-
-            return fName;
+            return tableFormatsExt[tableFormat] ?? 'dat';
         };
+
+        const fixFileName = (fName) => makeDefaultDownloadFileName('table', fName, getExt());
 
         if (!inFields) {
             const defV = Object.assign({}, defValues);
@@ -206,8 +204,7 @@ function TableDLReducer(tbl_id) {
                             inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'], fName);
                         }
                     } else if (action.payload.fieldKey === fKeyDef.fileFormat.fKey) {
-                        const fName = fixFileName(chooseFileNameSource());
-
+                        const fName= replaceExt(inFields[fKeyDef.fileName.fKey]?.value, getExt());
                         inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'], fName);
                     }
                     break;
