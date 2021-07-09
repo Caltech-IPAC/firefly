@@ -138,6 +138,7 @@ public class FileAnalysis {
                 putPartVal(h, p.getType().name(), i, "type");
                 putPartVal(h, p.getUiEntry().name(), i, "uiEntry");
                 putPartVal(h, p.getUiRender().name(), i, "uiRender");
+
                 putPartVal(h, p.getDesc(), i, "desc");
                 putPartVal(h, p.getConvertedFileName(),i,"convertedFileName");
                 putPartVal(h, p.getConvertedFileFormat(),i,"convertedFileFormat");
@@ -152,6 +153,7 @@ public class FileAnalysis {
                     putPartVal(h, JsonTableUtil.toJsonDataGroup(p.getDetails(),true), i, "details");
                 }
                 putPartVal(h, getJsonChartParams(p.getChartParams()),i,"chartParamsAry");
+                putPartVal(h, report.getAdditionalImageParams(),i,"additionalImageParams");
             }
         }
         return h.toJson();
