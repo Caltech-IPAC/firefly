@@ -2,33 +2,56 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
+import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {HiPSId, updateHiPSTblHighlightOnUrl, URL_COL} from '../visualize/HiPSListUtil.js';
-import {HiPSSurveyListSelection, HiPSPopupMsg, getTblModelOnPanel, sourcesPerChecked} from './HiPSSurveyListDisplay.jsx';
+
+import {URL_COL, makeHiPSRequest, defHiPSSources, getHiPSSources} from '../visualize/HiPSListUtil.js';
 import {ValidationField} from './ValidationField.jsx';
-import {getCellValue} from '../tables/TableUtil.js';
+import {getCellValue, getTblById} from '../tables/TableUtil.js';
 import {DEFAULT_FITS_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
 import WebPlotRequest from '../visualize/WebPlotRequest.js';
 import {parseWorldPt} from '../visualize/Point.js';
-import {useFieldGroupValues} from 'firefly/ui/SimpleComponent.jsx';
+import {dispatchTableFetch} from '../tables/TablesCntlr.js';
+import {TablePanel} from '../tables/ui/TablePanel.jsx';
+import {showInfoPopup} from './PopupUtil.jsx';
+import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
+import {useStoreConnector} from './SimpleComponent.jsx';
+import {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
+import {dispatchChangeHiPS, visRoot} from '../visualize/ImagePlotCntlr.js';
+import {PopupPanel} from './PopupPanel.jsx';
+import DialogRootContainer from './DialogRootContainer.jsx';
+import {dispatchHideDialog, dispatchShowDialog} from '../core/ComponentCntlr.js';
+import {FormPanel} from './FormPanel.jsx';
+import {FieldGroup} from './FieldGroup.jsx';
+import {primePlot} from '../visualize/PlotViewUtil.js';
+import {BLANK_HIPS_URL} from '../visualize/WebPlot.js';
 
-import './ImageSelect.css';
-
-const hipsPanelId = HiPSId;
-const urlWrapperStyle= {height: 35, width: 'calc(100% - 6pt)', alignItems: 'center'} ;
-const listWrapperStyle= {height:'100%', display: 'flex', flexDirection:'column', alignItems: 'center'};
+const useSource = 'useSource';
+let activeHipsTblId;
+let activeGroupKey;
 
 export const HiPSImageSelect= ({style={}, groupKey}) => {
-    const {imageSource}= useFieldGroupValues(groupKey,'imageSource');
-    return (
-        <div style={{height:'100%',...style}} className='ImageSelect'>
-            {imageSource === 'url' ?
-                <SelectUrl style={urlWrapperStyle}/> :
-                <HiPSSurveyListSelection surveysId={hipsPanelId} wrapperStyle={ listWrapperStyle } />
-            }
-        </div>
-    );
+    const [imageSource] = useStoreConnector(() => getFieldVal(groupKey,'imageSource'));
+    activeGroupKey = groupKey;
+
+    if (imageSource === 'url') {
+        return (
+            <div className='ImageSearch__section' style={style}>
+                <div className='ImageSearch__section--title'>4. Enter URL</div>
+                <ValidationField labelWidth={150} style={{width: 475}} fieldKey='txURL' />
+            </div>
+        );
+    } else {
+        return (
+            <div className='ImageSearch__section hips-table' style={style}>
+                <div className='ImageSearch__section--title' style={{display: 'inline-flex',width: '100%'}}>
+                    <div style={{width: 175}}>4. Select Data Set</div>
+                    <SourceSelect/>
+                </div>
+                <HiPSSurveyTable groupKey={groupKey}/>
+            </div>
+        );
+    }
 };
 
 HiPSImageSelect.propTypes = {
@@ -36,6 +59,70 @@ HiPSImageSelect.propTypes = {
     style: PropTypes.object
 };
 
+
+/**
+ * show HiPS survey info table in popup panel
+ * @param pv
+ * @returns {*}
+ */
+export function showHiPSSurverysPopup(pv=visRoot()) {
+
+    const dialogId = 'HiPSImageSelectPopup';
+    const groupKey = activeGroupKey || dialogId;
+
+    const onSubmit = () => {
+        const rootUrl = getHipsUrl();
+        if (rootUrl) {
+            const plot = pv ? primePlot(pv) : primePlot(visRoot());
+            // update the table highlight of the other one which is not shown in table panel
+            dispatchChangeHiPS({plotId: plot.plotId, hipsUrlRoot: rootUrl});
+            dispatchHideDialog(dialogId);
+        }
+    };
+
+    const popup = (
+        <PopupPanel title={'Change HiPS Image'} modal={true}>
+            <div className='ImageSearch__HipsPopup'>
+                <FormPanel  submitBarStyle = {{flexShrink: 0, padding: '0 19px 3px 6px'}}
+                            groupKey = {groupKey}
+                            submitText={'Search'}
+                            onSubmit = {onSubmit}
+                            onCancel = {() => dispatchHideDialog(dialogId)}
+                            help_id = 'visualization.changehips'>
+                    <FieldGroup className='flex-full' style={{height: '100%'}} groupKey={groupKey} keepState={true}>
+                        <SourceSelect/>
+                        <div style={{flexGrow: 1}}>
+                            <HiPSSurveyTable groupKey={groupKey}/>
+                        </div>
+                    </FieldGroup>
+                </FormPanel>
+            </div>
+        </PopupPanel>
+    );
+
+    DialogRootContainer.defineDialog(dialogId, popup);
+    dispatchShowDialog(dialogId);
+}
+
+export function getHipsUrl() {
+    const tableModel = getTblById(activeHipsTblId);
+    const {highlightedRow} = tableModel;
+    // blank hips is empty-space in the table.  this is done so the info icon is not shown.
+    // however, it should be treated as BLANK_HIPS_URL
+    return getCellValue(tableModel, highlightedRow, URL_COL)?.trim() || BLANK_HIPS_URL;
+}
+
+function SourceSelect() {
+    const sourceOptions = defHiPSSources()?.map((oneSource) => {
+        return {label: oneSource.label, value: oneSource.source};
+    });
+    return (
+        <CheckboxGroupInputField wrapperStyle={{color: 'black', fontWeight: 'normal', fontSize: 12, display: 'inline-flex', alignItems: 'center', marginTop: -4}}
+                                 fieldKey={useSource}
+                                 initialState={{value: sourceOptions?.[0]?.value}}
+                                 options={sourceOptions}/>
+    );
+}
 
 function SelectUrl({style}) {
     return (
@@ -57,31 +144,10 @@ SelectUrl.propTypes = {
  * @param {String} groupId
  */
 export function makeHiPSWebPlotRequest(request, plotId, groupId= DEFAULT_FITS_VIEWER_ID) {
-    let url;
-    const sources = sourcesPerChecked();
 
-    if ( (request?.imageSource ?? 'archive') === 'url') {
-        url = request.txURL.trim();
-        updateHiPSTblHighlightOnUrl(url, hipsPanelId, sources);
-    } else {
-        if (!sources) {
-            HiPSPopupMsg('No HiPS source selected', 'HiPS search');
-            return null;
-        }
-        const tableModel = getTblModelOnPanel(hipsPanelId);
-        if (!tableModel) {
-            HiPSPopupMsg('No HiPS information found', 'HiPS search');
-            return null;
-        }
-        const {highlightedRow=0} = tableModel;
-        url = getCellValue(tableModel, highlightedRow, URL_COL);
-        if (url) {
-            url = url.trim();
-        }
-    }
-
+    const url = ( request?.imageSource === 'url') ? request.txURL?.trim() : getHipsUrl();
     if (!url) {
-        HiPSPopupMsg('No HiPS URL found', 'HiPS search');
+        showInfoPopup('No HiPS URL found', 'HiPS search');
         return null;
     }
 
@@ -91,4 +157,25 @@ export function makeHiPSWebPlotRequest(request, plotId, groupId= DEFAULT_FITS_VI
     wpRequest.setPlotGroupId(groupId);
     wpRequest.setPlotId(plotId);
     return wpRequest;
+}
+
+function HiPSSurveyTable({groupKey}) {
+
+    let [sources] = useStoreConnector(() => getFieldVal(groupKey, useSource));
+    sources = sources ||  getHiPSSources();
+    activeHipsTblId = 'HiPS_tbl_id-' + sources.replaceAll(',', '-');
+
+    useEffect ( () => {
+        if (!getTblById(activeHipsTblId)) {
+            const req = makeHiPSRequest(sources, activeHipsTblId);
+            req && dispatchTableFetch(req);
+        }
+    }, [sources]);
+
+    return (
+        <TablePanel key={activeHipsTblId} tbl_id={activeHipsTblId} tbl_ui_id={activeHipsTblId+'-ui'}
+                    {...{showToolbar: false, selectable:false, showFilters:true, showOptionButton: true}}/>
+    );
+
+
 }

@@ -27,6 +27,13 @@
     flex-shrink: 0;
 }
 
+.ImageSearch__section.hips-table {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    padding: 0 2px 2px;
+}
+
 .ImageSearch__section--title {
     color: #005da4;
     font-size: larger;
@@ -47,3 +54,10 @@
     padding: 3px
 }
 
+.ImageSearch__HipsPopup {
+    width: 550px;
+    height: 400px;
+    min-width: 400px;
+    min-height: 350px;
+    resize: both;
+}

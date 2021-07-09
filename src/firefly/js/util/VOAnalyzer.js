@@ -1265,7 +1265,7 @@ export function applyTokenSub(tableModel, val='', rowIdx, def, encode=false) {
             const col = getColumnByRef(tableModel, cname);
             let cval = col ? getCellValue(tableModel, rowIdx, col.name) : '';  // if the variable cannot be resolved, return empty string
             if (encode) cval = encodeURIComponent(cval);
-            rval = rval.replace(v, cval);
+            rval = (!cval && v === rval) ? cval : rval.replace(v, cval);
         });
     }
     return rval ? rval : rval === 0 ? 0 : def;
