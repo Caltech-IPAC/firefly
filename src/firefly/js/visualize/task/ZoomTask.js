@@ -232,7 +232,7 @@ function doZoom(dispatcher,plot,zoomLevel,isFullScreen, zoomLockingEnabled, user
 
 
     const {plotId}= plot;
-    if (!localRawData) {
+    if (!localRawData || hips) {
         dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_START,
             payload:{plotId,zoomLevel, zoomLockingEnabled,userZoomType, devicePt} } );
     }
