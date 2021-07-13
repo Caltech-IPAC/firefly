@@ -4,6 +4,17 @@
 - See Firefly docker guidelines [here](firefly-docker.md).
 - To Access current (unstable) development - (Version _next_, unreleased) use docker tag: `nightly`
 
+## Version 2021.3 - Unreleased - expected in August 2021
+- 2021.3.0  (Aug 2021)
+  - docker tag: `release-2021.3.0`
+  - original release
+    
+### _Notes_
+- This release contains many bugs fixes
+- Options to remove group images. ([Firefly-708](https://github.com/Caltech-IPAC/firefly/pull/1070))
+- File saving names improved. ([Firefly-823](https://github.com/Caltech-IPAC/firefly/pull/1109))
+- Improved accessibility for small screen with image search panel ([Firefly-800](https://github.com/Caltech-IPAC/firefly/pull/1107))
+
 ## Version 2021.2
 - 2021.2.4 (July 2021)
   - docker tag: `latest`, `release-2021.2`, `release-2021.2.4`
