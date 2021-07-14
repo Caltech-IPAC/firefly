@@ -17,7 +17,7 @@ export const Banner = memo( ({menu, readout, appIcon, visPreview, appTitle, addi
                                  showUserInfo=false, enableVersionDialog= false }) => {
     return (
         <div className='banner__main'>
-            <div className='banner__left'>
+            <div className='banner__left' style={{ cursor: enableVersionDialog ? 'pointer' : 'inherit'}}>
                 {appIcon ?
                     <img src={appIcon}
                          onClick={() => enableVersionDialog && showFullVersionInfoDialog(appTitle) }
