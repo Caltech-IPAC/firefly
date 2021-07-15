@@ -4,7 +4,8 @@ import {doFetchTable, getColumnIdx, sortTableData} from '../../tables/TableUtil.
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 import {getProp, hashCode} from '../../util/WebUtil.js';
-import {get, isUndefined} from 'lodash';
+import {isArray, isUndefined} from 'lodash';
+import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
 
 const logger = Logger('TapUtil');
 const qFragment = '/sync?REQUEST=doQuery&LANG=ADQL&';
@@ -115,8 +116,7 @@ export function loadObsCoreSchemaTables(serviceUrl) {
         return tableModel;
 
     }).catch((reason) => {
-        const message = get(reason, 'message', reason);
-        const error = `Failed to get ObsCore-like tables for ${serviceUrl}: ${message}`;
+        const error = `Failed to get ObsCore-like tables for ${serviceUrl}: ${reason?.message ?? reason}`;
         logger.error(error);
         return {error};
     });
@@ -214,6 +214,17 @@ export function getColumnAttribute(columnsModel, colName, attrName) {
     }
 
     return targetRow[attrIdx];
+}
+
+const hasElements= (a) => Boolean(isArray(a) && a?.length);
+
+export function getTapServices(webApiUserAddedService) {
+    const tapServices = getAppOptions()?.tap?.services;
+    const additionalServices = getAppOptions()?.tap?.additional?.services;
+    const retVal= hasElements(tapServices) ? [...tapServices] : [...TAP_SERVICES_FALLBACK];
+    hasElements(additionalServices) && retVal.unshift(...additionalServices);
+    webApiUserAddedService && retVal.push(webApiUserAddedService);
+    return retVal;
 }
 
 export const TAP_SERVICES_FALLBACK = [
