@@ -238,11 +238,10 @@ export const TableSearchMethods = FunctionalTableSearchMethods;
 function SpatialSearch({cols, columnsModel, groupKey, fields, initArgs={}, obsCoreEnabled, useConstraintReducer, useFieldGroupReducer}) {
     const panelTitle = !obsCoreEnabled ? Spatial : 'Location';
     const panelValue = Spatial;
-    const panelPrefix = getPanelPrefix(panelTitle);
+    const panelPrefix = getPanelPrefix(panelValue);
     const {POSITION:worldPt, radiusInArcSec}= initArgs;
     const [spatialMethod, setSpatialMethod] = useState(TapSpatialSearchMethod.Cone.value);
     const [spatialRegionOperation, setSpatialRegionOperation] = useState('contains_shape');
-    const centerColObj = formCenterColumns(columnsModel);
     const [message, setMessage] = useState();
 
     // useEffect(() => {
@@ -308,13 +307,14 @@ function SpatialSearch({cols, columnsModel, groupKey, fields, initArgs={}, obsCo
                 if (constraintsResult.adqlConstraint?.length > 0){
                     adqlConstraint = constraintsResult.adqlConstraint;
                 } else {
-                    adqlConstraintErrors.push(`Unknown error processing ${panelValue} constraints`);
+                    adqlConstraintErrors.push(`Unknown error processing ${panelTitle} constraints`);
                 }
                 if  (constraintsResult.siaConstraints?.length > 0){
                     siaConstraints.push(...constraintsResult.siaConstraints);
                 }
-            } else if (!constraintsResult.adqlConstraint) {
-                logger.warn(`invalid ${panelValue} adql constraints`);
+            } else {
+                const firstMessage = Array.from(constraintsResult.fieldsValidity.values()).find((v) => !v.valid)?.message;
+                adqlConstraintErrors.push(`Error processing ${panelTitle} constraints: ${firstMessage}`);
             }
         }
         return {
@@ -371,7 +371,7 @@ function SpatialSearch({cols, columnsModel, groupKey, fields, initArgs={}, obsCo
                            cols={cols}
                            name={getLabel(CenterLonColumns).toLowerCase()} // label that appears in column chooser
                            inputStyle={{overflow:'auto', height:12, width: Width_Column}}
-                           initValue={centerColObj.lon}
+
                            tooltip={'Center longitude column for spatial search'}
                            label={getLabel(CenterLonColumns, ':')}
                            labelWidth={SpatialLableSaptail}
@@ -439,6 +439,7 @@ SpatialSearch.propTypes = {
  */
 function TemporalSearch({cols, columnsModel, groupKey, fields, useConstraintReducer, useFieldGroupReducer}) {
     const panelTitle = Temporal;
+    const panelValue = panelTitle;
     const panelPrefix = getPanelPrefix(panelTitle);
     const [message, setMesage] = useState();
 
@@ -551,17 +552,19 @@ function TemporalSearch({cols, columnsModel, groupKey, fields, useConstraintRedu
         const constraintsResult = makeTemporalConstraints(fields, columnsModel, newFields);
         updatePanelFields(constraintsResult.fieldsValidity, constraintsResult.valid, fields, newFields, panelTitle, panelPrefix);
         if (isPanelChecked(panelTitle, panelPrefix, newFields)) {
-            if (constraintsResult.valid){
-                if (constraintsResult.adqlConstraint?.length > 0){
+            if (constraintsResult.valid) {
+                if (constraintsResult.adqlConstraint?.length > 0) {
                     adqlConstraint = constraintsResult.adqlConstraint;
                 } else {
                     adqlConstraintErrors.push(`Unknown error processing ${panelTitle} constraints`);
                 }
-                if  (constraintsResult.siaConstraints?.length > 0){
+                if (constraintsResult.siaConstraints?.length > 0) {
                     siaConstraints.push(...constraintsResult.siaConstraints);
                 }
-            } else if (!constraintsResult.adqlConstraint) {
-                logger.warn(`invalid ${panelTitle} adql constraints`);
+            } else {
+                const firstMessage = Array.from(constraintsResult.fieldsValidity.values()).find((v) => !v.valid)?.message;
+                adqlConstraintErrors.push(`Error processing ${panelTitle} constraints: ${firstMessage}`);
+                logger.warn(`invalid ${panelValue} adql constraints`);
             }
         }
         return {
@@ -746,12 +749,14 @@ function makeSpatialConstraints(fields, columnsModel, newFields) {
         const fieldValidity = fieldsValidity.get(ServerParams.USER_TARGET_WORLD_PT);
         const worldPt = parseWorldPt(get(fields, [ServerParams.USER_TARGET_WORLD_PT, 'value']));
         let newWpt = {};
-        if (worldPt){
-            newWpt = convert(worldPt, worldSys);
-        } else {
-            // Point wasn't actually valid
-            fieldValidity.valid = false;
-            fieldValidity.message = 'no target found';
+        if (fieldValidity.valid){
+            if (worldPt){
+                newWpt = convert(worldPt, worldSys);
+            } else {
+                // Point wasn't actually valid
+                fieldValidity.valid = false;
+                fieldValidity.message = 'no target found';
+            }
         }
         return {...newWpt, ...fieldValidity};
     };
@@ -965,7 +970,11 @@ export function tableSearchMethodsConstraints(columnsModel) {
     const fields = FieldGroupUtils.getGroupFields(skey);
     const {constraintResults} = fields;
     if (constraintResults){
-        return {valid: true, where: constraintResults.adqlConstraints.join(' AND ')};
+        return {
+            valid: constraintResults.adqlConstraintErrors?.length === 0,
+            messages: constraintResults.adqlConstraintErrors,
+            where: constraintResults.adqlConstraints.join(' AND ')
+        };
     }
     return {valid: true};
 }

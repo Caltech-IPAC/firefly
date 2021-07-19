@@ -202,6 +202,7 @@ export const updatePanelFields = (fieldsValidity, valid, fields, newFields, pane
         const panelValid = get(fields, [panelFieldKey, 'panelValid'], false);
         for (const [key, validity] of fieldsValidity.entries()) {
             newFields[key].validity = validity;
+            newFields[key].message = validity.message;
             if (has(newFields[key], 'nullAllowed')) {
                 newFields[key].nullAllowed = !panelActive;
                 newFields[key].valid = panelActive ? validity.valid : true;
