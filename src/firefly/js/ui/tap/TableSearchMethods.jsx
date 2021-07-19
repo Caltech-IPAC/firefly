@@ -257,6 +257,19 @@ function SpatialSearch({cols, columnsModel, groupKey, fields, initArgs={}, obsCo
         });
     }, []);
 
+    useEffect(() => {
+        const centerColObj = formCenterColumns(columnsModel);
+        // we have ra+dec columns and it's not obsCore
+        if (centerColObj.lon.length && centerColObj.lat.length && !obsCoreEnabled){
+            dispatchValueChange({...{value: panelValue}, fieldKey: `${panelPrefix}Check`, groupKey});
+        } else {  // no ra+dec columns
+            dispatchValueChange({...{value: ''}, fieldKey: `${panelPrefix}Check`, groupKey});
+        }
+        dispatchValueChange({...{validator: getColValidator(cols, false, false), value: centerColObj.lon, valid: true}, fieldKey: CenterLonColumns, groupKey});
+        dispatchValueChange({...{validator: getColValidator(cols, false, false), value: centerColObj.lat, valid: true}, fieldKey: CenterLatColumns, groupKey});
+        dispatchValueChange({...{value: columnsModel.tbl_id}, fieldKey: CrtColumnsModel, groupKey});
+    }, [columnsModel, obsCoreEnabled]);
+
     const onChange = (inFields, action, rFields) => {
         const {fieldKey, value} = action.payload;
 
@@ -383,7 +396,7 @@ function SpatialSearch({cols, columnsModel, groupKey, fields, initArgs={}, obsCo
                                cols={cols}
                                name={getLabel(CenterLatColumns).toLowerCase()} // label that appears in column chooser
                                inputStyle={{overflow:'auto', height:12, width: Width_Column}}
-                               initValue={centerColObj.lat}
+
                                tooltip={'Center latitude column for spatial search'}
                                label={getLabel(CenterLatColumns, ':')}
                                labelWidth={SpatialLableSaptail}
@@ -990,16 +1003,8 @@ function buildTapSearchMethodReducer(columnsModel) {
             const onResetColumnsTable = () => {
                 const cols = getAvailableColumns(columnsModel);
                 set(rFields, [CrtColumnsModel, 'value'], columnsModel.tbl_id );
-                const centerColObj = formCenterColumns(columnsModel);
-                Object.assign(rFields[CenterLonColumns],
-                                       {validator: getColValidator(cols, false, false), value: centerColObj.lon, valid: true});
-                Object.assign(rFields[CenterLatColumns],
-                                       {validator: getColValidator(cols, false, false), value: centerColObj.lat, valid: true});
-
                 Object.assign(rFields[TemporalColumns],
                                         {validator: getColValidator(cols, false, false), value: '', valid: true});
-
-                // validateTemporalConstraints(inFields, rFields);
             };
 
 
