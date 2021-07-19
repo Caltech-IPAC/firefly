@@ -2,17 +2,17 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {useState, useRef, useEffect} from 'react';
+import React, {useState, useRef, useEffect, Fragment} from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import SplitPane from 'react-split-pane';
 import Tree, { TreeNode } from 'rc-tree';
 import 'rc-tree/assets/index.css';
-import {get, cloneDeep, defer} from 'lodash';
+import {cloneDeep, defer, isArray, isObject} from 'lodash';
 
 import {InputAreaFieldConnected} from '../InputAreaField.jsx';
 import {SplitContent} from '../panel/DockLayoutPanel';
-import {loadTapSchemas, loadTapTables, loadTapColumns} from './TapUtil';
+import {loadTapSchemas, loadTapTables, loadTapColumns, getTapServices} from './TapUtil';
 import {getColumnIdx} from '../../tables/TableUtil.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
@@ -30,6 +30,40 @@ const code = {className: 'language-sql'};
 var cFetchKey = Date.now();
 const SB_TIP= 'Clicking on a table or column name below will insert it into the ADQL Query field to the right';
 
+const defaultExamples=[
+    {
+        description: 'From the IRSA TAP service, a 1 degree cone search of the 2MASS point source catalog around M101 would be:',
+        /* eslint-disable-next-line quotes */
+        statement: `SELECT * FROM fp_psc WHERE CONTAINS(POINT('J2000', ra, dec), CIRCLE('J2000', 210.80225, 54.34894, 1.0)) = 1;`
+    },
+    {
+        description: 'From the Gaia TAP service, a 1 degree by 1 degree box of the Gaia data release 3 point source catalog around M101 would be:',
+        /* eslint-disable-next-line quotes */
+        statement: `SELECT * FROM gaiaedr3.gaia_source WHERE CONTAINS(POINT('ICRS', ra, dec), BOX('ICRS', 210.80225, 54.34894, 1.0, 1.0))=1`
+    },
+    {
+        description: 'From the IRSA TAP service, a triangle search of the AllWISE point source catalog around M101 would be:',
+        /* eslint-disable-next-line quotes */
+        statement: `SELECT designation, ra, dec, w2mpro FROM allwise_p3as_psd WHERE CONTAINS (POINT('J2000' , ra , dec) , 
+                                                            POLYGON('J2000' , 209.80225 , 54.34894 , 209.80225 , 55.34894 , 210.80225 , 54.34894))=1`,
+    }
+];
+
+
+function getExamples(serviceUrl) {
+    const configEx= getTapServices().find( ({value}) => value===serviceUrl)?.examples;
+    const ex= isArray(configEx) ?
+        defaultExamples.map( (e,idx) => (isObject(configEx?.[idx])) ? configEx[idx] : e) : defaultExamples;
+
+    return ex.map( ({description, statement},idx) =>
+        (<Fragment key={description}>
+            <div          >{description}</div>
+            <code {...code}>{statement}</code>
+            {(idx<defaultExamples.length-1) && <br style={{paddingBottom: 6 }}/>}
+        </Fragment>)
+    );
+}
+
 export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={}}) {
 
     const [treeData, setTreeData] = useState([]);                               // using a useState hook
@@ -43,7 +77,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
         // reload TAP schema when serviceUrl changes
         loadTapSchemas(serviceUrl).then((tm) => {
             if (key === cFetchKey) {
-                const tableData = get(tm, 'tableData.data', []);
+                const tableData = tm?.tableData?.data ?? [];
                 const cidx = getColumnIdx(tm, 'schema_name');
                 const treeData = tableData.map( (row) => ({key: `schema--${key}--${row[cidx]}`, title: row[cidx]}) );
                 setTreeData(treeData);
@@ -161,15 +195,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
 
                             <h3>Sample Queries</h3>
                             <div style={{marginLeft: 5, lineHeight: '1.4em'}}>
-                                <div          >{'From the IRSA TAP service, a 1 degree cone search of the 2MASS point source catalog around M101 would be:'}</div>
-                                <code {...code}>{"SELECT * FROM fp_psc WHERE CONTAINS(POINT('J2000', ra, dec), CIRCLE('J2000', 210.80225, 54.34894, 1.0))=1"}</code>
-                                <br style={{paddingBottom: 6 }}/>
-                                <div          >{'From the Gaia TAP service, a 1 degree by 1 degree box of the Gaia data release 3 point source catalog around M101 would be:'}</div>
-                                <code {...code}>{"SELECT * FROM gaiaedr3.gaia_source WHERE CONTAINS(POINT('ICRS', ra, dec), BOX('ICRS', 210.80225, 54.34894, 1.0, 1.0))=1"}</code>
-                                <br style={{paddingBottom: 6 }}/>
-                                <div          >{'From the IRSA TAP service, a triangle search of the AllWISE point source catalog around M101 would be:'}</div>
-                                <code {...code}>{`SELECT designation,ra,dec,w2mpro FROM allwise_p3as_psd WHERE CONTAINS(POINT('J2000', ra, dec), 
-                                POLYGON('J2000', 209.80225, 54.34894, 209.80225, 55.34894, 210.80225, 54.34894))=1`}</code>
+                                { getExamples(serviceUrl) }
                             </div>
                             <div style={{margin:'7px 0 0 2px'}}>
                                 These examples may not be directly usable in any TAP service you have selected.
@@ -195,7 +221,7 @@ function expandTables(serviceUrl, title, treeData, eventKey, setTreeData) {
     const key = cFetchKey;
     return loadTapTables(serviceUrl, title).then( (tm) => {
         if (cFetchKey === key) {
-            const tableData = get(tm, 'tableData.data', []);
+            const tableData = tm?.tableData?.data ?? [];
             const cidx = getColumnIdx(tm, 'table_name');
             const tables = tableData.map( (row) => ({key: `table--${key}--${row[cidx]}`, title: row[cidx], schema: title}) );
             addChildNodes(treeData, eventKey, tables);
@@ -209,7 +235,7 @@ function expandColumns(serviceUrl, title, schema, treeData, eventKey, setTreeDat
     const key = cFetchKey;
     return loadTapColumns(serviceUrl, schema, title).then( (tm) => {
         if (cFetchKey === key) {
-            const tableData = get(tm, 'tableData.data', []);
+            const tableData = tm?.tableData?.data ?? [];
             const nidx = getColumnIdx(tm, 'column_name');
             const didx = getColumnIdx(tm, 'description');
             const cols = tableData.map( (row) => {

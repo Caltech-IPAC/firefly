@@ -1,4 +1,5 @@
 import React from 'react';
+import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
 
 const topDivStyle= {
     paddingTop: 5,
@@ -7,30 +8,35 @@ const topDivStyle= {
     textAlign : 'center'
 };
 
-const titleStyle= {
-    display : 'inline-block',
-    verticalAlign: 'top'
+const defExampleEntries= {
+    /* eslint-disable-next-line quotes */
+    row1: [`'m81'`, `'ngc 18'`, `'12.34 34.89'`, `'46.53 -0.251 gal'`],
+    /* eslint-disable-next-line quotes */
+    row2: [ `'19h17m32s 11d58m02s equ j2000'`,`'12.3 8.5 b1950'`,`'J140258.51+542318.3'`]
+    };
+
+const defaultExamples= () => {
+    const row1Op= getAppOptions()?.targetPanelExampleRow1 ?? defExampleEntries.row1;
+    const row2Op= getAppOptions()?.targetPanelExampleRow2 ?? defExampleEntries.row2;
+    return (
+        <div style={{ display : 'inline-block', lineHeight : '1.2em'}}>
+            {row1Op?.map( (s,idx) => <span key={s} style={{paddingLeft: (idx===0) ? 5 : 15}}>{s}</span> )}
+            <br/>
+            {row2Op?.map( (s,idx) => <span key={s} style={{paddingLeft: (idx===0) ? 5 : 15}}>{s}</span> )}
+        </div>
+        );
 };
 
-const makeSpan= (w) => <span style={{paddingLeft: w}}/>;
-
-const defaultExamples = (
-    <div style={{ display : 'inline-block', lineHeight : '1.2em'}}>
-        {makeSpan(5)} 'm81' {makeSpan(15)} 'ngc 18' {makeSpan(15)}  '12.34 34.89'  {makeSpan(15)} '46.53 -0.251 gal'
-        <br/>
-        {makeSpan(5)}'19h17m32s 11d58m02s equ j2000' {makeSpan(5)}  '12.3 8.5 b1950' {makeSpan(5)} 'J140258.51+542318.3'
-    </div>);
-
-export function TargetFeedback ({showHelp, feedback, style={}, examples={}}) {
+export function TargetFeedback ({showHelp, feedback, style={}, examples}) {
     const topStyle= {...topDivStyle, ...style};
-    if (!showHelp) return <div style={topStyle}> <span dangerouslySetInnerHTML={{ __html : feedback }}/> </div>
+    if (!showHelp) return (<div style={topStyle}> <span dangerouslySetInnerHTML={{ __html : feedback }}/> </div>);
     return (
         <div style={topStyle}>
             <div>
-                <div style={titleStyle}>
+                <div style={{display : 'inline-block', verticalAlign: 'top'}}>
                     <i>Examples: </i>
                 </div>
-                {{...defaultExamples, ...examples}}
+                {examples ?? defaultExamples()}
             </div>
         </div>
     );

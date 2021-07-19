@@ -22,7 +22,13 @@ import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr.js';
 import {tableColumnsConstraints} from 'firefly/ui/tap/TableColumnsConstraints.jsx';
 import {skey, tableSearchMethodsConstraints} from 'firefly/ui/tap/TableSearchMethods.jsx';
 import {commonSelectStyles, selectTheme} from 'firefly/ui/tap/Select.jsx';
-import {getMaxrecHardLimit, getTapBrowserState, tapHelpId, TAP_SERVICES_FALLBACK} from 'firefly/ui/tap/TapUtil.js';
+import {
+    getMaxrecHardLimit,
+    getTapBrowserState,
+    tapHelpId,
+    TAP_SERVICES_FALLBACK,
+    getTapServices
+} from 'firefly/ui/tap/TapUtil.js';
 import { gkey, SectionTitle, AdqlUI, BasicUI} from 'firefly/ui/tap/TableSelectViewPanel.jsx';
 
 
@@ -250,18 +256,7 @@ function populateAndEditAdql(inAdql) {
     );
 }
 
-const hasElements= (a) => Boolean(isArray(a) && a?.length);
-const getTapServiceOptions= () => getTapServices().map(({label,value})=>({label:value, value, labelOnly:label}));
-
-function getTapServices() {
-    const tapServices = getAppOptions()?.tap?.services;
-    const additionalServices = getAppOptions()?.tap?.additional?.services;
-    const retVal= hasElements(tapServices) ? [...tapServices] : [...TAP_SERVICES_FALLBACK];
-    hasElements(additionalServices) && retVal.unshift(...additionalServices);
-    webApiUserAddedService && retVal.push(webApiUserAddedService);
-    return retVal;
-}
-
+const getTapServiceOptions= () => getTapServices(webApiUserAddedService).map(({label,value})=>({label:value, value, labelOnly:label}));
 
 function onTapSearchSubmit(request,serviceUrl) {
     const isADQL = (request.selectBy === 'adql');
