@@ -620,16 +620,18 @@ function doImageSearch({ imageMasterData, request, plotId, plotGroupId, viewerId
         return true;
     } else {                       // single channel
         const reqAry = makeRequests(get(request, FG_KEYS.single), imageMasterData, plotId, plotGroupId);
+        let retVal= false;
         reqAry.forEach( (r) => {
             if (r.dataType==='image' || r.dataType==='cube') {
                 dispatchPlotImage({wpRequest:r.request, viewerId,renderTreeId,pvOptions});
-                return true;
+                retVal= true;
             }
             else if (r.dataType==='table') {
                 dispatchTableSearch(r.request, {backgroundable:true, showFilters:true, removable:true });
-                return true;
+                retVal= true;
             }
         });
+        return retVal;
     }
     return false;
 }
