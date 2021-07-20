@@ -16,7 +16,13 @@ import {get, isNumber, isUndefined} from 'lodash';
 import {encodeServerUrl, getRootURL} from '../util/WebUtil.js';
 import {CysConverter} from './CsysConverter.js';
 import {makeDevicePt, makeWorldPt} from './Point.js';
-import {HealpixIndex, ORDER_MAX, radecToPolar, SpatialVector} from '../externalSource/aladinProj/HealpixIndex.js';
+import {
+    ang2pixNestNEW,
+    HealpixIndex,
+    ORDER_MAX,
+    radecToPolar,
+    SpatialVector
+} from '../externalSource/aladinProj/HealpixIndex.js';
 import {computeDistance, convert, toDegrees, toRadians} from './VisUtil.js';
 import {getScreenPixScaleArcSec, replaceHeader} from './WebPlot.js';
 import {primePlot} from './PlotViewUtil.js';
@@ -366,10 +372,45 @@ export function getHealpixPixel(plot, wp) {
 
     const {norder}= getHiPSNorderlevel(plot, true);
     if (norder>MAX_SUPPORTED_HIPS_LEVEL-9) return undefined;
-    const hpxIdx= getHealpixIndex(2**(norder+9));
-
     const polar = radecToPolar(wp.x,wp.y);
-    return {norder:norder+9, pixel:hpxIdx.ang2pix_nest(polar.theta, polar.phi)};
+    const tilePixel= ang2pixNestNEW(polar.theta, polar.phi,2**(norder));
+    const pixel= ang2pixNestNEW(polar.theta, polar.phi,2**(norder+9));
+    const tileCoords= healpixPixelTo512TileXY(pixel);
+    return { norder:norder+9, tileNorder: norder, pixel, tilePixel, tileCoords };
+}
+
+
+const twoPos= [256,128,64,32,16,8,4,2,1];
+
+/**
+ * Get the x,y of the tile for the healpix pixel. This assumes 512x512 tiles.
+ * @param pixel
+ * @return {{x: number, y: number}}
+ */
+function healpixPixelTo512TileXY(pixel) {
+    const tilePixel= Math.trunc(pixel/(512*512));
+    const internalPixOffset= pixel - (tilePixel*(512*512));
+    const pixStr= internalPixOffset.toString(2).padStart(18,'0');
+    let x= 0;
+    let y= 0;
+    let j;
+    for(let i= 0; i<17; i+=2) {
+        j= i/2;
+        const bits= pixStr.substring(i,i+2);
+        switch (bits) {
+            case '01':
+                y+= twoPos[j];
+                break;
+            case '10':
+                x+= twoPos[j];
+                break;
+            case '11':
+                y+= twoPos[j];
+                x+= twoPos[j];
+                break;
+        }
+    }
+    return {x,y};
 }
 
 

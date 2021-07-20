@@ -272,16 +272,22 @@ function getTAPServices() {
             [
                 {
                     description: 'From the IRSA TAP service, a 1 degree cone search of the 2MASS point source catalog around M101 would be:',
-                    statement: `SELECT * FROM fp_psc WHERE CONTAINS(POINT('J2000', ra, dec), CIRCLE('J2000', 210.80225, 54.34894, 1.0)) = 1;`
+                    statement:
+`SELECT * FROM fp_psc 
+WHERE CONTAINS(POINT('J2000', ra, dec), CIRCLE('J2000', 210.80225, 54.34894, 1.0)) = 1`
                 },
                 {
                     description: 'From the IRSA TAP service, a .25 degree cone search of the 2MASS point source catalog around M31 would be:',
-                    statement: `SELECT * FROM fp_psc WHERE CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 10.684, 41.269, .25))=1`
+                    statement:
+`SELECT * FROM fp_psc 
+WHERE CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 10.684, 41.269, .25))=1`
                 },
                 {
                     description: 'From the IRSA TAP service, a triangle search of the AllWISE point source catalog around M101 would be:',
-                    statement: `SELECT designation, ra, dec, w2mpro FROM allwise_p3as_psd WHERE CONTAINS (POINT('J2000' , ra , dec) , 
-                                                                    POLYGON('J2000' , 209.80225 , 54.34894 , 209.80225 , 55.34894 , 210.80225 , 54.34894))=1`,
+                    statement:
+`SELECT designation, ra, dec, w2mpro 
+FROM allwise_p3as_psd 
+WHERE CONTAINS (POINT('J2000' , ra , dec) , POLYGON('J2000' , 209.80225 , 54.34894 , 209.80225 , 55.34894 , 210.80225 , 54.34894))=1`,
                 }
             ]
         ),
@@ -299,16 +305,21 @@ function getTAPServices() {
                 [
                     {
                         description: 'From the Gaia TAP service, a .25 degree cone search Gaia data release 3 point source catalog around M31 would be:',
-                        statement: `SELECT * FROM gaiaedr3.gaia_source WHERE CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 10.684, 41.269, .25))=1`
+                        statement:
+`SELECT * FROM gaiaedr3.gaia_source 
+WHERE CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 10.684, 41.269, .25))=1`
                     },
                     {
                         description: 'From the Gaia TAP service, a 1 degree by 1 degree box of the Gaia data release 3 point source catalog around M101 would be:',
-                        statement: `SELECT * FROM gaiaedr3.gaia_source WHERE CONTAINS(POINT('ICRS', ra, dec), BOX('ICRS', 210.80225, 54.34894, 1.0, 1.0))=1`
+                        statement:
+`SELECT * FROM gaiaedr3.gaia_source 
+WHERE CONTAINS(POINT('ICRS', ra, dec), BOX('ICRS', 210.80225, 54.34894, 1.0, 1.0))=1`
                     },
                     {
                         description: 'From the Gaia TAP service, a triangle search of of the Gaia data release 3 point source catalog around M101 would be:',
-                        statement: `SELECT source_id, designation, ra, dec, phot_g_mean_mag FROM gaiaedr3.gaia_source WHERE CONTAINS (POINT('ICRS' , ra , dec) , 
-                                                                            POLYGON('ICRS' , 209.80225 , 54.34894 , 209.80225 , 55.34894 , 210.80225 , 54.34894))=1`,
+                        statement:
+`SELECT source_id, designation, ra, dec, phot_g_mean_mag FROM gaiaedr3.gaia_source 
+WHERE CONTAINS (POINT('ICRS' , ra , dec) , POLYGON('ICRS' , 209.80225 , 54.34894 , 209.80225 , 55.34894 , 210.80225 , 54.34894))=1`,
                     }
                 ]
         ),

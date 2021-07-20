@@ -37,6 +37,10 @@ const shiftLeft= (v,bits) => Math.trunc(v * powerOf2[bits]);
 export const radecToPolar= (ra, dec) => ({ theta: Math.PI / 2 - dec / 180 * Math.PI, phi: ra / 180 * Math.PI });
 export const polarToRadec= (t, s) => ({ ra: 180 * s / Math.PI, dec: 180 * (Math.PI / 2 - t) / Math.PI });
 
+function nside2order(nside) {
+    return (nside & nside - 1) > 0 ? -1 : parseInt(Math.log2(nside));
+}
+
 function bigAnd(v1, v2) {
     const hi = 0x80000000;
     const low = 0x7fffffff;
@@ -63,6 +67,79 @@ function bigOr(v1, v2) {
 
 const orAll= (...args) => args.reduce( (prev,curr) => bigOr(prev,curr) ,0);
 
+export function ang2pixNestNEW(theta, phi, nside) {
+    const order = nside2order(nside);
+    let  tp, o, c, jp, jm, ntt, face_num, ix, iy;
+    phi >= Constants.TWOPI && (phi -= Constants.TWOPI);
+    0 > phi && (phi += Constants.TWOPI);
+    if (theta > Constants.PI || 0 > theta) {
+        throw {
+            name: 'Illegal argument',
+            message: 'theta must be between 0 and ' + Constants.PI
+        };
+    }
+    if (0 > phi) {
+        throw {
+            name: 'Illegal argument',
+            message: 'phi must be between 0 and ' + Constants.TWOPI
+        };
+    }
+    const z = Math.cos(theta);
+    const za = Math.abs(z);
+    const tt = phi / Constants.PIOVER2;
+    if (Z0 >= za) { //Equatorial region
+        const M = nside * (.5 + tt);
+        const y = nside * .75 * z;
+        const u = M - y;
+        const p = M + y;
+        o = shiftRight(u,order);
+        c = shiftRight(p, order);
+        face_num = o===c ?
+            4===o ?
+                4 :
+                o + 4 :
+            c > o ?
+                o :
+                c + 8;
+        ix = parseInt(p & nside - 1);
+        iy = parseInt(nside - (u & nside - 1) - 1);
+    } else { // polar region, za > 2/3
+        ntt = parseInt(tt);
+        if (ntt >= 4) ntt = 3;
+        tp = tt - ntt;
+        const tmp = nside * Math.sqrt(3 * (1 - za));
+        //   (the index of edge lines increase when distance from the closest pole goes up)
+        jp = parseInt(tp * tmp);
+        jm = parseInt((1 - tp) * tmp);
+        jp = Math.min(NS_MAX - 1, jp);
+        jm = Math.min(NS_MAX - 1, jm);
+        // finds the face and pixel's (x,y)
+        if (z>=0) {
+            face_num = ntt; // in {0,3}
+            ix = parseInt(nside - jm - 1);
+            iy = parseInt(nside - jp - 1);
+        }
+        else {
+            face_num = ntt + 8; // in {8,11}
+            ix = jp;
+            iy = jm;
+        }
+    }
+    return xyf2nestNEW(ix, iy, face_num, order);
+}
+
+function xyf2nestNEW(ix, iy, face_num, order) {
+    const nest= shiftLeft(face_num, 2 * order) +
+        orAll(UTAB[255 & ix] ,
+            shiftLeft(UTAB[bigAnd(255, shiftRight(ix, 8))], 16) ,
+            shiftLeft(UTAB[bigAnd(255, shiftRight(ix, 16))], 32),
+            shiftLeft(UTAB[bigAnd(255, shiftRight(ix, 24))], 48),
+            shiftLeft(UTAB[bigAnd(255, iy)], 1) ,
+            shiftLeft(UTAB[bigAnd(255, shiftRight(iy, 8))], 17) ,
+            shiftLeft(UTAB[bigAnd(255, shiftRight(iy, 16))], 33) ,
+            shiftLeft(UTAB[bigAnd(255, shiftRight(iy, 24))], 49));
+    return nest;
+}
 
 
 
@@ -240,7 +317,7 @@ export class HealpixIndex {
         this.npix = 12 * this.npface;
         this.fact2 = 4 / this.npix;
         this.fact1 = (nside << 1) * this.fact2;
-        this.order = HealpixIndex.nside2order(nside);
+        this.order = nside2order(nside);
     }
     static calculateNSide(pixsize) {
         let i = 0;
@@ -267,9 +344,6 @@ export class HealpixIndex {
             }
         }
         return i;
-    }
-    static nside2order(nside) {
-        return (nside & nside - 1) > 0 ? -1 : parseInt(Math.log2(nside));
     }
 
     ang2pix_nest(theta, phi) {

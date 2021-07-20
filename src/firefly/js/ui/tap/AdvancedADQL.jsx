@@ -34,18 +34,24 @@ const defaultExamples=[
     {
         description: 'From the IRSA TAP service, a 1 degree cone search of the 2MASS point source catalog around M101 would be:',
         /* eslint-disable-next-line quotes */
-        statement: `SELECT * FROM fp_psc WHERE CONTAINS(POINT('J2000', ra, dec), CIRCLE('J2000', 210.80225, 54.34894, 1.0)) = 1;`
+        statement:
+`SELECT * FROM fp_psc 
+WHERE CONTAINS(POINT('J2000', ra, dec), CIRCLE('J2000', 210.80225, 54.34894, 1.0)) = 1`
     },
     {
         description: 'From the Gaia TAP service, a 1 degree by 1 degree box of the Gaia data release 3 point source catalog around M101 would be:',
         /* eslint-disable-next-line quotes */
-        statement: `SELECT * FROM gaiaedr3.gaia_source WHERE CONTAINS(POINT('ICRS', ra, dec), BOX('ICRS', 210.80225, 54.34894, 1.0, 1.0))=1`
+        statement:
+`SELECT * FROM gaiaedr3.gaia_source 
+WHERE CONTAINS(POINT('ICRS', ra, dec), BOX('ICRS', 210.80225, 54.34894, 1.0, 1.0))=1`
     },
     {
         description: 'From the IRSA TAP service, a triangle search of the AllWISE point source catalog around M101 would be:',
         /* eslint-disable-next-line quotes */
-        statement: `SELECT designation, ra, dec, w2mpro FROM allwise_p3as_psd WHERE CONTAINS (POINT('J2000' , ra , dec) , 
-                                                            POLYGON('J2000' , 209.80225 , 54.34894 , 209.80225 , 55.34894 , 210.80225 , 54.34894))=1`,
+        statement:
+`SELECT designation, ra, dec, w2mpro 
+FROM allwise_p3as_psd 
+WHERE CONTAINS (POINT('J2000' , ra , dec), POLYGON('J2000' , 209.80225 , 54.34894 , 209.80225 , 55.34894 , 210.80225 , 54.34894))=1`,
     }
 ];
 
@@ -57,9 +63,10 @@ function getExamples(serviceUrl) {
 
     return ex.map( ({description, statement},idx) =>
         (<Fragment key={description}>
-            <div          >{description}</div>
-            <code {...code}>{statement}</code>
-            {(idx<defaultExamples.length-1) && <br style={{paddingBottom: 6 }}/>}
+            <div style={{paddingTop:idx===0?0:7, paddingBottom:3}}>{description}</div>
+            <code className='language-sql' style={{  display: 'block', whiteSpace: 'pre-wrap', marginLeft:5, paddingLeft:3 }}>
+                {statement}
+            </code>
         </Fragment>)
     );
 }
@@ -89,6 +96,9 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
     useEffect(() => {
         // highlight help text/code snippets
         Prism.highlightAll();
+    },  [serviceUrl]);
+
+    useEffect(() => {
         // We need to get prism-live to adopt to the textarea
         const textArea = ReactDOM.findDOMNode(adqlEl.current)?.firstChild;
         // adopt textArea
