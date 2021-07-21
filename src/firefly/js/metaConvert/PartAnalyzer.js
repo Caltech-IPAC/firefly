@@ -254,7 +254,7 @@ function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, titl
     }
 }
 
-function analyzeImageResult(part, request, table, row, fileFormat, fileOnServer,title, activateParams, hduIdx) {
+function analyzeImageResult(part, request, table, row, fileFormat, fileOnServer,title='', activateParams, hduIdx) {
     const {interpretedData=false,uiEntry,uiRender, defaultPart=false}= part;
     if (uiEntry===UIEntry.UseSpecified && uiRender!==UIRender.Image) return undefined;
     const newReq= request.makeCopy();

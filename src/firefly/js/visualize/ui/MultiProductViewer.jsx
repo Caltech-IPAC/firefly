@@ -127,7 +127,7 @@ const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId, 
     const doResetButton= displayType!==DPtypes.ANALYZE && !isWorkingState && Boolean(searchParams || serDefParams?.some( (sdp) => !sdp.ref));
     // const doResetButton= Boolean(searchParams);
     let makeDropDown;
-    if (menu?.length>1) {
+    if (menu?.length>1 || fileMenu?.menu?.length>1) {
         const showMenu= !singleDownload || singleDownload && displayType===DPtypes.DOWNLOAD_MENU_ITEM;
         makeDropDown= getMakeDropdown(dpId, dataProductsState, showMenu, doResetButton, resetAllSearchParams);
     }
