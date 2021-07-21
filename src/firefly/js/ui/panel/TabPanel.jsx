@@ -184,9 +184,12 @@ export const Tabs = React.memo( (props) => {
 
     const [selectedIdx, setSelectedIdx] = useState(defaultSelected);
 
+    let localSelectIdx= selectedIdx; // keep a closure variable because useCallback if memorized not recreated on every render
+                                     // I am not sure why we need a memorized callback here but i don't want to change that.
     const onSelect = useCallback( (index,id,name) => {
-        if (index !== selectedIdx) {
+        if (index !== localSelectIdx) {
             setSelectedIdx(index);
+            localSelectIdx= index;
             onTabSelect && onTabSelect(index,id,name);
         }
     });
