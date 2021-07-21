@@ -37,15 +37,13 @@ export const ThumbnailView = memo(({plotView:pv}) => {
     if ( (!plot?.tileData && !hasLocalStretchByteData(plot)) || isHiPS(plot)) return <div style={s}/>;
 
     s.border= '1px solid rgb(187, 187, 187)';
-    const {width=70,height=70}= plot.tileData?.thumbnailImage ?? {};
+    const {width=70,height=70}= plot.tileData?.thumbnailImage ?? {width:70,height:70};
     dataRef.current.drawData= makeDrawing(pv,width,height);
 
-    const affTrans= makeTransform(0,0,0,0,pv.rotation, pv.flipX, pv.flipY,
-                                    {width:dim.imWidth || 70,height:dim.imHeight || 70});
+    const affTrans= makeTransform(0,0,0,0,pv.rotation, pv.flipX, pv.flipY, {width,height});
 
     const eventCallBack= (plotId,mouseState,pt) => {
-        if (!plot?.tileData) return;
-        const {width,height}= plot.tileData.thumbnailImage;
+        if ( (!plot?.tileData && !hasLocalStretchByteData(plot)) || isHiPS(plot)) return;
         eventCB(mouseState,pt,pv,width,height);
     };
 
