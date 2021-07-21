@@ -169,7 +169,7 @@ const defFireflyOptions = {
         },
     },
     tap : {
-        services: getTAPServices( ['IRSA', 'NED', 'abc', 'NASA Exoplanet Archive', 'KOA', 'HEASARC', 'MAST Images',
+        services: getTAPServices( ['IRSA', 'NED', 'NASA Exoplanet Archive', 'KOA', 'HEASARC', 'MAST Images',
                                    'CADC', 'VizieR (CDS)', 'Simbad (CDS)', 'Gaia', 'GAVO', 'HSA'] ),
         defaultMaxrec: 50000
     }
