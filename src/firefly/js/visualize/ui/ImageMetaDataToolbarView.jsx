@@ -116,7 +116,7 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds=
                 }
             </div>
             {showPager && <ImagePager pageSize={converter.maxPlots} tbl_id={activeTable.tbl_id} />}
-            {handleInlineTools && <InlineRightToolbarWrapper visRoot={vr} pv={pv} dlAry={pvDlAry} />}
+            {(handleInlineTools || viewerPlotIds?.length>1) && <InlineRightToolbarWrapper visRoot={vr} pv={pv} dlAry={pvDlAry} />}
         </div>
     );
 }

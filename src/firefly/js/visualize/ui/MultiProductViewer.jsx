@@ -5,7 +5,9 @@ import React, {memo, useContext, useState, useEffect} from 'react';
 import {string,array,object} from 'prop-types';
 import {get, isFunction, isArray} from 'lodash';
 import {useStoreConnector} from '../../ui/SimpleComponent';
-import {NewPlotMode, dispatchAddViewer, dispatchViewerUnmounted, IMAGE, PLOT2D, SINGLE, GRID} from '../MultiViewCntlr.js';
+import { NewPlotMode, dispatchAddViewer, dispatchViewerUnmounted, IMAGE, PLOT2D, SINGLE, GRID,
+    getViewer, getMultiViewRoot
+} from '../MultiViewCntlr.js';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 import {ImageMetaDataToolbar} from './ImageMetaDataToolbar.jsx';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
@@ -335,12 +337,15 @@ const OtherOptionsDropDown= ({menu, dpId, activeMenuLookupKey, resetAllSearchPar
 OtherOptionsDropDown.propTypes= { dpId : string, menu : array, activeMenuLookupKey : string, };
 
 
-const makeMultiImageViewer= (imageViewerId,metaDataTableId,makeDropDown, ImageMetaDataToolbar) => (
-    <MultiImageViewer {...{
-        viewerId:imageViewerId, insideFlex:true,
-        canReceiveNewPlots: NewPlotMode.none.key, tableId:metaDataTableId, controlViewerMounting:false,
-        handleInlineTools: Boolean(makeDropDown), handleInlineToolsWhenSingle:!Boolean(makeDropDown),
-        makeDropDown, Toolbar:ImageMetaDataToolbar}} />);
+const makeMultiImageViewer= (imageViewerId,metaDataTableId,makeDropDown, ImageMetaDataToolbar) => {
+    const multiImage= getViewer(getMultiViewRoot(),imageViewerId)?.itemIdAry?.length>1;
+    return (
+        <MultiImageViewer {...{
+            viewerId:imageViewerId, insideFlex:true,
+            canReceiveNewPlots: NewPlotMode.none.key, tableId:metaDataTableId, controlViewerMounting:false,
+            handleInlineTools: Boolean(makeDropDown||multiImage) , handleInlineToolsWhenSingle:!Boolean(makeDropDown),
+            makeDropDown, Toolbar:ImageMetaDataToolbar}} />);
+};
 
 
 /**

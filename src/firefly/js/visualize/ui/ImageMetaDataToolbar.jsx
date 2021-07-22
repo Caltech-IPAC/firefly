@@ -68,6 +68,7 @@ ImageMetaDataToolbar.propTypes= {
     visRoot : PropTypes.object,
     viewerId : PropTypes.string.isRequired,
     layoutType : PropTypes.string.isRequired,
+    handleInlineTools: PropTypes.bool,
     viewerPlotIds : PropTypes.arrayOf(PropTypes.string).isRequired,
     tableId: PropTypes.string,
     makeDropDown: PropTypes.func
