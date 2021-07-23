@@ -44,7 +44,7 @@ public class LockingVisNetwork {
     }
 
     public static FileInfo retrieveURL(URL url) throws FailedRequestException {
-        AnyUrlParams p= new AnyUrlParams(url, url.getFile(),null);
+        AnyUrlParams p= new AnyUrlParams(url, url.toString(),null);
         p.setLocalFileExtensions(Collections.singletonList(FileUtil.FITS));
         return retrieveURL(p);
     }
@@ -64,7 +64,7 @@ public class LockingVisNetwork {
                 DownloadListener dl = null;
                 if (params.getStatusKey() != null) { // todo: the download listener has very specific behavior
                                                      //       it could be generalized by passing a DownloadListener
-                    dl = new DownloadProgress(params.getStatusKey(), params.getPlotid());
+                    dl = new DownloadProgress(params.getStatusKey(), params.getPlotId());
                 }
                 retval= (params instanceof AnyUrlParams) ?
                         retrieveURL((AnyUrlParams)params, dl) :

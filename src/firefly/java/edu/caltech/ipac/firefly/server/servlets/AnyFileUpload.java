@@ -14,6 +14,8 @@ import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
+import edu.caltech.ipac.firefly.server.visualize.PlotServUtils;
+import edu.caltech.ipac.firefly.server.visualize.ProgressStat;
 import edu.caltech.ipac.firefly.server.visualize.imageretrieve.FileRetriever;
 import edu.caltech.ipac.firefly.server.visualize.imageretrieve.ImageFileRetrieverFactory;
 import edu.caltech.ipac.firefly.server.ws.WsServerCommands;
@@ -141,7 +143,7 @@ public class AnyFileUpload extends BaseHttpServlet {
                 // it's a stream from multipart.. write it to disk
                 String name = uploadedItem.getName();
                 File tmpFile = File.createTempFile("upload_", "_" + name, ServerContext.getUploadDir());
-                FileUtil.writeToFile(uploadedItem.openStream(), tmpFile);
+                FileUtil.writeToFile(uploadedItem.openStream(), tmpFile, (current) -> updateFeedback(name, current));
                 uploadFileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(tmpFile), tmpFile, name, uploadedItem.getContentType());
                 statusFileInfo= new FileInfo(uploadFileInfo.getFile());
             }
@@ -203,6 +205,12 @@ public class AnyFileUpload extends BaseHttpServlet {
 //====================================================================
 //
 //====================================================================
+
+    private static void updateFeedback(String statusKey, long totalRead) {
+        PlotServUtils.updatePlotCreateProgress(statusKey, null,
+                ProgressStat.PType.DOWNLOADING,
+                "Uploading " + FileUtil.getSizeAsString(totalRead));
+    }
 
     private static FileAnalysisReport.ReportType getReportType(String type) {
         try {

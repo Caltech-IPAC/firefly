@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import shallowequal from 'shallowequal';
 import SplitPane from 'react-split-pane';
 import {get} from 'lodash';
@@ -21,7 +21,7 @@ import {makeFileRequest} from '../../tables/TableRequestUtil.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
 import WebPlotRequest from '../WebPlotRequest.js';
-import {dispatchPlotImage, visRoot} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {dispatchPlotImage, visRoot} from '../ImagePlotCntlr.js';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
@@ -45,6 +45,7 @@ import {dispatchValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 import {CompleteButton,NONE} from 'firefly/ui/CompleteButton.jsx';
 import {createNewRegionLayerId} from 'firefly/drawingLayers/RegionPlot.js';
 import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
+import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
 
 
 export const panelKey = 'FileUploadAnalysis';
@@ -80,12 +81,15 @@ let currentAnalysisResult, currentReport, currentSummaryModel, currentDetailsMod
 
 export function FileUploadViewPanel() {
 
-    const [isLoading, isWsUpdating, uploadSrc, {message, analysisResult, report, summaryModel, detailsModel}] = useStoreConnector.bind({comparator: shallowequal}) (
-        () => get(getComponentState(panelKey), 'isLoading'),
-        () => isAccessWorkspace(),
-        () => getFieldVal(panelKey, uploadOptions),
-        () => getNextState()
-    );
+    const [{isLoading,statusKey}, isWsUpdating, uploadSrc, {message, analysisResult, report, summaryModel, detailsModel}] =
+        useStoreConnector.bind({comparator: shallowequal}) (
+            () => getComponentState(panelKey, {isLoading:false,statusKey:''}),
+            () => isAccessWorkspace(),
+            () => getFieldVal(panelKey, uploadOptions),
+            () => getNextState()
+        );
+
+    const [loadingMsg,setLoadingMsg]= useState(() => '');
 
     useEffect(() => {
         if (message || (analysisResult && analysisResult !== currentAnalysisResult)) {
@@ -95,6 +99,29 @@ export function FileUploadViewPanel() {
             dispatchComponentStateChange(panelKey, {isLoading: false});
         }
     });
+
+    let aWStatusKey;
+    useEffect(() => {
+        if (isLoading) {
+            if (statusKey) {
+                aWStatusKey= statusKey;
+                aWStatusKey && dispatchCancelActionWatcher(aWStatusKey);
+
+                const watchForUploadUpdate= ({payload}) => {
+                    payload.requestKey===statusKey && setLoadingMsg(payload.message);
+                };
+                dispatchAddActionWatcher({ id: statusKey, actions:[ImagePlotCntlr.PLOT_PROGRESS_UPDATE],
+                    callback:watchForUploadUpdate, params:{statusKey}});
+            }
+        }
+        else {
+            setLoadingMsg('');
+            dispatchCancelActionWatcher(aWStatusKey);
+        }
+        return (() => {
+            aWStatusKey && dispatchCancelActionWatcher(aWStatusKey);
+        });
+        }, [isLoading, statusKey] );
 
     const tablesOnly= isTablesOnly();
 
@@ -130,10 +157,29 @@ export function FileUploadViewPanel() {
                     <FileAnalysis {...{report, summaryModel, detailsModel,tablesOnly}}/>
                     <ImageDisplayOption/>
                 </div>
+                {(isLoading) && <LoadingMessage message={loadingMsg}/>}
             </FieldGroup>
-            {isLoading && <div style={{top: 1}} className='loading-mask'/>}
         </div>
     );
+}
+
+const LoadingMessage= ({message}) => (
+    <div style={{
+        position: 'absolute',
+        display:'flex',
+        flexDirection: 'column',
+        justifyContent:'center',
+        background: 'rgba(0,0,0,.25)',
+        alignItems: 'center',
+        top:1, bottom:5, left:1, right:1 }}>
+        <div style={{width:30, height:30}} className='loading-animation' />
+        <div style={{
+            alignSelf:'center', fontSize:'14pt', padding: 8, marginTop:15,
+            backgroundColor: 'rgba(255,255,255,.8)', borderRadius:8}}>
+            {message}
+        </div>
+    </div>
+);
 }
 
 export function resultFail() {
@@ -307,8 +353,8 @@ function ImageDisplayOption() {
 
 function UploadOptions({uploadSrc=FILE_ID, isloading, isWsUpdating}) {
 
-    const onLoading = (loading) => {
-        dispatchComponentStateChange(panelKey, {isLoading: loading});
+    const onLoading = (loading, statusKey) => {
+        dispatchComponentStateChange(panelKey, {isLoading: loading, statusKey:loading?statusKey:''});
     };
 
     if (uploadSrc === FILE_ID) {

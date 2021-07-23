@@ -18,7 +18,10 @@ public abstract class ImageServiceParams extends BaseNetParams {
     private final ImageSourceTypes type;
 
 
-    public ImageServiceParams(ImageSourceTypes type) {this.type= type;}
+    public ImageServiceParams(ImageSourceTypes type, String statusKey, String plotId) {
+        super(statusKey,plotId);
+        this.type= type;
+    }
     public void setWorldPt(WorldPt wp) {
         this.wp = wp!=null ? Plot.convert(wp, CoordinateSys.EQ_J2000) : null;
     }

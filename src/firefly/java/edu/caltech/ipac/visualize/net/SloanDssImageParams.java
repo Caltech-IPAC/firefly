@@ -13,7 +13,7 @@ public class SloanDssImageParams extends ImageServiceParams {
     private int  _timeout  = 0;
     private boolean _queryKey= false;
 
-    public SloanDssImageParams() { super(ImageSourceTypes.SDSS); }
+    public SloanDssImageParams(String statusKey, String plotId) { super(ImageSourceTypes.SDSS, statusKey, plotId); }
 
     public void  setSizeInDeg(float s)      { _sizeInDeg= s; }
     public float getSizeInDeg()      { return _sizeInDeg; }
@@ -34,7 +34,7 @@ public class SloanDssImageParams extends ImageServiceParams {
     }
 
     public SloanDssImageParams makeQueryKey() {
-        SloanDssImageParams newParam= new SloanDssImageParams();
+        SloanDssImageParams newParam= new SloanDssImageParams(this.getStatusKey(),this.getPlotId());
         newParam._queryKey= true;
         newParam.setSizeInDeg(_sizeInDeg);
         newParam.setBand(_band);

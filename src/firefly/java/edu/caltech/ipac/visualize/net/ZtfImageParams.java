@@ -18,7 +18,7 @@ public class ZtfImageParams extends ImageServiceParams {
     private float  _size= 500;
     private String _productLevel = ZTF_REF;
 
-    public ZtfImageParams() {super(ImageSourceTypes.ZTF); }
+    public ZtfImageParams(String statusKey, String plotId) {super(ImageSourceTypes.ZTF, statusKey, plotId); }
 
     public String getProductLevel()          { return _productLevel; }
 
