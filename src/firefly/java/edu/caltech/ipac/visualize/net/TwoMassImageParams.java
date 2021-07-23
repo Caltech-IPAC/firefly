@@ -9,7 +9,7 @@ public class TwoMassImageParams extends ImageServiceParams {
     private float  _size= 500;
     private String ds = "asky"; //asky, askyw, sx, sxw, cal
 
-    public TwoMassImageParams() {super(ImageSourceTypes.TWOMASS); }
+    public TwoMassImageParams(String statusKey, String plotId) {super(ImageSourceTypes.TWOMASS, statusKey, plotId); }
 
     public void setDataset(String ds1) { this.ds = ds1; }
     public String getDataset()          { return this.ds; }

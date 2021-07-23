@@ -12,7 +12,7 @@ public class WiseImageParams extends ImageServiceParams {
     private float  _size= 500;
     private String _productLevel = WISE_3A;
 
-    public WiseImageParams() {super(ImageSourceTypes.WISE); }
+    public WiseImageParams(String statusKey, String plotId) {super(ImageSourceTypes.WISE, statusKey, plotId); }
 
     public void setProductLevel(String productLevel) { _productLevel = productLevel; }
     public String getProductLevel()          { return _productLevel; }

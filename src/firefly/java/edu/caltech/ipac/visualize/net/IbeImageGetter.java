@@ -131,12 +131,15 @@ public class IbeImageGetter {
                   dataMap.put(WiseIbeDataSource.FTYPE, WiseIbeDataSource.DATA_TYPE.INTENSITY.name());
               }
               IbeDataParam dataParam= ibeSource.makeDataParam(dataMap);
+              Map<String,String> sourceParams= new HashMap<>();
+              sourceParams.put("ProgressKey", params.getStatusKey());
+              sourceParams.put("plotId", params.getPlotId());
 
               if (!StringUtils.isEmpty(sizeStr) && !sizeStr.equalsIgnoreCase(NULL) && !sizeStr.equalsIgnoreCase(NaN)) {
                   dataParam.setCutout(true, params.getRaJ2000String() + "," + params.getDecJ2000String(), sizeStr);
               }
               dataParam.setDoZip(true);
-              return ibe.getData(dataParam,null);
+              return ibe.getData(dataParam,sourceParams);
           }
           else {
               throw new FailedRequestException(count>1?"Too many results from "+params.getType():"Area not covered in "+params.getType());

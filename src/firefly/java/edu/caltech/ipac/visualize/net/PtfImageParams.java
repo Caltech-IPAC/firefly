@@ -18,7 +18,7 @@ public class PtfImageParams extends ImageServiceParams {
     private float  _size= 500;
     private String _productLevel = PTF_LEVEL2;
 
-    public PtfImageParams() {super(ImageSourceTypes.PTF); }
+    public PtfImageParams(String statusKey, String plotId) {super(ImageSourceTypes.PTF, statusKey, plotId); }
 
     public String getProductLevel()          { return _productLevel; }
 

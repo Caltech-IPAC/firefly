@@ -11,7 +11,7 @@ public class DssImageParams extends ImageServiceParams {
     private String    _survey = "poss2ukstu_red";
     private String    _name = "POSS2/UKSTU Red";
 
-    public DssImageParams() {super(ImageSourceTypes.DSS); }
+    public DssImageParams(String statusKey, String plotId) {super(ImageSourceTypes.DSS, statusKey, plotId); }
 
     public void   setWidth(float  w)      { _width= w; }
     public void   setHeight(float h)      { _height= h; }

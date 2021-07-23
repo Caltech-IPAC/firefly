@@ -52,7 +52,7 @@ public class Downloader {
         String outStr;
         Date startDate = null;
         TimeStats timeStats = null;
-        int informInc = (int)(100 * FileUtil.K);
+        int informInc = 32; // this informs about every 1 meg
         long totalRead = 0;
         boolean elapseIncreased = false;
         long lastElapse = 0;

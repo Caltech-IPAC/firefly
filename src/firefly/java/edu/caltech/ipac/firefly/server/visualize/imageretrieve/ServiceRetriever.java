@@ -103,7 +103,7 @@ public class ServiceRetriever implements FileRetriever {
         if (sizeInDegrees > 1) sizeInDegrees = 1F;
         if (sizeInDegrees < .02) sizeInDegrees = .02F;
 
-        SloanDssImageParams params = new SloanDssImageParams();
+        SloanDssImageParams params = new SloanDssImageParams(request.getProgressKey(), request.getPlotId());
         params.setBand(band);
         //When the size is NaN, use the default size defined in SloanDssImageParams to get the full image
         if (!Float.isNaN(sizeInDegrees)) {
@@ -118,7 +118,7 @@ public class ServiceRetriever implements FileRetriever {
     private FileInfo getDssPlot(WebPlotRequest request) throws FailedRequestException {
         String surveyKey = request.getSurveyKey();
         Circle circle = PlotServUtils.getRequestArea(request);
-        DssImageParams params = new DssImageParams();
+        DssImageParams params = new DssImageParams(request.getProgressKey(), request.getPlotId());
         params.setTimeout(15000); // time out - 15 sec
         params.setWorldPt(circle.getCenter());
         float arcMin = (float) MathUtil.convert(MathUtil.Units.DEGREE, MathUtil.Units.ARCMIN, circle.getRadius());
@@ -136,7 +136,7 @@ public class ServiceRetriever implements FileRetriever {
         float sizeInArcSec = (float) MathUtil.convert(MathUtil.Units.DEGREE, MathUtil.Units.ARCSEC, circle.getRadius());
         circle = new Circle(circle.getCenter(), sizeInArcSec);
         List<RelatedData> rdList= IbeQueryArtifact.get2MassRelatedData(circle.getCenter(), circle.getRadius()+"");
-        TwoMassImageParams params = new TwoMassImageParams();
+        TwoMassImageParams params = new TwoMassImageParams(request.getProgressKey(), request.getPlotId());
         params.setWorldPt(circle.getCenter());
         params.setDataset(request.getSurveyKey());
         params.setBand(request.getSurveyBand());
@@ -167,7 +167,8 @@ public class ServiceRetriever implements FileRetriever {
 
     private FileInfo getAtlasPlot(WebPlotRequest r) throws FailedRequestException {
         Circle circle = PlotServUtils.getRequestArea(r);
-        AtlasImageParams params = new AtlasImageParams(r.getSurveyKey(), r.getParam("table"));
+        AtlasImageParams params = new AtlasImageParams(r.getSurveyKey(), r.getParam("table"),
+                r.getProgressKey(), r.getPlotId());
         params.setWorldPt(circle.getCenter());
         params.setBand(r.getSurveyBand());
         // New image search deals with atlas surveyKey formatted such as 'schema.table'
@@ -193,7 +194,7 @@ public class ServiceRetriever implements FileRetriever {
 
     private FileInfo getWisePlot(WebPlotRequest r) throws FailedRequestException {
         Circle circle = PlotServUtils.getRequestArea(r);
-        WiseImageParams params = new WiseImageParams();
+        WiseImageParams params = new WiseImageParams(r.getProgressKey(), r.getPlotId());
         params.setWorldPt(circle.getCenter());
         params.setProductLevel(r.getSurveyKey());
         params.setBand(r.getSurveyBand());
@@ -204,7 +205,7 @@ public class ServiceRetriever implements FileRetriever {
 
     private FileInfo getZtfPlot(WebPlotRequest r) throws FailedRequestException {
         Circle circle = PlotServUtils.getRequestArea(r);
-        ZtfImageParams params = new ZtfImageParams();
+        ZtfImageParams params = new ZtfImageParams(r.getProgressKey(), r.getPlotId());
         params.setWorldPt(circle.getCenter());
         params.setProductLevel(r.getSurveyKey());
         params.setBand(r.getSurveyBand());
@@ -214,7 +215,7 @@ public class ServiceRetriever implements FileRetriever {
 
     private FileInfo getPtfPlot(WebPlotRequest r) throws FailedRequestException {
         Circle circle = PlotServUtils.getRequestArea(r);
-        PtfImageParams params = new PtfImageParams();
+        PtfImageParams params = new PtfImageParams(r.getProgressKey(), r.getPlotId());
         params.setWorldPt(circle.getCenter());
         params.setProductLevel(r.getSurveyKey());
         params.setBand(r.getSurveyBand());

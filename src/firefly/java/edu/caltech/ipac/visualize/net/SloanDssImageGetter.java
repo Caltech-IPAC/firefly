@@ -68,7 +68,7 @@ public class SloanDssImageGetter {
 
 
     public static void main(String args[]) {
-        SloanDssImageParams params = new SloanDssImageParams();
+        SloanDssImageParams params = new SloanDssImageParams("test", "test");
         params.setSizeInDeg(0.1F);
         params.setBand(SloanDssImageParams.SDSSBand.r);
         params.setWorldPt(new WorldPt(10.672, 41.259));

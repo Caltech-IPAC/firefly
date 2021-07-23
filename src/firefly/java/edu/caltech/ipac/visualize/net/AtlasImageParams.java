@@ -22,8 +22,8 @@ public class AtlasImageParams extends ImageServiceParams {
     private String _band= "12";
     private float  _size= 5.0F;
 
-    public AtlasImageParams(String service, String table){
-        super(ImageSourceTypes.ATLAS);
+    public AtlasImageParams(String service, String table, String statusKey, String plotId ){
+        super(ImageSourceTypes.ATLAS, statusKey, plotId);
         this.schema = service;
         this.table = table;
     }

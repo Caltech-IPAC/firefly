@@ -51,7 +51,7 @@ public class DssImageGetter {
 
 
    public static void main(String args[]) {
-        DssImageParams params= new DssImageParams();
+        DssImageParams params= new DssImageParams("test","test");
         params.setHeight(30.0F);
         params.setWidth(30.0F);
         params.setSurvey("poss2Red");
