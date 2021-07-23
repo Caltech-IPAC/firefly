@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Date;
 
+import static edu.caltech.ipac.util.FileUtil.MEG;
+
 /**
  * @author Trey Roby
  */
@@ -46,16 +48,13 @@ public class Downloader {
                    "Attempting to call URLDownload twice, an instance is " +
                            "only good for one call");
 
-        int cnt = 0;
+        int cnt = 1;
         long total = _downloadSize;
         String messStr;
         String outStr;
         Date startDate = null;
         TimeStats timeStats = null;
-        int informInc = 32; // this informs about every 1 meg
         long totalRead = 0;
-        boolean elapseIncreased = false;
-        long lastElapse = 0;
         if (total > 0) {
             messStr = " out of " + FileUtil.getSizeAsString(total);
         } else {
@@ -72,9 +71,13 @@ public class Downloader {
 
             int read;
             byte[] buffer = new byte[BUFFER_SIZE];
+            int progInc= 1;
             while ((read = _in.read(buffer)) != -1) {
                 totalRead += read;
-                if ((++cnt % informInc) == 0) {
+                if (totalRead> cnt*MEG) {
+                    if (cnt>9 && progInc==1) progInc=5; // message update every 5
+                    else if (cnt>19 && progInc==5) progInc=10; // message update every 10
+                    cnt+=progInc;
                     if (startDate == null) startDate = new Date();
                     if (total > 0) {
                         timeStats = computeTimeStats(startDate, totalRead, total);
@@ -92,13 +95,6 @@ public class Downloader {
                                         "downloaded data exceeded the max size of " +_maxDownloadSize);
                     }
                     fireDownloadListeners(totalRead, total, timeStats, outStr, ListenerCall.INCREMENT);
-                    if (!elapseIncreased) {
-                        if (lastElapse == timeStats.elapseSec) {
-                            elapseIncreased = true;
-                            informInc *= 5;
-                        }
-                    }
-                    lastElapse = timeStats.elapseSec;
                 }
                 _out.write(buffer, 0, read);
             }

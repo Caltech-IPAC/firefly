@@ -1,6 +1,6 @@
 import React, {memo} from 'react';
 import PropTypes from 'prop-types';
-import {get, has, isFunction, isNil} from 'lodash';
+import {get, has, isFunction, isNil, isString} from 'lodash';
 
 import {InputFieldView} from './InputFieldView.jsx';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
@@ -183,7 +183,7 @@ function makeDoUpload(file, type, isFromURL, fileAnalysis) {
 function doUpload(fileOrUrl, fileAnalysis, params={}) {
 
     const faFunction= isFunction(fileAnalysis) && fileAnalysis;
-    faFunction && faFunction(true);
+    faFunction && faFunction(true, isString(fileOrUrl) ? fileOrUrl : fileOrUrl?.name ? fileOrUrl.name : undefined);
     if (fileAnalysis) fileAnalysis=true;
     return upload(fileOrUrl, Boolean(fileAnalysis), params).then( (results) => {
         faFunction && faFunction(false);

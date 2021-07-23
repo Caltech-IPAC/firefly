@@ -296,7 +296,13 @@ public class FileUtil
         }
     }
 
-    public static void writeToFile(InputStream inStream, File toFile) throws IOException {
+
+    public interface Progress {
+        void updateProgress(long current);
+    }
+
+
+    public static void writeToFile(InputStream inStream, File toFile, Progress progress) throws IOException {
         BufferedOutputStream out = null;
         BufferedInputStream in = null;
         try {
@@ -305,8 +311,18 @@ public class FileUtil
 
             byte[] buffer = new byte[BUFFER_SIZE];
             int read;
+            int cnt= 1;
+            int progInc= 1;
+            long totalRead= 0;
             while ((read = in.read(buffer)) != -1) {
+                totalRead += read;
                 out.write(buffer, 0, read);
+                if (progress!=null && (totalRead> cnt*MEG)) {
+                    progress.updateProgress(totalRead);
+                    if (cnt>9 && progInc==1) progInc=5; // message update every 5
+                    else if (cnt>19 && progInc==5) progInc=10; // message update every 10
+                    cnt+=progInc;
+                }
             }
         } catch (EOFException e) {
             // do nothing we are done
