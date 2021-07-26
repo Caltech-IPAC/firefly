@@ -180,7 +180,6 @@ const LoadingMessage= ({message}) => (
         </div>
     </div>
 );
-}
 
 export function resultFail() {
     showInfoPopup('One or more fields are invalid', 'Validation Error');
