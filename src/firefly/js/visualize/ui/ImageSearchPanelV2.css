@@ -60,4 +60,6 @@
     min-width: 400px;
     min-height: 350px;
     resize: both;
+    display: flex;
+    flex-direction: column;
 }

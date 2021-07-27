@@ -273,8 +273,8 @@ function ThreeColor({imageMasterData, multiSelect, archiveName, noScroll}) {
     return (
         <div className='flex-full' style={{marginTop: 5}}>
             <StatefulTabs componentKey='ImageSearchPanelV2' resizable={false} useFlex={true} borderless={true}
-                  style={{flexGrow: 1}}
-                  contentStyle={{backgroundColor: 'rgb(202, 202, 202)', paddingBottom: 2}}
+                  style={{flexGrow: 1, overflow: 'unset'}}
+                  contentStyle={{backgroundColor: 'rgb(202, 202, 202)', paddingBottom: 2, overflow: 'unset'}}
                   headerStyle={{display:'inline-flex', marginLeft: 185}}>
                 <Tab key='ImageSearchRed' name='red' label={<div style={{width:40, color:'red'}}>Red</div>}>
                     <SingleChannel {...{key: FG_KEYS.red, groupKey: FG_KEYS.red, imageMasterData, multiSelect, archiveName, noScroll}}/>
@@ -403,7 +403,7 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, 
             </div>
             {isHips ?
                 <HiPSImageSelect groupKey={groupKey} /> :
-                <div className='ImageSearch__section' style={{ display: 'flex', flexDirection: 'column', padding: 'unset', flexShrink: 1, flexGrow: 1}}>
+                <div className='ImageSearch__section' style={{ display: 'flex', flexDirection: 'column', padding: 'unset', flexGrow: 1}}>
                     <div className='ImageSearch__section--title'>4. Select Data Set</div>
                     <ImageSelect style={{flexGrow: 1, width: '100%'}} key={`ImageSelect_${groupKey}`} {...{groupKey, title, addChangeListener, imageMasterData, multiSelect, scrollDivId: !noScroll && scrollDivId}} />
                 </div>

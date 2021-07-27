@@ -79,24 +79,21 @@ export function showHiPSSurverysPopup(pv=visRoot()) {
             dispatchHideDialog(dialogId);
         }
     };
-
     const popup = (
         <PopupPanel title={'Change HiPS Image'} modal={true}>
-            <div className='ImageSearch__HipsPopup'>
-                <FormPanel  submitBarStyle = {{flexShrink: 0, padding: '0 19px 3px 6px'}}
-                            groupKey = {groupKey}
-                            submitText={'Search'}
-                            onSubmit = {onSubmit}
-                            onCancel = {() => dispatchHideDialog(dialogId)}
-                            help_id = 'visualization.changehips'>
-                    <FieldGroup className='flex-full' style={{height: '100%'}} groupKey={groupKey} keepState={true}>
+            <FormPanel  submitBarStyle = {{flexShrink: 0, padding: '0 6px 3px 6px'}}
+                        groupKey = {groupKey}
+                        submitText={'Search'}
+                        onSubmit = {onSubmit}
+                        onCancel = {() => dispatchHideDialog(dialogId)}
+                        help_id = 'visualization.changehips'>
+                <FieldGroup groupKey={groupKey} keepState={true}>
+                    <div className='ImageSearch__HipsPopup'>
                         <SourceSelect/>
-                        <div style={{flexGrow: 1}}>
-                            <HiPSSurveyTable groupKey={groupKey}/>
-                        </div>
-                    </FieldGroup>
-                </FormPanel>
-            </div>
+                        <HiPSSurveyTable groupKey={groupKey}/>
+                    </div>
+                </FieldGroup>
+            </FormPanel>
         </PopupPanel>
     );
 
@@ -173,8 +170,12 @@ function HiPSSurveyTable({groupKey}) {
     }, [sources]);
 
     return (
-        <TablePanel key={activeHipsTblId} tbl_id={activeHipsTblId} tbl_ui_id={activeHipsTblId+'-ui'}
-                    {...{showToolbar: false, selectable:false, showFilters:true, showOptionButton: true}}/>
+        <div style={{flexGrow: 1, width: '100%', position: 'relative'}}>
+            <div style={{position: 'absolute', top:0, bottom:0, left:0, right:0}}>
+                <TablePanel key={activeHipsTblId} tbl_id={activeHipsTblId} tbl_ui_id={activeHipsTblId+'-ui'}
+                        {...{showToolbar: false, selectable:false, showFilters:true, showOptionButton: true}}/>
+            </div>
+        </div>
     );
 
 

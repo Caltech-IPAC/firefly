@@ -340,7 +340,10 @@ export const CellWrapper =  React.memo( (props) => {
 }, skipCellRender);
 
 function skipCellRender(prev={}, next={}) {
-    return prev.width === next.width &&
+    const {width, colIdx, rowIndex} = prev;
+    const {width:nwidth, colIdx:ncolIdx, rowIndex:nrowIndex} = next;
+
+    return width === nwidth && colIdx === ncolIdx && rowIndex === nrowIndex &&
         getCellInfo(prev)?.text === getCellInfo(next)?.text;
 }
 

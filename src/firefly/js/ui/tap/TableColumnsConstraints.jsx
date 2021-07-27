@@ -159,11 +159,8 @@ function reorganizeTableModel(tableModel, columnNames, reset) {
         }, []));
     });
 
-    // set column widths
-    const widths = calcColumnWidths(columns, data);
-    columns.forEach((col, idx) => {
-        col.prefWidth = Math.min(widths[idx]+2, 55);
-    });
+    // width is often the declared max char in database; remove it, TablePanel will auto-size it
+    columns.forEach((col) => Reflect.deleteProperty(col, 'width'));
 
     // add constraints column
     const constraintsColIdx = 1;
