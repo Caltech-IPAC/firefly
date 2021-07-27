@@ -13,7 +13,7 @@ import {FileUpload} from '../../ui/FileUpload.jsx';
 import {getFieldVal, getField} from '../../fieldGroup/FieldGroupUtils';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {getCellValue, getTblById, uniqueTblId, getSelectedDataSync} from '../../tables/TableUtil.js';
-import {dispatchTableSearch, dispatchTableFetch} from '../../tables/TablesCntlr.js';
+import {dispatchTableSearch, dispatchTableFetch, dispatchTableAddLocal} from '../../tables/TablesCntlr.js';
 import {getSizeAsString} from '../../util/WebUtil.js';
 
 
@@ -78,6 +78,8 @@ const isTablesOnly= () => getAppOptions()?.uploadPanelLimit==='tablesOnly';
 const uploadOptions = 'uploadOptions';
 
 let currentAnalysisResult, currentReport, currentSummaryModel, currentDetailsModel;
+const FILE_UPLOAD_KEY= 'file-upload-key-';
+let keyCnt=0;
 
 export function FileUploadViewPanel() {
 
@@ -86,10 +88,11 @@ export function FileUploadViewPanel() {
             () => getComponentState(panelKey, {isLoading:false,statusKey:''}),
             () => isAccessWorkspace(),
             () => getFieldVal(panelKey, uploadOptions),
-            () => getNextState()
+            (oldState) => getNextState(oldState)
         );
 
     const [loadingMsg,setLoadingMsg]= useState(() => '');
+    const [uploadKey,setUploadKey]= useState(() => FILE_UPLOAD_KEY+keyCnt);
 
     useEffect(() => {
         if (message || (analysisResult && analysisResult !== currentAnalysisResult)) {
@@ -99,6 +102,13 @@ export function FileUploadViewPanel() {
             dispatchComponentStateChange(panelKey, {isLoading: false});
         }
     });
+    useEffect(() => {
+        dispatchTableAddLocal(summaryModel, undefined, false);
+    }, [summaryModel]);
+
+    useEffect(() => {
+        dispatchTableAddLocal(detailsModel, undefined, false);
+    }, [detailsModel]);
 
     let aWStatusKey;
     useEffect(() => {
@@ -133,7 +143,7 @@ export function FileUploadViewPanel() {
 
     const clearReport= () => {
         currentReport= undefined;
-        dispatchValueChange({fieldKey:getLoadingFieldName(), groupKey:panelKey, value:'', analysisResult:undefined});
+        dispatchValueChange({fieldKey:getLoadingFieldName(), groupKey:panelKey, value:'', displayValue:'', analysisResult:undefined});
     };
 
     return (
@@ -150,8 +160,13 @@ export function FileUploadViewPanel() {
                             options={uploadMethod}
                             wrapperStyle={{fontWeight: 'bold', fontSize: 12}}/>
                             <div style={{paddingTop: '10px', display:'flex', flexDirection:'row', justifyContent:'space-between'}}>
-                                <UploadOptions {...{uploadSrc, isLoading, isWsUpdating}}/>
-                                {report && <CompleteButton text='Clear File' groupKey={NONE} onSuccess={() =>clearReport()}/> }
+                                <UploadOptions {...{uploadSrc, isLoading, isWsUpdating,  uploadKey:uploadKey}}/>
+                                {report && <CompleteButton text='Clear File' groupKey={NONE}
+                                                           onSuccess={() =>{
+                                                               clearReport();
+                                                               keyCnt++;
+                                                               setUploadKey(FILE_UPLOAD_KEY+keyCnt);
+                                                           }}/> }
                             </div>
                     </div>
                     <FileAnalysis {...{report, summaryModel, detailsModel,tablesOnly}}/>
@@ -173,11 +188,12 @@ const LoadingMessage= ({message}) => (
         alignItems: 'center',
         top:1, bottom:5, left:1, right:1 }}>
         <div style={{width:30, height:30}} className='loading-animation' />
+        {Boolean(message?.trim()) &&
         <div style={{
             alignSelf:'center', fontSize:'14pt', padding: 8, marginTop:15,
             backgroundColor: 'rgba(255,255,255,.8)', borderRadius:8}}>
             {message}
-        </div>
+        </div>}
     </div>
 );
 
@@ -264,7 +280,7 @@ export function resultSuccess(request) {
 
 const getLoadingFieldName= () => getFieldVal(panelKey, uploadOptions) || FILE_ID;
 
-function getNextState() {
+function getNextState(oldState) {
 
     // because this value is stored in different fields.. so we have to check on what options were selected to determine the active value
     const fieldState = getField(panelKey, getLoadingFieldName()) || {};
@@ -277,28 +293,12 @@ function getNextState() {
         if (analysisResult && analysisResult !== currentAnalysisResult) {
             currentReport = JSON.parse(analysisResult);
 
-            const columns = [
-                {name: 'Index', type: 'int', desc: 'Extension Index'},
-                {name: 'Type', type: 'char', desc: 'Data Type'},
-                {name: 'Description', type: 'char', desc: 'Extension Description'}
-            ];
-            const {parts=[]} = currentReport;
-            const data = parts.map( (p) => {
-                            const naxis= getIntHeader('NAXIS',p,0);
-                            return [p.index, (naxis===1 && p.type===FileAnalysisType.Image)?FileAnalysisType.Table :p.type, p.desc];
-                        });
-
-            currentSummaryModel = {
-                tbl_id: SUMMARY_TBL_ID,
-                title: 'File Summary',
-                totalRows: data.length,
-                tableData: {columns, data}
-            };
+            currentSummaryModel= makeSummaryModel(currentReport);
             modelToUseForDetails= currentSummaryModel;
 
-            const firstExtWithData= getFirstExtWithData(parts);
+            const firstExtWithData= getFirstExtWithData(currentReport .parts);
             if (firstExtWithData >= 0) {
-                const selectInfo = SelectInfo.newInstance({rowCount: data.length});
+                const selectInfo = SelectInfo.newInstance({rowCount: currentSummaryModel.tableData.data.length});
                 selectInfo.setRowSelect(firstExtWithData, true);        // default select first extension/part with data
                 currentSummaryModel.selectInfo = selectInfo.data;
                 modelToUseForDetails.highlightedRow= firstExtWithData;
@@ -312,7 +312,65 @@ function getNextState() {
     }
     currentDetailsModel = detailsModel;
 
-    return {message, analysisResult, report:currentReport, summaryModel:currentSummaryModel, detailsModel};
+    const newState= {message, analysisResult, report:currentReport, summaryModel:currentSummaryModel, detailsModel};
+    if (statesEqual(oldState,newState)) {
+        return oldState;
+    }
+    else {
+        // event if we have a new state, test to see if we have to replace the summaryModel.
+        return oldState &&
+        summaryModelEqual(newState.summaryModel,oldState.summaryModel) &&
+        oldState.analysisResult!==oldState.analysisResult ?
+            {...newState,summaryModel:oldState.summaryModel} : newState;
+    }
+}
+
+function statesEqual(s1,s2) {
+    if (!s1 || !s2) return false;
+    if (s1.message!==s2.message) return false;
+    if (s1.analysisResult!==s2.analysisResult) return false;
+    const r1= s1.report;
+    const r2= s2.report;
+    if (r1!==r2) {
+        if (r1.fileName!==r2.fileName ||   r1.fileFormat!==r2.fileFormat ||
+            r1.fileSize!==r2.fileSize || r1.parts?.length !== r2.parts?.length) return false;
+    }
+
+    if (!summaryModelEqual(s1.summaryModel, s2.summaryModel)) return false;
+
+    const d1= s1.detailsModel;
+    const d2= s2.detailsModel;
+    if (d1!==d2 &&
+        ( d1?.totalRows!==d2?.totalRows ||
+        d1?.tableData.data?.find( (d,idx) => d?.[2]!==d2?.tableData.data[idx][2]))) return false;
+    return true;
+
+}
+
+function summaryModelEqual(sm1,sm2) {
+    return !(sm1 !== sm2 &&
+        sm1?.totalRows !== sm2?.totalRows &&
+        sm1?.selectInfo !== sm2?.selectInfo);
+}
+
+function makeSummaryModel(report) {
+    const columns = [
+        {name: 'Index', type: 'int', desc: 'Extension Index'},
+        {name: 'Type', type: 'char', desc: 'Data Type'},
+        {name: 'Description', type: 'char', desc: 'Extension Description'}
+    ];
+    const {parts=[]} = report;
+    const data = parts.map( (p) => {
+        const naxis= getIntHeader('NAXIS',p,0);
+        return [p.index, (naxis===1 && p.type===FileAnalysisType.Image)?FileAnalysisType.Table :p.type, p.desc];
+    });
+    const summaryModel = {
+        tbl_id: SUMMARY_TBL_ID,
+        title: 'File Summary',
+        totalRows: data.length,
+        tableData: {columns, data}
+    };
+    return summaryModel;
 }
 
 function getDetailsModel(tableModel, report) {
@@ -350,7 +408,7 @@ function ImageDisplayOption() {
     );
 }
 
-function UploadOptions({uploadSrc=FILE_ID, isloading, isWsUpdating}) {
+function UploadOptions({uploadSrc=FILE_ID, isloading, isWsUpdating, uploadKey}) {
 
     const onLoading = (loading, statusKey) => {
         dispatchComponentStateChange(panelKey, {isLoading: loading, statusKey:loading?statusKey:''});
@@ -359,6 +417,7 @@ function UploadOptions({uploadSrc=FILE_ID, isloading, isWsUpdating}) {
     if (uploadSrc === FILE_ID) {
         return (
             <FileUpload
+                key={uploadKey}
                 innerStyle={{width: 90}}
                 fileNameStyle={{marginLeft: 5, fontSize: 12}}
                 fieldKey={FILE_ID}
@@ -369,6 +428,7 @@ function UploadOptions({uploadSrc=FILE_ID, isloading, isWsUpdating}) {
     } else if (uploadSrc === URL_ID) {
         return (
             <FileUpload
+                key={uploadKey}
                 innerStyle={{width: 300}}
                 fieldKey={URL_ID}
                 fileAnalysis={onLoading}
@@ -380,6 +440,7 @@ function UploadOptions({uploadSrc=FILE_ID, isloading, isWsUpdating}) {
     } else if (uploadSrc === WS_ID) {
         return (
             <WorkspaceUpload
+                key={uploadKey}
                 wrapperStyle={{marginRight: 32}}
                 preloadWsFile={true}
                 fieldKey={WS_ID}
@@ -474,7 +535,7 @@ function getTableArea(report, summaryModel, detailsModel) {
 }
 
 
-const FileAnalysis = React.memo( ({report, summaryModel, detailsModel, tablesOnly}) => {
+const FileAnalysis = ({report, summaryModel, detailsModel, tablesOnly}) => {
     if (report) {
         return (
             <div className='FileUpload__report'>
@@ -496,7 +557,7 @@ const FileAnalysis = React.memo( ({report, summaryModel, detailsModel, tablesOnl
         </div>);
 
     }
-});
+};
 
 
 
