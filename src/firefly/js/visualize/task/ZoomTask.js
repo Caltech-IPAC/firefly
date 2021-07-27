@@ -22,7 +22,7 @@ import {doHiPSImageConversionIfNecessary} from './PlotHipsTask.js';
 import {matchImageToHips, matchHiPStoPlotView} from './WcsMatchTask';
 import PlotState from '../PlotState.js';
 import {changeLocalRawDataZoom} from '../rawData/RawDataOps.js';
-import { findHipsCenProjToPlaceWptOnDevPtNEW, } from '../reducer/PlotView.js';
+import {findHipsCenProjToPlaceWptOnDevPtByInteration,} from '../reducer/PlotView.js';
 import {CCUtil} from '../CsysConverter.js';
 
 
@@ -251,7 +251,7 @@ function doZoom(dispatcher,plot,zoomLevel,isFullScreen, zoomLockingEnabled, user
             const postZoomVisRoot= getState()[IMAGE_PLOT_KEY];
             const postPv= getPlotViewById(postZoomVisRoot,plotId);
             if (wptBeforeZoom) {
-                const centerProjPt= findHipsCenProjToPlaceWptOnDevPtNEW(postPv,wptBeforeZoom,devicePt);
+                const centerProjPt= findHipsCenProjToPlaceWptOnDevPtByInteration(postPv,wptBeforeZoom,devicePt);
                 centerProjPt && dispatchChangeCenterOfProjection({plotId,centerProjPt});
             }
         }

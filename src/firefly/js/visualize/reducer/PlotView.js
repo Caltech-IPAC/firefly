@@ -578,3 +578,35 @@ export function findHipsCenProjToPlaceWptOnDevPtNEW(pv, wpt, targetDevPtPos) {
 //     // const newCenterWp= calculatePosition(wpt, lonDist, latDist);
 //     return newCenterWp;
 // }
+
+export function findHipsCenProjToPlaceWptOnDevPtByInteration(pv, wpt, targetDevPtPos) {
+    const plot= primePlot(pv);
+    const cc= CysConverter.make(plot);
+    const {viewDim:{width,height}}= plot;
+    const centerDevPt= makeDevicePt(width/2,height/2);
+
+    const wp1= cc.getWorldCoords(targetDevPtPos);
+    const wp2= cc.getWorldCoords(centerDevPt);
+    if (!wp1 || !wp2) return undefined;
+    const lonDist= getLonDist(wp1.x,wp2.x);
+    const latDist= getLatDist(wp1.y,wp2.y);
+    let newCenterInterationWP= makeWorldPt(wpt.x+lonDist,wpt.y+latDist, wpt.cSys);
+
+    // part 2
+
+    let tmpPlot= plot;
+    for(let i=0; (i<10); i++) {
+        tmpPlot= changeProjectionCenter(tmpPlot, newCenterInterationWP);
+        const tmpCC= CysConverter.make(tmpPlot);
+        const testDevPt= tmpCC.getDeviceCoords(wpt);
+        const errX= targetDevPtPos.x-testDevPt.x;
+        const errY= targetDevPtPos.y-testDevPt.y;
+        if (Math.abs(errX)<1 && Math.abs(errY)<1) {
+            return newCenterInterationWP;
+        }
+        const nextCenter= tmpCC.getWorldCoords(makeDevicePt(centerDevPt.x-errX, centerDevPt.y-errY));
+        if (!nextCenter) return newCenterInterationWP;
+        newCenterInterationWP= nextCenter;
+    }
+    return newCenterInterationWP;
+}
