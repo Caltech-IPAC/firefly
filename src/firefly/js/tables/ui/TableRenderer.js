@@ -461,6 +461,7 @@ export const createInputCell = (tooltips, size = 10, validator, onChange, style)
             return (
                 <div style={{padding: '0 2px 0 2px', marginTop:'-2px'}}>
                     <InputField
+                        key={rowIndex + '-' +colIdx}
                         validator={(v) => validator(v, data, rowIndex, colIdx)}
                         tooltip={tooltips}
                         size={size}
@@ -497,6 +498,7 @@ export const inputColumnRenderer = ({tbl_id, cname, tooltips, style={}, isReadOn
             return (
                 <div style={{...style}}>
                     <InputField
+                        key={rowIndex + '-' +colIdx}
                         validator={ validator && ((v) => validator(v, data, rowIndex, colIdx))}
                         tooltip={tooltips}
                         style={{width: '100%', boxSizing: 'border-box', ...style}}
