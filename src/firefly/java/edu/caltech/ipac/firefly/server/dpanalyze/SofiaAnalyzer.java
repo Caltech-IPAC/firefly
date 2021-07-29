@@ -38,7 +38,11 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
         String code = params.getOrDefault("product_type", "");
         String level = params.getOrDefault("processing_level", "").toUpperCase();
         String inst = params.getOrDefault("instrument", "").toUpperCase();
-        inputReport.setAdditionalImageParams(Collections.singletonMap("CUBE_FIRST_FRAME","50%"));
+        String configuration = params.getOrDefault("configuration", "").toUpperCase();
+
+        if(! inst.equals("FORCAST") && ! configuration.equals("IMAGING")) {
+            inputReport.setAdditionalImageParams(Collections.singletonMap("CUBE_FIRST_FRAME", "50%"));
+        }
 
         try {
             switch (inst) {
