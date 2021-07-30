@@ -4,16 +4,28 @@
 - See Firefly docker guidelines [here](firefly-docker.md).
 - To Access current (unstable) development - (Version _next_, unreleased) use docker tag: `nightly`
 
-## Version 2021.3 - Unreleased - expected in August 2021
+## Version 2021.3 
 - 2021.3.0  (Aug 2021)
   - docker tag: `release-2021.3.0`
   - original release
     
 ### _Notes_
-- This release contains many bugs fixes
 - Options to remove group images. ([Firefly-708](https://github.com/Caltech-IPAC/firefly/pull/1070))
 - File saving names improved. ([Firefly-823](https://github.com/Caltech-IPAC/firefly/pull/1109))
 - Improved accessibility for small screen with image search panel ([Firefly-800](https://github.com/Caltech-IPAC/firefly/pull/1107))
+- This release contains many bug fixes:
+    - fixed: HiPS mouse wheel zooming more accurate
+    - fixed: thumbnail scroll not working
+    - fixed: upload panel clear button not completely clearing data ([Firefly-825](https://github.com/Caltech-IPAC/firefly/pull/1116))
+    - fixed: Upload panel now shows progress feedback and indicator now works when loading images ([Firefly-828](https://github.com/Caltech-IPAC/firefly/pull/1113))
+    - fixed: Table Input fields sometimes duplicate entries ([Firefly-829](https://github.com/Caltech-IPAC/firefly/pull/1115))
+    - fixed: slate entries point not showing tap/table searches button correctly
+    
+##### _Pull Request in this release_
+- [Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2021.3+label%3abug)
+- [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2021.3+)
+
+
 
 ## Version 2021.2
 - 2021.2.4 (July 2021)

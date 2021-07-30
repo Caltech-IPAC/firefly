@@ -213,13 +213,6 @@ function ImageViewOptionsPanel() {
     if (!model) return null;
 
 
-    const DeleteFailedButton = () => (
-        <button type='button' className='button std hl'
-                onClick={() => deleteFailed()}>Delete Failed
-        </button>
-    );
-
-
     return (
         <div style={{
             resize: 'both', overflow: 'hidden', display: 'flex', flexDirection: 'column',
@@ -230,7 +223,6 @@ function ImageViewOptionsPanel() {
                 <div className='TablePanel'>
                     <div className={'TablePanel__wrapper--border'}>
                         <div className='TablePanel__table' style={{top: 0}}>
-                            <DeleteFailedButton />
                             <TablePanel
                                 tbl_ui_id={tbl_ui_id}
                                 tableModel={model}
