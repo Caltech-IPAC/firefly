@@ -7,16 +7,12 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {dispatchChangeViewerLayout} from '../MultiViewCntlr.js';
 import {dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
-import {VisInlineToolbarView} from './VisInlineToolbarView.jsx';
-import {getPlotViewById, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
-import {clone} from '../../util/WebUtil.js';
-
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
-import BrowserInfo from '../../util/BrowserInfo.js';
 import ONE from 'html/images/icons-2014/Images-One.png';
 import GRID from 'html/images/icons-2014/Images-Tiled.png';
 import PAGE_RIGHT from 'html/images/icons-2014/20x20_PageRight.png';
 import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
+import {VisMiniToolbar} from 'firefly/visualize/ui/v2/VisMiniToolbar.jsx';
 
 
 
@@ -25,27 +21,23 @@ const toolsStyle= {
     display:'flex',
     flexDirection:'row',
     flexWrap:'nowrap',
-    // alignItems: 'center',
+    alignItems: 'center',
     width:'100%',
     height: 30,
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
+    marginTop: -2,
+    paddingBottom: 2
 };
 
 
 export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds,
-                                          layoutType= 'grid', dlAry, handleInlineTools=true,
-                                          makeDropDown,
-                                          alwaysShowToolbar= false}) {
+                                          layoutType= 'grid', makeDropDown, toolbarStyle={}}) {
     
     let cIdx= viewerPlotIds.findIndex( (plotId) => plotId===visRoot.activePlotId);
-    const pv= getPlotViewById(visRoot, visRoot.activePlotId);
-    const pvDlAry= getAllDrawLayersForPlot(dlAry,visRoot.activePlotId,true);
 
     if (cIdx<0) cIdx= 0;
 
     const moreThanOne= viewerPlotIds.length>1;
-    if (!moreThanOne && !alwaysShowToolbar) return <div/>;
-
 
     const leftImageStyle= {
         verticalAlign:'bottom',
@@ -60,10 +52,9 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds,
 
     const nextIdx= cIdx===viewerPlotIds.length-1 ? 0 : cIdx+1;
     const prevIdx= cIdx ? cIdx-1 : viewerPlotIds.length-1;
-    var wcsMatch= false;
 
 
-    const style= moreThanOne ? toolsStyle : clone(toolsStyle,{height:15});
+    const style= {...toolsStyle, ...toolbarStyle};
 
     return (
         <div style={style}>
@@ -75,7 +66,7 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds,
                                onClick={() => dispatchChangeViewerLayout(viewerId,'single')}/>}
                 {moreThanOne && <ToolbarButton icon={GRID} tip={'Show all as tiles'}
                                enabled={true} visible={true} horizontal={true}
-                               imageStyle={{width:24,height:24,  paddingLeft:5, flex: '0 0 auto'}}
+                               imageStyle={{width:24,height:24, flex: '0 0 auto'}}
                                onClick={() => dispatchChangeViewerLayout(viewerId,'grid')}/>}
                 {layoutType==='single' && moreThanOne &&
                 <img style={leftImageStyle} src={PAGE_LEFT}
@@ -86,33 +77,12 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds,
                      src={PAGE_RIGHT}
                      onClick={() => dispatchChangeActivePlotView(viewerPlotIds[nextIdx])} />
                 }
-                {wcsMatch}
                 {makeDropDown && makeDropDown()}
             </div>
-            {handleInlineTools && moreThanOne && makeInlineRightToolbar(visRoot,pv,pvDlAry)}
+            <VisMiniToolbar/>
         </div>
     );
 }
-
-function makeInlineRightToolbar(visRoot,pv,dlAry){
-    if (!pv) return false;
-
-    const lVis= BrowserInfo.isTouchInput() || visRoot.apiToolsView;
-    const tb= visRoot.apiToolsView;
-    return (
-        <div>
-            <VisInlineToolbarView
-                pv={pv} dlCount={dlAry?.length}
-                showLayer={lVis}
-                showExpand={true}
-                showToolbarButton={tb}
-                showDelete ={false}
-            />
-        </div>
-    );
-}
-
-
 
 
 MultiViewStandardToolbar.propTypes= {
@@ -121,9 +91,8 @@ MultiViewStandardToolbar.propTypes= {
     viewerId : PropTypes.string.isRequired,
     layoutType : PropTypes.string,
     viewerPlotIds : PropTypes.arrayOf(PropTypes.string).isRequired,
-    handleInlineTools : PropTypes.bool,
-    alwaysShowToolbar : PropTypes.bool,
     makeDropDownFunc: PropTypes.func,
-    makeDropDown: PropTypes.bool
+    makeDropDown: PropTypes.bool,
+    toolbarStyle: PropTypes.object,
 };
 

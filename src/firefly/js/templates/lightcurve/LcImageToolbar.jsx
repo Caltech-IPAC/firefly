@@ -50,22 +50,16 @@ export class LcImageToolbar extends Component {
     }
 
     render() {
-        const {visRoot, viewerId, viewerPlotIds, layoutType, dlAry, tableId, closeFunc}= this.props;
+        const {viewerId, tableId, closeFunc}= this.props;
         return (
-            <LcImageToolbarView activePlotId={visRoot.activePlotId} viewerId={viewerId}
-                                      viewerPlotIds={viewerPlotIds} layoutType={layoutType} dlAry={dlAry}
-                                      tableId={tableId} closeFunc={closeFunc}
-                                        /> 
+            <LcImageToolbarView viewerId={viewerId} tableId={tableId} closeFunc={closeFunc} />
         );
     }
 }
 
 LcImageToolbar.propTypes= {
-    dlAry : PropTypes.arrayOf(PropTypes.object),
     visRoot : PropTypes.object,
     viewerId : PropTypes.string.isRequired,
-    layoutType : PropTypes.string.isRequired,
     tableId: PropTypes.string,
-    viewerPlotIds : PropTypes.arrayOf(PropTypes.string),
     closeFunc : PropTypes.func
 };

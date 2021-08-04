@@ -25,16 +25,17 @@ const defStyle= {
 };
 
 const magMouse= [MouseState.DRAG_COMPONENT.key, MouseState.DRAG.key, MouseState.MOVE.key, MouseState.DOWN.key];
-const EMPTY= <div style={defStyle}/>;
+
+const makeEmpty= (size) => (<div style={{...defStyle, width:size, height:size}}/>);
 
 export const MagnifiedView= memo(({plotView:pv,size,mouseState}) => {
-    if (!pv || !mouseState?.screenPt) return EMPTY;
+    if (!pv || !mouseState?.screenPt) return makeEmpty(size);
     const p= primePlot(pv);
-    if (!p || isHiPS(p) ) return EMPTY;
-    if (!magMouse.includes(mouseState.mouseState?.key)) return EMPTY;
+    if (!p || isHiPS(p) ) return makeEmpty(size);
+    if (!magMouse.includes(mouseState.mouseState?.key)) return makeEmpty(size);
 
     return (
-        <div style={{...defStyle, border: '1px solid rgb(187, 187, 187)'}}>
+        <div style={{...defStyle, width:size, height:size, border: '1px solid rgb(187, 187, 187)'}}>
             {showMag(mouseState.screenPt,pv, p,size)}
         </div>
     );

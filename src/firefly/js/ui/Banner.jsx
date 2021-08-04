@@ -14,21 +14,20 @@ import './Banner.css';
 const getVersionTipStr= (appTitle) => `${appTitle?appTitle+' ':''}Version:\n${getVersionInfoStr(true)}`;
 
 export const Banner = memo( ({menu, readout, appIcon, visPreview, appTitle, additionalTitleStyle = {},
-                                 showUserInfo=false, enableVersionDialog= false }) => {
+                                 showUserInfo=false, enableVersionDialog= false, showTitleOnBanner=false,
+                             bannerMiddleStyle={}, bannerLeftStyle={}}) => {
     return (
         <div className='banner__main'>
-            <div className='banner__left' style={{ cursor: enableVersionDialog ? 'pointer' : 'inherit'}}>
+            <div className='banner__left' style={{ cursor: enableVersionDialog ? 'pointer' : 'inherit', ...bannerLeftStyle}}>
                 {appIcon ?
                     <img src={appIcon}
                          onClick={() => enableVersionDialog && showFullVersionInfoDialog(appTitle) }
                          title={enableVersionDialog ? getVersionTipStr(appTitle) : ''}/> :
                     <div style={{width: 75}}/>}
             </div>
-            <div className='banner__middle'>
-                <div className='banner__middle--readout'>
-                    <div className='banner__middle--title' style={{marginLeft:'10px', ...additionalTitleStyle}}>{appTitle}</div>
-                    {readout}
-                </div>
+            <div className='banner__middle' style={bannerMiddleStyle}>
+
+                {showTitleOnBanner && <div className='banner__middle--title' style={{marginLeft:'10px', ...additionalTitleStyle}}>{appTitle}</div>}
                 <div className='banner__middle--menu'>
                     {menu}
                 </div>

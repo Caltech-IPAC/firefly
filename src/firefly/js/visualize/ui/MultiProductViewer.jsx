@@ -338,12 +338,10 @@ OtherOptionsDropDown.propTypes= { dpId : string, menu : array, activeMenuLookupK
 
 
 const makeMultiImageViewer= (imageViewerId,metaDataTableId,makeDropDown, ImageMetaDataToolbar) => {
-    const multiImage= getViewer(getMultiViewRoot(),imageViewerId)?.itemIdAry?.length>1;
     return (
         <MultiImageViewer {...{
             viewerId:imageViewerId, insideFlex:true,
             canReceiveNewPlots: NewPlotMode.none.key, tableId:metaDataTableId, controlViewerMounting:false,
-            handleInlineTools: Boolean(makeDropDown||multiImage) , handleInlineToolsWhenSingle:!Boolean(makeDropDown),
             makeDropDown, Toolbar:ImageMetaDataToolbar}} />);
 };
 

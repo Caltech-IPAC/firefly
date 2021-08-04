@@ -16,7 +16,6 @@ import {Menu} from '../../ui/Menu.jsx';
 import {Banner} from '../../ui/Banner.jsx';
 import {DropDownContainer} from '../../ui/DropDownContainer.jsx';
 import {TriViewPanel} from './TriViewPanel.jsx';
-import {VisHeader} from '../../visualize/ui/VisHeader.jsx';
 import {getActionFromUrl} from '../../core/History.js';
 import {launchTableTypeWatchers} from '../../visualize/ui/TriViewImageSection.jsx';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
@@ -24,7 +23,7 @@ import {getImageMasterData} from '../../visualize/ui/AllImageSearchConfig.js';
 import {getWorkspaceConfig, initWorkspace} from '../../visualize/WorkspaceCntlr.js';
 import {warningDivId} from '../../ui/LostConnection.jsx';
 
-import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-75x75.png';
+import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-42x42.png';
 import {startTTFeatureWatchers} from '../common/ttFeatureWatchers';
 
 /**
@@ -82,7 +81,8 @@ export class FireflyViewer extends PureComponent {
 
     render() {
         const {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown, showUserInfo, initLoadCompleted, initLoadingMessage,
-                dropdownPanels, views, footer, style, showViewsSwitch, leftButtons, centerButtons, rightButtons} = this.state;
+            dropdownPanels, views, footer, style, showViewsSwitch, leftButtons,
+            centerButtons, rightButtons, bannerLeftStyle, bannerMiddleStyle} = this.state;
         const {visible, view, initArgs} = dropDown || {};
 
         if (!isReady) {
@@ -91,7 +91,7 @@ export class FireflyViewer extends PureComponent {
             return (
                 <div id='App' className='rootStyle' style={style}>
                     <header>
-                        <BannerSection {...{menu, showUserInfo, appTitle, appIcon, altAppIcon}}/>
+                        <BannerSection {...{menu, showUserInfo, appTitle, appIcon, altAppIcon, bannerLeftStyle, bannerMiddleStyle}}/>
                         <div id={warningDivId} data-decor='full' className='warning-div center'/>
                         <DropDownContainer
                             key='dropdown'
@@ -159,8 +159,6 @@ function BannerSection(props) {
     return (
         <Banner key='banner'
             menu={<Menu menu={menu} /> }
-            visPreview={<VisHeader showHeader={false}/> }
-            readout={<VisHeader showPreview={false}/> }
             appIcon={appIcon}
             enableVersionDialog={true}
             {...rest}

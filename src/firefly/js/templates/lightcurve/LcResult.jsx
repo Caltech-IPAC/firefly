@@ -19,7 +19,6 @@ import {flux} from '../../core/ReduxFlux.js';
 import {LO_VIEW, getLayouInfo, dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
-import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
 import {LcImageViewerContainer} from './LcImageViewerContainer.jsx';
 import {SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
 import {LC, getViewerGroupKey, updateLayoutDisplay} from './LcManager.js';
@@ -74,7 +73,6 @@ export class LcResult extends PureComponent {
         const content = {};
         var visToolbar;
         if (showImages) {
-            visToolbar = <VisToolbar key='res-vis-tb'/>;
             content.imagePlot = (<LcImageViewerContainer key='res-images'
                                                          viewerId={LC.IMG_VIEWER_ID}
                                                          closeable={true}

@@ -59,8 +59,7 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
             <Tabs style={{height: '100%', ...style}} onTabSelect={onTabSelect} defaultSelected={selectedTab} useFlex={true} resizable={true}>
                 { showFits &&
                     <Tab name='Images' removable={false} id='fits'>
-                        <MultiImageViewer viewerId= {DEFAULT_FITS_VIEWER_ID}
-                                          insideFlex={true}
+                        <MultiImageViewer viewerId= {DEFAULT_FITS_VIEWER_ID} insideFlex={true}
                                           canReceiveNewPlots={NewPlotMode.create_replace.key}
                                           Toolbar={MultiViewStandardToolbar}/>
                     </Tab>

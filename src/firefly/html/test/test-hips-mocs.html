@@ -40,13 +40,6 @@
 
         onFireflyLoaded = function (firefly) {
 
-            firefly.util.image.initAutoReadout(
-                firefly.ui.DefaultApiReadout,
-                { MouseReadoutComponent:firefly.ui.PopupMouseReadoutMinimal,
-                    showThumb:false,
-                    showMag:false
-                }
-            );
             table1Data = firefly.util.table.makeIrsaCatalogRequest('WISE catalog', 'WISE', 'allwise_p3as_psd',
                 { position: '10.68479;41.26906;EQ_J2000',
                     SearchMethod: 'Cone',
@@ -198,7 +191,7 @@
         window.firefly= { options: { imageDisplayType: 'encapusulate' } };
         function onFireflyLoaded(firefly) {
 
-            firefly.action.dispatchApiToolsView(true, false);
+            // firefly.action.dispatchApiToolsView(true, false);
             firefly.showHiPS('actual',
                 {
                     plotId: 'aHipsID1-1',

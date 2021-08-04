@@ -10,13 +10,12 @@ import {isEmpty,omit,isFunction} from 'lodash';
 import {getPlotGroupById}  from '../PlotGroup.js';
 import {ExpandType, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {VisCtxToolbarView, canConvertHipsAndFits} from '../ui/VisCtxToolbarView';
-import {VisInlineToolbarView} from '../ui/VisInlineToolbarView';
+import {VisInlineToolbarView} from '../ui/VisInlineToolbarView.jsx';
 import {primePlot, isActivePlotView, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {ImageViewerLayout}  from '../ImageViewerLayout.jsx';
 import {isImage, isHiPS} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {AnnotationOps} from '../WebPlotRequest.js';
-import BrowserInfo from '../../util/BrowserInfo.js';
 import {AREA_SELECT,LINE_SELECT,POINT} from '../../core/ExternalAccessUtils.js';
 import {PlotTitle, TitleType} from './PlotTitle.jsx';
 import Catalog from '../../drawingLayers/Catalog.js';
@@ -24,6 +23,7 @@ import LSSTFootprint from '../../drawingLayers/ImageLineBasedFootprint';
 import {DataTypes} from '../draw/DrawLayer.js';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {getNumFilters} from '../../tables/FilterInfo';
+import {ZoomButton, ZoomType} from 'firefly/visualize/ui/ZoomButton.jsx';
 import './ImageViewerDecorate.css';
 
 const EMPTY_ARRAY=[];
@@ -181,50 +181,12 @@ function contextToolbar(pv,dlAry,extensionList) {
 
 
 const bgSlightGray= {background: 'rgba(255,255,255,.2)'};
-const bgFFGray= {background: '#e3e3e3'};
 
-function makeInlineRightToolbar(visRoot,pv,dlAry,mousePlotId, handleInlineTools, showDelete) {
-    const useInlineToolbar = toolsAnno.includes(pv.plotViewCtx.annotationOps);
-    const isExpanded= visRoot.expandedMode!==ExpandType.COLLAPSE;
-    const tb= !isExpanded && visRoot.useFloatToolbar;
-    const lVis= BrowserInfo.isTouchInput() || (visRoot.useFloatToolbar && pv && mousePlotId===pv.plotId);
-    const style= (lVis || tb) && handleInlineTools ? bgFFGray : bgSlightGray;
-    if (!pv && tb && handleInlineTools) {
-        return (
-            <div style={style} className='iv-decorate-inline-toolbar-container'>
-                <VisInlineToolbarView pv={pv} showLayer={false}
-                                      showExpand={false} showToolbarButton={true} showDelete ={false} />
-            </div>
-        );
-
-    }
+function makeInlineRightToolbar(visRoot,pv,showDelete) {
     if (!pv) return false;
-    if (!useInlineToolbar) return false;
-    if (isExpanded) {
-        if (showDelete) {
-            return (
-
-                <div className='iv-decorate-inline-toolbar-container'>
-                    <VisInlineToolbarView
-                        pv={pv} dlCount={dlAry?.length}
-                        showLayer={false} showExpand={false} showToolbarButton={false} showDelete ={true} />
-                </div>
-            );
-        }
-        else {
-            return false;
-        }
-    }
-    const exVis= BrowserInfo.isTouchInput() || !mousePlotId || mousePlotId===pv.plotId;
     return (
-        <div style={style} className='iv-decorate-inline-toolbar-container'>
-            <VisInlineToolbarView
-                pv={pv} dlAry={dlAry?.length}
-                showLayer={lVis && handleInlineTools}
-                showExpand={exVis && handleInlineTools}
-                showToolbarButton={tb && handleInlineTools}
-                showDelete ={showDelete}
-                />
+        <div style={bgSlightGray} className='iv-decorate-inline-toolbar-container'>
+            <VisInlineToolbarView pv={pv} showDelete={showDelete} />
         </div>
     );
 }
@@ -254,9 +216,28 @@ function arePropsEquals(props, np) {
 } //todo: look at closely for optimization
 
 
+function ZoomPair({pv, show}) {
+    return (
+        <div
+            style={{
+                visibility: show ? 'visible' : 'hidden',
+                opacity: show ? 1 : 0,
+                transition: show ? 'opacity .15s linear' : 'visibility 0s .15s, opacity .15s linear',
+                background:'rgba(227, 227, 227, .8)',
+                display:'inline-flex',
+                borderRadius:'0 0 5px ',
+                position:'absolute',
+                top:16,
+                left:0}}>
+            <ZoomButton size={20} plotView={pv} zoomType={ZoomType.UP} horizontal={true}/>
+            <ZoomButton size={20} plotView={pv} zoomType={ZoomType.DOWN} horizontal={true}/>
+        </div>
+    );
+    
+}
 
 const ImageViewerDecorate= memo((props) => {
-    const {plotView:pv,drawLayersAry,extensionList,visRoot,mousePlotId, handleInlineTools=true,workingIcon,
+    const {plotView:pv,drawLayersAry,extensionList,visRoot,mousePlotId, workingIcon,
         size:{width,height}, inlineTitle=true, aboveTitle= false }= props;
 
     const showDelete= pv.plotViewCtx.userCanDeletePlots;
@@ -307,13 +288,15 @@ const ImageViewerDecorate= memo((props) => {
                                        width={iWidth} height={iHeight}
                                        externalWidth={width} externalHeight={height}/>
                     {inlineTitleUI}
-                    {makeInlineRightToolbar(visRoot,pv,drawLayersAry,mousePlotId,handleInlineTools,showDelete)}
+                    <ZoomPair pv={pv} show={mousePlotId === pv?.plotId}/>
+                    {makeInlineRightToolbar(visRoot,pv,showDelete)}
                 </div>
             </div>
         </div>
         );
 
 }, arePropsEquals);
+
 
 ImageViewerDecorate.propTypes= {
     plotView : PropTypes.object.isRequired,
@@ -322,7 +305,6 @@ ImageViewerDecorate.propTypes= {
     extensionList : PropTypes.array.isRequired,
     mousePlotId : PropTypes.string,
     size : PropTypes.object.isRequired,
-    handleInlineTools : PropTypes.bool,
     workingIcon: PropTypes.bool,
     inlineTitle: PropTypes.bool,
     aboveTitle: PropTypes.bool

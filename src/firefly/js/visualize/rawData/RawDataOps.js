@@ -138,7 +138,7 @@ export function drawScreenTileToMainCanvas(plot, tileDef, mainCanvas, toX,toY,to
 }
 
 
-function makeThumbnailCanvas(plot, tSize=70) {
+function makeThumbnailCanvas(plot, tSize=140) {
     const tZoomLevel= tSize /Math.max( plot.dataWidth, plot.dataHeight);
     return getLocalScreenTileAtZoom(plot,0,0,tSize,tSize,tZoomLevel);
 }

@@ -15,7 +15,6 @@ import {hydraManager} from './HydraManager';
 import {Menu} from '../../ui/Menu.jsx';
 import {Banner} from '../../ui/Banner.jsx';
 import {DropDownContainer} from '../../ui/DropDownContainer.jsx';
-import {VisHeader} from '../../visualize/ui/VisHeader.jsx';
 import {getActionFromUrl} from '../../core/History.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 
@@ -75,7 +74,7 @@ export class HydraViewer extends PureComponent {
     }
 
     render() {
-        const {appTitle, appIcon, altAppIcon, footer, dropdownPanels=[], style} = this.props;
+        const {appTitle, appIcon, altAppIcon, footer, dropdownPanels=[], style, bannerLeftStyle, bannerMiddleStyle} = this.props;
         const {menu, layoutInfo={}} = this.state;
         const {dropDown} = layoutInfo;
         const {visible, view, initArgs} = dropDown || {};
@@ -83,7 +82,7 @@ export class HydraViewer extends PureComponent {
         return (
             <div id='App' className='rootStyle' style={style}>
                 <header>
-                    <BannerSection {...{menu, appTitle, appIcon, altAppIcon}}/>
+                    <BannerSection {...{menu, appTitle, appIcon, altAppIcon, bannerLeftStyle, bannerMiddleStyle}}/>
                     <div id={warningDivId} data-decor='full' className='warning-div center'/>
                     <DropDownContainer
                         key='dropdown'
@@ -143,8 +142,6 @@ function BannerSection(props) {
     return (
         <Banner key='banner'
                 menu={<Menu menu={menu} /> }
-                visPreview={<VisHeader showHeader={false}/> }
-                readout={<VisHeader showPreview={false}/> }
             {...rest}
         />
     );

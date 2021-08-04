@@ -3,28 +3,14 @@
  */
 
 import React from 'react';
-import {take,race,call} from 'redux-saga/effects';
-import {has,get} from 'lodash';
-import {MouseState} from '../visualize/VisMouseSync.js';
-import ImagePlotCntlr, {visRoot, ExpandType} from '../visualize/ImagePlotCntlr.js';
+import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
-import {dispatchAddSaga} from '../core/MasterSaga.js';
-import {DefaultApiReadout} from '../visualize/ui/DefaultApiReadout.jsx';
 import {getBootstrapRegistry} from '../core/BootstrapRegistry';
-import {PopupMouseReadoutFull} from '../visualize/ui/PopupMouseReadout.jsx';
-import DialogRootContainer from '../ui/DialogRootContainer.jsx';
-import {PopupPanel, LayoutType} from '../ui/PopupPanel.jsx';
-import {dispatchShowDialog,dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
-import {readoutRoot,isAutoReadIsLocked, isLockByClick} from '../visualize/MouseReadoutCntlr.js';
-import {mouseUpdatePromise} from '../visualize/VisMouseSync.js';
 import {RangeValues} from '../visualize/RangeValues.js';
-import {lastMouseImageReadout} from '../visualize/VisMouseSync';
 
 
 
-const API_READOUT= 'apiReadout';
-
-// NOTE 
+// NOTE
 // NOTE 
 //----------------------------------------------------------------
 // Anything that is exported here becomes part of the lowlevel API
@@ -97,15 +83,11 @@ export function setDrawLayerDefaults(drawLayerTypeId, defaults) {
  * @param {object} ReadoutComponent - either a PopupMouseReadoutMinimal or PopupMouseReadoutFull
  * @param {object} props - a list of the properties
  * @public
+ * @deprecated
  * @function initAutoReadout
  * @memberof firefly.util.image
  */
-export function initAutoReadout(ReadoutComponent= DefaultApiReadout,
-      props={MouseReadoutComponent:PopupMouseReadoutFull, showThumb:true,showMag:true } ){
-    if (isInit) return;
-    dispatchAddSaga(autoReadoutVisibility, {ReadoutComponent,props});
-    isInit= true;
-}
+export function initAutoReadout() {}
 
 
 /**
@@ -123,78 +105,4 @@ export function serializeSimpleRangeValues(stretchType,lowerValue,upperValue,alg
     return rv.toJSON();
 }
 
-
-//========== Private ================================
-//========== Private ================================
-//========== Private ================================
-//========== Private ================================
-
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-function *autoReadoutVisibility({ReadoutComponent,props}) {
-    let inDialog= false;
-    let showing;
-    let mouseState;
-    // var action;
-    let doYield= true;
-    let winner;
-    while (true) {
-        // if (doYield) action= yield take([MOUSE_STATE_CHANGE, ImagePlotCntlr.CHANGE_EXPANDED_MODE]);
-
-        if (doYield) {
-            winner = yield race({
-                expandedChange: take([ImagePlotCntlr.CHANGE_EXPANDED_MODE]),
-                mouse: call(mouseUpdatePromise)
-            });
-        }
-
-
-        doYield= true;
-        if (winner.mouse) {
-            mouseState = winner.mouse.mouseState;
-        }
-        if (visRoot().expandedMode!==ExpandType.COLLAPSE) {
-            hideReadout();
-            continue;
-        }
-        if (!mouseState) continue;
-        showing= isDialogVisible(API_READOUT);
-        if (mouseState!==MouseState.EXIT && !showing) {
-            showReadout(ReadoutComponent,props, (inD) => {
-                inDialog= inD;
-            });
-        }
-        else if (mouseState===MouseState.EXIT && showing) {
-             winner = yield race({
-                           expandedChange: take([ImagePlotCntlr.CHANGE_EXPANDED_MODE]),
-                           mouse: call(mouseUpdatePromise),
-                           timer: call(delay, 3000)
-                         });
-            if ((has(winner,'timer')) && !inDialog && !isLockByClick(readoutRoot()) && !isAutoReadIsLocked(readoutRoot())) {
-                hideReadout();
-            }
-            else {
-                doYield= false;
-            }
-        }
-    }
-}
-
-
-
-function showReadout(DefaultApiReadout, props={},  mouseInDialog) {
-
-    const title= get(lastMouseImageReadout(),'readoutItems.title.value','');
-    const popup= (
-        <PopupPanel title={title} layoutPosition={LayoutType.TOP_RIGHT} mouseInDialog={mouseInDialog} >
-            <DefaultApiReadout {...props} />
-        </PopupPanel>
-    );
-    DialogRootContainer.defineDialog(API_READOUT, popup);
-    dispatchShowDialog(API_READOUT);
-}
-
-function hideReadout() {
-    if (isDialogVisible(API_READOUT)) dispatchHideDialog(API_READOUT);
-}
 

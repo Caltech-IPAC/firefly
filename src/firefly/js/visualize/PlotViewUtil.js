@@ -9,7 +9,7 @@ import {makeTransform} from './PlotTransformUtils.js';
 import CysConverter, {CCUtil} from './CsysConverter';
 import {isHiPS, isImage} from './WebPlot.js';
 import {isDefined, memorizeLastCall} from '../util/WebUtil';
-import {getWavelength, isWLAlgorithmImplemented, getVrad, isVRADAlgorithmImplemented, PLANE} from './projection/Wavelength.js';
+import {getWavelength, isWLAlgorithmImplemented, PLANE} from './projection/Wavelength.js';
 import {getNumberHeader, HdrConst} from './FitsHeaderUtil.js';
 import {computeDistance, getRotationAngle, isCsysDirMatching, isEastLeftOfNorth, isPlotNorth} from './VisUtil';
 import {removeRawData} from './rawData/RawDataCache.js';

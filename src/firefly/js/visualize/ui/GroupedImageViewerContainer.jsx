@@ -2,10 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
-
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {MultiViewStandardToolbar} from './MultiViewStandardToolbar.jsx';
@@ -44,19 +40,20 @@ export class GroupedImageViewerContainer extends PureComponent {
 
     render() {
         const {viewerId, imageExpandedMode=false, closeable=true, insideFlex=false,
-               sparseGridTitleLocation= 'top', threeColorOn,
+               sparseGridTitleLocation= 'top', threeColorOn, style,
                Toolbar= MultiViewStandardToolbar}= this.props;
 
         if (imageExpandedMode) {
             return (
                 <MultiImageViewer
+                    style={style}
                     viewerId = {viewerId}
                     insideFlex= {insideFlex}
                     canReceiveNewPlots= {NewPlotMode.create_replace.key}
-                    handleInlineToolsWhenSingle= {false}
                     Toolbar = {Toolbar}
                     showWhenExpanded={true}
                     threeColorOn={threeColorOn}
+                    mouseReadoutEmbedded={false}
                     defaultDecoration={false}
                     closeFunc={closeable ? closeExpanded : null}
                     sparseGridTitleLocation={sparseGridTitleLocation}
@@ -66,10 +63,11 @@ export class GroupedImageViewerContainer extends PureComponent {
         } else {
             return (
                 <MultiImageViewer
+                    style={style}
                     viewerId = {viewerId}
                     insideFlex= {insideFlex}
                     canReceiveNewPlots= {NewPlotMode.create_replace.key}
-                    handleInlineToolsWhenSingle= {false}
+                    mouseReadoutEmbedded={false}
                     threeColorOn={threeColorOn}
                     Toolbar = {Toolbar}
                     sparseGridTitleLocation={sparseGridTitleLocation}
@@ -96,6 +94,7 @@ GroupedImageViewerContainer.propTypes = {
     gridDefs: PropTypes.arrayOf(PropTypes.object),
     size : PropTypes.number,
     threeColorOn : PropTypes.bool,
+    style: PropTypes.object,
     sparseGridTitleLocation : PropTypes.oneOf(['top', 'left', 'off', ''])
 };
 

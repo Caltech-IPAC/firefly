@@ -24,8 +24,11 @@ import {getEntry} from '../rawData/RawDataCache.js';
 import {SimpleCanvas} from '../draw/SimpleCanvas.jsx';
 
 
-export const ThumbnailView = memo(({plotView:pv}) => {
-    const s= { width: 70, height: 70, display: 'inline-block', position: 'relative', overflow: 'hidden' };
+export const ThumbnailView = memo(({plotView:pv, defSize=70, loadedSize= 70}) => {
+    const plot= primePlot(pv);
+    const localData= hasLocalStretchByteData(plot);
+    const size= localData ? loadedSize : defSize;
+    const s= { width: size, height: size, display: 'inline-block', position: 'relative', overflow: 'hidden' };
 
     const [dim, setDim] = useState({imWidth:0,imHeight:0});
     const dataRef = useRef({updateFunc:undefined, drawData:undefined});
@@ -33,17 +36,21 @@ export const ThumbnailView = memo(({plotView:pv}) => {
        dataRef.current.updateFunc?.(dataRef.current.drawData);
     }, [dataRef.current.drawData]);
 
-    const plot= primePlot(pv);
-    if ( (!plot?.tileData && !hasLocalStretchByteData(plot)) || isHiPS(plot)) return <div style={s}/>;
+    if ( (!plot?.tileData && !localData) || isHiPS(plot)) return <div style={s}/>;
 
     s.border= '1px solid rgb(187, 187, 187)';
-    const {width=70,height=70}= plot.tileData?.thumbnailImage ?? {width:70,height:70};
+    let width= size;
+    let height= size;
+    if (!localData && plot.tileData?.thumbnailImage) {
+        width= plot.tileData.thumbnailImage.width;
+        height= plot.tileData.thumbnailImage.height;
+    }
     dataRef.current.drawData= makeDrawing(pv,width,height);
 
     const affTrans= makeTransform(0,0,0,0,pv.rotation, pv.flipX, pv.flipY, {width,height});
 
     const eventCallBack= (plotId,mouseState,pt) => {
-        if ( (!plot?.tileData && !hasLocalStretchByteData(plot)) || isHiPS(plot)) return;
+        if ( (!plot?.tileData && !localData) || isHiPS(plot)) return;
         eventCB(mouseState,pt,pv,width,height);
     };
 
@@ -52,7 +59,7 @@ export const ThumbnailView = memo(({plotView:pv}) => {
 
     return (
         <div style={s}>
-            {makeImageTag(pv, onImageLoad)}
+            {makeImageTag(pv, onImageLoad, size)}
             <DrawerComponent width={width} height={height} getDrawLayer={() => dataRef.current.drawData}
                              setSimpleUpdateNotify={setSimpleUpdateNotify} />
             <EventLayer width={width} height={height} transform={affTrans} eventCallback={eventCallBack} />
@@ -109,9 +116,9 @@ function scrollPlot(pt,pv,width,height) {
     dispatchProcessScroll({plotId:pv.plotId,scrollPt:spt});
 }
 
-function makeImageTag(pv, onImageLoad) {
+function makeImageTag(pv, onImageLoad,size) {
     const plot= primePlot(pv);
-    const {url, width=70,height=70}= plot.tileData?.thumbnailImage ?? {};
+    const {url, width=size,height=size}= plot.tileData?.thumbnailImage ?? {};
     const s= { position : 'absolute', left : 0, top : 0, width, height };
     const transFormCss= makeThumbnailTransformCSS(pv.rotation,pv.flipX, pv.flipY);
     
@@ -186,7 +193,7 @@ function makeDrawing(pv,width,height) {
     const wptC= getCenterPtOfPlot(plot);
     if (!wptC) return null;
 
-    const arrowLength= (width+height)/3;
+    const arrowLength= (Math.min(width,70)+Math.min(height,70))/3;
     const thumbZoomFact= getThumbZoomFact(plot,width,height);
     const cdelt1 = getPixScaleDeg(plot);
     const wpt2= makeWorldPt(wptC.getLon(), wptC.getLat() + (Math.abs(cdelt1)/thumbZoomFact)*(arrowLength/1.6));
@@ -222,8 +229,8 @@ function makeDrawing(pv,width,height) {
     let transY= 0;
 
     if (isPlotNorth(plot) && !pv.rotation) {
-        transY=+20;
-        transX=+10;
+        transY+=20;
+        transX+=10;
     }
     else {
         if (spt2.y<15)       transY-=(spt2.y-15);

@@ -17,8 +17,6 @@ import {getExpandedChartProps} from '../../charts/ChartsCntlr.js';
 import {visRoot} from '../../visualize/ImagePlotCntlr.js';
 import {getMultiViewRoot, findViewerWithItemId, PLOT2D} from '../../visualize/MultiViewCntlr.js';
 import {ImageExpandedMode} from '../../visualize/iv/ImageExpandedMode.jsx';
-import {VisHeader} from '../../visualize/ui/VisHeader.jsx';
-import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
 import {startTTFeatureWatchers} from '../common/ttFeatureWatchers.js';
 import {Menu} from '../../ui/Menu.jsx';
 import {Banner} from '../../ui/Banner.jsx';
@@ -155,7 +153,6 @@ function mainView({expanded,gridView, gridColumns, initLoadingMessage, initLoadC
 
 const NormalMainView= ({gridView, gridColumns, initLoadingMessage, initLoadCompleted}) => (
         <div key='normalMainView' style={{flex: '1 1 auto', display: 'flex', flexDirection:'column', justifyContent: 'flex-start'}}>
-            <VisToolbar style={{paddingBottom:6, borderBottom: '1px solid rgba(0,0,0,.2)'}}/>
             <GridLayoutPanel {...{gridView:gridView||[], gridColumns, initLoadingMessage, initLoadCompleted}}/>
         </div> );
 
@@ -169,8 +166,6 @@ const EmptyMessage= () => (
 const BannerSection= ({menu, appIcon, ...rest}) => (
     <Banner {...{key:'banner', appIcon, enableVersionDialog:true, ...rest,
         menu: <Menu menu={menu}/>,
-        visPreview: <VisHeader showHeader={false}/>,
-        readout: <VisHeader showPreview={false}/>,
     }}/> );
 
 function onReady(menuItems, layoutInfo={}) {

@@ -4,13 +4,13 @@
 
 import React, {memo} from 'react';
 import PropTypes from 'prop-types';
-import {visRoot} from '../ImagePlotCntlr.js';
-import {readoutRoot} from '../MouseReadoutCntlr.js';
-import {getActivePlotView, getPlotViewById} from '../PlotViewUtil.js';
-import {ThumbnailView} from './ThumbnailView.jsx';
-import {MagnifiedView} from './MagnifiedView.jsx';
-import {lastMouseImageReadout, lastMouseCtx} from '../VisMouseSync';
-import {useMouseStoreConnector} from './MouseStoreConnector.jsx';
+import {visRoot} from '../../ImagePlotCntlr.js';
+import {readoutRoot} from '../../MouseReadoutCntlr.js';
+import {getActivePlotView, getPlotViewById} from '../../PlotViewUtil.js';
+import {ThumbnailView} from '../ThumbnailView.jsx';
+import {MagnifiedView} from '../MagnifiedView.jsx';
+import {lastMouseImageReadout, lastMouseCtx} from '../../VisMouseSync.js';
+import {useMouseStoreConnector} from '../MouseStoreConnector.jsx';
 
 const style= {
     display: 'inline-block',

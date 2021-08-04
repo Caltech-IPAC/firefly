@@ -4,12 +4,12 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {ThumbnailView} from './ThumbnailView.jsx';
-import {MagnifiedView} from './MagnifiedView.jsx';
-import {getActivePlotView, getPlotViewById} from '../PlotViewUtil.js';
-import {MouseReadout} from './MouseReadout.jsx';
-import {HiPSMouseReadout} from './HiPSMouseReadout';
-import {STANDARD_READOUT, HIPS_STANDARD_READOUT} from '../MouseReadoutCntlr.js';
+import {ThumbnailView} from '../ThumbnailView.jsx';
+import {MagnifiedView} from '../MagnifiedView.jsx';
+import {getActivePlotView, getPlotViewById} from '../../PlotViewUtil.js';
+import {MouseReadout} from '../MouseReadout.jsx';
+import {HiPSMouseReadout} from './HiPSMouseReadout.jsx';
+import {STANDARD_READOUT, HIPS_STANDARD_READOUT} from '../../MouseReadoutCntlr.js';
 
 
 const readoutUI = {

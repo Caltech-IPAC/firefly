@@ -4,14 +4,14 @@
 import React, {Fragment} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
-import {HIPS_STANDARD_READOUT, dispatchChangeLockUnlockByClick} from '../../visualize/MouseReadoutCntlr.js';
-import {getNonFluxDisplayElements, getFluxInfo} from './MouseReadoutUIUtil.js';
-import {MouseReadoutLock, DataReadoutItem } from './MouseReadout.jsx';
-import './MouseReadout.css';
+import {HIPS_STANDARD_READOUT, dispatchChangeLockUnlockByClick} from '../../MouseReadoutCntlr.js';
+import {getNonFluxDisplayElements, getFluxInfo} from '../MouseReadoutUIUtil.js';
+import {MouseReadoutLock, DataReadoutItem } from '../MouseReadout.jsx';
+import '../MouseReadout.css';
 
 //--------------- Icons --------------------------------
-import LOCKED from    'html/images/icons-2014/lock_20x20.png';
-import UNLOCKED from  'html/images/icons-2014/unlock_20x20.png';
+import LOCKED from 'images/icons-2014/lock_20x20.png';
+import UNLOCKED from 'images/icons-2014/unlock_20x20.png';
 
 const rS = { width: 485, position: 'relative'};
 const rSMin = { padding: '2px 0 2px 3px' };

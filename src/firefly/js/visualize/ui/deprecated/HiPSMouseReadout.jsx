@@ -5,10 +5,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
-import {getNonFluxDisplayElements} from './MouseReadoutUIUtil.js';
-import {MouseReadoutLock,DataReadoutItem} from './MouseReadout';
+import {getNonFluxDisplayElements} from '../MouseReadoutUIUtil.js';
+import {MouseReadoutLock,DataReadoutItem} from '../MouseReadout.jsx';
 
-import './MouseReadout.css';
+import '../MouseReadout.css';
 
 export function HiPSMouseReadout({readout, readoutData, showHealpixPixel=true }){
 

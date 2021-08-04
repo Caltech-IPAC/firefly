@@ -102,19 +102,14 @@
 .ff-horizontal-separator {
     position : relative;
     width: 0;
-    height: 27px;
+    height: 22px;
     display: inline-block;
     vertical-align: baseline;
     border-style: solid;
     border-color: rgba(136,166,185,1);
     border-width : 0 1px;
-    margin: 0 10px;
-    -moz-box-shadow: 0 0 1px 1px rgba(0,0,0,0.8);
-    -webkit-box-shadow: 0 0 1px 1px rgba(0,0,0,0.8);
+    margin: 0 8px;
     box-shadow: 0 0 1px 1px rgba(0,0,0,0.8);
-
-    -moz-border-radius: 5px 5px 5px 5px;
-    -webkit-border-radius: 5px 5px 5px 5px;
     border-radius: 5px 5px 5px 5px;
     background-color: rgba(136,166,185,1);
 }

@@ -4,7 +4,6 @@
 
 import React, {Fragment,memo, useState} from 'react';
 import {number,string,oneOfType,object,func,bool} from 'prop-types';
-import {get} from 'lodash';
 import {getNonFluxDisplayElements, getFluxInfo} from './MouseReadoutUIUtil.js';
 import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
 import {dispatchChangeLockByClick} from '../MouseReadoutCntlr.js';
@@ -21,7 +20,7 @@ export function MouseReadout({readout, readoutData}){
     if (!readoutData.readoutItems) return (<div className='mouseReadoutDisplaySpace'/>);
     const {threeColor}= readoutData;
 
-    const title= get(readoutData, 'readoutItems.title.value','');
+    const title= readoutData?.readoutItems?.title?.value ?? '';
 
     const displayEle= getNonFluxDisplayElements(readoutData.readoutItems,  readout.readoutPref, false);
     const {readout1, readout2, pixelSize, showReadout1PrefChange, showWavelengthFailed,
@@ -61,34 +60,51 @@ MouseReadout.propTypes = {
 };
 
 
-export const MouseReadoutLock= memo(({gArea, style={}, lockByClick}) => {
+export const MouseReadoutLock= memo(({gArea, gAreaLabel, style={}, lockByClick}) => {
     const s= gArea ? {gridArea:gArea,...style} : style;
     return (
-        <div style={s} title='Click on an image to lock the display at that point.'>
-            <input type='checkbox' name='aLock' value='lock' checked={lockByClick}
-                   onChange={() => {
-                       dispatchChangePointSelection('mouseReadout', !lockByClick);
-                       dispatchChangeLockByClick(!lockByClick);
+        <React.Fragment>
+            <div style={s} title='Click on an image to lock the display at that point.'>
+                <input type='checkbox' name='aLock' value='lock' checked={lockByClick}
+                       onChange={() => {
+                           dispatchChangePointSelection('mouseReadout', !lockByClick);
+                           dispatchChangeLockByClick(!lockByClick);
 
-                   }}
-            />
-            <span style={{position:'relative', top:-2}}>Lock by click</span>
-        </div>
-    );
+                       }}
+                />
+                {!gAreaLabel && <span style={{position:'relative', top:-2}}>Lock by click</span>}
+            </div>
+            {gAreaLabel &&
+            <span style={
+                {
+                    gridArea: gAreaLabel,
+                    position:'relative',
+                    whiteSpace:'nowrap',
+                    textOverflow: 'ellipsis',
+                    overflow:'hidden',
+                    paddingRight:3
+                } }>
+                Lock by click
+            </span>}
+        </React.Fragment>
+);
 });
 
 MouseReadoutLock.propTypes = {
     style:       object,
     gArea:       string, // grid Area used with css grid-template-areas
+    gAreaLabel:  string, // grid Area used with css grid-template-areas
     lockByClick: bool.isRequired
 };
 
+const baseVS={whiteSpace:'nowrap', overflow:'hidden', textOverflow: 'ellipsis'};
+const baseLS={whiteSpace:'nowrap', overflow:'hidden', textOverflow: 'ellipsis'};
 
 
 export const DataReadoutItem= memo(({lArea, vArea, cArea, labelStyle={}, valueStyle={}, showCopy=false,
                                         label='', value='', copyValue='', prefChangeFunc=undefined}) => {
-    const lS= lArea ? {gridArea:lArea,...labelStyle} : labelStyle;
-    const vS= vArea ? {gridArea:vArea,...valueStyle} : valueStyle;
+    const lS= lArea ? {gridArea:lArea,...baseLS,...labelStyle} : {...baseLS,...labelStyle};
+    const vS= vArea ? {gridArea:vArea,...baseVS, ...valueStyle} : {...baseVS,...valueStyle};
     const cS= cArea ? {gridArea:cArea, overflow:'hidden', height:13} : undefined;
     const labelClass= prefChangeFunc ? 'mouseReadoutLabel mouseReadoutClickLabel' : 'mouseReadoutLabel';
     const copyTitle= `Copy to clipboard: ${copyValue||value}`;
@@ -102,8 +118,8 @@ export const DataReadoutItem= memo(({lArea, vArea, cArea, labelStyle={}, valueSt
 
     return (
         <Fragment>
-            <div className={labelClass} style={lS} onClick={prefChangeFunc}>{label}</div>
-            <div style={vS}> {value} </div>
+            <div className={labelClass} title={value+''} style={lS} onClick={prefChangeFunc}>{label}</div>
+            <div style={vS} title={value+''}> {value} </div>
             {clipComponent}
         </Fragment>
     );

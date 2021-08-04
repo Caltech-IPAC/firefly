@@ -42,7 +42,6 @@ export function LcImageViewerContainer({viewerId, imageExpandedMode=false, close
                         insideFlex= {insideFlex}
                         forceRowSize={forceRowSize}
                         canReceiveNewPlots= {NewPlotMode.create_replace.key}
-                        handleInlineToolsWhenSingle= {false}
                         Toolbar = {Toolbar}
                         tableId={activeTableId}
             />
