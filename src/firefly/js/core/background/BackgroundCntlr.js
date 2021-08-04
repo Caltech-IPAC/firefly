@@ -60,7 +60,7 @@ function reducers() {
 /*---------------------------- DISPATCHERS -----------------------------*/
 
 /**
- * Action to show/hide the background monitor.  To hide, set showBgMonitor to fase
+ * Action to show/hide the background monitor.  To hide, set showBgMonitor to false
  * @param {Object}  p   payload
  * @param {boolean} p.showBgMonitor
  */
@@ -117,7 +117,7 @@ export function dispatchJobCancel(id) {
 }
 
 /**
- * Action to show/hide the background monitor.  To hide, set showBgMonitor to fase
+ * Submit download request
  * @param {DownloadRequest} dlRequest
  * @param {TableRequest} searchRequest
  * @param {string} selectionInfo

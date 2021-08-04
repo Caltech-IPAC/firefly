@@ -181,7 +181,6 @@ export function DownloadOptionPanel (props) {
 
         const akey = newBgKey();
         dispatchPackage(dlRequest, searchRequest, SelectInfo.newInstance(selectInfo).toString(), akey);
-        showDownloadDialog(this, false);
         dlTitleIdx++;
         setBgKey(akey);
     }, [cutoutSize, dataTag, dlParams, tbl_id]);
