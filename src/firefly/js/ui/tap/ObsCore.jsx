@@ -185,19 +185,21 @@ export function ObsCoreSearch({cols, groupKey, fields, useConstraintReducer}) {
         const constraintsResult = makeConstraints(fields, fieldsValidity, panelActive);
         updatePanelFields(constraintsResult.fieldsValidity, constraintsResult.valid, fields, newFields, panelValue, panelPrefix);
         if (isPanelChecked(panelValue, panelPrefix, newFields)) {
-            if (constraintsResult.valid){
-                if (constraintsResult.adqlConstraint?.length > 0){
+            if (constraintsResult.valid) {
+                if (constraintsResult.adqlConstraint?.length > 0) {
                     adqlConstraint = constraintsResult.adqlConstraint;
                 } else {
                     adqlConstraintErrors.push(`Unknown error processing ${panelValue} constraints`);
                 }
-                if  (constraintsResult.siaConstraints?.length > 0){
+                if (constraintsResult.siaConstraints?.length > 0) {
                     siaConstraints.push(...constraintsResult.siaConstraints);
                 }
-                if  (constraintsResult.siaConstraintErrors?.length > 0){
+                if (constraintsResult.siaConstraintErrors?.length > 0) {
                     siaConstraintErrors.push(...constraintsResult.siaConstraintErrors);
                 }
-            } else if (!constraintsResult.adqlConstraint) {
+            } else {
+                const firstMessage = Array.from(constraintsResult.fieldsValidity.values()).find((v) => !v.valid)?.message;
+                adqlConstraintErrors.push(`Error processing ${panelValue} constraints: ${firstMessage}`);
                 logger.warn(`invalid ${panelValue} adql constraints`);
             }
         }
@@ -214,7 +216,7 @@ export function ObsCoreSearch({cols, groupKey, fields, useConstraintReducer}) {
     return (
         <FieldGroupCollapsible header={<Header title={panelTitle} helpID={tapHelpId(panelPrefix)}
                                                checkID={`${panelPrefix}Check`} panelValue={panelValue} message={message}/>}
-                               initialState={{value: 'closed'}}
+                               initialState={{value: 'open'}}
                                fieldKey={`${panelPrefix}SearchPanel`}
                                wrapperStyle={{marginBottom: 15}}
                                headerStyle={HeaderFont}
@@ -457,7 +459,9 @@ export function ExposureDurationSearch({cols, groupKey, fields, useConstraintRed
                 if (constraintsResult.siaConstraints?.length > 0) {
                     siaConstraints.push(...constraintsResult.siaConstraints);
                 }
-            } else if (!constraintsResult.adqlConstraint) {
+            } else {
+                const firstMessage = Array.from(fieldsValidity.values()).find((v) => !v.valid)?.message;
+                adqlConstraintErrors.push(`Error processing ${panelValue} constraints: ${firstMessage}`);
                 logger.warn(`invalid ${panelValue} adql constraints`);
             }
         }
@@ -845,7 +849,9 @@ export function ObsCoreWavelengthSearch({cols, groupKey, fields, useConstraintRe
                 if (constraintsResult.siaConstraints?.length > 0) {
                     siaConstraints.push(...constraintsResult.siaConstraints);
                 }
-            } else if (!constraintsResult.adqlConstraint) {
+            } else {
+                const firstMessage = Array.from(fieldsValidity.values()).find((v) => !v.valid)?.message;
+                adqlConstraintErrors.push(`Error processing ${panelValue} constraints: ${firstMessage}`);
                 logger.warn(`invalid ${panelValue} adql constraints`);
             }
         }

@@ -320,6 +320,8 @@ function getAdqlQuery(showErrors= true) {
     // spatial and temporal constraints
     const whereFragment = tableSearchMethodsConstraints(columnsModel);
     if (!whereFragment.valid) {
+        const firstMessage = whereFragment.messages[0];
+        showInfoPopup(firstMessage, 'Error');
         return null;
     }
     let constraints = whereFragment.where || '';
