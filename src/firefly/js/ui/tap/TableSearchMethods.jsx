@@ -260,7 +260,7 @@ function SpatialSearch({cols, columnsModel, groupKey, fields, initArgs={}, obsCo
     useEffect(() => {
         const centerColObj = formCenterColumns(columnsModel);
         // we have ra+dec columns and it's not obsCore
-        if (centerColObj.lon.length && centerColObj.lat.length && !obsCoreEnabled){
+        if (centerColObj.lon.length && centerColObj.lat.length || obsCoreEnabled){
             dispatchValueChange({...{value: panelValue}, fieldKey: `${panelPrefix}Check`, groupKey});
         } else {  // no ra+dec columns
             dispatchValueChange({...{value: ''}, fieldKey: `${panelPrefix}Check`, groupKey});
