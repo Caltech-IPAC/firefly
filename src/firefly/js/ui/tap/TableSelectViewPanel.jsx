@@ -75,6 +75,7 @@ function useStateRef(initialState){
 export function BasicUI(props) {
     const tapFluxState = getTapBrowserState();
     const [error, setError] = useState(undefined);
+    const mountedRef = useRef(false);
     const [serviceUrl, serviceUrlRef, setServiceUrl] = useStateRef(tapFluxState.serviceUrl || props.serviceUrl);
     const [schemaName, schemaRef, setSchemaName] = useStateRef(tapFluxState.schemaName || props.initArgs.schema);
     const [tableName, tableRef, setTableName] = useStateRef(tapFluxState.tableName || props.initArgs.table);
@@ -102,6 +103,9 @@ export function BasicUI(props) {
         // update state for higher level components that might rely on obsCoreTables
 
         loadTapSchemas(requestServiceUrl).then((tableModel) => {
+            if (!mountedRef.current) {
+                return;
+            }
             if (serviceUrlRef.current !== requestServiceUrl) {
                 // stale request which won't reflect UI state if processed
                 return;
@@ -137,6 +141,9 @@ export function BasicUI(props) {
         dispatchValueChange({groupKey: gkey, fieldKey: 'tableName', value: undefined});
 
         loadTapTables(requestServiceUrl, requestSchemaName).then((tableModel) => {
+            if (!mountedRef.current) {
+                return;
+            }
             if (serviceUrlRef.current !== requestServiceUrl || schemaRef.current !== requestSchemaName){
                 // Processing a stale request - skip
                 return;
@@ -165,6 +172,9 @@ export function BasicUI(props) {
         setColumnsModel(undefined);
         //dispatchValueChange({groupKey: gkey, fieldKey: 'columnsModel', value: undefined});
         loadTapColumns(requestServiceUrl, requestSchemaName, requestTableName).then((columnsModel) => {
+            if (!mountedRef.current) {
+                return;
+            }
             if (serviceUrlRef.current !== requestServiceUrl || schemaRef.current !== requestSchemaName || tableRef.current !== requestTableName){
                 // processing a stale request
                 return;
@@ -178,11 +188,16 @@ export function BasicUI(props) {
                 tableName: requestTableName, tableOptions, columnsModel, obsCoreEnabled: matchesObsCore});
         });
     };
+
     useEffect(() => {
+        mountedRef.current = true;
         // properties changes due to changes in TapSearchPanel
         if(props.serviceUrl !== serviceUrl) {
             setServiceUrl(props.serviceUrl);
         }
+        return () => {
+            mountedRef.current = false;
+        };
     });
 
     useEffect(() => {
