@@ -29,16 +29,16 @@ export const tapHelpId = (id) => `tapSearches.${id}`;
 
 export function getTapBrowserState() {
     const tapBrowserState = getComponentState(tapBrowserComponentKey);
-    const {serviceUrl, schemaOptions, schemaName, tableOptions, tableName, columnsModel, obsCoreEnabled, obsCoreTables} = tapBrowserState || {};
-    return {serviceUrl, schemaOptions, schemaName, tableOptions, tableName, columnsModel, obsCoreEnabled, obsCoreTables};
+    const {serviceUrl, schemaOptions, schemaName, tableOptions, tableName, columnsModel, obsCoreEnabled, obsCoreTableModel} = tapBrowserState || {};
+    return {serviceUrl, schemaOptions, schemaName, tableOptions, tableName, columnsModel, obsCoreEnabled, obsCoreTableModel};
 }
 
 export function setTapBrowserState({serviceUrl, schemaOptions=undefined, schemaName=undefined,
                                        tableOptions=undefined, tableName=undefined, columnsModel=undefined,
-                                       obsCoreEnabled= false, obsCoreTables=undefined}) {
+                                       obsCoreEnabled= false, obsCoreTableModel=undefined}) {
     dispatchComponentStateChange(tapBrowserComponentKey,
         {serviceUrl, schemaOptions, schemaName, tableOptions, tableName, columnsModel,
-            obsCoreEnabled, obsCoreTables});
+            obsCoreEnabled, obsCoreTableModel});
 }
 
 export function updateTapBrowserState(updates) {
@@ -83,7 +83,7 @@ export function loadTapSchemas(serviceUrl) {
 
 export function loadObsCoreSchemaTables(serviceUrl) {
 
-    const url = serviceUrl + qFragment + 'QUERY=SELECT+s.schema_name,+t.table_name+FROM+TAP_SCHEMA.schemas+s+JOIN+TAP_SCHEMA.tables+t+on+(s.schema_name=t.schema_name)+JOIN+TAP_SCHEMA.columns+c+on+(t.table_name=c.table_name+and+c.column_name+in+(\'s_region\',+\'t_min\',+\'t_max\',+\'em_min\',+\'em_max\',+\'calib_level\',+\'dataproduct_type\',+\'obs_collection\'))+GROUP+BY+s.schema_name,+t.table_name+HAVING+count(c.column_name)=8';
+    const url = serviceUrl + qFragment + 'QUERY=SELECT+s.schema_name,+t.table_name+FROM+TAP_SCHEMA.schemas+s+JOIN+TAP_SCHEMA.tables+t+on+(s.schema_name=t.schema_name)+WHERE+s.schema_name=\'ivoa\'+AND+t.table_name+IN+(\'ivoa.obscore\',\'ivoa.ObsCore\')';
     const request = makeFileRequest('schemas', url, null, {pageSize: MAX_ROW});
 
     return doFetchTable(request).then((tableModel) => {
