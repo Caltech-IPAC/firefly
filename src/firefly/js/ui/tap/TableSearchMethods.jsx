@@ -148,16 +148,15 @@ function useConstraintReducer(component, constraintReducer, watchFields) {
             return constraintResult;
         }
         constraintReducers.adqlReducerMap.set(component, reduceQuery);
-        return () => {
-            constraintReducers.adqlReducerMap.delete(component);
-        };
-    });
 
-    useEffect(() => {
-        return FieldGroupUtils.bindToStore(skey, (fields) => {
+        const storeListener = FieldGroupUtils.bindToStore(skey, (fields) => {
             const constraintResults = get(fields, [fieldName]);
             setConstraintResult(constraintResults);
         });
+        return () => {
+            storeListener();
+            constraintReducers.adqlReducerMap.delete(component);
+        };
     }, []);
 
     const deps = watchFields || [];
