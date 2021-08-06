@@ -28,6 +28,8 @@ import {WsSaveOptions} from './WorkspaceSelectPane.jsx';
 import {NotBlank} from '../util/Validate.js';
 
 const DOWNLOAD_DIALOG_ID = 'Download Options';
+const OptionsContext = React.createContext();
+
 /**
  * This download button does 2 things:
  * 1. track a table for selected rows, then changes style to reflect whether or not it can be clicked
@@ -73,20 +75,23 @@ const DOWNLOAD_DIALOG_ID = 'Download Options';
  */
 export function DownloadButton(props) {
 
-    const tblIdGetter = () => props.tbl_id || getActiveTableId(props.tbl_grp);
+    const {tbl_grp, children, checkSelectedRow} = props;
+    const tblIdGetter = () => props.tbl_id || getActiveTableId(tbl_grp);
     const selectInfoGetter = () => get(getTblById(tblIdGetter()), 'selectInfo');
 
     const [tbl_id, selectInfo] = useStoreConnector(tblIdGetter, selectInfoGetter);
     const selectInfoCls = SelectInfo.newInstance(selectInfo);
 
     const onClick = useCallback(() => {
-        if (selectInfoCls.getSelectedCount() || props.checkSelectedRow===false) {
+        if (selectInfoCls.getSelectedCount() || checkSelectedRow===false) {
             if(hasOnlyProprietaryData(getTblById(tbl_id))){
                 showInfoPopup('You do not have permission to download the selected data set(s).', 'Private Data Selected');
             }else if(!hasOnlyProprietaryData()){
-                var panel = props.children ? React.Children.only(props.children) : <DownloadOptionPanel/>;
-                panel = React.cloneElement(panel, {tbl_id});
-                showDownloadDialog(panel);
+                showDownloadDialog((
+                    <OptionsContext.Provider value={{tbl_id, checkSelectedRow}}>
+                        {children ? React.Children.only(children) : <DownloadOptionPanel/>}
+                    </OptionsContext.Provider>
+                ));
             }
         } else {
             showInfoPopup('You have not chosen any data to download', 'No Data Selected');
@@ -135,11 +140,13 @@ let dlTitleIdx = 0;
 const newBgKey = () => 'DownloadOptionPanel-' + Date.now();
 
 export function DownloadOptionPanel (props) {
-    const {groupKey, cutoutSize, help_id, children, style, title, tbl_id, dlParams, dataTag, updateSearchRequest=null, updateDownloadRequest=null} = props;
+    const {groupKey, cutoutSize, help_id, children, style, title, dlParams, dataTag, updateSearchRequest=null, updateDownloadRequest=null} = props;
     const { cancelText='Cancel', showZipStructure=true, showEmailNotify=true, showFileLocation=true, showTitle=true } = props;
 
+    const {tbl_id:p_tbl_id, checkSelectedRow} = React.useContext(OptionsContext);
+    const tbl_id = props.tbl_id || p_tbl_id;
+
     const labelWidth = 110;
-    const ttl = title || DOWNLOAD_DIALOG_ID;
     const [bgKey, setBgKey] = useState(newBgKey());
 
     const onSubmit = useCallback((formInputs={}) => {
@@ -148,7 +155,7 @@ export function DownloadOptionPanel (props) {
         const {FileGroupProcessor} = dlParams;
 
         const selectInfoCls = SelectInfo.newInstance(selectInfo);
-        if (!selectInfoCls.getSelectedCount()) {
+        if (checkSelectedRow && !selectInfoCls.getSelectedCount()) {
             return showInfoPopup('You have not chosen any data to download', 'No Data Selected');
         }
 
@@ -174,7 +181,6 @@ export function DownloadOptionPanel (props) {
 
         const akey = newBgKey();
         dispatchPackage(dlRequest, searchRequest, SelectInfo.newInstance(selectInfo).toString(), akey);
-        showDownloadDialog(this, false);
         dlTitleIdx++;
         setBgKey(akey);
     }, [cutoutSize, dataTag, dlParams, tbl_id]);
@@ -208,7 +214,7 @@ export function DownloadOptionPanel (props) {
                 cancelText = {cancelText}
                 groupKey = {groupKey}
                 onSubmit = {onSubmit}
-                onCancel = {() => dispatchHideDialog(ttl)}
+                onCancel = {() => dispatchHideDialog(DOWNLOAD_DIALOG_ID)}
                 help_id  = {help_id}>
                 <FieldGroup groupKey={groupKey} keepState={true}>
                     {showWarnings && <div style={noticeCss}>This table contains proprietary data. Only data to which you have access will be downloaded.</div>}
@@ -384,16 +390,16 @@ function hasOnlyProprietaryData(tableModel={}){
  * @param {boolean} [show=true] show or hide this dialog
  */
 function showDownloadDialog(panel, show=true) {
-    const ttl = get(panel, 'props.title', DOWNLOAD_DIALOG_ID);
+    const title = get(panel, 'props.title', DOWNLOAD_DIALOG_ID);
     if (show) {
         const content= (
-            <PopupPanel title={ttl} >
+            <PopupPanel title={title} >
                 {panel}
             </PopupPanel>
         );
-        DialogRootContainer.defineDialog(ttl, content);
-        dispatchShowDialog(ttl);
+        DialogRootContainer.defineDialog(DOWNLOAD_DIALOG_ID, content);
+        dispatchShowDialog(DOWNLOAD_DIALOG_ID);
     } else {
-        dispatchHideDialog(ttl);
+        dispatchHideDialog(DOWNLOAD_DIALOG_ID);
     }
 }

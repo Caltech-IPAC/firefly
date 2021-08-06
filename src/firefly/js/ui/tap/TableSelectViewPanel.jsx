@@ -75,15 +75,16 @@ function useStateRef(initialState){
 export function BasicUI(props) {
     const tapFluxState = getTapBrowserState();
     const [error, setError] = useState(undefined);
+    const mountedRef = useRef(false);
     const [serviceUrl, serviceUrlRef, setServiceUrl] = useStateRef(tapFluxState.serviceUrl || props.serviceUrl);
     const [schemaName, schemaRef, setSchemaName] = useStateRef(tapFluxState.schemaName || props.initArgs.schema);
     const [tableName, tableRef, setTableName] = useStateRef(tapFluxState.tableName || props.initArgs.table);
-    const [obsCoreTables, setObsCoreTables] = useState(tapFluxState.obsCoreTables || undefined);
     const [obsCoreEnabled, setObsCoreEnabled] = useState(tapFluxState.obsCoreEnabled || false);
     const [schemaOptions, setSchemaOptions] = useState();
     const [tableOptions, setTableOptions] = useState();
     const [columnsModel, setColumnsModel] = useState();
     const selectBy = props.selectBy;
+    const obsCoreTableModel = props.obsCoreTableModel;
 
     const obsCoreSelected = selectBy === 'obscore';
     const tableSectionNumber = !obsCoreSelected ? '4' : '3';
@@ -97,13 +98,14 @@ export function BasicUI(props) {
         setTableName(undefined);
         setTableOptions(undefined);
         setColumnsModel(undefined);
-        setObsCoreTables(undefined);
         setObsCoreEnabled(undefined);
         dispatchValueChange({groupKey: gkey, fieldKey: 'tableName', value: undefined});
         // update state for higher level components that might rely on obsCoreTables
-        updateTapBrowserState({obsCoreTables: undefined});
 
         loadTapSchemas(requestServiceUrl).then((tableModel) => {
+            if (!mountedRef.current) {
+                return;
+            }
             if (serviceUrlRef.current !== requestServiceUrl) {
                 // stale request which won't reflect UI state if processed
                 return;
@@ -129,13 +131,6 @@ export function BasicUI(props) {
             }
         });
 
-        loadObsCoreSchemaTables(requestServiceUrl).then((tableModel) => {
-            const obsCoreTablesResponse = tableModel?.tableData.data || undefined;
-            setObsCoreTables(obsCoreTablesResponse);
-            // Update state early for ObsCore support
-            // we'll still have to wait for loadTables and loadColumns
-            updateTapBrowserState({obsCoreTables: obsCoreTablesResponse});
-        });
     };
 
     const loadTables = (requestServiceUrl, requestSchemaName, requestTableName) => {
@@ -146,6 +141,9 @@ export function BasicUI(props) {
         dispatchValueChange({groupKey: gkey, fieldKey: 'tableName', value: undefined});
 
         loadTapTables(requestServiceUrl, requestSchemaName).then((tableModel) => {
+            if (!mountedRef.current) {
+                return;
+            }
             if (serviceUrlRef.current !== requestServiceUrl || schemaRef.current !== requestSchemaName){
                 // Processing a stale request - skip
                 return;
@@ -174,6 +172,9 @@ export function BasicUI(props) {
         setColumnsModel(undefined);
         //dispatchValueChange({groupKey: gkey, fieldKey: 'columnsModel', value: undefined});
         loadTapColumns(requestServiceUrl, requestSchemaName, requestTableName).then((columnsModel) => {
+            if (!mountedRef.current) {
+                return;
+            }
             if (serviceUrlRef.current !== requestServiceUrl || schemaRef.current !== requestSchemaName || tableRef.current !== requestTableName){
                 // processing a stale request
                 return;
@@ -184,14 +185,19 @@ export function BasicUI(props) {
             const matchesObsCore = matchesObsCoreHeuristic(schemaName, tableName, columnsModel);
             setObsCoreEnabled(matchesObsCore);
             setTapBrowserState({serviceUrl: requestServiceUrl, schemaName: requestSchemaName, schemaOptions,
-                tableName: requestTableName, tableOptions, columnsModel, obsCoreEnabled: matchesObsCore, obsCoreTables});
+                tableName: requestTableName, tableOptions, columnsModel, obsCoreEnabled: matchesObsCore});
         });
     };
+
     useEffect(() => {
+        mountedRef.current = true;
         // properties changes due to changes in TapSearchPanel
         if(props.serviceUrl !== serviceUrl) {
             setServiceUrl(props.serviceUrl);
         }
+        return () => {
+            mountedRef.current = false;
+        };
     });
 
     useEffect(() => {
@@ -208,18 +214,8 @@ export function BasicUI(props) {
 
     useEffect(() => {
         if (selectBy === 'obscore'){
-            let seenTable = false;
-            obsCoreTables.forEach((tableRow) => {
-                const [schema, table, ...more] = tableRow;
-                // match schema name/table name only (we omit columnsModel)
-                if (matchesObsCoreHeuristic(schema, tableName, null)){
-                    setSchemaName(schema);
-                    setTableName(table);
-                    seenTable = true;
-                }
-            });
-            if (!seenTable){
-                const [schema, table, ...more] = obsCoreTables[0];
+            if (obsCoreTableModel?.tableData?.data) {
+                const [schema, table, ...more] = obsCoreTableModel?.tableData?.data[0];
                 setSchemaName(schema);
                 setTableName(table);
             }

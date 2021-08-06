@@ -27,7 +27,9 @@ import {
     getTapBrowserState,
     tapHelpId,
     TAP_SERVICES_FALLBACK,
-    getTapServices
+    getTapServices,
+    loadObsCoreSchemaTables,
+    updateTapBrowserState
 } from 'firefly/ui/tap/TapUtil.js';
 import { gkey, SectionTitle, AdqlUI, BasicUI} from 'firefly/ui/tap/TableSelectViewPanel.jsx';
 
@@ -98,11 +100,11 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
     const tapOps= getTapServiceOptions();
     const {current:clickFuncRef} = useRef({clickFunc:undefined});
     const [selectBy, setSelectBy]= useState('basic');
-    const [obsCoreTables, setObsCoreTables] = useState();
+    const [obsCoreTableModel, setObsCoreTableModel] = useState();
     const [serviceUrl, setServiceUrl]= useState(() => getInitServiceUrl(initArgs,tapOps));
     activateInitArgsAdqlOnce(initArgs);
 
-    const obsCoreEnabled = obsCoreTables?.length > 0;
+    const obsCoreEnabled = obsCoreTableModel?.tableData?.data?.length > 0;
 
     const onTapServiceOptionSelect= (selectedOption) => {
         if (!selectedOption) return;
@@ -113,14 +115,13 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
             ]
         );
         setServiceUrl(selectedOption.value);
-        setObsCoreTables(undefined);
+        setObsCoreTableModel(undefined);
     };
 
     useEffect(() => {
         return FieldGroupUtils.bindToStore( gkey, (fields) => {
             setSelectBy(getFieldVal(gkey,'selectBy',selectBy));
-            const obsCoreTables = getTapBrowserState().obsCoreTables;
-            setObsCoreTables(obsCoreTables);
+            setObsCoreTableModel(getTapBrowserState().obsCoreTableModel);
             searchFromAPIOnce( () => validateAutoSearch(fields,initArgs), () => setTimeout(() => clickFuncRef.clickFunc?.(), 5));
         });
     }, []);
@@ -165,10 +166,12 @@ const makePlaceHolderBeforeStyle= (l) =>
 
 
 
-function TapSearchPanelComponents({initArgs, serviceUrl, onTapServiceOptionSelect, tapOps, titleOn=true, selectBy, obsCoreEnabled}) {
+function TapSearchPanelComponents({initArgs, serviceUrl, onTapServiceOptionSelect, tapOps, titleOn=true, selectBy}) {
 
     const label= (serviceUrl && (tapOps.find( (e) => e.value===serviceUrl)?.labelOnly)) || '';
     const placeholder = serviceUrl ? `${serviceUrl} - Replace...` : 'Select TAP...';
+    const [obsCoreTableModel, setObsCoreTableModel] = useState();
+    const hasObsCoreTable = obsCoreTableModel?.tableData?.data?.length > 0;
 
     const tableSelectStyleEnhanced= {
         ...tableSelectStyleEnhancedTemplate,
@@ -180,17 +183,34 @@ function TapSearchPanelComponents({initArgs, serviceUrl, onTapServiceOptionSelec
         {label: 'Edit ADQL (advanced)', value: 'adql', tooltip: 'Enter or edit directly an ADQL query; supports complex queries including JOINs'}
     ];
 
-    if (obsCoreEnabled) {
+    if (hasObsCoreTable) {
         options.push({label: 'Image Search (ObsTAP)', value: 'obscore', tooltip: 'Search the ObsTAP image metadata on this service with a specialized GUI query builder'});
     }
 
     let queryTypeEpilogue = '';
     if (selectBy === 'obscore') {
+        let obsCoreTableName = 'ivoa.ObsCore';
+        if (hasObsCoreTable){
+            obsCoreTableName = obsCoreTableModel?.tableData?.data[0][1];
+        }
         // This component does not know the actual name of the table, but it is guaranteed
         // that name.toLowerCase() === 'ivoa.ObsCore'.toLowerCase()
         queryTypeEpilogue =
-            <div style={{display: 'inline-flex', marginTop: '4px'}}>(Searching the <pre style={{margin: '0px .5em'}}>ivoa.ObsCore</pre> table on this service...)</div>;
+            <div style={{display: 'inline-flex', marginTop: '4px'}}>(Searching the <pre style={{margin: '0px .5em'}}>{obsCoreTableName}</pre> table on this service...)</div>;
     }
+
+    const loadObsCoreTables = (requestServiceUrl) => {
+        loadObsCoreSchemaTables(requestServiceUrl).then((tableModel) => {
+            setObsCoreTableModel(tableModel);
+            // Update state early for ObsCore support
+            // we'll still have to wait for loadTables and loadColumns
+            updateTapBrowserState({obsCoreTableModel: tableModel});
+        });
+    };
+
+    useEffect(() => {
+        loadObsCoreTables(serviceUrl);
+    }, [serviceUrl]);
 
     return (
         <FieldGroup groupKey={gkey} keepState={true} style={{flexGrow: 1, display: 'flex'}}>
@@ -219,7 +239,7 @@ function TapSearchPanelComponents({initArgs, serviceUrl, onTapServiceOptionSelec
                     />
                     {queryTypeEpilogue}
                 </div>
-                {(selectBy === 'basic' || selectBy === 'obscore') && <BasicUI  serviceUrl={serviceUrl} selectBy={selectBy} initArgs={initArgs}/>}
+                {(selectBy === 'basic' || selectBy === 'obscore') && <BasicUI  serviceUrl={serviceUrl} selectBy={selectBy} initArgs={initArgs} obsCoreTableModel={obsCoreTableModel}/>}
                 {selectBy === 'adql' && <AdqlUI serviceUrl={serviceUrl}/>}
             </div>
         </FieldGroup>
@@ -320,6 +340,8 @@ function getAdqlQuery(showErrors= true) {
     // spatial and temporal constraints
     const whereFragment = tableSearchMethodsConstraints(columnsModel);
     if (!whereFragment.valid) {
+        const firstMessage = whereFragment.messages[0];
+        showInfoPopup(firstMessage, 'Error');
         return null;
     }
     let constraints = whereFragment.where || '';
