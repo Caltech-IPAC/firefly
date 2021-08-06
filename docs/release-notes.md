@@ -5,6 +5,8 @@
 - To Access current (unstable) development - (Version _next_, unreleased) use docker tag: `nightly`
 
 ## Version 2021.3 
+- 2021.3.1 (Aug 2021)
+  - docker tag: `latest`, `release-2021.3`, `release-2021.3.1`
 - 2021.3.0  (Aug 2021)
   - docker tag: `release-2021.3.0`
   - original release
@@ -17,9 +19,15 @@
     - fixed: HiPS mouse wheel zooming more accurate
     - fixed: thumbnail scroll not working
     - fixed: upload panel clear button not completely clearing data ([Firefly-825](https://github.com/Caltech-IPAC/firefly/pull/1116))
-    - fixed: Upload panel now shows progress feedback and indicator now works when loading images ([Firefly-828](https://github.com/Caltech-IPAC/firefly/pull/1113))
-    - fixed: Table Input fields sometimes duplicate entries ([Firefly-829](https://github.com/Caltech-IPAC/firefly/pull/1115))
+    - fixed: Upload panel now shows progress feedback and indicator, now works when loading images ([Firefly-828](https://github.com/Caltech-IPAC/firefly/pull/1113))
+    - fixed: Table Input fields sometimes show duplicate entries ([Firefly-829](https://github.com/Caltech-IPAC/firefly/pull/1115))
     - fixed: slate entries point not showing tap/table searches button correctly
+
+##### _Patches 2021.3_
+- 2021.3.1
+  - Small Bug fixes
+  - Improve TAP Ivoa.ObsCore detection ([DM-30780](https://github.com/Caltech-IPAC/firefly/pull/1119))
+  - Improve TAP spacial validation ([PR](https://github.com/Caltech-IPAC/firefly/pull/1118))
     
 ##### _Pull Request in this release_
 - [Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2021.3+label%3abug)
