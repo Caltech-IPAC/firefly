@@ -358,8 +358,8 @@ export function addScatterChanges({changes, chartId, traceNum, tablesource, tabl
                     ul = '<br> Lower Limit ';
                 }
             }
-            return `<span> ${xTipLabel} = ${parseFloat(xval)}${xerr} ${xUnit} <br>` +
-                ` ${yTipLabel} = ${parseFloat(yval)}${yerr} ${yUnit} ${ul} ${cval}</span>`;
+            return `<span> ${xTipLabel} = ${formatVal(xval)}${xerr} ${xUnit} <br>` +
+                ` ${yTipLabel} = ${formatVal(yval)}${yerr} ${yUnit} ${ul} ${cval}</span>`;
         });
 
         if (traceType === 'scatter') {
@@ -395,6 +395,18 @@ export function addScatterChanges({changes, chartId, traceNum, tablesource, tabl
 }
 
 /**
+ * This is a work-around for plotly not handling BigInt.
+ * We store BigInt as string.  Plotly will plot it as a number.  When converted, precision will be lost.
+ * Instead of showing the plotted value, we show the original BigInt as a string.
+ * @param v the value to format
+ * @returns {number}
+ */
+const formatVal = (v) => {
+    const val = parseFloat(v);
+    return (Number.isInteger(val) && !Number.isSafeInteger(val)) ? v : val;
+};
+
+/**
  * Format errors - all parameters can be strings or numbers
  * @param {string|number} val
  * @param {string|number} err
@@ -408,16 +420,16 @@ export const formatError = function(val, err, errLow, errHigh) {
     const errNum = parseFloat(err);
     if (Number.isFinite(errNum)) {
         //return ' \u00B1 '+numeral(lowErr).format(fmtLow); //Unicode U+00B1 is plusmn
-        str = ` \u00B1${errNum}`; //Unicode U+00B1 is plusmn
+        str = ` \u00B1${formatVal(err)}`; //Unicode U+00B1 is plusmn
     } else {
         const errHighNum = parseFloat(errHigh);
         if (Number.isFinite(errHighNum)) {
-            str += ` \u002B${errHighNum}`;
+            str += ` \u002B${formatVal(errHigh)}`;
         }
         const errLowNum = parseFloat(errLow);
         if (Number.isFinite(errLowNum)) {
             if (str) str += ' /';
-            str += ` \u2212${errLowNum}`;
+            str += ` \u2212${formatVal(errLow)}`;
         }
     }
     return str;

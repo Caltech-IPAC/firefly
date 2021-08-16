@@ -420,7 +420,7 @@ export function getDataChangesForMappings({tableModel, mappings, traceNum}) {
         const transposed = tableModel.tableData.columns.map(() => []);
         const data = get(tableModel, 'tableData.data', []);
         data.forEach((r) => {
-            r.map((e, idx) => transposed[idx].push(e));
+            r.map((e, idx) => transposed[idx].push(handleBigInt(e)));
         });
         // tableModel columns are named as the paths to the trace arrays
         getDataVal = (k,v) => {
@@ -454,6 +454,10 @@ export function getDataChangesForMappings({tableModel, mappings, traceNum}) {
     }
 
     return changes;
+}
+
+export function handleBigInt(v) {
+    return typeof v === 'bigint' ? String(v) : v;
 }
 
 /**

@@ -10,15 +10,13 @@ describe('sprintf: ', () => {
         expect(sprintf('%c', 65))	 .toBe('A');
         expect(sprintf('%d', 2))    .toBe('2');
         expect(sprintf('%i', 2))    .toBe('2');
-        expect(sprintf('%d', '2'))  .toBe('2');
-        expect(sprintf('%i', '2'))  .toBe('2');
 
         expect(sprintf('%j', {foo: 'bar'}))	.toBe('{"foo":"bar"}');
         expect(sprintf('%j', ['foo', 'bar']))	.toBe('["foo","bar"]');
 
         expect(sprintf('%e', 2))    .toBe('2.000000e+0');
-        expect(sprintf('%.6e', 2))  .toBe('2.000000e+0');
-        expect(sprintf('%.6E', 2))  .toBe('2.000000E+0');   // same as above but with uppercase E
+        expect(sprintf('%.3e', 2))  .toBe('2.000e+0');
+        expect(sprintf('%.3E', 2))  .toBe('2.000E+0');   // same as above but with uppercase E
         expect(sprintf('%u', 2))    .toBe('2');
         expect(sprintf('%u', -2))   .toBe('4294967294');
         expect(sprintf('%f', 2.2))  .toBe('2.200000');
@@ -94,6 +92,23 @@ describe('sprintf: ', () => {
     test('embedded:', () => {
         expect(sprintf('Total cost: $%7.2f', 12.1)) .toBe('Total cost: $  12.10');
         expect(sprintf('Total cost: $%7.3f', 12))   .toBe('Total cost: $ 12.000');
+    });
+
+    test('BigInt:', () => {
+        expect(sprintf('%s',    1448045501351006139n))  .toBe('1448045501351006139');
+        expect(sprintf('%i',    1448045501351006139n))  .toBe('1448045501351006139');
+        expect(sprintf('%d',    1448045501351006139n))  .toBe('1448045501351006139');
+
+        // converted to Number before formatting.
+        expect(sprintf('%.3e',  1448045501351006139n)).toBe('1.448e+18');
+        expect(sprintf('%.6g',  14480n))              .toBe('14480.0');
+        expect(sprintf('%J',    14480n))              .toBe('14480');
+        expect(sprintf('%.3f',  14480n))              .toBe('14480.000');
+
+        // when precision may be lost, error is thrown.
+        expect(() => sprintf('%J',    1448045501351006139n)).toThrowError(TypeError);
+        expect(() => sprintf('%.20g', 1448045501351006139n)).toThrowError(TypeError);
+        expect(() => sprintf('%f',    1448045501351006139n)).toThrowError(TypeError);
     });
 
 });

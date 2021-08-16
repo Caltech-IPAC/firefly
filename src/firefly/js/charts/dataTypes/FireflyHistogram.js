@@ -6,7 +6,7 @@ import {logger} from '../../util/Logger.js';
 import {COL_TYPE, getColumn, getColumns, getTblById, doFetchTable, stripColumnNameQuotes} from '../../tables/TableUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
-import {formatColExpr} from '../ChartUtil.js';
+import {formatColExpr, handleBigInt} from '../ChartUtil.js';
 
 
 import {toMaxFixed, getDecimalPlaces} from '../../util/MathUtil.js';
@@ -255,8 +255,8 @@ function createXY(data, binColor) { // removed '#d1d1d1' to use default colors
     var addBin = (xySeries, x1, x2, y) => {
         const xVal = (x1 + x2) / 2;
 
-        xySeries.x.push(xVal);
-        xySeries.y.push(y);
+        xySeries.x.push(handleBigInt(xVal));
+        xySeries.y.push(handleBigInt(y));
         const binWidth = x1 === x2 ? minWidth: x2-x1;
         xySeries.binWidth.push(binWidth);
 

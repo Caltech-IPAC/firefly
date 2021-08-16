@@ -5,7 +5,7 @@ import {get, isArray} from 'lodash';
 import {getTblById, getColumn, doFetchTable, stripColumnNameQuotes} from '../../tables/TableUtil.js';
 import {makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
-import {isScatter2d, getMaxScatterRows, singleTraceUI} from '../ChartUtil.js';
+import {isScatter2d, getMaxScatterRows, singleTraceUI, handleBigInt} from '../ChartUtil.js';
 import {serializeDecimateInfo, parseDecimateKey} from '../../tables/Decimate.js';
 import BrowserInfo from  '../../util/BrowserInfo.js';
 import {formatColExpr} from '../ChartUtil.js';
@@ -160,9 +160,9 @@ function getChanges({tableModel, tablesource, chartId, traceNum}) {
         // colNames = ['x', 'y', 'rowIdx', 'weight', 'decimate_key'];
         const [xval, yval, rowIdx, weight, decimateKey] = r;
         const centerPt = getCenter(xval, yval);
-        x.push(centerPt.x);
-        y.push(centerPt.y);
-        z.push(weight);
+        x.push(handleBigInt(centerPt.x));
+        y.push(handleBigInt(centerPt.y));
+        z.push(handleBigInt(weight));
         text.push(`<span> ${xTipLabel} = ${parseFloat(xval)} ${xUnit} <br>` +
                     ` ${yTipLabel} = ${parseFloat(yval)} ${yUnit} <br>` +
                     ` represents ${weight} points</span>`);

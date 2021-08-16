@@ -4,6 +4,7 @@
  */
 
 import 'isomorphic-fetch';
+import 'json-bigint-patch';         // patch JSON parse/stringify to recognize bigint
 import React from 'react';
 import ReactDOM from 'react-dom';
 import {set, defer, once} from 'lodash';

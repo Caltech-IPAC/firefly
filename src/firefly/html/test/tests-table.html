@@ -115,6 +115,7 @@
                 columns.map( (c) => 0.0000123456),  // a small number
                 columns.map( (c) => 123456789.0),   // a big number
                 columns.map( (c) => 2000/3),        // a long number
+                columns.map( (c, idx) => [2,4,6].includes(idx) ? 1448045501351006139n : 123n)    // client table with bigint.  use small number for the first 2 columns because those formats requires full precisions.
             ];
             const table = { tableData: { columns, data } };
 
