@@ -18,7 +18,7 @@ const middleStyle= {
     fontSize: '12pt',
     background: `url(${BUTTON_MIDDLE}) top left repeat-x`,
     color: 'white',
-    verticalAlign:'baseline'
+    verticalAlign:'bottom'
 };
 
 /**

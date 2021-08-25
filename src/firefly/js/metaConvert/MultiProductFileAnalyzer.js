@@ -127,8 +127,14 @@ export function makeAnalysisGetGridDataProduct(makeReq) {
         const promiseAry= reqAry.map( (r) => {
             return doUploadAndAnalysis({table,request:r,activateParams})
                 .then( (result) => {
-                    if (!get(result,'fileMenu.fileAnalysis')) return false;
-                    return gridEntryHasImages(result.fileMenu.fileAnalysis) && r;
+                    if (!result?.fileMenu?.fileAnalysis?.parts) return false;
+                    const {parts}= result.fileMenu.fileAnalysis;
+                    if (!gridEntryHasImages(parts)) return false;
+                    const newReq= r.makeCopy();
+                    parts
+                        .forEach( (p) => Object.entries(p.additionalImageParams ?? {} )
+                        .forEach(([k,v]) => newReq.setParam(k,v)));
+                    return newReq;
                 });
         });
 
@@ -323,7 +329,7 @@ function watchForUploadUpdate(action, cancelSelf, {url,dpId}) {
 }
 
 
-const gridEntryHasImages= (fileAnalysis) => fileAnalysis.parts.find( (p) => p.type===FileAnalysisType.Image);
+const gridEntryHasImages= (parts) => parts.find( (p) => p.type===FileAnalysisType.Image);
 
 function makeErrorResult(message, fileName,url) {
     return dpdtMessageWithDownload(`No displayable data available for this row${message?': '+message:''}`, fileName&&'Download: '+fileName, url);
