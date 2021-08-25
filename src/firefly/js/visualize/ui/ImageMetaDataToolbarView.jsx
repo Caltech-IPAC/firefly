@@ -105,15 +105,15 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds=
                                          style={{marginLeft: 5}}
                                          onClick={() => showThreeColorOps(viewer,dataId)}/>
                 }
-                {layoutType===SINGLE && viewerPlotIds.length>1 &&
-                            <img style={leftImageStyle} src={PAGE_LEFT}
-                                 onClick={() => dispatchChangeActivePlotView(viewerPlotIds[prevIdx])} />
-                }
-                {layoutType===SINGLE && viewerPlotIds.length>1 &&
-                            <img style={{cursor:'pointer', paddingLeft:5, flex: '0 0 auto'}}
-                                 src={PAGE_RIGHT}
-                                 onClick={() => dispatchChangeActivePlotView(viewerPlotIds[nextIdx])} />
-                }
+                {/*{layoutType===SINGLE && viewerPlotIds.length>1 &&*/}
+                {/*            <img style={leftImageStyle} src={PAGE_LEFT}*/}
+                {/*                 onClick={() => dispatchChangeActivePlotView(viewerPlotIds[prevIdx])} />*/}
+                {/*}*/}
+                {/*{layoutType===SINGLE && viewerPlotIds.length>1 &&*/}
+                {/*            <img style={{cursor:'pointer', paddingLeft:5, flex: '0 0 auto'}}*/}
+                {/*                 src={PAGE_RIGHT}*/}
+                {/*                 onClick={() => dispatchChangeActivePlotView(viewerPlotIds[nextIdx])} />*/}
+                {/*}*/}
             </div>
             {showPager && <ImagePager pageSize={converter.maxPlots} tbl_id={activeTable.tbl_id} />}
             {(handleInlineTools || viewerPlotIds?.length>1) && <InlineRightToolbarWrapper visRoot={vr} pv={pv} dlAry={pvDlAry} />}

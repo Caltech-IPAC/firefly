@@ -12,7 +12,7 @@ import {convertAngle} from './VisUtil.js';
 
 export const FullType = new Enum(['ONLY_WIDTH', 'WIDTH_HEIGHT', 'ONLY_HEIGHT']);
 
-export const imageLevels= [.03125, .0625, .125,.1,.25,.3, .4, .5, .75, .8, .9, 1, 1.25, 1.5,2, 2.5,3, 3.5,
+export const imageLevels= [.0125, .025, .05,.1,.25,.3, .4, .5, .75, .8, .9, 1, 1.25, 1.5,2, 2.5,3, 3.5,
     4,5, 6, 7,8, 9, 10, 11, 12, 13, 14, 15, 16, 18,20,22,24,28, 32];
 export const imageLevelsReversed= [...imageLevels].reverse();
 
