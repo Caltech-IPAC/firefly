@@ -24,7 +24,7 @@ export function initImageDrawer(targetCanvas) {
 
 
     return (plot, opacity,plotView, tileProcessInfo= {shouldProcess:false}) => {
-        if (!isImage(plot)) return;
+        if (!isImage(plot) || !plot.affTrans) return;
         abortLastDraw?.();
         const rootPlot= primePlot(plotView); // bounding box should us main plot not overlay plot
         const boundingBox= computeBounding(rootPlot,plotView.viewDim.width,plotView.viewDim.height);
