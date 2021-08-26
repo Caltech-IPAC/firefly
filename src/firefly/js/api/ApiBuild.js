@@ -37,7 +37,7 @@ import {MultiViewStandardToolbar} from '../visualize/ui/MultiViewStandardToolbar
 import {ImageExpandedMode} from '../visualize/iv/ImageExpandedMode.jsx';
 import {ApiExpandedDisplay} from '../visualize/ui/ApiExpandedDisplay.jsx';
 import {ApiFullImageDisplay} from '../visualize/ui/ApiFullImageDisplay.jsx';
-import {ApiToolbarImageDisplay} from 'firefly/visualize/ui/v2/ApiToolbarImageDisplay.jsx';
+import {ApiToolbarImageDisplay} from 'firefly/visualize/ui/ApiToolbarImageDisplay.jsx';
 import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
 import {TablePanel} from '../tables/ui/TablePanel.jsx';
 import {ChartsContainer} from '../charts/ui/ChartsContainer.jsx';

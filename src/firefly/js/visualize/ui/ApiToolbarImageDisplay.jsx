@@ -4,10 +4,10 @@
 
 import React, {memo} from 'react';
 import PropTypes from 'prop-types';
-import {MultiViewStandardToolbar} from '../MultiViewStandardToolbar.jsx';
-import {MultiImageViewer} from '../MultiImageViewer.jsx';
-import {NewPlotMode} from '../../MultiViewCntlr.js';
-import {RenderTreeIdCtx} from '../../../ui/RenderTreeIdCtx.jsx';
+import {MultiViewStandardToolbar} from './MultiViewStandardToolbar.jsx';
+import {MultiImageViewer} from './MultiImageViewer.jsx';
+import {NewPlotMode} from '../MultiViewCntlr.js';
+import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 
 
 export const ApiToolbarImageDisplay= memo(({viewerId, renderTreeId}) => {

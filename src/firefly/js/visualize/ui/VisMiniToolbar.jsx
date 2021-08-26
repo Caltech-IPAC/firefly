@@ -12,19 +12,19 @@ import {
     dispatchRestoreDefaults,
     dispatchRotate, ExpandType,
     visRoot
-} from '../../ImagePlotCntlr.js';
-import {getDlAry} from '../../DrawLayerCntlr.js';
+} from '../ImagePlotCntlr.js';
+import {getDlAry} from '../DrawLayerCntlr.js';
 import {
     getAllDrawLayersForPlot,
     getActivePlotView,
     primePlot,
     hasWCSProjection,
     findPlotGroup, hasOverlayColorLock
-} from '../../PlotViewUtil.js';
-import {getPreference} from '../../../core/AppDataCntlr';
-import {ImageCenterDropDown, TARGET_LIST_PREF} from '../ImageCenterDropDown';
-import {useStoreConnector} from '../../../ui/SimpleComponent';
-import {pvEqualExScroll} from '../../PlotViewUtil';
+} from '../PlotViewUtil.js';
+import {getPreference} from '../../core/AppDataCntlr.js';
+import {ImageCenterDropDown, TARGET_LIST_PREF} from './ImageCenterDropDown.jsx';
+import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {pvEqualExScroll} from '../PlotViewUtil.js';
 import {isHiPS} from 'firefly/visualize/WebPlot.js';
 import {getDefMenuItemKeys} from 'firefly/visualize/MenuItemKeys.js';
 import CoordinateSys from 'firefly/visualize/CoordSys.js';
@@ -49,7 +49,7 @@ import {showImageSelPanel} from 'firefly/visualize/ui/ImageSearchPanelV2.jsx';
 import {findUnactivatedRelatedData} from 'firefly/visualize/RelatedDataUtil.js';
 import {showDrawingLayerPopup} from 'firefly/visualize/ui/DrawLayerPanel.jsx';
 import {SingleColumnMenu} from 'firefly/ui/DropDownMenu.jsx';
-import {wrapResizer} from '../../../ui/SizeMeConfig.js';
+import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {dispatchSetLayoutMode, LO_MODE, LO_VIEW} from 'firefly/core/LayoutCntlr.js';
 
 import SAVE from 'images/icons-2014/Save.png';

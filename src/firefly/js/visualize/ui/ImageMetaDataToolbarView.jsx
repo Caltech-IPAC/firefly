@@ -13,7 +13,7 @@ import {dispatchChangeViewerLayout, getViewer, getMultiViewRoot,
         GRID_FULL, GRID_RELATED, SINGLE, GRID} from '../MultiViewCntlr.js';
 import {showColorBandChooserPopup} from './ColorBandChooserPopup.jsx';
 import {ImagePager} from './ImagePager.jsx';
-import {VisMiniToolbar} from 'firefly/visualize/ui/v2/VisMiniToolbar.jsx';
+import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
 
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import ONE from 'html/images/icons-2014/Images-One.png';

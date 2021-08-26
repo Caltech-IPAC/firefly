@@ -4,13 +4,13 @@
 
 import React, {useEffect, useRef, useState} from 'react';
 import {object, bool} from 'prop-types';
-import {getNonFluxDisplayElements, getFluxInfo} from '../MouseReadoutUIUtil.js';
-import {DataReadoutItem, MouseReadoutLock} from '../MouseReadout.jsx';
-import {STANDARD_READOUT} from '../../MouseReadoutCntlr.js';
-import '../MouseReadout.css';
+import {getNonFluxDisplayElements, getFluxInfo} from './MouseReadoutUIUtil.js';
+import {DataReadoutItem, MouseReadoutLock} from './MouseReadout.jsx';
+import {STANDARD_READOUT} from '../MouseReadoutCntlr.js';
+import './MouseReadout.css';
 import {ToolbarButton} from 'firefly/ui/ToolbarButton.jsx';
 import POPOUT_ICON from 'images//pop-out.png';
-import {showMouseReadoutPopout} from 'firefly/visualize/ui/v2/MouseReadPopoutAll.jsx';
+import {showMouseReadoutPopout} from 'firefly/visualize/ui/MouseReadPopoutAll.jsx';
 
 
 export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, style, slightlyTransparent=false, showOnInactive= false}){

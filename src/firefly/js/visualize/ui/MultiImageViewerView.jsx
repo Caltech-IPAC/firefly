@@ -12,9 +12,9 @@ import {ImageViewer} from './../iv/ImageViewer.jsx';
 import {useMouseStoreConnector} from 'firefly/visualize/ui/MouseStoreConnector.jsx';
 import {lastMouseImageReadout} from 'firefly/visualize/VisMouseSync.js';
 import {readoutRoot} from 'firefly/visualize/MouseReadoutCntlr.js';
-import {MouseReadoutBottomLine} from 'firefly/visualize/ui/v2/MouseReadoutBottomLine.jsx';
+import {MouseReadoutBottomLine} from 'firefly/visualize/ui/MouseReadoutBottomLine.jsx';
 import {isDialogVisible} from 'firefly/core/ComponentCntlr.js';
-import {MOUSE_READOUT_DIALOG_ID} from 'firefly/visualize/ui/v2/MouseReadPopoutAll.jsx';
+import {MOUSE_READOUT_DIALOG_ID} from 'firefly/visualize/ui/MouseReadPopoutAll.jsx';
 
 
 function makeState() {

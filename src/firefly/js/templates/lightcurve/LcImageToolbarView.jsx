@@ -14,7 +14,7 @@ import {LC, getConverterData} from './LcManager.js';
 import {CloseButton} from '../../ui/CloseButton.jsx';
 import {getTblById} from '../../tables/TableUtil.js';
 import {SortInfo, SORT_ASC, SORT_DESC, UNSORTED} from '../../tables/SortInfo.js';
-import {VisMiniToolbar} from 'firefly/visualize/ui/v2/VisMiniToolbar.jsx';
+import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
 
 
 const toolsStyle= {

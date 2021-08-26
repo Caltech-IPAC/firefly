@@ -4,7 +4,6 @@
 
 import React, {Fragment,memo, useState} from 'react';
 import {number,string,oneOfType,object,func,bool} from 'prop-types';
-import {getNonFluxDisplayElements, getFluxInfo} from './MouseReadoutUIUtil.js';
 import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
 import {dispatchChangeLockByClick} from '../MouseReadoutCntlr.js';
 import {copyToClipboard} from '../../util/WebUtil';
@@ -13,52 +12,6 @@ import {ToolbarButton} from '../../ui/ToolbarButton';
 import CLIPBOARD from 'html/images/12x12_clipboard.png';
 import CHECKED from 'html/images/12x12_clipboard-checked.png';
 import './MouseReadout.css';
-
-
-export function MouseReadout({readout, readoutData}){
-
-    if (!readoutData.readoutItems) return (<div className='mouseReadoutDisplaySpace'/>);
-    const {threeColor}= readoutData;
-
-    const title= readoutData?.readoutItems?.title?.value ?? '';
-
-    const displayEle= getNonFluxDisplayElements(readoutData.readoutItems,  readout.readoutPref, false);
-    const {readout1, readout2, pixelSize, showReadout1PrefChange, showWavelengthFailed,
-        showReadout2PrefChange, showPixelPrefChange, waveLength}= displayEle;
-    const showCopy= readout.lockByClick;
-
-    const fluxArray = getFluxInfo(readoutData);
-    const gridClasses= `mouseReadoutImageGrid ${showCopy?'mouseReadoutImageGrid-withclip' :''} mouseReadoutDisplaySpace`;
-
-    return (
-        <div className={gridClasses}>
-            <div style={{gridArea:'plotTitle', paddingLeft:4}}> {title}  </div>
-
-            <DataReadoutItem lArea='pixReadoutTopLabel' vArea='pixReadoutTopValue' cArea='clipboardIconTop'
-                             label={readout1.label} value={readout1.value} copyValue={readout1.copyValue} showCopy={showCopy}
-                             prefChangeFunc={showReadout1PrefChange}/>
-            <DataReadoutItem lArea='pixReadoutBottomLabel' vArea='pixReadoutBottomValue'  cArea='clipboardIconBottom'
-                             label={readout2.label} value={readout2.value} copyValue={readout2.copyValue} showCopy={showCopy}
-                             prefChangeFunc={showReadout2PrefChange}/>
-            <DataReadoutItem lArea='pixSizeLabel' vArea='pixSizeValue' label={pixelSize.label}
-                             value={pixelSize.value} prefChangeFunc={showPixelPrefChange}/>
-                             
-            <DataReadoutItem lArea='redLabel' vArea='redValue' label={fluxArray[0].label} value={fluxArray[0].value}/>
-            {threeColor && <DataReadoutItem lArea='greenLabel' vArea='greenValue' label={fluxArray[1].label} value={fluxArray[1].value}/>}
-            {waveLength && <DataReadoutItem lArea='greenLabel' vArea='greenValue' label={waveLength.label} value={waveLength.value}
-                prefChangeFunc={showWavelengthFailed} /> }
-            <DataReadoutItem lArea='blueLabel' vArea='blueValue' label={fluxArray[2].label} value={fluxArray[2].value}/>
-
-            <MouseReadoutLock gArea='lock' lockByClick={readout.lockByClick} />
-        </div>
-    );
-}
-
-MouseReadout.propTypes = {
-    readout: object,
-    readoutData: object
-};
-
 
 export const MouseReadoutLock= memo(({gArea, gAreaLabel, style={}, lockByClick}) => {
     const s= gArea ? {gridArea:gArea,...style} : style;

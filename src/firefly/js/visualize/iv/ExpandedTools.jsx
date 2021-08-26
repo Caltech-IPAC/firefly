@@ -24,7 +24,7 @@ import PAGE_RIGHT from 'html/images/icons-2014/20x20_PageRight.png';
 import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
 import ACTIVE_DOT from 'html/images/green-dot-10x10.png';
 import INACTIVE_DOT from 'html/images/blue-dot-10x10.png';
-import {VisMiniToolbar} from 'firefly/visualize/ui/v2/VisMiniToolbar.jsx';
+import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
 
 const tStyle= {
     display:'inline-block',
