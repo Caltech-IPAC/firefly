@@ -5,8 +5,10 @@
 - To Access current (unstable) development - (Version _next_, unreleased) use docker tag: `nightly`
 
 ## Version 2021.3 
+- 2021.3.2 (Aug 2021)
+  - docker tag: `latest`, `release-2021.3`, `release-2021.3.2`
 - 2021.3.1 (Aug 2021)
-  - docker tag: `latest`, `release-2021.3`, `release-2021.3.1`
+  - docker tag: `release-2021.3.1`
 - 2021.3.0  (Aug 2021)
   - docker tag: `release-2021.3.0`
   - original release
@@ -28,6 +30,12 @@
   - Small Bug fixes
   - Improve TAP Ivoa.ObsCore detection ([DM-30780](https://github.com/Caltech-IPAC/firefly/pull/1119))
   - Improve TAP spacial validation ([PR](https://github.com/Caltech-IPAC/firefly/pull/1118))
+- 2021.3.2
+  - fixed: zoom down bouncing issue ([PR](https://github.com/Caltech-IPAC/firefly/pull/1122))
+  - fixed: removed MultiProductViewer UI grid then single arrows ([PR](https://github.com/Caltech-IPAC/firefly/pull/1122))
+  - fixed: close button issue on safari ([PR](https://github.com/Caltech-IPAC/firefly/pull/1122))
+  - fixes: MultiProductViewer grid mode not using server side plot parameters([IRSA-4183](https://github.com/Caltech-IPAC/firefly/pull/1122))
+  - Continued TAP Ivoa.ObsCore detection ([DM-30780](https://github.com/Caltech-IPAC/firefly/pull/1120))
     
 ##### _Pull Request in this release_
 - [Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2021.3+label%3abug)
