@@ -736,7 +736,7 @@ function recenterPv(centerPt,  centerOnImage, updateFixedTarget= false) {
             if (!cp) cp= plot.attributes[PlotAttribute.FIXED_TARGET];
             if (!cp) cp= makeWorldPt(0,0,plot.imageCoordSys);
             const newPlot= changeProjectionCenter(plot,cp);
-            if (updateFixedTarget || centerPt.type===Point.W_PT) {
+            if (updateFixedTarget || centerPt?.type===Point.W_PT) {
                 newPlot.attributes= {...newPlot.attributes, [PlotAttribute.FIXED_TARGET]:centerPt};
             }
             return replacePrimaryPlot(pv, newPlot);

@@ -4,9 +4,10 @@
 
 
 .plot-title-inline-title-container {
-    position : absolute;
-    left : 0;
-    top : 0;
+    position : relative;
+    /*left : 0;*/
+    /*top : 0;*/
+    align-self: flex-start;
     padding : 0 5px 0 2px;
     background : rgba(227, 227, 227, .8);
     white-space : nowrap;

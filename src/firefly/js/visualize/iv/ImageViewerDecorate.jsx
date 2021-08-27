@@ -3,7 +3,7 @@
  */
 
 
-import React, {memo} from 'react';
+import React, {memo, useEffect, useRef, useState} from 'react';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
 import {isEmpty,omit,isFunction} from 'lodash';
@@ -11,7 +11,7 @@ import {getPlotGroupById}  from '../PlotGroup.js';
 import {ExpandType, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {VisCtxToolbarView, canConvertHipsAndFits} from '../ui/VisCtxToolbarView';
 import {VisInlineToolbarView} from '../ui/VisInlineToolbarView.jsx';
-import {primePlot, isActivePlotView, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
+import {primePlot, isActivePlotView, getAllDrawLayersForPlot, getPlotViewById} from '../PlotViewUtil.js';
 import {ImageViewerLayout}  from '../ImageViewerLayout.jsx';
 import {isImage, isHiPS} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
@@ -115,88 +115,68 @@ function showUnselect(pv,dlAry) {
 
 
 
-function contextToolbar(pv,dlAry,extensionList) {
-    const plot= primePlot(pv);
+function contextToolbar(plotView,dlAry,extensionList, width) {
+    const plot= primePlot(plotView);
     if (!plot) return;
 
-    const showMulti= isImage(plot) ? pv.plots.length>1 : plot.cubeDepth>1;
-    const hipsFits= canConvertHipsAndFits(pv);
-
+    const showMultiImageController= isImage(plot) ? plotView.plots.length>1 : plot.cubeDepth>1;
+    const hipsFits= canConvertHipsAndFits(plotView);
 
     if (plot.attributes[PlotAttribute.SELECTION]) {
-        const select= showSelect(pv,dlAry);
-        const unselect= showUnselect(pv,dlAry);
-        const filter= showFilter(pv,dlAry);
-        const clearFilter= showClearFilter(pv,dlAry);
+        const select= showSelect(plotView,dlAry);
+        const unselect= showUnselect(plotView,dlAry);
+        const filter= showFilter(plotView,dlAry);
+        const clearFilter= showClearFilter(plotView,dlAry);
         const selAry= extensionList.filter( (ext) => ext.extType===AREA_SELECT);
         const extensionAry= isEmpty(selAry) ? EMPTY_ARRAY : selAry;
         return (
-            <VisCtxToolbarView {...{plotView:pv, extensionAry,
-                                    showSelectionTools:true, showCatSelect:select,
-                                    showCatUnSelect:unselect,
-                                    showFilter:filter, showClearFilter:clearFilter,
-                                    showMultiImageController:showMulti}}
-            />
+            <VisCtxToolbarView {...{plotView, extensionAry, width,
+                showSelectionTools:true, showCatSelect:select, showCatUnSelect:unselect,
+                showFilter:filter, showClearFilter:clearFilter, showMultiImageController}} />
         );
     }
     else if (plot.attributes[PlotAttribute.ACTIVE_DISTANCE]) {
         const distAry= extensionList.filter( (ext) => ext.extType===LINE_SELECT);
-        if (!distAry.length && !showMulti && !hipsFits) return false;
+        if (!distAry.length && !showMultiImageController && !hipsFits) return;
         return (
-            <VisCtxToolbarView plotView={pv} extensionAry={isEmpty(distAry)?EMPTY_ARRAY:distAry}
-                               showMultiImageController={showMulti}/>
+                <VisCtxToolbarView {...{plotView, extensionAry:isEmpty(distAry)?EMPTY_ARRAY:distAry,
+                    width, showMultiImageController}}/>
         );
     }
     else if (plot.attributes[PlotAttribute.ACTIVE_POINT]) {
         const ptAry= extensionList.filter( (ext) => ext.extType===POINT);
-        if (!ptAry.length && !showMulti && !hipsFits) return false;
+        if (!ptAry.length && !showMultiImageController && !hipsFits) return;
         return (
-            <VisCtxToolbarView plotView={pv} extensionAry={isEmpty(ptAry)?EMPTY_ARRAY:ptAry}
-                               showMultiImageController={showMulti}/>
+                <VisCtxToolbarView {...{plotView, extensionAry:isEmpty(ptAry)?EMPTY_ARRAY:ptAry, width,
+                    showMultiImageController}}/>
         );
     }
-    else if (showUnselect(pv, dlAry)) {
+    else if (showUnselect(plotView, dlAry)) {
         return (
-            <VisCtxToolbarView {...{plotView:pv, extensionAry:EMPTY_ARRAY,
-                showCatUnSelect:true, showClearFilter:showClearFilter(pv,dlAry),
-                showMultiImageController:showMulti}}
-            />
+               <VisCtxToolbarView {...{plotView, extensionAry:EMPTY_ARRAY, width,
+                       showCatUnSelect:true, showClearFilter:showClearFilter(plotView,dlAry),
+                       showMultiImageController}} />
         );
     }
-    else if (showClearFilter(pv,dlAry)) {
+    else if (showClearFilter(plotView,dlAry)) {
         return (
-            <VisCtxToolbarView {...{plotView:pv, extensionAry:EMPTY_ARRAY,
-                showClearFilter:true,
-                showMultiImageController:showMulti}}
-            />
+                <VisCtxToolbarView {...{plotView, extensionAry:EMPTY_ARRAY,  width,
+                    showClearFilter:true, showMultiImageController}} />
         );
     }
-    else if (showMulti || hipsFits || isHiPS(plot)) {
-        return (
-            <VisCtxToolbarView plotView={pv} extensionAry={EMPTY_ARRAY} showMultiImageController={showMulti}/>
-        );
+    else if (showMultiImageController || hipsFits || isHiPS(plot)) {
+        return ( <VisCtxToolbarView {...{plotView, extensionAry:EMPTY_ARRAY, showMultiImageController, width}}/> );
     }
-    return false;
 }
 
-
-const bgSlightGray= {background: 'rgba(255,255,255,.2)'};
-
-function makeInlineRightToolbar(visRoot,pv,showDelete) {
-    if (!pv) return false;
-    return (
-        <div style={bgSlightGray} className='iv-decorate-inline-toolbar-container'>
-            <VisInlineToolbarView pv={pv} showDelete={showDelete} />
-        </div>
-    );
-}
 
 function getBorderColor(pv,visRoot) {
     if (!pv && !pv.plotId) return 'rgba(0,0,0,.4)';
     if (isActivePlotView(visRoot,pv.plotId)) return 'orange';
     const group= getPlotGroupById(visRoot,pv.plotGroupId);
-    if (group && group.overlayColorLock) return '#005da4';
-    else return 'rgba(0,0,0,.4)';
+    // if (group && group.overlayColorLock) return 'rgba(0, 93, 164, .2)';
+    if (group && group.overlayColorLock) return 'rgba(0, 0, 0, .1)';
+    else return 'rgba(0,0,0,.2)';
 }
 
 
@@ -210,15 +190,16 @@ const omitList= ['mousePlotId', 'size'];
 function arePropsEquals(props, np) {
     if (props.size.width!==np.size.width || props.size.height!==np.size.height) return false;
     if (!shallowequal(omit(np,omitList), omit(props,omitList))) return false;
-    const plotId= props.plotView?.plotId;
-    if (props.mousePlotId!==np.mousePlotId && (props.mousePlotId===plotId || np.mousePlotId===plotId)) return false;
+    // if (props.mousePlotId!==np.mousePlotId && (props.mousePlotId===plotId || np.mousePlotId===plotId)) return false;
+    if (props.mousePlotId!==np.mousePlotId) return false;
+    if (props.plotId!==np.plotId) return false;
     return true;
 } //todo: look at closely for optimization
 
 
 function ZoomPair({pv, show}) {
     return (
-        <div
+        primePlot(pv) ? <div
             style={{
                 visibility: show ? 'visible' : 'hidden',
                 opacity: show ? 1 : 0,
@@ -226,12 +207,12 @@ function ZoomPair({pv, show}) {
                 background:'rgba(227, 227, 227, .8)',
                 display:'inline-flex',
                 borderRadius:'0 0 5px ',
-                position:'absolute',
-                top:16,
-                left:0}}>
+                position: 'relative',
+                alignSelf: 'flex-start',
+                }}>
             <ZoomButton size={20} plotView={pv} zoomType={ZoomType.UP} horizontal={true}/>
             <ZoomButton size={20} plotView={pv} zoomType={ZoomType.DOWN} horizontal={true}/>
-        </div>
+        </div> : <div/>
     );
     
 }
@@ -240,19 +221,31 @@ const ImageViewerDecorate= memo((props) => {
     const {plotView:pv,drawLayersAry,extensionList,visRoot,mousePlotId, workingIcon,
         size:{width,height}, inlineTitle=true, aboveTitle= false }= props;
 
+    const [showDelAnyway, setShowSelAnyway]= useState(false);
+
+    useEffect(() => {
+        const mousePlotIdExist= Boolean(getPlotViewById(visRoot,mousePlotId));
+        if (mousePlotIdExist) {
+            setShowSelAnyway(false);
+            return;
+        }
+        setShowSelAnyway(true);
+        const id= setTimeout(() => setShowSelAnyway(false), 5000);
+        return () => clearTimeout(id);
+    },[mousePlotId]);
+
     const showDelete= pv.plotViewCtx.userCanDeletePlots;
-    const ctxToolbar= contextToolbar(pv,drawLayersAry,extensionList);
-    const top= ctxToolbar?32:0;
+    const ctxToolbar= contextToolbar(pv,drawLayersAry,extensionList,width);
+    // const topOffset= ctxToolbar?32:0;
+    // const top= ctxToolbar?32:0;
     const expandedToSingle= (visRoot.expandedMode===ExpandType.SINGLE);
     const plot= primePlot(pv);
     const iWidth= Math.max(expandedToSingle ? width : width-4,0);
-    const iHeight=Math.max(expandedToSingle ? height-top :height-5-top,0);
+    const iHeight=Math.max(expandedToSingle ? height :height-5,0);
 
     const brief= briefAnno.includes(pv.plotViewCtx.annotationOps);
     const titleLineHeaderUI= (plot && aboveTitle) ?
                 <PlotTitle brief={brief} titleType={TitleType.HEAD} plotView={pv} /> : undefined;
-    const inlineTitleUI= (plot && inlineTitle) ?
-                <PlotTitle brief={brief} titleType={TitleType.INLINE} plotView={pv} working={workingIcon}/> : undefined;
 
     const outerStyle= { width: '100%', height: '100%', overflow:'hidden', position:'relative'};
 
@@ -277,20 +270,24 @@ const ImageViewerDecorate= memo((props) => {
     }
 
     const makeActive= () => pv?.plotId && dispatchChangeActivePlotView(pv.plotId);
+    const showZoom= mousePlotId===pv?.plotId;
+    const showDel= showDelAnyway || mousePlotId===pv?.plotId || !plot;
 
     return (
         <div style={outerStyle} className='disable-select' onTouchStart={makeActive} onClick={makeActive} >
             {titleLineHeaderUI}
             <div className='image-viewer-decorate' style={innerStyle}>
-                {ctxToolbar}
-                <div style={{position: 'absolute', width:'100%', top, bottom:0}}>
+                <div style={{position: 'absolute', width:'100%', top:0, bottom:0, display:'flex', flexDirection:'column'}}>
                     <ImageViewerLayout plotView={pv} drawLayersAry={drawLayersAry}
                                        width={iWidth} height={iHeight}
                                        externalWidth={width} externalHeight={height}/>
-                    {inlineTitleUI}
-                    <ZoomPair pv={pv} show={mousePlotId === pv?.plotId}/>
-                    {makeInlineRightToolbar(visRoot,pv,showDelete)}
+                    {ctxToolbar}
+                    {(plot && inlineTitle) ?
+                        <PlotTitle brief={brief} titleType={TitleType.INLINE} plotView={pv}
+                                   working={workingIcon} /> : undefined}
+                    <ZoomPair pv={pv} show={showZoom} />
                 </div>
+                <VisInlineToolbarView pv={pv} showDelete={showDelete} show={showDel}/>
             </div>
         </div>
         );

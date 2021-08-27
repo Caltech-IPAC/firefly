@@ -110,7 +110,7 @@ export function parseObsCoreRegion(sRegionVal, unit='deg', isCorners=false) {
     let  message = '';
     const corners = [];
 
-    const sAry = sRegionVal.split(/\s+/);
+    const sAry = sRegionVal.trim().split(/\s+/);
 
     const retVal = (v, m) => {
         return Object.assign({}, {valid: v, message: m},

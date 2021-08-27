@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {memo} from 'react';
+import React, {memo,Fragment} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, isString} from 'lodash';
 import {
@@ -52,6 +52,7 @@ import shallowequal from 'shallowequal';
 
 
 
+const image24x24={width:24, height:24};
 
 
 function makeExtensionButtons(extensionAry,pv) {
@@ -128,7 +129,7 @@ function HipsFitsConvertButton({pv}) {
             <RadioGroupInputFieldView options={options}  value={value}
                                       buttonGroup={true}
                                       onChange={(ev) => doConvert(pv,ev.target.value)} />
-            <div style={{paddingLeft: 3}} title={buttonGroupTip}>
+            <div style={{paddingLeft: 3, display:'flex', alignItems:'center'}} title={buttonGroupTip}>
                 <input type='checkbox' checked={auto} onChange={() => changeAutoConvert(pv, !auto)} />
                 Auto
             </div>
@@ -197,22 +198,25 @@ HiPSCoordSelect.propTypes= {
 export const VisCtxToolbarView= memo((props) => {
     const {
         plotView:pv, extensionAry, showSelectionTools=false,
-        showCatSelect=false, showCatUnSelect=false,
+        showCatSelect=false, showCatUnSelect=false, width,
         showFilter=false, showClearFilter=false,
         showMultiImageController=false }= props;
 
     const rS= {
-        width: '100% - 2px',
+        width: '100%',
         display:'flex',
-        height: 34,
+        height: 28,
         position: 'relative',
         verticalAlign: 'top',
         whiteSpace: 'nowrap',
         flexDirection:'row',
         flexWrap:'nowrap',
-        alignItems: 'center'
+        background:'rgba(227, 227, 227, .8)',
+        overflow: 'hidden',
+        alignItems: 'center',
     };
 
+    const extraLine= showMultiImageController && width<350;
     const plot= primePlot(pv);
     const image= isImage(plot);
     const canConvertHF= canConvertHipsAndFits(pv);
@@ -220,59 +224,92 @@ export const VisCtxToolbarView= memo((props) => {
     const showOptions= showSelectionTools|| showCatSelect|| showCatUnSelect ||
         showFilter || showClearFilter || !isEmpty(extensionAry) || hips || canConvertHF;
 
-    return (
-        <div style={rS}>
-            {showMultiImageController && <MultiImageControllerView plotView={pv} />}
-
-            {showMultiImageController && showOptions && <ToolbarHorizontalSeparator style={{height: 20}}/>}
-
+    const makeButtons= () => (
+        <Fragment>
             {showOptions &&
-                  <div style={{padding: '0 0 2px 2px', fontStyle: 'italic', fontWeight: 'bold'}}>Options:</div> }
+            <div style={{padding: '0 0 2px 2px', fontStyle: 'italic', fontWeight: 'bold'}}>Options:</div> }
 
 
             {showSelectionTools && image &&
             <ToolbarButton icon={CROP} tip='Crop the image to the selected area'
+                           imageStyle={image24x24}
                            horizontal={true} onClick={() => crop(pv)}/>}
 
 
             {showCatSelect &&
             <ToolbarButton icon={SELECTED} tip='Mark data in area as selected'
+                           imageStyle={image24x24}
                            horizontal={true} onClick={() => selectDrawingLayer(pv)}/>}
 
             {showCatUnSelect &&
             <ToolbarButton icon={UNSELECTED} tip='Mark all data unselected'
+                           imageStyle={image24x24}
                            horizontal={true} onClick={() => unselectDrawingLayer(pv)}/>}
 
             {showFilter &&
             <ToolbarButton icon={FILTER} tip='Filter in the selected area'
+                           imageStyle={image24x24}
                            horizontal={true} onClick={() => filterDrawingLayer(pv)}/>}
 
             {showClearFilter &&
             <ToolbarButton icon={CLEAR_FILTER} tip='Clear all the Filters'
+                           imageStyle={image24x24}
                            horizontal={true} onClick={() => clearFilterDrawingLayer(pv)}/>}
 
             {showSelectionTools &&
             <ToolbarButton icon={SELECTED_ZOOM} tip='Zoom to fit selected area'
+                           imageStyle={image24x24}
                            horizontal={true}
                            onClick={() => zoomIntoSelection(pv)}/>}
 
             { showSelectionTools &&
             <ToolbarButton icon={SELECTED_RECENTER} tip='Recenter image to selected area'
+                           imageStyle={image24x24}
                            horizontal={true} onClick={() => recenterToSelection(pv)}/>}
 
             {showSelectionTools && image &&
             <ToolbarButton icon={STATISTICS} tip='Show statistics for the selected area'
+                           imageStyle={image24x24}
                            horizontal={true} onClick={() => stats(pv)}/>}
 
 
             {makeExtensionButtons(extensionAry,pv)}
+        </Fragment>
+        );
 
+
+    const makeHipsControls= () => (
+        <Fragment>
             {canConvertHF && <HipsFitsConvertButton pv={pv}/>}
             {hips && <HiPSCoordSelect plotId={plot?.plotId} imageCoordSys={plot?.imageCoordSys}/>}
             {hips && makeHiPSImageTable(pv)}
-        </div>
+        </Fragment>
     );
-    },
+
+    if (extraLine && showMultiImageController && showOptions) {
+        return (
+            <div style={{display:'flex', flexDirection:'column'}}>
+                <div style={rS}>
+                    <MultiImageControllerView plotView={pv} />
+                </div>
+                <div style={rS}>
+                    {makeButtons()}
+                    {makeHipsControls()}
+                </div>
+            </div>
+        );
+    }
+    else {
+        return (
+            <div style={rS}>
+                {showMultiImageController && <MultiImageControllerView plotView={pv} />}
+                {showMultiImageController && showOptions && <ToolbarHorizontalSeparator/>}
+                {makeButtons()}
+                {makeHipsControls()}
+            </div>
+        );
+    }
+},
     (prevP,nextP) => {
         return (shallowequal({...prevP, plotView:undefined}, {...nextP,plotView:undefined}) &&
                 pvEqualExScroll(prevP.plotView, nextP.plotView));
@@ -287,6 +324,7 @@ VisCtxToolbarView.propTypes= {
     showCatUnSelect : PropTypes.bool,
     showFilter : PropTypes.bool,
     showClearFilter : PropTypes.bool,
+    width : PropTypes.number,
     showMultiImageController : PropTypes.bool
 };
 
@@ -304,7 +342,7 @@ const leftImageStyle= {
 
 const mulImStyle= {
     display:'inline-flex',
-    height: 34,
+    height: 28,
     position: 'relative',
     verticalAlign: 'top',
     whiteSpace: 'nowrap',
