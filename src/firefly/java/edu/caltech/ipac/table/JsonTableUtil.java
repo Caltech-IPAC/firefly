@@ -308,21 +308,6 @@ public class JsonTableUtil {
     }
 
 
-    //LZ DM-4494
-    public static JSONObject toJsonTableModelMap(Map<String, DataGroup> dataMap, TableServerRequest request) throws IOException {
-        JSONObject jsoObj = new JSONObject();
-        for (Object key : dataMap.keySet()) {
-            DataGroup dataGroup = dataMap.get(key);
-            DataGroupPart dp = new DataGroupPart(dataGroup, 0, dataGroup.size());
-            JSONObject aJsonTable = JsonTableUtil.toJsonTableModel(dp, request);
-
-            jsoObj.put(key, aJsonTable);
-
-        }
-        return jsoObj;
-    }
-
-
 //====================================================================
 //  private methods
 //====================================================================
@@ -646,6 +631,12 @@ public class JsonTableUtil {
 
         if (obj instanceof Date) {
             return () -> "\"" + JSON_DATE.format(obj) + "\"";
+        } else if (obj instanceof Double) {
+            double d = (Double) obj;
+            long l = (long)d;
+            if (d == l) {
+                return () -> String.format("%d", l);      //  when BigInt(> 9.0e+15) is written in scientific notation, parsing will fail.  Use decimal format instead.
+            }
         }
         return null;
     }

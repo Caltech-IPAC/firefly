@@ -25,6 +25,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.*;
 import java.util.Date;
@@ -299,7 +300,10 @@ public class EmbeddedDbUtil {
                 if (dt.getDataType() == Float.class && val instanceof Double) {
                     // this is needed because hsql stores float as double.
                     val = ((Double) val).floatValue();
-                }
+                } else if (dt.getDataType() == Double.class && val instanceof BigDecimal) {
+                        // When expression involved big number like, long(bigint), BigDecimal is returned. Need to convert that back to double
+                        val = ((BigDecimal) val).doubleValue();
+                    }
                 row.setDataElement(dt, val);
             }
             dg.add(row);

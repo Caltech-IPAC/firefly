@@ -27,7 +27,8 @@ function jsonRequest(baseUrl, cmd, paramList, doPost) {
                 reject(new Error(`Error from Server for command ${cmd}: code: ${response.status}, text: ${response.statusText}`));
                 return;
             }
-            response.json().then( (result) => {
+            response.text().then( (text) => {
+                const result = JSON.parse(text);
                 if (has(result,'0.success')) {
                     if (toBoolean(result[0].success)) {
                         resolve(result[0].data ? result[0].data : result[0]);

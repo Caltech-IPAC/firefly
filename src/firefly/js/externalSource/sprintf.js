@@ -36,6 +36,10 @@ const re = {
     sign: /^[+-]/
 };
 
+const gLowerLimit = Math.pow(10, -4);
+const jLowerLimit = Math.pow(10, -3);
+const jUpperLimit = Math.pow(10, 7);
+
 export function sprintf(key) {
     // `arguments` is not an array, but should be fine for this call
     return sprintf_format(sprintf_parse(key), arguments);
@@ -73,7 +77,7 @@ function sprintf_format(parse_tree, argv) {
                 arg = arg();
             }
 
-            if (re.numeric_arg.test(ph.type) && (typeof arg !== 'number' && isNaN(arg))) {
+            if (re.numeric_arg.test(ph.type) && !(typeof arg === 'bigint' || Number.isFinite(arg))) {
                 throw new TypeError(sprintf('[sprintf] expecting number but found %T', arg));
             }
 
@@ -91,7 +95,7 @@ function sprintf_format(parse_tree, argv) {
                     break;
                 case 'd':
                 case 'i':
-                    arg = parseInt(arg, 10);
+                    arg = typeof arg === 'bigint' ? arg.toString() : parseInt(arg, 10);
                     break;
                 case 'j':
                     arg = JSON.stringify(arg, null, ph.width ? parseInt(ph.width) : 0);
@@ -101,12 +105,20 @@ function sprintf_format(parse_tree, argv) {
                     arg = prec ? parseFloat(arg).toExponential(prec) : parseFloat(arg).toExponential();
                     break;
                 case 'f':
+                    if (typeof arg === 'bigint') {
+                        arg = Number(arg);
+                        if (!Number.isSafeInteger(arg)) throw new TypeError('[sprintf] lost of precision detected');
+                    }
                     arg = prec ? parseFloat(arg).toFixed(prec) : parseFloat(arg);
                     break;
                 case 'g':
                 case 'G': {     // implementation of Java g format
+                    if (typeof arg === 'bigint') {
+                        if (prec > 15) throw new TypeError('[sprintf] lost of precision detected');
+                        arg = Number(arg);
+                    }
                     const m = Math.abs(arg);
-                    if (m === 0 || (m >= Math.pow(10, -4) && m < Math.pow(10, prec))) {
+                    if (m === 0 || (m >= gLowerLimit && m < Math.pow(10, prec))) {
                         arg = prec ? arg.toPrecision(prec) : parseFloat(arg);
                     } else {
                         arg = prec ? parseFloat(arg).toExponential(prec-1) : parseFloat(arg).toExponential();
@@ -142,10 +154,14 @@ function sprintf_format(parse_tree, argv) {
                     arg = (parseInt(arg, 10) >>> 0).toString(16).toUpperCase();
                     break;
                 case 'J': {     // implementation of Java's decimal toString
+                    if (typeof arg === 'bigint') {
+                        arg = Number(arg);
+                        if (!Number.isSafeInteger(arg)) throw new TypeError('[sprintf] lost of precision detected');
+                    }
                     const m = Math.abs(arg);
                     if (m === 0) {
                         arg = '0.0';
-                    } else if ( m >= Math.pow(10, -3) && m < Math.pow(10, 7)) {
+                    } else if ( m >= jLowerLimit && m < jUpperLimit) {
                         arg = parseFloat(arg);
                     } else {
                         arg = parseFloat(arg).toExponential();

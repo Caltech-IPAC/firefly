@@ -38,9 +38,10 @@
     "react-select": "~3.0",
     "react-sizeme": "~2.6",
     "react-split-pane": "~0.1",
-    "fixed-data-table-2": "~1.1",
+    "fixed-data-table-2": "~1.2",
     "prismjs": "~1.22",
-    "blissfuljs": "~1.0"
+    "blissfuljs": "~1.0",
+    "json-bigint-patch": "^0.0.4"
   },
   "devDependencies": {
     "@babel/core": "~7.8",
