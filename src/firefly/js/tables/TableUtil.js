@@ -758,7 +758,7 @@ export function cloneClientTable (tableModel) {
         const {data=[], columns=[]} = nTable.tableData;
         // add ROW_IDX to working table for tracking original row index
         columns.push({name: 'ROW_IDX', type: 'int', visibility: 'hidden'});
-        data.forEach((r, idx) => r.push(String(idx)));
+        data.forEach((r, idx) => r.push(idx));
     }
     return nTable;
 }
