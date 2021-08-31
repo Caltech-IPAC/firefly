@@ -79,7 +79,7 @@ function makeModel(tbl_id, plotViewAry, expandedIds, oldModel) {
         row[STATUS] = stat;
         row[PROJ_TYPE_DESC] = getAttribute(attributes, PlotAttribute.PROJ_TYPE_DESC);
         row[WAVE_TYPE] = getAttribute(attributes, PlotAttribute.WAVE_TYPE);
-        row[WAVE_LENGTH_UM] = getAttribute(attributes, PlotAttribute.WAVE_LENGTH_UM);
+        row[WAVE_LENGTH_UM] = parseFloat(getAttribute(attributes, PlotAttribute.WAVE_LENGTH_UM));
         row[DATA_HELP_URL] = getAttribute(attributes, PlotAttribute.DATA_HELP_URL);
         return row;
     });
