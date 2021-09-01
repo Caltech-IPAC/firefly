@@ -142,18 +142,6 @@ public class FitsReadTest extends FitsValidation {
          validateFits(expectedRANotFromNorthup, raNotFromNorthUp.createNewFits() );
     }
 
-    //@Test //TODO disable it for now until the Cube work finishes
-//    public void testCreateFitsImageCube() throws FitsException, IOException {
-//
-//        FitsImageCube fic = FitsReadFactory.createFitsImageCube(inCubeFits);
-//        Object[] keys = fic.getMapKeys();
-//        FitsRead calFitsRead0 = fic.getFitsReadMap().get(keys[0])[1];
-//        Fits  newFits = calFitsRead0.createNewFits();
-//        validateFits(expectedOutCubeFits, newFits);
-//
-//    }
-//
-
     @Test
     public void testCreateFitsReadRotatedFromNorth(){
        //TODO
@@ -209,15 +197,6 @@ public class FitsReadTest extends FitsValidation {
         frRotaionAngleNotfromNorth.writeSimpleFitsFile(fo);
         fo.close();
 
-//        String cubeFitsName="cube1.fits";
-//        String outCubeFitsName=dataPath+"/cube1_out.fits";
-//        Fits  inCubeFits = FileLoader.loadFits(FitsReadTest.class, cubeFitsName);
-//        FitsImageCube fic = FitsReadFactory.createFitsImageCube(inCubeFits);
-//        Object[] keys = fic.getMapKeys();
-//        FitsRead cubeFitsRead0 = fic.getFitsReadMap().get(keys[0])[1];
-//         fo = new java.io.FileOutputStream( outCubeFitsName);
-//        cubeFitsRead0.writeSimpleFitsFile(fo);
-//        fo.close();
 
     }
 

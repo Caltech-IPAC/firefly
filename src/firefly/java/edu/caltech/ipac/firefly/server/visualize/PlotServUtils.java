@@ -423,36 +423,6 @@ public class PlotServUtils {
     }
 
 
-//    static File createHistImage(JComponent c,
-//                                Icon hd,
-//                                File dir,
-//                                Color bgColor,
-//                                String fname) throws IOException {
-//        int w= c.getWidth();
-//        int h= c.getHeight();
-//        BufferedImage cHistImage     = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-//        Graphics2D g2= cHistImage.createGraphics();
-//        g2.setColor(bgColor);
-//        g2.fillRect(0, 0, w, h);
-//        hd.paintIcon(c, g2, 0, 0);
-//        File f= new File(dir,fname);
-//        writeImage(cHistImage, f);
-//        return f;
-//    }
-//
-//    private static void writeImage(BufferedImage image, File f) throws IOException {
-//        OutputStream chistOut= new BufferedOutputStream( new FileOutputStream(f),4096);
-//        Iterator writers = ImageIO.getImageWritersByFormatName("png");
-//        ImageWriter writer = (ImageWriter)writers.next();
-//        ImageOutputStream ios = ImageIO.createImageOutputStream(chistOut);
-//        writer.setOutput(ios);
-//        ImageWriteParam param= writer.getDefaultWriteParam();
-//        param.setDestinationType(new ImageTypeSpecifier(image));
-//        writer.write(image);
-//    }
-
-
-
     static void statsLog(String function, Object... sAry) {
         _statsLog.stats(function, sAry);
     }
