@@ -631,12 +631,6 @@ public class JsonTableUtil {
 
         if (obj instanceof Date) {
             return () -> "\"" + JSON_DATE.format(obj) + "\"";
-        } else if (obj instanceof Double) {
-            double d = (Double) obj;
-            long l = (long)d;
-            if (d == l) {
-                return () -> String.format("%d", l);      //  when BigInt(> 9.0e+15) is written in scientific notation, parsing will fail.  Use decimal format instead.
-            }
         }
         return null;
     }

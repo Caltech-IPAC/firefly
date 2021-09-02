@@ -8,6 +8,10 @@ import {ServerParams} from '../data/ServerParams.js';
 import {logger} from '../util/Logger.js';
 import {fetchUrl} from '../util/fetch';
 import {getCmdSrvURL} from '../util/WebUtil';
+import jsonBigInt from 'json-bigint';
+
+
+const JSONbigint = jsonBigInt({ useNativeBigInt: true });
 
 /**
  *
@@ -15,37 +19,49 @@ import {getCmdSrvURL} from '../util/WebUtil';
  * @param {string} cmd
  * @param paramList
  * @param {boolean} doPost
+ * @param {boolean} useBigInt       // use BigInt supported json parser
  * @return {Promise} a promise with the results
  */
-function jsonRequest(baseUrl, cmd, paramList, doPost) {
-    const options= {method: doPost?'POST':'GET'};
+function jsonRequest(baseUrl, cmd, paramList, doPost, useBigInt) {
+    const options = {method: doPost ? 'POST' : 'GET'};
     options.params = addParam(paramList, ServerParams.COMMAND, cmd);
 
-    return new Promise(function(resolve, reject) {
-        fetchUrl(baseUrl, options, false ).then( (response) => {
+    return new Promise(function (resolve, reject) {
+        fetchUrl(baseUrl, options, false).then((response) => {
             if (!response.ok) {
                 reject(new Error(`Error from Server for command ${cmd}: code: ${response.status}, text: ${response.statusText}`));
                 return;
             }
-            response.text().then( (text) => {
-                const result = JSON.parse(text);
-                if (has(result,'0.success')) {
+
+            const handleResults = (result) => {
+                if (has(result, '0.success')) {
                     if (toBoolean(result[0].success)) {
                         resolve(result[0].data ? result[0].data : result[0]);
-                    }
-                    else if (has(result,'0.error')){
+                    } else if (has(result, '0.error')) {
                         reject(new Error(result[0].error));
                     } else {
                         reject(new Error(`Unrecognized result: ${result}`));
                     }
-                }
-                else { //this part did not use WebPlotResultSerializer for making the return result in VisServerCommands
+                } else { //this part did not use WebPlotResultSerializer for making the return result in VisServerCommands
                     resolve(result);
-
                 }
-            });
-        }).catch(function(err) {
-            reject(err);
+            };
+
+            if (useBigInt) {
+                response.text().then((json) => {
+                    const result = JSONbigint.parse(json);
+                    handleResults(result);
+                }).catch(function (err) {
+                    reject(err);
+                });
+
+            } else {
+                response.json().then((result) => {
+                    handleResults(result);
+                }).catch(function (err) {
+                    reject(err);
+                });
+            }
         });
     });
 }
@@ -55,10 +71,11 @@ function jsonRequest(baseUrl, cmd, paramList, doPost) {
  * @param {string} cmd
  * @param paramList
  * @param {boolean} doPost
+ * @param {boolean} useBigInt  // support BigInt in JSON.  default to false
  * @return {Promise} a promise with the results
  */
-export function doJsonRequest(cmd, paramList, doPost=true) {
-    return jsonRequest(getCmdSrvURL(), cmd, paramList, doPost);
+export function doJsonRequest(cmd, paramList, doPost=true, useBigInt=false) {
+    return jsonRequest(getCmdSrvURL(), cmd, paramList, doPost, useBigInt);
 }
 
 /**

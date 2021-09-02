@@ -33,6 +33,11 @@ const SELECTION_INFO = 'selectionInfo';
 //TODO: convert FileStatus
 
 
+const doBigIntRequest = (cmd, params) => {
+    return doJsonRequest(ServerParams.TABLE_SEARCH, params, true, true);
+};
+
+
 /**
  * tableRequest will be sent to the server as a json string.
  * @param {TableRequest} tableRequest is a table request params object
@@ -56,7 +61,7 @@ export function fetchTable(tableRequest, hlRowIdx) {
         [ServerParams.REQUEST]: JSON.stringify(tableRequest),
     };
 
-    return doJsonRequest(ServerParams.TABLE_SEARCH, params)
+    return doBigIntRequest(ServerParams.TABLE_SEARCH, params)
     .then( (tableModel) => {
         const startIdx = get(tableModel, 'request.startIdx', 0);
         if (startIdx > 0) {
@@ -95,7 +100,7 @@ export function fetchTable(tableRequest, hlRowIdx) {
 export function queryTable(tableRequest, {filters, sortInfo, inclCols}) {
 
     const params = Object.assign(pickBy({filters, sortInfo, inclCols}), {[ServerParams.REQUEST]: JSON.stringify(tableRequest)});
-    return doJsonRequest(ServerParams.QUERY_TABLE, params)
+    return doBigIntRequest(ServerParams.QUERY_TABLE, params)
         .then( (index) => {
             return index;
         });
@@ -112,7 +117,7 @@ export function queryTable(tableRequest, {filters, sortInfo, inclCols}) {
 export function selectedValues({columnNames, request, selectedRows}) {
     columnNames = Array.isArray(columnNames) ? columnNames.join() : String(columnNames);
     selectedRows = Array.isArray(selectedRows) ? selectedRows.join() : String(selectedRows);
-    return doJsonRequest(ServerParams.SELECTED_VALUES, {columnNames, request: JSON.stringify(request), selectedRows})
+    return doBigIntRequest(ServerParams.SELECTED_VALUES, {columnNames, request: JSON.stringify(request), selectedRows})
             .then((tableModel) => {
                 return tableModel;
             });
@@ -146,7 +151,7 @@ export function packageRequest(dlRequest, searchRequest, selectionInfo) {
         [SELECTION_INFO]: selectionInfo
     };
 
-    return doJsonRequest(ServerParams.PACKAGE_REQUEST, params);
+    return doBigIntRequest(ServerParams.PACKAGE_REQUEST, params);
 }
 
 
@@ -159,7 +164,7 @@ export function getJsonData(request) {
     const paramList = [];
     paramList.push({name:ServerParams.REQUEST, value: request.toString()});
 
-    return doJsonRequest(ServerParams.JSON_DATA, paramList
+    return doBigIntRequest(ServerParams.JSON_DATA, paramList
     ).then((data) => {return data; });
 }
 
@@ -186,7 +191,7 @@ export function submitBackgroundSearch(request, clientRequest, waitMillis) {
     };
     clientRequest && (params[ServerParams.CLIENT_REQUEST] = JSON.stringify(clientRequest));
 
-    return doJsonRequest(ServerParams.SUB_BACKGROUND_SEARCH, params);
+    return doBigIntRequest(ServerParams.SUB_BACKGROUND_SEARCH, params);
 }
 
 /**
