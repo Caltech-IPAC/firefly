@@ -50,10 +50,10 @@ public abstract class Plot {
     private   float               _initialZoomLevel= 1.0F;
     protected boolean             _available       = true;
     protected float               _percentOpaque   = 1.0F;
-    public    PlotGroup           _plotGroup       = null;
-    protected int                 _offsetX         = 0;
-    protected int                 _offsetY         = 0;
-    protected Map<String,Object>  _attributes= new HashMap<String,Object>(3);
+    public    PlotGroup           _plotGroup;
+    protected final int           _offsetX         = 0;
+    protected final int           _offsetY         = 0;
+    protected Map<String,Object>  _attributes= new HashMap<>(3);
 
     public Plot() { this(null); }
 
@@ -189,11 +189,6 @@ public abstract class Plot {
         return getImageCoords(new Point(ev.getX(), ev.getY()));
 
     }
-//    public ImageWorkSpacePt getImageWorkSpaceCoords(MouseEvent ev)
-//                                  throws NoninvertibleTransformException {
-//        return getImageWorkSpaceCoords(new Point(ev.getX(), ev.getY()));
-//
-//    }
     /**
      * Return the image coordinates given screen x & y.
      * @param pt screen coordinates to convert from
@@ -388,22 +383,6 @@ public abstract class Plot {
                                                  throws ProjectionException;
 
 
-    /**
-     * Return a point the represents the passed point with a distance in
-     * World coordinates added to it.
-     * @param wp the world point WorldPt
-     * @param x the x of the world coordinates distance away from the point.
-     * @param y the y of the world coordinates distance away from the point.
-     * @return ImagePt the new point
-     * @throws ProjectionException if the point cannot be projected into an ImagePt
-     */
-//    public ImagePt getDistanceCoords(WorldPt wp, double x, double y)
-//                                                throws ProjectionException {
-//
-//       ImageWorkSpacePt iwpt= getImageCoords(wp);
-//       ImagePt pt= new ImagePt(iwpt.getX(), iwpt.getY());
-//       return getDistanceCoords(pt, x, y);
-//    }
 
     /**
      * Return a point the represents the passed point with a distance in
@@ -465,14 +444,6 @@ public abstract class Plot {
        return (AffineTransform )_plotGroup.getTransform().clone();
     }
 
-    /**
-     * Get the inverse transform this plot uses
-     * @return AffineTransform the transform
-     */
-//   public AffineTransform getInverseTransform() {
-//       return (AffineTransform )_plotGroup.getInverseTransform().clone();
-//    }
-
 
 
     public void setAttribute(String key, Object attribute) {
@@ -483,9 +454,6 @@ public abstract class Plot {
         return _attributes.get(key);
     }
 
-//    public boolean containsAttributeKey(String key) {
-//        return _attributes.containsKey(key);
-//    }
 
     /**
      * Set the factor to zoom this plot on the next zoom call.
@@ -558,10 +526,6 @@ public abstract class Plot {
      */
     public String getShortPlotDesc()         { return _shortPlotDesc; }
 
-    public void setPercentOpaque(float percentOpaque) {
-         _percentOpaque= percentOpaque;
-    }
-
     public float getPercentOpaque() {
          return _percentOpaque;
     }
@@ -599,19 +563,7 @@ public abstract class Plot {
    // ------------------    Private / Protected / Package Methods   ---------
    // =======================================================================
 
-   void setOffsetX(int x) {_offsetX= x;}
    int  getOffsetX() {return _offsetX;}
-
-   void setOffsetY(int y) {_offsetY= y;}
    int  getOffsetY() {return _offsetY;}
-
-    /**
-     * Set the transform this plot uses, this method should only be called 
-     * from subclasses of Plot.
-     * @param trans the transform
-     */
-   protected void setTransform(AffineTransform trans) {
-       _plotGroup.setTransform(trans);
-   }
 
 }

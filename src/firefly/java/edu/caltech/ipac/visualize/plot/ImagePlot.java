@@ -481,8 +481,7 @@ public class ImagePlot extends Plot implements Serializable {
      */
 
     public double getFlux(ImageWorkSpacePt iwspt, ActiveFitsReadGroup frGroup) throws PixelValueException {
-
-        return  getFluxFromFitsRead(frGroup.getFitsRead(refBand), frGroup, iwspt);
+        return  getFluxFromFitsRead(frGroup.getFitsRead(refBand), iwspt);
     }
 
 
@@ -503,21 +502,11 @@ public class ImagePlot extends Plot implements Serializable {
         }
         else {
             threeColorOK(band);
-            retval= getFluxFromFitsRead(frGroup.getFitsRead(band), frGroup, iwspt);
-
+            retval= getFluxFromFitsRead(frGroup.getFitsRead(band), iwspt);
         }
         return  retval;
     }
 
-
-    private void acceptFitsRead(FitsRead fr, ActiveFitsReadGroup frGroup) {
-        Assert.argTst(fr==null      ||
-                      fr==frGroup.getFitsRead(Band.NO_BAND) ||
-                      fr==frGroup.getFitsRead(Band.GREEN) ||
-                      fr==frGroup.getFitsRead(Band.BLUE),
-                      "You must pass a FitsRead that you have register via "+
-                      "the constructor or addThreeColorBand()");
-    }
 
 
     private void threeColorOK(Band band) {
@@ -536,9 +525,7 @@ public class ImagePlot extends Plot implements Serializable {
      * @throws PixelValueException if the pixel value is not on the image
      */
 
-   private double getFluxFromFitsRead(FitsRead fr, ActiveFitsReadGroup frGroup, ImageWorkSpacePt sipt)
-                   throws PixelValueException {
-       acceptFitsRead(fr,frGroup);
+   private double getFluxFromFitsRead(FitsRead fr, ImageWorkSpacePt sipt) throws PixelValueException {
        double retval= Double.NaN;
        if (fr!=null) {
            double xpass= sipt.getX()- ((double)getOffsetX());
@@ -549,12 +536,7 @@ public class ImagePlot extends Plot implements Serializable {
        return retval;
    }
 
-   private String getFluxUnitsFromFitsRead(FitsRead fr, ActiveFitsReadGroup frGroup) {
-       acceptFitsRead(fr,frGroup);
-       String retval= null;
-       if (fr!=null)  retval= fr.getFluxUnits();
-       return retval;
-   }
+   private String getFluxUnitsFromFitsRead(FitsRead fr) { return (fr!=null)  ? fr.getFluxUnits() : null; }
 
     /**
      * get units that this flux data is in.
@@ -568,7 +550,7 @@ public class ImagePlot extends Plot implements Serializable {
      * @return String the units.
      */
     public String getFluxUnits(Band band, ActiveFitsReadGroup frGroup) {
-        return getFluxUnitsFromFitsRead(frGroup.getFitsRead(band), frGroup);
+        return getFluxUnitsFromFitsRead(frGroup.getFitsRead(band));
     }
 
     /**
@@ -726,7 +708,7 @@ public class ImagePlot extends Plot implements Serializable {
            _isPlotted= true;
            computeMinMaxPoint();
            FitsRead fr= frGroup.getFitsRead(refBand);
-           _imageCoordSys= fr.determineCoordSys();
+           _imageCoordSys= fr.getImageCoordinateSystem();
            _projection= new ImageHeader(fr.getHeader()).createProjection();
            setZoomTo(getInitialZoomLevel());
            plotGroup.addToPlotted();

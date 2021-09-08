@@ -17,15 +17,14 @@ import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
-import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
-import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.RangeValues;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
 import nom.tam.fits.FitsException;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Trey Roby
@@ -33,11 +32,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class CtxControl {
 
     private static final Logger.LoggerImpl log = Logger.getLogger();
-    private final static AtomicLong _lastDirCheck= new AtomicLong(0) ;
-    private final static long EXPIRE_DAYS= 3;
-    private final static long EXPIRE_DIR_DELTA = 1000 * 60 * 60 * 24 * EXPIRE_DAYS;
-    private final static long CHECK_DIR_DELTA = 1000 * 60 * 60 * 12; // 12 hours
-    private static Counters counters= Counters.getInstance();
+    private static final Counters counters= Counters.getInstance();
 
     public static ActiveCallCtx prepare(PlotState state) throws FailedRequestException {
         try {
@@ -54,7 +49,6 @@ public class CtxControl {
                 WebPlotFactory.recreate(state);
                 retval= revalidatePlot(ctx);
                 counters.incrementVis("Revalidate");
-
             }
             else {
                 ctx.setPlotState(state);
@@ -96,8 +90,7 @@ public class CtxControl {
                         File fitsFile=   PlotStateUtil.getWorkingFitsFile(state, band);
 
                         if (fitsFile.canRead()) {
-                            FitsRead fr[];
-                            fr= FitsCacher.readFits(fitsFile).getFitReadAry();
+                            FitsRead[] fr= FitsCacher.readFits(fitsFile).getFitReadAry();
                             RangeValues rv= state.getRangeValues(band);
                             int imageIdx= state.getImageIdx(band);
                             frGroup.setFitsRead(band,fr[imageIdx]);
@@ -123,23 +116,17 @@ public class CtxControl {
                     plot.getPlotGroup().setZoomTo(state.getZoomLevel());
                     retval= new ActiveCallCtx(ctx,plot,frGroup);
                     String sizeStr= (state.isThreeColor() ? ", 3 Color: file sizes: " : ", file size: ");
-                    long elapse= System.currentTimeMillis()-start;
-                    log.info("revalidation success: " + ctx.getKey(),
-                              "time: " + UTCTimeUtil.getHMSFromMills(elapse) +
-                                      sizeStr + lenStr);
+                    String elapseStr= UTCTimeUtil.getHMSFromMills(System.currentTimeMillis()-start);
+                    log.info("revalidation success: " + ctx.getKey(), "time: " + elapseStr + sizeStr + lenStr);
 
-                    if (frGroup.getFitsRead(Band.NO_BAND)==null) {
-                        Logger.info("frGroup 0 band is null after recreate");
-                    }
+                    if (frGroup.getFitsRead(Band.NO_BAND)==null) Logger.info("frGroup 0 band is null after recreate");
                 }
                 else {
                     ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
-                    FitsRead fr[];
                     for(Band band : state.getBands()) {
                         File fitsFile=   PlotStateUtil.getWorkingFitsFile(state, band);
                         int imageIdx= state.getImageIdx(band);
-
-                        fr= FitsCacher.readFits(fitsFile).getFitReadAry();  //this call should get data from cache if it exist
+                        FitsRead[] fr= FitsCacher.readFits(fitsFile).getFitReadAry();  //this call should get data from cache if it exist
                         frGroup.setFitsRead(band, fr[imageIdx]);
                     }
 
@@ -149,8 +136,7 @@ public class CtxControl {
                     retval= new ActiveCallCtx(ctx,plot,frGroup);
                 }
             } catch (Exception e) {
-                log.warn(e, "revalidation failed: this should rarely happen: ",
-                          e.toString());
+                log.warn(e, "revalidation failed: this should rarely happen: ", e.toString());
                 retval= null;
             }
             ctx.updateAccessTime();
@@ -160,8 +146,7 @@ public class CtxControl {
     }
 
     public static String makeCachedCtx() {
-        PlotClientCtx ctx= makeAndCachePlotCtx();
-        return ctx.getKey();
+        return makeAndCachePlotCtx().getKey();
     }
 
     private static PlotClientCtx makeAndCachePlotCtx() {
@@ -200,22 +185,15 @@ public class CtxControl {
         }
     }
 
-
     public static boolean isImagePlotAvailable(String ctxString) {
         PlotClientCtx ctx = getPlotCtx(ctxString);
-        if (ctx != null) return (ctx.getCachedPlot() != null);
-        else             return false;
+        if (ctx==null) return false;
+        return (ctx.getCachedPlot() != null);
     }
 
     public static void freeCtxResources(String ctxString) {
         PlotClientCtx ctx = getPlotCtx(ctxString);
         if (ctx != null) ctx.freeResources(PlotClientCtx.Free.ALWAYS);
-    }
-
-    public static boolean deletePlot(String ctxStr) {
-        PlotClientCtx ctx = getPlotCtx(ctxStr);
-        if (ctx != null) deletePlotCtx(ctx);
-        return true;
     }
 
 

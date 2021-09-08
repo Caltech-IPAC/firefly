@@ -10,7 +10,6 @@ import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.Plot;
@@ -792,7 +791,7 @@ public class ScalableObject {
      * Get the rotation for the screen based on the rotation passed.
      */
     private float computeScreenRotation(Plot plot,  ActiveFitsReadGroup frGroup, RotationInfo rotation) {
-        float screenRotation= rotation.getRotation();
+        float screenRotation;
 
         WorldPt j2000p1;
         WorldPt j2000p2;
@@ -801,7 +800,6 @@ public class ScalableObject {
         ImageWorkSpacePt p1;
         ImageWorkSpacePt p2;
         ImageWorkSpacePt p3;
-        ImagePlot ip = (ImagePlot) plot;
         double cdelt1 = frGroup.getFitsRead(Band.NO_BAND).getCdelt1();
         double degree= 0;
 

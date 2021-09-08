@@ -33,21 +33,14 @@ public class PlotGroup implements Iterable<Plot> {
     private int _minY;     // image min y
     private int _maxY;     // image max y
 
-    private int _maxYscale;
-    private int _minXscale;
-    private boolean _overlayEnabled= true;
+    private final boolean _overlayEnabled= true;
 
     private Plot            _basePlot;
-    private List<Plot>      _plotList  = new ArrayList<Plot>(3);
+    private final List<Plot>  _plotList  = new ArrayList<>(3);
     private PlotContainer    _plotView;
     private AffineTransform _trans;
     private AffineTransform _inverseTrans;
  
-    static private Color    _fillColor= Color.black;
-
-
-    //LZ 7/21/15
-    public PlotGroup(){}
 
     public PlotGroup(Plot basePlot) {
        _basePlot= basePlot;
@@ -78,13 +71,8 @@ public class PlotGroup implements Iterable<Plot> {
     }
     
 
-    public boolean isOverlayEnabled() { return _overlayEnabled; }
-    public void    setOverlayEnabled(boolean enabled) { 
-       _overlayEnabled= enabled;
-    }
-
-
-    public int getScreenWidth()      { return _screenWidth;  }
+    public boolean isOverlayEnabled() { return true; }
+    public int getScreenWidth()     { return _screenWidth; }
     public int getScreenHeight()     { return _screenHeight; }
     public int getGroupImageWidth()  { return _imageWidth;   }
     public int getGroupImageHeight() { return _imageHeight;  }
@@ -133,12 +121,11 @@ public class PlotGroup implements Iterable<Plot> {
        _screenHeight = (int)((Math.abs(_minY) + Math.abs(_maxY))  * level);
        if (_screenWidth == 0 && _minX != _maxX) {  _screenWidth = 1; }
        if (_screenHeight == 0 && _minY != _maxY) {  _screenHeight = 1; }
-       _maxYscale = (int)(Math.abs(_maxY) * level);
-       _minXscale = (int)(Math.abs(_minX) * level);
+       int maxYscale = (int)(Math.abs(_maxY) * level);
+       int minXscale = (int)(Math.abs(_minX) * level);
        double scaleX =  1.0 * level;
        double scaleY = -1.0 * level;
-       setTransform(new AffineTransform(scaleX,0,0,scaleY,
-                                        _minXscale,_maxYscale) ); 
+       setTransform(new AffineTransform(scaleX,0,0,scaleY, minXscale,maxYscale) );
    }
 
     public float getZoomFact() {
@@ -187,12 +174,7 @@ public class PlotGroup implements Iterable<Plot> {
        _plotList.add(p);
     }
 
-    void removePlot(Plot p) {
-       if (_plotList.contains(p)) {
-           _plotList.remove(p);
-           removePlotCleanup(p);
-       }
-    }
+    void removePlot(Plot p) { _plotList.remove(p); }
 
 
 
@@ -219,7 +201,7 @@ public class PlotGroup implements Iterable<Plot> {
        try {
             _inverseTrans= trans.createInverse(); 
        } catch (NoninvertibleTransformException ex) {
-            System.out.println(ex);
+            System.out.println(ex.getMessage());
             _inverseTrans= null;
        }
    }
@@ -244,9 +226,6 @@ public class PlotGroup implements Iterable<Plot> {
   // ------------------------------------------------------------
   // ================= Private / Protected methods ==============
   // ------------------------------------------------------------
-    private void removePlotCleanup(Plot p) {
-    }
-
     /**
      * this method will coordinate between all the plots setting up
      * the transform and the width and height as new plots are added.
@@ -272,16 +251,10 @@ public class PlotGroup implements Iterable<Plot> {
        }
        _imageWidth=  Math.abs(_minX) + Math.abs(_maxX);
        _imageHeight= Math.abs(_minY) + Math.abs(_maxY);
-       //System.out.println("min/max X:"+ _minX+ ","+_maxX);
-       //System.out.println("min/max Y:"+ _minY+ ","+_maxY);
    }
 
-
-
-
-
    public void clear(Graphics2D g2) {
-       g2.setPaint( _fillColor );
+       g2.setPaint( Color.black );
        g2.fill( new Rectangle(_minX,_minY, _imageWidth, _imageHeight) );
    }
 

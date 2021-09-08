@@ -301,8 +301,6 @@ public class ImagePlotTest extends ConfigTest{
           double xpass= (iwspt.getX()- ((double)getOffsetX()))/imageScaleFactor;
           double ypass= (iwspt.getY()- ((double)getOffsetY()))/imageScaleFactor;
         */
-        imagePlot.setOffsetX(0);
-        imagePlot.setOffsetY(0);
         ImagePt impt  = imagePlot.getImageCoords(iwspt);
         Assert.assertEquals(impt.getX(), iwspt.getX(), delta);
         Assert.assertEquals(impt.getY(), iwspt.getY(), delta);

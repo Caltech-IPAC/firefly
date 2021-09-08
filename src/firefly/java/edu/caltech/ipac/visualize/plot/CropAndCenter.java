@@ -276,7 +276,7 @@ public class CropAndCenter  {
         }
 
         //convert the float data array to the bitpix type in the header
-        Object data =ArrayFuncs.convertArray(floatDataArray, FitsRead.getDataType(header.getIntValue("BITPIX")), true);
+        Object data =ArrayFuncs.convertArray(floatDataArray, FitsReadUtil.getDataType(header.getIntValue("BITPIX")), true);
         ImageData imageData= new ImageData(data);
 
         return new ImageHDU(newHeader,  imageData );

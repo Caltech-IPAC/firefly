@@ -9,9 +9,6 @@ package edu.caltech.ipac.visualize.plot.plotdata;
 
 import edu.caltech.ipac.util.SUTDebug;
 import edu.caltech.ipac.visualize.plot.ImageHeader;
-import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
-import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
-import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
@@ -429,8 +426,9 @@ public class FlipLR
 
 
        /* Now fix the header */
-       out_fits_header = FitsRead.cloneHeader(in_fits_header);
-       out_fits_header.addValue("CRPIX1", 
+		out_fits_header = FitsReadUtil.cloneHeaderFrom(in_fits_header);
+		out_fits_header.resetOriginalSize();;
+		out_fits_header.addValue("CRPIX1",
 	   in_header.naxis1 - in_header.crpix1 +1 , null);
        if (in_header.using_cd)
        {

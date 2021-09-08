@@ -188,25 +188,18 @@ public class BandState implements Serializable {
     }
 
     public boolean equals(Object o) {
-        boolean retval= false;
-        if (o==this) {
-            retval= true;
-        }
-        else if (o!=null && o instanceof BandState) {
-            BandState bs= (BandState)o;
-            if ( ComparisonUtil.equals(workingFitsFileStr, bs.workingFitsFileStr) &&
-                 ComparisonUtil.equals(originalFitsFileStr, bs.originalFitsFileStr) &&
-                 ComparisonUtil.equals(uploadFileNameStr, bs.uploadFileNameStr) &&
-                 ComparisonUtil.equals(plotRequestSerialize, bs.plotRequestSerialize) &&
-                 ComparisonUtil.equals(rangeValuesSerialize, bs.rangeValuesSerialize) &&
-                 ComparisonUtil.equals(directFileAcessData, bs.directFileAcessData) &&
-                 imageIdx ==bs.imageIdx &&
-                 originalImageIdx ==bs.originalImageIdx &&
-                 bandVisible ==bs.bandVisible) {
-                retval= true;
-            } // end if
-        }
-        return retval;
+        if (o==this) return true;
+        if (!(o instanceof BandState)) return false;
+        BandState bs= (BandState)o;
+        return ( ComparisonUtil.equals(workingFitsFileStr, bs.workingFitsFileStr) &&
+                ComparisonUtil.equals(originalFitsFileStr, bs.originalFitsFileStr) &&
+                ComparisonUtil.equals(uploadFileNameStr, bs.uploadFileNameStr) &&
+                ComparisonUtil.equals(plotRequestSerialize, bs.plotRequestSerialize) &&
+                ComparisonUtil.equals(rangeValuesSerialize, bs.rangeValuesSerialize) &&
+                ComparisonUtil.equals(directFileAcessData, bs.directFileAcessData) &&
+                imageIdx ==bs.imageIdx &&
+                originalImageIdx ==bs.originalImageIdx &&
+                bandVisible ==bs.bandVisible);
     }
 
 }

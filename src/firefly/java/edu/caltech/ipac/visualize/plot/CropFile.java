@@ -3,14 +3,19 @@
  */
 package edu.caltech.ipac.visualize.plot;
 
-import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
-import nom.tam.fits.*;
+import edu.caltech.ipac.util.SUTDebug;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
+import edu.caltech.ipac.visualize.plot.projection.Projection;
+import nom.tam.fits.BasicHDU;
+import nom.tam.fits.Fits;
+import nom.tam.fits.FitsException;
+import nom.tam.fits.Header;
+import nom.tam.fits.HeaderCardException;
 import nom.tam.fits.ImageData;
+import nom.tam.fits.ImageHDU;
 import nom.tam.image.ImageTiler;
 import nom.tam.util.ArrayFuncs;
 import nom.tam.util.BufferedDataOutputStream;
-import edu.caltech.ipac.util.SUTDebug;
-import edu.caltech.ipac.visualize.plot.projection.Projection;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -341,12 +346,12 @@ public class CropFile {
             // make 2dim
             float[][]  float2d = (float[][]) ArrayFuncs.curl(objm32, dims2);
             //convert back to original type
-            neImageData = new ImageData(ArrayFuncs.convertArray(float2d, FitsRead.getDataType(newHeader.getIntValue("BITPIX")), true) );
+            neImageData = new ImageData(ArrayFuncs.convertArray(float2d, FitsReadUtil.getDataType(newHeader.getIntValue("BITPIX")), true) );
         } else {
 
             // make 3dim
             float[][][]  float3d = (float[][][]) ArrayFuncs.curl(objm32, dims3);
-            neImageData = new ImageData(ArrayFuncs.convertArray(float3d, FitsRead.getDataType(newHeader.getIntValue("BITPIX")), true) );
+            neImageData = new ImageData(ArrayFuncs.convertArray(float3d, FitsReadUtil.getDataType(newHeader.getIntValue("BITPIX")), true) );
         }
 
         ImageHDU newImageHDU = new ImageHDU(newHeader, neImageData);
