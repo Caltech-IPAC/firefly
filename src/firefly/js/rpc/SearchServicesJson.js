@@ -34,7 +34,7 @@ const SELECTION_INFO = 'selectionInfo';
 
 
 const doBigIntRequest = (cmd, params) => {
-    return doJsonRequest(ServerParams.TABLE_SEARCH, params, true, true);
+    return doJsonRequest(cmd, params, true, true);
 };
 
 
