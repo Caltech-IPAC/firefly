@@ -3,7 +3,7 @@
  */
 
 import React, {useState, useEffect} from 'react';
-import {isEmpty, get, uniq, isEqual} from 'lodash';
+import {isEmpty, uniq, isEqual} from 'lodash';
 import {useStoreConnector} from '../../ui/SimpleComponent';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
@@ -17,7 +17,7 @@ import {
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {TablePanel} from '../../tables/ui/TablePanel';
 import {dispatchTableAddLocal, TABLE_SORT} from '../../tables/TablesCntlr';
-import {getTblById, getTblInfoById, getSelectedData, processRequest, watchTableChanges} from '../../tables/TableUtil';
+import {getTblById, getTblInfoById, processRequest, watchTableChanges} from '../../tables/TableUtil';
 import {getFormattedWaveLengthUnits, getPlotViewAry, getPlotViewById, isPlotViewArysEqual} from '../PlotViewUtil';
 import {PlotAttribute} from '../PlotAttribute';
 import {TABLE_LOADED, TABLE_FILTER, TABLE_FILTER_SELROW} from '../../tables/TablesCntlr';
@@ -57,11 +57,9 @@ columnsTemplate[WAVE_LENGTH_UM] = {
 };
 columnsTemplate[DATA_HELP_URL] = {name: 'Help', type: 'location', width: 7, links: [{href: '${Help}', value: 'help'}]};
 
-
-const getAttribute = (attributes, attribute) => get(attributes, [attribute], '');
+const getAttribute = (attributes, attribute, def='') => attributes?.[attribute] ?? def;
 
 const makeEnumValues = (data, idx) => uniq(data.map((d) => d[idx]).filter((d) => d)).join(',');
-
 
 function makeModel(tbl_id, plotViewAry, expandedIds, oldModel) {
     const data = plotViewAry.map((pv) => {
@@ -79,7 +77,7 @@ function makeModel(tbl_id, plotViewAry, expandedIds, oldModel) {
         row[STATUS] = stat;
         row[PROJ_TYPE_DESC] = getAttribute(attributes, PlotAttribute.PROJ_TYPE_DESC);
         row[WAVE_TYPE] = getAttribute(attributes, PlotAttribute.WAVE_TYPE);
-        row[WAVE_LENGTH_UM] = parseFloat(getAttribute(attributes, PlotAttribute.WAVE_LENGTH_UM));
+        row[WAVE_LENGTH_UM] = parseFloat(getAttribute(attributes, PlotAttribute.WAVE_LENGTH_UM, 0.0));
         row[DATA_HELP_URL] = getAttribute(attributes, PlotAttribute.DATA_HELP_URL);
         return row;
     });
@@ -92,7 +90,6 @@ function makeModel(tbl_id, plotViewAry, expandedIds, oldModel) {
 
 
     const newSi = SelectInfo.newInstance({rowCount: 0});
-    let newFilters;
     let request;
     if (oldModel) {
         const oldSi = SelectInfo.newInstance(oldModel.selectInfo);
@@ -108,7 +105,7 @@ function makeModel(tbl_id, plotViewAry, expandedIds, oldModel) {
             }
         });
         request = {...oldModel.request};
-        if (get(oldModel, 'request.filters') && newSi.data.rowCount > 0) {
+        if (oldModel?.request?.filters && newSi.data.rowCount > 0) {
             const {filters} = oldModel.request;
             if (filters && filters.indexOf('ROW_IDX' > -1)) {
                 request.filters = filters.replace(/"ROW_IDX" IN \(.*\)/, `"ROW_IDX" IN (${filterStr})`);

@@ -16,7 +16,6 @@ import {LcPeriodPlotly} from './LcPeriodPlotly.jsx';
 import {Menu} from '../../ui/Menu.jsx';
 import {Banner} from '../../ui/Banner.jsx';
 import {DropDownContainer} from '../../ui/DropDownContainer.jsx';
-import {VisHeader} from '../../visualize/ui/VisHeader.jsx';
 import {getActionFromUrl} from '../../core/History.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 import {FormPanel} from './../../ui/FormPanel.jsx';
@@ -64,9 +63,11 @@ export const LcViewer = memo((props) => {
         return shallowequal(oldState,newState) ? oldState : newState;
     });
 
-    const {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown,
+    const {isReady, menu={}, appTitle, altAppIcon, dropDown,
         dropdownPanels=[], footer, style, displayMode, missionEntries, fileLocation, error} = storeState;
-    const {additionalTitleStyle} = props;
+    const {appIcon, additionalTitleStyle= {}, bannerLeftStyle, bannerMiddleStyle} = props;
+    const additionalTitleStylePlus= {marginRight: 20, alignSelf: 'flex-start',...additionalTitleStyle}
+    const bannerMiddleStylePlus= {flexDirection: 'row', ...bannerMiddleStyle};
 
     if (!isReady) return (<div style={{top: 0}} className='loading-mask'/>);
 
@@ -103,7 +104,9 @@ export const LcViewer = memo((props) => {
     return (
         <div id='App' className='rootStyle' style={style}>
             <header>
-                <BannerSection {...{menu, appTitle : title, appIcon, altAppIcon, additionalTitleStyle}}/>
+                <BannerSection {...{menu, appTitle : title, appIcon, altAppIcon,
+                    additionalTitleStyle:additionalTitleStylePlus, bannerLeftStyle,
+                    bannerMiddleStyle:bannerMiddleStylePlus, showTitleOnBanner:true}}/>
                 <div id={warningDivId} data-decor='full' className='warning-div center'/>
                 <DropDownContainer key='dropdown' footer={footer} visible={!!visible}
                                    selected={view} initArgs={initArgs}
@@ -149,10 +152,7 @@ function onReady({menu}) {
 
 
 const BannerSection= ({menu,...rest}) => (
-        <Banner key='banner'
-                menu={<Menu menu={menu} /> }
-                visPreview={<VisHeader showHeader={false}/> }
-                readout={<VisHeader showPreview={false}/> }
+        <Banner key='banner' menu={<Menu menu={menu} /> }
             {...rest}
         />
     );

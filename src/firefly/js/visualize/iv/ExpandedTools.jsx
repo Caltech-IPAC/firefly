@@ -12,7 +12,7 @@ import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {CloseButton} from '../../ui/CloseButton.jsx';
 import {showExpandedOptionsPopup} from '../ui/ExpandedOptionsPopup.jsx';
 import { dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
-import {VisToolbar} from '../ui/VisToolbar.jsx';
+// import {VisToolbar} from '../ui/VisToolbar.jsx';
 import {getMultiViewRoot, getExpandedViewerItemIds} from '../MultiViewCntlr.js';
 
 import './ExpandedTools.css';
@@ -24,6 +24,7 @@ import PAGE_RIGHT from 'html/images/icons-2014/20x20_PageRight.png';
 import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
 import ACTIVE_DOT from 'html/images/green-dot-10x10.png';
 import INACTIVE_DOT from 'html/images/blue-dot-10x10.png';
+import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
 
 const tStyle= {
     display:'inline-block',
@@ -104,30 +105,28 @@ export function ExpandedTools({visRoot,closeFunc}) {
     };
 
     return (
-        <div>
-            <div style={{display: 'flex', flexWrap:'wrap',paddingBottom: 2, borderBottom: '1px solid rgba(0,0,0,.2)' }}>
+            <div style={{display: 'flex', alignItems:'center', marginTop:-4,
+                borderBottom: '1px solid rgba(0,0,0,.2)' }}>
                 {closeFunc && <CloseButton style={closeButtonStyle} onClick={closeFunc}/>}
+                {!single &&
+                <div style={{minHeight:25,
+                    display: 'flex', justifyContent:'space-between', flexDirection:'column'}} className='disable-select'>
+                    <div style={{alignSelf:'flex-end', whiteSpace:'nowrap', display:'flex'}}>
+                        <WhichView  visRoot={visRoot}/>
+                        {createOptions(expandedMode,singleAutoPlay, visRoot, plotIdAry)}
+                        <PagingControl
+                            viewerItemIds={getExpandedViewerItemIds(getMultiViewRoot())}
+                            activeItemId={activePlotId}
+                            isPagingMode={expandedMode===ExpandType.SINGLE}
+                            getItemTitle={getPlotTitle}
+                            onActiveItemChange={dispatchChangeActivePlotView}
+                        />
+                    </div>
+                </div>}
                 <div style={{'flex': '1 1 auto'}}>
-                    <VisToolbar messageUnder={Boolean(closeFunc)}/>
+                    <VisMiniToolbar/>
                 </div>
             </div>
-            {!single &&
-            <div style={{width:'100%', minHeight:25, margin: '7px 0 5px 0',
-                display: 'flex', justifyContent:'space-between'}} className='disable-select'>
-                {plotTitle}
-                <div style={{paddingBottom:5, alignSelf:'flex-end', whiteSpace:'nowrap', display:'flex'}}>
-                    <WhichView  visRoot={visRoot}/>
-                    {createOptions(expandedMode,singleAutoPlay, visRoot, plotIdAry)}
-                    <PagingControl
-                        viewerItemIds={getExpandedViewerItemIds(getMultiViewRoot())}
-                        activeItemId={activePlotId}
-                        isPagingMode={expandedMode===ExpandType.SINGLE}
-                        getItemTitle={getPlotTitle}
-                        onActiveItemChange={dispatchChangeActivePlotView}
-                    />
-                </div>
-            </div>}
-        </div>
     );
 }
 

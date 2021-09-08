@@ -9,9 +9,9 @@ import {Matrix} from '../../externalSource/transformation-matrix-js/matrix';
 
 const style={left:0,top:0,right:0, bottom:0,position:'absolute'};
 
-function fireEvent(ev,transform, plotId,mouseState, eventCallback, doPreventDefault= true) {
+function fireEvent(ev,transform, plotId,mouseState, eventCallback, doPreventDefault= true, doStopPropagation= true) {
     if (doPreventDefault) ev.preventDefault();
-    ev.stopPropagation();
+    if (doStopPropagation) ev.stopPropagation();
     const nativeEvent= ev.nativeEvent ? ev.nativeEvent : ev;
     const {screenX, screenY, offsetX, offsetY}= nativeEvent;
     const trans= Matrix.from(transform).inverse();
@@ -78,7 +78,7 @@ export const EventLayer = memo( ({transform,plotId, eventCallback}) => {
         addDocListeners();
     };
 
-    const onMouseMove= (ev) => !eRef.mouseDown && fireEvent(ev,transform,plotId,MouseState.MOVE, eventCallback);
+    const onMouseMove= (ev) => !eRef.mouseDown && fireEvent(ev,transform,plotId,MouseState.MOVE, eventCallback, true, false);
     const onMouseLeave= (ev) => fireEvent(ev,transform,plotId,MouseState.EXIT, eventCallback);
     const onMouseEnter= (ev) => fireEvent(ev,transform,plotId,MouseState.ENTER, eventCallback);
 

@@ -4,7 +4,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {isEmpty,omit,get} from 'lodash';
+import {isEmpty,omit} from 'lodash';
 import {flux} from '../../core/ReduxFlux.js';
 import {NewPlotMode, dispatchAddViewer, dispatchViewerUnmounted,
         getMultiViewRoot, getViewer, getLayoutType, findViewerWithItemId, IMAGE} from '../MultiViewCntlr.js';
@@ -124,7 +124,6 @@ MultiImageViewer.propTypes= {
     insideFlex : PropTypes.bool,
     closeFunc : PropTypes.func,
     showWhenExpanded : PropTypes.bool,
-    handleInlineToolsWhenSingle : PropTypes.bool,
     controlViewerMounting : PropTypes.bool
 };
 

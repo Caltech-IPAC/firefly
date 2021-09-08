@@ -19,7 +19,7 @@ import zoomOriginal from 'html/images/icons-2014/Zoom1x.png';
 import zoomFit from 'html/images/icons-2014/28x28_ZoomFitToSpace.png';
 import zoomFill from 'html/images/icons-2014/ZoomFillWidth.png';
 
-const CLICK_TIME= 200;
+const CLICK_TIME= 175;
 const makeZT= (name,icon,tip,utilZt) => ({name,icon,tip,utilZt});
 
 export const ZoomType= {
@@ -74,23 +74,21 @@ export function isZoomMax(pv) {
     const {zoomFactor}= plot;
     const zMax= getZoomMax(plot);
     if (zoomFactor>=zMax) return true;
-
-    var nextZ= getNextZoomLevel(plot,UserZoomTypes.UP);
+    const nextZ= getNextZoomLevel(plot,UserZoomTypes.UP);
     return (nextZ>zMax );
 }
 
-export function ZoomButton({plotView:pv,zoomType,visible}) {
-    return (
-        <ToolbarButton icon={zoomType.icon} tip={zoomType.tip}
+export const ZoomButton= ({plotView:pv,zoomType,visible=true, horizontal=true, size=28}) => (
+        <ToolbarButton icon={zoomType.icon} tip={zoomType.tip} imageStyle={{flexGrow:0, width:size, height:size}}
                        enabled={Boolean(primePlot(pv))} visible={visible}
-                       horizontal={true} onClick={() => zoom(pv,zoomType)}/>
+                       horizontal={horizontal} onClick={() => zoom(pv,zoomType)}/>
     );
-}
 
 
 ZoomButton.propTypes= {
     plotView : PropTypes.object,
-    visible : PropTypes.bool.isRequired,
+    visible : PropTypes.bool,
+    horizontal: PropTypes.bool,
+    size: PropTypes.number,
     zoomType : PropTypes.oneOf([ZoomType.UP,ZoomType.DOWN,ZoomType.ONE,ZoomType.FIT,ZoomType.FILL])
 };
-

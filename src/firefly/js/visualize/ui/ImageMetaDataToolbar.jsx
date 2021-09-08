@@ -51,12 +51,11 @@ export class ImageMetaDataToolbar extends Component {
     render() {
         const {activeTable}= this.state;
         
-        const {visRoot, viewerId, viewerPlotIds, layoutType, dlAry, makeDropDown, handleInlineTools=true}= this.props;
+        const {visRoot, viewerId, viewerPlotIds, layoutType, dlAry, makeDropDown}= this.props;
         return (
             <ImageMetaDataToolbarView activePlotId={visRoot.activePlotId} viewerId={viewerId}
                                       viewerPlotIds={viewerPlotIds} layoutType={layoutType} dlAry={dlAry}
                                       activeTable={activeTable} makeDataProductsConverter={makeDataProductsConverter}
-                                      handleInlineTools={handleInlineTools}
                                       makeDropDown={makeDropDown}
                                         /> 
         );
@@ -68,7 +67,6 @@ ImageMetaDataToolbar.propTypes= {
     visRoot : PropTypes.object,
     viewerId : PropTypes.string.isRequired,
     layoutType : PropTypes.string.isRequired,
-    handleInlineTools: PropTypes.bool,
     viewerPlotIds : PropTypes.arrayOf(PropTypes.string).isRequired,
     tableId: PropTypes.string,
     makeDropDown: PropTypes.func

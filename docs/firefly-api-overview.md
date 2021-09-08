@@ -306,21 +306,6 @@ firefly.showImage('imageDiv', {
 });
 ```
 
-`firefly.util.image.initAutoReadout(readoutComponent, props)` - initialize the auto readout.
-
-To use minimal readout, do the following:
-
-*Example:*                               
-```js
-    firefly.util.image.initAutoReadout(ui.DefaultApiReadout,
-        {
-            MouseReadoutComponent:firefly.ui.PopupMouseReadoutMinimal, 
-            showThumb:false,
-            showMag:false
-        }
-    );
-```
-
 
 ### Adding Context Extensions to FITS viewer
 

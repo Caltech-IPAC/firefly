@@ -153,6 +153,7 @@ export function ImageCenterDropDown({visRoot:vr, visible, mi}) {
                                tip='Center images'
                                enabled={Boolean(plot)} horizontal={true} visible={visible}
                                useDropDownIndicator={true}
+                               imageStyle={{width:24, height:24}}
                                dropDown={dropDown}/>
 
     );

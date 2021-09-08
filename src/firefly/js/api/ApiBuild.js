@@ -37,15 +37,13 @@ import {MultiViewStandardToolbar} from '../visualize/ui/MultiViewStandardToolbar
 import {ImageExpandedMode} from '../visualize/iv/ImageExpandedMode.jsx';
 import {ApiExpandedDisplay} from '../visualize/ui/ApiExpandedDisplay.jsx';
 import {ApiFullImageDisplay} from '../visualize/ui/ApiFullImageDisplay.jsx';
+import {ApiToolbarImageDisplay} from 'firefly/visualize/ui/ApiToolbarImageDisplay.jsx';
 import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
 import {TablePanel} from '../tables/ui/TablePanel.jsx';
 import {ChartsContainer} from '../charts/ui/ChartsContainer.jsx';
 import {ChartPanel} from '../charts/ui/ChartPanel.jsx';
 import {MultiChartViewer} from '../charts/ui/MultiChartViewer.jsx';
 import {PlotlyWrapper} from '../charts/ui/PlotlyWrapper.jsx';
-
-import {PopupMouseReadoutFull, PopupMouseReadoutMinimal} from '../visualize/ui/PopupMouseReadout.jsx';
-
 
 // builds the highlevel api
 import {buildHighLevelApi} from './ApiHighlevelBuild.js';
@@ -201,6 +199,7 @@ export function buildLowlevelAPI() {
         MultiViewStandardToolbar,
         ApiExpandedDisplay,
         ApiFullImageDisplay,
+        ApiToolbarImageDisplay,
         ImageExpandedMode,
         ImageMetaDataToolbar,
         TablesContainer,
@@ -209,8 +208,6 @@ export function buildLowlevelAPI() {
         MultiChartViewer,
         ChartPanel,
         PlotlyWrapper,
-        PopupMouseReadoutMinimal,
-        PopupMouseReadoutFull,
         showWorkspaceDialog,
         WorkspacePickerPopup: fieldGroupWrap(WorkspacePickerPopup)
     };

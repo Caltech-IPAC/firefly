@@ -3,28 +3,14 @@
  */
 
 import React, {memo} from 'react';
+import {makeMouseStatePayload, fireMouseCtxChange, MouseState} from '../VisMouseSync.js';
 import PropTypes from 'prop-types';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
-import {LayerButton} from './VisToolbarView.jsx';
-import {showTools} from './VisToolbar.jsx';
-import {HelpIcon} from '../../ui/HelpIcon.jsx';
-import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
-import {ExpandType, dispatchChangeExpandedMode, dispatchChangeActivePlotView,
-        dispatchDeletePlotView} from '../ImagePlotCntlr.js';
-import {pvEqualExScroll} from '../PlotViewUtil';
+import { dispatchDeletePlotView} from '../ImagePlotCntlr.js';
+import {pvEqualExScroll} from '../PlotViewUtil.js';
 import shallowequal from 'shallowequal';
+import DELETE from 'images/blue_delete_10x10.png';
 
-import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
-import GRID_EXPAND from 'html/images/icons-2014/24x24_ExpandArrows-grid-3.png';
-import DELETE from 'html/images/blue_delete_10x10.png';
-import WRENCH from 'html/images/wrench-24x24.png';
-
-
-function expand(plotId, grid) {
-    dispatchChangeActivePlotView(plotId);
-    dispatchSetLayoutMode( LO_MODE.expanded, LO_VIEW.images );
-    grid ? dispatchChangeExpandedMode(ExpandType.GRID) : dispatchChangeExpandedMode(true);
-}
 
 const rS= {
     width: '100% - 2px',
@@ -39,24 +25,28 @@ const rS= {
 };
 
 export const VisInlineToolbarView = memo( (props) => {
-        const {dlCount=0, pv, showLayer, expandGrid, showExpand, showDelete, showToolbarButton, help_id}= props;
+        const {pv, showDelete,show, topOffset=0}= props;
         if (!pv) return undefined;
-        const deleteClick= () => dispatchDeletePlotView({plotId:pv.plotId});
-        const expandClick= () => expand(pv.plotId, expandGrid);
-        const shouldShowTools= Boolean((showToolbarButton && showExpand) || (showToolbarButton && !pv.plots.length));
+        const deleteClick= () => {
+            const mouseStatePayload= makeMouseStatePayload(undefined,MouseState.EXIT,undefined,0,0);
+            fireMouseCtxChange(mouseStatePayload);  // this for anyone listening directly to the mouse
+            dispatchDeletePlotView({plotId:pv.plotId});
+        };
+
+        const topStyle= {
+            visibility: show ? 'visible' : 'hidden',
+            opacity: show ? 1 : 0,
+            transition: show ? 'opacity .15s linear' : 'visibility 0s .15s, opacity .15s linear',
+            top: topOffset
+        };
 
         return (
-            <div style={rS}>
-                <LayerButton pv={pv} dlCount={dlCount} visible={Boolean(showLayer && showExpand)}/>
-                <ToolbarButton icon={WRENCH} tip='Show tools' style={{alignSelf:'flex-start'}}
-                               horizontal={true} visible={shouldShowTools} onClick={showTools}/>
-                {help_id && <div style={{marginRight: 20}}><HelpIcon helpId={help_id}/></div>}
-                <ToolbarButton icon={expandGrid? GRID_EXPAND : OUTLINE_EXPAND}
-                               tip='Expand this panel to take up a larger area'
-                               horizontal={true} visible={showExpand} onClick={expandClick}/>
-                <ToolbarButton icon={DELETE} tip='Delete Image'
-                               style={{alignSelf:'flex-start'}}
-                               horizontal={true} visible={showDelete} onClick={deleteClick}/>
+            <div style={topStyle} className='iv-decorate-inline-toolbar-container'>
+                <div style={rS}>
+                    <ToolbarButton icon={DELETE} tip='Delete Image'
+                                   style={{alignSelf:'flex-start'}}
+                                   horizontal={true} visible={showDelete} onClick={deleteClick}/>
+                </div>
             </div>
         );
     },
@@ -65,11 +55,8 @@ export const VisInlineToolbarView = memo( (props) => {
 
 VisInlineToolbarView.propTypes= {
     pv : PropTypes.object,
-    dlCount: PropTypes.number,
-    showLayer : PropTypes.bool,
-    showExpand : PropTypes.bool,
-    expandGrid : PropTypes.bool,
     showDelete : PropTypes.bool,
+    show : PropTypes.bool,
     help_id : PropTypes.string,
-    showToolbarButton : PropTypes.bool
+    topOffset: PropTypes.number
 };

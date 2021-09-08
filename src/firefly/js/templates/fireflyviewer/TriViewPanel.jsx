@@ -10,11 +10,11 @@ import {LO_VIEW, LO_MODE, getLayouInfo, dispatchSetLayoutMode} from '../../core/
 import {ResultsPanel} from './ResultsPanel.jsx';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
-import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
 import {TriViewImageSection} from '../../visualize/ui/TriViewImageSection.jsx';
 import {AppInitLoadingMessage} from '../../ui/AppInitLoadingMessage.jsx';
 import {getExpandedChartProps} from '../../charts/ChartsCntlr.js';
 import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
+import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
 
 export class TriViewPanel extends PureComponent {
 
@@ -49,7 +49,6 @@ export class TriViewPanel extends PureComponent {
         if (initLoadingMessage && !initLoadCompleted) return (<AppInitLoadingMessage message={initLoadingMessage}/>);
 
         if (showImages) {
-            visToolbar = <VisToolbar key='res-vis-tb'/>;
             content.imagePlot = (<TriViewImageSection key='res-tri-img'
                                                       closeable={closeable}
                                                       imageExpandedMode={expanded===LO_VIEW.images}
@@ -81,7 +80,6 @@ export class TriViewPanel extends PureComponent {
                               searchDesc ={searchDesc({viewSwitch, leftButtons, centerButtons, rightButtons})}
                               expanded={expanded}
                               standard={standard}
-                              visToolbar={visToolbar}
                     { ...content}
                 />
             );

@@ -7,7 +7,7 @@ import PropTypes from 'prop-types';
 import {isEmpty} from 'lodash';
 import {clone} from '../../util/WebUtil.js';
 import sizeMe from 'react-sizeme';
-import ReactGridLayout, {Responsive, WidthProvider} from 'react-grid-layout';
+import {Responsive} from 'react-grid-layout';
 import {MultiImageViewer} from '../../visualize/ui/MultiImageViewer.jsx';
 import {MultiViewStandardToolbar} from '../../visualize/ui/MultiViewStandardToolbar.jsx';
 import {MultiChartViewer} from '../../charts/ui/MultiChartViewer.jsx';
@@ -189,7 +189,6 @@ function makeComponent(g) {
                     <MultiProductViewer key={g.cellId}  viewerId={g.cellId} metaDataTableId={getActiveTableId()} />
                 </div>
             );
-            break;
         case LO_VIEW.coverageImage:
             return (
                 <div key={g.cellId} style={{flex: 'auto', display: 'flex'}} >
@@ -200,12 +199,12 @@ function makeComponent(g) {
                                       Toolbar={MultiViewStandardToolbar}/>
                 </div>
             );
-            break;
         case LO_VIEW.images:
             return (
                 <div key={g.cellId} style={{flex: 'auto', display: 'flex'}} >
                     <MultiImageViewer key={g.cellId} viewerId= {g.cellId}
                                       insideFlex={true} Toolbar={MultiViewStandardToolbar}
+                                      toolbarStyle={{marginTop:0,paddingBottom:0}}
                                       alwaysShowToolbar={true}/>
                 </div>
             );
@@ -223,7 +222,6 @@ function makeComponent(g) {
             );
         default :
             return <div key={g.cellId} />;
-            break;
     }
 }
 

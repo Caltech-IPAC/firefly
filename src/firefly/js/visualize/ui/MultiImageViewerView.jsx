@@ -9,27 +9,38 @@ import {omit} from 'lodash';
 import {SINGLE, GRID} from '../MultiViewCntlr.js';
 import {MultiItemViewerView} from './MultiItemViewerView.jsx';
 import {ImageViewer} from './../iv/ImageViewer.jsx';
+import {useMouseStoreConnector} from 'firefly/visualize/ui/MouseStoreConnector.jsx';
+import {lastMouseImageReadout} from 'firefly/visualize/VisMouseSync.js';
+import {readoutRoot} from 'firefly/visualize/MouseReadoutCntlr.js';
+import {MouseReadoutBottomLine} from 'firefly/visualize/ui/MouseReadoutBottomLine.jsx';
+import {isDialogVisible} from 'firefly/core/ComponentCntlr.js';
+import {MOUSE_READOUT_DIALOG_ID} from 'firefly/visualize/ui/MouseReadPopoutAll.jsx';
 
+
+function makeState() {
+    return {
+        readoutData:lastMouseImageReadout(),
+        readout:readoutRoot(),
+        readoutShowing:!isDialogVisible(MOUSE_READOUT_DIALOG_ID)
+    };
+}
 
 export const MultiImageViewerView = forwardRef( (props, ref) => {
 
-    const {Toolbar, visRoot, viewerPlotIds, showWhenExpanded=false,
-        handleInlineToolsWhenSingle=true, inlineTitle= true, aboveTitle=false}= props;
+    const {readout, readoutData, readoutShowing}= useMouseStoreConnector(makeState);
+    const {Toolbar, visRoot, viewerPlotIds, showWhenExpanded=false, mouseReadoutEmbedded=true,
+        inlineTitle= true, aboveTitle=false, layoutType=GRID}= props;
 
     const makeItemViewer = (plotId) =>  {
         return (
             <ImageViewer plotId={plotId} key={plotId}
-                         handleInlineTools={false} {...{showWhenExpanded, inlineTitle, aboveTitle}} />
+                         {...{showWhenExpanded, inlineTitle, aboveTitle}} />
         );
     };
 
     const makeItemViewerFull = (plotId) => (
         <ImageViewer plotId={plotId} key={plotId}
-                     handleInlineTools={false} {...{
-                         showWhenExpanded, inlineTitle, aboveTitle,
-                         handleInlineTools: viewerPlotIds.length===1 && handleInlineToolsWhenSingle
-                     }
-                     } />
+                     {...{ showWhenExpanded, inlineTitle, aboveTitle, } } />
     );
 
     const makeToolbar = Toolbar ? () => (<Toolbar {...props} />) : undefined;
@@ -37,10 +48,39 @@ export const MultiImageViewerView = forwardRef( (props, ref) => {
     const newProps = Object.assign(omit(props, ['Toolbar', 'visRoot', 'viewerPlotIds', 'showWhenExpanded']),
         {activeItemId: visRoot.activePlotId, viewerItemIds: viewerPlotIds, makeToolbar, makeItemViewer, makeItemViewerFull});
 
+    let style= {display:'flex', flexDirection:'column', position:'relative'};
+    if (props.insideFlex) {
+        style= {...style, flex:'1 1 auto', maxWidth:'100%'};
+    }
+    else {
+        style=  {...style, width:'100%', height:'100%'};
+    }
 
-    return (
-        <MultiItemViewerView {...{...newProps, ref}} />
-    );
+    if (layoutType===SINGLE || viewerPlotIds?.length===1) {
+        return (
+            <div style={style}>
+                <MultiItemViewerView {...{...newProps, ref, insideFlex:true, style:props.style}} />
+                <MouseReadoutBottomLine readout={readout} readoutData={readoutData}
+                                        slightlyTransparent={mouseReadoutEmbedded}
+                                        readoutShowing={readoutShowing}
+                                        showOnInactive={!mouseReadoutEmbedded}
+                                        style={mouseReadoutEmbedded? {position:'absolute', left:0, right:1, bottom:3, margin:'0 3px 0 3px'}:{}} />
+            </div>
+        );
+    }
+    else {
+        return (
+            <div style={style}>
+                <MultiItemViewerView {...{...newProps, ref, insideFlex:true, style:props.style}} />
+                <MouseReadoutBottomLine readout={readout} readoutData={readoutData}
+                                        style={mouseReadoutEmbedded?{position:'absolute', left:4, bottom:4, right:4}:{}}
+                                        readoutShowing={readoutShowing}
+                                        showOnInactive={!mouseReadoutEmbedded}
+                                        slightlyTransparent={mouseReadoutEmbedded}
+                />
+            </div>
+        );
+    }
 });
 
 MultiImageViewerView.propTypes= {
@@ -58,9 +98,9 @@ MultiImageViewerView.propTypes= {
     gridDefFunc : PropTypes.func,  // optional - a function to return the grid definition
     gridComponent : PropTypes.object,  // a react element to define the grid - not implemented, just an idea
     insideFlex :  PropTypes.bool,
-    handleInlineToolsWhenSingle :  PropTypes.bool,
     inlineTitle: PropTypes.bool,
-    aboveTitle: PropTypes.bool
+    aboveTitle: PropTypes.bool,
+    mouseReadoutEmbedded: PropTypes.bool
 };
 
 

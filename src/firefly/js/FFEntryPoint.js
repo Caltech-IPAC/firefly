@@ -8,6 +8,7 @@ import {firefly} from './Firefly.js';
 import {mergeObjectOnly} from './util/WebUtil.js';
 import {getFireflyViewerWebApiCommands} from './api/webApiCommands/ViewerWebApiCommands';
 import {getLcCommands} from './api/webApiCommands/LcWebApiCommands.js';
+import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-42x42.png';
 
 
 /**
@@ -21,7 +22,8 @@ import {getLcCommands} from './api/webApiCommands/LcWebApiCommands.js';
  */
 var props = {
     appTitle: 'Firefly',
-    initLoadingMessage: window?.firefly?.options?.initLoadingMessage
+    initLoadingMessage: window?.firefly?.options?.initLoadingMessage,
+    appIcon : FFTOOLS_ICO
 };
 
 var options = {

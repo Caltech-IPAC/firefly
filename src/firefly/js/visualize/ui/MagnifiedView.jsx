@@ -24,17 +24,19 @@ const defStyle= {
     border: '1px solid transparent'
 };
 
-const magMouse= [MouseState.DRAG_COMPONENT.key, MouseState.DRAG.key, MouseState.MOVE.key, MouseState.DOWN.key];
-const EMPTY= <div style={defStyle}/>;
+const magMouse= [MouseState.DRAG_COMPONENT.key, MouseState.DRAG.key,
+    MouseState.MOVE.key, MouseState.DOWN.key, MouseState.CLICK.key];
+
+const makeEmpty= (size) => (<div style={{...defStyle, width:size, height:size}}/>);
 
 export const MagnifiedView= memo(({plotView:pv,size,mouseState}) => {
-    if (!pv || !mouseState?.screenPt) return EMPTY;
+    if (!pv || !mouseState?.screenPt) return makeEmpty(size);
     const p= primePlot(pv);
-    if (!p || isHiPS(p) ) return EMPTY;
-    if (!magMouse.includes(mouseState.mouseState?.key)) return EMPTY;
+    if (!p || isHiPS(p) ) return makeEmpty(size);
+    if (!magMouse.includes(mouseState.mouseState?.key)) return makeEmpty(size);
 
     return (
-        <div style={{...defStyle, border: '1px solid rgb(187, 187, 187)'}}>
+        <div style={{...defStyle, width:size, height:size, border: '1px solid rgb(187, 187, 187)'}}>
             {showMag(mouseState.screenPt,pv, p,size)}
         </div>
     );
@@ -90,9 +92,25 @@ function compareFourTileSort(o1, o2) {
     else return 1;
 }
 
-function showMag(spt,pv, plot,size) {
-    if (!plot || isBlankImage(plot) || plot.zoomFactor > 6) return false;
+const showTooHighZoomMessage= () => (
+    <div style={
+        {
+            width:'100%',
+            height:'100%',
+            display:'flex',
+            flexDirection:'column',
+            lineHeight:'12pt',
+            alignItems: 'center',
+            justifyContent: 'center',
+        } } >
+        <div>Zoom Factor Too High</div>
+        <div>Magnifier Off</div>
+    </div> );
 
+
+function showMag(spt,pv, plot,size) {
+    if (!plot || isBlankImage(plot)) return false;
+    if (plot.zoomFactor > 6) return showTooHighZoomMessage();
 
     const {width:screenW, height:screenH }= plot.screenSize;
     let sizeOffX, sizeOffY;

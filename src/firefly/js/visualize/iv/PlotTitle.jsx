@@ -17,12 +17,13 @@ import LOADING from 'html/images/gxt/loading.gif';
 
 export const TitleType= new Enum(['INLINE', 'HEAD', 'EXPANDED']);
 
-export const PlotTitle= memo(({plotView:pv, titleType, brief, working}) => {
+export const PlotTitle= memo(({plotView:pv, titleType, brief, working, topOffset=0}) => {
         let styleName= '';
         const plot= primePlot(pv);
         const world= hasWCSProjection(plot);
         const local= hasLocalStretchByteData(plot);
         const image= isImage(plot);
+        // const additionalStyle= TitleType.INLINE ? {top:topOffset} : {};
         switch (titleType) {
             case TitleType.INLINE:   styleName= 'plot-title-inline-title-container';  break;
             case TitleType.HEAD:     styleName= 'plot-title-header-title-container';  break;
@@ -50,7 +51,7 @@ export const PlotTitle= memo(({plotView:pv, titleType, brief, working}) => {
 
 
         return (
-            <div className={styleName} title={tooltip} >
+            <div className={styleName} title={tooltip}>
                 <div className='plot-title-title'>{plot.title}</div>
                 {!brief ? <div className='plot-title-zoom'><div title={tooltip} dangerouslySetInnerHTML={{__html:zlStr}}/> </div> : ''}
                 {!brief && rotString ? <div title={tooltip} className='plot-title-rotation'>{rotString}</div> : ''}
@@ -66,6 +67,7 @@ PlotTitle.propTypes= {
     plotView : PropTypes.object,
     titleType: PropTypes.object.isRequired,
     working : PropTypes.bool,
+    topOffset: PropTypes.number,
     brief : PropTypes.bool.isRequired
 };
 

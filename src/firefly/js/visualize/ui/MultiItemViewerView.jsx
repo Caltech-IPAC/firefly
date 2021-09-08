@@ -65,7 +65,7 @@ export const MultiItemViewerView=forwardRef( (props, ref) =>  {
         container= makePackedGrid(viewerItemIds,dim.rows,dim.cols,true,makeItemViewer);
     }
 
-    const s= Object.assign({}, style, wrapperStyle, defaultDecoration? defDecStyle: {});
+    const s= Object.assign({}, wrapperStyle, defaultDecoration? defDecStyle: {}, style);
 
     return (
         <div style={s} ref={ref}>

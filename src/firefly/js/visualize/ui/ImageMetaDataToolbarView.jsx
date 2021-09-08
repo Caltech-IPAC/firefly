@@ -5,21 +5,18 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import BrowserInfo from '../../util/BrowserInfo.js';
 import {getPlotViewById, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
-import {dispatchChangeActivePlotView, visRoot} from '../ImagePlotCntlr.js';
-import {VisInlineToolbarView} from './VisInlineToolbarView.jsx';
+import {visRoot} from '../ImagePlotCntlr.js';
 import {dispatchChangeViewerLayout, getViewer, getMultiViewRoot,
         GRID_FULL, GRID_RELATED, SINGLE, GRID} from '../MultiViewCntlr.js';
 import {showColorBandChooserPopup} from './ColorBandChooserPopup.jsx';
 import {ImagePager} from './ImagePager.jsx';
+import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
 
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import ONE from 'html/images/icons-2014/Images-One.png';
 import GRID_GROUP from 'html/images/icons-2014/Images-plus-related.png';
 import FULL_GRID from 'html/images/icons-2014/Images-Tiled-full.png';
-import PAGE_RIGHT from 'html/images/icons-2014/20x20_PageRight.png';
-import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
 import THREE_COLOR from 'html/images/icons-2014/28x28_FITS_Modify3Image.png';
 
 
@@ -31,12 +28,14 @@ const toolsStyle= {
     flexWrap:'nowrap',
     alignItems: 'center',
     justifyContent:'space-between',
-    height: 30
+    height: 30,
+    marginTop: -2,
+    paddingBottom: 2
 };
 
 
 export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds=[], layoutType, dlAry,
-                                          activeTable, makeDataProductsConverter, handleInlineTools=true, makeDropDown}) {
+                                          activeTable, makeDataProductsConverter, makeDropDown}) {
 
     const converter= makeDataProductsConverter(activeTable) || {};
     if (!converter) {
@@ -70,7 +69,7 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds=
 
     if (!makeDropDown && !showMultiImageOps && !converter.canGrid &&
         !converter.hasRelatedBands && !showThreeColorButton && !(layoutType===SINGLE && viewerPlotIds.length>1) &&
-        !showPager && !handleInlineTools) {
+        !showPager) {
         return <div/>;
     }
 
@@ -88,7 +87,6 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds=
                 {converter.canGrid && <ToolbarButton icon={FULL_GRID} tip={'Show full grid'}
                                enabled={true} visible={true} horizontal={true}
                                imageStyle={{width:24,height:24, flex: '0 0 auto'}}
-                               style={{marginLeft: 5}}
                                onClick={() => handleViewerLayout(viewerId,'grid',GRID_FULL)}/>}
 
                 {converter.hasRelatedBands  &&
@@ -102,7 +100,6 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds=
                              <ToolbarButton icon={THREE_COLOR} tip={'Show three color image'}
                                          enabled={true} visible={true} horizontal={true}
                                          imageStyle={{width:24,height:24, flex: '0 0 auto'}}
-                                         style={{marginLeft: 5}}
                                          onClick={() => showThreeColorOps(viewer,dataId)}/>
                 }
                 {/*{layoutType===SINGLE && viewerPlotIds.length>1 &&*/}
@@ -115,8 +112,8 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds=
                 {/*                 onClick={() => dispatchChangeActivePlotView(viewerPlotIds[nextIdx])} />*/}
                 {/*}*/}
             </div>
-            {showPager && <ImagePager pageSize={converter.maxPlots} tbl_id={activeTable.tbl_id} />}
-            {(handleInlineTools || viewerPlotIds?.length>1) && <InlineRightToolbarWrapper visRoot={vr} pv={pv} dlAry={pvDlAry} />}
+            {showPager && <ImagePager pageSize={converter.maxPlots} tbl_id={activeTable.tbl_id} style={{marginLeft:10}}/>}
+            <VisMiniToolbar/>
         </div>
     );
 }
@@ -129,7 +126,6 @@ ImageMetaDataToolbarView.propTypes= {
     viewerPlotIds : PropTypes.arrayOf(PropTypes.string).isRequired,
     activeTable: PropTypes.object,
     makeDataProductsConverter: PropTypes.func,
-    handleInlineTools : PropTypes.bool,
     makeDropDown: PropTypes.func
 };
 
@@ -137,31 +133,6 @@ function handleViewerLayout(viewerId, grid, gridLayout) {
     dispatchChangeViewerLayout(viewerId, grid, gridLayout);
     // add the dispatchZoom in metaDataWatcher on ImagePlotCntlr.UPDATE_VIEW_SIZE per viewer size change
 }
-
-function InlineRightToolbarWrapper({visRoot,pv,dlAry}){
-    if (!pv) return <div></div>;
-
-    var lVis= BrowserInfo.isTouchInput() || visRoot.apiToolsView;
-    var tb= visRoot.apiToolsView;
-    return (
-        <div>
-            <VisInlineToolbarView
-                pv={pv} dlCount={dlAry?.length}
-                showLayer={lVis}
-                showExpand={true}
-                showToolbarButton={tb}
-                showDelete ={false}
-            />
-        </div>
-    );
-}
-
-InlineRightToolbarWrapper.propTypes= {
-    visRoot: PropTypes.object,
-    pv : PropTypes.object,
-    dlAry : PropTypes.array
-};
-
 
 function showThreeColorOps(viewer,dataId) {
     if (!viewer) return;

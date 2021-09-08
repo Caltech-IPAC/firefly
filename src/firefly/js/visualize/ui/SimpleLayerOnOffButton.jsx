@@ -14,7 +14,7 @@ import {dispatchCreateDrawLayer,
 
 
 export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,visible,
-                                            plotTypeMustMatch= false, style={}, enabled= true,
+                                            plotTypeMustMatch= false, style={}, enabled= true, imageStyle,
                                             todo= false, isIconOn, onClick, dropDown, allPlots= true }) {
     const enableButton= Boolean(primePlot(pv)) && enabled;
     let isOn= isIconOn;
@@ -30,6 +30,7 @@ export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,vi
                                     enabled={enableButton}
                                     horizontal={true}
                                     visible={visible}
+                                    imageStyle={imageStyle}
                                     dropDown={dropDown} />
         );
     } else {
@@ -42,6 +43,7 @@ export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,vi
                            visible={visible}
                            todo={todo}
                            style={style}
+                           imageStyle={imageStyle}
                            onClick={() => onClick ? onClick(pv,!isOn) : onOff(pv,typeId,allPlots,plotTypeMustMatch,todo)}/>
         );
     }
@@ -62,6 +64,7 @@ SimpleLayerOnOffButton.propTypes= {
     dropDown: PropTypes.object,
     enabled: PropTypes.bool,
     style : PropTypes.object,
+    imageStyle : PropTypes.object,
 };
 
 SimpleLayerOnOffButton.defaultProps= {

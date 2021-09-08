@@ -59,11 +59,13 @@ export function CoverageViewer({viewerId='coverageImages',insideFlex=true, noCov
 
     if (hasPlots && (tblHasCoverage || forceShow)) {
         return (
-            <MultiImageViewer viewerId={viewerId}
-                              insideFlex={insideFlex}
-                              canReceiveNewPlots={NewPlotMode.replace_only.key}
-                              controlViewerMounting={false}
-                              Toolbar={MultiViewStandardToolbar}/>
+            <div style={{display:'flex', flexDirection:'column', width:'100%', background:'rgb(200, 200, 200)'}}>
+                <MultiImageViewer viewerId={viewerId}
+                                  insideFlex={insideFlex}
+                                  canReceiveNewPlots={NewPlotMode.replace_only.key}
+                                  controlViewerMounting={false}
+                                  Toolbar={MultiViewStandardToolbar}/>
+            </div>
         );
     }
     else {

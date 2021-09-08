@@ -35,8 +35,7 @@ import {setDefaultImageColorTable} from './visualize/WebPlotRequest.js';
 import {initWorkerContext} from './threadWorker/WorkerAccess.js';
 import {getTAPServices} from './ui/tap/TapKnownServices.js';
 
-
-var initDone = false;
+let initDone = false;
 const logger = Logger('Firefly-init');
 
 export const getFireflySessionId= once(() =>
@@ -115,8 +114,6 @@ const defAppProps = {
         {label:'Upload', action: 'FileUploadDropDownCmd'},
     ],
 };
-
-const tapEntry= (label,url,examples) => ({ label, value: url, examples});
 
 /** @type {FireflyOptions} */
 const defFireflyOptions = {

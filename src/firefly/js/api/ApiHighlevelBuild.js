@@ -602,7 +602,7 @@ function showImageInMultiViewer(llApi, targetDiv, request, isHiPS, hipsImageConv
     const {dispatchPlotImage, dispatchPlotHiPS, dispatchAddViewer, dispatchUpdateCustom}= llApi.action;
     const {IMAGE, NewPlotMode}= llApi.util.image;
     const {renderDOM}= llApi.util;
-    const {MultiImageViewer, ApiFullImageDisplay, MultiViewStandardToolbar}= llApi.ui;
+    const {ApiFullImageDisplay, ApiToolbarImageDisplay, MultiViewStandardToolbar}= llApi.ui;
     request = validatePlotRequest(llApi, targetDiv, request);
     const plotId= getPlotIdFromRequest(request);
     const viewerId= targetDiv;
@@ -641,7 +641,7 @@ function showImageInMultiViewer(llApi, targetDiv, request, isHiPS, hipsImageConv
     }
 
     if (imageRenderType===STANDARD) {
-        renderDOM(targetDiv, MultiImageViewer,
+        renderDOM(targetDiv, ApiToolbarImageDisplay,
             {viewerId,  canReceiveNewPlots:NewPlotMode.create_replace.key, Toolbar:MultiViewStandardToolbar });
     }
     else {
@@ -657,15 +657,15 @@ function showImageInMultiViewer(llApi, targetDiv, request, isHiPS, hipsImageConv
 
 
 function initCoverage(llApi, targetDiv,options= {}) {
-    const {MultiImageViewer, MultiViewStandardToolbar}= llApi.ui;
-    const {renderDOM,debug}= llApi.util;
+    const {MultiViewStandardToolbar, ApiToolbarImageDisplay}= llApi.ui;
+    const {renderDOM}= llApi.util;
     const {startCoverageWatcher,NewPlotMode}= llApi.util.image;
     highlevelImageInit(llApi);
 
     const {canReceiveNewPlots=NewPlotMode.replace_only.key}= options;
 
 
-    renderDOM(targetDiv, MultiImageViewer,
+    renderDOM(targetDiv, ApiToolbarImageDisplay,
         {viewerId:targetDiv, canReceiveNewPlots, canDelete:false, Toolbar:MultiViewStandardToolbar });
     options= Object.assign({},options, {viewerId:targetDiv});
     startCoverageWatcher(options);
@@ -677,7 +677,6 @@ var imageInit= false;
 function highlevelImageInit(llApi) {
     if (!imageInit) {
         llApi.action.dispatchApiToolsView(true);
-        llApi.util.image.initAutoReadout();
         imageInit= true;
     }
 }

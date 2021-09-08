@@ -25,6 +25,34 @@
     grid-template-columns :  60px 90px 80px 105px 74px 12px 160px  130px;
 }
 
+
+.miniMouseReadoutSingleImageGrid {
+    display: grid;
+    align-items: center;
+    grid-column-gap: 3px;
+    grid-row-gap: 5px;
+    grid-template-columns :  minmax(20px,24px) minmax(50px,65px) 12px minmax(155px,160px) minmax(30px,60px) minmax(100px,auto) min-content minmax(2px,max-content);
+    grid-template-rows :  auto;
+    grid-template-areas:
+            "popout pixReadoutLabel clipboardIcon pixReadoutValue fluxLabel fluxValue lock lockLabel"
+}
+
+.miniMouseReadoutWLImageGrid {
+    display: grid;
+    align-items: center;
+    grid-column-gap: 3px;
+    grid-row-gap: 5px;
+    grid-template-columns :  30px 65px 12px 160px 60px 90px 40px 90px min-content minmax(2px,max-content);
+    grid-template-rows :  auto;
+    grid-template-areas:
+            "popout pixReadoutLabel clipboardIcon pixReadoutValue fluxLabel fluxValue wlLabel wlValue lock lockLabel"
+}
+
+
+
+
+
+
 .mouseReadoutPopupMinimalGrid {
     display: grid;
     grid-column-gap: 3px;
@@ -51,6 +79,25 @@
             "lockDialog redLabel redValue pixReadoutBottomLabel clipboardIconBottom pixReadoutBottomValue"
             "lockDialog greenLabel greenValue blueLabel blueValue ."
             "lockDialog . lock . . .";
+}
+
+.mouseReadoutPopupInlineFullGrid {
+    display: grid;
+    grid-column-gap: 4px;
+    grid-row-gap: 5px;
+    grid-template-columns:  65px 14px 200px;
+    grid-template-rows : 2em 1.4em 1.4em 1.4em 1.4em;
+    grid-template-areas:
+            ". . lock"
+            "pixSizeLabel . pixSizeValue"
+            "pixReadoutTopLabel clipboardIconTop pixReadoutTopValue"
+            "pixReadoutBottomLabel clipboardIconBottom pixReadoutBottomValue"
+            "redLabel . redValue"
+            "greenLabel . greenValue"
+            " blueLabel . blueValue";
+}
+.mouseReadoutPopupInlineFullGrid-3c {
+    grid-template-rows : 2em 1.4em 1.4em 1.4em 1.4em 1.4em 1.4em;
 }
 
 .mouseReadoutPopupFullGrid-withclip {

@@ -12,14 +12,11 @@ import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {LO_VIEW} from '../../core/LayoutCntlr.js';
 import {SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
 import {TABLE_SEARCH} from '../../tables/TablesCntlr.js';
-import {CHART_ADD} from '../../charts/ChartsCntlr.js';
 
 import {TargetPanel} from '../../ui/TargetPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
-import Validate from '../../util/Validate.js';
 import {TriViewImageSection} from '../../visualize/ui/TriViewImageSection.jsx';
-import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
 import {dispatchLoadSearches} from '../../core/AppDataCntlr.js';
 
 
@@ -115,7 +112,6 @@ function Triview({layout}) {
 
     return (
         <div style={{flexGrow:1, display:'flex', flexDirection:'column'}}>
-            <VisToolbar key='res-vis-tb'/>
             <div style={{flexGrow:1, position:'relative'}}>
                 <SplitPane split='horizontal' maxSize={-20} minSize={20} defaultSize={'60%'}>
                     <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={'50%'}>
