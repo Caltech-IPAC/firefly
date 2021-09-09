@@ -47,7 +47,7 @@ public class AnyFitsGetter {
 
           boolean allowDownload= false;
          ClientLog.message("url=" + url);
-         URLConnection   conn = url.openConnection();
+         URLConnection   conn = URLDownload.makeConnection(url);
          if (conn instanceof HttpURLConnection) {
              ((HttpURLConnection)conn).setFollowRedirects(true);
          }
