@@ -19,7 +19,7 @@ export const SearchSummary =  memo(({request, style = DEF_STYLE}) => {
         wpMsg = isEmpty(wp.getObjName())?formatPosForTextField(wp):wp.objName;
     }
     const target = 'Target= ' + wpMsg;
-    const imageSize = 'Image Size=' + sprintf('%.4f',request.imageSizeAndUnit)+ ' deg';
+    const imageSize = 'Image Size=' + sprintf('%.4f deg', parseFloat(request.imageSizeAndUnit));
     const sources = 'Sources=' + request.selectImage.toUpperCase();
 
     let message = '';
