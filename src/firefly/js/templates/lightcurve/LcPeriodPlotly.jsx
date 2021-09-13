@@ -472,7 +472,7 @@ function getPhaseFlux(fields) {
     }
 
     const phaseV = data.map((d) => {
-        return parseFloat(getPhase(d[tIdx], tz, pd));
+        return getPhase(d[tIdx], tz, pd);
     });
 
     const minPhase = Math.min(...phaseV);

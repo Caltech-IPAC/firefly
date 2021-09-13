@@ -88,20 +88,17 @@ export function doPFCalculate(flux, time, period, tzero) {
 }
 
 /**
- * @summary calculate phase and return as text
+ * @summary calculate phase
  * @param {number} time
  * @param {number} timeZero
  * @param {number} period
- * @param {number} dec
- * @returns {string}  folded phase (positive or negative) with 'dec'  decimal digits
+ * @returns {number}  folded phase (positive or negative)
  */
-export function getPhase(time, timeZero, period,  dec=DEC_PHASE) {
+export function getPhase(time, timeZero, period) {
     var q = (time - timeZero)/period;
     var p = q >= 0  ? (q - Math.floor(q)) : (q + Math.floor(-q) + 1.0);
 
-
-    return p.toFixed(dec);
-
+    return p;
 }
 
 /**
@@ -114,6 +111,8 @@ export function getPhase(time, timeZero, period,  dec=DEC_PHASE) {
  */
 function addPhaseToTable(tbl, timeName, tzero, period) {
     var tIdx = timeName ? getColumnIdx(tbl, timeName) : -1;
+    tzero = parseFloat(tzero);
+    period = parseFloat(period);
 
     if (tIdx < 0) return null;
 
@@ -122,17 +121,17 @@ function addPhaseToTable(tbl, timeName, tzero, period) {
 
     var tPF = {tableData: cloneDeep(tbl.tableData),
                tableMeta: cloneDeep(tbl.tableMeta),
-               tbl_id, title, META_INFO:{'col.phase.precision': 'F5'}};
+               tbl_id, title};
     tPF.tableMeta = omit(tPF.tableMeta, ['source', 'resultSetID', 'sortInfo']);
 
     var phaseC = {desc: 'number of period elapsed since starting time.',
-                  name: LC.PHASE_CNAME, type: 'double', width: 6 };
+                  name: LC.PHASE_CNAME, type: 'double', precision: 'F5' };
 
     tPF.tableData.columns.push(phaseC);          // add phase column
 
-    tPF.tableData.data.forEach((d, index) => {   // add phase value (in string) to each data
+    tPF.tableData.data.forEach((d, index) => {   // add phase value to each data
 
-        tPF.tableData.data[index].push(getPhase(parseFloat(d[tIdx]), parseFloat(tzero), parseFloat(period)));
+        tPF.tableData.data[index].push(getPhase(d[tIdx], tzero, period));
     });
 
     const fluxCol = get(getLayouInfo(), [LC.MISSION_DATA, LC.META_FLUX_CNAME]);
@@ -229,7 +228,7 @@ function repeatDataCycle(phaseTable) {
     slice(tableData.data, 0).forEach((d) => {
         var newRow = slice(d);
 
-        newRow[fIdx] = `${ (parseFloat(d[fIdx]) + 1).toFixed(DEC_PHASE)}`;
+        newRow[fIdx] = d[fIdx] + 1;
         tableData.data.push(newRow);
     });
 
@@ -240,7 +239,7 @@ function repeatDataCycle(phaseTable) {
                                         'DATETIME', 'DataTag','DATABASE',
                                         'EQUINOX', 'SKYAREA', 'StatusFile', 'SQL']);
     */
-    set(phaseTable, ['tableMeta', 'RowsRetrieved'], `${totalRows}`);
+    set(phaseTable, ['tableMeta', 'RowsRetrieved'], totalRows);
     set(phaseTable, ['tableMeta', 'tbl_id'], tbl_id);
     set(phaseTable, ['tableMeta', 'title'], title);
     set(phaseTable, ['tableMeta', 'SQL'],`SELECT (${tableData.columns.length} column names follow in next row.)`);
