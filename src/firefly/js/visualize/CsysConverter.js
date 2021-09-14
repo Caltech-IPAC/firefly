@@ -716,7 +716,7 @@ export const CCUtil = {
      * @memberof   firefly.util.image.CCUtil
      * @public
      */
-    getImageWorkSpaceCoords : (plot,pt) => CysConverter.make(plot).getImageWorkSpaceCoords(pt),
+    getImageWorkSpaceCoords : (plot,pt) => plot && CysConverter.make(plot).getImageWorkSpaceCoords(pt),
     
     /**
      *
@@ -728,7 +728,7 @@ export const CCUtil = {
      * @memberof  firefly.util.image.CCUtil
      * @public
      */
-    getImageCoords: (plot,pt) => CysConverter.make(plot).getImageCoords(pt),
+    getImageCoords: (plot,pt) => plot && CysConverter.make(plot).getImageCoords(pt),
     
     /**
      *
@@ -740,7 +740,7 @@ export const CCUtil = {
      * @public
      * @memberof firefly.util.image.CCUtil
      */
-    getDeviceCoords: (plot,pt) => CysConverter.make(plot).getDeviceCoords(pt),
+    getDeviceCoords: (plot,pt) => plot && CysConverter.make(plot).getDeviceCoords(pt),
     
     /*
      *
@@ -752,7 +752,7 @@ export const CCUtil = {
      * @function  getScreenCoords
      * @memberof  firefly.util.image.CCUtil
      */
-    getScreenCoords: (plot,pt) => CysConverter.make(plot).getScreenCoords(pt),
+    getScreenCoords: (plot,pt) => plot && CysConverter.make(plot).getScreenCoords(pt),
     
     /**
      *
@@ -764,7 +764,7 @@ export const CCUtil = {
      * @memberof  firefly.util.image.CCUtil
      * @public
      */
-    getWorldCoords: (plot,pt) => CysConverter.make(plot).getWorldCoords(pt),
+    getWorldCoords: (plot,pt) => plot && CysConverter.make(plot).getWorldCoords(pt),
 
     /**
      *

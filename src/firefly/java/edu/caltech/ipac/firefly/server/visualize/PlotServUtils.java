@@ -31,6 +31,7 @@ import edu.caltech.ipac.visualize.plot.PlotGroup;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 import edu.caltech.ipac.visualize.plot.output.PlotOutput;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.Header;
@@ -319,7 +320,7 @@ public class PlotServUtils {
         try {
             Fits fits= new Fits(f);
             Header header=  fits.getHDU(0).getHeader();
-            fits.getStream().close();
+            FitsReadUtil.closeFits(fits);
             return header;
         } catch (FitsException|IOException  e) {
             return null;
@@ -734,5 +735,6 @@ public class PlotServUtils {
         }
         return retval;
     }
+
 }
 

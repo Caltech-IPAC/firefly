@@ -12,7 +12,17 @@ import {assign, cloneDeep, flatten, get, has, isArray, isEmpty, isObject, isStri
 import shallowequal from 'shallowequal';
 
 import {getAppOptions} from '../core/AppDataCntlr.js';
-import {COL_TYPE, getColumnType, getTblById, isColumnType, isFullyLoaded, isTableLoaded, stripColumnNameQuotes, watchTableChanges} from '../tables/TableUtil.js';
+import {
+    COL_TYPE,
+    getColumnType,
+    getMetaEntry,
+    getTblById,
+    isColumnType,
+    isFullyLoaded,
+    isTableLoaded,
+    stripColumnNameQuotes,
+    watchTableChanges
+} from '../tables/TableUtil.js';
 import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_SELECT, TABLE_SORT} from '../tables/TablesCntlr.js';
 import {dispatchLoadTblStats, getColValStats} from './TableStatsCntlr.js';
 import {dispatchChartHighlighted, dispatchChartSelect, dispatchChartUpdate, dispatchSetActiveTrace, getChartData} from './ChartsCntlr.js';
@@ -980,13 +990,21 @@ export function getDefaultChartProps(tbl_id) {
     if (!isEmpty(spectrumDM)) return spectrumPlot({tbl_id, spectrumDM});
 
 
-    let xCol, yCol;
+    // test to see if meta set the default x and y coloumns
+    const additionalChartDef= getMetaEntry(tblModel,MetaConst.ADDITIONAL_CHART_DEF);
+    let xCol= getMetaEntry(tblModel,MetaConst.DEFAULT_CHART_X_COL);
+    let yCol= getMetaEntry(tblModel,MetaConst.DEFAULT_CHART_Y_COL);
+    if (xCol) {
+        return genericXYChart({tbl_id, xCol, yCol:yCol||xCol, additionalChartDef});
+    }
+
+
     // for catalogs use lon and lat columns
     const centerColumns = findTableCenterColumns(tblModel);
     xCol = centerColumns?.lonCol;
     yCol = centerColumns?.latCol;
     if (xCol && yCol) {
-        return genericXYChart({tbl_id, xCol, yCol, xOptions: 'flip'});
+        return genericXYChart({tbl_id, xCol, yCol, xOptions: 'flip', additionalChartDef});
     }
 
     //otherwise use the first one-two numeric columns
@@ -994,19 +1012,19 @@ export function getDefaultChartProps(tbl_id) {
     if (numericCols?.length > 0) {
         xCol = numericCols[0]?.name;
         yCol = numericCols.length > 1 ? numericCols[1]?.name : xCol;
-        return genericXYChart({tbl_id, xCol, yCol});
+        return genericXYChart({tbl_id, xCol, yCol, additionalChartDef});
     }
 }
 
-function genericXYChart({tbl_id, xCol, yCol, xOptions}) {
+function genericXYChart({tbl_id, xCol, yCol, xOptions, additionalChartDef}) {
     if (xCol === yCol) {
-        return fireflyHistogram({tbl_id, xCol});
+        return fireflyHistogram({tbl_id, xCol,additionalChartDef });
     } else {
-        return scatterOrHeatmap({tbl_id, xCol, yCol, xOptions});
+        return scatterOrHeatmap({tbl_id, xCol, yCol, xOptions,additionalChartDef});
     }
 }
 
-function fireflyHistogram({tbl_id, xCol}) {
+function fireflyHistogram({tbl_id, xCol, additionalChartDef={data:{},layout:{}}}) {
     const xColName = quoteNonAlphanumeric(xCol);
     return {
         data: [{
@@ -1020,12 +1038,13 @@ function fireflyHistogram({tbl_id, xCol}) {
                     columnOrExpr: `${xColName}`
                 }
             },
-            name: `${xColName}`
+            name: `${xColName}`,
+            ...additionalChartDef?.data
         }]
     };
 }
 
-function scatterOrHeatmap({tbl_id, xCol, yCol, xOptions}) {
+function scatterOrHeatmap({tbl_id, xCol, yCol, xOptions, additionalChartDef={data:{},layout:{}}}) {
     const {totalRows} = getTblById(tbl_id) || {};
 
     const xColName = quoteNonAlphanumeric(xCol);
@@ -1034,6 +1053,8 @@ function scatterOrHeatmap({tbl_id, xCol, yCol, xOptions}) {
     const colorscaleName = 'GreySeq';
     const colorscale = colorscaleNameToVal(colorscaleName);
     const autorange = xOptions?.includes('flip') ? 'reversed' : 'true';
+    const addData= additionalChartDef?.data;
+    const addLayout= additionalChartDef?.layout;
 
     return {
         data: [{
@@ -1046,11 +1067,13 @@ function scatterOrHeatmap({tbl_id, xCol, yCol, xOptions}) {
             firefly: {
                 scatterOrHeatmap: true,
                 colorscale: colorscaleName
-            }
+            },
+            ...addData
         }],
         layout: {
             xaxis: {autorange},
-            yaxis: {showgrid: false}
+            yaxis: {showgrid: false},
+            ...addLayout
         }
     };
 

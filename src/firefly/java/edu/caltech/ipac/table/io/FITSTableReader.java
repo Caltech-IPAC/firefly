@@ -4,11 +4,17 @@
 package edu.caltech.ipac.table.io;
 
 import edu.caltech.ipac.firefly.data.table.MetaConst;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.GroupInfo;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.visualize.plot.ImagePt;
+import edu.caltech.ipac.visualize.plot.WorldPt;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
@@ -34,6 +40,7 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -319,11 +326,7 @@ public final class FITSTableReader
             throw e;
         } finally {
             FitsFactory.useThreadLocalSettings(false);
-            try {
-                if (fits!=null && fits.getStream()!=null) fits.getStream().close();
-            } catch (IOException e) {
-                // do nothing
-            }
+            FitsReadUtil.closeFits(fits);
         }
     }
 
@@ -341,14 +344,246 @@ public final class FITSTableReader
         return hasNAxis1Data && otherDimsAre1;
     }
 
-    public static DataGroup getFitsImageAsTable(String fits_filename,
+    private static String makeKeyforHDUTab(FitsReadUtil.ExtractionResults result) {
+        return result.getExtName()!=null ? result.getExtName() : "HDU#"+result.getHduNum();
+    }
+    private static String makeMetaEntryForHDUs(List<FitsReadUtil.ExtractionResults> results) {
+        StringBuilder str= new StringBuilder("");
+        for(FitsReadUtil.ExtractionResults r : results) {
+           if (str.length()>0) str.append(";");
+           str.append(makeKeyforHDUTab(r)).append("=").append(r.getHduNum());
+        }
+        return str.toString();
+    }
+
+
+
+    private static void insertZaxisSpectrumMeta(DataGroup dataGroup,
+                                                List<FitsReadUtil.ExtractionResults> results,
+                                                String wavelengthColName, String fluxColName) {
+
+        dataGroup.getTableMeta().addKeyword("utype", "spec:Spectrum");
+        GroupInfo wlGr = new GroupInfo("spec:Data.SpectralAxis", "");
+        GroupInfo.RefInfo wlref= new GroupInfo.RefInfo(wavelengthColName, "", "spec:Data.SpectralAxis.Value");
+        wlGr.setColumnRefs(Collections.singletonList(wlref));
+
+        GroupInfo fluxGr = new GroupInfo("spec:Data.FluxAxis", "");
+        GroupInfo.RefInfo fluxref= new GroupInfo.RefInfo(fluxColName, "", "spec:Data.FluxAxis.Value");
+        List<GroupInfo.RefInfo> fluxColList= new ArrayList<>();
+        fluxColList.add(fluxref);
+
+        // guess an error
+        for(FitsReadUtil.ExtractionResults result: results) {
+            String extName= result.getExtName();
+            if (extName!=null && extName.toLowerCase().startsWith("err")) {
+                fluxColList.add(new GroupInfo.RefInfo(makeKeyforHDUTab(result), "", "spec:Data.FluxAxis.Accuracy.StatError"));
+                break;
+            }
+        }
+        fluxGr.setColumnRefs(fluxColList);
+
+        dataGroup.setGroupInfos(Arrays.asList(wlGr, fluxGr));
+    }
+
+    private static void insertZaxisGenericChartMeta(DataGroup dataGroup,
+                                                    List<FitsReadUtil.ExtractionResults> results,
+                                                    String xColName ) {
+        String defYCol= "";
+        for(FitsReadUtil.ExtractionResults result : results) {
+            if (result.isRefHDU()) defYCol= makeKeyforHDUTab(result);
+        }
+        TableMeta meta= dataGroup.getTableMeta();
+        meta.addKeyword(MetaConst.DEFAULT_CHART_X_COL, xColName);
+        meta.addKeyword(MetaConst.DEFAULT_CHART_Y_COL, defYCol);
+        dataGroup.trimToSize();
+    }
+
+
+
+
+    public static DataGroup getCubeZaxisAsTable(ImagePt pt, String filename, int refHduNum,
+                                            boolean allMatchingHDUs, int drillSize, double[] wlAry,
+                                                String wlUnit, Map<Integer,String> fluxUnit)
+            throws IOException, FitsException {
+        File f= ServerContext.convertToFile(filename);
+        List<FitsReadUtil.ExtractionResults> results= FitsReadUtil.getAllZAxisAryFromRelatedCubes(
+                pt, f, refHduNum, allMatchingHDUs, drillSize );
+        ArrayList<DataType> dataTypes = new ArrayList<>();
+        int len= results.get(0).getAryData().length;
+        dataTypes.add(new DataType("plane","Plane", Integer.class));
+        if (wlAry!=null) {
+            DataType wlDt= new DataType("wavelength","WaveLength", Double.class);
+            wlDt.setUnits(wlUnit);
+            dataTypes.add(wlDt);
+        }
+        String refKey= null;
+        for(FitsReadUtil.ExtractionResults result : results) {
+            String desc= result.getExtName()!=null ? result.getExtName() : "HDU# "+result.getHduNum();
+            String key= makeKeyforHDUTab(result);
+            DataType dt = new DataType(key,desc, Double.class);
+            String u= fluxUnit.get(result.getHduNum());
+            if (u!=null) dt.setUnits(u);
+            if (result.isRefHDU()) refKey= key;
+
+            dataTypes.add(dt);
+        }
+        DataGroup dataGroup = new DataGroup("Cube Z-Axis", dataTypes);
+        for (int i = 0; (i < len); i++) {
+            DataObject aRow = new DataObject(dataGroup);
+            aRow.setDataElement("plane",i+1);
+            if (wlAry!=null) aRow.setDataElement("wavelength",wlAry[i]);
+            for(FitsReadUtil.ExtractionResults result : results) {
+                aRow.setDataElement(makeKeyforHDUTab(result),result.getAryData()[i]);
+            }
+            dataGroup.add(aRow);
+        }
+        TableMeta meta= dataGroup.getTableMeta();
+        meta.addKeyword(MetaConst.FITS_IM_PT, pt.toString());
+        meta.addKeyword(MetaConst.FITS_IMAGE_HDU, makeMetaEntryForHDUs(results));
+        meta.addKeyword(MetaConst.FITS_FILE_PATH, ServerContext.replaceWithPrefix(f));
+        meta.addKeyword(MetaConst.FITS_EXTRACTION_TYPE, "z-axis");
+        if (wlAry!=null && wlAry.length>0) {
+            insertZaxisSpectrumMeta(dataGroup, results, "wavelength", refKey);
+        }
+        else {
+            insertZaxisGenericChartMeta(dataGroup, results, wlAry!=null?"wavelength":"plane");
+        }
+        return dataGroup;
+    }
+
+
+
+    private static int getDir(ImagePt pt1, ImagePt pt2)  {
+        if (usingXAxis(pt1,pt2)) return   pt1.getX()-pt2.getX() < 0 ? 1 : -1;
+        else return pt1.getY() - pt2.getY() < 0 ? 1 : -1 ;
+    };
+
+    private static int getStartValue(ImagePt pt1, ImagePt pt2)  {
+        if (usingXAxis(pt1,pt2)) return (int)minValue(pt1,pt2);
+        else return (int)minValue(pt1,pt2);
+    };
+
+    private static double minValue(ImagePt pt1,ImagePt pt2) {
+        return usingXAxis(pt1,pt2) ? Math.min(pt1.getX(),pt2.getX()) : Math.min(pt1.getY(),pt2.getY());
+    }
+
+    private static boolean usingXAxis(ImagePt pt1,ImagePt pt2) {
+        double deltaX = Math.abs(pt2.getX() - pt1.getX());
+        double deltaY = Math.abs(pt2.getY() - pt1.getY());
+        return (deltaX > deltaY);
+    }
+
+
+    public static DataGroup getPointsAsTable(ImagePt[] ptAry, WorldPt[] wptAry, String filename, int refHduNum, int plane,
+                                             boolean allMatchingHDUs, int drillSize) throws IOException, FitsException {
+        File f= ServerContext.convertToFile(filename);
+        List<FitsReadUtil.ExtractionResults> results= FitsReadUtil.getAllPointsFromRelatedHDUs(
+                ptAry, f, refHduNum, plane, allMatchingHDUs, drillSize );
+        ArrayList<DataType> dataTypes = new ArrayList<>();
+        int len= results.get(0).getAryData().length;
+        dataTypes.add(new DataType("x","x", Integer.class));
+        dataTypes.add(new DataType("y","y", Integer.class));
+        boolean hasWpt= wptAry!=null && wptAry.length==ptAry.length;
+        if (hasWpt) {
+            dataTypes.add(new DataType("ra","ra", double.class));
+            dataTypes.add(new DataType("dec","dec", double.class));
+        }
+        String defYCol= "";
+        for(FitsReadUtil.ExtractionResults result : results) {
+            String desc= result.getExtName()!=null ? result.getExtName() : "HDU# "+result.getHduNum();
+            String key= makeKeyforHDUTab(result);
+            DataType dt = new DataType(key,desc, Double.class);
+            if (result.isRefHDU()) defYCol= key;
+            dataTypes.add(dt);
+        }
+        DataGroup dataGroup = new DataGroup("Cube Z-Axis", dataTypes);
+        for (int i = 0; (i < len); i++) {
+            DataObject aRow = new DataObject(dataGroup);
+            aRow.setDataElement("x",(int)Math.rint(ptAry[i].getX()));
+            aRow.setDataElement("y",(int)Math.rint(ptAry[i].getY()));
+            if (hasWpt) {
+                aRow.setDataElement("ra",wptAry[i].getLon());
+                aRow.setDataElement("dec",wptAry[i].getLat());
+            }
+            for(FitsReadUtil.ExtractionResults result : results) {
+                aRow.setDataElement(makeKeyforHDUTab(result),result.getAryData()[i]);
+            }
+            dataGroup.add(aRow);
+        }
+        TableMeta meta= dataGroup.getTableMeta();
+        meta.addKeyword(MetaConst.FITS_IMAGE_HDU, makeMetaEntryForHDUs(results));
+        if (plane>0) meta.addKeyword(MetaConst.FITS_IMAGE_HDU_CUBE_PLANE, plane+"");
+        if (hasWpt) meta.addKeyword(MetaConst.CENTER_COLUMN, "ra;dec;J2000");
+        meta.addKeyword(MetaConst.IMAGE_COLUMN, "x;y");
+        meta.addKeyword(MetaConst.CATALOG_OVERLAY_TYPE, hasWpt ? "TRUE" : "IMAGE_PTS");
+        meta.addKeyword(MetaConst.FITS_FILE_PATH, ServerContext.replaceWithPrefix(f));
+        meta.addKeyword(MetaConst.FITS_EXTRACTION_TYPE, "points");
+        meta.addKeyword(MetaConst.DEFAULT_CHART_X_COL, "x");
+        meta.addKeyword(MetaConst.DEFAULT_CHART_Y_COL, defYCol);
+        dataGroup.trimToSize();
+        return dataGroup;
+    }
+
+
+
+
+    public static DataGroup getLineSelectAsTable(ImagePt pt, ImagePt pt2, String filename, int refHduNum, int plane,
+                                                boolean allMatchingHDUs, int drillSize) throws IOException, FitsException {
+        File f= ServerContext.convertToFile(filename);
+        List<FitsReadUtil.ExtractionResults> results= FitsReadUtil.getAllLinesFromRelatedHDUs(
+                pt,pt2, f, refHduNum, plane, allMatchingHDUs, drillSize );
+        ArrayList<DataType> dataTypes = new ArrayList<>();
+        int len= results.get(0).getAryData().length;
+        dataTypes.add(new DataType("x","x", Integer.class));
+        dataTypes.add(new DataType("y","y", Integer.class));
+        String defYCol= "";
+        for(FitsReadUtil.ExtractionResults result : results) {
+            String desc= result.getExtName()!=null ? result.getExtName() : "HDU# "+result.getHduNum();
+            String key= makeKeyforHDUTab(result);
+            DataType dt = new DataType(key,desc, Double.class);
+            if (result.isRefHDU()) defYCol= key;
+            dataTypes.add(dt);
+        }
+        DataGroup dataGroup = new DataGroup("Cube Z-Axis", dataTypes);
+        int startValue= getStartValue(pt,pt2);
+        for (int i = 0; (i < len); i++) {
+            DataObject aRow = new DataObject(dataGroup);
+            ImagePt xyPt= VisUtil.getXorYinEquation(pt.getX(),pt.getY(),pt2.getX(),pt2.getY(),startValue+i);
+            aRow.setDataElement("x",(int)Math.rint(xyPt.getX()));
+            aRow.setDataElement("y",(int)Math.rint(xyPt.getY()));
+            for(FitsReadUtil.ExtractionResults result : results) {
+                aRow.setDataElement(makeKeyforHDUTab(result),result.getAryData()[i]);
+            }
+            dataGroup.add(aRow);
+        }
+        TableMeta meta= dataGroup.getTableMeta();
+        meta.addKeyword(MetaConst.FITS_IM_PT, pt.toString());
+        meta.addKeyword(MetaConst.FITS_IM_PT2, pt2.toString());
+        meta.addKeyword(MetaConst.FITS_IMAGE_HDU, makeMetaEntryForHDUs(results));
+        if (plane>0) meta.addKeyword(MetaConst.FITS_IMAGE_HDU_CUBE_PLANE, plane+"");
+        meta.addKeyword(MetaConst.FITS_FILE_PATH, ServerContext.replaceWithPrefix(f));
+        meta.addKeyword(MetaConst.FITS_EXTRACTION_TYPE, "line");
+        meta.addKeyword(MetaConst.DEFAULT_CHART_X_COL, usingXAxis(pt,pt2)?"x":"y");
+        meta.addKeyword(MetaConst.DEFAULT_CHART_Y_COL, defYCol);
+        meta.addKeyword(MetaConst.IMAGE_COLUMN, "x;y");
+        meta.addKeyword(MetaConst.CATALOG_OVERLAY_TYPE, "IMAGE_PTS");
+
+        dataGroup.trimToSize();
+        return dataGroup;
+    }
+
+
+
+
+
+    public static DataGroup getFitsImageAsTable(String filename,
                                                 Map<String,String> metaInfo,
                                                 int table_idx) throws FitsException, IOException {
 
         // todo try to read it as an image
         Fits fits= null;
         try {
-            fits = new Fits(fits_filename);
+            fits = new Fits(filename);
             BasicHDU[] parts = FitsReadUtil.readHDUs(fits);
             String[] colNames= new String[]{"index"};
             String[] colUnits= null;
@@ -364,12 +599,12 @@ public final class FITSTableReader
                 if (hdu instanceof TableHDU) return null;
                 if ((hdu instanceof ImageHDU) || (hdu instanceof CompressedImageHDU || hdu instanceof UndefinedHDU)) {
                     Header header = hdu.getHeader();
-                    int naxis = header.getIntValue("NAXIS", -1);
+                    int naxis = FitsReadUtil.getNaxis(header);
                     if (naxis < 1) return null;
-                    int naxis1 = header.getIntValue("NAXIS1", -1);
+                    int naxis1 = FitsReadUtil.getNaxis1(header);
                     if (naxis1 < 1) return null;
-                    int naxis2 = header.getIntValue("NAXIS2", -1);
-                    String desc = header.getStringValue("EXTNAME");
+                    int naxis2 = FitsReadUtil.getNaxis2(header);
+                    String desc = FitsReadUtil.getExtName(header);
                     if (desc == null) desc = header.getStringValue("NAME");
                     if (desc == null) desc = "No Name";
                     ArrayList<DataType> dataTypes = new ArrayList<>();
@@ -435,11 +670,7 @@ public final class FITSTableReader
             }
         }
         finally {
-            try {
-                if (fits!=null && fits.getStream()!=null) fits.getStream().close();
-            } catch (IOException e) {
-                // do nothing
-            }
+            FitsReadUtil.closeFits(fits);
         }
         return null;
 
@@ -463,7 +694,7 @@ public final class FITSTableReader
 
         int tIdx = Math.max(tableIdx, 1); //todo - should be throw an error if zero is passed?
 
-        BasicHDU<?>[] hdus = fits.read();
+        BasicHDU<?>[] hdus = FitsReadUtil.readHDUs(fits);
 
         if (tIdx>=hdus.length) {
             logTableReadError(fitsFilename,tableIdx,"HDU does not exist, HDU count: "+ hdus.length);

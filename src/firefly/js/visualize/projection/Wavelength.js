@@ -611,8 +611,8 @@ function getPixelCoords(ipt, cubeIdx) {
     //As noted above, the pixel is counting from 1 to naxis j where (j=1, 2,... naxis).  Since the p = Math.round(ipt.x - 0.5)
     //starts from 0.  Thus, 1 is added here.
     //pixel numbers refer to the center of the pixel, so we subtract 0.5, see notes above
-    const p0 = Math.round(ipt.x - 0.5) + 1 ;
-    const p1 = Math.round(ipt.y - 0.5) + 1 ;
+    const p0 = ipt ? Math.round(ipt.x - 0.5) + 1 : 0;
+    const p1 = ipt ? Math.round(ipt.y - 0.5) + 1  : 0;
     return [p0, p1, cubeIdx+1]; //since cubeIdx starts from 0
 }
 
@@ -632,10 +632,11 @@ function getPixelCoords(ipt, cubeIdx) {
  *  m3_j: is a linear transformation matrix given either by PC3_j or CD3_j
  *
  *
- * @param pixCoords: pixel coordinates
+ * @param pixCoords: pixel coordinates, normally this will be an array [imagePt.x,imagePt.y,plane]
  * @param {number} N
  * @param {Array.<number>} r_j: r j are pixel coordinates of the reference point given by CRPIX j
- * @param {Array.<number>} pc_3j: PC_3j matrix
+ * @param {Array.<number>} pc_3j: PC_3j matrix, if length=3 array and first two entries are 0,
+ * then probably all pixels on the plane have the same value
  * @param {Number} s_3: CDETl3 value
  * @return number
  */

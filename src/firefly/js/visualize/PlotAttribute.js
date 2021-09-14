@@ -47,6 +47,8 @@ export const PlotAttribute= {
 
     IMAGE_BOUNDS_SELECTION: 'IMAGE_BOUNDS_SELECTION',
 
+    SELECT_ACTIVE_CHART_PT: 'selectActiveChartPt',
+
     /**
      * setting for outline image, bounds (for FootprintObj) or drawObj, text, textLoc,
      */
@@ -59,6 +61,10 @@ export const PlotAttribute= {
      * @See ./Point.js
      */
     ACTIVE_DISTANCE: 'ACTIVE_DISTANCE',
+
+    PT_ARY: 'PT_ARY',
+
+    EXTRACTION_DATA: 'EXTRACTION_DATA',
 
     SHOW_COMPASS: 'SHOW_COMPASS',
 

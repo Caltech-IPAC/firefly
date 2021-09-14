@@ -36,7 +36,7 @@ public class FitsReadFactory {
      * @throws FitsException
      */
     public static FitsRead[] createFitsReadArray(Fits fits) throws FitsException {
-        return createFitsReadArray(fits.read(),false);
+        return createFitsReadArray(FitsReadUtil.readHDUs(fits),false);
     }
 
     /**
@@ -45,10 +45,10 @@ public class FitsReadFactory {
      * @return
      * @throws FitsException
      */
-    public static FitsRead[] createFitsReadArray( BasicHDU[] HDUs, boolean clearHdu) throws FitsException {
+    public static FitsRead[] createFitsReadArray( BasicHDU<?>[] HDUs, boolean clearHdu) throws FitsException {
         if (HDUs == null) throw new FitsException(BAD_FORMAT_MSG);
 
-        BasicHDU [] imageHDUs= FitsReadUtil.getImageHDUArray(HDUs);
+        BasicHDU<?> [] imageHDUs= FitsReadUtil.getImageHDUArray(HDUs);
         Header zeroHeader= getZeroHeader(HDUs) ;
         confirmHasImageData(imageHDUs,HDUs);
         FitsRead[] fitsReadAry = new FitsRead[imageHDUs.length];
@@ -56,14 +56,14 @@ public class FitsReadFactory {
         return fitsReadAry;
     }
 
-    private static Header getZeroHeader(BasicHDU[] HDUs) {
+    private static Header getZeroHeader(BasicHDU<?>[] HDUs) {
         if (HDUs.length>1 && (HDUs[0] instanceof ImageHDU) && HDUs[0].getHeader().getIntValue("NAXIS", -1)==0) {
             return HDUs[0].getHeader();
         }
         return null;
     }
 
-    private static void confirmHasImageData(BasicHDU[] imageHDUs, BasicHDU[] HDUs) throws FitsException {
+    private static void confirmHasImageData(BasicHDU<?>[] imageHDUs, BasicHDU<?>[] HDUs) throws FitsException {
         if (imageHDUs.length == 0) { //The FITS file does not have any Image data
             if (HDUs.length>1) {
                 throw new FitsException(NO_IMAGE_HDU_MSG_ONLY_TABLE);

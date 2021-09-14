@@ -1118,6 +1118,41 @@ export function isFullyOnScreen(plot,viewDim) {
 }
 
 
+/**
+ * This function will create a line. either based on y or based on x depend on which is farther apart. The is will return
+ * a point with x,y
+ * @param beginPt
+ * @param endPt
+ * @param independentValue
+ * @return {number}
+ */
+export function getXorYinEquation(beginPt,endPt, independentValue) {
+    const x1 = beginPt.x;
+    const y1 = beginPt.y;
+    const x2 = endPt.x;
+    const y2 = endPt.y;
+
+    // delta X and Y in image pixels
+    const deltaX = Math.abs(x2 - x1);
+    const deltaY = Math.abs(y2 - y1);
+
+    if (deltaX > deltaY) {
+        const slope = (y2-y1)/(x2-x1);
+        const yIntercept = y1-slope*x1;
+        const y= (slope*independentValue + yIntercept);
+        return {x:independentValue, y};
+    } else if (y1 !== y2) {
+        const  islope = (x2-x1)/(y2-y1);
+        const xIntercept = x1-islope*y1;
+        const x = (islope*independentValue + xIntercept);
+        return {x, y:independentValue};
+    }
+}
+
+
+
+
+
 export default {
     computeScreenDistance, computeDistance, computeSimpleDistance,convert,
     computeCentralPointAndRadius, getPositionAngle, getRotationAngle,getTranslateAndRotatePosition,

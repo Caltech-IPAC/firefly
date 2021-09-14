@@ -5,14 +5,14 @@
 import React, {memo,Fragment} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, isString} from 'lodash';
+import shallowequal from 'shallowequal';
 import {
     primePlot,getPlotViewById, isMultiHDUFits, getCubePlaneCnt, getHDU, getActivePlotView,
     convertHDUIdxToImageIdx, convertImageIdxToHDU, getFormattedWaveLengthUnits,
-    getHDUCount, getHDUIndex, getPtWavelength, hasPlaneOnlyWLInfo, hasPlaneOnlyVRADInfo, isImageCube, getPtVrad
+    getHDUCount, getHDUIndex, getPtWavelength, hasPlaneOnlyWLInfo, isImageCube,
 } from '../PlotViewUtil.js';
-import {getHeader} from '../FitsHeaderUtil.js';
+import {getExtName} from '../FitsHeaderUtil.js';
 import {isHiPS, isImage} from '../WebPlot.js';
-import {HdrConst} from '../FitsHeaderUtil.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
 import {dispatchExtensionActivate} from '../../core/ExternalAccessCntlr.js';
@@ -48,7 +48,6 @@ import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
 import SELECTED_ZOOM from 'html/images/icons-2014/ZoomFitToSelectedSpace.png';
 import SELECTED_RECENTER from 'html/images/icons-2014/RecenterImage-selection.png';
 import {pvEqualExScroll} from '../PlotViewUtil';
-import shallowequal from 'shallowequal';
 
 
 
@@ -378,7 +377,7 @@ export function MultiImageControllerView({plotView:pv}) {
             startStr= 'Image: ';
             const desc= plot.plotDesc ?? '';
             startStr= `HDU (#${hduNum}): `;
-            hduDesc= `${desc || getHeader(plot,HdrConst.EXTNAME,'')}`;
+            hduDesc= `${desc || getExtName(plot)}`;
             tooltip+= `HDU: ${hduNum} ${hduDesc?', '+hduDesc:''}`;
         }
         if (plot.cubeIdx>-1) {

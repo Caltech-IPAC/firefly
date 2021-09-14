@@ -50,7 +50,7 @@ public class FitsHDUUtil {
             headerAry= new Header[parts.length];
             for(int i = 0; i < parts.length; i++) {
                 FileAnalysisReport.Type ptype;
-                int naxis= parts[i].getHeader().getIntValue("NAXIS");
+                int naxis= FitsReadUtil.getNaxis(parts[i].getHeader());
 
                 if (parts[i] instanceof CompressedImageHDU)  ptype= Image;
                 else if (parts[i] instanceof ImageHDU)  ptype= Image;
@@ -67,9 +67,9 @@ public class FitsHDUUtil {
                     ptype = HeaderOnly;
                 }
 
-                String desc=null;
-                if (desc == null) desc = header.getStringValue("EXTNAME");
+                String desc = FitsReadUtil.getExtName(header);
                 if (desc == null) desc = header.getStringValue("NAME");
+                if (desc == null) desc = header.getStringValue("HDUCLAS2");
                 if (desc == null && isCompressed) desc = "CompressedImage";
 
 
@@ -87,6 +87,19 @@ public class FitsHDUUtil {
                     part.setTotalTableRows(tHdu.getNRows());
                     part.setDesc(desc);
                 }
+                if (ptype == Image) {
+                    if (desc==null) desc= "";
+                    int naxis1= FitsReadUtil.getNaxis1(header);
+                    int naxis2= FitsReadUtil.getNaxis2(header);
+                    int naxis3= FitsReadUtil.getNaxis3(header);
+                    if (naxis>=3 && naxis3>1) {
+                        desc+= String.format(" (cube %d x %d x %d)",naxis1,naxis2,naxis3);
+                    }
+                    else {
+                        desc+= String.format(" (%d x %d)",naxis1,naxis2);
+                    }
+                    part.setDesc(desc);
+                }
                 report.addPart(part);
 
                 if (type == FileAnalysisReport.ReportType.Brief) {
@@ -97,11 +110,7 @@ public class FitsHDUUtil {
             }
         }
         finally {
-            try {
-                if (fits!=null && fits.getStream()!=null) fits.getStream().close();
-            } catch (IOException e) {
-                // do nothing
-            }
+            FitsReadUtil.closeFits(fits);
         }
         return new FitsAnalysisReport(report,headerAry);
     }

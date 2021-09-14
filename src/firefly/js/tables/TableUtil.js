@@ -931,7 +931,7 @@ export function getAsyncTableSourceUrl(tbl_ui_id, params) {
     });
 }
 
-function makeTableSourceUrl(columns, request, otherParams) {
+export function makeTableSourceUrl(columns, request, otherParams) {
     const tableRequest = Object.assign(cloneDeep(request), {startIdx: 0,pageSize : MAX_ROW});
     const visiCols = columns.filter( (col) => get(col, 'visibility', 'show') === 'show')
                             .map( (col) => col.name);

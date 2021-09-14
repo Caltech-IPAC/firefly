@@ -50,6 +50,7 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.STAT,         new VisServerCommands.AreaStat());
         _cmdMap.put(ServerParams.GET_FLOAT_DATA,  new VisServerCommands.FloatAryCmd());
         _cmdMap.put(ServerParams.GET_BYTE_DATA,  new VisServerCommands.ByteAryCmd());
+        _cmdMap.put(ServerParams.FITS_EXTRACTION,  new VisServerCommands.ExtractionCmd());
 
         _cmdMap.put(ServerParams.DS9_REGION,   new VisServerCommands.DS9Region());
         _cmdMap.put(ServerParams.SAVE_DS9_REGION,      new VisServerCommands.SaveDS9Region());

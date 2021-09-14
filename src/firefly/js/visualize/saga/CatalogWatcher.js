@@ -3,6 +3,7 @@
  */
 
 import {isNil, get, isEmpty} from 'lodash';
+import Enum from 'enum';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE,TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
 import {SUBGROUP, dispatchAttachLayerToPlot, dispatchChangeVisibility, dispatchCreateDrawLayer,
         dispatchDestroyDrawLayer, dispatchModifyCustomField} from '../DrawLayerCntlr.js';
@@ -10,14 +11,14 @@ import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {getTblById, doFetchTable, isTableUsingRadians} from '../../tables/TableUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
-import {getDrawLayerById, getPlotViewById} from '../PlotViewUtil.js';
+import {getDrawLayerById, getPlotViewAry, getPlotViewById, primePlot} from '../PlotViewUtil.js';
 import {dlRoot} from '../DrawLayerCntlr.js';
-import Catalog from '../../drawingLayers/Catalog.js';
+import Catalog, {CatalogType} from '../../drawingLayers/Catalog.js';
 import {logger} from '../../util/Logger.js';
 import {getMaxScatterRows} from '../../charts/ChartUtil.js';
 import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
 import {parseWorldPt} from '../Point.js';
-import {findTableCenterColumns, isCatalog} from '../../util/VOAnalyzer.js';
+import {findImageCenterColumns, findTableCenterColumns, isCatalog} from '../../util/VOAnalyzer.js';
 import {getAppOptions} from '../../core/AppDataCntlr';
 import {makeWorldPt} from '../Point';
 import {CoordinateSys} from '../CoordSys.js';
@@ -38,6 +39,7 @@ export const catalogWatcherDef = {
               TABLE_REMOVE, ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS]
 };
 
+export const PointType = new Enum(['WORLD', 'IMAGE']);
 
 /**
  * type {TableWatchFunc}
@@ -112,27 +114,37 @@ export function watchCatalogs(tbl_id, action, cancelSelf, params) {
 
 const searchTargetId= (tbl_id) => 'search-target-'+tbl_id;
 
+const getCatalogPtType= (table) =>
+               getMetaEntry(table, MetaConst.CATALOG_OVERLAY_TYPE)?.toUpperCase()==='IMAGE_PTS' ? PointType.IMAGE : PointType.WORLD;
+
 function handleCatalogUpdate(tbl_id) {
     const sourceTable= getTblById(tbl_id);
     if (!sourceTable || sourceTable.isFetching) return;
     const {totalRows, request, highlightedRow,selectInfo, title}= sourceTable;
     const maxScatterRows = getMaxScatterRows();
-    const columns= findTableCenterColumns(sourceTable);
+
+
+    const catalogPtType= getCatalogPtType(sourceTable);
+    const columns= catalogPtType===PointType.WORLD ? findTableCenterColumns(sourceTable) : findImageCenterColumns(sourceTable);
 
     // recenterImage(sourceTable);
+    const c1= catalogPtType===PointType.WORLD ? columns.lonCol : columns.xCol;
+    const c2= catalogPtType===PointType.WORLD ? columns.latCol : columns.yCol;
+    if (catalogPtType===PointType.IMAGE && !findPlotViewUsingFitsPathMeta(sourceTable)) return;
 
     const params= {
         startIdx : 0,
         pageSize : MAX_ROW,
-        inclCols : `"${columns.lonCol}","${columns.latCol}","ROW_IDX"`        // column names should be in quotes
+        inclCols : `"${c1}","${c2}","ROW_IDX"`        // column names should be in quotes
     };
+
 
     let req = cloneRequest(sourceTable.request, params);
     let dataTooBigForSelection= false;
     if (totalRows > maxScatterRows) {
-        const sreq = cloneRequest(sourceTable.request, {inclCols: `"${columns.lonCol}","${columns.latCol}"`});
+        const sreq = cloneRequest(sourceTable.request, {inclCols: `"${c1}","${c2}"`});
         req = makeTableFunctionRequest(sreq, 'DecimateTable', title,
-            {decimate: serializeDecimateInfo(columns.lonCol, columns.latCol, 10000), pageSize: MAX_ROW});
+            {decimate: serializeDecimateInfo(c1, c2, 10000), pageSize: MAX_ROW});
         dataTooBigForSelection= true;
     }
 
@@ -142,7 +154,7 @@ function handleCatalogUpdate(tbl_id) {
         (tableModel) => {
             if (tableModel.tableData) {
                 updateDrawingLayer(tbl_id, tableModel,
-                    request, highlightedRow, selectInfo, columns, dataTooBigForSelection);
+                    request, highlightedRow, selectInfo, columns, dataTooBigForSelection, catalogPtType);
             }
         }
     ).catch(
@@ -153,7 +165,7 @@ function handleCatalogUpdate(tbl_id) {
 }
 
 function updateDrawingLayer(tbl_id, tableModel, tableRequest,
-                            highlightedRow, selectInfo, columns, dataTooBigForSelection) {
+                            highlightedRow, selectInfo, columns, dataTooBigForSelection, catalogPtType) {
 
     const plotIdAry= visRoot().plotViewAry.map( (pv) => pv.plotId);
     const {title, tableData, tableMeta}= tableModel;
@@ -167,33 +179,41 @@ function updateDrawingLayer(tbl_id, tableModel, tableRequest,
                                            dataTooBigForSelection});
     }
     else { // new drawing layer
-        const angleInRadian= isTableUsingRadians(tableModel, [columns.lonCol,columns.latCol]);
-        const catDL= dispatchCreateDrawLayer(Catalog.TYPE_ID,
-            {catalogId:tbl_id, title, tableData, tableMeta, tableRequest, highlightedRow,
-                                selectInfo, columns, dataTooBigForSelection, catalog:true,
-                                layersPanelLayoutId: tbl_id,
-                                angleInRadian});
-        dispatchAttachLayerToPlot(tbl_id, plotIdAry);
-
-        if (searchTarget) {
-            const newDL = dispatchCreateDrawLayer(SearchTarget.TYPE_ID,
-                {
-                    drawLayerId: searchTargetId(tbl_id),
-                    color: darker(catDL.drawingDef.color),
-                    searchTargetWP: searchTarget,
-                    layersPanelLayoutId: tbl_id,
-                    titlePrefix: 'Catalog ',
-                    canUserDelete: true,
-                });
-            dispatchAttachLayerToPlot(newDL.drawLayerId, plotIdAry, false);
+        if (catalogPtType===PointType.WORLD) {
+            const angleInRadian= isTableUsingRadians(tableModel, [columns.lonCol,columns.latCol]);
+            const catDL= dispatchCreateDrawLayer(Catalog.TYPE_ID,
+                {catalogId:tbl_id, title, tableData, tableMeta, tableRequest, highlightedRow,
+                    selectInfo, columns, dataTooBigForSelection, catalogType:CatalogType.POINT,
+                    layersPanelLayoutId: tbl_id, angleInRadian});
+            dispatchAttachLayerToPlot(tbl_id, plotIdAry);
+            if (searchTarget) {
+                const newDL = dispatchCreateDrawLayer(SearchTarget.TYPE_ID,
+                    {
+                        drawLayerId: searchTargetId(tbl_id),
+                        color: darker(catDL.drawingDef.color),
+                        searchTargetPoint: searchTarget,
+                        layersPanelLayoutId: tbl_id,
+                        titlePrefix: 'Catalog ',
+                        canUserDelete: true,
+                    });
+                dispatchAttachLayerToPlot(newDL.drawLayerId, plotIdAry, false);
+            }
+            const dl= getDrawLayerById(dlRoot(),tbl_id);
+            if (dl.supportSubgroups  &&  dl.tableMeta[SUBGROUP]) {
+                plotIdAry.map( (plotId) =>  getPlotViewById(visRoot(), plotId))
+                    .filter( (pv) => dl.tableMeta[SUBGROUP]!==get(pv, 'drawingSubGroupId'))
+                    .forEach( (pv) => pv && dispatchChangeVisibility({id:dl.drawLayerId, visible:false,
+                        plotId:pv.plotId, useGroup:false}));
+            }
         }
-
-        const dl= getDrawLayerById(dlRoot(),tbl_id);
-        if (dl.supportSubgroups  &&  dl.tableMeta[SUBGROUP]) {
-            plotIdAry.map( (plotId) =>  getPlotViewById(visRoot(), plotId))
-                .filter( (pv) => dl.tableMeta[SUBGROUP]!==get(pv, 'drawingSubGroupId'))
-                .forEach( (pv) => pv && dispatchChangeVisibility({id:dl.drawLayerId, visible:false,
-                                                                  plotId:pv.plotId, useGroup:false}));
+        else {
+            const pv=  findPlotViewUsingFitsPathMeta(getTblById(tbl_id));
+            if (!pv) return;
+            dispatchCreateDrawLayer(Catalog.TYPE_ID,
+                {catalogId:tbl_id, title, tableData, tableMeta, tableRequest, highlightedRow,
+                    selectInfo, columns, dataTooBigForSelection, catalogType:CatalogType.POINT_IMAGE_PT,
+                    layersPanelLayoutId: tbl_id });
+            dispatchAttachLayerToPlot(tbl_id, [pv.plotId]);
         }
     }
 }
@@ -201,7 +221,9 @@ function updateDrawingLayer(tbl_id, tableModel, tableRequest,
 function attachToCatalog(tbl_id, payload) {
     const {pvNewPlotInfoAry=[], wpRequest, wpRequestAry, redReq, blueReq, greenReq} = payload;
     const dl= getDrawLayerById(dlRoot(), tbl_id);
-    if (!dl) return;
+    const table= getTblById(tbl_id);
+    if (!dl || !table) return;
+    if (getCatalogPtType(table)===PointType.IMAGE) return;
     pvNewPlotInfoAry.forEach( (info, idx) => {
         let r= wpRequest || get(wpRequestAry,idx);
         if (!r) r= (redReq || blueReq || greenReq);
@@ -230,17 +252,21 @@ export function getSearchTarget(r, tableModel, searchTargetStr, overlayPositionS
     if (!result) return;
     const circle= result[0];
     const parts= circle.split(',');
-    if (parts.length!==4) return;
+    if (parts.length<4) return;
     let cStr= parts[0].split('(')[1];
     if (!cStr) return;
     if (cStr.startsWith(`\'`) && cStr.endsWith(`\'`)) {
        cStr= cStr.substring(1, cStr.length-1) ;
     }
     if (!isNaN(Number(parts[1]))  && !isNaN(Number(parts[1]))) {
-        return makeWorldPt(parts[1], parts[2], CoordinateSys.parse(cStr))
+        return makeWorldPt(parts[1], parts[2], CoordinateSys.parse(cStr));
     }
-
-    
 }
 
-
+export function findPlotViewUsingFitsPathMeta(table) {
+    if (!table) return;
+    const filePath= getMetaEntry(table,MetaConst.FITS_FILE_PATH);
+    if (!filePath) return;
+    const pvAry= getPlotViewAry(visRoot());
+    return pvAry.find( (pv) => primePlot(pv)?.plotState.getWorkingFitsFileStr()===filePath);
+}

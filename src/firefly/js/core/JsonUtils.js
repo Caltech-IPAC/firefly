@@ -24,6 +24,7 @@ const JSONbigint = jsonBigInt({ useNativeBigInt: true });
  */
 function jsonRequest(baseUrl, cmd, paramList, doPost, useBigInt) {
     const options = {method: doPost ? 'POST' : 'GET'};
+    if (doPost) baseUrl+=`?${ServerParams.COMMAND}=${cmd}`;
     options.params = addParam(paramList, ServerParams.COMMAND, cmd);
 
     return new Promise(function (resolve, reject) {

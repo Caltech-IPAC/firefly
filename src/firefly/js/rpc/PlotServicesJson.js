@@ -10,6 +10,8 @@ import {isArray} from 'lodash';
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest} from '../core/JsonUtils.js';
 import {SelectedShape} from '../drawingLayers/SelectedShape';
+import {getCmdSrvURL} from 'firefly/util/WebUtil.js';
+import {fetchUrl} from 'firefly/api/ApiUtil.js';
 
 
 /**
@@ -107,6 +109,53 @@ export function callGetFileFlux(stateAry, pt) {
     return doJsonRequest(ServerParams.FILE_FLUX_JSON, params,true);
 }
 
+async function fetchExtraction(params, cmd= ServerParams.FITS_EXTRACTION) {
+    const response= await fetchUrl(getCmdSrvURL()+`?${ServerParams.COMMAND}=${cmd}`,{method:'POST', params },false);
+    if (!response.ok) {
+        throw(new Error(`Error from Server for getStretchedByteData: code: ${response.status}, text: ${response.statusText}`));
+    }
+    const arrayBuffer= await response.arrayBuffer();
+    return new Float64Array(arrayBuffer);
+}
+
+export async function callGetCubeDrillDownAry(state, hduNum, pt, ptSize, relatedCubes) {
+    return fetchExtraction(
+        {
+            [ServerParams.EXTRACTION_TYPE]: 'z-axis',
+            [ServerParams.STATE]: state.toJson(false),
+            [ServerParams.PT] : pt.toString(),
+            [ServerParams.POINT_SIZE] : ptSize+'',
+            [ServerParams.HDU_NUM] : hduNum+'',
+            [ServerParams.RELATED_HDUS] : relatedCubes+'',
+        });
+}
+
+export async function callGetLineExtractionAry(state, hduNum, plane, pt, pt2, ptSize, relatedHDUS) {
+    return fetchExtraction(
+        {
+            [ServerParams.EXTRACTION_TYPE]: 'line',
+            [ServerParams.STATE]: state.toJson(false),
+            [ServerParams.PT] : pt.toString(),
+            [ServerParams.PT2] : pt2.toString(),
+            [ServerParams.POINT_SIZE] : ptSize+'',
+            [ServerParams.PLANE] : plane+'',
+            [ServerParams.HDU_NUM] : hduNum+'',
+            [ServerParams.RELATED_HDUS] : relatedHDUS+'',
+        });
+}
+
+export async function callGetPointExtractionAry(state, hduNum, plane, ptAry, ptSize, relatedHDUS) {
+    return fetchExtraction(
+        {
+            [ServerParams.EXTRACTION_TYPE]: 'points',
+            [ServerParams.STATE]: state.toJson(false),
+            [ServerParams.PTARY] : JSON.stringify(ptAry.map( (pt) => pt.toString())),
+            [ServerParams.POINT_SIZE] : ptSize+'',
+            [ServerParams.PLANE] : plane+'',
+            [ServerParams.HDU_NUM] : hduNum+'',
+            [ServerParams.RELATED_HDUS] : relatedHDUS+'',
+        });
+}
 
 /**
  *

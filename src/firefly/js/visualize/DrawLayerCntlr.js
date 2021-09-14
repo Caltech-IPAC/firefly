@@ -19,6 +19,10 @@ import {clone, toBoolean} from '../util/WebUtil.js';
 import {selectAreaEndActionCreator} from '../drawingLayers/SelectArea.js';
 import {distanceToolEndActionCreator} from '../drawingLayers/DistanceTool.js';
 import {
+    extractLineToolEndActionCreator,
+    extractLineToolStartActionCreator
+} from 'firefly/drawingLayers/ExtractLineTool.js';
+import {
     markerToolCreateLayerActionCreator,
     markerToolEndActionCreator,
     markerToolMoveActionCreator,
@@ -69,12 +73,18 @@ const SELECT_AREA_END= `${DRAWLAYER_PREFIX}.SelectArea.selectAreaEnd`;
 const SELECT_MOUSE_LOC= `${DRAWLAYER_PREFIX}.SelectArea.selectMouseLoc`;
 
 const SELECT_POINT=  `${DRAWLAYER_PREFIX}.SelectPoint.selectPoint`;
+const EXTRACT_POINT=  `${DRAWLAYER_PREFIX}.ExtractPoints.extractPoint`;
 
 
 // _- Distance tool
 const DT_START= `${DRAWLAYER_PREFIX}.DistanceTool.distanceToolStart`;
 const DT_MOVE= `${DRAWLAYER_PREFIX}.DistanceTool.distanceToolMove`;
 const DT_END= `${DRAWLAYER_PREFIX}.DistanceTool.distanceToolEnd`;
+
+// _- Distance tool
+const ELT_START= `${DRAWLAYER_PREFIX}.ExtractLineTool.distanceToolStart`;
+const ELT_MOVE= `${DRAWLAYER_PREFIX}.ExtractLineTool.distanceToolMove`;
+const ELT_END= `${DRAWLAYER_PREFIX}.ExtractLineTool.distanceToolEnd`;
 
 // region
 const REGION_CREATE_LAYER = `${DRAWLAYER_PREFIX}.RegionPlot.createLayer`;
@@ -159,6 +169,8 @@ export function getDrawLayerCntlrDef(drawLayerFactory) {
                 [CHANGE_VISIBILITY] :  makeChangeVisibilityActionCreator(drawLayerFactory),
                 [SELECT_AREA_END] :  selectAreaEndActionCreator,
                 [DT_END] :  distanceToolEndActionCreator,
+                [ELT_END] :  extractLineToolEndActionCreator,
+                [ELT_START] :  extractLineToolStartActionCreator,
                 [MARKER_START] :  markerToolStartActionCreator,
                 [MARKER_MOVE] :  markerToolMoveActionCreator,
                 [MARKER_END] :  markerToolEndActionCreator,
@@ -184,9 +196,10 @@ export default {
     ATTACH_LAYER_TO_PLOT, DETACH_LAYER_FROM_PLOT,CHANGE_DRAWING_DEF,
     CREATE_DRAWING_LAYER,DESTROY_DRAWING_LAYER, MODIFY_CUSTOM_FIELD,
     SELECT_AREA_START, SELECT_AREA_MOVE, SELECT_AREA_END, SELECT_MOUSE_LOC,
-    SELECT_POINT,
+    SELECT_POINT, EXTRACT_POINT,
     FORCE_DRAW_LAYER_UPDATE,
     DT_START, DT_MOVE, DT_END,
+    ELT_START, ELT_MOVE, ELT_END,
     REGION_CREATE_LAYER, REGION_DELETE_LAYER,  REGION_ADD_ENTRY, REGION_REMOVE_ENTRY,
     REGION_SELECT,
     MARKER_START, MARKER_MOVE, MARKER_END, MARKER_CREATE,

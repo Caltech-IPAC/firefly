@@ -107,15 +107,15 @@ public class FitsRead implements Serializable {
 
 
     public boolean isTileCompress() { return tileCompress; }
-    public int getNaxis() { return header.getIntValue("NAXIS",0); }
-    public int getNaxis1() { return header.getIntValue("NAXIS1",0); }
-    public int getNaxis2() { return header.getIntValue("NAXIS2",0); }
-    public int getNaxis3() { return (getNaxis2() > 2) ? header.getIntValue("NAXIS3") : 1; }
+    public int getNaxis() { return FitsReadUtil.getNaxis(header); }
+    public int getNaxis1() { return FitsReadUtil.getNaxis1(header); }
+    public int getNaxis2() { return FitsReadUtil.getNaxis2(header); }
+    public int getNaxis3() { return FitsReadUtil.getNaxis3(header); }
     public String getBUnit() { return this.bunit;}
-    public double getBscale() { return header.getDoubleValue("BSCALE", 1.0); }
-    public double getBzero() { return header.getDoubleValue("BZERO", 0.0); }
+    public double getBscale() { return FitsReadUtil.getBscale(header); }
+    public double getBzero() { return FitsReadUtil.getBzero(header); }
     public double getCdelt1() { return this.cdelt1; }
-    public double getBlankValue() {return header.getDoubleValue("BLANK", Double.NaN);}
+    public double getBlankValue() {return FitsReadUtil.getBlankValue(header); }
     public int getBitPix() {return header.getIntValue("BITPIX"); }
 
     public String getOrigin() {

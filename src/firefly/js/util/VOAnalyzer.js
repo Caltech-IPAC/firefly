@@ -456,6 +456,24 @@ class TableRecognizer {
         return this.setCenterColumnsInfo(s, CoordinateSys.parse(s[2]));
     }
 
+    getImagePtColumnsOnMeta() {
+        const cenData= getMetaEntry(this.tableModel, MetaConst.IMAGE_COLUMN);
+        if (!cenData) return undefined;
+
+        const s= cenData.split(';');
+        if (!s || s.length !== 2) {
+            return;
+        }
+
+        return {
+            type: 'ImageCenterPt',
+            xCol: s[0],
+            yCol: s[1],
+            xIdx: getColumnIdx(this.table, s[0]),
+            yIdx: getColumnIdx(this.table, s[1]),
+        };
+    }
+
 
     /**
      * search center columns pair by checking UCD value
@@ -656,8 +674,13 @@ class TableRecognizer {
  * @return {CoordColsDescription|null}
  */
 export function findTableCenterColumns(table) {
-   const tblRecog = get(table, ['tableData', 'columns']) && TableRecognizer.newInstance(table);
-   return tblRecog && tblRecog.getCenterColumns();
+    const tblRecog = get(table, ['tableData', 'columns']) && TableRecognizer.newInstance(table);
+    return tblRecog && tblRecog.getCenterColumns();
+}
+
+export function findImageCenterColumns(table) {
+    const tblRecog = get(table, ['tableData', 'columns']) && TableRecognizer.newInstance(table);
+    return getMetaEntry(table,MetaConst.FITS_FILE_PATH) && tblRecog?.getImagePtColumnsOnMeta();
 }
 
 /**
@@ -907,9 +930,11 @@ export function isCatalog(tableOrId) {
 
     if (isOrbitalPathTable(table)) return false;
 
-    if (isString(tableMeta[MetaConst.CATALOG_OVERLAY_TYPE])) {
-        if (tableMeta[MetaConst.CATALOG_OVERLAY_TYPE].toUpperCase()==='FALSE') return false;
-        return Boolean(TableRecognizer.newInstance(table).getCenterColumns());
+    const catOverType= getMetaEntry(table,MetaConst.CATALOG_OVERLAY_TYPE)?.toUpperCase();
+    if (catOverType==='FALSE')  return false;
+    if (isString(catOverType)) {
+        if (catOverType==='IMAGE_PTS') return Boolean(findImageCenterColumns(table));
+        else return Boolean(TableRecognizer.newInstance(table).getCenterColumns());
     }
     else {
         return Boolean(TableRecognizer.newInstance(table).getVODefinedCenterColumns());
@@ -1339,6 +1364,7 @@ const dataAxis = {
 export function getSpectrumDM(tableModel) {
     const utype = tableModel?.tableMeta?.utype?.toLowerCase();
     const isSpectrum = utype === 'spec:Spectrum'.toLowerCase();
+
     const isSED = utype === 'ipac:Spectrum.SED'.toLowerCase();
 
     if (!isSpectrum && !isSED) return;

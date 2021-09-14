@@ -18,7 +18,7 @@ import {PlotAttribute} from '../PlotAttribute.js';
 import {AnnotationOps} from '../WebPlotRequest.js';
 import {AREA_SELECT,LINE_SELECT,POINT} from '../../core/ExternalAccessUtils.js';
 import {PlotTitle, TitleType} from './PlotTitle.jsx';
-import Catalog from '../../drawingLayers/Catalog.js';
+import Catalog, {CatalogType} from '../../drawingLayers/Catalog.js';
 import LSSTFootprint from '../../drawingLayers/ImageLineBasedFootprint';
 import {DataTypes} from '../draw/DrawLayer.js';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
@@ -43,6 +43,10 @@ const toolsAnno= [
     AnnotationOps.INLINE_BRIEF_TOOLS
 ];
 
+
+const isCatalogPtData= (dl) => dl.drawLayerTypeId === Catalog.TYPE_ID && dl.catalogType===CatalogType.POINT;
+
+
 /**
  * todo
  * show the select and filter button show?
@@ -52,13 +56,13 @@ const toolsAnno= [
  */
 function showSelect(pv,dlAry) {
     return getAllDrawLayersForPlot(dlAry, pv.plotId,true)
-        .some( (dl) => (dl.drawLayerTypeId === Catalog.TYPE_ID && (dl.canSelect && !dl.dataTooBigForSelection) && dl.catalog) ||
+        .some( (dl) => (isCatalogPtData(dl) && (dl.canSelect && !dl.dataTooBigForSelection) ) ||
                         (dl.drawLayerTypeId === LSSTFootprint.TYPE_ID && dl.canSelect) );
 }
 
 function showFilter(pv,dlAry) {
     return getAllDrawLayersForPlot(dlAry, pv.plotId,true)
-        .some( (dl) => (dl.drawLayerTypeId===Catalog.TYPE_ID && dl.canFilter && dl.catalog) ||
+        .some( (dl) => (isCatalogPtData(dl) && dl.canFilter) ||
                        (dl.drawLayerTypeId === LSSTFootprint.TYPE_ID && dl.canFilter) );
 }
 
@@ -66,7 +70,7 @@ function showClearFilter(pv,dlAry) {
     return getAllDrawLayersForPlot(dlAry, pv.plotId,true)
         .some( (dl) => {
             const filterCnt= getNumFilters(dl.tableRequest);
-            return (dl.drawLayerTypeId===Catalog.TYPE_ID &&  filterCnt && dl.catalog ) ||
+            return (isCatalogPtData(dl) &&  filterCnt) ||
                    (dl.drawLayerTypeId === LSSTFootprint.TYPE_ID && filterCnt);
         });
 }
