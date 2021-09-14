@@ -279,17 +279,7 @@ function renderFileSizeAndPixelSize(plot, band, fitsHeaderInfo, isOnTab) {
     const pt = getPixScaleArcSec(plot);
     const pixelSize = pt.toFixed(2) + '"';
 
-    const  mSize = get(tableModel, ['tableMeta', 'fileSize'], 0);
-    const  fileSize = (mSize && mSize > 0)  ? getSizeAsString(mSize) : '';
-    let    fileSizeStr;
-
-    if (fileSize) {
-        const flen = fileSize.substring(0, fileSize.length - 1);
-
-        fileSizeStr = `${sprintf('%.2f',flen)}${fileSize.substring(fileSize.length - 1, fileSize.length)}`;
-    } else {
-        fileSizeStr = '';
-    }
+    const  fileSizeStr = getSizeAsString(tableModel?.tableMeta?.fileSize) ?? '';
 
     const titleStyleNoTab = {width: '100%', height: 30,display: 'inline-block', background:bgColor};
     const titleStyleOnTab = {width: '100%', height: 30,display: 'inline-block'};
@@ -398,7 +388,7 @@ function createRowData(header,hduStr) {
         .sort((a, b) => header[a].idx - header[b].idx)
         .reduce((prev, aKey, idx) => {
             if (aKey === 'COMMENT') return prev;
-            const row= [`${idx}`, aKey, getHeader(header,aKey,''), getHeaderDesc(header,aKey)];
+            const row= [idx, aKey, getHeader(header,aKey,''), getHeaderDesc(header,aKey)];
             if (hduStr) row.push(hduStr);
             prev.push(row);
             return prev;
