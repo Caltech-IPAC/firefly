@@ -11,6 +11,7 @@ import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.ClientLog;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.CacheManager;
 import org.apache.log4j.PropertyConfigurator;
@@ -64,11 +65,14 @@ public class ServerContext {
     public static final String CONFIG_DIR = "server_config_dir";
     public static final String CACHEMANAGER_DISABLED_PROP = "CacheManager.disabled";
     private static final String WORK_DIR_PROP = "work.directory";
+    private static final String SHARED_WORK_DIR_PROP= "shared.work.directory";
+    public static final String STATS_LOG_DIR= "stats.log.dir";
 
 
     private static RequestOwnerThreadLocal owner = new RequestOwnerThreadLocal();
     private static String appName;
     private static File workingDir;
+    private static File sharedWorkingDir= null;
     private static File appConfigDir;
     private static File webappConfigDir;
     private static File[] visSearchPath = null;
@@ -81,6 +85,7 @@ public class ServerContext {
     private volatile static String CACHE_PATH_STR;
     private volatile static String IRSA_ROOT_PATH_STR;
 
+    public static final String ACCESS_TEST_EXT= "access.test";
 
 
     private static final Logger.LoggerImpl log= Logger.getLogger();
@@ -94,7 +99,7 @@ public class ServerContext {
         PERM_FILE_PATH_STR = getPermWorkDir().getPath();
         TEMP_FILE_PATH_STR = getTempWorkDir().getPath();
         STAGE_FILE_PATH_STR = getStageWorkDir().getPath();
-        VIS_UPLOAD_PATH_STR = getVisUploadDir().getPath();
+        VIS_UPLOAD_PATH_STR = getUploadDir().getPath();
         CACHE_PATH_STR = getVisCacheDir().getPath();
         IRSA_ROOT_PATH_STR = getIrsaRoot().getPath();
 
@@ -135,7 +140,11 @@ public class ServerContext {
         // initializes log4j
         File cfg = getConfigFile("log4j.properties");
         if (cfg.canRead()) {
-            System.out.println("Initializing Log4J using file:" + cfg.getAbsolutePath());
+            String statsDir = AppProperties.getProperty(STATS_LOG_DIR);
+            if (!StringUtils.isEmpty(statsDir)) {
+                initDir(new File(statsDir));
+            }
+            System.out.println(String.format("Initializing Log4J using file: %s  => %s", cfg.getAbsolutePath(), statsDir));
             PropertyConfigurator.configureAndWatch(cfg.getAbsolutePath());
         }
 
@@ -165,9 +174,29 @@ public class ServerContext {
 
         DEBUG_MODE = AppProperties.getBooleanProperty("debug.mode", false);
 
+        File sharedWorkingDirFile = null;
+        String sharedWorkDirRoot = AppProperties.getProperty(SHARED_WORK_DIR_PROP);
+        if (!StringUtils.isEmpty(sharedWorkDirRoot)) {
+            sharedWorkingDirFile= initDir(new File(sharedWorkDirRoot));
+            setSharedWorkingDir(new File(sharedWorkingDirFile, appName));
+            try {
+                File swd = new File(getSharedWorkingDir(), FileUtil.getHostname()+"."+ACCESS_TEST_EXT);
+                if (swd.canWrite()) swd.delete();
+                swd.createNewFile();
+                swd.deleteOnExit();
+            } catch (IOException e) {
+                Logger.error("Could not create a test file in "+ getSharedWorkingDir().toString());
+            }
+        }
+
+
         Logger.info("CACHE_PROVIDER = " + EhcacheProvider.class.getName(),
                 "WORK_DIR = " + ServerContext.getWorkingDir(),
                 "DEBUG_MODE = " + DEBUG_MODE);
+
+        if (!getWorkingDir().equals(getSharedWorkingDir())) {
+            Logger.info("Using shared working dir: "+ getSharedWorkingDir());
+        }
     }
 
 
@@ -190,7 +219,7 @@ public class ServerContext {
             for(int i=0; (i<pathAry.length); i++) {
                 ServerContext.visSearchPath[i]= new File(pathAry[i]);
             }
-            List<String> logList= new ArrayList<String>(10);
+            List<String> logList= new ArrayList<>(10);
             logList.add(VIS_SEARCH_PATH + " loaded: ");
             logList.addAll(Arrays.asList(pathAry));
             logList.add("All local loaded FITS files must resides in these directories or sub-directories");
@@ -275,8 +304,25 @@ public class ServerContext {
         return workingDir;
     }
 
+
+    public static File getSharedWorkingDir() {
+        if (sharedWorkingDir==null) return getWorkingDir();
+        initDir(sharedWorkingDir);
+        if (!sharedWorkingDir.canWrite()) return getWorkingDir();
+        return sharedWorkingDir;
+    }
+
+
+
     public static void setWorkingDir(File workDir) {
         workingDir = workDir;
+    }
+
+    public static void setSharedWorkingDir(File sharedWorkDir) {
+        sharedWorkingDir = sharedWorkDir;
+        if (!sharedWorkingDir.canWrite()) {
+            Logger.getLogger().error("Cannot write to Shared Worked Dir: " + sharedWorkDir.toString());
+        }
     }
 
     public static File getPermWorkDir() {
@@ -314,11 +360,8 @@ public class ServerContext {
 
 
     public static File getStageWorkDir() {
-        File dir = new File(getWorkingDir(), "stage");
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-        return dir;
+        File dir = new File(getSharedWorkingDir(), "stage");
+        return initDir(dir);
     }
 
     //====================================================================
@@ -343,18 +386,14 @@ public class ServerContext {
     //====================================================================
 
 
-    private static void initDir(File dir) {
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
+    private static File initDir(File dir) {
+        if (!dir.exists()) dir.mkdirs();
+        return dir;
     }
 
     public static File getIrsaRoot() {
         File dir = new File(getWorkingDir(), "irsa-root");
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-        return dir;
+        return initDir(dir);
     }
 
     public static File convertToFile(String in) {
@@ -375,7 +414,7 @@ public class ServerContext {
                     retval= new File(getVisCacheDir(), relFile);
                 }
                 else if (prefix.equals(UPLOAD_DIR_PREFIX)) {
-                    retval= new File(getVisUploadDir(), relFile);
+                    retval= new File(getUploadDir(), relFile);
                 }
                 else if (prefix.equals(USER_IMAGES_DIR_PREFIX)) {
                     retval= new File(getVisSessionDir(), relFile);
@@ -410,7 +449,7 @@ public class ServerContext {
                 retval= validateFileInPath(in,!matchOutsideOfPath);
             }
             else {
-                retval= new File(getVisUploadDir(), in);
+                retval= new File(getUploadDir(), in);
             }
         }
         return retval;
@@ -497,7 +536,7 @@ public class ServerContext {
             }
             if (foundFile==null) {
                 if (fileStr.startsWith(getVisCacheDir().getPath()) ||
-                    fileStr.startsWith(getVisUploadDir().getPath()) ||
+                    fileStr.startsWith(getUploadDir().getPath()) ||
                     fileStr.startsWith(getVisSessionDir().getPath()) ||
                     fileStr.startsWith(getUsersBaseDir().getPath())   ||
                     fileStr.startsWith(getPermWorkDir().getPath())   ||
@@ -530,9 +569,9 @@ public class ServerContext {
         return cacheDir;
     }
 
-    public static File getVisUploadDir() {
-        File dir= getVisWorkingDir();
-        Assert.argTst(dir.canWrite(), "can't write to the vis cache dir");
+    public static File getUploadDir() {
+        File dir= getSharedWorkingDir();
+        Assert.argTst(dir.canWrite(), "can't write to cache dir");
         File cacheDir= new File(dir,UPLOAD_DIR_STR);
         if (!cacheDir.exists()) makeDirs(cacheDir);
         return cacheDir;
