@@ -37,7 +37,7 @@ public class FitsUpload extends BaseHttpServlet {
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
 
-        File dir= ServerContext.getVisUploadDir();
+        File dir= ServerContext.getUploadDir();
         File uploadedFile= getUniqueName(dir);
 
         String overrideKey= req.getParameter("cacheKey");

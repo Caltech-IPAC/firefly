@@ -78,7 +78,7 @@ public class FitsCacher {
                         } catch (FitsException e) {
                             File dir= fitsFile.getParentFile();
                             if ( dir.equals(ServerContext.getVisCacheDir()) ||      // if in cache or upload dir, rename the file
-                                    dir.equals(ServerContext.getVisUploadDir()) ) {
+                                    dir.equals(ServerContext.getUploadDir()) ) {
                                 String newF= fitsFile.getAbsolutePath()+"--bad-file";
                                 fitsFile.renameTo(new File(newF));
                                 FitsException newE= new FitsException("bad fits file renamed to: "+newF);
