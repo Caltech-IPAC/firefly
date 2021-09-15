@@ -106,7 +106,7 @@ function initState() {
             viewerId:DEFAULT_PLOT2D_VIEWER_ID,
             itemIdAry:[],
             viewType:GRID,
-            layout: GRID,
+            layout: SINGLE,
             canReceiveNewPlots: NewPlotMode.create_replace.key,
             reservedContainer:false,
             mounted: false,
