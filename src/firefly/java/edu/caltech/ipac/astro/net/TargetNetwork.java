@@ -43,7 +43,7 @@ public class TargetNetwork {
         res= (HorizonsEphPairs.HorizonsResults[])objCache.get(params);
         if (res==null) {
             res= HorizonsEphPairs.lowlevelGetEphInfo(nameOrId);
-            objCache.put(params,res,TWO_MONTHS);
+            if (res.length>0) objCache.put(params,res,TWO_MONTHS);
         }
         return res;
     }
