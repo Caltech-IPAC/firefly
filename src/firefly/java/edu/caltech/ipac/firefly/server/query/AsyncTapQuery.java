@@ -4,10 +4,11 @@
 package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.util.Ref;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.LinkInfo;
@@ -18,6 +19,8 @@ import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.httpclient.HttpMethod;
 
 import java.io.*;
+
+import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 
 
 @SearchProcessorImpl(id = AsyncTapQuery.ID, params = {
@@ -31,7 +34,7 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
 
     private static int MAXREC_HARD = AppProperties.getIntProperty("tap.maxrec.hardlimit", 10000000);
 
-    public AsyncJob submitRequest(ServerRequest request) throws DataAccessException {
+    public AsyncJob submitRequest(TableServerRequest request) throws DataAccessException {
         String serviceUrl = request.getParam("serviceUrl");
         String queryStr = createQueryString(request);
         String lang = request.getParam("LANG");
@@ -53,21 +56,24 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
         inputs.setParam("LANG", lang); // in tap 1.0, lang param is required
         inputs.setParam("request", "doQuery"); // in tap 1.0, request param is required
 
-        AsyncTapJob asyncTap = new AsyncTapJob();
+        AsyncTapJob asyncTap = new AsyncTapJob(request);
         HttpServices.postData(inputs, (method -> {
             String location = HttpServices.getResHeader(method, "Location", null);
             if (location != null) {
                 asyncTap.setBaseJobUrl(location);
-            } else if (!HttpServices.isOk(method)){
-                asyncTap.setErrorMsg(getErrResp(method, inputs.getRequestUrl()));
+                applyIfNotEmpty(getJob(), v -> v.getJobInfo().setDataOrigin(location));
             } else {
-                asyncTap.setErrorMsg("Failed to submit async job to " + serviceUrl);
+                String error = HttpServices.isOk(method) ? "Failed to submit async job to " + serviceUrl :
+                                getErrResp(method, inputs.getRequestUrl());
+                asyncTap.setErrorMsg(error);
+                applyIfNotEmpty(getJob(), v -> v.setError(method.getStatusCode(), error));
             }
         }));
 
         if (asyncTap.getPhase() == AsyncJob.Phase.PENDING) {
             HttpServices.postData(HttpServiceInput.createWithCredential(asyncTap.baseJobUrl + "/phase").setParam("PHASE", "RUN"));
         }
+        applyIfNotEmpty(getJob(), v -> v.progressDesc("query submitted..."));
         return asyncTap;
     }
 
@@ -112,10 +118,15 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
         return errMsg;
     }
 
-    public class AsyncTapJob implements AsyncJob  {
+    public static class AsyncTapJob implements AsyncJob {
+        private final TableServerRequest request;
         private Logger.LoggerImpl logger = Logger.getLogger();
         private String baseJobUrl;
         private String errorMsg;
+
+        public AsyncTapJob(TableServerRequest request) {
+            this.request = request;
+        }
 
         void setBaseJobUrl(String baseJobUrl) {
             this.baseJobUrl = baseJobUrl;
@@ -129,7 +140,7 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
             try {
                 //download file first: failing to parse gaia results with topcat SAX parser from url
                 String filename = getFilename(baseJobUrl);
-                File outFile = File.createTempFile(filename, ".vot", ServerContext.getTempWorkDir());
+                File outFile = File.createTempFile(filename, ".vot", QueryUtil.getTempDir(request));
                 HttpServiceInput input = HttpServiceInput.createWithCredential(baseJobUrl + "/results/result")
                                                          .setFollowRedirect(false);
                 HttpServices.getData(input, (method -> {
@@ -171,7 +182,7 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
         }
 
         public boolean cancel() {
-            return !HttpServices.postData(
+            return !HttpServices.getData(
                         HttpServiceInput.createWithCredential(baseJobUrl + "/phase").setParam("PHASE", Phase.ABORTED.name()),
                         new ByteArrayOutputStream()
             ).isError();
@@ -240,7 +251,7 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
             );
         }
 
-        protected String getBaseJobUrl() {
+        public String getBaseJobUrl() {
             return baseJobUrl;
         }
 

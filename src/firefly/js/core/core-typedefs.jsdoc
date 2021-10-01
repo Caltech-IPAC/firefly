@@ -104,35 +104,29 @@
 /**
  * Top-level.  Information on background jobs. Object is keyed by ID.
  * @typedef {Object} BackgroundInfo
- * @prop {string} email  email to notify when background job is completed
- * @prop {string} showDlScript  show download script link
- * @prop {Object.<string, BgStatus>} jobs  a map of background job and its statuses.
+ * @prop {string} email                     email to notify when background job is completed
+ * @prop {boolean} enableEmail              true to send email notification when job is done
+ * @prop {string} showDlScript              show download script link
+ * @prop {Object.<string, JobInfo>} jobs    a map of background job and its jobInfo.
  */
 
 /**
- * Background status of one job.  Packages info for this job are stored as ITEMS_n,
- * where n is a sequential integer.
- * @typedef {Object.<string, PackageStatus>} BgStatus
- * @prop {string} TYPE  type of job.  ie. 'PACKAGE'
- * @prop {string} ID    unique identifier for this job.
- * @prop {string} email email to notify when job completes.
- * @prop {string} Title title to display for this job.
- * @prop {string} STATE job's state.
- * @prop {number} PACKAGE_CNT  number of package in this job.
- * @prop {number} TOTAL_BYTES  total bytes.
- * @prop {string} DATA_SOURCE .
+ * Background jobInfo of one job.
+ * @typedef {Object} JobInfo
+ * @prop {string} jobId         unique identifier for this job
+ * @prop {string} ownerId       ID of the job creator
+ * @prop {string} phase         execution phase.  One of PENDING, QUEUED, EXECUTING, COMPLETED, ERROR, ABORTED
+ * @prop {string} startTime     start time in UTC
+ * @prop {string} endTime       end time in UTC
+ * @prop {number} executionDuration duration (in seconds) the job is allowed to run. 0 means unlimited
+ * @prop {string} destruction   the time at which the whole job + records + results will be destroyed
+ * @prop {string} parameters    the parameters to the job
+ * @prop {string[]} results     the results for the job - can also be retrieved at /{jobs}/{job-id}/results
+ * @prop {string} type          type of job. One of SEARCH, PACKAGE
+ * @prop {boolean} monitored    true if UI is monitoring the job
+ * @prop {number} progress      progress of the job as a percentage.  0-100, where 100 is done
+ * @prop {string} progressDesc  a description of the current progress
+ * @prop {string} error         error message if there's an error
  */
 
-/**
- * Background status of one job.  Packages info for this job are stored as ITEMS_n,
- * where n is a sequential integer.
- * @typedef {Object} PackageStatus
- * @prop {number} processedBytes  type of job.  ie. 'PACKAGE'
- * @prop {number} finalCompressedBytes    unique identifier for this job.
- * @prop {number} processedFiles job's state.
- * @prop {number} totalBytes  number of package in this job.
- * @prop {number} totalFiles  total bytes.
- * @prop {string} url
- */
-
-/*=========================================================================*/ 
+/*=========================================================================*/

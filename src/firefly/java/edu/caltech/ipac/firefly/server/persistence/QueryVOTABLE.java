@@ -10,6 +10,7 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.TableMeta;
@@ -42,7 +43,7 @@ public abstract class QueryVOTABLE extends IpacTablePartProcessor {
     @Override
     public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
         try {
-            File votable = getSearchResult(getQueryString(req), getFilePrefix(req));
+            File votable = getSearchResult(req);
             DataGroup[] groups = VoTableReader.voToDataGroups(votable.getAbsolutePath());
             DataGroup dg;
             int tblIdx = req.getIntParam(TBL_INDEX, 0);
@@ -95,7 +96,9 @@ public abstract class QueryVOTABLE extends IpacTablePartProcessor {
 
     protected abstract String getQueryString(TableServerRequest req) throws DataAccessException;
 
-    private File getSearchResult(String urlQuery, String filePrefix) throws IOException, DataAccessException, EndUserException {
+    private File getSearchResult(TableServerRequest req) throws IOException, DataAccessException, EndUserException {
+        String urlQuery = getQueryString(req);
+        String filePrefix = getFilePrefix(req);
 
         URL url;
         try {
@@ -107,7 +110,7 @@ public abstract class QueryVOTABLE extends IpacTablePartProcessor {
         URLConnection conn = null;
 
         //File outFile = createFile(req, ".xml");
-        File outFile = File.createTempFile(filePrefix, ".xml", ServerContext.getPermWorkDir());
+        File outFile = File.createTempFile(filePrefix, ".xml", QueryUtil.getTempDir(req));
         try {
             URLDownload.getDataToFile(url, outFile);
 

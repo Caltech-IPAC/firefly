@@ -33,7 +33,7 @@ import ComponentCntlr from '../core/ComponentCntlr.js';
 import {isExistWorspaceFile} from '../visualize/WorkspaceCntlr';
 import {parseUploadResults} from '../rpc/CoreServices.js';
 import {fetchUrl} from '../util/fetch';
-import {getCmdSrvURL} from '../util/WebUtil';
+import {getCmdSrvSyncURL} from '../util/WebUtil';
 
 /*-----------------------------------------------------------------------------------------*/
 /* core component as FilePicker wrapper
@@ -367,7 +367,7 @@ function doUploadWorkspace(file, params={}) {
         options.params.fileAnalysis = true;
     }
 
-    return fetchUrl(getCmdSrvURL(), options).then( (response) => {
+    return fetchUrl(getCmdSrvSyncURL(), options).then( (response) => {
         return response.text().then((text) => parseUploadResults(text) );
     });
 }

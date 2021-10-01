@@ -138,6 +138,22 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
     }
 
     /**
+     * send a ping to the given user with the given WS connection ID
+     * @param userKey
+     */
+    public static void pingClient(String userKey, String eventConnId) {
+        List<ServerEventQueue> conns = ServerEventManager.getEvQueueList();
+        for (ServerEventQueue seq : conns) {
+            // need to notify clients that are affected by update
+            if (seq.getConnID().equals(eventConnId) || seq.getUserKey().equals(userKey)) {
+                ServerEvent.EventTarget target = new ServerEvent.EventTarget(ServerEvent.Scope.SELF, seq.getConnID(), null, null);
+                ServerEvent sev = new ServerEvent(Name.PING, target, "");
+                ServerEventManager.fireEvent(sev);
+            }
+        }
+    }
+
+    /**
      * notify the clients that connections have been updated from the given channel.
      * In order for external viewer to work correctly, we have to treat them as pair.
      * So, even though they have different channels, we notify them both when connections are

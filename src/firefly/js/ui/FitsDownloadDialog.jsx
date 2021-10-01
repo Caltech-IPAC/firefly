@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import {set, isEmpty, capitalize} from 'lodash';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
-import {getRootURL, getCmdSrvURL, encodeUrl, updateSet, replaceExt} from '../util/WebUtil.js';
+import {getRootURL, getCmdSrvSyncURL, encodeUrl, updateSet, replaceExt} from '../util/WebUtil.js';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
@@ -272,7 +272,7 @@ function resultsSuccess(request, plotView, popupId) {
     };
 
     const downloadFileAndClose = (params) => {
-        const url = isWorkspace ? getCmdSrvURL() : getRootURL() + 'servlet/Download';
+        const url = isWorkspace ? getCmdSrvSyncURL() : getRootURL() + 'servlet/Download';
         isWorkspace ? doDownloadWorkspace(url, {params}) : download(encodeUrl(url, params));
         closePopup(popupId);
     };

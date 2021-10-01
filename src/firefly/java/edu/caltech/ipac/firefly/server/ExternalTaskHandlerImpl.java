@@ -2,6 +2,7 @@ package edu.caltech.ipac.firefly.server;
 
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.util.FileUtil;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -64,7 +65,7 @@ public class ExternalTaskHandlerImpl implements ExternalTaskHandler {
                 Object paramsResolved = ServerContext.convertFilePaths(parsedParams);
                 taskParams = JSONValue.toJSONString(paramsResolved);
 
-                jsonParamsFile = File.createTempFile(task, ".json", ServerContext.getTempWorkDir());
+                jsonParamsFile = File.createTempFile(task, ".json", QueryUtil.getTempDir());
                 FileUtil.writeStringToFile(jsonParamsFile, taskParams);
                 launcher.addParam("-i", jsonParamsFile);
             }

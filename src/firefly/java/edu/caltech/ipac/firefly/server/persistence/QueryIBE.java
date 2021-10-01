@@ -21,6 +21,7 @@ import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
@@ -86,7 +87,7 @@ public class QueryIBE extends EmbeddedDbProcessor {
         }
     }
 
-    private void addAddtlMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
+    private void addAddtlMeta(TableMeta meta, List<DataType> columns, TableServerRequest request) {
         super.prepareTableMeta(meta, columns, request);
         try {
             String mission = request.getParam(MISSION);
@@ -98,7 +99,7 @@ public class QueryIBE extends EmbeddedDbProcessor {
             Cache cache = CacheManager.getCache(Cache.TYPE_PERM_SMALL);
             DataGroup coldefs = (DataGroup) cache.get(cacheKey);
             if (coldefs == null) {
-                File ofile = File.createTempFile(mission+"-dd", ".tbl", ServerContext.getPermWorkDir());
+                File ofile = File.createTempFile(mission+"-dd", ".tbl", QueryUtil.getTempDir(request));
                 ibe.getMetaData(ofile);
                 coldefs = IpacTableReader.read(ofile);
                 cache.put(cacheKey, coldefs);

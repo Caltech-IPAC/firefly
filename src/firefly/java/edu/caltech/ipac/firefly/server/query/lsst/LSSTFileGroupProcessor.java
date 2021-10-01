@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.server.query.lsst;
 
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.FileInfo;
@@ -101,7 +102,7 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
 
 
 
-        FileGroup fg = new FileGroup(fiArr, ServerContext.getTempWorkDir(), 0, "LSST Download Files");
+        FileGroup fg = new FileGroup(fiArr, QueryUtil.getTempDir(request.getSearchRequest()), 0, "LSST Download Files");
         fgArr.add(fg);
 
         return fgArr;

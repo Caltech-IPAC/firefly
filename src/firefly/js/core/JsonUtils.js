@@ -7,7 +7,7 @@ import {toBoolean} from '../util/WebUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {logger} from '../util/Logger.js';
 import {fetchUrl} from '../util/fetch';
-import {getCmdSrvURL} from '../util/WebUtil';
+import {getCmdSrvSyncURL} from '../util/WebUtil';
 import jsonBigInt from 'json-bigint';
 
 
@@ -15,22 +15,20 @@ const JSONbigint = jsonBigInt({ useNativeBigInt: true });
 
 /**
  *
- * @param {string} baseUrl
- * @param {string} cmd
- * @param paramList
+ * @param {string} url
+ * @param params
  * @param {boolean} doPost
  * @param {boolean} useBigInt       // use BigInt supported json parser
  * @return {Promise} a promise with the results
  */
-function jsonRequest(baseUrl, cmd, paramList, doPost, useBigInt) {
-    const options = {method: doPost ? 'POST' : 'GET'};
-    if (doPost) baseUrl+=`?${ServerParams.COMMAND}=${cmd}`;
-    options.params = addParam(paramList, ServerParams.COMMAND, cmd);
+export function jsonFetch(url, params, doPost, useBigInt) {
+
+    const options = {method: doPost ? 'POST' : 'GET', params};
 
     return new Promise(function (resolve, reject) {
-        fetchUrl(baseUrl, options, false).then((response) => {
+        fetchUrl(url, options, false).then((response) => {
             if (!response.ok) {
-                reject(new Error(`Error from Server for command ${cmd}: code: ${response.status}, text: ${response.statusText}`));
+                reject(new Error(`Error fetching ${url}: code: ${response.status}, text: ${response.statusText}`));
                 return;
             }
 
@@ -76,7 +74,9 @@ function jsonRequest(baseUrl, cmd, paramList, doPost, useBigInt) {
  * @return {Promise} a promise with the results
  */
 export function doJsonRequest(cmd, paramList, doPost=true, useBigInt=false) {
-    return jsonRequest(getCmdSrvURL(), cmd, paramList, doPost, useBigInt);
+    const url = `${getCmdSrvSyncURL()}?${ServerParams.COMMAND}=${cmd}`;         // ensure url contains cmd value
+    if (doPost) paramList = addParam(paramList, ServerParams.COMMAND, cmd);     // ensure cmd is also in the paramList
+    return jsonFetch(url, paramList, doPost, useBigInt);
 }
 
 /**

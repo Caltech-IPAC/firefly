@@ -227,7 +227,7 @@ public class QueryWise extends IBESearchProcessor {
             outDefinitions[i].setKeyName("in_" + outDefinitions[i].getKeyName());
         }
 
-        File newOutFile = File.createTempFile("wise-catalog-joined-", ".tbl", ServerContext.getPermWorkDir());
+        File newOutFile = File.createTempFile("wise-catalog-joined-", ".tbl", QueryUtil.getTempDir(req));
         IpacTableWriter.save(newOutFile, dgJoined);
         return newOutFile;
     }
@@ -616,7 +616,7 @@ public class QueryWise extends IBESearchProcessor {
 
 
     private static File makeFileName(WiseRequest req) throws IOException {
-        return File.createTempFile("wise-catalog-original-", ".tbl", ServerContext.getPermWorkDir());
+        return File.createTempFile("wise-catalog-original-", ".tbl", QueryUtil.getTempDir(req));
     }
 
     private static String convertUnixToMJD(String unix) {

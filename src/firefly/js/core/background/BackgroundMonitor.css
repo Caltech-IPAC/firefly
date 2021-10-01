@@ -77,6 +77,15 @@
     text-overflow: ellipsis;
 }
 
+.BGMon__header--error {
+    color: maroon;
+    margin-left: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 280px;
+}
+
 .BGMon__header--waiting {
     display: inline-flex;
     align-items: center;
@@ -106,7 +115,7 @@
     width: 175px;
     height: 20px;
     white-space: nowrap;
-    justify-content: space-between;
+    justify-content: end;
 }
 
 .BGMon__packageItem > * {

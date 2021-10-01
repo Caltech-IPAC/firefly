@@ -152,6 +152,8 @@ public class Counters {
         SsoAdapter ssoAdapter = ServerContext.getRequestOwner().getSsoAdapter();
         addToList(retList, "Login URL", ssoAdapter == null ? "n/a" : ssoAdapter.getLoginUrl(""));
         addToList(retList, "Auth Token", (ssoAdapter != null && ssoAdapter.getAuthToken() != null) ? ssoAdapter.getAuthToken().getId() : null);
+        addToList(retList, "Session ID", ServerContext.getRequestOwner().getRequestAgent().getSessId());
+        addToList(retList, "User Key", ServerContext.getRequestOwner().getUserKey());
         retList.add("");
         addMemoryStatus(retList);
 

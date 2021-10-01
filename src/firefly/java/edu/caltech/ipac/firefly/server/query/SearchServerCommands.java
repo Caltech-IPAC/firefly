@@ -9,23 +9,30 @@ package edu.caltech.ipac.firefly.server.query;
  */
 
 
-import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
-import edu.caltech.ipac.firefly.core.background.JobAttributes;
 import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
 import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
-import edu.caltech.ipac.firefly.server.packagedata.BackgroundInfoCacher;
+import edu.caltech.ipac.firefly.server.events.ServerEventManager;
+import edu.caltech.ipac.firefly.server.packagedata.PackagedEmail;
+import edu.caltech.ipac.firefly.server.packagedata.PackagingWorker;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
+import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.firefly.core.background.Job;
+import edu.caltech.ipac.firefly.core.background.JobInfo;
+import edu.caltech.ipac.firefly.core.background.JobManager;
+import edu.caltech.ipac.firefly.core.background.ServCmdJob;
 import org.json.simple.JSONObject;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
+
+import static edu.caltech.ipac.firefly.data.ServerParams.EMAIL;
+import static edu.caltech.ipac.firefly.data.ServerParams.JOB_ID;
 
 /**
  * @author Trey Roby
@@ -33,13 +40,24 @@ import java.util.stream.Collectors;
 public class SearchServerCommands {
 
 
+    public static class TableSearch extends ServCmdJob {
+        public Job.Type getType() { return Job.Type.SEARCH; }
 
+        public String getLabel() {
+            return getParams().getTableServerRequest().getTblTitle();
+        }
 
-    public static class TableSearch extends ServCommand {
+        public void setJobId(String jobId) {
+            getParams().insertJobId(jobId);
+            super.setJobId(jobId);
+        }
 
         public String doCommand(SrvParam params) throws Exception {
             TableServerRequest tsr = params.getTableServerRequest();
-            DataGroupPart dgp = new SearchManager().getDataGroup(tsr);
+            SearchProcessor processor = SearchManager.getProcessor(tsr.getRequestId());
+            if (processor instanceof Job.Worker) setWorker((Job.Worker)processor);
+
+            DataGroupPart dgp = new SearchManager().getDataGroup(tsr, processor);
             JSONObject json = JsonTableUtil.toJsonTableModel(dgp, tsr);
             return json.toJSONString();
         }
@@ -85,7 +103,7 @@ public class SearchServerCommands {
 
         public String doCommand(SrvParam params) throws Exception {
             TableServerRequest tsr = params.getTableServerRequest();
-            SearchProcessor processor = new SearchManager().getProcessor(tsr.getRequestId());
+            SearchProcessor processor = SearchManager.getProcessor(tsr.getRequestId());
             if (processor instanceof JsonDataProcessor) {
                 return  ((JsonDataProcessor)processor).getData(tsr);
             } else {
@@ -104,148 +122,75 @@ public class SearchServerCommands {
 
     }
 
-    public static class PackageRequest extends ServCommand {
+    public static class PackageRequest extends ServCmdJob {
+
+        public Job.Type getType() { return Job.Type.PACKAGE; }
 
         public String doCommand(SrvParam params) throws Exception {
-            String tableReqStr = params.getRequired(ServerParams.REQUEST);
-            String selInfoStr = params.getOptional(ServerParams.SELECTION_INFO);
-            String dlReqStr = params.getOptional(ServerParams.DOWNLOAD_REQUEST);
-
-            DownloadRequest dlreq = QueryUtil.convertToDownloadRequest(dlReqStr, tableReqStr, selInfoStr);
-            SearchManager sman = new SearchManager();
-            SearchProcessor processor = sman.getProcessor(dlreq.getRequestId());
-            if (processor instanceof FileGroupsProcessor) {
-                BackgroundStatus bgStatus = sman.packageRequest(dlreq);
-                bgStatus.setParam(ServerParams.TITLE, dlreq.getTitle());
-                return QueryUtil.convertToJsonObject(bgStatus).toJSONString();
-            } else {
-                throw new DataAccessException("Unable to resolve a search processor for this request.  Operation aborted:" + dlreq.getRequestId());
-            }
-        }
-    }
-
-    public static class SubmitBackgroundSearch extends ServCommand {
-
-        public String doCommand(SrvParam params) throws Exception {
-            TableServerRequest serverRequest = params.getTableServerRequest();
-            int waitMil = params.getRequiredInt(ServerParams.WAIT_MILS);
-
-            BackgroundStatus bgStat =  new SearchManager().submitBackgroundSearch(serverRequest, null, waitMil);
-            return QueryUtil.convertToJsonObject(bgStat).toJSONString();
-        }
-    }
-
-    public static class GetStatus extends ServCommand {
-
-        public String doCommand(SrvParam params) throws Exception {
-            BackgroundStatus bgStat= BackgroundEnv.getStatus(params.getID(),
-                    params.getRequiredBoolean(ServerParams.POLLING));
-            return QueryUtil.convertToJsonObject(bgStat).toJSONString();
+            PackagingWorker worker = new PackagingWorker();
+            setWorker(worker);
+            return worker.doCommand(params);
         }
     }
 
     public static class AddBgJob extends ServCommand {
 
         public String doCommand(SrvParam params) throws Exception {
-            BackgroundStatus bgStatus = QueryUtil.convertToBackgroundStatus(params.getRequired("bgStatus"));
-            BackgroundEnv.addUserBackgroundInfo(bgStatus);
-            return "true";
+            String jobId = params.getRequired(JOB_ID);
+            JobInfo info = JobManager.setMonitored(jobId, true);
+            return JobManager.toJson(info);
         }
     }
 
     public static class RemoveBgJob extends ServCommand {
 
         public String doCommand(SrvParam params) throws Exception {
-            BackgroundEnv.removeUserBackgroundInfo(params.getID());
-            return "true";
+            String jobId = params.getRequired(JOB_ID);
+            JobInfo info = JobManager.setMonitored(jobId, false);
+            return JobManager.toJson(info);
         }
     }
 
     public static class Cancel extends ServCommand {
 
         public String doCommand(SrvParam params) throws Exception {
-            BackgroundEnv.cancel(params.getID());
-            return "true";
-        }
-    }
-
-    public static class CleanUp extends ServCommand {
-
-        public String doCommand(SrvParam params) throws Exception {
-            BackgroundEnv.cleanup(params.getID());
-            return "true";
-        }
-    }
-
-    public static class DownloadProgress extends ServCommand {
-        public boolean getCanCreateJson() { return false; }
-
-        public String doCommand(SrvParam params) throws Exception {
-            String file= params.getRequired(ServerParams.FILE);
-            BackgroundEnv.DownloadProgress dp= BackgroundEnv.getDownloadProgress(file);
-            return dp.toString();
+            String jobId = params.getRequired(JOB_ID);
+            JobInfo info = JobManager.abort(jobId, "Aborted by user");
+            return JobManager.toJson(info);
         }
     }
 
     public static class SetEmail extends ServCommand {
 
         public String doCommand(SrvParam params) throws Exception {
-            List<String> idList = params.getIDList();
-            String email = params.getRequired(ServerParams.EMAIL);
-            BackgroundEnv.setEmail(idList,email);
+            String email = params.getRequired(EMAIL);
+            JobManager.list().forEach(jobInfo -> {
+                String cEmail = jobInfo.getParams().get(EMAIL);
+                    if (!email.equals(cEmail)) {
+                        jobInfo.getParams().put(EMAIL, email);
+                    }
+                }
+            );
             return "true";
-        }
-    }
-
-    public static class SetAttribute extends ServCommand  {
-
-        public String doCommand(SrvParam params) throws Exception {
-            List<String> idList= params.getIDList();
-            String attStr= params.getRequired(ServerParams.ATTRIBUTE);
-            JobAttributes att= StringUtils.getEnum(attStr, JobAttributes.Unknown);
-            BackgroundEnv.setAttribute(idList,att);
-            return "true";
-        }
-    }
-
-    public static class GetEmail extends ServCommand {
-
-        public String doCommand(SrvParam params) throws Exception {
-            String id = params.getID();
-            return BackgroundEnv.getEmail(id);
         }
     }
 
     public static class ResendEmail extends ServCommand {
 
         public String doCommand(SrvParam params) throws Exception {
-            String email= params.getRequired(ServerParams.EMAIL);
-            List<String> idList = BackgroundEnv.getUserBackgroundInfo().stream()
-                    .filter(BackgroundInfoCacher::isSuccess)
-                    .map(BackgroundInfoCacher::getBID)
-                    .collect(Collectors.toList());
-            BackgroundEnv.resendEmail(idList,email);
-            return "true";
-        }
-    }
-
-    public static class ClearPushEntry extends ServCommand {
-
-        public String doCommand(SrvParam params) throws Exception {
-            String id= params.getRequired(ServerParams.ID);
-            int idx=   params.getRequiredInt(ServerParams.IDX);
-            BackgroundEnv.clearPushEntry(id,idx);
-            return "true";
+            String id = params.getRequired(JOB_ID);
+            String email = params.getOptional(EMAIL);
+            JobInfo info = JobManager.sendEmail(id, email);
+            return JobManager.toJson(info);
         }
     }
 
     public static class ReportUserAction extends ServCommand {
 
         public String doCommand(SrvParam params) throws Exception {
-            String channel= params.getRequired(ServerParams.CHANNEL_ID);
-            String desc= params.getRequired(ServerParams.DESC);
             String data= params.getRequired(ServerParams.DATA);
-            BackgroundEnv.reportUserAction(channel,desc,data);
+            ServerEvent userAction = new ServerEvent(Name.REPORT_USER_ACTION, ServerEvent.Scope.CHANNEL, data);
+            ServerEventManager.fireEvent(userAction);
             return "true";
         }
     }
@@ -255,7 +200,7 @@ public class SearchServerCommands {
 
         @Override
         public String doCommand(SrvParam params) throws Exception {
-            String id = params.getID();
+            String id = params.getRequired(JOB_ID);
             String file = params.getRequired(ServerParams.FILE);
             String source = params.getRequired(ServerParams.SOURCE);
             List<String> attStrList = params.getOptionalList(ServerParams.ATTRIBUTE);
@@ -263,8 +208,8 @@ public class SearchServerCommands {
             for(String a : attStrList) {
                 attList.add(Enum.valueOf(ScriptAttributes.class,a));
             }
-            BackgroundEnv.ScriptRet retval= BackgroundEnv.createDownloadScript(id, file, source, attList);
-            return retval!=null ? retval.getServlet() : null;
+            String url = PackagedEmail.makeScriptAndLink(JobManager.getJobInfo(id), source, attList);
+            return url;
         }
     }
 

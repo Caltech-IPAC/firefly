@@ -4,11 +4,12 @@
 
 import {get, set, unset, cloneDeep, omit, omitBy, isNil, pickBy, uniqueId} from 'lodash';
 
-import {uniqueTblId} from './TableUtil.js';
+import {getTblById, uniqueTblId} from './TableUtil.js';
 import {Keys} from '../core/background/BackgroundStatus.js';
 import {SelectInfo} from './SelectInfo.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {WS_HOME} from '../visualize/WorkspaceCntlr.js';
+import {getJobInfo} from '../core/background/BackgroundUtil.js';
 
 export const MAX_ROW = Math.pow(2,31) - 1;
 export const DataTagMeta = ['META_INFO', Keys.DATA_TAG]; // a tag describing the content of this table.  ie. 'catalog', 'imagemeta'
@@ -294,4 +295,23 @@ export function setSelectInfo(request, selectInfo) {
  */
 export function setNoCache(request) {
     set(request, '__searchID', Date.now());
+}
+
+
+/**
+ * @param jobId
+ * @returns {Request} returns search request from the given jobId
+ */
+export function getRequestFromJob(jobId) {
+    const request = getJobInfo(jobId)?.parameters?.[ServerParams.REQUEST];
+    return request ? JSON.parse(request) : {};
+}
+
+/**
+ * @param {string} tbl_id
+ * @returns {string} returns Job ID from the given tbl_id
+ */
+export function getJobIdFromTblId(tbl_id) {
+    const request = getTblById(tbl_id)?.request;
+    return request?.META_INFO?.[ServerParams.JOB_ID];
 }

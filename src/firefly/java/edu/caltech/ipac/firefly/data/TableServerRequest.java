@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import static edu.caltech.ipac.firefly.data.ServerParams.JOB_ID;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 public class TableServerRequest extends ServerRequest implements Serializable, Cloneable {
@@ -348,6 +349,9 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
         return tsr;
     }
 
+    public void setJobId(String jobId) { setMeta(JOB_ID, jobId); }
+
+    public String getJobId() { return getMeta(JOB_ID); }
 
 //====================================================================
 //

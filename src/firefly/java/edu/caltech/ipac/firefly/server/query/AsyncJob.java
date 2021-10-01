@@ -19,6 +19,7 @@ public interface AsyncJob {
     boolean cancel();
     Phase getPhase() throws DataAccessException;
     String getErrorMsg() throws DataAccessException;
+    String getBaseJobUrl();
 
     /**
      * @return how long should the job run before giving up.

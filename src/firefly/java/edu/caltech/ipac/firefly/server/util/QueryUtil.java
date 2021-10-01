@@ -8,8 +8,6 @@ import edu.caltech.ipac.astro.net.TargetNetwork;
 import edu.caltech.ipac.astro.target.IpacTableTargetsParser;
 import edu.caltech.ipac.astro.target.TargetFixedSingle;
 import edu.caltech.ipac.firefly.core.EndUserException;
-import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
-import edu.caltech.ipac.firefly.core.background.PackageProgress;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.DecimateInfo;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
@@ -47,18 +45,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.ACTIVE_REQUEST_CNT;
-import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.ITEMS;
-import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.MESSAGE_CNT;
-import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.PACKAGE_CNT;
-import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.RESPONSE_CNT;
-import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.TOTAL_BYTES;
+import static edu.caltech.ipac.firefly.data.TableServerRequest.FF_SESSION_ID;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_ID;
 
 /**
@@ -85,18 +77,24 @@ public class QueryUtil {
         }
     }
 
+    public static File getTempDir() {
+        return getTempDir(null);
+    }
+
     /**
      * returns a hierarchical temporary directory.
      * @return
      */
-    public static File getTempDir() {
+    public static File getTempDir(TableServerRequest tsr) {
         String sessId = ServerContext.getRequestOwner().getRequestAgent().getSessId();
-        File tempDir = new File(ServerContext.getTempWorkDir(), sessId.substring(0, 3));
+        if (tsr != null && tsr.getParam(FF_SESSION_ID) != null) {
+            sessId = Math.abs(tsr.getParam(FF_SESSION_ID).hashCode()) + "";
+        }
+        File rootDir = tsr == null || tsr.getJobId() == null ? ServerContext.getTempWorkDir() : ServerContext.getPermWorkDir();
+        File tempDir = new File(rootDir, sessId.substring(0, 3));
         if (!tempDir.exists()) tempDir.mkdirs();
         return tempDir;
     }
-
-
 
     public static DownloadRequest convertToDownloadRequest(String dlReqStr, String searchReqStr, String selInfoStr) {
         DownloadRequest retval = new DownloadRequest(convertToServerRequest(searchReqStr), null, null);
@@ -161,49 +159,6 @@ public class QueryUtil {
         return retval;
     }
 
-    public static BackgroundStatus convertToBackgroundStatus(String jsonBgStatus) {
-        BackgroundStatus retval = new BackgroundStatus();
-        if (!StringUtils.isEmpty(jsonBgStatus)) {
-            try {
-                JSONObject jsonReq = (JSONObject) new JSONParser().parse(jsonBgStatus);
-                for (Object key : jsonReq.keySet()) {
-                    String skey = String.valueOf(key);
-                    Object val = jsonReq.get(key);
-                    if (val != null) {
-                        if (skey.equals(BackgroundStatus.ITEMS.substring(0, BackgroundStatus.ITEMS.length()-1))) {
-                            parseBgItems(retval, val.toString());
-                        } else {
-                            retval.setParam(skey, val.toString());
-                        }
-                    }
-                }
-            } catch (ParseException e) {
-                LOGGER.error(e);
-            }
-        }
-        return retval;
-    }
-
-    public static JSONObject convertToJsonObject(BackgroundStatus bgStat) {
-        List<String> intParams = Arrays.asList(MESSAGE_CNT, PACKAGE_CNT, TOTAL_BYTES, RESPONSE_CNT, ACTIVE_REQUEST_CNT);
-
-        JSONObject rval = new JSONObject();
-        Map<String, String> params = bgStat.getParams();
-        if (params != null && params.size() > 0) {
-            for(Map.Entry<String,String> p :  Collections.unmodifiableSet(params.entrySet())) {
-                String key = p.getKey();
-                Object val = p.getValue();
-                if (key.startsWith(ITEMS)) {
-                    val = convertToJsonObject(PackageProgress.parse(p.getValue()));
-                } else if (intParams.contains(key)) {
-                    val = bgStat.getIntParam(key);
-                }
-                rval.put(key, val);
-            }
-        }
-        return rval;
-    }
-
     public static JSONArray toJsonArray(List values) {
         JSONArray jAry = new JSONArray();
         for (Object v : values) {
@@ -245,33 +200,6 @@ public class QueryUtil {
             }
         }
         return jObj;
-    }
-
-    public static JSONObject convertToJsonObject(PackageProgress progress) {
-        JSONObject rval = new JSONObject();
-        rval.put("totalFiles", progress.getTotalFiles());
-        rval.put("totalBytes", progress.getTotalByes());
-        rval.put("processedFiles", progress.getProcessedFiles());
-        rval.put("processedBytes", progress.getProcessedBytes());
-        rval.put("finalCompressedBytes", progress.getFinalCompressedBytes());
-        rval.put("url", progress.getURL());
-        return rval;
-    }
-
-    private static void parseBgItems(BackgroundStatus retval, String val) throws ParseException {
-        JSONArray items = (JSONArray) new JSONParser().parse(val);
-        for (int i = 0; i < items.size(); i++) {
-            JSONObject item = (JSONObject) items.get(i);
-            PackageProgress pp = new PackageProgress(
-                    getInt(item.get("totalFiles")),
-                    getInt(item.get("processedFiles")),
-                    getLong(item.get("totalBytes")),
-                    getLong(item.get("processedBytes")),
-                    getLong(item.get("finalCompressedBytes")),
-                    String.valueOf(item.get("url"))
-                );
-            retval.setParam(BackgroundStatus.ITEMS+i, pp.serialize());
-        }
     }
 
     public static String encode(String s) {

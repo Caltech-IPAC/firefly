@@ -57,8 +57,10 @@ export const getRootURL = once(() => {
     return workingURL.substring(0, workingURL.lastIndexOf('/')) + '/';
 });
 
-export const getCmdSrvURL = () => `${getRootURL()}sticky/CmdSrv`;
-export const getCmdSrvNoZipURL = () => `${getRootURL()}sticky/CmdSrvNoZip`;
+// export const getCmdSrvURL = () => `${getRootURL()}sticky/CmdSrv`;                // @Deprecated but, still supported by the server for fireflyclient
+export const getCmdSrvSyncURL = () => `${getRootURL()}CmdSrv/sync`;
+export const getCmdSrvNoZipURL = () => `${getRootURL()}CmdSrv/NoZip`;
+export const getCmdSrvAsyncURL = () => `${getRootURL()}CmdSrv/async`;
 
 export const isGPUAvailableInWorker= once(() => Boolean(getGlobalObj().OffscreenCanvas));
 // export const isGPUAvailableInWorker= () => false;

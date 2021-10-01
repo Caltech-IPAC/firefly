@@ -5,6 +5,7 @@ import edu.caltech.ipac.firefly.data.sofia.Sofia1DSpectraExtractor;
 import edu.caltech.ipac.firefly.data.sofia.SofiaFitsConverterUtil;
 import edu.caltech.ipac.firefly.data.sofia.SofiaSpectraModel;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.table.io.VoTableWriter;
@@ -275,7 +276,7 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
     private File extractSpectraTable(String fitsPath, SofiaSpectraModel.SpectraInstrument instrument) throws Exception {
         Sofia1DSpectraExtractor model = new Sofia1DSpectraExtractor(instrument);
         DataGroup dataObjects = model.extract(new File(fitsPath));
-        File tempSpectraFile = File.createTempFile("sofia1d-spectra-", ".xml", ServerContext.getTempWorkDir());
+        File tempSpectraFile = File.createTempFile("sofia1d-spectra-", ".xml", QueryUtil.getTempDir());
         VoTableWriter.save(tempSpectraFile, dataObjects, VO_TABLE_TABLEDATA);
         return tempSpectraFile;
     }

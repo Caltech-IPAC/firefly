@@ -9,6 +9,7 @@ import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
@@ -107,7 +108,7 @@ public class QueryRTreeInventory extends IpacTablePartProcessor {
         } else {
 
 
-            File outFile = File.createTempFile(getFilePrefix(req), ".tbl", ServerContext.getPermWorkDir());
+            File outFile = File.createTempFile(getFilePrefix(req), ".tbl", QueryUtil.getTempDir(req));
             try {
             downloadFile(url, outFile);
             } catch (EndUserException e) {

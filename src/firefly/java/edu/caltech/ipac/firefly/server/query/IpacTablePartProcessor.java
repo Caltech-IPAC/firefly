@@ -337,7 +337,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             key = key.appendToKey((Object[]) filters);
             File filterFile = validateFile((File) cache.get(key));
             if (filterFile == null) {
-                filterFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
+                filterFile = File.createTempFile(getFilePrefix(request), ".tbl", QueryUtil.getTempDir(request));
                 doFilter(filterFile, resultsFile, filters, request);
                 cache.put(key, filterFile);
             }
@@ -350,7 +350,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             key = key.appendToKey(sortInfo);
             File sortedFile = validateFile((File) cache.get(key));
             if (sortedFile == null) {
-                sortedFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
+                sortedFile = File.createTempFile(getFilePrefix(request), ".tbl", QueryUtil.getTempDir(request));
                 doSort(resultsFile, sortedFile, sortInfo, request);
                 cache.put(key, sortedFile);
             }
@@ -370,7 +370,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
                 DataGroup dg = IpacTableReader.read(resultsFile, requestedCols);
 
-                deciFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
+                deciFile = File.createTempFile(getFilePrefix(request), ".tbl", QueryUtil.getTempDir(request));
                 DataGroup retval = QueryUtil.doDecimation(dg, decimateInfo);
                 IpacTableWriter.save(deciFile, retval);
                 cache.put(key, deciFile);
@@ -384,7 +384,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             key = key.appendToKey(ic);
             File subFile = validateFile((File) cache.get(key));
             if (subFile == null) {
-                subFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
+                subFile = File.createTempFile(getFilePrefix(request), ".tbl", QueryUtil.getTempDir(request));
                 String sql = "select col " + ic + " from " + resultsFile.getAbsolutePath() + " into " + subFile.getAbsolutePath() + " with complete_header";
                 try {
                     DataGroupQueryStatement.parseStatement(sql).executeInline();
@@ -578,13 +578,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     }
 
     protected File createFile(TableServerRequest request, String fileExt) throws IOException {
-        File file = null;
-        if (doCache()) {
-            file = File.createTempFile(getFilePrefix(request), fileExt, ServerContext.getPermWorkDir());
-        } else {
-            file = File.createTempFile(getFilePrefix(request), fileExt, ServerContext.getTempWorkDir());
-        }
-        return file;
+        return File.createTempFile(getFilePrefix(request), fileExt, QueryUtil.getTempDir(request));
     }
 
 }

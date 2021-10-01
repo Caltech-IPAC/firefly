@@ -102,7 +102,7 @@ public class QueryMOS extends IpacTablePartProcessor {
             Thread catSearchTread = null;
             // pre-generate gator upload file for catalog overlay
             if (req.getBooleanParam(MOSRequest.CAT_OVERLAY)) {
-                catOverlayFile.setSource(File.createTempFile("mosCatOverlayFile-", ".tbl", ServerContext.getTempWorkDir()));
+                catOverlayFile.setSource(File.createTempFile("mosCatOverlayFile-", ".tbl", QueryUtil.getTempDir(req)));
                 Runnable r = new Runnable() {
                     public void run() {
                         try {
@@ -271,7 +271,7 @@ public class QueryMOS extends IpacTablePartProcessor {
     }
 
     private static File makeFileName(MOSRequest req) throws IOException {
-        return File.createTempFile("mos-result", ".xml", ServerContext.getPermWorkDir());
+        return File.createTempFile("mos-result", ".xml", QueryUtil.getTempDir(req));
     }
 
     protected static void requiredParam(StringBuffer sb, String name, double value) throws EndUserException {

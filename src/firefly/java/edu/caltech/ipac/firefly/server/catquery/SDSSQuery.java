@@ -273,7 +273,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
         DataType inRowIdType = uDg.getDataDefintion(CatalogRequest.UPDLOAD_ROW_ID);
         DataType raType = uDg.getDataDefintion("ra");
         DataType decType = uDg.getDataDefintion("dec");
-        File sdssUFile = File.createTempFile("sdss_upload", ".csv", ServerContext.getTempWorkDir());
+        File sdssUFile = File.createTempFile("sdss_upload", ".csv", QueryUtil.getTempDir());
         BufferedWriter writer = new BufferedWriter(new FileWriter(sdssUFile));
         try {
             writer.write("up_id,ra,dec\n");

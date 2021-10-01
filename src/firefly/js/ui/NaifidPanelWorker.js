@@ -4,7 +4,7 @@
 
 //-----------------
 import {ServerParams} from '../data/ServerParams';
-import {getCmdSrvURL, toBoolean} from '../util/WebUtil';
+import {getCmdSrvSyncURL, toBoolean} from '../util/WebUtil';
 import {fetchUrl} from '../util/fetch';
 
 
@@ -39,7 +39,7 @@ function makeResolverPromise(objName) {
 
 function makeSearchPromise(objName) {
     let rejectFunc= null;
-    const url= `${getCmdSrvURL()}?objName=${objName}&cmd=${ServerParams.RESOLVE_NAIFID}`;
+    const url= `${getCmdSrvSyncURL()}?objName=${objName}&cmd=${ServerParams.RESOLVE_NAIFID}`;
     const searchPromise= new Promise(
         function(resolve, reject) {
             let fetchOptions = {};

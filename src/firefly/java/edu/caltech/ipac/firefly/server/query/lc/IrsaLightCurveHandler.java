@@ -91,7 +91,7 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
     }
 
     protected File createPhaseFoldedTempFile() throws IOException {
-        return File.createTempFile("phase-folded", ".tbl", ServerContext.getTempWorkDir());
+        return File.createTempFile("phase-folded", ".tbl", QueryUtil.getTempDir());
     }
 
     protected DataGroup extractTblFrom(File votableResult, RESULT_TABLES_IDX resultTable) {
@@ -144,7 +144,7 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
         TableServerRequest sreq  = getTableServerRequest(request);
 
         try {
-            File file = File.createTempFile("lcInputTable", ".tbl", ServerContext.getTempWorkDir());
+            File file = File.createTempFile("lcInputTable", ".tbl", QueryUtil.getTempDir(request));
             OutputStream out = new FileOutputStream(file, false);
             new SearchManager().save(out, sreq, TableUtil.Format.IPACTABLE);
             out.close();
@@ -156,7 +156,7 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
 
     }
     protected File apiDownload(PeriodogramAPIRequest request) throws IOException{
-       File apiResultTempFile = File.createTempFile("lc-api-result-", ".xml", ServerContext.getTempWorkDir());
+       File apiResultTempFile = File.createTempFile("lc-api-result-", ".xml", QueryUtil.getTempDir(request));
 
         /**
          * @see LightCurveProcessor#computePeriodogram(PeriodogramAPIRequest, java.lang.String)

@@ -178,7 +178,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
         TableServerRequest nReq = new TableServerRequest(processor, request);
         nReq.setPageSize(Integer.MAX_VALUE);    // to ensure we're getting all of the data
         nReq.setStartIndex(0);
-        SearchProcessor<DataGroupPart> proc = new SearchManager().getProcessor(processor);
+        SearchProcessor<DataGroupPart> proc = SearchManager.getProcessor(processor);
         if (proc != null) {
             return (proc instanceof CanFetchDataGroup) ? ((CanFetchDataGroup)proc).fetchDataGroup(nReq) : proc.getData(nReq).getData();
         } else {

@@ -25,7 +25,7 @@ import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {getWorkspaceConfig} from '../../visualize/WorkspaceCntlr.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {download, makeDefaultDownloadFileName} from '../../util/fetch';
-import {getCmdSrvURL} from '../../util/WebUtil';
+import {getCmdSrvSyncURL} from '../../util/WebUtil';
 
 const fKeyDef = {
     fileName: {fKey: 'fileName', label: 'File name:'},
@@ -259,7 +259,7 @@ function resultSuccess(tbl_id, tbl_ui_id, popupId) {
 
         const downloadFile = (urlOrOp) => {
             if (isWorkspace()) {
-                doDownloadWorkspace(getCmdSrvURL(), {params: urlOrOp});
+                doDownloadWorkspace(getCmdSrvSyncURL(), {params: urlOrOp});
             } else {
                 download(urlOrOp);
             }

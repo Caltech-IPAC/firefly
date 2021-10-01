@@ -9,12 +9,10 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
-import edu.caltech.ipac.firefly.server.packagedata.PackagingController;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CachePeerProviderFactory;
-import edu.caltech.ipac.util.cache.StringKey;
+import edu.caltech.ipac.firefly.core.background.JobManager;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.distribution.CacheManagerPeerProvider;
@@ -58,6 +56,8 @@ public class ServerStatus extends BaseHttpServlet {
         boolean showHeaders = Boolean.parseBoolean(req.getParameter("headers"));
 
         res.addHeader("content-type", "text/plain");
+        String jobDetails = req.getParameter("job.details");
+
         PrintWriter writer = res.getWriter();
         try {
             showCountStatus(writer);
@@ -66,7 +66,7 @@ public class ServerStatus extends BaseHttpServlet {
             showWorkAreaStatus(writer);
             skip(writer);
 
-            showPackagingStatus(writer);
+            showPackagingStatus(writer, jobDetails != null && Boolean.parseBoolean(jobDetails));
             skip(writer);
 
             showMessagingStatus(writer);
@@ -92,6 +92,7 @@ public class ServerStatus extends BaseHttpServlet {
             writer.println("\n\nAvailable Parameters");
             writer.println(    "--------------------");
             writer.println("headers=[true|false]        Display all request's headers");
+            writer.println("job.details=[true|false]    Display details of all jobs");
 
         } finally {
             writer.flush();
@@ -242,9 +243,10 @@ public class ServerStatus extends BaseHttpServlet {
         w.println("Messaging Pool: " + Messenger.getStats());
     }
 
-    private static void showPackagingStatus(PrintWriter w) {
-        w.println("Packaging Controller Information");
-        w.println(StringUtils.toString(PackagingController.getInstance().getStatus(), "\n"));
+    private static void showPackagingStatus(PrintWriter w, boolean details) {
+        w.println("Async Job Information");
+        w.println();
+        w.println(JobManager.getStatistics(details));
     }
 
     private static void showHeaders(PrintWriter w, HttpServletRequest req) {

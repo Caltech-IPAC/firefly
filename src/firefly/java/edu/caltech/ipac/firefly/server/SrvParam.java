@@ -13,6 +13,7 @@ package edu.caltech.ipac.firefly.server;
  */
 
 
+import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.messaging.JsonHelper;
@@ -20,6 +21,7 @@ import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.visualize.VisJsonSerializer;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ImagePt;
@@ -33,6 +35,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static edu.caltech.ipac.firefly.data.TableServerRequest.FF_SESSION_ID;
+
 /**
  * @author Trey Roby
  */
@@ -42,10 +46,17 @@ public class SrvParam {
 
     public SrvParam(Map<String, String[]> paramMap) { this.paramMap=new HashMap<>(paramMap); }
 
+    public Map<String, String> flatten() {
+        HashMap<String, String> p = new HashMap<>();
+        paramMap.forEach((k, v) -> p.put(k, String.join(",", v)));
+        return p;
+    }
 
     public Map<String, String[]> getParamMap() {
         return paramMap;
     }
+
+    public int size() { return paramMap.size(); }
 
     /**
      * Return any parameters that are not in ignore list. If the parameter has more then one entry, only return the first
@@ -362,12 +373,22 @@ public class SrvParam {
 //  Table related convenience methods
 //====================================================================
     public TableServerRequest getTableServerRequest() {
-        return getTableServerRequest(ServerParams.REQUEST);
+        String reqString = getRequired(ServerParams.REQUEST);
+        return QueryUtil.convertToServerRequest(reqString);
     }
 
-    public TableServerRequest getTableServerRequest(String key) {
-        String reqString = getRequired(key);
-        return QueryUtil.convertToServerRequest(reqString);
+    public void insertJobId(String jobId) {
+        TableServerRequest request = getTableServerRequest();
+        request.setJobId(jobId);                    // for future reference
+        request.setParam(FF_SESSION_ID, jobId);     // for caching
+        setParam(ServerParams.REQUEST, JsonTableUtil.toJsonTableRequest(request).toJSONString());
+    }
+
+    public DownloadRequest getDownloadRequest() {
+        String tableReqStr = getRequired(ServerParams.REQUEST);
+        String dlReqStr = getRequired(ServerParams.DOWNLOAD_REQUEST);
+        String selInfoStr = getOptional(ServerParams.SELECTION_INFO);
+        return QueryUtil.convertToDownloadRequest(dlReqStr, tableReqStr, selInfoStr);
     }
 
     public TableUtil.Format getTableFormat() {
@@ -387,5 +408,6 @@ public class SrvParam {
 
         return allFormats.get(formatInMap);
     }
+
 }
 

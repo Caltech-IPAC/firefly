@@ -34,6 +34,7 @@ import {recordHistory} from './core/History.js';
 import {setDefaultImageColorTable} from './visualize/WebPlotRequest.js';
 import {initWorkerContext} from './threadWorker/WorkerAccess.js';
 import {getTAPServices} from './ui/tap/TapKnownServices.js';
+import {loadAllJobs} from './core/background/BackgroundUtil.js';
 
 let initDone = false;
 const logger = Logger('Firefly-init');
@@ -303,6 +304,7 @@ function bootstrap(props, options, webApiCommands) {
             client.addListener(ActionEventHandler);
             window.firefly.wsClient = client;
             notifyServerAppInit({spaName:`${props.appTitle||''}--${props.template?props.template:'api'}`});
+            loadAllJobs();
             resolve?.();
         });
     }).then(() => {

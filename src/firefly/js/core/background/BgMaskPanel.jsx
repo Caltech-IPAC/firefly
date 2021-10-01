@@ -1,9 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {get} from 'lodash';
 
 import {dispatchJobAdd} from './BackgroundCntlr.js';
-import {getComponentState} from '../../core/ComponentCntlr.js';
+import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {Logger} from '../../util/Logger.js';
 
@@ -12,29 +11,31 @@ const logger = Logger('BgMaskPanel');
 /**
  * This component uses ComponentCntlr state persistence.  It is keyed by the given props's componentKey.
  * The data structure is described below.
- * @typedef {Object} data BackgroundablePanel's data structure
- * @prop {boolean}  data.inProgress   true when a download is in progress
- * @prop {boolean}  data.bgStatus    the bgStatus given to this background request
+ * @typedef {Object} data               BackgroundablePanel's data structure
+ * @prop {boolean}  data.inProgress     true when a download is in progress
+ * @prop {boolean}  data.jobInfo        the jobInfo given to this background request
  */
 
 
 export const BgMaskPanel = React.memo(({componentKey, style={}}) => {
 
-    const [{inProgress, bgStatus}] = useStoreConnector(() => getComponentState(componentKey));
+    const [{inProgress, jobInfo}] = useStoreConnector(() => getComponentState(componentKey));
 
     const sendToBg = () => {
-        bgStatus && dispatchJobAdd(bgStatus);
+        if (jobInfo) {
+            dispatchComponentStateChange(componentKey, {inProgress:false, jobInfo:undefined});
+            dispatchJobAdd(jobInfo);
+        }
     };
     const maskStyle = {...defMaskStyle, ...style};
-    const parts = get(bgStatus, 'ITEMS.length', 0);
-    const msg = 'Working...' + (parts > 1 ? ` part #${parts}` : '');
+    const msg = jobInfo?.progressDesc || 'Working...';
 
     logger.debug(inProgress ? 'show' : 'hide');
     if (inProgress) {
         return (
             <div style={maskStyle}>
                 <div className='loading-mask'/>
-                { bgStatus &&
+                { jobInfo &&
                     <div style={{display: 'flex', alignItems: 'center'}}>
                         <div style={maskButton} >
                             <div style={{textAlign: 'center', margin: 5, fontSize: 'larger', fontStyle: 'italic'}}>{msg}</div>

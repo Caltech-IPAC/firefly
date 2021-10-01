@@ -5,7 +5,9 @@ package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.firefly.core.background.JobInfo;
 
 import java.util.concurrent.TimeUnit;
 
@@ -16,14 +18,25 @@ import java.util.concurrent.TimeUnit;
  * @version $Id: SearchProcessor.java,v 1.3 2012/06/21 18:23:53 loi Exp $
  */
 public abstract class AsyncSearchProcessor extends EmbeddedDbProcessor  {
-    abstract AsyncJob submitRequest(ServerRequest request) throws DataAccessException;
+    private AsyncJob asyncJob;
+
+    abstract AsyncJob submitRequest(TableServerRequest request) throws DataAccessException;
+
 
 //====================================================================
 //  default implementations
 //====================================================================
 
+    public void onAbort() {
+        if (asyncJob != null) {
+            asyncJob.cancel();
+            Logger.getLogger().debug("AsyncJob cancelled: " + asyncJob.getBaseJobUrl());
+            asyncJob = null;
+        }
+    }
+
     public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
-        AsyncJob asyncJob = submitRequest(req);
+        asyncJob = submitRequest(req);
         int cnt = 0;
         try {
             while (true) {
@@ -33,22 +46,28 @@ public abstract class AsyncSearchProcessor extends EmbeddedDbProcessor  {
                     case COMPLETED:
                         return asyncJob.getDataGroup();
                     case ERROR:
-                    case UNKNOWN:
-                        throw new DataAccessException(asyncJob.getErrorMsg());
+                    case UNKNOWN: {
+                        String error = asyncJob.getErrorMsg();
+                        if (getJob() != null) getJob().setError(500, error);
+                        throw new DataAccessException(error);
+                    }
                     case ABORTED:
-                        throw new DataAccessException("Query aborted");
+                        if (getJob() != null) getJob().setPhase(JobInfo.PHASE.ABORTED);
+                        throw new DataAccessException.Aborted();
                     case PENDING:
                     case EXECUTING:
                     case QUEUED:
                     default:
                     {
-                        int wait = cnt < 10 ? 500 : cnt < 20 ? 1000 : 2000;
+                        int wait = cnt < 3 ? 500 : cnt < 20 ? 1000 : 2000;
                         TimeUnit.MILLISECONDS.sleep(wait);
                     }
                 }
+                jobIf(v -> v=null);         // check job phase.. exit loop if aborted.
             }
         } catch (InterruptedException e) {
-            throw new DataAccessException("Query aborted");
+            onAbort();
+            throw new DataAccessException.Aborted();
         }
     }
 }

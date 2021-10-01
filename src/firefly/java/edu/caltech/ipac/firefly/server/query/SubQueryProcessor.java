@@ -69,7 +69,7 @@ public class SubQueryProcessor extends EmbeddedDbProcessor {
     }
 
     protected EmbeddedDbProcessor getSearchProcessor(TableServerRequest searchReq) throws DataAccessException {
-        return (EmbeddedDbProcessor) new SearchManager().getProcessor(searchReq.getRequestId());
+        return (EmbeddedDbProcessor) SearchManager.getProcessor(searchReq.getRequestId());
     }
 
 
