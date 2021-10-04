@@ -46,17 +46,17 @@ function timeValidator(fieldKey) {
     };
 }
 
-export function ObsCoreSearch({cols, groupKey, fields, useConstraintReducer}) {
+export function ObsCoreSearch({cols, groupKey, fields, useConstraintReducer, initArgs}) {
     const panelTitle = 'Observation Type and Source';
     const panelValue = 'ObsCore';
     const panelPrefix = getPanelPrefix(panelValue);
 
-    const [message, setMesage] = useState();
+    const [message, setMessage] = useState();
 
     useEffect(() => {
         return FieldGroupUtils.bindToStore(groupKey, (fields) => {
             const panelActive = getFieldVal(groupKey, `${panelPrefix}Check`) === panelValue;
-            setMesage(panelActive ? get(fields, [`${panelPrefix}SearchPanel`, 'panelMessage'], '') : '');
+            setMessage(panelActive ? get(fields, [`${panelPrefix}SearchPanel`, 'panelMessage'], '') : '');
         });
     }, []);
 
@@ -234,6 +234,7 @@ export function ObsCoreSearch({cols, groupKey, fields, useConstraintReducer}) {
                         label={'Calibration Level:'}
                         labelWidth={LableSaptail}
                         multiple={true}
+                        initialState={{value: initArgs.obsCoreCalibrationLevel || ''}}
                     />
                     {obsCoreCalibrationLevelOptions.helptext &&
                     <div style={{marginLeft: LableSaptail, marginTop: '5px', padding: '2px'}}>
@@ -247,7 +248,7 @@ export function ObsCoreSearch({cols, groupKey, fields, useConstraintReducer}) {
                         tooltip={'Select ObsCore Data Product Type'}
                         label={'Data Product Type:'}
                         labelWidth={LableSaptail}
-                        initialState={{value: 'image'}}
+                        initialState={{value: initArgs.obsCoreTypeSelection || 'image'}}
                         options={typeOptions()}
                         wrapperStyle={{marginRight: '15px', padding: '8px 0 5px 0', display: 'flex'}}
                         multiple={true}
@@ -264,6 +265,9 @@ export function ObsCoreSearch({cols, groupKey, fields, useConstraintReducer}) {
                         label={'Instrument Name:'}
                         labelWidth={LableSaptail}
                         validator={fakeValidator}
+                        initialState={{
+                            value: initArgs.obsCoreInstrumentName || ''
+                        }}
                     />
                     {obsCoreInstrumentNameOptions.helptext &&
                     <div style={{marginLeft: LableSaptail, marginTop: '5px', padding: '2px'}}>
@@ -282,6 +286,9 @@ export function ObsCoreSearch({cols, groupKey, fields, useConstraintReducer}) {
                         label={'Collection:'}
                         labelWidth={LableSaptail}
                         validator={fakeValidator}
+                        initialState={{
+                            value: initArgs.obsCoreCollection || ''
+                        }}
                     />
                     {obsCoreCollectionOptions.helptext &&
                     <div style={{marginLeft: LableSaptail, marginTop: '5px', padding: '2px'}}>
@@ -300,6 +307,9 @@ export function ObsCoreSearch({cols, groupKey, fields, useConstraintReducer}) {
                         label={'Data Product Subtype:'}
                         labelWidth={LableSaptail}
                         validator={fakeValidator}
+                        initialState={{
+                            value: initArgs.obsCoreSubType || ''
+                        }}
                     />
                     {obsCoreSubTypeOptions.helptext &&
                     <div style={{marginLeft: LableSaptail, marginTop: '5px', padding: '2px'}}>
@@ -323,7 +333,7 @@ ObsCoreSearch.propTypes = {
 };
 
 
-export function ExposureDurationSearch({cols, groupKey, fields, useConstraintReducer, useFieldGroupReducer}) {
+export function ExposureDurationSearch({cols, groupKey, fields, useConstraintReducer, useFieldGroupReducer, initArgs}) {
     const panelTitle = 'Timing';
     const panelValue = 'Exposure';
     const panelPrefix = getPanelPrefix(panelValue);
@@ -346,6 +356,26 @@ export function ExposureDurationSearch({cols, groupKey, fields, useConstraintRed
             setMesage(panelActive ? get(fields, [`${panelPrefix}SearchPanel`, 'panelMessage'], '') : '');
         });
     }, []);
+
+    useEffect(() => {
+        const expTimeMode = initArgs.exposureTimeMode || ISO;
+        if (initArgs.exposureMin){
+            dispatchValueChange({
+                ...{value:initArgs.exposureMin},
+                timeMode: expTimeMode,
+                fieldKey: 'exposureMin',
+                groupKey
+            });
+        }
+        if (initArgs.exposureMax){
+            dispatchValueChange({
+                ...{value:initArgs.exposureMax},
+                timeMode: expTimeMode,
+                fieldKey: 'exposureMax',
+                groupKey
+            });
+        }
+    }, [initArgs]);
 
     const DEBUG_OBSCORE = getAppOptions().tapObsCore?.debug ?? false;
 
@@ -497,6 +527,7 @@ export function ExposureDurationSearch({cols, groupKey, fields, useConstraintRed
                     alignment={'horizontal'}
                     label={'Time of Observation:'}
                     labelWidth={LableSaptail}
+                    initialState={{value: initArgs.exposureRangeType || 'since'}}
                 />
                 <div>
                     {rangeType === 'range' &&
@@ -506,7 +537,7 @@ export function ExposureDurationSearch({cols, groupKey, fields, useConstraintRed
                             options={timeOptions}
                             alignment={'horizontal'}
                             wrapperStyle={{width: LabelWidth, marginTop: 5, marginLeft: 0}}
-                            initialState={{value: ISO}}
+                            initialState={{value: initArgs.exposureTimeMode || ISO}}
                             label={'Use:'}
                             labelWidth={32 /* FIXME: Not sure if this is best */}
                             tooltip='Select time mode'
@@ -535,7 +566,7 @@ export function ExposureDurationSearch({cols, groupKey, fields, useConstraintRed
                                     inputStyle={{overflow: 'auto', height: 16}}
                                     validator={timeValidator('exposureMin')}
                                     tooltip={"'Exposure start from' time (t_min)"}
-                                    value={expMin}
+                                    value={initArgs.exposureMin || expMin}
                                 />
                             </div>
                         </div>
@@ -562,7 +593,7 @@ export function ExposureDurationSearch({cols, groupKey, fields, useConstraintRed
                                     inputStyle={{overflow: 'auto', height: 16}}
                                     validator={timeValidator('exposureMax')}
                                     tooltip={"'Exposure end to' time (t_max)"}
-                                    value={expMax}
+                                    value={initArgs.exposureMax || expMax}
                                 />
                             </div>
                         </div>
@@ -577,6 +608,9 @@ export function ExposureDurationSearch({cols, groupKey, fields, useConstraintRed
                             inputStyle={{overflow: 'auto', height: 16}}
                             validator={fakeValidator}
                             wrapperStyle={{marginLeft: LableSaptail, paddingLeft: 4 /* Extra padding because there's no label */, paddingBottom: 5}}
+                            initialState={{
+                                value: initArgs.exposureSinceValue || ''
+                            }}
                         />
                         <ListBoxInputField
                             fieldKey={'exposureSinceOptions'} // FIXME: Introduce SinceOptions
@@ -586,7 +620,7 @@ export function ExposureDurationSearch({cols, groupKey, fields, useConstraintRed
                                 {label: 'Days', value: 'days'},
                                 {label: 'Years',value: 'years'}
                             ]}
-                            initialState={{value: 'hours'}}
+                            initialState={{value: initArgs.exposureSinceOptions || 'hours'}}
                         />
                     </div>
                     }
@@ -601,6 +635,7 @@ export function ExposureDurationSearch({cols, groupKey, fields, useConstraintRed
                             labelWidth={LableSaptail}
                             validator={minimumPositiveFloatValidator('Minimum Exposure Length')}
                             placeholder={'-Inf'}
+                            initialState={{value: initArgs.exposureLengthMin}}
                         />
                         <div style={{display: 'flex', marginTop: 5, marginRight: '16px', paddingRight: '3px'}}>to</div>
                         <ValidationField
@@ -611,6 +646,7 @@ export function ExposureDurationSearch({cols, groupKey, fields, useConstraintRed
                             tooltip={'Cumulative shutter-open exposure must be less than this amount'}
                             validator={maximumPositiveFloatValidator('Maximum Exposure Length')}
                             placeholder={'+Inf'}
+                            initialState={{value: initArgs.exposureLengthMax}}
                         />
                         <div style={{display: 'flex', marginTop: 5}}>seconds</div>
                     </div>
@@ -701,7 +737,7 @@ function siaQueryRange(keyword, rangeList) {
     return siaFragmentList;
 }
 
-export function ObsCoreWavelengthSearch({cols, groupKey, fields, useConstraintReducer, useFieldGroupReducer}) {
+export function ObsCoreWavelengthSearch({cols, groupKey, fields, useConstraintReducer, useFieldGroupReducer, initArgs}) {
     const panelTitle = 'Spectral Coverage';
     const panelValue = 'Wavelength';
     const panelPrefix = getPanelPrefix(panelValue);
@@ -915,7 +951,7 @@ export function ObsCoreWavelengthSearch({cols, groupKey, fields, useConstraintRe
                                     {label: 'overlaps', value: 'overlaps'},
                                 ]}
                             initialState={{
-                                value: 'contains'
+                                value: initArgs.obsCoreWavelengthRangeType || 'contains'
                             }}
                             label={'Select observations whose wavelength coverage'}
                             labelWidth={236}
@@ -931,6 +967,7 @@ export function ObsCoreWavelengthSearch({cols, groupKey, fields, useConstraintRe
                                 size={SmallFloatNumericWidth}
                                 inputStyle={{overflow: 'auto', height: 16}}
                                 validator={floatValidator(0, 100e15, 'Wavelength')}
+                                initialState={{value: initArgs.obsCoreWavelengthContains || ''}}
                             />
                         </div>
                         }
@@ -943,6 +980,7 @@ export function ObsCoreWavelengthSearch({cols, groupKey, fields, useConstraintRe
                                 inputStyle={{overflow: 'auto', height: 16}}
                                 validator={minimumPositiveFloatValidator('Min Wavelength')}
                                 placeholder={'-Inf'}
+                                initialState={{value: initArgs.obsCoreWavelengthMinRange}}
                             />
                             <div style={{display: 'flex', marginTop: 5, marginRight: '16px', paddingRight: '3px'}}>to</div>
                             <ValidationField
@@ -952,6 +990,7 @@ export function ObsCoreWavelengthSearch({cols, groupKey, fields, useConstraintRe
                                 inputStyle={{overflow: 'auto', height: 16}}
                                 validator={maximumPositiveFloatValidator('Max Wavelength')}
                                 placeholder={'+Inf'}
+                                initialState={{value: initArgs.obsCoreWavelengthMaxRange}}
                             />
                         </div>
                         }
@@ -964,7 +1003,7 @@ export function ObsCoreWavelengthSearch({cols, groupKey, fields, useConstraintRe
                                     {label: 'angstroms', value: 'angstrom'},
                                 ]}
                             initialState={{
-                                value: 'nm'
+                                value: initArgs.obsCoreWavelengthUnits || 'nm'
                             }}
                             multiple={false}
                         />

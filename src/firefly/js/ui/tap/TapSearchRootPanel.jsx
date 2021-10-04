@@ -99,7 +99,7 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
     initApiAddedServiceOnce(initArgs);  // only look for the extra service the first time
     const tapOps= getTapServiceOptions();
     const {current:clickFuncRef} = useRef({clickFunc:undefined});
-    const [selectBy, setSelectBy]= useState('basic');
+    const [selectBy, setSelectBy]= useState(initArgs.selectBy || 'basic');
     const [obsCoreTableModel, setObsCoreTableModel] = useState();
     const [serviceUrl, setServiceUrl]= useState(() => getInitServiceUrl(initArgs,tapOps));
     activateInitArgsAdqlOnce(initArgs);
@@ -230,10 +230,10 @@ function TapSearchPanelComponents({initArgs, serviceUrl, onTapServiceOptionSelec
                     <RadioGroupInputField
                         fieldKey = 'selectBy'
                         initialState = {{
-                            defaultValue: 'basic',
                             options: options,
                             tooltip: 'Please select an interface type to use'
                         }}
+                        defaultValue = {initArgs.selectBy}
                         options = {options}
                         wrapperStyle={{alignSelf: 'center'}}
                     />
