@@ -3,56 +3,37 @@
  */
 package edu.caltech.ipac.astro.net;
 
+import edu.caltech.ipac.firefly.messaging.JsonHelper;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.action.ClassProperties;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.HostPort;
-import edu.caltech.ipac.util.download.NetworkManager;
 import edu.caltech.ipac.util.download.URLDownload;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Serializable;
-import java.io.StringReader;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
-/**
- * @author Booth Hartley
- * @version $Id: HorizonsEphPairs.java,v 1.12 2012/03/13 22:23:02 roby Exp $
- */
 public class HorizonsEphPairs {
 
-    private static final ClassProperties _prop = new ClassProperties(
-            HorizonsEphPairs.class);
+    public static final String horizonsServer = AppProperties.getProperty("horizons.host", "https://ssd.jpl.nasa.gov");
+    public static final String path= "/api/horizons_lookup.api";
 
-    private static final String NAME_IDENT = "Object Name";
-    private static final String ID_IDENT = "Primary SPKID";
-    private static final String DES_IDENT = "Primary designation";
-    private static final String ALIAS_IDENT = "Aliases";
-
-    //    private static final String CGI_CMD= "/cgi-bin/smb_spk.cgi";
-    private static final String CGI_CMD = "/x/smb_spk.cgi";
-
-
-
-    public static HorizonsResults[] lowlevelGetEphInfo(String idOrName)
-            throws FailedRequestException {
+    public static HorizonsResults[] lowlevelGetEphInfo(String idOrName) throws FailedRequestException {
 
         boolean isName = true;
-        HorizonsResults retval[] = null;
         try {
             Integer.parseInt(idOrName);
             isName = false;
-        } catch (NumberFormatException e) {
-        }
+        } catch (NumberFormatException ignore) { }
 
         if (isName) {
             idOrName = StringUtils.crunch(idOrName);
-            String s[] = idOrName.split(" ");
+            String[] s = idOrName.split(" ");
             if (s.length >= 2) {
                 try {
                     Integer.parseInt(s[0]);
@@ -60,192 +41,62 @@ public class HorizonsEphPairs {
                     if (inParens(s[1])) {
                         idOrName = stripFirstLast(s[1]);
                     } else {
-                        char cAry[] = s[1].toCharArray();
+                        char[] cAry = s[1].toCharArray();
                         boolean hasDigit = false;
                         for (int i = 0; (i < cAry.length && !hasDigit); i++) {
                             hasDigit = Character.isDigit(cAry[i]);
                         }
                         if (!hasDigit) idOrName = s[1];
                     }
-                } catch (NumberFormatException e) {
+                } catch (NumberFormatException ignore) {
                 }
             }
         }
 
-        HostPort server = NetworkManager.getInstance().getServer(
-                NetworkManager.HORIZONS_NAIF);
-
-        StringBuffer data = new StringBuffer(100);
 
         try {
-            data.append(URLEncoder.encode("OPTION", "UTF-8"));
-            data.append("=");
-            data.append(URLEncoder.encode("Look up", "UTF-8"));
-            data.append("&");
-            data.append(URLEncoder.encode("OBJECT", "UTF-8"));
-            data.append("=");
-            data.append(URLEncoder.encode(idOrName, "UTF-8"));
-
-
-            //String data = URLEncoder.encode("OBJECT", "UTF-8") + "=" +
-            //              URLEncoder.encode(idOrName, "UTF-8");
-            String urlStr = "https://" +
-                    server.getHost() + ":" + server.getPort() + CGI_CMD;
+            String urlStr = horizonsServer + path + "?sstr="+ URLEncoder.encode(idOrName, "UTF-8");
             URL url = new URL(urlStr);
-            String line;
-            String result = URLDownload.getStringFromURLUsingPost(url, data.toString(), null);
-            BufferedReader rd = new BufferedReader(new StringReader(result));
+            String jsonStrResult = new String(URLDownload.getDataFromURL(url, null));
+            JsonHelper json= JsonHelper.parse(jsonStrResult);
 
-
-            List<String> list = new ArrayList<String>(12);
-            boolean error = false;
-            while ((line = rd.readLine()) != null) {
-                list.add(line);
-                if (line.indexOf("ERROR") > -1) error = true;
+            JSONArray rList= json.getValue(new JSONArray(), "result");
+            List<HorizonsResults> horizonsResults= new ArrayList<>();
+            for(Object r : rList) {
+                String pdes= (String)((JSONObject)r).get("pdes");
+                String name= (String)((JSONObject)r).get("name");
+                String naifID= (String)((JSONObject)r).get("spkid");
+                JSONArray aList = (JSONArray)((JSONObject)r).get("alias");
+                String[] aStrAry= (String[])aList.toArray(new String[0]);
+                horizonsResults.add(new HorizonsResults(name,naifID,pdes,aStrAry));
             }
-            rd.close();
-
-
-            if (error) {
-                StringBuffer errStrBuff = new StringBuffer(100);
-                errStrBuff.append("<html>");
-                for (String s : list) errStrBuff.append(s);
-                throw new FailedRequestException("<html>" +
-                                                         "<br><br><b>ERROR:</b><br><br>" +
-                                                         "No matches found for: " + idOrName);
-            }
-
-            retval = buildHorizonsResults(list);
+            return horizonsResults.toArray(new HorizonsResults[0]);
         } catch (IOException e) {
-            throw new FailedRequestException("failed to retrieve ephermeris pairs",
-                                             "IOException in getting ephermeris info", e);
+            throw new FailedRequestException("failed to retrieve ephemeris pairs",
+                                             "IOException in getting ephemeris info", e);
         }
-        return retval;
     }
 
-
-    private static String appendAll(List l) {
-        StringBuffer buff = new StringBuffer(100);
-        for (Iterator i = l.iterator(); i.hasNext(); ) {
-            buff.append(i.next().toString());
-            buff.append("\n");
-        }
-        return buff.toString();
-    }
-
-
-    private static HorizonsResults[] buildHorizonsResults(List<String> list)
-            throws FailedRequestException {
-
-        String label;
-        String sAry[];
-        String name = null;
-        String id = null;
-        String des = null;
-        String alias = null;
-        String aliases[] = null;
-        List retList = new ArrayList(4);
-        for (String s : list) {
-            if (s.length() == 0) {
-
-                if (name == null || id == null || des == null || aliases == null) {
-                    throw new FailedRequestException(
-                            _prop.getError("parse"),
-                            "One of the fields was null.\n" +
-                                    "Results from query:\n" +
-                                    appendAll(list));
-                } else {
-                    if (StringUtils.isEmpty(name)) {
-                        name = StringUtils.isEmpty(des) ? "No Name*" : des;
-                    }
-                    retList.add(new HorizonsResults(name, id, des, aliases));
-                }
-                name = null;
-                id = null;
-                des = null;
-                alias = null;
-            } else {
-                sAry = s.split("=");
-                if (sAry.length != 2) {
-                    throw new FailedRequestException(
-                            _prop.getError("parse"),
-                            "Missing a value pair combination\n" +
-                                    "Results from query:\n" +
-                                    appendAll(list));
-                }
-
-                label = StringUtils.crunch(sAry[0]);
-                if (label.equals(NAME_IDENT)) {
-                    name = StringUtils.crunch(sAry[1]);
-                    if (StringUtils.isEmpty(name)) {
-                        name = "";
-                    } else if (inParens(name)) {
-                        name = stripFirstLast(name);
-                    }
-                } else if (label.equals(ID_IDENT)) {
-                    id = StringUtils.crunch(sAry[1]);
-                } else if (label.equals(DES_IDENT)) {
-                    des = StringUtils.crunch(sAry[1]);
-                } else if (label.equals(ALIAS_IDENT)) {
-                    alias = StringUtils.crunch(sAry[1]);
-                    if (alias.length() == 0) {
-                        aliases = new String[0];
-                    } else {
-                        aliases = alias.split(",");
-                        for (int k = 0; k < aliases.length; k++) {
-                            aliases[k] = aliases[k].trim();
-                        }
-                    }
-                } else {
-                    // if not one of the four ignore this line
-                }
-            }
-        } // end loop
-        if (retList.size() == 0) {
-            throw new FailedRequestException(
-                    _prop.getError("parse"),
-                    "No error indicated but no results\n" +
-                            "Results from query:\n" +
-                            appendAll(list));
-        }
-
-        return (HorizonsResults[]) retList.toArray(new HorizonsResults[0]);
-    }
 
 
     public static class HorizonsResults implements Serializable {
-        private final String _name;
-        private final String _naifID;
-        private final String _primaryDes;
-        private final String _aliases[];
+        private final String name;
+        private final String naifID;
+        private final String primaryDes;
+        private final String [] aliases;
 
-        public HorizonsResults(String name, String naifID, String primaryDes,
-                               String aliases[]) {
-            _name = name;
-            _naifID = naifID;
-            _primaryDes = primaryDes;
-            _aliases = aliases;
+        public HorizonsResults(String name, String naifID, String primaryDes, String[] aliases) {
+            this.name = name;
+            this.naifID = naifID;
+            this.primaryDes = primaryDes;
+            this.aliases = aliases;
         }
 
-        public final String getName() {
-            return _name;
-        }
-
-        public final String getNaifID() {
-            return _naifID;
-        }
-
-        public final String getPrimaryDes() {
-            return _primaryDes;
-        }
-
-        public final String[] getAliases() {
-            return _aliases;
-        }
-
-        public String toString() {
-            return _name + "     " + _naifID + "     " + _primaryDes;
-        }
+        public final String getName() { return name; }
+        public final String getNaifID() { return naifID; }
+        public final String getPrimaryDes() { return primaryDes; }
+        public final String[] getAliases() { return aliases; }
+        public String toString() { return name + "     " + naifID + "     " + primaryDes; }
     }
 
 
@@ -256,7 +107,7 @@ public class HorizonsEphPairs {
             name = args[0];
             ;
         } else {
-            name = "2150642";
+            name = "jupiter";
         }
         System.out.println("name = " + name);
 

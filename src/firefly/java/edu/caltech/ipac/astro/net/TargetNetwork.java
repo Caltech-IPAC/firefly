@@ -145,7 +145,7 @@ public class TargetNetwork {
         if (res==null) {
             res= HorizonsEphPairs.lowlevelGetEphInfo(nameOrId);
 
-            CacheHelper.putObj(params,res,TWO_MONTHS);
+            if (res.length>0) CacheHelper.putObj(params,res,TWO_MONTHS);
         }
         return res;
     }
