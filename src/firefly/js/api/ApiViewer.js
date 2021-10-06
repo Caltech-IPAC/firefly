@@ -36,6 +36,7 @@ export const ViewerType= new Enum([
 
 let defaultViewerFile='';
 let defaultViewerType=ViewerType.TriView;
+const activeViewers = {};     // a map of active viewer windows keyed by channel
 
 /**
  * @returns {{getViewer: function, getExternalViewer: function}}
@@ -79,7 +80,7 @@ export function getViewer(channel, file=defaultViewerFile, scriptUrl) {
         return getViewer && getViewer(channel, file);
     } else {
         // return currently loaded app's Viewer
-        channel = makeViewerChannel(channel || getWsChannel());
+        channel = makeViewerChannel(channel || getWsChannel(), file);
         const dispatch= (action) => dispatchRemoteAction(channel,action);
         const reinitViewer= () => dispatch({ type: REINIT_APP, payload: {}});
 
@@ -297,20 +298,21 @@ function buildChartPart(channel,file,dispatch) {
 }
 
 const doViewerOperation= (() => {
-    let viewerWindow;
     return (channel,file,initMsg, f) => {
         const cnt = getConnectionCount(channel);
         if (cnt > 0) {
-            viewerWindow ? viewerWindow.focus() : dispatchRemoteAction(channel, {type:GRAB_WINDOW_FOCUS});
+            activeViewers[channel] ? activeViewers[channel]?.focus() : dispatchRemoteAction(channel, {type:GRAB_WINDOW_FOCUS});
             f?.();
         } else {
             dispatchAddActionWatcher({
                 callback:windowReadyWatcher, actions:[WS_CONN_UPDATED, NOTIFY_REMOTE_APP_READY], params:{channel,f}
             });
             const url= `${modifyURLToFull(file,getRootURL())}?${WSCH}=${channel}`;
-            viewerWindow = window.open(url, channel);
-            set(viewerWindow, 'firefly.options.RequireWebSocketUptime', true);
-            initMsg && set(viewerWindow, 'firefly.options.initLoadingMessage', initMsg);
+            const win = window.open(url, channel);
+            activeViewers[channel] =  win;
+            win.onclose = () => Reflect.deleteProperty(activeViewers, channel);
+            set(win, 'firefly.options.RequireWebSocketUptime', true);
+            initMsg && set(win, 'firefly.options.initLoadingMessage', initMsg);
         }
     };
 })();
