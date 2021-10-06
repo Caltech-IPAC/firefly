@@ -41,6 +41,7 @@ export const GRAB_WINDOW_FOCUS = `${APP_DATA_PATH}.grabFocus`;
 
 /** the extension to add to a channel string to make a viewer channel */
 const CHANNEL_VIEWER_EXTENSION = '__viewer';
+const channel_matcher = new RegExp(`(.+)${CHANNEL_VIEWER_EXTENSION}(?:-(.+))?`)
 
 /** @type {SearchInfo} */
 const searchInfo = {};
@@ -151,8 +152,7 @@ export function dispatchUpdateAppData(appData) {
 export function dispatchNotifyRemoteAppReady() {
     const channel= getWsChannel();
     if (!channel) return;
-    const sourceChannel= channel.endsWith(CHANNEL_VIEWER_EXTENSION) ?
-        channel.substr(0,channel.lastIndexOf(CHANNEL_VIEWER_EXTENSION)) : channel;
+    const [, sourceChannel, app] = channel.match(channel_matcher) || [,channel];
     dispatchRemoteAction(sourceChannel,{ type : NOTIFY_REMOTE_APP_READY, payload: {ready:true, viewerChannel:channel}});
 }
 
@@ -177,8 +177,9 @@ export function dispatchOnAppReady(callback) {
  * @param {String} channel
  * @return {string}
  */
-export function makeViewerChannel(channel) {
-    return channel + CHANNEL_VIEWER_EXTENSION;
+export function makeViewerChannel(channel, file) {
+    file = file ? '-' + file.replaceAll('.', '_') : '';
+    return channel + CHANNEL_VIEWER_EXTENSION + file;
 }
 
 export function isAppReady() {
