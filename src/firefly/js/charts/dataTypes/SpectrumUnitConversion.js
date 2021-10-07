@@ -53,7 +53,7 @@ const UnitXref = {
             label: '𝛎 [%s]'
         },
         wavelength: {
-            options: [{value:'um'}, {value:'cm'}, {value:'m'}],
+            options: [{value: 'A'}, {value: 'nm'}, {value:'um'}, {value: 'mm'}, {value:'cm'}, {value:'m'}],
             label: 'λ [%s]'
         },
         flux_density: {
@@ -95,19 +95,52 @@ const UnitXref = {
         GHz : '%s'
     },
     // wavelength
+    A : {
+        A  : '%s',
+        nm : '%s / 10',
+        um : '%s / 1.0E+4',
+        mm : '%s / 1.0E+7',
+        cm : '%s / 1.0E+8',
+        m  : '%s / 1.0E+10'
+    },
+    nm : {
+        A  : '%s * 10',
+        nm : '%s',
+        um : '%s / 1.0E+3',
+        mm : '%s / 1.0E+6',
+        cm : '%s / 1.0E+7',
+        m  : '%s / 1.0E+9'
+    },
     um : {
+        A  : '%s * 1.0E+4',
+        nm : '%s * 1.0E+3',
         um : '%s',
-        cm : '%s / 10000.0',
-        m  : '%s / 1000000.0'
+        mm : '%s / 1.0E+3',
+        cm : '%s / 1.0E+4',
+        m  : '%s / 1.0E+6'
+    },
+    mm : {
+        A  : '%s * 1.0E+7',
+        nm : '%s * 1.0E+6',
+        um : '%s * 1.0E+3',
+        mm : '%s',
+        cm : '%s / 10',
+        m  : '%s / 1.0E+3'
     },
     cm : {
-        um : '%s * 10000.0',
+        A  : '%s * 1.0E+8',
+        nm : '%s * 1.0E+7',
+        um : '%s * 1.0E+4',
+        mm : '%s * 10',
         cm : '%s',
-        m  : '%s / 100.0'
+        m  : '%s / 100'
     },
     m  : {
-        um : '%s * 1000000.0',
-        cm : '%s * 100.0',
+        A  : '%s * 1.0E+10',
+        nm : '%s * 1.0E+9',
+        um : '%s * 1.0E+6',
+        mm : '%s * 1.0E+3',
+        cm : '%s * 100',
         m  : '%s'
     },
     //  flux density
