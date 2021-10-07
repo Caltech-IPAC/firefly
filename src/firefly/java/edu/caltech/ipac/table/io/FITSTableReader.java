@@ -362,7 +362,7 @@ public final class FITSTableReader
                                                 List<FitsReadUtil.ExtractionResults> results,
                                                 String wavelengthColName, String fluxColName) {
 
-        dataGroup.getTableMeta().addKeyword("utype", "spec:Spectrum");
+        dataGroup.getTableMeta().addKeyword(TableMeta.UTYPE, "spec:Spectrum");
         GroupInfo wlGr = new GroupInfo("spec:Data.SpectralAxis", "");
         GroupInfo.RefInfo wlref= new GroupInfo.RefInfo(wavelengthColName, "", "spec:Data.SpectralAxis.Value");
         wlGr.setColumnRefs(Collections.singletonList(wlref));
@@ -395,7 +395,6 @@ public final class FITSTableReader
         TableMeta meta= dataGroup.getTableMeta();
         meta.addKeyword(MetaConst.DEFAULT_CHART_X_COL, xColName);
         meta.addKeyword(MetaConst.DEFAULT_CHART_Y_COL, defYCol);
-        dataGroup.trimToSize();
     }
 
 

@@ -102,14 +102,6 @@ export const MetaConst = {
      * */
     DEFAULT_CHART_Y_COL: 'defaultChartYCol',
 
-    /**
-     * json parameters to add additional chart parameter to the default chart
-     * used with DEFAULT_CHART_X_COL and DEFAULT_CHART_Y_COL
-     * not used with DEFAULT_CHART_DEF
-     */
-    ADDITIONAL_CHART_DEF : 'additionalChartDef',
-
-
 
     /** a string or html rgb/rgba color that can be set in metadata, use with catalog overlay */
     DEFAULT_COLOR : 'DEFAULT_COLOR',

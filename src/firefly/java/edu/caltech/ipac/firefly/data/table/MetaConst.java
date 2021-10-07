@@ -112,13 +112,6 @@ public class MetaConst {
      * */
     public static final String DEFAULT_CHART_Y_COL= "defaultChartYCol";
 
-    /**
-     * json parameters to add additional chart parameter to the default chart
-     * used with DEFAULT_CHART_X_COL and DEFAULT_CHART_Y_COL
-     * not used with DEFAULT_CHART_DEF
-     */
-    public static final String ADDITIONAL_CHART_DEF= "additionalChartDef";
-
     /** the column name with access rights info;  true if (public, 1, or true), otherwise false  */
     public static final String DATARIGHTS_COL = "DATARIGHTS_COL";
 

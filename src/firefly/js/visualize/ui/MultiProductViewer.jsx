@@ -76,7 +76,7 @@ const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId, 
     const {displayType='unsupported', menu,fileMenu,
         message,url, isWorkingState, menuKey,
         activeMenuLookupKey,singleDownload= false,
-        chartTableDefOption=SHOW_CHART, imageActivate,
+        chartTableDefOption=SHOW_CHART, imageActivate, extraction,
         allowsInput=false, serDefParams= undefined, noProductsAvailable=false}= dataProductsState;
 
     const searchParams= getSearchParams(serviceParamsAry,activeMenuLookupKey,menuKey);
@@ -120,8 +120,6 @@ const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId, 
             });
     }, [activate,searchParams,allowsInput]);
 
-
-
     const resetAllSearchParams= () => menu?.forEach( (entry) =>
             getSearchParams(serviceParamsAry,activeMenuLookupKey,entry.menuKey) && dispatchSetSearchParams(
                                         { dpId, activeMenuLookupKey, menuKey:entry.menuKey, params: undefined }));
@@ -129,9 +127,9 @@ const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId, 
     const doResetButton= displayType!==DPtypes.ANALYZE && !isWorkingState && Boolean(searchParams || serDefParams?.some( (sdp) => !sdp.ref));
     // const doResetButton= Boolean(searchParams);
     let makeDropDown;
-    if (menu?.length>1 || fileMenu?.menu?.length>1) {
+    if (menu?.length>1 || fileMenu?.menu?.length>1 || extraction) {
         const showMenu= !singleDownload || singleDownload && displayType===DPtypes.DOWNLOAD_MENU_ITEM;
-        makeDropDown= getMakeDropdown(dpId, dataProductsState, showMenu, doResetButton, resetAllSearchParams);
+        makeDropDown= getMakeDropdown(dpId, dataProductsState, showMenu, doResetButton, extraction, resetAllSearchParams);
     }
 
 
@@ -352,14 +350,15 @@ const makeMultiImageViewer= (imageViewerId,metaDataTableId,makeDropDown, ImageMe
  * @param {DataProductState} dataProductState
  * @param {boolean} showMenu - true to show the Menu
  * @param {boolean} showRedoSearchButton - true to show the button
+ * @param {Function} extraction a function to extract the data product into somewhere else
  * @param {Function} resetAllSearchParams - function that will reset all the search param input to undefined
  * @return {function|undefined} function to create the drapdown menu
  */
-function getMakeDropdown(dpId, dataProductState, showMenu, showRedoSearchButton, resetAllSearchParams) {
+function getMakeDropdown(dpId, dataProductState, showMenu, showRedoSearchButton, extraction, resetAllSearchParams) {
     const {menu,fileMenu,activeMenuLookupKey, menuKey, analysisActivateFunc, originalTitle}= dataProductState;
     const hasFileMenu= get(fileMenu,'menu.length',0)>1;
     const hasMenu= showMenu && menu && menu.length>0;
-    if (!hasMenu && !hasFileMenu && !showRedoSearchButton) return undefined;
+    if (!hasMenu && !hasFileMenu && !showRedoSearchButton && !extraction) return undefined;
     return () => (
             <div style={{display:'flex', flexDirection:'row'}}>
                 {!hasMenu ? <div style={{width: 50,height:1 }}/> :
@@ -382,6 +381,8 @@ function getMakeDropdown(dpId, dataProductState, showMenu, showRedoSearchButton,
                     useDropDownIndicator={true}
                     dropDown={<FileMenuDropDown {...{fileMenu, dpId}} />} />
                 }
+                { extraction &&
+                <ToolbarButton text='Keep' tip={'Keep'} horizontal={true} onClick={() => extraction()} /> }
                 {showRedoSearchButton && analysisActivateFunc &&
                     <ToolbarButton
                         text='Redo Search' tip={'Redo Search'} horizontal={true}

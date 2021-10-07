@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isEmpty} from 'lodash';
+import {isEmpty,isString} from 'lodash';
 import {ServerRequest} from '../data/ServerRequest.js';
 import {getDefaultImageColorTable, WebPlotRequest} from '../visualize/WebPlotRequest.js';
 import {ZoomType} from '../visualize/ZoomType.js';
@@ -19,6 +19,7 @@ import {getTblById, onTableLoaded} from '../tables/TableUtil';
 import {ChartType} from '../data/FileAnalysis';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga';
 import {SET_LAYOUT_MODE, LO_MODE, LO_VIEW} from '../core/LayoutCntlr.js';
+import {getDefaultChartProps} from 'firefly/charts/ChartUtil.js';
 
 const getSetInSrByRow= (table,sr,rowNum) => (col) => {
     sr.setSafeParam(col.name, getCellValue(table,rowNum,col.name));
@@ -56,19 +57,21 @@ function isTableChartNormalViewAction(payload, type) {
     return (mode === LO_MODE.standard && loadedTablesIds.has(tbl_id));
 }
 
-function makeTableRequest(source, titleInfo, tbl_id, tbl_index, colNames, colUnits) {
+function makeTableRequest(source, titleInfo, tbl_id, tbl_index, colNames, colUnits, extraction=false) {
     const colNamesStr= colNames && makeCommaSeparated(colNames);
     const colUnitsStr= colUnits && makeCommaSeparated(colUnits);
+    const META_INFO= !extraction ?
+        {
+            [MetaConst.DATA_SOURCE] : 'false',
+            [MetaConst.CATALOG_OVERLAY_TYPE]:'false'
+        } : {}
     const dataTableReq= makeFileRequest(titleInfo.titleStr, source, undefined,
         {
-            tbl_id,
+            tbl_id : !extraction ? tbl_id : undefined,
             tbl_index,
             startIdx : 0,
             pageSize : 100,
-            META_INFO : {
-                [MetaConst.DATA_SOURCE] : 'false',
-                [MetaConst.CATALOG_OVERLAY_TYPE]:'false'
-            }
+            META_INFO,
         });
     if (colNamesStr) dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_COL_NAMES]=  colNamesStr;
     if (colUnitsStr) dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_UNITS]=  colUnitsStr;
@@ -87,7 +90,19 @@ function loadTableAndCharts(dataTableReq, tbl_id, tableGroupViewerId, dispatchCh
         });
 
     onTableLoaded(tbl_id).then( () => {
-        dispatchCharts && dispatchCharts.forEach( (c) => dispatchChartAdd(c));
+        if (dispatchCharts) {
+            dispatchCharts.forEach( (c) => {
+                const {useChartChooser,xAxis,yAxis,...dParams} = c;
+                if (useChartChooser) {
+                    const chartProps= getDefaultChartProps(tbl_id,xAxis,yAxis);
+                    dispatchChartAdd({...dParams,...chartProps});
+                }
+                else {
+                    dispatchChartAdd(c);
+                }
+            });
+
+        }
     });
 
     return () => {
@@ -96,6 +111,16 @@ function loadTableAndCharts(dataTableReq, tbl_id, tableGroupViewerId, dispatchCh
         dispatchCharts && dispatchCharts.forEach( (c) => dispatchChartRemove(c.chartId));
     };
 }
+
+export function createTableExtraction(source,titleInfo,tbl_index,colNames,colUnits) {
+    return () => {
+        const ti= isString(titleInfo) ? {titleStr:titleInfo} : titleInfo;
+        const dataTableReq= makeTableRequest(source,ti,undefined,tbl_index,colNames,colUnits, true);
+        dispatchTableSearch(dataTableReq,
+            { setAsActive: false, logHistory: false, showFilters: true, showInfoButton: true });
+    };
+}
+
 
 
 /**
@@ -118,7 +143,7 @@ export function createChartTableActivate(chartAndTable,source, titleInfo, activa
                                          chartId='part-result-chart', tbl_id= 'part-result-tbl') {
     return () => {
         const dispatchCharts=  chartAndTable && makeChartObj(chartInfo, activateParams,titleInfo,connectPoints,chartId,tbl_id);
-        const dataTableReq= makeTableRequest(source,titleInfo,tbl_id,tbl_index,colNames,colUnits);
+        const dataTableReq= makeTableRequest(source,titleInfo,tbl_id,tbl_index,colNames,colUnits,false);
         const savedRequest= loadedTablesIds.has(tbl_id) && JSON.stringify(loadedTablesIds.get(tbl_id)?.request);
 
         if (savedRequest!==JSON.stringify(dataTableReq)) {
@@ -219,7 +244,7 @@ function makeChartObj(chartInfo,  activateParams, titleInfo, connectPoints, char
 
     const {chartViewerId:viewerId}= activateParams;
     const {chartParamsAry}= chartInfo;
-    const {xAxis, yAxis}= chartInfo;
+    const {xAxis, yAxis, useChartChooser}= chartInfo;
 
     /* The table and chart title is the part's desc field. When the HDU does not have extname defined, the desc in the
      part is not defined.  In such case, the title is defined in PartAnalyzer is 'table_'+ HDU-index.  In order to change
@@ -232,6 +257,9 @@ function makeChartObj(chartInfo,  activateParams, titleInfo, connectPoints, char
         return chartParamsAry
             .map((chartParams) => makeChartFromParams(tbl_id, chartParams, xAxis, yAxis, chartTitle))
             .map((dataLayout) => ({viewerId, groupId: viewerId, chartId: `${chartId}--${chartNum++}`, ...dataLayout}));
+    }
+    else if (useChartChooser) {
+        return [{ viewerId, groupId: viewerId, chartId,xAxis, yAxis, useChartChooser: true }];
     }
     else {
         return [ {

@@ -24,7 +24,7 @@ import {
 import {
     createGridImagesActivate,
     createRelatedDataGridActivate,
-    createSingleImageActivate
+    createSingleImageActivate, createSingleImageExtraction
 } from './ImageDataProductsUtil';
 import {makeAnalysisGetGridDataProduct, makeAnalysisGetSingleDataProduct} from './MultiProductFileAnalyzer';
 import {dpdtImage} from './DataProductsType';
@@ -78,7 +78,8 @@ function getSingleDataProductWrapper(makeReq) {
         const retVal= makeReq(table, row, true);
         const r= get(retVal,'single');
         const activate= createSingleImageActivate(r,imageViewerId,table.tbl_id,row);
-        return Promise.resolve( dpdtImage('Image', activate));
+        const extraction= createSingleImageExtraction(r);
+        return Promise.resolve( dpdtImage('Image', activate, extraction));
     };
 }
 
@@ -115,7 +116,8 @@ function getRelatedDataProductWrapper(makeReq) {
         const retVal= makeReq(table, row, false,true,threeColorOps);
         if (retVal) {
             const activate= createRelatedDataGridActivate(retVal,imageViewerId,table.tbl_id, highlightPlotId);
-            return Promise.resolve( dpdtImage('Images', activate));
+            const extraction= retVal.standard ? createSingleImageExtraction(retVal.standard) : undefined;
+            return Promise.resolve( dpdtImage('Images', activate, extraction));
         }
         else {
             return Promise.resolve( {});

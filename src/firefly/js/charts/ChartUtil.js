@@ -8,21 +8,13 @@
  * Created by tatianag on 3/17/16.
  */
 
-import {assign, cloneDeep, flatten, get, has, isArray, isEmpty, isObject, isString, isUndefined, merge, pick, range, set, uniqueId} from 'lodash';
+import {assign, cloneDeep, flatten, get, has, isArray, isEmpty, isObject, isString,
+    isUndefined, merge, pick, range, set, uniqueId} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {getAppOptions} from '../core/AppDataCntlr.js';
-import {
-    COL_TYPE,
-    getColumnType,
-    getMetaEntry,
-    getTblById,
-    isColumnType,
-    isFullyLoaded,
-    isTableLoaded,
-    stripColumnNameQuotes,
-    watchTableChanges
-} from '../tables/TableUtil.js';
+import { COL_TYPE, getColumnType, getMetaEntry, getTblById, isColumnType, isFullyLoaded, isTableLoaded,
+    stripColumnNameQuotes, watchTableChanges } from '../tables/TableUtil.js';
 import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_SELECT, TABLE_SORT} from '../tables/TablesCntlr.js';
 import {dispatchLoadTblStats, getColValStats} from './TableStatsCntlr.js';
 import {dispatchChartHighlighted, dispatchChartSelect, dispatchChartUpdate, dispatchSetActiveTrace, getChartData} from './ChartsCntlr.js';
@@ -968,7 +960,14 @@ function getDefaultColorAttributes(traceData, type, idx) {
 }
 
 
-export function getDefaultChartProps(tbl_id) {
+/**
+ *
+ * @param tbl_id
+ * @param {String} [fbXCol] fallback X column, if defined use as a last resort for x column before guessing
+ * @param {String} [fbYCol] fallback Y column, if defined use as a last resort for y column before guessing
+ * @return {{data: {}, layout:{}}}
+ */
+export function getDefaultChartProps(tbl_id,fbXCol,fbYCol) {
 
     const tblModel = getTblById(tbl_id);
     const {tableMeta, tableData, totalRows} = tblModel || {};
@@ -991,20 +990,23 @@ export function getDefaultChartProps(tbl_id) {
 
 
     // test to see if meta set the default x and y coloumns
-    const additionalChartDef= getMetaEntry(tblModel,MetaConst.ADDITIONAL_CHART_DEF);
     let xCol= getMetaEntry(tblModel,MetaConst.DEFAULT_CHART_X_COL);
     let yCol= getMetaEntry(tblModel,MetaConst.DEFAULT_CHART_Y_COL);
     if (xCol) {
-        return genericXYChart({tbl_id, xCol, yCol:yCol||xCol, additionalChartDef});
+        return genericXYChart({tbl_id, xCol, yCol:yCol||xCol});
     }
 
+    // if defined, use these columns if nothing is specifically defined in the meta
+    if (fbXCol && fbYCol) {
+        return genericXYChart({tbl_id, xCol:fbXCol, yCol:fbYCol, xOptions: 'flip'});
+    }
 
     // for catalogs use lon and lat columns
     const centerColumns = findTableCenterColumns(tblModel);
     xCol = centerColumns?.lonCol;
     yCol = centerColumns?.latCol;
     if (xCol && yCol) {
-        return genericXYChart({tbl_id, xCol, yCol, xOptions: 'flip', additionalChartDef});
+        return genericXYChart({tbl_id, xCol, yCol, xOptions: 'flip'});
     }
 
     //otherwise use the first one-two numeric columns
@@ -1012,19 +1014,19 @@ export function getDefaultChartProps(tbl_id) {
     if (numericCols?.length > 0) {
         xCol = numericCols[0]?.name;
         yCol = numericCols.length > 1 ? numericCols[1]?.name : xCol;
-        return genericXYChart({tbl_id, xCol, yCol, additionalChartDef});
+        return genericXYChart({tbl_id, xCol, yCol});
     }
 }
 
-function genericXYChart({tbl_id, xCol, yCol, xOptions, additionalChartDef}) {
+function genericXYChart({tbl_id, xCol, yCol, xOptions}) {
     if (xCol === yCol) {
-        return fireflyHistogram({tbl_id, xCol,additionalChartDef });
+        return fireflyHistogram({tbl_id, xCol});
     } else {
-        return scatterOrHeatmap({tbl_id, xCol, yCol, xOptions,additionalChartDef});
+        return scatterOrHeatmap({tbl_id, xCol, yCol, xOptions});
     }
 }
 
-function fireflyHistogram({tbl_id, xCol, additionalChartDef={data:{},layout:{}}}) {
+function fireflyHistogram({tbl_id, xCol}) {
     const xColName = quoteNonAlphanumeric(xCol);
     return {
         data: [{
@@ -1039,12 +1041,11 @@ function fireflyHistogram({tbl_id, xCol, additionalChartDef={data:{},layout:{}}}
                 }
             },
             name: `${xColName}`,
-            ...additionalChartDef?.data
         }]
     };
 }
 
-function scatterOrHeatmap({tbl_id, xCol, yCol, xOptions, additionalChartDef={data:{},layout:{}}}) {
+function scatterOrHeatmap({tbl_id, xCol, yCol, xOptions}) {
     const {totalRows} = getTblById(tbl_id) || {};
 
     const xColName = quoteNonAlphanumeric(xCol);
@@ -1053,8 +1054,6 @@ function scatterOrHeatmap({tbl_id, xCol, yCol, xOptions, additionalChartDef={dat
     const colorscaleName = 'GreySeq';
     const colorscale = colorscaleNameToVal(colorscaleName);
     const autorange = xOptions?.includes('flip') ? 'reversed' : 'true';
-    const addData= additionalChartDef?.data;
-    const addLayout= additionalChartDef?.layout;
 
     return {
         data: [{
@@ -1068,12 +1067,10 @@ function scatterOrHeatmap({tbl_id, xCol, yCol, xOptions, additionalChartDef={dat
                 scatterOrHeatmap: true,
                 colorscale: colorscaleName
             },
-            ...addData
         }],
         layout: {
             xaxis: {autorange},
             yaxis: {showgrid: false},
-            ...addLayout
         }
     };
 

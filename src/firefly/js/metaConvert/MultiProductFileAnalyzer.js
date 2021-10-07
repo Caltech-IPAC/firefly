@@ -1,6 +1,10 @@
 import {get} from 'lodash';
 import {FileAnalysisType} from '../data/FileAnalysis';
-import { createGridImagesActivate, createSingleImageActivate } from './ImageDataProductsUtil';
+import {
+    createGridImagesActivate,
+    createSingleImageActivate,
+    createSingleImageExtraction
+} from './ImageDataProductsUtil';
 import {PlotAttribute} from '../visualize/PlotAttribute';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr';
@@ -340,7 +344,9 @@ function makeAllImageEntry(request, parts, imageViewerId,  tbl_id, row, imagePar
     parts.forEach( (p) => Object.entries(p.additionalImageParams ?? {} )
             .forEach(([k,v]) => newReq.setParam(k,v)));
     return dpdtImage(`Image Data ${imagePartsLength>1? ': All Images in File' :''}`,
-        createSingleImageActivate(newReq,imageViewerId,tbl_id,row),'image-'+0, {request});
+        createSingleImageActivate(newReq,imageViewerId,tbl_id,row),
+        createSingleImageExtraction(newReq),
+        'image-'+0, {request});
 }
 
 /**

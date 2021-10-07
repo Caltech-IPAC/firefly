@@ -93,7 +93,7 @@ export async function downloadChart(chartId) {
     const chartDivAll = document.querySelectorAll(`#${chartId}`);
     if (chartId && chartDivAll && chartDivAll.length > 0) {
         const chartDiv = chartDivAll[chartDivAll.length-1];
-        showPlotLySaveDialog(Plotly,chartDiv,chartId);
+        showPlotLySaveDialog(Plotly,chartDiv);
     } else {
         logger.error(`Image download has failed for chart id ${chartId}`);
     }

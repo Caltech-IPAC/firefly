@@ -5,7 +5,7 @@
 
 
 import React, {useEffect, useState} from 'react';
-import {PlotlyWrapper} from '../../charts/ui/PlotlyWrapper.jsx';
+import {downloadChart, PlotlyWrapper} from '../../charts/ui/PlotlyWrapper.jsx';
 import {PopupPanel} from 'firefly/ui/PopupPanel.jsx';
 import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
 import {dispatchHideDialog, dispatchShowDialog} from 'firefly/core/ComponentCntlr.js';
@@ -62,6 +62,7 @@ import {getAppOptions} from 'firefly/api/ApiUtil.js';
 
 
 const DIALOG_ID= 'extrationDialog';
+const CHART_ID= 'extractionChart';
 // const LINE_POINT_SELECTION_ID= 'lineSelectExtraction';
 const ZAXIS_POINT_SELECTION_ID= 'z-axisExtraction';
 
@@ -171,6 +172,7 @@ function ExtractionChart({plotlyDivStyle, plotlyData, plotlyLayout, afterRedraw,
             <PlotlyWrapper data={plotlyData} layout={{width,height,...plotlyLayout}}  style={plotlyDivStyle}
                            autoSizePlot={true}
                            autoDetectResizing={true}
+                           chartId={CHART_ID}
                            divUpdateCB={() => undefined}
                            newPlotCB={ (chart,pl) => afterRedraw(chart,pl) } />
         </div>
@@ -382,7 +384,7 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
                     inline={true} value={pointSize} onChange={(ev) => setPointSize(ev.target.value)}
                     labelWidth={10} label={' '} tooltip={ 'Choose point size'} options={sizeOp} multiple={false} />
             </div>
-            <div style={{minWidth:400, minHeight:200, width:'100%', height:'100%',
+            <div style={{minWidth:440, minHeight:200, width:'100%', height:'100%',
                 flex: '1 1 auto', boxSizing: 'border-box',
                 border: plotlyData ? '1px solid rgba(0,0,0,.3' : 'none' }}>
                 {plotlyData ?
@@ -399,7 +401,9 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
                     {plotlyData && canCreateExtractionTable &&
                     <CompleteButton style={{paddingLeft: 15}} text='Keep' onSuccess={()=> callKeepExtraction(false) } />}
                     {plotlyData &&
-                    <CompleteButton style={{paddingLeft: 15}} text='Download' onSuccess={()=> callKeepExtraction(true)}/>}
+                    <CompleteButton style={{paddingLeft: 15}} text='Download Table' onSuccess={()=> callKeepExtraction(true)}/>}
+                    {plotlyData &&
+                    <CompleteButton style={{paddingLeft: 15}} text='Download Chart' onSuccess={()=> downloadChart(CHART_ID)}/>}
                 </div>
                 <HelpIcon helpId={'visualization.extraction'}/>
             </div>

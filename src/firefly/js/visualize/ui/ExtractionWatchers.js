@@ -17,7 +17,7 @@ import {MetaConst} from 'firefly/data/MetaConst.js';
 import {
     convertHDUIdxToImageIdx, getHDU, getHDUIndex, getImageCubeIdx, isImageCube, primePlot
 } from 'firefly/visualize/PlotViewUtil.js';
-import {parseImagePt} from 'firefly/visualize/Point.js';
+import {makeImagePt, parseImagePt} from 'firefly/visualize/Point.js';
 import {
     dispatchAttachLayerToPlot,
     dispatchCreateDrawLayer,
@@ -59,14 +59,22 @@ function zAxisExtractionPlotWatcher(action,cancelSelf,{tbl_id}) {
 
 
 
-function zAxisExtractionTableWatcher(action,cancelSelf,{tbl_id, drawLayerId=undefined, color}) {
+function zAxisExtractionTableWatcher(action,cancelSelf,{tbl_id, drawLayerId=undefined, color, firstLoadComplete}) {
     if (action.payload.tbl_id!==tbl_id) return {tbl_id, drawLayerId, color};
     if (action.type===TABLE_REMOVE) {
         cancelSelf();
         drawLayerId && dispatchDestroyDrawLayer(drawLayerId);
         return;
     }
-    if (!isTargetCube(tbl_id)) return {tbl_id, drawLayerId, color};
+    const {type}= action;
+    if ((type===TABLE_UPDATE || type===TABLE_LOADED) && !firstLoadComplete) {
+        firstLoadComplete= true;
+        const {table,plot}= getInfo(tbl_id);
+        const cubeIdx= getImageCubeIdx(plot);
+        dispatchTableHighlight(tbl_id,cubeIdx,table.request)
+        return {tbl_id, drawLayerId, color, firstLoadComplete};
+    }
+    if (!isTargetCube(tbl_id)) return {tbl_id, drawLayerId, color, firstLoadComplete};
     const {table,pv,plot}= getInfo(tbl_id);
 
     if (!drawLayerId) {
@@ -76,7 +84,7 @@ function zAxisExtractionTableWatcher(action,cancelSelf,{tbl_id, drawLayerId=unde
         const newDL = dispatchCreateDrawLayer(SearchTarget.TYPE_ID,
             {
                 drawLayerId,
-                searchTargetPoint: imPt,
+                searchTargetPoint: makeImagePt(Math.trunc(imPt.x)+.5, Math.trunc(imPt.y)+.5),
                 titlePrefix: 'Extraction Point ',
                 canUserDelete: true,
             });
@@ -86,7 +94,7 @@ function zAxisExtractionTableWatcher(action,cancelSelf,{tbl_id, drawLayerId=unde
     const plane= getCellValue(table,table.highlightedRow,'plane');
     const primeIdx= convertHDUIdxToImageIdx(pv,getHDUIndex(pv,plot),plane-1);
     if (pv.primeIdx!==primeIdx) dispatchChangePrimePlot({plotId:plot.plotId,primeIdx});
-    return {tbl_id, drawLayerId, color};
+    return {tbl_id, drawLayerId, color, firstLoadComplete};
 }
 
 
