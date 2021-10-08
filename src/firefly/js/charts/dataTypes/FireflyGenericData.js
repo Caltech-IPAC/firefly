@@ -162,11 +162,9 @@ export function addScatterChanges({changes, chartId, traceNum, tablesource, tabl
     const {mappings} = tablesource;
     const {layout, data, fireflyData} = getChartData(chartId) || {};
     const xColumn = getColumn(tableModel, stripColumnNameQuotes(get(mappings, 'x')));
-    const xUnit = get(xColumn, 'units', '') ||
-                  get(fireflyData, `${traceNum}.xUnit`, '');
+    const xUnit = xColumn?.units || fireflyData?.[traceNum]?.xUnit || '';
     const yColumn = getColumn(tableModel, stripColumnNameQuotes(get(mappings, 'y')));
-    const yUnit = get(yColumn, 'units', '') ||
-                  get(fireflyData, `${traceNum}.yUnit`, '');
+    const yUnit = yColumn?.units || fireflyData?.[traceNum]?.yUnit || '';
 
     // default axes labels for the first trace (remove surrounding quotes, if any)
     const xLabel = stripColumnNameQuotes(get(mappings, 'x'));
