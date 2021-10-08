@@ -160,10 +160,13 @@ export function addOtherChanges({changes, chartId, traceNum, tablesource, tableM
 export function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}) {
 
     const {mappings} = tablesource;
+    const {layout, data, fireflyData} = getChartData(chartId) || {};
     const xColumn = getColumn(tableModel, stripColumnNameQuotes(get(mappings, 'x')));
-    const xUnit = get(xColumn, 'units', '');
+    const xUnit = get(xColumn, 'units', '') ||
+                  get(fireflyData, `${traceNum}.xUnit`, '');
     const yColumn = getColumn(tableModel, stripColumnNameQuotes(get(mappings, 'y')));
-    const yUnit = get(yColumn, 'units', '');
+    const yUnit = get(yColumn, 'units', '') ||
+                  get(fireflyData, `${traceNum}.yUnit`, '');
 
     // default axes labels for the first trace (remove surrounding quotes, if any)
     const xLabel = stripColumnNameQuotes(get(mappings, 'x'));
@@ -174,9 +177,6 @@ export function addScatterChanges({changes, chartId, traceNum, tablesource, tabl
     if (cTipLabel.length > 20) {
         cTipLabel = 'c';
     }
-
-
-    const {layout, data, fireflyData} = getChartData(chartId) || {};
 
     // legend group is used to show/hide traces together
     // highlight and selected traces should have the same legend group as the active scatter
