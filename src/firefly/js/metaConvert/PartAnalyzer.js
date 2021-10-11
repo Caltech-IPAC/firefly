@@ -3,7 +3,7 @@
  */
 import {isArray} from 'lodash';
 import {dpdtChartTable, dpdtImage, dpdtTable, DPtypes, SHOW_CHART, SHOW_TABLE, AUTO} from './DataProductsType';
-import {FileAnalysisType, Format, UIEntry, UIRender} from '../data/FileAnalysis';
+import {DataProductTypes, FileAnalysisType, Format, UIEntry, UIRender} from '../data/FileAnalysis';
 import {RequestType} from '../visualize/RequestType.js';
 import {TitleOptions} from '../visualize/WebPlotRequest';
 import {createChartTableActivate, createChartSingleRowArrayActivate, createTableExtraction} from './converterUtils';
@@ -12,16 +12,17 @@ import {isEmpty} from 'lodash';
 
 /**
  *
- * @param part
+ * @param {FileAnalysisPart} part
  * @param {WebPlotRequest} request
- * @param table
- * @param row
- * @param fileFormat
+ * @param {TableModel} table
+ * @param {number} row
+ * @param {String} fileFormat (see Format object)
+ * @param {String} dataTypeHint  stuff like 'spectrum', 'image', 'cube', etc
  * @param serverCacheFileKey
- * @param activateParams
+ * @param {ActivateParams} activateParams
  * @return {{tableResult: DataProductsDisplayType|undefined, imageResult: DataProductsDisplayType|undefined}}
  */
-export function analyzePart(part, request, table, row, fileFormat, serverCacheFileKey, activateParams) {
+export function analyzePart(part, request, table, row, fileFormat, dataTypeHint, serverCacheFileKey, activateParams) {
 
     const {type,desc, fileLocationIndex}= part;
     const availableTypes= findAvailableTypesForAnalysisPart(part, fileFormat);
@@ -33,10 +34,10 @@ export function analyzePart(part, request, table, row, fileFormat, serverCacheFi
             analyzeImageResult(part, request, table, row, fileFormat, part.convertedFileName,desc,activateParams,fileLocationIndex);
 
     let tableResult= availableTypes.includes(DPtypes.CHART) &&
-                   analyzeChartTableResult(false, part, fileFormat, fileOnServer,desc,activateParams,fileLocationIndex);
+                   analyzeChartTableResult(false, part, fileFormat, fileOnServer,desc,dataTypeHint,activateParams,fileLocationIndex);
     if (!tableResult) {
         tableResult= availableTypes.includes(DPtypes.TABLE) &&
-            analyzeChartTableResult(true, part, fileFormat, fileOnServer,desc,activateParams,fileLocationIndex);
+            analyzeChartTableResult(true, part, fileFormat, fileOnServer,desc,dataTypeHint,activateParams,fileLocationIndex);
     }
     return {imageResult, tableResult};
 }
@@ -53,12 +54,13 @@ export function chooseDefaultEntry(menu,parts,fileFormat, dataTypeHint) {
     if (!menu || !menu.length) return undefined;
     let defIndex= menu.findIndex( (m) => m.requestDefault);
     if (defIndex > -1) return defIndex;
+    const dth= dataTypeHint?.toLowerCase();
 
-    switch (dataTypeHint) {
-        case 'timeseries':
+    switch (dth) {
+        case DataProductTypes.timeseries:
             defIndex= menu.find( (m) => m.displayType===DPtypes.CHART);
             break;
-        case 'spectrum':
+        case DataProductTypes.spectrum:
             defIndex= menu.find( (m) => m.displayType===DPtypes.CHART);
             break;
     }
@@ -142,7 +144,7 @@ function getTableChartColInfo(title, part, fileFormat) {
         }
         else {
             for(let i=0; i<colCnt; i++) cNames.push(i===0?'naxis1_idx': `naxis1_data_${(i-1)}`);
-            if (colCnt===2) cNames[1]= !title? 'pixel value':title;
+            if (colCnt===2) cNames[1]= !title || title.startsWith('(')? 'pixel value':title;
         }
         const cUnits= cNames.length===tableColumnUnits.length ? tableColumnUnits : undefined;
         return {xCol:cNames[0],yCol:cNames[1],cNames,cUnits, connectPoints:false};
@@ -199,14 +201,15 @@ function getTableDropTitleStr(title,part,fileFormat,tableOnly) {
  *
  * @param {boolean} tableOnly
  * @param {FileAnalysisPart} part
- * @param fileFormat
- * @param fileOnServer
- * @param title
- * @param activateParams
- * @param tbl_index
+ * @param {String} fileFormat
+ * @param {String} fileOnServer - server key to access the file
+ * @param {String} title
+ * @param {String} dataTypeHint  stuff like 'spectrum', 'image', 'cube', etc
+ * @param {ActivateParams} activateParams
+ * @param {number} tbl_index
  * @return {DataProductsDisplayType|undefined}
  */
-function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, title, activateParams, tbl_index=0) {
+function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, title, dataTypeHint='', activateParams, tbl_index=0) {
     const {uiEntry,uiRender,chartParamsAry, interpretedData=false, defaultPart:requestDefault= false}= part;
     const partFormat= part.convertedFileFormat||fileFormat;
     if (uiEntry===UIEntry.UseSpecified) {
@@ -226,8 +229,8 @@ function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, titl
 
     if (tableOnly) {
         return dpdtTable(ddTitleStr,
-            createChartTableActivate(false, fileOnServer,titleInfo,activateParams, undefined, tbl_index, cNames, cUnits),
-            createTableExtraction(fileOnServer,titleInfo,tbl_index, cNames, cUnits),
+            createChartTableActivate(false, fileOnServer,titleInfo,activateParams, tbl_index, dataTypeHint, cNames, cUnits),
+            createTableExtraction(fileOnServer,titleInfo,tbl_index, cNames, cUnits, dataTypeHint),
             undefined, {paIdx:tbl_index,requestDefault});
     }
     else {
@@ -240,8 +243,8 @@ function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, titl
             if (!xCol || !yCol) return;
             if (chartTableDefOption===AUTO) chartTableDefOption= SHOW_TABLE;
             return dpdtChartTable(ddTitleStr,
-                createChartSingleRowArrayActivate(fileOnServer,'Row 1 Chart',activateParams,xCol,yCol,0,tbl_index),
-                createTableExtraction(fileOnServer,'Row 1 Chart',tbl_index, cNames, cUnits),
+                createChartSingleRowArrayActivate(fileOnServer,'Row 1 Chart',activateParams,xCol,yCol,0,tbl_index, dataTypeHint),
+                createTableExtraction(fileOnServer,'Row 1 Chart',tbl_index, cNames, cUnits, dataTypeHint),
                 undefined, {paIdx:tbl_index, chartTableDefOption, interpretedData, requestDefault});
         }
         else {
@@ -249,8 +252,8 @@ function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, titl
             const chartInfo= {xAxis:xCol, yAxis:yCol, chartParamsAry, useChartChooser};
             if (chartTableDefOption===AUTO) chartTableDefOption= imageAsTableColCnt===2 ? SHOW_CHART : SHOW_TABLE;
             return dpdtChartTable(ddTitleStr,
-                createChartTableActivate(true, fileOnServer,titleInfo,activateParams,chartInfo,tbl_index,cNames,cUnits,connectPoints),
-                createTableExtraction(fileOnServer,titleInfo,tbl_index, cNames, cUnits),
+                createChartTableActivate(true, fileOnServer,titleInfo,activateParams,chartInfo,tbl_index,dataTypeHint, cNames,cUnits,connectPoints),
+                createTableExtraction(fileOnServer,titleInfo,tbl_index, cNames, cUnits, dataTypeHint),
                 undefined, {paIdx:tbl_index, chartTableDefOption, interpretedData, requestDefault});
         }
     }

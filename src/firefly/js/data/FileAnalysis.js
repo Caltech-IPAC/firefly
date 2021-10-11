@@ -14,6 +14,17 @@ export const FileAnalysisType = {
     REGION: 'REGION'
 };
 
+export const DataProductTypes = {
+    spectrum : 'spectrum',
+    image : 'image',
+    cube : 'cube',
+    sed : 'sed',
+    timeseries : 'timeseries',
+    visibility : 'visibility',
+    event : 'event',
+    mesurements : 'mesurements',
+};
+
 export const UIRender = {
     Table: 'Table',
     Chart: 'Chart',

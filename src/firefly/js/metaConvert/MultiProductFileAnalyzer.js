@@ -188,16 +188,16 @@ function doActivateResult(result, menu,menuKey,dpId, serDefParams) {
 /**
  * This is the core function to upload and analyze the data
  * @param obj
- * @param obj.table
- * @param obj.row
- * @param obj.request
- * @param obj.activateParams
- * @param obj.dataTypeHint
+ * @param {TableModel} obj.table table of data products
+ * @param {number} obj.row active row number
+ * @param {WebPlotRequest} obj.request - used for image or just downloading files
+ * @param {ActivateParams} obj.activateParams
+ * @param {String} obj.dataTypeHint  stuff like 'spectrum', 'image', 'cube', etc
  * @param obj.menu
  * @param obj.menuKey
  * @param obj.activateResult
  * @param obj.dispatchWorkingMessage
- * @param obj.analysisActivateFunc
+ * @param {Function} obj.analysisActivateFunc
  * @return {Promise.<DataProductsDisplayType>}
  */
 async function doUploadAndAnalysis({
@@ -352,14 +352,14 @@ function makeAllImageEntry(request, parts, imageViewerId,  tbl_id, row, imagePar
 /**
  *
  * @param obj
- * @param obj.table
- * @param obj.row
- * @param obj.request
- * @param obj.activateParams
- * @param obj.serverCacheFileKey
- * @param obj.fileAnalysis
- * @param obj.dataTypeHint
- * @param obj.analysisActivateFunc
+ * @param {TableModel} obj.table table of data products
+ * @param {number} obj.row active row number
+ * @param {WebPlotRequest} obj.request - used for image or just downloading files
+ * @param {ActivateParams} obj.activateParams
+ * @param {String} obj.serverCacheFileKey - key to use for server calls to access the file
+ * @param {FileAnalysisReport} obj.fileAnalysis results of the file analysis server call
+ * @param {String} obj.dataTypeHint  stuff like 'spectrum', 'image', 'cube', etc
+ * @param {Function} obj.analysisActivateFunc
  * @return {DataProductsDisplayType}
  */
 function processAnalysisResult({table, row, request, activateParams,
@@ -380,6 +380,7 @@ function processAnalysisResult({table, row, request, activateParams,
 
     const url= request.getURL() || serverCacheFileKey;
 
+    // any of the following formats we respond to immediately
     switch (fileFormat) {
         case FileAnalysisType.PDF:
             return dpdtMessageWithDownload('Cannot not display PDF file, you may only download it', 'Download PDF File', url);
@@ -401,10 +402,9 @@ function processAnalysisResult({table, row, request, activateParams,
     }
 
 
+    // do deeper inspection looking for charts, tables, and images
 
-
-
-    const partAnalysis= parts.map( (p) => analyzePart(p,request, table, row, fileFormat, serverCacheFileKey,activateParams));
+    const partAnalysis= parts.map( (p) => analyzePart(p,request, table, row, fileFormat, dataTypeHint, serverCacheFileKey,activateParams));
     const imageParts= partAnalysis.filter( (pa) => pa.imageResult);
     let makeAllImageOption= !disableAllImageOption;
     if (makeAllImageOption) makeAllImageOption= imageParts.length>1 || (imageParts.length===1 && parts.length===1);

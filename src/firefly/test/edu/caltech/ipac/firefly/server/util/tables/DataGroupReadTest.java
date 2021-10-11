@@ -3,16 +3,14 @@
  */
 package edu.caltech.ipac.firefly.server.util.tables;
 
-import edu.caltech.ipac.table.io.FITSTableReader;
-import edu.caltech.ipac.table.io.IpacTableReader;
-import edu.caltech.ipac.table.io.IpacTableWriter;
-import edu.caltech.ipac.table.TableMeta;
-import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.TestCategory;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
-
+import edu.caltech.ipac.table.io.FITSTableReader;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableWriter;
+import edu.caltech.ipac.table.io.VoTableReader;
 import nom.tam.fits.FitsException;
 import org.junit.Assert;
 import org.junit.Test;
@@ -79,7 +77,7 @@ public class DataGroupReadTest {
 
     @Test
     public void fitsTable() throws IOException, FitsException {
-        DataGroup data = FITSTableReader.convertFitsToDataGroup(fitsTable.getPath(), null, null, null, 0);
+        DataGroup data = FITSTableReader.convertFitsToDataGroup(fitsTable.getPath(), null, FITSTableReader.DEFAULT, 0);
         Assert.assertNotNull(data);
         Assert.assertEquals("Number of rows", 765, data.size());
         Assert.assertEquals("Number of columns", 52, data.getDataDefinitions().length);

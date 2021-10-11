@@ -503,6 +503,7 @@ public class FitsReadUtil {
     public static double getBzero(Header h) { return h.getDoubleValue("BZERO", 0.0); }
     public static double getBlankValue(Header h) { return h.getDoubleValue("BLANK", Double.NaN); }
     public static String getExtName(Header h) { return h.getStringValue("EXTNAME"); }
+    public static String getUtype(Header h) { return h.getStringValue("UTYPE"); }
 
     public static void closeFits(Fits fits) {
         try {
