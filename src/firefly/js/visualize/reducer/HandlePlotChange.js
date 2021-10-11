@@ -35,7 +35,7 @@ import {
     getCenterOfProjection,
     getMatchingRotationAngle,
     isRotationMatching,
-    hasWCSProjection, canLoadStretchDataDirect
+    hasWCSProjection, canLoadStretchDataDirect, isThreeColor
 } from '../PlotViewUtil.js';
 import Point, {parseAnyPt, makeImagePt, makeWorldPt, makeDevicePt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
@@ -323,6 +323,14 @@ function installTiles(state, action) {
     const tileData= canLoadStretchDataDirect(plot) ? undefined : primaryTiles;
     pv= replacePrimaryPlot(pv,
         WebPlot.replacePlotValues(plot,primaryStateJson,tileData,rawData,bias,contrast,useRed,useGreen,useBlue));
+    if (action.type===Cntlr.COLOR_CHANGE && !isThreeColor(pv) && canLoadStretchDataDirect(plot)) {
+        const cId= primePlot(pv).plotState.getColorTableId();
+        pv.plots= pv.plots.map( (p) => {
+            const plotState= p.plotState.copy();
+            plotState.setColorTableId(cId);
+            return {...p,plotState};
+        });
+    }
     if (rawData) pv.localZoomStart= false;
 
     if (wcsMatchType && mpwWcsPrimId!==plotId) {

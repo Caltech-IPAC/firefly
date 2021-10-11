@@ -15,6 +15,7 @@ package edu.caltech.ipac.firefly.server;
 
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.messaging.JsonHelper;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.visualize.VisJsonSerializer;
 import edu.caltech.ipac.firefly.visualize.PlotState;
@@ -22,6 +23,8 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ImagePt;
+import edu.caltech.ipac.visualize.plot.WorldPt;
+import org.json.simple.JSONArray;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -262,6 +265,80 @@ public class SrvParam {
             throw new IllegalArgumentException(
                     "parameter could not be parsed as ImagePt: parameter: "+ key + ", value: "+v, e);
         }
+    }
+
+    public ImagePt[] getRequiredImagePtAry(String key) {
+        String v= getRequired(key);
+        try {
+            ImagePt[] ptAry= getImagePtAryFromJson(v);
+            if (ptAry==null) {
+                throw new IllegalArgumentException(
+                        "parameter could not be parsed as ImagePt: parameter: "+ key + ", value: "+v);
+            }
+            return ptAry;
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(
+                    "parameter could not be parsed as ImagePt: parameter: "+ key + ", value: "+v, e);
+        }
+    }
+
+    public static ImagePt[] getImagePtAryFromJson(String json) {
+        if (json==null) return null;
+        JsonHelper helper= JsonHelper.parse(json);
+        JSONArray list= helper.getValue(new JSONArray());
+        if (list==null || list.size()==0) return null;
+        ImagePt[] ptAry= new ImagePt[list.size()];
+        for(int i=0;(i<ptAry.length);i++) {
+            ptAry[i]= ImagePt.parse((String)list.get(i));
+            if (ptAry[i]==null) return null;
+        }
+        return ptAry;
+    }
+
+    public static WorldPt[] getWorldPtAryFromJson(String json) {
+        if (json==null) return null;
+        JsonHelper helper= JsonHelper.parse(json);
+        JSONArray list= helper.getValue(new JSONArray());
+        if (list==null || list.size()==0) return null;
+        WorldPt[] ptAry= new WorldPt[list.size()];
+        for(int i=0;(i<ptAry.length);i++) {
+            ptAry[i]= WorldPt.parse((String)list.get(i));
+            if (ptAry[i]==null) return null;
+        }
+        return ptAry;
+    }
+
+    public static double[] getDoubleAryFromJson(String json) {
+        if (json==null) return null;
+        JsonHelper helper= JsonHelper.parse(json);
+        JSONArray list= helper.getValue(new JSONArray());
+        if (list==null || list.size()==0) return null;
+        double[] dAry= new double[list.size()];
+        for(int i=0;(i<dAry.length);i++) {
+            try{
+                Object v= list.get(i);
+                if (v instanceof Double) dAry[i]= (Double) v;
+                else if (v instanceof Long) dAry[i]= (Long) v;
+                else if (v instanceof Integer) dAry[i]= (Integer) v;
+                else dAry[i]= Double.NaN;
+            } catch (ClassCastException e) {
+                return null;
+            }
+        }
+        return dAry;
+    }
+
+    public static String[] getStringAryFromJson(String json) {
+        if (json==null) return null;
+        JsonHelper helper= JsonHelper.parse(json);
+        JSONArray list= helper.getValue(new JSONArray());
+        if (list==null || list.size()==0) return null;
+        String[] sAry= new String[list.size()];
+        for(int i=0;(i<sAry.length);i++) {
+            Object v= list.get(i);
+            sAry[i]= v!=null ? v.toString() : null;
+        }
+        return sAry;
     }
 
     public boolean getOptionalBoolean(String key, boolean defval) {

@@ -248,7 +248,7 @@ export function resultSuccess(request) {
     const imageIndices = getSelectedRows(FileAnalysisType.Image);
 
     if (!isFileSupported()) {
-        showInfoPopup(`File type of ${getFirstPartType()} is not supported.`);
+        showInfoPopup(getFirstPartType() ? `File type of ${getFirstPartType()} is not supported.`: 'Could not recognize the file type');
         return false;
     }
 
@@ -292,11 +292,14 @@ function getNextState(oldState) {
     } else  if (analysisResult) {
         if (analysisResult && analysisResult !== currentAnalysisResult) {
             currentReport = JSON.parse(analysisResult);
+            if (currentReport.fileFormat===UNKNOWN_FORMAT) {
+                return {message:'Unrecognized file type', report:undefined, summaryModel:undefined, detailsModel:undefined};
+            }
 
             currentSummaryModel= makeSummaryModel(currentReport);
             modelToUseForDetails= currentSummaryModel;
 
-            const firstExtWithData= getFirstExtWithData(currentReport .parts);
+            const firstExtWithData= getFirstExtWithData(currentReport.parts);
             if (firstExtWithData >= 0) {
                 const selectInfo = SelectInfo.newInstance({rowCount: currentSummaryModel.tableData.data.length});
                 selectInfo.setRowSelect(firstExtWithData, true);        // default select first extension/part with data
@@ -463,7 +466,8 @@ function AnalysisInfo({report,supported=true}) {
             <div className='keyword-label'>Size:</div>  <div className='keyword-value'>{getSizeAsString(report.fileSize)}</div>
             {partCnt>1 && <div className='keyword-label'>{partDesc}</div>}
             {partCnt>1 &&<div className='keyword-value'>{partCnt}</div> }
-            {!supported && <div style={{color:'red', fontSize:'larger'}}>{`File type of ${getFirstPartType()} is not supported`}</div>}
+            {!supported && <div style={{color:'red', fontSize:'larger'}}>
+                {getFirstPartType() ? `File type of ${getFirstPartType()} is not supported` : 'Could not recognize the file type'}</div>}
         </div>
     );
 }

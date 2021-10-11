@@ -9,9 +9,9 @@ import {
     dpdtTable,
     DPtypes
 } from './DataProductsType';
-import {createTableActivate} from './converterUtils';
+import {createTableActivate, createTableExtraction} from './converterUtils';
 import {makeFileAnalysisActivate} from './MultiProductFileAnalyzer';
-import {createSingleImageActivate} from './ImageDataProductsUtil';
+import {createSingleImageActivate, createSingleImageExtraction} from './ImageDataProductsUtil';
 import {dispatchUpdateActiveKey, getActiveMenuKey} from './DataProductsCntlr';
 import {GIG} from '../util/WebUtil.js';
 import {dpdtDownloadMenuItem, dpdtMessageWithDownload} from './DataProductsType.js';
@@ -62,6 +62,7 @@ export function processDatalinkTable(sourceTable, row, datalinkTable, positionWP
             ...dMenu,
             dpdtTable('Show Datalink VO Table for list of products',
                 createTableActivate(dataSource,'Datalink VO Table', activateParams),
+                createTableExtraction(dataSource,'Datalink VO Table'),
                 'nd0-showtable', {url:dataSource}),
             dpdtDownload ( 'Download Datalink VO Table for list of products', dataSource, 'nd1-downloadtable', 'vo-table' ),
         ];
@@ -81,6 +82,7 @@ function addDataLinkEntries(dataSource,activateParams) {
     return [
         dpdtTable('Show Datalink VO Table for list of products',
             createTableActivate(dataSource,'Datalink VO Table', activateParams),
+            createTableExtraction(dataSource,'Datalink VO Table'),
             'datalink-entry-showtable', {url:dataSource}),
         dpdtDownload ( 'Download Datalink VO Table for list of products', dataSource, 'datalink-entry-downloadtable', 'vo-table' )
     ];
@@ -241,6 +243,7 @@ export function createGuessDataType(name, menuKey, url,ct,makeReq, semantics, ac
         const request= makeReq(url,positionWP,name);
         return dpdtImage(name,
             createSingleImageActivate(request,imageViewerId,table.tbl_id,row),
+            createSingleImageExtraction(request),
             menuKey, {request,url, semantics,size});
     }
     else if (ct.includes('table') || ct.includes('spectrum') || semantics.includes('auxiliary')) {

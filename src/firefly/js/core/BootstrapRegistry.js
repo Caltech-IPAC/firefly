@@ -29,7 +29,9 @@ import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import FixedMarker from '../drawingLayers/FixedMarker.js';
 import SelectArea from '../drawingLayers/SelectArea.js';
 import DistanceTool from '../drawingLayers/DistanceTool.js';
+import ExtractLineTool from '../drawingLayers/ExtractLineTool.js';
 import PointSelection from '../drawingLayers/PointSelection.js';
+import ExtractPoints from '../drawingLayers/ExtractPointsTool.js';
 import StatsPoint from '../drawingLayers/StatsPoint.js';
 import NorthUpCompass from '../drawingLayers/NorthUpCompass.js';
 import ImageRoot from '../drawingLayers/ImageRoot.js';
@@ -106,7 +108,8 @@ export const getBootstrapRegistry= once(() => {
         [DIALOG_OR_COMPONENT_KEY]: ComponentCntlr.reducer
     };
 
-    const drawLayerFactory= DrawLayerFactory.makeFactory(FixedMarker, SelectArea,DistanceTool,
+    const drawLayerFactory= DrawLayerFactory.makeFactory(
+        FixedMarker, SelectArea,DistanceTool, ExtractLineTool, ExtractPoints,
         PointSelection, StatsPoint, NorthUpCompass, ImageRoot, SearchTarget, Catalog, Artifact, WebGrid,
         RegionPlot, MarkerTool, FootprintTool, HiPSGrid, HiPSMOC, ImageOutline, ImageLineBasedFootprint);
 

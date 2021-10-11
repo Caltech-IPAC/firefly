@@ -153,6 +153,7 @@ const defFireflyOptions = {
     },
     image : {
         defaultColorTable: 1,
+        canCreateExtractionTable: false,
     },
     coverage : {
         // TODO: need to define all options with defaults here.  used in FFEntryPoint.js

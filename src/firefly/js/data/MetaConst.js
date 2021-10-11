@@ -17,11 +17,47 @@ export const MetaConst = {
      */
     CENTER_COLUMN : 'CENTER_COLUMN',
 
+    /**
+     * Meta entry that defines how to compute the image point position
+     * This is used in the case where this table is tied to a single FITS file
+     * use with FITS_FILE_PATH
+     */
+    IMAGE_COLUMN: 'IMAGE_COLUMN',
 
     /**
      * For coverage or catalog, an overlay position to use for this table
      */
     OVERLAY_POSITION : 'OverlayPosition',
+
+    /**
+     * How this data was extracted from the FITS file, should be z-axis, line, or points
+     */
+    FITS_EXTRACTION_TYPE: 'FitsExtractionType',
+
+    /**
+     * An image point in a fits FILE that is associated with this table
+     */
+    FITS_IM_PT: 'FitsImPoint',
+
+    /**
+     * A second image point in a fits FILE that is associated with this table
+     */
+    FITS_IM_PT2: 'FitsImPoint2',
+
+    /**
+     * Fits Image server file path, a path to a FITS file that is associated with this table
+     */
+    FITS_FILE_PATH: 'FitsFilePath',
+
+    /**
+     * Fits Image HDU, The HDU number of a FITS file that is associated with this table
+     */
+    FITS_IMAGE_HDU: 'FitsImageHDU',
+
+    /**
+     * Fits Image plane , The cube plane number
+     */
+    FITS_IMAGE_HDU_CUBE_PLANE: 'FitsImageHDUCubePlane',
 
 
     /**
@@ -48,8 +84,24 @@ export const MetaConst = {
     /** id string for types of image */
     IMAGE_SOURCE_ID : 'ImageSourceId',
 
-    /** default chart properties for this table */
+    /**
+     * default chart properties for this table
+     * Overrides DEFAULT_CHART_X_COL and DEFAULT_CHART_Y_COL
+     */
     DEFAULT_CHART_DEF : 'defaultChartDef',
+
+    /**
+     * default chart x column for this table - forces the chart to make the default chart with this x column
+     * not used with DEFAULT_CHART_DEF
+     */
+    DEFAULT_CHART_X_COL: 'defaultChartXCol',
+
+    /**
+     * default chart x column for this table - forces the chart to make the default chart with this x column
+     * not used with DEFAULT_CHART_DEF
+     * */
+    DEFAULT_CHART_Y_COL: 'defaultChartYCol',
+
 
     /** a string or html rgb/rgba color that can be set in metadata, use with catalog overlay */
     DEFAULT_COLOR : 'DEFAULT_COLOR',

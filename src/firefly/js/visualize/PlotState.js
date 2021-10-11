@@ -108,6 +108,12 @@ export class PlotState {
     getColorTableId() { return this.colorTableId; }
 
     /**
+     * set the number of the color table
+     * @param {number} colorTableId the new id
+     */
+    setColorTableId(colorTableId) { this.colorTableId= colorTableId; }
+
+    /**
      *
      * @return {boolean}
      */
@@ -161,23 +167,23 @@ export class PlotState {
      * @param band
      * @return {ClientFitsHeader}
      */
-    getDirectFileAccessData(band) { return this.get(band).getDirectFileAccessData(); }
+    getDirectFileAccessData(band) { return this.get(band || this.firstBand()).getDirectFileAccessData(); }
 
 
     /**
      * @param band
      * @return {string}
      */
-    getWorkingFitsFileStr(band) { return band ? this.get(band).getWorkingFitsFileStr() : null; }
+    getWorkingFitsFileStr(band) { return this.get(band || this.firstBand()).getWorkingFitsFileStr()}
 
     /**
      * @param band
      * @return {string}
      */
-    getOriginalFitsFileStr(band) { return band ? this.get(band).getOriginalFitsFileStr() : null; }
+    getOriginalFitsFileStr(band) { return this.get(band || this.firstBand()).getOriginalFitsFileStr(); }
 
 
-    getUploadFileName(band) { return band ? this.get(band).getUploadedFileName() : null; }
+    getUploadFileName(band) { return this.get(band || this.firstBand()).getUploadedFileName(); }
 
     /**
      *

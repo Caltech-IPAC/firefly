@@ -20,19 +20,25 @@ import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-42x42.png';
  *      window.firefly = {app: {views: 'images | tables', menu}};
  *   </script>
  */
-var props = {
+let props = {
     appTitle: 'Firefly',
     initLoadingMessage: window?.firefly?.options?.initLoadingMessage,
     appIcon : FFTOOLS_ICO
 };
 
-var options = {
+props = mergeObjectOnly(props, get(window, 'firefly.app', {}));
+const {template}= props;
+
+let options = {
     MenuItemKeys: {maskOverlay:true},
     catalogSpacialOp: 'polygonWhenPlotExist',
     workspace : {showOptions: false},
     imageMasterSourcesOrder: ['WISE', '2MASS', 'Spitzer'],
     charts: {
         singleTraceUI: false
+    },
+    image : {
+        canCreateExtractionTable: (template==='FireflyViewer' || template==='FireflySlate'),
     },
     hips : {
         useForImageSearch: true,
@@ -44,9 +50,7 @@ var options = {
     }
 };
 
-props = mergeObjectOnly(props, get(window, 'firefly.app', {}));
 options = mergeObjectOnly(options, get(window, 'firefly.options', {}));
-const {template}= props;
 let apiCommands;
 
 if (template==='FireflyViewer' || template==='FireflySlate') apiCommands= getFireflyViewerWebApiCommands();

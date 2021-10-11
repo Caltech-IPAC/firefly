@@ -36,6 +36,12 @@ public class ServerParams {
     public static final String PT2 = "pt2";
     public static final String PT3 = "pt3";
     public static final String PT4 = "pt4";
+    public static final String PTARY = "ptAry";
+    public static final String WPT_ARY = "wptAry";
+    public static final String WL_ARY = "wlAry";
+    public static final String FLUX_UNIT= "fluxUnit";
+    public static final String WL_UNIT= "wlUnit";
+    public static final String PLANE = "plane";
     public static final String CRO_MULTI_ALL = "cropMultiAll";
     public static final String STRETCH_DATA = "stretchData";
     public static final String BAND = "band";
@@ -155,6 +161,7 @@ public class ServerParams {
     public static final String GET_IMAGE_MASTER_DATA= "getImageMasterData";
     public static final String GET_FLOAT_DATA= "getFloatData";
     public static final String GET_BYTE_DATA= "getStretchedByteData";
+    public static final String FITS_EXTRACTION= "fitsExtraction";
 
     public static final String USER_TARGET_WORLD_PT = "UserTargetWorldPt";
 
@@ -169,6 +176,10 @@ public class ServerParams {
     public static final String INIT_APP = "CmdInitApp";
     public static final String LOGOUT = "CmdLogout";
     public static final String TILE_SIZE = "tileSize";
+    public static final String POINT_SIZE= "pointSize";
+    public static final String EXTRACTION_TYPE= "extractionType";
+    public static final String HDU_NUM= "hduNum";
+    public static final String RELATED_HDUS= "relatedHDUs";
     public static final String BACK_TO_URL= "backToUrl";
     public static final String MASK_DATA= "maskData";
     public static final String MASK_BITS= "maskBits";

@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.visualize;
 import edu.caltech.ipac.astro.conv.CoordConv;
 import edu.caltech.ipac.astro.conv.LonLat;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
+import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -613,6 +614,38 @@ public class VisUtil {
 	    }
 	    return new WorldPt(lon, lat);
 	}
+
+
+    /**
+     * This function will create a line. either based on y or based on x depend on which is farther apart. The is will return
+     * a point with x,y
+
+     * @param x1 start point x
+     * @param y1 start point y
+     * @param x2 end point x
+     * @param y2 end point y
+     * @param independentValue the x or y depending how the line is computed
+     * @return {number}
+     */
+    public static ImagePt getXorYinEquation(double x1, double y1, double x2, double y2, double independentValue) {
+        double deltaX = Math.abs(x2 - x1);
+        double deltaY = Math.abs(y2 - y1);
+
+        if (deltaX > deltaY) {
+            double slope = (y2-y1)/(x2-x1);
+            double yIntercept = y1-slope*x1;
+            double y= (slope*independentValue + yIntercept);
+            return new ImagePt(independentValue,y);
+        } else {
+            double  islope = (x2-x1)/(y2-y1);
+            double xIntercept = x1-islope*y1;
+            double x = (islope*independentValue + xIntercept);
+            return new ImagePt(x,independentValue);
+        }
+    }
+
+
+
 	
     /**
      * Find the corners of a bounding box given the center and the radius

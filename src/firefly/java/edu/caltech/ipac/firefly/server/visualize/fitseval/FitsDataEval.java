@@ -17,6 +17,7 @@ package edu.caltech.ipac.firefly.server.visualize.fitseval;
 import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,18 +27,21 @@ import java.util.List;
  */
 public class FitsDataEval implements Serializable {
 
-    private final FitsRead frAry[];
-    private final List<RelatedData> relatedDataAry[];
+    private final FitsRead [] frAry;
+    private final List<RelatedData>[] relatedDataAry;
+    private final File hduUnCompressedFile;
 
 
-    FitsDataEval(FitsRead frAry[]) {
+
+    FitsDataEval(FitsRead[] frAry, File hduCompressedFile) {
         this.frAry= frAry;
         relatedDataAry= new List[frAry.length];
-
+        this.hduUnCompressedFile = hduCompressedFile;
     }
 
     public FitsRead[] getFitReadAry() { return frAry; }
     public List<RelatedData> getRelatedData(int imageIdx) { return relatedDataAry[imageIdx]; }
+    public File getHduUnCompressedFile() { return hduUnCompressedFile; }
 
     public void addRelatedData(int imageIdx, RelatedData rData) {
         if (relatedDataAry[imageIdx]==null) {

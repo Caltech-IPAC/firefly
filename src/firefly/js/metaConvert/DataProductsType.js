@@ -121,24 +121,26 @@ export const dpdtMessageWithError= (message,detailMsgAry) => {
  *
  * @param {string} name
  * @param {Function} activate
+ * @param {Function} extraction
  * @param {number|string} menuKey
  * @param {Object} extra - all values in this object are added to the DataProjectType Object
  * @return {DataProductsDisplayType}
  */
-export function dpdtImage(name, activate, menuKey='image-0', extra={}) {
-    return { displayType:DPtypes.IMAGE, name, activate, menuKey, ...extra};
+export function dpdtImage(name, activate, extraction, menuKey='image-0', extra={}) {
+    return { displayType:DPtypes.IMAGE, name, activate, extraction, menuKey, ...extra};
 }
 
 /**
  *
  * @param {string} name
  * @param {Function} activate
+ * @param {Function} extraction
  * @param {number|string} menuKey
  * @param {Object} extra - all values in this object are added to the DataProjectType Object
  * @return {DataProductsDisplayType}
  */
-export function dpdtTable(name, activate, menuKey='table-0', extra={}) {
-    return { displayType:DPtypes.TABLE, name, activate, menuKey, ...extra};
+export function dpdtTable(name, activate, extraction, menuKey='table-0', extra={}) {
+    return { displayType:DPtypes.TABLE, name, activate, extraction, menuKey, ...extra};
 }
 
 /**
@@ -157,12 +159,13 @@ export function dpdtChart(name, activate, menuKey='chart-0', extra={}) {
  *
  * @param {string} name
  * @param {Function} activate
+ * @param {Function} extraction
  * @param {number|string} menuKey
  * @param {Object} extra - all values in this object are added to the DataProjectType Object
  * @return {DataProductsDisplayType}
  */
-export function dpdtChartTable(name, activate, menuKey='chart-table-0', extra={}) {
-    return { displayType:DPtypes.CHOICE_CTI, name, activate, menuKey, ...extra};
+export function dpdtChartTable(name, activate, extraction, menuKey='chart-table-0', extra={}) {
+    return { displayType:DPtypes.CHOICE_CTI, name, activate, extraction, menuKey, ...extra};
 }
 
 /**

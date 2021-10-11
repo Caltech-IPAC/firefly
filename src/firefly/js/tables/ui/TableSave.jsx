@@ -6,7 +6,7 @@ import React from 'react';
 import {get, set} from 'lodash';
 import Enum from 'enum';
 import {replaceExt, updateSet} from '../../util/WebUtil.js';
-import {getTblById, getAsyncTableSourceUrl, getTableSourceUrl} from '../TableUtil.js';
+import {getTblById, getAsyncTableSourceUrl, getTableSourceUrl, makeTableSourceUrl} from '../TableUtil.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../../core/ComponentCntlr.js';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
@@ -278,7 +278,14 @@ function resultSuccess(tbl_id, tbl_ui_id, popupId) {
                 downloadFile(urlOrOp);
             });
         } else {
-            const urlOrOp = getTableSourceUrl(tbl_ui_id, getOtherParams(fileName));
+            let urlOrOp;
+            if (tbl_ui_id) {
+                urlOrOp= getTableSourceUrl(tbl_ui_id, getOtherParams(fileName));
+            }
+            else {
+                const table= getTblById(tbl_id);
+                urlOrOp = makeTableSourceUrl(table.tableData.columns, table.request, getOtherParams(fileName));
+            }
             downloadFile(urlOrOp);
         }
     };

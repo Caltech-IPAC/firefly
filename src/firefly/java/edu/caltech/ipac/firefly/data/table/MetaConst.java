@@ -17,6 +17,12 @@ public class MetaConst {
      */
     public static final String CENTER_COLUMN = "CENTER_COLUMN";
 
+    /**
+     * Meta entry that defines how to compute the image point position
+     * This is used in the case where this table is tied to a single FITS file
+     * use with FITS_FILE_PATH
+     */
+    public static final String IMAGE_COLUMN = "IMAGE_COLUMN";
 
     /**
      *
@@ -50,6 +56,36 @@ public class MetaConst {
      */
     public static final String ORBITAL_PATH = "ORBITAL_PATH";
 
+    /**
+     * How this data was extracted from the FITS file, should be z-axis, line, or points
+     */
+    public static final String FITS_EXTRACTION_TYPE= "FitsExtractionType";
+
+    /**
+     * An image point in a fits FILE that is associated with this table
+     */
+    public static final String FITS_IM_PT= "FitsImPoint";
+
+    /**
+     * A second image point in a fits FILE that is associated with this table
+     */
+    public static final String FITS_IM_PT2= "FitsImPoint2";
+
+    /**
+     * Fits Image server file path, a path to a FITS file that is associated with this table
+     */
+    public static final String FITS_FILE_PATH= "FitsFilePath";
+
+    /**
+     * Fits Image HDU, The HDU number of a FITS file that is associated with this table
+     */
+    public static final String FITS_IMAGE_HDU= "FitsImageHDU";
+
+    /**
+     * Fits Image plane , The cube plane number
+     */
+    public static final String FITS_IMAGE_HDU_CUBE_PLANE= "FitsImageHDUCubePlane";
+
 
     /** @deprecated replaced by IMAGE_SOURCE_ID */
     @Deprecated
@@ -57,6 +93,24 @@ public class MetaConst {
     
     /** id string for types of image */
     public final static String IMAGE_SOURCE_ID = "ImageSourceId";
+
+    /**
+     * default chart properties for this table
+     * Overrides DEFAULT_CHART_X_COL and DEFAULT_CHART_Y_COL
+     */
+    public static final String DEFAULT_CHART_DEF= "defaultChartDef";
+
+    /**
+     * default chart x column for this table - forces the chart to make the default chart with this x column
+     * not used with DEFAULT_CHART_DEF
+     */
+    public static final String DEFAULT_CHART_X_COL= "defaultChartXCol";
+
+    /**
+     * default chart x column for this table - forces the chart to make the default chart with this x column
+     * not used with DEFAULT_CHART_DEF
+     * */
+    public static final String DEFAULT_CHART_Y_COL= "defaultChartYCol";
 
     /** the column name with access rights info;  true if (public, 1, or true), otherwise false  */
     public static final String DATARIGHTS_COL = "DATARIGHTS_COL";

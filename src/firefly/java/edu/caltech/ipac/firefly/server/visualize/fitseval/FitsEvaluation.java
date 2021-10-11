@@ -33,21 +33,26 @@ public class FitsEvaluation {
         evalList.add(new SpectralCubeEval());
     }
 
-    public static FitsDataEval readAndEvaluate(File f, boolean clearHdu, WebPlotRequest req) throws FitsException  {
+    public static FitsDataEval readAndEvaluate(File f, boolean clearHdu, WebPlotRequest req) throws FitsException, IOException  {
         return readAndEvaluate(new Fits(f), f, clearHdu, req);
     }
 
-    public static FitsDataEval readAndEvaluate(Fits fits, File f, boolean clearHdu, WebPlotRequest req) throws FitsException  {
+    public static FitsDataEval readAndEvaluate(Fits fits, File f, boolean clearHdu, WebPlotRequest req) throws FitsException, IOException {
+        FitsReadUtil.UncompressFitsInfo uFitsInfo= null;
         try  {
-            BasicHDU[] HDUs= FitsReadUtil.readHDUs(fits);
-            if (HDUs == null || HDUs.length==0) throw new FitsException("Bad format in FITS file");
-            FitsRead[] frAry = FitsReadFactory.createFitsReadArray(HDUs, clearHdu);
-            FitsDataEval fitsDataEval= new FitsDataEval(frAry);
-            if (HDUs.length >1) { // Do evaluation
+            BasicHDU<?>[] HDUs= FitsReadUtil.readHDUs(fits);
+            if (FitsReadUtil.hasCompressedImageHDUS(HDUs)) uFitsInfo = FitsReadUtil.createdUncompressImageHDUFile(HDUs,f);
+
+            File fitsFile= uFitsInfo!=null ? uFitsInfo.getFile() : f;
+            BasicHDU<?>[]  workingHDUS= uFitsInfo!=null ? uFitsInfo.getHDUs() : HDUs;
+            if (workingHDUS.length==0) throw new FitsException("Bad format in FITS file, no HDUs found");
+            FitsRead[] frAry = FitsReadFactory.createFitsReadArray(workingHDUS, clearHdu);
+            FitsDataEval fitsDataEval= new FitsDataEval(frAry,fitsFile);
+            if (workingHDUS.length >1) { // Do evaluation
                 for(int i= 0; i<frAry.length; i++) {
                     if (frAry[i].getPlaneNumber()==0) {
                         for (Eval e : evalList) {
-                            List<RelatedData> rdList= e.evaluate(f, frAry, HDUs, i, frAry[i].getHduNumber(), req);
+                            List<RelatedData> rdList= e.evaluate(fitsFile, frAry, workingHDUS, i, frAry[i].getHduNumber(), req);
                             fitsDataEval.addAllRelatedData(i,rdList);
                         }
                     }
@@ -58,9 +63,8 @@ public class FitsEvaluation {
             }
             return fitsDataEval;
         } finally {
-            try {
-                if (fits!=null && fits.getStream()!=null) fits.getStream().close();
-            } catch (IOException ignore) { }
+            FitsReadUtil.closeFits(fits);
+            if (uFitsInfo!=null) FitsReadUtil.closeFits(uFitsInfo.getFits());
         }
     }
 

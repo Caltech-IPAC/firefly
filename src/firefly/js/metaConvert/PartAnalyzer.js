@@ -3,11 +3,11 @@
  */
 import {isArray} from 'lodash';
 import {dpdtChartTable, dpdtImage, dpdtTable, DPtypes, SHOW_CHART, SHOW_TABLE, AUTO} from './DataProductsType';
-import {FileAnalysisType, UIEntry, UIRender} from '../data/FileAnalysis';
+import {FileAnalysisType, Format, UIEntry, UIRender} from '../data/FileAnalysis';
 import {RequestType} from '../visualize/RequestType.js';
 import {TitleOptions} from '../visualize/WebPlotRequest';
-import {createChartTableActivate, createChartSingleRowArrayActivate} from './converterUtils';
-import {createSingleImageActivate} from './ImageDataProductsUtil';
+import {createChartTableActivate, createChartSingleRowArrayActivate, createTableExtraction} from './converterUtils';
+import {createSingleImageActivate, createSingleImageExtraction} from './ImageDataProductsUtil';
 import {isEmpty} from 'lodash';
 
 /**
@@ -150,6 +150,9 @@ function getTableChartColInfo(title, part, fileFormat) {
     else {
         const tabColNames= getColumnNames(part,fileFormat);
         if (!tabColNames || tabColNames.length<2) return {};
+
+        if (part.details?.tableMeta?.utype) return {useChartChooser:true};
+
         let xCol= tabColNames.find( (c) => C_COL1.includes(c.toLowerCase()));
         let yCol= tabColNames.find( (c) => C_COL2.includes(c.toLowerCase()));
         let connectPoints= true;
@@ -158,14 +161,9 @@ function getTableChartColInfo(title, part, fileFormat) {
             yCol= tabColNames.find( (c) => TS_C_COL2.includes(c.toLowerCase()));
             connectPoints= false;
         }
-        if (!xCol || !yCol) {
-            xCol= tabColNames.find( (c) => SPACITAL_C_COL1.includes(c.toLowerCase()));
-            yCol= tabColNames.find( (c) => SPACITAL_C_COL2.includes(c.toLowerCase()));
-            connectPoints= false;
-        }
         const rowsTotal= getRowCnt(part,fileFormat);
-        if (rowsTotal<1 || !xCol || !yCol) return {};
-        return {xCol,yCol, connectPoints};
+        if (rowsTotal<1) return {};
+        return {xCol,yCol, connectPoints, useChartChooser:true};
     }
 }
 
@@ -217,7 +215,7 @@ function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, titl
     }
 
     const ddTitleStr= getTableDropTitleStr(title,part,partFormat,tableOnly);
-    const {xCol,yCol,cNames,cUnits,connectPoints}= getTableChartColInfo(title, part, partFormat);
+    const {xCol,yCol,cNames,cUnits,connectPoints,useChartChooser}= getTableChartColInfo(title, part, partFormat);
 
     //define title for table and chart
     let titleInfo={titleStr:title, showChartTitle:true};
@@ -229,26 +227,30 @@ function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, titl
     if (tableOnly) {
         return dpdtTable(ddTitleStr,
             createChartTableActivate(false, fileOnServer,titleInfo,activateParams, undefined, tbl_index, cNames, cUnits),
+            createTableExtraction(fileOnServer,titleInfo,tbl_index, cNames, cUnits),
             undefined, {paIdx:tbl_index,requestDefault});
     }
     else {
 
-        if ( (!xCol || !yCol) && !chartParamsAry) return;
+        if ( (!xCol || !yCol) && !chartParamsAry && !useChartChooser) return;
 
 
         let {chartTableDefOption}= part;
         if (getRowCnt(part,partFormat)===1) {
+            if (!xCol || !yCol) return;
             if (chartTableDefOption===AUTO) chartTableDefOption= SHOW_TABLE;
             return dpdtChartTable(ddTitleStr,
                 createChartSingleRowArrayActivate(fileOnServer,'Row 1 Chart',activateParams,xCol,yCol,0,tbl_index),
+                createTableExtraction(fileOnServer,'Row 1 Chart',tbl_index, cNames, cUnits),
                 undefined, {paIdx:tbl_index, chartTableDefOption, interpretedData, requestDefault});
         }
         else {
             const imageAsTableColCnt= isImageAsTable(part,partFormat) ? getImageAsTableColCount(part,partFormat) : 0;
-            const chartInfo= {xAxis:xCol, yAxis:yCol, chartParamsAry};
+            const chartInfo= {xAxis:xCol, yAxis:yCol, chartParamsAry, useChartChooser};
             if (chartTableDefOption===AUTO) chartTableDefOption= imageAsTableColCnt===2 ? SHOW_CHART : SHOW_TABLE;
             return dpdtChartTable(ddTitleStr,
                 createChartTableActivate(true, fileOnServer,titleInfo,activateParams,chartInfo,tbl_index,cNames,cUnits,connectPoints),
+                createTableExtraction(fileOnServer,titleInfo,tbl_index, cNames, cUnits),
                 undefined, {paIdx:tbl_index, chartTableDefOption, interpretedData, requestDefault});
         }
     }
@@ -274,7 +276,9 @@ function analyzeImageResult(part, request, table, row, fileFormat, fileOnServer,
                            `${title} (image)` :  `HDU #${hduIdx||0} (image) ${title}`;
 
     return dpdtImage(ddTitleStr,
-        createSingleImageActivate(newReq,imageViewerId,table.tbl_id,row),'image-'+0,
+        createSingleImageActivate(newReq,imageViewerId,table.tbl_id,row),
+        createSingleImageExtraction(newReq),
+        'image-'+0,
         {request:newReq, override, interpretedData, requestDefault:Boolean(defaultPart)});
 }
 
@@ -305,8 +309,21 @@ function getHeader(header, part) {
     return foundRow && foundRow[2];
 }
 
+
+const tabNumericDataTypes= ['double', 'real', 'float', 'int', 'long', 'd', 'r', 'f', 'i', 'l'];
+const fitNumericDataTypes= ['I', 'J', 'K', 'E', 'D', 'C', 'M'];
+
+/**
+ * Get the column name
+ *   - for tables try to return only the numeric column if the information is available
+ *   - for single dimension fits then make up column names
+ *   - for fits images that we want to read as tables the make up the column names
+ * @param part
+ * @param fileFormat
+ * @return {*|{length}|string[]}
+ */
 function getColumnNames(part, fileFormat) {
-    if (fileFormat==='FITS') {
+    if (fileFormat===Format.FITS) {
         const naxis= getIntHeader('NAXIS',part);
         const {tableColumnNames}= part;
         if (naxis===1) {
@@ -319,7 +336,11 @@ function getColumnNames(part, fileFormat) {
         }
         else {
             const ttNamesAry= getHeadersThatStartsWith('TTYPE',part);
-            if (ttNamesAry.length) return ttNamesAry;
+            if (ttNamesAry.length) {
+                const ttFormAry= getHeadersThatStartsWith('TFORM',part);
+                return ttFormAry.length===ttNamesAry.length ?    // return if we can tell - then all numeric columns else all columns
+                    ttNamesAry.filter( (n,idx) => fitNumericDataTypes.includes(ttFormAry[idx])) : ttNamesAry;
+            }
             const naxis2= getIntHeader('NAXIS2',part,0);
             if (naxis2<=30) {
                 if (isArray(tableColumnNames) && tableColumnNames.length===naxis2+1) {
@@ -331,8 +352,18 @@ function getColumnNames(part, fileFormat) {
             }
         }
     }
-    else {
-        return part.details.tableData.data.map( (row) => row[0]);
+    else if (fileFormat===Format.CSV || fileFormat===Format.TSV) { // return all columns, we can't tell the type
+        return part.details.tableData.data.map((row) => row[0]);
+    }
+    else if (fileFormat===Format.IPACTABLE) { // return all numeric columns and those we can't tell
+        return part.details.tableData.data
+            .filter( ([name,type]) => tabNumericDataTypes.includes(type) || type==='null')
+            .map( ([name]) => name);
+    }
+    else { // return all numeric columns
+        return part.details.tableData.data
+            .filter( ([name,type]) => tabNumericDataTypes.includes(type))
+            .map( ([name]) => name);
     }
 }
 

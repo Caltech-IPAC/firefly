@@ -28,6 +28,7 @@ class FileReadInfo {
     private final FileInfo fi;
 
     FileReadInfo(File originalFile,
+                 File workingFile,
                  FitsRead fr,
                  FileInfo fi,
                  Band band,
@@ -37,7 +38,7 @@ class FileReadInfo {
                  List<RelatedData> relatedData,
                  ModFileWriter modFileWriter) {
         this.originalFile= originalFile;
-        this.workingFile = originalFile;
+        this.workingFile = workingFile;
         this.band= band;
         this.originalImageIdx= imageIdx;
         this.fr= fr;

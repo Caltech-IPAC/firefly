@@ -19,7 +19,7 @@ import {
     getActivePlotView,
     primePlot,
     hasWCSProjection,
-    findPlotGroup, hasOverlayColorLock
+    findPlotGroup, hasOverlayColorLock, isImageCube, isThreeColor
 } from '../PlotViewUtil.js';
 import {getPreference} from '../../core/AppDataCntlr.js';
 import {ImageCenterDropDown, TARGET_LIST_PREF} from './ImageCenterDropDown.jsx';
@@ -51,6 +51,7 @@ import {showDrawingLayerPopup} from 'firefly/visualize/ui/DrawLayerPanel.jsx';
 import {SingleColumnMenu} from 'firefly/ui/DropDownMenu.jsx';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {dispatchSetLayoutMode, LO_MODE, LO_VIEW} from 'firefly/core/LayoutCntlr.js';
+import {LINE, POINTS, showExtractionDialog, Z_AXIS} from 'firefly/visualize/ui/ExtractionDialog.jsx';
 
 import SAVE from 'images/icons-2014/Save.png';
 import NEW_IMAGE from 'images/icons-2014/28x28_FITS_NewImage.png';
@@ -83,6 +84,9 @@ import ZOOM_DROP from 'images/Zoom-drop.png';
 import TOOL_DROP from 'images/tools-again-try2.png';
 import GRID_EXPAND from 'images/icons-2014/24x24_ExpandArrows-grid-3.png';
 import OUTLINE_EXPAND from 'images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
+import DRILL_DOWN from 'images/drill-down.png';
+import LINE_EXTRACTION from 'images/line-extract.png';
+import POINT_EXTRACTION from 'images/points.png';
 
 const omList= ['plotViewAry'];
 const image24x24={width:24, height:24};
@@ -363,6 +367,7 @@ function ToolsDrop({visRoot, pv,plot, mi, enabled, image, hips, showRotateLocked
             <RotateFlipRow style={{paddingTop:10}} pv={pv} mi={mi} enabled={enabled}
                            showRotateLocked={showRotateLocked} image={image}/>
             <LayersRow style={{paddingTop:10}} pv={pv} mi={mi} enabled={enabled} image={image}/>
+            {image && <ExtractRow style={{paddingTop:10}} pv={pv} mi={mi} enabled={enabled} image={image}/>}
             {(makeMatchLock || makeColorLock) && <div style={{display:'flex', alignItems:'center', paddingTop:10}}>
                 <div style={{width:130, fontSize:'larger'}}>More: </div>
                 {makeColorLock && <SimpleLayerOnOffButton plotView={pv}
@@ -413,6 +418,21 @@ const RotateFlipRow= ({style,image,mi,showRotateLocked,pv,enabled}) => (
                                 visible={mi.flipImageY && image} onClick={() => dispatchFlip({plotId:pv.plotId})} />
     </div>
 );
+
+const ExtractRow= ({style,image,mi,pv,enabled}) => {
+    const standIm= !isThreeColor(pv);
+    return (
+        <div style={{display:'flex', alignItems:'center', ...style}}>
+            <div style={{width:130, fontSize:'larger'}}>Extract: </div>
+            <ToolbarButton icon={DRILL_DOWN} tip='extract Z-axis from cube' enabled={standIm&&isImageCube(primePlot(pv))&&enabled}
+                           horizontal={true} visible={image} onClick={() => showExtractionDialog(Z_AXIS)}/>
+            <ToolbarButton icon={LINE_EXTRACTION} tip='extract line from image' enabled={standIm&&enabled}
+                           horizontal={true} visible={image} onClick={() => showExtractionDialog(LINE)}/>
+            <ToolbarButton icon={POINT_EXTRACTION} tip='extract points from image' enabled={standIm&&enabled}
+                           horizontal={true} visible={image} onClick={() => showExtractionDialog(POINTS)}/>
+        </div>
+        );
+};
 
 const LayersRow= ({style,image, pv,mi,enabled}) => (
     <div style={{display:'flex', alignItems:'center', ...style}}>

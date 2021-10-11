@@ -15,7 +15,7 @@ import {
 } from '../util/VOAnalyzer';
 import {makeFileRequest} from '../tables/TableRequestUtil';
 import {ZoomType} from '../visualize/ZoomType.js';
-import {createGridImagesActivate} from './ImageDataProductsUtil.js';
+import {createGridImagesActivate, createSingleImageExtraction} from './ImageDataProductsUtil.js';
 import {makeAnalysisGetSingleDataProduct} from './MultiProductFileAnalyzer';
 import {dpdtFromMenu, dpdtImage, dpdtMessage, dpdtMessageWithDownload, DPtypes,} from './DataProductsType';
 import {createGuessDataType, processDatalinkTable} from './DataLinkProcessor';
@@ -75,7 +75,7 @@ export function getObsCoreGridDataProduct(table, plotRows, activateParams) {
                 result.displayType===DPtypes.ANALYZE) )
             .map( (result) => result.request);
         const activate= createGridImagesActivate(requestAry,imageViewerId, table.tbl_id, plotRows);
-        return dpdtImage('image grid', activate,'image-grid-0',{requestAry});
+        return dpdtImage('image grid', activate,undefined, 'image-grid-0',{requestAry});
     });
 }
 

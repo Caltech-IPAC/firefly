@@ -17,13 +17,13 @@ import {downloadBlob, makeDefaultDownloadFileName} from 'firefly/util/fetch.js';
 
 const DIALOG_ID= 'plotDownloadDialog';
 
-export function showPlotLySaveDialog(Plotly, chartDiv, chartId) {
+export function showPlotLySaveDialog(Plotly, chartDiv) {
     // if (fileLocation === WORKSPACE) dispatchWorkspaceUpdate(); //todo keep if we add workspace support, it probably goes somewhere else
 
     const isWs = getWorkspaceConfig(); //todo - keep if we add workspace support
     const  popup = (
         <PopupPanel title={'Save Chart'}>
-                <PlotLySavePanel {...{Plotly, chartDiv, chartId, isWs, filename:getDefaultFilename(chartDiv,chartId)}}/>
+                <PlotLySavePanel {...{Plotly, chartDiv, isWs, filename:getDefaultFilename(chartDiv)}}/>
         </PopupPanel>
     );
     DialogRootContainer.defineDialog(DIALOG_ID, popup);
@@ -52,7 +52,7 @@ async function saveFile(request, Plotly, chartDiv) {
 }
 
 
-const PlotLySavePanel= function( {isWs,Plotly, chartDiv, chartId, filename}) {
+const PlotLySavePanel= function( {isWs,Plotly, chartDiv, filename}) {
     return (
         <FieldGroup groupKey={'PlotLySaveField'} style={{display:'flex', flexDirection:'column'}}>
             <div style={ {padding: 10}}>
@@ -68,7 +68,7 @@ const PlotLySavePanel= function( {isWs,Plotly, chartDiv, chartId, filename}) {
             <div style={{textAlign:'center', display:'flex', justifyContent:'space-between', padding: '15px 15px 7px 8px'}}>
                 <div style={{display:'flex', justifyContent:'space-between'}}>
                     <CompleteButton text='Save' dialogId={DIALOG_ID}
-                                    onSuccess={(request) => saveFile(request,Plotly, chartDiv, chartId)} />
+                                    onSuccess={(request) => saveFile(request,Plotly, chartDiv)} />
                     <CompleteButton text='Cancel' groupKey='' style={{paddingLeft:10}}
                                     onSuccess={() => dispatchHideDialog(DIALOG_ID)} />
                 </div>
@@ -76,4 +76,4 @@ const PlotLySavePanel= function( {isWs,Plotly, chartDiv, chartId, filename}) {
             </div>
         </FieldGroup>
     );
-}
+};

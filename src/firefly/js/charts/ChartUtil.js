@@ -8,11 +8,13 @@
  * Created by tatianag on 3/17/16.
  */
 
-import {assign, cloneDeep, flatten, get, has, isArray, isEmpty, isObject, isString, isUndefined, merge, pick, range, set, uniqueId} from 'lodash';
+import {assign, cloneDeep, flatten, get, has, isArray, isEmpty, isObject, isString,
+    isUndefined, merge, pick, range, set, uniqueId} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {getAppOptions} from '../core/AppDataCntlr.js';
-import {COL_TYPE, getColumnType, getTblById, isColumnType, isFullyLoaded, isTableLoaded, stripColumnNameQuotes, watchTableChanges} from '../tables/TableUtil.js';
+import { COL_TYPE, getColumnType, getMetaEntry, getTblById, isColumnType, isFullyLoaded, isTableLoaded,
+    stripColumnNameQuotes, watchTableChanges } from '../tables/TableUtil.js';
 import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_SELECT, TABLE_SORT} from '../tables/TablesCntlr.js';
 import {dispatchLoadTblStats, getColValStats} from './TableStatsCntlr.js';
 import {dispatchChartHighlighted, dispatchChartSelect, dispatchChartUpdate, dispatchSetActiveTrace, getChartData} from './ChartsCntlr.js';
@@ -958,7 +960,14 @@ function getDefaultColorAttributes(traceData, type, idx) {
 }
 
 
-export function getDefaultChartProps(tbl_id) {
+/**
+ *
+ * @param tbl_id
+ * @param {String} [fbXCol] fallback X column, if defined use as a last resort for x column before guessing
+ * @param {String} [fbYCol] fallback Y column, if defined use as a last resort for y column before guessing
+ * @return {{data: {}, layout:{}}}
+ */
+export function getDefaultChartProps(tbl_id,fbXCol,fbYCol) {
 
     const tblModel = getTblById(tbl_id);
     const {tableMeta, tableData, totalRows} = tblModel || {};
@@ -980,7 +989,18 @@ export function getDefaultChartProps(tbl_id) {
     if (!isEmpty(spectrumDM)) return spectrumPlot({tbl_id, spectrumDM});
 
 
-    let xCol, yCol;
+    // test to see if meta set the default x and y coloumns
+    let xCol= getMetaEntry(tblModel,MetaConst.DEFAULT_CHART_X_COL);
+    let yCol= getMetaEntry(tblModel,MetaConst.DEFAULT_CHART_Y_COL);
+    if (xCol) {
+        return genericXYChart({tbl_id, xCol, yCol:yCol||xCol});
+    }
+
+    // if defined, use these columns if nothing is specifically defined in the meta
+    if (fbXCol && fbYCol) {
+        return genericXYChart({tbl_id, xCol:fbXCol, yCol:fbYCol, xOptions: 'flip'});
+    }
+
     // for catalogs use lon and lat columns
     const centerColumns = findTableCenterColumns(tblModel);
     xCol = centerColumns?.lonCol;
@@ -1020,7 +1040,7 @@ function fireflyHistogram({tbl_id, xCol}) {
                     columnOrExpr: `${xColName}`
                 }
             },
-            name: `${xColName}`
+            name: `${xColName}`,
         }]
     };
 }
@@ -1046,11 +1066,11 @@ function scatterOrHeatmap({tbl_id, xCol, yCol, xOptions}) {
             firefly: {
                 scatterOrHeatmap: true,
                 colorscale: colorscaleName
-            }
+            },
         }],
         layout: {
             xaxis: {autorange},
-            yaxis: {showgrid: false}
+            yaxis: {showgrid: false},
         }
     };
 

@@ -5,7 +5,7 @@ import {
     getViewerItemIds,
     getMultiViewRoot,
     isImageViewerSingleLayout,
-    getLayoutType, GRID
+    getLayoutType, GRID, DEFAULT_FITS_VIEWER_ID
 } from '../visualize/MultiViewCntlr.js';
 import {dispatchPlotImage, dispatchDeletePlotView, visRoot, dispatchZoom,
     dispatchPlotGroup, dispatchChangeActivePlotView} from '../visualize/ImagePlotCntlr.js';
@@ -73,6 +73,20 @@ export function createSingleImageActivate(request, imageViewerId, tbl_id, highli
             [PlotAttribute.DATALINK_TABLE_ID]: tbl_id});
     }
     return () => replotImageDataProducts(request.getPlotId(), imageViewerId, tbl_id, [request]);
+}
+
+let extractedPlotId= 1;
+
+export function createSingleImageExtraction(request) {
+    if (!request) return undefined;
+    const wpRequest= request.makeCopy();
+    const plotId= `extract-plotId-${extractedPlotId}`;
+    wpRequest.setPlotId(plotId);
+    wpRequest.setPlotGroupId('extract-group');
+    extractedPlotId++;
+    return () => {
+        dispatchPlotImage({plotId, viewerId:DEFAULT_FITS_VIEWER_ID, wpRequest});
+    };
 }
 
 

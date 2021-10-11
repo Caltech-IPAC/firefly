@@ -176,8 +176,36 @@ public class VisServerOps {
         }
 
         return true;
+    }
 
+    public static double[] getZAxisAry(PlotState state, ImagePt pt, int hduNum, int ptSize, boolean relatedHDUs) {
+        try {
+            PlotServUtils.statsLog("z-axis drilldown");
+            File fitsFile= ServerContext.convertToFile(state.getWorkingFitsFileStr(NO_BAND));
+            return FitsReadUtil.getZAxisAryFromCube(pt, fitsFile, hduNum, ptSize);
+        } catch (Exception e) {
+            return new double[] {};
+        }
+    }
 
+    public static double[] getLineDataAry(PlotState state, ImagePt pt, ImagePt pt2, int plane, int hduNum, int drillSize) {
+        try {
+            PlotServUtils.statsLog("line data");
+            File fitsFile= ServerContext.convertToFile(state.getWorkingFitsFileStr(NO_BAND));
+            return FitsReadUtil.getLineDataAryFromFile(pt, pt2, plane, fitsFile, hduNum, drillSize);
+        } catch (Exception e) {
+            return new double[] {};
+        }
+    }
+
+    public static double[] getPointDataAry(PlotState state, ImagePt[] ptAry, int plane, int hduNum, int drillSize) {
+        try {
+            PlotServUtils.statsLog("line data");
+            File fitsFile= ServerContext.convertToFile(state.getWorkingFitsFileStr(NO_BAND));
+            return FitsReadUtil.getPointDataAryFromFile(ptAry, plane, fitsFile, hduNum, drillSize);
+        } catch (Exception e) {
+            return new double[] {};
+        }
     }
 
     public static String[] getFlux(PlotState[] stateAry, ImagePt ipt) {

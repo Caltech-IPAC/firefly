@@ -28,7 +28,7 @@ import {logger} from '../../util/Logger.js';
 import {getCornersColumns} from '../../tables/TableInfoUtil.js';
 import {dispatchCreateDrawLayer,dispatchDestroyDrawLayer, dispatchModifyCustomField,
                          dispatchAttachLayerToPlot, getDlAry} from '../DrawLayerCntlr.js';
-import Catalog from '../../drawingLayers/Catalog.js';
+import Catalog, {CatalogType} from '../../drawingLayers/Catalog.js';
 import {TableSelectOptions} from '../../drawingLayers/CatalogUI.jsx';
 import {getNextColor} from '../draw/DrawingDef.js';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga';
@@ -345,24 +345,11 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
 
     const {maxRadius, avgOfCenters}= computeSize(options, preparedTables, usesRadians);
 
-    // EMPTY_TBL
-    // if (!avgOfCenters || maxRadius<=0) {
-    //     // coverage drawing might need to be cleared
-    //     overlayCoverageDrawing(preparedTables, options, tblCatIdMap);
-    //     return;
-    // }
     if (!avgOfCenters || maxRadius<=0) {
         updateTableComponentStateStatus(tbl_id,COVERAGE_FAIL);
         return;
     }
 
-    const plot= primePlot(visRoot(), PLOT_ID);
-
-    // if (plot &&
-    //     pointEquals(avgOfCenters,plot.attributes[COVERAGE_TARGET]) && plot.attributes[COVERAGE_RADIUS]===maxRadius ) {
-    //     overlayCoverageDrawing(preparedTables, options, tblCatIdMap, true);
-    //     return;
-    // }
     overlayCoverageDrawing(preparedTables, options, tblCatIdMap, deletedTblId||table.tbl_id);
 
     if (deletedTblId) return;
@@ -509,7 +496,10 @@ function makeOverlayCoverageDrawing() {
         if (!plot && !affectedTblId) return;
         const tblIdAry=  plot ? plot.attributes[PlotAttribute.VISUALIZED_TABLE_IDS] : [affectedTblId];
         if (isEmpty(tblIdAry)) return;
-        let visible= true;
+        const visibleMap= tblCatIdMap[affectedTblId]?.reduce( (obj, catId) => {
+            obj[catId]= true;
+            return obj;
+        }, {} ) ?? {};
 
         tblIdAry.forEach( (tbl_id) => {
             if (!tbl_id) return;
@@ -536,7 +526,7 @@ function makeOverlayCoverageDrawing() {
                     if (layer && (tableRemoved || tbl_id===affectedTblId)) {
                         drawingOptions[cId] = layer.drawingDef;    // drawingDef and selectOption is stored as layer based
                         selectOps[cId] = layer.selectOption;
-                        visible= plot ? isDrawLayerVisible(layer, plot.plotId) : true;
+                        visibleMap[cId]= plot ? isDrawLayerVisible(layer, plot.plotId) : true;
                         dispatchDestroyDrawLayer(cId);
                     }
                 });
@@ -556,7 +546,7 @@ function makeOverlayCoverageDrawing() {
                 });
                 const oriTable= getTblById(id);
                 const arTable= preparedTables[id];
-                if (oriTable && arTable) addToCoverageDrawing(PLOT_ID, options, oriTable, arTable, drawingOptions, visible);
+                if (oriTable && arTable) addToCoverageDrawing(PLOT_ID, options, oriTable, arTable, drawingOptions, visibleMap);
 
             });
         });
@@ -583,6 +573,15 @@ function getColumns(dataType,covType,allRowsTable) {
     );
 }
 
+const getCatalogType= (dataType) => {
+    switch (dataType) {
+        case CoverageType.REGION: return CatalogType.REGION;
+        case CoverageType.X: return CatalogType.POINT;
+        case CoverageType.ORBITAL_PATH: return CatalogType.ORBITAL_PATH;
+        case CoverageType.BOX: return CatalogType.BOX;
+        default: return CatalogType.POINT;
+    }
+};
 
 /**
  *
@@ -593,7 +592,7 @@ function getColumns(dataType,covType,allRowsTable) {
  * @param {string} drawOp
  * @param {boolean} addVisible - when added it is visible
  */
-function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp, addVisible) {
+function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp, visibleMap) {
 
     if (allRowsTable==='WORKING') return;
     const covType= getCoverageType(options,allRowsTable);
@@ -605,7 +604,8 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp, addV
                                                    lookupOption(options, 'searchTarget', table.tbl_id),
                                                    lookupOption(options, 'overlayPosition', table.tbl_id)) : undefined;
 
-    const createDrawLayer = (cId, dataType, visible, isFromRegion=false) => {
+
+    const createDrawLayer = (cId, dataType, visible, titleAddition='') => {
         const columns= getColumns(dataType,covType,allRowsTable);
         const dl = getDlAry().find((dl) => dl.drawLayerTypeId === Catalog.TYPE_ID && dl.catalogId === cId);
 
@@ -615,18 +615,13 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp, addV
             catalogId: cId,
             layersPanelLayoutId,
             tblId: tbl_id,
-            title: `Coverage: ${table.title || tbl_id}` +
-                         (isFromRegion ? (dataType===CoverageType.REGION ? ' regions' : ' positions') : ''),
+            title: `Coverage: ${table.title || tbl_id}${titleAddition}`,
             color:  drawOp[cId].color,
             tableData,
             tableMeta,
             tableRequest: table.request,
             highlightedRow: table.highlightedRow,
-            catalog: (dataType === CoverageType.X || dataType === CoverageType.ORBITAL_PATH),
-            boxData: dataType !== CoverageType.X,
-            dataType: dataType.key,
-            orbitalPath: dataType === CoverageType.ORBITAL_PATH,
-            isFromRegion,
+            catalogType: getCatalogType(dataType),
             columns,
             symbol: drawOp.symbol || lookupOption(options, 'symbol', cId),
             size: drawOp.size || lookupOption(options, 'symbolSize', cId),
@@ -639,16 +634,18 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp, addV
     };
 
     if (covType === CoverageType.BOX) {
-        createDrawLayer(tbl_id, covType, addVisible);
+        createDrawLayer(tbl_id, covType, visibleMap[tbl_id] ?? true);
     } else if (covType === CoverageType.X) {
-        createDrawLayer(tbl_id, covType, addVisible);
+        createDrawLayer(tbl_id, covType, visibleMap[tbl_id] ?? true);
     } else if (covType === CoverageType.ORBITAL_PATH) {
-        createDrawLayer(tbl_id, covType, addVisible);
+        createDrawLayer(tbl_id, covType, visibleMap[tbl_id] ?? true);
     } else if (covType === CoverageType.REGION) {
         const layerType = [CoverageType.X, CoverageType.REGION];
         const layerId = [centerId(tbl_id), regionId(tbl_id)];
+        const titleAddition=[' positions', ' regions'];
+        const visible= layerId.map( (lId) => visibleMap[lId] ?? true);
 
-        layerType.forEach((type, idx) => createDrawLayer(layerId[idx], layerType[idx], addVisible, true));
+        layerType.forEach((type, idx) => createDrawLayer(layerId[idx], layerType[idx], visible[idx], titleAddition[idx]));
     }
 
     if (searchTarget) {
@@ -659,7 +656,7 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp, addV
                     color: darker(drawOp[covType === CoverageType.REGION? centerId(tbl_id) : tbl_id].color),
                     drawLayerId: searchTargetId(tbl_id),
                     plotId,
-                    searchTargetWP: searchTarget,
+                    searchTargetPoint: searchTarget,
                     layersPanelLayoutId,
                     titlePrefix: '',
                     canUserDelete: true,

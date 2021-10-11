@@ -32,6 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
@@ -171,6 +172,7 @@ public class VisServerCommands {
             chan.close();
 
 
+
         }
     }
 
@@ -192,6 +194,55 @@ public class VisServerCommands {
             chan.close();
         }
     }
+
+    public static class ExtractionCmd extends ServerCommandAccess.HttpCommand {
+        public void processRequest(HttpServletRequest req, HttpServletResponse res, SrvParam sp) throws Exception {
+
+            PlotState state= sp.getState();
+            String exType= sp.getRequired(ServerParams.EXTRACTION_TYPE);
+            int ptSize= sp.getOptionalInt(ServerParams.POINT_SIZE,1);
+            boolean relatedHDUs= sp.getOptionalBoolean(ServerParams.RELATED_HDUS, false);
+            int hduNum= sp.getRequiredInt(ServerParams.HDU_NUM);
+
+            int plane;
+            ImagePt pt, pt2;
+            ImagePt [] ptAry;
+            double [] extractAry;
+
+            switch (exType) {
+                case "z-axis":
+                    pt= sp.getRequiredImagePt(ServerParams.PT);
+                    extractAry= VisServerOps.getZAxisAry(state,pt,hduNum,ptSize,relatedHDUs);
+                    break;
+                case "line":
+                    pt=sp.getRequiredImagePt(ServerParams.PT);
+                    pt2= sp.getRequiredImagePt(ServerParams.PT2);
+                    plane= sp.getRequiredInt(ServerParams.PLANE);
+                    extractAry= VisServerOps.getLineDataAry(state,pt,pt2,plane,hduNum,ptSize);
+                    break;
+                case "points":
+                    ptAry= sp.getRequiredImagePtAry(ServerParams.PTARY);
+                    plane= sp.getRequiredInt(ServerParams.PLANE);
+                    extractAry= VisServerOps.getPointDataAry(state,ptAry,plane,hduNum,ptSize);
+                    break;
+                default:
+                    throw new IllegalArgumentException(ServerParams.EXTRACTION_TYPE+" is not supported");
+            }
+
+
+            res.setContentType("application/octet-stream");
+            ByteBuffer byteBuf = ByteBuffer.allocateDirect(extractAry.length * Double.BYTES); //8 bytes per float
+            byteBuf.order(ByteOrder.nativeOrder());
+            byteBuf.order(ByteOrder.LITTLE_ENDIAN);
+            DoubleBuffer buffer = byteBuf.asDoubleBuffer();
+            buffer.put(extractAry);
+            buffer.position(0);
+            WritableByteChannel chan= Channels.newChannel(res.getOutputStream());
+            chan.write(byteBuf);
+            chan.close();
+        }
+    }
+
 
 
     public static class StretchCmd extends ServCommand {

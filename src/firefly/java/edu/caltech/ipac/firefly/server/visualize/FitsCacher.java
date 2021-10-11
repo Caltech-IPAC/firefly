@@ -44,7 +44,7 @@ public class FitsCacher {
 
 
 
-    static FitsDataEval readFits(FileInfo fitsFileInfo, WebPlotRequest req, boolean useCache, boolean clearHdu) throws FitsException {
+    static FitsDataEval readFits(FileInfo fitsFileInfo, WebPlotRequest req, boolean useCache, boolean clearHdu) throws FitsException, IOException {
         File fitsFile= fitsFileInfo.getFile();
         FitsDataEval fitsDataEval= null;
 
@@ -147,7 +147,7 @@ public class FitsCacher {
         return fitsDataInfo;
     }
 
-    static FitsDataEval loadFits(Fits fits, File cachePath) throws FitsException {
+    static FitsDataEval loadFits(Fits fits, File cachePath) throws FitsException, IOException {
         FitsDataEval fitsDataEval= FitsEvaluation.readAndEvaluate(fits, cachePath, true, null);
         if (memCache!=null) memCache.put(new FileInfo(cachePath),fitsDataEval);
         return fitsDataEval;

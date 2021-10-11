@@ -249,8 +249,8 @@ function getDrawData(factory, drawLayer, action, plotId= null) {
     let retval;
     if (plotId) {
         retval= {
-            data:             Object.assign({},drawData.data,newDD.data),
-            highlightData:   Object.assign({},drawData.highlightData,newDD.highlightData),
+            data:            {...drawData?.data,...newDD.data},
+            highlightData:   {...drawData?.highlightData,...newDD.highlightData},
             selectIdxs: newDD.selectIdxs
         };
     }
@@ -259,9 +259,9 @@ function getDrawData(factory, drawLayer, action, plotId= null) {
     }
 
     // check for differences
-    if (retval.data!==drawData.data ||
-        retval.highlightData!==drawData.highlightData ||
-        retval.selectIdxs!==drawData.selectIdxs) {
+    if (retval.data!==drawData?.data ||
+        retval.highlightData!==drawData?.highlightData ||
+        retval.selectIdxs!==drawData?.selectIdxs) {
         return retval;
     }
     else {

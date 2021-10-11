@@ -28,6 +28,9 @@ import CHECKED from 'html/images/20x20_clipboard-checked.png';
 import CENTER from 'html/images/20x20-center-small.png';
 import {convert} from '../visualize/VisUtil';
 import CoordinateSys from '../visualize/CoordSys';
+import {CatalogType} from 'firefly/drawingLayers/Catalog.js';
+import Point from 'firefly/visualize/Point.js';
+import {sprintf} from 'firefly/externalSource/sprintf.js';
 
 export const TableSelectOptions = new Enum(['all', 'selected', 'highlighted']);
 export const getUIComponent = (drawLayer,pv,maxTitleChars) =>
@@ -43,7 +46,7 @@ function CatalogUI({drawLayer,pv}) {
 
     const showTableOptions = () => {
         let tableOptions = null;
-        const {selectOption, isFromRegion, columns} = drawLayer;
+        const {selectOption, catalogType, columns} = drawLayer;
 
         const tOptions = TableSelectOptions.enums.reduce((prev, eItem) => {
             prev.push({label: startCase(eItem.key), value: eItem.key});
@@ -53,7 +56,7 @@ function CatalogUI({drawLayer,pv}) {
         const searchTargetUI= drawLayer.searchTarget ? (<SearchTargetUI drawLayer={drawLayer} PlotView={pv}/>) : false;
 
         let subTitle;
-        if (isFromRegion) {
+        if (catalogType===CatalogType.REGION) {
             subTitle= (
                 <div>
                     {searchTargetUI}
@@ -230,7 +233,8 @@ CatalogUI.propTypes= {
 
 
 export function FixedPtControl({pv, wp, style={}}) {
-    const llStr= formatLonLatToString(convert(wp, CoordinateSys.EQ_J2000));
+    const llStr= wp.type===Point.W_PT ?
+        formatLonLatToString(convert(wp, CoordinateSys.EQ_J2000)) : `${Math.round(wp.x)},${Math.round(wp.y)}`;
     const [clipIcon, setClipIcon] = useState(CLIPBOARD);
 
     const doCopy= (str) => {

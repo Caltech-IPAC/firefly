@@ -9,7 +9,7 @@ import {makeTransform} from './PlotTransformUtils.js';
 import CysConverter, {CCUtil} from './CsysConverter';
 import {isHiPS, isImage} from './WebPlot.js';
 import {isDefined, memorizeLastCall} from '../util/WebUtil';
-import {getWavelength, isWLAlgorithmImplemented, PLANE} from './projection/Wavelength.js';
+import {getWavelength, isWLAlgorithmImplemented, PLANE, TAB} from './projection/Wavelength.js';
 import {getNumberHeader, HdrConst} from './FitsHeaderUtil.js';
 import {computeDistance, getRotationAngle, isCsysDirMatching, isEastLeftOfNorth, isPlotNorth} from './VisUtil';
 import {removeRawData} from './rawData/RawDataCache.js';
@@ -745,7 +745,7 @@ export function isMultiHDUFits(pv) {
 
 /**
  * @param {PlotView} pv
- * @return {Array.<number>|boolean}
+ * @return {Array.<number>|false}
  */
 export function getHduPlotStartIndexes(pv) {
     if (!pv) return false;
@@ -804,7 +804,7 @@ export function getPrimaryPlotHdu(pv) {
 /**
  * Get the HDU of this image in the FITS file, this is not the index of the HDU of load images since there
  * might be tables in between images
- * @param {WebPlot} plot
+ * @param {WebPlot|undefined} plot
  * @return {number} the HDU number, single images will always return 0
  */
 export const getHDU= (plot) => getNumberHeader(plot,HdrConst.SPOT_EXT,0);
@@ -812,7 +812,7 @@ export const getHDU= (plot) => getNumberHeader(plot,HdrConst.SPOT_EXT,0);
 /**
  *
  * @param {PlotView} pv
- * @param {WebPlot} plot
+ * @param {WebPlot|undefined} plot
  * @return {number}
  */
 export function getHDUIndex(pv, plot= undefined) {
@@ -833,7 +833,7 @@ export const hasImageCubes = (pv) => getNumberOfCubesInPV(pv)>0;
 
 /**
  * get the plane index of this plot in cube
- * @param {WebPlot} plot
+ * @param {WebPlot|undefined} plot
  * @return {number} the plane index, -1 if not in a cube
  */
 export const getImageCubeIdx = (plot) => plot?.cubeCtx?.cubePlane ?? -1;
@@ -841,7 +841,7 @@ export const getImageCubeIdx = (plot) => plot?.cubeCtx?.cubePlane ?? -1;
 
 /**
  * plot is plane in a image cube
- * @param {WebPlot} plot
+ * @param {WebPlot|undefined} plot
  * @return {boolean} true if plot is a plane in a cube, otherwise false
  */
 export const isImageCube = (plot) => getImageCubeIdx(plot) > -1;
@@ -912,9 +912,39 @@ export const getWavelengthParseFailReason= (plot) => hasWLInfo(plot) && plot.wlD
  * @param {WebPlot} plot
  * @return {boolean}
  */
-export const hasPlaneOnlyWLInfo= (plot) => hasWLInfo(plot) && plot.wlData.algorithm===PLANE;
+export function hasPlaneOnlyWLInfo(plot) {
+    if (!hasWLInfo(plot)) return false;
+    const {algorithm, pc_3j}= plot.wlData;
+    return (algorithm===PLANE ||
+        (isImageCube(plot) &&  algorithm===TAB && pc_3j && pc_3j.length===3 && !pc_3j[0] && !pc_3j[1]) );
+}
 
-export const hasPixelLevelWLInfo= (plot) => hasWLInfo(plot) && plot.wlData.algorithm!==PLANE;
+
+/**
+ * if this is a spectral cube and each plane has a single wavelength then return an array of wavelengths for each plane.
+ * @param pv
+ * @param {Point} [imPt] an image point that is used if the image has Pixel Level wavelength info
+ * @return {number[]}
+ */
+export function getAllWaveLengthsForCube(pv,imPt) {
+    const plot= primePlot(pv);
+    if (!plot || !isImageCube(plot) || !hasWLInfo(plot)) return;
+    const len= getCubePlaneCnt(pv);
+    if (!len) return;
+    return Array(len).fill('').map( (v,i) => getPtWavelength(plot,imPt, i));
+}
+
+
+export function getCubePlaneFromWavelength(pv,wl,imPt) {
+    const wlAry= getAllWaveLengthsForCube(pv,imPt);
+    if (!wlAry?.length) return -1;
+    const wlInt= Math.trunc(wl*1000000);
+    return wlAry.findIndex( (testWl) => Math.trunc(testWl*1000000)===wlInt);
+}
+
+
+
+export const hasPixelLevelWLInfo= (plot) => hasWLInfo(plot) && !hasPlaneOnlyWLInfo(plot);
 
 /**
  * Return the units string

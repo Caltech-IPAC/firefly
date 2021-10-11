@@ -134,15 +134,17 @@ public class WebPlotReader {
                 imageIdx= i;
                 WebPlotPipeline.PipelineRet pipeRet= WebPlotPipeline.applyPipeline(req, frAry[i], imageIdx, band, originalFile);
                 newFrAry[i]= pipeRet.fr;
-                ModFileWriter modFileWriter= checkUnzip(i,band,originalFile, pipeRet.modFileWriter);
+                ModFileWriter modFileWriter= checkUnzip(i,band,originalFile, pipeRet.modFileWriter); // todo - figure out: why I am only doing this in the pipeline case?
 
-                retval[i]= new FileReadInfo(originalFile, newFrAry[i], fd, band, imageIdx,
+                retval[i]= new FileReadInfo(originalFile, originalFile, newFrAry[i], fd, band, imageIdx,
                         fd.getDesc(), uploadedName, null, modFileWriter);
             }
         }
         else {
             for (int i = 0; (i < frAry.length); i++) {
-                retval[i]= new FileReadInfo(originalFile, frAry[i], fd, band, i, fd.getDesc(), uploadedName,
+                retval[i]= new FileReadInfo(originalFile,
+                        fitsDataEval.getHduUnCompressedFile()!=null?fitsDataEval.getHduUnCompressedFile():originalFile,
+                        frAry[i], fd, band, i, fd.getDesc(), uploadedName,
                         fitsDataEval.getRelatedData(i), null);
             }
         }

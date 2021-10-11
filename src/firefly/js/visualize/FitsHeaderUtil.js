@@ -196,6 +196,13 @@ export function getHeader(plotOrHeader,headerKey, defVal= undefined) {
 }
 
 /**
+ * get the name if the extension if it exist
+ * @param {WebPlot|Object|undefined} plotOrHeader image WebPlot or Header obj
+ * @return {string}
+ */
+export const getExtName= (plotOrHeader) => getHeader(plotOrHeader,HdrConst.EXTNAME,'');
+
+/**
  * return a header number value given a header key
  * @param {WebPlot|Object} plotOrHeader image WebPlot or Header obj
  * @param {string} headerKey key

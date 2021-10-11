@@ -86,10 +86,6 @@ export const DEFAULT_FONT_SIZE = '9pt';
  * @return {DrawingDef}
  */
 export function makeDrawingDef(color= 'red', presetDefaults= {}) {
-
-	// FIXME: those are not DS9 colors, hence problem when saved in DS9 regions format file
-
-
     const def= {
         color,
         symbol: DrawSymbol.X,
@@ -103,7 +99,7 @@ export function makeDrawingDef(color= 'red', presetDefaults= {}) {
         fontStyle: 'normal',
         selectedColor: COLOR_SELECTED_PT
     };
-    return Object.assign({}, def, presetDefaults);
+    return {...def, ...presetDefaults};
 }
 
 const colorList= USED_COLORS.map( (c) => ({count:0, name:c}));
@@ -118,9 +114,3 @@ export function releaseColor(cName) {
     const colorObj= colorList.find( (cO) => cO.name===cName);
     if (colorObj && colorObj.count>0) colorObj.count--;
 }
-
-
-
-
-
-
