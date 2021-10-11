@@ -1,7 +1,7 @@
 # Firefly Release Notes
 
-- You can find Firefly builds and the notes for running Firefly are on the [Docker Page](https://hub.docker.com/r/ipac/firefly).
-- See Firefly docker guidelines [here](firefly-docker.md).
+- You can find Firefly builds and the notes for running Firefly on the [Docker Page](https://hub.docker.com/r/ipac/firefly).
+- See Firefly Docker guidelines [here](firefly-docker.md).
 - To Access current (unstable) development - (Version _next_, unreleased) use docker tag: `nightly`
 
 ## Version 2021.3 
@@ -23,7 +23,7 @@
     - fixed: HiPS mouse wheel zooming more accurate
     - fixed: thumbnail scroll not working
     - fixed: upload panel clear button not completely clearing data ([Firefly-825](https://github.com/Caltech-IPAC/firefly/pull/1116))
-    - fixed: Upload panel now shows progress feedback and indicator, now works when loading images ([Firefly-828](https://github.com/Caltech-IPAC/firefly/pull/1113))
+    - fixed: upload panel now shows progress feedback and indicator, now works when loading images ([Firefly-828](https://github.com/Caltech-IPAC/firefly/pull/1113))
     - fixed: Table Input fields sometimes show duplicate entries ([Firefly-829](https://github.com/Caltech-IPAC/firefly/pull/1115))
     - fixed: slate entries point not showing tap/table searches button correctly
 
@@ -42,7 +42,7 @@
   - fixed: Use latest JPL/Horizons JSON name resolution api ([Firefly-277](https://github.com/Caltech-IPAC/firefly/pull/1132))
   - fixed: Firefly viewer unable to support multiple instances of different apps ([Firefly-859](https://github.com/Caltech-IPAC/firefly/pull/1135))
     
-##### _Pull Request in this release_
+##### _Pull Requests in this release_
 - [Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2021.3+label%3abug)
 - [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2021.3+)
 
@@ -101,7 +101,7 @@
   - Fixed: boolean table filters not working ([Firefly-805](https://github.com/Caltech-IPAC/firefly/pull/1104))
 
 
-##### _Pull Request in this release_
+##### _Pull Requests in this release_
 - [Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2021.2+label%3abug)
 - [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2021.2+)
 
@@ -139,11 +139,11 @@
   - firefox >= 79
   - edge >= 83
 
-##### _Pull Request in this release_
-- [bug fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2021.1+label%3abug)
-- [all prs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2021.1+)
+##### _Pull Requests in this release_
+- [Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2021.1+label%3abug)
+- [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2021.1+)
 
 
-# Older Release 2019 - 2020
+# Older Releases 2019 - 2020
 
-See [Older reelase notes 2019-2020](older-release-notes-2019-2020.md)
+See [Older release notes 2019-2020](older-release-notes-2019-2020.md)
