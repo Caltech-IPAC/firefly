@@ -8,6 +8,7 @@ import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
 import nom.tam.fits.BasicHDU;
+import nom.tam.fits.Header;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,6 +45,7 @@ class FitsSpectrumMeta {
     private static final String SPEC_TI_AXIS= "spec:Data.TimeAxis";
     private static final String SPEC_TI_AXIS_ACCURACY= SPEC_TI_AXIS+ACCURACY;
     private static final String IPAC_ORDER= "ipac:Data.SpectralAxis.Order";
+    private static final String spec10Version= "Spectrum v1.0";
 
     private static final String SPEC_SPECTRUM= "spec:Spectrum";
 
@@ -63,8 +65,9 @@ class FitsSpectrumMeta {
      */
     public static void searchForSpectrum(DataGroup dg, BasicHDU<?> hdu, boolean spectrumHint) {
 
-        String utype= FitsReadUtil.getUtype(hdu.getHeader());
-        if (utype==null && !spectrumHint) return;
+        Header h= hdu.getHeader();
+        String utype= FitsReadUtil.getUtype(h);
+        if (utype==null && !spectrumHint && !spec10Version.equals(h.getStringValue("VOCLASS"))) return;
 
         List<DataType> dtAry= Arrays.asList(dg.getDataDefinitions());
         List<GroupInfo> groupInfosList= new ArrayList<>();
