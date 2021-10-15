@@ -145,6 +145,11 @@ export const MetaConst = {
      */
     IMAGE_AS_TABLE_UNITS: 'IMAGE_AS_TABLE_UNITS',
 
+    /*
+     * a string the default says what this data type might be such as 'spectrum', 'sed', 'timeseries', etc
+     */
+    DATA_TYPE_HINT: 'DATA_TYPE_HINT',
+
     /** the column name with the url or filename of the image data */
     DATA_SOURCE : 'DataSource',
 

@@ -43,6 +43,11 @@ public class MetaConst {
      */
     public static final String IMAGE_AS_TABLE_UNITS= "IMAGE_AS_TABLE_UNITS";
 
+    /*
+     * a string the default says what this data type might be such as 'spectrum', 'sed', 'timeseries', etc
+     */
+    public static final String DATA_TYPE_HINT = "DATA_TYPE_HINT";
+
     /**
      * If defined to any value (but 'false') the the table is a catalog
      * CatalogOverlayType is required to even guess if there is no VO information.

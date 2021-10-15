@@ -26,9 +26,10 @@ const getSetInSrByRow= (table,sr,rowNum) => (col) => {
 };
 
 
-export function createTableActivate(source, titleStr, activateParams, tbl_index=0) {
+export function createTableActivate(source, titleStr, activateParams, dataTypeHint= '', tbl_index=0) {
 
-    return createChartTableActivate(false, source, {titleStr, showChartTitle:true}, activateParams,undefined,tbl_index);
+    return createChartTableActivate(false, source, {titleStr, showChartTitle:true},
+        activateParams,undefined,tbl_index, dataTypeHint);
 }
 
 const makeCommaSeparated= (strAry) => strAry.reduce( (str,d) => str? `${str},${d}` : d,'');
@@ -57,14 +58,27 @@ function isTableChartNormalViewAction(payload, type) {
     return (mode === LO_MODE.standard && loadedTablesIds.has(tbl_id));
 }
 
-function makeTableRequest(source, titleInfo, tbl_id, tbl_index, colNames, colUnits, extraction=false) {
+/**
+ *
+ * @param {String} source
+ * @param {Object} titleInfo
+ * @param {String} tbl_id
+ * @param {number} tbl_index
+ * @param {Array.<string>} colNames
+ * @param {Array.<string>} colUnits
+ * @param {String} dataTypeHint
+ * @param {boolean} extraction
+ * @return {TableRequest}
+ */
+function makeTableRequest(source, titleInfo, tbl_id, tbl_index, colNames, colUnits, dataTypeHint, extraction=false) {
     const colNamesStr= colNames && makeCommaSeparated(colNames);
     const colUnitsStr= colUnits && makeCommaSeparated(colUnits);
     const META_INFO= !extraction ?
         {
             [MetaConst.DATA_SOURCE] : 'false',
             [MetaConst.CATALOG_OVERLAY_TYPE]:'false'
-        } : {}
+        } : {};
+    if (dataTypeHint) META_INFO[MetaConst.DATA_TYPE_HINT]= dataTypeHint;
     const dataTableReq= makeFileRequest(titleInfo.titleStr, source, undefined,
         {
             tbl_id : !extraction ? tbl_id : undefined,
@@ -112,10 +126,10 @@ function loadTableAndCharts(dataTableReq, tbl_id, tableGroupViewerId, dispatchCh
     };
 }
 
-export function createTableExtraction(source,titleInfo,tbl_index,colNames,colUnits) {
+export function createTableExtraction(source,titleInfo,tbl_index,colNames,colUnits,dataTypeHint) {
     return () => {
         const ti= isString(titleInfo) ? {titleStr:titleInfo} : titleInfo;
-        const dataTableReq= makeTableRequest(source,ti,undefined,tbl_index,colNames,colUnits, true);
+        const dataTableReq= makeTableRequest(source,ti,undefined,tbl_index,colNames,colUnits,dataTypeHint, true);
         dispatchTableSearch(dataTableReq,
             { setAsActive: false, logHistory: false, showFilters: true, showInfoButton: true });
     };
@@ -131,6 +145,8 @@ export function createTableExtraction(source,titleInfo,tbl_index,colNames,colUni
  * @param {ActivateParams} activateParams
  * @param {ChartInfo} chartInfo
  * @param {Number} tbl_index
+ * @param {String} dataTypeHint  stuff like 'spectrum', 'image', 'cube', etc
+ * @param {boolean} isSpectrumHint true if we think this table might a a spectrum
  * @param {Array.<String>} colNames - an array of column names
  * @param {Array.<String>} colUnits - an array of types names
  * @param {boolean} connectPoints if a default scatter chart then connect the points
@@ -138,12 +154,13 @@ export function createTableExtraction(source,titleInfo,tbl_index,colNames,colUni
  * @param {String} tbl_id
  * @return {function} the activate function
  */
-export function createChartTableActivate(chartAndTable,source, titleInfo, activateParams, chartInfo={}, tbl_index=0,
+export function createChartTableActivate(chartAndTable,source, titleInfo, activateParams, chartInfo={},
+                                         tbl_index=0, dataTypeHint,
                                          colNames= undefined, colUnits= undefined, connectPoints=true,
                                          chartId='part-result-chart', tbl_id= 'part-result-tbl') {
     return () => {
         const dispatchCharts=  chartAndTable && makeChartObj(chartInfo, activateParams,titleInfo,connectPoints,chartId,tbl_id);
-        const dataTableReq= makeTableRequest(source,titleInfo,tbl_id,tbl_index,colNames,colUnits,false);
+        const dataTableReq= makeTableRequest(source,titleInfo,tbl_id,tbl_index,colNames,colUnits,dataTypeHint, false);
         const savedRequest= loadedTablesIds.has(tbl_id) && JSON.stringify(loadedTablesIds.get(tbl_id)?.request);
 
         if (savedRequest!==JSON.stringify(dataTableReq)) {
@@ -283,6 +300,7 @@ function makeChartObj(chartInfo,  activateParams, titleInfo, connectPoints, char
 
 export function createChartSingleRowArrayActivate(source, titleStr, activateParams,
                                                   xAxis, yAxis, tblRow= 0,tbl_index=0,
+                                                  dataTypeHint,
                                     chartId='part-result-chart',tbl_id= 'part-result-tbl') {
     return () => {
         const {tableGroupViewerId, chartViewerId}= activateParams;

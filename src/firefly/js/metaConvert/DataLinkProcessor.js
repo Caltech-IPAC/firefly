@@ -248,7 +248,7 @@ export function createGuessDataType(name, menuKey, url,ct,makeReq, semantics, ac
     }
     else if (ct.includes('table') || ct.includes('spectrum') || semantics.includes('auxiliary')) {
         return dpdtTable(name,
-            createTableActivate(url, semantics, activateParams),
+            createTableActivate(url, semantics, activateParams, ct),
             menuKey,{url,semantics,size} );
     }
     else if (isImageType(ct)) {

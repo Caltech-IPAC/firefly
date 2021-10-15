@@ -96,7 +96,7 @@ public class FitsHDUUtil {
                         desc+= String.format(" (cube %d x %d x %d)",naxis1,naxis2,naxis3);
                     }
                     else {
-                        desc+= String.format(" (%d x %d)",naxis1,naxis2);
+                        desc+= String.format(" (%d x %d)",naxis1,Math.max(naxis2,1));
                     }
                     part.setDesc(desc);
                 }
