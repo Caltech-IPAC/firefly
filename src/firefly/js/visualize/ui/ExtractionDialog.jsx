@@ -572,7 +572,7 @@ function makePlotlyLayoutObj(title,xAxis,yAxis, reversed=false) {
             lineColor: '#e9e9e9',
             exponentformat:'e'
         },
-        margin: { l: 50, r: 5, b: 50, t: 30, pad: 2 }
+        margin: { l: 50, r: 50, b: 50, t: 30, pad: 2 }
     };
 }
 

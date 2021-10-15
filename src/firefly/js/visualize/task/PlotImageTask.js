@@ -399,6 +399,7 @@ export function addDrawLayers(request, pv, plot) {
                     {
                         drawLayerId: ftId,
                         displayGroupId: 'AUTO_TARGET_OVERLAY',
+                        color: 'yellow',
                         plotId,
                         layersPanelLayoutId:plotId,
                         titlePrefix:isImage(plot)?'Image ':'HiPS '

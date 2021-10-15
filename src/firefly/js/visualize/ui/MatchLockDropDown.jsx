@@ -122,7 +122,7 @@ export function MatchLockDropDown({visRoot:vr, enabled, visible, inDropDown=fals
 
     return (
         <DropDownToolbarButton icon={wcsMatchType?MATCH_LOCKED:MATCH_UNLOCKED }
-                               tip='Determine how to align images'
+                               tip='Image alignment drop down. Determine how to align images'
                                enabled={enabled} horizontal={true}
                                visible={visible}
                                disableHiding={inDropDown}

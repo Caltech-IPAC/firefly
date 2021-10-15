@@ -21,13 +21,13 @@ const statusText= {
 };
 
 const statusContainer= { position:'absolute', top: 0, left:0, width:'100%', height:'100%' };
-const statusTextCell= { paddingTop:'10px', textAlign:'center', flex:'1 1 auto' };
+const statusTextCell= { paddingTop:10, paddingBottom:10, textAlign:'center', flex:'1 1 auto' };
 const maskWrapper= { position:'absolute', left:0, top:0, width:'100%', height:'100%' };
 const statusTextAlpha= {...statusText,  backgroundColor: 'rgba(200,200,200,.8)'};
 const statusTextCellWithClear= {...statusTextCell,  flex: '10 10 auto'};
 
 export const ImageViewerStatus= memo(
-    ({message='',working,useMessageAlpha=false, buttonCB, buttonText='OK', messageWaitTimeMS=0, maskWaitTimeMS=0} ) => {
+    ({message='',working,useMessageAlpha=false, buttonCB, buttonText='OK', messageWaitTimeMS=0, maskWaitTimeMS=0, top=0} ) => {
 
     const [showing, setShowing]= useState( { messageShowing:messageWaitTimeMS<=0, maskShowing:maskWaitTimeMS<=0 });
 
@@ -54,7 +54,7 @@ export const ImageViewerStatus= memo(
     const workingStatusTextCell= buttonCB ? statusTextCellWithClear : statusTextCell;
 
     return (
-        <div style={statusContainer}>
+        <div style={{...statusContainer, top}}>
             {working && showing.maskShowing && <div style={maskWrapper}> <div className='loading-mask'/> </div> }
             { showing.messageShowing &&
             <div style={workingStatusText} >

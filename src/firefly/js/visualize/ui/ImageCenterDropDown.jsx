@@ -150,7 +150,7 @@ export function ImageCenterDropDown({visRoot:vr, visible, mi}) {
 
     return (
         <DropDownToolbarButton icon={CENTER_DROP}
-                               tip='Center images'
+                               tip='Image center drop down. Center images.'
                                enabled={Boolean(plot)} horizontal={true} visible={visible}
                                useDropDownIndicator={true}
                                imageStyle={{width:24, height:24}}
