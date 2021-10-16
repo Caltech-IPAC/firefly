@@ -169,7 +169,7 @@ public final class FITSTableReader
                         convertStarTableToDataGroup(table, dataCols, headerCols, strategy) :
                         getFitsImageAsTable(hdu,metaInfo);
             }
-            String dataTypeHint= metaInfo.getOrDefault(MetaConst.DATA_TYPE_HINT,"").toLowerCase();
+            String dataTypeHint= metaInfo !=null ? metaInfo.getOrDefault(MetaConst.DATA_TYPE_HINT,"").toLowerCase() : "";
             FitsSpectrumMeta.searchForSpectrum(dg,hdus[table_idx], dataTypeHint.equals("spectrum"));
             return dg;
         } catch (FitsException|IOException e) {

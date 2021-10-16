@@ -17,6 +17,7 @@ import org.junit.experimental.categories.Category;
 import java.io.File;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 /**
@@ -140,7 +141,7 @@ public class FileAnalysisTest extends ConfigTest {
         assertEquals(11, report.getParts().size());
         assertEquals(FileAnalysisReport.Type.HeaderOnly, report.getParts().get(0).getType());
         assertNull(report.getParts().get(0).getDesc());
-        assertNull(report.getParts().get(1).getDesc());
+        assertNotNull(report.getParts().get(1).getDesc());
 
         assertEquals(FileAnalysisReport.Type.Table, report.getParts().get(4).getType());
         assertEquals(" 7 cols x 12 rows ", report.getParts().get(4).getDesc());
@@ -159,8 +160,8 @@ public class FileAnalysisTest extends ConfigTest {
         assertEquals(62, report.getParts().size());
         assertEquals(FileAnalysisReport.Type.HeaderOnly, report.getParts().get(0).getType());
         assertNull(report.getParts().get(0).getDesc());
-        assertNull(report.getParts().get(1).getDesc());
-        assertNull(report.getParts().get(61).getDesc());
+        assertNotNull(report.getParts().get(1).getDesc());
+        assertNotNull(report.getParts().get(61).getDesc());
     }
 
     @Test
