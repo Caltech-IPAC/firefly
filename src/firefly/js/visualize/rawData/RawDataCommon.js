@@ -5,7 +5,7 @@ import {
     AJAX_REQUEST, getGlobalObj,
     isGPUAvailableInWorker,
     isImageBitmap,
-    isOffscreenCanvas, MEG, K,
+    isOffscreenCanvas, MEG,
     REQUEST_WITH
 } from '../../util/WebUtil.js';
 import {getColorModel} from './rawAlgorithm/ColorTable.js';
@@ -14,8 +14,8 @@ import {isArrayBuffer} from 'lodash';
 
 const abortControllers= new Map(); // map of imagePlotId and AbortController
 export const TILE_SIZE = 3000;
-export const MAX_RAW_IMAGE_SIZE = 400*MEG; // 400 megs
-export const MAX_DIRECT_IMAGE_SIZE= 250*K;
+export const MAX_RAW_IMAGE_SIZE = 500*MEG; // 400 megs
+export const MAX_DIRECT_IMAGE_SIZE= 80*MEG;
 export const MAX_DIRECT_MASK_IMAGE_SIZE= 200*MEG;
 const USE_GPU = true;
 

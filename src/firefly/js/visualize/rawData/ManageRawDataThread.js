@@ -82,9 +82,6 @@ async function fetchByteDataArray(payload) {
             dataWidth,dataHeight, mask, maskBits, cmdSrvUrl);
         const rawTileDataGroup= createRawTileDataGroup(dataWidth,dataHeight);
         if (plotState.isThreeColor()) {
-            const bands= plotState.getBands();
-            // const colorCnt= bands.length;
-            // const tileLen= rawTileDataGroup.rawTileDataAry.length*colorCnt;
             let rt;
             let tileIdx=0;
             for(let i=0; (i<rawTileDataGroup.rawTileDataAry.length); i++) {

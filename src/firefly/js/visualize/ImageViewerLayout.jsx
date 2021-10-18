@@ -14,7 +14,9 @@ import {makeScreenPt, makeDevicePt} from './Point.js';
 import {DrawerComponent}  from './draw/DrawerComponent.jsx';
 import {CCUtil, CysConverter} from './CsysConverter.js';
 import {UserZoomTypes}  from './ZoomUtil.js';
-import {primePlot, getPlotViewById, hasLocalStretchByteData, isActivePlotView} from './PlotViewUtil.js';
+import {
+    primePlot, getPlotViewById, hasLocalStretchByteData, isActivePlotView, canLoadStretchDataDirect
+} from './PlotViewUtil.js';
 import {isImageViewerSingleLayout, getMultiViewRoot} from './MultiViewCntlr.js';
 import {contains, intersects} from './VisUtil.js';
 import BrowserInfo from '../util/BrowserInfo.js';
@@ -320,17 +322,19 @@ export class ImageViewerLayout extends PureComponent {
         const plotShowing= Boolean(width && height && plot);
         let onScreen= true;
         let sizeViewable= true;
+        let loadingRawData= false;
 
         if (plotShowing ) {
             onScreen= isImageOnScreen(pv);
             sizeViewable= isImageSizeViewable(pv);
             insideStuff= this.renderInside();
+            loadingRawData= !plot?.tileData && !hasLocalStretchByteData(plot) && canLoadStretchDataDirect(plot);
         }
 
         return (
             <div className='web-plot-view-scr' style={rootStyle}>
                 {insideStuff}
-                {makeMessageArea(pv,plotShowing,onScreen,sizeViewable)}
+                {makeMessageArea(pv,plotShowing,onScreen,sizeViewable,loadingRawData)}
             </div>
         );
     }
@@ -484,9 +488,15 @@ function makePrevDim(props) {
 }
 
 
-function makeMessageArea(pv,plotShowing,onScreen, sizeViewable) {
+function makeMessageArea(pv,plotShowing,onScreen, sizeViewable, loadingRawData) {
     if (pv.serverCall==='success') {
-        if (!onScreen) {
+        if (loadingRawData) {
+            return (
+                <ImageViewerStatus message={'Loading Color Data'} working={true}
+                                   maskWaitTimeMS= {500} messageWaitTimeMS={1000} useMessageAlpha={plotShowing}/>
+            );
+        }
+        else if (!onScreen) {
             return (
                 <ImageViewerStatus message={'Center Plot'} working={false} top={30}
                                    useMessageAlpha={false} buttonText='Recenter'

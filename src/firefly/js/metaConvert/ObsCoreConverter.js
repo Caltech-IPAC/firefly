@@ -5,7 +5,7 @@ import {
     getObsCoreAccessURL,
     getObsCoreProdType,
     getServiceDescriptors,
-    isDataLinkServiceDesc
+    isDataLinkServiceDesc, isFormatPng
 } from '../util/VOAnalyzer.js';
 import {
     getObsCoreProdTypeCol,
@@ -15,9 +15,9 @@ import {
 } from '../util/VOAnalyzer';
 import {makeFileRequest} from '../tables/TableRequestUtil';
 import {ZoomType} from '../visualize/ZoomType.js';
-import {createGridImagesActivate, createSingleImageExtraction} from './ImageDataProductsUtil.js';
+import {createGridImagesActivate} from './ImageDataProductsUtil.js';
 import {makeAnalysisGetSingleDataProduct} from './MultiProductFileAnalyzer';
-import {dpdtFromMenu, dpdtImage, dpdtMessage, dpdtMessageWithDownload, DPtypes,} from './DataProductsType';
+import {dpdtFromMenu, dpdtImage, dpdtMessage, dpdtMessageWithDownload, dpdtPNG, DPtypes,} from './DataProductsType';
 import {createGuessDataType, processDatalinkTable} from './DataLinkProcessor';
 import {createServDescMenuRet} from './ServDescConverter.js';
 import {dispatchUpdateActiveKey} from './DataProductsCntlr.js';
@@ -115,9 +115,11 @@ export function getObsCoreDataProduct(table, row, activateParams, doFileAnalysis
  */
 export async function getObsCoreSingleDataProduct(table, row, activateParams, serviceDescMenuList, doFileAnalysis= true) {
 
-    const {size,titleStr,dataSource,prodType,isVoTable,isDataLink}= getObsCoreRowMetaInfo(table,row);
+    const {size,titleStr,dataSource,prodType,isVoTable,isDataLink, isPng}= getObsCoreRowMetaInfo(table,row);
 
-    if (!dataSource || (isVoTable && !isDataLink)) return dpdtMessage(`${prodType} is not supported`);
+    if (!dataSource) return dpdtMessage(`${prodType} is not supported`);
+    if (isDataLink && !isVoTable) dpdtMessage(`${prodType} is not supported`);
+
     if (!hasRowAccess(table, row)) return dpdtMessage('You do not have access to these data.');
     const positionWP= makeWorldPtUsingCenterColumns(table,row);
 
@@ -129,6 +131,9 @@ export async function getObsCoreSingleDataProduct(table, row, activateParams, se
                                   //todo - what about if when the data link fetch fails but there is a serviceDescMenuList - what to do? does it matter?
             dpdtMessageWithDownload(`No data to display: Could not retrieve datalink data, ${reason}`, 'Download File: '+titleStr, dataSource);
         }
+    }
+    else if (isPng) {
+        return dpdtPNG('PNG image',dataSource);
     }
     else {
         if (size>GIG) return dpdtMessageWithDownload('Data is too large to load', 'Download File: '+titleStr, dataSource);
@@ -164,11 +169,12 @@ function getObsCoreRowMetaInfo(table,row) {
     const iName= getCellValue(table,row,'instrument_name') || '';
     const obsId= getCellValue(table,row,'obs_id') || '';
     const size= Number(getCellValue(table,row,'access_estsize')) || 0;
+    const isPng= isFormatPng(table,row);
     let obsCollect= getCellValue(table,row,'obs_collection') || '';
     if (obsCollect===iName) obsCollect= '';
 
     const titleStr= `${obsCollect?obsCollect+', ':''}${iName?iName+', ':''}${obsId}`;
-    return {iName,obsId,size,titleStr,dataSource,prodType,isVoTable,isDataLink};
+    return {iName,obsId,size,titleStr,dataSource,prodType,isVoTable,isDataLink,isPng};
 }
 
 
