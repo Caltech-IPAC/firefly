@@ -49,6 +49,11 @@ public class FileAnalysis {
         File infile= fileInfo.getFile();
         int responseCode= fileInfo.getResponseCode();
         String contentType= fileInfo.getContentType();
+        String ct= contentType!=null ? contentType.toLowerCase() : null;
+
+        if (ct!=null && (ct.contains("png") || ct.contains("jpg") || ct.contains("jpeg") || ct.contains("bmp"))) {
+            return analyzePNG(infile, mtype);
+        }
 
         Format format = TableUtil.guessFormat(infile);
         FileAnalysisReport report= null;
@@ -204,6 +209,12 @@ public class FileAnalysis {
     public static FileAnalysisReport analyzeRegion(File infile, FileAnalysisReport.ReportType type) {
         FileAnalysisReport report = new FileAnalysisReport(type, Format.REGION.name(), infile.length(), infile.getPath());
         report.addPart(new FileAnalysisReport.Part(FileAnalysisReport.Type.REGION, "Region File"));
+        return report;
+    }
+
+    public static FileAnalysisReport analyzePNG(File infile, FileAnalysisReport.ReportType type) {
+        FileAnalysisReport report = new FileAnalysisReport(type, Format.PNG.name(), infile.length(), infile.getPath());
+        report.addPart(new FileAnalysisReport.Part(FileAnalysisReport.Type.PNG, "PNG File"));
         return report;
     }
 

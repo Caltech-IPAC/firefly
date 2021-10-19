@@ -1178,6 +1178,10 @@ export function isFormatDataLink(tableOrId, rowIdx) {
     return accessFormat.includes('votable') && accessFormat.includes('content=datalink');
 }
 
+export function isFormatPng(tableOrId, rowIdx) {
+    const accessFormat= getObsCoreAccessFormat(tableOrId,rowIdx).toLowerCase();
+    return accessFormat.includes('jpeg') || accessFormat.includes('jpg') || accessFormat.includes('png');
+}
 
 
 /**

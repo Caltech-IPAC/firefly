@@ -160,7 +160,7 @@ export const ToolbarButton = memo((props) => {
                 <div title={tip} style={{display: 'flex', alignItems: 'center'}} className={cName + allowInput}
                      ref={setupRef} onClick={handleClick} onMouseOver={mouseOver} onMouseOut={mouseOut}>
                     <div style= {{display:'flex', flexGrow:1, alignItems:'center'}} className={textCName}>
-                        <img style={imageStyle} src={icon} className={textCName+ allowInput}/>
+                        <img style={imageStyle} src={icon} alt={tip} className={textCName+ allowInput}/>
                         <span style={{paddingLeft:5, flexGrow:1}}>{makeTextLabel(text,shortcutKey,allowInput)}</span>
                     </div>
                     {badgeCount>0 && makeBadge(badgeCount)}
@@ -175,7 +175,7 @@ export const ToolbarButton = memo((props) => {
                     <div style={{flexGrow:1, display:'flex'}} className={textCName}>
                         {hasCheckBox && makeCheckBox(checkBoxOn,imageStyle)}
                         {icon ?
-                            <img style={{flexGrow:1, ...imageStyle}} src={icon} className={allowInput}/> :
+                            <img style={{flexGrow:1, ...imageStyle}} src={icon} alt={tip} className={allowInput}/> :
                             <div style={{flexGrow:1}} className={textCName}>{makeTextLabel(text,shortcutKey,allowInput)}</div>}
                     </div>
                     {badgeCount>0 && makeBadge(badgeCount)}

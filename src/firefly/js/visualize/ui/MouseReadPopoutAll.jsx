@@ -3,7 +3,7 @@ import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
 import {dispatchShowDialog} from 'firefly/core/ComponentCntlr.js';
 import React from 'react';
 import {lastMouseCtx, lastMouseImageReadout, MouseState} from 'firefly/visualize/VisMouseSync.js';
-import {HIPS_STANDARD_READOUT, readoutRoot} from 'firefly/visualize/MouseReadoutCntlr.js';
+import {HIPS_STANDARD_READOUT, isLockByClick, readoutRoot} from 'firefly/visualize/MouseReadoutCntlr.js';
 import {useMouseStoreConnector} from 'firefly/visualize/ui/MouseStoreConnector.jsx';
 import {visRoot} from 'firefly/visualize/ImagePlotCntlr.js';
 import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
@@ -41,13 +41,14 @@ function PopoutMouseReadoutContents() {
     const mousePv= getPlotViewById(vr,currMouseState.plotId);
     const pvForThumbnail= currMouseState.mouseState===MouseState.EXIT ? pv : mousePv
     const image= isImage(primePlot(pvForThumbnail));
+    const lockByClick= isLockByClick(readoutRoot());
 
     return (
         <div>
             {image &&
             <div style={{padding: '5px 5px 2px 5px', display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
                 <ThumbnailView plotView={pvForThumbnail} loadedSize={140}/>
-                <MagnifiedView plotView={mousePv} size={140} mouseState={currMouseState} />
+                <MagnifiedView plotView={lockByClick ? pv : mousePv} size={140} mouseState={currMouseState} lockByClick={lockByClick} />
             </div>}
             <Readout readout={readout} readoutData={readoutData} showHealpixPixel={showHealpixPixel}/>
         </div>

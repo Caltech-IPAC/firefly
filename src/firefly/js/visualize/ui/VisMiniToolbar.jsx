@@ -208,27 +208,27 @@ export const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageE
             {apiToolsView && <ToolbarButton icon={NEW_IMAGE} tip='Select a new image'
                                             horizontal={true} visible={mi.imageSelect} onClick={showImagePopup}/>}
 
-            <DropDownToolbarButton icon={TOOL_DROP} tip='Tools' enabled={enabled} horizontal={true}
+            <DropDownToolbarButton icon={TOOL_DROP} tip='Tools drop down' enabled={enabled} horizontal={true}
                                    imageStyle={image24x24}
                                    dropDown={<ToolsDrop pv={pv} mi={mi} image={image} hips={hips} visRoot={visRoot}
                                                         plot={plot} unavailableCnt={unavailableCnt}
                                                         plotGroupAry={plotGroupAry}
                                                         showRotateLocked={showRotateLocked}/>} />
 
-            <DropDownToolbarButton icon={ZOOM_DROP} tip='Zoom' enabled={enabled} horizontal={true}
+            <DropDownToolbarButton icon={ZOOM_DROP} tip='Zoom drop down' enabled={enabled} horizontal={true}
                                    imageStyle={image24x24} dropDown={<ZoomDrop pv={pv} mi={mi} image={image}/>} />
 
             <ToolbarHorizontalSeparator/>
             <ColorButton colorDrops={colorDrops} enabled={enabled} pv={pv} />
 
-            <DropDownToolbarButton icon={STRETCH} tip='Quickly change the background image stretch'
+            <DropDownToolbarButton icon={STRETCH} tip='Stretch drop down. Quickly change the background image stretch'
                                    enabled={enabled} horizontal={true} visible={mi.stretchQuick && image}
                                    imageStyle={image24x24} dropDown={<StretchDropDownView plotView={pv}/>} />
 
             <ImageCenterDropDown visRoot={visRoot} visible={mi.recenter} mi={mi} />
 
             <SimpleLayerOnOffButton plotView={pv} typeId={SelectArea.TYPE_ID}
-                                    tip='Select an area for cropping or statistics'
+                                    tip='Select Drop down. Select an area for cropping or statistics'
                                     iconOn={getSelectedAreaIcon()} iconOff={getSelectedAreaIcon(false)}
                                     visible={mi.selectArea} imageStyle={image24x24}
                                     dropDown={<SelectAreaDropDownView plotView={pv} />} />
@@ -332,7 +332,7 @@ LayerButton.propTypes= {
 };
 
 
-const colorTip= 'Change the color table';
+const colorTip= 'Color Drop down. Change the color table';
 
 const ColorButton= ({colorDrops,enabled,pv}) => (
     colorDrops ?
@@ -424,11 +424,11 @@ const ExtractRow= ({style,image,mi,pv,enabled}) => {
     return (
         <div style={{display:'flex', alignItems:'center', ...style}}>
             <div style={{width:130, fontSize:'larger'}}>Extract: </div>
-            <ToolbarButton icon={DRILL_DOWN} tip='extract Z-axis from cube' enabled={standIm&&isImageCube(primePlot(pv))&&enabled}
+            <ToolbarButton icon={DRILL_DOWN} tip='Extract Z-axis from cube' enabled={standIm&&isImageCube(primePlot(pv))&&enabled}
                            horizontal={true} visible={image} onClick={() => showExtractionDialog(Z_AXIS)}/>
-            <ToolbarButton icon={LINE_EXTRACTION} tip='extract line from image' enabled={standIm&&enabled}
+            <ToolbarButton icon={LINE_EXTRACTION} tip='Extract line from image' enabled={standIm&&enabled}
                            horizontal={true} visible={image} onClick={() => showExtractionDialog(LINE)}/>
-            <ToolbarButton icon={POINT_EXTRACTION} tip='extract points from image' enabled={standIm&&enabled}
+            <ToolbarButton icon={POINT_EXTRACTION} tip='Extract points from image' enabled={standIm&&enabled}
                            horizontal={true} visible={image} onClick={() => showExtractionDialog(POINTS)}/>
         </div>
         );

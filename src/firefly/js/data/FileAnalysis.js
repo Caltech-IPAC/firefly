@@ -11,7 +11,8 @@ export const FileAnalysisType = {
     LoadInBrowser: 'LoadInBrowser',
     Unknown: 'UNKNOWN',
     HTML: 'HTML',
-    REGION: 'REGION'
+    REGION: 'REGION',
+    PNG: 'PNG'
 };
 
 export const DataProductTypes = {
@@ -49,6 +50,7 @@ export const Format= {
     JSON: 'JSON',
     PDF: 'PDF',
     TAR: 'TAR',
+    PNG: 'PNG',
     REGION: 'REGION',
     VO_TABLE: 'VO_TABLE',
     VO_TABLE_TABLEDATA: 'VO_TABLE_TABLEDATA',

@@ -201,7 +201,8 @@ public class WebPlotFactory {
                             s.getWorkingFitsFileStr(NO_BAND), s.getUploadFileName(NO_BAND),
                             pInfo[i].getDataDesc(), false, s.getPrimaryRequest(),zeroHeaderAry, attributes);
                 }
-                wpInit[i] = makePlotResults(pi, (i < 2 || i > pInfo.length - 2), allPlots.getZoomChoice(), !threeColor);
+//                wpInit[i] = makePlotResults(pi, (i < 2 || i > pInfo.length - 2), allPlots.getZoomChoice(), !threeColor);
+                wpInit[i] = makePlotResults(pi, false, allPlots.getZoomChoice(), !threeColor);
             }
 
 //            if (saveRequest!=null) {

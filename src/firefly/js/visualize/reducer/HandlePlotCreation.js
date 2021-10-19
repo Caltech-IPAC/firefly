@@ -4,8 +4,10 @@
 
 import {uniqBy, differenceBy, isEmpty, isNumber, isString} from 'lodash';
 import Cntlr, {WcsMatchType} from '../ImagePlotCntlr.js';
-import {replacePlots, makePlotView, updatePlotViewScrollXY,
-        findScrollPtToCenterImagePt, updateScrollToWcsMatch} from './PlotView.js';
+import {
+    replacePlots, makePlotView, updatePlotViewScrollXY,
+    findScrollPtToCenterImagePt, updateScrollToWcsMatch, initScrollCenterPoint
+} from './PlotView.js';
 import {makeOverlayPlotView, replaceOverlayPlots} from './OverlayPlotView.js';
 import {
     primePlot,
@@ -168,6 +170,21 @@ function addPlot(state,action, setActive, newPlot) {
             activePlotId = pv.plotId;
         }
         pv = replacePlots(pv, plotAry, overlayPlotViews, state.expandedMode, newPlot);
+
+        if (hasImageCubes(pv)) {
+            const firstCubePlotIdx= pv.plots.findIndex( (p) => p.cubeIdx>-1);
+            const cnt= getCubePlaneCnt(pv, pv.plots[firstCubePlotIdx]);
+            const frameIdx= getFirstFrameFromAttribute(pv,cnt);
+
+            if (frameIdx>0) {
+                const idx= pv.plots.findIndex( (p) => frameIdx===p.cubeIdx);
+                if (idx>-1) {
+                    pv.primeIdx= idx;
+                    pv= initScrollCenterPoint(pv);
+                }
+            }
+        }
+
         pv.request= pv.plots[0].plotState.getWebPlotRequest();
         if (pv.plotViewCtx.rotateNorthLock) {
             pv.rotation= 360 - getRotationAngle(primePlot(pv));
@@ -179,16 +196,6 @@ function addPlot(state,action, setActive, newPlot) {
         }
         processedTiles= processedTiles.filter( (d) => d.plotId!==pv.plotId); // remove old client tile data
 
-        if (hasImageCubes(pv)) {
-            const firstCubePlotIdx= pv.plots.findIndex( (p) => p.cubeIdx>-1);
-            const cnt= getCubePlaneCnt(pv, pv.plots[firstCubePlotIdx]);
-            const frameIdx= getFirstFrameFromAttribute(pv,cnt);
-
-            if (frameIdx>0) {
-                const idx= pv.plots.findIndex( (p) => frameIdx===p.cubeIdx);
-                if (idx>-1) pv.primeIdx=idx;
-            }
-        }
         return pv;
     });
 

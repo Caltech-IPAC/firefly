@@ -13,6 +13,8 @@ import {hasLocalStretchByteData, primePlot} from '../PlotViewUtil.js';
 import {makeThumbnailTransformCSS} from '../PlotTransformUtils.js';
 import {getLocalScreenTileAtZoom} from '../rawData/RawDataOps.js';
 import {SimpleCanvas} from '../draw/SimpleCanvas.jsx';
+import {PlotAttribute} from 'firefly/visualize/PlotAttribute.js';
+import {CCUtil} from 'firefly/visualize/CsysConverter.js';
 
 
 const defStyle= {
@@ -29,15 +31,23 @@ const magMouse= [MouseState.DRAG_COMPONENT.key, MouseState.DRAG.key,
 
 const makeEmpty= (size) => (<div style={{...defStyle, width:size, height:size}}/>);
 
-export const MagnifiedView= memo(({plotView:pv,size,mouseState}) => {
+export const MagnifiedView= memo(({plotView:pv,size,mouseState,lockByClick=false}) => {
     if (!pv || !mouseState?.screenPt) return makeEmpty(size);
     const p= primePlot(pv);
     if (!p || isHiPS(p) ) return makeEmpty(size);
-    if (!magMouse.includes(mouseState.mouseState?.key)) return makeEmpty(size);
+    let pt;
+    if (lockByClick && p?.attributes[PlotAttribute.ACTIVE_POINT]) {
+        pt= CCUtil.getScreenCoords(p, p.attributes[PlotAttribute.ACTIVE_POINT]?.pt);
+        if (!pt) return makeEmpty(size);
+    }
+    else {
+        if (!magMouse.includes(mouseState.mouseState?.key)) return makeEmpty(size);
+        pt= mouseState.screenPt;
+    }
 
     return (
         <div style={{...defStyle, width:size, height:size, border: '1px solid rgb(187, 187, 187)'}}>
-            {showMag(mouseState.screenPt,pv, p,size)}
+            {showMag(pt,pv, p,size)}
         </div>
     );
 });
@@ -45,6 +55,7 @@ export const MagnifiedView= memo(({plotView:pv,size,mouseState}) => {
 MagnifiedView.propTypes= {
     plotView: PropTypes.object,
     size: PropTypes.number.isRequired,
+    lockByClick: PropTypes.bool,
     mouseState: PropTypes.object
 };
 
