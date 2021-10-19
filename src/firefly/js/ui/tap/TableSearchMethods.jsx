@@ -209,11 +209,11 @@ const FunctionalTableSearchMethods = (props) => {
     return (
         <FieldGroup style={{height: '100%', overflow: 'auto'}}
                     groupKey={groupKey} keepState={true} reducerFunc={buildTapSearchMethodReducer(columnsModel)}>
-            {obsCoreEnabled && <ObsCoreSearch {...{cols, groupKey, fields, useConstraintReducer, useFieldGroupReducer}} />}
+            {obsCoreEnabled && <ObsCoreSearch {...{cols, groupKey, fields, useConstraintReducer, useFieldGroupReducer, initArgs:props.initArgs}} />}
             <SpatialSearch {...{cols, columnsModel, groupKey, fields, initArgs:props.initArgs, obsCoreEnabled, useConstraintReducer, useFieldGroupReducer}} />
-            {obsCoreEnabled && <ExposureDurationSearch {...{cols, groupKey, fields, useConstraintReducer, useFieldGroupReducer}} />}
+            {obsCoreEnabled && <ExposureDurationSearch {...{cols, groupKey, fields, useConstraintReducer, useFieldGroupReducer, initArgs:props.initArgs}} />}
             {!obsCoreEnabled && <TemporalSearch {...{cols, columnsModel, groupKey, fields, obsCoreEnabled, useConstraintReducer, useFieldGroupReducer}} />}
-            {obsCoreEnabled && <ObsCoreWavelengthSearch {...{cols, groupKey, fields, useConstraintReducer, useFieldGroupReducer}} />}
+            {obsCoreEnabled && <ObsCoreWavelengthSearch {...{cols, groupKey, fields, useConstraintReducer, useFieldGroupReducer, initArgs:props.initArgs}} />}
             {DEBUG_OBSCORE && <div>
                 adql WHERE: <br/>
                 {constraintResults?.adqlConstraints?.join(' AND ')}
@@ -357,7 +357,7 @@ function SpatialSearch({cols, columnsModel, groupKey, fields, initArgs={}, obsCo
                             {label: 'Central point (s_ra, s_dec) is contained by shape', value: 'center_contained'},
                         ]}
                     initialState={{
-                        value: 'contains_shape'
+                        value: initArgs.spatialRegionOperation || 'contains_shape'
                     }}
                     multiple={false}
                     label={'Query type:'}
