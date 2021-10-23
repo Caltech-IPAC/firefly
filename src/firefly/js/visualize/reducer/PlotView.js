@@ -10,7 +10,9 @@ import {WPConst} from '../WebPlotRequest';
 import {makeScreenPt, makeDevicePt, makeImagePt, makeWorldPt} from '../Point';
 import {getActiveTarget} from '../../core/AppDataCntlr.js';
 import { getCenterPtOfPlot, getLatDist, getLonDist } from '../VisUtil.js';
-import {getPlotViewById, matchPlotViewByPositionGroup, primePlot, findCurrentCenterPoint} from '../PlotViewUtil.js';
+import {
+    getPlotViewById, matchPlotViewByPositionGroup, primePlot, findCurrentCenterPoint, getHduPlotStartIndexes
+} from '../PlotViewUtil.js';
 import {changeProjectionCenter} from '../HiPSUtil.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {ZoomType} from '../ZoomType.js';
@@ -68,6 +70,9 @@ export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignore
  * @prop {number} lastCollapsedZoomLevel used for returning from expanded mode, keeps recode of the level before expanded
  * @prop {HipsImageConversionSettings} hipsImageConversion -  if defined, then plotview can convert between hips and image
  * @prop {number} plotCounter index of how many plots, used for making next ID
+ * @prop {boolean} multiHdu true if there is more than one HDUs
+ * @prop {number} cubeCnt - total number of cube in PlotView
+ * @prop {Array.<number>} hduPlotStartIndexes: start indexes of each hdu
  */
 
 /**
@@ -148,7 +153,10 @@ function createPlotViewContextData(req, pvOptions={}) {
         lastCollapsedZoomLevel: 0,
         preferenceColorKey: attributes[PlotAttribute.PREFERENCE_COLOR_KEY],
         defThumbnailSize: DEFAULT_THUMBNAIL_SIZE,
-        plotCounter:0 // index of how many plots, used for making next ID
+        plotCounter:0, // index of how many plots, used for making next ID
+        multiHdu:false, // this is updated when plots are added
+        cubeCnt: 0,     // this is updated when plots are added
+        hduPlotStartIndexes: [0], // this is updated when plots are added
     };
 
     const {hipsImageConversion:hi}= pvOptions;

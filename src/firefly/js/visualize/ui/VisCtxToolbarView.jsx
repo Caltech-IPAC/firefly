@@ -381,7 +381,7 @@ export function MultiImageControllerView({plotView:pv}) {
             tooltip+= `HDU: ${hduNum} ${hduDesc?', '+hduDesc:''}`;
         }
         if (plot.cubeIdx>-1) {
-            tooltip+= `${multiHdu ? ', ':''} Cube: ${plot.cubeIdx+1}/${getCubePlaneCnt(pv,plot)}`;
+            tooltip+= `${multiHdu ? ', ':''} Cube: ${plot.cubeIdx+1}/${getCubePlaneCnt(plot)}`;
 
             if (hasPlaneOnlyWLInfo(plot)) {
                 const wl= doFormat(getPtWavelength(plot,null, plot.cubeIdx),4);

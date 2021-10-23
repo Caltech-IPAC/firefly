@@ -24,7 +24,7 @@ export function makeColorAction(plot, colorTableId, bias, contrast, bandUse, wor
             bias,
             contrast,
             ...bandUse,
-            plotStateSerialized: plotState.toJson(false),
+            plotStateSerialized: plotState.toJson(true),
             threeColor: isThreeColor(plot),
             rootUrl: getRootURL()
         }
@@ -46,7 +46,7 @@ export function makeFluxDirectAction(plot, ipt, band, workerKey) {
         payload: {
             plotImageId: plot.plotImageId,
             iptSerialized: ipt.toString(),
-            plotStateSerialized: plot.plotState.toJson(false),
+            plotStateSerialized: plot.plotState.toJson(true),
             band,
         }};
 }
@@ -83,7 +83,7 @@ export function makeLoadAction(plot, band, workerKey) {
         workerKey,
         payload: {
             plotImageId,
-            plotStateSerialized: plotState.toJson(false),
+            plotStateSerialized: plotState.toJson(true),
             band,
             bias,
             contrast,
@@ -162,7 +162,7 @@ export function makeStretchAction(plot, band, workerKey, rvAry) {
         workerKey,
         payload: {
             plotImageId,
-            plotStateSerialized: plotState.toJson(false),
+            plotStateSerialized: plotState.toJson(true),
             dataWidth,
             dataHeight,
             datamin,

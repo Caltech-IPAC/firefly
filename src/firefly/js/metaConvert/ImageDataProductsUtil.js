@@ -1,5 +1,5 @@
 
-import {union,get,isEmpty,difference} from 'lodash';
+import {union, get, isEmpty, difference, isArray} from 'lodash';
 import {
     dispatchReplaceViewerItems,
     getViewerItemIds,
@@ -77,15 +77,22 @@ export function createSingleImageActivate(request, imageViewerId, tbl_id, highli
 
 let extractedPlotId= 1;
 
+
+function copyRequest(inR) {
+    const r= inR.makeCopy(inR);
+    const plotId= `extract-plotId-${extractedPlotId}`;
+    r.setPlotId(plotId);
+    r.setPlotGroupId('extract-group');
+    extractedPlotId++;
+}
+
 export function createSingleImageExtraction(request) {
     if (!request) return undefined;
-    const wpRequest= request.makeCopy();
-    const plotId= `extract-plotId-${extractedPlotId}`;
-    wpRequest.setPlotId(plotId);
-    wpRequest.setPlotGroupId('extract-group');
-    extractedPlotId++;
+    const wpRequest= isArray(request) ? request.map( (r) => copyRequest(r)) : copyRequest(request)
     return () => {
-        dispatchPlotImage({plotId, viewerId:DEFAULT_FITS_VIEWER_ID, wpRequest});
+        dispatchPlotImage({
+            plotId:isArray(wpRequest)?wpRequest.getPlotId():undefined,
+            viewerId:DEFAULT_FITS_VIEWER_ID, wpRequest});
     };
 }
 

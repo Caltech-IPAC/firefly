@@ -125,7 +125,7 @@ public class ImageHeaderTest  extends ConfigTest {
         FitsRead fitsRead0 = FitsReadFactory.createFitsReadArray(inFits)[0];
         Header header = fitsRead0.getHeader();
         ImageHDU imageHdu = (ImageHDU) fitsRead0.getHDU();
-        int planeNumber = header.getIntValue("SPOT_PL", 0);
+        int planeNumber = fitsRead0.getPlaneNumber();
         int  extension_number = header.getIntValue("SPOT_EXT", -1);
         long HDUOffset = extension_number == -1? imageHdu.getFileOffset():header.getIntValue("SPOT_OFF", 0);
 
@@ -404,7 +404,7 @@ public class ImageHeaderTest  extends ConfigTest {
 
         ImageHDU imageHdu = (ImageHDU) fitsRead0.getHDU();
         Header headerSpot =fitsRead0.getHeader();
-        int planeNumber = headerSpot.getIntValue("SPOT_PL", 0);
+        int planeNumber = fitsRead0.getPlaneNumber();
         int  extension_number = headerSpot.getIntValue("SPOT_EXT", -1);
         long HDUOffset = extension_number == -1? imageHdu.getFileOffset():headerSpot.getIntValue("SPOT_OFF", 0);
         ImageHeader imageHeaderWithSpot = new ImageHeader(headerSpot, HDUOffset, planeNumber);

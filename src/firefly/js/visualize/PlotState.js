@@ -120,11 +120,10 @@ export class PlotState {
     isThreeColor() { return this.threeColor; }
 
 
-    /**
-     *
-     * @return {number}
-     */
+    /** @return {number} */
     getZoomLevel() {return this.zoomLevel; }
+
+    setZoomLevel(zl) { this.zoomLevel= zl;}
 
     /**
      *

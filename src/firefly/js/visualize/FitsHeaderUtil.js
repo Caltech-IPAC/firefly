@@ -164,10 +164,9 @@ export function makeDoubleHeaderParse(header,zeroHeader,altWcs) {
  */
 function getHeaderObj(plotOrHeader,headerKey) {
     if (!plotOrHeader) return {};
-    if (isPlot(plotOrHeader)) {
-        const plot= plotOrHeader;
-        if (!isImage(plot) ) return {};
-        return get(plot,['header',headerKey],{});
+    if (plotOrHeader.plotImageId) {
+        if (!isImage(plotOrHeader) ) return {};
+        return plotOrHeader.header?.[headerKey] ?? {};
     }
     else {
         return plotOrHeader[headerKey] || {};

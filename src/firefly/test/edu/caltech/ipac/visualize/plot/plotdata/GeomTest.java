@@ -43,7 +43,7 @@ public class GeomTest extends FitsValidation {
         //get the expected ImageHeader from calling it directly
         ImageHDU imageHdu = (ImageHDU) inFits.getHDU(0);
         Header header =imageHdu.getHeader();
-        int planeNumber = header.getIntValue("SPOT_PL", 0);
+        int planeNumber = header.getIntValue("SPOT_PL", 0); // keep for now, but SPOT_PL is no longer guaranteed
         int extension_number = header.getIntValue("SPOT_EXT", -1);
         long HDU_offset;
         if (extension_number == -1) {

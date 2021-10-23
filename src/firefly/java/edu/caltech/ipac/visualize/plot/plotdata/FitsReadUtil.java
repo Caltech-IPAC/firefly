@@ -44,10 +44,10 @@ import java.util.List;
 public class FitsReadUtil {
 
     public static final String SPOT_HS = "SPOT_HS";
-    public static final String SPOT_EXT = "SPOT_EXT";
+    public static final String SPOT_EXT = "SPOT_EXT"; // HDU Number
     public static final String SPOT_OFF = "SPOT_OFF";
-    public static final String SPOT_BP = "SPOT_BP";
-    public static final String SPOT_PL = "SPOT_PL";
+    public static final String SPOT_BP = "SPOT_BP"; // original bitpix
+    public static final String SPOT_PL = "SPOT_PL"; // cube plane number, only used with cubes, deprecated
 
     public static ImageData getImageData(BasicHDU<?> refHdu, float[] float1d) throws FitsException {
         Header header = refHdu.getHeader();
@@ -176,7 +176,7 @@ public class FitsReadUtil {
         return new UncompressFitsInfo(retFile,outHDUsList.toArray(new BasicHDU[0]), fits);
     }
 
-    public static BasicHDU<?>[] getImageHDUArray(BasicHDU<?>[] HDUs) throws FitsException {
+    public static BasicHDU<?>[] getImageHDUArray(BasicHDU<?>[] HDUs, boolean onlyFireCubeHdu) throws FitsException {
         ArrayList<BasicHDU<?>> HDUList = new ArrayList<>();
 
         String delayedExceptionMsg = null; // the exception can be ignored if HDUList size is greater than 0
@@ -218,7 +218,7 @@ public class FitsReadUtil {
 
                 int naxis3 = header.getIntValue("NAXIS3", -1);
                 if ((naxis > 2) && (naxis3 > 1)) { //it is a cube data
-                    BasicHDU<?>[] splitHDUs = splitFitsCube(hdu);
+                    BasicHDU<?>[] splitHDUs = splitFitsCube(hdu, onlyFireCubeHdu);
                     /* for each plane of cube */
                     Collections.addAll(HDUList, splitHDUs);
                 } else {
@@ -251,40 +251,43 @@ public class FitsReadUtil {
     }
 
 
-    private static BasicHDU<?>[] splitFits3DCube(BasicHDU<?> inHdu, float[][][] data32) throws FitsException {
+    private static BasicHDU<?>[] splitFits3DCube(BasicHDU<?> inHdu, boolean onlyFirstCubeHdu) throws FitsException {
         ImageHDU hdu = (inHdu instanceof ImageHDU) ? (ImageHDU) inHdu : ((CompressedImageHDU) inHdu).asImageHDU();  // if we have to uncompress a cube it could take a long time
         BasicHDU<?>[] hduList = new BasicHDU<?>[hdu.getHeader().getIntValue("NAXIS3", 0)];
 
         for (int i = 0; i < hduList.length; i++) {
-            hduList[i] = makeHDU(hdu, data32[i]);
-            //set the header pointer to the BITPIX location to add the new key. Without calling this line, the pointer is point
-            //to the end of the Header, the SPOT_PL is added after the "END" key, which leads the image loading failure. 
-            hduList[i].getHeader().getIntValue("BITPIX", -1);
-            hduList[i].getHeader().addLine(new HeaderCard(SPOT_PL, i, "Plane of FITS cube (added by Firefly)"));
-            hduList[i].getHeader().resetOriginalSize();
+            if (onlyFirstCubeHdu && i>0) {
+                hduList[i] = null;
+            }
+            else {
+                hduList[i] = makeHDU(hdu, null);
+                //set the header pointer to the BITPIX location to add the new key. Without calling this line, the pointer is point
+                //to the end of the Header, the SPOT_PL is added after the "END" key, which leads the image loading failure.
+                hduList[i].getHeader().getIntValue("BITPIX", -1);
+                hduList[i].getHeader().addLine(new HeaderCard(SPOT_PL, i, "Plane of FITS cube (added by Firefly)"));
+                hduList[i].getHeader().resetOriginalSize();
+            }
 
         }
         return hduList;
 
     }
 
-    private static BasicHDU<?>[] splitFitsCube(BasicHDU<?> inHdu) throws FitsException {
-        ImageHDU hdu = (inHdu instanceof ImageHDU) ? (ImageHDU) inHdu : ((CompressedImageHDU) inHdu).asImageHDU();  // if we have to uncompress a cube it could take a long time
+    private static BasicHDU<?>[] splitFitsCube(BasicHDU<?> inHdu, boolean onlyFirstCubeHdu) throws FitsException {
         int naxis = inHdu.getHeader().getIntValue("NAXIS", -1);
 
         switch (naxis) {
             case 3:
-
-                float[][][] data3D = (float[][][]) ArrayFuncs.convertArray(hdu.getData().getData(), Float.TYPE, true);
-                return splitFits3DCube(inHdu, data3D);
-
+                return splitFits3DCube(inHdu, onlyFirstCubeHdu);
             case 4:
-                float[][][][] data4D = (float[][][][]) ArrayFuncs.convertArray(hdu.getData().getData(), Float.TYPE, true);
                 ArrayList<BasicHDU<?>> hduListArr = new ArrayList<>();
                 int naxis4 = inHdu.getHeader().getIntValue("NAXIS4", -1);
                 if (naxis4 == 1) {
                     for (int i = 0; i < naxis4; i++) {
-                        BasicHDU<?>[] hduList = splitFits3DCube(inHdu, data4D[i]);
+                        BasicHDU<?>[] hduList = splitFits3DCube(inHdu, onlyFirstCubeHdu);
+                        if (onlyFirstCubeHdu) {
+                            for(int j=1; (j<hduList.length);j++) hduList[j]= null;
+                        }
                         Collections.addAll(hduListArr, hduList);
                     }
                     return hduListArr.toArray(new BasicHDU<?>[0]);
@@ -619,12 +622,8 @@ public class FitsReadUtil {
 
     private static double valueFromFitsFile(ImageHDU hdu, int x, int y, int plane, int ptSize) throws IOException {
         Header header= hdu.getHeader();
-        int naxis= getNaxis(header);
-        if (naxis==4 && getNaxis4(header)!=1) throw new IllegalArgumentException("naxis 4 must has naxis 4 as dimension 1");
-        else if (naxis!=2 && naxis!=3 && naxis!=4) throw new IllegalArgumentException("only naxis 2 or 3 or 4 is supported");
         int naxis1= getNaxis1(header);
         int naxis2= getNaxis2(header);
-        StandardImageTiler tiler= hdu.getTiler();
         if (ptSize<1) ptSize= 1;
         else if (ptSize>5) ptSize= 5;
         int adjust= (int)Math.floor((ptSize-1) / 2.0);
@@ -634,26 +633,40 @@ public class FitsReadUtil {
         if (y<0) y= 0;
         if (x+ptSize>=naxis1) x-= (x+ptSize-naxis1+1);
         if (y+ptSize>=naxis2) y-= (y+ptSize-naxis2+1);
+        double[] doubleAry= (double[]) dataArrayFromFitsFile(hdu,x,y,ptSize,ptSize,plane,true);
+        double aveValue= averageArray(doubleAry);
+        return ImageStretch.getFluxStandard( aveValue, getBlankValue(header), getBscale(header), getBzero(header));
+    }
+
+    /**
+     *
+     * @param doDouble true for double array, false for float ary
+     * @return an Object that will be a double array or an float array
+     */
+    public static Object dataArrayFromFitsFile(ImageHDU hdu, int x, int y, int width, int height, int plane, boolean doDouble) throws IOException {
+        Header header= hdu.getHeader();
+        int naxis= getNaxis(header);
+        if (naxis==4 && getNaxis4(header)!=1) throw new IllegalArgumentException("naxis 4 must has naxis 4 as dimension 1");
+        else if (naxis!=2 && naxis!=3 && naxis!=4) throw new IllegalArgumentException("only naxis 2 or 3 or 4 is supported");
         int[] loc= null;
         int[] tileSize= null;
+        StandardImageTiler tiler= hdu.getTiler();
         switch (naxis) {
             case 2:
                 loc= new int [] {y,x};
-                tileSize= new int[] {ptSize,ptSize};
+                tileSize= new int[] {height,width};
                 break;
             case 3:
                 loc= new int [] {plane,y,x};
-                tileSize= new int[] {1,ptSize,ptSize};
+                tileSize= new int[] {1,height,width};
                 break;
             case 4:
                 loc= new int [] {0, plane,y,x};
-                tileSize= new int[] {1, 1,ptSize,ptSize};
+                tileSize= new int[] {1, 1,height,width};
                 break;
         }
         Object value= tiler.getTile(loc, tileSize);
-        double [] doubleAry= (double[]) ArrayFuncs.convertArray(value, Double.TYPE, true);
-        double aveValue= averageArray(doubleAry);
-        return ImageStretch.getFluxStandard( aveValue, getBlankValue(header), getBscale(header), getBzero(header));
+        return ArrayFuncs.convertArray(value, doDouble ? Double.TYPE : Float.TYPE, true);
     }
 
 

@@ -20,18 +20,17 @@ import java.util.List;
  */
 public class WebPlotInitializer {
 
-    private CoordinateSys _imageCoordSys;
-    private int           _dataWidth;
-    private int           _dataHeight;
-    private PlotImages    _initImages;
-    private PlotState     _plotState;
-    private WebFitsData   _fitsData[];
-    private String        _desc;
-    private String        _dataDesc;
-    private Header headerAry[]; //passed with non-cube images, length 1 for normal images, up to 3 for 3 color images
-    private Header zeroHeaderAry[]; //passed with non-cube images, length 1 for normal images, up to 3 for 3 color images
-    private transient List<RelatedData> relatedData;
-//    private transient Projection _projection;
+    private final CoordinateSys _imageCoordSys;
+    private final int           _dataWidth;
+    private final int           _dataHeight;
+    private final PlotImages    _initImages;
+    private final PlotState     _plotState;
+    private final WebFitsData[] _fitsData;
+    private final String        _desc;
+    private final String        _dataDesc;
+    private final Header[] headerAry; //passed with non-cube images, length 1 for normal images, up to 3 for 3 color images
+    private final Header[] zeroHeaderAry; //passed with non-cube images, length 1 for normal images, up to 3 for 3 color images
+    private final transient List<RelatedData> relatedData;
 
 
     public WebPlotInitializer(PlotState plotState,
@@ -41,7 +40,7 @@ public class WebPlotInitializer {
                              Header[] zeroHeaderAry,
                              int dataWidth,
                              int dataHeight,
-                             WebFitsData  fitsData[],
+                             WebFitsData[] fitsData,
                              String desc,
                              String dataDesc,
                              List<RelatedData> relatedData ) {
@@ -68,9 +67,6 @@ public class WebPlotInitializer {
     public CoordinateSys getCoordinatesOfPlot() { return _imageCoordSys; }
     public PlotImages getInitImages() { return _initImages; }
 
-//    public Projection getProjection() {
-//        return _projection;
-//    }
     public List<RelatedData> getRelatedData() { return  relatedData; }
 
     public int getDataWidth() { return _dataWidth; }
@@ -78,7 +74,6 @@ public class WebPlotInitializer {
     public WebFitsData[] getFitsData()  { return _fitsData; }
 
     public String getPlotDesc() { return _desc; }
-    public void setPlotDesc(String d) { _desc= d; }
     public String getDataDesc() { return _dataDesc; }
     public Header[] getHeaderAry() { return this.headerAry; }
     public Header[] getZeroHeaderAry() { return this.zeroHeaderAry; }

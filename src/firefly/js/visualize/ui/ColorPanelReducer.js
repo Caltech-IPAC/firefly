@@ -123,7 +123,9 @@ function computeLowerRangeField(fields,rv,fitsData,lowerWhich='lowerWhich', lowe
             };
             break;
         case ABSOLUTE:
-            retval= {validator: Validate.floatRange.bind(null,fitsData.dataMin, fitsData.dataMax, 3, 'Lower range'),
+            retval= {
+                validator:  fitsData.dataMin && fitsData.dataMax ?
+                    Validate.floatRange.bind(null,fitsData.dataMin, fitsData.dataMax, 3, 'Lower range') : undefined,
                 value : resetDefault ? fitsData.dataMin : fields[lowerRange].value
             };
             break;
@@ -156,7 +158,9 @@ function computeUpperRangeField(fields,rv,fitsData) {
             break;
 
         case ABSOLUTE:
-            retval= {validator: Validate.floatRange.bind(null,fitsData.dataMin, fitsData.dataMax, 3, 'Upper range'),
+            retval= {
+                validator: fitsData.dataMin && fitsData.dataMax ?
+                    Validate.floatRange.bind(null,fitsData.dataMin, fitsData.dataMax, 3, 'Upper range') : undefined,
                 value : resetDefault ? fitsData.dataMax : fields.upperRange.value
             };
             break;

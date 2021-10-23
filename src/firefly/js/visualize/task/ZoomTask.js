@@ -146,7 +146,7 @@ function evaluateZoomType(visRoot, pv, userZoomType, forceDelay, payloadLevel= 1
 
     }
 
-    if (hasLocalStretchByteData(plot)) useDelay= false;
+    if (hasLocalStretchByteData(plot) || !plot.tileData) useDelay= false;
 
     return {level, isFullScreen, useDelay, validParams};
 }
@@ -211,7 +211,7 @@ function makeZoomLevelMatcher(dispatcher, visRoot, sourcePv,level,matchByScale,i
  */
 function doZoom(dispatcher,plot,zoomLevel,isFullScreen, zoomLockingEnabled, userZoomType,devicePt,useDelay,getState) {
 
-    const localRawData=  hasLocalStretchByteData(plot);
+    const localRawData=  hasLocalStretchByteData(plot) || !plot.tileData;
     const oldZoomLevel= plot.zoomFactor;
     const hips= isHiPS(plot);
 
@@ -366,12 +366,21 @@ function processLocalZoom(dispatcher, plot, zoomLevel, isFullScreen, userZoomTyp
 
     const {plotId}= plot;
     const rawData= changeLocalRawDataZoom(plot,zoomLevel,isFullScreen);
+    let primaryStateJson;
+    if (rawData) {
+        primaryStateJson= PlotState.convertToJSON(rawData.plotState,true);
+    }
+    else {
+        const ps= plot.plotState.copy();
+        ps.setZoomLevel(zoomLevel);
+        primaryStateJson= PlotState.convertToJSON(ps,true);
+    }
     dispatcher( {
         type: ImagePlotCntlr.ZOOM_IMAGE,
         payload: {
             zoomLevel, zoomLockingEnabled,userZoomType, devicePt, localRawData:true,
             plotId,
-            primaryStateJson : PlotState.convertToJSON(rawData.plotState,true),
+            primaryStateJson,
             rawData,
             overlayRawDataAry: undefined //todo need to compute this
         }});

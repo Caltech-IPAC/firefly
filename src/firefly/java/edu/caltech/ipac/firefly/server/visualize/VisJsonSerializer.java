@@ -52,10 +52,14 @@ public class VisJsonSerializer {
             map.put("originalFitsFileStr", wpHeader.getOriginalFitsFileStr());
             if (wpHeader.getUploadFileNameStr()!=null) map.put("uploadFileNameStr", wpHeader.getUploadFileNameStr());
             if (wpHeader.isThreeColor()) map.put("threeColor", wpHeader.isThreeColor());
+            if (wpHeader.getRangeValuesSerialized()!=null) map.put("rangeValuesSerialize", wpHeader.getRangeValuesSerialized());
             map.put("plotRequestSerialize", wpHeader.getRequest().toString());
             map.put("dataDesc", wpHeader.getDataDesc());
             map.put("zeroHeaderAry", serializeHeaderAry(wpHeader.getZeroHeaderAry()));
+            if (wpHeader.isMultiImageFile()) map.put("multiImageFile", wpHeader.isMultiImageFile());
+            map.put("multiImage", wpHeader.getMultiImage().name());
             if (wpHeader.getAttributes()!=null) map.put("attributes", new JSONObject(wpHeader.getAttributes()));
+            map.put("colorTableId", wpHeader.getColorTableId());
         }
         return map;
     }
@@ -259,7 +263,7 @@ public class VisJsonSerializer {
 
 
         // don't pass if defaulted
-        if (s.getMultiImageAction()!=PlotState.MultiImageAction.GUESS) map.put("multiImage", s.getMultiImageAction().toString());
+        if (s.getMultiImageAction()!=null && s.getMultiImageAction()!=PlotState.MultiImageAction.GUESS) map.put("multiImage", s.getMultiImageAction().toString());
         if (!Double.isNaN(s.getRotationAngle())) map.put("rotationAngle", s.getRotationAngle());
         if (s.getRotateType()!=PlotState.RotateType.UNROTATE) map.put("rotationType", s.getRotateType().toString());
         if (s.getRotateNorthType()!=CoordinateSys.EQ_J2000) map.put("rotaNorthType", s.getRotateNorthType().toString());
@@ -394,7 +398,7 @@ public class VisJsonSerializer {
         if (b.isTileCompress()) map.put("tileCompress", b.isTileCompress());
         if (b.getCubeCnt()>0) map.put("cubeCnt", b.getCubeCnt());
         if (b.getCubePlaneNumber()>0) map.put("cubePlaneNumber", b.getCubePlaneNumber());
-        map.put("rangeValuesSerialize", b.getRangeValuesSerialized());
+        if (b.getRangeValuesSerialized()!=null) map.put("rangeValuesSerialize", b.getRangeValuesSerialized());
         return map;
     }
 

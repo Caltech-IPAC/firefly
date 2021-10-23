@@ -203,7 +203,7 @@ async function changeLocalRawDataColor(plotImageId, colorTableId, threeColor, bi
         await populateRawImagePixelDataInWorker(entry.rawTileDataGroup, colorTableId, threeColor, false, '',
             bias, contrast, bandUse, rootUrl);
     entry.rawTileDataGroup= localRawTileDataGroup;
-    return {rawTileDataGroup:retRawTileDataGroup, plotStateSerialized: newPlotState.toJson(false)};
+    return {rawTileDataGroup:retRawTileDataGroup, plotStateSerialized: newPlotState.toJson(true)};
 }
 
 

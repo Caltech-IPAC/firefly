@@ -5,8 +5,8 @@ import validator from 'validator';
 import {isNil} from 'lodash';
 
 const isInRange= function(val,min,max) {
-    const retval= !(min !== undefined && min!==null && val<min);
-    return retval && !(max !== undefined && max!==null && val>max);
+    const retval= !(min !== undefined && !isNaN(min) && min!==null && val<min);
+    return retval && !(max !== undefined && !isNaN(min) && max!==null && val>max);
 };
 
 const typeInject= {
