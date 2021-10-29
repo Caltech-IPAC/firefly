@@ -3,11 +3,9 @@
  */
 package edu.caltech.ipac.visualize.plot;
 
-import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.plotdata.RGBIntensity;
 
-import java.awt.image.ColorModel;
 import java.awt.image.IndexColorModel;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -26,6 +24,11 @@ public class ImageDataGroup implements Iterable<ImageData> {
     private       ImageData  _imageDataAry[];
     private final int _width;
     private final int _height;
+    private final int tileSize;
+    private final ImageData.ImageType imageType;
+    private int colorTableID;
+    private final RangeValues initRangeValues;
+    private final ImageMask[] iMasks;
 
     private RGBIntensity _rgbIntensity; // for 3-color hew-preserving images only
 
@@ -35,62 +38,37 @@ public class ImageDataGroup implements Iterable<ImageData> {
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
-    public ImageDataGroup(FitsRead fitsReadAry[],
+    public ImageDataGroup(int dataWidth, int dataHeight,
                           ImageData.ImageType imageType,
                           int colorTableID,
                           RangeValues rangeValues,
                           int tileSize) {
-        FitsRead fr= null;
-        for(FitsRead testFr : fitsReadAry) {
-            if (testFr!=null) {
-                fr= testFr;
-                break;
-            }
-        }
-        Assert.argTst(fr, "fitsReadAry must have one non-null element.");
-        _width = fr.getNaxis1();
-        _height = fr.getNaxis2();
-
-
-        int totWidth= _width;
-        int totHeight= _height;
-
-        int xPanels= totWidth / tileSize;
-        int yPanels= totHeight / tileSize;
-        if (totWidth % tileSize > 0) xPanels++;
-        if (totHeight % tileSize > 0) yPanels++;
-        
+        _width = dataWidth;
+        _height = dataHeight;
+        this.tileSize= tileSize;
+        this.colorTableID= colorTableID;
+        this.initRangeValues= rangeValues;
+        this.imageType= imageType;
+        this.iMasks= null;
         _rgbIntensity = null;
-
-        _imageDataAry= new ImageData[xPanels * yPanels];
-
-        for(int i= 0; i<xPanels; i++) {
-            for(int j= 0; j<yPanels; j++) {
-                int width= (i<xPanels-1) ? tileSize : ((totWidth-1) % tileSize + 1);
-                int height= (j<yPanels-1) ? tileSize : ((totHeight-1) % tileSize + 1);
-                _imageDataAry[(i*yPanels) +j]= new ImageData(imageType,
-                                                  colorTableID,rangeValues,
-                                                  tileSize*i,tileSize*j,
-                                                  width, height);
-            }
-        }
     }
 
     /**
      * LZ 07/20/15
      * @return
      */
-    public ImageDataGroup(FitsRead fitsReadAry[], ImageMask[] iMasks, RangeValues rangeValues, int tileSize) {
-        FitsRead fr= null;
-        for(FitsRead testFr : fitsReadAry) {
-            if (testFr!=null) {
-                fr= testFr;
-                break;
-            }
-        }
-        Assert.argTst(fr, "fitsReadAry must have one non-null element.");
-        _width = fr.getNaxis1();
-        _height = fr.getNaxis2();
+    public ImageDataGroup(int dataWidth, int dataHeight, ImageMask[] iMasks, RangeValues rangeValues, int tileSize) {
+        _width = dataWidth;
+        _height = dataHeight;
+        this.tileSize= tileSize;
+        this.iMasks = iMasks;
+        this.colorTableID= -1;
+        this.initRangeValues= rangeValues;
+        this.imageType= ImageData.ImageType.TYPE_8_BIT;
+    }
+
+    public ImageData[] getImageDataAry() {
+        if (_imageDataAry!=null) return _imageDataAry;
 
         int totWidth= _width;
         int totHeight= _height;
@@ -101,21 +79,18 @@ public class ImageDataGroup implements Iterable<ImageData> {
         if (totHeight % tileSize > 0) yPanels++;
 
 
-
         _imageDataAry= new ImageData[xPanels * yPanels];
-
-
-
         for(int i= 0; i<xPanels; i++) {
             for(int j= 0; j<yPanels; j++) {
                 int width= (i<xPanels-1) ? tileSize : ((totWidth-1) % tileSize + 1);
                 int height= (j<yPanels-1) ? tileSize : ((totHeight-1) % tileSize + 1);
-                _imageDataAry[(i*yPanels) +j]= new ImageData(
-                        iMasks,rangeValues,
-                        tileSize*i,tileSize*j,
-                        width, height);
+                _imageDataAry[(i*yPanels) +j]= (iMasks==null) ?
+                        new ImageData(imageType, colorTableID,initRangeValues, tileSize*i,tileSize*j, width, height) :
+                        new ImageData( iMasks,initRangeValues, tileSize*i,tileSize*j, width, height);
             }
         }
+        return _imageDataAry;
+
     }
 
 //======================================================================
@@ -123,43 +98,43 @@ public class ImageDataGroup implements Iterable<ImageData> {
 //======================================================================
 
     public Iterator<ImageData> iterator() {
-        return Arrays.asList(_imageDataAry).iterator();
+        return Arrays.asList(getImageDataAry()).iterator();
     }
 
-    public int size() { return _imageDataAry.length; }
-
-    public int getImageWidth() { return _width; }
-    public int getImageHeight() { return _height; }
+    public int size() { return getImageDataAry().length; }
 
     public boolean isUpToDate() {
-        for(ImageData id : _imageDataAry) {
+        if (_imageDataAry==null) return true;
+        for(ImageData id : getImageDataAry()) {
             if (id.isImageOutOfDate()) return false;
         }
         return true;
     }
 
-    public int getColorTableId() { return _imageDataAry[0].getColorTableId(); }
+    public int getColorTableId() { return colorTableID; }
 
     public void setColorTableId(int colorTableID) {
+        this.colorTableID= colorTableID;
         IndexColorModel cm= ColorTable.getColorModel(colorTableID);
-        for(ImageData id : _imageDataAry) {
+        for(ImageData id : getImageDataAry()) {
             id.setColorModel(cm);
             id.setColorTableIdOnly(colorTableID);
         }
     }
 
-    public ColorModel getColorModel() {
-        return _imageDataAry[0].getColorModel();
-    }
-
-    public void setColorModel(IndexColorModel cm) {
-        for(ImageData id : _imageDataAry) {
-            id.setColorModel(cm);
-        }
-    }
+//    public ColorModel getColorModel() {
+//        return _imageDataAry[0].getColorModel();
+//    }
+//
+//    public void setColorModel(IndexColorModel cm) {
+//        for(ImageData id : _imageDataAry) {
+//            id.setColorModel(cm);
+//        }
+//    }
 
     public void markImageOutOfDate() {
-        for(ImageData id : _imageDataAry) {
+        if (_imageDataAry==null) return;
+        for(ImageData id : getImageDataAry()) {
             id.markImageOutOfDate();
         }
     }
@@ -178,7 +153,7 @@ public class ImageDataGroup implements Iterable<ImageData> {
             setRGBIntensity = !Arrays.asList(fitsReadAry).contains(null);
         }
 
-        for(ImageData id : _imageDataAry) {
+        for(ImageData id : getImageDataAry()) {
             if (setRGBIntensity) {
                 id.setRGBIntensity(_rgbIntensity);
             }
@@ -187,13 +162,10 @@ public class ImageDataGroup implements Iterable<ImageData> {
     }
 
     public void freeResources() {
-        if (_imageDataAry!=null) {
-            for(ImageData d : _imageDataAry) {
-                d.freeResources();
-            }
-            _imageDataAry= null;
-        }
         _rgbIntensity = null;
+        if (_imageDataAry==null) return;
+        for(ImageData d : _imageDataAry) d.freeResources();
+        _imageDataAry= null;
     }
 
 

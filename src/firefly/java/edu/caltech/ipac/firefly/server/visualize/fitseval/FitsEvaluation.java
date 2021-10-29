@@ -46,7 +46,7 @@ public class FitsEvaluation {
             File fitsFile= uFitsInfo!=null ? uFitsInfo.getFile() : f;
             BasicHDU<?>[]  workingHDUS= uFitsInfo!=null ? uFitsInfo.getHDUs() : HDUs;
             if (workingHDUS.length==0) throw new FitsException("Bad format in FITS file, no HDUs found");
-            FitsRead[] frAry = FitsReadFactory.createFitsReadArray(workingHDUS, clearHdu);
+            FitsRead[] frAry = FitsReadFactory.createFitsReadArray(workingHDUS, f, clearHdu);
             FitsDataEval fitsDataEval= new FitsDataEval(frAry,fitsFile);
             if (workingHDUS.length >1) { // Do evaluation
                 for(int i= 0; i<frAry.length; i++) {

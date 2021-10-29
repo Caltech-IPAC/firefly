@@ -68,6 +68,7 @@ public class PlotClientCtx implements Serializable {
 
     public PlotImages getImages() { return _images.get(); }
     public void setImages(PlotImages images) {
+        if (images==null) return;
         _images.getAndSet(images);
         updateAccessTime();
         _allImagesList.add(images);

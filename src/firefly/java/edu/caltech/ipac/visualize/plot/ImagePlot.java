@@ -39,11 +39,13 @@ public class ImagePlot extends Plot implements Serializable {
     private CoordinateSys  _imageCoordSys= CoordinateSys.UNDEFINED;
     private ImagePt        _minPt;
     private ImagePt        _maxPt;
-    private   int            imageScaleFactor;
+    private int            imageScaleFactor= 1; //todo take this out completely
     private Band             refBand;
     private boolean  _threeColor;
     private boolean _isSharedDataPlot = false;
     private final boolean useForMask;
+    private int imageDataWidth;
+    private int imageDataHeight;
 
    private ImagePlot(PlotGroup plotGroup, boolean useForMask) {
        super(plotGroup);
@@ -62,10 +64,11 @@ public class ImagePlot extends Plot implements Serializable {
         useForMask = false;
         refBand= band;
         setInitialZoomLevel(initialZoomLevel);
-        imageScaleFactor= frGroup.getFitsRead(band).getImageScaleFactor();
         _threeColor= threeColor;
-        _imageData = new ImageDataGroup(frGroup.getFitsReadAry(),  _threeColor ? ImageData.ImageType.TYPE_24_BIT : ImageData.ImageType.TYPE_8_BIT,
-                                        initColorID,stretch,SQUARE);
+        initDataWidthAndHeight(frGroup);
+        _imageData = new ImageDataGroup(imageDataWidth, imageDataHeight,
+                _threeColor ? ImageData.ImageType.TYPE_24_BIT : ImageData.ImageType.TYPE_8_BIT,
+                initColorID,stretch,SQUARE);
         configureImage(frGroup);
     }
 
@@ -80,13 +83,26 @@ public class ImagePlot extends Plot implements Serializable {
         super(plotGroup);
         refBand= Band.NO_BAND;
         setInitialZoomLevel(initialZoomLevel);
-        imageScaleFactor= frGroup.getFitsRead(Band.NO_BAND).getImageScaleFactor();
         _threeColor= false;
         useForMask = true;
-       _imageData = new ImageDataGroup(frGroup.getFitsReadAry(), iMasks,stretch,SQUARE);
+        initDataWidthAndHeight(frGroup);
+       _imageData = new ImageDataGroup(imageDataWidth, imageDataHeight, iMasks,stretch,SQUARE);
         configureImage(frGroup);
     }
 
+
+    void initDataWidthAndHeight(ActiveFitsReadGroup  frGroup) {
+        FitsRead fr= null;
+        for(FitsRead testFr : frGroup.getFitsReadAry()) {
+            if (testFr!=null) {
+                fr= testFr;
+                break;
+            }
+        }
+        Assert.argTst(fr, "fitsReadAry must have one non-null element.");
+        imageDataWidth = fr.getNaxis1();
+        imageDataHeight = fr.getNaxis2();
+    }
 
     public boolean isThreeColor() { return _threeColor; }
     public boolean isUseForMask() { return useForMask; }
@@ -243,36 +259,28 @@ public class ImagePlot extends Plot implements Serializable {
      * This number will not change as the plot is zoomed up and down.
      * @return the width of the image data
      */
-   public int   getImageDataWidth() {
-      return _imageData.getImageWidth() * imageScaleFactor;
-   }
+   public int   getImageDataWidth() { return imageDataWidth; }
 
     /**
      * This method will return the height of the image data.
      * This number will not change as the plot is zoomed up and down.
      * @return the height of the image data
      */
-   public int  getImageDataHeight(){
-      return _imageData.getImageHeight() * imageScaleFactor;
-   }
+   public int  getImageDataHeight(){ return imageDataHeight; }
      
     /**
      * This method will return the width of the image in the world coordinate
      * system- degrees on the sky.
      * @return the width of the image data in degrees
      */
-   public double getWorldPlotWidth() {
-       return _projection.getPixelWidthDegree() *_imageData.getImageWidth();
-   }
+   public double getWorldPlotWidth() { return _projection.getPixelWidthDegree() * getImageDataWidth(); }
 
     /**
      * This method will return the height of the image in the world coordinate
      * system- degrees on the sky.
      * @return the height of the image data in degrees
      */
-   public double getWorldPlotHeight() {
-       return _projection.getPixelHeightDegree() *_imageData.getImageHeight();
-   }
+   public double getWorldPlotHeight() { return _projection.getPixelHeightDegree() * getImageDataHeight(); }
 
     /**
      * Return the image coordinates given a WorldPt class
@@ -633,7 +641,9 @@ public class ImagePlot extends Plot implements Serializable {
         p._threeColor       = _threeColor;
         p._attributes       = _attributes;
         p.imageScaleFactor  = imageScaleFactor;
-        p.setZoomTo(        1.0F );
+       p.imageDataHeight    = imageDataHeight;
+       p.imageDataWidth     = imageDataWidth;
+       p.setZoomTo(        1.0F );
 //        if (plotGroup != null) p.computeOffsetXY(frGroup);
         p.getPlotGroup().addToPlotted();
         p.setPlotDesc(      getPlotDesc() );

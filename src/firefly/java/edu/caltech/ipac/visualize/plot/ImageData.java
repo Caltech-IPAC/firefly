@@ -50,7 +50,7 @@ public class ImageData implements Serializable {
     private final int lastPixel;
     private final int lastLine;
 
-    private WritableRaster raster;
+    private WritableRaster internalRaster= null;
 
     // used for hue-preserving RGB only
     private RGBIntensity rgbIntensity; // stats for intensity
@@ -77,14 +77,6 @@ public class ImageData implements Serializable {
                      int height) {
         this(imageType,x,y,width,height,rangeValues);
         this.colorTableID = colorTableID;
-        cm = imageType==ImageType.TYPE_24_BIT ?
-                new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB), false, false,
-                                                             Transparency.OPAQUE, DataBuffer.TYPE_BYTE) :
-                ColorTable.getColorModel(colorTableID);
-
-        raster = imageType==ImageType.TYPE_24_BIT ?
-                Raster.createBandedRaster( DataBuffer.TYPE_BYTE, this.width, this.height,3, null) :
-                Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, this.width, this.height, 1, null);
     }
 
     //LZ 7/20/15 add this to make an ImageData with given IndexColorModel
@@ -97,8 +89,21 @@ public class ImageData implements Serializable {
 
         this(ImageType.TYPE_8_BIT,x,y,width,height,rangeValues);
         imageMasks=iMasks;
-        cm =  getIndexColorModelForMask(iMasks);
-        raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height, 1, null);
+    }
+
+
+
+
+
+
+    private WritableRaster getRaster() {
+        if (internalRaster==null) {
+            internalRaster = imageType==ImageType.TYPE_24_BIT ?
+                    Raster.createBandedRaster( DataBuffer.TYPE_BYTE, this.width, this.height,3, null) :
+                    Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, this.width, this.height, 1, null);
+        }
+        return internalRaster;
+
     }
 
     public void setRGBIntensity(RGBIntensity rgbIntensity) {
@@ -114,7 +119,7 @@ public class ImageData implements Serializable {
     public void freeResources() {
         cm = null;
         bufferedImage = null;
-        raster = null;
+        internalRaster= null;
         imageOutOfDate = true;
         rgbIntensity = null;
     }
@@ -141,7 +146,20 @@ public class ImageData implements Serializable {
     void setColorTableIdOnly(int colorTableID) { this.colorTableID = colorTableID; }
 
 
-    ColorModel getColorModel() { return cm; }
+    ColorModel getColorModel() {
+        if (cm!=null) return cm;
+        if (imageMasks==null) {
+            cm = imageType==ImageType.TYPE_24_BIT ?
+                    new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB), false, false,
+                            Transparency.OPAQUE, DataBuffer.TYPE_BYTE) :
+                    ColorTable.getColorModel(colorTableID);
+        }
+        else {
+            cm =  getIndexColorModelForMask(imageMasks);
+        }
+        return cm;
+
+    }
 
     void markImageOutOfDate() { imageOutOfDate = true; }
 
@@ -199,14 +217,14 @@ public class ImageData implements Serializable {
     }
 
     private void constructImage(FitsRead fitsReadAry[])  {
-        DataBufferByte db= (DataBufferByte) raster.getDataBuffer();
+        DataBufferByte db= (DataBufferByte) getRaster().getDataBuffer();
         if (imageType ==ImageType.TYPE_8_BIT) {
             if (imageMasks!=null && imageMasks.length!=0){
-                bufferedImage = new BufferedImage(cm, raster, false, null);
+                bufferedImage = new BufferedImage(getColorModel(), getRaster(), false, null);
                 fitsReadAry[0].doStretchMask( db.getData(0), x, lastPixel, y, lastLine, imageMasks);
             }
             else {
-                bufferedImage = new BufferedImage(cm, raster, false, null);
+                bufferedImage = new BufferedImage(getColorModel(), getRaster(), false, null);
                 ImageHeader imHead= new ImageHeader(fitsReadAry[0].getHeader());
                 ImageStretch.stretchPixels8Bit(rangeValuesAry[Band.NO_BAND.getIdx()],
                                                fitsReadAry[0].getRawFloatAry(), db.getData(0),
@@ -235,7 +253,7 @@ public class ImageData implements Serializable {
             }
             ImageStretch.stretchPixels3Color(rangeValuesAry, float1dAry, pixelDataAry, imHeadAry, histAry,
                     rgbIntensity, x, lastPixel, y, lastLine );
-            bufferedImage = new BufferedImage(cm, raster, false, null);
+            bufferedImage = new BufferedImage(getColorModel(), getRaster(), false, null);
         }
         else {
             Assert.tst(false, "image type must be TYPE_8_BIT or TYPE_24_BIT");

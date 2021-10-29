@@ -129,6 +129,7 @@ export class BandState {
         bState.tileCompress = Boolean(bsJson.tileCompress);
         bState.cubeCnt= bsJson.cubeCnt || 0;
         bState.cubePlaneNumber= bsJson.cubePlaneNumber || 0;
+        bState.directFileAccessData= bsJson.directFileAccessData;
         return bState;
     }
 

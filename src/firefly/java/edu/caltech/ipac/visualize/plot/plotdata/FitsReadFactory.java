@@ -16,6 +16,7 @@ import nom.tam.fits.FitsException;
 import nom.tam.fits.Header;
 import nom.tam.fits.ImageHDU;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -36,7 +37,7 @@ public class FitsReadFactory {
      * @throws FitsException
      */
     public static FitsRead[] createFitsReadArray(Fits fits) throws FitsException {
-        return createFitsReadArray(FitsReadUtil.readHDUs(fits),false);
+        return createFitsReadArray(FitsReadUtil.readHDUs(fits),null,false);
     }
 
     /**
@@ -45,14 +46,31 @@ public class FitsReadFactory {
      * @return
      * @throws FitsException
      */
-    public static FitsRead[] createFitsReadArray( BasicHDU<?>[] HDUs, boolean clearHdu) throws FitsException {
+    public static FitsRead[] createFitsReadArray(BasicHDU<?>[] HDUs, File f, boolean clearHdu) throws FitsException {
         if (HDUs == null) throw new FitsException(BAD_FORMAT_MSG);
 
-        BasicHDU<?> [] imageHDUs= FitsReadUtil.getImageHDUArray(HDUs);
+        BasicHDU<?> [] imageHDUs= FitsReadUtil.getImageHDUArray(HDUs, true);
+        BasicHDU<?> hdu;
         Header zeroHeader= getZeroHeader(HDUs) ;
         confirmHasImageData(imageHDUs,HDUs);
         FitsRead[] fitsReadAry = new FitsRead[imageHDUs.length];
-        for (int i = 0; i < imageHDUs.length; i++) fitsReadAry[i] =new FitsRead(imageHDUs[i], zeroHeader, clearHdu);
+        int planeNumber=0;
+        boolean cube= false;
+        BasicHDU<?> lastHdu= null;
+
+        for (int i = 0; i < imageHDUs.length; i++) {
+            hdu= imageHDUs[i];
+            if (hdu!=null) {
+                cube= hdu.getHeader().containsKey(FitsReadUtil.SPOT_PL);
+                planeNumber= 0;
+                lastHdu= hdu;
+            }
+            else {
+                planeNumber++;
+            }
+            File file= cube ? f : null;
+            fitsReadAry[i]= new FitsRead(lastHdu, zeroHeader, file, clearHdu, cube, cube?planeNumber:0);
+        }
         return fitsReadAry;
     }
 

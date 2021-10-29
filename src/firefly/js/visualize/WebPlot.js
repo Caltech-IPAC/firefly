@@ -199,6 +199,38 @@ export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_
  * @prop {string} obs_title
  */
 
+/**
+ * @typedef {Object} WebPlotInitializer
+ * see java class edu.caltech.ipac.firefly.visualize.WebPlotInitializer
+ * @prop imageCoordSys
+ * @prop dataWidth
+ * @prop dataHeight
+ * @prop initImages
+ * @prop plotState
+ * @prop fitsData
+ * @prop desc
+ * @prop dataDesc
+ * @prop {Array.<Header>} headerAry passed with non-cube images, length 1 for normal images, up to 3 for 3 color images
+ * @prop {Header} zeroHeaderAry  passed with non-cube images, length 1 for normal images, up to 3 for 3 color images
+ * @prop {Array.<RelatedData>} relatedData
+ */
+
+/**
+ * @typedef {Object} CubeCtx
+ * Information common to all cubes
+ *
+ * @prop {number} cubePlane
+ * @prop {number} cubeLength
+ * @prop {Array.<Header>} cubeHeaderAry
+ * @prop {Array.<RelatedData>} relatedData
+ * @prop {number} dataWidth
+ * @prop {number} dataHeight
+ * @prop imageCoordSys
+ * @prop processHeader
+ * @prop wlRelated
+ * @prop wlData
+ */
+
 
 const relatedIdRoot= '-Related-';
 
@@ -296,20 +328,36 @@ export const WebPlot= {
     /**
      *
      * @param {string} plotId
-     * @param wpInit init data returned from server
+     * @param {WebPlotInitializer} wpInit init data returned from server
      * @param {object} attributes any attributes to initialize
      * @param {boolean} asOverlay
-     * @param {{cubePlane,cubeHeaderAry,relatedData,dataWidth,dataHeight,imageCoordSys}} cubeCtx
+     * @param {CubeCtx} cubeCtx
+     * @param {WebPlotRquest} request0 - only used when this is part of a cube
      * @return {WebPlot} the plot
      */
-    makeWebPlotData(plotId, wpInit, attributes= {}, asOverlay= false, cubeCtx) {
+    makeWebPlotData(plotId, wpInit, attributes= {}, asOverlay= false, cubeCtx, request0) {
 
         const relatedData = cubeCtx ? cubeCtx.relatedData : wpInit.relatedData;
         const plotState= PlotState.makePlotStateWithJson(wpInit.plotState);
         const headerAry= !cubeCtx ? wpInit.headerAry : [cubeCtx.cubeHeaderAry[0]];
         const header= headerAry[plotState.firstBand().value];
         const zeroHeader= wpInit.zeroHeaderAry[0];
-        const processHeader= parseSpacialHeaderInfo(header,'',zeroHeader);
+
+        let processHeader;
+        let wlRelated;
+        let wlData;
+        if (cubeCtx?.processHeader) {
+            processHeader= cubeCtx.processHeader;
+            wlRelated= cubeCtx.wlRelated;
+            wlData= cubeCtx.wlData;
+            plotState.bandStateAry[0].plotRequestTmp= request0; //optimization to keep reparsing
+        }
+        else {
+            const headerInfo= processHeaderData(wpInit);
+            processHeader= headerInfo.processHeader;
+            wlRelated= headerInfo.wlRelated;
+            wlData= headerInfo.wlData;
+        }
         const projection= makeProjectionNew(processHeader, processHeader.imageCoordSys);
         const processHeaderAry= !plotState.isThreeColor() ?
                                    [processHeader] :
@@ -321,9 +369,6 @@ export const WebPlot= {
         };
 
 
-        const wlRelated= relatedData && relatedData.find( (r) => r.dataType==='WAVELENGTH_TABLE_RESOLVED');
-
-        let wlData= parseWavelengthHeaderInfo(header, '', zeroHeader, wlRelated?.table);
         const allWCSMap= processAllSpacialAltWcs(header);
         const allWlMap= processAllWavelengthAltWcs(header, wlRelated?.table);
         allWlMap['']= wlData;
@@ -376,6 +421,10 @@ export const WebPlot= {
             cubeIdx: cubeCtx?.cubePlane ?? -1,
             //=== End Mutable =====================
         };
+        if (imagePlot.webFitsData) {
+            imagePlot.webFitsData=
+                imagePlot.webFitsData.map( (wfd) => ({ ...wfd, dataMin: wfd.dataMin ?? 0, dataMax: wfd.dataMax ?? 0 }));
+        }
         plot= {...plot, ...imagePlot};
         if (relatedData) {
             plot.relatedData= relatedData.map( (d) => ({...d,relatedDataId: plotId+relatedIdRoot+d.dataKey}));
@@ -563,7 +612,7 @@ export function replaceHeader(plot, header) {
  * @param {object} o
  * @return boolean - true if this object is a WebPlot
  */
-export const isPlot= (o) => isObject(o) && Boolean(o.plotType && o.plotId && o.plotImageId && o.conversionCache);
+export const isPlot= (o) => Boolean(o && o.plotType && o.plotId && o.plotImageId && o.conversionCache);
 
 // noinspection JSUnresolvedVariable
 /**
@@ -629,3 +678,18 @@ export function getPixScaleDeg(plot) {
 }
 
 export const isBlankHiPSURL= (url) => url.toLowerCase()===BLANK_HIPS_URL;
+
+
+/**
+ * @param {Array.<WebPlotInitializer>} pC
+ * @return {{processHeader:Object, wlData: Object, wlRelated:Object}}
+ */
+export function processHeaderData(pC) {
+    const relatedData= pC.relatedData;
+    const wlRelated= relatedData && relatedData.find( (r) => r.dataType==='WAVELENGTH_TABLE_RESOLVED');
+    return {
+        processHeader: parseSpacialHeaderInfo(pC.headerAry[0],'',pC.zeroHeaderAry[0]),
+        wlData: parseWavelengthHeaderInfo(pC.headerAry[0],'',pC.zeroHeaderAry[0], wlRelated?.table),
+        wlRelated
+    };
+}

@@ -88,18 +88,20 @@ public class PlotState {
         return (bandAry!=null && bandAry.length>0) ? getBands()[0] : null;
     }
 
+    Band[] NO_BAND_ARY= new Band[] {Band.NO_BAND};
+
     public Band[] getBands() {
         if (usedBands ==null || usedBands.length==0) {
-            List<Band> bands= new ArrayList<Band>(3);
             if (threeColor) {
+                List<Band> bands= new ArrayList<Band>(3);
                 if (get(Band.RED).hasRequest())   bands.add(Band.RED);
                 if (get(Band.GREEN).hasRequest()) bands.add(Band.GREEN);
                 if (get(Band.BLUE).hasRequest())  bands.add(Band.BLUE);
+                usedBands = bands.toArray(new Band[bands.size()]);
             }
             else {
-                bands.add(Band.NO_BAND);
+                usedBands= NO_BAND_ARY;
             }
-            usedBands = bands.toArray(new Band[bands.size()]);
         }
         return usedBands;
     }
@@ -366,16 +368,16 @@ public class PlotState {
         }
     }
 
-// =====================================================================
-// -------------------- private Methods --------------------------------
-// =====================================================================
 
-    private BandState get(Band band) {
+    public BandState get(Band band) {
         int idx= band.getIdx();
         if (bandStateAry[idx]==null) bandStateAry[idx]= new BandState();
         return bandStateAry[idx];
     }
 
+// =====================================================================
+// -------------------- private Methods --------------------------------
+// =====================================================================
 
     private void initColorStretch(WebPlotRequest request, Band band) {
         if (request!=null) {

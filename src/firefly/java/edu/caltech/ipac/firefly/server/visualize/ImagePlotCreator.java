@@ -331,9 +331,13 @@ public class ImagePlotCreator {
         long fileLength= (f!=null && f.canRead()) ? f.length() : 0;
         FitsRead fr=  frGroup.getFitsReadAry()[band.getIdx()];
         if (fr==null) return null;
-        Histogram hist= fr.getHistogram();
-        double dataMin= hist.getDNMin() * fr.getBscale() + fr.getBzero();
-        double dataMmax= hist.getDNMax() * fr.getBscale() + fr.getBzero();
+        double dataMin= Double.NaN;
+        double dataMmax= Double.NaN;
+        if (!fr.isDeferredRead()) {
+            Histogram hist= fr.getHistogram();
+            dataMin= hist.getDNMin() * fr.getBscale() + fr.getBzero();
+            dataMmax= hist.getDNMax() * fr.getBscale() + fr.getBzero();
+        }
         return new WebFitsData( dataMin, dataMmax, fileLength, fr.getFluxUnits());
     }
 

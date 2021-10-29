@@ -20,6 +20,7 @@ import nom.tam.fits.ImageHDU;
 import nom.tam.image.compression.hdu.CompressedImageHDU;
 
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
@@ -28,7 +29,7 @@ import java.util.Arrays;
 
 import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil.SPOT_EXT;
 import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil.SPOT_OFF;
-import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil.SPOT_PL;
+import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil.dataArrayFromFitsFile;
 
 
 /**
@@ -39,12 +40,15 @@ public class FitsRead implements Serializable {
     private static final ArrayList<Integer> SUPPORTED_BIT_PIXS = new ArrayList<>(Arrays.asList(8, 16, 32, -32, -64));
     private static RangeValues DEFAULT_RANGE_VALUE = new RangeValues();
     private final int planeNumber;
+    private final boolean cube;
     private final int hduNumber;
     private final Header zeroHeader;
-    private BasicHDU hdu;
+    private BasicHDU<?> hdu;
     private float[] float1d;
     private Header header;
     private Histogram hist;
+    private final File file;
+    private final boolean deferredRead;
 
 //    private final long HDUOffset;
     private final CoordinateSys coordinateSys;
@@ -63,8 +67,9 @@ public class FitsRead implements Serializable {
      * @param imageHdu this hdu to build this FitsRead around
      * @throws FitsException if we can process the data
      */
-    FitsRead( BasicHDU imageHdu, Header zeroHeader, boolean clearHdu) throws FitsException {
+    FitsRead(BasicHDU<?> imageHdu, Header zeroHeader, File file, boolean clearHdu, boolean cube, int planeNumber) throws FitsException {
 
+        this.file= file;
         tileCompress= (imageHdu instanceof CompressedImageHDU);
 
         if (imageHdu instanceof ImageHDU) {
@@ -83,7 +88,14 @@ public class FitsRead implements Serializable {
 
         this.zeroHeader= zeroHeader;
 
-        this.planeNumber = header.getIntValue(SPOT_PL, 0);
+        this.deferredRead = cube && this.file!=null;
+
+        if (deferredRead && tileCompress) {
+            throw new IllegalArgumentException("FitsRead cannot do deferred readying with compressed images ");
+        }
+
+        this.planeNumber = cube ? planeNumber : 0;
+        this.cube = cube;
         this.hduNumber = header.getIntValue(SPOT_EXT, 0);
         long HDUOffset= header.getIntValue(SPOT_OFF, 0);
         this.bunit= hdu.getBUnit()!=null ? hdu.getBUnit() : "DN";
@@ -94,15 +106,10 @@ public class FitsRead implements Serializable {
         this.coordinateSys= imageHeader.determineCoordSys();
 
 
-        float1d = FitsReadUtil.getImageHDUDataInFloatArray(hdu); //convert to float to do all the calculations
+        float1d = deferredRead ? null : FitsReadUtil.getImageHDUDataInFloatArray(hdu); //convert to float to do all the calculations
 
         if (clearHdu) hdu= null;
 
-        double bscale= getBscale();
-        double bzero= getBzero();
-        double datamax = header.getDoubleValue("DATAMAX", Double.NaN);
-        double datamin = header.getDoubleValue("DATAMIN", Double.NaN);
-        hist= new Histogram(float1d, (datamin - bzero) / bscale, (datamax - bzero) / bscale);
     }
 
 
@@ -118,6 +125,8 @@ public class FitsRead implements Serializable {
     public double getBlankValue() {return FitsReadUtil.getBlankValue(header); }
     public int getBitPix() {return header.getIntValue("BITPIX"); }
 
+    public boolean isDeferredRead() { return deferredRead; }
+
     public String getOrigin() {
         return header.getStringValue(ImageHeader.ORIGIN)!=null ? header.getStringValue(ImageHeader.ORIGIN) : "";
     }
@@ -129,7 +138,25 @@ public class FitsRead implements Serializable {
         return (hc!=null) ? hc.getValue() : "";
     }
 
-    public float[] getRawFloatAry() { return float1d; }
+    public float[] getRawFloatAry() {
+        if (float1d!=null) return float1d;
+        if (!deferredRead) throw new IllegalArgumentException("FitsRead not setup for deferred reading");
+        Fits fits= null;
+        try {
+            fits = new Fits(this.file);
+            BasicHDU<?> hdu= FitsReadUtil.readHDUs(fits)[this.hduNumber];
+            if (!(hdu instanceof ImageHDU)) return null;
+            float1d= (float [])dataArrayFromFitsFile((ImageHDU)hdu, 0,0,getNaxis1(),getNaxis2(), planeNumber,false);
+            return float1d;
+        }
+        catch (FitsException|IOException|ArrayIndexOutOfBoundsException e) {
+            Logger.getLogger("FitsRead").error(e,"Could not ready cube FITS plane");
+            return null;
+        }
+        finally {
+            FitsReadUtil.closeFits(fits);
+        }
+    }
 
     public static RangeValues getDefaultFutureStretch() { return DEFAULT_RANGE_VALUE; }
 
@@ -158,7 +185,7 @@ public class FitsRead implements Serializable {
         byte blank_pixel_value = (byte) 255;
         int[] pixelhist = new int[256];
         ImageStretch.stretchPixelsForMask(startPixel, lastPixel, startLine, lastLine, this.getNaxis1(),
-                        blank_pixel_value, float1d, pixelData, pixelhist, lsstMasks);
+                        blank_pixel_value, getRawFloatAry(), pixelData, pixelhist, lsstMasks);
     }
 
 
@@ -184,7 +211,7 @@ public class FitsRead implements Serializable {
 
         int index = yint * this.getNaxis1() + xint;
 
-        double raw_dn = float1d[index];
+        double raw_dn = getRawFloatAry()[index];
 
         return (!getOrigin().startsWith(ImageHeader.PALOMAR_ID)) ?
                 ImageStretch.getFluxStandard(raw_dn,getBlankValue(),getBscale(),getBzero()) :
@@ -200,7 +227,7 @@ public class FitsRead implements Serializable {
 
     public boolean hasHdu() { return hdu!=null;}
 
-    public BasicHDU getHDU() {
+    public BasicHDU<?> getHDU() {
         if (hdu==null) throw new IllegalArgumentException("HDU has been cleared, there is not longer access to it.");
         return hdu;
     }
@@ -221,7 +248,16 @@ public class FitsRead implements Serializable {
 
     public Header getHeader() { return header; }
     public Header getZeroHeader() { return zeroHeader; }
-    public Histogram getHistogram() { return hist; }
+    public Histogram getHistogram() {
+        if (hist==null) {
+            double bscale= getBscale();
+            double bzero= getBzero();
+            double datamax = header.getDoubleValue("DATAMAX", Double.NaN);
+            double datamin = header.getDoubleValue("DATAMIN", Double.NaN);
+            hist= new Histogram(getRawFloatAry(), (datamin - bzero) / bscale, (datamax - bzero) / bscale);
+        }
+        return hist;
+    }
     public int getImageScaleFactor() { return 1; }
 
 
@@ -245,6 +281,10 @@ public class FitsRead implements Serializable {
      */
     public int getPlaneNumber() {
         return planeNumber;
+    }
+
+    public boolean isCube() {
+        return cube;
     }
 
     /**
@@ -272,12 +312,13 @@ public class FitsRead implements Serializable {
      * This method return the physical data value at the pixels as an one dimensional array
      */
     public float[] getDataFloat() {
-        if (getBscale()==1.0 && getBzero()==0) return float1d;
-        float[] fData = new float[float1d.length];
+        float[] floatAry= getRawFloatAry();
+        if (getBscale()==1.0 && getBzero()==0) return floatAry;
+        float[] fData = new float[floatAry.length];
         float bscale= (float) getBscale();
         float bzero= (float) getBzero();
-        for (int i = 0; i < float1d.length; i++) {
-            fData[i] = float1d[i] * bscale  + bzero;
+        for (int i = 0; i < floatAry.length; i++) {
+            fData[i] = floatAry[i] * bscale  + bzero;
         }
         return fData;
     }

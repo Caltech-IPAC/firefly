@@ -11,7 +11,7 @@ import ImagePlotCntlr, {
 } from '../ImagePlotCntlr.js';
 import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
 import {dispatchActiveTarget, getActiveTarget} from '../../core/AppDataCntlr.js';
-import {WebPlot, RDConst, isImage} from '../WebPlot.js';
+import {WebPlot, RDConst, isImage, processHeaderData} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute';
 import {getCenterPtOfPlot} from '../VisUtil.js';
 import {PlotState} from '../PlotState.js';
@@ -43,6 +43,8 @@ import {dispatchDestroyDrawLayer, dispatchDetachLayerFromPlot} from '../DrawLaye
 import {getAllDrawLayersForPlot} from '../PlotViewUtil';
 import SearchTarget from '../../drawingLayers/SearchTarget';
 import CsysConverter from '../CsysConverter';
+import {parseSpacialHeaderInfo} from 'firefly/visualize/projection/ProjectionHeaderParser.js';
+import {parseWavelengthHeaderInfo} from 'firefly/visualize/projection/WavelengthHeaderParser.js';
 
 //======================================== Exported Functions =============================
 //======================================== Exported Functions =============================
@@ -471,18 +473,21 @@ export function addDrawLayers(request, pv, plot) {
  *
  */
 
- function findCubePlane(plotCreate) {
-     const plotState= PlotState.makePlotStateWithJson(plotCreate.plotState);
-     if (plotState.isThreeColor()) return -1;
-     if (plotCreate.headerAry && isDefined(plotCreate.headerAry[0][HdrConst.SPOT_PL])) { // this should be the zero plane of the cube
-         return Number(plotCreate.headerAry[0][HdrConst.SPOT_PL].value);
+
+
+/**
+ * Only used during parsing, not for general use
+ * @param {WebPlotInitializer} plotCreate
+ * @return {number} plane index or -1 if not a cube plane
+ */
+function findCubePlane(plotCreate) {
+    // if there is a header and SPOT_PL is defined it is the zero plane of a cube, otherwise if is not a cube
+    // if no header then it is a cube and get the index from plotState
+     if (plotCreate.plotState.threeColor) return -1;
+     if (plotCreate.headerAry) {
+         return isDefined(plotCreate.headerAry[0][HdrConst.SPOT_PL]) ? 0 : -1;
      }
-     else if (!plotCreate.headerAry) {  // if no headerAry, it is a plane of the cube
-         return plotState.getCubePlaneNumber();
-     }
-     else {
-         return -1;
-     }
+    return plotCreate.plotState.bandStateAry.cubePlaneNumber;
  }
 
 
@@ -492,6 +497,8 @@ export function addDrawLayers(request, pv, plot) {
      bandState.uploadFileNameStr= plotCreateHeader.uploadFileNameStr;
      bandState.originalFitsFileStr= plotCreateHeader.originalFitsFileStr;
      bandState.workingFitsFileStr= plotCreateHeader.workingFitsFileStr;
+     bandState.rangeValuesSerialize= plotCreateHeader.rangeValuesSerialize;
+     bandState.multiImageFile= Boolean(plotCreateHeader.multiImageFile);
  }
 
 
@@ -518,24 +525,42 @@ export function populateFromHeader(plotCreateHeader, plotCreate) {
          }
          plotCreate[i].dataDesc= plotCreateHeader.dataDesc;
          plotCreate[i].zeroHeaderAry= plotCreateHeader.zeroHeaderAry;
+         if (plotCreateHeader.multiImage) plotCreate[i].plotState.multiImage= plotCreateHeader.multiImage;
+         plotCreate[i].plotState.colorTableId= plotCreateHeader.colorTableId;
      }
  }
 
+/**
+ * @param {Array.<WebPlotInitializer>} plotCreate
+ * @return {Array.<Object>}
+ */
  export function makeCubeCtxAry(plotCreate) {
      let cubeStartIdx=-1;
-     const cubeCtxAry= plotCreate
+     let headerInfo;
+
+    const cubeCtxAry= plotCreate
          .map( (pC,idx) => {
              const cubePlane= findCubePlane(pC);
              if (cubePlane<0) return undefined;
-             if (cubePlane===0) cubeStartIdx= idx;
+             if (cubePlane===0) {
+                 cubeStartIdx= idx;
+                 headerInfo= processHeaderData(pC);
+             }
              const cubeStartPC= plotCreate[cubeStartIdx];
+             const h= plotCreate[cubeStartIdx].headerAry[0];
+             const cubeLength= h.NAXIS3.value==='1' && h.NAXIS4?.value ? Number(h.NAXIS4.value) : Number(h.NAXIS3.value);
+
              return {
+                 cubeCntNumber: pC.plotState.bandStateAry.cubeCnt,
                  cubePlane,
+                 cubeLength,
                  cubeHeaderAry: cubeStartPC.headerAry,
+                 processHeader: headerInfo.processHeader,
+                 wlData: headerInfo.wlData,
                  relatedData: cubeStartPC.relatedData,
                  dataWidth: cubeStartPC.dataWidth,
                  dataHeight: cubeStartPC.dataHeight,
-                 imageCoordSys: cubeStartPC.imageCoordSys
+                 imageCoordSys: cubeStartPC.imageCoordSys,
              };
          });
      return cubeCtxAry;
@@ -543,7 +568,7 @@ export function populateFromHeader(plotCreateHeader, plotCreate) {
 
 /**
  *
- * @param {Array.<Object>} plotCreate
+ * @param {Array.<WebPlotInitializer>} plotCreate
  * @param {Object} plotCreateHeader
  * @param payload
  * @param requestKey
@@ -555,21 +580,23 @@ function handleSuccessfulCall(plotCreate, plotCreateHeader, payload, requestKey)
     populateFromHeader(plotCreateHeader, plotCreate);
     const cubeCtxAry= makeCubeCtxAry(plotCreate);
     const plotState= PlotState.makePlotStateWithJson(plotCreate[0].plotState);
-    const plotId= plotState.getWebPlotRequest().getPlotId();
+    const request0= plotState.getWebPlotRequest();
+    const plotId= request0.getPlotId();
     const initAttributes= plotCreateHeader ? {...payload.attributes, ...plotCreateHeader.attributes} :
                                              {...payload.attributes};
 
-    const plotAry= plotCreate.map((wpInit,idx) => makePlot(wpInit,plotId, initAttributes, cubeCtxAry[idx]) );
+    const attributes= {...initAttributes,  ...request0.getAttributes()};
+    let title;
+    const plotAry= plotCreate.map((wpInit,idx) => {
+        const plot= WebPlot.makeWebPlotData(plotId, wpInit, attributes,false, cubeCtxAry[idx],request0);
+        if (!title) title= makePostPlotTitle(plot,request0);
+        plot.title= title;
+        return plot;
+    });
     if (plotAry.length) updateActiveTarget(plotAry[0]);
     return {plotId, requestKey, plotAry, overlayPlotViews:null};
 }
 
-function makePlot(wpInit,plotId, attributes, cubeCtx) {
-    const r= PlotState.makePlotStateWithJson(wpInit.plotState).getWebPlotRequest();
-    const plot= WebPlot.makeWebPlotData(plotId, wpInit, {...attributes,  ...r.getAttributes()},false, cubeCtx);
-    plot.title= makePostPlotTitle(plot,r);
-    return plot;
-}
 
 
 /**

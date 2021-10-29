@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {uniqBy, differenceBy, isEmpty, isNumber, isString} from 'lodash';
+import {uniqBy, differenceBy, isEmpty, isNumber, isString, uniq} from 'lodash';
 import Cntlr, {WcsMatchType} from '../ImagePlotCntlr.js';
 import {
     replacePlots, makePlotView, updatePlotViewScrollXY,
@@ -15,7 +15,7 @@ import {
     clonePvAry,
     getOverlayById,
     getPlotViewIdListByPositionLock,
-    hasImageCubes, getCubePlaneCnt, getHDU
+    hasImageCubes, getCubePlaneCnt, getHDU, getImageCubeIdx, isMultiHDUFits
 } from '../PlotViewUtil.js';
 import {makePlotGroup} from '../PlotGroup.js';
 import {PlotAttribute} from '../PlotAttribute.js';
@@ -24,6 +24,7 @@ import {getRotationAngle} from '../VisUtil.js';
 import {updateTransform} from '../PlotTransformUtils.js';
 import {makeImagePt} from '../Point.js';
 import {isImage} from '../WebPlot';
+import {getNumberHeader, HdrConst} from 'firefly/visualize/FitsHeaderUtil.js';
 
 
 export function reducer(state, action) {
@@ -153,7 +154,18 @@ function addHiPS(state,action, setActive= true, newPlot= true) {
     return {...state, prevActivePlotId, plotViewAry, activePlotId};
 }
 
-
+/**
+ * Count the number of cubes
+ * @param {PlotView} pv
+ * @return {number} the number of cubes, 0 if none
+ */
+function countCubes(pv) {
+    if (!pv || !isImage(primePlot(pv)) ) return 0;
+    return pv.plots.reduce( (total, p, idx) => {
+        if (idx===0) return getImageCubeIdx(p)>=0 ? 1 : 0;
+        return ( getHDU(p)!==getHDU(pv.plots[idx-1]) && getImageCubeIdx(p)>-1) ? total+1 : total;
+    }, 0);
+}
 
 
 function addPlot(state,action, setActive, newPlot) {
@@ -170,10 +182,16 @@ function addPlot(state,action, setActive, newPlot) {
             activePlotId = pv.plotId;
         }
         pv = replacePlots(pv, plotAry, overlayPlotViews, state.expandedMode, newPlot);
+        const hduCnt= uniq(pv.plots.map( (p) => getNumberHeader(p,HdrConst.SPOT_EXT,0)));
+        pv.plotViewCtx.multiHdu= hduCnt.length>1;
+        pv.plotViewCtx.cubeCnt= countCubes(pv);
+        pv.plotViewCtx.hduPlotStartIndexes=  pv.plotViewCtx.multiHdu ?
+                                pv.plots.map( (p,idx) => idx).filter( (idx) => getImageCubeIdx(pv.plots[idx])<1) : [0];
 
-        if (hasImageCubes(pv)) {
+
+        if (pv.plotViewCtx.cubeCnt>0) {
             const firstCubePlotIdx= pv.plots.findIndex( (p) => p.cubeIdx>-1);
-            const cnt= getCubePlaneCnt(pv, pv.plots[firstCubePlotIdx]);
+            const cnt= getCubePlaneCnt(pv.plots[firstCubePlotIdx]);
             const frameIdx= getFirstFrameFromAttribute(pv,cnt);
 
             if (frameIdx>0) {

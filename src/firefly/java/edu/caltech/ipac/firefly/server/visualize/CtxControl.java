@@ -164,7 +164,7 @@ public class CtxControl {
         ctx.setPlotState(state);
         ctx.setPlot(plot);
         putPlotCtx(ctx);
-        PlotServUtils.createThumbnail(plot, frGroup, images, true, state.getThumbnailSize());
+        if (images!=null) PlotServUtils.createThumbnail(plot, frGroup, images, true, state.getThumbnailSize());
         state.setNewPlot(false);
     }
 

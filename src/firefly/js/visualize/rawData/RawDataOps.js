@@ -233,7 +233,7 @@ export async function changeLocalRawDataColor(plot, colorTableId, bias, contrast
     else {
         const newPlotState = plot.plotState.copy();
         newPlotState.colorTableId = colorTableId;
-        plotStateSerialized= newPlotState.toJson(false);
+        plotStateSerialized= newPlotState.toJson(true);
         rawTileDataGroup= entry.rawTileDataGroup;
     }
     entry.rawTileDataGroup = await populateTilesAsync(rawTileDataGroup, colorTableId, undefined, undefined, bias,contrast, bandUse);

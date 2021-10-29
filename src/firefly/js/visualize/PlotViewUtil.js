@@ -730,30 +730,20 @@ export function getFoV(pv, alternateZoomFactor) {
  * @param {PlotView} pv
  * @return {boolean} true if there are cubes or images
  */
-export const isMultiImageFits= (pv) => Boolean(isMultiHDUFits(pv) || getNumberOfCubesInPV(pv)>0);
+export const isMultiImageFits= (pv) => pv.plots.length>1 && !isHiPS(primePlot(pv));
 
 /**
  * Does the image file have more than one HDU
  * @param {PlotView} pv
  * @return {boolean} true if this file has more than one HDU
  */
-export function isMultiHDUFits(pv) {
-    if (!pv) return false;
-    const hduCnt= uniq(pv.plots.map( (p) => getNumberHeader(p,HdrConst.SPOT_EXT,0)));
-    return hduCnt.length>1;
-}
+export const isMultiHDUFits= (pv) => Boolean(pv?.plotViewCtx.multiHdu);
 
 /**
  * @param {PlotView} pv
  * @return {Array.<number>|false}
  */
-export function getHduPlotStartIndexes(pv) {
-    if (!pv) return false;
-    if (!isMultiHDUFits(pv)) return [0];
-    return pv.plots
-        .map( (p,idx) => idx)
-        .filter( (idx) => getImageCubeIdx(pv.plots[idx])<1);
-}
+export const getHduPlotStartIndexes= (pv) => pv?.plotViewCtx.hduPlotStartIndexes;
 
 /**
  * @param {PlotView} pv
@@ -769,24 +759,20 @@ export const getHDUCount= (pv) => getHduPlotStartIndexes(pv).length;
  */
 export function getNumberOfCubesInPV(pv) {
     if (!pv || !isImage(primePlot(pv)) ) return 0;
-    return pv.plots.reduce( (total, p, idx) => {
-        if (idx===0) return getImageCubeIdx(p)>=0 ? 1 : 0;
-        return ( getHDU(p)!==getHDU(pv.plots[idx-1]) && getImageCubeIdx(p)>-1) ? total+1 : total;
-    }, 0);
+    return pv.plotViewCtx.cubeCnt;
 }
 
 /**
  * Get the total number of planes in the cube of the plot
- * @param {PlotView} pv
+ * @param {PlotView|WebPlot} pv
  * @param {WebPlot} [plot] the plot to check, defaults to primaryPlot
  * @return {number}
  */
-export function getCubePlaneCnt(pv, plot) {
-    if (!plot) plot= primePlot(pv);
+export const getCubePlaneCnt= (plotOrPv) => {
+    const plot= isPlotView(plotOrPv) ? primePlot(plotOrPv) : plotOrPv;
     if (!isImageCube(plot)) return 0;
-    const hdu= getHDU(plot);
-    return pv.plots.filter( (p) => getHDU(p)===hdu).length;
-}
+    return plot.cubeCtx.cubeLength;
+};
 
 
 /**
@@ -855,7 +841,7 @@ export const isImageCube = (plot) => getImageCubeIdx(plot) > -1;
  */
 export function convertHDUIdxToImageIdx(pv, hduIdx, cubeIdx=0) {
     if (!pv || !isPlotView(pv)) return undefined;
-    if (!isMultiImageFits(pv)) return 0;
+   if (!isMultiImageFits(pv)) return 0;
     const plot= primePlot(pv);
     if (cubeIdx==='follow' && isImageCube(plot)) {
         const idx= pv.plots.findIndex((p)=> p===plot);
@@ -863,7 +849,7 @@ export function convertHDUIdxToImageIdx(pv, hduIdx, cubeIdx=0) {
     }
     const startIndexes= getHduPlotStartIndexes(pv);
     if (hduIdx>startIndexes.length-1)return 0;
-    const cnt= getCubePlaneCnt(pv, pv.plots[startIndexes[hduIdx]]);
+    const cnt= getCubePlaneCnt(pv.plots[startIndexes[hduIdx]]);
     return (isImageCube(pv.plots[startIndexes[hduIdx]]) && cubeIdx<cnt) ? startIndexes[hduIdx]+cubeIdx : startIndexes[hduIdx];
 }
 

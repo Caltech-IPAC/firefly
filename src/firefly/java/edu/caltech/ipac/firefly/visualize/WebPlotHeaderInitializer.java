@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.visualize;
  */
 
 
+import edu.caltech.ipac.visualize.plot.RangeValues;
 import nom.tam.fits.Header;
 
 import java.util.Map;
@@ -15,17 +16,23 @@ import java.util.Map;
  */
 public class WebPlotHeaderInitializer {
 
-    private String workingFitsFileStr;
-    private String originalFitsFileStr;
-    private String uploadFileNameStr;
-    private String dataDesc;
-    private boolean threeColor;
-    private WebPlotRequest request;
-    private Header[] zeroHeaderAry;
-    private Map<String,String> attributes;
+    private final String workingFitsFileStr;
+    private final String originalFitsFileStr;
+    private final String uploadFileNameStr;
+    private final String dataDesc;
+    private final String rangeValuesSerialized;
+    private final boolean threeColor;
+    private final WebPlotRequest request;
+    private final Header[] zeroHeaderAry;
+    private final Map<String,String> attributes;
+    private final boolean multiImageFile;
+    private final PlotState.MultiImageAction multiImage;
+    private final int colorTableId;
 
     public WebPlotHeaderInitializer(String originalFitsFileStr, String workingFitsFileStr,
-                                    String uploadFileNameStr, String dataDesc,
+                                    String uploadFileNameStr, RangeValues rv,
+                                    String dataDesc, int colorTableId, boolean multiImageFile,
+                                    PlotState.MultiImageAction multiImage,
                                     boolean threeColor, WebPlotRequest request, Header[] zeroHeaderAry,
                                     Map<String,String> attributes) {
         this.originalFitsFileStr= originalFitsFileStr;
@@ -34,8 +41,12 @@ public class WebPlotHeaderInitializer {
         this.threeColor = threeColor;
         this.request = request;
         this.dataDesc= dataDesc;
+        this.rangeValuesSerialized= rv.serialize();
         this.zeroHeaderAry= zeroHeaderAry;
         this.attributes= attributes;
+        this.multiImage= multiImage;
+        this.multiImageFile= multiImageFile;
+        this.colorTableId= colorTableId;
     }
 
     public String getWorkingFitsFileStr() { return workingFitsFileStr; }
@@ -46,6 +57,8 @@ public class WebPlotHeaderInitializer {
 
     public String getUploadFileNameStr() { return uploadFileNameStr; }
 
+    public String getRangeValuesSerialized() { return rangeValuesSerialized; }
+
     public String getDataDesc() { return dataDesc; }
 
     public WebPlotRequest getRequest() { return request; }
@@ -53,5 +66,11 @@ public class WebPlotHeaderInitializer {
     public Header[] getZeroHeaderAry() { return zeroHeaderAry; }
 
     public Map<String,String> getAttributes() { return attributes;}
+
+    public boolean isMultiImageFile() { return multiImageFile; }
+
+    public PlotState.MultiImageAction getMultiImage() { return multiImage; }
+
+    public int getColorTableId() { return colorTableId; }
 }
 

@@ -5,7 +5,7 @@
 import React from 'react';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
-import {primePlot, getPlotViewById} from '../PlotViewUtil.js';
+import {primePlot, getPlotViewById, isImageCube, getCubePlaneCnt} from '../PlotViewUtil.js';
 import {Tabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../../core/ComponentCntlr.js';
@@ -43,7 +43,8 @@ const labelColumn1 = { paddingTop:5, width:80, textAlign: 'right', color: 'Black
 //define the second label column in the textStyle div
 const labelColumn2 = { paddingTop:5, width:70, textAlign: 'right',display: 'inline-block', color: 'Black', fontWeight: 'bold'};
 //define the text data style
-const textStyle={ paddingTop:5,paddingLeft:3, width:140, color: 'Black', fontWeight: 'normal', display: 'inline-block'};
+const textStyle={ paddingTop:5,paddingLeft:3, width:60, color: 'Black', fontWeight: 'normal', display: 'inline-block'};
+const textLongStyle={ paddingTop:5,paddingLeft:3, width:110, color: 'Black', fontWeight: 'normal', display: 'inline-block'};
 
 //define the display style for the file size and pixel information and the table in the same div
 const tableAndTitleInfoStyle = {width: '100%', height: 'calc(100% - 40px)', display: 'flex', resize:'none'};
@@ -284,6 +285,8 @@ function renderFileSizeAndPixelSize(plot, band, fitsHeaderInfo, isOnTab) {
     const titleStyleNoTab = {width: '100%', height: 30,display: 'inline-block', background:bgColor};
     const titleStyleOnTab = {width: '100%', height: 30,display: 'inline-block'};
     var titleStyle = isOnTab? titleStyleOnTab:titleStyleNoTab;
+    let dimStr= `${plot.dataWidth} x ${plot.dataHeight}`;
+    if (isImageCube(plot)) dimStr+= ` x ${getCubePlaneCnt(plot)}`;
 
    return (
         <div style={titleStyle}>
@@ -291,6 +294,8 @@ function renderFileSizeAndPixelSize(plot, band, fitsHeaderInfo, isOnTab) {
             < div style= {textStyle} >{pixelSize}</div>
             <div style={ labelColumn2}> File Size:</div>
             <div style= {textStyle} >{fileSizeStr}</div>
+            <div style={ labelColumn2}> Dimensions:</div>
+            <div style= {textLongStyle} >{dimStr}</div>
         </div>
     );
 }

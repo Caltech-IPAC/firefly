@@ -4,11 +4,11 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.imageretrieve.FileRetriever;
 import edu.caltech.ipac.firefly.server.visualize.imageretrieve.ImageFileRetrieverFactory;
 import edu.caltech.ipac.firefly.visualize.Band;
+import edu.caltech.ipac.firefly.visualize.BandState;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.download.FailedRequestException;
@@ -18,7 +18,6 @@ import edu.caltech.ipac.visualize.plot.RangeValues;
 import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
 import nom.tam.fits.FitsException;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,7 +25,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static edu.caltech.ipac.firefly.visualize.Band.*;
+import static edu.caltech.ipac.firefly.visualize.Band.BLUE;
+import static edu.caltech.ipac.firefly.visualize.Band.GREEN;
+import static edu.caltech.ipac.firefly.visualize.Band.NO_BAND;
+import static edu.caltech.ipac.firefly.visualize.Band.RED;
 
 /**
  * @author Trey Roby
@@ -48,49 +50,50 @@ public class ImagePlotBuilder {
 
     public static SimpleResults create3Color(WebPlotRequest redRequest,
                                          WebPlotRequest greenRequest,
-                                         WebPlotRequest blueRequest) throws FailedRequestException, GeomException {
-        SimpleResults retval= null;
-        LinkedHashMap<Band, WebPlotRequest> requestMap = new LinkedHashMap<>(5);
-
-        if (redRequest != null) requestMap.put(RED, redRequest);
-        if (greenRequest != null) requestMap.put(GREEN, greenRequest);
-        if (blueRequest != null) requestMap.put(BLUE, blueRequest);
-
+                                         WebPlotRequest blueRequest) throws FailedRequestException {
         try {
+            SimpleResults retval= null;
+            LinkedHashMap<Band, WebPlotRequest> requestMap = new LinkedHashMap<>(5);
+
+            if (redRequest != null) requestMap.put(RED, redRequest);
+            if (greenRequest != null) requestMap.put(GREEN, greenRequest);
+            if (blueRequest != null) requestMap.put(BLUE, blueRequest);
             Results allPlots= build(requestMap, PlotState.MultiImageAction.USE_FIRST,
                                                      null, true);
             ImagePlotInfo[] piAry= allPlots.getPlotInfoAry();
             if (piAry!=null && piAry.length>0)  retval= new SimpleResults(piAry[0].getPlot(), piAry[0].getFrGroup());
-        } catch (FailedRequestException e) {
-            throw new FailedRequestException("Could not create plot. " + e.getMessage(), e.getDetailMessage());
-        } catch (FitsException e) {
-            throw new FailedRequestException("Could not create plot. Invalid FITS File format.", e.getMessage());
+            return retval;
         } catch (Exception e) {
-            throw new FailedRequestException("Could not create plot.", e.getMessage(), e);
+            throw makeException(e);
         }
-        return retval;
-
     }
 
 
-    private static List<SimpleResults> createList(WebPlotRequest wpr)
-            throws FailedRequestException {
-        wpr.setProgressKey(null); // this just makes sure in update progress caching does not happen
-        List<SimpleResults> retList= new ArrayList<>(10);
-
+    private static List<SimpleResults> createList(WebPlotRequest wpr) throws FailedRequestException {
         try {
+            wpr.setProgressKey(null); // this just makes sure in update progress caching does not happen
+            List<SimpleResults> retList= new ArrayList<>(10);
             Map<Band, WebPlotRequest> requestMap = new LinkedHashMap<>(2);
             requestMap.put(NO_BAND, wpr);
             Results allPlots= build(requestMap, PlotState.MultiImageAction.USE_FIRST, null, false);
             for(ImagePlotInfo pi : allPlots.getPlotInfoAry())  retList.add(new SimpleResults(pi.getPlot(),pi.getFrGroup()));
-        } catch (FailedRequestException e) {
-            throw new FailedRequestException("Could not create plot. " + e.getMessage(), e.getDetailMessage());
-        } catch (FitsException e) {
-            throw new FailedRequestException("Could not create plot. Invalid FITS File format.", e.getMessage());
+            return retList;
         } catch (Exception e) {
-            throw new FailedRequestException("Could not create plot.", e.getMessage(), e);
+            throw makeException(e);
         }
-        return retList;
+    }
+
+    private static FailedRequestException makeException(Exception e) {
+        if (e instanceof FailedRequestException) {
+            return new FailedRequestException("Could not create plot. " + e.getMessage(),
+                    ((FailedRequestException)e).getDetailMessage());
+        }
+        else if (e instanceof FitsException) {
+            return new FailedRequestException("Could not create plot. Invalid FITS File format.", e.getMessage());
+        }
+        else {
+            return new FailedRequestException("Could not create plot.", e.getMessage(), e);
+        }
     }
 
     static Results build(Map<Band, WebPlotRequest> requestMap,
@@ -123,39 +126,6 @@ public class ImagePlotBuilder {
 
         return new Results(pInfo,zoomChoice, findElapse,readElapse);
     }
-
-// Unused code commented out 3/5/2019 - keep around for awhile
-//    static Results buildFromFile(WebPlotRequest request,
-//                                 FileInfo fileData,
-//                                 FitsRead fitsRead,
-//                                 int imageIdx,
-//                                 PlotState state) throws Exception {
-//
-//
-//        ImagePlotInfo pInfo[];
-//        // ------------ read the FITS files
-//        long readStart = System.currentTimeMillis();
-//        PlotServUtils.updatePlotCreateProgress(request, ProgressStat.PType.CREATING, PlotServUtils.CREATING_MSG);
-//        long readElapse = System.currentTimeMillis() - readStart;
-//
-//
-//        Map<Band, FileReadInfo[]> readInfoMap = WebPlotReader.processFitsRead(fileData,request,fitsRead,imageIdx);
-//
-//        Map<Band,WebPlotRequest> requestMap= new HashMap<>(1);
-//        requestMap.put(Band.NO_BAND,request);
-//
-//        // ------------ make the ImagePlot(s)
-//        ZoomChoice zoomChoice = makeZoomChoice(requestMap, readInfoMap);
-//        if (state == null) {
-//            pInfo = makeNewPlots(readInfoMap, requestMap, zoomChoice, PlotState.MultiImageAction.USE_FIRST, false);
-//        } else {
-//            pInfo = new ImagePlotInfo[1];
-//            pInfo[0] = recreatePlot(state, readInfoMap, zoomChoice);
-//        }
-//
-//        return new Results(pInfo,zoomChoice, 0,readElapse);
-//    }
-
 
 
 
@@ -270,13 +240,13 @@ public class ImagePlotBuilder {
             case USE_EXTS:
                 if (!readInfoMap.containsKey(NO_BAND) || threeColor) {
                     throw new FailedRequestException("Cannot create plot",
-                            "Cannot yet use the MultiImageAction.USE_ALL action with three color");
+                            "Cannot yet use the MultiImageAction.USE_EXT action with three color");
                 }
                 WebPlotRequest rs = requestMap.get(NO_BAND);
 
                 ArrayList<Integer> infoList = getFileReadList(rs.getMultiImageExts(), readInfoMap.get(NO_BAND));
 
-                PlotState[] stateArys = makeNoBandMultiImagePlotStateOnList(rs, readInfoMap.get(NO_BAND),
+               PlotState[] stateArys = makeNoBandMultiImagePlotStateOnList(rs, readInfoMap.get(NO_BAND),
                                                                         PlotState.MultiImageAction.USE_EXTS,
                                                                         infoList);
                 plotInfo = new ImagePlotInfo[stateArys.length];
@@ -329,7 +299,7 @@ public class ImagePlotBuilder {
             }
         }
 
-        ArrayList<Integer> infoList = new ArrayList<>();
+        ArrayList<Integer> infoList = new ArrayList<>(frInfo.length);
 
         for (int i = 0; i < frInfo.length; i++) {
             int extNo = frInfo[i].getFitsRead().getHduNumber();
@@ -386,62 +356,59 @@ public class ImagePlotBuilder {
                                                                    FileReadInfo[] info,
                                                                    PlotState.MultiImageAction action,
                                                                    ArrayList<Integer> infoList ) {
-        PlotState[] stateAry = new PlotState[infoList.size()];
-        for (int i = 0; (i < stateAry.length); i++) {
-            int n = infoList.get(i);
-
-            stateAry[i] = PlotStateUtil.create(request);
-            stateAry[i].setMultiImageAction(action);
-            initState(stateAry[i], info[n], NO_BAND, request);
-            stateAry[i].setOriginalImageIdx(n, NO_BAND);
-            stateAry[i].setImageIdx(n, NO_BAND);
-        }
-        initMultiImageInfoOnList(stateAry,info, infoList);
-        return stateAry;
-    }
-
-    private static void initMultiImageInfoOnList(PlotState[] stateAry,  FileReadInfo[] infoAry, ArrayList<Integer>infoList) {
-        if (stateAry.length!=infoList.size() && stateAry.length>1) return;
-        boolean multiImageFile= stateAry.length>1;
-
         boolean cube= false;
-        for (Integer v : infoList) {
-            cube = infoAry[v].getFitsRead().getPlaneNumber() > 1;
-            if (cube) break;
+        if (infoList.size()>1) {
+            for (Integer v : infoList) {
+                cube = info[v].getFitsRead().getPlaneNumber() > 1;
+                if (cube) break;
+            }
         }
 
+        PlotState[] stateAry = new PlotState[infoList.size()];
         int cubePlane= 1;
         int cubeCnt= 0;
+        BandState bandS;
         for (int i = 0; (i < stateAry.length); i++) {
-            stateAry[i].setMultiImageFile(multiImageFile, NO_BAND);
+            int n = infoList.get(i);
+            stateAry[i] = PlotStateUtil.create(request);
+            stateAry[i].setMultiImageAction(action);
+            bandS= stateAry[i].get(NO_BAND);
+            initState(stateAry[i], info[n], NO_BAND, request);
+            bandS.setOriginalImageIdx(n);
+            bandS.setImageIdx(n);
+            bandS.setMultiImageFile(stateAry.length>1);
             if (cube) {
-                if (infoAry[infoList.get(i)].getFitsRead().getPlaneNumber()==1) {
+                if (info[infoList.get(i)].getFitsRead().getPlaneNumber()==1) {
                     cubePlane=1;
                     cubeCnt++;
+                    if (i>0) {
+                        stateAry[i-1].setCubeCnt(cubeCnt,Band.NO_BAND);
+                        stateAry[i-1].setCubePlaneNumber(0,Band.NO_BAND);
+                    }
                 }
-                stateAry[i].setCubeCnt(cubeCnt,Band.NO_BAND);
-                stateAry[i].setCubePlaneNumber(cubePlane,Band.NO_BAND);
+                bandS.setCubePlaneNumber(cubePlane);
+                bandS.setCubeCnt(cubeCnt);
                 cubePlane++;
             }
         }
+        return stateAry;
     }
+
 
     private static void initState(PlotState state,
                           FileReadInfo fi,
                           Band band,
                           WebPlotRequest req) {
         if (state.isBandUsed(band)) {
-            if (state.getContextString() == null) {
-                state.setContextString(CtxControl.makeCachedCtx());
-            }
-            state.setTileCompress(fi.getFitsRead().isTileCompress(), band);
-            state.setOriginalImageIdx(fi.getOriginalImageIdx(), band);
+            BandState bandS= state.get(NO_BAND);
+            if (state.getContextString() == null) state.setContextString(CtxControl.makeCachedCtx());
+            bandS.setTileCompress(fi.getFitsRead().isTileCompress());
+            bandS.setOriginalImageIdx(fi.getOriginalImageIdx());
             PlotStateUtil.setOriginalFitsFile(state, fi.getOriginalFile(), band);
             PlotStateUtil.setWorkingFitsFile(state, fi.getWorkingFile(), band);
-            state.setUploadFileName(fi.getUploadedName(),band);
-            checkFileNames(state, fi.getOriginalFile(), band);
-            state.setOriginalImageIdx(fi.getOriginalImageIdx(), band);
-            state.setImageIdx(fi.getOriginalImageIdx(), band);
+            bandS.setUploadedFileName(fi.getUploadedName());
+            bandS.setOriginalImageIdx(fi.getOriginalImageIdx());
+            bandS.setImageIdx(fi.getOriginalImageIdx());
             if (WebPlotPipeline.isRotation(req)) {
                 if (req.getRotateNorth()) {
                     state.setRotateType(PlotState.RotateType.NORTH);
@@ -449,17 +416,6 @@ public class ImagePlotBuilder {
                     state.setRotateType(PlotState.RotateType.ANGLE);
                     state.setRotationAngle(req.getRotationAngle());
                 }
-            }
-        }
-    }
-
-    private static void checkFileNames(PlotState state, File original, Band band) throws IllegalArgumentException {
-        if (original != null && original.canRead() && state.getOriginalFitsFileStr(band) == null) {
-            if (!ServerContext.isFileInPath(original)) {
-                String s = "Cannot read file - Configuration may not be setup correctly, file not in path: " +
-                        original.getPath();
-                _log.warn(s, "check property: " + ServerContext.VIS_SEARCH_PATH);
-                throw new IllegalArgumentException(s);
             }
         }
     }

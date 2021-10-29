@@ -35,11 +35,13 @@ public class Wavelength {
 
     private final Header header;
     private final BinaryTableHDU tableHDU;
+    private final int planeIdx;
     
 
-    public Wavelength(Header header, BinaryTableHDU tableHDU) {
+    public Wavelength(Header header, BinaryTableHDU tableHDU, int planeIdx) {
         this.header= header;
         this.tableHDU= tableHDU;
+        this.planeIdx= planeIdx;
     }
 
     /**
@@ -62,7 +64,7 @@ public class Wavelength {
     public double getWaveLength(ImagePt ipt) throws PixelValueException, FitsException, IOException, DataFormatException {
 
 
-        double[] pixelCoords= Wavelength.getPixelCoords(ipt, header);
+        double[] pixelCoords= Wavelength.getPixelCoords(ipt, header, planeIdx);
 
         int N = header.getIntValue("WCSAXES", -1);
         if (N==-1) {
@@ -522,12 +524,12 @@ public class Wavelength {
      * @return
      * @throws PixelValueException
      */
-    public static double[] getPixelCoords(ImagePt ipt, Header header) throws PixelValueException {
+    public static double[] getPixelCoords(ImagePt ipt, Header header, int planeIdx) throws PixelValueException {
 
         int p0 = (int) Math.round(ipt.getX() - 0.5); //x
         int p1 = (int) Math.round(ipt.getY() - 0.5); //y
 
-        int p2 = header.getIntValue("SPOT_PL", 0)-1; //z  default is 0  // todo: I think subtracting 1 is wrong, this should be looked at
+        int p2 = planeIdx-1; //z  default is 0  // todo: I think subtracting 1 is wrong, this should be looked at
         if (p2<0) p2= 0;
         int naxis1 = header.getIntValue("NAXIS1");
         int naxis2 = header.getIntValue("NAXIS2");
@@ -541,14 +543,14 @@ public class Wavelength {
     }
     //NOTE: This is the version used in javascript.  Based on the paper, the coordinate is starting from 1, not zero.
     //Since the unit test is based on the one above, I kept both to let unit test pass because this class is no longer used.
-    public static double[] getPixelCoordsCorrect(ImagePt ipt, Header header) throws PixelValueException {
+    public static double[] getPixelCoordsCorrect(ImagePt ipt, Header header, int planeIdx) throws PixelValueException {
 
         //pixel numbers refer to the center of the pixel, so we subtract 0.5, see notes above
         //As noted above, the pixel is counting from 1 to naxis j where (j=1, 2,... naxis).  Since the p = Math.round(ipt.x - 0.5)
         //starts from 0.  Thus, 1 is added here.
         int p0 = (int) Math.round(ipt.getX() - 0.5) +1 ; //x
         int p1 = (int) Math.round(ipt.getY() - 0.5) +1; //y
-        int p2 = header.getIntValue("SPOT_PL", 1) + 1;  //since SPOT_PL starts from 0
+        int p2 = planeIdx + 1;  //since planeIdx starts from 0
 
        // if (p2<0) p2= 0;
         int naxis1 = header.getIntValue("NAXIS1");
