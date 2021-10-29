@@ -18,6 +18,7 @@ export const ServerParams = {
         FULL_SCREEN : 'fullScreen',
         IMAGE_PT1 : 'ImagePt1',
         FILE_AND_HEADER : 'fah',
+        WPT : 'wpt',
         PT : 'pt',
         PT1 : 'pt1',
         PT2 : 'pt2',

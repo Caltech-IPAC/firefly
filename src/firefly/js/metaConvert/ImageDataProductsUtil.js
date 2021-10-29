@@ -18,6 +18,7 @@ import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {dispatchTableHighlight} from '../tables/TablesCntlr.js';
 import {isImageExpanded} from '../visualize/ImagePlotCntlr';
 import {DPtypes} from 'firefly/metaConvert/DataProductsType.js';
+import {showPinMessage, showTmpModal} from 'firefly/ui/PopupUtil.jsx';
 
 
 
@@ -84,15 +85,17 @@ function copyRequest(inR) {
     r.setPlotId(plotId);
     r.setPlotGroupId('extract-group');
     extractedPlotId++;
+    return r;
 }
 
 export function createSingleImageExtraction(request) {
     if (!request) return undefined;
-    const wpRequest= isArray(request) ? request.map( (r) => copyRequest(r)) : copyRequest(request)
+    const wpRequest= isArray(request) ? request.map( (r) => copyRequest(r)) : copyRequest(request);
     return () => {
         dispatchPlotImage({
             plotId:isArray(wpRequest)?wpRequest.getPlotId():undefined,
             viewerId:DEFAULT_FITS_VIEWER_ID, wpRequest});
+        showPinMessage('Pinning to Image Area');
     };
 }
 

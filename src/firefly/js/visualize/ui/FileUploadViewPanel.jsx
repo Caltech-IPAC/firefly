@@ -5,8 +5,6 @@
 import React, {useEffect, useState} from 'react';
 import shallowequal from 'shallowequal';
 import SplitPane from 'react-split-pane';
-import {get} from 'lodash';
-
 
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
@@ -28,7 +26,8 @@ import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {isAccessWorkspace, getWorkspaceConfig} from '../WorkspaceCntlr.js';
 import {getAppHiPSForMoc} from '../HiPSMocUtil.js';
 import {primePlot, getDrawLayersByType, getPlotViewAry} from '../PlotViewUtil.js';
-import {getDlAry, dispatchCreateImageLineBasedFootprintLayer, dispatchCreateRegionLayer} from '../DrawLayerCntlr.js';
+import {
+    getDlAry, dispatchCreateImageLineBasedFootprintLayer, dispatchCreateRegionLayer } from '../DrawLayerCntlr.js';
 import LSSTFootprint from '../../drawingLayers/ImageLineBasedFootprint.js';
 import {isMOCFitsFromUploadAnalsysis} from '../HiPSMocUtil.js';
 import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
@@ -46,6 +45,7 @@ import {CompleteButton,NONE} from 'firefly/ui/CompleteButton.jsx';
 import {createNewRegionLayerId} from 'firefly/drawingLayers/RegionPlot.js';
 import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
+import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField.jsx';
 
 
 export const panelKey = 'FileUploadAnalysis';
@@ -171,6 +171,7 @@ export function FileUploadViewPanel() {
                     </div>
                     <FileAnalysis {...{report, summaryModel, detailsModel,tablesOnly}}/>
                     <ImageDisplayOption/>
+                    <TableDisplayOption/>
                 </div>
                 {(isLoading) && <LoadingMessage message={loadingMsg}/>}
             </FieldGroup>
@@ -224,13 +225,13 @@ function getFirstExtWithData(parts) {
 
 
 
-function tablesOnlyResultSuccess() {
+function tablesOnlyResultSuccess(request) {
     const tableIndices = getSelectedRows(FileAnalysisType.Table);
     const imageIndices = getSelectedRows(FileAnalysisType.Image);
 
     if (tableIndices.length>0) {
         imageIndices.length>0 && showInfoPopup('Only loading the tables, ignoring the images.');
-        sendTableRequest(tableIndices, getFileCacheKey());
+        sendTableRequest(tableIndices, getFileCacheKey(), Boolean(request.tablesAsSpectrum==='spectrum'));
         return true;
     }
     else {
@@ -241,7 +242,7 @@ function tablesOnlyResultSuccess() {
 
 
 export function resultSuccess(request) {
-    if (isTablesOnly()) return tablesOnlyResultSuccess();
+    if (isTablesOnly()) return tablesOnlyResultSuccess(request);
     const fileCacheKey = getFileCacheKey();
 
     const tableIndices = getSelectedRows(FileAnalysisType.Table);
@@ -267,11 +268,11 @@ export function resultSuccess(request) {
         sendRegionRequest(fileCacheKey);
     }
     else if (isMocFits.valid) {
-        sendTableRequest(tableIndices, fileCacheKey, {[MetaConst.PREFERRED_HIPS]: getAppHiPSForMoc()}, false);
+        sendTableRequest(tableIndices, fileCacheKey, false, {[MetaConst.PREFERRED_HIPS]: getAppHiPSForMoc()}, false);
     } else if ( isLsstFootprintTable(currentDetailsModel) ) {
         sendLSSTFootprintRequest(fileCacheKey, request.fileName, tableIndices[0]);
     } else {
-        sendTableRequest(tableIndices, fileCacheKey);
+        sendTableRequest(tableIndices, fileCacheKey, Boolean(request.tablesAsSpectrum==='spectrum'));
         sendImageRequest(imageIndices, request, fileCacheKey);
     }
 }
@@ -391,6 +392,24 @@ function getFileCacheKey() {
     // because this value is stored in different fields.. so we have to check on what options were selected to determine the active value
     const uploadSrc = getFieldVal(panelKey, uploadOptions) || FILE_ID;
     return getFieldVal(panelKey, uploadSrc);
+}
+
+function TableDisplayOption() {
+
+    const [selectedTables] = useStoreConnector(() => getFileFormat() ? getSelectedRows('Table') : [] );
+    if ( selectedTables.length < 1) return null;
+
+    return (
+        <div style={{marginTop: 3}}>
+            <div style={{padding:'5px 0 9px 0'}}>
+                <CheckboxGroupInputField
+                    options={[{value: 'spectrum', tooltip:'Treat Tables As Spectrum',label:'Treat Tables As Spectrum'}]}
+                    fieldKey='tablesAsSpectrum'
+                    labelWidth={90}
+                />
+            </div>
+        </div>
+    );
 }
 
 function ImageDisplayOption() {
@@ -592,13 +611,15 @@ function sendRegionRequest(fileCacheKey) {
     }
 }
 
-function sendTableRequest(tableIndices, fileCacheKey, metaData, loadToUI= true) {
+function sendTableRequest(tableIndices, fileCacheKey, treatAsSpectrum, metaData={}, loadToUI= true) {
     const {fileName, parts=[]} = currentReport;
 
     tableIndices.forEach((idx) => {
         const {index} = parts[idx];
         const title = parts.length > 1 ? `${fileName}-${index}` : fileName;
-        const options=  metaData && { META_INFO: metaData};
+        const META_INFO= {...metaData};
+        if (treatAsSpectrum) META_INFO[MetaConst.DATA_TYPE_HINT]= 'spectrum';
+        const options=  {META_INFO};
         const tblReq = makeFileRequest(title, fileCacheKey, null, options);
         tblReq.tbl_index = index;
         loadToUI ? dispatchTableSearch(tblReq) : dispatchTableFetch(tblReq);
@@ -639,7 +660,7 @@ function sendImageRequest(imageIndices, request, fileCacheKey) {
                 dispatchPlotImage({plotId, wpRequest, viewerId});
             });
         } else {
-            const extList = imageIndices.map((idx) => get(parts, [idx, 'index'])).join();
+            const extList = imageIndices.map((idx) => parts?.[idx]?.index).join();
 
             wpRequest.setMultiImageExts(extList);
             if (!extList.includes('-1')) wpRequest.setAttributes({[PlotAttribute.POST_TITLE]:`- ext. ${extList}`});

@@ -3,7 +3,7 @@
  */
 
 
-import {get, isEmpty} from 'lodash';
+import {isEmpty} from 'lodash';
 import React from 'react';
 import PointDataObj from '../visualize/draw/PointDataObj.js';
 import {DrawSymbol} from '../visualize/draw/DrawSymbol.js';
@@ -17,7 +17,8 @@ import {formatWorldPt} from '../visualize/ui/WorldPtFormat.jsx';
 import {FixedPtControl} from './CatalogUI.jsx';
 import {flux} from 'firefly/core/ReduxFlux.js';
 import Point from 'firefly/visualize/Point.js';
-import {sprintf} from 'firefly/externalSource/sprintf.js';
+import CsysConverter from 'firefly/visualize/CsysConverter.js';
+import DrawLayerCntlr from 'firefly/visualize/DrawLayerCntlr.js';
 
 const ID= 'SEARCH_TARGET';
 const TYPE_ID= 'SEARCH_TARGET_TYPE';
@@ -41,7 +42,7 @@ function creator(initPayload, presetDefaults) {
 
     const options= {
         plotId,
-        displayGroupId,
+        displayGroupId: displayGroupId ?? drawLayerId,
         layersPanelLayoutId,
         titlePrefix,
         searchTargetPoint,
@@ -67,11 +68,25 @@ function getLayerChanges(drawLayer, action) {
         pv= getPlotViewById(visRoot(),plotId);
         plot= primePlot(pv);
     }
-    const drawData=  (action.type===UPDATE_SEARCH_TARGET) ? undefined : drawLayer.drawData;
-    if (action.type===ImagePlotCntlr.RECENTER) {
-        setTimeout(() => { flux.process({ type: UPDATE_SEARCH_TARGET, payload: { plotId}}); },1);
+    let drawData;
+    let drawingDef= drawLayer.drawingDef;
+    switch (action.type) {
+        case ImagePlotCntlr.RECENTER :
+            setTimeout(() => flux.process({ type: UPDATE_SEARCH_TARGET, payload: {plotId}}), 1);
+            drawData= drawLayer.drawData;
+            break;
+        case ImagePlotCntlr.UPDATE_SEARCH_TARGET:
+            drawData= undefined;
+            break;
+        case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
+            const {changes}= action.payload;
+            drawData= undefined;
+            if (changes.color) {
+                drawingDef= {...drawingDef,color:changes.color};
+            }
+            break;
     }
-    return { title:getTitle(pv, plot, drawLayer), drawData};
+    return { title:getTitle(pv, plot, drawLayer), drawingDef, drawData};
 }
 
 
@@ -81,7 +96,7 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 }
 
 function getTitle(pv, plot, dl) {
-    const pt= dl.searchTargetPoint || get(plot,['attributes',PlotAttribute.FIXED_TARGET]);
+    const pt= dl.searchTargetPoint || plot?.attributes?.[PlotAttribute.FIXED_TARGET];
     if (!pt) return null;
     if (!pv) pv= getActivePlotView(visRoot());
 
@@ -99,7 +114,20 @@ function getTitle(pv, plot, dl) {
         preStr=  dl.titlePrefix+' ' || 'Image Point: ';
         const titleEmLen= Math.min(preStr.length+2+16,24);
         minWidth= (titleEmLen+8)+'em';
-        ptDiv= (<div> {`(${Math.round(pt.x)}, ${Math.round(pt.y)})`} </div>);
+        const cc= CsysConverter.make(plot);
+        const convertedWp= cc.getWorldCoords(pt);
+        // const convertedWp= '';
+        //{`(${Math.round(pt.x)}, ${Math.round(pt.y)})${convertedWp&&' '+formatWorldPt(convertedWp,3,false)}`}
+        // {`(${Math.round(pt.x)}, ${Math.round(pt.y)})`}
+        ptDiv= (
+            <div>
+                {`(${Math.round(pt.x)}, ${Math.round(pt.y)})`}
+                {convertedWp&&
+                    <div style={{paddingTop:3}}>
+                        {formatWorldPt(convertedWp,3,false)}
+                    </div>
+                }
+            </div>);
     }
     return (
         <div style={{display: 'flex', justifyContent: 'space-between', alignItems:'center', width: 100, minWidth}}>

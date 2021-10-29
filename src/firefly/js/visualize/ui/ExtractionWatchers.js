@@ -10,7 +10,7 @@ import {
     TABLE_LOADED,
     TABLE_REMOVE,
     TABLE_SELECT,
-    TABLE_UPDATE
+    TABLE_UPDATE, TBL_RESULTS_ACTIVE
 } from 'firefly/tables/TablesCntlr.js';
 import {getCellValue, getColumnIdx, getMetaEntry, getTblById} from 'firefly/tables/TableUtil.js';
 import {MetaConst} from 'firefly/data/MetaConst.js';
@@ -21,7 +21,7 @@ import {makeImagePt, parseImagePt} from 'firefly/visualize/Point.js';
 import {
     dispatchAttachLayerToPlot,
     dispatchCreateDrawLayer,
-    dispatchDestroyDrawLayer
+    dispatchDestroyDrawLayer, dispatchModifyCustomField
 } from 'firefly/visualize/DrawLayerCntlr.js';
 import SearchTarget from 'firefly/drawingLayers/SearchTarget.js';
 import {findPlotViewUsingFitsPathMeta} from 'firefly/visualize/saga/CatalogWatcher.js';
@@ -34,7 +34,7 @@ export function addZAxisExtractionWatcher(tbl_id) {
         id: `table-zaxis-watcher-${idCnt}--`+tbl_id,
         callback:zAxisExtractionTableWatcher,
         params:{tbl_id},
-        actions:[TABLE_LOADED,TABLE_REMOVE,TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE]
+        actions:[TBL_RESULTS_ACTIVE,TABLE_LOADED,TABLE_REMOVE,TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE]
     });
     dispatchAddActionWatcher( {
         id: 'plot-zaxis-watcher-${idCnt}--'+tbl_id,
@@ -57,38 +57,53 @@ function zAxisExtractionPlotWatcher(action,cancelSelf,{tbl_id}) {
     return {tbl_id};
 }
 
-
+let drawingLayerIds= [];
+const UNSELECTED_COLOR= 'blue';
+const SELECTED_COLOR= 'orange';
 
 function zAxisExtractionTableWatcher(action,cancelSelf,{tbl_id, drawLayerId=undefined, color, firstLoadComplete}) {
     if (action.payload.tbl_id!==tbl_id) return {tbl_id, drawLayerId, color};
     if (action.type===TABLE_REMOVE) {
         cancelSelf();
         drawLayerId && dispatchDestroyDrawLayer(drawLayerId);
+        drawingLayerIds= drawingLayerIds.filter( (id) => id!==drawLayerId );
         return;
-    }
+   }
     const {type}= action;
     if ((type===TABLE_UPDATE || type===TABLE_LOADED) && !firstLoadComplete) {
         firstLoadComplete= true;
         const {table,plot}= getInfo(tbl_id);
         const cubeIdx= getImageCubeIdx(plot);
-        dispatchTableHighlight(tbl_id,cubeIdx,table.request)
+        dispatchTableHighlight(tbl_id,cubeIdx,table.request);
+        return {tbl_id, drawLayerId, color, firstLoadComplete};
+    }
+    if (type===TBL_RESULTS_ACTIVE) {
+        const {plot}= getInfo(tbl_id);
+        drawingLayerIds
+            .filter( (id) => id!==drawLayerId )
+            .forEach( (id) => dispatchModifyCustomField(id, {color:UNSELECTED_COLOR}, plot.plotId ));
+        dispatchModifyCustomField(drawLayerId, {color:SELECTED_COLOR}, plot.plotId );
         return {tbl_id, drawLayerId, color, firstLoadComplete};
     }
     if (!isTargetCube(tbl_id)) return {tbl_id, drawLayerId, color, firstLoadComplete};
     const {table,pv,plot}= getInfo(tbl_id);
 
     if (!drawLayerId) {
+        drawingLayerIds.forEach( (id) => dispatchModifyCustomField(id, {color:UNSELECTED_COLOR}, plot.plotId ));
         idCnt++;
         drawLayerId= `zaxis-drill-point-${idCnt}--`+tbl_id;
         const imPt= parseImagePt(getMetaEntry(table,MetaConst.FITS_IM_PT));
         const newDL = dispatchCreateDrawLayer(SearchTarget.TYPE_ID,
             {
+                plotId: plot.plotId,
                 drawLayerId,
                 searchTargetPoint: makeImagePt(Math.trunc(imPt.x)+.5, Math.trunc(imPt.y)+.5),
-                titlePrefix: 'Extraction Point ',
+                titlePrefix: table.title,
                 canUserDelete: true,
+                color: SELECTED_COLOR
             });
         dispatchAttachLayerToPlot(newDL.drawLayerId, [plot.plotId], false);
+        drawingLayerIds.push(newDL.drawLayerId);
     }
 
     const plane= getCellValue(table,table.highlightedRow,'plane');

@@ -255,7 +255,8 @@ function drag(drawLayer,action) {
     const newCurrent = drawLayer.moveHead ? imagePt : drawLayer.currentPt;
 
     const drawAry= makeSelectObj(newFirst, newCurrent, undefined, drawLayer.offsetCal, cc);
-    return Object.assign({firstPt: newFirst, currentPt:newCurrent, activePt:undefined}, makeBaseReturnObj(newFirst, newCurrent,drawAry));
+    const line= Object.assign({firstPt: newFirst, currentPt:newCurrent, activePt:undefined}, makeBaseReturnObj(newFirst, newCurrent,drawAry));
+    return line;
 }
 
 function end(action) {
@@ -320,7 +321,7 @@ function makeSelectObj(firstPt,currentPt, activePt, offsetCal, cc) {
     obj.textLoc=TextLocation.LINE_TOP_STACK;
     obj.texttBaseLine = 'middle';
     obj.drawEvenIfWrapping= true;
-    obj.supportedDrawingTypes=  (hasWCSProjection(cc)) ? DrawingType.ImageCoordsOnly : DrawingType.WcsCoordsOnly;
+    obj.supportedDrawingTypes=  (hasWCSProjection(cc)) ?  DrawingType.WcsCoordsOnly : DrawingType.ImageCoordsOnly;
     const retval= [obj];
     if (activePt) {
         retval.push(

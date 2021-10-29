@@ -43,6 +43,15 @@ export function showModal(content, show=true) {
     }
 }
 
+export function showTmpModal(content, displayTime=3000) {
+    showModal(content);
+    setTimeout( () => showModal(undefined,false), displayTime);
+}
+
+export function showPinMessage(text) {
+    showTmpModal(
+        ( <div style={{fontSize:'16pt', padding: 10}}> {text} </div> ), 500 );
+}
 
 /**
  * Creates and shows the modal dialog.

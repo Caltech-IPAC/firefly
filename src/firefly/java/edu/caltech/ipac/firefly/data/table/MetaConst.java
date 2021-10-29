@@ -67,6 +67,11 @@ public class MetaConst {
     public static final String FITS_EXTRACTION_TYPE= "FitsExtractionType";
 
     /**
+     * An world point in a fits FILE that is associated with this table
+     */
+    public static final String FITS_WORLD_PT= "FitsWorldPoint";
+
+    /**
      * An image point in a fits FILE that is associated with this table
      */
     public static final String FITS_IM_PT= "FitsImPoint";

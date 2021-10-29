@@ -35,6 +35,11 @@ export const MetaConst = {
     FITS_EXTRACTION_TYPE: 'FitsExtractionType',
 
     /**
+     * An world point in a fits FILE that is associated with this table
+     */
+    FITS_WORLD_PT: 'FitsWorldPoint',
+
+    /**
      * An image point in a fits FILE that is associated with this table
      */
     FITS_IM_PT: 'FitsImPoint',

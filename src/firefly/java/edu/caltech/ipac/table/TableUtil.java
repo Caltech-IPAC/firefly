@@ -46,7 +46,7 @@ public class TableUtil {
     public static DataGroup readAnyFormat(File inf, int tableIndex, Map<String, String> metaInfo) throws IOException {
         Format format = guessFormat(inf);
         if (format == Format.IPACTABLE) {
-            return IpacTableReader.read(inf);
+            return IpacTableReader.read(inf,metaInfo);
         } else if (format == Format.VO_TABLE) {
             DataGroup[] tables = VoTableReader.voToDataGroups(inf.getAbsolutePath(), tableIndex);
             if (tables.length > 0) {

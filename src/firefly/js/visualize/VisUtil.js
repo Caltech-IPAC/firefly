@@ -1150,6 +1150,39 @@ export function getXorYinEquation(beginPt,endPt, independentValue) {
 }
 
 
+export function getLinePointAry(pt1, pt2) {
+    const {x:x1,y:y1} = pt1;
+    const {x:x2,y:y2} = pt2;
+
+    // delta X and Y in image pixels
+    const deltaX = Math.abs(x2-x1);
+    const deltaY = Math.abs(y2-y1);
+
+    let x, y;
+    const pts = [];
+    if (deltaX > deltaY) {
+        const slope = (y2-y1)/(x2-x1);
+        const yIntercept = y1-slope*x1;
+        const minX = Math.trunc(Math.min(x1, x2));
+        const maxX = Math.trunc(Math.max(x1, x2));
+        for (x=minX; x<=maxX; x+=1) {
+            y = Math.trunc(slope*x + yIntercept);
+            pts.push(makeImagePt(x,y));
+        }
+        return pts;
+    } else if (y1!==y2) {
+        const islope = (x2-x1)/(y2-y1);
+        const xIntercept = x1-islope*y1;
+        const minY = Math.trunc(Math.min(y1, y2));
+        const maxY = Math.trunc(Math.max(y1, y2));
+        for (y=minY; y<=maxY; y+=1) {
+            x = Math.trunc(islope*y + xIntercept);
+            pts.push(makeImagePt(x,y));
+        }
+        return pts;
+    }
+    return null;
+}
 
 
 

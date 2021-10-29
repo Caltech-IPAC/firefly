@@ -79,7 +79,7 @@ function getSingleDataProductWrapper(makeReq) {
         const r= get(retVal,'single');
         const activate= createSingleImageActivate(r,imageViewerId,table.tbl_id,row);
         const extraction= createSingleImageExtraction(r);
-        return Promise.resolve( dpdtImage('Image', activate, extraction));
+        return Promise.resolve( dpdtImage('Image', activate, extraction, undefined, {extractionText:'Pin Image'}));
     };
 }
 
@@ -117,7 +117,7 @@ function getRelatedDataProductWrapper(makeReq) {
         if (retVal) {
             const activate= createRelatedDataGridActivate(retVal,imageViewerId,table.tbl_id, highlightPlotId);
             const extraction= retVal.standard ? createSingleImageExtraction(retVal.standard) : undefined;
-            return Promise.resolve( dpdtImage('Images', activate, extraction));
+            return Promise.resolve( dpdtImage('Images', activate, extraction,undefined, {extractionText:'Pin Image'} ));
         }
         else {
             return Promise.resolve( {});

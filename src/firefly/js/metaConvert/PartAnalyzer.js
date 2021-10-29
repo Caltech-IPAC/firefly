@@ -231,7 +231,7 @@ function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, titl
         return dpdtTable(ddTitleStr,
             createChartTableActivate(false, fileOnServer,titleInfo,activateParams, tbl_index, dataTypeHint, cNames, cUnits),
             createTableExtraction(fileOnServer,titleInfo,tbl_index, cNames, cUnits, dataTypeHint),
-            undefined, {paIdx:tbl_index,requestDefault});
+            undefined, {extractionText: 'Pin Table', paIdx:tbl_index,requestDefault});
     }
     else {
 
@@ -245,7 +245,7 @@ function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, titl
             return dpdtChartTable(ddTitleStr,
                 createChartSingleRowArrayActivate(fileOnServer,'Row 1 Chart',activateParams,xCol,yCol,0,tbl_index, dataTypeHint),
                 createTableExtraction(fileOnServer,'Row 1 Chart',tbl_index, cNames, cUnits, dataTypeHint),
-                undefined, {paIdx:tbl_index, chartTableDefOption, interpretedData, requestDefault});
+                undefined, {extractionText: 'Pin Table', paIdx:tbl_index, chartTableDefOption, interpretedData, requestDefault});
         }
         else {
             const imageAsTableColCnt= isImageAsTable(part,partFormat) ? getImageAsTableColCount(part,partFormat) : 0;
@@ -254,7 +254,7 @@ function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, titl
             return dpdtChartTable(ddTitleStr,
                 createChartTableActivate(true, fileOnServer,titleInfo,activateParams,chartInfo,tbl_index,dataTypeHint, cNames,cUnits,connectPoints),
                 createTableExtraction(fileOnServer,titleInfo,tbl_index, cNames, cUnits, dataTypeHint),
-                undefined, {paIdx:tbl_index, chartTableDefOption, interpretedData, requestDefault});
+                undefined, {extractionText: 'Pin Table', paIdx:tbl_index, chartTableDefOption, interpretedData, requestDefault});
         }
     }
 }
@@ -282,7 +282,7 @@ function analyzeImageResult(part, request, table, row, fileFormat, fileOnServer,
         createSingleImageActivate(newReq,imageViewerId,table.tbl_id,row),
         createSingleImageExtraction(newReq),
         'image-'+0,
-        {request:newReq, override, interpretedData, requestDefault:Boolean(defaultPart)});
+        {extractionText: 'Pin Image', request:newReq, override, interpretedData, requestDefault:Boolean(defaultPart)});
 }
 
 

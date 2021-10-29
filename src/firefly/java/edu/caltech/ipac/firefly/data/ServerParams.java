@@ -31,6 +31,7 @@ public class ServerParams {
     public static final String FULL_SCREEN = "fullScreen";
     public static final String IMAGE_PT1 = "ImagePt1";
     public static final String FILE_AND_HEADER = "fah";
+    public static final String WPT = "wpt";
     public static final String PT = "pt";
     public static final String PT1 = "pt1";
     public static final String PT2 = "pt2";
