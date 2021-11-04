@@ -61,10 +61,10 @@ function fileExtensionSingleProductAnalysis(request,idx=0) {
     if (i > 0 &&  i < url.length - 1) ext = url.substring(i+1).toLowerCase();
 
     if (ext.includes('tar')) {
-        return dpdtMessageWithDownload('Cannot not display TAR file, you may only download it', 'Download TAR File', url);
+        return dpdtMessageWithDownload('Cannot display TAR file, you may only download it', 'Download TAR File', url);
     }
     else if (ext.includes('pdf')) {
-        return dpdtMessageWithDownload('Cannot not display PDF file, you may only download it', 'Download PDF File', url);
+        return dpdtMessageWithDownload('Cannot display PDF file, you may only download it', 'Download PDF File', url);
     }
     else if (ext.includes('jpeg') || ext.includes('png') || ext.includes('jpg') || ext.includes('gig')) {
         return dpdtPNG('Show PNG image',url,'dlt-'+idx);
