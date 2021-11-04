@@ -9,6 +9,9 @@
 
 .banner__left {
     flex-grow: 0;
+    background-color: #3d3d3d;
+    border-radius: 0 20px 0 0;
+    border-top: 1px solid #eee;
 }
 
 .banner__middle {
