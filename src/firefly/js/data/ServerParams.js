@@ -76,6 +76,7 @@ export const ServerParams = {
         MASK_BITS: 'maskBits',
 
         EXT_TYPE: 'extType',
+        EXTRACTION_FLOAT_SIZE: 'extractionFloatSize',
         IMAGE: 'image',
         TOOL_TIP:  'toolTip',
         DS9_REGION_DATA: 'ds9RegionData',

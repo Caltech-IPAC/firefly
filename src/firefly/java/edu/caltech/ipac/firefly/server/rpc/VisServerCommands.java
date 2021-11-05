@@ -32,7 +32,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
@@ -200,6 +199,7 @@ public class VisServerCommands {
 
             PlotState state= sp.getState();
             String exType= sp.getRequired(ServerParams.EXTRACTION_TYPE);
+            boolean useFloat = sp.getOptionalInt(ServerParams.EXTRACTION_FLOAT_SIZE,64)==32;
             int ptSize= sp.getOptionalInt(ServerParams.POINT_SIZE,1);
             boolean relatedHDUs= sp.getOptionalBoolean(ServerParams.RELATED_HDUS, false);
             int hduNum= sp.getRequiredInt(ServerParams.HDU_NUM);
@@ -230,13 +230,22 @@ public class VisServerCommands {
             }
 
 
+
             res.setContentType("application/octet-stream");
-            ByteBuffer byteBuf = ByteBuffer.allocateDirect(extractAry.length * Double.BYTES); //8 bytes per float
+            ByteBuffer byteBuf = useFloat ?
+                    ByteBuffer.allocateDirect(extractAry.length * Float.BYTES) : //4 bytes per float
+                    ByteBuffer.allocateDirect(extractAry.length * Double.BYTES); //8 bytes per float
             byteBuf.order(ByteOrder.nativeOrder());
             byteBuf.order(ByteOrder.LITTLE_ENDIAN);
-            DoubleBuffer buffer = byteBuf.asDoubleBuffer();
-            buffer.put(extractAry);
-            buffer.position(0);
+            if (useFloat) {
+                float[] floatExtractAry= new float[extractAry.length];
+                for(int i=0;(i<floatExtractAry.length);i++) floatExtractAry[i]= (float)extractAry[i];
+                byteBuf.asFloatBuffer().put(floatExtractAry);
+            }
+            else {
+                byteBuf.asDoubleBuffer().put(extractAry);;
+            }
+            byteBuf.position(0);
             WritableByteChannel chan= Channels.newChannel(res.getOutputStream());
             chan.write(byteBuf);
             chan.close();

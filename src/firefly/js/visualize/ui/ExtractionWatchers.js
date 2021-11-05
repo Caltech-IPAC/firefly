@@ -15,13 +15,13 @@ import {
 import {getCellValue, getColumnIdx, getMetaEntry, getTblById} from 'firefly/tables/TableUtil.js';
 import {MetaConst} from 'firefly/data/MetaConst.js';
 import {
-    convertHDUIdxToImageIdx, getHDU, getHDUIndex, getImageCubeIdx, isImageCube, primePlot
+    convertHDUIdxToImageIdx, getDrawLayerById, getHDU, getHDUIndex, getImageCubeIdx, isImageCube, primePlot
 } from 'firefly/visualize/PlotViewUtil.js';
 import {makeImagePt, parseImagePt} from 'firefly/visualize/Point.js';
 import {
     dispatchAttachLayerToPlot,
     dispatchCreateDrawLayer,
-    dispatchDestroyDrawLayer, dispatchModifyCustomField
+    dispatchDestroyDrawLayer, dispatchModifyCustomField, dlRoot
 } from 'firefly/visualize/DrawLayerCntlr.js';
 import SearchTarget from 'firefly/drawingLayers/SearchTarget.js';
 import {findPlotViewUsingFitsPathMeta} from 'firefly/visualize/saga/CatalogWatcher.js';
@@ -62,7 +62,8 @@ const UNSELECTED_COLOR= 'blue';
 const SELECTED_COLOR= 'orange';
 
 function zAxisExtractionTableWatcher(action,cancelSelf,{tbl_id, drawLayerId=undefined, color, firstLoadComplete}) {
-    if (action.payload.tbl_id!==tbl_id) return {tbl_id, drawLayerId, color};
+    const retData = () => ({tbl_id, drawLayerId, color, firstLoadComplete});
+    if (action.payload.tbl_id!==tbl_id) return retData();
     if (action.type===TABLE_REMOVE) {
         cancelSelf();
         drawLayerId && dispatchDestroyDrawLayer(drawLayerId);
@@ -75,17 +76,21 @@ function zAxisExtractionTableWatcher(action,cancelSelf,{tbl_id, drawLayerId=unde
         const {table,plot}= getInfo(tbl_id);
         const cubeIdx= getImageCubeIdx(plot);
         dispatchTableHighlight(tbl_id,cubeIdx,table.request);
-        return {tbl_id, drawLayerId, color, firstLoadComplete};
+        return retData();
     }
     if (type===TBL_RESULTS_ACTIVE) {
         const {plot}= getInfo(tbl_id);
+        if (!plot) return retData();
         drawingLayerIds
             .filter( (id) => id!==drawLayerId )
-            .forEach( (id) => dispatchModifyCustomField(id, {color:UNSELECTED_COLOR}, plot.plotId ));
+            .forEach( (id) => {
+                const dl= getDrawLayerById(dlRoot(),id);
+                if (dl) dispatchModifyCustomField(id, {color:dl.drawingDef.preferedColor??UNSELECTED_COLOR}, plot.plotId);
+            });
         dispatchModifyCustomField(drawLayerId, {color:SELECTED_COLOR}, plot.plotId );
-        return {tbl_id, drawLayerId, color, firstLoadComplete};
+        return retData();
     }
-    if (!isTargetCube(tbl_id)) return {tbl_id, drawLayerId, color, firstLoadComplete};
+    if (!isTargetCube(tbl_id)) return retData();
     const {table,pv,plot}= getInfo(tbl_id);
 
     if (!drawLayerId) {
@@ -97,6 +102,7 @@ function zAxisExtractionTableWatcher(action,cancelSelf,{tbl_id, drawLayerId=unde
             {
                 plotId: plot.plotId,
                 drawLayerId,
+                layersPanelLayoutId: 'z-axis-layout',
                 searchTargetPoint: makeImagePt(Math.trunc(imPt.x)+.5, Math.trunc(imPt.y)+.5),
                 titlePrefix: table.title,
                 canUserDelete: true,
@@ -106,10 +112,11 @@ function zAxisExtractionTableWatcher(action,cancelSelf,{tbl_id, drawLayerId=unde
         drawingLayerIds.push(newDL.drawLayerId);
     }
 
+    if (isNaN(table.highlightedRow)) return retData();
     const plane= getCellValue(table,table.highlightedRow,'plane');
     const primeIdx= convertHDUIdxToImageIdx(pv,getHDUIndex(pv,plot),plane-1);
     if (pv.primeIdx!==primeIdx) dispatchChangePrimePlot({plotId:plot.plotId,primeIdx});
-    return {tbl_id, drawLayerId, color, firstLoadComplete};
+    return retData();
 }
 
 
@@ -118,7 +125,7 @@ function isTargetCube(tbl_id) {
     if (!pv || !plot|| !table || extractionType!=='z-axis') return;
     if (!isImageCube(plot)) return false;
     const imPt= parseImagePt(getMetaEntry(table,MetaConst.FITS_IM_PT));
-    if (isEmpty(hdus) || !imPt || !Object.values(hdus).includes(hduNum)) return false;
+    if (isEmpty(hdus) || !imPt || !Object.keys(hdus).includes(hduNum+'')) return false;
     if (getColumnIdx(table, 'plane') <0)  return false;
     return true;
 }
@@ -143,8 +150,8 @@ function getInfo(tbl_id) {
 function getHDUs(table) {
     const hduPairs= getMetaEntry(table,MetaConst.FITS_IMAGE_HDU);
     return hduPairs.split(';').reduce( (res,str) => {
-        const [k,v]= str.split('=');
-        res[k]=Number(v);
+        const [v,k]= str.split('=');
+        res[k]=v;
         return res;
     },{});
 }

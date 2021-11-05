@@ -2,11 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import React, {memo, useContext, useState, useEffect} from 'react';
-import {string,array,object} from 'prop-types';
+import {string,array,object,bool} from 'prop-types';
 import {get, isFunction, isArray} from 'lodash';
 import {useStoreConnector} from '../../ui/SimpleComponent';
-import { NewPlotMode, dispatchAddViewer, dispatchViewerUnmounted, IMAGE, PLOT2D, SINGLE, GRID,
-    getViewer, getMultiViewRoot
+import { NewPlotMode, dispatchAddViewer, dispatchViewerUnmounted, IMAGE, PLOT2D, SINGLE, GRID
 } from '../MultiViewCntlr.js';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 import {ImageMetaDataToolbar} from './ImageMetaDataToolbar.jsx';
@@ -54,14 +53,14 @@ export function MultiProductViewer ({viewerId, ...props}) {
 MultiProductViewer.propTypes= {
     viewerId : string,
     metaDataTableId : string,
+    enableExtraction: bool
 };
 
 
-const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId, noProductMessage}) => {
+const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId, noProductMessage, enableExtraction=false}) => {
     const {renderTreeId} = useContext(RenderTreeIdCtx);
     const [currentCTIChoice, setCurrentCTIChoice] = useState(undefined);
     const [lookupKey, setLookKey] = useState(undefined);
-    // const [activateParams, setActivateParams]= useState(undefined);
     const [dataProductsState, serviceParamsAry]= useStoreConnector(
         (old) => {
             const newDp= getDataProducts(dataProductRoot(),dpId)||{};
@@ -76,8 +75,9 @@ const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId, 
     const {displayType='unsupported', menu,fileMenu,
         message,url, isWorkingState, menuKey,
         activeMenuLookupKey,singleDownload= false,
-        chartTableDefOption=SHOW_CHART, imageActivate, extraction, extractionText,
+        chartTableDefOption=SHOW_CHART, imageActivate, extractionText,
         allowsInput=false, serDefParams= undefined, noProductsAvailable=false}= dataProductsState;
+    const extraction= enableExtraction && dataProductsState.extraction;
 
     const searchParams= getSearchParams(serviceParamsAry,activeMenuLookupKey,menuKey);
 
@@ -129,7 +129,8 @@ const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId, 
     let makeDropDown;
     if (menu?.length>1 || fileMenu?.menu?.length>1 || extraction) {
         const showMenu= !singleDownload || singleDownload && displayType===DPtypes.DOWNLOAD_MENU_ITEM;
-        makeDropDown= getMakeDropdown(dpId, dataProductsState, showMenu, doResetButton, extraction, extractionText, resetAllSearchParams);
+        makeDropDown= getMakeDropdown(
+            dpId, dataProductsState, showMenu, doResetButton, extraction, extractionText, resetAllSearchParams);
     }
 
 

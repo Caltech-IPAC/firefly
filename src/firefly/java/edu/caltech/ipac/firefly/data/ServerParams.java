@@ -176,6 +176,7 @@ public class ServerParams {
     public static final String TILE_SIZE = "tileSize";
     public static final String POINT_SIZE= "pointSize";
     public static final String EXTRACTION_TYPE= "extractionType";
+    public static final String EXTRACTION_FLOAT_SIZE= "extractionFloatSize";
     public static final String HDU_NUM= "hduNum";
     public static final String RELATED_HDUS= "relatedHDUs";
     public static final String BACK_TO_URL= "backToUrl";

@@ -403,7 +403,9 @@ function TableDisplayOption() {
         <div style={{marginTop: 3}}>
             <div style={{padding:'5px 0 9px 0'}}>
                 <CheckboxGroupInputField
-                    options={[{value: 'spectrum', tooltip:'Treat Tables As Spectrum',label:'Treat Tables As Spectrum'}]}
+                    options={[{value: 'spectrum',
+                        title:'If possible - interpret table columns names to fit into a spectrum data model',
+                        label:'Attempt to interpret tables as spectra'}]}
                     fieldKey='tablesAsSpectrum'
                     labelWidth={90}
                 />

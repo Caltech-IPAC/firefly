@@ -68,7 +68,7 @@ function getLayerChanges(drawLayer, action) {
         pv= getPlotViewById(visRoot(),plotId);
         plot= primePlot(pv);
     }
-    let drawData;
+    let drawData= drawLayer.drawData;
     let drawingDef= drawLayer.drawingDef;
     switch (action.type) {
         case ImagePlotCntlr.RECENTER :
@@ -84,6 +84,11 @@ function getLayerChanges(drawLayer, action) {
             if (changes.color) {
                 drawingDef= {...drawingDef,color:changes.color};
             }
+            break;
+        case DrawLayerCntlr.CHANGE_DRAWING_DEF:
+            drawingDef= action.payload.drawingDef;
+            drawingDef.preferedColor= drawingDef.color;
+            drawData= computeDrawData({...drawLayer,drawingDef});
             break;
     }
     return { title:getTitle(pv, plot, drawLayer), drawingDef, drawData};

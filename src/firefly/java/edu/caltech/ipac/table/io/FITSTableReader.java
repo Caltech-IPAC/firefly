@@ -275,7 +275,7 @@ public final class FITSTableReader
         }
         TableMeta meta= dataGroup.getTableMeta();
         meta.addKeyword(MetaConst.FITS_IM_PT, pt.toString());
-        meta.addKeyword(MetaConst.FITS_WORLD_PT, wpt.toString());
+        if (wpt!=null) meta.addKeyword(MetaConst.FITS_WORLD_PT, wpt.toString());
         meta.addKeyword(MetaConst.FITS_IMAGE_HDU, makeMetaEntryForHDUs(results));
         meta.addKeyword(MetaConst.FITS_FILE_PATH, ServerContext.replaceWithPrefix(f));
         meta.addKeyword(MetaConst.FITS_EXTRACTION_TYPE, "z-axis");
@@ -363,7 +363,8 @@ public final class FITSTableReader
                 ptAry, f, refHduNum, plane, allMatchingHDUs, drillSize );
         ArrayList<DataType> dataTypes = new ArrayList<>();
         int len= results.get(0).getAryData().length;
-        if (wptAry!=null) {
+        boolean hasWpt= wptAry!=null && wptAry.length==ptAry.length;
+        if (hasWpt) {
             dataTypes.add(new DataType("offset", Double.class, "offset", "arcsec", null, null));
             dataTypes.add(new DataType("ra",Double.class, "ra", "deg", null, null));
             dataTypes.add(new DataType("dec",Double.class, "dec","deg", null, null ));
@@ -385,7 +386,7 @@ public final class FITSTableReader
             aRow.setDataElement("pixOffset",rnd(VisUtil.computeDistance(ptAry[0],ptAry[i]), 1));
             aRow.setDataElement("x",(int)Math.rint(ptAry[i].getX()));
             aRow.setDataElement("y",(int)Math.rint(ptAry[i].getY()));
-            if (wptAry!=null) {
+            if (hasWpt) {
                 aRow.setDataElement("offset",rnd(VisUtil.computeDistance(wptAry[0],wptAry[i])*3600,3));
                 aRow.setDataElement("ra",rnd(wptAry[i].getX(),7));
                 aRow.setDataElement("dec",rnd(wptAry[i].getY(),7));
@@ -405,7 +406,7 @@ public final class FITSTableReader
         meta.addKeyword(MetaConst.DEFAULT_CHART_X_COL, wptAry!=null ? "offset" : "pixOffset");
         meta.addKeyword(MetaConst.DEFAULT_CHART_Y_COL, defYCol);
         meta.addKeyword(MetaConst.IMAGE_COLUMN, "x;y");
-        meta.addKeyword(MetaConst.CATALOG_OVERLAY_TYPE, "IMAGE_PTS");
+        meta.addKeyword(MetaConst.CATALOG_OVERLAY_TYPE, hasWpt ? "TRUE" : "IMAGE_PTS");
 
         dataGroup.trimToSize();
         return dataGroup;

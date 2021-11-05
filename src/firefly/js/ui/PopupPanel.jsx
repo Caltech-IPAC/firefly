@@ -23,7 +23,9 @@ export const PopupPanel= memo((props) => {
         setLayout(layoutPosition);
     };
 
-    const askParentToClose= () => requestToClose?.();
+    const askParentToClose= () => {
+        requestToClose?.();
+    };
     const onMouseEnter= () => mouseInDialog?.(true);
     const onMouseLeave= () => mouseInDialog?.(false);
 

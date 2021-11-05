@@ -31,7 +31,8 @@ export default {factoryDef, TYPE_ID}; // every draw layer must default export wi
 var idCnt=0;
 
 function dispatchSelectPoint(mouseStatePayload) {
-    const {plotId,screenPt,drawLayer}= mouseStatePayload;
+    const {plotId,screenPt,drawLayer,shiftDown}= mouseStatePayload;
+    if (shiftDown) return;
     if (drawLayer.drawData.data) {
         const plot= primePlot(visRoot(),plotId);
         const ptAry= plot.attributes[PlotAttribute.PT_ARY] ?? [];

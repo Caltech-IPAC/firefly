@@ -16,7 +16,9 @@ const startWatcher= once((dpId) => startDataProductsWatcher({ dataTypeViewerId:d
  * It should be use in the case where this is the only if it the the only one one the page.
  * If you are have more that on MultiProductViewer you should lay the out directly
  */
-export const MetaDataMultiProductViewer= memo(({ dpId='DataProductsType', metaDataTableId, autoStartWatcher=true, noProductMessage}) => {
-    autoStartWatcher && setTimeout(() => startWatcher(dpId),5);
-    return (<MultiProductViewer viewerId={dpId} metaDataTableId={metaDataTableId} noProductMessage={noProductMessage}/>);
+export const MetaDataMultiProductViewer= memo(({ viewerId='DataProductsType', metaDataTableId,
+                                                   enableExtraction= false,
+                                                   autoStartWatcher=true, noProductMessage}) => {
+    autoStartWatcher && setTimeout(() => startWatcher(viewerId),5);
+    return (<MultiProductViewer {...{viewerId, metaDataTableId, noProductMessage, enableExtraction}}/>);
 });
