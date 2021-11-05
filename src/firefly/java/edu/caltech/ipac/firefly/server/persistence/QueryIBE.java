@@ -37,11 +37,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
+
 @SearchProcessorImpl(id = "ibe_processor", params=
         {@ParamDoc(name="mission", desc="mission"),
          @ParamDoc(name="UserTargetWorldPt", desc="the target point, a serialized WorldPt object"),
          @ParamDoc(name="radius", desc="radius in degrees"),
-         @ParamDoc(name="mcenter", desc="Specifies whether to return only the most centered (in pixel space) image-set for the given input position.")
+         @ParamDoc(name="mcenter", desc="Specifies whether to return only the most centered (in pixel space) image-set for the given input position."),
+        @ParamDoc(name="filename", desc="Multi-Object search input file.")
         })
 public class QueryIBE extends EmbeddedDbProcessor {
     public static final String PROC_ID = QueryIBE.class.getAnnotation(SearchProcessorImpl.class).id();
@@ -49,25 +52,28 @@ public class QueryIBE extends EmbeddedDbProcessor {
     public static final String POS_WORLDPT = "UserTargetWorldPt";
     public static final String RADIUS = "radius";
     public static final String MOST_CENTER = "mcenter";
+    public static final String MULTI_POS_FILE = "filename";
 
-
-
-    protected String getFilePrefix(TableServerRequest request) {
-        return request.getParam(MISSION);
-    }
 
     @Override
     public DataGroup fetchDataGroup(TableServerRequest request) throws DataAccessException {
         try {
             String mission = request.getParam(MISSION);
+            String multiPos = request.getParam(MULTI_POS_FILE);
             Map<String,String> paramMap = IBEUtils.getParamMap(request.getParams());
 
-            IBE ibe = null;
-                ibe = IBEUtils.getIBE(mission, paramMap);
+            IBE ibe = IBEUtils.getIBE(mission, paramMap);
             IbeDataSource ibeDataSource = ibe.getIbeDataSource();
             IbeQueryParam queryParam= ibeDataSource.makeQueryParam(paramMap);
             File ofile = createTempFile(request, ".tbl"); //File.createTempFile(mission+"-", ".tbl", ServerContext.getPermWorkDir());
-            ibe.query(ofile, queryParam);
+            if (isEmpty(multiPos)) {
+                ibe.query(ofile, queryParam);
+            } else {
+                File ifile = ServerContext.convertToFile(multiPos);
+                if (ifile != null) {
+                    ibe.multipleQueries(ofile, ifile, queryParam);
+                }
+            }
 
             // no search results situation
             if (ofile == null || !ofile.exists() || ofile.length() == 0) {
