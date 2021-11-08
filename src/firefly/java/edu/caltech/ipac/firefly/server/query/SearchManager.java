@@ -3,21 +3,14 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.io.IpacTableException;
-import edu.caltech.ipac.firefly.core.RPCException;
-import edu.caltech.ipac.firefly.core.background.BackgroundState;
-import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
 import edu.caltech.ipac.firefly.data.FileInfo;
-import edu.caltech.ipac.firefly.server.packagedata.PackageMaster;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataGroupPart;
-import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.util.Assert;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
@@ -27,13 +20,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.io.PrintWriter;
-
-import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.CLIENT_REQ;
-import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.SERVER_REQ;
-import static edu.caltech.ipac.table.TableMeta.IS_FULLY_LOADED;
 
 
 /**
@@ -71,11 +57,14 @@ public class SearchManager {
 //====================================================================
 //  search related funtions...
 //====================================================================
-    public DataGroupPart getDataGroup(TableServerRequest request) throws DataAccessException {
 
+    public DataGroupPart getDataGroup(TableServerRequest request) throws DataAccessException {
         SearchProcessor processor = getProcessor(request.getRequestId());
-        DataGroupPart dgp = null;
-        dgp = (DataGroupPart) processor.getData(request);
+        return getDataGroup(request, processor);
+    }
+
+    public DataGroupPart getDataGroup(TableServerRequest request, SearchProcessor processor) throws DataAccessException {
+        DataGroupPart dgp = (DataGroupPart) processor.getData(request);
 
         TableMeta meta = dgp.getData().getTableMeta();
         processor.prepareTableMeta(meta,
@@ -98,7 +87,7 @@ public class SearchManager {
     }
 
 
-    public SearchProcessor getProcessor(String requestId) {
+    static public SearchProcessor getProcessor(String requestId) {
         SearchProcessor processor = SearchProcessorFactory.getProcessor(requestId);
 
         if (processor instanceof IpacTablePartProcessor) {
@@ -109,17 +98,6 @@ public class SearchManager {
         Assert.argTst(processor != null, "Search implementation is not defined for "+requestId);
         assert processor != null;
         return processor;
-    }
-
-    public BackgroundStatus packageRequest(final DownloadRequest request) throws DataAccessException {
-
-        SearchProcessor<List<FileGroup>> processor = getProcessor(request.getRequestId());
-        if (processor != null)  {
-            return new PackageMaster().packageData(request, processor);
-        }
-        else {
-            return BackgroundStatus.createUnknownFailStat();
-        }
     }
 
     public FileInfo getFileInfo(TableServerRequest request) throws DataAccessException {
@@ -146,50 +124,5 @@ public class SearchManager {
         }
         return null;
     }
-
-
-
-    public BackgroundStatus submitBackgroundSearch(TableServerRequest request, Request clientRequest, int waitMillis) throws RPCException {
-
-        Logger.briefDebug("Backgrounded search started:" + waitMillis + " wait, req:" + request);
-        String email= request.getMeta(ServerParams.EMAIL);
-        SearchWorker worker= new SearchWorker(request, clientRequest);
-        String title = request.getTblTitle() == null ? request.getRequestId() : request.getTblTitle();
-        BackgroundEnv.BackgroundProcessor processor=
-                              new BackgroundEnv.BackgroundProcessor(worker,  null,
-                                                                    title, request.getMeta(BackgroundStatus.DATA_TAG),
-                                                                    null,                                   // used for workspace's put.. n/a here.
-                                                                    email, request.getRequestId(),
-                                                                    ServerContext.getRequestOwner() );
-        return BackgroundEnv.backgroundProcess(waitMillis, processor, BackgroundStatus.BgType.SEARCH);
-    }
-
-//====================================================================
-//  inner classes
-//====================================================================
-    private class SearchWorker implements BackgroundEnv.Worker {
-
-        private final TableServerRequest request;
-        private Request clientRequest;
-
-        public SearchWorker(TableServerRequest request, Request clientRequest) {
-            this.request= request;
-            this.clientRequest = clientRequest;
-        }
-
-        public BackgroundStatus work(BackgroundEnv.BackgroundProcessor p)  throws Exception {
-            DataGroupPart data= getDataGroup(request);
-
-            BackgroundStatus bgStat= new BackgroundStatus(p.getBID(), BackgroundState.SUCCESS, BackgroundStatus.BgType.SEARCH);
-            if (request != null) {
-                bgStat.setParam(SERVER_REQ, JsonTableUtil.toJsonTableRequest(request).toJSONString());
-            }
-            if (clientRequest != null) {
-                bgStat.setParam(CLIENT_REQ, JsonTableUtil.toJsonTableRequest(clientRequest).toJSONString());
-            }
-            return bgStat;
-        }
-    }
-
 
 }

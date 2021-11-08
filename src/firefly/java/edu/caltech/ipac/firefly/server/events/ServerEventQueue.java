@@ -4,18 +4,14 @@
 package edu.caltech.ipac.firefly.server.events;
 
 
-import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import java.io.Serializable;
-
-import static edu.caltech.ipac.firefly.server.events.FluxAction.BG_STATUS_UPDATE;
 
 /**
  * @author Trey Roby
@@ -43,11 +39,7 @@ public class ServerEventQueue implements Serializable {
             eventJ.put("name", ev.getName().getName());
             eventJ.put("scope", scope.name());
             eventJ.put("dataType", ev.getDataType().name());
-            if (ev.getData() instanceof BackgroundStatus) {
-                JSONObject bgStatus = QueryUtil.convertToJsonObject((BackgroundStatus) ev.getData());
-                eventJ.put("name", Name.ACTION.getName());
-                eventJ.put("data", new FluxAction(BG_STATUS_UPDATE, bgStatus));
-            } else if (ev.getData().toString().trim().startsWith("{") ) {
+            if (ev.getData().toString().trim().startsWith("{") ) {
                 eventJ.put("data", JSONValue.parse(ev.getData().toString()));
             } else {
                 eventJ.put("data", ev.getData());
@@ -69,9 +61,7 @@ public class ServerEventQueue implements Serializable {
             String scope = (String)eventJ.get("scope");
             ServerEvent.DataType dtype = eventJ.get("dataType") == null ? ServerEvent.DataType.STRING : ServerEvent.DataType.valueOf((String) eventJ.get("dataType"));
             Serializable data;
-            if (dtype == ServerEvent.DataType.BG_STATUS) {
-                data = BackgroundStatus.parse((String) eventJ.get("data"));
-            } else if (dtype == ServerEvent.DataType.JSON) {
+            if (dtype == ServerEvent.DataType.JSON) {
                 data = (JSONObject)eventJ.get("data");
             } else {
                 data = (String) eventJ.get("data");

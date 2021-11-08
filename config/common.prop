@@ -43,22 +43,8 @@ pct.vis.shared.mem.size=@pct.vis.shared.mem.size@
 # ~33 spaces
 ArrayRenderer.padding=\
 
-# default download data size in bytes (2 Meg)
-download.data.bytesize=2097152
-
-# async download minimum uncompressed size (in bytes)
-# everything smaller should be downloaded synchronously (20 Meg)
-download.async.bytesize=20971520
-
-# maximum bytes in a packaged bundle
-download.bundle.maxbytes=304857600
-
-# maximum length the queue can back before users starts getting warnings
-download.warning.queue.size= 30
-
-# maximum number of file list computation threads running before the user starts getting warnings
-download.warning.fileListTask.size= 15
-
+# download data size in bytes (default to 5GB)
+download.data.bytesize=
 
 # default compression level
 # Use best speed level unless instructed otherwise.

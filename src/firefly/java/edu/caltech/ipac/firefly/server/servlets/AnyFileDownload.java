@@ -7,12 +7,10 @@ import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
-import edu.caltech.ipac.firefly.server.query.BackgroundEnv;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
-import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 
@@ -39,7 +37,6 @@ public class AnyFileDownload extends BaseHttpServlet {
     public static final String FILE_PARAM  = "file"; // required for other request
     public static final String RETURN_PARAM= "return"; // a name for the file, if empty or USE_SERVER_NAME the use file name on server
     public static final String LOG_PARAM   = "log"; // if true, log status
-    public static final String TRACK_PARAM = "track"; // if true, send progress to cleint
 
 
     public static final String USE_SERVER_NAME = "USE_SERVER_NAME";
@@ -187,7 +184,6 @@ public class AnyFileDownload extends BaseHttpServlet {
     private void sendFileToClient(HttpServletRequest req, HttpServletResponse res, File f, String local) throws IOException {
         SrvParam sp= new SrvParam(req.getParameterMap());
         boolean log= sp.getOptionalBoolean(LOG_PARAM,false);
-        boolean track= sp.getOptionalBoolean(TRACK_PARAM,false);
 
         String mType= getServletContext().getMimeType(f.getName());
         if (mType!=null) res.setContentType(mType);
@@ -202,13 +198,10 @@ public class AnyFileDownload extends BaseHttpServlet {
 
 
 
-        if (track) trackProgress(req, BackgroundEnv.DownloadProgress.WORKING);
         try {
             FileUtil.writeFileToStream(f, res.getOutputStream());
-            if (track) trackProgress(req, BackgroundEnv.DownloadProgress.DONE);
             if (log) logActivity(f);
         } catch (IOException e) {
-            if (track) trackProgress(req, BackgroundEnv.DownloadProgress.FAIL);
             throw e;
         }
 
@@ -226,11 +219,6 @@ public class AnyFileDownload extends BaseHttpServlet {
         _log.briefInfo(logStr);
         _statsLog.stats("file", "size(MB)", (double)f.length()/StringUtils.MEG,
                                          "u", FileUtil.getSizeAsString(f.length()), "file", f.getPath());
-    }
-
-    private static void trackProgress(HttpServletRequest req, BackgroundEnv.DownloadProgress progress) {
-        StringKey statusKey= new StringKey(req.getQueryString());
-        getCache().put(statusKey, progress);
     }
 
     public static Cache getCache() { return UserCache.getInstance(); }

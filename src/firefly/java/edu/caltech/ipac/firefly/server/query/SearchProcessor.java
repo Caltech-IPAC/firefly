@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.SortedSet;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.FF_SESSION_ID;
+import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 
 /**
  * Date: Jun 5, 2009
@@ -60,7 +61,7 @@ public interface SearchProcessor<Type> {
     static String getUniqueIDDef(TableServerRequest request) {
         RequestOwner ro = ServerContext.getRequestOwner();
         SortedSet<Param> params = request.getSearchParams();
-        params.add(new Param("sessID", request.getParam(FF_SESSION_ID)));
+        applyIfNotEmpty(request.getParam(FF_SESSION_ID),   v -> params.add(new Param(FF_SESSION_ID, v)));
         if (ro.isAuthUser()) {
             params.add( new Param("userID", ro.getUserInfo().getLoginName()));
         }

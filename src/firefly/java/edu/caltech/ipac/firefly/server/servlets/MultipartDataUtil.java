@@ -10,6 +10,7 @@ package edu.caltech.ipac.firefly.server.servlets;
 
 
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartData;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
@@ -59,7 +60,7 @@ public class MultipartDataUtil {
                 String fieldName = item.getFieldName();
                 String fileName = item.getName();
                 String contentType = item.getContentType();
-                File uf = new File(ServerContext.getTempWorkDir(), System.currentTimeMillis() + ".upload");
+                File uf = new File(QueryUtil.getTempDir(), System.currentTimeMillis() + ".upload");
                 item.write(uf);
                 data.addFile(fieldName, uf, fileName, contentType);
                 StringKey fileKey= new StringKey(fileName, System.currentTimeMillis());

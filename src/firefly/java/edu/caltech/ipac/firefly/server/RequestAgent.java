@@ -35,6 +35,7 @@ public class RequestAgent {
     private String remoteIP;
     private String sessId;
     private String contextPath;
+    private String servletPath;
 
     public RequestAgent() {}
 
@@ -45,6 +46,14 @@ public class RequestAgent {
         this.remoteIP = remoteIP;
         this.sessId = sessId;
         this.contextPath = contextPath;
+    }
+
+    public String getServletPath() {
+        return servletPath;
+    }
+
+    public void setServletPath(String servletPath) {
+        this.servletPath = servletPath;
     }
 
     public void setCookies(Map<String, Cookie> cookies) {
@@ -153,18 +162,18 @@ public class RequestAgent {
             String host  = getHeader("X-Forwarded-Server", getHeader("X-Forwarded-Host", request.getServerName()));
             String port  = getHeader("X-Forwarded-Port", String.valueOf(request.getServerPort()));
             port = port.matches("443|80") ? "" : ":" + port;
-            String contextPath = getHeader("X-Forwarded-Path", request.getContextPath());
+            String proxiedPath = getHeader("X-Forwarded-Path", request.getContextPath());
 
             String hostUrl = String.format("%s://%s%s", proto, host, port);
-            String baseUrl = hostUrl + contextPath;
+            String baseUrl = hostUrl + proxiedPath;
             baseUrl = baseUrl.endsWith("/") ? baseUrl :  baseUrl + "/";
 
             String requestUrl =  getHeader("X-Original-URI");
             if (requestUrl == null) {
                 String queryStr = request.getQueryString() == null ? "" : "?" + request.getQueryString();
                 String path = request.getRequestURI();
-                if (!contextPath.equals(request.getContextPath())) {
-                    path = path.replace(request.getContextPath(), contextPath);
+                if (!proxiedPath.equals(request.getContextPath())) {
+                    path = path.replace(request.getContextPath(), proxiedPath);
                 }
                 requestUrl = path + queryStr;
             }
@@ -175,10 +184,10 @@ public class RequestAgent {
             setBaseUrl(baseUrl);
             setHostUrl(hostUrl);
             setRequestUrl(requestUrl);
-            setContextPath(contextPath);
+            setContextPath(request.getContextPath());
             setRemoteIP(remoteIP);
             setSessId(request.getSession(true).getId());
-
+            setServletPath(request.getServletPath());
         }
 
         @Override

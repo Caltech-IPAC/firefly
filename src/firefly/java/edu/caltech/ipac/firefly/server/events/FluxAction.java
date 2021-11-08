@@ -16,8 +16,7 @@ public class FluxAction {
 
     public static final String TBL_UPDATE = "table.update";
 
-    public static final String BG_STATUS_UPDATE = "background.bgStatus";
-    public static final String BG_JOB_ADD = "background.bgJobAdd";
+    public static final String JOB_INFO = "background.jobInfo";
 
     private JSONObject root;
 

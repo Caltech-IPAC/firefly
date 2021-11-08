@@ -5,8 +5,7 @@ import {get, set, omitBy, pickBy, pick, isNil, cloneDeep, findKey, isEqual, unse
 
 import {flux} from '../core/ReduxFlux.js';
 import * as TblUtil from './TableUtil.js';
-import {MAX_ROW} from './TableRequestUtil.js';
-import {submitBackgroundSearch} from '../rpc/SearchServicesJson.js';
+import {MAX_ROW, getRequestFromJob} from './TableRequestUtil.js';
 import shallowequal from 'shallowequal';
 import {dataReducer} from './reducer/TableDataReducer.js';
 import {uiReducer} from './reducer/TableUiReducer.js';
@@ -14,12 +13,11 @@ import {resultsReducer} from './reducer/TableResultsReducer.js';
 import {updateMerge} from '../util/WebUtil.js';
 import {Logger} from '../util/Logger.js';
 import {FilterInfo} from './FilterInfo.js';
-import {selectedValues} from '../rpc/SearchServicesJson.js';
-import {trackBackgroundJob, isSuccess, isDone, getErrMsg} from '../core/background/BackgroundUtil.js';
+import {selectedValues, asyncFetchTable} from '../rpc/SearchServicesJson.js';
+import { trackBackgroundJob, isSuccess, isDone, getErrMsg} from '../core/background/BackgroundUtil.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
 import {dispatchJobAdd} from '../core/background/BackgroundCntlr.js';
-import {getTblInfo} from './TableUtil';
 
 
 export const TABLE_SPACE_PATH = 'table_space';
@@ -430,7 +428,7 @@ function tblRemove(action) {
 function highlightRow(action) {
 
     const dispatchHighlight = (dispatch, tableModel) => {
-        const {tbl_id, highlightedRow, request, selectInfo} = getTblInfo(tableModel);
+        const {tbl_id, highlightedRow, request, selectInfo} = TblUtil.getTblInfo(tableModel);
         const cols = TblUtil.getAllColumns(tableModel);
         const highlightedValues = TblUtil.getRowValues(tableModel, highlightedRow)
                                 .map( (v, idx) => [cols[idx]?.name, v])
@@ -491,7 +489,13 @@ function tableFetch(action) {
             dispatchTableLoaded(Object.assign(TblUtil.getTblInfo(tableModel), {invokedBy: TABLE_FETCH}));
         });
 
-        doTableFetch({tbl_id, request, hlRowIdx, dispatch});
+        request.startIdx = request.startIdx || 0;
+        const backgroundable = get(request, 'META_INFO.backgroundable', false);
+        if (backgroundable) {
+            asyncFetch(request, hlRowIdx, dispatch, tbl_id);
+        } else {
+            syncFetch(request, hlRowIdx, dispatch, tbl_id);
+        }
     };
 }
 
@@ -515,7 +519,7 @@ function tableSort(action) {
                 dispatch(action);
             });
 
-            doTableFetch({tbl_id, request: nreq, hlRowIdx, dispatch});
+            syncFetch(nreq, hlRowIdx, dispatch, tbl_id);
         }
     };
 }
@@ -556,7 +560,7 @@ function tableFilter(action) {
                 dispatch(action);
             });
 
-            doTableFetch({tbl_id, request: nreq, hlRowIdx,  dispatch});
+            syncFetch(nreq, hlRowIdx, dispatch, tbl_id);
         }
     };
 }
@@ -643,7 +647,6 @@ function getRowIdFor(request, selected) {
 }
 
 function syncFetch(request, hlRowIdx, dispatch, tbl_id) {
-    unset(request, 'META_INFO.backgroundable');
     TblUtil.doFetchTable(request, hlRowIdx)
         .then( (tableModel) => {
             try {
@@ -657,32 +660,32 @@ function syncFetch(request, hlRowIdx, dispatch, tbl_id) {
 }
 
 function asyncFetch(request, hlRowIdx, dispatch, tbl_id) {
-    const onComplete = (bgStatus) => {
-        const {STATE} = bgStatus || {};
-        if (isSuccess(STATE)) {
-            syncFetch(request, hlRowIdx, dispatch, tbl_id);
+    unset(request, 'META_INFO.backgroundable');
+    const onComplete = (jobInfo) => {
+        if (isSuccess(jobInfo)) {
+            syncFetch(getRequestFromJob(jobInfo.jobId), hlRowIdx, dispatch, tbl_id);
         } else {
-            dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, getErrMsg(bgStatus))});
+            dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, getErrMsg(jobInfo))});
         }
     };
 
-    const sentToBg = (bgStatus) => {
+    const sentToBg = (jobInfo) => {
         dispatchTblResultsRemove(tbl_id);
-        dispatchJobAdd(bgStatus);
+        dispatchJobAdd(jobInfo);
     };
 
     const bgKey = TblUtil.makeBgKey(tbl_id);
-    dispatchComponentStateChange(bgKey, {inProgress:true, bgStatus:undefined});
-    submitBackgroundSearch(request, request, 1000)
-        .then ( (bgStatus) => {
-            if (bgStatus) {
-                dispatchComponentStateChange(bgKey, {bgStatus});
-                if (isDone(bgStatus.STATE)) {
-                    onComplete(bgStatus);
-                    dispatchComponentStateChange(bgKey, {inProgress:false, bgStatus:undefined});
+    dispatchComponentStateChange(bgKey, {inProgress:true, jobInfo: undefined});
+    asyncFetchTable(request)
+        .then ( (jobInfo) => {
+            if (jobInfo) {
+                if (isDone(jobInfo)) {
+                    onComplete(jobInfo);
+                    dispatchComponentStateChange(bgKey, {inProgress:false, jobInfo:undefined});
                 } else {
                     // not done; track progress
-                    trackBackgroundJob({bgID: bgStatus.ID, key: bgKey, onComplete, sentToBg});
+                    dispatchComponentStateChange(bgKey, {jobInfo});
+                    trackBackgroundJob({jobId: jobInfo.jobId, key: bgKey, onComplete, sentToBg});
                 }
             }
         }).catch( (error) => {

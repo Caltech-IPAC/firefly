@@ -99,7 +99,7 @@ public class PtfIbeResolver {
     }
 
     protected File getTempFile() throws IOException {
-        File f = File.createTempFile("ptfFiles-", ".tbl", (isTestMode ? new File(".") : ServerContext.getTempWorkDir()));
+        File f = File.createTempFile("ptfFiles-", ".tbl", (isTestMode ? new File(".") : QueryUtil.getTempDir()));
         if (isTestMode) {
             f.deleteOnExit();
         }

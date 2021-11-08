@@ -32,6 +32,8 @@ import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.firefly.core.background.Job;
+import edu.caltech.ipac.firefly.core.background.JobInfo;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.json.simple.JSONObject;
 import org.springframework.core.NestedRuntimeException;
@@ -50,6 +52,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW;
@@ -58,8 +61,7 @@ import static edu.caltech.ipac.firefly.server.ServerContext.SHORT_TASK_EXEC;
 import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
 import static edu.caltech.ipac.firefly.server.db.DbAdapter.NULL_TOKEN;
 import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.execRequestQuery;
-import static edu.caltech.ipac.util.StringUtils.areEqual;
-import static edu.caltech.ipac.util.StringUtils.isEmpty;
+import static edu.caltech.ipac.util.StringUtils.*;
 
 /**
  * NOTE: We're using spring jdbc v2.x.  API changes dramatically in later versions.
@@ -88,11 +90,23 @@ import static edu.caltech.ipac.util.StringUtils.isEmpty;
  * - All column names must be enclosed in double-quotes(") to avoid reserved keywords clashes.
  *   This applies to inputs used by the database component, ie.  INCL_COLUMNS, FILTERS, SORT_INFO, etc
  */
-abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPart>, SearchProcessor.CanGetDataFile, SearchProcessor.CanFetchDataGroup {
+abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPart>, SearchProcessor.CanGetDataFile,
+                                                     SearchProcessor.CanFetchDataGroup, Job.Worker {
     private static final Map<String, ReentrantLock> activeRequests = new HashMap<>();
     private static final ReentrantLock lockChecker = new ReentrantLock();
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
     private static final int MAX_COL_ENUM_COUNT = AppProperties.getIntProperty("max.col.enum.count", 15);
+    private Job job;
+
+    public void setJob(Job job) {
+        this.job = job;
+    }
+
+    public Job getJob() {
+        return job;
+    }
+
+    public String getLabel() { return getJob().getParams().getTableServerRequest().getTblTitle(); }
 
     /**
      * Fetches the data for the given search request.  This method should perform a fetch for fresh
@@ -111,7 +125,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
      */
     public File getDbFile(TableServerRequest treq) {
         String fname = String.format("%s_%s.%s", treq.getRequestId(), DigestUtils.md5Hex(getUniqueID(treq)), DbAdapter.getAdapter(treq).getName());
-        return new File(QueryUtil.getTempDir(), fname);
+        return new File(QueryUtil.getTempDir(treq), fname);
     }
 
     /**
@@ -154,6 +168,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         try {
             boolean dbFileCreated = false;
             File dbFile = getDbFile(treq);
+            jobIf(v -> v.progress(10, "fetching data..."));
             if (!dbFile.exists()) {
                 StopWatch.getInstance().start("createDbFile: " + treq.getRequestId());
                 dbFile = createDbFromRequest(treq);
@@ -165,6 +180,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             DataGroupPart results;
             try {
                 results = getResultSet(treq, dbFile);
+                jobIf(v -> v.progress(90, "generating results..."));
             } catch (Exception e) {
                 // table data exists.. but, bad grammar when querying for the resultset.
                 // should return table meta info + error message
@@ -178,12 +194,13 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             // ensure all meta are collected and set accordingly
             TableUtil.consumeColumnMeta(results.getData(), treq);
 
+            int totalRows =  results.getRowCount();
             if (dbFileCreated) {
                 if (doLogging()) {
-                    SearchProcessor.logStats(treq.getRequestId(), results.getRowCount(), 0, false, getDescResolver().getDesc(treq));
+                    SearchProcessor.logStats(treq.getRequestId(), totalRows, 0, false, getDescResolver().getDesc(treq));
                 }
                 // check for values that can be enumerated..
-                if (results.getRowCount() < 5000) {
+                if (totalRows < 5000) {
                     enumeratedValuesCheck(dbFile, results, treq);
                 } else {
                     enumeratedValuesCheckBG(dbFile, results, treq);        // when it's more than 5000 rows, send it by background so it doesn't slow down response time.
@@ -191,6 +208,9 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             }
 
             results.getData().getTableMeta().setAttribute(DataGroupPart.LOADING_STATUS, DataGroupPart.State.COMPLETED.name());
+
+            jobIf(v -> v.getJobInfo().setSummary(String.format("%,d rows found", totalRows)));
+
             return results;
         } finally {
             activeRequests.remove(unigueReqID);
@@ -232,9 +252,12 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
         StopWatch.getInstance().start("fetchDataGroup: " + req.getRequestId());
         DataGroup dg = fetchDataGroup(req);
+
         StopWatch.getInstance().stop("fetchDataGroup: " + req.getRequestId()).printLog("fetchDataGroup: " + req.getRequestId());
 
         if (dg == null) throw new DataAccessException("Failed to retrieve data");
+
+        jobIf(v -> v.progress(70, dg.size() + " rows of data found"));
 
         prepareTableMeta(dg.getTableMeta(), Arrays.asList(dg.getDataDefinitions()), req);
         TableUtil.consumeColumnMeta(dg, null);      // META-INFO in the request should only be pass-along and not persist.
@@ -298,7 +321,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     }
 
     protected File createTempFile(TableServerRequest request, String fileExt) throws IOException {
-        return File.createTempFile(request.getRequestId(), fileExt, QueryUtil.getTempDir());
+        return File.createTempFile(request.getRequestId(), fileExt, QueryUtil.getTempDir(request));
     }
 
     public boolean doCache() {return false;}
@@ -609,6 +632,19 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     private static boolean maybeEnums(DataType dt) {
         return onlyCheckTypes.contains(dt.getDataType()) && !excludeColNames.contains(dt.getKeyName());
 
+    }
+
+    /**
+     * execute the given task if job is still in executing phase.  if job is aborted, throw exception to stop the process.
+     * @param f
+     */
+    void jobIf(Consumer<Job> f) throws DataAccessException {
+        Job job = getJob();
+        if (job != null) {
+            JobInfo.PHASE phase = job.getJobInfo().getPhase();
+            if (phase == JobInfo.PHASE.EXECUTING) f.accept(job);
+            if (phase == JobInfo.PHASE.ABORTED) throw new DataAccessException.Aborted();
+        }
     }
 
 

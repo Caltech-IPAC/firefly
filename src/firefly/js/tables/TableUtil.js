@@ -34,7 +34,7 @@ import {fetchTable, queryTable, selectedValues} from '../rpc/SearchServicesJson.
 import {ServerParams} from '../data/ServerParams.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga.js';
 import {MetaConst} from '../data/MetaConst';
-import {getCmdSrvURL, toBoolean} from '../util/WebUtil';
+import {getCmdSrvSyncURL, toBoolean} from '../util/WebUtil';
 import {upload} from '../rpc/CoreServices.js';
 import {dd2sex} from '../visualize/CoordUtil.js';
 
@@ -835,7 +835,7 @@ export function processRequest(tableModel, tableRequest, hlRowIdx) {
  * collects all available table information given the tbl_id
  * @param {string} tbl_id
  * @param {number} aPageSize  use this pageSize instead of the one in the request.
- * @returns {{tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize, totalPages, highlightedRow, selectInfo, error, tableMeta, bgStatus}}
+ * @returns {{tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize, totalPages, highlightedRow, selectInfo, error, tableMeta, backgroundable}}
  * @public
  * @memberof firefly.util.table
  * @func getTblInfoById
@@ -967,7 +967,7 @@ export function makeTableSourceUrl(columns, request, otherParams) {
     if (otherParams) {
         Object.assign(params, omitBy(otherParams, isNil));
     }
-    return wsCmd ? params : encodeServerUrl(getCmdSrvURL(), params);
+    return wsCmd ? params : encodeServerUrl(getCmdSrvSyncURL(), params);
 }
 
 export function setHlRowByRowIdx(nreq, tableModel) {

@@ -21,6 +21,7 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.query.ibe.IbeQueryArtifact;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.File;
@@ -86,7 +87,7 @@ public class IbeFileRetrieve extends BaseFileInfoProcessor {
     protected File makeOutputFile(IbeDataParam params) throws IOException {
         String fname = params.getFileName();
         if (fname.contains(".tbl")) {
-            return File.createTempFile("IbeFileRetrieve-", "-" + fname, ServerContext.getTempWorkDir());
+            return File.createTempFile("IbeFileRetrieve-", "-" + fname, QueryUtil.getTempDir(null));
         } else {
             ;
             return File.createTempFile(fname + "-", "", ServerContext.getVisCacheDir());

@@ -6,7 +6,6 @@ import slug from 'slug';
 import {getOrCreateWsConn} from '../core/messaging/WebSocketClient.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
-import {DownloadProgress, getDownloadProgress} from '../rpc/SearchServicesJson.js';
 import {logger} from './Logger.js';
 import {parseUrl, AJAX_REQUEST, lowLevelDoFetch, REQUEST_WITH, WS_CHANNEL_HD, WS_CONNID_HD} from './WebUtil.js';
 
@@ -50,36 +49,6 @@ export async function fetchUrl(url, options={}, doValidation = true, enableDefOp
         }
     };
     return lowLevelDoFetch(url, optionsWithDef, doValidation, logger?.tag('fetchUrl').debug);
-}
-
-
-/**
- * @param {string} url  the url to download.  It should be based on AnyFileDownload
- * @param {number} [numTries=1000]  number of time to check for progress until giving up
- * @returns {Promise}  resolve is called on DONE and reject when FAIL.
- */
-export function downloadWithProgress(url, numTries = 1000) {
-    return new Promise((resolve, reject) => {
-        const {search} = parseUrl(url);
-        let cnt = 0;
-        const doIt = () => {
-            const interval = Math.min(5000, Math.pow(2, 2 * cnt / 10) * 1000);  //gradually increase between 1 and 5 secs
-            console.log('Interval: ' + interval);
-            setTimeout(async () => {
-                cnt++;
-                const v= await getDownloadProgress(search);
-                if (DownloadProgress.DONE.is(v)) {
-                    resolve(v);
-                } else if (DownloadProgress.FAIL.is(v)) {
-                    reject(v);
-                } else {
-                    cnt < numTries ? doIt() : reject(`Number of tries(${numTries}) exceeded without results`);
-                }
-            }, interval);
-        };
-        doIt();
-        download(url);
-    });
 }
 
 export function downloadBlob(blob, filename) {

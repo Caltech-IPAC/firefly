@@ -9,17 +9,24 @@ package edu.caltech.ipac.firefly.server.packagedata;
  */
 
 
-import edu.caltech.ipac.firefly.core.background.BackgroundState;
-import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
-import edu.caltech.ipac.firefly.core.background.JobAttributes;
-import edu.caltech.ipac.firefly.core.background.PackageProgress;
 import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
+import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.query.BackgroundEnv;
+import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
+import edu.caltech.ipac.firefly.server.util.DownloadScript;
 import edu.caltech.ipac.firefly.server.util.EMailUtil;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.firefly.core.background.JobInfo;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -27,6 +34,8 @@ import static edu.caltech.ipac.firefly.core.background.ScriptAttributes.Curl;
 import static edu.caltech.ipac.firefly.core.background.ScriptAttributes.URLsOnly;
 import static edu.caltech.ipac.firefly.core.background.ScriptAttributes.Unzip;
 import static edu.caltech.ipac.firefly.core.background.ScriptAttributes.Wget;
+import static edu.caltech.ipac.firefly.data.ServerParams.EMAIL;
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 
 /**
@@ -35,8 +44,9 @@ import static edu.caltech.ipac.firefly.core.background.ScriptAttributes.Wget;
 public class PackagedEmail {
 
     private final static String DEF_SUCCESS_MESSAGE =   "Your packaging request has been completed";
-    public final static String MAIL_SUCCESS_MESSAGE = AppProperties.getProperty("download.mail.success",
-                                                                                DEF_SUCCESS_MESSAGE);
+    private final static String MAIL_SUCCESS_MESSAGE = AppProperties.getProperty("download.mail.success", DEF_SUCCESS_MESSAGE);
+    private static final String BASE_SERVLET = "servlet/Download?"+ AnyFileDownload.LOG_PARAM +"=true&" + AnyFileDownload.FILE_PARAM +"=";
+    private static final String RET_FILE = "&"+AnyFileDownload.RETURN_PARAM+"=";
 
     private static final List<ScriptAttributes> wget= Arrays.asList(Wget);
     private static final List<ScriptAttributes> wgetUnzip= Arrays.asList(Wget,Unzip);
@@ -44,51 +54,46 @@ public class PackagedEmail {
     private static final List<ScriptAttributes> curlUnzip= Arrays.asList(Curl,Unzip);
     private static final List<ScriptAttributes> text= Arrays.asList(URLsOnly);
 
-
-    /**
-     * Send an email to the user that his files are ready
-     * @param email the email address
-     * @param info the BackgroundInfo object
-     */
-    public static void send(String email, BackgroundInfoCacher info) {
-        send(email, info, null);
-    }
+    private static final Logger.LoggerImpl logger = Logger.getLogger();
+    private static final Logger.LoggerImpl statsLogger = Logger.getLogger(Logger.DOWNLOAD_LOGGER);
 
 
     /**
      * Send an email to the user that his files are ready
-     * @param email the email address
-     * @param info the BackgroundInfo object
-     * @param bgStat All the information about what was packaged
+     * @param jobInfo JobInfo
      */
-    public static void send(String email, BackgroundInfoCacher info, BackgroundStatus bgStat) {
+    public static void send(JobInfo jobInfo) {
+        DownloadRequest dlreq = jobInfo.getSrvParams().getDownloadRequest();
+        String email = dlreq.getEmail();
+
+        if (isEmpty(email))   email = jobInfo.getSrvParams().getOptional(EMAIL);
+
+        String dataSource = dlreq.getDataSource();
+
+        if (email == null) return;
+
         StringWriter sw = new StringWriter();
         try{
-            if (bgStat==null) bgStat= info.getStatus();
-            String title= info.getTitle();
-            BackgroundState state = bgStat.getState();
-            if (state.equals(BackgroundState.USER_ABORTED)) return;
-            else if (state.equals(BackgroundState.CANCELED)) {
-                sw.append("\nYour packaging was canceled.\n\n");
-            }
-            else if (state.equals(BackgroundState.FAIL)) {
+            String label= jobInfo.getLabel();
+            JobInfo.PHASE phase = jobInfo.getPhase();
+            if (phase.equals(JobInfo.PHASE.ABORTED)) {
+                sw.append("\nYour packaging was aborted.\n\n");
+            } else if (phase.equals(JobInfo.PHASE.ERROR)) {
                 sw.append("\nYour packaging request did not complete.\n\n");
-            } else if (state.equals(BackgroundState.SUCCESS)) {
+            } else if (phase.equals(JobInfo.PHASE.COMPLETED)) {
                 sw.append("\n");
                 sw.append(MAIL_SUCCESS_MESSAGE);
                 sw.append("\n\n");
             } else {
-                PackageMaster.logPIDWarn(bgStat.getID(),
-                                         "Cannot send completion email. Unexpected state in PackageReport: "+state);
+                logger.warn(jobInfo.getId(),
+                                         "Cannot send completion email. Unexpected state in JobInfo: " + phase);
                 return;
             }
-            if (bgStat.getNumMessages()> 0) {
-                sw.append("Please, note:");
-                for(String m : bgStat.getMessageList()) sw.append("\n    ").append(m);
-            }
 
-            if (bgStat.isMultiPart()) {
-                int cnt= bgStat.getPackageCount();
+            sw.append(jobInfo.getSummary());
+
+            if (jobInfo.getResults().size() > 1) {
+                int cnt= jobInfo.getResults().size();
                 sw.append("\n");
                 sw.append("You have ");
                 sw.append(Integer.toString(cnt));
@@ -99,15 +104,15 @@ public class PackagedEmail {
                 sw.append("\n\n");
                 sw.append("-------------------------- Section 1: Retrieval Scripts --------------------------\n");
                 sw.append("wget script (best for Unix/Linux):\n");
-                sw.append(makeScriptAndLink(bgStat, wget)).append("\n\n");
+                sw.append(makeScriptAndLink(jobInfo, dataSource, wget)).append("\n\n");
                 sw.append("wget/unzipping script (best for Unix/Linux):\n");
-                sw.append(makeScriptAndLink(bgStat, wgetUnzip)).append("\n\n");
+                sw.append(makeScriptAndLink(jobInfo, dataSource, wgetUnzip)).append("\n\n");
                 sw.append("curl script (best for Mac):\n");
-                sw.append(makeScriptAndLink(bgStat, curl)).append("\n\n");
+                sw.append(makeScriptAndLink(jobInfo, dataSource, curl)).append("\n\n");
                 sw.append("curl/unzipping script (best for Mac):\n");
-                sw.append(makeScriptAndLink(bgStat, curlUnzip)).append("\n\n");
+                sw.append(makeScriptAndLink(jobInfo, dataSource, curlUnzip)).append("\n\n");
                 sw.append("text file of urls (best for Windows, see Windows advice below):\n");
-                sw.append(makeScriptAndLink(bgStat, text)).append("\n\n");
+                sw.append(makeScriptAndLink(jobInfo, dataSource, text)).append("\n\n");
                 sw.append("\n\n");
                 sw.append("-------------------------- Section 2: Download URLs --------------------------\n");
             }
@@ -115,18 +120,14 @@ public class PackagedEmail {
                 sw.append("\n\n-------------------------- Download URL --------------------------\n");
             }
 
-
-            for(PackageProgress p : bgStat.getPartProgressList()) {
-                if (p.getURL() != null) {
-                    sw.append(p.getURL()).append("\n\n");
-                }
-            }
+            // print out result url
+            sw.append(String.join("\n\n", jobInfo.getResults()));
 
 
-            if (bgStat.isMultiPart()) {
+            if (jobInfo.getResults().size() > 1) {
                 sw.append("\n\n\n\n");
                 sw.append("Advice for Windows users:\n");
-                sw.append("   1. Go to the Windows wget web page at: http://gnuwin32.sourceforge.net/packages/wget.htm\n");
+                sw.append("   1. Go to the Windows wget web page at: https://www.gnu.org/software/wget/\n");
                 sw.append("   2. Scroll to the Download section and retrieve the wget installation.\n");
                 sw.append("   3. Install wget and add the binary to your path.\n");
                 sw.append("   4. Download the text only file of urls (above, in section 1)\n");
@@ -136,22 +137,58 @@ public class PackagedEmail {
 
 
             sw.flush();
-            EMailUtil.sendMessage(new String[]{email}, null, null, "Download Status - " + title, sw.toString());
-            bgStat.addAttribute(JobAttributes.EmailSent);
-            info.setStatus(bgStat);
+            EMailUtil.sendMessage(new String[]{email}, null, null, "Download Status - " + label, sw.toString());
         } catch(Throwable e) {
-            PackageMaster.logPIDWarn(bgStat!=null ? bgStat.getID() : "Unknown Background ID",
-                                     "Failed to send completion email to "+email+": "+e.getMessage()+sw.toString());
-            info.setStatus(bgStat);
-
+            logger.warn(jobInfo.getId()!=null ? jobInfo.getId() : "Unknown Background ID",
+                                     "Failed to send completion email to "+email+": "+e.getMessage() + sw.toString());
         }
     }
 
 
-    private static String makeScriptAndLink(BackgroundStatus bgStat, List<ScriptAttributes> attList) {
-        BackgroundEnv.ScriptRet retval= BackgroundEnv.createDownloadScript(bgStat.getID(), "download-results",
-                                                                           bgStat.getDataSource(), attList);
-        return ServerContext.getRequestOwner().getBaseUrl() + retval.getServlet();
+    public static String makeScriptAndLink(JobInfo jobInfo, String dataSource, List<ScriptAttributes> attributes) {
+
+        String scriptUrl = null;
+        List<URL> urlList= new ArrayList<>(jobInfo.getResults().size());
+        for(String part : jobInfo.getResults()) {
+            try {
+                urlList.add(new URL(part));
+            } catch (MalformedURLException e) {
+                logger.warn("Bad url for download script: " + part + "Background ID: " + jobInfo.getId());
+            }
+        }
+        String fName = "download-results";
+
+        if (urlList.size()>0) {
+            String  ext = attributes.contains(ScriptAttributes.URLsOnly) ? ".txt" : ".sh";
+            try {
+                File outFile = File.createTempFile(fName, ext, ServerContext.getStageWorkDir());
+                String retFile= fName+ext;
+                DownloadScript.composeDownloadScript(outFile, dataSource, urlList, attributes);
+                String fStr= ServerContext.replaceWithPrefix(outFile);
+                try {
+                    fStr = URLEncoder.encode(fStr, "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    // if it fails, then use the original
+                }
+
+                if (fStr!= null) {
+
+                    scriptUrl=  BASE_SERVLET  + fStr + RET_FILE + retFile;
+                    logger.info("download script built, returning: " + outFile, "Background ID: " + jobInfo.getId());
+                    statsLogger.stats("create_script", "fname", outFile);
+                }
+            } catch (IOException e) {
+                logger.warn(e,"Could not create temp file",
+                        "Background ID: " + jobInfo.getId(),
+                        "file root: "  + fName,
+                        "ext: "+ ext);
+            }
+        }
+        else {
+            logger.warn("Could not build a download script list, urlList length==0",
+                    "Background ID: " + jobInfo.getId());
+        }
+        return ServerContext.getRequestOwner().getBaseUrl() + scriptUrl;
     }
 
 

@@ -1,5 +1,5 @@
 import {RawDataThreadActions} from '../../threadWorker/WorkerThreadActions.js';
-import {getCmdSrvNoZipURL, getCmdSrvURL, getRootURL} from '../../util/WebUtil.js';
+import {getCmdSrvNoZipURL, getCmdSrvSyncURL, getRootURL} from '../../util/WebUtil.js';
 import {isThreeColor} from '../PlotViewUtil.js';
 import {allBandAry} from '../Band.js';
 
@@ -126,7 +126,7 @@ export function makeRetrieveStretchByteDataAction(plot, plotState, mask, maskBit
             bias,
             contrast,
             // cmdSrvUrl: getCmdSrvNoZipURL(),
-            cmdSrvUrl: getCmdSrvURL(),
+            cmdSrvUrl: getCmdSrvSyncURL(),
             threeColor,
             rootUrl: getRootURL()
         }

@@ -215,7 +215,7 @@ public class EmbeddedDbUtil {
      */
     public static DataGroup getSelectedData(ServerRequest searchRequest, List<Integer> selRows, String... cols) {
         TableServerRequest treq = (TableServerRequest)searchRequest;
-        EmbeddedDbProcessor proc = (EmbeddedDbProcessor) new SearchManager().getProcessor(searchRequest.getRequestId());
+        EmbeddedDbProcessor proc = (EmbeddedDbProcessor) SearchManager.getProcessor(searchRequest.getRequestId());
         String selCols = cols == null || cols.length == 0 ? "*" : Arrays.stream(cols).map( c -> (c.contains("\"") ? c : "\"" + c + "\"")).collect(Collectors.joining(","));
         DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
         File dbFile = proc.getDbFile(treq);

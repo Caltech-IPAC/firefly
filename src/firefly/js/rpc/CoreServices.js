@@ -8,9 +8,9 @@ import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest} from '../core/JsonUtils.js';
 import {WebPlotRequest} from '../visualize/WebPlotRequest';
 import {fetchUrl} from '../util/fetch';
-import {getCmdSrvURL} from '../util/WebUtil';
+import {getCmdSrvSyncURL} from '../util/WebUtil';
 
-const getUploadURL= () => `${getCmdSrvURL()}?${ServerParams.COMMAND}=${ServerParams.UPLOAD}`;
+const getUploadURL= () => `${getCmdSrvSyncURL()}?${ServerParams.COMMAND}=${ServerParams.UPLOAD}`;
 
 /**
  * tableRequest will be sent to the server as a json string.

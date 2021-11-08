@@ -6,8 +6,6 @@ package edu.caltech.ipac.firefly.server;
 import edu.caltech.ipac.firefly.data.Alert;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
-import edu.caltech.ipac.firefly.server.packagedata.BackgroundInfoCacher;
-import edu.caltech.ipac.firefly.server.query.BackgroundEnv;
 import edu.caltech.ipac.firefly.server.security.SsoAdapter;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import org.json.simple.JSONObject;
@@ -23,9 +21,6 @@ public class AppServerCommands {
 
             // check for alerts
             AlertsMonitor.checkAlerts(true);
-            // check for background jobs
-            BackgroundEnv.getUserBackgroundInfo().stream()
-                    .forEach(BackgroundInfoCacher::fireBackgroundJobAdd);
             // update login status
             UserInfo userInfo = ServerContext.getRequestOwner().getUserInfo();
             LOG.briefInfo("Init "+spaName);

@@ -14,6 +14,7 @@
         <url-pattern>/admin/*</url-pattern>
         <url-pattern>/servlet/*</url-pattern>
         <url-pattern>/sticky/*</url-pattern>
+        <url-pattern>/CmdSrv/*</url-pattern>
     </filter-mapping>
 
     <!--NoCacheFilter-->
@@ -38,6 +39,9 @@
         <url-pattern>*.css</url-pattern>
         <url-pattern>*.js</url-pattern>
         <url-pattern>/sticky/CmdSrv</url-pattern>
+        <url-pattern>/CmdSrv/sync</url-pattern>
+        <url-pattern>/CmdSrv/async</url-pattern>
+        <url-pattern>/CmdSrv/async/*</url-pattern>
         <url-pattern>/sticky/firefly/events</url-pattern>
     </filter-mapping>
 
@@ -86,10 +90,21 @@
     <servlet-mapping>
         <servlet-name>FireFly CommandService</servlet-name>
         <url-pattern>/sticky/CmdSrv</url-pattern>
+        <url-pattern>/CmdSrv/sync</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>FireFly CommandService</servlet-name>
-        <url-pattern>/sticky/CmdSrvNoZip</url-pattern>
+        <url-pattern>/CmdSrv/NoZip</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-class>edu.caltech.ipac.firefly.api.Async</servlet-class>
+        <servlet-name>FireFly Async API</servlet-name>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>FireFly Async API</servlet-name>
+        <url-pattern>/CmdSrv/async</url-pattern>
+        <url-pattern>/CmdSrv/async/*</url-pattern>
     </servlet-mapping>
 
     <servlet>

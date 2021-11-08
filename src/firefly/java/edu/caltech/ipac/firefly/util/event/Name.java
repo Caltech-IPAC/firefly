@@ -23,8 +23,7 @@ public class Name implements Serializable {
                                              "Event connection established.  Along with this event, you can expect connID and channel in the event's data. ie. {connID: val, channel: val}");
     public static final Name REPORT_USER_ACTION     =  new Name("REPORT_USER_ACTION", "report a user response");
     public static final Name ACTION                 =  new Name("FLUX_ACTION", "an action message.");
-    public static final Name SVR_BACKGROUND_REPORT=
-            new Name("SvrBackgroundReport", "Background Report sent from server");
+    public static final Name PING                   = new Name("PING", "keepalive ping");
 
 
     private final String _name;

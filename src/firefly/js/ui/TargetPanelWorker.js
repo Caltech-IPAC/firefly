@@ -6,7 +6,7 @@ import {PositionParsedInputType} from '../util/PositionParser.js';
 import {positionValidateSoft,formatTargetForHelp, formatPosForHelp} from './PositionFieldDef.js';
 import {parseWorldPt} from '../visualize/Point';
 import {fetchUrl} from '../util/fetch';
-import {getCmdSrvURL} from '../util/WebUtil';
+import {getCmdSrvSyncURL} from '../util/WebUtil';
 
 // return an object with:
 //     feedback, string
@@ -55,7 +55,7 @@ function makeSearchPromise(objName, resolver= 'nedthensimbad') {
                 fetchOptions.signal= controller.signal;
                 setTimeout(() => controller.abort(), FETCH_TIMEOUT);
             }
-            const url= `${getCmdSrvURL()}?objName=${objName}&resolver=${resolver}&cmd=CmdResolveName`;
+            const url= `${getCmdSrvSyncURL()}?objName=${objName}&resolver=${resolver}&cmd=CmdResolveName`;
             try {
                 const response= await fetchUrl(url, fetchOptions);
                 resolve(await response.json());

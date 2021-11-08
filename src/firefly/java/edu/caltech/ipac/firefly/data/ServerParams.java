@@ -130,20 +130,17 @@ public class ServerParams {
     public static final String JSON_DATA = "JsonData";
     public static final String RESOLVE_NAME= "CmdResolveName";
     public static final String RESOLVE_NAIFID = "CmdResolveNaifid";
-    public static final String SUB_BACKGROUND_SEARCH= "subBackgroundSearch";
-    public static final String GET_STATUS= "status";
+
+    // Background Job related
+    public static final String JOB_ID= "jobId";
     public static final String ADD_JOB = "addBgJob";
     public static final String REMOVE_JOB = "removeBgJob";
     public static final String CANCEL= "cancel";
-    public static final String CLEAN_UP= "cleanup";
-    public static final String DOWNLOAD_PROGRESS= "downloadProgress";
     public static final String SET_EMAIL= "setEmail";
-    public static final String SET_ATTR= "setAttribute";
-    public static final String GET_EMAIL= "getEmail";
     public static final String RESEND_EMAIL= "resendEmail";
-    public static final String CLEAR_PUSH_ENTRY= "clearPushEntry";
-    public static final String REPORT_USER_ACTION= "reportUserAction";
     public static final String CREATE_DOWNLOAD_SCRIPT= "createDownoadScript";
+
+    public static final String REPORT_USER_ACTION= "reportUserAction";
     public static final String DS9_REGION= "ds9Region";
     public static final String SAVE_DS9_REGION= "saveDS9Region";
     public static final String ADD_SAVED_REQUEST= "addSavedRequest";

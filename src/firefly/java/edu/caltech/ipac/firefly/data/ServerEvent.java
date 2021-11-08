@@ -36,7 +36,7 @@ public class ServerEvent implements Serializable {
         this(name, new EventTarget(scope), dataType, data, null);
     }
     public ServerEvent(Name name, EventTarget target, Serializable data) {
-        this(name, target, DataType.BG_STATUS, data, SERVER_CONN_ID);
+        this(name, target, DataType.JSON, data, SERVER_CONN_ID);
     }
     public ServerEvent(Name name, EventTarget target, DataType dataType, Serializable data) {
         this(name, target, dataType, data, SERVER_CONN_ID);
@@ -84,7 +84,7 @@ public class ServerEvent implements Serializable {
 
     public enum Scope {SELF, CHANNEL, USER, WORLD}
 
-    public enum DataType {JSON, BG_STATUS, STRING}
+    public enum DataType {JSON, STRING}
 
 //====================================================================
 //

@@ -153,7 +153,7 @@ public class VoTableReader {
             voTablePath = location;
         } else {
             // location is a URL, download it first.
-            File tmpFile = File.createTempFile("voreader-", ".xml", QueryUtil.getTempDir());
+            File tmpFile = File.createTempFile("voreader-", ".xml", QueryUtil.getTempDir(null));
             try {
                 HttpServices.getData( HttpServiceInput.createWithCredential(url), tmpFile);
                 voTablePath = tmpFile.getPath();

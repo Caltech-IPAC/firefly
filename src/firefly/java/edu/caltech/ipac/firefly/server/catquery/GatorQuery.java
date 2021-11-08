@@ -188,7 +188,7 @@ public class GatorQuery extends BaseGator {
             req.setMethod(CatalogRequest.Method.TABLE);
             File uloadFile = null;
             try {
-                uloadFile = File.createTempFile(getFilePrefix(req), ".tbl", ServerContext.getTempWorkDir());
+                uloadFile = File.createTempFile(getFilePrefix(req), ".tbl", QueryUtil.getTempDir(req));
                 WorldPt pt = req.getWorldPtParam(ServerParams.USER_TARGET_WORLD_PT);
                 if (pt == null) pt = req.getWorldPtJ2000();
                 pt = VisUtil.convertToJ2000(pt);

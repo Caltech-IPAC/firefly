@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.catquery;
 
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.query.DataGroupQueryStatement;
 import edu.caltech.ipac.firefly.core.EndUserException;
@@ -94,7 +95,7 @@ class GatorDDImpl extends BaseGator {
     @Override
     protected File createFile(TableServerRequest request) throws IOException {
         try {
-            return File.createTempFile(getFileBaseName((CatalogRequest) request), ".tbl", ServerContext.getPermWorkDir());
+            return File.createTempFile(getFileBaseName((CatalogRequest) request), ".tbl", QueryUtil.getTempDir(request));
         } catch (EndUserException e) {
             return null;
         }
@@ -131,7 +132,7 @@ class GatorDDImpl extends BaseGator {
     }
 
     protected File modifyData(File f, CatalogRequest req) throws Exception {
-        File inFile = File.createTempFile("gator-dd", ".tbl", ServerContext.getPermWorkDir());
+        File inFile = File.createTempFile("gator-dd", ".tbl", QueryUtil.getTempDir(req));
         String forStmt;
         if (req.getDDShort()) {
             //short form
