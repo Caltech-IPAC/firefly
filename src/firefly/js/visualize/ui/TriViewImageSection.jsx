@@ -66,7 +66,7 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
                 }
                 { showMeta &&
                     <Tab name={metaTitle} removable={false} id='meta'>
-                        <MetaDataMultiProductViewer metaDataTableId={metaDataTableId} />
+                        <MetaDataMultiProductViewer metaDataTableId={metaDataTableId} enableExtraction={true}/>
                     </Tab>
                 }
                 { showCoverage &&

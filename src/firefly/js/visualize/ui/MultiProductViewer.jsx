@@ -2,11 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import React, {memo, useContext, useState, useEffect} from 'react';
-import {string,array,object} from 'prop-types';
+import {string,array,object,bool} from 'prop-types';
 import {get, isFunction, isArray} from 'lodash';
 import {useStoreConnector} from '../../ui/SimpleComponent';
-import { NewPlotMode, dispatchAddViewer, dispatchViewerUnmounted, IMAGE, PLOT2D, SINGLE, GRID,
-    getViewer, getMultiViewRoot
+import { NewPlotMode, dispatchAddViewer, dispatchViewerUnmounted, IMAGE, PLOT2D, SINGLE, GRID
 } from '../MultiViewCntlr.js';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 import {ImageMetaDataToolbar} from './ImageMetaDataToolbar.jsx';
@@ -54,14 +53,14 @@ export function MultiProductViewer ({viewerId, ...props}) {
 MultiProductViewer.propTypes= {
     viewerId : string,
     metaDataTableId : string,
+    enableExtraction: bool
 };
 
 
-const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId, noProductMessage}) => {
+const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId, noProductMessage, enableExtraction=false}) => {
     const {renderTreeId} = useContext(RenderTreeIdCtx);
     const [currentCTIChoice, setCurrentCTIChoice] = useState(undefined);
     const [lookupKey, setLookKey] = useState(undefined);
-    // const [activateParams, setActivateParams]= useState(undefined);
     const [dataProductsState, serviceParamsAry]= useStoreConnector(
         (old) => {
             const newDp= getDataProducts(dataProductRoot(),dpId)||{};
@@ -76,8 +75,9 @@ const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId, 
     const {displayType='unsupported', menu,fileMenu,
         message,url, isWorkingState, menuKey,
         activeMenuLookupKey,singleDownload= false,
-        chartTableDefOption=SHOW_CHART, imageActivate, extraction,
+        chartTableDefOption=SHOW_CHART, imageActivate, extractionText,
         allowsInput=false, serDefParams= undefined, noProductsAvailable=false}= dataProductsState;
+    const extraction= enableExtraction && dataProductsState.extraction;
 
     const searchParams= getSearchParams(serviceParamsAry,activeMenuLookupKey,menuKey);
 
@@ -129,7 +129,8 @@ const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId, 
     let makeDropDown;
     if (menu?.length>1 || fileMenu?.menu?.length>1 || extraction) {
         const showMenu= !singleDownload || singleDownload && displayType===DPtypes.DOWNLOAD_MENU_ITEM;
-        makeDropDown= getMakeDropdown(dpId, dataProductsState, showMenu, doResetButton, extraction, resetAllSearchParams);
+        makeDropDown= getMakeDropdown(
+            dpId, dataProductsState, showMenu, doResetButton, extraction, extractionText, resetAllSearchParams);
     }
 
 
@@ -351,10 +352,11 @@ const makeMultiImageViewer= (imageViewerId,metaDataTableId,makeDropDown, ImageMe
  * @param {boolean} showMenu - true to show the Menu
  * @param {boolean} showRedoSearchButton - true to show the button
  * @param {Function} extraction a function to extract the data product into somewhere else
+ * @param {String} extractionText a string for the extraction button
  * @param {Function} resetAllSearchParams - function that will reset all the search param input to undefined
  * @return {function|undefined} function to create the drapdown menu
  */
-function getMakeDropdown(dpId, dataProductState, showMenu, showRedoSearchButton, extraction, resetAllSearchParams) {
+function getMakeDropdown(dpId, dataProductState, showMenu, showRedoSearchButton, extraction, extractionText, resetAllSearchParams) {
     const {menu,fileMenu,activeMenuLookupKey, menuKey, analysisActivateFunc, originalTitle}= dataProductState;
     const hasFileMenu= get(fileMenu,'menu.length',0)>1;
     const hasMenu= showMenu && menu && menu.length>0;
@@ -382,7 +384,7 @@ function getMakeDropdown(dpId, dataProductState, showMenu, showRedoSearchButton,
                     dropDown={<FileMenuDropDown {...{fileMenu, dpId}} />} />
                 }
                 { extraction &&
-                <ToolbarButton text='Keep' tip={'Keep'} horizontal={true} onClick={() => extraction()} /> }
+                <ToolbarButton text={extractionText || 'Pin'} tip={extractionText || 'Pin'} horizontal={true} onClick={() => extraction()} /> }
                 {showRedoSearchButton && analysisActivateFunc &&
                     <ToolbarButton
                         text='Redo Search' tip={'Redo Search'} horizontal={true}

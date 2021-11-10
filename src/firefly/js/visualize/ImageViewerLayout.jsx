@@ -227,7 +227,7 @@ export class ImageViewerLayout extends PureComponent {
 
     eventCB(plotId,mouseState,screenPt,screenX,screenY,nativeEv) {
         const {drawLayersAry,plotView}= this.props;
-        const mouseStatePayload= makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY);
+        const mouseStatePayload= makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY, {shiftDown:nativeEv.shiftKey});
         const list= drawLayersAry.filter( (dl) => dl.visiblePlotIdAry.includes(plotView.plotId) &&
                                                 get(dl,['mouseEventMap',mouseState.key],false) );
 

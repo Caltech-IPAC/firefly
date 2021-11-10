@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * Utility to search for Spectrum Data Model information from the meta of a FITS table
  */
-class FitsSpectrumMeta {
+class SpectrumMetaInspector {
     private static final List<String> wlColNames= Arrays.asList("wave", "wavelength", "wavelengths", "wl", "wls");
     private static final List<String> enColNames= Arrays.asList("ener", "energy");
     private static final List<String> freqColNames= Arrays.asList("freq", "frequency");
@@ -46,6 +46,7 @@ class FitsSpectrumMeta {
     private static final String SPEC_TI_AXIS_ACCURACY= SPEC_TI_AXIS+ACCURACY;
     private static final String IPAC_ORDER= "ipac:Data.SpectralAxis.Order";
     private static final String spec10Version= "Spectrum v1.0";
+    private static final String VOCLASS= "VOCLASS";
 
     private static final String SPEC_SPECTRUM= "spec:Spectrum";
 
@@ -54,6 +55,10 @@ class FitsSpectrumMeta {
         l.addAll(enColNames);
         l.addAll(freqColNames);
         specColNames= l.toArray(new String[0]);
+    }
+
+    public static void searchForSpectrum(DataGroup dg, boolean spectrumHint) {
+        searchForSpectrum(dg,null,spectrumHint);
     }
 
     /**
@@ -65,9 +70,20 @@ class FitsSpectrumMeta {
      */
     public static void searchForSpectrum(DataGroup dg, BasicHDU<?> hdu, boolean spectrumHint) {
 
-        Header h= hdu.getHeader();
-        String utype= FitsReadUtil.getUtype(h);
-        if (utype==null && !spectrumHint && !spec10Version.equals(h.getStringValue("VOCLASS"))) return;
+        String utype;
+        if (hdu!=null) {
+            Header h= hdu.getHeader();
+            utype= FitsReadUtil.getUtype(h);
+            String voclass= h.getStringValue(VOCLASS);
+            if (voclass==null) voclass= "";
+            if (utype==null && !spectrumHint &&
+                    !voclass.equals(spec10Version) &&
+                    !voclass.toLowerCase().startsWith("spectrum") ) return;
+        }
+        else {
+            utype= dg.getAttribute(TableMeta.UTYPE);
+            if (utype==null && !spectrumHint) return;
+        }
 
         List<DataType> dtAry= Arrays.asList(dg.getDataDefinitions());
         List<GroupInfo> groupInfosList= new ArrayList<>();

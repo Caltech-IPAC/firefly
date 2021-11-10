@@ -346,7 +346,7 @@ function makeAllImageEntry(request, parts, imageViewerId,  tbl_id, row, imagePar
     return dpdtImage(`Image Data ${imagePartsLength>1? ': All Images in File' :''}`,
         createSingleImageActivate(newReq,imageViewerId,tbl_id,row),
         createSingleImageExtraction(newReq),
-        'image-'+0, {request});
+        'image-'+0, {extractionText: 'Pin Image', request});
 }
 
 /**

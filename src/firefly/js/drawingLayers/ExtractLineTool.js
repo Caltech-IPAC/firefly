@@ -20,7 +20,7 @@ import {DrawingType} from '../visualize/draw/DrawObj';
 import {DrawSymbol} from 'firefly/visualize/draw/DrawSymbol.js';
 
 
-const EDIT_DISTANCE= BrowserInfo.isTouchInput() ? 18 : 10;
+const EDIT_DISTANCE= BrowserInfo.isTouchInput() ? 18 : 5;
 
 
 const ID= 'EXTRACT_LINE_TOOL';
@@ -57,6 +57,7 @@ export function extractLineToolEndActionCreator(rawAction) {
         const srcWorld = hasWCSProjection(cc);
 
         const sel= {pt0:drawLayer.firstPt,pt1:drawLayer.currentPt};
+        if (sel.pt0===sel.pt1) return;
 
         drawLayer.plotIdAry.forEach( (pId) => {
             if (pId===plotId) {
@@ -211,6 +212,8 @@ function start(drawLayer, action) {
     const plot= primePlot(visRoot(),plotId);
     const mode= getMode(plot);
     if (!plot) return;
+    const cc= CsysConverter.make(plot);
+    if (!cc.pointInData(imagePt)) return;
     let retObj= {};
     if (mode==='select' || shiftDown) {
         retObj= setupSelect(imagePt);
@@ -219,7 +222,6 @@ function start(drawLayer, action) {
         const ptAry= getPtAry(plot);
         if (!ptAry) return retObj;
 
-        const cc= CsysConverter.make(plot);
         const spt= cc.getScreenCoords(imagePt);
         const idx= findClosestPtIdx(ptAry,spt);
         const testPt= cc.getScreenCoords(ptAry[idx]);
@@ -255,7 +257,8 @@ function drag(drawLayer,action) {
     const newCurrent = drawLayer.moveHead ? imagePt : drawLayer.currentPt;
 
     const drawAry= makeSelectObj(newFirst, newCurrent, undefined, drawLayer.offsetCal, cc);
-    return Object.assign({firstPt: newFirst, currentPt:newCurrent, activePt:undefined}, makeBaseReturnObj(newFirst, newCurrent,drawAry));
+    const line= Object.assign({firstPt: newFirst, currentPt:newCurrent, activePt:undefined}, makeBaseReturnObj(newFirst, newCurrent,drawAry));
+    return line;
 }
 
 function end(action) {
@@ -320,7 +323,7 @@ function makeSelectObj(firstPt,currentPt, activePt, offsetCal, cc) {
     obj.textLoc=TextLocation.LINE_TOP_STACK;
     obj.texttBaseLine = 'middle';
     obj.drawEvenIfWrapping= true;
-    obj.supportedDrawingTypes=  (hasWCSProjection(cc)) ? DrawingType.ImageCoordsOnly : DrawingType.WcsCoordsOnly;
+    obj.supportedDrawingTypes=  (hasWCSProjection(cc)) ?  DrawingType.WcsCoordsOnly : DrawingType.ImageCoordsOnly;
     const retval= [obj];
     if (activePt) {
         retval.push(

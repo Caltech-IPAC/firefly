@@ -7,7 +7,7 @@ import PropTypes from 'prop-types';
 import {isEmpty} from 'lodash';
 import {clone} from '../../util/WebUtil.js';
 import sizeMe from 'react-sizeme';
-import {Responsive} from 'react-grid-layout';
+import GridLayout from 'react-grid-layout';
 import {MultiImageViewer} from '../../visualize/ui/MultiImageViewer.jsx';
 import {MultiViewStandardToolbar} from '../../visualize/ui/MultiViewStandardToolbar.jsx';
 import {MultiChartViewer} from '../../charts/ui/MultiChartViewer.jsx';
@@ -108,32 +108,20 @@ class SlateView extends Component {
 
         const sourceGridDim= getGridDim(gridView);
         const maxSize= getGridDim(gridView, CV);
-        const small= makeSmallLayout(gridView);
         const normalLayout= makeNormalLayout(gridView);
 
         if (!this.doCollapse) {
-            this.rowHeight= sourceGridDim.rows<=2 ?
-                Math.max(((height-25)/maxSize.rows), 5) :
-                Math.max(height/(maxSize.rows+.5), 5);
+            this.rowHeight= sourceGridDim.rows<=2 ? Math.max(((height-25)/maxSize.rows), 5) : Math.max(height/(maxSize.rows+.5), 5);
         }
-
-        const breakpoints= {xxs: 0, small: 400, normalLayout:600};
-        const cols=        {xxs: CV, small:CV, normalLayout: gridColumns};
-        const layouts=     {xxs: small, small, normalLayout};
-
-        // console.log(`GridLayoutPanel, Render: doCollapse: ${this.doCollapse}, w: ${width}, h:${height}, row Height:${this.rowHeight}, rows: ${maxSize.rows}`);
-
+        console.log(`GridLayoutPanel, Render: doCollapse: ${this.doCollapse}, w: ${width}, h:${height}, row Height:${this.rowHeight}, rows: ${maxSize.rows}`);
 
         return (
             <div className= 'GridLayoutPanel' style={{flex: '1 1 auto', overflow: 'auto'}}>
-                <Responsive width={width-14} cols={cols} rowHeight={this.rowHeight}
-                            compactType={this.doCollapse? 'vertical' : null}
-                            breakpoints={breakpoints} layouts={layouts} margin={[CELL_MARGIN,CELL_MARGIN]}
-                            onLayoutChange={this.renderedLayoutUpdated}
-                            onDragStart={this.dragStart}
-                >
+                <GridLayout width={width-1} cols={gridColumns} rowHeight={this.rowHeight}
+                            layout={normalLayout} margin={[CELL_MARGIN,CELL_MARGIN]}
+                            onLayoutChange={this.renderedLayoutUpdated} onDragStart={this.dragStart} >
                     {gridView.map ( makeComponent)}
-                </Responsive>
+                </GridLayout>
             </div>
         );
 
@@ -160,21 +148,11 @@ GridLayoutPanel.propTypes= {
 
 
 
-
-
-
-
-
 function makeNormalLayout(gridView) {
     return gridView.map ( (c) => ({ x : c.col*CV, y : c.row*CV, w : c.width*CV, h : c.height*CV,
                                     i : c.cellId, minW:CV, minH:CV }));
 }
 
-function makeSmallLayout(gridView) {
-    return gridView
-        .sort( (c1,c2) => c1.row===c2.row ? c1.col-c2.col : c1.row-c2.row)
-        .map ( (c,idx) => ({ x : 0, y : idx*CV, w : CV, h : c.height*CV, i : c.cellId, minW:1}) );
-}
 
 function makeComponent(g) {
 
@@ -185,8 +163,10 @@ function makeComponent(g) {
         case LO_VIEW.tableImageMeta:
             return (
                 <div key={g.cellId} style={{flex: 'auto', display: 'flex'}} >
-
-                    <MultiProductViewer key={g.cellId}  viewerId={g.cellId} metaDataTableId={getActiveTableId()} />
+                    <MultiProductViewer key={g.cellId}
+                                        viewerId={g.cellId}
+                                        metaDataTableId={getActiveTableId()}
+                                        enableExtraction={true}/>
                 </div>
             );
         case LO_VIEW.coverageImage:

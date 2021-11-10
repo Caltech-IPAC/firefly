@@ -31,6 +31,7 @@ public class ServerParams {
     public static final String FULL_SCREEN = "fullScreen";
     public static final String IMAGE_PT1 = "ImagePt1";
     public static final String FILE_AND_HEADER = "fah";
+    public static final String WPT = "wpt";
     public static final String PT = "pt";
     public static final String PT1 = "pt1";
     public static final String PT2 = "pt2";
@@ -175,6 +176,7 @@ public class ServerParams {
     public static final String TILE_SIZE = "tileSize";
     public static final String POINT_SIZE= "pointSize";
     public static final String EXTRACTION_TYPE= "extractionType";
+    public static final String EXTRACTION_FLOAT_SIZE= "extractionFloatSize";
     public static final String HDU_NUM= "hduNum";
     public static final String RELATED_HDUS= "relatedHDUs";
     public static final String BACK_TO_URL= "backToUrl";

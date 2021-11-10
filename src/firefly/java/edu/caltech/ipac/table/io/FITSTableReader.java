@@ -170,7 +170,7 @@ public final class FITSTableReader
                         getFitsImageAsTable(hdu,metaInfo);
             }
             String dataTypeHint= metaInfo !=null ? metaInfo.getOrDefault(MetaConst.DATA_TYPE_HINT,"").toLowerCase() : "";
-            FitsSpectrumMeta.searchForSpectrum(dg,hdus[table_idx], dataTypeHint.equals("spectrum"));
+            SpectrumMetaInspector.searchForSpectrum(dg,hdus[table_idx], dataTypeHint.equals("spectrum"));
             return dg;
         } catch (FitsException|IOException e) {
             logTableReadError(fits_filename,table_idx,e.getMessage());
@@ -221,7 +221,7 @@ public final class FITSTableReader
                 break;
             }
         }
-        FitsSpectrumMeta.createSpectrumMeta(dataGroup,wavelengthColName,fluxColName,errCol);
+        SpectrumMetaInspector.createSpectrumMeta(dataGroup,wavelengthColName,fluxColName,errCol);
     }
 
     private static void insertZaxisGenericChartMeta(DataGroup dataGroup,
@@ -239,7 +239,7 @@ public final class FITSTableReader
 
 
 
-    public static DataGroup getCubeZaxisAsTable(ImagePt pt, String filename, int refHduNum,
+    public static DataGroup getCubeZaxisAsTable(ImagePt pt, WorldPt wpt, String filename, int refHduNum,
                                             boolean allMatchingHDUs, int drillSize, double[] wlAry,
                                                 String wlUnit, Map<Integer,String> fluxUnit)
             throws IOException, FitsException {
@@ -250,17 +250,15 @@ public final class FITSTableReader
         int len= results.get(0).getAryData().length;
         dataTypes.add(new DataType("plane","Plane", Integer.class));
         if (wlAry!=null) {
-            DataType wlDt= new DataType("wavelength","WaveLength", Double.class);
-            wlDt.setUnits(wlUnit);
+            DataType wlDt= new DataType("wavelength",Double.class, "WaveLength", wlUnit, null, null);
             dataTypes.add(wlDt);
         }
         String refKey= null;
         for(FitsReadUtil.ExtractionResults result : results) {
             String desc= result.getExtName()!=null ? result.getExtName() : "HDU# "+result.getHduNum();
             String key= makeKeyforHDUTab(result);
-            DataType dt = new DataType(key,desc, Double.class);
             String u= fluxUnit.get(result.getHduNum());
-            if (u!=null) dt.setUnits(u);
+            DataType dt = new DataType(key,Double.class, desc, u, null, null);
             if (result.isRefHDU()) refKey= key;
 
             dataTypes.add(dt);
@@ -269,7 +267,7 @@ public final class FITSTableReader
         for (int i = 0; (i < len); i++) {
             DataObject aRow = new DataObject(dataGroup);
             aRow.setDataElement("plane",i+1);
-            if (wlAry!=null) aRow.setDataElement("wavelength",wlAry[i]);
+            if (wlAry!=null) aRow.setDataElement("wavelength",rnd(wlAry[i],7));
             for(FitsReadUtil.ExtractionResults result : results) {
                 aRow.setDataElement(makeKeyforHDUTab(result),result.getAryData()[i]);
             }
@@ -277,6 +275,7 @@ public final class FITSTableReader
         }
         TableMeta meta= dataGroup.getTableMeta();
         meta.addKeyword(MetaConst.FITS_IM_PT, pt.toString());
+        if (wpt!=null) meta.addKeyword(MetaConst.FITS_WORLD_PT, wpt.toString());
         meta.addKeyword(MetaConst.FITS_IMAGE_HDU, makeMetaEntryForHDUs(results));
         meta.addKeyword(MetaConst.FITS_FILE_PATH, ServerContext.replaceWithPrefix(f));
         meta.addKeyword(MetaConst.FITS_EXTRACTION_TYPE, "z-axis");
@@ -287,17 +286,6 @@ public final class FITSTableReader
             insertZaxisGenericChartMeta(dataGroup, results, wlAry!=null?"wavelength":"plane");
         }
         return dataGroup;
-    }
-
-
-
-//    private static int getDir(ImagePt pt1, ImagePt pt2)  {
-//        if (usingXAxis(pt1,pt2)) return   pt1.getX()-pt2.getX() < 0 ? 1 : -1;
-//        else return pt1.getY() - pt2.getY() < 0 ? 1 : -1 ;
-//    }
-
-    private static int getStartValue(ImagePt pt1, ImagePt pt2)  {
-        return (int)minValue(pt1,pt2);
     }
 
     private static double minValue(ImagePt pt1,ImagePt pt2) {
@@ -318,12 +306,12 @@ public final class FITSTableReader
                 ptAry, f, refHduNum, plane, allMatchingHDUs, drillSize );
         ArrayList<DataType> dataTypes = new ArrayList<>();
         int len= results.get(0).getAryData().length;
-        dataTypes.add(new DataType("x","x", Integer.class));
-        dataTypes.add(new DataType("y","y", Integer.class));
+        dataTypes.add(new DataType("x", Integer.class, "x", "pixel", null, null));
+        dataTypes.add(new DataType("y", Integer.class, "y", "pixel", null, null));
         boolean hasWpt= wptAry!=null && wptAry.length==ptAry.length;
         if (hasWpt) {
-            dataTypes.add(new DataType("ra","ra", double.class));
-            dataTypes.add(new DataType("dec","dec", double.class));
+            dataTypes.add(new DataType("ra",Double.class, "ra", "deg", null, null));
+            dataTypes.add(new DataType("dec",Double.class, "dec","deg", null, null ));
         }
         String defYCol= "";
         for(FitsReadUtil.ExtractionResults result : results) {
@@ -339,8 +327,8 @@ public final class FITSTableReader
             aRow.setDataElement("x",(int)Math.rint(ptAry[i].getX()));
             aRow.setDataElement("y",(int)Math.rint(ptAry[i].getY()));
             if (hasWpt) {
-                aRow.setDataElement("ra",wptAry[i].getLon());
-                aRow.setDataElement("dec",wptAry[i].getLat());
+                aRow.setDataElement("ra",rnd(wptAry[i].getX(),7));
+                aRow.setDataElement("dec",rnd(wptAry[i].getY(),7));
             }
             for(FitsReadUtil.ExtractionResults result : results) {
                 aRow.setDataElement(makeKeyforHDUTab(result),result.getAryData()[i]);
@@ -362,17 +350,28 @@ public final class FITSTableReader
     }
 
 
+    private static double rnd(double d, int decimalPlaces) {
+        double factor= Math.pow(10,decimalPlaces);
+        return Math.round(d*factor)/factor;
+    }
 
 
-    public static DataGroup getLineSelectAsTable(ImagePt pt, ImagePt pt2, String filename, int refHduNum, int plane,
+    public static DataGroup getLineSelectAsTable(ImagePt[] ptAry, WorldPt[] wptAry, String filename, int refHduNum, int plane,
                                                 boolean allMatchingHDUs, int drillSize) throws IOException, FitsException {
         File f= ServerContext.convertToFile(filename);
-        List<FitsReadUtil.ExtractionResults> results= FitsReadUtil.getAllLinesFromRelatedHDUs(
-                pt,pt2, f, refHduNum, plane, allMatchingHDUs, drillSize );
+        List<FitsReadUtil.ExtractionResults> results= FitsReadUtil.getAllPointsFromRelatedHDUs(
+                ptAry, f, refHduNum, plane, allMatchingHDUs, drillSize );
         ArrayList<DataType> dataTypes = new ArrayList<>();
         int len= results.get(0).getAryData().length;
-        dataTypes.add(new DataType("x","x", Integer.class));
-        dataTypes.add(new DataType("y","y", Integer.class));
+        boolean hasWpt= wptAry!=null && wptAry.length==ptAry.length;
+        if (hasWpt) {
+            dataTypes.add(new DataType("offset", Double.class, "offset", "arcsec", null, null));
+            dataTypes.add(new DataType("ra",Double.class, "ra", "deg", null, null));
+            dataTypes.add(new DataType("dec",Double.class, "dec","deg", null, null ));
+        }
+        dataTypes.add(new DataType("pixOffset",Double.class, "pixOffset", "pixel",null, null ));
+        dataTypes.add(new DataType("x", Integer.class, "x", "pixel", null, null));
+        dataTypes.add(new DataType("y", Integer.class, "y", "pixel", null, null));
         String defYCol= "";
         for(FitsReadUtil.ExtractionResults result : results) {
             String desc= result.getExtName()!=null ? result.getExtName() : "HDU# "+result.getHduNum();
@@ -382,28 +381,32 @@ public final class FITSTableReader
             dataTypes.add(dt);
         }
         DataGroup dataGroup = new DataGroup("Cube Z-Axis", dataTypes);
-        int startValue= getStartValue(pt,pt2);
         for (int i = 0; (i < len); i++) {
             DataObject aRow = new DataObject(dataGroup);
-            ImagePt xyPt= VisUtil.getXorYinEquation(pt.getX(),pt.getY(),pt2.getX(),pt2.getY(),startValue+i);
-            aRow.setDataElement("x",(int)Math.rint(xyPt.getX()));
-            aRow.setDataElement("y",(int)Math.rint(xyPt.getY()));
+            aRow.setDataElement("pixOffset",rnd(VisUtil.computeDistance(ptAry[0],ptAry[i]), 1));
+            aRow.setDataElement("x",(int)Math.rint(ptAry[i].getX()));
+            aRow.setDataElement("y",(int)Math.rint(ptAry[i].getY()));
+            if (hasWpt) {
+                aRow.setDataElement("offset",rnd(VisUtil.computeDistance(wptAry[0],wptAry[i])*3600,3));
+                aRow.setDataElement("ra",rnd(wptAry[i].getX(),7));
+                aRow.setDataElement("dec",rnd(wptAry[i].getY(),7));
+            }
             for(FitsReadUtil.ExtractionResults result : results) {
                 aRow.setDataElement(makeKeyforHDUTab(result),result.getAryData()[i]);
             }
             dataGroup.add(aRow);
         }
         TableMeta meta= dataGroup.getTableMeta();
-        meta.addKeyword(MetaConst.FITS_IM_PT, pt.toString());
-        meta.addKeyword(MetaConst.FITS_IM_PT2, pt2.toString());
+        meta.addKeyword(MetaConst.FITS_IM_PT, ptAry[0].toString());
+        meta.addKeyword(MetaConst.FITS_IM_PT2, ptAry[ptAry.length-1].toString());
         meta.addKeyword(MetaConst.FITS_IMAGE_HDU, makeMetaEntryForHDUs(results));
         if (plane>0) meta.addKeyword(MetaConst.FITS_IMAGE_HDU_CUBE_PLANE, plane+"");
         meta.addKeyword(MetaConst.FITS_FILE_PATH, ServerContext.replaceWithPrefix(f));
         meta.addKeyword(MetaConst.FITS_EXTRACTION_TYPE, "line");
-        meta.addKeyword(MetaConst.DEFAULT_CHART_X_COL, usingXAxis(pt,pt2)?"x":"y");
+        meta.addKeyword(MetaConst.DEFAULT_CHART_X_COL, wptAry!=null ? "offset" : "pixOffset");
         meta.addKeyword(MetaConst.DEFAULT_CHART_Y_COL, defYCol);
         meta.addKeyword(MetaConst.IMAGE_COLUMN, "x;y");
-        meta.addKeyword(MetaConst.CATALOG_OVERLAY_TYPE, "IMAGE_PTS");
+        meta.addKeyword(MetaConst.CATALOG_OVERLAY_TYPE, hasWpt ? "TRUE" : "IMAGE_PTS");
 
         dataGroup.trimToSize();
         return dataGroup;

@@ -18,6 +18,7 @@ export const ServerParams = {
         FULL_SCREEN : 'fullScreen',
         IMAGE_PT1 : 'ImagePt1',
         FILE_AND_HEADER : 'fah',
+        WPT : 'wpt',
         PT : 'pt',
         PT1 : 'pt1',
         PT2 : 'pt2',
@@ -75,6 +76,7 @@ export const ServerParams = {
         MASK_BITS: 'maskBits',
 
         EXT_TYPE: 'extType',
+        EXTRACTION_FLOAT_SIZE: 'extractionFloatSize',
         IMAGE: 'image',
         TOOL_TIP:  'toolTip',
         DS9_REGION_DATA: 'ds9RegionData',

@@ -331,7 +331,7 @@ function activateMenuItem(state,action) {
     }
     dpData.activeMenuKeys= {...activeMenuKeys, [activeMenuLookupKey]:menuKey};
 
-    const {activate,extraction, imageActivate, url, serDefParams, displayType, allowsInput, name, originalTitle}= aMenuItem;
+    const {activate,extraction, extractionText, imageActivate, url, serDefParams, displayType, allowsInput, name, originalTitle}= aMenuItem;
 
     const requiresActivate= ACTIVATE_REQUIRED.includes(displayType);
     if (requiresActivate && !activate) {
@@ -346,7 +346,7 @@ function activateMenuItem(state,action) {
             case DPtypes.TABLE:
             case DPtypes.CHART:
             case DPtypes.CHOICE_CTI:
-                dpData.dataProducts= {displayType, name, menuKey, menu, fileMenu, activeMenuKey:menuKey, activeMenuLookupKey, activate, extraction, imageActivate};
+                dpData.dataProducts= {displayType, name, menuKey, menu, fileMenu, activeMenuKey:menuKey, activeMenuLookupKey, activate, extraction, extractionText, imageActivate};
                 break;
             case DPtypes.PNG:
                 dpData.dataProducts= {displayType, name, url, menuKey, menu, activeMenuKey:menuKey, activeMenuLookupKey};
@@ -389,7 +389,7 @@ export function changeActiveFileMenuItem(state,action) {
     const actIdx= fileMenu.menu.findIndex( (m) => m.menuKey===newActiveFileMenuKey);
     const fileMenuItem= fileMenu.menu[actIdx<0? fileMenu.initialDefaultIndex: actIdx];
 
-    const {activate,extraction, imageActivate,displayType,serDefParams, message,chartTableDefOption,
+    const {activate,extraction, extractionText, imageActivate,displayType,serDefParams, message,chartTableDefOption,
         analysisActivateFunc, originalTitle, noProductsAvailable}= fileMenuItem;
 
     dpData.activeFileMenuKeys={...activeFileMenuKeys, [fileMenu.activeItemLookupKey]:fileMenuItem.menuKey};
@@ -404,7 +404,7 @@ export function changeActiveFileMenuItem(state,action) {
     }
 
     const newFileMenu= {...fileMenu, activeFileMenuKey:newActiveFileMenuKey};
-    const newDisplayProduct= { ...selectedMenuDataProduct, displayType, chartTableDefOption, activate, imageActivate, extraction, message,
+    const newDisplayProduct= { ...selectedMenuDataProduct, displayType, chartTableDefOption, activate, imageActivate, extraction, extractionText, message,
         fileMenu:newFileMenu, activeMenuKey:menuKey, serDefParams, analysisActivateFunc, originalTitle, noProductsAvailable};
     const newMenu= menu && menu.map( (menuItem) => (menuItem.menuKey!==menuKey) ? menuItem : newDisplayProduct );
     dpData.dataProducts= {...newDisplayProduct, menu:newMenu};

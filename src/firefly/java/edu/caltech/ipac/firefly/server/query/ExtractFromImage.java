@@ -20,6 +20,7 @@ import java.util.Map;
         {
                 @ParamDoc(name="extractionType", desc="should be one of z-axis, line, or points"),
                 @ParamDoc(name="pt", desc="image point"),
+                @ParamDoc(name="wpt", desc="world point"),
                 @ParamDoc(name="pt2", desc="second image point, if line"),
                 @ParamDoc(name="ptAry", desc="for point selection"),
                 @ParamDoc(name="wptAry", desc="for point selection, added to the created table"),
@@ -51,17 +52,18 @@ public class ExtractFromImage extends EmbeddedDbProcessor {
         try {
             if (extType == null || extType.equals("z-axis")) {
                 ImagePt pt = ImagePt.parse(req.getParam(ServerParams.PT));
+                WorldPt wpt = WorldPt.parse(req.getParam(ServerParams.WPT));
                 checkZAxisParams(pt, filename, refHduNum);
                 String wlUnit= req.getParam(ServerParams.WL_UNIT);
                 Map<Integer,String> fluxUnit= makeMapOfUnitsFromParam(req);
                 double[] wlAry= SrvParam.getDoubleAryFromJson(req.getParam(ServerParams.WL_ARY));
-                return FITSTableReader.getCubeZaxisAsTable(pt, filename, refHduNum, allMatchingHDUs, extractionSize, wlAry,wlUnit,fluxUnit);
+                return FITSTableReader.getCubeZaxisAsTable(pt, wpt, filename, refHduNum, allMatchingHDUs, extractionSize, wlAry,wlUnit,fluxUnit);
             }
             else if (extType.equals("line")) {
-                ImagePt pt = ImagePt.parse(req.getParam(ServerParams.PT));
-                ImagePt pt2 = ImagePt.parse(req.getParam(ServerParams.PT2));
-                checkLineParams(pt, pt2, plane, filename, refHduNum);
-                return FITSTableReader.getLineSelectAsTable(pt, pt2, filename, refHduNum, plane, allMatchingHDUs, extractionSize);
+                ImagePt[] ptAry= SrvParam.getImagePtAryFromJson(req.getParam(ServerParams.PTARY));
+                WorldPt[] wptAry= SrvParam.getWorldPtAryFromJson(req.getParam(ServerParams.WPT_ARY));
+                checkPointParams(ptAry, plane, filename, refHduNum);
+                return FITSTableReader.getLineSelectAsTable(ptAry, wptAry, filename, refHduNum, plane, allMatchingHDUs, extractionSize);
             } else if (extType.equals("points")) {
                 ImagePt[] ptAry= SrvParam.getImagePtAryFromJson(req.getParam(ServerParams.PTARY));
                 WorldPt[] wptAry= SrvParam.getWorldPtAryFromJson(req.getParam(ServerParams.WPT_ARY));
@@ -96,14 +98,6 @@ public class ExtractFromImage extends EmbeddedDbProcessor {
         if (pt==null) throw new IllegalArgumentException("Point is require for z-axis extraction");
         if (filename==null) throw new IllegalArgumentException("filename is require for z-axis extraction");
         if (refHduNum<0) throw new IllegalArgumentException("refHduNum is require for z-axis extraction");
-    }
-
-    private static void checkLineParams(ImagePt pt, ImagePt pt2, int plane, String filename, int refHduNum) {
-        if (pt==null) throw new IllegalArgumentException("Point is require for line extraction");
-        if (pt2==null) throw new IllegalArgumentException("Point2 is require for line extraction");
-        if (filename==null) throw new IllegalArgumentException("filename is require for line extraction");
-        if (refHduNum<0) throw new IllegalArgumentException("refHduNum is require for line extraction");
-        if (plane<0) throw new IllegalArgumentException("refHduNum is require for line extraction");
     }
 
     private static void checkPointParams(ImagePt[] ptAry, int plane, String filename, int refHduNum) {

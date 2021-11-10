@@ -20,6 +20,7 @@ import {ChartType} from '../data/FileAnalysis';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga';
 import {SET_LAYOUT_MODE, LO_MODE, LO_VIEW} from '../core/LayoutCntlr.js';
 import {getDefaultChartProps} from 'firefly/charts/ChartUtil.js';
+import {showPinMessage} from 'firefly/ui/PopupUtil.jsx';
 
 const getSetInSrByRow= (table,sr,rowNum) => (col) => {
     sr.setSafeParam(col.name, getCellValue(table,rowNum,col.name));
@@ -132,6 +133,7 @@ export function createTableExtraction(source,titleInfo,tbl_index,colNames,colUni
         const dataTableReq= makeTableRequest(source,ti,undefined,tbl_index,colNames,colUnits,dataTypeHint, true);
         dispatchTableSearch(dataTableReq,
             { setAsActive: false, logHistory: false, showFilters: true, showInfoButton: true });
+        showPinMessage('Pinning to Table Area');
     };
 }
 
