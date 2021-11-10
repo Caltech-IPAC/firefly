@@ -10,7 +10,7 @@ import {isArray} from 'lodash';
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest} from '../core/JsonUtils.js';
 import {SelectedShape} from '../drawingLayers/SelectedShape';
-import {getCmdSrvURL} from 'firefly/util/WebUtil.js';
+import {getCmdSrvSyncURL} from 'firefly/util/WebUtil.js';
 import {fetchUrl} from 'firefly/api/ApiUtil.js';
 import {getNumberHeader, HdrConst} from 'firefly/visualize/FitsHeaderUtil.js';
 
@@ -113,7 +113,7 @@ export function callGetFileFlux(stateAry, pt) {
 async function fetchExtraction(plot, inParams, cmd= ServerParams.FITS_EXTRACTION) {
     const use64Bit= getNumberHeader(plot,HdrConst.BITPIX,-64)===-64;
     const params= {...inParams, [ServerParams.EXTRACTION_FLOAT_SIZE]: use64Bit ? 64 : 32};
-    const response= await fetchUrl(getCmdSrvURL()+`?${ServerParams.COMMAND}=${cmd}`,{method:'POST', params },false);
+    const response= await fetchUrl(getCmdSrvSyncURL()+`?${ServerParams.COMMAND}=${cmd}`,{method:'POST', params },false);
     if (!response.ok) {
         throw(new Error(`Error from Server for getStretchedByteData: code: ${response.status}, text: ${response.statusText}`));
     }
