@@ -227,7 +227,8 @@ export class ImageViewerLayout extends PureComponent {
 
     eventCB(plotId,mouseState,screenPt,screenX,screenY,nativeEv) {
         const {drawLayersAry,plotView}= this.props;
-        const mouseStatePayload= makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY, {shiftDown:nativeEv.shiftKey});
+        const shiftDown= nativeEv.shiftKey;
+        const mouseStatePayload= makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY, {shiftDown});
         const list= drawLayersAry.filter( (dl) => dl.visiblePlotIdAry.includes(plotView.plotId) &&
                                                 get(dl,['mouseEventMap',mouseState.key],false) );
 
@@ -242,7 +243,7 @@ export class ImageViewerLayout extends PureComponent {
             return;
         }
         else {
-            const ownerCandidate= findMouseOwner(list,primePlot(plotView),screenPt);         // see if anyone can own that mouse
+            const ownerCandidate= !shiftDown && findMouseOwner(list,primePlot(plotView),screenPt);         // see if anyone can own that mouse
             this.mouseOwnerLayerId = DOWN.is(mouseState) && ownerCandidate ? ownerCandidate.drawLayerId : null;   // can only happen on mouseDown
             if (this.mouseOwnerLayerId) {
                 if (DOWN.is(mouseState)) dispatchChangeActivePlotView(plotId);

@@ -96,21 +96,32 @@ function enableDrawLayer(typeId) {
 }
 
 
-export function showExtractionDialog(extractionType) {
-    resetAll();
+export function showExtractionDialog(extractionType,wasCanceled) {
+    endExtraction();
     exTypeCntl[extractionType].start();
-    DialogRootContainer.defineDialog(DIALOG_ID, <ExtractDialog extractionType={extractionType}/> );
+    DialogRootContainer.defineDialog(DIALOG_ID, <ExtractDialog {...{extractionType, wasCanceled}}/> );
     dispatchShowDialog(DIALOG_ID);
 }
 
-function ExtractDialog({extractionType}) {
+export function endExtraction() {
+    cancelPointExtraction();
+    cancelZaxisExtraction();
+    cancelLineExtraction();
+}
+
+function ExtractDialog({extractionType,wasCanceled}) {
     const [pv] = useStoreConnector( getStoreState);
     const {canCreateExtractionTable}= getAppOptions().image;
     const {Panel, cancelFunc}= exTypeCntl[extractionType];
 
+    const doCancel= () => {
+        cancelFunc();
+        wasCanceled?.();
+    };
+
     return(
         <PopupPanel title={`Extract - ${primePlot(pv)?.title ?? ''}`}
-                    closeCallback={cancelFunc} requestToClose={cancelFunc}  >
+                    closeCallback={doCancel} requestToClose={doCancel}  >
             <Panel canCreateExtractionTable={canCreateExtractionTable} pv={pv}/>
         </PopupPanel>
     );
@@ -444,11 +455,6 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
 }
 
 
-function resetAll() {
-    cancelPointExtraction();
-    cancelZaxisExtraction();
-    cancelLineExtraction();
-}
 
 function cancelZaxisExtraction() {
     dispatchChangePointSelection(ZAXIS_POINT_SELECTION_ID, false);
@@ -457,9 +463,11 @@ function cancelZaxisExtraction() {
 
 function cancelLineExtraction() {
     const pv= getActivePlotView(visRoot());
-    if (pv) dispatchDetachLayerFromPlot(ExtractLineTool.TYPE_ID,pv.plotId,true);
-    dispatchAttributeChange({plotId:pv.plotId,overlayColorScope:true,
-        changes:{[PlotAttribute.SELECT_ACTIVE_CHART_PT]: undefined }});
+    if (pv) {
+        dispatchDetachLayerFromPlot(ExtractLineTool.TYPE_ID,pv.plotId,true);
+        dispatchAttributeChange({plotId:pv.plotId,overlayColorScope:true,
+            changes:{[PlotAttribute.SELECT_ACTIVE_CHART_PT]: undefined }});
+    }
     dispatchHideDialog(DIALOG_ID);
 }
 

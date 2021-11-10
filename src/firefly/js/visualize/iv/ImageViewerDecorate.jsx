@@ -212,10 +212,17 @@ function ZoomPair({pv, show}) {
                 display:'inline-flex',
                 borderRadius:'0 0 5px ',
                 position: 'relative',
+                flexDirection: 'row',
                 alignSelf: 'flex-start',
                 }}>
-            <ZoomButton size={20} plotView={pv} zoomType={ZoomType.UP} horizontal={true}/>
-            <ZoomButton size={20} plotView={pv} zoomType={ZoomType.DOWN} horizontal={true}/>
+            <div style={{display:'flex', alignSelf: 'flex-start'}}>
+                <ZoomButton size={20} plotView={pv} zoomType={ZoomType.UP} horizontal={true}/>
+                <ZoomButton size={20} plotView={pv} zoomType={ZoomType.DOWN} horizontal={true}/>
+            </div>
+            <div style={{display:'flex', alignSelf: 'flex-start'}}>
+                <ZoomButton size={20} plotView={pv} zoomType={ZoomType.FIT} horizontal={true}/>
+                <ZoomButton size={20} plotView={pv} zoomType={ZoomType.FILL} horizontal={true}/>
+            </div>
         </div> : <div/>
     );
     
