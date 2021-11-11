@@ -200,20 +200,6 @@ export const isPlotView= (obj) =>
 export const getOverlayById= (pv, imageOverlayId) =>
                        pv?.overlayPlotViews.find( (opv) => opv.imageOverlayId===imageOverlayId);
 
-/**
- * Look for a cached image tile that has been reprocessed from the original. Match by plotId and the original
- * url key of the unprocessed tile
- * @param {VisRoot} visRoot
- * @param {string} plotId
- * @param {string} originalUrlkey
- * @return {ClientTile}
- */
-export function findProcessedTile(visRoot, plotId, originalUrlkey) {
-    if (!visRoot) return undefined;
-    return flatten(visRoot.processedTiles.filter( (e) => e.plotId===plotId).map( (e) => e.clientTileAry))
-        .find( (tile) => tile.url===originalUrlkey );
-}
-
 
 /**
  *

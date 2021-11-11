@@ -38,6 +38,7 @@ export const PlotTitle= memo(({plotView:pv, titleType, brief, working, topOffset
         }
         // const style= (image && local) ? {backgroundColor : 'rgba(255,255,255,.3)'} : {};
         let rotString;
+        let flipString;
         if (pv.rotation) {
             if (pv.plotViewCtx.rotateNorthLock) {
                 rotString= 'North';
@@ -48,6 +49,10 @@ export const PlotTitle= memo(({plotView:pv, titleType, brief, working, topOffset
             zlStr+=',';
             tooltip+= `, ${rotString}`;
         }
+        if (pv.flipY) {
+            flipString= ', Flip Y';
+            tooltip+= ', Flip Y';
+        }
 
 
         return (
@@ -55,6 +60,7 @@ export const PlotTitle= memo(({plotView:pv, titleType, brief, working, topOffset
                 <div className='plot-title-title'>{plot.title}</div>
                 {!brief ? <div className='plot-title-zoom'><div title={tooltip} dangerouslySetInnerHTML={{__html:zlStr}}/> </div> : ''}
                 {!brief && rotString ? <div title={tooltip} className='plot-title-rotation'>{rotString}</div> : ''}
+                {!brief && flipString ? <div title={tooltip} className='plot-title-flipped'>{flipString}</div> : ''}
                 {working ?<img style={{width:14,height:14,padding:'0 3px 0 5px'}} src={LOADING}/> : ''}
             </div>
         );

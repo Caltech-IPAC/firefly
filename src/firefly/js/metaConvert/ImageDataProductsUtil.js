@@ -9,7 +9,7 @@ import {
 } from '../visualize/MultiViewCntlr.js';
 import {dispatchPlotImage, dispatchDeletePlotView, visRoot, dispatchZoom,
     dispatchPlotGroup, dispatchChangeActivePlotView} from '../visualize/ImagePlotCntlr.js';
-import {isImageDataRequestedEqual} from '../visualize/WebPlotRequest.js';
+import {AnnotationOps, isImageDataRequestedEqual} from '../visualize/WebPlotRequest.js';
 import {getPlotViewAry, getPlotViewById, primePlot} from '../visualize/PlotViewUtil.js';
 import {UserZoomTypes} from '../visualize/ZoomUtil.js';
 import {allBandAry} from '../visualize/Band.js';
@@ -164,7 +164,12 @@ function replotImageDataProducts(activePlotId, imageViewerId, tbl_id, reqAry, th
         }
     }
     // prepare each request
-    reqAry.forEach( (r) => r.setPlotGroupId(groupId));
+    reqAry= reqAry.map( (r) => {
+        const newR= r.makeCopy();
+        newR.setPlotGroupId(groupId);
+        newR.setAnnotationOps(AnnotationOps.INLINE);
+        return newR;
+    });
 
 
     // setup view for these plotting ids
@@ -184,7 +189,7 @@ function replotImageDataProducts(activePlotId, imageViewerId, tbl_id, reqAry, th
     const wpRequestAry= makePlottingList(reqAry);
     if (!isEmpty(wpRequestAry)) {
         dispatchPlotGroup({wpRequestAry, viewerId:imageViewerId, holdWcsMatch:true,
-            pvOptions: { userCanDeletePlots: false, menuItemKeys:{imageSelect : false} },
+            pvOptions: { userCanDeletePlots: false, menuItemKeys:{imageSelect : false}, useSticky:true },
             attributes: { tbl_id }
         });
     }

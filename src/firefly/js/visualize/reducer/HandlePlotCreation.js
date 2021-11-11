@@ -17,7 +17,7 @@ import {
     getPlotViewIdListByPositionLock,
     hasImageCubes, getCubePlaneCnt, getHDU, getImageCubeIdx, isMultiHDUFits
 } from '../PlotViewUtil.js';
-import {makePlotGroup} from '../PlotGroup.js';
+import {getPlotGroupById, makePlotGroup} from '../PlotGroup.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {CCUtil} from '../CsysConverter.js';
 import {getRotationAngle} from '../VisUtil.js';
@@ -112,7 +112,7 @@ function updateDefaults(plotRequestDefaults, action) {
 function startPlot(state, action) {
     const plotRequestDefaults= action.payload.enableRestore && updateDefaults(state.plotRequestDefaults,action);
     const plotGroupAry= confirmPlotGroup(state.plotGroupAry,action);
-    const plotViewAry= preNewPlotPrep(state.plotViewAry,action);
+    const plotViewAry= preNewPlotPrep(state,action, plotGroupAry);
     const retState= {...state};
     if (plotViewAry) retState.plotViewAry= plotViewAry;
     if (plotGroupAry) retState.plotGroupAry= plotGroupAry;
@@ -133,7 +133,7 @@ function addHiPS(state,action, setActive= true, newPlot= true) {
         activePlotId = pv.plotId;
     }
 
-    plotViewAry = plotViewAry.map((pv) => { // map has side effect of setting active plotId, and cleaning processedTiles
+    plotViewAry = plotViewAry.map((pv) => { // map has side effect of setting active plotId
         if ((pv.plotId!==plotId)) return pv;
         pv = replacePlots(pv, [plot], null, state.expandedMode, newPlot);
         pv.serverCall= 'success';
@@ -170,10 +170,10 @@ function countCubes(pv) {
 
 function addPlot(state,action, setActive, newPlot) {
     const {wcsMatchType}= state;
-    let {plotViewAry, activePlotId, prevActivePlotId, mpwWcsPrimId, processedTiles}= state;
+    let {plotViewAry, activePlotId, prevActivePlotId, mpwWcsPrimId}= state;
     const {pvNewPlotInfoAry}= action.payload;
 
-    plotViewAry = plotViewAry.map((pv) => { // map has side effect of setting active plotId, and cleaning processedTiles
+    plotViewAry = plotViewAry.map((pv) => { // map has side effect of setting active plotId
         const info = pvNewPlotInfoAry.find((i) => i.plotId === pv.plotId && (!i.requestKey || i.requestKey===pv.request.getRequestKey()));
         if (!info) return pv;
         const {plotAry, overlayPlotViews}= info;
@@ -212,14 +212,12 @@ function addPlot(state,action, setActive, newPlot) {
             pv.rotation=  Math.trunc(pv.request.getRotationAngle() -  getRotationAngle(primePlot(pv)));
             pv= updateTransform(pv);
         }
-        processedTiles= processedTiles.filter( (d) => d.plotId!==pv.plotId); // remove old client tile data
-
         return pv;
     });
 
     if (!mpwWcsPrimId) mpwWcsPrimId = activePlotId;
 
-    const newState = {...state, prevActivePlotId, plotViewAry, activePlotId, mpwWcsPrimId, processedTiles};
+    const newState = {...state, prevActivePlotId, plotViewAry, activePlotId, mpwWcsPrimId};
 
     if (wcsMatchType) {
         newState.plotViewAry = plotViewAry.map((pv) => updateForWcsMatching(newState, pv, mpwWcsPrimId));
@@ -351,17 +349,24 @@ function hipsFail(state,action) {
 /**
  /**
  *
- * @param plotViewAry
- * @param action
+ * @param {VisRoot} state
+ * @param {Action} action
+ * @param {Array.<PlotGroup>} plotGroupAry
  * @return {Array|null} new PlotViewAry or null it nothing is created.
  */
-function preNewPlotPrep(plotViewAry,action) {
+function preNewPlotPrep(state,action, plotGroupAry) {
+    const {plotViewAry}= state;
     const {payload}= action;
     const wpRequestAry= getRequestAry(payload);
 
     const pvChangeAry= wpRequestAry.map( (req) => {
         const plotId= req.getPlotId();
-        const pv= makePlotView(plotId, req,payload.pvOptions);
+        const plotGroup= getPlotGroupById(plotGroupAry,req.getPlotGroupId());
+        const pv= makePlotView(plotId, req,{
+            rotateNorthLock: plotGroup.rotateNorthLockSticky,
+            flipYLock: plotGroup.flipYSticky,
+            ...payload.pvOptions,
+        });
 
         const {hipsImageConversion}= payload;
         if (hipsImageConversion) {

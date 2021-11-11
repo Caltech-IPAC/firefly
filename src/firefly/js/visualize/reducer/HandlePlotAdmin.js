@@ -12,7 +12,7 @@ export function reducer(state, action) {
 
     switch (action.type) {
         case Cntlr.API_TOOLS_VIEW  :
-            return {...state,apiToolsView:action.payload.apiToolsView, useFloatToolbar: action.payload.useFloatToolbar};
+            return {...state,apiToolsView:action.payload.apiToolsView};
 
         case Cntlr.CHANGE_ACTIVE_PLOT_VIEW:
             return changeActivePlotView(state,action);
@@ -111,6 +111,5 @@ function deletePlotView(state,action) {
     if (state.mpwWcsPrimId===plotId) {
         state.mpwWcsPrimId= state.prevActivePlotId || state.activePlotId || get(state,'plotViewAry.0.plotId',null);
     }
-    state.processedTiles= state.processedTiles.filter( (d) => d.plotId!==plotId);// remove old client tile data
     return state;
 }
