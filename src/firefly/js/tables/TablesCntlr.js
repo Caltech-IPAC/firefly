@@ -675,20 +675,18 @@ function asyncFetch(request, hlRowIdx, dispatch, tbl_id) {
     };
 
     const bgKey = TblUtil.makeBgKey(tbl_id);
-    dispatchComponentStateChange(bgKey, {inProgress:true, jobInfo: undefined});
+    dispatchComponentStateChange(bgKey, {inProgress:true});
     asyncFetchTable(request)
         .then ( (jobInfo) => {
-            if (jobInfo) {
-                if (isDone(jobInfo)) {
-                    onComplete(jobInfo);
-                    dispatchComponentStateChange(bgKey, {inProgress:false, jobInfo:undefined});
-                } else {
-                    // not done; track progress
-                    dispatchComponentStateChange(bgKey, {jobInfo});
-                    trackBackgroundJob({jobId: jobInfo.jobId, key: bgKey, onComplete, sentToBg});
-                }
+            const jobId = jobInfo?.jobId;
+            const inProgress = !isDone(jobInfo);
+            dispatchComponentStateChange(bgKey, {inProgress, jobId});
+            if (inProgress) {
+                // not done; track progress
+                trackBackgroundJob({jobId, key: bgKey, onComplete, sentToBg});
             }
         }).catch( (error) => {
+            dispatchComponentStateChange(bgKey, {inProgress:false});
             dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, error.message)});
         });
 }

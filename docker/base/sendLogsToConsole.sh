@@ -1,19 +1,13 @@
 #!/bin/bash
 #
-# send the important log files to the console.
-# pause for a few seconds, the find the log file names and do a tail -f
+# pause for a few seconds, then add console to the 'brief' appender in log4j.properties so
+# logs are sent to standard out as well.
 #
 sleepTime=15s
-echo "sendLogsToConsole: started: sleeping ${sleepTime}"
-sleep ${sleepTime}
-ALL_LOGS="${CATALINA_HOME}/logs/*[a-zA-Z].log ${CATALINA_HOME}/logs/*.out"
-IFS=" " read -r -a logArray <<< "$(echo ${ALL_LOGS})"
-namelist=' '
-for element in "${logArray[@]}"
-do
-    namelist="$(basename -- ${element}) ${namelist}"
-done
-echo -e '\n\n>>>>>>>>> sendLogsToConsole: Tailing logs: ' "${namelist}" '\n'
-tail -c +0 -f ${ALL_LOGS}
 
-
+if ! ls ${CATALINA_HOME}/webapps/*/WEB-INF/config/log4j.properties.bak; then
+  echo "sendLogsToConsole: started: sleeping ${sleepTime}"
+  sleep ${sleepTime}
+  echo 'changing log4j config file to also send output to console'
+  sed -E -i.bak 's/logger\.(brief\.)?edu(.*)$/logger\.\1edu\2, console/' ${CATALINA_HOME}/webapps/*/WEB-INF/config/log4j.properties
+fi

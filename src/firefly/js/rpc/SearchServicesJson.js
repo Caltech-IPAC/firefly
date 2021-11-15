@@ -7,15 +7,15 @@
  */
 
 
-import {get, set, pickBy, cloneDeep, has, isUndefined} from 'lodash';
+import {get, pickBy, cloneDeep, has, isUndefined} from 'lodash';
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest} from '../core/JsonUtils.js';
 import {getBgEmail, submitJob, getBackgroundJobs, getJobInfo} from '../core/background/BackgroundUtil.js';
 import {dispatchBgJobInfo} from '../core/background/BackgroundCntlr.js';
-import {encodeUrl, getModuleName, updateSet, getCmdSrvSyncURL} from '../util/WebUtil.js';
+import {encodeUrl, updateSet, getCmdSrvSyncURL} from '../util/WebUtil.js';
 
 import {getTblById, getResultSetID, getResultSetRequest} from '../tables/TableUtil.js';
-import {MAX_ROW, DataTagMeta, getTblId, setResultSetID, setResultSetRequest, setSelectInfo} from '../tables/TableRequestUtil.js';
+import {MAX_ROW, getTblId, setResultSetID, setResultSetRequest, setSelectInfo} from '../tables/TableRequestUtil.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {getFireflySessionId} from '../Firefly.js';
 import {download} from '../util/fetch';
@@ -143,10 +143,6 @@ export function packageRequest(dlRequest, searchRequest, selectionInfo) {
     }
     if (!dlRequest.Email && getBgEmail()) {
         dlRequest.Email = getBgEmail();
-    }
-    // insert DataTag if not present
-    if (!get(searchRequest, DataTagMeta)) {
-        set(searchRequest, DataTagMeta, `${getModuleName()}-${ServerParams.PACKAGE_REQUEST}`);
     }
 
     const params = {

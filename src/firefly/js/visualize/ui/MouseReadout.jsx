@@ -11,6 +11,8 @@ import {ToolbarButton} from '../../ui/ToolbarButton';
 
 import CLIPBOARD from 'html/images/12x12_clipboard.png';
 import CHECKED from 'html/images/12x12_clipboard-checked.png';
+import CLIPBOARD_LARGE from 'html/images/20x20_clipboard.png';
+import CHECKED_LARGE from 'html/images/20x20_clipboard-checked.png';
 import './MouseReadout.css';
 
 export const MouseReadoutLock= memo(({gArea, gAreaLabel, style={}, lockByClick}) => {
@@ -93,7 +95,7 @@ DataReadoutItem.propTypes = {
 
 
 
-const buttonStyle= {
+const defButtonStyle= {
     borderRadius:2,
     backgroundColor:'rgba(255,255,255,.9',
     border:'solid transparent',
@@ -101,20 +103,24 @@ const buttonStyle= {
 };
 
 
-export function CopyToClipboard({value, title, style}) {
-    const [clipIcon, setClipIcon] = useState(CLIPBOARD);
+export function CopyToClipboard({value, title, style, size=12, buttonStyle={}}) {
+    const uncheckedIco = size > 12 ? CLIPBOARD_LARGE : CLIPBOARD;
+    const checkedIco = size > 12 ? CHECKED_LARGE : CHECKED;
+    title= title ||  `Copy to clipboard: ${value}`;
+
+    const [clipIcon, setClipIcon] = useState(uncheckedIco);
 
     const doCopy= (str) => {
         copyToClipboard(str);
         setTimeout( () => {
-            setClipIcon(CHECKED);
-            setTimeout( () => setClipIcon(CLIPBOARD),750);
+            setClipIcon(checkedIco);
+            setTimeout( () => setClipIcon(uncheckedIco),750);
         }, 10);
     };
 
     return (
         <div style={style}>
-            <ToolbarButton icon={clipIcon} tip={title} bgDark={true} style={buttonStyle}
+            <ToolbarButton icon={clipIcon} tip={title} bgDark={true} style={{...defButtonStyle, ...buttonStyle}} imageStyle={{height:size, width:size}}
                            horizontal={true} onClick={() => doCopy(value)} />
         </div>
     );

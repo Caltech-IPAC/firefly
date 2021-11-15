@@ -4,7 +4,7 @@
 
 import React, {useCallback, useState} from 'react';
 import PropTypes from 'prop-types';
-import {set, cloneDeep, get, omit} from 'lodash';
+import {cloneDeep, get} from 'lodash';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import {dispatchShowDialog, dispatchHideDialog} from '../core/ComponentCntlr.js';
@@ -21,7 +21,6 @@ import {dispatchPackage, dispatchBgSetEmailInfo} from '../core/background/Backgr
 import {WS_HOME} from '../visualize/WorkspaceCntlr.js';
 import {getBgEmailInfo} from '../core/background/BackgroundUtil.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
-import {DataTagMeta} from '../tables/TableRequestUtil.js';
 import {useStoreConnector} from './SimpleComponent.jsx';
 import {BgMaskPanel} from '../core/background/BgMaskPanel.jsx';
 import {WsSaveOptions} from './WorkspaceSelectPane.jsx';
@@ -140,7 +139,7 @@ let dlTitleIdx = 0;
 const newBgKey = () => 'DownloadOptionPanel-' + Date.now();
 
 export function DownloadOptionPanel (props) {
-    const {groupKey, cutoutSize, help_id, children, style, title, dlParams, dataTag, updateSearchRequest=null, updateDownloadRequest=null} = props;
+    const {groupKey, cutoutSize, help_id, children, style, title, dlParams, updateSearchRequest=null, updateDownloadRequest=null} = props;
     const { cancelText='Cancel', showZipStructure=true, showEmailNotify=true, showFileLocation=true, showTitle=true } = props;
 
     const {tbl_id:p_tbl_id, checkSelectedRow} = React.useContext(OptionsContext);
@@ -164,7 +163,7 @@ export function DownloadOptionPanel (props) {
         let dlRequest = makeTblRequest(FileGroupProcessor, formInputs.Title, Object.assign(dlParams, {cutoutSize}, formInputs));
 
         //make a search request
-        let searchRequest = set(cloneDeep(request), DataTagMeta, dataTag);
+        let searchRequest = cloneDeep(request);
 
         /*If a calling application has its own parameters to be added, deleted or updated, those parameters
           can be provided by using getOverrideRequestParams function.
@@ -183,7 +182,7 @@ export function DownloadOptionPanel (props) {
         dispatchPackage(dlRequest, searchRequest, SelectInfo.newInstance(selectInfo).toString(), akey);
         dlTitleIdx++;
         setBgKey(akey);
-    }, [cutoutSize, dataTag, dlParams, tbl_id]);
+    }, [cutoutSize, dlParams, tbl_id]);
 
     const showWarnings = hasProprietaryData(getTblById(tbl_id));
 
@@ -243,7 +242,6 @@ DownloadOptionPanel.propTypes = {
     help_id:    PropTypes.string,
     title:      PropTypes.string,           // title of the dialog, appears at top of the dialog
     style:      PropTypes.object,
-    dataTag:    PropTypes.string,
 
     showTitle:        PropTypes.bool,           // layout Title field.  This is the title of the package request.  It will be displayed in background monitor.
     showZipStructure: PropTypes.bool,           // layout ZipStructure field

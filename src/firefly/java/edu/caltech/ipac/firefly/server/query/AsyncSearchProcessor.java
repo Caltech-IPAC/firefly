@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataGroup;
@@ -63,7 +62,7 @@ public abstract class AsyncSearchProcessor extends EmbeddedDbProcessor  {
                         TimeUnit.MILLISECONDS.sleep(wait);
                     }
                 }
-                jobIf(v -> v=null);         // check job phase.. exit loop if aborted.
+                jobExecIf(v -> v=null);         // check job phase.. exit loop if aborted.
             }
         } catch (InterruptedException e) {
             onAbort();

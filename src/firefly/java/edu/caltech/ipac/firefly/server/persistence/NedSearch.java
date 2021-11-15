@@ -31,12 +31,6 @@ public class NedSearch extends QueryByConeSearchURL {
     static String url = "https://ned.ipac.caltech.edu/byname?objname=%s";
 
     @Override
-    protected String getFilePrefix(TableServerRequest request) {
-        return "nedconesearch-";
-    }
-
-
-    @Override
     public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
         DataGroup resDg = super.fetchDataGroup(req);
 

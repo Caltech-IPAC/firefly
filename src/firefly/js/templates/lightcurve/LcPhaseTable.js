@@ -236,7 +236,7 @@ function repeatDataCycle(phaseTable) {
     /* TODO: investigate to pick the needed properties under tableMeta */
     /*
     var newTableMeta = pick(tableMeta, ['fixlen', 'QueryTime', 'ORIGIN',
-                                        'DATETIME', 'DataTag','DATABASE',
+                                        'DATETIME', 'DATABASE',
                                         'EQUINOX', 'SKYAREA', 'StatusFile', 'SQL']);
     */
     set(phaseTable, ['tableMeta', 'RowsRetrieved'], totalRows);

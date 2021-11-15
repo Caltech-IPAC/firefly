@@ -22,7 +22,6 @@ import {LC} from './LcManager.js';
 import {getTblInfoById} from '../../tables/TableUtil';
 import {PlotAttribute} from '../../visualize/PlotAttribute';
 
-export const DL_DATA_TAG = 'timeseries-package';
 export const UNKNOWN_MISSION = 'generic';
 export const COORD_SYSTEM_OPTIONS = ['EQ_J2000', 'EQ_B1950', 'GALACTIC'];
 export const coordSysOptions = 'coordSysOptions';

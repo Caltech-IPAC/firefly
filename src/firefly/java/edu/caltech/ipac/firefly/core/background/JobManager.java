@@ -109,7 +109,7 @@ public class JobManager {
             // it's ok.. job may take longer to complete
         }
 
-        if (future.isDone()) {
+        if (future.isDone() && info.getPhase() != ERROR && info.getPhase() != ABORTED) {
             info.setPhase(COMPLETED);
         } else {
             runningJobs.put(job.getJobId(), new JobEntry(future, job));

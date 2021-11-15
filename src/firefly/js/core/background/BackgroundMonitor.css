@@ -72,9 +72,12 @@
 .BGMon__header--title {
     font-weight: bold;
     margin-left: 3px;
+    margin-right: -3px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    display: inline-flex;
+    align-items: center;
 }
 
 .BGMon__header--error {
@@ -136,4 +139,82 @@
 .BGMon__packageItem--info {
     color: dimgray;
     margin: auto 4px;
+}
+
+.JobInfo__main {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    overflow: scroll;
+}
+
+.JobInfo__popup {
+    width: 500px;
+    height: 200px;
+    min-height: 100px;
+    min-width: 250px;
+    resize: both;
+    overflow: scroll;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+
+.JobInfo__items {
+    display: flex;
+    flex-direction: column;
+}
+
+.JobInfo__items > * {
+    margin: 2px 0;
+}
+
+.JobInfo__items .keyword-label {
+    width: 63px;
+}
+
+.JobInfo__items .params .keyword-label {
+    width: unset;
+}
+
+.JobInfo__items--link {
+    height: 16px;
+    margin-left: 3px;
+}
+.JobInfo__items--link:hover {
+    cursor: pointer;
+}
+
+
+.BgMaskPanel__msg {
+    text-align: center;
+    margin: 7px 5px;
+    font-size: larger;
+    font-style: italic;
+}
+
+
+.BgMaskPanel {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    display: flex;
+    justify-content: center;
+}
+
+.BgMaskPanel__content {
+    margin-top: 95px;
+    position: relative;
+    color: white;
+    display: flex;
+    flex-direction: column;
+}
+
+.BgMaskPanel__actions {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 3px;
 }
