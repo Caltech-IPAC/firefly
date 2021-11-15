@@ -5,10 +5,9 @@
 import {isNumber} from 'lodash';
 import {createImageUrl,isTileVisible, initOffScreenCanvas, computeBounding} from './TileDrawHelper.jsx';
 import {makeTransform} from '../PlotTransformUtils.js';
-import {primePlot, findProcessedTile, hasLocalStretchByteData} from '../PlotViewUtil.js';
+import {primePlot, hasLocalStretchByteData} from '../PlotViewUtil.js';
 import {clone} from '../../util/WebUtil.js';
 import {retrieveAndProcessImage} from './ImageProcessor.js';
-import {dispatchAddProcessedTiles, visRoot} from '../ImagePlotCntlr.js';
 import {isImage} from '../WebPlot.js';
 import {drawScreenTileToMainCanvas} from '../rawData/RawDataOps.js';
 
@@ -133,14 +132,14 @@ function makeImageDrawTileObj(screenRenderParams, totalCnt, scale, loadedImages,
     let renderedCnt=0;
     let abortRender= false;
     let renderComplete=  false;
-    const {offscreenCanvas, offsetX, offsetY, plotView}= screenRenderParams;
+    const {offscreenCanvas, offsetX, offsetY}= screenRenderParams;
     const offscreenCtx = offscreenCanvas.getContext('2d');
 
     function drawToMainCanvas(image,x,y,w,h,tile,localImageRetriever) {
         renderedCnt++;
 
         if (abortRender) {
-            purgeLoadedImages(loadedImages);
+            // purgeLoadedImages(loadedImages);
             return;
         }
         if (!image && tile?.local && localImageRetriever) {
@@ -153,7 +152,7 @@ function makeImageDrawTileObj(screenRenderParams, totalCnt, scale, loadedImages,
         if (renderedCnt === totalCnt) {
             renderComplete= true;
             renderToScreen(screenRenderParams);
-            purgeLoadedImages(loadedImages);
+            // purgeLoadedImages(loadedImages);
         }
 
     }
@@ -174,11 +173,10 @@ function makeImageDrawTileObj(screenRenderParams, totalCnt, scale, loadedImages,
             const h = Math.trunc(tile.height * scale);
 
             const tileIdx = tile.local ? -1 : loadedImages.tileDefAry.findIndex((d) => d.local ? d.key===tile.key : d.url === tile.url);
-            const storeTile= findProcessedTile(visRoot(), plotView.plotId, tile.url);
+            // const storeTile= findProcessedTile(visRoot(), plotView.plotId, tile.url);
 
             let tileData;
             if (loadedImages.cachedImageData[tileIdx]) tileData= loadedImages.cachedImageData[tileIdx];
-            else if (storeTile) tileData=storeTile;
             else tileData=src;
             
 
@@ -227,31 +225,5 @@ function renderToScreen(screenRenderParams) {
         }
         ctx.restore();
     });
-}
-
-
-
-
-function purgeLoadedImages(loadedImages) {
-    if (!loadedImages) return;
-    let i;
-    const fiveSecAgo= Date.now()- (1000 * 5);
-    const saveTileData= [];
-    let saveCnt= 0;
-    for(i=0; (i<loadedImages.tileDefAry.length); i++) {
-        if (loadedImages.used[i] && loadedImages.used[i] < fiveSecAgo) {
-            if (loadedImages.cachedImageData[i]) {
-                saveTileData[saveCnt++]= loadedImages.cachedImageData[i];
-            }
-            loadedImages.cachedImageData[i]= null;
-        }
-    }
-
-    const dispatchData= saveTileData.filter( (d) => d.image instanceof HTMLCanvasElement)
-        .map( (d) => clone(d, {image:undefined, dataUrl: d.image.toDataURL('image/png')}) );
-    if (dispatchData.length) {
-        const {plotId, plotImageId, imageOverlayId, tileZoomLevel}= loadedImages;
-        dispatchAddProcessedTiles(plotId, imageOverlayId, plotImageId, tileZoomLevel, dispatchData);
-    }
 }
 

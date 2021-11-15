@@ -58,4 +58,12 @@
     color: #49a344;
 }
 
+.plot-title-flipped {
+    display: inline-block;
+    overflow: hidden;
+    padding-left: 1px;
+    color: #49a344;
+}
+
+
 

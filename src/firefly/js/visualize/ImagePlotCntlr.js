@@ -199,34 +199,30 @@ const initState= function() {
         activePlotId: null,
         plotViewAry : [],  //there is one plot view for every ImageViewer, a plotView will have a plotId
         plotGroupAry : [], // there is one for each group, a plot group may have multiple plotViews
-        // plotHistoryRequest: [], //todo
 
-        prevActivePlotId: null,
-        plotRequestDefaults : {}, // object: if normal request;
-        //                                         {plotId : {threeColor:boolean, wpRequest : object, }
-        //                                   if 3 color:
-        //                                         {plotId : {threeColor:boolean,
-        //                                                    redReq : object,
-        //                                                    greenReq : object,
-        //                                                    blueReq : object }
+        prevActivePlotId: null, // previous active plot before current one
+        plotRequestDefaults : {}, // object:
+        //                           if normal request;
+        //                              {plotId : {threeColor:boolean, wpRequest : object}
+        //                           if 3 color:
+        //                             {plotId : {threeColor:boolean, redReq : object, greenReq : object, blueReq : object }
 
-        positionLock: false,
         //-- expanded settings
         expandedMode: ExpandType.COLLAPSE,
         previousExpandedMode: ExpandType.GRID, //  must be SINGLE OR GRID
         singleAutoPlay : false,
 
         //--  misc
-        pointSelEnableAry : [],
-        apiToolsView: false,
+        pointSelEnableAry : [], // a list of keys who have enable point select, is array length is non-zero, then point select is enabled
+        apiToolsView: false,  // this should be deprecated, it is not used for much and there are other ways to do it.
         autoScrollToHighlightedTableRow: true,
         useAutoScrollToHighlightedTableRow: true, // this is not a use option, it is use to handle temporary disabling auto scroll`
 
         //-- wcs match parameters
-        wcsMatchCenterWP: null,
-        wcsMatchType: false,
-        mpwWcsPrimId: null,
-        processedTiles: []
+        positionLock: false, // images are locked together
+        wcsMatchCenterWP: null, // the point to match to
+        wcsMatchType: false,  // one of 'Standard', 'Target', 'Pixel', 'PixelCenter', or false
+        mpwWcsPrimId: null,   // the plotId others are match to
     };
 
 };
@@ -327,14 +323,13 @@ export function makeUniqueRequestKey(prefix= KEY_ROOT) {
 /**
  * Tweek how the API image view works
  * @param {boolean} apiToolsView
- * @param {boolean} useFloatToolbar
  *
  * @public
  * @function dispatchApiToolsView
  * @memberof firefly.action
  */
-export function dispatchApiToolsView(apiToolsView, useFloatToolbar= true) {
-    flux.process({ type: API_TOOLS_VIEW , payload: { apiToolsView, useFloatToolbar}});
+export function dispatchApiToolsView(apiToolsView) {
+    flux.process({ type: API_TOOLS_VIEW , payload: { apiToolsView}});
 }
 /**
  *
@@ -567,7 +562,7 @@ export function dispatchChangeCenterOfProjection({plotId,centerProjPt, dispatche
  * @param {boolean} p.centerOnImage only used if centerPt is not defined.  If true then the centering will be
  *                                  the center of the image.  If false, then the center point will be the
  *                                  FIXED_TARGET attribute, if defined. Otherwise it will be the center of the image.
- * @param {boolean} [updateFixedTarget] if true and centerPt is a worldPt, it will update the
+ * @param {boolean} [p.updateFixedTarget] if true and centerPt is a worldPt, it will update the
  *                                  FIXED_TARGET attribute on the plot
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  *
@@ -832,7 +827,7 @@ export function dispatchOverlayPlotChangeAttributes({plotId,imageOverlayId, attr
  * @param {number} [p.level] the level to zoom to, used only userZoomType 'LEVEL'
  * @param {number} [p.upDownPercent] value between 0 and 1 - 1 is 100% of the next step up or down
  * @param {string|ActionScope} [p.actionScope] default to group
- * @param {DevicePt} devicePt
+ * @param {DevicePt} p.devicePt
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  *
  * @public

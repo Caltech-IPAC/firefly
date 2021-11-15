@@ -70,6 +70,23 @@ function replaceAtt(pv,att, toAll) {
 }
 
 
+/**
+ * @global
+ * @public
+ * @typedef {Object} ImageTile
+ * @summary a single image tile
+ *
+ * @prop {number} width - width of this tile
+ * @prop {number} height - height of this tile
+ * @prop {number} index - index of this tile
+ * @prop {string} url - file key to use in the service to retrieve this tile
+ * @prop {number} x - pixel offset of this tile
+ * @prop {number} y - pixel offset of this tile
+ *
+ */
+
+
+
 export function reducer(state, action) {
 
     let retState= state;
@@ -77,28 +94,14 @@ export function reducer(state, action) {
         case Cntlr.ZOOM_IMAGE_START  :
             retState= zoomStart(state, action);
             break;
-        /**
-         * @global
-         * @public
-         * @typedef {Object} ImageTile
-         * @summary a single image tile
-         *
-         * @prop {number} width - width of this tile
-         * @prop {number} height - height of this tile
-         * @prop {number} index - index of this tile
-         * @prop {string} url - file key to use in the service to retrieve this tile
-         * @prop {number} x - pixel offset of this tile
-         * @prop {number} y - pixel offset of this tile
-         *
-         */
 
 
         case Cntlr.STRETCH_CHANGE_START  :
         case Cntlr.COLOR_CHANGE_START  :
             retState= workingServerCall(state,action);
             break;
-        
-        
+
+
         case Cntlr.ZOOM_IMAGE_FAIL  :
             retState= zoomFail(state,action);
             break;
@@ -358,9 +361,8 @@ function installTiles(state, action) {
     plot= primePlot(pv); // get the updated on
     if (clearLocal) plot.dataRequested= false;
     PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, plot.plotState);
-    const processedTiles= state.processedTiles.filter( (d) => d.plotId!==plotId); // remove old client tile data
 
-    return clone(state, {plotViewAry : replacePlotView(plotViewAry,pv), processedTiles});
+    return clone(state, {plotViewAry : replacePlotView(plotViewAry,pv)});
 }
 
 
@@ -529,7 +531,7 @@ function rotatePvToMatch(pv, masterPv, rotateNorthLock) {
 function updateClientRotation(state,action) {
     const {plotId,angle, rotateType, actionScope}= action.payload;
     const {wcsMatchType}= state;
-    let   {plotViewAry}= state;
+    let   {plotViewAry,plotGroupAry}= state;
 
     const pv= getPlotViewById(state,plotId);
     const plot= primePlot(pv);
@@ -570,12 +572,15 @@ function updateClientRotation(state,action) {
             applyToOnePvOrAll(state.positionLock, plotViewAry,plotId,false, (aPv) => rotatePv(aPv,targetAngle, rotateNorthLock&&aPv===pv)) :
             clonePvAryWithPv(plotViewAry, masterPv);
     }
+    const newPv= getPlotViewById(plotViewAry,pv.plotId);
+    plotGroupAry= plotGroupAry.map( (g) =>
+        g.plotGroupId===pv.plotGroupId ? {...g, rotateNorthLockSticky:newPv.plotViewCtx.rotateNorthLock }: g);
 
-    return clone(state,{plotViewAry});
+    return clone(state,{plotViewAry, plotGroupAry});
 }
 
 function flipPv(pv, isY) {
-    pv= clone(pv);
+    pv= {...pv};
     if (isY) pv.flipY= !pv.flipY;
     else     pv.flipX= !pv.flipX;
     const cc= CysConverter.make(primePlot(pv));
@@ -597,7 +602,7 @@ function flipPv(pv, isY) {
  */
 function updateClientFlip(state,action) {
     const {plotId,isY,actionScope=ActionScope.GROUP }= action.payload;
-    let   {plotViewAry}= state;
+    let   {plotViewAry, plotGroupAry}= state;
 
     const pv= getPlotViewById(state,plotId);
     if (!pv) return state;
@@ -606,7 +611,9 @@ function updateClientFlip(state,action) {
         applyToOnePvOrAll(state.positionLock, plotViewAry,plotId,false, (pv) => flipPv(pv,isY)) :
         clonePvAryWithPv(plotViewAry, flipPv(pv,isY));
 
-    return clone(state,{plotViewAry});
+    const newPv= getPlotViewById(plotViewAry,pv.plotId);
+    plotGroupAry= plotGroupAry.map( (g) => g.plotGroupId===pv.plotGroupId ? {...g, flipYSticky:newPv.flipY}: g);
+    return {...state,plotViewAry, plotGroupAry};
 }
 
 
@@ -842,38 +849,6 @@ function changeHipsImageConversionSettings(state,action) {
         });
     return clone(state,{plotViewAry});
 
-}
-
-
-
-function addProcessedTileData(state,action) {
-    const {plotId, plotImageId, imageOverlayId, zoomFactor}= action.payload;
-    let {clientTileAry}= action.payload;
-    let {processedTiles}= state;
-    const pv= getPlotViewById(state, plotId);
-    if (!pv) return state;
-    const plot= imageOverlayId? getOverlayById(pv,imageOverlayId)?.plot : findPlot(pv, plotImageId);
-    if (!plot) return state;
-    if (plot.zoomFactor!==zoomFactor) return state;
-
-    if (!isArray(clientTileAry)) clientTileAry= [clientTileAry];
-    let entry= processedTiles.find( (d) => d.plotId===plotId &&
-                                              d.imageOverlayId===imageOverlayId &&
-                                              d.plotImageId===plotImageId);
-    const doReplace= Boolean(entry);
-    if (doReplace && entry.zoomFactor!==zoomFactor) entry= null;
-
-    entry= entry ? clone(entry) : { plotId, imageOverlayId, plotImageId, zoomFactor, clientTileAry:[] };
-
-    entry.clientTileAry= unionBy(clientTileAry,entry.clientTileAry, 'url');
-
-    processedTiles= doReplace ? processedTiles.map( (d) =>
-                                         d.plotId===plotId &&
-                                         d.imageOverlayId===imageOverlayId &&
-                                         d.plotImageId===plotImageId ? entry : d) :
-                               [...processedTiles, entry];
-
-    return clone(state, {processedTiles});
 }
 
 function updateRawImageData(state, action) {

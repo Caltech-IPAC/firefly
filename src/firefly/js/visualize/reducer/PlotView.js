@@ -99,6 +99,9 @@ export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignore
  * @prop {Object} [menuItemKeys] - defines which menu items shows on the toolbar
  * @prop {boolean} [userCanDeletePlots] - default to true, defines if a PlotView can be deleted by the user
  * @prop {boolean} [visible] - default to true, defines if a PlotView image layer is visible after it is created
+ * @prop {boolean} rotateNorthLock
+ * @prop {boolean} flipYLock
+ * @prop {boolean} useSticky
  */
 
 
@@ -109,6 +112,7 @@ export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignore
  * @return  {PlotView}
  */
 export function makePlotView(plotId, req, pvOptions= {}) {
+    const {flipYLock,useSticky}= pvOptions;
     const pv= {
         plotId, // immutable
         plotGroupId: req.getPlotGroupId(), //immutable
@@ -127,7 +131,7 @@ export function makePlotView(plotId, req, pvOptions= {}) {
         menuItemKeys: makeMenuItemKeys(req,pvOptions,getDefMenuItemKeys()), // normally will not change
         plotViewCtx: createPlotViewContextData(req, pvOptions),
         rotation: 0,
-        flipY: false,
+        flipY: Boolean(flipYLock && useSticky),
         flipX: false,
     };
     return pv;
@@ -146,7 +150,7 @@ function createPlotViewContextData(req, pvOptions={}) {
     const plotViewCtx= {
         userCanDeletePlots: pvOptions?.userCanDeletePlots ?? true,
         annotationOps : req.getAnnotationOps(), // how titles are drawn
-        rotateNorthLock : false,
+        rotateNorthLock : Boolean(pvOptions.rotateNorthLock && pvOptions.useSticky),
         zoomLockingEnabled : false,
         zoomLockingType: UserZoomTypes.FIT, // can be FIT or FILL
         displayFixedTarget: pvOptions?.displayFixedTarget ?? true,
@@ -492,7 +496,7 @@ export const getScrollSize = (plotView) => computeScrollSizes(primePlot(plotView
 function findScrollPtForCenter(plotView) {
     const {width,height}= plotView.viewDim;
     const {width:scrW,height:scrH}= primePlot(plotView).screenSize;
-    const x= scrW/2- width/2;
+    const x= (scrW/2- width/2) * (plotView.flipY ? -1 : 1);
     const y= scrH/2- height/2;
     return makeScreenPt(x,y);
 }

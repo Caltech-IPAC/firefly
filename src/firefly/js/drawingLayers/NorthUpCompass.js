@@ -49,7 +49,7 @@ function creator() {
         hasPerPlotData:true,
         isPointData:false,
         canUserChangeColor: ColorChangeType.DYNAMIC,
-        destroyWhenAllDetached: true
+        destroyWhenAllDetached: false
     };
 
     const id = `${ID}-${idCnt}`;
@@ -83,7 +83,7 @@ function makeCompass(plotId){
     // const dist = 60;
     const px = 30;
 
-    let sptStart= cc.getScreenCoords(getTopmostVisiblePoint(plot,pv.viewDim, 55, 75));
+    let sptStart= cc.getScreenCoords(getTopmostVisiblePoint(plot,pv.viewDim, 55, 120));
     if (!sptStart) return null;
 
 
