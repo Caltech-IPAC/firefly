@@ -67,17 +67,18 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds=
     const showMultiImageOps= converter.canGrid || converter.hasRelatedBands;
 
 
+    let metaControls= true;
     if (!makeDropDown && !showMultiImageOps && !converter.canGrid &&
         !converter.hasRelatedBands && !showThreeColorButton && !(layoutType===SINGLE && viewerPlotIds.length>1) &&
         !showPager) {
-        return <div/>;
+        metaControls= false;
     }
 
 
     return (
         <div style={toolsStyle}>
             {makeDropDown && makeDropDown()}
-            <div style={{whiteSpace: 'nowrap'}}>
+            {metaControls && <div style={{whiteSpace: 'nowrap'}}>
                 {showMultiImageOps && <ToolbarButton icon={ONE} tip={'Show single image at full size'}
                                imageStyle={{width:24,height:24, flex: '0 0 auto'}}
                                enabled={true} visible={true}
@@ -111,7 +112,7 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds=
                 {/*                 src={PAGE_RIGHT}*/}
                 {/*                 onClick={() => dispatchChangeActivePlotView(viewerPlotIds[nextIdx])} />*/}
                 {/*}*/}
-            </div>
+            </div> }
             {showPager && <ImagePager pageSize={converter.maxPlots} tbl_id={activeTable.tbl_id} style={{marginLeft:10}}/>}
             <VisMiniToolbar/>
         </div>
