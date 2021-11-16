@@ -14,6 +14,7 @@ import {dispatchCreateDrawLayer,
 
 
 export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,visible,
+                                           modalEndInfo, setModalEndInfo, endText,
                                             plotTypeMustMatch= false, style={}, enabled= true, imageStyle,
                                             todo= false, isIconOn, onClick, dropDown, allPlots= true }) {
     const enableButton= Boolean(primePlot(pv)) && enabled;
@@ -34,7 +35,6 @@ export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,vi
                                     dropDown={dropDown} />
         );
     } else {
-
         return (
             <ToolbarButton icon={isOn ? iconOn : iconOff}
                            tip={tip}
@@ -44,7 +44,8 @@ export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,vi
                            todo={todo}
                            style={style}
                            imageStyle={imageStyle}
-                           onClick={() => onClick ? onClick(pv,!isOn) : onOff(pv,typeId,allPlots,plotTypeMustMatch,todo)}/>
+                           onClick={() => onClick ? onClick(pv,!isOn) :
+                               onOff(pv,typeId,allPlots,plotTypeMustMatch,todo,modalEndInfo, setModalEndInfo,endText)}/>
         );
     }
 }
@@ -73,7 +74,7 @@ SimpleLayerOnOffButton.defaultProps= {
 
 
 
-function onOff(pv,typeId,allPlots, plotTypeMustMatch, todo) {
+export function onOff(pv,typeId,allPlots, plotTypeMustMatch, todo, modalEndInfo, setModalEndInfo,endText) {
     if (!pv || !typeId) return;
 
     if (todo) {
@@ -86,9 +87,17 @@ function onOff(pv,typeId,allPlots, plotTypeMustMatch, todo) {
 
     if (!isDrawLayerAttached(dl,pv.plotId)) {
         dispatchAttachLayerToPlot(typeId,pv.plotId,allPlots,true, plotTypeMustMatch);
+        modalEndInfo?.f?.();
+        setModalEndInfo?.({
+            f: () => {
+                onOff(pv,typeId,allPlots,plotTypeMustMatch,todo, modalEndInfo, setModalEndInfo,endText);
+            },
+            s: endText
+        });
     }
     else {
         dispatchDetachLayerFromPlot(typeId,pv.plotId,allPlots,dl.destroyWhenAllDetached);
+        setModalEndInfo?.({});
     }
 }
 

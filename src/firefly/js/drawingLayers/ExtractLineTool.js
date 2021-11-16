@@ -211,7 +211,7 @@ function start(drawLayer, action) {
     const {imagePt,plotId,shiftDown}= action.payload;
     const plot= primePlot(visRoot(),plotId);
     const mode= getMode(plot);
-    if (!plot) return;
+    if (!plot || shiftDown) return;
     const cc= CsysConverter.make(plot);
     if (!cc.pointInData(imagePt)) return;
     let retObj= {};
@@ -248,10 +248,10 @@ function start(drawLayer, action) {
 
 
 function drag(drawLayer,action) {
-    const {imagePt,plotId}= action.payload;
+    const {imagePt,plotId, shiftDown}= action.payload;
     const plot= primePlot(visRoot(),plotId);
     const cc= CsysConverter.make(plot);
-    if (!cc) return;
+    if (!cc || shiftDown) return;
 
     const newFirst = drawLayer.moveHead ? drawLayer.firstPt : imagePt;
     const newCurrent = drawLayer.moveHead ? imagePt : drawLayer.currentPt;
@@ -262,7 +262,8 @@ function drag(drawLayer,action) {
 }
 
 function end(action) {
-    const {plotId}= action.payload;
+    const {plotId, shiftDown}= action.payload;
+    if (shiftDown) return;
     const mode= getMode(primePlot(visRoot(),plotId));
     const retObj= {};
     if (mode==='select') {

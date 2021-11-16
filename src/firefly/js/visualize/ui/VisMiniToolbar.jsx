@@ -51,7 +51,7 @@ import {showDrawingLayerPopup} from 'firefly/visualize/ui/DrawLayerPanel.jsx';
 import {SingleColumnMenu} from 'firefly/ui/DropDownMenu.jsx';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {dispatchSetLayoutMode, LO_MODE, LO_VIEW} from 'firefly/core/LayoutCntlr.js';
-import {LINE, POINTS, showExtractionDialog, Z_AXIS} from 'firefly/visualize/ui/ExtractionDialog.jsx';
+import {endExtraction, LINE, POINTS, showExtractionDialog, Z_AXIS} from 'firefly/visualize/ui/ExtractionDialog.jsx';
 
 import SAVE from 'images/icons-2014/Save.png';
 import NEW_IMAGE from 'images/icons-2014/28x28_FITS_NewImage.png';
@@ -87,6 +87,7 @@ import OUTLINE_EXPAND from 'images/icons-2014/24x24_ExpandArrowsWhiteOutline.png
 import DRILL_DOWN from 'images/drill-down.png';
 import LINE_EXTRACTION from 'images/line-extract.png';
 import POINT_EXTRACTION from 'images/points.png';
+import ReactDatetimeClass from 'react-datetime';
 
 const omList= ['plotViewAry'];
 const image24x24={width:24, height:24};
@@ -180,6 +181,8 @@ export const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageE
     const {apiToolsView}= visRoot;
     const {current:divref}= useRef({element:undefined});
     const [colorDrops,setColorDrops]= useState(true);
+    const [modalEndInfo, setModalEndInfo]= useState({f:undefined,s:undefined});
+
 
     useEffect(() => {
         if (divref.element) {
@@ -205,12 +208,27 @@ export const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageE
 
     return (
         <div style={rS} ref={ (c) => divref.element=c}>
+
+
+            {modalEndInfo.f  && modalEndInfo.s &&
+                <React.Fragment>
+                    <ToolbarButton
+                        style={{color:'#f60a0a'}}
+                        text={modalEndInfo.s} tip={modalEndInfo.s}
+                        horizontal={true} onClick={modalEndInfo.f}/>
+                    <ToolbarHorizontalSeparator/>
+                </React.Fragment>
+            }
+
+
             {apiToolsView && <ToolbarButton icon={NEW_IMAGE} tip='Select a new image'
                                             horizontal={true} visible={mi.imageSelect} onClick={showImagePopup}/>}
 
             <DropDownToolbarButton icon={TOOL_DROP} tip='Tools drop down' enabled={enabled} horizontal={true}
                                    imageStyle={image24x24}
                                    dropDown={<ToolsDrop pv={pv} mi={mi} image={image} hips={hips} visRoot={visRoot}
+                                                        setModalEndInfo={setModalEndInfo}
+                                                        modalEndInfo={modalEndInfo}
                                                         plot={plot} unavailableCnt={unavailableCnt}
                                                         plotGroupAry={plotGroupAry}
                                                         showRotateLocked={showRotateLocked}/>} />
@@ -231,7 +249,12 @@ export const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageE
                                     tip='Select Drop down. Select an area for cropping or statistics'
                                     iconOn={getSelectedAreaIcon()} iconOff={getSelectedAreaIcon(false)}
                                     visible={mi.selectArea} imageStyle={image24x24}
-                                    dropDown={<SelectAreaDropDownView plotView={pv} />} />
+                                    modalEndInfo={modalEndInfo}
+                                    setModalEndInfo={setModalEndInfo}
+                                    dropDown={<SelectAreaDropDownView plotView={pv}
+                                                                      modalEndInfo={modalEndInfo}
+                                                                      setModalEndInfo={setModalEndInfo} />} />
+
 
             <LayerButton pv={pv} dlCount={dlCount}/>
 
@@ -354,7 +377,8 @@ const ZoomDrop= ({pv,mi, image}) => (
 );
 
 
-function ToolsDrop({visRoot, pv,plot, mi, enabled, image, hips, showRotateLocked, unavailableCnt, plotGroupAry}) {
+function ToolsDrop({visRoot, pv,plot, mi, enabled, image, hips, setModalEndInfo, modalEndInfo,
+                       showRotateLocked, unavailableCnt, plotGroupAry}) {
 
     const makeMatchLock= mi.matchLockDropDown && unavailableCnt>0;
     const makeColorLock= mi.overlayColorLock && unavailableCnt>1;
@@ -366,8 +390,14 @@ function ToolsDrop({visRoot, pv,plot, mi, enabled, image, hips, showRotateLocked
             <SaveRestoreRow style={{marginTop:-20}} pv={pv} mi={mi} enabled={enabled} image={image} hips={hips}/>
             <RotateFlipRow style={{paddingTop:10}} pv={pv} mi={mi} enabled={enabled}
                            showRotateLocked={showRotateLocked} image={image}/>
-            <LayersRow style={{paddingTop:10}} pv={pv} mi={mi} enabled={enabled} image={image}/>
-            {image && <ExtractRow style={{paddingTop:10}} pv={pv} mi={mi} enabled={enabled} image={image}/>}
+            <LayersRow style={{paddingTop:10}} pv={pv} mi={mi} enabled={enabled} image={image}
+                       modalEndInfo={modalEndInfo}
+                       setModalEndInfo={setModalEndInfo}
+            />
+            {image && <ExtractRow style={{paddingTop:10}} pv={pv} mi={mi} enabled={enabled} image={image}
+                                  modalEndInfo={modalEndInfo}
+                                  setModalEndInfo={setModalEndInfo}
+            />}
             {(makeMatchLock || makeColorLock) && <div style={{display:'flex', alignItems:'center', paddingTop:10}}>
                 <div style={{width:130, fontSize:'larger'}}>More: </div>
                 {makeColorLock && <SimpleLayerOnOffButton plotView={pv}
@@ -419,22 +449,41 @@ const RotateFlipRow= ({style,image,mi,showRotateLocked,pv,enabled}) => (
     </div>
 );
 
-const ExtractRow= ({style,image,mi,pv,enabled}) => {
+
+function startExtraction(type,setModalEndInfo, modalEndInfo) {
+    modalEndInfo?.f?.();
+    let ended= false;
+    showExtractionDialog(type, () => {
+        if (!ended) setModalEndInfo({});
+    });
+    setModalEndInfo({
+        s: 'End Extraction',
+        f: () => {
+            ended= true;
+            endExtraction();
+            setModalEndInfo({});
+        }
+    });
+
+}
+
+const ExtractRow= ({style,image,mi,pv,enabled,setModalEndInfo, modalEndInfo}) => {
     const standIm= !isThreeColor(pv);
     return (
         <div style={{display:'flex', alignItems:'center', ...style}}>
             <div style={{width:130, fontSize:'larger'}}>Extract: </div>
             <ToolbarButton icon={DRILL_DOWN} tip='Extract Z-axis from cube' enabled={standIm&&isImageCube(primePlot(pv))&&enabled}
-                           horizontal={true} visible={image} onClick={() => showExtractionDialog(Z_AXIS)}/>
+                           horizontal={true} visible={image} onClick={() => startExtraction(Z_AXIS,setModalEndInfo,modalEndInfo)}/>
             <ToolbarButton icon={LINE_EXTRACTION} tip='Extract line from image' enabled={standIm&&enabled}
-                           horizontal={true} visible={image} onClick={() => showExtractionDialog(LINE)}/>
+                           horizontal={true} visible={image} onClick={() => startExtraction(LINE,setModalEndInfo,modalEndInfo)}/>
             <ToolbarButton icon={POINT_EXTRACTION} tip='Extract points from image' enabled={standIm&&enabled}
-                           horizontal={true} visible={image} onClick={() => showExtractionDialog(POINTS)}/>
+                           horizontal={true} visible={image} onClick={() => startExtraction(POINTS,setModalEndInfo,modalEndInfo)}/>
         </div>
         );
 };
 
-const LayersRow= ({style,image, pv,mi,enabled}) => (
+const LayersRow= ({style,image, pv,mi,enabled,setModalEndInfo, modalEndInfo}) => (
+
     <div style={{display:'flex', alignItems:'center', ...style}}>
         <div style={{width:130, fontSize:'larger'}}>Layers: </div>
         <SimpleLayerOnOffButton plotView={pv} typeId={NorthUpCompass.TYPE_ID}
@@ -445,6 +494,9 @@ const LayersRow= ({style,image, pv,mi,enabled}) => (
                                 plotTypeMustMatch={true} visible={mi.grid} />
         <SimpleLayerOnOffButton plotView={pv} typeId={DistanceTool.TYPE_ID}
                                 tip='Select, then click and drag to measure a distance on the image'
+                                endText={'End Distance'}
+                                modalEndInfo={modalEndInfo}
+                                setModalEndInfo={setModalEndInfo}
                                 iconOn={DIST_ON} iconOff={DIST_OFF} visible={mi.distanceTool} />
         <ToolbarButton icon={DS9_REGION} tip='Load a DS9 Region File' enabled={enabled}
                        horizontal={true} visible={mi.ds9Region} onClick={showRegionFileUploadPanel}/>

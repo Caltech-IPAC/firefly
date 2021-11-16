@@ -23,6 +23,7 @@ import SELECT_CIRCLE_ON from 'html/images/icons-2014/28x28_Circle-ON.png';
 import SELECT_NONE from 'html/images/icons-2014/28x28_Rect_DD.png';
 import {SelectedShape} from '../../drawingLayers/SelectedShape';
 import {visRoot} from '../ImagePlotCntlr.js';
+import {onOff} from 'firefly/visualize/ui/SimpleLayerOnOffButton.jsx';
 
 const NONSELECT = 'nonselect';
 
@@ -62,13 +63,14 @@ export function getSelectedAreaIcon(isSelected = true) {
 }
 
 
-function updateSelect(pv, value, allPlots=true) {
+function updateSelect(pv, value, allPlots=true, modalEndInfo, setModalEndInfo) {
 
     return ()=> {
         if (!pv) return;
 
 
         if (value !== NONSELECT) {
+            modalEndInfo?.f?.();
             detachSelectAreaRelatedLayers( pv, allPlots, selectAreaInfo()[value].typeId);
             detachSelectArea(pv);
             // create a new one
@@ -78,6 +80,10 @@ function updateSelect(pv, value, allPlots=true) {
             if (!isDrawLayerAttached(dl, pv.plotId)) {
                dispatchAttachLayerToPlot(dl.drawLayerId, pv.plotId, allPlots);
             }
+            setModalEndInfo({
+                s:'End Select',
+                f: () => onOff(pv,SelectArea.TYPE_ID,allPlots,false,false,modalEndInfo,setModalEndInfo,'')
+            });
         }
     };
 }
@@ -115,7 +121,7 @@ export function detachSelectAreaRelatedLayers(pv, allPlots = true, selectId = Se
 }
 
 
-export function SelectAreaDropDownView({plotView:pv, allPlots}) {
+export function SelectAreaDropDownView({plotView:pv, allPlots, modalEndInfo, setModalEndInfo}) {
     var enabled = !!pv;
     let sep = 1;
 
@@ -130,7 +136,7 @@ export function SelectAreaDropDownView({plotView:pv, allPlots}) {
                                horizontal={false}
                                icon={selectAreaInfo()[key].iconDropDown }
                                tip={selectAreaInfo()[key].tip}
-                               onClick={updateSelect(pv, key, allPlots)}/>
+                               onClick={updateSelect(pv, key, allPlots, modalEndInfo, setModalEndInfo)}/>
             ));
             prev.push(<DropDownVerticalSeparator key={sep++}/>);
             return prev;
