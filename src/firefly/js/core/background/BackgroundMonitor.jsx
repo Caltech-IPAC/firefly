@@ -166,8 +166,11 @@ function JobHeader({jobInfo}) {
 
     return (
         <div className='BGMon__header'>
-            <div className='BGMon__header--title' title={label}>{label} <img src={INFO} onClick={showInfo} className='JobInfo__items--link'/></div>
-            <div style={{display: 'inline-flex', alignItems: 'center', paddingLeft: 5}}>
+            <div title={label} style={{display: 'inline-flex', overflow: 'hidden'}}>
+                <div className='BGMon__header--title'>{label}</div>
+                <img src={INFO} onClick={showInfo} className='JobInfo__items--link'/>
+            </div>
+            <div style={{display: 'inline-flex', alignItems: 'center', paddingLeft: 5, flexShrink: 0}}>
                 <JobProgress jobInfo={jobInfo}/>
                 <div className='BGMon__header--action'>
                     {isActive(jobInfo) && <img className='BGMon__action' src={CANCEL} onClick={doCancel} title='Abort this job.'/>}
@@ -183,7 +186,7 @@ function JobHeader({jobInfo}) {
 }
 
 function JobProgress({jobInfo}) {
-    const {progressDesc, progress, error, jobId} = jobInfo;
+    const {progressDesc, progress, jobId} = jobInfo;
     if (isActive(jobInfo)) {
         return (
             <div className='BGMon__packageItem'>
@@ -191,7 +194,7 @@ function JobProgress({jobInfo}) {
             </div>
         );
     } else if (isAborted(jobInfo)) {
-        return <div>{jobInfo?.error || 'Request aborted'}</div>;
+        return <div>{jobInfo?.error || 'Job aborted'}</div>;
     } else if (isSuccess(jobInfo)) {
         if (jobInfo?.type === 'SEARCH') {
             const showTable = () => {
@@ -203,8 +206,7 @@ function JobProgress({jobInfo}) {
             return jobInfo?.results?.length === 1 ? <PackageItem {...{SINGLE:true, jobId, index:0}} /> : <div/> ;
         }
     } else {
-        const msg = error || 'unexpected error';
-        return <div className='BGMon__header--error' title={msg}>{msg}</div>;
+        return <div className='BGMon__header--error'>Job Failed</div>;
     }
 }
 

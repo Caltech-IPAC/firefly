@@ -100,13 +100,13 @@ public class JobManager {
         } catch (InterruptedException e) {
             info.setPhase(ABORTED);
             LOG.error(e, "Job aborted");
-        } catch (ExecutionException e) {
+        } catch (TimeoutException e) {
+            // it's ok.. job may take longer to complete
+        } catch (Exception e) {
             if (info.getPhase() != ERROR) {
                 job.setError(500, e.getMessage());
             }
             LOG.error(e);
-        } catch (TimeoutException e) {
-            // it's ok.. job may take longer to complete
         }
 
         if (future.isDone() && info.getPhase() != ERROR && info.getPhase() != ABORTED) {

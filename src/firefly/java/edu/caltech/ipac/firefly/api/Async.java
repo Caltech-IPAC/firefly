@@ -26,20 +26,20 @@ import static edu.caltech.ipac.firefly.core.background.JobManager.toJson;
 /**
  * Follows UWS pattern for async job processing.
  *
- * /CmdSrv/async                       # no parameter to list all jobs for current user. {jobs: [{job-url}]}
- * /CmdSrv/async?cmd=xxx               # submit job and then redirect to /CmdSrv/async/{id} to return JobInfo
- * /CmdSrv/async/{id}                  # return JobInfo for the given id
- * /CmdSrv/async/{id}?cmd=xxx          # run the command associated with this job, i.e. setEmail, resendEmail, etc.
- * /CmdSrv/async/{id}/phase?PHASE=ABORT       #abort this job.  RUN is not needed because we run it immediately upon submit
- * /CmdSrv/async/{id}/results          # return an array of url(s)
- * /CmdSrv/async/{id}/results/result   # return table result from a SEARCH job
+ * /CmdSrv/async                        # no parameter to list all jobs for current user. {jobs: [{job-url}]}
+ * /CmdSrv/async?cmd=xxx                # submit job and then redirect to /CmdSrv/async/{id} to return JobInfo
+ * /CmdSrv/async/{id}                   # return JobInfo for the given id
+ * /CmdSrv/async/{id}?cmd=xxx           # run the command associated with this job, i.e. setEmail, resendEmail, etc.
+ * /CmdSrv/async/{id}/phase?PHASE=ABORT # abort this job.  RUN is not needed because we run it immediately upon submit
+ * /CmdSrv/async/{id}/results           # return an array of url(s)
+ * /CmdSrv/async/{id}/results/result    # return table result from a SEARCH job
  *
  * @author loi
  * @version : $
  */
 public class Async extends BaseHttpServlet {
 
-    static private Logger.LoggerImpl logger = Logger.getLogger();
+    static private final Logger.LoggerImpl logger = Logger.getLogger();
 
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
