@@ -20,6 +20,7 @@ import {showColorPickerDialog} from '../../ui/ColorPicker.jsx';
 import {showPointShapeSizePickerDialog} from '../../ui/PointShapeSizePicker.jsx';
 import {getPlotViewById} from '../PlotViewUtil';
 import ImageRoot from '../../drawingLayers/ImageRoot.js';
+import {HelpIcon} from 'firefly/ui/HelpIcon.jsx';
 
 
 
@@ -72,21 +73,24 @@ function getUIComponent(dl,pv, factory, maxTitleChars) {
 
 function makePermInfo(pv,layers) {
     return (
-        <div style={{minWidth: 260, borderTop:'1px solid rgba(0, 0, 0, 0.298039)', paddingTop: 5, margin: '4px 5px 0 5px'}}>
-            {makeAddRelatedDataAry(pv)}
-            <div style={{paddingTop:5}}>
-                <button style={{display : 'inline-block'}} type='button'
-                        className='button'
-                        onClick={() => showAllLayers(layers,pv,true)}>
-                    {'Show All'}
-                </button>
-                <button style={{display : 'inline-block'}} type='button'
-                        className='button'
-                        onClick={() => showAllLayers(layers,pv,false)}>
-                    {'Hide All'}
-                </button>
+        <div style={{display:'flex', justifyContent: 'space-between', minWidth: 260, borderTop:'1px solid rgba(0, 0, 0, 0.298039)', paddingTop: 5, margin: '4px 0 0 0'}}>
+            <div style={{marginLeft:5}}>
+                {makeAddRelatedDataAry(pv)}
+                <div style={{paddingTop:5}}>
+                    <button style={{display : 'inline-block'}} type='button'
+                            className='button'
+                            onClick={() => showAllLayers(layers,pv,true)}>
+                        {'Show All'}
+                    </button>
+                    <button style={{display : 'inline-block'}} type='button'
+                            className='button'
+                            onClick={() => showAllLayers(layers,pv,false)}>
+                        {'Hide All'}
+                    </button>
 
+                </div>
             </div>
+            <HelpIcon helpId={'visualization.layerPanel'} style={{alignSelf:'center'}}/>
         </div>
     );
 }

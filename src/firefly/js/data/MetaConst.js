@@ -212,6 +212,8 @@ export const MetaConst = {
      */
     ANALYZER_PARAMS : 'AnalyzerParams',
 
+    /** if defined and true and a table is a MOC then the table will not be loaded as a MOC layer, just as a table */
+    IGNORE_MOC : 'ignoreMOC',
 
     /** @deprecated use CENTER_COLUMN */
     CATALOG_COORD_COLS : 'CatalogCoordColumns',

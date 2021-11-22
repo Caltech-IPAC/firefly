@@ -9,6 +9,7 @@ import {mergeObjectOnly} from './util/WebUtil.js';
 import {getFireflyViewerWebApiCommands} from './api/webApiCommands/ViewerWebApiCommands';
 import {getLcCommands} from './api/webApiCommands/LcWebApiCommands.js';
 import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-42x42.png';
+import {getDefaultMOCList} from 'firefly/visualize/HiPSMocUtil.js';
 
 
 /**
@@ -44,6 +45,10 @@ let options = {
         useForImageSearch: true,
         hipsSources: 'irsa,cds',
         defHipsSources: {source: 'irsa', label: 'IRSA Featured'},
+        adhocMocSource: {
+            sources: getDefaultMOCList(),
+            label: 'Featured MOC '
+        },
         mergedListPriority: 'Irsa'
     },
     coverage : { // example of using DSS and wise combination for coverage (not that anyone would want to combination)

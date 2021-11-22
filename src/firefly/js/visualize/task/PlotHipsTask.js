@@ -45,7 +45,7 @@ import {ZoomType} from '../ZoomType.js';
 import {CCUtil} from '../CsysConverter.js';
 import { addDrawLayers, determineViewerId, ensureWPR, getHipsImageConversion, } from './PlotImageTask.js';
 import {
-    dispatchAttachLayerToPlot,
+    dispatchAttachLayerToPlot, dispatchChangeVisibility,
     dispatchCreateDrawLayer,
     dispatchDetachLayerFromPlot,
     dlRoot,
@@ -63,6 +63,7 @@ import {locateOtherIfMatched, matchHiPStoPlotView} from './WcsMatchTask';
 import {upload} from '../../rpc/CoreServices.js';
 import {fetchUrl} from '../../util/fetch';
 import {getGpuJs} from '../rawData/GpuJsConfig.js';
+import {showInfoPopup} from 'firefly/ui/PopupUtil.jsx';
 
 const PROXY= true;
 
@@ -258,7 +259,8 @@ async function makeHiPSPlot(rawAction, dispatcher) {
         let plot= WebPlot.makeWebPlotDataHIPS(plotId, resolvedHipsRootUrl, wpRequest, hipsProperties, attributes, PROXY);
 
         if (!blank) {
-            await createHiPSMocLayer(getPropertyItem(hipsProperties, 'ivoid'), resolvedHipsRootUrl, plot);
+            await createHiPSMocLayer(getPropertyItem(hipsProperties, 'ivoid'),
+                getPropertyItem(hipsProperties, 'obs_title'), resolvedHipsRootUrl, plot);
         }
         if (currentPlots[plotId]!==requestKey) {
             // hipsFail('hips plot expired or aborted');
@@ -284,34 +286,35 @@ async function makeHiPSPlot(rawAction, dispatcher) {
 
 
 
-async function createHiPSMocLayer(ivoid, hipsUrl, plot, mocFile = 'Moc.fits') {
+export async function createHiPSMocLayer(ivoid, title, hipsUrl, plot, visible=false, mocFile = 'Moc.fits') {
     const mocUrl = hipsUrl.endsWith('/') ? hipsUrl + mocFile : hipsUrl+'/'+mocFile;
     const tblId = makeMocTableId(ivoid);
     const dls = getDrawLayersByType(getDlAry(), HiPSMOC.TYPE_ID);
 
     let   dl = dls.find((oneLayer) => oneLayer.drawLayerId === tblId);
     if (dl) {
-        if (plot.plotId) {
-            dispatchAttachLayerToPlot(dl.drawLayerId, plot.plotId, false, false);
-        }
+        dispatchAttachLayerToPlot(dl.drawLayerId, plot.plotId, false, visible);
+        if (visible) dispatchChangeVisibility({id:dl.drawLayerId, visible:true, plotId:plot.plotId});
         return;
     }
 
     try {
-        const {status, cacheKey, analysisResult}=  await upload(mocUrl, 'details');
+        const {status, cacheKey, analysisResult}=  await upload(mocUrl, 'details', {hipsCache:true});
         if (status === '200') {
             const report = JSON.parse(analysisResult) || {};
 
             const isMocFits = isMOCFitsFromUploadAnalsysis(report);
             if (isMocFits.valid) {
-                dl = addNewMocLayer(tblId, cacheKey, mocUrl, isMocFits?.[MOCInfo]?.[UNIQCOL]);
+                dl = addNewMocLayer(tblId, title, cacheKey, mocUrl, isMocFits?.[MOCInfo]?.[UNIQCOL]);
                 if (dl && plot.plotId) {
-                    dispatchAttachLayerToPlot(dl.drawLayerId, plot.plotId, true, false);
+                    dispatchAttachLayerToPlot(dl.drawLayerId, plot.plotId, true, visible);
                 }
             }
         }
     }
     catch (e) {
+        showInfoPopup('Could not find the MOC for: '+ title,
+            'Moc Not Found'); // eslint-disable-line quotes
         console.log(`MOC not found at URL (this is not uncommon): ${e}`) ;
     }
 }

@@ -30,7 +30,6 @@ import {convert} from '../visualize/VisUtil';
 import CoordinateSys from '../visualize/CoordSys';
 import {CatalogType} from 'firefly/drawingLayers/Catalog.js';
 import Point from 'firefly/visualize/Point.js';
-import {sprintf} from 'firefly/externalSource/sprintf.js';
 
 export const TableSelectOptions = new Enum(['all', 'selected', 'highlighted']);
 export const getUIComponent = (drawLayer,pv,maxTitleChars) =>

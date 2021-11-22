@@ -44,8 +44,9 @@ import java.util.List;
  *  Possible Parameters:
  *  wcCmd
  *  URL - url string
+ *  hipsCache - use with url, if true put the upload file in the HiPS file hierarchy
  *  webPlotRequest - serialized webPlotRequest string
- *  workspacePut
+ *  workspacePut - put the file into the workspace
  *  filename - string
  *  cacheKey
  *  fileAnalysis - one of "Brief", "Normal", "Details", "false"
@@ -62,6 +63,8 @@ public class AnyFileUpload extends BaseHttpServlet {
     private static final String WORKSPACE_PUT = "workspacePut";
     private static final String WS_CMD = "wsCmd";
     public  static final String ANALYZER_ID = "analyzerId";
+    /** use the hips cache hierarchy */
+    public  static final String HIPS_CACHE = "hipsCache";
     /** load from a URL */
     private static final String URL = "URL";
     /** load from a WebPlotRequest */
@@ -70,7 +73,7 @@ public class AnyFileUpload extends BaseHttpServlet {
     private static final String FILE_ANALYSIS= "fileAnalysis";
 
     private static final List<String> allParams= Arrays.asList(
-            FILE_NAME, CACHE_KEY, WORKSPACE_PUT, WS_CMD, ANALYZER_ID, URL,
+            FILE_NAME, CACHE_KEY, WORKSPACE_PUT, WS_CMD, ANALYZER_ID, URL,HIPS_CACHE,
             WEB_PLOT_REQUEST, FILE_ANALYSIS, ServerParams.COMMAND);
 
 
@@ -103,50 +106,14 @@ public class AnyFileUpload extends BaseHttpServlet {
         }
 
         // handle upload file request.. results in saved as an UploadFileInfo
-        UploadFileInfo uploadFileInfo = null;
-        FileInfo statusFileInfo= null;
-
-        String wsCmd = sp.getOptional(WS_CMD);
-        String fromUrl = sp.getOptional(URL);
-        WebPlotRequest fromWPR= sp.getOptionalWebPlotRequest(WEB_PLOT_REQUEST);
         String analysisType = sp.getOptional(FILE_ANALYSIS);
-        boolean analyzeFile= analysisType != null && !analysisType.toLowerCase().equals("false");
-        int responseCode= 200;
+        boolean analyzeFile= analysisType != null && !analysisType.equalsIgnoreCase("false");
 
         try {
-            if (wsCmd != null) {
-                // from workspace.. get the file using workspace api
-                uploadFileInfo = getFileFromWorkspace(sp);
-                statusFileInfo= new FileInfo(uploadFileInfo.getFile());
-            } else if (fromUrl != null) {
-                // from a URL.. get it
-                int idx = fromUrl.lastIndexOf('/');
-                long fnameHash = System.currentTimeMillis();
-                String fname = (idx >= 0) ? fromUrl.substring(idx + 1) : fromUrl;
-                fname = fname.contains("?") ? "Upload-"+fnameHash : fname;       // don't save queryString as file name.  this will confuse reader expecting a url, like VoTableReader
-                statusFileInfo = LockingVisNetwork.retrieveURL(new URL(fromUrl));
-                int code= statusFileInfo.getResponseCode();
-                File file= statusFileInfo.getFile();
-                if (file!=null && code!=200 && code!=304) {
-                    throw new Exception("invalid upload from URL: " + statusFileInfo.getResponseCodeMsg());
-                }
-                uploadFileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(file), file, fname, null);
-
-            } else if (fromWPR!= null) {
-                FileRetriever retrieve = ImageFileRetrieverFactory.getRetriever(fromWPR);
-                if (retrieve==null) throw new Exception("Could not determine how to retrieve file");
-                statusFileInfo = retrieve.getFile(fromWPR,false);
-                responseCode= statusFileInfo.getResponseCode();
-                File file= statusFileInfo.getFile();
-                uploadFileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(file), file, file.getName(), statusFileInfo.getContentType());
-            } else if (uploadedItem != null) {
-                // it's a stream from multipart.. write it to disk
-                String name = uploadedItem.getName();
-                File tmpFile = File.createTempFile("upload_", "_" + name, ServerContext.getUploadDir());
-                FileUtil.writeToFile(uploadedItem.openStream(), tmpFile, (current) -> updateFeedback(name, current));
-                uploadFileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(tmpFile), tmpFile, name, uploadedItem.getContentType());
-                statusFileInfo= new FileInfo(uploadFileInfo.getFile());
-            }
+            Result result= retrieveFile(sp,uploadedItem);
+            UploadFileInfo uploadFileInfo = result.uploadFileInfo;
+            FileInfo statusFileInfo= result.statusFileInfo;
+            int responseCode= statusFileInfo.getResponseCode();
 
             if (FileUtil.isGZipFile(uploadFileInfo.getFile())) {
                 File f= uploadFileInfo.getFile();
@@ -170,26 +137,9 @@ public class AnyFileUpload extends BaseHttpServlet {
             fileCacheKey = fileCacheKey == null ? uploadFileInfo.getPname() : fileCacheKey;
             UserCache.getInstance().put(new StringKey(fileCacheKey), uploadFileInfo);
 
-            // returns the fileCacheKey
-            String returnVal = fileCacheKey;
-
-            if (analyzeFile) {
-                if (statusFileInfo==null) statusFileInfo= new FileInfo(uploadFileInfo.getFile());
-                String analyzerId = sp.getOptional(ANALYZER_ID);
-                StopWatch.getInstance().start("doAnalysis");
-
-                FileAnalysisReport.ReportType reportType = getReportType(analysisType);
-                FileAnalysisReport report = FileAnalysis.analyze(
-                        statusFileInfo, reportType, analyzerId,
-                        sp.getParamMapUsingExcludeList(allParams));
-                report.setFileName(uploadFileInfo.getFileName());
-                returnVal = returnVal + "::" + FileAnalysis.toJsonString(report);   // appends the report to the end of the returned String
-
-                StopWatch.getInstance().printLog("doAnalysis");
-            }
-            else if (responseCode>=400) {
-                throw new Exception("Upload failed with response code: "+ responseCode);
-            }
+            // returns the fileCacheKey or full analysis json
+            String returnVal= analyzeFile ? callAnalysis(sp,statusFileInfo,uploadFileInfo,fileCacheKey) : fileCacheKey;
+            if (responseCode>=400) throw new Exception(codeFailMsg(responseCode));
 
             sendReturnMsg(res, 200, null, returnVal);
             Counters.getInstance().increment(Counters.Category.Upload, uploadFileInfo.getContentType());
@@ -205,6 +155,23 @@ public class AnyFileUpload extends BaseHttpServlet {
 //====================================================================
 //
 //====================================================================
+
+    private static String codeFailMsg(int responseCode) {
+        return "Upload failed with response code: "+ responseCode;
+    }
+
+    private static boolean isUrlFail(FileInfo statusFileInfo) {
+        int responseCode= statusFileInfo.getResponseCode();
+        File file= statusFileInfo.getFile();
+        return (file!=null && responseCode!=200 && responseCode!=304);
+    }
+
+
+    private static UploadFileInfo makeUploadFileInfo(FileInfo statusFileInfo, String fname) {
+        File file= statusFileInfo.getFile();
+        return new UploadFileInfo(ServerContext.replaceWithPrefix(file), file, fname!=null ? fname : file.getName(),
+                statusFileInfo.getContentType());
+    }
 
     private static void updateFeedback(String statusKey, long totalRead) {
         PlotServUtils.updatePlotCreateProgress(statusKey, null,
@@ -230,4 +197,80 @@ public class AnyFileUpload extends BaseHttpServlet {
     }
 
 
+    private static String callAnalysis(SrvParam sp, FileInfo statusFileInfo,
+                                       UploadFileInfo uploadFileInfo, String fileCacheKey) throws Exception {
+
+        String analysisType = sp.getOptional(FILE_ANALYSIS);
+        String analyzerId = sp.getOptional(ANALYZER_ID);
+        StopWatch.getInstance().start("doAnalysis");
+
+        FileAnalysisReport.ReportType reportType = getReportType(analysisType);
+        FileAnalysisReport report = FileAnalysis.analyze(
+                statusFileInfo, reportType, analyzerId,
+                sp.getParamMapUsingExcludeList(allParams));
+        report.setFileName(uploadFileInfo.getFileName());
+        String returnVal = fileCacheKey + "::" + FileAnalysis.toJsonString(report);   // appends the report to the end of the returned String
+        StopWatch.getInstance().printLog("doAnalysis");
+        return returnVal;
+    }
+
+
+    private static Result retrieveFile(SrvParam sp, FileItemStream uploadedItem) throws Exception {
+        
+        String wsCmd = sp.getOptional(WS_CMD);
+        String fromUrl = sp.getOptional(URL);
+        WebPlotRequest fromWPR= sp.getOptionalWebPlotRequest(WEB_PLOT_REQUEST);
+        boolean hipsCache = sp.getOptionalBoolean(HIPS_CACHE,false);
+
+        UploadFileInfo uploadFileInfo;
+        FileInfo statusFileInfo;
+
+        if (wsCmd != null) {
+            // from workspace.. get the file using workspace api
+            uploadFileInfo = getFileFromWorkspace(sp);
+            statusFileInfo= new FileInfo(uploadFileInfo.getFile());
+        } else if (fromUrl != null) { // from a URL.. get it
+            String fname;
+            if (hipsCache) {
+                statusFileInfo= HiPSRetrieve.retrieveHiPSData(fromUrl,null);
+                fname= (statusFileInfo.getFile()!=null) ? statusFileInfo.getFile().getName() : null;
+            }
+            else {
+                int idx = fromUrl.lastIndexOf('/');
+                fname = (idx >= 0) ? fromUrl.substring(idx + 1) : fromUrl;
+                fname = fname.contains("?") ? "Upload-"+System.currentTimeMillis() : fname;       // don't save queryString as file name.  this will confuse reader expecting a url, like VoTableReader
+                statusFileInfo = LockingVisNetwork.retrieveURL(new URL(fromUrl));
+            }
+            if (isUrlFail(statusFileInfo)) throw new Exception(codeFailMsg(statusFileInfo.getResponseCode()));
+            uploadFileInfo= makeUploadFileInfo(statusFileInfo,fname);
+
+        } else if (fromWPR!= null) {
+            FileRetriever retrieve = ImageFileRetrieverFactory.getRetriever(fromWPR);
+            if (retrieve==null) throw new Exception("Could not determine how to retrieve file");
+            statusFileInfo = retrieve.getFile(fromWPR,false);
+            uploadFileInfo= makeUploadFileInfo(statusFileInfo,null);
+        } else if (uploadedItem != null) {
+            // it's a stream from multipart.. write it to disk
+            String name = uploadedItem.getName();
+            File tmpFile = File.createTempFile("upload_", "_" + name, ServerContext.getUploadDir());
+            FileUtil.writeToFile(uploadedItem.openStream(), tmpFile, (current) -> updateFeedback(name, current));
+            uploadFileInfo = new UploadFileInfo(ServerContext.replaceWithPrefix(tmpFile), tmpFile, name, uploadedItem.getContentType());
+            statusFileInfo= new FileInfo(uploadFileInfo.getFile());
+        }
+        else {
+            throw new IllegalArgumentException("Invalid parameters to AnyFileUpload");
+        }
+        return new Result(statusFileInfo,uploadFileInfo);
+    }
+
+
+    private static class Result {
+        final FileInfo statusFileInfo;
+        final UploadFileInfo uploadFileInfo;
+
+        public Result(FileInfo statusFileInfo, UploadFileInfo uploadFileInfo) {
+            this.statusFileInfo = statusFileInfo;
+            this.uploadFileInfo = uploadFileInfo;
+        }
+    }
 }

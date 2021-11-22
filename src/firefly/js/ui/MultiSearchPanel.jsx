@@ -10,6 +10,7 @@ import {TapSearchPanel} from 'firefly/ui/tap/TapSearchRootPanel.jsx';
 import {CatalogSelectViewPanel} from 'firefly/visualize/ui/CatalogSelectViewPanel.jsx';
 import {FileUploadDropdown} from 'firefly/ui/FileUploadDropdown.jsx';
 import {getAppOptions} from 'firefly/api/ApiUtil.js';
+import {dispatchComponentStateChange} from 'firefly/core/ComponentCntlr.js';
 
 const multiSearchComponents= [
     {
@@ -63,13 +64,23 @@ const getComponentAry= once(() => {
         .filter( (c) => c);
 } );
 
-const getDefTabIdx= once((initArgs) => {
-    if (!initArgs.defaultSelectedId) return 0;
-    const idx= getComponentAry().findIndex( ({id}) => id===initArgs.defaultSelectedId);
+const getDefTabIdx= once((initArgs) => getTabIdx(initArgs));
+
+function getTabIdx(args) {
+    if (!args.defaultSelectedId) return 0;
+    const idx= getComponentAry().findIndex( ({id}) => id===args.defaultSelectedId);
     return idx>-1 ? idx : 0;
-});
+}
 
 const makeTabLabel= (str) => (<div style={tabStyle}>{str}</div>);
+
+export function setMultiSearchPanelTab(setId) {
+    const selectedIdx= getComponentAry().findIndex( ({id}) => setId===id);
+    if (selectedIdx>-1) {
+        dispatchComponentStateChange('MultiCatalogTabs', {selectedIdx});
+    }
+}
+
 
 export function MultiSearchPanel({initArgs={}}) {
 

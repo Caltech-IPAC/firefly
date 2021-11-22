@@ -242,7 +242,7 @@ export class MocGroup {
         const {norder} = getHiPSNorderlevel(this.plot);
 
         this.hipsOrder = norder;
-        this.displayOrder = Math.max(this.minOrder, this.hipsOrder) + 6;
+        this.displayOrder = Math.max(this.minOrder, this.hipsOrder) + 4;
     }
 
     getVisibleTileMap() {          // init the visibleMap by finding visible tiles with the order less than displayOrder

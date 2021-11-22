@@ -5,7 +5,9 @@
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 
-import {URL_COL, makeHiPSRequest, defHiPSSources, getHiPSSources} from '../visualize/HiPSListUtil.js';
+import {
+    URL_COL, makeHiPSRequest, defHiPSSources, getHiPSSources, IVOAID_COL, TITLE_COL
+} from '../visualize/HiPSListUtil.js';
 import {ValidationField} from './ValidationField.jsx';
 import {getCellValue, getTblById} from '../tables/TableUtil.js';
 import {DEFAULT_FITS_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
@@ -25,8 +27,16 @@ import {FormPanel} from './FormPanel.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
 import {primePlot} from '../visualize/PlotViewUtil.js';
 import {BLANK_HIPS_URL} from '../visualize/WebPlot.js';
+import {createHiPSMocLayer} from 'firefly/visualize/task/PlotHipsTask.js';
+import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
+import CompleteButton from 'firefly/ui/CompleteButton.jsx';
+import {dispatchShowDropDown} from 'firefly/core/LayoutCntlr.js';
+import {setMultiSearchPanelTab} from 'firefly/ui/MultiSearchPanel.jsx';
+import {getDefaultMOCList} from 'firefly/visualize/HiPSMocUtil.js';
+import {showUploadDialog} from 'firefly/ui/FileUploadDropdown.jsx';
 
-const useSource = 'useSource';
+const useSourceHiPS = 'useSourceHiPS';
+const useSourceMOC = 'useSourceMOC';
 let activeHipsTblId;
 let activeGroupKey;
 
@@ -59,63 +69,89 @@ HiPSImageSelect.propTypes = {
     style: PropTypes.object
 };
 
+const DIALOG_ID = 'HiPSImageSelectPopup';
+
+function showUpload()  {
+    if (visRoot().apiToolsView) {
+        showUploadDialog();
+    }
+    else {
+        const view= getAppOptions()?.multiTableSearchCmdOptions
+            ?.find( ({id}) => id==='upload') ? 'MultiTableSearchCmd' : 'FileUploadDropDownCmd';
+        dispatchHideDialog(DIALOG_ID);
+        if (view==='MultiTableSearchCmd') setMultiSearchPanelTab('upload');
+        dispatchShowDropDown({view, initArgs:{defaultSelectedId:'upload', always:true}});
+    }
+}
+
 
 /**
  * show HiPS survey info table in popup panel
- * @param pv
+ * @param {PlotView} pv
+ * @param {boolean} moc
  * @returns {*}
  */
-export function showHiPSSurverysPopup(pv=visRoot()) {
+export function showHiPSSurverysPopup(pv, moc= false) {
 
-    const dialogId = 'HiPSImageSelectPopup';
-    const groupKey = activeGroupKey || dialogId;
+    const groupKey = activeGroupKey || DIALOG_ID;
 
     const onSubmit = () => {
         const rootUrl = getHipsUrl();
         if (rootUrl) {
             const plot = pv ? primePlot(pv) : primePlot(visRoot());
             // update the table highlight of the other one which is not shown in table panel
-            dispatchChangeHiPS({plotId: plot.plotId, hipsUrlRoot: rootUrl});
-            dispatchHideDialog(dialogId);
+            moc ? createHiPSMocLayer(getIvoaId(), getTitle(), rootUrl, primePlot(pv), true).then() :
+                  dispatchChangeHiPS({plotId: plot.plotId, hipsUrlRoot: rootUrl});
+            dispatchHideDialog(DIALOG_ID);
         }
     };
+
+
     const popup = (
-        <PopupPanel title={'Change HiPS Image'} modal={true}>
+        <PopupPanel title={moc ? 'Add MOC Layer' : 'Change HiPS Image'} modal={true}>
             <FormPanel  submitBarStyle = {{flexShrink: 0, padding: '0 6px 3px 6px'}}
+                        style={ {resize:'both', overflow: 'hidden', zIndex:1}}
                         groupKey = {groupKey}
-                        submitText={'Search'}
+                        submitText={moc ? 'Add MOC' : 'Change HiPS'}
                         onSubmit = {onSubmit}
-                        onCancel = {() => dispatchHideDialog(dialogId)}
+                        onCancel = {() => dispatchHideDialog(DIALOG_ID)}
                         help_id = 'visualization.changehips'>
-                <FieldGroup groupKey={groupKey} keepState={true}>
+                <FieldGroup groupKey={groupKey} keepState={true} style={{width:'100%', height:'100%'}}>
                     <div className='ImageSearch__HipsPopup'>
-                        <SourceSelect/>
-                        <HiPSSurveyTable groupKey={groupKey}/>
+                        <SourceSelect moc={moc}/>
+                        <HiPSSurveyTable groupKey={groupKey} moc={moc}/>
+                        {moc && <div style={{display:'flex', padding: '6px 15px 0 0', justifyContent:'flex-end'}}>
+                            <div style={{lineHeight:'25px', height: 25, paddingRight: 4, fontWeight:'bold'}}> To Upload a MOC: </div>
+                            <CompleteButton text='Upload' groupKey='' onSuccess={() => showUpload()} />
+                        </div>}
                     </div>
                 </FieldGroup>
             </FormPanel>
         </PopupPanel>
     );
 
-    DialogRootContainer.defineDialog(dialogId, popup);
-    dispatchShowDialog(dialogId);
+    DialogRootContainer.defineDialog(DIALOG_ID, popup);
+    dispatchShowDialog(DIALOG_ID);
 }
 
-export function getHipsUrl() {
+function getHighlightCell(cellStr) {
     const tableModel = getTblById(activeHipsTblId);
-    const {highlightedRow} = tableModel;
-    // blank hips is empty-space in the table.  this is done so the info icon is not shown.
-    // however, it should be treated as BLANK_HIPS_URL
-    return getCellValue(tableModel, highlightedRow, URL_COL)?.trim() || BLANK_HIPS_URL;
+    return getCellValue(tableModel, tableModel?.highlightedRow, cellStr)?.trim();
+
 }
 
-function SourceSelect() {
-    const sourceOptions = defHiPSSources()?.map((oneSource) => {
-        return {label: oneSource.label, value: oneSource.source};
-    });
+const getIvoaId= () => getHighlightCell(IVOAID_COL) || BLANK_HIPS_URL;// blank hips is empty-space in the table
+const getTitle= () => getHighlightCell(TITLE_COL) || 'Blank HiPS';// blank hips is empty-space in the table
+export const getHipsUrl= () => getHighlightCell(URL_COL) || BLANK_HIPS_URL;// blank hips is empty-space in the table
+
+function SourceSelect({moc=false}) {
+    const mocSource= getAppOptions().hips?.adhocMocSource || 'Featured Sources';
+    const sourceOptions = moc && mocSource ?
+            [{label : mocSource.label, value: 'adhoc' }] :
+            defHiPSSources()?.map((oneSource) => ({label: oneSource.label, value: oneSource.source}));
     return (
         <CheckboxGroupInputField wrapperStyle={{color: 'black', fontWeight: 'normal', fontSize: 12, display: 'inline-flex', alignItems: 'center', marginTop: -4}}
-                                 fieldKey={useSource}
+                                 fieldKey={moc ? useSourceMOC : useSourceHiPS}
                                  initialState={{value: sourceOptions?.[0]?.value}}
                                  options={sourceOptions}/>
     );
@@ -156,15 +192,19 @@ export function makeHiPSWebPlotRequest(request, plotId, groupId= DEFAULT_FITS_VI
     return wpRequest;
 }
 
-function HiPSSurveyTable({groupKey}) {
+function HiPSSurveyTable({groupKey, moc=false}) {
 
-    let [sources] = useStoreConnector(() => getFieldVal(groupKey, useSource));
+    let [sources] = useStoreConnector(() => getFieldVal(groupKey, moc ? useSourceMOC : useSourceHiPS));
     sources = sources ||  getHiPSSources();
-    activeHipsTblId = 'HiPS_tbl_id-' + sources.replaceAll(',', '-');
+    activeHipsTblId = 'HiPS_tbl_id-' + (moc ? '--moc--' : '--hips--') + sources.replaceAll(',', '-');
 
     useEffect ( () => {
         if (!getTblById(activeHipsTblId)) {
-            const req = makeHiPSRequest(sources, activeHipsTblId);
+            const mocSources= getAppOptions().hips?.adhocMocSource?.sources ?? getDefaultMOCList();
+            const req = makeHiPSRequest(
+                moc===true? 'moc' : 'hips', sources,
+                moc ? mocSources : undefined,
+                activeHipsTblId);
             req && dispatchTableFetch(req);
         }
     }, [sources]);

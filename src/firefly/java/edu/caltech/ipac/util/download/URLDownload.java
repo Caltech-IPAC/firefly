@@ -140,6 +140,7 @@ public class URLDownload {
           }
       }
 
+
     private static void addCookiesToConnection(URLConnection conn, Map<String, String> cookies) {
         if (!(conn instanceof HttpURLConnection) || cookies == null) return;
         StringBuilder sb = new StringBuilder(200);
@@ -184,6 +185,35 @@ public class URLDownload {
         }
     }
 
+    public static HttpResultInfo getHeaderFromURL(URL url,
+                                                  Map<String, String> cookies,
+                                                  Map<String, String> requestHeaders,
+                                                  int timeoutInSec ) throws FailedRequestException {
+        URLConnection conn= null;
+        try {
+            conn= makeConnection(url,cookies,requestHeaders);
+            if (timeoutInSec>0) {
+                conn.setConnectTimeout(timeoutInSec * 1000);
+                conn.setReadTimeout(timeoutInSec * 1000);
+            }
+            ((HttpURLConnection)conn).setRequestMethod("HEAD");
+            logHeader(null, conn, null);
+            Set<Map.Entry<String,List<String>>> hSet = getResponseCode(conn)==-1 ? null : conn.getHeaderFields().entrySet();
+            HttpResultInfo result= new HttpResultInfo(null,getResponseCode(conn),conn.getContentType(),getSugestedFileName(conn));
+
+            if (hSet!=null) {
+                for (Map.Entry<String, List<String>> e : hSet) {
+                    result.putAttribute(e.getKey()!=null ? e.getKey() : "<none>",combineValues(e.getValue()));
+                }
+            }
+            FileUtil.silentClose(conn.getInputStream());
+            return result;
+        } catch (IOException e) {
+            logError(url, null, e);
+            throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e), e, getResponseCode(conn));
+        }
+    }
+
 //======================================================================
 //------------------ Public getDataToFile using a URL  -----------------
 //======================================================================
@@ -202,7 +232,8 @@ public class URLDownload {
                                                   File outfile, DownloadListener dl,
                                                   int timeoutInSec) throws FailedRequestException {
         try {
-            return getDataToFile(makeConnection(url, cookies, requestHeader), outfile, dl, true, true, 0L,timeoutInSec,postData);
+            Options ops= new Options(true,true,0L,false,dl);
+            return getDataToFile(makeConnection(url, cookies, requestHeader), outfile, ops, timeoutInSec,postData,0);
         } catch (IOException e) {
             logError(url, postData, e);
             throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e), e);
@@ -218,7 +249,7 @@ public class URLDownload {
      * @throws FailedRequestException Any Network Error with simple message, cause will probably be IOException
      */
     public static FileInfo getDataToFile(URL url, File outfile) throws FailedRequestException {
-        return getDataToFile(url, outfile, null, null, null, true, true, 0);
+        return getDataToFile(url, outfile, null, null, new Options());
     }
 
     /**
@@ -233,18 +264,15 @@ public class URLDownload {
                                          File outfile,
                                          Map<String, String> cookies,
                                          Map<String, String> requestHeaders) throws FailedRequestException {
-        return getDataToFile(url,outfile,cookies,requestHeaders,null,true,true,0);
+        return getDataToFile(url,outfile,cookies,requestHeaders, new Options());
     }
 
     /**
      * @param url                  the url to get data from
      * @param outfile              The name of the file to write the data to.
-     * @param dl                   listen for progress and cancel if necessary, may be null
      * @param cookies              a map of cookies as name value pairs, may be null
      * @param requestHeaders       a map of header name value pairs, may be null
-     * @param onlyIfModified       get the file only if there is a newer version, normally true
-     * @param uncompress           if this data appears to be compressed then uncompress it first, normally true
-     * @param maxFileSize          maximum that can be downloaded, 0 means don't check, normally 0
+     * @param ops                  download options
      * @return an array of FileInfo objects
      * @throws FailedRequestException Any Network Error with simple message, cause will probably be IOException
      */
@@ -252,13 +280,10 @@ public class URLDownload {
                                          File outfile,
                                          Map<String, String> cookies,
                                          Map<String, String> requestHeaders,
-                                         DownloadListener dl,
-                                         boolean onlyIfModified,
-                                         boolean uncompress,
-                                         long maxFileSize) throws FailedRequestException {
+                                         Options ops) throws FailedRequestException {
         try {
             return getDataToFile(makeConnection(url, cookies, requestHeaders),
-                                 outfile, dl, onlyIfModified, uncompress, maxFileSize, 0, null);
+                                 outfile, ops, 0, null, ops.allowRedirect?2:0);
         } catch (IOException e) {
             throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e), e);
         }
@@ -270,10 +295,7 @@ public class URLDownload {
     /**
      * @param conn                 the URLConnection
      * @param outfile              The name of the file to write the data to.
-     * @param dl                   listen for progress and cancel if necessary, may be null
-     * @param onlyIfModified       get the file only if there is a newer version, normally true
-     * @param uncompress           if this data appears to be compressed then uncompress it first, normally true
-     * @param maxFileSize          maximum that can be downloaded, 0 means don't check, normally 0
+     * @param ops                  download options
      * @param timeoutInSec         timeout in seconds, 0 is use default, normally 0
      * @param postData             If non-null then send as post data
      * @return an array of FileInfo objects
@@ -281,14 +303,14 @@ public class URLDownload {
      */
     public static FileInfo getDataToFile(URLConnection conn,
                                          File outfile,
-                                         DownloadListener dl,
-                                         boolean onlyIfModified,
-                                         boolean uncompress,
-                                         long maxFileSize,
+                                         Options ops,
                                          int timeoutInSec,
-                                         Map<String,String> postData) throws FailedRequestException {
+                                         Map<String,String> postData,
+                                         int redirectCnt) throws FailedRequestException {
+
         try {
             FileInfo outFileData;
+            Map<String,List<String>> reqProp= conn.getRequestProperties();
             Map<String,List<String>> sendHeaders= null;
             long start = System.currentTimeMillis();
             try {
@@ -299,7 +321,7 @@ public class URLDownload {
                 if (conn instanceof HttpURLConnection) {
                     pushPostData(conn,postData);
                     sendHeaders= conn.getRequestProperties();
-                    if (onlyIfModified) {
+                    if (ops.onlyIfModified) {
                         outFileData = checkAlreadyDownloaded(conn, outfile);
                         if (outFileData != null) return outFileData;
                     }
@@ -315,8 +337,8 @@ public class URLDownload {
             //---From here on the server should be responding
             //------
             logHeader(postData, conn, sendHeaders);
-            validFileSize(conn, maxFileSize);
-            netCopy(makeAnyInStream(conn,uncompress), makeOutStream(outfile), conn, maxFileSize, dl);
+            validFileSize(conn, ops.maxFileSize);
+            netCopy(makeAnyInStream(conn,ops.uncompress), makeOutStream(outfile), conn, ops.maxFileSize, ops.dl);
             long elapse = System.currentTimeMillis() - start;
             int responseCode= getResponseCode(conn);
             outFileData = new FileInfo(outfile, getSugestedFileName(conn), responseCode,
@@ -324,14 +346,40 @@ public class URLDownload {
             logDownload(outFileData, conn.getURL().toString(), elapse );
 
             if (responseCode>=300 && responseCode<400) {
+                if (redirectCnt>0 && (responseCode==301 || responseCode==302 || responseCode==303) )  {
+                   return redirect(conn,outfile,reqProp, ops,timeoutInSec,redirectCnt-1) ;
+                }
+                outFileData.putAttribute("Location", conn.getHeaderField("Location"));
                 throw new FailedRequestException(ResponseMessage.getHttpResponseMessage(responseCode),
-                                                 "Response Code: "+responseCode, responseCode);
+                                                 "Response Code: "+responseCode, responseCode, outFileData);
             }
             return outFileData;
         } catch (IOException e) {
             logError(conn.getURL(), null, e);
             throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e),e, getResponseCode(conn));
         }
+    }
+
+
+    private static FileInfo redirect(URLConnection conn,
+                                             File outfile,
+                                             Map<String,List<String>> reqProp,
+                                             Options ops,
+                                             int timeoutInSec,
+                                             int redirectCnt) throws FailedRequestException, IOException {
+
+        outfile.delete();
+        String urlStr= conn.getHeaderField("Location");
+        HttpURLConnection newConn= (HttpURLConnection)makeConnection(new URL(urlStr), null, null);
+        for(Map.Entry<String,List<String>> entry : reqProp.entrySet()) {
+            for(String s : entry.getValue()) newConn.setRequestProperty(entry.getKey(), s);
+        }
+        if (conn.getHeaderField("Set-Cookie")!=null) {
+            newConn.setRequestProperty("Cookie", conn.getHeaderField("Set-Cookie"));
+        }
+        newConn.setRequestProperty("Accept-Encoding", "gzip, deflate");
+        return getDataToFile(newConn,
+                outfile, ops, timeoutInSec, null, redirectCnt);
     }
 
     private static String postDataToString(Map<String,String> postData) {
@@ -454,11 +502,13 @@ public class URLDownload {
     private static void logHeader(Map<String,String> postData, URLConnection conn, Map<String,List<String>> sendHeaders) {
         StringBuffer workBuff;
         try {
+            String verb= "";
+            if (conn instanceof HttpURLConnection) verb= ((HttpURLConnection)conn).getRequestMethod();
             Set<Map.Entry<String,List<String>>> hSet = getResponseCode(conn)==-1 ? null : conn.getHeaderFields().entrySet();
             List<String> outStr= new ArrayList<>(40);
             String key;
             if (conn.getURL() != null) {
-                outStr.add("----------Sending");
+                outStr.add("----------Sending " + verb);
                 outStr.add( conn.getURL().toString());
                 if (sendHeaders!=null) {
                     for(Map.Entry<String,List<String>> se: sendHeaders.entrySet()) {
@@ -584,5 +634,34 @@ public class URLDownload {
 
     private static InputStream makeErrStream(HttpURLConnection conn) {
         return new BufferedInputStream(conn.getErrorStream(), BUFFER_SIZE);
+    }
+
+    private static String combineValues(List<String> values) {
+        StringBuilder workBuff = new StringBuilder(100);
+        Iterator<String> valIter;
+        int m;
+        for (m = 0, valIter = values.iterator(); (valIter.hasNext()); m++) {
+            if (m > 0) workBuff.append("; ");
+            workBuff.append(valIter.next());
+        }
+        return workBuff.toString();
+    }
+
+    public static class Options {
+        final boolean onlyIfModified;
+        final boolean uncompress;
+        final long maxFileSize;
+        final boolean allowRedirect;
+        final DownloadListener dl;
+
+        public Options(boolean onlyIfModified, boolean uncompress, long maxFileSize, boolean allowRedirect, DownloadListener dl) {
+            this.onlyIfModified = onlyIfModified;
+            this.uncompress = uncompress;
+            this.maxFileSize = maxFileSize;
+            this.allowRedirect = allowRedirect;
+            this.dl= dl;
+        }
+        public Options(boolean onlyIfModified, boolean allowRedirect) { this(onlyIfModified,true,0,allowRedirect,null); }
+        public Options() { this(true,true,0,false,null); }
     }
 }
