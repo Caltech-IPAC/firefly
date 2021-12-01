@@ -131,5 +131,8 @@ public class MetaConst {
     // meta options
     public static final String HIGHLIGHTED_ROW = "highlightedRow";
     public static final String HIGHLIGHTED_ROW_BY_ROWIDX = "highlightedRowByRowIdx";
+
+    /** if defined and true and a table is a MOC then the table will not be loaded as a MOC layer, just as a table */
+    public static final String IGNORE_MOC= "ignoreMOC";
 }
 

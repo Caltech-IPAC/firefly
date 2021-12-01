@@ -3,6 +3,8 @@
  */
 package edu.caltech.ipac.util.download;
 
+import edu.caltech.ipac.firefly.data.FileInfo;
+
 /**
  * This exception is thrown when a value is out of range.
  * @author Trey Roby
@@ -11,6 +13,7 @@ package edu.caltech.ipac.util.download;
 public class FailedRequestException extends Exception {
     private final String detailMessage;
     private int responseCode= -1;
+    private FileInfo fileInfo= null;
 
     /**
      * Create a new FailedRequestException Exception.
@@ -29,6 +32,12 @@ public class FailedRequestException extends Exception {
     public FailedRequestException(String userMessage, String detailMessage, int responseCode) {
         this(userMessage, detailMessage, null);
         this.responseCode= responseCode;
+    }
+
+    public FailedRequestException(String userMessage, String detailMessage, int responseCode, FileInfo fi) {
+        this(userMessage, detailMessage, null);
+        this.responseCode= responseCode;
+        this.fileInfo= fi;
     }
 
     /**
@@ -73,5 +82,6 @@ public class FailedRequestException extends Exception {
 
     public String getUserMessage()       { return getMessage(); }
     public String getDetailMessage()     { return detailMessage; }
-    public int    getResponseCode()     { return responseCode; }
+    public int    getResponseCode()      { return responseCode; }
+    public FileInfo getFileInfo()        { return fileInfo; }
 }

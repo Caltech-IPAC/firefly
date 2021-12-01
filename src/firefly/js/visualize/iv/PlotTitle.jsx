@@ -17,26 +17,17 @@ import LOADING from 'html/images/gxt/loading.gif';
 
 export const TitleType= new Enum(['INLINE', 'HEAD', 'EXPANDED']);
 
-export const PlotTitle= memo(({plotView:pv, titleType, brief, working, topOffset=0}) => {
-        let styleName= '';
+export const PlotTitle= memo(({plotView:pv, titleType, brief, working}) => {
         const plot= primePlot(pv);
         const world= hasWCSProjection(plot);
         const local= hasLocalStretchByteData(plot);
-        const image= isImage(plot);
-        // const additionalStyle= TitleType.INLINE ? {top:topOffset} : {};
-        switch (titleType) {
-            case TitleType.INLINE:   styleName= 'plot-title-inline-title-container';  break;
-            case TitleType.HEAD:     styleName= 'plot-title-header-title-container';  break;
-            case TitleType.EXPANDED: styleName= 'plot-title-expanded-title-container';break;
-        }
         const zlRet= getZoomDesc(pv);
         let zlStr= world ? `FOV: ${zlRet.fovFormatted}` : zlRet.zoomLevelFormatted;
         let tooltip= world ? `${plot.title}\nHorizontal field of view: ${zlRet.fovFormatted}` : plot.title;
-        if (image) {
+        if (isImage(plot)) {
             const dataLoaded= local ? '\nLocal Data' : '\nDistributed Data';
             tooltip+= `\nZoom Level: ${zlRet.zoomLevelFormatted}${dataLoaded}`;
         }
-        // const style= (image && local) ? {backgroundColor : 'rgba(255,255,255,.3)'} : {};
         let rotString;
         let flipString;
         if (pv.rotation) {
@@ -56,12 +47,12 @@ export const PlotTitle= memo(({plotView:pv, titleType, brief, working, topOffset
 
 
         return (
-            <div className={styleName} title={tooltip}>
+            <div className={getStyleName(titleType)} title={tooltip}>
                 <div className='plot-title-title'>{plot.title}</div>
                 {!brief ? <div className='plot-title-zoom'><div title={tooltip} dangerouslySetInnerHTML={{__html:zlStr}}/> </div> : ''}
                 {!brief && rotString ? <div title={tooltip} className='plot-title-rotation'>{rotString}</div> : ''}
                 {!brief && flipString ? <div title={tooltip} className='plot-title-flipped'>{flipString}</div> : ''}
-                {working ?<img style={{width:14,height:14,padding:'0 3px 0 5px'}} src={LOADING}/> : ''}
+                {working && <img className={'plot-title-working'} src={LOADING}/>}
             </div>
         );
     },
@@ -69,11 +60,18 @@ export const PlotTitle= memo(({plotView:pv, titleType, brief, working, topOffset
         pvEqualExScroll(p.plotView, np.plotView),
 );
 
+function getStyleName(titleType) {
+    switch (titleType) {
+        case TitleType.INLINE:   return 'plot-title-inline-title-container';
+        case TitleType.HEAD:     return 'plot-title-header-title-container';
+        case TitleType.EXPANDED: return 'plot-title-expanded-title-container';
+    }
+}
+
 PlotTitle.propTypes= {
     plotView : PropTypes.object,
     titleType: PropTypes.object.isRequired,
     working : PropTypes.bool,
-    topOffset: PropTypes.number,
     brief : PropTypes.bool.isRequired
 };
 

@@ -2,14 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import Enum from 'enum';
+import {debounce, get, set, isEmpty, cloneDeep, isString} from 'lodash';
 import {makeDrawingDef, TextLocation, Style} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {primePlot, getDrawLayerById, getPlotViewIdListInOverlayGroup} from '../visualize/PlotViewUtil.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import DrawLayerCntlr, {DRAWING_LAYER_KEY, dispatchUpdateDrawLayer} from '../visualize/DrawLayerCntlr.js';
-import {get, set, isEmpty, cloneDeep, isString} from 'lodash';
-import {clone} from '../util/WebUtil.js';
 import MocObj, {createDrawObjsInMoc, setMocDisplayOrder, MocGroup} from '../visualize/draw/MocObj.js';
 import {getUIComponent} from './HiPSMOCUI.jsx';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
@@ -67,6 +66,8 @@ function loadMocFitsWatcher(action, cancelSelf, params, dispatch, getState) {
             }
             if (!tReq) return;
 
+            const {plotIdAry=[]}= action.payload;
+            plotIdAry.forEach( (plotId) => addTask(plotId, 'fetchMOC'));
             doFetchTable(tReq).then(
                 (tableModel) => {
                     if (tableModel.tableData) {
@@ -75,11 +76,13 @@ function loadMocFitsWatcher(action, cancelSelf, params, dispatch, getState) {
                         visiblePlotIdAry .forEach((pId) => {
                             dispatch({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotId: pId}});
                         });
+                        plotIdAry.forEach( (plotId) => removeTask(plotId, 'fetchMOC'));
                     }
                 }
             ).catch(
                 (reason) => {
                     logger.error(`Failed to MOC table: ${reason}`, reason);
+                    plotIdAry.forEach( (plotId) => removeTask(plotId, 'fetchMOC'));
                 }
             );
 
@@ -113,7 +116,8 @@ function creator(initPayload) {
         canHighlight:true,
         canUserChangeColor: ColorChangeType.DYNAMIC,
         hasPerPlotData: true,
-        destroyWhenAllDetached: true
+        destroyWhenAllDetached: true,
+        layersPanelLayoutId: initPayload.layersPanelLayoutId,
     };
 
     // const actionTypes = [DrawLayerCntlr.REGION_SELECT, TABLE_LOADED];
@@ -138,7 +142,7 @@ function creator(initPayload) {
     dl.mocTable= undefined;
     dl.rootTitle= dl.title;
 
-    dispatchAddActionWatcher({
+        dispatchAddActionWatcher({
         callback:loadMocFitsWatcher,
         params: {id: dl.drawLayerId, mocFitsInfo},
         actions:[DrawLayerCntlr.CHANGE_VISIBILITY, DrawLayerCntlr.ATTACH_LAYER_TO_PLOT]
@@ -261,11 +265,8 @@ function getLayerChanges(drawLayer, action) {
 
         case DrawLayerCntlr.CHANGE_VISIBILITY:
             if (action.payload.visible) {
-                if (!getTblById(mocFitsInfo.tbl_id)) {     // moc table is not loaded yet
-                    const pIdAry = plotIdAry ? plotIdAry :[plotId];
-
-                    return Object.assign({}, {title: getTitle(drawLayer, pIdAry, true)});
-                }
+                const pIdAry = plotIdAry ? plotIdAry :[plotId];
+                return Object.assign({}, {title: getTitle(drawLayer, pIdAry, action.payload.visible && !drawLayer.mocTable)});
             }
             break;
 
@@ -343,11 +344,11 @@ function updateMocData(dl, plotId) {
     const updateStatus = updateStatusAry[plotId];
 
      if (isEmpty(updateStatus.newMocObj)) {    // find visible cells first
-        const newMocObj = clone(mocObj);
+        const newMocObj = {...mocObj};
 
         newMocObj.mocGroup = MocGroup.make(null, mocObj.mocGroup, plot);
         newMocObj.mocGroup.collectVisibleTilesFromMoc(plot, updateStatus.storedSidePoints);
-        newMocObj.style = dl?.mocStyle?.[plotId] ?? dl.drawingDef?.style ?? style.STANDARD;
+        newMocObj.style = dl?.mocStyle?.[plotId] ?? dl.drawingDef?.style ?? Style.STANDARD;
         updateStatus.newMocObj = newMocObj;
     } else if (updateStatus.newMocObj.mocGroup.isInCollection()) {
          const {mocGroup} = updateStatus.newMocObj;
@@ -400,7 +401,7 @@ function updateDrawLayer(drawObjAry, drawLayer, plotId) {
     const dd = Object.assign({}, drawLayer.drawData);
     set(dd[DataTypes.DATA], [plotId], drawObjAry);
 
-    const newDrawLayer = clone(drawLayer, {drawData: dd});
+    const newDrawLayer = {...drawLayer, drawData: dd};
     dispatchUpdateDrawLayer(newDrawLayer);
 }
 
@@ -445,6 +446,8 @@ function asyncComputeDrawData(drawLayer, action) {
                                 mocStyle?.[targetPlotId] ?? drawLayer.drawingDef?.style ?? Style.STANDARD,
                                     targetPlotId),
             drawLayer, targetPlotId);
+    } else if (action.type === ImagePlotCntlr.ANY_REPLOT) {
+        mocRedraw(drawLayer,action);
     } else if (action.type === DrawLayerCntlr.CHANGE_DRAWING_DEF) {
         const {plotIdAry} = drawLayer;
         const dd = {...drawLayer.drawData};
@@ -457,27 +460,34 @@ function asyncComputeDrawData(drawLayer, action) {
         const newDrawLayer = {...drawLayer, drawData: dd};
         dispatchUpdateDrawLayer(newDrawLayer);
     } else {
-        const {plotId, plotIdAry} = action.payload;
-        const {visiblePlotIdAry, updateStatusAry} = drawLayer;
-
-        let pIdAry = [];
-        if (plotIdAry) {
-            pIdAry = plotIdAry;
-        } else if (action.type === ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION ) {
-            if (plotId) {
-                pIdAry = getPlotViewIdListInOverlayGroup(visRoot(), plotId);
-            }
-        } else if (plotId) {
-            pIdAry = [plotId];
-        }
-
-        pIdAry.forEach((pId) => {
-            if (visiblePlotIdAry.includes(pId) && get(updateStatusAry, pId)) {
-                const updateMethod = LayerUpdateMethod.none;
-
-                abortUpdate(drawLayer, updateStatusAry, pId, updateMethod);
-                updateStatusAry[pId].setCanceler(makeUpdateDeferred(drawLayer, pId));
-            }
-        });
+        mocRedrawDebounce(drawLayer, action);
     }
 }
+
+function mocRedraw(drawLayer,action) {
+    const {plotId, plotIdAry} = action.payload;
+    const {visiblePlotIdAry, updateStatusAry} = drawLayer;
+
+    let pIdAry = [];
+    if (plotIdAry) {
+        pIdAry = plotIdAry;
+    } else if (action.type === ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION ) {
+        if (plotId) {
+            pIdAry = getPlotViewIdListInOverlayGroup(visRoot(), plotId);
+        }
+    } else if (plotId) {
+        pIdAry = [plotId];
+    }
+
+    pIdAry.forEach((pId) => {
+        if (visiblePlotIdAry.includes(pId) && get(updateStatusAry, pId)) {
+            const updateMethod = LayerUpdateMethod.none;
+
+            abortUpdate(drawLayer, updateStatusAry, pId, updateMethod);
+            updateStatusAry[pId].setCanceler(makeUpdateDeferred(drawLayer, pId));
+        }
+    });
+
+}
+
+const mocRedrawDebounce= debounce(mocRedraw,60);

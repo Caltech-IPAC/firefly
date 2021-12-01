@@ -13,6 +13,8 @@ export const HiPSSources = ServerParams.IRSA + ',' + ServerParams.CDS;
 
 export const IVO_ID_COL= 'CreatorID';
 export const URL_COL= 'Url';
+export const IVOAID_COL= 'CreatorID';
+export const TITLE_COL= 'Title';
 
 const BLANK_HIPS_URL= 'ivo://CDS/P/2MASS/color';
 const HIPS_SEARCH = 'hips';
@@ -56,15 +58,6 @@ export function defHiPSSources() {
     }
     return isArray(defObj) ? defObj : [defObj];}
 
-/**
- * get default HiPS source
- * @returns {string}
- */
-export function getDefHiPSSources() {
-    const defInfo = defHiPSSources();
-
-    return defInfo.map((oneSource) => (oneSource.source)).join(',');
-}
 
 /**
  * get HiPS source priority for the merged list
@@ -75,16 +68,19 @@ export function getHiPSMergePriority() {
     return toCsvLowercase(mergeP);
 }
 
-export function makeHiPSRequest(sources=getHiPSSources(), tbl_id, types=HiPSData) {
+
+export function makeHiPSRequest(tableType, sources=getHiPSSources(), mocSources, tbl_id, types=HiPSData) {
     const sourceMergePriority = getHiPSMergePriority();
     const sp = sourceMergePriority?.join?.(',') || sourceMergePriority;
-
-    return makeTblRequest('HiPSSearch', 'HiPS Maps',
-        {[ServerParams.HIPS_DATATYPES]: types?.join(','),
+    const params=
+        {
+            [ServerParams.HIPS_DATATYPES]: types?.join(','),
             [ServerParams.HIPS_SOURCES]: sources,
-            [ServerParams.HIPS_MERGE_PRIORITY]: sp},
-        {tbl_id, pageSize: MAX_ROW});
-
+            [ServerParams.HIPS_TABLE_TYPE]: tableType,
+            [ServerParams.HIPS_MERGE_PRIORITY]: sp,
+        };
+    if (mocSources) params[ServerParams.ADD_HOC_SOURCE]= mocSources.join(',');
+    return makeTblRequest('HiPSSearch', 'HiPS Maps', params, {tbl_id, pageSize: MAX_ROW});
 }
 
 /**
@@ -111,7 +107,7 @@ export function resolveHiPSIvoURL(ivoOrUrl) {
     if (FULL_HIPS_TABLE) {
         return Promise.resolve(findInTable(FULL_HIPS_TABLE));
     } else {
-        const request = makeHiPSRequest();
+        const request = makeHiPSRequest('hips');
         return doFetchTable(request).then( (tableModel) => {
             FULL_HIPS_TABLE = tableModel;
             return findInTable(tableModel);

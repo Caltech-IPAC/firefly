@@ -81,7 +81,7 @@ let currentAnalysisResult, currentReport, currentSummaryModel, currentDetailsMod
 const FILE_UPLOAD_KEY= 'file-upload-key-';
 let keyCnt=0;
 
-export function FileUploadViewPanel() {
+export function FileUploadViewPanel({setSubmitText}) {
 
     const [{isLoading,statusKey}, isWsUpdating, uploadSrc, {message, analysisResult, report, summaryModel, detailsModel}] =
         useStoreConnector.bind({comparator: shallowequal}) (
@@ -93,6 +93,10 @@ export function FileUploadViewPanel() {
 
     const [loadingMsg,setLoadingMsg]= useState(() => '');
     const [uploadKey,setUploadKey]= useState(() => FILE_UPLOAD_KEY+keyCnt);
+
+    useEffect(() => {
+        setSubmitText(getLoadButtonText());
+    },[report,setSubmitText, summaryModel, detailsModel]);
 
     useEffect(() => {
         if (message || (analysisResult && analysisResult !== currentAnalysisResult)) {
@@ -146,6 +150,8 @@ export function FileUploadViewPanel() {
         dispatchValueChange({fieldKey:getLoadingFieldName(), groupKey:panelKey, value:'', displayValue:'', analysisResult:undefined});
     };
 
+    const isMoc=  isMOCFitsFromUploadAnalsysis(currentReport)?.valid;
+
     return (
         <div style={{position: 'relative', height: '100%', display: 'flex', alignItems: 'stretch',
             flexDirection: 'column' }}>
@@ -169,9 +175,9 @@ export function FileUploadViewPanel() {
                                                            }}/> }
                             </div>
                     </div>
-                    <FileAnalysis {...{report, summaryModel, detailsModel,tablesOnly}}/>
+                    <FileAnalysis {...{report, summaryModel, detailsModel,tablesOnly, isMoc}}/>
                     <ImageDisplayOption/>
-                    <TableDisplayOption/>
+                    <TableDisplayOption isMoc={isMoc}/>
                 </div>
                 {(isLoading) && <LoadingMessage message={loadingMsg}/>}
             </FieldGroup>
@@ -197,6 +203,24 @@ const LoadingMessage= ({message}) => (
         </div>}
     </div>
 );
+
+function getLoadButtonText() {
+    const tblCnt = getSelectedRows(FileAnalysisType.Table)?.length ?? 0;
+    if (tblCnt && isMOCFitsFromUploadAnalsysis(currentReport).valid) return 'Load MOC';
+    if (isRegion()) return 'Load Region';
+
+    const imgCnt = getSelectedRows(FileAnalysisType.Image)?.length ?? 0;
+
+    if (isLsstFootprintTable(currentDetailsModel) ) return 'Load Footprint';
+    if (tblCnt && !imgCnt) return tblCnt>1 ? `Load ${tblCnt} Tables` : 'Load Table';
+    if (!tblCnt && imgCnt) return imgCnt>1 ? `Load ${imgCnt} Images` : 'Load Image';
+    if (tblCnt && imgCnt) return `Load ${imgCnt>1?imgCnt+' ' : ''}Image${imgCnt >1 ?'s':''} and ${tblCnt>1?tblCnt+' ' : ''}Table${tblCnt>1? 's':''}`;
+    return  'Load';
+}
+
+
+
+
 
 export function resultFail() {
     showInfoPopup('One or more fields are invalid', 'Validation Error');
@@ -268,7 +292,9 @@ export function resultSuccess(request) {
         sendRegionRequest(fileCacheKey);
     }
     else if (isMocFits.valid) {
-        sendTableRequest(tableIndices, fileCacheKey, false, {[MetaConst.PREFERRED_HIPS]: getAppHiPSForMoc()}, false);
+        const mocMeta= {[MetaConst.PREFERRED_HIPS]: getAppHiPSForMoc()};
+        if (request.mocOp==='table') mocMeta[MetaConst.IGNORE_MOC]='true';
+        sendTableRequest(tableIndices, fileCacheKey, false, mocMeta, request.mocOp==='table');
     } else if ( isLsstFootprintTable(currentDetailsModel) ) {
         sendLSSTFootprintRequest(fileCacheKey, request.fileName, tableIndices[0]);
     } else {
@@ -394,10 +420,24 @@ function getFileCacheKey() {
     return getFieldVal(panelKey, uploadSrc);
 }
 
-function TableDisplayOption() {
+function TableDisplayOption({isMoc}) {
 
     const [selectedTables] = useStoreConnector(() => getFileFormat() ? getSelectedRows('Table') : [] );
     if ( selectedTables.length < 1) return null;
+
+    if (isMoc) {
+        const options= [{label:'Load as MOC Overlay', value:'moc'}, {label:'Load as Table', value:'table'}];
+        return (
+            <div style={{padding: '5px 0 5px 0'}}>
+                <RadioGroupInputField options={options}
+                                      labelWidth={100}
+                                      alignment={'horizontal'}
+                                      defaultValue = {'moc'}
+                                      fieldKey = 'mocOp' />
+
+            </div>
+        );
+    }
 
     return (
         <div style={{marginTop: 3}}>
@@ -495,14 +535,14 @@ function AnalysisInfo({report,supported=true}) {
 
 const tblOptions = {showToolbar:false, border:false, showOptionButton: false, showFilters: true};
 
-function AnalysisTable({summaryModel, detailsModel, report}) {
+function AnalysisTable({summaryModel, detailsModel, report, isMoc}) {
     if (!summaryModel) return null;
 
     // Details table need to render first to create a stub to collect data when Summary table is loaded.
     return (
         <div className='FileUpload__summary'>
             {(summaryModel.tableData.data.length>1) ?
-                <MultiDataSet summaryModel={summaryModel} detailsModel={detailsModel}/> :
+                <MultiDataSet summaryModel={summaryModel} detailsModel={detailsModel} isMoc={isMoc}/> :
                 <SingleDataSet type={summaryModel.tableData.data[0][1]} desc={summaryModel.tableData.data[0][2]}
                                detailsModel={detailsModel} report={report}/>
             }
@@ -526,12 +566,22 @@ function SingleDataSet({type, desc, detailsModel, report, supported=isSinglePart
     );
 }
 
-function MultiDataSet({summaryModel, detailsModel}) {
+function MultiDataSet({summaryModel, detailsModel, isMoc}) {
     return (
-        <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={350}>
-            <TablePanel showTypes={false} title='File Summary' tableModel={summaryModel} tbl_ui_id={summaryUiId} {...tblOptions} />
-            <Details detailsModel={detailsModel}/>
-        </SplitPane>
+        <div style={{display: 'flex', flexDirection: 'column', width: '100%'}}>
+            {
+                isMoc &&
+                <div style={{height: 20, fontWeight: 'bold', alignSelf: 'center', fontSize: 'larger', }}>
+                    This table is a MOC and can be overlaid on a HiPS Survey
+                </div>
+            }
+            <div style={{height:'100%', position:'relative'}}>
+                <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={350}>
+                    <TablePanel showTypes={false} title='File Summary' tableModel={summaryModel} tbl_ui_id={summaryUiId} {...tblOptions} />
+                    <Details detailsModel={detailsModel}/>
+                </SplitPane>
+            </div>
+        </div>
     );
 }
 
@@ -548,7 +598,7 @@ function Details({detailsModel}) {
 }
 
 
-function getTableArea(report, summaryModel, detailsModel) {
+function getTableArea(report, summaryModel, detailsModel, isMoc) {
     if (report?.fileFormat === UNKNOWN_FORMAT) {
         return (
             <div style={{flexGrow: 1, marginTop: 40, textAlign:'center', fontSize: 'larger', color: 'red'}}>
@@ -556,16 +606,16 @@ function getTableArea(report, summaryModel, detailsModel) {
             </div>
         );
     }
-    return <AnalysisTable {...{summaryModel, detailsModel, report}} />;
+    return <AnalysisTable {...{summaryModel, detailsModel, report, isMoc}} />;
 }
 
 
-const FileAnalysis = ({report, summaryModel, detailsModel, tablesOnly}) => {
+const FileAnalysis = ({report, summaryModel, detailsModel, tablesOnly, isMoc}) => {
     if (report) {
         return (
             <div className='FileUpload__report'>
                 {summaryModel.tableData.data.length>1 && <AnalysisInfo report={report} />}
-                {getTableArea(report, summaryModel, detailsModel)}
+                {getTableArea(report, summaryModel, detailsModel, isMoc)}
             </div>
         );
     }

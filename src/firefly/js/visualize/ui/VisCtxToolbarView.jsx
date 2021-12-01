@@ -48,6 +48,8 @@ import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
 import SELECTED_ZOOM from 'html/images/icons-2014/ZoomFitToSelectedSpace.png';
 import SELECTED_RECENTER from 'html/images/icons-2014/RecenterImage-selection.png';
 import {pvEqualExScroll} from '../PlotViewUtil';
+import {DropDownToolbarButton} from 'firefly/ui/DropDownToolbarButton.jsx';
+import {SingleColumnMenu} from 'firefly/ui/DropDownMenu.jsx';
 
 
 
@@ -138,22 +140,29 @@ function HipsFitsConvertButton({pv}) {
 
 HipsFitsConvertButton.propTypes= { pv : PropTypes.object.isRequired};
 
-// Auto-transition
-
 function makeHiPSImageTable(pv) {
     if (!primePlot(pv)) return null;
+
+    const dropDown= (
+        <SingleColumnMenu>
+            <ToolbarButton text={'Change HiPS'} tip={'Choose a different HiPS Survey'}
+                           horizontal={false} key={'change Hips'}
+                           onClick={()=>showHiPSSurverysPopup(pv)} />
+            <ToolbarButton text={'Add MOC Layer'} tip={'Add a new MOC layer to the HiPS Survey'}
+                           horizontal={false} key={'add'}
+                           onClick={()=>showHiPSSurverysPopup(pv,true)} />
+        </SingleColumnMenu>
+    );
+
     return (
         <div style={{display:'flex'}}>
-            <div style={{margin: '0 5px 0 4px'}}>
-                <input  type='button'
-                        value='Change HiPS'
-                        title={'Choose a different HiPS Survey'}
-                        onClick={()=>showHiPSSurverysPopup(pv)} />
-            </div>
+                <DropDownToolbarButton
+                    text={'HiPS / MOC'} tip='Change displayed HiPS or add a MOC'
+                    horizontal={true} style={{margin: '0 5px 0 4px'}}
+                    useDropDownIndicator={true} dropDown={dropDown} />
         </div>
     );
 }
-
 
 
 const hipsCoordOptions= [

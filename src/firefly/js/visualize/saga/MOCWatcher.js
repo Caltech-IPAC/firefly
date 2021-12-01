@@ -75,7 +75,8 @@ function loadMOC(tbl_id) {
 
     onPlotComplete(plotId).then( (pv) => {
         if (!pv) return;
-        const dl = addNewMocLayer(table.tbl_id, undefined, null, table.tableData.columns[0].name, true);
+        const dl = addNewMocLayer(table.tbl_id, undefined, undefined, null,
+            table.tableData.columns[0].name, true);
         if (dl) {
             dispatchAttachLayerToPlot(dl.drawLayerId, plotId, true, true);
         }

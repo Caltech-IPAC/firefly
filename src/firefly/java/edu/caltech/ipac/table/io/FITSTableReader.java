@@ -645,7 +645,7 @@ public final class FITSTableReader
         throws FitsException{
 
         ColumnInfo colInfo = table.getColumnInfo(colIdx);
-        String colName = colInfo.getName();
+        String colName = colInfo.getName()!=null ? colInfo.getName() : "column-"+colIdx;
         String classType = DefaultValueInfo.formatClass(colInfo.getContentClass());
         String unit = colInfo.getUnitString();
         String desc = colInfo.getDescription();

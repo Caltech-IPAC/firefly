@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {isArray, once} from 'lodash';
+import {once} from 'lodash';
 import React, {useEffect, useRef, useState} from 'react';
 import FieldGroupUtils, {getFieldVal} from 'firefly/fieldGroup/FieldGroupUtils.js';
 import {makeSearchOnce} from 'firefly/util/WebUtil.js';
@@ -26,7 +26,6 @@ import {
     getMaxrecHardLimit,
     getTapBrowserState,
     tapHelpId,
-    TAP_SERVICES_FALLBACK,
     getTapServices,
     loadObsCoreSchemaTables,
     updateTapBrowserState
@@ -278,20 +277,32 @@ function populateAndEditAdql(inAdql) {
 
 const getTapServiceOptions= () => getTapServices(webApiUserAddedService).map(({label,value})=>({label:value, value, labelOnly:label}));
 
+function getTableNameFromADQL(adql) {
+    if (!adql) return;
+    const adqlUp= adql.toUpperCase();
+    const start= adqlUp.toUpperCase().indexOf('FROM ')+5;
+    const end= adqlUp.lastIndexOf('WHERE');
+    if  (start>5 && end>-1) {
+        const tStr=  adql.substring(start,end)?.trim();
+        if (tStr) return tStr.split(/[\s,]+/)[0]; // pull the first works out between the FROM and the WHERE
+    }
+    return undefined;
+}
+
+function getTitle(adql, serviceUrl) {
+    const tname = getTableNameFromADQL(adql);
+    const host= serviceUrl?.match(/.*:\/\/(.*)\/.*/i)?.[1]; // table name or service url
+    if (tname && host) return `${tname} - ${host}`;
+    return tname || host;
+}
+
+
+
 function onTapSearchSubmit(request,serviceUrl) {
     const isADQL = (request.selectBy === 'adql');
-    let adql = undefined;
-    let title = undefined;
+    let adql = isADQL ? request.adqlQuery : getAdqlQuery();
     const maxrec = request.maxrec;
-    if (isADQL) {
-        adql = request.adqlQuery;
-        // use service name for title
-        const found = serviceUrl.match(/.*:\/\/(.*)\/.*/i);
-        title = found && found[1];
-    } else {
-        adql = getAdqlQuery();
-        title = request.tableName;
-    }
+
     if (adql) {
         const hasMaxrec = !isNaN(parseInt(maxrec));
         adql = adql.replace(/\s/g, ' ');    // replace all whitespaces with spaces
@@ -300,7 +311,7 @@ function onTapSearchSubmit(request,serviceUrl) {
             if (hasMaxrec) params.MAXREC = maxrec;
             const options = {};
 
-            const treq = makeTblRequest('AsyncTapQuery', title, params, options);
+            const treq = makeTblRequest('AsyncTapQuery', getTitle(adql,serviceUrl), params, options);
             setNoCache(treq);
             dispatchTableSearch(treq, {backgroundable: true, showFilters: true, showInfoButton: true});
 

@@ -26,6 +26,10 @@ import java.util.Properties;
 public class HiPSRetrieve {
 
     public static FileInfo retrieveHiPSData(String urlStr, String pathExt) {
+        return retrieveHiPSData(urlStr,pathExt,3);
+    }
+
+    public static FileInfo retrieveHiPSData(String urlStr, String pathExt, int depth) {
         try {
             URL url= new URL(urlStr);
 
@@ -34,7 +38,8 @@ public class HiPSRetrieve {
             if (!dir.exists()) dir.mkdirs();
 
             File targetFile= new File(dir, new File((pathExt == null ? url.getFile() : pathExt)).getName());
-            FileInfo fi= URLDownload.getDataToFile(url,targetFile);
+            URLDownload.Options ops= new URLDownload.Options(true,true);
+            FileInfo fi= URLDownload.getDataToFile(url,targetFile,null, null, ops);
             int rCode= fi.getResponseCode();
             File retFile= fi.getFile();
 

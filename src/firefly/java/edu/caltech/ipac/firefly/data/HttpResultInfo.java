@@ -33,7 +33,7 @@ public class HttpResultInfo {
         putAttribute(RESPONSE_CODE_MSG, ResponseMessage.getHttpResponseMessage(responseCode));
         putAttribute(EXTERNAL_NAME,suggestedFileName);
         if (contentType!=null) putAttribute(CONTENT_TYPE, contentType);
-        putAttribute(SIZE_IN_BYTES, result.length+"");
+        if (result!=null) putAttribute(SIZE_IN_BYTES, result.length+"");
     }
 
     public void putAttribute(String key, String value) { attributes.put(key,value); }

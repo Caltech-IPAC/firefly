@@ -252,6 +252,42 @@
     </script>
 </template>
 
+<template title="Demo a Setting custom MOC list" style='height: 400px' class="tpl lg " >
+    <div id="expected" >
+        <div class="source-code indent-3">
+            - a small MOC list in options
+            - firefly.options.hips.adhocMocSource
+            - load a HiPS
+            - users can load a MOC from 'HiPS / MOC' dropdown
+        </div>
+    </div>
+    <div id="actual" class="box x3"></div>
+    <script>
+        window.firefly= {
+            options: {
+                hips: {
+                    adhocMocSource: {
+                        sources: [
+                            'ivo://CDS/P/SPITZER/IRAC1',
+                            'ivo://CDS/P/ZTF/DR7/g',
+                            'ivo://xcatdb/P/XMM/PN/eb4',
+                        ],
+                        label: 'Demo Featured'
+                    }
+                },
+            } };
+        function onFireflyLoaded(firefly) {
+            firefly.showHiPS('actual',
+                {plotId: 'hipstest',
+                    title: "SDSS HiPS",
+                    WorldPt:'10.68479292;41.269065;EQ_J2000',
+                    hipsRootUrl: 'ivo://CDS/P/SDSS9/color',
+                    SizeInDeg: 180}
+            );
+        }
+    </script>
+</template>
+
 
 <!-- this is where test cases will be attached-->
 <div id="tst-container"/>
