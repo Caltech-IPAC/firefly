@@ -46,6 +46,10 @@ export function showDropDown({id='',content, style={}, atElRef, locDir, wrapperS
     return ddDiv;
 }
 
+export function isDropDownShowing(id) {
+    return document.getElementById(getddDiv(id));
+}
+
 export function hideDropDown(id='') {
     const ddDiv = document.getElementById(getddDiv(id));
     if (ddDiv) {

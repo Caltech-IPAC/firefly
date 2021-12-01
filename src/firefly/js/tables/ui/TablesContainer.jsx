@@ -72,7 +72,7 @@ export class TablesContainer extends PureComponent {
         if (expandedMode) {
             return <ExpandedView {...{active, tables, tableOptions, layout, expandedMode, closeable, tbl_group}} />;
         } else {
-            return isEmpty(tables) ? <div></div> : <StandardView {...{active, tables, tableOptions, expandedMode, tbl_group, style}} />;
+            return isEmpty(tables) ? <div/> : <StandardView {...{active, tables, tableOptions, expandedMode, tbl_group, style}} />;
         }
     }
 }
@@ -127,7 +127,8 @@ function StandardView(props) {
     } else {
         const uid = hashCode(keys.join());
         return (
-            <TabsView key={uid} style={{height: '100%', width: '100%', ...style}} defaultSelected={activeIdx} onTabSelect={onTabSelect} resizable={true}>
+            <TabsView key={uid} style={{height: '100%', width: '100%', ...style}} defaultSelected={activeIdx}
+                      onTabSelect={onTabSelect} resizable={true} showOpenTabs={true} tabId={'TableContainers-' + (tbl_group||'main')}>
                 {tablesAsTab(tables, tableOptions, expandedMode)}
             </TabsView>
         );

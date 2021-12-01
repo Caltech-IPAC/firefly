@@ -2,26 +2,34 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {memo, useEffect, useState, useCallback} from 'react';
+import React, {memo, useEffect, useState, useCallback, useRef} from 'react';
 import PropTypes from 'prop-types';
 import sizeMe from 'react-sizeme';
-import {omit, isString} from 'lodash';
+import {omit, isString, uniqueId} from 'lodash';
 
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 import {useFieldGroupConnector} from '../FieldGroupConnector.jsx';
 import {useStoreConnector} from '../SimpleComponent.jsx';
+import {hideDropDown, isDropDownShowing, showDropDown} from '../DialogRootContainer.jsx';
+import {TablePanel} from '../../tables/ui/TablePanel.jsx';
+import {getCellValue, getTblById, watchTableChanges} from '../../tables/TableUtil.js';
+import {TABLE_FILTER, TABLE_HIGHLIGHT, TABLE_SORT} from '../../tables/TablesCntlr.js';
 
 import './TabPanel.css';
 
+
+export function uniqueTabId() {
+    return `TapPanel-${uniqueId()}`;
+}
 
 /**
  * There are 4 implementations of TabPanel:  Tabs, TabsView, StatefulTabs, and FieldGroupTabs
  * See each component description below for more details.
  */
-
 const TabsHeaderInternal = React.memo((props) => {
-    const {children, resizable, headerStyle={}, size, label} = props;
+    const {tabId, children, resizable, headerStyle={}, size, label, onSelect, showOpenTabs} = props;
 
+    const childrenAry = React.Children.toArray(children);
     const {width:widthPx} = size;
     const numTabs = children.length;
     let maxTitleWidth = undefined;
@@ -31,19 +39,32 @@ const TabsHeaderInternal = React.memo((props) => {
         const availableWidth = widthPx - 5 - 20 * numTabs;
         maxTitleWidth = Math.min(200, Math.trunc(availableWidth / numTabs));
         if (maxTitleWidth < 0) { maxTitleWidth = 1; }
-        sizedChildren = React.Children.toArray(children).map((child) => {
+        sizedChildren = childrenAry.map((child) => {
             return React.cloneElement(child, {maxTitleWidth});
         });
     }
     const style = {display: 'flex', flexShrink: 0, height: 20, ...headerStyle};
     const layoutLabel= isString(label) ? <div style={{padding: '0 10px 0 5px'}}>{label}</div> : label;
 
+    const arrowEl = useRef(null);
+    const showTabs = (ev) => handleOpenTabs({ev, doOpen: !isDropDownShowing(tabId), tabId, onSelect, arrowEl, childrenAry});
+    if (isDropDownShowing(tabId)) handleOpenTabs({doOpen: false});
+
     return (
         <div style={style}>
             {label && layoutLabel}
-            {(widthPx||!resizable) ? <ul className='TabPanel__Tabs'>
-                {sizedChildren}
-            </ul> : <div/>}
+            <div className='TabPanel__Header' style={{marginRight: 5}}>
+                {(widthPx||!resizable) ? <ul className='TabPanel__Tabs'>
+                    {sizedChildren}
+                </ul> : <div/>}
+                {showOpenTabs && (
+                    <div style={{width: 20, height: 20, marginLeft: 3}}>
+                        <div className='round-btn' onClick={showTabs} ref={arrowEl} title='Search open tabs'>
+                            <div className='arrow-down' style={{borderWidth: '7px 7px 0 7px'}}/>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 });
@@ -52,7 +73,10 @@ TabsHeaderInternal.propTypes= {
     resizable: PropTypes.bool,
     headerStyle: PropTypes.object,
     label: PropTypes.node,
-    size: PropTypes.object.isRequired
+    size: PropTypes.object.isRequired,
+    tabId: PropTypes.string,
+    onSelect: PropTypes.func,
+    showOpenTabs: PropTypes.bool
 };
 
 
@@ -116,8 +140,8 @@ Tab.defaultProps= { selected: false };
  */
 export const TabsView = React.memo((props) => {
 
-    const {children, onTabSelect, defaultSelected, useFlex, resizable, borderless,
-        style={}, headerStyle, contentStyle={}, label} = props;
+    const {children, onTabSelect, defaultSelected, useFlex, resizable, borderless, tabId=uniqueTabId(),
+        style={}, headerStyle, contentStyle={}, label, showOpenTabs} = props;
 
     const onSelect = useCallback( (index,id,name) => {
         onTabSelect && onTabSelect(index,id,name);
@@ -141,10 +165,11 @@ export const TabsView = React.memo((props) => {
     }
 
     const contentClsName = borderless ? 'TabPanel__Content borderless' : 'TabPanel__Content';
+    const mainClsName = showOpenTabs ? 'TabPanel__main boxed' : 'TabPanel__main';
 
     return (
-        <div style={{display: 'flex', flexDirection: 'column', overflow: 'hidden', ...style}}>
-            <TabsHeader {...{resizable, headerStyle, label}}>{headers}</TabsHeader>
+        <div className={mainClsName} style={style}>
+            <TabsHeader {...{resizable, headerStyle, label, tabId, onSelect, showOpenTabs}}>{headers}</TabsHeader>
             <div style={contentStyle} className={contentClsName}>
                 {(content) ? content : ''}
             </div>
@@ -163,7 +188,8 @@ TabsView.propTypes = {
     headerStyle: PropTypes.object,
     contentStyle: PropTypes.object,
     borderless: PropTypes.bool,
-    label: PropTypes.node
+    label: PropTypes.node,
+    tabId: PropTypes.string
 };
 
 TabsView.defaultProps= {
@@ -273,3 +299,37 @@ FieldGroupTabs.propTypes = {
     ...omit(Tabs.propTypes, 'defaultSelected')     //  defaultSelected is not used.. use value for defaultSelected.
 };
 FieldGroupTabs.defaultProps = omit(Tabs.defaultProps, 'defaultSelected');
+
+
+function handleOpenTabs({ev, doOpen, tabId, onSelect, childrenAry, arrowEl}) {
+    ev?.stopPropagation?.();
+    if (doOpen) {
+        // create table model for the drop down
+        const columns = [{name: 'OPEN TABS', width: 50, type: 'char'}];
+        const highlightedRow = childrenAry.findIndex((child) => child?.props?.selected);
+        const tbl_id = tabId;
+        const data = childrenAry.map((child, idx) => {
+            const p = child?.props;
+            return [isString(p.label) ? p.label : p.name || `[blank]-${idx}`];
+        });
+        const tableModel = {tbl_id, tableData: {columns, data}, highlightedRow, totalRows: data.length};
+        // monitor for changes
+        watchTableChanges(tabId, [TABLE_HIGHLIGHT, TABLE_SORT, TABLE_FILTER], () => {
+            const tbl = getTblById(tabId) || {};
+            const {highlightedRow} = tbl;
+            const selRowIdx = getCellValue(tbl, highlightedRow, 'ROW_IDX');
+            if (selRowIdx >= 0) onSelect(selRowIdx);
+        }, tabId);          // make watcherId same as tabId so there can only be one watcher per tabpanel
+
+        const width = 381;
+        const content =  (
+            <div style={{width, height: 200, position: 'relative'}}>
+                <TablePanel tbl_ui_id={tabId+'-ui'} tableModel={tableModel} border={false} showTypes={false}
+                            showToolbar={false} showFilters={true} selectable={false} showOptionButton={false}/>
+            </div>);
+        showDropDown({id: tabId, content, atElRef: arrowEl.current, locDir: 43,
+                    style: {marginLeft: -width+10, marginTop: -4}, wrapperStyle: {zIndex: 110}}); // 110 is the z-index of a dropdown
+    } else {
+        hideDropDown(tabId);
+    }
+};
