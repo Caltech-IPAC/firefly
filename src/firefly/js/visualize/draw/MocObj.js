@@ -29,14 +29,14 @@ const PTILE_OPACITY_RATIO = 0.5;
  * @param {Object} drawingDef
  * @return {object}
  */
-function make(cellNums, drawingDef) {
+function make(cellNums, drawingDef, mocCsys) {
     if (!cellNums || !cellNums.length) return null;
 
     const {style=DEFAULT_STYLE, color} = drawingDef || {};
     const obj = DrawObj.makeDrawObj();
     obj.type = MOC_OBJ;
 
-    const mocGroup = MocGroup.make(cellNums);
+    const mocGroup = MocGroup.make(cellNums, null, undefined, mocCsys);
     mocGroup.makeGroups();
     Object.assign(obj, {regionOptions: {message: 'polygon2'}, mocGroup, style, color});
 
@@ -159,17 +159,19 @@ const PROD_VISIBLE_TOTAL = 200000*2200;
  * class MocGroup convert moc nuniq values into a set of norder and npix and store all nuniq per norder
  */
 export class MocGroup {
-    constructor(cellList, mGroup = null, plot = {}) {
+    constructor(cellList, mGroup = null, plot = {}, mocCsys) {
         if (mGroup) {
             this.cells = mGroup.cells;
             this.groupInLevels = mGroup.groupInLevels;
             this.minOrder = mGroup.minOrder;
             this.maxOrder = mGroup.maxOrder;
+            this.mocCsys = mGroup.mocCsys;
         } else {
             this.cells = cellList;
             this.groupInLevels = {};
             this.minOrder = 100;
             this.maxOrder = 0;
+            this.mocCsys= mocCsys;
         }
         this.healpixCache = getHealpixCornerTool();
 
@@ -177,11 +179,11 @@ export class MocGroup {
         this.initCollection(plot);
     }
 
-    static make(cellList, mGroup = null, plot) {
+    static make(cellList, mGroup = null, plot, mocCsys) {
         if (cellList) {
-            return new MocGroup(cellList, null, plot);
+            return new MocGroup(cellList, null, plot, mocCsys);
         } else {
-            return (mGroup ? new MocGroup(null, mGroup, plot) : null);
+            return (mGroup ? new MocGroup(null, mGroup, plot, mocCsys) : null);
         }
     }
 
@@ -255,7 +257,7 @@ export class MocGroup {
                     return true;
                 }
 
-                set(this.visibleMap, [d], getVisibleTilesAtOrderPerNpix(this.plot, d));
+                set(this.visibleMap, [d], getVisibleTilesAtOrderPerNpix(this.plot, d, this.mocCsys));
                 this.highestOrderInMap = d;
                 return false;
             });
@@ -554,9 +556,16 @@ function drawMoc(mocObj, ctx, cc, drawParams, vpPtM,onlyAddToPath) {
 
 
 // create one drawObj for one tile
-export function createOneDrawObjInMoc(nuniq, norder, npix, displayOrder, hipsOrder, coordsys, regionOptions, isAllSky, isParentTile) {
-    const polyPts = getMocSidePointsNuniq(norder, npix, hipsOrder+6, coordsys, isAllSky);
+export function createOneDrawObjInMoc(nuniq, norder, npix, displayOrder, hipsOrder, dataCoordSys, mocCoordsys, regionOptions, isAllSky, isParentTile) {
+    const polyPts = getMocSidePointsNuniq(norder, npix, hipsOrder+6, dataCoordSys, isAllSky);
     if (!polyPts)  return null;
+
+    // The following is sort of a hack. If the data coordinate system match  the moc coordinate system
+    // then change it to the MOC coordinate system. The lon and lat is correct with the wrong coordinate system.
+    // getMocSidePointsNuniq should take the moc coordinate system and do the right thing but I can't figure out how to fix it.
+    if (mocCoordsys!==dataCoordSys) {
+        polyPts.forEach( (p) => p.cSys= mocCoordsys);
+    }
 
     const polyRegion = makeRegionPolygon(polyPts, regionOptions);
     const drawObj = drawRegions([polyRegion])[0];
@@ -567,7 +576,7 @@ export function createOneDrawObjInMoc(nuniq, norder, npix, displayOrder, hipsOrd
 }
 
 // create all drawObjs
-export function createDrawObjsInMoc(mocObj, plot, startIdx, endIdx, storedSidePoints) {
+export function createDrawObjsInMoc(mocObj, plot, mocCsys, startIdx, endIdx, storedSidePoints) {
     initSidePoints(storedSidePoints);
     const {displayOrder, regionOptions={}, allCells, hipsOrder, mocGroup, style=Style.STANDARD, color} = mocObj;
 
@@ -580,7 +589,7 @@ export function createDrawObjsInMoc(mocObj, plot, startIdx, endIdx, storedSidePo
 
     const drawObjs = allCells.slice(startIdx, endIdx+1).reduce((prev, oneCell) => {
         const {norder, npix, nuniq, isParentTile} = oneCell;
-        const drawObj = createOneDrawObjInMoc(nuniq, norder, npix, displayOrder, hipsOrder, plot.dataCoordSys,
+        const drawObj = createOneDrawObjInMoc(nuniq, norder, npix, displayOrder, hipsOrder,  plot.dataCoordSys, mocCsys,
                                               regionOptions, mocGroup.isAllSky, isParentTile);
 
         if (drawObj) {
@@ -599,10 +608,10 @@ export function createDrawObjsInMoc(mocObj, plot, startIdx, endIdx, storedSidePo
 
 
 
-function getVisibleTilesAtOrderPerNpix(plot, order) {
+function getVisibleTilesAtOrderPerNpix(plot, order, mocCsys) {
     const {centerWp, fov} = getPointMaxSide(plot, plot.viewDim);
 
-    return getAllVisibleHiPSCells(order, centerWp, fov, plot.dataCoordSys)
+    return getAllVisibleHiPSCells(order, centerWp, fov, mocCsys)
             .reduce((npix_set, oneTile) => {
                 set(npix_set, [oneTile.ipix], oneTile.wpCorners);
                 return npix_set;

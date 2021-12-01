@@ -12,7 +12,7 @@ import DrawLayerCntlr, {DRAWING_LAYER_KEY, dispatchUpdateDrawLayer} from '../vis
 import MocObj, {createDrawObjsInMoc, setMocDisplayOrder, MocGroup} from '../visualize/draw/MocObj.js';
 import {getUIComponent} from './HiPSMOCUI.jsx';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
-import {getTblById} from '../tables/TableUtil.js';
+import {getMetaEntry, getTblById} from '../tables/TableUtil.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {MAX_ROW} from '../tables/TableRequestUtil.js';
 import {dispatchAddTaskCount, dispatchRemoveTaskCount, makeTaskId } from '../core/AppDataCntlr.js';
@@ -24,6 +24,7 @@ import {dispatchAddActionWatcher} from '../core/MasterSaga';
 import {MetaConst} from '../data/MetaConst';
 import {getNextColor} from '../visualize/draw/DrawingDef';
 import {rateOpacity} from '../util/Color.js';
+import {CoordinateSys} from '../visualize/CoordSys.js';
 
 const ID= 'MOC_PLOT';
 const TYPE_ID= 'MOC_PLOT_TYPE';
@@ -258,8 +259,10 @@ function getLayerChanges(drawLayer, action) {
                     return data.map((row) => row[0]);
                 };
                 const mocTiles = getMocNuniqs(mocTable);
-                const mocObj = createMocObj(drawLayer, mocTiles);
-                return {mocTable, mocObj, title: getTitle(drawLayer, visiblePlotIdAry)};
+                const mocCsys= getMetaEntry(mocTable,'COORDSYS')?.trim().toUpperCase().startsWith('G') ?
+                    CoordinateSys.GALACTIC : CoordinateSys.EQ_J2000;
+                const mocObj = createMocObj(drawLayer, mocTiles, mocCsys);
+                return {mocTable, mocObj, mocCsys, title: getTitle(drawLayer, visiblePlotIdAry)};
             }
             break;
 
@@ -291,10 +294,10 @@ function getLayerChanges(drawLayer, action) {
  * @param moc_nuniq_nums
  * @returns {Object}
  */
-function createMocObj(dl, moc_nuniq_nums = []) {
+function createMocObj(dl, moc_nuniq_nums = [], mocCsys) {
     const {mocObj, drawingDef} = dl;
 
-    return mocObj ? cloneDeep(mocObj) : MocObj.make(moc_nuniq_nums, drawingDef);
+    return mocObj ? cloneDeep(mocObj) : MocObj.make(moc_nuniq_nums, drawingDef, mocCsys);
 }
 
 
@@ -362,7 +365,7 @@ function updateMocData(dl, plotId) {
          if (updateStatus.processedTiles.length < updateStatus.totalTiles || (updateStatus.totalTiles === 0)) {   // form drawObj
              const startIdx = updateStatus.processedTiles.length;
              const endIdx = updateStatus.processedTiles.length + updateStatus.maxChunk - 1;
-             const moreObjs = createDrawObjsInMoc(updateStatus.newMocObj, plot,
+             const moreObjs = createDrawObjsInMoc(updateStatus.newMocObj, plot, dl.mocCsys,
                  startIdx, endIdx, updateStatus.storedSidePoints);  // handle max chunk
              updateStatus.processedTiles.push(...moreObjs);
              if (updateStatus.processedTiles.length >= updateStatus.totalTiles) {
