@@ -16,7 +16,7 @@ export function showJobInfo(jobId) {
         <PopupPanel title='Job Information' >
             <div key={jobId} className='JobInfo__popup'>
                 <JobInfo jobId={jobId}/>
-                <div style={{margin: '2px 9px 6px'}}>
+                <div style={{margin: '2px 19px 6px'}}>
                     <HelpIcon helpId={''} style={{float: 'right'}}/>
                 </div>
             </div>
