@@ -23,20 +23,22 @@ export function TableInfo(props) {
    const jobId = getJobIdFromTblId(tbl_id);
 
     return (
-        <div style={{padding: 10, padding: 10, height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column'}}>
+        <div style={{padding: 10, padding: '10px 5px 5px', height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column'}}>
             <StatefulTabs componentKey='TablePanelOptions' defaultSelected={0} borderless={true} useFlex={true} style={{flex: '1 1 0'}}>
-                <Tab name='Table Meta'>
-                    <div style={{width: '100%', height: '100%', overflow: 'auto'}}>
-                        <MetaContent tbl_id={tbl_id}/>
-                    </div>
-                </Tab>
                 {jobId &&
                 <Tab name='Job Info'>
                     <JobInfo jobId={jobId}/>
                 </Tab>
                 }
+                <Tab name='Table Metadata'>
+                    <div style={{width: '100%', height: '100%', overflow: 'auto'}}>
+                        <MetaContent tbl_id={tbl_id}/>
+                    </div>
+                </Tab>
             </StatefulTabs>
-            <HelpIcon helpId={''} style={{float: 'right'}}/>
+            <div>
+                <HelpIcon helpId={''} style={{float: 'right'}}/>
+            </div>
         </div>
     );
 }
@@ -142,20 +144,20 @@ export function MetaInfo({tbl_id, style, isOpen=false}) {
     );
 }
 
-export function KeywordBlock({style={}, label, value, asLink}) {
+export function KeywordBlock({style={}, label, value, title, asLink}) {
     return (
         <div style={{display: 'inline-flex', alignItems: 'center', ...style}}>
-            <Keyword {...{label, value, asLink}}/>
+            <Keyword {...{label, value, title, asLink}}/>
         </div>
     );
 }
 
-export function Keyword({style={}, label, value, asLink}) {
+export function Keyword({style={}, label, value, title, asLink}) {
     label = label && label + ':';
     if (label || value) {
         return (
             <React.Fragment>
-                {label && <div className='keyword-label'>{label}</div>}
+                {label && <div title={title} className='keyword-label'>{label}</div>}
                 { asLink ? <LinkTag title={value} href={value} /> :
                     <ContentEllipsis text={value} style={{padding: 1, margin: 'unset'}}><div title={value} style={{whiteSpace: 'nowrap',...style}} className='keyword-value'>{value}</div></ContentEllipsis>
                 }
@@ -172,7 +174,8 @@ export function LinkTag({href, title}) {
         return (
             <div style={{display: 'inline-flex', alignItems: 'center', overflow: 'hidden'}}>
                 <CopyToClipboard value={href} size={16} buttonStyle={{backgroundColor: 'unset'}}/>
-                <a className='ff-href' style={{marginLeft: 3, verticalAlign: 'middle', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}} href={href} title={title} target='Links'>{title}</a>
+                <a className='ff-href' style={{padding: '0 3px', verticalAlign: 'middle', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.5}}
+                   href={href} title={title} target='Links'>{title}</a>
             </div>
         );
     } else return null;

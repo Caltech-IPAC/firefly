@@ -16,7 +16,9 @@ export function showJobInfo(jobId) {
         <PopupPanel title='Job Information' >
             <div key={jobId} className='JobInfo__popup'>
                 <JobInfo jobId={jobId}/>
-                <HelpIcon helpId={''} style={{margin: 3}}/>
+                <div style={{margin: '2px 9px 6px'}}>
+                    <HelpIcon helpId={''} style={{float: 'right'}}/>
+                </div>
             </div>
         </PopupPanel>
     );
@@ -36,7 +38,7 @@ export function JobInfo({jobId, style}) {
                 {endTime && <KeywordBlock label='End Time' value={endTime}/>}
                 {dataOrigin && <KeywordBlock label='Job Link' value={dataOrigin} asLink={true}/>}
                 <FinalMsg {...{phase, results, error, summary}}/>
-                <KeywordBlock label='ID' value={jobId}/>
+                <KeywordBlock label='ID' value={jobId} title='Internal query identifier, usable for diagnostics'/>
             </div>
         </div>
     );

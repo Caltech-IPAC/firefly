@@ -259,7 +259,7 @@ function showTableOptionDialog(onChange, onOptionReset, tbl_ui_id, tbl_id) {
 
 function showTableInfoDialog(tbl_id)  {
     const content = (
-        <div className='TablePanelInfoWrapper'>
+        <div className='TablePanelInfoWrapper' style={{width: 500}}>
             <TableInfo tbl_id={tbl_id}/>
         </div>
     );
