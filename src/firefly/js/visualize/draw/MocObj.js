@@ -29,14 +29,14 @@ const PTILE_OPACITY_RATIO = 0.5;
  * @param {Object} drawingDef
  * @return {object}
  */
-function make(cellNums, drawingDef) {
+function make(cellNums, drawingDef, mocCsys) {
     if (!cellNums || !cellNums.length) return null;
 
     const {style=DEFAULT_STYLE, color} = drawingDef || {};
     const obj = DrawObj.makeDrawObj();
     obj.type = MOC_OBJ;
 
-    const mocGroup = MocGroup.make(cellNums);
+    const mocGroup = MocGroup.make(cellNums, undefined, mocCsys);
     mocGroup.makeGroups();
     Object.assign(obj, {regionOptions: {message: 'polygon2'}, mocGroup, style, color});
 
@@ -159,17 +159,19 @@ const PROD_VISIBLE_TOTAL = 200000*2200;
  * class MocGroup convert moc nuniq values into a set of norder and npix and store all nuniq per norder
  */
 export class MocGroup {
-    constructor(cellList, mGroup = null, plot = {}) {
+    constructor(cellList, mGroup = null, plot = {}, mocCsys) {
         if (mGroup) {
             this.cells = mGroup.cells;
             this.groupInLevels = mGroup.groupInLevels;
             this.minOrder = mGroup.minOrder;
             this.maxOrder = mGroup.maxOrder;
+            this.mocCsys = mGroup.mocCsys;
         } else {
             this.cells = cellList;
             this.groupInLevels = {};
             this.minOrder = 100;
             this.maxOrder = 0;
+            this.mocCsys= mocCsys;
         }
         this.healpixCache = getHealpixCornerTool();
 
@@ -177,12 +179,12 @@ export class MocGroup {
         this.initCollection(plot);
     }
 
-    static make(cellList, mGroup = null, plot) {
-        if (cellList) {
-            return new MocGroup(cellList, null, plot);
-        } else {
-            return (mGroup ? new MocGroup(null, mGroup, plot) : null);
-        }
+    static make(cellList, plot, mocCsys) {
+        return new MocGroup(cellList, null, plot, mocCsys);
+    }
+
+    static copy(mGroup, plot) {
+        return mGroup && new MocGroup(undefined, mGroup, plot);
     }
 
     initCollection(plot) {
@@ -255,7 +257,7 @@ export class MocGroup {
                     return true;
                 }
 
-                set(this.visibleMap, [d], getVisibleTilesAtOrderPerNpix(this.plot, d));
+                set(this.visibleMap, [d], getVisibleTilesAtOrderPerNpix(this.plot, d, this.mocCsys));
                 this.highestOrderInMap = d;
                 return false;
             });
@@ -322,7 +324,7 @@ export class MocGroup {
     };
 
     addingCandidates(ipix, nOrder, wpCorners, nuniq, isParentTile = false){
-        getCornerForPix(nOrder, ipix, this.plot.dataCoordSys, this.healpixCache, wpCorners);
+        getCornerForPix(nOrder, ipix, this.mocCsys, this.healpixCache, wpCorners);
         this.addToResult(nOrder, ipix, nuniq, isParentTile);
         return true;
     }
@@ -332,7 +334,7 @@ export class MocGroup {
         const cc = CsysConverter.make(this.plot);
         tiles.find((oneTile) => {
             const {npix, nuniq} = oneTile;
-            const {wpCorners} = getCornerForPix(0, npix, this.plot.dataCoordSys, this.healpixCache);
+            const {wpCorners} = getCornerForPix(0, npix, this.mocCsys, this.healpixCache);
 
             if (isTileVisibleByPosition(wpCorners, cc)) {
                 this.addToResult(0, npix,nuniq);
@@ -418,7 +420,7 @@ export class MocGroup {
                 let nextSet;
 
                 if (get(this.visibleMap, [(pOrder - 1)]) && this.visibleNpixAt(pOrder - 1).length < 5000) {
-                    nextSet = getVisibleTilesAtOrderPerNpix(this.plot, pOrder);        // for not too big list
+                    nextSet = getVisibleTilesAtOrderPerNpix(this.plot, pOrder, this.mocCsys);        // for not too big list
                 } else {                                                       // extended from list of lower order
                     const npixAry = new Array(incNum).fill(0).map((i, idx) => idx);
                     nextSet = Object.keys(this.visibleMap[pOrder - 1]).reduce((prev, oneNpix) => {
@@ -554,8 +556,8 @@ function drawMoc(mocObj, ctx, cc, drawParams, vpPtM,onlyAddToPath) {
 
 
 // create one drawObj for one tile
-export function createOneDrawObjInMoc(nuniq, norder, npix, displayOrder, hipsOrder, coordsys, regionOptions, isAllSky, isParentTile) {
-    const polyPts = getMocSidePointsNuniq(norder, npix, hipsOrder+6, coordsys, isAllSky);
+function createOneDrawObjInMoc(nuniq, norder, npix, displayOrder, hipsOrder, mocCoordsys, regionOptions, isAllSky, isParentTile) {
+    const polyPts = getMocSidePointsNuniq(norder, npix, hipsOrder+6, mocCoordsys, isAllSky);
     if (!polyPts)  return null;
 
     const polyRegion = makeRegionPolygon(polyPts, regionOptions);
@@ -567,7 +569,7 @@ export function createOneDrawObjInMoc(nuniq, norder, npix, displayOrder, hipsOrd
 }
 
 // create all drawObjs
-export function createDrawObjsInMoc(mocObj, plot, startIdx, endIdx, storedSidePoints) {
+export function createDrawObjsInMoc(mocObj, plot, mocCsys, startIdx, endIdx, storedSidePoints) {
     initSidePoints(storedSidePoints);
     const {displayOrder, regionOptions={}, allCells, hipsOrder, mocGroup, style=Style.STANDARD, color} = mocObj;
 
@@ -580,7 +582,7 @@ export function createDrawObjsInMoc(mocObj, plot, startIdx, endIdx, storedSidePo
 
     const drawObjs = allCells.slice(startIdx, endIdx+1).reduce((prev, oneCell) => {
         const {norder, npix, nuniq, isParentTile} = oneCell;
-        const drawObj = createOneDrawObjInMoc(nuniq, norder, npix, displayOrder, hipsOrder, plot.dataCoordSys,
+        const drawObj = createOneDrawObjInMoc(nuniq, norder, npix, displayOrder, hipsOrder,  mocCsys,
                                               regionOptions, mocGroup.isAllSky, isParentTile);
 
         if (drawObj) {
@@ -599,10 +601,10 @@ export function createDrawObjsInMoc(mocObj, plot, startIdx, endIdx, storedSidePo
 
 
 
-function getVisibleTilesAtOrderPerNpix(plot, order) {
+function getVisibleTilesAtOrderPerNpix(plot, order, mocCsys) {
     const {centerWp, fov} = getPointMaxSide(plot, plot.viewDim);
 
-    return getAllVisibleHiPSCells(order, centerWp, fov, plot.dataCoordSys)
+    return getAllVisibleHiPSCells(order, centerWp, fov, mocCsys)
             .reduce((npix_set, oneTile) => {
                 set(npix_set, [oneTile.ipix], oneTile.wpCorners);
                 return npix_set;
