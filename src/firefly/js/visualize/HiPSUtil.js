@@ -26,7 +26,7 @@ import {
 import {computeDistance, convert, toDegrees, toRadians} from './VisUtil.js';
 import {getScreenPixScaleArcSec, replaceHeader} from './WebPlot.js';
 import {primePlot} from './PlotViewUtil.js';
-import CoordinateSys from './CoordSys';
+import {CoordinateSys} from './CoordSys.js';
 import {getFireflySessionId} from '../Firefly';
 import {makeHiPSProjection} from './WebPlot';
 
@@ -314,11 +314,9 @@ function makeHealpixCornerCacheTool() {
            const norder= nsideToNorder[nside];
            if (!norder) return null;
            const fullAry= isUndefined(ipix);
-           switch (coordSys) {
-               case CoordinateSys.EQ_J2000: return fullAry ? j2Corners[norder] : j2Corners[norder][ipix];
-               case CoordinateSys.GALACTIC: return fullAry ? galCorners[norder] :galCorners[norder][ipix];
-               default: return null;
-           }
+           if (CoordinateSys.EQ_J2000.toString()===coordSys.toString()) return fullAry ? j2Corners[norder] : j2Corners[norder][ipix];
+           if (CoordinateSys.GALACTIC.toString()===coordSys.toString()) return fullAry ? galCorners[norder] :galCorners[norder][ipix];
+           return null;
        },
 
         makeCornersForPix(ipix, nside, coordSys) {

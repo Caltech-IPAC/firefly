@@ -275,9 +275,9 @@ function getLayerChanges(drawLayer, action) {
 
         case DrawLayerCntlr.CHANGE_DRAWING_DEF:   // from color change
             const {color} = action.payload.drawingDef || {};
-            const newMocObj = createMocObj(drawLayer);
+            const newMocObj = createMocObj(drawLayer, undefined, undefined);
 
-            if (newMocObj && newMocObj.color != color) {
+            if (newMocObj && newMocObj.color!==color) {
                 newMocObj.color = color;
                 return {mocObj: newMocObj};
             }
@@ -294,7 +294,7 @@ function getLayerChanges(drawLayer, action) {
  * @param moc_nuniq_nums
  * @returns {Object}
  */
-function createMocObj(dl, moc_nuniq_nums = [], mocCsys) {
+function createMocObj(dl, moc_nuniq_nums = [], mocCsys= undefined) {
     const {mocObj, drawingDef} = dl;
 
     return mocObj ? cloneDeep(mocObj) : MocObj.make(moc_nuniq_nums, drawingDef, mocCsys);
@@ -349,7 +349,7 @@ function updateMocData(dl, plotId) {
      if (isEmpty(updateStatus.newMocObj)) {    // find visible cells first
         const newMocObj = {...mocObj};
 
-        newMocObj.mocGroup = MocGroup.make(null, mocObj.mocGroup, plot);
+        newMocObj.mocGroup = MocGroup.copy(mocObj.mocGroup, plot);
         newMocObj.mocGroup.collectVisibleTilesFromMoc(plot, updateStatus.storedSidePoints);
         newMocObj.style = dl?.mocStyle?.[plotId] ?? dl.drawingDef?.style ?? Style.STANDARD;
         updateStatus.newMocObj = newMocObj;
