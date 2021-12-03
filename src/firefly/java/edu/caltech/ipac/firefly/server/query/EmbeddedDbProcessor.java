@@ -168,7 +168,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         try {
             boolean dbFileCreated = false;
             File dbFile = getDbFile(treq);
-            jobIf(v -> v.progress(10, "fetching data..."));
+            jobExecIf(v -> v.progress(10, "fetching data..."));
             if (!dbFile.exists()) {
                 StopWatch.getInstance().start("createDbFile: " + treq.getRequestId());
                 dbFile = createDbFromRequest(treq);
@@ -180,14 +180,16 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             DataGroupPart results;
             try {
                 results = getResultSet(treq, dbFile);
-                jobIf(v -> v.progress(90, "generating results..."));
+                jobExecIf(v -> v.progress(90, "generating results..."));
             } catch (Exception e) {
                 // table data exists.. but, bad grammar when querying for the resultset.
                 // should return table meta info + error message
                 // limit 0 does not work with oracle-like syntax
                 DataGroup dg = EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(treq), dbFile, "select * from data where ROWNUM < 1", MAIN_DB_TBL);
                 results = EmbeddedDbUtil.toDataGroupPart(dg, treq);
-                results.setErrorMsg(retrieveMsgFromError(e, treq));
+                String error = retrieveMsgFromError(e, treq);
+                results.setErrorMsg(error);
+                jobExecIf(v -> v.setError(500, error));
             }
             StopWatch.getInstance().stop("getDataset: " + request.getRequestId()).printLog("getDataset: " + request.getRequestId());
 
@@ -209,7 +211,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
             results.getData().getTableMeta().setAttribute(DataGroupPart.LOADING_STATUS, DataGroupPart.State.COMPLETED.name());
 
-            jobIf(v -> v.getJobInfo().setSummary(String.format("%,d rows found", totalRows)));
+            jobExecIf(v -> v.getJobInfo().setSummary(String.format("%,d rows found", totalRows)));
 
             return results;
         } finally {
@@ -257,7 +259,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
         if (dg == null) throw new DataAccessException("Failed to retrieve data");
 
-        jobIf(v -> v.progress(70, dg.size() + " rows of data found"));
+        jobExecIf(v -> v.progress(70, dg.size() + " rows of data found"));
 
         prepareTableMeta(dg.getTableMeta(), Arrays.asList(dg.getDataDefinitions()), req);
         TableUtil.consumeColumnMeta(dg, null);      // META-INFO in the request should only be pass-along and not persist.
@@ -638,7 +640,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
      * execute the given task if job is still in executing phase.  if job is aborted, throw exception to stop the process.
      * @param f
      */
-    void jobIf(Consumer<Job> f) throws DataAccessException {
+    protected void jobExecIf(Consumer<Job> f) throws DataAccessException {
         Job job = getJob();
         if (job != null) {
             JobInfo.PHASE phase = job.getJobInfo().getPhase();

@@ -28,7 +28,6 @@ import {HelpIcon} from './../../ui/HelpIcon.jsx';
 import {getAllConverterIds, getConverter, getMissionName, DL_DATA_TAG} from './LcConverterFactory.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {HelpText} from './../../ui/HelpText.jsx';
-import {dispatchAllowDataTag} from '../../core/background/BackgroundCntlr.js';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {getWorkspaceConfig, initWorkspace} from '../../visualize/WorkspaceCntlr.js';
@@ -146,7 +145,6 @@ function onReady({menu}) {
         const goto = getActionFromUrl() || {type: SHOW_DROPDOWN};
         if (goto) flux.process(goto);
     }
-    dispatchAllowDataTag([DL_DATA_TAG]);
     dispatchNotifyRemoteAppReady();
 }
 

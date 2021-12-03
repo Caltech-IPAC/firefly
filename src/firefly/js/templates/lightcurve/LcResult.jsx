@@ -32,7 +32,7 @@ import {getTblById, doFetchTable, isTblDataAvail} from '../../tables/TableUtil.j
 import {MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchMultiValueChange, dispatchRestoreDefaults}  from '../../fieldGroup/FieldGroupCntlr.js';
 import {logger} from '../../util/Logger.js';
-import {getConverter, getMissionName,  DL_DATA_TAG} from './LcConverterFactory.js';
+import {getConverter, getMissionName} from './LcConverterFactory.js';
 import {convertAngle} from '../../visualize/VisUtil.js';
 
 const resultItems = () => {
@@ -120,7 +120,6 @@ export function defaultDownloadPanel(mission='', cutoutSize, addtlParams={}) {
         <DownloadButton>
             <DownloadOptionPanel
                 groupKey = {mission}
-                dataTag = {DL_DATA_TAG}
                 cutoutSize={cutoutSize}
                 title={'Image Download Options'}
                 dlParams={{

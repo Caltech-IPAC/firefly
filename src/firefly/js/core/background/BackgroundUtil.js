@@ -7,7 +7,7 @@ import Enum from 'enum';
 
 import {flux} from '../ReduxFlux';
 import {BACKGROUND_PATH, BG_JOB_INFO, dispatchBgJobInfo, dispatchJobAdd} from './BackgroundCntlr.js';
-import {getCmdSrvAsyncURL, getModuleName} from '../../util/WebUtil.js';
+import {getCmdSrvAsyncURL} from '../../util/WebUtil.js';
 import {dispatchComponentStateChange} from '../ComponentCntlr.js';
 import {dispatchAddActionWatcher} from '../MasterSaga.js';
 import {BG_JOB_ADD} from './BackgroundCntlr.js';
@@ -99,10 +99,6 @@ export function getBgEmailInfo() {
     return {email, enableEmail};
 }
 
-export function emailSent(bgStatus) {
-    return get(bgStatus, 'ATTRIBUTES', '').includes('EmailSent');
-}
-
 export function canCreateScript(jobInfo) {
     return jobInfo.type === 'PACKAGE';
 }
@@ -131,74 +127,22 @@ export function getErrMsg(jobInfo) {
     return jobInfo?.error;
 }
 
-
-/**
- * returns a regex used to filter the incoming BackgroundStatus's DataTag.
- * @returns {RegExp}
- */
-export function getDataTagMatcher() {
-    var patterns = get(flux.getState(), [BACKGROUND_PATH, 'allowDataTag']) || [`^${getModuleName()}-.*`, 'catalog'];
-    patterns = Array.isArray(patterns) ? patterns : patterns.split(',').map((s) => s.trim());
-    return new RegExp(patterns.join('|'));
-}
-
-/**
- * returns a regex used to filter the incoming BackgroundStatus's DataTag.
- * @returns {RegExp}
- */
-export function setDataTagMatcher() {
-    var patterns = get(flux.getState(), [BACKGROUND_PATH, 'allowDataTag']) || [`^${getModuleName()}-.*`, 'catalog'];
-    patterns = Array.isArray(patterns) ? patterns : patterns.split(',').map((s) => s.trim());
-    return new RegExp(patterns.join('|'));
-}
-
-
 export const SCRIPT_ATTRIB = new Enum(['URLsOnly', 'Unzip', 'Ditto', 'Curl', 'Wget', 'RemoveZip']);
-export const BG_PHASE  = new Enum([
-    /**
-     * Waiting to start request
-     */
-    'PENDING',
-    /**
-     * In processing queue
-     */
-    'QUEUED',
-    /**
-     * server is working on the packaging
-     */
-    'EXECUTING',
-    /**
-     * job is aborted
-     */
-    'ABORTED',
-    /**
-     * job completed with error
-     */
-    'ERROR',
-    /**
-     * job successfully completed
-     */
-    'COMPLETED',
-]);
-
 
 export function doPackageRequest({dlRequest, searchRequest, selectInfo, bgKey, onComplete}) {
     const sentToBg = (jobInfo) => {
         dispatchJobAdd(jobInfo);
     };
 
-    dispatchComponentStateChange(bgKey, {inProgress:true, jobInfo:undefined});
+    dispatchComponentStateChange(bgKey, {inProgress:true});
     SearchServices.packageRequest(dlRequest, searchRequest, selectInfo)
         .then((jobInfo) => {
-            if (jobInfo) {
-                if (isDone(jobInfo)) {
-                    onComplete(jobInfo);
-                    dispatchComponentStateChange(bgKey, {inProgress:false, jobInfo:undefined});
-                } else {
-                    // not done; track progress
-                    dispatchComponentStateChange(bgKey, {jobInfo});
-                    trackBackgroundJob({jobId: jobInfo.jobId, key: bgKey, onComplete, sentToBg});
-                }
+            const jobId = jobInfo?.jobId;
+            const inProgress = !isDone(jobInfo);
+            dispatchComponentStateChange(bgKey, {inProgress, jobId});
+            if (inProgress) {
+                // not done; track progress
+                trackBackgroundJob({jobId, key: bgKey, onComplete, sentToBg});
             }
         });
 }
@@ -219,13 +163,14 @@ function bgTracker(action, cancelSelf, params={}) {
     const {jobId, key, onComplete, sentToBg} = params;
     const jobInfo = action.payload || {};
     if ( jobInfo?.jobId === jobId) {
-        dispatchComponentStateChange(key, {jobInfo});
         switch (action.type) {
             case BG_JOB_INFO:
                 if (isDone(jobInfo)) {
                     cancelSelf();
-                    dispatchComponentStateChange(key, {inProgress:false, jobInfo:undefined});
-                    onComplete && onComplete(jobInfo);
+                    dispatchComponentStateChange(key, {inProgress:false});
+                    if(isSuccess(jobInfo)) {
+                        onComplete && onComplete(jobInfo);
+                    }
                 }
                 break;
             case BG_JOB_ADD:

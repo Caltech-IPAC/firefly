@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import {isEmpty, isNil, unset} from 'lodash';
+import {isEmpty, isNil} from 'lodash';
 
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
@@ -11,8 +11,8 @@ import {InputField} from '../../ui/InputField.jsx';
 import {ProgressBar} from '../../ui/ProgressBar.jsx';
 import Validate from '../../util/Validate.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
-import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
-import {getBackgroundInfo, isActive, isAborted, isDone, isSuccess, emailSent, canCreateScript, getJobInfo} from './BackgroundUtil.js';
+import {dispatchShowDialog, dispatchHideDialog} from '../ComponentCntlr.js';
+import {getBackgroundInfo, isActive, isAborted, isDone, isSuccess, canCreateScript, getJobInfo} from './BackgroundUtil.js';
 import {dispatchBgJobInfo, dispatchJobRemove, dispatchBgSetEmailInfo, dispatchJobCancel} from './BackgroundCntlr.js';
 import {showScriptDownloadDialog} from '../../ui/ScriptDownloadDialog.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
@@ -21,11 +21,13 @@ import {download} from '../../util/fetch';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {updateSet} from '../../util/WebUtil.js';
 import {getRequestFromJob} from '../../tables/TableRequestUtil.js';
+import {showJobInfo} from './JobInfo.jsx';
 
 import LOADING from 'html/images/gxt/loading.gif';
 import CANCEL from 'html/images/stop.gif';
 import DOWNLOAED from 'html/images/blue_check-on_10x10.gif';
 import FAILED from 'html/images/exclamation16x16.gif';
+import INFO from 'html/images/info-icon.png';
 import './BackgroundMonitor.css';
 
 
@@ -126,7 +128,7 @@ function SearchJob({jobInfo}) {
 }
 
 function PackageJob({jobInfo}) {
-    const {results, DATA_SOURCE, email, label='unknown'} = jobInfo;
+    const {jobId, results, DATA_SOURCE, email, label='unknown'} = jobInfo;
     const script = canCreateScript(jobInfo) && isSuccess(jobInfo) && results?.length > 1;
 
     const items = results?.map( (url, idx) => <PackageItem key={'multi-' + idx} jobId={jobInfo.jobId} index={idx} />);
@@ -158,11 +160,17 @@ function JobHeader({jobInfo}) {
     const doCancel = () => {
         dispatchJobCancel(jobId);
     };
+    const showInfo = () => {
+        showJobInfo(jobId);
+    };
 
     return (
         <div className='BGMon__header'>
-            <div className='BGMon__header--title' title={label}>{label}</div>
-            <div style={{display: 'inline-flex', alignItems: 'center', paddingLeft: 5}}>
+            <div title={label} style={{display: 'inline-flex', overflow: 'hidden'}}>
+                <div className='BGMon__header--title'>{label}</div>
+                <img src={INFO} onClick={showInfo} className='JobInfo__items--link'/>
+            </div>
+            <div style={{display: 'inline-flex', alignItems: 'center', paddingLeft: 5, flexShrink: 0}}>
                 <JobProgress jobInfo={jobInfo}/>
                 <div className='BGMon__header--action'>
                     {isActive(jobInfo) && <img className='BGMon__action' src={CANCEL} onClick={doCancel} title='Abort this job.'/>}
@@ -178,7 +186,7 @@ function JobHeader({jobInfo}) {
 }
 
 function JobProgress({jobInfo}) {
-    const {progressDesc, progress, error, jobId} = jobInfo;
+    const {progressDesc, progress, jobId} = jobInfo;
     if (isActive(jobInfo)) {
         return (
             <div className='BGMon__packageItem'>
@@ -186,7 +194,7 @@ function JobProgress({jobInfo}) {
             </div>
         );
     } else if (isAborted(jobInfo)) {
-        return <div>{jobInfo?.error || 'Request aborted'}</div>;
+        return <div>{jobInfo?.error || 'Job aborted'}</div>;
     } else if (isSuccess(jobInfo)) {
         if (jobInfo?.type === 'SEARCH') {
             const showTable = () => {
@@ -198,8 +206,7 @@ function JobProgress({jobInfo}) {
             return jobInfo?.results?.length === 1 ? <PackageItem {...{SINGLE:true, jobId, index:0}} /> : <div/> ;
         }
     } else {
-        const msg = error || 'unexpected error';
-        return <div className='BGMon__header--error' title={msg}>{msg}</div>;
+        return <div className='BGMon__header--error'>Job Failed</div>;
     }
 }
 

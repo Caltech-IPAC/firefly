@@ -28,7 +28,6 @@ export const BG_JOB_REMOVE      = `${BACKGROUND_PATH}.bgJobRemove`;
 export const BG_JOB_CANCEL      = `${BACKGROUND_PATH}.bgJobCancel`;
 export const BG_SET_EMAIL       = `${BACKGROUND_PATH}.bgSetEmail`;
 export const BG_Package         = `${BACKGROUND_PATH}.bgPackage`;
-export const BG_ALLOW_DATA_TAG  = `${BACKGROUND_PATH}.bgAllowDataTag`;
 
 export default {actionCreators, reducers};
 
@@ -77,14 +76,6 @@ export function dispatchBgJobInfo(jobInfo) {
  */
 export function dispatchBgSetEmailInfo({email, enableEmail}) {
     flux.process({ type : BG_SET_EMAIL, payload: {email, enableEmail} });
-}
-
-/**
- * a list of patterns use to filter the incoming background jobs.
- * @param {string[]}  patterns
- */
-export function dispatchAllowDataTag(patterns) {
-    flux.process({ type : BG_ALLOW_DATA_TAG, payload: {patterns} });
 }
 
 /**
@@ -234,10 +225,6 @@ function reducer(state={}, action={}) {
             return nstate;
             break;
         }
-        case BG_ALLOW_DATA_TAG :
-            const {patterns} = action.payload;
-            return updateSet(state, 'allowDataTag', patterns);
-            break;
         case BG_JOB_ADD :
         case BG_JOB_CANCEL :
         case BG_JOB_REMOVE :

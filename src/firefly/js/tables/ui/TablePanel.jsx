@@ -12,7 +12,7 @@ import * as TblUtil from '../TableUtil.js';
 import {dispatchTableRemove, dispatchTblExpanded, dispatchTableFetch, dispatchTableAddLocal, dispatchTableFilter} from '../TablesCntlr.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
-import {TableInfo} from './TableInfo.jsx';
+import {TableInfo, MetaInfo} from './TableInfo.jsx';
 import {TableConnector} from '../TableConnector.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {PagingBar} from '../../ui/PagingBar.jsx';
@@ -20,16 +20,13 @@ import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {showTableDownloadDialog} from './TableSave.jsx';
-import {showOptionsPopup, showInfoPopup} from '../../ui/PopupUtil.jsx';
+import {showOptionsPopup} from '../../ui/PopupUtil.jsx';
 import {BgMaskPanel} from '../../core/background/BgMaskPanel.jsx';
-import {CollapsiblePanel} from '../../ui/panel/CollapsiblePanel.jsx';
+import {Logger} from '../../util/Logger.js';
 
-//import INFO from 'html/images/icons-2014/24x24_Info.png';
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 import OPTIONS from 'html/images/icons-2014/24x24_GearsNEW.png';
-import {ObjectTree} from './ObjectTree.jsx';
-import {Logger} from '../../util/Logger.js';
 
 const logger = Logger('Tables').tag('TablePanel');
 
@@ -159,8 +156,7 @@ export class TablePanel extends PureComponent {
         const tstate = getTableState(this.state);
         logger.debug(`render.. state:[${tstate}] -- ${tbl_id}`);
 
-        if (tstate === 'ERROR')     return <TableError {...{error, tbl_id, message: error}}/>;
-        if (tstate === 'LOADING')   return <Loading {...{showTitle, tbl_id, title, removable, backgroundable}}/>;
+        if (['ERROR','LOADING'].includes(tstate))  return <NotReady {...{showTitle, tbl_id, title, removable, backgroundable, error}}/>;
 
         return (
             <div style={{ position: 'relative', width: '100%', height: '100%'}}>
@@ -263,7 +259,7 @@ function showTableOptionDialog(onChange, onOptionReset, tbl_ui_id, tbl_id) {
 
 function showTableInfoDialog(tbl_id)  {
     const content = (
-        <div className='TablePanelInfoWrapper'>
+        <div className='TablePanelInfoWrapper' style={{width: 500}}>
             <TableInfo tbl_id={tbl_id}/>
         </div>
     );
@@ -321,7 +317,7 @@ TablePanel.defaultProps = {
     showSave: true,
     showOptionButton: true,
     showFilterButton: true,
-    showInfoButton: false,
+    showInfoButton: true,
     showTypes: true,
     selectable: true,
     expandedMode: false,
@@ -331,114 +327,6 @@ TablePanel.defaultProps = {
     pageSize: 100
 };
 
-export function MetaInfo({tbl_id, style, isOpen=false}) {
-    const contentStyle={display: 'flex', flexDirection: 'column', maxHeight: 200, overflow: 'auto', paddingBottom: 1};
-    const wrapperStyle={width: '100%'};
-
-    if (!TblUtil.hasAuxData(tbl_id)) {
-        return null;
-    }
-    const {keywords, links, params, resources, groups} = TblUtil.getTblById(tbl_id);
-
-    return (
-        <div className='TablePanel__meta' style={style}>
-            { !isEmpty(keywords) &&
-            <CollapsiblePanel componentKey={tbl_id + '-meta'} header='Table Meta' {...{isOpen, contentStyle, wrapperStyle}}>
-                {keywords.concat()                                             // make a copy so the original array does not mutate
-                    .filter( ({key}) => key)
-                    .sort(({key:k1}, {key:k2}) => (k1+'').localeCompare(k2+''))        // sort it by key
-                    .map(({value, key}, idx) => {                              // map it into html elements
-                        return (
-                            <div key={'keywords-' + idx} style={{display: 'inline-flex'}}>
-                                <Keyword label={key} value={value}/>
-                            </div>
-                        );
-                    })
-                }
-            </CollapsiblePanel>
-            }
-            { !isEmpty(params) &&
-            <CollapsiblePanel componentKey={tbl_id + '-params'} header='Table Params' {...{isOpen, contentStyle, wrapperStyle}}>
-                {params.concat()                                                          // same logic as keywords, but sort by name
-                    .sort(({name:k1}, {name:k2}) => k1.localeCompare(k2))
-                    .map(({name, value, type='N/A'}, idx) => {
-                        return (
-                            <div key={'params-' + idx} style={{display: 'inline-flex'}}>
-                                <Keyword label={`${name}(${type})`} value={value}/>
-                            </div>
-                        );
-                    })
-                }
-            </CollapsiblePanel>
-            }
-            { !isEmpty(groups) &&
-            <CollapsiblePanel componentKey={tbl_id + '-groups'} header='Groups' {...{isOpen, contentStyle, wrapperStyle}}>
-                {groups.map((rs, idx) => {
-                        const showValue = () => showInfoPopup(
-                            <div style={{whiteSpace: 'pre'}}>
-                                <ObjectTree data={rs} title={<b>Group</b>} className='MetaInfo__tree'/>
-                            </div> );
-                        return (
-                            <div key={'groups-' + idx} style={{display: 'inline-flex'}}>
-                                { rs.ID && <Keyword label='ID' value={rs.ID}/> }
-                                { rs.name && <Keyword label='name' value={rs.name}/> }
-                                { rs.UCD && <Keyword label='UCD' value={rs.UCD}/> }
-                                { rs.utype && <Keyword label='utype' value={rs.utype}/> }
-                                <a className='ff-href' onClick={showValue}> show value</a>
-                            </div>
-                        );
-                    })
-                }
-            </CollapsiblePanel>
-            }
-            { !isEmpty(links) &&
-            <CollapsiblePanel componentKey={tbl_id + '-links'} header='Links' {...{isOpen, contentStyle, wrapperStyle}}>
-                {links.map((l, idx) => {
-                        const dispVal = l.value || l.href;
-                        return (
-                            <div key={'links-' + idx} style={{display: 'inline-flex'}}>
-                                { l.ID && <Keyword label='ID' value={l.ID}/> }
-                                { l.role && <Keyword label='role' value={l.role}/> }
-                                { l.type && <Keyword label='type' value={l.type}/> }
-                                <a style={{whiteSpace: 'nowrap', maxWidth: 300}} href={l.href} title={l.title || dispVal}>{dispVal}</a>
-                            </div>
-                        );
-                    })
-                }
-            </CollapsiblePanel>
-            }
-            { !isEmpty(resources) &&
-            <CollapsiblePanel componentKey={tbl_id + '-resources'} header='Resources' {...{isOpen, contentStyle, wrapperStyle}}>
-                {resources.map((rs, idx) => {
-                        const showValue = () => showInfoPopup(
-                                    <div style={{whiteSpace: 'pre'}}>
-                                        <ObjectTree data={rs} title={<b>Resource</b>} className='MetaInfo__tree'/>
-                                    </div> );
-                        return (
-                            <div key={'resources-' + idx} style={{display: 'inline-flex'}}>
-                                { rs.ID && <Keyword label='ID' value={rs.ID}/> }
-                                { rs.name && <Keyword label='name' value={rs.name}/> }
-                                { rs.type && <Keyword label='type' value={rs.type}/> }
-                                { rs.utype && <Keyword label='utype' value={rs.utype}/> }
-                                <a className='ff-href' onClick={showValue}> show value</a>
-                            </div>
-                        );
-                    })
-                }
-            </CollapsiblePanel>
-            }
-        </div>
-    );
-}
-
-function Keyword({style={}, label, value}) {
-    return (
-        <React.Fragment>
-            <div className='keyword-label'>{label}</div>
-            <div title = {value} style={{whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', ...style}} className='keyword-value'>{value}</div>
-        </React.Fragment>
-    );
-}
 
 function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons}) {
     const style = {display: 'flex'};
@@ -467,35 +355,38 @@ function Title({title, removable, tbl_id}) {
     );
 }
 
-function Loading({showTitle, tbl_id, title, removable, backgroundable}) {
-    const height = showTitle ? 'calc(100% - 20px)': '100%';
-    const maskPanel = backgroundable ? <BgMaskPanel componentKey={TblUtil.makeBgKey(tbl_id)}/> : <div className='loading-mask'/>;
-    return (
-        <div style={{position: 'relative', width: '100%', height: '100%', border: 'solid 1px rgba(0,0,0,.2)', boxSizing: 'border-box'}}>
-            {showTitle && <Title {...{title, removable, tbl_id}}/>}
-            <div style={{height, position: 'relative'}}>
-                {maskPanel}
+
+function NotReady({showTitle, tbl_id, title, removable, backgroundable, error}) {
+    if (backgroundable) {
+        const height = showTitle ? 'calc(100% - 20px)': '100%';
+        return (
+            <div style={{position: 'relative', width: '100%', height: '100%', border: 'solid 1px rgba(0,0,0,.2)', boxSizing: 'border-box'}}>
+                {showTitle && <Title {...{title, removable, tbl_id}}/>}
+                <div style={{height, position: 'relative'}}>
+                    <BgMaskPanel componentKey={TblUtil.makeBgKey(tbl_id)}/>
+                </div>
             </div>
-        </div>
-    );
+        );
+    } else {
+        const prevReq = TblUtil.getResultSetRequest(tbl_id);
+        const reloadTable = () => {
+            dispatchTableFetch(JSON.parse(prevReq));
+        };
+        if (error) {
+            return (
+                <div className='TablePanel__error'>
+                    <div style={{textAlign: 'center'}}>
+                        <div style={{display: 'flex', flexDirection: 'column', margin: '5px 0'}}>
+                            <b>Table Load Error:</b>
+                            <pre style={{margin: '7px 0', whiteSpace: 'pre-wrap'}}>{error}</pre>
+                        </div>
+                        {prevReq && <button type='button' className='button std' onClick={reloadTable}>Back</button>}
+                    </div>
+                </div>
+            );
+        } else return <div className='loading-mask'/>;
+    }
 }
 
-function TableError({tbl_id, message}) {
-    const prevReq = TblUtil.getResultSetRequest(tbl_id);
-    const reloadTable = () => {
-        dispatchTableFetch(JSON.parse(prevReq));
-    };
-    return (
-        <div className='TablePanel__error'>
-            <div style={{textAlign: 'center'}}>
-                <div style={{display: 'flex', flexDirection: 'column', margin: '5px 0'}}>
-                    <b>Table Load Error:</b>
-                    <pre style={{margin: '7px 0', whiteSpace: 'pre-wrap'}}>{message}</pre>
-                </div>
-                {prevReq && <button type='button' className='button std' onClick={reloadTable}>Back</button>}
-            </div>
-        </div>
-    );
-}
 
 

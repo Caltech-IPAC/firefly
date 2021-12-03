@@ -32,11 +32,6 @@ public class QueryByConeSearchURL extends QueryVOTABLE {
     public static final String ACCESS_URL = "accessUrl";
 
 
-    @Override
-    protected String getFilePrefix(TableServerRequest request) {
-        return "conesearch-";
-    }
-
     protected String getQueryString(TableServerRequest req) throws DataAccessException {
         String accessUrl = req.getSafeParam(ACCESS_URL);
         if (accessUrl == null) {

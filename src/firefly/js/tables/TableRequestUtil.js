@@ -5,14 +5,12 @@
 import {get, set, unset, cloneDeep, omit, omitBy, isNil, pickBy, uniqueId} from 'lodash';
 
 import {getTblById, uniqueTblId} from './TableUtil.js';
-import {Keys} from '../core/background/BackgroundStatus.js';
 import {SelectInfo} from './SelectInfo.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {WS_HOME} from '../visualize/WorkspaceCntlr.js';
 import {getJobInfo} from '../core/background/BackgroundUtil.js';
 
 export const MAX_ROW = Math.pow(2,31) - 1;
-export const DataTagMeta = ['META_INFO', Keys.DATA_TAG]; // a tag describing the content of this table.  ie. 'catalog', 'imagemeta'
 /* TABLE_REQUEST should match QueryUtil on the server-side */
 
 

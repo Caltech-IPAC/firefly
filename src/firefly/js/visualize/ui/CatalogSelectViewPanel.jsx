@@ -5,11 +5,11 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {FormPanel} from '../../ui/FormPanel.jsx';
-import { get, merge, isEmpty, isFunction, set} from 'lodash';
+import { get, merge, isEmpty, isFunction} from 'lodash';
 import {updateMerge} from '../../util/WebUtil.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {doFetchTable} from '../../tables/TableUtil.js';
-import {makeIrsaCatalogRequest, DataTagMeta} from '../../tables/TableRequestUtil.js';
+import {makeIrsaCatalogRequest} from '../../tables/TableRequestUtil.js';
 import {CatalogTableListField} from './CatalogTableListField.jsx';
 import {CatalogConstraintsPanel} from './CatalogConstraintsPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
@@ -210,7 +210,6 @@ function doCatalog(request) {
         tReq.selcols = colsSearched;
     }
     //console.log('final request: ' + JSON.stringify(tReq));
-    set(tReq, DataTagMeta, 'catalog');
     dispatchTableSearch(tReq, {backgroundable:true});
 }
 

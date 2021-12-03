@@ -378,10 +378,14 @@ public class SrvParam {
     }
 
     public void insertJobId(String jobId) {
-        TableServerRequest request = getTableServerRequest();
-        request.setJobId(jobId);                    // for future reference
-        request.setParam(FF_SESSION_ID, jobId);     // for caching
-        setParam(ServerParams.REQUEST, JsonTableUtil.toJsonTableRequest(request).toJSONString());
+        try {
+            TableServerRequest request = getTableServerRequest();
+            request.setJobId(jobId);                    // for future reference
+            request.setParam(FF_SESSION_ID, jobId);     // for caching
+            setParam(ServerParams.REQUEST, JsonTableUtil.toJsonTableRequest(request).toJSONString());
+        }catch (Exception e) {
+            // just ignore.  will generate error downstream.
+        }
     }
 
     public DownloadRequest getDownloadRequest() {

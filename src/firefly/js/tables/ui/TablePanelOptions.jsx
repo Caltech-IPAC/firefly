@@ -12,7 +12,6 @@ import {intValidator} from '../../util/Validate.js';
 import {getTableUiById, isClientTable} from '../TableUtil.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {dispatchTableAddLocal, dispatchTableRemove, TABLE_SELECT, dispatchTableFilter} from '../TablesCntlr.js';
-import {MetaInfo} from './TablePanel.jsx';
 import {COL_TYPE,  getTblById, isOfType, parsePrecision, getColumnValues, watchTableChanges, getFilterCount, getColumn, hasAuxData} from '../TableUtil.js';
 import {TablePanel} from './TablePanel';
 import {FILTER_CONDITION_TTIPS, FilterInfo} from '../FilterInfo';
@@ -21,8 +20,8 @@ import {dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {POPUP_DIALOG_ID} from '../../ui/PopupUtil.jsx';
 import {StatefulTabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import {SelectInfo} from '../SelectInfo.js';
-import {makeBadge} from '../../ui/ToolbarButton.jsx';
 import {getSqlFilter} from '../TableUtil';
+import {HelpIcon} from '../../ui/HelpIcon.jsx';
 
 export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOptionReset}) => {
 
@@ -77,11 +76,6 @@ export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOpt
                         </div>
                     </Tab>
                 }
-                <Tab name='Table Meta'>
-                    <div style={{width: '100%', height: '100%', overflow: 'auto'}}>
-                        <MetaContent tbl_id={tbl_id}/>
-                    </div>
-                </Tab>
             </StatefulTabs>
             <div style={{margin: '5px 15px 0 0'}}>
                 <button type='button' className='button std' style={{marginRight: 5}}
@@ -90,6 +84,7 @@ export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOpt
                 <button type='button' className='button std'
                         onClick={onClose}>Close
                 </button>
+                <HelpIcon helpId={''} style={{float: 'right', marginTop: 4}}/>
             </div>
         </div>
     );
@@ -101,14 +96,6 @@ TablePanelOptions.propTypes = {
     onChange: PropTypes.func,
     onOptionReset: PropTypes.func
 };
-
-function MetaContent({tbl_id}) {
-    if (hasAuxData(tbl_id)) {
-        return <MetaInfo tbl_id={tbl_id} isOpen={true} style={{ width: '100%', border: 'none', margin: 'unset', padding: 'unset'}} />;
-    } else {
-        return <div style={{margin: 20, fontWeight: 'bold'}}>No metadata available</div>;
-    }
-}
 
 function OptionsFilterStats({tbl_id}) {
 

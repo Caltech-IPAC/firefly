@@ -24,7 +24,7 @@ import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {useStoreConnector} from './../../ui/SimpleComponent.jsx';
 import {applyLinkSub, applyTokenSub} from '../../util/VOAnalyzer.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
-import {dispatchTableUpdate} from '../../tables/TablesCntlr.js';
+import {dispatchTableUpdate} from '../TablesCntlr.js';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 
@@ -282,19 +282,13 @@ export function makeDefaultRenderer(col={}) {
     return renderer;
 }
 
-
-/**
- * A wrapper tag that handles default styles, textAlign, and actions.
- */
-export const CellWrapper =  React.memo( (props) => {
-    const {tbl_id, startIdx, CellRenderer, style, columnKey, col, rowIndex, data, height, width} = props;
-    const dropDownID = 'actions--dropdown';
-    const popupID = 'actions--popup';
+export function ContentEllipsis({children, text, style={}, actions=[]}) {
 
     const [hasActions, setHasActions] = useState(false);
     const actionsEl = useRef(null);
-    const cellInfo = getCellInfo({columnKey, col, rowIndex, data, tbl_id, startIdx});
-    const {textAlign, text} = cellInfo;
+
+    const dropDownID = 'actions--dropdown';
+    const popupID = 'actions--popup';
 
     const onActionsClicked = (ev) => {
         ev.stopPropagation();
@@ -317,26 +311,42 @@ export const CellWrapper =  React.memo( (props) => {
         <div className='Actions__dropdown'>
             <div className='Actions__item' onClick={copyCB}>Copy to clipboard</div>
             <div className='Actions__item' onClick={viewAsText}>View as plain text</div>
+            {actions?.map((text, action) => <div className='Actions__item' onClick={action}>{text}</div>)}
         </div>
     );
-    const lineHeight = height - 6 + 'px';  // 6 is the top/bottom padding.
 
     const checkOverflow = (ev) => {
-        if (CellRenderer.allowActions) {
-            const c = ev?.currentTarget?.children?.[0] || {};
-            setHasActions(c.clientWidth < c.scrollWidth-6);  // account for paddings
-        }
+        const w = ev?.currentTarget;
+        const c = ev?.currentTarget?.children?.[0];
+        setHasActions(w?.clientWidth < c?.scrollWidth-6);  // account for paddings
     };
 
     return (
-        <div onMouseEnter={checkOverflow}
-             onMouseLeave={() => setHasActions(false)} style={{display: 'flex', height: '100%'}}>
-            <div style={{textAlign, lineHeight, ...style}} className='public_fixedDataTableCell_cellContent'>
-                <CellRenderer {...omit(props, 'Content')} cellInfo={cellInfo}/>
-            </div>
-            {hasActions && <div ref={actionsEl} className='Actions__anchor clickable' onClick={onActionsClicked} title='Display full cell contents'>&#x25cf;&#x25cf;&#x25cf;</div>}
+        <div onMouseEnter={checkOverflow} onMouseLeave={() => setHasActions(false)} style={{display: 'flex', position: 'relative', overflow: 'hidden', ...style}}>
+            {React.Children.only(children)}
+            {hasActions && <div ref={actionsEl} className='Actions__anchor clickable' style={style} onClick={onActionsClicked} title='Display full cell contents'>&#x25cf;&#x25cf;&#x25cf;</div>}
         </div>
     );
+}
+
+
+/**
+ * A wrapper tag that handles default styles, textAlign, and actions.
+ */
+export const CellWrapper =  React.memo( (props) => {
+    const {tbl_id, startIdx, CellRenderer, style, columnKey, col, rowIndex, data, height, width} = props;
+
+    const cellInfo = getCellInfo({columnKey, col, rowIndex, data, tbl_id, startIdx});
+    const {textAlign, text} = cellInfo;
+    const lineHeight = height - 6 + 'px';  // 6 is the top/bottom padding.
+
+    const content = (
+        <div style={{textAlign, lineHeight, ...style}} className='public_fixedDataTableCell_cellContent'>
+            <CellRenderer {...omit(props, 'Content')} cellInfo={cellInfo}/>
+        </div>
+    );
+    return CellRenderer?.allowActions ? <ContentEllipsis text={text}>{content}</ContentEllipsis> : content;
+
 }, skipCellRender);
 
 function skipCellRender(prev={}, next={}) {

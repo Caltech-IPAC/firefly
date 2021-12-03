@@ -116,8 +116,8 @@ public final class PackagingWorker implements Job.Worker {
         JobInfo jobInfo = getJob().getJobInfo();
         jobInfo.setProgress(100);
         jobInfo.setProgressDesc(summary);
-        jobInfo.setPhase(JobInfo.PHASE.COMPLETED);
-        jobInfo.setSummary(String.join(summary));
+        jobInfo.setSummary(summary);
+        getJob().setPhase(JobInfo.PHASE.COMPLETED);
 
         PackagedEmail.send(getJob().getJobInfo());
 

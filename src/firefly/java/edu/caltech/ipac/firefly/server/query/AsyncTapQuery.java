@@ -163,18 +163,7 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
                 }));
 
                 DataGroup[] results = VoTableReader.voToDataGroups(outFile.getAbsolutePath());
-                if (results.length > 0) {
-                    DataGroup dg = results[0];
-                    LinkInfo jobLink = new LinkInfo();
-                    jobLink.setID("IVOA_UWS_JOB");
-                    jobLink.setTitle("Universal Worker Service Job");
-                    jobLink.setHref(baseJobUrl);
-                    // update table links
-                    dg.getLinkInfos().add(0, jobLink);
-                }  else {
-                    return null;
-                }
-                return results[0];
+                return results.length > 0 ? results[0] : null;
             } catch (Exception e) {
                 throw new DataAccessException("Failure when retrieving results from "+baseJobUrl+"/results/result\n"+
                         e.getMessage());

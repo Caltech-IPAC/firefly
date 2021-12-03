@@ -1,10 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import shallowequal from 'shallowequal';
 
-import {dispatchJobAdd} from './BackgroundCntlr.js';
-import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
+import {dispatchJobAdd, dispatchJobCancel} from './BackgroundCntlr.js';
+import {dispatchComponentStateChange, getComponentState} from '../ComponentCntlr.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {Logger} from '../../util/Logger.js';
+import {showJobInfo} from './JobInfo.jsx';
+import {getJobInfo} from './BackgroundUtil.js';
+import INFO from 'html/images/info-icon.png';
 
 const logger = Logger('BgMaskPanel');
 
@@ -19,55 +23,76 @@ const logger = Logger('BgMaskPanel');
 
 export const BgMaskPanel = React.memo(({componentKey, style={}}) => {
 
-    const [{inProgress, jobInfo}] = useStoreConnector(() => getComponentState(componentKey));
+    const [{inProgress, jobInfo}] = useStoreConnector((oldState={}) => {
+        const {inProgress:oProg, jobInfo:oInfo} = oldState;
+        const {inProgress, jobId} = getComponentState(componentKey);
+        const jobInfo = getJobInfo(jobId);
+        if (oProg === inProgress && shallowequal(oInfo, jobInfo)) return oldState;
+        return {inProgress, jobInfo};
+    });
 
     const sendToBg = () => {
         if (jobInfo) {
-            dispatchComponentStateChange(componentKey, {inProgress:false, jobInfo:undefined});
+            dispatchComponentStateChange(componentKey, {inProgress:false});
             dispatchJobAdd(jobInfo);
         }
     };
-    const maskStyle = {...defMaskStyle, ...style};
-    const msg = jobInfo?.progressDesc || 'Working...';
+    const abort = () => {
+        if (jobInfo) {
+            dispatchComponentStateChange(componentKey, {inProgress:false});
+            dispatchJobCancel(jobInfo.jobId);
+        }
+    };
+
+    const showInfo = () => {
+        jobInfo && showJobInfo(jobInfo.jobId);
+    };
+
+    const msg = jobInfo?.error || jobInfo?.progressDesc || 'Working...';
+
+    const Options = () => ( inProgress &&
+        <div className='BgMaskPanel__actions'>
+            <div className='button large' onClick={sendToBg}>Send to background</div>
+            <div className='button large' onClick={abort}>Cancel</div>
+        </div>
+    );
+
 
     logger.debug(inProgress ? 'show' : 'hide');
     if (inProgress) {
         return (
-            <div style={maskStyle}>
+            <div className='BgMaskPanel' style={style}>
                 <div className='loading-mask'/>
-                { jobInfo &&
-                    <div style={{display: 'flex', alignItems: 'center'}}>
-                        <div style={maskButton} >
-                            <div style={{textAlign: 'center', margin: 5, fontSize: 'larger', fontStyle: 'italic'}}>{msg}</div>
-                            <div className='button large' onClick={sendToBg}>Send to background</div>
+                <div style={{display: 'flex', alignItems: 'center'}}>
+                    <div className='BgMaskPanel__content'>
+                        <div style={{display: 'inline-flex', alignItems: 'center', justifyContent: 'center'}}>
+                            <div className='BgMaskPanel__msg'>{msg}</div>
+                            <img className='JobInfo__items--link' onClick={showInfo} src={INFO} style={{height: 20}}/>
                         </div>
+                        <Options/>
                     </div>
-                }
+                </div>
             </div>
         );
-    } else {
-        return null;
-    }
+    } else if (['ERROR', 'ABORTED'].includes(jobInfo?.phase)) {
+        return (
+            <div className='BgMaskPanel' style={style}>
+                <div className='mask-only'/>
+                <div style={{display: 'flex', alignItems: 'center'}}>
+                    <div className='BgMaskPanel__content'>
+                        <div style={{display: 'inline-flex', alignItems: 'center', justifyContent: 'center'}}>
+                            <di style={{marginRight: 5, fontSize: 18}}> {jobInfo.phase} </di>
+                            <img className='JobInfo__items--link' onClick={showInfo} src={INFO} style={{height: 20}}/>
+                        </div>
+                        <div className='BgMaskPanel__msg'>{msg}</div>
+                    </div>
+                </div>
+            </div>
+        );
+    } else return null;
 });
 
 BgMaskPanel.propTypes = {
     componentKey: PropTypes.string.isRequired,  // key used to identify this background job
     style: PropTypes.object                     // used for overriding default styling
-};
-
-const defMaskStyle = {
-            position: 'relative',
-            width: '100%',
-            height: '100%',
-            boxSizing: 'border-box',
-            border: '1px solid rgba(0, 0, 0, 0.3)',
-            display: 'flex',
-            justifyContent: 'center'
-        };
-
-const maskButton =  {
-    marginTop: '95px',
-    position: 'relative',
-    color: 'white'
-
 };
