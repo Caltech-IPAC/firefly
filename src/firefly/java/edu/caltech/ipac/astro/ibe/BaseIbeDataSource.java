@@ -4,11 +4,16 @@
 package edu.caltech.ipac.astro.ibe;
 
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
+import edu.caltech.ipac.visualize.plot.Plot;
+import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
+
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
  * Date: 4/18/14
@@ -46,7 +51,34 @@ public class BaseIbeDataSource implements IbeDataSource {
     }
 
     public IbeQueryParam makeQueryParam(Map<String, String> queryInfo) {
-        return null;
+
+        // handles only the common position search params
+        IbeQueryParam queryParam = new IbeQueryParam();
+
+        String userTargetWorldPt = queryInfo.get("UserTargetWorldPt");
+        String upload = queryInfo.get("filename");
+        if (userTargetWorldPt != null || !isEmpty(upload)) {
+            // search by position
+            if (userTargetWorldPt != null) {
+                WorldPt pt = WorldPt.parse(userTargetWorldPt);
+                if (pt != null) {
+                    pt = Plot.convert(pt, CoordinateSys.EQ_J2000);
+                    queryParam.setPos(pt.getLon() + "," + pt.getLat());
+                }
+            } else {
+                queryParam.setPos(queryInfo.get("filename"));
+            }
+            if (!StringUtils.isEmpty(queryInfo.get("intersect"))) {
+                queryParam.setIntersect(IbeQueryParam.Intersect.valueOf(queryInfo.get("intersect")));
+            }
+            String mcen = queryInfo.get("mcenter");
+            if (mcen != null && (mcen.equalsIgnoreCase(MCEN) || Boolean.parseBoolean(mcen))) {
+                queryParam.setMcen(true);
+            } else {
+                queryParam.setSize(queryInfo.get("size"));
+            }
+        }
+        return queryParam;
     }
 
     public void setIbeHost(String ibeHost) {
