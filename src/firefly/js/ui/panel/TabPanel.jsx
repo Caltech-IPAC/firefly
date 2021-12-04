@@ -16,6 +16,7 @@ import {getCellValue, getTblById, watchTableChanges} from '../../tables/TableUti
 import {TABLE_FILTER, TABLE_HIGHLIGHT, TABLE_SORT} from '../../tables/TablesCntlr.js';
 
 import './TabPanel.css';
+import {dispatchChartUpdate} from '../../charts/ChartsCntlr.js';
 
 
 export function uniqueTabId() {
@@ -48,7 +49,11 @@ const TabsHeaderInternal = React.memo((props) => {
 
     const arrowEl = useRef(null);
     const showTabs = (ev) => handleOpenTabs({ev, doOpen: !isDropDownShowing(tabId), tabId, onSelect, arrowEl, childrenAry});
-    if (isDropDownShowing(tabId)) handleOpenTabs({doOpen: false});
+
+    const titles = getTabTitles(childrenAry).join();
+    useEffect( ()=> {
+        if (isDropDownShowing(tabId)) handleOpenTabs({tabId, doOpen: false});
+    }, [tabId, titles]);
 
     return (
         <div style={style}>
@@ -305,13 +310,10 @@ function handleOpenTabs({ev, doOpen, tabId, onSelect, childrenAry, arrowEl}) {
     ev?.stopPropagation?.();
     if (doOpen) {
         // create table model for the drop down
-        const columns = [{name: 'OPEN TABS', width: 50, type: 'char'}];
+        const columns = [{name: 'OPEN TABS', width: 50}];
         const highlightedRow = childrenAry.findIndex((child) => child?.props?.selected);
         const tbl_id = tabId;
-        const data = childrenAry.map((child, idx) => {
-            const p = child?.props;
-            return [isString(p.label) ? p.label : p.name || `[blank]-${idx}`];
-        });
+        const data = getTabTitles(childrenAry);
         const tableModel = {tbl_id, tableData: {columns, data}, highlightedRow, totalRows: data.length};
         // monitor for changes
         watchTableChanges(tabId, [TABLE_HIGHLIGHT, TABLE_SORT, TABLE_FILTER], () => {
@@ -333,3 +335,11 @@ function handleOpenTabs({ev, doOpen, tabId, onSelect, childrenAry, arrowEl}) {
         hideDropDown(tabId);
     }
 };
+
+function getTabTitles(childrenAry) {
+    return childrenAry.map((child, idx) => {
+        const p = child?.props;
+        return [isString(p.label) ? p.label : p.name || `[blank]-${idx}`];
+    });
+
+}
