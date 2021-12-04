@@ -240,33 +240,9 @@ public class AtlasIbeDataSource extends BaseIbeDataSource {
     @Override
     public IbeQueryParam makeQueryParam(Map<String, String> queryInfo) {
 
-        // source search
-        IbeQueryParam queryParam = new IbeQueryParam();
+        // common position search params
+        IbeQueryParam queryParam = super.makeQueryParam(queryInfo);
 
-        // process POS - target search
-        String userTargetWorldPt = queryInfo.get("UserTargetWorldPt");
-        if (userTargetWorldPt != null) {
-            WorldPt pt = WorldPt.parse(userTargetWorldPt);
-            if (pt != null) {
-                pt = Plot.convert(pt, CoordinateSys.EQ_J2000);
-                queryParam.setPos(pt.getLon() + "," + pt.getLat());
-                if (!StringUtils.isEmpty(queryInfo.get("intersect"))) {
-                    queryParam.setIntersect(IbeQueryParam.Intersect.valueOf(queryInfo.get("intersect")));
-                }
-                String mcen = queryInfo.get("mcenter");
-                if (mcen != null && (mcen.equalsIgnoreCase(MCEN) || Boolean.parseBoolean(mcen))) {
-                    queryParam.setMcen(true);
-
-                } else {
-                    // workaround:
-                    if (StringUtils.isEmpty(queryInfo.get("radius"))) {
-                        queryParam.setSize(queryInfo.get("size"));
-                    } else {
-                        queryParam.setSize(queryInfo.get("radius"));
-                    }
-                }
-            }
-        }
         // process constraints
         String constraints = processAtlasConstraints(queryInfo);
         if (!StringUtils.isEmpty(constraints)) {
@@ -365,36 +341,10 @@ public class AtlasIbeDataSource extends BaseIbeDataSource {
     }
 
     @Override
-    public String getQueryUrl(IbeQueryParam param) {
-        return getSearchUrl() + "&" + convertToUrl(param);
-    }
-
-    @Override
     public String getMetaDataUrl() {
         return this.getIbeHost() + "/IBE?table=" +
                 this.getDataset() +
                 "." + this.getTableName() + "&FORMAT=METADATA";
-    }
-
-    private String convertToUrl(IbeQueryParam param) {
-        String s = "";
-        if (param == null) return "";
-
-        if (!StringUtils.isEmpty(param.getRefBy())) {
-            s = addUrlParam(s, REF_BY, param.getRefBy());
-        } else if (!StringUtils.isEmpty(param.getPos())) {
-            s = addUrlParam(s, POS, param.getPos());
-            s = addUrlParam(s, INTERSECT, param.getIntersect());
-            if (param.isMcen()) {
-                s = addUrlParam(s, null, MCEN);
-            } else {
-                s = addUrlParam(s, SIZE, param.getSize());
-            }
-        }
-
-        s = addUrlParam(s, COLUMNS, param.getColumns()); // ATLAS IBE2 doesn't have the columns filter, might want to do TAP data source for that purpose?
-        s = addUrlParam(s, WHERE, param.getWhere(), true);
-        return s;
     }
 
     public String getImageRoot() {

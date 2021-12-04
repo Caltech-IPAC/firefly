@@ -18,6 +18,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
+import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
+
 /**
  * Date: 3/20/2018
  *
@@ -164,28 +167,9 @@ public class ZtfIbeDataSource extends BaseIbeDataSource {
     @Override
     public IbeQueryParam makeQueryParam(Map<String, String> queryInfo) {
 
-        // source search
-        IbeQueryParam queryParam = new IbeQueryParam();
+        // common position search params
+        IbeQueryParam queryParam = super.makeQueryParam(queryInfo);
 
-        // process POS - target search
-        String userTargetWorldPt = queryInfo.get("UserTargetWorldPt");
-        if (userTargetWorldPt != null) {
-            WorldPt pt = WorldPt.parse(userTargetWorldPt);
-            if (pt != null) {
-                pt = Plot.convert(pt, CoordinateSys.EQ_J2000);
-                queryParam.setPos(pt.getLon() + "," + pt.getLat());
-                if (!StringUtils.isEmpty(queryInfo.get("intersect"))) {
-                    queryParam.setIntersect(IbeQueryParam.Intersect.valueOf(queryInfo.get("intersect")));
-                }
-                String mcen = queryInfo.get("mcenter");
-                if (mcen != null && mcen.equalsIgnoreCase(MCEN)) {
-                    queryParam.setMcen(true);
-
-                } else {
-                    queryParam.setSize(queryInfo.get("size"));
-                }
-            }
-        }
         // process constraints
         String constraints = processConstraints(queryInfo);
         if (!StringUtils.isEmpty(constraints)) {

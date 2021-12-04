@@ -18,6 +18,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
 
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
+
 /**
  * Date: 4/18/14
  *
@@ -227,36 +229,13 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
     @Override
     public IbeQueryParam makeQueryParam(Map<String, String> queryInfo) {
 
-        // source search
-        IbeQueryParam queryParam = new IbeQueryParam();
+        // common position search params
+        IbeQueryParam queryParam = super.makeQueryParam(queryInfo);
 
-        String userTargetWorldPt = queryInfo.get(USER_TARGET_WORLD_PT);
         String refSourceId = queryInfo.get("refSourceId");
         String sourceId = queryInfo.get("sourceId");
 
-        if (userTargetWorldPt != null) {
-            // search by position
-            WorldPt pt = WorldPt.parse(userTargetWorldPt);
-            if (pt != null) {
-                pt = Plot.convert(pt, CoordinateSys.EQ_J2000);
-                queryParam.setPos(pt.getLon() + "," + pt.getLat());
-                if (!StringUtils.isEmpty(queryInfo.get("intersect"))) {
-                    queryParam.setIntersect(IbeQueryParam.Intersect.valueOf(queryInfo.get("intersect")));
-                }
-                String mcen = queryInfo.get("mcenter");
-                if (mcen != null && mcen.equalsIgnoreCase(MCEN)) {
-                    queryParam.setMcen(true);
-
-                } else {
-                    // workaround:
-                    if ( StringUtils.isEmpty(queryInfo.get("radius"))) {
-                        queryParam.setSize(queryInfo.get("size"));
-                    } else {
-                        queryParam.setSize(queryInfo.get("radius"));
-                    }
-                }
-            }
-        } else if (refSourceId != null) {
+        if (refSourceId != null) {
             String sourceSpec = WISE + "." + getDataset() + "." + wds.getSourceTable() + "(\"source_id\":\"" + refSourceId + "\")";
             queryParam.setRefBy(sourceSpec);
         } else if (sourceId != null) {
