@@ -3,7 +3,6 @@
     flex-direction: column;
     overflow: hidden;
     flex-shrink: 0;
-    height: 20px;
     position: relative;
     box-sizing: border-box;
 }

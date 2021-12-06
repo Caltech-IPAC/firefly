@@ -84,7 +84,7 @@ export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOpt
                 <button type='button' className='button std'
                         onClick={onClose}>Close
                 </button>
-                <HelpIcon helpId={''} style={{float: 'right', marginTop: 4}}/>
+                <HelpIcon helpId={'tables.options'} style={{float: 'right', marginTop: 4}}/>
             </div>
         </div>
     );

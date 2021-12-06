@@ -37,7 +37,7 @@ export function TableInfo(props) {
                 </Tab>
             </StatefulTabs>
             <div>
-                <HelpIcon helpId={''} style={{float: 'right'}}/>
+                <HelpIcon helpId={'tables.info'} style={{float: 'right', marginRight: 10}}/>
             </div>
         </div>
     );
@@ -58,7 +58,7 @@ function MetaContent({tbl_id}) {
 
 
 export function MetaInfo({tbl_id, style, isOpen=false}) {
-    const contentStyle={display: 'flex', flexDirection: 'column', maxHeight: 200, overflow: 'auto', paddingBottom: 1};
+    const contentStyle={display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingBottom: 1};
     const wrapperStyle={width: '100%'};
 
     if (!hasAuxData(tbl_id)) {
