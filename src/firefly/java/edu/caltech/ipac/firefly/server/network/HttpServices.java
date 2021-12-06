@@ -188,7 +188,7 @@ public class HttpServices {
             LOG.info("HttpServices URL:" + method.getURI().toString());
 
             method.setRequestHeader("Connection", "close");            // request server to NOT keep-alive.. we don't plan to reuse this connection.
-            method.setRequestHeader("User-Agent", USER_AGENT);
+            method.setRequestHeader("User-Agent", URLDownload.getUserAgentString());
             method.setRequestHeader(HttpHeaders.ACCEPT_ENCODING, "gzip");
             if (method instanceof GetMethod) {
                 method.setFollowRedirects(input.isFollowRedirect());    // post are not allowed to follow redirect

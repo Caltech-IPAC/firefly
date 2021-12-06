@@ -131,11 +131,13 @@ task createVersionTag  {
         props.setProperty('BuildTime', build_time)
         props.setProperty('BuildTag', tag)
         props.setProperty('BuildCommit', getCommitHash())
+        props.setProperty('BuildGitTagFirefly', getCommitTag())
 
         props.setProperty('ExtendedCache', project.env == "local" ? (project.hasProperty("ExtendedCache") ? project.ExtendedCache : "true") : "false")
 
         if (fireflyPath != rootDir.getPath()) {
             props.setProperty('BuildCommitFirefly', getCommitHash(fireflyPath))
+            props.setProperty('BuildGitTagFirefly', getCommitTag(fireflyPath))
         }
 
         props.store(file("${project.buildDir}/version.tag").newWriter(), "Version Info")

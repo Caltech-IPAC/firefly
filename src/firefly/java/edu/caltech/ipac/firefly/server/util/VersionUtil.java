@@ -5,7 +5,6 @@ package edu.caltech.ipac.firefly.server.util;
 
 import edu.caltech.ipac.firefly.data.Version;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.util.AppProperties;
 
 import javax.servlet.ServletContext;
 import java.io.File;
@@ -34,6 +33,7 @@ public class VersionUtil {
     private static final String BUILD_TAG  ="BuildTag";
     private static final String BUILD_COMMIT  ="BuildCommit";
     private static final String BUILD_COMMIT_FIREFLY  ="BuildCommitFirefly";
+    private static final String BUILD_GIT_TAG_FIREFLY ="BuildGitTagFirefly";
 
     private static final String VERSION_FILE = "version.tag";
 
@@ -70,7 +70,9 @@ public class VersionUtil {
             _version.setBuildTime(props.getProperty(BUILD_TIME));
             _version.setBuildTag(props.getProperty(BUILD_TAG));
             _version.setBuildCommit(props.getProperty(BUILD_COMMIT));
+            _version.setBuildCommit(props.getProperty(BUILD_COMMIT));
             _version.setBuildCommitFirefly(props.getProperty(BUILD_COMMIT_FIREFLY));
+            _version.setBuildGitTagFirefly(props.getProperty(BUILD_GIT_TAG_FIREFLY));
         } catch (IOException e) {
             // just ignore
         }
