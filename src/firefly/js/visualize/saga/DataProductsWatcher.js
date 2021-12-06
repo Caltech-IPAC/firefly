@@ -16,7 +16,7 @@ import {findGridTableRows} from '../../metaConvert/converterUtils.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga.js';
 import {isMetaDataTable} from '../../util/VOAnalyzer.js';
-import {zoomPlotPerViewSize, resetImageFullGridActivePlot, changeActivePlotView} from '../../metaConvert/ImageDataProductsUtil.js';
+import {resetImageFullGridActivePlot, changeActivePlotView} from '../../metaConvert/ImageDataProductsUtil.js';
 import {
     dataProductRoot,
     dispatchUpdateDataProducts,
@@ -40,7 +40,7 @@ const DataProductsWatcherDef = {
               MultiViewCntlr.VIEWER_UNMOUNTED,
               MultiViewCntlr.CHANGE_VIEWER_LAYOUT, MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA,
               ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW,
-              ImagePlotCntlr.UPDATE_VIEW_SIZE, ImagePlotCntlr.ANY_REPLOT]
+              ImagePlotCntlr.ANY_REPLOT]
 };
 
 export function startDataProductsWatcher({dataTypeViewerId= 'DataProductsType', paused=true}) {
@@ -143,10 +143,6 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
 
         case ImagePlotCntlr.ANY_REPLOT:
             if (!paused) resetImageFullGridActivePlot(tbl_id, action.payload.plotIdAry);
-            break;
-
-        case ImagePlotCntlr.UPDATE_VIEW_SIZE:
-            if (!paused) zoomPlotPerViewSize(payload.plotId);
             break;
 
         case REINIT_APP:
