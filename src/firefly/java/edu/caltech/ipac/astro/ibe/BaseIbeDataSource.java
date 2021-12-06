@@ -145,7 +145,9 @@ public class BaseIbeDataSource implements IbeDataSource {
     @Override
     public String getQueryUrl(IbeQueryParam param) {
         String url = getSearchUrl();
-        return (url.contains("?") ? "&" : "?") + convertToUrl(param);
+        String qStr = convertToUrl(param);
+        qStr = isEmpty(qStr) ? "" : (url.contains("?") ? "&" : "?") + convertToUrl(param);
+        return url + qStr;
     }
 
     @Override
