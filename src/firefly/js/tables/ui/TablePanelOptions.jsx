@@ -229,6 +229,7 @@ export const ColumnOptions = React.memo(({tbl_id, tbl_ui_id, ctm_tbl_id, onChang
                 renderers = {renderers}
                 showToolbar = {false}
                 showOptionButton = {false}
+                showTypes={false}
                 showFilters={true}
                 selectable = {true}
                 rowHeight = {27}

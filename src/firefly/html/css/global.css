@@ -291,6 +291,22 @@ div.rootStyle img {
     font-weight: bold;
 }
 
+.round-btn {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    padding: 1px;
+    justify-content: center;
+}
+
+.round-btn:hover {
+    background-color: rgba(0,0,0, .15);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 1px solid rgba(0,0,0, 0.15);
+}
+
 
 .keyword-label  {
     font-weight: bold;

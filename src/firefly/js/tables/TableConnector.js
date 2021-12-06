@@ -25,10 +25,10 @@ export class TableConnector {
         const {tbl_ui_id, tbl_id, tableModel} = this;
         if (!getTableUiByTblId(tbl_id)) {
             TblCntlr.dispatchTableUiUpdate({tbl_ui_id, tbl_id, ...this.options});
-            if (tableModel && !tableModel.origTableModel) {
-                set(tableModel, 'request.tbl_id', tbl_id);
-                TblCntlr.dispatchTableAddLocal(tableModel, undefined, false);
-            }
+        }
+        if (tableModel && !tableModel.origTableModel) {
+            set(tableModel, 'request.tbl_id', tbl_id);
+            TblCntlr.dispatchTableAddLocal(tableModel, undefined, false);
         }
     }
 

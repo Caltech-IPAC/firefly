@@ -436,7 +436,7 @@ function autoCorrectCondition(v, col) {
     // empty string or string with no value
     if (!op && !val) return v.trim();
 
-    op = op ? op.toLowerCase() : (useQuote ? 'like' : '=');      // no operator is treated as 'like'
+    op = op ? op.toLowerCase() : (!col?.type || useQuote ? 'like' : '=');      // use 'like' when column type is string-like or not defined
 
     switch (op) {
         case 'like':

@@ -1,7 +1,33 @@
+.TabPanel__main {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+    height: 20px;
+    position: relative;
+    box-sizing: border-box;
+}
+.TabPanel__main.boxed {
+    background-color: #d7d6d6;
+    padding-top: 4px;
+    border: 1px solid #cdcdcd;
+    border-bottom: none;
+    border-top-right-radius: 2px;
+    border-top-left-radius: 2px;
+}
+
+.TabPanel__Header {
+    display: inline-flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+}
+
 .TabPanel__Tabs {
   list-style: none;
   padding:0;
   margin:0;
+    display: inline-flex;
 }
 
 
