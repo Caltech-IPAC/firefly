@@ -2,34 +2,9 @@
 
 - You can find Firefly builds and the notes for running Firefly on the [Docker Page](https://hub.docker.com/r/ipac/firefly).
 - See Firefly Docker guidelines [here](firefly-docker.md).
-- To Access current (unstable) development - (Version _next_, unreleased) use docker tag: `nightly`
-- 
-## Version 2021.4  (next version - unreleased)
-
-
-### _Notes_
-- BigInt: Support for json parsing ([Firefly-732](https://github.com/Caltech-IPAC/firefly/pull/1125))
-- BigInt: Support for 64 bit integers in tables ([Firefly-732](https://github.com/Caltech-IPAC/firefly/pull/1121)) 
-- UI Changes across Firefly ([Firefly-832](https://github.com/Caltech-IPAC/firefly/pull/1123))
-- Spectrum: Data conversion ([Firefly-843](https://github.com/Caltech-IPAC/firefly/pull/1131))
-- Spectrum: FITS reading ([Firefly-851](https://github.com/Caltech-IPAC/firefly/pull/1139))
-- Spectrum: FITS and FITS Cube Data Extraction ([Firefly-838](https://github.com/Caltech-IPAC/firefly/pull/1136))
-- Support TAP ObsCore components in WebApi ([PR](https://github.com/Caltech-IPAC/firefly/pull/1134))
-- Lazy read cube planes ([Firefly-874](https://github.com/Caltech-IPAC/firefly/pull/1142))
-- Implement a new background model based on UWS ([Firefly-854](https://github.com/Caltech-IPAC/firefly/pull/1144))
-- Display better background job information ([Firefly-872](https://github.com/Caltech-IPAC/firefly/pull/1151))
-- Create dropdown to add MOC layers ([Firefly-853](https://github.com/Caltech-IPAC/firefly/pull/1152))
-- IBE search processor support Multi position search ([Firefly-876](https://github.com/Caltech-IPAC/firefly/pull/1148))
-
-- Bug fixes:
-  - fixed: Using new Horizons API for moving target ([Firefly-277](https://github.com/Caltech-IPAC/firefly/pull/1132))
-  - fixed: Stick flipping and North Up  ([Firefly-858](https://github.com/Caltech-IPAC/firefly/pull/1150))
-  - fixed: Firefly slate table come up on bottom instead of the side ([DM-32004](https://github.com/Caltech-IPAC/firefly/pull/1145))
-  - fixed: TAP search names tab correctly ([Firefly-882](https://github.com/Caltech-IPAC/firefly/pull/1148))
-  - fixed: IRSA-4224: UI covering recenter after UI changes ([IRSA-4224](https://github.com/Caltech-IPAC/firefly/pull/1140))
-  - fixed: Firefly-849: magnified image vanish ([Firefly-849](https://github.com/Caltech-IPAC/firefly/pull/1140))
-  - fixed: Firefly-842: SOFIA images not centered on screen ([Firefly-842](https://github.com/Caltech-IPAC/firefly/pull/1140))
-  - fixed: Firefly-845: Datalink fail when image url string has a plus (+) sign ([Firefly-845](https://github.com/Caltech-IPAC/firefly/pull/1140))
+- To Access current (unstable) development - (Version _next_, unreleased) 
+  - use docker tag: `nightly`
+  - [Notes on next version](next-release-details.md)
 
 
 
