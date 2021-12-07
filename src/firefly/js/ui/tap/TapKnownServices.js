@@ -48,7 +48,7 @@ WHERE CONTAINS (POINT('J2000' , ra , dec) , POLYGON('J2000' , 209.80225 , 54.348
         tapEntry('KOA', 'https://koa.ipac.caltech.edu/TAP/'),
         tapEntry('HEASARC', 'https://heasarc.gsfc.nasa.gov/xamin/vo/tap'),
         tapEntry('MAST Images', 'https://vao.stsci.edu/CAOMTAP/TapService.aspx'),
-        tapEntry('CADC', 'https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap'),
+        tapEntry('CADC', 'https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/argus/'),
         // CDS???
         tapEntry('VizieR (CDS)', 'http://tapvizier.u-strasbg.fr/TAPVizieR/tap/'),
         tapEntry('Simbad (CDS)', 'https://simbad.u-strasbg.fr/simbad/sim-tap'),
