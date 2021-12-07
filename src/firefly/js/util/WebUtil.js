@@ -574,8 +574,8 @@ export function updateDelete(object, path, value) {
 
 /**
  * similar to deep merge, except when a value is an array, it will replace the value instead of merging.
- * @param {Object} target  - the target or destination object
- * @param {Object} sources - the source objects
+ * @param {Object|undefined} target  - the target or destination object
+ * @param {Object|undefined} sources - the source objects
  */
 export function mergeObjectOnly(target, sources) {
     return mergeWith(target, sources,
