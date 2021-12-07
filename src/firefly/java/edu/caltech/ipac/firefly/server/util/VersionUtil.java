@@ -106,7 +106,7 @@ public class VersionUtil {
         if (StringUtils.isEmpty(tag)) return unknownVersionUA;
         try {
             Matcher m= Pattern.compile("\\d+(\\.\\d+)+").matcher(tag);
-            return "Firefly/" + m.results().findFirst().get().group();
+            return m.find() ? "Firefly/" +m.group(0) : unknownVersionUA;
         } catch (Exception e) {
             return unknownVersionUA;
         }
