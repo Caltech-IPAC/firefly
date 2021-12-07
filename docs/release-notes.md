@@ -7,8 +7,48 @@
   - [Notes on next version](next-release-details.md)
 
 
+## Version 2021.4  (December 2021)
+- 2021.4 (December 2021)
+  - docker tag: `latest`, `release-2021.4`, `release-2021.4.0`
 
-## Version 2021.3 
+### _Notes_
+#### New features - This release contains some significant new features and UI improvements
+- _BigInt_: Support for json parsing ([Firefly-732](https://github.com/Caltech-IPAC/firefly/pull/1125))
+- _BigInt_: Support for 64 bit integers in tables ([Firefly-732](https://github.com/Caltech-IPAC/firefly/pull/1121))
+- _Spectrum_: Data conversion ([Firefly-843](https://github.com/Caltech-IPAC/firefly/pull/1131))
+- _Spectrum_: FITS reading ([Firefly-851](https://github.com/Caltech-IPAC/firefly/pull/1139))
+- _Spectrum_: FITS and FITS Cube Data Extraction ([Firefly-838](https://github.com/Caltech-IPAC/firefly/pull/1136))
+- _Background_: Implement a new background model based on UWS ([Firefly-854](https://github.com/Caltech-IPAC/firefly/pull/1144))
+- _Background_: Display better background job information ([Firefly-872](https://github.com/Caltech-IPAC/firefly/pull/1151))
+- _WebApi_: Support TAP ObsCore components ([PR](https://github.com/Caltech-IPAC/firefly/pull/1134))
+- Create dropdown to add MOC layers ([Firefly-853](https://github.com/Caltech-IPAC/firefly/pull/1152))
+- Lazy read cube planes ([Firefly-874](https://github.com/Caltech-IPAC/firefly/pull/1142))
+- IBE search processor support Multi position search ([Firefly-876](https://github.com/Caltech-IPAC/firefly/pull/1148))
+- UI Changes across Firefly ([Firefly-832](https://github.com/Caltech-IPAC/firefly/pull/1123))
+  - Improves space for small screen
+  - Cleaner layout - more space given to data
+  - Detail Image/HiPS readout now optional
+  - Image/HiPS toolbar reorganization
+  - Improved tab handling ([Firefly-855](https://github.com/Caltech-IPAC/firefly/pull/1154))
+
+
+#### Notable Bug fixes
+- fixed: Using new Horizons API for moving target ([Firefly-277](https://github.com/Caltech-IPAC/firefly/pull/1132))
+- fixed: Sticky flipping and North Up  ([Firefly-858](https://github.com/Caltech-IPAC/firefly/pull/1150))
+- fixed: Firefly slate table comes up on bottom instead of the side ([DM-32004](https://github.com/Caltech-IPAC/firefly/pull/1145))
+- fixed: TAP search names tab correctly ([Firefly-882](https://github.com/Caltech-IPAC/firefly/pull/1148))
+- fixed: Firefly-849: magnified image vanish ([Firefly-849](https://github.com/Caltech-IPAC/firefly/pull/1140))
+- fixed: Firefly-842: SOFIA images not centered on screen ([Firefly-842](https://github.com/Caltech-IPAC/firefly/pull/1140))
+  - fixed: Firefly-845: Datalink fail when image url string has a plus (+) sign ([Firefly-845](https://github.com/Caltech-IPAC/firefly/pull/1140))
+
+
+##### _Pull Requests in this release_
+- [Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2021.4+label%3abug)
+- [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2021.4+)
+
+
+
+## Version 2021.3 (August 2021) 
 - 2021.3.3 (Oct 2021)
   - docker tag: `latest`, `release-2021.3`, `release-2021.3.3`
 - 2021.3.2 (Aug 2021)

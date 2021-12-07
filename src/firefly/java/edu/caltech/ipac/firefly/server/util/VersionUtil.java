@@ -111,23 +111,6 @@ public class VersionUtil {
             return unknownVersionUA;
         }
     }
-
-//    private static String getFireflyUA() {
-//        String unknown= "Firefly/development";
-//        String tag = getAppVersion().getBuildGitTagFirefly();
-//        if (StringUtils.isEmpty(tag)) return unknown;
-//        Matcher m = Pattern.compile("[1-9]").matcher(tag);
-//        if (!m.find()) return unknown;
-//        int firstIdx= m.start();
-//        int lastIdx= m.start();
-//        while (m.find()) lastIdx= m.start();
-//        try {
-//            return "Firefly/" + tag.substring(firstIdx,lastIdx+1);
-//        } catch (Exception e) {
-//            return unknown;
-//        }
-//    }
-
 }
 
 
