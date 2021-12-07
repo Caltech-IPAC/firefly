@@ -5,7 +5,6 @@ package edu.caltech.ipac.util.download;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.HttpResultInfo;
-import edu.caltech.ipac.firefly.data.Version;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
 import edu.caltech.ipac.util.Base64;
@@ -32,8 +31,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
 
@@ -48,30 +45,6 @@ public class URLDownload {
 
     public static String getUserFromUrl(String url) { return getUserInfoPart(url,0); }
     public static String getPasswordFromUrl(String url) { return getUserInfoPart(url,1); }
-
-    public static String getUserAgentString() {
-        Version v= VersionUtil.getAppVersion();
-        String fUA= getFireflyUA(v);
-        if (v.getAppName().equalsIgnoreCase("firefly")) return fUA;
-        if (v.getMajor()==0) return fUA;
-        return fUA + " ("+v.getAppName() + "/" + v.getMajor()+"."+v.getMinor()+"."+v.getRev() + ")";
-    }
-
-    private static String getFireflyUA(Version v) {
-        String unknown= "Firefly/development";
-        String tag = v.getBuildGitTagFirefly();
-        if (StringUtils.isEmpty(tag)) return unknown;
-        Matcher m = Pattern.compile("[1-9]").matcher(tag);
-        if (!m.find()) return unknown;
-        int firstIdx= m.start();
-        int lastIdx= m.start();
-        while (m.find()) lastIdx= m.start();
-        try {
-            return "Firefly/" + tag.substring(firstIdx,lastIdx+1);
-        } catch (Exception e) {
-            return unknown;
-        }
-    }
 
     private static String getUserInfoPart(String url,int idx) {
         try {
@@ -130,7 +103,7 @@ public class URLDownload {
         try {
             URLConnection conn = url.openConnection();
             if (conn instanceof HttpURLConnection) {
-                conn.setRequestProperty("User-Agent", getUserAgentString());
+                conn.setRequestProperty("User-Agent", VersionUtil.getUserAgentString());
                 conn.setRequestProperty("Accept-Encoding", "gzip, deflate");
                 addCookiesToConnection(conn, cookies);
                 String[] userInfo = getUserInfo(url);
