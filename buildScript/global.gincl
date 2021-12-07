@@ -142,6 +142,19 @@ ext.getCommitHash = { workDir="." ->
     }
 }
 
+ext.getCommitTag = { workDir="." ->
+    try {
+        def hashOut = new ByteArrayOutputStream()
+        exec {
+            commandLine "git", "tag", "--points-at", "HEAD"
+            workingDir = workDir
+            standardOutput = hashOut
+        }
+        return hashOut.toString().trim();
+    } catch (Exception e) {
+        return 'n/a'
+    }
+}
 
 ext.getVersionInfo = { key ->
     if (!project.hasProperty("tag_file")) {

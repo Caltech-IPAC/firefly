@@ -5,13 +5,15 @@ package edu.caltech.ipac.firefly.server.util;
 
 import edu.caltech.ipac.firefly.data.Version;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.StringUtils;
 
 import javax.servlet.ServletContext;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 /**
  * User: roby
  * Date: May 15, 2009
@@ -34,8 +36,10 @@ public class VersionUtil {
     private static final String BUILD_TAG  ="BuildTag";
     private static final String BUILD_COMMIT  ="BuildCommit";
     private static final String BUILD_COMMIT_FIREFLY  ="BuildCommitFirefly";
+    private static final String BUILD_GIT_TAG_FIREFLY ="BuildGitTagFirefly";
 
     private static final String VERSION_FILE = "version.tag";
+    private static final String unknownVersionUA= "Firefly/development";
 
     private static final Version _version= new Version();
     private static boolean init= false;
@@ -71,6 +75,7 @@ public class VersionUtil {
             _version.setBuildTag(props.getProperty(BUILD_TAG));
             _version.setBuildCommit(props.getProperty(BUILD_COMMIT));
             _version.setBuildCommitFirefly(props.getProperty(BUILD_COMMIT_FIREFLY));
+            _version.setBuildGitTagFirefly(props.getProperty(BUILD_GIT_TAG_FIREFLY));
         } catch (IOException e) {
             // just ignore
         }
@@ -87,6 +92,41 @@ public class VersionUtil {
         }
         return retval;
     }
+
+    public static String getUserAgentString() {
+        String fUA= getFireflyUA();
+        Version v= getAppVersion();
+        if (v.getAppName().equalsIgnoreCase("firefly")) return fUA;
+        if (v.getMajor()==0) return fUA;
+        return fUA + " ("+v.getAppName() + "/" + v.getMajor()+"."+v.getMinor()+"."+v.getRev() + ")";
+    }
+
+    private static String getFireflyUA() {
+        String tag = getAppVersion().getBuildGitTagFirefly();
+        if (StringUtils.isEmpty(tag)) return unknownVersionUA;
+        try {
+            Matcher m= Pattern.compile("\\d+(\\.\\d+)+").matcher(tag);
+            return "Firefly/" + m.results().findFirst().get().group();
+        } catch (Exception e) {
+            return unknownVersionUA;
+        }
+    }
+
+//    private static String getFireflyUA() {
+//        String unknown= "Firefly/development";
+//        String tag = getAppVersion().getBuildGitTagFirefly();
+//        if (StringUtils.isEmpty(tag)) return unknown;
+//        Matcher m = Pattern.compile("[1-9]").matcher(tag);
+//        if (!m.find()) return unknown;
+//        int firstIdx= m.start();
+//        int lastIdx= m.start();
+//        while (m.find()) lastIdx= m.start();
+//        try {
+//            return "Firefly/" + tag.substring(firstIdx,lastIdx+1);
+//        } catch (Exception e) {
+//            return unknown;
+//        }
+//    }
 
 }
 

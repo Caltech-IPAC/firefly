@@ -6,6 +6,7 @@ package edu.caltech.ipac.util.download;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.HttpResultInfo;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.VersionUtil;
 import edu.caltech.ipac.util.Base64;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -101,18 +102,21 @@ public class URLDownload {
                                                Map<String, String> requestHeaders) throws IOException {
         try {
             URLConnection conn = url.openConnection();
-            addCookiesToConnection(conn, cookies);
-            String[] userInfo = getUserInfo(url);
-            if (userInfo != null) {
-                String authStringEnc = Base64.encode(userInfo[0] + ":" + userInfo[1]);
-                conn.setRequestProperty("Authorization", "Basic " + authStringEnc);
+            if (conn instanceof HttpURLConnection) {
+                conn.setRequestProperty("User-Agent", VersionUtil.getUserAgentString());
+                conn.setRequestProperty("Accept-Encoding", "gzip, deflate");
+                addCookiesToConnection(conn, cookies);
+                String[] userInfo = getUserInfo(url);
+                if (userInfo != null) {
+                    String authStringEnc = Base64.encode(userInfo[0] + ":" + userInfo[1]);
+                    conn.setRequestProperty("Authorization", "Basic " + authStringEnc);
+                }
             }
             if (requestHeaders != null && requestHeaders.size() > 0) {
                 for (Map.Entry<String, String> entry : requestHeaders.entrySet()) {
                     conn.setRequestProperty(entry.getKey(), entry.getValue());
                 }
             }
-            conn.setRequestProperty("Accept-Encoding", "gzip, deflate");
             return conn;
         } catch (IOException e) {
             logError(url,null,e);
@@ -171,9 +175,10 @@ public class URLDownload {
         URLConnection conn= null;
         try {
             conn= makeConnection(url,cookies,requestHeaders);
+            Map<String,List<String>> reqProp= conn.getRequestProperties();
             pushPostData(conn, postData);
 
-            logHeader(postData, conn, null);
+            logHeader(postData, conn, reqProp);
             ByteArrayOutputStream out = new ByteArrayOutputStream(4096);
             netCopy(makeAnyInStream(conn, false), out, conn, 0, null);
             byte[] results = out.toByteArray();
@@ -197,7 +202,7 @@ public class URLDownload {
                 conn.setReadTimeout(timeoutInSec * 1000);
             }
             ((HttpURLConnection)conn).setRequestMethod("HEAD");
-            logHeader(null, conn, null);
+            logHeader(null, conn, conn.getRequestProperties());
             Set<Map.Entry<String,List<String>>> hSet = getResponseCode(conn)==-1 ? null : conn.getHeaderFields().entrySet();
             HttpResultInfo result= new HttpResultInfo(null,getResponseCode(conn),conn.getContentType(),getSugestedFileName(conn));
 

@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.network;
 
+import edu.caltech.ipac.firefly.server.util.VersionUtil;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -34,14 +35,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
-import static org.apache.commons.httpclient.params.HttpMethodParams.USER_AGENT;
 
 
 /**
@@ -188,7 +187,7 @@ public class HttpServices {
             LOG.info("HttpServices URL:" + method.getURI().toString());
 
             method.setRequestHeader("Connection", "close");            // request server to NOT keep-alive.. we don't plan to reuse this connection.
-            method.setRequestHeader("User-Agent", USER_AGENT);
+            method.setRequestHeader("User-Agent", VersionUtil.getUserAgentString());
             method.setRequestHeader(HttpHeaders.ACCEPT_ENCODING, "gzip");
             if (method instanceof GetMethod) {
                 method.setFollowRedirects(input.isFollowRedirect());    // post are not allowed to follow redirect

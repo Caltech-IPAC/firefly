@@ -163,7 +163,7 @@ export function getVersionInfoStr(includeBuiltOnDate) {
 
 const VersionInfo= ()  => <div onClick={() => showFullVersionInfoDialog()}>{getVersionInfoStr(true)}</div>;
 
-function versionInfoFull({BuildMajor, BuildMinor, BuildRev, BuildNumber, BuildType, BuildTime, BuildTag, BuildCommit, BuildCommitFirefly}) {
+function versionInfoFull({BuildMajor, BuildMinor, BuildRev, BuildNumber, BuildType, BuildTime, BuildTag, BuildCommit, BuildGitTagFirefly, BuildCommitFirefly}) {
     let version = `v${BuildMajor}.${Number(BuildMinor)===-1?'Next':BuildMinor}`;
     version += BuildRev !== '0' ? `.${BuildRev}` : '';
     return (
@@ -193,6 +193,12 @@ function versionInfoFull({BuildMajor, BuildMinor, BuildRev, BuildNumber, BuildTy
                     <div className='DD-Version__key'>Git commit(Firefly)</div>
                     <div className='DD-Version__value'>{BuildCommitFirefly}</div>
                 </div>
+            }
+            { BuildGitTagFirefly &&
+            <div className='DD-Version__item'>
+                <div className='DD-Version__key'>Firefly Git Tag</div>
+                <div className='DD-Version__value'>{BuildGitTagFirefly}</div>
+            </div>
             }
         </div>
     );
