@@ -395,14 +395,14 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
 
     if (blankHips) {
         dispatchPlotHiPS({plotId: PLOT_ID, viewerId, wpRequest:hipsRequest, attributes,
-            pvOptions: {userCanDeletePlots:false, displayFixedTarget:false}
+            pvOptions: {userCanDeletePlots:false, displayFixedTarget:false, useForCoverage:true}
         });
     }
     else {
         dispatchPlotImageOrHiPS({
             plotId: PLOT_ID, viewerId, hipsRequest, imageRequest, allSkyRequest,
             fovDegFallOver, fovMaxFitsSize, autoConvertOnZoom, plotAllSkyFirst,
-            pvOptions: {userCanDeletePlots:false, displayFixedTarget:false},
+            pvOptions: {userCanDeletePlots:false, displayFixedTarget:false, useForCoverage:true},
             attributes,
         });
 

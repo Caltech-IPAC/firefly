@@ -179,9 +179,10 @@ function VisMiniTBContainer({visRoot,dlCount, style= {}, size:{width}, manageExp
  */
 export const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, expandGrid}) => {
     const {apiToolsView}= visRoot;
+    const mountedRef= useRef({mounted:true});
     const {current:divref}= useRef({element:undefined});
     const [colorDrops,setColorDrops]= useState(true);
-    const [modalEndInfo, setModalEndInfo]= useState({f:undefined,s:undefined});
+    const [modalEndInfo, setModalEndInfoInternal]= useState({f:undefined,s:undefined});
 
 
     useEffect(() => {
@@ -191,6 +192,13 @@ export const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageE
             setColorDrops(Boolean(window.innerHeight-rect.bottom>560));
         }
     }, []);
+
+    useEffect(() => {
+        mountedRef.current.mounted= true;
+        return () => mountedRef.current.mounted= false;
+    }, []);
+
+    const setModalEndInfo= (info) => mountedRef.current.mounted && setModalEndInfoInternal(info);
 
     const pv= getActivePlotView(visRoot);
     const plot= primePlot(pv);
@@ -382,6 +390,7 @@ function ToolsDrop({visRoot, pv,plot, mi, enabled, image, hips, setModalEndInfo,
 
     const makeMatchLock= mi.matchLockDropDown && unavailableCnt>0;
     const makeColorLock= mi.overlayColorLock && unavailableCnt>1;
+    const showExtract= image && !pv?.plotViewCtx.useForCoverage;
     return (
         <div className='ff-MenuItem-dropDown'>
             <div style={{display:'inline-block', height:'100%', flex:'0 0 auto', margin:'0px 0 0 300px'}}>
@@ -394,10 +403,13 @@ function ToolsDrop({visRoot, pv,plot, mi, enabled, image, hips, setModalEndInfo,
                        modalEndInfo={modalEndInfo}
                        setModalEndInfo={setModalEndInfo}
             />
-            {image && <ExtractRow style={{paddingTop:10}} pv={pv} mi={mi} enabled={enabled} image={image}
-                                  modalEndInfo={modalEndInfo}
-                                  setModalEndInfo={setModalEndInfo}
-            />}
+            {showExtract && !pv.plotViewCtx.useForCoverage && <ExtractRow style={{paddingTop:10}}
+                                                                          pv={pv} mi={mi}
+                                                                          enabled={enabled}
+                                                                          image={image}
+                                                                          modalEndInfo={modalEndInfo}
+                                                                          setModalEndInfo={setModalEndInfo} />
+            }
             {(makeMatchLock || makeColorLock) && <div style={{display:'flex', alignItems:'center', paddingTop:10}}>
                 <div style={{width:130, fontSize:'larger'}}>More: </div>
                 {makeColorLock && <SimpleLayerOnOffButton plotView={pv}

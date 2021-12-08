@@ -37,7 +37,8 @@ export const MouseReadoutLock= memo(({gArea, gAreaLabel, style={}, lockByClick})
                     whiteSpace:'nowrap',
                     textOverflow: 'ellipsis',
                     overflow:'hidden',
-                    paddingRight:3
+                    paddingRight:3,
+                    minWidth: 20
                 } }>
                 Lock by click
             </span>}

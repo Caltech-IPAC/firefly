@@ -3,7 +3,7 @@
  */
 
 import update from 'immutability-helper';
-import {isEmpty, isUndefined, isArray, unionBy, isString, isNumber} from 'lodash';
+import {isEmpty, isUndefined, isString, isNumber} from 'lodash';
 import Cntlr, {ExpandType, WcsMatchType, ActionScope} from '../ImagePlotCntlr.js';
 import {replacePlotView, replacePrimaryPlot, changePrimePlot, updatePlotViewScrollXY,
         findScrollPtToCenterImagePt, findScrollPtToPlaceOnDevPt,
@@ -27,9 +27,7 @@ import {
     matchPlotViewByPositionGroup,
     getPlotViewIdxById,
     getPlotGroupIdxById,
-    getOverlayById,
     findPlotGroup,
-    findPlot,
     getPlotViewById,
     findCurrentCenterPoint,
     getCenterOfProjection,
@@ -557,7 +555,12 @@ function updateClientRotation(state,action) {
     }
 
     targetAngle= (360 + targetAngle) % 360;
-    if (!isEastLeftOfNorth(plot)) targetAngle= 360-targetAngle;
+    if (!isEastLeftOfNorth(plot) && !pv.flipY) {
+        targetAngle= 360-targetAngle;
+    }
+    else if (isEastLeftOfNorth(plot) && pv.flipY) {
+        targetAngle= 360-targetAngle;
+    }
 
     const masterPv= rotatePv(pv,targetAngle,rotateNorthLock);
     const matchingByWcs= wcsMatchType===WcsMatchType.Standard || wcsMatchType===WcsMatchType.Target;
@@ -581,8 +584,13 @@ function updateClientRotation(state,action) {
 
 function flipPv(pv, isY) {
     pv= {...pv};
-    if (isY) pv.flipY= !pv.flipY;
-    else     pv.flipX= !pv.flipX;
+    if (isY) {
+        pv.flipY= !pv.flipY;
+        if (pv.rotation!==0) pv.rotation= 360-pv.rotation;
+    }
+    else {
+        pv.flipX= !pv.flipX;
+    }
     const cc= CysConverter.make(primePlot(pv));
     if (!cc) return pv;
     const {width,height}= pv.viewDim;

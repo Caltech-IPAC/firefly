@@ -250,7 +250,7 @@ public final class FITSTableReader
         int len= results.get(0).getAryData().length;
         dataTypes.add(new DataType("plane","Plane", Integer.class));
         if (wlAry!=null) {
-            DataType wlDt= new DataType("wavelength",Double.class, "WaveLength", wlUnit, null, null);
+            DataType wlDt= new DataType("wavelength",Double.class, "Wavelength", wlUnit, null, null);
             dataTypes.add(wlDt);
         }
         String refKey= null;

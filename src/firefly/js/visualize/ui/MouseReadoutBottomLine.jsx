@@ -9,8 +9,10 @@ import {DataReadoutItem, MouseReadoutLock} from './MouseReadout.jsx';
 import {STANDARD_READOUT} from '../MouseReadoutCntlr.js';
 import './MouseReadout.css';
 import {ToolbarButton} from 'firefly/ui/ToolbarButton.jsx';
-import POPOUT_ICON from 'images//pop-out.png';
 import {showMouseReadoutPopout} from 'firefly/visualize/ui/MouseReadPopoutAll.jsx';
+
+import './MouseReadout.css';
+import POPOUT_ICON from 'images//pop-out.png';
 
 
 export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, style, slightlyTransparent=false, showOnInactive= false}){
@@ -25,6 +27,7 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
             setWidth(w);
         }
     });
+    const fullSize= width>500;
 
     const {readoutType}= readoutData;
     const image= readoutType===STANDARD_READOUT;
@@ -36,7 +39,7 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
     const showCopy= readout.lockByClick;
 
     const fluxArray = getFluxInfo(readoutData);
-    const gridClasses= getGridClass(threeColor,waveLength);
+    const gridClasses= getGridClass(fullSize, image,threeColor,waveLength);
     const ls= {color:'rgb(90,90,90)'};
 
     const rootStyle= {
@@ -52,7 +55,6 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
         return <div/>;
     }
 
-    const fullSize= width>350;
     return (
         <div className={gridClasses} style={rootStyle} ref={ (c) => divref.element=c} >
             <DataReadoutItem lArea='pixReadoutLabel' vArea='pixReadoutValue' cArea='clipboardIcon'
@@ -69,7 +71,7 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
             {fullSize && waveLength && image && <DataReadoutItem lArea='wlLabel' vArea='wlValue' label={waveLength.label} value={waveLength.value}
                                                      labelStyle={ls}
                                                      prefChangeFunc={showWavelengthFailed} /> }
-            {fullSize && <MouseReadoutLock gArea='lock' gAreaLabel='lockLabel'  lockByClick={readout.lockByClick} />}
+            {<MouseReadoutLock gArea='lock' gAreaLabel='lockLabel'  lockByClick={readout.lockByClick} />}
             <ToolbarButton icon={POPOUT_ICON}
                            style={{gridArea:'popout'}}
                            imageStyle={{width:16,flexGrow:0}}
@@ -92,9 +94,10 @@ MouseReadoutBottomLine.propTypes = {
 };
 
 
-function getGridClass(threeColor, waveLength) {
+function getGridClass(fullSize, image, threeColor, waveLength) {
     if (waveLength) return 'miniMouseReadoutWLImageGrid';
-    return 'miniMouseReadoutSingleImageGrid';
+    if (fullSize && image) return 'miniMouseReadoutSingleImageGrid';
+    return 'miniMouseReadoutNoFluxGrid';
 
 }
 
