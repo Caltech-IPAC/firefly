@@ -23,10 +23,11 @@
 }
 
 .TabPanel__Tabs {
-  list-style: none;
-  padding:0;
-  margin:0;
+    list-style: none;
+    padding:0;
+    margin:0;
     display: inline-flex;
+    overflow: hidden;
 }
 
 
