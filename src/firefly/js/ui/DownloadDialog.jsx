@@ -11,23 +11,25 @@ import {dispatchShowDialog, dispatchHideDialog} from '../core/ComponentCntlr.js'
 import {FormPanel} from './FormPanel.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
 import Validate from '../util/Validate.js';
-import {InputField} from './InputField.jsx';
 import {ValidationField} from './ValidationField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {showInfoPopup} from './PopupUtil.jsx';
 import {getActiveTableId, getTblById, hasRowAccess, getProprietaryInfo} from '../tables/TableUtil.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
-import {dispatchPackage, dispatchBgSetEmailInfo} from '../core/background/BackgroundCntlr.js';
+import {dispatchPackage} from '../core/background/BackgroundCntlr.js';
 import {WS_HOME} from '../visualize/WorkspaceCntlr.js';
-import {getBgEmailInfo} from '../core/background/BackgroundUtil.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {useStoreConnector} from './SimpleComponent.jsx';
 import {BgMaskPanel} from '../core/background/BgMaskPanel.jsx';
 import {WsSaveOptions} from './WorkspaceSelectPane.jsx';
 import {NotBlank} from '../util/Validate.js';
+import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
+import {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
 
 const DOWNLOAD_DIALOG_ID = 'Download Options';
 const OptionsContext = React.createContext();
+const emailNotif = 'enableEmailNotification';
+const emailKey = 'Email';          // should match server DownloadRequest.EMAIL
 
 /**
  * This download button does 2 things:
@@ -162,6 +164,9 @@ export function DownloadOptionPanel (props) {
         //make a download request
         let dlRequest = makeTblRequest(FileGroupProcessor, formInputs.Title, Object.assign(dlParams, {cutoutSize}, formInputs));
 
+        if (!dlParams[emailNotif]) Reflect.deleteProperty(dlRequest, emailKey);
+        Reflect.deleteProperty(dlRequest, emailNotif);
+
         //make a search request
         let searchRequest = cloneDeep(request);
 
@@ -226,7 +231,7 @@ export function DownloadOptionPanel (props) {
                         {cutoutSize         && <DownloadCutout {...{labelWidth}} />}
                         {showZipStructure   && <ZipStructure {...{labelWidth}} />}
                         {showFileLocation   && <WsSaveOptions {...{groupKey, labelWidth, saveAsProps}}/>}
-                        {showEmailNotify    && <EmailNotification/>}
+                        {showEmailNotify    && <EmailNotification {...{groupKey}}/>}
                     </div>
                 </FieldGroup>
             </FormPanel>
@@ -312,35 +317,26 @@ export function DownloadCutout({style={}, fieldKey='dlCutouts', labelWidth}) {
         />
     );
 }
-export function EmailNotification({style}) {
-
-    const [{email, enableEmail}] = useStoreConnector(getBgEmailInfo);
-
-    const toggleEnableEmail = (e) => {
-        const checked = e.target.checked;
-        const m_email = checked ? email : '';
-        dispatchBgSetEmailInfo({email: m_email, enableEmail: checked});
-    };
-
-    const onEmailChanged = (v) => {
-        if (get(v, 'valid')) {
-            if (email !== v.value) dispatchBgSetEmailInfo({email: v.value});
-        }
-    };
+export function EmailNotification({style, groupKey}) {
+    const [enableEmail] = useStoreConnector(() => getFieldVal(groupKey, emailNotif));
 
     return (
         <div style={style}>
-            <div style={{width: 250, marginTop: 15}}><input type='checkbox' checked={enableEmail} onChange={toggleEnableEmail}/>Enable email notification</div>
+            <div style={{width: 250, marginTop: 15}}>
+                <CheckboxGroupInputField fieldKey={emailNotif}
+                                     initialState= {{value: ''}}
+                                     options={[{label:'Enable email notification', value: 'true'}]}/>
+            </div>
             {enableEmail &&
-                <InputField
+                <ValidationField
+                    fieldKey={emailKey}
                     validator={Validate.validateEmail.bind(null, 'an email field')}
                     tooltip='Enter an email to be notified when a process completes.'
                     label='Email:'
-                    labelStyle={{display: 'inline-block', marginLeft: 18, width: 32, fontWeight: 'bold'}}
-                    value={email}
+                    labelWidth={35}
+                    labelStyle={{marginLeft: 18, fontWeight: 'bold'}}
                     placeholder='Enter an email to get notification'
                     style={{width: 170}}
-                    onChange={onEmailChanged}
                     actOn={['blur', 'enter']}
                 />
             }

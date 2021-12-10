@@ -166,7 +166,7 @@ function JobHeader({jobInfo}) {
 
     return (
         <div className='BGMon__header'>
-            <div title={label} style={{display: 'inline-flex', overflow: 'hidden'}}>
+            <div title={label} style={{display: 'inline-flex', overflow: 'hidden', alignItems: 'center'}}>
                 <div className='BGMon__header--title'>{label}</div>
                 <img src={INFO} onClick={showInfo} className='JobInfo__items--link'/>
             </div>
