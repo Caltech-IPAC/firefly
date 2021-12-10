@@ -143,6 +143,8 @@ export function doPackageRequest({dlRequest, searchRequest, selectInfo, bgKey, o
             if (inProgress) {
                 // not done; track progress
                 trackBackgroundJob({jobId, key: bgKey, onComplete, sentToBg});
+            } else {
+                onComplete?.(jobInfo);
             }
         });
 }

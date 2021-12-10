@@ -24,7 +24,7 @@ export function CheckboxGroupInputFieldView({fieldKey, onChange, label, tooltip,
             {options.map( (option) => {
                 return (
                     <div key={option.value}
-                         style={alignment==='vertical' ? {display:'block'}:{display:'inline-block'}}>
+                         style={alignment==='vertical' ? {display:'block'}:{display:'inline-flex', alignItems: 'center'}}>
                         <input type='checkbox'
                                name={fieldKey}
                                value={option.value}

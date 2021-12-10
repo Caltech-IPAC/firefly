@@ -72,7 +72,6 @@
 .BGMon__header--title {
     font-weight: bold;
     margin-left: 3px;
-    margin-right: -3px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
