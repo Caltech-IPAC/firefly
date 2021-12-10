@@ -37,7 +37,7 @@ const TabsHeaderInternal = React.memo((props) => {
     let sizedChildren = children;
     if (widthPx && resizable) {
         // 2*5px - border, for each tab: 2x1px - border, 2x6px - padding, 6px - left margin
-        const availableWidth = widthPx - 5 - 20 * numTabs;
+        const availableWidth = widthPx - 25 - 20 * numTabs;
         maxTitleWidth = Math.min(200, Math.trunc(availableWidth / numTabs));
         if (maxTitleWidth < 0) { maxTitleWidth = 1; }
         sizedChildren = childrenAry.map((child) => {
