@@ -437,7 +437,7 @@ export function isPlotRotatedNorth(plot, csys= CoordinateSys.EQ_J2000) {
  * @return {boolean} true if is is left of north.
  */
 export function isEastLeftOfNorth(plot) {
-    if (!plot) return true;
+    if (!plot?.projection) return true;
     if (!plot.projection.isSpecified() || !plot.projection.isImplemented()) return true;
 
     const mx = plot.dataWidth/2;
@@ -885,6 +885,7 @@ export function getTopmostVisiblePoint(plot,viewDim,xOff, yOff) {
  * @return {boolean} true if covering
  */
 export function isImageCoveringArea(plot,pt, width,height) {
+    if (!pt) return false;
     const cc= CysConverter.make(plot);
     pt= cc.getDeviceCoords(pt);
     const testPts= [

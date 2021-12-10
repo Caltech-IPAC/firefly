@@ -36,7 +36,10 @@ export function showFitsRotationDialog() {
 
 function getCurrentRotation(pv) {
     if (!pv || !pv.rotation || pv.rotation>359 || pv.rotation<.5) return 0;
-    const angle=  isEastLeftOfNorth(primePlot(pv)) ? 360-pv.rotation : pv.rotation;
+    let angle;
+    if (isEastLeftOfNorth(primePlot(pv)) && !pv.flipY) angle= 360-pv.rotation;
+    else if (!isEastLeftOfNorth(primePlot(pv)) && pv.flipY) angle= 360-pv.rotation;
+    else angle= pv.rotation;
     return Math.round(angle);
 }
 

@@ -810,7 +810,7 @@ function createOutlineBoxAllSteps(fpCenter, outlineCenter, width, height, unitTy
             var vCenter = makeDevicePt(cc.viewDim.width / 2, cc.viewDim.height / 2);
 
             outlineBox = createOutlineBox(vCenter, sBox, sBox, ShapeDataObj.UnitType.PIXEL, cc, angle);
-            outlineBox.outlineType = OutlineType.plotcenter;
+            if (outlineBox) outlineBox.outlineType = OutlineType.plotcenter;
         }
     }
     return outlineBox;
@@ -963,7 +963,7 @@ function createOutlineBox(centerPt, width, height, unitType, cc, angle = 0.0) {
                       simpleRotateAroundPt(cc.getImageCoords(corner), cc.getImageCoords(centerPt), -angle, Point.IM_PT) :
                       corner;
 
-        if (rCorner && cc.pointInData(rCorner)) {
+        if (rCorner && cc.pointOnDisplay(rCorner)) {
             prev++;
         }
         return prev;
@@ -1181,7 +1181,7 @@ export function updateFootprintOutline(drawObj, cc, bForced = false) {
         drawObj.drawObjAry.push(createCrossCenter(centerPt));
 
         const handle = updateHandle(drawObj, cc, [MARKER_HANDLE.outline]);
-        if (handle) {
+        if (handle?.length) {
             drawObj.drawObjAry.push(handle[0]);
         }
 

@@ -9,7 +9,7 @@ import {downloadChart, PlotlyWrapper} from '../../charts/ui/PlotlyWrapper.jsx';
 import {PopupPanel} from 'firefly/ui/PopupPanel.jsx';
 import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
 import {dispatchHideDialog, dispatchShowDialog} from 'firefly/core/ComponentCntlr.js';
-import {
+import ImagePlotCntlr, {
     dispatchAttributeChange,
     dispatchChangePointSelection,
     dispatchChangePrimePlot,
@@ -37,7 +37,7 @@ import {ListBoxInputFieldView} from 'firefly/ui/ListBoxInputField.jsx';
 import { callGetCubeDrillDownAry, callGetPointExtractionAry } from 'firefly/rpc/PlotServicesJson.js';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {getExtName} from 'firefly/visualize/FitsHeaderUtil.js';
-import {dispatchTableFetch, dispatchTableSearch} from 'firefly/tables/TablesCntlr.js';
+import {dispatchTableFetch, dispatchTableSearch, TABLE_REMOVE} from 'firefly/tables/TablesCntlr.js';
 import {makeTblRequest} from 'firefly/tables/TableRequestUtil.js';
 import ExtractLineTool from 'firefly/drawingLayers/ExtractLineTool.js';
 import ExtractPointsTool from 'firefly/drawingLayers/ExtractPointsTool.js';
@@ -56,6 +56,8 @@ import {showTableDownloadDialog} from 'firefly/tables/ui/TableSave.jsx';
 import {getAppOptions} from 'firefly/api/ApiUtil.js';
 import {showPinMessage} from 'firefly/ui/PopupUtil.jsx';
 import ReactDOM from 'react-dom';
+import {MetaConst} from 'firefly/data/MetaConst.js';
+import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga.js';
 
 
 
@@ -95,13 +97,26 @@ function enableDrawLayer(typeId) {
     !isDrawLayerAttached(dl,pv.plotId) && dispatchAttachLayerToPlot(typeId,pv.plotId,true,true, true);
 }
 
+const EXTRACT_END_ID= 'extractEndId';
+
 
 export function showExtractionDialog(extractionType,wasCanceled) {
     endExtraction();
     exTypeCntl[extractionType].start();
     DialogRootContainer.defineDialog(DIALOG_ID, <ExtractDialog {...{extractionType, wasCanceled}}/> );
     dispatchShowDialog(DIALOG_ID);
+
+
+    dispatchAddActionWatcher( {
+        id: EXTRACT_END_ID,
+        callback: (action,cancelSelf) => {
+            endExtraction();
+            cancelSelf();
+        },
+        actions:[ImagePlotCntlr.PLOT_IMAGE]
+    });
 }
+
 
 export function endExtraction() {
     cancelPointExtraction();
@@ -268,11 +283,11 @@ function PointExtractionPanel({canCreateExtractionTable, pv}) {
             startUpHelp: (
                 <div>
                     <div> Click on an image to extract a point, continue clicking to extract more points. </div>
-                    <div style={{marginTop:25}}> Shift-click will change images without extracting points. </div>
+                    <div style={{marginTop:25}}> Shift-click will change the selected image without extracting points. </div>
                 </div>
             ),
             afterRedraw: (chart,pl) => afterPointsChartRedraw(pv,chart,pl,chartXAxis, imPtAry),
-            callKeepExtraction: (download) => keepPointsExtraction(imPtAry, pv, plot, plot.plotState.getWorkingFitsFileStr(), hduNum, plane, pointSize,download),
+            callKeepExtraction: (download, doOverlay) => keepPointsExtraction(imPtAry, pv, plot, plot.plotState.getWorkingFitsFileStr(), hduNum, plane, pointSize,download, doOverlay),
             cancelFunc: () => cancelZaxisExtraction(), bottomUI
         }} /> );
 }
@@ -335,9 +350,14 @@ function LineExtractionPanel({canCreateExtractionTable, pv}) {
         <ExtractionPanelView {...{
             allRelatedHDUS, setAllRelatedHDUS, pointSize, setPointSize, canCreateExtractionTable,
             plotlyDivStyle, plotlyData: extractionData&&plotlyData, plotlyLayout,
-            startUpHelp: 'Draw line on image to extract point on line and show chart',
+            startUpHelp: (
+                <div>
+                    <div> Draw line on image to extract point on line and show chart. </div>
+                    <div style={{marginTop:25}}> Shift-click will change the selected image without selecting a new line. </div>
+                </div>
+            ),
             afterRedraw: (chart,pl) => afterLineChartRedraw(pv,chart,pl,imPtAry,makeImagePt(x1,y1), makeImagePt(x2,y2)),
-            callKeepExtraction: (download) => keepLineExtraction(ipt1,ipt2, pv, plot, plot.plotState.getWorkingFitsFileStr(), hduNum, plane, pointSize, download),
+            callKeepExtraction: (download, doOverlay) => keepLineExtraction(ipt1,ipt2, pv, plot, plot.plotState.getWorkingFitsFileStr(), hduNum, plane, pointSize, download, doOverlay),
             cancelFunc: () => cancelZaxisExtraction()
         }} /> );
 }
@@ -407,7 +427,7 @@ function ZAxisExtractionPanel({canCreateExtractionTable, pv}) {
                 'Click on a pixel to extract data from all planes of the cube' :
                 'Please choose a cube to extract z-axis data',
             afterRedraw: (chart,pl) => afterZAxisChartRedraw(makeImagePt(x,y), pv,chart,pl),
-            callKeepExtraction: (download) => keepZAxisExtraction(makeImagePt(x,y), pv, plot, plot.plotState.getWorkingFitsFileStr(), hduNum, pointSize, download),
+            callKeepExtraction: (download, doOverlay) => keepZAxisExtraction(makeImagePt(x,y), pv, plot, plot.plotState.getWorkingFitsFileStr(), hduNum, pointSize, download,doOverlay),
             cancelFunc: () => cancelZaxisExtraction()
         }} />
     );
@@ -442,9 +462,9 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
                 justifyContent:'space-between', padding: '15px 15px 7px 8px' }}>
                 <div style={{display:'flex', justifyContent:'space-between'}}>
                     {plotlyData && canCreateExtractionTable &&
-                    <CompleteButton style={{paddingLeft: 15}} text='Pin Table' onSuccess={()=> callKeepExtraction(false) } />}
+                    <CompleteButton style={{paddingLeft: 15}} text='Pin Table' onSuccess={()=> callKeepExtraction(false, true)} />}
                     {plotlyData &&
-                    <CompleteButton style={{paddingLeft: 15}} text='Download as Table' onSuccess={()=> callKeepExtraction(true)}/>}
+                    <CompleteButton style={{paddingLeft: 15}} text='Download as Table' onSuccess={()=> callKeepExtraction(true,false)}/>}
                     {plotlyData &&
                     <CompleteButton style={{paddingLeft: 15}} text='Download Chart' onSuccess={()=> downloadChart(CHART_ID)}/>}
                 </div>
@@ -483,18 +503,22 @@ const getNextTblId= () => 'extraction-table-'+(idCnt++);
 
 
 
-async function doDispatchTableSaving(req) {
+async function doDispatchTableSaving(req, doOverlay) {
     const {tbl_id}= req;
-    dispatchTableFetch(req,{ tbl_group: 'main', backgroundable: false, });
+    const sendReq= {...req};
+    sendReq.META_INFO= !doOverlay ? {...sendReq.META_INFO, [MetaConst.CATALOG_OVERLAY_TYPE]: 'FALSE'} :{...sendReq.META_INFO};
+    dispatchTableFetch(sendReq,{ tbl_group: 'main', backgroundable: false});
     await onTableLoaded(tbl_id);
     showTableDownloadDialog({tbl_id,tbl_ui_id:undefined})();
 }
 
 
 
-function doDispatchTable(req) {
+function doDispatchTable(req, doOverlay) {
     showPinMessage('Pinning Extraction to Table Area');
-    dispatchTableSearch(req,{
+    const sendReq= {...req};
+    sendReq.META_INFO= !doOverlay ? {...sendReq.META_INFO, [MetaConst.CATALOG_OVERLAY_TYPE]: 'FALSE'} :{...sendReq.META_INFO};
+    dispatchTableSearch(sendReq,{
         logHistory: false,
         removable:true,
         tbl_group: 'main',
@@ -506,7 +530,7 @@ function doDispatchTable(req) {
 
 let titleCnt= 1;
 
-function keepZAxisExtraction(pt,pv, plot, filename,refHDUNum,extractionSize, save=false) {
+function keepZAxisExtraction(pt,pv, plot, filename,refHDUNum,extractionSize, save=false, doOverlay=true) {
     const wlUnit= getWaveLengthUnits(plot);
     const wpt= CCUtil.getWorldCoords(plot,pt);
     const fluxUnit= getHduPlotStartIndexes(pv)
@@ -531,12 +555,12 @@ function keepZAxisExtraction(pt,pv, plot, filename,refHDUNum,extractionSize, sav
             allMatchingHDUs: true,
         },
         {tbl_id});
-    save ? doDispatchTableSaving(dataTableReq) : doDispatchTable(dataTableReq);
+    save ? doDispatchTableSaving(dataTableReq, doOverlay) : doDispatchTable(dataTableReq, doOverlay);
     idCnt++;
     titleCnt++;
 }
 
-function keepLineExtraction(pt, pt2,pv, plot, filename,refHDUNum,plane,extractionSize,save=false) {
+function keepLineExtraction(pt, pt2,pv, plot, filename,refHDUNum,plane,extractionSize,save=false,doOverlay=true) {
     const tbl_id= getNextTblId();
     const imPtAry= getLinePointAry(pt,pt2);
     const cc= CysConverter.make(plot);
@@ -556,7 +580,7 @@ function keepLineExtraction(pt, pt2,pv, plot, filename,refHDUNum,plane,extractio
             allMatchingHDUs: true,
         },
         {tbl_id});
-    save ? doDispatchTableSaving(dataTableReq) : doDispatchTable(dataTableReq);
+    save ? doDispatchTableSaving(dataTableReq, doOverlay) : doDispatchTable(dataTableReq, doOverlay);
     idCnt++;
     titleCnt++;
 }
@@ -572,7 +596,7 @@ function makePlaneTitle(rootStr, pv,plot,cnt) {
     return `${rootStr} ${cnt}${hduStr}${cubeStr}`;
 }
 
-function keepPointsExtraction(ptAry,pv, plot, filename,refHDUNum,plane,extractionSize,save=false) {
+function keepPointsExtraction(ptAry,pv, plot, filename,refHDUNum,plane,extractionSize,save=false,doOverlay=true) {
     const tbl_id= getNextTblId();
     const cc= CysConverter.make(plot);
     const wptStrAry=
@@ -593,7 +617,7 @@ function keepPointsExtraction(ptAry,pv, plot, filename,refHDUNum,plane,extractio
             allMatchingHDUs: true,
         },
         {tbl_id});
-    save ? doDispatchTableSaving(dataTableReq) : doDispatchTable(dataTableReq);
+    save ? doDispatchTableSaving(dataTableReq,doOverlay) : doDispatchTable(dataTableReq,doOverlay);
     idCnt++;
     titleCnt++;
 }

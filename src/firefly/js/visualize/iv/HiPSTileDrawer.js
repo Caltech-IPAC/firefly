@@ -50,6 +50,7 @@ export function createHiPSDrawer(targetCanvas, GPU) {
 
         const {norder, useAllSky}= getHiPSNorderlevel(plot, true);
         const {fov,centerWp}= getPointMaxSide(plot,viewDim);
+        if (!centerWp) return;
         const tilesToLoad= findCellOnScreen(plot,viewDim,norder, fov, centerWp);
         let drawTiming= DrawTiming.ASYNC;
         const {bias,contrast}= plot.rawData.bandData[0];

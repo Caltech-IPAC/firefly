@@ -151,6 +151,7 @@ function createPlotViewContextData(req, pvOptions={}) {
         userCanDeletePlots: pvOptions?.userCanDeletePlots ?? true,
         annotationOps : req.getAnnotationOps(), // how titles are drawn
         rotateNorthLock : Boolean(pvOptions.rotateNorthLock && pvOptions.useSticky),
+        useForCoverage: Boolean(pvOptions.useForCoverage),
         zoomLockingEnabled : false,
         zoomLockingType: UserZoomTypes.FIT, // can be FIT or FILL
         displayFixedTarget: pvOptions?.displayFixedTarget ?? true,

@@ -493,7 +493,7 @@ function makeMessageArea(pv,plotShowing,onScreen, sizeViewable, loadingRawData) 
     if (pv.serverCall==='success') {
         if (loadingRawData) {
             return (
-                <ImageViewerStatus message={'Loading Color Data'} working={true}
+                <ImageViewerStatus message={'Loading Image Rendering'} working={true}
                                    maskWaitTimeMS= {500} messageWaitTimeMS={1000} useMessageAlpha={plotShowing}/>
             );
         }

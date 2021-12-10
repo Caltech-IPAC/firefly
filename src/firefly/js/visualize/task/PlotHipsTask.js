@@ -457,7 +457,7 @@ export function convertToImage(pv, allSky= false, tryCenterBySelectedObj= false)
     const plot= primePlot(pv);
     const attributes= {...plot.attributes, ...getCornersAttribute(pv)};
     const fromImage= isImage(plot) && !plot.projection.isWrappingProjection();
-    const {displayFixedTarget,userCanDeletePlots}= pv.plotViewCtx;
+    const {displayFixedTarget,userCanDeletePlots,useForCoverage}= pv.plotViewCtx;
     if (convertToAllSky) {
         if (fromImage) {
             prepFromImageConversion(pv,wpRequest);
@@ -482,7 +482,7 @@ export function convertToImage(pv, allSky= false, tryCenterBySelectedObj= false)
     }
 
     dispatchPlotImage({plotId, wpRequest, hipsImageConversion: pv.plotViewCtx.hipsImageConversion,
-        pvOptions:{displayFixedTarget,userCanDeletePlots},
+        pvOptions:{displayFixedTarget,userCanDeletePlots, useForCoverage},
         attributes, enableRestore:false});
 }
 
@@ -502,11 +502,11 @@ export function convertToHiPS(pv, fromAllSky= false, tryCenterBySelectedObj= fal
     if (!fromAllSky) {
         prepFromImageConversion(pv,wpRequest);
     }
-    const {displayFixedTarget,userCanDeletePlots}= pv.plotViewCtx;
+    const {displayFixedTarget,userCanDeletePlots, useForCoverage}= pv.plotViewCtx;
 
     dispatchPlotHiPS({plotId, wpRequest, attributes, hipsImageConversion: pv.plotViewCtx.hipsImageConversion,
         enableRestore:false,
-        pvOptions:{ displayFixedTarget, userCanDeletePlots }
+        pvOptions:{ displayFixedTarget, userCanDeletePlots, useForCoverage}
     });
 }
 
