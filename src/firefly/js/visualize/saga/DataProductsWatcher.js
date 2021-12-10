@@ -16,7 +16,7 @@ import {findGridTableRows} from '../../metaConvert/converterUtils.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga.js';
 import {isMetaDataTable} from '../../util/VOAnalyzer.js';
-import {resetImageFullGridActivePlot, changeActivePlotView} from '../../metaConvert/ImageDataProductsUtil.js';
+import {zoomPlotPerViewSize, resetImageFullGridActivePlot, changeActivePlotView} from '../../metaConvert/ImageDataProductsUtil.js';
 import {
     dataProductRoot,
     dispatchUpdateDataProducts,
@@ -24,6 +24,7 @@ import {
     getDataProducts
 } from '../../metaConvert/DataProductsCntlr';
 import {dpdtMessage} from '../../metaConvert/DataProductsType';
+import {UserZoomTypes} from 'firefly/visualize/ZoomUtil.js';
 
 const MAX_GRID_SIZE= 50;
 
@@ -40,7 +41,7 @@ const DataProductsWatcherDef = {
               MultiViewCntlr.VIEWER_UNMOUNTED,
               MultiViewCntlr.CHANGE_VIEWER_LAYOUT, MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA,
               ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW,
-              ImagePlotCntlr.ANY_REPLOT]
+              ImagePlotCntlr.UPDATE_VIEW_SIZE, ImagePlotCntlr.ANY_REPLOT]
 };
 
 export function startDataProductsWatcher({dataTypeViewerId= 'DataProductsType', paused=true}) {
@@ -64,7 +65,7 @@ export function startDataProductsWatcher({dataTypeViewerId= 'DataProductsType', 
 function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
     const {options:{dataTypeViewerId= 'DataProductsType'}} = params;
     const dpId= params.options.dpId || dataTypeViewerId;
-    let {paused= true} = params;
+    let {paused= true, zoomOnNextViewSizeChange=false} = params;
     const {abortPromise:abortLastPromise} = params;
     const activateParams= getActivateParams(dataProductRoot(),dpId);
     const {imageViewerId}= activateParams;
@@ -112,12 +113,13 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
         case TABLE_UPDATE:
         case TBL_RESULTS_ACTIVE:
             if (!paused) abortPromise= updateDataProducts(tbl_id, activateParams, abortLastPromise);
+            zoomOnNextViewSizeChange= false;
             break;
 
         case MultiViewCntlr.CHANGE_VIEWER_LAYOUT:
         case MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA:
             if (!paused) abortPromise= updateDataProducts(tbl_id, activateParams, abortLastPromise, true);
-
+            zoomOnNextViewSizeChange= true;
             break;
 
 
@@ -125,16 +127,19 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
             if (payload.mounted) {
                 abortPromise= updateDataProducts(tbl_id, activateParams, abortLastPromise);
                 paused= false;
+                zoomOnNextViewSizeChange= false;
             }
             break;
 
         case MultiViewCntlr.VIEWER_MOUNTED:
             paused= false;
             abortPromise= updateDataProducts(tbl_id, activateParams, abortLastPromise);
+            zoomOnNextViewSizeChange= false;
             break;
 
         case MultiViewCntlr.VIEWER_UNMOUNTED:
             paused= true;
+            zoomOnNextViewSizeChange= false;
             break;
 
         case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
@@ -143,13 +148,21 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
 
         case ImagePlotCntlr.ANY_REPLOT:
             if (!paused) resetImageFullGridActivePlot(tbl_id, action.payload.plotIdAry);
+            zoomOnNextViewSizeChange= false;
+            break;
+
+        case ImagePlotCntlr.UPDATE_VIEW_SIZE:
+            if (!paused && zoomOnNextViewSizeChange) {
+                zoomPlotPerViewSize(payload.plotId, UserZoomTypes.FIT);
+            }
             break;
 
         case REINIT_APP:
             cancelSelf();
+            zoomOnNextViewSizeChange= false;
             break;
     }
-    return {paused, abortPromise};
+    return {paused, abortPromise, zoomOnNextViewSizeChange};
 }
 
 

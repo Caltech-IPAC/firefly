@@ -7,10 +7,12 @@ import {
     isImageViewerSingleLayout,
     getLayoutType, GRID, DEFAULT_FITS_VIEWER_ID
 } from '../visualize/MultiViewCntlr.js';
-import {dispatchPlotImage, dispatchDeletePlotView, visRoot, dispatchZoom,
-    dispatchPlotGroup, dispatchChangeActivePlotView} from '../visualize/ImagePlotCntlr.js';
+import ImagePlotCntlr, {
+    dispatchPlotImage, dispatchDeletePlotView, visRoot, dispatchZoom,
+    dispatchPlotGroup, dispatchChangeActivePlotView, dispatchPlotMaskLazyLoad
+} from '../visualize/ImagePlotCntlr.js';
 import {AnnotationOps, isImageDataRequestedEqual} from '../visualize/WebPlotRequest.js';
-import {getPlotViewAry, getPlotViewById, primePlot} from '../visualize/PlotViewUtil.js';
+import {getPlotViewAry, getPlotViewById, isPlotIdInPvNewPlotInfoAry, primePlot} from '../visualize/PlotViewUtil.js';
 import {UserZoomTypes} from '../visualize/ZoomUtil.js';
 import {allBandAry} from '../visualize/Band.js';
 import {getTblById} from '../tables/TableUtil.js';
@@ -19,6 +21,8 @@ import {dispatchTableHighlight} from '../tables/TablesCntlr.js';
 import {isImageExpanded} from '../visualize/ImagePlotCntlr';
 import {DPtypes} from 'firefly/metaConvert/DataProductsType.js';
 import {showPinMessage, showTmpModal} from 'firefly/ui/PopupUtil.jsx';
+import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga.js';
+import {logger} from 'firefly/util/Logger.js';
 
 
 
@@ -101,13 +105,58 @@ export function createSingleImageExtraction(request) {
 
 
 
-export function zoomPlotPerViewSize(plotId) {
-    const vr= visRoot();
-    if (!vr.wcsMatchType &&  isImageViewerSingleLayout(getMultiViewRoot(), vr, plotId)) {
-        dispatchZoom({plotId, userZoomType: UserZoomTypes.FILL});
+
+
+export function zoomPlotPerViewSizeOLD(plotId, zoomType) {
+    setTimeout(() => {
+        if (!visRoot().wcsMatchType) {
+            dispatchZoom({plotId, userZoomType: zoomType});
+        }
+    },5);
+}
+///=========================
+
+function watchForCompletedPlot(action, cancelSelf, params) {
+    const {afterComplete, plotId}= params;
+    const {payload,type}= action;
+
+    if (type===ImagePlotCntlr.PLOT_IMAGE_FAIL) {
+        if (payload.plotId!==plotId) return;
+        cancelSelf();
+        return;
+    }
+    if (type===ImagePlotCntlr.PLOT_IMAGE) {
+        if (!payload.pvNewPlotInfoAry.some( (n) => n.plotId===plotId)) {
+            return;
+        }
+        afterComplete();
+        cancelSelf();
+        return;
+    }
+    logger.warn('watchForCompletedPlot: should never get here.');
+    cancelSelf();
+}
+
+export function zoomPlotPerViewSize(plotId, zoomType) {
+    const afterComplete= () => {
+        if (!visRoot().wcsMatchType) {
+            dispatchZoom({plotId, userZoomType: zoomType});
+        }
+    };
+    const pv= getPlotViewById(visRoot(),plotId);
+    if (pv.serverCall==='working') {
+        dispatchAddActionWatcher( {
+            callback: watchForCompletedPlot,
+            params: {plotId, afterComplete},
+            actions: [ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_IMAGE_FAIL]
+        } );
+    }
+    else {
+        afterComplete();
     }
 }
 
+///=========================
 
 export function resetImageFullGridActivePlot(tbl_id, plotIdAry) {
     if (!tbl_id || isEmpty(plotIdAry)) return

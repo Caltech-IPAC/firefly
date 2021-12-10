@@ -283,7 +283,7 @@ function PointExtractionPanel({canCreateExtractionTable, pv}) {
             startUpHelp: (
                 <div>
                     <div> Click on an image to extract a point, continue clicking to extract more points. </div>
-                    <div style={{marginTop:25}}> Shift-click will change images without extracting points. </div>
+                    <div style={{marginTop:25}}> Shift-click will change the selected image without extracting points. </div>
                 </div>
             ),
             afterRedraw: (chart,pl) => afterPointsChartRedraw(pv,chart,pl,chartXAxis, imPtAry),
@@ -353,7 +353,7 @@ function LineExtractionPanel({canCreateExtractionTable, pv}) {
             startUpHelp: (
                 <div>
                     <div> Draw line on image to extract point on line and show chart. </div>
-                    <div style={{marginTop:25}}> Shift-click will change images without selecting a new line. </div>
+                    <div style={{marginTop:25}}> Shift-click will change the selected image without selecting a new line. </div>
                 </div>
             ),
             afterRedraw: (chart,pl) => afterLineChartRedraw(pv,chart,pl,imPtAry,makeImagePt(x1,y1), makeImagePt(x2,y2)),
