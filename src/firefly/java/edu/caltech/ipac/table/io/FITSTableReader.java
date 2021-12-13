@@ -317,7 +317,8 @@ public final class FITSTableReader
         for(FitsReadUtil.ExtractionResults result : results) {
             String desc= result.getExtName()!=null ? result.getExtName() : "HDU# "+result.getHduNum();
             String key= makeKeyforHDUTab(result);
-            DataType dt = new DataType(key,desc, Double.class);
+            String bunit= result.getHeader().getStringValue("BUNIT");
+            DataType dt = new DataType(key,Double.class, desc, bunit, null,null);
             if (result.isRefHDU()) defYCol= key;
             dataTypes.add(dt);
         }
@@ -376,7 +377,8 @@ public final class FITSTableReader
         for(FitsReadUtil.ExtractionResults result : results) {
             String desc= result.getExtName()!=null ? result.getExtName() : "HDU# "+result.getHduNum();
             String key= makeKeyforHDUTab(result);
-            DataType dt = new DataType(key,desc, Double.class);
+            String bunit= result.getHeader().getStringValue("BUNIT");
+            DataType dt = new DataType(key,Double.class, desc, bunit, null,null);
             if (result.isRefHDU()) defYCol= key;
             dataTypes.add(dt);
         }

@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {flatten, has, isArray, isEmpty, isObject, isString, isUndefined, uniq} from 'lodash';
+import {has, isArray, isEmpty, isObject, isString, isUndefined} from 'lodash';
 import shallowequal from 'shallowequal';
 import {getPlotGroupById} from './PlotGroup.js';
 import {makeDevicePt, makeImagePt, makeWorldPt, pointEquals} from './Point.js';
@@ -22,16 +22,20 @@ export const CANVAS_DL_ID_START= 'dl-';
 /**
  * 
  * @param {VisRoot | PlotView[]} ref
+ * @param {String} [plotGroupId] return only the PlotViews with the same group id, if undefined return all
  * @returns {PlotView[]}
  */
-export function getPlotViewAry(ref) {
+export function getPlotViewAry(ref, plotGroupId= undefined) {
     if (!ref) return undefined;
+    let pvAry;
     if (ref.plotViewAry && has(ref,'activePlotId')) { // I was passed the visRoot
-        return ref.plotViewAry;
+        pvAry= ref.plotViewAry;
     }
     else if (isArray(ref) && ref.length>0 && ref[0].plotId)  { // passed a plotViewAry
-        return ref;
+        pvAry= ref;
     }
+    if (!plotGroupId) return pvAry;
+    return pvAry.filter( (pv) => pv.plotGroupId===plotGroupId);
 }
 
 /**
