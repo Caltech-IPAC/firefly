@@ -24,7 +24,7 @@ import {
     getDrawLayerByType,
     getHDU,
     getHDUIndex, getHduPlotStartIndexes,
-    getImageCubeIdx, getPtWavelength, getWaveLengthUnits,
+    getImageCubeIdx, getPlotViewAry, getPtWavelength, getWaveLengthUnits,
     hasWCSProjection, hasWLInfo,
     isDrawLayerAttached,
     isImageCube,
@@ -125,7 +125,7 @@ export function endExtraction() {
 }
 
 function ExtractDialog({extractionType,wasCanceled}) {
-    const [pv] = useStoreConnector( getStoreState);
+    const [{pv, pvCnt}] = useStoreConnector( getStoreState);
     const {canCreateExtractionTable}= getAppOptions().image;
     const {Panel, cancelFunc}= exTypeCntl[extractionType];
 
@@ -137,16 +137,18 @@ function ExtractDialog({extractionType,wasCanceled}) {
     return(
         <PopupPanel title={`Extract - ${primePlot(pv)?.title ?? ''}`}
                     closeCallback={doCancel} requestToClose={doCancel}  >
-            <Panel canCreateExtractionTable={canCreateExtractionTable} pv={pv}/>
+            <Panel canCreateExtractionTable={canCreateExtractionTable} pv={pv} pvCnt={pvCnt}/>
         </PopupPanel>
     );
 }
 
 
 
-function getStoreState(prevPv) {
+function getStoreState(prevResult) {
     const pv= getActivePlotView(visRoot());
-    return pv===prevPv ? prevPv : pv;
+    const pvAry= pv ? getPlotViewAry(visRoot(), pv.plotGroupId) : [];
+    if (prevResult && prevResult.pv===pv && prevResult.pvCnt===pvAry.length) return prevResult;
+    return {pv,pvCnt:pvAry.length};
 }
 
 const sizeOp=[];
@@ -230,7 +232,7 @@ function makeLineExtractionTitle(pv,x1,y1,x2,y2) {
 }
 
 
-function PointExtractionPanel({canCreateExtractionTable, pv}) {
+function PointExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
     const [{plotlyDivStyle, plotlyData, plotlyLayout},setChartParams]= useState({});
     const [pointSize,setPointSize]= useState(1);
     const [allRelatedHDUS,setAllRelatedHDUS]= useState(true);
@@ -267,7 +269,7 @@ function PointExtractionPanel({canCreateExtractionTable, pv}) {
                     if (activeIdx<0) activeIdx= 0;
                 }
                 const chartData=
-                    genPointChartData(dataAry,imPtAry, imPtAry[activeIdx][key], dataAry[activeIdx],
+                    genPointChartData(plot, dataAry,imPtAry, imPtAry[activeIdx][key], dataAry[activeIdx],
                         pointSize,chartTitle, chartXAxis, activeIdx);
                 setChartParams(chartData);
             }
@@ -283,7 +285,7 @@ function PointExtractionPanel({canCreateExtractionTable, pv}) {
             startUpHelp: (
                 <div>
                     <div> Click on an image to extract a point, continue clicking to extract more points. </div>
-                    <div style={{marginTop:25}}> Shift-click will change the selected image without extracting points. </div>
+                    {pvCnt>1 && <div style={{marginTop:25}}> Shift-click will change the selected image without extracting points. </div>}
                 </div>
             ),
             afterRedraw: (chart,pl) => afterPointsChartRedraw(pv,chart,pl,chartXAxis, imPtAry),
@@ -294,7 +296,7 @@ function PointExtractionPanel({canCreateExtractionTable, pv}) {
 
 
 
-function LineExtractionPanel({canCreateExtractionTable, pv}) {
+function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
     const [{plotlyDivStyle, plotlyData, plotlyLayout},setChartParams]= useState({});
     const [imPtAry,setImPtAry]= useState(undefined);
     const [pointSize,setPointSize]= useState(1);
@@ -353,7 +355,7 @@ function LineExtractionPanel({canCreateExtractionTable, pv}) {
             startUpHelp: (
                 <div>
                     <div> Draw line on image to extract point on line and show chart. </div>
-                    <div style={{marginTop:25}}> Shift-click will change the selected image without selecting a new line. </div>
+                    {pvCnt>1 && <div style={{marginTop:25}}> Shift-click will change the selected image without selecting a new line. </div>}
                 </div>
             ),
             afterRedraw: (chart,pl) => afterLineChartRedraw(pv,chart,pl,imPtAry,makeImagePt(x1,y1), makeImagePt(x2,y2)),
@@ -681,24 +683,29 @@ function makePlotlyDataObj(xDataAry, yDataAry,x,y,ttXStr,ttYStr, makeXDesc= (i)=
 
 function genSliceChartData(plot, ipt1,ipt2, xDataAry,yDataAry,x,y, pointSize, title, reversed) {
     const unitStr= hasWCSProjection(plot) ? ' (arcsec)' : '';
+    const yUnits= getFluxUnits(plot,Band.NO_BAND);
+    const yAxisLabel= getExtName(plot) || 'HDU# '+getHDU(plot);
     return {
         plotlyDivStyle,
-        plotlyData: makePlotlyDataObj(xDataAry, yDataAry, x, y, 'Offset'+unitStr, 'Value'),
-        plotlyLayout: makePlotlyLayoutObj(title, 'Offset'+unitStr, `Value${pointSize > 1 ? ` (${pointSize}x${pointSize} avg)` : ''}`, reversed),
+        plotlyData: makePlotlyDataObj(xDataAry, yDataAry, x, y, 'Offset'+unitStr, yAxisLabel),
+        plotlyLayout: makePlotlyLayoutObj(title, 'Offset'+unitStr,
+            `${yAxisLabel} (${yUnits})${pointSize > 1 ? ` (${pointSize}x${pointSize} avg)` : ''}`, reversed),
     };
 }
 
-function genPointChartData(dataAry,imPtAry, x,y, pointSize, title, chartXAxis, activeIdx) {
+function genPointChartData(plot, dataAry,imPtAry, x,y, pointSize, title, chartXAxis, activeIdx) {
 
     const xAxis= chartXAxis==='imageX' ? imPtAry.map( (pt) => pt.x) : imPtAry.map( (pt) => pt.y);
     const xAxisTitle= chartXAxis==='imageX' ? 'Image X': 'Image Y';
     const xLabel= (i) => `(${imPtAry[i].x},${imPtAry[i].y})`;
+    const yUnits= getFluxUnits(plot,Band.NO_BAND);
+    const yAxisLabel= getExtName(plot) || 'HDU# '+getHDU(plot);
 
     return {
         plotlyDivStyle,
-        plotlyData: makePlotlyDataObj(xAxis, dataAry, x, y, xAxisTitle, 'Value',
+        plotlyData: makePlotlyDataObj(xAxis, dataAry, x, y, xAxisTitle, yAxisLabel,
           xLabel , xLabel(activeIdx)),
-        plotlyLayout: makePlotlyLayoutObj(title, xAxisTitle, `Value${pointSize > 1 ? ` (${pointSize}x${pointSize} avg)` : ''}`),
+        plotlyLayout: makePlotlyLayoutObj(title, xAxisTitle, `${yAxisLabel} (${yUnits})${pointSize > 1 ? ` (${pointSize}x${pointSize} avg)` : ''}`),
     };
 }
 
