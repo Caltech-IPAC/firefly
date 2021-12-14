@@ -97,7 +97,10 @@ export function isOutlineImageForSelectArea(dl) {
                                           : Object.values(dl.title).find((v) => v.includes(SELECT_AREA_TITLE));
 }
 
+let clearModalEndInfo= undefined;
+
 export function detachSelectArea(pv, allPlots = true, id = SelectArea.TYPE_ID) {
+    if (id) clearModalEndInfo?.();
     const dlAry = getDrawLayersByType(getDlAry(), id);
 
     dlAry.forEach((dl) => {
@@ -122,12 +125,12 @@ export function detachSelectAreaRelatedLayers(pv, allPlots = true, selectId = Se
 
 
 export function SelectAreaDropDownView({plotView:pv, allPlots, modalEndInfo, setModalEndInfo}) {
-    var enabled = !!pv;
-    let sep = 1;
+    const enabled = !!pv;
+    clearModalEndInfo= () => setModalEndInfo?.({});
 
     const selectAreaCommands = () => {
 
-        return [SelectedShape.rect, SelectedShape.circle].reduce((prev, s) => {
+        return [SelectedShape.rect, SelectedShape.circle].reduce((prev, s,idx) => {
             const key = s.key;
             prev.push((
                 <ToolbarButton key={key}
@@ -138,7 +141,7 @@ export function SelectAreaDropDownView({plotView:pv, allPlots, modalEndInfo, set
                                tip={selectAreaInfo()[key].tip}
                                onClick={updateSelect(pv, key, allPlots, modalEndInfo, setModalEndInfo)}/>
             ));
-            prev.push(<DropDownVerticalSeparator key={sep++}/>);
+            prev.push(<DropDownVerticalSeparator key={idx+1}/>);
             return prev;
         }, []);
     };
