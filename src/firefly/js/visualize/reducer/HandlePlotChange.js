@@ -164,11 +164,6 @@ export function reducer(state, action) {
             retState= changeHipsImageConversionSettings(state,action);
             break;
 
-
-        case Cntlr.ADD_PROCESSED_TILES:
-            retState= addProcessedTileData(state,action);
-            break;
-
         case Cntlr.UPDATE_RAW_IMAGE_DATA:
             retState= updateRawImageData(state,action);
             break;

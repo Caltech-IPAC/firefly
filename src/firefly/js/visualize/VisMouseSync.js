@@ -13,6 +13,22 @@ import {isHiPS} from './WebPlot.js';
 import {getHealpixPixel} from './HiPSUtil';
 import {STANDARD_READOUT} from './MouseReadoutCntlr';
 
+/**
+ * @typedef MouseState
+ * @prop NONE,
+ * @prop ENTER,
+ * @prop EXIT,
+ * @prop DOWN,
+ * @prop UP,
+ * @prop DRAG_COMPONENT,
+ * @prop DRAG,
+ * @prop MOVE,
+ * @prop CLICK,
+ * @prop WHEEL_UP,
+ * @prop WHEEL_DOWN,
+ * @prop DOUBLE_CLICK,
+ * @type {Enum}
+ */
 export const MouseState= new Enum(['NONE', 'ENTER', 'EXIT', 'DOWN', 'UP',
     'DRAG_COMPONENT', 'DRAG', 'MOVE', 'CLICK', 'WHEEL_UP', 'WHEEL_DOWN',
     'DOUBLE_CLICK']);

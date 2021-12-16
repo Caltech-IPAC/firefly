@@ -27,7 +27,7 @@ export const makePlotGroup= (plotGroupId,overlayColorLock) =>
 
 /**
  * get the plot view with the id
- * @param {VisRoot|Array.<PlotGroup>} visRootOrGroupAry- root of the visualization object in storet
+ * @param {VisRoot|Array.<PlotGroup>} visRootOrGroupAry - root of the visualization object in store
  * @param {string} plotGroupId
  * @return {object} the plot group object
  */

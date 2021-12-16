@@ -49,6 +49,14 @@ export const EXPANDED_MODE_RESERVED= 'EXPANDED_MODE_RESERVED';
 export const GRID_RELATED='gridRelated';
 export const GRID_FULL='gridFull';
 
+/**
+ * @typedef NewPlotMode
+ * enum one of
+ * @prop create_replace
+ * @prop replace_only
+ * @prop none
+ * @type {Enum}
+ */
 export const NewPlotMode = new Enum(['create_replace', 'replace_only', 'none']);
 
 function initState() {

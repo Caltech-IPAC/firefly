@@ -323,7 +323,7 @@ function doRotateNorth(pv,rotate) {
         dispatchChangeHiPS( {plotId:pv.plotId,  coordSys: rotate?CoordinateSys.EQ_J2000:CoordinateSys.GALACTIC});
     }
     else {
-        dispatchRotate({plotId:pv.plotId, rotateType:rotate?RotateType.NORTH:RotateType.UNROTATE});
+        dispatchRotate({ploId:pv.plotId, rotateType:rotate?RotateType.NORTH:RotateType.UNROTATE});
     }
 }
 
@@ -479,7 +479,7 @@ function startExtraction(type,setModalEndInfo, modalEndInfo) {
 
 }
 
-const ExtractRow= ({style,image,mi,pv,enabled,setModalEndInfo, modalEndInfo}) => {
+const ExtractRow= ({style,image,pv,enabled,setModalEndInfo, modalEndInfo}) => {
     const standIm= !isThreeColor(pv);
     return (
         <div style={{display:'flex', alignItems:'center', ...style}}>

@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {isArray, isBoolean, isEmpty, isNumber, isObject} from 'lodash';
+import {isArray, isBoolean, isEmpty, isNumber} from 'lodash';
 import {RequestType} from './RequestType.js';
 import CoordinateSys from './CoordSys.js';
 import {makeProjection, makeProjectionNew, UNRECOGNIZED, UNSPECIFIED} from './projection/Projection.js';
@@ -65,6 +65,7 @@ export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_
  * @prop {String} plotImageId,  - plot image id, id of this WebPlot , immutable
  * @prop {Object} serverImage, immutable
  * @prop {String} title - the title
+ * @prop {Object} header
  * @prop {{cubePlane,cubeHeaderAry}} cubeCtx
  * @prop {number} cubeIdx
  * @prop {PlotState} plotState - the plot state, immutable
@@ -84,7 +85,8 @@ export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_
  * @prop {Object} affTrans - the affine transform
  * @prop {Array.<RawData>} rawData
  * @prop {{width:number, height:number}} viewDim  size of viewable area  (div size: offsetWidth & offsetHeight)
- * @prop {Array.<Object>} directFileAccessDataAry - object of parameters to get flux from the FITS file
+ * @prop {Array.<Object>}
+ * directFileAccessDataAry - object of parameters to get flux from the FITS file
  *
  * @see PlotView
  */
@@ -332,13 +334,14 @@ export const WebPlot= {
      * @param {object} attributes any attributes to initialize
      * @param {boolean} asOverlay
      * @param {CubeCtx} cubeCtx
-     * @param {WebPlotRquest} request0 - only used when this is part of a cube
+     * @param {WebPlotRequest} [request0] - only used when this is part of a cube
+     * @param {RangeValues} [rv0] - only used when this is part of a cube
      * @return {WebPlot} the plot
      */
-    makeWebPlotData(plotId, wpInit, attributes= {}, asOverlay= false, cubeCtx, request0) {
+    makeWebPlotData(plotId, wpInit, attributes= {}, asOverlay= false, cubeCtx, request0, rv0) {
 
         const relatedData = cubeCtx ? cubeCtx.relatedData : wpInit.relatedData;
-        const plotState= PlotState.makePlotStateWithJson(wpInit.plotState);
+        const plotState= PlotState.makePlotStateWithJson(wpInit.plotState,request0, rv0);
         const headerAry= !cubeCtx ? wpInit.headerAry : [cubeCtx.cubeHeaderAry[0]];
         const header= headerAry[plotState.firstBand().value];
         const zeroHeader= wpInit.zeroHeaderAry[0];
@@ -350,7 +353,6 @@ export const WebPlot= {
             processHeader= cubeCtx.processHeader;
             wlRelated= cubeCtx.wlRelated;
             wlData= cubeCtx.wlData;
-            plotState.bandStateAry[0].plotRequestTmp= request0; //optimization to keep reparsing
         }
         else {
             const headerInfo= processHeaderData(wpInit);
@@ -681,7 +683,7 @@ export const isBlankHiPSURL= (url) => url.toLowerCase()===BLANK_HIPS_URL;
 
 
 /**
- * @param {Array.<WebPlotInitializer>} pC
+ * @param {WebPlotInitializer} pC
  * @return {{processHeader:Object, wlData: Object, wlRelated:Object}}
  */
 export function processHeaderData(pC) {

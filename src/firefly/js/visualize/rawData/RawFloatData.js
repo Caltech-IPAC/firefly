@@ -109,7 +109,7 @@ async function changeLocalRawDataStretch(plotImageId, dataWidth, dataHeight, plo
         allBandAry.forEach( (b,idx) => {
             plotState.bandStateAry[b.value].rangeValues = undefined;
             if (plotState.isBandUsed(b)) {
-                plotState.bandStateAry[b.value].rangeValuesSerialize = (rvAry[idx]||fallbackRV).toJSON();
+                plotState.bandStateAry[b.value].rangeValues= (rvAry[idx]||fallbackRV);
             }
         });
 
@@ -123,8 +123,7 @@ async function changeLocalRawDataStretch(plotImageId, dataWidth, dataHeight, plo
 
         const rv = rvAry[bIdx];
         rawTileDataGroup= await stretchStandardAsync(rawTileDataGroup, float1d, processHeader, histogram, rv);
-        plotState.bandStateAry[bIdx].rangeValues = undefined;
-        plotState.bandStateAry[bIdx].rangeValuesSerialize = rv.toJSON();
+        plotState.bandStateAry[bIdx].rangeValues = rv;
     }
     const {retRawTileDataGroup, localRawTileDataGroup}=
         await populateRawImagePixelDataInWorker(rawTileDataGroup, plotState.getColorTableId(), threeColor, false, '', .5, 1, rootUrl);

@@ -143,7 +143,7 @@ const nOrderForPixAsSizeCacheMap= {};
  * Return the best norder for a given screen pixel angular size in arc seconds
  * Results are cached so this function is very efficient.
  * @param {Number} sizeInArcSec - pixel size in arc seconds
- * @return {Number} the best norder for the pixet l
+ * @return {Number} the best norder for the pixel
  */
 function getNOrderForPixArcSecSize(sizeInArcSec) {
     const sizeInArcSecKey= sizeInArcSec.toFixed(7);
@@ -415,7 +415,7 @@ function healpixPixelTo512TileXY(pixel) {
 /**
  *
  * @param norder
- * @param {WorldPt} centerWp - center of visible area, coorindate system of this point should be same as the projection
+ * @param {WorldPt} centerWp - center of visible area, coordinate system of this point should be same as the projection
  * @param {number} fov - Math.max(width, height) of the field of view in degrees (i think)
  * @param {CoordinateSys} dataCoordSys
  * @return {Array.<{ipix:string, wpCorners:Array.<WorldPt>}>} an array of objects the contain the healpix
@@ -477,9 +477,9 @@ export function makeSpatialVector(wp) {
 
 
 /**
- * convert to radius and extend a litte (suggestion from Aladin)
+ * convert to radius and extend a little (suggestion from Aladin)
  * @param {number} fov in degrees
- * @return {number} exetended radius in radians
+ * @return {number} extended radius in radians
  */
 function getSearchRadiusInRadians(fov) {
 

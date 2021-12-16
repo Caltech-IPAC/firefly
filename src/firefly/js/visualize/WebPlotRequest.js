@@ -4,7 +4,6 @@ import Enum from 'enum';
 import {ServerRequest} from '../data/ServerRequest.js';
 import {RequestType} from './RequestType.js';
 import {ZoomType} from './ZoomType.js';
-import Point from './Point.js';
 import {parseResolver} from '../astro/net/Resolver.js';
 import {RangeValues} from './RangeValues.js';
 import {PlotAttribute} from './PlotAttribute.js';
@@ -18,16 +17,42 @@ const DEFAULT_HIPS_OVERLAYS= ['ACTIVE_TARGET_TYPE','POINT_SELECTION_TYPE', 'NORT
     'OVERLAY_MARKER_TYPE', 'OVERLAY_FOOTPRINT_TYPE', 'REGION_PLOT_TYPE', 'HIPS_GRID_TYPE', 'MOC_PLOT_TYPE'];
 
 /**
+ * @typedef ServiceType
  * @summary service type
  * @description can be 'IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'WISE', 'ATLAS','ZTF', 'PTF', 'UNKNOWN'
+ *
+ * @prop IRIS
+ * @prop ISSA
+ * @prop DSS
+ * @prop SDSS
+ * @prop TWOMASS
+ * @prop MSX
+ * @prop WISE
+ * @prop ATLAS
+ * @prop ZTF
+ * @prop PTF
+ * @prop UNKNOWN
+ *
+ * @type {Enum}
  * @public
  * @global
  */
 export const ServiceType= new Enum(['IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'WISE', 'ATLAS', 'ZTF', 'PTF', 'UNKNOWN'],
                                               { ignoreCase: true });
 /**
+ * @typedef {Object} TitleOptions
  * @summary title options
  * @description can be 'CLEARED', 'PLOT_DESC', 'FILE_NAME', 'HEADER_KEY', 'PLOT_DESC_PLUS', 'SERVICE_OBS_DATE'
+ *
+ * @prop NONE
+ * @prop CLEARED
+ * @prop PLOT_DESC
+ * @prop FILE_NAME
+ * @prop HEADER_KEY
+ * @prop PLOT_DESC_PLUS
+ * @prop SERVICE_OBS_DATE'
+ *
+ * @type {Enum}
  * @public
  * @global
  */
@@ -40,6 +65,18 @@ export const TitleOptions= new Enum([
     'SERVICE_OBS_DATE'
 ], { ignoreCase: true });
 
+/**
+ * @typedef {Object} AnnotationOps
+ * @prop INLINE
+ * @prop INLINE_BRIEF
+ * @prop INLINE_BRIEF_TOOLS
+ * @prop TITLE_BAR
+ * @prop TITLE_BAR_BRIEF
+ * @prop TITLE_BAR_BRIEF_TOOLS
+ * @prop TITLE_BAR_BRIEF_CHECK_BO
+ *
+ * @type {Enum}
+ */
 export const AnnotationOps= new Enum([  // note - this is not completely implemented - only finder chart using it now
     'INLINE',    //default inline title full title and tools
     'INLINE_BRIEF',  // inline brief title, no tools
@@ -50,6 +87,13 @@ export const AnnotationOps= new Enum([  // note - this is not completely impleme
     'TITLE_BAR_BRIEF_CHECK_BOX' // title bar brief title with a check box (used in planck)
 ], { ignoreCase: true });
 
+/**
+ * @typedef {Object} GridOnStatus
+ * @prop FALSE
+ * @prop TRUE
+ * @prop TRUE_LABELS_FALSE
+ * @type {Enum}
+ */
 export const GridOnStatus= new Enum(['FALSE','TRUE','TRUE_LABELS_FALSE'], { ignoreCase: true });
 
 export const DEFAULT_THUMBNAIL_SIZE= 70;
@@ -61,7 +105,6 @@ export const WPConst= {
     URLKEY : 'URL',
     SIZE_IN_DEG : 'SizeInDeg',
     SURVEY_KEY : 'SurveyKey',
-    SURVEY_KEY_ALT : 'SurveyKeyAlt',
     SURVEY_KEY_BAND : 'SurveyKeyBand',
     TYPE : 'Type',
     ZOOM_TYPE : 'ZoomType',
@@ -80,13 +123,6 @@ export const WPConst= {
     ZOOM_TO_WIDTH : 'ZoomToWidth',
     ZOOM_TO_HEIGHT : 'ZoomToHeight',
     ZOOM_ARCSEC_PER_SCREEN_PIX : 'ZoomArcsecPerScreenPix',
-    POST_CROP : 'PostCrop',
-    POST_CROP_AND_CENTER : 'PostCropAndCenter',
-    POST_CROP_AND_CENTER_TYPE : 'PostCropAndCenterType',
-    CROP_PT1 : 'CropPt1',
-    CROP_PT2 : 'CropPt2',
-    CROP_WORLD_PT1 : 'CropWorldPt1',
-    CROP_WORLD_PT2 : 'CropWorldPt2',
     OBJECT_NAME : 'ObjectName',
     RESOLVER : 'Resolver',
     PROGRESS_KEY : 'ProgressKey',
@@ -128,7 +164,7 @@ const paramKeys= Object.values(WPConst);
 const allKeys= new Enum([...paramKeys, ...plotAttKeys ], { ignoreCase: true });
 
 
-const clientSideKeys = [WPConst.PREFERENCE_COLOR_KEY, WPConst.ALLOW_IMAGE_SELECTION, WPConst.GRID_ON,
+const clientSideKeys = [WPConst.PREFERENCE_COLOR_KEY, WPConst.GRID_ON,
          WPConst.TITLE_OPTIONS, WPConst.POST_TITLE, WPConst.PRE_TITLE, WPConst.OVERLAY_POSITION,
          WPConst.PLOT_GROUP_ID, WPConst.DRAWING_SUB_GROUP_ID,
          WPConst.DOWNLOAD_FILENAME_ROOT, WPConst.PLOT_ID, WPConst.GROUP_LOCKED, WPConst.OVERLAY_IDS
@@ -146,7 +182,7 @@ const defParams= {
 };
 
 /**
- * @summary Web plot request. This object can be created by using the method of making survey request like *makexxxRequest*
+ * @summary Web plot request. This object can be created by using the method of making survey request like *makeXXXRequest*
  * and the method of setting the parameters.
  * @param {RequestType} type request type
  * @param {string} userDesc description
@@ -593,39 +629,6 @@ export class WebPlotRequest extends ServerRequest {
     setFlipY(flipY) { this.setParam(WPConst.FLIP_Y,flipY+''); }
 
 //======================================================================
-//----------------------- Crop Settings --------------------------------
-// this is not really used right now from the client, we might later.
-// the FinderChart api uses post crop
-//======================================================================
-    /**
-     * Crop the image before returning it.  If rotation is set then the crop will happen post rotation.
-     * Note: setCropPt1 & setCropPt2 are required to crop
-     *
-     * @param postCrop boolean, do the post crop
-     */
-    setPostCrop(postCrop) { this.setParam(WPConst.POST_CROP, postCrop + ''); }
-
-    /**
-     * set the post crop
-     * @param postCrop boolean
-     */
-    setPostCropAndCenter(postCrop) { this.setParam(WPConst.POST_CROP_AND_CENTER, postCrop + ''); }
-
-    /**
-     * Set to coordinate system for crop and center, eq j2000 is the default
-     * @param csys CoordinateSys, the CoordinateSys, default CoordinateSys.EQ_J2000
-     */
-    setPostCropAndCenterType(csys) { this.setParam(WPConst.POST_CROP_AND_CENTER_TYPE, csys.toString()); }
-
-    setCropPt1(pt1) {
-        if (pt1) this.setParam((pt1.type===Point.W_PT) ? WPConst.CROP_WORLD_PT1 : WPConst.CROP_PT1, pt1.toString());
-    }
-
-    setCropPt2(pt2) {
-        if (pt2) this.setParam((pt2.type===Point.W_PT) ? WPConst.CROP_WORLD_PT2 : WPConst.CROP_PT2, pt2.toString());
-    }
-
-//======================================================================
 //----------------------- Retrieval Settings --------------------------------
 //======================================================================
 
@@ -700,16 +703,6 @@ export class WebPlotRequest extends ServerRequest {
      * @return {string} key string
      */
     getSurveyKey() { return this.getParam(WPConst.SURVEY_KEY); }
-
-    /**
-     * @param {string} key string
-     */
-    setSurveyKeyAlt(key) { this.setParam(WPConst.SURVEY_KEY_ALT, key); }
-
-    /**
-     * @return {string} key string
-     */
-    getSurveyKeyAlt() { return this.getParam(WPConst.SURVEY_KEY_ALT); }
 
     /**
      * @return {string} key string
@@ -943,7 +936,7 @@ export class WebPlotRequest extends ServerRequest {
      * @param {string} str the serialized WebPlotRequest
      * @return (WebPlotRequest) the deserialized WebPlotRequest
      */
-    static parse(str) { return ServerRequest.parse(str, new WebPlotRequest()); }
+    static parse(str) { return ServerRequest.parseAndAdd(str, new WebPlotRequest()); }
 
     static isWPR(o) {return isObject(o) && o.getRequestClass?.()===WEB_PLOT_REQUEST_CLASS;}
 

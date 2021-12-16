@@ -10,6 +10,15 @@ import {getFoV, primePlot} from './PlotViewUtil.js';
 import {convertAngle} from './VisUtil.js';
 
 
+/**
+ * @typedef FullType
+ * enum can be one of
+ * @prop ONLY_WIDTH
+ * @prop WIDTH_HEIGHT
+ * @prop ONLY_HEIGHT
+ * @prop {Function} has
+ * @type {Enum}
+ */
 export const FullType = new Enum(['ONLY_WIDTH', 'WIDTH_HEIGHT', 'ONLY_HEIGHT']);
 
 export const imageLevels= [.0125, .025, .05,.1,.25,.3, .4, .5, .75, .8, .9, 1, 1.25, 1.5,2, 2.5,3, 3.5,
@@ -34,7 +43,16 @@ const IMAGE_ZOOM_MAX= imageLevels[imageLevels.length-1];
 const HIPS_ZOOM_MAX= hipsLevels[hipsLevels.length-1];
 
 /**
+ * @typedef UserZoomTypes
  * can be 'UP','DOWN', 'FIT', 'FILL', 'ONE', 'LEVEL', 'WCS_MATCH_PREV'
+ * @prop UP,
+ * @prop DOWN,
+ * @prop FIT,
+ * @prop FILL,
+ * @prop ONE,
+ * @prop LEVEL,
+ * @prop WCS_MATCH_PREV,
+ * @type {Enum}
  * @public
  * @global
  */

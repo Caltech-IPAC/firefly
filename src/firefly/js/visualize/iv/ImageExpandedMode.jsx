@@ -3,11 +3,12 @@
  */
 import React, {memo, useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {visRoot, dispatchChangeExpandedMode, isImageExpanded, ExpandType} from '../ImagePlotCntlr.js';
+import {visRoot, dispatchChangeExpandedMode, ExpandType} from '../ImagePlotCntlr.js';
 import {getMultiViewRoot, getViewer, getExpandedViewerItemIds, EXPANDED_MODE_RESERVED} from '../MultiViewCntlr.js';
 import {ExpandedTools} from './ExpandedTools.jsx';
 import {MultiImageViewerView} from '../ui/MultiImageViewerView.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent';
+import {isImageExpanded} from 'firefly/visualize/PlotViewUtil.js';
 
 export const ImageExpandedMode= memo(({closeFunc,insideFlex=true,viewerId, forceExpandedMode=true}) => {
 

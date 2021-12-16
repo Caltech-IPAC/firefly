@@ -433,7 +433,7 @@ export function isPlotRotatedNorth(plot, csys= CoordinateSys.EQ_J2000) {
 /**
  * Return true if east if left of north.  If east is right of north return false. This works regardless of the rotation
  * of the image.
- * @param {WebPlot} plot
+ * @param {WebPlot|undefined} plot
  * @return {boolean} true if is is left of north.
  */
 export function isEastLeftOfNorth(plot) {
@@ -465,8 +465,8 @@ export function isEastLeftOfNorth(plot) {
 
 /**
  *
- * @param {WebPlot} p1
- * @param {WebPlot} p2
+ * @param {WebPlot|undefined} p1
+ * @param {WebPlot|undefined} p2
  * @return {boolean}
  */
 export const isCsysDirMatching= (p1,p2) => isEastLeftOfNorth(p1)===isEastLeftOfNorth(p2);
@@ -685,7 +685,7 @@ function getSelectedPtsFromEllipse(selection, plot, objList) {
 }
 
 /**
- * get selected points from rectanglur selected area
+ * get selected points from rectangular selected area
  * @param {object} selection obj with two properties pt0 & pt1
  * @param {WebPlot} plot web plot
  * @param objList array of DrawObj (must be an array and contain a getCenterPt() method)
@@ -966,7 +966,7 @@ export function lineCrossesRect(segX1, segY1, segX2, segY2, x, y, w,h) {
 function direction(a, b, c) {
     const d = (b.y - a.y) * (c.x - b.x) - (b.x - a.x) * (c.y - b.y);
 
-    if (d == 0) {
+    if (d===0) {
         return 0;   // a, b, c collinear
     } else {
         return (d < 0) ? 2 : 1;

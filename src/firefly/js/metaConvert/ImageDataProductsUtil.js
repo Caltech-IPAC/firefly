@@ -1,26 +1,21 @@
 
 import {union, get, isEmpty, difference, isArray} from 'lodash';
 import {
-    dispatchReplaceViewerItems,
-    getViewerItemIds,
-    getMultiViewRoot,
-    isImageViewerSingleLayout,
-    getLayoutType, GRID, DEFAULT_FITS_VIEWER_ID
+    dispatchReplaceViewerItems, getViewerItemIds, getMultiViewRoot,
+    getLayoutType, GRID, DEFAULT_FITS_VIEWER_ID, IMAGE
 } from '../visualize/MultiViewCntlr.js';
 import ImagePlotCntlr, {
     dispatchPlotImage, dispatchDeletePlotView, visRoot, dispatchZoom,
-    dispatchPlotGroup, dispatchChangeActivePlotView, dispatchPlotMaskLazyLoad
-} from '../visualize/ImagePlotCntlr.js';
+    dispatchPlotGroup, dispatchChangeActivePlotView } from '../visualize/ImagePlotCntlr.js';
 import {AnnotationOps, isImageDataRequestedEqual} from '../visualize/WebPlotRequest.js';
-import {getPlotViewAry, getPlotViewById, isPlotIdInPvNewPlotInfoAry, primePlot} from '../visualize/PlotViewUtil.js';
-import {UserZoomTypes} from '../visualize/ZoomUtil.js';
+import {
+    getPlotViewAry, getPlotViewById, isImageExpanded, primePlot } from '../visualize/PlotViewUtil.js';
 import {allBandAry} from '../visualize/Band.js';
 import {getTblById} from '../tables/TableUtil.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {dispatchTableHighlight} from '../tables/TablesCntlr.js';
-import {isImageExpanded} from '../visualize/ImagePlotCntlr';
 import {DPtypes} from 'firefly/metaConvert/DataProductsType.js';
-import {showPinMessage, showTmpModal} from 'firefly/ui/PopupUtil.jsx';
+import {showPinMessage} from 'firefly/ui/PopupUtil.jsx';
 import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga.js';
 import {logger} from 'firefly/util/Logger.js';
 
@@ -84,7 +79,7 @@ let extractedPlotId= 1;
 
 
 function copyRequest(inR) {
-    const r= inR.makeCopy(inR);
+    const r= inR.makeCopy();
     const plotId= `extract-plotId-${extractedPlotId}`;
     r.setPlotId(plotId);
     r.setPlotGroupId('extract-group');
@@ -104,18 +99,7 @@ export function createSingleImageExtraction(request) {
 }
 
 
-
-
-
-export function zoomPlotPerViewSizeOLD(plotId, zoomType) {
-    setTimeout(() => {
-        if (!visRoot().wcsMatchType) {
-            dispatchZoom({plotId, userZoomType: zoomType});
-        }
-    },5);
-}
-///=========================
-
+/** @type actionWatcherCallback */
 function watchForCompletedPlot(action, cancelSelf, params) {
     const {afterComplete, plotId}= params;
     const {payload,type}= action;
@@ -159,7 +143,7 @@ export function zoomPlotPerViewSize(plotId, zoomType) {
 ///=========================
 
 export function resetImageFullGridActivePlot(tbl_id, plotIdAry) {
-    if (!tbl_id || isEmpty(plotIdAry)) return
+    if (!tbl_id || isEmpty(plotIdAry)) return;
 
     const {highlightedRow = 0} = getTblById(tbl_id)||{};
     const vr = visRoot();
@@ -225,7 +209,7 @@ function replotImageDataProducts(activePlotId, imageViewerId, tbl_id, reqAry, th
     const inViewerIds= getViewerItemIds(getMultiViewRoot(), imageViewerId);
     const idUnionLen= union(plottingIds,inViewerIds).length;
     if (idUnionLen!== inViewerIds.length || plottingIds.length<inViewerIds.length) {
-        dispatchReplaceViewerItems(imageViewerId,plottingIds);
+        dispatchReplaceViewerItems(imageViewerId,plottingIds,IMAGE);
     }
 
 

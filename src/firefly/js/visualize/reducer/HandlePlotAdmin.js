@@ -2,18 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get} from 'lodash';
-import Cntlr, {ExpandType, isImageExpanded} from '../ImagePlotCntlr.js';
-import {getPlotViewById} from '../PlotViewUtil.js';
-import {clone} from '../../util/WebUtil.js';
-
+import Cntlr, {ExpandType} from '../ImagePlotCntlr.js';
+import {getPlotViewById, isImageExpanded} from '../PlotViewUtil.js';
 
 export function reducer(state, action) {
-
     switch (action.type) {
-        case Cntlr.API_TOOLS_VIEW  :
+        case Cntlr.API_TOOLS_VIEW:
             return {...state,apiToolsView:action.payload.apiToolsView};
-
         case Cntlr.CHANGE_ACTIVE_PLOT_VIEW:
             return changeActivePlotView(state,action);
         case Cntlr.CHANGE_EXPANDED_MODE:
@@ -30,7 +25,6 @@ export function reducer(state, action) {
             return {...state, useAutoScrollToHighlightedTableRow:action.payload.useAutoScroll};
         case Cntlr.DELETE_PLOT_VIEW:
             return deletePlotView(state,action);
-
         case Cntlr.WCS_MATCH:
             const {wcsMatchCenterWP,wcsMatchType,mpwWcsPrimId}= action.payload;
             return {...state,wcsMatchCenterWP,wcsMatchType,mpwWcsPrimId};
@@ -47,32 +41,27 @@ function changePointSelection(state,action) {
     const {pointSelEnableAry}= state;
     if (enabled) {
         if (pointSelEnableAry.includes(requester)) return state;
-        return clone(state,{pointSelEnableAry: [...pointSelEnableAry,requester]});
+        return {...state,pointSelEnableAry: [...pointSelEnableAry,requester]};
     }
     else {
         if (!pointSelEnableAry.includes(requester)) return state;
-        return clone(state,{pointSelEnableAry: pointSelEnableAry.filter( (e) => e!==requester)});
+        return {...state,pointSelEnableAry: pointSelEnableAry.filter( (e) => e!==requester)};
     }
 }
 
 function changeMouseReadout(state, action) {
-
-    const fieldKey=action.payload.readoutType;
-    const payload = action.payload;
-    const newRadioValue = payload.newRadioValue;
+    const {payload} = action;
+    const fieldKey=payload.readoutType;
     const oldRadioValue = state[fieldKey];
-    if (newRadioValue ===oldRadioValue) return state;
-    return Object.assign({}, state, {[fieldKey]:newRadioValue});
-
+    if (payload.newRadioValue===oldRadioValue) return state;
+    return {...state, [fieldKey]:payload.newRadioValue};
 }
 
 function changeActivePlotView(state,action) {
     const {plotId}= action.payload;
     if (plotId===state.activePlotId) return state;
-    const prevActivePlotId= state.activePlotId;
     if (plotId && !getPlotViewById(state,plotId)) return state;
-
-    return clone(state, {prevActivePlotId, activePlotId:action.payload.plotId});
+    return {...state, prevActivePlotId:state.activePlotId, activePlotId:plotId};
 }
 
 function changeExpandedMode(state,action) {
@@ -92,24 +81,22 @@ function changeExpandedMode(state,action) {
             changes.mpwWcsPrimId= state.activePlotId;
         }
     }
-
-    return clone(state, changes);
+    return {...state, ...changes};
 }
-
 
 function deletePlotView(state,action) {
     const {plotId}= action.payload;
     if (!state.plotViewAry.find( (pv) => pv.plotId===plotId)) return state;
 
-    state= clone(state, {plotViewAry:state.plotViewAry.filter( (pv) => pv.plotId!==plotId)});
+    const nextState= {...state, plotViewAry:state.plotViewAry.filter( (pv) => pv.plotId!==plotId)};
     if (state.activePlotId===plotId) {
-        state.activePlotId= get(state,'plotViewAry.0.plotId',null);
+        nextState.activePlotId= state.plotViewAry[0]?.plotId;
     }
     if (state.prevActivePlotId===plotId || state.prevActivePlotId===state.activePlotId) {
-        state.prevActivePlotId= null;
+        nextState.prevActivePlotId= undefined;
     }
     if (state.mpwWcsPrimId===plotId) {
-        state.mpwWcsPrimId= state.prevActivePlotId || state.activePlotId || get(state,'plotViewAry.0.plotId',null);
+        nextState.mpwWcsPrimId= state.prevActivePlotId || state.activePlotId || state.plotViewAry[0]?.plotId;
     }
-    return state;
+    return nextState;
 }

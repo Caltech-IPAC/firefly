@@ -3,7 +3,7 @@
  */
 
 
-import React, {Component, PropTypes} from 'react';
+import React from 'react';
 import {get} from 'lodash';
 import SplitPane from 'react-split-pane';
 

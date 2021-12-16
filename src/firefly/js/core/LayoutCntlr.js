@@ -20,7 +20,23 @@ import {getDefaultChartProps} from '../charts/ChartUtil.js';
 export const LAYOUT_PATH = 'layout';
 
 // this enum is flaggable, therefore you can use any combination of the 3, i.e. 'tables | images'.
+/**
+ * @typedef LO_VIEW
+ * @type {Enum}
+ * @prop none
+ * @prop tables
+ * @prop images
+ * @prop xyPlots
+ * @prop tableImageMeta
+ * @prop coverageImage
+ */
 export const LO_VIEW = new Enum(['none', 'tables', 'images', 'xyPlots', 'tableImageMeta', 'coverageImage'], { ignoreCase: true });
+/**
+ * @typedef LO_MODE
+ * @type {Enum}
+ * @prop expanded
+ * @prop standard
+ */
 export const LO_MODE = new Enum(['expanded', 'standard']);
 export const SPECIAL_VIEWER = new Enum(['tableImageMeta', 'coverageImage'], { ignoreCase: true });
 

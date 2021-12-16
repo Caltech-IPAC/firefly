@@ -14,7 +14,6 @@ import {TriViewImageSection} from '../../visualize/ui/TriViewImageSection.jsx';
 import {AppInitLoadingMessage} from '../../ui/AppInitLoadingMessage.jsx';
 import {getExpandedChartProps} from '../../charts/ChartsCntlr.js';
 import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
-import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
 
 export class TriViewPanel extends PureComponent {
 
@@ -44,7 +43,6 @@ export class TriViewPanel extends PureComponent {
         const {title, mode, showTables, showImages, showXyPlots, images={}} = this.state;
         const {expanded, standard, closeable} = mode || {};
         const content = {};
-        var visToolbar;
 
         if (initLoadingMessage && !initLoadCompleted) return (<AppInitLoadingMessage message={initLoadingMessage}/>);
 

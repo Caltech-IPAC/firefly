@@ -142,7 +142,7 @@ function getInitState()  {
     return {
         plot, pv, colors,
         threeC: isThreeColor(plot),
-        hasOperation: plot.plotState.hasOperation(Operation.CROP) && !plot.plotState.hasOperation(Operation.ROTATE),
+        hasOperation: plot.plotState.hasOperation(Operation.CROP)
     };
 }
 

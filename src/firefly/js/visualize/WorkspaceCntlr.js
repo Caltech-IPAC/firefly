@@ -24,6 +24,13 @@ export const WORKSPACE_IN_LOADING = `${WORKSPACE_PREFIX}.inLoading`;
 
 export default {actionCreators, reducers };
 export const WS_HOME = 'WS_Home';
+/**
+ * @typedef {Object} WS_SERVER_PARAM
+ * @prop should_overwrite
+ * @prop currentrelpath
+ * @prop newpath
+ * @type {Enum}
+ */
 export const WS_SERVER_PARAM = new Enum(['should_overwrite', 'currentrelpath', 'newpath']);
 
 

@@ -3,7 +3,6 @@
  */
 
 import update from 'immutability-helper';
-import Enum from 'enum';
 import {PlotAttribute} from '../PlotAttribute';
 import {isImage, isHiPS} from '../WebPlot.js';
 import {WPConst} from '../WebPlotRequest';
@@ -11,8 +10,7 @@ import {makeScreenPt, makeDevicePt, makeImagePt, makeWorldPt} from '../Point';
 import {getActiveTarget} from '../../core/AppDataCntlr.js';
 import { getCenterPtOfPlot, getLatDist, getLonDist } from '../VisUtil.js';
 import {
-    getPlotViewById, matchPlotViewByPositionGroup, primePlot, findCurrentCenterPoint, getHduPlotStartIndexes
-} from '../PlotViewUtil.js';
+    getPlotViewById, matchPlotViewByPositionGroup, primePlot, findCurrentCenterPoint } from '../PlotViewUtil.js';
 import {changeProjectionCenter} from '../HiPSUtil.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {ZoomType} from '../ZoomType.js';
@@ -23,7 +21,7 @@ import {getDefMenuItemKeys} from '../MenuItemKeys.js';
 import {ExpandType, WcsMatchType} from '../ImagePlotCntlr.js';
 import {updateTransform, makeTransform} from '../PlotTransformUtils.js';
 
-export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignoreCase: true });
+// export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignoreCase: true });
 
 /**
  * @global
@@ -41,7 +39,7 @@ export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignore
  * @prop {String} plotId, immutable
  * @prop {String} plotGroupId, immutable
  * @prop {String} drawingSubGroupId, immutable
- * @peop {boolean} visible true when we draw the base image
+ * @prop {boolean} visible true when we draw the base image
  * @prop {Array.<WebPlot>} plots all the plots that this plotView can show, usually the image in the fits file
  * @prop {String} plottingStatusMsg, end user description of the what is doing on
  * @prop {String} serverCall, one of 'success', 'working', 'fail'
@@ -66,7 +64,7 @@ export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignore
  *
  * @prop {boolean} userCanDeletePlots true if this plotView can be deleted by the user
  * @prop {boolean} zoomLockingEnabled the plot will automaticly adjust the zoom when resized
- * @prop {UserZoomTypes} zoomLockingType the type of zoom lockeing
+ * @prop {UserZoomTypes} zoomLockingType the type of zoom locking
  * @prop {number} lastCollapsedZoomLevel used for returning from expanded mode, keeps recode of the level before expanded
  * @prop {HipsImageConversionSettings} hipsImageConversion -  if defined, then plotview can convert between hips and image
  * @prop {number} plotCounter index of how many plots, used for making next ID
@@ -102,6 +100,7 @@ export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignore
  * @prop {boolean} rotateNorthLock
  * @prop {boolean} flipYLock
  * @prop {boolean} useSticky
+ * @prop {boolean} useForCoverage
  */
 
 
@@ -273,7 +272,7 @@ export function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, newPlo
 /**
  * create a copy of the PlotView with a new scroll position and a new view port if necessary
  * The scroll position is the top left visible point.
- * @param {PlotView} plotView the current plotView
+ * @param {PlotView|undefined} plotView the current plotView
  * @param {Point} newScrollPt  the screen point of the scroll position
  * @return {PlotView} new copy of plotView
  */
@@ -504,8 +503,8 @@ function findScrollPtForCenter(plotView) {
 
 /**
  * find the scroll screen pt to put the image centered on the passed ImagePt
- * @param {PlotView} plotView
- * @param {ImagePt} ipt - if this is not an image point it will be converted to one
+ * @param {PlotView|undefined} plotView
+ * @param {ImagePt|undefined} ipt - if this is not an image point it will be converted to one
  * @return {ScreenPt} the screen point to use as the scroll position
  */
 export function findScrollPtToCenterImagePt(plotView, ipt) {
@@ -518,8 +517,8 @@ export function findScrollPtToCenterImagePt(plotView, ipt) {
  * Return the scroll point for a PlotView that will place the given image point on the given device point.
  * or another way to say it:
  * Given a device point and an image point, return the scroll point the would make the two line up.
- * @param {PlotView} pv
- * @param {ImagePt} ipt - if this is not an image point it will be converted to one
+ * @param {PlotView|undefined} pv
+ * @param {ImagePt|undefined} ipt - if this is not an image point it will be converted to one
  * @param {DevicePt} targetDevPtPos - the point on the device that the image
  * @return {ScreenPt} the scroll position the places the image point on to the device point
  */
@@ -542,56 +541,12 @@ export function findScrollPtToPlaceOnDevPt(pv, ipt, targetDevPtPos) {
     return makeScreenPt(pv.flipY ? -x : x,pv.flipX ? -y : y);
 }
 
-
-export function findHipsCenProjToPlaceWptOnDevPt(pv, wpt, targetDevPtPos) {
-    const plot= primePlot(pv);
-    const cc= CysConverter.make(plot);
-    const {viewDim:{width,height}}= plot;
-    const offX= targetDevPtPos.x-width/2;
-    const offY= targetDevPtPos.y-height/2;
-    const tarAsDevPt= cc.getDeviceCoords(wpt);
-    return cc.getWorldCoords(makeDevicePt(tarAsDevPt.x-offX, tarAsDevPt.y-offY));
-}
-export function findHipsCenProjToPlaceWptOnDevPtNEW(pv, wpt, targetDevPtPos) {
-    const plot= primePlot(pv);
-    const cc= CysConverter.make(plot);
-    const {viewDim:{width,height}}= plot;
-    const offX= targetDevPtPos.x-width/2;
-    const offY= targetDevPtPos.y-height/2;
-    // const tarAsDevPt= cc.getDeviceCoords(wpt);
-    const centerDevPt= makeDevicePt(targetDevPtPos.x-offX, targetDevPtPos.y-offY);
-
-    const wp1= cc.getWorldCoords(targetDevPtPos);
-    const wp2= cc.getWorldCoords(centerDevPt);
-    if (!wp1 || !wp2) return undefined;
-    const lonDist= getLonDist(wp1.x,wp2.x);
-    const latDist= getLatDist(wp1.y,wp2.y);
-    const newCenterWp= makeWorldPt(wpt.x+lonDist,wpt.y+latDist, wpt.cSys);
-    // const newCenterWp= calculatePosition(wpt, lonDist, latDist);
-    return newCenterWp;
-}
-
-// export function findHipsCenProjToPlaceWptOnDevPtNEW2(pv, wpt, targetDevPtPos) {
-//     const plot= primePlot(pv);
-//     const cc= CysConverter.make(plot);
-//     const {viewDim:{width,height}}= plot;
-//     const offX= targetDevPtPos.x-width/2;
-//     const offY= targetDevPtPos.y-height/2;
-//     // const tarAsDevPt= cc.getDeviceCoords(wpt);
-//     const centerDevPt= makeDevicePt(targetDevPtPos.x-offX, targetDevPtPos.y-offY);
-//
-//     const wp1= cc.getWorldCoords(targetDevPtPos);
-//     const wp2= cc.getWorldCoords(centerDevPt);
-//     if (!wp1 || !wp2) return undefined;
-//     // const lonDist= computeDistanceAngularDistance(wp1.x, wp1.y, wp2.x, wp1.y);
-//     // const latDist= computeDistanceAngularDistance(wp1.x, wp1.y, wp1.x, wp2.y);
-//     // const lonDist= getLonDist(wp1.x,wp2.x);
-//     // const latDist= getLatDist(wp1.y,wp2.y);
-//     const newCenterWp= makeWorldPt(wpt.x+lonDist,wpt.y+latDist, wpt.cSys);
-//     // const newCenterWp= calculatePosition(wpt, lonDist, latDist);
-//     return newCenterWp;
-// }
-
+/**
+ * @param {PlotView} pv
+ * @param {WorldPt} wpt
+ * @param targetDevPtPos
+ * @return {WorldPt}
+ */
 export function findHipsCenProjToPlaceWptOnDevPtByInteration(pv, wpt, targetDevPtPos) {
     const plot= primePlot(pv);
     const cc= CysConverter.make(plot);
@@ -603,23 +558,23 @@ export function findHipsCenProjToPlaceWptOnDevPtByInteration(pv, wpt, targetDevP
     if (!wp1 || !wp2) return undefined;
     const lonDist= getLonDist(wp1.x,wp2.x);
     const latDist= getLatDist(wp1.y,wp2.y);
-    let newCenterInterationWP= makeWorldPt(wpt.x+lonDist,wpt.y+latDist, wpt.cSys);
+    let newCenterIterationWP= makeWorldPt(wpt.x+lonDist,wpt.y+latDist, wpt.cSys);
 
     // part 2
 
     let tmpPlot= plot;
     for(let i=0; (i<10); i++) {
-        tmpPlot= changeProjectionCenter(tmpPlot, newCenterInterationWP);
+        tmpPlot= changeProjectionCenter(tmpPlot, newCenterIterationWP);
         const tmpCC= CysConverter.make(tmpPlot);
         const testDevPt= tmpCC.getDeviceCoords(wpt);
         const errX= targetDevPtPos.x-testDevPt.x;
         const errY= targetDevPtPos.y-testDevPt.y;
         if (Math.abs(errX)<1 && Math.abs(errY)<1) {
-            return newCenterInterationWP;
+            return newCenterIterationWP;
         }
         const nextCenter= tmpCC.getWorldCoords(makeDevicePt(centerDevPt.x-errX, centerDevPt.y-errY));
-        if (!nextCenter) return newCenterInterationWP;
-        newCenterInterationWP= nextCenter;
+        if (!nextCenter) return newCenterIterationWP;
+        newCenterIterationWP= nextCenter;
     }
-    return newCenterInterationWP;
+    return newCenterIterationWP;
 }

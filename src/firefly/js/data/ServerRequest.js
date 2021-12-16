@@ -3,7 +3,6 @@
  */
 
 import {has} from 'lodash';
-import validator from 'validator';
 import {parseWorldPt} from '../visualize/Point.js';
 import {replaceAll, isDefined} from '../util/WebUtil.js';
 import {toBoolean} from '../util/WebUtil';
@@ -13,9 +12,7 @@ const REQUEST_CLASS= 'RequestClass';
 const SERVER_REQUEST_CLASS = 'ServerRequest';
 const PARAM_SEP = '&';
 const URL_SUB = 'URL_PARAM_SEP';
-//const KW_DESC_SEP = '/';
 const KW_VAL_SEP = '=';
-const BACKGROUNDABLE = 'bgable';
 const ID_KEY = 'id';
 
 export const ID_NOT_DEFINED = 'ID_NOT_DEFINED';
@@ -31,28 +28,10 @@ export class ServerRequest {
         this.setRequestClass(SERVER_REQUEST_CLASS);
     }
 
-//====================================================================
-//
-//====================================================================
-
-    /**
-     * return true if this parameter is a user input parameter.
-     * @return {boolean}
-     */
-    isInputParam() { return true; }
-
-
     getRequestId() { return this.getParam(ID_KEY); }
 
     setRequestId(id) { this.params[ID_KEY]= id; }
 
-    isBackgroundable() {
-        return this.getBooleanParam(BACKGROUNDABLE, false);
-    }
-
-    setIsBackgroundable(isBackgroundable) {
-        this.setParam(BACKGROUNDABLE, `${isBackgroundable}`);
-    }
 
     getRequestClass() {
         return this.containsParam(REQUEST_CLASS) ? this.getParam(REQUEST_CLASS) : SERVER_REQUEST_CLASS;
@@ -60,15 +39,9 @@ export class ServerRequest {
 
     setRequestClass(reqType) { this.setParam(REQUEST_CLASS,reqType); }
 
-//====================================================================
+    containsParam(paramKey) { return Boolean(this.params[paramKey]); }
 
-    containsParam(paramKey) {
-        return this.params[paramKey]?true:false;
-    }
-
-    getParam(paramKey) {
-        return this.params[paramKey]|| null;
-    }
+    getParam(paramKey) { return this.params[paramKey]; }
 
     getParams() { return this.params; }
 
@@ -83,7 +56,7 @@ export class ServerRequest {
      */
     setParam() {
         if (arguments.length===1 && typeof arguments[0] === 'object') {
-            var v= arguments[0];
+            const v= arguments[0];
             if (v.name && v.value) {
                 this.params[v.name]= v.value;
             }
@@ -95,8 +68,8 @@ export class ServerRequest {
             this.params[arguments[0]]= arguments[1];
         }
         else if (arguments.length>2) {
-            var values= [];
-            for(var i=2; i<arguments.length; i++) {
+            const values= [];
+            for(let i=2; i<arguments.length; i++) {
                values.push(arguments[i]);
             }
             this.params[arguments[0]]= values.join(',');
@@ -104,20 +77,7 @@ export class ServerRequest {
     }
 
 
-    setParams(params) {
-         Object.assign(this.params, params);
-    }
-
-    //public void setParams(Map<String,String> paramMap) {
-    //    for(Map.Entry<String,String> entry : paramMap.entrySet()) {
-    //        setParam(new Param(entry.getKey(),entry.getValue()));
-    //    }
-    //}
-
-    setWorldPtParam(name, wpt) {
-        this.params[name]=wpt? null : wpt.toString();
-    }
-
+    setParams(params) { Object.assign(this.params, params); }
 
     setSafeParam(name,val) {
         this.params[name]= val ? replaceAll(val+'',PARAM_SEP,URL_SUB) : null;
@@ -129,19 +89,13 @@ export class ServerRequest {
      * @return {string}
      */
     getSafeParam(name) {
-        var val= this.params[name];
+        const val= this.params[name];
         return val ? replaceAll(val,URL_SUB,PARAM_SEP) : null;
     }
 
-    isValid() { return this.params[ID_KEY] ? true : false; }
+    isValid() { return Boolean(this.params[ID_KEY]); }
 
     removeParam(name) { delete this.params[name]; }
-
-    /**
-     * Add a predefined attribute
-     * @return {boolean} true if this was a predefined attribute and was set, false it this is an unknow attribute
-     */
-    addPredefinedAttrib() { return false; }
 
 //====================================================================
 
@@ -157,16 +111,14 @@ export class ServerRequest {
      * @param req
      * @return {ServerRequest} the passed request
      */
-    static parse(str,req) {
+    static parseAndAdd(str,req) {
         if (!str) return null;
         str.split(PARAM_SEP).forEach((p) => {
             if (!p) return;
-            var outParam= p.split(/=(.+)?/,2);
+            const outParam= p.split(/=(.+)?/,2);
             if (outParam.length===2) {
-                var newParam= {name : outParam[0], value:outParam[1]};
-                if (!req.addPredefinedAttrib(newParam)) {
-                   req.setParam(newParam);
-                }
+                const newParam= {name : outParam[0], value:outParam[1]};
+                req.setParam(newParam);
             }
         });
         return req;
@@ -183,8 +135,8 @@ export class ServerRequest {
      * @return {string}
      */
     toString() {
-        var idStr= (ID_KEY+KW_VAL_SEP+this.params[ID_KEY]);
-        var retStr= Object.keys(this.params).sort().reduce((str,key) => {
+        const idStr= (ID_KEY+KW_VAL_SEP+this.params[ID_KEY]);
+        const retStr= Object.keys(this.params).sort().reduce((str,key) => {
             if (key!==ID_KEY && isDefined(this.params[key])) str+= PARAM_SEP+key+KW_VAL_SEP+this.params[key];
             return str;
         },idStr);
@@ -193,7 +145,7 @@ export class ServerRequest {
 
 
     cloneRequest() {
-        var sr = this.newInstance();
+        const sr = this.newInstance();
         sr.copyFrom(this);
         return sr;
     }
@@ -201,16 +153,6 @@ export class ServerRequest {
     newInstance() {
         return new ServerRequest();
     }
-
-
-
-//====================================================================
-//  overriding equals
-//====================================================================
-//    @Override
-//    public int hashCode() {
-//        return toString().hashCode();
-//    }
 
     equals(obj) {
         if (obj instanceof ServerRequest) {
@@ -227,7 +169,7 @@ export class ServerRequest {
     }
 
     getIntParam(key, def=0) {
-        const retval= validator.toInt(this.getParam(key)+'');
+        const retval= parseInt(this.getParam(key)+'');
         return !isNaN(retval) ? retval : def;
     }
 
@@ -238,18 +180,8 @@ export class ServerRequest {
      * @return {number}
      */
     getFloatParam(key, def=0) {
-        const retval= validator.toFloat(this.getParam(key)+'');
+        const retval= parseFloat(this.getParam(key)+'');
         return !isNaN(retval) ? retval : def;
-    }
-
-    /**
-     *
-     * @param key
-     * @return {Date}
-     */
-    getDateParam(key) {
-        var dateValue= validator.toInt(this.getParam(key)+'');
-        return !isNaN(dateValue) ? new Date(dateValue) : null;
     }
 
     /**
@@ -258,14 +190,9 @@ export class ServerRequest {
      * @return {WorldPt}
      */
     getWorldPtParam(key) {
-        var wpStr= this.getParam(key);
+        const wpStr= this.getParam(key);
         return wpStr ? parseWorldPt(wpStr) : null;
     }
-
-//====================================================================
-//  convenience data converting routines
-//====================================================================
-
 
     static addParam(str, key, value) {
         if (str && key && value) {
@@ -273,10 +200,4 @@ export class ServerRequest {
         }
         return str;
     }
-
-
-//====================================================================
-//  inner classes
-//====================================================================
-
 }

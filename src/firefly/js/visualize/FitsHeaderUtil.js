@@ -2,8 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get} from 'lodash';
-import {isImage,isPlot} from './WebPlot.js';
+import {isImage} from './WebPlot.js';
 
 
 /**
@@ -15,11 +14,6 @@ import {isImage,isPlot} from './WebPlot.js';
  * @prop {number} height
  *
  */
-
-
-
-
-
 export const HdrConst= {
 
     // Common FITS Headers
@@ -42,6 +36,7 @@ export const HdrConst= {
     NAXIS1   : 'NAXIS1',
     NAXIS2   : 'NAXIS2',
     NAXIS3   : 'NAXIS3',
+    NAXIS4   : 'NAXIS4',
 
     // FITS Headers that are added by firefly
     SPOT_OFF : 'SPOT_OFF', // Extension Offset (added by Firefly)
@@ -57,7 +52,7 @@ export const HdrConst= {
 export function makeHeaderParse(header, altWcs='') {
     return {
         header,
-        getIntValue: (key, def= 0) => parseInt(getNumberHeader(header,key,def)),
+        getIntValue: (key, def= 0) => Math.trunc(getNumberHeader(header,key,def)),
 
         getIntOneOfValue: (keyAry, def=0) => {
             const foundKey= keyAry.find( (k) => !isNaN(getNumberHeader(header,k,NaN)) );
@@ -130,7 +125,7 @@ export function makeDoubleHeaderParse(header,zeroHeader,altWcs) {
         getDoubleAry(keyRoot,altWcs, startIdx,endIdx,def=undefined) {
             if (startIdx>endIdx) return def;
             const retAry= hp.getDoubleAry(keyRoot,altWcs,startIdx,endIdx, def);
-            let validValueArr = retAry.filter( (v)=> v!==def );
+            const validValueArr = retAry.filter( (v)=> v!==def );
             if (validValueArr.length>0) return retAry;
             return zhp ? zhp.getDoubleAry(keyRoot,altWcs, startIdx,endIdx,def) : def;
         },

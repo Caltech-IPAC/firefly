@@ -15,13 +15,14 @@ import {computeDistance, getRotationAngle, isCsysDirMatching, isEastLeftOfNorth,
 import {removeRawData} from './rawData/RawDataCache.js';
 import {MAX_DIRECT_IMAGE_SIZE, MAX_DIRECT_MASK_IMAGE_SIZE, MAX_RAW_IMAGE_SIZE} from './rawData/RawDataCommon.js';
 import {hasClearedDataInStore, hasLocalRawDataInStore, hasLocalStretchByteDataInStore} from './rawData/RawDataOps.js';
+import {ExpandType} from 'firefly/visualize/ImagePlotCntlr.js';
 
 
 export const CANVAS_IMAGE_ID_START= 'image-';
 export const CANVAS_DL_ID_START= 'dl-';
 /**
  * 
- * @param {VisRoot | PlotView[]} ref
+ * @param {VisRoot | PlotView[]| undefined} ref
  * @param {String} [plotGroupId] return only the PlotViews with the same group id, if undefined return all
  * @returns {PlotView[]}
  */
@@ -72,13 +73,13 @@ export const primePlot= memorizeLastCall( (ref,plotId) => {
  * last call results are cached, for optimizations, after 2000 calls cached calls are about 2 times faster.
  * cache is hit about 1.5 times for every non-cache all
  *
- * @param {VisRoot | PlotView[] } ref this can be the visRoot object or a plotViewAry array.
+ * @param {VisRoot | PlotView[] | undefined } ref this can be the visRoot object or a plotViewAry array.
  * @param {string} plotId
  *
  * @returns {PlotView|undefined} the plot view object, or undefined if it is not found
  */
 export const getPlotViewById= memorizeLastCall( (ref,plotId) =>{
-    if (!plotId) return undefined;
+    if (!plotId || !ref) return undefined;
     const plotViewAry= getPlotViewAry(ref);
     if (!plotViewAry) return undefined;
     return plotViewAry.find( (pv) => pv.plotId===plotId);
@@ -120,7 +121,7 @@ export function getPlotViewIdListByPositionLock(visRoot, pvOrId) {
 /**
  * Return an array of plotId's that are in the plot group associated with the the pvOrId parameter.
  * @param {VisRoot} visRoot - root of the visualization object in store
- * @param pvOrId this parameter will take the plotId string or a plotView objectgs
+ * @param pvOrId this parameter will take the plotId string or a plotView objects
  * @returns {Array.<String>}
  */
 export function getPlotViewIdListInOverlayGroup(visRoot,pvOrId) {
@@ -197,7 +198,7 @@ export const isPlotView= (obj) =>
 
 /**
  *
- * @param {PlotView} pv
+ * @param {PlotView|undefined} pv
  * @param {String} imageOverlayId
  * @return {OverlayPlotView|undefined}
  */
@@ -207,8 +208,8 @@ export const getOverlayById= (pv, imageOverlayId) =>
 
 /**
  *
- * @param ref
- * @param plotId
+ * @param {VisRoot | PlotView[] | undefined } ref
+ * @param {string} plotId
  * @param imageOverlayId
  * @return {OverlayPlotView}
  */
@@ -624,6 +625,10 @@ export function isPlotIdInPvNewPlotInfoAry(pvNewPlotInfoAry, plotId) {
     return pvNewPlotInfoAry.some( (npi) => npi.plotId===plotId);
 }
 
+/**
+ * @typedef {Object} Canvas
+ * @prop id
+ */
 
 /**
  *
@@ -754,9 +759,8 @@ export function getNumberOfCubesInPV(pv) {
 
 /**
  * Get the total number of planes in the cube of the plot
- * @param {PlotView|WebPlot} pv
- * @param {WebPlot} [plot] the plot to check, defaults to primaryPlot
- * @return {number}
+ * @param {PlotView|WebPlot} plotOrPv
+ * @return {number} the number of cube planes, 0 if this is not a cube
  */
 export const getCubePlaneCnt= (plotOrPv) => {
     const plot= isPlotView(plotOrPv) ? primePlot(plotOrPv) : plotOrPv;
@@ -873,7 +877,7 @@ export function convertImageIdxToHDU(pv, imageIdx) {
  * Only CTYPEka = 'WAVE-ccc', exists, the hasWLInfo is true.
  * also check if vrad data is available, when CTYPE# = 'VRAD-xxx', hasVRADInfo is true.
  * If the wlType or vradType is not defined, it is a pure cube data
- * @param {WebPlot} plot
+ * @param {WebPlot|undefined} plot
  * @return {boolean}
  */
 export const hasWLInfo= (plot) =>
@@ -937,7 +941,7 @@ const MICRON_SYMBOL= String.fromCharCode(0x03BC)+'m';
 
 /**
  *
- * @param {WebPlot|String} plotOrStr - pass a webplot to get the units from and the format or a string that will be formatted
+ * @param {WebPlot|String} plotOrStr - pass a WebPlot to get the units from and the format or a string that will be formatted
  * @param {boolean} anyPartOfStr - replace units with symbols in any part of a longer string
  * @return {string}
  */
@@ -954,13 +958,13 @@ export function getFormattedWaveLengthUnits(plotOrStr, anyPartOfStr=false) {
 
 /**
  *
- * @param {WebPlot} plot
+ * @param {WebPlot|undefined} plot
  * @param {Point} pt
  * @param {number} cubeIdx
  * @return {number}
  */
 export const getPtWavelength= (plot, pt, cubeIdx) =>
-          hasWLInfo(plot) && getWavelength(CCUtil.getImageCoords(plot,pt),cubeIdx,plot.wlData);
+    (plot && hasWLInfo(plot) && getWavelength(CCUtil.getImageCoords(plot,pt),cubeIdx,plot.wlData)) ?? 0;
 
 
 //=============================================================
@@ -1143,3 +1147,7 @@ export function isAllStretchDataLoaded(vr) {
         .filter( (p) => isImage(p))
         .every( (p) => hasLocalStretchByteData(p));
 }
+
+export const isImageExpanded = (expandedMode) => expandedMode === true ||
+    expandedMode === ExpandType.GRID ||
+    expandedMode === ExpandType.SINGLE;
