@@ -148,7 +148,6 @@ export function createTableExtraction(source,titleInfo,tbl_index,colNames,colUni
  * @param {ChartInfo} chartInfo
  * @param {Number} tbl_index
  * @param {String} dataTypeHint  stuff like 'spectrum', 'image', 'cube', etc
- * @param {boolean} isSpectrumHint true if we think this table might a a spectrum
  * @param {Array.<String>} colNames - an array of column names
  * @param {Array.<String>} colUnits - an array of types names
  * @param {boolean} connectPoints if a default scatter chart then connect the points

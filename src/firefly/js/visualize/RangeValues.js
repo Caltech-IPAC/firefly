@@ -2,7 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-//LZ 06/11/15 add arcsine and power law gamma parameters
 import {isNumber, isString, isObject} from 'lodash';
 
 
@@ -63,25 +62,25 @@ export class RangeValues {
                  scalingK=1.0,
                  bias= 0.5,
                  contrast= 1.0 ) {
-        this.lowerWhich= parseInt(lowerWhich);
-        this.lowerValue= parseFloat(lowerValue);
-        this.upperWhich= parseInt(upperWhich);
-        this.upperValue= parseFloat(upperValue);
-        this.asinhQValue = parseFloat(asinhQValue);
-        this.gammaValue=parseFloat(gammaValue);
-        this.algorithm=  parseInt(algorithm);
-        this.zscaleContrast= parseInt(zscaleContrast);
-        this.zscaleSamples= parseInt(zscaleSamples); /* desired number of pixels in sample */
-        this.zscaleSamplesPerLine= parseInt(zscaleSamplesPerLine); /* optimal number of pixels per line */
-        this.rgbPreserveHue=  parseInt(rgbPreserveHue); /* if 0, stretch by band, otherwise preserve hue*/
-        this.asinhStretch=parseFloat(asinhStretch);
-        this.scalingK=parseFloat(scalingK);
+        this.lowerWhich= parseInt(lowerWhich+'');
+        this.lowerValue= parseFloat(lowerValue+'');
+        this.upperWhich= parseInt(upperWhich+'');
+        this.upperValue= parseFloat(upperValue+'');
+        this.asinhQValue = parseFloat(asinhQValue+'');
+        this.gammaValue=parseFloat(gammaValue+'');
+        this.algorithm=  parseInt(algorithm+'');
+        this.zscaleContrast= parseInt(zscaleContrast+'');
+        this.zscaleSamples= parseInt(zscaleSamples+''); /* desired number of pixels in sample */
+        this.zscaleSamplesPerLine= parseInt(zscaleSamplesPerLine+''); /* optimal number of pixels per line */
+        this.rgbPreserveHue=  parseInt(rgbPreserveHue+''); /* if 0, stretch by band, otherwise preserve hue*/
+        this.asinhStretch=parseFloat(asinhStretch+'');
+        this.scalingK=parseFloat(scalingK+'');
         if (this.rgbPreserveHue > 0) {
             this.algorithm = STRETCH_ASINH;
             this.upperWhich = ZSCALE;
         }
-        this.bias= parseFloat(bias);
-        this.contrast= parseFloat(contrast);
+        this.bias= parseFloat(bias+'');
+        this.contrast= parseFloat(contrast+'');
     }
 
 
@@ -89,7 +88,7 @@ export class RangeValues {
     /**
      * @return {RangeValues}
      */
-    static clone() {
+    clone() {
         return new RangeValues( this.lowerWhich, this.lowerValue, this.upperWhich,
             this.upperValue, this.asinhQValue,  this.gammaValue, this.algorithm,
             this.zscaleContrast, this.zscaleSamples, this.zscaleSamplesPerLine,

@@ -63,7 +63,6 @@ public class WebPlotRequest extends ServerRequest {
     public static final String URL = "URL";
     public static final String SIZE_IN_DEG = "SizeInDeg";
     public static final String SURVEY_KEY = "SurveyKey";
-    public static final String SURVEY_KEY_ALT = "SurveyKeyAlt";
     public static final String SURVEY_KEY_BAND = "SurveyKeyBand";
     public static final String FILTER = "filter";
     public static final String TYPE = "Type";
@@ -133,7 +132,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String WAVE_LENGTH_UM= "WAVE_LENGTH_UM";
 
     private static final String _allKeys[] = {FILE, WORLD_PT, URL, SIZE_IN_DEG, SURVEY_KEY,
-                                              SURVEY_KEY_ALT, SURVEY_KEY_BAND, TYPE, ZOOM_TYPE,
+                                              SURVEY_KEY_BAND, TYPE, ZOOM_TYPE,
                                               SERVICE, USER_DESC, INIT_ZOOM_LEVEL,
                                               TITLE, ROTATE_NORTH, ROTATE_NORTH_TYPE, ROTATE, ROTATION_ANGLE,
                                               HEADER_KEY_FOR_TITLE,
@@ -893,14 +892,6 @@ public class WebPlotRequest extends ServerRequest {
 
     public String getSurveyKey() {
         return getParam(SURVEY_KEY);
-    }
-
-    public void setSurveyKeyAlt(String key) {
-        setParam(SURVEY_KEY_ALT, key);
-    }
-
-    public String getSurveyKeyAlt() {
-        return getParam(SURVEY_KEY_ALT);
     }
 
     public String getSurveyBand() { return getParam(SURVEY_KEY_BAND); }

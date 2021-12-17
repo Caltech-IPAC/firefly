@@ -24,7 +24,6 @@ import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {warningDivId} from '../../ui/LostConnection';
 import {startTTFeatureWatchers} from '../common/ttFeatureWatchers.js';
 import {dispatchSetLayoutMode, LO_MODE} from '../../core/LayoutCntlr';
-import {} from '../../core/AppDataCntlr';
 import {getExpandedChartProps} from '../../charts/ChartsCntlr.js';
 import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
 

@@ -333,7 +333,7 @@ export class CysConverter {
                 retval= CysConverter.makeIPtFromFitsImPt(pt);
                 break;
             case Point.ZERO_BASED_IM_PT:
-                retval= this.makeIPtFromxZeroImPt(pt);
+                retval= this.makeIPtFromZeroImPt(pt);
                 break;
             case Point.W_PT:
                 retval = this.getImageCoordsFromWorldPt(pt);
@@ -356,7 +356,7 @@ export class CysConverter {
         return pt ? makeImagePt(pt.x-.5, pt.y-.5) : null;
     }
 
-    makeIPtFromxZeroImPt(pt) {
+    makeIPtFromZeroImPt(pt) {
         if (!pt) return null;
         const {ltv1,ltv2}= CysConverter.getLtv(this.header);
         return makeImagePt(pt.x+.5+ltv1, pt.y+.5+ltv2);
@@ -429,7 +429,6 @@ export class CysConverter {
             case Point.SPT:
                 retval= this.makeDevicePtFromSp(pt, altTransform);
                 break;
-                break;
         }
         return retval;
     }
@@ -448,7 +447,7 @@ export class CysConverter {
     /**
      *
      * @param {Object} sp ScreenPt
-     * @param {Object} altTransform
+     * @param {Object} [altTransform]
      * @return {DevicePt}
      */
      makeDevicePtFromSp(sp, altTransform) {
@@ -580,7 +579,7 @@ export class CysConverter {
 
     /**
      *
-     * @param {ImageWorkspacePt} iwpt ImageWorkspacePt
+     * @param {ImageWpt} iwpt ImageWorkspacePt
      * @param {number} [altZoomLevel]
      */
     makeSPtFromIWPt(iwpt, altZoomLevel) {
@@ -598,7 +597,7 @@ export class CysConverter {
 
     /**
      * @desc Return the sky coordinates given a image x (fsamp) and  y (fline)
-     * @param {Point} pt  the point to convert
+     * @param {Point|undefined} pt  the point to convert
      * @param  {CoordinateSys} [outputCoordSys] (optional) The coordinate system to return, default to coordinate system of image
      * @returns {WorldPt} the translated coordinates
      */
@@ -721,7 +720,7 @@ export const CCUtil = {
     /**
      *
      * Convert to Image Point
-     * @param {WebPlot} plot - the image
+     * @param {WebPlot|undefined} plot - the image
      * @param {object} pt - the point to convert
      * @return {ImagePt}
      * @function getImageCoords
@@ -747,7 +746,7 @@ export const CCUtil = {
      * Convert to Screen Point
      * */
     /**
-     * @param {WebPlot} plot - the image
+     * @param {WebPlot|undefined} plot - the image
      * @param {object} pt - the point to convert
      * @function  getScreenCoords
      * @memberof  firefly.util.image.CCUtil
@@ -757,7 +756,7 @@ export const CCUtil = {
     /**
      *
      * Convert to World Point
-     * @param {WebPlot} plot - the image
+     * @param {WebPlot|undefined} plot - the image
      * @param  pt - the point to convert
      * @return {WorldPt}
      * @function getWorldCoords
@@ -766,12 +765,6 @@ export const CCUtil = {
      */
     getWorldCoords: (plot,pt) => plot && CysConverter.make(plot).getWorldCoords(pt),
 
-    /**
-     *
-     * @ignore
-     *
-     */
-    getWorldPtRepresentation
 };
 
 

@@ -9,12 +9,10 @@ import {logger} from '../../util/Logger.js';
 import {isImage, isHiPS} from '../WebPlot.js';
 import ImagePlotCntlr, {
     ActionScope, IMAGE_PLOT_KEY, WcsMatchType,
-    dispatchUpdateViewSize, dispatchRecenter, dispatchChangeCenterOfProjection
-} from '../ImagePlotCntlr.js';
+    dispatchUpdateViewSize, dispatchRecenter, dispatchChangeCenterOfProjection } from '../ImagePlotCntlr.js';
 import {
     getPlotViewById, primePlot, getPlotStateAry, operateOnOthersInPositionGroup,
-    applyToOnePvOrAll, hasLocalStretchByteData
-} from '../PlotViewUtil.js';
+    applyToOnePvOrAll, hasLocalStretchByteData } from '../PlotViewUtil.js';
 import {callSetZoomLevel} from '../../rpc/PlotServicesJson.js';
 import {isImageViewerSingleLayout, getMultiViewRoot} from '../MultiViewCntlr.js';
 import {WebPlotResult} from '../WebPlotResult.js';
@@ -93,7 +91,7 @@ export function zoomActionCreator(rawAction) {
  * @param {UserZoomTypes} userZoomType
  * @param {boolean} forceDelay
  * @param {number} payloadLevel
- * @param {number} [p.upDownPercent] value between 0 and 1 - 1 is 100% of the next step up or down
+ * @param {number} [upDownPercent] value between 0 and 1 - 1 is 100% of the next step up or down
  * @return {{level: number, isFullScreen: boolean, useDelay: boolean, validParams: boolean}}
  */
 function evaluateZoomType(visRoot, pv, userZoomType, forceDelay, payloadLevel= 1, upDownPercent=1) {
@@ -204,7 +202,7 @@ function makeZoomLevelMatcher(dispatcher, visRoot, sourcePv,level,matchByScale,i
  * @param {number} zoomLevel
  * @param {boolean} isFullScreen
  * @param {boolean} zoomLockingEnabled
- * @param {UserZoomType} userZoomType
+ * @param {UserZoomTypes} userZoomType
  * @param {DevicePt} devicePt
  * @param {boolean} useDelay
  * @param {Function} getState

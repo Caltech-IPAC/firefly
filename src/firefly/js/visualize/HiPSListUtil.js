@@ -6,7 +6,13 @@ import {getColumnIdx, doFetchTable} from '../tables/TableUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {isBlankHiPSURL} from './WebPlot.js';
 
-export const HiPSId = 'hips';
+/**
+ * @typedef HiPSDataType
+ * @prop image
+ * @prop cube
+ * @prop catalog
+ * @type {Enum}
+ */
 export const HiPSDataType= new Enum([ 'image', 'cube', 'catalog'], { ignoreCase: true });
 export const HiPSData = [HiPSDataType.image, HiPSDataType.cube];
 export const HiPSSources = ServerParams.IRSA + ',' + ServerParams.CDS;
@@ -27,6 +33,12 @@ export function useForImageSearch() {
 }
 
 // convert comma separated string into trimmed-lowercase.
+/**
+ *
+ * @param {String} items
+ * @param {String} sep
+ * @return {Array.<String>}
+ */
 const toCsvLowercase = (items, sep = ',') => {
     return items?.split(sep).map( (s) => s?.trim()?.toLowerCase()).join(sep);
 };
@@ -36,12 +48,8 @@ const toCsvLowercase = (items, sep = ',') => {
  * @returns {string}
  */
 export function getHiPSSources() {
-    let srcs =  get(getAppOptions(), [HIPS_SEARCH, ServerParams.HIPS_SOURCES], ServerParams.ALL);
-
-    if (srcs.toLowerCase() === ServerParams.ALL.toLowerCase()) {
-        srcs = HiPSSources;
-    }
-    return toCsvLowercase(srcs);
+    const srcs = getAppOptions()?.[HIPS_SEARCH]?.[ServerParams.HIPS_SOURCES] ?? ServerParams.ALL;
+    return (srcs.toLowerCase() === ServerParams.ALL.toLowerCase()) ? HiPSSources : toCsvLowercase(srcs);
 }
 
 /**
@@ -61,7 +69,7 @@ export function defHiPSSources() {
 
 /**
  * get HiPS source priority for the merged list
- * @returns {string}
+ * @returns {Array.<string>}
  */
 export function getHiPSMergePriority() {
     const mergeP = get(getAppOptions(), [HIPS_SEARCH, ServerParams.HIPS_MERGE_PRIORITY], '');

@@ -85,7 +85,7 @@ const sex2dd = function (coordstr, islat, isequ) {
         if (numseen===0) throw INVALID_STRING;
 
         //convert it and save it
-        part[i] = parseFloat(r.substring(0, numseen + pointseen));
+        part[i] = parseFloat(r?.substring(0, numseen + pointseen));
 
         r = p;  // now deal with the separator
         p = p.trim();

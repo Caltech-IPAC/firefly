@@ -60,6 +60,7 @@ export function changePrime(rawAction, dispatcher, getState) {
     checkZoom(plotId,oldP, newP, scrollToImagePt,visRoot);
 }
 
+/** @type actionWatcherCallback */
 function zoomCompleteWatch(action, cancelSelf, {plotId,scrollToImagePt},dispatch,getState) {
     if (action.payload.plotId===plotId) {
         const visRoot= getState()[IMAGE_PLOT_KEY];

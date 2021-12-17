@@ -113,7 +113,7 @@ export function setMaskVisible(opv, visible) {
 /**
  * Do processing to turn this related data into a drawing layer
  * @param {VisRoot}  vr
- * @param {PlotView} pv
+ * @param {PlotView|undefined} pv
  * @param {RelatedData} relatedData
  */
 export function enableRelatedDataLayer(vr, pv, relatedData) {
@@ -213,7 +213,7 @@ function enableRelatedDataLayerTableOverlay(pv, relatedData) {
  * search matchOverlayPlotViews array and find any related data in the passed PlotView. Enable the layers
  * that match.
  * This function has side effect of dispatching actions
- * @param {PlotView} pv the plot view the contains the related data
+ * @param {PlotView|undefined} pv the plot view the contains the related data
  * @param {OverlayPlotView[]} matchOverlayPlotViews array of OverlayPlotView that must be matched
  */
 export function enableMatchingRelatedData(pv, matchOverlayPlotViews) {

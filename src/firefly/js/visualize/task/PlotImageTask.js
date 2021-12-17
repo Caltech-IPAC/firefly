@@ -2,13 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {flatten, isArray, uniqueId, uniqBy, isEmpty, isNumber, isString} from 'lodash';
+import {flatten, isArray, uniqueId, uniqBy} from 'lodash';
 import {WebPlotRequest, GridOnStatus} from '../WebPlotRequest.js';
-import ImagePlotCntlr, {
-    visRoot,
-    makeUniqueRequestKey,
-    IMAGE_PLOT_KEY,
-} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, { visRoot, makeUniqueRequestKey, IMAGE_PLOT_KEY} from '../ImagePlotCntlr.js';
 import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
 import {dispatchActiveTarget, getActiveTarget} from '../../core/AppDataCntlr.js';
 import {WebPlot, RDConst, isImage, processHeaderData} from '../WebPlot.js';
@@ -21,30 +17,23 @@ import {PlotPref} from '../PlotPref.js';
 import {makePostPlotTitle} from '../reducer/PlotTitle.js';
 import {dispatchAddViewerItems, getMultiViewRoot, findViewerWithItemId, EXPANDED_MODE_RESERVED, IMAGE, DEFAULT_FITS_VIEWER_ID} from '../MultiViewCntlr.js';
 import {
-    getPlotViewById,
-    getDrawLayerByType,
-    getDrawLayersByType,
-    getDrawLayerById,
-    getPlotViewIdListInOverlayGroup,
-    removeRawDataByPlotView, canLoadStretchDataDirect, isImageCube
-} from '../PlotViewUtil.js';
+    getPlotViewById, getDrawLayerByType, getDrawLayersByType, getDrawLayerById, getPlotViewIdListInOverlayGroup,
+    removeRawDataByPlotView, canLoadStretchDataDirect} from '../PlotViewUtil.js';
 import {enableMatchingRelatedData, enableRelatedDataLayer} from '../RelatedDataUtil.js';
 import {modifyRequestForWcsMatch} from './WcsMatchTask.js';
-import WebGrid from '../../drawingLayers/WebGrid.js';
-import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
-import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
 import {dispatchPlotProgressUpdate, dispatchRecenter, dispatchWcsMatch} from '../ImagePlotCntlr';
 import {isDefined} from '../../util/WebUtil';
 import {HdrConst} from '../FitsHeaderUtil.js';
 import {doFetchTable} from '../../tables/TableUtil';
-import ImageRoot from '../../drawingLayers/ImageRoot';
 import {dispatchDestroyDrawLayer, dispatchDetachLayerFromPlot} from '../DrawLayerCntlr';
 import {getAllDrawLayersForPlot} from '../PlotViewUtil';
-import SearchTarget from '../../drawingLayers/SearchTarget';
 import CsysConverter from '../CsysConverter';
-import {parseSpacialHeaderInfo} from 'firefly/visualize/projection/ProjectionHeaderParser.js';
-import {parseWavelengthHeaderInfo} from 'firefly/visualize/projection/WavelengthHeaderParser.js';
+import WebGrid from '../../drawingLayers/WebGrid.js';
+import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
+import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
+import ImageRoot from '../../drawingLayers/ImageRoot';
+import SearchTarget from '../../drawingLayers/SearchTarget';
 
 //======================================== Exported Functions =============================
 //======================================== Exported Functions =============================
@@ -419,9 +408,8 @@ export function addDrawLayers(request, pv, plot) {
         const dls = getDrawLayersByType(dlRoot(), drawLayerTypeId);
         dls.forEach((dl) => {
             if (dl.canAttachNewPlot) {
-                const visibility = (dl.drawLayerTypeId === HiPSGrid.TYPE_ID) ||
-                                    (dl.drawLayerTypeId === HiPSMOC.TYPE_ID && isEmpty(dl.visiblePlotIdAry))
-                                    ? false : true;
+                const visibility = !((dl.drawLayerTypeId === HiPSGrid.TYPE_ID) || //HiPSGrid and HiPSMOC don't come up visible by default
+                                    (dl.drawLayerTypeId === HiPSMOC.TYPE_ID && !dl.visiblePlotIdAry.length));
                 dispatchAttachLayerToPlot(dl.drawLayerId, plotId,  true, visibility, false);
             }
         });
@@ -504,7 +492,7 @@ function findCubePlane(plotCreate) {
 
 /**
  * readds the data into each plotCreate from the plotCreateHeader.
- * The data in the header is replicated in each plot and was clear for network transfere
+ * The data in the header is replicated in each plot and was clear for network transfer
  * efficiency. This optimization is very import for large cubes.
  * Note- data is modified in place plotCreate will me changed, no new object is created.
  * @param plotCreateHeader
@@ -581,6 +569,7 @@ function handleSuccessfulCall(plotCreate, plotCreateHeader, payload, requestKey)
     const cubeCtxAry= makeCubeCtxAry(plotCreate);
     const plotState= PlotState.makePlotStateWithJson(plotCreate[0].plotState);
     const request0= plotState.getWebPlotRequest();
+    const rv0= plotState.getRangeValues();
     const plotId= request0.getPlotId();
     const initAttributes= plotCreateHeader ? {...payload.attributes, ...plotCreateHeader.attributes} :
                                              {...payload.attributes};
@@ -588,7 +577,7 @@ function handleSuccessfulCall(plotCreate, plotCreateHeader, payload, requestKey)
     const attributes= {...initAttributes,  ...request0.getAttributes()};
     let title;
     const plotAry= plotCreate.map((wpInit,idx) => {
-        const plot= WebPlot.makeWebPlotData(plotId, wpInit, attributes,false, cubeCtxAry[idx],request0);
+        const plot= WebPlot.makeWebPlotData(plotId, wpInit, attributes,false, cubeCtxAry[idx],request0,rv0);
         if (!title) title= makePostPlotTitle(plot,request0);
         plot.title= title;
         return plot;
@@ -618,23 +607,6 @@ function updateActiveTarget(plot) {
     }
     if (activeTarget) dispatchActiveTarget(activeTarget);
 }
-
-
-/**
- *
- * @param {String[]} plotIdAry
- * @param {Object.<string, OverlayPlotView[]>} oldOverlayPlotViews
- */
-function matchAndActivateOverlayPlotViews(plotIdAry, oldOverlayPlotViews) {
-    // plotIdAry.forEach( (plotId) => dispatchDeleteOverlayPlot({plotId, deleteAll:true}));
-
-    plotIdAry
-        .map( (plotId) => getPlotViewById(visRoot(), plotId))
-        .filter( (pv) => pv)
-        .forEach( (pv) => enableMatchingRelatedData(pv,oldOverlayPlotViews[pv.plotId]));
-}
-
-
 
 /**
  *

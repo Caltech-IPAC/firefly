@@ -10,8 +10,17 @@
 import Enum from 'enum';
 
 /**
+ * @typedef ZoomType
  * @summary zoom type
  * @description can be 'STANDARD', 'LEVEL', 'FULL_SCREEN', 'TO_WIDTH_HEIGHT', 'TO_WIDTH', 'TO_HEIGHT', 'ARCSEC_PER_SCREEN_PIX'
+ * @prop STANDARD
+ * @prop LEVEL
+ * @prop FULL_SCREEN
+ * @prop TO_WIDTH_HEIGHT
+ * @prop TO_WIDTH
+ * @prop TO_HEIGHT
+ * @prop ARCSEC_PER_SCREEN_PIX
+ * @type {Enum}
  * @public
  * @global
  */
@@ -24,12 +33,3 @@ export const ZoomType= new Enum([
                       'TO_HEIGHT',         // requires height, not yet implemented
                       'ARCSEC_PER_SCREEN_PIX' // arcsec
                       ]);
-
-const whArray= [ZoomType.TO_WIDTH, ZoomType.TO_HEIGHT, ZoomType.FULL_SCREEN,
-                ZoomType.TO_WIDTH_HEIGHT, ZoomType.ARCSEC_PER_SCREEN_PIX];
-
-/**
- * Return true if zoom type requires width and height
- * @param zoomType
- */
-export const requiresWidthHeight= (zoomType) => whArray.includes( zoomType);

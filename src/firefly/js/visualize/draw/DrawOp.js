@@ -36,8 +36,8 @@ class DrawOp {
     }
 
     /**
-     *
      * @param drawObj
+     * @return {Point}
      */
     static getCenterPt(drawObj) {
         return op(drawObj,'getCenterPt')(drawObj);

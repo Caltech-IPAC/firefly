@@ -23,6 +23,7 @@ const Point = {  SPT, IM_PT, IM_WS_PT, FITS_IM_PT, ZERO_BASED_IM_PT, DEV_PT, PRO
  * @prop {Number} x
  * @prop {Number} y
  * @prop {String} type one of 'RenderedPt', 'ScreenPt', 'ImagePt', 'ImageWorkSpacePt', 'WorldPt', 'ProjectionPt', 'OffsetPt'
+ * @prop {CoordinateSys} [cSys] - the coordinate system constant, only used for world point
  * @public
  * @global
  */
@@ -57,6 +58,16 @@ const Point = {  SPT, IM_PT, IM_WS_PT, FITS_IM_PT, ZERO_BASED_IM_PT, DEV_PT, PRO
  * @global
  */
 
+ /**
+  * @typedef {Object} ImageWpt
+  * @summary a point in image file coordinates
+  * @prop {Number} x
+  * @prop {Number} y
+  * @prop {String} type constant must be 'ImageWpt'
+  * @public
+  * @global
+  */
+
 /**
  * @typedef {Object} FitsImagePt
  * @summary a point in FITS standard image file coordinates
@@ -86,6 +97,9 @@ const Point = {  SPT, IM_PT, IM_WS_PT, FITS_IM_PT, ZERO_BASED_IM_PT, DEV_PT, PRO
  * @prop {CoordinateSys} cSys - the coordinate system constant
  * @prop {String} objName - the object name the was used for name resolution, may not be defined
  * @prop {Resolver} resolver - the resolver used to create this worldPt, may not be defined
+ * @prop {function} getLon
+ * @prop {function} getLat
+ * @prop {function} getCoordSys
  *
  * @public
  * @global
@@ -129,7 +143,7 @@ export class SimplePt {
 
 /**
  * WorldPt constructor
- * @type {Function}
+ * @type {WorldPt}
  * @constructor
  * @alias module:firefly/visualize/Pt.WorldPt
  * @param {number} lon - the longitude
@@ -140,7 +154,7 @@ export class SimplePt {
  * @public
  * @global
  */
-export class WorldPt {
+class WorldPtObj {
     constructor(lon,lat,coordSys,objName,resolver) {
         this.x= lon;
         this.y= lat;
@@ -197,10 +211,6 @@ export class WorldPt {
         }
         return retval;
     }
-
-    static parse(inStr) {
-        return parseWorldPt(inStr);
-    }
 }
 
 
@@ -249,24 +259,24 @@ function toNum(v) {
  * @param {boolean} [angleInRadian] - if true then convert to degrees
  * @return {WorldPt}
  *
- * @function makeWorldPt
+ * @Function makeWorldPt
  * @public
  * @global
  */
 export const makeWorldPt=
     memorizeLastCall((lon, lat, coordSys= CoordinateSys.EQ_J2000, detectHMS= false, angleInRadian= false) =>{
-    let lonNum=toNum(lon);
-    let latNum=toNum(lat);
-    if (isNaN(lonNum) || isNaN(latNum)) {
-        if (!detectHMS) return undefined;
-        if (isString(lon) && isString(lat) && coordSys.isEquatorial()) {
-            lonNum= CoordUtil.convertStringToLon(lon,CoordinateSys.EQ_J2000);
-            latNum= CoordUtil.convertStringToLat(lat,CoordinateSys.EQ_J2000);
+        let lonNum=toNum(lon);
+        let latNum=toNum(lat);
+        if (isNaN(lonNum) || isNaN(latNum)) {
+            if (!detectHMS) return undefined;
+            if (isString(lon) && isString(lat) && coordSys.isEquatorial()) {
+                lonNum= CoordUtil.convertStringToLon(lon,CoordinateSys.EQ_J2000);
+                latNum= CoordUtil.convertStringToLat(lat,CoordinateSys.EQ_J2000);
+            }
+            if (isNaN(lonNum) || isNaN(latNum)) return undefined;
         }
-        if (isNaN(lonNum) || isNaN(latNum)) return undefined;
-    }
-    return new WorldPt( angleInRadian ? toDeg(lonNum): lonNum, angleInRadian ? toDeg(latNum): latNum, coordSys);
-});
+        return new WorldPtObj( angleInRadian ? toDeg(lonNum): lonNum, angleInRadian ? toDeg(latNum): latNum, coordSys);
+    });
 
 /**
  * Create a new world point with the object name and resolver defined
@@ -276,7 +286,7 @@ export const makeWorldPt=
  * @return {WorldPt}
  */
 export function makeResolvedWorldPt(wp,objName,resolver=Resolver.UNKNOWN) {
-    return new WorldPt(wp.x,wp.y,wp.cSys,objName,resolver);
+    return new WorldPtObj(wp.x,wp.y,wp.cSys,objName,resolver);
 }
 
 /**
@@ -371,7 +381,7 @@ export const makeOffsetPt= (x,y) => Object.assign(new SimplePt(x,y), {type:OFFSE
  * @return {Point}
  */
 export function makeAnyPt(x,y,coordSys) {
-    const csys= (coordSys?.getJsys && coordSys?.getEquinox) ? coordSys  : CoordinateSys.parse(coordSys);
+    const csys= isString(coordSys) ? CoordinateSys.parse(coordSys) : coordSys;
     switch (csys) {
         case CoordinateSys.SCREEN_PIXEL:
         case CoordinateSys.UNDEFINED:    return makeScreenPt(x, y);
@@ -414,7 +424,7 @@ export function parseAnyPt(inStr) {
 export function pointEquals(p1,p2)  {
     if (isNil(p1) && isNil(p2)) return true;
     else if (isNil(p1) || isNil(p2)) return false;
-    return (p1.x===p2.x && p1.y===p2.y && p1.type===p2.type && p1.csys===p2.csys);
+    return (p1.x===p2.x && p1.y===p2.y && p1.type===p2.type && p1.cSys===p2.cSys);
 }
 
 

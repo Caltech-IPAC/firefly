@@ -29,6 +29,13 @@ import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 
 const logger = Logger('ApiViewer');
 
+/**
+ * @typedef ViewerType
+ * one of
+ * @prop TriView
+ * @prop Grid
+ * @type {Enum}
+ */
 export const ViewerType= new Enum([
     'TriView',  // use what it in the title
     'Grid' // use the plot description key
