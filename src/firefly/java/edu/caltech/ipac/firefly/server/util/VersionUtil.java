@@ -36,7 +36,8 @@ public class VersionUtil {
     private static final String BUILD_TAG  ="BuildTag";
     private static final String BUILD_COMMIT  ="BuildCommit";
     private static final String BUILD_COMMIT_FIREFLY  ="BuildCommitFirefly";
-    private static final String BUILD_GIT_TAG_FIREFLY ="BuildGitTagFirefly";
+    private static final String BUILD_FIREFLY_TAG ="BuildFireflyTag";
+    private static final String DEV_CYCLE_TAG ="DevCycleTag";
 
     private static final String VERSION_FILE = "version.tag";
     private static final String unknownVersionUA= "Firefly/development";
@@ -75,7 +76,8 @@ public class VersionUtil {
             _version.setBuildTag(props.getProperty(BUILD_TAG));
             _version.setBuildCommit(props.getProperty(BUILD_COMMIT));
             _version.setBuildCommitFirefly(props.getProperty(BUILD_COMMIT_FIREFLY));
-            _version.setBuildGitTagFirefly(props.getProperty(BUILD_GIT_TAG_FIREFLY));
+            _version.setBuildFireflyTag(props.getProperty(BUILD_FIREFLY_TAG));
+            _version.setDevCycleTag(props.getProperty(DEV_CYCLE_TAG));
         } catch (IOException e) {
             // just ignore
         }
@@ -102,11 +104,18 @@ public class VersionUtil {
     }
 
     private static String getFireflyUA() {
-        String tag = getAppVersion().getBuildGitTagFirefly();
-        if (StringUtils.isEmpty(tag)) return unknownVersionUA;
+        String releaseTag = getAppVersion().getBuildFireflyTag();
+        String devCycle = getAppVersion().getDevCycleTag();
+        if (StringUtils.isEmpty(releaseTag) && StringUtils.isEmpty(devCycle)) return unknownVersionUA;
+        Matcher m;
         try {
-            Matcher m= Pattern.compile("\\d+(\\.\\d+)+").matcher(tag);
-            return m.find() ? "Firefly/" +m.group(0) : unknownVersionUA;
+            if (!StringUtils.isEmpty(releaseTag)) {
+                m= Pattern.compile("\\d+(\\.\\d+)+").matcher(releaseTag);
+                if (m.find()) return "Firefly/" +m.group(0) + (releaseTag.startsWith("pre") ? "-prerelease" : "");
+            }
+            m= Pattern.compile("\\d+(\\.\\d+)+").matcher(devCycle);
+            if (m.find()) return "Firefly/" +m.group(0)+"-development";
+            return unknownVersionUA;
         } catch (Exception e) {
             return unknownVersionUA;
         }

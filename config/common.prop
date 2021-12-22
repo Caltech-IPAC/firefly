@@ -9,7 +9,9 @@ BuildTime=@build_time@
 BuildTag=@BuildTag@
 BuildCommit=@BuildCommit@
 BuildCommitFirefly=@BuildCommitFirefly@
-BuildGitTagFirefly=@BuildGitTagFirefly@
+BuildFireflyTag=@BuildFireflyTag@
+BuildFireflyBranch=@BuildFireflyBranch@
+DevCycleTag=@DevCycleTag@
 
 
 #==========================================================
