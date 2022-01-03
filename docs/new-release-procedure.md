@@ -27,20 +27,20 @@
 
 5. **Build docker images and deploy it to IRSA Kubernetes**
    - Best to use Jenkins: https://irsawebdev5.ipac.caltech.edu:8443/view/IRSA%20k8s/job/ikc_firefly/build
-   - Build the docker with the following docker tags: `rc-yyyy.m`, `release-yyyy.m`,`release-yyyy.m.r`, `latest` 
-   - _example:_ from the example above the release would be built with: `rc-2021.2`, `release-2021.2`,`release-2021.2.1`, `latest`
+   - Build the docker with the following docker tags: `rc-yyyy.m`, `yyyy.m`,`yyyy.m.r`, `latest` 
+   - _example:_ from the example above the release would be built with: `rc-2021.2`, `2021.2`,`2021.2.1`, `latest`
    - `BUILD_ENV`: Select 'ops'
    - `ACTION`: Select 'both'  
    - `DEPLOY_ENV`: Select 'ops' to have this release deploy to fireflyops.ipac.caltech.edu
    - _notes:_ 
        - the `rc-yyyy.m` docker tag does not represent the release, it is just the most recent build of the branch
-       - the `release-yyyy.m` docker tag always represents the latest release of the version
+       - the `yyyy.m` docker tag always represents the latest release of the version
        - the `latest` tag is always the latest formal release. (note- development release use `nightly`)
        
 6. **Test the release.**
    - start docker on your laptop
-   - `docker pull ipac/firefly:release-yyyy.m.r`
-   - `docker run --rm  -p 8090:8080 -m 4G --name firefly ipac/firefly:release-yyyy.m.r`
+   - `docker pull ipac/firefly:yyyy.m.r`
+   - `docker run --rm  -p 8090:8080 -m 4G --name firefly ipac/firefly:yyyy.m.r`
    - Look at the main page: 
      - http://localhost:8090/firefly/
      - bring up version information, confirm build date and version

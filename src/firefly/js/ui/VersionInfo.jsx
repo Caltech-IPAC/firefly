@@ -61,8 +61,9 @@ function VersionInfoFull() {
                     !isVersionFormalRelease() &&
                     <div className='Version-grid-warning'>
                         {isVersionPreRelease() ?
-                            'Warning: Untested, early preview version of firefly on dev cycle ' + getDevCycle() :
-                            'Warning: Untested, development build of firefly on dev cycle ' + getDevCycle()}
+                            `Warning: Early preview of Firefly ${getDevCycle()}` :
+                            `Warning: Development build of Firefly on dev cycle ${getDevCycle()}`
+                        }
                     </div>
                 }
             </div>
