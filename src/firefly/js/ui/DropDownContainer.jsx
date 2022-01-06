@@ -5,11 +5,10 @@
 import React, {Component, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
-import {get, pick, isEmpty} from 'lodash';
+import {get, isEmpty, pick} from 'lodash';
 
 import {getDropDownInfo} from '../core/LayoutCntlr.js';
 import {flux} from '../core/ReduxFlux.js';
-import {getVersion} from '../Firefly.js';
 import {SearchPanel} from '../ui/SearchPanel.jsx';
 import {ImageSearchDropDown} from '../visualize/ui/ImageSearchPanelV2.jsx';
 import {TestSearchPanel} from '../ui/TestSearchPanel.jsx';
@@ -19,11 +18,11 @@ import {LSSTCatalogSelectViewPanel} from '../visualize/ui/LSSTCatalogSelectViewP
 import {FileUploadDropdown} from '../ui/FileUploadDropdown.jsx';
 import {WorkspaceDropdown} from '../ui/WorkspaceDropdown.jsx';
 import {getAlerts} from '../core/AppDataCntlr.js';
-import {showInfoPopup} from '../ui/PopupUtil.jsx';
 
 import './DropDownContainer.css';
 import {MultiSearchPanel} from 'firefly/ui/MultiSearchPanel.jsx';
 import {TapSearchPanel} from 'firefly/ui/tap/TapSearchRootPanel.jsx';
+import {VersionInfo} from 'firefly/ui/VersionInfo.jsx';
 
 const flexGrowWithMax = {width: '100%', maxWidth: 1400};
 
@@ -148,62 +147,6 @@ DropDownContainer.propTypes = {
 DropDownContainer.defaultProps = {
     visible: false
 };
-
-
-export const showFullVersionInfoDialog = (title='') => showInfoPopup(versionInfoFull(getVersion()), `${title} Version Information`);
-
-
-export function getVersionInfoStr(includeBuiltOnDate) {
-    const {BuildMajor, BuildMinor, BuildRev, BuildType, BuildDate} = getVersion();
-    let version = `v${BuildMajor}.${Number(BuildMinor)===-1?'Next':BuildMinor}`;
-    version += BuildRev !== '0' ? `.${BuildRev}` : '';
-    version += BuildType === 'Final' ? '' : `_${BuildType}`;
-    return includeBuiltOnDate ? version + ` Built On: ${BuildDate}`: version;
-}
-
-const VersionInfo= ()  => <div onClick={() => showFullVersionInfoDialog()}>{getVersionInfoStr(true)}</div>;
-
-function versionInfoFull({BuildMajor, BuildMinor, BuildRev, BuildNumber, BuildType, BuildTime, BuildTag, BuildCommit, BuildGitTagFirefly, BuildCommitFirefly}) {
-    let version = `v${BuildMajor}.${Number(BuildMinor)===-1?'Next':BuildMinor}`;
-    version += BuildRev !== '0' ? `.${BuildRev}` : '';
-    return (
-        <div className='DD-Version'>
-            <div className='DD-Version__item'>
-                <div className='DD-Version__key'>Version</div>
-                <div className='DD-Version__value'>{version}</div>
-            </div>
-            <div className='DD-Version__item'>
-                <div className='DD-Version__key'>Type</div>
-                <div className='DD-Version__value'>{BuildType}</div>
-            </div>
-            <div className='DD-Version__item'>
-                <div className='DD-Version__key'>Build Number</div>
-                <div className='DD-Version__value'>{BuildNumber}</div>
-            </div>
-            <div className='DD-Version__item'>
-                <div className='DD-Version__key'>Built On</div>
-                <div className='DD-Version__value'>{BuildTime}</div>
-            </div>
-            <div className='DD-Version__item'>
-                <div className='DD-Version__key'>Git commit</div>
-                <div className='DD-Version__value'>{BuildCommit}</div>
-            </div>
-            { BuildCommitFirefly &&
-                <div className='DD-Version__item'>
-                    <div className='DD-Version__key'>Git commit(Firefly)</div>
-                    <div className='DD-Version__value'>{BuildCommitFirefly}</div>
-                </div>
-            }
-            { BuildGitTagFirefly &&
-            <div className='DD-Version__item'>
-                <div className='DD-Version__key'>Firefly Git Tag</div>
-                <div className='DD-Version__value'>{BuildGitTagFirefly}</div>
-            </div>
-            }
-        </div>
-    );
-
-}
 
 export class Alerts extends PureComponent {
 

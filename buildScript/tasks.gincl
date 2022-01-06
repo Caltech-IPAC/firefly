@@ -131,7 +131,9 @@ task createVersionTag  {
         props.setProperty('BuildTime', build_time)
         props.setProperty('BuildTag', tag)
         props.setProperty('BuildCommit', getCommitHash())
-        props.setProperty('BuildGitTagFirefly', getCommitTag(fireflyPath))
+        props.setProperty('BuildFireflyTag', getCommitTag(fireflyPath))
+        props.setProperty('BuildFireflyBranch', getBranch(fireflyPath))
+        props.setProperty('DevCycleTag', getDevCycleTag(fireflyPath, "unknown"))
 
         props.setProperty('ExtendedCache', project.env == "local" ? (project.hasProperty("ExtendedCache") ? project.ExtendedCache : "true") : "false")
 

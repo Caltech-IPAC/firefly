@@ -16,6 +16,9 @@
  * @prop {string} BuildTag      vcs tag string if it were tagged
  * @prop {string} BuildCommit   vcs commit used to build this app
  * @prop {string} BuildCommitFirefly    Firefly's vcs commit used to build this app.
+ * @prop {string} BuildFireflyTag firefly tag used for this build
+ * @prop {string} BuildFireflyBranch firefly branch used for this build
+ * @prop {string} DevCycle the tag that marks this development cycle
  */
 
 /**

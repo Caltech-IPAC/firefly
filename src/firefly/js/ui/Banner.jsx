@@ -8,10 +8,10 @@ import PropTypes from 'prop-types';
 import {useStoreConnector} from './SimpleComponent.jsx';
 import {getUserInfo} from '../core/AppDataCntlr.js';
 import {logout} from '../rpc/CoreServices.js';
-import {getVersionInfoStr, showFullVersionInfoDialog} from '../ui/DropDownContainer.jsx';
+import {getVersionInfoStr, showFullVersionInfoDialog} from 'firefly/ui/VersionInfo.jsx';
 import './Banner.css';
 
-const getVersionTipStr= (appTitle) => `${appTitle?appTitle+' ':''}Version:\n${getVersionInfoStr(true)}`;
+const getVersionTipStr= (appTitle) => `${appTitle?appTitle+' ':''}Version:\n${getVersionInfoStr(true,true)}`;
 
 export const Banner = memo( ({menu, readout, appIcon, visPreview, appTitle, additionalTitleStyle = {},
                                  showUserInfo=false, enableVersionDialog= false, showTitleOnBanner=false,
