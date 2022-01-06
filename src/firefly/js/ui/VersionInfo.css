@@ -1,0 +1,30 @@
+.Version-grid {
+    user-select: text;
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-column-gap: 5px;
+    grid-row-gap: 5px;
+}
+
+.Version-grid-desc {
+    font-weight: bold;
+    grid-column-start: 1;
+    justify-self: end;
+    white-space: nowrap;
+    height: 14px;
+}
+
+.Version-grid-value {
+    grid-column-start: 2;
+    justify-self: start;
+    white-space: nowrap;
+    height: 14px;
+}
+
+.Version-grid-warning {
+    grid-column-start: 1;
+    grid-column-end: span 2;
+    text-align: center;
+    color: red;
+    padding-top:10px
+}

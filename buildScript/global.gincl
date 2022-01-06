@@ -156,6 +156,34 @@ ext.getCommitTag = { workDir="." ->
     }
 }
 
+ext.getDevCycleTag = { workDir=".", fallback="" ->
+    try {
+        def hashOut = new ByteArrayOutputStream()
+        exec {
+            commandLine "git", "describe", "--tags", "--match", "cycle-*", "--abbrev=0"
+            workingDir = workDir
+            standardOutput = hashOut
+        }
+        return hashOut.toString().trim();
+    } catch (Exception e) {
+        return fallback
+    }
+}
+
+ext.getBranch = { workDir=".", fallback="" ->
+    try {
+        def hashOut = new ByteArrayOutputStream()
+        exec {
+            commandLine "git", "rev-parse", "--abbrev-ref", "HEAD"
+            workingDir = workDir
+            standardOutput = hashOut
+        }
+        return hashOut.toString().trim();
+    } catch (Exception e) {
+        return fallback
+    }
+}
+
 ext.getVersionInfo = { key ->
     if (!project.hasProperty("tag_file")) {
         project.ext.tag_file = "${project.buildDir}/version.tag"

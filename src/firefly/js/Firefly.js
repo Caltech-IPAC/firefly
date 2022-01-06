@@ -261,8 +261,35 @@ export function startAsAppFromApi(divId, props={template: 'FireflySlate'}) {
  * returns version information in a key/value object.
  * @returns {VersionInfo}
  */
-export function getVersion() {
-  return getPropsWith('version.');
+export const getVersion= once(() => getPropsWith('version.') );
+const ffTag= () => getVersion().BuildFireflyTag ?? '';
+
+const releaseRE= /release-\d+(\.\d+)+/;
+const preRE=  /pre-(\d)+-\d+(\.\d+)+/;
+const cycleRE= /cycle-\d+\.\d+/;
+const justVersion= /\d+(\.\d+)+/;
+
+export function getFireflyLibraryVersionStr() {
+    const {BuildFireflyBranch:branch='unknown-branch'} = getVersion();
+
+    if (isVersionFormalRelease()) return getFormalReleaseVersionStr();
+    else if (isVersionPreRelease()) return getPrereleaseVersionStr();
+    else if (getDevCycle()) return getDevVersionStr(branch);
+    else return `0.0-${branch}-development`;
+}
+
+const getPrereleaseVersionStr= () =>
+    ffTag().match(justVersion)?.[0]+'-PRE-'+ ffTag().match(preRE)?.[0].split('-')[1];
+
+const getDevVersionStr= (branch) =>`${getDevCycle()}-DEV${branch!=='dev'?'-'+branch:''}`;
+const getFormalReleaseVersionStr= () => ffTag().match(justVersion)?.[0];
+
+
+export const isVersionFormalRelease = ()  => Boolean(ffTag().match(releaseRE));
+export const isVersionPreRelease = ()  => Boolean(ffTag().match(preRE));
+export function getDevCycle() {
+    const {DevCycleTag:tag} = getVersion();
+    return tag?.match(cycleRE) ? tag?.match(justVersion)[0] : '';
 }
 
 

@@ -30,7 +30,8 @@ public class Version implements Serializable {
     private String      _buildTag= "";
     private String      _buildCommit= "";
     private String      _buildCommitFirefly= "";
-    private String      _buildGitTagFirefly= "";
+    private String      _buildFireflyTag = "";
+    private String      _devCycleTag = "";
     private long        _configLastModTime = 0;
 
 //======================================================================
@@ -73,9 +74,8 @@ public class Version implements Serializable {
         this._buildCommitFirefly = _buildCommitFirefly;
     }
 
-    public void setBuildGitTagFirefly(String buildGitTagFirefly) {
-        this._buildGitTagFirefly= buildGitTagFirefly;
-    }
+    public void setBuildFireflyTag(String buildFireflyTag) { this._buildFireflyTag = buildFireflyTag; }
+    public void setDevCycleTag(String devCycleTag) { this._devCycleTag = devCycleTag; }
 
     public String getBuildTime() {
         return _buildTime;
@@ -100,7 +100,8 @@ public class Version implements Serializable {
     public String getBuildDate() { return _buildDate; }
     public int getBuildNumber() { return _build;  }
     public String getAppName() { return _appName; }
-    public String getBuildGitTagFirefly() { return _buildGitTagFirefly; }
+    public String getBuildFireflyTag() { return _buildFireflyTag; }
+    public String getDevCycleTag() { return _devCycleTag; }
 
     @Override
     public String toString() {
