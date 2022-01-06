@@ -96,8 +96,6 @@ Webpack packages:
 - babel-loader
 - style-loader
 - css-loader
-- url-loader (v2, v3 requires node 10.13)
-- file-loader (v4, v5 requires node 10.13)
 - webpack-visualizer-plugin
 
 

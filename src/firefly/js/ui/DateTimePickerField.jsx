@@ -5,7 +5,6 @@ import Moment from 'moment';
 import DateTime from 'react-datetime';
 import Validate from '../util/Validate.js';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils';
-import {clone} from '../util/WebUtil.js';
 
 import './tap/react-datetime.css';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';

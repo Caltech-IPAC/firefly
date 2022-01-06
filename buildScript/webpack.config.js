@@ -104,8 +104,8 @@ export default function makeWebpackConfig(config) {
     let filename = config.use_loader ? '[name]-dev.js' : '[name].js';
     let workerFilename= '[name].worker.js';
     if (BUILD_ENV !== 'local') {
-        filename = config.use_loader ? '[name]-[hash].js' : '[name].js';
-        workerFilename= '[name]-[hash].worker.js';
+        filename = config.use_loader ? '[name]-[fullhash].js' : '[fullhash].js';
+        workerFilename= '[name]-[fullhash].worker.js';
     }
     const output =  {filename, path: out_path};
 
@@ -134,25 +134,27 @@ export default function makeWebpackConfig(config) {
         {
             test : /\.(js|jsx)$/,
             include: [config.firefly_dir].concat(config.src),
-            loader: 'babel-loader',
-            query: {
+            use: {
+                loader: 'babel-loader',
                 // later presets run before earlier for each AST node
                 // use 'es2015', {modules: false}] for es5 with es6 modules
-                presets: [
-                    ['@babel/preset-env',
-                        {
-                            targets: {
-                                browsers: ['safari >= 12', 'chrome >= 81', 'firefox >= 79', 'edge >= 83']
-                            },
-                            debug: false,//
-                            modules: false,  // preserve application module style - in our case es6 modules
-                            useBuiltIns : 'usage',
-                            corejs: 3
-                        }
+                options: {
+                    presets: [
+                        ['@babel/preset-env',
+                            {
+                                targets: {
+                                    browsers: ['safari >= 12', 'chrome >= 90', 'firefox >= 90', 'edge >= 90']
+                                },
+                                debug: false,
+                                modules: false,  // preserve application module style - in our case es6 modules
+                                useBuiltIns : 'usage',
+                                corejs: 3
+                            }
+                        ],
+                        '@babel/preset-react'
                     ],
-                    '@babel/preset-react'
-                ],
-                plugins: [ '@babel/plugin-transform-runtime', 'lodash' ]
+                    plugins: [ '@babel/plugin-transform-runtime', 'lodash' ]
+                }
             }
         },
         {
@@ -165,43 +167,13 @@ export default function makeWebpackConfig(config) {
         },
         {
             test    : /\.css$/,
-            use: [ { loader: 'style-loader' }, { loader: 'css-loader' }]
+            use: [ { loader: 'style-loader' }, { loader: 'css-loader' } ]
         },
         {
             test: /\.(png|jpg|gif)$/,
-            use: [{ loader: `url-loader?root=${path.resolve(config.firefly_dir, 'html')}`}]
+            type: 'asset/inline'
         }
     ];
-
-
-    if (config.do_lint) {
-        let eslint_options = '';
-        if (process.env.DO_LINT_STRICT) {
-            // in addition to .eslintrc, extra rules are defined in .eslint-strict.json
-            const eslint_strict_path = path.resolve(config.project, '.eslint-strict.json');
-            if (fs.existsSync(eslint_strict_path)) {
-                eslint_options = '?' + JSON.stringify(JSON.parse(fs.readFileSync(eslint_strict_path)));
-                console.log('eslint-loader' + eslint_options);
-            } else {
-                console.log('ERROR: No .eslint-strict.json found - excluding lint');
-                console.log('----------------------------------------------------');
-                config.do_lint = false;
-            }
-        }
-        rules.push(
-            {
-                test : /\.(js|jsx)$/,
-                enforce: 'pre',
-                exclude: exclude_dirs,
-                loader: 'eslint-loader' + eslint_options,
-                options: {
-                    configFile  : path.resolve(config.project,'.eslintrc'),
-                    failOnError : false,
-                    emitWarning : false
-                }
-            }
-        );
-    }
 
     if (!ENV_DEV_MODE) { // Adding this so we see it in the log file of our builds
         console.log('Building client with Global Props:');
@@ -212,8 +184,7 @@ export default function makeWebpackConfig(config) {
         name    : config.name,
         mode    : process.env.NODE_ENV,
         target  : 'web',
-        devtool : 'source-map',
-        // optimization,
+        devtool : process.env.NODE_ENV!=='production' ? 'source-map' : false,
         optimization: {
             minimizer: [ new TerserPlugin({ terserOptions: {safari10: true} }) ]
         },
@@ -225,7 +196,12 @@ export default function makeWebpackConfig(config) {
         module: {rules},
         output,
         plugins,
-        stats: {maxModules: 0},
+        stats: {
+            builtAt: true,
+            cached: false,
+            excludeModules: () => true,
+
+        },
         performance: { hints: false }  // Warning disabled the references: https://webpack.js.org/guides/code-splitting/
     };
 
@@ -235,29 +211,6 @@ export default function makeWebpackConfig(config) {
 
     return webpack_config;
 }
-// ----------------------------------
-// Vendor Bundle Configuration
-// ----------------------------------
-//webpackConfig.entry.vendor = [
-//    'history',
-//    'immutable',
-//    'react',
-//    'react-redux',
-//    'react-router',
-//    'redux',
-//    'redux-devtools',
-//    'redux-devtools/lib/react'
-//];
-//
-//// NOTE: this is a temporary workaround. I don't know how to get Karma
-//// to include the vendor bundle that webpack creates, so to get around that
-//// we remove the bundle splitting when webpack is used with Karma.
-//const commonChunkPlugin = new webpack.optimize.CommonsChunkPlugin(
-//    'vendor', '[name].[hash].js'
-//);
-//commonChunkPlugin.__KARMA_IGNORE__ = true;
-//webpackConfig.plugins.push(commonChunkPlugin);
-
 
 const getLoadScript= (nameRoot, loaderPostfix) => `${nameRoot}${loaderPostfix}`;
 
@@ -266,8 +219,10 @@ function firefly_loader(loadScript, outpath, nameRoot, loaderPostfix, isLocal) {
     return function ()  {
         this.hooks.done.tap('done',
             (stats) => {
-                const hash = isLocal ? 'dev' : stats.hash;
-                //var cxt_name = stats.compilation.name;
+                // not we not get the hash from stats.compilation.hash not stats.compilation.fullHash
+                // this is what matches [fullhash] for the filename
+                // this is not very consistent so we should watch it in the future
+                const hash = isLocal ? 'dev' : stats.compilation.hash;
 
                 const loaderScript= getLoadScript(nameRoot,loaderPostfix);
                 let content = fs.readFileSync(loadScript);

@@ -763,7 +763,7 @@ task buildClient (dependsOn: loadConfig) {
             println ">> webpack.config.js not found.  Skipping buildClient."
             throw new StopExecutionException("webpack.config.js not found.  Skipping buildClient.")
         }
-        def res = project.NODE 'yarn', 'run', 'build', "--env.baseWarName=${webapp.baseWarName}", "--env.app-name=${project["app-name"]}"
+        def res = project.NODE 'yarn', 'run', 'build', "--env", "baseWarName=${webapp.baseWarName}", "--env", "app-name=${project["app-name"]}"
         if (res.getExitValue() != 0) {
             throw new GradleException("Fail to build Client")
         }
@@ -833,7 +833,7 @@ task devMode (dependsOn: createVersionTag) {
     outputs.upToDateWhen { false }
 
     doLast {
-        def res = project.NODE 'yarn', 'run', 'dev', "--env.baseWarName=${webapp.baseWarName}", "--env.app-name=${project["app-name"]}"
+        def res = project.NODE 'yarn', 'run', 'dev', "--env", "baseWarName=${webapp.baseWarName}", "--env", "app-name=${project["app-name"]}"
         if (res.getExitValue() == 0) {
             throw new GradleException("Fail to run dev mode")
         }

@@ -262,8 +262,8 @@ function parseVersion(ua,key) {
 
 
     var sAry= ver.split('\.');
-    var majorV= validator.isNumeric(sAry[0]) ? parseInt(sAry[0]) : UNKNOWN_VER;
-    var minorV= validator.isNumeric(sAry[1]) ? parseInt(sAry[1]) : UNKNOWN_VER;
+    var majorV= validator.isNumeric(sAry[0]+'') ? parseInt(sAry[0]) : UNKNOWN_VER;
+    var minorV= validator.isNumeric(sAry[1]+'') ? parseInt(sAry[1]) : UNKNOWN_VER;
     return {majorV,minorV};
 }
 
