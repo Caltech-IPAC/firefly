@@ -1,7 +1,6 @@
 /* eslint-env node */
 
 import webpack from 'webpack';
-import Visualizer from 'webpack-visualizer-plugin';
 import TerserPlugin from 'terser-webpack-plugin';
 import path from 'path';
 import fs from 'fs';
@@ -25,14 +24,18 @@ process.traceDeprecation = true;
  * @param {function}  [config.doFirst]  execute with the original config param if given.
  * @param {function}  [config.doLast]   execute with the created webpack_config param if given.
  * @returns {Object} a webpack config object.
+ *
+ *
+ * note- removed unmaintained webpack-visualizer-plugin, maybe replace with webpack-bundle-analyzer in the future
  */
 export default function makeWebpackConfig(config) {
 
     const ENV_DEV_MODE= process.env.DEV_MODE;
-    const BUILD_ENV   = process.env.BUILD_ENV;
+    const {BUILD_ENV='local'}   = process.env;
+    const localBuild= BUILD_ENV === 'local';
 
     if (!process.env.NODE_ENV) {
-        process.env.NODE_ENV = (BUILD_ENV === 'local') ? 'development' : 'production';
+        process.env.NODE_ENV = localBuild ? 'development' : 'production';
     }
 
     console.log('ENV_DEV_MODE: ' + ENV_DEV_MODE);
@@ -79,7 +82,7 @@ export default function makeWebpackConfig(config) {
 
     const globals = {
         __PROPS__       : {
-            BUILD_ENV   : JSON.stringify(process.env.BUILD_ENV || 'local'),
+            BUILD_ENV   : JSON.stringify(process.env.BUILD_ENV),
             SCRIPT_NAME : JSON.stringify(script_names),
             MODULE_NAME : JSON.stringify(config.name)
         }
@@ -103,29 +106,21 @@ export default function makeWebpackConfig(config) {
     const out_path = ENV_DEV_MODE ? config.deploy_dir : config.dist;
     let filename = config.use_loader ? '[name]-dev.js' : '[name].js';
     let workerFilename= '[name].worker.js';
-    if (BUILD_ENV !== 'local') {
+    if (!localBuild) {
         filename = config.use_loader ? '[name]-[fullhash].js' : '[fullhash].js';
         workerFilename= '[name]-[fullhash].worker.js';
     }
     const output =  {filename, path: out_path};
 
     /*------------------------ PLUGINS -----------------------------*/
-    const plugins = [
-        new webpack.DefinePlugin(globals),
-        
-    ];
-    if (ENV_DEV_MODE) {
-        plugins.push( dev_progress() );
-    }
-    if (BUILD_ENV === 'dev') {
-        plugins.push( new Visualizer({filename: './package-stats.html'}) );
-    }
+    const plugins = [ new webpack.DefinePlugin(globals)];
+    if (ENV_DEV_MODE) plugins.push( dev_progress() );
 
     if (config.use_loader) {
         plugins.push(
             firefly_loader(
                 path.resolve(config.firefly_dir, '../../buildScript/loadScript.js'),
-                out_path, nameRoot, config.loaderPostfix, BUILD_ENV === 'local')
+                out_path, nameRoot, config.loaderPostfix, localBuild)
         );
     }
 
@@ -215,14 +210,14 @@ export default function makeWebpackConfig(config) {
 const getLoadScript= (nameRoot, loaderPostfix) => `${nameRoot}${loaderPostfix}`;
 
 
-function firefly_loader(loadScript, outpath, nameRoot, loaderPostfix, isLocal) {
+function firefly_loader(loadScript, outpath, nameRoot, loaderPostfix, localBuild) {
     return function ()  {
         this.hooks.done.tap('done',
             (stats) => {
                 // not we not get the hash from stats.compilation.hash not stats.compilation.fullHash
                 // this is what matches [fullhash] for the filename
                 // this is not very consistent so we should watch it in the future
-                const hash = isLocal ? 'dev' : stats.compilation.hash;
+                const hash = localBuild ? 'dev' : stats.compilation.hash;
 
                 const loaderScript= getLoadScript(nameRoot,loaderPostfix);
                 let content = fs.readFileSync(loadScript);

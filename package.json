@@ -68,8 +68,7 @@
     "worker-loader": "^3.0",
     "babel-loader": "~8.2",
     "style-loader": "~3.3",
-    "css-loader": "~6.5",
-    "webpack-visualizer-plugin": "~0.1.11"
+    "css-loader": "~6.5"
   },
   "optionalDependencies": {
     "fsevents": "~2.3"
@@ -77,8 +76,5 @@
   "resolutions": {
     "**/chokidar/fsevents": "~2.3",
     "**/jest-haste-map/fsevents": "~2.3"
-  },
-  "jest":{
-    "testEnvironment": "jsdom"
   }
 }
