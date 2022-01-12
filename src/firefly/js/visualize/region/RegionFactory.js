@@ -756,7 +756,7 @@ export class RegionFactory {
         var nstr;
         var isTransformationChecked = false;
 
-        if (!validator.isInt(unit_char) && (unit_char !== 's')) {
+        if (!Number.isInteger(Number(unit_char)) && (unit_char !== 's')) {
             switch(unit_char.toLowerCase()) {
                 case '"':
                     unit = RegionValueUnit.ARCSEC;

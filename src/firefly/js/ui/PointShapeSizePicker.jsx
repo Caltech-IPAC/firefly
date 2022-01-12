@@ -20,7 +20,6 @@ import {SimpleCanvas} from '../visualize/draw/SimpleCanvas.jsx';
 import {getDrawLayersByDisplayGroup} from '../visualize/PlotViewUtil.js';
 import {clone} from '../util/WebUtil.js';
 import Color from '../util/Color.js';
-import validator from 'validator';
 import {HelpIcon} from '../ui/HelpIcon.jsx';
 
 
@@ -157,7 +156,7 @@ class ShapePickerWrapper extends PureComponent {
         var validSize = true;
         var isize;
 
-        if (!size || !validator.isFloat(size+'')) {
+        if (isNaN(parseFloat(size))) {
             validSize = false;
         } else {
             isize = Math.floor(parseFloat(size));
