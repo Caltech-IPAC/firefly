@@ -1,0 +1,151 @@
+ARG build_dir=firefly
+ARG target=firefly:warAll
+ARG env=dev
+
+
+FROM openjdk:8-jdk-slim-bullseye AS deps
+
+RUN apt-get update && apt-get install -y curl git htmldoc unzip wget bzip2
+
+RUN apt-get update \
+# use node v12.x. may not be available via apt-get
+    && curl -sL https://deb.nodesource.com/setup_12.x | bash -  \
+    && apt-get install -y nodejs \
+    && npm install yarn -g  \
+# gradle version 4.10.  Not available via apt-get
+    && cd /usr/local \
+    && wget https://services.gradle.org/distributions/gradle-4.10-bin.zip \
+    && unzip gradle-4.10-bin.zip \
+    && ln -sf /usr/local/gradle-4.10/bin/gradle /usr/local/bin/  \
+    && rm gradle-4.10-bin.zip \
+# cleanup
+    && rm -rf /var/lib/apt/lists/*;
+
+WORKDIR "/opt/work/lib"
+COPY firefly/package.json firefly/package-lock.json ./
+RUN npm install --no-package-lock
+
+
+FROM deps AS builder
+
+ARG build_dir
+ARG target
+ARG env
+
+WORKDIR /opt/work
+COPY . .
+COPY --from=deps /opt/work/lib/node_modules ./firefly/node_modules
+
+WORKDIR /opt/work/${build_dir}
+ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.internal.launcher.welcomeMessageEnabled=false"
+RUN gradle -Penv=${env} -b ../firefly/build.gradle :firefly:jar && gradle -Penv=${env} ${target}
+
+
+
+# Beginning of runtime image script
+
+# Description:
+# A tomcat application server running as UID 91(tomcat) by default.
+# It's designed to support running as a different user via -u or --user param.
+#
+#-----------------------------------------------------------------------------
+# To build: docker build -t ipac/firefly --build-arg IMAGE_NAME=ipac/firefly .
+# For help in running: docker run --rm  ipac/firefly --help
+#-----------------------------------------------------------------------------
+#
+# Below are predefined directories Firefly uses during runtime.
+# Mount these directories to an external volume or to the host filesystem if you would like it
+# to persists beyond the container's lifecycle.
+#
+# Firefly mountPaths:
+# /firefly/config           : used to override application properties
+# /firefly/workarea         : work area for temporary files
+# /firefly/shared-workarea  : work area for files that are shared between multiple instances of the application
+# /firefly/logs             : logs directory
+# /firefly/logs/statistics  : directory for statistics logs
+# /firefly/alerts           : alerts monitor will watch this directory for application alerts
+# /external                 : default external data directory visible to Firefly
+
+
+FROM tomcat:9.0-jdk11-openjdk
+
+ARG build_dir
+
+
+# - add packages: vim, wget, etc
+# - add any other standard apt packages here
+# - this is a big part of the layer so do it early
+# - emacs removed because it is so big: to readd emacs: emacs-nox
+RUN apt-get update \
+    && apt-get install -y bc vim procps wget \
+    && rm -rf /var/lib/apt/lists/*;
+
+# These are the users replaceable environment variables, basically runtime arguments
+#          MIN_JVM_SIZE and MAX_JVM_SIZE can be used to set the min and max JVM side
+#          - If MAX_JVM_SIZE is not set, the memory is autosized to the memory available to the container.
+#          - Set the available memory on the command line with --memory="4g"
+#          - You can change MAX_RAM_PERCENT on the command line with -e "MAX_RAM_PERCENT=80"
+#          - also- User name and password to use admin
+#          - FIREFLY_OPTS could be used to pass any properties
+
+ENV MAX_JVM_SIZE='' \
+    MIN_JVM_SIZE=1G \
+    INIT_RAM_PERCENT=10\
+    MAX_RAM_PERCENT=93\
+    JVM_CORES=0\
+    ADMIN_USER=admin\
+    ADMIN_PASSWORD=replaceMe \
+    DEBUG=false \
+    CLEANUP_INTERVAL=36h \
+    FIREFLY_OPTS=''
+
+# ----------------------------------------------------------
+# ----------------------------------------------------------
+# Overide the following from the command line:
+#          MIN_JVM_SIZE, MAX_JVM_SIZE,
+#          INIT_RAM_PERCENT, MAX_RAM_PERCENT,
+#          ADMIN_USER, ADMIN_PASSWORD,
+#          DEBUG, FIREFLY_OPTS
+# ----------------------------------------------------------
+# ----------------------------------------------------------
+
+ARG IMAGE_NAME=''
+
+ENV JPDA_ADDRESS=*:5050 \
+    VISUALIZE_FITS_SEARCH_PATH='' \
+    BUILD_TIME_NAME=${IMAGE_NAME} \
+    START_MODE=run
+
+WORKDIR ${CATALINA_HOME}
+
+# set up directory protections, copy stuff around, add tomcat user and group
+RUN mkdir -p conf/Catalina/localhost /local/www /firefly/config /firefly/workarea /firefly/shared-workarea /firefly/logs/statistics /firefly/alerts /hydra \
+  && rm -r logs && ln -s /firefly/logs logs && ln -s /firefly/logs /hydra \
+  && chmod -R 777 /firefly \
+  && chmod 777 webapps temp work /local /local/www conf \
+  && chmod +rw conf/*
+
+# These are the file that are executed at startup: start tomcat, logging, help, etc
+COPY firefly/docker/*.sh firefly/docker/*.txt ${CATALINA_HOME}/
+
+# Tomcat config files, tomcat-users is for the admin username and password
+# context.xml set delegate to true for we can use the classpath of tomcat
+COPY firefly/docker/tomcat-users.xml firefly/docker/context.xml firefly/docker/java.security.override conf/
+COPY firefly/docker/local.xml firefly/docker/conf/Catalina/localhost
+
+# Make directories, make scripts executable, save old tomcat config files, remove unwanted apps
+# increase max header size to avoid failing on large auth token
+RUN chmod +x *.sh; \
+    mv conf/tomcat-users.xml conf/tomcat-users.xml.in; \
+    sed -i 's/Connector port="8080"/Connector maxHttpHeaderSize="24576" port="8080"/g' ${CATALINA_HOME}/conf/server.xml
+
+# 8080 - http,  5050 - debug
+EXPOSE 8080 5050
+
+USER 91:91
+
+#copy all wars, typically there should only be one
+COPY --from=builder /opt/work/${build_dir}/build/dist/*.war ${CATALINA_HOME}/webapps/
+
+#CMD ["/bin/bash", "./launchTomcat.sh"]
+ENTRYPOINT ["/bin/bash", "-c", "./launchTomcat.sh ${*}", "--"]

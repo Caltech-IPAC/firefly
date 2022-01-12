@@ -1,0 +1,7 @@
+*
+!firefly
+!irsa-ife
+**/build
+**/.gradle
+**/node_modules
+**/.git

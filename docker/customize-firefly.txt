@@ -1,0 +1,13 @@
+
+Customize:
+   To fine tune the configuration you have to replace the launch page.
+   Replacing the launch page - index.html or slate.html with your own with different configurations
+      - first extract and prepare you file from the example
+           - create a empty directory to map to the container (example - mkdir /myDir)
+           > docker run --rm  -v /myDir:/local/www  --name firefly ipac/firefly:latest --help
+           - if the directory was empty, the container will place example html files into it.
+           - edit index.html to you liking (example - /myDir/index.html)
+      > docker run -p 80:8080 -v /myDir:/local/www -m 4g --rm --name firefly ipac/firefly:latest
+      - firefly maps this directory to "/local"
+      - start firefly with your alternative launch page- with http://localhost/local/ or http://localhost/local/myFireflyPage.html
+
