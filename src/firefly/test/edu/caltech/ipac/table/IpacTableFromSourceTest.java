@@ -54,7 +54,7 @@ public class IpacTableFromSourceTest extends ConfigTest {
     public void fromUrl() {
         try {
             TableServerRequest req = new TableServerRequest(IpacTableFromSource.PROC_ID);
-            req.setParam(ServerParams.SOURCE, "http://web.ipac.caltech.edu/staff/loi/demo/sample_multi_votable.xml");
+            req.setParam(ServerParams.SOURCE, "https://web.ipac.caltech.edu/staff/loi/demo/sample_multi_votable.xml");
 
             DataGroup results = new IpacTableFromSource().fetchDataGroup(req);
             verifyTableData(results, null);
