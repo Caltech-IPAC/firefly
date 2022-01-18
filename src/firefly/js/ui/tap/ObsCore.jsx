@@ -31,7 +31,6 @@ import {RadioGroupInputField} from 'firefly/ui/RadioGroupInputField';
 import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField';
 import {getAppOptions} from 'firefly/api/ApiUtil';
 import {floatValidator, minimumPositiveFloatValidator, maximumPositiveFloatValidator} from 'firefly/util/Validate';
-import toFloat from 'validator/es/lib/toFloat';
 import {dispatchValueChange} from 'firefly/fieldGroup/FieldGroupCntlr';
 import {Logger} from 'firefly/util/Logger';
 
@@ -426,16 +425,16 @@ export function ExposureDurationSearch({cols, groupKey, fields, useConstraintRed
                         let sinceMillis;
                         switch (exposureSinceOptions.value) {
                             case 'minutes':
-                                sinceMillis = toFloat(exposureSinceValue.value) * 60 * 1000;
+                                sinceMillis = parseFloat(exposureSinceValue.value) * 60 * 1000;
                                 break;
                             case 'hours':
-                                sinceMillis = toFloat(exposureSinceValue.value) * 60 * 60 * 1000;
+                                sinceMillis = parseFloat(exposureSinceValue.value) * 60 * 60 * 1000;
                                 break;
                             case 'days':
-                                sinceMillis = toFloat(exposureSinceValue.value) * 24 * 60 * 60 * 1000;
+                                sinceMillis = parseFloat(exposureSinceValue.value) * 24 * 60 * 60 * 1000;
                                 break;
                             case 'years':
-                                sinceMillis = toFloat(exposureSinceValue.value) * 365 * 24 * 60 * 60 * 1000;
+                                sinceMillis = parseFloat(exposureSinceValue.value) * 365 * 24 * 60 * 60 * 1000;
                                 break;
                         }
                         const sinceString = new Date(Date.now() - sinceMillis).toISOString();

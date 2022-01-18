@@ -3,7 +3,6 @@
  */
 
 import Enum from 'enum';
-import validator from 'validator';
 import DrawObj from './DrawObj';
 import DrawUtil from './DrawUtil';
 import VisUtil, {convertAngle, convert, lineCrossesRect, segmentIntersectRect} from '../VisUtil.js';
@@ -926,7 +925,7 @@ export function drawText(drawObj, ctx, plot, inPt, drawParams) {
     const color = drawParams.color || drawObj.color || 'black';
 
     let textHeight= 12;
-    if (validator.isFloat(fontSize.substring(0, fontSize.length - 2))) {
+    if (!isNaN(parseFloat(fontSize.substring(0, fontSize.length - 2)))) {
         textHeight = parseFloat(fontSize.substring(0, fontSize.length - 2)) * 14 / 10;
     }
 
@@ -1921,7 +1920,7 @@ function isAreaInView(objArea, plot) {
 export function fontHeight (fontSize) {
     let height = 12;
 
-    if (validator.isFloat(fontSize.substring(0, fontSize.length-2))) {
+    if (!isNaN(parseFloat(fontSize.substring(0, fontSize.length-2)))) {
         height = parseFloat(fontSize.substring(0, fontSize.length-2)) * 14/10 + 0.5;
     }
     return height;

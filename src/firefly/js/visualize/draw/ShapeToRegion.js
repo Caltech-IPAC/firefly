@@ -2,7 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import validator from 'validator';
 import CsysConverter from '../CsysConverter.js';
 import {convertAngle} from '../VisUtil.js';
 import {makeScreenPt} from '../Point.js';
@@ -70,10 +69,10 @@ export function toRegion(drawObj, plot, drawParams) {
 var getFontSize = (fontSize) => {
 
     if (fontSize.length > 2 && fontSize.match(/\D\D$/)) {
-        if (validator.isFloat(fontSize.slice(0, -2))) {
+        if (!isNaN(parseFloat(fontSize.slice(0, -2)))) {
             return parseInt(fontSize.slice(0, -2));
         }
-    } else if (validator.isFloat(fontSize)) {
+    } else if (!isNaN(parseFloat(fontSize))) {
         return parseInt(fontSize);
     }
     return null;

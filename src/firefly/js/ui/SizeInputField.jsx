@@ -6,7 +6,6 @@ import {InputFieldView} from './InputFieldView.jsx';
 import {ListBoxInputFieldView} from './ListBoxInputField.jsx';
 import Validate from '../util/Validate.js';
 import {toMaxFixed} from '../util/MathUtil.js';
-import validator from 'validator';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 
 const invalidSizeMsg = 'size is not set properly or size is out of range';
@@ -20,7 +19,7 @@ function getUnit(unit) {
 // input: string format,
 // output: size in degree (string foramt, no decimal digit limit), '': invalid input
 export const sizeToDeg = (sizestr, unit) => {
-    if (sizestr && !validator.isFloat(sizestr+'')) {
+    if (sizestr && isNaN(parseFloat(sizestr))) {
         return sizestr;
     }
     return (sizestr) ? convertAngle(((unit) ? unit : 'deg'), 'deg', sizestr).toString() : '';

@@ -15,9 +15,8 @@ import CoordUtil from '../visualize/CoordUtil.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {InputFieldView} from '../ui/InputFieldView.jsx';
-import {isNil, get, isEmpty} from 'lodash';
+import {isNil, get} from 'lodash';
 import {sprintf} from '../externalSource/sprintf';
-import validator from 'validator';
 
 export const getFootprintToolUIComponent = (drawLayer,pv) => <FootprintToolUI drawLayer={drawLayer} pv={pv}/>;
 export const defaultFootprintTextLoc = TextLocation.REGION_SE;
@@ -118,7 +117,7 @@ class FootprintToolUI extends PureComponent {
         var angleDeg = get(ev, 'target.value');
         var isValidAngle = true;
 
-        if  (isEmpty(angleDeg) || !validator.isFloat(angleDeg+'')) {
+        if  (isNaN(parseFloat(angleDeg))) {
             if (!angleDeg) angleDeg = '';
             isValidAngle = false;
         }

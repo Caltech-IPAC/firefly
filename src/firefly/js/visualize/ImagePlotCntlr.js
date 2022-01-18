@@ -762,6 +762,7 @@ export function dispatchChangeHipsImageConversion({plotId, hipsImageConversionCh
  * @param {string} p.plotId
  * @param {string} [p.hipsUrlRoot]
  * @param {CoordinateSys} [p.coordSys]
+ * @param {number} [p.cubeIdx]
  * @param {WorldPt} [p.centerProjPt]
  * @param {String} [p.blankColor] set the background color of the hips if is is a blank hips
  * @param {boolean} [p.applyToGroup] apply to the whole group it is locked
@@ -786,6 +787,8 @@ export function dispatchChangeHiPS({ plotId, hipsUrlRoot, coordSys, centerProjPt
  * @param {string} p.fileKey file on the server
  * @param {string} p.color - color is optional, if not specified, one is chosen
  * @param {string} p.title
+ * @param {string} p.lazyLoad
+ * @param {string} p.uiCanAugmentTitle
  * @param {string} [p.relatedDataId] pass a related data id if one exist
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  *

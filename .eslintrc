@@ -15,40 +15,25 @@
    },*/
 
   "env": {
+    "es2021": true,
     "es6": true,
     "es2020": true,
     "browser": true,
     "jest": true
   },
-  "parser": "babel-eslint",
+  "parser": "@babel/eslint-parser",
   "parserOptions": {
-     "ecmaVersion": 2020,
-     "ecmaFeatures": {
-      "arrowFunctions" : true,
-      "binaryLiterals" : true,
-      "blockBindings": true,
-      "classes" : true,
-      "defaultParams" : true,
-      "destructuring" : true,
-      "restParams" : true,
-      "forOf": true,
-      "jsx": true,
-      "experimentalObjectRestSpread": true,
-      "modules" : true,
-      "objectLiteralComputedProperties" : true,
-      "objectLiteralShorthandMethods" : true,
-      "objectLiteralShorthandProperties" : true,
-      "octalLiterals" : true,
-      "spread" : true,
-      "superInFunctions" : true,
-      "templateStrings" : true
-    },
-    "sourceType": "module"
+    "requireConfigFile": false,
+    "ecmaVersion": 2020,
+    "sourceType": "module",
+    "babelOptions": {
+           "presets": ["@babel/preset-react"]
+        }
   },
  "settings": {
    "react": {
      "createClass": "createReactClass", // Regex for Component Factory to use,
-     "version": "detect", // React version. "detect" automatically picks the version you have installed.
+     "version": "detect" // React version. "detect" automatically picks the version you have installed.
    }
   },
  "rules": {
@@ -83,7 +68,6 @@
     "react/react-in-jsx-scope": 1,
     "react/self-closing-comp": 1,
     "react-hooks/rules-of-hooks": "error", // Checks rules of Hooks
-    "react-hooks/exhaustive-deps": "warn", // Checks effect dependencies
     "semi": [2, "always"],
     "space-infix-ops": 0,
     "quotes": [2, "single", "avoid-escape"],

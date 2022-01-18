@@ -11,7 +11,7 @@ import {ExtraButton, FormPanel} from 'firefly/ui/FormPanel.jsx';
 import {ValidationField} from 'firefly/ui/ValidationField.jsx';
 import {intValidator} from 'firefly/util/Validate.js';
 import {FieldGroup} from 'firefly/ui/FieldGroup.jsx';
-import CreatableSelect from 'react-select/creatable/dist/react-select.esm.js';
+import CreatableSelect from 'react-select/creatable';
 import {RadioGroupInputField} from 'firefly/ui/RadioGroupInputField.jsx';
 import {makeTblRequest, setNoCache} from 'firefly/tables/TableRequestUtil.js';
 import {dispatchTableSearch} from 'firefly/tables/TablesCntlr.js';
