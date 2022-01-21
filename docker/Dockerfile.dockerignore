@@ -1,0 +1,9 @@
+*
+!firefly
+!firefly-help
+!irsa-ife
+!suit
+!suit-help
+**/build
+**/.gradle
+**/node_modules

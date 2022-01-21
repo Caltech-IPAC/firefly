@@ -519,8 +519,12 @@ task dockerImage (dependsOn: loadConfig) {
         if (copy_res) {
             copy {
                 from ("${project.distDir}") { include '*.war' }
-                from ("${fireflyPath}/docker/base") { include '*' }
+                from ("${fireflyPath}/docker") {
+                    include '*'
+                    exclude 'Dockerfile.dockerignore'
+                }
                 into "${project.buildDir}/docker"
+                rename ('Dockerfile.orig','Dockerfile')
             }
         }
 
