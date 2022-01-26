@@ -6,26 +6,20 @@ import PropTypes from 'prop-types';
 import {omit} from 'lodash';
 import shallowequal from 'shallowequal';
 import {
-    dispatchChangeActivePlotView, dispatchChangeExpandedMode,
-    dispatchChangeHiPS,
-    dispatchFlip, dispatchOverlayColorLocking,
-    dispatchRestoreDefaults,
-    dispatchRotate, ExpandType,
-    visRoot
+    dispatchChangeActivePlotView, dispatchChangeExpandedMode, dispatchChangeHiPS, dispatchFlip,
+    dispatchOverlayColorLocking, dispatchRestoreDefaults, dispatchRotate, ExpandType, visRoot
 } from '../ImagePlotCntlr.js';
+import {dispatchComponentStateChange, getComponentState} from 'firefly/core/ComponentCntlr.js';
+import {dispatchSetLayoutMode, LO_MODE, LO_VIEW} from 'firefly/core/LayoutCntlr.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
 import {
-    getAllDrawLayersForPlot,
-    getActivePlotView,
-    primePlot,
-    hasWCSProjection,
-    findPlotGroup, hasOverlayColorLock, isImageCube, isThreeColor
+    getAllDrawLayersForPlot, getActivePlotView, primePlot, hasWCSProjection,
+    findPlotGroup, hasOverlayColorLock, isImageCube, isThreeColor, pvEqualExScroll
 } from '../PlotViewUtil.js';
+import {isHiPS} from 'firefly/visualize/WebPlot.js';
 import {getPreference} from '../../core/AppDataCntlr.js';
 import {ImageCenterDropDown, TARGET_LIST_PREF} from './ImageCenterDropDown.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {pvEqualExScroll} from '../PlotViewUtil.js';
-import {isHiPS} from 'firefly/visualize/WebPlot.js';
 import {getDefMenuItemKeys} from 'firefly/visualize/MenuItemKeys.js';
 import CoordinateSys from 'firefly/visualize/CoordSys.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from 'firefly/ui/ToolbarButton.jsx';
@@ -50,7 +44,6 @@ import {findUnactivatedRelatedData} from 'firefly/visualize/RelatedDataUtil.js';
 import {showDrawingLayerPopup} from 'firefly/visualize/ui/DrawLayerPanel.jsx';
 import {SingleColumnMenu} from 'firefly/ui/DropDownMenu.jsx';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
-import {dispatchSetLayoutMode, LO_MODE, LO_VIEW} from 'firefly/core/LayoutCntlr.js';
 import {endExtraction, LINE, POINTS, showExtractionDialog, Z_AXIS} from 'firefly/visualize/ui/ExtractionDialog.jsx';
 
 import SAVE from 'images/icons-2014/Save.png';
@@ -90,6 +83,7 @@ import POINT_EXTRACTION from 'images/points.png';
 
 const omList= ['plotViewAry'];
 const image24x24={width:24, height:24};
+const emptyModalEndInfo= {f:undefined,s:undefined};
 
 /**
  * Return a new State if some values have changed in the store. If critical check show nothing has changed
@@ -109,16 +103,18 @@ function getStoreState(oldState) {
     const recentTargetAry= getPreference(TARGET_LIST_PREF, []);
     const dlCount= activePlotId ?
             getAllDrawLayersForPlot(getDlAry(),activePlotId).length + (newPv?.overlayPlotViews?.length??0)  : 0;
+    const modalEndInfo= getComponentState('ModalEndInfo', emptyModalEndInfo);
 
-    const newState= {visRoot:vr, dlCount, recentTargetAry};
+    const newState= {visRoot:vr, dlCount, recentTargetAry, modalEndInfo};
     if (!oldState) return newState;
 
        // -- if old state is passed, then do some comparisons to see if the state needs to update updated
     const tAryIsEqual= shallowequal(recentTargetAry, oldState?.recentTargetAry);
 
-    if (vr===oldState.visRoot && dlCount===oldState.dlCount && tAryIsEqual) return oldState; // nothing has changed
+    if (vr===oldState.visRoot && dlCount===oldState.dlCount && tAryIsEqual && modalEndInfo===oldState.modalEndInfo) return oldState; // nothing has changed
 
     let needsUpdate= dlCount!==oldState.dlCount || !tAryIsEqual || activePlotId!==oldState.visRoot.activePlotId;
+    if (!needsUpdate) needsUpdate= modalEndInfo!==oldState.modalEndInfo;
     if (!needsUpdate) needsUpdate= !shallowequal(omit(vr,omList),omit(oldState.visRoot,omList));
 
     const oldPv= getActivePlotView(oldState.visRoot);
@@ -127,15 +123,13 @@ function getStoreState(oldState) {
     return (needsUpdate) ? newState : oldState;
 }
 
-
-const VisMiniTBWrapper= wrapResizer(VisMiniTBContainer);
-
 export const VisMiniToolbar = memo( ({style, manageExpand=true, expandGrid=false}) => {
-    const [{visRoot,dlCount, recentTargetAry}] = useStoreConnector(getStoreState);
+    const [{visRoot,dlCount, recentTargetAry, modalEndInfo}] = useStoreConnector(getStoreState);
+    const setModalEndInfo= (info) => dispatchComponentStateChange('ModalEndInfo',  {...emptyModalEndInfo, ...info});
 
     return (
-        <VisMiniTBWrapper visRoot={visRoot} dlCount={dlCount} style={style} recentTargetAry={recentTargetAry}
-                          manageExpand={manageExpand} expandGrid={expandGrid} />
+        <VisMiniTBWrapper {...{visRoot, dlCount, style, recentTargetAry,
+                          manageExpand, expandGrid, modalEndInfo, setModalEndInfo}} />
     );
 });
 
@@ -155,34 +149,20 @@ const rS= {
     justifyContent: 'flex-end'
 };
 
-
-
-function VisMiniTBContainer({visRoot,dlCount, style= {}, size:{width}, manageExpand, expandGrid}) {
-    return (
+const VisMiniTBWrapper= wrapResizer(
+    ({visRoot, dlCount, style= {}, size:{width}, manageExpand, expandGrid, modalEndInfo, setModalEndInfo}) => (
         <div style={{...rS, ...style}} className='disable-select' >
-            <VisMiniToolbarView visRoot={visRoot} dlCount={dlCount} availableWidth={width}
-                                manageExpand={manageExpand} expandGrid={expandGrid} />
+            <VisMiniToolbarView {...{visRoot, dlCount, availableWidth:width,
+                                manageExpand, expandGrid,modalEndInfo, setModalEndInfo}} />
         </div>
-    );
-}
+    ));
 
 
-/**
- * Vis Toolbar
- * @param visRoot visualization store root
- * @param toolTip tool tip to show
- * @param availableWidth
- * @param manageExpand show the expand button when not in expanded mode
- * @param expandGrid expand button is the grid expand button
- * @return {Component}
- */
-export const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, expandGrid}) => {
+const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, expandGrid,
+                                            modalEndInfo, setModalEndInfo}) => {
     const {apiToolsView}= visRoot;
-    const mountedRef= useRef({mounted:true});
     const {current:divref}= useRef({element:undefined});
     const [colorDrops,setColorDrops]= useState(true);
-    const [modalEndInfo, setModalEndInfoInternal]= useState({f:undefined,s:undefined});
-
 
     useEffect(() => {
         if (divref.element) {
@@ -191,13 +171,6 @@ export const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageE
             setColorDrops(Boolean(window.innerHeight-rect.bottom>560));
         }
     }, []);
-
-    useEffect(() => {
-        mountedRef.current.mounted= true;
-        return () => mountedRef.current.mounted= false;
-    }, []);
-
-    const setModalEndInfo= (info) => mountedRef.current.mounted && setModalEndInfoInternal(info);
 
     const pv= getActivePlotView(visRoot);
     const plot= primePlot(pv);
@@ -293,7 +266,9 @@ VisMiniToolbarView.propTypes= {
     dlCount : PropTypes.number,
     manageExpand : PropTypes.bool,
     expandGrid: PropTypes.bool,
-    availableWidth: PropTypes.number
+    availableWidth: PropTypes.number,
+    modalEndInfo: PropTypes.object,
+    setModalEndInfo: PropTypes.func,
 };
 
 
