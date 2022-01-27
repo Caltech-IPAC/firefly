@@ -179,15 +179,15 @@ const defFireflyOptions = {
 
 
 
-    /**
-     * add options to store and setup any options that need specific initialization
-     * @param {Object} options
-     */
-    function installOptions(options) {
-        // setup options
-        dispatchAppOptions(options);
-        options.disableDefaultDropDown && dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
-        options.readoutDefaultPref && dispatchChangeReadoutPrefs(options.readoutDefaultPref);
+/**
+ * add options to store and setup any options that need specific initialization
+ * @param {Object} options
+ */
+function installOptions(options) {
+    // setup options
+    dispatchAppOptions(options);
+    options.disableDefaultDropDown && dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
+    options.readoutDefaultPref && dispatchChangeReadoutPrefs(options.readoutDefaultPref);
     options.wcsMatchType && dispatchWcsMatch({matchType:options.wcsMatchType, lockMatch:true});
     setDefaultImageColorTable(options.image?.defaultColorTable ?? 1);
 
@@ -209,17 +209,12 @@ function fireflyInit(props, options={}, webApiCommands) {
 
     props = mergeObjectOnly(defAppProps, props);
     const viewer = Templates[props.template];
+    if (viewer) props.renderTreeId= undefined; // in non API usages, renderTreeId is not used, this line is just for clarity
 
     installOptions(mergeObjectOnly(defFireflyOptions, options));
 
     // initialize UI or API depending on entry mode.
-    if (viewer) {
-        props.renderTreeId= undefined; // in non API usages, renderTreeId is not used, this line is just for clarity
-        documentReady().then(() => renderRoot(viewer, props,webApiCommands));
-    }
-    else {
-        initApi();
-    }
+    documentReady().then(() => viewer ? renderRoot(viewer, props,webApiCommands) : initApi());
     initDone = true;
 }
 
