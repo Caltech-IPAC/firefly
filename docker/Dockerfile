@@ -124,9 +124,7 @@ WORKDIR ${CATALINA_HOME}
 # set up directory protections, copy stuff around, add tomcat user and group
 RUN mkdir -p conf/Catalina/localhost /local/www /firefly/config /firefly/workarea /firefly/shared-workarea /firefly/logs/statistics /firefly/alerts /hydra \
   && groupadd -g ${gid} ${group} && useradd -u ${uid} -g ${group} -s /bin/sh ${user} \
-  && rm -r logs && ln -s /firefly/logs logs && ln -s /firefly/logs /hydra \
-  && chmod -R 777 /firefly \
-  && chmod 777 webapps temp work /local/www
+  && rm -r logs && ln -s /firefly/logs logs && ln -s /firefly/logs /hydra
 
 # These are the file that are executed at startup: start tomcat, logging, help, etc
 COPY firefly/docker/*.sh firefly/docker/*.txt ${CATALINA_HOME}/
@@ -141,8 +139,9 @@ COPY --from=builder /opt/work/${build_dir}/build/dist/*.war ${CATALINA_HOME}/web
 
 # Make directories, make scripts executable, save old tomcat config files, remove unwanted apps
 # increase max header size to avoid failing on large auth token
-RUN chmod +x *.sh \
-  && chmod +r conf/* \
+RUN chmod a+x *.sh \
+  && chmod -R a+w /firefly \
+  && chmod a+w *.txt webapps temp work /local/www \
   && sed -i 's/Connector port="8080"/Connector maxHttpHeaderSize="24576" port="8080"/g' ${CATALINA_HOME}/conf/server.xml
 
 # 8080 - http,  5050 - debug
