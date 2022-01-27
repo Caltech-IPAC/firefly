@@ -8,7 +8,7 @@ import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLaye
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {primePlot, getDrawLayerById, getPlotViewIdListInOverlayGroup} from '../visualize/PlotViewUtil.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
-import DrawLayerCntlr, {DRAWING_LAYER_KEY, dispatchUpdateDrawLayer} from '../visualize/DrawLayerCntlr.js';
+import DrawLayerCntlr, {DRAWING_LAYER_KEY, dispatchUpdateDrawLayer, dlRoot} from '../visualize/DrawLayerCntlr.js';
 import MocObj, {createDrawObjsInMoc, setMocDisplayOrder, MocGroup} from '../visualize/draw/MocObj.js';
 import {getUIComponent} from './HiPSMOCUI.jsx';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
@@ -377,18 +377,27 @@ function updateMocData(dl, plotId) {
 
 /**
  * start producing draw data at specific intervals
- * @param dl
+ * @param drawLayerId
  * @param plotId
  * @returns {Function}
  */
-function makeUpdateDeferred(dl, plotId) {
-    const {updateStatusAry} = dl;
+function makeUpdateDeferred(drawLayerId, plotId) {
+    const {updateStatusAry} = getDrawLayerById(dlRoot(), drawLayerId);
 
     updateStatusAry[plotId].startUpdate();
-    addTask(plotId, updateStatusAry[plotId].updateTaskId);
+    const {updateTaskId}= updateStatusAry[plotId];
+    addTask(plotId, updateTaskId);
 
     const id = window.setInterval( () => {
-        updateMocData(dl, plotId);
+        const updateDl= getDrawLayerById(dlRoot(), drawLayerId);
+        if (updateDl?.plotIdAry.includes(plotId) && updateDl?.visiblePlotIdAry.includes(plotId)) {
+            updateMocData(updateDl, plotId);
+        }
+        else {
+            removeTask(plotId, updateTaskId);
+            updateStatusAry[plotId].abortUpdate();
+            window.clearInterval(id);
+        }
     }, 0);
 
     return () => window.clearInterval(id);
@@ -487,7 +496,7 @@ function mocRedraw(drawLayer,action) {
             const updateMethod = LayerUpdateMethod.none;
 
             abortUpdate(drawLayer, updateStatusAry, pId, updateMethod);
-            updateStatusAry[pId].setCanceler(makeUpdateDeferred(drawLayer, pId));
+            updateStatusAry[pId].setCanceler(makeUpdateDeferred(drawLayer.drawLayerId, pId));
         }
     });
 

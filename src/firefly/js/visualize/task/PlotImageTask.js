@@ -18,7 +18,8 @@ import {makePostPlotTitle} from '../reducer/PlotTitle.js';
 import {dispatchAddViewerItems, getMultiViewRoot, findViewerWithItemId, EXPANDED_MODE_RESERVED, IMAGE, DEFAULT_FITS_VIEWER_ID} from '../MultiViewCntlr.js';
 import {
     getPlotViewById, getDrawLayerByType, getDrawLayersByType, getDrawLayerById, getPlotViewIdListInOverlayGroup,
-    removeRawDataByPlotView, canLoadStretchDataDirect} from '../PlotViewUtil.js';
+    removeRawDataByPlotView, canLoadStretchDataDirect, isDrawLayerAttached
+} from '../PlotViewUtil.js';
 import {enableMatchingRelatedData, enableRelatedDataLayer} from '../RelatedDataUtil.js';
 import {modifyRequestForWcsMatch} from './WcsMatchTask.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
@@ -407,7 +408,7 @@ export function addDrawLayers(request, pv, plot) {
     request.getOverlayIds().forEach((drawLayerTypeId)=> {
         const dls = getDrawLayersByType(dlRoot(), drawLayerTypeId);
         dls.forEach((dl) => {
-            if (dl.canAttachNewPlot) {
+            if (dl.canAttachNewPlot && !isDrawLayerAttached(dl,plotId)) {
                 const visibility = !((dl.drawLayerTypeId === HiPSGrid.TYPE_ID) || //HiPSGrid and HiPSMOC don't come up visible by default
                                     (dl.drawLayerTypeId === HiPSMOC.TYPE_ID && !dl.visiblePlotIdAry.length));
                 dispatchAttachLayerToPlot(dl.drawLayerId, plotId,  true, visibility, false);

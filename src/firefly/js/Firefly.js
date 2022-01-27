@@ -265,18 +265,20 @@ const cycleRE= /cycle-\d+\.\d+/;
 const justVersion= /\d+(\.\d+)+/;
 
 export function getFireflyLibraryVersionStr() {
-    const {BuildFireflyBranch:branch='unknown-branch'} = getVersion();
+    const {BuildFireflyBranch:branch='unknown-branch', BuildCommit:commit, BuildCommitFirefly:ffCommit} = getVersion();
 
     if (isVersionFormalRelease()) return getFormalReleaseVersionStr();
     else if (isVersionPreRelease()) return getPrereleaseVersionStr();
-    else if (getDevCycle()) return getDevVersionStr(branch);
+    else if (getDevCycle()) return getDevVersionStr(branch, ffCommit??commit);
     else return `0.0-${branch}-development`;
 }
 
 const getPrereleaseVersionStr= () =>
     ffTag().match(justVersion)?.[0]+'-PRE-'+ ffTag().match(preRE)?.[0].split('-')[1];
 
-const getDevVersionStr= (branch) =>`${getDevCycle()}-DEV${branch!=='dev'?'-'+branch:''}`;
+const getDevVersionStr= (branch,commit) =>
+    `${getDevCycle()}-DEV${branch!=='dev'?':'+branch:''}_${commit?.substring(0,4)}`;
+
 const getFormalReleaseVersionStr= () => ffTag().match(justVersion)?.[0];
 
 
