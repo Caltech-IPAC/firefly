@@ -81,8 +81,7 @@ RUN mkdir -p conf/Catalina/localhost /local/www /firefly/config /firefly/workare
 COPY *.sh *.txt ${CATALINA_HOME}/
 
 # Tomcat config files, tomcat-users is for the admin username and password
-# context.xml set delegate to true for we can use the classpath of tomcat
-COPY tomcat-users.xml context.xml  conf/
+COPY tomcat-users.xml conf/
 COPY local.xml conf/Catalina/localhost
 
 # Make directories, make scripts executable, save old tomcat config files, remove unwanted apps

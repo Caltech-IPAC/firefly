@@ -126,14 +126,14 @@ RUN mkdir -p conf/Catalina/localhost /local/www /firefly/config /firefly/workare
   && groupadd -g ${gid} ${group} && useradd -u ${uid} -g ${group} -s /bin/sh ${user} \
   && rm -r logs && ln -s /firefly/logs logs && ln -s /firefly/logs /hydra \
   && chmod -R 777 /firefly \
-  && chmod 777 webapps temp work /local /local/www
+  && chmod 777 webapps temp work /local/www
 
 # These are the file that are executed at startup: start tomcat, logging, help, etc
 COPY firefly/docker/*.sh firefly/docker/*.txt ${CATALINA_HOME}/
 
 # Tomcat config files, tomcat-users is for the admin username and password
 # context.xml set delegate to true for we can use the classpath of tomcat
-COPY firefly/docker/tomcat-users.xml firefly/docker/context.xml  conf/
+COPY firefly/docker/tomcat-users.xml conf/
 COPY firefly/docker/local.xml firefly/docker/conf/Catalina/localhost
 
 #copy all wars, typically there should only be one
