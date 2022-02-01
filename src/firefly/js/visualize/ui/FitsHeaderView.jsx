@@ -17,12 +17,11 @@ import {getPixScaleArcSec} from '../WebPlot.js';
 import {Band} from '../Band.js';
 import {get} from 'lodash';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
-import {sprintf} from '../../externalSource/sprintf.js';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {getTblById} from '../../tables/TableUtil.js';
 import {TABLE_SORT, TABLE_REPLACE, dispatchTableSort} from '../../tables/TablesCntlr.js';
 import {getHDU, isThreeColor} from '../PlotViewUtil';
-import {getHeader, getHeaderDesc} from '../FitsHeaderUtil.js';
+import { getAllValuesOfHeader, } from '../FitsHeaderUtil.js';
 
 const popupIdRoot = 'directFileAccessData';
 const popupPanelResizableStyle = {
@@ -387,17 +386,18 @@ function createTableIdForFitsHeader(plot) {
     return  tbl_id;
 }
 
-
 function createRowData(header,hduStr) {
     return Object.keys(header)
-        .sort((a, b) => header[a].idx - header[b].idx)
-        .reduce((prev, aKey, idx) => {
-            if (aKey === 'COMMENT') return prev;
-            const row= [idx, aKey, getHeader(header,aKey,''), getHeaderDesc(header,aKey)];
-            if (hduStr) row.push(hduStr);
-            prev.push(row);
+        .reduce((prev, aKey) => {
+            const hList= getAllValuesOfHeader(header, aKey);
+            hList.forEach((h) => {
+                const row= [h.idx??0, aKey, h.value??'', h.comment??''];
+                if (hduStr) row.push(hduStr);
+                prev.push(row);
+            });
             return prev;
-        }, []);
+        }, [])
+        .sort((r1, r2) => r1[0] - r2[0]);
 }
 
 /**

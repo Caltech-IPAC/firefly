@@ -162,11 +162,31 @@ public class VisJsonSerializer {
         Cursor<String, HeaderCard> i= header.iterator();
         int pos = 0;
         for(HeaderCard card= i.next(); i.hasNext();  card= i.next(), pos++) {
-            JSONObject mapValue = new JSONObject();
-            mapValue.put("value", card.getValue());
-            mapValue.put("comment", card.getComment());
-            mapValue.put("idx", pos);
-            map.put(card.getKey(), mapValue);
+
+            JSONObject cardData = new JSONObject();
+            cardData.put("value", card.getValue());
+            cardData.put("comment", card.getComment());
+            cardData.put("idx", pos);
+
+
+            if (map.containsKey(card.getKey())) {
+                Object data= map.get(card.getKey());
+                if (data instanceof JSONArray) {
+                    ((JSONArray) data).add(cardData);
+                }
+                else if (data instanceof  JSONObject) {
+                    JSONArray array= new JSONArray();
+                    array.add(data);
+                    array.add(cardData);
+                    map.put(card.getKey(), array);
+                }
+                else {
+                    // json serialization error
+                }
+            }
+            else {
+                map.put(card.getKey(), cardData);
+            }
         }
         return map;
     }
