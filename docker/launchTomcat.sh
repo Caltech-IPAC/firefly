@@ -62,8 +62,6 @@ echo "        --debug : start in debug mode"
 echo -e "\n"
 
 
-sed "s/USER/${ADMIN_USER}/" ${CATALINA_HOME}/conf/tomcat-users.xml.in | sed "s/PASSWORD/${ADMIN_PASSWORD}/" > ${CATALINA_HOME}/conf/tomcat-users.xml
-
 #------------ if we are doing firefly.jar setup examples in the local/www directory
 ./setupFireflyExample.sh
 
@@ -92,6 +90,8 @@ fi
 #---------   CATALINA_OPTS must be exported for catalina.sh to pick them up
 export CATALINA_OPTS="\
   ${JVM_SIZING} \
+  -DADMIN_USER=${ADMIN_USER} \
+  -DADMIN_PASSWORD=${ADMIN_PASSWORD:=replaceMe} \
   -Dhost.name=${HOSTNAME} \
   -Dserver.cores=${JVM_CORES} \
   -Djava.net.preferIPv4Stack=true \

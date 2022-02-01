@@ -2,7 +2,6 @@ ARG build_dir=firefly
 ARG target=firefly:warAll
 ARG env=dev
 
-
 FROM openjdk:8-jdk-slim-bullseye AS deps
 
 RUN apt-get update && apt-get install -y curl git htmldoc unzip wget bzip2
@@ -14,8 +13,8 @@ RUN apt-get update \
     && npm install yarn -g  \
 # gradle version 4.10.  Not available via apt-get
     && cd /usr/local \
-    && wget https://services.gradle.org/distributions/gradle-4.10-bin.zip \
-    && unzip gradle-4.10-bin.zip \
+    && wget  -q https://services.gradle.org/distributions/gradle-4.10-bin.zip \
+    && unzip -q gradle-4.10-bin.zip \
     && ln -sf /usr/local/gradle-4.10/bin/gradle /usr/local/bin/  \
     && rm gradle-4.10-bin.zip \
 # cleanup
@@ -70,14 +69,18 @@ RUN gradle -Penv=${env} -b ../firefly/build.gradle :firefly:jar && gradle -Penv=
 FROM tomcat:9.0-jdk11-openjdk
 
 ARG build_dir
+ARG user=tomcat
+ARG group=tomcat
+ARG uid=91
+ARG gid=91
 
 
 # - add packages: vim, wget, etc
 # - add any other standard apt packages here
 # - this is a big part of the layer so do it early
 # - emacs removed because it is so big: to readd emacs: emacs-nox
-RUN apt-get update \
-    && apt-get install -y bc vim procps wget \
+RUN apt-get update && apt-get install -y \
+        bc vim procps wget \
     && rm -rf /var/lib/apt/lists/*;
 
 # These are the users replaceable environment variables, basically runtime arguments
@@ -94,7 +97,7 @@ ENV MAX_JVM_SIZE='' \
     MAX_RAM_PERCENT=93\
     JVM_CORES=0\
     ADMIN_USER=admin\
-    ADMIN_PASSWORD=replaceMe \
+    ADMIN_PASSWORD='' \
     DEBUG=false \
     CLEANUP_INTERVAL=36h \
     FIREFLY_OPTS=''
@@ -120,10 +123,8 @@ WORKDIR ${CATALINA_HOME}
 
 # set up directory protections, copy stuff around, add tomcat user and group
 RUN mkdir -p conf/Catalina/localhost /local/www /firefly/config /firefly/workarea /firefly/shared-workarea /firefly/logs/statistics /firefly/alerts /hydra \
-  && rm -r logs && ln -s /firefly/logs logs && ln -s /firefly/logs /hydra \
-  && chmod -R 777 /firefly \
-  && chmod 777 webapps temp work /local /local/www conf \
-  && chmod +rw conf/*
+  && groupadd -g ${gid} ${group} && useradd -u ${uid} -g ${group} -s /bin/sh ${user} \
+  && rm -r logs && ln -s /firefly/logs logs && ln -s /firefly/logs /hydra
 
 # These are the file that are executed at startup: start tomcat, logging, help, etc
 COPY firefly/docker/*.sh firefly/docker/*.txt ${CATALINA_HOME}/
@@ -133,19 +134,20 @@ COPY firefly/docker/*.sh firefly/docker/*.txt ${CATALINA_HOME}/
 COPY firefly/docker/tomcat-users.xml firefly/docker/context.xml firefly/docker/java.security.override conf/
 COPY firefly/docker/local.xml firefly/docker/conf/Catalina/localhost
 
+#copy all wars, typically there should only be one
+COPY --from=builder /opt/work/${build_dir}/build/dist/*.war ${CATALINA_HOME}/webapps/
+
 # Make directories, make scripts executable, save old tomcat config files, remove unwanted apps
 # increase max header size to avoid failing on large auth token
-RUN chmod +x *.sh; \
-    mv conf/tomcat-users.xml conf/tomcat-users.xml.in; \
-    sed -i 's/Connector port="8080"/Connector maxHttpHeaderSize="24576" port="8080"/g' ${CATALINA_HOME}/conf/server.xml
+RUN chmod a+x *.sh \
+  && chmod -R a+w /firefly \
+  && chmod a+w *.txt webapps temp work /local/www \
+  && sed -i 's/Connector port="8080"/Connector maxHttpHeaderSize="24576" port="8080"/g' ${CATALINA_HOME}/conf/server.xml
 
 # 8080 - http,  5050 - debug
 EXPOSE 8080 5050
 
-USER 91:91
-
-#copy all wars, typically there should only be one
-COPY --from=builder /opt/work/${build_dir}/build/dist/*.war ${CATALINA_HOME}/webapps/
+USER tomcat
 
 #CMD ["/bin/bash", "./launchTomcat.sh"]
 ENTRYPOINT ["/bin/bash", "-c", "./launchTomcat.sh ${*}", "--"]
