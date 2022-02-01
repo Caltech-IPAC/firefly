@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * This class will download files via VisNetwork.  However it also locks so that two of the same request do not happen
+ * This class will download files via VisNetwork.  However, it also locks so that two of the same request do not happen
  * at the same time. This way a file will not overwrite itself during download.
  *
  * @author Trey Roby
@@ -57,25 +57,23 @@ public class LockingVisNetwork {
     private static FileInfo lockingRetrieve(BaseNetParams params, ServiceCaller svcCaller) throws FailedRequestException {
         Objects.requireNonNull(params);
         confirmParamsType(params);
-        FileInfo retval;
         try {
             Object lockKey= _activeRequest.computeIfAbsent(params, k -> new Object());
             synchronized (lockKey) {
-                DownloadListener dl = null;
-                if (params.getStatusKey() != null) { // todo: the download listener has very specific behavior
-                                                     //       it could be generalized by passing a DownloadListener
-                    dl = new DownloadProgress(params.getStatusKey(), params.getPlotId());
-                }
-                retval= (params instanceof AnyUrlParams) ?
-                        retrieveURL((AnyUrlParams)params, dl) :
-                        retrieveService((ImageServiceParams) params, dl, svcCaller);
+                return (params instanceof AnyUrlParams) ?
+                    retrieveURL( (AnyUrlParams)params, makeDownloadProgress(params) ) :
+                    retrieveService((ImageServiceParams) params, svcCaller);
             }
         } catch (IOException | SecurityException e) {
             throw ResponseMessage.simplifyNetworkCallException(e);
         } finally {
             _activeRequest.remove(params);
         }
-        return retval;
+    }
+
+    private static DownloadProgress makeDownloadProgress(BaseNetParams params) { // todo: generalize beyond just plotId
+        if (params.getStatusKey()== null) return null;
+        return new DownloadProgress(params.getStatusKey(), params.getPlotId());
     }
 
     private static void confirmParamsType(NetParams params) throws FailedRequestException {
@@ -84,7 +82,7 @@ public class LockingVisNetwork {
         }
     }
 
-    private static FileInfo retrieveService(ImageServiceParams params, DownloadListener dl, ServiceCaller svcCaller) throws IOException, FailedRequestException {
+    private static FileInfo retrieveService(ImageServiceParams params, ServiceCaller svcCaller) throws IOException, FailedRequestException {
         FileInfo fileInfo= CacheHelper.getFileInfo(params);
         if (fileInfo == null)  {
             fileInfo= svcCaller.retrieve(params,CacheHelper.makeFitsFile(params));
@@ -136,18 +134,16 @@ public class LockingVisNetwork {
         }
 
         public void dataDownloading(DownloadEvent ev) {
-            if (_key != null) {
-                String offStr = "";
-                if (ev.getMax() > 0) {
-                    offStr = " of " + FileUtil.getSizeAsString(ev.getMax(),true);
-                }
-                String messStr = "Retrieved " + FileUtil.getSizeAsString(ev.getCurrent(),true) + offStr;
-                PlotServUtils.updatePlotCreateProgress(_key, _plotId, ProgressStat.PType.DOWNLOADING, messStr);
+            if (_key == null) return;
+            String offStr = "";
+            if (ev.getMax() > 0) {
+                offStr = " of " + FileUtil.getSizeAsString(ev.getMax(),true);
             }
+            String messStr = "Retrieved " + FileUtil.getSizeAsString(ev.getCurrent(),true) + offStr;
+            PlotServUtils.updatePlotCreateProgress(_key, _plotId, ProgressStat.PType.DOWNLOADING, messStr);
         }
 
         public void beginDownload(DownloadEvent ev) {/*not used*/ }
-
         public void downloadCompleted(DownloadEvent ev) {/*not used*/ }
     }
 

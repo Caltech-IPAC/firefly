@@ -293,7 +293,7 @@ export async function createHiPSMocLayer(ivoid, title, hipsUrl, plot, visible=fa
 
     let   dl = dls.find((oneLayer) => oneLayer.drawLayerId === tblId);
     if (dl) {
-        dispatchAttachLayerToPlot(dl.drawLayerId, plot.plotId, false, visible);
+        dispatchAttachLayerToPlot(dl.drawLayerId, plot.plotId, false, visible, true);
         if (visible) dispatchChangeVisibility({id:dl.drawLayerId, visible:true, plotId:plot.plotId});
         return;
     }
@@ -307,7 +307,7 @@ export async function createHiPSMocLayer(ivoid, title, hipsUrl, plot, visible=fa
             if (isMocFits.valid) {
                 dl = addNewMocLayer(tblId, title, cacheKey, mocUrl, isMocFits?.[MOCInfo]?.[UNIQCOL]);
                 if (dl && plot.plotId) {
-                    dispatchAttachLayerToPlot(dl.drawLayerId, plot.plotId, true, visible);
+                    dispatchAttachLayerToPlot(dl.drawLayerId, plot.plotId, true, visible, true);
                 }
             }
         }

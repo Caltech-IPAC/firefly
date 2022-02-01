@@ -30,8 +30,15 @@ public class CacheHelper {
     public static void putFileInfo(CacheKey key, FileInfo fileInfo) { fileCache.put(key,fileInfo); }
 
     public static FileInfo getFileInfo(CacheKey key)   {
-        Object cacheObj= fileCache.get(key);
-        return (cacheObj instanceof FileInfo) ? (FileInfo)cacheObj : null;
+        try {
+            Object cacheObj= fileCache.get(key);
+            return (cacheObj instanceof FileInfo) ? (FileInfo)cacheObj : null;
+        } catch (Exception e) {
+            try {
+                fileCache.put(key,null); // clean out the bad entry
+            } catch (Exception ignore) {}
+            return null;
+        }
     }
 }
 
