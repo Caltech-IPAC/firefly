@@ -13,8 +13,8 @@ RUN apt-get update \
     && npm install yarn -g  \
 # gradle version 4.10.  Not available via apt-get
     && cd /usr/local \
-    && wget https://services.gradle.org/distributions/gradle-4.10-bin.zip \
-    && unzip gradle-4.10-bin.zip \
+    && wget  -q https://services.gradle.org/distributions/gradle-4.10-bin.zip \
+    && unzip -q gradle-4.10-bin.zip \
     && ln -sf /usr/local/gradle-4.10/bin/gradle /usr/local/bin/  \
     && rm gradle-4.10-bin.zip \
 # cleanup
@@ -97,7 +97,7 @@ ENV MAX_JVM_SIZE='' \
     MAX_RAM_PERCENT=93\
     JVM_CORES=0\
     ADMIN_USER=admin\
-    ADMIN_PASSWORD=replaceMe \
+    ADMIN_PASSWORD='' \
     DEBUG=false \
     CLEANUP_INTERVAL=36h \
     FIREFLY_OPTS=''
