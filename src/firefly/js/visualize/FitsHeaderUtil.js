@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {isArray} from 'lodash';
 import {isImage} from './WebPlot.js';
 
 
@@ -155,7 +156,7 @@ export function makeDoubleHeaderParse(header,zeroHeader,altWcs) {
  *
  * @param {WebPlot|Object} plotOrHeader image WebPlot or Header obj
  * @param headerKey
- * @return {{value:string,comment:string,idx:number}}
+ * @return {{value:string,comment:string,idx:number}|Array.<{value:string,comment:string,idx:number}>}
  */
 function getHeaderObj(plotOrHeader,headerKey) {
     if (!plotOrHeader) return {};
@@ -175,7 +176,8 @@ function getHeaderObj(plotOrHeader,headerKey) {
  * @return {string} the description of the header if it exist otherwise an empty string
  */
 export function getHeaderDesc(plotOrHeader,headerKey) {
-    return getHeaderObj(plotOrHeader, headerKey)['comment'] || '';
+    const v= getHeaderObj(plotOrHeader, headerKey);
+    return (isArray(v)) ? v[v.length-1].comment ?? '' : v.comment ?? '';
 }
 
 /**
@@ -186,7 +188,29 @@ export function getHeaderDesc(plotOrHeader,headerKey) {
  * @return {string} the value of the header if it exist, otherwise the default value
  */
 export function getHeader(plotOrHeader,headerKey, defVal= undefined) {
-    return getHeaderObj(plotOrHeader, headerKey)['value'] || defVal;
+    const v= getHeaderObj(plotOrHeader, headerKey);
+    const result= (isArray(v)) ? v[v.length-1].value : v.value;
+    return result || defVal;
+}
+
+/**
+ * Check if a header has multiple values. this is uncommon except for entries like history
+ * @param {WebPlot|Object} plotOrHeader image WebPlot or Header obj
+ * @param {string} headerKey key
+ * @return {Boolean} true if multi value
+ */
+const isMultiValueHeader= (plotOrHeader,headerKey) => isArray(getHeaderObj(plotOrHeader, headerKey));
+
+
+/**
+ *
+ * @param {WebPlot|Object} plotOrHeader image WebPlot or Header obj
+ * @param {string} headerKey key
+ * @return {Array.<{value:string,comment:string,idx:number}>}
+ */
+export function getAllValuesOfHeader(plotOrHeader, headerKey) {
+    const v= getHeaderObj(plotOrHeader, headerKey);
+    return isArray(v) ? v : [v];
 }
 
 /**
