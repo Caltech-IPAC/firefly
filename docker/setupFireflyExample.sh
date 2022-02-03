@@ -10,8 +10,8 @@ onlyWar=`echo ${aWarFile} | awk -F/ '{print $NF}'`
 dirEmpty=`find /local/www -maxdepth 0 -empty -exec echo true \;`
 if [ "$onlyWar" = "firefly.war" ] && [ "$dirEmpty" = "true" ]; then
     echo "Alt Entry Point: beginning set up example"
-    mkdir /local/tmp-expand
-    cd /local/tmp-expand
+    mkdir /tmp/tmp-expand
+    cd /tmp/tmp-expand
     unzip -d . ${aWarFile} firefly.html slate.html firefly-dev.html
     mv slate.html slate-old.html
     mv firefly-dev.html firefly-dev-old.html
@@ -20,6 +20,6 @@ if [ "$onlyWar" = "firefly.war" ] && [ "$dirEmpty" = "true" ]; then
     cat firefly-dev-old.html | sed -e s,firefly_loader.js,/firefly/firefly_loader.js, > firefly-dev.html
     cp {index,slate,firefly-dev}.html /local/www
     cd ..
-    rm -r /local/tmp-expand
-    echo "Alt Entry Point: setting up example: index.html, slate.html, firefly-dev.html in /www/local"
+    rm -r /tmp/tmp-expand
+    echo "Alt Entry Point: setting up example: index.html, slate.html, firefly-dev.html in /local/www"
 fi

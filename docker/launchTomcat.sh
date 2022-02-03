@@ -10,6 +10,8 @@ else
   MAX_RAM_PERCENT=
 fi
 
+ADMIN_PASSWORD=${ADMIN_PASSWORD:-`echo $RANDOM | base64 | head -c 8`}
+
 echo -e "\n!!============================================================"
 echo "!!============================================================"
 echo "!!==================== For Help =============================="
@@ -91,7 +93,7 @@ fi
 export CATALINA_OPTS="\
   ${JVM_SIZING} \
   -DADMIN_USER=${ADMIN_USER} \
-  -DADMIN_PASSWORD=${ADMIN_PASSWORD:=replaceMe} \
+  -DADMIN_PASSWORD=${ADMIN_PASSWORD} \
   -Dhost.name=${HOSTNAME} \
   -Dserver.cores=${JVM_CORES} \
   -Djava.net.preferIPv4Stack=true \
