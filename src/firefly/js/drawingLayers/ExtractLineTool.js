@@ -33,7 +33,7 @@ const factoryDef= makeFactoryDef(TYPE_ID,creator,null,getLayerChanges,onDetach);
 
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
 
-let idCnt=0;
+let idCnt=1;
 
 export function extractLineToolStartActionCreator(rawAction) {
     return (dispatcher, getState) => {
@@ -46,26 +46,17 @@ export function extractLineToolStartActionCreator(rawAction) {
     };
 }
 
-export function extractLineToolEndActionCreator(rawAction) {
-    return (dispatcher, getState) => {
-        let {drawLayer}= rawAction.payload;
-        const {plotId}= rawAction.payload;
-        dispatcher({type:DrawLayerCntlr.DT_END, payload:rawAction.payload} );
-        drawLayer= getDrawLayerById(getState()[DRAWING_LAYER_KEY], drawLayer.drawLayerId);
-        const srcPlot= primePlot(visRoot(),plotId);
-        const cc= CsysConverter.make(srcPlot);
-        const srcWorld = hasWCSProjection(cc);
 
-        const sel= {pt0:drawLayer.firstPt,pt1:drawLayer.currentPt};
-        if (sel.pt0===sel.pt1) return;
 
-        drawLayer.plotIdAry.forEach( (pId) => {
+function addDistAttributesToPlots(drawLayer, plotId, sel) {
+    const srcPlot= primePlot(visRoot(),plotId);
+    const cc= CsysConverter.make(srcPlot);
+    const srcWorld = hasWCSProjection(cc);
+    drawLayer.plotIdAry.forEach(
+        (pId) => {
             if (pId===plotId) {
                 dispatchAttributeChange({plotId:pId, toAllPlotsInPlotView:true, overlayColorScope:false,
-                    changes: {
-                        [PlotAttribute.ACTIVE_DISTANCE]: sel,
-                        [PlotAttribute.EXTRACTION_DATA]: true,
-                    }
+                    changes: { [PlotAttribute.ACTIVE_DISTANCE]: sel, [PlotAttribute.EXTRACTION_DATA]: true, }
                 });
             }
             else {
@@ -75,15 +66,25 @@ export function extractLineToolEndActionCreator(rawAction) {
                     const pt0= targetCC.getImageCoords(cc.getWorldCoords(drawLayer.firstPt));
                     const pt1= targetCC.getImageCoords(cc.getWorldCoords(drawLayer.currentPt));
                     dispatchAttributeChange({plotId:pId, toAllPlotsInPlotView:false, overlayColorScope:false,
-                        changes:{
-                            [PlotAttribute.ACTIVE_DISTANCE]: {pt0,pt1},
-                            [PlotAttribute.EXTRACTION_DATA]: true,
-                        },
+                        changes:{ [PlotAttribute.ACTIVE_DISTANCE]: {pt0,pt1}, [PlotAttribute.EXTRACTION_DATA]: true, },
                     });
                 }
             }
+        });
+}
 
-        } );
+
+
+
+export function extractLineToolEndActionCreator(rawAction) {
+    return (dispatcher, getState) => {
+        let {drawLayer}= rawAction.payload;
+        const {plotId}= rawAction.payload;
+        dispatcher({type:DrawLayerCntlr.DT_END, payload:rawAction.payload} );
+        drawLayer= getDrawLayerById(getState()[DRAWING_LAYER_KEY], drawLayer.drawLayerId); // make sure it is the most recent version
+        const sel= {pt0:drawLayer.firstPt,pt1:drawLayer.currentPt};
+        if (sel.pt0===sel.pt1) return;
+        addDistAttributesToPlots(drawLayer,plotId,sel);
     };
 }
 
@@ -92,31 +93,30 @@ export function extractLineToolEndActionCreator(rawAction) {
  * @return {Function}
  */
 function creator() {
-    const drawingDef= makeDrawingDef('red');
     const pairs= {
         [MouseState.DRAG.key]: DrawLayerCntlr.ELT_MOVE,
         [MouseState.DOWN.key]: DrawLayerCntlr.ELT_START,
         [MouseState.UP.key]: DrawLayerCntlr.ELT_END
     };
-
-
     const exclusiveDef= { exclusiveOnDown: true, type : 'anywhere' };
-
     const actionTypes= [DrawLayerCntlr.ELT_START, DrawLayerCntlr.ELT_MOVE, DrawLayerCntlr.ELT_END];
 
-    idCnt++;
     const options= {
         canUseMouse:true,
         canUserChangeColor: ColorChangeType.DYNAMIC,
-        destroyWhenAllDetached: true
+        activePt: undefined,
+        helpLine: selHelpText,
+        offsetCal: false,
+        moveHead: true,      // drag start from head or not
+        vertexDef: {points:null, pointDist:EDIT_DISTANCE},
     };
-    return DrawLayer.makeDrawLayer( `${ID}-${idCnt}`, TYPE_ID, 'Extract Line Tool',
-                                     options, drawingDef, actionTypes, pairs, exclusiveDef, getCursor );
+    return DrawLayer.makeDrawLayer( `${ID}-${idCnt++}`, TYPE_ID, 'Extract Line Tool',
+                                     options, makeDrawingDef('red'), actionTypes, pairs, exclusiveDef, getCursor );
 }
 
 function onDetach(drawLayer,action) {
     const {plotIdAry}= action.payload;
-    plotIdAry.forEach( (plotId) => {
+    plotIdAry?.forEach( (plotId) => {
         const plot= primePlot(visRoot(),plotId);
         if (plot && plot.attributes[PlotAttribute.ACTIVE_DISTANCE]) {
             dispatchAttributeChange({
@@ -148,7 +148,7 @@ function getLayerChanges(drawLayer, action) {
         case DrawLayerCntlr.ELT_END:
             return end(action);
         case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
-            return attach();
+            return attach(drawLayer);
         case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
             return dealWithMods(drawLayer,action);
     }
@@ -163,12 +163,10 @@ function getLayerChanges(drawLayer, action) {
 function makeBaseReturnObj(firstPt,currPt,drawAry )  {
 
     const exclusiveDef= { exclusiveOnDown: true, type : 'vertexThenAnywhere' };
-
     return {drawData:{data:drawAry},
             exclusiveDef,
             vertexDef:{points:[firstPt, currPt], pointDist:EDIT_DISTANCE}
     };
-
 }
 
 function dealWithMods(drawLayer,action) {
@@ -186,19 +184,11 @@ function dealWithMods(drawLayer,action) {
     return null;
 }
 
-function attach() {
-    return {
-        helpLine: selHelpText,
-        drawData:{data:null},
-        activePt: undefined,
-        offsetCal: false,
-        firstPt: null,
-        currentPt: null,
-        moveHead: true,      // drag start from head or not
-        vertexDef: {points:null, pointDist:EDIT_DISTANCE},
-        exclusiveDef: { exclusiveOnDown: true, type : 'anywhere' }
-    };
-    
+function attach(drawLayer) {
+    const plotId= drawLayer.plotIdAry[0];
+    if (!plotId || !drawLayer.firstPt || !drawLayer.currentPt) return;
+    const sel= {pt0:drawLayer.firstPt,pt1:drawLayer.currentPt};
+    setTimeout( () => addDistAttributesToPlots(drawLayer, plotId,sel), 3);
 }
 
 function getMode(plot) {

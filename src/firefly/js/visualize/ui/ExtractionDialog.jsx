@@ -5,45 +5,37 @@
 
 
 import React, {useEffect, useState} from 'react';
+import ReactDOM from 'react-dom';
 import {downloadChart, PlotlyWrapper} from '../../charts/ui/PlotlyWrapper.jsx';
 import {PopupPanel} from 'firefly/ui/PopupPanel.jsx';
 import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
 import {dispatchHideDialog, dispatchShowDialog} from 'firefly/core/ComponentCntlr.js';
-import ImagePlotCntlr, {
-    dispatchAttributeChange,
-    dispatchChangePointSelection,
-    dispatchChangePrimePlot,
-    visRoot
-} from 'firefly/visualize/ImagePlotCntlr.js';
+import ImagePlotCntlr, { dispatchAttributeChange, dispatchChangePointSelection,
+    dispatchChangePrimePlot, visRoot } from 'firefly/visualize/ImagePlotCntlr.js';
 import CompleteButton from 'firefly/ui/CompleteButton.jsx';
 import HelpIcon from 'firefly/ui/HelpIcon.jsx';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 import {
-    convertHDUIdxToImageIdx,
-    getActivePlotView, getAllWaveLengthsForCube, getCubePlaneFromWavelength,
-    getDrawLayerByType,
-    getHDU,
-    getHDUIndex, getHduPlotStartIndexes,
-    getImageCubeIdx, getPlotViewAry, getPtWavelength, getWaveLengthUnits,
-    hasWCSProjection, hasWLInfo,
+    convertHDUIdxToImageIdx, getActivePlotView, getAllWaveLengthsForCube, getCubePlaneFromWavelength,
+    getDrawLayerByType, getHDU, getHDUIndex, getHduPlotStartIndexes, getImageCubeIdx,
+    getPlotViewAry, getPlotViewById, getPtWavelength, getWaveLengthUnits, hasWCSProjection, hasWLInfo,
     isDrawLayerAttached,
-    isImageCube,
-    isMultiHDUFits,
-    primePlot
+    isImageCube, isMultiHDUFits, primePlot
 } from 'firefly/visualize/PlotViewUtil.js';
 import {PlotAttribute} from 'firefly/visualize/PlotAttribute.js';
 import {CCUtil, CysConverter} from 'firefly/visualize/CsysConverter.js';
 import {ListBoxInputFieldView} from 'firefly/ui/ListBoxInputField.jsx';
-import { callGetCubeDrillDownAry, callGetPointExtractionAry } from 'firefly/rpc/PlotServicesJson.js';
+import {callGetCubeDrillDownAry, callGetPointExtractionAry } from 'firefly/rpc/PlotServicesJson.js';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {getExtName} from 'firefly/visualize/FitsHeaderUtil.js';
-import {dispatchTableFetch, dispatchTableSearch, TABLE_REMOVE} from 'firefly/tables/TablesCntlr.js';
+import {dispatchTableFetch, dispatchTableSearch} from 'firefly/tables/TablesCntlr.js';
 import {makeTblRequest} from 'firefly/tables/TableRequestUtil.js';
 import ExtractLineTool from 'firefly/drawingLayers/ExtractLineTool.js';
 import ExtractPointsTool from 'firefly/drawingLayers/ExtractPointsTool.js';
 import {
-    dispatchAttachLayerToPlot, dispatchCreateDrawLayer,
-    dispatchDetachLayerFromPlot, dispatchModifyCustomField, getDlAry } from 'firefly/visualize/DrawLayerCntlr.js';
+    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
+    dispatchDetachLayerFromPlot, dispatchModifyCustomField, getDlAry
+} from 'firefly/visualize/DrawLayerCntlr.js';
 import {makeImagePt} from 'firefly/api/ApiUtilImage.jsx';
 import {computeDistance, computeScreenDistance, getLinePointAry} from 'firefly/visualize/VisUtil.js';
 import {RadioGroupInputFieldView} from 'firefly/ui/RadioGroupInputFieldView.jsx';
@@ -54,10 +46,9 @@ import {Band} from 'firefly/visualize/Band.js';
 import {onTableLoaded} from 'firefly/tables/TableUtil.js';
 import {showTableDownloadDialog} from 'firefly/tables/ui/TableSave.jsx';
 import {getAppOptions} from 'firefly/api/ApiUtil.js';
-import {showPinMessage} from 'firefly/ui/PopupUtil.jsx';
-import ReactDOM from 'react-dom';
+import {showInfoPopup, showPinMessage} from 'firefly/ui/PopupUtil.jsx';
 import {MetaConst} from 'firefly/data/MetaConst.js';
-import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga.js';
+import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
 
 
 
@@ -109,10 +100,7 @@ export function showExtractionDialog(extractionType,wasCanceled) {
 
     dispatchAddActionWatcher( {
         id: EXTRACT_END_ID,
-        callback: (action,cancelSelf) => {
-            endExtraction();
-            cancelSelf();
-        },
+        callback: (action) => exTypeCntl[extractionType].start(),
         actions:[ImagePlotCntlr.PLOT_IMAGE]
     });
 }
@@ -122,6 +110,7 @@ export function endExtraction() {
     cancelPointExtraction();
     cancelZaxisExtraction();
     cancelLineExtraction();
+    dispatchCancelActionWatcher(EXTRACT_END_ID);
 }
 
 function ExtractDialog({extractionType,wasCanceled}) {
@@ -145,9 +134,12 @@ function ExtractDialog({extractionType,wasCanceled}) {
 
 
 function getStoreState(prevResult) {
-    const pv= getActivePlotView(visRoot());
+    const vr= visRoot();
+    const activePv= getActivePlotView(vr);
+    const pv= primePlot(activePv) ? activePv :
+        primePlot(vr, vr.prevActivePlotId) ? getPlotViewById(vr,vr.prevActivePlotId) : activePv;
     const pvAry= pv ? getPlotViewAry(visRoot(), pv.plotGroupId) : [];
-    if (prevResult && prevResult.pv===pv && prevResult.pvCnt===pvAry.length) return prevResult;
+    if (prevResult && prevResult.pv===pv && prevResult.pvCnt===pvAry.length && primePlot(pv)===primePlot(prevResult.pv)) return prevResult;
     return {pv,pvCnt:pvAry.length};
 }
 
@@ -273,7 +265,7 @@ function PointExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
                         pointSize,chartTitle, chartXAxis, activeIdx);
                 setChartParams(chartData);
             }
-            if (!plot) cancelPointExtraction();
+            // if (!pv) cancelPointExtraction();
         };
         getData();
     },[ptAry.length,hduNum,plotId,plotImageId,pointSize,chartX,chartY,chartXAxis]);
@@ -290,7 +282,6 @@ function PointExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
             ),
             afterRedraw: (chart,pl) => afterPointsChartRedraw(pv,chart,pl,chartXAxis, imPtAry),
             callKeepExtraction: (download, doOverlay) => keepPointsExtraction(imPtAry, pv, plot, plot.plotState.getWorkingFitsFileStr(), hduNum, plane, pointSize,download, doOverlay),
-            cancelFunc: () => cancelZaxisExtraction(), bottomUI
         }} /> );
 }
 
@@ -343,7 +334,7 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
                         setImPtAry(newImPtAry);
                 } );
             }
-            if (!plot) cancelLineExtraction();
+            if (!pv) cancelLineExtraction();
         };
         if (extractionData) getData();
     },[x1,y1,x2,y2,hduNum,plotId,plotImageId,pointSize,chartX,chartY]);
@@ -360,7 +351,6 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
             ),
             afterRedraw: (chart,pl) => afterLineChartRedraw(pv,chart,pl,imPtAry,makeImagePt(x1,y1), makeImagePt(x2,y2)),
             callKeepExtraction: (download, doOverlay) => keepLineExtraction(ipt1,ipt2, pv, plot, plot.plotState.getWorkingFitsFileStr(), hduNum, plane, pointSize, download, doOverlay),
-            cancelFunc: () => cancelZaxisExtraction()
         }} /> );
 }
 
@@ -414,12 +404,10 @@ function ZAxisExtractionPanel({canCreateExtractionTable, pv}) {
                 const chartTitle= `Z Axis Preview - ${extName?extName+',':''} HDU #${hduNum}, Point: (${x},${y})`;
                 setChartParams(genZAxisChartData(makeImagePt(x,y), pv, dataAry, plane , dataAry[plane] , pointSize, chartTitle));
             }
-            if (!plot) cancelZaxisExtraction();
+            // if (!pv) cancelZaxisExtraction();
         };
         void updateChart();
     },[x,y,hduNum,plotId,pointSize,plotImageId]);
-
-    if (!plot) return <div/>;
 
     return (
         <ExtractionPanelView {...{
@@ -429,8 +417,7 @@ function ZAxisExtractionPanel({canCreateExtractionTable, pv}) {
                 'Click on a pixel to extract data from all planes of the cube' :
                 'Please choose a cube to extract z-axis data',
             afterRedraw: (chart,pl) => afterZAxisChartRedraw(makeImagePt(x,y), pv,chart,pl),
-            callKeepExtraction: (download, doOverlay) => keepZAxisExtraction(makeImagePt(x,y), pv, plot, plot.plotState.getWorkingFitsFileStr(), hduNum, pointSize, download,doOverlay),
-            cancelFunc: () => cancelZaxisExtraction()
+            callKeepExtraction: (download, doOverlay) => keepZAxisExtraction(makeImagePt(x,y), pv, plot, plot?.plotState.getWorkingFitsFileStr(), hduNum, pointSize, download,doOverlay),
         }} />
     );
 }
@@ -489,13 +476,17 @@ function cancelLineExtraction() {
         dispatchDetachLayerFromPlot(ExtractLineTool.TYPE_ID,pv.plotId,true);
         dispatchAttributeChange({plotId:pv.plotId,overlayColorScope:true,
             changes:{[PlotAttribute.SELECT_ACTIVE_CHART_PT]: undefined }});
+        dispatchDestroyDrawLayer(ExtractLineTool.TYPE_ID);
     }
     dispatchHideDialog(DIALOG_ID);
 }
 
 function cancelPointExtraction() {
     const pv= getActivePlotView(visRoot());
-    if (pv) dispatchDetachLayerFromPlot(ExtractPointsTool.TYPE_ID,pv.plotId,true);
+    if (pv) {
+        dispatchDetachLayerFromPlot(ExtractPointsTool.TYPE_ID,pv.plotId,true);
+        dispatchDestroyDrawLayer(ExtractPointsTool.TYPE_ID);
+    }
     dispatchHideDialog(DIALOG_ID);
 }
 
@@ -533,6 +524,10 @@ function doDispatchTable(req, doOverlay) {
 let titleCnt= 1;
 
 function keepZAxisExtraction(pt,pv, plot, filename,refHDUNum,extractionSize, save=false, doOverlay=true) {
+    if (!pv || !plot  || !filename) {
+        showInfoPopup('Plot no longer exist. Cannot extract.');
+        return;
+    }
     const wlUnit= getWaveLengthUnits(plot);
     const wpt= CCUtil.getWorldCoords(plot,pt);
     const fluxUnit= getHduPlotStartIndexes(pv)
@@ -563,6 +558,10 @@ function keepZAxisExtraction(pt,pv, plot, filename,refHDUNum,extractionSize, sav
 }
 
 function keepLineExtraction(pt, pt2,pv, plot, filename,refHDUNum,plane,extractionSize,save=false,doOverlay=true) {
+    if (!pv || !plot  || !filename) {
+        showInfoPopup('Plot no longer exist. Cannot extract.');
+        return;
+    }
     const tbl_id= getNextTblId();
     const imPtAry= getLinePointAry(pt,pt2);
     const cc= CysConverter.make(plot);
@@ -599,6 +598,10 @@ function makePlaneTitle(rootStr, pv,plot,cnt) {
 }
 
 function keepPointsExtraction(ptAry,pv, plot, filename,refHDUNum,plane,extractionSize,save=false,doOverlay=true) {
+    if (!pv || !plot  || !filename) {
+        showInfoPopup('Plot no longer exist. Cannot extract.');
+        return;
+    }
     const tbl_id= getNextTblId();
     const cc= CysConverter.make(plot);
     const wptStrAry=
