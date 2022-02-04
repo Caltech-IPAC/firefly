@@ -32,6 +32,7 @@ var idCnt=0;
 
 function dispatchSelectPoint(mouseStatePayload) {
     const {plotId,screenPt,drawLayer}= mouseStatePayload;
+    if (mouseStatePayload.shiftDown) return;
     if (drawLayer.drawData.data) {
         flux.process({type:DrawLayerCntlr.SELECT_POINT, payload:mouseStatePayload} );
         dispatchAttributeChange(
