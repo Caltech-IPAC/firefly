@@ -135,16 +135,10 @@ div.rootStyle img {
 }
 
 .disable-select {
-    -moz-user-select : none;
-    -ms-user-select : none;
-    -webkit-user-select : none;
     user-select :  none;
 }
 
 .enable-select {
-    -moz-user-select : text;
-    -ms-user-select : text;
-    -webkit-user-select : text;
     user-select :  text;
 }
 

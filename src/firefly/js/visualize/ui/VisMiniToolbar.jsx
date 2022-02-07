@@ -17,7 +17,7 @@ import {
     findPlotGroup, hasOverlayColorLock, isImageCube, isThreeColor, pvEqualExScroll
 } from '../PlotViewUtil.js';
 import {isHiPS} from 'firefly/visualize/WebPlot.js';
-import {getPreference} from '../../core/AppDataCntlr.js';
+import {getAppOptions, getPreference} from '../../core/AppDataCntlr.js';
 import {ImageCenterDropDown, TARGET_LIST_PREF} from './ImageCenterDropDown.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {getDefMenuItemKeys} from 'firefly/visualize/MenuItemKeys.js';
@@ -177,7 +177,7 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
     const image= !isHiPS(plot);
     const hips= isHiPS(plot);
     const plotGroupAry= visRoot.plotGroupAry;
-    const mi= pv ? pv.menuItemKeys : getDefMenuItemKeys();
+    const mi= pv?.menuItemKeys ?? getDefMenuItemKeys();
     const enabled= Boolean(plot);
     const isExpanded= visRoot.expandedMode!==ExpandType.COLLAPSE;
 
@@ -364,7 +364,7 @@ function ToolsDrop({visRoot, pv,plot, mi, enabled, image, hips, setModalEndInfo,
 
     const makeMatchLock= mi.matchLockDropDown && unavailableCnt>0;
     const makeColorLock= mi.overlayColorLock && unavailableCnt>1;
-    const showExtract= image && !pv?.plotViewCtx.useForCoverage;
+    const showExtract= Boolean(image) && mi.extract;
     return (
         <div className='ff-MenuItem-dropDown'>
             <div style={{display:'inline-block', height:'100%', flex:'0 0 auto', margin:'0px 0 0 300px'}}>
@@ -377,12 +377,8 @@ function ToolsDrop({visRoot, pv,plot, mi, enabled, image, hips, setModalEndInfo,
                        modalEndInfo={modalEndInfo}
                        setModalEndInfo={setModalEndInfo}
             />
-            {showExtract && !pv.plotViewCtx.useForCoverage && <ExtractRow style={{paddingTop:10}}
-                                                                          pv={pv} mi={mi}
-                                                                          enabled={enabled}
-                                                                          image={image}
-                                                                          modalEndInfo={modalEndInfo}
-                                                                          setModalEndInfo={setModalEndInfo} />
+            {showExtract && <ExtractRow style={{paddingTop:10}} pv={pv} mi={mi} enabled={enabled} image={image}
+                                        modalEndInfo={modalEndInfo} setModalEndInfo={setModalEndInfo} />
             }
             {(makeMatchLock || makeColorLock) && <div style={{display:'flex', alignItems:'center', paddingTop:10}}>
                 <div style={{width:130, fontSize:'larger'}}>More: </div>
@@ -391,8 +387,7 @@ function ToolsDrop({visRoot, pv,plot, mi, enabled, image, hips, setModalEndInfo,
                                                           tip='Lock all images for color changes and overlays.'
                                                           iconOn={LOCKED} iconOff={UNLOCKED}
                                                           visible={mi.overlayColorLock}
-                                                          onClick={() => toggleOverlayColorLock(pv,plotGroupAry)}
-                />}
+                                                          onClick={() => toggleOverlayColorLock(pv,plotGroupAry)} />}
                 {makeMatchLock && <MatchLockDropDown visRoot={visRoot} enabled={enabled} inDropDown={true}
                                                      visible={mi.matchLockDropDown} />}
             </div> }
@@ -453,17 +448,20 @@ function startExtraction(type,setModalEndInfo, modalEndInfo) {
 
 }
 
-const ExtractRow= ({style,image,pv,enabled,setModalEndInfo, modalEndInfo}) => {
+const ExtractRow= ({style,pv,enabled,setModalEndInfo, modalEndInfo,mi}) => {
     const standIm= !isThreeColor(pv);
     return (
         <div style={{display:'flex', alignItems:'center', ...style}}>
             <div style={{width:130, fontSize:'larger'}}>Extract: </div>
             <ToolbarButton icon={DRILL_DOWN} tip='Extract Z-axis from cube' enabled={standIm&&isImageCube(primePlot(pv))&&enabled}
-                           horizontal={true} visible={image} onClick={() => startExtraction(Z_AXIS,setModalEndInfo,modalEndInfo)}/>
+                           horizontal={true} onClick={() => startExtraction(Z_AXIS,setModalEndInfo,modalEndInfo)}
+                           visible={mi.extractZAxis}/>
             <ToolbarButton icon={LINE_EXTRACTION} tip='Extract line from image' enabled={standIm&&enabled}
-                           horizontal={true} visible={image} onClick={() => startExtraction(LINE,setModalEndInfo,modalEndInfo)}/>
+                           horizontal={true} onClick={() => startExtraction(LINE,setModalEndInfo,modalEndInfo)}
+                           visible={mi.extractLine}/>
             <ToolbarButton icon={POINT_EXTRACTION} tip='Extract points from image' enabled={standIm&&enabled}
-                           horizontal={true} visible={image} onClick={() => startExtraction(POINTS,setModalEndInfo,modalEndInfo)}/>
+                           horizontal={true} onClick={() => startExtraction(POINTS,setModalEndInfo,modalEndInfo)}
+                           visible={mi.extractPoint}/>
         </div>
         );
 };
