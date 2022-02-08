@@ -70,7 +70,8 @@ public class WiseRequest extends TableServerRequest {
     public final static String NEOWISER_YR5 = "neowiser_yr5";
     public final static String NEOWISER_YR6 = "neowiser_yr6";
     public final static String NEOWISER_YR7 = "neowiser_yr7";
-    public final static String NEOWISER_YR8 = "neowiser_yr8";       //this is the on-going yr internal neowiser
+    public final static String NEOWISER_YR8 = "neowiser_yr8";
+    public final static String NEOWISER_YR9 = "neowiser_yr9";       //this is the on-going yr9 internal neowiser
     public final static String PASS2_4BAND = "pass2-4band";
     public final static String PASS2_3BAND = "pass2-3band";
     public final static String PASS2_2BAND = "pass2-2band";
@@ -95,8 +96,9 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR4,"neowiser_p1bs_psd");
             put(NEOWISER_YR5,"neowiser_p1bs_psd");
             put(NEOWISER_YR6,"neowiser_p1bs_psd");
-            put(NEOWISER_YR7,"neowiser_p1bs_psd");      //to be changed when year 7 goes public
-            put(NEOWISER_YR8,"neowiser_i1bs_psd");
+            put(NEOWISER_YR7,"neowiser_p1bs_psd");
+            put(NEOWISER_YR8,"neowiser_i1bs_psd");      //todo  change to pibs when year 8 goes public
+            put(NEOWISER_YR9,"neowiser_i1bs_psd");
 
         }
     };
@@ -121,6 +123,7 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR6,"NEOWISER YR6 (2 Bands)");
             put(NEOWISER_YR7,"NEOWISER YR7 (2 Bands)");
             put(NEOWISER_YR8,"NEOWISER YR8 (2 Bands)");
+            put(NEOWISER_YR9,"NEOWISER YR9 (2 Bands)");
             put(PASS2_4BAND,"Pass 2 (4 Bands)");
             put(PASS2_3BAND,"Pass 2 (3 Bands)");
             put(PASS2_2BAND, "Pass 2 (2 Bands)");
@@ -151,7 +154,7 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR6,"wise_neowiser_yr6");
             put(NEOWISER_YR7,"wise_neowiser_yr7");
             put(NEOWISER_YR8,"wise_neowiser_yr8");
-
+            put(NEOWISER_YR9,"wise_neowiser_yr9");
         }
     };
     // Scan ID ranges from Roc Cutri:
@@ -181,7 +184,8 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR5, new Integer[]{88734, 99799}); // 88734a is the first scan for yr5
             put(NEOWISER_YR6, new Integer[]{1090, 12253}); // 01090r is the first scan for yr6 , 12253r is the last scan
             put(NEOWISER_YR7, new Integer[]{12254, 23446}); // 12254r is the first scan for yr7, 23446r is the last scan
-            put(NEOWISER_YR8, new Integer[]{23447, 99999}); // 23447r is the first scan for yr8
+            put(NEOWISER_YR8, new Integer[]{23447, 34601}); // 23447r is the first scan for yr8, 34601r is the last scan
+            put(NEOWISER_YR9, new Integer[]{34601, 99999}); // 34601s is the first scan for yr9
         }
     };
     // mappings of the dataset selected to the wise table and table source values.
@@ -213,6 +217,7 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR6 +"|1b", new String[]{"yr6_p1bm_frm", "yr6_p1bs_psd"});  
             put(NEOWISER_YR7 +"|1b", new String[]{"yr7_p1bm_frm", "yr7_p1bs_psd"});  //  yr7 goes public March 2021
             put(NEOWISER_YR8 +"|1b", new String[]{"yr8_i1bm_frm", "yr8_i1bs_psd"});  //  yr8 internal for iwise
+            put(NEOWISER_YR9 +"|1b", new String[]{"yr9_i1bm_frm", "yr9_i1bs_psd"});  //  yr9 internal for iwise
             put(MERGE_INT+"|1b", new String[]{"merge_i1bm_frm", "merge_i1bs_psd"});
             put(MERGE_INT+"|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
             put(PASS2_4BAND+"|1b", new String[]{"4band_i1bm_frm", "4band_i1bs_psd"});
@@ -524,14 +529,22 @@ public class WiseRequest extends TableServerRequest {
             }
 
         } else {
-            if (scanID.contains("r,s,t,u,v,w") && scanNum <= 1089) {
+            if (scanID.contains("r,s,t,u,v,w") && scanNum<=SCANID_MAP.get(NEOWISER_YR5)[1]) {
                 return new String[]{NEOWISER_YR5};
-            } else if (scanID.contains("r,s,t,u,v,w") && (scanNum >= 1090 && scanNum <= 12253)) {
+            } else if (scanID.contains("r,s,t,u,v,w") &&
+                    (scanNum >= SCANID_MAP.get(NEOWISER_YR6)[0] && scanNum <= SCANID_MAP.get(NEOWISER_YR6)[1])) {
                 return new String[]{NEOWISER_YR6};
-            } else if (scanID.contains("r,s,t,u,v,w") && scanNum >= 12254 && scanNum <= 23446) {
+            } else if (scanID.contains("r,s,t,u,v,w") &&
+                    (scanNum >= SCANID_MAP.get(NEOWISER_YR7)[0] && scanNum <= SCANID_MAP.get(NEOWISER_YR7)[1])) {
                 return new String[]{NEOWISER_YR7};
-            } else if (scanID.contains("r,s,t,u,v,w") && scanNum >= 23447) {
+            } else if (scanID.contains("r,s,t,u,v,w") &&
+                    (scanNum < SCANID_MAP.get(NEOWISER_YR8)[1] ||
+                    scanNum == SCANID_MAP.get(NEOWISER_YR8)[1]) && scanID.trim().endsWith("r")) {
                 return new String[]{NEOWISER_YR8};
+            } else if (scanID.contains("r,s,t,u,v,w") &&
+                    (scanNum > SCANID_MAP.get(NEOWISER_YR9)[0] ||
+                    scanNum == SCANID_MAP.get(NEOWISER_YR9)[0]) && scanID.trim().endsWith("s")) {
+                return new String[]{NEOWISER_YR9};
             }
             if (scanNum < SCANID_MAP.get(PASS2_4BAND)[1] ||
                     (scanNum == SCANID_MAP.get(PASS2_4BAND)[1] && scanID.trim().endsWith("a"))) {
