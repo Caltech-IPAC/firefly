@@ -7,7 +7,6 @@ import {makeWisePlotRequest} from './WiseRequestList.js';
 import {make2MassPlotRequest} from './TwoMassRequestList.js';
 import {makeAtlasPlotRequest} from './AtlasRequestList.js';
 import {makeZtfPlotRequest} from './ZtfRequestList.js';
-import {makeLsstSdssPlotRequest, makeLsstWisePlotRequest} from './LsstSdssRequestList.js';
 import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
 import {ZoomType} from '../visualize/ZoomType.js';
 import {Band} from '../visualize/Band';
@@ -224,43 +223,6 @@ function initConverterTemplates() {
             getSingleDataProduct: getSingleDataProductWrapper(makeZtfPlotRequest),
             getGridDataProduct: getGridDataProductWrapper(makeZtfPlotRequest),
             getRelatedDataProduct: getRelatedDataProductWrapper(makeZtfPlotRequest),
-        },
-        {
-            converterId: 'lsst_sdss',
-            tableMatches: (table) => matchById(table, 'lsst_sdss'),
-            create: simpleCreate,
-            threeColor: true,
-            hasRelatedBands: true,
-            canGrid: true,
-            maxPlots: 12,
-            getSingleDataProduct: getSingleDataProductWrapper(makeLsstSdssPlotRequest),
-            getGridDataProduct: getGridDataProductWrapper(makeLsstSdssPlotRequest),
-            getRelatedDataProduct: getRelatedDataProductWrapper(makeLsstSdssPlotRequest),
-            threeColorBands: {
-                u: {color: null, title: 'u'},
-                g: {color: Band.RED, title: 'g'},
-                r: {color: Band.GREEN, title: 'r'},
-                i: {color: null, title: 'i'},
-                z: {color: Band.BLUE, title: 'z'}
-            }
-        },
-        {
-            converterId: 'lsst_wise',
-            tableMatches: (table) => matchById(table, 'lsst_wise'),
-            create: simpleCreate,
-            threeColor: true,
-            hasRelatedBands: true,
-            canGrid: true,
-            maxPlots: 12,
-            getSingleDataProduct: getSingleDataProductWrapper(makeLsstWisePlotRequest),
-            getGridDataProduct: getGridDataProductWrapper(makeLsstWisePlotRequest),
-            getRelatedDataProduct: getRelatedDataProductWrapper(makeLsstWisePlotRequest),
-            threeColorBands: {
-                b1: {color: Band.RED, title: 'Band 1'},
-                b2: {color: Band.GREEN, title: 'Band 2'},
-                b3: {color: null, title: 'Band 3'},
-                b4: {color: Band.BLUE, title: 'Band 4'}
-            }
         },
         {
             converterId: 'ObsCore',
