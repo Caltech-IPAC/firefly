@@ -357,9 +357,10 @@ function tableAddLocal(action) {
 
         tableModel = fixClientTable(tableModel);
         const {title, tbl_id} = tableModel;
-        const tbl_ui_id = options.tbl_ui_id || TblUtil.uniqueTblUiId();
-
-        if (addUI) dispatchTblResultsAdded(tbl_id, title, options, tbl_ui_id);
+        if (addUI) {
+            const tbl_ui_id = options.tbl_ui_id || TblUtil.uniqueTblUiId();
+            dispatchTblResultsAdded(tbl_id, title, options, tbl_ui_id);
+        }
         dispatch( {type: TABLE_REPLACE, payload: tableModel} );
         dispatchTableLoaded(Object.assign( TblUtil.getTblInfo(tableModel), {invokedBy: TABLE_FETCH}));
     };
@@ -428,7 +429,7 @@ function tblRemove(action) {
 function highlightRow(action) {
 
     const dispatchHighlight = (dispatch, tableModel) => {
-        const {tbl_id, highlightedRow, request, selectInfo} = TblUtil.getTblInfo(tableModel);
+        const {tbl_id, highlightedRow, selectInfo} = TblUtil.getTblInfo(tableModel);
         const cols = TblUtil.getAllColumns(tableModel);
         const highlightedValues = TblUtil.getRowValues(tableModel, highlightedRow)
                                 .map( (v, idx) => [cols[idx]?.name, v])
@@ -442,15 +443,17 @@ function highlightRow(action) {
 
     return (dispatch) => {
         const {tbl_id, highlightedRow, request={}} = action.payload;
-        TblUtil.fixRequest(request);
-        var tableModel = TblUtil.getTblById(tbl_id);
+        const tableModel = TblUtil.getTblById(tbl_id);
         if (!tableModel || tableModel.error || highlightedRow < 0 || highlightedRow >= tableModel.totalRows) return;   // out of bound.. ignore.
         if (highlightedRow === tableModel.highlightedRow && !request.pageSize) return;   // nothing to change
 
-        var tmpModel = TblUtil.smartMerge(tableModel, action.payload);
+        const tmpModel = TblUtil.smartMerge(tableModel, action.payload);
         const {hlRowIdx, startIdx, endIdx, pageSize} = TblUtil.getTblInfo(tmpModel);
         if (TblUtil.isTblDataAvail(startIdx, endIdx, tableModel)) {
             const aTableModel = {...tableModel, highlightedRow};
+            if (pageSize !== tableModel?.request?.pageSize) {
+                dispatch({type: TABLE_UPDATE, payload: {tbl_id, request}});
+            }
             dispatchHighlight(dispatch, aTableModel);
         } else {
             const request = cloneDeep(tableModel.request);

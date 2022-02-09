@@ -81,7 +81,7 @@
                   SearchMethod: "Cone",
                   radius: "0.00278",
                   providerName: "NED",
-                  accessUrl: "http://ned.ipac.caltech.edu/cgi-bin/NEDobjsearch?search_type=Near+Position+Search&of=xml_main&"
+                  accessUrl: "https://ned.ipac.caltech.edu/cgi-bin/NEDobjsearch?search_type=Near+Position+Search&of=xml_main&"
                 },
                 { sortInfo: "ASC,Object Name",
                   META_INFO: {"col.Type.FmtDisp": "abc-%s"}
@@ -181,7 +181,7 @@
                     SearchMethod: 'Cone',
                     radius: 300
                 });
-            tblReq3 = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
+            tblReq3 = firefly.util.table.makeFileRequest(null, 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
                 { pageSize: 15,
                     META_INFO: {CENTER_COLUMN: 'crval1;crval2;EQJ2000'}
                 });
