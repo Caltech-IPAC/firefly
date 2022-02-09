@@ -136,27 +136,26 @@ export function makeIrsaCatalogRequest(title, project, catalog, params={}, optio
 }
 
 /**
- * creates the request to query VO catalogmakeLsstCatalogRequest
+ * creates the request to query VO using ConeSearchByURL or another vo provider Search processor
  * @param {string} title    title to be displayed with this table result
  * @param {ConeParams|BoxParams|ElipParams} params   one of 'Cone','Eliptical','Box','Polygon','Table','AllSky'.
  * @param {TableRequest} [options]
  * @returns {TableRequest}
  * @func makeVOCatalogRequest
  * @memberof firefly.util.table
+ * @see edu.caltech.ipac.firefly.server.persistence.QueryByConeSearchURL.java
  */
 export function makeVOCatalogRequest(title, params={}, options={}) {
-    var req = {startIdx: 0, pageSize: 100};
+    const req = {startIdx: 0, pageSize: 100};
     const tbl_id = options.tbl_id || uniqueTblId();
-    const providerid = voProviders[params.providerName];
-
-    const id = providerid || 'ConeSearchByURL';
+    const id = voProviders[params.providerName] || 'ConeSearchByURL';
     const UserTargetWorldPt = params.UserTargetWorldPt || params.position;  // may need to convert to worldpt.
-    var META_INFO = Object.assign(options.META_INFO || {}, {title, tbl_id});
+    const META_INFO = {...options.META_INFO, title, tbl_id};
 
     options = omit(options, 'tbl_id');
     params = omit(params, 'position');
 
-    return omitBy(Object.assign(req, options, params, {id, tbl_id, META_INFO, UserTargetWorldPt}), isNil);
+    return omitBy({...req, ...options, ...params, id, tbl_id, META_INFO, UserTargetWorldPt}, isNil);
 }
 
 const voProviders = {'NED':'NedSearch'};
