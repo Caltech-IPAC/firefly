@@ -6,7 +6,6 @@ import {RangeValues,STRETCH_LINEAR,SIGMA} from '../../../visualize/RangeValues.j
 import {WebPlotRequest} from '../../../visualize/WebPlotRequest.js';
 import {makeWorldPt} from '../../../visualize/Point.js';
 import {CoordinateSys} from '../../../visualize/CoordSys.js';
-import {ZoomType} from '../../../visualize/ZoomType.js';
 import {ServerRequest} from '../../../data/ServerRequest.js';
 
 import {addCommonReqParams} from '../LcConverterFactory.js';
@@ -14,6 +13,13 @@ import {convertAngle} from '../../../visualize/VisUtil.js';
 
 
 const bandMap= {u:0, g:1, r:2, i:3, z:4};
+
+// ------------------------------------------------------------------
+// ------------------------------------------------------------------
+// This is not longer supported on the backend
+// I am leaving it in as a template for future LSST time series code
+// ------------------------------------------------------------------
+// ------------------------------------------------------------------
 
 
 /**

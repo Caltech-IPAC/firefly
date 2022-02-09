@@ -215,28 +215,6 @@
                       META_INFO: {TSDatasetId: 'wise'} });
             firefly.getViewer(null, "ts.html").showTable(req);
 
-/*            if (isTimeSeriesTable(tableModel)) {
-                req = cloneDeep(get(tableModel, 'request'));
-                req.tbl_id = LC.RAW_TABLE;
-                set(req, 'META_INFO.tbl_id', LC.RAW_TABLE);
-                req && getViewer(undefined, 'timeseries').showTable(req);
-            } else {
-                const row = getTblRowAsObj(getTblById(tbl_id), highlightedRow) || {};
-                const {mission, tableName, database, objectIdColumn} = get(tableModel, 'tableMeta') || {};
-                const objectId = objectIdColumn ? get(row, objectIdColumn, undefined) : undefined;
-
-                if (!isNil(objectId)) {
-                    const META_INFO = {[LC.META_MISSION]: mission};
-
-                    req = makeTblRequest('LSSTLightCurveQuery', objectId, {objectId, table_name: tableName, database}, {tbl_id: LC.RAW_TABLE, META_INFO});
-
-                    if (mission.toLowerCase().includes('wise')) {
-                        req = req && addExistingConstraints(tableModel, req);
-                    }
-
-                    req && getViewer(undefined, 'timeseries').showTable(req);
-                }
-            }*/
         }
 
         function loadMovingTable() {

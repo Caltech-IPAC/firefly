@@ -14,7 +14,6 @@ import {ImageSearchDropDown} from '../visualize/ui/ImageSearchPanelV2.jsx';
 import {TestSearchPanel} from '../ui/TestSearchPanel.jsx';
 import {TestQueriesPanel} from '../ui/TestQueriesPanel.jsx';
 import {ChartSelectDropdown} from '../ui/ChartSelectDropdown.jsx';
-import {LSSTCatalogSelectViewPanel} from '../visualize/ui/LSSTCatalogSelectViewPanel.jsx';
 import {FileUploadDropdown} from '../ui/FileUploadDropdown.jsx';
 import {WorkspaceDropdown} from '../ui/WorkspaceDropdown.jsx';
 import {getAlerts} from '../core/AppDataCntlr.js';
@@ -41,7 +40,6 @@ export const dropDownMap = {
     ChartSelectDropDownCmd: {view: <ChartSelectDropdown />},
     TAPSearch: {view: <TapSearchPanel/>, layout: {width: '100%'}},
     MultiTableSearchCmd: {view: <MultiSearchPanel/>,  layout: {width: '100%'}},
-    LsstCatalogDropDown: {view: <LSSTCatalogSelectViewPanel />},
     FileUploadDropDownCmd: {view: <FileUploadDropdown />, layout: {width: '100%'}},
     WorkspaceDropDownCmd: {view: <WorkspaceDropdown />},
     // --- testing

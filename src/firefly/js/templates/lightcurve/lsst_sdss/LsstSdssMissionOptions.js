@@ -17,6 +17,13 @@ import {getTypeData} from './../LcUtil.jsx';
 
 const labelWidth = 100;
 
+// ------------------------------------------------------------------
+// ------------------------------------------------------------------
+// This is not longer supported on the backend
+// I am leaving it in as a template for future LSST time series code
+// ------------------------------------------------------------------
+// ------------------------------------------------------------------
+
 export class LsstSdssSettingBox extends PureComponent {
     constructor(props) {
         super(props);

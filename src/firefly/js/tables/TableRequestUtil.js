@@ -136,57 +136,26 @@ export function makeIrsaCatalogRequest(title, project, catalog, params={}, optio
 }
 
 /**
- * creates the request to query LSST catalogs.  // TODO: more detail to be updated based on the LSST catalog DD content
- * @param {string} title    title to be displayed with this table result
- * @param {string} project
- * @param {string} catalog  the catalog name to search
- * @param {ConeParams|BoxParams|ElipParams} params   one of 'Cone','Eliptical','Box','Polygon','Table','AllSky'.
- * @param {TableRequest} [options]
- * @returns {TableRequest}
- * @func makeLsstCatalogRequest
- * @memberof firefly.util.table
- */
-export function makeLsstCatalogRequest(title, project, catalog, params={}, options={}) {
-    const req = {startIdx: 0, pageSize: 100};
-
-    title = title ?? catalog;
-    const tbl_id = options.tbl_id || uniqueTblId();
-    const id = get(params, 'SearchMethod')==='Table'?'LSSTMultiObjectSearch':'LSSTCatalogSearch';
-    const UserTargetWorldPt = params.UserTargetWorldPt || params.position;  // may need to convert to worldpt.
-    const table_name = catalog;
-    const meta_table = catalog;
-    const META_INFO = pickBy(Object.assign(options.META_INFO || {}, {title, tbl_id}));
-
-
-    options = omit(options, 'tbl_id');
-    params = omit(params, 'position');
-
-    return omitBy(Object.assign(req, options, params,
-                                {id, tbl_id, META_INFO, UserTargetWorldPt, table_name, meta_table, project}), isNil);
-}
-
-/**
- * creates the request to query VO catalogmakeLsstCatalogRequest
+ * creates the request to query VO using ConeSearchByURL or another vo provider Search processor
  * @param {string} title    title to be displayed with this table result
  * @param {ConeParams|BoxParams|ElipParams} params   one of 'Cone','Eliptical','Box','Polygon','Table','AllSky'.
  * @param {TableRequest} [options]
  * @returns {TableRequest}
  * @func makeVOCatalogRequest
  * @memberof firefly.util.table
+ * @see edu.caltech.ipac.firefly.server.persistence.QueryByConeSearchURL.java
  */
 export function makeVOCatalogRequest(title, params={}, options={}) {
-    var req = {startIdx: 0, pageSize: 100};
+    const req = {startIdx: 0, pageSize: 100};
     const tbl_id = options.tbl_id || uniqueTblId();
-    const providerid = voProviders[params.providerName];
-
-    const id = providerid || 'ConeSearchByURL';
+    const id = voProviders[params.providerName] || 'ConeSearchByURL';
     const UserTargetWorldPt = params.UserTargetWorldPt || params.position;  // may need to convert to worldpt.
-    var META_INFO = Object.assign(options.META_INFO || {}, {title, tbl_id});
+    const META_INFO = {...options.META_INFO, title, tbl_id};
 
     options = omit(options, 'tbl_id');
     params = omit(params, 'position');
 
-    return omitBy(Object.assign(req, options, params, {id, tbl_id, META_INFO, UserTargetWorldPt}), isNil);
+    return omitBy({...req, ...options, ...params, id, tbl_id, META_INFO, UserTargetWorldPt}, isNil);
 }
 
 const voProviders = {'NED':'NedSearch'};
