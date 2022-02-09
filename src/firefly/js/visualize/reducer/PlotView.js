@@ -127,7 +127,7 @@ export function makePlotView(plotId, req, pvOptions= {}) {
         affTrans: null,
         viewDim : {width:0, height:0}, // size of viewable area  (i.e. div size: offsetWidth & offsetHeight)
         overlayPlotViews: [],
-        menuItemKeys: makeMenuItemKeys(req,pvOptions,getDefMenuItemKeys()), // normally will not change
+        menuItemKeys: {...getDefMenuItemKeys(), ...pvOptions.menuItemKeys},
         plotViewCtx: createPlotViewContextData(req, pvOptions),
         rotation: 0,
         flipY: Boolean(flipYLock && useSticky),
@@ -170,14 +170,6 @@ function createPlotViewContextData(req, pvOptions={}) {
         if (!hi.fovMaxFitsSize ) hi.fovMaxFitsSize= hi.fovDegFallOver;
     }
     return plotViewCtx;
-}
-
-
-
-//todo - this function should determine which menuItem are visible and which are hidden
-// for now just return the default
-function makeMenuItemKeys(req,pvOptions,defMenuItemKeys) {
-    return {...defMenuItemKeys, ...pvOptions.menuItemKeys};
 }
 
 /**

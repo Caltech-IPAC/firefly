@@ -25,12 +25,13 @@
         </div>
     </div>
     <div id="actual" class="flow-h">
-        <div id="gatorTable" class="box"></div>
-        <div id="gatorCoverage" class="box"></div>
+        <div id="gatorTable" class="box" style='width: 400px;'></div>
+        <div id="gatorCoverage" class="box" style='width: 400px;'></div>
         <div id="gatorXy" class="box"></div>
     </div>
     <script>
         irsaviewer_init();
+        firefly.options.MenuItemKeys.extract=false;
 
         onFireflyLoaded = function (firefly) {
 

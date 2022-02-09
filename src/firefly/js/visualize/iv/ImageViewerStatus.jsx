@@ -57,7 +57,7 @@ export const ImageViewerStatus= memo(
         <div style={{...statusContainer, top}}>
             {working && showing.maskShowing && <div style={maskWrapper}> <div className='loading-mask'/> </div> }
             { showing.messageShowing &&
-            <div style={workingStatusText} >
+            <div className='enable-select' style={workingStatusText} >
                 <div style={workingStatusTextCell}>{message}</div>
                 { buttonCB && <CompleteButton text={buttonText} style={{flex: '2 2 auto'}} onSuccess={buttonCB}/> }
             </div>

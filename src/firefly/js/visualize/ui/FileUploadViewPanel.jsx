@@ -482,7 +482,7 @@ function UploadOptions({uploadSrc=FILE_ID, isloading, isWsUpdating, uploadKey}) 
         return (
             <FileUpload
                 key={uploadKey}
-                innerStyle={{width: 90}}
+                innerStyle={{width: '7em'}}
                 fileNameStyle={{marginLeft: 5, fontSize: 12}}
                 fieldKey={FILE_ID}
                 fileAnalysis={onLoading}

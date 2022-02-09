@@ -1,48 +1,42 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-import {get} from 'lodash';
 import {getAppOptions} from '../core/AppDataCntlr.js';
 
-export const MenuItemKeys= {
-    fitsDownload : 'fitsDownload',
-    imageSelect : 'imageSelect',
-    lockImage: 'lockImage',
-    zoomUp : 'zoomUp',
-    zoomDown : 'zoomDown',
-    zoomOriginal : 'zoomOriginal',
-    zoomFit : 'zoomFit',
-    zoomFill : 'zoomFill',
-    colorTable : 'colorTable',
-    stretchQuick : 'stretchQuick',
-    rotate: 'rotate',
-    rotateNorth: 'rotateNorth',
-    flipImageY: 'flipImageY',
-    recenter : 'recenter',
-    selectArea: 'selectArea',
-    distanceTool: 'distanceTool',
-    markerToolDD : 'markerToolDD',
-    northArrow : 'northArrow',
-    grid : 'grid',
-    ds9Region : 'ds9Region',
-    maskOverlay : 'maskOverlay',
-    layer : 'layer',
-    irsaCatalog : 'irsaCatalog',
-    restore : 'restore',
-    overlayColorLock: 'overlayColorLock',
-    fitsHeader: 'fitsHeader',
-    panByTableRow: 'panByTableRow',
-    matchLockDropDown: 'matchLockDropDown'
-};
-
-const defaultOff = [MenuItemKeys.lockImage, MenuItemKeys.irsaCatalog, MenuItemKeys.maskOverlay];
-
-
-const tempMiKeys= Object.keys(MenuItemKeys).reduce((obj,k) => {
-    obj[k]= !defaultOff.includes(k);
-    return obj;
-},{});
-
-export const getDefMenuItemKeys= () => Object.assign({}, tempMiKeys, get(getAppOptions(), 'MenuItemKeys', {}));
-
+export function getDefMenuItemKeys() {
+    const MenuItemKeys= {
+        lockImage: false,
+        maskOverlay : false,
+        irsaCatalog : false,
+        fitsDownload : true,
+        imageSelect : true,
+        zoomUp : true,
+        zoomDown : true,
+        zoomOriginal : true,
+        zoomFit : true,
+        zoomFill : true,
+        colorTable : true,
+        stretchQuick : true,
+        rotate: true,
+        rotateNorth: true,
+        flipImageY: true,
+        recenter : true,
+        selectArea: true,
+        distanceTool: true,
+        markerToolDD : true,
+        northArrow : true,
+        grid : true,
+        ds9Region : true,
+        layer : true,
+        restore : true,
+        overlayColorLock: true,
+        fitsHeader: true,
+        panByTableRow: true,
+        matchLockDropDown: true,
+        extractZAxis: true,
+        extractLine: true,
+        extractPoint: true,
+        extract: true,
+    };
+    return {...MenuItemKeys, ...getAppOptions()?.MenuItemKeys};
+}
