@@ -377,7 +377,9 @@ export function submitChanges({chartId, fields, tbl_id, renderTreeId}) {
 
         // omit fields, that start with '__'
         if (!k.startsWith('__') && isUndefined(changes[k])) {
-            changes[k] = v;
+            if (layout.title || k!=='layout.title.text' || v) { // if no title set then don't set it in the changes
+                changes[k] = v;
+            }
         }
 
     });
