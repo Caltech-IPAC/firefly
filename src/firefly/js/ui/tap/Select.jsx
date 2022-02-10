@@ -28,8 +28,21 @@ export const selectTheme = (theme) => ({
 
 // LoadingIndicator component
 const LoadingIndicator = () => ( <img style={{width: 20, height: 20, padding: 5}} src={LOADING}/> );
-const addTarget= (s) => (s.indexOf('<a ')<0) ? s : s.replace('<a ', `<a target='tapOpen' `);
-const cleanUp= (s) => addTarget(truncate(s, {length: 140}));
+
+const achoreRE= /<a.*(\/>|<\/a>)/;
+
+function cleanUp(s) {
+    if (!s.includes('<a ')) return truncate(s, {length: 140});
+    const aStr= s.match(achoreRE)?.[0];
+    if (!aStr) return truncate(s, {length: 140});
+    const tmp= document.createElement('div');
+    tmp.innerHTML= aStr;
+    tmp.children[0].target= 'tapOpen';
+    tmp.children[0].title= tmp.children[0].innerHTML;
+    tmp.children[0].innerHTML= truncate(tmp.children[0].innerHTML, {length: 80});
+    return s.replace(achoreRE, tmp.innerHTML);
+
+}
 
 // Option component
 const SelectOption = (props) => {
