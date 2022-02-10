@@ -24,7 +24,7 @@
     <div id="actual" class="box x3"/>
     <script>
         function onFireflyLoaded(firefly) {
-            tblReq1 = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
+            tblReq1 = firefly.util.table.makeFileRequest(null, 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
                 { META_INFO: {
                     "col.in_row_id.label": 'location',
                     "col.in_row_id.type": 'location',
@@ -32,7 +32,7 @@
                     "col.in_ra.width": '15',
                     "col.in_ra.links": [
                             {href: "https://irsa.ipac.caltech.edu/?id="},
-                            {href: "http://ivoa.net/?id=${band}", value: 'ivoa-${band}'}
+                            {href: "https://ivoa.net/?id=${band}", value: 'ivoa-${band}'}
                         ],
                     "col.in_dec.label": 'bad href',
                     "col.in_dec.links": [{href: "${abc}"}],
@@ -76,7 +76,7 @@
     <div id="actual"  class="box x3"/>
     <script>
         function onFireflyLoaded(firefly) {
-            tblReq1 = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
+            tblReq1 = firefly.util.table.makeFileRequest(null, 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
                 { META_INFO: {
                         DATARIGHTS_COL: "band"
                     }});
@@ -142,7 +142,7 @@
     <script>
         function onFireflyLoaded(firefly) {
             tblReq = firefly.util.table.makeFileRequest(
-                "Table Events", 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl');
+                "Table Events", 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl');
             firefly.showTable('tbl-div', tblReq);
 
             firefly.util.addActionListener(firefly.action.type.TABLE_HIGHLIGHT, handleHighlight);
@@ -215,7 +215,7 @@
 
 
             //-----------  using API with server-backed table --------------
-            const tblReq = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
+            const tblReq = firefly.util.table.makeFileRequest(null, 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
                 { META_INFO: {
                         "col.in_row_id.label": 'override name',
                         "col.in_ra.label": 'forced_width',
@@ -250,7 +250,7 @@
         function onFireflyLoaded(firefly) {
 
             //-----------  using API with server-backed table --------------
-            const tblReq = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
+            const tblReq = firefly.util.table.makeFileRequest(null, 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
                 { META_INFO: {
                         "tbl.resources": [ {
                             type: 'meta',
@@ -272,7 +272,7 @@
                         }],
                         "tbl.links": [
                             {href: "https://irsa.ipac.caltech.edu/?id="},
-                            {href: "http://ivoa.net/?id=${band}", value: 'ivoa-${band}'}
+                            {href: "https://ivoa.net/?id=${band}", value: 'ivoa-${band}'}
                         ]
                     }});
             firefly.showTable('actual', tblReq, {showMetaInfo: true});
@@ -300,7 +300,7 @@
         function onFireflyLoaded(firefly) {
 
             //-----------  using API with server-backed table --------------
-            const tblReq = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
+            const tblReq = firefly.util.table.makeFileRequest(null, 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
                 { META_INFO: {
                         "col.in_row_id.visibility":  'hidden',
 
@@ -318,7 +318,7 @@
                         "col.crval1.cellRenderer": 'CoordCell::hms=${crval1},dms=${crval2}',
 
                         "col.crval2.label": 'crval2 as link',
-                        "col.crval2.cellRenderer": 'ATag::href=http://ivoa.net/?id=${crval2}',
+                        "col.crval2.cellRenderer": 'ATag::href=https://ivoa.net/?id=${crval2}',
 
                         "col.ra1.label": 'ra1 as HMS',
                         "col.ra1.cellRenderer": 'CoordCell::hms=${ra1},style=color:green;font-style:italic',

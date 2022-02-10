@@ -2,18 +2,17 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {isEmpty, truncate, get} from 'lodash';
-import shallowequal from 'shallowequal';
+import {isEmpty, truncate, get, set} from 'lodash';
 
-import {flux} from '../../core/ReduxFlux.js';
-import * as TblUtil from '../TableUtil.js';
-import {dispatchTableRemove, dispatchTblExpanded, dispatchTableFetch, dispatchTableAddLocal, dispatchTableFilter} from '../TablesCntlr.js';
+import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {dispatchTableRemove, dispatchTblExpanded, dispatchTableFetch, dispatchTableAddLocal, dispatchTableUiUpdate} from '../TablesCntlr.js';
+import {uniqueTblUiId, uniqueTblId, getTableUiById, getTableUiByTblId, makeBgKey, getResultSetRequest} from '../TableUtil.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
 import {TableInfo, MetaInfo} from './TableInfo.jsx';
-import {TableConnector} from '../TableConnector.js';
+import {makeConnector} from '../TableConnector.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {PagingBar} from '../../ui/PagingBar.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
@@ -39,196 +38,139 @@ const TT_CLEAR_FILTER = 'Remove all filters';
 const TT_SHOW_FILTER = 'The Filter Panel can be used to remove unwanted data from the search results';
 const TT_EXPAND = 'Expand this panel to take up a larger area';
 
-export class TablePanel extends PureComponent {
-    constructor(props) {
-        super(props);
 
-        this.toggleFilter = this.toggleFilter.bind(this);
-        this.toggleTextView = this.toggleTextView.bind(this);
-        this.clearFilter = this.clearFilter.bind(this);
-        this.toggleOptions = this.toggleOptions.bind(this);
-        this.expandTable = this.expandTable.bind(this);
-        this.onOptionUpdate = this.onOptionUpdate.bind(this);
-        this.onOptionReset = this.onOptionReset.bind(this);
-        this.setupInitState = this.setupInitState.bind(this);
-        this.state = this.setupInitState(props);
-    }
+export function TablePanel(props) {
+    let {tbl_id, tbl_ui_id, tableModel, leftButtons, rightButtons, ...options} = props;
+    tbl_id = tbl_id || tableModel?.tbl_id || uniqueTblId();
+    tbl_ui_id = tbl_ui_id || uniqueTblUiId();
 
+    const [uiState] = useStoreConnector(() => getTableUiById(tbl_ui_id) || {columns: []});
 
-    setupInitState(props) {
-        var {tbl_id, tbl_ui_id, tableModel, ...options} = props;
-
-        if (!tbl_id && tableModel) {
-            if (!tableModel.tbl_id) {
-                tableModel.tbl_id = TblUtil.uniqueTblId();
-            }
-            tbl_id = tableModel.tbl_id;
+    useEffect( () => {
+        if (!getTableUiByTblId(tbl_id)) {
+            dispatchTableUiUpdate({tbl_ui_id, tbl_id, options});
         }
-        tbl_ui_id = tbl_ui_id || TblUtil.uniqueTblUiId();
-        this.tableConnector = TableConnector.newInstance(tbl_id, tbl_ui_id, tableModel, options);
-        const uiState = TblUtil.getTableUiById(tbl_ui_id);
-        return Object.assign({}, this.props, uiState);
-    }
-
-    UNSAFE_componentWillReceiveProps(props) {
-        if (!shallowequal(this.props, props)) {
-            const {tableModel} = this.props;
-            if (tableModel !== props.tableModel) {
-                // table model changed..
-                dispatchTableAddLocal(props.tableModel, undefined, false);
-            }
-            this.setState(this.setupInitState(props));
+        if (tableModel && !tableModel.origTableModel) {
+            tableModel.tbl_id = tbl_id;
+            set(tableModel, 'request.tbl_id', tbl_id);
+            dispatchTableAddLocal(tableModel, undefined, false);
         }
-    }
-
-    componentDidMount() {
-        this.removeListener= flux.addListener(() => this.storeUpdate());
-        this.tableConnector.onMount();
-    }
+    }, [tbl_id, tbl_ui_id, tableModel]);
 
 
-    componentWillUnmount() {
-        this.removeListener && this.removeListener();
-        this.isUnmounted = true;
-    }
+    const {selectable, expandable, expandedMode, border, renderers, title, removable, rowHeight, help_id,
+        showToolbar, showTitle, showInfoButton, showMetaInfo, showOptions,
+        showOptionButton, showPaging, showSave, showFilterButton,
+        totalRows, showLoading, columns, showUnits, allowUnits, showTypes, showFilters, textView,
+        error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask, showToggleTextView,
+        filterInfo, filterCount, sortInfo, data, backgroundable, highlightedRowHandler, cellRenderers} = {...options, ...uiState};
 
-    storeUpdate() {
-        if (!this.isUnmounted) {
-            const {tbl_ui_id} = this.tableConnector;
-            const uiState = TblUtil.getTableUiById(tbl_ui_id) || {columns: []};
-            this.setState(uiState);
-        }
-    }
+    const connector = makeConnector(tbl_id, tbl_ui_id);
 
-    toggleFilter() {
-        this.tableConnector.onOptionUpdate({showFilters: !this.state.showFilters});
-    }
-    toggleTextView() {
-        this.tableConnector.onToggleTextView(!this.state.textView);
-    }
-    clearFilter() {
-        const {tbl_id} = this.tableConnector;
-        dispatchTableFilter({tbl_id, filters: '', sqlFilter: ''});
-    }
-    toggleOptions() {
-        this.tableConnector.onToggleOptions(!this.state.showOptions);
-    }
-    expandTable() {
-        const {tbl_ui_id, tbl_id} = this.tableConnector;
+    const toggleFilter = () => connector.onOptionUpdate({showFilters: !showFilters});
+    const toggleTextView = () => connector.onToggleTextView(!textView);
+    const clearFilter = () => connector({filters: '', sqlFilter: ''});
+    const toggleOptions = () => connector.onToggleOptions(!showOptions);
+    const onOptionUpdate = (value) => connector.onOptionUpdate(value);
+    const onOptionReset = () => connector.onOptionReset(props);
+
+    const expandTable = () => {
         dispatchTblExpanded(tbl_ui_id, tbl_id);
         dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.tables);
-    }
-    onOptionUpdate(value) {
-        this.tableConnector.onOptionUpdate(value);
-    }
-    onOptionReset() {
-        this.tableConnector.onOptionReset();
-    }
+    };
 
 
-    render() {
-        const {tableConnector} = this;
-        const { selectable, expandable, expandedMode, border, renderers, title, removable, rowHeight, help_id,
-            showToolbar, showTitle, showInfoButton, showMetaInfo,
-            showOptionButton, showPaging, showSave, showFilterButton,
-            totalRows, showLoading, columns, showUnits, allowUnits, showTypes, showFilters, textView,
-            tbl_id, error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask, showToggleTextView,
-            filterInfo, filterCount, sortInfo, data, backgroundable, highlightedRowHandler, cellRenderers} = this.state;
-        var {leftButtons, rightButtons} =  this.state;
-        const {tbl_ui_id} = this.tableConnector;
+    const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
+    const viewIcoStyle = 'PanelToolbar__button ' + (textView ? 'tableView' : 'textView');
+    const tableTopPos = showToolbar && (leftButtons && showTitle ? 41 : 29) || 0;
+    const TT_VIEW = textView ? TT_TABLE_VIEW : TT_TEXT_VIEW;
 
-        const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
-        const viewIcoStyle = 'PanelToolbar__button ' + (textView ? 'tableView' : 'textView');
-        const tableTopPos = showToolbar && (leftButtons && showTitle ? 41 : 29) || 0;
-        const TT_VIEW = textView ? TT_TABLE_VIEW : TT_TEXT_VIEW;
+    // converts the additional left/right buttons into elements
+    leftButtons =   leftButtons && leftButtons
+        .map((f) => f(uiState))
+        .map( (c, idx) => get(c, 'props.key') ? c : React.cloneElement(c, {key: idx})); // insert key prop if missing
+    rightButtons = rightButtons && rightButtons
+        .map((f) => f(uiState))
+        .map( (c, idx) => get(c, 'props.key') ? c : React.cloneElement(c, {key: idx})); // insert key prop if missing
 
-        // converts the additional left/right buttons into elements
-        leftButtons =   leftButtons && leftButtons
-            .map((f) => f(this.state))
-            .map( (c, idx) => get(c, 'props.key') ? c : React.cloneElement(c, {key: idx})); // insert key prop if missing
-        rightButtons = rightButtons && rightButtons
-            .map((f) => f(this.state))
-            .map( (c, idx) => get(c, 'props.key') ? c : React.cloneElement(c, {key: idx})); // insert key prop if missing
+    const showOptionsDialog = () => showTableOptionDialog(onOptionUpdate, onOptionReset, tbl_ui_id, tbl_id);
+    const showInfoDialog = () => showTableInfoDialog(tbl_id);
 
-        const showOptionsDialog = () => showTableOptionDialog(this.onOptionUpdate, this.onOptionReset, tbl_ui_id, tbl_id);
-        const showInfoDialog = () => showTableInfoDialog(tbl_id);
+    const tstate = getTableState(uiState);
+    logger.debug(`render.. state:[${tstate}] -- ${tbl_id}`);
 
-        const tstate = getTableState(this.state);
-        logger.debug(`render.. state:[${tstate}] -- ${tbl_id}`);
+    if (['ERROR','LOADING'].includes(tstate))  return <NotReady {...{showTitle, tbl_id, title, removable, backgroundable, error}}/>;
 
-        if (['ERROR','LOADING'].includes(tstate))  return <NotReady {...{showTitle, tbl_id, title, removable, backgroundable, error}}/>;
-
-        return (
-            <div style={{ position: 'relative', width: '100%', height: '100%'}}>
-                <div className='TablePanel'>
-                    {showMetaInfo && <MetaInfo tbl_id={tbl_id} /> }
-                    <div className={'TablePanel__wrapper' + (border ? '--border' : '')}>
-                        {showToolbar &&
-                        <div className='PanelToolbar TablePanel__toolbar'>
-                            <LeftToolBar {...{tbl_id, title, removable, showTitle, leftButtons}}/>
-                            {showPaging && <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:tableConnector}} /> }
-                            <div className='PanelToolbar__group'>
-                                {rightButtons}
-                                {showFilterButton && filterCount > 0 &&
-                                <div onClick={this.clearFilter}
-                                     title={TT_CLEAR_FILTER}
-                                     className='PanelToolbar__button clearFilters'/>}
-                                {showFilterButton &&
-                                <ToolbarButton icon={FILTER}
-                                               tip={TT_SHOW_FILTER}
-                                               visible={true}
-                                               badgeCount={filterCount}
-                                               onClick={this.toggleFilter}/>
-                                }
-                                {showToggleTextView && <div onClick={this.toggleTextView}
-                                     title={TT_VIEW}
-                                     className={viewIcoStyle}/>}
-                                {showSave &&
-                                <div onClick={showTableDownloadDialog({tbl_id, tbl_ui_id})}
-                                     title={TT_SAVE}
-                                     className='PanelToolbar__button save'/> }
-                                {showInfoButton &&
-                                <div style={{marginLeft: '4px'}}
-                                     title={TT_INFO}
-                                     onClick={showInfoDialog}
-                                     className='PanelToolbar__button info'/> }
-                                {showOptionButton &&
-                                <div style={{marginLeft: '4px'}}
-                                     title={TT_OPTIONS}
-                                     onClick={showOptionsDialog}
-                                     className='PanelToolbar__button options'/> }
-                                { expandable && !expandedMode &&
-                                <div className='PanelToolbar__button' onClick={this.expandTable} title={TT_EXPAND}>
-                                    <img src={OUTLINE_EXPAND}/>
-                                </div>}
-                                { help_id && <div style={{marginTop:-10}}> <HelpIcon helpId={help_id} /> </div>}
-                            </div>
-                        </div>
-                        }
-                        <div className='TablePanel__table' style={{top: tableTopPos}}
-                             onClick={stopPropagation}
-                             onTouchStart={stopPropagation}
-                             onMouseDown={stopPropagation}
-                        >
-                            <BasicTableView
-                                callbacks={tableConnector}
-                                { ...{columns, data, hlRowIdx, rowHeight, selectable, showUnits, allowUnits, showTypes, showFilters,
-                                    selectInfoCls, filterInfo, sortInfo, textView, showMask, currentPage,
-                                    tableConnector, renderers, tbl_ui_id, highlightedRowHandler, startIdx, cellRenderers} }
-                            />
-                            {showOptionButton && !showToolbar &&
-                            <img className='TablePanel__options--small'
-                                 src={OPTIONS}
-                                 title={TT_OPTIONS}
-                                 onClick={showOptionsDialog}/>
+    return (
+        <div style={{ position: 'relative', width: '100%', height: '100%'}}>
+            <div className='TablePanel'>
+                {showMetaInfo && <MetaInfo tbl_id={tbl_id} /> }
+                <div className={'TablePanel__wrapper' + (border ? '--border' : '')}>
+                    {showToolbar &&
+                    <div className='PanelToolbar TablePanel__toolbar'>
+                        <LeftToolBar {...{tbl_id, title, removable, showTitle, leftButtons}}/>
+                        {showPaging && <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:connector}} /> }
+                        <div className='PanelToolbar__group'>
+                            {rightButtons}
+                            {showFilterButton && filterCount > 0 &&
+                            <div onClick={clearFilter}
+                                 title={TT_CLEAR_FILTER}
+                                 className='PanelToolbar__button clearFilters'/>}
+                            {showFilterButton &&
+                            <ToolbarButton icon={FILTER}
+                                           tip={TT_SHOW_FILTER}
+                                           visible={true}
+                                           badgeCount={filterCount}
+                                           onClick={toggleFilter}/>
                             }
-    
+                            {showToggleTextView && <div onClick={toggleTextView}
+                                 title={TT_VIEW}
+                                 className={viewIcoStyle}/>}
+                            {showSave &&
+                            <div onClick={showTableDownloadDialog({tbl_id, tbl_ui_id})}
+                                 title={TT_SAVE}
+                                 className='PanelToolbar__button save'/> }
+                            {showInfoButton &&
+                            <div style={{marginLeft: '4px'}}
+                                 title={TT_INFO}
+                                 onClick={showInfoDialog}
+                                 className='PanelToolbar__button info'/> }
+                            {showOptionButton &&
+                            <div style={{marginLeft: '4px'}}
+                                 title={TT_OPTIONS}
+                                 onClick={showOptionsDialog}
+                                 className='PanelToolbar__button options'/> }
+                            { expandable && !expandedMode &&
+                            <div className='PanelToolbar__button' onClick={expandTable} title={TT_EXPAND}>
+                                <img src={OUTLINE_EXPAND}/>
+                            </div>}
+                            { help_id && <div style={{marginTop:-10}}> <HelpIcon helpId={help_id} /> </div>}
                         </div>
+                    </div>
+                    }
+                    <div className='TablePanel__table' style={{top: tableTopPos}}
+                         onClick={stopPropagation}
+                         onTouchStart={stopPropagation}
+                         onMouseDown={stopPropagation}
+                    >
+                        <BasicTableView
+                            callbacks={connector}
+                            { ...{columns, data, hlRowIdx, rowHeight, selectable, showUnits, allowUnits, showTypes, showFilters,
+                                selectInfoCls, filterInfo, sortInfo, textView, showMask, currentPage,
+                                renderers, tbl_ui_id, highlightedRowHandler, startIdx, cellRenderers} }
+                        />
+                        {showOptionButton && !showToolbar &&
+                        <img className='TablePanel__options--small'
+                             src={OPTIONS}
+                             title={TT_OPTIONS}
+                             onClick={showOptionsDialog}/>
+                        }
+
                     </div>
                 </div>
             </div>
-        );
-    }
+        </div>
+    );
 }
 
 function getTableState(state) {
@@ -363,12 +305,12 @@ function NotReady({showTitle, tbl_id, title, removable, backgroundable, error}) 
             <div style={{position: 'relative', width: '100%', height: '100%', border: 'solid 1px rgba(0,0,0,.2)', boxSizing: 'border-box'}}>
                 {showTitle && <Title {...{title, removable, tbl_id}}/>}
                 <div style={{height, position: 'relative'}}>
-                    <BgMaskPanel componentKey={TblUtil.makeBgKey(tbl_id)}/>
+                    <BgMaskPanel componentKey={makeBgKey(tbl_id)}/>
                 </div>
             </div>
         );
     } else {
-        const prevReq = TblUtil.getResultSetRequest(tbl_id);
+        const prevReq = getResultSetRequest(tbl_id);
         const reloadTable = () => {
             dispatchTableFetch(JSON.parse(prevReq));
         };
@@ -387,6 +329,5 @@ function NotReady({showTitle, tbl_id, title, removable, backgroundable, error}) 
         } else return <div className='loading-mask'/>;
     }
 }
-
 
 

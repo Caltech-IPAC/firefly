@@ -117,7 +117,7 @@
 
         function loadHiPS(sTarget,r,c,w,h) {
             const request= { plotId: 'aHipsID', WorldPt    : sTarget, title     : 'A HiPS',
-                hipsRootUrl: 'http://alasky.u-strasbg.fr/DSS/DSSColor'
+                hipsRootUrl: 'https://alasky.u-strasbg.fr/DSS/DSSColor'
             };
             firefly.getViewer().addCell(r,c,w,h, 'images', 'Hips');
             firefly.getViewer().showHiPS(request, 'Hips');
@@ -392,7 +392,7 @@
 
         function loadMOC(mocFile) {
             const req = firefly.util.table.makeFileRequest(mocFile,
-                'http://web.ipac.caltech.edu/staff/roby/demo/moc/'+mocFile,
+                'https://web.ipac.caltech.edu/staff/roby/demo/moc/'+mocFile,
                 null,
                 {    META_INFO: {PREFERRED_HIPS : 'https://irsa.ipac.caltech.edu/data/hips/CDS/2MASS/Color'} } );
             firefly.getViewer().fetchTable(req);
@@ -425,7 +425,7 @@
 
         function loadTriView() {
             const req = firefly.util.table.makeFileRequest('Test',
-                'http://web.ipac.caltech.edu.s3-us-west-2.amazonaws.com/staff/roby/demo/fp_2mass.fp_psc29179.tbl',
+                'https://web.ipac.caltech.edu/staff/roby/demo/fp_2mass.fp_psc29179.tbl',
                 null,
                 {} );
             firefly.getViewer().showTable(req);
@@ -465,17 +465,17 @@
             const reqUtil= firefly.util.table;
             const reqAry= [
                 reqUtil.makeFileRequest('2mass file',
-                    'http://web.ipac.caltech.edu.s3-us-west-2.amazonaws.com/staff/roby/demo/fp_2mass.fp_psc29179.tbl',
+                    'https://web.ipac.caltech.edu/staff/roby/demo/fp_2mass.fp_psc29179.tbl',
                     null,
                     {} ),
 
                 reqUtil.makeFileRequest('wise file',
-                    'http://web.ipac.caltech.edu.s3-us-west-2.amazonaws.com/staff/roby/demo/WiseDemoTable.tbl',
+                    'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',
                     null,
                     {} ),
 
                 reqUtil.makeFileRequest('orbital path',
-                    'http://web.ipac.caltech.edu.s3-us-west-2.amazonaws.com/staff/roby/demo/wise-orbit-allsky.tbl',
+                    'https://web.ipac.caltech.edu/staff/roby/demo/wise-orbit-allsky.tbl',
                     null,
                     {
                         META_INFO: {
@@ -499,7 +499,7 @@
                         SearchMethod: "Cone",
                         radius: "0.00278",
                         providerName: "NED",
-                        accessUrl: "http://ned.ipac.caltech.edu/cgi-bin/NEDobjsearch?search_type=Near+Position+Search&of=xml_main&"
+                        accessUrl: "https://ned.ipac.caltech.edu/cgi-bin/NEDobjsearch?search_type=Near+Position+Search&of=xml_main&"
                     },
                     { sortInfo: "ASC,Object Name",
                         META_INFO: {"col.Type.FmtDisp": "abc-%s"}

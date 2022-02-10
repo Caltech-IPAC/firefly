@@ -123,7 +123,7 @@
         onFireflyLoaded= function(firefly) {
             const tblReq = firefly.util.table.makeFileRequest(
                 'SED: ARP-220 raw', // title
-                'http://ned.ipac.caltech.edu/cgi-bin/datasearch?ebars_spec=ebars&label_spec=no&x_spec=freq&y_spec=Fnu_jy&xr=-2&objname=ARP+220&objid=58863&search_type=Photo_id&meas_type=bot&of=xml_main&objname=ARP+220&objid\
+                'https://ned.ipac.caltech.edu/cgi-bin/datasearch?ebars_spec=ebars&label_spec=no&x_spec=freq&y_spec=Fnu_jy&xr=-2&objname=ARP+220&objid=58863&search_type=Photo_id&meas_type=bot&of=xml_main&objname=ARP+220&objid\
 =58863&search_type=Photo_id&meas_type=bot',  // source
                 null,  // alt_source
                 {filters: '"NED Units" like \'Jy\''} // options
@@ -188,7 +188,7 @@
         onFireflyLoaded= function(firefly) {
             const tblReq = firefly.util.table.makeFileRequest(
                 'SED: NGC 1068', // title
-                'http://ned.ipac.caltech.edu/cgi-bin/datasearch?meas_type=bot&ebars_spec=ebars&label_spec=no&x_spec=freq&y_spec=Fnu_jy&xr=-1&of=xml_main&search_type=Photometry&objname=NGC+1068&hconst=67.8&omegam=0.308&omegav=0.692&wmap=4&corr_z=1&objid=58240', // source
+                'https://ned.ipac.caltech.edu/cgi-bin/datasearch?meas_type=bot&ebars_spec=ebars&label_spec=no&x_spec=freq&y_spec=Fnu_jy&xr=-1&of=xml_main&search_type=Photometry&objname=NGC+1068&hconst=67.8&omegam=0.308&omegav=0.692&wmap=4&corr_z=1&objid=58240', // source
                 null,  // alt_source
                 {filters: '"NED Units" like \'Jy\''} // options
             );
@@ -260,7 +260,7 @@
             firefly.debug = true;
             const searchRequest = firefly.util.table.makeFileRequest(
                 'WiseDemoTable', // title
-                'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',  // source
+                'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',  // source
                 null,  // alt_source
                 {pageSize: 1} // options
             );
@@ -299,7 +299,7 @@
             firefly.debug = true;
             const searchRequest = firefly.util.table.makeFileRequest(
                 'WiseDemoTable', // title
-                'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',  // source
+                'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',  // source
                 null,  // alt_source
                 {pageSize: 1} // options
             );
@@ -543,7 +543,7 @@
             firefly.options = {charts: {singleTraceUI: true, yLimitUI: true}};
             const tblReq = firefly.util.table.makeFileRequest(
                 'SED: NGC 1068', // title
-                'http://ned.ipac.caltech.edu/cgi-bin/datasearch?meas_type=bot&ebars_spec=ebars&label_spec=no&x_spec=freq&y_spec=Fnu_jy&xr=-1&of=xml_main&search_type=Photometry&objname=NGC+1068&hconst=67.8&omegam=0.308&omegav=0.692&wmap=4&corr_z=1&objid=58240', // source
+                'https://ned.ipac.caltech.edu/cgi-bin/datasearch?meas_type=bot&ebars_spec=ebars&label_spec=no&x_spec=freq&y_spec=Fnu_jy&xr=-1&of=xml_main&search_type=Photometry&objname=NGC+1068&hconst=67.8&omegam=0.308&omegav=0.692&wmap=4&corr_z=1&objid=58240', // source
                 null,  // alt_source
                 { filters: '"NED Units" like \'Jy\'',
                   META_INFO: {

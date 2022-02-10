@@ -2,11 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, get} from 'lodash';
 
-import {flux} from '../../core/ReduxFlux.js';
 import * as TblUtil from '../TableUtil.js';
 import {TablePanel} from './TablePanel.jsx';
 import {TabsView, Tab} from '../../ui/panel/TabPanel.jsx';
@@ -18,62 +17,33 @@ import {LO_VIEW, LO_MODE, dispatchSetLayoutMode, getExpandedMode} from '../../co
 import {CloseButton} from '../../ui/CloseButton.jsx';
 
 import {Logger} from '../../util/Logger.js';
+import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 
 const logger = Logger('Tables').tag('TablesContainer');
 
-// logic moved to SearchServicesJson.fetchTable because it was causing multiple render.
-function updateTitles(tables) {
-    if (isEmpty(tables)) return tables;
-    return Object.entries(tables).reduce( (obj,[key,{title,tbl_id, ...tableInfo}]) => {
-            obj[key]= {...tableInfo, tbl_id, title:(TblUtil.getTblById(tbl_id)?.tableMeta?.title ?? title)};
-            return obj;
-        },{});
-}
 
-export class TablesContainer extends PureComponent {
-    constructor(props) {
-        super(props);
-        this.state = this.nextState(props);
-    }
+export function TablesContainer(props) {
+    const {mode, closeable, tableOptions, style, expandedMode:xMode} = props;
+    let {tbl_group} = props;
 
-    componentDidMount() {
-        logger.debug('mounted');
-        this.removeListener= flux.addListener(() => this.storeUpdate());
-    }
+    const [tables, active, expandedMode] = useStoreConnector(
+        () => TblUtil.getTableGroup(tbl_group)?.tables,
+        () => TblUtil.getTableGroup(tbl_group)?.active,
+        () => xMode || getExpandedMode() === LO_VIEW.tables
+    );
 
-    componentWillUnmount() {
-        logger.debug('unmounted');
-        this.removeListener && this.removeListener();
-        this.isUnmounted = true;
-    }
-
-    nextState(props) {
-        var {mode, tbl_group, closeable, tableOptions} = props;
-        const expandedMode = props.expandedMode || getExpandedMode() === LO_VIEW.tables;
+    useEffect(() => {
         if (expandedMode && mode !== 'standard') {
             tbl_group = TblUtil.getTblExpandedInfo().tbl_group;
         }
-        const {tables, layout, active} = TblUtil.getTableGroup(tbl_group) || {};
+    }, [expandedMode, mode]);
 
-        return {closeable, tbl_group, expandedMode, tables:updateTitles(tables), tableOptions, layout, active};
-    }
+    logger.debug('render... tbl_group: ' + tbl_group);
 
-    storeUpdate() {
-        if (!this.isUnmounted) {
-            this.setState(this.nextState(this.props));
-        }
-    }
-
-    render() {
-        const {closeable, tbl_group, expandedMode, tables, tableOptions, layout, active, style} = this.state;
-
-        logger.debug('render... tbl_group: ' + tbl_group);
-
-        if (expandedMode) {
-            return <ExpandedView {...{active, tables, tableOptions, layout, expandedMode, closeable, tbl_group}} />;
-        } else {
-            return isEmpty(tables) ? <div/> : <StandardView {...{active, tables, tableOptions, expandedMode, tbl_group, style}} />;
-        }
+    if (expandedMode) {
+        return <ExpandedView {...{active, tables, tableOptions, expandedMode, closeable, tbl_group}} />;
+    } else {
+        return isEmpty(tables) ? <div/> : <StandardView {...{active, tables, tableOptions, expandedMode, tbl_group, style}} />;
     }
 }
 
@@ -82,6 +52,7 @@ TablesContainer.propTypes = {
     closeable: PropTypes.bool,
     tbl_group: PropTypes.string,
     style: PropTypes.object,
+    tableOptions: PropTypes.object,
     mode: PropTypes.oneOf(['expanded', 'standard', 'both'])
 };
 TablesContainer.defaultProps = {

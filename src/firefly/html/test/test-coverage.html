@@ -290,7 +290,7 @@
                     SearchMethod: 'Cone',
                     radius: 300
                 });
-            tblReq3 = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
+            tblReq3 = firefly.util.table.makeFileRequest(null, 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
                 { pageSize: 15,
                     META_INFO: {CENTER_COLUMN: 'crval1;crval2;EQJ2000'}
                 });
@@ -317,8 +317,7 @@
     <script>
         function onFireflyLoaded(firefly) {
             firefly.showCoverage('coverageHere', {gridOn:true});
-            //const  tblReq = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/wise-orbit-allsky.tbl',null,
-            const tblReq = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu.s3-us-west-2.amazonaws.com/staff/roby/demo/wise-orbit-allsky.tbl',null,
+            const tblReq = firefly.util.table.makeFileRequest(null, 'https://web.ipac.caltech.edu/staff/roby/demo/wise-orbit-allsky.tbl',null,
                 { pageSize: 15,
                     META_INFO: {
                         CENTER_COLUMN: 'ra_obs;dec_obs;EQJ2000',
