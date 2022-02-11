@@ -938,7 +938,7 @@ export function makeTableSourceUrl(columns, request, otherParams) {
     if (visiCols.length !== columns.length) {
         tableRequest['inclCols'] = visiCols.map( (c) => c.includes('"') ? c : '"' + c + '"').join();  // add quotes to cname unless it's already quoted.
     }
-    const origTable = getTblById(request);
+    const origTable = getTblById(request?.tbl_id);
     const precision = columns.filter( (col) => col.precision)
                              .filter( (col) => col.precision !== get(getColumn(origTable, col.name), 'precision'))
                              .map( (col) => [`col.${col.name}.precision`, col.precision]);
