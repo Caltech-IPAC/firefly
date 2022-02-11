@@ -12,7 +12,7 @@ import {cloneDeep, defer, isArray, isObject} from 'lodash';
 
 import {InputAreaFieldConnected} from '../InputAreaField.jsx';
 import {SplitContent} from '../panel/DockLayoutPanel';
-import {loadTapSchemas, loadTapTables, loadTapColumns, getTapServices} from './TapUtil';
+import {loadTapSchemas, loadTapTables, loadTapColumns, getTapServices, maybeQuote} from './TapUtil';
 import {getColumnIdx} from '../../tables/TableUtil.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
@@ -115,11 +115,11 @@ export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={
             if (taVal) {
                 insertAtCursor(textArea, tname, adqlKey, groupKey, prismLiveRef.current);
             } else {
-                dispatchValueChange({fieldKey: adqlKey, groupKey, value: `SELECT TOP 1000 * FROM ${tname}`, valid: true});
+                dispatchValueChange({fieldKey: adqlKey, groupKey, value: `SELECT TOP 1000 * FROM ${maybeQuote(tname,true)}`, valid: true});
                 window.setTimeout( () => prismLiveRef.current.syncStyles?.(), 10);
             }
         } else if (type === 'column') {
-            const val = ffcn.current.checked ? `${tname}.${cname}` : cname;
+            const val = ffcn.current.checked ? `${maybeQuote(tname,true)}.${maybeQuote(cname)}` : maybeQuote(cname);
             insertAtCursor(textArea, val, adqlKey, groupKey, prismLiveRef.current);
         }
     };

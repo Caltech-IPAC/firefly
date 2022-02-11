@@ -281,7 +281,7 @@ export function BasicUI(props) {
                 <div className='expandable'>
                     <SplitPane split='vertical' maxSize={splitMax} mixSize={20} defaultSize={splitDef}>
                         <SplitContent>
-                            {columnsModel ?  <TableSearchMethods initArgs={props.initArgs} columnsModel={columnsModel} obsCoreEnabled={obsCoreEnabled}/>
+                            {columnsModel ?  <TableSearchMethods initArgs={props.initArgs} serviceUrl={serviceUrl} columnsModel={columnsModel} obsCoreEnabled={obsCoreEnabled}/>
                                 : <div className='loading-mask'/>
                             }
                         </SplitContent>

@@ -22,14 +22,8 @@ import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr.js';
 import {tableColumnsConstraints} from 'firefly/ui/tap/TableColumnsConstraints.jsx';
 import {skey, tableSearchMethodsConstraints} from 'firefly/ui/tap/TableSearchMethods.jsx';
 import {commonSelectStyles, selectTheme} from 'firefly/ui/tap/Select.jsx';
-import {
-    getMaxrecHardLimit,
-    getTapBrowserState,
-    tapHelpId,
-    getTapServices,
-    loadObsCoreSchemaTables,
-    updateTapBrowserState
-} from 'firefly/ui/tap/TapUtil.js';
+import { getMaxrecHardLimit, getTapBrowserState, tapHelpId, getTapServices,
+    loadObsCoreSchemaTables, updateTapBrowserState, maybeQuote } from 'firefly/ui/tap/TapUtil.js';
 import { gkey, SectionTitle, AdqlUI, BasicUI} from 'firefly/ui/tap/TableSelectViewPanel.jsx';
 
 
@@ -343,7 +337,7 @@ function onTapSearchSubmit(request,serviceUrl) {
 
 
 function getAdqlQuery(showErrors= true) {
-    const tableName = FieldGroupUtils.getGroupFields(gkey)?.tableName?.value;
+    const tableName = maybeQuote(FieldGroupUtils.getGroupFields(gkey)?.tableName?.value, true);
     if (!tableName) return;
 
     const {columnsModel} = getTapBrowserState();

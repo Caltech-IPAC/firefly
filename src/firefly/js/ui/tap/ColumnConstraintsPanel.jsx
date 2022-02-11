@@ -5,6 +5,7 @@ import {FILTER_CONDITION_TTIPS, FilterInfo} from '../../tables/FilterInfo.js';
 
 import {getColumnIdx, getTblById} from '../../tables/TableUtil.js';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
+import {maybeQuote} from 'firefly/ui/tap/TapUtil.js';
 
 /**
  * @summary component to display column constraints and selections using a table
@@ -84,7 +85,7 @@ export function getTableConstraints(tbl_id) {
                 if (!valid) {
                     errors += (errors.length > 0 ? `, "${value}"` : `Invalid constraints: "${value}"`);
                 } else if (v) {
-                    const oneConstraint = `${colName} ${v}`;
+                    const oneConstraint = `${maybeQuote(colName)} ${v}`;
                     whereFragment += (whereFragment.length > 0 ? ` AND ${oneConstraint}` : oneConstraint);
                 }
             });
@@ -97,7 +98,7 @@ export function getTableConstraints(tbl_id) {
     let selcolsFragment = tbl_data.reduce((prev, d, idx) => {
             if ((sel_info.selectAll && (!sel_info.exceptions.has(idx))) ||
                 (!sel_info.selectAll && (sel_info.exceptions.has(idx)))) {
-                prev += d[0] + ',';
+                prev += maybeQuote(d[0]) + ',';
                 selcolsArray.push(d[0]);
             } else {
                 allSelected = false;
