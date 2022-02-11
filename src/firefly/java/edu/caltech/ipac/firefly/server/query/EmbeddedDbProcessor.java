@@ -619,13 +619,14 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                         results.getData().getDataDefintion(cname).setEnumVals(enumVals);
                         // update dd table
                         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
-                                .update(String.format("UPDATE data_dd SET enumVals = '%s' WHERE cname = '%s'", enumVals, cname));
+                                .update("UPDATE data_dd SET enumVals = ? WHERE cname = ?", enumVals, cname);
                     }
                 }
             });
             StopWatch.getInstance().stop("enumeratedValuesCheck: " + treq.getRequestId()).printLog("enumeratedValuesCheck: " + treq.getRequestId());
         } catch (Exception ex) {
-            // do nothing.. ignore any errors.
+            LOGGER.error(ex);
+            // do nothing.. ok to ignore errors.
         }
     }
 
