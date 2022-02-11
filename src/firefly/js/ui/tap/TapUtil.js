@@ -227,6 +227,25 @@ export function getTapServices(webApiUserAddedService) {
     return retVal;
 }
 
+const validTableNameRE= /^[A-Za-z][A-Za-z_0-9]*(\.[A-Za-z][A-Za-z_0-9]*){0,2}$/;
+const validColumnNameRE=/^[A-Za-z][A-Za-z_0-9]*(\.[A-Za-z][A-Za-z_0-9]*){0,3}$/;
+
+/**
+ * Add quotes around a table or column name if it is not already quoted and if non-standard names.
+ * @param {string} name a table or column name
+ * @param {boolean} [isTable] - if the the name is a table name otherwise it is a colunm name
+ * @return {string}
+ */
+export function maybeQuote(name, isTable=false) {
+    if (!name || (name.startsWith('"') && name.endsWith('"'))) return name;
+    const re= isTable ? validTableNameRE : validColumnNameRE;
+    return  (name.match(re)) ? name : `"${name}"`;
+}
+
+// --- keep for reference //todo delete after 2022.2 release
+// export const maybeQuoteByService= (serviceURL, item, isTable) =>
+//           (serviceURL && serviceURL.includes('VizieR')) ? maybeQuote(item,isTable) : item;
+
 export const TAP_SERVICES_FALLBACK = [
     {
         label: 'https://irsa.ipac.caltech.edu/TAP',

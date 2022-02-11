@@ -22,7 +22,7 @@ import {FieldGroupCollapsible} from '../panel/CollapsiblePanel.jsx';
 import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
 import {convertMJDToISO, validateDateTime, validateMJD} from '../DateTimePickerField.jsx';
 import {TimePanel} from '../TimePanel.jsx';
-import {getColumnAttribute, HeaderFont, ISO, MJD, tapHelpId} from './TapUtil.js';
+import {maybeQuote, getColumnAttribute, HeaderFont, ISO, MJD, tapHelpId} from './TapUtil.js';
 import {ColsShape, ColumnFld, getColValidator} from '../../charts/ui/ColumnOrExpression';
 import {
     changeDatePickerOpenStatus,
@@ -846,7 +846,7 @@ function makeSpatialConstraints(fields, columnsModel, newFields) {
         const ucdCoord = getUCDCoord(centerLonColumns.value);
         const worldSys = posCol[ucdCoord.key].coord;
         const adqlCoordSys = posCol[ucdCoord.key].adqlCoord;
-        const point = `POINT('${adqlCoordSys}', ${centerLonColumns.value}, ${centerLatColumns.value})`;
+        const point = `POINT('${adqlCoordSys}', ${maybeQuote(centerLonColumns.value)}, ${maybeQuote(centerLatColumns.value)})`;
         const userAreaResult = checkUserArea(spatialMethod, fields, worldSys, adqlCoordSys);
         userAreaResult.fieldsValidity.forEach((value, key) => fieldsValidity.set(key, value));
         if (userAreaResult.valid) {
@@ -953,7 +953,7 @@ function makeTemporalConstraints(fields, columnsModel, newFields) {
                     return '';
                 } else {
                     const limit  = useISO ? `'${oneRange}'` : oneRange;
-                    return idx === FROM ? `${timeColumn} >= ${limit}` : `${timeColumn} <= ${limit}`;
+                    return idx === FROM ? `${maybeQuote(timeColumn)} >= ${limit}` : `${maybeQuote(timeColumn)} <= ${limit}`;
                 }
             });
 

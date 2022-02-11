@@ -217,7 +217,7 @@ export function parseObsCoreRegion(sRegionVal, unit='deg', isCorners=false) {
 
         default:
             valid = false;
-            message = errorMessage[ErrorRegion.ErrorRegion.errorShape.key];
+            message = errorMessage[ErrorRegion.errorShape.key];
             break;
     }
 
