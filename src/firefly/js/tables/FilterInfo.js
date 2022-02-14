@@ -70,7 +70,7 @@ export function getNumFilters(request) {
  * @prop {boolean} options.removeQuotes  remove double-quotes from column name if present
  * @returns {string[]}
  */
-function parseInput(input, options={}) {
+export function parseInput(input, options={}) {
     const {removeQuotes=false} = options;
     let [cname='', op='', val='', ...rest] = (' '+input).split(operators);
     op = op.trim();
@@ -158,7 +158,6 @@ export class FilterInfo {
             const parts = conditions.split(COND_SEP);
             for (let i = 0; i < parts.length; i += 2) {
                 const [cname, op, val] = parseInput(parts[i]);
-                if (isNaN(Number(val))) return false;
                 if (cname || !op || !val) return false;
             }
         }
