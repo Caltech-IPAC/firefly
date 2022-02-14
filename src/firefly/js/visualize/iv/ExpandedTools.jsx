@@ -105,7 +105,7 @@ export function ExpandedTools({visRoot,closeFunc}) {
     };
 
     return (
-            <div style={{display: 'flex', alignItems:'center', marginTop:-4,
+            <div style={{display: 'flex', alignItems:'center', marginTop:-3,
                 borderBottom: '1px solid rgba(0,0,0,.2)' }}>
                 {closeFunc && <CloseButton style={closeButtonStyle} onClick={closeFunc}/>}
                 {!single &&

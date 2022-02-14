@@ -158,6 +158,7 @@ export class FilterInfo {
             const parts = conditions.split(COND_SEP);
             for (let i = 0; i < parts.length; i += 2) {
                 const [cname, op, val] = parseInput(parts[i]);
+                if (isNaN(Number(val))) return false;
                 if (cname || !op || !val) return false;
             }
         }

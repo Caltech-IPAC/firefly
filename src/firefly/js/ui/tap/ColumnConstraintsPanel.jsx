@@ -85,7 +85,13 @@ export function getTableConstraints(tbl_id) {
                 if (!valid) {
                     errors += (errors.length > 0 ? `, "${value}"` : `Invalid constraints: "${value}"`);
                 } else if (v) {
-                    const oneConstraint = `${maybeQuote(colName)} ${v}`;
+                    const condAry = v.split(/( and | or )/i).map( (s) => s.trim().toUpperCase());
+                    const qCol= maybeQuote(colName);
+                    const constraint= '(' + condAry.reduce((full,part) => {
+                            if (!full) return `${qCol} ${part}`;
+                            return (part==='AND' || part==='OR') ? `${full} ${part}` : `${full} ${qCol} ${part}`;
+                        },'') + ')';
+                    const oneConstraint= condAry>1 ? `(${constraint})` : constraint;
                     whereFragment += (whereFragment.length > 0 ? ` AND ${oneConstraint}` : oneConstraint);
                 }
             });
