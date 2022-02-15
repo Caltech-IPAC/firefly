@@ -90,7 +90,7 @@ export const Templates = {
  * @prop {Object} MenuItemKeys -  an object the references MenuItemKeys.js that can turn on or off buttons on the image tool bar
  * @prop {Array.<string> } imageTabs - specifies the order of the time in the image dialog e.g. - [ 'fileUpload', 'url', '2mass', 'wise', 'sdss', 'msx', 'dss', 'iras' ]
  * @prop {string|function} irsaCatalogFilter - a function or a predefined key that specifies how the catalogs are filter in the UI
- * @prop {string} catalogSpacialOp -  two values undefined or 'polygonWhenPlotExist'. when catalogSpacialOp === 'polygonWhenPlotExist' then
+ * @prop {string} catalogSpatialOp -  two values undefined or 'polygonWhenPlotExist'. when catalogSpatialOp === 'polygonWhenPlotExist' then
  *                                  the catalog panel will show the polygon option as default when possible
  * @prop {Array.<string> } imageMasterSources -  default - ['ALL'], source to build image master data from
  * @prop {Array.<string> } imageMasterSourcesOrder - for the image dialog sort order of the projects, anything not listed is put on bottom
@@ -127,7 +127,7 @@ const defFireflyOptions = {
     MenuItemKeys: {},
     imageTabs: undefined,
     irsaCatalogFilter: undefined,
-    catalogSpacialOp: undefined,
+    catalogSpatialOp: undefined,
     imageMasterSources: ['ALL'],
     imageDisplayType:'standard',
     showCatalogSearchTarget: true,

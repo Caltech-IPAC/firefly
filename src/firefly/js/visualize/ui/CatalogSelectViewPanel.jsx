@@ -551,7 +551,7 @@ class CatalogDDList extends PureComponent {
         const {cols} = master;
         const catPanelStyle = {height: 300};
 
-        const polygonDefWhenPlot= get(getAppOptions(), 'catalogSpacialOp')==='polygonWhenPlotExist';
+        const polygonDefWhenPlot= get(getAppOptions(), 'catalogSpatialOp')==='polygonWhenPlotExist';
 
         // for 'pos' column
         const POS_COL = master.cols.findIndex((oneCol) => {

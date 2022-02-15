@@ -32,7 +32,7 @@ const {template}= props;
 
 let options = {
     MenuItemKeys: {maskOverlay:true},
-    catalogSpacialOp: 'polygonWhenPlotExist',
+    catalogSpatialOp: 'polygonWhenPlotExist',
     workspace : {showOptions: false},
     imageMasterSourcesOrder: ['WISE', '2MASS', 'Spitzer'],
     charts: {
