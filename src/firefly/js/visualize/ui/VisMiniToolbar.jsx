@@ -80,6 +80,7 @@ import OUTLINE_EXPAND from 'images/icons-2014/24x24_ExpandArrowsWhiteOutline.png
 import DRILL_DOWN from 'images/drill-down.png';
 import LINE_EXTRACTION from 'images/line-extract.png';
 import POINT_EXTRACTION from 'images/points.png';
+import {showPlotInfoPopup} from 'firefly/visualize/ui/PlotInfoPopup.js';
 
 const omList= ['plotViewAry'];
 const image24x24={width:24, height:24};
@@ -407,7 +408,7 @@ const SaveRestoreRow= ({style,image,hips,mi,pv,enabled}) => (
         <ToolbarButton icon={FITS_HEADER}
                        tip={image ? 'Show FITS header' : (hips ? 'Show HiPS properties' : '')}
                        enabled={enabled} horizontal={true} visible={mi.directFileAccessData}
-                       onClick={image ? (element) => fitsHeaderView(pv, element ) : (hips ? (element) => HiPSPropertyView(pv, element) : null)} />
+                       onClick={(element) => showPlotInfoPopup(pv, element )} />
     </div>
 );
 
@@ -431,10 +432,10 @@ const RotateFlipRow= ({style,image,mi,showRotateLocked,pv,enabled}) => (
 );
 
 
-function startExtraction(type,setModalEndInfo, modalEndInfo) {
+function startExtraction(element,type,setModalEndInfo, modalEndInfo) {
     modalEndInfo?.f?.();
     let ended= false;
-    showExtractionDialog(type, () => {
+    showExtractionDialog(element, type, () => {
         if (!ended) setModalEndInfo({});
     });
     setModalEndInfo({
@@ -454,13 +455,13 @@ const ExtractRow= ({style,pv,enabled,setModalEndInfo, modalEndInfo,mi}) => {
         <div style={{display:'flex', alignItems:'center', ...style}}>
             <div style={{width:130, fontSize:'larger'}}>Extract: </div>
             <ToolbarButton icon={DRILL_DOWN} tip='Extract Z-axis from cube' enabled={standIm&&isImageCube(primePlot(pv))&&enabled}
-                           horizontal={true} onClick={() => startExtraction(Z_AXIS,setModalEndInfo,modalEndInfo)}
+                           horizontal={true} onClick={(element) => startExtraction(element,Z_AXIS,setModalEndInfo,modalEndInfo)}
                            visible={mi.extractZAxis}/>
             <ToolbarButton icon={LINE_EXTRACTION} tip='Extract line from image' enabled={standIm&&enabled}
-                           horizontal={true} onClick={() => startExtraction(LINE,setModalEndInfo,modalEndInfo)}
+                           horizontal={true} onClick={(element) => startExtraction(element,LINE,setModalEndInfo,modalEndInfo)}
                            visible={mi.extractLine}/>
             <ToolbarButton icon={POINT_EXTRACTION} tip='Extract points from image' enabled={standIm&&enabled}
-                           horizontal={true} onClick={() => startExtraction(POINTS,setModalEndInfo,modalEndInfo)}
+                           horizontal={true} onClick={(element) => startExtraction(element,POINTS,setModalEndInfo,modalEndInfo)}
                            visible={mi.extractPoint}/>
         </div>
         );

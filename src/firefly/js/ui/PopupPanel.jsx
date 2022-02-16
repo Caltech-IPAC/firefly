@@ -9,17 +9,35 @@ import {getDefaultPopupPosition, humanStart, humanMove, humanStop} from './Popup
 import './PopupPanel.css';
 import DEL_ICO from 'html/images/blue_delete_10x10.png';
 
+/** @typedef {Object} LayoutType
+ * enum can be one of
+ * @prop CENTER
+ * @prop TOP_EDGE_CENTER
+ * @prop TOP_CENTER
+ * @prop TOP_LEFT
+ * @prop TOP_RIGHT
+ * @prop NONE
+ * @prop USER_POSITION
+ * @type {Enum}
+ */
 export const LayoutType= new Enum(['CENTER', 'TOP_EDGE_CENTER', 'TOP_CENTER', 'TOP_LEFT', 'TOP_RIGHT', 'NONE', 'USER_POSITION']);
 
 export const PopupPanel= memo((props) => {
     const {title='', visible=true, layoutPosition=LayoutType.TOP_CENTER, closePromise, closeCallback, modal=false,
-        requestToClose, mouseInDialog, requestOnTop, dialogId, zIndex=0, children, style }= props;
+        requestToClose, mouseInDialog, requestOnTop, dialogId, zIndex=0, children, style,
+        initLeft, initTop, onMove}= props;
     const [{left,top}, setPos]= useState({left:0,top:0});
     const [layout, setLayout]= useState(LayoutType.NONE);
     const {current:ctxRef} = useRef({ mouseCtx: undefined, popupRef : undefined, titleBarRef: undefined});
 
     const updateLayoutPosition= () => {
-        setPos(getDefaultPopupPosition(ctxRef.popupRef,layoutPosition));
+        if (layoutPosition===LayoutType.USER_POSITION) {
+            setPos({left:initLeft,top:initTop});
+        }
+        else {
+            setPos(getDefaultPopupPosition(ctxRef.popupRef,layoutPosition));
+        }
+
         setLayout(layoutPosition);
     };
 
@@ -36,8 +54,11 @@ export const PopupPanel= memo((props) => {
     const dialogMove = (ev) => {
         const r = humanMove(ev,ctxRef.mouseCtx,ctxRef.titleBarRef);
         r && setPos({left:r.left, top:r.top});
+        r && onMove?.({left:r?.left,top:r?.top});
     };
-    const dialogMoveEnd = (ev) => humanStop(ev, ctxRef.mouseCtx);
+    const dialogMoveEnd = (ev) => {
+        humanStop(ev, ctxRef.mouseCtx);
+    };
 
     useEffect(() => {
         setTimeout( updateLayoutPosition, 10);
@@ -75,7 +96,10 @@ PopupPanel.propTypes= {
     mouseInDialog : PropTypes.func,
     modal : PropTypes.bool,
     visible : PropTypes.bool,
-    style : PropTypes.object
+    style : PropTypes.object,
+    initLeft: PropTypes.number,
+    initTop: PropTypes.number,
+    onMove: PropTypes.func
 };
 
 function PopupHeaderTop({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart,dialogMoveEnd,

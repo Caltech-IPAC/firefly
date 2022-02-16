@@ -5,7 +5,7 @@
 import React from 'react';
 import {get} from 'lodash';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
-import {PopupPanel} from '../../ui/PopupPanel.jsx';
+import {LayoutType, PopupPanel} from '../../ui/PopupPanel.jsx';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
@@ -14,11 +14,11 @@ import {closeButtonStyle, helpIdStyle} from './FitsHeaderView.jsx';
 import {getTblById} from '../../tables/TableUtil.js';
 import {primePlot} from '../PlotViewUtil.js';
 
-const popupIdRoot = 'hipsProperty';
 
 //define the table style only in the table div
 const tableStyle = {boxSizing: 'border-box', paddingLeft:5,paddingRight:5, width: '100%', height: 'calc(100% - 50px)', overflow: 'hidden', flexGrow: 1, display: 'flex', resize:'none'};
 
+export const HIPS_PROPERTY_POPUP_ID = 'hipsPropertyID';
 
 const popupPanelNoPropsResizableStyle = {
     width: 400,
@@ -43,27 +43,26 @@ const popupPanelResizableStyle = {
     position: 'relative'
 };
 
-export function HiPSPropertyView(pv,element) {
+export function HiPSPropertyView(pv,element, initLeft,initTop, onMove) {
     const plot = primePlot(pv);
-
-    if (plot) {
-        showHiPSPropsPopup(plot,element);
-    }
+    if (plot) showHiPSPropsPopup(plot,element, initLeft,initTop, onMove);
 }
 
-function showHiPSPropsPopup(plot, element) {
+function showHiPSPropsPopup(plot, element, initLeft,initTop, onMove) {
     const tableId = plot.title.replace(/\s/g, '').replace(/[^a-zA-Z0-9]/g, '_') + '_HiPS';
-    const popupId = popupIdRoot + '_' + tableId;
     const popTitle = 'HiPS Properties : ' + plot.title;
 
     var popup = (
-        <PopupPanel title={popTitle}>
-            {popupForm(plot, tableId, popupId)}
+        <PopupPanel title={popTitle}
+                    initLeft={initLeft} initTop={initTop}
+                    onMove={onMove}
+                    layoutPosition={isNaN(initLeft)||isNaN(initTop)?LayoutType.TOP_CENTER:LayoutType.USER_POSITION} >
+            {popupForm(plot, tableId, HIPS_PROPERTY_POPUP_ID)}
         </PopupPanel>
     );
 
-    DialogRootContainer.defineDialog(popupId, popup,element);
-    dispatchShowDialog(popupId);
+    DialogRootContainer.defineDialog(HIPS_PROPERTY_POPUP_ID, popup,element);
+    dispatchShowDialog(HIPS_PROPERTY_POPUP_ID);
 }
 
 function popupForm(plot, tableId, popupId) {

@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
-import {PopupPanel} from '../../ui/PopupPanel.jsx';
+import {LayoutType, PopupPanel} from '../../ui/PopupPanel.jsx';
 import {primePlot, getPlotViewById, isImageCube, getCubePlaneCnt} from '../PlotViewUtil.js';
 import {Tabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
@@ -23,7 +23,6 @@ import {TABLE_SORT, TABLE_REPLACE, dispatchTableSort} from '../../tables/TablesC
 import {getHDU, isThreeColor} from '../PlotViewUtil';
 import { getAllValuesOfHeader, } from '../FitsHeaderUtil.js';
 
-const popupIdRoot = 'directFileAccessData';
 const popupPanelResizableStyle = {
     width: 550,
     minWidth: 448,
@@ -66,6 +65,7 @@ const tabStyle =  {width: '100%',height:'100%', display: 'inline-block', backgro
 const FITSHEADERCONTENT = 'fitsHeader';
 let currentSortInfo = '';
 
+export const FITS_HEADER_POPUP_ID = 'FITS_HEADER_POPUP_ID';
 
 function popupForm(plot, fitsHeaderInfo, popupId) {
 
@@ -78,10 +78,9 @@ function popupForm(plot, fitsHeaderInfo, popupId) {
     }
 }
 
-const FITSHEADER_DIALOGID = popupIdRoot+'_fitsHeader';
 
-function showFitsHeaderPopup(plot, fitsHeaderInfo, element) {
-    const popupId = FITSHEADER_DIALOGID;
+
+function showFitsHeaderPopup(plot, fitsHeaderInfo, element, initLeft, initTop, onMove) {
 
     const getTitle =  (p) => {
          const pv = getPlotViewById(visRoot(), p.plotId);
@@ -98,17 +97,20 @@ function showFitsHeaderPopup(plot, fitsHeaderInfo, element) {
          return 'FITS Header : ' + title;
     };
 
-    const getPopup = (aPlot, fitsHeaderTbl) => {
-        return (<PopupPanel title={getTitle(aPlot)}>
-                {popupForm(aPlot, fitsHeaderTbl, popupId)}
+    const getPopup = (aPlot, fitsHeaderTbl, initLeft, initTop) => {
+        return (<PopupPanel title={getTitle(aPlot)}
+                            onMove={onMove}
+                            initLeft={initLeft} initTop={initTop}
+                            layoutPosition={isNaN(initLeft)||isNaN(initTop)?LayoutType.TOP_CENTER:LayoutType.USER_POSITION} >
+                {popupForm(aPlot, fitsHeaderTbl, FITS_HEADER_POPUP_ID)}
             </PopupPanel>
         );
     };
 
     const updatePopup = (p, tableInfo) => {
         return () => {
-            DialogRootContainer.defineDialog(popupId, getPopup(p, tableInfo), element);
-            dispatchShowDialog(popupId, p.plotId);
+            DialogRootContainer.defineDialog(FITS_HEADER_POPUP_ID, getPopup(p, tableInfo, initLeft, initTop), element);
+            dispatchShowDialog(FITS_HEADER_POPUP_ID, p.plotId);
         };
     };
 
@@ -116,7 +118,7 @@ function showFitsHeaderPopup(plot, fitsHeaderInfo, element) {
     // update table sort when active image is changed
     const watchActivePlotChange = (action, cancelSelf, params) => {
         let {displayedPlotId, displayedHdu} = params;
-        if (!isDialogVisible(popupId)) {
+        if (!isDialogVisible(FITS_HEADER_POPUP_ID)) {
             cancelSelf();
         } else {
             const crtPlot = primePlot(visRoot());
@@ -144,7 +146,7 @@ function showFitsHeaderPopup(plot, fitsHeaderInfo, element) {
 
     // update table sort info when there 'sort' happens, update table sort on new table
     const watchActiveTableChange = (action, cancelSelf) => {
-        if (!isDialogVisible(popupId)) {
+        if (!isDialogVisible(FITS_HEADER_POPUP_ID)) {
             cancelSelf();
         } else {
             let tblModel;
@@ -166,14 +168,19 @@ function showFitsHeaderPopup(plot, fitsHeaderInfo, element) {
     };
 
 
-    if (!isDialogVisible(popupId)) {
+    if (!isDialogVisible(FITS_HEADER_POPUP_ID)) {
         dispatchAddActionWatcher({actions: [ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW,
                                             ImagePlotCntlr.CHANGE_PRIME_PLOT,
                                             ImagePlotCntlr.PLOT_IMAGE,
                                             ImagePlotCntlr.DELETE_PLOT_VIEW],
-                                  callback:  watchActivePlotChange});
-        dispatchAddActionWatcher({actions: [TABLE_SORT, TABLE_REPLACE],
-                                  callback:  watchActiveTableChange});
+                                  callback:  watchActivePlotChange,
+                                  id: 'fits-header-view-watch-active-plot-change'
+        });
+        dispatchAddActionWatcher({
+            actions: [TABLE_SORT, TABLE_REPLACE],
+            callback:  watchActiveTableChange,
+            id: 'fits-header-view-watch-active-table-change'
+        });
 
         updatePopup(plot, fitsHeaderInfo)();
     }
@@ -336,15 +343,18 @@ function renderTable(band, fitsHeaderInfo, isPlacedOnTab) {
  * This function will return the popup component.  As React conversion, the CamelCase is used.
  * @param plotView
  * @param element
+ * @param initLeft
+ * @param initTop
+ * @param onMove
  */
-export function fitsHeaderView(plotView,element) {
+export function fitsHeaderView(plotView,element, initLeft, initTop, onMove) {
 
     var plot = primePlot(plotView);
     if (!plot)  return;
 
     const resultTable = createFitsHeaderTable(null, plot);
     if (resultTable) {
-        showFitsHeaderPopup(plot, resultTable, element);
+        showFitsHeaderPopup(plot, resultTable, element, initLeft, initTop, onMove);
     } else {
         logger.error(`fitsHeader error: ${plot.plotId}`);
     }
