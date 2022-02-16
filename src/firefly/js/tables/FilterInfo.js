@@ -70,7 +70,7 @@ export function getNumFilters(request) {
  * @prop {boolean} options.removeQuotes  remove double-quotes from column name if present
  * @returns {string[]}
  */
-function parseInput(input, options={}) {
+export function parseInput(input, options={}) {
     const {removeQuotes=false} = options;
     let [cname='', op='', val='', ...rest] = (' '+input).split(operators);
     op = op.trim();
