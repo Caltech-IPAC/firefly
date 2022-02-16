@@ -131,6 +131,9 @@ function renderTable(tableModel) {
                showToolbar={false}
                selectable={false}
                showOptionButton={false}
+               allowUnits={false}
+               showFilters={true}
+               showTypes={false}
            />
 
         </div>
