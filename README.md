@@ -37,14 +37,14 @@ In addition, Firefly is able to display all-sky images in the IVOA standard HiPS
 Firefly shows 2D graphs interactively so that a user can read the data point values as he moves his mouse around or zooms in to investigate the data at a finer level. These graphs are used for spectrum or plotting table columns. The user can specify any column that the tables are showing. The user can also define expressions from the columns for the XY Plot, such as (col1\*col2/tan(col3)). Table based charts share their data model with the table, so both table and chart can trigger or respond to the common events, such as filtering of the data. Firefly also supports creating and plotting 1D histograms and heatmaps (2D histograms).
 
 
-## Branches
-There are several branches the this repository.  Here are the ones that you should care about.
+## Branches and tags
+There are several branches in the repository.  Here are the ones that you should care about.
 
  - rc-YYYY.N: The next release candidate branch.  This is generally the most stable branch.
  - dev: This branch could be updated every day. It is the active development branch. It is not stable. Nightly builds are performed.
  - firefly-xxx-reason, IRSA-xxx: These branches are temporary development feature branches and are associated with corresponding tickets in IPAC Jira.
- - master: No longer regularly updated and should not be used by anyone.
-
+ - Tags: Firefly is tagged for releases and pre-releases
+ - [See Details on tags and branches](docs/tags-and-branches.md)
 
 ## Setup
 
