@@ -1,7 +1,7 @@
 import {isHiPS, isImage} from 'firefly/visualize/WebPlot.js';
 import {getActivePlotView, primePlot} from 'firefly/visualize/PlotViewUtil.js';
 import {FITS_HEADER_POPUP_ID, fitsHeaderView} from 'firefly/visualize/ui/FitsHeaderView.jsx';
-import {HIPS_PROPERTY_POPUP_ID, HiPSPropertyView} from 'firefly/visualize/ui/HiPSPropertyView.jsx';
+import {HIPS_PROPERTY_POPUP_ID, showHiPSPropertyView} from 'firefly/visualize/ui/HiPSPropertyView.jsx';
 import {dispatchHideDialog, isDialogVisible} from 'firefly/core/ComponentCntlr.js';
 import ImagePlotCntlr, {visRoot} from 'firefly/visualize/ImagePlotCntlr.js';
 import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga.js';
@@ -33,7 +33,7 @@ export function showPlotInfoPopup(pv, element) {
 
 function showInfo(pv,element, left, top) {
     if (isImage(primePlot(pv))) fitsHeaderView(pv, element, left, top, onMove);
-    else HiPSPropertyView(pv, element, left, top, onMove);
+    else showHiPSPropertyView(pv, element, left, top, onMove);
 }
 
 const watchActivePlotChange = (action, cancelSelf, params) => {

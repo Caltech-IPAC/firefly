@@ -368,6 +368,7 @@ function multiValueChange(state,action) {
     fieldAry.forEach( (f) => state= valueChange(state,{type:VALUE_CHANGE, payload:{...f,groupKey,fireReducer:false}} ));
 
     const fg= findAndCloneFieldGroup(state, groupKey);
+    if (!fg) return state;
     fg.fields= fireFieldsReducer(fg, action);
 
     let mods= {[groupKey]:fg};

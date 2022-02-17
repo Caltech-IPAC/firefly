@@ -17,7 +17,7 @@ import {
     findPlotGroup, hasOverlayColorLock, isImageCube, isThreeColor, pvEqualExScroll
 } from '../PlotViewUtil.js';
 import {isHiPS} from 'firefly/visualize/WebPlot.js';
-import {getAppOptions, getPreference} from '../../core/AppDataCntlr.js';
+import {getPreference} from '../../core/AppDataCntlr.js';
 import {ImageCenterDropDown, TARGET_LIST_PREF} from './ImageCenterDropDown.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {getDefMenuItemKeys} from 'firefly/visualize/MenuItemKeys.js';
@@ -35,8 +35,6 @@ import {MarkerDropDownView} from 'firefly/visualize/ui/MarkerDropDownView.jsx';
 import {showRegionFileUploadPanel} from 'firefly/visualize/region/RegionFileUploadView.jsx';
 import {showMaskDialog} from 'firefly/visualize/ui/MaskAddPanel.jsx';
 import {MatchLockDropDown} from 'firefly/visualize/ui/MatchLockDropDown.jsx';
-import {fitsHeaderView} from 'firefly/visualize/ui/FitsHeaderView.jsx';
-import {HiPSPropertyView} from 'firefly/visualize/ui/HiPSPropertyView.jsx';
 import {HelpIcon} from 'firefly/ui/HelpIcon.jsx';
 import {RotateType} from 'firefly/visualize/PlotState.js';
 import {showImageSelPanel} from 'firefly/visualize/ui/ImageSearchPanelV2.jsx';
