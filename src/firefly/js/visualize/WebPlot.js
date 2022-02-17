@@ -425,7 +425,7 @@ export const WebPlot= {
         };
         if (imagePlot.webFitsData) {
             imagePlot.webFitsData=
-                imagePlot.webFitsData.map( (wfd) => ({ ...wfd, dataMin: wfd.dataMin ?? 0, dataMax: wfd.dataMax ?? 0 }));
+                imagePlot.webFitsData.map( (wfd) => ({ ...wfd, dataMin: wfd?.dataMin ?? 0, dataMax: wfd?.dataMax ?? 0 }));
         }
         plot= {...plot, ...imagePlot};
         if (relatedData) {

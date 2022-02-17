@@ -108,11 +108,21 @@ function get3CValue(fluxArray) {
     }, '');
 }
 
+function getWhichRGBChar(s) {
+    if (!s) return '';
+    const labLow= s.toLowerCase();
+    if (labLow.includes('red')) return 'r';
+    if (labLow.includes('green')) return 'g';
+    if (labLow.includes('blue')) return 'b';
+    return '';
+}
+
 function get3CLabel(fluxArray) {
-    const rgbStr= ['r','g','b'];
-    const label=  fluxArray.reduce( (prev,f,idx) => {
+    const label=  fluxArray.reduce( (prev,f) => {
         if (!f?.value) return prev;
-        return prev ? `${prev}, ${rgbStr[idx]}` : rgbStr[idx];
+        const rgbChar= getWhichRGBChar(f.label);
+        if (!rgbChar) return prev;
+        return prev ? `${prev}, ${rgbChar}` : rgbChar;
     }, '');
     return label? label+':' : '';
 }

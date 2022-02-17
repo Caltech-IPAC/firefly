@@ -708,7 +708,9 @@ export function getFoV(pv, alternateZoomFactor) {
         const ip2=  cc.getWorldCoords(makeImagePt(plot.dataWidth, 0));
         const idist= (ip1 && ip2) && computeDistance(ip1, ip2);
         if (!idist) return false;
-        return (pv.viewDim.width/plot.screenSize.width) * idist;
+        return alternateZoomFactor ?
+            (pv.viewDim.width/(plot.dataWidth*alternateZoomFactor)) * idist :
+            (pv.viewDim.width/plot.screenSize.width) * idist;
     }
 }
 

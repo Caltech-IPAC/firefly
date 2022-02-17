@@ -91,10 +91,10 @@ function enableDrawLayer(typeId) {
 const EXTRACT_END_ID= 'extractEndId';
 
 
-export function showExtractionDialog(extractionType,wasCanceled) {
+export function showExtractionDialog(element,extractionType,wasCanceled) {
     endExtraction();
     exTypeCntl[extractionType].start();
-    DialogRootContainer.defineDialog(DIALOG_ID, <ExtractDialog {...{extractionType, wasCanceled}}/> );
+    DialogRootContainer.defineDialog(DIALOG_ID, <ExtractDialog {...{extractionType, wasCanceled}}/>, element );
     dispatchShowDialog(DIALOG_ID);
 
 
