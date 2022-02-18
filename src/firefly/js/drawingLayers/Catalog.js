@@ -40,6 +40,16 @@ import {SelectedShape} from './SelectedShape';
 
 
 const TYPE_ID= 'CATALOG_TYPE';
+/**
+ * @typedef {Object} CatalogType
+ * enum can be one of
+ * @prop POINT
+ * @prop BOX
+ * @prop REGION
+ * @prop ORBITAL_PATH
+ * @prop POINT_IMAGE_PT
+ * @type {Enum}
+ */
 export const CatalogType = new Enum(['POINT', 'BOX', 'REGION', 'ORBITAL_PATH', 'POINT_IMAGE_PT']);
 
 

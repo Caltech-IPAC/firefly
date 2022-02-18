@@ -3,7 +3,7 @@
  */
 
 
-import React, {memo, useEffect, useRef, useState} from 'react';
+import React, {memo, useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
 import {isEmpty,omit,isFunction} from 'lodash';
@@ -24,7 +24,12 @@ import {DataTypes} from '../draw/DrawLayer.js';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {getNumFilters} from '../../tables/FilterInfo';
 import {ZoomButton, ZoomType} from 'firefly/visualize/ui/ZoomButton.jsx';
+import {ToolbarButton} from 'firefly/ui/ToolbarButton.jsx';
+import {expand} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
+import {getDefMenuItemKeys} from 'firefly/visualize/MenuItemKeys.js';
+
 import './ImageViewerDecorate.css';
+import OUTLINE_EXPAND from 'images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 
 const EMPTY_ARRAY=[];
 
@@ -201,7 +206,11 @@ function arePropsEquals(props, np) {
 } //todo: look at closely for optimization
 
 
-function ZoomPair({pv, show}) {
+function ZoomGroup({visRoot, pv, show}) {
+
+    const {showImageToolbar}= pv?.menuItemKeys ?? getDefMenuItemKeys();
+    const manageExpand= !showImageToolbar && visRoot.expandedMode===ExpandType.COLLAPSE;
+
     return (
         primePlot(pv) ? <div
             style={{
@@ -215,6 +224,11 @@ function ZoomPair({pv, show}) {
                 flexDirection: 'row',
                 alignSelf: 'flex-start',
                 }}>
+
+            {manageExpand && <ToolbarButton icon={OUTLINE_EXPAND}
+                                            tip='Expand this panel to take up a larger area'
+                                            horizontal={true} onClick={() =>expand(pv?.plotId, false)}/>}
+            
             <div style={{display:'flex', alignSelf: 'flex-start'}}>
                 <ZoomButton size={20} plotView={pv} zoomType={ZoomType.UP} horizontal={true}/>
                 <ZoomButton size={20} plotView={pv} zoomType={ZoomType.DOWN} horizontal={true}/>
@@ -296,7 +310,7 @@ const ImageViewerDecorate= memo((props) => {
                     {(plot && inlineTitle) ?
                         <PlotTitle brief={brief} titleType={TitleType.INLINE} plotView={pv}
                                    working={workingIcon} /> : undefined}
-                    <ZoomPair pv={pv} show={showZoom} />
+                    <ZoomGroup visRoot={visRoot} pv={pv} show={showZoom} />
                 </div>
                 <VisInlineToolbarView pv={pv} showDelete={showDelete} show={showDel}/>
             </div>

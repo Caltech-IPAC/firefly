@@ -182,29 +182,31 @@ export function computeCentralPointAndRadius(inPoints) {
     return {centralPoint, maxRadius};
 }
 
+
 /**
  * call computeCentralPointAndRadius in 2 ways first with a flatten version of the 2d array
  * then again with group of points.  This allows us not to overweight a larger group when computing the center.
  *
  * @param {Array.<Array.<WorldPt>>} inPoints2dAry  a 2d array of world points. Each array represents a group of points
+ * @param {number} minSizeDeg
  * @return {{centralPoint:WorldPt, maxRadius:number, avgOfCenters:WorldPt}}
  */
-export function computeCentralPtRadiusAverage(inPoints2dAry) {
+export function computeCentralPtRadiusAverage(inPoints2dAry,minSizeDeg=.11) {
 
     const testAry= flattenDeep(inPoints2dAry);
 
-    if (isEmpty(testAry)) return {centralPoint:undefined, maxRadius: 0, avgOfCenters:undefined};
-    if (isOnePoint(testAry)) return {centralPoint:testAry[0], maxRadius: .05, avgOfCenters:testAry[0]};
+    if (isEmpty(testAry)) return {centralPoint:undefined, fovSize: 0, avgOfCenters:undefined};
+    if (isOnePoint(testAry)) return {centralPoint:testAry[0], fovSize: minSizeDeg, avgOfCenters:testAry[0]};
 
     const {centralPoint, maxRadius}= computeCentralPointAndRadius(testAry);
-    if (inPoints2dAry.length===1) return {centralPoint, maxRadius, avgOfCenters:centralPoint};
+    if (inPoints2dAry.length===1) return {centralPoint, fovSize:Math.max(maxRadius,minSizeDeg), avgOfCenters:centralPoint};
 
     const centers= inPoints2dAry
         .map( (ptAry) => isOnePoint(ptAry) ? ptAry[0] : computeCentralPointAndRadius(ptAry).centralPoint)
         .filter((pt) => pt); // filter out undefined centers
 
     const {centralPoint:avgOfCenters}= computeCentralPointAndRadius(centers);
-    return {centralPoint, maxRadius, avgOfCenters};
+    return {centralPoint, fovSize: Math.max(maxRadius,minSizeDeg), avgOfCenters};
 }
 
 function isOnePoint(wpList) {

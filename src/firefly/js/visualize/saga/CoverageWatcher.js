@@ -45,11 +45,22 @@ import {darker} from '../../util/Color';
 import {isOrbitalPathTable} from '../../util/VOAnalyzer';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 
+/**
+ * @typedef {Object} CoverageType
+ * enum can be one of
+ * @prop X
+ * @prop BOX
+ * @prop REGION
+ * @prop ORBITAL_PATH
+ * @prop ALL
+ * @prop GUESS
+ * @type {Enum}
+ */
 const CoverageType = new Enum(['X', 'BOX', 'REGION', 'ORBITAL_PATH', 'ALL', 'GUESS']);
 const FitType=  new Enum (['WIDTH', 'WIDTH_HEIGHT']);
 
 const COVERAGE_TARGET = 'COVERAGE_TARGET';
-const COVERAGE_RADIUS = 'COVERAGE_RADIUS';
+const COVERAGE_FOV = 'COVERAGE_FOV';
 
 export const PLOT_ID= 'CoveragePlot';
 
@@ -78,7 +89,6 @@ export const PLOT_ID= 'CoveragePlot';
 const defOptions= {
     title: '2MASS K_s',
     tip: 'Coverage',
-    getCoverageBaseTitle : (table) => '',   // eslint-disable-line no-unused-vars
     coverageType : CoverageType.ALL,
     symbol : DrawSymbol.SQUARE,
     symbolSize : 5,
@@ -103,14 +113,13 @@ const defOptions= {
     fovDegFallOver: .13,
     fovMaxFitsSize: .2,
     autoConvertOnZoom: false,
-    fovDegMinSize: 100/3600, //defaults to 100 arcsec
+    fovDegMinSize: .1,
     viewerId:'DefCoverageId',
     paused: true
 };
 
 export const COVERAGE_WATCH_CID= 'COVERAGE_WATCH_CID';
 export const COVERAGE_FAIL= 'fail';
-export const TABLE_EMPTY= 'fail';
 
 const overlayCoverageDrawing= makeOverlayCoverageDrawing();
 
@@ -343,9 +352,10 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
 
 
 
-    const {maxRadius, avgOfCenters}= computeSize(options, preparedTables, usesRadians);
+    const {fovSize:retFovSize, avgOfCenters}= computeSize(options, preparedTables, usesRadians);
+    const fovSize= retFovSize*1.1;
 
-    if (!avgOfCenters || maxRadius<=0) {
+    if (!avgOfCenters || fovSize<=0) {
         updateTableComponentStateStatus(tbl_id,COVERAGE_FAIL);
         return;
     }
@@ -357,25 +367,23 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
 
     const commonSearchTarget= getCommonSearchTarget(Object.values(preparedTables),options);
 
-    const {fovDegFallOver, fovMaxFitsSize, autoConvertOnZoom,
-        imageSourceParams, fovDegMinSize, overlayPosition= avgOfCenters}= options;
+    const {fovDegFallOver, fovMaxFitsSize, autoConvertOnZoom, imageSourceParams, overlayPosition= avgOfCenters}= options;
 
     let plotAllSkyFirst= false;
     let allSkyRequest= null;
-    const size= Math.max(maxRadius*2.2, fovDegMinSize);
-    if (size>160 && !blankHips) {
+    if (fovSize>160 && !blankHips) {
         allSkyRequest= WebPlotRequest.makeAllSkyPlotRequest();
         allSkyRequest.setTitleOptions(TitleOptions.PLOT_DESC);
         allSkyRequest= initRequest(allSkyRequest, viewerId, PLOT_ID, overlayPosition);
         plotAllSkyFirst= true;
     }
     let imageRequest= WebPlotRequest.makeFromObj(imageSourceParams) ||
-                            WebPlotRequest.make2MASSRequest(avgOfCenters, 'asky', 'k', size);
+                            WebPlotRequest.make2MASSRequest(avgOfCenters, 'asky', 'k', fovSize);
     imageRequest= initRequest(imageRequest, viewerId, PLOT_ID, overlayPosition, avgOfCenters);
 
     const hipsRequest= initRequest(WebPlotRequest.makeHiPSRequest(preferredHipsSourceURL, null),
                        viewerId, PLOT_ID, overlayPosition, avgOfCenters);
-    hipsRequest.setSizeInDeg(size);
+    hipsRequest.setSizeInDeg(fovSize);
     if (options.gridOn) {
         imageRequest.setGridOn(options.gridOn);
         hipsRequest.setGridOn(options.gridOn);
@@ -386,7 +394,7 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
 
     const attributes= {
         [COVERAGE_TARGET]: avgOfCenters,
-        [COVERAGE_RADIUS]: maxRadius,
+        [COVERAGE_FOV]: fovSize,
         [PlotAttribute.VISUALIZED_TABLE_IDS]: tblIdAry,
         [PlotAttribute.COVERAGE_CREATED]: true,
         [PlotAttribute.REPLOT_WITH_NEW_CENTER]: true,
@@ -478,7 +486,7 @@ function computeSize(options, preparedTables, usesRadians) {
             }
             return flattenDeep(ptAry);
     } );
-    return computeCentralPtRadiusAverage(testAry);
+    return computeCentralPtRadiusAverage(testAry, options.fovDegMinSize);
 }
 
 function makeOverlayCoverageDrawing() {
@@ -588,9 +596,9 @@ const getCatalogType= (dataType) => {
  * @param {string} plotId
  * @param {CoverageOptions} options
  * @param {TableData} table
- * @param {TableData} allRowsTable
+ * @param {TableData|String} allRowsTable
  * @param {string} drawOp
- * @param {boolean} addVisible - when added it is visible
+ * @param visibleMap - when added it is visible
  */
 function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp, visibleMap) {
 
