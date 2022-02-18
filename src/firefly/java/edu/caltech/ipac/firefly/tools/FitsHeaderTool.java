@@ -4,13 +4,11 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import nom.tam.fits.*;
 import nom.tam.util.Cursor;
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.PropertyConfigurator;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Properties;
 
 /**
  * Utility class for command line tool to output FITS header from local file or URL.
@@ -25,8 +23,6 @@ public class FitsHeaderTool {
     private static File tempFile;
 
     public static void main(String[] args) throws FitsException, IOException {
-
-        initLog4j();
 
         if (args.length != 1) {
             usage();
@@ -61,17 +57,6 @@ public class FitsHeaderTool {
 
             }
         }
-    }
-
-    private static void initLog4j() {
-        Properties prop = new Properties();
-        prop.setProperty("log4j.appender.terminal", "org.apache.log4j.ConsoleAppender");
-        prop.setProperty("log4j.appender.terminal.layout", "org.apache.log4j.PatternLayout");
-        //prop.setProperty("log4j.appender.terminal.layout.ConversionPattern","%d{MM/dd HH:mm:ss} %5p - %.2000m [%t] (%c{2}#%M:%L)%n");
-        prop.setProperty("log4j.logger.edu.caltech.ipac", "INFO, terminal");
-//        prop.setProperty("log4j.additivity.edu.caltech.ipac","true");
-//        PropertyConfigurator.configure("/tmp/log4j.properties");
-        PropertyConfigurator.configure(prop);
     }
 
     static void usage() {

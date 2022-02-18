@@ -6,7 +6,6 @@ package edu.caltech.ipac.firefly.server.cache;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Element;
-import org.apache.log4j.PropertyConfigurator;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -46,9 +45,6 @@ public class EhcacheTest {
     }
 
     public static void main(String[] args) {
-        File cfg = new File("log4j.properties");
-        System.out.println("Initializing Log4J using file:" + cfg.getAbsolutePath());
-        PropertyConfigurator.configureAndWatch(cfg.getAbsolutePath());
 
         CacheManager cman = new EhcacheTest().getCman();
         Cache cache = cman.getCache("PERM_SMALL");

@@ -160,12 +160,12 @@ task prepareWebapp (type:Copy, dependsOn: [loadConfig, createVersionTag]) {
 
     into('WEB-INF/config') {
         from ("${project.buildDir}/version.tag")
-        from ("$rootDir/config/") {include '*.prop', '*.xml', 'ignore_sizeof.txt', '*.properties'}
+        from ("$rootDir/config/") {include '*.prop', '*.xml', 'ignore_sizeof.txt'}
         from ('config') {exclude "web.xml"}
     }
 
     into('WEB-INF/classes') {
-        from("$rootDir/config/") {include 'logging.properties'}
+        from("$rootDir/config/") {include '*.properties'}
     }
 
     into('WEB-INF') {
@@ -380,16 +380,6 @@ test {
     // listen to events in the test execution lifecycle
     beforeTest { descriptor ->
         logger.lifecycle("Running test: " + descriptor)
-    }
-
-    doFirst {
-        // things needed before test run
-        copy {
-            from("$fireflyPath/config/test/log4j-test.properties")
-            into "${warDir}/WEB-INF/config"
-            rename("log4j-test.properties", "log4j.properties")
-            filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: project.appConfigProps)
-        }
     }
 }
 

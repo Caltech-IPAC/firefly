@@ -39,7 +39,7 @@ public class CachePeerProviderFactoryTest extends ConfigTest {
      * intended for connection test.  Not meant to be used in production.
      * change peerDiscovery=PubSub to peerDiscovery=MultiCast to test using multicast
      *
-     * Change log4j-test.properties to see LOG output
+     * Change to DEBUG level to see output.  i.e. Logger.setProLog(Level.DEBUG, null);
      *
      */
     private static String ehcacheConfig =

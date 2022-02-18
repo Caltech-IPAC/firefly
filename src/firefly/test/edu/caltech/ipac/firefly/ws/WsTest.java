@@ -108,8 +108,7 @@ public class WsTest extends ConfigTest {
 
         WspaceMeta meta = man.getMeta("/", WspaceMeta.Includes.ALL_PROPS);
 
-        // Change to INFO level in log4j-test.properties to see output.
-        // log4j.logger.test=INFO, A1
+        // Change to INFO level to see output.  i.e. Logger.setProLog(Level.INFO, null);
 
         LOG.info(meta.getNodesAsString());
 

@@ -137,11 +137,22 @@ COPY firefly/docker/local.xml firefly/docker/conf/Catalina/localhost
 #copy all wars, typically there should only be one
 COPY --from=builder /opt/work/${build_dir}/build/dist/*.war ${CATALINA_HOME}/webapps/
 
+# extract all war files into tomcat's webapps; mod log4j to have log sent to stdout as well
+WORKDIR ${CATALINA_HOME}/webapps
+RUN for n in *.war; do \
+    war_dir=`basename $n .war`; \
+    mkdir -p $war_dir; \
+    unzip -oqd $war_dir $n; \
+    sed -E -i.bak 's/##out--//' $war_dir/WEB-INF/classes/log4j2.properties; \
+    chmod a+w $war_dir/WEB-INF/config; \
+    done
+
+WORKDIR ${CATALINA_HOME}
 # Make directories, make scripts executable, save old tomcat config files, remove unwanted apps
 # increase max header size to avoid failing on large auth token
 RUN chmod a+x *.sh \
   && chmod -R a+w /firefly \
-  && chmod a+w *.txt webapps temp work /local/www \
+  && chmod a+w *.txt temp work /local/www \
   && sed -i 's/Connector port="8080"/Connector maxHttpHeaderSize="24576" port="8080"/g' ${CATALINA_HOME}/conf/server.xml
 
 # 8080 - http,  5050 - debug

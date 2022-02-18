@@ -5,17 +5,14 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.ws.WsCredentials;
 import edu.caltech.ipac.util.AppProperties;
-import org.apache.log4j.PropertyConfigurator;
 import org.junit.BeforeClass;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Properties;
 import java.util.UUID;
-import java.util.logging.LogManager;
 
 /**
  * Should load the logger and app properties to apply to any test runnner
@@ -26,8 +23,6 @@ import java.util.logging.LogManager;
  */
 public class ConfigTest {
 
-    public static String LOG4J_PROP_FILE = "./config/test/log4j-test.properties";
-    public static String LOGGING_PROP_FILE = "./config/test/logging-test.properties";
     public static String TEST_PROP_FILE = "./config/test/app-test.prop";
     public static String WS_USER_ID = AppProperties.getProperty("workspace.user","test@ipac.caltech.edu");
 
@@ -41,27 +36,11 @@ public class ConfigTest {
      */
     @BeforeClass
     public static void initializeTest() {
-        try {
-            File propFile = new File(LOG4J_PROP_FILE);
-            if (!propFile.canRead())
-                throw new FileNotFoundException(propFile + " not found, continue without logs...");
-            PropertyConfigurator.configure(propFile.getAbsolutePath());
-        } catch (Exception e) {
-            System.err.println(ConfigTest.class.getCanonicalName() + ": " + LOG4J_PROP_FILE + " not found, continue without logs...");
-        }
 
-
-        try {
-            File propFile = new File(LOGGING_PROP_FILE);
-
-            if (!propFile.canRead())
-                throw new FileNotFoundException(propFile + " not found, continue without logs...");
-            // Set in logging.properties the level where java.util.logging logger is used instead of log4j
-            // to INFO to see more logs
-            LogManager.getLogManager().readConfiguration(new FileInputStream(propFile));
-        } catch (Exception e) {
-            System.err.println(LOGGING_PROP_FILE + " not found, continue with default logging level");
-        }
+        Logger.initProgLog();
+        // uncomment line below to test
+        //Logger.setProLog(Level.DEBUG, null);
+        Logger.getLogger("test").debug("!!!!!!!!!!TEST log works");
 
         try {
             loadProperties();

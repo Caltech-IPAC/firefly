@@ -5,12 +5,12 @@ prepareWebapp {
     }
     from("${fireflyPath}/config/") {
         include "ehcache.xml"
-        include "log4j.properties"
         include "common.prop"
         into 'WEB-INF/config'
     }
     from("${fireflyPath}/config/") {
         include "logging.properties"
+        include "log4j2.properties"
         into 'WEB-INF/classes'
     }
 }
