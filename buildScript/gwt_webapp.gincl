@@ -72,11 +72,11 @@ task prepareWebapp (type:Copy, dependsOn: [gwt, loadConfig, createVersionTag]) {
   outputs.upToDateWhen { false }
 
   from("$rootDir/config/") {
-    include '*.prop', '*.xml', 'ignore_sizeof.txt', '*.properties'
+    include '*.prop', '*.xml', 'ignore_sizeof.txt'
     into 'WEB-INF/config'
   }
   from("$rootDir/config/") {
-    include 'logging.properties'
+    include '*.properties'
     into 'WEB-INF/classes'
   }
   from("$rootDir/config") {

@@ -31,7 +31,7 @@ These paths are needed:
 **Build and start Firefly**
 
     $ cd cm/firefly
-    $ docker-compose up -d
+    $ docker-compose up
 
 Firefly is now up and running at http://localhost:8080/firefly/
 
