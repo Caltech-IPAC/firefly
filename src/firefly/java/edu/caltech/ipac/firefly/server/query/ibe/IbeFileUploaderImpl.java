@@ -27,6 +27,7 @@ import java.util.Map;
  * Implementing IbeFileUploader using HttpClient via MultiPartPostBuilder
  * @author loi
  * @version $Id: $
+ * @deprecated
  */
 public class IbeFileUploaderImpl implements IbeFileUploader {
 

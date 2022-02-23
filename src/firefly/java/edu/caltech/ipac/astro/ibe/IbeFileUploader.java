@@ -12,6 +12,7 @@ import java.util.Map;
  *
  * @author loi
  * @version $Id: $
+ * @deprecated
  */
 public interface IbeFileUploader {
 
