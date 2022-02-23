@@ -8,8 +8,10 @@
 
 
 ## Version 2021.4  (December 2021)
+- 2021.4.1 (Feb 2022)
+  - docker tag: `latest`, `release-2021.4`, `release-2021.4.1`
 - 2021.4 (December 2021)
-  - docker tag: `latest`, `release-2021.4`, `release-2021.4.0`
+  - docker tag: `release-2021.4.0`
 
 ### _Notes_
 #### New features - This release contains some significant new features and UI improvements
@@ -46,6 +48,10 @@
 - [Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2021.4+label%3abug)
 - [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2021.4+)
 
+##### _Patches 2021.4_
+- 2021.4.1
+  - IBE not passing credentials ([Firefly-938](https://github.com/Caltech-IPAC/firefly/pull/1189))
+  - Better version tracking ([Firefly-915](https://github.com/Caltech-IPAC/firefly/pull/1165))
 
 
 ## Version 2021.3 (August 2021) 

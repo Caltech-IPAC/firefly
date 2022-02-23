@@ -6,6 +6,7 @@ package edu.caltech.ipac.astro.ibe;
 import edu.caltech.ipac.astro.ibe.datasource.AtlasIbeDataSource;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
+import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.URLFileInfoProcessor;
 import edu.caltech.ipac.table.DataGroup;
@@ -19,9 +20,7 @@ import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collections;
 import java.util.Map;
 
 import static edu.caltech.ipac.astro.ibe.BaseIbeDataSource.addUrlParam;
@@ -39,7 +38,6 @@ public class IBE {
     public static final String POS = "POS";
 
     private IbeDataSource ibeDataSource;
-    private IbeFileUploader fileUploader;
 
 
     public IBE(IbeDataSource ibeDataSource) {
@@ -48,10 +46,6 @@ public class IBE {
 
     public IbeDataSource getIbeDataSource() {
         return ibeDataSource;
-    }
-
-    public void setFileUploader(IbeFileUploader fileUploader) {
-        this.fileUploader = fileUploader;
     }
 
     public void getMetaData(File results) throws IOException {
@@ -66,22 +60,17 @@ public class IBE {
     }
 
     public void multipleQueries(File results, File posFile, IbeQueryParam param) {
-        if (fileUploader == null) {
-            try {
-                fileUploader = (IbeFileUploader) Class.forName("edu.caltech.ipac.firefly.server.query.ibe.IbeFileUploaderImpl").newInstance();
-            } catch (Exception e) {
-                throw new UnsupportedOperationException("You need an IbeFileUploader to do multiple queries search.");
-            }
-        }
-
         String url = ibeDataSource.getSearchUrl();
 
         Map<String, String> paramMap = ibeDataSource.getMulipleQueryParam(param);
         paramMap.remove(POS);
-        try {
-            fileUploader.post(results, POS, posFile, new URL(url), paramMap);
-        } catch (MalformedURLException e) {
-            throw new IllegalArgumentException("IBE URL is bad.");
+        HttpServiceInput input = HttpServiceInput.createWithCredential(url);
+        paramMap.forEach(input::setParam);
+        input.setFile(POS, posFile);
+
+        HttpServices.Status status = HttpServices.postData(input, results);
+        if (status.isError()) {
+            throw new RuntimeException(String.format("IBE multi POS search failed with (%d) - %s", status.getStatusCode(), status.getErrMsg()));
         }
     }
 
@@ -173,7 +162,10 @@ public class IBE {
 
     private void downloadViaUrlToFile(URL url, File results) throws IOException {
         try {
-            URLDownload.getDataToFile(url, results, null, Collections.singletonMap("Accept", "text/plain"));
+            HttpServiceInput addtlInfo = HttpServiceInput.createWithCredential(url.toString());
+            addtlInfo.setHeader("Accept", "text/plain");
+
+            URLDownload.getDataToFile(url, results, addtlInfo.getCookies(), addtlInfo.getHeaders());
         } catch (FailedRequestException e) {
             throw new IOException(e.getUserMessage(), e);
         }
