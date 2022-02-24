@@ -37,6 +37,7 @@ export function getDefMenuItemKeys() {
         extractLine: true,
         extractPoint: true,
         extract: true,
+        showImageToolbar: true,
     };
     return {...MenuItemKeys, ...getAppOptions()?.MenuItemKeys};
 }

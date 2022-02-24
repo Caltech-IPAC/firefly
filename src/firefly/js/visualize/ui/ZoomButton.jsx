@@ -6,8 +6,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {dispatchZoom} from '../ImagePlotCntlr.js';
-import {getZoomMax, getNextZoomLevel, UserZoomTypes} from '../ZoomUtil.js';
-import {primePlot} from '../PlotViewUtil.js';
+import {getZoomMax, getNextZoomLevel, UserZoomTypes, getZoomDesc} from '../ZoomUtil.js';
+import {getFoV, primePlot} from '../PlotViewUtil.js';
 import {showZoomOptionsPopup} from '../../ui/ZoomOptionsPopup.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {isImage} from '../WebPlot.js';
@@ -44,11 +44,12 @@ function getZoomer() {
         if (zType===ZoomType.UP) {
             if (isZoomMax(pv)) {
                 let msg;
+                const zlRet= getZoomDesc(pv);
                 if (isImage(plot)) {
-                    msg= 'You may not zoom beyond ' + getZoomMax(plot) + 'x';
+                    msg= `Maximum Zoom: You reached you maximum zoom: FOV: ${zlRet.fovFormatted}`;
                 }
                 else {
-                    msg= `You may not zoom beyond HiPS Norder level ${MAX_SUPPORTED_HIPS_LEVEL}`;
+                    msg= `You may not zoom beyond HiPS Norder level ${MAX_SUPPORTED_HIPS_LEVEL}, FOV: ${zlRet.fovFormatted}`;
                 }
 
                 const renderContent= <div style={{padding: '5px 0 5px 0',whiteSpace: 'nowrap'}}> {msg} </div> ;

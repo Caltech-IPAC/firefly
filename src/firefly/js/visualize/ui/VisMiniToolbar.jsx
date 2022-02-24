@@ -311,7 +311,7 @@ function toggleOverlayColorLock(pv,plotGroupAry){
     dispatchOverlayColorLocking(pv.plotId,!hasOverlayColorLock(pv,plotGroup));
 }
 
-function expand(plotId, grid) {
+export function expand(plotId, grid) {
     dispatchChangeActivePlotView(plotId);
     dispatchSetLayoutMode( LO_MODE.expanded, LO_VIEW.images );
     grid ? dispatchChangeExpandedMode(ExpandType.GRID) : dispatchChangeExpandedMode(true);

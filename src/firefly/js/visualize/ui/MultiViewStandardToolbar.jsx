@@ -13,6 +13,8 @@ import GRID from 'html/images/icons-2014/Images-Tiled.png';
 import PAGE_RIGHT from 'html/images/icons-2014/20x20_PageRight.png';
 import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
 import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
+import {getDefMenuItemKeys} from 'firefly/visualize/MenuItemKeys.js';
+import {getActivePlotView, getPlotViewById} from 'firefly/visualize/PlotViewUtil.js';
 
 
 
@@ -55,6 +57,8 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds,
 
 
     const style= {...toolsStyle, ...toolbarStyle};
+    const {showImageToolbar}= getActivePlotView(visRoot)?.menuItemKeys ?? getDefMenuItemKeys();
+    if (!showImageToolbar) return <div/>;
 
     return (
         <div style={style}>
