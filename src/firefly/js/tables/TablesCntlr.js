@@ -687,6 +687,8 @@ function asyncFetch(request, hlRowIdx, dispatch, tbl_id) {
             if (inProgress) {
                 // not done; track progress
                 trackBackgroundJob({jobId, key: bgKey, onComplete, sentToBg});
+            } else {
+                onComplete(jobInfo);
             }
         }).catch( (error) => {
             dispatchComponentStateChange(bgKey, {inProgress:false});
