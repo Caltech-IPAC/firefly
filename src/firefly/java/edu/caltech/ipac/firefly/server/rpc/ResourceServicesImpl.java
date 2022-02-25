@@ -33,7 +33,7 @@ import java.util.List;
  */
 public class ResourceServicesImpl extends BaseRemoteService implements ResourceServices {
 
-    private static final Logger.LoggerImpl _statsLog= Logger.getLogger(Logger.INFO_LOGGER);
+    private static final Logger.LoggerImpl _statsLog= Logger.getLogger();
     private static final List<String> allIPList= new ArrayList<String>(500);
     private static final List<String> osList= new ArrayList<String>(20);
     private static final List<String> browerList= new ArrayList<String>(20);

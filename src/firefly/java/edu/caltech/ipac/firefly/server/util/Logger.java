@@ -9,9 +9,16 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.IgnoreStackEntry;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.ThrowableUtil;
-import org.apache.log4j.Level;
-import org.apache.log4j.or.ObjectRenderer;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.appender.ConsoleAppender;
+import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilder;
+import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilderFactory;
+import org.apache.logging.log4j.core.config.builder.impl.BuiltConfiguration;
+import org.apache.logging.log4j.util.Supplier;
 
 /**
  * Date: Dec 10, 2008
@@ -24,12 +31,13 @@ public class Logger {
     public static final String SEARCH_LOGGER = "search";
     public static final String DOWNLOAD_LOGGER = "dl";
     public static final String VIS_LOGGER = "visu";
-    public static final String INFO_LOGGER = "info";
 
     private enum Type { NORMAL(""), BRIEF("brief."), STATISTICS("statistics.");
                             String prefix;
-                            private Type(String prefix) {this.prefix = prefix;}
+                            Type(String prefix) {this.prefix = prefix;}
                         }
+
+    private static final String ARY_SEP = "\n" + AppProperties.getProperty("ArrayRenderer.padding", "    ");
 
     /**
      * use static accessors methods
@@ -87,63 +95,44 @@ public class Logger {
         getLogger(loggerName).stats(function, msgs);
     }
 
-
-//====================================================================
-//  Custom Renderer
-//====================================================================
-
-    public static class VerboseMessage {
-        String[] msgs;
-
-        public VerboseMessage(String[] msgs) {
-            this.msgs = msgs;
-        }
-
-        public String toString() {
-            return CollectionUtil.toString(msgs);
-        }
-    }
-
     /**
-     * use string '[Ljava.lang.String' to define in your configuration
+     * Programmatically send all logs to System.out, but have it turned off.
+     * Anywhere in your code, use setProgLog() to control what get printed to console.
      */
-    public static class ArrayRenderer implements ObjectRenderer {
-        private String padding = AppProperties.getProperty("ArrayRenderer.padding", "    ");
+    public static void initProgLog() {
+        try {
+            ConfigurationBuilder<BuiltConfiguration> builder = ConfigurationBuilderFactory.newConfigurationBuilder();
+            builder.add(builder.newAppender("console", "CONSOLE").addAttribute("target", ConsoleAppender.Target.SYSTEM_OUT));
+            builder.add(builder.newRootLogger(Level.OFF).add(builder.newAppenderRef("console")));
+            Configurator.initialize(builder.build());
+        }catch (Exception e) {
+            System.err.println("Failed to initialize Log4J framework");
+        }
 
-        public String doRender(Object o) {
-
-            if(o instanceof VerboseMessage) {
-                String[] msgs = ((VerboseMessage)o).msgs;
-                StringBuffer sb = new StringBuffer();
-                for(int i = 0; i < msgs.length; i++) {
-                    Object m = msgs[i];
-                    if (i > 0) sb.append("\n").append(padding);
-                    sb.append(String.valueOf(m));
-                }
-                return sb.toString();
-            }
-            return String.valueOf(o);
+        try {
+            java.util.logging.Logger root = java.util.logging.LogManager.getLogManager().getLogger("");
+            root.setLevel(java.util.logging.Level.OFF);
+        } catch (Exception e) {
+            System.err.println("Failed to initialize Java logging framework");
         }
     }
 
-    /**
-     * use string '[Ljava.lang.String' to define in your configuration
-     */
-    public static class WrappedArrayRenderer implements ObjectRenderer {
-        private static final String PRE_STR   = "   ";
-        private static final String BEGIN_STR = "  _________________";
-        private static final String END_STR   = "  ~~~~~~~~~~~~~~~~~";
-
-        public String doRender(Object o) {
-            Object[] msgs = o.getClass().isArray() ? (Object[])o : new Object[]{o};
-            StringBuffer sb = new StringBuffer("\n").append(BEGIN_STR);
-            for(Object m : msgs) {
-                sb.append(PRE_STR).append("\n").append(String.valueOf(m));
-            }
-            sb.append(END_STR);
-            return sb.toString();
+    public static void setProLog(Level level, String logger) {
+        logger = StringUtils.isEmpty(logger) ? "" : logger;
+        if (logger.length() == 0) {
+            Configurator.setRootLevel(level);
+        } else {
+            Configurator.setLevel(logger, level);
         }
+        java.util.logging.Level jl = level == Level.ERROR ? java.util.logging.Level.SEVERE :
+                    level == Level.ERROR ? java.util.logging.Level.SEVERE :
+                    level == Level.WARN ? java.util.logging.Level.WARNING :
+                    level == Level.INFO ? java.util.logging.Level.INFO :
+                    level == Level.DEBUG ? java.util.logging.Level.FINE :
+                    java.util.logging.Level.FINER;
+        java.util.logging.Logger.getLogger(logger).setLevel(jl);
     }
+
 
     private static void doLog(String msg, boolean isStatic, int stackCount) {
         if (stackCount > 0) {
@@ -193,8 +182,8 @@ public class Logger {
      */
     @IgnoreStackEntry
     public static class LoggerImpl {
-        private static String CLASS_NAME = Logger.class.getName();
-        private String name;
+        private static final String CLASS_NAME = Logger.class.getName();
+        private final String name;
 
         /**
          * use static Logger.getLogger() instead
@@ -208,37 +197,30 @@ public class Logger {
             this.name = name;
         }
 
-        public void briefDebug(String msgs) {
-            log(Type.BRIEF, Level.DEBUG, msgs);
-        }
+        public void trace(String... msgs) { log(Type.NORMAL, Level.TRACE, msgs); }
+        /**
+         * @deprecated
+         * Same as debug().  Use debug() instead.
+         */
+        public void briefDebug(String msgs) { debug(msgs); }
 
-        public void debug(String... msgs) {
-            log(Type.NORMAL, Level.DEBUG, msgs);
-        }
+        public void debug(String... msgs) { log(Type.NORMAL, Level.DEBUG, msgs); }
 
-        public void briefInfo(String msgs) {
-            log(Type.BRIEF, Level.INFO, msgs);
-        }
+        /**
+         * @deprecated
+         * Same as info().  Use info() instead.
+         */
+        public void briefInfo(String msgs) { info(msgs); }
 
-        public void info(String... msgs) {
-            log(Type.NORMAL, Level.INFO, msgs);
-        }
+        public void info(String... msgs) { log(Type.NORMAL, Level.INFO, msgs);}
 
-        public void warn(String... msgs) {
-            warn(null, msgs);
-        }
+        public void warn(String... msgs) { warn(null, msgs); }
 
-        public void warn(Throwable t, String... msgs) {
-            log(Type.NORMAL, Level.WARN, t, msgs);
-        }
+        public void warn(Throwable t, String... msgs) { log(Type.NORMAL, Level.WARN, t, msgs); }
 
-        public void error(String... msgs) {
-            error(null, msgs);
-        }
+        public void error(String... msgs) { error(null, msgs); }
 
-        public void error(Throwable t, String... msgs) {
-            log(Type.NORMAL, Level.ERROR, t, msgs);
-        }
+        public void error(Throwable t, String... msgs) { log(Type.NORMAL, Level.ERROR, t, msgs); }
 
         /**
          * This method is for logging statistic related information.
@@ -265,67 +247,63 @@ public class Logger {
          *
          *
          *
-         * @param function a function name.  It must not contain spaces.  Reccommend less than 20 chars.
+         * @param function a function name.  It must not contain spaces.  Recommend less than 20 chars.
          * @param msgs the messages to log.  It should be in the form of key, value, key, value etc..
          */
-        static String fmt = "%-20s %-15s %8.3f -- %s";
         public void stats(String function, Object... msgs) {
-            RequestOwner ro = ServerContext.getRequestOwner();
-            double respTime = (System.currentTimeMillis() - ro.getStartTime().getTime())/1000.0;
-            log(Type.STATISTICS, Level.FATAL, String.format(fmt, function, ro.getRemoteIP(), respTime, formatMsg(msgs)));
+            log(Type.STATISTICS, Level.FATAL, null, () -> {
+                if (msgs == null || msgs.length == 0) {
+                    return "";
+                }
+                RequestOwner ro = ServerContext.getRequestOwner();
+                double respTime = (System.currentTimeMillis() - ro.getStartTime().getTime())/1000.0;
+
+                StringBuilder sb = new StringBuilder();
+                for(int i = 0; i < msgs.length; i++) {
+                    if (i > 0) {
+                        sb.append(" | ");
+                    }
+                    sb.append(msgs[i]);
+                    if (i+1 < msgs.length) {
+                        Object val = msgs[++i];
+                        if (val != null) {
+                            if (val instanceof Float || val instanceof Double) {
+                                sb.append(":").append(String.format("%.3f", val));
+                            }
+                            sb.append(":").append(val);
+                        }
+                    }
+                }
+                return String.format(FMT, function, ro.getRemoteIP(), respTime, sb);
+            });
         }
+        private static final String FMT = "%-20s %-15s %8.3f -- %s";
 
     //====================================================================
     //
     //====================================================================
-
-        private String formatMsg(Object... msgs) {
-            if (msgs == null || msgs.length == 0) {
-                return "";
-            }
-
-            StringBuffer sb = new StringBuffer();
-            for(int i = 0; i < msgs.length; i++) {
-                if (i > 0) {
-                    sb.append(" | ");
-                }
-                sb.append(String.valueOf(msgs[i]));
-                if (i+1 < msgs.length) {
-                    Object val = msgs[++i];
-                    if (val != null) {
-                        String valStr = String.valueOf(val);
-                        if (val instanceof Float || val instanceof Double) {
-                            valStr = String.format("%.3f", val);
-                        }
-                        sb.append(":").append(valStr);
-                    }
-                }
-            }
-            return sb.toString();
-        }
-
 
         private void log(Type type, Level level, String... msgs) {
             log(type, level, null, msgs);
         }
 
         private void log(Type type, Level level, Throwable t, String... msgs) {
-            org.apache.log4j.Logger logger = getLogger(type);
+            log(type, level, t, () -> {
+                if (msgs == null) return "";
+                return msgs.length == 1 ? msgs[0] :
+                       CollectionUtil.toString(msgs, type.equals(Type.NORMAL) ? ARY_SEP : ", ");
+            });
+        }
+
+        private void log(Type type, Level level, Throwable t, Supplier<String> msg) {
+            org.apache.logging.log4j.Logger logger = getLogger(type);
             if (logger != null) {
-                logger.log(CLASS_NAME, level, getMsg(type, msgs), t);
+                logger.log(level, msg, t);
             }
         }
 
-        private Object getMsg(Type type, String... msgs) {
-            if(type.equals(Type.NORMAL)) {
-                return new VerboseMessage(msgs);
-            } else {
-                return  (msgs == null) ? "" : CollectionUtil.toString(msgs);
-            }
-        }
-
-        private org.apache.log4j.Logger getLogger(Type type) {
-            org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(type.prefix + name);
+        private org.apache.logging.log4j.Logger getLogger(Type type) {
+            org.apache.logging.log4j.Logger logger = LogManager.getLogger(type.prefix + name);
             if (logger == null) {
                 System.out.println("Logger not found:" + type.prefix + name);
             }

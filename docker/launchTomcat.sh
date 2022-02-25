@@ -127,9 +127,8 @@ fi
 
 
 
-#------- start background scripts: cleanup and log to console
+#------- start background scripts: cleanup
 ${CATALINA_HOME}/cleanup.sh /firefly/workarea /firefly/shared-workarea &
-${CATALINA_HOME}/sendLogsToConsole.sh &
 
 echo "launchTomcat.sh: Starting Tomcat"
 if [ "$DEBUG" = "true" ] ||[ "$DEBUG" = "t" ] ||[ "$DEBUG" = "1" ] ||  \
