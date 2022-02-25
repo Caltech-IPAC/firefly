@@ -15,7 +15,6 @@ import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.CacheManager;
 import nom.tam.fits.FitsFactory;
-import org.apache.log4j.PropertyConfigurator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -163,17 +162,6 @@ public class ServerContext {
         if (webappConfigDir == null && appConfigDir == null) {
             String errmsg = CONFIG_DIR + " is not setup correctly.  System will not function properly";
             throw new RuntimeException(errmsg);
-        }
-
-        // initializes log4j
-        File cfg = getConfigFile("log4j.properties");
-        if (cfg.canRead()) {
-            String statsDir = AppProperties.getProperty(STATS_LOG_DIR);
-            if (!StringUtils.isEmpty(statsDir)) {
-                initDir(new File(statsDir));
-            }
-            System.out.println(String.format("Initializing Log4J using file: %s  => %s", cfg.getAbsolutePath(), statsDir));
-            PropertyConfigurator.configureAndWatch(cfg.getAbsolutePath());
         }
 
         // setup ClientLog and Assert to use firefly logging.

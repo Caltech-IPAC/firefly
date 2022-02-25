@@ -625,7 +625,6 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             });
             StopWatch.getInstance().stop("enumeratedValuesCheck: " + treq.getRequestId()).printLog("enumeratedValuesCheck: " + treq.getRequestId());
         } catch (Exception ex) {
-            LOGGER.error(ex);
             // do nothing.. ok to ignore errors.
         }
     }
