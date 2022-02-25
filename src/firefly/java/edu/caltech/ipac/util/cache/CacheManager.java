@@ -5,6 +5,7 @@ package edu.caltech.ipac.util.cache;
 
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.KeyBasedCache;
+import edu.caltech.ipac.util.AppProperties;
 
 import java.util.List;
 
@@ -18,9 +19,17 @@ public class CacheManager {
 
     private static final String DEF_TYPE = Cache.TYPE_PERM_SMALL;
     private static final String DEF_PROVIDER = "edu.caltech.ipac.firefly.server.cache.EhcacheProvider";  //  ie... "edu.caltech.ipac.firefly.server.cache.EhcacheProvider";
+    private static final String CACHEMANAGER_DISABLED_PROP = "CacheManager.disabled";
 
     private static  Cache.Provider cacheProvider;
     private static boolean isDisabled = false;
+
+
+    static {
+        // disable caching is it's a preference
+        isDisabled = AppProperties.getBooleanProperty(CACHEMANAGER_DISABLED_PROP, false);
+    }
+
 
     public static Cache getCache() {
         return getCache(DEF_TYPE);
@@ -58,10 +67,6 @@ public class CacheManager {
         return isDisabled;
     }
 
-    public static void setDisabled(boolean disabled) {
-        isDisabled = disabled;
-    }
-
     public static Cache getSessionCache() {
         return new KeyBasedCache(ServerContext.getRequestOwner().getRequestAgent().getSessId());
     }
@@ -71,7 +76,7 @@ public class CacheManager {
     }
 
 
-    //====================================================================
+//====================================================================
 //  helper functions
 //====================================================================
     private static Cache.Provider newInstanceOf(String className) {

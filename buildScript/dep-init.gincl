@@ -1,23 +1,35 @@
 
 prepareWebapp {
-    from("${fireflyPath}/config/web.xml") {
-        into 'WEB-INF/'
-    }
-    from("${fireflyPath}/config/") {
-        include "ehcache.xml"
-        include "common.prop"
-        into 'WEB-INF/config'
-    }
-    from("${fireflyPath}/config/") {
-        include "logging.properties"
-        include "log4j2.properties"
-        into 'WEB-INF/classes'
+    doFirst {
+        copy {
+            from("${fireflyPath}/config/web.xml")
+            into "${warDir}/WEB-INF/"
+            filter(ReplaceTokens, tokens: project.appConfigProps)
+        }
+        copy {
+            from("${fireflyPath}/config/") {
+                include "ehcache.xml"
+                include "common.prop"
+            }
+            into "${warDir}/WEB-INF/config"
+            filter(ReplaceTokens, tokens: project.appConfigProps)
+        }
+        copy {
+            from("${fireflyPath}/config/") {
+                include "*.properties"
+            }
+            into "${warDir}/WEB-INF/classes"
+            filter(ReplaceTokens, tokens: project.appConfigProps)
+        }
     }
 }
 
 
 
 // make sure node_modules exists.  if it does not, use the one from firefly's
+
+import org.apache.tools.ant.filters.ReplaceTokens
+
 import java.nio.file.*;
 
 Path target_node_module = Paths.get("${fireflyPath}/node_modules");

@@ -6,7 +6,7 @@ ext.distDir = "${buildRoot}/dist"
 ext.warDir = "${buildDir}/war"
 ext['launch.page'] = ext['app-name'] + ".html"
 
-jar.destinationDir = file ("$rootDir/jars/build")
+jar.destinationDirectory = file ("$rootDir/jars/build")
 
 ext {
 
@@ -77,9 +77,7 @@ ext {
                 ':gwt-dev',
     ]
 
-    firefly_ext_lib = [ ':simbad_ws' ]
-
-    firefly_lib = [ firefly_ext_lib, ':firefly' ]
+    firefly_lib = [ ':firefly' ]
 
 
     FIREFLY_RUNTIME = [':firefly_data'] + fits_io_lib + apache_lib + spring_lib + webservices_lib + oidc_lib +
@@ -91,8 +89,8 @@ ext {
 
 
 dependencies {
-    compile fits_io_lib, junit_lib
-    compile FIREFLY_COMPILE
+    implementation fits_io_lib, junit_lib
+    implementation FIREFLY_COMPILE
 }
 
 def libPath = "$fireflyPath/jars"

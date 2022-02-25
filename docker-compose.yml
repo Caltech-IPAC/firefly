@@ -1,4 +1,4 @@
-version: '3'
+version: '3.4'
 services:
   firefly:
     image: ipac/firefly:${BUILD_TAG:-latest}  # value taken from shell, or latest
@@ -9,3 +9,18 @@ services:
       - "8080:8080"
     environment: # any variable listed in catalina.sh and usually set in tomcat's setenv.sh, could be set here
       - ADMIN_PASSWORD      # value taken from env
+  test:
+    image: ipac/firefly:deps
+    build:
+      context: ../
+      dockerfile: firefly/docker/Dockerfile
+      target: deps
+    command: bash -c "cd firefly && gradle firefly:test"
+    volumes:
+      - ../firefly_test_data:/opt/work/firefly_test_data
+      - ../firefly:/opt/work/firefly
+      - /opt/work/firefly/.gradle
+      - /opt/work/firefly/build
+      - /opt/work/firefly/jars/build
+      - /opt/work/firefly/node_modules
+      - ./build/dist:/opt/work/firefly/build/dist/

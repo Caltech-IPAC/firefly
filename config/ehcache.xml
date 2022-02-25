@@ -118,6 +118,7 @@
         use 239.250.0.1 for org-local
         use 230.0.0.1   for global
     -->
+    <!--REPLICATE
     <cacheManagerPeerProviderFactory
             class="edu.caltech.ipac.util.cache.CachePeerProviderFactory"
             properties="peerDiscovery=@ehcache.peerDiscovery@,
@@ -125,6 +126,7 @@
                         multicastGroupPort=@ehcache.multicast.port@, timeToLive=@ehcache.multicast.ttl@"
             propertySeparator=","
             />
+    REPLICATE-->
 
     <!--
     CacheManagerPeerListener
@@ -159,14 +161,14 @@
     * socketTimeoutMillis - the number of ms client sockets will stay open when sending
       messages to the listener. This should be long enough for the slowest message.
       If not specified it defaults 120000ms.
-
     -->
+
+    <!--REPLICATE
     <cacheManagerPeerListenerFactory
             class="net.sf.ehcache.distribution.RMICacheManagerPeerListenerFactory"
             properties="socketTimeoutMillis=300000"
                         propertySeparator="," />
-
-
+    REPLICATE-->
 
     <!--
     Cache configuration
@@ -383,11 +385,15 @@
            diskSpoolBufferSizeMB="5"
            diskExpiryThreadIntervalSeconds="300"
         >
+
+        <!--REPLICATE
         <cacheEventListenerFactory
                class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
                properties="asynchronousReplicationIntervalMillis=250,
                            replicateAsynchronously=true"
                propertySeparator=","/>
+        REPLICATE-->
+
     </cache>
 
     <!--
@@ -404,16 +410,19 @@
            diskSpoolBufferSizeMB="5"
            diskExpiryThreadIntervalSeconds="600"
        >
-       <cacheEventListenerFactory
-               class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
-               properties="asynchronousReplicationIntervalMillis=250,
-                           replicateAsynchronously=true"
-               propertySeparator=","/>
-     </cache>
 
-    <!--
-     The data stored in this cache is relatively large, but does not expire.
-    -->
+       <!--REPLICATE
+       <cacheEventListenerFactory
+           class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
+           properties="asynchronousReplicationIntervalMillis=250,
+                       replicateAsynchronously=true"
+           propertySeparator=","/>
+        REPLICATE-->
+ </cache>
+
+<!--
+ The data stored in this cache is relatively large, but does not expire.
+-->
     <cache name="PERM_LARGE"
            maxElementsInMemory="10"
            eternal="true"
@@ -442,22 +451,25 @@
            diskSpoolBufferSizeMB="5"
            diskExpiryThreadIntervalSeconds="600"
         >
+
+        <!--REPLICATE
         <cacheEventListenerFactory
-               class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
-               properties="asynchronousReplicationIntervalMillis=250,
-                           replicateAsynchronously=true"
-               propertySeparator=","/>
-           />
+           class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
+           properties="asynchronousReplicationIntervalMillis=250,
+                       replicateAsynchronously=true"
+           propertySeparator=","/>
+        />
+        REPLICATE-->
 
-    </cache>
+</cache>
 
 
-    <!--
-     This cache is reserved for file path(File) caching.  There is no idle time expiration.
-     This is similar to PERM_SMALL, except there will be a CacheEventListener to monitor
-     the File object, and to clean up the file when the File object is evicted.
-     THIS CACHE IS DISTRIBUTED.
-    -->
+<!--
+This cache is reserved for file path(File) caching.  There is no idle time expiration.
+This is similar to PERM_SMALL, except there will be a CacheEventListener to monitor
+the File object, and to clean up the file when the File object is evicted.
+THIS CACHE IS DISTRIBUTED.
+-->
     <cache name="TEMP_FILE"
            maxElementsInMemory="5000"
            eternal="true"
@@ -465,12 +477,15 @@
            overflowToDisk="false"
            diskPersistent="false"
         >
+
+        <!--REPLICATE
         <cacheEventListenerFactory
                class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
                properties="asynchronousReplicationIntervalMillis=250,
                            replicateAsynchronously=true"
                propertySeparator=","/>
            />
+        REPLICATE-->
 
     </cache>
 

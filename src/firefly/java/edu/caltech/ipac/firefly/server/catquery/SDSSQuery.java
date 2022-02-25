@@ -158,12 +158,6 @@ public class SDSSQuery extends IpacTablePartProcessor {
 
                 if (resp == null) {
                     throw new IOException("Exception during post");
-                } else if (resp.getStatusCode()<200 || resp.getStatusCode()>300) {
-                    // throw new IOException(resp.getStatusMsg());
-                    // try repeating the request through CasJobs
-                    boolean nearestOnly = request.getBooleanParam(SDSSRequest.NEAREST_ONLY);
-                    String radiusArcMin = request.getParam(SDSSRequest.RADIUS_ARCMIN);
-                    SDSSCasJobs.getCrossMatchResults(sdssUFile, nearestOnly, radiusArcMin, csv);
                 }
             }
 
