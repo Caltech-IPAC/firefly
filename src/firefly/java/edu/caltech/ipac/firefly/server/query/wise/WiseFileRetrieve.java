@@ -30,7 +30,7 @@ import java.util.Map;
 public class WiseFileRetrieve extends BaseFileInfoProcessor {
 
     public static final boolean USE_HTTP_AUTHENTICATOR = false;
-    public static final String WISE_DATA_RETRIEVAL_TYPE = AppProperties.getProperty("wise.data_retrieval_type", "filesystem");  // url or filesystem
+    public static final String WISE_DATA_RETRIEVAL_TYPE = AppProperties.getProperty("wise.data_retrieval_type", "url");  // url or filesystem
     public static final String WISE_FILESYSTEM_BASEPATH = AppProperties.getProperty("wise.filesystem_basepath");
     public static final String DEFAULT_SCHEMA = AppProperties.getProperty("wise.schema.default", WiseRequest.ALLWISE_MULTIBAND);
 
@@ -72,6 +72,12 @@ public class WiseFileRetrieve extends BaseFileInfoProcessor {
         PROD_LEVEL_MAP.put(WiseRequest.NEOWISER_YR1 +"|1b", "links-neowiser/l1b-yr1/");
         PROD_LEVEL_MAP.put(WiseRequest.NEOWISER_YR2 +"|1b", "links-neowiser/l1b-yr2/");
         PROD_LEVEL_MAP.put(WiseRequest.NEOWISER_YR3 +"|1b", "links-neowiser/l1b-yr3/");
+        PROD_LEVEL_MAP.put(WiseRequest.NEOWISER_YR4 +"|1b", "links-neowiser/l1b-yr4/");
+        PROD_LEVEL_MAP.put(WiseRequest.NEOWISER_YR5 +"|1b", "links-neowiser/l1b-yr5/");
+        PROD_LEVEL_MAP.put(WiseRequest.NEOWISER_YR6 +"|1b", "links-neowiser/l1b-yr6/");
+        PROD_LEVEL_MAP.put(WiseRequest.NEOWISER_YR7 +"|1b", "links-neowiser/l1b-yr7/");
+        PROD_LEVEL_MAP.put(WiseRequest.NEOWISER_YR8 +"|1b", "links-neowiser/l1b-yr8/");    //check file link
+        PROD_LEVEL_MAP.put(WiseRequest.NEOWISER_YR9 +"|1b", "links-neowiser/l1b-yr9/");    //check file link
 
     }
 

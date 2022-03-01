@@ -64,13 +64,8 @@ public class QueryMOS extends IpacTablePartProcessor {
             String tblType = req.getParam(MOSRequest.TABLE_NAME);
             boolean headerOnly = isHeaderOnlyRequest(req);
 
-            String tblName;
-            if (ORBITAL_PATH_TABLE_NAME.equals(tblType) || RESULT_TABLE_NAME.equals(tblType) ) {
-                tblName= tblType;
-            }
-            else {
-                tblName = (MOSRequest.ORBITAL_PATH_TABLE.equalsIgnoreCase(tblType)) ? ORBITAL_PATH_TABLE_NAME : RESULT_TABLE_NAME;
-            }
+            String tblName = (tblType != null && tblType.equalsIgnoreCase(MOSRequest.ORBITAL_PATH_TABLE))
+                    ? ORBITAL_PATH_TABLE_NAME : RESULT_TABLE_NAME;
 
             DataGroup dg = doSearch(req, tblName, headerOnly);
             return headerOnly ? getOrbitalElements(dg) : dg;
@@ -205,7 +200,7 @@ public class QueryMOS extends IpacTablePartProcessor {
         }
         else if (!StringUtils.isEmpty(objectName)) {
             requiredParam(sb, MOSRequest.INPUT_TYPE, "name_input");
-            requiredParam(sb, MOSRequest.OBJ_TYPE, req.getParam(MOSRequest.OBJ_TYPE + "_1"));
+            requiredParam(sb, MOSRequest.OBJ_TYPE, req.getParam(MOSRequest.OBJ_TYPE ));
             requiredParam(sb, MOSRequest.OBJ_NAME, URLEncoder.encode(objectName.trim(), "ISO-8859-1"));
 
         } else {
@@ -213,7 +208,7 @@ public class QueryMOS extends IpacTablePartProcessor {
             String mpcData = req.getParam(MOSRequest.MPC_DATA);
             if (!StringUtils.isEmpty(mpcData)) {
                 requiredParam(sb, MOSRequest.INPUT_TYPE, "mpc_input");
-                requiredParam(sb, MOSRequest.OBJ_TYPE, req.getParam(MOSRequest.OBJ_TYPE + "_2"));
+                requiredParam(sb, MOSRequest.OBJ_TYPE, req.getParam(MOSRequest.OBJ_TYPE));
                 requiredParam(sb, MOSRequest.MPC_DATA, URLEncoder.encode(mpcData.trim(), "ISO-8859-1"));
 
             } else {
@@ -227,7 +222,7 @@ public class QueryMOS extends IpacTablePartProcessor {
                 requiredParam(sb, MOSRequest.ARG_PERIHELION, req.getParam(MOSRequest.ARG_PERIHELION));
                 requiredParam(sb, MOSRequest.ASCEND_NODE, req.getParam(MOSRequest.ASCEND_NODE));
 
-                String objType = req.getParam(MOSRequest.OBJ_TYPE + "_3");
+                String objType = req.getParam(MOSRequest.OBJ_TYPE);
                 requiredParam(sb, MOSRequest.OBJ_TYPE, objType);
                 if (objType.equalsIgnoreCase("asteroid")) {
                     requiredParam(sb, MOSRequest.SEMIMAJOR_AXIS, req.getParam(MOSRequest.SEMIMAJOR_AXIS));
@@ -242,12 +237,12 @@ public class QueryMOS extends IpacTablePartProcessor {
 
         String obsBegin = req.getParam(MOSRequest.OBS_BEGIN);
         if (!StringUtils.isEmpty(obsBegin)) {
-            optionalParam(sb, MOSRequest.OBS_BEGIN, URLEncoder.encode(convertDate(obsBegin.trim()), "ISO-8859-1"));
+            optionalParam(sb, MOSRequest.OBS_BEGIN, URLEncoder.encode((obsBegin.trim()), "ISO-8859-1"));
         }
 
         String obsEnd = req.getParam(MOSRequest.OBS_END);
         if (!StringUtils.isEmpty(obsEnd)) {
-            optionalParam(sb, MOSRequest.OBS_END, URLEncoder.encode(convertDate(obsEnd.trim()), "ISO-8859-1"));
+            optionalParam(sb, MOSRequest.OBS_END, URLEncoder.encode((obsEnd.trim()), "ISO-8859-1"));
         }
 
         // no longer part of hydra interface
