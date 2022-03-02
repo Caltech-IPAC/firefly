@@ -91,84 +91,6 @@ public class PlotOutput {
 //    }
 
 
-    /**
-     * Find a tiles size the divides evenly into the the zoom factor.
-     * This is to prevent round off errors in the image
-     * @return the file size
-     */
-
-//    private int findTileSizeEXPERIMENTAL() {
-//
-//        int retval= -1;
-//        float zoomLevel= _plot.getZoomFactor();
-//        int intZoomLevel= (int)zoomLevel;
-//
-//        int baseTile;
-//        int w= _plot.getImageDataWidth();
-//        if (w>4000) baseTile= 200;
-//        else if (w>2000) baseTile= 160;
-//        else if (w>1000) baseTile= 100;
-//        else if (w>500) baseTile= 80;
-//        else baseTile= 60;
-//
-//        if (intZoomLevel<.50001 && intZoomLevel>.49999) {
-//            retval= baseTile/2;
-//        }
-//
-//        if (intZoomLevel<.250001 && intZoomLevel>.24999) {
-//            retval= baseTile/4;
-//        }
-//
-//
-//        if (intZoomLevel==1 ||
-//            intZoomLevel==2 ||
-//            intZoomLevel==4 ||
-//            intZoomLevel==8 ||
-//            intZoomLevel==16 ) {
-//            retval= baseTile*intZoomLevel;
-//        }
-//
-//
-//
-//        if (retval==-1) {
-//            if (_plot.getZoomFactor()<0) {
-//                retval= 500;
-//            }
-//            else {
-//
-//                for(int size : _trySizes) {
-//                    if ((size % intZoomLevel) == 0) {
-//                        retval= size;
-//                        break;
-//                    }
-//                }
-//
-//
-//                if (retval==-1) {
-//                    if (intZoomLevel < 21) {
-//                        retval= intZoomLevel*35;
-//                    }
-//                    else if (intZoomLevel < 31) {
-//                        retval= intZoomLevel*25;
-//                    }
-//                    else if (intZoomLevel < 41) {
-//                        retval= intZoomLevel*15;
-//                    }
-//                    else if (intZoomLevel < 51) {
-//                        retval= intZoomLevel*12;
-//                    }
-//                    else {
-//                        retval= intZoomLevel*10;
-//                    }
-//                }
-//            }
-//        }
-//
-//
-//
-//        return retval;
-//    }
-
     private int findTileSize() {
 
         return findTileSize(_plot.getZoomFactor());
@@ -331,38 +253,6 @@ public class PlotOutput {
 
         return retList;
     }
-
-
-    public static List<TileFileInfo> defineTiles(File dir,
-                                                 float zfact,
-                                                 String baseName,
-                                                 int outType,
-                                                 int screenWidth,
-                                                 int screenHeight) {
-
-        String ext= getExt(outType);
-        Assert.argTst(outType == JPEG || outType == BMP  || outType == PNG,  "ext must be jpeg, bmp, or png");
-        int defTileSize= findTileSize(zfact);
-        int width= defTileSize;
-        int height;
-        File file;
-
-        List<TileFileInfo> retList= new ArrayList<TileFileInfo>(20);
-
-
-        for(int x= 0; (x<screenWidth);  x+=width) {
-            for(int y= 0; (y<screenHeight);  y+=height) {
-                width= ((x+defTileSize) > screenWidth-defTileSize) ? screenWidth - x : defTileSize;
-                height= ((y+defTileSize) > screenHeight-defTileSize) ? screenHeight - y : defTileSize;
-                file= getTileFile(dir,baseName,x,y,ext);
-                retList.add(new TileFileInfo(x,y,width, height, file,false));
-            }
-        }
-
-        return retList;
-    }
-
-
 
     private static File getTileFile(File dir, String baseName, int x, int y, String ext) {
         return new File(dir,baseName+"_"+x+"_"+y+"."+ext);

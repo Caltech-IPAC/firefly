@@ -401,11 +401,12 @@ export const getRotationAngle= (plot) => {
 
 /**
  * Is the image positioned so that north is up.
- * @param {WebPlot} plot
+ * @param {WebPlot|undefined} plot
  * @param {CoordinateSys} csys
  * @return {boolean}
  */
 export function isPlotNorth(plot, csys= CoordinateSys.EQ_J2000) {
+    if (!plot) return false;
     const ix = plot.dataWidth/ 2;
     const iy = plot.dataHeight/ 2;
     const cc= CysConverter.make(plot);

@@ -171,6 +171,7 @@ export class PlotState {
      */
     getRangeValues(band) { return this.get(band || this.firstBand()).rangeValues; }
 
+    setRangeValues(band,rv) { this.get(band).rangeValues= rv;}
 
     /**
      * @param band
@@ -290,7 +291,7 @@ export class PlotState {
      * @param {boolean} includeDirectAccessData include the includeDirectAccessData object
      */
     static convertToJSON(s, includeDirectAccessData= true) {
-        if (!s) return null;
+        if (!s) return undefined;
         const json= {};
         json.ctxStr=s.ctxStr;
         json.zoomLevel= s.zoomLevel;

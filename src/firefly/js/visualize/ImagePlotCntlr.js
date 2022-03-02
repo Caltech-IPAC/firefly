@@ -92,27 +92,18 @@ const PLOT_HIPS_FAIL= `${PLOTS_PREFIX}.PlotHiPSFail`;
 const ANY_REPLOT= `${PLOTS_PREFIX}.Replot`;
 
 /** Action Type: start the zoom process.  The image will appear zoomed by scaling, the server has not updated yet */
-const ZOOM_IMAGE_START= `${PLOTS_PREFIX}.ZoomImageStart`;
+const ZOOM_HIPS= `${PLOTS_PREFIX}.ZoomHiPS`;
 
 /** Action Type: The zoom from the server has complete */
 const ZOOM_IMAGE= `${PLOTS_PREFIX}.ZoomImage`;
-const ZOOM_IMAGE_FAIL= `${PLOTS_PREFIX}.ZoomImageFail`;
 const ZOOM_LOCKING= `${PLOTS_PREFIX}.ZoomEnableLocking`;
 
 
-/** Action Type: image with new color table call started */
-const COLOR_CHANGE_START= `${PLOTS_PREFIX}.ColorChangeStart`;
 /** Action Type: image with new color table loaded */
 const COLOR_CHANGE= `${PLOTS_PREFIX}.ColorChange`;
-const COLOR_CHANGE_FAIL= `${PLOTS_PREFIX}.ColorChangeFail`;
 
-
-/** Action Type: server image stretch call started */
-const STRETCH_CHANGE_START= `${PLOTS_PREFIX}.StretchChangeStart`;
 /** Action Type: image loaded with new stretch */
 const STRETCH_CHANGE= `${PLOTS_PREFIX}.StretchChange`;
-const STRETCH_CHANGE_FAIL= `${PLOTS_PREFIX}.StretchChangeFail`;
-
 
 /** Action Type: image rotated */
 const ROTATE= `${PLOTS_PREFIX}.Rotate`;
@@ -153,7 +144,7 @@ const CHANGE_MOUSE_READOUT_MODE=`${PLOTS_PREFIX}.changeMouseReadoutMode`;
 /** Action Type: delete a plotView */
 const DELETE_PLOT_VIEW=`${PLOTS_PREFIX}.deletePlotView`;
 
-const UPDATE_RAW_IMAGE_DATA= `${PLOTS_PREFIX}.updatePlotImageData`;
+const BYTE_DATA_REFRESH= `${PLOTS_PREFIX}.byteDataRefresh`;
 
 const PLOT_MASK_START= `${PLOTS_PREFIX}.plotMaskStart`;
 /** Action Type: add a mask image*/
@@ -315,14 +306,13 @@ function actionCreators() {
 export default {
     reducers, actionCreators,
     ANY_REPLOT, PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE, PLOT_HIPS, PLOT_HIPS_FAIL, CHANGE_HIPS,ABORT_HIPS,
-    ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE,ZOOM_LOCKING,
+    ZOOM_HIPS, ZOOM_IMAGE, ZOOM_LOCKING,
     CHANGE_CENTER_OF_PROJECTION, ROTATE, FLIP, CROP_START, CROP, CROP_FAIL,
-    COLOR_CHANGE_START, COLOR_CHANGE, COLOR_CHANGE_FAIL,
-    STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL, CHANGE_POINT_SELECTION, CHANGE_EXPANDED_MODE,
+    COLOR_CHANGE, STRETCH_CHANGE, CHANGE_POINT_SELECTION, CHANGE_EXPANDED_MODE,
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL, RECENTER, OVERLAY_COLOR_LOCKING, POSITION_LOCKING,
     RESTORE_DEFAULTS, CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,
     DELETE_PLOT_VIEW, CHANGE_ACTIVE_PLOT_VIEW, CHANGE_PRIME_PLOT, CHANGE_IMAGE_VISIBILITY,
-    PLOT_MASK, PLOT_MASK_START, PLOT_MASK_FAIL, PLOT_MASK_LAZY_LOAD, DELETE_OVERLAY_PLOT, UPDATE_RAW_IMAGE_DATA,
+    PLOT_MASK, PLOT_MASK_START, PLOT_MASK_FAIL, PLOT_MASK_LAZY_LOAD, DELETE_OVERLAY_PLOT, BYTE_DATA_REFRESH,
     OVERLAY_PLOT_CHANGE_ATTRIBUTES, WCS_MATCH, API_TOOLS_VIEW, CHANGE_MOUSE_READOUT_MODE,
     CHANGE_HIPS_IMAGE_CONVERSION, CHANGE_TABLE_AUTO_SCROLL, USE_TABLE_AUTO_SCROLL,REQUEST_LOCAL_DATA
 };
@@ -407,14 +397,15 @@ export function dispatchChangePrimePlot({plotId, primeIdx, dispatcher= flux.proc
 }
 
 /**
- * set if the base image is visible
+ * set if the base image is visible on a PlotView or an OverlayPlotView
  * @param {Object} p
  * @param {string} p.plotId
+ * @param {string} [p.imageOverlayId] if defined change the visibility on the OverlayPlotView match this idea
  * @param {boolean} p.visible - true if visible
- * @param {Function} p.dispatcher only for special dispatching uses such as remote
+ * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  */
-export function dispatchChangeImageVisibility({plotId, visible, dispatcher= flux.process}) {
-    dispatcher({ type: CHANGE_IMAGE_VISIBILITY, payload: { plotId, visible}});
+export function dispatchChangeImageVisibility({plotId, imageOverlayId, visible, dispatcher= flux.process}) {
+    dispatcher({ type: CHANGE_IMAGE_VISIBILITY, payload: { plotId, imageOverlayId, visible}});
 }
 
 /**
@@ -846,7 +837,6 @@ export function dispatchOverlayPlotChangeAttributes({plotId,imageOverlayId, attr
  * @param {string|UserZoomTypes} p.userZoomType (one of ['UP','DOWN', 'FIT', 'FILL', 'ONE', 'LEVEL', 'WCS_MATCH_PREV')
  * @param {boolean} [p.maxCheck]
  * @param {boolean} [p.zoomLockingEnabled]
- * @param {boolean} [p.forceDelay]
  * @param {number} [p.level] the level to zoom to, used only userZoomType 'LEVEL'
  * @param {number} [p.upDownPercent] value between 0 and 1 - 1 is 100% of the next step up or down
  * @param {string|ActionScope} [p.actionScope] default to group
@@ -869,17 +859,14 @@ export function dispatchOverlayPlotChangeAttributes({plotId,imageOverlayId, attr
  * action.dispatchZoom({plotId:’myPlot’, userZoomType:’FIT’ }};
  * @example
  * // Example of zoom to level, if you are connected to a widget that is changing  the level fast, zLevel is the variable with the zoom level
- * action.dispatchZoom({plotId:’myPlot’, userZoomType:’LEVEL’, level: zLevel, forceDelay: true }};
+ * action.dispatchZoom({plotId:’myPlot’, userZoomType:’LEVEL’, level: zLevel }};
  */
 export function dispatchZoom({plotId, userZoomType, maxCheck= true, upDownPercent=1,
-                             zoomLockingEnabled=false, forceDelay=false, level, devicePt,
-                             actionScope=ActionScope.GROUP,
-                             dispatcher= flux.process} ) {
+                             zoomLockingEnabled=false, level, devicePt,
+                             actionScope=ActionScope.GROUP, dispatcher= flux.process} ) {
     dispatcher({
         type: ZOOM_IMAGE,
-        payload :{
-            plotId, userZoomType, actionScope, maxCheck, zoomLockingEnabled, forceDelay, level, devicePt, upDownPercent,
-        }});
+        payload :{ plotId, userZoomType, actionScope, maxCheck, zoomLockingEnabled, level, devicePt, upDownPercent}});
 }
 
 /**
@@ -1041,11 +1028,11 @@ const creationActions= convertToIdentityObj([
 ]);
 
 const changeActions= convertToIdentityObj([
-    ZOOM_LOCKING, ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE, UPDATE_VIEW_SIZE, PROCESS_SCROLL,
-    CHANGE_PLOT_ATTRIBUTE, COLOR_CHANGE, COLOR_CHANGE_START, COLOR_CHANGE_FAIL, ROTATE, FLIP,
-    STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL, RECENTER, OVERLAY_COLOR_LOCKING, POSITION_LOCKING,
+    ZOOM_LOCKING, ZOOM_HIPS, ZOOM_IMAGE, UPDATE_VIEW_SIZE, PROCESS_SCROLL,
+    CHANGE_PLOT_ATTRIBUTE, COLOR_CHANGE, ROTATE, FLIP,
+    STRETCH_CHANGE, RECENTER, OVERLAY_COLOR_LOCKING, POSITION_LOCKING,
     PLOT_PROGRESS_UPDATE, OVERLAY_PLOT_CHANGE_ATTRIBUTES, CHANGE_PRIME_PLOT, CHANGE_CENTER_OF_PROJECTION,
-    CHANGE_HIPS, CHANGE_HIPS_IMAGE_CONVERSION, CHANGE_IMAGE_VISIBILITY, UPDATE_RAW_IMAGE_DATA,
+    CHANGE_HIPS, CHANGE_HIPS_IMAGE_CONVERSION, CHANGE_IMAGE_VISIBILITY, BYTE_DATA_REFRESH,
     REQUEST_LOCAL_DATA
 ]);
 

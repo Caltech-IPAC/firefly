@@ -15,12 +15,11 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
-import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
-import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
 import edu.caltech.ipac.visualize.plot.Histogram;
-import edu.caltech.ipac.visualize.plot.HistogramOps;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.RangeValues;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.Header;
 import nom.tam.fits.HeaderCard;
@@ -44,12 +43,10 @@ public class ImagePlotCreator {
 
     private static final Logger.LoggerImpl _log= Logger.getLogger();
 
-    static ImagePlotInfo[] makeAllNoBand(PlotState stateAry[],
-                                         FileReadInfo[] readAry,
-                                         ZoomChoice zoomChoice) throws FitsException {
+    static ImagePlotInfo[] makeAllNoBand(PlotState[] stateAry, FileReadInfo[] readAry) throws FitsException {
          // never use this method with three color plots
 
-         ImagePlotInfo piAry[]= new ImagePlotInfo[readAry.length];
+         ImagePlotInfo[] piAry= new ImagePlotInfo[readAry.length];
          FileReadInfo readInfo;
 
          for(int i= 0; (i<readAry.length); i++)  {
@@ -67,7 +64,7 @@ public class ImagePlotCreator {
              }
              ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
              frGroup.setFitsRead(readInfo.getBand(),readInfo.getFitsRead());
-             ImagePlot plot= createImagePlot(stateAry[i], frGroup, readInfo.getBand(),readInfo.getDataDesc(),zoomChoice, readAry.length>1);
+             ImagePlot plot= createImagePlot(stateAry[i], frGroup, readInfo.getBand(),readInfo.getDataDesc(),readAry.length>1);
              WebFitsData wfData= makeWebFitsData(frGroup, readInfo.getBand(),readInfo.getOriginalFile());
              Map<Band,WebFitsData> wfDataMap= new LinkedHashMap<>();
              wfDataMap.put(Band.NO_BAND,wfData);
@@ -81,11 +78,8 @@ public class ImagePlotCreator {
      }
 
     static ImagePlotInfo makeOneImagePerBand(PlotState state,
-                                             Map<Band, FileReadInfo[]> readInfoMap,
-                                             ZoomChoice zoomChoice)  throws FailedRequestException,
-                                                                            FitsException,
-                                                                            GeomException,
-                                                                            IOException {
+                                             Map<Band, FileReadInfo[]> readInfoMap)
+            throws FailedRequestException, FitsException, GeomException, IOException {
 
 
         ImagePlotInfo retval;
@@ -111,7 +105,7 @@ public class ImagePlotCreator {
             frGroup.setFitsRead(band,readInfo.getFitsRead());
             if (first) {
                 fileInfo= readInfo.getFileInfo();
-                plot= createImagePlot(state,frGroup,band, readInfo.getDataDesc(),zoomChoice,false);
+                plot= createImagePlot(state,frGroup,band, readInfo.getDataDesc(),false);
                 if (state.isThreeColor()) {
                     plot.setThreeColorBand(state.isBandVisible(band) ? readInfo.getFitsRead() :null,
                             band,frGroup);
@@ -150,12 +144,11 @@ public class ImagePlotCreator {
                                      ActiveFitsReadGroup frGroup,
                                      Band band,
                                      String plotDesc,
-                                     ZoomChoice zoomChoice,
                                      boolean    isMultiImage) throws FitsException {
 
         ImagePlot plot;
         RangeValues rv= state.getRangeValues();
-        float zoomLevel= zoomChoice.getZoomLevel();
+        float zoomLevel= state.getWebPlotRequest().getInitialZoomLevel();
         WebPlotRequest request= state.getPrimaryRequest();
         if (rv==null) {
             rv= FitsRead.getDefaultRangeValues();
@@ -182,7 +175,7 @@ public class ImagePlotCreator {
 
         if (state.isNewPlot()) { // new plot requires computing the zoom level
 
-            zoomLevel= computeZoomLevel(plot,zoomChoice);
+            zoomLevel= computeZoomLevel(plot, state);
             plot.getPlotGroup().setZoomTo(zoomLevel);
             state.setZoomLevel(zoomLevel);
         }
@@ -206,8 +199,7 @@ public class ImagePlotCreator {
         FitsCacher.clearCachedHDU(readInfo.getOriginalFile());
         plot.setThreeColorBand(state.isBandVisible(readInfo.getBand()) ? readInfo.getFitsRead() :null,
                                readInfo.getBand(),frGroup);
-        HistogramOps histOps= plot.getHistogramOps(band,frGroup);
-        FitsRead tmpFR= histOps.getFitsRead();
+        FitsRead tmpFR= frGroup.getFitsRead(band);
         if (tmpFR!=readInfo.getFitsRead() && readInfo.getWorkingFile()!=null) { // testing to see it the fits read got geomed when the band was added
             state.setImageIdx(0, band);
             retval = new ModFileWriter.GeomFileWriter(readInfo.getWorkingFile(),0,tmpFR,readInfo.getBand(),false);
@@ -220,13 +212,11 @@ public class ImagePlotCreator {
 
     private static void stretchBand(Band band, PlotState state, ImagePlot plot, ActiveFitsReadGroup frGroup) {
         RangeValues rv= state.getRangeValues(band);
-        HistogramOps histOps= plot.getHistogramOps(band,frGroup);
         if (rv==null) {
             rv= FitsRead.getDefaultFutureStretch();
             state.setRangeValues(rv, band);
         }
-        histOps.recomputeStretch(rv);
-
+        plot.getImageData().recomputeStretch(frGroup.getFitsReadAry(), band.getIdx(),rv);
     }
 
     private static void initPlotTitle(PlotState state,
@@ -297,25 +287,21 @@ public class ImagePlotCreator {
 
 
 
-    private static float computeZoomLevel(ImagePlot plot, ZoomChoice zoomChoice) {
+    private static float computeZoomLevel(ImagePlot plot, PlotState state) {
+        WebPlotRequest wpr= state.getWebPlotRequest();
         int width=  plot.getImageDataWidth();
         int height= plot.getImageDataHeight();
-        float retval= zoomChoice.getZoomLevel();
-        if (zoomChoice.getZoomType()== ZoomType.TO_WIDTH) {
-            retval= (float)zoomChoice.getWidth() / (float)width ;
-            if (zoomChoice.hasMaxZoomLevel()) {
-                if (retval>zoomChoice.getMaxZoomLevel()) retval=zoomChoice.getMaxZoomLevel();
-            }
+        float retval= wpr.getInitialZoomLevel();
+        ZoomType zoomType= wpr.getZoomType();
+        if (wpr.getZoomType()== ZoomType.TO_WIDTH) {
+            retval= wpr.getZoomToWidth() / (float)width ;
         }
-        else if (zoomChoice.getZoomType()== ZoomType.FULL_SCREEN || zoomChoice.getZoomType()== ZoomType.TO_WIDTH_HEIGHT) {
+        else if (zoomType== ZoomType.FULL_SCREEN || zoomType== ZoomType.TO_WIDTH_HEIGHT) {
             retval= VisUtil.getEstimatedFullZoomFactor(VisUtil.FullType.WIDTH_HEIGHT,width, height,
-                                                       zoomChoice.getWidth(), zoomChoice.getHeight());
-            if (zoomChoice.hasMaxZoomLevel()) {
-                if (retval>zoomChoice.getMaxZoomLevel()) retval=zoomChoice.getMaxZoomLevel();
-            }
+                                                       wpr.getZoomToWidth(), wpr.getZoomToHeight());
         }
-        else if (zoomChoice.getZoomType()== ZoomType.ARCSEC_PER_SCREEN_PIX) {
-            retval= (float)plot.getPixelScale() / zoomChoice.getArcsecPerScreenPix();
+        else if (zoomType== ZoomType.ARCSEC_PER_SCREEN_PIX) {
+            retval= (float)plot.getPixelScale() / wpr.getZoomArcsecPerScreenPix();
         }
         return retval;
     }

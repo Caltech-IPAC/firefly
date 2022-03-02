@@ -1,6 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import {isString} from 'lodash';
 import {initOffScreenCanvas} from './TileDrawHelper.jsx';
 import {createCanvas} from '../../util/WebUtil.js';
 
@@ -77,6 +78,7 @@ export function addFailedImage(url) {
 }
 
 export function isInFailTileCached(url) {
+    if (!isString(url)) return false;
     const time=  failedCachedImages.get(makeKey(url));
     if (!time) return false;
     const found= Date.now()-time < (1000 * 10); // search less than 10 seconds old

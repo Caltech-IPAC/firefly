@@ -147,7 +147,6 @@ export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_
  * @typedef {Object} RawData
  *
  * @prop {ThumbnailImage} thumbnailData
- * @prop {Array.<ScreenTileDef>} localScreenTileDefList
  * @prop {number} datamin
  * @prop {number} datamax
  * @prop {Object} processHeader
@@ -509,7 +508,7 @@ export const WebPlot= {
      * @param {boolean|undefined} useBlue
      * @return {WebPlot}
      */
-    replacePlotValues(plot, stateJson, tileData, rawData, bias, contrast, useRed,useGreen, useBlue) {
+    replacePlotValues(plot, stateJson, rawData, bias, contrast, useRed,useGreen, useBlue) {
         const plotState= PlotState.makePlotStateWithJson(stateJson);
         const zf= plotState.getZoomLevel();
         const screenSize= {width:plot.dataWidth*zf, height:plot.dataHeight*zf};
@@ -524,8 +523,8 @@ export const WebPlot= {
         }
 
         plot= {...plot,...{plotState, zoomFactor:zf,screenSize}};
-        if (tileData) plot.tileData= tileData;
-        if (rawData) plot.rawData= {...plot.rawData, localScreenTileDefList:rawData.localScreenTileDefList};
+        plot.tileData= undefined;
+        if (rawData) plot.rawData= {...plot.rawData};
 
         if (isNumber(bias) || isNumber(contrast) || isArray(bias) || isArray(contrast) ) {
             const {bandData:oldBandData}= plot.rawData;
@@ -627,7 +626,7 @@ export const isBlankImage= (plot) =>
         !plot?.plotState.isThreeColor() && plot?.plotState.getWebPlotRequest()?.getRequestType()===RequestType.BLANK;
 
 /**
- * @param {WebPlot} plot
+ * @param {WebPlot|undefined} plot
  * @param {number} zoomFactor
  * @return {WebPlot}
  */

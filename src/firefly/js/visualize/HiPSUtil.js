@@ -558,9 +558,10 @@ export function isTileInside(norder1, npix1, norder2, npix2) {
 
 /**
  * replace the hips projection if the coordinate system changes
- * @param {WebPlot} plot
+ * @param {WebPlot|undefined} plot
  * @param coordinateSys
  * @param {WorldPt} wp
+ * @return {WebPlot}
  */
 export function replaceHiPSProjection(plot, coordinateSys, wp = makeWorldPt(0, 0)) {
     const newWp = convert(wp, coordinateSys);

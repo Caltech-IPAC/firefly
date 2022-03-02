@@ -41,7 +41,7 @@ export function createHiPSDrawer(targetCanvas, GPU) {
     const hipsColorOps= getHipsColorOps(GPU);
 
 
-    return (plot, opacity,plotView, tileProcessInfo= {shouldProcess:false}) => {
+    return (plot, opacity,plotView) => {
         if (!isHiPS(plot)) return;
         abortLastDraw && abortLastDraw(); // stop any incomplete drawing
 
@@ -87,12 +87,12 @@ export function createHiPSDrawer(targetCanvas, GPU) {
 
         if (doDrawTransitionalImage) {
             drawTransitionalImage(fov,centerWp,targetCanvas,plot, plotView,norder, transitionNorder, hipsColorOps,
-                opacity, tileProcessInfo, tilesToLoad);
+                opacity, tilesToLoad);
         }
 
         const offscreenCanvas = makeOffScreenCanvas(plotView,plot,drawTiming!==DrawTiming.IMMEDIATE);
         abortLastDraw= drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, hipsColorOps, tilesToLoad, useAllSky,
-            opacity, tileProcessInfo, drawTiming);
+            opacity, drawTiming);
         lastDrawNorder= norder;
         lastFov= fov;
     };
@@ -110,11 +110,10 @@ export function createHiPSDrawer(targetCanvas, GPU) {
  * @param transitionNorder
  * @param hipsColorOps
  * @param opacity
- * @param tileProcessInfo
  * @param finalTileToLoad
  */
 function drawTransitionalImage(fov, centerWp, targetCanvas, plot, plotView,
-                               norder, transitionNorder, hipsColorOps, opacity, tileProcessInfo, finalTileToLoad) {
+                               norder, transitionNorder, hipsColorOps, opacity, finalTileToLoad) {
     const {viewDim}= plotView;
     let tilesToLoad;
     const {bias,contrast}= plot.rawData.bandData[0];
@@ -125,9 +124,9 @@ function drawTransitionalImage(fov, centerWp, targetCanvas, plot, plotView,
         const tilesToLoad3= findCellOnScreen(plot,viewDim,3, fov, centerWp);
         const offscreenCanvas = makeOffScreenCanvas(plotView,plot,false);
         drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, 2, hipsColorOps, tilesToLoad2, true,
-            opacity, tileProcessInfo, DrawTiming.IMMEDIATE, false);
+            opacity, DrawTiming.IMMEDIATE, false);
         drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, 3, hipsColorOps, tilesToLoad3, false,
-            opacity, tileProcessInfo, DrawTiming.IMMEDIATE);
+            opacity, DrawTiming.IMMEDIATE);
     }
     else {
         let lookMore= true;
@@ -138,14 +137,14 @@ function drawTransitionalImage(fov, centerWp, targetCanvas, plot, plotView,
             const hasSomeTiles= tilesToLoad.some( (tile)=> findTileCachedImage(createImageUrl(plot,tile),colorTableId,bias,contrast));
             if (hasSomeTiles || testNorder===3) { // if there are tiles or we need to do the allsky
                 drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, testNorder, hipsColorOps, tilesToLoad, testNorder===3,
-                    opacity, tileProcessInfo, DrawTiming.IMMEDIATE, false);
+                    opacity, DrawTiming.IMMEDIATE, false);
                 lookMore= false;
                 // console.log(`draw transi: transitionNorder: ${transitionNorder}, testNorder: ${testNorder}`);
             }
         }
         // draw what ever part of the nornder tiles that are in cache on top
         drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, hipsColorOps, finalTileToLoad, false,
-            opacity, tileProcessInfo, DrawTiming.IMMEDIATE);
+            opacity, DrawTiming.IMMEDIATE);
     }
 }
 
@@ -275,11 +274,10 @@ function shim2DevPtCorner(devPtCorners,centerDevPt, viewDim) {
  * @param tilesToLoad
  * @param useAllSky
  * @param opacity
- * @param tileProcessInfo
  * @param drawTiming
  * @param screenRenderEnabled
  */
-function drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, hipsColorOps, tilesToLoad, useAllSky, opacity, tileProcessInfo,
+function drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, hipsColorOps, tilesToLoad, useAllSky, opacity,
                      drawTiming= DrawTiming.ASYNC, screenRenderEnabled= true) {
     const {viewDim}= plotView;
     const rootPlot= primePlot(plotView); // bounding box should us main plot not overlay plot
@@ -289,8 +287,7 @@ function drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, hips
 
     if (!targetCanvas) return noOp;
     const screenRenderParams= {plotView, plot, targetCanvas, offscreenCanvas, opacity, offsetX, offsetY};
-    const drawer= makeHipsRenderer(screenRenderParams, tilesToLoad.length, !plot.asOverlay,
-                                   tileProcessInfo, screenRenderEnabled, hipsColorOps);
+    const drawer= makeHipsRenderer(screenRenderParams, tilesToLoad.length, !plot.asOverlay, screenRenderEnabled, hipsColorOps);
     if (plot.blank) {
         drawer.renderToScreen();
         return drawer.abort; // this abort function will any async promise calls stop before they draw

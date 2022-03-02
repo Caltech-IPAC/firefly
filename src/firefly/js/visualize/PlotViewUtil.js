@@ -13,8 +13,7 @@ import {getWavelength, isWLAlgorithmImplemented, PLANE, TAB} from './projection/
 import {getNumberHeader, HdrConst} from './FitsHeaderUtil.js';
 import {computeDistance, getRotationAngle, isCsysDirMatching, isEastLeftOfNorth, isPlotNorth} from './VisUtil';
 import {removeRawData} from './rawData/RawDataCache.js';
-import {MAX_DIRECT_IMAGE_SIZE, MAX_DIRECT_MASK_IMAGE_SIZE, MAX_RAW_IMAGE_SIZE} from './rawData/RawDataCommon.js';
-import {hasClearedDataInStore, hasLocalRawDataInStore, hasLocalStretchByteDataInStore} from './rawData/RawDataOps.js';
+import {hasClearedDataInStore, hasLocalStretchByteDataInStore} from './rawData/RawDataOps.js';
 import {ExpandType} from 'firefly/visualize/ImagePlotCntlr.js';
 
 
@@ -147,6 +146,7 @@ export function getPlotViewIdListInOverlayGroup(visRoot,pvOrId) {
 export function getAllPlotViewIdByOverlayLock(visRoot, pvOrId, hasPlots=false, plotTypeMustMatch) {
     if (!pvOrId) return [];
     const majorPv= (typeof pvOrId ==='string') ? getPlotViewById(visRoot,pvOrId) : pvOrId;
+    if (!majorPv) return [];
     const gid= majorPv.plotGroupId;
     const group= getPlotGroupById(visRoot,gid);
     const locked= hasOverlayColorLock(majorPv,group);
@@ -1109,30 +1109,6 @@ export function getMatchingRotationAngle(masterPv, pv) {
     if (targetRotation < 0) targetRotation += 360;
     if (targetRotation > 359) targetRotation %= 360;
     return targetRotation;
-}
-
-export function canLoadStretchData(plot) {
-    if (!plot || !isImage(plot)) return false;
-    return (plot.dataWidth*plot.dataHeight) < MAX_RAW_IMAGE_SIZE;
-}
-
-export function canLoadStretchDataDirect(plot, mask=false) {
-    if (!plot || !isImage(plot)) return false;
-    const size= (plot.dataWidth*plot.dataHeight);
-    return mask ?
-        size<Math.min(MAX_RAW_IMAGE_SIZE,MAX_DIRECT_MASK_IMAGE_SIZE)  :
-        size<Math.min(MAX_RAW_IMAGE_SIZE,MAX_DIRECT_IMAGE_SIZE);
-}
-
-export function isAllStretchDataLoadable(vr) {
-    return getPlotViewAry(vr)
-        .map( (pv) => primePlot(pv))
-        .filter( (p) => isImage(p))
-        .every( (p) => canLoadStretchData(p));
-}
-
-export function hasLocalRawData(plot) {
-    return hasLocalRawDataInStore(plot);
 }
 
 export function hasLocalStretchByteData(plot) {

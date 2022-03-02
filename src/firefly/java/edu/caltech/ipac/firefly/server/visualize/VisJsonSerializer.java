@@ -11,13 +11,10 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 
 import edu.caltech.ipac.firefly.data.RelatedData;
-import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.BandState;
 import edu.caltech.ipac.firefly.visualize.ClientFitsHeader;
-import edu.caltech.ipac.firefly.visualize.InsertBandInitializer;
 import edu.caltech.ipac.firefly.visualize.PlotImages;
 import edu.caltech.ipac.firefly.visualize.PlotState;
-import edu.caltech.ipac.firefly.visualize.StretchData;
 import edu.caltech.ipac.firefly.visualize.WebFitsData;
 import edu.caltech.ipac.firefly.visualize.WebPlotHeaderInitializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
@@ -212,19 +209,6 @@ public class VisJsonSerializer {
     }
 
 
-    public static JSONObject serializeInsertBandInitializer(InsertBandInitializer bInit) {
-        JSONObject map = new JSONObject();
-        map.put("initImages", serializePlotImages(bInit.getImages()));
-        map.put("plotState", serializePlotState(bInit.getPlotState()));
-        map.put("fitsData", serializeWebFitsData(bInit.getFitsData()));
-        map.put("band", bInit.getBand().toString());
-        map.put("dataDesc", bInit.getDataDesc());
-        return map;
-    }
-
-
-
-
     public static JSONObject serializePlotImages(PlotImages pi) {
         if (pi==null) return null;
         JSONObject map = new JSONObject();
@@ -314,29 +298,6 @@ public class VisJsonSerializer {
         }
         return map;
     }
-
-
-
-    public static StretchData deserializeStretchDataFromString(String s) {
-        if (s==null) return null;
-        try {
-            JSONParser parser= new JSONParser();
-            Object obj= parser.parse(s);
-            if (obj!=null && obj instanceof JSONObject) {
-                JSONObject sdJson= (JSONObject)obj;
-                return new StretchData(
-                        Band.parse(getStr(sdJson,"band")),
-                        RangeValues.parse(getStr(sdJson,"rv")),
-                        (Boolean)sdJson.get("bandVisible"));
-            }
-        } catch (ParseException e){
-            return null;
-        }
-        return null;
-    }
-
-
-
 
 
     public static PlotState deserializePlotStateFromString(String s) {

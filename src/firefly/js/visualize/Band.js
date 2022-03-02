@@ -4,7 +4,7 @@
 import Enum from 'enum';
 
 /**
- * @typedef  Band
+ * @typedef  {Object} Band
  * A Band in an image plot
  * must be enum 'RED', 'GREEN', 'BLUE', 'NO_BAND'
  * @prop RED

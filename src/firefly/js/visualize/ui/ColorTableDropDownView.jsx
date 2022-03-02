@@ -9,12 +9,7 @@ import { ToolbarButton, DropDownVerticalSeparator, } from '../../ui/ToolbarButto
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {dispatchColorChange} from '../ImagePlotCntlr.js';
 import {
-    primePlot,
-    getPlotViewIdListInOverlayGroup,
-    isThreeColor,
-    getActivePlotView,
-    isAllStretchDataLoadable, isAllStretchDataLoaded, getPlotViewById
-} from '../PlotViewUtil.js';
+    primePlot, getPlotViewIdListInOverlayGroup, isThreeColor, getActivePlotView, isAllStretchDataLoaded, } from '../PlotViewUtil.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {isImage} from '../WebPlot.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
@@ -172,7 +167,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
         setColorTableId(Number(plot.plotState.getColorTableId()));
     }, [plotId]);
 
-    if (!plot) return <div/>
+    if (!plot) return <div/>;
 
     const {plotState}= plot;
     const changeBiasContrastColor= (colorTableId, newBias, newContrast, useRed=true, useGreen=true, useBlue=true, band= Band.NO_BAND) => {
@@ -217,10 +212,6 @@ const AdvancedColorPanel= ({allowPopout}) => {
                             hasCheckBox={true} checkBoxOn={colorTableId===ct.id}
                             imageStyle={{height:8}}
                             onClick={() => changeBiasContrastColor(ct.id, bias,contrast)}/>) );
-
-
-    const allLoadAble= isAllStretchDataLoadable(visRoot());
-
 
 
     const makeAdvancedStandardFeatures= () => (
@@ -311,9 +302,9 @@ const AdvancedColorPanel= ({allowPopout}) => {
                 </div>
             }
             {!threeColor && makeItems()}
-            {allLoadAble && !threeColor && <DropDownVerticalSeparator useLine={true}/>}
-            {allLoadAble && !threeColor && makeAdvancedStandardFeatures()}
-            {allLoadAble && threeColor && makeAdvanced3CFeatures()}
+            {!threeColor && <DropDownVerticalSeparator useLine={true}/>}
+            {!threeColor && makeAdvancedStandardFeatures()}
+            {threeColor && makeAdvanced3CFeatures()}
         </SingleColumnMenu>
     );
 };

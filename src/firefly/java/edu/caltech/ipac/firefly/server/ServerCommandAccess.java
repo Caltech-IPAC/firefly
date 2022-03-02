@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 package edu.caltech.ipac.firefly.server;
-/**
+/*
  * User: roby
  * Date: 1/4/12
  * Time: 2:46 PM
@@ -41,21 +41,16 @@ public class ServerCommandAccess {
     }
 
     private static void initCommand() {
-        _cmdMap.put(ServerParams.FILE_FLUX_JSON, new VisServerCommands.FileFluxCmdJson());
-        _cmdMap.put(ServerParams.CREATE_PLOT,  new VisServerCommands.GetWebPlotCmd());
-        _cmdMap.put(ServerParams.CREATE_PLOT_GROUP,  new VisServerCommands.GetWebPlotGroupCmd());
-        _cmdMap.put(ServerParams.ZOOM,         new VisServerCommands.ZoomCmd());
-        _cmdMap.put(ServerParams.STRETCH,      new VisServerCommands.StretchCmd());
-        _cmdMap.put(ServerParams.CHANGE_COLOR, new VisServerCommands.ChangeColor());
-        _cmdMap.put(ServerParams.CROP,         new VisServerCommands.Crop());
-        _cmdMap.put(ServerParams.HISTOGRAM,    new VisServerCommands.ColorHistogram());
-        _cmdMap.put(ServerParams.STAT,         new VisServerCommands.AreaStat());
-        _cmdMap.put(ServerParams.GET_FLOAT_DATA,  new VisServerCommands.FloatAryCmd());
-        _cmdMap.put(ServerParams.GET_BYTE_DATA,  new VisServerCommands.ByteAryCmd());
-        _cmdMap.put(ServerParams.FITS_EXTRACTION,  new VisServerCommands.ExtractionCmd());
-
-        _cmdMap.put(ServerParams.DS9_REGION,   new VisServerCommands.DS9Region());
-        _cmdMap.put(ServerParams.SAVE_DS9_REGION,      new VisServerCommands.SaveDS9Region());
+        _cmdMap.put(ServerParams.FILE_FLUX_JSON,        new VisServerCommands.FileFluxCmdJson());
+        _cmdMap.put(ServerParams.CREATE_PLOT,           new VisServerCommands.GetWebPlotCmd());
+        _cmdMap.put(ServerParams.CREATE_PLOT_GROUP,     new VisServerCommands.GetWebPlotGroupCmd());
+        _cmdMap.put(ServerParams.CROP,                  new VisServerCommands.Crop());
+        _cmdMap.put(ServerParams.HISTOGRAM,             new VisServerCommands.ColorHistogram());
+        _cmdMap.put(ServerParams.STAT,                  new VisServerCommands.AreaStat());
+        _cmdMap.put(ServerParams.GET_BYTE_DATA,         new VisServerCommands.ByteAryCmd());
+        _cmdMap.put(ServerParams.FITS_EXTRACTION,       new VisServerCommands.ExtractionCmd());
+        _cmdMap.put(ServerParams.DS9_REGION,            new VisServerCommands.DS9Region());
+        _cmdMap.put(ServerParams.SAVE_DS9_REGION,       new VisServerCommands.SaveDS9Region());
         _cmdMap.put(ServerParams.GET_IMAGE_MASTER_DATA, new VisServerCommands.GetMasterImageData());
 
         //Workspaces

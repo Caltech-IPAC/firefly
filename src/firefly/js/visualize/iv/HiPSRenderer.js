@@ -27,12 +27,11 @@ const colorId = (plot) => {
  *          opacity:number, offsetX:number, offsetY:number}} screenRenderParams
  * @param totalCnt
  * @param isBaseImage
- * @param tileProcessInfo
  * @param screenRenderEnabled
  * @param hipsColorOps
  * @return {{drawTile(*=, *=): undefined, drawTileImmediate(*=, *, *=): void, abort(): void}}
  */
-export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, tileProcessInfo, screenRenderEnabled, hipsColorOps) {
+export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, screenRenderEnabled, hipsColorOps) {
 
     let renderedCnt=0;
     let abortRender= false;
@@ -84,14 +83,12 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, tile
             emptyTile= false;
         }
 
-        const {tileAttributes, shouldProcess, processor}= tileProcessInfo;
-
         let p;
         if (isInFailTileCached(tileData)) {
            p= Promise.reject();
         }
         else {
-            const {promise, cancelImageLoad} = retrieveAndProcessImage(tileData, tileAttributes, shouldProcess, processor);
+            const {promise, cancelImageLoad} = retrieveAndProcessImage(tileData);
             allImageCancelFuncs.push(cancelImageLoad);
             p= promise;
         }
@@ -146,6 +143,9 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, tile
      * @param {string} src - url of the image
      * @param {HiPSDeviceTileData} tile
      * @param allskyImage
+     * @param colorTableId
+     * @param bias
+     * @param contrast
      */
     const drawTileImmediate= (src, tile, allskyImage, colorTableId, bias, contrast) => {
         const image= allskyImage || findTileCachedImage(src, colorTableId, bias, contrast)?.image;

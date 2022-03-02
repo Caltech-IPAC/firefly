@@ -120,9 +120,6 @@ public class ServerParams {
     public static final String FILE_FLUX_JSON = "CmdFileFluxJson";
     public static final String CREATE_PLOT = "CmdCreatePlot";
     public static final String CREATE_PLOT_GROUP = "CmdCreatePlotGroup";
-    public static final String ZOOM = "CmdZoom";
-    public static final String STRETCH = "CmdStretch";
-    public static final String CHANGE_COLOR = "CmdChangeColor";
     public static final String FLIP_Y = "CmdFlipY";
     public static final String HISTOGRAM = "CmdHistogram";
     public static final String CROP = "CmdCrop";
@@ -176,6 +173,7 @@ public class ServerParams {
     public static final String INIT_APP = "CmdInitApp";
     public static final String LOGOUT = "CmdLogout";
     public static final String TILE_SIZE = "tileSize";
+    public static final String DATA_COMPRESS = "dataCompress";
     public static final String POINT_SIZE= "pointSize";
     public static final String EXTRACTION_TYPE= "extractionType";
     public static final String EXTRACTION_FLOAT_SIZE= "extractionFloatSize";
