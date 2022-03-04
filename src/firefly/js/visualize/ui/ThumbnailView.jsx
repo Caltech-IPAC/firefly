@@ -5,7 +5,6 @@
 import React, {memo, useEffect, useRef, useState} from 'react';
 import PropTypes from 'prop-types';
 import {isPlotNorth,getCenterPtOfPlot} from '../VisUtil.js';
-import {encodeServerUrl, getRootURL} from '../../util/WebUtil.js';
 import {DrawerComponent} from '../draw/DrawerComponent.jsx';
 import {makeScreenPt,makeWorldPt, makeDevicePt} from '../Point.js';
 import {CysConverter} from '../CsysConverter.js';
@@ -118,38 +117,27 @@ function scrollPlot(pt,pv,width,height) {
 
 function makeImageTag(pv, onImageLoad,size) {
     const plot= primePlot(pv);
-    const {url, width=size,height=size}= plot.tileData?.thumbnailImage ?? {};
+    const {width=size,height=size}= plot.tileData?.thumbnailImage ?? {};
     const s= { position : 'absolute', left : 0, top : 0, width, height };
     const transFormCss= makeThumbnailTransformCSS(pv.rotation,pv.flipX, pv.flipY);
     
     if (transFormCss) s.transform= transFormCss;
+    if (!hasLocalStretchByteData(plot)) return <div/>;
 
-    let imageURL;
-    if (hasLocalStretchByteData(plot)) {
-        const thumbnailCanvas= getEntry(plot?.plotImageId)?.thumbnailEncodedImage;
+    const thumbnailCanvas= getEntry(plot?.plotImageId)?.thumbnailEncodedImage;
 
-        const drawOnCanvas= (targetCanvas) => {
-            if (!targetCanvas) return;
-            const ctx= targetCanvas.getContext('2d');
-            ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
-            ctx.drawImage(thumbnailCanvas,0,0);
-        };
+    const drawOnCanvas= (targetCanvas) => {
+        if (!targetCanvas) return;
+        const ctx= targetCanvas.getContext('2d');
+        ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+        ctx.drawImage(thumbnailCanvas,0,0);
+    };
 
-        return (<div style={s}>
+    return (
+        <div style={s}>
             <SimpleCanvas drawIt={drawOnCanvas} width={thumbnailCanvas.width} height={thumbnailCanvas.height}
                           id={'thumbnail'}/>
         </div>);
-    }
-    else {
-        const params= {
-            file : url,
-            type : 'thumbnail',
-            state : plot.plotState.toJson(false)
-        };
-        imageURL= encodeServerUrl(getRootURL() + 'sticky/FireFly_ImageDownload', params);
-        return <img src={imageURL} style={s} ref={onImageLoad} /> ;
-    }
-
 }
 
 function getThumbZoomFact(plot, thumbW, thumbH) {
@@ -260,5 +248,3 @@ function makeDrawing(pv,width,height) {
     scrollBox.color= COLOR_DRAW_2;
     return [dataN,dataE,scrollBox];
 }
-
-

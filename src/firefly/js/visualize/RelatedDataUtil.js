@@ -6,7 +6,10 @@ import {isEmpty, difference,get, flatten, values, uniq} from 'lodash';
 import {primePlot, getPlotViewIdListInOverlayGroup, getPlotViewById, operateOnOthersInOverlayColorGroup} from './PlotViewUtil.js';
 import {WPConst} from './WebPlotRequest.js';
 import {RDConst} from './WebPlot.js';
-import {visRoot, dispatchPlotMask, dispatchOverlayPlotChangeAttributes, dispatchPlotMaskLazyLoad} from './ImagePlotCntlr.js';
+import {
+    visRoot, dispatchPlotMask, dispatchOverlayPlotChangeAttributes, dispatchPlotMaskLazyLoad,
+    dispatchChangeImageVisibility
+} from './ImagePlotCntlr.js';
 import {dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from './DrawLayerCntlr.js';
 import Artifact from '../drawingLayers/Artifact.js';
 
@@ -101,7 +104,7 @@ export function operateOnOverlayPlotViewsThatMatch(vr, opv, func) {
  */
 export function setMaskVisible(opv, visible) {
     if (!visible || opv.plot) {
-        dispatchOverlayPlotChangeAttributes({plotId:opv.plotId, imageOverlayId:opv.imageOverlayId, attributes:{visible}});
+        dispatchChangeImageVisibility({plotId:opv.plotId, imageOverlayId:opv.imageOverlayId,visible});
     }
     else if (visible && opv.lazyLoadPayload) {
         dispatchPlotMaskLazyLoad(opv.lazyLoadPayload);

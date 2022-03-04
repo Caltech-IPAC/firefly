@@ -3,27 +3,18 @@
  */
 package edu.caltech.ipac.visualize.draw;
 
-import edu.caltech.ipac.astro.CoordException;
-import edu.caltech.ipac.astro.target.TargetUtil;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
-import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImageHeader;
-import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.PixelValueException;
-import edu.caltech.ipac.visualize.plot.Plot;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
-import edu.caltech.ipac.visualize.plot.Pt;
-import edu.caltech.ipac.visualize.plot.WorldPt;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
-import java.awt.geom.Point2D;
+import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
-import java.text.NumberFormat;
 import java.util.HashMap;
 
 
@@ -34,159 +25,67 @@ import java.util.HashMap;
  */
 public class AreaStatisticsUtil {
     public enum WhichDir {LON, LAT }
-    public enum ReadoutMode {HMS, DECIMAL }
-    private static final NumberFormat  _nf   = NumberFormat.getInstance();// OK for i18n
-
-    public enum AreaBand {
-        RED(Band.RED, "red"),
-        GREEN(Band.GREEN, "green"),
-        BLUE(Band.BLUE, "blue"),
-        NO_BAND(Band.NO_BAND, "") ;
-
-        AreaBand(Band band, String label) {
-            _band = band;
-            _label = label;
-        }
-        Band _band;
-        String _label;
-    }
+    private static final double DtoR = Math.PI/180.0; // degrees to radians conversion factor
 
 
-    // degrees to readians conversion factor
-    private static final double DtoR = Math.PI/180.0;
 
-    // min, max, centroid, and flux weighted centroid
-    // will be displayed as a number of JTextPanes
-    // positioned using 4x3 GridLayout
+    public static HashMap<Metrics, Metric> getAreaStatistics(ActiveFitsReadGroup frGroup, String areaShape, double rotateAngle, Band band,
+                                                  ImagePt pt1, ImagePt pt2, ImagePt pt3, ImagePt pt4) {
 
+        Shape shape;
 
-    public static String formatPosHtml(Plot plot, ImageWorkSpacePt ip) {
-        return formatReadoutByImagePt(plot, ip, "<br>");
-    }
-
-
-    public static String formatReadoutByImagePt(Plot plot, ImageWorkSpacePt ipt, String separator) {
-        String retval;
-        try {
-            Point2D screenPt = null;
-            ReadoutMode readoutMode = ReadoutMode.HMS;
-            CoordinateSys coordSys= CoordinateSys.EQ_J2000;
-            if (coordSys.equals(CoordinateSys.SCREEN_PIXEL)) {
-                screenPt = plot.getScreenCoords(ipt);
+        if (areaShape.equals("circle")) {
+            double x_1 = Math.min(pt1.getX(), pt3.getX());
+            double x_2 = Math.max(pt1.getX(), pt3.getX());
+            double y_1 = Math.min(pt1.getY(), pt3.getY());
+            double y_2 = Math.max(pt1.getY(), pt3.getY());
+            if (rotateAngle != 0.0) {
+                shape = makeRotatedEllipse(pt1, pt2, pt3);
+            } else {
+                shape = new Ellipse2D.Double(x_1, y_1, (x_2 - x_1), (y_2 - y_1));
             }
-	    ImagePt ip = new ImagePt(ipt.getX(), ipt.getY());
-            retval = getReadoutByImagePt(plot, ip, screenPt, WhichDir.LON, readoutMode, coordSys) +
-                     separator +
-                     getReadoutByImagePt(plot, ip, screenPt, WhichDir.LAT, readoutMode, coordSys);
-            return retval;
-        } catch (Exception e) {
-            return "";
-        }
-    }
 
-    private static String getReadoutByImagePt(Plot plot,
-                                       ImagePt ip,
-                                       Point2D screenPt,
-                                       WhichDir dir,
-                                       ReadoutMode mode,
-                                       CoordinateSys coordSys) {
-        String retStr;
-        if (plot == null) {
-            retStr= "";
-        }
-        else if (coordSys.equals(CoordinateSys.PIXEL)) {
-            retStr= getDecimalXY(getValue(ip,dir)-0.5 , dir, coordSys);
-        }
-        else if (coordSys.equals(CoordinateSys.SCREEN_PIXEL)) {
-            retStr= getDecimalXY(getValue(screenPt,dir), dir,
-                                  CoordinateSys.SCREEN_PIXEL);
-        }
-        else {
-            try {
-		ImageWorkSpacePt iwspt = new ImageWorkSpacePt(ip.getX(), ip.getY());
-                WorldPt degPt= plot.getWorldCoords(iwspt, coordSys);
-                if (mode == ReadoutMode.HMS) {
-                    retStr= getHmsXY(getValue(degPt,dir), dir, coordSys);
-                }
-                else if (mode == ReadoutMode.DECIMAL) {
-                    retStr= getDecimalXY(getValue(degPt,dir), dir, coordSys);
-                }
-                else {
-                    retStr= null;
-                }
-            } catch (ProjectionException pe) {
-                retStr= "";
-            }
-        }
-        return retStr;
-    }
+        } else { // rectangle
+            GeneralPath genPath = new GeneralPath();
+            genPath.moveTo((float) pt1.getX(), (float) pt1.getY());
 
-    private static String getDecimalXY(double val,
-                                WhichDir dir,
-                                CoordinateSys coordSys) {
+            genPath.lineTo((float) pt4.getX(), (float) pt4.getY());
+            genPath.lineTo((float) pt3.getX(), (float) pt3.getY());
+            genPath.lineTo((float) pt2.getX(), (float) pt2.getY());
+            genPath.lineTo((float) pt1.getX(), (float) pt1.getY());
 
-        String desc= null;
-        if (dir==WhichDir.LON) {
-            desc= coordSys.getlonShortDesc();
+            shape = genPath;
         }
-        else if (dir==WhichDir.LAT) {
-            desc= coordSys.getlatShortDesc();
-        }
-        return desc + _nf.format(val);
-    }
 
-    private static String getHmsXY(double val, WhichDir which, CoordinateSys coordSys) {
-        String retStr;
-        try {
-            if (which==WhichDir.LON) {
-                retStr= coordSys.getlonShortDesc() +
-                        TargetUtil.convertLonToString(val, coordSys.isEquatorial());
-            }
-            else if (which==WhichDir.LAT) {
-                retStr= coordSys.getlatShortDesc() +
-                        TargetUtil.convertLatToString(val, coordSys.isEquatorial());
-            }
-            else {
-                retStr= null;
-            }
-        } catch (CoordException ce) {
-            retStr= "";
-        }
-        return retStr;
+        Rectangle2D boundingBox = shape.getBounds2D();
+
+        double minX = boundingBox.getMinX();
+        double maxX = boundingBox.getMaxX();
+        double minY = boundingBox.getMinY();
+        double maxY = boundingBox.getMaxY();
+
+        FitsRead fr= frGroup.getFitsRead(band);
+        minX = Math.max(0, minX);
+        maxX = Math.min(fr.getNaxis1() - 1, maxX);
+        minY = Math.max(0, minY);
+        maxY = Math.min(fr.getNaxis2() - 1, maxY);
+
+        Rectangle2D.Double newBoundingBox = new Rectangle2D.Double(minX, minY, (maxX - minX), (maxY - minY));
+        //what to do about selected band?
+        HashMap<Metrics, Metric> metrics = AreaStatisticsUtil.getStatisticMetrics(
+                frGroup, band, shape, newBoundingBox, rotateAngle);
+        return metrics;
     }
 
 
-
-    private static double getValue(Point2D pt, WhichDir dir) {
-        double val;
-        if (dir==WhichDir.LON) {
-            val= pt.getX();
-        }
-        else if (dir==WhichDir.LAT) {
-            val= pt.getY();
-        }
-        else {
-            val= 0;
-        }
-        return val;
+    // create an ellipse containing the information of ellipse center and length of major and minor axis
+    private static Ellipse2D.Double makeRotatedEllipse(ImagePt pt1, ImagePt pt2, ImagePt pt3) {
+        double a = Math.sqrt(Math.pow((pt1.getX() - pt2.getX()), 2) + Math.pow((pt1.getY() - pt2.getY()), 2));
+        double b = Math.sqrt(Math.pow((pt2.getX() - pt3.getX()), 2) + Math.pow((pt2.getY() - pt3.getY()), 2));
+        double x_c = (pt1.getX() + pt3.getX())/2;
+        double y_c = (pt1.getY() + pt3.getY())/2;
+        return new Ellipse2D.Double(x_c - a/2, y_c - b/2, a, b);
     }
-
-    private static double getValue(Pt pt, WhichDir dir) {
-        double val;
-        if (dir==WhichDir.LON) {
-            val= pt.getX();
-        }
-        else if (dir==WhichDir.LAT) {
-            val= pt.getY();
-        }
-        else {
-            val= 0;
-        }
-        return val;
-    }
-
-
-
 
 
     /**
@@ -239,13 +138,12 @@ public class AreaStatisticsUtil {
 
     /**
      * Get hash map with Area Statistics Metrics
-     * @param plot  image plot
      * @param selectedBand selected color band, one of (ImagePlot.NO_BAND, ImagePlot.RED, ImagePlot.BLUE, ImagePlot.GREEN)
      * @param shape shape that contains region of calculation
      * @param boundingBox if not null, region of calculation will be intersection of shape and boundingBox
      * @return map of calculated metrics by metric id
      */
-    public static HashMap<Metrics, Metric> getStatisticMetrics(ImagePlot plot, ActiveFitsReadGroup frGroup,
+    public static HashMap<Metrics, Metric> getStatisticMetrics(ActiveFitsReadGroup frGroup,
                                                                Band selectedBand, Shape shape,
                                                                Rectangle2D boundingBox, double rAngle) {
 
@@ -278,36 +176,29 @@ public class AreaStatisticsUtil {
 
 
         /* adjust minX, minY, maxX, maxY to be centered on a pixel */
-        ImageWorkSpacePt iwwspt = new ImageWorkSpacePt(minX,minY);
-        ImagePt ippt = plot.getImageCoords(iwwspt);
+        ImagePt ippt =  new ImagePt(minX,minY);
         ippt = new ImagePt(
                 Math.rint(ippt.getX() + 0.5) -0.5,
                 Math.rint(ippt.getY() + 0.5) -0.5);
-        iwwspt = plot.getImageCoords(ippt);
-        minX = iwwspt.getX();
-        minY = iwwspt.getY();
+        minX = ippt.getX();
+        minY = ippt.getY();
 
-        iwwspt = new ImageWorkSpacePt(maxX,maxY);
-        ippt = plot.getImageCoords(iwwspt);
+        ippt = new ImagePt(maxX,maxY);
         ippt = new ImagePt(
                 Math.rint(ippt.getX() + 0.5) -0.5,
                 Math.rint(ippt.getY() + 0.5) -0.5);
-        iwwspt = plot.getImageCoords(ippt);
-        maxX = iwwspt.getX();
-        maxY = iwwspt.getY();
+        maxX = ippt.getX();
+        maxY = ippt.getY();
 
         // I need to take into account imageScaleFactor from FitsRead
+        FitsRead fr= selectedBand==Band.NO_BAND ? frGroup.getFitsRead(Band.NO_BAND) : frGroup.getFitsRead(selectedBand);
         for (double y=minY; y<=maxY; y+=imageScaleFactor ) {
             for (double x=minX; x<=maxX; x+=imageScaleFactor) {
                 try {
                     if ((rAngle != 0.0 && !rotatedEllipseContains((Ellipse2D.Double)shape, x, y, rAngle)) ||
                         (rAngle == 0.0 && !shape.contains(x, y)))
                         continue;
-                    if (selectedBand == Band.NO_BAND) {
-                        flux = plot.getFlux(new ImageWorkSpacePt(x, y),frGroup);
-                    } else {
-                        flux = plot.getFlux(frGroup, selectedBand, new ImageWorkSpacePt(x, y));
-                    }
+                    flux= fr.getFlux(new ImagePt(x,y));
                     if (Double.isNaN(flux))
                     {
                         continue;
@@ -337,13 +228,12 @@ public class AreaStatisticsUtil {
             }
         }
         if (nPixels == 0) {
-            HashMap<Metrics, Metric> metrics = new HashMap<Metrics, Metric>(1);
+            HashMap<Metrics, Metric> metrics = new HashMap<>(1);
             metrics.put(Metrics.NUM_PIXELS, new Metric("Number Of Pixels", null, 0, ""));
             return metrics;
         }
 
-        String fluxUnits = ((selectedBand == Band.NO_BAND) ? plot.getFluxUnits(frGroup) : plot.getFluxUnits(selectedBand,frGroup));
-
+        String fluxUnits = fr.getFluxUnits();
 
         // calculate the centroid position
         double xCentroid = xSum / nPixels;
@@ -386,7 +276,7 @@ public class AreaStatisticsUtil {
 	    integratedFluxUnits = "mag";
 	}
 
-        HashMap<Metrics, Metric> metrics = new HashMap<Metrics, Metric>(Metrics.values().length);
+        HashMap<Metrics, Metric> metrics = new HashMap<>(Metrics.values().length);
 
         ImageWorkSpacePt maxIp = new ImageWorkSpacePt(maximumX, maximumY);
         metrics.put(Metrics.MAX, new Metric("Maximum Flux", maxIp, maximumFlux, fluxUnits));
@@ -408,4 +298,3 @@ public class AreaStatisticsUtil {
     }
 
 }
-

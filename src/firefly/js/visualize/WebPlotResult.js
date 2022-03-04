@@ -5,7 +5,6 @@ export const WebPlotResult= {
 
     PLOT_CREATE : 'PlotCreate',
     PLOT_STATE : 'PlotState',
-    INSERT_BAND_INIT : 'InsertBand',
     STRING: 'String',
     PLOT_IMAGES: 'PlotImages',
     FLUX_VALUE: 'FluxValue',

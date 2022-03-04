@@ -189,7 +189,12 @@ export function initScrollCenterPoint(pv)  {
     }
 }
 
-
+/**
+ *
+ * @param {plotView} pv
+ * @param nextIdx
+ * @return {PlotView}
+ */
 export function changePrimePlot(pv, nextIdx) {
     const {plots}= pv;
     if (!plots[nextIdx]) return pv;
@@ -294,8 +299,8 @@ export function replacePlotView(plotViewAry,newPlotView) {
 
 /**
  *
- * @param {PlotView} plotView
- * @param {WebPlot} primePlot
+ * @param {PlotView|undefined} plotView
+ * @param {WebPlot|undefined} primePlot
  * @return {PlotView} return the new PlotView object
  */
 export function replacePrimaryPlot(plotView,primePlot) {
@@ -324,8 +329,8 @@ export function updatePlotGroupScrollXY(visRoot, plotId,plotViewAry, plotGroupAr
  * This function all all the safety checks for undefined plotview or plots. It is
  * always safe to call.
  * @param {WcsMatchType} wcsMatchType
- * @param {PlotView} masterPv - master PlotView
- * @param {PlotView} matchToPv - match to PlotView
+ * @param {PlotView|undefined} masterPv - master PlotView
+ * @param {PlotView|undefined} matchToPv - match to PlotView
  * @return {PlotView} a new version of matchToPv with the scroll position matching
  */
 export function updateScrollToWcsMatch(wcsMatchType, masterPv, matchToPv) {

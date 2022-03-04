@@ -22,7 +22,6 @@ public class WebPlotResult implements Iterable<Map.Entry<String,Object>> {
     public static final String PLOT_CREATE = "PlotCreate";
     public static final String PLOT_CREATE_HEADER = "PlotCreateHeader";
     public static final String PLOT_STATE = "PlotState";
-    public static final String INSERT_BAND_INIT = "InsertBand";
     public static final String STRING= "String";
     public static final String PLOT_IMAGES= "PlotImages";
     public static final String FLUX_VALUE= "FluxValue";
@@ -42,14 +41,14 @@ public class WebPlotResult implements Iterable<Map.Entry<String,Object>> {
     public static final String TITLE= "Title";
     public static final String RESULT_ARY= "resultAry";
 
-    private String _ctxStr;
-    private boolean _success;
-    private String _briefFailReason;
-    private String _userFailReason;
-    private String _detailFailReason;
+    private final String _ctxStr;
+    private final boolean _success;
+    private final String _briefFailReason;
+    private final String _userFailReason;
+    private final String _detailFailReason;
     private String _requestKey;
-    private String _plotId;
-    private HashMap<String, Object> _map= new HashMap<>(3);
+    private final String _plotId;
+    private final HashMap<String, Object> _map= new HashMap<>(3);
 
 //======================================================================
 //----------------------- Constructors ---------------------------------

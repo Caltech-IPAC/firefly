@@ -210,6 +210,11 @@ public class SrvParam {
         }
     }
 
+    public String getOptional(String key, String defValue) {
+        String v= getOptional(key);
+        return (v==null) ? defValue : v;
+    }
+
     public float getOptionalFloat(String key, float defValue) {
         String ary[]= paramMap.get(key);
         if (ary != null && ary.length>0) {

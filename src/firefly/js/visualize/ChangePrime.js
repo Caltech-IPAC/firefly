@@ -76,10 +76,7 @@ function changeScrollToImagePt(visRoot, plotId, scrollToImagePt) {
 }
 
 const addWatcher= (plotId,scrollToImagePt) => dispatchAddActionWatcher( {
-    callback:zoomCompleteWatch,
-    params:{plotId,scrollToImagePt},
-    actions:[ImagePlotCntlr.ZOOM_IMAGE, ImagePlotCntlr.ZOOM_IMAGE_FAIL]
-});
+    callback:zoomCompleteWatch, params:{plotId,scrollToImagePt}, actions:[ImagePlotCntlr.ZOOM_IMAGE] });
 
 
 function checkZoom(plotId, oldP, newP, scrollToImagePt, visRoot) {

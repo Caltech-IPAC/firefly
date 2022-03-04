@@ -66,36 +66,6 @@ export const callGetAreaStatistics= (state, ipt1, ipt2, ipt3, ipt4, areaShape = 
                 [ServerParams.ROTATION]: rotation }, true);
 
 
-/**
- *
- * @param {Array} stateAry
- * @param {number} level
- * @param {boolean} isFullScreen hint, will only make on file
- */
-export function callSetZoomLevel(stateAry, level, isFullScreen) {
-    const params= makeParamsWithStateAry(stateAry,false, [
-        {name:ServerParams.LEVEL, value:level},
-        {name:ServerParams.FULL_SCREEN, value : isFullScreen},
-    ]);
-    return doJsonRequest(ServerParams.ZOOM, params, true);
-}
-
-
-export function callChangeColor(state, colorTableId) {
-    const params= [
-        {name:ServerParams.STATE, value: state.toJson(false)},
-        {name:ServerParams.COLOR_IDX, value:colorTableId}
-    ];
-    return doJsonRequest(ServerParams.CHANGE_COLOR, params, true);
-}
-
-
-export function callRecomputeStretch(state, stretchDataAry) {
-    const params= { [ServerParams.STATE]: state.toJson(false)};
-    stretchDataAry.forEach( (sd,idx) => params[ServerParams.STRETCH_DATA+idx]=  JSON.stringify(sd));
-    return doJsonRequest(ServerParams.STRETCH, params, true);
-}
-
 export function callCrop(stateAry, corner1ImagePt, corner2ImagePt, cropMultiAll) {
     const params= makeParamsWithStateAry(stateAry,false, [
         {name:ServerParams.PT1, value: corner1ImagePt.toString()},

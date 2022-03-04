@@ -534,17 +534,12 @@ public class ImagePlot extends Plot implements Serializable {
      */
 
    private double getFluxFromFitsRead(FitsRead fr, ImageWorkSpacePt sipt) throws PixelValueException {
-       double retval= Double.NaN;
-       if (fr!=null) {
-           double xpass= sipt.getX()- ((double)getOffsetX());
-           double ypass= sipt.getY()- ((double)getOffsetY());
-           ImagePt ipt = new ImagePt(xpass, ypass);
-           retval=  fr.getFlux(ipt);
-       }
-       return retval;
+       if (fr==null) return Double.NaN;
+       ImagePt ipt = new ImagePt(sipt.getX(), sipt.getY());
+       return fr.getFlux(ipt);
    }
 
-   private String getFluxUnitsFromFitsRead(FitsRead fr) { return (fr!=null)  ? fr.getFluxUnits() : null; }
+    private String getFluxUnitsFromFitsRead(FitsRead fr) { return (fr!=null)  ? fr.getFluxUnits() : null; }
 
     /**
      * get units that this flux data is in.
@@ -655,13 +650,6 @@ public class ImagePlot extends Plot implements Serializable {
 //======================
 
     public ImageDataGroup getImageData() { return _imageData; }
-
-
-    public HistogramOps getHistogramOps(Band band, ActiveFitsReadGroup frGroup) {
-        FitsRead fr= frGroup.getFitsRead(band);
-        Assert.argTst(fr!=null, "You have not set a fits read for the passed band");
-        return new HistogramOps(frGroup.getFitsReadAry(),band, _imageData);
-    }
 
     //======================
    public boolean coordsWrap(WorldPt wp1, WorldPt wp2) {

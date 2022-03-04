@@ -57,7 +57,7 @@ function creator() {
         callback:relocateCompass,
         params: {id},
         actions:[ImagePlotCntlr.RECENTER, ImagePlotCntlr.PROCESS_SCROLL, ImagePlotCntlr.ZOOM_IMAGE,
-                 ImagePlotCntlr.ZOOM_IMAGE_START, ImagePlotCntlr.ROTATE, ImagePlotCntlr.FLIP]
+                 ImagePlotCntlr.ZOOM_HIPS, ImagePlotCntlr.ROTATE, ImagePlotCntlr.FLIP]
     });
     return DrawLayer.makeDrawLayer( id, TYPE_ID, selHelpText,
                                     options, drawingDef, actionTypes);

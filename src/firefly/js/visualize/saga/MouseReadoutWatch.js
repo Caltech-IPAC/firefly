@@ -11,13 +11,7 @@ import {callGetFileFlux} from '../../rpc/PlotServicesJson.js';
 import {Band} from '../Band.js';
 import {MouseState} from '../VisMouseSync.js';
 import {CysConverter} from '../CsysConverter.js';
-import {
-    getPixScaleArcSec,
-    getScreenPixScaleArcSec,
-    isImage,
-    isHiPS,
-    getFluxUnits
-} from '../WebPlot.js';
+import { getPixScaleArcSec, getScreenPixScaleArcSec, isImage, isHiPS, getFluxUnits } from '../WebPlot.js';
 import {getPlotTilePixelAngSize} from '../HiPSUtil.js';
 import {mouseUpdatePromise, fireMouseReadoutChange} from '../VisMouseSync';
 import {
@@ -25,15 +19,12 @@ import {
     getImageCubeIdx,
     getPtWavelength, getWavelengthParseFailReason,
     getWaveLengthUnits, hasPixelLevelWLInfo, hasPlaneOnlyWLInfo,
-    isImageCube, wavelengthInfoParsedSuccessfully, isThreeColor, hasLocalRawData
-} from '../PlotViewUtil';
+    isImageCube, wavelengthInfoParsedSuccessfully, } from '../PlotViewUtil';
 import {getNumberHeader, HdrConst} from '../FitsHeaderUtil.js';
-import {getFluxDirect} from '../rawData/RawDataOps.js';
 
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const PAUSE_DELAY= 30;
-const LOCAL_PAUSE_DELAY= 30;
 
 
 /**
@@ -110,26 +101,18 @@ function* processAsyncDataImmediate(plotView, worldPt, screenPt, imagePt, threeC
 
 function* processAsyncDataDelayed(plotView, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder) {
     const plot= primePlot(plotView);
-    const mousePausedRaceWinner = yield race({ mouseCtx: call(mouseUpdatePromise), timer: call(delay, hasLocalRawData(plot) ? LOCAL_PAUSE_DELAY :PAUSE_DELAY) });
+    const mousePausedRaceWinner = yield race({ mouseCtx: call(mouseUpdatePromise), timer: call(delay, PAUSE_DELAY) });
 
     if (mousePausedRaceWinner.mouseCtx) return mousePausedRaceWinner.mouseCtx;
 
     try {
-        let mouseMoveRaceWinner;
-        if (hasLocalRawData(primePlot(plotView))) {
-            mouseMoveRaceWinner={readoutItems: yield call(makeAsyncReadout,plotView, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder)};
-        }
-        else {
-            mouseMoveRaceWinner = yield race({
+        const mouseMoveRaceWinner = yield race({
                 mouseCtx: call(mouseUpdatePromise),
                 readoutItems: call(makeAsyncReadout,plotView, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder)
             });
-        }
         if (mouseMoveRaceWinner.mouseCtx) return mouseMoveRaceWinner.mouseCtx;
 
         if (mouseMoveRaceWinner.readoutItems) {
-            // dispatchReadoutData({plotId:plotView.plotId,readoutItems:mouseMoveRaceWinner.readoutItems,
-            //                  threeColor, readoutKey:getReadoutKey(plot)});
             fireMouseReadoutChange({plotId:plotView.plotId,readoutItems:mouseMoveRaceWinner.readoutItems,
                 threeColor, readoutType:getReadoutKey(plot)});
             const mouseCtx = yield call(mouseUpdatePromise);
@@ -305,31 +288,15 @@ function makeReadoutWithFlux(readout, plot, fluxResult,threeColor) {
 function doFluxCall(plotView,iPt) {
     const plot= primePlot(plotView);
     if (CysConverter.make(plot).pointInPlot(iPt)) {
-        if (hasLocalRawData(plot)) {
-           if (isThreeColor(plot))  {
-               // const gf= (band) => plot.plotState.isBandUsed(band) ? {[band.key]: getFluxDirect(plot,iPt,band)} : Promise.resolve();
-               const gf= (band) => plot.plotState.isBandUsed(band) ? getFluxDirect(plot,iPt,band) : Promise.resolve();
-               const threeRet= Promise.all([gf(Band.RED), gf(Band.GREEN), gf(Band.BLUE)]);
-               return threeRet.then( (fluxAry) => {
-                   return { [Band.RED.key]:fluxAry[0], [Band.GREEN.key]:fluxAry[1], [Band.BLUE.key]:fluxAry[2]};
-               });
-           }
-           else {
-               return getFluxDirect(plot,iPt).then( (result) => {
-                   return {[Band.NO_BAND.key]: result};
-               });
-           }
-        } else {
-            const plotStateAry= getPlotStateAry(plotView);
-            return callGetFileFlux(plotStateAry, iPt)
-                .then((result) => {
-                    return result;
-                })
-                .catch((e) => {
-                    console.log(`flux error: ${plotView.plotId}`, e);
-                    return ['', '', ''];
-                });
-        }
+        const plotStateAry= getPlotStateAry(plotView);
+        return callGetFileFlux(plotStateAry, iPt)
+            .then((result) => {
+                return result;
+            })
+            .catch((e) => {
+                console.log(`flux error: ${plotView.plotId}`, e);
+                return ['', '', ''];
+            });
     }
     else {
         return Promise.resolve();

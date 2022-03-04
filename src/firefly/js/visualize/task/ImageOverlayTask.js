@@ -2,13 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {logger} from '../../util/Logger.js';
-import ImagePlotCntlr, {makeUniqueRequestKey, IMAGE_PLOT_KEY, dispatchPlotMask, dispatchZoom, dispatchPlotMaskLazyLoad} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {makeUniqueRequestKey, IMAGE_PLOT_KEY, dispatchPlotMaskLazyLoad} from '../ImagePlotCntlr.js';
 import {
     primePlot,
     getOverlayByPvAndId,
     getPlotViewById,
     getOverlayById,
-    hasLocalStretchByteData, canLoadStretchDataDirect
+    hasLocalStretchByteData,
 } from '../PlotViewUtil.js';
 import {PlotState} from '../PlotState.js';
 import {RequestType} from '../RequestType.js';
@@ -213,8 +213,8 @@ function processMaskSuccessResponse(dispatcher, payload, result) {
         const plotState= PlotState.makePlotStateWithJson(PlotCreate[0].plotState);
         const imageOverlayId= plotState.getWebPlotRequest().getPlotId();
 
-        var plot= WebPlot.makeWebPlotData(imageOverlayId, PlotCreate[0], {}, true);
-        if (canLoadStretchDataDirect(plot,true)) plot.tileData = undefined;
+        const plot= WebPlot.makeWebPlotData(imageOverlayId, PlotCreate[0], {}, true);
+        plot.tileData = undefined;
         const resultPayload= clone(payload, {plot});
         dispatcher({type: ImagePlotCntlr.PLOT_MASK, payload: resultPayload});
     }

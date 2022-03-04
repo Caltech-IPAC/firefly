@@ -194,6 +194,7 @@ export default function makeWebpackConfig(config) {
         stats: {
             builtAt: true,
             cached: false,
+            children: true,
             excludeModules: () => true,
 
         },

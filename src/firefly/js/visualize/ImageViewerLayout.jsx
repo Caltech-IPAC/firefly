@@ -14,24 +14,14 @@ import {makeScreenPt, makeDevicePt} from './Point.js';
 import {DrawerComponent}  from './draw/DrawerComponent.jsx';
 import {CCUtil, CysConverter} from './CsysConverter.js';
 import {UserZoomTypes}  from './ZoomUtil.js';
-import {
-    primePlot, getPlotViewById, hasLocalStretchByteData, isActivePlotView, canLoadStretchDataDirect
-} from './PlotViewUtil.js';
+import { primePlot, getPlotViewById, hasLocalStretchByteData, isActivePlotView } from './PlotViewUtil.js';
 import {isImageViewerSingleLayout, getMultiViewRoot} from './MultiViewCntlr.js';
 import {contains, intersects} from './VisUtil.js';
 import BrowserInfo from '../util/BrowserInfo.js';
 
-import {
-    visRoot,
-    ActionScope,
-    dispatchPlotProgressUpdate,
-    dispatchZoom,
-    dispatchRecenter,
-    dispatchProcessScroll,
-    dispatchChangeCenterOfProjection,
-    dispatchChangeActivePlotView,
-    dispatchUpdateViewSize, dispatchRequestLocalData
-} from './ImagePlotCntlr.js';
+import { visRoot, ActionScope, dispatchPlotProgressUpdate, dispatchZoom, dispatchRecenter, dispatchProcessScroll,
+    dispatchChangeCenterOfProjection, dispatchChangeActivePlotView,
+    dispatchUpdateViewSize, dispatchRequestLocalData } from './ImagePlotCntlr.js';
 import {fireMouseCtxChange, makeMouseStatePayload, MouseState} from './VisMouseSync.js';
 import {isHiPS, isImage} from './WebPlot.js';
 import Color from '../util/Color.js';
@@ -329,7 +319,7 @@ export class ImageViewerLayout extends PureComponent {
             onScreen= isImageOnScreen(pv);
             sizeViewable= isImageSizeViewable(pv);
             insideStuff= this.renderInside();
-            loadingRawData= !plot?.tileData && !hasLocalStretchByteData(plot) && canLoadStretchDataDirect(plot);
+            loadingRawData= isImage(plot) && !plot?.tileData && !hasLocalStretchByteData(plot);
         }
 
         return (
@@ -439,38 +429,12 @@ function makeTileDrawers(pv) {
     const drawers= pv.overlayPlotViews.filter( (opv) => opv.visible && opv.plot).map( (opv,idx) => {
         return (
             <ImageRender opacity={opv.opacity} plot={opv.plot} plotView={pv}
-                         idx={idx+1}
-                         tileAttributes={opv.colorAttributes}
-                         shouldProcess={(im, newData, imState, nextImState) => {
-                                  if (newData) return imState.color!== imState.srcImageColor;
-                                  else         return imState.color!==nextImState.color;
-                              }}
-                         processor={makeMaskColorProcessor(opv.colorAttributes.color)}
-                         key={'TileDrawer-overlay:'+opv.imageOverlayId}
-            />
+                         idx={idx+1} key={'TileDrawer-overlay:'+opv.imageOverlayId} />
         );
     });
     if (pv.visible) drawers.unshift(rootDrawer);
     return drawers;
 }
-
-
-function makeMaskColorProcessor(colorStr) {
-    return (imageData) => {
-        const cAry= Color.getRGBA(colorStr);
-        const {data}= imageData;
-        const len= data.length;
-        for(let i= 0; i<len; i+=4) {
-            if (data[i+3]) {
-                data[i]  = cAry[0];
-                data[i+1]= cAry[1];
-                data[i+2]= cAry[2];
-            }
-        }
-        return {imageData, compressible:true};
-    };
-}
-
 
 /**
  *

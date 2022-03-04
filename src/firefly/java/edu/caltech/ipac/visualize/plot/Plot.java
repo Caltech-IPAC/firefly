@@ -51,8 +51,6 @@ public abstract class Plot {
     protected boolean             _available       = true;
     protected float               _percentOpaque   = 1.0F;
     public    PlotGroup           _plotGroup;
-    protected final int           _offsetX         = 0;
-    protected final int           _offsetY         = 0;
     protected Map<String,Object>  _attributes= new HashMap<>(3);
 
     public Plot() { this(null); }
@@ -563,7 +561,7 @@ public abstract class Plot {
    // ------------------    Private / Protected / Package Methods   ---------
    // =======================================================================
 
-   int  getOffsetX() {return _offsetX;}
-   int  getOffsetY() {return _offsetY;}
+   int  getOffsetX() {return 0;}
+   int  getOffsetY() {return 0;}
 
 }

@@ -567,13 +567,13 @@ function getCornersAttribute(pv) {
 /**
  * This function will convert between HiPS and FITS or FITS and Hips depend on hipsImageConversion settings and zoom
  * direction.
- * @param {PlotView} pv
+ * @param {PlotView|undefined} pv
  * @param {number} [prevZoomLevel] - previous zoom level
  * @param {number} [nextZoomLevel] - next zoom level
  * @return {boolean}
  */
 export function doHiPSImageConversionIfNecessary(pv, prevZoomLevel, nextZoomLevel) {
-    if (!pv.plotViewCtx.hipsImageConversion) return false;
+    if (!pv?.plotViewCtx?.hipsImageConversion) return false;
     const plot= primePlot(pv);
     const {fovDegFallOver, allSkyRequest}=  pv.plotViewCtx.hipsImageConversion;
     const {width,height}= pv.viewDim;

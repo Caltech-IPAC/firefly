@@ -1,8 +1,6 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-import update from 'immutability-helper';
 import {isEmpty, isUndefined, isString, isNumber} from 'lodash';
 import Cntlr, {ExpandType, WcsMatchType, ActionScope} from '../ImagePlotCntlr.js';
 import {replacePlotView, replacePrimaryPlot, changePrimePlot, updatePlotViewScrollXY,
@@ -19,22 +17,10 @@ import {CCUtil, CysConverter} from '../CsysConverter.js';
 import {convert, isPlotNorth, getRotationAngle, isCsysDirMatching, isEastLeftOfNorth} from '../VisUtil';
 import {PlotPref} from '../PlotPref';
 import {
-    primePlot,
-    clonePvAry,
-    clonePvAryWithPv,
-    applyToOnePvOrAll,
-    applyToOnePvOrOverlayGroup,
-    matchPlotViewByPositionGroup,
-    getPlotViewIdxById,
-    getPlotGroupIdxById,
-    findPlotGroup,
-    getPlotViewById,
-    findCurrentCenterPoint,
-    getCenterOfProjection,
-    getMatchingRotationAngle,
-    isRotationMatching,
-    hasWCSProjection, canLoadStretchDataDirect, isThreeColor
-} from '../PlotViewUtil.js';
+    primePlot, clonePvAry, clonePvAryWithPv, applyToOnePvOrAll, applyToOnePvOrOverlayGroup,
+    matchPlotViewByPositionGroup, getPlotViewIdxById, getPlotGroupIdxById, findPlotGroup,
+    getPlotViewById, findCurrentCenterPoint, getCenterOfProjection, getMatchingRotationAngle,
+    isRotationMatching, hasWCSProjection, isThreeColor } from '../PlotViewUtil.js';
 import Point, {parseAnyPt, makeImagePt, makeWorldPt, makeDevicePt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import PlotState, {RotateType} from '../PlotState.js';
@@ -42,12 +28,7 @@ import {updateTransform} from '../PlotTransformUtils.js';
 import {WebPlotRequest} from '../WebPlotRequest.js';
 import {logger} from '../../util/Logger.js';
 
-
-//============ EXPORTS ===========
-//============ EXPORTS ===========
-
 const isFitFill= (userZoomType) =>  (userZoomType===UserZoomTypes.FIT || userZoomType===UserZoomTypes.FILL);
-const clone = (obj,params={}) => ({...obj,...params});
 
 /**
  * 
@@ -87,96 +68,30 @@ function replaceAtt(pv,att, toAll) {
 
 export function reducer(state, action) {
 
-    let retState= state;
+    const retState= state;
     switch (action.type) {
-        case Cntlr.ZOOM_IMAGE_START  :
-            retState= zoomStart(state, action);
-            break;
-
-
-        case Cntlr.STRETCH_CHANGE_START  :
-        case Cntlr.COLOR_CHANGE_START  :
-            retState= workingServerCall(state,action);
-            break;
-
-
-        case Cntlr.ZOOM_IMAGE_FAIL  :
-            retState= zoomFail(state,action);
-            break;
-        case Cntlr.STRETCH_CHANGE_FAIL:
-        case Cntlr.COLOR_CHANGE_FAIL:
-            retState= endServerCallFail(state,action);
-            break;
-        case Cntlr.ZOOM_IMAGE  :
-            retState= zoomImage(state,action);
-            break;
+        case Cntlr.ZOOM_HIPS  : return zoomSetup(state, action);
+        case Cntlr.ZOOM_IMAGE  : return updateDisplayData(zoomSetup(state, action),action);
         case Cntlr.COLOR_CHANGE  :
-        case Cntlr.STRETCH_CHANGE  :
-            retState= installTiles(state,action);
-            break;
-        case Cntlr.UPDATE_VIEW_SIZE :
-            retState= updateViewSize(state,action);
-            break;
-        case Cntlr.PROCESS_SCROLL  :
-            retState= processScroll(state,action);
-            break;
-
-        case Cntlr.CHANGE_CENTER_OF_PROJECTION:
-            retState= processProjectionChange(state,action);
-            break;
-        case Cntlr.CHANGE_HIPS :
-            retState= changeHiPS(state,action);
-            break;
-
-        case Cntlr.RECENTER:
-            retState= recenter(state,action);
-            break;
-        case Cntlr.ROTATE:
-            retState= updateClientRotation(state,action);
-            break;
-        case Cntlr.FLIP:
-            retState= updateClientFlip(state,action);
-            break;
-        case Cntlr.CHANGE_PLOT_ATTRIBUTE :
-            retState= changePlotAttribute(state,action);
-            break;
-        case Cntlr.ZOOM_LOCKING:
-            retState= changeLocking(state,action);
-            break;
-        case Cntlr.POSITION_LOCKING:
-            retState= changePositionLocking(state,action);
-            break;
-        case Cntlr.OVERLAY_COLOR_LOCKING:
-            retState= changeOverlayColorLocking(state,action);
-            break;
-        case Cntlr.PLOT_PROGRESS_UPDATE  :
-            retState= updatePlotProgress(state,action);
-            break;
-        case Cntlr.CHANGE_PRIME_PLOT  :
-            retState= makeNewPrimePlot(state,action);
-            break;
-
-        case Cntlr.OVERLAY_PLOT_CHANGE_ATTRIBUTES :
-            retState= changeOverlayPlotAttributes(state,action);
-            break;
-
-        case Cntlr.CHANGE_HIPS_IMAGE_CONVERSION :
-            retState= changeHipsImageConversionSettings(state,action);
-            break;
-
-        case Cntlr.UPDATE_RAW_IMAGE_DATA:
-            retState= updateRawImageData(state,action);
-            break;
-
-        case Cntlr.CHANGE_IMAGE_VISIBILITY:
-            retState= changeVisibility(state,action);
-            break;
-        case Cntlr.REQUEST_LOCAL_DATA:
-            retState= requestLocalData(state,action);
-            break;
-
-        default:
-            break;
+        case Cntlr.STRETCH_CHANGE  : return updateDisplayData(state,action);
+        case Cntlr.UPDATE_VIEW_SIZE : return updateViewSize(state,action);
+        case Cntlr.PROCESS_SCROLL  : return processScroll(state,action);
+        case Cntlr.CHANGE_CENTER_OF_PROJECTION: return processProjectionChange(state,action);
+        case Cntlr.CHANGE_HIPS : return changeHiPS(state,action);
+        case Cntlr.RECENTER: return recenter(state,action);
+        case Cntlr.ROTATE: return updateClientRotation(state,action);
+        case Cntlr.FLIP: return updateClientFlip(state,action);
+        case Cntlr.CHANGE_PLOT_ATTRIBUTE : return changePlotAttribute(state,action);
+        case Cntlr.ZOOM_LOCKING: return changeLocking(state,action);
+        case Cntlr.POSITION_LOCKING: return changePositionLocking(state,action);
+        case Cntlr.OVERLAY_COLOR_LOCKING: return changeOverlayColorLocking(state,action);
+        case Cntlr.PLOT_PROGRESS_UPDATE  : return updatePlotProgress(state,action);
+        case Cntlr.CHANGE_PRIME_PLOT  : return makeNewPrimePlot(state,action);
+        case Cntlr.OVERLAY_PLOT_CHANGE_ATTRIBUTES : return changeOverlayPlotAttributes(state,action);
+        case Cntlr.CHANGE_HIPS_IMAGE_CONVERSION : return changeHipsImageConversionSettings(state,action);
+        case Cntlr.BYTE_DATA_REFRESH: return markByteDataRefresh(state,action);
+        case Cntlr.CHANGE_IMAGE_VISIBILITY: return changeVisibility(state,action);
+        case Cntlr.REQUEST_LOCAL_DATA: return requestLocalData(state,action);
     }
     return retState;
 }
@@ -209,33 +124,33 @@ function changePlotAttribute(state,action) {
         plotViewAry= applyToOnePvOrAll(false, plotViewAry, plotId, false,
             (pv)=> replaceAtt(pv,newAtts,toAllPlotsInPlotView) );
     }
-    return clone(state,{plotViewAry});
+    return {...state,plotViewAry};
 }
 
 
 
 function changeLocking(state,action) {
-    const {plotId, zoomLockingEnabled, zoomLockingType}=  action.payload;
-    const zt= UserZoomTypes.get(zoomLockingType);
-    return clone(state,{plotViewAry: state.plotViewAry.map( (pv) =>
-            (pv.plotId===plotId) ?
-                update(pv, {plotViewCtx : {$merge :{zoomLockingEnabled,zoomLockingType:zt} }} ) : pv
-        )});
+    const {plotId, zoomLockingEnabled, zoomLockingType:inZoomLockingType}=  action.payload;
+    const zoomLockingType= UserZoomTypes.get(inZoomLockingType);
+    const plotViewAry= state.plotViewAry.map( (pv) =>
+                (pv.plotId===plotId) ?
+                    {...pv, plotViewCtx:{...pv.plotViewCtx, zoomLockingEnabled,zoomLockingType}} : pv);
+    return {...state,plotViewAry};
 }
 
 
-function zoomStart(state, action) {
+function zoomSetup(state, action) {
     const {wcsMatchType, plotViewAry, expandedMode, mpwWcsPrimId}= state;
-    const {plotId, zoomLevel, userZoomType, zoomLockingEnabled, devicePt, localRawData}= action.payload;
+    const {plotId, zoomLevel, userZoomType, zoomLockingEnabled, devicePt}= action.payload;
     const pvIdx=getPlotViewIdxById(state,plotId);
     const plot= pvIdx>-1 ? primePlot(plotViewAry[pvIdx]) : null;
     if (!plot) return state;
     let pv= plotViewAry[pvIdx];
 
-    // up date book keeping
-    const newCtx= {zoomLockingEnabled};
-    if (expandedMode===ExpandType.COLLAPSE) newCtx.lastCollapsedZoomLevel= zoomLevel;
-    if (zoomLockingEnabled && isFitFill(userZoomType))  newCtx.zoomLockingType= userZoomType;
+    // update bookkeeping
+    const plotViewCtx= {...pv.plotViewCtx};
+    if (expandedMode===ExpandType.COLLAPSE) plotViewCtx.lastCollapsedZoomLevel= zoomLevel;
+    if (zoomLockingEnabled && isFitFill(userZoomType))  plotViewCtx.zoomLockingType= userZoomType;
 
 
     // update zoom factor and scroll position
@@ -244,6 +159,7 @@ function zoomStart(state, action) {
     const mouseOverImagePt= devicePt && CCUtil.getImageCoords(plot,devicePt);
 
     pv= replacePrimaryPlot(pv,clonePlotWithZoom(plot,zoomLevel));
+    pv.plotViewCtx= plotViewCtx;
 
 
     if (wcsMatchType && mpwWcsPrimId!==plotId) {
@@ -253,10 +169,9 @@ function zoomStart(state, action) {
     else {
         if (isImage(plot)) {
             pv= updatePlotViewScrollXY(pv,
-                devicePt ? findScrollPtToPlaceOnDevPt(pv, mouseOverImagePt,devicePt) :
-                findScrollPtToCenterImagePt(pv,centerImagePt));
-            if (localRawData) pv.localZoomStart= true;
-
+                devicePt ?
+                    findScrollPtToPlaceOnDevPt(pv, mouseOverImagePt,devicePt) :
+                    findScrollPtToCenterImagePt(pv,centerImagePt));
         }
         else {
             pv= updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv,centerImagePt));
@@ -265,61 +180,43 @@ function zoomStart(state, action) {
 
 
     if (pv.overlayPlotViews?.length) {
-        pv.overlayPlotViews= pv.overlayPlotViews.map( (oPv) =>
-            clone(oPv, {plot:clonePlotWithZoom(oPv.plot,zoomLevel)}) );
+        pv.overlayPlotViews= pv.overlayPlotViews.map( (oPv) => ({...oPv, plot:clonePlotWithZoom(oPv.plot,zoomLevel) }));
     }
-
-
-    // return new state
-    return update(state, { plotViewAry : {
-                  [pvIdx]: {$set: update(pv, {plotViewCtx: {$merge: newCtx}
-        }) } }});
+    return {...state, plotViewAry:replacePlotView(state.plotViewAry, pv)};
 }
 
-function zoomImage(state,action) {
-    const {rawData}= action.payload;
-    const newState= rawData ? zoomStart(state, action): state;
-    return installTiles(newState,action);
+function updateHiPSColor(state,action) {
+    const {plotViewAry}= state;
+    const {plotId, primaryStateJson,bias,contrast}= action.payload;
+    let pv= getPlotViewById(state,plotId);
+    const plot= primePlot(pv);
+    const plotState= PlotState.makePlotStateWithJson(primaryStateJson);
+    const newPlot= {...plot,plotState};
+
+    if (isNumber(bias) || isNumber(contrast)) {
+        const {bandData:oldBandData}= newPlot.rawData;
+        const bandData= oldBandData.map( (entry)  => ({...entry,
+            bias:  isNumber(bias) ? bias : entry.bias,
+            contrast:  isNumber(contrast) ? contrast : entry.contrast,
+        }));
+        newPlot.rawData= {...plot.rawData,bandData};
+    }
+    pv= replacePrimaryPlot(pv, newPlot);
+    return {...state, plotViewAry : replacePlotView(plotViewAry,pv)};
+
 }
 
-function installTiles(state, action) {
+function updateImageDisplayData(state,action) {
     const {plotViewAry, mpwWcsPrimId, wcsMatchType}= state;
     const clearLocal= action.type===Cntlr.STRETCH_CHANGE;
-    const {plotId, primaryStateJson,primaryTiles,overlayUpdateAry,
-        rawData,bias,contrast, useRed, useGreen, useBlue}= action.payload;
-    let pv= getPlotViewById(state,plotId);
-    let plot= primePlot(pv);
+    const {plotId, primaryStateJson,overlayUpdateAry, rawData,bias,contrast, useRed, useGreen, useBlue}= action.payload;
+    const inPv= getPlotViewById(state,plotId);
+    const inPlot= primePlot(inPv);
 
-
-
-    if (!plot || !primaryStateJson) {
-        logger.error('primePlot undefined or primaryStateJson is not set.', new Error());
-        console.log('installTiles: state, action', state, action);
-        return state;
-    }
-
-    if (isHiPS(plot)) {
-        const plotState= PlotState.makePlotStateWithJson(primaryStateJson);
-        const newPlot= {...plot,plotState};
-
-        if (isNumber(bias) || isNumber(contrast)) {
-            const {bandData:oldBandData}= newPlot.rawData;
-            const bandData= oldBandData.map( (entry)  => ({...entry,
-                bias:  isNumber(bias) ? bias : entry.bias,
-                contrast:  isNumber(contrast) ? contrast : entry.contrast,
-            }));
-            newPlot.rawData= {...plot.rawData,bandData};
-        }
-        pv= replacePrimaryPlot(pv, newPlot);
-        return {...state, plotViewAry : replacePlotView(plotViewAry,pv)};
-    }
-
-    pv= {...pv};
-    pv.serverCall='success';
-    const tileData= canLoadStretchDataDirect(plot) ? undefined : primaryTiles;
+    let pv= {...inPv, serverCall:'success'};
     pv= replacePrimaryPlot(pv,
-        WebPlot.replacePlotValues(plot,primaryStateJson,tileData,rawData,bias,contrast,useRed,useGreen,useBlue));
-    if (action.type===Cntlr.COLOR_CHANGE && !isThreeColor(pv) && canLoadStretchDataDirect(plot)) {
+        WebPlot.replacePlotValues(inPlot,primaryStateJson,rawData,bias,contrast,useRed,useGreen,useBlue));
+    if (action.type===Cntlr.COLOR_CHANGE && !isThreeColor(pv)) {
         const cId= primePlot(pv).plotState.getColorTableId();
         pv.plots= pv.plots.map( (p) => {
             const plotState= p.plotState.copy();
@@ -327,7 +224,6 @@ function installTiles(state, action) {
             return {...p,plotState};
         });
     }
-    if (rawData) pv.localZoomStart= false;
 
     if (wcsMatchType && mpwWcsPrimId!==plotId) {
         const masterPV= getPlotViewById(state, mpwWcsPrimId);
@@ -346,16 +242,29 @@ function installTiles(state, action) {
             const overlayUpdate= overlayUpdateAry.find( (u) => u.imageOverlayId===oPv.imageOverlayId);
             if (!overlayUpdate) return oPv;
 
-            const p= WebPlot.replacePlotValues(oPv.plot,overlayUpdate.overlayStateJson,overlayUpdate.overlayTiles);
-            return clone(oPv, {plot:p});
+            const p= WebPlot.replacePlotValues(oPv.plot,overlayUpdate.overlayStateJson);
+            return {...oPv, plot:p};
         });
     }
 
-    plot= primePlot(pv); // get the updated on
+    const plot= primePlot(pv); // get the updated on
     if (clearLocal) plot.dataRequested= false;
     PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, plot.plotState);
 
-    return clone(state, {plotViewAry : replacePlotView(plotViewAry,pv)});
+    return {...state, plotViewAry : replacePlotView(plotViewAry,pv)};
+}
+
+function updateDisplayData(state, action) {
+    const {plotId, primaryStateJson}= action.payload;
+    const pv= getPlotViewById(state,plotId);
+    const plot= primePlot(pv);
+
+    if (!plot || !primaryStateJson) {
+        logger.error('primePlot undefined or primaryStateJson is not set.', new Error());
+        logger.error('installTiles: state, action', state, action);
+        return state;
+    }
+    return isHiPS(plot) ? updateHiPSColor(state,action) : updateImageDisplayData(state,action);
 }
 
 
@@ -453,20 +362,20 @@ function changeHiPS(state,action) {
             });
     }
 
-    return clone(state, {plotViewAry});
+    return {...state, plotViewAry};
 }
 
 
 /**
  *
  * @param {Array<PlotView>} plotViewAry
- * @param {PlotView} pv
+ * @param {PlotView|undefined} pv
  * @param {CoordinateSys} coordSys
  * @param {boolean} applyToGroup
  * @return {Array<PlotView>}
  */
 function changeHipsCoordinateSys(plotViewAry, pv, coordSys, applyToGroup) {
-    return applyToOnePvOrAll(applyToGroup, plotViewAry, pv.plotId, false,
+    return applyToOnePvOrAll(applyToGroup, plotViewAry, pv?.plotId, false,
         (pv) => {
             let plot= primePlot(pv);
             plot= replaceHiPSProjection(plot, coordSys, getCenterOfProjection(plot) );
@@ -488,11 +397,8 @@ function processScroll(state,action) {
 
 
 function rotatePv(pv, targetAngle, rotateNorthLock) {
-    pv= clone(pv);
-    pv.rotation= targetAngle;
-    pv.plotViewCtx= clone(pv.plotViewCtx, {rotateNorthLock});
+    pv= {...pv, rotation:targetAngle, plotViewCtx:{...pv.plotViewCtx, rotateNorthLock}};
     return updateTransform(pv);
-
 }
 
 function rotatePvToMatch(pv, masterPv, rotateNorthLock) {
@@ -509,8 +415,7 @@ function rotatePvToMatch(pv, masterPv, rotateNorthLock) {
     else {
         rotation= csysDirMatching ? 360+rotation :360-rotation;
     }
-    pv= {...pv, rotation};
-    pv.plotViewCtx= clone(pv.plotViewCtx, {rotateNorthLock});
+    pv= {...pv, rotation, plotViewCtx: {...pv.plotViewCtx, rotateNorthLock}};
     return updateTransform(pv);
 }
 
@@ -574,7 +479,7 @@ function updateClientRotation(state,action) {
     plotGroupAry= plotGroupAry.map( (g) =>
         g.plotGroupId===pv.plotGroupId ? {...g, rotateNorthLockSticky:newPv.plotViewCtx.rotateNorthLock }: g);
 
-    return clone(state,{plotViewAry, plotGroupAry});
+    return {...state,plotViewAry, plotGroupAry};
 }
 
 function flipPv(pv, isY) {
@@ -667,7 +572,7 @@ function updateViewSize(state,action) {
         return pv;
 
     });
-    return Object.assign({},state,{plotViewAry});
+    return {...state,plotViewAry};
 }
 
 
@@ -693,7 +598,7 @@ function recenter(state,action) {
     }
 
 
-    return clone(state,{plotViewAry, mpwWcsPrimId:plotId});
+    return {...state,plotViewAry, mpwWcsPrimId:plotId};
 }
 
 
@@ -724,7 +629,6 @@ function recenterUsingWcsMatch(state, pv, centerPt, centerOnImage=false, onlyIma
  * @param {boolean} updateFixedTarget if true the PlotAttribute.FIXED_TARGET will but updated to this point
  * @return {Function} a new plot view
  */
-
 function recenterPv(centerPt,  centerOnImage, updateFixedTarget= false) {
     return (pv) => {
         const plot = primePlot(pv);
@@ -768,7 +672,7 @@ function makeNewPrimePlot(state,action) {
     let pv=  getPlotViewById(state,plotId);
     if (!pv || isEmpty(pv.plots) || pv.plots.length<=primeIdx) return state;
     pv= changePrimePlot(pv, primeIdx);
-    return clone(state,{plotViewAry:clonePvAryWithPv(state,pv)});
+    return {...state, plotViewAry:clonePvAryWithPv(state,pv)};
 }
 
 /**
@@ -783,13 +687,10 @@ function changePositionLocking(state,action) {
         const pv= getPlotViewById(state, plotId);
         const plot= primePlot(pv);
         const plotViewAry= changeHipsCoordinateSys(state.plotViewAry, pv,plot.imageCoordSys,true );
-        state= clone(state, {plotViewAry});
-        state= processProjectionChange(state,
-            clone(action, {payload:{plotId, centerProjPt:getCenterOfProjection(plot) }}));
+        state= {...state, plotViewAry};
+        state= processProjectionChange(state, {...action, payload:{plotId, centerProjPt:getCenterOfProjection(plot) }});
     }
-
     return {...state, positionLock};
-
 }
 
 
@@ -804,36 +705,16 @@ function changeOverlayColorLocking(state,action) {
     return state;
 }
 
-function zoomFail(state,action) {
-    const {plotId}= action.payload;
-    const newState= {...state, plotViewAry: clonePvAry(state,plotId, {localZoomStart:false}) };
-    return endServerCallFail(newState,action);
-}
-
-
-function endServerCallFail(state,action) {
-    const {plotId,message}= action.payload;
-    const stat= {serverCall:'fail'};
-    if (isString(message)) stat.plottingStatusMsg= message;
-    return clone(state,{plotViewAry:clonePvAry(state,plotId, stat)});
-}
-function workingServerCall(state,action) {
-    const {plotId,message}= action.payload;
-    return clone(state,{plotViewAry:clonePvAry(state,plotId,
-                           {serverCall:'working', plottingStatusMsg:message})});
-}
-
-
 function changeOverlayPlotAttributes(state,action) {
     const {plotId, imageOverlayId, attributes}= action.payload;
     const plotViewAry= state.plotViewAry
         .map( (pv) => {
             if (pv.plotId!==plotId) return pv;
             const overlayPlotViews = pv.overlayPlotViews
-                 .map( (opv) => opv.imageOverlayId!==imageOverlayId ? opv : clone(opv,attributes));
-            return clone(pv, {overlayPlotViews});
+                 .map( (opv) => opv.imageOverlayId!==imageOverlayId ? opv : {...opv,...attributes});
+            return {...pv, overlayPlotViews};
         });
-    return clone(state,{plotViewAry});
+    return {...state,plotViewAry};
 }
 
 function changeHipsImageConversionSettings(state,action) {
@@ -850,12 +731,12 @@ function changeHipsImageConversionSettings(state,action) {
             pv.plotViewCtx.hipsImageConversion= {...pv.plotViewCtx.hipsImageConversion, ...changes};
             return pv;
         });
-    return clone(state,{plotViewAry});
+    return {...state,plotViewAry};
 
 }
 
-function updateRawImageData(state, action) {
-    const {plotId, plotImageId, imageOverlayId, rawData}= action.payload;
+function markByteDataRefresh(state, action) {
+    const {plotId, plotImageId, imageOverlayId}= action.payload;
     const pv= getPlotViewById(state,plotId);
     if (!pv) return state;
     let updatedPv;
@@ -863,13 +744,12 @@ function updateRawImageData(state, action) {
     if (imageOverlayId) {
         const overlayPlotViews= pv.overlayPlotViews?.map( (oPv) => {
             if (oPv?.plot?.plotImageId!==plotImageId) return oPv;
-            oPv.plot= {...oPv.plot,rawData};
-            return oPv;
+            return {...oPv, plot:{...oPv.plot}};
         });
         updatedPv= {...pv, overlayPlotViews};
     }
     else {
-        const plots= pv.plots.map( (p) => p.plotImageId===plotImageId ? {...p,rawData}: p);
+        const plots= pv.plots.map( (p) => p.plotImageId===plotImageId ? {...p}: p);
         updatedPv= {...pv,plots};
     }
 
@@ -913,11 +793,22 @@ function updatePlotProgress(state,action) {
 
     // do the update
     const serverCall= done ? callSuccess ? 'success' : 'fail' : 'working';
-    return clone(state,{plotViewAry:clonePvAry(state,plotId, {plottingStatusMsg,serverCall})});
+    return {...state,plotViewAry:clonePvAry(state,plotId, {plottingStatusMsg,serverCall})};
 }
 
 function changeVisibility(state,action) {
-    const {plotId, visible}= action.payload;
-    return {...state,plotViewAry:clonePvAry(state,plotId, {visible})};
+    const {plotId, imageOverlayId, visible}= action.payload;
+    if (imageOverlayId) {
+        const plotViewAry= state.plotViewAry.map( (pv) => {
+            if (pv.plotId!==plotId) return pv;
+            const overlayPlotViews=
+                pv.overlayPlotViews.map( (opv) => opv.imageOverlayId===imageOverlayId ? {...opv,visible} : opv);
+            return {...pv, overlayPlotViews};
+        });
+        return {...state, plotViewAry};
+    }
+    else {
+        return {...state,plotViewAry:clonePvAry(state,plotId, {visible})};
+    }
 
 }

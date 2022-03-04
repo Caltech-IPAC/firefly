@@ -116,15 +116,14 @@ public class ImagePlotBuilder {
         long readElapse = System.currentTimeMillis() - readStart;
 
         // ------------ make the ImagePlot(s)
-        ZoomChoice zoomChoice = makeZoomChoice(requestMap, readInfoMap);
         if (state == null) {
-            pInfo = makeNewPlots(readInfoMap, requestMap, zoomChoice, multiAction, threeColor);
+            pInfo = makeNewPlots(readInfoMap, requestMap, multiAction, threeColor);
         } else {
             pInfo = new ImagePlotInfo[1];
-            pInfo[0] = recreatePlot(state, readInfoMap, zoomChoice);
+            pInfo[0] = recreatePlot(state, readInfoMap);
         }
 
-        return new Results(pInfo,zoomChoice, findElapse,readElapse);
+        return new Results(pInfo,findElapse,readElapse);
     }
 
 
@@ -134,13 +133,9 @@ public class ImagePlotBuilder {
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
 
-    static private ImagePlotInfo recreatePlot(PlotState state,
-                                              Map<Band, FileReadInfo[]> readInfoMap,
-                                              ZoomChoice zoomChoice) throws FailedRequestException,
-                                                                            IOException,
-                                                                            FitsException,
-                                                                            GeomException {
-        return ImagePlotCreator.makeOneImagePerBand(state, readInfoMap, zoomChoice);
+    static private ImagePlotInfo recreatePlot(PlotState state, Map<Band, FileReadInfo[]> readInfoMap)
+            throws FailedRequestException, IOException, FitsException, GeomException {
+        return ImagePlotCreator.makeOneImagePerBand(state, readInfoMap);
     }
 
 
@@ -192,7 +187,6 @@ public class ImagePlotBuilder {
      *
      * @param readInfoMap the map of band to all the fits images read and
      * @param requestMap  the map of band to all the plot request
-     * @param zoomChoice  how do determine zoom
      * @param multiAction enum that gives direction on how to take the readInfoMap make plots out of them
      * @param threeColor  should be be making a three color plot
      * @return an array of ImagePlotInfo, one for each web plot that will be created on the client
@@ -203,7 +197,6 @@ public class ImagePlotBuilder {
      */
     private static ImagePlotInfo[] makeNewPlots(Map<Band, FileReadInfo[]> readInfoMap,
                                                 Map<Band, WebPlotRequest> requestMap,
-                                                ZoomChoice zoomChoice,
                                                 PlotState.MultiImageAction multiAction,
                                                 boolean threeColor) throws FailedRequestException,
                                                                            IOException,
@@ -216,8 +209,7 @@ public class ImagePlotBuilder {
 
         switch (multiAction) {
             case GUESS:
-                plotInfo = makeNewPlots(readInfoMap, requestMap, zoomChoice,
-                                        getActionGuess(threeColor), threeColor);
+                plotInfo = makeNewPlots(readInfoMap, requestMap, getActionGuess(threeColor), threeColor);
                 break;
             case USE_FIRST:
                 if (threeColor) state = make3ColorState(requestMap, readInfoMap, multiAction);
@@ -226,7 +218,7 @@ public class ImagePlotBuilder {
                     state.setOriginalImageIdx(0, band);
                     state.setImageIdx(0, band);
                 }
-                plotInfo[0] = ImagePlotCreator.makeOneImagePerBand(state, readInfoMap, zoomChoice);
+                plotInfo[0] = ImagePlotCreator.makeOneImagePerBand(state, readInfoMap);
                 break;
             case USE_IDX:
                 WebPlotRequest r= requestMap.get(NO_BAND);
@@ -235,7 +227,7 @@ public class ImagePlotBuilder {
                 state.setOriginalImageIdx(idx, NO_BAND);
                 state.setImageIdx(idx, NO_BAND);
                 state.setMultiImageFile(true,Band.NO_BAND);
-                plotInfo[0] = ImagePlotCreator.makeOneImagePerBand(state, readInfoMap, zoomChoice);
+                plotInfo[0] = ImagePlotCreator.makeOneImagePerBand(state, readInfoMap);
                 break;
             case USE_EXTS:
                 if (!readInfoMap.containsKey(NO_BAND) || threeColor) {
@@ -251,7 +243,7 @@ public class ImagePlotBuilder {
                                                                         infoList);
                 plotInfo = new ImagePlotInfo[stateArys.length];
                 for (int i = 0; i < stateArys.length; i++) {
-                    plotInfo[i] = ImagePlotCreator.makeOneImagePerBand(stateArys[i], readInfoMap, zoomChoice);
+                    plotInfo[i] = ImagePlotCreator.makeOneImagePerBand(stateArys[i], readInfoMap);
                 }
 
                 break;
@@ -261,7 +253,7 @@ public class ImagePlotBuilder {
                                                      "Cannot yet use the MultiImageAction.USE_ALL action with three color");
                 }
                 PlotState[] stateAry = makeNoBandMultiImagePlotState(requestMap.get(NO_BAND), readInfoMap.get(NO_BAND));
-                plotInfo = ImagePlotCreator.makeAllNoBand(stateAry, readInfoMap.get(NO_BAND), zoomChoice);
+                plotInfo = ImagePlotCreator.makeAllNoBand(stateAry, readInfoMap.get(NO_BAND));
                 break;
             case MAKE_THREE_COLOR:
                 if (threeColor && readInfoMap.containsKey(NO_BAND)) { // this handles the case of one file with multiple images becoming three color
@@ -276,7 +268,7 @@ public class ImagePlotBuilder {
                     }
                 }
                 state = make3ColorState(requestMap, readInfoMap, multiAction);
-                plotInfo[0] = ImagePlotCreator.makeOneImagePerBand(state, readInfoMap, zoomChoice);
+                plotInfo[0] = ImagePlotCreator.makeOneImagePerBand(state, readInfoMap);
                 break;
             default:
                 throw new FailedRequestException("Plot creation failed", "unknown multiAction, don't know how to create plot");
@@ -436,26 +428,9 @@ public class ImagePlotBuilder {
         }
     }
 
-
-
-
     private static WebPlotRequest firstRequest(Map<Band, WebPlotRequest> requestMap) {
         return requestMap.values().iterator().next();
     }
-
-    private static ZoomChoice makeZoomChoice(Map<Band, WebPlotRequest> requestMap,
-                                             Map<Band, FileReadInfo[]> readInfoMap) {
-        Band band = readInfoMap.entrySet().iterator().next().getKey();
-        WebPlotRequest request = requestMap.get(band);
-
-        return new ZoomChoice(false,
-                              request.getZoomType(),
-                              request.getInitialZoomLevel(),
-                              request.getZoomToWidth(),
-                              request.getZoomToHeight(),
-                              request.getZoomArcsecPerScreenPix());
-    }
-
 //======================================================================
 //------------------ Inner Classes --------------------------------------
 //======================================================================
@@ -464,19 +439,16 @@ public class ImagePlotBuilder {
         private final ImagePlotInfo[] plotInfoAry;
         private final long findElapse;
         private final long readElapse;
-        private final ZoomChoice zoomChoice;
 
-        private Results(ImagePlotInfo[] plotInfoAry, ZoomChoice zoomChoice, long findElapse, long readElapse) {
+        private Results(ImagePlotInfo[] plotInfoAry, long findElapse, long readElapse) {
             this.plotInfoAry = plotInfoAry;
             this.findElapse = findElapse;
             this.readElapse = readElapse;
-            this.zoomChoice = zoomChoice;
         }
 
         ImagePlotInfo[] getPlotInfoAry() { return plotInfoAry; }
         long getFindElapse() { return findElapse; }
         long getReadElapse() { return readElapse; }
-        ZoomChoice getZoomChoice() { return zoomChoice; }
     }
 
 

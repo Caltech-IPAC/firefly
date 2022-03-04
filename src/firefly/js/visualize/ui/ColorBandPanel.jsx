@@ -73,11 +73,6 @@ export const ColorBandPanel= memo(({fields,plot,band, groupKey}) => {
             return retFunc;
         }
         callGetColorHistogram(plotState,band).then(  (result) => {
-            const dataHistUrl= encodeServerUrl(getRootURL() + 'sticky/FireFly_ImageDownload',
-                { file: result.DataHistImageUrl, type: 'any' });
-
-            const cbarUrl= encodeServerUrl(getRootURL() + 'sticky/FireFly_ImageDownload',
-                { file: result.CBarImageUrl, type: 'any' });
             const dataHistogram= result.DataHistogram;
             const dataBinMeanArray= result.DataBinMeanArray;
             const dataBinColorIdx= result.DataBinColorIdx;

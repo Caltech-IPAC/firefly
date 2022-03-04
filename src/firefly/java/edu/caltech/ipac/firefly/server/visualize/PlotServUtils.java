@@ -10,9 +10,6 @@ import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.Band;
-import edu.caltech.ipac.firefly.visualize.PlotImages;
-import edu.caltech.ipac.firefly.visualize.PlotState;
-import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -27,7 +24,6 @@ import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.Circle;
 import edu.caltech.ipac.visualize.plot.ImageMask;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
-import edu.caltech.ipac.visualize.plot.PlotGroup;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 import edu.caltech.ipac.visualize.plot.output.PlotOutput;
@@ -39,7 +35,6 @@ import nom.tam.fits.Header;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -75,145 +70,6 @@ public class PlotServUtils {
         _hostname= FileUtil.getHostname();
     }
 
-    static void createThumbnail(ImagePlot plot,
-                                ActiveFitsReadGroup frGroup,
-                                PlotImages images,
-                                boolean justName,
-                                int     thumbnailSize) throws IOException {
-
-        PlotGroup plotGroup= plot.getPlotGroup();
-        float saveZLevel= plotGroup.getZoomFact();
-        int div= Math.max( plotGroup.getGroupImageWidth(),
-                           plotGroup.getGroupImageHeight() );
-        float tZoomLevel= thumbnailSize /(float)div;
-        plotGroup.setZoomTo(tZoomLevel);
-
-        File f= new File(ServerContext.getVisSessionDir(),images.getTemplateName()+"_thumb" +"."+JPG_NAME_EXT);
-        String relFile= ServerContext.replaceWithUsersBaseDirPrefix(f);
-
-        if (!justName) new PlotOutput(plot,frGroup).writeThumbnail(f,PlotOutput.JPEG);
-
-        PlotImages.ThumbURL tn= new PlotImages.ThumbURL(relFile,plot.getScreenWidth(),plot.getScreenHeight());
-        images.setThumbnail(tn);
-
-        plotGroup.setZoomTo(saveZLevel);
-    }
-
-
-    private static void writeThumbnail(ImagePlot plot, ActiveFitsReadGroup frGroup, File f, int thumbnailSize) throws IOException{
-        ImagePlot tPlot= (ImagePlot)plot.makeSharedDataPlot(frGroup);
-        int div= Math.max(plot.getPlotGroup().getGroupImageWidth(), plot.getPlotGroup().getGroupImageHeight());
-
-        tPlot.getPlotGroup().setZoomTo(thumbnailSize/(float)div);
-
-        int ext= f.getName().endsWith(JPG_NAME_EXT) ? PlotOutput.JPEG : PlotOutput.PNG;
-
-        new PlotOutput(tPlot,frGroup).writeThumbnail(f, ext);
-        tPlot.freeResources();
-    }
-
-    static PlotImages writeImageTiles(File      imagefileDir,
-                                      String    root,
-                                      ImagePlot plot,
-                                      ActiveFitsReadGroup frGroup,
-                                      boolean   fullScreen,
-                                      int tileCnt) throws IOException {
-
-        PlotOutput po= new PlotOutput(plot,frGroup);
-        List<PlotOutput.TileFileInfo> results;
-        if (fullScreen) {
-            results= po.writeTilesFullScreen(imagefileDir, root,PlotOutput.PNG, plot.isUseForMask(), tileCnt>0);
-        }
-        else {
-            results= po.writeTiles(imagefileDir, root,PlotOutput.PNG,plot.isUseForMask(),tileCnt);
-        }
-        PlotImages images= new PlotImages(root,results.size(), plot.getScreenWidth(), plot.getScreenHeight(), plot.getZoomFactor());
-        PlotImages.ImageURL imageURL;
-        String relFile;
-        int idx= 0;
-        for(PlotOutput.TileFileInfo info : results) {
-            relFile= ServerContext.replaceWithUsersBaseDirPrefix(info.getFile());
-            imageURL= new PlotImages.ImageURL(relFile,
-                                              info.getX(), info.getY(),
-                                              info.getWidth(), info.getHeight(),
-                                              idx++,
-                                              info.isCreated());
-            images.add(imageURL);
-        }
-        return images;
-    }
-
-
-
-    static PlotImages defineTiles(File imagefileDir,
-                                  String root,
-                                  float zfact,
-                                  int screenWidth,
-                                  int screenHeight) {
-
-        List<PlotOutput.TileFileInfo> results;
-        results= PlotOutput.defineTiles(imagefileDir, zfact, root, PlotOutput.PNG, screenWidth, screenHeight);
-        PlotImages images= new PlotImages(root,results.size(), screenWidth, screenHeight, zfact);
-        PlotImages.ImageURL imageurl;
-        String relFile;
-        int idx= 0;
-        for(PlotOutput.TileFileInfo info : results) {
-            relFile= ServerContext.replaceWithUsersBaseDirPrefix(info.getFile());
-            imageurl= new PlotImages.ImageURL(relFile,
-                                              info.getX(), info.getY(),
-                                              info.getWidth(), info.getHeight(),
-                                              idx++, false);
-            images.add(imageurl);
-        }
-        return images;
-    }
-
-
-
-
-    public static long getTileModTime(String fname) {
-        File f= ServerContext.convertToFile(fname);
-        return f.canRead() ? f.lastModified() : -1;
-    }
-
-
-    public static File createImageFile(ImagePlot plot,
-                                       ActiveFitsReadGroup frGroup,
-                                       String fname,
-                                       int x,
-                                       int y,
-                                       int width,
-                                       int height) throws IOException {
-
-        File f= ServerContext.convertToFile(fname);
-        if (!f.canRead()) {
-            f= createOneTile(plot, frGroup, f,x,y,width,height);
-        }
-        return f;
-    }
-
-    public static void writeFullImageFileToStream(OutputStream oStream, ImagePlot plot, ActiveFitsReadGroup frGroup) throws IOException {
-
-        File f= getUniquePngFileName("imageDownload", ServerContext.getVisSessionDir());
-        createFullTile(plot, frGroup, f);
-        FileUtil.writeFileToStream(f, oStream);
-    }
-
-    public static File createImageThumbnail(String fname, ImagePlot plot, ActiveFitsReadGroup frGroup, int thumbnailSize)
-                                                                    throws FitsException, IOException {
-        File f= ServerContext.convertToFile(fname);
-        if (!f.canRead()) writeThumbnail(plot,frGroup,f,thumbnailSize);
-        return f;
-    }
-
-    private static boolean isValidForDownload(File f) {
-        return (ServerContext.convertToFile(f.getPath())!=null);
-    }
-
-    private static File createFullTile(ImagePlot plot, ActiveFitsReadGroup frGroup, File f) throws IOException {
-        return  createOneTile(plot,frGroup,f,0,0,PLOT_FULL_WIDTH,PLOT_FULL_HEIGHT);
-    }
-
     static File createFullTile(ImagePlot plot,
                                ActiveFitsReadGroup frGroup,
                                File f,
@@ -225,10 +81,6 @@ public class PlotServUtils {
                               fog,vectorList, scaleList, gridLayer);
     }
 
-
-    private static File createOneTile(ImagePlot plot, ActiveFitsReadGroup frGroup, File f, int x, int y, int width, int height) throws IOException {
-        return createOneTile(plot,frGroup,f,x,y,width,height,null,null,null,null);
-    }
 
 
     private static File createOneTile(ImagePlot plot,
@@ -257,23 +109,6 @@ public class PlotServUtils {
 
     }
 
-
-    static String makeTileBase(PlotState state) {
-        File f= null;
-        String fName= state.getOriginalFitsFileStr(state.firstBand());
-        if (fName!=null)  f= ServerContext.convertToFile(fName);
-        String baseStr= null;
-        if (f!=null) {
-            baseStr= FileUtil.getBase(f);
-        }
-        else if (state.isThreeColor()) {
-            baseStr= "Blank-3color-nobands";
-        }
-        else if (isBlank(state)) {
-            baseStr= "Blank";
-        }
-        return  baseStr +"-"+ state.getContextString() +"-"+state.toString().hashCode();
-    }
 
     public static void updatePlotCreateProgress(ProgressStat pStat) {
         Cache cache= UserCache.getInstance();
@@ -370,57 +205,49 @@ public class PlotServUtils {
         long year;
         String dateValue= header.getStringValue(headerKey);
         if(dateValue !=null){
-            if (headerKey.equals("ORDATE")) {
-                if (dateValue.length()>5) {
-                    dateValue= dateValue.subSequence(0,2)+"-"+dateValue.subSequence(2,4)+"-"+
-                            dateValue.subSequence(4,6);
-                    year = 2000+Integer.parseInt(dateValue.subSequence(0,2).toString());
-                    if (year > currentYear) {
-                        dateValue = "19"+dateValue;
-                    } else {
-                        dateValue = "20"+dateValue;
-                    }
-                }
-            } else if (headerKey.equals("DATE-OBS")) {
-                dateValue = dateValue.split("T")[0];
-                if (dateValue.contains("/")) {
-                    String newDate = "";
-                    for (String v: dateValue.split("/")) {
-                        if (newDate.length()==0) {
-                            newDate = v;
+            switch (headerKey) {
+                case "ORDATE":
+                    if (dateValue.length() > 5) {
+                        dateValue = dateValue.subSequence(0, 2) + "-" + dateValue.subSequence(2, 4) + "-" +
+                                dateValue.subSequence(4, 6);
+                        year = 2000 + Integer.parseInt(dateValue.subSequence(0, 2).toString());
+                        if (year > currentYear) {
+                            dateValue = "19" + dateValue;
                         } else {
-                            newDate = v + "-" + newDate;
+                            dateValue = "20" + dateValue;
                         }
                     }
-                    year = 2000+Integer.parseInt(newDate.subSequence(0,2).toString());
-                    if (year > currentYear) {
-                        dateValue = "19"+newDate;
-                    } else {
-                        dateValue = "20"+newDate;
+                    break;
+                case "DATE-OBS":
+                    dateValue = dateValue.split("T")[0];
+                    if (dateValue.contains("/")) {
+                        String newDate = "";
+                        for (String v : dateValue.split("/")) {
+                            if (newDate.length() == 0) {
+                                newDate = v;
+                            } else {
+                                newDate = v + "-" + newDate;
+                            }
+                        }
+                        year = 2000 + Integer.parseInt(newDate.subSequence(0, 2).toString());
+                        if (year > currentYear) {
+                            dateValue = "19" + newDate;
+                        } else {
+                            dateValue = "20" + newDate;
+                        }
                     }
-                }
-            } else if (headerKey.equals("MIDOBS")) {
-                dateValue = dateValue.split("T")[0];
-            } else if (headerKey.equals("DATEIRIS")) {
-                dateValue = "1983";
+                    break;
+                case "MIDOBS":
+                    dateValue = dateValue.split("T")[0];
+                    break;
+                case "DATEIRIS":
+                    dateValue = "1983";
+                    break;
             }
             return dateValue;
         }else{
             return "";
         }
-    }
-
-    public static boolean isBlank(PlotState state) {
-        return isBlank(state,state.firstBand());
-    }
-
-    public static boolean isBlank(PlotState state, Band band) {
-        boolean retval= false;
-        if (band==null || (state.getWorkingFitsFileStr(band)==null && state.getOriginalFitsFileStr(band)==null)) {
-            WebPlotRequest req= state.getWebPlotRequest(band);
-            retval= (req.getRequestType()== RequestType.BLANK);
-        }
-        return retval;
     }
 
 
@@ -466,8 +293,8 @@ public class PlotServUtils {
     private static ImageMask[] sortImageMaskArrayInIndexOrder(ImageMask[] imageMasks){
 
         Map<Integer, ImageMask> unsortedMap= new HashMap<>();
-        for (int i=0;i<imageMasks.length; i++){
-            unsortedMap.put(imageMasks[i].getIndex(), imageMasks[i]);
+        for (ImageMask imageMask : imageMasks) {
+            unsortedMap.put(imageMask.getIndex(), imageMask);
         }
 
         Map<Integer, ImageMask> treeMap = new TreeMap<>(unsortedMap);
@@ -479,23 +306,8 @@ public class PlotServUtils {
                                        WebPlotRequest      request,
                                        RangeValues         stretch) throws FitsException {
 
-         ImageMask maskDef[]= createMaskDefinition(request);
+         ImageMask[] maskDef= createMaskDefinition(request);
          return new ImagePlot(null, frGroup,initialZoomLevel, sortImageMaskArrayInIndexOrder(maskDef) , stretch);
-    }
-
-    public static String convertZoomToString(float level) {
-        String retval;
-        int zfInt= (int)(level*10000);
-
-        if      (zfInt>=10000) retval= ((int)level)+"x";
-        else if (zfInt==312)   retval= "1/32x";
-        else if (zfInt==625)   retval= "1/16x";
-        else if (zfInt==1250)  retval= "1/8x";
-        else if (zfInt==2500)  retval= "1/4x";
-        else if (zfInt==5000)  retval= "1/2x";
-        else                   retval= String.format("%.3fx", level);
-
-        return retval;
     }
 
     public static Circle getRequestArea(WebPlotRequest request) {
@@ -521,7 +333,7 @@ public class PlotServUtils {
 
     private static ImageMask[] createMaskDefinition(WebPlotRequest r) {
         List<String> maskColors= r.getMaskColors();
-        Color cAry[]= new Color[maskColors.size()];
+        Color[] cAry= new Color[maskColors.size()];
         List<ImageMask> masksList=  new ArrayList<ImageMask>();
         int bits= r.getMaskBits();
         int colorIdx= 0;
@@ -632,18 +444,13 @@ public class PlotServUtils {
 
 
     private static ProgressMessage getSingleStatusMessage(String key) {
-        ProgressMessage retval = EMPTY_MESSAGE;
-        Cache cache = UserCache.getInstance();
-        ProgressStat stat = (ProgressStat) cache.get(new StringKey(key));
-        if (stat != null) {
-            retval = new ProgressMessage(stat.getMessage(), stat.isDone());
-        }
-        return retval;
+        ProgressStat stat = (ProgressStat) UserCache.getInstance().get(new StringKey(key));
+        if (stat != null)  return new ProgressMessage(stat.getMessage(), stat.isDone());
+        return EMPTY_MESSAGE;
     }
 
     private static ProgressMessage getMultiStatMessage(ProgressStat stat) {
-        ProgressMessage retval = null;
-        String downloadStr = null;
+        ProgressMessage retval;
         Cache cache = UserCache.getInstance();
         List<String> keyList = stat.getMemberIDList();
         ProgressStat statEntry;
@@ -729,8 +536,7 @@ public class PlotServUtils {
                 int green= Integer.parseInt(gStr, 16);
                 int blue= Integer.parseInt(bStr, 16);
                 retval= new int[] { red, green, blue};
-            } catch (NumberFormatException e) {
-                retval= null;
+            } catch (NumberFormatException ignore) {
             }
         }
         return retval;

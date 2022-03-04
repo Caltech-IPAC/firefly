@@ -13,7 +13,6 @@ package edu.caltech.ipac.firefly.server.visualize;
 import edu.caltech.ipac.firefly.data.BandInfo;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.CreatorResults;
-import edu.caltech.ipac.firefly.visualize.InsertBandInitializer;
 import edu.caltech.ipac.firefly.visualize.PlotImages;
 import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
@@ -67,10 +66,6 @@ public class WebPlotResultSerializer {
             if (res.containsKey(WebPlotResult.PLOT_IMAGES)) {
                 PlotImages images= (PlotImages)res.getResult(WebPlotResult.PLOT_IMAGES);
                 map.put(WebPlotResult.PLOT_IMAGES, VisJsonSerializer.serializePlotImages(images));
-            }
-            if (res.containsKey(WebPlotResult.INSERT_BAND_INIT)) {
-                InsertBandInitializer init= (InsertBandInitializer)res.getResult(WebPlotResult.INSERT_BAND_INIT);
-                map.put(WebPlotResult.INSERT_BAND_INIT, VisJsonSerializer.serializeInsertBandInitializer(init));
             }
             if (res.containsKey(WebPlotResult.PLOT_CREATE)) {
                 CreatorResults cr= (CreatorResults)res.getResult(WebPlotResult.PLOT_CREATE);

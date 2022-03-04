@@ -18,7 +18,7 @@ import {makePostPlotTitle} from '../reducer/PlotTitle.js';
 import {dispatchAddViewerItems, getMultiViewRoot, findViewerWithItemId, EXPANDED_MODE_RESERVED, IMAGE, DEFAULT_FITS_VIEWER_ID} from '../MultiViewCntlr.js';
 import {
     getPlotViewById, getDrawLayerByType, getDrawLayersByType, getDrawLayerById, getPlotViewIdListInOverlayGroup,
-    removeRawDataByPlotView, canLoadStretchDataDirect, isDrawLayerAttached
+    removeRawDataByPlotView, isDrawLayerAttached
 } from '../PlotViewUtil.js';
 import {enableMatchingRelatedData, enableRelatedDataLayer} from '../RelatedDataUtil.js';
 import {modifyRequestForWcsMatch} from './WcsMatchTask.js';
@@ -314,9 +314,7 @@ function continuePlotImageSuccess(dispatcher, payload, successAry, failAry) {
 
         pvNewPlotInfoAry.forEach( ({plotAry}) => { // images are small enough, clear the png tiles then images will load direct
             const realPlotAry = isArray(plotAry) ? plotAry : [plotAry];
-            realPlotAry.forEach((p) => {
-                if (canLoadStretchDataDirect(p)) p.tileData = undefined;
-            });
+            realPlotAry.forEach((p) => p.tileData = undefined );
         });
 
         dispatcher({type: ImagePlotCntlr.PLOT_IMAGE, payload: resultPayload});

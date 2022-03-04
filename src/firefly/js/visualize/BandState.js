@@ -67,7 +67,6 @@ export function makeBandStateWithJson(bsJson, overridePlotRequest, overrideRV ) 
     bState.cubeCnt= bsJson.cubeCnt || 0;
     bState.cubePlaneNumber= bsJson.cubePlaneNumber || 0;
     bState.directFileAccessData= bsJson.directFileAccessData;
-    // bState.rangeValues= RangeValues.parse(bState.rangeValuesSerialize);
     return bState;
 }
 
@@ -86,7 +85,7 @@ export function convertBandStateToJSON(bs, includeDirectAccessData= true) {
     json.plotRequestSerialize= bs.plotRequest.toStringServerSideOnly();
 
 
-    json.rangeValuesSerialize= bs.rangeValues.toJSON();
+    json.rangeValuesSerialize= bs.rangeValues?.toJSON() ?? undefined;
     if (includeDirectAccessData) json.directFileAccessData= bs.directFileAccessData;
     if (bs.multiImageFile) json.multiImageFile= bs.multiImageFile;
     if (bs.tileCompress) json.tileCompress = bs.tileCompress;
