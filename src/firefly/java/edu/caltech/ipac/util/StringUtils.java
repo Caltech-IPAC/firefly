@@ -172,7 +172,7 @@ public class StringUtils {
         String[] reqkeys = str.split(regExp);
         int[] intAry = new int[reqkeys.length];
         for (int i = 0; i < reqkeys.length; i++) {
-            intAry[i] = new Integer(reqkeys[i].trim());
+            intAry[i] = Integer.parseInt(reqkeys[i].trim());
         }
         return intAry;
     }
@@ -183,7 +183,7 @@ public class StringUtils {
         String[] reqkeys = str.split(regExp);
         ArrayList<Integer> list = new ArrayList<Integer>(reqkeys.length);
         for (int i = 0; i < reqkeys.length; i++) {
-            list.add( new Integer(reqkeys[i].trim()));
+            list.add( Integer.parseInt(reqkeys[i].trim()));
         }
         return list;
     }

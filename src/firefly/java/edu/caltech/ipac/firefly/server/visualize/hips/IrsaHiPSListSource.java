@@ -38,7 +38,7 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
     private static final String irsaHiPSListFrom = irsaHiPSSource.equals("file") ?
                                                     AppProperties.getProperty("irsa.hips.masterFile",irsaHipsTable):
                                                     AppProperties.getProperty("irsa.hips.masterUrl", irsaHipsUrl);
-    private static int TIMEOUT  = new Integer( AppProperties.getProperty("HiPS.timeoutLimit" , "30")).intValue();
+    private static int TIMEOUT  = AppProperties.getIntProperty("HiPS.timeoutLimit" , 30);
     private static String PROP = PARAMS.PROPERTIES.getKey().toLowerCase();
 
     private static Map<String, String> paramsMap = new HashMap<>();

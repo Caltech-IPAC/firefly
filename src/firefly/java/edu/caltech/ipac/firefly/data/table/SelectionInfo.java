@@ -53,7 +53,7 @@ public class SelectionInfo implements Serializable, Cloneable {
 
     public void select(int idx) {
         if (selectAll) {
-            exceptions.remove(new Integer(idx));
+            exceptions.remove(idx);
         } else {
             exceptions.add(idx);
             if (exceptions.size() == rowCount) {
@@ -66,7 +66,7 @@ public class SelectionInfo implements Serializable, Cloneable {
         if (selectAll) {
             exceptions.add(idx);
         } else {
-            exceptions.remove(new Integer(idx));
+            exceptions.remove(idx);
         }
     }
 

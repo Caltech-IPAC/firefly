@@ -10,7 +10,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.AccessControlException;
 import java.util.Map;
 import java.util.Properties;
 
@@ -221,7 +220,7 @@ public class AppProperties {
       if (overridePDB==null) {
           try {
                retval= System.getProperty(key, def);
-          } catch (AccessControlException ace) { /*do nothing*/ }
+          } catch (Exception e) { /*do nothing*/ }
           if (retval==def) retval= _mainProperties.getProperty(key, def);
       }
       else {

@@ -252,7 +252,7 @@ public class Wavelength {
             float[] fData = (float[]) obj;
             double[] data = new double[fData.length];
             for (int i=0; i<fData.length; i++){
-                data[i] = new Double(fData[i]).doubleValue();
+                data[i] = fData[i];
             }
             return data;
         }
@@ -263,7 +263,7 @@ public class Wavelength {
             int[] iData = (int[]) obj;
             double[] data = new double[iData.length];
             for (int i=0; i<iData.length; i++){
-                data[i] = new Double(iData[i]).doubleValue();
+                data[i] = iData[i];
             }
             return data;
         }
@@ -271,7 +271,7 @@ public class Wavelength {
             long[] lData = (long[]) obj;
             double[] data = new double[lData.length];
             for (int i=0; i<lData.length; i++){
-                data[i] = new Double(lData[i]).doubleValue();
+                data[i] = lData[i];
             }
             return data;
         }
@@ -279,7 +279,7 @@ public class Wavelength {
             short[] sData = (short[]) obj;
             double[] data = new double[sData.length];
             for (int i=0; i<sData.length; i++){
-                data[i] = new Double(sData[i]).doubleValue();
+                data[i] = sData[i];
             }
             return data;
         }
