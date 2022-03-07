@@ -107,24 +107,20 @@ export CATALINA_OPTS="\
 	${FIREFLY_OPTS}"
 
 
-version=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2 | cut -d'.' -f1,2)
-if [ $(echo "$version > 1.8" | bc) -gt 0 ]; then
-  # Java 9 introduces Modularity with module level security
-  # GWT apps requires these module to be opened
-  CATALINA_OPTS="$CATALINA_OPTS \
-      --add-opens java.base/java.lang.module=ALL-UNNAMED \
-      --add-opens java.base/jdk.internal.math=ALL-UNNAMED \
-      --add-opens java.base/jdk.internal.module=ALL-UNNAMED \
-      --add-opens java.base/jdk.internal.ref=ALL-UNNAMED \
-      --add-opens java.base/jdk.internal.loader=ALL-UNNAMED \
-      --add-opens java.base/jdk.internal.reflect=ALL-UNNAMED \
-      --add-opens java.base/jdk.internal.platform.cgroupv1=ALL-UNNAMED \
-      --add-opens jdk.management.jfr/jdk.management.jfr=ALL-UNNAMED \
-      --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED \
-      --add-opens java.logging/sun.util.logging.internal=ALL-UNNAMED \
-    "
-fi
-
+# Java 9 introduces Modularity with module level security
+# GWT apps requires these module to be opened
+CATALINA_OPTS="$CATALINA_OPTS \
+    --add-opens java.base/java.lang.module=ALL-UNNAMED \
+    --add-opens java.base/jdk.internal.math=ALL-UNNAMED \
+    --add-opens java.base/jdk.internal.module=ALL-UNNAMED \
+    --add-opens java.base/jdk.internal.ref=ALL-UNNAMED \
+    --add-opens java.base/jdk.internal.loader=ALL-UNNAMED \
+    --add-opens java.base/jdk.internal.reflect=ALL-UNNAMED \
+    --add-opens java.base/jdk.internal.platform.cgroupv1=ALL-UNNAMED \
+    --add-opens jdk.management.jfr/jdk.management.jfr=ALL-UNNAMED \
+    --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED \
+    --add-opens java.logging/sun.util.logging.internal=ALL-UNNAMED \
+  "
 
 
 #------- start background scripts: cleanup

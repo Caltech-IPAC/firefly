@@ -46,7 +46,7 @@ public class EhcacheProvider implements Cache.Provider {
 
     static {
         URL url = null;
-        File f = getConfFile("ehcache.xml");
+        File f = ServerContext.getConfigFile("ehcache.xml");
         if (f != null && f.canRead()) {
             try {
                 url = f.toURI().toURL();
@@ -66,8 +66,8 @@ public class EhcacheProvider implements Cache.Provider {
         if (f.lastModified() > curConfModTime) {
             curConfModTime = f.lastModified();
 
-            File sharedConfig = getConfFile("shared_ehcache.xml");
-            File ignoreSizeOf = getConfFile("ignore_sizeof.txt");
+            File sharedConfig = ServerContext.getConfigFile("shared_ehcache.xml");
+            File ignoreSizeOf = ServerContext.getConfigFile("ignore_sizeof.txt");
             System.setProperty("net.sf.ehcache.sizeof.filter", ignoreSizeOf.getAbsolutePath());
 
             sharedManager = CacheManager.create(sharedConfig.getAbsolutePath());
@@ -92,19 +92,6 @@ public class EhcacheProvider implements Cache.Provider {
 //            MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 //            ManagementService.registerMBeans(manager, mBeanServer, false, false, false, true);
         }
-    }
-
-    private static File getConfFile(String fname) {
-        File confFile = ServerContext.getConfigFile(fname);
-        if (confFile == null) {
-            confFile = new File(ServerContext.getWebappConfigDir(), fname);
-            try {
-                URLDownload.getDataToFile(EhcacheImpl.class.getResource("/edu/caltech/ipac/firefly/server/cache/resources/" + fname), confFile);
-            } catch (Exception e) {
-                _log.error("Unable to extract " + fname + " from jar file");
-            }
-        }
-        return confFile;
     }
 
     private static String[] findCleanupCacheTypes() {
