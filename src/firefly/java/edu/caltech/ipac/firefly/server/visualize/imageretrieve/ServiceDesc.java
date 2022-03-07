@@ -15,20 +15,18 @@ public class ServiceDesc {
 
 
     public static String get(WebPlotRequest r) {
-        switch (r.getServiceType()) {
-            case ISSA: return getIssaDesc(r);
-            case IRIS: return getIrisDesc(r);
-            case TWOMASS: return get2MassDesc(r);
-            case MSX: return "MSX Image" + r.getServiceType();
-            case DSS: return getDssDesc(r);
-            case SDSS: return getSloanDssDesc(r);
-            case WISE: return getWiseDesc(r);
-            case AKARI:
-            case SEIP:
-            case ATLAS: return getAtlasDesc(r);
-            case UNKNOWN: return r.getServiceTypeString();
-            default: return r.getServiceType()+"";
-        }
+        return switch (r.getServiceType()) {
+            case ISSA -> getIssaDesc(r);
+            case IRIS -> getIrisDesc(r);
+            case TWOMASS -> get2MassDesc(r);
+            case MSX -> "MSX Image" + r.getServiceType();
+            case DSS -> getDssDesc(r);
+            case SDSS -> getSloanDssDesc(r);
+            case WISE -> getWiseDesc(r);
+            case AKARI, SEIP, ATLAS -> getAtlasDesc(r);
+            case UNKNOWN -> r.getServiceTypeString();
+            default -> r.getServiceType() + "";
+        };
     }
 
 
@@ -42,21 +40,20 @@ public class ServiceDesc {
 
 
     private static String getDssDesc(WebPlotRequest r) {
-
         String survey= r.getSurveyKey().toLowerCase();
         String root = "DSS ";
 
-        switch (survey) {
-            case "poss2ukstu_red": return root + "POSS2/UKSTU Red";
-            case "poss2ukstu_ir": return root + "POSS2/UKSTU Infrared";
-            case "poss2ukstu_blue": return root + "POSS2/UKSTU Blue";
-            case "poss1_red": return root + "POSS1 Red";
-            case "poss1_blue": return root + "POSS1 Blue";
-            case "quickv": return root + "Quick-V Survey";
-            case "phase2_gsc2": return root + "HST Phase 2 Target Positioning(GSC 2)";
-            case "phase2_gsc1": return root + "HST Phase 1 Target Positioning(GSC 1)";
-            default : return root;
-        }
+        return switch (survey) {
+            case "poss2ukstu_red" -> root + "POSS2/UKSTU Red";
+            case "poss2ukstu_ir" -> root + "POSS2/UKSTU Infrared";
+            case "poss2ukstu_blue" -> root + "POSS2/UKSTU Blue";
+            case "poss1_red" -> root + "POSS1 Red";
+            case "poss1_blue" -> root + "POSS1 Blue";
+            case "quickv" -> root + "Quick-V Survey";
+            case "phase2_gsc2" -> root + "HST Phase 2 Target Positioning(GSC 2)";
+            case "phase2_gsc1" -> root + "HST Phase 1 Target Positioning(GSC 1)";
+            default -> root;
+        };
     }
 
 
@@ -80,12 +77,12 @@ public class ServiceDesc {
     private static String get2MassDesc(WebPlotRequest request) {
         String band= request.getSurveyBand().toLowerCase();
         String root = "2MASS ";
-        switch (band) {
-            case "j": return root + "J";
-            case "h": return root + "H";
-            case "k": return root + "K";
-            default : return root;
-        }
+        return switch (band) {
+            case "j" -> root + "J";
+            case "h" -> root + "H";
+            case "k" -> root + "K";
+            default -> root;
+        };
     }
 
     private static String getIrisDesc(WebPlotRequest request) {
@@ -94,24 +91,24 @@ public class ServiceDesc {
 
     private static String getIrisDesc(String survey ) {
         String root = "IRAS: ";
-        switch (survey) {
-            case "12": return root + "IRIS 12 micron";
-            case "25": return root + "IRIS 25 micron";
-            case "60": return root + "IRIS 60 micron";
-            case "100": return root + "IRIS 100 micron";
-            default : return root;
-        }
+        return switch (survey) {
+            case "12" -> root + "IRIS 12 micron";
+            case "25" -> root + "IRIS 25 micron";
+            case "60" -> root + "IRIS 60 micron";
+            case "100" -> root + "IRIS 100 micron";
+            default -> root;
+        };
     }
 
     private static String getIssaDesc(WebPlotRequest request) {
         String survey= request.getSurveyKey();
         String root = "ISSA ";
-        switch (survey) {
-            case "12": return root + "12 micron";
-            case "25": return root + "25 micron";
-            case "60": return root + "60 micron";
-            case "100": return root + "100 micron";
-            default : return root;
-        }
+        return switch (survey) {
+            case "12" -> root + "12 micron";
+            case "25" -> root + "25 micron";
+            case "60" -> root + "60 micron";
+            case "100" -> root + "100 micron";
+            default -> root;
+        };
     }
 }

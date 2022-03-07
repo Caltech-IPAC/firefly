@@ -195,13 +195,13 @@ public final class FITSTableReader
     }
 
     private static String makeKeyforHDUTab(FitsReadUtil.ExtractionResults result) {
-        return result.getExtName()!=null ? result.getExtName() : "HDU#"+result.getHduNum();
+        return result.extName()!=null ? result.extName() : "HDU#"+result.hduNum();
     }
     private static String makeMetaEntryForHDUs(List<FitsReadUtil.ExtractionResults> results) {
         StringBuilder str= new StringBuilder();
         for(FitsReadUtil.ExtractionResults r : results) {
            if (str.length()>0) str.append(";");
-           str.append(makeKeyforHDUTab(r)).append("=").append(r.getHduNum());
+           str.append(makeKeyforHDUTab(r)).append("=").append(r.hduNum());
         }
         return str.toString();
     }
@@ -215,7 +215,7 @@ public final class FITSTableReader
         // guess an error
         String errCol= null;
         for(FitsReadUtil.ExtractionResults result: results) {
-            String extName= result.getExtName();
+            String extName= result.extName();
             if (extName!=null && extName.toLowerCase().startsWith("err")) {
                 errCol= makeKeyforHDUTab(result);
                 break;
@@ -229,7 +229,7 @@ public final class FITSTableReader
                                                     String xColName ) {
         String defYCol= "";
         for(FitsReadUtil.ExtractionResults result : results) {
-            if (result.isRefHDU()) defYCol= makeKeyforHDUTab(result);
+            if (result.refHDU()) defYCol= makeKeyforHDUTab(result);
         }
         TableMeta meta= dataGroup.getTableMeta();
         meta.addKeyword(MetaConst.DEFAULT_CHART_X_COL, xColName);
@@ -247,7 +247,7 @@ public final class FITSTableReader
         List<FitsReadUtil.ExtractionResults> results= FitsReadUtil.getAllZAxisAryFromRelatedCubes(
                 pt, f, refHduNum, allMatchingHDUs, drillSize );
         ArrayList<DataType> dataTypes = new ArrayList<>();
-        int len= results.get(0).getAryData().length;
+        int len= results.get(0).aryData().length;
         dataTypes.add(new DataType("plane","Plane", Integer.class));
         if (wlAry!=null) {
             DataType wlDt= new DataType("wavelength",Double.class, "Wavelength", wlUnit, null, null);
@@ -255,11 +255,11 @@ public final class FITSTableReader
         }
         String refKey= null;
         for(FitsReadUtil.ExtractionResults result : results) {
-            String desc= result.getExtName()!=null ? result.getExtName() : "HDU# "+result.getHduNum();
+            String desc= result.extName()!=null ? result.extName() : "HDU# "+result.hduNum();
             String key= makeKeyforHDUTab(result);
-            String u= fluxUnit.get(result.getHduNum());
+            String u= fluxUnit.get(result.hduNum());
             DataType dt = new DataType(key,Double.class, desc, u, null, null);
-            if (result.isRefHDU()) refKey= key;
+            if (result.refHDU()) refKey= key;
 
             dataTypes.add(dt);
         }
@@ -269,7 +269,7 @@ public final class FITSTableReader
             aRow.setDataElement("plane",i+1);
             if (wlAry!=null) aRow.setDataElement("wavelength",rnd(wlAry[i],7));
             for(FitsReadUtil.ExtractionResults result : results) {
-                aRow.setDataElement(makeKeyforHDUTab(result),result.getAryData()[i]);
+                aRow.setDataElement(makeKeyforHDUTab(result),result.aryData()[i]);
             }
             dataGroup.add(aRow);
         }
@@ -305,7 +305,7 @@ public final class FITSTableReader
         List<FitsReadUtil.ExtractionResults> results= FitsReadUtil.getAllPointsFromRelatedHDUs(
                 ptAry, f, refHduNum, plane, allMatchingHDUs, drillSize );
         ArrayList<DataType> dataTypes = new ArrayList<>();
-        int len= results.get(0).getAryData().length;
+        int len= results.get(0).aryData().length;
         dataTypes.add(new DataType("x", Integer.class, "x", "pixel", null, null));
         dataTypes.add(new DataType("y", Integer.class, "y", "pixel", null, null));
         boolean hasWpt= wptAry!=null && wptAry.length==ptAry.length;
@@ -315,11 +315,11 @@ public final class FITSTableReader
         }
         String defYCol= "";
         for(FitsReadUtil.ExtractionResults result : results) {
-            String desc= result.getExtName()!=null ? result.getExtName() : "HDU# "+result.getHduNum();
+            String desc= result.extName()!=null ? result.extName() : "HDU# "+result.hduNum();
             String key= makeKeyforHDUTab(result);
-            String bunit= result.getHeader().getStringValue("BUNIT");
+            String bunit= result.header().getStringValue("BUNIT");
             DataType dt = new DataType(key,Double.class, desc, bunit, null,null);
-            if (result.isRefHDU()) defYCol= key;
+            if (result.refHDU()) defYCol= key;
             dataTypes.add(dt);
         }
         DataGroup dataGroup = new DataGroup("Cube Z-Axis", dataTypes);
@@ -332,7 +332,7 @@ public final class FITSTableReader
                 aRow.setDataElement("dec",rnd(wptAry[i].getY(),7));
             }
             for(FitsReadUtil.ExtractionResults result : results) {
-                aRow.setDataElement(makeKeyforHDUTab(result),result.getAryData()[i]);
+                aRow.setDataElement(makeKeyforHDUTab(result),result.aryData()[i]);
             }
             dataGroup.add(aRow);
         }
@@ -363,7 +363,7 @@ public final class FITSTableReader
         List<FitsReadUtil.ExtractionResults> results= FitsReadUtil.getAllPointsFromRelatedHDUs(
                 ptAry, f, refHduNum, plane, allMatchingHDUs, drillSize );
         ArrayList<DataType> dataTypes = new ArrayList<>();
-        int len= results.get(0).getAryData().length;
+        int len= results.get(0).aryData().length;
         boolean hasWpt= wptAry!=null && wptAry.length==ptAry.length;
         if (hasWpt) {
             dataTypes.add(new DataType("offset", Double.class, "offset", "arcsec", null, null));
@@ -375,11 +375,11 @@ public final class FITSTableReader
         dataTypes.add(new DataType("y", Integer.class, "y", "pixel", null, null));
         String defYCol= "";
         for(FitsReadUtil.ExtractionResults result : results) {
-            String desc= result.getExtName()!=null ? result.getExtName() : "HDU# "+result.getHduNum();
+            String desc= result.extName()!=null ? result.extName() : "HDU# "+result.hduNum();
             String key= makeKeyforHDUTab(result);
-            String bunit= result.getHeader().getStringValue("BUNIT");
+            String bunit= result.header().getStringValue("BUNIT");
             DataType dt = new DataType(key,Double.class, desc, bunit, null,null);
-            if (result.isRefHDU()) defYCol= key;
+            if (result.refHDU()) defYCol= key;
             dataTypes.add(dt);
         }
         DataGroup dataGroup = new DataGroup("Cube Z-Axis", dataTypes);
@@ -394,7 +394,7 @@ public final class FITSTableReader
                 aRow.setDataElement("dec",rnd(wptAry[i].getY(),7));
             }
             for(FitsReadUtil.ExtractionResults result : results) {
-                aRow.setDataElement(makeKeyforHDUTab(result),result.getAryData()[i]);
+                aRow.setDataElement(makeKeyforHDUTab(result),result.aryData()[i]);
             }
             dataGroup.add(aRow);
         }

@@ -139,14 +139,12 @@ public class PlotOutput {
     }
 
     private static String getExt(int outType) {
-        String retval= FileUtil.png;
-        switch (outType) {
-            case JPEG : retval= FileUtil.jpg; break;
-            case PNG : retval= FileUtil.png; break;
-            case BMP : retval= FileUtil.bmp; break;
-        }
-        return retval;
-
+        return switch (outType) {
+            case JPEG -> FileUtil.jpg;
+            case PNG -> FileUtil.png;
+            case BMP -> FileUtil.bmp;
+            default -> FileUtil.png;
+        };
     }
 
 
@@ -267,21 +265,10 @@ public class PlotOutput {
 
 
     private BufferedImage createImage(int width, int height, Quality quality) {
-        BufferedImage retval;
-
-        switch (quality) {
-            case HIGH:
-                retval=  new BufferedImage(width,height, BufferedImage.TYPE_INT_ARGB);
-                break;
-            case MEDIUM:
-                retval= new BufferedImage(width,height, BufferedImage.TYPE_USHORT_565_RGB);
-                break;
-            default :
-                Assert.argTst(false, "quality must be HIGH or MEDIUM");
-                retval= null;
-                break;
-        }
-        return retval;
+        return switch (quality) {
+            case HIGH ->  new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+            case MEDIUM ->  new BufferedImage(width, height, BufferedImage.TYPE_USHORT_565_RGB);
+        };
     }
 
 

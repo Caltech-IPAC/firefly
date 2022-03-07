@@ -169,7 +169,7 @@ public class DirectStretchUtils {
             final float [] flip1d= flipFloatArray(float1d,totWidth,totHeight);
             byte1d= new byte[flip1d.length];
 
-            List<ImageMask> masksList=  new ArrayList<ImageMask>();
+            List<ImageMask> masksList=  new ArrayList<>();
             for(int j= 0; (j<31); j++) {
                 if (((maskBits>>j) & 1) != 0) {
                     masksList.add(new ImageMask(j,Color.RED));
@@ -261,14 +261,11 @@ public class DirectStretchUtils {
 
 
         public byte[] findMostCompressAry(CompressType ct) {
-            switch (ct) {
-                case FULL: return byte1d;
-                case QUARTER_HALF_FULL:
-                case QUARTER_HALF: return byte1dQuarter;
-                case HALF:
-                case HALF_FULL: return byte1dHalf;
-                default: return new byte[0];
-            }
+            return switch (ct) {
+                case FULL -> byte1d;
+                case QUARTER_HALF_FULL, QUARTER_HALF -> byte1dQuarter;
+                case HALF, HALF_FULL -> byte1dHalf;
+            };
         }
 
         public boolean isRangeValuesMatching(PlotState state) {

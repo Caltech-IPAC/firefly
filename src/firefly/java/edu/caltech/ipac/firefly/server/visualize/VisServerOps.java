@@ -88,7 +88,7 @@ public class VisServerOps {
     public static WebPlotResult create3ColorPlot(WebPlotRequest redR, WebPlotRequest greenR, WebPlotRequest blueR) {
         try {
             WebPlotFactory.WebPlotFactoryRet wpRet = WebPlotFactory.createNew(redR, greenR, blueR);
-            WebPlotRequest req= wpRet.getWpInit()[0].getPlotState().getPrimaryRequest();
+            WebPlotRequest req= wpRet.getWpInit()[0].plotState().getPrimaryRequest();
             WebPlotResult retval = makeNewPlotResult(wpRet.getWpInit(),wpRet.getWpHeader(), req.getProgressKey());
             CtxControl.deletePlotCtx(CtxControl.getPlotCtx(null));
             counters.incrementVis("New 3 Color Plots");
@@ -340,7 +340,7 @@ public class VisServerOps {
         boolean success = true;
         for (int i = 0; (i < stateAry.length); i++) {
             resultAry[i] = crop(stateAry[i], c1, c2, cropMultiAll);
-            if (success) success = resultAry[i].isSuccess();
+            if (success) success = resultAry[i].success();
         }
         WebPlotResult result = new WebPlotResult(stateAry[0].getContextString());
         result.putResult(WebPlotResult.RESULT_ARY, resultAry);
@@ -425,7 +425,7 @@ public class VisServerOps {
 
             int imageIdx = 0;
             for (WebPlotInitializer wpInit : wpRet.getWpInit()) {
-                PlotState cropState = wpInit.getPlotState();
+                PlotState cropState = wpInit.plotState();
                 cropState.addOperation(PlotState.Operation.CROP);
                 cropState.setWorkingFitsFileStr(cropRequest[0].getFileName(), bands[0]);
                 for (int i = 0; (i < bands.length); i++) {
@@ -728,9 +728,8 @@ public class VisServerOps {
     }
 
     private static WebPlotResult makeNewPlotResult(WebPlotInitializer[] wpInit, WebPlotHeaderInitializer wpHeader, String requestKey) {
-        PlotState state = wpInit[0].getPlotState();
-        WebPlotResult retval = new WebPlotResult(state.getContextString());
-        if (requestKey!=null) retval.setRequestKey(requestKey);
+        PlotState state = wpInit[0].plotState();
+        WebPlotResult retval = new WebPlotResult((requestKey!=null) ? requestKey : state.getContextString());
         retval.putResult(WebPlotResult.PLOT_CREATE, new CreatorResults(wpHeader, wpInit));
         return retval;
     }
