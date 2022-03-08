@@ -8,13 +8,13 @@ sourceSets {
 }
 
 jar {
-  baseName = 'firefly_data'
+  archiveBaseName = 'firefly_data'
   includes = ['**']
   from sourceSets.main.allJava
 }
 
 clean {
   doFirst {
-    delete "${jar.destinationDir}/${jar.baseName}.jar"
+    delete "${jar.destinationDirectory}/${jar.archiveBaseName}.jar"
   }
 }

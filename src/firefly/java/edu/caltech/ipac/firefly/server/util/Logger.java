@@ -124,7 +124,6 @@ public class Logger {
             Configurator.setLevel(logger, level);
         }
         java.util.logging.Level jl = level == Level.ERROR ? java.util.logging.Level.SEVERE :
-                    level == Level.ERROR ? java.util.logging.Level.SEVERE :
                     level == Level.WARN ? java.util.logging.Level.WARNING :
                     level == Level.INFO ? java.util.logging.Level.INFO :
                     level == Level.DEBUG ? java.util.logging.Level.FINE :
@@ -201,6 +200,7 @@ public class Logger {
          * @deprecated
          * Same as debug().  Use debug() instead.
          */
+        @Deprecated
         public void briefDebug(String msgs) { debug(msgs); }
 
         public void debug(String... msgs) { log(Type.NORMAL, Level.DEBUG, msgs); }
@@ -209,6 +209,7 @@ public class Logger {
          * @deprecated
          * Same as info().  Use info() instead.
          */
+        @Deprecated
         public void briefInfo(String msgs) { info(msgs); }
 
         public void info(String... msgs) { log(Type.NORMAL, Level.INFO, msgs);}

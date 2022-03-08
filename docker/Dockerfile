@@ -2,7 +2,7 @@ ARG build_dir=firefly
 ARG target=firefly:warAll
 ARG env=dev
 
-FROM openjdk:8-jdk-slim-bullseye AS deps
+FROM openjdk:17-jdk-slim-buster AS deps
 
 RUN apt-get update && apt-get install -y curl git htmldoc unzip wget
 
@@ -11,21 +11,25 @@ RUN apt-get update \
     && curl -sL https://deb.nodesource.com/setup_12.x | bash -  \
     && apt-get install -y nodejs \
     && npm install yarn -g  \
-# gradle version 4.10.  Not available via apt-get
+# gradle version 17.4  Not available via apt-get
     && cd /usr/local \
-    && wget  -q https://services.gradle.org/distributions/gradle-4.10-bin.zip \
-    && unzip -q gradle-4.10-bin.zip \
-    && ln -sf /usr/local/gradle-4.10/bin/gradle /usr/local/bin/  \
-    && rm gradle-4.10-bin.zip \
+    && wget  -q https://services.gradle.org/distributions/gradle-7.4-bin.zip \
+    && unzip -q gradle-7.4-bin.zip \
+    && ln -sf /usr/local/gradle-7.4/bin/gradle /usr/local/bin/  \
+    && rm gradle-7.4-bin.zip \
 # cleanup
     && rm -rf /var/lib/apt/lists/*;
+
+WORKDIR "/opt/work"
+
+FROM deps AS node_module
 
 WORKDIR "/opt/work/lib"
 COPY firefly/package.json firefly/yarn.lock ./
 RUN yarn install --ignore-platform --frozen-lockfile
 
 
-FROM deps AS builder
+FROM node_module AS builder
 
 ARG build_dir
 ARG target
@@ -33,12 +37,11 @@ ARG env
 
 WORKDIR /opt/work
 COPY . .
-COPY --from=deps /opt/work/lib/node_modules ./firefly/node_modules
+COPY --from=node_module /opt/work/lib/node_modules ./firefly/node_modules
 
 WORKDIR /opt/work/${build_dir}
 ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.internal.launcher.welcomeMessageEnabled=false"
 RUN gradle -Penv=${env} ${target}
-
 
 
 # Beginning of runtime image script
@@ -66,7 +69,7 @@ RUN gradle -Penv=${env} ${target}
 # /external                 : default external data directory visible to Firefly
 
 
-FROM tomcat:9.0-jdk11-openjdk
+FROM tomcat:9.0-jdk17-openjdk-slim-buster
 
 ARG build_dir
 ARG user=tomcat
@@ -80,7 +83,7 @@ ARG gid=91
 # - this is a big part of the layer so do it early
 # - emacs removed because it is so big: to readd emacs: emacs-nox
 RUN apt-get update && apt-get install -y \
-        vim procps wget \
+        vim procps wget unzip \
         && rm -rf /var/lib/apt/lists/*;
 
 # These are the users replaceable environment variables, basically runtime arguments
@@ -132,7 +135,7 @@ COPY firefly/docker/*.sh firefly/docker/*.txt ${CATALINA_HOME}/
 # Tomcat config files, tomcat-users is for the admin username and password
 # context.xml set delegate to true for we can use the classpath of tomcat
 COPY firefly/docker/tomcat-users.xml conf/
-COPY firefly/docker/local.xml firefly/docker/conf/Catalina/localhost
+COPY firefly/docker/local.xml conf/Catalina/localhost
 
 #copy all wars, typically there should only be one
 COPY --from=builder /opt/work/${build_dir}/build/dist/*.war ${CATALINA_HOME}/webapps/
@@ -144,15 +147,13 @@ RUN for n in *.war; do \
     mkdir -p $war_dir; \
     unzip -oqd $war_dir $n; \
     sed -E -i.bak 's/##out--//' $war_dir/WEB-INF/classes/log4j2.properties; \
-    chmod a+w $war_dir/WEB-INF/config; \
     done
 
-WORKDIR ${CATALINA_HOME}
-# Make directories, make scripts executable, save old tomcat config files, remove unwanted apps
+# Add permission to files and directories needed for runtime
 # increase max header size to avoid failing on large auth token
+WORKDIR ${CATALINA_HOME}
 RUN chmod a+x *.sh \
-  && chmod -R a+w /firefly \
-  && chmod a+w *.txt temp work /local/www \
+  && chmod -R a+w *.txt temp work /local/www /firefly \
   && sed -i 's/Connector port="8080"/Connector maxHttpHeaderSize="24576" port="8080"/g' ${CATALINA_HOME}/conf/server.xml
 
 # 8080 - http,  5050 - debug

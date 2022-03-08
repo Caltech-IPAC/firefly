@@ -73,7 +73,6 @@ public class ServerContext {
     private static boolean FITS_SECURITY;
     private static final Map<File, Long> _visSessionDirs= new ConcurrentHashMap<>(617);
     private static final String CONFIG_DIR = "server_config_dir";
-    private static final String CACHEMANAGER_DISABLED_PROP = "CacheManager.disabled";
     private static final String WORK_DIR_PROP = "work.directory";
     private static final String SHARED_WORK_DIR_PROP= "shared.work.directory";
     public static final String VIS_SEARCH_PATH= "visualize.fits.search.path";
@@ -166,12 +165,6 @@ public class ServerContext {
 
         // setup ClientLog and Assert to use firefly logging.
         Assert.setLogger(new AssertLogger());
-
-
-
-        // disable caching is it's a preference
-        CacheManager.setDisabled(AppProperties.getBooleanProperty(CACHEMANAGER_DISABLED_PROP, false));
-
 
         // Must be done after property init
         FITS_SECURITY = AppProperties.getBooleanProperty("visualize.fits.Security", true);

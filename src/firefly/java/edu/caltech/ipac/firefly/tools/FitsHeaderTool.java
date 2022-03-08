@@ -4,6 +4,7 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import nom.tam.fits.*;
 import nom.tam.util.Cursor;
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.Level;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +28,7 @@ public class FitsHeaderTool {
         if (args.length != 1) {
             usage();
         }
+        Logger.setProLog(Level.INFO, null);
         //String url ="https://irsa.ipac.caltech.edu/data/SOFIA/FIFI-LS/OC5I/20170726_F422/proc/p4647/data/g11/F0422_FI_IFS_70050813_RED_RP0_100696.fits";
         try {
             URL uri = new URL(args[0]);

@@ -3,16 +3,6 @@ BuildMajor=@BuildMajor@
 BuildMinor=@BuildMinor@
 BuildRev=@BuildRev@
 BuildType=@BuildType@
-BuildNumber=@BuildNumber@
-BuildDate=@build_Date@
-BuildTime=@build_time@
-BuildTag=@BuildTag@
-BuildCommit=@BuildCommit@
-BuildCommitFirefly=@BuildCommitFirefly@
-BuildFireflyTag=@BuildFireflyTag@
-BuildFireflyBranch=@BuildFireflyBranch@
-DevCycleTag=@DevCycleTag@
-
 
 #==========================================================
 # app.prop env sensitive properties

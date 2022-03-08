@@ -565,22 +565,22 @@ public class DataType implements Serializable, Cloneable {
                 return Boolean.valueOf(s);
             }
             else if (type ==Double.class) {
-                return new Double(s);
+                return Double.parseDouble(s);
             }
             else if (type ==Float.class) {
-                return new Float(s);
+                return Float.parseFloat(s);
             }
             else if (type ==Integer.class) {
-                return new Integer(s);
+                return Integer.parseInt(s);
             }
             else if (type ==Short.class) {
-                return new Short(s);
+                return Short.parseShort(s);
             }
             else if (type ==Long.class) {
-                return new Long(s);
+                return Long.parseLong(s);
             }
             else if (type ==Byte.class) {
-                return new Byte(s);
+                return Byte.parseByte(s);
             }
             else if (type ==HREF.class) {
                 return HREF.parseHREF(s);

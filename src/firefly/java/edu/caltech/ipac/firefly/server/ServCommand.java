@@ -38,7 +38,7 @@ public abstract class ServCommand extends ServerCommandAccess.HttpCommand {
 
             int cnt = 1;
             for (Throwable t = e.getCause(); (t != null); t = t.getCause()) {
-                json.put("cause"+(new Integer(cnt)).toString(),t.toString() );
+                json.put("cause"+cnt,t.toString());
                 cnt++;
             }
             //make it size=1 array since the UI side expects an array

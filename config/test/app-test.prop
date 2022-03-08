@@ -23,4 +23,5 @@ workspace.protocol.webdav=edu.caltech.ipac.firefly.server.WebDAVWorkspaceManager
 # workspace.protocol.webdav=edu.caltech.ipac.firefly.server.ws.WebdavImpl
 
 visualize.fits.Security=false
+CacheManager.disabled=true
 

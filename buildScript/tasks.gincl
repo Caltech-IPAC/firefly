@@ -1,3 +1,5 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
 apply plugin: 'war'
 
 /**---------------------------    util classes   ---------------------------------**/
@@ -55,7 +57,6 @@ class ConfigRepo {
 
 }
 
-
 /**---------------------------    utils   ---------------------------------**/
 
 task loadConfig {
@@ -80,7 +81,7 @@ task loadConfig {
         }
 
         def props = configRepo.flatten();
-//        props.each{ k, v -> println "^^ ${k} => ${v}" }
+//        props.each{ k, v -> println "!!! ${k} => ${v}" }
 
         if (file("$rootDir/buildScript/build.config").exists()) {
             ConfigRepo.parse(project.env, file("$rootDir/buildScript/build.config"))
@@ -98,10 +99,11 @@ task loadConfig {
         }
 
         project.ext.properties.each { k,v ->
-            props.put(k,v)
+            props.put(k, String.valueOf(v))
         }
 
         project.ext.appConfigProps = props
+//        project.ext.appConfigProps.each{ k, v -> println "!!!!!! ${k} => ${v}" }
     }
 }
 
@@ -147,50 +149,15 @@ task createVersionTag  {
 }
 
 
-task prepareWebapp (type:Copy, dependsOn: [loadConfig, createVersionTag]) {
+task prepareWebapp (dependsOn: [loadConfig, createVersionTag, jar]) {
     description= 'Generates the configuration files needed by the webapp, ie. app.prop, web.xml, etc.'
     group = MISC_GROUP
-
-    dependsOn jar
-
-    // should rerun this everytime.  properties could be modified from external files.
-    outputs.upToDateWhen { false }
-
-    into warDir
-
-    into('WEB-INF/config') {
-        from ("${project.buildDir}/version.tag")
-        from ("$rootDir/config/") {include '*.prop', '*.xml', 'ignore_sizeof.txt'}
-        from ('config') {exclude "web.xml"}
-    }
-
-    into('WEB-INF/classes') {
-        from("$rootDir/config/") {include '*.properties'}
-    }
-
-    into('WEB-INF') {
-        from("$rootDir/config") {include 'web.xml', 'context.xml'}
-        from('config') {include 'web.xml', 'context.xml'}
-    }
-
-    // translate the *.html files.
-    from("html/") { include "*.html"}
 
     doFirst {
 
         // copy the content of html to war
         copy {
             from ("html/") { include '**/*' }
-            into warDir
-        }
-
-        // to avoid storing multiple copies of plotly library under project html
-        // copy minimized plotly from firefly
-        copy {
-            from ("$fireflyPath/src/firefly/html/") {
-                include 'plotly*min.js'
-                include 'gpu-browser*min*.js'
-                }
             into warDir
         }
 
@@ -208,19 +175,53 @@ task prepareWebapp (type:Copy, dependsOn: [loadConfig, createVersionTag]) {
             into "${warDir}/WEB-INF/classes"
         }
 
-        if (project.appConfigProps["ehcache.replicate"] && !project.appConfigProps["ehcache.replicate"].toBoolean()) {
-            exclude "ehcache.xml"
+        copy {
+            from ('config') {exclude "web.xml"}
+            from ("${project.buildDir}/version.tag")
+            from ("$rootDir/config/") { include '*.prop' }
+            into("${warDir}/WEB-INF/config")
+            filter(ReplaceTokens, tokens: project.appConfigProps)
         }
 
-        filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: project.appConfigProps)
-    }
-    doLast {
+        copy {
+            from("$rootDir/config/") {include '*.properties'}
+            into("${warDir}/WEB-INF/classes")
+            filter(ReplaceTokens, tokens: project.appConfigProps)
+        }
+
+        copy {
+            from("$rootDir/config") {include 'web.xml', 'context.xml'}
+            from('config') {include 'web.xml', 'context.xml'}
+            into("${warDir}/WEB-INF")
+            filter(ReplaceTokens, tokens: project.appConfigProps)
+        }
+
+        copy {
+            from("html/") { include "*.html"}
+            into(warDir)
+            filter(ReplaceTokens, tokens: project.appConfigProps)
+        }
+
+        // additional filter for these ehcache config files to handle replication or not
+        copy {
+            from ("$fireflyPath/config/") { include '*ehcache.xml', 'ignore_sizeof.txt' }
+            into("${warDir}/WEB-INF/config")
+            filter(ReplaceTokens, tokens: project.appConfigProps)
+            filter { line -> project.appConfigProps["ehcache.replicate"]?.toBoolean() ? line.replaceAll('<!--REPLICATE|REPLICATE-->', '') : line }
+        }
+
+        // to avoid storing multiple copies of plotly library under project html
+        // copy minimized plotly from firefly
         // plotly script load fails if loaded from amd environment
         // with a script tag (as firefly loads it)
         // see DM-11341 for details
-        println ">> updating plotly script"
-        ant.replaceregexp(match:'\\&\\&define\\.amd', replace:'\\&\\&false', flags:'g', byline:true) {
-            fileset(dir: warDir, includes: 'plotly*min.js')
+        copy {
+            from ("$fireflyPath/src/firefly/html/") {
+                include 'plotly*min.js'
+                include 'gpu-browser*min*.js'
+            }
+            into warDir
+            filter { line -> line.replaceAll('\\&\\&define\\.amd', '\\&\\&false')}      // instead of ant.replaceregexp to preserve file permission
         }
     }
 }
@@ -355,6 +356,9 @@ test {
     environment 'contextPath': "/${project['app-name']}"
     environment 'contextName': project['app-name']
     environment 'webappConfigPath': "${project.warDir}/WEB-INF/config/"
+
+    reports.junitXml.destination = file("$distDir/reports/${project['app-name']}/xml")
+    reports.html.destination = file("$distDir/reports/${project['app-name']}/html")
 
     if (project.hasProperty("category")) {
         if (project.category) {
@@ -684,9 +688,9 @@ task onlinehelp () {
 /**--------------------------------------  misc ----------------------------------**/
 
 task testJar(type: Jar, dependsOn: testClasses) {
-    baseName = "test-${project.archivesBaseName}"
+    archiveBaseName = "test-${project.archivesBaseName}"
     from sourceSets.test.output
-    destinationDir = file ("$rootDir/jars/build")
+    destinationDirectory = file ("$rootDir/jars/build")
 
 }
 
@@ -840,8 +844,8 @@ task devMode (dependsOn: createVersionTag) {
 //-------------------------
 // define task order
 //-------------------------
-prepareWebapp.mustRunAfter loadConfig
-buildClient.mustRunAfter  prepareWebapp
+buildClient.mustRunAfter  loadConfig
+prepareWebapp.mustRunAfter buildClient
 buildJsDoc.mustRunAfter   buildClient
 onlinehelp.mustRunAfter   buildJsDoc
 war.mustRunAfter          onlinehelp

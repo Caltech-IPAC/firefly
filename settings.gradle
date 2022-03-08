@@ -1,10 +1,7 @@
 rootProject.name = 'firefly_root'
 
-include 'simbad', 'firefly', 'firefly_data', 'proxy', 'proxyDev'
+include 'firefly', 'firefly_data'
 
-project(":simbad").projectDir   = file('src/external/simbad')
 project(":firefly").projectDir  = file('src/firefly')
 project(":firefly_data").projectDir = file('src/firefly_data')
-project(":proxy").projectDir = file('docker/proxy')
-project(":proxyDev").projectDir = file('docker/proxy-dev')
 

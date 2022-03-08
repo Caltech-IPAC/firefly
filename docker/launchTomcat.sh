@@ -106,6 +106,14 @@ export CATALINA_OPTS="\
 	${FIREFLY_OPTS}"
 
 
+# Java 9 introduces Modularity with module level security
+# Firefly apps requires these module to be opened
+CATALINA_OPTS="$CATALINA_OPTS \
+    --add-opens java.base/java.util=ALL-UNNAMED \
+    "
+
+
+
 #------- start background scripts: cleanup
 ${CATALINA_HOME}/cleanup.sh /firefly/workarea /firefly/shared-workarea &
 

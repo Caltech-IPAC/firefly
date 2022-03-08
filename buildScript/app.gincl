@@ -1,7 +1,7 @@
 task preselect(dependsOn: war)
 
 jar {
-    baseName = "${project['app-name']}"
+    archiveBaseName = "${project['app-name']}"
     include "edu/caltech/ipac/${project.projectDir.name}/**/*"
     from sourceSets.main.allJava
     enabled = true
@@ -41,7 +41,8 @@ war {
     outputs.dir warDir
     classpath = configurations.webappLib
     from warDir
-    destinationDir = file(project.distDir)
+    destinationDirectory = file(project.distDir)
+    duplicatesStrategy = 'exclude'
 
     doFirst {
         archiveName = "${webapp.baseWarName}.war"
@@ -52,7 +53,7 @@ clean {
     doFirst {
 
         delete "${project.distDir}/${webapp.baseWarName}.war"
-        delete "${jar.destinationDir}/${jar.baseName}.jar"
+        delete "${jar.destinationDirectory}/${jar.archiveBaseName}.jar"
         delete "${project.buildDir}"
     }
 }
