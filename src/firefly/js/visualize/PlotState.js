@@ -166,7 +166,7 @@ export class PlotState {
 
     /**
      * Get the range values for the plot.
-     * @param {band} [band] the band get range value for, parameter is unnecessary for non-three color plots
+     * @param {Band} [band] the band get range value for, parameter is unnecessary for non-three color plots
      * @return {RangeValues}
      */
     getRangeValues(band) { return this.get(band || this.firstBand()).rangeValues; }
