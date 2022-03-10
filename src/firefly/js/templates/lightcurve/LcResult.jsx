@@ -196,14 +196,9 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
     };
     return (
         <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1, position: 'relative'}}>
-            { visToolbar &&
-            <div style={{display: 'inline-flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                <div>{visToolbar}</div>
-                <div>
-                    {downloaderOptPanel(mission, cutoutSizeInDeg)}
-                </div>
+            <div style={{display: 'inline-flex', justifyContent: 'flex-end', alignItems: 'center'}}>
+                {downloaderOptPanel(mission, cutoutSizeInDeg)}
             </div>
-            }
             {searchDesc}
             {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
             <div style={{flexGrow: 1, position: 'relative'}}>

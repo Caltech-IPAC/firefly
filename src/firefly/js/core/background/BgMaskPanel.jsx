@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
 
@@ -18,14 +18,15 @@ const logger = Logger('BgMaskPanel');
  * @typedef {Object} data               BackgroundablePanel's data structure
  * @prop {boolean}  data.inProgress     true when a download is in progress
  * @prop {boolean}  data.jobInfo        the jobInfo given to this background request
+ * @prop {function} data.onMaskComplete    function called when job has successfully completed or sent to background or canceled
  */
 
 
-export const BgMaskPanel = React.memo(({componentKey, style={}}) => {
+export const BgMaskPanel = React.memo(({componentKey, onMaskComplete, style={}}) => {
 
     const [{inProgress, jobInfo}] = useStoreConnector((oldState={}) => {
         const {inProgress:oProg, jobInfo:oInfo} = oldState;
-        const {inProgress, jobId} = getComponentState(componentKey);
+        const {inProgress=false, jobId} = getComponentState(componentKey);
         const jobInfo = getJobInfo(jobId);
         if (oProg === inProgress && shallowequal(oInfo, jobInfo)) return oldState;
         return {inProgress, jobInfo};
@@ -57,6 +58,12 @@ export const BgMaskPanel = React.memo(({componentKey, style={}}) => {
         </div>
     );
 
+    const errorInJob= ['ERROR', 'ABORTED'].includes(jobInfo?.phase);
+
+    useEffect(() => {
+        (jobInfo && !inProgress && !errorInJob) && onMaskComplete?.();
+    }, [inProgress, jobInfo, errorInJob]);
+
 
     logger.debug(inProgress ? 'show' : 'hide');
     if (inProgress) {
@@ -74,7 +81,7 @@ export const BgMaskPanel = React.memo(({componentKey, style={}}) => {
                 </div>
             </div>
         );
-    } else if (['ERROR', 'ABORTED'].includes(jobInfo?.phase)) {
+    } else if (errorInJob) {
         return (
             <div className='BgMaskPanel' style={style}>
                 <div className='mask-only'/>
@@ -94,5 +101,6 @@ export const BgMaskPanel = React.memo(({componentKey, style={}}) => {
 
 BgMaskPanel.propTypes = {
     componentKey: PropTypes.string.isRequired,  // key used to identify this background job
-    style: PropTypes.object                     // used for overriding default styling
+    style: PropTypes.object,                    // used for overriding default styling
+    onMaskComplete: PropTypes.func
 };

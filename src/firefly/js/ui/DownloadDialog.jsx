@@ -201,7 +201,8 @@ export function DownloadOptionPanel (props) {
         height:undefined,
         backgroundColor: 'rgba(0,0,0,0.2)'
     };
-    const maskPanel = <BgMaskPanel key={bgKey} componentKey={bgKey} style={maskStyle}/>;
+    const maskPanel = <BgMaskPanel key={bgKey} componentKey={bgKey} style={maskStyle}
+                                   onMaskComplete={() =>hideDownloadDialog()}/>;
 
     const saveAsProps = {
         initialState: {
@@ -381,19 +382,16 @@ function hasOnlyProprietaryData(tableModel={}){
 /**
  * creates and show the DownloadDialog.
  * @param {Component}  panel  the panel to show in the popup.
- * @param {boolean} [show=true] show or hide this dialog
  */
-function showDownloadDialog(panel, show=true) {
+function showDownloadDialog(panel) {
     const title = get(panel, 'props.title', DOWNLOAD_DIALOG_ID);
-    if (show) {
-        const content= (
-            <PopupPanel title={title} >
-                {panel}
-            </PopupPanel>
-        );
-        DialogRootContainer.defineDialog(DOWNLOAD_DIALOG_ID, content);
-        dispatchShowDialog(DOWNLOAD_DIALOG_ID);
-    } else {
-        dispatchHideDialog(DOWNLOAD_DIALOG_ID);
-    }
+    const content= (
+        <PopupPanel title={title} >
+            {panel}
+        </PopupPanel>
+    );
+    DialogRootContainer.defineDialog(DOWNLOAD_DIALOG_ID, content);
+    dispatchShowDialog(DOWNLOAD_DIALOG_ID);
 }
+
+const hideDownloadDialog= () => dispatchHideDialog(DOWNLOAD_DIALOG_ID);

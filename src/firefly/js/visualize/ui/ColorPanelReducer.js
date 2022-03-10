@@ -2,17 +2,15 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get} from 'lodash';
 import Validate from '../../util/Validate.js';
 import FieldGroupCntlr, {FORCE_FIELD_GROUP_REDUCER, INIT_FIELD_GROUP} from '../../fieldGroup/FieldGroupCntlr.js';
 import ImagePlotCntlr from '../ImagePlotCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
 import RangeValues, {STRETCH_LINEAR, STRETCH_ASINH, PERCENTAGE, ABSOLUTE, SIGMA, ZSCALE} from './../RangeValues.js';
-import {clone} from '../../util/WebUtil.js';
 
 
-const cloneWithValue= (field,v) => Object.assign({}, field, {value:v});
+const cloneWithValue= (field,v) => ({...field, value:v});
 
 
 export const RED_PANEL= 'redPanel';
@@ -59,7 +57,7 @@ function computeColorPanelState(fields, plottedRV, fitsData, band, action) {
     switch (action.type) {
         case FieldGroupCntlr.VALUE_CHANGE:
             const valid= Object.keys(fields).every( (key) => {
-                return !fields[key].mounted ? true :  fields[key].valid;
+                return (!fields[key].mounted || key==='upperRange' || key==='lowerRange') ? true :  fields[key].valid;
             } );
             if (!valid) return fields;
             return syncFields(fields,makeRangeValuesFromFields(fields),fitsData);
@@ -70,7 +68,7 @@ function computeColorPanelState(fields, plottedRV, fitsData, band, action) {
         case ImagePlotCntlr.ANY_REPLOT:
             if (!plottedRV && !fitsData) return fields;
             // no update if hue-preserving
-            if (get(plottedRV, 'rgbPreserveHue', 0) > 0) return fields;
+            if ((plottedRV?.rgbPreserveHue ?? 0) > 0) return fields;
             const newFields = updateFieldsFromRangeValues(fields,plottedRV);
             return syncFields(newFields,plottedRV,fitsData);
 
@@ -87,15 +85,15 @@ function computeColorPanelState(fields, plottedRV, fitsData, band, action) {
  * @param fitsData
  */
 function syncFields(fields,rv,fitsData) {
-    const newFields= clone(fields);
+    const newFields= {...fields};
     if (Number.parseInt(rv.lowerWhich)!==ZSCALE) {
-        newFields.lowerRange= clone(fields.lowerRange, computeLowerRangeField(fields,rv,fitsData));
-        newFields.upperRange= clone(fields.upperRange, computeUpperRangeField(fields,rv,fitsData));
+        newFields.lowerRange= {...fields.lowerRange, ...computeLowerRangeField(fields,rv,fitsData)};
+        newFields.upperRange= {...fields.upperRange, ...computeUpperRangeField(fields,rv,fitsData)};
     }
 
-    newFields.algorithm= clone(fields.algorithm, {value: rv.algorithm});
-    newFields.lowerWhich=   clone(fields.lowerWhich, {value: rv.lowerWhich});
-    newFields.upperWhich=   clone(fields.upperWhich, {value: rv.upperWhich});
+    newFields.algorithm= {...fields.algorithm, value: rv.algorithm};
+    newFields.lowerWhich=   {...fields.lowerWhich, value: rv.lowerWhich};
+    newFields.upperWhich=   {...fields.upperWhich, value: rv.upperWhich};
 
     if (newFields.lowerWhich.value===ZSCALE) newFields.lowerWhich.value= PERCENTAGE;
     if (newFields.upperWhich.value===ZSCALE) newFields.upperWhich.value= PERCENTAGE;
@@ -113,7 +111,7 @@ function syncFields(fields,rv,fitsData) {
  * @param {String} lowerRange - field key for lower range field
 */
 function computeLowerRangeField(fields,rv,fitsData,lowerWhich='lowerWhich', lowerRange='lowerRange') {
-    const resetDefault= (fields[lowerWhich].value!==rv.lowerWhich);
+    const resetDefault= (Number(fields[lowerWhich].value)!==Number(rv.lowerWhich));
     let retval;
     switch (rv.lowerWhich) {
         case PERCENTAGE:
@@ -135,6 +133,7 @@ function computeLowerRangeField(fields,rv,fitsData,lowerWhich='lowerWhich', lowe
             };
             break;
     }
+    retval= {...retval, ...retval.validator(retval.value)};
     return retval;
 }
 
@@ -148,7 +147,7 @@ function computeLowerRangeField(fields,rv,fitsData,lowerWhich='lowerWhich', lowe
  */
 function computeUpperRangeField(fields,rv,fitsData) {
     let retval;
-    const resetDefault= (fields.upperWhich.value!==rv.upperWhich);
+    const resetDefault= (Number(fields.upperWhich.value)!==Number(rv.upperWhich));
     switch (rv.upperWhich) {
         case PERCENTAGE:
         default :
@@ -170,6 +169,7 @@ function computeUpperRangeField(fields,rv,fitsData) {
             };
             break;
     }
+    retval= {...retval, ...retval.validator(retval.value)};
     return retval;
 }
 
@@ -202,7 +202,7 @@ function makeRangeValuesFromFields(fields) {
  * @param {RangeValues} rv
  */
 function updateFieldsFromRangeValues(fields,rv) {
-    fields= clone(fields);
+    fields= {...fields};
     fields.lowerWhich= cloneWithValue(fields.lowerWhich, rv.lowerWhich===ZSCALE ? PERCENTAGE : rv.lowerWhich);
     fields.lowerRange= cloneWithValue(fields.lowerRange, rv.lowerValue);
     fields.upperWhich= cloneWithValue(fields.upperWhich, rv.lowerWhich===ZSCALE ? PERCENTAGE : rv.upperWhich);
@@ -432,15 +432,15 @@ export function computeHuePreservePanelState(fields, plottedRVAry, fitsDataAry, 
  * @param {Array} fitsDataAry
  */
 function syncFieldsHuePreserve(fields,rvAry,fitsDataAry) {
-    const newFields= clone(fields);
+    const newFields= {...fields};
     [['lowerWhichRed','lowerRangeRed', 'kRed'],
         ['lowerWhichGreen','lowerRangeGreen', 'kGreen'],
         ['lowerWhichBlue', 'lowerRangeBlue', 'kBlue']].forEach(
             ([lowerWhich,lowerRange,scalingK],i) => {
         if (Number.parseInt(rvAry[i].lowerRange)!==ZSCALE) {
-            newFields[lowerRange]= clone(fields[lowerRange], computeLowerRangeField(fields,rvAry[i],fitsDataAry[i],lowerWhich,lowerRange));
+            newFields[lowerRange]= {...fields[lowerRange], ...computeLowerRangeField(fields,rvAry[i],fitsDataAry[i],lowerWhich,lowerRange)};
         }
-        newFields[lowerWhich]=   clone(fields[lowerWhich], {value: rvAry[i].lowerWhich});
+        newFields[lowerWhich]=   {...fields[lowerWhich],value: rvAry[i].lowerWhich};
         if (newFields[lowerWhich].value===ZSCALE) newFields[lowerWhich].value= PERCENTAGE;
         //scalingK is between 0.1 and 10, while range slider values are from -1 to 1
         newFields[scalingK].value = scalingKToFieldVal(rvAry[i].scalingK);
@@ -482,7 +482,7 @@ function makeHuePreserveRangeValuesFromFields(fields) {
  * @param {Array.<RangeValues>} rvAry
  */
 function updateHuePreserveFieldsFromRangeValues(fields,rvAry) {
-    fields= clone(fields);
+    fields= {...fields};
     [['lowerWhichRed','lowerRangeRed','kRed'],
         ['lowerWhichGreen','lowerRangeGreen','kGreen'],
         ['lowerWhichBlue', 'lowerRangeBlue','kBlue']].forEach(([lowerWhich, lowerRange, scalingK], i) => {
