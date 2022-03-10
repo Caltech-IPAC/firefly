@@ -34,6 +34,7 @@ import org.json.simple.parser.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Trey Roby
@@ -45,18 +46,18 @@ public class VisJsonSerializer {
         JSONObject map = null;
         if (wpHeader!=null) {
             map = new JSONObject();
-            map.put("workingFitsFileStr", wpHeader.getWorkingFitsFileStr());
-            map.put("originalFitsFileStr", wpHeader.getOriginalFitsFileStr());
-            if (wpHeader.getUploadFileNameStr()!=null) map.put("uploadFileNameStr", wpHeader.getUploadFileNameStr());
-            if (wpHeader.isThreeColor()) map.put("threeColor", wpHeader.isThreeColor());
-            if (wpHeader.getRangeValuesSerialized()!=null) map.put("rangeValuesSerialize", wpHeader.getRangeValuesSerialized());
-            map.put("plotRequestSerialize", wpHeader.getRequest().toString());
-            map.put("dataDesc", wpHeader.getDataDesc());
-            map.put("zeroHeaderAry", serializeHeaderAry(wpHeader.getZeroHeaderAry()));
-            if (wpHeader.isMultiImageFile()) map.put("multiImageFile", wpHeader.isMultiImageFile());
-            map.put("multiImage", wpHeader.getMultiImage().name());
-            if (wpHeader.getAttributes()!=null) map.put("attributes", new JSONObject(wpHeader.getAttributes()));
-            map.put("colorTableId", wpHeader.getColorTableId());
+            map.put("workingFitsFileStr", wpHeader.workingFitsFileStr());
+            map.put("originalFitsFileStr", wpHeader.originalFitsFileStr());
+            if (wpHeader.uploadFileNameStr()!=null) map.put("uploadFileNameStr", wpHeader.uploadFileNameStr());
+            if (wpHeader.threeColor()) map.put("threeColor", wpHeader.threeColor());
+            if (wpHeader.rv()!=null) map.put("rangeValuesSerialize", wpHeader.rv().serialize());
+            map.put("plotRequestSerialize", wpHeader.request().toString());
+            map.put("dataDesc", wpHeader.dataDesc());
+            map.put("zeroHeaderAry", serializeHeaderAry(wpHeader.zeroHeaderAry()));
+            if (wpHeader.multiImageFile()) map.put("multiImageFile", wpHeader.multiImageFile());
+            map.put("multiImage", wpHeader.multiImage().name());
+            if (wpHeader.attributes()!=null) map.put("attributes", new JSONObject(wpHeader.attributes()));
+            map.put("colorTableId", wpHeader.colorTableId());
         }
         return map;
     }
@@ -65,25 +66,25 @@ public class VisJsonSerializer {
     public static JSONObject serializeWebPlotInitializerDeep(WebPlotInitializer wpInit) {
         JSONObject map = new JSONObject();
 
-        if (wpInit.getCoordinatesOfPlot()!=null) map.put("imageCoordSys", wpInit.getCoordinatesOfPlot().toString());
-        if (wpInit.getHeaderAry()!=null) map.put("headerAry", serializeHeaderAry(wpInit.getHeaderAry()));
-        if (wpInit.getZeroHeaderAry()!=null) map.put("zeroHeaderAry", serializeHeaderAry(wpInit.getZeroHeaderAry()));
-        if (wpInit.getRelatedData()!=null) map.put("relatedData", serializeRelatedDataArray(wpInit.getRelatedData()));
-        if (wpInit.getDataWidth()>=0) map.put("dataWidth", wpInit.getDataWidth());
-        if (wpInit.getDataWidth()>=0) map.put("dataHeight", wpInit.getDataHeight());
-        map.put("initImages", serializePlotImages(wpInit.getInitImages()));
-        map.put("plotState", serializePlotState(wpInit.getPlotState()));
-        map.put("desc", wpInit.getPlotDesc());
-        if (wpInit.getDataDesc()!=null) map.put("dataDesc", wpInit.getDataDesc());
+        if (wpInit.imageCoordSys()!=null) map.put("imageCoordSys", wpInit.imageCoordSys().toString());
+        if (wpInit.headerAry()!=null) map.put("headerAry", serializeHeaderAry(wpInit.headerAry()));
+        if (wpInit.zeroHeaderAry()!=null) map.put("zeroHeaderAry", serializeHeaderAry(wpInit.zeroHeaderAry()));
+        if (wpInit.relatedData()!=null) map.put("relatedData", serializeRelatedDataArray(wpInit.relatedData()));
+        if (wpInit.dataWidth()>=0) map.put("dataWidth", wpInit.dataWidth());
+        if (wpInit.dataWidth()>=0) map.put("dataHeight", wpInit.dataHeight());
+        map.put("initImages", serializePlotImages(wpInit.initImages()));
+        map.put("plotState", serializePlotState(wpInit.plotState()));
+        map.put("desc", wpInit.plotDesc());
+        if (wpInit.dataDesc()!=null) map.put("dataDesc", wpInit.dataDesc());
 
         JSONArray ary= new JSONArray();
 
-        if (wpInit.getPlotState().isThreeColor()) {
-            for(WebFitsData wfd : wpInit.getFitsData()) ary.add(serializeWebFitsData(wfd));
+        if (wpInit.plotState().isThreeColor()) {
+            for(WebFitsData wfd : wpInit.fitsData()) ary.add(serializeWebFitsData(wfd));
             map.put("fitsData", ary);
         }
         else {
-            map.put("fitsData", serializeWebFitsData(wpInit.getFitsData()[0]));
+            map.put("fitsData", serializeWebFitsData(wpInit.fitsData()[0]));
         }
 
         return map;
@@ -306,7 +307,7 @@ public class VisJsonSerializer {
             PlotState state= null;
             JSONParser parser= new JSONParser();
             Object obj= parser.parse(s);
-            if (obj!=null && obj instanceof JSONObject) {
+            if (obj instanceof JSONObject) {
                 state= deserializePlotState((JSONObject)obj);
             }
             return state;
@@ -499,12 +500,7 @@ public class VisJsonSerializer {
 
     private static boolean getBoolean(JSONObject j, String key, boolean defValue) throws IllegalArgumentException, ClassCastException {
         Boolean b= (Boolean)j.get(key);
-        if (b==null) {
-            return defValue;
-        }
-        else {
-            return b.booleanValue();
-        }
+        return Objects.requireNonNullElse(b, defValue);
     }
 
 }

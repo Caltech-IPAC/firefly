@@ -4,7 +4,7 @@
 
 import {loadScript, getRootURL, getGlobalObj} from '../../util/WebUtil.js';
 
-const GPU_JS_SCRIPT= 'gpu-browser.min-2.10.0.js';
+const GPU_JS_SCRIPT= 'gpu-browser.min-2.15.0.js';
 const LOAD_ERR_MSG= 'Load Failed: could not load gpu.js';
 
 let foundGPU;

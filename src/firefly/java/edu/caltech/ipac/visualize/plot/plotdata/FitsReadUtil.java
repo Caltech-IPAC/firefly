@@ -95,11 +95,11 @@ public class FitsReadUtil {
 
 
     public static Header cloneHeaderFrom(Header header) throws HeaderCardException {
-        Cursor iter = header.iterator();
+        Cursor<String, HeaderCard> iter = header.iterator();
         Header clonedHeader = new Header();
 
         while (iter.hasNext()) {
-            HeaderCard card = (HeaderCard) iter.next();
+            HeaderCard card = iter.next();
             clonedHeader.addLine(card.copy());
         }
 
@@ -775,37 +775,17 @@ public class FitsReadUtil {
     }
 
     public static Class<?> getDataType(int bitPix){
-        switch (bitPix){
-            case 8: return Byte.TYPE;
-            case 16: return Short.TYPE;
-            case 32: return Integer.TYPE;
-            case 64: return Long.TYPE;
-            case -32: return  Float.TYPE;
-            case -64: return  Double.TYPE;
-            default: return null;
-        }
+        return switch (bitPix) {
+            case 8 -> Byte.TYPE;
+            case 16 -> Short.TYPE;
+            case 32 -> Integer.TYPE;
+            case 64 -> Long.TYPE;
+            case -32 -> Float.TYPE;
+            case -64 -> Double.TYPE;
+            default -> null;
+        };
     }
 
 
-    public static class ExtractionResults {
-        private final int hduNum;
-        private final String extName;
-        private final double[] aryData;
-        private final boolean refHDU;
-        private final Header header;
-
-        public ExtractionResults(int hduNum, String extName, double[] aryData, boolean refHDU, Header header) {
-            this.hduNum = hduNum;
-            this.extName = extName;
-            this.aryData = aryData;
-            this.refHDU = refHDU;
-            this.header = header;
-        }
-
-        public int getHduNum() { return hduNum; }
-        public String getExtName() { return extName; }
-        public double[] getAryData() { return aryData; }
-        public boolean isRefHDU() { return refHDU; }
-        public Header getHeader() { return header; }
-    }
+    public record ExtractionResults(int hduNum, String extName, double[] aryData, boolean refHDU, Header header) { }
 }

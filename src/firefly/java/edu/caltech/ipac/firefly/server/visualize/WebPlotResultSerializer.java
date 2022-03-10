@@ -56,13 +56,9 @@ public class WebPlotResultSerializer {
     public static JSONObject createJsonDeep(WebPlotResult res) {
 
         JSONObject map = new JSONObject();
-        map.put("JSON", true);
-        map.put( "success", res.isSuccess());
-        String requestKey= res.getRequestKey()==null?"":res.getRequestKey();
-        if (res.isSuccess()) {
-            if (res.containsKey(WebPlotResult.PLOT_STATE)) {
-                map.put(WebPlotResult.PLOT_STATE, VisJsonSerializer.serializePlotState(res.getPlotState()));
-            }
+        map.put( "success", res.success());
+        String requestKey= res.requestKey()==null?"":res.requestKey();
+        if (res.success()) {
             if (res.containsKey(WebPlotResult.PLOT_IMAGES)) {
                 PlotImages images= (PlotImages)res.getResult(WebPlotResult.PLOT_IMAGES);
                 map.put(WebPlotResult.PLOT_IMAGES, VisJsonSerializer.serializePlotImages(images));
@@ -70,27 +66,15 @@ public class WebPlotResultSerializer {
             if (res.containsKey(WebPlotResult.PLOT_CREATE)) {
                 CreatorResults cr= (CreatorResults)res.getResult(WebPlotResult.PLOT_CREATE);
                 JSONArray ary = new JSONArray();
-                for(WebPlotInitializer wpInit : cr.getInitializers()) {
+                for(WebPlotInitializer wpInit : cr.wpInitAry()) {
                     ary.add(VisJsonSerializer.serializeWebPlotInitializerDeep(wpInit));
                 }
                 map.put(WebPlotResult.PLOT_CREATE, ary);
-                map.put(WebPlotResult.PLOT_CREATE_HEADER, VisJsonSerializer.serializeWebPlotHeaderInitializer(cr.getInitHeader()));
-            }
-            if (res.containsKey(WebPlotResult.DATA_HIST_IMAGE_URL)) {
-                String s= res.getStringResult(WebPlotResult.DATA_HIST_IMAGE_URL);
-                map.put(WebPlotResult.DATA_HIST_IMAGE_URL, s);
-            }
-            if (res.containsKey(WebPlotResult.CBAR_IMAGE_URL)) {
-                String s= res.getStringResult(WebPlotResult.CBAR_IMAGE_URL);
-                map.put(WebPlotResult.CBAR_IMAGE_URL, s);
+                map.put(WebPlotResult.PLOT_CREATE_HEADER, VisJsonSerializer.serializeWebPlotHeaderInitializer(cr.wpHeader()));
             }
             if (res.containsKey(WebPlotResult.STRING)) {
                 String s= res.getStringResult(WebPlotResult.STRING);
                 map.put(WebPlotResult.STRING, s);
-            }
-            if (res.containsKey(WebPlotResult.IMAGE_FILE_NAME)) {
-                String s= res.getStringResult(WebPlotResult.IMAGE_FILE_NAME);
-                map.put(WebPlotResult.IMAGE_FILE_NAME, s);
             }
             if (res.containsKey(WebPlotResult.REGION_FILE_NAME)) {
                 String s= res.getStringResult(WebPlotResult.REGION_FILE_NAME);
@@ -147,12 +131,11 @@ public class WebPlotResultSerializer {
 
         }
         else {
+            map.put( "briefFailReason", res.briefFailReason());
+            map.put( "userFailReason", res.userFailReason());
+            map.put( "detailFailReason", res.detailFailReason());
             map.put( "requestKey", requestKey);
-            map.put( "briefFailReason", res.getBriefFailReason());
-            map.put( "userFailReason", res.getUserFailReason());
-            map.put( "detailFailReason", res.getDetailFailReason());
-            map.put( "requestKey", requestKey);
-            map.put( "plotId", res.getPlotId());
+            map.put( "plotId", res.plotId());
         }
 
         JSONObject wraperObj= new JSONObject();
@@ -165,7 +148,7 @@ public class WebPlotResultSerializer {
     }
 
     public static JSONObject bandInfoDeepSerialize(BandInfo bi) {
-        Map<Band, HashMap<Metrics, Metric>> metMap= bi.getMetricsMap();
+        Map<Band, HashMap<Metrics, Metric>> metMap= bi.metricsMap();
         JSONObject retval= new JSONObject();
         for(Map.Entry<Band,HashMap<Metrics, Metric>> entry : metMap.entrySet()) {
             retval.put(entry.getKey().toString(), convertMetrics(entry.getValue()));
