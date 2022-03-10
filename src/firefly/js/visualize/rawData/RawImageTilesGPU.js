@@ -8,38 +8,25 @@ export const getGPUOps= once((GPU) => {
 
     const gpu= new GPU({mode:'gpu'});
 
-    const standardFunc= Function('pixelAry', 'colorModel','height', 'contrast', 'offsetShift', `
+    const standardFuncSimple= Function('pixelAry', 'colorModel','height',  `
             const pixel= pixelAry[height-this.thread.y-1][this.thread.x];
-            if (pixel!==255) {
-                let pixelIdx= pixel*3;
-                if (offsetShift!==0) {
-                    const newPixel = Math.floor( offsetShift+(pixel*contrast));
-                    pixelIdx= (newPixel > 254) ? 762 : (newPixel<0) ? 0 : newPixel*3;
-                }
-                this.color( colorModel[pixelIdx], colorModel[pixelIdx+1], colorModel[pixelIdx+2]);
-            }
-            else {
-                this.color( 0,0,0);
-            }`
+            let pixelIdx= pixel*3;
+            this.color( colorModel[pixelIdx], colorModel[pixelIdx+1], colorModel[pixelIdx+2]);
+            `
     );
 
+    const standardFuncWithContrast= Function('pixelAry', 'colorModel','height', 'contrast', 'offsetShift', `
+            const pixel= pixelAry[height-this.thread.y-1][this.thread.x];
+            let pixelIdx= pixel*3;
+            const newPixel = Math.floor( offsetShift+(pixel*contrast));
+            pixelIdx= (newPixel > 254) ? 762 : (newPixel<0) ? 0 : newPixel*3;
+            this.color( colorModel[pixelIdx], colorModel[pixelIdx+1], colorModel[pixelIdx+2]);
+            `
+    );
 
-    // const standardFunc= function(pixelAry, colorModel,height, contrast, offsetShift) {
-    //         const pixel= pixelAry[height-this.thread.y-1][this.thread.x];
-    //         if (pixel!==255) {
-    //             let pixelIdx= pixel*3;
-    //             if (offsetShift!==0) {
-    //                 const newPixel = Math.floor( offsetShift+(pixel*contrast));
-    //                 pixelIdx= (newPixel > 254) ? 762 : (newPixel<0) ? 0 : newPixel*3;
-    //             }
-    //             this.color( colorModel[pixelIdx], colorModel[pixelIdx+1], colorModel[pixelIdx+2]);
-    //         }
-    //         else {
-    //             this.color( 0,0,0);
-    //         }
+    const standRawDataTileSimpleGPU = gpu.createKernel(standardFuncSimple,{graphical:true, dynamicOutput:true, dynamicArguments:true, tactic: 'speed'});
+    const standRawDataTileWithContrastGPU = gpu.createKernel(standardFuncWithContrast,{graphical:true, dynamicOutput:true, dynamicArguments:true, tactic: 'speed'});
 
-    const standRawDataTileGPU = gpu.createKernel(standardFunc,{graphical:true, dynamicOutput:true, dynamicArguments:true, tactic: 'speed'});
-    
     const threeCFunc = Function(
         'redAry', 'greenAry', 'blueAry', 'use', 'contrast', 'offsetShift', 'width','height', `
         const idx= (height - this.thread.y-1) * width + this.thread.x;
@@ -60,26 +47,6 @@ export const getGPUOps= once((GPU) => {
         }
         this.color( r/255, g/255, b/255, 1);`
     );
-
-    // const threeCFuncX = function(redAry, greenAry, blueAry, use, contrast, offsetShift, width,height) {
-    //     const idx= (height - this.thread.y-1) * width + this.thread.x;
-    //     let r= use[0]===1 ? redAry[idx] : 0;
-    //     let g= use[1]===1 ? greenAry[idx] : 0;
-    //     let b= use[2]===1 ? blueAry[idx] : 0;
-    //     if (r!==0 && offsetShift[0]!==0) {
-    //         r= Math.floor( offsetShift[0]+(r*contrast[0]));
-    //         r= (r > 254) ? 254 : (r<0) ? 0 : r;
-    //     }
-    //     if (g!==0 && offsetShift[1]!==0) {
-    //         g= Math.floor( offsetShift[1]+(g*contrast[1]));
-    //         g= (g > 254) ? 254 : (g<0) ? 0 : g;
-    //     }
-    //     if (b!==0&& offsetShift[2]!==0) {
-    //         b= Math.floor( offsetShift[2]+(b*contrast[2]));
-    //         b= (b > 254) ? 254 : (b<0) ? 0 : b;
-    //     }
-    //     this.color( r/255, g/255, b/255, 1);
-    // };
 
     const threeCRawDataTileGPU = gpu.createKernel(threeCFunc,{graphical:true, dynamicOutput:true, dynamicArguments:true, tactic: 'speed'});
 
@@ -122,15 +89,18 @@ export const getGPUOps= once((GPU) => {
 
         const offset = (127*(bias-0.5)*-4);
         const shift = (127*(1-contrast));
-        standRawDataTileGPU.setOutput([width,height]);
-        standRawDataTileGPU(
-            GPU.input(pixelData,[width,height]),
-            colorModel,
-            height,
-            contrast,
-            offset+shift,
-           );
-        return makeRetData(standRawDataTileGPU.canvas, width, height);
+        const offsetShift=Math.trunc(offset+shift);
+        if (offsetShift===0) {
+            standRawDataTileSimpleGPU.setOutput([width,height]);
+            standRawDataTileSimpleGPU( GPU.input(pixelData,[width,height]), colorModel, height);
+            return makeRetData(standRawDataTileSimpleGPU.canvas, width, height);
+        }
+        else {
+            standRawDataTileWithContrastGPU.setOutput([width,height]);
+            standRawDataTileWithContrastGPU(
+                GPU.input(pixelData,[width,height]), colorModel, height, contrast, offsetShift);
+            return makeRetData(standRawDataTileWithContrastGPU.canvas, width, height);
+        }
     }
 
     /**
@@ -198,20 +168,16 @@ export const getGPUOps= once((GPU) => {
 
 
     function makeRetData(gpuCanvas,width,height)  {
-        const g= getGlobalObj();
-
-        const c = g.document ? g.document.createElement('canvas') : new OffscreenCanvas(width,height);
-        c.width = width;
-        c.height = height;
+        const c= createCanvas(width,height);
 
         if (gpuCanvas.width===width && gpuCanvas.height===height) {
-            c.getContext('2d').drawImage(standRawDataTileGPU.canvas,0,0);
+            c.getContext('2d').drawImage(gpuCanvas,0,0);
         }
         else if (width===TILE_SIZE && height===TILE_SIZE) {
-            c.getContext('2d').drawImage(standRawDataTileGPU.canvas,0,0);
+            c.getContext('2d').drawImage(gpuCanvas,0,0);
         }
         else {
-            c.getContext('2d').drawImage(standRawDataTileGPU.canvas,0,gpuCanvas.height-height,width,height,0,0,width,height);
+            c.getContext('2d').drawImage(gpuCanvas,0,gpuCanvas.height-height,width,height,0,0,width,height);
         }
         return c;
 

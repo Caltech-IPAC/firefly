@@ -863,7 +863,10 @@ export const getColorModel= memorizeLastCall((colorTableId) => {
 		paletteData[3*old_dn+2] =  old_blue/255;
 	}
 	/* DEBUG set top color = red */
-	paletteData[3*255] = 255/255;
+	// paletteData[3*255] = 255/255;
+	// paletteData[3*255 + 1] = 0;
+	// paletteData[3*255 + 2] = 0;
+	paletteData[3*255] = 0;
 	paletteData[3*255 + 1] = 0;
 	paletteData[3*255 + 2] = 0;
 	/* END DEBUG */
