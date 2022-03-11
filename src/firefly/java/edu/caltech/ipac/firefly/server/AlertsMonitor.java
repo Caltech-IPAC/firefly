@@ -16,6 +16,8 @@ import java.nio.file.Paths;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
+
 /**
  * Date: 6/16/16
  *
@@ -61,9 +63,9 @@ public class AlertsMonitor {
     }
 
     public static void startMonitor() {
-        Path ALERTS_DIR = Paths.get(AppProperties.getProperty("alerts.dir"));
-        if (Files.isDirectory(ALERTS_DIR)) {
-            alertDir = ALERTS_DIR.toFile();
+        String ALERTS_DIR = AppProperties.getProperty("alerts.dir");
+        if (!isEmpty(ALERTS_DIR) && Files.isDirectory(Paths.get(ALERTS_DIR))) {
+            alertDir = new File(ALERTS_DIR);
         } else {
             LOG.info("alerts.dir is not a directory: " + ALERTS_DIR, "Use ${work.directory}/alerts instead");
             alertDir = new File(ServerContext.getWorkingDir(), "alerts");

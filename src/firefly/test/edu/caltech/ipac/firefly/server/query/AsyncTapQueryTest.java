@@ -32,7 +32,8 @@ public class AsyncTapQueryTest extends ConfigTest {
 			DataGroup results = new AsyncTapQuery().fetchDataGroup(req);
 
 			Assert.assertTrue("has results", results.size() > 0);
-            Assert.assertEquals("number of cols", 64, results.getDataDefinitions().length);
+			Assert.assertNotNull("has ra", results.getDataDefintion("ra"));
+			Assert.assertNotNull("has dec", results.getDataDefintion("dec"));
 
 		} catch (Exception e) {
 			Assert.fail("testExecRequestQuery failed with exception: " + e.getMessage());
