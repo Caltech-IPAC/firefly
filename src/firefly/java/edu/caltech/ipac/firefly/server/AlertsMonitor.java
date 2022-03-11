@@ -67,8 +67,8 @@ public class AlertsMonitor {
         if (!isEmpty(ALERTS_DIR) && Files.isDirectory(Paths.get(ALERTS_DIR))) {
             alertDir = new File(ALERTS_DIR);
         } else {
-            LOG.info("alerts.dir is not a directory: " + ALERTS_DIR, "Use ${work.directory}/alerts instead");
-            alertDir = new File(ServerContext.getWorkingDir(), "alerts");
+            LOG.info("alerts.dir is not a directory: " + ALERTS_DIR, "Use workarea/alerts instead");
+            alertDir = new File(ServerContext.getWorkingDir().getParentFile(), "alerts");
             if (!alertDir.exists()) alertDir.mkdirs();
         }
 
