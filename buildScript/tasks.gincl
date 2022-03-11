@@ -102,6 +102,8 @@ task loadConfig {
             props.put(k, String.valueOf(v))
         }
 
+        props.tomcat_home = props.tomcat_home ?: System.getenv('CATALINA_BASE') ?: System.getenv('CATALINA_HOME')
+
         project.ext.appConfigProps = props
 //        project.ext.appConfigProps.each{ k, v -> println "!!!!!! ${k} => ${v}" }
     }
@@ -135,7 +137,7 @@ task createVersionTag  {
         props.setProperty('BuildTag', tag)
         props.setProperty('BuildCommit', getCommitHash())
         props.setProperty('BuildFireflyTag', getCommitTag(fireflyPath))
-        props.setProperty('BuildFireflyBranch', branchOverride!= null ? branchOverride : getBranch(fireflyPath))
+        props.setProperty('BuildFireflyBranch', branchOverride ?: getBranch(fireflyPath))
         props.setProperty('DevCycleTag', getDevCycleTag(fireflyPath, "unknown"))
 
         props.setProperty('ExtendedCache', project.env == "local" ? (project.hasProperty("ExtendedCache") ? project.ExtendedCache : "true") : "false")
@@ -269,7 +271,7 @@ task deploy (dependsOn: [loadConfig]) {
 
         def tomcat_home = appConfigProps.get("tomcat_home")
         if (!file(tomcat_home).exists()) {
-            throw ProjectConfigurationException("tomcat_home property is not found.")
+            throw ProjectConfigurationException("Tomcat installation directory does not exists: $tomcat_home")
         }
         if (!file("$war.destinationDir/${webapp.baseWarName}.war").exists()) {
             println ">> ${webapp.baseWarName}.war not found.  Skipping deploy."
@@ -749,7 +751,7 @@ task publishToGithub (dependsOn: loadConfig) {
 
 /**--------------------------------------  main ----------------------------------**/
 
-task buildClient (dependsOn: loadConfig) {
+task buildClient (dependsOn: [loadConfig, createVersionTag]) {
     description= 'Build JavaScript portion of the application.'
     group = SUB_GROUP
 

@@ -1,6 +1,7 @@
 ARG build_dir=firefly
 ARG target=firefly:warAll
-ARG env=dev
+ARG env=local
+ARG BranchOverride=''
 
 FROM openjdk:17-jdk-slim-buster AS deps
 
@@ -34,6 +35,7 @@ FROM node_module AS builder
 ARG build_dir
 ARG target
 ARG env
+ARG BranchOverride
 
 WORKDIR /opt/work
 COPY . .
@@ -41,7 +43,7 @@ COPY --from=node_module /opt/work/lib/node_modules ./firefly/node_modules
 
 WORKDIR /opt/work/${build_dir}
 ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.internal.launcher.welcomeMessageEnabled=false"
-RUN gradle -Penv=${env} ${target}
+RUN gradle -Penv=${env} -PBranchOverride=${BranchOverride} ${target}
 
 
 # Beginning of runtime image script
@@ -125,9 +127,9 @@ ENV JPDA_ADDRESS=*:5050 \
 WORKDIR ${CATALINA_HOME}
 
 # set up directory protections, copy stuff around, add tomcat user and group
-RUN mkdir -p conf/Catalina/localhost /local/www /firefly/config /firefly/workarea /firefly/shared-workarea /firefly/logs/statistics /firefly/alerts /hydra \
+RUN mkdir -p conf/Catalina/localhost /local/www /firefly/config /firefly/workarea /firefly/shared-workarea /firefly/logs/statistics /firefly/alerts \
   && groupadd -g ${gid} ${group} && useradd -u ${uid} -g ${group} -s /bin/sh ${user} \
-  && rm -r logs && ln -s /firefly/logs logs && ln -s /firefly/logs /hydra
+  && rm -r logs && ln -s /firefly/logs logs && ln -s /firefly/logs
 
 # These are the file that are executed at startup: start tomcat, logging, help, etc
 COPY firefly/docker/*.sh firefly/docker/*.txt ${CATALINA_HOME}/

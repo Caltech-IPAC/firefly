@@ -10,6 +10,9 @@ import edu.caltech.ipac.util.FileUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -21,8 +24,7 @@ import java.util.TimerTask;
  */
 public class AlertsMonitor {
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
-    private static final String ALERTS_DIR = AppProperties.getProperty("alerts.dir", "/hydra/alerts/");
-    private static final File alertDir = new File(ALERTS_DIR);
+    private static File alertDir;
     private static Alert alerts = null;
     private static Timer timer;
 
@@ -59,6 +61,15 @@ public class AlertsMonitor {
     }
 
     public static void startMonitor() {
+        Path ALERTS_DIR = Paths.get(AppProperties.getProperty("alerts.dir"));
+        if (Files.isDirectory(ALERTS_DIR)) {
+            alertDir = ALERTS_DIR.toFile();
+        } else {
+            LOG.info("alerts.dir is not a directory: " + ALERTS_DIR, "Use ${work.directory}/alerts instead");
+            alertDir = new File(ServerContext.getWorkingDir(), "alerts");
+            if (!alertDir.exists()) alertDir.mkdirs();
+        }
+
         if (timer != null) {
             timer.cancel();
         }

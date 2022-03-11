@@ -49,7 +49,7 @@ export default function makeWebpackConfig(config) {
     config.firefly_root = config.firefly_root || path.resolve(process.cwd(), '../..');
     config.firefly_dir = config.firefly_dir || path.resolve(config.firefly_root, 'src/firefly');
     config.project = config.project || path.resolve(process.cwd(), '../../');
-    config.baseWarName = config.baseWarName || config.name; 
+    config.baseWarName = config.baseWarName || config.name;
 
     const def_config = {
         dist        : process.env.WP_BUILD_DIR || path.resolve(config.project, `build/${config.name}/war`),
@@ -58,7 +58,7 @@ export default function makeWebpackConfig(config) {
         use_loader  : true,
         loaderPostfix: '_loader.js',
         filename    : '[name]-dev.js',
-        deploy_dir  : (process.env.tomcat_home || '/hydra/server/tomcat') + `/webapps/${config.baseWarName}`,
+        deploy_dir  : (process.env.tomcat_home || process.env.CATALINA_BASE || process.env.CATALINA_HOME) + `/webapps/${config.baseWarName}`,
         alias       : {
             firefly : path.resolve(config.firefly_dir, 'js'),
             styles : path.resolve(config.firefly_dir, 'html', 'css'),
