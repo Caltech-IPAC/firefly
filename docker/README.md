@@ -9,6 +9,8 @@ Docker and Docker-Compose
 - https://docs.docker.com/get-docker/
 - https://docs.docker.com/compose/install/
 
+**Note:**  Some versions of Docker includes docker compose.  In that case, you can skip docker-compose installation and
+can use `docker compose` instead of `docker-compose`. 
 
 ## Quick Start
 
@@ -17,9 +19,9 @@ Docker and Docker-Compose
 In this example, `cm` is used as a top-level directory for these repositories.  But, it does not need to be named `cm`.
 It can be named anything you want.
 
-    $ mkdir cm && cd cm
-    $ git clone https://github.com/Caltech-IPAC/firefly
-    $ git clone https://github.com/Caltech-IPAC/firefly-help
+    mkdir cm && cd cm
+    git clone https://github.com/Caltech-IPAC/firefly
+    git clone https://github.com/Caltech-IPAC/firefly-help
 
 On macOS, only shared paths are accessible by Docker.  
 You can configure shared paths from `Docker -> Preferences... -> Resources -> File Sharing.`  
@@ -30,8 +32,8 @@ These paths are needed:
 
 **Build and start Firefly**
 
-    $ cd cm/firefly
-    $ docker-compose up
+    cd cm/firefly
+    docker-compose up firefly
 
 Firefly is now up and running at http://localhost:8080/firefly/
 
@@ -41,21 +43,21 @@ Firefly is now up and running at http://localhost:8080/firefly/
 
 **Monitor Firefly logs**
 
-    $ docker-compose logs -f 
+    docker-compose logs -f firefly
 
 
 **Interactive bash shell in the container**
 
-    $ docker-compose exec firefly bash
+    docker-compose exec firefly bash
 
 
 **Cleanly shutdown Firefly**
 
-    $ docker-compose down
+    docker-compose down
 
 **Build Firefly from source**
 
-    $ docker-compose build
+    docker-compose build firefly
 
 If you've made changes to the source, this will pick up the changes and create a new Docker image with your changes.  
 Because Firefly uses multi-stage builds, Docker is smart enough to reuse unaffected layers to speed up the build process.  
@@ -69,21 +71,21 @@ BUILD_TAG variable defaults to 'latest'.  You can tag this build by setting it t
 
 By default, Firefly builds includes documentation and help pages.  To build only Firefly, 
 
-    $ docker-compose build --build-arg target=war
+    docker-compose build --build-arg target=war firefly
 
 `target` is the gradle task used when building.  There are others, like `test`.
 
 
 **To publish this build to DockerHub**
 
-    $ docker-compose push
+    docker-compose push
 
 **To run Firefly from DockerHub**
 
 If you want to run a version available from DockerHub.  
 Set BUILD_TAG to the version you want, then 
 
-    $ docker-compose pull && docker-compose up -d
+    docker-compose pull && docker-compose up -d
 
 
 
@@ -91,7 +93,7 @@ Set BUILD_TAG to the version you want, then
 
 Firefly has many configurable runtime parameters.  For more information, run
 
-    $ docker run --rm ipac/firefly:latest --help
+    docker run --rm ipac/firefly:latest --help
 
 There are many `docker run` examples on how to use these parameters.  Consider add them into a docker-compose.yml for 
 easy operation.  For information on how to do this, go here: https://docs.docker.com/compose/compose-file/compose-file-v3/
@@ -102,7 +104,7 @@ line, or place them in a `.env` file.
 For example, Firefly's docker-compose.yml contains BUILD_TAG and ADMIN_PASSWORD variables.  The values can come from the 
 `.env` file, like this
 
-    $ cat .env
+    cat .env
     ADMIN_PASSWORD=reset-me
     BUILD_TAG=my-test 
 
