@@ -129,7 +129,7 @@ WORKDIR ${CATALINA_HOME}
 # set up directory protections, copy stuff around, add tomcat user and group
 RUN mkdir -p conf/Catalina/localhost /local/www /firefly/config /firefly/workarea /firefly/shared-workarea /firefly/logs/statistics /firefly/alerts \
   && groupadd -g ${gid} ${group} && useradd -u ${uid} -g ${group} -s /bin/sh ${user} \
-  && rm -r logs && ln -s /firefly/logs logs && ln -s /firefly/logs
+  && rm -r logs && ln -s /firefly/logs logs
 
 # These are the file that are executed at startup: start tomcat, logging, help, etc
 COPY firefly/docker/*.sh firefly/docker/*.txt ${CATALINA_HOME}/
