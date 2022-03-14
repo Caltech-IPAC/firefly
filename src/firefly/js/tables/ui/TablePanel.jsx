@@ -40,7 +40,7 @@ const TT_EXPAND = 'Expand this panel to take up a larger area';
 
 
 export function TablePanel(props) {
-    let {tbl_id, tbl_ui_id, tableModel, leftButtons, rightButtons, ...options} = props;
+    let {tbl_id, tbl_ui_id, tableModel, ...options} = props;
     tbl_id = tbl_id || tableModel?.tbl_id || uniqueTblId();
     tbl_ui_id = tbl_ui_id || uniqueTblUiId();
 
@@ -64,6 +64,7 @@ export function TablePanel(props) {
         totalRows, showLoading, columns, showUnits, allowUnits, showTypes, showFilters, textView,
         error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask, showToggleTextView,
         filterInfo, filterCount, sortInfo, data, backgroundable, highlightedRowHandler, cellRenderers} = {...options, ...uiState};
+    let {leftButtons, rightButtons} = {...options, ...uiState};
 
     const connector = makeConnector(tbl_id, tbl_ui_id);
 
@@ -326,7 +327,13 @@ function NotReady({showTitle, tbl_id, title, removable, backgroundable, error}) 
                     </div>
                 </div>
             );
-        } else return <div className='loading-mask'/>;
+        } else {
+            return (
+                <div style={{ position: 'relative', width: '100%', height: '100%'}}>
+                    <div className='loading-mask'/>
+                </div>
+            );
+        }
     }
 }
 
