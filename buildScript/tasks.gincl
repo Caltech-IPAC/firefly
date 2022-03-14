@@ -102,7 +102,9 @@ task loadConfig {
             props.put(k, String.valueOf(v))
         }
 
-        props.tomcat_home = props.tomcat_home ?: System.getenv('CATALINA_BASE') ?: System.getenv('CATALINA_HOME')
+        if (!props.hasProperty('tomcat_home')) {
+            props.put('tomcat_home', System.getenv('CATALINA_BASE') ?: System.getenv('CATALINA_HOME') ?: '')
+        }
 
         project.ext.appConfigProps = props
 //        project.ext.appConfigProps.each{ k, v -> println "!!!!!! ${k} => ${v}" }
@@ -164,9 +166,7 @@ task prepareWebapp (dependsOn: [loadConfig, createVersionTag, jar]) {
         }
 
         copy {
-            from { // use of closure defers evaluation until execution time
-                configurations.webappLib
-            }
+            from configurations.webappLib
             into "${warDir}/WEB-INF/lib"
         }
 
