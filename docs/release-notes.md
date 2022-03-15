@@ -6,6 +6,38 @@
   - use docker tag: `nightly`
   - [Notes on next version](next-release-details.md)
 
+## Version 2022.1  (March 2022)
+- 2021.4.0 (March 2021)
+  - docker tag: `latest`, `release-2022.1`, `release-2021.1.0`
+
+### _Notes_
+#### This release is focused on small enhancements, fixing bugs, and updating infrastructure. There are no new UI changes in this release.
+
+#### Enhancements
+- API: provide way to disable extraction [Firefly-907](https://github.com/Caltech-IPAC/firefly/pull/1175)
+- Extraction no longer turns off when new images are added [Firefly-908](https://github.com/Caltech-IPAC/firefly/pull/1174)
+- More image dataset added [IRSA-4468](https://github.com/Caltech-IPAC/firefly/pull/1191)
+- FITS and HiPS info dialogs better integrated [Firefly-323](https://github.com/Caltech-IPAC/firefly/pull/1185)
+- TAP: Automatic quoting of non-standard TAP columns, especially helpful when searching VizieR [Firefly-935](https://github.com/Caltech-IPAC/firefly/pull/1182)
+
+#### Notable Bug fixes
+- Fixed: Some TAP entries truncated [Firefly-719](https://github.com/Caltech-IPAC/firefly/pull/1178)
+- Fixed: repeating headers are not showing [Firefly-926](https://github.com/Caltech-IPAC/firefly/pull/1173)
+- Fixed: Saving filtered tables [Firefly-931](https://github.com/Caltech-IPAC/firefly/pull/1180)
+  
+#### Infrastructure updates
+- Java updated to v `17`  [Firefly-932](https://github.com/Caltech-IPAC/firefly/pull/1192)
+- log2j updated to `2.17.1` [Firefly-933](https://github.com/Caltech-IPAC/firefly/pull/1188)
+- Most javascript libraries updated [Firefly-917](https://github.com/Caltech-IPAC/firefly/pull/1166)
+- _Build_: Gradle updated to `7.4` [Firefly-932](https://github.com/Caltech-IPAC/firefly/pull/1192)
+- _Build_: Webpack updated to `5.6`, build now required node `12+` [Firefly-917](https://github.com/Caltech-IPAC/firefly/pull/1166)
+- _Build_: Improved docker environment [Firefly-924](https://github.com/Caltech-IPAC/firefly/pull/1166)
+
+
+##### _Pull Requests in this release_
+- [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2022.1+label%3abug)
+- [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2022.1+)
+
 
 ## Version 2021.4  (December 2021)
 - 2021.4.1 (Feb 2022)
