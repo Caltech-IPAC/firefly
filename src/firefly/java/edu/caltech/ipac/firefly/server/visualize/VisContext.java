@@ -11,75 +11,51 @@ import edu.caltech.ipac.util.download.CacheHelper;
 
 import java.util.HashMap;
 import java.util.Map;
-/**
- * User: roby
- * Date: Jul 29, 2008
- * Time: 3:36:31 PM
- */
-
 
 /**
  * @author Trey Roby
+ * Date: Jul 29, 2008
  */
 public class VisContext {
 
     public static final String PLOT_ABORTED= "Plot aborted by client";
-    public static final long   FITS_MAX_SIZE = AppProperties.getLongProperty("visualize.fits.MaxSizeInBytes",
-                                                                              (long)(FileUtil.GIG*10));
-
+    public static final long FITS_MAX_SIZE = AppProperties.getLongProperty("visualize.fits.MaxSizeInBytes", FileUtil.GIG*10);
     private static boolean _initialized= false;
-    private static boolean _initializedCounters= false;
-
-//    public final static MemoryPurger purger;
+    private static final Map<String,String> footprintMap= new HashMap<>();
 
     static {
         init();
     }
 
-
-
-
-
-//======================================================================
-//----------------------- Public Methods -------------------------------
-//======================================================================
-
-
-
     static public void init() {
-        if (!_initialized) {
-            System.setProperty("java.awt.headless", "true");
-            CacheHelper.setCacheDir(ServerContext.getVisCacheDir());
-            _initialized= true;
-        }
-
+        if (_initialized) return;
+        System.setProperty("java.awt.headless", "true");
+        CacheHelper.setCacheDir(ServerContext.getVisCacheDir());
+        initFootprints();
+        initCounters();
+        _initialized = true;
     }
 
-    public static void initCounters() {
-        if (!_initializedCounters) {
-            Counters c= Counters.getInstance();
-            c.initKey(Counters.Category.Visualization, "New Plots");
-            c.initKey(Counters.Category.Visualization, "New 3 Color Plots");
-            c.initKey(Counters.Category.Visualization, "3 Color Band");
-            c.initKey(Counters.Category.Visualization, "Revalidate");
-            c.initKey(Counters.Category.Visualization, "Zoom");
-            c.initKey(Counters.Category.Visualization, "Crop");
-            c.initKey(Counters.Category.Visualization, "Flip");
-            c.initKey(Counters.Category.Visualization, "Rotate");
-            c.initKey(Counters.Category.Visualization, "Color change");
-            c.initKey(Counters.Category.Visualization, "Stretch change");
-            c.initKey(Counters.Category.Visualization, "Fits header");
-            c.initKey(Counters.Category.Visualization, "Region read");
-            c.initKey(Counters.Category.Visualization, "Region save");
-            c.initKey(Counters.Category.Visualization, "Area Stat");
-            c.initKey(Counters.Category.Visualization, "Total Read", Counters.Unit.KB,0);
-            _initializedCounters= true;
-        }
+    private static void initCounters() {
+        Counters c= Counters.getInstance();
+        c.initKey(Counters.Category.Visualization, "New Plots");
+        c.initKey(Counters.Category.Visualization, "New 3 Color Plots");
+        c.initKey(Counters.Category.Visualization, "3 Color Band");
+        c.initKey(Counters.Category.Visualization, "Revalidate");
+        c.initKey(Counters.Category.Visualization, "Zoom");
+        c.initKey(Counters.Category.Visualization, "Crop");
+        c.initKey(Counters.Category.Visualization, "Flip");
+        c.initKey(Counters.Category.Visualization, "Rotate");
+        c.initKey(Counters.Category.Visualization, "Color change");
+        c.initKey(Counters.Category.Visualization, "Stretch change");
+        c.initKey(Counters.Category.Visualization, "Fits header");
+        c.initKey(Counters.Category.Visualization, "Region read");
+        c.initKey(Counters.Category.Visualization, "Region save");
+        c.initKey(Counters.Category.Visualization, "Area Stat");
+        c.initKey(Counters.Category.Visualization, "Total Read", Counters.Unit.KB,0);
     }
 
-    private static final Map<String, String> footprintMap;
-    static {
-        footprintMap = new HashMap<String, String>();
+    private static void initFootprints() {
         footprintMap.put("HST",         "footprint/Footprint_HST.reg");
         footprintMap.put("HST_NICMOS",  "footprint/Footprint_HST.reg");
         footprintMap.put("HST_WFPC2",   "footprint/Footprint_HST.reg");
@@ -122,17 +98,10 @@ public class VisContext {
         footprintMap.put("SOFIA_HAWC_BAND_E_POLAR",      "footprint/Footprint_SOFIA.reg");
 
         footprintMap.put("SOFIA_FPI+",      "footprint/Footprint_SOFIA.reg");
-
-
-
     }
 
-    static public void addFootprint(String key, String path) {
-        footprintMap.put(key, path);
-    }
+    static public void addFootprint(String key, String path) { footprintMap.put(key, path); }
 
-    static public String getFootprint(String key) {
-        return footprintMap.get(key);
-    }
+    static public String getFootprint(String key) { return footprintMap.get(key); }
 }
 

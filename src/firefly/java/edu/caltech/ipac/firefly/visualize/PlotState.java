@@ -4,7 +4,6 @@
 package edu.caltech.ipac.firefly.visualize;
 
 import edu.caltech.ipac.util.ComparisonUtil;
-import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 
 import java.util.ArrayList;
@@ -15,55 +14,25 @@ import java.util.List;
  */
 public class PlotState {
 
-    private final static String SPLIT_TOKEN= "--PlotState--";
-    public enum RotateType {NORTH, ANGLE, UNROTATE}
-    public enum Operation {ROTATE, CROP, FLIP_Y}
-    public static final String NO_CONTEXT = "NoContext";
+    public enum Operation {CROP}
     public static final int MAX_BANDS= 3;
-
-    public enum MultiImageAction { GUESS,      // Default, guess between load first, and use all, depending on three color params
-                                   USE_FIRST,   // only valid option if loading a three color with multiple Request
-                                   USE_IDX,   // use a specific image from the fits read Array
-                                   USE_EXTS,  // use a list of specific image extension from fits read Array
-                                   MAKE_THREE_COLOR, // make a three color out of the first three images, not yet implemented
-                                   USE_ALL} // only valid in non three color, make a array of WebPlots
-
-
-    private transient Band[] usedBands;
-
-
-    // plot state information
-
 
 
     // must be three, one for RED, GREEN, BLUE -
     // NO_BAND uses 0 like RED
     // NO_BAND and 3 color are mutually exclusive so there is no conflict
-    private BandState bandStateAry[]= new BandState[MAX_BANDS];
+    private final BandState[] bandStateAry= new BandState[MAX_BANDS];
 
 
-    private MultiImageAction multiImage = MultiImageAction.GUESS;
     private String ctxStr;
-    private boolean newPlot = true;
-    private float zoomLevel = 1F;
     private boolean threeColor = false;
-    private int colorTableId = 0;
-    private RotateType rotationType = RotateType.UNROTATE;
-    private CoordinateSys rotaNorthType = CoordinateSys.EQ_J2000;
-    private boolean flippedY = false;
-    private double rotationAngle = Double.NaN;
-    private List<Operation> ops = new ArrayList<Operation>(1);
+    private List<Operation> ops = new ArrayList<>(1);
 
 //======================================================================
 //----------------------- Private Constructors -------------------------
 //======================================================================
 
-    public PlotState() {
-    }
-
-//======================================================================
-//----------------------- Public Static Factory Methods ----------------
-//======================================================================
+    public PlotState() { }
 
 //======================================================================
 //----------------------- Public Methods -------------------------------
@@ -71,11 +40,7 @@ public class PlotState {
 
     public BandState[] getBandStateAry() { return bandStateAry; }
 
-
-    public MultiImageAction getMultiImageAction() { return multiImage; }
-    public void setMultiImageAction(MultiImageAction multiImage) { this.multiImage = multiImage; }
-
-    public void setBandStateAry(BandState bsAry[]) {
+    public void setBandStateAry(BandState[] bsAry) {
         for(int i=0; (i<MAX_BANDS); i++) {
             if (i<bsAry.length) {
                 bandStateAry[i]= bsAry[i];
@@ -84,26 +49,23 @@ public class PlotState {
     }
 
     public Band firstBand() {
-        Band bandAry[]= getBands();
+        Band[] bandAry= getBands();
         return (bandAry!=null && bandAry.length>0) ? getBands()[0] : null;
     }
 
     Band[] NO_BAND_ARY= new Band[] {Band.NO_BAND};
 
     public Band[] getBands() {
-        if (usedBands ==null || usedBands.length==0) {
-            if (threeColor) {
-                List<Band> bands= new ArrayList<Band>(3);
-                if (get(Band.RED).hasRequest())   bands.add(Band.RED);
-                if (get(Band.GREEN).hasRequest()) bands.add(Band.GREEN);
-                if (get(Band.BLUE).hasRequest())  bands.add(Band.BLUE);
-                usedBands = bands.toArray(new Band[bands.size()]);
-            }
-            else {
-                usedBands= NO_BAND_ARY;
-            }
+        if (threeColor) {
+            List<Band> bands= new ArrayList<>(3);
+            if (get(Band.RED).hasRequest())   bands.add(Band.RED);
+            if (get(Band.GREEN).hasRequest()) bands.add(Band.GREEN);
+            if (get(Band.BLUE).hasRequest())  bands.add(Band.BLUE);
+            return bands.toArray(new Band[0]);
         }
-        return usedBands;
+        else {
+            return NO_BAND_ARY;
+        }
     }
 
     public boolean isBandUsed(Band band) {
@@ -121,40 +83,8 @@ public class PlotState {
     public  String getContextString() { return ctxStr; }
     public  void setContextString(String ctxStr) { this.ctxStr = ctxStr; }
 
-    public boolean isNewPlot() { return newPlot; }
-    public void setNewPlot(boolean newPlot ) { this.newPlot = newPlot; }
-
-    public int getColorTableId() { return colorTableId; }
-    public void setColorTableId(int id ) { colorTableId = id; }
-
     public void setThreeColor(boolean threeColor) { this.threeColor = threeColor; }
     public boolean isThreeColor() { return threeColor; }
-
-    public int getThumbnailSize() {
-        return get(firstBand()).getWebPlotRequest().getThumbnailSize();
-    }
-
-    public void setZoomLevel(float z) {
-        zoomLevel = z;}
-    public float getZoomLevel() {return zoomLevel;}
-
-    public void setRotateType(RotateType rotationType) { this.rotationType = rotationType; }
-    public RotateType getRotateType() {return rotationType;}
-    public boolean isRotated() {return rotationType!=PlotState.RotateType.UNROTATE;}
-
-    public void setFlippedY(boolean flippedY) { this.flippedY = flippedY; }
-    public boolean isFlippedY() { return flippedY; }
-
-    public void setRotationAngle(double angle) { rotationAngle = angle; }
-    public double getRotationAngle() { return rotationAngle; }
-
-    public void setRotateNorthType(CoordinateSys csys) {
-        rotaNorthType = csys;
-    }
-
-    public CoordinateSys getRotateNorthType() {
-        return rotaNorthType;
-    }
 
     /**
      * this method will make a copy of WebPlotRequest. Any changes to the WebPlotRequest object
@@ -174,7 +104,6 @@ public class PlotState {
      */
     public void setWebPlotRequest(WebPlotRequest plotRequests, Band band, boolean initStretch) {
         get(band).setWebPlotRequest(plotRequests);
-        usedBands = null;
         if (initStretch) initColorStretch(plotRequests,band);
     }
 
@@ -205,11 +134,6 @@ public class PlotState {
      */
     public WebPlotRequest getWebPlotRequest() { return get(firstBand()).getWebPlotRequest(); }
 
-
-    public void setBandVisible(Band band, boolean visible) { get(band).setBandVisible(visible); }
-    public boolean isBandVisible(Band band) { return  get(band).isBandVisible(); }
-
-
     public boolean isMultiImageFile(Band band) {
         if (band==null) band= firstBand();
         return get(band).isMultiImageFile();
@@ -217,14 +141,6 @@ public class PlotState {
 
     public boolean isMultiImageFile() { return get(firstBand()).isMultiImageFile(); }
     public void setMultiImageFile(boolean multiImageFile, Band band) { get(band).setMultiImageFile(multiImageFile); }
-
-    public boolean isTileCompress(Band band) {
-        if (band==null) band= firstBand();
-        return get(band).isTileCompress();
-    }
-
-    public boolean isTileCompress() { return get(firstBand()).isTileCompress(); }
-    public void setTileCompress(boolean tileCompress, Band band) { get(band).setTileCompress(tileCompress); }
 
     public int getCubeCnt(Band band) {
         if (band==null) band= firstBand();
@@ -270,68 +186,19 @@ public class PlotState {
     public int getOriginalImageIdx(Band band) { return get(band).getOriginalImageIdx(); }
 
     public void addOperation(Operation op) {if (!ops.contains(op)) ops.add(op); }
-    public void removeOperation(Operation op) {if (ops.contains(op)) ops.remove(op); }
     public boolean hasOperation(Operation op) {return ops.contains(op); }
-    public void clearOperations() {
-        ops.clear(); }
     public List<Operation> getOperations() { return ops;}
 
-    public boolean isFilesOriginal() {
-        boolean matches= true;
-        for(Band band : getBands()) {
-            matches= get(band).isFileOriginal();
-            if (!matches) break;
-        }
-        return matches;
-    }
-
     public String toPrettyString() {
-        String s= "PlotState: ";
-        WebPlotRequest pr;
-        for(Band band : getBands() ) {
-            pr= get(band).getWebPlotRequest();
-            if (pr!=null) s+= pr.prettyString() + ", ";
-        }
-        s+= "ctxStr: " + ctxStr +
-            ", zoom: " + zoomLevel +
-            ", color id: " + colorTableId +
-            ", 3 color: " + threeColor;
-        return s;
-
+        return "ctxStr: " + ctxStr + ", 3 color: " + threeColor;
     }
 
-    public String toString() {
-        StringBuilder sb= new StringBuilder(350);
-        sb.append(multiImage).append(SPLIT_TOKEN);
-        sb.append(ctxStr).append(SPLIT_TOKEN);
-        sb.append(newPlot).append(SPLIT_TOKEN);
-        sb.append(zoomLevel).append(SPLIT_TOKEN);
-        sb.append(threeColor).append(SPLIT_TOKEN);
-        sb.append(colorTableId).append(SPLIT_TOKEN);
-        sb.append(rotationType).append(SPLIT_TOKEN);
-        sb.append(rotationAngle).append(SPLIT_TOKEN);
-        sb.append(flippedY).append(SPLIT_TOKEN);
-        sb.append(rotaNorthType.toString()).append(SPLIT_TOKEN);
-
-        for(int i= 0; (i< bandStateAry.length); i++) {
-                sb.append(bandStateAry[i]==null ? null : bandStateAry[i].toString());
-                if (i< bandStateAry.length-1) sb.append(SPLIT_TOKEN);
-        }
-        return sb.toString();
-    }
+    public String toString() { return toPrettyString(); }
 
     public PlotState makeCopy() {
         PlotState p= new PlotState();
-        p.multiImage= this.multiImage;
         p.ctxStr= this.ctxStr;
-        p.newPlot= this.newPlot;
-        p.zoomLevel= this.zoomLevel;
         p.threeColor= this.threeColor;
-        p.colorTableId= this.colorTableId;
-        p.rotationType= this.rotationType;
-        p.rotaNorthType = this.rotaNorthType;
-        p.flippedY = this.flippedY;
-        p.rotationAngle = this.rotationAngle;
         p.ops = this.ops;
         for(int i= 0; (i< bandStateAry.length); i++) {
             if (this.bandStateAry[i]!=null) {
@@ -341,33 +208,13 @@ public class PlotState {
         return p;
     }
 
-
     public boolean equals(Object o) {
-        boolean retval= false;
-        if (o==this) {
-            retval= true;
-        }
-        else if (o!=null && o instanceof PlotState) {
-            PlotState ps= (PlotState)o;
-            if ( ComparisonUtil.equals(bandStateAry, ps.bandStateAry) &&
-                 ComparisonUtil.equals(ctxStr, ps.ctxStr) &&
-                 zoomLevel ==ps.zoomLevel &&
-                 threeColor ==ps.threeColor &&
-                 colorTableId ==ps.colorTableId) {
-                retval= true;
-            } // end if
-        }
-        return retval;
+        if (o==this) return true;
+        if (!(o instanceof PlotState ps)) return false;
+        return ComparisonUtil.equals(bandStateAry, ps.bandStateAry) &&
+                ComparisonUtil.equals(ctxStr, ps.ctxStr) &&
+                threeColor == ps.threeColor;
     }
-
-    public void clearBand(Band band) {
-        int idx= band.getIdx();
-        if (bandStateAry[idx]!=null) {
-            bandStateAry[idx]= null;
-            setWebPlotRequest(null, band);
-        }
-    }
-
 
     public BandState get(Band band) {
         int idx= band.getIdx();
@@ -381,7 +228,6 @@ public class PlotState {
 
     private void initColorStretch(WebPlotRequest request, Band band) {
         if (request!=null) {
-            colorTableId = request.getInitialColorTable();
             if (request.containsParam(WebPlotRequest.INIT_RANGE_VALUES)) {
                 String rvStr= request.getParam(WebPlotRequest.INIT_RANGE_VALUES);
                 RangeValues rv= RangeValues.parse(rvStr);
@@ -390,8 +236,5 @@ public class PlotState {
         }
 
     }
-
-
-
 }
 

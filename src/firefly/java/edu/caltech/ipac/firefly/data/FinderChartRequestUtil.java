@@ -321,21 +321,5 @@ public class FinderChartRequestUtil {
         }
     }
 
-    /**
-     * TODO remove that if not needed, i couldn't find any reference but please double check before rmeoving it!
-     */
-    @Deprecated
-    public static enum Source {DSS, IRIS, twomass, WISE, ATLAS, SDSS}
-    /**
-     * TODO remove that if not needed, i couldn't find any reference but please double check before rmeoving it!
-     */
-    @Deprecated
-    public static enum Band {dss_bands, iras_bands, twomass_bands, wise_bands, spitzer_bands, SDSS_bands}
-    /**
-     * TODO remove that if not needed, i couldn't find any reference but please double check before rmeoving it!
-     */
-    @Deprecated
-    public static enum Radius {iras_radius, twomass_radius, wise_radius, sdss_radius}
-
 }
 

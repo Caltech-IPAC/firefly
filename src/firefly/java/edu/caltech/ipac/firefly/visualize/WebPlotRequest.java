@@ -4,9 +4,7 @@
 package edu.caltech.ipac.firefly.visualize;
 
 import edu.caltech.ipac.astro.net.Resolver;
-import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.Circle;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
@@ -18,27 +16,14 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-/**
- * User: roby
- * Date: Apr 2, 2009
- * Time: 9:18:47 AM
- */
-
 
 /**
  * @author Trey Roby
  */
 public class WebPlotRequest extends ServerRequest {
 
-    public static WebPlotRequest makeZTFRequest(WorldPt wp,
-                                                  String survey,
-                                                  String band,
-                                                  float sizeInDeg) {
-        WebPlotRequest req= makePlotServiceReq(ServiceType.ZTF, wp, survey, sizeInDeg);
-        req.setParam(SURVEY_KEY_BAND, band + "");
-        req.setTitle("ZTF: "+survey.toUpperCase());
-        return req;
-    }
+    public enum ServiceType {IRIS, SEIP, AKARI, ATLAS, ISSA, DSS, SDSS, TWOMASS, MSX, WISE, ZTF, PTF, UNKNOWN}
+
     public enum TitleOptions {NONE,  // use what it in the title
                               PLOT_DESC, // use the plot description key
                               FILE_NAME, // use the file name or analyze the URL and make a title from that
@@ -46,11 +31,7 @@ public class WebPlotRequest extends ServerRequest {
                               PLOT_DESC_PLUS, // ??
                               SERVICE_OBS_DATE,
                              }
-    public enum ExpandedTitleOptions {
-        REPLACE,// use expanded title when expanded
-        PREFIX,// use expanded title as prefix to title
-        SUFFIX,// use expanded title as sufix to title
-    }
+
     public enum GridOnStatus {FALSE,TRUE,TRUE_LABELS_FALSE}
     public static final int DEFAULT_THUMBNAIL_SIZE= 70;
 
@@ -90,13 +71,9 @@ public class WebPlotRequest extends ServerRequest {
     public static final String CROP_PT2 = "CropPt2";
     public static final String CROP_WORLD_PT1 = "CropWorldPt1";
     public static final String CROP_WORLD_PT2 = "CropWorldPt2";
-    public static final String CONTINUE_ON_FAIL = "ContinueOnFail";
     public static final String OBJECT_NAME = "ObjectName";
     public static final String RESOLVER = "Resolver";
     public static final String PLOT_DESC_APPEND = "PlotDescAppend";
-    public static final String BLANK_ARCSEC_PER_PIX = "BlankArcsecPerScreenPix";  //todo: doc
-    public static final String BLANK_PLOT_WIDTH = "BlankPlotWidth";               //todo: doc
-    public static final String BLANK_PLOT_HEIGHT = "BlankPlotHeight";             //todo: doc
     public static final String PROGRESS_KEY = "ProgressKey";
     public static final String FLIP_Y = "FlipY";
     public static final String FLIP_X = "FlipX";
@@ -113,7 +90,6 @@ public class WebPlotRequest extends ServerRequest {
     // keys - client side operations
     // note- if you add a new key make sure you put it in the _allKeys array
     public static final String PREFERENCE_COLOR_KEY = "PreferenceColorKey";
-    public static final String SHOW_TITLE_AREA = "ShowTitleArea";
     public static final String HIDE_TITLE_DETAIL = "HideTitleDetail";
     public static final String GRID_ON = "GridOn";
     public static final String TITLE_OPTIONS = "TitleOptions";
@@ -131,44 +107,6 @@ public class WebPlotRequest extends ServerRequest {
     public static final String WAVE_LENGTH= "WAVE_LENGTH";
     public static final String WAVE_LENGTH_UM= "WAVE_LENGTH_UM";
 
-    private static final String _allKeys[] = {FILE, WORLD_PT, URL, SIZE_IN_DEG, SURVEY_KEY,
-                                              SURVEY_KEY_BAND, TYPE, ZOOM_TYPE,
-                                              SERVICE, USER_DESC, INIT_ZOOM_LEVEL,
-                                              TITLE, ROTATE_NORTH, ROTATE_NORTH_TYPE, ROTATE, ROTATION_ANGLE,
-                                              HEADER_KEY_FOR_TITLE,
-                                              INIT_RANGE_VALUES, INIT_COLOR_TABLE, MULTI_IMAGE_IDX,
-                                              MULTI_IMAGE_EXTS,
-                                              ZOOM_TO_WIDTH, ZOOM_TO_HEIGHT,
-                                              POST_CROP, POST_CROP_AND_CENTER, FLIP_X, FLIP_Y,
-                                              POST_CROP_AND_CENTER_TYPE, CROP_PT1, CROP_PT2, CROP_WORLD_PT1, CROP_WORLD_PT2,
-                                              ZOOM_ARCSEC_PER_SCREEN_PIX, CONTINUE_ON_FAIL, OBJECT_NAME, RESOLVER,
-                                              BLANK_ARCSEC_PER_PIX, BLANK_PLOT_WIDTH, BLANK_PLOT_HEIGHT,
-
-                                              PREFERENCE_COLOR_KEY,
-                                              SHOW_TITLE_AREA,
-                                              PLOT_DESC_APPEND, HIDE_TITLE_DETAIL,
-                                              GRID_ON, TITLE_OPTIONS,
-                                              POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
-                                              TITLE_FILENAME_MODE_PFX, DRAWING_SUB_GROUP_ID,
-                                              DOWNLOAD_FILENAME_ROOT, PLOT_ID,
-
-    };
-
-    private static final String _clientSideKeys[] = {
-                                                     PREFERENCE_COLOR_KEY,
-                                                     SHOW_TITLE_AREA,
-                                                     HIDE_TITLE_DETAIL, GRID_ON,
-                                                     TITLE_OPTIONS,
-                                                     POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
-                                                     TITLE_FILENAME_MODE_PFX,
-                                                     DRAWING_SUB_GROUP_ID,
-                                                     DOWNLOAD_FILENAME_ROOT, PLOT_ID,
-
-    };
-
-
-    private static final String _ignoreForEquals[] = {PROGRESS_KEY, ZOOM_TO_WIDTH, ZOOM_TO_HEIGHT, ZOOM_TYPE};
-
 
     public enum Order {FLIP_Y, FLIP_X, ROTATE, POST_CROP, POST_CROP_AND_CENTER}
 
@@ -177,7 +115,7 @@ public class WebPlotRequest extends ServerRequest {
                                                        Order.ROTATE+";"+
                                                        Order.POST_CROP+";"+
                                                        Order.POST_CROP_AND_CENTER;
-    private static List<Order> defOrder= makeOrderList(DEFAULT_PIPELINE_ORDER);
+    private final static List<Order> defOrder= makeOrderList(DEFAULT_PIPELINE_ORDER);
 
 
 //======================================================================
@@ -235,11 +173,6 @@ public class WebPlotRequest extends ServerRequest {
         return retval;
     }
 
-
-    public static WebPlotRequest makeFilePlotRequest(String fileName) {
-        return makeFilePlotRequest(fileName, 1.0F);
-    }
-
     public static WebPlotRequest makeFilePlotRequest(String fileName, float initZoomLevel) {
         WebPlotRequest req = new WebPlotRequest(RequestType.FILE, "Fits file: " + fileName);
         req.setParam(FILE, fileName);
@@ -253,27 +186,11 @@ public class WebPlotRequest extends ServerRequest {
         return req;
     }
 
-    public static WebPlotRequest makeRawDatasetProcessorRequest(TableServerRequest request, String desc) {
-        ServerRequest sreq = new ServerRequest(request.getRequestId());
-        sreq.setParam(ServerParams.REQUEST, request.toString());
-        WebPlotRequest req = new WebPlotRequest(RequestType.RAWDATASET_PROCESSOR, desc);
-        req.setParams(sreq.getParams());
-        return req;
-    }
-
-
     public static WebPlotRequest makeURLPlotRequest(String url) {
         WebPlotRequest req = new WebPlotRequest(RequestType.URL, "Fits from URL: " + url);
         req.setURL(url);
         return req;
     }
-
-    public static WebPlotRequest makeURLPlotRequest(String url, String userDesc) {
-        WebPlotRequest req = new WebPlotRequest(RequestType.URL, userDesc);
-        req.setURL(url);
-        return req;
-    }
-
 
     public static WebPlotRequest makeWorkspaceRequest(String filePath, String userDesc) {
         WebPlotRequest req = new WebPlotRequest(RequestType.WORKSPACE, userDesc==null? filePath : userDesc);
@@ -288,86 +205,50 @@ public class WebPlotRequest extends ServerRequest {
         return req;
     }
 
-
     public static WebPlotRequest makeTblURLPlotRequest(String url) {
         WebPlotRequest req = new WebPlotRequest(RequestType.URL, "Table from URL: " + url);
         req.setParam(URL, url);
         return req;
     }
 
-    //======================== ISSA =====================================
-
-
-    public static WebPlotRequest makeISSARequest(WorldPt wp,
-                                                 String survey,
-                                                 float sizeInDeg) {
+    public static WebPlotRequest makeISSARequest(WorldPt wp, String survey, float sizeInDeg) {
         WebPlotRequest req= makePlotServiceReq(ServiceType.ISSA, wp, survey, sizeInDeg);
         req.setTitle("ISSA: "+survey);
         return req;
     }
 
-    //======================== IRIS =====================================
-
-
-    public static WebPlotRequest makeIRISRequest(WorldPt wp,
-                                                 String survey,
-                                                 float sizeInDeg) {
+    public static WebPlotRequest makeIRISRequest(WorldPt wp, String survey, float sizeInDeg) {
         WebPlotRequest req= makePlotServiceReq(ServiceType.IRIS, wp, survey, sizeInDeg);
         req.setTitle("IRIS: "+survey);
         return req;
     }
 
-
-    //======================== 2MASS =====================================
-
-    public static WebPlotRequest make2MASSRequest(WorldPt wp,
-                                                  String survey,
-                                                  String band,
-                                                  float sizeInDeg) {
+    public static WebPlotRequest make2MASSRequest(WorldPt wp, String survey, String band, float sizeInDeg) {
         WebPlotRequest req= makePlotServiceReq(ServiceType.TWOMASS, wp, survey, sizeInDeg);
         req.setParam(SURVEY_KEY_BAND, band + "");
         req.setTitle("2MASS: "+survey.toUpperCase());
         return req;
     }
 
-    //======================== MSX =====================================
-
-    public static WebPlotRequest makeMSXRequest(WorldPt wp,
-                                                String survey,
-                                                float sizeInDeg) {
+    public static WebPlotRequest makeMSXRequest(WorldPt wp, String survey, float sizeInDeg) {
         WebPlotRequest req= makePlotServiceReq(ServiceType.MSX, wp, survey, sizeInDeg);
         req.setTitle("MSX: "+survey);
         return req;
     }
 
-    //======================== SDSS =====================================
-
-
-    public static WebPlotRequest makeSloanDSSRequest(WorldPt wp,
-                                                     String band,
-                                                     float sizeInDeg) {
+    public static WebPlotRequest makeSloanDSSRequest(WorldPt wp, String band, float sizeInDeg) {
         WebPlotRequest req= makePlotServiceReq(ServiceType.SDSS, wp, band, sizeInDeg);
         req.setTitle("SDSS: "+band);
         return req;
     }
-    //======================== DSS =====================================
 
-
-    public static WebPlotRequest makeDSSRequest(WorldPt wp,
-                                                String survey,
-                                                float sizeInDeg) {
+    public static WebPlotRequest makeDSSRequest(WorldPt wp, String survey, float sizeInDeg) {
         WebPlotRequest req= makePlotServiceReq(ServiceType.DSS, wp, survey, sizeInDeg);
         req.setTitle("DSS: "+survey);
         return req;
     }
 
-    //======================== Wise =====================================
-
-
-    public static WebPlotRequest makeWiseRequest(WorldPt wp,
-                                                 String survey,
-                                                 String band,
-                                                 float sizeInDeg) {
+    public static WebPlotRequest makeWiseRequest(WorldPt wp, String survey, String band, float sizeInDeg) {
         WebPlotRequest req = makePlotServiceReq(ServiceType.WISE, wp, survey, sizeInDeg);
         req.setParam(SURVEY_KEY_BAND, band + "");
         String sDesc= survey.equalsIgnoreCase("3a")  ? "Atlas" : survey;
@@ -375,24 +256,27 @@ public class WebPlotRequest extends ServerRequest {
         return req;
     }
 
-    //======================== ZTF =====================================
+    public static WebPlotRequest makeZTFRequest(WorldPt wp, String survey, String band, float sizeInDeg) {
+        WebPlotRequest req= makePlotServiceReq(ServiceType.ZTF, wp, survey, sizeInDeg);
+        req.setParam(SURVEY_KEY_BAND, band + "");
+        req.setTitle("ZTF: "+survey.toUpperCase());
+        return req;
+    }
 
-    // TODO this is actually coupled with edu.caltech.ipac.firefly.data.FinderChartRequestUtil.ImageSet.ImageSet and so we need to add imageset here although SEIP, AKARI are using ATLAS services.
-    public enum
-            ServiceType {IRIS, SEIP, AKARI, ATLAS, ISSA, DSS, SDSS, TWOMASS, MSX, WISE, ZTF, PTF, UNKNOWN}
 
     /**
-     * @param wp
+     * @param wp WorldPt
      * @param survey for atlas, survey is in form of 'schema.table'
      * @param band SEIP exmaple 'irac1'
      * @param filter for SEIP, it should loo like type=science and fname like %.mosaic.fits
-     * @param sizeInDeg
-     * @return
+     * @param sizeInDeg size
+     * @return a request
      */
     public static WebPlotRequest makeAtlasRequest(WorldPt wp,
-                                   String survey,
-                                   String band, String filter,
-                                   float sizeInDeg) {
+                                                  String survey,
+                                                  String band,
+                                                  String filter,
+                                                  float sizeInDeg) {
         WebPlotRequest req = makePlotServiceReq(ServiceType.ATLAS, wp, survey, sizeInDeg);
         req.setParam(SURVEY_KEY, survey.split("\\.")[0]);
         req.setParam("dataset", survey.split("\\.")[0]);
@@ -414,20 +298,6 @@ public class WebPlotRequest extends ServerRequest {
 
 
 
-    //======================== Blank =====================================
-    public static WebPlotRequest makeBlankPlotRequest(WorldPt wp,
-                                                      float arcsecSize,
-                                                      int plotWidth,
-                                                      int plotHeight ) {
-        WebPlotRequest r= new WebPlotRequest(RequestType.BLANK, "");
-        r.setWorldPt(wp);
-        r.setBlankArcsecPerPix(arcsecSize);
-        r.setBlankPlotWidth(plotWidth);
-        r.setBlankPlotHeight(plotHeight);
-        r.setGridOn(GridOnStatus.TRUE);
-        return r;
-    }
-
 //======================================================================
 //----------------------- Title Settings -------------------------------
 //======================================================================
@@ -438,14 +308,6 @@ public class WebPlotRequest extends ServerRequest {
 
     public String getTitle() {
         return getParam(TITLE);
-    }
-
-    public void setShowTitleArea(boolean show) {
-        setParam(SHOW_TITLE_AREA, show + "");
-    }
-
-    public boolean getShowTitleArea() {
-        return getBooleanParam(SHOW_TITLE_AREA);
     }
 
     public String getUserDesc() {
@@ -463,13 +325,6 @@ public class WebPlotRequest extends ServerRequest {
         }
         return retval;
     }
-
-    public void setTitleFilenameModePfx(String pfx) {
-        setParam(TITLE_FILENAME_MODE_PFX, pfx);
-    }
-
-    public String getTitleFilenameModePfx() { return getParam(TITLE_FILENAME_MODE_PFX); }
-
 
 //======================================================================
 //----------------------- Overlay Settings ------------------------------
@@ -589,21 +444,6 @@ public class WebPlotRequest extends ServerRequest {
             retval = ZoomType.TO_WIDTH_HEIGHT;
         }
         return retval;
-    }
-
-    /**
-     * set the arcseconds per screen pixel that will be used to determine the zoom level.
-     * Used with ZoomType.ARCSEC_PER_SCREEN_PIX
-     *
-     * @param arcsecSize
-     * @see ZoomType
-     */
-    public void setZoomArcsecPerScreenPix(float arcsecSize) {
-        setParam(ZOOM_ARCSEC_PER_SCREEN_PIX, arcsecSize + "");
-    }
-
-    public float getZoomArcsecPerScreenPix() {
-        return containsParam(ZOOM_ARCSEC_PER_SCREEN_PIX) ? getFloatParam(ZOOM_ARCSEC_PER_SCREEN_PIX) : 0F;
     }
 
 //======================================================================
@@ -757,60 +597,18 @@ public class WebPlotRequest extends ServerRequest {
         if (cpStr != null) {
             try {
                 pt = ImagePt.parse(cpStr);
-
-            } catch (NumberFormatException e) {
-                // ignore
-            }
+            } catch (NumberFormatException ignore) { }
         }
         return pt;
     }
 
 
-    public WorldPt getCropWorldPt1() {
-        return getWorldPtParam(CROP_WORLD_PT1);
-    }
+    public WorldPt getCropWorldPt1() { return getWorldPtParam(CROP_WORLD_PT1); }
 
-    public WorldPt getCropWorldPt2() {
-        return getWorldPtParam(CROP_WORLD_PT2);
-    }
+    public WorldPt getCropWorldPt2() { return getWorldPtParam(CROP_WORLD_PT2); }
 
 
 
-//======================================================================
-//----------------------- Blank Image Settings -------------------------
-//======================================================================
-
-    /**
-     * set the arc seconds per pixel that will be used for a blank image
-     * Used with RequestType.BLANK
-     *
-     * @param arcsecSize the size of the pixels in arcsec
-     * @see RequestType
-     */
-    public void setBlankArcsecPerPix(float arcsecSize) {
-        setParam(BLANK_ARCSEC_PER_PIX, arcsecSize + "");
-    }
-
-    public float getBlankArcsecPerPix() {
-        return containsParam(BLANK_ARCSEC_PER_PIX) ? getFloatParam(BLANK_ARCSEC_PER_PIX) : 0F;
-    }
-
-    public void setBlankPlotWidth(int width) {
-        setParam(BLANK_PLOT_WIDTH, width + "");
-    }
-
-    public int getBlankPlotWidth() {
-        return containsParam(BLANK_PLOT_WIDTH) ? getIntParam(BLANK_PLOT_WIDTH) : 0;
-    }
-
-
-    public void setBlankPlotHeight(int height) {
-        setParam(BLANK_PLOT_HEIGHT, height + "");
-    }
-
-    public int getBlankPlotHeight() {
-        return containsParam(BLANK_PLOT_HEIGHT) ? getIntParam(BLANK_PLOT_HEIGHT) : 0;
-    }
 
 //======================================================================
 //----------------------- Retrieval Settings --------------------------------
@@ -944,10 +742,6 @@ public class WebPlotRequest extends ServerRequest {
         setParam(PREFERENCE_COLOR_KEY, key);
     }
 
-    public String getPreferenceColorKey() {
-        return getParam(PREFERENCE_COLOR_KEY);
-    }
-
     public void setGridOn(GridOnStatus gridOnStatus) {
         setParam(GRID_ON, gridOnStatus.toString());
     }
@@ -975,10 +769,6 @@ public class WebPlotRequest extends ServerRequest {
     public int getThumbnailSize() {
         return containsParam(THUMBNAIL_SIZE) ? getIntParam(THUMBNAIL_SIZE) : DEFAULT_THUMBNAIL_SIZE;
     }
-
-    /** todo deprecate */
-    public boolean isContinueOnFail() { return getBooleanParam(CONTINUE_ON_FAIL); }
-
     public void setHeaderKeyForTitle(String headerKey) {
         setParam(HEADER_KEY_FOR_TITLE, headerKey);
     }
@@ -1014,9 +804,7 @@ public class WebPlotRequest extends ServerRequest {
     public boolean isPlotAsMask() { return getBooleanParam(PLOT_AS_MASK);}
 
 
-    public void setMaskColors(String colors[]) {
-        setParam(MASK_COLORS, StringUtils.combineAry(";", colors));
-    }
+    public void setMaskColors(String[] colors) { setParam(MASK_COLORS, StringUtils.combineAry(";", colors)); }
 
     public List<String> getMaskColors() {
         if (containsParam(MASK_COLORS)) {
@@ -1041,22 +829,6 @@ public class WebPlotRequest extends ServerRequest {
 
     public int getMaskRequiredHeight() { return getIntParam(MASK_REQUIRED_HEIGHT,0); }
 
-    /**
-     * Set the order that the image processing pipeline runs when it reads a fits file.
-     * This is experimental.  Use at your own risk.
-     * Warning- if you exclude an Order elements the pipeline will not execute that process
-     * even is you have it set in the option.
-     * @param orderList the order of the pipeline
-     */
-    public void setPipelineOrder(List<Order> orderList) {
-        StringBuilder sb= new StringBuilder(orderList.size()*10);
-        for(Order order : orderList) {
-            sb.append(order.toString());
-            sb.append(";");
-        }
-        sb.deleteCharAt(sb.length()-1);
-        setParam(PIPELINE_ORDER, sb.toString());
-    }
 
     public List<Order> getPipelineOrder() {
         List<Order> retList;
@@ -1071,16 +843,15 @@ public class WebPlotRequest extends ServerRequest {
     }
 
     private static List<Order> makeOrderList(String orderStr) {
-        List<Order> retList= new ArrayList<Order>(5);
-        String sAry[]= orderStr.split(";");
+        List<Order> retList= new ArrayList<>(5);
+        String[] sAry= orderStr.split(";");
         for(String s : sAry) {
             try {
                 Order order= Enum.valueOf(Order.class, s);
                 if (!retList.contains(order)) {
                     retList.add(order);
                 }
-            } catch (Exception e) {
-            }
+            } catch (Exception ignore) { }
         }
         return retList;
     }
@@ -1169,11 +940,8 @@ public class WebPlotRequest extends ServerRequest {
         return req;
     }
 
-    private static String makeServiceReqDesc(ServiceType serviceType,
-                                             String survey,
-                                             float sizeInDeg) {
-        return serviceType.toString() + ": " + survey +
-                ", " + sizeInDeg + " Deg";
+    private static String makeServiceReqDesc(ServiceType serviceType, String survey, float sizeInDeg) {
+        return serviceType.toString() + ": " + survey + ", " + sizeInDeg + " Deg";
     }
 
 
@@ -1193,37 +961,5 @@ public class WebPlotRequest extends ServerRequest {
         retval.copyFrom(this);
         return retval;
     }
-
-    public static WebPlotRequest makeCopy(WebPlotRequest r) {
-        return r == null ? null : r.makeCopy();
-    }
-
-    public static String[] getAllKeys() {
-        return _allKeys;
-    }
-
-    /**
-     * Perform equals but ignore layout params, such as zoom type, width and height
-     * @param obj
-     * @return
-     */
-    public boolean equalsPlottingParams(Object obj) {
-        boolean retval= false;
-        if (obj instanceof WebPlotRequest) {
-            WebPlotRequest wpr1= this.makeCopy();
-            WebPlotRequest wpr2= ((WebPlotRequest)obj).makeCopy();
-            for(String key : _ignoreForEquals) {
-                wpr1.removeParam(key);
-                wpr2.removeParam(key);
-            }
-            retval= wpr1.toString().equals(wpr2.toString());
-        }
-        return retval;
-    }
-
-// =====================================================================
-// -------------------- Factory Methods --------------------------------
-// =====================================================================
-
 }
 

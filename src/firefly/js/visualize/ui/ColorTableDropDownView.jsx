@@ -147,7 +147,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
     const allLoaded = useStoreConnector(() => isAllStretchDataLoaded(visRoot()));
     const [bias,setBias]= useState( () => getBias(plot));
     const [contrast,setContrast]= useState( () => getContrast(plot));
-    const [colorTableId,setColorTableId]= useState( () => Number(plot?.plotState.getColorTableId()));
+    const [colorTableId,setColorTableId]= useState( () => Number(plot?.colorTableId));
     const [useRed,setUseRed]= useState( () => plot?.rawData.useRed);
     const [useGreen,setUseGreen]= useState( () => plot?.rawData.useGreen);
     const [useBlue,setUseBlue]= useState( () => plot?.rawData.useBlue);
@@ -164,7 +164,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
         const c= getContrast(plot);
         setBias(b);
         setContrast(c);
-        setColorTableId(Number(plot.plotState.getColorTableId()));
+        setColorTableId(Number(plot.colorTableId));
     }, [plotId]);
 
     if (!plot) return <div/>;

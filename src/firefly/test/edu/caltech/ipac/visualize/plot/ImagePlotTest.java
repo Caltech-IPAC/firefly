@@ -60,7 +60,7 @@ public class ImagePlotTest extends ConfigTest{
         frGroup = new ActiveFitsReadGroup();
         frGroup.setFitsRead(Band.NO_BAND, fitsRead);
         LOG.info("Create an ImagePlot object using the input data");
-        imagePlot = new ImagePlot(null, frGroup, 1F, false, Band.NO_BAND, 0, FitsRead.getDefaultFutureStretch());
+        imagePlot = new ImagePlot(frGroup, 1F, false, Band.NO_BAND, 0, FitsRead.getDefaultFutureStretch());
 
         LOG.info("Load expected results from files");
         expectedImage = ImageIO.read(new File(FileLoader.getDataPath(ImageDataTest.class)+expectedImageFile));
@@ -119,7 +119,7 @@ public class ImagePlotTest extends ConfigTest{
 
         ImageMask[] lsstMasks=  {lsstmaskRed,lsstmaskGreen, lsstmaskBlue };
 
-        ImagePlot imagePlot = new ImagePlot(null, frGroup, 1F, lsstMasks, FitsRead.getDefaultFutureStretch());
+        ImagePlot imagePlot = new ImagePlot(frGroup, 1F, lsstMasks, FitsRead.getDefaultFutureStretch());
 
         //validate the size of the image
         Assert.assertEquals(height, imagePlot.getScreenHeight());
@@ -162,7 +162,7 @@ public class ImagePlotTest extends ConfigTest{
         FitsRead fitsRead = FitsReadFactory.createFitsReadArray(inFits)[0];
         ActiveFitsReadGroup frGroup = new ActiveFitsReadGroup();
         frGroup.setFitsRead(Band.RED, fitsRead);
-        ImagePlot imagePlot = new ImagePlot(null, frGroup, 1F, true, Band.RED, 0, FitsRead.getDefaultFutureStretch());
+        ImagePlot imagePlot = new ImagePlot(frGroup, 1F, true, Band.RED, 0, FitsRead.getDefaultFutureStretch());
         imagePlot.setThreeColorBand(fitsRead, Band.RED, frGroup);
         Assert.assertTrue(imagePlot.isThreeColor());
 
@@ -181,7 +181,7 @@ public class ImagePlotTest extends ConfigTest{
         FitsRead fitsRead = FitsReadFactory.createFitsReadArray(inFits)[0];
         ActiveFitsReadGroup frGroup = new ActiveFitsReadGroup();
         frGroup.setFitsRead(Band.RED, fitsRead);
-        ImagePlot imagePlot = new ImagePlot(null, frGroup, 1F, true, Band.RED, 0, FitsRead.getDefaultFutureStretch());
+        ImagePlot imagePlot = new ImagePlot(frGroup, 1F, true, Band.RED, 0, FitsRead.getDefaultFutureStretch());
 
 
         //after removing the band, the band in the frGroup will be null
@@ -290,7 +290,7 @@ public class ImagePlotTest extends ConfigTest{
      */
     @Test
     public void testGetImageCoords() throws FitsException, IOException, ProjectionException, NoninvertibleTransformException {
-        imagePlot = new ImagePlot(null, frGroup, 1F, false, Band.NO_BAND, 0, FitsRead.getDefaultFutureStretch());
+        imagePlot = new ImagePlot(frGroup, 1F, false, Band.NO_BAND, 0, FitsRead.getDefaultFutureStretch());
         WorldPt wpt = new WorldPt(326.7281667, 64.5584444);
         LOG.info("Used a known point as a test reference");
         ImageWorkSpacePt  iwspt = imagePlot.getImageCoords (wpt);
@@ -358,25 +358,6 @@ public class ImagePlotTest extends ConfigTest{
     }
 
 
-    /**
-     * Known flux: 3.5248487632267E7 (calculated by ImagePlot) 
-     * @throws FitsException
-     * @throws IOException
-     * @throws ProjectionException
-     * @throws NoninvertibleTransformException
-     * @throws PixelValueException
-     */
-
-    @Test
-    public void testGetFlux() throws FitsException, IOException, ProjectionException, NoninvertibleTransformException, PixelValueException {
-
-        WorldPt wpt = new WorldPt(326.7281667, 64.5584444);
-        LOG.info("Used a known point as a test reference");
-        ImageWorkSpacePt  iwspt = imagePlot.getImageCoords (wpt);
-        double flux = imagePlot.getFlux( frGroup,Band.NO_BAND, iwspt );
-        Assert.assertEquals(3.5248487632267E7, flux, delta);
-    }
-
 
     /**
       * This main method is used to create an output file which is used as a reference to validate the
@@ -399,7 +380,7 @@ public class ImagePlotTest extends ConfigTest{
         frGroup.setFitsRead(Band.NO_BAND, fitsRead);
 
 
-        ImagePlot imagePlot = new ImagePlot(null, frGroup, 1F, false, Band.NO_BAND, 0, FitsRead.getDefaultFutureStretch());
+        ImagePlot imagePlot = new ImagePlot(frGroup, 1F, false, Band.NO_BAND, 0, FitsRead.getDefaultFutureStretch());
 
         PlotOutput po = new PlotOutput(imagePlot, frGroup);
         po.writeTilesFullScreen( new File(FileLoader.getDataPath(ImagePlotTest.class)), "f3", PlotOutput.PNG, true, true);
@@ -414,7 +395,7 @@ public class ImagePlotTest extends ConfigTest{
 
         ImageMask[] lsstMasks=  {lsstmaskRed,lsstmaskGreen, lsstmaskBlue };
 
-        imagePlot = new ImagePlot(null, frGroup, 1F, lsstMasks, FitsRead.getDefaultFutureStretch());
+        imagePlot = new ImagePlot(frGroup, 1F, lsstMasks, FitsRead.getDefaultFutureStretch());
         po = new PlotOutput(imagePlot, frGroup);
         po.writeTilesFullScreen( new File(FileLoader.getDataPath(ImagePlotTest.class)), "f3WithMask", PlotOutput.PNG, true, true);
 

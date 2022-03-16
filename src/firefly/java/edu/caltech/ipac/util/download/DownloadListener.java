@@ -10,9 +10,9 @@ import java.util.EventListener;
  * @author Trey Roby
  */
 public interface DownloadListener extends EventListener {
-    public abstract void dataDownloading(DownloadEvent ev);
-    public abstract void beginDownload(DownloadEvent ev);
-    public abstract void downloadCompleted(DownloadEvent ev);
+    void dataDownloading(DownloadEvent ev);
+    default void beginDownload(DownloadEvent ev) {};
+    default void downloadCompleted(DownloadEvent ev) {};
 }
 
 

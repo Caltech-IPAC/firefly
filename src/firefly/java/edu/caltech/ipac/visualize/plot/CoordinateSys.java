@@ -10,12 +10,6 @@ import java.io.Serializable;
 
 public class CoordinateSys implements Serializable {
 
-    // =====================================================================
-    // --------------- Private  final variables-----------------------------
-    // =====================================================================
-
-//    private final static ClassProperties _prop= new ClassProperties(
-//                                                       CoordinateSys.class);
 
     // =====================================================================
     // --------------- Constants for the parse Method ----------
@@ -52,15 +46,6 @@ public class CoordinateSys implements Serializable {
     private static final String SCREEN_PIXEL_DESC = "Screen Pixel";
     private static final String UNDEF_DESC = "Undefined";
 
-//    private static final String EQ_J_DESC  = _prop.getName("Equatorial.J");
-//    private static final String EQ_B_DESC  = _prop.getName("Equatorial.B");
-//    private static final String EC_J_DESC  = _prop.getName("Ecliptic.J");
-//    private static final String EC_B_DESC  = _prop.getName("Ecliptic.B");
-//    private static final String GAL_DESC   = _prop.getName("Galactic");
-//    private static final String SGAL_DESC  = _prop.getName("SuperGalactic");
-//    private static final String PIXEL_DESC = _prop.getName("Pixel");
-//    private static final String SCREEN_PIXEL_DESC = _prop.getName("ScreenPixel");
-//    private static final String UNDEF_DESC = _prop.getName("Undefined");
 
     // =====================================================================
     // --------------  Constant Predefined Coordinate systems --------------

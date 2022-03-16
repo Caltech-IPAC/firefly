@@ -162,14 +162,12 @@ export function colorChangeActionCreator(rawAction) {
 
 function colorChangeHiPS(store, dispatcher, plotId, cbarId, biasToUse,contrastToUse, actionScope) {
 
-    const doDispatch= (plotId, oldPlotState) => {
-        const newPlotState= oldPlotState.copy();
-        newPlotState.colorTableId = cbarId;
+    const doDispatch= (plotId) => {
         dispatcher( {
             type:ImagePlotCntlr.COLOR_CHANGE,
             payload: {
                 plotId,
-                primaryStateJson : PlotState.convertToJSON(newPlotState,true),
+                colorTableId: cbarId,
                 bias: biasToUse,
                 contrast : contrastToUse
             }});
@@ -182,7 +180,7 @@ function colorChangeHiPS(store, dispatcher, plotId, cbarId, biasToUse,contrastTo
     if (actionScope!==ActionScope.SINGLE){
         operateOnOthersInOverlayColorGroup(store, pv, (pv) => {
             const plot= primePlot(pv);
-            doDispatch(plot.plotId,plot.plotState);
+            doDispatch(plot.plotId);
         });
     }
 }
@@ -356,9 +354,11 @@ function makeCroppedPlot(pc,plotCreateHeader, pv, cubeCtx) {
     const plot= WebPlot.makeWebPlotData(pv.plotId, pc,
         {...oldPlot.attributes,
             [PlotAttribute.IMAGE_BOUNDS_SELECTION]:undefined,
-            [PlotAttribute.SELECTION]: undefined},
+            [PlotAttribute.SELECTION]: undefined
+        },
     false, cubeCtx);
     plot.title= oldPlot.title;
+    plot.colorTableId= oldPlot.colorTableId;
     return plot;
 }
 
@@ -371,9 +371,9 @@ function makeOnComplete(dispatcher, plotId, taskId)  {
             type: ImagePlotCntlr.COLOR_CHANGE,
             payload: {
                 plotId,
-                primaryStateJson : PlotState.convertToJSON(colorChangeResults.plotState,true),
                 bias: colorChangeResults.bias,
                 contrast : colorChangeResults.contrast,
+                colorTableId: colorChangeResults.colorTableId,
                 ...colorChangeResults.bandUse
             }});
         dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotIdAry:[plotId]}} );

@@ -297,7 +297,7 @@ export const VisCtxToolbarView= memo((props) => {
     const makeHipsControls= () => (
         <Fragment>
             {canConvertHF && <HipsFitsConvertButton pv={pv}/>}
-            {!canConvertHF && <HipsProjConvertButton pv={pv}/>}
+            {hips && !canConvertHF && <HipsProjConvertButton pv={pv}/>}
             {hips && <HiPSCoordSelect plotId={plot?.plotId} imageCoordSys={plot?.imageCoordSys}/>}
             {hips && makeHiPSImageTable(pv)}
         </Fragment>

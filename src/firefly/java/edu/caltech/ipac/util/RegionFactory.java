@@ -1139,18 +1139,7 @@ public class RegionFactory {
         public  String getLine();
     }
 
-    public static class ParseRet {
-        final List<Region>  regionList;
-        final List<String> msgList;
-
-        public ParseRet(List<Region> regionList, List<String> msgList) {
-            this.regionList = regionList;
-            this.msgList = msgList;
-        }
-
-        public List<Region> getRegionList() { return regionList; }
-        public List<String> getMsgList() { return msgList; }
-    }
+    public record ParseRet(List<Region> regionList, List<String> msgList) { }
 
 
     public static String getStartCharOfString(String s)  {

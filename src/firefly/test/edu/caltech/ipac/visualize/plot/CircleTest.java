@@ -34,11 +34,11 @@ public class CircleTest {
     @Test
     public void testGetCenter(){
         Assert.assertNotNull(circle);
-        Assert.assertEquals(circle.getCenter().getLon(), worldPt.getLon(), delta);
-        Assert.assertEquals(circle.getCenter().getLat(), worldPt.getLat(), delta);
+        Assert.assertEquals(circle.center().getLon(), worldPt.getLon(), delta);
+        Assert.assertEquals(circle.center().getLat(), worldPt.getLat(), delta);
     }
     @Test
     public void testGetRadius(){
-        Assert.assertEquals(circle.getRadius(), radius, delta);
+        Assert.assertEquals(circle.radius(), radius, delta);
     }
 }

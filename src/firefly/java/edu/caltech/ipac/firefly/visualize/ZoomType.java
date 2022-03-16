@@ -3,14 +3,8 @@
  */
 package edu.caltech.ipac.firefly.visualize;
 /**
- * User: roby
- * Date: 7/7/11
- * Time: 12:46 PM
- */
-
-
-/**
 * @author Trey Roby
+ * Date: 7/7/11
 */
 public enum ZoomType {
                       STANDARD,       // use normal zoom, zoom to given zoom level or 1x if not specified

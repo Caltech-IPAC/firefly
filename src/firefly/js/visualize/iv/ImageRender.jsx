@@ -83,23 +83,15 @@ export class ImageRender extends Component {
     render() {
         const {plot, idx, opacity,plotView:pv}= this.props;
         const {width, height}= pv.viewDim;
-        const {tileData} = plot;
+        const style = {...containerStyle, width, height};
+        this.tileDrawer?.(plot, opacity,pv);
 
-        const scale = plot.zoomFactor/ plot.plotState.getZoomLevel();
-        const style = Object.assign({}, containerStyle, {width, height});
-        if (tileData && scale < .5 && tileData.images?.length > 5) { // only does check for image plots
-            return false;
-        }
-        else {
-            if (this.tileDrawer) this.tileDrawer(plot, opacity,pv);
-
-            return (
-                <div className='tile-drawer' style={style}>
-                    <SimpleCanvas drawIt={this.drawInit} width={width} height={height} plotType={plot.plotType}
-                                  id={`${CANVAS_IMAGE_ID_START}${idx}-${pv.plotId}`}/>
-                </div>
-            );
-        }
+        return (
+            <div className='tile-drawer' style={style}>
+                <SimpleCanvas drawIt={this.drawInit} width={width} height={height} plotType={plot.plotType}
+                              id={`${CANVAS_IMAGE_ID_START}${idx}-${pv.plotId}`}/>
+            </div>
+        );
     }
 }
 

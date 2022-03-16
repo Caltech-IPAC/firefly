@@ -44,7 +44,9 @@ public class RegionParser {
     }
 
     public  RegionFactory.ParseRet processFile(File f) throws IOException {
-        return processFile(new BufferedReader(new FileReader(f), 5000));
+        try (BufferedReader br= new BufferedReader(new FileReader(f), 5000)) {
+            return processFile(br);
+        }
     }
 
     public  RegionFactory.ParseRet processFile(final BufferedReader reader) throws IOException {
@@ -89,12 +91,12 @@ public class RegionParser {
             System.in.read();
             RegionParser parser= new RegionParser();
             RegionFactory.ParseRet result= parser.processFile(f);
-            for(Region r : result.getRegionList())   System.out.println(r.toString());
-            for(String s : result.getMsgList())  System.out.println(s);
+            for(Region r : result.regionList())   System.out.println(r.toString());
+            for(String s : result.msgList())  System.out.println(s);
 
             System.out.println("Output:");
             System.out.println("------");
-            for(Region r : result.getRegionList())   System.out.println(r.serialize());
+            for(Region r : result.regionList())   System.out.println(r.serialize());
 
         } catch (Exception e) {
             System.out.println("Test Failed: "+e.toString());

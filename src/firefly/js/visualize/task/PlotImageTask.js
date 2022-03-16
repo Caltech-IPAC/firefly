@@ -149,8 +149,9 @@ export function makePlotImageAction(rawAction) {
 
         if (!wpRequestAry) {
             payload= makeSinglePlotPayload(vr, rawAction.payload, requestKey);
+            const {wpRequest, redReq, blueReq, greenReq}= payload
             removeRawDataByPlotView(getPlotViewById(visRoot(),payload.plotId));
-            setActiveRequestKey(payload.wpRequest.getPlotId(),requestKey);
+            [wpRequest, redReq, blueReq, greenReq].forEach( (r) => r && setActiveRequestKey(r.getPlotId(),requestKey));
         }
         else {
             const {viewerId=DEFAULT_FITS_VIEWER_ID, attributes,
@@ -519,7 +520,6 @@ export function populateFromHeader(plotCreateHeader, plotCreate) {
          plotCreate[i].dataDesc= plotCreateHeader.dataDesc;
          plotCreate[i].zeroHeaderAry= plotCreateHeader.zeroHeaderAry;
          if (plotCreateHeader.multiImage) plotCreate[i].plotState.multiImage= plotCreateHeader.multiImage;
-         plotCreate[i].plotState.colorTableId= plotCreateHeader.colorTableId;
      }
  }
 
@@ -554,6 +554,9 @@ export function populateFromHeader(plotCreateHeader, plotCreate) {
                  dataWidth: cubeStartPC.dataWidth,
                  dataHeight: cubeStartPC.dataHeight,
                  imageCoordSys: cubeStartPC.imageCoordSys,
+                 fluxUnits: cubeStartPC.fitsData.fluxUnits,
+                 getFitsFileSize: cubeStartPC.fitsData.getFitsFileSize,
+                 desc: cubeStartPC.desc
              };
          });
      return cubeCtxAry;

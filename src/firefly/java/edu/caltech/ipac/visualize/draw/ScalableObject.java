@@ -17,7 +17,12 @@ import edu.caltech.ipac.visualize.plot.PlotContainer;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
-import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
@@ -71,7 +76,7 @@ public class ScalableObject {
 
     public DrawOnPlotReturn drawOnPlot(Plot         plot,
                                        ActiveFitsReadGroup frGroup,
-                                       Graphics2D   g2,
+                                       Graphics2D g2,
                                        WorldPt      wpt,
                                        WorldPt      wpt2,
                                        RotationInfo rotation,
@@ -109,7 +114,7 @@ public class ScalableObject {
                                        WorldPt      offset,
                                        CachePtInfo  overrideCPInfo,
                                        boolean      enableDraw) {
-       Shape   outShape[];
+       Shape outShape[];
        int     i;
        boolean insideClip= false;
        ImageWorkSpacePt pt;
@@ -290,16 +295,6 @@ public class ScalableObject {
        while(j.hasNext()) {
           p= (Plot)j.next();
           addPlot(p);
-       }
-   }
-
-
-   public void removePlotView(PlotContainer container) {
-       Plot p;
-       Iterator  j= container.iterator();
-       while(j.hasNext()) {
-          p= (Plot)j.next();
-          removePlot(p);
        }
    }
 

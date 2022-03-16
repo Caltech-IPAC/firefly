@@ -1,6 +1,6 @@
 import {isArray, isArrayBuffer} from 'lodash';
 import {Band} from '../Band.js';
-import {findPlot, getOverlayById, getPlotViewById, primePlot} from '../PlotViewUtil.js';
+import {findPlot, getOverlayById, getPlotViewById, isThreeColor, primePlot} from '../PlotViewUtil.js';
 import {createCanvas, isGPUAvailableInWorker, isImageBitmap, MEG} from '../../util/WebUtil.js';
 import ImagePlotCntlr, {dispatchRequestLocalData, visRoot} from '../ImagePlotCntlr.js';
 import {PlotState} from '../PlotState.js';
@@ -137,7 +137,7 @@ export function queueChangeLocalRawDataColor(plot, colorTableId, bias, contrast,
  * @param bandUse
  * @return {ChangeColorResults}
  */
-async function changeLocalRawDataColor(plot, colorTableId, bias, contrast, bandUse=defBandUse) {
+export async function changeLocalRawDataColor(plot, colorTableId, bias, contrast, bandUse=defBandUse) {
     const entry = getEntry(plot.plotImageId);
     if (!entry) return {};
 
@@ -159,7 +159,6 @@ async function changeLocalRawDataColor(plot, colorTableId, bias, contrast, bandU
     }
     else {
         const newPlotState = plot.plotState.copy();
-        newPlotState.colorTableId = colorTableId;
         plotStateSerialized= newPlotState.toJson(true);
         rawTileDataGroup= entry.rawTileDataGroup;
     }
@@ -169,8 +168,21 @@ async function changeLocalRawDataColor(plot, colorTableId, bias, contrast, bandU
     colorChangeDonePromises.delete(plot.plotImageId);
     donePromiseResolve?.();
     const plotState= PlotState.parse(plotStateSerialized);
-    return {plotState, bias,contrast,bandUse};
+    return {plotState, bias,contrast,bandUse, colorTableId};
 }
+
+
+export function colorTableMatches(plot) {
+    if (!plot || isThreeColor(plot)) return true;
+    const entry = getEntry(plot.plotImageId);
+    if (!entry?.rawTileDataGroup?.colorTableId) return true;
+    if (entry.rawTileDataGroup.colorTableId!==plot.colorTableId) return false;
+    // const {bias, contrast}= plot.rawData.bandData[0];
+    //todo add check bias and contrast here
+    return true;
+}
+
+
 
 export async function changeLocalMaskColor(plot, maskColor) {
     if (!getEntry(plot.plotImageId)) return;
@@ -206,12 +218,14 @@ function clearLocalStretchData(plot) {
  */
 function getFirstDataCompress(plot, mask) {
     if (mask) return 'FULL';
-    const {zoomFactor, dataWidth, dataHeight}= plot;
+    const {dataWidth, dataHeight}= plot;
     const size= dataWidth*dataHeight;
     if (size < 6*MEG) return 'FULL';
-    if (size > 500 * MEG) return 'QUARTER';
-    if (zoomFactor<.2) return 'QUARTER';
-    return (zoomFactor<.4) ? 'HALF' : 'FULL';
+    if (size < 10*MEG) return 'HALF';
+    return 'QUARTER';
+    // if (zoomFactor===1)  return 'QUARTER'; // this is probably the init, zoom will change probably to smaller;
+    // // if (zoomFactor<.2) return 'QUARTER';
+    // return (zoomFactor<.4) ? 'HALF' : 'FULL';
 }
 
 /**
@@ -239,8 +253,9 @@ export async function loadStretchData(pv, plot, dispatcher) {
 
     const workerKey= getEntry(plot.plotImageId)?.workerKey ?? getNextWorkerKey();
     const {plotImageId}= plot;
+    const {plotImageId:plotImageIdForValidation}= primePlot(pv);
 
-    const plotInvalid= () => primePlot(visRoot(),plotId)?.plotImageId!==plotImageId;
+    const plotInvalid= () => primePlot(visRoot(),plotId)?.plotImageId!==plotImageIdForValidation;
     const reqId= getStretchReqId();
     imageIdsRequested.set(plotImageId,reqId);
     const {plotId}= pv;
@@ -333,7 +348,7 @@ async function requestAgain(reqId, plotId, plot, waitTime, dataCompress, workerK
 async function loadStandardStretchData(workerKey, plot, loadingOptions, maskOptions) {
     const {dataCompress='FULL', backgroundUpdate=false, checkForPlotUpdate=true}= loadingOptions;
     const {processHeader} = plot.rawData.bandData[0];
-    const {plotImageId}= plot;
+    const {plotImageId,colorTableId:originalColorTableId}= plot;
     const veryLargeData= plot.dataWidth*plot.dataHeight > MAX_FULL_DATA_SIZE;
     let entry = getEntry(plotImageId);
     if (entry) {
@@ -372,7 +387,7 @@ async function loadStandardStretchData(workerKey, plot, loadingOptions, maskOpti
             entry.dataType = STRETCH_ONLY;
             const success=  maskOptions ?
                 await completeMaskLoad(latestPlot, stretchResult, maskOptions.maskColor) :
-                await completeLoad(latestPlot, stretchResult); //todo - get mask color
+                await completeLoad(latestPlot, stretchResult, originalColorTableId); //todo - get mask color
             return {success, fatal:false};
         } else {
             clearLocalStretchData(latestPlot);
@@ -389,25 +404,23 @@ async function loadStandardStretchData(workerKey, plot, loadingOptions, maskOpti
 /**
  * @param {WebPlot} plot
  * @param {{rawTileDataGroup:RawTileDataGroup, plotStateSerialized:string}} stretchResult
+ * @param {number} originalColorTableId
  * @return {Promise<boolean>}
  */
-async function completeLoad(plot, stretchResult) {
-    const {rawTileDataGroup, plotStateSerialized} = stretchResult;
-    const plotState = PlotState.parse(plotStateSerialized);
+async function completeLoad(plot, stretchResult, originalColorTableId) {
     const currPlot= primePlot(visRoot(),plot.plotId);
-    if (!currPlot) return {};
+    if (!currPlot) return false;
     const entry = getEntry(plot.plotImageId);
-    if (plotState.getColorTableId()===currPlot.plotState.getColorTableId()) {
-        entry.rawTileDataGroup = await populateTilesAsync(rawTileDataGroup, currPlot.plotState.getColorTableId());
-        entry.thumbnailEncodedImage = makeThumbnailCanvas(currPlot);
-        return true;
+    if (originalColorTableId===currPlot.colorTableId) {
+        entry.rawTileDataGroup = await populateTilesAsync(stretchResult.rawTileDataGroup, currPlot.colorTableId);
     }
     else {
         const {bias,contrast}= currPlot.rawData.bandData[0];
-        await changeLocalRawDataColor(currPlot, currPlot.plotState.colorTableId, bias, contrast);
-        entry.thumbnailEncodedImage = makeThumbnailCanvas(currPlot);
-        return true;
+        await changeLocalRawDataColor(currPlot, currPlot.colorTableId, bias, contrast);
     }
+    entry.rawTileDataGroup.colorTableId= currPlot.colorTableId;
+    entry.thumbnailEncodedImage = makeThumbnailCanvas(currPlot);
+    return true;
 }
 
 

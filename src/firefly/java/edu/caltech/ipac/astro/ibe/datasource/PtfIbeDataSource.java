@@ -10,9 +10,6 @@ import edu.caltech.ipac.astro.ibe.IbeQueryParam;
 import edu.caltech.ipac.firefly.server.query.ptf.PtfIbeResolver;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.visualize.plot.Plot;
-import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.IOException;
 import java.util.ArrayList;

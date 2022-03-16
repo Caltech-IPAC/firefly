@@ -44,7 +44,7 @@ public class FitsValidation extends ConfigTest{
    public void validateData(Fits expectedFits, Fits calculatedFits) throws FitsException {
         FitsRead[] fitsReads = FitsReadFactory.createFitsReadArray(calculatedFits);
         FitsRead[] expectedFitsRead = FitsReadFactory.createFitsReadArray(expectedFits);
-        for (int i=0;  i<fitsReads.length; i++){
+       for (int i=0;  i<fitsReads.length; i++){
             Assert.assertArrayEquals(fitsReads[i].getDataFloat(), expectedFitsRead[i].getDataFloat(), (float) delta);
         }
 
@@ -96,8 +96,12 @@ public class FitsValidation extends ConfigTest{
              String calculatedValue = calculatedCard.getValue().trim();
              //Do the numerical comparison  in case there are scientific notations, or precision difference
              if (!isBlank(expectedValue) && isOnlyNumber(expectedValue)){
-                 double expectedDoubleNumber = new Double(expectedValue).doubleValue();
-                 double calculatedDoubleNumber = new Double(calculatedValue).doubleValue();
+                 double expectedDoubleNumber = 0;
+                 double calculatedDoubleNumber = 0;
+                 try {
+                     expectedDoubleNumber = Double.parseDouble(expectedValue);
+                     calculatedDoubleNumber = Double.parseDouble(calculatedValue);
+                 } catch (NumberFormatException ignore) { }
                  //compare double numbers
                  Assert.assertEquals(expectedDoubleNumber, calculatedDoubleNumber,delta);
              }

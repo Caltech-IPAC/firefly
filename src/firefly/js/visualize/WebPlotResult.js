@@ -5,7 +5,6 @@ export const WebPlotResult= {
 
     PLOT_CREATE : 'PlotCreate',
     STRING: 'String',
-    PLOT_IMAGES: 'PlotImages',
     DATA_HISTOGRAM: 'DataHistogram',
     DATA_BIN_MEAN_ARRAY: 'DataBinMeanArray',
     DATA_BIN_COLOR_IDX: 'DataBinColorIdx',

@@ -252,7 +252,7 @@ export function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, newPlo
     pv.plottingStatusMsg='';
     pv.serverCall='success';
 
-    PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, pv.plots[pv.primeIdx].plotState);
+    PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, pv.plots[pv.primeIdx].plotState, pv.plots[pv.primeIdx].colorTableId);
 
     if (expandedMode===ExpandType.COLLAPSE) {
         pv.plotViewCtx.lastCollapsedZoomLevel= pv.plots[pv.primeIdx].zoomFactor;

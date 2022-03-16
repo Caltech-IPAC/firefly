@@ -11,8 +11,6 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * This class is the abstract base class for all plots.  Almost all classes that
@@ -34,35 +32,12 @@ import java.util.Map;
  */
 public abstract class Plot {
 
-    /**
-     * used for the zoom call.  the call will zoom up.
-     */
-    public static final int UP   = 1;
-    /**
-     * used for the zoom call.  the call will zoom down.
-     */
-    public static final int DOWN = 2;
-
-    private   float               _zFactor         = 2.0F;
+    private   float               _zFactor         = 1.0F;
     private   String              _plotDesc;
-    private   String              _shortPlotDesc;
-    private   boolean             _show            = true;
     private   float               _initialZoomLevel= 1.0F;
-    protected boolean             _available       = true;
-    protected float               _percentOpaque   = 1.0F;
     public    PlotGroup           _plotGroup;
-    protected Map<String,Object>  _attributes= new HashMap<>(3);
 
-    public Plot() { this(null); }
-
-    public Plot(PlotGroup plotGroup) {
-       if (plotGroup == null)
-          _plotGroup= new PlotGroup(this);
-       else {
-          _plotGroup= plotGroup;
-          plotGroup.addPlot(this);
-       }
-    }
+    public Plot() { _plotGroup= new PlotGroup(this); }
 
     public PlotGroup getPlotGroup() { return _plotGroup; }
 
@@ -110,25 +85,6 @@ public abstract class Plot {
     public abstract double  getWorldPlotHeight();
 
     /**
-     * This method work like a clone except is makes a plot so it shares
-     * some of the objects.  The result of the class will produce a plot that
-     * shares the ImageData.  If the ImageData get changed both plots will
-     * change. 
-     * @return Plot a new plot that shares image data.
-     */
-    public abstract Plot    makeSharedDataPlot(ActiveFitsReadGroup frGroup);
-
-    /**
-     * This method work like a clone except is makes a plot so it shares
-     * some of the objects.  The result of the class will produce a plot that
-     * shares the ImageData.  If the ImageData get changed both plots will
-     * change.
-     * @param plotGroup the PlotGroup to make this plot in
-     * @return Plot a new plot that shares image data.
-     */
-    public abstract Plot    makeSharedDataPlot(PlotGroup plotGroup, ActiveFitsReadGroup frGroup);
-
-    /**
      * Determine if a world point is in the plot boundaries.
      * @param wpt the point to test.
      * @return boolean true if it is in the boundaries, false if not.
@@ -150,22 +106,6 @@ public abstract class Plot {
     public abstract CoordinateSys getCoordinatesOfPlot();
 
     /**
-     * get the flux of a given image point point on the plot.
-     * @param pt the image point
-     * @return double the flux value
-     * @throws PixelValueException if the pixel is invalid
-     */
-
-    public abstract double getFlux(ImageWorkSpacePt pt, ActiveFitsReadGroup frGroup)
-                                      throws PixelValueException;
-
-    /**
-     * get units that this flux data is in.
-     * @return String the units.
-     */
-    public abstract String getFluxUnits(ActiveFitsReadGroup frGroup);
-
-    /**
      * get the scale (usually in arcseconds) that on image pixel of data
      * represents.
      * @return double the scale of one pixel.
@@ -182,8 +122,7 @@ public abstract class Plot {
      * @throws NoninvertibleTransformException if this point can be transformed in the
      *                                conversion process- almost never happens
      */
-    public ImagePt getImageCoords(MouseEvent ev)
-                                  throws NoninvertibleTransformException {
+    public ImagePt getImageCoords(MouseEvent ev) throws NoninvertibleTransformException {
         return getImageCoords(new Point(ev.getX(), ev.getY()));
 
     }
@@ -194,34 +133,27 @@ public abstract class Plot {
      * @throws NoninvertibleTransformException if this point can be transformed in the
      *                                conversion process- almost never happens
      */
-    public ImagePt getImageCoords(Point2D pt)
-                                  throws NoninvertibleTransformException {
+    public ImagePt getImageCoords(Point2D pt) throws NoninvertibleTransformException {
         AffineTransform inverse= _plotGroup.getInverseTransform();
-        ImagePt retval;
         if (inverse != null) {
             Point2D imagePt= inverse.transform(pt, null);
-            retval= new ImagePt(imagePt.getX(),imagePt.getY());
+            return new ImagePt(imagePt.getX(),imagePt.getY());
         }
         else {
-              throw new
-                  NoninvertibleTransformException("no inverse tranform");
+            throw new NoninvertibleTransformException("no inverse transform");
         }
-        return retval;
     }
 
     public ImageWorkSpacePt getImageWorkSpaceCoords(Point2D pt)
                                   throws NoninvertibleTransformException {
         AffineTransform inverse= _plotGroup.getInverseTransform();
-        ImageWorkSpacePt retval;
         if (inverse != null) {
             Point2D imagePt= inverse.transform(pt, null);
-            retval= new ImageWorkSpacePt(imagePt.getX(), imagePt.getY());
+            return new ImageWorkSpacePt(imagePt.getX(), imagePt.getY());
         }
         else {
-              throw new
-                  NoninvertibleTransformException("no inverse tranform");
+            throw new NoninvertibleTransformException("no inverse transform");
         }
-        return retval;
     }
 
 
@@ -232,9 +164,7 @@ public abstract class Plot {
      * @return ImagePt the converted point
      */
 
-   public ImagePt getImageCoords(ImageWorkSpacePt sipt) {
-        return new ImagePt(sipt.getX(), sipt.getY());
-   }
+   public ImagePt getImageCoords(ImageWorkSpacePt sipt) { return new ImagePt(sipt.getX(), sipt.getY()); }
 
    public ImageWorkSpacePt getImageWorkSpaceCoords(ImagePt sipt) {
        return new ImageWorkSpacePt(sipt.getX(), sipt.getY());
@@ -258,8 +188,7 @@ public abstract class Plot {
      * @return ImagePt the translated coordinates
      * @throws ProjectionException if the point cannot be projected into an ImagePt
      */
-    public abstract ImageWorkSpacePt getImageCoords(WorldPt wpt)
-                                  throws ProjectionException;
+    public abstract ImageWorkSpacePt getImageCoords(WorldPt wpt) throws ProjectionException;
 
 
     /**
@@ -292,9 +221,7 @@ public abstract class Plot {
      * @return Point2D the screen coordinates
      */
     public Point2D getScreenCoords(ImagePt ipt) {
-        return  _plotGroup.getTransform().transform(
-                                 new Point2D.Double(ipt.getX(), ipt.getY()),
-                                 null);
+        return  _plotGroup.getTransform().transform( new Point2D.Double(ipt.getX(), ipt.getY()), null);
     }
 
     /**
@@ -303,9 +230,7 @@ public abstract class Plot {
      * @return Point2D the screen coordinates
      */
     public Point2D getScreenCoords(ImageWorkSpacePt ipt) {
-        return  _plotGroup.getTransform().transform(
-                                 new Point2D.Double(ipt.getX(), ipt.getY()),
-                                 null);
+        return  _plotGroup.getTransform().transform( new Point2D.Double(ipt.getX(), ipt.getY()), null);
     }
 
     /**
@@ -318,13 +243,9 @@ public abstract class Plot {
      * @throws NoninvertibleTransformException if this point can be transformed in the
      *                                conversion process- almost never happens
      */
-    public WorldPt getWorldCoords(
-                                  Point2D pt,
-                                  CoordinateSys outputCoordSys)
-                                  throws NoninvertibleTransformException,
-                                         ProjectionException {
-	ImageWorkSpacePt iwspt = getImageWorkSpaceCoords(pt);
-        return getWorldCoords(iwspt,outputCoordSys);
+    public WorldPt getWorldCoords(Point2D pt, CoordinateSys outputCoordSys)
+                                  throws NoninvertibleTransformException, ProjectionException {
+        return getWorldCoords(getImageWorkSpaceCoords(pt),outputCoordSys);
     }
 
 
@@ -336,11 +257,8 @@ public abstract class Plot {
      * @throws NoninvertibleTransformException if this point can be transformed in the
      *                                conversion process- almost never happens
      */
-    public WorldPt getWorldCoords(Point2D pt)
-                                  throws NoninvertibleTransformException,
-                                         ProjectionException {
-	ImageWorkSpacePt iwspt = getImageWorkSpaceCoords(pt);
-        return getWorldCoords(iwspt);
+    public WorldPt getWorldCoords(Point2D pt) throws NoninvertibleTransformException, ProjectionException {
+        return getWorldCoords(getImageWorkSpaceCoords(pt));
     }
 
     /**
@@ -351,9 +269,7 @@ public abstract class Plot {
      * @throws NoninvertibleTransformException if this point can be transformed in the
      *                                conversion process- almost never happens
      */
-    public WorldPt getWorldCoords(MouseEvent ev)
-                                  throws NoninvertibleTransformException,
-                                         ProjectionException {
+    public WorldPt getWorldCoords(MouseEvent ev) throws NoninvertibleTransformException, ProjectionException {
         return getWorldCoords(new Point(ev.getX(), ev.getY()));
     }
 
@@ -364,8 +280,7 @@ public abstract class Plot {
      * @return WorldPt the translated coordinates
      * @throws ProjectionException if the point cannot be projected into an WorldPt
      */
-    public WorldPt getWorldCoords(ImageWorkSpacePt pt)
-                                          throws ProjectionException {
+    public WorldPt getWorldCoords(ImageWorkSpacePt pt) throws ProjectionException {
        return getWorldCoords(pt, CoordinateSys.EQ_J2000);
     }
     /**
@@ -376,11 +291,19 @@ public abstract class Plot {
      * @return WorldPt the translated coordinates
      * @throws ProjectionException if the point cannot be projected into an WorldPt
      */
-    public abstract WorldPt getWorldCoords(ImageWorkSpacePt pt,
-                                  CoordinateSys outputCoordSys)
+    public abstract WorldPt getWorldCoords(ImageWorkSpacePt pt, CoordinateSys outputCoordSys)
                                                  throws ProjectionException;
 
-
+    /**
+     * Return a point the represents the passed point with a distance in
+     * Image coordinates added to it.
+     * @param pt the initial image point
+     * @param x the x of the world coordinates distance away from the point.
+     * @param y the y of the world coordinates distance away from the point.
+     * @return ImagePt the new point
+     * @throws ProjectionException if the point cannot be projected into an ImagePt
+     */
+    public abstract ImagePt getDistanceCoords(ImagePt pt, double  x, double  y) throws ProjectionException;
 
     /**
      * Return a point the represents the passed point with a distance in
@@ -391,30 +314,8 @@ public abstract class Plot {
      * @return ImagePt the new point
      * @throws ProjectionException if the point cannot be projected into an ImagePt
      */
-    public abstract ImagePt getDistanceCoords(ImagePt pt,
-                                              double  x,
-                                              double  y)
+    public abstract ImageWorkSpacePt getDistanceCoords(ImageWorkSpacePt pt, double  x, double  y)
                                                throws ProjectionException;
-
-    /**
-     * Return a point the represents the passed point with a distance in
-     * Image coordinates added to it.
-     * @param pt the initial image point
-     * @param x the x of the world coordinates distance away from the point.
-     * @param y the y of the world coordinates distance away from the point.
-     * @return ImagePt the new point
-     * @throws ProjectionException if the point cannot be projected into an ImagePt
-     */
-    public abstract ImageWorkSpacePt getDistanceCoords(ImageWorkSpacePt pt,
-                                              double  x,
-                                              double  y)
-                                               throws ProjectionException;
-
-    /**
-     * return if this plot is actually plotted.
-     * @return boolean is this Plot class plotted
-     */
-    public abstract boolean isPlotted();
 
     /**
      * return the factor this plot is scale to (in other words, how much or little
@@ -438,19 +339,7 @@ public abstract class Plot {
      * Get the transform this plot uses
      * @return AffineTransform the transform
      */
-    public AffineTransform getTransform() {
-       return (AffineTransform )_plotGroup.getTransform().clone();
-    }
-
-
-
-    public void setAttribute(String key, Object attribute) {
-        _attributes.put(key,attribute);
-    }
-
-    public Object getAttribute(String key) {
-        return _attributes.get(key);
-    }
+    public AffineTransform getTransform() { return (AffineTransform )_plotGroup.getTransform().clone(); }
 
 
     /**
@@ -481,25 +370,7 @@ public abstract class Plot {
      * Get the level a image will be zoom when it is plotted
      * @return float the initial zoom level
      */
-    public float getInitialZoomLevel() {
-       return _initialZoomLevel;
-    }
-
-    /**
-     * set whether to show or hide this plot
-     * @param show true to show, false to hide.
-     */
-    public void setShowing(boolean show) {
-        if (show != _show) {
-            _show = show;
-        }
-    }
-
-    /**
-     * return if this plot is showing
-     * @return boolean true if showing, false if hiding.
-     */
-    public boolean isShowing() { return _show; }
+    public float getInitialZoomLevel() { return _initialZoomLevel; }
 
     /**
      * Set a description of this plot.
@@ -513,24 +384,7 @@ public abstract class Plot {
      */
     public String getPlotDesc()         { return _plotDesc; }
 
-    /**
-     * Set a very short description of this plot.
-     * @param d the very short plot description
-     */
-    public void   setShortPlotDesc(String d) { _shortPlotDesc= d; }
-    /**
-     * Get the very short description of this plot.
-     * @return String the very short plot description
-     */
-    public String getShortPlotDesc()         { return _shortPlotDesc; }
-
-    public float getPercentOpaque() {
-         return _percentOpaque;
-    }
-
-    public String toString() {
-        return getPlotDesc();
-    }
+    public String toString() { return getPlotDesc(); }
 
     /**
      * Convert from one coordinate system to another.
@@ -555,13 +409,4 @@ public abstract class Plot {
        }
        return retval;
     }
-
-
-   // =======================================================================
-   // ------------------    Private / Protected / Package Methods   ---------
-   // =======================================================================
-
-   int  getOffsetX() {return 0;}
-   int  getOffsetY() {return 0;}
-
 }

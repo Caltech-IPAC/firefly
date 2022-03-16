@@ -23,8 +23,8 @@ public class PlotGroup implements Iterable<Plot> {
 
     private int _imageWidth;     // image width of the mosaic of images
     private int _imageHeight;    // image height of the mosaic of images 
-    private int _screenWidth;    // screen width of the mosic of imagges
-    private int _screenHeight;   // screen height of the mosic of imagges
+    private int _screenWidth;    // screen width of the mosaic of images
+    private int _screenHeight;   // screen height of the mosaic of images
 
 
             // keep the mosaic image min/max
@@ -33,11 +33,8 @@ public class PlotGroup implements Iterable<Plot> {
     private int _minY;     // image min y
     private int _maxY;     // image max y
 
-    private final boolean _overlayEnabled= true;
-
-    private Plot            _basePlot;
+    private final Plot        _basePlot;
     private final List<Plot>  _plotList  = new ArrayList<>(3);
-    private PlotContainer    _plotView;
     private AffineTransform _trans;
     private AffineTransform _inverseTrans;
  
@@ -48,30 +45,12 @@ public class PlotGroup implements Iterable<Plot> {
     }
 
     /**
-     * Get the PlotView.
-     * A PlotGroup contains a reference to the PlotView that contains it.
-     * A PlotGroup may be in only one PlotView.
-     * @return PlotView the PlotView this plot is in.
-     */
-    public PlotContainer getPlotView() { return _plotView; }
-
-    /**
      * Return the base plot for the plot group.  The base plot is the plot that
      * defines the projection all other plot are reprojected to.
      * @return a Plot
      */
     public Plot getBasePlot() { return _basePlot; }
 
-    public void freeResources() {
-        _plotList.clear();
-        _plotView= null;
-        _trans= null;
-        _inverseTrans= null;
-        _basePlot= null;
-    }
-    
-
-    public boolean isOverlayEnabled() { return true; }
     public int getScreenWidth()     { return _screenWidth; }
     public int getScreenHeight()     { return _screenHeight; }
     public int getGroupImageWidth()  { return _imageWidth;   }
@@ -132,39 +111,6 @@ public class PlotGroup implements Iterable<Plot> {
        return (float)getTransform().getScaleX();
     }
 
-    /**
-     * Is the passed plot the base plot. Returns true if it is. Does not check
-     * if the plot is even on the list.
-     * @param plot the plot to test
-     * @return true if the plot is the base, false otherwise
-     */
-    public boolean isBasePlot(Plot plot) {
-        return (plot == _basePlot);
-    }
-
-    /**
-     * finds where this image sites on the larger drawing pallet.
-     * @param targetPlot the plot we are searching for
-     * @return ImageLocation object with the minx,maxX,minY,maxY
-     */
-    public ImageLocation getImageLocation(Plot targetPlot) {
-        int minX, maxX, minY, maxY;
-        ImageLocation retval= null;
-        for(Plot p : _plotList) {
-            if (p==targetPlot) {
-                if (p.isPlotted()) {
-                    minX= p.getOffsetX();
-                    maxX= p.getImageDataWidth() + p.getOffsetX();
-                    minY= p.getOffsetY();
-                    maxY= p.getImageDataHeight() + p.getOffsetY();
-                    retval= new ImageLocation(p,minX,maxX,minY,maxY);
-                }
-                break;
-            }
-        }
-        return retval;
-    }
-
 
   // ------------------------------------------------------------
   // ================= Package methods ==========================
@@ -216,10 +162,8 @@ public class PlotGroup implements Iterable<Plot> {
    }
 
    void removeFromPlotted() {
-      if (_basePlot.isPlotted()) {
-        computeMinMax();
-        setZoomTo((float) _trans.getScaleX());
-      }
+       computeMinMax();
+       setZoomTo((float) _trans.getScaleX());
    }
 
 
@@ -238,16 +182,14 @@ public class PlotGroup implements Iterable<Plot> {
        _minY= 0;
        _maxY= 0;
         for(Plot p : _plotList) {
-          if (p.isPlotted()) {
-             minX= p.getOffsetX(); 
-             maxX= p.getImageDataWidth() + p.getOffsetX(); 
-             minY= p.getOffsetY(); 
-             maxY= p.getImageDataHeight() + p.getOffsetY(); 
+             minX= 0;
+             maxX= p.getImageDataWidth();
+             minY= 0;
+             maxY= p.getImageDataHeight();
              if (minX < _minX) _minX= minX;
              if (maxX > _maxX) _maxX= maxX;
              if (minY < _minY) _minY= minY;
              if (maxY > _maxY) _maxY= maxY;
-          }
        }
        _imageWidth=  Math.abs(_minX) + Math.abs(_maxX);
        _imageHeight= Math.abs(_minY) + Math.abs(_maxY);
@@ -257,30 +199,5 @@ public class PlotGroup implements Iterable<Plot> {
        g2.setPaint( Color.black );
        g2.fill( new Rectangle(_minX,_minY, _imageWidth, _imageHeight) );
    }
-
-
-    /**
-     * Inner class for show returning the location of an image on the large
-     * plotting pallet. All values are in image coordinates
-     */
-    public static class ImageLocation  {
-        private final Plot _p;
-        private final int _minX;     // image min x
-        private final int _maxX;     // image max x
-        private final int _minY;     // image min y
-        private final int _maxY;     // image max y
-        private ImageLocation(Plot p, int minX, int maxX, int minY, int maxY) {
-            _p= p;
-            _minX= minX;
-            _maxX= maxX;
-            _minY= minY;
-            _maxY= maxY;
-        }
-        public Plot getPlot() {return _p; }
-        public int getMinX() { return _minX; }
-        public int getMaxX() { return _maxX; }
-        public int getMinY() { return _minY; }
-        public int getMaxY() { return _maxY; }
-    }
 
 }

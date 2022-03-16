@@ -197,7 +197,6 @@ function makeMaskRequest(fileKey, imageOverlayId, pv, maskValue, imageNumber, co
     if (state) {
         r.setZoomType(ZoomType.LEVEL);
         r.setInitialZoomLevel(plot.zoomFactor);
-        r.setFlipY(state.isFlippedY());
     }
     return r;
 }

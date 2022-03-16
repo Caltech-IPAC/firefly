@@ -33,8 +33,8 @@ import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory.BAD_FORMA
  */
 public class FitsCacher {
 
-    private static Cache memCache= CacheManager.getCache(Cache.TYPE_VIS_SHARED_MEM);
-    private static Cache fileInfoCache= CacheManager.getCache(Cache.TYPE_PERM_SMALL);
+    private static final Cache memCache= CacheManager.getCache(Cache.TYPE_VIS_SHARED_MEM);
+    private static final Cache fileInfoCache= CacheManager.getCache(Cache.TYPE_PERM_SMALL);
     private static final Map<CacheKey, Object> activeRequest = new ConcurrentHashMap<>(61);
     private static final Logger.LoggerImpl _log = Logger.getLogger();
 
@@ -82,6 +82,7 @@ public class FitsCacher {
                     }
                 }
             }
+
         } finally {
             activeRequest.remove(fitsFileInfo);
         }
@@ -101,7 +102,7 @@ public class FitsCacher {
     private static void logTime(FileInfo fitsFileInfo, long time) {
         String timeStr = UTCTimeUtil.getHMSFromMills(time);
         File f= fitsFileInfo.getFile();
-        _log.briefInfo("Read Fits: " + timeStr + ", " + FileUtil.getSizeAsString(f.length()) + ": " + f.getName());
+        _log.info("Read Fits: " + timeStr + ", " + FileUtil.getSizeAsString(f.length()) + ": " + f.getName());
     }
 
 
@@ -171,15 +172,13 @@ public class FitsCacher {
 
 
 
-    public static void addFitsReadToCache(File fitsFile, FitsRead frAry[]) {
+    public static void addFitsReadToCache(File fitsFile, FitsRead[] frAry) {
         addFitsReadToCache(fitsFile.getPath(), frAry);
     }
 
-    private static void addFitsReadToCache(String fitsFilePath, FitsRead frAry[]) {
+    private static void addFitsReadToCache(String fitsFilePath, FitsRead[] frAry) {
         File f= ServerContext.convertToFile(fitsFilePath,true);
-        if (f!=null) {
-            CacheKey key= new StringKey(fitsFilePath);
-            if (memCache!=null) memCache.put(key,frAry);
-        }
+        if (f==null || memCache==null) return;
+        memCache.put(new StringKey(fitsFilePath),frAry);
     }
 }

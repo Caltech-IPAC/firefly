@@ -142,9 +142,6 @@ public class LockingVisNetwork {
             String messStr = "Retrieved " + FileUtil.getSizeAsString(ev.getCurrent(),true) + offStr;
             PlotServUtils.updatePlotCreateProgress(_key, _plotId, ProgressStat.PType.DOWNLOADING, messStr);
         }
-
-        public void beginDownload(DownloadEvent ev) {/*not used*/ }
-        public void downloadCompleted(DownloadEvent ev) {/*not used*/ }
     }
 
 }

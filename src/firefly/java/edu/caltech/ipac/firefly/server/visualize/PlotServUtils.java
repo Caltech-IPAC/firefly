@@ -9,38 +9,25 @@ import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.visualize.Band;
+import edu.caltech.ipac.firefly.visualize.PlotState;
+import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.StringKey;
-import edu.caltech.ipac.visualize.draw.FixedObjectGroup;
-import edu.caltech.ipac.visualize.draw.GridLayer;
-import edu.caltech.ipac.visualize.draw.ScalableObjectPosition;
-import edu.caltech.ipac.visualize.draw.VectorObject;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.Circle;
-import edu.caltech.ipac.visualize.plot.ImageMask;
-import edu.caltech.ipac.visualize.plot.ImagePlot;
-import edu.caltech.ipac.visualize.plot.RangeValues;
 import edu.caltech.ipac.visualize.plot.WorldPt;
-import edu.caltech.ipac.visualize.plot.output.PlotOutput;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
-import nom.tam.fits.Fits;
-import nom.tam.fits.FitsException;
 import nom.tam.fits.Header;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicLong;
+
+import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil.findHeaderValue;
 
 
 /**
@@ -50,14 +37,6 @@ public class PlotServUtils {
 
     private static final Logger.LoggerImpl _statsLog= Logger.getLogger(Logger.VIS_LOGGER);
     private static final Logger.LoggerImpl _log= Logger.getLogger();
-    private static final int PLOT_FULL_WIDTH = -25;
-    private static final int PLOT_FULL_HEIGHT = -25;
-    private static final AtomicLong _nameCnt= new AtomicLong(0);
-
-    private static final String JPG_NAME_EXT=FileUtil.jpg;
-    private static final String PNG_NAME_EXT=FileUtil.png;
-    private static final String _hostname;
-    private static final String _pngNameExt="." + PNG_NAME_EXT;
 
     public static final String STARTING_READ_MSG = "Retrieving Data";
     public static final String READ_PERCENT_MSG = "Retrieving ";
@@ -65,50 +44,6 @@ public class PlotServUtils {
     public static final String CREATING_MSG =  "Creating Images";
     public static final String PROCESSING_MSG =  "Processing Images";
     public static final String PROCESSING_COMPLETED_MSG =  "Processing Images Completed";
-
-    static {
-        _hostname= FileUtil.getHostname();
-    }
-
-    static File createFullTile(ImagePlot plot,
-                               ActiveFitsReadGroup frGroup,
-                               File f,
-                               List<FixedObjectGroup> fog,
-                               List<VectorObject> vectorList,
-                               List<ScalableObjectPosition> scaleList,
-                               GridLayer gridLayer) throws IOException {
-        return  createOneTile(plot,frGroup,f,0,0,PLOT_FULL_WIDTH,PLOT_FULL_HEIGHT,
-                              fog,vectorList, scaleList, gridLayer);
-    }
-
-
-
-    private static File createOneTile(ImagePlot plot,
-                                      ActiveFitsReadGroup frGroup,
-                                      File f,
-                                      int x,
-                                      int y,
-                                      int width,
-                                      int height,
-                                      List<FixedObjectGroup> fogList,
-                                      List<VectorObject> vectorList,
-                                      List<ScalableObjectPosition> scaleList,
-                                      GridLayer gridLayer) throws IOException {
-
-        PlotOutput po= new PlotOutput(plot,frGroup);
-        if (fogList!=null) po.setFixedObjectGroupList(fogList);
-        if (gridLayer!=null) po.setGridLayer(gridLayer);
-        if (vectorList!=null) po.setVectorList(vectorList);
-        if (scaleList!=null) po.setScaleList(scaleList);
-        int ext= f.getName().endsWith(JPG_NAME_EXT) ? PlotOutput.JPEG : PlotOutput.PNG;
-        if (width== PLOT_FULL_WIDTH) width= plot.getScreenWidth();
-        if (height== PLOT_FULL_HEIGHT) height= plot.getScreenHeight();
-
-        po.writeTile(f, ext, plot.isUseForMask(),x, y, width, height, null);
-        return f;
-
-    }
-
 
     public static void updatePlotCreateProgress(ProgressStat pStat) {
         Cache cache= UserCache.getInstance();
@@ -151,50 +86,55 @@ public class PlotServUtils {
         }
     }
 
-    private static Header getTopFitsHeader(File f) {
-        try {
-            Fits fits= new Fits(f);
-            Header header=  fits.getHDU(0).getHeader();
-            FitsReadUtil.closeFits(fits);
-            return header;
-        } catch (FitsException|IOException  e) {
-            return null;
-        }
+
+    static String makePlotDesc(PlotState state, ActiveFitsReadGroup frGroup, String dataDesc, boolean isMultiImage) {
+
+        WebPlotRequest req= state.getWebPlotRequest();
+        Header header= frGroup.getFitsRead(state.firstBand()).getHeader();
+
+        return switch (req.getTitleOptions()) {
+            case PLOT_DESC -> (req.getTitle() == null ? "" : req.getTitle()) + dataDesc;
+            case FILE_NAME -> (isMultiImage)? findTitleByHeader(header,state,req) : "";
+            case HEADER_KEY -> findTitleByHeader(header,state,req);
+            case PLOT_DESC_PLUS -> {
+                String s= req.getPlotDescAppend();
+                yield req.getTitle()+ (s!=null ? " "+s : "");
+            }
+            case SERVICE_OBS_DATE -> {
+                if (req.getRequestType()!= RequestType.SERVICE) yield "";
+                yield req.getTitle() + ": " + getDateValueFromServiceFits(req.getServiceType(), header);
+            }
+            default ->  "";
+        };
     }
+
+    private static String findTitleByHeader(Header header, PlotState state, WebPlotRequest req) {
+        return findHeaderValue(header,
+                        req.getHeaderKeyForTitle(),
+                        "EXTNAME",
+                        "EXTTYPE",
+                        state.getCubeCnt()>0 ? "PLANE"+state.getImageIdx(state.firstBand()) : null
+        );
+    }
+
 
 
     private static String getServiceDateHeaderKey(WebPlotRequest.ServiceType sType) {
-        String header= "none";
-        switch (sType) {
-            case TWOMASS:
-                header= "ORDATE";
-                break;
-            case ATLAS:
-            case DSS:
-                header= "DATE-OBS";
-                break;
-            case WISE:
-                header= "MIDOBS";
-                break;
-            case SDSS:
-                header= "DATE-OBS";
-                break;
-            case IRIS:
-                header= "DATEIRIS";
-                break;
-        }
-        return header;
+        return switch (sType) {
+            case TWOMASS -> "ORDATE";
+            case ATLAS, DSS -> "DATE-OBS";
+            case WISE -> "MIDOBS";
+            case SDSS -> "DATE-OBS";
+            case IRIS -> "DATEIRIS";
+            default -> "none";
+        };
     }
 
     public static String getDateValueFromServiceFits(WebPlotRequest.ServiceType sType, File f) {
-        Header header=  getTopFitsHeader(f);
-        if (header!=null) {
-            return getDateValueFromServiceFits(getServiceDateHeaderKey(sType), header);
-        }
-        else {
-            return "";
-        }
+        Header header=  FitsReadUtil.getTopFitsHeader(f);
+        return (header!=null) ? getDateValueFromServiceFits(getServiceDateHeaderKey(sType), header) : "";
     }
+
 
     public static String getDateValueFromServiceFits(WebPlotRequest.ServiceType sType, Header header) {
         return getDateValueFromServiceFits(getServiceDateHeaderKey(sType), header);
@@ -264,52 +204,6 @@ public class PlotServUtils {
         return retval;
     }
 
-
-
-
-    static File getUniquePngFileName(String nameBase, File dir) {
-        File f= new File(dir,nameBase + "-" + _nameCnt.incrementAndGet() +"-"+ _hostname+ _pngNameExt);
-        f= FileUtil.createUniqueFileFromFile(f);
-        return f;
-    }
-
-    static ImagePlot makeImagePlot(ActiveFitsReadGroup frGroup,
-                                   float     initialZoomLevel,
-                                   boolean   threeColor,
-                                   Band      band,
-                                   int       initColorID,
-                                   RangeValues stretch) throws FitsException {
-        return new ImagePlot(null, frGroup,initialZoomLevel, threeColor, band, initColorID, stretch);
-    }
-
-    /**
-     * Sort the imageMask array in the ascending order based on the mask's index (the bit offset)
-     * When such mask array passed to create IndexColorModel, the number of the colors can be decided using the
-     * masks colors and store the color according to the order of the imageMask in the array.
-     *
-     * @param imageMasks the mask
-     * @return the ImageMask array
-     */
-    private static ImageMask[] sortImageMaskArrayInIndexOrder(ImageMask[] imageMasks){
-
-        Map<Integer, ImageMask> unsortedMap= new HashMap<>();
-        for (ImageMask imageMask : imageMasks) {
-            unsortedMap.put(imageMask.getIndex(), imageMask);
-        }
-
-        Map<Integer, ImageMask> treeMap = new TreeMap<>(unsortedMap);
-        return treeMap.values().toArray(new ImageMask[0]);
-    }
-
-    static ImagePlot makeMaskImagePlot(ActiveFitsReadGroup frGroup,
-                                       float               initialZoomLevel,
-                                       WebPlotRequest      request,
-                                       RangeValues         stretch) throws FitsException {
-
-         ImageMask[] maskDef= createMaskDefinition(request);
-         return new ImagePlot(null, frGroup,initialZoomLevel, sortImageMaskArrayInIndexOrder(maskDef) , stretch);
-    }
-
     public static Circle getRequestArea(WebPlotRequest request) {
         Circle retval = null;
         WorldPt wp= request.getWorldPt();
@@ -319,38 +213,15 @@ public class PlotServUtils {
             if (!StringUtils.isEmpty(objName)) {
                 try {
                     wp= TargetNetwork.resolveToWorldPt(objName, request.getResolver());
-                } catch (Exception e) {
-                    wp= null;
-                }
+                } catch (Exception ignore) { }
             }
         }
 
         float side = request.getSizeInDeg();
         if (wp != null) retval = new Circle(wp, side);
-
         return retval;
     }
 
-    private static ImageMask[] createMaskDefinition(WebPlotRequest r) {
-        List<String> maskColors= r.getMaskColors();
-        Color[] cAry= new Color[maskColors.size()];
-        List<ImageMask> masksList=  new ArrayList<ImageMask>();
-        int bits= r.getMaskBits();
-        int colorIdx= 0;
-        for(String htmlColor : maskColors) {
-            cAry[colorIdx++]= convertColorHtmlToJava(htmlColor);
-        }
-        colorIdx= 0;
-
-        for(int j= 0; (j<31); j++) {
-            if (((bits>>j) & 1) != 0) {
-                Color c= (colorIdx<cAry.length) ? cAry[colorIdx] : Color.pink;
-                colorIdx++;
-                masksList.add(new ImageMask(j,c));
-            }
-        }
-        return masksList.toArray(new ImageMask[masksList.size()]);
-    }
 
     private static Color parseRGB(String color) {
         String rgb = "rgb";
@@ -388,41 +259,37 @@ public class PlotServUtils {
     }
 
     public static Color convertColorHtmlToJava(String color) {
-        Color c;
         if (isHexColor(color)) {
-            int rgb[]=  toRGB(color);
-            c= new Color(rgb[0],rgb[1],rgb[2]);
+            int[] rgb=  toRGB(color);
+            return new Color(rgb[0],rgb[1],rgb[2]);
         }
         else if (color.startsWith("rgb")) {
-            c = parseRGB(color);
+            return parseRGB(color);
         } else {
-            if      (color.equals("black"))   c= Color.black;
-            else if (color.equals("aqua"))    c= new Color(0,255,255);
-            else if (color.equals("blue"))    c= Color.blue;
-            else if (color.equals("cyan"))    c= Color.cyan;
-            else if (color.equals("fuchsia")) c= new Color(255,0,255);
-            else if (color.equals("gray"))    c= new Color(128,128,128);
-            else if (color.equals("green"))   c= new Color(0,128,0);
-            else if (color.equals("lime"))    c= Color.green;  // this is correct, lime is 0,255,0
-            else if (color.equals("magenta")) c= Color.magenta;
-            else if (color.equals("maroon"))  c= new Color(128,0,0);
-            else if (color.equals("navy"))    c= new Color(0,0,128);
-            else if (color.equals("olive"))   c= new Color(128,128,0);
-            else if (color.equals("orange"))  c= Color.orange;
-            else if (color.equals("pink"))    c= Color.pink;
-            else if (color.equals("purple"))  c= new Color(128,0,128);
-            else if (color.equals("red"))     c= Color.red;
-            else if (color.equals("silver"))  c= new Color(192,192,192);
-            else if (color.equals("teal"))    c= new Color(0,128,128);
-            else if (color.equals("white"))   c= Color.white;
-            else if (color.equals("yellow"))  c= Color.yellow;
-            else {
-                // lightGray or white is a better presentation for "unknown" color string. -TLau
-                c= Color.lightGray;
-                _log.debug("convertColorHtmlToJava(String color) does not understand " + color + ".  Color.lightGray is assigned.");
-            }
+            return switch (color) {
+                case "black" -> Color.black;
+                case "aqua" -> new Color(0, 255, 255);
+                case "blue" -> Color.blue;
+                case "cyan" -> Color.cyan;
+                case "fuchsia" -> new Color(255, 0, 255);
+                case "gray" -> new Color(128, 128, 128);
+                case "green" -> new Color(0, 128, 0);
+                case "lime" -> Color.green;  // this is correct, lime is 0,255,0
+                case "magenta" -> Color.magenta;
+                case "maroon" -> new Color(128, 0, 0);
+                case "navy" -> new Color(0, 0, 128);
+                case "olive" -> new Color(128, 128, 0);
+                case "orange" -> Color.orange;
+                case "pink" -> Color.pink;
+                case "purple" -> new Color(128, 0, 128);
+                case "red" -> Color.red;
+                case "silver" -> new Color(192, 192, 192);
+                case "teal" -> new Color(0, 128, 128);
+                case "white" -> Color.white;
+                case "yellow" -> Color.yellow;
+                default -> Color.lightGray;// lightGray or white is better presentation for "unknown" color string.
+            };
         }
-        return c;
     }
 
     private static final ProgressMessage EMPTY_MESSAGE= new ProgressMessage("",false);
@@ -472,21 +339,9 @@ public class PlotServUtils {
                 if (statEntry.isDone()) numDone++;
 
                 switch (ptype) {
-                    case DOWNLOADING:
-                        downloadMsg = statEntry.getMessage();
-                        break;
-                    case READING:
-                        readingMsg = statEntry.getMessage();
-                        break;
-                    case CREATING:
-                        creatingMsg = statEntry.getMessage();
-                        break;
-                    case GROUP:
-                    case OTHER:
-                    case SUCCESS:
-                    default:
-                        // ignore
-                        break;
+                    case DOWNLOADING -> downloadMsg = statEntry.getMessage();
+                    case READING -> readingMsg = statEntry.getMessage();
+                    case CREATING -> creatingMsg = statEntry.getMessage();
                 }
             }
         }
@@ -498,14 +353,7 @@ public class PlotServUtils {
         return retval;
     }
 
-    public static class ProgressMessage {
-        final String message;
-        final boolean done;
-        ProgressMessage(String message, boolean done) {
-            this.message= message;
-            this.done= done;
-        }
-    }
+    public record ProgressMessage(String message, boolean done) { }
 
     private static boolean isHexColor(String text) {
         boolean retval= false;
@@ -543,4 +391,3 @@ public class PlotServUtils {
     }
 
 }
-

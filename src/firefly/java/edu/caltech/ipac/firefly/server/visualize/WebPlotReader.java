@@ -4,9 +4,8 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.visualize.fitseval.FitsDataEval;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.FileUtil;
@@ -18,114 +17,78 @@ import nom.tam.fits.FitsException;
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 
 /**
  * @author Trey Roby
- *
- * 07/07/15
- * The Crop class is deprecated. The same function is added to CropAndCenter.
  */
 public class WebPlotReader {
 
-    private static final Logger.LoggerImpl _log = Logger.getLogger();
-
     public static Map<Band, FileReadInfo[]> readFiles(Map<Band, FileInfo> fitsFiles, WebPlotRequest req)
-            throws IOException,
-                   FitsException,
-                   FailedRequestException,
-                   GeomException {
-
+            throws IOException, FitsException, FailedRequestException, GeomException {
         Map<Band, FileReadInfo[]> retMap = new LinkedHashMap<>();
-        for (Map.Entry<Band, FileInfo> entry : fitsFiles.entrySet()) {
-            Band band = entry.getKey();
-            FileReadInfo info[] = readOneFits(entry.getValue(), band, req);
+        for (var entry : fitsFiles.entrySet()) {
+            var band = entry.getKey();
+            var fi= entry.getValue();
+            var info = needsPipeline(req) ? readWithPipeline(fi,band,req) : readNormal(fi,band,req);
             retMap.put(band, info);
         }
         return retMap;
     }
 
+    /**
+     * Read everything from the FITS file. All network image plotting firefly calls will use this code
+     */
+    private static FileReadInfo[] readNormal(FileInfo fd, Band band, WebPlotRequest req)
+                                                    throws IOException, FitsException {
+        var fitsDataEval = FitsCacher.readFits(fd, req, true, true);
+        var frAry= fitsDataEval.getFitReadAry();
+        var retval = new FileReadInfo[frAry.length];
+        var workingFile= fitsDataEval.getHduUnCompressedFile()!=null?
+                fitsDataEval.getHduUnCompressedFile():fd.getFile();
+        for (int i = 0; (i < frAry.length); i++) {
+            retval[i]= new FileReadInfo(fd.getFile(), workingFile, frAry[i], fd, band, i,
+                    fd.getDesc(), getUploadedName(fd), fitsDataEval.getRelatedData(i));
+        }
+        return retval;
+    }
 
 
     /**
-     * @param fd file data
-     * @param band which band
-     * @param req WebPlotRequest from the search, usually the first
-     * @return the ReadInfo[] object
-     * @throws java.io.IOException        any io problem
-     * @throws nom.tam.fits.FitsException problem reading the fits file
-     * @throws edu.caltech.ipac.util.download.FailedRequestException
-     *                                    any other problem
-     * @throws GeomException
-     *                                    problem reprojecting
+     *  read with pipeline - this is not commonly used more from normal firefly calls, since most operations
+     *  can be handled on the client
+     *  finder chart still uses this code when creating a PDF
      */
-    public static FileReadInfo[] readOneFits(FileInfo fd, Band band, WebPlotRequest req)
-            throws IOException,
-                   FitsException,
-                   FailedRequestException,
-                   GeomException {
-
-        FileReadInfo retval[];
-
+    private static FileReadInfo[] readWithPipeline(FileInfo fd, Band band, WebPlotRequest req)
+            throws IOException, FitsException, FailedRequestException, GeomException {
         File originalFile = fd.getFile();
-        String uploadedName= null;
-        // note: add case for upload from workspace
+        var fitsDataEval = FitsCacher.readFits(fd, req, false, false); // turn caching off if I have to use pipeline
+        var frAry= fitsDataEval.getFitReadAry();
+        var retval = new FileReadInfo[frAry.length];
+        FitsRead[] newFrAry= new FitsRead[frAry.length];
+        for (int imageIdx = 0; (imageIdx < frAry.length); imageIdx++) {
+            newFrAry[imageIdx]= WebPlotPipeline.applyPipeline(req, frAry[imageIdx]);
+
+            retval[imageIdx]= new FileReadInfo(originalFile, originalFile, newFrAry[imageIdx], fd, band, imageIdx,
+                    fd.getDesc(), getUploadedName(fd), null);
+        }
+        return retval;
+    }
+
+    private static String getUploadedName(FileInfo fileInfo) {
+        File originalFile = fileInfo.getFile();
         if (ServerContext.isInUploadDir(originalFile) || originalFile.getName().startsWith("upload_") ||
                 originalFile.getName().startsWith("ws-upload")) {
-            uploadedName= fd.getDesc();
+            return fileInfo.getDesc();
         }
-
-        boolean usePipeline= needsPipeline(req);
-        FitsDataEval fitsDataEval = FitsCacher.readFits(fd, req, !usePipeline, !usePipeline); // turn caching off if I have to use pipeline
-        FitsRead frAry[]= fitsDataEval.getFitReadAry();
-        retval = new FileReadInfo[frAry.length];
-
-        if (usePipeline) { // if we need to use the pipeline make sure we create a new array
-            FitsRead newFrAry[]= new FitsRead[frAry.length];
-            int imageIdx;
-            for (int i = 0; (i < frAry.length); i++) {
-                imageIdx= i;
-                WebPlotPipeline.PipelineRet pipeRet= WebPlotPipeline.applyPipeline(req, frAry[i], imageIdx, band, originalFile);
-                newFrAry[i]= pipeRet.fr;
-                ModFileWriter modFileWriter= checkUnzip(i,band,originalFile, pipeRet.modFileWriter); // todo - figure out: why I am only doing this in the pipeline case?
-
-                retval[i]= new FileReadInfo(originalFile, originalFile, newFrAry[i], fd, band, imageIdx,
-                        fd.getDesc(), uploadedName, null, modFileWriter);
-            }
-        }
-        else {
-            for (int i = 0; (i < frAry.length); i++) {
-                retval[i]= new FileReadInfo(originalFile,
-                        fitsDataEval.getHduUnCompressedFile()!=null?fitsDataEval.getHduUnCompressedFile():originalFile,
-                        frAry[i], fd, band, i, fd.getDesc(), uploadedName,
-                        fitsDataEval.getRelatedData(i), null);
-            }
-        }
-
-        return retval;
+        return null;
     }
 
     private static boolean needsPipeline(WebPlotRequest req) {
         if (req==null) return false;
         return (req.isFlipY() || req.isFlipX() || req.getPostCropAndCenter() || req.getPostCrop() || WebPlotPipeline.isRotation(req));
-    }
-
-    private static ModFileWriter checkUnzip(int i, Band band, File originalFile, ModFileWriter modFileWriter)  {
-        if (i == 0 &&  modFileWriter == null && isUnzipNecessary(originalFile) ) {
-
-            _log.warn("Setting up unzip ModFileWriter, this procedure is deprecated.",
-                      "We should not just unzip the fits files up front.",
-                       originalFile.getAbsolutePath());
-            modFileWriter = new ModFileWriter.UnzipFileWriter(band, originalFile);
-        }
-        return modFileWriter;
-    }
-
-
-    private static boolean isUnzipNecessary(File f) {
-        String ext = FileUtil.getExtension(f);
-        return (ext != null && ext.equalsIgnoreCase(FileUtil.GZ));
     }
 
     static void validateAccess(Map<Band, FileInfo> fitsFiles) throws FailedRequestException {
@@ -151,17 +114,19 @@ public class WebPlotReader {
     }
 
     private static String concatFileNames(Map<Band, FileInfo> fitsFiles) {
-        StringBuilder sb = new StringBuilder(200);
+        StringBuilder sb = new StringBuilder();
         boolean first = true;
         for (FileInfo rf : fitsFiles.values()) {
-            File f = rf.getFile();
             if (!first) sb.append(", ");
-            sb.append(f);
+            sb.append(rf.getFile());
             first = false;
         }
         return sb.toString();
     }
 
 
+    public record FileReadInfo(File originalFile, File workingFile, FitsRead fitsRead,
+                                      FileInfo fileInfo, Band band, int originalImageIdx, String dataDesc,
+                                      String uploadedName, List<RelatedData> relatedData) { }
 }
 

@@ -9,7 +9,6 @@ import edu.caltech.ipac.visualize.plot.Histogram;
 import edu.caltech.ipac.visualize.plot.ImageHeader;
 import edu.caltech.ipac.visualize.plot.ImageMask;
 import edu.caltech.ipac.visualize.plot.ImagePt;
-import edu.caltech.ipac.visualize.plot.PixelValueException;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
@@ -197,16 +196,12 @@ public class FitsRead implements Serializable {
      *
      * @param ipt ImagePt coordinates
      */
-    public double getFlux(ImagePt ipt)
-            throws PixelValueException {
-
-
+    public double getFlux(ImagePt ipt) {
         int xint = (int) Math.round(ipt.getX() - 0.5);
         int yint = (int) Math.round(ipt.getY() - 0.5);
 
-        if ((xint < 0) || (xint >= this.getNaxis1()) ||
-                (yint < 0) || (yint >= this.getNaxis2())) {
-            throw new PixelValueException("location not on the image");
+        if ((xint < 0) || (xint >= this.getNaxis1()) || (yint < 0) || (yint >= this.getNaxis2())) {
+            return Double.NaN;
         }
 
         int index = yint * this.getNaxis1() + xint;

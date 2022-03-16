@@ -18,10 +18,7 @@ import {findCellOnScreen} from 'firefly/visualize/iv/HiPSCellFinder.js';
 
 const noOp= { drawerTile : () => undefined, abort : () => undefined };
 
-const colorId = (plot) => {
-    const id= Number(plot.plotState.getColorTableId());
-    return isNaN(id) ? -1 : id;
-};
+const colorId = (plot) => plot?.colorTableId ?? -1;
 
 /**
  * @typedef DrawTiming
