@@ -103,7 +103,7 @@ function renderScalingCoefficients(fields, replot) {
                                     fieldKey='bandScaling'>
                 {['Red', 'Green', 'Blue'].map((c) => {
                     const fieldKey = `k${c}`;
-                    const value = fields?.[fieldKey].value ?? 1;
+                    const value = fields?.[fieldKey]?.value ?? 1;
                     const displayVal = Math.pow(10, value).toFixed(2);
                     const label = `${c}: ${displayVal}`;
 

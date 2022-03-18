@@ -46,7 +46,7 @@ function getZoomer() {
                 let msg;
                 const zlRet= getZoomDesc(pv);
                 if (isImage(plot)) {
-                    msg= `Maximum Zoom: You reached you maximum zoom: FOV: ${zlRet.fovFormatted}`;
+                    msg= `Maximum Zoom: You reached your maximum zoom: FOV: ${zlRet.fovFormatted}`;
                 }
                 else {
                     msg= `You may not zoom beyond HiPS Norder level ${MAX_SUPPORTED_HIPS_LEVEL}, FOV: ${zlRet.fovFormatted}`;

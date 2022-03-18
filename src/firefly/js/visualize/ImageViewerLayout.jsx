@@ -310,7 +310,7 @@ export class ImageViewerLayout extends PureComponent {
         const {viewDim:{width,height}}= pv;
         let insideStuff;
         const plot= primePlot(pv);
-        const plotShowing= Boolean(width && height && plot);
+        const plotShowing= Boolean(width && height && plot && !pv.nonRecoverableFail);
         let onScreen= true;
         let sizeViewable= true;
         let loadingRawData= false;
@@ -454,7 +454,7 @@ function makePrevDim(props) {
 
 
 function makeMessageArea(pv,plotShowing,onScreen, sizeViewable, loadingRawData) {
-    if (pv.serverCall==='success') {
+    if (pv.serverCall==='success' && !pv.nonRecoverableFail) {
         if (loadingRawData) {
             return (
                 <ImageViewerStatus message={'Loading Image Rendering'} working={true}
@@ -486,12 +486,13 @@ function makeMessageArea(pv,plotShowing,onScreen, sizeViewable, loadingRawData) 
             );
 
     }
-    else if (pv.serverCall==='fail') {
+    else if (pv.serverCall==='fail' || pv.nonRecoverableFail) {
         const buttonCB= plotShowing ?
             () => dispatchPlotProgressUpdate(pv.plotId,'',true, pv.request.getRequestKey()) : undefined;
         return (
             <ImageViewerStatus message={pv.plottingStatusMsg || 'Image Data Plot Fail'}
-                               working={false} useMessageAlpha={true} buttonText='OK' buttonCB={buttonCB} />
+                               working={false} useMessageAlpha={!pv.nonRecoverableFail}
+                               buttonText='OK' buttonCB={buttonCB} />
         );
     }
 }

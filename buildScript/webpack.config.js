@@ -157,7 +157,7 @@ export default function makeWebpackConfig(config) {
             loader: 'worker-loader',
             options: {
                 filename: workerFilename,
-                inline: 'fallback'
+                inline: localBuild ? undefined : 'fallback',
             }
         },
         {

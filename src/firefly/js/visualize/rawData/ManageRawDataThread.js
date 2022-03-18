@@ -7,6 +7,7 @@ import {lowLevelDoFetch, MEG } from '../../util/WebUtil.js';
 import {
     abortFetch, getRealDataDim, getTransferable,
     makeFetchOptions, populateRawImagePixelDataInWorker, TILE_SIZE } from './RawDataCommon.js';
+import {call} from 'redux-saga/effects';
 
 const {FETCH_DATA, STRETCH, COLOR, GET_FLUX, REMOVE_RAW_DATA, FETCH_STRETCH_BYTE_DATA, ABORT_FETCH}= RawDataThreadActions;
 
@@ -72,8 +73,13 @@ async function fetchByteDataArray(payload) {
 
     try {
         const start= Date.now();
-        const allTileAry= await callStretchedByteData(plotImageId, plotStateSerialized, plotState,
+        const callResults= await callStretchedByteData(plotImageId, plotStateSerialized, plotState,
             dataWidth,dataHeight, mask, maskBits, cmdSrvUrl, dataCompress, veryLargeData);
+        if (!callResults.success) {
+            return {data:{success:false, fatal: true, message: callResults.message}};
+        }
+
+        const {allTileAry}= callResults;
         const rawTileDataGroup= createRawTileDataGroup(dataWidth,dataHeight, dataCompress);
         if (plotState.isThreeColor()) {
             let rt;
@@ -119,7 +125,7 @@ async function fetchByteDataArray(payload) {
     }
     catch (e) {
         console.log(e);
-        return {data:{success:false, messsage: 'call aborted'}};
+        return {data:{success:false, fatal: false, messsage: 'call aborted: ' + e.toString()}};
     }
 }
 
@@ -133,6 +139,13 @@ function getCompressParam(dataCompress, veryLargeData) {
 }
 
 /**
+ * @typedef StretchByteDataResults
+ * @prop {boolean} success
+ * @prop {string} message
+ * @prop {Array.<Uint8ClampedArray>} allTileAry
+ */
+
+/**
  *
  * @param {String} plotImageId
  * @param plotStateSerialized
@@ -144,7 +157,7 @@ function getCompressParam(dataCompress, veryLargeData) {
  * @param {String} cmdSrvUrl
  * @param {String} dataCompress - should be 'FULL' or 'HALF' or 'QUARTER'
  * @param {boolean} veryLargeData - if true and dataCompress is 'QUARTER' never request full size
- * @return {Promise<Array.<Uint8ClampedArray>>}
+ * @return {Promise<StretchByteDataResults>}
  */
 export async function callStretchedByteData(plotImageId,plotStateSerialized,plotState, dataWidth,dataHeight,
                                             mask,maskBits,cmdSrvUrl, dataCompress= 'FULL', veryLargeData= false) {
@@ -162,10 +175,20 @@ export async function callStretchedByteData(plotImageId,plotStateSerialized,plot
 
     const response= await lowLevelDoFetch(cmdSrvUrl, options, false );
     if (!response.ok) {
-        throw(new Error(`Error from Server for getStretchedByteData: code: ${response.status}, text: ${response.statusText}`));
+        return {
+            success:false,
+            message: `Fatal: Error from Server for getStretchedByteData: code: ${response.status}, text: ${response.statusText}`,
+            allTileAry:[]
+        };
     }
     const byte1d= new Uint8ClampedArray(await response.arrayBuffer());
-
+    if (!byte1d.length) {
+        return {
+            success:false,
+            message: 'Fatal: No data returned from getStretchedByteData',
+            allTileAry:[]
+        };
+    }
 
     const {tileSize,xPanels,yPanels, realDataWidth, realDataHeight} =  getRealDataDim(dataCompress,dataWidth,dataHeight);
 
@@ -185,7 +208,7 @@ export async function callStretchedByteData(plotImageId,plotStateSerialized,plot
             }
         }
     }
-    return allTileAry;
+    return {success: true, message:'', allTileAry};
 }
 
 
