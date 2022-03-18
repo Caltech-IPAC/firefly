@@ -71,7 +71,7 @@ RUN gradle -Penv=${env} -PBranchOverride=${BranchOverride} ${target}
 # /external                 : default external data directory visible to Firefly
 
 
-FROM tomcat:9.0-jdk17-openjdk-slim-buster
+FROM tomcat:9.0-jdk17-openjdk-buster
 
 ARG build_dir
 ARG user=tomcat
