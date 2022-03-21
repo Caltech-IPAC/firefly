@@ -6,9 +6,8 @@
   - use docker tag: `nightly`
   - [Notes on next version](next-release-details.md)
 
-## Version 2022.1  (March 2022)
-- 2021.4.0 (March 2021)
-  - docker tag: `latest`, `release-2022.1`, `release-2021.1.0`
+## Version 2022.1  (Not yet released - 2022)
+- 2022.1.0 (target for March 2022)
 
 ### _Notes_
 #### This release is focused on small enhancements, fixing bugs, and updating infrastructure. There are no new UI changes in this release.
