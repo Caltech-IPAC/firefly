@@ -331,7 +331,7 @@ function plotFail(state,action) {
     const {plotViewAry}= state;
     const plotView=  getPlotViewById(state,plotId);
     if (!plotView) return state;
-    const changes= {plottingStatusMsg:description,serverCall:'fail' };
+    const changes= {plottingStatusMsg:description,serverCall:'fail', nonRecoverableFail:true };
     return {...state,  plotViewAry:clonePvAry(plotViewAry,plotId,changes)};
 }
 
@@ -340,7 +340,7 @@ function hipsFail(state,action) {
     const {plotViewAry}= state;
     const plotView=  getPlotViewById(state,plotId);
     if (!plotView) return state;
-    const changes= {plottingStatusMsg:description,serverCall:'fail' };
+    const changes= {plottingStatusMsg:description,serverCall:'fail', nonRecoverableFail:true };
     return {...state,  plotViewAry:clonePvAry(plotViewAry,plotId,changes)};
 }
 

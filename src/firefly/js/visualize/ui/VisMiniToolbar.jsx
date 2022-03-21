@@ -296,7 +296,7 @@ function doRotateNorth(pv,rotate) {
         dispatchChangeHiPS( {plotId:pv.plotId,  coordSys: rotate?CoordinateSys.EQ_J2000:CoordinateSys.GALACTIC});
     }
     else {
-        dispatchRotate({ploId:pv.plotId, rotateType:rotate?RotateType.NORTH:RotateType.UNROTATE});
+        dispatchRotate({plotId:pv.plotId, rotateType:rotate?RotateType.NORTH:RotateType.UNROTATE});
     }
 }
 

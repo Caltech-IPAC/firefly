@@ -296,7 +296,7 @@ const ImageViewerDecorate= memo((props) => {
 
     const makeActive= () => pv?.plotId && dispatchChangeActivePlotView(pv.plotId);
     const showZoom= mousePlotId===pv?.plotId;
-    const showDel= showDelAnyway || mousePlotId===pv?.plotId || !plot;
+    const showDel= showDelAnyway || mousePlotId===pv?.plotId || !plot || pv.nonRecoverableFail;
 
     return (
         <div style={outerStyle} className='disable-select' onTouchStart={makeActive} onClick={makeActive} >

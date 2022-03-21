@@ -14,6 +14,7 @@ import {
 } from './RawDataThreadActionCreators.js';
 import {MAX_FULL_DATA_SIZE} from './RawDataCommon.js';
 import {makeThumbnailCanvas} from 'firefly/visualize/rawData/RawTileDrawer.js';
+import {Logger} from 'firefly/util/Logger.js';
 
 const nextColorChangeParams= new Map();
 const colorChangeDonePromises= new Map();
@@ -247,12 +248,26 @@ export async function loadStretchData(pv, plot, dispatcher) {
     const maskOptions= mask ? {maskColor:oPv?.colorAttributes.color, maskBits: oPv?.maskValue } : undefined;
     const dataCompress= getFirstDataCompress(plot,mask);
     const dataSize= plot.dataWidth*plot.dataHeight;
-    const firstSuccess= await loadStandardStretchData(workerKey, plot,
+    const {success:firstSuccess, fatal}= await loadStandardStretchData(workerKey, plot,
                   {dataCompress, backgroundUpdate:false, checkForPlotUpdate:!mask}, maskOptions);
 
-    if (!firstSuccess) return;
-    dispatcher({ type: ImagePlotCntlr.BYTE_DATA_REFRESH, payload:{plotId, imageOverlayId, plotImageId}});
-    if (dataCompress==='FULL') return;
+    if (firstSuccess) {
+        dispatcher({ type: ImagePlotCntlr.BYTE_DATA_REFRESH, payload:{plotId, imageOverlayId, plotImageId}});
+        if (dataCompress==='FULL') return;
+    }
+    else {
+        if (fatal) {
+            Logger('RawDataOps').warn(`dispatch the the plot failed on BYTE_DATA_REFRESH: ${dataCompress}`);
+            if (dataCompress!=='FULL') {
+                await requestAgain(reqId, plotId, plot, 5, 'FULL', workerKey, dispatcher);
+            }
+            else {
+                dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
+                    payload:{plotId, description:'Failed: Could not retrieve image render data' }});
+            }
+            return;
+        }
+    }
 
     let currPlot= primePlot(visRoot(),plotId);
     const waitTime= currPlot.zoomFactor<.3 ? 5000 : 1500; // wait 5 sec if small zoom level is otherwise 1.5 sec
@@ -281,9 +296,18 @@ async function requestAgain(reqId, plotId, plot, waitTime, dataCompress, workerK
     const {plotImageId}= plot;
     await delay(waitTime);
     if (imageIdsRequested.get(plotImageId)!==reqId) return false; // abort another request for this image has started
-    const success= await loadStandardStretchData(workerKey, plot,
+    const {success,fatal}= await loadStandardStretchData(workerKey, plot,
                        { dataCompress, backgroundUpdate: true, checkForPlotUpdate: true});
-    success && dispatcher({ type: ImagePlotCntlr.BYTE_DATA_REFRESH, payload:{plotId, imageOverlayId:undefined, plotImageId}});
+    if (success) {
+        dispatcher({ type: ImagePlotCntlr.BYTE_DATA_REFRESH, payload:{plotId, imageOverlayId:undefined, plotImageId}});
+    }
+    else {
+        if (fatal) {
+            Logger('RawDataOps').warn(`dispatch the the plot failed on BYTE_DATA_REFRESH: ${dataCompress}`);
+            dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
+                payload:{plotId, description:'Failed: Could not retrieve image render data' }});
+        }
+    }
     return success;
 }
 
@@ -299,7 +323,7 @@ async function requestAgain(reqId, plotId, plot, waitTime, dataCompress, workerK
  * @param {Object|undefined} [maskOptions]
  * @param {String} maskOptions.maskColor
  * @param {Number} maskOptions.maskBits
- * @return {Promise<boolean>}
+ * @return {Promise<{success:boolean, fatal: boolean}>}
  */
 async function loadStandardStretchData(workerKey, plot, loadingOptions, maskOptions) {
     const {dataCompress='FULL', backgroundUpdate=false, checkForPlotUpdate=true}= loadingOptions;
@@ -314,7 +338,7 @@ async function loadStandardStretchData(workerKey, plot, loadingOptions, maskOpti
         }
     }
     else {
-        if (backgroundUpdate) return false;
+        if (backgroundUpdate) return {success:false, fatal:false};
         addRawDataToCache(plotImageId, processHeader, workerKey, Band.NO_BAND, CLEARED);
         entry = getEntry(plotImageId);
     }
@@ -323,14 +347,14 @@ async function loadStandardStretchData(workerKey, plot, loadingOptions, maskOpti
         const stretchResult = await postToWorker(
             makeRetrieveStretchByteDataAction(plot, plot.plotState, maskOptions, dataCompress, veryLargeData, workerKey));
         entry.loadingCnt--;
-        if (!stretchResult.success) return false;
+        if (!stretchResult.success) return {success:false, fatal: stretchResult.fatal};
 
         let latestPlot;
         let continueLoading;
         if (checkForPlotUpdate) {
             const latestPlotView= getPlotViewById(visRoot(),plot.plotId);
             latestPlot= findPlot(latestPlotView,plot.plotImageId);
-            if (!latestPlot) return;
+            if (!latestPlot) return {success:false, fatal:false};
             const {plotState} = latestPlot;
             continueLoading = plotState.getBands().every((b) => plotState.getRangeValues(b)?.toJSON() === plot.plotState.getRangeValues(b)?.toJSON());
         }
@@ -341,14 +365,18 @@ async function loadStandardStretchData(workerKey, plot, loadingOptions, maskOpti
 
         if (continueLoading) {
             entry.dataType = STRETCH_ONLY;
-            return maskOptions ?
-                completeMaskLoad(latestPlot, stretchResult, maskOptions.maskColor) :
-                completeLoad(latestPlot, stretchResult); //todo - get mask color
+            const success=  maskOptions ?
+                await completeMaskLoad(latestPlot, stretchResult, maskOptions.maskColor) :
+                await completeLoad(latestPlot, stretchResult); //todo - get mask color
+            return {success, fatal:false};
         } else {
             clearLocalStretchData(latestPlot);
+            return {success:false, fatal: stretchResult.fatal};
         }
-    } catch (e) {
+    } catch (failResult) {
+        const {success,fatal}= failResult;
         entry.loadingCnt--;
+        return {success, fatal};
     }
 }
 
