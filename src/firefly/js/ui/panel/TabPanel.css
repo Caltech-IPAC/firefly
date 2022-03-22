@@ -40,6 +40,7 @@
     color:black; /*CVAL-BLACK*/
     cursor:pointer;
     height: 20px;
+    margin-top: 1px;
     margin-left:6px;
     padding:2px 6px;
     font-weight: normal;

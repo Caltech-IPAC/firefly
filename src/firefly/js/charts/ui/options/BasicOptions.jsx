@@ -1,6 +1,6 @@
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {isArray, get, isUndefined, isEmpty, reverse, set} from 'lodash';
+import {isArray, get, isUndefined, isEmpty, reverse, set, isString} from 'lodash';
 
 import {dispatchChartUpdate, dispatchChartAdd, getChartData} from '../../ChartsCntlr.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
@@ -463,6 +463,9 @@ export function basicOptions ({activeTrace:pActiveTrace, chartId, tbl_id, groupK
     yNoLog = yNoLog ?? rest.yNoLog;
     isXNotNumeric = isXNotNumeric ?? rest.isXNotNumeric;
     isYNotNumeric = isYNotNumeric ?? rest.isYNotNumeric;
+    const initTitle= isString(layout?.title?.text) ?
+        layout.title.text :
+        isString(layout?.title) ? layout.title : '';
 
     const boundariesFieldProps = {labelWidth: 35, size: 10};
 
@@ -550,9 +553,9 @@ export function basicOptions ({activeTrace:pActiveTrace, chartId, tbl_id, groupK
                         </div>
                     </div>),
         Title:  (props={}) => ( <ValidationField fieldKey={'layout.title.text'}
-                                 initialState= {{value: get(layout, 'title.text')}}
-                                 tooltip='Chart title'
-                                 label='Chart title:' {...fieldProps} {...props}/>),
+                                                 initialState= {{value: initTitle}}
+                                                 tooltip='Chart title'
+                                                 label='Chart title:' {...fieldProps} {...props}/>),
         ChooseTrace: ({style={}, ...props}) => {
             if (!data || data.length < 2) return null;
             return (
