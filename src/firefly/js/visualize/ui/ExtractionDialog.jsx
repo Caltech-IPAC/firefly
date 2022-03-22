@@ -64,17 +64,14 @@ export const POINTS= 'POINTS';
 const exTypeCntl= {
     Z_AXIS: {
         Panel: ZAxisExtractionPanel,
-        cancelFunc: cancelZaxisExtraction,
         start: () => dispatchChangePointSelection(ZAXIS_POINT_SELECTION_ID, true),
     },
     LINE: {
         Panel: LineExtractionPanel,
-        cancelFunc: cancelLineExtraction,
         start: () => enableDrawLayer(ExtractLineTool.TYPE_ID),
     },
     POINTS: {
         Panel: PointExtractionPanel,
-        cancelFunc: cancelPointExtraction,
         start: () => enableDrawLayer(ExtractPointsTool.TYPE_ID),
     }
 
@@ -116,10 +113,10 @@ export function endExtraction() {
 function ExtractDialog({extractionType,wasCanceled}) {
     const [{pv, pvCnt}] = useStoreConnector( getStoreState);
     const {canCreateExtractionTable}= getAppOptions().image;
-    const {Panel, cancelFunc}= exTypeCntl[extractionType];
+    const {Panel}= exTypeCntl[extractionType];
 
     const doCancel= () => {
-        cancelFunc();
+        endExtraction();
         wasCanceled?.();
     };
 
