@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isEmpty, omitBy, isUndefined, cloneDeep, get, range, memoize} from 'lodash';
+import {isEmpty, omitBy, isUndefined, cloneDeep, get, range} from 'lodash';
 import * as TblCntlr from './TablesCntlr.js';
 import {getTblById, getTblInfoById} from './TableUtil.js';
 import {SelectInfo} from './SelectInfo.js';
@@ -11,9 +11,10 @@ import {getTableUiById} from './TableUtil';
 
 
 
-export const makeConnector = memoize((tbl_id, tbl_ui_id) => {
+export const makeConnector = ((tbl_id, tbl_ui_id) => {
     return {
         onSort: (sortInfoString) => onSort(tbl_id, sortInfoString),
+        applyFilterChanges: ({filterInfo, sqlFilter}) => applyFilterChanges({tbl_id, filterInfo, sqlFilter}),
         onFilter: (filterIntoString) => onFilter(tbl_id, filterIntoString),
         onFilterSelected: (selected) => onFilterSelected(tbl_id, selected),
         onPageSizeChange: (nPageSize) => onPageSizeChange(tbl_id, nPageSize),
@@ -35,8 +36,8 @@ export function onSort(tbl_id, sortInfoString) {
     TblCntlr.dispatchTableSort({tbl_id, sortInfo: sortInfoString});
 }
 
-export function onFilter(tbl_id, filterIntoString) {
-    TblCntlr.dispatchTableFilter({tbl_id, filters: filterIntoString});
+export function onFilter(tbl_id, filterInfo) {
+    applyFilterChanges({tbl_id, filterInfo});
 }
 
 /**
@@ -102,16 +103,26 @@ export function onToggleOptions(tbl_ui_id, showOptions) {
     TblCntlr.dispatchTableUiUpdate(changes);
 }
 
+export function applyFilterChanges({tbl_id, filterInfo, sqlFilter}) {
+    if (!tbl_id) return;
+    const request = {tbl_id};
+    if (!isUndefined(filterInfo)) {
+        request.filters = filterInfo;
+    }
+    if (!isUndefined(sqlFilter)) {
+        request.sqlFilter = sqlFilter;
+    }
+    if (Object.keys(request).length > 1) {
+        TblCntlr.dispatchTableFilter(request);
+    }
+}
+
 export function onOptionUpdate({tbl_id, tbl_ui_id, pageSize, columns, showUnits, showTypes, showFilters, sortInfo, filterInfo, sqlFilter, resetColWidth}) {
     if (pageSize) {
         onPageSizeChange(tbl_id, pageSize);
     }
-    if (!isUndefined(filterInfo)) {
-        onFilter(tbl_id, filterInfo);
-    }
-    if (!isUndefined(sqlFilter)) {
-        TblCntlr.dispatchTableFilter({tbl_id, sqlFilter});
-    }
+
+    applyFilterChanges({tbl_id, filterInfo, sqlFilter});
 
     const changes = omitBy({columns, showUnits, showTypes, showFilters, optSortInfo:sortInfo}, isUndefined);
 

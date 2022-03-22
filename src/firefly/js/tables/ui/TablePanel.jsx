@@ -70,7 +70,7 @@ export function TablePanel(props) {
 
     const toggleFilter = () => connector.onOptionUpdate({showFilters: !showFilters});
     const toggleTextView = () => connector.onToggleTextView(!textView);
-    const clearFilter = () => connector({filters: '', sqlFilter: ''});
+    const clearFilter = () => connector.applyFilterChanges({filterInfo: '', sqlFilter: ''});
     const toggleOptions = () => connector.onToggleOptions(!showOptions);
     const onOptionUpdate = (value) => connector.onOptionUpdate(value);
     const onOptionReset = () => connector.onOptionReset(props);
@@ -98,7 +98,7 @@ export function TablePanel(props) {
     const showInfoDialog = () => showTableInfoDialog(tbl_id);
 
     const tstate = getTableState(uiState);
-    logger.debug(`render.. state:[${tstate}] -- ${tbl_id}`);
+    logger.debug(`render.. state:[${tstate}] -- ${tbl_id}  ${tbl_ui_id}`);
 
     if (['ERROR','LOADING'].includes(tstate))  return <NotReady {...{showTitle, tbl_id, title, removable, backgroundable, error}}/>;
 
