@@ -2,12 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PureComponent, useRef, useCallback, useState} from 'react';
+import React, {Component, PureComponent, useRef, useCallback, useState, useEffect} from 'react';
 import {Cell} from 'fixed-data-table-2';
 import {set, get, isEqual, pick, omit, isEmpty, isString, toNumber} from 'lodash';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS, NULL_TOKEN} from '../FilterInfo.js';
-import {isColumnType, COL_TYPE, tblDropDownId, getTblById, getColumn, formatValue, getTypeLabel, getColumnIdx, getRowValues, getCellValue} from '../TableUtil.js';
+import {isColumnType, COL_TYPE, tblDropDownId, getTblById, getColumn, formatValue, getTypeLabel,
+        getColumnIdx, getRowValues, getCellValue, getTableUiByTblId} from '../TableUtil.js';
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {SORT_ASC, UNSORTED} from '../SortInfo';
@@ -24,7 +25,7 @@ import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {useStoreConnector} from './../../ui/SimpleComponent.jsx';
 import {applyLinkSub, applyTokenSub} from '../../util/VOAnalyzer.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
-import {dispatchTableUpdate} from '../TablesCntlr.js';
+import {dispatchTableUiUpdate, dispatchTableUpdate} from '../TablesCntlr.js';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 
@@ -82,8 +83,24 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
 
     const colGetter= () => getColumn(getTblById((tbl_id)), cname);
 
+    const inputRef = useRef(null);
     const enumArrowEl = useRef(null);
     const [col={}] = useStoreConnector(colGetter);
+
+    const [focusCol] = useStoreConnector(() => getTableUiByTblId(tbl_id)?.focusCol);
+    useEffect(() => {
+        const onFocus = () => {
+            const {tbl_ui_id} = getTableUiByTblId(tbl_id);
+            dispatchTableUiUpdate({tbl_ui_id, focusCol:cname});
+        };
+        if (focusCol !== cname) {
+            inputRef.current?.addEventListener('focus', onFocus);
+            return () => {
+                inputRef.current?.removeEventListener('focus', onFocus);
+            };
+        }
+    }, [inputRef]);
+    const autoFocus = focusCol === cname;
 
     const validator = useCallback((cond) => {
         return FilterInfo.conditionValidator(cond, tbl_id, cname);
@@ -110,6 +127,8 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
                 onChange={onFilter}
                 actOn={blurEnter}
                 showWarning={false}
+                inputRef={inputRef}
+                autoFocus={autoFocus}
                 style={filterStyle}
                 wrapperStyle={filterStyle}/>
             {enumVals && <div ref={enumArrowEl} className='arrow-down clickable' onClick={onEnumClicked} style={{borderWidth: 6, borderRadius: 2}}/>}

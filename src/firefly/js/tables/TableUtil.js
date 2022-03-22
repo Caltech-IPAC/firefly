@@ -2,23 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {
-    get,
-    set,
-    has,
-    isEmpty,
-    isUndefined,
-    uniqueId,
-    cloneDeep,
-    omitBy,
-    isNil,
-    isPlainObject,
-    isArray,
-    padEnd,
-    chunk,
-    isString,
-    isObject
-} from 'lodash';
+import {chunk, cloneDeep, get, has, isArray, isEmpty, isNil, isObject, isPlainObject, isString, isUndefined, omitBy, padEnd, set, uniqueId} from 'lodash';
 import Enum from 'enum';
 
 import {getWsConnId} from '../core/AppDataCntlr.js';
@@ -257,7 +241,7 @@ export function getTableUiById(tbl_ui_id) {
  */
 export function getTableUiByTblId(tbl_id) {
     const uiRoot = get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'ui'], {});
-    return Object.keys(uiRoot).find( (ui_id) => get(uiRoot, [ui_id, 'tbl_id']) === tbl_id);
+    return Object.values(uiRoot).find( (tblUiState) => tblUiState?.tbl_id === tbl_id);
 }
 
 /**

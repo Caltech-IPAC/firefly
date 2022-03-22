@@ -88,7 +88,7 @@ export class InputFieldView extends PureComponent {
 
     render() {
         var {hasFocus}= this.state;
-        var {visible,disabled, label,tooltip,labelWidth,value,style,wrapperStyle,labelStyle,
+        var {visible,disabled, label,tooltip,labelWidth,value,style,wrapperStyle,labelStyle, inputRef, autoFocus,
              valid,size,onChange, onBlur, onKeyPress, onKeyDown, onKeyUp, showWarning, message, type, placeholder, form='__ignore', readonly}= this.props;
         if (!visible) return null;
         wrapperStyle = Object.assign({whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block'}, wrapperStyle);
@@ -116,7 +116,8 @@ export class InputFieldView extends PureComponent {
                        value={currValue}
                        disabled={readonly}
                        title={ (!showWarning && !valid) ? message : tooltip}
-                       {...pickBy({size, type, disabled, placeholder, form})}
+                       ref={inputRef}
+                       {...pickBy({size, type, disabled, placeholder, form, autoFocus})}
                 />
                 {showWarning && this.makeWarningArea(!valid)}
             </div>
