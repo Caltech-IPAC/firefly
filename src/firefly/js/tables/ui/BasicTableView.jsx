@@ -4,23 +4,15 @@
 
 import React, {useCallback, useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {Table,Column} from 'fixed-data-table-2';
+import {Column, Table} from 'fixed-data-table-2';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
-import {get, isEmpty} from 'lodash';
+import {get, isEmpty, isUndefined} from 'lodash';
 
-import {tableTextView, getTableUiById, getProprietaryInfo, getTblById, hasRowAccess, calcColumnWidths, uniqueTblUiId, hasNoData} from '../TableUtil.js';
+import {calcColumnWidths, getProprietaryInfo, getTableUiById, getTblById, hasNoData, hasRowAccess, tableTextView, uniqueTblUiId} from '../TableUtil.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
-import {
-    TextCell,
-    HeaderCell,
-    SelectableHeader,
-    SelectableCell,
-    LinkCell,
-    makeDefaultRenderer,
-    CellWrapper
-} from './TableRenderer.js';
+import {CellWrapper, HeaderCell, makeDefaultRenderer, SelectableCell, SelectableHeader} from './TableRenderer.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {dispatchTableUiUpdate, TBL_UI_UPDATE} from '../TablesCntlr.js';
 import {Logger} from '../../util/Logger.js';
@@ -37,12 +29,21 @@ const BY_SCROLL = 'byScroll';
 const BasicTableViewInternal = React.memo((props) => {
 
     const {width, height} = props.size;
-    const {columns, data, hlRowIdx, showUnits, showTypes, showFilters, filterInfo, renderers,
+    const {columns, data, hlRowIdx, showTypes, showFilters, filterInfo, renderers,
             bgColor, selectable, selectInfoCls, sortInfo, callbacks, textView, rowHeight,
             error, tbl_ui_id=uniqueTblUiId(), currentPage, startIdx=0, highlightedRowHandler, cellRenderers} = props;
 
     const uiStates = getTableUiById(tbl_ui_id) || {};
     const {tbl_id, columnWidths, scrollLeft=0, scrollTop=0, triggeredBy} = uiStates;
+    let showUnits = uiStates.showUnits ?? props.showUnits;
+
+
+    useEffect( () => {
+        if (isUndefined(showUnits) && !isEmpty(columns)) {
+            showUnits = !!columns.find?.((col) => col?.units);
+            dispatchTableUiUpdate({tbl_ui_id, showUnits});
+        }
+    }, [showUnits, columns]);
 
     const onScrollEnd    = useCallback( doScrollEnd.bind({tbl_ui_id}), [tbl_ui_id]);
     const onColumnResize = useCallback( doColumnResize.bind({columnWidths, tbl_ui_id}), [columnWidths]);
@@ -170,7 +171,6 @@ BasicTableViewInternal.propTypes = {
 
 BasicTableViewInternal.defaultProps = {
     selectable: false,
-    showUnits: false,
     showTypes: false,
     showFilters: false,
     showMask: false,

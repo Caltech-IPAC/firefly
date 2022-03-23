@@ -95,7 +95,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     private static final Map<String, ReentrantLock> activeRequests = new HashMap<>();
     private static final ReentrantLock lockChecker = new ReentrantLock();
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
-    private static final int MAX_COL_ENUM_COUNT = AppProperties.getIntProperty("max.col.enum.count", 15);
+    private static final int MAX_COL_ENUM_COUNT = AppProperties.getIntProperty("max.col.enum.count", 32);
     private Job job;
 
     public void setJob(Job job) {

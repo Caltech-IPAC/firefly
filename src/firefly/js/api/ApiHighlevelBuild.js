@@ -145,7 +145,7 @@ function buildTablePart(llApi) {
      * @prop {number}  pageSize     the starting page size.  Will use the request's pageSize if not given.
      * @prop {boolean} removable    true if this table can be removed from view.  Defaults to true.
      * @prop {boolean} backgroundable    true if this search can be sent to background.  Defaults to false.
-     * @prop {boolean} showUnits    defaults to false
+     * @prop {boolean} showUnits    defaults to true if table contains unit info
      * @prop {boolean} showTypes    defaults to false
      * @prop {boolean} showFilters  defaults to false
      * @prop {boolean} selectable   defaults to true

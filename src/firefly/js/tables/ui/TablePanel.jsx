@@ -251,7 +251,6 @@ TablePanel.propTypes = {
 
 TablePanel.defaultProps = {
     showMetaInfo: false,
-    showUnits: false,
     allowUnits: true,
     showFilters: false,
     showToolbar: true,
