@@ -500,7 +500,7 @@ options -  table options, object with the following properties:
 | ---------- | ---- | ----------- |
 | tbl_group | string | the group this table belongs to, defaults to 'main' |
 | removable  | boolean | true if this table can be removed from view, defaults to true |
-| showUnits  | boolean | defaults to false |
+| showUnits  | boolean | defaults to true if table contains unit info |
 | showFilters | boolean | defaults to false |
 | selectable | boolean | defaults to true |
 | expandable | boolean | defaults to true |
