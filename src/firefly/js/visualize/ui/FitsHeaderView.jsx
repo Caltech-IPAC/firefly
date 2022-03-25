@@ -391,7 +391,7 @@ function createFitsHeaderTable(tableId, plot) {
                 prev[oneBand.key] = {
                     tbl_id, tableData: {columns, data},
                     totalRows: data.length, highlightedRow: 0,
-                    tableMeta: {fileSize: plot?.webFitsData?.oneBand?.getFitsFileSize, content: FITSHEADERCONTENT}
+                    tableMeta: {fileSize: plot?.webFitsData?.[oneBand.value]?.getFitsFileSize, content: FITSHEADERCONTENT}
                 };
             } else {
                 prev[oneBand.key] = tbl;

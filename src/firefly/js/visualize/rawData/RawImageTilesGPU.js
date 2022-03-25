@@ -1,5 +1,5 @@
 // import {GPU} from 'gpu.js';
-import {createCanvas, getGlobalObj} from '../../util/WebUtil.js';
+import {createCanvas, getGlobalObj, inWorker} from '../../util/WebUtil.js';
 import {isArrayBuffer, once, isArray} from 'lodash';
 import {TILE_SIZE} from './RawDataCommon.js';
 import {toRGB} from 'firefly/util/Color.js';
@@ -54,7 +54,7 @@ export const getGPUOps= once((GPU) => {
         const canvas= createTileWithGPU(inData,colorModel,isThreeColor, mask, maskColor, bias,contrast, bandUse);
 
         const g= getGlobalObj();
-        if (!g.document && g.createImageBitmap) {
+        if (inWorker() && g.createImageBitmap) { // if in a worker then turn canvas into ImageBitmap to return to main
             const workerTmpTile= await g.createImageBitmap(canvas);
             return { ...inData, workerTmpTile };
         }

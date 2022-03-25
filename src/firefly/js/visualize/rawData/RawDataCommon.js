@@ -10,6 +10,7 @@ import {
     REQUEST_WITH
 } from '../../util/WebUtil.js';
 import {getColorModel} from './rawAlgorithm/ColorTable.js';
+import {RawDataThreadActions} from 'firefly/threadWorker/WorkerThreadActions.js';
 
 
 const abortControllers= new Map(); // map of imagePlotId and AbortController
@@ -86,7 +87,7 @@ export function makeFetchOptions(plotImageId, params) {
 
 export async function abortFetch({plotImageId}) {
     abortControllers.get(plotImageId)?.abort();
-    return {data:true};
+    return {data:{success:true, type: RawDataThreadActions.ABORT_FETCH}};
 }
 
 export function getTransferable(result) {
