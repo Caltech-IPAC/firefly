@@ -20,7 +20,7 @@ import java.net.URL;
  */
 public class FitsHeaderTool {
 
-    private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
+    private static final Logger.LoggerImpl LOGGER = Logger.getLogger("FitsHeaderTool");
     private static File tempFile;
 
     public static void main(String[] args) throws FitsException, IOException {
@@ -28,7 +28,7 @@ public class FitsHeaderTool {
         if (args.length != 1) {
             usage();
         }
-        Logger.setProLog(Level.INFO, null);
+        Logger.setLogLevel(Level.INFO, "FitsHeaderTool");  // show only logs from this class
         //String url ="https://irsa.ipac.caltech.edu/data/SOFIA/FIFI-LS/OC5I/20170726_F422/proc/p4647/data/g11/F0422_FI_IFS_70050813_RED_RP0_100696.fits";
         try {
             URL uri = new URL(args[0]);

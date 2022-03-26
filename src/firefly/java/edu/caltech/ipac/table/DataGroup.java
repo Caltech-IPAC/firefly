@@ -28,6 +28,7 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
     private List<ResourceInfo> resources = new ArrayList<>();  // for <RESOURCE> in VOTABLE
     private transient DataType[] cachedColumnsAry = null;
     private transient int highlightedRow = -1;
+    private int initCapacity = 1000;
 
     public DataGroup() {}
 
@@ -39,6 +40,8 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
         this.title = title;
         dataDefs.forEach(this::addDataDefinition);
     }
+
+    public void setInitCapacity(int initCap) { this.initCapacity = initCap; }
 
     public String getTitle() {
         return title;
@@ -480,21 +483,21 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
             DataType dt = getDataDefintion(cname);
             if (dt != null) {
                 if (dt.getArraySize() != null) {
-                    dataList =  new PrimitiveList.Objects();
+                    dataList =  new PrimitiveList.Objects(initCapacity);
                 } else {
                     Class clz = dt.getDataType();
                     if (clz == Double.class) {
-                        dataList = new PrimitiveList.Doubles();
+                        dataList = new PrimitiveList.Doubles(initCapacity);
                     } else if (clz == Float.class) {
-                        dataList = new PrimitiveList.Floats();
+                        dataList = new PrimitiveList.Floats(initCapacity);
                     } else if (clz == Long.class) {
-                        dataList = new PrimitiveList.Longs();
+                        dataList = new PrimitiveList.Longs(initCapacity);
                     } else if (clz == Integer.class) {
-                        dataList = new PrimitiveList.Integers();
+                        dataList = new PrimitiveList.Integers(initCapacity);
                     } else if (clz == Boolean.class) {
-                        dataList = new PrimitiveList.Booleans();
+                        dataList = new PrimitiveList.Booleans(initCapacity);
                     } else {
-                        dataList = new PrimitiveList.Objects();
+                        dataList = new PrimitiveList.Objects(initCapacity);
                     }
                 }
                 data.put(cname, dataList);

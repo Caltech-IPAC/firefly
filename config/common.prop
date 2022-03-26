@@ -14,9 +14,6 @@ DbAdapter.type = hsql
 # default to System.getProperty("java.io.tmpdir") + "/workarea"
 work.directory=@work.directory@
 
-# set this to false to disable debug related code, like logging, etc.
-debug.mode=@debug.mode@
-
 # Allow JMX to monitor ehcache's status.
 # Enabling this feature may incur a small performance hit.
 ehcache.jmx.monitor=true

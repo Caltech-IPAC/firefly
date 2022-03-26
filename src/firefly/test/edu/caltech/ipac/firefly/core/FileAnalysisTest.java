@@ -9,6 +9,7 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.table.DataGroup;
+import org.apache.logging.log4j.Level;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -244,7 +245,8 @@ public class FileAnalysisTest extends ConfigTest {
     @Test
     public void perfTest() throws Exception {
 
-        StopWatch.getInstance().start("perfTestMidSize").enable().setLogger(Logger.getLogger("console"));
+        Logger.setLogLevel(Level.TRACE, "edu.caltech");     // exclude numerous nom.tam warnings
+        StopWatch.getInstance().start("perfTestMidSize");
         for(int i=0; i < 10; i++) {
             StopWatch.getInstance().start("voTable");
             FileAnalysis.analyze(voTable, FileAnalysisReport.ReportType.Details);

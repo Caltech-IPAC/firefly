@@ -330,22 +330,25 @@ public class TableUtil {
 
     public static Map<String, Format> getAllFormats() { return allFormats; }
 
-    public static class ColCheckInfo {
-        HashMap<String, CheckInfo> colCheckInfos = new HashMap<>();  // keyed by column name
+    public static class ParsedInfo {
+        HashMap<String, ParsedColInfo> parsedInfo = new HashMap<>();  // keyed by column name
 
-        public CheckInfo getCheckInfo(String cname) {
-            CheckInfo checkInfo = colCheckInfos.get(cname);
+        public ParsedColInfo getInfo(String cname) {
+            ParsedColInfo checkInfo = parsedInfo.get(cname);
             if (checkInfo == null) {
-                checkInfo = new CheckInfo();
-                colCheckInfos.put(cname, checkInfo);
+                checkInfo = new ParsedColInfo();
+                parsedInfo.put(cname, checkInfo);
             }
             return checkInfo;
         }
     }
 
-    public static class CheckInfo {
+    public static class ParsedColInfo {
         public boolean formatChecked;              // indicates guess format logic has been performed
         public boolean htmlChecked;                // indicates html content check has been performed
+        public int startIdx;
+        public int endIdx;
+
     }
 }
 

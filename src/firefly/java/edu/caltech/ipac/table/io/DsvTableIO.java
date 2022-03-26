@@ -58,7 +58,7 @@ public class DsvTableIO {
             CSVRecord cols = records.get(0);
             List<DataType> columns = convertToDataType(cols);
             DataGroup dg = new DataGroup(null, columns);
-            TableUtil.ColCheckInfo colCheckInfo = new TableUtil.ColCheckInfo();
+            TableUtil.ParsedInfo colCheckInfo = new TableUtil.ParsedInfo();
 
             // parse the data
             for (int i = 1; i < records.size(); i++) {
@@ -122,7 +122,7 @@ public class DsvTableIO {
         return columns;
     }
 
-    static DataObject parseRow(DataGroup source, CSVRecord line, TableUtil.ColCheckInfo colCheckInfo) {
+    static DataObject parseRow(DataGroup source, CSVRecord line, TableUtil.ParsedInfo colCheckInfo) {
 
         DataType[] headers = source.getDataDefinitions();
         if (line != null && line.size() > 0) {
@@ -136,7 +136,7 @@ public class DsvTableIO {
                     }
                     row.setDataElement(type, type.convertStringToData(val));
 
-                    TableUtil.CheckInfo checkInfo = colCheckInfo.getCheckInfo(type.getKeyName());
+                    TableUtil.ParsedColInfo checkInfo = colCheckInfo.getInfo(type.getKeyName());
                     IpacTableUtil.applyGuessLogic(type, val, checkInfo);
                 }
             return row;

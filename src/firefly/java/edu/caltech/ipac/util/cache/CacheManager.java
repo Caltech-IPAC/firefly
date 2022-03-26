@@ -55,6 +55,7 @@ public class CacheManager {
     }
 
     public static boolean setCacheProvider(String cacheProviderClassName) {
+        if (isDisabled) return true;
         setCacheProvider(newInstanceOf(cacheProviderClassName));
         return cacheProvider != null;
     }

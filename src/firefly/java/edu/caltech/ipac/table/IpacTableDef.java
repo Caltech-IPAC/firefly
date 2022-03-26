@@ -19,14 +19,14 @@ public class IpacTableDef extends TableMeta {
     private int rowCount;
     private int rowStartOffset;
     private transient KeyVal<Integer, String> extras;     // used by IpacTableUtil to store extras data while parsing an ipac table via input stream
-    private transient TableUtil.ColCheckInfo colCheckInfos = new TableUtil.ColCheckInfo();      // used by IpacTableUtil to store check logic on a variety of things.
+    private transient TableUtil.ParsedInfo parsedInfo = new TableUtil.ParsedInfo();      // used by IpacTableUtil to store check logic on a variety of things.
 
     public KeyVal<Integer, String> getExtras() {
         return extras;
     }
 
-    public TableUtil.ColCheckInfo getColCheckInfos() {
-        return colCheckInfos;
+    public TableUtil.ParsedColInfo getParsedInfo(String cname) {
+        return parsedInfo.getInfo(cname);
     }
 
     public int getColOffset(int idx) {
