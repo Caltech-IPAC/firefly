@@ -38,6 +38,7 @@ const globalObj= (() => {
 })();
 
 export const getGlobalObj= () => globalObj;
+export const inWorker= () => !getGlobalObj().document;
 
 /*global __PROPS__*/        // this is defined at build-time.
 export const getGlobalProps= once( () => __PROPS__ ?? {});

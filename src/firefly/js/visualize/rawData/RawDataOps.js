@@ -239,6 +239,8 @@ export async function loadStretchData(pv, plot, dispatcher) {
 
     const workerKey= getEntry(plot.plotImageId)?.workerKey ?? getNextWorkerKey();
     const {plotImageId}= plot;
+
+    const plotInvalid= () => primePlot(visRoot(),plotId)?.plotImageId!==plotImageId;
     const reqId= getStretchReqId();
     imageIdsRequested.set(plotImageId,reqId);
     const {plotId}= pv;
@@ -251,6 +253,7 @@ export async function loadStretchData(pv, plot, dispatcher) {
     const {success:firstSuccess, fatal}= await loadStandardStretchData(workerKey, plot,
                   {dataCompress, backgroundUpdate:false, checkForPlotUpdate:!mask}, maskOptions);
 
+    if (plotInvalid()) return;
     if (firstSuccess) {
         dispatcher({ type: ImagePlotCntlr.BYTE_DATA_REFRESH, payload:{plotId, imageOverlayId, plotImageId}});
         if (dataCompress==='FULL') return;
@@ -269,11 +272,13 @@ export async function loadStretchData(pv, plot, dispatcher) {
         }
     }
 
+    if (plotInvalid()) return;
     let currPlot= primePlot(visRoot(),plotId);
     const waitTime= currPlot.zoomFactor<.3 ? 5000 : 1500; // wait 5 sec if small zoom level is otherwise 1.5 sec
     const nextDataCompress= getNextDataCompress(dataCompress,currPlot);
     const secondSuccess= await requestAgain(reqId, plotId, currPlot, waitTime, nextDataCompress, workerKey, dispatcher);
     if (secondSuccess && nextDataCompress==='HALF' &&  dataSize < MAX_FULL_DATA_SIZE) {
+        if (plotInvalid()) return;
         currPlot= primePlot(visRoot(),plotId);
         const waitTime= currPlot.zoomFactor<.5 ? 7000 : 1500; // This image could be very big, wait longer before the load
         await requestAgain(reqId, plotId,currPlot, waitTime,'FULL', workerKey,dispatcher);

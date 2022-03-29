@@ -70,14 +70,13 @@ function getWorker(workerKey) {
  * @return {Promise<unknown>}
  */
 export function postToWorker(action) {
-    if (!action.workerKey) throw('postToWorker requires worker key');
+    const {workerKey}= action;
+    if (!workerKey) throw('postToWorker requires worker key');
     const callKey= uniqueId('callkey-');
-    const worker= getWorker(action.workerKey);
-    action= {...action, callKey};
-    worker.postMessage(action);
+    getWorker(workerKey).postMessage({...action, callKey});
 
     return new Promise( (resolve, reject) => {
-        promiseMap.set(callKey, {callKey, resolve,reject});
+        promiseMap.set(callKey, {callKey, workerKey, resolve, reject});
     });
 }
 
@@ -90,6 +89,13 @@ export function getNextWorkerKey() {
 
 
 export function removeWorker(workerKey) {
+    [...promiseMap.values()]
+        .filter( (v) => v.workerKey===workerKey)
+        .forEach( (v) => {
+            promiseMap.delete(v.callKey);
+            v.reject({success:false, fatal:false});
+        });
+
     getWorker(workerKey).terminate();
     workerMap.delete(workerKey);
 }

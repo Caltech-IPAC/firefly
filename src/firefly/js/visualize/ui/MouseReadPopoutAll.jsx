@@ -3,7 +3,9 @@ import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
 import {dispatchShowDialog} from 'firefly/core/ComponentCntlr.js';
 import React from 'react';
 import {lastMouseCtx, lastMouseImageReadout, MouseState} from 'firefly/visualize/VisMouseSync.js';
-import {HIPS_STANDARD_READOUT, isLockByClick, readoutRoot} from 'firefly/visualize/MouseReadoutCntlr.js';
+import {
+    HIPS_STANDARD_READOUT, isLockByClick, readoutRoot, STANDARD_READOUT
+} from 'firefly/visualize/MouseReadoutCntlr.js';
 import {useMouseStoreConnector} from 'firefly/visualize/ui/MouseStoreConnector.jsx';
 import {visRoot} from 'firefly/visualize/ImagePlotCntlr.js';
 import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
@@ -65,6 +67,7 @@ const ls= {color:'rgb(90,90,90)'};
 function Readout({readout, readoutData, showHealpixPixel=false}){
     const {threeColor, readoutType}= readoutData;
     const isHiPS= readoutType===HIPS_STANDARD_READOUT;
+    const image= readoutType===STANDARD_READOUT;
 
     if (!get(readoutData,'readoutItems')) return <div style={rS}/>;
     const displayEle= getNonFluxDisplayElements(readoutData.readoutItems,  readout.readoutPref, isHiPS);
@@ -73,7 +76,7 @@ function Readout({readout, readoutData, showHealpixPixel=false}){
     const hipsPixel= showHealpixPixel && isHiPS;
     const showCopy= readout.lockByClick;
     const gridClasses= `mouseReadoutPopupInlineFullGrid${threeColor?' mouseReadoutPopupInlineFullGrid-3c':''}` ;
-    const {readout1, readout2, showReadout1PrefChange, showReadout2PrefChange}= displayEle;
+    const {readout1, readout2, showReadout1PrefChange, showReadout2PrefChange, showWavelengthFailed, waveLength}= displayEle;
 
     return (
         <div className={gridClasses} style={rS}>
@@ -97,6 +100,10 @@ function Readout({readout, readoutData, showHealpixPixel=false}){
             {!isHiPS && <DataReadoutItem lArea='redLabel' vArea='redValue'
                                          labelStyle={ls}
                                          label={fluxArray[0].label} value={fluxArray[0].value}/>}
+            {!threeColor && waveLength && image &&
+                <DataReadoutItem lArea='greenLabel' vArea='greenValue' label={waveLength.label} value={waveLength.value}
+                                                     labelStyle={ls}
+                                                     prefChangeFunc={showWavelengthFailed} /> }
             {threeColor && <DataReadoutItem lArea='greenLabel' vArea='greenValue'
                                             labelStyle={ls}
                                             label={fluxArray[1].label} value={fluxArray[1].value}/> }

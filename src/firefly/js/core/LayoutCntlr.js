@@ -10,9 +10,9 @@ import {flux} from './ReduxFlux';
 import {clone} from '../util/WebUtil.js';
 import {smartMerge, getActiveTableId} from '../tables/TableUtil.js';
 import {getDropDownNames} from '../ui/Menu.jsx';
-import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
-import {TBL_RESULTS_ADDED, TBL_RESULTS_REMOVE, TABLE_REMOVE} from '../tables/TablesCntlr.js';
-import {CHART_ADD, CHART_REMOVE} from '../charts/ChartsCntlr.js';
+import ImagePlotCntlr, {IMAGE_PLOT_KEY} from '../visualize/ImagePlotCntlr.js';
+import {TBL_RESULTS_ADDED, TBL_RESULTS_REMOVE, TABLE_REMOVE, TABLE_SPACE_PATH} from '../tables/TablesCntlr.js';
+import {CHART_ADD, CHART_REMOVE, CHART_SPACE_PATH} from '../charts/ChartsCntlr.js';
 import {REPLACE_VIEWER_ITEMS} from '../visualize/MultiViewCntlr.js';
 import {REINIT_APP} from './AppDataCntlr.js';
 import {getDefaultChartProps} from '../charts/ChartUtil.js';
@@ -258,9 +258,10 @@ export function getLayoutRoot() {
  * @returns {LayoutInfo} returns the layout information of the application
  */
 export function getLayouInfo() {
-    const layout = get(flux.getState(), 'layout', {initLoadCompleted:false});
-    const hasImages = get(flux.getState(), 'allPlots.plotViewAry.length') > 0;
-    const hasTables = !isEmpty(get(flux.getState(), 'table_space.results.main.tables', {}));
+    const state= flux.getState() ?? {};
+    const layout = state[LAYOUT_PATH] ?? {initLoadCompleted:false};
+    const hasImages = state[IMAGE_PLOT_KEY]?.plotViewAry.length > 0;
+    const hasTables = !isEmpty(state[TABLE_SPACE_PATH]?.results?.main?.tables);
     /*
       to make plot area disappear if it's not possible to create a plot use
          hasXyPlots = getChartIdsInGroup(getActiveTableId()).length > 0 ||
@@ -269,9 +270,13 @@ export function getLayouInfo() {
       the drawback is that the layout changes for tables with no numeric data or no data
     */
     // keep plot area in place if any table has a related chart
-    const hasXyPlots = !isEmpty(get(flux.getState(), 'charts.data', {})) || (hasTables && !isEmpty(getDefaultChartProps(getActiveTableId())));
-    return {...layout, hasImages, hasTables, hasXyPlots,
-                      initLoadCompleted:layout.initLoadCompleted||hasImages||hasTables||hasXyPlots};
+    const hasXyPlots = !isEmpty(state[CHART_SPACE_PATH]?.data) || (hasTables && !isEmpty(getDefaultChartProps(getActiveTableId())));
+    const initLoadCompleted= layout.initLoadCompleted||hasImages||hasTables||hasXyPlots;
+
+    // we should not make a new object unless something has changed
+    return (hasImages===layout.hasImages && hasTables===layout.hasTables &&
+            hasXyPlots===layout.hasXyPlots && layout.initLoadCompleted) ?
+        layout : {...layout, hasImages, hasTables, hasXyPlots, initLoadCompleted};
 }
 
 function getSelView(state, dropDown) {

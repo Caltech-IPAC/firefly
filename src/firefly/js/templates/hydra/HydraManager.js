@@ -93,6 +93,9 @@ function handleNewSearch(layoutInfo, action) {
 }
 
 
+/**
+ * remove the previous results
+ */
 export function cleanup() {
 
     // remove all tables
