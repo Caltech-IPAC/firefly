@@ -7,7 +7,8 @@
   - [Notes on next version](next-release-details.md)
 
 ## Version 2022.1  (Not yet released - 2022)
-- 2022.1.0 (target for March 2022)
+- 2022.1.0 (March 2022)
+  - docker tag: `latest`, `2022.1`, `2022.1.0`
 
 ### _Notes_
 #### This release is focused on small enhancements, fixing bugs, and updating infrastructure. There are no new UI changes in this release.
@@ -23,6 +24,7 @@
 - Fixed: Some TAP entries truncated [Firefly-719](https://github.com/Caltech-IPAC/firefly/pull/1178)
 - Fixed: repeating headers are not showing [Firefly-926](https://github.com/Caltech-IPAC/firefly/pull/1173)
 - Fixed: Saving filtered tables [Firefly-931](https://github.com/Caltech-IPAC/firefly/pull/1180)
+- Fixed: occasionally images get stuck a loading state  [Firefly-933](https://github.com/Caltech-IPAC/firefly/pull/1202)
   
 #### Infrastructure updates
 - Java updated to v `17`  [Firefly-932](https://github.com/Caltech-IPAC/firefly/pull/1192)
