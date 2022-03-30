@@ -7,7 +7,7 @@ import {getPlotGroupById} from './PlotGroup.js';
 import {makeDevicePt, makeImagePt, makeWorldPt, pointEquals} from './Point.js';
 import {makeTransform} from './PlotTransformUtils.js';
 import CysConverter, {CCUtil} from './CsysConverter';
-import {isHiPS, isImage} from './WebPlot.js';
+import {isHiPS, isHiPSAitoff, isImage} from './WebPlot.js';
 import {isDefined, memorizeLastCall} from '../util/WebUtil';
 import {getWavelength, isWLAlgorithmImplemented, PLANE, TAB} from './projection/Wavelength.js';
 import {getNumberHeader, HdrConst} from './FitsHeaderUtil.js';
@@ -679,26 +679,27 @@ export function getAllCanvasLayersForPlot(plotId) {
 
 /**
  *
- * @param {PlotView} pv
+ * @param {PlotView|WebPlot} plotOrPv
  * @param {number} [alternateZoomFactor]
  * @return {number|boolean} fov in degrees, or false if it can't be computed
  */
-export function getFoV(pv, alternateZoomFactor) {
-    const plot= primePlot(pv);
+export function getFoV(plotOrPv, alternateZoomFactor) {
+    if (!plotOrPv) return false;
+    const plot= isPlotView(plotOrPv) ? primePlot(plotOrPv) : plotOrPv;
+    const {width, height} = plot.viewDim;
     const cc = CysConverter.make(plot);
-    const {width, height} = pv.viewDim;
-    const allSkyImage= Boolean(isImage(plot) && plot.projection.isWrappingProjection());
     if (!cc || !width || !height) return false;
+    const allSkyImage= Boolean(plot.projection.isWrappingProjection());
     if (alternateZoomFactor) cc.zoomFactor= alternateZoomFactor;
     const pt1 = cc.getWorldCoords(makeDevicePt(1, height / 2));
     const pt2 = (allSkyImage) ? cc.getWorldCoords(makeDevicePt(width/2, height / 2))  :
-                                cc.getWorldCoords(makeDevicePt(width - 1, height / 2));
+        cc.getWorldCoords(makeDevicePt(width - 1, height / 2));
 
     const dist= (pt1 && pt2) && computeDistance(pt1, pt2);
     if (dist) return allSkyImage ? dist*2 : dist;
 
     if (isHiPS(plot)) {
-        return 180; // todo: this may need to consider the projection type in to future, ie aitoff 360
+        return isHiPSAitoff(plot) ? 360 : 180;
     }
     else if (allSkyImage) {
         return 360;
@@ -709,8 +710,8 @@ export function getFoV(pv, alternateZoomFactor) {
         const idist= (ip1 && ip2) && computeDistance(ip1, ip2);
         if (!idist) return false;
         return alternateZoomFactor ?
-            (pv.viewDim.width/(plot.dataWidth*alternateZoomFactor)) * idist :
-            (pv.viewDim.width/plot.screenSize.width) * idist;
+            (width/(plot.dataWidth*alternateZoomFactor)) * idist :
+            (width/plot.screenSize.width) * idist;
     }
 }
 
@@ -891,7 +892,7 @@ export const getWavelengthParseFailReason= (plot) => hasWLInfo(plot) && plot.wlD
 
 /**
  * check to see if wavelength data is available as the plain level (not pixel level) only
- * @param {WebPlot} plot
+ * @param {WebPlot|undefined} plot
  * @return {boolean}
  */
 export function hasPlaneOnlyWLInfo(plot) {
@@ -1047,6 +1048,7 @@ export const pvEqualExScroll= memorizeLastCall((pv1,pv2) => {
                 p1.dataRequested!==p2.dataRequested ||
                 p1.blankColor!==p2.blankColor ||
                 p1.rawData!==p2.rawData ||
+                p1.projection.header.maptype!==p2.projection.header.maptype ||
                 p1.plotState !== p2.plotState) result= false;
         }
     }

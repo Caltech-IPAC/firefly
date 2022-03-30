@@ -390,7 +390,7 @@ export function dispatchPositionLocking(plotId,positionLock) {
  * @param {Object} p
  * @param {string} p.plotId
  * @param {number} p.primeIdx
- * @param {Function} p.dispatcher only for special dispatching uses such as remote
+ * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  */
 export function dispatchChangePrimePlot({plotId, primeIdx, dispatcher= flux.process}) {
     dispatcher({ type: CHANGE_PRIME_PLOT , payload: { plotId, primeIdx }});
@@ -556,11 +556,12 @@ export function dispatchProcessScroll({plotId,scrollPt, disableBoundCheck=false,
  *
  * @param {Object}  p
  * @param {string} p.plotId
- * @param {WorldPt} p.centerProjPt
+ * @param {WorldPt} [p.centerProjPt] new center, if undefined just keep the same center
+ * @param {boolean} [p.fullSky] if true AITOFF, false half sky, undefined then don't change
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  */
-export function dispatchChangeCenterOfProjection({plotId,centerProjPt, dispatcher= flux.process}) {
-    dispatcher({type: CHANGE_CENTER_OF_PROJECTION, payload: {plotId, centerProjPt} });
+export function dispatchChangeCenterOfProjection({plotId,centerProjPt, fullSky, dispatcher= flux.process}) {
+    dispatcher({type: CHANGE_CENTER_OF_PROJECTION, payload: {plotId, centerProjPt, fullSky} });
 }
 
 /**
@@ -705,7 +706,7 @@ export function dispatchAbortHiPS({plotId, dispatcher= flux.process }) {
  * @param {string} p.plotId
  * @param {WebPlotParams|WebPlotRequest} p.hipsRequest
  * @param {WebPlotParams|WebPlotRequest} p.imageRequest - must be a ServiceType request.
- * @param {WebPlotParams|WebPlotRequest} p.allSkyRequest - must be a allsky type request
+ * @param {WebPlotParams|WebPlotRequest} p.allSkyRequest - must be an allsky type request,  this is deprecated, parameter ignored
  * @param {boolean} [p.plotAllSkyFirst= false] - if there is an all sky set up then plot that first
  * @param {number} [p.fovDegFallOver] - the size in degrees that the image will switch between hips and a image cutout
  * @param {number} [p.fovMaxFitsSize] - the max size the fits image service can support

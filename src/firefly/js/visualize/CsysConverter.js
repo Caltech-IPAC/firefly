@@ -8,7 +8,7 @@ import Point, {makeImageWorkSpacePt, makeImagePt,
     makeScreenPt, makeWorldPt, makeDevicePt,
     isValidPoint, makeFitsImagePt, makeZeroBasedImagePt} from './Point.js';
 import {Matrix} from '../externalSource/transformation-matrix-js/matrix.js';
-import {getPixScaleDeg, isHiPS} from './WebPlot.js';
+import {getDevPixScaleDeg, isHiPS, isHiPSAitoff} from './WebPlot.js';
 
 
 function convertToCorrect(wp) {
@@ -53,7 +53,7 @@ export class CysConverter {
         this.plotState= plot.plotState;
         this.dataWidth= plot.dataWidth;
         this.dataHeight= plot.dataHeight;
-        this.projection= plot.allWCSMap[whichWCS];
+        this.projection= plot.allWCSMap?.[whichWCS] ?? plot.projection;
         this.zoomFactor= plot.zoomFactor;
         this.imageCoordSys= plot.imageCoordSys;
         this.inPlotRoughGuess= null;
@@ -164,6 +164,7 @@ export class CysConverter {
 
     pointOnDisplay(pt) {
         if (!isValidPoint(pt)) return false;
+        if (isHiPS(this) && isHiPSAitoff(this)) return this.pointInView(pt)
         const devPt= this.getDeviceCoords(pt);
         if (!devPt) return false;
         const {x,y}= devPt;
@@ -641,33 +642,24 @@ export class CysConverter {
 //----------------------------- Conversion Methods End -----------------------------------
 //========================================================================================
 //========================================================================================
-//========================================================================================
-//========================================================================================
-//========================================================================================
-//========================================================================================
 
-    coordsWrap(wp1, wp2) {
-        if (!wp1 || !wp2) return false;
-
-        let retval= false;
-        if (this.projection.isWrappingProjection()) {
-            const  worldDist= computeDistance(wp1, wp2);
-            const pix= getPixScaleDeg(this);
-            const value1= worldDist/pix;
-
-            const ip1= this.getImageWorkSpaceCoords(wp1);
-            const ip2= this.getImageWorkSpaceCoords(wp2);
-            if (ip1 && ip2) {
-                const xDiff= ip1.x-ip2.x;
-                const yDiff= ip1.y-ip2.y;
-                const imageDist= Math.sqrt(xDiff*xDiff + yDiff*yDiff);
-                retval= ((imageDist / value1) > 3);
-            }
-            else {
-                retval= false;
-            }
-        }
-        return retval;
+    /**
+     * @param wp1
+     * @param wp2
+     * @param [lenientFactor] how aggressive to check
+     * @return {boolean}
+     */
+    coordsWrap(wp1, wp2, lenientFactor= 3) {
+        if (!wp1 || !wp2 || !this.projection.isWrappingProjection()) return false;
+        const dp1= this.getDeviceCoords(wp1);
+        const dp2= this.getDeviceCoords(wp2);
+        if (!dp1 || !dp2) return false;
+        const xDiff= dp1.x-dp2.x;
+        const yDiff= dp1.y-dp2.y;
+        const worldDist= computeDistance(wp1, wp2);
+        const expectedDevicePixels= worldDist/getDevPixScaleDeg(this);
+        const deviceDist= Math.sqrt(xDiff*xDiff + yDiff*yDiff);
+        return ((deviceDist / expectedDevicePixels) > lenientFactor); //these two number should be close to 1, if >10 then we think it wraps
     }
 
     /**

@@ -64,7 +64,7 @@
  *
  */
 
-import { makeWorldPt, makeImagePt,makeDevicePt,makeImageWorkSpacePt} from '../visualize/Point.js';
+import { makeWorldPt, makeImagePt,makeDevicePt} from '../visualize/Point.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import CoordinateSys from '../visualize/CoordSys.js';
 import CoordUtil from '../visualize/CoordUtil.js';
@@ -73,6 +73,8 @@ import { getDrawLayerParameters} from './WebGrid.js';
 import {Regrid} from '../util/Interp/Regrid.js';
 import {getPointMaxSide} from  '../visualize/HiPSUtil.js';
 import {convert} from '../visualize/VisUtil.js';
+import {isHiPS, isHiPSAitoff} from 'firefly/visualize/WebPlot.js';
+import {getFoV} from 'firefly/visualize/PlotViewUtil.js';
 
 const precision3Digit = '%.3f';
 const precision6Digit = '%.6f';
@@ -97,14 +99,15 @@ export function makeGridDrawData (plot,  cc, useLabels, numOfGridLines=11){
 
     const {width,height, screenWidth, csys, labelFormat} = getDrawLayerParameters(plot);
 
-    const wpt = cc.getWorldCoords(makeImageWorkSpacePt(1, 1), csys);
+    const wpt = cc.getWorldCoords(makeImagePt(1, 1), csys);
     const aitoff = (!wpt);
     const {fov, centerWp}= getPointMaxSide(plot, plot.viewDim);
     const centerWpt = convert(centerWp,csys);
 
 
     if (centerWpt && width > 0 && height >0) {
-        const bounds = new Rectangle(0, 0, width, height);
+        const bounds=  (isHiPS(plot) && isHiPSAitoff(plot) && getFoV(plot) > 200)  ?
+            undefined : new Rectangle(0, 0, width, height);
 
         const {xLines, yLines, labels} = plot.plotType==='hips'?computeHipGridLines(cc, csys,screenWidth, numOfGridLines, labelFormat,plot,fov, centerWpt)
         :computeImageGridLines(cc, csys, width,height,screenWidth, numOfGridLines, labelFormat,plot);
@@ -299,7 +302,7 @@ function edgeRun (intervals,x0,  y0,dx, dy, range, csys, wrap, cc) {
 
     while (i <= intervals) {
 
-        var wpt =cc.getWorldCoords(makeImageWorkSpacePt(x,y),csys);
+        const wpt =cc.getWorldCoords(makeImagePt(x,y),csys);
         //look for lower and upper longitude and latitude
         if (wpt) {
             vals[0] = wpt.getLon();
@@ -307,7 +310,7 @@ function edgeRun (intervals,x0,  y0,dx, dy, range, csys, wrap, cc) {
 
             if (wrap && vals[0] > 180) vals[0] = vals[0]-360;
             if (wrap!=null //true and false
-                || wrap==null && cc.pointInPlot(makeWorldPt(vals[0], vals[1], csys))//temporary solution to solve the problem reported.
+                || wrap==null && cc.pointInView(makeWorldPt(vals[0], vals[1], csys))//temporary solution to solve the problem reported.
                 || csys===CoordinateSys.EQ_B2000
                 || csys===CoordinateSys.EQ_J2000 ) {
                 //assign the new lower and upper longitude if found
@@ -467,7 +470,7 @@ function getRange( csys, width, height, cc) {
 
 
 
-    if (cc.pointInPlot(makeWorldPt(sharedLon, sharedLat, csys))){
+    if (cc.pointInView(makeWorldPt(sharedLon, sharedLat, csys))){
         range[0][0] = -179.999;
         range[0][1] =  179.999;
         range[1][1] = 90;
@@ -477,7 +480,7 @@ function getRange( csys, width, height, cc) {
 
     sharedLon= 0.0;
     sharedLat= -90.0;
-    if (cc.pointInPlot(makeWorldPt(sharedLon, sharedLat, csys))){
+    if (cc.pointInView(makeWorldPt(sharedLon, sharedLat, csys))){
         range[0][0] = -179.999;
         range[0][1] =  179.999;
         range[1][0] = -90;
@@ -505,7 +508,7 @@ function getRange( csys, width, height, cc) {
         sharedLat= (trange[1][0] + trange[1][1])/2;
 
         //this block is modified to fix the issue reported that only one line is drawn in some case
-        if (cc.pointInPlot(makeWorldPt(sharedLon, sharedLat, csys)))
+        if (cc.pointInView(makeWorldPt(sharedLon, sharedLat, csys)))
         {
             wrap = true;
 
@@ -517,7 +520,7 @@ function getRange( csys, width, height, cc) {
             trange=edgeVals(1, width, height, csys,null,cc);
             sharedLon = 0.0;
             sharedLat = (trange[1][0] + trange[1][1]) / 2;
-            if (cc.pointInPlot(makeWorldPt(sharedLon, sharedLat,csys))) {
+            if (cc.pointInView(makeWorldPt(sharedLon, sharedLat,csys))) {
                 wrap=true;
                 // Redo min/max
                 trange =edgeVals(1, width, height, csys,wrap,cc);
@@ -652,7 +655,7 @@ function findLine(cc,csys, direction, value, range, screenWidth, type='image'){
 
     }
     var opoints = findPoints(cc, csys,nInterval, x, y, dx, dy, null);
-    if (type==='hips') return fixPoints(opoints);
+    if (type==='hips') return opoints;
 
     //NO need to do this, but left here since it was here originally
     var  straight = isStraight(opoints);
@@ -674,7 +677,7 @@ function findLine(cc,csys, direction, value, range, screenWidth, type='image'){
         count++;
     }
 
-    return fixPoints(npoints);
+    return npoints;
 
 
 }
@@ -770,15 +773,8 @@ function findPoints(cc,csys, intervals, x0, y0,dx, dy,  opoints){
         sharedLon= tx;
         sharedLat= ty;
         wpt= makeWorldPt(sharedLon, sharedLat, csys);
-        ip = cc.getImageWorkSpaceCoords(wpt);
-        if (ip) {
-
-            xy = makeImagePt(ip.x, ip.y);
-        }
-        else {
-
-            xy=makeImagePt(1.e20,1.e20);
-        }
+        xy = cc.getImageCoords(wpt);
+        if (!xy) xy=makeImagePt(1.e20,1.e20);
         lon[i]= sharedLon;
         lat[i]=sharedLat;
         xpoints[0][i] = xy.x;
@@ -787,22 +783,6 @@ function findPoints(cc,csys, intervals, x0, y0,dx, dy,  opoints){
     }
     return xpoints;
 }
-
-function fixPoints(points){
-
-    // Convert points to fixed values.
-    var len = points[0].length;
-    for (let i=0; i < len; i += 1){
-        if (points[0][i] < 1.e10) continue;
-        points[0][i] = -10000;
-        points[1][i] = -10000;
-
-    }
-
-    return points;
-}
-
-
 
 function drawLabeledPolyLine (drawData, bounds,  label, labelPoint, slopAngle, isLonLine, x, y, aitoff,screenWidth, useLabels,cc,plot){
 
@@ -816,18 +796,19 @@ function drawLabeledPolyLine (drawData, bounds,  label, labelPoint, slopAngle, i
     const plotType = plot.plotType;
     for (let i=0; i<x.length-1; i+=1) {
         //check the x[i] and y[i] are inside the image screen
-        if (x[i] > -1000 && x[i+1] > -1000 &&
-            ((x[i] >= bounds.x) &&
-            ((x[i] - bounds.x) < bounds.width) &&
-            (y[i] >= bounds.y) &&
-            ((y[i]-bounds.y) < bounds.height) ||
-            // bounds check on x[i+1], y[i+1]
-            (x[i+1] >= bounds.x) &&
-            ((x[i+1] - bounds.x) < bounds.width) &&
-            (y[i+1] >= bounds.y) &&
-            ((y[i+1]-bounds.y) < bounds.height))) {
-            ipt0= makeImageWorkSpacePt(x[i],y[i]);
-            ipt1= makeImageWorkSpacePt(x[i+1], y[i+1]);
+        ipt0= makeImagePt(x[i],y[i]);
+        ipt1= makeImagePt(x[i+1], y[i+1]);
+
+        const inbounds= bounds ?
+            x[i] > -1000 && x[i+1] > -1000 &&
+                        ((x[i] >= bounds.x) && ((x[i] - bounds.x) < bounds.width) &&
+                        (y[i] >= bounds.y) && ((y[i]-bounds.y) < bounds.height) ||
+                        // bounds check on x[i+1], y[i+1]
+                        (x[i+1] >= bounds.x) && ((x[i+1] - bounds.x) < bounds.width) &&
+                        (y[i+1] >= bounds.y) && ((y[i+1]-bounds.y) < bounds.height)) :
+           !cc.coordsWrap(ipt0,ipt1,1);
+
+        if (inbounds) {
             //For image, the ra/dec interval is 8, so the points needed to be checked if they are located within the interval
             //For hips, the range for ra is 360, so no check is needed.
             if ( plotType==='hips' ||
@@ -932,8 +913,8 @@ function getImageLabelPositionAndAngle(xLines,yLines,cc){
          isLonLine = i < lineCount / 2 ? true : false;
          midLinePos=Math.ceil(xLines[i].length / 2) - 1;
 
-         ipt0 = makeImageWorkSpacePt(xLines[i][midLinePos], yLines[i][midLinePos]);
-         ipt1 = makeImageWorkSpacePt(xLines[i][midLinePos + 1], yLines[i][midLinePos + 1]);
+         ipt0 = makeImagePt(xLines[i][midLinePos], yLines[i][midLinePos]);
+         ipt1 = makeImagePt(xLines[i][midLinePos + 1], yLines[i][midLinePos + 1]);
          wpt0 = cc.getScreenCoords(ipt0);
          wpt1 = cc.getScreenCoords(ipt1);
 
@@ -967,7 +948,7 @@ function drawLines(bounds,  labels, xLines,yLines, aitoff,screenWidth, useLabels
     const lonLineCount = lineCount/2;
     let isLonLine=false, labelPosition, labelAngle;
 
-   const {lonLinePos, lonLineAngles, latLinePos, latLineAngles}=plot.plotType==='hips'?
+   const {lonLinePos, lonLineAngles, latLinePos, latLineAngles}=isHiPS(plot) ?
         getHiPsLabelPositionAndAngle(xLines,yLines,labels, cc, csys, centerWpt, labelFormat)
        :getImageLabelPositionAndAngle(xLines,yLines,cc);
     for (let i=0; i<lineCount; i++) {

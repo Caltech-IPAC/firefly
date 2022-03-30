@@ -5,12 +5,7 @@
 import {isNil} from 'lodash';
 import {retrieveAndProcessImage} from './ImageProcessor.js';
 import {drawOneHiPSTile} from './HiPSSingleTileRender.js';
-import {
-    findTileCachedImage,
-    addTileCachedImage,
-    addFailedImage,
-    isInFailTileCached,
-} from './HiPSTileCache.js';
+import {findTileCachedImage, addTileCachedImage, addFailedImage, isInFailTileCached} from './HiPSTileCache.js';
 import {dispatchAddTaskCount, dispatchRemoveTaskCount, makeTaskId, getTaskCount} from '../../core/AppDataCntlr.js';
 import {createImageUrl, createEmptyTile} from './TileDrawHelper.jsx';
 
@@ -139,39 +134,28 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
     };
 
     /**
-     * draw a tile async (retrieve image and draw tile).  Any retrieved tiles will the added to the cache.
-     * @param {string} src - url of the image
+     * draw a tile when all
+     * @param image
      * @param {HiPSDeviceTileData} tile
-     * @param allskyImage
-     * @param colorTableId
-     * @param bias
-     * @param contrast
+     * @param {HiPSAllSkyCacheInfo} [cachedAllSkyData]
      */
-    const drawTileImmediate= (src, tile, allskyImage, colorTableId, bias, contrast) => {
-        const image= allskyImage || findTileCachedImage(src, colorTableId, bias, contrast)?.image;
+    const drawTileImmediate= (image, tile, cachedAllSkyData) => {
         if (image) {
-            const tileSize= tile.tileSize || image.width;
-            drawOneHiPSTile(offscreenCtx, image, tile.devPtCorners,
-                tileSize, {x:tile.dx,y:tile.dy}, tile.nside);
+            if (tile.coordsWrap && cachedAllSkyData) {
+                tile.subCells?.forEach( (cell) => {
+                    const subImage= cachedAllSkyData.order3Array[cell.tileNumber];
+                    drawOneHiPSTile(offscreenCtx, subImage, cell.devPtCorners, subImage.width, {x:0,y:0}, cell.nside);
+                });
+            }
+            else {
+                const tileSize= tile.tileSize || image.width;
+                drawOneHiPSTile(offscreenCtx, image, tile.devPtCorners, tileSize, {x:tile.dx,y:tile.dy}, tile.nside);
+            }
         }
         renderedCnt++;
         if (renderedCnt === totalCnt) {
             renderComplete= true;
             renderToScreen();
-        }
-    };
-
-    const drawAllSkyFromOneImage= (allSkyImage, tilesToLoad) => {
-
-        const width= allSkyImage.width/27;
-        let offset;
-        for(let i=0; i<tilesToLoad.length; i++) { // do a classic for loop to increase the fps by 3 or 4
-            offset= Math.floor(tilesToLoad[i].tileNumber/27);
-            tilesToLoad[i].dy= width * offset;
-            tilesToLoad[i].dx=  width * (tilesToLoad[i].tileNumber - 27*offset);
-            tilesToLoad[i].tileSize= width;
-            drawTileImmediate(null, tilesToLoad[i],allSkyImage);
-
         }
     };
 
@@ -197,7 +181,7 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
 
     //  ------------------------------------------------------------
     //  -------------------------  return public functions
-    //  this object has not properties, just functions to render
+    //  this object has no properties, just functions to render
     //  ------------------------------------------------------------
     return {
         renderToScreen,
@@ -231,7 +215,8 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
             const {bias,contrast}= plot.rawData.bandData[0];
             const colorTableId= colorId(plot);
             for(let i=0; i<tilesToLoad.length; i++) { // do a classic for loop to increase the fps by 3 or 4
-                drawTileImmediate(createImageUrl(plot, tilesToLoad[i]), tilesToLoad[i], undefined, colorTableId, bias, contrast);
+                const image= findTileCachedImage(createImageUrl(plot, tilesToLoad[i]), colorTableId, bias, contrast)?.image;
+                drawTileImmediate(image, tilesToLoad[i]);
             }
         },
 
@@ -243,13 +228,9 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
          */
         drawAllSky(norder, cachedAllSky, tilesToLoad) {
             if (abortRender) return;
-            if (norder===3) {
-                drawAllSkyFromOneImage(cachedAllSky.order3, tilesToLoad);
-            }
-            else {
-                for(let i=0; i<tilesToLoad.length; i++) { // do a classic for loop to increase the fps by 3 or 4
-                    drawTileImmediate(null, tilesToLoad[i],cachedAllSky.order2Array[tilesToLoad[i].tileNumber]);
-                }
+            const allSkyAry= norder===3 ? cachedAllSky.order3Array : cachedAllSky.order2Array;
+            for(let i=0; i<tilesToLoad.length; i++) { // do a classic for loop to increase the fps by 3 or 4
+                drawTileImmediate(allSkyAry[tilesToLoad[i].tileNumber], tilesToLoad[i], cachedAllSky);
             }
         },
 

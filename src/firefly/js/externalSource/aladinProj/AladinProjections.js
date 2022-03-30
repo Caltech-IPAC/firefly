@@ -1,8 +1,8 @@
 import {AstroMath} from './astroMath';
 
 
-export function Projection(lon0, lat0) {
-	this.PROJECTION = Projection.PROJ_TAN;
+export function Projection(proj, lon0, lat0) {
+	this.PROJECTION = proj;
 	this.ROT = this.tr_oR(lon0, lat0);
 }
 
@@ -12,24 +12,6 @@ Projection.PROJ_AITOFF = 6;	// Aitoff Projection
 
 Projection.prototype = {
 	
-	/** Set the center of the projection
-	 * 
-	 * (ajout T. Boch, 19/02/2013)
-	 * 
-	 * */
-	setCenter(lon0, lat0) {
-		this.ROT = this.tr_oR(lon0, lat0);
-	},
-	
-	/**
-	 * Set the projection to use
-	 * p = projection code
-	 */
-	setProjection(p) {
-		this.PROJECTION = p;
-	},
-
-
 	/**
 	 * Computes the projection of 1 point : ra,dec => X,Y
 	 * alpha, delta = longitude, latitude
@@ -42,7 +24,7 @@ Projection.prototype = {
 			return null;
 		}
 
-		return { X: -P[0], Y: -P[1] };
+		return { x: -P[0], y: -P[1] };
 	},
 
 	/**

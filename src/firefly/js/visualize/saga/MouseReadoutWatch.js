@@ -11,14 +11,12 @@ import {callGetFileFlux} from '../../rpc/PlotServicesJson.js';
 import {Band} from '../Band.js';
 import {MouseState} from '../VisMouseSync.js';
 import {CysConverter} from '../CsysConverter.js';
-import { getPixScaleArcSec, getScreenPixScaleArcSec, isImage, isHiPS, getFluxUnits } from '../WebPlot.js';
+import {getPixScaleArcSec, getScreenPixScaleArcSec, isImage, isHiPS, getFluxUnits} from '../WebPlot.js';
 import {getPlotTilePixelAngSize} from '../HiPSUtil.js';
 import {mouseUpdatePromise, fireMouseReadoutChange} from '../VisMouseSync';
 import {
-    primePlot, getPlotStateAry, getPlotViewById,
-    getImageCubeIdx,
-    getPtWavelength, getWavelengthParseFailReason,
-    getWaveLengthUnits, hasPixelLevelWLInfo, hasPlaneOnlyWLInfo,
+    primePlot, getPlotStateAry, getPlotViewById, getImageCubeIdx, getPtWavelength,
+    getWavelengthParseFailReason, getWaveLengthUnits, hasPixelLevelWLInfo, hasPlaneOnlyWLInfo,
     isImageCube, wavelengthInfoParsedSuccessfully, } from '../PlotViewUtil';
 import {getNumberHeader, HdrConst} from '../FitsHeaderUtil.js';
 
@@ -255,7 +253,7 @@ function isFluxInt(plot,band) {
 /**
  *
  * @param readout
- * @param {WebPlot} plot
+ * @param {WebPlot|undefined} plot
  * @param fluxResult
  * @param threeColor
  * @return {*}
@@ -400,7 +398,7 @@ function makeWLResult(plot,imagePt= undefined) {
         }
     }
     else {
-        return;
+        return undefined;
     }
 }
 
@@ -469,7 +467,7 @@ function makeHiPSPixelReadoutItem(plot) {
  */
 function makeHiPSReadout(plot, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder) {
     const csys= CysConverter.make(plot);
-    if (csys.pointInPlot(imagePt)) {
+    if (csys.pointInView(imagePt)) {
             return {
                 worldPt: makePointReadoutItem('World Point', worldPt),
                 screenPt: makePointReadoutItem('Screen Point', screenPt),

@@ -4,9 +4,11 @@
 import {isArray, isBoolean, isEmpty, isNumber} from 'lodash';
 import {RequestType} from './RequestType.js';
 import CoordinateSys from './CoordSys.js';
-import {makeProjection, makeProjectionNew, UNRECOGNIZED, UNSPECIFIED} from './projection/Projection.js';
+import {
+    HIPS_AITOFF, HIPS_SIN, makeProjection, makeProjectionNew, UNRECOGNIZED, UNSPECIFIED
+} from './projection/Projection.js';
 import PlotState from './PlotState.js';
-import {makeScreenPt, makeWorldPt} from './Point.js';
+import {makeDevicePt, makeScreenPt, makeWorldPt} from './Point.js';
 import {changeProjectionCenter} from './HiPSUtil.js';
 import {CysConverter} from './CsysConverter.js';
 import {makeImagePt} from './Point';
@@ -27,7 +29,7 @@ export const RDConst= {
     SUPPORTED_DATATYPES: ['IMAGE_MASK', 'TABLE']
 };
 
-const HIPS_DATA_WIDTH=  10000000000;
+export const HIPS_DATA_WIDTH=  10000000000;
 const HIPS_DATA_HEIGHT= 10000000000;
 
 
@@ -454,7 +456,7 @@ export const WebPlot= {
         const hipsCoordSys= makeHiPSCoordSys(hipsProperties);
         const lon= blank ? 0 : Number(hipsProperties.hips_initial_ra) || 0;
         const lat= blank ? 0 : Number(hipsProperties.hips_initial_dec) || 0;
-        const projection= makeHiPSProjection(hipsCoordSys, lon,lat);
+        const projection= makeHiPSProjection(hipsCoordSys, lon,lat, false);
         const plot= makePlotTemplate(plotId,'hips',false, hipsCoordSys);
         const zoomFactor= .0001;
 
@@ -499,7 +501,6 @@ export const WebPlot= {
      *
      * @param {WebPlot} plot
      * @param {object} stateJson
-     * @param {ImageTileData} [tileData]
      * @param {ImageTileData} [rawData]
      * @param {Number} [bias]
      * @param {Number} [contrast]
@@ -547,13 +548,14 @@ export const WebPlot= {
  * @param {CoordinateSys} coordinateSys
  * @param lon
  * @param lat
+ * @param {boolean} fullSky
  * @return {Projection}
  */
-export function makeHiPSProjection(coordinateSys, lon=0, lat=0) {
+export function makeHiPSProjection(coordinateSys, lon=0, lat=0, fullSky= false) {
     const header= {
         cdelt1: 180/HIPS_DATA_WIDTH,
         cdelt2: 180/HIPS_DATA_HEIGHT,
-        maptype: 5,
+        maptype: fullSky ? HIPS_AITOFF : HIPS_SIN,
         crpix1: HIPS_DATA_WIDTH*.5,
         crpix2: HIPS_DATA_HEIGHT*.5,
         crval1: lon,
@@ -562,6 +564,7 @@ export function makeHiPSProjection(coordinateSys, lon=0, lat=0) {
     return makeProjection({header, coorindateSys:coordinateSys.toString()});
 }
 
+export const isHiPSAitoff= (plot) => isHiPS(plot) && plot.projection.header.maptype===HIPS_AITOFF;
 
 
 /**
@@ -591,20 +594,17 @@ function makeHiPSCoordSys(hipsProperties) {
  * @param {WorldPt} wp
  */
 export function replaceHiPSProjectionUsingProperties(plot, hipsProperties, wp= makeWorldPt(0,0)) {
-    const projection= makeHiPSProjection(makeHiPSCoordSys(hipsProperties), wp.x, wp.y);
+    const projection= makeHiPSProjection(makeHiPSCoordSys(hipsProperties), wp.x, wp.y, isHiPSAitoff(plot));
     const {coordSys}= projection;
     return { ...plot, imageCoordSys: coordSys, dataCoordSys: coordSys, projection, allWCSMap: {'':projection} };
 }
 
-
 /**
- * replace the header in the transform of the plot object
- * @param {WebPlot} plot
- * @param {Object} header
+ * @param {WebPlot|undefined} plot
+ * @param {Projection} projection
  * @return {WebPlot}
  */
-export function replaceHeader(plot, header) {
-    const projection= makeProjection({header:{...header}, coorindateSys:plot.projection.coordSys.toString()});
+export function replaceProjection(plot, projection) {
     return { ...plot, conversionCache: new Map(), projection, allWCSMap: {'':projection} };
 }
 
@@ -677,6 +677,25 @@ export function getPixScaleDeg(plot) {
     }
     return 0;
 }
+
+export function getDevPixScaleDeg(plot) {
+    if (!plot?.projection || !isKnownType(plot) ) return 0;
+    if (isImage(plot)) {
+        return plot.projection.getPixelScaleArcSec() / plot.zoomFactor;
+    }
+    else if (isHiPS(plot)) {
+        const pt00= makeWorldPt(0,0, plot.imageCoordSys);
+        const tmpPlot= changeProjectionCenter(plot, pt00);
+        const cc= CysConverter.make(tmpPlot);
+        const devP= cc.getDeviceCoords( pt00);
+        const pt2= cc.getWorldCoords( makeDevicePt(devP.x-1, devP.y), plot.imageCoordSys);
+        return Math.abs(0-pt2.x);
+    }
+    return 0;
+}
+
+
+
 
 export const isBlankHiPSURL= (url) => url.toLowerCase()===BLANK_HIPS_URL;
 

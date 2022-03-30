@@ -145,6 +145,7 @@ export const WPConst= {
     OVERLAY_IDS: 'PredefinedOverlayIds',
     HIPS_ROOT_URL: 'hipsRootUrl',
     HIPS_SURVEYS_ID: 'hipsSurveysId',
+    HIPS_USE_AITOFF_PROJECTION: 'hipsUseAitoffProjection',
 
     ANNOTATION_OPS : 'AnnotationOps',
     TITLE_OPTIONS : 'TitleOptions',
@@ -835,6 +836,11 @@ export class WebPlotRequest extends ServerRequest {
 
     setHipsRootUrl(url) { this.setSafeParam(WPConst.HIPS_ROOT_URL, url);}
     getHipsRootUrl() { return this.getSafeParam(WPConst.HIPS_ROOT_URL);}
+
+
+    setHipsUseAitoffProjection(useAitoff) { this.setParam(WPConst.HIPS_USE_AITOFF_PROJECTION, Boolean(useAitoff));}
+    getHipsUseAitoffProjection() { return this.getBooleanParam(WPConst.HIPS_USE_AITOFF_PROJECTION);}
+
 
     /**
      *
