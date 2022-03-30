@@ -30,6 +30,7 @@ import {doFetchTable} from '../../tables/TableUtil';
 import {dispatchDestroyDrawLayer, dispatchDetachLayerFromPlot} from '../DrawLayerCntlr';
 import {getAllDrawLayersForPlot} from '../PlotViewUtil';
 import CsysConverter from '../CsysConverter';
+import {getActiveRequestKey, setActiveRequestKey} from 'firefly/visualize/task/ActivePlottingTask.js';
 import WebGrid from '../../drawingLayers/WebGrid.js';
 import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
@@ -60,7 +61,6 @@ export function getHipsImageConversion(hipsImageConversion ) {
     return hipsImageConversion && {
         hipsRequestRoot:ensureWPR(hipsImageConversion.hipsRequestRoot),
         imageRequestRoot:ensureWPR(hipsImageConversion.imageRequestRoot),
-        allSkyRequest: ensureWPR(hipsImageConversion.allSkyRequest),
         fovDegFallOver: hipsImageConversion.fovDegFallOver,
         fovMaxFitsSize: hipsImageConversion.fovMaxFitsSize,
         plotAllSkyFirst: hipsImageConversion.plotAllSkyFirst,
@@ -150,7 +150,7 @@ export function makePlotImageAction(rawAction) {
         if (!wpRequestAry) {
             payload= makeSinglePlotPayload(vr, rawAction.payload, requestKey);
             removeRawDataByPlotView(getPlotViewById(visRoot(),payload.plotId));
-
+            setActiveRequestKey(payload.wpRequest.getPlotId(),requestKey);
         }
         else {
             const {viewerId=DEFAULT_FITS_VIEWER_ID, attributes,
@@ -170,9 +170,12 @@ export function makePlotImageAction(rawAction) {
                 requestKey,
                 renderTreeId
             };
-
-            payload.wpRequestAry= payload.wpRequestAry.map( (req) =>
-                            addRequestKey(req,makeUniqueRequestKey('groupItemReqKey-'+req.getPlotId())));
+            const keyRoot= makeUniqueRequestKey('groupItemReqKey-');
+            payload.wpRequestAry= payload.wpRequestAry.map( (req) => {
+                const key= makeUniqueRequestKey(keyRoot+'-'+req.getPlotId());
+                setActiveRequestKey(req.getPlotId(), key);
+                return addRequestKey(req,key);
+            });
             payload.wpRequestAry.forEach( (r) => removeRawDataByPlotView(getPlotViewById(visRoot(),r.getPlotId())));
 
 
@@ -270,6 +273,9 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
 
      // the following line checks to see if we are processing the results from the right request
     if (payload.requestKey && result.requestKey && payload.requestKey!==result.requestKey) return;
+    if (payload.wpRequestAry &&
+        !payload.wpRequestAry.every( (r) => r.getRequestKey() === getActiveRequestKey(r.getPlotId()))) return;
+    if (payload.wpRequest && payload.wpRequest.getRequestKey()!==getActiveRequestKey(payload.wpRequest.getPlotId())) return;
 
     if (result.success && Array.isArray(result.data)) {
         successAry= result.data.filter( (d) => d.data.success);

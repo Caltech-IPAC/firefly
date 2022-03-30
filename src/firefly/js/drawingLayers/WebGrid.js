@@ -6,7 +6,7 @@
 
 
 import  {get, isBoolean, isEmpty} from 'lodash';
-import {clone} from '../util/WebUtil.js';
+import {clone, isDefined} from '../util/WebUtil.js';
 import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
@@ -15,11 +15,12 @@ import {primePlot} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {getUIComponent} from './WebGridUI.jsx';
 import { makeGridDrawData } from './ComputeWebGridData.js';
-import {isImage} from '../visualize/WebPlot.js';
+import {isHiPSAitoff, isImage} from '../visualize/WebPlot.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import {getPreference} from '../core/AppDataCntlr.js';
 import {flux} from '../core/ReduxFlux.js';
 import CoordinateSys from '../visualize/CoordSys.js';
+ import {changeProjectionCenterAndType} from 'firefly/visualize/HiPSUtil.js';
 
 
 export const COORDINATE_PREFERENCE = 'coordinate';
@@ -83,8 +84,14 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
      var plot= primePlot(visRoot(),plotId);
      if (!plot)return null;
 
+     const projectionTypeChange= action.type===ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION && isDefined(action.payload.fullSky);
+     if (projectionTypeChange) {
+         let aitoff= isHiPSAitoff(plot);
+         aitoff= !aitoff;
+         plot= changeProjectionCenterAndType(plot,undefined,aitoff);
+     }
 
-     var cc= CsysConverter.make(plot);
+     const cc= CsysConverter.make(plot);
      if (!cc) return null;
 
    return lastDataRet ||makeGridDrawData(plot, cc, drawLayer.useLabels) ;

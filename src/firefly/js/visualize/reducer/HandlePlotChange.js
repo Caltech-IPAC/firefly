@@ -8,10 +8,10 @@ import {replacePlotView, replacePrimaryPlot, changePrimePlot, updatePlotViewScro
         updateScrollToWcsMatch, updatePlotGroupScrollXY} from './PlotView.js';
 import {
     WebPlot, clonePlotWithZoom, isHiPS, isImage,
-    replaceHiPSProjectionUsingProperties, getHiPsTitleFromProperties, DEFAULT_BLANK_HIPS_TITLE
+    replaceHiPSProjectionUsingProperties, getHiPsTitleFromProperties, DEFAULT_BLANK_HIPS_TITLE, isHiPSAitoff
 } from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
-import {replaceHiPSProjection, changeProjectionCenter} from '../HiPSUtil.js';
+import {replaceHiPSProjection, changeProjectionCenter, changeProjectionCenterAndType} from '../HiPSUtil.js';
 import {updateSet} from '../../util/WebUtil.js';
 import {CCUtil, CysConverter} from '../CsysConverter.js';
 import {convert, isPlotNorth, getRotationAngle, isCsysDirMatching, isEastLeftOfNorth} from '../VisUtil';
@@ -275,17 +275,18 @@ function updateDisplayData(state, action) {
  * @return {VisRoot}
  */
 function processProjectionChange(state,action) {
-    const {plotId,centerProjPt}= action.payload;
+    const {plotId,centerProjPt,fullSky= undefined}= action.payload;
+
     const {plotViewAry,wcsMatchType}= state;
     const newPlotViewAry= applyToOnePvOrAll(state.positionLock, plotViewAry, plotId, false,
          (pv)=> {
              const plot= primePlot(pv);
-             if (plot) pv= replacePrimaryPlot(pv, changeProjectionCenter(plot,centerProjPt));
+             if (plot) pv= replacePrimaryPlot(pv, changeProjectionCenterAndType(plot,centerProjPt,fullSky));
              return pv;
          } );
     const matchingByWcs= wcsMatchType===WcsMatchType.Standard || wcsMatchType===WcsMatchType.Target;
     let newState= {...state, plotViewAry :newPlotViewAry};
-    if (matchingByWcs)  {
+    if (matchingByWcs && centerProjPt)  {
         const imagePv= newPlotViewAry.find( (aPv) => isImage(primePlot(aPv)));
         if (imagePv) {
             const finalPvAry= recenterUsingWcsMatch(newState,imagePv,centerProjPt, false,true);

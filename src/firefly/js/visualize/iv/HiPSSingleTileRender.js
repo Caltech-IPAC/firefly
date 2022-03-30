@@ -11,7 +11,7 @@ import {Matrix} from '../../externalSource/transformation-matrix-js/matrix';
  * @param img - the image tile
  * @param {Array.<DevicePt>} cornersAry - array of points of the 4 corners to copy the image to on the destination canvas
  * @param {Number} tileSize - width/height of image tile
- * @param {DevicePt} offset - an offset point
+ * @param {DevicePt|{x:number,y:number}} offset - an offset point
  * @param {Number} norder
  */
 export function drawOneHiPSTile(ctx, img, cornersAry, tileSize, offset, norder) {

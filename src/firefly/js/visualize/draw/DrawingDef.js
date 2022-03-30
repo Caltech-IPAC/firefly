@@ -22,35 +22,52 @@ const USED_COLORS= [COLOR_PT_1, COLOR_PT_2, COLOR_PT_3, COLOR_PT_5, COLOR_PT_6, 
 export const COLOR_DRAW_1 = '#ff0000'; // red
 export const COLOR_DRAW_2 = '#5500ff'; // purple
 
-/** 
- *  enum
+/**
  *  a very long enum, look at code in DrawingDef.js
- * */
-export const TextLocation = new Enum([ 'DEFAULT',
-    'LINE_TOP',
-    'LINE_BOTTOM',
-    'LINE_MID_POINT',
-    'LINE_MID_POINT_OR_BOTTOM',
-    'LINE_MID_POINT_OR_TOP',
-    'LINE_TOP_STACK',
-    'CIRCLE_NE',
-    'CIRCLE_NW',
-    'CIRCLE_SE',
-    'CIRCLE_SW',
-    'RECT_NE',
-    'RECT_NW',
-    'RECT_SE',
-    'RECT_SW',
-    'ELLIPSE_NE',
-    'ELLIPSE_NW',
-    'ELLIPSE_SE',
-    'ELLIPSE_SW',
-    'REGION_NE',
-    'REGION_NW',
-    'REGION_SE',
-    'REGION_SW',
+ * @typedef {Object} TextLocation
+ * @type {Enum}
+ * @prop DEFAULT
+ * @prop LINE_TOP
+ * @prop LINE_BOTTOM
+ * @prop LINE_MID_POINT
+ * @prop LINE_MID_POINT_OR_BOTTOM
+ * @prop LINE_MID_POINT_OR_TOP
+ * @prop LINE_TOP_STACK
+ * @prop CIRCLE_NE
+ * @prop CIRCLE_NW
+ * @prop CIRCLE_SE
+ * @prop CIRCLE_SW
+ * @prop RECT_NE
+ * @prop RECT_NW
+ * @prop RECT_SE
+ * @prop RECT_SW
+ * @prop ELLIPSE_NE
+ * @prop ELLIPSE_NW
+ * @prop ELLIPSE_SE
+ * @prop ELLIPSE_SW
+ * @prop REGION_NE
+ * @prop REGION_NW
+ * @prop REGION_SE
+ * @prop REGION_SW
+ * @prop CENTER
+ */
+export const TextLocation = new Enum([
+    'DEFAULT', 'LINE_TOP', 'LINE_BOTTOM', 'LINE_MID_POINT', 'LINE_MID_POINT_OR_BOTTOM', 'LINE_MID_POINT_OR_TOP',
+    'LINE_TOP_STACK', 'CIRCLE_NE', 'CIRCLE_NW', 'CIRCLE_SE', 'CIRCLE_SW', 'RECT_NE', 'RECT_NW', 'RECT_SE',
+    'RECT_SW', 'ELLIPSE_NE', 'ELLIPSE_NW', 'ELLIPSE_SE', 'ELLIPSE_SW', 'REGION_NE', 'REGION_NW',
+    'REGION_SE', 'REGION_SW',
     'CENTER']); // use MID_X, MID_X_LONG, MID_Y, MID_Y_LONG for vertical or horizontal lines
 
+/**
+ * @typedef {Object} Style
+ * @type {Enum}
+ * @prop STANDARD
+ * @prop HANDLED
+ * @prop STARTHANDLED
+ * @prop ENDHANDLED
+ * @prop LIGHT
+ * @prop FILL
+ */
 export const Style= new Enum(['STANDARD','HANDLED', 'STARTHANDLED', 'ENDHANDLED', 'LIGHT', 'FILL']);
 
 export const DEFAULT_FONT_SIZE = '9pt';

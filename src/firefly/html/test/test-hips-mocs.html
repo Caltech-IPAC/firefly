@@ -288,6 +288,27 @@
     </script>
 </template>
 
+<template title="Demo show a aitoff hips at about 210 degrees" style='height: 400px' class="tpl lg " >
+    <div id="expected" >
+        <div class="source-code indent-3">
+            - hips showing in aitoff mode at 210 degress
+        </div>
+    </div>
+    <div id="actual" class="box x3"></div>
+    <script>
+        function onFireflyLoaded(firefly) {
+            firefly.showHiPS('actual',
+                {plotId: 'hipstest',
+                    title: "SDSS HiPS",
+                    WorldPt:'10.68479292;41.269065;EQ_J2000',
+                    hipsRootUrl: 'ivo://CDS/P/SDSS9/color',
+                    hipsUseAitoffProjection: true,
+                    SizeInDeg: 210}
+            );
+        }
+    </script>
+</template>
+
 
 <!-- this is where test cases will be attached-->
 <div id="tst-container"/>

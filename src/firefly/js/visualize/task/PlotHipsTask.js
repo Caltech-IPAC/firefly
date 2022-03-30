@@ -17,7 +17,7 @@ import ImagePlotCntlr, {
     makeUniqueRequestKey
 } from '../ImagePlotCntlr.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
-import {WebPlot, isHiPS, isImage, isBlankHiPSURL} from '../WebPlot.js';
+import {WebPlot, isHiPS, isImage, isBlankHiPSURL, isHiPSAitoff} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {getRootURL, loadImage} from '../../util/WebUtil.js';
 import {
@@ -64,6 +64,9 @@ import {upload} from '../../rpc/CoreServices.js';
 import {fetchUrl} from '../../util/fetch';
 import {getGpuJs} from '../rawData/GpuJsConfig.js';
 import {showInfoPopup} from 'firefly/ui/PopupUtil.jsx';
+import {
+    clearActiveRequest, getActiveRequestKey, setActiveRequestKey
+} from 'firefly/visualize/task/ActivePlottingTask.js';
 
 const PROXY= true;
 
@@ -124,9 +127,10 @@ function watchForHiPSViewDim(action, cancelSelf, params) {
     const {plotId}= action.payload;
     if (plotId!==params.plotId) return;
     const vr= visRoot();
-    const pv= getPlotViewById(vr, plotId);
+    let pv= getPlotViewById(vr, plotId);
     const {width,height}= pv.viewDim;
     const wp= pv.request && pv.request.getWorldPt();
+    const useAitoff= pv.request.getHipsUseAitoffProjection();
     if (width && height && width>30 && height>30) {
         const plot= primePlot(pv);
         if (!plot) return;
@@ -135,24 +139,28 @@ function watchForHiPSViewDim(action, cancelSelf, params) {
         if ((vr.wcsMatchType===WcsMatchType.Standard || vr.wcsMatchType===WcsMatchType.Target) &&
                                      isImage(primePlot(getPlotViewById(vr, vr.mpwWcsPrimId)))) {
             matchHiPStoPlotView(vr, getPlotViewById(vr, vr.mpwWcsPrimId));
+            if (useAitoff) dispatchChangeCenterOfProjection({plotId,fullSky: useAitoff});
         }
         else if (!pv.request.getSizeInDeg() && !wp && lockedToOtherHiPS(vr,pv) && otherPlot) { //if nothing enter, match to existing HiPS
             dispatchZoom({ plotId, userZoomType: UserZoomTypes.LEVEL, level:otherPlot.zoomFactor });
             const {centerWp}= getPointMaxSide(otherPlot, otherPlot.viewDim);
-            dispatchChangeCenterOfProjection({plotId,centerProjPt:centerWp});
+            dispatchChangeCenterOfProjection({plotId,centerProjPt:centerWp, fullSky: useAitoff});
         }
         else {
-            let size= pv.request.getSizeInDeg()  || (plot.blank? 180 : Number(plot.hipsProperties.hips_initial_fov)) || 180;
-
-            if (size) {
-                if (size<.00027 || size>70) { // if size is really small (<1 arcsec) or big then do a fill, small size is probably an error
-                    dispatchZoom({ plotId, userZoomType: UserZoomTypes.FILL});
-                }
-                else {
-                    if (size<.0025) size= .0025; //if between 1 arcsec and 9 then set to 9 arcsec
-                    const level= getHiPSZoomLevelToFit(pv,size);
-                    dispatchZoom({ plotId, userZoomType: UserZoomTypes.LEVEL, level });
-                }
+            if (useAitoff) dispatchChangeCenterOfProjection({plotId,fullSky: useAitoff});
+            pv= getPlotViewById(visRoot(),plotId);
+            const fallbackSize= useAitoff ? 360 : 180;
+            const sizeFromProps= !plot.blank ? Number(plot.hipsProperties.hips_initial_fov) : 0;
+            const size= pv.request.getSizeInDeg()  || sizeFromProps || fallbackSize;
+            if (!pv.request.getSizeInDeg() && sizeFromProps && (size<.00027 || size>70)) { // if size is small (<1 arcsec) or big then do a fill, size is probably an error
+                dispatchZoom({ plotId, userZoomType: UserZoomTypes.FILL});
+            }
+            else if (useAitoff && size>290) {
+                dispatchZoom({ plotId, userZoomType: (size>330) ? UserZoomTypes.FIT : UserZoomTypes.FILL});
+            }
+            else { // set to zoom to the size, if between 1 arcsec and 9 then set to 9 arcsec
+                const level= getHiPSZoomLevelToFit(pv,size<.0025 ? .0025 : size);
+                dispatchZoom({ plotId, userZoomType: UserZoomTypes.LEVEL, level });
             }
 
             if (wp) dispatchChangeCenterOfProjection({plotId,centerProjPt:wp});
@@ -209,9 +217,7 @@ async function addAllSkyUsingProperties(hipsProperties, hipsUrlRoot, plotId, pro
 
 
 
-const currentPlots= {};
-
-export const makeAbortHiPSAction= (rawAction) => () =>  currentPlots[rawAction.payload.plotId]= undefined;
+export const makeAbortHiPSAction= (rawAction) => () =>  clearActiveRequest(rawAction.payload.plotId);
 export const makePlotHiPSAction= (rawAction) => (dispatcher) => makeHiPSPlot(rawAction,dispatcher);
 export const makeChangeHiPSAction= (rawAction) => (dispatcher, getState) => doHiPSChange(rawAction,dispatcher,getState);
 
@@ -230,14 +236,14 @@ async function makeHiPSPlot(rawAction, dispatcher) {
     const hipsImageConversion= getHipsImageConversion(payload.hipsImageConversion);
     if (hipsImageConversion) newPayload.pvOptions= {...pvOptions, hipsImageConversion};
     const requestKey= makeUniqueRequestKey('plotRequestKey');
-    currentPlots[plotId]=requestKey;
+    setActiveRequestKey(plotId,requestKey);
 
     const hipsFail= (errStr) => dispatcher( { type: ImagePlotCntlr.PLOT_HIPS_FAIL,
                                            payload:{ description: 'HiPS display failed: '+ errStr, plotId, wpRequest } });
 
     try {
         const resolvedHipsRootUrl= await resolveHiPSIvoURL(wpRequest.getHipsRootUrl());
-        if (currentPlots[plotId]!==requestKey) {
+        if (getActiveRequestKey(plotId)!==requestKey) {
             // hipsFail('hips plot expired or aborted');
             // console.log('hips plot expired or aborted');
             return;
@@ -262,13 +268,13 @@ async function makeHiPSPlot(rawAction, dispatcher) {
             await createHiPSMocLayer(getPropertyItem(hipsProperties, 'ivoid'),
                 getPropertyItem(hipsProperties, 'obs_title'), resolvedHipsRootUrl, plot);
         }
-        if (currentPlots[plotId]!==requestKey) {
+        if (getActiveRequestKey(plotId)!==requestKey) {
             // hipsFail('hips plot expired or aborted');
             // console.log('hips plot expired or aborted');
             return;
         }
         plot= await addAllSky(plot);
-        const GPU= await getGpuJs(getRootURL());
+        const GPU= await getGpuJs(getRootURL()); // make sure the GPU code is loaded up front
         createHiPSGridLayer();
         dispatchAddActionWatcher({
             actions:[ImagePlotCntlr.PLOT_HIPS, ImagePlotCntlr.UPDATE_VIEW_SIZE],
@@ -397,7 +403,6 @@ export function makeImageOrHiPSAction(rawAction) {
         const {payload}= rawAction;
         const hipsRequest= ensureWPR(payload.hipsRequest);
         const imageRequest= ensureWPR(payload.imageRequest);
-        const allSkyRequest= ensureWPR(payload.allSkyRequest);
 
         if (!validateHipsAndImage(imageRequest, hipsRequest, payload.fovDegFallOver)) return;
 
@@ -407,20 +412,14 @@ export function makeImageOrHiPSAction(rawAction) {
         const viewerId= determineViewerId(payload.viewerId, plotId);
         const size= getSizeInDeg(imageRequest, hipsRequest);
         const groupId= getPlotGroupId(imageRequest, hipsRequest);
-        const useImage= (plotAllSkyFirst && allSkyRequest) || (imageRequest.getWorldPt() &&
-                                                              (size !== 0) && (size < fovDegFallOver));
-        let wpRequest;
+        const hipsAitoff= plotAllSkyFirst;
+        const useImage= !plotAllSkyFirst && imageRequest.getWorldPt() && (size !== 0) && (size < fovDegFallOver);
 
-        if (useImage) {
-            wpRequest= plotAllSkyFirst ? allSkyRequest.makeCopy() : imageRequest.makeCopy();
-        }
-        else {
-            wpRequest= hipsRequest.makeCopy();
-        }
+        const wpRequest= useImage ? imageRequest.makeCopy() : hipsRequest.makeCopy();
+        if (hipsAitoff) wpRequest.setHipsUseAitoffProjection(true);
 
         const hipsImageConversion= {hipsRequestRoot:hipsRequest, imageRequestRoot:imageRequest, fovMaxFitsSize,
-                                    autoConvertOnZoom, allSkyRequest, fovDegFallOver, plotAllSkyFirst};
-
+                                    autoConvertOnZoom, fovDegFallOver, plotAllSkyFirst};
 
         wpRequest.setSizeInDeg(size);
         wpRequest.setPlotId(plotId);
@@ -440,45 +439,29 @@ export function makeImageOrHiPSAction(rawAction) {
 /**
  * convert to a image defined in  hipsImageConversion
  * @param {PlotView} pv
- * @param {boolean} allSky if true, convert to the allsky image defined in hipsImageConversion
  * @param {boolean} tryCenterBySelectedObj - if the field of view is large and convert to image is selected then try to
  *             choose and image center that is the selected object of the associated table.
  */
-export function convertToImage(pv, allSky= false, tryCenterBySelectedObj= false) {
+export function convertToImage(pv, tryCenterBySelectedObj= false) {
     const {plotId, plotGroupId,viewDim}= pv;
-    const {allSkyRequest, imageRequestRoot, fovMaxFitsSize}= pv.plotViewCtx.hipsImageConversion;
+    const {imageRequestRoot, fovMaxFitsSize}= pv.plotViewCtx.hipsImageConversion;
     dispatchDetachLayerFromPlot(ImageOutline.TYPE_ID, plotId);
     dispatchDetachLayerFromPlot(HiPSGrid.TYPE_ID, plotId);
-    const convertToAllSky= allSky && allSkyRequest;
-    const wpRequest= (convertToAllSky) ? allSkyRequest.makeCopy() : imageRequestRoot.makeCopy();
+    const wpRequest= imageRequestRoot.makeCopy();
     const currentFoV= getFoV(pv);
     wpRequest.setPlotId(plotId);
     wpRequest.setPlotGroupId(plotGroupId);
     const plot= primePlot(pv);
     const attributes= {...plot.attributes, ...getCornersAttribute(pv)};
-    const fromImage= isImage(plot) && !plot.projection.isWrappingProjection();
     const {displayFixedTarget,userCanDeletePlots,useForCoverage}= pv.plotViewCtx;
-    if (convertToAllSky) {
-        if (fromImage) {
-            prepFromImageConversion(pv,wpRequest);
-            // wpRequest.setZoomType(ZoomType.ARCSEC_PER_SCREEN_PIX);
-            // wpRequest.setZoomArcsecPerScreenPix((currentFoV/viewDim.width) * 3600);
-            wpRequest.setZoomType(ZoomType.TO_WIDTH);
-        }
-        else {
-            wpRequest.setZoomType(ZoomType.TO_WIDTH);
-        }
+    wpRequest.setWorldPt(findWorldPtToCenterOn(pv,tryCenterBySelectedObj));
+    wpRequest.setSizeInDeg(currentFoV> fovMaxFitsSize ? fovMaxFitsSize : currentFoV);
+    if (currentFoV > 5) {
+        wpRequest.setZoomType(ZoomType.TO_WIDTH_HEIGHT);
     }
     else {
-        wpRequest.setWorldPt(findWorldPtToCenterOn(pv,tryCenterBySelectedObj));
-        wpRequest.setSizeInDeg(currentFoV> fovMaxFitsSize ? fovMaxFitsSize : currentFoV);
-        if (currentFoV > 5) {
-            wpRequest.setZoomType(ZoomType.TO_WIDTH_HEIGHT);
-        }
-        else {
-            wpRequest.setZoomType(ZoomType.ARCSEC_PER_SCREEN_PIX);
-            wpRequest.setZoomArcsecPerScreenPix((currentFoV/viewDim.width) * 3600);
-        }
+        wpRequest.setZoomType(ZoomType.ARCSEC_PER_SCREEN_PIX);
+        wpRequest.setZoomArcsecPerScreenPix((currentFoV/viewDim.width) * 3600);
     }
 
     dispatchPlotImage({plotId, wpRequest, hipsImageConversion: pv.plotViewCtx.hipsImageConversion,
@@ -488,23 +471,22 @@ export function convertToImage(pv, allSky= false, tryCenterBySelectedObj= false)
 
 
 
-export function convertToHiPS(pv, fromAllSky= false, tryCenterBySelectedObj= false) {
+export function convertToHiPS(pv, tryCenterBySelectedObj= false, useAitoff) {
     const {plotId, plotGroupId}= pv;
     const wpRequest= pv.plotViewCtx.hipsImageConversion.hipsRequestRoot.makeCopy();
     wpRequest.setPlotId(plotId);
     wpRequest.setPlotGroupId(plotGroupId);
     wpRequest.setSizeInDeg(getFoV(pv));
+    wpRequest.setHipsUseAitoffProjection(useAitoff);
     const plot= primePlot(pv);
-
 
     const attributes= {...plot.attributes, ...getCornersAttribute(pv)};
     wpRequest.setWorldPt(findWorldPtToCenterOn(pv,tryCenterBySelectedObj));
-    if (!fromAllSky) {
-        prepFromImageConversion(pv,wpRequest);
-    }
+    prepFromImageConversion(pv,wpRequest);
     const {displayFixedTarget,userCanDeletePlots, useForCoverage}= pv.plotViewCtx;
 
-    dispatchPlotHiPS({plotId, wpRequest, attributes, hipsImageConversion: pv.plotViewCtx.hipsImageConversion,
+    dispatchPlotHiPS({plotId, wpRequest, attributes,
+        hipsImageConversion: pv.plotViewCtx.hipsImageConversion,
         enableRestore:false,
         pvOptions:{ displayFixedTarget, userCanDeletePlots, useForCoverage}
     });
@@ -575,7 +557,7 @@ function getCornersAttribute(pv) {
 export function doHiPSImageConversionIfNecessary(pv, prevZoomLevel, nextZoomLevel) {
     if (!pv?.plotViewCtx?.hipsImageConversion) return false;
     const plot= primePlot(pv);
-    const {fovDegFallOver, allSkyRequest}=  pv.plotViewCtx.hipsImageConversion;
+    const {fovDegFallOver}=  pv.plotViewCtx.hipsImageConversion;
     const {width,height}= pv.viewDim;
     const fov= getFoV(pv);
     if (!nextZoomLevel || !prevZoomLevel) {
@@ -584,15 +566,8 @@ export function doHiPSImageConversionIfNecessary(pv, prevZoomLevel, nextZoomLeve
     }
 
     if (isHiPS(plot) ) {
-        const {screenSize}= plot;
         if (fovDegFallOver && prevZoomLevel<=nextZoomLevel && fov < fovDegFallOver) { // zooming in hips FOV passes fovDegFallOver
-            convertToImage(pv, false);
-            return true;
-        }
-        else if (fov>179 &&  prevZoomLevel>=nextZoomLevel &&   // zooming out, hips image getting small
-            screenSize.width<width-10 && screenSize.height<height-10 && screenSize.width>50 &&
-            allSkyRequest){
-            convertToImage(pv, true);
+            convertToImage(pv);
             return true;
         }
     }

@@ -370,11 +370,7 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
     const {fovDegFallOver, fovMaxFitsSize, autoConvertOnZoom, imageSourceParams, overlayPosition= avgOfCenters}= options;
 
     let plotAllSkyFirst= false;
-    let allSkyRequest= null;
-    if (fovSize>160 && !blankHips) {
-        allSkyRequest= WebPlotRequest.makeAllSkyPlotRequest();
-        allSkyRequest.setTitleOptions(TitleOptions.PLOT_DESC);
-        allSkyRequest= initRequest(allSkyRequest, viewerId, PLOT_ID, overlayPosition);
+    if (fovSize>110 && !blankHips) {
         plotAllSkyFirst= true;
     }
     let imageRequest= WebPlotRequest.makeFromObj(imageSourceParams) ||
@@ -387,7 +383,6 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
     if (options.gridOn) {
         imageRequest.setGridOn(options.gridOn);
         hipsRequest.setGridOn(options.gridOn);
-        allSkyRequest?.setGridOn(options.gridOn);
     }
 
     const tblIdAry= Object.keys(preparedTables).filter( (v) => !isString(preparedTables[v]));
@@ -408,7 +403,7 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
     }
     else {
         dispatchPlotImageOrHiPS({
-            plotId: PLOT_ID, viewerId, hipsRequest, imageRequest, allSkyRequest,
+            plotId: PLOT_ID, viewerId, hipsRequest, imageRequest,
             fovDegFallOver, fovMaxFitsSize, autoConvertOnZoom, plotAllSkyFirst,
             pvOptions: {userCanDeletePlots:false, displayFixedTarget:false, useForCoverage:true},
             attributes,

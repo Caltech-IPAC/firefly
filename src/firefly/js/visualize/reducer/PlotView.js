@@ -79,10 +79,10 @@ import {updateTransform, makeTransform} from '../PlotTransformUtils.js';
  * @typedef {Object} HipsImageConversionSettings
  * @summary Parameters to do conversion between hips and images
  *
- * @prop {WebPlotParams|WebPlotRequest} hipsRequestRoot a request object that contains the base parameter to display a HiPS
- * @prop {WebPlotParams|WebPlotRequest} imageRequestRoot a request object that contains the base parameter to display an image. It must be a service type.
- * @prop {number} fovDegFallOver The field of view size to determine when to move between and HiPS and an image
- * @prop {number} fovMaxFitsSize how big this fits image can be
+ * @prop {WebPlotParams|WebPlotRequest} [hipsRequestRoot] a request object that contains the base parameter to display a HiPS
+ * @prop {WebPlotParams|WebPlotRequest} [imageRequestRoot] a request object that contains the base parameter to display an image. It must be a service type.
+ * @prop {number} [fovDegFallOver] The field of view size to determine when to move between and HiPS and an image
+ * @prop {number} [fovMaxFitsSize] how big this fits image can be
  * @prop {boolean} autoConvertOnZoom do auto convert on zoom
  */
 

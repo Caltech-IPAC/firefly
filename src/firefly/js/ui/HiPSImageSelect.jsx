@@ -91,7 +91,7 @@ function showUpload()  {
  * @param {boolean} moc
  * @returns {*}
  */
-export function showHiPSSurverysPopup(pv, moc= false) {
+export function showHiPSSurveysPopup(pv, moc= false) {
 
     const groupKey = activeGroupKey || DIALOG_ID;
 

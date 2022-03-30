@@ -11,6 +11,8 @@ import CsysConverter from '../CsysConverter.js';
 import {Style, TextLocation,DEFAULT_FONT_SIZE} from './DrawingDef.js';
 import {rateOpacity} from '../../util/Color.js';
 import VisUtil from '../VisUtil.js';
+import {isHiPSAitoff} from 'firefly/visualize/WebPlot.js';
+import {getFoV} from 'firefly/visualize/PlotViewUtil.js';
 
 const MOC_OBJ= 'MOCObj';
 const DEFAULT_STYLE= Style.STANDARD;
@@ -27,6 +29,7 @@ const PTILE_OPACITY_RATIO = 0.5;
  *
  * @param {Array} cellNums MOC cell number list
  * @param {Object} drawingDef
+ * @param mocCsys
  * @return {object}
  */
 function make(cellNums, drawingDef, mocCsys) {
@@ -256,6 +259,7 @@ export class MocGroup {
                 if ((d > 1) && Object.keys(this.visibleMap[d - 1]).length > 5000) {
                     return true;
                 }
+                if (d>3 && getFoV(this.plot) > 200) return true;
 
                 set(this.visibleMap, [d], getVisibleTilesAtOrderPerNpix(this.plot, d, this.mocCsys));
                 this.highestOrderInMap = d;
@@ -401,6 +405,11 @@ export class MocGroup {
         set(this.notIncNpixs, [toOrder], notIncludedNpixs);
     }
 
+    canGetVisTiles(order, plot) {
+        if (getFoV(plot) < 200) return true;
+        return order<=3;
+    }
+
     expandVisibleMap(toOrder) {
         if (has(this.visibleMap, toOrder)) {
             return true;
@@ -419,7 +428,8 @@ export class MocGroup {
             if (((sNpix * nTiles <= PROD_VISIBLE_TOTAL)&&(sNpix <= 200000)) || (sNpix < nTiles && sNpix < 10000)) {
                 let nextSet;
 
-                if (get(this.visibleMap, [(pOrder - 1)]) && this.visibleNpixAt(pOrder - 1).length < 5000) {
+                if ( (this.canGetVisTiles(pOrder, this.plot)) &&
+                    (this.visibleMap?.[(pOrder - 1)] && this.visibleNpixAt(pOrder - 1).length < 5000)) {
                     nextSet = getVisibleTilesAtOrderPerNpix(this.plot, pOrder, this.mocCsys);        // for not too big list
                 } else {                                                       // extended from list of lower order
                     const npixAry = new Array(incNum).fill(0).map((i, idx) => idx);
@@ -444,20 +454,20 @@ export class MocGroup {
         return false;
     }
     // for print and stats purpose
-    visibleCount() {
-        const tileCount = Object.keys(this.vTiles).reduce((prev, order) => {
-            set(prev, [order], (this.noTilesAtOrder(order) ? 0 : this.vTiles[order].length));
-
-            return prev;
-        }, {});
-
-        const vCount = Object.keys(this.visibleMap).reduce((prev, order) => {
-            set(prev, [order], (has(this.visibleMap, [order])&&this.visibleMap[order] ? this.visibleNpixAt(order).length : 0));
-            return prev;
-        }, {});
-
-        return {tileCount, vCount};
-    }
+    // visibleCount() {
+    //     const tileCount = Object.keys(this.vTiles).reduce((prev, order) => {
+    //         set(prev, [order], (this.noTilesAtOrder(order) ? 0 : this.vTiles[order].length));
+    //
+    //         return prev;
+    //     }, {});
+    //
+    //     const vCount = Object.keys(this.visibleMap).reduce((prev, order) => {
+    //         set(prev, [order], (has(this.visibleMap, [order])&&this.visibleMap[order] ? this.visibleNpixAt(order).length : 0));
+    //         return prev;
+    //     }, {});
+    //
+    //     return {tileCount, vCount};
+    // }
 
     getHighestOrderFromMap(byOrder) {
         return Object.keys(this.visibleMap).reduce((prev, order) => {
@@ -604,7 +614,7 @@ export function createDrawObjsInMoc(mocObj, plot, mocCsys, startIdx, endIdx, sto
 function getVisibleTilesAtOrderPerNpix(plot, order, mocCsys) {
     const {centerWp, fov} = getPointMaxSide(plot, plot.viewDim);
 
-    return getAllVisibleHiPSCells(order, centerWp, fov, mocCsys)
+    return getAllVisibleHiPSCells(order, centerWp, fov, mocCsys, isHiPSAitoff(plot))
             .reduce((npix_set, oneTile) => {
                 set(npix_set, [oneTile.ipix], oneTile.wpCorners);
                 return npix_set;
