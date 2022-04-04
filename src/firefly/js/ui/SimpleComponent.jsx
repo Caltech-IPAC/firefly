@@ -51,6 +51,7 @@ export class SimpleComponent extends PureComponent {
  * This allows a stateGetter to optionally act as a comparator.  If the stateGetter does not care about the changes
  * then it can return the oldState and there will be no state update.
  * @returns {Object[]}  an array of state's value in the order of the given stateGetters
+ * @deprecated the plan is to replace the logic of this function with useStoreState's.  In the meantime, use useStoreState instead.
  */
 export function useStoreConnector(...stateGetters) {
     const {comparator=Object.is} = this || {};
@@ -84,6 +85,46 @@ export function useStoreConnector(...stateGetters) {
 
     return rval;
 }
+
+/**
+ * A replacement for SimpleComponent.
+ * This function make use of useState and useEffect to
+ * trigger a re-render of functional components when the value in the store changes.
+ *
+ * By default, this will call shallowequal to ensure the state has changed before
+ * calling setState.  To override this behavior, use useStoreState.bind({comparator: your_compare_function}).
+ *
+ * @param {function} stateGetter  a getter function returning a state, when called the oldState is passed as a parameter.
+ * This allows a stateGetter to optionally act as a comparator.  If the stateGetter does not care about the changes
+ * then it can return the oldState and there will be no state update.
+ * @param {Array} deps array of dependencies used by stateGetter
+ * @returns {Object}  new state's value
+ */
+export function useStoreState(stateGetter, deps=[]) {
+    const {comparator=shallowequal} = this || {};
+
+    const [val, setter] = useState(stateGetter());
+
+    let isMounted = true;
+    useEffect(() => {
+        const remover = flux.addListener(() => {
+            if (isMounted) {
+                const newState = stateGetter(val);      // if getter returns oldState then no state update
+                if (newState===val) return;             // comparator might be overridden, use === first for efficiency
+                if (!comparator(stateGetter, newState)) {
+                    setter(newState);
+                }
+            }
+        });
+        return () => {
+            isMounted = false;
+            remover && remover();
+        };
+    }, deps);     // defaults to run only once
+
+    return val;
+}
+
 
 export function useBindFieldGroupToStore(groupKey) {
     let mounted= true;
