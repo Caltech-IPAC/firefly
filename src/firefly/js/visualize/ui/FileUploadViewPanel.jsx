@@ -83,13 +83,10 @@ let keyCnt=0;
 
 export function FileUploadViewPanel({setSubmitText}) {
 
-    const [{isLoading,statusKey}, isWsUpdating, uploadSrc, {message, analysisResult, report, summaryModel, detailsModel}] =
-        useStoreConnector.bind({comparator: shallowequal}) (
-            () => getComponentState(panelKey, {isLoading:false,statusKey:''}),
-            () => isAccessWorkspace(),
-            () => getFieldVal(panelKey, uploadOptions),
-            (oldState) => getNextState(oldState)
-        );
+    const {isLoading,statusKey} = (() => getComponentState(panelKey, {isLoading:false,statusKey:''}));
+    const isWsUpdating          = (() => isAccessWorkspace());
+    const uploadSrc             = (() => getFieldVal(panelKey, uploadOptions));
+    const {message, analysisResult, report, summaryModel, detailsModel} = ((oldState) => getNextState(oldState));
 
     const [loadingMsg,setLoadingMsg]= useState(() => '');
     const [uploadKey,setUploadKey]= useState(() => FILE_UPLOAD_KEY+keyCnt);
@@ -422,7 +419,7 @@ function getFileCacheKey() {
 
 function TableDisplayOption({isMoc}) {
 
-    const [selectedTables] = useStoreConnector(() => getFileFormat() ? getSelectedRows('Table') : [] );
+    const selectedTables = useStoreConnector(() => getFileFormat() ? getSelectedRows('Table') : [] );
     if ( selectedTables.length < 1) return null;
 
     if (isMoc) {
@@ -456,7 +453,7 @@ function TableDisplayOption({isMoc}) {
 
 function ImageDisplayOption() {
 
-    const [selectedImages] = useStoreConnector(() => getSelectedRows('Image'));
+    const selectedImages = useStoreConnector(() => getSelectedRows('Image'));
     if ( selectedImages.length < 2) return null;
 
     const imgOptions = [{value: 'oneWindow', label: 'All images in one window'},

@@ -12,9 +12,7 @@ import {FieldGroupCollapsible} from '../../../ui/panel/CollapsiblePanel.jsx';
 
 export function FireflyHistogramOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey}) {
 
-    const [activeTrace] = useStoreConnector(() => {
-        return pActiveTrace ?? getChartData(chartId)?.activeTrace;
-    });
+    const activeTrace = useStoreConnector(() => pActiveTrace ?? getChartData(chartId)?.activeTrace);
 
     groupKey = groupKey || `${chartId}-ffhist-${activeTrace}`;
     const {tbl_id, noColor, multiTrace} = getChartProps(chartId, ptbl_id, activeTrace);

@@ -16,7 +16,6 @@ import {dispatchMultiValueChange} from '../fieldGroup/FieldGroupCntlr.js';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
 import {updateSet} from '../util/WebUtil.js';
 import {useStoreConnector} from './SimpleComponent';
-import shallowequal from 'shallowequal';
 
 import './ImageSelect.css';
 import infoIcon from 'html/images/info-icon.png';
@@ -58,7 +57,7 @@ export function ImageSelect({style, imageMasterData, groupKey, multiSelect=true,
         ['missionId', 'project', 'subProject'].forEach((k) => d[k] = d[k] || '');
     });
 
-    const [filteredImageData] = useStoreConnector.bind({comparator: shallowequal})(() => getFilteredImageData(imageMasterData, groupKey));
+    const filteredImageData = useStoreConnector(() => getFilteredImageData(imageMasterData, groupKey));
     const [, setLastMod] = useState(new Date().getTime());
     const pStyle = scrollDivId ? {flexGrow: 1, display: 'flex'} : {flexGrow: 1, display: 'flex', height: 1};
 
@@ -186,7 +185,8 @@ function ToolBar({className, filteredImageData, groupKey, onChange}) {
             .map((o) => o.label).join() )                 // takes the label of the selected field
         .join();
 
-    const [allFilter, allSelect] = useStoreConnector(calcFilter,calcSelect);
+    const allFilter = useStoreConnector(calcFilter);
+    const allSelect = useStoreConnector(calcSelect);
 
     return (
         <div className={className}>

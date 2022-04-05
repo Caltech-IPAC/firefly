@@ -29,7 +29,7 @@ export function showJobInfo(jobId) {
 
 
 export function JobInfo({jobId, style}) {
-    const [{phase, startTime, endTime, dataOrigin, results, error, summary}] = useStoreConnector(() => getJobInfo(jobId) || {});
+    const {phase, startTime, endTime, dataOrigin, results, error, summary} = useStoreConnector(() => getJobInfo(jobId) || {});
     return (
         <div className='JobInfo__main' style={style}>
             <div className='JobInfo__items'>

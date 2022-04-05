@@ -162,7 +162,7 @@ ChartSelectPanel.contextType= RenderTreeIdCtx;
 
 function ChartAction({chartId, chartActions, chartAction, chartActionChanged}) {
 
-    const [activeTrace=0] = useStoreConnector(() => getChartData(chartId)?.activeTrace);
+    const activeTrace = useStoreConnector(() => getChartData(chartId)?.activeTrace ?? 0);
     const {ChooseTrace} = basicOptions({chartId, activeTrace});
 
     const options = [];
@@ -251,7 +251,7 @@ function SyncedOptionsUI (props) {
     // based on chartData, determine what options to display
 
     const {chartId, groupKey} = props;
-    const [{useSpectrum, dataType, type, activeTrace}] = useStoreConnector.bind({comparator: shallowequal})(() =>  {
+    const {useSpectrum, dataType, type, activeTrace} = useStoreConnector(() =>  {
         const {data, fireflyData, activeTrace=0} = getChartData(chartId);
         const dataType = fireflyData?.[activeTrace]?.dataType;
         const fval = getFieldVal(groupKey, `fireflyData.${activeTrace}.useSpectrum`);
@@ -259,6 +259,7 @@ function SyncedOptionsUI (props) {
         const type = get(data, [activeTrace, 'type'], 'scatter');
         return {useSpectrum, dataType, type, activeTrace};
     });
+
     const {fireflyData} = getChartData(chartId);
 
     useEffect( ()=> {

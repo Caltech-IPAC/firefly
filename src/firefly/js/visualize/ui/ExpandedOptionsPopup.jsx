@@ -195,7 +195,8 @@ function ImageViewOptionsPanel() {
     const tbl_ui_id = TABLE_ID + '-ui';
 
 
-    const [plotViewAry, expandedIds] = useStoreConnector(getPvAry, getExpandedIds);
+    const plotViewAry = useStoreConnector(getPvAry);
+    const expandedIds = useStoreConnector(getExpandedIds);
     const [model, setModel] = useState(undefined);
 
 

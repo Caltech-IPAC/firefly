@@ -3,10 +3,9 @@ import {useStoreConnector} from '../../ui/SimpleComponent';
 import {getActiveTableId, getCellValue, getMetaEntry, getTblById} from '../../tables/TableUtil';
 
 export const PngViewer = memo(()=> {
-    const [tbl_id, highlightedRow] = useStoreConnector(
-        () => getActiveTableId(),
-        () => getTblById(getActiveTableId()) ?. highlightedRow ?? -1
-    );
+    const tbl_id         = useStoreConnector(() => getActiveTableId());
+    const highlightedRow = useStoreConnector(() => getTblById(getActiveTableId())?.highlightedRow ?? -1);
+
     const tableModel = getTblById(tbl_id);
     const [badUrl, setBadUrl] = useState(undefined);
 

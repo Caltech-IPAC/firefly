@@ -64,7 +64,7 @@ const TEN_SECONDS= 10000;
 export const ImageViewer= memo( ({showWhenExpanded=false, plotId, inlineTitle, aboveTitle}) => {
 
     const [mousePlotId, setMousePlotId] = useState(lastMouseCtx().plotId);
-    const [{plotView,vr,drawLayersAry,taskCount}] = useStoreConnector( (oldState) => getStoreState(plotId,oldState) );
+    const {plotView,vr,drawLayersAry,taskCount} = useStoreConnector( (oldState) => getStoreState(plotId,oldState) );
     const {current:timeoutRef} = useRef({timeId:undefined});
 
     useEffect(() => {

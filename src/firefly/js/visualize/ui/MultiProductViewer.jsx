@@ -61,14 +61,11 @@ const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId, 
     const {renderTreeId} = useContext(RenderTreeIdCtx);
     const [currentCTIChoice, setCurrentCTIChoice] = useState(undefined);
     const [lookupKey, setLookKey] = useState(undefined);
-    const [dataProductsState, serviceParamsAry]= useStoreConnector(
-        (old) => {
+    const dataProductsState = useStoreConnector((old) => {
             const newDp= getDataProducts(dataProductRoot(),dpId)||{};
             return (!old || (newDp!==old && newDp.displayType && newDp.displayType!==DPtypes.DOWNLOAD)) ? newDp : old;
-        },
-        () => getServiceParamsAry(dataProductRoot(),dpId)
-    );
-
+        });
+    const serviceParamsAry = useStoreConnector(() => getServiceParamsAry(dataProductRoot(),dpId));
 
     const {imageViewerId,chartViewerId,tableGroupViewerId}=  getActivateParams(dataProductRoot(),dpId);
 

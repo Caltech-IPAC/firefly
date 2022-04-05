@@ -26,11 +26,9 @@ export function TablesContainer(props) {
     const {mode, closeable, tableOptions, style, expandedMode:xMode} = props;
     let {tbl_group} = props;
 
-    const [tables, active, expandedMode] = useStoreConnector(
-        () => TblUtil.getTableGroup(tbl_group)?.tables,
-        () => TblUtil.getTableGroup(tbl_group)?.active,
-        () => xMode || getExpandedMode() === LO_VIEW.tables
-    );
+    const tables = useStoreConnector(() => TblUtil.getTableGroup(tbl_group)?.tables);
+    const active = useStoreConnector(() => TblUtil.getTableGroup(tbl_group)?.active);
+    const expandedMode = useStoreConnector(() => xMode || getExpandedMode() === LO_VIEW.tables);
 
     useEffect(() => {
         if (expandedMode && mode !== 'standard') {

@@ -23,9 +23,8 @@ const fieldProps = {labelWidth: 62, size: 15};
 
 export function HeatmapOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey}) {
 
-    const [activeTrace] = useStoreConnector(() => {
-        return  pActiveTrace ?? getChartData(chartId)?.activeTrace;
-    });
+    const activeTrace = useStoreConnector(() => pActiveTrace ?? getChartData(chartId)?.activeTrace);
+
     groupKey = groupKey || `${chartId}-heatmap-${activeTrace}`;
     const {tablesource, tbl_id, multiTrace} = getChartProps(chartId, ptbl_id, activeTrace);
     const {Name} = basicOptions({activeTrace, tbl_id, chartId, groupKey, fieldProps:{labelWidth: 60}});

@@ -22,7 +22,7 @@ export const DrawerComponent= memo( (props) => {
 
     const {plot, width, height, idx, drawLayerId, setSimpleUpdateNotify, getDrawLayer }=  props;
     const [drawLayerManual, setDrawLayerManual]= useState(() => undefined);
-    const [drawLayerFromStore]= useStoreConnector((prev)  => findDrawLayerInStore(prev,drawLayerId));
+    const drawLayerFromStore = useStoreConnector((prev)  => findDrawLayerInStore(prev,drawLayerId));
 
     useEffect(() => {
             if (!setSimpleUpdateNotify) return;

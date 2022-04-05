@@ -226,7 +226,7 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange}) {
 
 
     const sqlEl = useRef(null);                                                // using a useRef hook
-    const [uiState] = useStoreConnector(() => getTableUiById(tbl_ui_id));
+    const uiState = useStoreConnector(() => getTableUiById(tbl_ui_id));
 
     useEffect(() => {
         const {op='AND', sql=''} = getSqlFilter(tbl_id);

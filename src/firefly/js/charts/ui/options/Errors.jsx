@@ -132,7 +132,7 @@ export function Error_X({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, grou
     errorMinus = errorMinus || get(mappings, [activeTrace, 'error_x.arrayminus'], '');
     const colValStats = getColValStats(tbl_id);
 
-    const [type] = useStoreConnector(() => getFieldVal(groupKey, fldName, defType));
+    const type = useStoreConnector(() => getFieldVal(groupKey, fldName, defType));
 
     return <Error {...{axis: 'x', groupKey, colValStats, activeTrace, type, error, errorMinus, labelWidth, readonly}}/>;
 }
@@ -146,7 +146,7 @@ export function Error_Y({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, grou
     errorMinus = errorMinus || get(mappings, ['error_y.arrayminus'], '');
     const colValStats = getColValStats(tbl_id);
 
-    const [type] = useStoreConnector(() => getFieldVal(groupKey, fldName, defType));
+    const type = useStoreConnector(() => getFieldVal(groupKey, fldName, defType));
 
     return <Error {...{axis: 'y', groupKey, colValStats, activeTrace, type, error, errorMinus, labelWidth, readonly}}/>;
 }

@@ -46,7 +46,7 @@ function getCurrentRotation(pv) {
 const marks = { 0: '0', 45:'45', 90:'90', 135: '135', 180:'180', 225: '225', 270:'270', 315:'315', 359:'359' };
 
 function FitsRotationImmediatePanel() {
-    const [pv] = useStoreConnector(() => getActivePlotView(visRoot()));
+    const pv = useStoreConnector(() => getActivePlotView(visRoot()));
 
     useEffect(() => {
         (!pv || !isImage(primePlot(pv))) && dispatchHideDialog(DIALOG_ID);

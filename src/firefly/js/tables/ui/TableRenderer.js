@@ -81,13 +81,13 @@ const blurEnter = ['blur','enter'];
 
 function Filter({cname, onFilter, filterInfo, tbl_id}) {
 
-    const colGetter= () => getColumn(getTblById((tbl_id)), cname);
+    const colGetter= () => getColumn(getTblById((tbl_id)), cname) ?? {};
 
     const inputRef = useRef(null);
     const enumArrowEl = useRef(null);
-    const [col={}] = useStoreConnector(colGetter);
+    const col = useStoreConnector(colGetter);
 
-    const [focusCol] = useStoreConnector(() => getTableUiByTblId(tbl_id)?.focusCol);
+    const focusCol = useStoreConnector(() => getTableUiByTblId(tbl_id)?.focusCol);
     useEffect(() => {
         const onFocus = () => {
             const {tbl_ui_id} = getTableUiByTblId(tbl_id);

@@ -56,10 +56,9 @@ export const LcViewer = memo((props) => {
         dispatchOnAppReady((state) => onReady({state, menu:props.menu}));
     }, []);
 
-    const [storeState]= useStoreConnector((oldState={}) => {
+    const storeState= useStoreConnector(() => {
         const fileLocation = getFieldVal(vFileKey, 'uploadContainer', 'isLocal');
-        const newState= {fileLocation, menu:getMenu(), isReady:isAppReady(), ...getLayouInfo()};
-        return shallowequal(oldState,newState) ? oldState : newState;
+        return {fileLocation, menu:getMenu(), isReady:isAppReady(), ...getLayouInfo()};
     });
 
     const {isReady, menu={}, appTitle, altAppIcon, dropDown,
@@ -180,7 +179,7 @@ function getUploadPanelState(oldState) {
 
 
 export const UploadPanel = ({initArgs}) =>{
-    const [{missionOptions,fileLocation}]= useStoreConnector(getUploadPanelState );
+    const {missionOptions,fileLocation} = useStoreConnector(getUploadPanelState );
 
     useEffect( () => {
         executeOnce( () => validateAutoSearch(initArgs), () => callAutoSearch(initArgs));

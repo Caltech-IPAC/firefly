@@ -63,7 +63,7 @@ function DrawLayerPanel() {
 
 const defaultTitle = 'Layers- ';
 export function DrawLayerPanelTitle({}) {
-    const [plotTitle] = useStoreConnector(() => primePlot(visRoot())?.title );
+    const plotTitle = useStoreConnector(() => primePlot(visRoot())?.title );
     return (plotTitle ? `${defaultTitle}${plotTitle}` : defaultTitle);
 }
 

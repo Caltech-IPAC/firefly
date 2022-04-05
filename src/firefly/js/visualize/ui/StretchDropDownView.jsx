@@ -112,7 +112,7 @@ const contrastMarks = { 0: '0', 5:'.5', 10:'1', 15:'1.5',  20:'2' };
 
 
 export function StretchDropDownView({toolbarElement}) {
-    const [pv] = useStoreConnector(() => getActivePlotView(visRoot()));
+    const pv = useStoreConnector(() => getActivePlotView(visRoot()));
     const enabled= pv ? true : false;
     const plot= primePlot(pv);
     const rv= plot.plotState.getRangeValues();
