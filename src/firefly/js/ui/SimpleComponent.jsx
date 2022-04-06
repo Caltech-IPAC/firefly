@@ -44,46 +44,40 @@ export class SimpleComponent extends PureComponent {
  * This function make use of useState and useEffect to
  * trigger a re-render of functional components when the value in the store changes.
  *
- * By default, this will call Object.is() to ensure the state has changed before
+ * By default, this will call shallowequal to ensure the state has changed before
  * calling setState.  To override this behavior, use useStoreConnector.bind({comparator: your_compare_function}).
  *
- * @param stateGetters  one or more functions returning a state, when called the oldState is passed as a parameter.
+ * @param {function} stateGetter  a getter function returning a state, when called the oldState is passed as a parameter.
  * This allows a stateGetter to optionally act as a comparator.  If the stateGetter does not care about the changes
  * then it can return the oldState and there will be no state update.
- * @returns {Object[]}  an array of state's value in the order of the given stateGetters
+ * @param {Array} deps array of dependencies used by stateGetter
+ * @returns {Object}  new state's value
  */
-export function useStoreConnector(...stateGetters) {
-    const {comparator=Object.is} = this || {};
+export function useStoreConnector(stateGetter, deps=[]) {
+    const {comparator=shallowequal} = this || {};
 
-    const rval = [];
-    const setters = stateGetters.map((getter) => {
-        const [val, setter] = useState(getter());
-        rval.push(val);
-        return [getter, setter, val];
-    });
+    const [val, setter] = useState(stateGetter());
 
     let isMounted = true;
     useEffect(() => {
         const remover = flux.addListener(() => {
             if (isMounted) {
-                setters.forEach(([getter, setter, oldState], idx) => {
-                    const newState = getter(oldState);  // if getter returns oldState then no state update
-                    if (newState===oldState) return;    // comparator might be overridden, use === first for efficiency
-                    setters[idx][2] = newState;
-                    if (!comparator(oldState, newState)) {
-                        setter(newState);
-                    }
-                });
+                const newState = stateGetter(val);      // if getter returns oldState then no state update
+                if (newState===val) return;             // comparator might be overridden, use === first for efficiency
+                if ( !comparator(val, newState) ) {
+                    setter(newState);
+                }
             }
         });
         return () => {
             isMounted = false;
             remover && remover();
         };
-    }, []);     // only run once
+    }, deps);     // defaults to run only once
 
-    return rval;
+    return val;
 }
+
 
 export function useBindFieldGroupToStore(groupKey) {
     let mounted= true;

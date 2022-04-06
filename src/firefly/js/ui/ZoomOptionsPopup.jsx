@@ -18,7 +18,7 @@ export function showZoomOptionsPopup() {
 }
 
 const ZoomOptionsPopup = () => {
-    const [pv]= useStoreConnector( () => getActivePlotView(visRoot()));
+    const pv= useStoreConnector( () => getActivePlotView(visRoot()));
     useEffect(() => void (!primePlot(pv) && dispatchHideDialog('zoomOptionsDialog')), [pv]);
     return primePlot(pv) ? <ZoomOptionsPopupForm pv={pv}/> : <div/>;
 };

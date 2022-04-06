@@ -73,9 +73,7 @@ function findViewerId(viewerId= DEFAULT_PLOT2D_VIEWER_ID, renderTreeId= undefine
 
 export function BasicOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey}) {
     
-    const [activeTrace] = useStoreConnector(() => {
-        return pActiveTrace ?? getChartData(chartId)?.activeTrace ?? 0;
-    });
+    const activeTrace = useStoreConnector(() =>  pActiveTrace ?? getChartData(chartId)?.activeTrace ?? 0);
     useEffect(() => {
        return () => hideColSelectPopup();
     }, []);
@@ -236,7 +234,7 @@ export function PlotBoundaries({activeTrace:pActiveTrace, tbl_id, chartId, group
 
 function XyRatio({groupKey, Xyratio, Stretch, xNoLog}) {
 
-    const [showStretch] = useStoreConnector(() => {
+    const showStretch = useStoreConnector(() => {
         const {value, valid} = getField(groupKey, xyratioFldName) || {};
         return !!value && valid;
     });

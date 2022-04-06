@@ -12,7 +12,8 @@ import {isImageExpanded} from 'firefly/visualize/PlotViewUtil.js';
 
 export const ImageExpandedMode= memo(({closeFunc,insideFlex=true,viewerId, forceExpandedMode=true}) => {
 
-    const [vr,multiViewRoot]= useStoreConnector(visRoot, getMultiViewRoot);
+    const vr            = useStoreConnector(visRoot);
+    const multiViewRoot = useStoreConnector(getMultiViewRoot);
     useEffect(() => {
         forceExpandedMode && !isImageExpanded(vr.expandedMode) && dispatchChangeExpandedMode(true);
         return () => forceExpandedMode && dispatchChangeExpandedMode(ExpandType.COLLAPSE);

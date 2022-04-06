@@ -80,7 +80,8 @@ export function DownloadButton(props) {
     const tblIdGetter = () => props.tbl_id || getActiveTableId(tbl_grp);
     const selectInfoGetter = () => get(getTblById(tblIdGetter()), 'selectInfo');
 
-    const [tbl_id, selectInfo] = useStoreConnector(tblIdGetter, selectInfoGetter);
+    const tbl_id = useStoreConnector(tblIdGetter);
+    const selectInfo = useStoreConnector(selectInfoGetter);
     const selectInfoCls = SelectInfo.newInstance(selectInfo);
 
     const onClick = useCallback(() => {
@@ -319,7 +320,7 @@ export function DownloadCutout({style={}, fieldKey='dlCutouts', labelWidth}) {
     );
 }
 export function EmailNotification({style, groupKey}) {
-    const [enableEmail] = useStoreConnector(() => getFieldVal(groupKey, emailNotif));
+    const enableEmail = useStoreConnector(() => getFieldVal(groupKey, emailNotif));
 
     return (
         <div style={style}>

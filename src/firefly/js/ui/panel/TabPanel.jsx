@@ -240,9 +240,7 @@ Tabs.defaultProps = TabsView.defaultProps;
 export const StatefulTabs = React.memo( (props) => {
     const {children=[], defaultSelected=0, onTabSelect, componentKey} = props;
 
-    let [selectedIdx = defaultSelected] = useStoreConnector( () => {
-        return getComponentState(componentKey)?.selectedIdx;
-    });
+    let selectedIdx = useStoreConnector( () => getComponentState(componentKey)?.selectedIdx ?? defaultSelected);
 
     const onSelect = useCallback( (index,id,name) => {
         dispatchComponentStateChange(componentKey, {selectedIdx: index});

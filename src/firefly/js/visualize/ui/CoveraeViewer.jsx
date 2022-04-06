@@ -37,12 +37,10 @@ export function CoverageViewer({viewerId='coverageImages',insideFlex=true, noCov
                                 workingMessage='Working...', noCovStyle={}}) {
 
     startWatcher(viewerId);
-    const [pv,tbl_id,isFetching,covState] = useStoreConnector(
-        () => getActivePlotView(visRoot()),
-        () => getActiveOrFirstTblId(),
-        () => getTblById(getActiveOrFirstTblId())?.isFetching ?? false,
-        () => getComponentState(COVERAGE_WATCH_CID,[]));
-
+    const pv        = useStoreConnector(() => getActivePlotView(visRoot()));
+    const tbl_id    = useStoreConnector(() => getActiveOrFirstTblId());
+    const isFetching= useStoreConnector(() => getTblById(getActiveOrFirstTblId())?.isFetching ?? false);
+    const covState  = useStoreConnector(() => getComponentState(COVERAGE_WATCH_CID,[]));
 
     useEffect(() => {
         dispatchAddViewer(viewerId, NewPlotMode.replace_only, IMAGE, true, renderTreeId, SINGLE);

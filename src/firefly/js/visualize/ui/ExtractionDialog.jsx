@@ -111,7 +111,7 @@ export function endExtraction() {
 }
 
 function ExtractDialog({extractionType,wasCanceled}) {
-    const [{pv, pvCnt}] = useStoreConnector( getStoreState);
+    const {pv, pvCnt} = useStoreConnector( getStoreState);
     const {canCreateExtractionTable}= getAppOptions().image;
     const {Panel}= exTypeCntl[extractionType];
 

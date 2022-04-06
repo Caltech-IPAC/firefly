@@ -14,7 +14,7 @@ const showBgMonAction = { type:'COMMAND',
 
 export function BgMonitorButton () {
 
-    const [{jobs={}}] = useStoreConnector(() => getBackgroundInfo());
+    const {jobs={}} = useStoreConnector(() => getBackgroundInfo());
 
     const monitoredJobs = Object.values(jobs).filter( (info) => info?.monitored );
     const working = monitoredJobs.some( (info) => isActive(info) );

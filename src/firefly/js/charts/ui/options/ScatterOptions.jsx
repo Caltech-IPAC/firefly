@@ -48,7 +48,7 @@ export function yLimitUI() {
  */
 export function ScatterOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey}) {
 
-    const [activeTrace] = useStoreConnector(() => pActiveTrace ?? getChartData(chartId)?.activeTrace);
+    const activeTrace = useStoreConnector(() => pActiveTrace ?? getChartData(chartId)?.activeTrace);
     useEffect(() => {
         return () => hideColSelectPopup();
     }, []);

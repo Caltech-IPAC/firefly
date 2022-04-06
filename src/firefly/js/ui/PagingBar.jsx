@@ -36,7 +36,7 @@ export function PagingBar(props) {
                 <div onClick={() => callbacks.onGotoPage(currentPage - 1)} className='PagingBar__button previous' title='Previous Page'/>
                 <div style={{display: 'inline-flex', alignItems: 'center'}}>
                     <InputField
-                        style={{textAlign: 'right', width: `${nchar}ch`}}
+                        style={{textAlign: 'right', width: `${nchar+1}ch`}}
                         validator = {intValidator(1, totalPages, 'Page Number')}
                         tooltip = 'Jump to this page'
                         value = {currentPage+''}

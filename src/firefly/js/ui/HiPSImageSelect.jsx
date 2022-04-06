@@ -41,7 +41,7 @@ let activeHipsTblId;
 let activeGroupKey;
 
 export const HiPSImageSelect= ({style={}, groupKey}) => {
-    const [imageSource] = useStoreConnector(() => getFieldVal(groupKey,'imageSource'));
+    const imageSource = useStoreConnector(() => getFieldVal(groupKey,'imageSource'));
     activeGroupKey = groupKey;
 
     if (imageSource === 'url') {
@@ -194,7 +194,7 @@ export function makeHiPSWebPlotRequest(request, plotId, groupId= DEFAULT_FITS_VI
 
 function HiPSSurveyTable({groupKey, moc=false}) {
 
-    let [sources] = useStoreConnector(() => getFieldVal(groupKey, moc ? useSourceMOC : useSourceHiPS));
+    let sources = useStoreConnector(() => getFieldVal(groupKey, moc ? useSourceMOC : useSourceHiPS));
     sources = sources ||  getHiPSSources();
     activeHipsTblId = 'HiPS_tbl_id-' + (moc ? '--moc--' : '--hips--') + sources.replaceAll(',', '-');
 

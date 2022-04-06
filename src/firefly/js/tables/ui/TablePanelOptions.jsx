@@ -25,7 +25,7 @@ import {HelpIcon} from '../../ui/HelpIcon.jsx';
 
 export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOptionReset}) => {
 
-    const [uiState] = useStoreConnector(() => getTableUiById(tbl_ui_id));
+    const uiState = useStoreConnector(() => getTableUiById(tbl_ui_id));
     const ctm_tbl_id = `${tbl_ui_id}-columnOptions`;
     const showAdvFilter = !isClientTable(tbl_id);
 
@@ -99,7 +99,7 @@ TablePanelOptions.propTypes = {
 
 function OptionsFilterStats({tbl_id}) {
 
-    const [filterCnt] = useStoreConnector(() => getFilterCount(getTblById(tbl_id)));
+    const filterCnt = useStoreConnector(() => getFilterCount(getTblById(tbl_id)));
     const filterStr = filterCnt === 0 ? '' : filterCnt === 1 ? '1 filter' : `${filterCnt} filters`;
     const clearFilters = () => dispatchTableFilter({tbl_id, filters: ''});;
 

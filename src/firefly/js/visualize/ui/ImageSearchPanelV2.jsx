@@ -121,7 +121,7 @@ function ImageSearchPanel({resizable=true, onSubmit, gridSupport = false, multiS
     const dim = {height: 600, width: 725, minHeight: 600, minWidth: 725};
     const style = resizable ? {...dim, ...resize} : {width: '100%'};
 
-    const [imageType]= useStoreConnector(() => getFieldVal(FG_KEYS.main, FD_KEYS.type));
+    const imageType = useStoreConnector(() => getFieldVal(FG_KEYS.main, FD_KEYS.type));
 
     return (
         <div style={style}>
@@ -219,7 +219,7 @@ function ImageSearchPanelV2 ({archiveName='Search', title='Image Search', multiS
             });
     }, []);
 
-    const [imageType]= useStoreConnector(() => getFieldVal(FG_KEYS.main, FD_KEYS.type));
+    const imageType = useStoreConnector(() => getFieldVal(FG_KEYS.main, FD_KEYS.type));
     const {isThreeColorImgType, isHipsImgType, isSingleChannelImgType} = isImageType(imageType);
 
     multiSelect = !isThreeColorImgType && multiSelect;
@@ -327,11 +327,11 @@ function ImageType({}) {
 
 function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archive', noScroll}) {
 
-    const [imageType]= useStoreConnector(() => getFieldVal(FG_KEYS.main, FD_KEYS.type));
+    const imageType = useStoreConnector(() => getFieldVal(FG_KEYS.main, FD_KEYS.type));
     const {isThreeColorImgType, isHipsImgType} = isImageType(imageType);
 
     const defaultValue = isThreeColorImgType ? 'none' : 'archive';
-    const [imageSource] = useStoreConnector(() => getFieldVal(groupKey, FD_KEYS.source, defaultValue));
+    const imageSource  = useStoreConnector(() => getFieldVal(groupKey, FD_KEYS.source, defaultValue));
 
 
     const options = [   {label: archiveName, value: 'archive'},

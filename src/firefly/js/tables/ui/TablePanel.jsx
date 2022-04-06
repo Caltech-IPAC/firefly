@@ -44,7 +44,7 @@ export function TablePanel(props) {
     tbl_id = tbl_id || tableModel?.tbl_id || uniqueTblId();
     tbl_ui_id = tbl_ui_id || uniqueTblUiId();
 
-    const [uiState] = useStoreConnector(() => getTableUiById(tbl_ui_id) || {columns: []});
+    const uiState = useStoreConnector(() => getTableUiById(tbl_ui_id) || {columns:[]}, [tbl_ui_id]);
 
     useEffect( () => {
         if (!getTableUiByTblId(tbl_id)) {
@@ -56,7 +56,6 @@ export function TablePanel(props) {
             dispatchTableAddLocal(tableModel, undefined, false);
         }
     }, [tbl_id, tbl_ui_id, tableModel]);
-
 
     const {selectable, expandable, expandedMode, border, renderers, title, removable, rowHeight, help_id,
         showToolbar, showTitle, showInfoButton, showMetaInfo, showOptions,

@@ -47,7 +47,7 @@ export function showBackgroundMonitor(show=true) {
 
  function BackgroundMonitor() {
 
-    const [{jobs={}, email, enableEmail, help_id}] = useStoreConnector(() => getBackgroundInfo());
+    const {jobs={}, email, enableEmail, help_id} = useStoreConnector(() => getBackgroundInfo());
 
     const items = Object.values(jobs)
                     .filter((job) => job?.monitored)
@@ -212,7 +212,7 @@ function JobProgress({jobInfo}) {
 
 
 function PackageItem({SINGLE, jobId, index}) {
-    const [jobInfo] = useStoreConnector(() => getJobInfo(jobId));
+    const jobInfo = useStoreConnector(() => getJobInfo(jobId));
 
     const {parameters, downloadState} = jobInfo;
     const dlreq = JSON.parse(parameters?.downloadRequest);

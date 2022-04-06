@@ -24,7 +24,7 @@ const logger = Logger('BgMaskPanel');
 
 export const BgMaskPanel = React.memo(({componentKey, onMaskComplete, style={}}) => {
 
-    const [{inProgress, jobInfo}] = useStoreConnector((oldState={}) => {
+    const {inProgress, jobInfo} = useStoreConnector((oldState={}) => {
         const {inProgress:oProg, jobInfo:oInfo} = oldState;
         const {inProgress=false, jobId} = getComponentState(componentKey);
         const jobInfo = getJobInfo(jobId);

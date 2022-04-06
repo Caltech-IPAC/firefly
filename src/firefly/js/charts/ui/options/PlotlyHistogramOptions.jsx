@@ -21,9 +21,7 @@ const fieldProps = {labelWidth: 62, size: 15};
  */
 export function HistogramOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey}) {
 
-    const [activeTrace] = useStoreConnector(() => {
-        return pActiveTrace ?? getChartData(chartId)?.activeTrace;
-    });
+    const activeTrace = useStoreConnector(() => pActiveTrace ?? getChartData(chartId)?.activeTrace);
 
     groupKey = groupKey || `${chartId}-ffhist-${activeTrace}`;
     const {tbl_id, multiTrace, noColor} = getChartProps(chartId, ptbl_id, activeTrace);

@@ -63,7 +63,7 @@ function getNextState(prevS, renderTreeId) {
  */
 export const FireflySlate= memo(( {initLoadingMessage, appTitle= 'Firefly', appIcon=FFTOOLS_ICO, altAppIcon,
                                       footer, style, renderTreeId, menu:menuItems, showBgMonitor=false}) => {
-    const [state]= useStoreConnector( (prevState) => getNextState(prevState,renderTreeId));
+    const state= useStoreConnector( (prevState) => getNextState(prevState,renderTreeId));
     const {isReady, mode={}, gridView= [], gridColumns=1, menu={}, dropDown={}, layoutInfo, initLoadCompleted, dropdownPanels} = state;
     const {expanded} = mode;
     const {visible, view, initArgs} = dropDown;

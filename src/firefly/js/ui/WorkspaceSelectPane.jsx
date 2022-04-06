@@ -42,8 +42,9 @@ export function WsSaveOptions (props) {
     saveAsProps = {label:'Save as:', labelWidth, wrapperStyle:{margin: '3px 0'}, size:30, ...saveAsProps};
     fileLocProps = {label:'File Location:', labelWidth, ...fileLocProps};
 
-    const [loc, wsSelect] = useStoreConnector(  () => getFieldVal(groupKey, 'fileLocation'),
-                                                () => getFieldVal(groupKey, 'wsSelect'));
+    const loc      = useStoreConnector(() => getFieldVal(groupKey, 'fileLocation'));
+    const wsSelect = useStoreConnector(() => getFieldVal(groupKey, 'wsSelect'));
+
     useEffect(() => {
         dispatchWorkspaceUpdate();
     }, [loc]);
@@ -80,7 +81,8 @@ WsSaveOptions.propTypes = {
 
 function ShowWorkspace({wsSelect}) {
 
-    const [wsList, isUpdating] = useStoreConnector(getWorkspaceList, isAccessWorkspace);
+    const wsList     = useStoreConnector(getWorkspaceList);
+    const isUpdating = useStoreConnector(isAccessWorkspace);
 
     const content = isUpdating ? <div className='loading-mask' style={{margin:-3}}/>
                     : isEmpty(wsList) ? <div style={{color:'maroon', fontStyle:'italic', padding:10}}> {'Workspace access error: ' + getWorkspaceErrorMsg()} </div>

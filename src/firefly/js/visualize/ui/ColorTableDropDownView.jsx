@@ -141,10 +141,10 @@ function getContrast(plot) {
 }
 
 const AdvancedColorPanel= ({allowPopout}) => {
-    const [plot]= useStoreConnector( () => {
+    const plot = useStoreConnector( () => {
         return primePlot(visRoot());
     });
-    const [allLoaded] = useStoreConnector(() => isAllStretchDataLoaded(visRoot()));
+    const allLoaded = useStoreConnector(() => isAllStretchDataLoaded(visRoot()));
     const [bias,setBias]= useState( () => getBias(plot));
     const [contrast,setContrast]= useState( () => getContrast(plot));
     const [colorTableId,setColorTableId]= useState( () => Number(plot?.plotState.getColorTableId()));
@@ -335,7 +335,7 @@ export function showColorDialog() {
 
 
 function PopoutColorPanel() {
-    const [pv]= useStoreConnector( () => getActivePlotView(visRoot()));
+    const pv = useStoreConnector( () => getActivePlotView(visRoot()));
     if (!primePlot(pv)) return <div/>;
     return <AdvancedColorPanel allowPopout={false}/>;
 }

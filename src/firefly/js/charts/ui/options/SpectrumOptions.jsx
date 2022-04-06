@@ -20,7 +20,7 @@ import {getSpectrumProps} from '../../dataTypes/FireflySpectrum.js';
 
 export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey}) {
 
-    const [activeTrace=0] = useStoreConnector(() => pActiveTrace ?? getChartData(chartId)?.activeTrace);
+    const activeTrace = useStoreConnector(() => pActiveTrace ?? getChartData(chartId)?.activeTrace ?? 0);
 
     groupKey = groupKey || `${chartId}-ffsed-${activeTrace}`;
 

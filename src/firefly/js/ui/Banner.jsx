@@ -3,7 +3,6 @@
  */
 
 import React, {memo} from 'react';
-import shallowequal from 'shallowequal';
 import PropTypes from 'prop-types';
 import {useStoreConnector} from './SimpleComponent.jsx';
 import {getUserInfo} from '../core/AppDataCntlr.js';
@@ -56,12 +55,7 @@ Banner.propTypes= {
 
 
 const UserInfo= memo(() => {
-    const [userInfo={}]= useStoreConnector(
-        (prev) => {
-            const userInfo= getUserInfo();
-            if (!prev) return userInfo;
-            return shallowequal(prev,userInfo) ? prev : userInfo;
-        });
+    const userInfo = useStoreConnector(() => getUserInfo() ?? {});
 
     const {loginName='Guest', firstName='', lastName='', login_url, logout_url} = userInfo;
     const isGuest = loginName === 'Guest';
