@@ -374,7 +374,7 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
 
     const hipsRequest= initRequest(WebPlotRequest.makeHiPSRequest(preferredHipsSourceURL, null),
                        viewerId, PLOT_ID, overlayPosition, avgOfCenters);
-    hipsRequest.setSizeInDeg(fovSize);
+    hipsRequest.setSizeInDeg(fovSize>180?300:fovSize);
     if (options.gridOn) {
         imageRequest.setGridOn(options.gridOn);
         hipsRequest.setGridOn(options.gridOn);

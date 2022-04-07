@@ -32,7 +32,7 @@ import {
 } from '../PlotViewUtil.js';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 import {
-    getHiPSZoomLevelToFit,
+    getHiPSZoomLevelForFOV,
     getPointMaxSide,
     getPropertyItem,
     makeHiPSAllSkyUrl,
@@ -122,6 +122,7 @@ function initCorrectCoordinateSys(pv) {
     }
 }
 
+const MIN_FOV_SIZE= .0025; // 9 arcsec - minimum fov for initial size
 
 function watchForHiPSViewDim(action, cancelSelf, params) {
     const {plotId}= action.payload;
@@ -151,16 +152,16 @@ function watchForHiPSViewDim(action, cancelSelf, params) {
             pv= getPlotViewById(visRoot(),plotId);
             const fallbackSize= useAitoff ? 360 : 180;
             const sizeFromProps= !plot.blank ? Number(plot.hipsProperties.hips_initial_fov) : 0;
-            const size= pv.request.getSizeInDeg()  || sizeFromProps || fallbackSize;
-            if (!pv.request.getSizeInDeg() && sizeFromProps && (size<.00027 || size>70)) { // if size is small (<1 arcsec) or big then do a fill, size is probably an error
+            const fovSize= pv.request.getSizeInDeg()  || sizeFromProps || fallbackSize;
+            if (!pv.request.getSizeInDeg() && sizeFromProps && (fovSize<.00027 || fovSize>70)) { // if size is small (<1 arcsec) or big then do a fill, size is probably an error
                 dispatchZoom({ plotId, userZoomType: UserZoomTypes.FILL});
             }
-            else if (useAitoff && size>290) {
-                dispatchZoom({ plotId, userZoomType: (size>330) ? UserZoomTypes.FIT : UserZoomTypes.FILL});
+            else if (useAitoff && fovSize>290) {
+                dispatchZoom({ plotId, userZoomType: (fovSize>299) ? UserZoomTypes.FILL : UserZoomTypes.FIT});
             }
-            else { // set to zoom to the size, if between 1 arcsec and 9 then set to 9 arcsec
-                const level= getHiPSZoomLevelToFit(pv,size<.0025 ? .0025 : size);
-                dispatchZoom({ plotId, userZoomType: UserZoomTypes.LEVEL, level });
+            else { // set to zoom to the size, if less than minimum, use minimum
+                const cleanFov= fovSize<MIN_FOV_SIZE ? MIN_FOV_SIZE : fovSize;
+                dispatchZoom({plotId, userZoomType: UserZoomTypes.LEVEL, level:getHiPSZoomLevelForFOV(pv,cleanFov) });
             }
 
             if (wp) dispatchChangeCenterOfProjection({plotId,centerProjPt:wp});

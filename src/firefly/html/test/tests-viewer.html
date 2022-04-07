@@ -540,13 +540,9 @@
         function onFireflyLoaded(firefly) { }
 
         function loadImageIntoTriView() {
-            const req= {
-                url: 'https://irsa.ipac.caltech.edu/cgi-bin/Subimage/nph-subimage?origfile=/irsadata/AKARI//images/N60/l000.85_b+65.00_ecl_6deg_N60_sigma.fits&ra=317.778840&dec=56.472080&xsize=2.000000',
-                Title: 'Image Title Here'
-            };
             firefly.getViewer().showImage({
                 Title: 'Image Title Here',
-                url: 'https://irsa.ipac.caltech.edu/cgi-bin/Subimage/nph-subimage?origfile=/irsadata/AKARI//images/N60/l000.85_b+65.00_ecl_6deg_N60_sigma.fits&ra=317.778840&dec=56.472080&xsize=2.000000'
+                url: 'https://irsa.ipac.caltech.edu/ibe//data/akari/akari_images/images/N60/l000.85_b+65.00_ecl_6deg_N60_fixstripe.fits'
 
             });
         }

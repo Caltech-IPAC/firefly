@@ -44,7 +44,7 @@ export function findCellOnScreen(plot, viewDim, norder, fov,centerWp) {
     if (isHiPSAitoff(plot)){
         const aitoffAll= fov>200;
         for(let i= 0; (i<cells.length); i++) {
-            cell= (aitoffAll && tileCoordsWrap(cc, cells[i].wpCorners)) ? makeWrappingCell(cells[i],norder,plot.dataCoordSys, cc) : cells[i];
+            cell= tileCoordsWrap(cc, cells[i].wpCorners) ? makeWrappingCell(cells[i],norder,plot.dataCoordSys, cc) : cells[i];
             devPtCorners= [];
             if (!cell.coordsWrap || !aitoffAll ) {
                 for(let j=0; (j<cell.wpCorners.length); j++)  {
@@ -88,6 +88,7 @@ export function findCellOnScreen(plot, viewDim, norder, fov,centerWp) {
  * @prop {HiPSDeviceTileData}
  */
 function makeWrappingCell(wc, norder, dataCoordSys, cc) {
+    if (norder>2) return {...wc, coordsWrap:true};
     const nside= norder+1;
     const subCells= Array(4).fill(nside,0,4).map( (sc,idx) => {
                 const tileNumber = wc.ipix * 4 + idx;

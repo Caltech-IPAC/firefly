@@ -93,11 +93,11 @@ export function getNextZoomLevel(plot, zoomType, upDownPercent=1) {
 
 /**
  * @param plot
- * @param screenDim
+ * @param viewDim
  * @param fullType
  */
-export function getEstimatedFullZoomFactor(plot, screenDim, fullType) {
-    const {width,height} = screenDim;
+export function getEstimatedFullZoomFactor(plot, viewDim, fullType) {
+    const {width,height} = viewDim;
     let overrideFullType= fullType;
 
     if (plot.attributes[PlotAttribute.EXPANDED_TO_FIT_TYPE]) {

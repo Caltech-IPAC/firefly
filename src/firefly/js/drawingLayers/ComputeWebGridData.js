@@ -73,8 +73,8 @@ import { getDrawLayerParameters} from './WebGrid.js';
 import {Regrid} from '../util/Interp/Regrid.js';
 import {getPointMaxSide} from  '../visualize/HiPSUtil.js';
 import {convert} from '../visualize/VisUtil.js';
-import {isHiPS, isHiPSAitoff} from 'firefly/visualize/WebPlot.js';
-import {getFoV} from 'firefly/visualize/PlotViewUtil.js';
+import {isHiPS, isHiPSAitoff} from '../visualize/WebPlot.js';
+import {getFoV} from '../visualize/PlotViewUtil.js';
 
 const precision3Digit = '%.3f';
 const precision6Digit = '%.6f';
@@ -655,7 +655,7 @@ function findLine(cc,csys, direction, value, range, screenWidth, type='image'){
 
     }
     var opoints = findPoints(cc, csys,nInterval, x, y, dx, dy, null);
-    if (type==='hips') return opoints;
+    if (type==='hips') return isHiPSAitoff(cc) ? opoints : fixPoints(opoints);
 
     //NO need to do this, but left here since it was here originally
     var  straight = isStraight(opoints);
@@ -677,7 +677,7 @@ function findLine(cc,csys, direction, value, range, screenWidth, type='image'){
         count++;
     }
 
-    return npoints;
+    return fixPoints(npoints);
 
 
 }
@@ -784,6 +784,31 @@ function findPoints(cc,csys, intervals, x0, y0,dx, dy,  opoints){
     return xpoints;
 }
 
+function fixPoints(points){
+
+    // Convert points to fixed values.
+    var len = points[0].length;
+    for (let i=0; i < len; i += 1){
+        if (points[0][i] < 1.e10) continue;
+        points[0][i] = -10000;
+        points[1][i] = -10000;
+
+    }
+
+    return points;
+}
+
+function isInBounds(bounds, x,y, i) {
+    return (x[i] > -1000 && x[i+1] > -1000 &&
+    ((x[i] >= bounds.x) && ((x[i] - bounds.x) < bounds.width) &&
+        (y[i] >= bounds.y) && ((y[i]-bounds.y) < bounds.height) ||
+        // bounds check on x[i+1], y[i+1]
+        (x[i+1] >= bounds.x) && ((x[i+1] - bounds.x) < bounds.width) &&
+        (y[i+1] >= bounds.y) && ((y[i+1]-bounds.y) < bounds.height)));
+
+}
+
+
 function drawLabeledPolyLine (drawData, bounds,  label, labelPoint, slopAngle, isLonLine, x, y, aitoff,screenWidth, useLabels,cc,plot){
 
 
@@ -798,15 +823,15 @@ function drawLabeledPolyLine (drawData, bounds,  label, labelPoint, slopAngle, i
         //check the x[i] and y[i] are inside the image screen
         ipt0= makeImagePt(x[i],y[i]);
         ipt1= makeImagePt(x[i+1], y[i+1]);
+        let inbounds;
 
-        const inbounds= bounds ?
-            x[i] > -1000 && x[i+1] > -1000 &&
-                        ((x[i] >= bounds.x) && ((x[i] - bounds.x) < bounds.width) &&
-                        (y[i] >= bounds.y) && ((y[i]-bounds.y) < bounds.height) ||
-                        // bounds check on x[i+1], y[i+1]
-                        (x[i+1] >= bounds.x) && ((x[i+1] - bounds.x) < bounds.width) &&
-                        (y[i+1] >= bounds.y) && ((y[i+1]-bounds.y) < bounds.height)) :
-           !cc.coordsWrap(ipt0,ipt1,1);
+        if (isHiPSAitoff(plot)) {
+            inbounds= bounds ? isInBounds(bounds,x,y,i) : true;
+            inbounds= inbounds && !cc.coordsWrap(ipt0,ipt1,1);
+        }
+        else {
+            inbounds= bounds && isInBounds(bounds,x,y,i);
+        }
 
         if (inbounds) {
             //For image, the ra/dec interval is 8, so the points needed to be checked if they are located within the interval

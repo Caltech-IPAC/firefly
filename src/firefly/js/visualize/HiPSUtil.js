@@ -24,7 +24,7 @@ import {
     SpatialVector
 } from '../externalSource/aladinProj/HealpixIndex.js';
 import {computeDistance, convert, toDegrees, toRadians} from './VisUtil.js';
-import {getScreenPixScaleArcSec, HIPS_DATA_WIDTH, isHiPSAitoff, replaceProjection} from './WebPlot.js';
+import {getScreenPixScaleArcSec, isHiPSAitoff, replaceProjection} from './WebPlot.js';
 import {getFoV, primePlot} from './PlotViewUtil.js';
 import {CoordinateSys} from './CoordSys.js';
 import {getFireflySessionId} from '../Firefly';
@@ -259,28 +259,21 @@ export function getPointMaxSide(plot, viewDim) {
 /**
  *
  * @param {PlotView} pv
- * @param {number} size in degrees
+ * @param {number} fov in degrees
  * @return {number} a zoom level
  */
-export function getHiPSZoomLevelToFit(pv,size) {
+export function getHiPSZoomLevelForFOV(pv, fov) {
     const {width,height}=pv.viewDim;
     const plot= primePlot(pv);
     if (!plot || !width || !height) return 1;
-
-    // make version of plot centered at 0,0
-    const tmpPlot= changeProjectionCenter(plot, makeWorldPt(0,0, plot.imageCoordSys));
+   
+    // make version of plot centered at 0,0 with zoom level 1
+    const tmpPlot= changeProjectionCenter({...plot, zoomFactor:1}, makeWorldPt(0,0, plot.imageCoordSys));
     const cc= CysConverter.make(tmpPlot);
-    const pt1= cc.getImageCoords( makeWorldPt(0,0, plot.imageCoordSys));
-    const pt2= cc.getImageCoords( makeWorldPt(size,0, plot.imageCoordSys));
-    if (isHiPSAitoff(plot) && size>180) {
-        const diff= Math.abs(pt2.x-pt1.x);
-        const percentBigger= (diff-(HIPS_DATA_WIDTH/2))/HIPS_DATA_WIDTH;
-        const zl=  (width*(percentBigger*.95))/(Math.abs(pt2.x-pt1.x));
-        return zl;
-    }
-    else {
-        return width/Math.abs(pt2.x-pt1.x);
-    }
+    const pt1= cc.getDeviceCoords( makeWorldPt(0,0, plot.imageCoordSys));
+    const pt2= cc.getDeviceCoords( makeWorldPt(fov/2,0, plot.imageCoordSys));
+    const devSize= Math.abs(pt2.x-pt1.x)*2;
+    return width / devSize;
 }
 
 
