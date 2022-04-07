@@ -171,52 +171,67 @@ public class DataGroupReadTest {
     public void memTest() {
         Logger.setLogLevel(Level.DEBUG);
         int testSize = 10000000;
+        final Ref<Object> ref = new Ref<>();        // prevent gc from collecting
 
-        List<Object> olist = new ArrayList<>(100);
         logMemUsage(() -> {
+            List<Object> olist = new ArrayList<>();
+            ref.setSource(olist);
             for (int i=0; i< testSize; i++) olist.add(i + Math.random());
             return String.format("List<Object>(%,d)", testSize);
         });
+        ref.setSource(null);        // allow gc to collect
 
-        PrimitiveList.Objects objects = new PrimitiveList.Objects();
         logMemUsage(() -> {
+            PrimitiveList.Objects objects = new PrimitiveList.Objects();
+            ref.setSource(objects);
             for (int i=0; i< testSize; i++) objects.add(i + Math.random());
             return String.format("Object[](%,d)    ", testSize);
         });
+        ref.setSource(null);
 
-        List<Double> dlist = new ArrayList<>(100);
         logMemUsage(() -> {
+            List<Double> dlist = new ArrayList<>();
+            ref.setSource(dlist);
             for (int i=0; i< testSize; i++) dlist.add(i + Math.random());
             return String.format("List<Double>(%,d)", testSize);
         });
+        ref.setSource(null);
 
-        PrimitiveList.Doubles doubleAry = new PrimitiveList.Doubles();
         logMemUsage(() -> {
+            PrimitiveList.Doubles doubleAry = new PrimitiveList.Doubles();
+            ref.setSource(doubleAry);
             for (int i=0; i< testSize; i++) doubleAry.add(i * Math.random());
             return String.format("double[](%,d)    ", testSize);
         });
+        ref.setSource(null);
 
-        PrimitiveList.Integers intAry = new PrimitiveList.Integers();
         logMemUsage(() -> {
+            PrimitiveList.Integers intAry = new PrimitiveList.Integers();
+            ref.setSource(intAry);
             for (int i=0; i< testSize; i++) intAry.add((int) (i * Math.random()));
             return String.format("int[](%,d)       ", testSize);
         });
+        ref.setSource(null);
 
-        String[] strAry = new String[testSize];
         logMemUsage(() -> {
+            String[] strAry = new String[testSize];
+            ref.setSource(strAry);
             for (int i=0; i< testSize; i++) {
                 strAry[i] = String.valueOf(i%10);
             }
             return String.format("strAry[](%,d)    ", testSize);
         });
+        ref.setSource(null);
 
-        List<String> strList = new ArrayList<>();
         logMemUsage(() -> {
+            List<String> strList = new ArrayList<>();
+            ref.setSource(strList);
             for (int i=0; i< testSize; i++) {
                 strList.add(String.valueOf(i%10));
             }
             return String.format("strList[](%,d)   ", testSize);
         });
+        ref.setSource(null);
     }
 
     private static DataGroup readTest(File inFile) throws IOException {

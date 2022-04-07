@@ -21,9 +21,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static edu.caltech.ipac.table.JsonTableUtil.toLinkInfos;
-import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
-import static edu.caltech.ipac.util.StringUtils.isEmpty;
 import static edu.caltech.ipac.table.TableMeta.*;
+import static edu.caltech.ipac.util.StringUtils.*;
 
 /**
  * Date: Jun 25, 2009
@@ -394,40 +393,62 @@ public class IpacTableUtil {
     }
 
     /**
+     * DataObject and DataGroup member's functions rely heavily on HashMap.  Although HashMap.get is very performant,
+     * but when calling it tens and hundreds of millions times will add up.
+     * This function is used by DataGroupQuery only and will be removed when we remove DataGroupQuery.
      *
      * @param source
      * @param line
+     * @param tableDef
      * @return
      */
     public static DataObject parseRow(DataGroup source, String line, IpacTableDef tableDef) {
+
+        TableUtil.ParsedColInfo[] parsedColInfos = Arrays.stream(source.getDataDefinitions())
+                                                    .map(dt -> tableDef.getParsedInfo(dt.getKeyName()))
+                                                    .toArray(TableUtil.ParsedColInfo[]::new);
+
+        Object[] data = parseRow(line, source.getDataDefinitions(), parsedColInfos);
+        if (data != null) {
+            DataObject row = new DataObject(source);
+            row.setData(data);
+            return row;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Return the parsed values of the given line for the given columns.
+     * @param line      the line to data to parse.
+     * @param cols      the columns to extract data from.  may be a subset of the total columns in the line.
+     * @param parsedColInfos  the corresponding parsed info of the cols.
+     * @return an array of converted values corresponding to the given cols.
+     */
+    public static Object[] parseRow(String line, DataType[] cols, TableUtil.ParsedColInfo[] parsedColInfos) {
+
         if (line==null) return null;
-        DataType[] headers = source.getDataDefinitions();
-        int endOfLine=0, endoffset=0;
+        int endOfLine = line.length();
         try {
             if (line.startsWith(" ") && line.trim().length() > 0) {
-                DataObject row = new DataObject(source);
-                endOfLine = line.length();
 
-                DataType dt;
-                for (int idx = 0; idx < headers.length; idx++) {
-                    dt = headers[idx];
-                    TableUtil.ParsedColInfo pci = tableDef.getParsedInfo(dt.getKeyName());
-                    if (pci.startIdx > endOfLine) {
-                        // it's okay.  we'll take what's given and treat the rest as null.
-                        break;
-                    }
+                Object[] arow = new Object[cols.length];
+                for (int i =0; i <cols.length; i++) {
+                    TableUtil.ParsedColInfo pci = parsedColInfos[i];
+                    DataType dt = cols[i];
+                    if (pci.startIdx > endOfLine) return null; // it's okay.  we'll take what's given and treat the rest as null.
+
                     // if ending spaces are missing... just ignore it.
-                    endoffset = Math.min(pci.endIdx, endOfLine);
-
+                    int endoffset = Math.min(pci.endIdx, endOfLine);
                     String val = line.substring(pci.startIdx, endoffset).trim();
+
                     if (!dt.isKnownType()) {
                         IpacTableUtil.guessDataType(dt, val);
                     }
                     applyGuessLogic(dt, val, pci);
-
-                    row.setDataElement(dt, dt.convertStringToData(val));
+                    arow[i] = dt.convertStringToData(val);
                 }
-                return row;
+                return arow;
             } else if (line.trim().length() > 0 && !line.startsWith("\\") && !line.startsWith("|")) {
                 throw new RuntimeException("Data row must start with a space.");
             }
@@ -544,7 +565,6 @@ public class IpacTableUtil {
         if (src != null) {
             tableDef.setSource(src.getAbsolutePath());
         }
-
         return tableDef;
     }
 

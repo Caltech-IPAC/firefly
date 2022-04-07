@@ -7,7 +7,6 @@ import edu.caltech.ipac.firefly.core.FileAnalysisReport;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.IpacTableDef;
 import edu.caltech.ipac.table.IpacTableUtil;
@@ -20,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -52,9 +52,7 @@ public final class IpacTableReader {
     static DataGroup doRead(BufferedReader bufferedReader, Map<String, String> passedMetaInfo,
                             IpacTableDef tableDef, String... onlyColumns) throws IOException {
 
-        DataGroup inData = new DataGroup(null, tableDef.getCols());
         DataGroup outData = create(tableDef, onlyColumns);
-        boolean isSelectedColumns = onlyColumns != null && onlyColumns.length > 0;
 
         String line = null;
         int lineNum = tableDef.getExtras() == null ? 0 : tableDef.getExtras().getKey();
@@ -62,19 +60,14 @@ public final class IpacTableReader {
         try {
             line = tableDef.getExtras() == null ? bufferedReader.readLine() : tableDef.getExtras().getValue();
             lineNum++;
-            DataObject row, arow;
+
+            TableUtil.ParsedColInfo[] parsedInfos = Arrays.stream(outData.getDataDefinitions())
+                                                        .map(dt -> tableDef.getParsedInfo(dt.getKeyName()))
+                                                        .toArray(TableUtil.ParsedColInfo[]::new);
             while (line != null) {
-                row = IpacTableUtil.parseRow(inData, line, tableDef);
+                Object[] row = IpacTableUtil.parseRow(line, outData.getDataDefinitions(), parsedInfos);
                 if (row != null) {
-                    if (isSelectedColumns) {
-                        arow = new DataObject(outData);
-                        for (DataType dt : outData.getDataDefinitions()) {
-                            arow.setDataElement(dt, row.getDataElement(dt.getKeyName()));
-                        }
-                        outData.add(arow);
-                    } else {
-                        outData.add(row);
-                    }
+                    outData.add(row);
                 }
                 line = bufferedReader.readLine();
                 lineNum++;

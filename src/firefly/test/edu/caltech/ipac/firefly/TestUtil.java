@@ -32,6 +32,7 @@ public class TestUtil {
     public static void logMemUsage(Supplier<String> run) {
         ManagementFactory.getMemoryMXBean().gc();
         long before = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed();
+        LOG.trace(String.format("Memory before=%6.2fMB", before/1024.0/1024.0));
 
         long start = System.currentTimeMillis();
         String desc = run.get();
@@ -39,8 +40,9 @@ public class TestUtil {
         long peak = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed() - before;
 
         ManagementFactory.getMemoryMXBean().gc();
-        long after = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed() - before;
-        LOG.info(String.format("%s:  Memory Usage peak=%6.2fMB  final:%6.2fMB  elapsed:%4.2fsecs", desc, peak/1024.0/1024.0, after/1024.0/1024.0, elapsed/1000.0));
+        long after = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed();
+        LOG.trace(String.format("Memory after=%6.2fMB",  after/1024.0/1024.0));
+        LOG.info(String.format("%s:  Memory Usage peak=%6.2fMB  final:%6.2fMB  elapsed:%4.2fsecs", desc, peak/1024.0/1024.0, (after-before)/1024.0/1024.0, elapsed/1000.0));
     }
 
 

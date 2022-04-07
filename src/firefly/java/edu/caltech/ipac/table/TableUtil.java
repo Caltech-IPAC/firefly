@@ -180,11 +180,14 @@ public class TableUtil {
         RandomAccessFile reader = new RandomAccessFile(inf, "r");
         long skip = ((long)start * (long)tableDef.getLineWidth()) + (long)tableDef.getRowStartOffset();
         int count = 0;
+        TableUtil.ParsedColInfo[] parsedColInfos = Arrays.stream(dg.getDataDefinitions())
+                                                        .map(dt -> tableDef.getParsedInfo(dt.getKeyName()))
+                                                        .toArray(TableUtil.ParsedColInfo[]::new);
         try {
             reader.seek(skip);
             String line = reader.readLine();
             while (line != null && count < rows) {
-                DataObject row = IpacTableUtil.parseRow(dg, line, tableDef);
+                Object[] row = IpacTableUtil.parseRow(line, dg.getDataDefinitions(), parsedColInfos);
                 if (row != null) {
                     dg.add(row);
                     count++;

@@ -140,6 +140,21 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
     }
 
     /**
+     * Add a full row of data based on the columns index.
+     * @param row   the array of data based on the columns index.
+     */
+    public void add(Object[] row) {
+        if (row != null) {
+            if (data.size() == 0) size = 0;                    // reset size if there's no data
+            DataType[] cols = getDataDefinitions();
+            for (int i = 0; i < cols.length; i++) {
+                addData(cols[i].getKeyName(), row[i]);
+            }
+            size++;
+        }
+    }
+
+    /**
      * @param key   if null, meta will be treated as a comment
      * @param value meta value
      */
