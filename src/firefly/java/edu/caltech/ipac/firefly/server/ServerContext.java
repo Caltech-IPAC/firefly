@@ -204,7 +204,6 @@ public class ServerContext {
         Logger.info("",
                 "CACHE_PROVIDER : " + EhcacheProvider.class.getName(),
                 "WORK_DIR       : " + getWorkingDir(),
-                "DEBUG_MODE     : " + AppProperties.getBooleanProperty("debug.mode", false),
                 "Available Cores: " + getAvailableCores() );
 
          if (!getWorkingDir().equals(getSharedWorkingDir())) {

@@ -10,6 +10,7 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.table.io.VoTableReader;
+import org.apache.logging.log4j.Level;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -41,7 +42,8 @@ public class VoTableReaderTest extends ConfigTest {
         // before code refactor
         // [main] INFO  console  - getheader ran 10 times., Elapsed Time: 0.3430 SECONDS., Total time is 4.2630 SECONDS, Avg time is 0.4263 SECONDS.
 
-        StopWatch.getInstance().start("perfTestMidSize").enable().setLogger(Logger.getLogger("console"));
+        Logger.setLogLevel(Level.DEBUG, "edu.caltech");     // exclude starlink warning logs
+        StopWatch.getInstance().start("perfTestMidSize");
         for(int i=0; i < 10; i++) {
             StopWatch.getInstance().start("getheader");
             VoTableReader.analyze(midFile, FileAnalysisReport.ReportType.Details);
@@ -56,7 +58,8 @@ public class VoTableReaderTest extends ConfigTest {
         // before code refactor
         // [main] INFO  console  - getheader ran 10 times., Elapsed Time: 0.6150 SECONDS., Total time is 6.6650 SECONDS, Avg time is 0.6665 SECONDS
 
-        StopWatch.getInstance().start("perfTestLargeSize").enable().setLogger(Logger.getLogger("console"));
+        Logger.setLogLevel(Level.DEBUG, "edu.caltech");
+        StopWatch.getInstance().start("perfTestLargeSize");
         for(int i=0; i < 10; i++) {
             StopWatch.getInstance().start("getheader");
             VoTableReader.analyze(largeFile, FileAnalysisReport.ReportType.Details);

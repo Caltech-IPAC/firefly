@@ -44,7 +44,7 @@ public interface PrimitiveList {
      */
     default int newCapacity(int minCapacity, int oldCapacity) {
         // overflow-conscious code
-        int newCapacity = oldCapacity + (oldCapacity >> 1);
+        int newCapacity = oldCapacity + Math.min(oldCapacity >> 1, 100000);     // setting a newCapacity size limit to ensure HUGE table do not require unnecessary amount of memory to load.
         if (newCapacity - minCapacity < 0)
             newCapacity = minCapacity;
         return newCapacity;
@@ -52,7 +52,13 @@ public interface PrimitiveList {
     }
 
     public static class Objects implements PrimitiveList {
-        private ArrayList<Object> data = new ArrayList<>(100);
+        private ArrayList<Object> data;
+
+        public Objects() { this(1000); }
+
+        public Objects(int initCapacity) {
+            this.data = new ArrayList<>(initCapacity);
+        }
 
         public Class getDataClass() {
             return Object.class;
@@ -83,6 +89,12 @@ public interface PrimitiveList {
         private double[] data;
         private int size;
 
+        public Doubles() { this(1000); }
+
+        public Doubles(int initCapacity) {
+            data  = new double[initCapacity];
+        }
+
         public Class getDataClass() {
             return Double.class;
         }
@@ -112,9 +124,6 @@ public interface PrimitiveList {
          * @param minCapacity
          */
         private void ensureCapacity(int minCapacity) {
-            if (data == null) {
-                data  = new double[100];
-            }
             if (minCapacity >= data.length) {
                 data = Arrays.copyOf(data, newCapacity(minCapacity, data.length));
             }
@@ -130,6 +139,12 @@ public interface PrimitiveList {
     public static class Floats implements PrimitiveList {
         private float[] data;
         private int size;
+
+        public Floats() { this(1000); }
+
+        public Floats(int initCapacity) {
+            data  = new float[initCapacity];
+        }
 
         public Class getDataClass() {
             return Float.class;
@@ -156,9 +171,6 @@ public interface PrimitiveList {
         }
 
         private void ensureCapacity(int minCapacity) {
-            if (data == null) {
-                data = new float[100];
-            }
             if (minCapacity >= data.length) {
                 data = Arrays.copyOf(data, newCapacity(minCapacity, data.length));
             }
@@ -174,6 +186,12 @@ public interface PrimitiveList {
     public static class Longs implements PrimitiveList {
         private long[] data;
         private int size;
+
+        public Longs() { this(1000); }
+
+        public Longs(int initCapacity) {
+            data  = new long[initCapacity];
+        }
 
         public Class getDataClass() {
             return Long.class;
@@ -200,9 +218,6 @@ public interface PrimitiveList {
         }
 
         private void ensureCapacity(int minCapacity) {
-            if (data == null) {
-                data = new long[100];
-            }
             if (minCapacity >= data.length) {
                 data = Arrays.copyOf(data, newCapacity(minCapacity,data.length));
             }
@@ -218,6 +233,12 @@ public interface PrimitiveList {
     public static class Integers implements PrimitiveList {
         private int[] data = null;
         private int size;
+
+        public Integers() { this(1000); }
+
+        public Integers(int initCapacity) {
+            data  = new int[initCapacity];
+        }
 
         public Class getDataClass() {
             return Integer.class;
@@ -244,9 +265,6 @@ public interface PrimitiveList {
         }
 
         private void ensureCapacity(int minCapacity) {
-            if (data == null) {
-                data = new int[100];
-            }
             if (minCapacity >= data.length) {
                 data = Arrays.copyOf(data, newCapacity(minCapacity, data.length));
             }
@@ -262,6 +280,13 @@ public interface PrimitiveList {
     public static class Booleans implements PrimitiveList {
         private boolean[] data = null;
         private int size;
+
+        public Booleans() { this(1000); }
+
+        public Booleans(int initCapacity) {
+            data  = new boolean[initCapacity];
+        }
+
 
         public Class getDataClass() {
             return Boolean.class;
@@ -288,9 +313,6 @@ public interface PrimitiveList {
         }
 
         private void ensureCapacity(int minCapacity) {
-            if (data == null) {
-                data = new boolean[100];
-            }
             if (minCapacity >= data.length) {
                 data = Arrays.copyOf(data, newCapacity(minCapacity, data.length));
             }

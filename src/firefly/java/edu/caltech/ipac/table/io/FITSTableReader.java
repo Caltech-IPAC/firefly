@@ -457,6 +457,7 @@ public final class FITSTableReader
                 if (colUnits!=null && colUnits.length>1) idxDT.setUnits(colUnits[1]);
                 dataTypes.add(dataDT);
                 DataGroup dataGroup = new DataGroup(desc, dataTypes);
+                dataGroup.setInitCapacity(data.length);
                 for (int i = 0; (i < data.length); i++) {
                     DataObject aRow = new DataObject(dataGroup);
                     aRow.setDataElement(idxDT, i);
@@ -486,6 +487,7 @@ public final class FITSTableReader
                 }
 
                 DataGroup dataGroup = new DataGroup(desc, dataTypes);
+                dataGroup.setInitCapacity(data[0].length);
 
                 DataType[] dd;
                 for (int row = 0; row < data[0].length; row++) {
@@ -580,6 +582,7 @@ public final class FITSTableReader
 
         // creating DataGroup rows.
         DataGroup dataGroup = new DataGroup(table.getName(), dataTypes);
+        dataGroup.setInitCapacity((int)table.getRowCount());
         for (long row = 0; row < table.getRowCount(); row++){
             addRowToDataGroup(table, dataGroup, colIdxMap, row, strategy);
         }

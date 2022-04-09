@@ -12,6 +12,8 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.ThrowableUtil;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.ConsoleAppender;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilder;
@@ -96,9 +98,9 @@ public class Logger {
 
     /**
      * Programmatically send all logs to System.out, but have it turned off.
-     * Anywhere in your code, use setProgLog() to control what get printed to console.
+     * Anywhere in your code, use setLogLevel() to control what get printed to console.
      */
-    public static void initProgLog() {
+    private static void initConsoleLog() {
         try {
             ConfigurationBuilder<BuiltConfiguration> builder = ConfigurationBuilderFactory.newConfigurationBuilder();
             builder.add(builder.newAppender("console", "CONSOLE").addAttribute("target", ConsoleAppender.Target.SYSTEM_OUT));
@@ -116,7 +118,16 @@ public class Logger {
         }
     }
 
-    public static void setProLog(Level level, String logger) {
+    public static void setLogLevel(Level level) {
+        setLogLevel(level, null);
+    }
+
+    public static void setLogLevel(Level level, String logger) {
+        Appender console = ((LoggerContext) LogManager.getContext(false)).getConfiguration().getAppender("console");
+        if (console == null) {
+            initConsoleLog();
+        }
+
         logger = StringUtils.isEmpty(logger) ? "" : logger;
         if (logger.length() == 0) {
             Configurator.setRootLevel(level);
@@ -127,7 +138,8 @@ public class Logger {
                     level == Level.WARN ? java.util.logging.Level.WARNING :
                     level == Level.INFO ? java.util.logging.Level.INFO :
                     level == Level.DEBUG ? java.util.logging.Level.FINE :
-                    java.util.logging.Level.FINER;
+                    level == Level.TRACE ? java.util.logging.Level.FINER :
+                                java.util.logging.Level.OFF;
         java.util.logging.Logger.getLogger(logger).setLevel(jl);
     }
 

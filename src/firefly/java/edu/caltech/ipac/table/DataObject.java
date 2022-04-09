@@ -71,6 +71,21 @@ public class DataObject implements Serializable, Cloneable {
         }
     }
 
+    /**
+     * Set the data for this DataObject(row)
+     * @param data the full row of data in the same order as its columns
+     */
+    public void setData(Object[] data) {
+        DataType[] cols = group.getDataDefinitions();
+        for(int i = 0; i < cols.length; i++) {
+            if (rowData != null) {
+                rowData.put(cols[i].getKeyName(), data[i]);
+            } else {
+                group.setData(cols[i].getKeyName(), rowNum, data[i]);
+            }
+        }
+    }
+
     public String getFixedFormatedData(DataType dt) {
         return dt.formatFixedWidth(getDataElement(dt));      // this is used by ipac table only
     }

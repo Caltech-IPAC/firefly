@@ -29,14 +29,13 @@ public class StopWatch {
         }
     };
 
-    private static boolean DEBUG_MODE = AppProperties.getBooleanProperty("debug.mode", false);
     private static ThreadLocal<StopWatch> stopWatch = new ThreadLocal<StopWatch>(){
                         protected StopWatch initialValue() {
                             return new StopWatch();
                         }
                     };
     private Map<String, Tracker> logs = new HashMap<String, Tracker>();
-    private Logger.LoggerImpl logger = Logger.getLogger("StopWatch");
+    private Logger.LoggerImpl logger = Logger.getLogger();
 
     private StopWatch() {
     }
@@ -54,7 +53,6 @@ public class StopWatch {
      * @return
      */
     public StopWatch enable() {
-        DEBUG_MODE = true;
         return this;
     }
 
@@ -64,8 +62,6 @@ public class StopWatch {
     }
 
     public StopWatch start(String desc) {
-        if (!DEBUG_MODE) return this;        // if not running in debug mode, ignore StopWatch logging
-
         Tracker l = getTracker(desc);
         if (l == null) {
             l = new Tracker(desc, logger);
@@ -88,8 +84,6 @@ public class StopWatch {
     }
 
     public StopWatch printLog(String desc, Unit unit) {
-
-        if (!DEBUG_MODE) return this;        // if not running in debug mode, ignore StopWatch logging
 
         if (getTracker(desc) != null) {
             getTracker(desc).printLog(unit);
@@ -152,9 +146,9 @@ public class StopWatch {
         public void printLog(Unit unit) {
             if (isRunning) stops();
             if (numStops == 1) {
-                logger.info(String.format("%s ran with elapsed time of %.4f %s", desc, getElapsedTime(unit),  unit.name()));
+                logger.debug(String.format("%s ran with elapsed time of %.4f %s", desc, getElapsedTime(unit),  unit.name()));
             } else {
-                logger.info(String.format("%s ran %d times.", desc, numStops),
+                logger.debug(String.format("%s ran %d times.", desc, numStops),
                              String.format("Elapsed Time: %.4f %s.", getElapsedTime(unit), unit.name()),
                              String.format("Total time is %.4f %s", getTotalTime(unit), unit.name()),
                              String.format("Avg time is %.4f %s.", getAvgTime(unit), unit.name()));

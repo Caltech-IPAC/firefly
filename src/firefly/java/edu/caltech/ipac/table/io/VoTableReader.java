@@ -240,6 +240,7 @@ public class VoTableReader {
 
         DataGroup dg = getTableHeader(tableEl);
         List<DataType> cols = Arrays.asList(dg.getDataDefinitions());
+        dg.setInitCapacity((int)table.getRowCount());
 
         // post-process to handle custom logic
         DataType raCol = cols.stream().filter(dt -> HMS_UCD_PATTERN.matcher(String.valueOf(dt.getUCD())).matches())

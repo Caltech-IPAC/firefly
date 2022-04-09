@@ -169,6 +169,7 @@ public class EmbeddedDbUtil {
         sql = dbAdapter.translateSql(sql);
         String ddSql = refTable == null ? null : dbAdapter.getDDSql(refTable);
 
+        logger.trace("execQuery => SQL: " + sql);
         try {
             DataGroup dg = (DataGroup)JdbcFactory.getTemplate(dbInstance).query(sql, rs -> {
                 return dbToDataGroup(rs, dbInstance, ddSql);
@@ -308,6 +309,7 @@ public class EmbeddedDbUtil {
             }
             dg.add(row);
         } while (rs.next()) ;
+        logger.trace(String.format("converting a %,d rows ResultSet into a DataGroup", dg.size()));
         return dg;
     }
 
@@ -526,21 +528,27 @@ public class EmbeddedDbUtil {
 
 
     private static void doTableLoad(JdbcTemplate jdbc, String insertDataSql, DataGroup data) {
-
-        jdbc.batchUpdate(insertDataSql, new BatchPreparedStatementSetter() {
-            public void setValues(PreparedStatement ps, int i) throws SQLException {
-                Object[] row = data.get(i).getData();
-                Object[] rowWithIdx = new Object[ row.length + 2];
-                System.arraycopy(row, 0, rowWithIdx, 0, row.length);
-                rowWithIdx[row.length] = i;
-                rowWithIdx[row.length+1] = i;
-
-                for (int cidx = 0; cidx < rowWithIdx.length; cidx++) ps.setObject(cidx+1, rowWithIdx[cidx]);
-            }
-            public int getBatchSize() {
-                return data.size();
-            }
-        });
+        int loaded = 0;
+        int rows = data.size();
+        while (loaded < rows) {
+            int batchSize = Math.min(rows-loaded, 10000);   // set batchSize limit to 10k to  ensure HUGE table do not require unnecessary amount of memory to load
+            final int roffset = loaded;
+            loaded += batchSize;
+            jdbc.batchUpdate(insertDataSql, new BatchPreparedStatementSetter() {
+                final DataType[] cols = data.getDataDefinitions();
+                public void setValues(PreparedStatement ps, int i) throws SQLException {
+                    int ridx = roffset+i;
+                    for (int cidx = 0; cidx < cols.length; cidx++)  {
+                        ps.setObject(cidx+1, data.getData(cols[cidx].getKeyName(), ridx));
+                    }
+                    ps.setObject(cols.length+1, i);         // add ROW_IDX
+                    ps.setObject(cols.length+2, i);         // add ROW_NUM
+                }
+                public int getBatchSize() {
+                    return batchSize;
+                }
+            });
+        }
     }
 
     private static DataType[] makeDbCols(DataGroup dg) {
