@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.core.background;
 
+import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -16,6 +17,7 @@ import static edu.caltech.ipac.firefly.core.background.JobInfo.PHASE.ABORTED;
  * @version : $
  */
 public interface Job extends Callable<String> {
+
     enum Type {SEARCH, PACKAGE}
 
     String getJobId();
@@ -31,6 +33,8 @@ public interface Job extends Callable<String> {
     SrvParam getParams();
 
     Type getType();
+
+    void runAs(RequestOwner ro);
 
     String run() throws Exception;
 
@@ -66,15 +70,19 @@ public interface Job extends Callable<String> {
     default String call() {
 
         setPhase(JobInfo.PHASE.EXECUTING);
+        JobManager.logJobInfo(getJobInfo());
+
         try {
             String results = run();
             setPhase(JobInfo.PHASE.COMPLETED);
+            JobManager.logJobInfo(getJobInfo());
             return results;
         } catch (InterruptedException | DataAccessException.Aborted e) {
             setPhase(ABORTED);
-            Logger.getLogger().error(e, "Job aborted");
+            JobManager.logJobInfo(getJobInfo());
         } catch (Exception e) {
             setError(500, e.getMessage());
+            JobManager.logJobInfo(getJobInfo());
             Logger.getLogger().error(e);
         }
         return null;
