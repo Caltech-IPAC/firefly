@@ -12,20 +12,20 @@
  */
 
 
-import {get, isNumber, isUndefined} from 'lodash';
+import {isNumber, isUndefined} from 'lodash';
 import {encodeServerUrl, getRootURL} from '../util/WebUtil.js';
 import {CysConverter} from './CsysConverter.js';
 import {makeDevicePt, makeWorldPt} from './Point.js';
 import {
-    ang2pixNestNEW,
+    ang2pixNest,
     HealpixIndex,
     ORDER_MAX,
     radecToPolar,
     SpatialVector
 } from '../externalSource/aladinProj/HealpixIndex.js';
 import {computeDistance, convert, toDegrees, toRadians} from './VisUtil.js';
-import {getScreenPixScaleArcSec, replaceHeader} from './WebPlot.js';
-import {primePlot} from './PlotViewUtil.js';
+import {getScreenPixScaleArcSec, isHiPSAitoff, replaceProjection} from './WebPlot.js';
+import {getFoV, primePlot} from './PlotViewUtil.js';
 import {CoordinateSys} from './CoordSys.js';
 import {getFireflySessionId} from '../Firefly';
 import {makeHiPSProjection} from './WebPlot';
@@ -35,7 +35,7 @@ export const MAX_SUPPORTED_HIPS_LEVEL= ORDER_MAX-1;
 
 
 
-var workingHealpixIdx;
+let workingHealpixIdx;
 function getHealpixIndex(nside) {
     if (!isNumber(nside)) return undefined;
     if (!workingHealpixIdx || workingHealpixIdx.nside!==nside) workingHealpixIdx= new HealpixIndex(nside);
@@ -45,15 +45,24 @@ function getHealpixIndex(nside) {
 
 
 /**
- *
  * @param {WebPlot|CysConverter} plot
  * @param {WorldPt} wp new center of projection
  */
-export function changeProjectionCenter(plot, wp) {
+export const changeProjectionCenter= (plot, wp) => changeProjectionCenterAndType(plot, wp);
+
+/**
+ * @param {WebPlot|CysConverter} plot
+ * @param {WorldPt} [wp] new center of projection, if undefined then it will keep the same center point
+ * @param {boolean} [fullSky] true if this is a fullSky projection (AITOFF), if undefined then it will stay the same
+ * @return {WebPlot}
+ */
+export function changeProjectionCenterAndType(plot, wp, fullSky) {
     if (!plot) return undefined;
-    wp= convert(wp, plot.projection.coordSys);
-    const header= {...plot.projection.header, crval1:wp.x, crval2:wp.y};
-    return replaceHeader(plot,header);
+    const fullSkyToUse= isUndefined(fullSky) ? isHiPSAitoff(plot) : fullSky;
+    const cWp= convert(wp, plot.projection.coordSys);
+    const x= cWp?.x ?? plot.projection.header.crval1;
+    const y= cWp?.y ?? plot.projection.header.crval2;
+    return replaceProjection(plot, makeHiPSProjection(plot.projection.coordSys, x, y, fullSkyToUse));
 }
 
 
@@ -126,9 +135,9 @@ export function getHiPSNorderlevel(plot, limitToImageDepth= false) {
     let norder= getNOrderForPixArcSecSize(screenPixArcsecSize);
 
     if (limitToImageDepth) {
-        let maxOrder= Number(get(plot, 'hipsProperties.hips_order'));
+        let maxOrder= Number(plot.hipsProperties?.hips_order);
         if (!maxOrder) {
-            const hipsPixelScale= Number(get(plot, 'hipsProperties.hips_pixel_scale'));
+            const hipsPixelScale= Number(plot.hipsProperties?.hips_pixel_scale);
             maxOrder= hipsPixelScale ? getNOrderForPixArcSecSize(hipsPixelScale*3600) : 3;
         }
         norder= Math.min(norder, maxOrder);
@@ -162,7 +171,7 @@ function getNOrderForPixArcSecSize(sizeInArcSec) {
 export function makeHiPSTileUrl(plot, nOrder, tileNumber) {
     if (!plot) return null;
     const dir= Math.floor(tileNumber/10000)*10000;
-    const exts= get(plot, 'hipsProperties.hips_tile_format', 'jpg');
+    const exts= plot.hipsProperties?.hips_tile_format ?? 'jpg';
     const cubeExt= plot.cubeDepth>1 && plot.cubeIdx>0 ? '_'+plot.cubeIdx : '';
     return makeHipsUrl(`${plot.hipsUrlRoot}/Norder${nOrder}/Dir${dir}/Npix${tileNumber}${cubeExt}.${getHiPSTileExt(exts)}`, plot.proxyHips);
 }
@@ -182,7 +191,7 @@ export function makeHiPSAllSkyUrl(urlRoot,exts,cubeIdx= 0, proxy= false) {
 
 export function makeHiPSAllSkyUrlFromPlot(plot) {
     if (!plot) return null;
-    const exts= get(plot, 'hipsProperties.hips_tile_format', 'jpg');
+    const exts= plot.hipsProperties?.hips_tile_format ?? 'jpg';
     const cubeIdx= plot.cubeDepth>1 && plot.cubeIdx>0 ? plot.cubeIdx : 0;
     return makeHiPSAllSkyUrl(plot.hipsUrlRoot, exts, cubeIdx, plot.proxyHips);
 
@@ -236,38 +245,35 @@ export function getPointMaxSide(plot, viewDim) {
     const centerDevPt= makeDevicePt(width/2, height/2);
     const centerWp= cc.getWorldCoords( centerDevPt, plot.imageCoordSys);
 
-    const pt0= cc.getWorldCoords( makeDevicePt(0,0), plot.imageCoordSys);
     const ptWidth= cc.getWorldCoords( makeDevicePt(width,0), plot.imageCoordSys);
     const ptHeight= cc.getWorldCoords( makeDevicePt(0,height), plot.imageCoordSys);
 
 
     if (!ptWidth || !ptHeight) {
-        return {centerWp,centerDevPt, fov:180};
+        return {centerWp,centerDevPt, fov:isHiPSAitoff(plot) ? 360 : 180};
     }
-
-    const widthInDeg= computeDistance(pt0, ptWidth);
-    const heightInDeg= computeDistance(pt0, ptHeight);
-    return {centerWp, centerDevPt, fov:Math.max(widthInDeg,heightInDeg)};
+    return {centerWp, centerDevPt, fov:getFoV(plot)};
 }
 
 
 /**
  *
  * @param {PlotView} pv
- * @param {number} size in degrees
+ * @param {number} fov in degrees
  * @return {number} a zoom level
  */
-export function getHiPSZoomLevelToFit(pv,size) {
+export function getHiPSZoomLevelForFOV(pv, fov) {
     const {width,height}=pv.viewDim;
     const plot= primePlot(pv);
     if (!plot || !width || !height) return 1;
-
-    // make version of plot centered at 0,0
-    const tmpPlot= changeProjectionCenter(plot, makeWorldPt(0,0, plot.imageCoordSys));
+   
+    // make version of plot centered at 0,0 with zoom level 1
+    const tmpPlot= changeProjectionCenter({...plot, zoomFactor:1}, makeWorldPt(0,0, plot.imageCoordSys));
     const cc= CysConverter.make(tmpPlot);
-    const pt1= cc.getImageCoords( makeWorldPt(0,0, plot.imageCoordSys));
-    const pt2= cc.getImageCoords( makeWorldPt(size,0, plot.imageCoordSys));
-    return width/Math.abs(pt2.x-pt1.x);
+    const pt1= cc.getDeviceCoords( makeWorldPt(0,0, plot.imageCoordSys));
+    const pt2= cc.getDeviceCoords( makeWorldPt(fov/2,0, plot.imageCoordSys));
+    const devSize= Math.abs(pt2.x-pt1.x)*2;
+    return width / devSize;
 }
 
 
@@ -352,7 +358,7 @@ function makeHealpixCornerCacheTool() {
  * @param {number} nside
  * @param {HealpixIndex} healpixIdx
  */
-var healpixCache;
+let healpixCache;
 
 export function getHealpixCornerTool() {
     if (!healpixCache) healpixCache= makeHealpixCornerCacheTool();
@@ -371,8 +377,8 @@ export function getHealpixPixel(plot, wp) {
     const {norder}= getHiPSNorderlevel(plot, true);
     if (norder>MAX_SUPPORTED_HIPS_LEVEL-9) return undefined;
     const polar = radecToPolar(wp.x,wp.y);
-    const tilePixel= ang2pixNestNEW(polar.theta, polar.phi,2**(norder));
-    const pixel= ang2pixNestNEW(polar.theta, polar.phi,2**(norder+9));
+    const tilePixel= ang2pixNest(polar.theta, polar.phi,2**(norder));
+    const pixel= ang2pixNest(polar.theta, polar.phi,2**(norder+9));
     const tileCoords= healpixPixelTo512TileXY(pixel);
     return { norder:norder+9, tileNorder: norder, pixel, tilePixel, tileCoords };
 }
@@ -418,14 +424,18 @@ function healpixPixelTo512TileXY(pixel) {
  * @param {WorldPt} centerWp - center of visible area, coordinate system of this point should be same as the projection
  * @param {number} fov - Math.max(width, height) of the field of view in degrees (i think)
  * @param {CoordinateSys} dataCoordSys
- * @return {Array.<{ipix:string, wpCorners:Array.<WorldPt>}>} an array of objects the contain the healpix
+ * @param {Boolean} isAitoff
+ * @return {Array.<{ipix:number, wpCorners:Array.<WorldPt>}>} an array of objects the contain the healpix
  *            pixel number and a worldPt array of corners
  */
-export function getVisibleHiPSCells (norder, centerWp, fov, dataCoordSys) {
+export function getVisibleHiPSCells (norder, centerWp, fov, dataCoordSys, isAitoff= false) {
     const healpixCache= getHealpixCornerTool();
     const dataCenterWp= convert(centerWp, dataCoordSys);
 
-    if (fov>80 && norder<=3) { // get all the cells and filter them
+    if (isAitoff && fov > 130 && norder<=3) {
+        return healpixCache.getFullCellList(norder,dataCoordSys);
+    }
+    else if (fov>80 && norder<=3) { // get all the cells and filter them
         return filterAllSky(dataCenterWp, healpixCache.getFullCellList(norder,dataCoordSys));
     }
     else { // get only the healpix number for the fov and create the cell list
@@ -435,19 +445,30 @@ export function getVisibleHiPSCells (norder, centerWp, fov, dataCoordSys) {
     }
 }
 
+export function getCornersForCell(norder, ipix, dataCoordSys) {
+    return (norder<=3) ?
+        getHealpixCornerTool().getFullCellList(norder, dataCoordSys)?.[ipix]?.wpCorners :
+        getHealpixCornerTool().makeCornersForPix(ipix, 2**norder, dataCoordSys); // this branch in this call is untested
+
+}
+
 /**
  * get any HiPS cells which is fully or partially visible within given fov area
  * @param norder
  * @param centerWp
  * @param fov
  * @param dataCoordSys
+ * @param {Boolean} isAitoff
  * @returns {*}
  */
-export function getAllVisibleHiPSCells (norder, centerWp, fov, dataCoordSys) {
+export function getAllVisibleHiPSCells (norder, centerWp, fov, dataCoordSys, isAitoff) {
     const healpixCache= getHealpixCornerTool();
     const dataCenterWp= convert(centerWp, dataCoordSys);
 
-    if (fov>80 && norder<=3) { // get all the cells and filter them
+    if (isAitoff && fov > 130 && norder<=3) {
+        return healpixCache.getFullCellList(norder,dataCoordSys);
+    }
+    else if (fov>80 && norder<=3) { // get all the cells and filter them
         const cells = healpixCache.getFullCellList(norder,dataCoordSys);
 
         return cells.filter( (cell) =>{
@@ -514,6 +535,14 @@ export function resolveHiPSConstant(c) {
 
 }
 
+export function tileCoordsWrap(cc, [wp1,wp2,wp3,wp4], factor= 3) {
+    const wrap=
+        cc.coordsWrap(wp1,wp2,factor) ||
+        cc.coordsWrap(wp1,wp4,factor) ||
+        cc.coordsWrap(wp2,wp3,factor) ||
+        cc.coordsWrap(wp3,wp4,factor);
+    return wrap;
+}
 
 /**
  * get property value, some key may have alternate one to get the value, need more investigation
@@ -565,7 +594,7 @@ export function isTileInside(norder1, npix1, norder2, npix2) {
  */
 export function replaceHiPSProjection(plot, coordinateSys, wp = makeWorldPt(0, 0)) {
     const newWp = convert(wp, coordinateSys);
-    const projection = makeHiPSProjection(coordinateSys, newWp.x, newWp.y);
+    const projection = makeHiPSProjection(coordinateSys, newWp.x, newWp.y, isHiPSAitoff(plot));
     //note- the dataCoordSys stays the same
     return {...plot, imageCoordSys: projection.coordSys, projection, allWCSMap: {'': projection}};
 }

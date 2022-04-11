@@ -12,7 +12,7 @@ import {toRegion} from './ShapeToRegion.js';
 import {getDrawobjArea,  isScreenPtInRegion, makeHighlightShapeDataObj} from './ShapeHighlight.js';
 import CsysConverter from '../CsysConverter.js';
 import {has, isNil, get, set, isEmpty} from 'lodash';
-import {getPlotViewById, getCenterOfProjection} from '../PlotViewUtil.js';
+import {getPlotViewById, getCenterOfProjection, getFoV} from '../PlotViewUtil.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {getPixScaleArcSec, getScreenPixScaleArcSec} from '../WebPlot.js';
 import {toRadians, toDegrees} from '../VisUtil.js';
@@ -20,7 +20,27 @@ import {rateOpacity, maximizeOpacity} from '../../util/Color.js';
 
 const FONT_FALLBACK= ',sans-serif';
 
+/**
+ * @typedef {Object} UnitType
+ * @type {Enum}
+ * @prop PIXEL
+ * @prop ARCSEC
+ * @prop IMAGE_PIXEL
+ */
 const UnitType= new Enum(['PIXEL','ARCSEC','IMAGE_PIXEL']);
+/**
+ * @typedef {Object} ShapeType
+ * @type {Enum}
+ * @prop Line
+ * @prop Text
+ * @prop Circle
+ * @prop Rectangle
+ * @prop Ellipse
+ * @prop Annulus
+ * @prop BoxAnnulus
+ * @prop EllipseAnnulus
+ * @prop Polygon
+ */
 export const ShapeType= new Enum(['Line', 'Text','Circle', 'Rectangle', 'Ellipse',
                          'Annulus', 'BoxAnnulus', 'EllipseAnnulus', 'Polygon'], { ignoreCase: true });
 export const SHAPE_DATA_OBJ= 'ShapeDataObj';
@@ -53,7 +73,7 @@ export function flipTextLocAroundY(plot, textLoc) {
             TextLocation.REGION_NE, TextLocation.REGION_NW,
             TextLocation.REGION_SE, TextLocation.REGION_SW];
 
-        var idx = locSet.findIndex((loc) => (loc === textLoc));
+        let idx = locSet.findIndex((loc) => (loc === textLoc));
 
         if (idx >= 0) {
             idx = idx%2 ? idx - 1 : idx + 1;
@@ -66,7 +86,7 @@ export function flipTextLocAroundY(plot, textLoc) {
 export function getPVRotateAngle(plot, angle) {
      const pv = getPlotViewById(visRoot(), plot.plotId);
 
-     var angleInRadian = pv.rotation ? convertAngle('deg', 'radian', pv.rotation) : 0.0;
+     let angleInRadian = pv.rotation ? convertAngle('deg', 'radian', pv.rotation) : 0.0;
      if (pv.flipY) {
          angleInRadian = Math.PI - (angle - angleInRadian);
      } else {
@@ -222,6 +242,7 @@ function makePolygon(ptAry, drawObjAry=null) {
  *  @param   pt
  *  @param  text
  *  @param  rotationAngle - the rotation angle + 'deg'
+ *  @param isLonLine
  * @return {*}
  */
 
@@ -235,15 +256,15 @@ function makeTextWithOffset(textOffset, pt, text) {
 
 
 function makeDrawParams(drawObj,def={}) {
-    var style= drawObj.style || def.style || Style.STANDARD;
-    var lineWidth= drawObj.lineWidth || def.lineWidth || DEF_WIDTH;
-    var textLoc= drawObj.textLoc || def.textLoc || TextLocation.DEFAULT;
-    var unitType= drawObj.unitType || def.unitType || UnitType.PIXEL;
-    var fontName= drawObj.fontName || def.fontName || 'helvetica';
-    var fontSize= drawObj.fontSize || def.fontSize || DEFAULT_FONT_SIZE;
-    var fontWeight= drawObj.fontWeight || def.fontWeight || 'normal';
-    var fontStyle= drawObj.fontStyle || def.fontStyle || 'normal';
-    var rotationAngle = drawObj.rotationAngle||undefined;
+    const style= drawObj.style || def.style || Style.STANDARD;
+    const lineWidth= drawObj.lineWidth || def.lineWidth || DEF_WIDTH;
+    const textLoc= drawObj.textLoc || def.textLoc || TextLocation.DEFAULT;
+    const unitType= drawObj.unitType || def.unitType || UnitType.PIXEL;
+    const fontName= drawObj.fontName || def.fontName || 'helvetica';
+    const fontSize= drawObj.fontSize || def.fontSize || DEFAULT_FONT_SIZE;
+    const fontWeight= drawObj.fontWeight || def.fontWeight || 'normal';
+    const fontStyle= drawObj.fontStyle || def.fontStyle || 'normal';
+    const rotationAngle = drawObj.rotationAngle||undefined;
 
     return {
         color: DrawUtil.getColor(drawObj.color,def.color),
@@ -408,7 +429,7 @@ function getRectangleCenterScreenPt(drawObj,plot,unitType) {
  * @param width  in arcsec
  * @param height in arcsec
  * @param {CysConverter} plot
- * @returns {{upperLeft: *, upperRight: *, lowerLeft: *, lowerRight: *}} corners in world coordinate
+ * @returns {{upperLeft: *, upperRight: *, lowerLeft: *, lowerRight: *, center:WorldPt}} corners in world coordinate
  */
 function getRectCorners(pt, isCenter, width, height, plot) {
     let wpt = plot.getWorldCoords(pt);
@@ -566,7 +587,7 @@ export function drawShape(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
             drawLine(drawObj, ctx,  plot, drawParams, onlyAddToPath);
             break;
         case ShapeType.Circle:
-            drawCircle(drawObj, ctx,  plot, drawParams, onlyAddToPath);
+            drawCircle(drawObj, ctx,  plot, drawParams);
             break;
         case ShapeType.Rectangle:
             drawRectangle(drawObj, ctx,  plot, drawParams, onlyAddToPath);
@@ -585,17 +606,14 @@ export function drawShape(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
 }
 
 function boxIntersectRect(pts, plot, w, h, isCenter, sRect, renderOptions) {
-    let corners_rect = [];     // corners in device coordinate
+    const corners_rect = [];     // corners in device coordinate
 
     if (isCenter) {
         if (!sRect) return false;
 
         for (let i = 0; i < 4; i++) {
-            let c_pt = plot.getDeviceCoords(sRect.corners[i]);
-
-            if (!c_pt) {
-                return false;
-            }
+            const c_pt = plot.getDeviceCoords(sRect.corners[i]);
+            if (!c_pt) return false;
             corners_rect.push(c_pt);
         }
     } else {
@@ -606,7 +624,7 @@ function boxIntersectRect(pts, plot, w, h, isCenter, sRect, renderOptions) {
         const t_y = translation? translation.y : 0;
 
         for (let i = 0; i < 0; i++) {
-            let c_pt = plot.getDeviceCoords(makeDevicePt(corner_loc[i][0] * w + pt.x + t_x,
+            const c_pt = plot.getDeviceCoords(makeDevicePt(corner_loc[i][0] * w + pt.x + t_x,
                 corner_loc[i][1] * h + pt.y + t_y));
 
             if (!c_pt) {
@@ -796,8 +814,6 @@ function drawCircle(drawObj, ctx,  plot, drawParams) {
     let cenDevPt;
     let inView = false;
 
-    const {width: vWidth, height: vHeight} = plot.viewDim;
-
     if (pts.length===1 && !isNil(radius)) {
         switch (unitType) {
             case UnitType.PIXEL: screenRadius= radius;
@@ -861,7 +877,7 @@ export function drawText(drawObj, ctx, plot, inPt, drawParams) {
            textAngle=0, offsetOnScreen=false}= drawObj;
     let { textAlign='start'} = drawObj;
     //the angle of the grid line
-    let angle=0;
+    let angle;
     let pvAngle=undefined;
 
     if (rotationAngle){
@@ -1411,9 +1427,59 @@ function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
         return retPt;
 
     };
+    // const isPolygonInDisplay = (pts, style, plot) => {
+    //     let wrapping= false;
+    //     const devPts = pts.map((onePt,idx) => {
+    //         const dPt= plot.getDeviceCoords(onePt);
+    //         if (idx===0 || !dPt) return dPt;
+    //         if (plot.coordsWrap(onePt, pts[idx-1])) {
+    //             wrapping= true;
+    //             return undefined;
+    //         }
+    //         return dPt;
+    //     });
+    //
+    //     const {width, height} = plot.viewDim;
+    //
+    //     // detect if none of the points are visible
+    //     const anyVisible = devPts.find((onePt) => {
+    //         return (onePt && (onePt.x >= 0) && (onePt.x < width) && (onePt.y >= 0) && (onePt.y < height));
+    //     });
+    //
+    //     if (!anyVisible) {
+    //         return {devPts, inDisplay: 0};
+    //     }
+    //
+    //     let inDisplay = 0;
+    //     const newPts = devPts.map((onePt, idx) => {
+    //         const newPt = adjustPointOnDisplay(pts[idx], onePt);
+    //         if (newPt) {
+    //             inDisplay++;
+    //         }
+    //         return newPt;
+    //     });
+    //
+    //
+    //     return {devPts:newPts, inDisplay, wrapping};
+    // };
 
     const isPolygonInDisplay = (pts, style, plot) => {
-        const devPts = pts.map((onePt) => plot.getDeviceCoords(onePt));
+        let wrapping= false;
+        const checkWrap= Boolean(plot.projection.isWrappingProjection()) && getFoV(plot) >200;
+        let devPts = pts.map((onePt,idx) => {
+            const dPt= plot.getDeviceCoords(onePt);
+            if (idx===0 || !dPt) return dPt;
+            if (checkWrap && plot.coordsWrap(onePt, pts[idx-1])) {
+                wrapping= true;
+                return undefined;
+            }
+            return dPt;
+        });
+
+        if (checkWrap) {
+            devPts= devPts.filter( (pt) => pt);
+        }
+
         const {width, height} = plot.viewDim;
 
         // detect if none of the points are visible
@@ -1435,16 +1501,16 @@ function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
         });
 
 
-        return {devPts:newPts, inDisplay};
+        return {devPts:newPts, inDisplay, wrapping};
     };
 
     const {pts, renderOptions}= drawObj;
 
     if (pts) {
 
-        const {devPts, inDisplay} = isPolygonInDisplay(pts, style, plot);  // check if polygon is out of display
+        const {devPts, inDisplay, wrapping} = isPolygonInDisplay(pts, style, plot);  // check if polygon is out of display
 
-        if (inDisplay <= 0) return;   // not visible
+        if (inDisplay <= 0 || wrapping) return;   // not visible
 
         if ((style === Style.FILL)) {
             if (inDisplay < devPts.length) {

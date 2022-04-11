@@ -6,8 +6,10 @@
 import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import {primePlot, isDrawLayerVisible} from '../visualize/PlotViewUtil.js';
-import {getHiPSNorderlevel, getVisibleHiPSCells,
-       getPointMaxSide, getMaxDisplayableHiPSGridLevel} from '../visualize/HiPSUtil.js';
+import {
+    getHiPSNorderlevel, getVisibleHiPSCells,
+    getPointMaxSide, getMaxDisplayableHiPSGridLevel, tileCoordsWrap, changeProjectionCenterAndType
+} from '../visualize/HiPSUtil.js';
 import FootprintObj from '../visualize/draw/FootprintObj.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
@@ -17,7 +19,8 @@ import {makeImagePt} from '../visualize/Point.js';
 import CysConverter from '../visualize/CsysConverter';
 import {getUIComponent} from './HiPSGridlUI.jsx';
 import {getAllPlotViewIdByOverlayLock} from '../visualize/PlotViewUtil';
-import {clone} from '../util/WebUtil.js';
+import {isDefined} from '../util/WebUtil.js';
+import {isHiPSAitoff} from 'firefly/visualize/WebPlot.js';
 
 const ID= 'HIPS_GRID';
 const TYPE_ID= 'HIPS_GRID_TYPE';
@@ -95,11 +98,12 @@ function computeDrawData(drawLayer,action, gridType, gridLockLevel, isVisible = 
     const {payload}= action;
     const plotIdAry= payload.plotId ? getAllPlotViewIdByOverlayLock(visRoot(), payload.plotId, false, true) : payload.plotIdAry;
     if (plotIdAry) {
-        const drawData= {data: clone(drawLayer.drawData.data)};
+        const drawData= {data: {...drawLayer.drawData.data}};
+        const projectionTypeChange= isDefined(payload.fullSky);
 
         plotIdAry.forEach( (plotId) => {
             if (plotId && (isDrawLayerVisible(drawLayer, plotId) || isVisible)) {
-                drawData.data[plotId] = computeDrawDataForId(plotId, gridType, gridLockLevel);
+                drawData.data[plotId] = computeDrawDataForId(plotId, gridType, gridLockLevel, projectionTypeChange);
             } else {
                 drawData.data[plotId] = null;
             }
@@ -111,9 +115,14 @@ function computeDrawData(drawLayer,action, gridType, gridLockLevel, isVisible = 
     }
 }
 
-function computeDrawDataForId(plotId, gridType, gridLockLevel) {
-    const plot= primePlot(visRoot(),plotId);
+function computeDrawDataForId(plotId, gridType, gridLockLevel, projectionTypeChange) {
+    let plot= primePlot(visRoot(),plotId);
     if (!plot) return [];
+    let aitoff= isHiPSAitoff(plot);
+    if (projectionTypeChange) {
+        aitoff= !aitoff;
+        plot= changeProjectionCenterAndType(plot,undefined,aitoff);
+    }
 
     const cc= CysConverter.make(plot);
 
@@ -128,10 +137,12 @@ function computeDrawDataForId(plotId, gridType, gridLockLevel) {
     }
 
     const {fov, centerWp}= getPointMaxSide(plot, plot.viewDim);
-    const cells= getVisibleHiPSCells(norder,centerWp,fov, plot.dataCoordSys);
+    const cells= getVisibleHiPSCells(norder,centerWp,fov, plot.dataCoordSys, aitoff);
+
+    const nonWrapCells= fov>=130 && aitoff ? cells.filter( (c) => !tileCoordsWrap(cc, c.wpCorners)) : cells;
 
     // const fpAry= cells.map( (c) => c.wpCorners);
-    const fpAry= cells
+    const fpAry= nonWrapCells
         .map( (c) => {
             const scrCorners= c.wpCorners.map( (corner) => cc.getImageCoords(corner));
             if (scrCorners.some ((scrC) => !scrC)) return null;
@@ -141,7 +152,7 @@ function computeDrawDataForId(plotId, gridType, gridLockLevel) {
 
 
 
-    const idAry= cells
+    const idAry= nonWrapCells
         .map( (c) => {
             const s1= cc.getImageCoords(c.wpCorners[0]);
             const s2= cc.getImageCoords(c.wpCorners[2]);

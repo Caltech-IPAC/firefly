@@ -7,7 +7,7 @@ import {CysConverter} from '../CsysConverter.js';
 import {toRadians, contains, intersects, getBoundingBox} from '../VisUtil.js';
 import {makeDevicePt} from '../Point.js';
 import {isHiPS} from '../WebPlot.js';
-import {memorizeUsingMap} from '../../util/WebUtil';
+import {createCanvas, memorizeUsingMap} from '../../util/WebUtil';
 
 export function createImageUrl(plot, tile) {
     if (isHiPS(plot)) return makeHiPSTileUrl(plot,tile.nside, tile.tileNumber);
@@ -15,9 +15,7 @@ export function createImageUrl(plot, tile) {
 }
 
 export function initOffScreenCanvas(dim) {
-    const offscreenCanvas = document.createElement('canvas');
-    offscreenCanvas.width = dim.width;
-    offscreenCanvas.height = dim.height;
+    const offscreenCanvas = createCanvas(dim.width,dim.height);
 
     const offscreenCtx = offscreenCanvas.getContext('2d');
     offscreenCtx.font= 'italic 15pt Arial';
@@ -40,14 +38,11 @@ export function drawEmptyRecTile(x,y,w,h,ctx,plotView ) {
         ctx.restore();
         ctx.strokeRect(x, y, w-1, h-1);
     }
-
 }
 
 
 export function createEmptyTile(w,h) {
-    const c = document.createElement('canvas');
-    c.width = w;
-    c.height = h;
+    const c= createCanvas(w,h);
     const ctx = c.getContext('2d');
     ctx.fillStyle = 'rgb(0,0,0)';
     ctx.fillRect(0, 0, w, h);
@@ -102,11 +97,12 @@ const isQuadTileOnScreenCachable= memorizeUsingMap( (x1,y1,x2,y2,x3,y3,x4,y4, wi
 
 
 export function computeBounding(plot,w,h) {
-    const ptAry= [];
     const cc= CysConverter.make(plot);
-    ptAry.push(cc.getScreenCoords(makeDevicePt(0,0)));
-    ptAry.push(cc.getScreenCoords(makeDevicePt(w,0)));
-    ptAry.push(cc.getScreenCoords(makeDevicePt(w,h)));
-    ptAry.push(cc.getScreenCoords(makeDevicePt(0,h)));
+    const ptAry= [
+        cc.getScreenCoords(makeDevicePt(0,0)),
+        cc.getScreenCoords(makeDevicePt(w,0)),
+        cc.getScreenCoords(makeDevicePt(w,h)),
+        cc.getScreenCoords(makeDevicePt(0,h)),
+    ];
     return getBoundingBox(ptAry);
 }

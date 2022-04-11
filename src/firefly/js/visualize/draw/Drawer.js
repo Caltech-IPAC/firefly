@@ -577,7 +577,7 @@ function shouldDrawObj(csysConv, obj) {
     }
 
     if (csysConv && obj.pt && obj.type===POINT_DATA_OBJ) {
-        return csysConv.pointOnDisplay(obj.pt);
+        return isImage(csysConv) ? csysConv.pointOnDisplay(obj.pt) : csysConv.pointInView(obj.pt);
     }
     return true;
 }

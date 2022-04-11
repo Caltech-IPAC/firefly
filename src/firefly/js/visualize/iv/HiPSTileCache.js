@@ -21,6 +21,7 @@ let cachedAllSkyImages= new Map();
  * @prop {string} url
  * @prop {Image}  order3 single image with the all order 3 allsky
  * @prop {Array.<Canvas>}  order2Array array of order 2 image tiles, each index if the tile number
+ * @prop {Array.<Canvas>}  order3Array array of order 3 image tiles, each index if the tile number
  */
 
 
@@ -31,9 +32,9 @@ const makeKey= (url,colorTableId=-1,bias=.5,contrast=1) =>
 /**
  *
  * @param url
- * @param colorTableId
- * @param bias
- * @param contrast
+ * @param [colorTableId]
+ * @param [bias]
+ * @param [contrast]
  * @return {HiPSAllSkyCacheInfo}
  */
 export function findAllSkyCachedImage(url,colorTableId,bias,contrast) {
@@ -42,10 +43,19 @@ export function findAllSkyCachedImage(url,colorTableId,bias,contrast) {
     return result;
 }
 
+/**
+ *
+ * @param {String} url
+ * @param {Canvas|Image} image
+ * @param {number} [colorTableId]
+ * @param {number} [bias]
+ * @param {number} [contrast]
+ */
 export function addAllSkyCachedImage(url, image, colorTableId,bias,contrast) {
-    const order2AllSky= makeOrder2AllSkyImages(image);
+    const order2Array= makeOrder2AllSkyImages(image);
+    const order3Array= makeOrder3AllSkyImages(image);
     cachedAllSkyImages.set(makeKey(url,colorTableId,bias,contrast),
-        {url, colorTableId,bias,contrast, order3:image, order2Array: order2AllSky, colorTable: 'todo', time: Date.now()});
+        {url, colorTableId,bias,contrast, order3:image, order2Array, order3Array, colorTable: 'todo', time: Date.now()});
     if (cachedAllSkyImages.size>MAX_ALLSKY_IMAGES+(MAX_ALLSKY_IMAGES*.1)) {
         cachedAllSkyImages= cleanupCache(cachedAllSkyImages,MAX_ALLSKY_IMAGES);
     }
@@ -124,6 +134,21 @@ function makeOrder2AllSkyImages(order3Image) {
             ctx.drawImage(order3Image, sx, sy, sourceSize,sourceSize, dx,dy  ,sourceSize,sourceSize );
         }
         allsky2Array[i]= canvas;
+    }
+    return allsky2Array;
+}
+
+function makeOrder3AllSkyImages(order3Image) {
+    const sourceSize= order3Image.width/27;
+    const allsky2Array= [];
+    for(let order3pix=0; order3pix<768; order3pix++) {
+        const canvas= initOffScreenCanvas({width:sourceSize, height:sourceSize});
+        const ctx=canvas.getContext('2d');
+        const offset= Math.floor(order3pix/27);
+        const sy= sourceSize * offset;
+        const sx=  sourceSize * (order3pix - 27*offset);
+        ctx.drawImage(order3Image, sx, sy, sourceSize,sourceSize, 0,0,sourceSize,sourceSize );
+        allsky2Array[order3pix]= canvas;
     }
     return allsky2Array;
 }

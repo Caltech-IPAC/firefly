@@ -3,21 +3,16 @@
  */
 
 import Enum from 'enum';
-import {get, isEmpty, isObject, isString, flattenDeep, values, isUndefined, isNil} from 'lodash';
-import {WebPlotRequest, TitleOptions} from '../WebPlotRequest.js';
+import {isEmpty, isObject, isString, flattenDeep, values, isUndefined, isNil} from 'lodash';
+import {WebPlotRequest} from '../WebPlotRequest.js';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE,
         TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
 import ImagePlotCntlr, { visRoot, dispatchDeletePlotView, dispatchPlotImageOrHiPS, dispatchPlotHiPS } from '../ImagePlotCntlr.js';
 import {primePlot, getDrawLayerById} from '../PlotViewUtil.js';
 import {REINIT_APP} from '../../core/AppDataCntlr.js';
 import {
-    doFetchTable,
-    getTblById,
-    getActiveTableId,
-    getTableInGroup,
-    isTableUsingRadians,
-    getMetaEntry, getBooleanMetaEntry
-} from '../../tables/TableUtil.js';
+    doFetchTable, getTblById, getActiveTableId, getTableInGroup, isTableUsingRadians,
+    getMetaEntry, getBooleanMetaEntry } from '../../tables/TableUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW } from '../../tables/TableRequestUtil.js';
 import MultiViewCntlr, {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
@@ -171,7 +166,7 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
     const {preparedTables, tblCatIdMap}= sharedData;
 
     if (paused) {
-        paused= !get(getViewer(getMultiViewRoot(), viewerId),'mounted', false);
+        paused= !(getViewer(getMultiViewRoot(), viewerId)?.mounted ?? false);
     }
     if (!action) {
         if (!paused) {
@@ -310,7 +305,7 @@ function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, 
             if (isOrbitalPathTable(tbl_id)) req.sortInfo= undefined;
             doFetchTable(req).then(
                 (allRowsTable) => {
-                    if (get(allRowsTable, ['tableData', 'data'], []).length > 0) {
+                    if (allRowsTable?.tableData?.data?.length > 0) {
                         preparedTables[tbl_id] = allRowsTable;
                         const isRegion = isTableWithRegion(allRowsTable);
 
@@ -370,11 +365,7 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
     const {fovDegFallOver, fovMaxFitsSize, autoConvertOnZoom, imageSourceParams, overlayPosition= avgOfCenters}= options;
 
     let plotAllSkyFirst= false;
-    let allSkyRequest= null;
-    if (fovSize>160 && !blankHips) {
-        allSkyRequest= WebPlotRequest.makeAllSkyPlotRequest();
-        allSkyRequest.setTitleOptions(TitleOptions.PLOT_DESC);
-        allSkyRequest= initRequest(allSkyRequest, viewerId, PLOT_ID, overlayPosition);
+    if (fovSize>110 && !blankHips) {
         plotAllSkyFirst= true;
     }
     let imageRequest= WebPlotRequest.makeFromObj(imageSourceParams) ||
@@ -383,11 +374,10 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
 
     const hipsRequest= initRequest(WebPlotRequest.makeHiPSRequest(preferredHipsSourceURL, null),
                        viewerId, PLOT_ID, overlayPosition, avgOfCenters);
-    hipsRequest.setSizeInDeg(fovSize);
+    hipsRequest.setSizeInDeg(fovSize>180?300:fovSize);
     if (options.gridOn) {
         imageRequest.setGridOn(options.gridOn);
         hipsRequest.setGridOn(options.gridOn);
-        allSkyRequest?.setGridOn(options.gridOn);
     }
 
     const tblIdAry= Object.keys(preparedTables).filter( (v) => !isString(preparedTables[v]));
@@ -408,7 +398,7 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
     }
     else {
         dispatchPlotImageOrHiPS({
-            plotId: PLOT_ID, viewerId, hipsRequest, imageRequest, allSkyRequest,
+            plotId: PLOT_ID, viewerId, hipsRequest, imageRequest,
             fovDegFallOver, fovMaxFitsSize, autoConvertOnZoom, plotAllSkyFirst,
             pvOptions: {userCanDeletePlots:false, displayFixedTarget:false, useForCoverage:true},
             attributes,
@@ -709,7 +699,7 @@ const isValidNum= (n) => !isNil(n) && !isNaN(Number(n));
 function hasCorners(options, table) {
     const cornerColumns= getCornersColumns(table);
     if (isEmpty(cornerColumns)) return false;
-    const tblData = get(table, 'tableData.data', []);
+    const tblData = table?.tableData?.data ?? [];
     const dataCnt= tblData.reduce( (tot, row) =>
         cornerColumns.every( (cDef) => isValidNum(row[cDef.lonIdx]) && isValidNum(row[cDef.lonIdx]) ) ? tot+1 : tot
     ,0);
@@ -720,14 +710,14 @@ function getPtAryFromTable(options,table, usesRadians){
     const cDef= findTableCenterColumns(table);
     if (isEmpty(cDef)) return [];
     const {lonIdx,latIdx,csys}= cDef;
-    return get(table, 'tableData.data', [])
+    return (table?.tableData?.data ?? [])
         .map( (row) => makeWorldPt(row[lonIdx], row[latIdx], csys, true, usesRadians))
         .filter( (v) => v);
 }
 
 function getBoxAryFromTable(options,table, usesRadians){
     const cDefAry= getCornersColumns(table);
-    return get(table, 'tableData.data', [])
+    return (table?.tableData?.data ?? [])
         .map( (row) => cDefAry
             .map( (cDef) => makeWorldPt(row[cDef.lonIdx], row[cDef.latIdx], cDef.csys, true, usesRadians) ))
         .filter( (row) => row.every( (v) => v));
@@ -737,7 +727,7 @@ function getBoxAryFromTable(options,table, usesRadians){
 function getRegionAryFromTable(options, table) {
     const rCol = findTableRegionColumn(table);
 
-    return get(table, 'tableData.data', [])
+    return (table?.tableData?.data ?? [])
         .map((row) => {
              const cornerInfo = parseObsCoreRegion(row[rCol.regionIdx], rCol.unit, true);
 

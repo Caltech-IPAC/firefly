@@ -4,7 +4,7 @@
 import Enum from 'enum';
 import {sprintf} from '../externalSource/sprintf';
 import {logger} from '../util/Logger.js';
-import {getPixScaleArcSec, isImage} from './WebPlot.js';
+import {getPixScaleArcSec, isHiPS, isHiPSAitoff, isImage} from './WebPlot.js';
 import {PlotAttribute} from './PlotAttribute.js';
 import {getFoV, primePlot} from './PlotViewUtil.js';
 import {convertAngle} from './VisUtil.js';
@@ -93,11 +93,11 @@ export function getNextZoomLevel(plot, zoomType, upDownPercent=1) {
 
 /**
  * @param plot
- * @param screenDim
+ * @param viewDim
  * @param fullType
  */
-export function getEstimatedFullZoomFactor(plot, screenDim, fullType) {
-    const {width,height} = screenDim;
+export function getEstimatedFullZoomFactor(plot, viewDim, fullType) {
+    const {width,height} = viewDim;
     let overrideFullType= fullType;
 
     if (plot.attributes[PlotAttribute.EXPANDED_TO_FIT_TYPE]) {
@@ -105,13 +105,17 @@ export function getEstimatedFullZoomFactor(plot, screenDim, fullType) {
         if (FullType.has(s)) overrideFullType= FullType.get(s);
     }
     return getEstimatedFullZoomFactorDetails(overrideFullType, plot.dataWidth, plot.dataHeight,
-                                              width,height);
+                                              width,height, isHiPS(plot) && isHiPSAitoff(plot));
 }
 
 function getEstimatedFullZoomFactorDetails(fullType, dataWidth, dataHeight,
-                                           screenWidth, screenHeight) {
-    const zFactW =  screenWidth /  dataWidth;
-    const zFactH =  screenHeight /  dataHeight;
+                                           screenWidth, screenHeight, hipsAitoff) {
+    const zFactW =  screenWidth /  (dataWidth* (hipsAitoff?2.7:1));
+    const zFactH =  screenHeight / dataHeight;
+
+    if (hipsAitoff) {
+        return fullType===FullType.ONLY_WIDTH ? zFactW : zFactH*.7;
+    }
     if (fullType===FullType.ONLY_WIDTH || screenHeight <= 0 || dataHeight <= 0) {
         return  zFactW;
     } else if (fullType===FullType.ONLY_HEIGHT || screenWidth <= 0 || dataWidth <= 0) {

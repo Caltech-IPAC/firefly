@@ -194,7 +194,7 @@ function drawPt(ctx, pt, plot, drawObj, drawParams, renderOptions, vpPtM, onlyAd
         else {
             vpPt=plot.getScreenCoords(pt);
         }
-        if (plot.pointOnDisplay(vpPt)) {
+        if (plot.pointInView(vpPt)) {
             drawXY(ctx,vpPt, plot, drawObj, drawParams, renderOptions, onlyAddToPath);
         }
     }

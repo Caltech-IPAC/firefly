@@ -88,7 +88,7 @@ export function fireMouseCtxChange(mouseCtx) {
  * @param {string} readoutData.readoutType
  * @param {string} readoutData.plotId
  * @param {Object} readoutData.readoutItems
- * @param {boolean} readoutData.threeColor
+ * @param {boolean} [readoutData.threeColor]
  */
 export function fireMouseReadoutChange({readoutType= STANDARD_READOUT, plotId, readoutItems={}, threeColor=false}) {
     lastReadout=  {readoutType,plotId,readoutItems,threeColor};
