@@ -4,7 +4,9 @@
 
 package edu.caltech.ipac.firefly.core.background;
 
+import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServCommand;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.SrvParam;
 
 /**
@@ -18,6 +20,7 @@ public abstract class ServCmdJob extends ServCommand implements Job {
     private String jobId;           // jobId may be null when it's not executing as a Job.
     private Worker worker;
     private SrvParam params;
+    private RequestOwner reqOwner;
 
     public void setParams(SrvParam params) {
         this.params = params;
@@ -29,6 +32,11 @@ public abstract class ServCmdJob extends ServCommand implements Job {
      * @throws Exception
      */
     public String run() throws Exception {
+        if (reqOwner != null) {
+            ServerContext.getRequestOwner().setTo(reqOwner);
+        } else {
+            ServerContext.clearRequestOwner();
+        }
         return doCommand(params);
     }
 
@@ -58,6 +66,13 @@ public abstract class ServCmdJob extends ServCommand implements Job {
         }
     }
 
+    public void runAs(RequestOwner reqOwner) {
+        try {
+            this.reqOwner = (RequestOwner) reqOwner.clone();
+        } catch (CloneNotSupportedException e) {
+            // ignore.. should not happen
+        }
+    }
 }
 
 

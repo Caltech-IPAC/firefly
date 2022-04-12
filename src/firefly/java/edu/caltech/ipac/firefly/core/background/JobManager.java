@@ -5,6 +5,7 @@
 package edu.caltech.ipac.firefly.core.background;
 
 import edu.caltech.ipac.firefly.data.ServerEvent;
+import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
@@ -18,7 +19,6 @@ import org.json.simple.JSONObject;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -85,27 +85,32 @@ public class JobManager {
     }
 
     public static JobInfo submit(Job job) {
+        RequestOwner reqOwner = ServerContext.getRequestOwner();
         JobInfo info = new JobInfo(nextJobId());
-        info.setOwner(ServerContext.getRequestOwner().getUserKey());
+        info.setOwner(reqOwner.getUserKey());
         info.setPhase(QUEUED);
-        info.setEventConnId(ServerContext.getRequestOwner().getEventConnID());
+        info.setEventConnId(reqOwner.getEventConnID());
         info.setType(job.getType());
         allJobInfos.put(info.getId(), info);
 
+        job.runAs(reqOwner);
         job.setJobId(info.getId());
 
+        logJobInfo(info);
         Future future = job.getType() == SEARCH ? searches.submit(job) : packagers.submit(job);
+
         try {
             future.get(WAIT_COMPLETE, TimeUnit.SECONDS);        // wait in seconds for a job to complete
         } catch (InterruptedException e) {
             info.setPhase(ABORTED);
-            LOG.error(e, "Job aborted");
+            logJobInfo(info);
         } catch (TimeoutException e) {
             // it's ok.. job may take longer to complete
         } catch (Exception e) {
             if (info.getPhase() != ERROR) {
                 job.setError(500, e.getMessage());
             }
+            logJobInfo(info);
             LOG.error(e);
         }
 
@@ -262,6 +267,11 @@ public class JobManager {
             });
         }
         return sb.toString();
+    }
+
+    static void logJobInfo(JobInfo info) {
+        LOG.debug(String.format("JOB:%s  owner:%s  phase:%s  msg:%s", info.getId(), info.getOwner(), info.getPhase(), info.getSummary()));
+        LOG.trace(String.format("JOB: %s details: %s", info.getId(), toJson(info)));
     }
 
 
