@@ -110,6 +110,8 @@ export CATALINA_OPTS="\
 # Firefly apps requires these module to be opened
 CATALINA_OPTS="$CATALINA_OPTS \
     --add-opens java.base/java.util=ALL-UNNAMED \
+    --add-opens java.base/java.text=ALL-UNNAMED \
+    --add-opens java.desktop/java.awt.font=ALL-UNNAMED \
     "
 
 
