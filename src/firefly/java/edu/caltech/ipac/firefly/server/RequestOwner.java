@@ -195,6 +195,17 @@ public class RequestOwner implements Cloneable {
         return ro;
     }
 
+    public void setTo(RequestOwner ro) {
+        requestAgent = ro.requestAgent;
+        startTime = ro.startTime;
+        workingDir = ro.workingDir;
+        attributes = ro.attributes;
+        eventChannel = ro.eventChannel;
+        eventConnID = ro.eventConnID;
+        userKey = ro.userKey;
+        wsManager = ro.wsManager;
+    }
+
     public String getBaseUrl() {
         return requestAgent.getBaseUrl();
     }

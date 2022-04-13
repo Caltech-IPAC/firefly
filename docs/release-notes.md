@@ -7,8 +7,10 @@
   - [Notes on next version](next-release-details.md)
 
 ## Version 2022.1  (Not yet released - 2022)
+- 2022.1.1 (April 2022)
+  - docker tag: `latest`, `2022.1`, `2022.1.1`
 - 2022.1.0 (March 2022)
-  - docker tag: `latest`, `2022.1`, `2022.1.0`
+  - docker tag: `2022.1.0`
 
 ### _Notes_
 #### This release is focused on small enhancements, fixing bugs, and updating infrastructure. There are no new UI changes in this release.
@@ -39,13 +41,17 @@
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2022.1+label%3abug)
 - [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2022.1+)
 
+##### _Patches 2022.1_
+- 2022.1.1
+  - Fixed: Not packaging proprietary data correctly ([IRSA-4570,IRSA-4571](https://github.com/Caltech-IPAC/firefly/pull/1209))
+
 
 ## Version 2021.4  (December 2021)
 - 2021.4.1 (Feb 2022)
   - docker tag: `latest`, `release-2021.4`, `release-2021.4.1`
 - 2021.4 (December 2021)
   - docker tag: `release-2021.4.0`
-
+   
 ### _Notes_
 #### New features - This release contains some significant new features and UI improvements
 - _BigInt_: Support for json parsing ([Firefly-732](https://github.com/Caltech-IPAC/firefly/pull/1125))
