@@ -83,10 +83,10 @@ let keyCnt=0;
 
 export function FileUploadViewPanel({setSubmitText}) {
 
-    const {isLoading,statusKey} = (() => getComponentState(panelKey, {isLoading:false,statusKey:''}));
-    const isWsUpdating          = (() => isAccessWorkspace());
-    const uploadSrc             = (() => getFieldVal(panelKey, uploadOptions));
-    const {message, analysisResult, report, summaryModel, detailsModel} = ((oldState) => getNextState(oldState));
+    const {isLoading,statusKey} = useStoreConnector(() => getComponentState(panelKey, {isLoading:false,statusKey:''}));
+    const isWsUpdating          = useStoreConnector(() => isAccessWorkspace());
+    const uploadSrc             = useStoreConnector(() => getFieldVal(panelKey, uploadOptions));
+    const {message, analysisResult, report, summaryModel, detailsModel} = useStoreConnector((oldState) => getNextState(oldState));
 
     const [loadingMsg,setLoadingMsg]= useState(() => '');
     const [uploadKey,setUploadKey]= useState(() => FILE_UPLOAD_KEY+keyCnt);
@@ -132,7 +132,7 @@ export function FileUploadViewPanel({setSubmitText}) {
         return (() => {
             aWStatusKey && dispatchCancelActionWatcher(aWStatusKey);
         });
-        }, [isLoading, statusKey] );
+    }, [isLoading, statusKey] );
 
     const tablesOnly= isTablesOnly();
 
@@ -162,15 +162,15 @@ export function FileUploadViewPanel({setSubmitText}) {
                             alignment={'horizontal'}
                             options={uploadMethod}
                             wrapperStyle={{fontWeight: 'bold', fontSize: 12}}/>
-                            <div style={{paddingTop: '10px', display:'flex', flexDirection:'row', justifyContent:'space-between'}}>
-                                <UploadOptions {...{uploadSrc, isLoading, isWsUpdating,  uploadKey:uploadKey}}/>
-                                {report && <CompleteButton text='Clear File' groupKey={NONE}
-                                                           onSuccess={() =>{
-                                                               clearReport();
-                                                               keyCnt++;
-                                                               setUploadKey(FILE_UPLOAD_KEY+keyCnt);
-                                                           }}/> }
-                            </div>
+                        <div style={{paddingTop: '10px', display:'flex', flexDirection:'row', justifyContent:'space-between'}}>
+                            <UploadOptions {...{uploadSrc, isLoading, isWsUpdating,  uploadKey:uploadKey}}/>
+                            {report && <CompleteButton text='Clear File' groupKey={NONE}
+                                                       onSuccess={() =>{
+                                                           clearReport();
+                                                           keyCnt++;
+                                                           setUploadKey(FILE_UPLOAD_KEY+keyCnt);
+                                                       }}/> }
+                        </div>
                     </div>
                     <FileAnalysis {...{report, summaryModel, detailsModel,tablesOnly, isMoc}}/>
                     <ImageDisplayOption/>
@@ -369,7 +369,7 @@ function statesEqual(s1,s2) {
     const d2= s2.detailsModel;
     if (d1!==d2 &&
         ( d1?.totalRows!==d2?.totalRows ||
-        d1?.tableData.data?.find( (d,idx) => d?.[2]!==d2?.tableData.data[idx][2]))) return false;
+            d1?.tableData.data?.find( (d,idx) => d?.[2]!==d2?.tableData.data[idx][2]))) return false;
     return true;
 
 }
@@ -516,7 +516,7 @@ function UploadOptions({uploadSrc=FILE_ID, isloading, isWsUpdating, uploadKey}) 
 
 function AnalysisInfo({report,supported=true}) {
     const partDesc = report.fileFormat === 'FITS' ? 'Extensions:' :
-                     report.fileFormat === UNKNOWN_FORMAT ? '' : 'Parts:';
+        report.fileFormat === UNKNOWN_FORMAT ? '' : 'Parts:';
     const partCnt= report?.parts?.length ?? 1;
     return (
         <div className='FileUpload__headers'>
