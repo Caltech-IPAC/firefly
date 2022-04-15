@@ -63,7 +63,7 @@ export function useStoreConnector(stateGetter, deps=[]) {
         let cState = val;
         const remover = flux.addListener(() => {
             if (isMounted) {
-                const nState = stateGetter(val);      // if getter returns oldState then no state update
+                const nState = stateGetter(cState);      // if getter returns oldState then no state update
                 if (nState===cState) return;             // comparator might be overridden, use === first for efficiency
                 if ( !comparator(cState, nState) ) {
                     cState = nState;

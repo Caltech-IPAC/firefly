@@ -44,9 +44,10 @@ public class JobManager {
 
     private static final int KEEP_ALIVE_INTERVAL = AppProperties.getIntProperty("job.keepalive.interval", 30);    // default keepalive interval in seconds
     private static final int WAIT_COMPLETE = AppProperties.getIntProperty("job.wait.complete", 1);                // wait for complete after submit in seconds
+    private static final int MAX_PACKAGERS = AppProperties.getIntProperty("job.max.packagers", 10);               // maximum number of simultaneous packaging threads
 
     private static Logger.LoggerImpl LOG = Logger.getLogger();
-    private static ExecutorService packagers = Executors.newFixedThreadPool(10);
+    private static ExecutorService packagers = Executors.newFixedThreadPool(MAX_PACKAGERS);
     private static ExecutorService searches = Executors.newCachedThreadPool();
     private static HashMap<String, JobEntry> runningJobs = new HashMap<>();
     private static HashMap<String, JobInfo> allJobInfos = new HashMap<>();
