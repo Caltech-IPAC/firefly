@@ -265,7 +265,7 @@
  * @prop {boolean} [removable=true]  true if this table can be removed from view.
  * @prop {boolean} [border=true]
  * @prop {boolean} [showToolbar=true]   when false, showFilters, showTitle, showPaging, showSave, and showFilterButton will be false as well.
- * @prop {boolean} [showFilters=false]
+ * @prop {boolean} [showFilters]        defaults to true for all tables except client tables
  * @prop {boolean} [showTitle=true]
  * @prop {boolean} [showToggleTextView=true]
  * @prop {boolean} [showPaging=true]    enable/disable paging feature.  When false, all data will be displayed.

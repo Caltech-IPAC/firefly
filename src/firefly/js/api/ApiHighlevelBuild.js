@@ -147,7 +147,7 @@ function buildTablePart(llApi) {
      * @prop {boolean} backgroundable    true if this search can be sent to background.  Defaults to false.
      * @prop {boolean} showUnits    defaults to true if table contains unit info
      * @prop {boolean} showTypes    defaults to false
-     * @prop {boolean} showFilters  defaults to false
+     * @prop {boolean} showFilters  defaults to true for all tables except client tables
      * @prop {boolean} selectable   defaults to true
      * @prop {boolean} expandable   defaults to true
      * @prop {boolean} showToolbar  defaults to true

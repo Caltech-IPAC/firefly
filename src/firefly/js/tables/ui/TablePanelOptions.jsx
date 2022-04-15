@@ -112,7 +112,7 @@ function OptionsFilterStats({tbl_id}) {
 }
 
 function Options({uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChange}) {
-    const {pageSize, showPaging=true, showUnits, allowUnits=true,showTypes=true, showFilters=false} = uiState || {};
+    const {pageSize, showPaging=true, showUnits, allowUnits=true,showTypes=true, showFilters} = uiState || {};
 
     const onPageSize = (pageSize) => {
         if (pageSize.valid) {
