@@ -1,24 +1,19 @@
 package edu.caltech.ipac.firefly.server.visualize;
-/**
- * User: roby
- * Date: 10/1/20
- * Time: 8:58 AM
- */
-
 
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.Histogram;
-import edu.caltech.ipac.visualize.plot.ImageData;
 import edu.caltech.ipac.visualize.plot.ImageHeader;
 import edu.caltech.ipac.visualize.plot.ImageMask;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.ImageStretch;
 import edu.caltech.ipac.visualize.plot.plotdata.RGBIntensity;
+import nom.tam.fits.Header;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +27,7 @@ import static edu.caltech.ipac.firefly.visualize.Band.RED;
 
 /**
  * @author Trey Roby
+ * Date: 10/1/20
  */
 public class DirectStretchUtils {
 
@@ -72,7 +68,7 @@ public class DirectStretchUtils {
         int yPanels= totHeight / tileSize;
         if (totWidth % tileSize > 0) xPanels++;
         if (totHeight % tileSize > 0) yPanels++;
-        ImageData[] imageDataAry= new ImageData[xPanels * yPanels];
+        StretchTile[] sTileAry= new StretchTile[xPanels * yPanels];
 
         byte [] byte1d;
         byte [] byte1dHalf= null;
@@ -129,11 +125,12 @@ public class DirectStretchUtils {
                 for(int j= 0; j<yPanels; j++) {
                     int width= (i<xPanels-1) ? tileSize : ((totWidth-1) % tileSize + 1);
                     int height= (j<yPanels-1) ? tileSize : ((totHeight-1) % tileSize + 1);
-                    idx= (i*yPanels) +j;
-                    imageDataAry[idx]= new ImageData(ImageData.ImageType.TYPE_24_BIT,
-                            0,state.getRangeValues(), tileSize*i,tileSize*j, width, height);
-                    if (!rv.rgbPreserveHue()) imageDataAry[idx].setRangeValuesAry(rvAry);
-                    imageDataAry[idx].stretch3ColorAndSave(float1dAry,imHeadAry,histAry,fr.getHeader(), useIntensity?rgbIntensity:null);
+                    int tileIdx= (i*yPanels) +j;
+                    RGBIntensity rgbI= useIntensity?rgbIntensity:null;
+                    RangeValues[] rvAryToUse= rv.rgbPreserveHue() ? new RangeValues[] {rv,rv,rv} : rvAry;
+                    sTileAry[tileIdx]= StretchTile.make3C( rvAryToUse, tileSize*i,tileSize*j, width, height);
+
+                    executor.execute(() -> sTileAry[tileIdx].stretch3Color(float1dAry,imHeadAry,histAry,rgbI));
                 }
             }
             executor.shutdown();
@@ -143,19 +140,19 @@ public class DirectStretchUtils {
             byte1dHalf=  useHalf(ct) ? new byte[dRoundUp(totWidth,2) * dRoundUp(totHeight,2) * bLen] : null;
             byte1dQuarter= useQuarter(ct) ? new byte[dRoundUp(totWidth,4) * dRoundUp(totHeight,4) * bLen] : null;
 
-            for (ImageData imageData : imageDataAry) {
-                tmpByte3CAry= imageData.getSaved3CStretch();
+            for (StretchTile stretchTile : sTileAry) {
+                tmpByte3CAry= stretchTile.get3CResult();
                 for(int bandIdx=0; (bandIdx<3);bandIdx++) {
                     if (float1dAry[bandIdx]!=null) {
                         System.arraycopy(tmpByte3CAry[bandIdx],0,byte1d,bPos,tmpByte3CAry[bandIdx].length);
                         bPos+=tmpByte3CAry[bandIdx].length;
                         if (useHalf(ct)) {
-                            byte[] hDecimatedAry= makeDecimated(tmpByte3CAry[bandIdx],2, imageData.getWidth(), imageData.getHeight());
+                            byte[] hDecimatedAry= makeDecimated(tmpByte3CAry[bandIdx],2, stretchTile.getWidth(), stretchTile.getHeight());
                             System.arraycopy(hDecimatedAry, 0, byte1dHalf, bPosHalf, hDecimatedAry.length);
                             bPosHalf += hDecimatedAry.length;
                         }
                         if (useQuarter(ct)) {
-                            byte[] qDecimatedAry= makeDecimated(tmpByte3CAry[bandIdx],4, imageData.getWidth(), imageData.getHeight());
+                            byte[] qDecimatedAry= makeDecimated(tmpByte3CAry[bandIdx],4, stretchTile.getWidth(), stretchTile.getHeight());
                             System.arraycopy(qDecimatedAry, 0, byte1dQuarter, bPosQuarter , qDecimatedAry.length);
                             bPosQuarter += qDecimatedAry.length;
                         }
@@ -172,7 +169,7 @@ public class DirectStretchUtils {
             List<ImageMask> masksList=  new ArrayList<>();
             for(int j= 0; (j<31); j++) {
                 if (((maskBits>>j) & 1) != 0) {
-                    masksList.add(new ImageMask(j,Color.RED));
+                    masksList.add(new ImageMask(j, Color.RED));
                 }
             }
             ImageMask[] maskAry= masksList.toArray(new ImageMask[0]);
@@ -183,16 +180,16 @@ public class DirectStretchUtils {
                     int width= (i<xPanels-1) ? tileSize : ((totWidth-1) % tileSize + 1);
                     int height= (j<yPanels-1) ? tileSize : ((totHeight-1) % tileSize + 1);
                     idx= (i*yPanels) +j;
-                    imageDataAry[idx]= new ImageData( maskAry, rv, tileSize*i,tileSize*j, width, height);
-                    ImageData im= imageDataAry[idx];
+                    sTileAry[idx]= StretchTile.makeMask( maskAry, tileSize*i,tileSize*j, width, height);
+                    StretchTile im= sTileAry[idx];
 
-                    executor.execute(() -> im.stretchMaskAndSave(flip1d,fr.getNaxis1()));
+                    executor.execute(() -> im.stretchMask(flip1d,fr.getNaxis1()));
                 }
             }
             executor.shutdown();
             normalTermination= executor.awaitTermination(600, TimeUnit.SECONDS);
-            for (ImageData imageData : imageDataAry) {
-                byte[] tmpByteAry = imageData.getSavedStandardStretch();
+            for (StretchTile stretchTile : sTileAry) {
+                byte[] tmpByteAry = stretchTile.getStandardResult();
                 System.arraycopy(tmpByteAry, 0, byte1d, bPos, tmpByteAry.length);
                 bPos += tmpByteAry.length;
             }
@@ -207,11 +204,10 @@ public class DirectStretchUtils {
                     int width= (i<xPanels-1) ? tileSize : ((totWidth-1) % tileSize + 1);
                     int height= (j<yPanels-1) ? tileSize : ((totHeight-1) % tileSize + 1);
                     idx= (i*yPanels) +j;
-                    imageDataAry[idx]= new ImageData(ImageData.ImageType.TYPE_8_BIT,
-                            state.getColorTableId(),rv, tileSize*i,tileSize*j, width, height);
-                    ImageData im= imageDataAry[idx];
+                    sTileAry[idx]= StretchTile.makeStandard( rv, tileSize*i,tileSize*j, width, height);
+                    StretchTile im= sTileAry[idx];
 
-                    executor.execute(() -> im.stretch8bitAndSave(flip1d,fr.getHeader(),fr.getHistogram()));
+                    executor.execute(() -> im.stretch8bit(flip1d,fr.getHeader(),fr.getHistogram()));
                 }
             }
             executor.shutdown();
@@ -220,17 +216,17 @@ public class DirectStretchUtils {
 
             byte1dHalf=  useHalf(ct) ? new byte[dRoundUp(totWidth,2) * dRoundUp(totHeight,2)] : null;
             byte1dQuarter= useQuarter(ct) ? new byte[dRoundUp(totWidth,4) * dRoundUp(totHeight,4)] : null;
-            for (ImageData imageData : imageDataAry) {
-                byte[] tmpByteAry = imageData.getSavedStandardStretch();
+            for (StretchTile stretchTile : sTileAry) {
+                byte[] tmpByteAry = stretchTile.getStandardResult();
                 System.arraycopy(tmpByteAry, 0, byte1d, bPos, tmpByteAry.length);
                 bPos += tmpByteAry.length;
                 if (useHalf(ct)) {
-                    byte[] hDecimatedAry= makeDecimated(tmpByteAry,2, imageData.getWidth(), imageData.getHeight());
+                    byte[] hDecimatedAry= makeDecimated(tmpByteAry,2, stretchTile.getWidth(), stretchTile.getHeight());
                     System.arraycopy(hDecimatedAry, 0, byte1dHalf, bPosHalf, hDecimatedAry.length);
                     bPosHalf += hDecimatedAry.length;
                 }
                 if (useQuarter(ct)) {
-                    byte[] qDecimatedAry= makeDecimated(tmpByteAry,4, imageData.getWidth(), imageData.getHeight());
+                    byte[] qDecimatedAry= makeDecimated(tmpByteAry,4, stretchTile.getWidth(), stretchTile.getHeight());
                     System.arraycopy(qDecimatedAry, 0, byte1dQuarter, bPosQuarter , qDecimatedAry.length);
                     bPosQuarter += qDecimatedAry.length;
                 }
@@ -331,5 +327,69 @@ public class DirectStretchUtils {
             }
         }
         return (byte) (sum/cnt);
+    }
+
+    private static class StretchTile {
+        private byte[] saveStandardStretch;
+        private byte[][] save3CStretch;
+
+        private final ImageMask[] imageMasks;
+        private final RangeValues[] rvAry;
+        private final int x;
+        private final int y;
+        private final int width;
+        private final int height;
+        private final int lastPixel;
+        private final int lastLine;
+
+        private StretchTile(int x, int y, int width, int height, RangeValues[] rvAry, ImageMask[] imageMasks) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+            this.lastPixel = this.x + this.width -1;
+            this.lastLine = this.y + this.height -1;
+            this.rvAry = rvAry;
+            this.imageMasks=imageMasks;
+        }
+
+        public int getWidth() { return width;}
+        public int getHeight() { return height;}
+        public byte[] getStandardResult() { return this.saveStandardStretch; }
+        public byte[][] get3CResult() { return this.save3CStretch; }
+
+        public static StretchTile make3C(RangeValues[] rvAry, int x, int y, int width, int height) {
+            return new StretchTile(x,y,width,height,rvAry, null);
+        }
+        public static StretchTile makeStandard(RangeValues rv, int x, int y, int width, int height) {
+            return new StretchTile(x,y,width,height,new RangeValues[] {rv, rv, rv}, null);
+        }
+        public static StretchTile makeMask(ImageMask[] iMasks, int x, int y, int width, int height) {
+            return new StretchTile(x,y,width,height, null, iMasks);
+        }
+
+        public void stretch3Color(float [][] float1dAry, ImageHeader [] imHeadAry, Histogram[] histAry, RGBIntensity rgbIntensity) {
+            byte[][] pixelDataAry= new byte[3][];
+            for(int i=0;i<3; i++) pixelDataAry[i]= new byte[this.width * this.height];
+            ImageStretch.stretchPixels3Color(rvAry, float1dAry, pixelDataAry, imHeadAry, histAry,
+                    rgbIntensity, x, lastPixel, y, lastLine );
+            this.save3CStretch=  pixelDataAry;
+        }
+
+        public void stretch8bit(final float [] float1d, final Header header, final Histogram histogram) {
+            final ImageHeader imHead= new ImageHeader(header) ;
+            byte [] byteAry= new byte[this.width * this.height];
+            ImageStretch.stretchPixels8Bit(rvAry[0], float1d, byteAry, imHead,  histogram, x, lastPixel, y, lastLine );
+            this.saveStandardStretch =byteAry;
+        }
+
+        public void stretchMask(final float [] float1d, final int naxis1) {
+            byte [] byteAry= new byte[this.width * this.height];
+            int[] pixelhist = new int[256];
+            ImageStretch.stretchPixelsForMask(x, lastPixel, y, lastLine, naxis1,
+                    (byte) 255, float1d, byteAry, pixelhist, imageMasks);
+            this.saveStandardStretch = byteAry;
+        }
+
     }
 }

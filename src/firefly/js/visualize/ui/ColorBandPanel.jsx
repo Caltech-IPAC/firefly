@@ -11,7 +11,6 @@ import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
 import {RangeSlider} from '../../ui/RangeSlider.jsx';
 import {callGetColorHistogram} from '../../rpc/PlotServicesJson.js';
-import {encodeServerUrl, getRootURL} from '../../util/WebUtil.js';
 import {
     PERCENTAGE,  ABSOLUTE,SIGMA, STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL,
     STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from '../RangeValues.js';
@@ -20,11 +19,7 @@ import ImagePlotCntlr, {dispatchStretchChange, visRoot} from '../ImagePlotCntlr.
 import {getActivePlotView, isThreeColor} from '../PlotViewUtil.js';
 import {makeSerializedRv} from './ColorDialog.jsx';
 import {getFluxUnits} from '../WebPlot';
-import {SimpleCanvas} from 'firefly/visualize/draw/SimpleCanvas.jsx';
-import {
-    getColorModel,
-    makeColorHistImage,
-    makeColorTableImage
+import { getColorModel, makeColorHistImage, makeColorTableImage
 } from 'firefly/visualize/rawData/rawAlgorithm/ColorTable.js';
 import {useWatcher} from 'firefly/ui/SimpleComponent.jsx';
 import {dispatchForceFieldGroupReducer} from 'firefly/fieldGroup/FieldGroupCntlr.js';
@@ -95,10 +90,10 @@ export const ColorBandPanel= memo(({fields,plot,band, groupKey}) => {
 
     const bandReplot= debounce(getReplotFunc(groupKey, band), 600);
 
-    const ctOrBand= isThreeColor(plot)?band:getColorModel(plot.plotState.colorTableId);
+    const ctOrBand= isThreeColor(plot)?band:getColorModel(plot.colorTableId);
     const cbarUrl= makeColorTableImage(ctOrBand, 300,10).toDataURL('image/png');
     const dataHistUrl= dataHistogram && dataBinColorIdx &&
-        makeColorHistImage(ctOrBand, Number(plot.plotState.colorTableId),
+        makeColorHistImage(ctOrBand, Number(plot.colorTableId),
             HIST_WIDTH,HIST_HEIGHT,dataHistogram,dataBinColorIdx).toDataURL('image/png');
 
     return (

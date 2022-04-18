@@ -99,7 +99,7 @@ public class ServiceRetriever implements FileRetriever {
             band= SloanDssImageParams.SDSSBand.r;
         }
         // this is really size not radius, i am just using Circle to hold the params
-        float sizeInDegrees = (float)circle.getRadius();
+        float sizeInDegrees = (float)circle.radius();
         if (sizeInDegrees > 1) sizeInDegrees = 1F;
         if (sizeInDegrees < .02) sizeInDegrees = .02F;
 
@@ -109,7 +109,7 @@ public class ServiceRetriever implements FileRetriever {
         if (!Float.isNaN(sizeInDegrees)) {
             params.setSizeInDeg(sizeInDegrees);
         }
-        params.setWorldPt(circle.getCenter());
+        params.setWorldPt(circle.center());
         FileInfo fi = LockingVisNetwork.retrieve(params, (p,f) -> SloanDssImageGetter.get((SloanDssImageParams) p,f));
         fi.setDesc(ServiceDesc.get(request));
         return fi;
@@ -120,8 +120,8 @@ public class ServiceRetriever implements FileRetriever {
         Circle circle = PlotServUtils.getRequestArea(request);
         DssImageParams params = new DssImageParams(request.getProgressKey(), request.getPlotId());
         params.setTimeout(15000); // time out - 15 sec
-        params.setWorldPt(circle.getCenter());
-        float arcMin = (float) MathUtil.convert(MathUtil.Units.DEGREE, MathUtil.Units.ARCMIN, circle.getRadius());
+        params.setWorldPt(circle.center());
+        float arcMin = (float) MathUtil.convert(MathUtil.Units.DEGREE, MathUtil.Units.ARCMIN, circle.radius());
         params.setWidth(arcMin);// this is really size not radius, i am just using Circle to hold the params
         params.setHeight(arcMin);// this is really size not radius, i am just using Circle to hold the params
         params.setSurvey(surveyKey);
@@ -133,14 +133,14 @@ public class ServiceRetriever implements FileRetriever {
     private FileInfo get2MassPlot(WebPlotRequest request) throws FailedRequestException {
         Circle circle = PlotServUtils.getRequestArea(request);
         // this is really size not radius, i am just using Circle to hold the params
-        float sizeInArcSec = (float) MathUtil.convert(MathUtil.Units.DEGREE, MathUtil.Units.ARCSEC, circle.getRadius());
-        circle = new Circle(circle.getCenter(), sizeInArcSec);
-        List<RelatedData> rdList= IbeQueryArtifact.get2MassRelatedData(circle.getCenter(), circle.getRadius()+"");
+        float sizeInArcSec = (float) MathUtil.convert(MathUtil.Units.DEGREE, MathUtil.Units.ARCSEC, circle.radius());
+        circle = new Circle(circle.center(), sizeInArcSec);
+        List<RelatedData> rdList= IbeQueryArtifact.get2MassRelatedData(circle.center(), circle.radius()+"");
         TwoMassImageParams params = new TwoMassImageParams(request.getProgressKey(), request.getPlotId());
-        params.setWorldPt(circle.getCenter());
+        params.setWorldPt(circle.center());
         params.setDataset(request.getSurveyKey());
         params.setBand(request.getSurveyBand());
-        params.setSize((float)circle.getRadius());
+        params.setSize((float)circle.radius());
         return retrieveViaIbe(request,params,rdList);
     }
 
@@ -169,7 +169,7 @@ public class ServiceRetriever implements FileRetriever {
         Circle circle = PlotServUtils.getRequestArea(r);
         AtlasImageParams params = new AtlasImageParams(r.getSurveyKey(), r.getParam("table"),
                 r.getProgressKey(), r.getPlotId());
-        params.setWorldPt(circle.getCenter());
+        params.setWorldPt(circle.center());
         params.setBand(r.getSurveyBand());
         // New image search deals with atlas surveyKey formatted such as 'schema.table'
         String datasetAtlas = r.getSurveyKey();
@@ -185,7 +185,7 @@ public class ServiceRetriever implements FileRetriever {
         params.setTable(table);
         params.setInstrument(r.getParam(AtlasIbeDataSource.INSTRUMENT_KEY));
         params.setXtraFilter(r.getParam(AtlasIbeDataSource.XTRA_KEY));
-        params.setSize((float)circle.getRadius());
+        params.setSize((float)circle.radius());
         params.setDataType(r.getParam(ImageMasterDataEntry.PARAMS.DATA_TYPE.getKey()));
         FileInfo fi = LockingVisNetwork.retrieve(params, (p,f) -> AtlasIbeImageGetter.get(p));
         fi.setDesc(ServiceDesc.get(r));
@@ -195,31 +195,31 @@ public class ServiceRetriever implements FileRetriever {
     private FileInfo getWisePlot(WebPlotRequest r) throws FailedRequestException {
         Circle circle = PlotServUtils.getRequestArea(r);
         WiseImageParams params = new WiseImageParams(r.getProgressKey(), r.getPlotId());
-        params.setWorldPt(circle.getCenter());
+        params.setWorldPt(circle.center());
         params.setProductLevel(r.getSurveyKey());
         params.setBand(r.getSurveyBand());
-        params.setSize((float)circle.getRadius());
-        List<RelatedData> rdList= IbeQueryArtifact.getWiseRelatedData(circle.getCenter(), circle.getRadius()+"", r.getSurveyBand());
+        params.setSize((float)circle.radius());
+        List<RelatedData> rdList= IbeQueryArtifact.getWiseRelatedData(circle.center(), circle.radius()+"", r.getSurveyBand());
         return retrieveViaIbe(r,params,rdList);
     }
 
     private FileInfo getZtfPlot(WebPlotRequest r) throws FailedRequestException {
         Circle circle = PlotServUtils.getRequestArea(r);
         ZtfImageParams params = new ZtfImageParams(r.getProgressKey(), r.getPlotId());
-        params.setWorldPt(circle.getCenter());
+        params.setWorldPt(circle.center());
         params.setProductLevel(r.getSurveyKey());
         params.setBand(r.getSurveyBand());
-        params.setSize((float)circle.getRadius());
+        params.setSize((float)circle.radius());
         return retrieveViaIbe(r,params,null);
     }
 
     private FileInfo getPtfPlot(WebPlotRequest r) throws FailedRequestException {
         Circle circle = PlotServUtils.getRequestArea(r);
         PtfImageParams params = new PtfImageParams(r.getProgressKey(), r.getPlotId());
-        params.setWorldPt(circle.getCenter());
+        params.setWorldPt(circle.center());
         params.setProductLevel(r.getSurveyKey());
         params.setBand(r.getSurveyBand());
-        params.setSize((float)circle.getRadius());
+        params.setSize((float)circle.radius());
         return retrieveViaIbe(r,params,null);
     }
 

@@ -68,7 +68,7 @@ function convertToBits(ary) {
 async function fetchByteDataArray(payload) {
     const {plotImageId,plotStateSerialized, plotState, processHeader, dataWidth, dataHeight,
         bias, contrast, cmdSrvUrl, rootUrl, mask= false, maskBits=0, maskColor='',
-        veryLargeData= false, dataCompress='FULL'} = payload;
+        veryLargeData= false, dataCompress='FULL', colorTableId} = payload;
 
     try {
         // const start= Date.now();
@@ -108,7 +108,7 @@ async function fetchByteDataArray(payload) {
             entry= getEntry(plotImageId);
         }
         const {retRawTileDataGroup, localRawTileDataGroup}=
-                await populateRawImagePixelDataInWorker(rawTileDataGroup, plotState.colorTableId, plotState.isThreeColor(),
+                await populateRawImagePixelDataInWorker(rawTileDataGroup, colorTableId, plotState.isThreeColor(),
                                                         mask, maskColor, bias, contrast, {}, rootUrl);
         entry.rawTileDataGroup= localRawTileDataGroup;
 
@@ -233,7 +233,6 @@ async function changeLocalRawDataColor(plotImageId, colorTableId, threeColor, bi
     const bandEntry=entry?.[Band.NO_BAND.key];
     if (!bandEntry) return;
     const newPlotState = plotState.copy();
-    newPlotState.colorTableId = colorTableId;
     const {retRawTileDataGroup, localRawTileDataGroup}=
         await populateRawImagePixelDataInWorker(entry.rawTileDataGroup, colorTableId, threeColor, false, '',
             bias, contrast, bandUse, rootUrl);

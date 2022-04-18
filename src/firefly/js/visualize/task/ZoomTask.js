@@ -202,11 +202,8 @@ function processHiPSZoom(dispatcher, plot, zoomLevel, userZoomType, zoomLockingE
 
 function processFitsImageZoom(dispatcher, plot, zoomLevel, userZoomType, zoomLockingEnabled, devicePt) {
     const {plotId}= plot;
-    const ps= plot.plotState.copy();
-    ps.setZoomLevel(zoomLevel);
-    const primaryStateJson= PlotState.convertToJSON(ps,true);
     dispatcher( {
         type: ImagePlotCntlr.ZOOM_IMAGE,
-        payload: { zoomLevel, zoomLockingEnabled,userZoomType, devicePt, plotId, primaryStateJson}});
+        payload: { zoomLevel, zoomLockingEnabled,userZoomType, devicePt, plotId, primaryStateJson:undefined}});
     dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotIdAry:[plotId]}} );
 }

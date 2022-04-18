@@ -8,19 +8,10 @@ import {RawDataThreadActions} from '../../threadWorker/WorkerThreadActions.js';
  * @typedef RawDataStoreEntry
  *
  * @prop plotImageId
- * @prop {Float32Array} float1d
- * @prop {HistogramData} histogram
- * @prop {number} dataWidth
- * @prop {number} dataHeight
- * @prop {Array<Int8Array>} stretchedDataTiles
- * @prop {Array<Int8Array>} color
- * @prop {ThumbnailImage} thumbnailData
+ * @prop {Canvas} thumbnailEncodedImage
  * @prop {Array.<{x:number,y:number,width:number,height:number,local:boolean}>} localScreenTileDefList
- * @prop {number} datamin
- * @prop {number} datamax
- * @prop {Object} processHeader
- * @prop {Object} imageTileDataGroup
- * @prop {Array.<Canvas>} rawDataTiles
+ * @prop {RawTileDataGroup}
+ *
  * @prop {number} loadingCnt - number of times this is loading, it should be 0,1,2
  */
 

@@ -5,16 +5,16 @@
 import {Band} from './Band.js';
 import BrowserCache from '../util/BrowserCache.js';
 import {RangeValues} from './RangeValues.js';
-import PlotState from './PlotState.js';
 
 /**
+ * change pref
  * @param {string} cacheKey
- * @param (PlotState} state
+ * @param {PlotState} state
+ * @param {Number} colorTableId
  */
-var putCacheColorPref= function(cacheKey, state) {
+function putCacheColorPref(cacheKey, state, colorTableId) {
     if (!cacheKey) return;
-    var colorTableId= state.getColorTableId();
-    var pref= {colorTableId};
+    const pref= {colorTableId};
 
     state.getBands().forEach(
         (band)=> {
@@ -22,7 +22,7 @@ var putCacheColorPref= function(cacheKey, state) {
         });
 
     BrowserCache.put(cacheKey,pref);
-};
+}
 
 
 

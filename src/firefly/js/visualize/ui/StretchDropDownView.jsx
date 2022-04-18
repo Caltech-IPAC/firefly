@@ -101,7 +101,7 @@ const changeBiasContrast= throttle((plot,bias,contrast) => {
     if (isThreeColor(plot)) return;
     dispatchColorChange({
         plotId:plot.plotId,
-        cbarId: plot.plotState.getColorTableId(),
+        cbarId: plot.colorTableId,
         bias,
         contrast
     });

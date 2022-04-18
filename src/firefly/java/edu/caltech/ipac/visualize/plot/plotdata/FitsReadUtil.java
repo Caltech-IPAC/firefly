@@ -135,6 +135,17 @@ public class FitsReadUtil {
         return false;
     }
 
+    public static Header getTopFitsHeader(File f) {
+        try {
+            Fits fits= new Fits(f);
+            Header header=  fits.getHDU(0).getHeader();
+            closeFits(fits);
+            return header;
+        } catch (FitsException|IOException  e) {
+            return null;
+        }
+    }
+
     public static class UncompressFitsInfo {
         private final Fits fits;
         private final File file;
@@ -507,6 +518,18 @@ public class FitsReadUtil {
     public static double getBlankValue(Header h) { return h.getDoubleValue("BLANK", Double.NaN); }
     public static String getExtName(Header h) { return h.getStringValue("EXTNAME"); }
     public static String getUtype(Header h) { return h.getStringValue("UTYPE"); }
+
+
+    public static String findHeaderValue(Header header, String... keys) {
+        String value= null;
+        for(String k : keys) {
+            if (k!=null) value= header.getStringValue(k);
+            if (value!=null) return value;
+        }
+        return null;
+    }
+
+
 
     public static void closeFits(Fits fits) {
         try {

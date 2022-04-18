@@ -23,11 +23,11 @@ public class Histogram {
     private static int HISTSIZ2 = 4096;  /* full size of hist array */
     private static int HISTSIZ = 2048;     /* half size of hist array */
 
-    private int[] hist;
+    private final int[] hist;
     private double histMin;
     private double histBinsize;
-    private double irafMin;
-    private double irafMax;
+    private final double irafMin;
+    private final double irafMax;
 
 
 
@@ -150,9 +150,8 @@ public class Histogram {
 
         irafMin = datamin;
         irafMax = datamax;
-
-
     }
+
 
     private double  getHistBinSize(double histMax){
         double  hbinsiz = (histMax - histMin) / HISTSIZ2;
@@ -272,11 +271,10 @@ public class Histogram {
      * @return A pointer to the histogram array
      */
     public int[] getHistogramArray() {
-        int retHist[] = new int[hist.length];
+        int[] retHist= new int[hist.length];
         System.arraycopy(hist, 0, retHist, 0, hist.length);
         return retHist;
     }
-
 
     /**
      * @return The minimum DN value in the image
@@ -298,6 +296,18 @@ public class Histogram {
      */
     public double getDNfromBin(int bin) {
         return (bin * histBinsize + histMin);
+    }
+
+    /**
+     * Generate the mean bin data array
+     * @param bscale the bscale from the fits header
+     * @param bzero the bzero from the fits header
+     * @return an array the same length as the histograme
+     */
+    public double[] getMeanBinDataAry(double bscale, double bzero) {
+        double[] meanDataAry = new double[hist.length];
+        for (int i = 0; i < meanDataAry.length; i++) meanDataAry[i] = getDNfromBin(i) * bscale + bzero;
+        return meanDataAry ;
     }
 
     /**

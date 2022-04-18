@@ -13,8 +13,8 @@ import java.util.List;
  * @author Trey Roby
  * Date: Sep 11, 2009
  */
-public record WebPlotInitializer(PlotState plotState, PlotImages initImages, CoordinateSys imageCoordSys,
+public record WebPlotInitializer(PlotState plotState, CoordinateSys imageCoordSys,
                                  Header[] headerAry, Header[] zeroHeaderAry, int dataWidth,
                                  int dataHeight, WebFitsData[] fitsData,
-                                 String plotDesc, String dataDesc, List<RelatedData> relatedData) { }
+                                 String desc, String dataDesc, List<RelatedData> relatedData) { }
 

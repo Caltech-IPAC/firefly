@@ -67,6 +67,7 @@ export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_
  * @prop {String} plotImageId,  - plot image id, id of this WebPlot , immutable
  * @prop {Object} serverImage, immutable
  * @prop {String} title - the title
+ * @prop {number} colorTableId
  * @prop {Object} header
  * @prop {{cubePlane,cubeHeaderAry}} cubeCtx
  * @prop {number} cubeIdx
@@ -208,7 +209,6 @@ export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_
  * @prop imageCoordSys
  * @prop dataWidth
  * @prop dataHeight
- * @prop initImages
  * @prop plotState
  * @prop fitsData
  * @prop desc
@@ -232,6 +232,8 @@ export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_
  * @prop processHeader
  * @prop wlRelated
  * @prop wlData
+ * @prop getFitsFileSize
+ * @prop fluxUnits
  */
 
 
@@ -379,7 +381,7 @@ export const WebPlot= {
         if (Object.values(allWlMap).length>0 && wlData?.algorithm!==TAB) {
             wlData= Object.values(allWlMap)[0];
         }
-        const zf= plotState.getZoomLevel();
+        const zf= 1;
 
         // because of history we keep directFileAccessData in the plot state, however now we compute it on the client
         // also- we need to keep a copy in plotState for backward compatibility and in the plot to put in back in the plotState
@@ -396,8 +398,9 @@ export const WebPlot= {
 
         // noinspection JSUnresolvedVariable
         const imagePlot= {
-            tileData    : wpInit.initImages,
+            tileData    : undefined,
             relatedData     : null,
+            colorTableId: request0?.getInitialColorTable() ?? 0,
             header,
             headerAry,
             zeroHeader,
@@ -411,9 +414,9 @@ export const WebPlot= {
             dataWidth,
             dataHeight,
             title : '',
-            plotDesc        : wpInit.desc,
+            plotDesc        : cubeCtx ? cubeCtx.desc : wpInit.desc,
             dataDesc        : wpInit.dataDesc,
-            webFitsData     : isArray(wpInit.fitsData) ? wpInit.fitsData : [wpInit.fitsData],
+            webFitsData     : isArray(wpInit.fitsData) ? wpInit.fitsData :  wpInit.fitsData ? [wpInit.fitsData] : [{}],
             //=== Mutable =====================
             screenSize: {width:Math.trunc(dataWidth*zf)||1, height:Math.trunc(dataHeight*zf)||1},
             zoomFactor: zf,
@@ -426,7 +429,11 @@ export const WebPlot= {
         };
         if (imagePlot.webFitsData) {
             imagePlot.webFitsData=
-                imagePlot.webFitsData.map( (wfd) => ({ ...wfd, dataMin: wfd?.dataMin ?? 0, dataMax: wfd?.dataMax ?? 0 }));
+                imagePlot.webFitsData.map( (wfd) => {
+                    let newWfd=  { ...wfd, dataMin: wfd?.dataMin ?? 0, dataMax: wfd?.dataMax ?? 0 };
+                    if (cubeCtx) newWfd= {...newWfd, fluxUnits:cubeCtx.fluxUnits, getFitsFileSize:cubeCtx.getFitsFileSize};
+                    return newWfd;
+                });
         }
         plot= {...plot, ...imagePlot};
         if (relatedData) {
@@ -463,6 +470,7 @@ export const WebPlot= {
         const hipsPlot= {
             //HiPS specific
             nside: 3,
+            colorTableId: -1,
             hipsUrlRoot,
             dataCoordSys : hipsCoordSys,
             hipsProperties,
@@ -501,6 +509,7 @@ export const WebPlot= {
      *
      * @param {WebPlot} plot
      * @param {object} stateJson
+     * @param {number} zoomFactor
      * @param {ImageTileData} [rawData]
      * @param {Number} [bias]
      * @param {Number} [contrast]
@@ -509,10 +518,9 @@ export const WebPlot= {
      * @param {boolean|undefined} useBlue
      * @return {WebPlot}
      */
-    replacePlotValues(plot, stateJson, rawData, bias, contrast, useRed,useGreen, useBlue) {
-        const plotState= PlotState.makePlotStateWithJson(stateJson);
-        const zf= plotState.getZoomLevel();
-        const screenSize= {width:plot.dataWidth*zf, height:plot.dataHeight*zf};
+    replacePlotValues(plot, stateJson, zoomFactor, rawData, colorTableId, bias, contrast, useRed,useGreen, useBlue) {
+        const plotState= stateJson ? PlotState.makePlotStateWithJson(stateJson) : plot.plotState;
+        const screenSize= {width:plot.dataWidth*zoomFactor, height:plot.dataHeight*zoomFactor};
 
         //keep the plotState populated with the fitsHeader information, this is only used with get flux calls
         //todo: i think is could be cached on the server side so we don't need to be send it back and forth
@@ -523,8 +531,9 @@ export const WebPlot= {
             }
         }
 
-        plot= {...plot,...{plotState, zoomFactor:zf,screenSize}};
+        plot= {...plot,...{plotState, zoomFactor,screenSize}};
         plot.tileData= undefined;
+        if (colorTableId>-1) plot.colorTableId= colorTableId;
         if (rawData) plot.rawData= {...plot.rawData};
 
         if (isNumber(bias) || isNumber(contrast) || isArray(bias) || isArray(contrast) ) {
@@ -614,16 +623,6 @@ export function replaceProjection(plot, projection) {
  * @return boolean - true if this object is a WebPlot
  */
 export const isPlot= (o) => Boolean(o && o.plotType && o.plotId && o.plotImageId && o.conversionCache);
-
-// noinspection JSUnresolvedVariable
-/**
- * @deprecated - we are moving away from blank images. So this function will soon be unnecessary
- * Check if the plot is is a blank image
- * @param {WebPlot} plot - the plot
- * @return {boolean}
- */
-export const isBlankImage= (plot) =>
-        !plot?.plotState.isThreeColor() && plot?.plotState.getWebPlotRequest()?.getRequestType()===RequestType.BLANK;
 
 /**
  * @param {WebPlot|undefined} plot

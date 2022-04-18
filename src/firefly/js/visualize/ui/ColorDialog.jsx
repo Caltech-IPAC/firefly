@@ -13,8 +13,8 @@ import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {ColorBandPanel} from './ColorBandPanel.jsx';
 import {ColorRGBHuePreservingPanel} from './ColorRGBHuePreservingPanel.jsx';
-import ImagePlotCntlr, {dispatchStretchChange, visRoot} from '../ImagePlotCntlr.js';
-import {primePlot, getActivePlotView} from '../PlotViewUtil.js';
+import {dispatchStretchChange, visRoot} from '../ImagePlotCntlr.js';
+import {primePlot, getActivePlotView, isThreeColor} from '../PlotViewUtil.js';
 import { RangeValues, ZSCALE, STRETCH_ASINH}from '../RangeValues.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
@@ -67,7 +67,7 @@ export const ColorDialog= memo(() => {
     if (!plot) return false;
 
     if (isImage(plot)) {
-        return plot.plotState.isThreeColor() ?
+        return isThreeColor(plot) ?
             renderThreeColorView(plot,rFields,gFields,bFields,rgbFields,huePreserving,setHuePreserving) :
             renderStandardView(plot,fields);
     }
@@ -206,7 +206,7 @@ function replot(usedBands=null) {
 
     return (request)=> {
 
-        const defReq= request.redPanel || request.greenPanel || request.bluePanel
+        const defReq= request.redPanel || request.greenPanel || request.bluePanel;
         if (request.colorDialogTabs) {
 
             replot3Color(

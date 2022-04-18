@@ -1,14 +1,10 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.firefly.server.visualize;
-/**
- * User: roby
- * Date: 2/28/13
- * Time: 12:53 PM
- */
+package edu.caltech.ipac.firefly.server.visualize.fc;
 
 
+import edu.caltech.ipac.firefly.server.visualize.PlotServUtils;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.util.dd.RegionAnnulus;
@@ -34,22 +30,22 @@ import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.PlotContainer;
-import edu.caltech.ipac.visualize.plot.PlotContainerImpl;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.Font;
 import java.util.List;
 
 /**
  * @author Trey Roby
+ * Date: 2/28/13
  */
 public class RegionPng {
 
@@ -72,8 +68,8 @@ public class RegionPng {
         this.vectorList = vectorList;
         this.scaleList = scaleList;
         this.plot = plot;
-        this.container= new PlotContainerImpl();
-        ((PlotContainerImpl)container).getPlotList().add(plot);
+        this.container= new PlotContainer();
+        container.getPlotList().add(plot);
     }
 
 //======================================================================

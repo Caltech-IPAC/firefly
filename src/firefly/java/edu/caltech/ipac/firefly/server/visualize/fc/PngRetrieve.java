@@ -12,7 +12,6 @@ import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.ImagePlotBuilder;
-import edu.caltech.ipac.firefly.server.visualize.PlotPngCreator;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
@@ -47,8 +46,8 @@ public class PngRetrieve {
             importPlotState(request, plotStateStr);
             ImagePlotBuilder.SimpleResults plotR= ImagePlotBuilder.create(request);
             List<StaticDrawInfo> drawInfoList = parseDrawInfoListStr(request, drawInfoListStr, artifactList);
-            if (request.getPlotDescAppend()!=null) request.setTitle( plotR.getPlot().getPlotDesc());
-            return ServerContext.convertToFile(PlotPngCreator.createImagePng(plotR.getPlot(),plotR.getFrGroup() ,drawInfoList));
+            if (request.getPlotDescAppend()!=null) request.setTitle( plotR.plot().getPlotDesc());
+            return ServerContext.convertToFile(PlotPngCreator.createImagePng(plotR.plot(),plotR.getFrGroup() ,drawInfoList));
         } catch (Exception e) {
             _log.error(e,"Could not create png file");
 
@@ -99,7 +98,7 @@ public class PngRetrieve {
                     sdi.setDrawType(StaticDrawInfo.DrawType.REGION);
 
                     if (sdiLbl.equals("target")) {
-                        WorldPt position[] = {request.getRequestArea().getCenter()};
+                        WorldPt position[] = {request.getRequestArea().center()};
                         for (WorldPt wp : position) {
                             RegionPoint rg = new RegionPoint(wp, rgtpl.getPointType(), rgtpl.getPointSize());
                             rg.setOptions(rgtpl.getOptions());

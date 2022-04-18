@@ -1,12 +1,9 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-
 import {isEmpty, isArray} from 'lodash';
 import {Band} from './Band.js';
 import {convertBandStateToJSON, makeBandState, makeBandStateWithJson} from './BandState.js';
-import CoordinateSys from './CoordSys.js';
 import Enum from 'enum';
 
 
@@ -26,7 +23,6 @@ export const RotateType= new Enum(['NORTH', 'ANGLE', 'UNROTATE']);
 /**
  * @typedef Operation
  * can be 'ROTATE', 'CROP', 'FLIP_Y'
- * @prop ROTATE
  * @prop CROP
  * @prop FLIP_Y
  * @type {Enum}
@@ -34,37 +30,18 @@ export const RotateType= new Enum(['NORTH', 'ANGLE', 'UNROTATE']);
 export const Operation= new Enum(['ROTATE', 'CROP', 'FLIP_Y']);
 
 
-
-
-
-
-
 export class PlotState {
 
     /**
      * @summary Contains data about the state of a plot.
      * This object is never created directly if is always instantiated from the json sent from the server.
-     * @prop {number} zoomLevel - the zoomlevel of the image
      * @prop {boolean} threeColor - is a three color plot
-     * @prop {number} colorTableId - the id of the color table in use
-     * @prop {boolean} flippedY - flipped on the y axis
-     * @prop {number} rotationAngle - if rotated by angle, then the angle  of the rotation
-     * @prop {RotateType} rotationType the type of rotations
      * @public
      */
     constructor() {
-
         this.bandStateAry= [null,null,null];
         this.ctxStr=null;
-        this.zoomLevel= 1;
         this.threeColor= false;
-        this.colorTableId= 0;
-        this.rotationType= RotateType.UNROTATE;
-        this.rotaNorthType= CoordinateSys.EQ_J2000;
-        this.flippedY= false;
-        this.rotationAngle= NaN;
-        this.multiImage= undefined;
-
         this.ops= [];
     }
 
@@ -113,35 +90,10 @@ export class PlotState {
     }
 
     /**
-     * Get the number of the color table
-     * @return {number}
-     */
-    getColorTableId() { return this.colorTableId; }
-
-    /**
-     * set the number of the color table
-     * @param {number} colorTableId the new id
-     */
-    setColorTableId(colorTableId) { this.colorTableId= colorTableId; }
-
-    /**
      *
      * @return {boolean}
      */
     isThreeColor() { return this.threeColor; }
-
-
-    /** @return {number} */
-    getZoomLevel() {return this.zoomLevel; }
-
-    setZoomLevel(zl) { this.zoomLevel= zl;}
-
-    /**
-     *
-     * @return {boolean}
-     */
-    isFlippedY() { return this.flippedY; }
-
 
     /**
      * @summary this method will make a copy of WebPlotRequest. Any changes to the WebPlotRequest object
@@ -259,13 +211,8 @@ export class PlotState {
         if (!psJson) return;
         const state= PlotState.makePlotState();
         // if not include used defaulted values
-        state.multiImage= psJson.multiImage; // if multiImage is not default we don't care
-        state.flippedY= Boolean(psJson.flippedY);
         state.threeColor= Boolean(psJson.threeColor);
-        state.rotationType= psJson.rotationType ? RotateType.get(psJson.rotationType) : RotateType.UNROTATE;
-        state.rotaNorthType= psJson.rotaNorthType ? CoordinateSys.parse(psJson.rotaNorthType) : CoordinateSys.EQ_J2000;
-        state.rotationAngle= psJson.rotationAngle ? psJson.rotationAngle : NaN;
-        state.ops= psJson.ops ? psJson.ops.map( (op) => Operation.get(op) ) :[];
+        state.ops= psJson.ops?.map( (op) => Operation.get(op) ) ?? [];
 
         const {bandStateAry}= psJson;
         const ovPR= !state.threeColor ? overridePlotRequest : undefined;
@@ -279,8 +226,6 @@ export class PlotState {
         }
 
         state.ctxStr=psJson.ctxStr;
-        state.zoomLevel= psJson.zoomLevel;
-        state.colorTableId= psJson.colorTableId || 0;
 
         return state;
     }
@@ -294,16 +239,10 @@ export class PlotState {
         if (!s) return undefined;
         const json= {};
         json.ctxStr=s.ctxStr;
-        json.zoomLevel= s.zoomLevel;
-        json.colorTableId= s.colorTableId;
+        json.colorTableId= 0;
 
-        if (s.multiImage) json.multiImage= s.multiImage;
-        if (s.rotationType!==RotateType.UNROTATE) json.rotationType= s.rotationType.key;
-        if (s.rotaNorthType!==CoordinateSys.EQ_J2000) json.rotaNorthType= s.rotaNorthType.toString();
         if (!isEmpty(s.ops)) json.ops= s.ops.map( (op) => op.key );
         if (s.threeColor) json.threeColor= true;
-        if (s.flippedY) json.flippedY= true;
-        if (!isNaN(s.rotationAngle)) json.rotationAngle= s.rotationAngle;
 
 
         json.bandStateAry= s.bandStateAry.map( (bJ) => convertBandStateToJSON(bJ,includeDirectAccessData));
@@ -317,7 +256,6 @@ export function makePlotStateShimForHiPS(wpRequest) {
     const bandState= makeBandState();
     bandState.plotRequest= wpRequest;
     plotState.bandStateAry= [bandState,null,null];
-    plotState.colorTableId=-1;
     return plotState;
 }
 

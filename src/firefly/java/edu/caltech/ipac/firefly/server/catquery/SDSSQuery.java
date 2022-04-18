@@ -322,8 +322,8 @@ public class SDSSQuery extends IpacTablePartProcessor {
         if (CatalogRequest.Method.BOX.getDesc().equals(String.valueOf(method))) {
             double radiusArcsec = request.getDoubleParam(SDSSRequest.RADIUS_ARCMIN) * 60;
             VisUtil.Corners corners = VisUtil.getCorners(pt, radiusArcsec);
-            String upperLeft = String.format(Locale.US, "%8.6f,%8.6f", corners.getUpperLeft().getLon(), corners.getUpperLeft().getLat());
-            String lowerRight = String.format(Locale.US, "%8.6f,%8.6f", corners.getLowerRight().getLon(), corners.getLowerRight().getLat());
+            String upperLeft = String.format(Locale.US, "%8.6f,%8.6f", corners.upperLeft().getLon(), corners.upperLeft().getLat());
+            String lowerRight = String.format(Locale.US, "%8.6f,%8.6f", corners.lowerRight().getLon(), corners.lowerRight().getLat());
             sql = BOX_TGT_SQL.replace("%RA_MAX%,%DEC_MAX%", upperLeft).replace("%RA_MIN%,%DEC_MIN%",lowerRight);
         } else {
             String raDec = String.format(Locale.US, "%8.6f,%8.6f", pt.getLon(), pt.getLat());

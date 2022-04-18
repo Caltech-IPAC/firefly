@@ -9,12 +9,16 @@ package edu.caltech.ipac.visualize.plot;
  */
 
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 /**
  * @author Trey Roby
  */
-public interface PlotContainer extends Iterable<Plot> {
-
-    void freeResources();
-
+public class PlotContainer implements Iterable<Plot> {
+    private final List<Plot> plots       = new ArrayList<>();
+    public List<Plot> getPlotList() { return plots; }
+    public Iterator<Plot> iterator() { return plots.iterator(); }
 }
 

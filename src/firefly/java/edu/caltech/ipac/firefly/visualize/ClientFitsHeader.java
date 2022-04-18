@@ -21,7 +21,6 @@ import java.util.Map;
  */
 public class ClientFitsHeader implements Serializable, Iterable<String> {
 
-    private final static String SPLIT_TOKEN= "--ClientFitHead--";
 
     private static final String PLANE_NUMBER= "planeNumber";
     private static final String BITPIX= "bitpix";
@@ -149,7 +148,7 @@ public class ClientFitsHeader implements Serializable, Iterable<String> {
         StringBuilder sb = new StringBuilder(500);
         for(Map.Entry<String,String> entry : _headers.entrySet()) {
             sb.append(entry.getKey()).append("=").append(entry.getValue());
-            sb.append(SPLIT_TOKEN);
+            sb.append(";");
         }
         return sb.toString();
     }

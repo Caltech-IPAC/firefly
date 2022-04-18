@@ -14,7 +14,7 @@ import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.ImageDataGroup;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.Plot;
-import edu.caltech.ipac.visualize.plot.PlotContainerImpl;
+import edu.caltech.ipac.visualize.plot.PlotContainer;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageTypeSpecifier;
@@ -29,7 +29,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class PlotOutput {
@@ -39,8 +38,8 @@ public class PlotOutput {
     public static final int BMP=  82;
 
     public enum Quality {HIGH, MEDIUM}
-    private static final int _trySizes[]= {512,640,500,630,748,760,494,600,700,420,800,825,650};
-    public static final int CREATE_ALL= -1;
+    private static final int[] _trySizes= {512,640,500,630,748,760,494,600,700,420,800,825,650};
+    public static final int CREATE_ALL= 1;
     private final ImagePlot _plot;
     private final ActiveFitsReadGroup _frGroup;
     private GridLayer _gridLayer;
@@ -91,11 +90,7 @@ public class PlotOutput {
 //    }
 
 
-    private int findTileSize() {
-
-        return findTileSize(_plot.getZoomFactor());
-    }
-
+    private int findTileSize() { return findTileSize(_plot.getZoomFactor()); }
 
     private static int findTileSize(float zfact) {
 
@@ -113,8 +108,6 @@ public class PlotOutput {
                     break;
                 }
             }
-
-
             if (retval==-1) {
                 if (intZoomLevel < 21) {
                     retval= intZoomLevel*35;
@@ -148,22 +141,16 @@ public class PlotOutput {
     }
 
 
-    public List<TileFileInfo> writeTilesFullScreen(File dir,
-                                                  String baseName,
-                                                  int outType,
-                                                  boolean requiresTransparency,
-                                                  boolean createTile) throws IOException {
-
-
-
-
-        List<TileFileInfo> retval;
+    public void writeTilesFullScreen(File dir,
+                                     String baseName,
+                                     int outType,
+                                     boolean requiresTransparency,
+                                     boolean createTile) throws IOException {
         if (_plot.getZoomFactor()<1) {
             int tileSize= findTileSize();
-            retval= writeTiles(dir,baseName,outType,requiresTransparency, tileSize,10);
+            writeTiles(dir,baseName,outType,requiresTransparency, tileSize,10);
         }
         else {
-            retval= new ArrayList<TileFileInfo>(1);
             int width= _plot.getScreenWidth();
             int height= _plot.getScreenHeight();
             BufferedImage image= createImage(width,height, requiresTransparency?Quality.HIGH:Quality.MEDIUM);
@@ -171,10 +158,7 @@ public class PlotOutput {
             if (createTile) {
                 writeTile(f,outType,requiresTransparency,0,0,width,height,image);
             }
-            retval.add(new TileFileInfo(0,0,width, height,f,createTile));
         }
-
-        return retval;
     }
 
 
@@ -208,7 +192,7 @@ public class PlotOutput {
 
 
         ImagePlot plot= _plot;
-        PlotContainerImpl container= new PlotContainerImpl();
+        PlotContainer container= new PlotContainer();
         container.getPlotList().add(_plot);
 
 
@@ -220,7 +204,7 @@ public class PlotOutput {
         if (createOnly>0) defImage= createImage(defTileSize,defTileSize, requiresTransparency?Quality.HIGH:Quality.MEDIUM);
 
         ImageDataGroup imageDataGrp= plot.getImageData();
-        List<TileFileInfo> retList= new ArrayList<TileFileInfo>(imageDataGrp.size());
+        List<TileFileInfo> retList= new ArrayList<>(imageDataGrp.size());
         BufferedImage image;
         int screenWidth= plot.getScreenWidth();
         int screenHeight= plot.getScreenHeight();
@@ -297,7 +281,7 @@ public class PlotOutput {
         _plot.preProcessImageTiles(_frGroup);
         _plot.paintTile(g2,_frGroup,x,y,width,height);
 
-        PlotContainerImpl container= new PlotContainerImpl();
+        PlotContainer container= new PlotContainer();
         container.getPlotList().add(_plot);
 
         if (_fogList!=null && _fogList.size()>0) {
@@ -329,9 +313,7 @@ public class PlotOutput {
     }
 
 
-    private void saveTileToFile(File f,
-                           BufferedImage image,
-                           int outType) throws IOException {
+    private void saveTileToFile(File f, BufferedImage image, int outType) throws IOException {
         BufferedOutputStream stream= null;
         try {
             stream= new BufferedOutputStream( new FileOutputStream(f),4096);
@@ -349,7 +331,7 @@ public class PlotOutput {
         else if (outType == PNG) {
 //            ImageIO.write(image, "png", out);
 
-            Iterator writers = ImageIO.getImageWritersByFormatName("png");
+            var writers = ImageIO.getImageWritersByFormatName("png");
             ImageWriter writer = (ImageWriter)writers.next();
             ImageOutputStream ios = ImageIO.createImageOutputStream(out);
             writer.setOutput(ios);
@@ -371,19 +353,15 @@ public class PlotOutput {
         else if (outType == JPEG) {
             try {
                 //ImageIO.write(image, "jpg", out);
-                Iterator writers = ImageIO.getImageWritersByFormatName("jpg");
-                ImageWriter writer = (ImageWriter)writers.next();
+                var writers = ImageIO.getImageWritersByFormatName("jpg");
+                ImageWriter writer = writers.next();
                 ImageOutputStream ios = ImageIO.createImageOutputStream(out);
                 writer.setOutput(ios);
                 ImageWriteParam param= writer.getDefaultWriteParam();
                 param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT) ;
                 param.setCompressionQuality(1.0F);
                 param.setSourceSubsampling(1,1,0,0);
-
-
                 writer.write(image);
-
-
                 FileUtil.silentClose(ios);
                 //JPEGImageEncoder jpeg= JPEGCodec.createJPEGEncoder(out);
                 //jpeg.encode(image);
@@ -396,34 +374,7 @@ public class PlotOutput {
         }
     }
 
-    public static class TileFileInfo {
-        private final int _x;
-        private final int _y;
-        private final int _width;
-        private final int _height;
-        private final File _file;
-        private final boolean _created;
-
-        public TileFileInfo( int x,
-                             int y,
-                             int width,
-                             int height,
-                             File file,
-                             boolean created) {
-            _x= x;
-            _y= y;
-            _width= width;
-            _height= height;
-            _file= file;
-            _created= created;
-        }
-        public int getX() { return _x; }
-        public int getY() { return _y; }
-        public int getWidth() { return _width; }
-        public int getHeight() { return _height; }
-        public File getFile() { return _file; }
-        public boolean isCreated() { return _created; }
-    }
+    public record TileFileInfo(int x, int y, int width, int height, File file, boolean created) { }
 
 
 }

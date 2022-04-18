@@ -10,6 +10,7 @@ import {stretchPixels3Color, stretchPixels8Bit, stretchPixelsForMask} from './ra
 import {parseImagePt} from '../Point.js';
 import {getTransferable, makeFetchOptions, populateRawImagePixelDataInWorker} from './RawDataCommon.js';
 
+// todo - the color id is not longer in plot state it is in plot
 
 export async function callFloatData(plotImageId,plotStateSerialized,band,cmdSrvUrl) {
     const options= makeFetchOptions(plotImageId, {
@@ -126,7 +127,7 @@ async function changeLocalRawDataStretch(plotImageId, dataWidth, dataHeight, plo
         plotState.bandStateAry[bIdx].rangeValues = rv;
     }
     const {retRawTileDataGroup, localRawTileDataGroup}=
-        await populateRawImagePixelDataInWorker(rawTileDataGroup, plotState.getColorTableId(), threeColor, false, '', .5, 1, rootUrl);
+        await populateRawImagePixelDataInWorker(rawTileDataGroup, 1, threeColor, false, '', .5, 1, rootUrl);
     entry.rawTileDataGroup= localRawTileDataGroup;
 
 

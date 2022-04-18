@@ -776,127 +776,57 @@ static IndexColorModel _defaultColorModel = null;
 	int paletteLength = paletteData.length / 3;
 
 
-       if (color_table_id.equals("0")) 
-       {
-	   ct = clt0;
-       }
-       else if (color_table_id.equals("1")) 
-       {
-	   ct = clt1;
-       }
-       else if (color_table_id.equals("2")) 
-       {
-	   ct = clt2;
-       }
-       else if (color_table_id.equals("3")) 
-       {
-	   ct = clt3;
-       }
-       else if (color_table_id.equals("4")) 
-       {
-	   ct = clt4;
-       }
-       else if (color_table_id.equals("5")) 
-       {
-	   ct = clt5;
-       }
-       else if (color_table_id.equals("6")) 
-       {
-	   ct = clt6;
-       }
-       else if (color_table_id.equals("7")) 
-       {
-	   ct = clt7;
-       }
-       else if (color_table_id.equals("8")) 
-       {
-	   ct = clt8;
-       }
-       else if (color_table_id.equals("9")) 
-       {
-	   ct = clt9;
-       }
-       else if (color_table_id.equals("10")) 
-       {
-	   ct = clt10;
-       }
-       else if (color_table_id.equals("11")) 
-       {
-	   ct = clt11;
-       }
-       else if (color_table_id.equals("12")) 
-       {
-	   ct = clt12;
-       }
-       else if (color_table_id.equals("13")) 
-       {
-	   ct = clt13;
-       }
-       else if (color_table_id.equals("14")) 
-       {
-	   ct = clt14;
-       }
-       else if (color_table_id.equals("15")) 
-       {
-	   ct = clt15;
-       }
-       else if (color_table_id.equals("16")) 
-       {
-	   ct = clt16;
-       }
-       else if (color_table_id.equals("17")) 
-       {
-	   ct = clt17;
-       }
-       else if (color_table_id.equals("18")) 
-       {
-	   ct = clt18;
-       }
-       else if (color_table_id.equals("19")) 
-       {
-	   ct = clt19;
-       }
-       else if (color_table_id.equals("20")) 
-       {
-	   ct = clt20;
-       }
-       else if (color_table_id.equals("21")) 
-       {
-	   ct = clt21;
-       }
-       else if (color_table_id.equals("file")) {
+	  switch (color_table_id) {
+		  case "0" -> ct = clt0;
+		  case "1" -> ct = clt1;
+		  case "2" -> ct = clt2;
+		  case "3" -> ct = clt3;
+		  case "4" -> ct = clt4;
+		  case "5" -> ct = clt5;
+		  case "6" -> ct = clt6;
+		  case "7" -> ct = clt7;
+		  case "8" -> ct = clt8;
+		  case "9" -> ct = clt9;
+		  case "10" -> ct = clt10;
+		  case "11" -> ct = clt11;
+		  case "12" -> ct = clt12;
+		  case "13" -> ct = clt13;
+		  case "14" -> ct = clt14;
+		  case "15" -> ct = clt15;
+		  case "16" -> ct = clt16;
+		  case "17" -> ct = clt17;
+		  case "18" -> ct = clt18;
+		  case "19" -> ct = clt19;
+		  case "20" -> ct = clt20;
+		  case "21" -> ct = clt21;
+		  case "file" -> {
+			  if (SUTDebug.isDebug()) {
+				  System.out.println("we will do color table from file " +
+						  file.getAbsolutePath());
+			  }
+			  ct = new int[1025];
+			  FileReader fr = new FileReader(file);
+			  BufferedReader br = new BufferedReader(fr);
+			  for (k = 0; ; k += 4) {
+				  myline = br.readLine();
+				  if (myline == null) {
+					  ct[k] = -1;   /* mark the end */
+					  break;
+				  }
 
-	   if (SUTDebug.isDebug())
-	   {
-	       System.out.println("we will do color table from file " + 
-		   file.getAbsolutePath());
-	   }
-	   ct = new int[1025];
-	      FileReader fr = new FileReader(file);
-	      BufferedReader br = new BufferedReader(fr);
-
-	      for (k = 0; ; k+=4)
-	      {
-		 myline = br.readLine();
-		 if (myline == null)
-		 {
-		     ct[k] = -1;   /* mark the end */
-		     break;
-		 }
-
-		 st = new StringTokenizer(myline);
-		 ct[k]   = Integer.parseInt(st.nextToken());
-		 ct[k+1] = Integer.parseInt(st.nextToken());
-		 ct[k+2] = Integer.parseInt(st.nextToken());
-		 ct[k+3] = Integer.parseInt(st.nextToken());
-	      }
-       }
-       else
-       {
-	  System.out.println("ColorTable ERROR: no color table with the ID = " + 
-	      color_table_id);
-	  ct = null;
-       }
+				  st = new StringTokenizer(myline);
+				  ct[k] = Integer.parseInt(st.nextToken());
+				  ct[k + 1] = Integer.parseInt(st.nextToken());
+				  ct[k + 2] = Integer.parseInt(st.nextToken());
+				  ct[k + 3] = Integer.parseInt(st.nextToken());
+			  }
+		  }
+		  default -> {
+			  System.out.println("ColorTable ERROR: no color table with the ID = " +
+					  color_table_id);
+			  ct = null;
+		  }
+	  }
 
        k = 0;
        dn      = ct[k];

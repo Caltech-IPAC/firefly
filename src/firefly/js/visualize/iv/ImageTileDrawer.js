@@ -8,6 +8,7 @@ import {makeTransform} from '../PlotTransformUtils.js';
 import {primePlot, hasLocalStretchByteData} from '../PlotViewUtil.js';
 import {isImage} from '../WebPlot.js';
 import {drawScreenTileToMainCanvas} from 'firefly/visualize/rawData/RawTileDrawer.js';
+import {changeLocalRawDataColor, colorTableMatches} from 'firefly/visualize/rawData/RawDataOps.js';
 
 /**
  * Return a function that should be called on every render to draw the image
@@ -18,11 +19,11 @@ export function initImageDrawer(targetCanvas) {
     return (plot, opacity,plotView) => {
         if (!isImage(plot) || !plot.affTrans || !hasLocalStretchByteData(plot)) return;
         const rootPlot= primePlot(plotView); // bounding box should us main plot not overlay plot
-        const boundingBox= computeBounding(rootPlot,plotView.viewDim.width,plotView.viewDim.height);
-        const {x,y,w,h}= boundingBox;
-        const offsetX= x>0 ? x : 0;
-        const offsetY= y>0 ? y : 0;
-        drawImage(plotView, plot, targetCanvas, offsetX,offsetY, opacity,{x, y, width:w, height:h});
+        const {x,y,w,h}= computeBounding(rootPlot,plotView.viewDim.width,plotView.viewDim.height);
+        const offsetX= Math.trunc(x>0 ? x : 0);
+        const offsetY= Math.trunc(y>0 ? y : 0);
+        drawImage(plotView, plot, targetCanvas, offsetX,offsetY, opacity,
+            {x:Math.trunc(x), y:Math.trunc(y), width:Math.trunc(w), height:Math.trunc(h)});
     };
 }
 /**
@@ -34,9 +35,8 @@ export function initImageDrawer(targetCanvas) {
  * @param {number} offsetY
  * @param {number} opacity
  * @param {{x:number,y:number,width:number,height:number}} tile
- * @return {{drawTileLocal:Function}}
  */
-function drawImage(plotView, plot, targetCanvas, offsetX,offsetY, opacity, tile) {
+async function drawImage(plotView, plot, targetCanvas, offsetX,offsetY, opacity, tile) {
 
     if (!targetCanvas) return;
     const offscreenCanvas = initOffScreenCanvas(plotView.viewDim);
@@ -47,12 +47,14 @@ function drawImage(plotView, plot, targetCanvas, offsetX,offsetY, opacity, tile)
         offscreenCanvas.width = diagonal;
         offscreenCanvas.height = diagonal;
     }
-
-    offsetX= Math.trunc(offsetX);
-    offsetY= Math.trunc(offsetY);
-    const x = Math.trunc((tile.x) - offsetX);
-    const y = Math.trunc((tile.y) - offsetY);
-    drawScreenTileToMainCanvas(plot,tile,offscreenCanvas,x,y,Math.trunc(tile.width), Math.trunc(tile.height));
+    if (!colorTableMatches(plot)) {
+        const {bias, contrast}= plot.rawData.bandData[0];
+        await changeLocalRawDataColor(plot,plot.colorTableId,bias, contrast);
+    }
+    const x = tile.x - offsetX;
+    const y = tile.y - offsetY;
+    const {width,height}= tile;
+    drawScreenTileToMainCanvas(plot,tile,offscreenCanvas,x,y,width,height, primePlot(plotView).zoomFactor);
     const screenRenderParams= {plotView, plot, targetCanvas, offscreenCanvas, opacity, offsetX, offsetY};
     renderToScreen(screenRenderParams);
 }

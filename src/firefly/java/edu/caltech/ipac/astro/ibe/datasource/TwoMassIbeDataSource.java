@@ -4,14 +4,10 @@
 package edu.caltech.ipac.astro.ibe.datasource;
 
 import edu.caltech.ipac.astro.ibe.BaseIbeDataSource;
-import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataParam;
 import edu.caltech.ipac.astro.ibe.IbeQueryParam;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.visualize.plot.Plot;
-import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;

@@ -151,7 +151,6 @@ export function getRealDataDim( dataCompress, dataWidth, dataHeight) {
  * @prop {number} height
  * @prop {Number} lastPixel
  * @prop {Number} lastLine
- * @prop {String} dataCompress - should be 'FULL' or 'HALF' or 'QUARTER'
  * @prop {ArrayBuffer|ImageBitmap|Canvas} workerTmpTile - the input to make a canvas tile with
  * @prop {Uint8Array|ArrayBuffer|undefined} pixelDataStandard
  * @prop {Array.<Uint8Array|ArrayBuffer>} pixelData3C
@@ -161,5 +160,7 @@ export function getRealDataDim( dataCompress, dataWidth, dataHeight) {
 
 /**
  * @typedef RawTileDataGroup
+ * @prop {String} dataCompress - should be 'FULL' or 'HALF' or 'QUARTER'
+ * @prop {number} colorTableId
  * @prop {Array.<RawTileData>} rawTileData
  */

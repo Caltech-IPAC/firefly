@@ -58,7 +58,7 @@ export function makeAbortFetchAction(plotImageId, workerKey) {
  * @return {WorkerAction}
  */
 export function makeRetrieveStretchByteDataAction(plot, plotState, maskOptions, dataCompress, veryLargeData, workerKey) {
-    const {plotImageId} = plot;
+    const {plotImageId, colorTableId} = plot;
     const b = plot.plotState.firstBand();
     const {processHeader} = plot.rawData.bandData[b.value];
     const cleanProcessHeader = {...processHeader, imageCoordSys: processHeader.imageCoordSys.toString()};
@@ -79,6 +79,7 @@ export function makeRetrieveStretchByteDataAction(plot, plotState, maskOptions, 
             dataHeight: plot.dataHeight,
             plotStateSerialized: plotState.toJson(false),
             processHeader: cleanProcessHeader,
+            colorTableId,
             bias,
             contrast,
             // cmdSrvUrl: getCmdSrvNoZipURL(),

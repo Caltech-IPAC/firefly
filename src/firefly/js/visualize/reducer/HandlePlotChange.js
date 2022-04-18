@@ -187,11 +187,10 @@ function zoomSetup(state, action) {
 
 function updateHiPSColor(state,action) {
     const {plotViewAry}= state;
-    const {plotId, primaryStateJson,bias,contrast}= action.payload;
+    const {plotId, bias,contrast,colorTableId}= action.payload;
     let pv= getPlotViewById(state,plotId);
     const plot= primePlot(pv);
-    const plotState= PlotState.makePlotStateWithJson(primaryStateJson);
-    const newPlot= {...plot,plotState};
+    const newPlot= {...plot,colorTableId};
 
     if (isNumber(bias) || isNumber(contrast)) {
         const {bandData:oldBandData}= newPlot.rawData;
@@ -209,19 +208,18 @@ function updateHiPSColor(state,action) {
 function updateImageDisplayData(state,action) {
     const {plotViewAry, mpwWcsPrimId, wcsMatchType}= state;
     const clearLocal= action.type===Cntlr.STRETCH_CHANGE;
-    const {plotId, primaryStateJson,overlayUpdateAry, rawData,bias,contrast, useRed, useGreen, useBlue}= action.payload;
+    const {plotId, primaryStateJson,overlayUpdateAry, rawData,bias,contrast, useRed, useGreen, useBlue, zoomLevel:newZoomFactor, colorTableId=-1}= action.payload;
     const inPv= getPlotViewById(state,plotId);
     const inPlot= primePlot(inPv);
 
     let pv= {...inPv, serverCall:'success'};
+    const zoomFactor= (action.type===Cntlr.ZOOM_IMAGE) ? newZoomFactor : inPlot.zoomFactor;
     pv= replacePrimaryPlot(pv,
-        WebPlot.replacePlotValues(inPlot,primaryStateJson,rawData,bias,contrast,useRed,useGreen,useBlue));
+        WebPlot.replacePlotValues(inPlot,primaryStateJson,zoomFactor, rawData,colorTableId, bias,contrast,useRed,useGreen,useBlue));
     if (action.type===Cntlr.COLOR_CHANGE && !isThreeColor(pv)) {
-        const cId= primePlot(pv).plotState.getColorTableId();
+        const cId= primePlot(pv).colorTableId;
         pv.plots= pv.plots.map( (p) => {
-            const plotState= p.plotState.copy();
-            plotState.setColorTableId(cId);
-            return {...p,plotState};
+            return {...p,colorTableId:cId}; //todo bias and control need to be set here
         });
     }
 
@@ -249,21 +247,15 @@ function updateImageDisplayData(state,action) {
 
     const plot= primePlot(pv); // get the updated on
     if (clearLocal) plot.dataRequested= false;
-    PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, plot.plotState);
+    PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, plot.plotState, plot.colorTableId);
 
     return {...state, plotViewAry : replacePlotView(plotViewAry,pv)};
 }
 
 function updateDisplayData(state, action) {
-    const {plotId, primaryStateJson}= action.payload;
+    const {plotId}= action.payload;
     const pv= getPlotViewById(state,plotId);
     const plot= primePlot(pv);
-
-    if (!plot || !primaryStateJson) {
-        logger.error('primePlot undefined or primaryStateJson is not set.', new Error());
-        logger.error('installTiles: state, action', state, action);
-        return state;
-    }
     return isHiPS(plot) ? updateHiPSColor(state,action) : updateImageDisplayData(state,action);
 }
 

@@ -8,20 +8,14 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 
 import java.io.Serializable;
-/**
- * User: roby
- * Date: Aug 7, 2008
- * Time: 4:17:43 PM
- */
-
 
 
 /**
  * @author Trey Roby
+ * Date: Aug 7, 2008
  */
 public class BandState implements Serializable {
 
-    private final static String SPLIT_TOKEN= "--BandState--";
 
     private String workingFitsFileStr = null;
     private String originalFitsFileStr = null;
@@ -31,8 +25,7 @@ public class BandState implements Serializable {
 
     private String plotRequestSerialize = null; // Serialized WebPlotRequest
     private String rangeValuesSerialize = null; // Serialized RangeValues
-    private ClientFitsHeader directFileAcessData;
-    private boolean bandVisible = true;
+    private ClientFitsHeader directFileAccessData;
     private boolean multiImageFile = false;
     private boolean tileCompress = false;
     private int     cubeCnt = 0;
@@ -41,17 +34,7 @@ public class BandState implements Serializable {
     private transient WebPlotRequest plotRequestTmp = null;
     private transient RangeValues rangeValues = null;
 
-
-//======================================================================
-//----------------------- Private Constructors -------------------------
-//======================================================================
-
     public BandState() {}
-
-
-//======================================================================
-//----------------------- Public Methods -------------------------------
-//======================================================================
 
     public void setImageIdx(int idx) { imageIdx = idx; }
     public int getImageIdx() { return imageIdx; }
@@ -90,23 +73,16 @@ public class BandState implements Serializable {
     /**
      * get a copy of the WebPlotRequest for this BandState.  Any changes to the object will not be reflected in
      * BandState you must set it back in
-     * @return
+     * @return request
      */
     public WebPlotRequest getWebPlotRequest() {
         if (plotRequestTmp ==null) plotRequestTmp = WebPlotRequest.parse(plotRequestSerialize);
         return plotRequestTmp;
     }
 
-
-    public String getWebPlotRequestSerialized() {
-        return plotRequestSerialize;
-    }
+    public String getWebPlotRequestSerialized() { return plotRequestSerialize; }
 
     public boolean hasRequest() { return plotRequestSerialize !=null; }
-
-    public void setBandVisible(boolean visible) { bandVisible = visible; }
-    public boolean isBandVisible() { return bandVisible; }
-
 
     public void setRangeValues(RangeValues rangeValues) {
         this.rangeValues = null;
@@ -125,27 +101,19 @@ public class BandState implements Serializable {
      * this method will make a copy of ClientFitsHeader. Any changes to the ClientFitsHeader object
      * after the set will not be
      * reflected here.
-     * @param header
+     * @param header client fits header object
      */
-    public void setDirectFileAccessData(ClientFitsHeader header) {
-        directFileAcessData = header;
-    }
+    public void setDirectFileAccessData(ClientFitsHeader header) { directFileAccessData = header; }
 
     public FileAndHeaderInfo getFileAndHeaderInfo() {
-        return new FileAndHeaderInfo(workingFitsFileStr, directFileAcessData);
+        return new FileAndHeaderInfo(workingFitsFileStr, directFileAccessData);
     }
 
     public String getWorkingFitsFileStr() { return workingFitsFileStr; }
     public void setWorkingFitsFileStr(String fileStr) { workingFitsFileStr = fileStr; }
 
-
     public String getOriginalFitsFileStr() { return originalFitsFileStr; }
-    public void setOriginalFitsFileStr(String fileStr) {
-        originalFitsFileStr = fileStr; }
-
-    public boolean isFileOriginal() {
-       return ComparisonUtil.equals(originalFitsFileStr, workingFitsFileStr);
-    }
+    public void setOriginalFitsFileStr(String fileStr) { originalFitsFileStr = fileStr; }
 
     public void setUploadedFileName(String uploadFile) { uploadFileNameStr = uploadFile; }
     public String getUploadedFileName() { return uploadFileNameStr; }
@@ -160,8 +128,7 @@ public class BandState implements Serializable {
 
         b.plotRequestSerialize = this.plotRequestSerialize;
         b.rangeValuesSerialize = this.rangeValuesSerialize;
-        b.directFileAcessData= this.directFileAcessData;
-        b.bandVisible = this.bandVisible;
+        b.directFileAccessData = this.directFileAccessData;
         b.multiImageFile = this.multiImageFile;
         b.tileCompress = this.tileCompress;
         b.cubeCnt = this.cubeCnt;
@@ -171,7 +138,7 @@ public class BandState implements Serializable {
 
 
     public String toString() {
-        return StringUtils.combine(SPLIT_TOKEN,
+        return StringUtils.combine(";",
                 workingFitsFileStr,
                 originalFitsFileStr,
                 uploadFileNameStr,
@@ -179,8 +146,7 @@ public class BandState implements Serializable {
                 originalImageIdx +"",
                 plotRequestSerialize,
                 rangeValuesSerialize,
-                directFileAcessData +"",
-                bandVisible +"",
+                directFileAccessData +"",
                 multiImageFile+"",
                 tileCompress+"",
                 cubeCnt+"",
@@ -189,17 +155,15 @@ public class BandState implements Serializable {
 
     public boolean equals(Object o) {
         if (o==this) return true;
-        if (!(o instanceof BandState)) return false;
-        BandState bs= (BandState)o;
+        if (!(o instanceof BandState bs)) return false;
         return ( ComparisonUtil.equals(workingFitsFileStr, bs.workingFitsFileStr) &&
                 ComparisonUtil.equals(originalFitsFileStr, bs.originalFitsFileStr) &&
                 ComparisonUtil.equals(uploadFileNameStr, bs.uploadFileNameStr) &&
                 ComparisonUtil.equals(plotRequestSerialize, bs.plotRequestSerialize) &&
                 ComparisonUtil.equals(rangeValuesSerialize, bs.rangeValuesSerialize) &&
-                ComparisonUtil.equals(directFileAcessData, bs.directFileAcessData) &&
+                ComparisonUtil.equals(directFileAccessData, bs.directFileAccessData) &&
                 imageIdx ==bs.imageIdx &&
-                originalImageIdx ==bs.originalImageIdx &&
-                bandVisible ==bs.bandVisible);
+                originalImageIdx ==bs.originalImageIdx);
     }
 
 }

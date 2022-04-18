@@ -5,7 +5,7 @@
 import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 import {MouseState} from '../VisMouseSync.js';
-import {isBlankImage, isHiPS} from '../WebPlot.js';
+import {isHiPS} from '../WebPlot.js';
 import {hasLocalStretchByteData, primePlot} from '../PlotViewUtil.js';
 import {makeThumbnailTransformCSS} from '../PlotTransformUtils.js';
 import {SimpleCanvas} from '../draw/SimpleCanvas.jsx';
@@ -73,7 +73,7 @@ const showTooHighZoomMessage= () => (
 
 
 function showMag(spt,pv, plot,size) {
-    if (!plot || isBlankImage(plot)) return false;
+    if (!plot) return false;
     if (plot.zoomFactor > 6) return showTooHighZoomMessage();
 
     const {width:screenW, height:screenH }= plot.screenSize;

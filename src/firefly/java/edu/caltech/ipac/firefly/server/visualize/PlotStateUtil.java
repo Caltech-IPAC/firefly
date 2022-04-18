@@ -20,30 +20,23 @@ public class PlotStateUtil {
     public static PlotState create(WebPlotRequest req) {
         PlotState state= new PlotState();
         state.setWebPlotRequest(req, Band.NO_BAND);
-        state.setMultiImageAction(PlotState.MultiImageAction.USE_ALL);
         return state;
     }
 
     public static PlotState create(Map<Band,WebPlotRequest> reqMap) {
-
         PlotState state= new PlotState();
         state.setThreeColor(true);
-        state.setMultiImageAction(PlotState.MultiImageAction.USE_FIRST);
-
         WebPlotRequest redReq= reqMap.get(Band.RED);
         WebPlotRequest greenReq= reqMap.get(Band.GREEN);
         WebPlotRequest blueReq= reqMap.get(Band.BLUE);
         if (redReq!=null) state.setWebPlotRequest(redReq, Band.RED);
         if (greenReq!=null) state.setWebPlotRequest(greenReq, Band.GREEN);
         if (blueReq!=null) state.setWebPlotRequest(blueReq, Band.BLUE);
-
         return state;
     }
 
     public static void initRequestFromState(WebPlotRequest req, PlotState oldState, Band band) {
         req.setInitialRangeValues(oldState.getRangeValues(band));
-        req.setInitialColorTable(oldState.getColorTableId());
-        req.setInitialZoomLevel(oldState.getZoomLevel());
         WebPlotRequest oldReq= oldState.getPrimaryRequest();
         if (oldReq.isPlotAsMask()) {
             req.setPlotAsMask(true);
@@ -51,6 +44,8 @@ public class PlotStateUtil {
             req.setMaskColors(req.getMaskColors().toArray(new String[3]));
         }
     }
+
+    public static File getWorkingFitsFile(PlotState state) { return getWorkingFitsFile(state, Band.NO_BAND); }
 
     public static File getWorkingFitsFile(PlotState state, Band band) {
         return ServerContext.convertToFile(state.getWorkingFitsFileStr(band));

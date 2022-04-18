@@ -11,8 +11,7 @@ import java.util.Map;
  */
 public record WebPlotHeaderInitializer(String originalFitsFileStr, String workingFitsFileStr,
                                        String uploadFileNameStr, RangeValues rv,
-                                       String dataDesc, int colorTableId, boolean multiImageFile,
-                                       PlotState.MultiImageAction multiImage,
+                                       String dataDesc, boolean multiImageFile,
                                        boolean threeColor, WebPlotRequest request, Header[] zeroHeaderAry,
                                        Map<String,String> attributes) {}
 

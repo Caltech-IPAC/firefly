@@ -11,10 +11,7 @@ import {createImageUrl, createEmptyTile} from './TileDrawHelper.jsx';
 
 const emptyTileCanvas= createEmptyTile(512,512);
 
-const colorId = (plot) => {
-    const id= Number(plot.plotState.getColorTableId());
-    return isNaN(id) ? -1 : id;
-};
+const colorId = (plot) => plot?.colorTableId ?? -1;
 
 /**
  * The object that can render a HiPS to the screen.

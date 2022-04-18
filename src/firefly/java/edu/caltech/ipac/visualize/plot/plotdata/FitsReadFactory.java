@@ -31,21 +31,11 @@ public class FitsReadFactory {
 
     /**
      * read a fits with extensions or cube data to create a list of the FistRead object
-     *
-     * @param fits
-     * @return
-     * @throws FitsException
      */
     public static FitsRead[] createFitsReadArray(Fits fits) throws FitsException {
         return createFitsReadArray(FitsReadUtil.readHDUs(fits),null,false);
     }
 
-    /**
-     *
-     * @param HDUs
-     * @return
-     * @throws FitsException
-     */
     public static FitsRead[] createFitsReadArray(BasicHDU<?>[] HDUs, File f, boolean clearHdu) throws FitsException {
         if (HDUs == null) throw new FitsException(BAD_FORMAT_MSG);
 

@@ -8,7 +8,6 @@ import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.ImageHeader;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
-import edu.caltech.ipac.visualize.plot.PixelValueException;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 
 import java.awt.Shape;
@@ -194,36 +193,31 @@ public class AreaStatisticsUtil {
         FitsRead fr= selectedBand==Band.NO_BAND ? frGroup.getFitsRead(Band.NO_BAND) : frGroup.getFitsRead(selectedBand);
         for (double y=minY; y<=maxY; y+=imageScaleFactor ) {
             for (double x=minX; x<=maxX; x+=imageScaleFactor) {
-                try {
-                    if ((rAngle != 0.0 && !rotatedEllipseContains((Ellipse2D.Double)shape, x, y, rAngle)) ||
+                if ((rAngle != 0.0 && !rotatedEllipseContains((Ellipse2D.Double)shape, x, y, rAngle)) ||
                         (rAngle == 0.0 && !shape.contains(x, y)))
-                        continue;
-                    flux= fr.getFlux(new ImagePt(x,y));
-                    if (Double.isNaN(flux))
-                    {
-                        continue;
-                    }
-                    nPixels++;
-                    fluxSum += flux;
-                    squareSum += flux*flux;
-                    xfSum += x*flux;
-                    yfSum += y*flux;
-                    xSum += x;
-                    ySum += y;
+                    continue;
+                flux= fr.getFlux(new ImagePt(x,y));
+                if (Double.isNaN(flux))
+                {
+                    continue;
+                }
+                nPixels++;
+                fluxSum += flux;
+                squareSum += flux*flux;
+                xfSum += x*flux;
+                yfSum += y*flux;
+                xSum += x;
+                ySum += y;
 
-                    if (flux < minimumFlux) {
-                        minimumFlux = flux;
-                        minimumX = x;
-                        minimumY = y;
-                    }
-                    if (flux > maximumFlux) {
-                        maximumFlux = flux;
-                        maximumX = x;
-                        maximumY = y;
-                    }
-                } catch (PixelValueException pve) {
-                    // do nothing
-//                    System.out.println("Pixel Value Exception: ("+x+","+y+") "+pve.getMessage());
+                if (flux < minimumFlux) {
+                    minimumFlux = flux;
+                    minimumX = x;
+                    minimumY = y;
+                }
+                if (flux > maximumFlux) {
+                    maximumFlux = flux;
+                    maximumX = x;
+                    maximumY = y;
                 }
             }
         }
