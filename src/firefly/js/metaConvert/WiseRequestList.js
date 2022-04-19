@@ -45,7 +45,7 @@ export function makeWisePlotRequest(table, row, includeSingle, includeStandard, 
         const setSubSize= () => req.setParam('subsize', `${sizeUnit? convertAngle(sizeUnit, 'deg', subsize) : subsize}`);
 
         if (subsize>0) {
-            if (getMetaEntry(table,'DataType')) {
+            if (getMetaEntry(table,'DataType')==='MOS') {
                 const ra_obj= getCellValue(table,row,'ra_obj');
                 const dec_obj= getCellValue(table,row,'dec_obj');
                 if (ra_obj && dec_obj) {
