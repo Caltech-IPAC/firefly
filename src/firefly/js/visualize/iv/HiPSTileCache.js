@@ -69,13 +69,19 @@ export function findTileCachedImage(url, colorTableId,bias,contrast) {
 }
 
 
+
 export function addTileCachedImage(url, image, colorTableId,bias,contrast) {
     let cacheImage= image;
     if (image instanceof HTMLImageElement) {
         cacheImage= createCanvas(image.width,image.height);
         cacheImage.getContext('2d').drawImage(image,0,0);
     }
-    cachedImages.set( makeKey(url,colorTableId,bias,contrast),
+    const key= makeKey(url,colorTableId,bias,contrast);
+    if (cacheImage.getContext('2d').getImageData(0,0,1,1).data[3]===0) {
+        cachedImages.remove(key); // remove any previous version of this tile
+        return; // if any pixel is fully transparent, then something is wrong with the tile, don't cache
+    }
+    cachedImages.set( key,
         {url, image:cacheImage, colorTableId,bias,contrast, emptyTile:false, colorTable: 'todo', time: Date.now()});
     if (cachedImages.size>MAX_TILE_IMAGES+(MAX_TILE_IMAGES*.25)) {
         cachedImages= cleanupCache(cachedImages, MAX_TILE_IMAGES);
