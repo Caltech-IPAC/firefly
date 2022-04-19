@@ -6,7 +6,7 @@
 import {get} from 'lodash';
 import {makeServerRequestBuilder} from './converterUtils.js';
 import {RangeValues,STRETCH_LINEAR,SIGMA} from '../visualize/RangeValues.js';
-import {getCellValue} from '../tables/TableUtil.js';
+import {getCellValue, getMetaEntry} from '../tables/TableUtil.js';
 import {parseWorldPt} from '../visualize/Point.js';
 import {convertAngle} from '../visualize/VisUtil.js';
 import {PlotAttribute} from '../visualize/PlotAttribute';
@@ -39,16 +39,29 @@ export function makeWisePlotRequest(table, row, includeSingle, includeStandard, 
         const req= svcBuilder(plotId, reqKey, title, rowNum, extraParams);
         req.setAttributes({[PlotAttribute.PREFERENCE_COLOR_KEY]:'wise-color-pref'});
         const subsize = get(table, 'request.subsize');
-        if (subsize && subsize>0) {
-            const {UserTargetWorldPt, sizeUnit} = get(table, 'request', {});
-            if (UserTargetWorldPt && sizeUnit) {
+        const {UserTargetWorldPt, sizeUnit} = get(table, 'request', {});
+
+
+        const setSubSize= () => req.setParam('subsize', `${sizeUnit? convertAngle(sizeUnit, 'deg', subsize) : subsize}`);
+
+        if (subsize>0) {
+            if (getMetaEntry(table,'DataType')) {
+                const ra_obj= getCellValue(table,row,'ra_obj');
+                const dec_obj= getCellValue(table,row,'dec_obj');
+                if (ra_obj && dec_obj) {
+                    req.setParam('center', `${ra_obj},${dec_obj}`);
+                    req.setParam('in_ra', `${ra_obj}`);
+                    req.setParam('in_dec', `${dec_obj}`);
+                    setSubSize();
+                }
+            }
+            else if (UserTargetWorldPt) {
                 const wp = parseWorldPt(UserTargetWorldPt);
                 // cutout is requested when in_ra, in_dec, and subsize are set (see WiseIbeDataSource)
                 req.setParam('center', `${wp.getLon()},${wp.getLat()}`); // degrees assumed if no unit
                 req.setParam('in_ra', `${wp.getLon()}`);
                 req.setParam('in_dec', `${wp.getLat()}`);
-                const newSize = convertAngle(sizeUnit, 'deg', subsize);
-                req.setParam('subsize', `${newSize}`);
+                setSubSize();
             }
         }
         /*
@@ -63,6 +76,7 @@ export function makeWisePlotRequest(table, row, includeSingle, includeStandard, 
         */
         return req;
     };
+
 
     const retval= {};
     const band= getCellValue(table,row,'band');
