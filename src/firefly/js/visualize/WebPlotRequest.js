@@ -585,6 +585,11 @@ export class WebPlotRequest extends ServerRequest {
         this.setParam(WPConst.ZOOM_ARCSEC_PER_SCREEN_PIX, arcsecSize + '');
     }
 
+    getZoomArcsecPerScreenPix() {
+        return this.containsParam(WPConst.ZOOM_ARCSEC_PER_SCREEN_PIX) ?
+            this.getFloatParam(WPConst.ZOOM_ARCSEC_PER_SCREEN_PIX) : 0;
+    }
+
 //======================================================================
 //----------------------- Rotate  & Flip Settings ---------------------
 //  these have become pure client settings. We strip then out when we

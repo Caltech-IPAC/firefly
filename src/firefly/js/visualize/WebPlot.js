@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {isArray, isBoolean, isEmpty, isNumber} from 'lodash';
-import {RequestType} from './RequestType.js';
+import {ZoomType} from 'firefly/visualize/ZoomType.js';
 import CoordinateSys from './CoordSys.js';
 import {
     HIPS_AITOFF, HIPS_SIN, makeProjection, makeProjectionNew, UNRECOGNIZED, UNSPECIFIED
@@ -381,8 +381,6 @@ export const WebPlot= {
         if (Object.values(allWlMap).length>0 && wlData?.algorithm!==TAB) {
             wlData= Object.values(allWlMap)[0];
         }
-        const zf= 1;
-
         // because of history we keep directFileAccessData in the plot state, however now we compute it on the client
         // also- we need to keep a copy in plotState for backward compatibility and in the plot to put in back in the plotState
         // when a new one is generated
@@ -395,6 +393,7 @@ export const WebPlot= {
         let plot= makePlotTemplate(plotId,'image',asOverlay, CoordinateSys.parse(imageCoordSys));
         const dataWidth= cubeCtx ? cubeCtx.dataWidth : wpInit.dataWidth;
         const dataHeight= cubeCtx ? cubeCtx.dataHeight : wpInit.dataHeight;
+        const zf= getInitZoomLevel(request0, dataWidth, dataHeight, projection.getPixelScaleDegree());
 
         // noinspection JSUnresolvedVariable
         const imagePlot= {
@@ -511,6 +510,7 @@ export const WebPlot= {
      * @param {object} stateJson
      * @param {number} zoomFactor
      * @param {ImageTileData} [rawData]
+     * @param {Number} [colorTableId]
      * @param {Number} [bias]
      * @param {Number} [contrast]
      * @param {boolean|undefined} useRed
@@ -575,6 +575,32 @@ export function makeHiPSProjection(coordinateSys, lon=0, lat=0, fullSky= false) 
 
 export const isHiPSAitoff= (plot) => isHiPS(plot) && plot.projection.header.maptype===HIPS_AITOFF;
 
+
+/**
+ * @param {WebPlotRequest} req
+ * @param {number} dataWidth
+ * @param {number} dataHeight
+ * @param {number} pixelScaleDeg
+ */
+function getInitZoomLevel(req, dataWidth, dataHeight, pixelScaleDeg) {
+    const width=  req.getZoomToWidth();
+    const height= req.getZoomToHeight();
+    const zt= req.getZoomType();
+    switch (zt) {
+        case ZoomType.TO_HEIGHT: // this is not implemented, do FULL_SCREEN
+        case ZoomType.FULL_SCREEN:
+        case ZoomType.TO_WIDTH_HEIGHT:
+            return Math.min(width /  dataWidth, height /  dataHeight);
+        case ZoomType.TO_WIDTH:
+            return width / dataWidth;
+        case ZoomType.ARCSEC_PER_SCREEN_PIX:
+            return pixelScaleDeg / req.getZoomArcsecPerScreenPix();
+        case ZoomType.LEVEL:
+        case ZoomType.STANDARD:
+        default:
+            return req.getInitialZoomLevel();
+    }
+}
 
 /**
  * @param {HipsProperties} hipsProperties
