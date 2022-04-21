@@ -96,6 +96,11 @@ public class ServerRequest implements Serializable, Cloneable {
         return p == null ? null : p.getValue();
     }
 
+    public String getParam(String param, String def) {
+        String val = getParam(param);
+        return val == null ? def : val;
+    }
+
     public List<Param> getParams() {
         return new ArrayList<Param>(params.values());
     }

@@ -53,6 +53,7 @@ public class EmbeddedDbUtil {
      */
     public static void createDbFile(File dbFile, DbAdapter dbAdapter) throws IOException {
         dbAdapter.close(dbFile, true);              // in case database exists in memory, close it and remove all files related to it.
+        if (!dbFile.getParentFile().exists()) dbFile.getParentFile().mkdirs();
         dbFile.createNewFile();                     // creates the file
         createCustomFunctions(dbFile, dbAdapter);   // add custom functions
     }
