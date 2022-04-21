@@ -230,7 +230,7 @@ export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_
  * @prop {number} dataHeight
  * @prop imageCoordSys
  * @prop processHeader
- * @prop wlRelated
+ * @prop wlTableRelatedAry
  * @prop wlData
  * @prop getFitsFileSize
  * @prop fluxUnits
@@ -313,12 +313,12 @@ function processAllSpacialAltWcs(header) {
     }, {});
 }
 
-function processAllWavelengthAltWcs(header,wlTable) {
+function processAllWavelengthAltWcs(header,wlTableRelatedAry) {
     const availableAry= getAtlProjectionIDs(header);
     if (isEmpty(availableAry)) return {};
 
     return availableAry.reduce( (obj, altChar) => {
-        const wlData= parseWavelengthHeaderInfo(header, altChar, undefined, wlTable);
+        const wlData= parseWavelengthHeaderInfo(header, altChar, undefined, wlTableRelatedAry);
         if (wlData) obj[altChar]= wlData;
         return obj;
     }, {});
@@ -336,7 +336,7 @@ export const WebPlot= {
      * @param {WebPlotInitializer} wpInit init data returned from server
      * @param {object} attributes any attributes to initialize
      * @param {boolean} asOverlay
-     * @param {CubeCtx} cubeCtx
+     * @param {CubeCtx} [cubeCtx]
      * @param {WebPlotRequest} [request0] - only used when this is part of a cube
      * @param {RangeValues} [rv0] - only used when this is part of a cube
      * @return {WebPlot} the plot
@@ -345,22 +345,23 @@ export const WebPlot= {
 
         const relatedData = cubeCtx ? cubeCtx.relatedData : wpInit.relatedData;
         const plotState= PlotState.makePlotStateWithJson(wpInit.plotState,request0, rv0);
+        if (!request0) request0= plotState.getWebPlotRequest();
         const headerAry= !cubeCtx ? wpInit.headerAry : [cubeCtx.cubeHeaderAry[0]];
         const header= headerAry[plotState.firstBand().value];
         const zeroHeader= wpInit.zeroHeaderAry[0];
 
         let processHeader;
-        let wlRelated;
+        let wlTableRelatedAry;
         let wlData;
         if (cubeCtx?.processHeader) {
             processHeader= cubeCtx.processHeader;
-            wlRelated= cubeCtx.wlRelated;
+            wlTableRelatedAry= cubeCtx.wlTableRelatedAry;
             wlData= cubeCtx.wlData;
         }
         else {
             const headerInfo= processHeaderData(wpInit);
             processHeader= headerInfo.processHeader;
-            wlRelated= headerInfo.wlRelated;
+            wlTableRelatedAry= headerInfo.wlTableRelatedAry;
             wlData= headerInfo.wlData;
         }
         const projection= makeProjectionNew(processHeader, processHeader.imageCoordSys);
@@ -375,12 +376,16 @@ export const WebPlot= {
 
 
         const allWCSMap= processAllSpacialAltWcs(header);
-        const allWlMap= processAllWavelengthAltWcs(header, wlRelated?.table);
-        allWlMap['']= wlData;
-        allWCSMap['']= projection;
-        if (Object.values(allWlMap).length>0 && wlData?.algorithm!==TAB) {
-            wlData= Object.values(allWlMap)[0];
+        const allWlMap= processAllWavelengthAltWcs(header, wlTableRelatedAry);
+        if (wlData) {
+            allWlMap['']= wlData;
         }
+        else if (!isEmpty(allWlMap)) {
+            wlData= Object.values(allWlMap)[0];
+            allWlMap['']= undefined;
+        }
+        allWCSMap['']= projection;
+        
         // because of history we keep directFileAccessData in the plot state, however now we compute it on the client
         // also- we need to keep a copy in plotState for backward compatibility and in the plot to put in back in the plotState
         // when a new one is generated
@@ -727,14 +732,15 @@ export const isBlankHiPSURL= (url) => url.toLowerCase()===BLANK_HIPS_URL;
 
 /**
  * @param {WebPlotInitializer} pC
- * @return {{processHeader:Object, wlData: Object, wlRelated:Object}}
+ * @return {{processHeader:Object, wlData: Object, wlTableRelatedAry:Array}}
  */
 export function processHeaderData(pC) {
     const relatedData= pC.relatedData;
-    const wlRelated= relatedData && relatedData.find( (r) => r.dataType==='WAVELENGTH_TABLE_RESOLVED');
+    const wlTableRelatedAry= relatedData && relatedData.filter( (r) => r.dataType==='WAVELENGTH_TABLE_RESOLVED');
+
     return {
         processHeader: parseSpacialHeaderInfo(pC.headerAry[0],'',pC.zeroHeaderAry[0]),
-        wlData: parseWavelengthHeaderInfo(pC.headerAry[0],'',pC.zeroHeaderAry[0], wlRelated?.table),
-        wlRelated
+        wlData: parseWavelengthHeaderInfo(pC.headerAry[0],'',pC.zeroHeaderAry[0], wlTableRelatedAry),
+        wlTableRelatedAry
     };
 }

@@ -301,12 +301,17 @@ function lookForRelatedDataThenContinue(successAry,failAry, payload, dispatcher)
     setTimeout( () => {
         const promiseAry= [Promise.resolve()];
         successAry.forEach( (s) => s.data.PlotCreate.forEach( (pc) => {
-            const tType= pc.relatedData && pc.relatedData.find( (r) => r.dataType==='WAVELENGTH_TABLE');
-            if (tType) {
-                const p= doFetchTable(tType.searchParams).then( (wlTable) => {
-                    pc.relatedData.push({dataType:'WAVELENGTH_TABLE_RESOLVED',dataKey:tType.dataKey+'-resolved', table:wlTable});
+            const tTypeAry= pc.relatedData && pc.relatedData.filter( (r) => r.dataType==='WAVELENGTH_TABLE');
+            if (tTypeAry?.length) {
+                tTypeAry.forEach( ({searchParams,dataKey,hduIdx,hduName}) => {
+                    const p= doFetchTable(searchParams).then( (wlTable) => {
+                        pc.relatedData.push({
+                            dataType:'WAVELENGTH_TABLE_RESOLVED',dataKey:dataKey+'-resolved',
+                            table:wlTable, hduIdx, hduName
+                        });
+                    });
+                    promiseAry.push(p);
                 });
-                promiseAry.push(p);
             }
         }));
         Promise.all(promiseAry).then( () =>continuePlotImageSuccess(dispatcher, payload, successAry, failAry));
@@ -550,6 +555,7 @@ export function populateFromHeader(plotCreateHeader, plotCreate) {
                  cubeHeaderAry: cubeStartPC.headerAry,
                  processHeader: headerInfo.processHeader,
                  wlData: headerInfo.wlData,
+                 wlTableRelatedAry: headerInfo.wlTableRelatedAry,
                  relatedData: cubeStartPC.relatedData,
                  dataWidth: cubeStartPC.dataWidth,
                  dataHeight: cubeStartPC.dataHeight,

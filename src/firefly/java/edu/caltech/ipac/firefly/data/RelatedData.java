@@ -27,6 +27,8 @@ public class RelatedData implements Serializable {
     private Map<String,String> availableMask= new HashMap<>();
     private transient Map<String,Object> serverOnlyData= new HashMap<>();
     private final boolean sendToClient;
+    private String hduName= null;
+    private int hduIdx= -1;
 
 
     private RelatedData(boolean sendToClient) {
@@ -117,12 +119,15 @@ public class RelatedData implements Serializable {
     }
 
     public static RelatedData makeWavelengthTabularRelatedData(Map<String,String> searchParams,
-                                                               String dataKey, String desc) {
+                                                               String dataKey, String desc,
+                                                               String hduName, int hduIdx ) {
         RelatedData d= new RelatedData(true);
         d.dataType= WAVELENGTH_TABLE;
         d.searchParams= searchParams;
         d.dataKey = dataKey;
         d.desc= desc;
+        d.hduIdx= hduIdx;
+        d.hduName= hduName;
         return d;
     }
 
@@ -139,6 +144,8 @@ public class RelatedData implements Serializable {
     public Map<String,String> getAvailableMask() { return availableMask;}
     public String getDesc() { return desc;}
     public Map<String,String> getSearchParams() { return searchParams;}
+    public String getHduName() { return hduName;}
+    public int getHduIdx() { return hduIdx;}
 
     public boolean isSendToClient() { return sendToClient; }
 }

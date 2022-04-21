@@ -33,6 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -518,6 +519,20 @@ public class FitsReadUtil {
     public static double getBlankValue(Header h) { return h.getDoubleValue("BLANK", Double.NaN); }
     public static String getExtName(Header h) { return h.getStringValue("EXTNAME"); }
     public static String getUtype(Header h) { return h.getStringValue("UTYPE"); }
+
+
+
+
+    static List<String> alphabetAry= Arrays.asList("ABCDEFGHIJKLMNOPQRSTUVWZYZ".split(""));
+
+    /**
+     * return an array of all the alt projections in this file.
+     * @param h the fits header
+     * @return {string[]}
+     */
+    public static List<String> getAtlProjectionIDs(Header h) {
+        return alphabetAry.stream().filter( (c) -> h.containsKey("CTYPE1"+c)).toList();
+    }
 
 
     public static String findHeaderValue(Header header, String... keys) {

@@ -897,9 +897,10 @@ export const getWavelengthParseFailReason= (plot) => hasWLInfo(plot) && plot.wlD
  */
 export function hasPlaneOnlyWLInfo(plot) {
     if (!hasWLInfo(plot)) return false;
+    if(plot.wlData.planeOnlyWL) return true;
     const {algorithm, pc_3j}= plot.wlData;
     return (algorithm===PLANE ||
-        (isImageCube(plot) &&  algorithm===TAB && pc_3j && pc_3j.length===3 && !pc_3j[0] && !pc_3j[1]) );
+        (isImageCube(plot) &&  algorithm===TAB && pc_3j?.length===3 && !pc_3j[0] && !pc_3j[1]) );
 }
 
 

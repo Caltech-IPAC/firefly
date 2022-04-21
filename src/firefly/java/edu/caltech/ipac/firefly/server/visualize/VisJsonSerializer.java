@@ -244,6 +244,8 @@ public class VisJsonSerializer {
         putJsonObj(retObj, "searchParams", new JSONObject(rData.getSearchParams()));
         putStr(retObj, "desc", rData.getDesc());
         putStr(retObj, "dataKey", rData.getDataKey());
+        putStrNotNull(retObj, "hduName", rData.getHduName());
+        if (rData.getHduIdx()>-1) putNum(retObj, "hduIdx", rData.getHduIdx());
         return retObj;
     }
 

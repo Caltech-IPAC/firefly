@@ -22,7 +22,6 @@ import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.RegionParser;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.UTCTimeUtil;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.CacheManager;
@@ -187,7 +186,6 @@ public class VisServerOps {
     public static byte[] getByteStretchArray(PlotState state, int tileSize, boolean mask, long maskBits, CompressType ct) {
         DirectStretchUtils.StretchDataInfo data;
         try {
-            long start = System.currentTimeMillis();
             var ctx = CtxControl.prepare(state);
             ActiveFitsReadGroup frGroup= ctx.fitsReadGroup();
             Cache memCache= CacheManager.getCache(Cache.TYPE_VIS_SHARED_MEM);
@@ -199,13 +197,13 @@ public class VisServerOps {
                 fromCache= " (from Cache)";
             }
             else {
-                data= DirectStretchUtils.getStretchData(state,frGroup,tileSize,mask, maskBits,ct);
+                data= !mask ? DirectStretchUtils.getStretchData(state,frGroup,tileSize,ct) :
+                              DirectStretchUtils.getStretchDataMask(state,frGroup,tileSize,maskBits);
                 if (ct!= CompressType.FULL) memCache.put(stretchDataKey, data.copyParts(ct));
             }
             PlotServUtils.statsLog("byteAry",
                     "total-MB", (float)data.findMostCompressAry(ct).length / StringUtils.MEG,
-                    "Type", (state.isThreeColor() ? "3 Color" : "Standard") +" - "+ ct + fromCache,
-                    "Time", UTCTimeUtil.getHMSFromMills(System.currentTimeMillis() - start));
+                    "Type", (state.isThreeColor() ? "3 Color" : "Standard") +" - "+ ct + fromCache);
             return data.findMostCompressAry(ct);
         } catch (Exception e) {
             return new byte[] {};
