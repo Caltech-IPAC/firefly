@@ -305,6 +305,10 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
 
     public void cleanup(boolean force) {
+        cleanup(force, false);
+    }
+
+    public void cleanup(boolean force, boolean deleteFile) {
 
         try {
             long MAX_MEMORY_ROWS = DbAdapter.maxMemRows();
@@ -314,7 +318,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
                     .filter((db) -> db.hasExpired() || force).collect(Collectors.toList());
             if (toBeRemove.size() > 0) {
                 LOGGER.info(String.format("There are currently %d databases open.  Of which, %d will be closed.", dbInstances.size(), toBeRemove.size()));
-                toBeRemove.forEach((db) -> close(db.getDbFile(), false));
+                toBeRemove.forEach((db) -> close(db.getDbFile(), deleteFile));
             }
             // remove search results based on LRU when count is greater than the high-water mark
             long totalRows = dbInstances.values().stream().mapToInt((db) -> db.getRowCount()).sum();
@@ -325,7 +329,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
                 for(EmbeddedDbInstance db : active) {
                     cRows += db.getRowCount();
                     if (cRows > highWaterMark) {
-                        close(db.getDbFile(), false);
+                        close(db.getDbFile(), deleteFile);
                     }
                 }
             }

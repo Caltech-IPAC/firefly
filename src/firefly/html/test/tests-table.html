@@ -355,39 +355,34 @@ added in this test.  Open console, then
     <script>
         function onFireflyLoaded(firefly) {
 
-            const {makeFileRequest, makeResourceRequest} = firefly.util.table;
+            const {makeFileRequest, makeResourceRequest, createResource, deleteResource} = firefly.util.table;
 
-            // define 3 resources
-            const gReq = makeFileRequest(null, 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl');
-            const global = {request: gReq};     // default to global
+            // simplest use case.  create a public resource then query it.
+            const simplest = {request: makeFileRequest(null, 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl')};
+            // createResource(simplest);        // this is optional because a default global scope resource will be created if one does not exists.
+            const simplestTbl = makeResourceRequest(simplest, 'Simplest');
+            firefly.showTable('actual', simplestTbl);
 
-            const uReq = makeFileRequest(null, 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl', null, {dummy:'user'});    // insert dummy param to make the request different from global
-            const user = {request: uReq, scope: 'user'};
-
-            const pReq = makeFileRequest(null, 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl', null, {dummy:'protected'});
-            const secured = {request: pReq, scope: 'protected', secret: 'mysecret'};
-
-            // create the resources
-            // makeResourceRequest({resource: global, action: 'create'});   // by default, a Resource is created with 'global' scope if one does not exists.  This line is not needed, but is nice for clarity.
-            makeResourceRequest({resource: user, action: 'create'});
-            makeResourceRequest({resource: secured, action: 'create'});
-
-
-
-            const globalTbl =   makeResourceRequest({resource: global, title: 'Global Resource'});
-            const userTbl =     makeResourceRequest({resource: user, title: 'User Resource'});
-            const protectedTbl = makeResourceRequest({resource: secured, title: 'Protected Resource'});
-            const noAccess =    makeResourceRequest({resource: {...secured, secret:''}, title: 'No Access'});        // this should fail.  access protected resource without secret token
-
-            firefly.showTable('actual', globalTbl);
+            // create a 'user' resource
+            const user = {scope: 'user', request: makeFileRequest(null, 'https://web.ipac.caltech.edu/staff/roby/demo/fp_2mass.fp_psc29179.tbl')};
+            createResource(user);
+            const userTbl = makeResourceRequest(user, 'User Resource');
             firefly.showTable('actual', userTbl);
-            firefly.showTable('actual', protectedTbl);
-            firefly.showTable('actual', noAccess);
+
+            // create a 'protected' resource with secret token
+            const secured = {scope: 'protected', secret: 'mysecret', request: makeFileRequest(null, 'https://web.ipac.caltech.edu/staff/roby/demo/wise-orbit-allsky.tbl')};
+            createResource(secured);
+            const securedTbl = makeResourceRequest(secured, 'Protected Resource');
+            firefly.showTable('actual', securedTbl);
+
+            // Accessing 'protected' resource without secret token
+            const accessDeniedTbl = makeResourceRequest({...secured, secret: 'wrong secret'}, 'Access Denied');
+            firefly.showTable('actual', accessDeniedTbl);
 
             firefly.deleteResourceTests = function () {
-                makeResourceRequest({resource: global, action: 'delete'});
-                makeResourceRequest({resource: user, action: 'delete'});
-                makeResourceRequest({resource: secured, action: 'delete'});
+                deleteResource(global);
+                deleteResource(user);
+                deleteResource(secured);
             }
         }
     </script>

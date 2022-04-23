@@ -176,30 +176,59 @@ const voProviders = {'NED':'NedSearch'};
  */
 
 /**
- * Creates a table request object for the given resource
- * @param {object} p                function parameters
- * @param {ResourceInfo} p.resource resource information
- * @param {string} [p.title]        title to display with this table.
- * @param {TableRequest} [p.options] table request options.  see TableRequest for details.
- * @param {string} p.action  one of 'query', 'create', 'delete'.  defautls to 'query'.
- *                         when action is 'create' or 'delete', it will submit the request.
- *                         no further action is needed.
- * @returns {TableRequest}
+ * Create the given Resource
+ * @param {ResourceInfo} resource   resource information
+ * @public
+ * @func  createResource
+ * @memberof firefly.util.table
+ */
+export function createResource(resource) {
+    handleResourceRequest({resource, action: 'create'});
+}
+
+/**
+ * Delete the given Resource
+ * @param {ResourceInfo} resource   resource information
+ * @public
+ * @func  deleteResource
+ * @memberof firefly.util.table
+ */
+export function deleteResource(resource) {
+    handleResourceRequest({resource, action: 'delete'});
+}
+
+/**
+ * @param {ResourceInfo} resource   resource information
+ * @param {string} [title]          title to display with this table.
+ * @param {TableRequest} [options]  table request options.  see TableRequest for details.
+ * @returns {TableRequest} the request to query data from the given resource
  * @public
  * @func  makeResourceRequest
  * @memberof firefly.util.table
  */
-export function makeResourceRequest({resource={}, title, options={}, action='query'}) {
+export function makeResourceRequest(resource={}, title, options={}) {
+    return handleResourceRequest({resource, title, options, action: 'query'});
+}
 
+/**
+ * private function to handle Resource related actions
+ * @param {object} p                function parameters
+ * @param {ResourceInfo} p.resource resource information
+ * @param {string} [p.title]        title to display with this table.
+ * @param {TableRequest} [p.options] table request options.  see TableRequest for details.
+ * @param {string} p.action one of 'query', 'create', 'delete'.  defautls to 'query'.
+ *                          when action is 'create' or 'delete', it will submit the request.
+ *                          no further action is needed.
+ */
+function handleResourceRequest({resource={}, title, options={}, action='query'}) {
     const {request, scope, secret} = resource;
     const searchRequest = JSON.stringify(request);
 
     if (action === 'query') {
-        return  makeTblRequest('ResourceProcessor', title, {searchRequest, action, scope, secret}, options);
+        return makeTblRequest('ResourceProcessor', title, {searchRequest, action, scope, secret}, options);
     } else {
         const req = makeTblRequest('ResourceProcessor', null, {searchRequest, action, scope, secret});
         return fetchTable(req)   // initiate and load the resource
-            .then(() => req)
             .catch((err) => logger.error(`Failed to ${action} Resource from request: ${err}`, `request=${request}`));
     }
 }

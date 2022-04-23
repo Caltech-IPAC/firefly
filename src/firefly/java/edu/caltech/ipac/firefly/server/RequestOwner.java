@@ -96,6 +96,14 @@ public class RequestOwner implements Cloneable {
         return wsManager;
     }
 
+    /**
+     * Normally, this is not used, unless for testing or similar cases where you need to change the default behavior.
+     * @param userKey a user key string
+     */
+    public void setUserKey(String userKey) {
+        this.userKey = userKey;
+    }
+
     public String getUserKey() {
         if (userKey == null) {
             userKey = requestAgent == null ? null : requestAgent.getCookieVal(USER_KEY);

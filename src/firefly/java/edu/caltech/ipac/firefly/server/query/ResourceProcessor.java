@@ -49,17 +49,17 @@ import static edu.caltech.ipac.util.FileUtil.writeStringToFile;
 public class ResourceProcessor extends EmbeddedDbProcessor {
     public static final String PROC_ID = "ResourceProcessor";
 
-    private static final String ACTION = "action";
-    private static final String SCOPE = "scope";
-    private static final String SECRET = "secret";
+    public static final String ACTION = "action";
+    public static final String SCOPE = "scope";
+    public static final String SECRET = "secret";
 
-    private static final String CREATE = "create";
-    private static final String QUERY = "query";
-    private static final String DELETE = "delete";
+    public static final String CREATE = "create";
+    public static final String QUERY = "query";
+    public static final String DELETE = "delete";
 
-    private static final String GLOBAL = "global";
-    private static final String USER = "user";
-    private static final String PROTECTED = "protected";
+    public static final String GLOBAL = "global";
+    public static final String USER = "user";
+    public static final String PROTECTED = "protected";
 
 
     /**
@@ -74,9 +74,8 @@ public class ResourceProcessor extends EmbeddedDbProcessor {
     }
 
     /**
-     * return a string
-     * @param request
-     * @return
+     * @param request  a Table Request
+     * @return a unique string ID used to match TableRequest
      */
     public String getUniqueID(ServerRequest request) {
         try {
@@ -100,8 +99,8 @@ public class ResourceProcessor extends EmbeddedDbProcessor {
     public DataGroup fetchDataGroup(TableServerRequest treq) throws DataAccessException {
         try {
             TableServerRequest sreq = QueryUtil.getSearchRequest(treq);
-            SearchProcessor processor = SearchManager.getProcessor(sreq.getRequestId());
-            if (processor != null && processor instanceof CanFetchDataGroup) {
+            SearchProcessor<?> processor = SearchManager.getProcessor(sreq.getRequestId());
+            if (processor instanceof CanFetchDataGroup) {
                 return ((CanFetchDataGroup)processor).fetchDataGroup(sreq);
             } else throw new IllegalArgumentException("SearchProcessor not found for the given request: " + getUniqueID(treq));
         } catch (Exception e) {
@@ -118,7 +117,7 @@ public class ResourceProcessor extends EmbeddedDbProcessor {
             return new DataGroupPart(new DataGroup("empty set", new DataType[]{new DataType("dummy", String.class)}), 0, 0);
         }
 
-        if (action.equals(CREATE)) treq.setPageSize(0);            // when creating... just load database.  don't return any data.
+        if (action.equals(CREATE)) treq.setPageSize(1);            // when creating... just load database.  don't return any data. this version of hsqldb 0 return all.  so, set to 1 instead.
         return super.getResultSet(treq, dbFile);
     }
 
@@ -142,7 +141,7 @@ public class ResourceProcessor extends EmbeddedDbProcessor {
             try {
                 BufferedInputStream bif = new BufferedInputStream(new FileInputStream(aclFile));
                 acl.load(bif);
-            } catch (Exception e) {}    // ignore.  assume empty file
+            } catch (Exception ignore) {}    // ignore.  assume empty file
             String scope = acl.getProperty(SCOPE,GLOBAL);
             String secret = acl.getProperty(SECRET, "");
             String user = acl.getProperty(USER, "");
@@ -164,10 +163,9 @@ public class ResourceProcessor extends EmbeddedDbProcessor {
     }
 
     /**
-     * A 32 characters string used as an ID for this resource backed by the given Table Request.
      * This ID is created from a md5 hex of the parameters in the table request.
-     * @param treq
-     * @return
+     * @param treq the Table Request of a Resource
+     * @return a 32 characters string used as an ID for this resource backed by the given Table Request.
      */
     private String getResourceID(TableServerRequest treq) {
         return DigestUtils.md5Hex(getUniqueID(treq));

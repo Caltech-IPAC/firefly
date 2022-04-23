@@ -9,4 +9,5 @@ export {getTblInfo, getActiveTableId, getTblById, getTableUiByTblId, getTblInfoB
         getColumnIdx, getColumn, getColumns, getCellValue, 
         getColumnValues, getRowValues, getSelectedData} from '../tables/TableUtil.js';
 
-export {makeTblRequest, makeFileRequest, makeIrsaWorkspaceRequest, makeIrsaCatalogRequest, cloneRequest, makeTableFunctionRequest, makeResourceRequest} from '../tables/TableRequestUtil.js';
+export {makeTblRequest, makeFileRequest, makeIrsaWorkspaceRequest, makeIrsaCatalogRequest, cloneRequest,
+        makeTableFunctionRequest, deleteResource, createResource, makeResourceRequest} from '../tables/TableRequestUtil.js';
