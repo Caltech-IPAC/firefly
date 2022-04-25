@@ -331,6 +331,62 @@
     </script>
 </template>
 
+<template title="Table as a Resource" class="tpl">
+    <div id="expected">
+        <div style="margin: 10px">
+<pre>
+A resource can be created with different scope:
+  global:   anyone can access it
+  user:     user who create it can access
+  protected: anyone with secret token can access
+
+Once this test is loaded, 'User Resource'
+will fail to load in incognito mode
+because it's consider a different user.
+
+For this test, deleteResourceTests function is
+added to firefly.  Run it to remove the resources
+added in this test.  Open console, then
+    firefly.deleteResourceTests()
+</pre>
+        </div>
+    </div>
+    <div id="actual"  class="box x3"/>
+    <script>
+        function onFireflyLoaded(firefly) {
+
+            const {makeFileRequest, makeResourceRequest, createResource, deleteResource} = firefly.util.table;
+
+            // simplest use case.  create a public resource then query it.
+            const simplest = {request: makeFileRequest(null, 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl')};
+            // createResource(simplest);        // this is optional because a default global scope resource will be created if one does not exists.
+            const simplestTbl = makeResourceRequest(simplest, 'Simplest');
+            firefly.showTable('actual', simplestTbl);
+
+            // create a 'user' resource
+            const user = {scope: 'user', request: makeFileRequest(null, 'https://web.ipac.caltech.edu/staff/roby/demo/fp_2mass.fp_psc29179.tbl')};
+            createResource(user);
+            const userTbl = makeResourceRequest(user, 'User Resource');
+            firefly.showTable('actual', userTbl);
+
+            // create a 'protected' resource with secret token
+            const secured = {scope: 'protected', secret: 'mysecret', request: makeFileRequest(null, 'https://web.ipac.caltech.edu/staff/roby/demo/wise-orbit-allsky.tbl')};
+            createResource(secured);
+            const securedTbl = makeResourceRequest(secured, 'Protected Resource');
+            firefly.showTable('actual', securedTbl);
+
+            // Accessing 'protected' resource without secret token
+            const accessDeniedTbl = makeResourceRequest({...secured, secret: 'wrong secret'}, 'Access Denied');
+            firefly.showTable('actual', accessDeniedTbl);
+
+            firefly.deleteResourceTests = function () {
+                deleteResource(global);
+                deleteResource(user);
+                deleteResource(secured);
+            }
+        }
+    </script>
+</template>
 
 
 <!-- this is where test cases will be attached-->

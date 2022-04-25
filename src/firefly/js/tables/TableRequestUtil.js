@@ -9,6 +9,11 @@ import {SelectInfo} from './SelectInfo.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {WS_HOME} from '../visualize/WorkspaceCntlr.js';
 import {getJobInfo} from '../core/background/BackgroundUtil.js';
+import {fetchTable} from 'firefly/rpc/SearchServicesJson';
+import {Logger} from '../util/Logger.js';
+
+
+const logger = Logger('Tables').tag('TableRequestUtil');
 
 export const MAX_ROW = Math.pow(2,31) - 1;
 /* TABLE_REQUEST should match QueryUtil on the server-side */
@@ -159,6 +164,74 @@ export function makeVOCatalogRequest(title, params={}, options={}) {
 }
 
 const voProviders = {'NED':'NedSearch'};
+
+/**
+ * Parameters for cone search
+ * @typedef {object} ResourceInfo
+ * @global
+ * @public
+ * @prop {TableRequest} request     required. the table request to create this resource from
+ * @prop {string}       [scope]       access type of this resource.  one of 'global', 'user', 'protected'.  defaults to 'global'.
+ * @prop {string}       [secret]      the secret token required to access 'protected' scope
+ */
+
+/**
+ * Create the given Resource
+ * @param {ResourceInfo} resource   resource information
+ * @public
+ * @func  createResource
+ * @memberof firefly.util.table
+ */
+export function createResource(resource) {
+    handleResourceRequest({resource, action: 'create'});
+}
+
+/**
+ * Delete the given Resource
+ * @param {ResourceInfo} resource   resource information
+ * @public
+ * @func  deleteResource
+ * @memberof firefly.util.table
+ */
+export function deleteResource(resource) {
+    handleResourceRequest({resource, action: 'delete'});
+}
+
+/**
+ * @param {ResourceInfo} resource   resource information
+ * @param {string} [title]          title to display with this table.
+ * @param {TableRequest} [options]  table request options.  see TableRequest for details.
+ * @returns {TableRequest} the request to query data from the given resource
+ * @public
+ * @func  makeResourceRequest
+ * @memberof firefly.util.table
+ */
+export function makeResourceRequest(resource={}, title, options={}) {
+    return handleResourceRequest({resource, title, options, action: 'query'});
+}
+
+/**
+ * private function to handle Resource related actions
+ * @param {object} p                function parameters
+ * @param {ResourceInfo} p.resource resource information
+ * @param {string} [p.title]        title to display with this table.
+ * @param {TableRequest} [p.options] table request options.  see TableRequest for details.
+ * @param {string} p.action one of 'query', 'create', 'delete'.  defautls to 'query'.
+ *                          when action is 'create' or 'delete', it will submit the request.
+ *                          no further action is needed.
+ */
+function handleResourceRequest({resource={}, title, options={}, action='query'}) {
+    const {request, scope, secret} = resource;
+    const searchRequest = JSON.stringify(request);
+
+    if (action === 'query') {
+        return makeTblRequest('ResourceProcessor', title, {searchRequest, action, scope, secret}, options);
+    } else {
+        const req = makeTblRequest('ResourceProcessor', null, {searchRequest, action, scope, secret});
+        return fetchTable(req)   // initiate and load the resource
+            .catch((err) => logger.error(`Failed to ${action} Resource from request: ${err}`, `request=${request}`));
+    }
+}
 
 /**
  * create a deep clone of the given request.  tbl_id is removed from the cloned request.
