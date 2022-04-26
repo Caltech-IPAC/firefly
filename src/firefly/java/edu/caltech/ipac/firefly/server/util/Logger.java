@@ -282,7 +282,9 @@ public class Logger {
                             if (val instanceof Float || val instanceof Double) {
                                 sb.append(":").append(String.format("%.3f", val));
                             }
-                            sb.append(":").append(val);
+                            else {
+                                sb.append(":").append(val);
+                            }
                         }
                     }
                 }

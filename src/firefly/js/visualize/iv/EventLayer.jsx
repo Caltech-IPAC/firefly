@@ -24,6 +24,7 @@ function fireEvent(ev,transform, plotId,mouseState, eventCallback, doPreventDefa
 function fireDocEvent(element, nativeEv,transform, plotId,mouseState, eventCallback) {
     nativeEv.preventDefault();
     nativeEv.stopPropagation();
+    if (!element) return;
     const {screenX, screenY, pageX:x, pageY:y}= nativeEv;
     const {left, top}= element.getBoundingClientRect();
     const compOffX= x-left;

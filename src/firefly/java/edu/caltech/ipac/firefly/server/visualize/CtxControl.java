@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Trey Roby
  */
 public class CtxControl {
+    private static final int root= (int)(System.currentTimeMillis() % 1000);
     private static final Counters counters= Counters.getInstance();
     private static final AtomicLong cnt = new AtomicLong(0);
 
@@ -58,5 +59,5 @@ public class CtxControl {
     }
 
     public record ActiveCallCtx(ActiveFitsReadGroup fitsReadGroup) { }
-    public static String makeCtxString() {return ServerContext.getAppName() +"-" +FileUtil.getHostname()+"-"+ cnt.incrementAndGet();}
+    public static String makeCtxString() {return ServerContext.getAppName() +"-" +FileUtil.getHostname()+"-"+root+"-"+ cnt.incrementAndGet();}
 }

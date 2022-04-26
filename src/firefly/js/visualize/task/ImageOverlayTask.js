@@ -212,7 +212,7 @@ function processMaskSuccessResponse(dispatcher, payload, result) {
         const plotState= PlotState.makePlotStateWithJson(PlotCreate[0].plotState);
         const imageOverlayId= plotState.getWebPlotRequest().getPlotId();
 
-        const plot= WebPlot.makeWebPlotData(imageOverlayId, PlotCreate[0], {}, true);
+        const plot= WebPlot.makeWebPlotData(imageOverlayId, PlotCreate[0], {}, true, undefined, plotState.getWebPlotRequest());
         plot.tileData = undefined;
         const resultPayload= clone(payload, {plot});
         dispatcher({type: ImagePlotCntlr.PLOT_MASK, payload: resultPayload});

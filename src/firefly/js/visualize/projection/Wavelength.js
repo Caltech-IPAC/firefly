@@ -88,8 +88,7 @@ function getWaveLengthPlane(ipt, cubeIdx, wlData) {
 }
 
 export function isWLAlgorithmImplemented(wlData) {
-    const {algorithm}= wlData;
-    return wlTypes[algorithm].implemented;
+    return wlTypes[wlData?.algorithm]?.implemented ?? false;
 }
 
 /**
