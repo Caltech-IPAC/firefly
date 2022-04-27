@@ -151,14 +151,17 @@ function HipsProjConvertButton({pv}) {
 
 function makeHiPSImageTable(pv) {
     if (!primePlot(pv)) return null;
+    const mi= pv.plotViewCtx.menuItemKeys;
 
     const dropDown= (
         <SingleColumnMenu>
             <ToolbarButton text={'Change HiPS'} tip={'Choose a different HiPS Survey'}
                            horizontal={false} key={'change Hips'}
+                           visible={mi.hipsSurveyPopup}
                            onClick={()=>showHiPSSurveysPopup(pv)} />
             <ToolbarButton text={'Add MOC Layer'} tip={'Add a new MOC layer to the HiPS Survey'}
                            horizontal={false} key={'add'}
+                           visible={mi.mocLayerPopup}
                            onClick={()=>showHiPSSurveysPopup(pv,true)} />
         </SingleColumnMenu>
     );
@@ -237,6 +240,7 @@ export const VisCtxToolbarView= memo((props) => {
     const image= isImage(plot);
     const canConvertHF= canConvertHipsAndFits(pv);
     const hips= isHiPS(plot);
+    const mi= pv?.plotViewCtx.menuItemKeys;
     const showOptions= showSelectionTools|| showCatSelect|| showCatUnSelect ||
         showFilter || showClearFilter || !isEmpty(extensionAry) || hips || canConvertHF;
 
@@ -249,45 +253,52 @@ export const VisCtxToolbarView= memo((props) => {
             {showSelectionTools && image &&
             <ToolbarButton icon={CROP} tip='Crop the image to the selected area'
                            imageStyle={image24x24}
+                           visible={mi.crop}
                            horizontal={true} onClick={() => crop(pv)}/>}
 
 
             {showCatSelect &&
             <ToolbarButton icon={SELECTED} tip='Mark data in area as selected'
                            imageStyle={image24x24}
+                           visible={mi.selectTableRows}
                            horizontal={true} onClick={() => selectDrawingLayer(pv)}/>}
 
             {showCatUnSelect &&
             <ToolbarButton icon={UNSELECTED} tip='Mark all data unselected'
                            imageStyle={image24x24}
+                           visible={mi.unselectTableRows}
                            horizontal={true} onClick={() => unselectDrawingLayer(pv)}/>}
 
             {showFilter &&
             <ToolbarButton icon={FILTER} tip='Filter in the selected area'
                            imageStyle={image24x24}
+                           visible={mi.filterTableRows}
                            horizontal={true} onClick={() => filterDrawingLayer(pv)}/>}
 
             {showClearFilter &&
             <ToolbarButton icon={CLEAR_FILTER} tip='Clear all the Filters'
                            imageStyle={image24x24}
+                           visible={mi.clearTableFilters}
                            horizontal={true} onClick={() => clearFilterDrawingLayer(pv)}/>}
 
             {showSelectionTools &&
             <ToolbarButton icon={SELECTED_ZOOM} tip='Zoom to fit selected area'
                            imageStyle={image24x24}
                            horizontal={true}
+                           visible={mi.zoomToSelection}
                            onClick={() => zoomIntoSelection(pv)}/>}
 
             { showSelectionTools &&
             <ToolbarButton icon={SELECTED_RECENTER} tip='Recenter image to selected area'
                            imageStyle={image24x24}
+                           visible={mi.recenterToSelection}
                            horizontal={true} onClick={() => recenterToSelection(pv)}/>}
 
             {showSelectionTools && image &&
             <ToolbarButton icon={STATISTICS} tip='Show statistics for the selected area'
                            imageStyle={image24x24}
+                           visible={mi.imageStatistics}
                            horizontal={true} onClick={() => stats(pv)}/>}
-
 
             {makeExtensionButtons(extensionAry,pv)}
         </Fragment>

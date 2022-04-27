@@ -33,7 +33,7 @@ export function ListBoxInputFieldView({inline, value, onChange, fieldKey, option
                     onChange={onChange}
                     disabled={readonly}
                     value={multiple ? vAry : value}>
-                {options.map(( (option) => {
+                {options?.map(( (option) => {
                     const optLabel = option.label || option.value;
                     return (
                         <option value={option.value}

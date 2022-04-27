@@ -27,7 +27,7 @@ const FONT_FALLBACK= ',sans-serif';
  * @prop ARCSEC
  * @prop IMAGE_PIXEL
  */
-const UnitType= new Enum(['PIXEL','ARCSEC','IMAGE_PIXEL']);
+export const UnitType= new Enum(['PIXEL','ARCSEC','IMAGE_PIXEL']);
 /**
  * @typedef {Object} ShapeType
  * @type {Enum}

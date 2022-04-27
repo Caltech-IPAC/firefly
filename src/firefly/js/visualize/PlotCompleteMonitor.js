@@ -1,3 +1,4 @@
+import {isString} from 'lodash';
 import ImagePlotCntlr, {visRoot} from './ImagePlotCntlr';
 import {dispatchAddActionWatcher} from '../core/MasterSaga';
 import {getPlotViewById, primePlot} from './PlotViewUtil';
@@ -53,4 +54,40 @@ function watchViewDim(action, cancelSelf, {plotId, resolve, reject, failureAsRej
         cancelSelf();
     }
     return {plotId, resolve, reject, failureAsReject, failActions, succActions, foundSuccComplete};
+}
+
+
+/**
+ * return when the view dim is defined, or PlotView is deleted, or after 10 seconds
+ * @param plotIdAryOrPlotId
+ * @return {Promise<Awaited<unknown>[]>}
+ */
+export async function onViewDimDefined(plotIdAryOrPlotId) {
+    const ary=  (isString(plotIdAryOrPlotId)) ? [plotIdAryOrPlotId] : plotIdAryOrPlotId;
+    return await Promise.all( ary.map( (plotId) => resolveViewDimPromise(plotId)));
+}
+
+function onViewDimDefinedWatcher(action, cancelSelf, {plotId, resolve, startTime}) {
+    const {type, payload} = action;
+    const pv = getPlotViewById(visRoot(), plotId);
+    let resolvedViewDim;
+    if ((payload.plotId !== plotId && type===ImagePlotCntlr.DELETE_PLOT_VIEW) || !pv) resolvedViewDim= {width:0,height:0};
+    if (pv.viewDim.width>0 && pv.viewDim.height>0) resolvedViewDim= pv.viewDim;
+    if (Date.now() > (startTime +10_000)) resolvedViewDim= {width:0,height:0};
+    if (resolvedViewDim) {
+        resolve(resolvedViewDim);
+        cancelSelf();
+    }
+    return {plotId, resolve, startTime};
+}
+
+function resolveViewDimPromise(plotId) {
+    const pv= getPlotViewById(visRoot(),plotId);
+    if (pv?.viewDim.width>0 && pv?.viewDim.height>0 ) return Promise.resolve(pv.viewDim);
+    return new Promise((resolve) => {
+        dispatchAddActionWatcher({
+            actions: [ImagePlotCntlr.UPDATE_VIEW_SIZE, ImagePlotCntlr.DELETE_PLOT_VIEW],
+            callback: onViewDimDefinedWatcher, params: {plotId, resolve, startTime: Date.now()}
+        } );
+    });
 }

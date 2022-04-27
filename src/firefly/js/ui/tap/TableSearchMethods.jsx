@@ -46,6 +46,7 @@ import {ExposureDurationSearch, ObsCoreSearch, ObsCoreWavelengthSearch} from 'fi
 import {getAppOptions} from 'firefly/api/ApiUtil';
 import CoordinateSys from 'firefly/visualize/CoordSys';
 import {Logger} from 'firefly/util/Logger';
+import {VisualTargetPanel} from 'firefly/visualize/ui/TargetHiPSPanel.jsx';
 
 const logger = Logger('TableSearchMethods');
 
@@ -364,10 +365,10 @@ function SpatialSearch({cols, columnsModel, groupKey, fields, initArgs={}, obsCo
                     labelWidth={LableSaptail}
                 />
                 <div style={{marginTop: '5px'}}>
-                    {spatialRegionOperation !== 'contains_point' && doSpatialSearch()}
+                    {spatialRegionOperation !== 'contains_point' && doSpatialSearch(true)}
                     {spatialRegionOperation === 'contains_point' &&
                         <div style={{marginLeft: LeftInSearch}}>
-                            {renderTargetPanel(groupKey, fields, true)}
+                            {renderTargetPanel(groupKey, fields, true, false)}
                         </div>
                     }
                 </div>
@@ -407,11 +408,11 @@ function SpatialSearch({cols, columnsModel, groupKey, fields, initArgs={}, obsCo
         );
     };
 
-    const doSpatialSearch = () => {
+    const doSpatialSearch = (hasRadius) => {
         return (
             <div style={{display:'flex', flexDirection:'column', flexWrap:'no-wrap',
                          width: SpatialWidth, marginLeft: LeftInSearch, marginTop: 5}}>
-                {selectSpatialSearchMethod(groupKey, fields, spatialMethod)}
+                {selectSpatialSearchMethod(groupKey, fields, spatialMethod, hasRadius)}
                 {setSpatialSearchSize(fields, radiusInArcSec, spatialMethod)}
             </div>
         );
@@ -427,7 +428,7 @@ function SpatialSearch({cols, columnsModel, groupKey, fields, initArgs={}, obsCo
                                headerStyle={HeaderFont}>
             <div style={{marginTop: '5px'}}>
                 {!obsCoreEnabled && showCenterColumns()}
-                {!obsCoreEnabled && doSpatialSearch()}
+                {!obsCoreEnabled && doSpatialSearch(true)}
                 {obsCoreEnabled && doObsCoreSearch()}
             </div>
             {DEBUG_OBSCORE && <div>
@@ -619,7 +620,7 @@ TemporalSearch.propTypes = {
 };
 
 
-function selectSpatialSearchMethod(groupKey, fields, spatialMethod) {
+function selectSpatialSearchMethod(groupKey, fields, spatialMethod, hasRadius) {
     const spatialOptions = () => {
         return TapSpatialSearchMethod.enums.reduce((p, enumItem)=> {
             p.push({label: enumItem.key, value: enumItem.value});
@@ -641,7 +642,7 @@ function selectSpatialSearchMethod(groupKey, fields, spatialMethod) {
                     value: TapSpatialSearchMethod.Cone.value
                 }}
             />
-            {renderTargetPanel(groupKey, fields, spatialMethod === TapSpatialSearchMethod.Cone.value)}
+            {renderTargetPanel(groupKey, fields, spatialMethod === TapSpatialSearchMethod.Cone.value, hasRadius)}
         </div>
     );
 }
@@ -657,13 +658,18 @@ ObsCoreSearch.propTypes = {
  * @param groupKey
  * @param fields
  * @param visible
+ * @param {boolean} hasRadius
  * @returns {null}
  */
-function renderTargetPanel(groupKey, fields, visible) {
+function renderTargetPanel(groupKey, fields, visible, hasRadius) {
     const targetSelect = () => {
         return (
             <div style={{height: 70, display:'flex', justifyContent: 'flex-start', alignItems: 'center', marginTop: '5px'}}>
-                <TargetPanel labelWidth={LableSaptail} groupKey={groupKey} feedbackStyle={{height: 40}}/>
+                <VisualTargetPanel labelWidth={LableSaptail} groupKey={groupKey} feedbackStyle={{height: 40}}
+                                   hipsUrl='ivo://CDS/P/2MASS/color'
+                                   hipsFOVInDeg={240} sizeKey={hasRadius?RadiusSize : undefined}
+                                   centerPt={makeWorldPt(0,0)}
+                />
             </div>
         );
     };

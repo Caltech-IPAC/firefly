@@ -1,14 +1,18 @@
 export const PlotAttribute= {
 
-    MOVING_TARGET_CTX_ATTR:   'MOVING_TARGET_CTX_ATTR',
 
-    /**
-     * This will probably be a WebMouseReadoutHandler class
-     * @see WebMouseReadoutHandler
-     */
-    READOUT_ATTR: 'READOUT_ATTR',
 
-    READOUT_ROW_PARAMS: 'READOUT_ROW_PARAMS',
+    // -----    no longer used
+    // READOUT_ATTR: 'READOUT_ATTR',
+    // MOVING_TARGET_CTX_ATTR:   'MOVING_TARGET_CTX_ATTR',
+    // READOUT_ROW_PARAMS: 'READOUT_ROW_PARAMS',
+    // SHOW_COMPASS: 'SHOW_COMPASS',
+    // DISABLE_ROTATE_REASON: 'DISABLE_ROTATE_HINT',
+    // FLIP_ZOOM_BY_LEVEL: 'FLIP_ZOOM_BY_LEVEL',
+    // FLIP_ZOOM_TO_FILL: 'FLIP_ZOOM_TO_FILL',
+    // MAX_EXPANDED_ZOOM_LEVEL : 'MAX_EXPANDED_ZOOM_LEVEL',
+    // LAST_EXPANDED_ZOOM_LEVEL : 'LAST_EXPANDED_ZOOM_LEVEL',
+    // COVERAGE_CREATED: 'COVERAGE_CREATED',
 
     /**
      * This will probably be a WorldPt
@@ -62,11 +66,11 @@ export const PlotAttribute= {
      */
     ACTIVE_DISTANCE: 'ACTIVE_DISTANCE',
 
+    /** point used for extractions */
     PT_ARY: 'PT_ARY',
 
+    /** true if there is extraction data */
     EXTRACTION_DATA: 'EXTRACTION_DATA',
-
-    SHOW_COMPASS: 'SHOW_COMPASS',
 
     /**
      * This will probably an object {pt: point}
@@ -76,42 +80,10 @@ export const PlotAttribute= {
 
 
     /**
-     * This is a String describing why this plot can't be rotated.  If it is defined then
-     * rotating is disabled.
-     */
-    DISABLE_ROTATE_REASON: 'DISABLE_ROTATE_HINT',
-
-    /**
-     * what should happen when multi-fits images are changed.  If set the zoom is set to the same level
-     * eg 1x, 2x ect.  If not set then flipping should attempt to make the image the same arcsec/screen pixel.
-     */
-    FLIP_ZOOM_BY_LEVEL: 'FLIP_ZOOM_BY_LEVEL',
-
-    /**
-     * what should happen when multi-fits images are changed.  If set the zoom is set to the same level
-     * eg 1x, 2x ect.  If not set then flipping should attempt to make the image the same arcsec/screen pixel.
-     */
-    FLIP_ZOOM_TO_FILL: 'FLIP_ZOOM_TO_FILL',
-
-    /**
-     * if set, when expanded the image will be zoom to no bigger than this level,
-     * this should be a subclass of Number
-     */
-    MAX_EXPANDED_ZOOM_LEVEL : 'MAX_EXPANDED_ZOOM_LEVEL',
-
-    /**
-     * if set, this should be the last expanded single image zoom level.
-     * this should be a subclass of Number
-     */
-    LAST_EXPANDED_ZOOM_LEVEL : 'LAST_EXPANDED_ZOOM_LEVEL',
-
-    /**
      * if set, must be one of the string values defined by the enum ZoomUtil.FullType
-     * currently is is ONLY_WIDTH, WIDTH_HEIGHT, ONLY_HEIGHT
+     * currently it is ONLY_WIDTH, WIDTH_HEIGHT, ONLY_HEIGHT
      */
     EXPANDED_TO_FIT_TYPE : 'MAX_EXPANDED_ZOOM_LEVEL',
-
-
 
     /** A title to be post-pended to the title */
     POST_TITLE: 'PostTitle',
@@ -122,10 +94,19 @@ export const PlotAttribute= {
     /** a key for saving color table selection to preferences */
     PREFERENCE_COLOR_KEY : 'PreferenceColorKey',
 
+    /** an url for help about the dataset for this image */
     DATA_HELP_URL: 'DATA_HELP_URL',
+
+    /** a description of the projection - a string*/
     PROJ_TYPE_DESC: 'PROJ_TYPE_DESC',
+
+    /** wavelength type */
     WAVE_TYPE: 'WAVE_TYPE',
+
+    /** a description of the wavelength - a string*/
     WAVE_LENGTH: 'WAVE_LENGTH',
+
+    /** the wavelength - a number */
     WAVE_LENGTH_UM: 'WAVE_LENGTH_UM',
 
 
@@ -138,6 +119,12 @@ export const PlotAttribute= {
     /** an array of table ids used by coverage or other representation of these tables */
     VISUALIZED_TABLE_IDS : 'VISUALIZED_TABLE_IDS',
 
-    COVERAGE_CREATED: 'COVERAGE_CREATED',
+    /** hint on how the plot happened - it was just replotted with a different center */
     REPLOT_WITH_NEW_CENTER: 'REPLOT_WITH_NEW_CENTER',
+
+    /** a world point that a user selected for a search */
+    USER_SEARCH_WP: 'USER_SEARCH_WP',
+
+    /** the radius of the search */
+    USER_SEARCH_RADIUS_DEG: 'USER_SEARCH_RADIUS_DEG'
 };

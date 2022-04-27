@@ -14,32 +14,28 @@ import {CysConverter} from './CsysConverter.js';
 import {makeImagePt} from './Point';
 import {makeDirectFileAccessData, parseSpacialHeaderInfo} from './projection/ProjectionHeaderParser.js';
 import {parseWavelengthHeaderInfo} from './projection/WavelengthHeaderParser.js';
-import {TAB} from './projection/Wavelength';
 import {memorizeLastCall} from '../util/WebUtil';
 import {makePlotStateShimForHiPS} from './PlotState';
 
 export const BLANK_HIPS_URL= 'blank';
 export const DEFAULT_BLANK_HIPS_TITLE= 'Blank HiPS Projection';
 
+/**
+ * Related data Constants
+ * @type {{IMAGE_OVERLAY: string, TABLE: string, IMAGE_MASK: string, WAVELENGTH_TABLE: string, WAVELENGTH_TABLE_RESOLVED: string, SUPPORTED_DATATYPES: string[]}}
+ */
 export const RDConst= {
     IMAGE_OVERLAY: 'IMAGE_OVERLAY',
     IMAGE_MASK: 'IMAGE_MASK',
     TABLE: 'TABLE',
     WAVELENGTH_TABLE: 'WAVELENGTH_TABLE',
+    WAVELENGTH_TABLE_RESOLVED: 'WAVELENGTH_TABLE_RESOLVED',
     SUPPORTED_DATATYPES: ['IMAGE_MASK', 'TABLE']
 };
 
 const HIPS_DATA_WIDTH=  10000000000;
 const HIPS_DATA_HEIGHT= 10000000000;
 
-
-
-/**
- *
- * @param {HipsProperties} hipsProperties
- * @return {string}
- */
-export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_title || hipsProperties.label || 'HiPS';
 
 
 /**
@@ -89,6 +85,7 @@ export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_
  * @prop {Array.<RawData>} rawData
  * @prop {{width:number, height:number}} viewDim  size of viewable area  (div size: offsetWidth & offsetHeight)
  * @prop {Array.<Object>}
+ * @prop {Object} attributes
  * directFileAccessDataAry - object of parameters to get flux from the FITS file
  *
  * @see PlotView
@@ -244,6 +241,12 @@ export const isImage= (plot) => Boolean(plot?.plotType==='image');
 export const isKnownType= (plot) => Boolean(plot?.plotType==='image' || plot?.plotType==='hips');
 
 /**
+ * @param {HipsProperties} hipsProperties
+ * @return {string}
+ */
+export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_title || hipsProperties.label || 'HiPS';
+
+/**
  *
  * @param plotId
  * @param plotType
@@ -333,6 +336,7 @@ export const WebPlot= {
     /**
      *
      * @param {string} plotId
+     * @param {Dimension} viewDim
      * @param {WebPlotInitializer} wpInit init data returned from server
      * @param {object} attributes any attributes to initialize
      * @param {boolean} asOverlay
@@ -341,7 +345,7 @@ export const WebPlot= {
      * @param {RangeValues} [rv0] - only used when this is part of a cube
      * @return {WebPlot} the plot
      */
-    makeWebPlotData(plotId, wpInit, attributes= {}, asOverlay= false, cubeCtx, request0, rv0) {
+    makeWebPlotData(plotId, viewDim, wpInit, attributes= {}, asOverlay= false, cubeCtx, request0, rv0) {
 
         const relatedData = cubeCtx ? cubeCtx.relatedData : wpInit.relatedData;
         const plotState= PlotState.makePlotStateWithJson(wpInit.plotState,request0, rv0);
@@ -398,7 +402,7 @@ export const WebPlot= {
         let plot= makePlotTemplate(plotId,'image',asOverlay, CoordinateSys.parse(imageCoordSys));
         const dataWidth= cubeCtx ? cubeCtx.dataWidth : wpInit.dataWidth;
         const dataHeight= cubeCtx ? cubeCtx.dataHeight : wpInit.dataHeight;
-        const zf= getInitZoomLevel(request0, dataWidth, dataHeight, projection.getPixelScaleDegree());
+        const zf= getInitZoomLevel(viewDim, request0, dataWidth, dataHeight, projection.getPixelScaleDegree());
 
         // noinspection JSUnresolvedVariable
         const imagePlot= {
@@ -582,15 +586,15 @@ export const isHiPSAitoff= (plot) => isHiPS(plot) && plot.projection.header.mapt
 
 
 /**
+ * @param {Dimension} viewDim
  * @param {WebPlotRequest} req
  * @param {number} dataWidth
  * @param {number} dataHeight
  * @param {number} pixelScaleDeg
  */
-function getInitZoomLevel(req, dataWidth, dataHeight, pixelScaleDeg) {
-    const width=  req.getZoomToWidth();
-    const height= req.getZoomToHeight();
-    const zt= req.getZoomType();
+function getInitZoomLevel(viewDim,  req, dataWidth, dataHeight, pixelScaleDeg) {
+    const {width,height}= viewDim ?? {};
+    const zt= (width && height) ? req.getZoomType() : ZoomType.LEVEL;
     switch (zt) {
         case ZoomType.TO_HEIGHT: // this is not implemented, do FULL_SCREEN
         case ZoomType.FULL_SCREEN:
@@ -724,11 +728,7 @@ export function getDevPixScaleDeg(plot) {
     return 0;
 }
 
-
-
-
 export const isBlankHiPSURL= (url) => url.toLowerCase()===BLANK_HIPS_URL;
-
 
 /**
  * @param {WebPlotInitializer} pC
@@ -736,7 +736,7 @@ export const isBlankHiPSURL= (url) => url.toLowerCase()===BLANK_HIPS_URL;
  */
 export function processHeaderData(pC) {
     const relatedData= pC.relatedData;
-    const wlTableRelatedAry= relatedData && relatedData.filter( (r) => r.dataType==='WAVELENGTH_TABLE_RESOLVED');
+    const wlTableRelatedAry= relatedData && relatedData.filter( (r) => r.dataType===RDConst.WAVELENGTH_TABLE_RESOLVED);
 
     return {
         processHeader: parseSpacialHeaderInfo(pC.headerAry[0],'',pC.zeroHeaderAry[0]),

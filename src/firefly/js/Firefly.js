@@ -214,7 +214,7 @@ function fireflyInit(props, options={}, webApiCommands) {
     installOptions(mergeObjectOnly(defFireflyOptions, options));
 
     // initialize UI or API depending on entry mode.
-    documentReady().then(() => viewer ? renderRoot(viewer, props,webApiCommands) : initApi());
+    documentReady().then(() => viewer ? renderRoot(viewer, props,webApiCommands) : initApi(props));
     initDone = true;
 }
 
@@ -224,7 +224,9 @@ function fireflyInit(props, options={}, webApiCommands) {
  * @param {AppProps} props
  * @return {Object} return object has two functions {unrender:Function, render:Function}
  */
-export function startAsAppFromApi(divId, props={template: 'FireflySlate'}) {
+export function startAsAppFromApi(divId, overrideProps={template: 'FireflySlate'}) {
+
+    const props = {...mergeObjectOnly({...window.firefly.originalAppProps}, overrideProps), div:divId};
     const viewer = Templates[props.template];
     if (!divId || !viewer) {
         !divId  && logger.error('required: divId');
@@ -236,10 +238,6 @@ export function startAsAppFromApi(divId, props={template: 'FireflySlate'}) {
     props.readoutDefaultPref && dispatchChangeReadoutPrefs(props.readoutDefaultPref);
     props.wcsMatchType && dispatchWcsMatch({matchType:props.wcsMatchType, lockMatch:true});
 
-
-
-    props = {...mergeObjectOnly({...defAppProps}, props), div:divId};
-    
     const controlObj= {
         unrender: () => {
                 const e= document.getElementById(divId);

@@ -425,10 +425,10 @@ function reducer(state=initState(), action={}) {
             return deleteSingleItem(state,payload.plotId, IMAGE);
         case ImagePlotCntlr.PLOT_HIPS:
         case ImagePlotCntlr.PLOT_IMAGE_START:
-            const {viewerId, plotId, renderTreeId} = payload;
+            const {viewerId, plotId, renderTreeId, pvOptions:{canBeExpanded= true} } = payload;
             if (!imageViewerCanAdd(state,viewerId, plotId)) return state;
             state= addItems(state,payload.viewerId,[payload.plotId], IMAGE, renderTreeId);
-            return addItems(state,EXPANDED_MODE_RESERVED,[payload.plotId],IMAGE);
+            return canBeExpanded ? addItems(state,EXPANDED_MODE_RESERVED,[payload.plotId],IMAGE) : state;
         case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
         case ImagePlotCntlr.PLOT_IMAGE:
             return changeActiveItem(state, payload, IMAGE);

@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {has, isArray, isEmpty, isObject, isString, isUndefined} from 'lodash';
+import {get, has, isArray, isEmpty, isObject, isString, isUndefined} from 'lodash';
 import shallowequal from 'shallowequal';
 import {getPlotGroupById} from './PlotGroup.js';
 import {makeDevicePt, makeImagePt, makeWorldPt, pointEquals} from './Point.js';
@@ -14,7 +14,10 @@ import {getNumberHeader, HdrConst} from './FitsHeaderUtil.js';
 import {computeDistance, getRotationAngle, isCsysDirMatching, isEastLeftOfNorth, isPlotNorth} from './VisUtil';
 import {removeRawData} from './rawData/RawDataCache.js';
 import {hasClearedDataInStore, hasLocalStretchByteDataInStore} from './rawData/RawDataOps.js';
-import {ExpandType} from 'firefly/visualize/ImagePlotCntlr.js';
+import ImagePlotCntlr, {ExpandType} from 'firefly/visualize/ImagePlotCntlr.js';
+import * as TblCntlr from 'firefly/tables/TablesCntlr.js';
+import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga.js';
+import {createErrorTbl, getTblById, getTblInfoById, isFullyLoaded, isTableLoaded} from 'firefly/tables/TableUtil.js';
 
 
 export const CANVAS_IMAGE_ID_START= 'image-';
@@ -268,7 +271,7 @@ export function getDrawLayerByType(ref,typeId) {
  * get all drawing layers of type 'typeId'
  * @param {DrawLayer[]|DrawLayerRoot} ref - the root of the drawing layer controller or the master array of all drawing layers
  * @param typeId
- * @return {object} the draw layer
+ * @return {Array.<DrawLayer>} the draw layer
  */
 export function getDrawLayersByType(ref,typeId) {
     if (!ref) return undefined;
@@ -1055,7 +1058,7 @@ export const pvEqualExScroll= memorizeLastCall((pv1,pv2) => {
     }
     if (result && (
         pv1.visible!==pv2.visible || pv1.request!==pv2.request ||
-        pv1.viewDim!==pv2.viewDim || pv1.menuItemKeys!==pv2.menuItemKeys ||
+        pv1.viewDim!==pv2.viewDim || pv1.plotViewCtx.menuItemKeys!==pv2.plotViewCtx.menuItemKeys ||
         pv1.plotViewCtx!==pv2.plotViewCtx || pv1.rotation!==pv2.rotation ||
         pv1.flipY!==pv2.flipY)) result= false;
     if (result && !shallowequal(pv1.overlayPlotViews, pv2.overlayPlotViews)) result= false;

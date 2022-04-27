@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isEmpty} from 'lodash';
+import {isEmpty, isString} from 'lodash';
 import ImagePlotCntlr, {
     dispatchChangeCenterOfProjection,
     dispatchPlotHiPS,
@@ -17,7 +17,7 @@ import ImagePlotCntlr, {
     makeUniqueRequestKey
 } from '../ImagePlotCntlr.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
-import {WebPlot, isHiPS, isImage, isBlankHiPSURL, isHiPSAitoff} from '../WebPlot.js';
+import {WebPlot, isHiPS, isImage, isBlankHiPSURL} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {getRootURL, loadImage} from '../../util/WebUtil.js';
 import {
@@ -43,7 +43,6 @@ import {
 import {addAllSkyCachedImage, findAllSkyCachedImage} from '../iv/HiPSTileCache.js';
 import {ZoomType} from '../ZoomType.js';
 import {CCUtil} from '../CsysConverter.js';
-import { addDrawLayers, determineViewerId, ensureWPR, getHipsImageConversion, } from './PlotImageTask.js';
 import {
     dispatchAttachLayerToPlot, dispatchChangeVisibility,
     dispatchCreateDrawLayer,
@@ -67,6 +66,9 @@ import {showInfoPopup} from 'firefly/ui/PopupUtil.jsx';
 import {
     clearActiveRequest, getActiveRequestKey, setActiveRequestKey
 } from 'firefly/visualize/task/ActivePlottingTask.js';
+import {
+    addDrawLayers, determineViewerId, ensureWPR, getHipsImageConversion
+} from 'firefly/visualize/task/CreateTaskUtil.js';
 
 const PROXY= true;
 
@@ -130,8 +132,10 @@ function watchForHiPSViewDim(action, cancelSelf, params) {
     const vr= visRoot();
     let pv= getPlotViewById(vr, plotId);
     const {width,height}= pv.viewDim;
-    const wp= pv.request && pv.request.getWorldPt();
-    const useAitoff= pv.request.getHipsUseAitoffProjection();
+    const {request}= pv;
+    const wp= request.getWorldPt();
+    const useAitoff= request.getHipsUseAitoffProjection();
+    const hipsCys= request.getHipsUseCoordinateSys();
     if (width && height && width>30 && height>30) {
         const plot= primePlot(pv);
         if (!plot) return;
@@ -142,7 +146,7 @@ function watchForHiPSViewDim(action, cancelSelf, params) {
             matchHiPStoPlotView(vr, getPlotViewById(vr, vr.mpwWcsPrimId));
             if (useAitoff) dispatchChangeCenterOfProjection({plotId,fullSky: useAitoff});
         }
-        else if (!pv.request.getSizeInDeg() && !wp && lockedToOtherHiPS(vr,pv) && otherPlot) { //if nothing enter, match to existing HiPS
+        else if (!request.getSizeInDeg() && !wp && lockedToOtherHiPS(vr,pv) && otherPlot) { //if nothing enter, match to existing HiPS
             dispatchZoom({ plotId, userZoomType: UserZoomTypes.LEVEL, level:otherPlot.zoomFactor });
             const {centerWp}= getPointMaxSide(otherPlot, otherPlot.viewDim);
             dispatchChangeCenterOfProjection({plotId,centerProjPt:centerWp, fullSky: useAitoff});
@@ -152,8 +156,8 @@ function watchForHiPSViewDim(action, cancelSelf, params) {
             pv= getPlotViewById(visRoot(),plotId);
             const fallbackSize= useAitoff ? 360 : 180;
             const sizeFromProps= !plot.blank ? Number(plot.hipsProperties.hips_initial_fov) : 0;
-            const fovSize= pv.request.getSizeInDeg()  || sizeFromProps || fallbackSize;
-            if (!pv.request.getSizeInDeg() && sizeFromProps && (fovSize<.00027 || fovSize>70)) { // if size is small (<1 arcsec) or big then do a fill, size is probably an error
+            const fovSize= request.getSizeInDeg()  || sizeFromProps || fallbackSize;
+            if (!request.getSizeInDeg() && sizeFromProps && (fovSize<.00027 || fovSize>70)) { // if size is small (<1 arcsec) or big then do a fill, size is probably an error
                 dispatchZoom({ plotId, userZoomType: UserZoomTypes.FILL});
             }
             else if (useAitoff && fovSize>290) {
@@ -164,12 +168,13 @@ function watchForHiPSViewDim(action, cancelSelf, params) {
                 dispatchZoom({plotId, userZoomType: UserZoomTypes.LEVEL, level:getHiPSZoomLevelForFOV(pv,cleanFov) });
             }
 
-            if (wp) dispatchChangeCenterOfProjection({plotId,centerProjPt:wp});
+            if (wp) dispatchChangeCenterOfProjection({plotId, centerProjPt: wp});
+            if (hipsCys && primePlot(pv).imageCoordSys !== hipsCys) dispatchChangeHiPS({plotId, coordSys: hipsCys});
         }
 
 
         initCorrectCoordinateSys(pv);
-        addDrawLayers(pv.request, pv, plot); //todo for blank
+        addDrawLayers(request, pv, plot); //todo for blank
 
         cancelSelf();
     }
@@ -265,7 +270,7 @@ async function makeHiPSPlot(rawAction, dispatcher) {
         const hipsProperties= parseProperties(str);
         let plot= WebPlot.makeWebPlotDataHIPS(plotId, resolvedHipsRootUrl, wpRequest, hipsProperties, attributes, PROXY);
 
-        if (!blank) {
+        if (!blank && wpRequest.getOverlayIds()?.includes(HiPSMOC.TYPE_ID)) {
             await createHiPSMocLayer(getPropertyItem(hipsProperties, 'ivoid'),
                 getPropertyItem(hipsProperties, 'obs_title'), resolvedHipsRootUrl, plot);
         }
@@ -294,7 +299,7 @@ async function makeHiPSPlot(rawAction, dispatcher) {
 
 
 export async function createHiPSMocLayer(ivoid, title, hipsUrl, plot, visible=false, mocFile = 'Moc.fits') {
-    const mocUrl = hipsUrl.endsWith('/') ? hipsUrl + mocFile : hipsUrl+'/'+mocFile;
+    const mocUrl = (mocFile && isString(mocFile))  ? hipsUrl.endsWith('/') ? hipsUrl + mocFile : hipsUrl+'/'+mocFile : hipsUrl;
     const tblId = makeMocTableId(ivoid);
     const dls = getDrawLayersByType(getDlAry(), HiPSMOC.TYPE_ID);
 

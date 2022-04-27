@@ -17,7 +17,6 @@ import {
 import {callCrop} from '../../rpc/PlotServicesJson.js';
 import {WebPlotResult} from '../WebPlotResult.js';
 import {isHiPS, WebPlot} from '../WebPlot.js';
-import {makeCubeCtxAry, populateFromHeader} from './PlotImageTask';
 import {locateOtherIfMatched} from './WcsMatchTask';
 import {PlotAttribute} from '../PlotAttribute.js';
 import PlotState from '../PlotState.js';
@@ -25,6 +24,7 @@ import {RangeValues} from '../RangeValues.js';
 import {loadStretchData, queueChangeLocalRawDataColor} from '../rawData/RawDataOps.js';
 import {dispatchAddTaskCount, dispatchRemoveTaskCount} from '../../core/AppDataCntlr.js';
 import {Band} from '../Band.js';
+import {makeCubeCtxAry, populateFromHeader} from 'firefly/visualize/task/CreateTaskUtil.js';
 
 
 //=======================================================================
@@ -71,7 +71,7 @@ export const rotateActionCreator= (rawAction) => dispatchAndMaybeMatch(rawAction
 
 
 let taskCnt= 0;
-export function makeTaskId() {
+function makeTaskId() {
     taskCnt++;
     return `plot_change_task-${taskCnt}`;
 }
@@ -110,9 +110,6 @@ export function colorChangeActionCreator(rawAction) {
             colorChangeHiPS(store, dispatcher, plotId, cbarId, biasToUse,contrastToUse, rawAction.payload.actionScope);
             return;
         }
-
-
-        const aType= ImagePlotCntlr.COLOR_CHANGE;
         if (rawAction.payload.actionScope===ActionScope.SINGLE){
             const taskId= makeTaskId();
             if (!isThreeColor(plot)) {
@@ -323,7 +320,7 @@ function processPlotReplace(dispatcher, result, pv, makeSuccessAction, makeFailA
             resultAry.forEach((r, i) => {
                 if (i === 0) return;
                 const {imageOverlayId}= existingOverlayPlotViews[i-1];
-                const plot = WebPlot.makeWebPlotData(imageOverlayId, r.data[WebPlotResult.PLOT_CREATE][0], {}, true);
+                const plot = WebPlot.makeWebPlotData(imageOverlayId, pv.viewDim, r.data[WebPlotResult.PLOT_CREATE][0], {}, true);
                 overlayPlotViews[i - 1] = {plot};
             });
 
@@ -351,7 +348,7 @@ function getResultAry(result) {
 
 function makeCroppedPlot(pc,plotCreateHeader, pv, cubeCtx) {
     const oldPlot= primePlot(pv);
-    const plot= WebPlot.makeWebPlotData(pv.plotId, pc,
+    const plot= WebPlot.makeWebPlotData(pv.plotId, pv.viewDim,pc,
         {...oldPlot.attributes,
             [PlotAttribute.IMAGE_BOUNDS_SELECTION]:undefined,
             [PlotAttribute.SELECTION]: undefined

@@ -26,8 +26,10 @@ import {StatefulTabs, Tab,FieldGroupTabs} from './panel/TabPanel.jsx';
 import {dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {NaifidPanel} from './NaifidPanel.jsx';
 import {useBindFieldGroupToStore} from 'firefly/ui/SimpleComponent.jsx';
-import {getGroupFields} from 'firefly/fieldGroup/FieldGroupUtils.js';
-
+import {getGroupFields} from '../fieldGroup/FieldGroupUtils.js';
+import {CoordinateSys, makeWorldPt, WebPlotRequest} from '../api/ApiUtilImage.jsx';
+import {TargetHiPSPanel, VisualTargetPanel} from '../visualize/ui/TargetHiPSPanel.jsx';
+import {SizeInputFields} from 'firefly/ui/SizeInputField.jsx';
 
 
 function getDialogBuilder() {
@@ -210,9 +212,19 @@ const AllTest= () => (
                             </CollapsiblePanel>
                         </div>
                     </Tab>
-                    <Tab name='Third'>
+                    <Tab name='Dependent'>
                         <div style={{minWidth: 300, minHeight: 150}}>
                             <FieldGroupWithMasterDependent />
+                        </div>
+                    </Tab>
+                    <Tab name='HiPS/Target'>
+                        <div style={{minWidth: 500, minHeight: 400}}>
+                            <CreateHiPSTargetExample/>
+                        </div>
+                    </Tab>
+                    <Tab name='HiPS/Target - popup'>
+                        <div style={{minWidth: 500, minHeight: 400}}>
+                            <CreateHiPSTargetPopupExample/>
                         </div>
                     </Tab>
                 </StatefulTabs>
@@ -455,8 +467,6 @@ function FieldGroupTestView ({fields={}}) {
                 </button>
                 <button type='button' className='button std hl'  onClick={() => resetDefaults()}>
                     <b>Reset All Defaults</b>
-                </button>
-                <button type='button' className='button std hl' onClick={()=>showModal(sampleModal())}>
                     Display Modal Dialog
                 </button>
 
@@ -554,6 +564,58 @@ function makeField1(hide) {
     return hide ? hidden : f1;
 }
 
+
+function CreateHiPSTargetExample() {
+    const someMocUrls= [
+        'https://irsa.ipac.caltech.edu/data/hips/CDS/GALEX/GR6-03-2014/AIS-Color/Moc.fits', // 79%
+        'https://irsa.ipac.caltech.edu/data/hips/CDS/SPITZER/IRAC1/Moc.fits', // 1.37%
+        'http://alasky.cds.unistra.fr/DES/CDS_P_DES-DR1_Y/Moc.fits', //   12.7% , center  22,34, fov 120
+        'http://alasky.cds.unistra.fr/VISTA/VVV_DR4/VISTA-VVV-DR4-J/Moc.fits' // 1.38%  center 246,49, fov 85
+    ];
+    return (
+        <FieldGroup style= {{padding:5}} groupKey={'HiPS_TARGET'}>
+            <div>
+                <TargetHiPSPanel centerPt={makeWorldPt(246,-49)} hipsUrl='ivo://CDS/P/DSS2/color'
+                                 style={{height:600}}
+                                 hipsFOVInDeg={86} searchAreaInDeg={1.5}
+                                 coordinateSys={ CoordinateSys.GALACTIC}
+                                 mocList={[
+                                     {
+                                         mocUrl: 'http://alasky.cds.unistra.fr/VISTA/VVV_DR4/VISTA-VVV-DR4-J/Moc.fits',
+                                         title: 'Vista Coverage'
+                                     }
+                                 ]}
+                />
+            </div>
+        </FieldGroup>
+    );
+}
+
+function CreateHiPSTargetPopupExample() {
+    return (
+        <FieldGroup style= {{padding:5}} groupKey='HiPS_TARGET_POPUP'>
+            <div>
+                <div style={{display:'flex', flexDirection:'column', marginLeft:10, marginTop: 20}}>
+                    <VisualTargetPanel style={{paddingTop: 10}} labelWidth={100}
+                                       hipsUrl='ivo://CDS/P/2MASS/color'
+                                       centerPt={makeWorldPt(246,-49)}
+                                       sizeKey='HiPSPanelRadius'
+                                       hipsFOVInDeg={86} searchAreaInDeg={1.5}
+                                       mocList={[
+                                           {
+                                               mocUrl: 'http://alasky.cds.unistra.fr/VISTA/VVV_DR4/VISTA-VVV-DR4-J/Moc.fits',
+                                               title: 'Vista Coverage'
+                                           }
+                                       ]}
+                    />
+                    <SizeInputFields fieldKey='HiPSPanelRadius' showFeedback={true} labelWidth= {100}  nullAllowed={false}
+                                     label={'Search Area'}
+                                     initialState={{ unit: 'arcsec', value: 1.5+'', min: 1 / 3600, max: 100 }} />
+                </div>
+            </div>
+        </FieldGroup>
+    );
+}
 
 
 //export default ExampleDialog;

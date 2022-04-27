@@ -47,7 +47,6 @@ import {updateTransform, makeTransform} from '../PlotTransformUtils.js';
  * @prop {number} scrollX scroll position X
  * @prop {number} scrollY scroll position Y
  * @prop {{width:number, height:number}} viewDim  size of viewable area  (div size: offsetWidth & offsetHeight)
- * @prop {Object} menuItemKeys - which toolbar button are enables for this plotView
  * @prop {Object} overlayPlotViews
  * @prop {Object} options
  * @prop {number} rotation if > 0 then the plot is rotated by this many degrees
@@ -56,22 +55,6 @@ import {updateTransform, makeTransform} from '../PlotTransformUtils.js';
  * @prop {PlotViewContextData} plotViewCtx
  */
 
-/**
- * @global
- * @public
- * @typedef {Object} PlotViewContextData
- * Various properties about this PlotView
- *
- * @prop {boolean} userCanDeletePlots true if this plotView can be deleted by the user
- * @prop {boolean} zoomLockingEnabled the plot will automaticly adjust the zoom when resized
- * @prop {UserZoomTypes} zoomLockingType the type of zoom locking
- * @prop {number} lastCollapsedZoomLevel used for returning from expanded mode, keeps recode of the level before expanded
- * @prop {HipsImageConversionSettings} hipsImageConversion -  if defined, then plotview can convert between hips and image
- * @prop {number} plotCounter index of how many plots, used for making next ID
- * @prop {boolean} multiHdu true if there is more than one HDUs
- * @prop {number} cubeCnt - total number of cube in PlotView
- * @prop {Array.<number>} hduPlotStartIndexes: start indexes of each hdu
- */
 
 /**
  * @global
@@ -94,13 +77,37 @@ import {updateTransform, makeTransform} from '../PlotTransformUtils.js';
  *
  * @prop {HipsImageConversionSettings} [hipsImageConversion] If object is defined and populated correctly then
  * the PlotView will convert between HiPS and Image
- * @prop {Object} [menuItemKeys] - defines which menu items shows on the toolbar
- * @prop {boolean} [userCanDeletePlots] - default to true, defines if a PlotView can be deleted by the user
+ * @prop {Object} [menuItemKeys= getDefaultMenuItemKeys()] - defines which menu items shows on the toolbar
+ * @prop {boolean} [userCanDeletePlots=true] - default to true, defines if a PlotView can be deleted by the user
+ * @prop {boolean} [useForSearchResults=true] - this plotview is used to show some sort of result, defaults to true the normal case
+ * @prop {boolean} [displayFixedTarget=true] - overlay the search position if it exist
+ * @prop {boolean} [canBeExpanded=true] true if this pv can be expanded, defaults to true the normal case
  * @prop {boolean} [visible] - default to true, defines if a PlotView image layer is visible after it is created
- * @prop {boolean} rotateNorthLock
- * @prop {boolean} flipYLock
- * @prop {boolean} useSticky
- * @prop {boolean} useForCoverage
+ * @prop {boolean} [rotateNorthLock]
+ * @prop {boolean} [flipYLock]
+ * @prop {boolean} [useSticky]
+ * @prop {boolean} [useForCoverage=false]
+ */
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} PlotViewContextData
+ * Various properties about this PlotView
+ *
+ * @prop {Object} menuItemKeys - defines which menu items shows on the toolbar
+ * @prop {boolean} userCanDeletePlots true if this plotView can be deleted by the user
+ * @prop {boolean} zoomLockingEnabled the plot will automaticly adjust the zoom when resized
+ * @prop {boolean} useForSearchResults - marker that this plotview is used to show some sort of result, defaults to true the normal case
+ * @prop {boolean} useForCoverage - marker that is plot is being used to show overage data
+ * @prop {boolean} canBeExpanded true if this pv can be expanded, defaults to true the normal case
+ * @prop {UserZoomTypes} zoomLockingType the type of zoom locking
+ * @prop {number} lastCollapsedZoomLevel used for returning from expanded mode, keeps recode of the level before expanded
+ * @prop {HipsImageConversionSettings} hipsImageConversion -  if defined, then plotview can convert between hips and image
+ * @prop {number} plotCounter index of how many plots, used for making next ID
+ * @prop {boolean} multiHdu true if there is more than one HDUs
+ * @prop {number} cubeCnt - total number of cube in PlotView
+ * @prop {Array.<number>} hduPlotStartIndexes: start indexes of each hdu
  */
 
 
@@ -127,7 +134,6 @@ export function makePlotView(plotId, req, pvOptions= {}) {
         affTrans: null,
         viewDim : {width:0, height:0}, // size of viewable area  (i.e. div size: offsetWidth & offsetHeight)
         overlayPlotViews: [],
-        menuItemKeys: {...getDefMenuItemKeys(), ...pvOptions.menuItemKeys},
         plotViewCtx: createPlotViewContextData(req, pvOptions),
         rotation: 0,
         flipY: Boolean(flipYLock && useSticky),
@@ -147,16 +153,19 @@ export function makePlotView(plotId, req, pvOptions= {}) {
 function createPlotViewContextData(req, pvOptions={}) {
     const attributes= req.getAttributes();
     const plotViewCtx= {
+        menuItemKeys: {...getDefMenuItemKeys(), ...pvOptions.menuItemKeys},
         userCanDeletePlots: pvOptions?.userCanDeletePlots ?? true,
-        annotationOps : req.getAnnotationOps(), // how titles are drawn
         rotateNorthLock : Boolean(pvOptions.rotateNorthLock && pvOptions.useSticky),
-        useForCoverage: Boolean(pvOptions.useForCoverage),
+        useForCoverage: Boolean(pvOptions.useForCoverage),  // marker boolean - plot used for coverage
+        useForSearchResults: pvOptions.useForSearchResults ?? true,  // marker boolean - plot used for some result
+        canBeExpanded: pvOptions.canBeExpanded ?? true, // image can
+        displayFixedTarget: pvOptions?.displayFixedTarget ?? true,
+        annotationOps : req.getAnnotationOps(), // how titles are drawn - todo this might be deprecated - needs research
         zoomLockingEnabled : false,
         zoomLockingType: UserZoomTypes.FIT, // can be FIT or FILL
-        displayFixedTarget: pvOptions?.displayFixedTarget ?? true,
         lastCollapsedZoomLevel: 0,
         preferenceColorKey: attributes[PlotAttribute.PREFERENCE_COLOR_KEY],
-        defThumbnailSize: DEFAULT_THUMBNAIL_SIZE,
+        defThumbnailSize: DEFAULT_THUMBNAIL_SIZE,  // todo - this option might need some cleanup
         plotCounter:0, // index of how many plots, used for making next ID
         multiHdu:false, // this is updated when plots are added
         cubeCnt: 0,     // this is updated when plots are added
@@ -164,9 +173,8 @@ function createPlotViewContextData(req, pvOptions={}) {
     };
 
     const {hipsImageConversion:hi}= pvOptions;
-    if (hi && hi.hipsRequestRoot && hi.imageRequestRoot && hi.fovDegFallOver) {  // confirm all three parameters are there
-        const defaults= {autoConvertOnZoom: false};
-        plotViewCtx.hipsImageConversion= {...defaults, ...hi};
+    if (hi?.hipsRequestRoot && hi?.imageRequestRoot && hi?.fovDegFallOver) {  // confirm all three parameters are there
+        plotViewCtx.hipsImageConversion= {autoConvertOnZoom: false, ...hi};
         if (!hi.fovMaxFitsSize ) hi.fovMaxFitsSize= hi.fovDegFallOver;
     }
     return plotViewCtx;
