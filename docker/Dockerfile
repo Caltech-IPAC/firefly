@@ -137,12 +137,9 @@ COPY firefly/docker/*.sh firefly/docker/*.txt ${CATALINA_HOME}/
 COPY firefly/docker/tomcat-users.xml firefly/docker/java.security.override conf/
 COPY firefly/docker/local.xml conf/Catalina/localhost
 
-#copy all wars, typically there should only be one
-COPY --from=builder /opt/work/${build_dir}/build/dist/*.war ${CATALINA_HOME}/webapps/
-
-# sideload additional war files into tomcat.
-COPY firefly/.gitignore firefly/docker/*.war ${CATALINA_HOME}/webapps/
-
+# copy all wars, typically there should only be one
+# add war files to firefly/docker directory to sideload the apps into this tomcat webapps instance
+COPY --from=builder /opt/work/${build_dir}/build/dist/*.war /opt/work/firefly/docker/*.war ${CATALINA_HOME}/webapps/
 
 # extract all war files into tomcat's webapps; mod log4j to have log sent to stdout as well
 WORKDIR ${CATALINA_HOME}/webapps
