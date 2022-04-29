@@ -40,10 +40,7 @@ COPY . .
 COPY --from=node_module /opt/work/lib/node_modules ./firefly/node_modules
 
 WORKDIR /opt/work/${build_dir}
-ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.internal.launcher.welcomeMessageEnabled=false \
-
-
-"
+ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.internal.launcher.welcomeMessageEnabled=false"
 RUN gradle -Penv=${env} -b ../firefly/build.gradle :firefly:jar && gradle -Penv=${env} ${target}
 
 
