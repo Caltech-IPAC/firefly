@@ -40,7 +40,10 @@ COPY . .
 COPY --from=node_module /opt/work/lib/node_modules ./firefly/node_modules
 
 WORKDIR /opt/work/${build_dir}
-ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.internal.launcher.welcomeMessageEnabled=false"
+ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.internal.launcher.welcomeMessageEnabled=false \
+
+
+"
 RUN gradle -Penv=${env} -b ../firefly/build.gradle :firefly:jar && gradle -Penv=${env} ${target}
 
 
@@ -98,7 +101,7 @@ RUN apt-get update && apt-get install -y \
 ENV MAX_JVM_SIZE='' \
     MIN_JVM_SIZE=1G \
     INIT_RAM_PERCENT=10\
-    MAX_RAM_PERCENT=93\
+    MAX_RAM_PERCENT=100\
     JVM_CORES=0\
     ADMIN_USER=admin\
     ADMIN_PASSWORD='' \
@@ -140,13 +143,17 @@ COPY firefly/docker/local.xml conf/Catalina/localhost
 #copy all wars, typically there should only be one
 COPY --from=builder /opt/work/${build_dir}/build/dist/*.war ${CATALINA_HOME}/webapps/
 
+# sideload additional war files into tomcat.
+COPY firefly/.gitignore firefly/docker/*.war ${CATALINA_HOME}/webapps/
+
+
 # extract all war files into tomcat's webapps; mod log4j to have log sent to stdout as well
 WORKDIR ${CATALINA_HOME}/webapps
 RUN for n in *.war; do \
     war_dir=`basename $n .war`; \
     mkdir -p $war_dir; \
     unzip -oqd $war_dir $n; \
-    sed -E -i.bak 's/##out--//' $war_dir/WEB-INF/classes/log4j2.properties; \
+    sed -E -i.bak 's/##out--//' $war_dir/WEB-INF/classes/log4j2.properties || true; \
     done
 
 # Add permission to files and directories needed for runtime

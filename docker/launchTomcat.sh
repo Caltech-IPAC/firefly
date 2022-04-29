@@ -90,7 +90,7 @@ else
 fi
 
 #---------   CATALINA_OPTS must be exported for catalina.sh to pick them up
-export CATALINA_OPTS="\
+export CATALINA_OPTS="${CATALINA_OPTS} \
   ${JVM_SIZING} \
   -DADMIN_USER=${ADMIN_USER} \
   -DADMIN_PASSWORD=${ADMIN_PASSWORD} \
@@ -104,8 +104,17 @@ export CATALINA_OPTS="\
   -Dalerts.dir=/firefly/alerts \
   -Djava.security.properties=/usr/local/tomcat/conf/java.security.override \
   -Dvisualize.fits.search.path=${VIS_PATH} \
-	${FIREFLY_OPTS}"
-
+ 	${FIREFLY_OPTS}"
+ 	
+# naming scheme:  same as internal prop name with underscore -> dot conversion
+overrideVars=("sso_server_url" "josso_db_url" "josso_db_userId" "josso_db_password")
+for var in ${overrideVars[@]}; do
+  if [ ! -z ${!var} ]; then
+    echo "===========> ${var} is ${!var}"
+    ivar=${var//_/.}
+    export CATALINA_OPTS="${CATALINA_OPTS} -D${ivar}=${!var}"
+  fi
+done
 
 # Java 9 introduces Modularity with module level security
 # GWT apps requires these module to be opened
