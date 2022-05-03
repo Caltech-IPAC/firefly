@@ -5,12 +5,22 @@
 import {makeDoubleHeaderParse} from '../FitsHeaderUtil.js';
 import {AWAV, F2W, LINEAR, LOG, PLANE, TAB, V2W, WAVE,VRAD} from './Wavelength.js';
 
+
+/**
+ * @typedef WavelengthTabRelatedData
+ *
+ * @prop {String} dataType - for wavelength, the dataType should always be 'WAVELENGTH_TABLE_RESOLVED'
+ * @prop {String} hduName - the name of the table hdu
+ * @prop {String} hduIdx - the index of the table hdu
+ * @prop {TableModel} table - the table with wavelength algorythm
+ */
+
 /**
  *
  * @param {Header} header
  * @param {String} altWcs
  * @param {Header} zeroHeader
- * @param wlTableRelatedAry
+ * @param {Array.<WavelengthTabRelatedData>} wlTableRelatedAry
  * @return {*}
  */
 export function parseWavelengthHeaderInfo(header, altWcs='', zeroHeader, wlTableRelatedAry) {

@@ -452,9 +452,8 @@ describe('A test suite for Wavelength.js', function () {
         const jsonStr =require(tableFile);
         const header = jsonStr.header;
         const wlTable = jsonStr.wlTable;
-        const wlData= parseWavelengthHeaderInfo(header, '', undefined, wlTable);
-
-
+        const wlData= parseWavelengthHeaderInfo(header, '', undefined,
+            [ {dataType:'WAVELENGTH_TABLE_RESOLVED', table:wlTable, hduName:'WCS-table'} ]);
         const expectedTabWl = calculateExpectedTabWavelength(header, wlTable);
         let calculatedTabWl=[];
         for (let i=0; i<tabPointArray.length; i++){
