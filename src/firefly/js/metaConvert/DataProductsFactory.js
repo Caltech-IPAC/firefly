@@ -27,7 +27,7 @@ import {
 } from './ImageDataProductsUtil';
 import {makeAnalysisGetGridDataProduct, makeAnalysisGetSingleDataProduct} from './MultiProductFileAnalyzer';
 import {dpdtImage} from './DataProductsType';
-import {dispatchUpdateCustom, GRID, GRID_RELATED} from '../visualize/MultiViewCntlr';
+import {dispatchUpdateCustom, GRID, GRID_FULL, GRID_RELATED} from '../visualize/MultiViewCntlr';
 import {getDataSourceColumn} from '../util/VOAnalyzer';
 import {getColumn, getMetaEntry} from '../tables/TableUtil';
 import {getAppOptions} from '../core/AppDataCntlr';
@@ -171,7 +171,8 @@ function initConverterTemplates() {
         {
             converterId: 'wise',
             tableMatches: (table) => matchById(table, 'wise'),
-            create: simpleCreate,
+            create: (table, converterTemplate) =>
+                ({...converterTemplate, initialLayout:getMetaEntry(table,'DataType')==='MOS' ? GRID_FULL:GRID_RELATED}),
             threeColor: true,
             hasRelatedBands: true,
             canGrid: true,
