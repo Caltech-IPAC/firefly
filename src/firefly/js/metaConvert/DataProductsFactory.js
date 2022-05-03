@@ -27,7 +27,7 @@ import {
 } from './ImageDataProductsUtil';
 import {makeAnalysisGetGridDataProduct, makeAnalysisGetSingleDataProduct} from './MultiProductFileAnalyzer';
 import {dpdtImage} from './DataProductsType';
-import {dispatchUpdateCustom} from '../visualize/MultiViewCntlr';
+import {dispatchUpdateCustom, GRID, GRID_RELATED} from '../visualize/MultiViewCntlr';
 import {getDataSourceColumn} from '../util/VOAnalyzer';
 import {getColumn, getMetaEntry} from '../tables/TableUtil';
 import {getAppOptions} from '../core/AppDataCntlr';
@@ -142,6 +142,7 @@ function getRelatedDataProductWrapper(makeReq) {
  * @prop {boolean} hasRelatedBands supports groups of related images
  * @prop {boolean} canGrid support grids of images
  * @prop {number} maxPlot total number of images that can be created at a time, i.e. page size
+ * @prop {string} initialLayout - one of SINGLE, GRID, GRID_RELATED, GRID_FULL
  *
  * @prop {function(table:TableModel,row:String,activateParams:ActivateParams):function} getSingleDataProduct
  *  pass table,rowNum,activate params return a activate function
@@ -174,6 +175,7 @@ function initConverterTemplates() {
             threeColor: true,
             hasRelatedBands: true,
             canGrid: true,
+            initialLayout: GRID_RELATED,
             maxPlots: 12,
             getSingleDataProduct: getSingleDataProductWrapper(makeWisePlotRequest),
             getGridDataProduct: getGridDataProductWrapper(makeWisePlotRequest),
