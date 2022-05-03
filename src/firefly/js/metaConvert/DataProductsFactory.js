@@ -114,7 +114,7 @@ function getRelatedDataProductWrapper(makeReq) {
         const {imageViewerId}= activateParams;
         const retVal= makeReq(table, row, false,true,threeColorOps);
         if (retVal) {
-            const activate= createRelatedDataGridActivate(retVal,imageViewerId,table.tbl_id, highlightPlotId);
+            const activate= createRelatedDataGridActivate(retVal,imageViewerId,table.tbl_id, highlightPlotId ?? retVal.highlightPlotId);
             const extraction= retVal.standard ? createSingleImageExtraction(retVal.standard) : undefined;
             return Promise.resolve( dpdtImage('Images', activate, extraction,undefined, {extractionText:'Pin Image'} ));
         }
