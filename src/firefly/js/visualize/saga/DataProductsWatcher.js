@@ -77,7 +77,7 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
         if (paused) {
             paused= !Boolean(imView || dpView);
         }
-        if (!paused && getActiveTableId()===tbl_id) updateDataProducts(tbl_id, activateParams);
+        if (!paused && getActiveTableId()===tbl_id) updateDataProducts(null, tbl_id, activateParams);
         initImage3ColorDisplayManagement(imageViewerId); //todo: 3 color not working
         return {paused};
     }
@@ -112,20 +112,20 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
         case TABLE_HIGHLIGHT:
         case TABLE_UPDATE:
         case TBL_RESULTS_ACTIVE:
-            if (!paused) abortPromise= updateDataProducts(tbl_id, activateParams, abortLastPromise);
+            if (!paused) abortPromise= updateDataProducts(action, tbl_id, activateParams, abortLastPromise);
             zoomOnNextViewSizeChange= false;
             break;
 
         case MultiViewCntlr.CHANGE_VIEWER_LAYOUT:
         case MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA:
-            if (!paused) abortPromise= updateDataProducts(tbl_id, activateParams, abortLastPromise, true);
+            if (!paused) abortPromise= updateDataProducts(action, tbl_id, activateParams, abortLastPromise);
             zoomOnNextViewSizeChange= true;
             break;
 
 
         case MultiViewCntlr.ADD_VIEWER:
             if (payload.mounted) {
-                abortPromise= updateDataProducts(tbl_id, activateParams, abortLastPromise);
+                abortPromise= updateDataProducts(action, tbl_id, activateParams, abortLastPromise);
                 paused= false;
                 zoomOnNextViewSizeChange= false;
             }
@@ -133,7 +133,7 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
 
         case MultiViewCntlr.VIEWER_MOUNTED:
             paused= false;
-            abortPromise= updateDataProducts(tbl_id, activateParams, abortLastPromise);
+            abortPromise= updateDataProducts(action, tbl_id, activateParams, abortLastPromise);
             zoomOnNextViewSizeChange= false;
             break;
 
@@ -169,16 +169,21 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
 const getKey= (threeOp, band) => Object.keys(threeOp).find( (k) => threeOp[k].color && threeOp[k].color.key===band.key);
 
 /**
- * 
+ *
+ * @param {Action} action
  * @param {string} tbl_id
  * @param {ActivateParams} activateParams
  * @param {function} abortLastPromise
- * @param {boolean} layoutChange
  * @return {function} a function to abort any unfinished promises
  */
-function updateDataProducts(tbl_id, activateParams, abortLastPromise=undefined, layoutChange= false) {
+function updateDataProducts(action, tbl_id, activateParams, abortLastPromise=undefined) {
 
     abortLastPromise && abortLastPromise();
+
+    const layoutChange= action?.type===MultiViewCntlr.CHANGE_VIEWER_LAYOUT ||
+        action?.type===MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA;
+
+
     const {imageViewerId,dpId}= activateParams;
     let continuePromise= true;
     const abortPromiseFunc= () => continuePromise= false;
@@ -197,18 +202,21 @@ function updateDataProducts(tbl_id, activateParams, abortLastPromise=undefined, 
 
     const converter = makeDataProductsConverter(table);
     if (!converter) return;
-    const {converterId}= converter;
+    const firstTime= !action;// if action undefined, then first time with this table
+    const {converterId, initialLayout=SINGLE, canGrid= false, threeColor, hasRelatedBands}=  converter;
     let threeColorOps;
 
-
-    if ((!converter.canGrid && viewer.layout === GRID) ||
-        (viewer.layout === GRID && viewer.layoutDetail !== GRID_FULL && !converter.hasRelatedBands)) {
-        dispatchChangeViewerLayout(imageViewerId, SINGLE);
+    if (firstTime) {
+        if (canGrid && initialLayout!==SINGLE) {
+            dispatchChangeViewerLayout(viewer.viewerId,GRID,initialLayout);
+        }
+        else if (initialLayout===SINGLE) {
+            dispatchChangeViewerLayout(viewer.viewerId,SINGLE);
+        }
         viewer = getViewer(getMultiViewRoot(), imageViewerId);
     }
 
-
-    if (converter.threeColor) {
+    if (threeColor) {
         const showThreeColor= get(viewer.customData, [converterId,'threeColorVisible'], false);
         if (showThreeColor) {
             threeColorOps= [

@@ -53,6 +53,10 @@ export function* imagePlotter(params, dispatch, getState) {
                             .filter( (a) => a.payload.requestKey!==requestKey) // filter out this request
                             .filter( (a) => !actionMatches(a,plotId));         // filter out any duplicates
                     }
+                    else {
+                        waitingPlotActions= unionWith(waitingPlotActions,[waitAction],
+                            (a1,a2) => a1.payload.requestKey===a2.payload.requestKey);
+                    }
                 });
                 break;
         }

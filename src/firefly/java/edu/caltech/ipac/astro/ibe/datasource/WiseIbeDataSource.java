@@ -53,7 +53,7 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
         MERGE_INT_3A("merge_int", "merge_p3am_cdd", "merge_p3as_psd", "links-merge/l3a/"),
         NEOWISER_PROV_1B("neowiser_prov", "i1bm_frm", "i1bs_psd", "links-nprov/l1b/"),
         NEOWISER_YR1_1B("neowiser_yr1", "yr1_p1bm_frm", "yr1_p1bs_psd", "links-neowiser/l1b-yr1/"),
-        NEOWISER_1B("neowiser", "i1bm_frm", "i1bs_psd", "links-neowiser/l1b/"),
+        NEOWISER_1B("neowiser", "p1bm_frm", "p1bs_psd", "links-neowiser/l1b/"),
 
         PASS1_1B("pass1", "i1bm_frm", "i1bs_psd", "links-pass1/l1b/"),
         PASS1_3A("pass1", "i3am_cdd", "i3as_psd", "links-pass1/l3a/"),

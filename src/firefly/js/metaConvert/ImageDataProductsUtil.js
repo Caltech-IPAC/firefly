@@ -222,6 +222,7 @@ function replotImageDataProducts(activePlotId, imageViewerId, tbl_id, reqAry, th
     const wpRequestAry= makePlottingList(reqAry);
     if (!isEmpty(wpRequestAry)) {
         dispatchPlotGroup({wpRequestAry, viewerId:imageViewerId, holdWcsMatch:true,
+            setNewPlotAsActive: !activePlotId,
             pvOptions: { userCanDeletePlots: false, menuItemKeys:{imageSelect : false}, useSticky:true },
             attributes: { tbl_id }
         });
