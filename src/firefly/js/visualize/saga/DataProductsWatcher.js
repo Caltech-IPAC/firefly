@@ -206,16 +206,15 @@ function updateDataProducts(action, tbl_id, activateParams, abortLastPromise=und
     const {converterId, initialLayout=SINGLE, canGrid= false, threeColor, hasRelatedBands}=  converter;
     let threeColorOps;
 
-    if (firstTime && canGrid && viewer.layout===SINGLE && initialLayout!==SINGLE ) {
-        dispatchChangeViewerLayout(viewer.viewerId,'grid',initialLayout);
-    }
-
-    if ((!canGrid && viewer.layout === GRID) ||
-        (viewer.layout === GRID && viewer.layoutDetail !== GRID_FULL && !hasRelatedBands)) {
-        dispatchChangeViewerLayout(imageViewerId, SINGLE);
+    if (firstTime) {
+        if (canGrid && initialLayout!==SINGLE) {
+            dispatchChangeViewerLayout(viewer.viewerId,GRID,initialLayout);
+        }
+        else if (initialLayout===SINGLE) {
+            dispatchChangeViewerLayout(viewer.viewerId,SINGLE);
+        }
         viewer = getViewer(getMultiViewRoot(), imageViewerId);
     }
-
 
     if (threeColor) {
         const showThreeColor= get(viewer.customData, [converterId,'threeColorVisible'], false);
