@@ -386,7 +386,6 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
         [COVERAGE_TARGET]: avgOfCenters,
         [COVERAGE_FOV]: fovSize,
         [PlotAttribute.VISUALIZED_TABLE_IDS]: tblIdAry,
-        [PlotAttribute.COVERAGE_CREATED]: true,
         [PlotAttribute.REPLOT_WITH_NEW_CENTER]: true,
     };
     if (commonSearchTarget) attributes[PlotAttribute.CENTER_ON_FIXED_TARGET]= commonSearchTarget;

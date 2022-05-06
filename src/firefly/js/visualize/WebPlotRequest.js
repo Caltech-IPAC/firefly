@@ -7,6 +7,7 @@ import {ZoomType} from './ZoomType.js';
 import {parseResolver} from '../astro/net/Resolver.js';
 import {RangeValues} from './RangeValues.js';
 import {PlotAttribute} from './PlotAttribute.js';
+import CoordinateSys from 'firefly/visualize/CoordSys.js';
 
 
 const DEFAULT_IMAGE_OVERLAYS= ['ACTIVE_TARGET_TYPE','POINT_SELECTION_TYPE', 'NORTH_UP_COMPASS_TYPE',
@@ -120,8 +121,6 @@ export const WPConst= {
     INIT_COLOR_TABLE : 'ColorTable',
     MULTI_IMAGE_IDX : 'MultiImageIdx',
     MULTI_IMAGE_EXTS: 'MultiImageExts',
-    ZOOM_TO_WIDTH : 'ZoomToWidth',
-    ZOOM_TO_HEIGHT : 'ZoomToHeight',
     ZOOM_ARCSEC_PER_SCREEN_PIX : 'ZoomArcsecPerScreenPix',
     OBJECT_NAME : 'ObjectName',
     RESOLVER : 'Resolver',
@@ -146,6 +145,8 @@ export const WPConst= {
     HIPS_ROOT_URL: 'hipsRootUrl',
     HIPS_SURVEYS_ID: 'hipsSurveysId',
     HIPS_USE_AITOFF_PROJECTION: 'hipsUseAitoffProjection',
+    HIPS_USE_COORDINATE_SYS: 'hipsCoordinateSys',
+    HIPS_ADDITIONAL_MOC_LIST: 'hipsAdditionalMocList',
 
     ANNOTATION_OPS : 'AnnotationOps',
     TITLE_OPTIONS : 'TitleOptions',
@@ -504,38 +505,6 @@ export class WebPlotRequest extends ServerRequest {
 //======================================================================
 
     /**
-     * Certain zoom types require the width of the viewable area to determine the zoom level
-     * used with ZoomType.FULL_SCREEN, ZoomType.TO_WIDTH
-     *
-     * @param {number} width the width in pixels
-     * @see {ZoomType}
-     */
-    setZoomToWidth(width) {
-        const w= Number(width);
-        if (!isNaN(w)) this.setParam(WPConst.ZOOM_TO_WIDTH, Math.round(w) + '');
-    }
-
-    getZoomToWidth() {
-        return this.containsParam(WPConst.ZOOM_TO_WIDTH) ? this.getIntParam(WPConst.ZOOM_TO_WIDTH) : 0;
-    }
-
-    /**
-     * Certain zoom types require the height of the viewable area to determine the zoom level
-     * used with ZoomType.FULL_SCREEN, ZoomType.TO_HEIGHT (to height, no yet implemented)
-     *
-     * @param height the height in pixels
-     * @see {ZoomType}
-     */
-    setZoomToHeight(height) {
-        const h= Number(height);
-        if (!isNaN(h)) this.setParam(WPConst.ZOOM_TO_HEIGHT, Math.round(h) + '');
-    }
-
-    getZoomToHeight() {
-        return this.containsParam(WPConst.ZOOM_TO_HEIGHT) ? this.getIntParam(WPConst.ZOOM_TO_HEIGHT) : 0;
-    }
-
-    /**
      * set the initialize zoom level, this is used with ZoomType.LEVEL
      *
      * @param {number} zl the zoom level, float
@@ -568,10 +537,7 @@ export class WebPlotRequest extends ServerRequest {
     setZoomType(zoomType) { if (zoomType) this.setParam(WPConst.ZOOM_TYPE, zoomType.key); }
 
     getZoomType() {
-        const w= this.getZoomToWidth();
-        const h= this.getZoomToHeight();
-        const defaultType= (w && h) ?  ZoomType.TO_WIDTH_HEIGHT : ZoomType.LEVEL;
-        return ZoomType.get(this.getParam(WPConst.ZOOM_TYPE)) || defaultType;
+        return ZoomType.get(this.getParam(WPConst.ZOOM_TYPE)) || ZoomType.TO_WIDTH_HEIGHT;
     }
 
     /**
@@ -846,6 +812,14 @@ export class WebPlotRequest extends ServerRequest {
     setHipsUseAitoffProjection(useAitoff) { this.setParam(WPConst.HIPS_USE_AITOFF_PROJECTION, Boolean(useAitoff));}
     getHipsUseAitoffProjection() { return this.getBooleanParam(WPConst.HIPS_USE_AITOFF_PROJECTION);}
 
+    setHipsUseCoordinateSys(csys) {
+        if (csys!==CoordinateSys.EQ_J2000 && csys!==CoordinateSys.GALACTIC) return;
+        this.setParam(WPConst.HIPS_USE_COORDINATE_SYS, csys.toString());
+    }
+
+    getHipsUseCoordinateSys() {
+        return CoordinateSys.parse(this.getParam(WPConst.HIPS_USE_COORDINATE_SYS));
+    }
 
     /**
      *
@@ -1028,8 +1002,6 @@ export function confirmPlotRequest(request,global={},fallbackGroupId,makePlotId)
 function makeDataOnlyRequestString(r) {
     if (!r) return '';
     r= r.makeCopy();
-    r.setZoomToWidth(1);
-    r.setZoomToHeight(1);
     r.setRequestKey('');
     r.setInitialRangeValues();
     r.setInitialColorTable(getDefaultImageColorTable());

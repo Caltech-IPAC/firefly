@@ -22,6 +22,7 @@ import {hasCoverageData, isCatalog, isMetaDataTable} from '../../util/VOAnalyzer
 import {MetaDataMultiProductViewer} from './MetaDataMultiProductViewer';
 import {CoverageViewer} from './CoveraeViewer';
 import {isOrbitalPathTable} from '../../util/VOAnalyzer';
+import {getPlotViewAry} from 'firefly/visualize/PlotViewUtil.js';
 
 
 /**
@@ -273,6 +274,9 @@ function onNewImage(layoutInfo, action) {
     const {images={}} = layoutInfo;
     let {selectedTab, showMeta, showFits, coverageLockedOn} = images;
 
+    const showImages= getPlotViewAry(visRoot()).some( (pv) => pv.plotViewCtx.useForSearchResults);
+    if (!showImages) return layoutInfo;
+
     const {viewerId} = action.payload || {};
     if (viewerId === META_VIEWER_ID) {
         // select meta tab when new images are added to meta image group.
@@ -288,5 +292,7 @@ function onNewImage(layoutInfo, action) {
         // why lock coverage here?
         coverageLockedOn = true;
     }
-    return smartMerge(layoutInfo, {showImages: true, images: {coverageLockedOn, selectedTab, showMeta, showFits}});
+
+
+    return smartMerge(layoutInfo, {showImages:true, images: {coverageLockedOn, selectedTab, showMeta, showFits}});
 }

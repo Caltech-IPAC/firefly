@@ -20,7 +20,6 @@ import {isHiPS} from 'firefly/visualize/WebPlot.js';
 import {getPreference} from '../../core/AppDataCntlr.js';
 import {ImageCenterDropDown, TARGET_LIST_PREF} from './ImageCenterDropDown.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {getDefMenuItemKeys} from 'firefly/visualize/MenuItemKeys.js';
 import CoordinateSys from 'firefly/visualize/CoordSys.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from 'firefly/ui/ToolbarButton.jsx';
 import {showFitsDownloadDialog} from 'firefly/ui/FitsDownloadDialog.jsx';
@@ -83,6 +82,11 @@ import {showPlotInfoPopup} from 'firefly/visualize/ui/PlotInfoPopup.js';
 const omList= ['plotViewAry'];
 const image24x24={width:24, height:24};
 const emptyModalEndInfo= {f:undefined,s:undefined};
+
+export function closeToolbarModalLayers() {
+    const modalEndInfo= getComponentState('ModalEndInfo', emptyModalEndInfo);
+    modalEndInfo?.f?.();
+}
 
 /**
  * Return a new State if some values have changed in the store. If critical check show nothing has changed
@@ -176,9 +180,10 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
     const image= !isHiPS(plot);
     const hips= isHiPS(plot);
     const plotGroupAry= visRoot.plotGroupAry;
-    const mi= pv?.menuItemKeys ?? getDefMenuItemKeys();
+    const mi= pv?.plotViewCtx.menuItemKeys ?? {};
     const enabled= Boolean(plot);
     const isExpanded= visRoot.expandedMode!==ExpandType.COLLAPSE;
+    const farLeftButtonEnabled= mi.overlayColorLock && mi.matchLockDropDown && mi.expand;
 
     let showRotateLocked= false;
     if (plot) showRotateLocked = image ? pv.plotViewCtx.rotateNorthLock : plot.imageCoordSys===CoordinateSys.EQ_J2000;
@@ -212,8 +217,10 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
                                                         plotGroupAry={plotGroupAry}
                                                         showRotateLocked={showRotateLocked}/>} />
 
-            <DropDownToolbarButton icon={ZOOM_DROP} tip='Zoom drop down' enabled={enabled} horizontal={true}
-                                   imageStyle={image24x24} dropDown={<ZoomDrop pv={pv} mi={mi} image={image}/>} />
+            {mi.zoomDropDownMenu && <DropDownToolbarButton icon={ZOOM_DROP} tip='Zoom drop down'
+                                                          enabled={enabled} horizontal={true}
+                                                          imageStyle={image24x24}
+                                                          dropDown={<ZoomDrop pv={pv} mi={mi} image={image}/>} />}
 
             <ToolbarHorizontalSeparator/>
             <ColorButton colorDrops={colorDrops} enabled={enabled} pv={pv} />
@@ -237,7 +244,7 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
 
             <LayerButton pv={pv} dlCount={dlCount}/>
 
-            {unavailableCnt<2 && <ToolbarHorizontalSeparator/>}
+            {unavailableCnt<2 && farLeftButtonEnabled && <ToolbarHorizontalSeparator/>}
 
             {unavailableCnt<2 && <SimpleLayerOnOffButton plotView={pv}
                                     isIconOn={pv&&plot? isOverlayColorLocked(pv,plotGroupAry) : false }
@@ -254,7 +261,8 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
 
             {manageExpand && <ToolbarButton icon={expandGrid? GRID_EXPAND : OUTLINE_EXPAND}
                            tip='Expand this panel to take up a larger area'
-                           horizontal={true} visible={!isExpanded} onClick={() =>expand(pv?.plotId, expandGrid)}/>
+                           horizontal={true} visible={!isExpanded && pv?.plotViewCtx.canBeExpanded}
+                                            onClick={() =>expand(pv?.plotId, expandGrid)}/>
             }
         </div>
     );

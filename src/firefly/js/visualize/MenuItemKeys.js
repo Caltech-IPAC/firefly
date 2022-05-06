@@ -10,11 +10,14 @@ export function getDefMenuItemKeys() {
         irsaCatalog : false,
         fitsDownload : true,
         imageSelect : true,
+        zoomDropDownMenu: true,
         zoomUp : true,
         zoomDown : true,
         zoomOriginal : true,
         zoomFit : true,
         zoomFill : true,
+        zoomToSelection : true,
+        recenterToSelection: true,
         colorTable : true,
         stretchQuick : true,
         rotate: true,
@@ -38,6 +41,14 @@ export function getDefMenuItemKeys() {
         extractPoint: true,
         extract: true,
         showImageToolbar: true,
+        hipsSurveyPopup: true,
+        mocLayerPopup: true,
+        crop: true,
+        selectTableRows: true,
+        unselectTableRows: true,
+        filterTableRows: true,
+        clearTableFilters: true,
+        imageStatistics: true
     };
     return {...MenuItemKeys, ...getAppOptions()?.MenuItemKeys};
 }

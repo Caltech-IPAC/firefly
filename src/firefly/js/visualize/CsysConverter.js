@@ -669,7 +669,7 @@ export class CysConverter {
      * @returns {CysConverter}
      */
     static make(plot, altAffTrans) {
-        return plot ? new CysConverter(plot, altAffTrans) : null;
+        return plot ? new CysConverter(plot, altAffTrans) : undefined;
     }
 } //end of class definition
 

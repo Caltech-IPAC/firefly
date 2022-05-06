@@ -16,10 +16,10 @@ import {ZoomType} from '../ZoomType.js';
 import {clone} from '../../util/WebUtil.js';
 import {WebPlot} from '../WebPlot.js';
 import {callGetWebPlot} from '../../rpc/PlotServicesJson.js';
-import {populateFromHeader} from './PlotImageTask';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga';
 import {isPlotIdInPvNewPlotInfoAry} from '../PlotViewUtil';
 import {changeLocalMaskColor} from 'firefly/visualize/rawData/RawDataOps.js';
+import {populateFromHeader} from 'firefly/visualize/task/CreateTaskUtil.js';
 
 const colorList= [
     '#FF0000','#00FF00', '#0000FF', '#91D33D',
@@ -212,7 +212,7 @@ function processMaskSuccessResponse(dispatcher, payload, result) {
         const plotState= PlotState.makePlotStateWithJson(PlotCreate[0].plotState);
         const imageOverlayId= plotState.getWebPlotRequest().getPlotId();
 
-        const plot= WebPlot.makeWebPlotData(imageOverlayId, PlotCreate[0], {}, true, undefined, plotState.getWebPlotRequest());
+        const plot= WebPlot.makeWebPlotData(imageOverlayId, undefined, PlotCreate[0], {}, true, undefined, plotState.getWebPlotRequest());
         plot.tileData = undefined;
         const resultPayload= clone(payload, {plot});
         dispatcher({type: ImagePlotCntlr.PLOT_MASK, payload: resultPayload});

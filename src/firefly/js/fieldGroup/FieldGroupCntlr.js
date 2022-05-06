@@ -6,6 +6,7 @@ import {flux} from '../core/ReduxFlux.js';
 import {omit, isEqual, isUndefined} from 'lodash';
 import {revalidateFields} from './FieldGroupUtils.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
+import {isDefined} from 'firefly/util/WebUtil.js';
 
 /**
  * Reducer for 'fieldGroup' key
@@ -322,7 +323,7 @@ function smartReplace(oldFields, newFields) {
 }
 
 function valueChange(state,action) {
-    const {fieldKey, groupKey,message='', valid=true, fireReducer=true}= action.payload;
+    const {fieldKey, groupKey,message='', valid=true, fireReducer=true, displayValue}= action.payload;
 
     if (!getFieldGroup(state,groupKey)) {
         state = initFieldGroup(state,action);
@@ -333,6 +334,7 @@ function valueChange(state,action) {
 
     const addToInit= !fg.fields[fieldKey];
     fg.fields[fieldKey]=  { ...fg.fields[fieldKey], ...action.payload, message, valid};
+    if (isDefined(displayValue)) fg.fields[fieldKey].displayValue= displayValue;
 
     if (fireReducer) fg.fields= fireFieldsReducer(fg, action);
     if (addToInit) fg.initFields= [...fg.initFields,fg.fields[fieldKey]];

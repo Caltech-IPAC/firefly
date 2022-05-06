@@ -13,7 +13,7 @@ import {dispatchCreateDrawLayer,
         dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
 
 
-export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,visible,
+export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,visible=true,
                                            modalEndInfo, setModalEndInfo, endText,
                                             plotTypeMustMatch= false, style={}, enabled= true, imageStyle,
                                             todo= false, isIconOn, onClick, dropDown, allPlots= true }) {
@@ -55,7 +55,7 @@ SimpleLayerOnOffButton.propTypes= {
     typeId :  PropTypes.string,
     tip : PropTypes.string,
     iconOn : PropTypes.string,
-    visible : PropTypes.bool.isRequired,
+    visible : PropTypes.bool,
     todo: PropTypes.bool,
     iconOff : PropTypes.string,
     onClick : PropTypes.func,

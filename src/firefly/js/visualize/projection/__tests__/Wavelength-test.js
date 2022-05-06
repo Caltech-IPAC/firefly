@@ -4,6 +4,7 @@ import { getJsonFiles} from './Projection-test.js';
 import {getWavelength, LOG} from '../Wavelength.js';
 import {makeWorldPt} from '../../Point.js';
 import {getHeader} from '../../FitsHeaderUtil.js';
+import {RDConst} from 'firefly/visualize/WebPlot.js';
 
 const fs = require('fs');
 const precision=10;
@@ -453,7 +454,7 @@ describe('A test suite for Wavelength.js', function () {
         const header = jsonStr.header;
         const wlTable = jsonStr.wlTable;
         const wlData= parseWavelengthHeaderInfo(header, '', undefined,
-            [ {dataType:'WAVELENGTH_TABLE_RESOLVED', table:wlTable, hduName:'WCS-table'} ]);
+            [ {dataType:RDConst.WAVELENGTH_TABLE_RESOLVED, table:wlTable, hduName:'WCS-table'} ]);
         const expectedTabWl = calculateExpectedTabWavelength(header, wlTable);
         let calculatedTabWl=[];
         for (let i=0; i<tabPointArray.length; i++){

@@ -10,12 +10,13 @@ import {flux} from './ReduxFlux';
 import {clone} from '../util/WebUtil.js';
 import {smartMerge, getActiveTableId} from '../tables/TableUtil.js';
 import {getDropDownNames} from '../ui/Menu.jsx';
-import ImagePlotCntlr, {IMAGE_PLOT_KEY} from '../visualize/ImagePlotCntlr.js';
+import ImagePlotCntlr, {IMAGE_PLOT_KEY, visRoot} from '../visualize/ImagePlotCntlr.js';
 import {TBL_RESULTS_ADDED, TBL_RESULTS_REMOVE, TABLE_REMOVE, TABLE_SPACE_PATH} from '../tables/TablesCntlr.js';
 import {CHART_ADD, CHART_REMOVE, CHART_SPACE_PATH} from '../charts/ChartsCntlr.js';
 import {REPLACE_VIEWER_ITEMS} from '../visualize/MultiViewCntlr.js';
 import {REINIT_APP} from './AppDataCntlr.js';
 import {getDefaultChartProps} from '../charts/ChartUtil.js';
+import {getPlotViewAry} from 'firefly/visualize/PlotViewUtil.js';
 
 export const LAYOUT_PATH = 'layout';
 
@@ -260,7 +261,7 @@ export function getLayoutRoot() {
 export function getLayouInfo() {
     const state= flux.getState() ?? {};
     const layout = state[LAYOUT_PATH] ?? {initLoadCompleted:false};
-    const hasImages = state[IMAGE_PLOT_KEY]?.plotViewAry.length > 0;
+    const hasImages = getPlotViewAry(visRoot()).some( (pv) => pv.plotViewCtx.useForSearchResults);
     const hasTables = !isEmpty(state[TABLE_SPACE_PATH]?.results?.main?.tables);
     /*
       to make plot area disappear if it's not possible to create a plot use
@@ -304,9 +305,9 @@ export function dropDownHandler(layoutInfo, action) {
         case TBL_RESULTS_ADDED:
         case REPLACE_VIEWER_ITEMS :
         case ImagePlotCntlr.PLOT_IMAGE :
-        case ImagePlotCntlr.PLOT_IMAGE_START :
             return smartMerge(layoutInfo, {dropDown: {visible: false}});
-            break;
+        case ImagePlotCntlr.PLOT_IMAGE_START :
+            return smartMerge(layoutInfo, {dropDown: {visible: !(action.payload.pvOptions?.useForSearchResults??true)}});
         case CHART_REMOVE:
         case SHOW_DROPDOWN:
         case TABLE_REMOVE:

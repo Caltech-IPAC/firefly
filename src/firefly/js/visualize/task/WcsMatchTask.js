@@ -4,36 +4,27 @@
 
 import {isEmpty} from 'lodash';
 import ImagePlotCntlr, {
-    ActionScope,
-    dispatchFlip,
-    dispatchPositionLocking,
-    dispatchRecenter,
-    dispatchRotate,
-    dispatchUpdateViewSize,
-    dispatchZoom,
-    dispatchChangeCenterOfProjection,
-    dispatchChangeHiPS,
-    dispatchAttributeChange,
-    visRoot,
-    IMAGE_PLOT_KEY,
-    WcsMatchType
+    ActionScope, dispatchAttributeChange, dispatchChangeCenterOfProjection, dispatchChangeHiPS, dispatchFlip,
+    dispatchPositionLocking, dispatchRecenter, dispatchRotate, dispatchUpdateViewSize, dispatchZoom, IMAGE_PLOT_KEY,
+    visRoot, WcsMatchType
 } from '../ImagePlotCntlr.js';
-import {applyToOnePvOrAll, getPlotViewById, primePlot, getCorners, getDrawLayerByType, getPlotViewAry,
-    getMatchingRotationAngle, isRotationMatching, findCurrentCenterPoint,
-    getCenterOfProjection, hasWCSProjection} from '../PlotViewUtil.js';
+import {
+    applyToOnePvOrAll, findCurrentCenterPoint, getCenterOfProjection, getCorners, getDrawLayerByType,
+    getMatchingRotationAngle, getPlotViewAry, getPlotViewById, hasWCSProjection, isRotationMatching, primePlot
+} from '../PlotViewUtil.js';
 import {isHiPS, isImage} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute';
-import {getRotationAngle, isEastLeftOfNorth, isPlotRotatedNorth} from '../VisUtil.js';
-import {FullType, getArcSecPerPix, getEstimatedFullZoomFactor, getZoomLevelForScale, UserZoomTypes} from '../ZoomUtil.js';
+import {isEastLeftOfNorth, isPlotRotatedNorth} from '../VisUtil.js';
+import {
+    FullType, getArcSecPerPix, getEstimatedFullZoomFactor, getZoomLevelForScale, UserZoomTypes
+} from '../ZoomUtil.js';
 import {RotateType} from '../PlotState.js';
 import {CCUtil} from '../CsysConverter.js';
-import {ZoomType} from '../ZoomType.js';
 import {makeScreenPt, pointEquals} from '../Point.js';
 import CoordinateSys from '../CoordSys';
 import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dlRoot} from '../DrawLayerCntlr';
 import ImageOutline from '../../drawingLayers/ImageOutline';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga';
-
 
 
 function watchForCompletedPlot(action, cancelSelf, params, dispatch, getState) {
@@ -288,27 +279,6 @@ function getCornersAttribute(pv) {
 
 
 
-
-
-export function modifyRequestForWcsMatch(pv, wpr) {
-    const plot= primePlot(pv);
-    if (!plot) return wpr;
-    const newWpr= wpr.makeCopy();
-    const asPerPix= getArcSecPerPix(plot,plot.zoomFactor);
-    newWpr.setRotateNorth(false);
-    newWpr.setRotate(false);
-    if (isPlotRotatedNorth(plot)) {
-        newWpr.setRotateNorth(true);
-    }
-    else {
-        const targetRotation= getRotationAngle(plot) + pv.rotation;
-        newWpr.setRotate(true);
-        newWpr.setRotationAngle(targetRotation);
-    }
-    newWpr.setZoomType(ZoomType.ARCSEC_PER_SCREEN_PIX);
-    newWpr.setZoomArcsecPerScreenPix(asPerPix);
-    return newWpr;
-}
 
 
 /**

@@ -964,7 +964,9 @@ export function dispatchChangeExpandedMode(expandedMode) { //todo: this code sho
         const pv= getPlotViewById(vr,plotId);
         if (pv) {
             const group= getPlotGroupById(vr,pv.plotGroupId);
-            const plotIdAry= getOnePvOrGroup(vr.plotViewAry,plotId,group, true).map( (pv) => pv.plotId);
+            const plotIdAry= getOnePvOrGroup(vr.plotViewAry,plotId,group, true)
+                .filter((pv) => pv.plotViewCtx.canBeExpanded)
+                .map( (pv) => pv.plotId);
             dispatchReplaceViewerItems(EXPANDED_MODE_RESERVED,plotIdAry, IMAGE );
         }
     }

@@ -24,9 +24,9 @@ const nedThenSimbad= 'nedthensimbad';
 const simbadThenNed= 'simbadthenned';
 
 const TargetPanelView = (props) =>{
-    const {showHelp, feedback, valid, message, onChange, value,
+    const {showHelp, feedback, valid, message, onChange, value, style={}, button,
         labelWidth, children, resolver, feedbackStyle, showResolveSourceOp= true, showExample= true,
-        examples, label= LABEL_DEFAULT, onUnmountCB}= props;
+        examples, label= LABEL_DEFAULT, onUnmountCB, wpt}= props;
 
     useEffect(() => () => onUnmountCB(props),[]);
 
@@ -38,10 +38,13 @@ const TargetPanelView = (props) =>{
         />);
     const positionInput = children ? (<div style={{display: 'flex'}}>{positionField} {children}</div>) : positionField;
 
+
+
     return (
-        <div>
+        <div style={style}>
             <div style= {{display: 'flex'}}>
                 {positionInput}
+                {button && button}
                 {showResolveSourceOp &&
                 <ListBoxInputFieldView
                     options={[
@@ -61,6 +64,7 @@ const TargetPanelView = (props) =>{
 
 TargetPanelView.propTypes = {
     label : PropTypes.string,
+    style: PropTypes.object,
     valid   : PropTypes.bool.isRequired,
     showHelp   : PropTypes.bool.isRequired,
     feedback: PropTypes.string.isRequired,
@@ -169,6 +173,7 @@ function replaceValue(v,defaultToActiveTarget) {
 
 
 
+
 export const TargetPanel = memo( ({fieldKey= 'UserTargetWorldPt',initialState= {},
                                        defaultToActiveTarget= true, ...restOfProps}) => {
     const {viewProps, fireValueChange, groupKey}=  useFieldGroupConnector({
@@ -182,6 +187,7 @@ export const TargetPanel = memo( ({fieldKey= 'UserTargetWorldPt',initialState= {
 
 
 TargetPanel.propTypes = {
+    style: PropTypes.object,
     fieldKey: PropTypes.string,
     groupKey: PropTypes.string,
     examples: PropTypes.object,
@@ -196,17 +202,20 @@ TargetPanel.propTypes = {
 
 function computeProps(viewProps, componentProps, fieldKey, groupKey) {
 
-    let feedback= viewProps.feedback|| '';
-    let value= viewProps.displayValue;
-    let showHelp= get(viewProps,'showHelp', true);
-    const resolver= viewProps.resolver || nedThenSimbad;
-    const wpStr= viewProps.value;
-    const wp= parseWorldPt(wpStr);
+    let feedback;
+    let value;
+    let showHelp;
+    const wp= parseWorldPt(viewProps.value);
 
-    if (isValidPoint(wp) && !value) {
+    if (isValidPoint(wp) && !viewProps.displayValue) {
         feedback= formatTargetForHelp(wp);
         value= wp.objName || formatPosForTextField(wp);
         showHelp= false;
+    }
+    else {
+        value= viewProps.displayValue;
+        feedback= viewProps.feedback|| '';
+        showHelp= viewProps?.showHelp ?? true;
     }
 
     return {
@@ -216,7 +225,7 @@ function computeProps(viewProps, componentProps, fieldKey, groupKey) {
         tooltip: 'Enter a target',
         value,
         feedback,
-        resolver,
+        resolver: viewProps.resolver ?? nedThenSimbad,
         showHelp,
         onUnmountCB: (props) => didUnmount(fieldKey,groupKey,props),
         ...componentProps};

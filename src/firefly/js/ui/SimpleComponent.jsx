@@ -2,8 +2,9 @@ import {PureComponent, useEffect, useState} from 'react';
 import {isArray, isString, uniqueId} from 'lodash';
 import shallowequal from 'shallowequal';
 import {flux} from '../core/ReduxFlux.js';
-import FieldGroupUtils, {getFldValue, getGroupFields} from '../fieldGroup/FieldGroupUtils.js';
+import FieldGroupUtils, {getFieldVal, getFldValue, getGroupFields} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
+import {dispatchValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 
 export class SimpleComponent extends PureComponent {
     constructor(props) {
@@ -106,21 +107,28 @@ export function useFieldGroupValues(groupKey,fieldKeys) {
     const keyList= isArray(fieldKeys) ? fieldKeys : isString(fieldKeys) ? [fieldKeys] : [];
     let mounted= true;
     const stateObj= keyList.reduce( (obj,k) => {
-        const [value,set]= useState(() => getFldValue(getGroupFields(groupKey),k));
-        obj[k]={value,set};
+        const [value,setValue]= useState(() => getFldValue(getGroupFields(groupKey),k));
+        obj[k]={value,setValue};
         return obj;
     },{});
 
     useEffect(() => {
         const remover= FieldGroupUtils.bindToStore(groupKey, (updatedFields) => {
-            mounted && keyList.forEach( (k) => stateObj[k].set( getFldValue(updatedFields,k)));
+            mounted && keyList.forEach( (k) => stateObj[k].setValue( getFldValue(updatedFields,k)));
         });
         return () => {
             mounted= false;
             remover();
         };
     },[]);
-    return Object.fromEntries(Object.entries(stateObj).map( ([k,{value}]) => [k,value] ));
+
+    return Object.fromEntries(Object.entries(stateObj).map( ([k,{value}]) => {
+        return [k, {
+            value,
+            confirmValue: () => getFieldVal(groupKey,k,value),
+            set: (newValue,valid=true) => dispatchValueChange({fieldKey:k, groupKey, value:newValue,valid, displayValue:''})
+        }];
+    } ));
 }
 
 

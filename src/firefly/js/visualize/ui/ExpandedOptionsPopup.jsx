@@ -166,7 +166,7 @@ function getSelectedPlotIds(){
     const {tableModel, selectInfo} = getTblInfoById(TABLE_ID);
 
     return selectInfo.selectAll ?
-        tableModel.tableData.data.map(row => !selectInfo.exceptions.has(parseInt(row[ROW_IDX])) ? row[PID_IDX] : '')
+        tableModel.tableData.data.map((row) => !selectInfo.exceptions.has(parseInt(row[ROW_IDX])) ? row[PID_IDX] : '')
         :
         Array.from(selectInfo.exceptions).map((idx) =>
             tableModel.tableData.data[idx][2]);

@@ -26,7 +26,6 @@ import {getNumFilters} from '../../tables/FilterInfo';
 import {ZoomButton, ZoomType} from 'firefly/visualize/ui/ZoomButton.jsx';
 import {ToolbarButton} from 'firefly/ui/ToolbarButton.jsx';
 import {expand} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
-import {getDefMenuItemKeys} from 'firefly/visualize/MenuItemKeys.js';
 
 import './ImageViewerDecorate.css';
 import OUTLINE_EXPAND from 'images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
@@ -208,7 +207,7 @@ function arePropsEquals(props, np) {
 
 function ZoomGroup({visRoot, pv, show}) {
 
-    const {showImageToolbar}= pv?.menuItemKeys ?? getDefMenuItemKeys();
+    const {showImageToolbar=true}= pv?.plotViewCtx.menuItemKeys ?? {};
     const manageExpand= !showImageToolbar && visRoot.expandedMode===ExpandType.COLLAPSE;
 
     return (

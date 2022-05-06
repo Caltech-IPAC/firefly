@@ -108,7 +108,7 @@ import {mocWatcherDef} from '../visualize/saga/MOCWatcher.js';
  * Start in api mode. Will create the api and call window.onFireflyLoaded(firefly)
  * @ignore
  */
-export function initApi() {
+export function initApi(props) {
     const lowlevelApi= buildLowlevelAPI();
     const viewInterface= buildViewerApi();
 
@@ -125,6 +125,7 @@ export function initApi() {
 
     if (!window.firefly) window.firefly= {getJsonFromTask};
     window.firefly.ignoreHistory = true;
+    window.firefly.originalAppProps= props;
     Object.assign(window.firefly, lowlevelApi, highLevelApi, viewInterface, React);
     const firefly= window.firefly;
     dispatchOnAppReady(() => {

@@ -32,6 +32,7 @@ import DistanceTool from '../drawingLayers/DistanceTool.js';
 import ExtractLineTool from '../drawingLayers/ExtractLineTool.js';
 import PointSelection from '../drawingLayers/PointSelection.js';
 import ExtractPoints from '../drawingLayers/ExtractPointsTool.js';
+import SearchSelectTool from '../drawingLayers/SearchSelectTool.js';
 import StatsPoint from '../drawingLayers/StatsPoint.js';
 import NorthUpCompass from '../drawingLayers/NorthUpCompass.js';
 import ImageRoot from '../drawingLayers/ImageRoot.js';
@@ -49,7 +50,6 @@ import ImageLineBasedFootprint from '../drawingLayers/ImageLineBasedFootprint.js
 
 //--- import Sagas
 import {dispatchAddSaga, masterSaga} from './MasterSaga.js';
-import {imagePlotter} from '../visualize/saga/ImagePlotter.js';
 import {watchReadout} from '../visualize/saga/MouseReadoutWatch.js';
 import {addExtensionWatcher} from './messaging/ExternalAccessWatcher.js';
 
@@ -111,7 +111,8 @@ export const getBootstrapRegistry= once(() => {
     const drawLayerFactory= DrawLayerFactory.makeFactory(
         FixedMarker, SelectArea,DistanceTool, ExtractLineTool, ExtractPoints,
         PointSelection, StatsPoint, NorthUpCompass, ImageRoot, SearchTarget, Catalog, Artifact, WebGrid,
-        RegionPlot, MarkerTool, FootprintTool, HiPSGrid, HiPSMOC, ImageOutline, ImageLineBasedFootprint);
+        RegionPlot, MarkerTool, FootprintTool, SearchSelectTool,
+        HiPSGrid, HiPSMOC, ImageOutline, ImageLineBasedFootprint);
 
 
     /**
@@ -126,7 +127,6 @@ export const getBootstrapRegistry= once(() => {
     /** start the core Saga */
     const startCoreSagas= () => {
         sagaMiddleware.run(masterSaga);
-        dispatchAddSaga( imagePlotter);
         dispatchAddSaga( watchReadout);
         addExtensionWatcher();
     };
