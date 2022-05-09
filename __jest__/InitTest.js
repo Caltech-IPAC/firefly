@@ -30,6 +30,12 @@ jest.mock('firefly/util/BrowserInfo.js', () => {
     };
 });
 
+jest.mock('firefly/ui/ExampleDialog.jsx', () => {
+    return {
+        showExampleDialog: () => '',
+    };
+});
+
 jest.mock('firefly/visualize/DrawLayerCntlr.js', () => {
     return {
         dispatchDestroyDrawLayer: () => '',
