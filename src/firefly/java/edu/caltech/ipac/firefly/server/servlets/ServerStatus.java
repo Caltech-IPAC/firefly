@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.servlets;
 
+import edu.caltech.ipac.firefly.core.background.JobManager;
 import edu.caltech.ipac.firefly.messaging.Messenger;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
@@ -12,7 +13,6 @@ import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.CachePeerProviderFactory;
-import edu.caltech.ipac.firefly.core.background.JobManager;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.distribution.CacheManagerPeerProvider;
@@ -129,16 +129,21 @@ public class ServerStatus extends BaseHttpServlet {
             writer.println("\tMax Heap       : " + c.getCacheConfiguration().getMaxBytesLocalHeap()/(1024 * 1024) + "MB");
             writer.println("\tMax Entries    : " + c.getCacheConfiguration().getMaxEntriesLocalHeap());
             writer.println("\tStatistics     : " + getStats(c));
-            for (CacheManagerPeerProvider peerProv : peerProvs.values()) {
-                List peers = peerProv.listRemoteCachePeers(c);
-                for(Object o : peers) {
-                    CachePeer cp = (CachePeer) o;
-                    try {
-                        writer.println("\tReplicating with: " + cp.getUrl());
-                    } catch (RemoteException e) {
-                        writer.println("\tFail to connect: " + cp.toString());
+            if (peerProvs.size()>0) {
+                for (CacheManagerPeerProvider peerProv : peerProvs.values()) {
+                    List<?> peers = peerProv.listRemoteCachePeers(c);
+                    for(Object o : peers) {
+                        CachePeer cp = (CachePeer) o;
+                        try {
+                            writer.println("\tReplicating with: " + cp.getUrl());
+                        } catch (RemoteException e) {
+                            writer.println("\tFail to connect: " + cp);
+                        }
                     }
                 }
+            }
+            else {
+                writer.println("\tNot replicating");
             }
             writer.println();
         }
@@ -236,10 +241,22 @@ public class ServerStatus extends BaseHttpServlet {
         w.println("Server Events Information");
         w.println("  - Total events fired:" + ServerEventManager.getTotalEventCnt());
         w.println("  - Total events delivered:" + ServerEventManager.getDeliveredEventCnt());
-        w.println("  - Total active queues:" + ServerEventManager.getActiveQueueCnt());
+        int qCnt= ServerEventManager.getActiveQueueCnt();
+        w.println("  - Total active queues:" + qCnt);
+        if(qCnt>0) {
+            w.println("  - "+ (qCnt>10? "10 Most recently used channels:" :  "Channel list, ordered by last use:"));
+            w.println(makeQueueList());
+        }
+    }
+
+    private static String makeQueueList() {
+        return ServerEventManager.getQueueDescriptionList(10).stream()
+                .map( d -> String.format("     - %s, %s\n",d.channel(), new Date(d.lastPutTime())))
+                .reduce("", (all, entry) -> all+entry);
     }
 
     private static void showMessagingStatus(PrintWriter w) {
+        w.println("Messenger: Redis host: " + Messenger.getRedisHostPortDesc());
         w.println("Messaging Pool: " + Messenger.getStats());
     }
 

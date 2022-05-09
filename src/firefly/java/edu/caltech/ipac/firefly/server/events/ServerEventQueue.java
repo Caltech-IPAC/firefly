@@ -22,6 +22,7 @@ public class ServerEventQueue implements Serializable {
     private String connID;
     private String channel;
     private String userKey;
+    private transient long lastPutTime= 0;
 
     public ServerEventQueue(String connID, String channel, String userKey, EventConnector terminal) {
         this.connID = connID;
@@ -85,6 +86,7 @@ public class ServerEventQueue implements Serializable {
         }
         String message = convertToJson(ev);
         if (message != null) {
+            lastPutTime= System.currentTimeMillis();
             eventTerminal.send(message);
         }
     }
@@ -147,5 +149,9 @@ public class ServerEventQueue implements Serializable {
         public boolean isOpen();
         public void close();
     }
+
+    public QueueDescription convertToDescription() { return new QueueDescription(connID,channel,userKey,lastPutTime); }
+
+    public record QueueDescription(String connID, String channel, String userKey, long lastPutTime) {}
 }
 

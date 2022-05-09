@@ -33,6 +33,7 @@ import java.util.concurrent.Executors;
  * @version $Id: $
  */
 public class Messenger {
+    public enum Status {CONNECTED, FAIL_TO_CONNECT, NOT_USING};
     private static final String REDIS_HOST = AppProperties.getProperty("redis.host", "127.0.0.1");
     private static final int REDIS_PORT = AppProperties.getIntProperty("redis.port", 6379);
     private static final int MAX_POOL_SIZE = AppProperties.getIntProperty("redis.max.poolsize", 25);
@@ -41,6 +42,7 @@ public class Messenger {
 
     // message broker..  Jedis
     private static JedisPool jedisPool;
+    private static Status status = Status.NOT_USING;
 
     // to limit one thread per topic
     private static ConcurrentHashMap<String, SubscriberHandle> pubSubHandlers = new ConcurrentHashMap<>();
@@ -61,17 +63,22 @@ public class Messenger {
                 pconfig.setBlockWhenExhausted(true);                // wait.. if needed
                 jedisPool = new JedisPool(pconfig, REDIS_HOST, REDIS_PORT, Protocol.DEFAULT_TIMEOUT, REDIS_PASSWORD);
                 jedisPool.getResource().close();
+                status = Status.CONNECTED;
             } catch (Exception ex) {
                 LOG.error("Unable to connect to Redis at " + REDIS_HOST + ":" + REDIS_PORT);
                 jedisPool = null;
+                status = Status.FAIL_TO_CONNECT;
                 return false;
             }
         }
         return true;
     }
 
+    public static Status getStatus() { return status; }
+
     public static String getStats() {
 
+        if (getStatus()==Status.NOT_USING) return "Messenger is offline";
         JsonHelper stats = new JsonHelper();
         if (!init()) {
             return stats.setValue("Messenger is offline").toJson();
@@ -91,6 +98,10 @@ public class Messenger {
                     .setValue(passwd, "password")
                     .toJson();
         }
+    }
+
+    public static String getRedisHostPortDesc() {
+        return REDIS_HOST + ":" + REDIS_PORT + " ("+ getStatus() + ")";
     }
 
     public static boolean isOffline() {

@@ -155,6 +155,14 @@ public class ServerEventManager {
         return cnt;
     }
 
+    public static List<ServerEventQueue.QueueDescription> getQueueDescriptionList(int limit) {
+        return evQueueList.stream()
+                .map(ServerEventQueue::convertToDescription)
+                .sorted((d1,d2) -> (int)(d2.lastPutTime()-d1.lastPutTime()))
+                .limit(limit)
+                .toList();
+    }
+
 
     /**
      * bad logic.. removing good eventQueue(ws connetions)..

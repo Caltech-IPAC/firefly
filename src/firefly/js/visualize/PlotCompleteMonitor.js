@@ -60,7 +60,7 @@ function watchViewDim(action, cancelSelf, {plotId, resolve, reject, failureAsRej
 /**
  * return when the view dim is defined, or PlotView is deleted, or after 10 seconds
  * @param plotIdAryOrPlotId
- * @return {Promise<Awaited<unknown>[]>}
+ * @return {Promise}
  */
 export async function onViewDimDefined(plotIdAryOrPlotId) {
     const ary=  (isString(plotIdAryOrPlotId)) ? [plotIdAryOrPlotId] : plotIdAryOrPlotId;
