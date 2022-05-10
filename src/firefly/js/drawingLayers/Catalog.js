@@ -497,7 +497,7 @@ function computeBoxHighlightLayer(drawLayer, columns, highlightedRow) {
 
 function computeRegionHighlightLayer(drawLayer, columns) {
     const {tableData}= drawLayer;
-    const d= tableData?.data?.highlightedRow;
+    const d= tableData?.data[drawLayer?.highlightedRow];
     if (!d) return null;
 
     const regionColAry = isArray(columns) ? columns : [columns];
@@ -520,7 +520,7 @@ function computeRegionHighlightLayer(drawLayer, columns) {
 function computeSelectedIdxAry(drawLayer) {
     const {selectInfo} = drawLayer;
     const {selectOption} = drawLayer;
-    if (!selectInfo || (selectOption && selectOption !== TableSelectOptions.all.key)) {
+    if (!selectInfo || (selectOption && selectOption === TableSelectOptions.highlighted.key)) {
         return null;
     }
     const si= SelectInfo.newInstance(selectInfo);
