@@ -27,7 +27,6 @@ public class CtxControl {
     private static final AtomicLong cnt = new AtomicLong(0);
 
     public static ActiveCallCtx prepare(PlotState state) throws FailedRequestException {
-        counters.incrementVis("Revalidate");
         if (state==null) throw new FailedRequestException("state cannot but null");
         try {
             return revalidatePlot(state, false);
@@ -38,7 +37,10 @@ public class CtxControl {
 
     private static ActiveCallCtx revalidatePlot(PlotState state, boolean recreate) throws FailedRequestException {
         try {
-            if (recreate) WebPlotFactory.recreate(state);
+            if (recreate) {
+                counters.incrementVis("Recreate");
+                WebPlotFactory.recreate(state);
+            }
             return makeActiveCallCtx(state);
         } catch (IOException|FitsException e) {
             if (recreate) Logger.getLogger().warn(e, "prepare failed on re-validate plot: " + e.getMessage());;
@@ -52,6 +54,7 @@ public class CtxControl {
         for(Band band : state.getBands()) {
             File fitsFile=   PlotStateUtil.getWorkingFitsFile(state, band);
             int imageIdx= state.getImageIdx(band);
+            if (!FitsCacher.isCached(fitsFile)) counters.incrementVis("FITS re-read");
             FitsRead[] fr= FitsCacher.readFits(fitsFile).getFitReadAry();  //this call should get data from cache if it exist
             frGroup.setFitsRead(band, fr[imageIdx]);
         }

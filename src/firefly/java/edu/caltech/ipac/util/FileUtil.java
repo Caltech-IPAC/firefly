@@ -797,6 +797,14 @@ public class FileUtil
         return retHost;
     }
 
+    public static String getIPString() {
+        try {
+            return InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+            return "UNKNOWN_IP";
+        }
+    }
+
     public static String makeShortHostName(String hostname) {
         String retHost= "";
         if (hostname!=null) {

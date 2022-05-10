@@ -42,6 +42,9 @@ public class FitsCacher {
         return readFits(getFileInfoFromCache(fitsFile),null, true, false);
     }
 
+    static boolean isCached(File fitsFile) {
+        return (fileInfoCache!=null && fileInfoCache.isCached(new StringKey(fitsFile.getAbsolutePath())));
+    }
 
 
     static FitsDataEval readFits(FileInfo fitsFileInfo, WebPlotRequest req, boolean useCache, boolean clearHdu) throws FitsException, IOException {

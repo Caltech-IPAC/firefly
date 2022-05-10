@@ -10,7 +10,6 @@ package edu.caltech.ipac.firefly.server;
 
 
 import edu.caltech.ipac.firefly.server.security.SsoAdapter;
-import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -147,6 +146,7 @@ public class Counters {
         String elapse= UTCTimeUtil.getDHMS((System.currentTimeMillis()-startTime)/1000);
         retList.add("Overview");
         addToList(retList,"Hostname", HOST_NAME);
+        addToList(retList,"IP", FileUtil.getIPString());
         addToList(retList, "Up time", elapse);
         addToList(retList, "Client Base URL", ServerContext.getRequestOwner().getBaseUrl());
         SsoAdapter ssoAdapter = ServerContext.getRequestOwner().getSsoAdapter();
@@ -173,16 +173,12 @@ public class Counters {
                         lastCat= kp.getCat();
                     }
                     switch (kp.getUnit()) {
-                        case CNT:
-                            addToList(retList,kp.getKey(),cntMap.get(mapKey).get());
-                            break;
-                        case KB:
-                            String sizeStr= StringUtils.getKBSizeAsString(cntMap.get(mapKey).get());
-                            addToList(retList,kp.getKey(),sizeStr);
-                            break;
-                        default:
-                            // do nothing
-                            break;
+                        case CNT -> addToList(retList, kp.getKey(), cntMap.get(mapKey).get());
+                        case KB -> {
+                            String sizeStr = StringUtils.getKBSizeAsString(cntMap.get(mapKey).get());
+                            addToList(retList, kp.getKey(), sizeStr);
+                        }
+                        default -> { }// do nothing
                     }
 
                 }

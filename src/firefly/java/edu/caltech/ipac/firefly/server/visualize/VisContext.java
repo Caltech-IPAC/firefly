@@ -40,18 +40,15 @@ public class VisContext {
         Counters c= Counters.getInstance();
         c.initKey(Counters.Category.Visualization, "New Plots");
         c.initKey(Counters.Category.Visualization, "New 3 Color Plots");
-        c.initKey(Counters.Category.Visualization, "3 Color Band");
-        c.initKey(Counters.Category.Visualization, "Revalidate");
-        c.initKey(Counters.Category.Visualization, "Zoom");
+        c.initKey(Counters.Category.Visualization, "Byte Data: Full");
+        c.initKey(Counters.Category.Visualization, "Byte Data: Half");
+        c.initKey(Counters.Category.Visualization, "Byte Data: Quarter");
         c.initKey(Counters.Category.Visualization, "Crop");
-        c.initKey(Counters.Category.Visualization, "Flip");
-        c.initKey(Counters.Category.Visualization, "Rotate");
-        c.initKey(Counters.Category.Visualization, "Color change");
-        c.initKey(Counters.Category.Visualization, "Stretch change");
-        c.initKey(Counters.Category.Visualization, "Fits header");
         c.initKey(Counters.Category.Visualization, "Region read");
         c.initKey(Counters.Category.Visualization, "Region save");
         c.initKey(Counters.Category.Visualization, "Area Stat");
+        c.initKey(Counters.Category.Visualization, "FITS re-read");
+        c.initKey(Counters.Category.Visualization, "Recreate");
         c.initKey(Counters.Category.Visualization, "Total Read", Counters.Unit.KB,0);
     }
 

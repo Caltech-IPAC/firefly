@@ -305,6 +305,14 @@ public class DirectStretchUtils {
             };
         }
 
+        public static String getMostCompressedDescription(CompressType ct) {
+            return switch (ct) {
+                case FULL -> "Full";
+                case QUARTER_HALF_FULL, QUARTER_HALF -> "Quarter";
+                case HALF, HALF_FULL -> "Half";
+            };
+        }
+
         public boolean isRangeValuesMatching(PlotState state) {
             if (!state.isThreeColor()) {
                 return rvAry.length==1 && rvAry[0].toString().equals(state.getRangeValues().toString());

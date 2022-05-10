@@ -10,6 +10,7 @@ import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.server.visualize.DirectStretchUtils.CompressType;
+import edu.caltech.ipac.firefly.server.visualize.DirectStretchUtils.StretchDataInfo;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.BandState;
 import edu.caltech.ipac.firefly.visualize.CreatorResults;
@@ -190,7 +191,7 @@ public class VisServerOps {
             ActiveFitsReadGroup frGroup= ctx.fitsReadGroup();
             Cache memCache= CacheManager.getCache(Cache.TYPE_VIS_SHARED_MEM);
             CacheKey stretchDataKey= new StringKey(state.getContextString()+"byte-data");
-            data= (DirectStretchUtils.StretchDataInfo)memCache.get(stretchDataKey);
+            data= (StretchDataInfo)memCache.get(stretchDataKey);
             String fromCache= "";
             if (data!=null && data.isRangeValuesMatching(state) && data.findMostCompressAry(ct)!=null) {
                 if (ct==CompressType.FULL || ct==CompressType.HALF) memCache.put(stretchDataKey, null); // this the two types then this is the last time we need this data
@@ -201,6 +202,7 @@ public class VisServerOps {
                               DirectStretchUtils.getStretchDataMask(state,frGroup,tileSize,maskBits);
                 if (ct!= CompressType.FULL) memCache.put(stretchDataKey, data.copyParts(ct));
             }
+            counters.incrementVis("Byte Data: " + StretchDataInfo.getMostCompressedDescription(ct));
             PlotServUtils.statsLog("byteAry",
                     "total-MB", (float)data.findMostCompressAry(ct).length / StringUtils.MEG,
                     "Type", (state.isThreeColor() ? "3 Color" : "Standard") +" - "+ ct + fromCache);
