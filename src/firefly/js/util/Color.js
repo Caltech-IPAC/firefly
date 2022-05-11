@@ -32,7 +32,9 @@ const colours = {
 };
 
 
-function toRGBA(/* String */ color, /* Number */ alpha=1) {
+function toRGBA(/* String */ inColor, /* Number */ alpha=1) {
+    if (!inColor) return [0,0,0,alpha];
+    const color= colours[inColor?.toLowerCase()] ?? inColor;
     if (color.startsWith('rgb')) {
         const cStrAry= color.substring(color.indexOf('(')+1, color.indexOf(')')).split(',');
         const intColor= cStrAry.map( (s) => Number(s));
@@ -45,7 +47,9 @@ function toRGBA(/* String */ color, /* Number */ alpha=1) {
     }
 }
 
-export function toRGB(/* String */ color) {
+export function toRGB(/* String */ inColor) {
+    if (!inColor) return [0,0,0];
+    const color= colours[inColor?.toLowerCase()] ?? inColor;
     if (color.startsWith('rgb')) {
         const intColor= toRGBA(color);
         intColor.length=3;

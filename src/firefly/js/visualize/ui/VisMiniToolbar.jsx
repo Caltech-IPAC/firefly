@@ -78,6 +78,7 @@ import DRILL_DOWN from 'images/drill-down.png';
 import LINE_EXTRACTION from 'images/line-extract.png';
 import POINT_EXTRACTION from 'images/points.png';
 import {showPlotInfoPopup} from 'firefly/visualize/ui/PlotInfoPopup.js';
+import {getDefMenuItemKeys} from 'firefly/visualize/MenuItemKeys.js';
 
 const omList= ['plotViewAry'];
 const image24x24={width:24, height:24};
@@ -180,7 +181,7 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
     const image= !isHiPS(plot);
     const hips= isHiPS(plot);
     const plotGroupAry= visRoot.plotGroupAry;
-    const mi= pv?.plotViewCtx.menuItemKeys ?? {};
+    const mi= pv?.plotViewCtx.menuItemKeys ?? getDefMenuItemKeys();
     const enabled= Boolean(plot);
     const isExpanded= visRoot.expandedMode!==ExpandType.COLLAPSE;
     const farLeftButtonEnabled= mi.overlayColorLock && mi.matchLockDropDown && mi.expand;
