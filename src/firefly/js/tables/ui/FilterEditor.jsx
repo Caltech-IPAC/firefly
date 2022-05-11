@@ -25,6 +25,7 @@ import {insertAtCursor} from '../../ui/tap/AdvancedADQL.jsx';
 import {dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
+import {CopyToClipboard} from '../../visualize/ui/MouseReadout';
 
 import RIGHT_ARROW from 'html/images/right-arrow-in-16x16.png';
 
@@ -346,6 +347,7 @@ function ColumnFilter({colFilters, onChange}) {
                 <div style={{fontWeight: 'bold', display: 'inline-flex', margin: '5px 0'}}>
                     <div>Current Constraints: </div>
                     <div style={{marginLeft: 5}} className='ff-href' onClick={clearFilters}>Clear</div>
+                    <CopyToClipboard style={{marginLeft:7}} value={colFilters}/>
                 </div>
                 <div className='TablePanelOptions__filters' title={colFilters}>{colFilters}</div>
             </div>

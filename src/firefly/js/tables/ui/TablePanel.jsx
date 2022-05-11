@@ -264,7 +264,6 @@ TablePanel.defaultProps = {
     expandable: true,
     showToggleTextView: true,
     border: true,
-    pageSize: 100
 };
 
 

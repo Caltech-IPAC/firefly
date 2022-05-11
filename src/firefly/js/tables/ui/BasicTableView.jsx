@@ -6,7 +6,7 @@ import React, {useCallback, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {Column, Table} from 'fixed-data-table-2';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
-import {get, isEmpty, isUndefined} from 'lodash';
+import {get, isEmpty, isUndefined, omitBy, pick} from 'lodash';
 
 import {calcColumnWidths, getProprietaryInfo, getTableUiById, getTblById, hasNoData, hasRowAccess, isClientTable, tableTextView, uniqueTblUiId} from '../TableUtil.js';
 import {SelectInfo} from '../SelectInfo.js';
@@ -29,28 +29,33 @@ const BY_SCROLL = 'byScroll';
 const BasicTableViewInternal = React.memo((props) => {
 
     const {width, height} = props.size;
-    const {columns, data, hlRowIdx, showTypes, filterInfo, renderers,
-            bgColor, selectable, selectInfoCls, sortInfo, callbacks, textView, rowHeight,
+    const {columns, data, hlRowIdx, renderers, bgColor, selectInfoCls, callbacks, rowHeight,
             error, tbl_ui_id=uniqueTblUiId(), currentPage, startIdx=0, highlightedRowHandler, cellRenderers} = props;
 
     const uiStates = getTableUiById(tbl_ui_id) || {};
-    const {tbl_id, columnWidths, scrollLeft=0, scrollTop=0, triggeredBy} = uiStates;
+    const {tbl_id, columnWidths, scrollLeft=0, scrollTop=0, triggeredBy, showTypes, showFilters, showUnits, filterInfo,
+            selectable, sortInfo, textView} = uiStates;
 
-    let showUnits = uiStates.showUnits ?? props.showUnits;
     useEffect( () => {
-        if (isUndefined(showUnits) && !isEmpty(columns)) {
-            showUnits = !!columns.find?.((col) => col?.units);
-            dispatchTableUiUpdate({tbl_ui_id, showUnits});
-        }
-    }, [showUnits, columns]);
+        dispatchTableUiUpdate({tbl_ui_id,
+            ...omitBy(pick(props, 'showTypes', 'showFilters', 'showUnits', 'filterInfo','selectable', 'sortInfo', 'textView'), isUndefined)
+        });
+    }, []);
 
-    let showFilters = uiStates.showFilters ?? props.showFilters;
     useEffect( () => {
-        if (isUndefined(showFilters) && !isEmpty(columns)) {
-            showFilters = !!tbl_id && !isClientTable(tbl_id);    // false if no tbl_id or is a client table
-            dispatchTableUiUpdate({tbl_ui_id, showFilters});
+        if (!isEmpty(columns)) {
+            const changes = {};
+            if (isUndefined(showUnits)) {
+                changes.showUnits = !!columns.find?.((col) => col?.units);
+            }
+            if (isUndefined(showFilters)) {
+                changes.showFilters = !!tbl_id && !isClientTable(tbl_id);    // false if no tbl_id or is a client table
+            }
+            if (!isEmpty(changes)) {
+                dispatchTableUiUpdate({tbl_ui_id, ...changes});
+            }
         }
-    }, [showFilters, columns]);
+    }, [columns]);
 
     const onScrollEnd    = useCallback( doScrollEnd.bind({tbl_ui_id}), [tbl_ui_id]);
     const onColumnResize = useCallback( doColumnResize.bind({columnWidths, tbl_ui_id}), [columnWidths]);

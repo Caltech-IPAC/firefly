@@ -15,7 +15,7 @@ import {Logger} from '../util/Logger.js';
 import {FilterInfo} from './FilterInfo.js';
 import {selectedValues, asyncFetchTable} from '../rpc/SearchServicesJson.js';
 import { trackBackgroundJob, isSuccess, isDone, getErrMsg} from '../core/background/BackgroundUtil.js';
-import {REINIT_APP} from '../core/AppDataCntlr.js';
+import {REINIT_APP, getAppOptions} from '../core/AppDataCntlr.js';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
 import {dispatchJobAdd} from '../core/background/BackgroundCntlr.js';
 
@@ -332,11 +332,8 @@ function tableSearch(action) {
             const {tbl_ui_id, backgroundable = false, showPaging=true} = options;
             const {tbl_id} = request;
             const title = get(request, 'META_INFO.title');
-            if (showPaging) {
-                request.pageSize = options.pageSize = options.pageSize || request.pageSize || 100;
-            } else {
-                request.pageSize = MAX_ROW;
-            }
+            // use pageSize when given.  otherwise, use default or max if paging is not shown.
+            request.pageSize = options.pageSize = options.pageSize ?? request.pageSize ?? (showPaging ? getAppOptions()?.table?.pageSize : MAX_ROW);
             if (TblUtil.getTblById(tbl_id)) {
                 // table exists... this is a new search.  old data should be removed.
                 dispatchTableRemove(tbl_id, false);

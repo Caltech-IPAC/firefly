@@ -46,7 +46,7 @@ let nextId= 1;
 
 function showTable(cmd,params) {
     const {title='', source, ...rest}= params;
-    const options= {tbl_id: `${tableRootStr}${nextId++}`, startIdx:0, pageSize:100, ...rest};
+    const options= {tbl_id: `${tableRootStr}${nextId++}`, startIdx:0, ...rest};
 
     const dataTableReq= makeFileRequest(title, source, undefined,options);
     dispatchTableSearch(dataTableReq,options);

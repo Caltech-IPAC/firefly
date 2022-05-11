@@ -31,12 +31,11 @@ export const MAX_ROW = Math.pow(2,31) - 1;
  * @memberof firefly.util.table
  */
 export function makeTblRequest(id, title, params={}, options={}) {
-    var req = {startIdx: 0, pageSize: 100};
     title = title ?? id;
     const tbl_id = options.tbl_id || uniqueTblId();
     var META_INFO = pickBy(Object.assign(options.META_INFO || {}, {title, tbl_id}));
     options = omit(options, 'tbl_id');
-    return omitBy(Object.assign(req, options, params, {META_INFO, tbl_id, id}), isNil);
+    return omitBy(Object.assign({startIdx: 0}, options, params, {META_INFO, tbl_id, id}), isNil);
 }
 
 /**
@@ -53,12 +52,11 @@ export function makeTblRequest(id, title, params={}, options={}) {
  */
 export function makeFileRequest(title, source, alt_source, options={}) {
     const id = 'IpacTableFromSource';
-    var req = {startIdx: 0, pageSize: 100};
     title = title ?? source;
     const tbl_id = options.tbl_id || uniqueTblId();
     options = omit(options, 'tbl_id');
     var META_INFO = pickBy(Object.assign(options.META_INFO || {}, {title, tbl_id}));
-    return omitBy(Object.assign(req, options, {source, alt_source, META_INFO, tbl_id, id}), isNil);
+    return omitBy(Object.assign({startIdx: 0}, options, {source, alt_source, META_INFO, tbl_id, id}), isNil);
 }
 
 /**
@@ -126,7 +124,6 @@ export function makeIrsaWorkspaceRequest(source, title, options={}) {
  * @memberof firefly.util.table
  */
 export function makeIrsaCatalogRequest(title, project, catalog, params={}, options={}) {
-    var req = {startIdx: 0, pageSize: 100};
     title = title ?? catalog;
     const tbl_id = options.tbl_id || uniqueTblId();
     const id = 'GatorQuery';
@@ -137,7 +134,7 @@ export function makeIrsaCatalogRequest(title, project, catalog, params={}, optio
     options = omit(options, 'tbl_id');
     params = omit(params, 'position');
 
-    return omitBy(Object.assign(req, options, params, {id, tbl_id, META_INFO, UserTargetWorldPt, catalogProject, catalog}), isNil);
+    return omitBy(Object.assign({startIdx: 0}, options, params, {id, tbl_id, META_INFO, UserTargetWorldPt, catalogProject, catalog}), isNil);
 }
 
 /**
@@ -151,7 +148,6 @@ export function makeIrsaCatalogRequest(title, project, catalog, params={}, optio
  * @see edu.caltech.ipac.firefly.server.persistence.QueryByConeSearchURL.java
  */
 export function makeVOCatalogRequest(title, params={}, options={}) {
-    const req = {startIdx: 0, pageSize: 100};
     const tbl_id = options.tbl_id || uniqueTblId();
     const id = voProviders[params.providerName] || 'ConeSearchByURL';
     const UserTargetWorldPt = params.UserTargetWorldPt || params.position;  // may need to convert to worldpt.
@@ -160,7 +156,7 @@ export function makeVOCatalogRequest(title, params={}, options={}) {
     options = omit(options, 'tbl_id');
     params = omit(params, 'position');
 
-    return omitBy({...req, ...options, ...params, id, tbl_id, META_INFO, UserTargetWorldPt}, isNil);
+    return omitBy({startIdx: 0, ...options, ...params, id, tbl_id, META_INFO, UserTargetWorldPt}, isNil);
 }
 
 const voProviders = {'NED':'NedSearch'};
