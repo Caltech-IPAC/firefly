@@ -249,6 +249,7 @@ function modifyMaskColor(opv) {
     const rgbStr= `rgba(${rV},${gV},${bV},${opv.opacity})`;
     showColorPickerDialog(rgbStr, false, true,
         (ev, okPushed) => {
+            if (!ev?.rgb) return;
             const {r,g,b,a}= ev.rgb;
             const newColor= `#${hexC(r)}${hexC(g)}${hexC(b)}`;
 
