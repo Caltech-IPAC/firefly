@@ -21,6 +21,7 @@ import {showPointShapeSizePickerDialog} from '../../ui/PointShapeSizePicker.jsx'
 import {getPlotViewById} from '../PlotViewUtil';
 import ImageRoot from '../../drawingLayers/ImageRoot.js';
 import {HelpIcon} from 'firefly/ui/HelpIcon.jsx';
+import {toRGB} from 'firefly/util/Color.js';
 
 
 
@@ -240,12 +241,7 @@ const hexC= (v) =>  padStart(v.toString(16),2,'0');
 
 function modifyMaskColor(opv) {
 
-    const {color}= opv.colorAttributes;
-    const rV= parseInt(color.substring(1,3),16);
-    const gV= parseInt(color.substring(3,5),16);
-    const bV= parseInt(color.substring(5,7),16);
-
-
+    const [rV,gV,bV]= toRGB(opv.colorAttributes.color);
     const rgbStr= `rgba(${rV},${gV},${bV},${opv.opacity})`;
     showColorPickerDialog(rgbStr, false, true,
         (ev, okPushed) => {
