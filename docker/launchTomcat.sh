@@ -119,18 +119,9 @@ done
 # Java 9 introduces Modularity with module level security
 # GWT apps requires these module to be opened
 CATALINA_OPTS="$CATALINA_OPTS \
-    --add-opens java.base/java.lang.module=ALL-UNNAMED \
-    --add-opens java.base/jdk.internal.math=ALL-UNNAMED \
-    --add-opens java.base/jdk.internal.module=ALL-UNNAMED \
-    --add-opens java.base/jdk.internal.ref=ALL-UNNAMED \
-    --add-opens java.base/jdk.internal.loader=ALL-UNNAMED \
-    --add-opens java.base/jdk.internal.reflect=ALL-UNNAMED \
-    --add-opens java.base/jdk.internal.platform.cgroupv1=ALL-UNNAMED \
-    --add-opens jdk.management.jfr/jdk.management.jfr=ALL-UNNAMED \
-    --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED \
-    --add-opens java.logging/sun.util.logging.internal=ALL-UNNAMED \
-  "
-
+    --illegal-access=warn \
+ "
+# --illegal-access is still available in JDK 11.  this is no longer an option in JDK 17.
 
 #------- start background scripts: cleanup
 ${CATALINA_HOME}/cleanup.sh /firefly/workarea /firefly/shared-workarea &
