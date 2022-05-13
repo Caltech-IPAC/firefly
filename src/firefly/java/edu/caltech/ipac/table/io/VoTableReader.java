@@ -266,8 +266,8 @@ public class VoTableReader {
                         if ((val instanceof Double && Double.isNaN((Double) val)) ||
                                 (val instanceof Float && Float.isNaN((Float) val))    )    {
                             val = null;
-                        } else if(val instanceof String) {
-                            val = ((String) val).trim();
+                        } else if(val instanceof String || val instanceof Character) {
+                            val = (String.valueOf(val)).trim();
                         }
                         row.setDataElement(dtype, val);
                     }
