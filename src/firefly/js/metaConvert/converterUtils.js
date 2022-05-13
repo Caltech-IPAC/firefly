@@ -85,7 +85,6 @@ function makeTableRequest(source, titleInfo, tbl_id, tbl_index, colNames, colUni
             tbl_id : !extraction ? tbl_id : undefined,
             tbl_index,
             startIdx : 0,
-            pageSize : 100,
             META_INFO,
         });
     if (colNamesStr) dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_COL_NAMES]=  colNamesStr;
@@ -310,7 +309,6 @@ export function createChartSingleRowArrayActivate(source, titleStr, activatePara
                 tbl_id,
                 tbl_index,
                 startIdx : 0,
-                pageSize : 100,
                 META_INFO : {
                     [MetaConst.DATA_SOURCE] : 'false',
                     [MetaConst.CATALOG_OVERLAY_TYPE]:'false'

@@ -536,7 +536,6 @@ function keepZAxisExtraction(pt,pv, plot, filename,refHDUNum,extractionSize, sav
     const dataTableReq= makeTblRequest('ExtractFromImage', `Extraction Z-Axis - ${titleCnt}`,
         {
             startIdx : 0,
-            pageSize : save? 0: 100,
             extractionType: 'z-axis',
             pt: pt.toString(),
             wpt: wpt?.toString(),
@@ -549,6 +548,7 @@ function keepZAxisExtraction(pt,pv, plot, filename,refHDUNum,extractionSize, sav
             allMatchingHDUs: true,
         },
         {tbl_id});
+    if (save) dataTableReq.pageSize = 0;
     save ? doDispatchTableSaving(dataTableReq, doOverlay) : doDispatchTable(dataTableReq, doOverlay);
     idCnt++;
     titleCnt++;
@@ -567,7 +567,6 @@ function keepLineExtraction(pt, pt2,pv, plot, filename,refHDUNum,plane,extractio
         imPtAry.map( (pt) => cc.getWorldCoords(pt)).map( (wpt) => wpt.toString()) : undefined;
     const dataTableReq= makeTblRequest('ExtractFromImage', makePlaneTitle('Extract Line',pv,plot,titleCnt), {
             startIdx : 0,
-            pageSize : 100,
             extractionType: 'line',
             ptAry: JSON.stringify(imPtAry.map((pt) => pt.toString())),
             wptAry: JSON.stringify(wptStrAry),
@@ -608,7 +607,6 @@ function keepPointsExtraction(ptAry,pv, plot, filename,refHDUNum,plane,extractio
     const dataTableReq= makeTblRequest('ExtractFromImage', makePlaneTitle('Points',pv,plot,titleCnt),
         {
             startIdx : 0,
-            pageSize : 100,
             extractionType: 'points',
             ptAry: JSON.stringify(ptAry.map((pt) => pt.toString())),
             wptAry: JSON.stringify(wptStrAry),

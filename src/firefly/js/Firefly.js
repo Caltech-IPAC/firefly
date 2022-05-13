@@ -152,6 +152,9 @@ const defFireflyOptions = {
         defHipsSources: {source: 'irsa', label: 'Featured'},
         mergedListPriority: 'irsa'
     },
+    table : {
+        pageSize: 100,
+    },
     image : {
         defaultColorTable: 1,
         canCreateExtractionTable: false,
