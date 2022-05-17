@@ -90,7 +90,7 @@ else
 fi
 
 #---------   CATALINA_OPTS must be exported for catalina.sh to pick them up
-export CATALINA_OPTS="${CATALINA_OPTS} \
+export CATALINA_OPTS="\
   ${JVM_SIZING} \
   -DADMIN_USER=${ADMIN_USER} \
   -DADMIN_PASSWORD=${ADMIN_PASSWORD} \
@@ -104,17 +104,14 @@ export CATALINA_OPTS="${CATALINA_OPTS} \
   -Dalerts.dir=/firefly/alerts \
   -Djava.security.properties=/usr/local/tomcat/conf/java.security.override \
   -Dvisualize.fits.search.path=${VIS_PATH} \
- 	${FIREFLY_OPTS}"
- 	
-# naming scheme:  same as internal prop name with underscore -> dot conversion
-overrideVars=("sso_server_url" "josso_db_url" "josso_db_userId" "josso_db_password")
-for var in ${overrideVars[@]}; do
-  if [ ! -z ${!var} ]; then
-    echo "===========> ${var} is ${!var}"
-    ivar=${var//_/.}
-    export CATALINA_OPTS="${CATALINA_OPTS} -D${ivar}=${!var}"
+	"
+
+#----- eval FIREFLY_OPTS if exists.  key-value pairs are separated by spaces. therefore, it does not support values with spaces in it.
+  if [ ! -z "${FIREFLY_OPTS}" ]; then
+    jvmProps=`sed -r 's/-D//g;s/( )+/ -D/g;s/^/-D/' <<< $FIREFLY_OPTS`     # remove -D if exists(backward compatible), then add -D to every pair
+    echo "==> adding FIREFLY_OPTS to JVM startup: ${jvmProps}"
+    export CATALINA_OPTS="${CATALINA_OPTS} ${jvmProps}"
   fi
-done
 
 # Java 9 introduces Modularity with module level security
 # GWT apps requires these module to be opened
