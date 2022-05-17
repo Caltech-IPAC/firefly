@@ -107,11 +107,18 @@ export CATALINA_OPTS="\
 	"
 
 #----- eval FIREFLY_OPTS if exists.  key-value pairs are separated by spaces. therefore, it does not support values with spaces in it.
-  if [ ! -z "${FIREFLY_OPTS}" ]; then
-    jvmProps=`sed -r 's/-D//g;s/( )+/ -D/g;s/^/-D/' <<< $FIREFLY_OPTS`     # remove -D if exists(backward compatible), then add -D to every pair
-    echo "==> adding FIREFLY_OPTS to JVM startup: ${jvmProps}"
-    export CATALINA_OPTS="${CATALINA_OPTS} ${jvmProps}"
-  fi
+if [ ! -z "${FIREFLY_OPTS}" ]; then
+  jvmProps=`sed -r 's/-D//g;s/( )+/ -D/g;s/^/-D/' <<< $FIREFLY_OPTS`     # remove -D if exists(backward compatible), then add -D to every pair
+  export CATALINA_OPTS="${CATALINA_OPTS} ${jvmProps}"
+fi
+# envVar with names matching 'FIREFLY_OPTS_*'.
+# A more advanced internal scheme to support secrets, quotes, and spaces in values
+# Use '__' in key, to sub for '.' since '.' is not allowed in envVar.
+for var in "${!FIREFLY_OPTS_@}"; do
+  prop=`sed 's/FIREFLY_OPTS_//g;s/__/./g' <<< "$var"`
+  export CATALINA_OPTS="${CATALINA_OPTS} -D$prop=${!var}"
+done
+#----- eval FIREFLY_OPTS
 
 # Java 9 introduces Modularity with module level security
 # GWT apps requires these module to be opened
