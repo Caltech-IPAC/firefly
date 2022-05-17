@@ -39,9 +39,10 @@ echo "        Initial JVM size (**)            INIT_RAM_PERCENT           ${INIT
 echo "        Max JVM size (**)                MAX_RAM_PERCENT            ${MAX_RAM_PERCENT}${PER_NOT_USED}"
 echo "        CPU cores (0 means guess)        JVM_CORES                  ${JVM_CORES}"
 echo "        Run tomcat with debug            DEBUG                      ${DEBUG}"
-echo "        Extra firefly properties         FIREFLY_OPTS               ${FIREFLY_OPTS}"
-echo "  (*)  If MAX_JVM_SIZE is blank, autosizing properties INIT_RAM_PERCENT and MAX_RAM_PERCENT are used instead"
-echo "  (**) Autosizing properties INIT_RAM_PERCENT and MAX_RAM_PERCENT are not used if MAX_JVM_SIZE is set"
+echo "        Extra firefly properties(***)    FIREFLY_OPTS               ${FIREFLY_OPTS}"
+echo " (*)   If MAX_JVM_SIZE is blank, autosizing properties INIT_RAM_PERCENT and MAX_RAM_PERCENT are used instead"
+echo " (**)  Autosizing properties INIT_RAM_PERCENT and MAX_RAM_PERCENT are not used if MAX_JVM_SIZE is set"
+echo " (***) key=value pairs separated by spaces"
 echo
 echo "Ports: "
 echo "        8080 - http"
@@ -103,8 +104,14 @@ export CATALINA_OPTS="\
   -Dstats.log.dir=/firefly/logs/statistics \
   -Dalerts.dir=/firefly/alerts \
   -Dvisualize.fits.search.path=${VIS_PATH} \
-	${FIREFLY_OPTS}"
+	"
 
+#----- eval FIREFLY_OPTS if exists.  key-value pairs are separated by spaces. therefore, it does not support values with spaces in it.
+  if [ ! -z "${FIREFLY_OPTS}" ]; then
+    jvmProps=`sed -r 's/-D//g;s/( )+/ -D/g;s/^/-D/' <<< $FIREFLY_OPTS`     # remove -D if exists(backward compatible), then add -D to every pair
+    echo "==> adding FIREFLY_OPTS to JVM startup: ${jvmProps}"
+    export CATALINA_OPTS="${CATALINA_OPTS} ${jvmProps}"
+  fi
 
 # Java 9 introduces Modularity with module level security
 # Firefly apps requires these module to be opened
