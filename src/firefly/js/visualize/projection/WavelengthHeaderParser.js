@@ -3,7 +3,8 @@
  */
 
 import {makeDoubleHeaderParse} from '../FitsHeaderUtil.js';
-import {AWAV, F2W, LINEAR, LOG, PLANE, TAB, V2W, WAVE,VRAD} from './Wavelength.js';
+import {AWAV, F2W, LINEAR, LOG, PLANE, TAB, V2W, WAVE, VRAD} from './Wavelength.js';  // eslint-disable-line no-unused-vars
+import {isDefined} from '../../util/WebUtil.js';
 
 
 /**
@@ -35,7 +36,6 @@ export function parseWavelengthHeaderInfo(header, altWcs='', zeroHeader, wlTable
     } else if (whatType.toUpperCase()===VRAD) {
         return calculateVradParams(parse, altWcs, which, mijMatrixKeyRoot, table);
     }
-    //return calculateWavelengthParams(parse,altWcs,which,mijMatrixKeyRoot,wlTable);
 }
 
 
@@ -45,10 +45,10 @@ function findWLTableToMatch(parse, altWcs, which, wlTableRelatedAry) {
     return wlTableRelatedAry.find( (entry) => entry.hduName===tName)?.table;
 }
 
-const isWaveParseDependent = (algorithm) => algorithm===LINEAR || algorithm===LOG  || algorithm===F2W  ||
-                                            algorithm===V2W  || algorithm===TAB;
-
-const isVradParseDependent = (algorithm) => algorithm===LINEAR;
+// const isWaveParseDependent = (algorithm) => algorithm===LINEAR || algorithm===LOG  || algorithm===F2W  ||
+//                                             algorithm===V2W  || algorithm===TAB;
+//
+// const isVradParseDependent = (algorithm) => algorithm===LINEAR;
 
 const allGoodValues= (...numbers)  => numbers.every((n) => !isNaN(n));
 
@@ -59,7 +59,7 @@ const L_10= Math.log(10);
  * According to A&A 395, 1061-1075 (2002) DOI: 10.1051/0004-6361:20021326
  * Representations of world coordinates in FITS E. W. Greisen1 - M. R. Calabretta2
  * https://www.aanda.org/articles/aa/full/2002/45/aah3859/aah3859.html
- * the CD_ij is for the older FITs header. The newer FITs header has PC only.
+ * the CD_ij is for the older FITS header. The newer FITS header has PC only.
  * 1. If both PC and CD exist, it is wrong. Instead of throwing exception, no wavelength is displayed.
  * 2. If PC is not exist, one or more CD is exist, use CD_ij (j=1..N); if any of CD_ij
  *   is not defined, the default is 0.0;
@@ -73,8 +73,8 @@ const L_10= Math.log(10);
  */
 function getPC_ijKey(parser,which){
 
-    let hasPC = parser.hasKeyStartWith(`PC${which}_`);
-    let hasCD = parser.hasKeyStartWith(`CD${which}_`);
+    const hasPC = parser.hasKeyStartWith(`PC${which}_`);
+    const hasCD = parser.hasKeyStartWith(`CD${which}_`);
 
     if (hasPC && hasCD){
         return undefined;
@@ -91,7 +91,7 @@ function getPC_ijKey(parser,which){
  * not have to be 3.  In general, if the wavelength is depending on two dimensional images, it most likely
  * is 3.  But the axis 3 can also be other quantity such as Frequency etc.
  *
- * If the FITs header has 'WCSAXES', this will be the wavelength axis.
+ * If the FITS header has 'WCSAXES', this will be the wavelength axis.
  * If 'WCSAXES' is not defined, the default will be the larger of naxis and the j where j=1, 2, 3, ..)
  * @param parse
  * @returns {*}
@@ -118,13 +118,13 @@ function getWCSAXES(parse){
  *
  * Reference:  A&A 395, 1061-1075 (2002) DOI: 10.1051/0004-6361:20021326
  * Representations of world coordinates in FITS E. W. Greisen1 - M. R. Calabretta2
- * paper,  the CD_ij is for the older FITs header. The newer FITs header has PC only.
+ * paper,  the CD_ij is for the older FITS header. The newer FITS header has PC only.
  *
  * This method is checking the pc_ij and r_j array.  If any of the values are undefined,
  * the default are assigned.  The default values are defined as following based on the reference
  * paper above:
  *
- * PC_ij: an array defined in the FITs header. Fhe size of the dimension is N.  N is defined by
+ * PC_ij: an array defined in the FITS header. Fhe size of the dimension is N.  N is defined by
  *  WCSAXES or naxis
  *   i: the wcsaxes's value, if the wcsaxes = 2, then i=2
  *   j: 0, ...N
@@ -150,21 +150,21 @@ function getWCSAXES(parse){
  * @returns {Array}
  */
 function applyDefaultValues(inArr, keyRoot, which, N){
-    let retAry=[];
+    const retAry=[];
     for (let i=0; i<N; i++) {
-        if (inArr && inArr[i] && !isNaN(inArr[i])){
+        if (inArr && isDefined(inArr[i]) && !isNaN(inArr[i])){
             //if inArr is defined and it has a valid value
             retAry[i]=inArr[i];
             continue;
         }
-        switch (keyRoot){ //either inArr is undefined, or inArr[i] is undefined
+        switch (keyRoot) { //either inArr is undefined, or inArr[i] is undefined
             case 'PC':
                 retAry[i] = (i+1) === parseInt(which)? 1:0;
                 break;
             case 'CRPIX' || 'CD':
                 retAry[i] = 0.0;
                 break;
-        };
+        }
     }
     return retAry;
 }
@@ -174,42 +174,32 @@ function isWaveLength(ctype, pc_3j){
 
     const sArray= ctype.split('-');
 
+    if (sArray[0] !== 'WAVE') return false;
+
     //The header has the axis dependency information, ie. pc_31 (naxis1) or pc_32 (naxis2) are defined.
     //If no such information, and it is not a "TAB", thus there is no dependency.  The wavelength will not
     // be displayed in the mouse readout.
 
-    if ( (sArray[0]==='WAVE'  && ( pc_3j[0]!==0 || pc_3j[1]!==0)  ) || (sArray[0]==='WAVE' && sArray[1]==='TAB'  )){
-        return true;
-    }
-    return false;
-
-}
-
-function isVrad(ctype){
-    if (!ctype.trim()) return false;
-
-    const sArray= ctype.split('-');
-    return (sArray[0]==='VRAD');
+    return ((pc_3j[0] !== 0 || pc_3j[1] !== 0) || sArray[1] === 'TAB');
 }
 
 /**
- * NOTE:
- *
  * Get the key Spectra headers 
  * @param parse
- * @param altWcs
- * @param which
+ * @param {string} altWcs one character alternative WCS version, '' for primary
+ * @param {number} which index of the world coordinate
+ * @param {string} defaultUnits default units
  * @returns {*}
  */
-function getCoreSpectralHeaders(parse,altWcs,which) {
-    let ctype, crpix, crval, cdelt, units, nAxis, N;
-    ctype= parse.getValue(`CTYPE${which}${altWcs}`, ' ');
-    crpix= parse.getDoubleValue(`CRPIX${which}${altWcs}`, 0.0);
-    crval= parse.getDoubleValue(`CRVAL${which}${altWcs}`, 0.0);
-    cdelt= parse.getDoubleValue(`CDELT${which}${altWcs}`, 1.0);
-    nAxis= parse.getIntValue('NAXIS');
-    N= parse.getIntOneOfValue(['WCSAXES', 'WCSAXIS', 'NAXIS'], -1);
-    return {ctype, crpix, crval, cdelt, nAxis, N};
+function getCoreSpectralHeaders(parse, altWcs, which, defaultUnits='') {
+    const ctype = parse.getValue(`CTYPE${which}${altWcs}`, ' ');
+    const units = parse.getValue(`CUNIT${which}${altWcs}`, defaultUnits);
+    const crpix = parse.getDoubleValue(`CRPIX${which}${altWcs}`, 0.0);
+    const crval = parse.getDoubleValue(`CRVAL${which}${altWcs}`, 0.0);
+    const cdelt = parse.getDoubleValue(`CDELT${which}${altWcs}`, 1.0);
+    const nAxis = parse.getIntValue('NAXIS');
+    const N = parse.getIntOneOfValue(['WCSAXES', 'WCSAXIS', 'NAXIS'], -1);
+    return {ctype, units, crpix, crval, cdelt, nAxis, N};
 }
 /**
  * NOTE:
@@ -222,7 +212,7 @@ function getCoreSpectralHeaders(parse,altWcs,which) {
  * @param wlTable
  * @returns {*}
  */
-function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
+function calculateWavelengthParams(parse, altWcs, which, pc_3j_key, wlTable) {
 
     /*
     * Base on the reference: A&A 395, 1061-1075 (2002) DOI: 10.1051/0004-6361:20021326
@@ -233,8 +223,7 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
     * CUNIT i	' ' (i.e. undefined)
     * NOTE: i is the which variable here.
     */
-    const { ctype, crpix, crval, cdelt, nAxis, N}= getCoreSpectralHeaders(parse,altWcs,which);
-    const units= parse.getValue(`CUNIT${which}${altWcs}`, '');
+    const {ctype, units, crpix, crval, cdelt, nAxis, N}= getCoreSpectralHeaders(parse, altWcs, which);
     const restWAV= parse.getDoubleValue('RESTWAV'+altWcs, 0);
     let pc_3j = parse.getDoubleAry(`${pc_3j_key}${which}_`,altWcs,1,N, undefined);
     let r_j = parse.getDoubleAry('CRPIX',altWcs,1,N, undefined);
@@ -253,13 +242,13 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
     const pv3_2= parse.getValue(`PV${which}_2${altWcs}`, '');
     const pv3_3= parse.getValue(`PV${which}_3${altWcs}`, '');
 
-    const {algorithm, wlType} = getAlgorithmAndType(ctype,N);
+    const {algorithm, wlType} = getAlgorithmAndType(ctype, N);
 
 
-    const canDoPlaneCalc= allGoodValues(crpix,crval,cdelt && nAxis===3 ) ;
+    const canDoPlaneCalc= allGoodValues(crpix, crval, cdelt && nAxis===3);
 
-    //We only support the standard format in the FITs header.  The standard means the CTYPEka='WAVE-ccc" where
-    //ccc can be 'F2W', 'V2W', 'LOG', 'TAB' or empty that means linear. If the header does not have this kind
+    // We only support the standard format in the FITS header. The standard means the CTYPEka='WAVE-ccc" where
+    // ccc can be 'F2W', 'V2W', 'LOG', 'TAB' or empty that means linear. If the header does not have this kind
     // CTYPEka defined, we check if it is a spectra cube.  If it is a spectra cube,and it is independent of the
     // images we display the wavelength at each plane.  If it is a spectra cube and it is wavelength is depending on
     // the image coordinates, we display the wavelength at the mouse readout at each plane.
@@ -269,9 +258,9 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
     //If it is a cube plane FITS, plot and display the wavelength at each plane
     if (canDoPlaneCalc && nAxis===3  &&  (!isWL || isWL && algorithm==='TAB') ) {
         /* There are two cases for wavelength planes:
-        *  1. The FITs has wavelength planes, and each plane has the same wavelength, ie. the third axis
+        *  1. The FITS has wavelength planes, and each plane has the same wavelength, ie. the third axis
         *     is wavelength.  Then the algorithm is PLANE
-        *  2. The FITs has wavelength planes,and the wavelength on each plane is changing with the image point
+        *  2. The FITS has wavelength planes,and the wavelength on each plane is changing with the image point
         *     position.  For example, the algorithm is TAB.
         */
         const algorithmForPlane = isWL? algorithm: PLANE;
@@ -283,19 +272,19 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
         }
         return  {
             N, algorithm, ctype, restWAV, pc_3j, r_j,
-            ps3_0, ps3_1, ps3_2, pv3_1, pv3_2,pv3_3,
-            s_3:  cdelt, lambda_r:  crval, wlTable,
-            crpix, crval, cdelt,nAxis, wlType, units,
+            ps3_0, ps3_1, ps3_2, pv3_1, pv3_2, pv3_3,
+            crpix, crval, cdelt, nAxis, wlType, units,
+            wlTable,
         };
 
     }
 
-    //Plot and display the wavelength as one of the mouse readout only if the FITs header
+    //Plot and display the wavelength as one of the mouse readout only if the FITS header
     //contains the required parameters and the wavelength is depending on the image axes.
     /* We don't show the wavelength in the mouse readout in following three situations:
      *  1. Algorithm is not defined
      *  2. wlType is not defined or the type is not supported
-     *  3. The FITs file is not wavelength type (may be plane)
+     *  3. The FITS file is not wavelength type (may be plane)
      *
      */
     if (!algorithm || !wlType  || !isWL) return;
@@ -308,7 +297,7 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
 
     let failReason= '';
     let failWarning= '';
-    if (N<0) {
+    if (N < 0) {
         failReason+= 'Dimension value is not available, must be NAXIS or WCSAXES';
     }
     else {
@@ -319,10 +308,9 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
     }
 
     return {
-        N, algorithm, ctype, restWAV, wlType, crpix, crval, failReason, failWarning, units, pc_3j, r_j,
+        N, algorithm, ctype, restWAV, wlType, crpix, crval, cdelt,
+        failReason, failWarning, units, pc_3j, r_j,
         ps3_0, ps3_1, ps3_2, pv3_1, pv3_2, pv3_3,
-        s_3: cdelt,
-        lambda_r:  crval,
         wlTable
     };
 }
@@ -335,43 +323,35 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key,wlTable) {
  * @param altWcs
  * @param which
  * @param pc_3j_key
+ * @param vradTable
  * @returns {*}
  */
-function calculateVradParams(parse, altWcs, which, pc_3j_key,vradTable) {
+function calculateVradParams(parse, altWcs, which, pc_3j_key, vradTable) { // eslint-disable-line no-unused-vars
 
     /*
     * Only consider VRAD plane case for now
     * the pc_3j_key, vradTalble not used in Plane case
     */
-    const { ctype, crpix, crval, cdelt, nAxis, N}= getCoreSpectralHeaders(parse,altWcs,which);
-    const units= parse.getValue(`CUNIT${which}${altWcs}`, 'm/s');
-    const {algorithm, wlType} = getAlgorithmAndType(ctype,N);
-
-    const canDoPlaneCalc= allGoodValues(crpix,crval,cdelt && nAxis===3 ) ;
-
-    const isVR = isVrad(ctype);
+    const { ctype, units, crpix, crval, cdelt, nAxis} = getCoreSpectralHeaders(parse, altWcs, which, 'm/s');
+    const {algorithm, wlType} = getAlgorithmAndType(ctype);
 
     //If it is a cube plane FITS, plot and display the Vrad at each plane
-    if (canDoPlaneCalc && nAxis===3) {
-        const algorithmForPlane = isVrad? algorithm: PLANE;
-        const ret = makeSimplePlaneBased(crpix, crval, cdelt,nAxis, algorithmForPlane, wlType, units, 'use PLANE since is cube and parameters missing');
-
-        return ret;
+    if (allGoodValues(crpix, crval, cdelt) && nAxis===3) {
+        return makeSimplePlaneBased(crpix, crval, cdelt, nAxis, algorithm, wlType, units, 'use PLANE since is cube and parameters missing');
     }
 
     //If it is a cube plane FITS, plot and display the VRAD at each plane
-    if (!algorithm || !wlType  || !isVR) return;
+    //if (!algorithm || !wlType  || !isVR) return;
 
-    /*Adding other VRAD algorithm and conversions here
-    *
-    */
+    //Adding other VRAD algorithm and conversions here
+
 }
 
-function makeSimplePlaneBased(crpix,crval, cdelt, nAxis,algorithm, wlType, units, reason) {
-    if (allGoodValues(crpix,crval,cdelt) && nAxis===3 ) {
+function makeSimplePlaneBased(crpix, crval, cdelt, nAxis, algorithm, wlType, units, reason) {
+    if (allGoodValues(crpix, crval, cdelt) && nAxis === 3 ) {
         //return {algorithm: PLANE, wlType: wlType || WAVE, crpix, crval, cdelt, units, reason};
 
-        return {algorithm: algorithm, wlType: wlType, crpix, crval, cdelt, units, reason, planeOnlyWL:true};
+        return {algorithm, wlType, crpix, crval, cdelt, units, reason, planeOnlyWL:true};
     }
     else {
         return {algorithm: undefined, wlType, failReason: 'CTYPE3, CRVAL3, CDELT3 are required for simple and NAXIS===3', failReason2: reason};
