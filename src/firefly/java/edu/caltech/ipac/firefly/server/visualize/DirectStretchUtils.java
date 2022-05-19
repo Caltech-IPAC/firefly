@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
+import edu.caltech.ipac.firefly.data.HasSizeOf;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
@@ -284,7 +285,7 @@ public class DirectStretchUtils {
     private record StretchVars(int totWidth, int totHeight, int xPanels, int yPanels, int tileLen, CompressType ct) {}
     private record StretchTileDef(int x, int y, int width, int height, CompressType ct) {}
 
-    public static class StretchDataInfo implements Serializable {
+    public static class StretchDataInfo implements Serializable, HasSizeOf {
         private final byte [] byte1d;
         private final byte [] byte1dHalf;
         private final byte [] byte1dQuarter;
@@ -336,6 +337,15 @@ public class DirectStretchUtils {
         public StretchDataInfo copyParts(CompressType ct) {
             boolean keepHalf= ct== CompressType.QUARTER_HALF_FULL || ct== CompressType.QUARTER_HALF;
             return new StretchDataInfo(byte1d, keepHalf?byte1dHalf:null, null, rvAry);
+        }
+
+        @Override
+        public long getSizeOf() {
+            long sum= rvAry.length * 80L;
+            if (byte1d!=null) sum+=byte1d.length;
+            if (byte1dHalf!=null) sum+=byte1dHalf.length;
+            if (byte1dQuarter!=null) sum+=byte1dQuarter.length;
+            return sum;
         }
     }
 

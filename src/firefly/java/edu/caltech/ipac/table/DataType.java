@@ -91,6 +91,7 @@ public class DataType implements Serializable, Cloneable {
     private       String precision;
     private       String ucd;
     private       String utype;
+    private       String xtype;
     private       String ref = "";
     private       List<LinkInfo> links = new ArrayList<>();
     private       String maxValue = "";
@@ -282,6 +283,15 @@ public class DataType implements Serializable, Cloneable {
     public String getUType() {
         return utype;
     }
+
+    public void setXType(String xtype) {
+        this.xtype = xtype;
+    }
+
+    public String getXType() {
+        return this.xtype;
+    }
+
 
     public void setMaxValue(String max) {
         this.maxValue = max;

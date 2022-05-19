@@ -125,7 +125,7 @@ const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId, 
     // const doResetButton= Boolean(searchParams);
     let makeDropDown;
     if (menu?.length>1 || fileMenu?.menu?.length>1 || extraction) {
-        const showMenu= !singleDownload || singleDownload && displayType===DPtypes.DOWNLOAD_MENU_ITEM;
+        const showMenu= !singleDownload || (singleDownload && (displayType===DPtypes.DOWNLOAD_MENU_ITEM || displayType===DPtypes.MESSAGE))
         makeDropDown= getMakeDropdown(
             dpId, dataProductsState, showMenu, doResetButton, extraction, extractionText, resetAllSearchParams);
     }
@@ -139,6 +139,7 @@ const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId, 
                 return (<ActivateMenu
                     {...{
                         serDefParams,
+                        serviceDefRef:dataProductsState.serviceDefRef,
                         setSearchParams: (params) => dispatchSetSearchParams({dpId,activeMenuLookupKey,menuKey,params}),
                         title:dataProductsState.name,
                         makeDropDown,

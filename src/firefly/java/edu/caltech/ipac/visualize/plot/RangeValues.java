@@ -41,21 +41,21 @@ public final class RangeValues implements Cloneable, Serializable {
     private static final short RGB_PRESERVE_HUE_DEFAULT = 0; // use 0 for false, 1 for true
 
 
-    private int    _lowerWhich;
-    private double _lowerValue;
-    private int    _upperWhich;
-    private double _upperValue;
+    private final int    _lowerWhich;
+    private final double _lowerValue;
+    private final int    _upperWhich;
+    private final double _upperValue;
     private double _asinhQValue;
-    private double _gammaValue;
-    private int    _algorithm= STRETCH_LINEAR;
-    private short  _rgbPreserveHue;
+    private final double _gammaValue;
+    private final int    _algorithm;
+    private final short  _rgbPreserveHue;
     private double _asinhStretch; // used with hue-preserving rgb only
-    private double _scalingK; /* scaling factor for flux, used with hue-preserving rgb only */
-    private int    _zscale_contrast;
-    private int    _zscale_samples; /* desired number of pixels in sample */
-    private int    _zscale_samples_per_line; /* optimal number of pixels per line */
-    private double _bias;
-    private double _contrast;
+    private final double _scalingK; /* scaling factor for flux, used with hue-preserving rgb only */
+    private final int    _zscale_contrast;
+    private final int    _zscale_samples; /* desired number of pixels in sample */
+    private final int    _zscale_samples_per_line; /* optimal number of pixels per line */
+    private final double _bias;
+    private final double _contrast;
 
     public RangeValues() {
         this( PERCENTAGE, 1.0, PERCENTAGE, 99.0, ASINH_Q, GAMMA, STRETCH_LINEAR, 25, 600, 120, RGB_PRESERVE_HUE_DEFAULT, ASINH_STRETCH_PARAM, SCALING_K);
@@ -134,18 +134,6 @@ public final class RangeValues implements Cloneable, Serializable {
 
     public boolean rgbPreserveHue() { return _rgbPreserveHue != 0; }
 
-    public byte computeBiasAndContrast(byte data) {
-        short value = data>=0?data:(short)(2*(Byte.MAX_VALUE+1)+data);
-        short offset = (short)(Byte.MAX_VALUE*(_bias-0.5)*-4);
-        short shift = (short)(Byte.MAX_VALUE*(1-_contrast));
-
-        value = (short)( offset+(value*_contrast)+shift );
-        if (value>(Byte.MAX_VALUE*2)) value = Byte.MAX_VALUE*2;
-        if (value<0) value = 0;
-
-        return (byte) value;
-    }
-
     public Object clone() {
         return new RangeValues( _lowerWhich, _lowerValue, _upperWhich,
 		_upperValue, _asinhQValue, _gammaValue, _algorithm,
@@ -158,7 +146,7 @@ public final class RangeValues implements Cloneable, Serializable {
         if (isEmpty(sIn)) return null;
 
         try {
-            String s[]= sIn.split(",");
+            String[] s= sIn.split(",");
             int i= 0;
             int    lowerWhich=              Integer.parseInt(s[i++]);
             double lowerValue=              parseDouble(s[i++]);
@@ -212,9 +200,7 @@ public final class RangeValues implements Cloneable, Serializable {
                 getScalingK();
     }
 
-    private static boolean isEmpty(String s) {
-        return s == null || s.trim().length() == 0;
-    }
+    private static boolean isEmpty(String s) { return s == null || s.trim().length() == 0; }
 
     public static double parseDouble(String s) throws NumberFormatException {
         return s.equals("NaN") ? Double.NaN : Double.parseDouble(s);

@@ -355,6 +355,7 @@ public class JsonTableUtil {
             applyIfNotEmpty(dt.getPrecision(), v -> c.put("precision", v));
             applyIfNotEmpty(dt.getUCD(), v -> c.put("UCD", v));
             applyIfNotEmpty(dt.getUType(), v -> c.put("utype", v));
+            applyIfNotEmpty(dt.getXType(), v -> c.put("xtype", v));
             applyIfNotEmpty(dt.getRef(), v -> c.put("ref", v));
             applyIfNotEmpty(dt.getMaxValue(), v -> c.put("maxValue", v));
             applyIfNotEmpty(dt.getMinValue(), v -> c.put("minValue", v));

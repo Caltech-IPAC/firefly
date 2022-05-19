@@ -1,6 +1,6 @@
 
 import {isArray} from 'lodash';
-import {isDefined} from '../../../util/WebUtil.js';
+import {isDefined} from '../../../../util/WebUtil.js';
 
 const MASK32 = 0xffffffff;
 

@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.visualize.plot;
 
+import edu.caltech.ipac.firefly.data.HasSizeOf;
 import edu.caltech.ipac.util.SUTDebug;
 
 import java.util.Arrays;
@@ -19,7 +20,7 @@ import java.util.Arrays;
  */
 
 
-public class Histogram {
+public class Histogram implements HasSizeOf {
     private static int HISTSIZ2 = 4096;  /* full size of hist array */
     private static int HISTSIZ = 2048;     /* half size of hist array */
 
@@ -385,7 +386,7 @@ public class Histogram {
         return tbl;
     }
 
+    public long getSizeOf() {
+        return hist.length*4L + 32L;
+    }
 }
-
-
-

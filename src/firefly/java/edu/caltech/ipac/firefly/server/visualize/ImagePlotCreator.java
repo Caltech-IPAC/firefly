@@ -246,7 +246,7 @@ public class ImagePlotCreator {
         if (tmpFR!=readInfo.fitsRead() && readInfo.workingFile()!=null) { // testing to see it the fits read got geomed when the band was added
             state.setImageIdx(0, band);
             retval = new ModFileWriter.GeomFileWriter(readInfo.workingFile(),0,tmpFR,readInfo.band(),false);
-            FitsCacher.addFitsReadToCache(retval.getTargetFile(), new FitsRead[]{tmpFR});
+            FitsCacher.addFitsReadToCache(retval.getTargetFile(), tmpFR);
         }
 
         stretchBand(band,state, plot,frGroup);

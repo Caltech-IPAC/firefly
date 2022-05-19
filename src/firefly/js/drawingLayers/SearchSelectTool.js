@@ -20,6 +20,9 @@ const ID= 'SEARCH_SELECT_TOOL';
 const TYPE_ID= 'SEARCH_SELECT_TOOL_TYPE';
 const factoryDef= makeFactoryDef(TYPE_ID,creator,getDrawData,getLayerChanges,onDetach,null);
 
+const RADIUS= 'RADIUS';
+const DIAMETER= 'DIAMETER'; // todo - no yet implemented
+const AREA= 'AREA'; // todo - no yet implemented
 
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
 
@@ -52,7 +55,7 @@ function onDetach(drawLayer,action) {
     });
 }
 
-function creator(initPayload, presetDefaults) {
+function creator({minSize=1/3600,maxSize=100, searchType=RADIUS}={}, presetDefaults) {
     const drawingDef= { ...makeDrawingDef('yellow'), symbol: DrawSymbol.DIAMOND, size: 8, ...presetDefaults };
     idCnt++;
     const pairs= {
@@ -66,6 +69,9 @@ function creator(initPayload, presetDefaults) {
         canUserDelete: false,
         canUserChangeColor: ColorChangeType.DYNAMIC,
         destroyWhenAllDetached : true,
+        minSize,
+        maxSize,
+        searchType,
     };
     return DrawLayer.makeDrawLayer(`${ID}-${idCnt}`,TYPE_ID, 'Search Select Tool', options, drawingDef, actionTypes, pairs);
 }
@@ -86,11 +92,13 @@ function getLayerChanges(drawLayer, action) {
 
 function drawSearchSelection(drawLayer, action, active, plotId) {
     const {plotIdAry}= action.payload;
+    const {minSize,maxSize}= drawLayer;
     const plot= primePlot(visRoot(),plotId||plotIdAry?.[0]);
     const wp= plot?.attributes[PlotAttribute.USER_SEARCH_WP];
     if (!wp) return [];
     const radius= plot.attributes[PlotAttribute.USER_SEARCH_RADIUS_DEG];
     const drawAry= [ PointDataObj.make(wp,7, DrawSymbol.EMP_SQUARE_X)];
-    radius && drawAry.push( {...ShapeDataObj.makeCircleWithRadius(wp, radius*3600,UnitType.ARCSEC), lineWidth:3} );
+    const drawRadius= radius<=maxSize ? (radius >= minSize ? radius : minSize) : maxSize;
+    radius && drawAry.push( {...ShapeDataObj.makeCircleWithRadius(wp, drawRadius*3600,UnitType.ARCSEC), lineWidth:3} );
     return drawAry;
 }

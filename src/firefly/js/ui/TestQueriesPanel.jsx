@@ -15,17 +15,20 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
+import CompleteButton from './CompleteButton.jsx';
+import {
+    convertRequest, DynamicFieldGroupPanel, DynamicForm,
+    DynLayoutPanelTypes, makeAreaDef, makeEnumDef, makeFloatDef, makeIntDef, makeTargetDef, makeUnknownDef
+} from './DynamicUISearchPanel.jsx';
 
 import {FormPanel} from './FormPanel.jsx';
 import {FieldGroup} from '../ui/FieldGroup.jsx';
 import {ValidationField} from '../ui/ValidationField.jsx';
 import {IbeSpacialType} from './IbeSpacialType.jsx';
 import {TargetPanel} from '../ui/TargetPanel.jsx';
-import {InputGroup} from '../ui/InputGroup.jsx';
 import {ServerParams} from '../data/ServerParams.js';
 import {showInfoPopup} from './PopupUtil.jsx';
 
-import Validate from '../util/Validate.js';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 
 import FieldGroupUtils  from '../fieldGroup/FieldGroupUtils.js';
@@ -33,12 +36,55 @@ import {dispatchTableSearch} from '../tables/TablesCntlr.js';
 import {FieldGroupTabs, Tab} from './panel/TabPanel.jsx';
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
-import {parseWorldPt} from '../visualize/Point.js';
+import {makeWorldPt, parseWorldPt} from '../visualize/Point.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {getDS9Region} from '../rpc/PlotServicesJson.js';
 import {RegionFactory} from '../visualize/region/RegionFactory.js';
 import {NaifidPanel} from './NaifidPanel';
 
+const dynamic1Params= [
+    makeTargetDef(
+        {hipsUrl:'ivo://CDS/P/DSS2/color', centerPt:makeWorldPt(10,10), hipsFOVInDeg:10, raKey:'ra', decKey:'dec'}),
+    makeAreaDef({key:'size', minValue:1, maxValue:10, initValue:2, desc:'Area to Search'}),
+    makeIntDef({key:'int1', minValue:10, maxValue:1000, desc:'field #1', units: 'um', tooltip:'tooltip for field1',initValue:25 }),
+    makeFloatDef({key:'float2', minValue:.1, maxValue:8.88, precision:3, initValue:3, desc:'float #3', tooltip:'tooltip for field1'}),
+    makeEnumDef({key:'enum3', tooltip:'tip for enum 3', initValue:'joe', desc:'Choose',
+        enumValues: [
+            {label:'Samuel', value:'sam'},
+            {label:'Joe', value:'joe'},
+            {label:'Mary', value:'mary'},
+            {label:'Jane', value:'jane'},
+            {label:'All', value:'all'}
+        ]}),
+    makeEnumDef({key:'enum5', tooltip:'for thing', initValue:'paper', desc:'Choose thing',
+        enumValues: [
+            {label:'Rock', value:'rock'},
+            {label:'Paper', value:'paper'},
+            {label:'Scissors', value:'scissors'},
+            {label:'Dynamite', value:'dynamite'},
+            {label:'Other', value:'other'},
+        ]}),
+];
+
+const dynamic2Params= [
+    makeEnumDef({key:'enum3', tooltip:'tip for enum 3', initValue:'joe', desc:'Choose', units:'name',
+        enumValues: [
+            {label:'Samuel', value:'sam'},
+            {label:'Joe', value:'joe'},
+            {label:'Mary', value:'mary'},
+            {label:'Jane', value:'jane'},
+            {label:'All', value:'all'}
+        ]}),
+    makeEnumDef({key:'enum5', tooltip:'for thing', initValue:'paper', desc:'Choose thing',
+        enumValues: [
+            {label:'Rock', value:'rock'},
+            {label:'Paper', value:'paper'},
+            {label:'Scissors', value:'scissors'},
+            {label:'Dynamite', value:'dynamite'},
+            {label:'Other', value:'other'},
+        ]}),
+    makeUnknownDef({key:'u6', tooltip:'a string of some sort', initValue:'stuff', desc:'Enter stuff'}),
+];
 
 export class TestQueriesPanel extends PureComponent {
 
@@ -89,6 +135,15 @@ export class TestQueriesPanel extends PureComponent {
                             <Tab name='NAIF-ID' id='naifid'>
                                 <div>{renderNaifid(fields)}</div>
                             </Tab>
+                            <Tab name='Dynamic 1' id='dynamic1'>
+                                {makeDynamic1()}
+                            </Tab>
+                            <Tab name='Dynamic 2' id='dynamic2'>
+                                {makeDynamic2()}
+                            </Tab>
+                            <Tab name='Dyn Search Panel' id='dsp'>
+                                {makeDynamicForm()}
+                            </Tab>
                         </FieldGroupTabs>
 
                     </FieldGroup>
@@ -123,6 +178,46 @@ function renderNaifid(fields){
            />
 
         </div>
+    );
+}
+
+
+function makeDynamic1() {
+
+    return (
+        <DynLayoutPanelTypes.Simple fieldDefAry={dynamic1Params} style={{margin:3, width:'100%'}}/>
+    );
+}
+
+function makeDynamic2() {
+    return (
+        <div>
+            <DynamicFieldGroupPanel
+                groupKey={'simpledyngroup'}
+                DynLayoutPanel={DynLayoutPanelTypes.Simple}
+                fieldDefAry={dynamic2Params}
+                style={{margin:3, width:'100%'}}/>
+            <CompleteButton groupKey={'simpledyngroup'}
+                            style={{margin: 3}}
+                            onSuccess={(request) => showDymResult(convertRequest(request,dynamic2Params ))}/>
+        </div>
+    );
+}
+
+
+function makeDynamicForm() {
+
+    return (
+        <DynamicForm groupKey='dform'
+                     fieldDefAry={dynamic1Params}
+                     style={{width: 'calc(100% - 5px)', display: 'flex', flexDirection: 'column'}}
+                     DynLayoutPanel={DynLayoutPanelTypes.Grid}
+                     onSubmit={(r) => {
+                         showDymResult(r);
+                         console.log(r);
+                     }}
+        />
+
     );
 }
 
@@ -350,12 +445,24 @@ function render2MassSearch(fields) {
 
 
 
+function showDymResult(convertedRequest) {
+    console.log(convertedRequest);
+    const result= (
+        <div style={{padding:'5px'}}>
+            {Object.entries(convertedRequest).map( ([k,v]) => ( <div key={k}> {k} = {v} </div> )) }
+        </div>
+    );
+    showInfoPopup(result, 'Results' );
+
+
+}
 
 
 function onSearchSubmit(request) {
     console.log(request);
     const wp = parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);
-    if (!wp && request.Tabs !== 'hips') {
+    const usesTarget= ['wiseImage', '2massImage','atlasImage', 'loadRegion'];
+    if (!wp && usesTarget.includes(request.Tabs)) {
         showInfoPopup('Target is required');
         return;
     }
@@ -370,8 +477,11 @@ function onSearchSubmit(request) {
     else if (request.Tabs === 'loadRegion') {
         doRegionLoad(request);
     }
-    else {
-        console.log('request no supported');
+    else if (request.Tabs === 'dynamic1') {
+        showDymResult(convertRequest(request, dynamic1Params));
+    }
+    else if (request.Tabs === 'dynamic2') {
+        showDymResult( convertRequest(request,dynamic2Params ));
     }
 }
 

@@ -4,7 +4,6 @@
 
 import {get,isFunction,hasIn,isBoolean, isEmpty} from 'lodash';
 import {flux} from '../core/ReduxFlux.js';
-import {clone} from '../util/WebUtil.js';
 import {smartMerge} from '../tables/TableUtil.js';
 import {FIELD_GROUP_KEY,dispatchValueChange,dispatchMultiValueChange} from './FieldGroupCntlr.js';
 import {Logger} from '../util/Logger.js';
@@ -39,7 +38,7 @@ function validateSingle(groupKey, includeUnmounted) {
             if (typeof newValue=== 'object' && // check to see if return is an object that includes {value: any} and not a promise
                 !newValue.then &&
                 newValue.hasOwnProperty('value') ) {
-                dispatchValueChange(Object.assign({valid:true,fieldKey:key,groupKey},newValue));
+                dispatchValueChange({valid:true,fieldKey:key,groupKey,...newValue});
             }
             else {
                 dispatchValueChange({fieldKey:key,groupKey,valid:true,value:newValue});
@@ -57,9 +56,9 @@ function validateSingle(groupKey, includeUnmounted) {
         .filter( (f) => !isFunction(f.value) && !hasIn(f.value,'then'))
         .map( (f) => {
             if (!f.nullAllowed && !f.value && f.valid && !isBoolean(f.value) && f.mounted) {
-                f= clone(f, {message: 'Value is required', valid: false});
+                f= {...f, message: 'Value is required', valid: false};
             }
-            f= (f.validator && f.valid) ? clone(f, f.validator(f.value)) :f;
+            f= (f.validator && f.valid) ? {...f, ...f.validator(f.value)} : f;
             return f;
         });
 
@@ -176,8 +175,6 @@ export function revalidateFields(fields) {
     Object.keys(fields).forEach( (key) => {
         const f= fields[key];
         if (f.validator && !isFunction(f.value) && f.value && !f.value.then) {
-            // const {valid,message} = f.validator(f.value);
-            // newfields[key]= (valid!==f.valid || message!==f.message) ? clone(f,{valid,message}) : f;
             newfields[key]= smartMerge(f,f.validator(f.value));
             if (newfields[key] !== f) hasChanged = true;
         } else {

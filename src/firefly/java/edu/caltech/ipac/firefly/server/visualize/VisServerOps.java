@@ -138,6 +138,7 @@ public class VisServerOps {
 
     public static double[] getDataAry(String desc, PlotState state, Extractor extractor) {
         try {
+            CtxControl.confirmFiles(state);
             PlotServUtils.statsLog(desc);
             File fitsFile= ServerContext.convertToFile(state.getWorkingFitsFileStr(NO_BAND));
             return extractor.getData(fitsFile);
@@ -166,6 +167,13 @@ public class VisServerOps {
 
         // 1. handle primary plot
         var faHList = Arrays.stream(primState.getBands()).map(primState::getFileAndHeaderInfo).toList();
+
+        try {
+            CtxControl.confirmFiles(stateAry[0]);
+        } catch (FailedRequestException e) {
+            return faHList.stream().map( f -> Float.NaN+"").toList();
+        }
+
         var baseList= getFileFlux(faHList, ipt);
         if (stateAry.length==1) return baseList;
 
@@ -187,8 +195,7 @@ public class VisServerOps {
     public static byte[] getByteStretchArray(PlotState state, int tileSize, boolean mask, long maskBits, CompressType ct) {
         DirectStretchUtils.StretchDataInfo data;
         try {
-            var ctx = CtxControl.prepare(state);
-            ActiveFitsReadGroup frGroup= ctx.fitsReadGroup();
+            ActiveFitsReadGroup frGroup= CtxControl.prepare(state);
             Cache memCache= CacheManager.getCache(Cache.TYPE_VIS_SHARED_MEM);
             CacheKey stretchDataKey= new StringKey(state.getContextString()+"byte-data");
             data= (StretchDataInfo)memCache.get(stretchDataKey);
@@ -206,6 +213,7 @@ public class VisServerOps {
             PlotServUtils.statsLog("byteAry",
                     "total-MB", (float)data.findMostCompressAry(ct).length / StringUtils.MEG,
                     "Type", (state.isThreeColor() ? "3 Color" : "Standard") +" - "+ ct + fromCache);
+            CtxControl.refreshCache(state);
             return data.findMostCompressAry(ct);
         } catch (Exception e) {
             return new byte[] {};
@@ -215,7 +223,7 @@ public class VisServerOps {
     public static WebPlotResult crop(PlotState[] stateAry, ImagePt c1, ImagePt c2, boolean cropMultiAll) {
         List<WebPlotResult> resultsList= Arrays.stream(stateAry).map((s) -> crop(s, c1, c2, cropMultiAll)).toList();
         boolean success= resultsList.stream().filter(r -> !r.success()).toList().size()==0;
-        WebPlotResult result = WebPlotResult.make(WebPlotResult.RESULT_ARY, resultsList.toArray());
+        WebPlotResult result = WebPlotResult.make(WebPlotResult.RESULT_ARY, resultsList.toArray(new WebPlotResult[0]));
         return success ? result : resultsList.get(0);
     }
 
@@ -327,10 +335,10 @@ public class VisServerOps {
         try {
             counters.incrementVis("Area Stat");
             HashMap<Band, HashMap<Metrics, Metric>> metricsMap = new HashMap<>();
-            ActiveFitsReadGroup frGroup= CtxControl.prepare(state).fitsReadGroup();
-            for (Band band : state.getBands()) {
-                metricsMap.put(band,
-                        AreaStatisticsUtil.getAreaStatistics(frGroup, areaShape,rotateAngle,band,pt1,pt2,pt3,pt4));
+            ActiveFitsReadGroup frGroup= CtxControl.prepare(state);
+            for (Band b: state.getBands()) {
+                metricsMap.put(b,
+                        AreaStatisticsUtil.getAreaStatistics(frGroup, areaShape,rotateAngle,b,pt1,pt2,pt3,pt4));
             }
             return WebPlotResult.make(WebPlotResult.BAND_INFO, new BandInfo(metricsMap));
         } catch (Exception e) {
@@ -341,7 +349,7 @@ public class VisServerOps {
     public static WebPlotResult getColorHistogram(PlotState state, Band band) {
         try {
             counters.incrementVis("getColorHistogram");
-            FitsRead fr=  CtxControl.prepare(state).fitsReadGroup().getFitsRead(band);
+            FitsRead fr= CtxControl.prepare(state).getFitsRead(band);
             Histogram hist = fr.getHistogram();
             return WebPlotResult.make(
                     WebPlotResult.DATA_HISTOGRAM, hist.getHistogramArray(),

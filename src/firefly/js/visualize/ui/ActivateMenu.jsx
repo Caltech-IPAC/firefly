@@ -3,33 +3,39 @@
  */
 
 import React, {memo} from 'react';
-import PropTypes, {string,func, object, arrayOf} from 'prop-types';
-import {FieldGroup} from '../../ui/FieldGroup.jsx';
+import {string,func, object, arrayOf} from 'prop-types';
+import { convertRequest, DynamicFieldGroupPanel, DynLayoutPanelTypes,
+    makeCircleDef, makeEnumDef, makeFloatDef, makeIntDef, makeUnknownDef } from '../../ui/DynamicUISearchPanel.jsx';
 import {CompleteButton} from '../../ui/CompleteButton.jsx';
-import {ValidationField} from '../../ui/ValidationField.jsx';
-import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
+import {showInfoPopup} from '../../ui/PopupUtil.jsx';
+import {splitByWhiteSpace} from '../../util/WebUtil.js';
+import {makeWorldPt} from '../Point.js';
 
 
 const GROUP_KEY= 'ActivateMenu';
 
 const titleStyle= {width: '100%', textAlign:'center', padding:'10px 0 5px 0', fontSize:'larger', fontWeight:'bold'};
 
-export const ActivateMenu= memo(({ serDefParams, setSearchParams, title, makeDropDown}) => {
+
+export const ActivateMenu= memo(({ serviceDefRef='none', serDefParams, setSearchParams, title, makeDropDown}) => {
 
 
     const loadParams= (request) => {
         setSearchParams(request);
     };
-
+    const fieldDefAry= makeFieldDefs(serDefParams);
     return (
-        <div>
+        <div key={serviceDefRef}>
             {makeDropDown?.()}
             <div style={{padding: '5px 5px 5px 5px'}}>
                 <div style= {titleStyle}> {title} </div>
-                <FieldGroup groupKey={GROUP_KEY} keepState={false}>
-                    {makeActivateInput(serDefParams)}
-                </FieldGroup>
-                <CompleteButton style={{padding: '20px 0 0 0'}} onSuccess={loadParams} text={'Submit'} groupKey={GROUP_KEY} />
+                <DynamicFieldGroupPanel groupKey={GROUP_KEY} keepState={false}
+                                        DynLayoutPanel={DynLayoutPanelTypes.Simple}
+                                        fieldDefAry={fieldDefAry} />
+                <CompleteButton style={{padding: '20px 0 0 0'}}
+                                onSuccess={(r) => loadParams(convertRequest(r,fieldDefAry))}
+                                onFail={() => showInfoPopup('Some field are not valid')}
+                                text={'Submit'} groupKey={GROUP_KEY} />
             </div>
         </div>
     );
@@ -38,62 +44,85 @@ export const ActivateMenu= memo(({ serDefParams, setSearchParams, title, makeDro
 ActivateMenu.propTypes= {
     serDefParams: arrayOf(object),
     title: string,
+    serviceDefRef: string,
     setSearchParams: func,
     makeDropDown: func
 };
 
+const isFloatingType= (type) => (type==='float' || type==='double');
 
-/**
- * @param {ServiceDescriptorInputParam} serviceDefParams
- * @return {*}
- */
+const isCircleField= ({type,arraySize,xtype='',units=''}) =>
+    (isFloatingType(type) && Number(arraySize)===3 && xtype.toLowerCase()==='circle' && units.toLowerCase()==='deg');
 
-function makeActivateInput(serDefParams) {
+function getCircleValues(s) {
+    const strAry= splitByWhiteSpace(s);
+    if (strAry.length!==3 || strAry.find( (s) => isNaN(Number(s)))) return [];
+    return strAry.map( (s) => Number(s));
+}
+
+const getCircleInfo = ({minValue='' ,maxValue='', value=''}) => {
+    const matchStr=[value,minValue,maxValue].find( (s) => getCircleValues(s).length===3);
+    if (!matchStr) return {};
+    const valueAry= getCircleValues(matchStr);
+    if (valueAry?.length!==3) return {};
+    const minNum= getCircleValues(minValue)[2];
+    const maxNum= getCircleValues(maxValue)[2];
+    return {wpt:makeWorldPt(valueAry[0],valueAry[1]), radius: valueAry[2], minValue:minNum, maxValue:maxNum};
+}
+
+const isNumberField= ({type,minValue,maxValue,value}) =>
+    (type==='int' || isFloatingType(type)) ||
+    (value || minValue || maxValue) &&
+    (!isNaN(Number(value)) || !isNaN(Number(minValue)) || !isNaN(Number(maxValue)) );
+
+
+
+function makeFieldDefs(serDefParams) {
     return serDefParams
         .filter( (sdP) => !sdP.ref )
         .map( (sdP) => {
-            const {optionalParam,minValue, maxValue,value, name,options,desc:tooltip} = sdP;
+            const {type, optionalParam:nullAllowed, value='', name,options,desc:tooltip, units=''} = sdP;
 
             if (options) {
                 const fieldOps = options.split(',').map( (op) => ({label:op,value:op}));
-                return (
-                    <div key={name} style={{paddingTop:16}}>
-                        <RadioGroupInputField
-                            key={name}
-                            initialState= {{
-                                value: fieldOps[0].value,
-                                tooltip,
-                                label: name
-                            }}
-                            options={fieldOps} alignment='vertical' fieldKey={name} groupKey={GROUP_KEY}/>
-                    </div>
-                );
+                return makeEnumDef({key:name, desc:name, tooltip, units, initValue:fieldOps[0].value, enumValues:fieldOps});
             }
             else {
-                return (
-                    <div key={name} style={{paddingTop:8}}>
-                        <ValidationField
-                            style={{width: 300}}
-                            labelStyle={{textAlign:'right'}}
-                            initialState= {{
-                                value: value || '',
-                                tooltip,
-                                validator: (s) => {
-                                    return s||optionalParam ? { valid : true, message : '' } :
-                                        { valid : false, message : 'Value is Required' };
-                                }
-                            }}
-                            fieldKey={name}
-                            groupKey={GROUP_KEY}
-                            labelWidth={100}
-                            label={`${name}${optionalParam?(' (optional)'):''}: `}
-                        />
-                        {minValue && <div style={{paddingTop:5, textAlign:'center'}}>{`Min Value: ${minValue}`}</div>}
-                        {maxValue && <div style={{paddingTop:5, textAlign:'center'}}>{`Max Value: ${maxValue}`}</div>}
-                    </div>
-                );
+                if (isCircleField(sdP)) {
+                    const {wpt:centerPt,radius=1,minValue,maxValue}= getCircleInfo(sdP);
+                    return makeCircleDef({key:name, desc:name, tooltip, units,
+                        targetKey:'circleTarget', sizeKey:'circleSize',
+                        initValue:radius,
+                        centerPt, minValue, maxValue,
+                        hipsFOVInDeg:radius*2+radius*.2 });
+                }
+                else if (isNumberField(sdP)) {
+                        const minNum= Number(sdP.minValue);
+                        const maxNum= Number(sdP.maxValue);
+                        const vNum= Number(value);
+                        if (type==='int') {
+                            return makeIntDef({key:name, desc:name, tooltip, units, precision:4, nullAllowed,
+                                initValue:!isNaN(vNum)?vNum : undefined,
+                                minValue:!isNaN(minNum)?minNum : undefined,
+                                maxValue:!isNaN(maxNum)?maxNum : undefined,
+                            });
+                        }
+                        else if (isFloatingType(type)) {
+                            return makeFloatDef({key:name, desc:name, tooltip, units, precision:4, nullAllowed,
+                                initValue:!isNaN(vNum)?vNum : undefined,
+                                minValue:!isNaN(minNum)?minNum : undefined,
+                                maxValue:!isNaN(maxNum)?maxNum : undefined,
+                            });
+                        }
+                        else {
+                            return makeUnknownDef({key:name, desc:name, tooltip, units, initValue:value });
+                        }
+                }
+                else {
+                    return makeUnknownDef({key:name, desc:name, tooltip, units, initValue:value??'' });
+                }
             }
-    });
-
+        });
 }
+
 

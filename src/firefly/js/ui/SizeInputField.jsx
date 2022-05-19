@@ -207,7 +207,17 @@ SizeInputFieldView.defaultProps = {
 
 export const SizeInputFields = memo( (props) => {
 
-    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+    const {viewProps, fireValueChange}=  useFieldGroupConnector(
+        {
+            ...props,
+            initialState:{...props.initialState,
+                validator: (value) => {
+                    const valid = isSizeValid(value, props.initialState.min, props.initialState.max);
+                    return {valid, message: valid ? '' : 'Value out of range'};
+                }
+            }
+        }
+);
     const {unit, valid, value, displayValue} = updateSizeInfo(viewProps);
     return (<SizeInputFieldView
              {...{...viewProps, unit, valid, value, displayValue}}

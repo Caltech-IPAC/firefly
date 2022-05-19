@@ -27,9 +27,8 @@ function buildViewProps(fieldState,props,fieldKey,groupKey,value='') {
         return obj;
     },{} );
 
-    const tmpProps= Object.assign({ message, valid, visible, value, displayValue,
-            tooltip, validator, key:`${groupKey}-${fieldKey}`},
-        rest, propsClean);
+    const tmpProps= { message, valid, visible, value, displayValue,
+            tooltip, validator, key:`${groupKey}-${fieldKey}`, ...rest, ...propsClean};
 
     return omit(tmpProps, STORE_OMIT_LIST);
 }

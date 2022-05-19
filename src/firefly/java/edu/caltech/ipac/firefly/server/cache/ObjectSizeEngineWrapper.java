@@ -1,10 +1,9 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
 package edu.caltech.ipac.firefly.server.cache;
 
-
+import edu.caltech.ipac.firefly.data.HasSizeOf;
 import net.sf.ehcache.pool.Size;
 import net.sf.ehcache.pool.SizeOfEngine;
 import net.sf.ehcache.pool.impl.DefaultSizeOfEngine;
@@ -27,21 +26,11 @@ public class ObjectSizeEngineWrapper extends DefaultSizeOfEngine {
 
     @Override
     public SizeOfEngine copyWith(int maxDepth, boolean abortWhenMaxDepthExceeded) {
-//        return super.copyWith(maxDepth, abortWhenMaxDepthExceeded);
         return new ObjectSizeEngineWrapper(maxDepth, abortWhenMaxDepthExceeded);
     }
 
     @Override
     public Size sizeOf(Object key, Object value, Object container) {
-        return (value instanceof BluffSize) ?
-                 new Size(((BluffSize)value).getSize(), true) :
-                 super.sizeOf(key,value,container);
-    }
-
-    static public class BluffSize {
-        private long size;
-        public BluffSize(long size) {this.size= size;}
-        public long getSize() { return size; }
+        return (value instanceof HasSizeOf h) ? new Size(h.getSizeOf(), true) : super.sizeOf(key,value,container);
     }
 }
-

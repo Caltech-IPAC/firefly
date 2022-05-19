@@ -272,7 +272,7 @@ public class ImageHeaderTest  extends ConfigTest {
         HashMap<String, Double> expectedImagePtMap = new HashMap<>();
         String[] keys = (String[])  obj.keySet().toArray(new String[0]);
         for (int i=0; i<keys.length; i++){
-            expectedImagePtMap.put(keys[i], new Double((Double) obj.get(keys[i])) );
+            expectedImagePtMap.put(keys[i], (Double) obj.get(keys[i]) );
         }
         obj = (JSONObject) jsonObject.get("expectedWorldPt");
 

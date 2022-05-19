@@ -16,7 +16,7 @@ function fireEvent(ev,transform, plotId,mouseState, eventCallback, doPreventDefa
     const nativeEvent= ev.nativeEvent ? ev.nativeEvent : ev;
     const {screenX, screenY, offsetX, offsetY}= nativeEvent;
     const trans= Matrix.from(transform).inverse();
-    const tmpScreenPt= trans.applyToPoint(offsetX,offsetY);
+    const tmpScreenPt= trans.applyToPoint(offsetX-window.scrollX,offsetY-window.scrollY);
     const spt= makeScreenPt(tmpScreenPt.x,tmpScreenPt.y);
     eventCallback(plotId,mouseState,spt,screenX,screenY,nativeEvent);
 }
@@ -27,8 +27,8 @@ function fireDocEvent(element, nativeEv,transform, plotId,mouseState, eventCallb
     if (!element) return;
     const {screenX, screenY, pageX:x, pageY:y}= nativeEv;
     const {left, top}= element.getBoundingClientRect();
-    const compOffX= x-left;
-    const compOffY= y-top;
+    const compOffX= x-left-window.scrollX;
+    const compOffY= y-top-window.scrollY;
     const trans= Matrix.from(transform).inverse();
     const tmpScreenPt= trans.applyToPoint(compOffX, compOffY);
     const spt= makeScreenPt(tmpScreenPt.x,tmpScreenPt.y);

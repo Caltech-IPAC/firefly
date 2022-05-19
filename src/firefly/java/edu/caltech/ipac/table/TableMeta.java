@@ -43,6 +43,7 @@ public class TableMeta implements Serializable {
     public static final String PRECISION_TAG = "col.@.precision";
     public static final String UCD_TAG = "col.@.UCD";
     public static final String UTYPE_TAG = "col.@.utype";
+    public static final String XTYPE_TAG = "col.@.xtype";
     public static final String REF_TAG = "col.@.ref";
     public static final String MIN_VALUE_TAG = "col.@.minValue";
     public static final String MAX_VALUE_TAG = "col.@.maxValue";
@@ -64,6 +65,7 @@ public class TableMeta implements Serializable {
     public static final String REF = "ref";
     public static final String UCD = "ucd";
     public static final String UTYPE = "utype";
+    public static final String XTYPE = "xtype";
     public static final String DESC = "desc";
     public static final String NAME = "name";
 

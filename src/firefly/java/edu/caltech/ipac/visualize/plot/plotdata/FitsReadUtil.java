@@ -147,22 +147,7 @@ public class FitsReadUtil {
         }
     }
 
-    public static class UncompressFitsInfo {
-        private final Fits fits;
-        private final File file;
-        private final BasicHDU<?>[] HDUs;
-
-        public UncompressFitsInfo(File file, BasicHDU<?>[] HDUs, Fits fits) {
-            this.fits= fits;
-            this.file = file;
-            this.HDUs = HDUs;
-        }
-
-        public File getFile() { return file; }
-        public Fits getFits() { return fits; }
-        public BasicHDU<?>[] getHDUs() { return HDUs; }
-    }
-
+    public record UncompressFitsInfo(File file, BasicHDU<?>[] HDUs, Fits fits) {}
 
     public static UncompressFitsInfo createdUncompressImageHDUFile(BasicHDU<?>[] HDUs, File originalFile)
             throws FitsException, IOException {

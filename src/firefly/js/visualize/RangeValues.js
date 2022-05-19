@@ -10,7 +10,7 @@ export const ABSOLUTE_STR   = 'absolute';
 export const SIGMA_STR      = 'sigma';
 
 export const PERCENTAGE = 88;
-export const MINMAX     = 89;
+// export const MINMAX     = 89;  // obsolete
 export const ABSOLUTE   = 90;
 export const ZSCALE     = 91;
 export const SIGMA      = 92;

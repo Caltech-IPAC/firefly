@@ -1,4 +1,3 @@
-import {get} from 'lodash';
 import {FileAnalysisType} from '../data/FileAnalysis';
 import {
     createGridImagesActivate,
@@ -168,14 +167,13 @@ const parseAnalysis= (serverCacheFileKey, analysisResult) =>
                             serverCacheFileKey && analysisResult && JSON.parse(analysisResult);
 
 
-function doActivateResult(result, menu,menuKey,dpId, serDefParams) {
+function doActivateResult(result, menu,menuKey,dpId, serDefParams, analysisActivateFunc) {
+    const modifiedResult= {...result, menu, menuKey, serDefParams, analysisActivateFunc};
     if (result.displayType===DPtypes.MESSAGE && !result.singleDownload) {
-        result.menu= menu;
-        result.resetMenuKey= menuKey;
-        dispatchUpdateDataProducts(dpId, result);
+        dispatchUpdateDataProducts(dpId, modifiedResult);
     }
     else if (result.displayType===DPtypes.MESSAGE) {
-        dispatchUpdateDataProducts(dpId, result);
+        dispatchUpdateDataProducts(dpId, modifiedResult);
     }
     else if (result.displayType===DPtypes.SEND_TO_BROWSER) {
         window.open(result.url, '_blank');
@@ -194,11 +192,14 @@ function doActivateResult(result, menu,menuKey,dpId, serDefParams) {
  * @param {WebPlotRequest} obj.request - used for image or just downloading files
  * @param {ActivateParams} obj.activateParams
  * @param {String} obj.dataTypeHint  stuff like 'spectrum', 'image', 'cube', etc
- * @param obj.menu
- * @param obj.menuKey
+ * @param {Array.<Object>} obj.menu
+ * @param {String} obj.menuKey
  * @param obj.activateResult
  * @param obj.dispatchWorkingMessage
+ * @param obj.serDefParams
+ * @param obj.userInputParams
  * @param {Function} obj.analysisActivateFunc
+ * @param {string} obj.originalTitle
  * @return {Promise.<DataProductsDisplayType>}
  */
 async function doUploadAndAnalysis({
@@ -234,7 +235,7 @@ async function doUploadAndAnalysis({
         const result= processAnalysisResult({ table, row, request, activateParams, serverCacheFileKey,
                                               fileAnalysis, dataTypeHint, analysisActivateFunc, serDefParams,
                                               originalTitle});
-        activateResult && doActivateResult(result, menu,menuKey,dpId, serDefParams);
+        activateResult && doActivateResult(result, menu,menuKey,dpId, serDefParams, analysisActivateFunc);
         return result;
     };
 
@@ -285,7 +286,7 @@ async function doUploadAndAnalysis({
     catch (e) {
         url && dispatchCancelActionWatcher(url);
         console.log('Call to Upload failed', e);
-        dispatchUpdateDataProducts(dpId, makeErrorResult(e.message));
+        dispatchUpdateDataProducts(dpId, {...makeErrorResult(e.message),menu, serDefParams, analysisActivateFunc});
     }
 }
 
@@ -363,11 +364,13 @@ function makeAllImageEntry(request, path, parts, imageViewerId,  tbl_id, row, im
  * @param {FileAnalysisReport} obj.fileAnalysis results of the file analysis server call
  * @param {String} obj.dataTypeHint  stuff like 'spectrum', 'image', 'cube', etc
  * @param {Function} obj.analysisActivateFunc
+ * @param obj.serDefParams
+ * @param {String} obj.originalTitle
  * @return {DataProductsDisplayType}
  */
 function processAnalysisResult({table, row, request, activateParams,
                                    serverCacheFileKey, fileAnalysis, dataTypeHint,
-                                   analysisActivateFunc, serDefParams, originalTitle}) {
+                                  analysisActivateFunc, serDefParams, originalTitle}) {
 
 
     const {imageViewerId, dpId}= activateParams;

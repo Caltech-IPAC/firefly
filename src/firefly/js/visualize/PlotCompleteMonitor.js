@@ -72,7 +72,7 @@ function onViewDimDefinedWatcher(action, cancelSelf, {plotId, resolve, startTime
     const pv = getPlotViewById(visRoot(), plotId);
     let resolvedViewDim;
     if ((payload.plotId !== plotId && type===ImagePlotCntlr.DELETE_PLOT_VIEW) || !pv) resolvedViewDim= {width:0,height:0};
-    if (pv.viewDim.width>0 && pv.viewDim.height>0) resolvedViewDim= pv.viewDim;
+    if (pv?.viewDim?.width>0 && pv?.viewDim?.height>0) resolvedViewDim= pv.viewDim;
     if (Date.now() > (startTime +10_000)) resolvedViewDim= {width:0,height:0};
     if (resolvedViewDim) {
         resolve(resolvedViewDim);
