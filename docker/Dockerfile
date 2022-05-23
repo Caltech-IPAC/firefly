@@ -92,7 +92,7 @@ RUN apt-get update && apt-get install -y \
 #          - Set the available memory on the command line with --memory="4g"
 #          - You can change MAX_RAM_PERCENT on the command line with -e "MAX_RAM_PERCENT=80"
 #          - also- User name and password to use admin
-#          - FIREFLY_OPTS could be used to pass any properties
+#          - PROPS could be used to pass any properties
 
 ENV INIT_RAM_PERCENT=10\
     MAX_RAM_PERCENT=100\
@@ -101,14 +101,14 @@ ENV INIT_RAM_PERCENT=10\
     ADMIN_PASSWORD='' \
     DEBUG=false \
     CLEANUP_INTERVAL=12h \
-    FIREFLY_OPTS=''
+    PROPS=''
 
 # ----------------------------------------------------------
 # ----------------------------------------------------------
 # Overide the following from the command line:
 #          INIT_RAM_PERCENT, MAX_RAM_PERCENT,
 #          ADMIN_USER, ADMIN_PASSWORD,
-#          DEBUG, FIREFLY_OPTS
+#          DEBUG, PROPS
 # ----------------------------------------------------------
 # ----------------------------------------------------------
 

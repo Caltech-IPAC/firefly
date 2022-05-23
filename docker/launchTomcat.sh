@@ -25,7 +25,7 @@ echo "        Clean internal(eg- 720m, 5h, 3d) CLEANUP_INTERVAL           ${CLEA
 echo
 echo "Advanced environment variables:"
 echo "        Run tomcat with debug            DEBUG                      ${DEBUG}"
-echo "        Extra firefly properties(*)      FIREFLY_OPTS               ${FIREFLY_OPTS}"
+echo "        Extra firefly properties(*)      PROPS                      ${PROPS}"
 echo " (*) key=value pairs separated by spaces"
 echo
 echo "Ports: "
@@ -70,7 +70,8 @@ fi
 
 #---------   CATALINA_OPTS must be exported for catalina.sh to pick them up
 export CATALINA_OPTS="\
-  -XX:InitialRAMPercentage=${INIT_RAM_PERCENT} -XX:MaxRAMPercentage=${MAX_RAM_PERCENT} \
+  -XX:InitialRAMPercentage=${INIT_RAM_PERCENT} \
+  -XX:MaxRAMPercentage=${MAX_RAM_PERCENT} \
   -DADMIN_USER=${ADMIN_USER} \
   -DADMIN_PASSWORD=${ADMIN_PASSWORD} \
   -Dhost.name=${HOSTNAME} \
@@ -84,19 +85,19 @@ export CATALINA_OPTS="\
   -Dvisualize.fits.search.path=${VIS_PATH} \
 	"
 
-#----- eval FIREFLY_OPTS if exists.  key-value pairs are separated by spaces. therefore, it does not support values with spaces in it.
-if [ ! -z "${FIREFLY_OPTS}" ]; then
-  jvmProps=`sed -r 's/-D//g;s/( )+/ -D/g;s/^/-D/' <<< $FIREFLY_OPTS`     # remove -D if exists(backward compatible), then add -D to every pair
+#----- eval PROPS if exists.  key-value pairs are separated by spaces. therefore, it does not support values with spaces in it.
+if [ ! -z "${PROPS}" ]; then
+  jvmProps=`sed -r 's/( )+/ -D/g;s/^/-D/' <<< $PROPS`     # add -D to every key=val pair
   export CATALINA_OPTS="${CATALINA_OPTS} ${jvmProps}"
 fi
-# envVar with names matching 'FIREFLY_OPTS_*'.
+# envVar with names matching 'PROPS_*'.
 # A more advanced internal scheme to support secrets, quotes, and spaces in values
 # Use '__' in key, to sub for '.' since '.' is not allowed in envVar.
-for var in "${!FIREFLY_OPTS_@}"; do
-  prop=`sed 's/FIREFLY_OPTS_//g;s/__/./g' <<< "$var"`
+for var in "${!PROPS_@}"; do
+  prop=`sed 's/PROPS_//g;s/__/./g' <<< "$var"`
   export CATALINA_OPTS="${CATALINA_OPTS} -D$prop=${!var}"
 done
-#----- eval FIREFLY_OPTS
+#----- eval PROPS
 
 # Java 9 introduces Modularity with module level security
 # Firefly apps requires these module to be opened
