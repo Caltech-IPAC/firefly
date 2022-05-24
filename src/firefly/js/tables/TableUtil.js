@@ -1002,7 +1002,7 @@ export function tableToIpac(tableModel) {
 
 export function tableTextView(columns, dataAry, tableMeta) {
 
-    const colWidths = calcColumnWidths(columns, dataAry);
+    const colWidths = calcColumnWidths(columns, dataAry, {useWidth: false});
     const meta = tableMeta && Object.entries(tableMeta).map(([k,v]) => `\\${k} = ${v}`).join('\n');
 
     const cols = columns.map((c, idx) => get(c,'visibility', 'show') === 'show' ? [c, idx] : null).filter((c) => c);  // only visible columns: [col, colIdx]
@@ -1081,15 +1081,18 @@ export function tableDetailsView(tbl_id, highlightedRow, details_tbl_id) {
  * the header and the data in a table given columns and dataAry.
  * @param {TableColumn[]} columns  array of column object
  * @param {TableData} dataAry  array of array.
- * @param {int} maxAryWidth  maximum size of column with array values
+ * @param {object} opt options
+ * @param {number} opt.maxAryWidth  maximum width of column with array values
+ * @param {number} opt.maxColWidth  maximum width of column without array values
+ * @param {boolean} opt.useWidth    use width and prefWidth props in calculation
  * @returns {number[]} an array of widths corresponding to the given columns array.
  * @memberof firefly.util.table
  * @func calcColumnWidths
  */
-export function calcColumnWidths(columns, dataAry, {maxAryWidth=Number.MAX_SAFE_INTEGER, maxColWidth=Number.MAX_SAFE_INTEGER}={}) {
+export function calcColumnWidths(columns, dataAry, {maxAryWidth=Number.MAX_SAFE_INTEGER, maxColWidth=Number.MAX_SAFE_INTEGER, useWidth=true}={}) {
     return columns.map( (cv, idx) => {
 
-        let width = cv.prefWidth || cv.width;
+        let width = useWidth? cv.prefWidth || cv.width : 0;
         if (width) {
             return width;
         }
