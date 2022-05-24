@@ -88,31 +88,26 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*;
 
 # These are the users replaceable environment variables, basically runtime arguments
-#          MIN_JVM_SIZE and MAX_JVM_SIZE can be used to set the min and max JVM side
-#          - If MAX_JVM_SIZE is not set, the memory is autosized to the memory available to the container.
 #          - Set the available memory on the command line with --memory="4g"
 #          - You can change MAX_RAM_PERCENT on the command line with -e "MAX_RAM_PERCENT=80"
 #          - also- User name and password to use admin
-#          - FIREFLY_OPTS could be used to pass any properties
+#          - PROPS could be used to pass any properties
 
-ENV MAX_JVM_SIZE='' \
-    MIN_JVM_SIZE=1G \
-    INIT_RAM_PERCENT=10\
+ENV INIT_RAM_PERCENT=10\
     MAX_RAM_PERCENT=100\
     JVM_CORES=0\
     ADMIN_USER=admin\
     ADMIN_PASSWORD='' \
     DEBUG=false \
-    CLEANUP_INTERVAL=36h \
-    FIREFLY_OPTS=''
+    CLEANUP_INTERVAL=12h \
+    PROPS=''
 
 # ----------------------------------------------------------
 # ----------------------------------------------------------
 # Overide the following from the command line:
-#          MIN_JVM_SIZE, MAX_JVM_SIZE,
 #          INIT_RAM_PERCENT, MAX_RAM_PERCENT,
 #          ADMIN_USER, ADMIN_PASSWORD,
-#          DEBUG, FIREFLY_OPTS
+#          DEBUG, PROPS
 # ----------------------------------------------------------
 # ----------------------------------------------------------
 
