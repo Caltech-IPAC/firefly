@@ -378,7 +378,7 @@ function skipCellRender(prev={}, next={}) {
 
 
 function ViewAsText({text, ...rest}) {
-    const [doFmt, setDoFmt] = useState(false);
+    const [doFmt, setDoFmt] = useState(true);
 
     const onChange = (e) => {
         setDoFmt(e.target.checked);
@@ -394,7 +394,7 @@ function ViewAsText({text, ...rest}) {
     return (
         <PopupPanel title={'View as plain text'} style={{flexDirection: 'column'}} {...rest}>
             <div style={{display: 'flex', alignItems: 'center'}}>
-                <input id='doFormat' type = 'checkbox' title = {label} onChange = {onChange}/>
+                <input id='doFormat' type='checkbox' title={label} onChange={onChange} checked={doFmt}/>
                 <label htmlFor='doFormat' style={{verticalAlign: ''}}>{label}</label>
             </div>
             <textarea readOnly className='Actions__popup' value={text} style={{width: 650, height: 125}}/>
@@ -498,6 +498,7 @@ export const createInputCell = (tooltips, size = 10, validator, onChange, style)
                         value={val}
                         onChange={(v) => changeHandler(rowIndex, data, colIdx, v) }
                         actOn={['blur','enter']}
+                        showWarning={false}
                     />
                 </div>
             );
