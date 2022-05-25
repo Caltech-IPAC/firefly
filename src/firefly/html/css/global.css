@@ -107,6 +107,19 @@ div.rootStyle img {
     cursor: pointer;
 }
 
+.button.text {
+    line-height: 1.5;
+    padding: 0 5px;
+    border: 1px solid #acacac;
+    border-radius: 2px;
+    white-space: nowrap;
+}
+
+.button.text:hover {
+    border: 1px solid #878787;
+    background-color: #c4c4c4;
+}
+
 .button.large {
     white-space: nowrap;
     border: 2px solid white;

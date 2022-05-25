@@ -382,7 +382,7 @@ function getMakeDropdown(dpId, dataProductState, showMenu, showRedoSearchButton,
                     dropDown={<FileMenuDropDown {...{fileMenu, dpId}} />} />
                 }
                 { extraction &&
-                <ToolbarButton text={extractionText || 'Pin'} tip={extractionText || 'Pin'} horizontal={true} onClick={() => extraction()} /> }
+                <div className='button text' style={{lineHeight: '18px'}} title={extractionText || 'Pin'} onClick={() => extraction()}>{extractionText || 'Pin'}</div> }
                 {showRedoSearchButton && analysisActivateFunc &&
                     <ToolbarButton
                         text='Redo Search' tip={'Redo Search'} horizontal={true}

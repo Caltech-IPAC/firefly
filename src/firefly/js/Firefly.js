@@ -139,12 +139,13 @@ const defFireflyOptions = {
     'help.base.url': undefined,                     // this overrides property set during build time.
 
     charts: {
-        defaultDeletable: undefined, // by default if there are more than one chart in container, all charts are deletable
-        maxRowsForScatter: 5000, // maximum table rows for scatter chart support, heatmap is created for larger tables
-        minScatterGLRows: 1000, // minimum number of points to use WebGL 'scattergl' instead of SVG 'scatter'
-        singleTraceUI: false, // by default we support multi-trace in UI
-        upperLimitUI: false, // by default user can not set upper limit column in scatter options
-        ui: {HistogramOptions: {fixedAlgorithm: undefined}} // by default we allow both "uniform binning" and "bayesian blocks"
+        defaultDeletable: undefined,    // by default if there are more than one chart in container, all charts are deletable
+        maxRowsForScatter: 5000,        // maximum table rows for scatter chart support, heatmap is created for larger tables
+        minScatterGLRows: 1000,         // minimum number of points to use WebGL 'scattergl' instead of SVG 'scatter'
+        singleTraceUI: false,           // by default we support multi-trace in UI
+        upperLimitUI: false,            // by default user can not set upper limit column in scatter options
+        useChartWorkArea: false,        // true to use Chart container with 'pin' feature
+        ui: {HistogramOptions: {fixedAlgorithm: undefined}}     // by default we allow both "uniform binning" and "bayesian blocks"
     },
     hips : {
         useForImageSearch: true,

@@ -12,6 +12,11 @@
     border: 2px solid orange;
 }
 
+.ChartPanel--default {
+    border: 3px solid #8cb3da;
+    border-radius: 2px;
+}
+
 .ChartPanel__container {
     display: flex;
     flex: auto;
@@ -21,6 +26,8 @@
 }
 
 .ChartPanel__wrapper {
+    display: flex;
+    flex-direction: column;
     position: relative;
     background-color: #c8c8c8;
     flex-grow: 1;
@@ -44,15 +51,7 @@
     top: 0;
     bottom: 0;
     left: 0;
-    right: 0
-}
-
-.ChartPanel__chartarea--withToolbar {
-    position: absolute;
-    top: 29px;
-    bottom: 0;
-    left: 1px;
-    right: 0
+    right: 0;
 }
 
 .ChartPanel__glass {
@@ -86,11 +85,8 @@
 
 .ChartToolbar {
     display: inline-flex;
-    flex-direction: row;
-    width: 100%;
     height: 30px;
     align-items: center;
-    justify-content: flex-end;
 }
 
 .ChartToolbar__buttons {
@@ -179,6 +175,12 @@
 .ChartToolbar__clear-selected {
     background-image: url("~images/icons-2014/24x24_CheckmarkOff_Circle.png");
 }
+
+.ChartToolbar__pin {
+    background-image: url("~images/icons-2014/24x24_Save.png");
+}
+
+
 /* hide the popup doubleclick tooltips since we turned it off */
 div.plotly-notifier {
     visibility: hidden;

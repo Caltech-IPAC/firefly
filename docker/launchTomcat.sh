@@ -85,6 +85,7 @@ export CATALINA_OPTS="\
   -Dserver_config_dir=/firefly/config \
   -Dstats.log.dir=/firefly/logs/statistics \
   -Dalerts.dir=/firefly/alerts \
+  -Djava.security.properties=/usr/local/tomcat/conf/java.security.override \
   -Dvisualize.fits.search.path=${VIS_PATH} \
 	"
 
