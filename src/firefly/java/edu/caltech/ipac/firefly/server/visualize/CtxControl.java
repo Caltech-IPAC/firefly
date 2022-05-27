@@ -16,17 +16,31 @@ import nom.tam.fits.FitsException;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Trey Roby
  */
 public class CtxControl {
-    private static final int root= (int)(System.currentTimeMillis() % 1000);
-    private static final Counters counters= Counters.getInstance();
+    private static final String ctxStrRoot=
+            String.format("%s-%s-%d",ServerContext.getAppName(), FileUtil.getHostname(), System.currentTimeMillis()%999);
     private static final AtomicLong cnt = new AtomicLong(0);
 
-    public static ActiveCallCtx prepare(PlotState state) throws FailedRequestException {
+    public static void confirmFiles(PlotState state) throws FailedRequestException {
+        if (state==null) throw new FailedRequestException("state cannot but null");
+        if (!state.isThreeColor()) {
+            if (!PlotStateUtil.getWorkingFitsFile(state).exists()) revalidatePlot(state,true);
+        }
+        else {
+            boolean filesMissing= Arrays.stream(state.getBands())
+                    .map( b -> !PlotStateUtil.getWorkingFitsFile(state,b).exists())
+                    .reduce(false, (prev,fileMissing) -> (prev||fileMissing) );
+            if (filesMissing) revalidatePlot(state,true);
+        }
+    }
+
+    public static ActiveFitsReadGroup prepare(PlotState state) throws FailedRequestException {
         if (state==null) throw new FailedRequestException("state cannot but null");
         try {
             return revalidatePlot(state, false);
@@ -35,32 +49,37 @@ public class CtxControl {
         }
     }
 
-    private static ActiveCallCtx revalidatePlot(PlotState state, boolean recreate) throws FailedRequestException {
+    public static void refreshCache(PlotState state) {
+        if (state==null) return;
+        Arrays.stream(state.getBands())
+                .forEach( b -> FitsCacher.refreshCache(PlotStateUtil.getWorkingFitsFile(state, b)));
+    }
+
+    public static String makeCtxString() { return ctxStrRoot+"-"+ cnt.incrementAndGet(); }
+
+    private static ActiveFitsReadGroup revalidatePlot(PlotState state, boolean recreate) throws FailedRequestException {
         try {
             if (recreate) {
-                counters.incrementVis("Recreate");
+                Counters.getInstance().incrementVis("Recreate");
                 WebPlotFactory.recreate(state);
             }
             return makeActiveCallCtx(state);
         } catch (IOException|FitsException e) {
-            if (recreate) Logger.getLogger().warn(e, "prepare failed on re-validate plot: " + e.getMessage());;
+            if (recreate) Logger.getLogger().warn(e, "prepare failed on re-validate plot: " + e.getMessage());
             throw new FailedRequestException(
                     recreate ? "Could not revalidate plot after recreation" : "Could ot revalidate",e);
         }
     }
 
-    private static ActiveCallCtx makeActiveCallCtx(PlotState state) throws FitsException, IOException {
+    private static ActiveFitsReadGroup makeActiveCallCtx(PlotState state) throws FitsException, IOException {
         ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
-        for(Band band : state.getBands()) {
-            File fitsFile=   PlotStateUtil.getWorkingFitsFile(state, band);
-            int imageIdx= state.getImageIdx(band);
-            if (!FitsCacher.isCached(fitsFile)) counters.incrementVis("FITS re-read");
-            FitsRead[] fr= FitsCacher.readFits(fitsFile).getFitReadAry();  //this call should get data from cache if it exist
-            frGroup.setFitsRead(band, fr[imageIdx]);
+        for(Band b : state.getBands()) {
+            File fitsFile= PlotStateUtil.getWorkingFitsFile(state, b);
+            int imageIdx= state.getImageIdx(b);
+            if (!FitsCacher.isCached(fitsFile)) Counters.getInstance().incrementVis("FITS re-read");
+            FitsRead[] fr= FitsCacher.readFits(fitsFile).getFitReadAry();  //read fits file or get from cache
+            frGroup.setFitsRead(b, fr[imageIdx]);
         }
-        return new ActiveCallCtx(frGroup);
+        return frGroup;
     }
-
-    public record ActiveCallCtx(ActiveFitsReadGroup fitsReadGroup) { }
-    public static String makeCtxString() {return ServerContext.getAppName() +"-" +FileUtil.getHostname()+"-"+root+"-"+ cnt.incrementAndGet();}
 }

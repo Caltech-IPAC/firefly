@@ -438,6 +438,7 @@ public class VoTableReader {
         applyIfNotEmpty(el.getAttribute("ref"), dt::setRef);
         applyIfNotEmpty(el.getAttribute("ucd"), dt::setUCD);
         applyIfNotEmpty(el.getAttribute("utype"), dt::setUType);
+        applyIfNotEmpty(el.getAttribute("xtype"), dt::setXType);
         applyIfNotEmpty(el.getDescription(), dt::setDesc);
         applyIfNotEmpty(el.getAttribute("datatype"), v -> {
             dt.setTypeDesc(v);

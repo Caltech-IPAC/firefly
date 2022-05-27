@@ -7,7 +7,7 @@
 import {
     STRETCH_ASINH, STRETCH_EQUAL, STRETCH_LINEAR, STRETCH_LOG,
     STRETCH_LOGLOG, STRETCH_POWERLAW_GAMMA, STRETCH_SQRT, STRETCH_SQUARED, ZSCALE
-} from '../../RangeValues.js';
+} from '../../../RangeValues.js';
 import {getDNfromBin, getTblArray} from './Histogram.js';
 import {ImageMask} from './ImageMask.js';
 import {getScaled, getShigh, getSlow} from './StretchUtil.js';
@@ -290,7 +290,7 @@ function stretchPixelsUsingOtherAlgorithms(startPixel, lastPixel, startLine, las
 
 
     //-----
-    let stretchThePixel
+    let stretchThePixel;
     if (rangeValues.algorithm===STRETCH_LINEAR) {
         stretchThePixel= (floatPixel) => getLinearStretchedPixelValue( (floatPixel - slow) * 254 / sdiff);
     } else if (rangeValues.algorithm===STRETCH_POWERLAW_GAMMA) {

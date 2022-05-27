@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.visualize.plot.plotdata;
 
+import edu.caltech.ipac.firefly.data.HasSizeOf;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.Histogram;
@@ -35,7 +36,7 @@ import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil.dataArrayFro
  *
  *
  */
-public class FitsRead implements Serializable {
+public class FitsRead implements Serializable, HasSizeOf {
     private static final ArrayList<Integer> SUPPORTED_BIT_PIXS = new ArrayList<>(Arrays.asList(8, 16, 32, -32, -64));
     private static RangeValues DEFAULT_RANGE_VALUE = new RangeValues();
     private final int planeNumber;
@@ -55,6 +56,7 @@ public class FitsRead implements Serializable {
     private final int maptype;
     private final double cdelt1;
     private final String bunit;
+    private long estimatedBaseSize=0;
 
     private final boolean tileCompress;
 
@@ -323,6 +325,20 @@ public class FitsRead implements Serializable {
         header = null;
         hist= null;
         hdu= null;
+    }
+
+    public long getSizeOf() {
+        if (estimatedBaseSize==0) {
+            estimatedBaseSize= 68;
+            if (file!=null) estimatedBaseSize+= file.getAbsolutePath().length();
+            if (header!=null && (!cube || planeNumber == 0)) estimatedBaseSize+= header.getOriginalSize();
+            if (zeroHeader!=null && getHduNumber()==0) estimatedBaseSize+= zeroHeader.getOriginalSize();
+        }
+        long retSize= estimatedBaseSize;
+        if (hist!=null) retSize+= hist.getSizeOf();
+        if (float1d!=null) retSize+= float1d.length*4L;
+        if (hdu!=null) retSize+= hdu.getSize();
+        return retSize;
     }
 
     public void writeSimpleFitsFile(OutputStream stream) throws FitsException, IOException{

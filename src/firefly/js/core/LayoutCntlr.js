@@ -307,7 +307,9 @@ export function dropDownHandler(layoutInfo, action) {
         case ImagePlotCntlr.PLOT_IMAGE :
             return smartMerge(layoutInfo, {dropDown: {visible: false}});
         case ImagePlotCntlr.PLOT_IMAGE_START :
-            return smartMerge(layoutInfo, {dropDown: {visible: !(action.payload.pvOptions?.useForSearchResults??true)}});
+            const {useForSearchResults= true}= action.payload.pvOptions;
+            const visible= !useForSearchResults && layoutInfo.dropDown.visible;
+            return smartMerge(layoutInfo, {dropDown: {visible}});
         case CHART_REMOVE:
         case SHOW_DROPDOWN:
         case TABLE_REMOVE:

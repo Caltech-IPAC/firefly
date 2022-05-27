@@ -225,6 +225,8 @@ public class Counters {
         addMemStrToList(retList,"Free Active", FileUtil.getSizeAsString(freeMem));
         addMemStrToList(retList,"Total Active", FileUtil.getSizeAsString(totMem));
         retList.add("");
+        retList.add("Cores - "+ Runtime.getRuntime().availableProcessors());
+        retList.add("");
     }
 
 

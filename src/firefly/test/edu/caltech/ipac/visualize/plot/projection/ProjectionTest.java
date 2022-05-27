@@ -60,7 +60,7 @@ public class ProjectionTest {
 
         String[] keys = (String[])  jsonObject.keySet().toArray(new String[0]);
         for (int i=0; i<keys.length; i++){
-            map.put(keys[i], new Double((Double) jsonObject.get(keys[i])) );
+            map.put(keys[i], (Double) jsonObject.get(keys[i]) );
         }
 
         return map;

@@ -8,7 +8,7 @@
  * firefly. It may do import from external packages such as lodash and immutability-helper below
  */
 
-import { fromPairs, get, has, isArray, isUndefined, isBoolean, isEqual, isFunction, isNil, isObject,
+import { fromPairs, get, has, isString, isArray, isUndefined, isBoolean, isEqual, isFunction, isNil, isObject,
     isPlainObject, last, mergeWith, omit, once, set, union } from 'lodash';
 import update from 'immutability-helper';
 
@@ -773,6 +773,13 @@ export const isNumeric= (n) => !isNaN(parseFloat(n)) && isFinite(n);
  * @param {String} s
  */
 export const crunch= (s = '') => s && s.replace(/[ \t\n\r\f]/g, ' ').trim().replace(/\s{2,}/g, ' ');
+
+/**
+ * split the string with any number white space between
+ * @param s
+ * @return {Array.<string>} an array of string without which space, bad input will return an empty array
+ */
+export const splitByWhiteSpace= (s='') => (isString(s) && s.split( /\s+/).filter( (s) => s)) || [];
 
 export function matches(s, regExp, ignoreCase) {
     if (isNil(s)) return false;

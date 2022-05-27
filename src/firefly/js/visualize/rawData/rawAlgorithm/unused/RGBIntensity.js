@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {getScaled, getSlow, getZscaleValue} from './StretchUtil.js';
-import {ZSCALE} from '../../RangeValues.js';
+import {ZSCALE} from '../../../RangeValues.js';
 
 /**
  * This class is used to store intensity-related info for RGB hue preserving algorithm.

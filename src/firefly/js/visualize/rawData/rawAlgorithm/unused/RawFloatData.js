@@ -1,14 +1,14 @@
-import {ServerParams} from '../../data/ServerParams.js';
-import {getSizeAsString, lowLevelDoFetch, MEG} from '../../util/WebUtil.js';
-import {addRawDataToCache, getEntry, getEntryByBand} from './RawDataThreadCache.js';
-import {makeHistogram} from './rawAlgorithm/Histogram.js';
-import {allBandAry, Band} from '../Band.js';
-import {RangeValues, STRETCH_ASINH} from '../RangeValues.js';
-import {RGBIntensity} from './rawAlgorithm/RGBIntensity.js';
-import {createRawTileDataGroup} from './ManageRawDataThread.js';
-import {stretchPixels3Color, stretchPixels8Bit, stretchPixelsForMask} from './rawAlgorithm/Stretch.js';
-import {parseImagePt} from '../Point.js';
-import {getTransferable, makeFetchOptions, populateRawImagePixelDataInWorker} from './RawDataCommon.js';
+import {ServerParams} from '../../../../data/ServerParams.js';
+import {getSizeAsString, lowLevelDoFetch, MEG} from '../../../../util/WebUtil.js';
+import {addRawDataToCache, getEntry, getEntryByBand} from '../../RawDataThreadCache.js';
+import {makeHistogram} from './Histogram.js';
+import {allBandAry, Band} from '../../../Band.js';
+import {RangeValues, STRETCH_ASINH} from '../../../RangeValues.js';
+import {RGBIntensity} from './RGBIntensity.js';
+import {createRawTileDataGroup} from '../../ManageRawDataThread.js';
+import {stretchPixels3Color, stretchPixels8Bit, stretchPixelsForMask} from './Stretch.js';
+import {parseImagePt} from '../../../Point.js';
+import {getTransferable, makeFetchOptions, populateRawImagePixelDataInWorker} from '../../RawDataCommon.js';
 
 // todo - the color id is not longer in plot state it is in plot
 

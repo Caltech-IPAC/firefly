@@ -146,7 +146,7 @@ function createDataLinkMenuRet(dataSource, dataLinkData, positionWP, sourceTable
                                        undefined, urlParams, name);
                 menuEntry= dpdtAnalyze(`Show: ${name} ${allowsInput?' (Input Required)':''}` ,
                     activate,accessURL,urlParams,menuKey,
-                    {activeMenuLookupKey,request, allowsInput,
+                    {activeMenuLookupKey,request, allowsInput, serviceDefRef,
                         standardID, ID, semantics,size});
             }
         }

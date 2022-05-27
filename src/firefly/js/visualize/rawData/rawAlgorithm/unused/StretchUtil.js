@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {ABSOLUTE, PERCENTAGE, SIGMA, ZSCALE} from '../../RangeValues.js';
+import {ABSOLUTE, PERCENTAGE, SIGMA, ZSCALE} from '../../../RangeValues.js';
 import {get_pct, get_sigma} from './Histogram.js';
 import {cdl_zscale} from './Zscale.js';
 

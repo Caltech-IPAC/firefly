@@ -22,12 +22,11 @@ import {
     dispatchForceDrawLayerUpdate, dlRoot, getDlAry } from '../DrawLayerCntlr.js';
 import {createHiPSMocLayer} from '../task/PlotHipsTask.js';
 import {GroupKeyCtx} from '../../ui/FieldGroup.jsx';
-import {useFieldGroupValues, useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {useFieldGroupValue, useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {TargetPanel} from '../../ui/TargetPanel.jsx';
 import {SizeInputFields} from '../../ui/SizeInputField.jsx';
 import SearchSelectTool from '../../drawingLayers/SearchSelectTool.js';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
-import {logger} from '../../util/Logger.js';
 import {ToolbarButton} from 'firefly/ui/ToolbarButton.jsx';
 import CLICK from 'html/images/20x20_click.png';
 import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
@@ -48,11 +47,13 @@ const sharedPropTypes= {
     plotId:string,
     cleanup: bool,
     groupKey: string,
+    minSize: number,
+    maxSize: number,
     coordinateSys: oneOf([CoordinateSys.GALACTIC, CoordinateSys.EQ_J2000]),
     mocList: arrayOf( shape({ mocUrl: string, title: string }) ),
 };
 
-export function VisualTargetPanel({groupKey:gk, labelWidth= 100, ...restOfProps}) {
+export function VisualTargetPanel({groupKey:gk, fieldKey, labelWidth= 100, ...restOfProps}) {
     useEffect(() => {
         return () => {
             dispatchHideDialog(DIALOG_ID);
@@ -66,12 +67,12 @@ export function VisualTargetPanel({groupKey:gk, labelWidth= 100, ...restOfProps}
             <ToolbarButton icon={CLICK} tip={'Choose target visually'} bgDark={true}
                            imageStyle={{height:18, width:18}} horizontal={true}
                            onClick={(element) =>
-                               showHiPSPanelPopup({ ...restOfProps, element, groupKey})} />
+                               showHiPSPanelPopup({ ...restOfProps, targetKey:fieldKey, element, groupKey})} />
         </div>
     );
 
     return (
-        <TargetPanel button={popupButton} labelWidth={labelWidth}/>
+        <TargetPanel fieldKey={fieldKey} button={popupButton} labelWidth={labelWidth}/>
     );
 }
 
@@ -84,21 +85,22 @@ VisualTargetPanel.propTypes= {
 
 export const HiPSTargetView = ({style, hipsUrl=DEFAULT_HIPS, hipsFOVInDeg= DEFAULT_FOV, centerPt=makeWorldPt(0,0),
                                    targetKey='UserTargetWorldPt', sizeKey='none', coordinateSys, mocList,
-                                   plotId='defaultHiPSTargetSearch', cleanup= false, groupKey:gk}) => {
+                                   minSize=1/3600, maxSize=100,
+                                   plotId='defaultHiPSTargetSearch', cleanup= false, groupKey}) => {
 
-    const context= useContext(GroupKeyCtx);
     const viewerId= plotId+'-viewer';
-    const groupKey= gk || context.groupKey;
 
     const pv= useStoreConnector(() => getPlotViewById(visRoot(),plotId));
-    const {[targetKey]:userTargetWorldPt, [sizeKey]:hiPSPanelRadius}= useFieldGroupValues(groupKey,[targetKey,sizeKey]);
+    const [getTargetWp,setTargetWp]= useFieldGroupValue(targetKey, groupKey);
+    const [getHiPSRadius, setHiPSRadius]= useFieldGroupValue(sizeKey, groupKey);
 
-    const userEnterWorldPt= () =>  parseWorldPt(userTargetWorldPt.confirmValue());
-    const userEnterSearchRadius= () =>  Number(hiPSPanelRadius.confirmValue());
+    const userEnterWorldPt= () =>  parseWorldPt(getTargetWp());
+    const userEnterSearchRadius= () =>  Number(getHiPSRadius());
 
     useEffect(() => { // show HiPS plot
         if (!pv || hipsUrl!==pv.request.getHipsRootUrl()) {
             initHiPSPlot({plotId,hipsUrl, viewerId,centerPt,hipsFOVInDeg, coordinateSys, mocList,
+                minSize, maxSize,
                 userEnterWorldPt:userEnterWorldPt(), userEnterSearchRadius:userEnterSearchRadius()});
         }
         else {
@@ -116,17 +118,18 @@ export const HiPSTargetView = ({style, hipsUrl=DEFAULT_HIPS, hipsFOVInDeg= DEFAU
         if (plot.attributes[PlotAttribute.SELECTION]) {
             const {cenWpt, radius}= getPtRadiusFromSelection(plot);
             if (!cenWpt) return;
-            if (pointEquals(userEnterWorldPt(),cenWpt) && radius===userEnterSearchRadius()) return;
-            userTargetWorldPt?.set(cenWpt.toString());
-            hiPSPanelRadius?.set(radius+'');
-            updatePlotOverlayFromUserInput(plotId, cenWpt, radius);
+            const drawRadius= radius<=maxSize ? (radius >= minSize ? radius : minSize) : maxSize;
+            if (pointEquals(userEnterWorldPt(),cenWpt) && drawRadius===userEnterSearchRadius()) return;
+            setTargetWp(cenWpt.toString());
+            setHiPSRadius(drawRadius+'');
+            updatePlotOverlayFromUserInput(plotId, cenWpt, drawRadius);
         }
         else {
             const wp= plot.attributes[PlotAttribute.USER_SEARCH_WP];
             if (!wp) return;
             const utWPt= userEnterWorldPt();
             if (!utWPt || (isValidPoint(utWPt) && !pointEquals(wp,utWPt ))) {
-                userTargetWorldPt?.set(wp.toString());
+                setTargetWp(wp.toString());
             }
         }
 
@@ -134,12 +137,12 @@ export const HiPSTargetView = ({style, hipsUrl=DEFAULT_HIPS, hipsFOVInDeg= DEFAU
 
     useEffect(() => { // if target or radius field change then hips plot to reflect it
         updatePlotOverlayFromUserInput(plotId, userEnterWorldPt(), userEnterSearchRadius());
-    }, [userTargetWorldPt.value, hiPSPanelRadius.value]);
+    }, [getTargetWp, getHiPSRadius]);
 
-    if (!groupKey) {
-        logger.error('group key must be defined, as property or part of context');
-        return <div/>;
-    }
+    // if (!groupKey) {
+    //     logger.error('group key must be defined, as property or part of context');
+    //     return <div/>;
+    // }
 
     return (
         <div style={{height:500, ...style, display:'flex', flexDirection:'column'}}>
@@ -159,15 +162,16 @@ HiPSTargetView.propTypes= {
 
 
 
-export const TargetHiPSPanel = ({searchAreaInDeg, style, ...restOfProps}) => (
+export const TargetHiPSPanel = ({searchAreaInDeg, style,
+                                    minValue:min= 1/3600, maxValue:max= 100, ...restOfProps}) => (
     <div style={{display:'flex', width: 700, height:700, flexDirection:'column', ...style}}>
         <HiPSTargetView {...{...restOfProps, targetKey:'UserTargetWorldPt', sizeKey:'HiPSPanelRadius',
-            style:{height:400} }}/>
+                             minSize:min, maxSize:max, style:{height:400} }}/>
         <div style={{display:'flex', flexDirection:'column', marginLeft:100}}>
             <TargetPanel style={{paddingTop: 10}} labelWidth={100}/>
             <SizeInputFields fieldKey='HiPSPanelRadius' showFeedback={true} labelWidth= {100}  nullAllowed={false}
                              label={'Search Area'}
-                             initialState={{ unit: 'arcsec', value: searchAreaInDeg+'', min: 1 / 3600, max: 100 }} />
+                             initialState={{ unit: 'arcsec', value: searchAreaInDeg+'', min, max }} />
         </div>
     </div>
 );
@@ -177,13 +181,35 @@ TargetHiPSPanel.propTypes= {
     ...sharedPropTypes,
 };
 
+export const TargetHiPSRadiusPopupPanel = ({searchAreaInDeg, targetKey='UserTargetWorldPt', sizeKey= 'HiPSPanelRadius', style,
+                                              minValue:min= 1/3600, maxValue:max= 100,
+                                               ...restOfProps}) => (
+    <div style={{display:'flex', width: 700, paddingBottom: 20, flexDirection:'column', ...style}}>
+        <div style={{display:'flex', flexDirection:'column'}}>
+            <VisualTargetPanel {...{style:{paddingTop: 10}, fieldKey:targetKey, sizeKey, labelWidth:100,
+                minSize:min, maxSize:max, ...restOfProps}} />
+            <SizeInputFields {...{
+                fieldKey:sizeKey, showFeedback:true, labelWidth:100, nullAllowed:false,
+                label:'Search Area',
+                initialState:{ unit: 'arcsec', value: searchAreaInDeg+'', min, max }
+            }} />
+        </div>
+    </div>
+);
+
+TargetHiPSRadiusPopupPanel.propTypes= {
+    searchAreaInDeg: PropTypes.number.isRequired,
+    sizeKey: PropTypes.string,
+    ...sharedPropTypes,
+};
+
 
 const defPopupPlotId= 'defaultHiPSPopupTargetSearch';
 
 function showHiPSPanelPopup({element, plotId= defPopupPlotId, ...restOfProps}) {
 
     const doClose= () => {
-        closeToolbarModalLayers()
+        closeToolbarModalLayers();
     };
 
     const hipsPanel= (
@@ -221,12 +247,14 @@ const createMocTableId= () => `moc-table-${++mocCnt}`;
  * @param obj.hipsFOVInDeg
  * @param obj.coordinateSys
  * @param obj.mocList
+ * @param obj.minSize
+ * @param obj.maxSize
  * @param obj.userEnterWorldPt
  * @param obj.userEnterSearchRadius
  * @return {Promise<void>}
  */
 async function initHiPSPlot({ hipsUrl, plotId, viewerId, centerPt, hipsFOVInDeg, coordinateSys, mocList,
-                                userEnterWorldPt, userEnterSearchRadius }) {
+                                minSize, maxSize, userEnterWorldPt, userEnterSearchRadius }) {
     getDrawLayersByType(dlRoot(), HiPSMOC.TYPE_ID)
         .forEach( ({drawLayerId}) => dispatchDestroyDrawLayer(drawLayerId));// clean up any old moc layers
     const wpRequest= WebPlotRequest.makeHiPSRequest(hipsUrl, centerPt, hipsFOVInDeg);
@@ -272,7 +300,6 @@ function updatePlotOverlayFromUserInput(plotId, wp, radius, forceCenterOn= false
 
 /**
  * @param {WebPlot} plot
- * @param {{pt0:WorldPt, pt1:WorldPt}}selection
  * @return {{}|{radius: number, cenWpt: WorldPt}}
  */
 function getPtRadiusFromSelection(plot) {

@@ -7,20 +7,18 @@ package edu.caltech.ipac.firefly.server.network;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.security.SsoAdapter;
 import edu.caltech.ipac.util.StringUtils;
-import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 /**
  * Date: 5/23/17
  *
  * @version $Id: $
  */
-public class HttpServiceInput implements Cloneable{
+public class HttpServiceInput implements Cloneable, Serializable {
     private String requestUrl;
     private Map<String, String> params;
     private Map<String, String> headers;

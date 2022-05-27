@@ -420,21 +420,6 @@
         REPLICATE-->
  </cache>
 
-<!--
- The data stored in this cache is relatively large, but does not expire.
--->
-    <cache name="PERM_LARGE"
-           maxElementsInMemory="10"
-           eternal="true"
-           memoryStoreEvictionPolicy="LRU"
-           overflowToDisk="true"
-           diskPersistent="true"
-           maxElementsOnDisk="5000"
-           diskSpoolBufferSizeMB="30"
-           diskExpiryThreadIntervalSeconds="600"
-        >
-     </cache>
-
     <!--
      This cache is reserved for file path(File) caching.  There is no idle time expiration.
      This is similar to PERM_SMALL, except there will be a CacheEventListener to monitor 
@@ -488,18 +473,5 @@ THIS CACHE IS DISTRIBUTED.
         REPLICATE-->
 
     </cache>
-
-
-    <!--
-     The data store in this cache is large.  it will NOT be replicated.
-    -->
-    <cache name="VISUALIZE"
-           maxElementsInMemory="150000"
-           eternal="false"
-           timeToIdleSeconds="7200"
-           memoryStoreEvictionPolicy="LRU"
-           overflowToDisk="false"
-           diskPersistent="false"
-       />
 
 </ehcache>

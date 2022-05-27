@@ -14,7 +14,7 @@ import nom.tam.fits.FitsException;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -23,15 +23,10 @@ import java.util.List;
 public class FitsEvaluation {
 
     public interface Eval {
-        List<RelatedData> evaluate(File f, FitsRead[] frAry, BasicHDU[] HDUs, int fitsReadIndex, int hduIndex, WebPlotRequest req);
+        List<RelatedData> evaluate(File f, FitsRead[] frAry, BasicHDU<?>[] HDUs, int fitsReadIndex, int hduIndex, WebPlotRequest req);
     }
 
-    static final private List<Eval> evalList= new ArrayList<>();
-
-    static {
-        evalList.add(new MaskEval());
-        evalList.add(new SpectralCubeEval());
-    }
+    static final private List<Eval> evalList= Arrays.asList(new MaskEval(), new SpectralCubeEval());
 
     public static FitsDataEval readAndEvaluate(File f, boolean clearHdu, WebPlotRequest req) throws FitsException, IOException  {
         return readAndEvaluate(new Fits(f), f, clearHdu, req);
@@ -43,8 +38,8 @@ public class FitsEvaluation {
             BasicHDU<?>[] HDUs= FitsReadUtil.readHDUs(fits);
             if (FitsReadUtil.hasCompressedImageHDUS(HDUs)) uFitsInfo = FitsReadUtil.createdUncompressImageHDUFile(HDUs,f);
 
-            File fitsFile= uFitsInfo!=null ? uFitsInfo.getFile() : f;
-            BasicHDU<?>[]  workingHDUS= uFitsInfo!=null ? uFitsInfo.getHDUs() : HDUs;
+            File fitsFile= uFitsInfo!=null ? uFitsInfo.file() : f;
+            BasicHDU<?>[]  workingHDUS= uFitsInfo!=null ? uFitsInfo.HDUs() : HDUs;
             if (workingHDUS.length==0) throw new FitsException("Bad format in FITS file, no HDUs found");
             FitsRead[] frAry = FitsReadFactory.createFitsReadArray(workingHDUS, f, clearHdu);
             FitsDataEval fitsDataEval= new FitsDataEval(frAry,fitsFile);
@@ -64,9 +59,8 @@ public class FitsEvaluation {
             return fitsDataEval;
         } finally {
             FitsReadUtil.closeFits(fits);
-            if (uFitsInfo!=null) FitsReadUtil.closeFits(uFitsInfo.getFits());
+            if (uFitsInfo!=null) FitsReadUtil.closeFits(uFitsInfo.fits());
         }
     }
-
 
 }

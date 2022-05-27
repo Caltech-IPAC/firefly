@@ -229,7 +229,7 @@ public class VisJsonSerializer {
         if (relatedData==null || relatedData.size()==0) return null;
         JSONArray relatedArray= new JSONArray();
         for(RelatedData r : relatedData) {
-            if (r.isSendToClient()) addJsonObj(relatedArray,serializeRelated(r));
+            addJsonObj(relatedArray,serializeRelated(r));
         }
         return relatedArray;
     }

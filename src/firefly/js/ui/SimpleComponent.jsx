@@ -1,10 +1,11 @@
-import {PureComponent, useEffect, useState} from 'react';
+import {PureComponent, useCallback, useContext, useEffect, useState} from 'react';
 import {isArray, isString, uniqueId} from 'lodash';
 import shallowequal from 'shallowequal';
 import {flux} from '../core/ReduxFlux.js';
 import FieldGroupUtils, {getFieldVal, getFldValue, getGroupFields} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
 import {dispatchValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
+import {GroupKeyCtx} from './FieldGroup.jsx';
 
 export class SimpleComponent extends PureComponent {
     constructor(props) {
@@ -97,38 +98,57 @@ export function useBindFieldGroupToStore(groupKey) {
     return fields || undefined;
 }
 
+// todo - keep around for a while - this is the array version of useFieldGroupValue
+//        I don't think we need it
+// export function useFieldGroupValuesOLD2(groupKey,fieldKeys) {
+//     const keyList= isArray(fieldKeys) ? fieldKeys : isString(fieldKeys) ? [fieldKeys] : [];
+//     let mounted= true;
+//     const stateList= keyList.map( (fieldKey) => {
+//         const [value,setValue]= useState(() => getFldValue(getGroupFields(groupKey),fieldKey));
+//         return {fieldKey,value,setValue};
+//     },{});
+//
+//     useEffect(() => {
+//         const remover= FieldGroupUtils.bindToStore(groupKey, (updatedFields) => {
+//             mounted && stateList.forEach( ({fieldKey,setValue}) => setValue( getFldValue(updatedFields,fieldKey)));
+//         });
+//         return () => {
+//             mounted= false;
+//             remover();
+//         };
+//     },[]);
+//
+//     return stateList.map( ({fieldKey,value}) =>
+//         [
+//             useCallback(() =>getFieldVal(groupKey,fieldKey,value), [value]),   // getter
+//             useCallback((newValue,valid=true) => dispatchValueChange({fieldKey, groupKey, value:newValue,valid, displayValue:''})) //setter
+//         ]);
+// }
+
 /**
  * This hook will return a object of fields values. {[fieldName]:value}
- * @param {String} groupKey - the field group to check for
- * @param {String|Array.<String>} [fieldKeys] - an array of keys to check for or a single single key to check for
- * @return {{}}
+ * @param {String} fieldKey - a fieldKey to check for
+ * @param {String} [gk] - the groupKey if not set then it is retrieved from context, the normal use is to not pass this parameter
+ * @return {Array.<Function>}  return an array of 2 functions [getValue,setValue]
  */
-export function useFieldGroupValues(groupKey,fieldKeys) {
-    const keyList= isArray(fieldKeys) ? fieldKeys : isString(fieldKeys) ? [fieldKeys] : [];
+export function useFieldGroupValue(fieldKey, gk) {
+    const context= useContext(GroupKeyCtx);
+    const groupKey= gk || context.groupKey;
     let mounted= true;
-    const stateObj= keyList.reduce( (obj,k) => {
-        const [value,setValue]= useState(() => getFldValue(getGroupFields(groupKey),k));
-        obj[k]={value,setValue};
-        return obj;
-    },{});
-
+    const [value,setValue]= useState(() => getFldValue(getGroupFields(groupKey),fieldKey));
     useEffect(() => {
         const remover= FieldGroupUtils.bindToStore(groupKey, (updatedFields) => {
-            mounted && keyList.forEach( (k) => stateObj[k].setValue( getFldValue(updatedFields,k)));
+            mounted && setValue( getFldValue(updatedFields,fieldKey));
         });
         return () => {
             mounted= false;
             remover();
         };
     },[]);
-
-    return Object.fromEntries(Object.entries(stateObj).map( ([k,{value}]) => {
-        return [k, {
-            value,
-            confirmValue: () => getFieldVal(groupKey,k,value),
-            set: (newValue,valid=true) => dispatchValueChange({fieldKey:k, groupKey, value:newValue,valid, displayValue:''})
-        }];
-    } ));
+    return [
+        useCallback(() =>getFieldVal(groupKey,fieldKey,value), [value]),   // getter
+        useCallback((newValue,valid=true) => dispatchValueChange({fieldKey, groupKey, value:newValue,valid, displayValue:''})) //setter
+    ];
 }
 
 

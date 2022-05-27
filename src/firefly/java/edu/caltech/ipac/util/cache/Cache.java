@@ -17,12 +17,10 @@ public interface Cache {
      * is described using 2 words; the first is length of time it may idle, and the
      * second is the type of data.
      */
-    public static final String TYPE_PERM_SMALL = "PERM_SMALL";
-    public static final String TYPE_PERM_LARGE = "PERM_LARGE";
-    public static final String TYPE_PERM_FILE  = "PERM_FILE";
-    public static final String TYPE_TEMP_FILE  = "TEMP_FILE";
-    public static final String TYPE_VISUALIZE  = "VISUALIZE";
-    public static final String TYPE_VIS_SHARED_MEM = "VIS_SHARED_MEM";
+    String TYPE_PERM_SMALL = "PERM_SMALL";
+    String TYPE_PERM_FILE  = "PERM_FILE";
+    String TYPE_TEMP_FILE  = "TEMP_FILE";
+    String TYPE_VIS_SHARED_MEM = "VIS_SHARED_MEM";
 
     /**
      * This is used to save User's session information.  It is backed
