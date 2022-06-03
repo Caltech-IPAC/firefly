@@ -18,14 +18,14 @@ function getCurrentValueArr(value) {
 const convertValue= (value,options) => (!value) ? get(options, [0, 'value']) : value;
 
 
-export function ListBoxInputFieldView({inline, value, onChange, fieldKey, options,
+export function ListBoxInputFieldView({inline, value, onChange, fieldKey, options, labelStyle,
                                        multiple, labelWidth, tooltip, label, wrapperStyle, selectStyle, readonly=false}) {
 
     var vAry= getCurrentValueArr(value);
     const style = Object.assign({whiteSpace:'nowrap', display: inline?'inline-block':'block'}, wrapperStyle);
     return (
         <div style={style}>
-            {label && <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth} />}
+            {label && <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth} labelStyle={labelStyle} />}
             <select name={fieldKey}
                     title={tooltip}
                     style={selectStyle}
@@ -64,6 +64,7 @@ ListBoxInputFieldView.propTypes= {
     labelWidth : PropTypes.number,
     selectStyle: PropTypes.object,
     wrapperStyle: PropTypes.object,
+    labelStyle: PropTypes.object,
     readonly: PropTypes.bool
 };
 

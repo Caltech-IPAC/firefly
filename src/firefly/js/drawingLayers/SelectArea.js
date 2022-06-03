@@ -42,7 +42,6 @@ export default {factoryDef, TYPE_ID}; // every draw layer must default export wi
 
 let idCnt=0;
 
-
 export function selectAreaEndActionCreator(rawAction) {
     return (dispatcher, getState) => {
         const {plotId}= rawAction.payload;
@@ -56,7 +55,10 @@ export function selectAreaEndActionCreator(rawAction) {
         if (drawLayer.drawData.data) {
             const selectBox= drawLayer.drawData.data.find( (drawObj) => drawObj.type===SelectBox.SELECT_BOX);
             const sel= {pt0:selectBox.pt1,pt1:selectBox.pt2};
-            dispatchAttributeChange({plotId,attKey:PlotAttribute.SELECTION,attValue:sel});
+            dispatchAttributeChange({plotId,changes: {
+                    [PlotAttribute.SELECTION] : sel,
+                    [PlotAttribute.SELECTION_TYPE] : drawLayer.selectedShape ?? SelectedShape.rect.key
+            }});
             // const imBoundSel= pv.rotation ? getImageBoundsSelection(sel,CsysConverter.make(plot)) : sel;
             const imBoundSel= getImageBoundsSelection(sel,CsysConverter.make(plot), drawLayer.selectedShape,
                                                       pv.rotation);
@@ -108,7 +110,11 @@ function onDetach(drawLayer,action) {
     plotIdAry.forEach( (plotId) => {
         const plot= primePlot(visRoot(),plotId);
         if (plot && plot.attributes[PlotAttribute.SELECTION]) {
-            dispatchAttributeChange({plotId, overlayColorScope:false, attKey:PlotAttribute.SELECTION, attValue:null});
+            dispatchAttributeChange({plotId,overlayColorScope:false,
+                changes: {
+                    [PlotAttribute.SELECTION] : undefined,
+                    [PlotAttribute.SELECTION_TYPE] : undefined,
+                }});
         }
         if (plot && plot.attributes[PlotAttribute.IMAGE_BOUNDS_SELECTION]) {
             dispatchAttributeChange({plotId,overlayColorScope:false,attKey:PlotAttribute.IMAGE_BOUNDS_SELECTION,attValue:null});

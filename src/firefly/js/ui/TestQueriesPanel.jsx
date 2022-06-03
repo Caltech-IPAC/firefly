@@ -15,11 +15,14 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
-import CompleteButton from './CompleteButton.jsx';
 import {
-    convertRequest, DynamicFieldGroupPanel, DynamicForm,
-    DynLayoutPanelTypes, makeAreaDef, makeEnumDef, makeFloatDef, makeIntDef, makeTargetDef, makeUnknownDef
-} from './DynamicUISearchPanel.jsx';
+    makeAreaDef, makeCheckboxDef, makeCircleDef, makeEnumDef, makeFloatDef, makeIntDef, makePolygonDef, makeTargetDef,
+    makeUnknownDef
+} from './dynamic/DynamicDef.js';
+import {
+    convertRequest, DynamicFieldGroupPanel, DynamicForm, DynCompleteButton,
+    DynLayoutPanelTypes
+} from './dynamic/DynamicUISearchPanel.jsx';
 
 import {FormPanel} from './FormPanel.jsx';
 import {FieldGroup} from '../ui/FieldGroup.jsx';
@@ -44,8 +47,8 @@ import {NaifidPanel} from './NaifidPanel';
 
 const dynamic1Params= [
     makeTargetDef(
-        {hipsUrl:'ivo://CDS/P/DSS2/color', centerPt:makeWorldPt(10,10), hipsFOVInDeg:10, raKey:'ra', decKey:'dec'}),
-    makeAreaDef({key:'size', minValue:1, maxValue:10, initValue:2, desc:'Area to Search'}),
+        {hipsUrl:'ivo://CDS/P/DSS2/color', centerPt:makeWorldPt(10,10), hipsFOVInDeg:10, raKey:'ra', decKey:'dec', popupHiPS:false}),
+    makeAreaDef({key:'sizeOfSearch', minValue:1, maxValue:10, initValue:2, desc:'Area to Search'}),
     makeIntDef({key:'int1', minValue:10, maxValue:1000, desc:'field #1', units: 'um', tooltip:'tooltip for field1',initValue:25 }),
     makeFloatDef({key:'float2', minValue:.1, maxValue:8.88, precision:3, initValue:3, desc:'float #3', tooltip:'tooltip for field1'}),
     makeEnumDef({key:'enum3', tooltip:'tip for enum 3', initValue:'joe', desc:'Choose',
@@ -64,6 +67,11 @@ const dynamic1Params= [
             {label:'Dynamite', value:'dynamite'},
             {label:'Other', value:'other'},
         ]}),
+    makeCheckboxDef({key:'cb1', desc:'check box one', initValue:true}),
+    makeCheckboxDef({key:'cb2', desc:'check box two', initValue:false}),
+    makeCheckboxDef({key:'cb3', desc:'check box three', initValue:true}),
+    makeCheckboxDef({key:'cb4', desc:'check box found', initValue:true}),
+    makePolygonDef({key:'somePoints', desc:'Area to Search', tooltip:'the area to search'})
 ];
 
 const dynamic2Params= [
@@ -84,6 +92,21 @@ const dynamic2Params= [
             {label:'Other', value:'other'},
         ]}),
     makeUnknownDef({key:'u6', tooltip:'a string of some sort', initValue:'stuff', desc:'Enter stuff'}),
+    makeCheckboxDef({key:'cb1', desc:'check box one', initValue:true}),
+    makeCheckboxDef({key:'cb2', desc:'check box two', initValue:false}),
+    makeCheckboxDef({key:'cb3', desc:'check box three', initValue:true}),
+];
+
+const dynamic3Params= [
+    makeCircleDef({key:'someArea', desc:'Area to Search', tooltip:'the area to search',
+        targetKey:'TargetPoint', sizeKey:'coneRadius', minValue:.01, maxValue:4, initValue:.2,
+        centerPt:makeWorldPt(10,10), hipsFOVInDeg:30, hipsUrl:'ivo://CDS/P/DSS2/color' }),
+    makePolygonDef({key:'somePoints', desc:'Area to Search', tooltip:'the area to search'}),
+    makeIntDef({key:'int1', minValue:10, maxValue:1000, desc:'field #1', units: 'um', tooltip:'tooltip for field1',initValue:25 }),
+    makeFloatDef({key:'float2', minValue:.1, maxValue:8.88, precision:3, initValue:3, desc:'float #3', tooltip:'tooltip for field1'}),
+    makeCheckboxDef({key:'cb1', desc:'check box one', initValue:true}),
+    makeCheckboxDef({key:'cb2', desc:'check box two', initValue:false}),
+    makeCheckboxDef({key:'cb3', desc:'check box three', initValue:true}),
 ];
 
 export class TestQueriesPanel extends PureComponent {
@@ -144,6 +167,9 @@ export class TestQueriesPanel extends PureComponent {
                             <Tab name='Dyn Search Panel' id='dsp'>
                                 {makeDynamicForm()}
                             </Tab>
+                            <Tab name='Dynamic 3' id='dynamic3'>
+                                {makeDynamic3()}
+                            </Tab>
                         </FieldGroupTabs>
 
                     </FieldGroup>
@@ -197,9 +223,26 @@ function makeDynamic2() {
                 DynLayoutPanel={DynLayoutPanelTypes.Simple}
                 fieldDefAry={dynamic2Params}
                 style={{margin:3, width:'100%'}}/>
-            <CompleteButton groupKey={'simpledyngroup'}
-                            style={{margin: 3}}
-                            onSuccess={(request) => showDymResult(convertRequest(request,dynamic2Params ))}/>
+            <DynCompleteButton groupKey={'simpledyngroup'}
+                               style={{margin: 3}}
+                               fieldDefAry={dynamic3Params}
+                               onSuccess={(request) => showDymResult(request)}/>
+        </div>
+    );
+}
+
+function makeDynamic3() {
+    return (
+        <div>
+            <DynamicFieldGroupPanel
+                groupKey={'simpledyngroup3'}
+                DynLayoutPanel={DynLayoutPanelTypes.Simple}
+                fieldDefAry={dynamic3Params}
+                style={{margin:3, width:'100%'}}/>
+            <DynCompleteButton groupKey={'simpledyngroup3'}
+                               style={{margin: 3}}
+                               fieldDefAry={dynamic3Params}
+                               onSuccess={(request) => showDymResult(request)}/>
         </div>
     );
 }
@@ -449,7 +492,7 @@ function showDymResult(convertedRequest) {
     console.log(convertedRequest);
     const result= (
         <div style={{padding:'5px'}}>
-            {Object.entries(convertedRequest).map( ([k,v]) => ( <div key={k}> {k} = {v} </div> )) }
+            {Object.entries(convertedRequest).map( ([k,v]) => ( <div key={k}> {k} = {v+''} </div> )) }
         </div>
     );
     showInfoPopup(result, 'Results' );

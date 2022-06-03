@@ -16,7 +16,7 @@ function fireEvent(ev,transform, plotId,mouseState, eventCallback, doPreventDefa
     const nativeEvent= ev.nativeEvent ? ev.nativeEvent : ev;
     const {screenX, screenY, offsetX, offsetY}= nativeEvent;
     const trans= Matrix.from(transform).inverse();
-    const tmpScreenPt= trans.applyToPoint(offsetX-window.scrollX,offsetY-window.scrollY);
+    const tmpScreenPt= trans.applyToPoint(offsetX,offsetY);
     const spt= makeScreenPt(tmpScreenPt.x,tmpScreenPt.y);
     eventCallback(plotId,mouseState,spt,screenX,screenY,nativeEvent);
 }

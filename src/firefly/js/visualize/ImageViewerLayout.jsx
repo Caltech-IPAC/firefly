@@ -567,7 +567,7 @@ function findMouseOwner(dlList, plot, screenPt) {
 
 function fireMouseEvent(drawLayer,mouseState,mouseStatePayload) {
     const payload= Object.assign({},mouseStatePayload,{drawLayer});
-    const fireObj= drawLayer.mouseEventMap[mouseState.key];
+    const fireObj= drawLayer?.mouseEventMap[mouseState.key];
     if (isString(fireObj)) {
         flux.process({type: fireObj, payload});
     }

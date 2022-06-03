@@ -237,12 +237,12 @@ public class ImageHeaderTest  extends ConfigTest {
 //
 //        //created parameter fields
 //        Class<?> paramsClass = params.getClass();
-//        Field[] cFields = paramsClass.getFields();
+//        Field[] circleFields = paramsClass.getFields();
 //
-//        for (int i=0; i<cFields.length; i++){
+//        for (int i=0; i<circleFields.length; i++){
 //            for (int j=0; j<eFields.length; j++) {
-//                if (cFields[i].getName().equalsIgnoreCase(eFields[j].getName())) {
-//                     Assert.assertEquals(eFields[j].get(imageHeader), cFields[i].get(params));
+//                if (circleFields[i].getName().equalsIgnoreCase(eFields[j].getName())) {
+//                     Assert.assertEquals(eFields[j].get(imageHeader), circleFields[i].get(params));
 //                    break;
 //                }
 //            }

@@ -15,9 +15,9 @@ const defExampleEntries= {
     row2: [ `'19h17m32s 11d58m02s equ j2000'`,`'12.3 8.5 b1950'`,`'J140258.51+542318.3'`]
     };
 
-const defaultExamples= () => {
-    const row1Op= getAppOptions()?.targetPanelExampleRow1 ?? defExampleEntries.row1;
-    const row2Op= getAppOptions()?.targetPanelExampleRow2 ?? defExampleEntries.row2;
+const defaultExamples= (targetPanelExampleRow1, targetPanelExampleRow2) => {
+    const row1Op= targetPanelExampleRow1 ?? getAppOptions()?.targetPanelExampleRow1 ?? defExampleEntries.row1;
+    const row2Op= targetPanelExampleRow2 ?? getAppOptions()?.targetPanelExampleRow2 ?? defExampleEntries.row2;
     return (
         <div style={{ display : 'inline-block', lineHeight : '1.2em'}}>
             {row1Op?.map( (s,idx) => <span key={s} style={{paddingLeft: (idx===0) ? 5 : 15}}>{s}</span> )}
@@ -27,7 +27,7 @@ const defaultExamples= () => {
         );
 };
 
-export function TargetFeedback ({showHelp, feedback, style={}, examples}) {
+export function TargetFeedback ({showHelp, feedback, style={}, targetPanelExampleRow1, targetPanelExampleRow2, examples}) {
     const topStyle= {...topDivStyle, ...style};
     if (!showHelp) return (<div style={topStyle}> <span dangerouslySetInnerHTML={{ __html : feedback }}/> </div>);
     return (
@@ -36,7 +36,7 @@ export function TargetFeedback ({showHelp, feedback, style={}, examples}) {
                 <div style={{display : 'inline-block', verticalAlign: 'top'}}>
                     <i>Examples: </i>
                 </div>
-                {examples ?? defaultExamples()}
+                {examples ?? defaultExamples(targetPanelExampleRow1, targetPanelExampleRow2)}
             </div>
         </div>
     );

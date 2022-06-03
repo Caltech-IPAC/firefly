@@ -133,9 +133,9 @@ export const getFieldGroupState= (groupKey) => flux.getState()[FIELD_GROUP_KEY]?
 
 export const isFieldGroupMounted = (groupKey) => getFieldGroupState(groupKey)?.isMounted
 
-export function getFieldVal(groupKey, fldName, defval=undefined) {
-    return get(getGroupFields(groupKey), [fldName, 'value'], defval);
-}
+export const getFieldVal= (groupKey, fldName, defval) => getFldValue(getGroupFields(groupKey), fldName, defval);
+
+const getFldValue= (fields, fldName, defval=undefined) => fields?.[fldName]?.value ?? defval;
 
 export const getField= (groupKey, fldName) => getGroupFields(groupKey)?.[fldName];
 
@@ -147,7 +147,6 @@ export const getReducerFunc= (groupKey) => getFieldGroupState(groupKey)?.reducer
  */
 export const getGroupFields= (groupKey) => getFieldGroupState(groupKey)?.fields ?? {};
 
-export const getFldValue= (fields, fldName, defval=undefined) => fields?.[fldName]?.value ?? defval;
 
 /**
  *

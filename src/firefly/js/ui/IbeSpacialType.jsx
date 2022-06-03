@@ -96,7 +96,7 @@ function renderSearchRegion(visible) {
     
     return (
         <SizeInputFields fieldKey='size'
-                         wrapperStyle={{visibility:visible?'visible':'hidden'}}
+                         style={{visibility:visible?'visible':'hidden'}}
                          initialState= {{
                                            value: '0.00833333333333',
                                            tooltip: 'Please select an option',
@@ -113,7 +113,7 @@ function renderSearchRegion(visible) {
 function renderImageSize(visible) {
    return (
        <SizeInputFields fieldKey='subsize'
-                        wrapperStyle={{visibility:visible?'visible':'hidden'}}
+                        style={{visibility:visible?'visible':'hidden'}}
                         initialState= {{
                                                value: '0.1388888888889',
                                                tooltip: 'Please select an option',

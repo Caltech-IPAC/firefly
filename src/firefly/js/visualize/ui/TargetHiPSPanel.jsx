@@ -1,5 +1,13 @@
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
+
 import React, {useContext,useEffect} from 'react';
 import PropTypes, {arrayOf, shape, oneOf, bool, object, string, number} from 'prop-types';
+import {SelectedShape} from '../../drawingLayers/SelectedShape.js';
+import {sprintf} from '../../externalSource/sprintf.js';
+import {InputAreaFieldConnected} from '../../ui/InputAreaField.jsx';
+import {splitByWhiteSpace} from '../../util/WebUtil.js';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
 import {MultiViewStandardToolbar} from './MultiViewStandardToolbar.jsx';
 import {
@@ -12,10 +20,9 @@ import {PlotAttribute} from '../PlotAttribute.js';
 import CsysConverter from '../CsysConverter.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {onPlotComplete} from '../PlotCompleteMonitor.js';
-import {isValidPoint, makeDevicePt, makeWorldPt, parseWorldPt, pointEquals} from '../Point.js';
+import {isValidPoint, makeDevicePt, makeImagePt, makeWorldPt, parseWorldPt, pointEquals} from '../Point.js';
 import {
-    getDrawLayerByType, getDrawLayersByType, getPlotViewById,
-    isDrawLayerAttached, primePlot
+    getDrawLayerByType, getDrawLayersByType, getPlotViewById, isDrawLayerAttached, primePlot
 } from '../PlotViewUtil.js';
 import {
     dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
@@ -28,16 +35,20 @@ import {SizeInputFields} from '../../ui/SizeInputField.jsx';
 import SearchSelectTool from '../../drawingLayers/SearchSelectTool.js';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
 import {ToolbarButton} from 'firefly/ui/ToolbarButton.jsx';
-import CLICK from 'html/images/20x20_click.png';
 import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
-import {dispatchShowDialog, dispatchHideDialog} from 'firefly/core/ComponentCntlr.js';
+import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from 'firefly/core/ComponentCntlr.js';
 import {LayoutType, PopupPanel} from 'firefly/ui/PopupPanel.jsx';
-import {computeDistance} from 'firefly/visualize/VisUtil.js';
+import {
+    computeCentralPointAndRadius, computeDistance, getEllipseArcEndPoints, getPointOnEllipse
+} from 'firefly/visualize/VisUtil.js';
 import {closeToolbarModalLayers} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
+import CLICK from 'html/images/20x20_click.png';
 
 const DIALOG_ID= 'HiPSPanelPopup';
 const DEFAULT_HIPS= 'ivo://CDS/P/DSS2/color';
 const DEFAULT_FOV= 340;
+export const CONE_CHOICE_KEY= 'CONE';
+export const POLY_CHOICE_KEY= 'POLY';
 
 const sharedPropTypes= {
     hipsUrl: string,
@@ -49,31 +60,33 @@ const sharedPropTypes= {
     groupKey: string,
     minSize: number,
     maxSize: number,
+    whichOverlay: string,
     coordinateSys: oneOf([CoordinateSys.GALACTIC, CoordinateSys.EQ_J2000]),
     mocList: arrayOf( shape({ mocUrl: string, title: string }) ),
 };
 
-export function VisualTargetPanel({groupKey:gk, fieldKey, labelWidth= 100, ...restOfProps}) {
-    useEffect(() => {
-        return () => {
-            dispatchHideDialog(DIALOG_ID);
-        };
-    },[]);
+export function VisualPolygonPanel({label, initValue, tooltip, fieldKey, style,
+                                       labelStyle={},labelWidth= 100, manageHiPS=true, ...restOfProps}) {
 
-    const context= useContext(GroupKeyCtx);
-    const groupKey= gk || context.groupKey;
+    const button= manageHiPS &&
+        ( <HiPSPanelPopupButton {...{polygonKey:fieldKey, whichOverlay:POLY_CHOICE_KEY, ...restOfProps}} /> );
+    return (
+        <InputAreaFieldConnected {...{
+            fieldKey, label, labelStyle, button, labelWidth, tooltip,
+            wrapperStyle:{display:'flex', alignItems:'center'},
+            style:{overflow:'auto', height:55, maxHeight:200, minWidth: 100, width:280, maxWidth:360, ...style},
+            initialState:{value:initValue},
+        }} />
+    );
+}
+
+export function VisualTargetPanel({fieldKey, labelWidth= 100, ...restOfProps}) {
     const popupButton= (
         <div style={{paddingRight: 2}}>
-            <ToolbarButton icon={CLICK} tip={'Choose target visually'} bgDark={true}
-                           imageStyle={{height:18, width:18}} horizontal={true}
-                           onClick={(element) =>
-                               showHiPSPanelPopup({ ...restOfProps, targetKey:fieldKey, element, groupKey})} />
+            <HiPSPanelPopupButton {...{targetKey:fieldKey, whichOverlay:CONE_CHOICE_KEY, ...restOfProps}} />
         </div>
     );
-
-    return (
-        <TargetPanel fieldKey={fieldKey} button={popupButton} labelWidth={labelWidth}/>
-    );
+    return ( <TargetPanel fieldKey={fieldKey} button={popupButton} labelWidth={labelWidth}/> );
 }
 
 VisualTargetPanel.propTypes= {
@@ -83,9 +96,35 @@ VisualTargetPanel.propTypes= {
 
 
 
+export function convertStrToWpAry(str) {
+    const ptStrAry= str?.split(',');
+    if (!(ptStrAry?.length>1)) return [];
+    const wpAry= ptStrAry
+        .map( (s) => splitByWhiteSpace(s))
+        .filter( (sAry) => sAry.length===2 && !isNaN(Number(sAry[0])) && !isNaN(Number(sAry[1])))
+        .map( (sAry) => makeWorldPt(sAry[0],sAry[1]));
+    return wpAry;
+}
+
+function convertWpAryToStr(wpAry,plot) {
+    const cc= CsysConverter.make(plot);
+    return wpAry.reduce( (fullStr, pt, idx) => {
+        const wpt= cc.getWorldCoords(pt);
+        return wpt ? `${fullStr}${idx>0?', ':''}${sprintf('%.6f',wpt.x)} ${sprintf('%.6f',wpt.y)}` : fullStr;
+    },'');
+}
+
+
+function isWpArysEquals(wpAry1, wpAry2) {
+    if (wpAry1?.length!==wpAry2.length) return false;
+    return wpAry1.filter( (wp,idx) => pointEquals(wp,wpAry2[idx])).length===wpAry1.length;
+}
+
+
 export const HiPSTargetView = ({style, hipsUrl=DEFAULT_HIPS, hipsFOVInDeg= DEFAULT_FOV, centerPt=makeWorldPt(0,0),
-                                   targetKey='UserTargetWorldPt', sizeKey='none', coordinateSys, mocList,
-                                   minSize=1/3600, maxSize=100,
+                                   targetKey='UserTargetWorldPt', sizeKey='none---Size', polygonKey='non---Polygon',
+                                   whichOverlay= CONE_CHOICE_KEY,
+                                   coordinateSys, mocList, minSize=1/3600, maxSize=100,
                                    plotId='defaultHiPSTargetSearch', cleanup= false, groupKey}) => {
 
     const viewerId= plotId+'-viewer';
@@ -93,56 +132,75 @@ export const HiPSTargetView = ({style, hipsUrl=DEFAULT_HIPS, hipsFOVInDeg= DEFAU
     const pv= useStoreConnector(() => getPlotViewById(visRoot(),plotId));
     const [getTargetWp,setTargetWp]= useFieldGroupValue(targetKey, groupKey);
     const [getHiPSRadius, setHiPSRadius]= useFieldGroupValue(sizeKey, groupKey);
+    const [getPolygon, setPolygon]= useFieldGroupValue(polygonKey, groupKey);
 
     const userEnterWorldPt= () =>  parseWorldPt(getTargetWp());
     const userEnterSearchRadius= () =>  Number(getHiPSRadius());
+    const userEnterPolygon= () => convertStrToWpAry(getPolygon());
 
     useEffect(() => { // show HiPS plot
         if (!pv || hipsUrl!==pv.request.getHipsRootUrl()) {
             initHiPSPlot({plotId,hipsUrl, viewerId,centerPt,hipsFOVInDeg, coordinateSys, mocList,
-                minSize, maxSize,
-                userEnterWorldPt:userEnterWorldPt(), userEnterSearchRadius:userEnterSearchRadius()});
+                userEnterWorldPt:userEnterWorldPt(), userEnterSearchRadius:userEnterSearchRadius(),
+                whichOverlay, userEnterPolygon:userEnterPolygon(),
+            });
         }
         else {
-            updatePlotOverlayFromUserInput(plotId, userEnterWorldPt(), userEnterSearchRadius(), true);
+            updatePlotOverlayFromUserInput(plotId, whichOverlay, userEnterWorldPt(), userEnterSearchRadius(),
+                userEnterPolygon(), true);
         }
         return () => {
             if (cleanup) dispatchDeletePlotView({plotId});
         };
     },[]);
 
-    useEffect(() => { // if plot view changes then update the target field
+    useEffect(() => { // if plot view changes then update the target or polygon field
+        if (whichOverlay!==CONE_CHOICE_KEY && whichOverlay!==POLY_CHOICE_KEY) return;
         const plot= primePlot(visRoot(),plotId);
         if (!plot) return;
+        const isCone= whichOverlay===CONE_CHOICE_KEY;
+        const {cenWpt, radius, corners}= plot.attributes[PlotAttribute.SELECTION] ?getDetailsFromSelection(plot) : {};
 
-        if (plot.attributes[PlotAttribute.SELECTION]) {
-            const {cenWpt, radius}= getPtRadiusFromSelection(plot);
-            if (!cenWpt) return;
-            const drawRadius= radius<=maxSize ? (radius >= minSize ? radius : minSize) : maxSize;
-            if (pointEquals(userEnterWorldPt(),cenWpt) && drawRadius===userEnterSearchRadius()) return;
-            setTargetWp(cenWpt.toString());
-            setHiPSRadius(drawRadius+'');
-            updatePlotOverlayFromUserInput(plotId, cenWpt, drawRadius);
+        if (isCone) {
+            if (plot.attributes[PlotAttribute.SELECTION]) {
+                if (!cenWpt) return;
+                const drawRadius= radius<=maxSize ? (radius >= minSize ? radius : minSize) : maxSize;
+                if (pointEquals(userEnterWorldPt(),cenWpt) && drawRadius===userEnterSearchRadius()) return;
+                setTargetWp(cenWpt.toString());
+                setHiPSRadius(drawRadius+'');
+                updatePlotOverlayFromUserInput(plotId, whichOverlay, cenWpt, drawRadius, undefined);
+                setTimeout(() => closeToolbarModalLayers(), 10);
+            }
+            else {
+                const wp= plot.attributes[PlotAttribute.USER_SEARCH_WP];
+                if (!wp) return;
+                const utWPt= userEnterWorldPt();
+                if (!utWPt || (isValidPoint(utWPt) && !pointEquals(wp,utWPt ))) {
+                    setTargetWp(wp.toString());
+                }
+            }
         }
         else {
-            const wp= plot.attributes[PlotAttribute.USER_SEARCH_WP];
-            if (!wp) return;
-            const utWPt= userEnterWorldPt();
-            if (!utWPt || (isValidPoint(utWPt) && !pointEquals(wp,utWPt ))) {
-                setTargetWp(wp.toString());
+            if (plot.attributes[PlotAttribute.SELECTION]) {
+                if (isWpArysEquals(corners,userEnterPolygon())) return;
+                setPolygon(convertWpAryToStr(corners,plot));
+                setTimeout(() => closeToolbarModalLayers(), 10);
+            }
+            else {
+                const polyWpAry= plot.attributes[PlotAttribute.POLYGON_ARY];
+                if (polyWpAry?.length) {
+                    if (isWpArysEquals(polyWpAry,userEnterPolygon())) return;
+                    setPolygon(convertWpAryToStr(polyWpAry,plot));
+                }
             }
         }
 
     },[pv]);
 
     useEffect(() => { // if target or radius field change then hips plot to reflect it
-        updatePlotOverlayFromUserInput(plotId, userEnterWorldPt(), userEnterSearchRadius());
-    }, [getTargetWp, getHiPSRadius]);
-
-    // if (!groupKey) {
-    //     logger.error('group key must be defined, as property or part of context');
-    //     return <div/>;
-    // }
+        updatePlotOverlayFromUserInput(plotId, whichOverlay, userEnterWorldPt(),
+            userEnterSearchRadius(), userEnterPolygon());
+    }, [getTargetWp, getHiPSRadius, getPolygon, whichOverlay]);
 
     return (
         <div style={{height:500, ...style, display:'flex', flexDirection:'column'}}>
@@ -170,7 +228,8 @@ export const TargetHiPSPanel = ({searchAreaInDeg, style,
         <div style={{display:'flex', flexDirection:'column', marginLeft:100}}>
             <TargetPanel style={{paddingTop: 10}} labelWidth={100}/>
             <SizeInputFields fieldKey='HiPSPanelRadius' showFeedback={true} labelWidth= {100}  nullAllowed={false}
-                             label={'Search Area'}
+                             label='Search Area:'
+                             labelStyle={{textAlign:'right', paddingRight:4}}
                              initialState={{ unit: 'arcsec', value: searchAreaInDeg+'', min, max }} />
         </div>
     </div>
@@ -181,16 +240,18 @@ TargetHiPSPanel.propTypes= {
     ...sharedPropTypes,
 };
 
-export const TargetHiPSRadiusPopupPanel = ({searchAreaInDeg, targetKey='UserTargetWorldPt', sizeKey= 'HiPSPanelRadius', style,
+export const TargetHiPSRadiusPopupPanel = ({searchAreaInDeg, style,
+                                               targetKey='UserTargetWorldPt', sizeKey= 'HiPSPanelRadius', polygonKey,
                                               minValue:min= 1/3600, maxValue:max= 100,
                                                ...restOfProps}) => (
     <div style={{display:'flex', width: 700, paddingBottom: 20, flexDirection:'column', ...style}}>
         <div style={{display:'flex', flexDirection:'column'}}>
-            <VisualTargetPanel {...{style:{paddingTop: 10}, fieldKey:targetKey, sizeKey, labelWidth:100,
+            <VisualTargetPanel {...{style:{paddingTop: 10}, fieldKey:targetKey, sizeKey, polygonKey, labelWidth:100,
                 minSize:min, maxSize:max, ...restOfProps}} />
             <SizeInputFields {...{
                 fieldKey:sizeKey, showFeedback:true, labelWidth:100, nullAllowed:false,
-                label:'Search Area',
+                label:'Search Area:',
+                labelStyle:{textAlign:'right', paddingRight:4},
                 initialState:{ unit: 'arcsec', value: searchAreaInDeg+'', min, max }
             }} />
         </div>
@@ -202,6 +263,37 @@ TargetHiPSRadiusPopupPanel.propTypes= {
     sizeKey: PropTypes.string,
     ...sharedPropTypes,
 };
+
+export const hideHiPSPopupPanel= () => dispatchHideDialog(DIALOG_ID);
+
+
+function HiPSPanelPopupButton({groupKey:gk, polygonKey, whichOverlay=CONE_CHOICE_KEY, targetKey,
+                                  hideHiPSPopupPanelOnDismount= true,
+                                  tip='Choose search area visually', ...restOfProps}) {
+
+
+    const showDialog= (element) => showHiPSPanelPopup({ polygonKey, targetKey, element, groupKey, whichOverlay, ...restOfProps});
+
+    useEffect(() => {
+        if (isDialogVisible(DIALOG_ID)) {
+            showDialog();
+        }
+        return () => {
+            if (hideHiPSPopupPanelOnDismount) hideHiPSPopupPanel();
+        };
+    },[]);
+
+    const context= useContext(GroupKeyCtx);
+    const groupKey= gk || context.groupKey;
+    return (
+        <ToolbarButton {...{
+            icon:CLICK, tip, bgDark:true, horizontal:true, imageStyle:{height:18, width:18},
+            onClick:(element) => showDialog(element)
+        }}/>
+    );
+}
+
+
 
 
 const defPopupPlotId= 'defaultHiPSPopupTargetSearch';
@@ -216,12 +308,12 @@ function showHiPSPanelPopup({element, plotId= defPopupPlotId, ...restOfProps}) {
         <PopupPanel title={'Choose Target'} layoutPosition={LayoutType.TOP_RIGHT}
                     closeCallback={() => doClose()} >
             <div style={{
-                padding: 3, display:'flex', flexDirection:'column', width: 500,
+                padding: 3, display:'flex', flexDirection:'column', width: 500, height:400,
                 alignItems:'center', resize:'both', overflow: 'hidden', zIndex:1}}>
                 <HiPSTargetView {...{
                     plotId,
                     ...restOfProps,
-                    style:{height:400, width:'100%', paddingBottom:4} }} />
+                    style:{height:'100%', width:'100%', paddingBottom:4} }} />
             </div>
         </PopupPanel>
     );
@@ -247,14 +339,16 @@ const createMocTableId= () => `moc-table-${++mocCnt}`;
  * @param obj.hipsFOVInDeg
  * @param obj.coordinateSys
  * @param obj.mocList
- * @param obj.minSize
- * @param obj.maxSize
  * @param obj.userEnterWorldPt
  * @param obj.userEnterSearchRadius
+ * @param obj.whichOverlay
+ * @param obj.userEnterPolygon
  * @return {Promise<void>}
  */
 async function initHiPSPlot({ hipsUrl, plotId, viewerId, centerPt, hipsFOVInDeg, coordinateSys, mocList,
-                                minSize, maxSize, userEnterWorldPt, userEnterSearchRadius }) {
+                                userEnterWorldPt, userEnterSearchRadius,
+                                whichOverlay, userEnterPolygon,
+                            }) {
     getDrawLayersByType(dlRoot(), HiPSMOC.TYPE_ID)
         .forEach( ({drawLayerId}) => dispatchDestroyDrawLayer(drawLayerId));// clean up any old moc layers
     const wpRequest= WebPlotRequest.makeHiPSRequest(hipsUrl, centerPt, hipsFOVInDeg);
@@ -282,27 +376,41 @@ async function initHiPSPlot({ hipsUrl, plotId, viewerId, centerPt, hipsFOVInDeg,
     !dl && dispatchCreateDrawLayer(SearchSelectTool.TYPE_ID);
     !isDrawLayerAttached(dl,plotId) && dispatchAttachLayerToPlot(SearchSelectTool.TYPE_ID,plotId,false);
     if (userEnterWorldPt) {
-        updatePlotOverlayFromUserInput(plotId,userEnterWorldPt, userEnterSearchRadius, true);
+        updatePlotOverlayFromUserInput(plotId,whichOverlay, userEnterWorldPt, userEnterSearchRadius, userEnterPolygon, true);
     }
 }
 
-function updatePlotOverlayFromUserInput(plotId, wp, radius, forceCenterOn= false) {
+function updatePlotOverlayFromUserInput(plotId, whichOverlay, wp, radius, polygonAry, forceCenterOn= false) {
     const dl= getDrawLayerByType(getDlAry(), SearchSelectTool.TYPE_ID);
     if (!dl) return;
-    dispatchAttributeChange( {plotId, changes:{[PlotAttribute.USER_SEARCH_WP]:wp} });
-    dispatchAttributeChange( {plotId, changes:{[PlotAttribute.USER_SEARCH_RADIUS_DEG]:radius}});
+    const isCone= whichOverlay===CONE_CHOICE_KEY;
+
+    dispatchAttributeChange( {plotId,
+        changes:{
+            [PlotAttribute.USER_SEARCH_WP]: isCone ? wp : undefined,
+            [PlotAttribute.USER_SEARCH_RADIUS_DEG]: isCone ? radius : undefined,
+            [PlotAttribute.POLYGON_ARY]: isCone ? undefined : polygonAry,
+            [PlotAttribute.RELATIVE_IMAGE_POLYGON_ARY]: isCone ? undefined : makeRelativePolygonAry(primePlot(visRoot(),plotId),polygonAry),
+            [PlotAttribute.USE_POLYGON]: !isCone,
+        }
+    } );
     dispatchForceDrawLayerUpdate(dl.drawLayerId, plotId);
 
+    const centerProjPt= isCone ? wp : computeCentralPointAndRadius(polygonAry)?.centralPoint;
     const cc= CsysConverter.make(primePlot(visRoot(),plotId));
-    if ((!cc || cc.pointInView(wp)) && !forceCenterOn) return;
-    dispatchChangeCenterOfProjection({plotId, centerProjPt:wp});
+    if (!centerProjPt || !cc) return;
+    if (cc.pointInView(centerProjPt) && !forceCenterOn) return;
+    dispatchChangeCenterOfProjection({plotId, centerProjPt});
 }
+
+
+const radians= [Math.PI/4, 2*Math.PI/4, 3*Math.PI/4, 4*Math.PI/4, 5*Math.PI/4, 6*Math.PI/4, 7*Math.PI/4, 8*Math.PI/4];
 
 /**
  * @param {WebPlot} plot
  * @return {{}|{radius: number, cenWpt: WorldPt}}
  */
-function getPtRadiusFromSelection(plot) {
+function getDetailsFromSelection(plot) {
     const {pt0,pt1}= plot.attributes[PlotAttribute.SELECTION];
     if (!pt0 || !pt1) return {};
     const cc= CsysConverter.make(plot);
@@ -314,5 +422,39 @@ function getPtRadiusFromSelection(plot) {
     const sideWPx= cc.getWorldCoords( makeDevicePt( dPt0.x,cen.y));
     const sideWPy= cc.getWorldCoords( makeDevicePt( cen.x,dPt0.y));
     const radius= Math.min(computeDistance(sideWPx,cenWpt), computeDistance(sideWPy,cenWpt));
-    return {cenWpt, radius};
+    let corners;
+    const rx= cen.x-dPt0.x;
+    const ry= cen.y-dPt0.y;
+
+
+    if (plot.attributes[PlotAttribute.SELECTION_TYPE]===SelectedShape.circle.key) {
+        corners= radians.map( (radian) => {
+            const {x,y}= getPointOnEllipse(cen.x,cen.y,rx,ry,radian);
+            return cc.getWorldCoords(makeDevicePt(x,y));
+        });
+    }
+    else {
+        const ptCorner01= cc.getWorldCoords(makeDevicePt(dPt0.x, dPt1.y));
+        const ptCorner10= cc.getWorldCoords(makeDevicePt(dPt1.x, dPt0.y));
+        corners= [pt0,ptCorner01,pt1,ptCorner10];
+    }
+
+    const relativeDevCorners= corners.map( (pt) => {
+        const dPt= cc.getDeviceCoords(pt);
+        return makeDevicePt( cen.x-dPt.x, cen.y-dPt.y );
+    });
+
+
+    return {cenWpt, radius, corners, relativeDevCorners};
+}
+
+function makeRelativePolygonAry(plot, polygonAry) {
+    const cc= CsysConverter.make(plot);
+    const dAry= polygonAry.map( (pt) => cc.getImageCoords(pt)).filter( (pt) => pt);
+    if (dAry.length <3) return;
+    const avgX= dAry.reduce( (sum,{x}) => sum+x,0)/dAry.length;
+    const avgY= dAry.reduce( (sum,{y}) => sum+y,0)/dAry.length;
+    const cen= makeImagePt(avgX,avgY);
+    const relDevPtAry= dAry.map( (pt) => makeImagePt(cen.x-pt.x, cen.y-pt.y));
+    return relDevPtAry;
 }
