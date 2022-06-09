@@ -24,16 +24,16 @@ import {isDefined} from '../../util/WebUtil.js';
  * @param {Array.<WavelengthTabRelatedData>} wlTableRelatedAry
  * @return {*}
  */
-export function parseWavelengthHeaderInfo(header, altWcs='', zeroHeader, wlTableRelatedAry) {
-    const parse= makeDoubleHeaderParse(header, zeroHeader, altWcs);
-    const which= altWcs?'1':getWCSAXES(parse);
-    const whatType= parse.getValue(`CTYPE${which}${altWcs}`, ' ');
-    const mijMatrixKeyRoot = getPC_ijKey(parse,which);
+export function parseWavelengthHeaderInfo(header, altWcs = '', zeroHeader, wlTableRelatedAry) {
+    const parse = makeDoubleHeaderParse(header, zeroHeader, altWcs);
+    const which = altWcs ? '1' : getWCSAXES(parse);
+    const whatType = parse.getValue(`CTYPE${which}${altWcs}`, ' ');
+    const mijMatrixKeyRoot = getPC_ijKey(parse, which);
     if (!mijMatrixKeyRoot) return; //When both PC i_j and CD i_j are present, we don't show the wavelength
-    const table= findWLTableToMatch(parse,altWcs,which,wlTableRelatedAry);
+    const table = findWLTableToMatch(parse, altWcs, which, wlTableRelatedAry);
     if (whatType.toUpperCase().startsWith('WAVE')) {
         return calculateWavelengthParams(parse, altWcs, which, mijMatrixKeyRoot, table);
-    } else if (whatType.toUpperCase()===VRAD) {
+    } else if (whatType.toUpperCase() === VRAD) {
         return calculateVradParams(parse, altWcs, which, mijMatrixKeyRoot, table);
     }
 }
@@ -41,19 +41,15 @@ export function parseWavelengthHeaderInfo(header, altWcs='', zeroHeader, wlTable
 
 function findWLTableToMatch(parse, altWcs, which, wlTableRelatedAry) {
     if (!wlTableRelatedAry?.length) return;
-    const tName= parse.getValue(`PS${which}_0${altWcs}`);
-    return wlTableRelatedAry.find( (entry) => entry.hduName===tName)?.table;
+    const tName = parse.getValue(`PS${which}_0${altWcs}`);
+    return wlTableRelatedAry.find((entry) => entry.hduName === tName)?.table;
 }
 
-// const isWaveParseDependent = (algorithm) => algorithm===LINEAR || algorithm===LOG  || algorithm===F2W  ||
-//                                             algorithm===V2W  || algorithm===TAB;
-//
-// const isVradParseDependent = (algorithm) => algorithm===LINEAR;
 
-const allGoodValues= (...numbers)  => numbers.every((n) => !isNaN(n));
+const allGoodValues = (...numbers) => numbers.every((n) => !isNaN(n));
 
 
-const L_10= Math.log(10);
+const L_10 = Math.log(10);
 
 /**
  * According to A&A 395, 1061-1075 (2002) DOI: 10.1051/0004-6361:20021326
@@ -71,15 +67,15 @@ const L_10= Math.log(10);
  * @param which
  * @returns {*}
  */
-function getPC_ijKey(parser,which){
+function getPC_ijKey(parser, which) {
 
     const hasPC = parser.hasKeyStartWith(`PC${which}_`);
     const hasCD = parser.hasKeyStartWith(`CD${which}_`);
 
-    if (hasPC && hasCD){
+    if (hasPC && hasCD) {
         return undefined;
     }
-    if (!hasPC && hasCD){
+    if (!hasPC && hasCD) {
         return 'CD';
     }
     return 'PC';
@@ -96,22 +92,20 @@ function getPC_ijKey(parser,which){
  * @param parse
  * @returns {*}
  */
-function getWCSAXES(parse){
-    const  wcsAxis = parse.getValue('WCSAXES');
+function getWCSAXES(parse) {
+    const wcsAxis = parse.getValue('WCSAXES');
 
     if (wcsAxis) return wcsAxis;
 
-    const nAxis= parse.getIntValue('NAXIS');
+    const nAxis = parse.getIntValue('NAXIS');
 
-    const ctype= parse.getValue(`CTYPE${nAxis+1}`, undefined);
+    const ctype = parse.getValue(`CTYPE${nAxis + 1}`, undefined);
 
-    if(ctype){
-        return (nAxis+1).toString();
-    }
-    else{
+    if (ctype) {
+        return (nAxis + 1).toString();
+    } else {
         return nAxis.toString();
     }
-
 }
 
 /**
@@ -129,11 +123,11 @@ function getWCSAXES(parse){
  *   i: the wcsaxes's value, if the wcsaxes = 2, then i=2
  *   j: 0, ...N
  *   If any of the PC_ij is not defined in the header, the following default is assigned:
- *   1.  PC i_j = 	1.0 when i = j
+ *   1.  PC i_j =    1.0 when i = j
  *   2.  PC i_j = 0.0 when i!=j
  *
  *  If instead of using PC, CD is used, the following default is assigned:
- *  CD i_j	0.0  NOTE: CD i_j's default is different from PC i_j
+ *  CD i_j    0.0  NOTE: CD i_j's default is different from PC i_j
  *
  *
  *  r_j: An array of the CRPIX values, the size of the dimension is N.  N is defined by
@@ -149,17 +143,17 @@ function getWCSAXES(parse){
  * @param N
  * @returns {Array}
  */
-function applyDefaultValues(inArr, keyRoot, which, N){
-    const retAry=[];
-    for (let i=0; i<N; i++) {
-        if (inArr && isDefined(inArr[i]) && !isNaN(inArr[i])){
+function applyDefaultValues(inArr, keyRoot, which, N) {
+    const retAry = [];
+    for (let i = 0; i < N; i++) {
+        if (isDefined(inArr?.[i]) && !isNaN(inArr[i])) {
             //if inArr is defined and it has a valid value
-            retAry[i]=inArr[i];
+            retAry[i] = inArr[i];
             continue;
         }
         switch (keyRoot) { //either inArr is undefined, or inArr[i] is undefined
             case 'PC':
-                retAry[i] = (i+1) === parseInt(which)? 1:0;
+                retAry[i] = (i + 1) === parseInt(which) ? 1 : 0;
                 break;
             case 'CRPIX' || 'CD':
                 retAry[i] = 0.0;
@@ -168,11 +162,12 @@ function applyDefaultValues(inArr, keyRoot, which, N){
     }
     return retAry;
 }
-function isWaveLength(ctype, pc_3j){
 
-    if (ctype.trim()==='') return false;
+function isWaveLength(ctype, pc_3j) {
 
-    const sArray= ctype.split('-');
+    if (ctype.trim() === '') return false;
+
+    const sArray = ctype.split('-');
 
     if (sArray[0] !== 'WAVE') return false;
 
@@ -184,14 +179,14 @@ function isWaveLength(ctype, pc_3j){
 }
 
 /**
- * Get the key Spectra headers 
+ * Get the key Spectra headers
  * @param parse
  * @param {string} altWcs one character alternative WCS version, '' for primary
  * @param {number} which index of the world coordinate
  * @param {string} defaultUnits default units
  * @returns {*}
  */
-function getCoreSpectralHeaders(parse, altWcs, which, defaultUnits='') {
+function getCoreSpectralHeaders(parse, altWcs, which, defaultUnits = '') {
     const ctype = parse.getValue(`CTYPE${which}${altWcs}`, ' ');
     const units = parse.getValue(`CUNIT${which}${altWcs}`, defaultUnits);
     const crpix = parse.getDoubleValue(`CRPIX${which}${altWcs}`, 0.0);
@@ -201,6 +196,7 @@ function getCoreSpectralHeaders(parse, altWcs, which, defaultUnits='') {
     const N = parse.getIntOneOfValue(['WCSAXES', 'WCSAXIS', 'NAXIS'], -1);
     return {ctype, units, crpix, crval, cdelt, nAxis, N};
 }
+
 /**
  * NOTE:
  *   pc_3j, means the the wavelength axis is 3.  In fact, the wavelength can be in any axis.
@@ -223,29 +219,29 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key, wlTable) {
     * CUNIT i	' ' (i.e. undefined)
     * NOTE: i is the which variable here.
     */
-    const {ctype, units, crpix, crval, cdelt, nAxis, N}= getCoreSpectralHeaders(parse, altWcs, which);
-    const restWAV= parse.getDoubleValue('RESTWAV'+altWcs, 0);
-    let pc_3j = parse.getDoubleAry(`${pc_3j_key}${which}_`,altWcs,1,N, undefined);
-    let r_j = parse.getDoubleAry('CRPIX',altWcs,1,N, undefined);
+    const {ctype, units, crpix, crval, cdelt, nAxis, N} = getCoreSpectralHeaders(parse, altWcs, which);
+    const restWAV = parse.getDoubleValue('RESTWAV' + altWcs, 0);
+    let pc_3j = parse.getDoubleAry(`${pc_3j_key}${which}_`, altWcs, 1, N, undefined);
+    let r_j = parse.getDoubleAry('CRPIX', altWcs, 1, N, undefined);
 
     //check if any value is not defined, use default
-    pc_3j = applyDefaultValues(pc_3j,pc_3j_key, which, N);
-    r_j   = applyDefaultValues(r_j, 'CRPIX', which, N);
+    pc_3j = applyDefaultValues(pc_3j, pc_3j_key, which, N);
+    r_j = applyDefaultValues(r_j, 'CRPIX', which, N);
 
-    const ps3_0= parse.getValue(`PS${which}_0${altWcs}`, '');
-    const ps3_1= parse.getValue(`PS${which}_1${altWcs}`, '');
-    const ps3_2= parse.getValue(`PS${which}_2${altWcs}`, '');
+    const ps3_0 = parse.getValue(`PS${which}_0${altWcs}`, '');
+    const ps3_1 = parse.getValue(`PS${which}_1${altWcs}`, '');
+    const ps3_2 = parse.getValue(`PS${which}_2${altWcs}`, '');
     //pv3_1: EXTLEVEL, pv3_2: EXTVER, pv3_3: axis number associated with the coordinate array in ps3_1
     //The pv3_i values are not used in our case, since we only handle the FITS with one axis related to TAB wavelength.
     //We processed those values just in case there is need to handle the FITS with more than one TAB axes.
-    const pv3_1= parse.getValue(`PV${which}_1${altWcs}`, '');
-    const pv3_2= parse.getValue(`PV${which}_2${altWcs}`, '');
-    const pv3_3= parse.getValue(`PV${which}_3${altWcs}`, '');
+    const pv3_1 = parse.getValue(`PV${which}_1${altWcs}`, '');
+    const pv3_2 = parse.getValue(`PV${which}_2${altWcs}`, '');
+    const pv3_3 = parse.getValue(`PV${which}_3${altWcs}`, '');
 
     const {algorithm, wlType} = getAlgorithmAndType(ctype, N);
 
 
-    const canDoPlaneCalc= allGoodValues(crpix, crval, cdelt && nAxis===3);
+    const canDoPlaneCalc = allGoodValues(crpix, crval, cdelt && nAxis === 3);
 
     // We only support the standard format in the FITS header. The standard means the CTYPEka='WAVE-ccc" where
     // ccc can be 'F2W', 'V2W', 'LOG', 'TAB' or empty that means linear. If the header does not have this kind
@@ -256,21 +252,21 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key, wlTable) {
     const isWL = isWaveLength(ctype, pc_3j);
 
     //If it is a cube plane FITS, plot and display the wavelength at each plane
-    if (canDoPlaneCalc && nAxis===3  &&  (!isWL || isWL && algorithm==='TAB') ) {
+    if (canDoPlaneCalc && nAxis === 3 && (!isWL || isWL && algorithm === 'TAB')) {
         /* There are two cases for wavelength planes:
         *  1. The FITS has wavelength planes, and each plane has the same wavelength, ie. the third axis
         *     is wavelength.  Then the algorithm is PLANE
         *  2. The FITS has wavelength planes,and the wavelength on each plane is changing with the image point
         *     position.  For example, the algorithm is TAB.
         */
-        const algorithmForPlane = isWL? algorithm: PLANE;
+        const algorithmForPlane = isWL ? algorithm : PLANE;
         //const wlType = whichType;
         //todo - if we are not table then we will table plan
-        if (algorithm!=='TAB' ) {
-            return makeSimplePlaneBased(crpix, crval, cdelt,nAxis, algorithmForPlane, wlType, units,
+        if (algorithm !== 'TAB') {
+            return makeSimplePlaneBased(crpix, crval, cdelt, nAxis, algorithmForPlane, wlType, units,
                 'use PLANE since is cube and parameters missing');
         }
-        return  {
+        return {
             N, algorithm, ctype, restWAV, pc_3j, r_j,
             ps3_0, ps3_1, ps3_2, pv3_1, pv3_2, pv3_3,
             crpix, crval, cdelt, nAxis, wlType, units,
@@ -287,24 +283,23 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key, wlTable) {
      *  3. The FITS file is not wavelength type (may be plane)
      *
      */
-    if (!algorithm || !wlType  || !isWL) return;
+    if (!algorithm || !wlType || !isWL) return;
 
 
-    if (algorithm===LOG){  //the values in CRPIXk and CDi_j (PC_i_j) are log based on 10 rather than natural log, so a factor is needed.
-        r_j && (r_j= r_j.map( (v) => v*L_10));
-        pc_3j && (pc_3j= pc_3j.map( (v) => v*L_10));
+    if (algorithm === LOG) {  //the values in CRPIXk and CDi_j (PC_i_j) are log based on 10 rather than natural log, so a factor is needed.
+        r_j && (r_j = r_j.map((v) => v * L_10));
+        pc_3j && (pc_3j = pc_3j.map((v) => v * L_10));
     }
 
-    let failReason= '';
-    let failWarning= '';
+    let failReason = '';
+    let failWarning = '';
     if (N < 0) {
-        failReason+= 'Dimension value is not available, must be NAXIS or WCSAXES';
-    }
-    else {
+        failReason += 'Dimension value is not available, must be NAXIS or WCSAXES';
+    } else {
         // if (!pc_3j) failReason+= `, PC3_i${altWcs} or CD3_i${altWcs} is not defined`;
         // if (!r_j) failReason+= `, CRPIXi${altWcs} is not defined`;
-        if (!pc_3j) failWarning+= `, PC3_i${altWcs} or CD3_i${altWcs} is not defined`;
-        if (!r_j) failWarning+= `, CRPIXi${altWcs} is not defined`;
+        if (!pc_3j) failWarning += `, PC3_i${altWcs} or CD3_i${altWcs} is not defined`;
+        if (!r_j) failWarning += `, CRPIXi${altWcs} is not defined`;
     }
 
     return {
@@ -332,29 +327,28 @@ function calculateVradParams(parse, altWcs, which, pc_3j_key, vradTable) { // es
     * Only consider VRAD plane case for now
     * the pc_3j_key, vradTalble not used in Plane case
     */
-    const { ctype, units, crpix, crval, cdelt, nAxis} = getCoreSpectralHeaders(parse, altWcs, which, 'm/s');
+    const {ctype, units, crpix, crval, cdelt, nAxis} = getCoreSpectralHeaders(parse, altWcs, which, 'm/s');
     const {algorithm, wlType} = getAlgorithmAndType(ctype);
 
     //If it is a cube plane FITS, plot and display the Vrad at each plane
-    if (allGoodValues(crpix, crval, cdelt) && nAxis===3) {
-        return makeSimplePlaneBased(crpix, crval, cdelt, nAxis, algorithm, wlType, units, 'use PLANE since is cube and parameters missing');
+    if (allGoodValues(crpix, crval, cdelt) && nAxis === 3) {
+        return makeSimplePlaneBased(crpix, crval, cdelt, nAxis, algorithm, wlType, units,
+            'use PLANE since is cube and parameters missing');
     }
-
-    //If it is a cube plane FITS, plot and display the VRAD at each plane
-    //if (!algorithm || !wlType  || !isVR) return;
-
-    //Adding other VRAD algorithm and conversions here
-
 }
 
 function makeSimplePlaneBased(crpix, crval, cdelt, nAxis, algorithm, wlType, units, reason) {
-    if (allGoodValues(crpix, crval, cdelt) && nAxis === 3 ) {
+    if (allGoodValues(crpix, crval, cdelt) && nAxis === 3) {
         //return {algorithm: PLANE, wlType: wlType || WAVE, crpix, crval, cdelt, units, reason};
 
-        return {algorithm, wlType, crpix, crval, cdelt, units, reason, planeOnlyWL:true};
-    }
-    else {
-        return {algorithm: undefined, wlType, failReason: 'CTYPE3, CRVAL3, CDELT3 are required for simple and NAXIS===3', failReason2: reason};
+        return {algorithm, wlType, crpix, crval, cdelt, units, reason, planeOnlyWL: true};
+    } else {
+        return {
+            algorithm: undefined,
+            wlType,
+            failReason: 'CTYPE3, CRVAL3, CDELT3 are required for simple and NAXIS===3',
+            failReason2: reason
+        };
     }
 }
 
@@ -367,30 +361,29 @@ function makeSimplePlaneBased(crpix, crval, cdelt, nAxis, algorithm, wlType, uni
  * @param {String} ctype3
  * @return {{algorithm:string,wlType:string}}
  */
-function getAlgorithmAndType(ctype3){
+function getAlgorithmAndType(ctype3) {
     // let wlType, vradType, algorithm;
     // It is temporary to include Vrad under wlType
     // need to do generic spectral header parser
     let wlType, algorithm;
-    if (!ctype3.trim()) return {algorithm:undefined,wlType:undefined};
-    ctype3= ctype3.toUpperCase();
+    if (!ctype3.trim()) return {algorithm: undefined, wlType: undefined};
+    ctype3 = ctype3.toUpperCase();
     const sArray = ctype3.split('-');
 
     if (ctype3.startsWith(WAVE) || ctype3.startsWith(AWAV)) {
-        if (ctype3.startsWith(WAVE)) wlType= WAVE;
-        else if (ctype3.startsWith(AWAV)) wlType= AWAV;
+        if (ctype3.startsWith(WAVE)) wlType = WAVE;
+        else if (ctype3.startsWith(AWAV)) wlType = AWAV;
 
-        if (sArray.length===1) algorithm= LINEAR;
-        else if (sArray[1].trim()===LOG) algorithm=LOG;
-        else algorithm=sArray[1];
-    }
-    else if (ctype3.startsWith('LAMBDA')) {
-        wlType= WAVE;
-        algorithm= LINEAR;
+        if (sArray.length === 1) algorithm = LINEAR;
+        else if (sArray[1].trim() === LOG) algorithm = LOG;
+        else algorithm = sArray[1];
+    } else if (ctype3.startsWith('LAMBDA')) {
+        wlType = WAVE;
+        algorithm = LINEAR;
     } else if (ctype3.startsWith('VRAD')) {
-        wlType= VRAD;
-        algorithm= PLANE;
+        wlType = VRAD;
+        algorithm = PLANE;
     }
-    return {algorithm,wlType};
+    return {algorithm, wlType};
 }
 
