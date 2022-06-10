@@ -1,4 +1,4 @@
-import React, {PureComponent} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import PropTypes from 'prop-types';
 import {PointerPopup} from '../ui/PointerPopup.jsx';
 import {InputFieldLabel} from './InputFieldLabel.jsx';
@@ -10,7 +10,7 @@ import EXCLAMATION from 'html/images/exclamation16x16.gif';
 
 
 function computeStyle(valid,hasFocus,additionalClasses) {
-    let extraClasses = " " + (additionalClasses || "");
+    const extraClasses = ' ' + (additionalClasses || '');
     if (!valid) {
         return 'ff-inputfield-view-error' + extraClasses;
     }
@@ -33,10 +33,10 @@ const makeInfoPopup = (mess,x,y) => <PointerPopup x={x} y={y} message={makeMessa
 
 
 function computeWarningXY(warnIcon) {
-    var bodyRect = document.body.getBoundingClientRect();
-    var elemRect = warnIcon.getBoundingClientRect();
-    var warningOffsetX = (elemRect.left - bodyRect.left) + warnIcon.offsetWidth / 2;
-    var warningOffsetY = elemRect.top - bodyRect.top;
+    const bodyRect = document.body.getBoundingClientRect();
+    const elemRect = warnIcon.getBoundingClientRect();
+    const warningOffsetX = (elemRect.left - bodyRect.left) + warnIcon.offsetWidth / 2;
+    const warningOffsetY = elemRect.top - bodyRect.top;
     return {warningOffsetX, warningOffsetY};
 }
 
@@ -48,75 +48,65 @@ const ICON_SPACE_STYLE= {
     display:'inline-block'};
 
 
-export class InputAreaFieldView extends PureComponent {
-    constructor(props) {
-        super(props);
-        this.warnIcon = null;
-        this.state = { hasFocus: false, infoPopup: false };
-    }
+export function InputAreaFieldView({ visible,label,tooltip,rows,cols,labelWidth,value,style,wrapperStyle,labelStyle,
+                                       button,inline, valid,onChange, onBlur, onKeyPress, showWarning,
+                                       message, type, placeholder, additionalClasses, idName } ) {
+    const [hasFocus,setHasFocus]= useState(false);
+    const [infoPopup,setInfoPopup]= useState(false);
+    const {current:warn}= useRef({warnIcon:undefined, hider:undefined});
 
-    componentDidUpdate() {
-        var {infoPopup}= this.state;
+    useEffect(()=> {
         if (infoPopup) {
-            var {warningOffsetX, warningOffsetY}= computeWarningXY(this.warnIcon);
-            var {message}= this.props;
-            this.hider = DialogRootContainer.showTmpPopup(makeInfoPopup(message, warningOffsetX, warningOffsetY));
+            const {warningOffsetX, warningOffsetY}= computeWarningXY(warn.warnIcon);
+            warn.hider = DialogRootContainer.showTmpPopup(makeInfoPopup(message, warningOffsetX, warningOffsetY));
         }
-        else {
-            if (this.hider) {
-                this.hider();
-                this.hider = null;
-            }
+        else if (warn.hider) {
+                warn.hider();
+                warn.hider = null;
         }
-    }
+    }, [infoPopup]);
 
-    makeWarningArea(warn) {
-        if (warn) {
-            return (
-                <div style={ICON_SPACE_STYLE}
-                     onMouseOver={() => this.setState({infoPopup:true})}
-                     onMouseLeave={() => this.setState({infoPopup:false})}>
-                    <img src={EXCLAMATION} ref={(c) => this.warnIcon= c}/>
-                </div>
-            );
-        }
-        else {
-            return <div style={ICON_SPACE_STYLE}/>;
-        }
-    }
-
-    render() {
-        var {hasFocus}= this.state;
-        var {visible,label,tooltip,rows,cols,labelWidth,value,style,wrapperStyle,labelStyle,
-             valid,size,onChange, onBlur, onKeyPress, showWarning, message, type, placeholder, additionalClasses, idName}= this.props;
         if (!visible) return null;
-        wrapperStyle = Object.assign({whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block'}, wrapperStyle);
-        return (
-            <div style={wrapperStyle}>
-                {label && <InputFieldLabel labelStyle={labelStyle} label={label} tooltip={tooltip} labelWidth={labelWidth}/> }
-                <textarea style={Object.assign({display:'inline-block'}, style)}
-                          rows={rows}
-                          cols={cols}
-                          spellCheck={false}
-                          className={computeStyle(valid,hasFocus,additionalClasses)}
-                          id={idName}
-                       onChange={(ev) => onChange ? onChange(ev) : null}
-                       onFocus={ () => !hasFocus ? this.setState({hasFocus:true, infoPopup:false}) : ''}
-                       onBlur={ (ev) => {
-                                onBlur && onBlur(ev);
-                                this.setState({hasFocus:false, infoPopup:false});
-                            }}
-                       onKeyPress={(ev) => onKeyPress && onKeyPress(ev)}
-                       value={type==='file' ? undefined : value}
-                       title={ (!showWarning && !valid) ? message : tooltip}
-                       size={size}
-                       type={type}
-                       placeholder={placeholder}
-                />
-                {showWarning && this.makeWarningArea(!valid)}
-            </div>
-        );
-    }
+
+    const warningArea= showWarning ?
+            !valid ? (
+                    <div style={ICON_SPACE_STYLE}
+                         onMouseOver={() => setInfoPopup(true)}
+                         onMouseLeave={() => setInfoPopup(false)}>
+                        <img src={EXCLAMATION} ref={(c) => warn.warnIcon= c}/>
+                    </div> )
+                : (<div style={ICON_SPACE_STYLE}/>) : false;
+
+    return (
+        <div style={{whiteSpace:'nowrap', display: inline?'inline-block':'block', ...wrapperStyle}}>
+            {label && <InputFieldLabel labelStyle={labelStyle} label={label} tooltip={tooltip} labelWidth={labelWidth}/> }
+            <textarea style={{display:'inline-block', ...style}}
+                      rows={rows}
+                      cols={cols}
+                      spellCheck={false}
+                      className={computeStyle(valid,hasFocus,additionalClasses)}
+                      id={idName}
+                      onChange={(ev) => onChange?.(ev)}
+                      onFocus={ () => {
+                          if (hasFocus) {
+                              setHasFocus(true);
+                              setInfoPopup(false);
+                          }
+                      }}
+                      onBlur={ (ev) => {
+                          onBlur?.(ev);
+                          setHasFocus(false);
+                          setInfoPopup(false);
+                      }}
+                      onKeyPress={(ev) => onKeyPress?.(ev)}
+                      value={type==='file' ? undefined : value}
+                      title={ (!showWarning && !valid) ? message : tooltip}
+                      placeholder={placeholder}
+            />
+            {warningArea}
+            {Boolean(button) && button}
+        </div>
+    );
 }
 
 InputAreaFieldView.propTypes= {
@@ -131,12 +121,10 @@ InputAreaFieldView.propTypes= {
     labelStyle: PropTypes.object,
     wrapperStyle: PropTypes.object,
     value   : PropTypes.string.isRequired,
-    size : PropTypes.number,
     onChange : PropTypes.func.isRequired,
     onBlur : PropTypes.func,
     onKeyPress : PropTypes.func,
     showWarning : PropTypes.bool,
-    type: PropTypes.string,
     rows: PropTypes.number,
     cols: PropTypes.number,
     placeholder: PropTypes.string,
@@ -149,7 +137,6 @@ InputAreaFieldView.defaultProps= {
     valid : true,
     visible : true,
     message: '',
-    type: 'text',
     rows:10,
     cols:50,
     idName: ''

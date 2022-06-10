@@ -14,7 +14,8 @@ import CsysConverter from '../visualize/CsysConverter.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import {clone} from '../util/WebUtil.js';
 import ShapeDataObj, {UnitType} from '../visualize/draw/ShapeDataObj.js';
-import {pointEquals} from 'firefly/visualize/Point.js';
+import {makeDevicePt, makeImagePt, makeWorldPt, pointEquals} from 'firefly/visualize/Point.js';
+import {SelectedShape} from './SelectedShape.js';
 
 const ID= 'SEARCH_SELECT_TOOL';
 const TYPE_ID= 'SEARCH_SELECT_TOOL_TYPE';
@@ -34,11 +35,26 @@ function dispatchSelectPoint(mouseStatePayload) {
     if (shiftDown || !drawLayer.drawData.data) return;
     const plot= primePlot(visRoot(),plotId);
     const cc= CsysConverter.make(plot);
+    if (!plot) return;
     const wp= cc.getWorldCoords(screenPt);
     const center= getCenterOfProjection(plot);
     if (lastProjectionCenter && (!pointEquals(center, lastProjectionCenter?.center) || lastProjectionCenter.plotId!==plotId)) return;
     lastProjectionCenter= undefined;
-    dispatchAttributeChange( {plotId, changes:{[PlotAttribute.USER_SEARCH_WP]:wp} });
+
+    if (plot.attributes[PlotAttribute.USE_POLYGON]){
+        const ptAry= plot.attributes[PlotAttribute.POLYGON_ARY];
+        if (!ptAry?.length) return;
+        const relPloygonAry= plot.attributes[PlotAttribute.RELATIVE_IMAGE_POLYGON_ARY];
+        if (!relPloygonAry) return;
+        const dp= cc.getImageCoords(wp);
+        const polygonAry= relPloygonAry.map( (pt) => cc.getWorldCoords( makeImagePt(dp.x-pt.x, dp.y-pt.y)));
+        dispatchAttributeChange({plotId,changes: {
+                [PlotAttribute.POLYGON_ARY] : polygonAry,
+            }});
+    }
+    else {
+        dispatchAttributeChange( {plotId, changes:{[PlotAttribute.USER_SEARCH_WP]:wp} });
+    }
     dispatchForceDrawLayerUpdate(drawLayer.drawLayerId, plotId);
 }
 
@@ -92,13 +108,26 @@ function getLayerChanges(drawLayer, action) {
 
 function drawSearchSelection(drawLayer, action, active, plotId) {
     const {plotIdAry}= action.payload;
-    const {minSize,maxSize}= drawLayer;
     const plot= primePlot(visRoot(),plotId||plotIdAry?.[0]);
-    const wp= plot?.attributes[PlotAttribute.USER_SEARCH_WP];
+    if (!plot) return [];
+    return plot.attributes[PlotAttribute.USE_POLYGON] ?
+        drawSearchSelectionPolygon(plot, drawLayer) : drawSearchSelectionCircle(plot, drawLayer);
+}
+
+function drawSearchSelectionCircle(plot, drawLayer) {
+    const {minSize,maxSize}= drawLayer;
+    const wp= plot.attributes[PlotAttribute.USER_SEARCH_WP];
     if (!wp) return [];
     const radius= plot.attributes[PlotAttribute.USER_SEARCH_RADIUS_DEG];
     const drawAry= [ PointDataObj.make(wp,7, DrawSymbol.EMP_SQUARE_X)];
     const drawRadius= radius<=maxSize ? (radius >= minSize ? radius : minSize) : maxSize;
     radius && drawAry.push( {...ShapeDataObj.makeCircleWithRadius(wp, drawRadius*3600,UnitType.ARCSEC), lineWidth:3} );
+    return drawAry;
+}
+
+function drawSearchSelectionPolygon(plot, drawLayer) {
+    const wpAry= plot?.attributes[PlotAttribute.POLYGON_ARY];
+    if (!(wpAry?.length>2)) return [];
+    const drawAry= [{...ShapeDataObj.makePolygon(wpAry), lineWidth:3 }];
     return drawAry;
 }

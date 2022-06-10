@@ -61,7 +61,7 @@ function doGetInitialState(groupKey, initialState,  props, confirmValueOnInit= d
     const {keepState=false}= getFieldGroupState(groupKey) ?? {};
     const storeField= get(FieldGroupUtils.getGroupFields(groupKey), [fieldKey]);
     const initS= !keepState ? (initialState ||  storeField || {}) : (storeField || initialState || {});
-    return {...initS, value: confirmValueOnInit(initS.value,props,initialState)};
+    return {...initS, value: confirmValueOnInit(initS.value,props,initialState,initS)};
 }
 
 

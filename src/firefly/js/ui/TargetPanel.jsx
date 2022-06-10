@@ -26,6 +26,7 @@ const simbadThenNed= 'simbadthenned';
 const TargetPanelView = (props) =>{
     const {showHelp, feedback, valid, message, onChange, value, style={}, button,
         labelWidth, children, resolver, feedbackStyle, showResolveSourceOp= true, showExample= true,
+        targetPanelExampleRow1, targetPanelExampleRow2,
         examples, label= LABEL_DEFAULT, onUnmountCB, wpt}= props;
 
     useEffect(() => () => onUnmountCB(props),[]);
@@ -56,7 +57,8 @@ const TargetPanelView = (props) =>{
                     tooltip='Select which name resolver' label='' labelWidth={3} wrapperStyle={{}}
                 />}
             </div>
-            {(showExample || !showHelp) && <TargetFeedback {...{showHelp, feedback, style:feedbackStyle, examples}}/> }
+            {(showExample || !showHelp) && <TargetFeedback {...{showHelp, feedback, style:feedbackStyle,
+                targetPanelExampleRow1, targetPanelExampleRow2, examples}}/> }
         </div>
     );
 };
@@ -78,6 +80,8 @@ TargetPanelView.propTypes = {
     feedbackStyle: PropTypes.object,
     nullAllowed: PropTypes.bool,
     showResolveSourceOp: PropTypes.bool,
+    targetPanelExampleRow1: PropTypes.arrayOf(PropTypes.string),
+    targetPanelExampleRow2: PropTypes.arrayOf(PropTypes.string),
     showExample: PropTypes.bool
 };
 
@@ -160,8 +164,9 @@ function makePayloadAndUpdateActive(displayValue, parseResults, resolvePromise, 
 }
 
 
-function replaceValue(v,defaultToActiveTarget) {
+function replaceValue(v,defaultToActiveTarget, computedState) {
     if (!defaultToActiveTarget) return v;
+    if ((computedState.displayValue || computedState.message) && !computedState.valid) return '';
     const t= getActiveTarget();
     let retVal= v;
     if (t && t.worldPt) {
@@ -178,7 +183,7 @@ export const TargetPanel = memo( ({fieldKey= 'UserTargetWorldPt',initialState= {
                                        defaultToActiveTarget= true, ...restOfProps}) => {
     const {viewProps, fireValueChange, groupKey}=  useFieldGroupConnector({
                                 fieldKey, initialState,
-                                confirmValueOnInit: (v) => replaceValue(v,defaultToActiveTarget)});
+                                confirmValueOnInit: (v, props,initialState,computedState) => replaceValue(v,defaultToActiveTarget,computedState)});
     const newProps= computeProps(viewProps, restOfProps, fieldKey, groupKey);
     return ( <TargetPanelView {...newProps}
                               onChange={(value,source) => handleOnChange(value,source,newProps, fireValueChange)}/>);
@@ -195,6 +200,8 @@ TargetPanel.propTypes = {
     nullAllowed: PropTypes.bool,
     initialState: PropTypes.object,
     showResolveSourceOp: PropTypes.bool,
+    targetPanelExampleRow1: PropTypes.arrayOf(PropTypes.string),
+    targetPanelExampleRow2: PropTypes.arrayOf(PropTypes.string),
     showExample: PropTypes.bool,
     defaultToActiveTarget: PropTypes.bool,
 };

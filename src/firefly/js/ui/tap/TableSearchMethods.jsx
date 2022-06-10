@@ -722,7 +722,7 @@ function radiusInField({label = getLabel(RadiusSize), radiusInArcSec=undefined }
     const marginSides = 5;
     return (
         <SizeInputFields fieldKey={RadiusSize} showFeedback={true}
-                         wrapperStyle={{padding:5, margin: `${marginSides}px 0px ${marginSides}px 0px`}}
+                         style={{padding:5, margin: `${marginSides}px 0px ${marginSides}px 0px`}}
                          initialState={{
                                                unit: 'arcsec',
                              labelWidth : SpatialLableSaptail - marginSides - 1 /* box border width */,

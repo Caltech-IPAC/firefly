@@ -1,8 +1,8 @@
 import {PureComponent, useCallback, useContext, useEffect, useState} from 'react';
-import {isArray, isString, uniqueId} from 'lodash';
+import {uniqueId} from 'lodash';
 import shallowequal from 'shallowequal';
 import {flux} from '../core/ReduxFlux.js';
-import FieldGroupUtils, {getFieldVal, getFldValue, getGroupFields} from '../fieldGroup/FieldGroupUtils.js';
+import FieldGroupUtils, {getField, getFieldVal, getGroupFields} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
 import {dispatchValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 import {GroupKeyCtx} from './FieldGroup.jsx';
@@ -83,6 +83,13 @@ export function useStoreConnector(stateGetter, deps=[]) {
 }
 
 
+/**
+ * @deprecated
+ * The better approach is to use useFieldGroupValue
+ * @see useFieldGroupValue
+ * @param groupKey
+ * @return {*|undefined}
+ */
 export function useBindFieldGroupToStore(groupKey) {
     let mounted= true;
     const [fields, setFields] = useState(() => getGroupFields(groupKey));
@@ -126,7 +133,9 @@ export function useBindFieldGroupToStore(groupKey) {
 // }
 
 /**
- * This hook will return a object of fields values. {[fieldName]:value}
+ * This hook will return a setter and a getter function for a field value.
+ * Note - The setter and getter functions are static until the field value has changed, they are created with react
+ * useCallback. Therefor they can be used in useEffects array of values dependencies.
  * @param {String} fieldKey - a fieldKey to check for
  * @param {String} [gk] - the groupKey if not set then it is retrieved from context, the normal use is to not pass this parameter
  * @return {Array.<Function>}  return an array of 2 functions [getValue,setValue]
@@ -134,21 +143,33 @@ export function useBindFieldGroupToStore(groupKey) {
 export function useFieldGroupValue(fieldKey, gk) {
     const context= useContext(GroupKeyCtx);
     const groupKey= gk || context.groupKey;
+    const setValueToState= useState(undefined)[1]; // use state here is just to force re-renders on value change
     let mounted= true;
-    const [value,setValue]= useState(() => getFldValue(getGroupFields(groupKey),fieldKey));
+    let value= getFieldVal(groupKey,fieldKey);
     useEffect(() => {
-        const remover= FieldGroupUtils.bindToStore(groupKey, (updatedFields) => {
-            mounted && setValue( getFldValue(updatedFields,fieldKey));
-        });
+        const updater= () => {
+            if (!mounted) return;
+            const newValue= getFieldVal(groupKey,fieldKey);
+            if (newValue!==value) {
+                setValueToState(newValue);
+                value= newValue;
+            }
+        };
+        const remover= FieldGroupUtils.bindToStore(groupKey, updater);
         return () => {
             mounted= false;
             remover();
         };
     },[]);
-    return [
-        useCallback(() =>getFieldVal(groupKey,fieldKey,value), [value]),   // getter
-        useCallback((newValue,valid=true) => dispatchValueChange({fieldKey, groupKey, value:newValue,valid, displayValue:''})) //setter
-    ];
+
+    const getter= useCallback(() =>getFieldVal(groupKey,fieldKey,value), [value]);   // getter
+    const setter= useCallback(
+            (newValue,valid=true) => {
+                const field= getField(groupKey,fieldKey);
+                if (!field || newValue===field.value) return;
+                dispatchValueChange({fieldKey, groupKey, value:newValue,valid, displayValue:''});
+            }, [value]); //setter
+    return [ getter, setter ];
 }
 
 

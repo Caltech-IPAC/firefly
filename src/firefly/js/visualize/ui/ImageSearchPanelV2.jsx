@@ -368,7 +368,6 @@ function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archi
 function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, noScroll}) {
     const title = '4. Select Data Set';
     const targetStyle = {height: 40, width: 450};
-    const sizeStyle = {margin: '-5px 0 0 36px'};
     const isHips = isHipsImgType;
     const sizeLabel = isHips ? 'Field of view (optional):' : 'Cutout size (leave blank for full size):';
     const sizeKey = isHips ? 'sizeFov' : 'conesize';
@@ -387,7 +386,7 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, 
                                  label={isHips?'Coordinates or Object Name (optional):' :'Coordinates or Object Name:' }
                                  nullAllowed={true} />
                     <SizeInputFields fieldKey={sizeKey} showFeedback={true}
-                                     feedbackStyle={sizeStyle}
+                                     feedbackStyle={{marginLeft:185}}
                                      initialState={{
                                              unit: initUnit,
                                              labelWidth : 0,

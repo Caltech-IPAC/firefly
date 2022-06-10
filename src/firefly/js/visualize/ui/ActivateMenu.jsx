@@ -4,9 +4,11 @@
 
 import React, {memo} from 'react';
 import {string,func, object, arrayOf} from 'prop-types';
-import { convertRequest, DynamicFieldGroupPanel, DynLayoutPanelTypes,
-    makeCircleDef, makeEnumDef, makeFloatDef, makeIntDef, makeUnknownDef } from '../../ui/DynamicUISearchPanel.jsx';
-import {CompleteButton} from '../../ui/CompleteButton.jsx';
+import {sprintf} from '../../externalSource/sprintf.js';
+import {
+    makeCircleDef, makeEnumDef, makeFloatDef, makeIntDef, makePolygonDef, makeUnknownDef
+} from '../../ui/dynamic/DynamicDef.js';
+import { DynamicFieldGroupPanel, DynCompleteButton, DynLayoutPanelTypes } from '../../ui/dynamic/DynamicUISearchPanel.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {splitByWhiteSpace} from '../../util/WebUtil.js';
 import {makeWorldPt} from '../Point.js';
@@ -32,10 +34,11 @@ export const ActivateMenu= memo(({ serviceDefRef='none', serDefParams, setSearch
                 <DynamicFieldGroupPanel groupKey={GROUP_KEY} keepState={false}
                                         DynLayoutPanel={DynLayoutPanelTypes.Simple}
                                         fieldDefAry={fieldDefAry} />
-                <CompleteButton style={{padding: '20px 0 0 0'}}
-                                onSuccess={(r) => loadParams(convertRequest(r,fieldDefAry))}
-                                onFail={() => showInfoPopup('Some field are not valid')}
-                                text={'Submit'} groupKey={GROUP_KEY} />
+                <DynCompleteButton style={{padding: '20px 0 0 0'}}
+                                   fieldDefAry={fieldDefAry}
+                                   onSuccess={(r) => loadParams(r)}
+                                   onFail={() => showInfoPopup('Some field are not valid')}
+                                   text={'Submit'} groupKey={GROUP_KEY} />
             </div>
         </div>
     );
@@ -54,6 +57,9 @@ const isFloatingType= (type) => (type==='float' || type==='double');
 const isCircleField= ({type,arraySize,xtype='',units=''}) =>
     (isFloatingType(type) && Number(arraySize)===3 && xtype.toLowerCase()==='circle' && units.toLowerCase()==='deg');
 
+const isPolygonField= ({type,xtype='',units=''}) =>
+    (isFloatingType(type) && xtype.toLowerCase()==='polygon' && units.toLowerCase()==='deg');
+
 function getCircleValues(s) {
     const strAry= splitByWhiteSpace(s);
     if (strAry.length!==3 || strAry.find( (s) => isNaN(Number(s)))) return [];
@@ -68,7 +74,14 @@ const getCircleInfo = ({minValue='' ,maxValue='', value=''}) => {
     const minNum= getCircleValues(minValue)[2];
     const maxNum= getCircleValues(maxValue)[2];
     return {wpt:makeWorldPt(valueAry[0],valueAry[1]), radius: valueAry[2], minValue:minNum, maxValue:maxNum};
-}
+};
+
+const getPolygonInfo = ({minValue='' ,maxValue='', value=''}) => {
+    const vStr= value || minValue || maxValue;
+    const validAryStr= splitByWhiteSpace(vStr).filter( (s) => !isNaN(Number(s))).map( (s) => sprintf('%.5f',Number(s)));
+    if (validAryStr.length % 2 !==0) return {value:''};
+    return {value: validAryStr.reduce( (s, num, idx) => idx!==0 && idx%2===0 ? `${s}, ${num}` : `${s} ${num}`, '')};
+};
 
 const isNumberField= ({type,minValue,maxValue,value}) =>
     (type==='int' || isFloatingType(type)) ||
@@ -95,6 +108,10 @@ function makeFieldDefs(serDefParams) {
                         initValue:radius,
                         centerPt, minValue, maxValue,
                         hipsFOVInDeg:radius*2+radius*.2 });
+                }
+                if (isPolygonField(sdP)) {
+                    const {value}= getPolygonInfo(sdP);
+                    return makePolygonDef({key:name, desc:name, tooltip, units, initValue:value});
                 }
                 else if (isNumberField(sdP)) {
                         const minNum= Number(sdP.minValue);

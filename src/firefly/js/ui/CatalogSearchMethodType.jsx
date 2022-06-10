@@ -9,6 +9,7 @@ import {get} from 'lodash';
 import {ValidationField} from '../ui/ValidationField.jsx';
 import {VALUE_CHANGE, dispatchValueChange} from '../fieldGroup/FieldGroupCntlr.js';
 import {TargetPanel} from '../ui/TargetPanel.jsx';
+import {VisualPolygonPanel} from '../visualize/ui/TargetHiPSPanel.jsx';
 
 import {isHiPS} from '../visualize/WebPlot.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
@@ -19,7 +20,6 @@ import {clone} from '../util/WebUtil.js';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {SizeInputFields} from './SizeInputField.jsx';
-import {InputAreaFieldConnected} from './InputAreaField.jsx';
 import {UploadOptionsDialog} from './UploadOptionsDialog.jsx';
 import {getWorkspaceConfig} from '../visualize/WorkspaceCntlr.js';
 import {FieldGroup} from './FieldGroup.jsx';
@@ -251,7 +251,7 @@ export function calcCornerString(pv, method) {
 function radiusInField({label = 'Radius:'}) {
     return (
         <SizeInputFields fieldKey='conesize' showFeedback={true}
-                         wrapperStyle={{padding:5, margin: '5px 0 5px 0'}}
+                         style={{padding:5, margin: '5px 0 5px 0'}}
                          initialState={{
                                                unit: 'arcsec',
                                                labelWidth : 100,
@@ -385,18 +385,14 @@ export function renderPolygonDataArea(imageCornerCalc, labelWidth, labelStyle, w
                 />
                 }
             </div>
-            <InputAreaFieldConnected fieldKey='polygoncoords'
-                                     wrapperStyle={wrapperStyle}
-                                     style={{overflow:'auto',height:'65px', maxHeight:'200px', width:'220px', maxWidth:'300px'}}
-                                     initialState={{
-                                               tooltip:'Enter polygon coordinates search',
-                                               labelWidth:70
-                                            }}
-                                     label='Coordinates:'
-                                     labelStyle={labelStyle}
-                                     labelWidth={labelWidth}
-                                     tooltip='Enter polygon coordinates search'
-            />
+            <VisualPolygonPanel {...{
+                fieldKey:'polygoncoords',
+                style:{overflow:'auto',height:'65px', maxHeight:'200px', width:'220px', maxWidth:'300px'},
+                initialState:{},
+                label:'Coordinates:',
+                labelStyle,
+                labelWidth,
+                tooltip:'Enter polygon coordinates search', }} />
             <ul>
                 <li>- Each vertex is defined by a J2000 RA and Dec position pair</li>
                 <li>- A max of 15 and min of 3 vertices is allowed</li>

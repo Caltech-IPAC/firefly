@@ -1188,6 +1188,29 @@ export function getLinePointAry(pt1, pt2) {
     return null;
 }
 
+function getEllipsePointForAngle(cx, cy, rx, ry, rotationAngle, theta) {
+    const { abs, sin, cos } = Math;
+    const M = abs(rx) * cos(theta);
+    const N = abs(ry) * sin(theta);
+    return [
+        cx + cos(rotationAngle) * M - sin(rotationAngle) * N,
+        cy + sin(rotationAngle) * M + cos(rotationAngle) * N
+    ];
+}
+
+export function getEllipseArcEndPoints(cx, cy, rx, ry,  theta, dTheta, rotationAngle=0) {
+
+    const [x1, y1] = getEllipsePointForAngle(cx, cy, rx, ry, rotationAngle, theta);
+    const [x2, y2] = getEllipsePointForAngle(cx, cy, rx, ry, rotationAngle, theta + dTheta);
+    const fa = Math.abs(dTheta) > Math.PI ? 1 : 0;
+    const fs = dTheta > 0 ? 1 : 0;
+    return { x1, y1, x2, y2, fa, fs };
+}
+
+export function getPointOnEllipse(cx, cy, rx, ry, angle) {
+    const [x, y] = getEllipsePointForAngle(cx, cy, rx, ry, 0, angle);
+    return {x,y};
+}
 
 
 export default {

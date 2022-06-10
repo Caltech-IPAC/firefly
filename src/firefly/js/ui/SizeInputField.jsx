@@ -1,6 +1,5 @@
-import React, {PureComponent, memo} from 'react';
+import React, {useEffect, memo, useState} from 'react';
 import PropTypes from 'prop-types';
-import {get} from 'lodash';
 import {convertAngle} from '../visualize/VisUtil.js';
 import {InputFieldView} from './InputFieldView.jsx';
 import {ListBoxInputFieldView} from './ListBoxInputField.jsx';
@@ -9,12 +8,10 @@ import {toMaxFixed} from '../util/MathUtil.js';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 
 const invalidSizeMsg = 'size is not set properly or size is out of range';
-const DECDIGIT = 6;
+const DEC_DIGIT = 6;
 const unitSign = { 'arcsec':'"', 'arcmin':'\'', 'deg':' deg' };
 
-function getUnit(unit) {
-    return unitSign[unit];
-}
+const getUnitSign= (unit) => unitSign[unit];
 
 // input: string format,
 // output: size in degree (string foramt, no decimal digit limit), '': invalid input
@@ -28,158 +25,123 @@ export const sizeToDeg = (sizestr, unit) => {
 // input: size in degree string format
 // output: size in string format in any given unit (for displaying)
 export const sizeFromDeg= (sizeDeg, unit) => (
-    (sizeDeg)? toMaxFixed(convertAngle('deg', ((unit) ? unit :'deg'), sizeDeg), DECDIGIT).toString() : ''
+    (sizeDeg)? toMaxFixed(convertAngle('deg', ((unit) ? unit :'deg'), sizeDeg), DEC_DIGIT).toString() : ''
 );
 
-// validate if size (in degree, string foramt) is within the range
-var isSizeValid = (sizeDeg,  min, max) => (
-    (sizeDeg && Validate.floatRange(min, max, 1, 'value of  size in degree', sizeDeg).valid) ? true : false
+// validate if size (in degree, string format) is within the range
+const isSizeValid = (sizeDeg,  min, max) => (
+    (sizeDeg && Validate.floatRange(min, max, 1, 'value of  size in degree', sizeDeg).valid)
 );
 
-function updateSizeInfo(params) {
-    var unit = params.unit ? params.unit : 'deg';
-    var valid = (params.nullAllowed && !params.value) || isSizeValid(params.value, params.min, params.max);
-    var value = params.value; //(valid&&params.value) ? params.value  : '';
-    var displayValue = params.displayValue ? params.displayValue : sizeFromDeg(value, unit);
+const isFieldValid= (valInDeg, nullAllowed, min, max) => (nullAllowed && !valInDeg) || isSizeValid(valInDeg, min, max);
 
-    return {unit, valid, value, displayValue};
+function updateSizeInfo({unit, value, nullAllowed, min, max, displayValue}) {
+    return {
+        unit: unit || 'deg',
+        valid: isFieldValid(value, nullAllowed, min, max),
+        value,
+        displayValue: displayValue ? displayValue : sizeFromDeg(value, unit)
+    };
 }
 
 /**
- *
  * @param ev
  * @param sizeInfo
  * @param params
  * @param fireValueChange unit, value, displayValue are string, and valid is bool
+ * @return SizeInputFieldViewState
  */
 function handleOnChange(ev, sizeInfo, params, fireValueChange) {
-     var {unit, value, valid, displayValue} = Object.assign({}, params, sizeInfo);
-     var min = () => sizeFromDeg(params.min, params.unit);
-     var max = () => sizeFromDeg(params.max, params.unit);
-     var msg = valid? '': `${invalidSizeMsg}, ${min()}-${max()}${getUnit(params.unit)}.`;
+     const {unit, value, valid, displayValue} = {...params, ...sizeInfo};
+     const min = () => sizeFromDeg(params.min, params.unit);
+     const max = () => sizeFromDeg(params.max, params.unit);
+     const feedback = valid? '': `${invalidSizeMsg}, ${min()}-${max()}${getUnitSign(params.unit)}.`;
+     fireValueChange({ feedback, displayValue, unit, value, valid });
+}
 
-
-     fireValueChange({
-         feedback: msg,
-         displayValue,
-         unit,
-         value,
-         valid
-     });
+function getFeedback(unit, min, max, showFeedback) {
+    const sign = getUnitSign(unit);
+    const minmsg = `${sizeFromDeg(min, unit)}`;
+    const maxmsg = `${sizeFromDeg(max, unit)}`;
+    return {
+        errmsg: `${invalidSizeMsg}, ${minmsg}-${maxmsg}${sign}.`,
+        feedback: showFeedback ? `Valid range between: ${minmsg}${sign} and ${maxmsg}${sign}` : ''
+    };
 }
 
 /**
- * @param {string} value size value in degree
- * @param {string} displayValue size value displayed
- * @param {string} unit selected unit
- * @param {bool}   valid validation of size value in degree
- *
+ * @typedef SizeInputFieldViewState
+ * @prop {string} value size value in degree
+ * @prop {string} displayValue size value displayed
+ * @prop {string} unit selected unit
+ * @prop {bool}   valid validation of size value in degree
  */
 
-class SizeInputFieldView extends PureComponent {
-    constructor(props) {
-        super(props);
+const SizeInputFieldView= (props) => {
+    const {nullAllowed, min, max, style= {}, wrapperStyle={} /*wrapperStyle is deprecated*/,
+        feedbackStyle={}, labelWidth, label, labelStyle, showFeedback, onChange} = props;
+    const [{value, valid, displayValue, unit},setState]= useState(() => updateSizeInfo(props));
+    const {feedback, errmsg}= getFeedback(unit,min,max,showFeedback);
 
-        this.onSizeChange = this.onSizeChange.bind(this);
-        this.onUnitChange = this.onUnitChange.bind(this);
+    useEffect(() => {
+        setState(updateSizeInfo(props));
+    }, [ nullAllowed,  min, max,props.value, props.displayValue, props.unit]);
 
-        this.state = updateSizeInfo(props);
-    }
-
-    static getDerivedStateFromProps(props) {
-        return updateSizeInfo(props);
-    }
-
-
-    onSizeChange(ev) {
-        var displayValue = get(ev, 'target.value');
-        var tmpDeg = sizeToDeg(displayValue, this.state.unit);
-        var valid = (this.props.nullAllowed && !tmpDeg) || isSizeValid(tmpDeg, this.props.min, this.props.max);
-        var value = tmpDeg; //(valid) ? tmpDeg: '';
-        var stateUpdate = Object.assign({}, this.state, { displayValue,  value, valid });
-
-        this.setState({displayValue, value, valid});
-        this.props.onChange(ev, stateUpdate);
-    }
-
-    onUnitChange(ev) {
-        var unit = get(ev, 'target.value');
-
-        // update displayValue and unit
-        if (unit !== this.state.unit) {
-            var {value, valid, displayValue} = this.state;
-
-            // in case current displayed value is invalid
-            // try keep it if it is good for new unit
-            if ( !valid ) {
-                value = sizeToDeg(displayValue, unit);
-                valid = (this.props.nullAllowed && !value) || isSizeValid(value, this.props.min, this.props.max);
-                if (!valid) {
-                    value = '';   // set back to empty string in case still invalid
-                }
-            } else {
-                displayValue = sizeFromDeg(value, unit);
-            }
-            var stateUpdate = Object.assign({}, this.state, {unit, displayValue, value, valid});
-
-            this.setState(stateUpdate);
-            this.props.onChange(ev, stateUpdate);
-        }
-    }
-
-    render() {
-        var {displayValue, valid, unit} = this.state;
-        var {min, max, wrapperStyle={}, feedbackStyle={}} = this.props;
-        var sign = unitSign[unit];
-        var minmsg = `${sizeFromDeg(min, unit)}`;
-        var maxmsg = `${sizeFromDeg(max, unit)}`;
-        var errmsg = `${invalidSizeMsg}, ${minmsg}-${maxmsg}${sign}.`;
-
-        var showFeedback = () => {
-            if (this.props.showFeedback) {
-                var message = `Valid range between: ${minmsg}${sign} and ${maxmsg}${sign}`;
-
-                return <p>{message}</p>;
-            } else {
-                return undefined;
-            }
+    const onSizeChange= (ev) => {
+        const newDisplayValue = ev?.target?.value;
+        const degreesVal = sizeToDeg(newDisplayValue, unit);
+        const stateUpdate = {
+            displayValue: newDisplayValue,
+            value: degreesVal,
+            valid: isFieldValid(degreesVal,nullAllowed,min,max),
+            unit
         };
+        setState(stateUpdate);
+        onChange?.(ev, stateUpdate);
+    };
 
-        return (
-            <div style={wrapperStyle}>
-                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'flex-start'}} >
-                    <InputFieldView
-                        valid={valid}
-                        onChange={this.onSizeChange}
-                        onBlur={this.onSizeChange}
-                        onKeyPress={this.onSizeChange}
-                        value={displayValue}
-                        message={errmsg}
-                        label={this.props.label}
-                        labelWidth={this.props.labelWidth}
-                        tooltip={'enter size within the valid range'}
-                    />
-                    <ListBoxInputFieldView
-                        onChange={this.onUnitChange}
-                        options={
-                              [{label: 'degrees', value: 'deg'},
-                               {label: 'arcminutes', value: 'arcmin'},
-                               {label: 'arcseconds', value: 'arcsec'}
-                               ]}
-                        value={unit}
-                        multiple={false}
-                        labelWidth={2}
-                        label={''}
-                        tooltip={'unit of the size'}
-                    />
-                </div>
-                <div style={feedbackStyle}>
-                    {showFeedback()}
-                </div>
+    const onUnitChange= (ev) => {
+        const newUnit = ev?.target?.value;
+        if (unit === newUnit) return;
+        let newValue= value;
+        let newValid= valid;
+        if ( !valid ) {    // in case current displayed value is invalid, try keep it if it is good for new unit
+            newValue = sizeToDeg(displayValue, newUnit);
+            newValid = isFieldValid(newValue,nullAllowed,min,max);
+            if (!newValid) newValue = '';   // set back to empty string in case still invalid
+        }
+        const stateUpdate = {
+            unit:newUnit,
+            displayValue: valid ? sizeFromDeg(value, newUnit) : displayValue,
+            value: newValue,
+            valid: newValid,
+        };
+        setState(stateUpdate);
+        onChange?.(ev, stateUpdate);
+    };
+
+
+    return (
+        <div style={{...wrapperStyle, ...style}}>
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'flex-start'}} >
+                <InputFieldView
+                    valid={valid}
+                    onChange={onSizeChange} onBlur={onSizeChange} onKeyPress={onSizeChange}
+                    value={displayValue} message={errmsg} label={label} labelWidth={labelWidth} labelStyle={labelStyle}
+                    tooltip={'enter size within the valid range'} />
+                <ListBoxInputFieldView
+                    onChange={onUnitChange}
+                    value={unit} multiple={false} labelWidth={2} label={''} tooltip={'unit of the size'}
+                    options={[
+                        {label: 'degrees', value: 'deg'},
+                        {label: 'arcminutes', value: 'arcmin'},
+                        {label: 'arcseconds', value: 'arcsec'}
+                        ]} />
             </div>
-        );
-    }
-}
+            <div style={{marginLeft: labelWidth+5, marginTop:5,  ...feedbackStyle}}> {feedback} </div>
+        </div>
+    );
+};
 
 SizeInputFieldView.propTypes = {
     unit:  PropTypes.string,
@@ -193,7 +155,8 @@ SizeInputFieldView.propTypes = {
     value: PropTypes.string,
     valid: PropTypes.bool,
     showFeedback: PropTypes.bool,
-    wrapperStyle: PropTypes.object,
+    wrapperStyle: PropTypes.object, // deprecated
+    style: PropTypes.object,  // replaces wrapper style
     feedbackStyle: PropTypes.object
 };
 
@@ -220,9 +183,9 @@ export const SizeInputFields = memo( (props) => {
 );
     const {unit, valid, value, displayValue} = updateSizeInfo(viewProps);
     return (<SizeInputFieldView
-             {...{...viewProps, unit, valid, value, displayValue}}
-             onChange= {(ev, sizeInfo) => handleOnChange(ev, sizeInfo, viewProps, fireValueChange)} />
-             );
+            {...{...viewProps, unit, valid, value, displayValue}}
+            onChange= {(ev, sizeInfo) => handleOnChange(ev, sizeInfo, viewProps, fireValueChange)} />
+    );
 });
 
 

@@ -49,7 +49,24 @@ export const PlotAttribute= {
      */
     SELECTION: 'SELECTION',
 
+    /** the selection type, a string - 'rect' or 'circle' */
+    SELECTION_TYPE: 'SELECTION_TYPE',
+
+
     IMAGE_BOUNDS_SELECTION: 'IMAGE_BOUNDS_SELECTION',
+
+    /**
+     * A polygon that is drawn on the image or HiPS, it should be an arrays of points [pt,pt,pt,pt,pt]
+     * probably not more than 15 points
+     */
+    POLYGON_ARY: 'POLYGON_ARY',
+
+    RELATIVE_IMAGE_POLYGON_ARY: 'RELATIVE_IMAGE_POLYGON_ARY',
+
+    /**
+     * boolean
+     */
+    USE_POLYGON: 'USE_POLYGON',
 
     SELECT_ACTIVE_CHART_PT: 'selectActiveChartPt',
 
@@ -66,7 +83,7 @@ export const PlotAttribute= {
      */
     ACTIVE_DISTANCE: 'ACTIVE_DISTANCE',
 
-    /** point used for extractions */
+    /** point used for extractions, it should be a (possibly large) array of points [pt,pt,pt,pt,pt,...,pt] */
     PT_ARY: 'PT_ARY',
 
     /** true if there is extraction data */
