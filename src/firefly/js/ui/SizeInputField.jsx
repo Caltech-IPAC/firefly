@@ -175,8 +175,12 @@ export const SizeInputFields = memo( (props) => {
             ...props,
             initialState:{...props.initialState,
                 validator: (value) => {
-                    const valid = isSizeValid(value, props.initialState.min, props.initialState.max);
-                    return {valid, message: valid ? '' : 'Value out of range'};
+                    const v= (value+'').trim();
+                    const valid =
+                        (viewProps.nullAllowed && v==='') ||
+                        isSizeValid(value, props.initialState.min, props.initialState.max);
+                    const message= valid ? '' : (v ? 'Value out of range' : 'Value is required');
+                    return {valid, message};
                 }
             }
         }
