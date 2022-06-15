@@ -16,16 +16,19 @@ echo -e "!!============================================================\n\n"
 echo "========== Information:  you can set environment variable using -e on docker run line =====  "
 echo 
 echo "Environment Variables:"
-echo "        Description                      Name                       Value"
-echo "        -----------                      --------                   -----"
-echo "        Admin username                   ADMIN_USER                 ${ADMIN_USER}"
-echo "        Admin password                   ADMIN_PASSWORD             ${ADMIN_PASSWORD}"
-echo "        Additional data path             VISUALIZE_FITS_SEARCH_PATH ${VISUALIZE_FITS_SEARCH_PATH}"
-echo "        Clean internal(eg- 720m, 5h, 3d) CLEANUP_INTERVAL           ${CLEANUP_INTERVAL}"
+echo "        Description                      Name                          Value"
+echo "        -----------                      --------                      -----"
+echo "        Admin username                   ADMIN_USER                    ${ADMIN_USER}"
+echo "        Admin password                   ADMIN_PASSWORD                ${ADMIN_PASSWORD}"
+echo "        Additional data path             VISUALIZE_FITS_SEARCH_PATH    ${VISUALIZE_FITS_SEARCH_PATH}"
+echo "        Clean internal(eg- 720m, 5h, 3d) CLEANUP_INTERVAL              ${CLEANUP_INTERVAL}"
 echo
 echo "Advanced environment variables:"
-echo "        Run tomcat with debug            DEBUG                      ${DEBUG}"
-echo "        Extra firefly properties(*)      PROPS                      ${PROPS}"
+echo "        Run tomcat with debug            DEBUG                         ${DEBUG}"
+echo "        Extra firefly properties(*)      PROPS                         ${PROPS}"
+echo "        Redis host                       PROPS_redis__host             ${PROPS_redis__host}"
+echo "        SSO host                         PROPS_sso__req__auth__hosts   ${PROPS_sso__req__auth__hosts}"
+echo "        firefly.options (JSON string)    PROPS_FIREFLY_OPTIONS         ${PROPS_FIREFLY_OPTIONS}"
 echo " (*) key=value pairs separated by spaces"
 echo
 echo "Ports: "
@@ -109,7 +112,7 @@ CATALINA_OPTS="$CATALINA_OPTS \
 #------- start background scripts: cleanup
 ${CATALINA_HOME}/cleanup.sh /firefly/workarea /firefly/shared-workarea &
 
-echo "launchTomcat.sh: Starting Tomcat"
+echo -e "\nlaunchTomcat.sh: Starting Tomcat"
 if [ "$DEBUG" = "true" ] ||[ "$DEBUG" = "t" ] ||[ "$DEBUG" = "1" ] ||  \
    [ "$DEBUG" = "TRUE" ] || [ "$DEBUG" = "True" ] || [ "$1" = "--debug" ]; then
     exec ${CATALINA_HOME}/bin/catalina.sh jpda ${START_MODE}

@@ -68,7 +68,7 @@ export function jsonFetch(url, params, doPost, useBigInt) {
 /**
  * 
  * @param {string} cmd
- * @param paramList
+ * @param [paramList]
  * @param {boolean} doPost
  * @param {boolean} useBigInt  // support BigInt in JSON.  default to false
  * @return {Promise} a promise with the results

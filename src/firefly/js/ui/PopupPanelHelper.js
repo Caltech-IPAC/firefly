@@ -101,12 +101,14 @@ const endMove= (ctx) => void (ctx && (ctx.moving= false));
 /**
  * @param {element} e
  * @param layoutType
+ * @param {element} positionElement
  * @return {{top: number, left: number}}
  */
-export const getDefaultPopupPosition= function(e, layoutType) {
+export const getDefaultPopupPosition= function(e, layoutType,positionElement) {
 
     let left= 0;
     let top= 0;
+    const posBound= positionElement?.getBoundingClientRect() ?? {};
     switch (layoutType.toString()) {
         case 'CENTER' :
             left= window.innerWidth/2 - e.offsetWidth/2 + window.scrollX;
@@ -127,6 +129,12 @@ export const getDefaultPopupPosition= function(e, layoutType) {
         case 'TOP_EDGE_CENTER' :
             left= window.innerWidth/2 - e.offsetWidth/2 + window.scrollX;
             top= window.scrollY+ 3;
+            break;
+        case 'TOP_RIGHT_OF_BUTTON' :
+            if (!positionElement) return getDefaultPopupPosition(e,'TOP_RIGHT');
+            left= posBound.width + posBound.x + 5  + e.offsetWidth < window.innerWidth ?
+                posBound.width + posBound.x + 5 : window.innerWidth - e.offsetWidth;
+            top= posBound.y > e.offsetHeight ? posBound.y - e.offsetHeight : 5;
             break;
     }
     return {left, top};

@@ -21,7 +21,7 @@ import {showInfoPopup} from './ui/PopupUtil';
 import {bootstrapRedux, flux} from './core/ReduxFlux.js';
 import {getOrCreateWsConn} from './core/messaging/WebSocketClient.js';
 import {ActionEventHandler} from './core/messaging/MessageHandlers.js';
-import {notifyServerAppInit} from './rpc/CoreServices.js';
+import {getServerDefinedOptions, notifyServerAppInit} from './rpc/CoreServices.js';
 import {getPropsWith, mergeObjectOnly, getProp, toBoolean, documentReady,uuid} from './util/WebUtil.js';
 import {dispatchChangeTableAutoScroll, dispatchWcsMatch, visRoot} from './visualize/ImagePlotCntlr.js';
 import {Logger} from './util/Logger.js';
@@ -310,7 +310,7 @@ function bootstrap(props, options, webApiCommands) {
     if (window?.firefly?.initialized) return Promise.resolve(); // if initialized, don't run it again.
 
     set(window, 'firefly.initialized', true);
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
 
         const processDecor= (process) => (rawAction) => {
             getOrCreateWsConn().catch(() => showLostConnection());
@@ -323,17 +323,29 @@ function bootstrap(props, options, webApiCommands) {
 
         ensureUsrKey();
         // establish websocket connection first before doing anything else.
-        getOrCreateWsConn().then((client) => {
-            fireflyInit(props, options, webApiCommands);
 
-            client.addListener(ActionEventHandler);
-            window.firefly.wsClient = client;
-            notifyServerAppInit({spaName:`${props.appTitle||''}--${props.template?props.template:'api'}`});
-            loadAllJobs();
-            resolve?.();
-        });
+        let srvOptions={};
+        try {
+            srvOptions= await getServerDefinedOptions();
+        }
+        catch (err) {
+            logger.error('could not retrieve valid server options');
+        }
+
+        const finalOptions = mergeObjectOnly(options, srvOptions);
+        const client= await getOrCreateWsConn();
+
+        fireflyInit(props, finalOptions, webApiCommands);
+
+        client.addListener(ActionEventHandler);
+        window.firefly.wsClient = client;
+        notifyServerAppInit({spaName:`${props.appTitle||''}--${props.template?props.template:'api'}`});
+        loadAllJobs();
+        resolve?.();
+
+
     }).then(() => {
-        // when all is done.. mark app as 'ready'
+        // when all is done, mark app as 'ready'
         defer(() => dispatchUpdateAppData({isReady: true}));
         initWorkerContext();
     });

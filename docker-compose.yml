@@ -7,8 +7,8 @@ services:
       dockerfile: firefly/docker/Dockerfile
     ports:
       - "8080:8080"
-    environment: # any variable listed in catalina.sh and usually set in tomcat's setenv.sh, could be set here
-      - ADMIN_PASSWORD      # value taken from env
+    env_file:
+      - ./firefly-docker.env
   test:
     image: ipac/firefly:deps
     build:

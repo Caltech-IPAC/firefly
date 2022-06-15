@@ -171,6 +171,7 @@ public class ServerParams {
     public static final String JSON_SEARCH = "jsonSearch";
 
     public static final String INIT_APP = "CmdInitApp";
+    public static final String SRV_DEFINED_OPTIONS= "CmdSrvDefinedOptions";
     public static final String LOGOUT = "CmdLogout";
     public static final String TILE_SIZE = "tileSize";
     public static final String DATA_COMPRESS = "dataCompress";

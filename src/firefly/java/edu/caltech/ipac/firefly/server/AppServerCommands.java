@@ -8,7 +8,10 @@ import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.server.security.SsoAdapter;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.util.AppProperties;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 public class AppServerCommands {
     private static final String SPA_NAME = "spaName";
@@ -23,9 +26,28 @@ public class AppServerCommands {
             AlertsMonitor.checkAlerts(true);
             // update login status
             UserInfo userInfo = ServerContext.getRequestOwner().getUserInfo();
-            LOG.briefInfo("Init "+spaName);
+            LOG.info("Init "+spaName);
             LOG.debug("User info for this client: " + userInfo);
             return "true";
+        }
+    }
+
+    public static class SrvDefinedOptions extends ServCommand {
+        static boolean firstTime= true;
+        static String json = AppProperties.getProperty(ServerContext.JSON_OPTIONS,"{}");
+        public String doCommand(SrvParam params) throws Exception {
+
+            if (firstTime) {
+                try {
+                    new JSONParser().parse(json);
+                    LOG.info("Client Options ("+ServerContext.JSON_OPTIONS+"): " +json);
+                } catch (ParseException e){
+                    LOG.error("Could not parse Client Options ("+ServerContext.JSON_OPTIONS+") to JSON: " +json);
+                    json = "{}";
+                }
+                firstTime= false;
+            }
+            return json;
         }
     }
 

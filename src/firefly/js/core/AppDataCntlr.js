@@ -217,7 +217,7 @@ export function getRootUrlPath() {
 }
 
 export function getAppOptions() {
-    return flux.getState()[APP_DATA_PATH].appOptions || window.firefly?.options;
+    return flux.getState()[APP_DATA_PATH].appOptions ?? window.firefly?.options ?? {};
 }
 
 export function getUserInfo() {

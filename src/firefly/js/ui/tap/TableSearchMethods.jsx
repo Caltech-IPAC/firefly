@@ -7,7 +7,6 @@ import {ListBoxInputField} from '../ListBoxInputField.jsx';
 import {FieldGroup} from '../FieldGroup.jsx';
 import {findCenterColumnsByColumnsModel, posCol, UCDCoord} from '../../util/VOAnalyzer.js';
 import FieldGroupCntlr, {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
-import {TargetPanel} from '../../ui/TargetPanel.jsx';
 import {SizeInputFields} from '../SizeInputField.jsx';
 import {ServerParams} from '../../data/ServerParams.js';
 import {getColumnIdx} from '../../tables/TableUtil.js';
@@ -22,7 +21,7 @@ import {FieldGroupCollapsible} from '../panel/CollapsiblePanel.jsx';
 import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
 import {convertMJDToISO, validateDateTime, validateMJD} from '../DateTimePickerField.jsx';
 import {TimePanel} from '../TimePanel.jsx';
-import {maybeQuote, getColumnAttribute, HeaderFont, ISO, MJD, tapHelpId} from './TapUtil.js';
+import {maybeQuote, getColumnAttribute, HeaderFont, ISO, MJD, tapHelpId, getTapServices} from './TapUtil.js';
 import {ColsShape, ColumnFld, getColValidator} from '../../charts/ui/ColumnOrExpression';
 import {
     changeDatePickerOpenStatus,
@@ -43,7 +42,7 @@ import {
     Width_Time_Wrapper
 } from 'firefly/ui/tap/TableSearchHelpers';
 import {ExposureDurationSearch, ObsCoreSearch, ObsCoreWavelengthSearch} from 'firefly/ui/tap/ObsCore';
-import {getAppOptions} from 'firefly/api/ApiUtil';
+import {getAppOptions} from '../../core/AppDataCntlr.js';
 import CoordinateSys from 'firefly/visualize/CoordSys';
 import {Logger} from 'firefly/util/Logger';
 import {VisualTargetPanel} from 'firefly/visualize/ui/TargetHiPSPanel.jsx';
@@ -211,7 +210,7 @@ const FunctionalTableSearchMethods = (props) => {
         <FieldGroup style={{height: '100%', overflow: 'auto'}}
                     groupKey={groupKey} keepState={true} reducerFunc={buildTapSearchMethodReducer(columnsModel)}>
             {obsCoreEnabled && <ObsCoreSearch {...{cols, groupKey, fields, useConstraintReducer, useFieldGroupReducer, initArgs:props.initArgs}} />}
-            <SpatialSearch {...{cols, columnsModel, groupKey, fields, initArgs:props.initArgs, obsCoreEnabled, useConstraintReducer, useFieldGroupReducer}} />
+            <SpatialSearch {...{cols, serviceUrl:props.serviceUrl, columnsModel, groupKey, fields, initArgs:props.initArgs, obsCoreEnabled, useConstraintReducer, useFieldGroupReducer}} />
             {obsCoreEnabled && <ExposureDurationSearch {...{cols, groupKey, fields, useConstraintReducer, useFieldGroupReducer, initArgs:props.initArgs}} />}
             {!obsCoreEnabled && <TemporalSearch {...{cols, columnsModel, groupKey, fields, obsCoreEnabled, useConstraintReducer, useFieldGroupReducer}} />}
             {obsCoreEnabled && <ObsCoreWavelengthSearch {...{cols, groupKey, fields, useConstraintReducer, useFieldGroupReducer, initArgs:props.initArgs}} />}
@@ -235,7 +234,7 @@ const FunctionalTableSearchMethods = (props) => {
 
 export const TableSearchMethods = FunctionalTableSearchMethods;
 
-function SpatialSearch({cols, columnsModel, groupKey, fields, initArgs={}, obsCoreEnabled, useConstraintReducer, useFieldGroupReducer}) {
+function SpatialSearch({cols, serviceUrl, columnsModel, groupKey, fields, initArgs={}, obsCoreEnabled, useConstraintReducer, useFieldGroupReducer}) {
     const panelTitle = !obsCoreEnabled ? Spatial : 'Location';
     const panelValue = Spatial;
     const panelPrefix = getPanelPrefix(panelValue);
@@ -243,6 +242,7 @@ function SpatialSearch({cols, columnsModel, groupKey, fields, initArgs={}, obsCo
     const [spatialMethod, setSpatialMethod] = useState(TapSpatialSearchMethod.Cone.value);
     const [spatialRegionOperation, setSpatialRegionOperation] = useState('contains_shape');
     const [message, setMessage] = useState();
+    const {hipsUrl,centerWP,fovDeg}= getTapServices().find( ({value}) => value===serviceUrl) ?? {};
 
     // useEffect(() => {
     //     setPanelTitle(!obsCoreEnabled ? Spatial : 'Location');
@@ -368,7 +368,7 @@ function SpatialSearch({cols, columnsModel, groupKey, fields, initArgs={}, obsCo
                     {spatialRegionOperation !== 'contains_point' && doSpatialSearch(true)}
                     {spatialRegionOperation === 'contains_point' &&
                         <div style={{marginLeft: LeftInSearch}}>
-                            {renderTargetPanel(groupKey, fields, true, false)}
+                            {renderTargetPanel(groupKey, fields, true, false,hipsUrl, centerWP, fovDeg)}
                         </div>
                     }
                 </div>
@@ -412,8 +412,8 @@ function SpatialSearch({cols, columnsModel, groupKey, fields, initArgs={}, obsCo
         return (
             <div style={{display:'flex', flexDirection:'column', flexWrap:'no-wrap',
                          width: SpatialWidth, marginLeft: LeftInSearch, marginTop: 5}}>
-                {selectSpatialSearchMethod(groupKey, fields, spatialMethod, hasRadius)}
-                {setSpatialSearchSize(fields, radiusInArcSec, spatialMethod)}
+                {selectSpatialSearchMethod(groupKey, fields, spatialMethod, hasRadius, hipsUrl, centerWP, fovDeg)}
+                {setSpatialSearchSize(fields, radiusInArcSec, spatialMethod, hipsUrl,centerWP,fovDeg)}
             </div>
         );
     };
@@ -620,7 +620,7 @@ TemporalSearch.propTypes = {
 };
 
 
-function selectSpatialSearchMethod(groupKey, fields, spatialMethod, hasRadius) {
+function selectSpatialSearchMethod(groupKey, fields, spatialMethod, hasRadius, hipsUrl, centerWP, fovDeg) {
     const spatialOptions = () => {
         return TapSpatialSearchMethod.enums.reduce((p, enumItem)=> {
             p.push({label: enumItem.key, value: enumItem.value});
@@ -642,7 +642,7 @@ function selectSpatialSearchMethod(groupKey, fields, spatialMethod, hasRadius) {
                     value: TapSpatialSearchMethod.Cone.value
                 }}
             />
-            {renderTargetPanel(groupKey, fields, spatialMethod === TapSpatialSearchMethod.Cone.value, hasRadius)}
+            {renderTargetPanel(groupKey, fields, spatialMethod === TapSpatialSearchMethod.Cone.value, hasRadius, hipsUrl, centerWP, fovDeg)}
         </div>
     );
 }
@@ -659,17 +659,22 @@ ObsCoreSearch.propTypes = {
  * @param fields
  * @param visible
  * @param {boolean} hasRadius
+ * @param hipsUrl
+ * @param centerWP
+ * @param fovDeg
  * @returns {null}
  */
-function renderTargetPanel(groupKey, fields, visible, hasRadius) {
+function renderTargetPanel(groupKey, fields, visible, hasRadius,
+                           hipsUrl= getAppOptions().coverage?.hipsSourceURL  ??  'ivo://CDS/P/2MASS/color',
+                           centerWP, fovDeg=240) {
     const targetSelect = () => {
+        const wp= parseWorldPt(centerWP) ?? makeWorldPt(0,0);
         return (
             <div style={{height: 70, display:'flex', justifyContent: 'flex-start', alignItems: 'center', marginTop: '5px'}}>
                 <VisualTargetPanel labelWidth={LableSaptail} groupKey={groupKey} feedbackStyle={{height: 40}}
-                                   hipsUrl='ivo://CDS/P/2MASS/color'
-                                   hipsFOVInDeg={240} sizeKey={hasRadius?RadiusSize : undefined}
-                                   centerPt={makeWorldPt(0,0)}
-                />
+                                   sizeKey={hasRadius? RadiusSize : undefined}
+                                   hipsDisplayKey={fovDeg}
+                                   hipsUrl={hipsUrl} hipsFOVInDeg={fovDeg} centerPt={wp} />
             </div>
         );
     };
@@ -682,9 +687,12 @@ function renderTargetPanel(groupKey, fields, visible, hasRadius) {
  * @param fields
  * @param radiusInArcSec
  * @param spatialMethod
+ * @param hipsUrl
+ * @param centerWP
+ * @param fovDeg
  * @returns {*}
  */
-function setSpatialSearchSize(fields, radiusInArcSec, spatialMethod) {
+function setSpatialSearchSize(fields, radiusInArcSec, spatialMethod, hipsUrl,centerWP,fovDeg) {
     const border = '1px solid #a3aeb9';
     const searchType = spatialMethod;
 
@@ -699,7 +707,13 @@ function setSpatialSearchSize(fields, radiusInArcSec, spatialMethod) {
 
         return (
             <div style={{marginTop: 5}}>
-                {renderPolygonDataArea(imageCornerCalc, SpatialLableSaptail - 1 /* box border */ - 5 /* box padding */ - 5 /* label padding */)}
+                {renderPolygonDataArea({
+                    imageCornerCalc,
+                    labelWidth:SpatialLableSaptail - 1 /* box border */ - 5 /* box padding */ - 5 /* label padding */,
+                    hipsUrl,
+                    centerWP,
+                    fovDeg
+                })}
             </div>
         );
     } else {

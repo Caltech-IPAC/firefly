@@ -121,7 +121,8 @@ function isWpArysEquals(wpAry1, wpAry2) {
 }
 
 
-export const HiPSTargetView = ({style, hipsUrl=DEFAULT_HIPS, hipsFOVInDeg= DEFAULT_FOV, centerPt=makeWorldPt(0,0),
+export const HiPSTargetView = ({style, hipsDisplayKey='none',
+                                   hipsUrl=DEFAULT_HIPS, hipsFOVInDeg= DEFAULT_FOV, centerPt=makeWorldPt(0,0),
                                    targetKey='UserTargetWorldPt', sizeKey='none---Size', polygonKey='non---Polygon',
                                    whichOverlay= CONE_CHOICE_KEY,
                                    coordinateSys, mocList, minSize=1/3600, maxSize=100,
@@ -152,7 +153,7 @@ export const HiPSTargetView = ({style, hipsUrl=DEFAULT_HIPS, hipsFOVInDeg= DEFAU
         return () => {
             if (cleanup) dispatchDeletePlotView({plotId});
         };
-    },[]);
+    },[hipsDisplayKey]);
 
     useEffect(() => { // if plot view changes then update the target or polygon field
         if (whichOverlay!==CONE_CHOICE_KEY && whichOverlay!==POLY_CHOICE_KEY) return;
@@ -305,7 +306,7 @@ function showHiPSPanelPopup({element, plotId= defPopupPlotId, ...restOfProps}) {
     };
 
     const hipsPanel= (
-        <PopupPanel title={'Choose Target'} layoutPosition={LayoutType.TOP_RIGHT}
+        <PopupPanel title={'Choose Target'} layoutPosition={LayoutType.TOP_RIGHT_OF_BUTTON} element={element}
                     closeCallback={() => doClose()} >
             <div style={{
                 padding: 3, display:'flex', flexDirection:'column', width: 500, height:400,
@@ -450,6 +451,7 @@ function getDetailsFromSelection(plot) {
 
 function makeRelativePolygonAry(plot, polygonAry) {
     const cc= CsysConverter.make(plot);
+    if (!cc) return;
     const dAry= polygonAry.map( (pt) => cc.getImageCoords(pt)).filter( (pt) => pt);
     if (dAry.length <3) return;
     const avgX= dAry.reduce( (sum,{x}) => sum+x,0)/dAry.length;

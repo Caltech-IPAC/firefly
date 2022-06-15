@@ -31,6 +31,9 @@ export function notifyServerAppInit({spaName}={}) {
     return doJsonRequest(ServerParams.INIT_APP, {spaName});
 }
 
+export function getServerDefinedOptions() {
+    return doJsonRequest(ServerParams.SRV_DEFINED_OPTIONS);
+}
 
 
 
