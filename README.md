@@ -7,7 +7,7 @@ The development started with the Spitzer Heritage Archive (SHA), and continued i
 
 Firefly is designed to build complex web-based front-end application making use of  reusable [React](https://reactjs.org) components to enable access and explore astronomical data with advanced data visualization capabilities.
 
-The visualization provides user with an integrated experience with brushing and linking capabilities among images, catalogs, and plots. Firefly is used in NASA/IPAC Infrared Science Archive [IRSA](https://irsa.ipac.caltech.edu) GUIs to query and visualize data from missions such as WISE, Spitzer, SOFIA, ZTF, PTF, etc. and a large number of highly-used contributed data products from a diverse set of astrophysics projects, in Rubin Observatory Science Platform Portal, at NASA Exoplanet Science Institute ()[NExScI](https://nexsci.caltech.edu)) and in NASA/IPAC Extragalactic Database ([NED](http://ned.ipac.caltech.edu).
+The visualization provides user with an integrated experience with brushing and linking capabilities among images, catalogs, and plots. Firefly is used in NASA/IPAC Infrared Science Archive ([IRSA](https://irsa.ipac.caltech.edu)) GUIs to query and visualize data from missions such as WISE, Spitzer, SOFIA, ZTF, PTF, etc. and a large number of highly-used contributed data products from a diverse set of astrophysics projects, in Rubin Observatory Science Platform Portal, at NASA Exoplanet Science Institute ([NExScI](https://nexsci.caltech.edu)) and in NASA/IPAC Extragalactic Database ([NED](http://ned.ipac.caltech.edu)).
 
 ### Quick-start
 
