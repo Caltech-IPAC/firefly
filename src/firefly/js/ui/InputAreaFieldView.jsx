@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {forwardRef, useEffect, useRef, useState} from 'react';
 import PropTypes from 'prop-types';
 import {PointerPopup} from '../ui/PointerPopup.jsx';
 import {InputFieldLabel} from './InputFieldLabel.jsx';
@@ -48,9 +48,9 @@ const ICON_SPACE_STYLE= {
     display:'inline-block'};
 
 
-export function InputAreaFieldView({ visible,label,tooltip,rows,cols,labelWidth,value,style,wrapperStyle,labelStyle,
+export const InputAreaFieldView= forwardRef( ({ visible,label,tooltip,rows,cols,labelWidth,value,style,wrapperStyle,labelStyle,
                                        button,inline, valid,onChange, onBlur, onKeyPress, showWarning,
-                                       message, type, placeholder, additionalClasses, idName } ) {
+                                       message, type, placeholder, additionalClasses, idName },ref ) => {
     const [hasFocus,setHasFocus]= useState(false);
     const [infoPopup,setInfoPopup]= useState(false);
     const {current:warn}= useRef({warnIcon:undefined, hider:undefined});
@@ -78,7 +78,7 @@ export function InputAreaFieldView({ visible,label,tooltip,rows,cols,labelWidth,
                 : (<div style={ICON_SPACE_STYLE}/>) : false;
 
     return (
-        <div style={{whiteSpace:'nowrap', display: inline?'inline-block':'block', ...wrapperStyle}}>
+        <div style={{whiteSpace:'nowrap', display: inline?'inline-block':'block', ...wrapperStyle}} ref={ref}>
             {label && <InputFieldLabel labelStyle={labelStyle} label={label} tooltip={tooltip} labelWidth={labelWidth}/> }
             <textarea style={{display:'inline-block', ...style}}
                       rows={rows}
@@ -107,7 +107,7 @@ export function InputAreaFieldView({ visible,label,tooltip,rows,cols,labelWidth,
             {Boolean(button) && button}
         </div>
     );
-}
+});
 
 InputAreaFieldView.propTypes= {
     valid   : PropTypes.bool,

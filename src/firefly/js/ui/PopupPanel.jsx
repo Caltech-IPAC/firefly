@@ -9,23 +9,24 @@ import {getDefaultPopupPosition, humanStart, humanMove, humanStop} from './Popup
 import './PopupPanel.css';
 import DEL_ICO from 'html/images/blue_delete_10x10.png';
 
-/** @typedef {Object} LayoutType
+/**
+ * @typedef {Object} LayoutType
  * enum can be one of
  * @prop CENTER
  * @prop TOP_EDGE_CENTER
  * @prop TOP_CENTER
  * @prop TOP_LEFT
  * @prop TOP_RIGHT
+ * @prop TOP_RIGHT_OF_BUTTON
  * @prop NONE
  * @prop USER_POSITION
- * @type {Enum}
  */
-export const LayoutType= new Enum(['CENTER', 'TOP_EDGE_CENTER', 'TOP_CENTER', 'TOP_LEFT', 'TOP_RIGHT', 'NONE', 'USER_POSITION']);
+export const LayoutType= new Enum(['CENTER', 'TOP_EDGE_CENTER', 'TOP_CENTER', 'TOP_LEFT', 'TOP_RIGHT', 'NONE', 'USER_POSITION', 'TOP_RIGHT_OF_BUTTON']);
 
 export const PopupPanel= memo((props) => {
     const {title='', visible=true, layoutPosition=LayoutType.TOP_CENTER, closePromise, closeCallback, modal=false,
         requestToClose, mouseInDialog, requestOnTop, dialogId, zIndex=0, children, style,
-        initLeft, initTop, onMove}= props;
+        initLeft, initTop, onMove, element}= props;
     const [{left,top}, setPos]= useState({left:0,top:0});
     const [layout, setLayout]= useState(LayoutType.NONE);
     const {current:ctxRef} = useRef({ mouseCtx: undefined, popupRef : undefined, titleBarRef: undefined});
@@ -35,7 +36,7 @@ export const PopupPanel= memo((props) => {
             setPos({left:initLeft,top:initTop});
         }
         else {
-            setPos(getDefaultPopupPosition(ctxRef.popupRef,layoutPosition));
+            setPos(getDefaultPopupPosition(ctxRef.popupRef,layoutPosition, element));
         }
 
         setLayout(layoutPosition);

@@ -5,6 +5,7 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
+import {getAppOptions} from '../core/AppDataCntlr.js';
 
 import {ValidationField} from '../ui/ValidationField.jsx';
 import {VALUE_CHANGE, dispatchValueChange} from '../fieldGroup/FieldGroupCntlr.js';
@@ -26,7 +27,7 @@ import {FieldGroup} from './FieldGroup.jsx';
 
 import CsysConverter from '../visualize/CsysConverter.js';
 import {primePlot, getActivePlotView, getFoV} from '../visualize/PlotViewUtil.js';
-import { makeImagePt, makeWorldPt, makeScreenPt, makeDevicePt} from '../visualize/Point.js';
+import {makeImagePt, makeWorldPt, makeScreenPt, makeDevicePt, parseWorldPt} from '../visualize/Point.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {getValueInScreenPixel} from '../visualize/draw/ShapeDataObj.js';
 
@@ -331,7 +332,7 @@ function sizeArea(groupKey, searchType, imageCornerCalc) {
             </div>
         );
     } else if (searchType === SpatialMethod.Polygon.value) {
-        return renderPolygonDataArea(imageCornerCalc);
+        return renderPolygonDataArea({imageCornerCalc});
     } else {
         return (
 
@@ -342,7 +343,9 @@ function sizeArea(groupKey, searchType, imageCornerCalc) {
     }
 }
 
-export function renderPolygonDataArea(imageCornerCalc, labelWidth, labelStyle, wrapperStyle) {
+export function renderPolygonDataArea({imageCornerCalc, labelWidth, labelStyle, wrapperStyle,
+                                          hipsUrl= getAppOptions().coverage?.hipsSourceURL  ??  'ivo://CDS/P/2MASS/color',
+                                          centerWP, fovDeg=240 }) {
     wrapperStyle = {padding: 5, display: 'flex', ...wrapperStyle};
 
     let cornerTypeOps=
@@ -367,6 +370,7 @@ export function renderPolygonDataArea(imageCornerCalc, labelWidth, labelStyle, w
             cornerTypeOps.splice(cornerTypeOps.length-1, 0, {label: 'Selection', value: 'area-selection'});
         }
     }
+    const wp= parseWorldPt(centerWP) ?? makeWorldPt(0,0);
     return (
         <div
             style={{padding:5, border:'solid #a3aeb9 1px' }}>
@@ -389,6 +393,10 @@ export function renderPolygonDataArea(imageCornerCalc, labelWidth, labelStyle, w
                 fieldKey:'polygoncoords',
                 style:{overflow:'auto',height:'65px', maxHeight:'200px', width:'220px', maxWidth:'300px'},
                 initialState:{},
+                hipsDisplayKey:fovDeg,
+                hipsUrl,
+                hipsFOVInDeg:fovDeg,
+                centerPt:wp,
                 label:'Coordinates:',
                 labelStyle,
                 labelWidth,

@@ -218,13 +218,24 @@ export function getColumnAttribute(columnsModel, colName, attrName) {
 
 const hasElements= (a) => Boolean(isArray(a) && a?.length);
 
+function mergeAdditionalServices(tapServices, additional) {
+    if (!hasElements(additional)) return tapServices;
+
+    const modifiedOriginal= tapServices.map( (t) => {
+        const match= additional.find( (a) => a.label===t.label);
+        return match ? {...t,...match} : t;
+    });
+    const trulyAdditional= additional.filter( (a) => !tapServices.find( (t) => t.label===a.label) );
+
+    return [...trulyAdditional,...modifiedOriginal];
+}
+
 export function getTapServices(webApiUserAddedService) {
-    const tapServices = getAppOptions()?.tap?.services;
-    const additionalServices = getAppOptions()?.tap?.additional?.services;
-    const retVal= hasElements(tapServices) ? [...tapServices] : [...TAP_SERVICES_FALLBACK];
-    hasElements(additionalServices) && retVal.unshift(...additionalServices);
-    webApiUserAddedService && retVal.push(webApiUserAddedService);
-    return retVal;
+    const {tap} = getAppOptions();
+    const startingTapServices= hasElements(tap?.services) ? [...tap.services] : [...TAP_SERVICES_FALLBACK];
+    const mergedServices= mergeAdditionalServices(startingTapServices,tap?.additional?.services);
+    webApiUserAddedService && mergedServices.push(webApiUserAddedService);
+    return mergedServices;
 }
 
 const validTableNameRE= /^[A-Za-z][A-Za-z_0-9]*(\.[A-Za-z][A-Za-z_0-9]*){0,2}$/;

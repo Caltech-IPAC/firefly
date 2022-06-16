@@ -147,6 +147,7 @@ export const ServerParams = {
         UPLOAD: 'upload',
         LOG_OUT: 'CmdLogout',
         INIT_APP: 'CmdInitApp',
+        SRV_DEFINED_OPTIONS: 'CmdSrvDefinedOptions',
         GET_IMAGE_MASTER_DATA: 'getImageMasterData',
         GET_FLOAT_DATA: 'getFloatData',
         GET_BYTE_DATA: 'getStretchedByteData',

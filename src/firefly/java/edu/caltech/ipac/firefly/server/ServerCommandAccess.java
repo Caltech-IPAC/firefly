@@ -93,6 +93,7 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.VIS_PUSH_ACTION,        new PushCommands.PushAction());
 
         _cmdMap.put(ServerParams.INIT_APP,               new AppServerCommands.InitApp());
+        _cmdMap.put(ServerParams.SRV_DEFINED_OPTIONS,    new AppServerCommands.SrvDefinedOptions());
         _cmdMap.put(ServerParams.LOGOUT,                 new AppServerCommands.Logout());
         _cmdMap.put(ServerParams.GET_USER_INFO,          new AppServerCommands.GetUserInfo());
         _cmdMap.put(ServerParams.GET_ALERTS,             new AppServerCommands.GetAlerts());

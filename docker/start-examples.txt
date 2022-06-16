@@ -22,26 +22,27 @@ To find releases try- https://hub.docker.com/r/ipac/firefly/tags
 -------------------- More advanced:
 
 Background:
-   > docker run -p 80:8080  --memory=8g --rm ipac/firefly:latest >& my.log &
+   > docker run -p 80:8080  -m 8g --rm ipac/firefly:latest >& my.log &
    - start firefly with - http://localhost/firefly/
 
 Map a directory for direct file reading:
-   > docker run -p 80:8080  -v /local/data:/external --memory=8g --rm ipac/firefly:latest
+   > docker run -p 80:8080  -v /local/data:/external -m 8g --rm ipac/firefly:latest
    - start firefly with - http://localhost/firefly/
 
+
 Write to logging directory outside of docker image:
-   > docker run -p 80:8080 -v /local/myLogDir:/firefly/logs --memory=8g --rm ipac/firefly:latest
+   > docker run -p 80:8080 -v /local/myLogDir:/firefly/logs -m 8g --rm ipac/firefly:latest
    - start firefly with - http://localhost/firefly/
 
 Debugging:
-   > docker run -p 8055:8080 -p 5050:5050 --memory=4g -e "ADMIN_PASSWORD=myPassword" -e DEBUG="TRUE" --rm --name firefly ipac/firefly:latest
+   > docker run -p 8055:8080 -p 5050:5050 -m 4g -e "ADMIN_PASSWORD=myPassword" -e DEBUG="TRUE" --rm --name firefly ipac/firefly:latest
    - start firefly with - http://localhost:8055/firefly/
 
 Production like:
-   > docker run -p 8055:8080 -p --memory=30g -e "ADMIN_PASSWORD=myPassword" -e DEBUG="FALSE" --name productionServer ipac/firefly:latest
+   > docker run -p 8055:8080 -p -m 30g -e "ADMIN_PASSWORD=myPassword" -e DEBUG="FALSE" --name productionServer ipac/firefly:latest
    - start firefly with - http://localhost:8055/firefly/
 
 Production like, multiple tomcats, using a shared work directory:
-   > docker run -p 8055:8080 -p --memory=30g -e "ADMIN_PASSWORD=myPassword" \
+   > docker run -p 8055:8080 -p -m 30g -e "ADMIN_PASSWORD=myPassword" \
              -v /local/shared/work/area:/firefly/shared-workarea --name productionServer ipac/firefly:latest
    - start firefly with - http://localhost:8055/firefly/
