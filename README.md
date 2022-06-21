@@ -1,5 +1,20 @@
 # Firefly
 
+## Intro
+
+Firefly is an open-source web-based UI library for astronomical data archive access and visualization developed in Infrared Processing and Analysis Center (IPAC) at [Caltech](https://caltech.edu).
+The development started with the Spitzer Heritage Archive (SHA), and continued in the WISE Image Archive, Planck Image Archive, and other web applications in the NASA/IPAC Infrared Science Archive (IRSA) applications. It was open sourced in 2015, hosted at GitHub.
+
+Firefly is designed to build complex web-based front-end application making use of  reusable [React](https://reactjs.org) components to enable access and explore astronomical data with advanced data visualization capabilities.
+
+The visualization provides user with an integrated experience with brushing and linking capabilities among images, catalogs, and plots. Firefly is used in NASA/IPAC Infrared Science Archive ([IRSA](https://irsa.ipac.caltech.edu)) GUIs to query and visualize data from missions such as WISE, Spitzer, SOFIA, ZTF, PTF, etc. and a large number of highly-used contributed data products from a diverse set of astrophysics projects, in Rubin Observatory Science Platform Portal, at NASA Exoplanet Science Institute ([NExScI](https://nexsci.caltech.edu)) and in NASA/IPAC Extragalactic Database ([NED](http://ned.ipac.caltech.edu)).
+
+### Quick-start
+
+The fastest way to start using Firefly and check examples is to make use of Docker images.
+See the Docker quick-start [here](docs/firefly-docker.md).
+
+## Release note
 
 Note - if you are pulling, look at the [branches section](#branches)
 
@@ -8,7 +23,8 @@ Note - if you are pulling, look at the [branches section](#branches)
 Firefly builds are available on Docker and the notes for using it are on the [Docker Page](https://hub.docker.com/r/ipac/firefly).
 
 
-### Firefly Framework
+## Firefly Framework
+
 Firefly is being reused for various archives because it is a framework of archive components. This has allowed us now to implement multiple archive systems at a fraction of the cost of the first system, Spitzer Heritage Archive. Firefly has undergone an extensive re-write since then, adopted React/Redux framework for the client side, making it much  easier to work with other JavaScript libraries. Recently we have adopted Plotly.js graphing library.
 
 ### Firefly Viewer
@@ -59,7 +75,7 @@ There are several branches in the repository.  Here are the ones that you should
  -  [Tomcat 7+] (http://tomcat.apache.org/download-70.cgi)
     Apache Tomcat is an open source software implementation of the Java Servlet and JavaServer Pages technologies.
 
- -  [Node v12+] (https://nodejs.org/) 
+ -  [Node v12+] (https://nodejs.org/)
     Javascript interpreter for command line environment, used for development tools
 
 ### Prepare before the build
