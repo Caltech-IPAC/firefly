@@ -342,7 +342,7 @@ function computePointDrawLayer(drawLayer, tableData, columns) {
             .map( (d) => {
                 const wp= makeDrawPoint(d);
                 let line;
-                if (lastWp) line= ShapeDataObj.makeLine(wp, lastWp);
+                if (lastWp && Math.abs(lastWp.x-wp.x)<80 && !useImagePts) line= ShapeDataObj.makeLine(wp, lastWp);
                 lastWp= wp;
                 return line;
             })

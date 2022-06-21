@@ -13,6 +13,8 @@ import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,7 +27,7 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
     public static final String WISE = "wise";
     public static final String FTYPE = "type";
 
-    public final static String SOURCE_ID_PATTERN_1B = "[0-9]{5}[abcde][0-9]{3}-[0-9]{6}";
+    public final static String SOURCE_ID_PATTERN_1B = "[0-9]{5}[abcders][0-9]{3}-[0-9]{6}";
     public final static String SOURCE_ID_PATTERN_3A = "[0-9]{4}[pm][0-9]{3}_a[abc][1-9]{2}-[0-9]{6}";
     public final static String SOURCE_ID_PATTERN_3O = "[0-9]{4}[pm][0-9]{3}_[^a].*-[0-9]{6}";
     public final static String SOURCE_ID_PATTERN_3A_PASS1 = "[0-9]{4}[pm][0-9]{3}_aa[1-9]{2}-[0-9]{6}";
@@ -33,62 +35,46 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
     public final static String SOURCE_ID_PATTERN_3A_PASS2_3B = "[0-9]{4}[pm][0-9]{3}_ab3[1-9]-[0-9]{6}";
     public final static String SOURCE_ID_PATTERN_3A_ALLWISE = "[0-9]{4}[pm][0-9]{3}_ac5[1-9]-[0-9]{6}";
 
+    // Image sets (public)
+        public final static String PRELIM = "prelim";
+        public final static String PRELIM_POSTCRYO = "prelim_postcryo";
+        public final static String ALLWISE_MULTIBAND = "allwise-multiband";
+        public final static String ALLSKY_4BAND = "allsky-4band";
+        public final static String CRYO_3BAND = "cryo_3band";
+        public final static String POSTCRYO = "postcryo";
+        public final static String NEOWISER = "neowiser";
+        public final static String MERGE = "merge";
+        public final static String MERGE_INT = "merge_int";
     public static enum DATA_TYPE {
         INTENSITY, MASK, UNCERTAINTY, COVERAGE, DIFF_SPIKES, HALOS, OPT_GHOSTS, LATENTS
     }
 
-    public enum DataProduct {
-        PRELIM_1B("prelim","p1bm_frm", "p1bs_psd", "links-prelim/l1b/"),
-        PRELIM_3A("prelim","p3am_cdd", "p3as_psd", "links-prelim/l3a/"),
-        PRELIM_POSTCRYO_1B("prelim_postcryo","p1bm_frm", "p1bs_psd", "links-postcryo-prelim/l1b-2band/"),
-        ALLWISE_MULTIBAND_3A("allwise","p3am_cdd", "p3as_psd", "links-allwise/l3a/"), // TODO: change for production, changed XW
-        ALLSKY_4BAND_1B("allsky", "4band_p1bm_frm", "4band_p1bs_psd", "links-allsky/l1b-4band/"),
-        ALLSKY_4BAND_3A("allsky", "4band_p3am_cdd", "4band_p3as_psd", "links-allsky/l3a-4band/"),
-        CRYO_3BAND_1B("cryo_3band", "3band_p1bm_frm", "p1bs_psd", "links-3band/l1b-3band/"),
-        CRYO_3BAND_3A("cryo_3band", "3band_p3am_cdd", "p3as_psd", "links-3band/l3a-3band/"),  // currently they are different: p1bm_frm and p3am_cdd
-        POSTCRYO_1B("postcryo", "2band_p1bm_frm", "2band_p1bs_psd", "links-postcryo/l1b-2band/"),
-        MERGE_1B("merge", "merge_p1bm_frm", "merge_p1bs_psd", "links-allsky/l1b-merge/"),         // exists under links-allsky
-        MERGE_INT_1B("merge_int", "merge_i1bm_frm", "merge_i1bs_psd", "links-merge/l1b/"),
-        MERGE_3A("merge", "merge_p3am_cdd", "merge_p3as_psd", "links-allwise/l3a-merge/"),       // exists under links-allwise
-        MERGE_INT_3A("merge_int", "merge_p3am_cdd", "merge_p3as_psd", "links-merge/l3a/"),
-        NEOWISER_PROV_1B("neowiser_prov", "i1bm_frm", "i1bs_psd", "links-nprov/l1b/"),
-        NEOWISER_YR1_1B("neowiser_yr1", "yr1_p1bm_frm", "yr1_p1bs_psd", "links-neowiser/l1b-yr1/"),
-        NEOWISER_1B("neowiser", "p1bm_frm", "p1bs_psd", "links-neowiser/l1b/"),
-
-        PASS1_1B("pass1", "i1bm_frm", "i1bs_psd", "links-pass1/l1b/"),
-        PASS1_3A("pass1", "i3am_cdd", "i3as_psd", "links-pass1/l3a/"),
-        PASS1_3O("pass1", "i3om_cdd", "i3os_psd", "links-pass1/l3o/"),
-        PASS2_4BAND_1B("pass2", "4band_i1bm_frm", "4band_i1bs_psd", "links-pass2/l1b-4band/"),
-        PASS2_4BAND_3A("pass2", "4band_i3am_cdd", "4band_i3as_psd", "links-pass2/l3a-4band/"),
-        PASS2_3BAND_1B("pass2", "3band_i1bm_frm", "3band_i1bs_psd", "links-pass2/l1b-3band/"),
-        PASS2_3BAND_3A("pass2", "3band_i3am_cdd", "3band_i3as_psd", "links-pass2/l3a-3band/"),
-        PASS2_2BAND_1B("pass2",  "2band_i1bm_frm", "2band_i1bs_psd", "links-pass2/l1b-2band/");
-
-        private String dataset;
-        private String imageTable;
-        private String sourceTable;
-        private String filesysDatasetPath;
-
-
-        DataProduct(String dataset, String imageTable, String sourceTable, String filesysDatasetPath) {
-            this.dataset = dataset;
-            this.imageTable = imageTable;
-            this.sourceTable = sourceTable;
-            this.filesysDatasetPath = filesysDatasetPath;
+    private static String getSchemaFromSourceId(String sourceId) {
+            if (StringUtils.isEmpty(sourceId)) {
+                return null;
+            }
+            if (sourceId.matches(SOURCE_ID_PATTERN_3O)) {
+                return PRELIM;
+            } else if (sourceId.matches(SOURCE_ID_PATTERN_3A)) {
+                if (sourceId.matches(SOURCE_ID_PATTERN_3A_PASS1)) {
+                    return PRELIM;
+                } else if ((sourceId.matches(SOURCE_ID_PATTERN_3A_PASS2_4B))) {
+                    return ALLSKY_4BAND;
+                } else if ((sourceId.matches(SOURCE_ID_PATTERN_3A_PASS2_3B))) {
+                    return CRYO_3BAND;
+    // TODO: uncomment when needed
+    //            } else if ((sourceId.matches(SOURCE_ID_PATTERN_3A_PASS2_2B))) {
+    //                return publicRelease ? PRELIM_POSTCRYO : PASS2_2BAND;
+                } else if ((sourceId.matches(SOURCE_ID_PATTERN_3A_ALLWISE))) {
+                    return ALLWISE_MULTIBAND;
+                } else {
+                    //assert(false);
+                    return null;
+                }
+            } else {
+                return null;
+            }
         }
-
-        public String getDataset() { return dataset;}
-        public String getImageTable() { return imageTable;}
-        public String getSourceTable() { return sourceTable;}
-        public String getFilesysDatasetPath() { return filesysDatasetPath;}
-
-        public String imageset() {
-            return name().substring(0, name().lastIndexOf("_"));
-        }
-        public String plevel() {
-            return name().substring(name().lastIndexOf("_")+1);
-        }
-    }
 
     private DataProduct wds;
     private String mergeImageSet;
@@ -128,12 +114,24 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
 
         String productLevel = dsInfo.get("ProductLevel");
 
+        List<String> imageSets = Arrays.asList(imageset.split(","));
+
         if (StringUtils.isEmpty(productLevel)) {
             String sourceId = dsInfo.get("sourceId");
-            String sourceProductLevel = getProductLevelFromSourceId(sourceId);
-            if (sourceProductLevel == null) {
-                throw new IllegalArgumentException("Invalid Source ID: " + sourceId);
+            if (!StringUtils.isEmpty(sourceId)) {
+                productLevel = getProductLevelFromSourceId(sourceId);
+                if (productLevel == null) {
+                    throw new IllegalArgumentException("Invalid Source ID: " + sourceId);
+                }
             }
+            String refsourceId = dsInfo.get("refSourceId");
+            if (!StringUtils.isEmpty(refsourceId)) {
+                productLevel = getProductLevelFromSourceId(refsourceId);
+                if (productLevel == null) {
+                    throw new IllegalArgumentException("Invalid Source ID: " + refsourceId);
+                }
+            }
+
         }
 
         String ds = imageset.replaceAll("-", "_").toUpperCase();
@@ -142,6 +140,7 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
             ds = mergeSchemaFromProp.toUpperCase();
             mergeImageSet = imageset;
         }
+
         DataProduct dsource = DataProduct.valueOf(ds + "_" + dt);
         setupDS(host, baseFsPath, dsource);
     }
@@ -229,13 +228,15 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
 
         String refSourceId = queryInfo.get("refSourceId");
         String sourceId = queryInfo.get("sourceId");
+        String dataproductlevel = queryInfo.get("dataproductlevel");
+        String sourceidTable = getSchemaFromSourceId(sourceId);
 
         if (refSourceId != null) {
-            String sourceSpec = WISE + "." + getDataset() + "." + wds.getSourceTable() + "(\"source_id\":\"" + refSourceId + "\")";
+            String sourceSpec = WISE + "." + wds.getSourceTable() + "(\"source_id\":\"" + refSourceId + "\")";
             queryParam.setRefBy(sourceSpec);
         } else if (sourceId != null) {
             String sourceTable = wds.getSourceTable();
-            String sourceSpec = WISE + "." + getDataset() + "." + sourceTable + "(\"source_id\":\"" + sourceId + "\")";
+            String sourceSpec = WISE + "." + sourceTable + "(\"source_id\":\"" + sourceId + "\")";
             queryParam.setPos(sourceSpec);
         }
 
@@ -382,8 +383,8 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
             }
 
             if (mergeImageSet.contains(DataProduct.NEOWISER_1B.imageset())) {
-                if (n>0) imageSetConstraint += ",6";
-                else imageSetConstraint += "6";
+                if (n>0) imageSetConstraint += ",6,7,8,9,10,11,12,13";
+                else imageSetConstraint += ",6,7,8,9,10,11,12,13";
                 n++;
             }
 
@@ -574,6 +575,59 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
             return "3o";
         } else {
             return null;
+        }
+    }
+
+    public enum DataProduct {
+        PRELIM_1B("prelim","p1bm_frm", "prelim_p1bs_psd", "links-prelim/l1b/"),
+        PRELIM_3A("prelim","p3am_cdd", "prelim_p3as_psd", "links-prelim/l3a/"),
+        PRELIM_POSTCRYO_1B("prelim_postcryo","p1bm_frm", "prelim_2band_p1bs_psd", "links-postcryo-prelim/l1b-2band/"),
+        ALLWISE_MULTIBAND_3A("allwise","p3am_cdd", "allsky_4band_p1bs_psd", "links-allwise/l3a/"), // TODO: change for production, changed XW
+        ALLSKY_4BAND_1B("allsky", "4band_p1bm_frm", "allsky_4band_p1bs_psd", "links-allsky/l1b-4band/"),
+        ALLSKY_4BAND_3A("allsky", "4band_p3am_cdd", "allsky_4band_p1bs_psd", "links-allsky/l3a-4band/"),
+        CRYO_3BAND_1B("cryo_3band", "3band_p1bm_frm", "allsky_4band_p1bs_psd", "links-3band/l1b-3band/"),
+        CRYO_3BAND_3A("cryo_3band", "3band_p3am_cdd", "allsky_4band_p1bs_psd", "links-3band/l3a-3band/"),  // currently they are different: p1bm_frm and p3am_cdd
+        POSTCRYO_1B("postcryo", "2band_p1bm_frm", "allsky_4band_p1bs_psd", "links-postcryo/l1b-2band/"),
+        MERGE_1B("merge", "merge_p1bm_frm", "allsky_4band_p1bs_psd", "links-allsky/l1b-merge/"),         // exists under links-allsky
+        MERGE_INT_1B("merge_int", "merge_i1bm_frm", "merge_i1bs_psd", "links-merge/l1b/"),
+        MERGE_3A("merge", "merge_p3am_cdd", "allsky_4band_p1bs_psd", "links-allwise/l3a-merge/"),       // exists under links-allwise
+        MERGE_INT_3A("merge_int", "merge_p3am_cdd", "allsky_4band_p3as_psd", "links-merge/l3a/"),
+        NEOWISER_PROV_1B("neowiser_prov", "i1bm_frm", "i1bs_psd", "links-nprov/l1b/"),
+        NEOWISER_YR1_1B("neowiser_yr1", "yr1_p1bm_frm", "yr1_p1bs_psd", "links-neowiser/l1b-yr1/"),
+        NEOWISER_1B("neowiser", "p1bm_frm", "allsky_4band_p1bs_psd", "links-neowiser/l1b/"),
+
+        PASS1_1B("pass1", "i1bm_frm", "i1bs_psd", "links-pass1/l1b/"),
+        PASS1_3A("pass1", "i3am_cdd", "i3as_psd", "links-pass1/l3a/"),
+        PASS1_3O("pass1", "i3om_cdd", "i3os_psd", "links-pass1/l3o/"),
+        PASS2_4BAND_1B("pass2", "4band_i1bm_frm", "4band_i1bs_psd", "links-pass2/l1b-4band/"),
+        PASS2_4BAND_3A("pass2", "4band_i3am_cdd", "4band_i3as_psd", "links-pass2/l3a-4band/"),
+        PASS2_3BAND_1B("pass2", "3band_i1bm_frm", "3band_i1bs_psd", "links-pass2/l1b-3band/"),
+        PASS2_3BAND_3A("pass2", "3band_i3am_cdd", "3band_i3as_psd", "links-pass2/l3a-3band/"),
+        PASS2_2BAND_1B("pass2",  "2band_i1bm_frm", "2band_i1bs_psd", "links-pass2/l1b-2band/");
+
+        private String dataset;
+        private String imageTable;
+        private String sourceTable;   // this sourceTable is mapped and meant for source Id searches
+        private String filesysDatasetPath;
+
+
+        DataProduct(String dataset, String imageTable, String sourceTable, String filesysDatasetPath) {
+            this.dataset = dataset;
+            this.imageTable = imageTable;
+            this.sourceTable = sourceTable;
+            this.filesysDatasetPath = filesysDatasetPath;
+        }
+
+        public String getDataset() { return dataset;}
+        public String getImageTable() { return imageTable;}
+        public String getSourceTable() { return sourceTable;}
+        public String getFilesysDatasetPath() { return filesysDatasetPath;}
+
+        public String imageset() {
+            return name().substring(0, name().lastIndexOf("_"));
+        }
+        public String plevel() {
+            return name().substring(name().lastIndexOf("_")+1);
         }
     }
 
