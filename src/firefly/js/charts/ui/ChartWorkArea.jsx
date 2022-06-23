@@ -195,7 +195,7 @@ const Toolbar = ({viewerId, tbl_group, style={}}) => {
     const [modeLabel, modeTitle] = sideBySide ? ['As Tabs', 'Switch to tabs layout'] : ['Side-By-Side', 'Switch to Side-By-Side layout'];
 
     return (
-        <div style={{display: 'inline-flex', justifyContent: 'end', backgroundColor: 'inherit', marginBottom: 3, ...style}}>
+        <div style={{display: 'inline-flex', justifyContent: 'flex-end', backgroundColor: 'inherit', marginBottom: 3, ...style}}>
             {canPin && <div onClick={doPinChart} title='Pin the active chart' className='button text' style={{marginRight:20}}>Pin Chart</div>}
             {canShowTable && <div onClick={showTable} title='Show the table associated with this chart' className='button text'>Show Table</div>}
             {canToggle && <div onClick={toggleSideBySide} title={modeTitle} className='button text'>{modeLabel}</div>}
