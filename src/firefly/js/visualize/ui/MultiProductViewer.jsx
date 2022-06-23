@@ -360,7 +360,7 @@ function getMakeDropdown(dpId, dataProductState, showMenu, showRedoSearchButton,
     const hasMenu= showMenu && menu && menu.length>0;
     if (!hasMenu && !hasFileMenu && !showRedoSearchButton && !extraction) return undefined;
     return () => (
-            <div style={{display:'flex', flexDirection:'row'}}>
+            <div style={{display:'inline-flex', alignItems: 'center', height: 30}}>
                 {!hasMenu ? <div style={{width: 50,height:1 }}/> :
                     <DropDownToolbarButton
                         text={'More'}
@@ -382,7 +382,7 @@ function getMakeDropdown(dpId, dataProductState, showMenu, showRedoSearchButton,
                     dropDown={<FileMenuDropDown {...{fileMenu, dpId}} />} />
                 }
                 { extraction &&
-                <div className='button text' style={{lineHeight: '18px'}} title={extractionText || 'Pin'} onClick={() => extraction()}>{extractionText || 'Pin'}</div> }
+                <div className='button text' style={{lineHeight: '18px', height: 18}} title={extractionText || 'Pin'} onClick={() => extraction()}>{extractionText || 'Pin'}</div> }
                 {showRedoSearchButton && analysisActivateFunc &&
                     <ToolbarButton
                         text='Redo Search' tip={'Redo Search'} horizontal={true}

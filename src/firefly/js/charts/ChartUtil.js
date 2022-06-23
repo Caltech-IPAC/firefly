@@ -513,7 +513,7 @@ export function handleTableSourceConnections({chartId, data, fireflyData}) {
         }
 
         // make sure table watcher is set for all non-empty table sources
-        if (!isEmpty(traceTS) && !traceTS._cancel) {
+        if (!isEmpty(traceTS)) {
             //creates a new one.. and save the cancel handle
             if (doUpdate) {
                 // fetch data syncs highlighted and selected with the table
@@ -527,7 +527,7 @@ export function handleTableSourceConnections({chartId, data, fireflyData}) {
                     updateSelected(chartId, selectInfo);
                 }
             }
-            traceTS._cancel = setupTableWatcher(chartId, traceTS, idx);
+            if (!traceTS._cancel) traceTS._cancel = setupTableWatcher(chartId, traceTS, idx);
         }
         tablesources[idx] = traceTS;
     });
