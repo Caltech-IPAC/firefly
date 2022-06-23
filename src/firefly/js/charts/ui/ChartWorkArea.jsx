@@ -207,7 +207,7 @@ const Toolbar = ({viewerId, tbl_group, style={}}) => {
 export const PinnedCharts = (props) => {
 
     const {tbl_group='main', expandedMode} = props;
-    const canReceiveNewItems=NewPlotMode.create_replace.key, closeable=false, noChartToolbar=false;
+    const canReceiveNewItems=NewPlotMode.create_replace.key, closeable=false;
     const viewerId = 'PINNED_CHARTS_VIEWER';
 
     const {renderTreeId} = useContext(RenderTreeIdCtx);
@@ -311,11 +311,21 @@ function BlankClosePanel() {
 }
 
 function doUpdateViewer(viewerId, tbl_group, action) {
-    if (action?.type === TABLE_REMOVE) {
-        const {tbl_id} = action.payload;
-        getChartIdsInGroup(PINNED_GROUP)
-            .filter((id) => getChartData(id)?.tbl_id === tbl_id)
-            .forEach((id) => dispatchChartRemove(id));
+    switch (action?.type) {
+        case TABLE_REMOVE: {
+            const {tbl_id} = action.payload;
+            getChartIdsInGroup(PINNED_GROUP)
+                .filter((id) => getChartData(id)?.tbl_id === tbl_id)
+                .forEach((id) => dispatchChartRemove(id));
+            break;
+        }
+        case CHART_REMOVE: {
+            const pinnedCnt = getViewerItemIds(getMultiViewRoot(), PINNED_VIEWER_ID)?.length ?? 0;
+            if (pinnedCnt <= 0) {
+                switchTab(PINNED_VIEWER_ID, 0);  // set selected tab back to 0
+            }
+            break;
+        }
     }
 
     const currentIds = getViewerItemIds(getMultiViewRoot(), PINNED_GROUP);
@@ -326,14 +336,3 @@ function doUpdateViewer(viewerId, tbl_group, action) {
         dispatchAddViewerItems(PINNED_GROUP, chartIds, PLOT2D);
     }
 }
-
-// const ToolBar = (props) => {
-//     const {expandedMode, closeable, viewerId, layoutType, activeItemId, chartId, expandable} = props;
-//     const MultiChartTB = expandedMode ? MultiChartToolbarExpanded : MultiChartToolbarStandard;
-//     return (
-//         <div>
-//             <MultiChartTB {...{closeable, viewerId, layoutType, activeItemId}}/>
-//             <ToolbarUI {...{chartId, expandable, expandedMode}}/>
-//         </div>
-//     );
-// };

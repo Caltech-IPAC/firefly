@@ -147,7 +147,7 @@ export class MultiChartViewer extends PureComponent {
         const ToolBar = expandedMode ? MultiChartToolbarExpanded : MultiChartToolbarStandard;
 
         return (
-            <div style={{position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column'}}>
+            <div className='ChartPanel__wrapper' style={{width: '100%', height: '100%', boxSizing: 'border-box'}}>
                 <ToolBar chartId={activeItemId} expandable={!expandedMode} {...{expandedMode, closeable, viewerId, layoutType, activeItemId}}/>
                 <MultiItemViewerView {...this.props} {...newProps}/>
             </div>
