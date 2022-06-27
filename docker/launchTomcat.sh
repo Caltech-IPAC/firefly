@@ -2,6 +2,7 @@
 
 NAME=${BUILD_TIME_NAME:-"ipac/firefly"}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-`echo $RANDOM | base64 | head -c 8`}
+USE_ADMIN_AUTH=${USE_ADMIN_AUTH:-"true"}
 
 echo -e "\n!!============================================================"
 echo "!!============================================================"
@@ -88,8 +89,8 @@ export CATALINA_OPTS="\
   -Dvisualize.fits.search.path=${VIS_PATH} \
 	"
 
-#----- override ADMIN_PROTECTED path if set
-if [ ! -z ${ADMIN_PROTECTED+x} ]; then export CATALINA_OPTS="${CATALINA_OPTS} -DADMIN_PROTECTED='${ADMIN_PROTECTED}'"; fi
+#----- remove ADMIN_PROTECTED path so it no longer restricted by basic auth
+if [ "${USE_ADMIN_AUTH,,}" = "false" ]; then export CATALINA_OPTS="${CATALINA_OPTS} -DADMIN_PROTECTED="; fi
 
 #----- eval PROPS if exists.  key-value pairs are separated by spaces. therefore, it does not support values with spaces in it.
 if [ ! -z "${PROPS}" ]; then
