@@ -88,6 +88,9 @@ export CATALINA_OPTS="\
   -Dvisualize.fits.search.path=${VIS_PATH} \
 	"
 
+#----- override ADMIN_PROTECTED path if set
+if [ ! -z ${ADMIN_PROTECTED+x} ]; then export CATALINA_OPTS="${CATALINA_OPTS} -DADMIN_PROTECTED='${ADMIN_PROTECTED}'"; fi
+
 #----- eval PROPS if exists.  key-value pairs are separated by spaces. therefore, it does not support values with spaces in it.
 if [ ! -z "${PROPS}" ]; then
   jvmProps=`sed -r 's/( )+/ -D/g;s/^/-D/' <<< $PROPS`     # add -D to every key=val pair
