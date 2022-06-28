@@ -32,9 +32,8 @@ export const Banner = memo( ({menu, readout, appIcon, visPreview, appTitle, addi
                 </div>
             </div>
             <div className='banner__right'>
-                {visPreview}
+                {showUserInfo && <UserInfo/>}
             </div>
-            {showUserInfo && <UserInfo/>}
         </div>
     );
 });
@@ -72,7 +71,7 @@ const UserInfo= memo(() => {
 
     return (
         <div className='banner__user-info'>
-            <span>{displayName}</span>
+            <span className='banner__user-info--name' title={displayName}>{displayName}</span>
             {!isGuest && <div className='banner__user-info--links' onClick={onLogout}>Logout</div>}
             {isGuest && <div className='banner__user-info--links' onClick={onLogin}>Login</div>}
         </div>
