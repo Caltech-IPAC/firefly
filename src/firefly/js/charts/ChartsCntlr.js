@@ -681,11 +681,9 @@ function reduceData(state={}, action={}) {
         case (CHART_MOUNTED) :
         {
             const {chartId} = action.payload;
-            // if (has(state, chartId)) {
-                const n = get(state, [chartId,'mounted'], 0);
-                state = updateSet(state, [chartId,'mounted'], Number(n) + 1);
-                logger.info(`CHART_MOUNTED ${chartId} #mounted ${state[chartId].mounted}`);
-            // }
+            const n = get(state, [chartId,'mounted'], 0);
+            state = updateSet(state, [chartId,'mounted'], Number(n) + 1);
+            logger.info(`CHART_MOUNTED ${chartId} #mounted ${state[chartId].mounted}`);
 
             return state;
         }

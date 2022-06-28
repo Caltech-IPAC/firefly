@@ -32,6 +32,7 @@ import {HelpIcon} from '../../ui/HelpIcon';
 import {getComponentState, dispatchComponentStateChange} from '../../core/ComponentCntlr';
 import {SplitContent} from '../../ui/panel/DockLayoutPanel';
 import {hideInfoPopup, showInfoPopup, showYesNoPopup, showPinMessage} from '../../ui/PopupUtil.jsx';
+import {TextButton} from '../../ui/TextButton.jsx';
 
 const logger = Logger('ChartWorkArea');
 const PINNED_CHART_PREFIX = 'pinned-';
@@ -196,7 +197,7 @@ const Toolbar = ({viewerId, tbl_group, style={}}) => {
 
     return (
         <div style={{display: 'inline-flex', justifyContent: 'flex-end', backgroundColor: 'inherit', marginBottom: 3, ...style}}>
-            {canPin && <div onClick={doPinChart} title='Pin the active chart' className='button text' style={{marginRight:20}}>Pin Chart</div>}
+            {canPin && <TextButton onClick={doPinChart} title='Pin the active chart' style={{marginRight:20}}>Pin Chart</TextButton>}
             {canShowTable && <div onClick={showTable} title='Show the table associated with this chart' className='button text'>Show Table</div>}
             {canToggle && <div onClick={toggleSideBySide} title={modeTitle} className='button text'>{modeLabel}</div>}
             <HelpIcon helpId={'chartarea.info'} style={{margin: '0 10px'}}/>
