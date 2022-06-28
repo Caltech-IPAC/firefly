@@ -21,7 +21,7 @@ import {MultiChartToolbarStandard, MultiChartToolbarExpanded} from './MultiChart
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 
 export function getActiveViewerItemId(viewerId) {
-    return getViewer(getMultiViewRoot(), viewerId).customData.activeItemId;
+    return getViewer(getMultiViewRoot(), viewerId)?.customData?.activeItemId;
 }
 
 
@@ -122,7 +122,7 @@ export class MultiChartViewer extends PureComponent {
                  onClick={(ev)=>onChartSelect(ev,chartId)}
                  onTouchStart={stopPropagation}
                  onMouseDown={stopPropagation}>
-                <ChartPanel key={chartId} showToolbar={false} chartId={chartId} deletable={deletable} glass={glass}/>
+                <ChartPanel key={chartId} showToolbar={false} chartId={chartId} deletable={deletable}/>
             </div>
         );
 
@@ -130,7 +130,7 @@ export class MultiChartViewer extends PureComponent {
             <div onClick={stopPropagation}
                  onTouchStart={stopPropagation}
                  onMouseDown={stopPropagation}>
-                <ChartPanel key={chartId} showToolbar={false} chartId={chartId} deletable={deletable} glass={glass}/>
+                <ChartPanel key={chartId} showToolbar={false} chartId={chartId} deletable={deletable}/>
             </div>
         );
 
@@ -144,30 +144,13 @@ export class MultiChartViewer extends PureComponent {
 
         //console.log('Active chart ID: '+activeItemId);
 
-        const showChartToolbar = !Boolean(noChartToolbar);
-        const hasToolbar = showChartToolbar || (viewer.itemIdAry.length > 1);
-        const chartAreaClass = `ChartPanel__chartarea${hasToolbar?'--withToolbar':''}`;
-        
+        const ToolBar = expandedMode ? MultiChartToolbarExpanded : MultiChartToolbarStandard;
+
         return (
-        <div className='ChartPanel__container'>
-            <div className='ChartPanel__wrapper'>
-                {expandedMode ? <MultiChartToolbarExpanded {...{closeable, viewerId, layoutType, activeItemId}}/> : <MultiChartToolbarStandard {...{viewerId, layoutType, activeItemId}}/>}
-                {showChartToolbar &&
-                <ChartPanel key={'toolbar-'+activeItemId}
-                            expandedMode={expandedMode}
-                            expandable={!expandedMode}
-                            showChart={false}
-                            chartId={activeItemId}
-                            deletable={deletable}/>
-                }
-
-                <div className={chartAreaClass}>
-                    <MultiItemViewerView {...this.props} {...newProps}/>
-                </div>
-                {expandedMode && closeable && <CloseButton style={{paddingLeft: 10, position: 'absolute', top: 0, left: 0}} onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>}
+            <div className='ChartPanel__wrapper' style={{width: '100%', height: '100%', boxSizing: 'border-box'}}>
+                <ToolBar chartId={activeItemId} expandable={!expandedMode} {...{expandedMode, closeable, viewerId, layoutType, activeItemId}}/>
+                <MultiItemViewerView {...this.props} {...newProps}/>
             </div>
-        </div>
-
         );
     }
 }

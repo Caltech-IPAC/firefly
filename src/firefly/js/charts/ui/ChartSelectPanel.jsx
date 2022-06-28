@@ -123,7 +123,7 @@ export class ChartSelectPanel extends SimpleComponent {
     }
 
     render() {
-        const {tbl_id, chartId, inputStyle={}, hideDialog} = this.props;
+        const {tbl_id, chartId, inputStyle={}, hideDialog, style={}} = this.props;
         const {renderTreeId}= this.context;
 
         const chartActions = getChartActions({chartId, tbl_id});
@@ -133,7 +133,7 @@ export class ChartSelectPanel extends SimpleComponent {
         const chartActionChanged = (chartAction) => { this.setState({chartAction}); };
 
         return (
-            <div style={{padding: 10}}>
+            <div style={{padding: 10, ...style}}>
                 <FormPanel
                     groupKey={groupKey}
                     submitText={chartAction===CHART_TRACE_MODIFY ? 'Apply' : 'OK'}
@@ -142,6 +142,7 @@ export class ChartSelectPanel extends SimpleComponent {
                     onError={() => {}}
                     onCancel={hideDialog}
                     inputStyle = {inputStyle}
+                    style={{padding:5}}
                     changeMasking={this.changeMasking}>
                     <ChartAction {...{chartId, chartActions, chartAction, chartActionChanged}}/>
                     <ChartActionOptions {...{chartAction, tbl_id, chartId, groupKey, hideDialog}}/>
@@ -191,7 +192,7 @@ function ChartAction({chartId, chartActions, chartAction, chartActionChanged}) {
         };
 
         return (
-            <div style={{marginTop:-10}}>
+            <div>
                 <RadioGroupInputFieldView
                     options={options}
                     alignment={'horizontal'}
@@ -312,6 +313,7 @@ export function showChartsDialog(chartId) {
                 tbl_id,
                 chartId,
                 chartAction: CHART_TRACE_MODIFY,
+                style: {marginTop: -10},
                 inputStyle: {backgroundColor:'none', padding: 3, border: 'none', borderBottom: 'solid 1px #a5a5a'},
                 hideDialog: ()=>dispatchHideDialog(popupId)}}/>
         </PopupPanel>

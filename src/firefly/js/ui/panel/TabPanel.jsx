@@ -266,6 +266,11 @@ StatefulTabs.propTypes = {
 StatefulTabs.defaultProps = TabsView.defaultProps;
 
 
+export function switchTab(componentKey, selectedIdx) {
+    dispatchComponentStateChange(componentKey, {selectedIdx});
+}
+
+
 /*----------------------------------------------------------------------------------------------*/
 
 function onChange(idx,id, name, viewProps, fireValueChange) {

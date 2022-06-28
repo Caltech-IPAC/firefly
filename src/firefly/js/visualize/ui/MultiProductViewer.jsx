@@ -13,6 +13,7 @@ import {MultiImageViewer} from './MultiImageViewer.jsx';
 import {MultiChartViewer} from '../../charts/ui/MultiChartViewer';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
+import {TextButton} from '../../ui/TextButton.jsx';
 import {CompleteButton} from '../../ui/CompleteButton';
 import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
@@ -360,7 +361,7 @@ function getMakeDropdown(dpId, dataProductState, showMenu, showRedoSearchButton,
     const hasMenu= showMenu && menu && menu.length>0;
     if (!hasMenu && !hasFileMenu && !showRedoSearchButton && !extraction) return undefined;
     return () => (
-            <div style={{display:'flex', flexDirection:'row'}}>
+            <div style={{display:'inline-flex', alignItems: 'center', height: 30}}>
                 {!hasMenu ? <div style={{width: 50,height:1 }}/> :
                     <DropDownToolbarButton
                         text={'More'}
@@ -382,7 +383,7 @@ function getMakeDropdown(dpId, dataProductState, showMenu, showRedoSearchButton,
                     dropDown={<FileMenuDropDown {...{fileMenu, dpId}} />} />
                 }
                 { extraction &&
-                <ToolbarButton text={extractionText || 'Pin'} tip={extractionText || 'Pin'} horizontal={true} onClick={() => extraction()} /> }
+                <TextButton style={{lineHeight: '18px', height: 18}} title={extractionText || 'Pin'} onClick={() => extraction()}>{extractionText || 'Pin'}</TextButton> }
                 {showRedoSearchButton && analysisActivateFunc &&
                     <ToolbarButton
                         text='Redo Search' tip={'Redo Search'} horizontal={true}

@@ -213,8 +213,7 @@ function onClick(chartId) {
 
         const traceNum = curveNumber >= curveNumberMap.length ? curveNumber : curveNumberMap[curveNumber];
         if (traceNum !== activeTrace && traceNum < curveNumberMap.length) {
-            activeTrace = traceNum;
-            dispatchSetActiveTrace({chartId, activeTrace});
+            dispatchSetActiveTrace({chartId, activeTrace: traceNum});
         }
 
         // traceNum is related to any of trace data or SELECTED trace or HIGHLIGHTED trace

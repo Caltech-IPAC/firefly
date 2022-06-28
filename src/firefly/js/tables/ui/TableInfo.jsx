@@ -23,7 +23,7 @@ export function TableInfo(props) {
    const jobId = getJobIdFromTblId(tbl_id);
 
     return (
-        <div style={{padding: 10, padding: '10px 5px 5px', height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column'}}>
+        <div style={{padding: '10px 5px 5px', height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column'}}>
             <StatefulTabs componentKey='TablePanelOptions' defaultSelected={0} borderless={true} useFlex={true} style={{flex: '1 1 0'}}>
                 {jobId &&
                 <Tab name='Job Info'>

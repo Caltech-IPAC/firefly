@@ -85,6 +85,14 @@ export function getMinScatterGLRows() {
 }
 
 /**
+ * @returns {boolean} return true if ChartWorkArea is used.
+ */
+export function useChartWorkArea() {
+    return getAppOptions()?.charts?.useChartWorkArea ?? false;
+}
+
+
+/**
  * @summary Get unique chart id
  * @param {string} [prefix] - prefix
  * @returns {string} unique chart id
@@ -505,7 +513,7 @@ export function handleTableSourceConnections({chartId, data, fireflyData}) {
         }
 
         // make sure table watcher is set for all non-empty table sources
-        if (!isEmpty(traceTS) && !traceTS._cancel) {
+        if (!isEmpty(traceTS)) {
             //creates a new one.. and save the cancel handle
             if (doUpdate) {
                 // fetch data syncs highlighted and selected with the table
@@ -519,7 +527,7 @@ export function handleTableSourceConnections({chartId, data, fireflyData}) {
                     updateSelected(chartId, selectInfo);
                 }
             }
-            traceTS._cancel = setupTableWatcher(chartId, traceTS, idx);
+            if (!traceTS._cancel) traceTS._cancel = setupTableWatcher(chartId, traceTS, idx);
         }
         tablesources[idx] = traceTS;
     });
@@ -556,16 +564,17 @@ function tablesourcesEqual(newTS, oldTS) {
 
 function updateChartData(chartId, traceNum, tablesource, action={}) {
 
+    const chartData = getChartData(chartId);
+
+    // make sure the chart is not yet removed
+    if (isEmpty(chartData) || !chartData?.mounted) { return; }
+
     // Only Scatter Plot does update on a table sort event.
     if (action.type === TABLE_LOADED && action.payload.invokedBy === TABLE_SORT) {
-        const {data} = getChartData(chartId);
-        const traceType = get(data, [traceNum, 'type'], 'scatter');
+        const traceType = get(chartData, ['data', traceNum, 'type'], 'scatter');
         if (!traceType.includes('scatter')) return;
     }
 
-
-    // make sure the chart is not yet removed
-    if (isEmpty(getChartData(chartId))) { return; }
     const {tbl_id, resultSetID, mappings} = tablesource;
     if (action.type === TABLE_HIGHLIGHT) {
         // ignore if traceNum is not active
