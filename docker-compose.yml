@@ -10,13 +10,12 @@ services:
     env_file:
       - ./firefly-docker.env
   test:
-    image: ipac/firefly:deps
     build:
       context: ../
       dockerfile: firefly/docker/Dockerfile
       target: deps
     command: bash -c "cd firefly && gradle firefly:test"
-    volumes:
+    volumes: &volInfo
       - ../firefly_test_data:/opt/work/firefly_test_data
       - ../firefly:/opt/work/firefly
       - /opt/work/firefly/.gradle
@@ -24,3 +23,12 @@ services:
       - /opt/work/firefly/jars/build
       - /opt/work/firefly/node_modules
       - ./build/dist:/opt/work/firefly/build/dist/
+  dev:
+    build:
+      context: ../
+      dockerfile: firefly/docker/Dockerfile
+      target: dev_env
+    ports:
+      - "8080:8080"
+      - "5050:5050"
+    volumes: *volInfo
