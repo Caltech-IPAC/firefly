@@ -69,6 +69,13 @@ deploy it.  Reload the page in your browser to see the changes.
 DevMode only applies to client-side code.  If you made changes to server-side(.java) code, you need to rerun `docker-compose up dev` 
 to have it rebuild and redeploy.
 
+#### Debugger
+
+Client side debugging is done via the browser's DevTool.  
+
+To debug server side code, attach your debugger to a remote JVM on localhost:5050.  Of course, this only works
+while DevMode is running.
+
 
 ### HOW-TO
 
