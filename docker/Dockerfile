@@ -22,14 +22,8 @@ RUN apt-get update \
 
 WORKDIR "/opt/work"
 
-FROM deps AS node_module
 
-WORKDIR "/opt/work/lib"
-COPY firefly/package.json firefly/package-lock.json ./
-RUN npm install --no-package-lock
-
-
-FROM node_module AS builder
+FROM deps AS builder
 
 ARG build_dir
 ARG target
@@ -37,11 +31,10 @@ ARG env
 
 WORKDIR /opt/work
 COPY . .
-COPY --from=node_module /opt/work/lib/node_modules ./firefly/node_modules
 
 WORKDIR /opt/work/${build_dir}
 ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.internal.launcher.welcomeMessageEnabled=false"
-RUN gradle -Penv=${env} -b ../firefly/build.gradle :firefly:jar && gradle -Penv=${env} ${target}
+RUN gradle -Penv=${env} -p ../firefly :firefly:jar -x buildClient && gradle -Penv=${env} ${target} -x buildClient
 
 
 
