@@ -98,11 +98,17 @@ This will stop Firefly and removes everything created by `up`.
 **To run Firefly from DockerHub**
 
 If you want to run a version available from DockerHub.  
-Set BUILD_TAG to the version you want, then 
 
-    export BUILD_TAG=latest
-    docker-compose pull && docker-compose up firefly
+Set BUILD_TAG to the version you want.  Pull then run the image.
 
+These are examples in `bash`
+
+    export BUILD_TAG=mytag
+    docker-compose pull firefly && docker-compose up firefly
+
+or, in one-line
+
+    (export BUILD_TAG=mytag; docker-compose pull firefly && docker-compose up firefly)
 
 
 #### Customize Firefly

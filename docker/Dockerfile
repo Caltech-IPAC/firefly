@@ -160,7 +160,7 @@ COPY firefly/docker/*.sh firefly/docker/*.txt ${CATALINA_HOME}/
 
 # Tomcat config files, tomcat-users is for the admin username and password
 # context.xml set delegate to true for we can use the classpath of tomcat
-COPY firefly/docker/tomcat-users.xml conf/
+COPY firefly/docker/tomcat-users.xml firefly/docker/java.security.override conf/
 COPY firefly/docker/local.xml conf/Catalina/localhost
 
 #copy all wars, typically there should only be one
