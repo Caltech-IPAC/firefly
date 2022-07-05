@@ -6,6 +6,7 @@
   - use docker tag: `nightly`
   - [Notes on next version](next-release-details.md)
 
+
 ## Version 2022.1
 - 2022.1.1 (April 2022)
   - docker tag: `latest`, `2022.1`, `2022.1.1`
