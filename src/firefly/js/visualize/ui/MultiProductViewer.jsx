@@ -325,7 +325,7 @@ const OtherOptionsDropDown= ({menu, dpId, activeMenuLookupKey, resetAllSearchPar
                                enabled={true} horizontal={false} key={'otherOptions-'+idx} hasCheckBox={true}
                                checkBoxOn={menuItem.menuKey===getActiveMenuKey(dpId, activeMenuLookupKey)}
                                onClick={() => {
-                                   resetAllSearchParams();
+                                   // resetAllSearchParams();
                                    dispatchActivateMenuItem(dpId,menuItem.menuKey);
                                } }/> )
             )}

@@ -25,5 +25,4 @@ irsa.gator.service.periodogram.url=@irsa.gator.service.periodogram.url@
 irsa.gator.service.periodogram.keys=x y alg step_method pmin pmax step_size peaks
 
 # IRSA HiPS map service
-irsa.hips.list.source=@irsa.hips.list.source@
 irsa.hips.masterUrl=@irsa.hips.masterUrl@

@@ -195,7 +195,7 @@ function findCachedAllSkyToFitColor(allSkyURL,ctId,bias,contrast, hipsColorOps) 
     const cachedAllSkyData= findAllSkyCachedImage(allSkyURL,ctId,bias,contrast);
     if (cachedAllSkyData) return cachedAllSkyData; // found and returned
     const cachedAllSkyOriginalData= findAllSkyCachedImage(allSkyURL);  //look for the based all sky image (without color change)
-    if (!cachedAllSkyOriginalData) return undefined;
+    if (!cachedAllSkyOriginalData || ctId<0) return cachedAllSkyOriginalData;
        // at this point we have a base all sky image that needs to have the color changed
     const coloredAllSkyCanvas= hipsColorOps.changeHiPSColor(cachedAllSkyOriginalData.order3,ctId,bias,contrast);
     addAllSkyCachedImage(allSkyURL, coloredAllSkyCanvas,ctId,bias,contrast);

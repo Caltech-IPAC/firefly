@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, has, isArray, isEmpty, isObject, isString, isUndefined} from 'lodash';
+import {has, isArray, isEmpty, isObject, isString, isUndefined} from 'lodash';
 import shallowequal from 'shallowequal';
 import {getPlotGroupById} from './PlotGroup.js';
 import {makeDevicePt, makeImagePt, makeWorldPt, pointEquals} from './Point.js';
@@ -14,10 +14,7 @@ import {getNumberHeader, HdrConst} from './FitsHeaderUtil.js';
 import {computeDistance, getRotationAngle, isCsysDirMatching, isEastLeftOfNorth, isPlotNorth} from './VisUtil';
 import {removeRawData} from './rawData/RawDataCache.js';
 import {hasClearedDataInStore, hasLocalStretchByteDataInStore} from './rawData/RawDataOps.js';
-import ImagePlotCntlr, {ExpandType} from 'firefly/visualize/ImagePlotCntlr.js';
-import * as TblCntlr from 'firefly/tables/TablesCntlr.js';
-import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga.js';
-import {createErrorTbl, getTblById, getTblInfoById, isFullyLoaded, isTableLoaded} from 'firefly/tables/TableUtil.js';
+import {ExpandType} from 'firefly/visualize/ImagePlotCntlr.js';
 
 
 export const CANVAS_IMAGE_ID_START= 'image-';
