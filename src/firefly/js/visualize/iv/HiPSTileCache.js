@@ -2,16 +2,22 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {isString} from 'lodash';
+import {visRoot} from '../ImagePlotCntlr.js';
+import {getPlotViewAry, primePlot} from '../PlotViewUtil.js';
+import {isHiPS} from '../WebPlot.js';
 import {initOffScreenCanvas} from './TileDrawHelper.jsx';
 import {createCanvas} from '../../util/WebUtil.js';
 
 
-const MAX_TILE_IMAGES= 400;
-const MAX_ALLSKY_IMAGES= 80;
+const MIN_TILE_TOTAL= 85;
+const MAX_TILE_IMAGES_PER_HIPS= 60;
+const MAX_TILE_TOTAL= 400;
+const MAX_ALLSKY_IMAGES_PER_HIPS= 3;
+const MAX_ALLSKY_TOTAL= 20;
 
 let cachedImages= new Map();
-let failedCachedImages= new Map();
 let cachedAllSkyImages= new Map();
+const failedCachedImages= new Map();
 
 /**
  * @global
@@ -25,9 +31,23 @@ let cachedAllSkyImages= new Map();
  */
 
 
+const getHiPSCount= () => getPlotViewAry(visRoot()).filter( (pv) => isHiPS(primePlot(pv)))?.length;
+function getMaxTiles(maxPerHips,lowerLimit, upperLimit) {
+    return Math.max(Math.min((getHiPSCount()*maxPerHips), upperLimit), lowerLimit);
+}
 
-const makeKey= (url,colorTableId=-1,bias=.5,contrast=1) =>
-    `${url}-${colorTableId}-${Math.trunc(bias*100)}-${Math.trunc(contrast*100)}`;
+const getMaxStandardTiles= () => getMaxTiles(MAX_TILE_IMAGES_PER_HIPS, MIN_TILE_TOTAL, MAX_TILE_TOTAL);
+const getMaxAllSkyTiles= () => getMaxTiles(MAX_ALLSKY_IMAGES_PER_HIPS, MAX_ALLSKY_IMAGES_PER_HIPS, MAX_ALLSKY_TOTAL);
+
+
+
+function makeKey(url,colorTableId=-1,bias=.5,contrast=1) {
+    if (colorTableId===-1) { // if the default tile then the key should set bias and contrast to the default
+        bias=.5;
+        contrast=1;
+    }
+    return `${url}-${colorTableId}-${Math.trunc(bias*100)}-${Math.trunc(contrast*100)}`;
+}
 
 /**
  *
@@ -56,8 +76,9 @@ export function addAllSkyCachedImage(url, image, colorTableId,bias,contrast) {
     const order3Array= makeOrder3AllSkyImages(image);
     cachedAllSkyImages.set(makeKey(url,colorTableId,bias,contrast),
         {url, colorTableId,bias,contrast, order3:image, order2Array, order3Array, colorTable: 'todo', time: Date.now()});
-    if (cachedAllSkyImages.size>MAX_ALLSKY_IMAGES+(MAX_ALLSKY_IMAGES*.1)) {
-        cachedAllSkyImages= cleanupCache(cachedAllSkyImages,MAX_ALLSKY_IMAGES);
+    const max= getMaxAllSkyTiles();
+    if (cachedAllSkyImages.size>max) {
+        cachedAllSkyImages= cleanupCache(cachedAllSkyImages,max);
     }
 }
 
@@ -83,8 +104,9 @@ export function addTileCachedImage(url, image, colorTableId,bias,contrast) {
     }
     cachedImages.set( key,
         {url, image:cacheImage, colorTableId,bias,contrast, emptyTile:false, colorTable: 'todo', time: Date.now()});
-    if (cachedImages.size>MAX_TILE_IMAGES+(MAX_TILE_IMAGES*.25)) {
-        cachedImages= cleanupCache(cachedImages, MAX_TILE_IMAGES);
+    const max= getMaxStandardTiles();
+    if (cachedImages.size>max+(max*.25)) {
+        cachedImages= cleanupCache(cachedImages, max);
     }
 }
 

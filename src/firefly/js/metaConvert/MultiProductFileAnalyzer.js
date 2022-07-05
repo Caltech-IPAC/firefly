@@ -1,4 +1,5 @@
 import {FileAnalysisType} from '../data/FileAnalysis';
+import {Logger} from '../util/Logger.js';
 import {
     createGridImagesActivate,
     createSingleImageActivate,
@@ -28,6 +29,7 @@ import {getAppOptions} from '../core/AppDataCntlr';
 import {isDefined} from '../util/WebUtil.js';
 import {dpdtSendToBrowser} from './DataProductsType.js';
 import {RequestType} from 'firefly/api/ApiUtilImage.jsx';
+import {logger} from '../util/Logger.js';
 
 
 const uploadedCache= {};
@@ -184,6 +186,12 @@ function doActivateResult(result, menu,menuKey,dpId, serDefParams, analysisActiv
     }
 }
 
+function logSericeDescritor(baseUrl, sendParams, newUrl) {
+    console.log(`service descriptor base URL: ${baseUrl}`);
+    Object.entries(sendParams).forEach(([k,v]) => console.log(`param: ${k}, value: ${v}`));
+    console.log(`service descriptor new URL: ${newUrl}`);
+}
+
 /**
  * This is the core function to upload and analyze the data
  * @param obj
@@ -254,6 +262,7 @@ async function doUploadAndAnalysis({
         const newUrl= new URL(request.getURL());
 
         Object.entries(sendParams).forEach( ([k,v]) => newUrl.searchParams.append(k,v));
+        logSericeDescritor(request.getURL(), sendParams, newUrl.toString());
         request.setURL(newUrl.toString());
     }
 

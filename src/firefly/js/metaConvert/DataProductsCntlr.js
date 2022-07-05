@@ -263,7 +263,7 @@ function setSearchParams(state,action) {
             obj.menuKey===menuKey ? {dpId,activeMenuLookupKey,menuKey,params} : obj);
     }
     else {
-        serviceParamsAry= [...dpData.serviceParamsAry, {dpId,activeMenuLookupKey,menuKey,params}]
+        serviceParamsAry= [...dpData.serviceParamsAry, {dpId,activeMenuLookupKey,menuKey,params}];
     }
     return insertOrReplace(state,{...dpData,serviceParamsAry});
 }
@@ -402,7 +402,8 @@ export function changeActiveFileMenuItem(state,action) {
     }
 
     const newFileMenu= {...fileMenu, activeFileMenuKey:newActiveFileMenuKey};
-    const newDisplayProduct= { ...selectedMenuDataProduct, ...fileMenuItem, fileMenu:newFileMenu, activeMenuKey:menuKey};
+    const newDisplayProduct= { ...selectedMenuDataProduct, ...fileMenuItem,
+        fileMenu:newFileMenu, activeMenuKey:menuKey, menuKey};
     const newMenu= menu && menu.map( (menuItem) => (menuItem.menuKey!==menuKey) ? menuItem : newDisplayProduct );
     dpData.dataProducts= {...newDisplayProduct, menu:newMenu};
     return insertOrReplace(state,dpData);
