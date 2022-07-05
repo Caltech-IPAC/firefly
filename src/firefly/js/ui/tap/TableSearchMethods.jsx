@@ -358,7 +358,7 @@ function SpatialSearch({cols, serviceUrl, columnsModel, groupKey, fields, initAr
                             {label: 'Central point (s_ra, s_dec) is contained by shape', value: 'center_contained'},
                         ]}
                     initialState={{
-                        value: initArgs.spatialRegionOperation || 'contains_shape'
+                        value: initArgs.spatialRegionOperation || 'contains_point'
                     }}
                     multiple={false}
                     label={'Query type:'}
