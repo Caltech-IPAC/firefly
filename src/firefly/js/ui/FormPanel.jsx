@@ -39,6 +39,7 @@ function createSuccessHandler(action, params={}, title, onSubmit) {
         }
 
         // submitResult is not defined, or it is true, or it is false and hideOnInValid is true
+        if (params?.disabledDropdownHide) return;
         if (isNil(submitResult) || submitResult || (!submitResult&&get(params, 'hideOnInvalid', true))) {
             dispatchHideDropDown();
         }
