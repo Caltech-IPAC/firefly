@@ -8,7 +8,7 @@ import {Column, Table} from 'fixed-data-table-2';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {get, isEmpty, isUndefined, omitBy, pick} from 'lodash';
 
-import {calcColumnWidths, getProprietaryInfo, getTableUiById, getTblById, hasNoData, hasRowAccess, isClientTable, tableTextView, uniqueTblUiId} from '../TableUtil.js';
+import {calcColumnWidths, getCellValue, getProprietaryInfo, getTableUiById, getTblById, hasNoData, hasRowAccess, isClientTable, tableTextView, uniqueTblUiId} from '../TableUtil.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
@@ -332,6 +332,19 @@ function defHighlightedRowHandler(tbl_id, hlRowIdx, startIdx) {
 
     const tableModel = getTblById(tbl_id);
     const hasProprietaryInfo = !isEmpty(getProprietaryInfo(tableModel));
+    const relatedCols = tableModel?.tableMeta?.['tbl.relatedCols'];
+    const relatedColsHL = relatedCols?.split(',')
+                            .map((cname) => getCellValue(tableModel, hlRowIdx, cname?.trim()))
+                            .join('|');
+    const isRelated = (ridx) => {
+        if (relatedCols) {
+            const cVal = relatedCols.split(',')
+                            .map((cname) => getCellValue(tableModel, ridx, cname?.trim()))
+                            .join('|');
+            return relatedColsHL === cVal;
+        }
+        return false;
+    };
 
     return (rowIndex) => {
         const absRowIndex = startIdx + rowIndex;
@@ -339,6 +352,7 @@ function defHighlightedRowHandler(tbl_id, hlRowIdx, startIdx) {
             return hlRowIdx === rowIndex ? 'TablePanel__no-access--highlighted' : 'TablePanel__no-access';
         }
         if (hlRowIdx === rowIndex) return 'tablePanel__Row_highlighted';
+        if (isRelated(rowIndex)) return 'tablePanel__Row_related';
     };
 }
 

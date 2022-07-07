@@ -4,6 +4,7 @@
   ~ License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
   -->
 
+<!--suppress ALL -->
 <html>
 
 <head>
@@ -393,10 +394,10 @@ added in this test.  Open console, then
     <div id="expected" >
         <div style="margin: 10px">
             <h4>use sortByCols for multi-columns sorting</h4>
-            <pre>
-                scan_id column is sorted by: 'scan_id,band' <br>
-                scangrp column is sorted by: 'scangrp,scan_id,band'
-            </pre>
+            <p>
+                scan_id column is sorted by: 'scan_id,frame_num,band' <br>
+                scangrp column is sorted by: 'scangrp,scan_id,frame_num,band'
+            </p>
 
         </div>
     </div>
@@ -407,15 +408,42 @@ added in this test.  Open console, then
             //-----------  using API with server-backed table --------------
             const tblReq = firefly.util.table.makeFileRequest(null, 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
                 { META_INFO: {
-                    "col.scan_id.sortByCols": 'scan_id,band',
-                    "col.scangrp.sortByCols": 'scangrp,scan_id,band'
+                    "col.scan_id.sortByCols": 'scan_id,frame_num,band',
+                    "col.scangrp.sortByCols": 'scangrp,scan_id,frame_num,band'
                 }});
-            tblReq.inclCols = 'scangrp,scan_id,band,date_obs,in_ra,in_dec'.split(",").map(c => `"${c.trim()}"`).join();   // add quotes around comma separated values
+            tblReq.inclCols = 'scangrp,scan_id,frame_num,band,in_ra,in_dec,date_obs'.split(",").map(c => `"${c.trim()}"`).join();   // add quotes around comma separated values
             firefly.showTable('actual', tblReq, {showMetaInfo: true});
         }
     </script>
 </template>
 
+
+<template title="Table related rows highlighting" class="tpl">
+    <div id="expected" >
+        <div style="margin: 10px">
+            <h4>use tbl.relatedCols to highlight related rows</h4>
+            <p>
+                Highlight rows with the same scangrp, scan_id and frame_num
+            </p>
+
+        </div>
+    </div>
+    <div id="actual"  class="box x3"/>
+    <script>
+        function onFireflyLoaded(firefly) {
+
+            //-----------  using API with server-backed table --------------
+            const tblReq = firefly.util.table.makeFileRequest(null, 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
+                { META_INFO: {
+                    "tbl.relatedCols": 'scan_id,frame_num',
+                    "col.scan_id.sortByCols": 'scan_id,frame_num,band',
+                    "col.scangrp.sortByCols": 'scangrp,scan_id,frame_num,band'
+                }});
+            tblReq.inclCols = 'scangrp,scan_id,frame_num,band,in_ra,in_dec,date_obs'.split(",").map(c => `"${c.trim()}"`).join();   // add quotes around comma separated values
+            firefly.showTable('actual', tblReq, {showMetaInfo: true});
+        }
+    </script>
+</template>
 
 <!-- this is where test cases will be attached-->
 <div id="tst-container"/>

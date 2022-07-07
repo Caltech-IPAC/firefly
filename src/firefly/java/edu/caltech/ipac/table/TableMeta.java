@@ -52,6 +52,8 @@ public class TableMeta implements Serializable {
     public static final String ARY_SIZE_TAG = "col.@.arraySize";
     public static final String CELL_RENDERER = "col.@.cellRenderer";
 
+    public static final String TBL_RELATED_COLS = "tbl.relatedCols";    // rows where relatedCols are equal will be highlighted in a preset color
+
     public static final String TBL_RESOURCES = "tbl.resources";
     public static final String TBL_LINKS = "tbl.links";
     public static final String TBL_GROUPS = "tbl.groups";
@@ -59,7 +61,6 @@ public class TableMeta implements Serializable {
     public static final String RESULTSET_ID = "resultSetID";            // this meta if exists contains the ID of the resultset returned.
     public static final String RESULTSET_REQ = "resultSetRequest";      // this meta if exists contains the Request used to create this resultset.
 
-    public static final String IS_FULLY_LOADED = "isFullyLoaded";
 
     public static final String ID = "ID";
     public static final String REF = "ref";

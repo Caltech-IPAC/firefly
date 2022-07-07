@@ -688,3 +688,7 @@ body[dir="rtl"] .fixedDataTableColumnResizerLineLayout_main, .fixedDataTableColu
     background-color: #ffe8bf !important; /* #d3fad1 */
 }
 
+.fixedDataTableRowLayout_rowWrapper .tablePanel__Row_related div {
+    background-color: #faf4e5;
+}
+
