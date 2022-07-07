@@ -106,7 +106,6 @@ export function showHiPSSurveysPopup(pv, moc= false) {
         }
     };
 
-
     const popup = (
         <PopupPanel title={moc ? 'Add MOC Layer' : 'Change HiPS Image'} modal={true}>
             <FormPanel  submitBarStyle = {{flexShrink: 0, padding: '0 6px 3px 6px'}}
@@ -115,6 +114,7 @@ export function showHiPSSurveysPopup(pv, moc= false) {
                         submitText={moc ? 'Add MOC' : 'Change HiPS'}
                         onSubmit = {onSubmit}
                         onCancel = {() => dispatchHideDialog(DIALOG_ID)}
+                        params={{disabledDropdownHide: true}}
                         help_id = 'visualization.changehips'>
                 <FieldGroup groupKey={groupKey} keepState={true} style={{width:'100%', height:'100%'}}>
                     <div className='ImageSearch__HipsPopup'>
