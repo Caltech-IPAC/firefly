@@ -418,7 +418,8 @@ public class EmbeddedDbUtil {
                             dt.getLinkInfos(),
                             dt.getDataOptions(),
                             dt.getArraySize(),
-                            dt.getCellRenderer()
+                            dt.getCellRenderer(),
+                            dt.getSortByCols()
                     }
             );
         }
@@ -461,6 +462,7 @@ public class EmbeddedDbUtil {
                 applyIfNotEmpty(rs.getString("dataOptions"), dtype::setDataOptions);
                 applyIfNotEmpty(rs.getString("arraySize"), dtype::setArraySize);
                 applyIfNotEmpty(rs.getString("cellRenderer"), dtype::setCellRenderer);
+                applyIfNotEmpty(rs.getString("sortByCols"), dtype::setSortByCols);
 
             } while (rs.next());
         } catch (SQLException e) {
@@ -482,8 +484,27 @@ public class EmbeddedDbUtil {
         return cols;
     }
 
+    /**
+     * This function is to test if a table exists in the given database.
+     * It's using a get count and catches exception to determine if the given table exists.
+     * It will work across all databases, but it's not optimal.  Change to specific implementation when needed.
+     * @param treq
+     * @param dbFile
+     * @param tblName
+     * @return
+     */
+    public static boolean hasTable(TableServerRequest treq, File dbFile, String tblName) {
+        try {
+            DbInstance dbInstance = DbAdapter.getAdapter(treq).getDbInstance(dbFile);
+            JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(String.format("select count(*) from %s", tblName));
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
-    //====================================================================
+
+//====================================================================
 //  privates functions
 //====================================================================
 
@@ -574,23 +595,5 @@ public class EmbeddedDbUtil {
     }
 
 
-    /**
-     * This function is to test if a table exists in the given database.
-     * It's using a get count and catches exception to determine if the given table exists.
-     * It will work across all databases, but it's not optimal.  Change to specific implementation when needed.
-     * @param treq
-     * @param dbFile
-     * @param tblName
-     * @return
-     */
-    public static boolean hasTable(TableServerRequest treq, File dbFile, String tblName) {
-        try {
-            DbInstance dbInstance = DbAdapter.getAdapter(treq).getDbInstance(dbFile);
-            JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(String.format("select count(*) from %s", tblName));
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
 
 }

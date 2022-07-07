@@ -121,7 +121,7 @@ public interface DbAdapter {
     String DEF_DB_TYPE = AppProperties.getProperty("DbAdapter.type", HSQL);
 
     static DbAdapter getAdapter() {
-        return getAdapter(TBL_FILE_TYPE);
+        return getAdapter(DEF_DB_TYPE);
     }
 
     static DbAdapter getAdapter(TableServerRequest treq) {

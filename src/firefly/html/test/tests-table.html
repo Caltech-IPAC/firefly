@@ -389,6 +389,34 @@ added in this test.  Open console, then
 </template>
 
 
+<template title="Table sortByCols" class="tpl">
+    <div id="expected" >
+        <div style="margin: 10px">
+            <h4>use sortByCols for multi-columns sorting</h4>
+            <pre>
+                scan_id column is sorted by: 'scan_id,band' <br>
+                scangrp column is sorted by: 'scangrp,scan_id,band'
+            </pre>
+
+        </div>
+    </div>
+    <div id="actual"  class="box x3"/>
+    <script>
+        function onFireflyLoaded(firefly) {
+
+            //-----------  using API with server-backed table --------------
+            const tblReq = firefly.util.table.makeFileRequest(null, 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
+                { META_INFO: {
+                    "col.scan_id.sortByCols": 'scan_id,band',
+                    "col.scangrp.sortByCols": 'scangrp,scan_id,band'
+                }});
+            tblReq.inclCols = 'scangrp,scan_id,band,date_obs,in_ra,in_dec'.split(",").map(c => `"${c.trim()}"`).join();   // add quotes around comma separated values
+            firefly.showTable('actual', tblReq, {showMetaInfo: true});
+        }
+    </script>
+</template>
+
+
 <!-- this is where test cases will be attached-->
 <div id="tst-container"/>
 

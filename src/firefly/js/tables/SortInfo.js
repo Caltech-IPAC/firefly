@@ -36,7 +36,7 @@ export function sortInfoString(colName, isAscending=true) {
      * @returns {*}
      */
     getDirection(colName) {
-        colName = colName.replace(/^"(.+)"$/, '$1');           // strip quotes is any;
+        colName = colName.replace(/^"(.+)"$/, '$1');           // strip quotes if any;
         if (this.sortColumns[0] === colName) {
             return this.direction;
         } else {
@@ -54,7 +54,7 @@ export function sortInfoString(colName, isAscending=true) {
         const dir = this.getDirection(name);
         const direction = dir === UNSORTED ? SORT_ASC :
                           dir === SORT_ASC ? SORT_DESC : UNSORTED;
-        const sortColumns = UNSORTED ? [] : [colName];
+        const sortColumns = direction === UNSORTED ? [] : colName.split(',').map((cn) => cn?.trim());
         return new SortInfo(direction, sortColumns).serialize();
     }
 
@@ -67,7 +67,7 @@ export function sortInfoString(colName, isAscending=true) {
             const parts = sortInfo.split(',').map((s) => s.trim());
             if (parts) {
                 const direction = parts[0] && parts[0].toUpperCase();
-                const sortColumns = parts[1] && parts.slice(1).map( (c) => c.replace(/^"(.+)"$/, '$1'));           // strip quotes is any
+                const sortColumns = parts[1] && parts.slice(1).map( (c) => c.replace(/^"(.+)"$/, '$1'));           // strip quotes if any
                 return new SortInfo(direction, sortColumns);
             }
         } else {
