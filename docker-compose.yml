@@ -22,7 +22,6 @@ services:
       - /opt/work/firefly/build
       - /opt/work/firefly/jars/build
       - /opt/work/firefly/node_modules
-      - ./build/dist:/opt/work/firefly/build/dist/
   dev:
     build:
       context: ../

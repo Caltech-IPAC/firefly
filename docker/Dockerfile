@@ -60,7 +60,7 @@ COPY firefly/docker/tomcat-users.xml conf/
 RUN mkdir -p /firefly/workarea /firefly/logs/statistics /firefly/alerts \
     && chmod a+x *.sh
 
-CMD /opt/tomcat/launchTomcat.sh && cd /opt/work/${work_dir} && gradle ${project}:bAD && gradle ${project}:dev
+CMD /opt/tomcat/launchTomcat.sh && cd /opt/work/${work_dir} && gradle ${project}:bAD -x buildClient && gradle ${project}:dev
 
 
 FROM node_module AS builder
