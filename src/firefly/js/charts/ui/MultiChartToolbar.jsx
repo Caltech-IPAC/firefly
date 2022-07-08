@@ -5,7 +5,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {get} from 'lodash';
 import {getChartData} from '../ChartsCntlr.js';
 import {dispatchChangeViewerLayout, dispatchUpdateCustom, getViewerItemIds, getViewer, getLayoutType, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
 
@@ -178,12 +177,11 @@ const MultiChartExt = ({viewerId, layoutType, activeItemId}) => {
 
 const getChartTitle = (chartId, viewerItemIds) => {
     const chartData = getChartData(chartId);
-    const chartType = get(chartData, 'chartType');
-    const idx = viewerItemIds.findIndex((el) => {return el === chartId;} );
-    if (idx>=0) {
-        return `${idx+1}-${chartType}`;
-    } else {
-        return chartType;
+    let title = chartData?.layout?.title?.text;         // use chart title if exists, otherwise titled it `Plot n`, where n is the index of the charts in this viewer.
+    if (!title) {
+        const idx = viewerItemIds.findIndex((id) => id === chartId);
+        title = `Plot ${idx}`;
     }
+    return title;
 };
 
