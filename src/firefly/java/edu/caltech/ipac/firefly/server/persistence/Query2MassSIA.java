@@ -99,7 +99,7 @@ public class Query2MassSIA extends QueryVOTABLE  {
 
         // set related columns
         meta.setAttribute(MetaConst.IMAGE_SOURCE_ID, "2MASS");
-        meta.setAttribute("col.related", relatedCols);
+        meta.setAttribute(TableMeta.TBL_RELATED_COLS, relatedCols);
 
     }
 

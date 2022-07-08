@@ -22,6 +22,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static edu.caltech.ipac.table.TableMeta.TBL_RELATED_COLS;
+
 /**
  * @author tatianag
  *         $Id: $
@@ -181,7 +183,7 @@ public class IBEUtils {
         }
 
         if (relatedCols != null) {
-            attribs.put("col.related", relatedCols);
+            attribs.put(TBL_RELATED_COLS, relatedCols);
         }
         return attribs;
     }
