@@ -183,8 +183,8 @@ const Toolbar = ({viewerId, tbl_group, style={}}) => {
         pinChart({chartId});
     };
     const activeChartTblId = useStoreConnector(() => {
-        const chartId = getActiveViewerItemId(PINNED_VIEWER_ID);
-        return getChartData(chartId)?.data?.[0]?.tbl_id;
+        const chartData = getChartData(getActiveViewerItemId(PINNED_VIEWER_ID));
+        return chartData?.data?.[0]?.tbl_id || chartData?.fireflyData?.[0].tbl_id;
     });
 
     const showTable = () => dispatchActiveTableChanged(activeChartTblId, tbl_group);
@@ -238,14 +238,10 @@ export const PinnedCharts = (props) => {
     }, [tbl_group, viewerId]);
 
     const viewer = useStoreConnector(() => getViewer(getMultiViewRoot(),viewerId));
+    const activeItemId = useStoreConnector(() =>  getActiveViewerItemId(viewerId) ?? viewer.itemIdAry[0]);
 
     if (!viewer || isEmpty(viewer.itemIdAry)) {
         return expandedMode && closeable ? <BlankClosePanel/> : null;
-    }
-
-    let activeItemId = getActiveViewerItemId(viewerId);
-    if (isUndefined(activeItemId) || !getChartData(activeItemId)?.chartType) {
-        activeItemId = viewer.itemIdAry[0];
     }
 
     const deletable = viewer.itemIdAry.length > 1;                  // if there are more than 1 chart in the viewer, they should be deletable by default
@@ -284,7 +280,7 @@ export const PinnedCharts = (props) => {
         <div className='ChartPanel__container'>
             <div className='ChartPanel__wrapper'>
                 <ToolBar chartId={activeItemId} expandable={!expandedMode} {...{expandedMode, closeable, viewerId, layoutType, activeItemId}}/>
-                <MultiItemViewerView {...props} {...{layoutType, makeItemViewer, makeItemViewerFull, viewerItemIds}}/>
+                <MultiItemViewerView {...props} {...{layoutType, makeItemViewer, makeItemViewerFull, activeItemId, viewerItemIds}}/>
             </div>
         </div>
     );
