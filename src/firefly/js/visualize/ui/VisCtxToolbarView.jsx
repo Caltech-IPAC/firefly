@@ -97,8 +97,8 @@ function changeAutoConvert(pv, auto) {
 
 
 const projOptions= [
-    {label: 'HiPS', value: 'sin', tooltip: 'All-sky multi-resolution picture with spherical projection, upto 180 degrees'},
-    {label: 'HiPS/Aitoff', value: 'aitoff', tooltip: 'All-sky multi-resolution picture with AITOFF projection, upto 360 degrees'},
+    {label: 'HiPS', value: 'sin', tooltip: 'All-sky multi-resolution picture with spherical projection, up to 180 degrees'},
+    {label: 'HiPS/Aitoff', value: 'aitoff', tooltip: 'All-sky multi-resolution picture with AITOFF projection, up to 360 degrees'},
 ];
 const defHFOptions= [
     {label: 'FITS', value: 'fits', tooltip: 'Scientific pixel data over limited regions'},
