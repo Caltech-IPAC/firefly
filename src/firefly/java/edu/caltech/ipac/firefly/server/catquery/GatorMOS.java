@@ -84,8 +84,6 @@ public class GatorMOS extends EmbeddedDbProcessor {
         HttpServices.getData(input, handler);
         if (handler.exception != null) handleError(handler.exception);
         DataGroup results = handler.results;
-        DataType[] columns = results.getDataDefinitions();
-        TableMeta meta = results.getTableMeta();
         TableMeta.LonLatColumns centcol = new TableMeta.LonLatColumns(RA, DEC, CoordinateSys.EQ_J2000);
         results.getTableMeta().setCenterCoordColumns(centcol);
         results.getTableMeta().setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "TRUE");

@@ -184,7 +184,6 @@ public class HttpServices {
     public static HttpMethod executeMethod(HttpMethod method, HttpServiceInput input, Handler handler) throws IOException {
         try {
             input = input == null ? new HttpServiceInput() : input;
-            LOG.info("HttpServices URL:" + method.getURI().toString());
 
             method.setRequestHeader("Connection", "close");            // request server to NOT keep-alive.. we don't plan to reuse this connection.
             method.setRequestHeader("User-Agent", VersionUtil.getUserAgentString());
@@ -201,6 +200,8 @@ public class HttpServices {
             handleHeaders(method, input.getHeaders());
 
             handleParams(method, input.getParams(), input.getFiles());
+
+            LOG.info("HttpServices URL:" + method.getURI().toString());
 
             httpClient.executeMethod(method);
 
