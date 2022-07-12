@@ -6,8 +6,7 @@ import './ChartPanel.css';
 
 import React, {useContext, useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {isEmpty, isEqual, isUndefined, omit, cloneDeep, set} from 'lodash';
-import SplitPane from 'react-split-pane';
+import {isEmpty, isEqual, omit, cloneDeep, set} from 'lodash';
 
 import {CloseButton} from '../../ui/CloseButton.jsx';
 import {ChartPanel} from './ChartPanel.jsx';
@@ -24,13 +23,13 @@ import {useStoreConnector} from '../../ui/SimpleComponent';
 import {Logger} from '../../util/Logger.js';
 import {findGroupByTblId, getActiveTableId, getTblById, monitorChanges} from '../../tables/TableUtil';
 import {TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_REMOVE, dispatchActiveTableChanged} from '../../tables/TablesCntlr';
-import {uniqueChartId} from '../../charts/ChartUtil';
-import {getActiveViewerItemId} from '../../charts/ui/MultiChartViewer';
-import {DefaultChartsContainer} from '../../charts/ui/ChartsContainer';
+import {uniqueChartId} from '../ChartUtil';
+import {getActiveViewerItemId} from './MultiChartViewer';
+import {DefaultChartsContainer} from './ChartsContainer';
 import {StatefulTabs, switchTab, Tab} from '../../ui/panel/TabPanel';
 import {HelpIcon} from '../../ui/HelpIcon';
 import {getComponentState, dispatchComponentStateChange} from '../../core/ComponentCntlr';
-import {SplitContent} from '../../ui/panel/DockLayoutPanel';
+import {SplitPanel} from '../../ui/panel/DockLayoutPanel';
 import {hideInfoPopup, showInfoPopup, showYesNoPopup, showPinMessage} from '../../ui/PopupUtil.jsx';
 import {TextButton} from '../../ui/TextButton.jsx';
 
@@ -39,8 +38,7 @@ const PINNED_CHART_PREFIX = 'pinned-';
 
 const PINNED_VIEWER_ID = 'PINNED_CHARTS_VIEWER';
 const PINNED_GROUP = PINNED_VIEWER_ID;                 // use same id for now.
-const PINNED_MAX = 6;
-
+const PINNED_MAX = 12;
 
 
 export function pinChart({chartId, autoLayout=true}) {
@@ -110,46 +108,63 @@ export const showAsTabs = (showPinnedCharts=false) => {
 };
 
 
-let splitLoc = 400;
 export const ChartWorkArea = (props) => {
     const {viewerId, tbl_group} = props;
 
     const chartIds = useStoreConnector(() =>  getChartIdsInGroup(PINNED_GROUP));
     const tabs = useStoreConnector(() =>  getComponentState(PINNED_VIEWER_ID));
+
     const activeLabel = useStoreConnector(() => getViewerItemIds(getMultiViewRoot(), viewerId)?.length > 1 ? 'Active Charts' : 'Active Chart');
+    const pinnedLabel = chartIds?.length > 1 ? 'Pinned Charts' : 'Pinned Chart';
 
     if (!chartIds?.length)  {           // use the default container if there's no pinned charts
         return (
-            <div className='TabPanel__main boxed' style={{height: '100%'}}>
-                <Toolbar {...{viewerId, tbl_group}}/>
+            <div className='ChartPanel__container'>
+                <div className='ChartPanel__section--title' style={{justifyContent: 'flex-end'}}><PinChart {...{viewerId, tbl_group}}/> <Help/> </div>
                 <DefaultChartsContainer {...props}/>
             </div>
         );
     }
 
-    if (tabs?.sideBySide) {
-        const label = {fontWeight: 'bold', height: 15, marginLeft: 3};
+    const PinToolbar = () => <div style={{display: 'inline-flex'}}><ShowTable tbl_group={tbl_group}/><ToggleMode/><Help/></div>;
+    const ActiveToolbar = () => <div style={{display: 'inline-flex'}}><PinChart {...{viewerId, tbl_group}}/><ToggleMode/><Help/></div>;
+
+    const TabToolbar = () => {
+        const {selectedIdx=0} = getComponentState(PINNED_VIEWER_ID);
         return (
-            <div className='TabPanel__main boxed' style={{height: '100%'}}>
-                <Toolbar {...{viewerId, tbl_group, style:{position: 'absolute', right:0, zIndex: 1}}}/>
+            <div className='ChartPanel__section--title tabs'>
+                { selectedIdx === 0 ? <ActiveToolbar/> : <PinToolbar/>}
+            </div>
+        );
+    };
+
+    if (tabs?.sideBySide) {
+        return (
+            <div className='ChartPanel__container'>
                 <div style={{flexGrow: 1, position: 'relative'}}>
-                    <SplitPane split='vertical' defaultSize={splitLoc} onChange={(size) => splitLoc = size} style={{display: 'inline-flex'}}>
-                        <SplitContent style={{display: 'flex', flexDirection: 'column'}}>
-                            <div style={label}>{activeLabel}</div>
+                    <SplitPanel split='vertical' defaultSize={400} style={{display: 'inline-flex'}} pKey='chart-sideBySide'>
+                        <div className='ChartPanel__section' style={{marginRight: 5}}>
+                            <div className='ChartPanel__section--title'>
+                                <div className='label'>{activeLabel}</div>
+                                <PinChart {...{viewerId, tbl_group}}/>
+                            </div>
                             <DefaultChartsContainer {...props}/>
-                        </SplitContent>
-                        <SplitContent style={{display: 'flex', flexDirection: 'column'}}>
-                            <div style={label}>Pinned Charts</div>
+                        </div>
+                        <div className='ChartPanel__section' style={{marginLeft: 5}}>
+                            <div className='ChartPanel__section--title'>
+                                <div className='label'>{pinnedLabel}</div>
+                                <PinToolbar/>
+                            </div>
                             <PinnedCharts {...props}/>
-                        </SplitContent>
-                    </SplitPane>
+                        </div>
+                    </SplitPanel>
                 </div>
             </div>
         );
     } else {
         return (
-            <div className='TabPanel__main boxed' style={{height: '100%'}}>
-                <Toolbar {...{viewerId, tbl_group, style:{position: 'absolute', right:0, zIndex: 1}}}/>
+            <div className='ChartPanel__container'>
+                <TabToolbar/>
                 <StatefulTabs componentKey={PINNED_VIEWER_ID} defaultSelected={0} useFlex={true} style={{flex: '1 1 0', marginTop: 5}}>
                     <Tab name={activeLabel}>
                         <DefaultChartsContainer {...props}/>
@@ -173,7 +188,11 @@ ChartWorkArea.propTypes = {
     useOnlyChartsInViewer :PropTypes.bool
 };
 
-const Toolbar = ({viewerId, tbl_group, style={}}) => {
+const Help = () => <HelpIcon helpId={'chartarea.info'} style={{margin: '0 10px'}}/>;
+
+const PinChart = ({viewerId, tbl_group}) => {
+    const {sideBySide=false, selectedIdx} = getComponentState(PINNED_VIEWER_ID);
+    const canPin = sideBySide || selectedIdx !== 1;
     const doPinChart = () => {
         let chartId = getActiveViewerItemId(viewerId);      // viewerId is Active Charts viewer
         if (!chartId) {
@@ -182,28 +201,34 @@ const Toolbar = ({viewerId, tbl_group, style={}}) => {
         }
         pinChart({chartId});
     };
+    return canPin ? <TextButton onClick={doPinChart} title='Pin the active chart' style={{height:15}}>Pin Chart</TextButton> : null;
+};
+
+const ShowTable = ({tbl_group}) => {
+
     const activeChartTblId = useStoreConnector(() => {
-        const chartData = getChartData(getActiveViewerItemId(PINNED_VIEWER_ID));
+        const chartId = getActiveViewerItemId(PINNED_VIEWER_ID) ?? getViewerItemIds(getMultiViewRoot(), PINNED_VIEWER_ID)?.[0];
+        const chartData = getChartData(chartId);
         return chartData?.data?.[0]?.tbl_id || chartData?.fireflyData?.[0].tbl_id;
     });
 
     const showTable = () => dispatchActiveTableChanged(activeChartTblId, tbl_group);
 
     const {sideBySide=false, selectedIdx} = getComponentState(PINNED_VIEWER_ID);
-    const canPin = sideBySide || selectedIdx !== 1;
     const canShowTable = activeChartTblId && (sideBySide || selectedIdx === 1);
+
+    return canShowTable ? <TextButton onClick={showTable} title='Show the table associated with this chart' style={{height:15}}>Show Table</TextButton> : null;
+};
+
+const ToggleMode = () => {
+
+    const {sideBySide=false} = getComponentState(PINNED_VIEWER_ID);
     const canToggle =  getViewerItemIds(getMultiViewRoot(), PINNED_VIEWER_ID)?.length > 0;
     const [modeLabel, modeTitle] = sideBySide ? ['As Tabs', 'Switch to tabs layout'] : ['Side-By-Side', 'Switch to Side-By-Side layout'];
 
-    return (
-        <div style={{display: 'inline-flex', justifyContent: 'flex-end', backgroundColor: 'inherit', marginBottom: 3, ...style}}>
-            {canPin && <TextButton onClick={doPinChart} title='Pin the active chart' style={{marginRight:20}}>Pin Chart</TextButton>}
-            {canShowTable && <div onClick={showTable} title='Show the table associated with this chart' className='button text'>Show Table</div>}
-            {canToggle && <div onClick={toggleSideBySide} title={modeTitle} className='button text'>{modeLabel}</div>}
-            <HelpIcon helpId={'chartarea.info'} style={{margin: '0 10px'}}/>
-        </div>
-    );
+    return canToggle ? <TextButton onClick={toggleSideBySide} title={modeTitle} style={{height:15}}>{modeLabel}</TextButton> : null;
 };
+
 
 export const PinnedCharts = (props) => {
 
