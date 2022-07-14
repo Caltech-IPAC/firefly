@@ -291,7 +291,10 @@ function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, 
             if (!cenCol) return;
             const sreq = cloneRequest(table.request, {inclCols: `"${cenCol.lonCol}","${cenCol.latCol}"`});
             req = makeTableFunctionRequest(sreq, 'DecimateTable', 'coverage',
-                {decimate: serializeDecimateInfo(cenCol.lonCol, cenCol.latCol, 10000), pageSize: MAX_ROW});
+                {
+                    decimate: !isOrbitalPathTable(tbl_id) ? serializeDecimateInfo(cenCol.lonCol, cenCol.latCol, 10000) : undefined,
+                    pageSize: MAX_ROW
+                });
         }
 
         req.tbl_id = `cov-${tbl_id}`;

@@ -366,7 +366,7 @@ public class QueryWise extends IBESearchProcessor {
 
         String schema = req.getSchema();
         List<String> imageSets = Arrays.asList(schema.split(","));
-        if (WiseRequest.useMergedTable(schema) && imageSets.size() < 6) {   // 6 means all were selected.  no constraint is needed.
+        if (WiseRequest.useMergedTable(schema) && imageSets.size() < 10) {   // 7 means all were selected.  no constraint is needed.
             int n = 0;
             String imageSetConstraint = "image_set";
             if (imageSets.size() > 1) {
@@ -408,11 +408,40 @@ public class QueryWise extends IBESearchProcessor {
                 else imageSetConstraint += "8";
                 n++;
             }
+            if (imageSets.contains(WiseRequest.NEOWISER_YR4)) {
+                if (n>0) imageSetConstraint += ",9";
+                else imageSetConstraint += "9";
+                n++;
+            }
+            if (imageSets.contains(WiseRequest.NEOWISER_YR5)) {
+                if (n>0) imageSetConstraint += ",10";
+                else imageSetConstraint += "10";
+                n++;
+            }
+            if (imageSets.contains(WiseRequest.NEOWISER_YR6)) {
+                if (n>0) imageSetConstraint += ",11";
+                else imageSetConstraint += "11";
+                n++;
+            }
+            if (imageSets.contains(WiseRequest.NEOWISER_YR7)) {
+                if (n>0) imageSetConstraint += ",12";
+                else imageSetConstraint += "12";
+                n++;
+            }
+            if (imageSets.contains(WiseRequest.NEOWISER_YR8)) {
+                if (n>0) imageSetConstraint += ",13";
+                else imageSetConstraint += "13";
+                n++;
+            }
+            if (imageSets.contains(WiseRequest.NEOWISER_YR9)) {
+                if (n>0) imageSetConstraint += ",14";
+                else imageSetConstraint += "14";
+                n++;
+            }
 
-
-            if (imageSets.contains(WiseRequest.NEOWISER)) {    // public merge of yr1, yr2, and yr3.  currently yr1 and yr2 are available.
-                if (n > 0) imageSetConstraint += ",6,7";
-                else imageSetConstraint += "6,7";
+            if (imageSets.contains(WiseRequest.NEOWISER)) {    // public merge upto yr8
+                if (n > 0) imageSetConstraint += ",6,7,8,9,10,11,12,13";
+                else imageSetConstraint += "6,7,8,9,10,11,12,13";
                 n++;
             }
 

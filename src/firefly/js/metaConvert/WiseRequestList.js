@@ -85,18 +85,18 @@ export function makeWisePlotRequest(table, row, includeSingle, includeStandard, 
     const band= getCellValue(table,row,'band');
 
     if (includeSingle) {
-        retval.single= builder(`wise-${band}`,'ibe_file_retrieve', `Wise band ${band}`, row, {band});
+        retval.single= builder(`wise-${band}`,'ibe_file_retrieve', `WISE Band ${band}`, row, {band});
     }
 
     if (includeStandard) {
         retval.standard= [
-            builder('wise-1','ibe_file_retrieve', 'Wise band 1', row, {band:'1'}),
-            builder('wise-2','ibe_file_retrieve', 'Wise band 2', row, {band:'2'})];
+            builder('wise-1','ibe_file_retrieve', 'WISE Band 1', row, {band:'1'}),
+            builder('wise-2','ibe_file_retrieve', 'WISE Band 2', row, {band:'2'})];
 
         if (!TwoBandTables.find((tbl) => get(table,'request.table_name', '').toLowerCase().includes(tbl))) {
-            retval.standard.push(builder('wise-3', 'ibe_file_retrieve', 'Wise band 3', row, {band: '3'}));
+            retval.standard.push(builder('wise-3', 'ibe_file_retrieve', 'WISE Band 3', row, {band: '3'}));
             if (!ThreeBandTables.find((tbl) => get(table,'request.table_name','').toLowerCase().includes(tbl))) {
-                retval.standard.push(builder('wise-4', 'ibe_file_retrieve', 'Wise band 4', row, {band: '4'}));
+                retval.standard.push(builder('wise-4', 'ibe_file_retrieve', 'WISE Band 4', row, {band: '4'}));
             }
         }
         const idx= Number(band)-1;
@@ -105,7 +105,7 @@ export function makeWisePlotRequest(table, row, includeSingle, includeStandard, 
 
     if (threeColorOps) {
         retval.threeColor= threeColorOps.map( (b) =>
-            b && builder('wise-three-0','ibe_file_retrieve', 'Wise 3 Color', row, {band:bandMap[b]})
+            b && builder('wise-three-0','ibe_file_retrieve', 'WISE 3 Color', row, {band:bandMap[b]})
         );
     }
     return retval;
