@@ -113,7 +113,7 @@ div.rootStyle img {
     border: 1px solid #acacac;
     border-radius: 2px;
     white-space: nowrap;
-}
+    font-weight: normal;}
 
 .button.text:hover {
     border: 1px solid #878787;
@@ -179,19 +179,17 @@ div.rootStyle img {
 .Pane.vertical .content, .Pane.horizontal  .content{
     overflow: hidden;
     position: absolute;
-    top: 5px;
-    bottom: 5px;
-    left: 5px;
-    right: 5px;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
 }
 
 .Pane.vertical .wrapper, .Pane.horizontal .wrapper{
     flex: auto;
     display: flex;
     overflow: hidden;
-    /*border: 1px solid #a3aeb9;*/
-    border-radius: 5px;
-    margin: 3px;
+    margin: 5px;
     position: relative;
 }
 

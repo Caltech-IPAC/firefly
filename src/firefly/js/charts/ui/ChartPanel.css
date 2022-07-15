@@ -54,6 +54,46 @@
     right: 0;
 }
 
+.ChartPanel__section {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    border-top-left-radius: 3px;
+    overflow: hidden;
+}
+
+.ChartPanel__section--title .label {
+    border: 1px solid #b3b3b3;
+    height: 17px;
+    padding: 3px 15px 0;
+    border-top-left-radius: 5px;
+    background-color: #c8c8c8;
+    z-index: 1;
+    border-bottom: none;
+}
+
+.ChartPanel__section--title {
+    display: inline-flex;
+    justify-content: space-between;
+    font-weight: bold;
+    align-items: flex-start;
+    height: 21px;
+    margin-left: 5px;
+    margin-bottom: -1px;
+}
+
+.ChartPanel__section--title .button.text {
+    line-height: 15px;
+}
+
+.ChartPanel__section--title.tabs {
+    position: absolute;
+    right: 1px;
+    top: 2px;
+    z-index: 1;
+}
+
+
 .ChartPanel__glass {
     background-color: transparent
 }
