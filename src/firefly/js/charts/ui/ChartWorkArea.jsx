@@ -165,7 +165,7 @@ export const ChartWorkArea = (props) => {
         return (
             <div className='ChartPanel__container'>
                 <TabToolbar/>
-                <StatefulTabs componentKey={PINNED_VIEWER_ID} defaultSelected={0} useFlex={true} style={{flex: '1 1 0', marginTop: 5}}>
+                <StatefulTabs componentKey={PINNED_VIEWER_ID} defaultSelected={0} useFlex={true} style={{flex: '1 1 0', marginTop: 1}}>
                     <Tab name={activeLabel}>
                         <DefaultChartsContainer {...props}/>
                     </Tab>
@@ -188,7 +188,7 @@ ChartWorkArea.propTypes = {
     useOnlyChartsInViewer :PropTypes.bool
 };
 
-const Help = () => <HelpIcon helpId={'chartarea.info'} style={{margin: '0 10px'}}/>;
+const Help = () => <HelpIcon helpId={'chartarea.info'} style={{marginLeft:10}}/>;
 
 const PinChart = ({viewerId, tbl_group}) => {
     const {sideBySide=false, selectedIdx} = getComponentState(PINNED_VIEWER_ID);
@@ -201,7 +201,7 @@ const PinChart = ({viewerId, tbl_group}) => {
         }
         pinChart({chartId});
     };
-    return canPin ? <TextButton onClick={doPinChart} title='Pin the active chart' style={{height:15}}>Pin Chart</TextButton> : null;
+    return canPin ? <TextButton onClick={doPinChart} title='Pin the active chart'>Pin Chart</TextButton> : null;
 };
 
 const ShowTable = ({tbl_group}) => {
@@ -217,7 +217,7 @@ const ShowTable = ({tbl_group}) => {
     const {sideBySide=false, selectedIdx} = getComponentState(PINNED_VIEWER_ID);
     const canShowTable = activeChartTblId && (sideBySide || selectedIdx === 1);
 
-    return canShowTable ? <TextButton onClick={showTable} title='Show the table associated with this chart' style={{height:15}}>Show Table</TextButton> : null;
+    return canShowTable ? <TextButton onClick={showTable} title='Show the table associated with this chart'>Show Table</TextButton> : null;
 };
 
 const ToggleMode = () => {
@@ -226,7 +226,7 @@ const ToggleMode = () => {
     const canToggle =  getViewerItemIds(getMultiViewRoot(), PINNED_VIEWER_ID)?.length > 0;
     const [modeLabel, modeTitle] = sideBySide ? ['As Tabs', 'Switch to tabs layout'] : ['Side-By-Side', 'Switch to Side-By-Side layout'];
 
-    return canToggle ? <TextButton onClick={toggleSideBySide} title={modeTitle} style={{height:15}}>{modeLabel}</TextButton> : null;
+    return canToggle ? <TextButton onClick={toggleSideBySide} title={modeTitle}>{modeLabel}</TextButton> : null;
 };
 
 
