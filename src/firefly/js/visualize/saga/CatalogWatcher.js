@@ -11,7 +11,9 @@ import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {getTblById, doFetchTable, isTableUsingRadians} from '../../tables/TableUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
-import {getDrawLayerById, getPlotViewAry, getPlotViewById, primePlot} from '../PlotViewUtil.js';
+import {
+    getDrawLayerById, getPlotViewAry, getPlotViewById, isDrawLayerAttached, isDrawLayerVisible, primePlot
+} from '../PlotViewUtil.js';
 import {dlRoot} from '../DrawLayerCntlr.js';
 import Catalog, {CatalogType} from '../../drawingLayers/Catalog.js';
 import {logger} from '../../util/Logger.js';
@@ -218,6 +220,15 @@ function updateDrawingLayer(tbl_id, tableModel, tableRequest,
     }
 }
 
+function shouldDlBeVisible(dl,pv) {
+    if (!pv) return true;
+    return Boolean(pv.drawingSubGroupId) ||
+        getPlotViewAry(visRoot())
+            .filter( (pv) => isDrawLayerAttached(dl, pv.plotId ))
+            .map( (pv) => isDrawLayerVisible(dl, pv.plotId ))
+            .reduce( (allV,v) => allV && v, true);
+}
+
 function attachToCatalog(tbl_id, payload) {
     const {pvNewPlotInfoAry=[], wpRequest, wpRequestAry, redReq, blueReq, greenReq} = payload;
     const dl= getDrawLayerById(dlRoot(), tbl_id);
@@ -228,9 +239,9 @@ function attachToCatalog(tbl_id, payload) {
         let r= wpRequest || get(wpRequestAry,idx);
         if (!r) r= (redReq || blueReq || greenReq);
         if (!r || r.getAttributes[PlotAttribute.DATALINK_TABLE_ID]===tbl_id) return; //Don't overlay catalogs on image data products
-        dispatchAttachLayerToPlot(dl.drawLayerId, info.plotId);
         const pv= getPlotViewById(visRoot(), info.plotId);
-        const pvSubGroup= get(pv, 'drawingSubGroupId');
+        dispatchAttachLayerToPlot(dl.drawLayerId, info.plotId,false, shouldDlBeVisible(dl,pv));
+        const pvSubGroup= pv?.drawingSubGroupId;
         const tableSubGroup= dl.tableMeta[SUBGROUP];
         if (!isNil(pvSubGroup) && !isNil(tableSubGroup)  && pvSubGroup!==tableSubGroup) {
             pv && dispatchChangeVisibility({id:dl.drawLayerId, visible:false, plotId:pv.plotId, useGroup:false});

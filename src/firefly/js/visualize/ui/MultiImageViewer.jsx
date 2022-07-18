@@ -6,8 +6,10 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty,omit} from 'lodash';
 import {flux} from '../../core/ReduxFlux.js';
-import {NewPlotMode, dispatchAddViewer, dispatchViewerUnmounted,
-        getMultiViewRoot, getViewer, getLayoutType, findViewerWithItemId, IMAGE} from '../MultiViewCntlr.js';
+import {
+    NewPlotMode, dispatchAddViewer, dispatchViewerUnmounted,
+    getMultiViewRoot, getViewer, getLayoutType, findViewerWithItemId, IMAGE, getViewerItemIds
+} from '../MultiViewCntlr.js';
 import {MultiImageViewerView} from './MultiImageViewerView.jsx';
 import {visRoot, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
@@ -15,6 +17,8 @@ import {getPlotViewById} from '../PlotViewUtil.js';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 import {getActivePlotView} from '../PlotViewUtil';
 
+
+const activeViewerMap= new Map();
 
 function nextState(props, state) {
     const viewer= getViewer(getMultiViewRoot(),props.viewerId);
@@ -29,8 +33,7 @@ function nextState(props, state) {
 function viewWithIdMounted(itemId) {
     const vId= findViewerWithItemId(getMultiViewRoot(),itemId,IMAGE);
     if (!vId) return false;
-    const v= getViewer(getMultiViewRoot(),vId);
-    return v && v.mounted;
+    return Boolean(activeViewerMap.get(vId));
 }
 
 
@@ -60,9 +63,12 @@ export class MultiImageViewer extends PureComponent {
         const viewer = getViewer(getMultiViewRoot(), props.viewerId);
         const {rootWidget}= this;
         if (!pv || !viewer || !rootWidget || !viewer.lastActiveItemId) return;
-        if (viewer.lastActiveItemId!==pv.plotId && rootWidget.offsetWidth && rootWidget.offsetHeight) {
+        activeViewerMap.set(this.props.viewerId, Boolean(rootWidget.offsetWidth && rootWidget.offsetHeight));
+        if (viewer.lastActiveItemId!==pv.plotId && !viewer.itemIdAry.includes(pv.plotId) && rootWidget.offsetWidth && rootWidget.offsetHeight) {
             setTimeout(() => {
-                if (!viewWithIdMounted(pv.plotId)) dispatchChangeActivePlotView(viewer.lastActiveItemId);
+                if (!viewWithIdMounted(pv.plotId) && !viewer.itemIdAry.includes(getActivePlotView(visRoot())?.plotId)) {
+                    dispatchChangeActivePlotView(viewer.lastActiveItemId);
+                }
             }, 5);
         }
 
@@ -72,6 +78,7 @@ export class MultiImageViewer extends PureComponent {
         this.iAmMounted= false;
         if (this.removeListener) this.removeListener();
         if (this.props.controlViewerMounting) dispatchViewerUnmounted(this.props.viewerId);
+        activeViewerMap.delete(this.props.viewerId);
     }
 
     componentDidMount() {

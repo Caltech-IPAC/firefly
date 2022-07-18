@@ -12,7 +12,7 @@ import {
     convertHDUIdxToImageIdx, convertImageIdxToHDU, getFormattedWaveLengthUnits,
     getHDUCount, getHDUIndex, getPtWavelength, hasPlaneOnlyWLInfo, isImageCube,
 } from '../PlotViewUtil.js';
-import {getExtName} from '../FitsHeaderUtil.js';
+import {getExtName, getExtType} from '../FitsHeaderUtil.js';
 import {isHiPS, isHiPSAitoff, isImage} from '../WebPlot.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
@@ -399,7 +399,7 @@ export function MultiImageControllerView({plotView:pv}) {
             startStr= 'Image: ';
             const desc= plot.plotDesc ?? '';
             startStr= `HDU (#${hduNum}): `;
-            hduDesc= `${desc || getExtName(plot)}`;
+            hduDesc= `${desc || getExtName(plot) || getExtType(plot)}`;
             tooltip+= `HDU: ${hduNum} ${hduDesc?', '+hduDesc:''}`;
         }
         if (plot.cubeIdx>-1) {

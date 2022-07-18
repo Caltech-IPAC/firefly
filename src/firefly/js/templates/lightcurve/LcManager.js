@@ -70,7 +70,7 @@ export const LC = {
     MISSION_DATA: 'missionEntries',
     GENERAL_DATA:'generalEntries',
 
-    TABLE_PAGESIZE: 100
+    TABLE_PAGESIZE: 30000
 };
 
 const plotIdRoot= 'LC_FRAME-';

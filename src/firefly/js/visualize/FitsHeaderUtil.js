@@ -34,6 +34,7 @@ export const HdrConst= {
     DATAMAX  : 'DATAMAX',
     DATAMIN  : 'DATAMIN',
     EXTNAME  : 'EXTNAME',
+    EXTTYPE  : 'EXTTYPE',
     NAXIS1   : 'NAXIS1',
     NAXIS2   : 'NAXIS2',
     NAXIS3   : 'NAXIS3',
@@ -219,6 +220,8 @@ export function getAllValuesOfHeader(plotOrHeader, headerKey) {
  * @return {string}
  */
 export const getExtName= (plotOrHeader) => getHeader(plotOrHeader,HdrConst.EXTNAME,'');
+
+export const getExtType= (plotOrHeader) => getHeader(plotOrHeader,HdrConst.EXTTYPE,'');
 
 /**
  * return a header number value given a header key

@@ -3,6 +3,7 @@
  */
 
 import {flatten, isArray, uniqBy} from 'lodash';
+import {getExtName, getExtType} from '../FitsHeaderUtil.js';
 import {DEFAULT_THUMBNAIL_SIZE, WebPlotRequest, WPConst} from '../WebPlotRequest.js';
 import ImagePlotCntlr, {IMAGE_PLOT_KEY, makeUniqueRequestKey, visRoot,
     dispatchPlotProgressUpdate, dispatchRecenter, dispatchWcsMatch} from '../ImagePlotCntlr.js';
@@ -207,7 +208,8 @@ function processSuccessResult(dispatcher, payload, successAry) {
 
     const vr= visRoot();
     if (vr.wcsMatchType && vr.positionLock) {
-        dispatchWcsMatch( {plotId:vr.activePlotId, matchType:vr.wcsMatchType, lockMatch:true});
+        const matchId= getPlotViewById(vr,vr.mpwWcsPrimId)?.plotId ?? vr.activePlotId;
+        dispatchWcsMatch( {plotId:matchId, matchType:vr.wcsMatchType, lockMatch:true});
     }
 }
 
@@ -263,7 +265,8 @@ function createPlots(plotCreate, plotCreateHeader, payload, requestKey) {
     let title;
     const plotAry= plotCreate.map((wpInit,idx) => {
         const plot= WebPlot.makeWebPlotData(plotId, viewDim, wpInit, attributes,false, cubeCtxAry[idx],request0,rv0);
-        if (!title) title= makePostPlotTitle(plot,request0);
+        const extStr= plotCreate.length===1 ? getExtName(plot) || getExtType(plot) : undefined;
+        if (!title) title= makePostPlotTitle(plot,request0, extStr);
         plot.title= title;
         return plot;
     });

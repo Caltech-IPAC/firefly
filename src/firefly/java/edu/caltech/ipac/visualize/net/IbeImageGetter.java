@@ -34,7 +34,7 @@ public class IbeImageGetter {
 
     static final String NaN = "NaN";
     static final String NULL = "null";
-    public static FileInfo get(ImageServiceParams params) throws FailedRequestException, IOException {
+    public static FileInfo get(ImageServiceParams params) throws FailedRequestException {
         boolean isWise= false;
 
 
