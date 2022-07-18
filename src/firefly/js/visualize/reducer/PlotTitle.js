@@ -12,7 +12,7 @@ import {isThreeColor} from 'firefly/visualize/PlotViewUtil.js';
  * @param {WebPlotRequest} r the request
  * @return {String} the title
  */
-export function makePostPlotTitle(plot,r){
+export function makePostPlotTitle(plot,r, extStr){
 
 
     if (isThreeColor(plot)) return '3-color';
@@ -25,7 +25,7 @@ export function makePostPlotTitle(plot,r){
 
     preTitle= preTitle ? `${preTitle}: `: '';
     if (titleOps===TitleOptions.FILE_NAME) {
-        title= computeFileNameBaseTitle(r,plot.plotState, plot.plotState.firstBand(),preTitle);
+        title= computeFileNameBaseTitle(r,plot.plotState, plot.plotState.firstBand(),preTitle, extStr);
     }
     else if (!title ||
         titleOps===TitleOptions.PLOT_DESC ||
@@ -43,22 +43,22 @@ export function makePostPlotTitle(plot,r){
     return title;
 }
 
-function computeFileNameBaseTitle(r,state, band, preTitle) {
+function computeFileNameBaseTitle(r,state, band, preTitle, extStr) {
     let retval= '';
     const rt= r.getRequestType();
 
     switch (rt) {
         case RequestType.WORKSPACE:
-            if (r.getFileName()) retval= computeTitleFromFile(r.getFileName(), preTitle);
-            else if (state.getUploadFileName(band)) retval= computeTitleFromFile(state.getUploadFileName(band), preTitle);
+            if (r.getFileName()) retval= computeTitleFromFile(r.getFileName(), preTitle, extStr);
+            else if (state.getUploadFileName(band)) retval= computeTitleFromFile(state.getUploadFileName(band), preTitle, extStr);
             break;
         case RequestType.FILE:
         case RequestType.TRY_FILE_THEN_URL:
-            if (state.getUploadFileName(band)) retval= computeTitleFromFile(state.getUploadFileName(band), preTitle);
-            else if (r.getFileName()) retval= computeTitleFromFile(r.getFileName(), preTitle);
+            if (state.getUploadFileName(band)) retval= computeTitleFromFile(state.getUploadFileName(band), preTitle, extStr);
+            else if (r.getFileName()) retval= computeTitleFromFile(r.getFileName(), preTitle, extStr);
             break;
         case RequestType.URL:
-            retval= computeTitleFromURL(r.getURL(),r,preTitle);
+            retval= computeTitleFromURL(r.getURL(),r,preTitle, extStr);
             break;
 
     }
@@ -68,7 +68,7 @@ function computeFileNameBaseTitle(r,state, band, preTitle) {
 }
 
 
-function computeTitleFromURL(urlStr, r, preTitle='') {
+function computeTitleFromURL(urlStr, r, preTitle='', extStr) {
     if (!urlStr || !r) return '';
     var retval= '';
     var qIdx=urlStr.indexOf('?');
@@ -96,15 +96,18 @@ function computeTitleFromURL(urlStr, r, preTitle='') {
                 retval= prepend+ workStr;
             }
         }
+        if (extStr) retval+=`(${extStr})`;
     }
     else {
-        retval= preTitle+computeTitleFromFile(urlStr);
+        retval= computeTitleFromFile(urlStr, preTitle, extStr);
     }
     return retval;
 }
 
-function computeTitleFromFile(fileStr) {
-    return fileStr ? getFileBase(stripFilePath(fileStr)) : '';
+function computeTitleFromFile(fileStr, preTitle='', extStr) {
+    let title= fileStr ? preTitle+ getFileBase(stripFilePath(fileStr)) : '';
+    if (extStr) title+=`(${extStr})`;
+    return title;
 }
 
 function stripFilePath(path) {

@@ -187,7 +187,7 @@ public class ServiceRetriever implements FileRetriever {
         params.setXtraFilter(r.getParam(AtlasIbeDataSource.XTRA_KEY));
         params.setSize((float)circle.radius());
         params.setDataType(r.getParam(ImageMasterDataEntry.PARAMS.DATA_TYPE.getKey()));
-        FileInfo fi = LockingVisNetwork.retrieve(params, (p,f) -> AtlasIbeImageGetter.get(p));
+        FileInfo fi = LockingVisNetwork.retrieve(params, (p,f) -> AtlasIbeImageGetter.get((AtlasImageParams) p));
         fi.setDesc(ServiceDesc.get(r));
         return fi;
     }
@@ -224,7 +224,7 @@ public class ServiceRetriever implements FileRetriever {
     }
 
     private FileInfo retrieveViaIbe(WebPlotRequest r, ImageServiceParams params, List<RelatedData> rdList) throws FailedRequestException {
-        FileInfo fi= LockingVisNetwork.retrieve(params, (p,f) -> IbeImageGetter.get(p));
+        FileInfo fi= LockingVisNetwork.retrieve(params, (p,f) -> IbeImageGetter.get((ImageServiceParams) p));
         fi.setDesc(ServiceDesc.get(r));
         if (rdList!=null) fi.addRelatedDataList(rdList);
         return fi;

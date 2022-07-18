@@ -205,6 +205,8 @@ const initState= () => {
      * @prop {boolean} positionLock plots are locked together for scrolling and rotation.
      * @prop {WorldPt} wcsMatchCenterWP: null, // the point to match to
      * @prop {WcsMatchType} wcsMatchType   one of 'Standard', 'Target', 'Pixel', 'PixelCenter', or false
+     * @prop {String} mpwWcsPrimId  plotId of the prime wcs match image
+     *
      */
     return {
         activePlotId: null,
@@ -576,6 +578,7 @@ export function dispatchChangeCenterOfProjection({plotId,centerProjPt, fullSky, 
  *                                  FIXED_TARGET attribute, if defined. Otherwise it will be the center of the image.
  * @param {boolean} [p.updateFixedTarget] if true and centerPt is a worldPt, it will update the
  *                                  FIXED_TARGET attribute on the plot
+ * @param {boolean} [p.updateWcsPrimId] if true update the make plotId the prime for wcs matching, defaults to true
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  *
  * @public
@@ -583,8 +586,9 @@ export function dispatchChangeCenterOfProjection({plotId,centerProjPt, fullSky, 
  * @memberof firefly.action
  */
 export function dispatchRecenter({plotId, centerPt= undefined, centerOnImage=false,
+                                     updateWcsPrimId=true,
                                      updateFixedTarget= false, dispatcher= flux.process}) {
-    dispatcher({type: RECENTER, payload: {plotId, centerPt, centerOnImage, updateFixedTarget} });
+    dispatcher({type: RECENTER, payload: {plotId, centerPt, centerOnImage, updateFixedTarget, updateWcsPrimId} });
 }
 
 /**

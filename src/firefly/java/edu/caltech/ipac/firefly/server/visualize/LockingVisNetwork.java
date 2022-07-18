@@ -49,6 +49,11 @@ public class LockingVisNetwork {
         return retrieveURL(p);
     }
 
+    public static FileInfo retrieve(ServiceCaller srvCaller, String lockKey) throws FailedRequestException {
+        ServiceCallerParams p= new ServiceCallerParams(srvCaller, lockKey);
+        return lockingRetrieve(p, srvCaller);
+    }
+
 
 //======================================================================
 //----------------------- Private Methods ------------------------------
@@ -60,9 +65,11 @@ public class LockingVisNetwork {
         try {
             Object lockKey= _activeRequest.computeIfAbsent(params, k -> new Object());
             synchronized (lockKey) {
-                return (params instanceof AnyUrlParams) ?
-                    retrieveURL( (AnyUrlParams)params, makeDownloadProgress(params) ) :
-                    retrieveService((ImageServiceParams) params, svcCaller);
+                return (params instanceof AnyUrlParams urlP) ?
+                    retrieveURL( urlP, makeDownloadProgress(params) ) :
+                        (params instanceof ImageServiceParams isParam) ?
+                                retrieveService(isParam, svcCaller) :
+                                retrieveServiceCaller((ServiceCallerParams) params);
             }
         } catch (IOException | SecurityException e) {
             throw ResponseMessage.simplifyNetworkCallException(e);
@@ -77,7 +84,7 @@ public class LockingVisNetwork {
     }
 
     private static void confirmParamsType(NetParams params) throws FailedRequestException {
-        if (!(params instanceof ImageServiceParams) && !(params instanceof AnyUrlParams) ) {
+        if (!(params instanceof ImageServiceParams) && !(params instanceof AnyUrlParams) && !(params instanceof ServiceCallerParams)) {
             throw new FailedRequestException("Unrecognized Param Type");
         }
     }
@@ -89,6 +96,10 @@ public class LockingVisNetwork {
             CacheHelper.putFileInfo(params,fileInfo);
         }
         return fileInfo;
+    }
+
+    private static FileInfo retrieveServiceCaller(ServiceCallerParams params) throws IOException, FailedRequestException {
+        return params.getSvcCaller().retrieve(null,null);
     }
 
     //======================================
@@ -119,8 +130,10 @@ public class LockingVisNetwork {
     }
 
     public interface ServiceCaller {
-        FileInfo retrieve(ImageServiceParams p, File suggestedFile) throws  IOException, FailedRequestException;
+        FileInfo retrieve(CanCallService p, File suggestedFile) throws  IOException, FailedRequestException;
     }
+
+    public interface CanCallService {};
 
 
     private static class DownloadProgress implements DownloadListener {
@@ -144,4 +157,20 @@ public class LockingVisNetwork {
         }
     }
 
+    private static class ServiceCallerParams extends BaseNetParams implements CanCallService {
+
+        private final String lockKey;
+        private final ServiceCaller svcCaller;
+
+        public ServiceCallerParams (ServiceCaller svcCaller, String lockKey) {
+            super("","");
+            this.lockKey= lockKey;
+            this.svcCaller= svcCaller;
+        }
+
+        public ServiceCaller getSvcCaller() {return svcCaller;}
+
+        @Override
+        public String getUniqueString() { return lockKey; }
+    }
 }

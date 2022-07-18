@@ -20,13 +20,11 @@ export const TitleType= new Enum(['INLINE', 'HEAD', 'EXPANDED']);
 export const PlotTitle= memo(({plotView:pv, titleType, brief, working}) => {
         const plot= primePlot(pv);
         const world= hasWCSProjection(plot);
-        const local= hasLocalStretchByteData(plot);
         const zlRet= getZoomDesc(pv);
         let zlStr= world ? `FOV: ${zlRet.fovFormatted}` : zlRet.zoomLevelFormatted;
         let tooltip= world ? `${plot.title}\nHorizontal field of view: ${zlRet.fovFormatted}` : plot.title;
         if (isImage(plot)) {
-            const dataLoaded= local ? '\nLocal Data' : '\nDistributed Data';
-            tooltip+= `\nZoom Level: ${zlRet.zoomLevelFormatted}${dataLoaded}`;
+            tooltip+= `\nZoom Level: ${zlRet.zoomLevelFormatted}`;
         }
         let rotString;
         let flipString;

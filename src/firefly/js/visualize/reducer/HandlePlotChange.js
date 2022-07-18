@@ -577,7 +577,7 @@ function updateViewSize(state,action) {
  * @return {VisRoot}
  */
 function recenter(state,action) {
-    const {plotId, centerPt, centerOnImage, updateFixedTarget= false}= action.payload;
+    const {plotId, centerPt, centerOnImage, updateFixedTarget= false, updateWcsPrimId=true}= action.payload;
     const {wcsMatchType}= state;
     const pv= getPlotViewById(state,plotId);
 
@@ -591,7 +591,8 @@ function recenter(state,action) {
     }
 
 
-    return {...state,plotViewAry, mpwWcsPrimId:plotId};
+    return {...state,plotViewAry,
+        mpwWcsPrimId:(updateWcsPrimId||!state.mpwWcsPrimId) ? plotId: state.mpwWcsPrimId};
 }
 
 
