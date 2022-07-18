@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {get, isUndefined, omit, range} from 'lodash';
+import {get, isUndefined, omit, range, isString} from 'lodash';
 
 import {Expression} from '../../../util/expr/Expression.js';
 import {getChartData, hasUpperLimits} from '../../ChartsCntlr.js';
@@ -252,18 +252,18 @@ function getTraceType(chartId, tbl_id, activeTrace) {
 export function scatterInputs ({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey, fieldProps={}}) {
     const {activeTrace, tbl_id, data, fireflyData, mappings} = getChartProps(chartId, ptbl_id, pActiveTrace);
     const colValStats = getColValStats(tbl_id);
-
+    const strOrNull = (v) => isString(v) ? v : undefined;
     return {
         Mode: (props={}) => ( <ListBoxInputField fieldKey={`data.${activeTrace}.mode`}
                                                  label='Trace Style:'
-                                                 initialState= {{value: get(data, `${activeTrace}.mode`)}}
+                                                 initialState= {{value: strOrNull(get(data, `${activeTrace}.mode`))}}
                                                  options={[{label: 'points', value:'markers'},
                                                      {label: 'connected points', value:'lines+markers'},
                                                      {label: 'lines', value:'lines'}]}
                                                   {...fieldProps} {...props}/>),
         Symbol: (props={}) => (<ListBoxInputField fieldKey={`data.${activeTrace}.marker.symbol`}
                                                   label='Symbol:'
-                                                  initialState= {{value: get(data, `${activeTrace}.marker.symbol`)}}
+                                                  initialState= {{value: strOrNull(get(data, `${activeTrace}.marker.symbol`))}}
                                                   options={[{value:'circle'}, {value:'circle-open'}, {value:'square'}, {value:'square-open'},
                                                       {value:'diamond'}, {value:'diamond-open'},{value:'cross'}, {value:'x'},
                                                       {value:'triangle-up'}, {value:'hexagon'}, {value:'star'}]}
@@ -331,7 +331,7 @@ export function scatterInputs ({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartI
                                          groupKey = {groupKey}  {...fieldProps} {...props}/>),
         ColorScale: (props={}) => ( <ListBoxInputField fieldKey={`data.${activeTrace}.marker.colorscale`}
                                          label='Color Scale:'
-                                         initialState= {{value: get(data, `${activeTrace}.marker.colorscale`)}}
+                                         initialState= {{value: strOrNull(get(data, `${activeTrace}.marker.colorscale`))}}
                                          tooltip='Select colorscale for color map'
                                          options={PlotlyCS.map((e)=>({value:e}))}
                                          nullAllowed={true}
