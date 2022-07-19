@@ -8,11 +8,11 @@ FROM openjdk:17-jdk-slim-buster AS deps
 RUN apt-get update && apt-get install -y curl git htmldoc unzip wget
 
 RUN apt-get update \
-# use node v12.x. may not be available via apt-get
-    && curl -sL https://deb.nodesource.com/setup_12.x | bash -  \
+# use node v18.x. may not be available via apt-get
+    && curl -sL https://deb.nodesource.com/setup_18.x | bash -  \
     && apt-get install -y nodejs \
     && npm install yarn -g  \
-# gradle version 17.4  Not available via apt-get
+# gradle version 7.4  Not available via apt-get
     && cd /usr/local \
     && wget  -q https://services.gradle.org/distributions/gradle-7.4-bin.zip \
     && unzip -q gradle-7.4-bin.zip \

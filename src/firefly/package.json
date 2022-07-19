@@ -7,6 +7,11 @@
     "test-debug": "node --inspect-brk ../../node_modules/jest/bin/jest --runInBand --passWithNoTests"
   },
   "jest": {
+    "verbose": true,
+    "clearMocks": true,
+    "collectCoverage": true,
+    "coverageDirectory": "../../build/dist/reports",
+    "coverageReporters": ["lcov"],
     "moduleFileExtensions": [
       "js",
       "jsx"
