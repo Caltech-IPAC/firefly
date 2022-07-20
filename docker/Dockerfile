@@ -35,7 +35,7 @@ FROM node_module AS dev_env
 RUN apt-get update \
 # install tomcat9 for dev mode \
     && curl -O https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.64/bin/apache-tomcat-9.0.64.tar.gz \
-    && mkdir /opt/tomcat && tar xzvf apache-tomcat-9*tar.gz -C /opt/tomcat --strip-components=1 \
+    && mkdir /opt/tomcat && tar xzf apache-tomcat-9*tar.gz -C /opt/tomcat --strip-components=1 \
     && sed -i -E 's/allow=".*"/allow=".*"/' /opt/tomcat/webapps/manager/META-INF/context.xml \
 # cleanup
     && rm apache-tomcat-9*tar.gz \
@@ -53,7 +53,7 @@ ENV project=firefly
 WORKDIR ${CATALINA_HOME}
 
 # Tomcat scripts, config files, etc
-COPY firefly/docker/*.sh .
+COPY firefly/docker/*.sh ./
 COPY firefly/docker/tomcat-users.xml conf/
 
 # set up directory protections, copy stuff around, add tomcat user and group
