@@ -1,12 +1,11 @@
-import React, {forwardRef, useEffect, useRef, useState} from 'react';
-import PropTypes from 'prop-types';
+import React, {forwardRef, useContext, useEffect, useRef, useState} from 'react';
+import PropTypes, {bool} from 'prop-types';
 import {PointerPopup} from '../ui/PointerPopup.jsx';
+import {ConnectionCtx} from './ConnectionCtx.js';
 import {InputFieldLabel} from './InputFieldLabel.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import './InputAreaFieldView.css';
 import EXCLAMATION from 'html/images/exclamation16x16.gif';
-
-
 
 
 function computeStyle(valid,hasFocus,additionalClasses) {
@@ -15,7 +14,7 @@ function computeStyle(valid,hasFocus,additionalClasses) {
         return 'ff-inputfield-view-error' + extraClasses;
     }
     else {
-        return (hasFocus ? 'ff-inputfield-view-focus' : 'ff-inputfield-view-valid') + extraClasses;
+        return (hasFocus ? 'ff-inputfield-view-focus-no-bg' : 'ff-inputfield-view-valid-no-bg') + extraClasses;
     }
 }
 
@@ -49,11 +48,13 @@ const ICON_SPACE_STYLE= {
 
 
 export const InputAreaFieldView= forwardRef( ({ visible,label,tooltip,rows,cols,labelWidth,value,style,wrapperStyle,labelStyle,
-                                       button,inline, valid,onChange, onBlur, onKeyPress, showWarning,
-                                       message, type, placeholder, additionalClasses, idName },ref ) => {
+                                                  button,inline, valid,onChange, onBlur,
+                                                  showWarning, connectedMarker=false,
+                                                  message, type, placeholder, additionalClasses, idName },ref ) => {
     const [hasFocus,setHasFocus]= useState(false);
     const [infoPopup,setInfoPopup]= useState(false);
     const {current:warn}= useRef({warnIcon:undefined, hider:undefined});
+    const connectContext= useContext(ConnectionCtx);
 
     useEffect(()=> {
         if (infoPopup) {
@@ -66,7 +67,7 @@ export const InputAreaFieldView= forwardRef( ({ visible,label,tooltip,rows,cols,
         }
     }, [infoPopup]);
 
-        if (!visible) return null;
+    if (!visible) return null;
 
     const warningArea= showWarning ?
             !valid ? (
@@ -77,31 +78,26 @@ export const InputAreaFieldView= forwardRef( ({ visible,label,tooltip,rows,cols,
                     </div> )
                 : (<div style={ICON_SPACE_STYLE}/>) : false;
 
+    const connectedStyle= connectedMarker||connectContext.controlConnected ? {backgroundColor:'yellow'} : {};
     return (
         <div style={{whiteSpace:'nowrap', display: inline?'inline-block':'block', ...wrapperStyle}} ref={ref}>
             {label && <InputFieldLabel labelStyle={labelStyle} label={label} tooltip={tooltip} labelWidth={labelWidth}/> }
-            <textarea style={{display:'inline-block', ...style}}
-                      rows={rows}
-                      cols={cols}
-                      spellCheck={false}
+            <textarea style={{display:'inline-block', ...connectedStyle, ...style}}
+                      rows={rows} cols={cols} spellCheck={false} placeholder={placeholder} id={idName}
                       className={computeStyle(valid,hasFocus,additionalClasses)}
-                      id={idName}
+                      value={type==='file' ? undefined : value}
+                      title={ (!showWarning && !valid) ? message : tooltip}
                       onChange={(ev) => onChange?.(ev)}
                       onFocus={ () => {
-                          if (hasFocus) {
-                              setHasFocus(true);
-                              setInfoPopup(false);
-                          }
+                          if (!hasFocus) return;
+                          setHasFocus(true);
+                          setInfoPopup(false);
                       }}
                       onBlur={ (ev) => {
                           onBlur?.(ev);
                           setHasFocus(false);
                           setInfoPopup(false);
                       }}
-                      onKeyPress={(ev) => onKeyPress?.(ev)}
-                      value={type==='file' ? undefined : value}
-                      title={ (!showWarning && !valid) ? message : tooltip}
-                      placeholder={placeholder}
             />
             {warningArea}
             {Boolean(button) && button}
@@ -123,12 +119,12 @@ InputAreaFieldView.propTypes= {
     value   : PropTypes.string.isRequired,
     onChange : PropTypes.func.isRequired,
     onBlur : PropTypes.func,
-    onKeyPress : PropTypes.func,
     showWarning : PropTypes.bool,
     rows: PropTypes.number,
     cols: PropTypes.number,
     placeholder: PropTypes.string,
     additionalClasses: PropTypes.string,
+    connectedMarker: bool,
     idName: PropTypes.string
 };
 

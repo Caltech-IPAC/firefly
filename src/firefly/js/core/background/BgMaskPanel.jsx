@@ -88,7 +88,7 @@ export const BgMaskPanel = React.memo(({componentKey, onMaskComplete, style={}})
                 <div style={{display: 'flex', alignItems: 'center'}}>
                     <div className='BgMaskPanel__content'>
                         <div style={{display: 'inline-flex', alignItems: 'center', justifyContent: 'center'}}>
-                            <di style={{marginRight: 5, fontSize: 18}}> {jobInfo.phase} </di>
+                            <div style={{marginRight: 5, fontSize: 18}}> {jobInfo.phase} </div>
                             <img className='JobInfo__items--link' onClick={showInfo} src={INFO} style={{height: 20}}/>
                         </div>
                         <div className='BgMaskPanel__msg'>{msg}</div>

@@ -370,7 +370,7 @@ export function renderPolygonDataArea({imageCornerCalc, labelWidth, labelStyle, 
             cornerTypeOps.splice(cornerTypeOps.length-1, 0, {label: 'Selection', value: 'area-selection'});
         }
     }
-    const wp= parseWorldPt(centerWP) ?? makeWorldPt(0,0);
+    const wp= parseWorldPt(centerWP);
     return (
         <div
             style={{padding:5, border:'solid #a3aeb9 1px' }}>

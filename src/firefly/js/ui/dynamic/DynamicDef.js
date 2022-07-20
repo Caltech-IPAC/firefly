@@ -134,24 +134,46 @@ export const makeUnknownDef = ({key, desc, tooltip, units, initValue, nullAllowe
 export const makeAreaDef = ({key, minValue, maxValue, desc, tooltip, initValue, nullAllowed}) =>
     ({type: AREA, key, desc, tooltip, initValue, minValue, maxValue, nullAllowed});
 
-export function makeCircleDef({
-                                  key, targetKey, sizeKey, minValue, maxValue, desc, tooltip, initValue, nullAllowed,
-                                  centerPt, hipsFOVInDeg, coordinateSys,
+/**
+ *
+ * @param {Object} obj
+ * @param {String} obj.key
+ * @param {String} obj.targetKey
+ * @param {String} [obj.sizeKey]
+ * @param obj.minValue
+ * @param obj.maxValue
+ * @param {String} obj.desc
+ * @param {String} obj.tooltip
+ * @param obj.initValue
+ * @param obj.nullAllowed
+ * @param obj.centerPt
+ * @param obj.hipsFOVInDeg
+ * @param obj.coordinateSys
+ * @param {String} [obj.sRegion]  an obsCore s_region type string
+ * @param obj.hipsUrl
+ * @param obj.mocList
+ * @param {String} [obj.targetPanelExampleRow1]
+ * @param {String} [obj.targetPanelExampleRow2]
+ * @returns {FieldDef}
+ */
+export function makeCircleDef({ key, targetKey, sizeKey, minValue, maxValue, desc, tooltip, initValue, nullAllowed,
+                                  centerPt, hipsFOVInDeg, coordinateSys, sRegion,
                                   hipsUrl, mocList, targetPanelExampleRow1, targetPanelExampleRow2
                               }) {
     return ({
         type: CIRCLE, key, desc, tooltip, initValue, minValue, maxValue, nullAllowed,
         targetDetails: {
             hipsUrl, centerPt, hipsFOVInDeg, coordinateSys, mocList,
-            targetKey, sizeKey,
+            targetKey, sizeKey, sRegion,
             targetPanelExampleRow1, targetPanelExampleRow2
         }
     });
 }
 
-export const makePolygonDef = ({key, desc, tooltip, initValue, targetPanelExampleRow1, nullAllowed, popupHiPS=true}) =>
+export const makePolygonDef = ({key, desc, tooltip, initValue, targetPanelExampleRow1, sRegion,
+                                   nullAllowed, popupHiPS=true}) =>
     ({type: POLYGON, key, desc, tooltip, initValue, nullAllowed,
-        targetDetails: {targetPanelExampleRow1,popupHiPS,polygonKey:key}
+        targetDetails: {targetPanelExampleRow1,popupHiPS,polygonKey:key, sRegion}
     });
 
 /**
@@ -190,6 +212,7 @@ export const makePolygonDef = ({key, desc, tooltip, initValue, targetPanelExampl
  * @prop {String} targetKey
  * @prop {String} sizeKey
  * @prop {String} polygonKey
+ * @prop {String} obj.sRegion  an obsCore s_region type string
  * @prop {Array.<String>} targetPanelExampleRow1 eg- [`'62, -37'`, `'60.4 -35.1'`, `'4h11m59s -32d51m59s equ j2000'`, `'239.2 -47.6 gal'`],
  * @prop {Array.<String>} targetPanelExampleRow2  eg= [`'NGC 1532' (NB: DC2 is a simulated sky, so names are not useful)`],
  */

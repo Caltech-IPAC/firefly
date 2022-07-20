@@ -1076,7 +1076,7 @@ export function hasObsCoreLikeDataProducts(tableOrId) {
  * @prop {string} value
  * @prop {boolean} allowsInput - use may change the parameter
  * @prop {boolean} inputRequired - user must enter something
- * @prop {Array.<ServiceDescriptorInputParam>} urlParams
+ * @prop {Array.<ServiceDescriptorInputParam>} serDefParams
  */
 
 /**
@@ -1112,7 +1112,7 @@ export function getServiceDescriptors(tableOrId) {
             title: desc ?? 'Service Descriptor '+idx,
             accessURL: params.find( ({name}) => name==='accessURL')?.value,
             standardID: params.find( ({name}) => name==='standardID')?.value,
-            urlParams: groups
+            serDefParams: groups
                 .find( (g) => g.name==='inputParams')
                 ?.params.map( (p) => {
                     const optionalParam= !p.ref && !p.value && !p.options;
@@ -1136,6 +1136,25 @@ export function getServiceDescriptors(tableOrId) {
  * @return {string}
  */
 export const getObsCoreAccessFormat= (tableOrId, rowIdx) => getObsCoreCellValue(tableOrId,rowIdx, 'access_format');
+
+
+/**
+ * return s_region cell data
+ * @param {TableModel|String} tableOrId - a table model or a table id
+ * @param rowIdx
+ * @return {string}
+ */
+export const getObsCoreSRegion= (tableOrId, rowIdx) => getObsCoreCellValue(tableOrId,rowIdx, 's_region');
+
+/**
+ * return obs_title cell data
+ * @param {TableModel|String} tableOrId - a table model or a table id
+ * @param rowIdx
+ * @return {string}
+ */
+export const getObsTitle= (tableOrId, rowIdx) => getObsCoreCellValue(tableOrId,rowIdx, 'obs_title');
+
+
 /**
  * return access_url cell data
  * @param {TableModel|String} tableOrId - a table model or a table id

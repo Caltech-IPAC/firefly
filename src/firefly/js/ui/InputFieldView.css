@@ -6,16 +6,30 @@
 
 
 .ff-inputfield-view-valid {
-    border : 1px solid #b5b8c8;              /* NOT part of color palette */
+    border : 1px solid #b5b8c8;
     background: url('~images/text-bg.gif') repeat-x;
     width: auto;
     height: auto;
     padding : 2px;
 }
 
+.ff-inputfield-view-valid-no-bg {
+    border : 1px solid #b5b8c8;
+    width: auto;
+    height: auto;
+    padding : 2px;
+}
+
 .ff-inputfield-view-focus {
-    border : 1px solid #7eadd9;             /* NOT part of color palette */
+    border : 1px solid #7eadd9;
     background: url('~images/text-bg.gif') repeat-x;
+    width: auto;
+    height: auto;
+    padding : 2px;
+}
+
+.ff-inputfield-view-focus-no-bg {
+    border : 1px solid #7eadd9;
     width: auto;
     height: auto;
     padding : 2px;
@@ -23,7 +37,7 @@
 
 
 .ff-inputfield-view-error {
-    border : 1px solid red;                 /* NOT part of color palette */
+    border : 1px solid red;
     width: auto;
     height: auto;
     background: #FFEEEE url('~images/invalid_line.gif') left bottom repeat-x;

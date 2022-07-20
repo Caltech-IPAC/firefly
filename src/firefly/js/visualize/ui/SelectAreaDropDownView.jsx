@@ -82,7 +82,8 @@ function updateSelect(pv, value, allPlots=true, modalEndInfo, setModalEndInfo) {
             }
             setModalEndInfo({
                 s:'End Select',
-                f: () => onOff(pv,SelectArea.TYPE_ID,allPlots,false,false,modalEndInfo,setModalEndInfo,'')
+                f: () => onOff(pv,SelectArea.TYPE_ID,allPlots,false,false,modalEndInfo,setModalEndInfo,''),
+                offOnNewPlot: true,
             });
         }
     };

@@ -1,6 +1,7 @@
-import React, {useEffect, memo, useState} from 'react';
-import PropTypes from 'prop-types';
+import React, {useEffect, memo, useState, useContext} from 'react';
+import PropTypes, {bool} from 'prop-types';
 import {convertAngle} from '../visualize/VisUtil.js';
+import {ConnectionCtx} from './ConnectionCtx.js';
 import {InputFieldView} from './InputFieldView.jsx';
 import {ListBoxInputFieldView} from './ListBoxInputField.jsx';
 import Validate from '../util/Validate.js';
@@ -79,6 +80,7 @@ function getFeedback(unit, min, max, showFeedback) {
 
 const SizeInputFieldView= (props) => {
     const {nullAllowed, min, max, style= {}, wrapperStyle={} /*wrapperStyle is deprecated*/,
+        connectedMarker= false,
         feedbackStyle={}, labelWidth, label, labelStyle, showFeedback, onChange} = props;
     const [{value, valid, displayValue, unit},setState]= useState(() => updateSizeInfo(props));
     const {feedback, errmsg}= getFeedback(unit,min,max,showFeedback);
@@ -86,6 +88,7 @@ const SizeInputFieldView= (props) => {
     useEffect(() => {
         setState(updateSizeInfo(props));
     }, [ nullAllowed,  min, max,props.value, props.displayValue, props.unit]);
+    const connectContext= useContext(ConnectionCtx);
 
     const onSizeChange= (ev) => {
         const newDisplayValue = ev?.target?.value;
@@ -126,8 +129,9 @@ const SizeInputFieldView= (props) => {
             <div style={{display: 'flex', alignItems: 'center', justifyContent: 'flex-start'}} >
                 <InputFieldView
                     valid={valid}
-                    onChange={onSizeChange} onBlur={onSizeChange} onKeyPress={onSizeChange}
+                    onChange={onSizeChange} onBlur={onSizeChange}
                     value={displayValue} message={errmsg} label={label} labelWidth={labelWidth} labelStyle={labelStyle}
+                    connectedMarker={connectedMarker||connectContext.controlConnected}
                     tooltip={'enter size within the valid range'} />
                 <ListBoxInputFieldView
                     onChange={onUnitChange}
@@ -136,7 +140,7 @@ const SizeInputFieldView= (props) => {
                         {label: 'degrees', value: 'deg'},
                         {label: 'arcminutes', value: 'arcmin'},
                         {label: 'arcseconds', value: 'arcsec'}
-                        ]} />
+                    ]} />
             </div>
             <div style={{marginLeft: labelWidth+5, marginTop:5,  ...feedbackStyle}}> {feedback} </div>
         </div>
@@ -157,6 +161,7 @@ SizeInputFieldView.propTypes = {
     showFeedback: PropTypes.bool,
     wrapperStyle: PropTypes.object, // deprecated
     style: PropTypes.object,  // replaces wrapper style
+    connectedMarker: bool,
     feedbackStyle: PropTypes.object
 };
 
@@ -196,6 +201,7 @@ export const SizeInputFields = memo( (props) => {
 SizeInputFields.propTypes={
     fieldKey : PropTypes.string,
     groupKey : PropTypes.string,
+    connectedMarker: bool,
     initialState: PropTypes.shape({
         value: PropTypes.any,
         tooltip:  PropTypes.string,

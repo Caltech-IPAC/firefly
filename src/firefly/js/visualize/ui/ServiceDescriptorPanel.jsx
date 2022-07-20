@@ -19,13 +19,14 @@ const GROUP_KEY= 'ActivateMenu';
 const titleStyle= {width: '100%', textAlign:'center', padding:'10px 0 5px 0', fontSize:'larger', fontWeight:'bold'};
 
 
-export const ActivateMenu= memo(({ serviceDefRef='none', serDefParams, setSearchParams, title, makeDropDown}) => {
+export const ServiceDescriptorPanel= memo(({ serviceDefRef='none', serDefParams, setSearchParams,
+                                               title, makeDropDown, sRegion}) => {
 
 
     const loadParams= (request) => {
         setSearchParams(request);
     };
-    const fieldDefAry= makeFieldDefs(serDefParams);
+    const fieldDefAry= makeFieldDefs(serDefParams, sRegion);
     return (
         <div key={serviceDefRef}>
             {makeDropDown?.()}
@@ -44,7 +45,7 @@ export const ActivateMenu= memo(({ serviceDefRef='none', serDefParams, setSearch
     );
 });
 
-ActivateMenu.propTypes= {
+ServiceDescriptorPanel.propTypes= {
     serDefParams: arrayOf(object),
     title: string,
     serviceDefRef: string,
@@ -90,7 +91,7 @@ const isNumberField= ({type,minValue,maxValue,value}) =>
 
 
 
-function makeFieldDefs(serDefParams) {
+function makeFieldDefs(serDefParams, sRegion) {
     return serDefParams
         .filter( (sdP) => !sdP.ref )
         .map( (sdP) => {
@@ -107,11 +108,13 @@ function makeFieldDefs(serDefParams) {
                         targetKey:'circleTarget', sizeKey:'circleSize',
                         initValue:radius,
                         centerPt, minValue, maxValue,
-                        hipsFOVInDeg:radius*2+radius*.2 });
+                        hipsFOVInDeg:radius*2+radius*.2,
+                        sRegion
+                    });
                 }
                 if (isPolygonField(sdP)) {
                     const {value}= getPolygonInfo(sdP);
-                    return makePolygonDef({key:name, desc:name, tooltip, units, initValue:value});
+                    return makePolygonDef({key:name, desc:name, tooltip, units, initValue:value, sRegion});
                 }
                 else if (isNumberField(sdP)) {
                         const minNum= Number(sdP.minValue);

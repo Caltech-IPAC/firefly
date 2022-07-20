@@ -98,6 +98,7 @@ const defOptions= {
 
     useHiPS: true,
     hipsSourceURL : 'ivo://CDS/P/2MASS/color', // url
+    hipsSource360URL : 'ivo://ov-gso/P/DIRBE/ZSMA1', // url
     imageSourceParams: {
         Service : 'TWOMASS',
         SurveyKey: 'asky',
@@ -165,14 +166,21 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
     let paused = isUndefined(params.paused) ? options.paused : params.paused;
     const {preparedTables, tblCatIdMap}= sharedData;
 
+    const setPreferredHipsOnSharedData= () => {
+        const pref= findPreferredHiPS(tbl_id, sharedData.preferredHipsSourceURL,
+            options.hipsSourceURL, options.hipsSource360URL, preparedTables[tbl_id]);
+        sharedData.preferredHipsSourceURL= pref.preferredHipsSourceURL;
+        sharedData.preferredHipsSource360URL= pref.preferredHipsSource360URL;
+    };
+
     if (paused) {
         paused= !(getViewer(getMultiViewRoot(), viewerId)?.mounted ?? false);
     }
     if (!action) {
         if (!paused) {
             preparedTables[tbl_id]= undefined;
-            sharedData.preferredHipsSourceURL= findPreferredHiPS(tbl_id, sharedData.preferredHipsSourceURL, options.hipsSourceURL, preparedTables[tbl_id]);
-            updateCoverage(tbl_id, viewerId, sharedData.preparedTables, options, tblCatIdMap, sharedData.preferredHipsSourceURL);
+            setPreferredHipsOnSharedData();
+            updateCoverage(tbl_id, viewerId, sharedData.preparedTables, options, tblCatIdMap, sharedData.preferredHipsSourceURL, sharedData.preferredHipsSource360URL);
         }
         return;
     }
@@ -190,8 +198,8 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
     }
 
     if (action.type===MultiViewCntlr.VIEWER_MOUNTED || action.type===MultiViewCntlr.ADD_VIEWER)  {
-        sharedData.preferredHipsSourceURL= findPreferredHiPS(tbl_id, sharedData.preferredHipsSourceURL, options.hipsSourceURL, preparedTables[tbl_id]);
-        updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, sharedData.preferredHipsSourceURL);
+        setPreferredHipsOnSharedData();
+        updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, sharedData.preferredHipsSourceURL, sharedData.preferredHipsSource360URL);
         return {paused:false};
     }
 
@@ -202,8 +210,8 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
 
         case TABLE_LOADED:
             if (!getTableInGroup(tbl_id)) return {paused};
-            sharedData.preferredHipsSourceURL= findPreferredHiPS(tbl_id, sharedData.preferredHipsSourceURL, options.hipsSourceURL, preparedTables[tbl_id]);
-            updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, sharedData.preferredHipsSourceURL);
+            setPreferredHipsOnSharedData();
+            updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, sharedData.preferredHipsSourceURL, sharedData.preferredHipsSource360URL);
             break;
 
         // case TBL_RESULTS_ACTIVE:
@@ -215,8 +223,8 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
         case TABLE_REMOVE:
             removeCoverage(payload.tbl_id, preparedTables);
             if (!isEmpty(preparedTables)) {
-                sharedData.preferredHipsSourceURL= findPreferredHiPS(tbl_id, sharedData.preferredHipsSourceURL, options.hipsSourceURL, preparedTables[tbl_id]);
-                updateCoverage(getActiveTableId(), viewerId, preparedTables, options, tblCatIdMap, sharedData.preferredHipsSourceURL, payload.tbl_id);
+                setPreferredHipsOnSharedData();
+                updateCoverage(getActiveTableId(), viewerId, preparedTables, options, tblCatIdMap, sharedData.preferredHipsSourceURL, sharedData.preferredHipsSource360URL, payload.tbl_id);
                 removeTableComponentStateStatus(payload.tbl_id);
             }
             cancelSelf();
@@ -266,9 +274,10 @@ function removeCoverage(tbl_id, preparedTables) {
  * @param {CoverageOptions} options
  * @param {object} tblCatIdMap
  * @param {string} preferredHipsSourceURL
+ * @param {string} preferredHipsSource360URL
  * @param {string} deletedTblId
  */
-function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, preferredHipsSourceURL, deletedTblId= undefined) {
+function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, preferredHipsSourceURL, preferredHipsSource360URL, deletedTblId= undefined) {
 
     try {
         const table = getTblById(tbl_id);
@@ -301,7 +310,7 @@ function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, 
 
         if (preparedTables[tbl_id]) { //todo support decimated data
             updateCoverageWithData(viewerId, table, options, tbl_id, preparedTables[tbl_id], preparedTables,
-                isTableUsingRadians(table), tblCatIdMap, preferredHipsSourceURL, deletedTblId );
+                isTableUsingRadians(table), tblCatIdMap, preferredHipsSourceURL, preferredHipsSource360URL, deletedTblId );
         }
         else {
             preparedTables[tbl_id] = 'WORKING';
@@ -314,7 +323,7 @@ function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, 
 
                         tblCatIdMap[tbl_id] = (isRegion) ? [centerId(tbl_id), regionId(tbl_id)] : [tbl_id, searchTargetId(tbl_id)];
                         updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, preparedTables,
-                            isTableUsingRadians(table), tblCatIdMap, preferredHipsSourceURL );
+                            isTableUsingRadians(table), tblCatIdMap, preferredHipsSourceURL, preferredHipsSource360URL);
                     }
                 }
             ).catch(
@@ -343,10 +352,11 @@ function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, 
  * @param usesRadians
  * @param {object} tblCatIdMap
  * @param {string} preferredHipsSourceURL
+ * @param {string} preferredHipsSource360URL
  * @param {string} deletedTblId - only defined if a table has been deleted
  */
 function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, preparedTables,
-                                usesRadians, tblCatIdMap, preferredHipsSourceURL, deletedTblId ) {
+                                usesRadians, tblCatIdMap, preferredHipsSourceURL, preferredHipsSource360URL, deletedTblId ) {
 
 
 
@@ -368,14 +378,16 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
     const {fovDegFallOver, fovMaxFitsSize, autoConvertOnZoom, imageSourceParams, overlayPosition= avgOfCenters}= options;
 
     let plotAllSkyFirst= false;
+    let hipsUrl= preferredHipsSourceURL;
     if (fovSize>110 && !blankHips) {
         plotAllSkyFirst= true;
+        hipsUrl= preferredHipsSource360URL;
     }
     let imageRequest= WebPlotRequest.makeFromObj(imageSourceParams) ||
                             WebPlotRequest.make2MASSRequest(avgOfCenters, 'asky', 'k', fovSize);
     imageRequest= initRequest(imageRequest, viewerId, PLOT_ID, overlayPosition, avgOfCenters);
 
-    const hipsRequest= initRequest(WebPlotRequest.makeHiPSRequest(preferredHipsSourceURL, null),
+    const hipsRequest= initRequest(WebPlotRequest.makeHiPSRequest(hipsUrl, null),
                        viewerId, PLOT_ID, overlayPosition, avgOfCenters);
     hipsRequest.setSizeInDeg(fovSize>180?300:fovSize);
     if (options.gridOn) {
@@ -766,25 +778,43 @@ function cleanUpOptions(options) {
  * @param preparedTable
  * @return {*}
  */
-function findPreferredHiPS(tbl_id,prevPreferredHipsSourceURL, optionHipsSourceURL, preparedTable) {
+function findPreferredHiPS(tbl_id,prevPreferredHipsSourceURL, optionHipsSourceURL, optionHipsSource360URL, preparedTable) {
+
+    const makeRet= (hNormal,h360) => ({preferredHipsSourceURL:hNormal, preferredHipsSource360URL:h360});
 
     const table = getTblById(tbl_id);
-    if (!table || table.isFetching) return optionHipsSourceURL;
+    if (!table || table.isFetching) return makeRet(optionHipsSourceURL,optionHipsSource360URL);
     if (!preparedTable) { // if a new table then the meta takes precedence
         const sim= getBooleanMetaEntry(table, MetaConst.SIMULATED_TABLE, false);
         const covHips= getMetaEntry(table,MetaConst.COVERAGE_HIPS);
-        if (covHips) return covHips;
-        if (sim) return BLANK_HIPS_URL;
+        if (covHips) return makeRet(covHips,covHips);
+        if (sim) return makeRet(BLANK_HIPS_URL, BLANK_HIPS_URL);
     }
     const plot= primePlot(visRoot(), PLOT_ID);
     if (isHiPS(plot)) {
-        return plot.hipsUrlRoot;
+        return makeRet(plot.hipsUrlRoot, plot.hipsUrlRoot);
     }
-    if (prevPreferredHipsSourceURL) return prevPreferredHipsSourceURL;
-    if (optionHipsSourceURL) return optionHipsSourceURL;
+    if (prevPreferredHipsSourceURL) return makeRet(prevPreferredHipsSourceURL, prevPreferredHipsSourceURL);
+    if (optionHipsSourceURL) return makeRet(optionHipsSourceURL, optionHipsSource360URL);
 }
 
-
+// function findPreferred360HiPS(tbl_id,prevPreferredHipsSourceURL, optionHipsSourceURL, optionHipsSource360URL, preparedTable) {
+//     const normalUrl= findPreferredHiPS(tbl_id,prevPreferredHipsSourceURL, optionHipsSourceURL, preparedTable);
+//     const table = getTblById(tbl_id);
+//     if (!preparedTable) { // if a new table then the meta takes precedence
+//         const sim= getBooleanMetaEntry(table, MetaConst.SIMULATED_TABLE, false);
+//         const covHips= getMetaEntry(table,MetaConst.COVERAGE_HIPS);
+//         if (covHips) return covHips;
+//         if (sim) return BLANK_HIPS_URL;
+//     }
+//     const plot= primePlot(visRoot(), PLOT_ID);
+//     if (isHiPS(plot)) {
+//         return plot.hipsUrlRoot;
+//     }
+//     return optionHipsSource360URL ?? optionHipsSourceURL;
+//
+// }
+//
 
 function getCommonSearchTarget(tableAry,options) {
     const searchTargetAry= tableAry

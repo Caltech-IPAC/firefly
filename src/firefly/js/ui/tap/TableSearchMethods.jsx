@@ -23,6 +23,7 @@ import {convertMJDToISO, validateDateTime, validateMJD} from '../DateTimePickerF
 import {TimePanel} from '../TimePanel.jsx';
 import {maybeQuote, getColumnAttribute, HeaderFont, ISO, MJD, tapHelpId, getTapServices} from './TapUtil.js';
 import {ColsShape, ColumnFld, getColValidator} from '../../charts/ui/ColumnOrExpression';
+import {ConnectionCtx} from '../ConnectionCtx.js';
 import {
     changeDatePickerOpenStatus,
     FROM,
@@ -180,6 +181,7 @@ function useFieldGroupReducer(component, fieldGroupReducer) {
 const FunctionalTableSearchMethods = (props) => {
 
     const [fields, setFields] = useState(FieldGroupUtils.getGroupFields(skey));
+    const [controlConnected, setControlConnected] = useState(false);
     //const [queryState, dispatchQueryState] = useReducer();
     // FIXME: Rationalize use of state, props, etc...
     //const [columnsModel, setColumnsModel] = useState(props ? props.columnsModel : getTblById(get(fields, [CrtColumnsModel, 'value'])));
@@ -207,28 +209,30 @@ const FunctionalTableSearchMethods = (props) => {
 
     // We create a new reducer for this FieldGroup
     return (
-        <FieldGroup style={{height: '100%', overflow: 'auto'}}
-                    groupKey={groupKey} keepState={true} reducerFunc={buildTapSearchMethodReducer(columnsModel)}>
-            {obsCoreEnabled && <ObsCoreSearch {...{cols, groupKey, fields, useConstraintReducer, useFieldGroupReducer, initArgs:props.initArgs}} />}
-            <SpatialSearch {...{cols, serviceUrl:props.serviceUrl, columnsModel, groupKey, fields, initArgs:props.initArgs, obsCoreEnabled, useConstraintReducer, useFieldGroupReducer}} />
-            {obsCoreEnabled && <ExposureDurationSearch {...{cols, groupKey, fields, useConstraintReducer, useFieldGroupReducer, initArgs:props.initArgs}} />}
-            {!obsCoreEnabled && <TemporalSearch {...{cols, columnsModel, groupKey, fields, obsCoreEnabled, useConstraintReducer, useFieldGroupReducer}} />}
-            {obsCoreEnabled && <ObsCoreWavelengthSearch {...{cols, groupKey, fields, useConstraintReducer, useFieldGroupReducer, initArgs:props.initArgs}} />}
-            {DEBUG_OBSCORE && <div>
-                adql WHERE: <br/>
-                {constraintResults?.adqlConstraints?.join(' AND ')}
-                <br/>
-                adql errors: <br/>
-                {constraintResults?.adqlConstraintErrors?.map((elem) => {elem.join(', ');})}
-                <br/>
-                sia ?: <br/>
-                {constraintResults?.siaConstraints?.join('&')}
-                <br/>
-                sia errors: <br/>
-                {constraintResults?.siaConstraintErrors?.map((elem) => elem.join(', ')).join('<br/>')}
-                <br/>
-            </div>}
-        </FieldGroup>
+        <ConnectionCtx.Provider value={{controlConnected, setControlConnected}}>
+            <FieldGroup style={{height: '100%', overflow: 'auto'}}
+                        groupKey={groupKey} keepState={true} reducerFunc={buildTapSearchMethodReducer(columnsModel)}>
+                {obsCoreEnabled && <ObsCoreSearch {...{cols, groupKey, fields, useConstraintReducer, useFieldGroupReducer, initArgs:props.initArgs}} />}
+                <SpatialSearch {...{cols, serviceUrl:props.serviceUrl, columnsModel, groupKey, fields, initArgs:props.initArgs, obsCoreEnabled, useConstraintReducer, useFieldGroupReducer}} />
+                {obsCoreEnabled && <ExposureDurationSearch {...{cols, groupKey, fields, useConstraintReducer, useFieldGroupReducer, initArgs:props.initArgs}} />}
+                {!obsCoreEnabled && <TemporalSearch {...{cols, columnsModel, groupKey, fields, obsCoreEnabled, useConstraintReducer, useFieldGroupReducer}} />}
+                {obsCoreEnabled && <ObsCoreWavelengthSearch {...{cols, groupKey, fields, useConstraintReducer, useFieldGroupReducer, initArgs:props.initArgs}} />}
+                {DEBUG_OBSCORE && <div>
+                    adql WHERE: <br/>
+                    {constraintResults?.adqlConstraints?.join(' AND ')}
+                    <br/>
+                    adql errors: <br/>
+                    {constraintResults?.adqlConstraintErrors?.map((elem) => {elem.join(', ');})}
+                    <br/>
+                    sia ?: <br/>
+                    {constraintResults?.siaConstraints?.join('&')}
+                    <br/>
+                    sia errors: <br/>
+                    {constraintResults?.siaConstraintErrors?.map((elem) => elem.join(', ')).join('<br/>')}
+                    <br/>
+                </div>}
+            </FieldGroup>
+        </ConnectionCtx.Provider>
     );
 };
 
@@ -668,7 +672,7 @@ function renderTargetPanel(groupKey, fields, visible, hasRadius,
                            hipsUrl= getAppOptions().coverage?.hipsSourceURL  ??  'ivo://CDS/P/2MASS/color',
                            centerWP, fovDeg=240) {
     const targetSelect = () => {
-        const wp= parseWorldPt(centerWP) ?? makeWorldPt(0,0);
+        const wp= parseWorldPt(centerWP);
         return (
             <div style={{height: 70, display:'flex', justifyContent: 'flex-start', alignItems: 'center', marginTop: '5px'}}>
                 <VisualTargetPanel labelWidth={LableSaptail} groupKey={groupKey} feedbackStyle={{height: 40}}

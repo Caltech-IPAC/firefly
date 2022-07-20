@@ -10,12 +10,17 @@ import EXCLAMATION from 'html/images/exclamation16x16.gif';
 
 
 
-function computeStyle(valid,hasFocus,readonly) {
+function computeStyle(valid,hasFocus,readonly,connectedMarker) {
     if (!valid) {
         return 'ff-inputfield-view-error';
-    } else if(readonly) {
+    }
+    else if(readonly) {
         return 'ff-inputfield-view-readonly';
-    } else {
+    }
+    else if (connectedMarker) {
+        return (hasFocus ? 'ff-inputfield-view-focus-no-bg' : 'ff-inputfield-view-valid-no-bg');
+    }
+    else {
         return hasFocus ? 'ff-inputfield-view-focus' : 'ff-inputfield-view-valid';
     }
 }
@@ -58,10 +63,10 @@ export class InputFieldView extends PureComponent {
     }
 
     componentDidUpdate() {
-        var {infoPopup}= this.state;
+        const {infoPopup}= this.state;
         if (infoPopup && this.warnIcon) {
-            var {warningOffsetX, warningOffsetY}= computeWarningXY(this.warnIcon);
-            var {message}= this.props;
+            const {warningOffsetX, warningOffsetY}= computeWarningXY(this.warnIcon);
+            const {message}= this.props;
             if (this.hider) this.hider();
             this.hider = DialogRootContainer.showTmpPopup(makeInfoPopup(message, warningOffsetX, warningOffsetY));
         }
@@ -87,11 +92,13 @@ export class InputFieldView extends PureComponent {
     }
 
     render() {
-        var {hasFocus}= this.state;
-        var {visible,disabled, label,tooltip,labelWidth,value,style,wrapperStyle,labelStyle, inputRef, autoFocus,
-             valid,size,onChange, onBlur, onKeyPress, onKeyDown, onKeyUp, showWarning, message, type, placeholder, form='__ignore', readonly}= this.props;
+        const {hasFocus}= this.state;
+        const {visible,disabled, label,tooltip,labelWidth,value,style,wrapperStyle,labelStyle, inputRef, autoFocus,
+             valid,size,onChange, onBlur, onKeyPress, onKeyDown, onKeyUp, showWarning, connectedMarker=false,
+            message, type, placeholder, readonly}= this.props;
         if (!visible) return null;
-        wrapperStyle = Object.assign({whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block'}, wrapperStyle);
+        const useWrapperStyle = {whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block', ...wrapperStyle};
+        let {form='__ignore'}= this.props;
         // form to relate this input field to.
         // assign form to null or empty-string to use it within a form tag (similar to input tag without form attribute).
         // if form is not given, it will default to __ignore so that it does not interfere with embedded forms.
@@ -99,11 +106,14 @@ export class InputFieldView extends PureComponent {
 
         const currValue= (type==='file') ? undefined : value;
 
+        const inputStyle= {display:'inline-block'};
+        if (connectedMarker) inputStyle.backgroundColor= 'yellow';
+
         return (
-            <div style={wrapperStyle}>
+            <div style={useWrapperStyle}>
                 {label && <InputFieldLabel labelStyle={labelStyle} label={label} tooltip={tooltip} labelWidth={labelWidth}/> }
-                <input style={Object.assign({display:'inline-block'}, style)}
-                       className={computeStyle(valid,hasFocus, readonly)}
+                <input style={{...inputStyle, ...style}}
+                       className={computeStyle(valid,hasFocus, readonly,connectedMarker)}
                        onChange={(ev) => onChange ? onChange(ev) : null}
                        onFocus={ () => !hasFocus ? this.setState({hasFocus:true, infoPopup:false}) : ''}
                        onBlur={ (ev) => {
@@ -148,6 +158,7 @@ InputFieldView.propTypes= {
     type: string,
     placeholder: string,
     form: string,
+    connectedMarker: bool,
     readonly: bool
 };
 
