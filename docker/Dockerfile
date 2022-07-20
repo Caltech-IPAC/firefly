@@ -7,10 +7,6 @@ FROM openjdk:8-jdk-slim-buster AS deps
 RUN apt-get update && apt-get install -y curl git htmldoc unzip wget bzip2
 
 RUN apt-get update \
-# use node v12.x. may not be available via apt-get
-    && curl -sL https://deb.nodesource.com/setup_12.x | bash -  \
-    && apt-get install -y nodejs \
-    && npm install yarn -g  \
 # gradle version 4.10.  Not available via apt-get
     && cd /usr/local \
     && wget  -q https://services.gradle.org/distributions/gradle-4.10-bin.zip \
@@ -34,7 +30,7 @@ COPY . .
 
 WORKDIR /opt/work/${build_dir}
 ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.internal.launcher.welcomeMessageEnabled=false"
-RUN gradle -Penv=${env} -p ../firefly :firefly:jar -x buildClient && gradle -Penv=${env} ${target} -x buildClient
+RUN gradle -Penv=${env} -p ../firefly :firefly:jar && gradle -Penv=${env} ${target}
 
 
 
