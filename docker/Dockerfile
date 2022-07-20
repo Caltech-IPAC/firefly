@@ -8,11 +8,11 @@ FROM openjdk:17-jdk-slim-buster AS deps
 RUN apt-get update && apt-get install -y curl git htmldoc unzip wget
 
 RUN apt-get update \
-# use node v12.x. may not be available via apt-get
-    && curl -sL https://deb.nodesource.com/setup_12.x | bash -  \
+# use node v18.x. may not be available via apt-get
+    && curl -sL https://deb.nodesource.com/setup_18.x | bash -  \
     && apt-get install -y nodejs \
     && npm install yarn -g  \
-# gradle version 17.4  Not available via apt-get
+# gradle version 7.4  Not available via apt-get
     && cd /usr/local \
     && wget  -q https://services.gradle.org/distributions/gradle-7.4-bin.zip \
     && unzip -q gradle-7.4-bin.zip \
@@ -28,6 +28,39 @@ FROM deps AS node_module
 WORKDIR "/opt/work/lib"
 COPY firefly/package.json firefly/yarn.lock ./
 RUN yarn install --ignore-platform --frozen-lockfile
+
+
+FROM node_module AS dev_env
+
+RUN apt-get update \
+# install tomcat9 for dev mode \
+    && curl -O https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.64/bin/apache-tomcat-9.0.64.tar.gz \
+    && mkdir /opt/tomcat && tar xzf apache-tomcat-9*tar.gz -C /opt/tomcat --strip-components=1 \
+    && sed -i -E 's/allow=".*"/allow=".*"/' /opt/tomcat/webapps/manager/META-INF/context.xml \
+# cleanup
+    && rm apache-tomcat-9*tar.gz \
+    && rm -rf /var/lib/apt/lists/*;
+
+ENV JPDA_ADDRESS=*:5050 \
+    CATALINA_HOME=/opt/tomcat \
+    DEBUG=true \
+    START_MODE=start \
+    USE_ADMIN_AUTH="false"
+
+ENV work_dir=firefly
+ENV project=firefly
+
+WORKDIR ${CATALINA_HOME}
+
+# Tomcat scripts, config files, etc
+COPY firefly/docker/*.sh ./
+COPY firefly/docker/tomcat-users.xml conf/
+
+# set up directory protections, copy stuff around, add tomcat user and group
+RUN mkdir -p /firefly/workarea /firefly/logs/statistics /firefly/alerts \
+    && chmod a+x *.sh
+
+CMD /opt/tomcat/launchTomcat.sh && cd /opt/work/${work_dir} && gradle ${project}:bAD -x buildClient && gradle ${project}:dev
 
 
 FROM node_module AS builder
@@ -94,11 +127,7 @@ RUN apt-get update && apt-get install -y \
 #          - also- User name and password to use admin
 #          - PROPS could be used to pass any properties
 
-ENV INIT_RAM_PERCENT=10\
-    MAX_RAM_PERCENT=100\
-    JVM_CORES=0\
-    ADMIN_USER=admin\
-    ADMIN_PASSWORD='' \
+ENV JVM_CORES=0\
     DEBUG=false \
     CLEANUP_INTERVAL=12h \
     PROPS=''
@@ -131,7 +160,7 @@ COPY firefly/docker/*.sh firefly/docker/*.txt ${CATALINA_HOME}/
 
 # Tomcat config files, tomcat-users is for the admin username and password
 # context.xml set delegate to true for we can use the classpath of tomcat
-COPY firefly/docker/tomcat-users.xml conf/
+COPY firefly/docker/tomcat-users.xml firefly/docker/java.security.override conf/
 COPY firefly/docker/local.xml conf/Catalina/localhost
 
 #copy all wars, typically there should only be one

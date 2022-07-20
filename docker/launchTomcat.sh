@@ -1,6 +1,7 @@
 #!/bin/bash
 
 NAME=${BUILD_TIME_NAME:-"ipac/firefly"}
+ADMIN_USER=${ADMIN_USER:-admin}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-`echo $RANDOM | base64 | head -c 8`}
 USE_ADMIN_AUTH=${USE_ADMIN_AUTH:-"true"}
 
@@ -74,8 +75,8 @@ fi
 
 #---------   CATALINA_OPTS must be exported for catalina.sh to pick them up
 export CATALINA_OPTS="\
-  -XX:InitialRAMPercentage=${INIT_RAM_PERCENT} \
-  -XX:MaxRAMPercentage=${MAX_RAM_PERCENT} \
+  -XX:InitialRAMPercentage=${INIT_RAM_PERCENT:-10} \
+  -XX:MaxRAMPercentage=${MAX_RAM_PERCENT:-100} \
   -DADMIN_USER=${ADMIN_USER} \
   -DADMIN_PASSWORD=${ADMIN_PASSWORD} \
   -Dhost.name=${HOSTNAME} \
