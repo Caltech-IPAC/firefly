@@ -7,6 +7,11 @@
   - [Notes on next version](next-release-details.md)
 
 
+#### Infrastructure updates
+- _Build_: Node.js updated to `v18`, `v12` is end-of-life [Pull Request](https://github.com/Caltech-IPAC/firefly/pull/1234)
+- _Build_: Improved docker developer environment [Pull Request](https://github.com/Caltech-IPAC/firefly/pull/1234)
+
+
 ## Version 2022.1
 - 2022.1.1 (April 2022)
   - docker tag: `latest`, `2022.1`, `2022.1.1`

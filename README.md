@@ -65,17 +65,16 @@ There are several branches in the repository.  Here are the ones that you should
 ## Setup
 
 ### Prerequisites
- -  [Java 1.8] http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
+ -  [Java 17] http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
     This is the version we are using to compile and run Firefly.  
 
- -  [Gradle 3.x] (https://gradle.org/downloads)
+ -  [Gradle 7.4] (https://gradle.org/downloads)
     Gradle is an open source build automation system.
 
-
- -  [Tomcat 7+] (http://tomcat.apache.org/download-70.cgi)
+ -  [Tomcat 9] (http://tomcat.apache.org/download-70.cgi)
     Apache Tomcat is an open source software implementation of the Java Servlet and JavaServer Pages technologies.
 
- -  [Node v12+] (https://nodejs.org/)
+ -  [Node v18] (https://nodejs.org/)
     Javascript interpreter for command line environment, used for development tools
 
 ### Prepare before the build
