@@ -14,8 +14,6 @@ dependencies {
 
 jar {
 
-  dependsOn buildClient
-
   baseName = 'firefly'
   includes = ['edu/caltech/ipac/**/*']
   from sourceSets.main.allJava

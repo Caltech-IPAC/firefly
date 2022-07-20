@@ -1,7 +1,9 @@
 #!/bin/bash
 
 NAME=${BUILD_TIME_NAME:-"ipac/firefly"}
+ADMIN_USER=${ADMIN_USER:-admin}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-`echo $RANDOM | base64 | head -c 8`}
+USE_ADMIN_AUTH=${USE_ADMIN_AUTH:-"true"}
 
 echo -e "\n!!============================================================"
 echo "!!============================================================"
@@ -16,16 +18,19 @@ echo -e "!!============================================================\n\n"
 echo "========== Information:  you can set environment variable using -e on docker run line =====  "
 echo 
 echo "Environment Variables:"
-echo "        Description                      Name                       Value"
-echo "        -----------                      --------                   -----"
-echo "        Admin username                   ADMIN_USER                 ${ADMIN_USER}"
-echo "        Admin password                   ADMIN_PASSWORD             ${ADMIN_PASSWORD}"
-echo "        Additional data path             VISUALIZE_FITS_SEARCH_PATH ${VISUALIZE_FITS_SEARCH_PATH}"
-echo "        Clean internal(eg- 720m, 5h, 3d) CLEANUP_INTERVAL           ${CLEANUP_INTERVAL}"
+echo "        Description                      Name                          Value"
+echo "        -----------                      --------                      -----"
+echo "        Admin username                   ADMIN_USER                    ${ADMIN_USER}"
+echo "        Admin password                   ADMIN_PASSWORD                ${ADMIN_PASSWORD}"
+echo "        Additional data path             VISUALIZE_FITS_SEARCH_PATH    ${VISUALIZE_FITS_SEARCH_PATH}"
+echo "        Clean internal(eg- 720m, 5h, 3d) CLEANUP_INTERVAL              ${CLEANUP_INTERVAL}"
 echo
 echo "Advanced environment variables:"
-echo "        Run tomcat with debug            DEBUG                      ${DEBUG}"
-echo "        Extra firefly properties(*)      PROPS                      ${PROPS}"
+echo "        Run tomcat with debug            DEBUG                         ${DEBUG}"
+echo "        Extra firefly properties(*)      PROPS                         ${PROPS}"
+echo "        Redis host                       PROPS_redis__host             ${PROPS_redis__host}"
+echo "        SSO host                         PROPS_sso__req__auth__hosts   ${PROPS_sso__req__auth__hosts}"
+echo "        firefly.options (JSON string)    PROPS_FIREFLY_OPTIONS         ${PROPS_FIREFLY_OPTIONS}"
 echo " (*) key=value pairs separated by spaces"
 echo
 echo "Ports: "
@@ -70,8 +75,8 @@ fi
 
 #---------   CATALINA_OPTS must be exported for catalina.sh to pick them up
 export CATALINA_OPTS="\
-  -XX:InitialRAMPercentage=${INIT_RAM_PERCENT} \
-  -XX:MaxRAMPercentage=${MAX_RAM_PERCENT} \
+  -XX:InitialRAMPercentage=${INIT_RAM_PERCENT:-10} \
+  -XX:MaxRAMPercentage=${MAX_RAM_PERCENT:-90} \
   -DADMIN_USER=${ADMIN_USER} \
   -DADMIN_PASSWORD=${ADMIN_PASSWORD} \
   -Dhost.name=${HOSTNAME} \
@@ -85,6 +90,9 @@ export CATALINA_OPTS="\
   -Djava.security.properties=/usr/local/tomcat/conf/java.security.override \
   -Dvisualize.fits.search.path=${VIS_PATH} \
 	"
+
+#----- remove ADMIN_PROTECTED path so it no longer restricted by basic auth
+if [ "${USE_ADMIN_AUTH,,}" = "false" ]; then export CATALINA_OPTS="${CATALINA_OPTS} -DADMIN_PROTECTED="; fi
 
 #----- eval PROPS if exists.  key-value pairs are separated by spaces. therefore, it does not support values with spaces in it.
 if [ ! -z "${PROPS}" ]; then
@@ -110,7 +118,7 @@ CATALINA_OPTS="$CATALINA_OPTS \
 #------- start background scripts: cleanup
 ${CATALINA_HOME}/cleanup.sh /firefly/workarea /firefly/shared-workarea &
 
-echo "launchTomcat.sh: Starting Tomcat"
+echo -e "\nlaunchTomcat.sh: Starting Tomcat"
 if [ "$DEBUG" = "true" ] ||[ "$DEBUG" = "t" ] ||[ "$DEBUG" = "1" ] ||  \
    [ "$DEBUG" = "TRUE" ] || [ "$DEBUG" = "True" ] || [ "$1" = "--debug" ]; then
     exec ${CATALINA_HOME}/bin/catalina.sh jpda ${START_MODE}
