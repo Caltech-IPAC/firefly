@@ -34,7 +34,7 @@ FROM node_module AS dev_env
 
 RUN apt-get update \
 # install tomcat9 for dev mode \
-    && curl -O https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.64/bin/apache-tomcat-9.0.64.tar.gz \
+    && curl -O https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.65/bin/apache-tomcat-9.0.65.tar.gz \
     && mkdir /opt/tomcat && tar xzf apache-tomcat-9*tar.gz -C /opt/tomcat --strip-components=1 \
     && sed -i -E 's/allow=".*"/allow=".*"/' /opt/tomcat/webapps/manager/META-INF/context.xml \
 # cleanup
