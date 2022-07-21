@@ -2,9 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {memo, useEffect} from 'react';
-import PropTypes from 'prop-types';
-import {get} from 'lodash';
+import React, {memo, useContext, useEffect} from 'react';
+import PropTypes, {bool} from 'prop-types';
+import {ConnectionCtx} from './ConnectionCtx.js';
 import {parseTarget} from './TargetPanelWorker.js';
 import {formatPosForTextField, formatTargetForHelp} from './PositionFieldDef.js';
 import {TargetFeedback} from './TargetFeedback.jsx';
@@ -27,15 +27,18 @@ const TargetPanelView = (props) =>{
     const {showHelp, feedback, valid, message, onChange, value, style={}, button,
         labelWidth, children, resolver, feedbackStyle, showResolveSourceOp= true, showExample= true,
         targetPanelExampleRow1, targetPanelExampleRow2,
+        connectedMarker=false,
         examples, label= LABEL_DEFAULT, onUnmountCB, wpt}= props;
 
     useEffect(() => () => onUnmountCB(props),[]);
+    const connectContext= useContext(ConnectionCtx);
 
     const positionField = (
         <InputFieldView valid={valid} visible= {true} message={message}
-            onChange={(ev) => onChange(ev.target.value, TARGET)}
-            label={label} value={value} tooltip='Enter a target'
-            labelWidth={labelWidth} labelStyle={{paddingRight:'45px'}}
+                        onChange={(ev) => onChange(ev.target.value, TARGET)}
+                        label={label} value={value} tooltip='Enter a target'
+                        connectedMarker={connectedMarker||connectContext.controlConnected}
+                        labelWidth={labelWidth} labelStyle={{paddingRight:'45px'}}
         />);
     const positionInput = children ? (<div style={{display: 'flex'}}>{positionField} {children}</div>) : positionField;
 
@@ -82,6 +85,7 @@ TargetPanelView.propTypes = {
     showResolveSourceOp: PropTypes.bool,
     targetPanelExampleRow1: PropTypes.arrayOf(PropTypes.string),
     targetPanelExampleRow2: PropTypes.arrayOf(PropTypes.string),
+    connectedMarker: bool,
     showExample: PropTypes.bool
 };
 
@@ -167,12 +171,7 @@ function makePayloadAndUpdateActive(displayValue, parseResults, resolvePromise, 
 function replaceValue(v,defaultToActiveTarget, computedState) {
     if (!defaultToActiveTarget) return v;
     if ((computedState.displayValue || computedState.message) && !computedState.valid) return '';
-    const t= getActiveTarget();
-    let retVal= v;
-    if (t && t.worldPt) {
-       if (get(t,'worldPt')) retVal= t.worldPt.toString();
-    }
-    return retVal;
+    return getActiveTarget()?.worldPt?.toString() ?? v;
 }
 
 
@@ -203,6 +202,7 @@ TargetPanel.propTypes = {
     targetPanelExampleRow1: PropTypes.arrayOf(PropTypes.string),
     targetPanelExampleRow2: PropTypes.arrayOf(PropTypes.string),
     showExample: PropTypes.bool,
+    connectedMarker: bool,
     defaultToActiveTarget: PropTypes.bool,
 };
 

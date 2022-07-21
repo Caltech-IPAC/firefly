@@ -6,6 +6,7 @@ import React, {memo,Fragment} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, isString} from 'lodash';
 import shallowequal from 'shallowequal';
+import {flux} from '../../core/ReduxFlux.js';
 import {sprintf} from '../../externalSource/sprintf';
 import {
     primePlot,getPlotViewById, isMultiHDUFits, getCubePlaneCnt, getHDU, getActivePlotView,
@@ -13,13 +14,14 @@ import {
     getHDUCount, getHDUIndex, getPtWavelength, hasPlaneOnlyWLInfo, isImageCube,
 } from '../PlotViewUtil.js';
 import {getExtName, getExtType} from '../FitsHeaderUtil.js';
+import {makeWorldPt} from '../Point.js';
 import {isHiPS, isHiPSAitoff, isImage} from '../WebPlot.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
 import {dispatchExtensionActivate} from '../../core/ExternalAccessCntlr.js';
 import {
     dispatchChangePrimePlot, dispatchChangeHiPS,
-    dispatchChangeHipsImageConversion, visRoot, dispatchChangeCenterOfProjection
+    dispatchChangeHipsImageConversion, visRoot, dispatchChangeCenterOfProjection, WcsMatchType, dispatchRecenter
 } from '../ImagePlotCntlr.js';
 import {makePlotSelectionExtActivateData} from '../../core/ExternalAccessUtils.js';
 import {ListBoxInputFieldView} from '../../ui/ListBoxInputField';
@@ -311,6 +313,15 @@ export const VisCtxToolbarView= memo((props) => {
             {hips && !canConvertHF && <HipsProjConvertButton pv={pv}/>}
             {hips && <HiPSCoordSelect plotId={plot?.plotId} imageCoordSys={plot?.imageCoordSys}/>}
             {hips && makeHiPSImageTable(pv)}
+            {isHiPSAitoff(plot) &&
+                <ToolbarButton text='Center Galactic' tip='Align Aitoff HiPS to Galactic 0,0'
+                               horizontal={true}
+                               onClick={() => dispatchChangeHiPS({
+                                   plotId:plot.plotId,
+                                   coordSys:CoordinateSys.GALACTIC,
+                                   centerProjPt:makeWorldPt(0, 0, CoordinateSys.GALACTIC) })
+                               } />
+            }
         </Fragment>
     );
 

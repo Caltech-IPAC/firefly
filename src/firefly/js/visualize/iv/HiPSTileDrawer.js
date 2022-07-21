@@ -266,7 +266,7 @@ function makeOffScreenCanvas(plotView, plot, overlayTransparent) {
 
     const aitoff= isHiPSAitoff(plot);
     let altDevRadius= plotView.viewDim.width/2 + plotView.scrollX - 4;
-    if (aitoff) altDevRadius*= 2.85;
+    if (aitoff) altDevRadius*= 2.92;
     if (aitoff && fov>=360) {
         clipForFullScreen(ctx, width,height, centerDevPt, altDevRadius, true);
     }

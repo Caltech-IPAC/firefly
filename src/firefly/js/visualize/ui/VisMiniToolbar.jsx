@@ -174,6 +174,10 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
             if (!rect) return;
             setColorDrops(Boolean(window.innerHeight-rect.bottom>560));
         }
+        return () => {
+            const modalEndInfo= getComponentState('ModalEndInfo', emptyModalEndInfo);
+            if (modalEndInfo.offOnNewPlot) closeToolbarModalLayers();
+        };
     }, []);
 
     const pv= getActivePlotView(visRoot);
@@ -451,7 +455,8 @@ function startExtraction(element,type,setModalEndInfo, modalEndInfo) {
             ended= true;
             endExtraction();
             setModalEndInfo({});
-        }
+        },
+        offOnNewPlot: false
     });
 
 }

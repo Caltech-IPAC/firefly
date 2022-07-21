@@ -36,7 +36,7 @@ import {
 } from '../../metaConvert/DataProductsCntlr';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView';
 import {dispatchChangeActivePlotView} from '../ImagePlotCntlr';
-import {ActivateMenu} from './ActivateMenu.jsx';
+import {ServiceDescriptorPanel} from './ServiceDescriptorPanel.jsx';
 import {getServiceParamsAry} from '../../metaConvert/DataProductsCntlr.js';
 
 
@@ -137,13 +137,14 @@ const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId, 
             return makeMultiImageViewer(imageViewerId,metaDataTableId,makeDropDown,ImageMetaDataToolbar);
         case DPtypes.ANALYZE :
             if (allowsInput && !searchParams) {
-                return (<ActivateMenu
+                return (<ServiceDescriptorPanel
                     {...{
                         serDefParams,
                         serviceDefRef:dataProductsState.serviceDefRef,
                         setSearchParams: (params) => dispatchSetSearchParams({dpId,activeMenuLookupKey,menuKey,params}),
                         title:dataProductsState.name,
                         makeDropDown,
+                        sRegion: dataProductsState.sRegion,
                         }} />);
             }
             else {

@@ -1,4 +1,6 @@
-import {getDataLinkData, getObsCoreAccessURL, getObsCoreProdType, getServiceDescriptors} from '../util/VOAnalyzer';
+import {
+    getDataLinkData, getObsCoreAccessURL, getObsCoreProdType, getObsCoreSRegion, getObsTitle, getServiceDescriptors
+} from '../util/VOAnalyzer';
 import {
     dpdtAnalyze,
     dpdtDownload,
@@ -36,10 +38,13 @@ export function processDatalinkTable(sourceTable, row, datalinkTable, positionWP
     const dataSource= getObsCoreAccessURL(sourceTable,row);
     const dataLinkData= getDataLinkData(datalinkTable);
     const prodType= (getObsCoreProdType(sourceTable,row) || '').toLocaleLowerCase();
+    const obsTitle= getObsTitle(sourceTable,row);
+    const sRegion= getObsCoreSRegion(sourceTable,row);
     const descriptors= getServiceDescriptors(datalinkTable);
     const menu=  dataLinkData.length &&
-         createDataLinkMenuRet(dataSource,dataLinkData,positionWP, sourceTable, row, activateParams,
-             makeReq,prodType,descriptors, additionalServiceDescMenuList, doFileAnalysis);
+         createDataLinkMenuRet({dataSource,dataLinkData,positionWP, sourceTable, row, activateParams,
+             makeReq,prodType,descriptors, additionalServiceDescMenuList, doFileAnalysis,
+             obsTitle, sRegion });
 
     const hasData= menu.length>0;
     const canShow= menu.length>0 && menu.some( (m) => m.displayType!==DPtypes.DOWNLOAD && m.size<GIG);
@@ -109,21 +114,25 @@ const isAuxSem= (semantics) => semantics==='#auxiliary';
 
 /**
  *
- * @param dataSource
- * @param dataLinkData
- * @param {WorldPt} positionWP
- * @param {TableModel} sourceTable
- * @param {number} row
- * @param {ActivateParams} activateParams
- * @param makeReq
- * @param prodType
- * @param {Array.<DataProductsDisplayType>} [additionalServiceDescMenuList]
- * @param {Array.<ServiceDescriptorDef>} [descriptors]
- * @param doFileAnalysis
+ * @param obj
+ * @param obj.dataSource
+ * @param obj.dataLinkData
+ * @param {WorldPt} obj.positionWP
+ * @param {TableModel} obj.sourceTable
+ * @param {number} obj.row
+ * @param {ActivateParams} obj.activateParams
+ * @param obj.makeReq
+ * @param obj.prodType
+ * @param {Array.<DataProductsDisplayType>} [obj.additionalServiceDescMenuList]
+ * @param {Array.<ServiceDescriptorDef>} [obj.descriptors]
+ * @param obj.doFileAnalysis
+ * @param obj.obsTitle
+ * @param obj.sRegion
  * @return {Array.<DataProductsDisplayType>}
  */
-function createDataLinkMenuRet(dataSource, dataLinkData, positionWP, sourceTable, row, activateParams, makeReq,
-                               prodType, descriptors, additionalServiceDescMenuList, doFileAnalysis=true) {
+function createDataLinkMenuRet({dataSource, dataLinkData, positionWP, sourceTable, row, activateParams, makeReq,
+                               prodType, descriptors, additionalServiceDescMenuList, doFileAnalysis=true,
+                               obsTitle, sRegion }) {
     const auxTot= dataLinkData.filter( (e) => e.semantics==='#auxiliary').length;
     let auxCnt=0;
     let primeCnt=0;
@@ -139,15 +148,15 @@ function createDataLinkMenuRet(dataSource, dataLinkData, positionWP, sourceTable
         if (serviceDefRef) {
             const servDesc= descriptors.find( ({ID}) => ID===serviceDefRef);
             if (servDesc) {
-                const {title,accessURL,standardID,urlParams, ID}= servDesc;
+                const {title,accessURL,standardID,serDefParams, ID}= servDesc;
                 const request= makeReq(accessURL,positionWP,title);
-                const allowsInput=urlParams.some( (p) => p.allowsInput);
+                const allowsInput=serDefParams.some( (p) => p.allowsInput);
                 const activate= makeFileAnalysisActivate(sourceTable,row, request, positionWP,activateParams,menuKey,
-                                       undefined, urlParams, name);
+                                       undefined, serDefParams, name);
                 menuEntry= dpdtAnalyze(`Show: ${name} ${allowsInput?' (Input Required)':''}` ,
-                    activate,accessURL,urlParams,menuKey,
+                    activate,accessURL,serDefParams,menuKey,
                     {activeMenuLookupKey,request, allowsInput, serviceDefRef,
-                        standardID, ID, semantics,size});
+                        standardID, ID, semantics,size, obsTitle, sRegion});
             }
         }
         else if (url) {

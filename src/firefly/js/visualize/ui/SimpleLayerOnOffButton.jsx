@@ -92,7 +92,8 @@ export function onOff(pv,typeId,allPlots, plotTypeMustMatch, todo, modalEndInfo,
             f: () => {
                 onOff(pv,typeId,allPlots,plotTypeMustMatch,todo, modalEndInfo, setModalEndInfo,endText);
             },
-            s: endText
+            s: endText,
+            offOnNewPlot: true
         });
     }
     else {

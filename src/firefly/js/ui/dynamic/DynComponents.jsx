@@ -178,7 +178,7 @@ function PositionAndPolyFieldEmbed({fieldDefAry}) {
     const [getConeAreaOp] = useFieldGroupValue(CONE_AREA_KEY);
 
     const {
-        hipsUrl, centerPt, hipsFOVInDeg = 240, coordinateSys: csysStr = 'EQ_J2000', mocList,
+        hipsUrl, centerPt, hipsFOVInDeg = 240, coordinateSys: csysStr = 'EQ_J2000', mocList, sRegion,
         targetPanelExampleRow1, targetPanelExampleRow2} = targetDetails ?? polyType?.targetDetails ?? {};
     const coordinateSys = CoordinateSys.parse(csysStr) ?? CoordinateSys.EQ_J2000;
 
@@ -194,7 +194,7 @@ function PositionAndPolyFieldEmbed({fieldDefAry}) {
         <div key='targetGroup'
              style={{display: 'flex', flexDirection: 'column', alignItems: 'center', alignSelf: 'stretch'}}>
             <HiPSTargetView {...{
-                hipsUrl, centerPt, hipsFOVInDeg, mocList, coordinateSys,
+                hipsUrl, centerPt, hipsFOVInDeg, mocList, coordinateSys, sRegion,
                 minSize: minValue, maxSize: maxValue, whichOverlay: getConeAreaOp(),
                 targetKey, sizeKey, polygonKey, style: {height: 400, alignSelf: 'stretch'}
             }}/>
@@ -317,7 +317,7 @@ function CircleField({ fieldKey, desc, tooltip = '', initValue, minValue, maxVal
 
 function PolygonField({ fieldKey, desc = 'Coordinates', initValue = '', style={},
                           labelWidth = DEF_LABEL_WIDTH, tooltip = 'Enter polygon coordinates search',
-                          targetDetails: {targetPanelExampleRow1 = DEF_AREA_EXAMPLE}, ...restOfProps }) {
+                          targetDetails: {targetPanelExampleRow1 = DEF_AREA_EXAMPLE, sRegion}, ...restOfProps }) {
 
     const help = [
         'Each vertex is defined by a J2000 RA and Dec position pair',
@@ -336,6 +336,7 @@ function PolygonField({ fieldKey, desc = 'Coordinates', initValue = '', style={}
                 labelStyle: {},
                 labelWidth,
                 tooltip,
+                sRegion,
                 ...restOfProps
             }}
             />

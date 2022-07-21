@@ -76,13 +76,13 @@ export function createServDescMenuRet(descriptors, positionWP, sourceTable, row,
     return descriptors
         .filter( (sDesc) => !isDataLinkServiceDesc(sDesc))
         .map( (sDesc,idx) => {
-            const {title,accessURL,standardID,urlParams, ID}= sDesc;
+            const {title,accessURL,standardID,serDefParams, ID}= sDesc;
             const menuKey= 'serdesc-dlt-'+idx;
-            const allowsInput= urlParams.some( (p) => p.allowsInput);
+            const allowsInput= serDefParams.some( (p) => p.allowsInput);
             const request= makeReq(accessURL,positionWP,title);
             const name= 'Show: '+title;
-            const activate= makeFileAnalysisActivate(sourceTable,row, request, positionWP,activateParams,menuKey, undefined, urlParams, name);
-            return dpdtAnalyze(name,activate,accessURL,urlParams,menuKey,{activeMenuLookupKey,request, allowsInput, standardID, ID});
+            const activate= makeFileAnalysisActivate(sourceTable,row, request, positionWP,activateParams,menuKey, undefined, serDefParams, name);
+            return dpdtAnalyze(name,activate,accessURL,serDefParams,menuKey,{activeMenuLookupKey,request, allowsInput, standardID, ID});
         });
 }
 

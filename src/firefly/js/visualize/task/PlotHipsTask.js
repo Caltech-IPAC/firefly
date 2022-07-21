@@ -3,6 +3,7 @@
  */
 
 import {isEmpty, isString} from 'lodash';
+import CoordSys, {CoordinateSys} from '../CoordSys.js';
 import ImagePlotCntlr, {
     dispatchChangeCenterOfProjection,
     dispatchPlotHiPS,
@@ -16,6 +17,7 @@ import ImagePlotCntlr, {
     WcsMatchType,
     makeUniqueRequestKey
 } from '../ImagePlotCntlr.js';
+import {makeWorldPt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {WebPlot, isHiPS, isImage, isBlankHiPSURL} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
@@ -422,7 +424,11 @@ export function makeImageOrHiPSAction(rawAction) {
         const useImage= !plotAllSkyFirst && imageRequest.getWorldPt() && (size !== 0) && (size < fovDegFallOver);
 
         const wpRequest= useImage ? imageRequest.makeCopy() : hipsRequest.makeCopy();
-        if (hipsAitoff) wpRequest.setHipsUseAitoffProjection(true);
+        if (hipsAitoff) {
+            wpRequest.setHipsUseAitoffProjection(true);
+            wpRequest.setWorldPt(makeWorldPt(0,0,CoordinateSys.GALACTIC));
+            wpRequest.setHipsUseCoordinateSys(CoordinateSys.GALACTIC);
+        }
 
         const hipsImageConversion= {hipsRequestRoot:hipsRequest, imageRequestRoot:imageRequest, fovMaxFitsSize,
                                     autoConvertOnZoom, fovDegFallOver, plotAllSkyFirst};

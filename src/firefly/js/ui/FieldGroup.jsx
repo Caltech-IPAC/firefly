@@ -8,7 +8,7 @@ import {getFieldGroupState, isFieldGroupMounted} from '../fieldGroup/FieldGroupU
 
 export const GroupKeyCtx = React.createContext({});
 export const FieldGroup = memo( ({keepMounted, reducerFunc=undefined, groupKey, keepState=false, children, style, className}) => {
-        const [fields, setFields]= useState(() => getFieldGroupState(groupKey))
+        const [fields, setFields]= useState(() => getFieldGroupState(groupKey));
         const {groupKey:wrapperGroupKey}= useContext(GroupKeyCtx);
         useLayoutEffect(() => {
             dispatchMountFieldGroup(groupKey, true, keepState, reducerFunc, wrapperGroupKey);
