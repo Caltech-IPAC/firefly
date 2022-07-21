@@ -10,7 +10,7 @@
     "verbose": true,
     "clearMocks": true,
     "collectCoverage": true,
-    "coverageDirectory": "../../build/dist/reports",
+    "coverageDirectory": "../../build/dist/reports/firefly",
     "coverageReporters": ["lcov"],
     "moduleFileExtensions": [
       "js",
