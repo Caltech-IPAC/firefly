@@ -113,23 +113,23 @@ function SimpleDynSearchPanel({style={}, fieldDefAry}) {
                 <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}> {spacialPanel} </div>}
             {Boolean(polyPanel) &&
                 <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}> {polyPanel} </div>}
-                <div style={{paddingLeft:useSpacial?60:5, display:'flex', flexDirection:'column'}}>
-                    {useArea &&
-                        <div key='a' style={{paddingTop:5, display:'flex', flexDirection:'column'}}>
-                            {areaFields}
-                        </div>}
-                    {(useCirclePolyField) &&
-                        <div style={{paddingTop:5, display:'flex', flexDirection:'column'}}>
-                            {circlePolyField}
-                        </div>}
-                    <div style={{display:'flex', flexDirection:'row', alignItems:'center'}}>
-                        {Boolean(iFieldLayout) && <div>{iFieldLayout}</div>}
-                        {Boolean(checkBoxFields) &&
-                            <div style={{padding: '5px 0 0 45px', display:'flex', flexDirection:'column', alignSelf:'center'}}>
-                                {checkBoxFields}
-                            </div> }
-                    </div>
+            <div style={{paddingLeft:5, display:'flex', flexDirection:'column'}}>
+                {useArea &&
+                    <div key='a' style={{paddingTop:5, display:'flex', flexDirection:'column'}}>
+                        {areaFields}
+                    </div>}
+                {(useCirclePolyField) &&
+                    <div style={{paddingTop:5, display:'flex', flexDirection:'column'}}>
+                        {circlePolyField}
+                    </div>}
+                <div style={{display:'flex', flexDirection:'row', alignItems:'center'}}>
+                    {Boolean(iFieldLayout) && <div>{iFieldLayout}</div>}
+                    {Boolean(checkBoxFields) &&
+                        <div style={{padding: '5px 0 0 45px', display:'flex', flexDirection:'column', alignSelf:'center'}}>
+                            {checkBoxFields}
+                        </div> }
                 </div>
+            </div>
         </div>
     );
 }

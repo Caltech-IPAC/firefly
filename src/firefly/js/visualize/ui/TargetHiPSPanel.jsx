@@ -90,13 +90,13 @@ export function VisualPolygonPanel({label, initValue, tooltip, fieldKey, style,
     );
 }
 
-export function VisualTargetPanel({fieldKey, labelWidth= 100, ...restOfProps}) {
+export function VisualTargetPanel({fieldKey, labelWidth= 100, label, labelStyle, ...restOfProps}) {
     const popupButton= (
         <div style={{paddingRight: 2}}>
             <HiPSPanelPopupButton {...{targetKey:fieldKey, whichOverlay:CONE_CHOICE_KEY, ...restOfProps}} />
         </div>
     );
-    return ( <TargetPanel fieldKey={fieldKey} button={popupButton} labelWidth={labelWidth}/> );
+    return ( <TargetPanel fieldKey={fieldKey} button={popupButton} labelStyle={labelStyle} labelWidth={labelWidth} label={label}/> );
 }
 
 VisualTargetPanel.propTypes= {
@@ -280,18 +280,19 @@ TargetHiPSPanel.propTypes= {
 
 export const TargetHiPSRadiusPopupPanel = ({searchAreaInDeg, style,
                                                targetKey=DEFAULT_TARGET_KEY, sizeKey= 'HiPSPanelRadius', polygonKey,
-                                              minValue:min= 1/3600, maxValue:max= 100,
-                                               ...restOfProps}) => {
+                                              minValue:min= 1/3600, maxValue:max= 100, targetLabelStyle,
+                                               sizeLabel= 'Search Area:', sizeFeedbackStyle, ...restOfProps}) => {
     const [controlConnected, setControlConnected] = useState(false);
     return (
         <ConnectionCtx.Provider value={{controlConnected, setControlConnected}}>
             <div style={{display:'flex', width: 700, paddingBottom: 20, flexDirection:'column', ...style}}>
                 <div style={{display:'flex', flexDirection:'column'}}>
                     <VisualTargetPanel {...{style:{paddingTop: 10}, fieldKey:targetKey, sizeKey, polygonKey, labelWidth:100,
-                        minSize:min, maxSize:max, ...restOfProps}} />
+                        labelStyle:targetLabelStyle, minSize:min, maxSize:max, ...restOfProps}} />
                     <SizeInputFields {...{
                         fieldKey:sizeKey, showFeedback:true, labelWidth:100, nullAllowed:false,
-                        label:'Search Area:',
+                        label: sizeLabel,
+                        feedbackStyle:sizeFeedbackStyle,
                         labelStyle:{textAlign:'right', paddingRight:4},
                         initialState:{ unit: 'arcsec', value: searchAreaInDeg+'', min, max }
                     }} />

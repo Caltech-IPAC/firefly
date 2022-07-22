@@ -254,7 +254,7 @@ function makeValidationField({ key, type, desc, tooltip = '', initValue, minValu
     return (
         <ValidationField {...{
             key,
-            fieldKey: key, tooltip: tooltip + unitsStr, label, labelWidth,
+            fieldKey: key, tooltip: tooltip + unitsStr, label:label+':', labelWidth,
             labelStyle:{textAlign:'right', paddingRight:4},
             initialState: {
                 value: initValue ?? (type !== UNKNOWN ? minValue ?? 0 : ''),
@@ -287,7 +287,7 @@ function makeListBoxField({ key, desc, tooltip = '', initValue, enumValues, unit
     const label= desc ?  desc + unitsStr : '';
     return (
         <ListBoxInputField {...{
-            key, fieldKey: key, label, tooltip: tooltip + unitsStr, labelWidth,
+            key, fieldKey: key, label:label+':', tooltip: tooltip + unitsStr, labelWidth,
             initialState: {value: initValue},
             options: enumValues.map((e) => isString(e) ? {label: e, value: e} : e),
             labelStyle:{textAlign:'right', paddingRight:4},
@@ -298,17 +298,20 @@ function makeListBoxField({ key, desc, tooltip = '', initValue, enumValues, unit
 }
 
 function CircleField({ fieldKey, desc, tooltip = '', initValue, minValue, maxValue, targetKey, sizeKey, polygonKey,
-                         style={}, labelWidth = DEF_LABEL_WIDTH, targetDetails, ...restOfProps }) {
+                         style={}, labelWidth = DEF_LABEL_WIDTH, label='Coords or Object:', targetDetails, ...restOfProps }) {
     return (
         <div key={fieldKey} style={{display: 'flex', alignSelf:'start', flexDirection:'column', ...style}}>
             <div title={tooltip} style={{width: labelWidth, alignSelf: 'start', paddingBottom: 10}}>{desc}</div>
             <TargetHiPSRadiusPopupPanel {...{
-                style: {marginLeft: desc ? 20 : 0},
-                key: fieldKey, searchAreaInDeg: initValue, labelWidth,
+                style: {marginLeft: 0, textAlign:'right'},
+                key: fieldKey, searchAreaInDeg: initValue, labelWidth, label,
                 minValue, maxValue, ...targetDetails, ...restOfProps,
+                targetLabelStyle:{paddingRight:4},
                 targetKey:targetKey??targetDetails.targetKey,
                 sizeKey:sizeKey??targetDetails.sizeKey,
-                polygonKey:polygonKey??targetDetails.polygonKey
+                sizeLabel:'Search Area:',
+                polygonKey:polygonKey??targetDetails.polygonKey,
+                sizeFeedbackStyle:{textAlign:'center', marginLeft:0}
             }} />
         </div>
     );

@@ -27,6 +27,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -522,12 +523,20 @@ public class URLDownload {
                         workBuff.append(StringUtils.pad(20,key));
                         workBuff.append(": ");
                         if (key.equalsIgnoreCase("cookie")) {
-                            List<String> cValList= se.getValue();
-                            int lenTotal=0;
-                            for(String s : cValList) lenTotal+= ((s==null) ? 0 : s.length());
-                            workBuff.append("<not shown");
-                            if (lenTotal>0) workBuff.append(", length: ").append(lenTotal);
-                            workBuff.append(">");
+                            try {
+                                List<String> cValList= se.getValue();
+                                int lenTotal= cValList.stream().map( (s) -> s==null ? 0 : s.length()).reduce(0, Integer::sum);
+                                String names= cValList.stream()
+                                        .reduce("", (all,t) -> all+ Arrays.stream(t.split(";"))
+                                                .map( (s) -> s.split("=")[0])
+                                                .reduce("", (allV,tv) -> allV+tv+","));
+                                workBuff.append("<cookie names: ").append(names);
+                                if (lenTotal>0) workBuff.append(" length: ").append(lenTotal);
+                                workBuff.append(">");
+                            }
+                            catch (Exception e) {
+                                workBuff.append("<not shown>");
+                            }
                         }
                         else {
                             workBuff.append(se.getValue());

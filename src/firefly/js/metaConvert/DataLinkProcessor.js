@@ -153,7 +153,7 @@ function createDataLinkMenuRet({dataSource, dataLinkData, positionWP, sourceTabl
                 const allowsInput=serDefParams.some( (p) => p.allowsInput);
                 const activate= makeFileAnalysisActivate(sourceTable,row, request, positionWP,activateParams,menuKey,
                                        undefined, serDefParams, name);
-                menuEntry= dpdtAnalyze(`Show: ${name} ${allowsInput?' (Input Required)':''}` ,
+                menuEntry= dpdtAnalyze(`Show: ${title??name} ${allowsInput?' (Input Required)':''}` ,
                     activate,accessURL,serDefParams,menuKey,
                     {activeMenuLookupKey,request, allowsInput, serviceDefRef,
                         standardID, ID, semantics,size, obsTitle, sRegion});
