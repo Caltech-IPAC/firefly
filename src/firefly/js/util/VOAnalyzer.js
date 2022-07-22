@@ -1093,12 +1093,25 @@ export const isDataLinkServiceDesc= (sd) => false && sd?.standardID.includes(DAT
  */
 export const hasServiceDescriptors= (tableOrId) => Boolean(getServiceDescriptors(tableOrId));
 
+
+function getSDDescription(table, ID) {
+    if (!ID) return;
+    const serviceDefCol= getColumnIdx(table,'service_def');
+    const descriptionCol= getColumnIdx(table,'description');
+    if (descriptionCol===-1 || serviceDefCol===-1) return;
+    if (table.totalRows>50) return;
+    const sdRow= table.tableData.data.find( (dAry) => dAry[serviceDefCol]===ID);
+    if (!sdRow) return;
+    return sdRow[descriptionCol];
+}
+
 /**
  * return a list of service descriptors found in the table or false
  * @param {String|TableModel} tableOrId
+ * @param {boolean} removeAsync
  * @return {Array.<ServiceDescriptorDef>|false}
  */
-export function getServiceDescriptors(tableOrId) {
+export function getServiceDescriptors(tableOrId, removeAsync=true) {
     const table= getTableModel(tableOrId);
     if (!table || !isArray(table.resources)) return false;
     const sResources= table.resources.filter(
@@ -1109,7 +1122,7 @@ export function getServiceDescriptors(tableOrId) {
     const sdAry= sResources.map( ({desc,params,ID,groups}, idx) => (
         {
             ID,
-            title: desc ?? 'Service Descriptor '+idx,
+            title: desc ?? getSDDescription(table,ID) ??'Service Descriptor '+idx,
             accessURL: params.find( ({name}) => name==='accessURL')?.value,
             standardID: params.find( ({name}) => name==='standardID')?.value,
             serDefParams: groups
@@ -1125,7 +1138,9 @@ export function getServiceDescriptors(tableOrId) {
                 }),
         }
     ));
-    return sdAry.length ? sdAry : false;
+    if (!removeAsync)return sdAry.length ? sdAry : false;
+    const sdAryNoAsync= sdAry.filter( ({standardID}) => !standardID.toLowerCase().includes('async')); // filter out async
+    return sdAryNoAsync.length ? sdAryNoAsync : false;
 }
 
 

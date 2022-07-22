@@ -27,7 +27,7 @@ const TargetPanelView = (props) =>{
     const {showHelp, feedback, valid, message, onChange, value, style={}, button,
         labelWidth, children, resolver, feedbackStyle, showResolveSourceOp= true, showExample= true,
         targetPanelExampleRow1, targetPanelExampleRow2,
-        connectedMarker=false,
+        connectedMarker=false, labelStyle={paddingRight:'45px'},
         examples, label= LABEL_DEFAULT, onUnmountCB, wpt}= props;
 
     useEffect(() => () => onUnmountCB(props),[]);
@@ -38,7 +38,7 @@ const TargetPanelView = (props) =>{
                         onChange={(ev) => onChange(ev.target.value, TARGET)}
                         label={label} value={value} tooltip='Enter a target'
                         connectedMarker={connectedMarker||connectContext.controlConnected}
-                        labelWidth={labelWidth} labelStyle={{paddingRight:'45px'}}
+                        labelWidth={labelWidth} labelStyle={labelStyle}
         />);
     const positionInput = children ? (<div style={{display: 'flex'}}>{positionField} {children}</div>) : positionField;
 
@@ -69,6 +69,7 @@ const TargetPanelView = (props) =>{
 
 TargetPanelView.propTypes = {
     label : PropTypes.string,
+    labelStyle: PropTypes.object,
     style: PropTypes.object,
     valid   : PropTypes.bool.isRequired,
     showHelp   : PropTypes.bool.isRequired,
@@ -192,6 +193,7 @@ export const TargetPanel = memo( ({fieldKey= 'UserTargetWorldPt',initialState= {
 
 TargetPanel.propTypes = {
     style: PropTypes.object,
+    labelStyle: PropTypes.object,
     fieldKey: PropTypes.string,
     groupKey: PropTypes.string,
     examples: PropTypes.object,

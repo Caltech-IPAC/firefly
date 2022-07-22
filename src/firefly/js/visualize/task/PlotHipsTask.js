@@ -38,7 +38,7 @@ import {
     getPointMaxSide,
     getPropertyItem,
     makeHiPSAllSkyUrl,
-    makeHiPSAllSkyUrlFromPlot,
+    makeHiPSAllSkyUrlFromPlot, makeHiPSPropertiesUrl,
     makeHipsUrl,
     resolveHiPSConstant
 } from '../HiPSUtil.js';
@@ -263,7 +263,7 @@ async function makeHiPSPlot(rawAction, dispatcher) {
         }
 
         dispatchPlotProgressUpdate(plotId, 'Retrieving Info', false, null);
-        const result= await fetchUrl(makeHipsUrl(`${resolvedHipsRootUrl}/properties`, PROXY), {}, true, PROXY);
+        const result= await fetchUrl(makeHiPSPropertiesUrl(resolvedHipsRootUrl, PROXY), {}, true, PROXY);
         if (!result.text) {
             hipsFail('Could not retrieve HiPS properties file');
             return;
