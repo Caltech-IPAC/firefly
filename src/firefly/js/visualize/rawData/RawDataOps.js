@@ -220,6 +220,9 @@ function getFirstDataCompress(plot, mask) {
     if (mask) return 'FULL';
     const {dataWidth, dataHeight}= plot;
     const size= dataWidth*dataHeight;
+    if (!isThreeColor(plot) && plot.webFitsData[Band.NO_BAND.value].dataMin<0) { //these type of image don't seem to compress very well
+        return (size < 100*MEG) ? 'FULL' : 'HALF';
+    }
     if (size < 6*MEG) return 'FULL';
     if (size < 10*MEG) return 'HALF';
     return 'QUARTER';
@@ -277,7 +280,7 @@ export async function loadStretchData(pv, plot, dispatcher) {
         if (fatal) {
             Logger('RawDataOps').warn(`dispatch the the plot failed on BYTE_DATA_REFRESH: ${dataCompress}`);
             if (dataCompress!=='FULL') {
-                await requestAgain(reqId, plotId, plot, 5, 'FULL', workerKey, dispatcher);
+                await requestAgain(reqId, plotId, plot, 1, 'FULL', workerKey, dispatcher);
             }
             else {
                 dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
@@ -289,7 +292,7 @@ export async function loadStretchData(pv, plot, dispatcher) {
 
     if (plotInvalid()) return;
     let currPlot= primePlot(visRoot(),plotId);
-    const waitTime= currPlot.zoomFactor<.3 ? 5000 : 1500; // wait 5 sec if small zoom level is otherwise 1.5 sec
+    const waitTime= currPlot.zoomFactor<.3 ? 4000 : 100; // wait 4 sec if small zoom level is otherwise 1 sec
     const nextDataCompress= getNextDataCompress(dataCompress,currPlot);
     const secondSuccess= await requestAgain(reqId, plotId, currPlot, waitTime, nextDataCompress, workerKey, dispatcher);
     if (secondSuccess && nextDataCompress==='HALF' &&  dataSize < MAX_FULL_DATA_SIZE) {

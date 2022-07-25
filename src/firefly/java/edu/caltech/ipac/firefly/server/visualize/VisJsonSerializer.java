@@ -290,8 +290,8 @@ public class VisJsonSerializer {
     private static JSONObject serializeWebFitsData(WebFitsData wfData) {
         if (wfData==null) return null;
         JSONObject map = new JSONObject();
-        putDoubleOver0(map, "dataMin", wfData.dataMin());
-        putDoubleOver0(map,"dataMax", wfData.dataMax());
+        putDoubleNot0(map, "dataMin", wfData.dataMin());
+        putDoubleNot0(map,"dataMax", wfData.dataMax());
         putStr(map, "fluxUnits", wfData.fluxUnits());
         putNum(map, "getFitsFileSize", wfData.fitsFileSize());
         return map;
@@ -456,6 +456,7 @@ public class VisJsonSerializer {
     private static void addJsonObj(JSONArray a, JSONObject v) {a.add(v);}
 
     private static void putDoubleOver0(JSONObject m, String key, double v) {if (v>0.0) putDouble(m,key,v);}
+    private static void putDoubleNot0(JSONObject m, String key, double v) {if (v!=0.0) putDouble(m,key,v);}
     private static void putNumOver0(JSONObject m, String key, int v) {if (v>0) putNum(m,key,v);}
     private static void putStrNotNull(JSONObject m, String key, String v) {if (v!=null) putStr(m,key,v);}
     private static void putBoolIfTrue(JSONObject m, String key, boolean v) {if (v) putBool(m,key,v);}
