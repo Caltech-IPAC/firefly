@@ -292,7 +292,7 @@ public class VisJsonSerializer {
         JSONObject map = new JSONObject();
         putDoubleNot0(map, "dataMin", wfData.dataMin());
         putDoubleNot0(map,"dataMax", wfData.dataMax());
-        putDoubleNot0(map,"standardErr", wfData.standardErr());
+        putDoubleNot0(map,"largeBinPercent", wfData.largeBinPercent());
         putStr(map, "fluxUnits", wfData.fluxUnits());
         putNum(map, "getFitsFileSize", wfData.fitsFileSize());
         return map;

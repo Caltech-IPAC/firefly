@@ -6,6 +6,8 @@ import {
 import {CopyToClipboard} from '../visualize/ui/MouseReadout.jsx';
 import {showInfoPopup} from './PopupUtil.jsx';
 import './VersionInfo.css';
+import IPAC_LOGO from 'images/ipac_logo-56x40.png';
+import CALTECH_LOGO from 'images/caltech-new-logo.png';
 
 const VER = 'Version';
 const BUILT_ON = 'Built On';
@@ -50,6 +52,10 @@ function VersionInfoFull() {
 
     return (
         <div style={{display: 'flex', justifyContent: 'space-evenly'}}>
+            <div style={{paddingRight:10, display: 'flex', flexDirection:'column', alignItems:'center'}}>
+                <a href="https://www.caltech.edu" target='caltech-window'><img style={{width:70}} alt="Caltech" src={CALTECH_LOGO}/></a>
+                <a href="https://www.ipac.caltech.edu" target='ipac-window'><img alt="IPAC" src={IPAC_LOGO}/></a>
+            </div>
             <div className='Version-grid'>
                 <Entry desc={VER} value={version}/>
                 <Entry desc={BUILT_ON} value={BuildTime}/>

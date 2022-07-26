@@ -29,7 +29,7 @@ public class Histogram implements HasSizeOf {
     private double histBinsize;
     private final double irafMin;
     private final double irafMax;
-    private final double standardErr;
+    private final double largeBinPercent;
 
 
 
@@ -152,7 +152,7 @@ public class Histogram implements HasSizeOf {
 
         irafMin = datamin;
         irafMax = datamax;
-        standardErr= get_sigma(1,true)/Math.sqrt(float1dArray.length);
+        largeBinPercent= computeLargeBinPercent(float1dArray.length);
     }
 
 
@@ -268,6 +268,22 @@ public class Histogram implements HasSizeOf {
             return ((i + 1.0) * histBinsize + histMin);
         else
             return ((i) * histBinsize + histMin);
+    }
+
+    public double computeLargeBinPercent(int dataLen) {
+       int cnt=0;
+
+       int histMax=0;
+        for (int j : hist) {
+            if (histMax < j) histMax = j;
+        }
+        int marker= (int)(histMax*.4);
+
+
+        for (int j : hist) {
+            if (j > marker) cnt++;
+        }
+       return (float)cnt/(float)hist.length;
     }
 
     /**
@@ -392,5 +408,5 @@ public class Histogram implements HasSizeOf {
         return hist.length*4L + 32L;
     }
 
-    public double getStandardErr() { return standardErr; }
+    public double getLargeBinPercent() { return largeBinPercent; }
 }
