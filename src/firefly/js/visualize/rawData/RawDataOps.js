@@ -220,8 +220,8 @@ function getFirstDataCompress(plot, mask) {
     if (mask) return 'FULL';
     const {dataWidth, dataHeight}= plot;
     const size= dataWidth*dataHeight;
-    if (!isThreeColor(plot) && plot.webFitsData[Band.NO_BAND.value].dataMin<0) { //these type of image don't seem to compress very well
-        return (size < 100*MEG) ? 'FULL' : 'HALF';
+    if (!isThreeColor(plot) && plot.webFitsData[Band.NO_BAND.value].standardErr<.01) { //these type of image don't seem to compress very well
+        return (size < 55*MEG) ? 'FULL' : 'QUARTER';
     }
     if (size < 6*MEG) return 'FULL';
     if (size < 10*MEG) return 'HALF';
@@ -241,6 +241,9 @@ function getNextDataCompress(firstCompress, plot) {
     const size= dataWidth*dataHeight;
     if (firstCompress!=='QUARTER' && size < MAX_FULL_DATA_SIZE) return 'FULL';
     if (size > MAX_FULL_DATA_SIZE) return 'HALF';
+    if (!isThreeColor(plot) && plot.webFitsData[Band.NO_BAND.value].standardErr<.01) { //these type of image don't seem to compress very well
+        return 'FULL';
+    }
     if (size > 70*MEG && zoomFactor<.4) return 'HALF';
     return 'FULL';
 }
@@ -292,7 +295,7 @@ export async function loadStretchData(pv, plot, dispatcher) {
 
     if (plotInvalid()) return;
     let currPlot= primePlot(visRoot(),plotId);
-    const waitTime= currPlot.zoomFactor<.3 ? 4000 : 100; // wait 4 sec if small zoom level is otherwise 1 sec
+    const waitTime= currPlot.zoomFactor<.3 ? 4000 : 1000; // wait 4 sec if small zoom level is otherwise 1 sec
     const nextDataCompress= getNextDataCompress(dataCompress,currPlot);
     const secondSuccess= await requestAgain(reqId, plotId, currPlot, waitTime, nextDataCompress, workerKey, dispatcher);
     if (secondSuccess && nextDataCompress==='HALF' &&  dataSize < MAX_FULL_DATA_SIZE) {

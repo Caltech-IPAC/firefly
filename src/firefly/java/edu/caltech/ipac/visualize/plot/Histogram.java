@@ -29,6 +29,7 @@ public class Histogram implements HasSizeOf {
     private double histBinsize;
     private final double irafMin;
     private final double irafMax;
+    private final double standardErr;
 
 
 
@@ -151,6 +152,7 @@ public class Histogram implements HasSizeOf {
 
         irafMin = datamin;
         irafMax = datamax;
+        standardErr= get_sigma(1,true)/Math.sqrt(float1dArray.length);
     }
 
 
@@ -389,4 +391,6 @@ public class Histogram implements HasSizeOf {
     public long getSizeOf() {
         return hist.length*4L + 32L;
     }
+
+    public double getStandardErr() { return standardErr; }
 }

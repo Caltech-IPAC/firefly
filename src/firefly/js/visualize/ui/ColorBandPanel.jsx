@@ -148,6 +148,8 @@ function suggestedValuesPanel( plot,band ) {
     const dataMaxStr = `Data Max: ${sprintf('%.6f',dataMax)} `;
     const dataMinStr = `Data Min: ${sprintf('%.6f', dataMin)}`;
 
+    if (!dataMin && !dataMax) return <div style={style}/>
+
     return (
         <div style={style}>
                 <span style={{float:'left', paddingRight:2, opacity:.5, marginLeft:40 }}>

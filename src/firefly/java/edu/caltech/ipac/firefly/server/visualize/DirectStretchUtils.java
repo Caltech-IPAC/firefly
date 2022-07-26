@@ -264,7 +264,7 @@ public class DirectStretchUtils {
         return out;
     }
 
-    static byte averageCells(byte[] in,int width,int rowIdx, int colIdx, int factor) {
+    static byte averageCellsORIGINAL(byte[] in,int width,int rowIdx, int colIdx, int factor) {
         int sum= 0;
         int cnt= 0;
         int inIdx;
@@ -272,6 +272,41 @@ public class DirectStretchUtils {
             for(int i=rowIdx; (i<rowIdx+factor); i++)  {
                 inIdx= j * width + i;
                 if (inIdx<in.length) {
+                    sum+= Byte.toUnsignedInt(in[inIdx]);
+                    cnt++;
+                }
+            }
+        }
+        return (byte) (sum/cnt);
+    }
+
+    static byte averageCells(byte[] in,int width,int rowIdx, int colIdx, int factor) {
+        int sum= 0;
+        int cnt= 0;
+        int inIdx;
+        int factHalf= factor/2;
+        int startColIdx, endColIdx;
+        int startRowIdx, endRowIdx;
+        if (colIdx-factHalf<0) {
+            startColIdx= colIdx;
+            endColIdx= colIdx+factor;
+        }
+        else {
+            startColIdx= colIdx-factHalf;
+            endColIdx= colIdx+factHalf;
+        }
+        if (rowIdx-factHalf<0) {
+            startRowIdx= rowIdx;
+            endRowIdx= rowIdx+factor;
+        }
+        else {
+            startRowIdx= rowIdx-factHalf;
+            endRowIdx= rowIdx+factHalf;
+        }
+        for(int j=startColIdx; (j<endColIdx); j++)  {
+            for(int i=startRowIdx; (i<endRowIdx); i++)  {
+                inIdx= j * width + i;
+                if (inIdx>=0  && inIdx<in.length) {
                     sum+= Byte.toUnsignedInt(in[inIdx]);
                     cnt++;
                 }

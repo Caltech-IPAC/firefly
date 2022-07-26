@@ -73,7 +73,7 @@ const HIPS_DATA_HEIGHT= 10000000000;
  * @prop {number} zoomFactor - the zoom factor
  * @prop {boolean} blank - true if the is a blank plot, default to false
  * @prop {string} title - title of the plot
- * @prop {object} webFitsData -  needs documentation
+ * @prop {WebFitsData} webFitsData -  needs documentation
  * @prop {ImageTileData} tileData -  object contains the image tile information
  * @prop {CoordinateSys} imageCoordSys - the image coordinate system
  * @prop {Dimension} screenSize - width/height in screen pixels
@@ -91,6 +91,17 @@ const HIPS_DATA_HEIGHT= 10000000000;
  * @see PlotView
  */
 
+/**
+ * @global
+ * @public
+ * @typedef {Object} WebFitsData
+ *
+ * @prop {number} dataMin
+ * @prop {number} dataMax
+ * @prop {number} standardErr,
+ * @prop {number} fitsFileSize
+ * @prop {number} fluxUnits
+ */
 
 
 /**

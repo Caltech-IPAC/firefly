@@ -122,8 +122,9 @@ function computeLowerRangeField(fields,rv,fitsData,lowerWhich='lowerWhich', lowe
             break;
         case ABSOLUTE:
             retval= {
-                validator:  !isNaN(fitsData.dataMin) && !isNaN(fitsData.dataMax) ?
-                    Validate.floatRange.bind(null,fitsData.dataMin, fitsData.dataMax, 3, 'Lower range') : undefined,
+                validator:  fitsData.dataMin && fitsData.dataMax ?
+                    Validate.floatRange.bind(null,fitsData.dataMin, fitsData.dataMax, 3, 'Lower range') :
+                    () => ({valid:true, message:''}),
                 value : resetDefault ? fitsData.dataMin : fields[lowerRange].value
             };
             break;
@@ -158,9 +159,10 @@ function computeUpperRangeField(fields,rv,fitsData) {
 
         case ABSOLUTE:
             retval= {
-                validator: !isNaN(fitsData.dataMin) && !isNaN(fitsData.dataMax) ?
-                    Validate.floatRange.bind(null,fitsData.dataMin, fitsData.dataMax, 3, 'Upper range') : undefined,
-                value : resetDefault ? fitsData.dataMax : fields.upperRange.value
+                validator: fitsData.dataMin && fitsData.dataMax ?
+                    Validate.floatRange.bind(null,fitsData.dataMin, fitsData.dataMax, 3, 'Upper range') :
+                    () => ({valid:true, message:''}),
+            value : resetDefault ? fitsData.dataMax : fields.upperRange.value
             };
             break;
         case SIGMA:
