@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {isEmpty, isUndefined, isString, isNumber} from 'lodash';
+import {Band} from '../Band.js';
 import Cntlr, {ExpandType, WcsMatchType, ActionScope} from '../ImagePlotCntlr.js';
 import {replacePlotView, replacePrimaryPlot, changePrimePlot, updatePlotViewScrollXY,
         findScrollPtToCenterImagePt, findScrollPtToPlaceOnDevPt,
@@ -20,7 +21,8 @@ import {
     primePlot, clonePvAry, clonePvAryWithPv, applyToOnePvOrAll, applyToOnePvOrOverlayGroup,
     matchPlotViewByPositionGroup, getPlotViewIdxById, getPlotGroupIdxById, findPlotGroup,
     getPlotViewById, findCurrentCenterPoint, getCenterOfProjection, getMatchingRotationAngle,
-    isRotationMatching, hasWCSProjection, isThreeColor } from '../PlotViewUtil.js';
+    isRotationMatching, hasWCSProjection, isThreeColor, isImageCube, getImageCubeIdx, getHDU
+} from '../PlotViewUtil.js';
 import Point, {parseAnyPt, makeImagePt, makeWorldPt, makeDevicePt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import PlotState, {RotateType} from '../PlotState.js';
@@ -207,7 +209,7 @@ function updateHiPSColor(state,action) {
 
 function updateImageDisplayData(state,action) {
     const {plotViewAry, mpwWcsPrimId, wcsMatchType}= state;
-    const clearLocal= action.type===Cntlr.STRETCH_CHANGE;
+    const stretchChange= action.type===Cntlr.STRETCH_CHANGE;
     const {plotId, primaryStateJson,overlayUpdateAry, rawData,bias,contrast, useRed, useGreen, useBlue, zoomLevel:newZoomFactor, colorTableId=-1}= action.payload;
     const inPv= getPlotViewById(state,plotId);
     const inPlot= primePlot(inPv);
@@ -246,7 +248,19 @@ function updateImageDisplayData(state,action) {
     }
 
     const plot= primePlot(pv); // get the updated on
-    if (clearLocal) plot.dataRequested= false;
+    if (stretchChange) {
+        plot.dataRequested= false;
+        const rv= plot.plotState.getRangeValues();
+        const hduIdx= getHDU(plot);
+        if (!isThreeColor(pv) && isImageCube(plot)) {
+            pv.plots= pv.plots.map((p) => {
+                if (getHDU(p)!==hduIdx) return p;
+                const newPlotState= p.plotState.copy();
+                newPlotState.setRangeValues(Band.NO_BAND,rv);
+                return {...p,dataRequested:false,plotState:newPlotState}
+            });
+        }
+    }
     PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, plot.plotState, plot.colorTableId);
 
     return {...state, plotViewAry : replacePlotView(plotViewAry,pv)};

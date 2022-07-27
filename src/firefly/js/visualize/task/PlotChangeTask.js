@@ -210,7 +210,7 @@ export function stretchChangeActionCreator(rawAction) {
         const doStretch= async (stretchPlot) => {
             if (!stretchPlot) return;
             const {plotId}= stretchPlot;
-            doStretchServerCall(dispatcher,getState, store,plotId,stretchData);
+            doStretchDispatch(dispatcher,getState, store,plotId,stretchData);
         };
 
 
@@ -278,7 +278,7 @@ function doCrop(dispatcher,pv,imagePt1, imagePt2, cropMultiAll, originalWcsMatch
 
 
 
-function doStretchServerCall(dispatcher,getState, store,plotId,stretchData) {
+function doStretchDispatch(dispatcher,getState, store,plotId,stretchData) {
 
     const plot= primePlot(store,plotId);
     const plotState= plot.plotState.copy();

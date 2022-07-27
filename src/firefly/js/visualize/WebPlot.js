@@ -98,7 +98,7 @@ const HIPS_DATA_HEIGHT= 10000000000;
  *
  * @prop {number} dataMin
  * @prop {number} dataMax
- * @prop {number} standardErr,
+ * @prop {number} largeBinPercent,
  * @prop {number} fitsFileSize
  * @prop {number} fluxUnits
  */
