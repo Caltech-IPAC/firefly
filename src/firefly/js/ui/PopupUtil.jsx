@@ -84,13 +84,14 @@ export function showOptionsPopup({content, title='Options', modal = false, show=
  * @param {string | object} content can be a string or a react component
  * @param {string} title
  * @param {boolean} [isCopyable] true or false, if undefined, then the default to true if it is a string
+ * @param [wrapperStyle]
  * @return {object}
  */
-export function showInfoPopup(content, title='Information', isCopyable=undefined) {
+export function showInfoPopup(content, title='Information', isCopyable=undefined, wrapperStyle) {
     if (isUndefined(isCopyable)) isCopyable = isString(content);
     var results= (
         <PopupPanel title={title} >
-            {makeContent(content, isCopyable)}
+            {makeContent(content, isCopyable, wrapperStyle)}
         </PopupPanel>
     );
     DialogRootContainer.defineDialog(INFO_POPUP, results);
@@ -104,10 +105,10 @@ export function hideInfoPopup() {
     dispatchHideDialog(INFO_POPUP);
 }
 
-function makeContent(content, isCopyable) {
+function makeContent(content, isCopyable, wrapperStyle={}) {
     return (
         <div style={{padding:5}}>
-            <div style={{minWidth:350, maxWidth: 500, padding:'10px 10px 15px 10px', fontSize:'120%', overflow: 'hidden'}}
+            <div style={{minWidth:350, maxWidth: 500, padding:'10px 10px 15px 10px', fontSize:'120%', overflow: 'hidden', ...wrapperStyle}}
                  className={isCopyable ? 'popup-panel-textcopyable' : ''}>
                 {content}
             </div>
