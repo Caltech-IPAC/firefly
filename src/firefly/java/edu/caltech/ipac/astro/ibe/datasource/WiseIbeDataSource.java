@@ -338,12 +338,12 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
             setDataset(wds.getDataset());
             setTableName(wds.getImageTable());
 
-            File dir= (baseFsPath!=null) ? new File(baseFsPath) : null;
-
-            if (baseFsPath != null && dir.canRead()) {
-                setUseFileSystem(true);
-                setBaseFilesystemPath(baseFsPath + "/" + wds.getFilesysDatasetPath());
-            }
+//            File dir= (baseFsPath!=null) ? new File(baseFsPath) : null;
+//
+//            if (baseFsPath != null && dir.canRead()) {
+//                setUseFileSystem(true);
+//                setBaseFilesystemPath(baseFsPath + "/" + wds.getFilesysDatasetPath());
+//            }
         }
     }
 

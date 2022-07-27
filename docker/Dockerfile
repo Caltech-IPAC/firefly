@@ -49,6 +49,7 @@ ENV JPDA_ADDRESS=*:5050 \
 
 ENV work_dir=firefly
 ENV project=firefly
+ENV env=local
 
 WORKDIR ${CATALINA_HOME}
 
@@ -60,7 +61,7 @@ COPY firefly/docker/tomcat-users.xml conf/
 RUN mkdir -p /firefly/workarea /firefly/logs/statistics /firefly/alerts \
     && chmod a+x *.sh
 
-CMD /opt/tomcat/launchTomcat.sh && cd /opt/work/${work_dir} && gradle ${project}:bAD -x buildClient && gradle ${project}:dev
+CMD /opt/tomcat/launchTomcat.sh && cd /opt/work/${work_dir} && gradle -Penv=${env} ${project}:bAD && gradle -Penv=${env} ${project}:dev
 
 
 FROM node_module AS builder
