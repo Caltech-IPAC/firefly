@@ -1,9 +1,16 @@
 #!/bin/bash
 
+JPDA_ADDRESS=${JPDA_ADDRESS:-*:5050}
+VISUALIZE_FITS_SEARCH_PATH=${VISUALIZE_FITS_SEARCH_PATH:-''}
+START_MODE=${START_MODE:-run}
 NAME=${BUILD_TIME_NAME:-"ipac/firefly"}
+
 ADMIN_USER=${ADMIN_USER:-admin}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-`echo $RANDOM | base64 | head -c 8`}
 USE_ADMIN_AUTH=${USE_ADMIN_AUTH:-"true"}
+
+
+
 
 echo -e "\n!!============================================================"
 echo "!!============================================================"

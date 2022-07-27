@@ -37,18 +37,12 @@ const BasicTableViewInternal = React.memo((props) => {
             selectable, sortInfo, textView} = uiStates;
 
     useEffect( () => {
-        dispatchTableUiUpdate({tbl_ui_id,
-            ...omitBy(pick(props, 'showTypes', 'showFilters', 'showUnits', 'filterInfo','selectable', 'sortInfo', 'textView'), isUndefined)
-        });
-    }, []);
-
-    useEffect( () => {
         if (!isEmpty(columns)) {
-            const changes = {};
-            if (isUndefined(showUnits)) {
+            const changes = omitBy(pick(props, 'showTypes', 'showFilters', 'showUnits', 'filterInfo','selectable', 'sortInfo', 'textView'), isUndefined);
+            if (isUndefined(changes.showUnits)) {
                 changes.showUnits = !!columns.find?.((col) => col?.units);
             }
-            if (isUndefined(showFilters)) {
+            if (isUndefined(changes.showFilters)) {
                 changes.showFilters = !!tbl_id && !isClientTable(tbl_id);    // false if no tbl_id or is a client table
             }
             if (!isEmpty(changes)) {

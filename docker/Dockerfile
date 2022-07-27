@@ -41,14 +41,12 @@ RUN apt-get update \
     && rm apache-tomcat-9*tar.gz \
     && rm -rf /var/lib/apt/lists/*;
 
-ENV JPDA_ADDRESS=*:5050 \
-    CATALINA_HOME=/opt/tomcat \
-    DEBUG=true \
-    START_MODE=start \
+ENV CATALINA_HOME=/opt/tomcat \
     USE_ADMIN_AUTH="false"
 
 ENV work_dir=firefly
 ENV project=firefly
+ENV env=local
 
 WORKDIR ${CATALINA_HOME}
 
@@ -60,7 +58,7 @@ COPY firefly/docker/tomcat-users.xml conf/
 RUN mkdir -p /firefly/workarea /firefly/logs/statistics /firefly/alerts \
     && chmod a+x *.sh
 
-CMD /opt/tomcat/launchTomcat.sh && cd /opt/work/${work_dir} && gradle ${project}:bAD -x buildClient && gradle ${project}:dev
+CMD ./devMode.sh
 
 
 FROM node_module AS builder
@@ -142,11 +140,6 @@ ENV JVM_CORES=0\
 # ----------------------------------------------------------
 
 ARG IMAGE_NAME=''
-
-ENV JPDA_ADDRESS=*:5050 \
-    VISUALIZE_FITS_SEARCH_PATH='' \
-    BUILD_TIME_NAME=${IMAGE_NAME} \
-    START_MODE=run
 
 WORKDIR ${CATALINA_HOME}
 
