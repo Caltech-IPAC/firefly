@@ -86,28 +86,21 @@ function VersionInfoFull() {
     );
 }
 
-
 const Acknowledgement= () => (
-    <div style={{padding:'10px 5px 3px 5px', width:600, fontSize:'smaller'}}>
-        <span>
-            Firefly development at&nbsp;
-        </span>
+    <div style={{padding:'10px 5px 3px 5px', width:520, fontSize:'85%', lineHeight:1.3}}>
+            Firefly development by&nbsp;
         <a href='https://ipac.caltech.edu' target='ipac-window'>IPAC</a>
-        <span>
+            &nbsp;at&nbsp;
+        <a href='https://www.caltech.edu' target='caltech-window'>Caltech</a>
             &nbsp;has been supported by NASA, principally through&nbsp;
-        </span>
         <a href='https://irsa.ipac.caltech.edu' target='ipac-window'>IRSA</a>
-        <span>
            , and by the National Science Foundation, through the&nbsp;
-        </span>
         <a href='https://www.lsst.org/' target='rubin-window'>Vera C. Rubin Observatory</a>
-        <span>
             . Firefly is open-source software, available on&nbsp;
-        </span>
         <a href='https://github.com/Caltech-IPAC/firefly' target='github-window'>GitHub</a>
-        <span> and </span>
+        &nbsp;and&nbsp;
         <a href='https://hub.docker.com/repository/docker/ipac/firefly' target='dockerhub-window'>DockerHub</a>
-        <span>.</span>
+        .
     </div>
 
 );

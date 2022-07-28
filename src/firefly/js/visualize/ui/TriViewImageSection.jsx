@@ -215,7 +215,7 @@ function onActiveTable (layoutInfo, action) {
     let {coverageLockedOn, showCoverage, showMeta, metaDataTableId} = images;
 
     const showFits= shouldShowFits();
-    showImages= showFits||coverageLockedOn;
+    showImages= showFits;
 
     if (!tbl_id) {
         images = {showMeta: false, showCoverage: false, showFits, metaDataTableId: null};
@@ -243,9 +243,8 @@ function onActiveTable (layoutInfo, action) {
         showImages = true;
     } else {
         showCoverage = false;
-        showImages= showFits||coverageLockedOn;
+        showImages= showFits;
     }
-
     if (anyHasMeta) {
         metaDataTableId = isMetaDataTable(tbl_id) ? tbl_id : findFirstMetaTable(tblList);
         showMeta = true;
