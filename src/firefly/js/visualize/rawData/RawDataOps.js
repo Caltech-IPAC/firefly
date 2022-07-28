@@ -212,6 +212,7 @@ function clearLocalStretchData(plot) {
 }
 
 function isNoisyImage(plot) {
+    if (isNaN(plot?.webFitsData?.[Band.NO_BAND.value]?.largeBinPercent)) return false;
     return (!isThreeColor(plot) && plot.webFitsData[Band.NO_BAND.value].largeBinPercent>.03);
 }
 

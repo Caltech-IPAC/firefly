@@ -614,7 +614,7 @@ function getInitZoomLevel(viewDim,  req, dataWidth, dataHeight, pixelScaleDeg) {
         case ZoomType.TO_WIDTH:
             return width / dataWidth;
         case ZoomType.ARCSEC_PER_SCREEN_PIX:
-            return pixelScaleDeg / req.getZoomArcsecPerScreenPix();
+            return pixelScaleDeg / req.getZoomArcsecPerScreenPix()*3600;
         case ZoomType.LEVEL:
         case ZoomType.STANDARD:
         default:
