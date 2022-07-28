@@ -8,8 +8,10 @@
 
 
 ## Version 2022.2 
+- 2022.2.1 (April 2022)
+  - docker tag: `latest`, `2022.2`, `2022.2.1`
 - 2022.2 - (July 2022)
-  - docker tag: `latest`, `2022.2`, `2022.2.0`
+  - docker tag: `2022.2.0`
 
 ### _Notes_
 #### This release has notable UI, Infrastructure, and  API enhancements
@@ -33,6 +35,16 @@
 #### Notable Bug fixes
 - Fixed: WAVE_TAB: The algorithm is producing incorrect results [Firefly-989](https://github.com/Caltech-IPAC/firefly/pull/1224)
 - Multiple table related bugs
+
+
+##### _Patches 2022.2_
+- 2022.2.1
+  - Added IPAC Logo to version dialog([Firefly-1037](https://github.com/Caltech-IPAC/firefly/pull/1225))
+  - Stretch dropdown shows checkbox if stretch selected ([Firefly-1029](https://github.com/Caltech-IPAC/firefly/pull/1225))
+  - Fixed: TAP column table showing filters ([PR](https://github.com/Caltech-IPAC/firefly/pull/1244))
+  - Fixed: Cube planes all change stretch ([Firefly-1038](https://github.com/Caltech-IPAC/firefly/pull/1225))
+
+
 
 ##### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2022.2+label%3abug)
@@ -77,6 +89,7 @@
 ##### _Patches 2022.1_
 - 2022.1.1
   - Fixed: Not packaging proprietary data correctly ([IRSA-4570,IRSA-4571](https://github.com/Caltech-IPAC/firefly/pull/1209))
+     
 
 
 ## Version 2021.4  (December 2021)

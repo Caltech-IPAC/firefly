@@ -98,7 +98,7 @@ const HIPS_DATA_HEIGHT= 10000000000;
  *
  * @prop {number} dataMin
  * @prop {number} dataMax
- * @prop {number} standardErr,
+ * @prop {number} largeBinPercent,
  * @prop {number} fitsFileSize
  * @prop {number} fluxUnits
  */
@@ -614,7 +614,7 @@ function getInitZoomLevel(viewDim,  req, dataWidth, dataHeight, pixelScaleDeg) {
         case ZoomType.TO_WIDTH:
             return width / dataWidth;
         case ZoomType.ARCSEC_PER_SCREEN_PIX:
-            return pixelScaleDeg / req.getZoomArcsecPerScreenPix();
+            return pixelScaleDeg / req.getZoomArcsecPerScreenPix()*3600;
         case ZoomType.LEVEL:
         case ZoomType.STANDARD:
         default:

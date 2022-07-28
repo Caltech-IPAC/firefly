@@ -285,14 +285,14 @@ public class ImagePlotCreator {
         if (fr==null) return null;
         double dataMin= Double.NaN;
         double dataMax= Double.NaN;
-        double standardErr= 0;
+        double largeBinPercent= 0;
         if (!fr.isDeferredRead()) {
             Histogram hist= fr.getHistogram();
             dataMin= hist.getDNMin() * fr.getBscale() + fr.getBzero();
             dataMax= hist.getDNMax() * fr.getBscale() + fr.getBzero();
-            standardErr= hist.getStandardErr();
+            largeBinPercent= hist.getLargeBinPercent();
         }
-        return new WebFitsData( dataMin, dataMax, standardErr, fileLength, fr.getFluxUnits());
+        return new WebFitsData( dataMin, dataMax, largeBinPercent, fileLength, fr.getFluxUnits());
     }
 
     public record PlotInfo(PlotState state, ImagePlot plot, FileInfo fileInfo,

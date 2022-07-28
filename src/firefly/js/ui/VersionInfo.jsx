@@ -6,6 +6,9 @@ import {
 import {CopyToClipboard} from '../visualize/ui/MouseReadout.jsx';
 import {showInfoPopup} from './PopupUtil.jsx';
 import './VersionInfo.css';
+import IPAC_LOGO from 'images/ipac_logo-56x40.png';
+import CALTECH_LOGO from 'images/caltech-new-logo.png';
+import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-42x42.png';
 
 const VER = 'Version';
 const BUILT_ON = 'Built On';
@@ -49,28 +52,59 @@ function VersionInfoFull() {
         + (ffTag ? `\n${FF_TAG}:         ${ffTag}` : '');
 
     return (
-        <div style={{display: 'flex', justifyContent: 'space-evenly'}}>
-            <div className='Version-grid'>
-                <Entry desc={VER} value={version}/>
-                <Entry desc={BUILT_ON} value={BuildTime}/>
-                <Entry desc={COMMIT} value={BuildCommit}/>
-                {major ? <Entry desc={FF_LIB} value={getFireflyLibraryVersionStr()}/> : ''}
-                {ffCommit && <Entry desc={FF_COM} value={ffCommit}/>}
-                {ffTag && <Entry desc={FF_TAG} value={ffTag}/>}
-                {
-                    !isVersionFormalRelease() &&
-                    <div className='Version-grid-warning'>
-                        {isVersionPreRelease() ?
-                            `Warning: Early preview of Firefly ${getDevCycle()}` :
-                            `Warning: Development build of Firefly on dev cycle ${getDevCycle()}`
-                        }
+        <div style={{display: 'flex', justifyContent: 'space-evenly', flexDirection:'column'}}>
+            <div style={{display: 'flex', justifyContent: 'flex-start'}}>
+                <div style={{paddingRight:10, display: 'flex', flexDirection:'column', alignItems:'center', marginTop:-20}}>
+                    <a href='https://github.com/Caltech-IPAC/firefly' target='github-window'><img alt='Firefly' src={FFTOOLS_ICO} style={{marginTop:10}}/></a>
+                    <a href='https://www.caltech.edu' target='caltech-window'><img style={{width:70}} alt='Caltech' src={CALTECH_LOGO}/></a>
+                    <a href='https://www.ipac.caltech.edu' target='ipac-window'><img alt='IPAC' src={IPAC_LOGO}/></a>
+                </div>
+                <div style={{display: 'flex', justifyContent: 'space-evenly', marginLeft:60, alignItems:'flex-start'}}>
+                    <div className='Version-grid'>
+                        <Entry desc={VER} value={version}/>
+                        <Entry desc={BUILT_ON} value={BuildTime}/>
+                        <Entry desc={COMMIT} value={BuildCommit}/>
+                        {major ? <Entry desc={FF_LIB} value={getFireflyLibraryVersionStr()}/> : ''}
+                        {ffCommit && <Entry desc={FF_COM} value={ffCommit}/>}
+                        {ffTag && <Entry desc={FF_TAG} value={ffTag}/>}
                     </div>
-                }
+                    <CopyToClipboard style={{justifySelf: 'start', marginLeft:10}}
+                                     value={versionAsText} size={16} buttonStyle={{backgroundColor: 'unset'}}/>
+                </div>
             </div>
-            <CopyToClipboard style={{justifySelf: 'end', marginLeft: 10}}
-                             value={versionAsText} size={16} buttonStyle={{backgroundColor: 'unset'}}/>
+            {
+                !isVersionFormalRelease() &&
+                <div className='Version-grid-warning'>
+                    {isVersionPreRelease() ?
+                        `Warning: Early preview of Firefly ${getDevCycle()}` :
+                        `Warning: Development build of Firefly on dev cycle ${getDevCycle()}`
+                    }
+                </div>
+            }
+            <Acknowledgement/>
         </div>
     );
 }
 
-export const showFullVersionInfoDialog = (title = '') => showInfoPopup( <VersionInfoFull/>, `${title} Version Information`);
+const Acknowledgement= () => (
+    <div style={{padding:'10px 5px 3px 5px', width:520, fontSize:'85%', lineHeight:1.3}}>
+            Firefly development by&nbsp;
+        <a href='https://ipac.caltech.edu' target='ipac-window'>IPAC</a>
+            &nbsp;at&nbsp;
+        <a href='https://www.caltech.edu' target='caltech-window'>Caltech</a>
+            &nbsp;has been supported by NASA, principally through&nbsp;
+        <a href='https://irsa.ipac.caltech.edu' target='ipac-window'>IRSA</a>
+           , and by the National Science Foundation, through the&nbsp;
+        <a href='https://www.lsst.org/' target='rubin-window'>Vera C. Rubin Observatory</a>
+            . Firefly is open-source software, available on&nbsp;
+        <a href='https://github.com/Caltech-IPAC/firefly' target='github-window'>GitHub</a>
+        &nbsp;and&nbsp;
+        <a href='https://hub.docker.com/repository/docker/ipac/firefly' target='dockerhub-window'>DockerHub</a>
+        .
+    </div>
+
+);
+
+
+
+export const showFullVersionInfoDialog = (title = '') => showInfoPopup( <VersionInfoFull/>, `${title} Version Information`, true, {maxWidth:620});

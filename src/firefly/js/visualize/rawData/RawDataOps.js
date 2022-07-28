@@ -211,6 +211,11 @@ function clearLocalStretchData(plot) {
     entry.dataType= CLEARED;
 }
 
+function isNoisyImage(plot) {
+    if (isNaN(plot?.webFitsData?.[Band.NO_BAND.value]?.largeBinPercent)) return false;
+    return (!isThreeColor(plot) && plot.webFitsData[Band.NO_BAND.value].largeBinPercent>.03);
+}
+
 /**
  * @param {WebPlot} plot
  * @param {boolean} mask
@@ -220,7 +225,7 @@ function getFirstDataCompress(plot, mask) {
     if (mask) return 'FULL';
     const {dataWidth, dataHeight}= plot;
     const size= dataWidth*dataHeight;
-    if (!isThreeColor(plot) && plot.webFitsData[Band.NO_BAND.value].standardErr<.01) { //these type of image don't seem to compress very well
+    if (isNoisyImage(plot)) { //these type of image don't seem to compress very well
         return (size < 55*MEG) ? 'FULL' : 'QUARTER';
     }
     if (size < 6*MEG) return 'FULL';
@@ -241,7 +246,7 @@ function getNextDataCompress(firstCompress, plot) {
     const size= dataWidth*dataHeight;
     if (firstCompress!=='QUARTER' && size < MAX_FULL_DATA_SIZE) return 'FULL';
     if (size > MAX_FULL_DATA_SIZE) return 'HALF';
-    if (!isThreeColor(plot) && plot.webFitsData[Band.NO_BAND.value].standardErr<.01) { //these type of image don't seem to compress very well
+    if (isNoisyImage(plot)) { //these type of image don't seem to compress very well
         return 'FULL';
     }
     if (size > 70*MEG && zoomFactor<.4) return 'HALF';

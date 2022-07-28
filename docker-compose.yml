@@ -30,4 +30,6 @@ services:
     ports:
       - "8080:8080"
       - "5050:5050"
+    env_file:
+      - ./firefly-docker.env
     volumes: *volInfo
