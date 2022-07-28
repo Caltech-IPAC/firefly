@@ -11,9 +11,9 @@ import {InputGroup} from '../../ui/InputGroup.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
-import {showInfoPopup} from '../../ui/PopupUtil.jsx';
+import {INFO_POPUP, showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {getMultiViewRoot,dispatchUpdateCustom, getViewer} from '../MultiViewCntlr.js';
-import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
+import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../../core/ComponentCntlr.js';
 import {Band, allBandAry} from '../Band.js';
 
 
@@ -38,35 +38,46 @@ function ColorBandChooserPanel ({viewerId, bandData, dataId}) {
     const options= Object.keys(threeOp).map( (k) => ({value:k, label:threeOp[k].title}));
     options.push({value:'NONE', label:'Disable'});
 
-    var redVal= Object.keys(threeOp).find( (k) => Boolean(threeOp[k].color===Band.RED));
-    var greenVal= Object.keys(threeOp).find( (k) => Boolean(threeOp[k].color===Band.GREEN));
-    var blueVal= Object.keys(threeOp).find( (k) => Boolean(threeOp[k].color===Band.BLUE));
+    const {threeColorVisible}=  getViewer(getMultiViewRoot(), viewerId)?.customData[dataId];
+
+    let redVal= Object.keys(threeOp).find( (k) => Boolean(threeOp[k].color===Band.RED));
+    let greenVal= Object.keys(threeOp).find( (k) => Boolean(threeOp[k].color===Band.GREEN));
+    let blueVal= Object.keys(threeOp).find( (k) => Boolean(threeOp[k].color===Band.BLUE));
     if (!redVal) redVal= 'NONE';
     if (!greenVal) greenVal= 'NONE';
     if (!blueVal) blueVal= 'NONE';
 
     return (
-        <FieldGroup groupKey={'WHICH_BANDS'} keepState={false}>
-            <div style={{padding:'10px 10px 5px 15px'}}>
-                <InputGroup labelWidth={50}>
-                    <ListBoxInputField  initialState= {{ value: redVal,
-                                                         tooltip: 'Select Red band', label : 'Red:' }}
+        <FieldGroup groupKey={'WHICH_BANDS'} keepState={false} style={{display:'flex', flexDirection:'column', alignItems:'center' }}>
+            <div style={{padding:'10px 5px 5px 5px'}}>
+                <div style={{display:'flex', flexDirection:'column', justifyContent:'space-around', height:60}}>
+                    <ListBoxInputField labelWidth={40}
+                        initialState= {{ value: redVal, tooltip: 'Select Red band', label : 'Red:' }}
                                         options={options} fieldKey={Band.RED.key} />
 
-                    <ListBoxInputField  initialState= {{value: greenVal,
-                                                        tooltip: 'Select Green band', label : 'Green:' }}
+                    <ListBoxInputField labelWidth={40}
+                        initialState= {{value: greenVal, tooltip: 'Select Green band', label : 'Green:' }}
                                         options={options} fieldKey={Band.GREEN.key} />
 
-                    <ListBoxInputField  initialState= {{value: blueVal,
-                                                        tooltip: 'Select Blue band', label : 'Blue:' }}
+                    <ListBoxInputField labelWidth={40}
+                                       initialState= {{value: blueVal, tooltip: 'Select Blue band', label : 'Blue:' }}
                                         options={options} fieldKey={Band.BLUE.key} />
-                </InputGroup>
+
+                </div>
             </div>
-            <CompleteButton
-                style={{padding : '12px 0 5px 5px'}}
-                onSuccess={(request) => update3Color(request,bandData, viewerId, dataId)}
-                closeOnValid={false}
-                dialogId='ColorBandChooserPopup' />
+            <div style={{display:'flex', justifyContent:'space-around', margin: '7px 5px 10px 3px' }}>
+                <CompleteButton
+                    style={{padding : '12px 0 5px 5px'}}
+                    text={`${threeColorVisible?'Update':'Show'} Three Color`}
+                    onSuccess={(request) => update3Color(request,bandData, viewerId, dataId)}
+                    closeOnValid={true}
+                    dialogId='ColorBandChooserPopup' />
+
+                {threeColorVisible && <CompleteButton
+                    style={{padding : '12px 0 5px 5px'}} text={'Hide Three Color'}
+                    onSuccess={(request) => hideThreeColor(viewerId, dataId)}
+                    closeOnValid={true} dialogId='ColorBandChooserPopup' />}
+            </div>
 
         </FieldGroup>
     );
@@ -108,6 +119,11 @@ function validate(request) {
     }
 
     return {valid:true};
+}
+
+function hideThreeColor(viewerId, dataId) {
+    const v= getViewer(getMultiViewRoot(), viewerId);
+    dispatchUpdateCustom(viewerId,{...v.customData, [dataId]:{...v.customData[dataId], threeColorVisible:false}});
 }
 
 

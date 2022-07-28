@@ -237,7 +237,7 @@ function replotImageDataProducts(activePlotId, imageViewerId, tbl_id, reqAry, th
             dispatchPlotImage(
                 {
                     plotId:threeCPlotId, viewerId:imageViewerId, wpRequest:plotThreeReqAry, threeColor:true,
-                    pvOptions: {userCanDeletePlots: true, menuItemKeys:{imageSelect : false}},
+                    pvOptions: {userCanDeletePlots: false, menuItemKeys:{imageSelect : false}},
                     attributes: { tbl_id }
                 });
         }
