@@ -407,7 +407,7 @@ task init () {
     group = DEV_GROUP
 
     doLast {
-            project.InitNode()
+            project.InitNode(rootDir)
     }
 }
 
