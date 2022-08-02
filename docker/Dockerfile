@@ -42,7 +42,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*;
 
 ENV CATALINA_HOME=/opt/tomcat \
-    USE_ADMIN_AUTH="false"
+    USE_ADMIN_AUTH=false \
+    DEBUG=true
 
 ENV work_dir=firefly
 ENV project=firefly
