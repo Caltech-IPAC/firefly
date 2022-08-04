@@ -1,6 +1,6 @@
 #!/bin/bash
 
-JPDA_ADDRESS=${JPDA_ADDRESS:-*:5050}
+export JPDA_ADDRESS="*:5050"
 VISUALIZE_FITS_SEARCH_PATH=${VISUALIZE_FITS_SEARCH_PATH:-''}
 START_MODE=${START_MODE:-run}
 NAME=${BUILD_TIME_NAME:-"ipac/firefly"}
@@ -126,8 +126,7 @@ CATALINA_OPTS="$CATALINA_OPTS \
 ${CATALINA_HOME}/cleanup.sh /firefly/workarea /firefly/shared-workarea &
 
 echo -e "\nlaunchTomcat.sh: Starting Tomcat"
-if [ "$DEBUG" = "true" ] ||[ "$DEBUG" = "t" ] ||[ "$DEBUG" = "1" ] ||  \
-   [ "$DEBUG" = "TRUE" ] || [ "$DEBUG" = "True" ] || [ "$1" = "--debug" ]; then
+if [ "${DEBUG,,}" = "true" ] || [ "$1" = "--debug" ]; then
     exec ${CATALINA_HOME}/bin/catalina.sh jpda ${START_MODE}
 else
     exec ${CATALINA_HOME}/bin/catalina.sh ${START_MODE}

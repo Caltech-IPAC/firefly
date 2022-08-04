@@ -26,10 +26,17 @@ public interface SsoAdapter {
     String SSO_FRAMEWORK_NAME = "sso.framework.name";
     String SSO_FRAMEWORK_ADAPTER = "sso.framework.adapter";
 
+    // common properties keys used by SsoAdapter implementers
+    String LOGIN_URL         = "sso.login.url";
+    String LOGOUT_URL        = "sso.logout.url";
+    String REQ_AUTH_HOSTS    = "sso.req.auth.hosts";
+
+
     enum SsoFramework {
         josso(JOSSOAdapter.class),
         oidc(OidcAdapter.class),
-        mod_auth_openidc(AuthOpenidcMod.class);
+        mod_auth_openidc(AuthOpenidcMod.class),
+        PAT(PersonalAccessToken.class);
 
         Class clz;
         SsoFramework(Class clz) { this.clz= clz;}
