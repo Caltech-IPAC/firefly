@@ -1,7 +1,7 @@
 import {get} from 'lodash';
 
 import * as TblUtil from '../TableUtil.js';         // used for named import
-import TableUtil from '../TableUtil.js';            // using default import
+import TableUtil, {formatValue} from '../TableUtil.js';            // using default import
 import {SelectInfo} from '../SelectInfo';
 import {MetaConst} from '../../data/MetaConst';
 import {dataReducer} from '../reducer/TableDataReducer.js';
@@ -134,6 +134,23 @@ describe('TableUtil: ', () => {
                     ]
                 );
             });
+    });
+
+    test('formatValue', () => {
+
+        // test java-like String.format using fmtDisp column meta
+        let res = formatValue({fmtDisp: 'cost $%.2f'}, 123.3432);
+        expect(res).toEqual('cost $123.34');
+
+        // test java-like String.format using format column meta
+        res = formatValue({format: 'cost $%.2f'}, 123.3432);
+        expect(res).toEqual('cost $123.34');
+
+        // @Kartikeya Puri, please add tests for precision column meta here...
+        // for precision, column must be numeric.. i.e.  {type: 'float', precision: 'E3'}
+        // see TableUtil.js->formatValue function descriptions from details
+
+
     });
 
 });

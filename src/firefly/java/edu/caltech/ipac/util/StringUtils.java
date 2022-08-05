@@ -39,46 +39,17 @@ public class StringUtils {
     public static final long MEG_TENTH    = MEG / 10;
     public static final long GIG_HUNDREDTH= GIG / 100;
     public static final long K            = 1024;
-    public static String DASH_1;
-    public static String DASH_2;
-    public static String DASH_3;
-    public static String DOUBLE_QUOTATION_MARK_1;
-    public static String DOUBLE_QUOTATION_MARK_2;
-    public static String DOUBLE_QUOTATION_MARK_3;
-    public static String DOUBLE_QUOTATION_MARK_4;
-
-    static {
-        try { // jdk 1.1 and up supports public String(byte[] bytes, java.lang.String s)
-            DASH_1= new String (new byte[]{-30,-128,-102,-61,-124,-61,-82},"UTF-8");
-            DASH_2= new String (new byte[]{-30,-128,-102,-61,-124,-61,-84},"UTF-8");
-            DASH_3= new String (new byte[]{-30,-128,-109},"UTF-8");
-            DOUBLE_QUOTATION_MARK_1= new String (new byte[]{-30,-128,-99},"UTF-8");
-            DOUBLE_QUOTATION_MARK_2= new String (new byte[]{-30,-128,-100},"UTF-8");
-            DOUBLE_QUOTATION_MARK_3= new String (new byte[]{-30,-128,-102,-61,-124,-61,-71},"UTF-8");
-            DOUBLE_QUOTATION_MARK_4= new String (new byte[]{-30,-128,-102,-61,-124,-61,-70},"UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            //rare case, only happens if UTF-8 is not supported.
-            DASH_1=new String (new byte[]{-30,-128,-108});
-            DASH_2=new String (new byte[]{-30,-128,-109});
-            DASH_3=new String (new byte[]{-48});
-            DOUBLE_QUOTATION_MARK_1=new String (new byte[]{-45});
-            DOUBLE_QUOTATION_MARK_2=new String (new byte[]{-46});
-            DOUBLE_QUOTATION_MARK_3=new String (new byte[]{-30,-128,-99});
-            DOUBLE_QUOTATION_MARK_4=new String (new byte[]{-30,-128,-100});
-        }
-    }
 
     public static String[] groupMatch(String regex, String val) {
         return groupMatch(regex, val, 0);
     }
 
     /**
-     * This is used for capturing groups.  If matches, it'll return all of the matching groups as
-     * an array of strings, otherwise null.
-     * @param regex pattern to match
+     * Entire string matching with capturing groups.
+     * @param regex pattern to match the full string
      * @param val   string value to match with
      * @param flags Match flags, a bit mask
-     * @return return all of the matching groups as an array of strings, otherwise null.
+     * @return return all the matching groups as an array of strings, otherwise null.
      */
     public static String[] groupMatch(String regex, String val, int flags) {
         return groupMatch(Pattern.compile(regex, flags), val);
@@ -100,6 +71,33 @@ public class StringUtils {
         }
     }
 
+    /**
+     * Find all occurrences that matches the regex within the given string.
+     * If matches, it'll return occurrences as an array of strings, otherwise null.
+     * @param regex pattern to find
+     * @param val   string value to match with
+     * @param flags Match flags, a bit mask
+     * @return return all the matching occurrences as an array of strings, otherwise null.
+     */
+    public static String[] groupFind(String regex, String val, int flags) {
+        return groupFind(Pattern.compile(regex, flags), val);
+    }
+
+    public static String[] groupFind(String regex, String val) {
+        return groupFind(Pattern.compile(regex, 0), val);
+    }
+
+     /**
+     * When performance matters, use this to save the time it takes to compile the reqex.
+     */
+    public static String[] groupFind(Pattern pattern, String val) {
+        Matcher m = pattern.matcher(val);
+        ArrayList<String> res = new ArrayList<>();
+        while ( m.find() ) {
+            res.add(m.group(0));
+        }
+        return res.size() > 0 ? res.toArray(new String[0]) : null;
+    }
 
     /**
      * applies the consumer's logic if v is not null or is an empty string
@@ -310,29 +308,6 @@ public class StringUtils {
         return retval;
     }
 
-
-
-    /**
-     *
-     * @param s a string
-     * @return  Return true if the given string contains letters.
-     */
-    public static boolean containsLetters(String s) {
-        boolean retval = false;
-
-        if (s==null) return retval;
-
-        int     length = s.length();
-        for (int i=0; i<length; i++) {
-            if (Character.isLetter(s.charAt(i))) {
-                retval = true;
-                break;
-            }
-        }
-        return retval;
-    }
-
-
     /**
      * Returns true is the given string is either null, or an empty string.
      * A string of white spaces is also considered empty.
@@ -349,15 +324,6 @@ public class StringUtils {
         }
         return false;
     }
-
-
-
-    public static boolean hasContent(String s) {
-        return !isEmpty(s);
-    }
-
-
-
 
 
     /**
@@ -700,15 +666,6 @@ public class StringUtils {
             StringBuilder sb= new StringBuilder(200);
             sb.append(str);
             str = convertExtendedAscii(sb);
-            /*
-            str= str.replaceAll(DASH_1, "-");
-            str= str.replaceAll(DASH_2, "-");
-            str= str.replaceAll(DASH_3, "-");
-            str= str.replaceAll(DOUBLE_QUOTATION_MARK_1,"\"");
-            str= str.replaceAll(DOUBLE_QUOTATION_MARK_2, "\"");
-            str= str.replaceAll(DOUBLE_QUOTATION_MARK_3, "\"");
-            str= str.replaceAll(DOUBLE_QUOTATION_MARK_4, "\"");*/
-            
         }
         return str;
     }
