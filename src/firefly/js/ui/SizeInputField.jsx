@@ -177,7 +177,7 @@ export const SizeInputFields = memo( (props) => {
 
     const {viewProps, fireValueChange}=  useFieldGroupConnector(
         {
-            ...props,
+            nullAllowed:props.initialState.nullAllowed??false, ...props,
             initialState:{...props.initialState,
                 validator: (value) => {
                     const v= (value+'').trim();

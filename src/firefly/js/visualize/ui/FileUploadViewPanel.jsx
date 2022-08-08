@@ -18,6 +18,7 @@ import {getSizeAsString} from '../../util/WebUtil.js';
 import {makeFileRequest} from '../../tables/TableRequestUtil.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
+import RangeValues from '../RangeValues.js';
 import WebPlotRequest from '../WebPlotRequest.js';
 import ImagePlotCntlr, {dispatchPlotImage, visRoot} from '../ImagePlotCntlr.js';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
@@ -690,6 +691,7 @@ function sendImageRequest(imageIndices, request, fileCacheKey) {
     const {fileName, parts=[]} = currentReport;
 
     const wpRequest = WebPlotRequest.makeFilePlotRequest(fileCacheKey);
+    wpRequest.setInitialRangeValues(RangeValues.make2To10SigmaLinear());
     const {viewerId=''} = getAViewFromMultiView(getMultiViewRoot(), IMAGE) || {};
 
     if (viewerId) {

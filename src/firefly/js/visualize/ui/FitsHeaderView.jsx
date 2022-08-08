@@ -110,6 +110,7 @@ function showFitsHeaderPopup(plot, fitsHeaderInfo, element, initLeft, initTop, o
         } else {
             const crtPlot = primePlot(visRoot());
             const newTableInfo = createFitsHeaderTable(null, crtPlot);
+            if (!newTableInfo) return {displayedPlotId, displayedHdu};
 
             Object.keys(newTableInfo).reduce((prev, oneBand) => {
                 prev = prev || updateTableSort(newTableInfo[oneBand]);

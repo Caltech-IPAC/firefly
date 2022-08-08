@@ -108,18 +108,19 @@ export const getDefaultPopupPosition= function(e, layoutType,positionElement) {
 
     let left= 0;
     let top= 0;
+    const {offsetWidth=0,offsetHeight=0}= e??{};
     const posBound= positionElement?.getBoundingClientRect() ?? {};
     switch (layoutType.toString()) {
         case 'CENTER' :
-            left= window.innerWidth/2 - e.offsetWidth/2 + window.scrollX;
-            top= window.innerHeight/2 - e.offsetHeight/2 + window.scrollY;
+            left= window.innerWidth/2 - offsetWidth/2 + window.scrollX;
+            top= window.innerHeight/2 - offsetHeight/2 + window.scrollY;
             break;
         case 'TOP_CENTER' :
-            left= window.innerWidth/2 - e.offsetWidth/2 + window.scrollX;
+            left= window.innerWidth/2 - offsetWidth/2 + window.scrollX;
             top= window.scrollY+ 100;
             break;
         case 'TOP_RIGHT' :
-            left= window.innerWidth - e.offsetWidth - 30 + window.scrollX;
+            left= window.innerWidth - offsetWidth - 30 + window.scrollX;
             top= window.scrollY+ 3;
             break;
         case 'TOP_LEFT' :
@@ -127,14 +128,14 @@ export const getDefaultPopupPosition= function(e, layoutType,positionElement) {
             top= window.scrollY+ 3;
             break;
         case 'TOP_EDGE_CENTER' :
-            left= window.innerWidth/2 - e.offsetWidth/2 + window.scrollX;
+            left= window.innerWidth/2 - offsetWidth/2 + window.scrollX;
             top= window.scrollY+ 3;
             break;
         case 'TOP_RIGHT_OF_BUTTON' :
             if (!positionElement) return getDefaultPopupPosition(e,'TOP_RIGHT');
-            left= posBound.width + posBound.x + 5  + e.offsetWidth < window.innerWidth ?
-                posBound.width + posBound.x + 5 : window.innerWidth - e.offsetWidth;
-            top= posBound.y > e.offsetHeight ? posBound.y - e.offsetHeight : 5;
+            left= posBound.width + posBound.x + 5  + offsetWidth < window.innerWidth ?
+                posBound.width + posBound.x + 5 : window.innerWidth - offsetWidth;
+            top= posBound.y > offsetHeight ? posBound.y - offsetHeight : 5;
             break;
     }
     return {left, top};

@@ -360,8 +360,10 @@ function renderRoot(viewer, props, webApiCommands) {
         return;
     }
 
-    const doAppRender= () => ReactDOM.render(React.createElement(viewer, props), e);
-    isUsingWebApi(webApiCommands) ? handleWebApi(webApiCommands, e, doAppRender) : doAppRender();
+
+    const webApi= isUsingWebApi(webApiCommands);
+    const doAppRender= () => ReactDOM.render(React.createElement(viewer, {...props, normalInit: !webApi }), e);
+    webApi ? handleWebApi(webApiCommands, e, doAppRender) : doAppRender();
 }
 
 
@@ -370,9 +372,14 @@ function handleWebApi(webApiCommands, e, doAppRender) {
         params, badParams, missingParams}= evaluateWebApi(webApiCommands);
     switch (status) {
         case WebApiStat.EXECUTE_API_CMD:
+            let apiCompleted= false;
             window.history.pushState('home', 'Home', new URL(window.location).pathname); // ?? is this necessary?
             doAppRender();
-            dispatchOnAppReady(() =>  execute?.(cmd,params));
+            dispatchOnAppReady(() =>  {
+                if (apiCompleted) return;
+                execute?.(cmd,params);
+                apiCompleted= true;
+            });
             break;
         case WebApiStat.SHOW_HELP:
             ReactDOM.render(

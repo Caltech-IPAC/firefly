@@ -1003,8 +1003,11 @@ function makeDataOnlyRequestString(r) {
     if (!r) return '';
     r= r.makeCopy();
     r.setRequestKey('');
+    r.setPlotId('');
+    r.setPlotGroupId('');
     r.setInitialRangeValues();
     r.setInitialColorTable(getDefaultImageColorTable());
+    r.setAnnotationOps(AnnotationOps.INLINE);
     return r.toString();
 }
 

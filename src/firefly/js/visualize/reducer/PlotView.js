@@ -39,6 +39,7 @@ import {updateTransform, makeTransform} from '../PlotTransformUtils.js';
  * @prop {String} plotId, immutable
  * @prop {String} plotGroupId, immutable
  * @prop {String} drawingSubGroupId, immutable
+ * @prop {WebPlotRequest} request
  * @prop {boolean} visible true when we draw the base image
  * @prop {Array.<WebPlot>} plots all the plots that this plotView can show, usually the image in the fits file
  * @prop {String} plottingStatusMsg, end user description of the what is doing on

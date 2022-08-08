@@ -219,9 +219,6 @@ export function BasicUI(props) {
                 setSchemaName(schema);
                 setTableName(table);
             }
-        } else {
-            setSchemaName(undefined);
-            setTableName(undefined);
         }
     }, [serviceUrl, selectBy]);
 
