@@ -209,7 +209,12 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
         }
         String subSize = pathInfo.get("subsize");
 
-        if (!StringUtils.isEmpty(subLon) && !StringUtils.isEmpty(subLat) && !StringUtils.isEmpty(subSize)) {
+        // if no subSize specified by searches, set doCutout flag false
+        if (StringUtils.isEmpty(subSize)) {
+            dataParam.setCutout(false,null,null);
+        } else if (subSize.equals("null")) {
+           dataParam.setCutout(false,null,null);
+        } else if (subSize != "null" && !StringUtils.isEmpty(subLon) && !StringUtils.isEmpty(subLat)){
             dataParam.setCutout(true, subLon + "," + subLat, subSize);
         }
 
