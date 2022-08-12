@@ -563,8 +563,8 @@ public class EmbeddedDbUtil {
                     for (int cidx = 0; cidx < cols.length; cidx++)  {
                         ps.setObject(cidx+1, data.getData(cols[cidx].getKeyName(), ridx));
                     }
-                    ps.setObject(cols.length+1, i);         // add ROW_IDX
-                    ps.setObject(cols.length+2, i);         // add ROW_NUM
+                    ps.setObject(cols.length+1, ridx);         // add ROW_IDX
+                    ps.setObject(cols.length+2, ridx);         // add ROW_NUM
                 }
                 public int getBatchSize() {
                     return batchSize;
