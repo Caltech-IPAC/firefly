@@ -35,7 +35,7 @@ const TT_SAVE = 'Save the content as an IPAC, CSV, or TSV table';
 const TT_TEXT_VIEW = 'Text View';
 const TT_TABLE_VIEW = 'Table View';
 const TT_CLEAR_FILTER = 'Remove all filters';
-const TT_SHOW_FILTER = 'The Filter Panel can be used to remove unwanted data from the search results';
+const TT_SHOW_FILTER = 'Filters can be used to remove unwanted rows from the search results';
 const TT_EXPAND = 'Expand this panel to take up a larger area';
 
 

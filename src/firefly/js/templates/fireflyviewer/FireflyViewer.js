@@ -65,7 +65,7 @@ export class FireflyViewer extends PureComponent {
 
     componentDidMount() {
         dispatchOnAppReady((state) => {
-            onReady({state, menu: this.props.menu, views: this.props.views,
+            onReady({state, menu: this.props.menu, views: this.props.views, normalInit:this.props.normalInit??true,
                 options:this.props.options, initLoadingMessage:this.props.initLoadingMessage, initLoadCompleted:this.state.initLoadCompleted});
         });
         this.removeListener = flux.addListener(() => this.storeUpdate());
@@ -133,6 +133,7 @@ FireflyViewer.propTypes = {
     rightButtons: PropTypes.arrayOf( PropTypes.func ),
     options: PropTypes.object,
     initLoadingMessage: PropTypes.string,
+    normalInit: PropTypes.bool
 };
 
 FireflyViewer.defaultProps = {
@@ -140,13 +141,13 @@ FireflyViewer.defaultProps = {
     views: 'images | tables | xyPlots'
 };
 
-function onReady({menu, views, options={}, initLoadingMessage, initLoadCompleted}) {
+function onReady({menu, views, options={}, initLoadingMessage, initLoadCompleted, normalInit}) {
     if (menu) {
         const {backgroundMonitor= true}= options;
         dispatchSetMenu({menuItems: menu, showBgMonitor:backgroundMonitor});
     }
     const {hasImages, hasTables, hasXyPlots} = getLayouInfo();
-    if (!(hasImages || hasTables || hasXyPlots)) {
+    if (normalInit && (!(hasImages || hasTables || hasXyPlots))) {
         let goto = getActionFromUrl();
         if (!goto) goto= (!initLoadingMessage || initLoadCompleted) && {type: SHOW_DROPDOWN};
         if (goto) flux.process(goto);

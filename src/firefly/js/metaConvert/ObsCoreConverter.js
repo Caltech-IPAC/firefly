@@ -1,4 +1,5 @@
 import {get, isEmpty, uniqueId} from 'lodash';
+import {RangeValues, SIGMA, STRETCH_LINEAR} from '../visualize/RangeValues.js';
 import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
 import {getCellValue, doFetchTable, hasRowAccess} from '../tables/TableUtil.js';
 import {
@@ -198,7 +199,9 @@ export function makeObsCoreRequest(dataSource, positionWP, titleStr) {
         r.setTitleOptions(TitleOptions.FILE_NAME);
     }
     r.setPlotId(uniqueId('obscore-'));
+
     if (positionWP) r.setOverlayPosition(positionWP);
+    r.setInitialRangeValues(RangeValues.make2To10SigmaLinear());
 
     return r;
 }

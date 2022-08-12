@@ -144,7 +144,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
                 } else if (checkForUpdates) {
                     FileUtil.writeStringToFile(nFile, "workaround");
                     nFile.setLastModified(res.lastModified());
-                    URLDownload.Options ops= new URLDownload.Options(false,true);
+                    URLDownload.Options ops= URLDownload.Options.modifiedOp(false);
                     FileInfo finfo = URLDownload.getDataToFile(url, nFile, inputs.getCookies(), inputs.getHeaders(), ops);
                     if (finfo.getResponseCode() != HttpURLConnection.HTTP_NOT_MODIFIED) {
                         checkForFailures(finfo);

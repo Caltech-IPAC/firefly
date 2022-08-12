@@ -13,6 +13,7 @@
  * @prop {boolean} allSelected
  * @prop {boolean} rotateNorthLockSticky
  * @prop {boolean} flipYSticky
+ * @prop {RangeValues} defaultRangeValues
  */
 
 /**
@@ -22,7 +23,7 @@
  */
 export const makePlotGroup= (plotGroupId,overlayColorLock) =>
     ({ plotGroupId, overlayColorLock, enableSelecting :false, allSelected :false,
-        rotateNorthLockSticky:false, flipYSticky : false,
+        rotateNorthLockSticky:false, flipYSticky : false, defaultRangeValues: undefined,
     });
 
 /**

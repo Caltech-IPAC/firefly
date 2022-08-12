@@ -5,6 +5,7 @@ package edu.caltech.ipac.util.download;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.HttpResultInfo;
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
 import edu.caltech.ipac.util.Base64;
@@ -28,6 +29,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -238,7 +240,7 @@ public class URLDownload {
                                                   File outfile, DownloadListener dl,
                                                   int timeoutInSec) throws FailedRequestException {
         try {
-            Options ops= new Options(true,true,0L,false,dl);
+            Options ops= new Options(true,true,0L,false,false, dl);
             return getDataToFile(makeConnection(url, cookies, requestHeader), outfile, ops, timeoutInSec,postData,0);
         } catch (IOException e) {
             logError(url, postData, e);
@@ -255,7 +257,7 @@ public class URLDownload {
      * @throws FailedRequestException Any Network Error with simple message, cause will probably be IOException
      */
     public static FileInfo getDataToFile(URL url, File outfile) throws FailedRequestException {
-        return getDataToFile(url, outfile, null, null, new Options());
+        return getDataToFile(url, outfile, null, null, Options.def());
     }
 
     /**
@@ -270,7 +272,7 @@ public class URLDownload {
                                          File outfile,
                                          Map<String, String> cookies,
                                          Map<String, String> requestHeaders) throws FailedRequestException {
-        return getDataToFile(url,outfile,cookies,requestHeaders, new Options());
+        return getDataToFile(url,outfile,cookies,requestHeaders, Options.def());
     }
 
     /**
@@ -288,8 +290,16 @@ public class URLDownload {
                                          Map<String, String> requestHeaders,
                                          Options ops) throws FailedRequestException {
         try {
-            return getDataToFile(makeConnection(url, cookies, requestHeaders),
-                                 outfile, ops, 0, null, ops.allowRedirect?2:0);
+            Map<String, String> h= new HashMap<>();
+            if (requestHeaders!=null) h.putAll(requestHeaders);
+            if (ops.useCredentials) {
+                var inputs= HttpServiceInput.createWithCredential(url.toString());
+                var credentials= inputs.getHeaders();
+                if (credentials!=null && credentials.size()>0) {
+                    if (!credentials.keySet().stream().allMatch(h::containsKey)) h.putAll(credentials);
+                }
+            }
+            return getDataToFile(makeConnection(url, cookies, h), outfile, ops, 0, null, ops.allowRedirect?2:0);
         } catch (IOException e) {
             throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e), e);
         }
@@ -661,21 +671,39 @@ public class URLDownload {
         return workBuff.toString();
     }
 
-    public static class Options {
-        final boolean onlyIfModified;
-        final boolean uncompress;
-        final long maxFileSize;
-        final boolean allowRedirect;
-        final DownloadListener dl;
+    public record Options (boolean onlyIfModified, boolean uncompress, long maxFileSize, boolean allowRedirect,
+                           boolean useCredentials, DownloadListener dl) {
 
-        public Options(boolean onlyIfModified, boolean uncompress, long maxFileSize, boolean allowRedirect, DownloadListener dl) {
-            this.onlyIfModified = onlyIfModified;
-            this.uncompress = uncompress;
-            this.maxFileSize = maxFileSize;
-            this.allowRedirect = allowRedirect;
-            this.dl= dl;
+        /**
+         * convenience function
+         * set no size limit,
+         * sets true: onlyIfModified, uncompress, use credentials
+         * set false: allowRedirect
+         * @return Options
+         */
+        public static Options def() {return new Options(true,true,0,false,true,null);}
+
+        /**
+         * convenience function
+         * set no size limit,
+         * sets true: uncompress, allowRedirect, use credentials
+         * @param onlyIfModified - check for file modification
+         * @return Options
+         */
+        public static Options modifiedOp(boolean onlyIfModified) {
+            return new Options (onlyIfModified,true,0,true,true,null);
         }
-        public Options(boolean onlyIfModified, boolean allowRedirect) { this(onlyIfModified,true,0,allowRedirect,null); }
-        public Options() { this(true,true,0,false,null); }
+
+        /**
+         * convenience function
+         * sets true: onlyIfModified,  uncompress, allowRedirect, use credentials
+         * @param maxFileSize download size limit
+         * @param dl download listener
+         * @return Options
+         */
+        public static Options listenerOp(long maxFileSize, DownloadListener dl) {
+            return new Options (true,true,maxFileSize,true,true,dl);
+        }
     }
+
 }

@@ -57,7 +57,12 @@ function doHeadersMatchMOC(sourceHeaderEntries, doTableValidation= true) {
     const k= 0;
     const v= 1;
     const mocKeySet = [{PCOUNT: '0'}, {GCOUNT: '1'}, {TFIELDS: '1'},
-        [{TFORM1: '1J',  NAXIS1: '4'}, {TFORM1: '1K', NAXIS1: '8'}]];
+        [
+            {TFORM1: '1J',  NAXIS1: '4'},
+            {TFORM1: 'J',  NAXIS1: '4'},
+            {TFORM1: '1K', NAXIS1: '8'},
+            {TFORM1: 'K', NAXIS1: '8'}
+        ]];
 
     const mocKeys = flatten(mocKeySet).reduce((prev, oneCond) => {
         Object.keys(oneCond).forEach((aKey) => {

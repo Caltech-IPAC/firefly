@@ -143,7 +143,7 @@ function creator(initPayload) {
     dl.mocTable= undefined;
     dl.rootTitle= dl.title;
 
-        dispatchAddActionWatcher({
+    dispatchAddActionWatcher({
         callback:loadMocFitsWatcher,
         params: {id: dl.drawLayerId, mocFitsInfo},
         actions:[DrawLayerCntlr.CHANGE_VISIBILITY, DrawLayerCntlr.ATTACH_LAYER_TO_PLOT]
