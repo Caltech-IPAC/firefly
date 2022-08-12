@@ -76,7 +76,8 @@ export function StretchDropDownView({toolbarElement}) {
     const pv = useStoreConnector(() => getActivePlotView(visRoot()));
     const enabled= Boolean(pv);
     const plot= primePlot(pv);
-    const rv= plot.plotState.getRangeValues();
+    if (!plot) return <div/>;
+    const rv= plot?.plotState?.getRangeValues();
 
     const zscaleStretchMatches= (rv, algorithm) => rv.upperWhich===ZSCALE && algorithm===rv.algorithm;
 

@@ -7,11 +7,12 @@ import {
 import ImagePlotCntlr, {
     dispatchPlotImage, dispatchDeletePlotView, visRoot, dispatchZoom,
     dispatchPlotGroup, dispatchChangeActivePlotView } from '../visualize/ImagePlotCntlr.js';
-import {AnnotationOps, isImageDataRequestedEqual} from '../visualize/WebPlotRequest.js';
+import {getPlotGroupById} from '../visualize/PlotGroup.js';
+import {AnnotationOps, isImageDataRequestedEqual, WebPlotRequest} from '../visualize/WebPlotRequest.js';
 import {
     getPlotViewAry, getPlotViewById, isImageExpanded, primePlot } from '../visualize/PlotViewUtil.js';
 import {allBandAry} from '../visualize/Band.js';
-import {getTblById} from '../tables/TableUtil.js';
+import {getActiveTableId, getTblById} from '../tables/TableUtil.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {dispatchTableHighlight} from '../tables/TablesCntlr.js';
 import {DPtypes} from 'firefly/metaConvert/DataProductsType.js';
@@ -182,6 +183,14 @@ export function changeActivePlotView(plotId,tbl_id) {
 function replotImageDataProducts(activePlotId, imageViewerId, tbl_id, reqAry, threeReqAry)  {
     const groupId= `${imageViewerId}-${tbl_id||'no-table-group'}-standard`;
     reqAry= reqAry.filter( (r) => r);
+    reqAry.forEach( (r) => {
+            const foundPv= getPlotViewAry(visRoot()).find( (pv) =>
+                pv.plotGroupId===groupId && isImageDataRequestedEqual(pv.request, r));
+            if (foundPv) r.setPlotId(foundPv.request.getPlotId());
+        });
+
+
+
     let plottingIds= reqAry.map( (r) =>  r && r.getPlotId()).filter( (id) => id);
     let threeCPlotId;
     let plottingThree= false;
@@ -193,7 +202,12 @@ function replotImageDataProducts(activePlotId, imageViewerId, tbl_id, reqAry, th
             plottingThree= true;
             threeCPlotId= r.getPlotId();
             plottingIds= [...plottingIds,threeCPlotId];
-            threeReqAry.forEach( (r) => r && r.setPlotGroupId(groupId) );
+            const group= getPlotGroupById(visRoot(), groupId);
+            threeReqAry.forEach( (r) => {
+                if (!r) return;
+                r.setPlotGroupId(groupId);
+                if (group?.defaultRangeValues) r.setInitialRangeValues(group.defaultRangeValues);
+            } );
         }
     }
     // prepare each request
@@ -201,20 +215,21 @@ function replotImageDataProducts(activePlotId, imageViewerId, tbl_id, reqAry, th
         const newR= r.makeCopy();
         newR.setPlotGroupId(groupId);
         newR.setAnnotationOps(AnnotationOps.INLINE);
+        const group= getPlotGroupById(visRoot(), groupId);
+        if (group?.defaultRangeValues) newR.setInitialRangeValues(group.defaultRangeValues);
         return newR;
     });
 
-
     // setup view for these plotting ids
-    const inViewerIds= getViewerItemIds(getMultiViewRoot(), imageViewerId);
-    const idUnionLen= union(plottingIds,inViewerIds).length;
-    if (idUnionLen!== inViewerIds.length || plottingIds.length<inViewerIds.length) {
+    const plotIdsInViewer= getViewerItemIds(getMultiViewRoot(), imageViewerId);
+    const idUnionLen= union(plottingIds,plotIdsInViewer).length;
+    if (idUnionLen!== plotIdsInViewer.length || plottingIds.length<plotIdsInViewer.length) {
         dispatchReplaceViewerItems(imageViewerId,plottingIds,IMAGE);
     }
 
 
     // clean up unused Ids
-    const cleanUpIds= difference(inViewerIds,plottingIds);
+    const cleanUpIds= difference(plotIdsInViewer,plottingIds);
     cleanUpIds.forEach( (plotId) => dispatchDeletePlotView({plotId, holdWcsMatch:true}));
 
 
@@ -250,9 +265,21 @@ function replotImageDataProducts(activePlotId, imageViewerId, tbl_id, reqAry, th
         if (nextDisplayType===DPtypes.IMAGE && layoutType===GRID && tbl_id===nextMetaDataTableId) {
             return;
         }
-        // !isEmpty(wpRequestAry) && wpRequestAry.forEach( (wpR) => dispatchDeletePlotView({plotId:wpR.getPlotId()}) );
+        // if (nextDisplayType===DPtypes.IMAGE && tbl_id===nextMetaDataTableId) {
+            // todo: need a check here: see if we are just collapsing from expanded mode - then just return
+            //       maybe check the table and row, if it is the same as the plot then don't
+            //plot.attributes[PlotAttribute.DATALINK_TABLE_ROW];
+            //plot.attributes[PlotAttribute.DATALINK_TABLE_ID];
+        // }
+        const table= getTblById(getActiveTableId());
         getPlotViewAry(visRoot())
             .filter( (pv) => pv.plotGroupId===groupId)
+            .filter( (pv) => {
+                const plot= primePlot(pv);
+                if (!table || !plot) return true;
+                return Number(plot.attributes[PlotAttribute.DATALINK_TABLE_ROW])!== table.highlightedRow||
+                       plot.attributes[PlotAttribute.DATALINK_TABLE_ID]!==table.tbl_id;
+            })
             .forEach( (pv) => dispatchDeletePlotView({plotId:pv.plotId}) );
         plottingThree && dispatchDeletePlotView({plotId:threeCPlotId});
     };

@@ -119,7 +119,7 @@ public class LockingVisNetwork {
 
         try {
             File fileName= (fileInfo==null) ? CacheHelper.makeFile(params.getFileDir(), params.getUniqueString()) : fileInfo.getFile();
-            URLDownload.Options ops= new URLDownload.Options(true,true,params.getMaxSizeToDownload(),true,dl);
+            var ops= URLDownload.Options.listenerOp(params.getMaxSizeToDownload(), dl);
             fileInfo= URLDownload.getDataToFile(params.getURL(), fileName, params.getCookies(), params.getHeaders(), ops);
             if (fileInfo.getResponseCode()==200) CacheHelper.putFileInfo(params,fileInfo);
             return fileInfo;

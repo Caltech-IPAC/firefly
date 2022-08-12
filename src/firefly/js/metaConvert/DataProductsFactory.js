@@ -3,6 +3,7 @@
  */
 
 import {get, isEmpty, isArray} from 'lodash';
+import {RangeValues, SIGMA, STRETCH_LINEAR} from '../visualize/RangeValues.js';
 import {makeWisePlotRequest} from './WiseRequestList.js';
 import {make2MassPlotRequest} from './TwoMassRequestList.js';
 import {makeAtlasPlotRequest} from './AtlasRequestList.js';
@@ -481,6 +482,7 @@ function makeMovingRequest(table, row, dataSource, positionWP, plotId) {
     r.setTitleOptions(TitleOptions.FILE_NAME);
     r.setZoomType(ZoomType.TO_WIDTH_HEIGHT);
     r.setPlotId(plotId);
+    r.setInitialRangeValues(RangeValues.make2To10SigmaLinear());
     r.setOverlayPosition(positionWP);
     return r;
 

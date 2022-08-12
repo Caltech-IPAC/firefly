@@ -7,7 +7,6 @@ package edu.caltech.ipac.firefly.server.servlets;
 
 
 import edu.caltech.ipac.firefly.data.FileInfo;
-import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
@@ -39,9 +38,7 @@ public class HiPSRetrieve {
             if (!dir.exists()) dir.mkdirs();
 
             File targetFile= new File(dir, new File((pathExt == null ? url.getFile() : pathExt)).getName());
-            URLDownload.Options ops= new URLDownload.Options(true,true);
-            RequestOwner ro = ServerContext.getRequestOwner();
-            FileInfo fi= URLDownload.getDataToFile(url,targetFile,ro.getCookieMap(), null, ops);
+            FileInfo fi= URLDownload.getDataToFile(url,targetFile,null, null, URLDownload.Options.modifiedOp(true));
             int rCode= fi.getResponseCode();
             File retFile= fi.getFile();
 

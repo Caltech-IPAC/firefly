@@ -13,8 +13,10 @@ import {ImageViewerStatus} from './iv/ImageViewerStatus.jsx';
 import {makeScreenPt, makeDevicePt} from './Point.js';
 import {DrawerComponent}  from './draw/DrawerComponent.jsx';
 import {CCUtil, CysConverter} from './CsysConverter.js';
-import {UserZoomTypes}  from './ZoomUtil.js';
-import { primePlot, getPlotViewById, hasLocalStretchByteData, isActivePlotView } from './PlotViewUtil.js';
+import {getArcSecPerPix, getZoomLevelForScale, UserZoomTypes} from './ZoomUtil.js';
+import {
+    primePlot, getPlotViewById, hasLocalStretchByteData, isActivePlotView, hasWCSProjection, getFoV
+} from './PlotViewUtil.js';
 import {isImageViewerSingleLayout, getMultiViewRoot} from './MultiViewCntlr.js';
 import {contains, intersects} from './VisUtil.js';
 import BrowserInfo from '../util/BrowserInfo.js';
@@ -23,7 +25,7 @@ import { visRoot, ActionScope, dispatchPlotProgressUpdate, dispatchZoom, dispatc
     dispatchChangeCenterOfProjection, dispatchChangeActivePlotView,
     dispatchUpdateViewSize, dispatchRequestLocalData } from './ImagePlotCntlr.js';
 import {fireMouseCtxChange, makeMouseStatePayload, MouseState} from './VisMouseSync.js';
-import {isHiPS, isImage} from './WebPlot.js';
+import {getDevPixScaleDeg, isHiPS, isHiPSAitoff, isImage} from './WebPlot.js';
 import Color from '../util/Color.js';
 import {plotMove} from './PlotMove';
 import {getAppOptions} from 'firefly/api/ApiUtil.js';
@@ -57,8 +59,9 @@ const zoomFromWheelOrTrackpad= (usingMouseWheel, params) => {
 function updateZoom(plotId, paging) {
     const vr= visRoot();
     const pv= getPlotViewById(vr, plotId);
+    const plot= primePlot(pv);
 
-    if (!primePlot(pv)) return;
+    if (!plot) return;
     if (!pv.plotViewCtx.zoomLockingEnabled) return;
 
     let doZoom;
@@ -67,7 +70,7 @@ function updateZoom(plotId, paging) {
         doZoom= false;
     }
     else if (isImageViewerSingleLayout(getMultiViewRoot(), vr, plotId)) {
-        doZoom= true;
+        doZoom= plot.viewDim.width>=plot.screenSize.width && plot.viewDim.height>=plot.screenSize.height;
         actionScope= ActionScope.SINGLE;
     }
     else {  // case: not expanded or expand as grid
@@ -78,19 +81,18 @@ function updateZoom(plotId, paging) {
             actionScope= ActionScope.GROUP;
         }
         else {
-            doZoom= true;
+            doZoom= plot.viewDim.width>=plot.screenSize.width && plot.viewDim.height>=plot.screenSize.height;
             actionScope= ActionScope.SINGLE;
         }
     }
+    if (doZoom && isHiPS(plot)) {
+        const fov= getFoV(plot);
+        doZoom= isHiPSAitoff(plot) ? fov>340 : fov>170;
+    }
 
     if (doZoom) {
-        dispatchZoom({
-            plotId,
-            userZoomType: (paging && vr.wcsMatchType) ? UserZoomTypes.WCS_MATCH_PREV : pv.plotViewCtx.zoomLockingType,
-            zoomLockingEnabled: true,
-            forceDelay: !hasLocalStretchByteData(primePlot(pv)),
-            actionScope
-        });
+        const userZoomType= (paging && vr.wcsMatchType) ? UserZoomTypes.WCS_MATCH_PREV : pv.plotViewCtx.zoomLockingType;
+        dispatchZoom({ plotId, userZoomType, zoomLockingEnabled: true, actionScope });
     }
 }
 

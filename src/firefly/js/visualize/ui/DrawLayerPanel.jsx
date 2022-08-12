@@ -71,7 +71,7 @@ const dialogBuilder= getDialogBuilder();
 
 export function showDrawingLayerPopup(div) {
     dialogBuilder(div);
-    dispatchShowDialog(DRAW_LAYER_POPUP);
+    dispatchShowDialog(DRAW_LAYER_POPUP,div);
 }
 
 export function hideDrawingLayerPopup() { dispatchHideDialog(DRAW_LAYER_POPUP); }

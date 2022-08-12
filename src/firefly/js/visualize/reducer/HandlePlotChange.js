@@ -3,7 +3,9 @@
  */
 import {isEmpty, isUndefined, isString, isNumber} from 'lodash';
 import {Band} from '../Band.js';
+import {getExtType} from '../FitsHeaderUtil.js';
 import Cntlr, {ExpandType, WcsMatchType, ActionScope} from '../ImagePlotCntlr.js';
+import {getPlotGroupById} from '../PlotGroup.js';
 import {replacePlotView, replacePrimaryPlot, changePrimePlot, updatePlotViewScrollXY,
         findScrollPtToCenterImagePt, findScrollPtToPlaceOnDevPt,
         updateScrollToWcsMatch, updatePlotGroupScrollXY} from './PlotView.js';
@@ -208,8 +210,7 @@ function updateHiPSColor(state,action) {
 }
 
 function updateImageDisplayData(state,action) {
-    const {plotViewAry, mpwWcsPrimId, wcsMatchType}= state;
-    const stretchChange= action.type===Cntlr.STRETCH_CHANGE;
+    const {plotViewAry, mpwWcsPrimId, wcsMatchType, plotGroupAry}= state;
     const {plotId, primaryStateJson,overlayUpdateAry, rawData,bias,contrast, useRed, useGreen, useBlue, zoomLevel:newZoomFactor, colorTableId=-1}= action.payload;
     const inPv= getPlotViewById(state,plotId);
     const inPlot= primePlot(inPv);
@@ -248,22 +249,41 @@ function updateImageDisplayData(state,action) {
     }
 
     const plot= primePlot(pv); // get the updated on
-    if (stretchChange) {
-        plot.dataRequested= false;
+    let newPlotGroupAry= plotGroupAry;
+    if (action.type===Cntlr.STRETCH_CHANGE) {
+        pv= updateForStretch(pv,plot);
         const rv= plot.plotState.getRangeValues();
-        const hduIdx= getHDU(plot);
-        if (!isThreeColor(pv) && isImageCube(plot)) {
-            pv.plots= pv.plots.map((p) => {
-                if (getHDU(p)!==hduIdx) return p;
-                const newPlotState= p.plotState.copy();
-                newPlotState.setRangeValues(Band.NO_BAND,rv);
-                return {...p,dataRequested:false,plotState:newPlotState}
-            });
-        }
+        newPlotGroupAry= plotGroupAry.map( (g) => g.plotGroupId===pv.plotGroupId ? {...g,defaultRangeValues:rv} : g);
     }
     PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, plot.plotState, plot.colorTableId);
 
-    return {...state, plotViewAry : replacePlotView(plotViewAry,pv)};
+    return {...state, plotViewAry : replacePlotView(plotViewAry,pv), plotGroupAry:newPlotGroupAry};
+}
+
+
+function updateForStretch(inPv, plot) {
+    const pv= {...inPv};
+    plot.dataRequested= false;
+    const rv= plot.plotState.getRangeValues();
+    const hduIdx= getHDU(plot);
+    const extType= getExtType(plot);
+
+    const stretchChangeMatch= (p) => {
+        if (p===plot) return false;
+        if (getHDU(p)===hduIdx) return true;
+        if (extType && extType===getExtType(p)) return true;
+        return false;
+    };
+
+    if (!isThreeColor(pv)) {
+        pv.plots= pv.plots.map((p) => {
+            if (!stretchChangeMatch(p)) return p;
+            const newPlotState= p.plotState.copy();
+            newPlotState.setRangeValues(Band.NO_BAND,rv);
+            return {...p,dataRequested:false,plotState:newPlotState}
+        });
+    }
+    return pv;
 }
 
 function updateDisplayData(state, action) {

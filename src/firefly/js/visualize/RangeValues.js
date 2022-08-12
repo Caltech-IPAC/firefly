@@ -210,6 +210,10 @@ export class RangeValues {
 
     }
 
+    static make2To10SigmaLinear() {
+        return RangeValues.makeRV({which:SIGMA, lowerValue:-2, upperValue:10, algorithm:STRETCH_LINEAR});
+    }
+
     /**
      *
      * @param boundsType one of 'percent', 'absolute', 'sigma'
