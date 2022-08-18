@@ -233,16 +233,43 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
 
         String refSourceId = queryInfo.get("refSourceId");
         String sourceId = queryInfo.get("sourceId");
-        String dataproductlevel = queryInfo.get("dataproductlevel");
-        String sourceidTable = getSchemaFromSourceId(sourceId);
-
+        
+        if (sourceId != null) {
+            String sourceProductLevel = getProductLevelFromSourceId(sourceId);
+            if (sourceProductLevel == null) {
+                throw new IllegalArgumentException("Invalid Source ID: " + sourceId);
+            }
+            if ( sourceProductLevel == "1b") {
+                String sourceSpec = WISE + "." + wds.getSourceTable() + "(\"source_id\":\"" + sourceId + "\")";
+                queryParam.setPos(sourceSpec);
+            }
+            else if (sourceProductLevel == "3a") {
+                String sourceSchema = getSchemaFromSourceId(sourceId);
+                String ss = sourceSchema.toUpperCase();
+                String tt = sourceProductLevel.toUpperCase();
+                DataProduct sourcedt = DataProduct.valueOf(ss + "_" + tt);
+                String sourceTable = sourcedt.getSourceTable();
+                String sourceSpec = WISE + "." + sourceTable + "(\"source_id\":\"" + sourceId + "\")";
+                queryParam.setPos(sourceSpec);
+            }
+        }
         if (refSourceId != null) {
-            String sourceSpec = WISE + "." + wds.getSourceTable() + "(\"source_id\":\"" + refSourceId + "\")";
-            queryParam.setRefBy(sourceSpec);
-        } else if (sourceId != null) {
-            String sourceTable = wds.getSourceTable();
-            String sourceSpec = WISE + "." + sourceTable + "(\"source_id\":\"" + sourceId + "\")";
-            queryParam.setPos(sourceSpec);
+            String sourceProductLevel = getProductLevelFromSourceId(refSourceId);
+            if (sourceProductLevel == null) {
+                throw new IllegalArgumentException("Invalid Source ID: " + refSourceId);
+            }
+            if (sourceProductLevel == "1b") {
+                String sourceSpec = WISE + "." + wds.getSourceTable() + "(\"source_id\":\"" + refSourceId + "\")";
+                queryParam.setRefBy(sourceSpec);
+            } else if (sourceProductLevel == "3a") {
+                /*String sourceSchema = getSchemaFromSourceId(refSourceId);
+                String ss = sourceSchema.toUpperCase();
+                String tt = sourceProductLevel.toUpperCase();*/
+                DataProduct sourcedt = DataProduct.valueOf(ALLSKY_4BAND + "_" + "3A");
+                String sourceTable = sourcedt.getSourceTable();
+                String sourceSpec = WISE + "." + sourceTable + "(\"source_id\":\"" + refSourceId + "\")";
+                queryParam.setPos(sourceSpec);
+            }
         }
 
         // process constraints
@@ -343,6 +370,7 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
             setDataset(wds.getDataset());
             setTableName(wds.getImageTable());
 
+//      following code was commented out to force url file retrieval
 //            File dir= (baseFsPath!=null) ? new File(baseFsPath) : null;
 //
 //            if (baseFsPath != null && dir.canRead()) {
@@ -407,11 +435,13 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
             // process DATE RANGE
             String timeStart = queryInfo.get("timeStart");
             if (!StringUtils.isEmpty(timeStart)) {
-                constraints.add("mjd_obs>='" + IBE.convertUnixToMJD(timeStart) + "'");
+                //constraints.add("mjd_obs>='" + IBE.convertUnixToMJD(timeStart) + "'");
+                constraints.add("date_obs>='" + timeStart + "'");
             }
             String timeEnd = queryInfo.get("timeEnd");
             if (!StringUtils.isEmpty(timeEnd)) {
-                constraints.add("mjd_obs<='" + IBE.convertUnixToMJD(timeEnd) + "'");
+                //constraints.add("mjd_obs<='" + IBE.convertUnixToMJD(timeEnd) + "'");
+                constraints.add("date_obs<='" + timeEnd + "'");
             }
 
             // process Scan IDs (support multiple IDs)
@@ -589,17 +619,17 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
         PRELIM_POSTCRYO_1B("prelim_postcryo","p1bm_frm", "prelim_2band_p1bs_psd", "links-postcryo-prelim/l1b-2band/"),
         ALLWISE_MULTIBAND_3A("allwise","p3am_cdd", "allsky_4band_p1bs_psd", "links-allwise/l3a/"), // TODO: change for production, changed XW
         ALLSKY_4BAND_1B("allsky", "4band_p1bm_frm", "allsky_4band_p1bs_psd", "links-allsky/l1b-4band/"),
-        ALLSKY_4BAND_3A("allsky", "4band_p3am_cdd", "allsky_4band_p1bs_psd", "links-allsky/l3a-4band/"),
-        CRYO_3BAND_1B("cryo_3band", "3band_p1bm_frm", "allsky_4band_p1bs_psd", "links-3band/l1b-3band/"),
-        CRYO_3BAND_3A("cryo_3band", "3band_p3am_cdd", "allsky_4band_p1bs_psd", "links-3band/l3a-3band/"),  // currently they are different: p1bm_frm and p3am_cdd
-        POSTCRYO_1B("postcryo", "2band_p1bm_frm", "allsky_4band_p1bs_psd", "links-postcryo/l1b-2band/"),
+        ALLSKY_4BAND_3A("allsky", "4band_p3am_cdd", "allsky_4band_p3as_psd", "links-allsky/l3a-4band/"),
+        CRYO_3BAND_1B("cryo_3band", "3band_p1bm_frm", "allsky_3band_p1bs_psd", "links-3band/l1b-3band/"),
+        CRYO_3BAND_3A("cryo_3band", "3band_p3am_cdd", "allsky_3band_p3as_psd", "links-3band/l3a-3band/"),  // currently they are different: p1bm_frm and p3am_cdd
+        POSTCRYO_1B("postcryo", "2band_p1bm_frm", "allsky_2band_p1bs_psd", "links-postcryo/l1b-2band/"),
         MERGE_1B("merge", "merge_p1bm_frm", "allsky_4band_p1bs_psd", "links-allsky/l1b-merge/"),         // exists under links-allsky
         MERGE_INT_1B("merge_int", "merge_i1bm_frm", "merge_i1bs_psd", "links-merge/l1b/"),
         MERGE_3A("merge", "merge_p3am_cdd", "allsky_4band_p1bs_psd", "links-allwise/l3a-merge/"),       // exists under links-allwise
         MERGE_INT_3A("merge_int", "merge_p3am_cdd", "allsky_4band_p3as_psd", "links-merge/l3a/"),
         NEOWISER_PROV_1B("neowiser_prov", "i1bm_frm", "i1bs_psd", "links-nprov/l1b/"),
         NEOWISER_YR1_1B("neowiser_yr1", "yr1_p1bm_frm", "yr1_p1bs_psd", "links-neowiser/l1b-yr1/"),
-        NEOWISER_1B("neowiser", "p1bm_frm", "allsky_4band_p1bs_psd", "links-neowiser/l1b/"),
+        NEOWISER_1B("neowiser", "p1bm_frm", "neowiser_p1bs_psd", "links-neowiser/l1b/"),
 
         PASS1_1B("pass1", "i1bm_frm", "i1bs_psd", "links-pass1/l1b/"),
         PASS1_3A("pass1", "i3am_cdd", "i3as_psd", "links-pass1/l3a/"),
