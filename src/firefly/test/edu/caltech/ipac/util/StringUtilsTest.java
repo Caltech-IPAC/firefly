@@ -10,8 +10,7 @@ import org.junit.Test;
 
 import java.util.regex.Pattern;
 
-import static edu.caltech.ipac.util.StringUtils.groupFind;
-import static edu.caltech.ipac.util.StringUtils.groupMatch;
+import static edu.caltech.ipac.util.StringUtils.*;
 
 /**
  * Date: 8/5/22
@@ -67,4 +66,19 @@ public class StringUtilsTest extends ConfigTest {
 
     // @Kartikeya Puri, please add a few more test here..
     // i.e getInt, getLong, getDouble, getFloat from edu.caltech.ipac.util.StringUtils
+    @Test
+    public void getIntFunc() {
+        String num = "273";
+
+        int result = getInt(num);
+
+        Assert.assertNotNull(result);
+        Assert.assertEquals(273, result);
+
+        result = getInt("not a number");
+        Assert.assertNotNull(result);
+        Assert.assertEquals(Integer.MIN_VALUE, result);
+
+        //System.out.println(result);
+    }
 }

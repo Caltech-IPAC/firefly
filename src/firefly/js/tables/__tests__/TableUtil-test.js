@@ -150,6 +150,31 @@ describe('TableUtil: ', () => {
         // for precision, column must be numeric.. i.e.  {type: 'float', precision: 'E3'}
         // see TableUtil.js->formatValue function descriptions from details
 
+        //there is a check in CoordUtil.js's dd2sex method for longitude degree out of range (< 0 or > 360)
+        //but currently there's no such check for latitude out of the [-90,90] range
+
+        //for DMS, islat = true therefore latitude
+        res = formatValue({type: 'float', precision: 'DMS5'}, "+30.263");
+        expect(res).toEqual('+30d15m46.8s');
+
+        //for HMS, islat = false therefore longitutde
+        res = formatValue({type: 'float', precision: 'HMS5'}, "+30.263");
+        expect(res).toEqual('2h01m03.12s');
+
+        res = formatValue({type: 'float', precision: 'DMS5'}, "-15.530694"); //latitude
+        expect(res).toEqual('-15d31m50.5s');
+
+        res = formatValue({type: 'float', precision: 'HMS'}, "324.42"); //longitude
+        expect(res).toEqual('21h37m40.80s');
+
+        res = formatValue({type: 'float', precision: 'E3'}, 453.450664);
+        expect(res).toEqual('4.535E+2');
+
+        res = formatValue({type: 'float', precision: 'G3'}, 43.450664);
+        expect(res).toEqual('43.5');
+
+        res = formatValue({type: 'float', precision: 'F2'}, 1.9999);
+        expect(res).toEqual('2.00'); //for 1.9999 this is an edge case, formatValue will return 2.00
 
     });
 
