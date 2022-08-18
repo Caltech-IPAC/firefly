@@ -79,6 +79,62 @@ public class StringUtilsTest extends ConfigTest {
         Assert.assertNotNull(result);
         Assert.assertEquals(Integer.MIN_VALUE, result);
 
-        //System.out.println(result);
+        num = "21474836478"; //max int = 2147483647, so this should cause NumberFormatException and return Integer.MIN_VALUE
+        result = getInt(num);
+
+        Assert.assertNotNull(result);
+        System.out.println(result);
+        Assert.assertEquals(Integer.MIN_VALUE, result);
+
+        //test with sending null, floating point numbers etc. should all return Integer.MIN_VALUE
+    }
+
+    @Test
+    public void getLongFunc() {
+        String num = "273";
+
+        long result = getLong(num);
+
+        Assert.assertNotNull(result);
+        Assert.assertEquals(273, result);
+
+        result = getLong("not a number");
+        Assert.assertNotNull(result);
+        Assert.assertEquals(Long.MIN_VALUE, result);
+
+        result = getLong("2958583");
+        Assert.assertNotNull(result);
+        Assert.assertEquals(2958583, result);
+
+        result = getLong(null);
+        Assert.assertNotNull(result);
+        Assert.assertEquals(Long.MIN_VALUE, result);
+
+        result = getLong("6.54"); //float
+        Assert.assertNotNull(result);
+        Assert.assertEquals(Long.MIN_VALUE, result);
+
+        System.out.println(result);
+    }
+
+    @Test
+    public void getDoubleFunc() {
+        String num = "273";
+
+        double result = getDouble(num);
+
+        Assert.assertNotNull(result);
+        //what's delta in floating point numbers? 
+        Assert.assertEquals(273.0, result, 0);
+
+        result = getDouble("not a number");
+        Assert.assertNotNull(result);
+        Assert.assertEquals(Double.NaN, result, 0);
+
+        result = getDouble("273");
+        Assert.assertNotNull(result);
+        Assert.assertEquals(273.0, result, 0);
+
+        System.out.println(result);
     }
 }

@@ -167,6 +167,17 @@ describe('TableUtil: ', () => {
         res = formatValue({type: 'float', precision: 'HMS'}, "324.42"); //longitude
         expect(res).toEqual('21h37m40.80s');
 
+        //testing below - feel free to change values as needed
+        //this is converted to 40 (400 - 360) -- but shouldn't be allowed to enter > 90 degrees for latitude, correct?
+        //even on firefly if I enter "40 400" (40 for longitude, 400 for dms, 400 is converted to 40)
+        res = formatValue({type: 'float', precision: 'DMS5'}, "400"); //latitude
+        console.log(res);
+        expect(res).toEqual('+40d00m00.0s');
+
+        res = formatValue({type: 'float', precision: 'HMS'}, "324.42"); //longitude
+        console.log(res);
+        expect(res).toEqual('21h37m40.80s');
+
         res = formatValue({type: 'float', precision: 'E3'}, 453.450664);
         expect(res).toEqual('4.535E+2');
 
