@@ -150,10 +150,6 @@ describe('TableUtil: ', () => {
         // for precision, column must be numeric.. i.e.  {type: 'float', precision: 'E3'}
         // see TableUtil.js->formatValue function descriptions from details
 
-        //there is a check in CoordUtil.js's dd2sex method for longitude degree out of range (< 0 or > 360)
-        //but currently there's no such check for latitude out of the [-90,90] range
-        //in firefly, we allow DMS/Latitude to be entered in degrees outside of the [-90,90] range?
-
         //for DMS, islat = true therefore latitude (dec)
         res = formatValue({type: 'float', precision: 'DMS5'}, "+30.263");
         expect(res).toEqual('+30d15m46.8s');
@@ -162,20 +158,20 @@ describe('TableUtil: ', () => {
         res = formatValue({type: 'float', precision: 'HMS5'}, "+30.263");
         expect(res).toEqual('2h01m03.12s');
 
-        res = formatValue({type: 'float', precision: 'DMS5'}, "-15.530694"); //latitude
+        res = formatValue({type: 'float', precision: 'DMS5'}, "-15.530694"); //latitude/dec
         expect(res).toEqual('-15d31m50.5s');
 
-        res = formatValue({type: 'float', precision: 'HMS'}, "324.42"); //longitude
+        res = formatValue({type: 'float', precision: 'HMS'}, "324.42"); //longitude/ra
         expect(res).toEqual('21h37m40.80s');
 
         //400, with DMS is converted to 40 (400 - 360) in dd2sex (CoordUtil.js)
-        res = formatValue({type: 'float', precision: 'DMS5'}, "400"); //latitude
+        res = formatValue({type: 'float', precision: 'DMS5'}, "400"); //latitude/dec
         expect(res).toEqual('+40d00m00.0s');
 
-        res = formatValue({type: 'float', precision: 'DMS5'}, "11.973"); //latitude
+        res = formatValue({type: 'float', precision: 'DMS5'}, "11.973"); //latitude/dec
         expect(res).toEqual('+11d58m22.8s');
 
-        res = formatValue({type: 'float', precision: 'HMS'}, "11.973"); //longitude
+        res = formatValue({type: 'float', precision: 'HMS'}, "11.973"); //longitude/ra
         expect(res).toEqual('0h47m53.52s');
 
         res = formatValue({type: 'float', precision: 'E3'}, 453.450664); //3 significant digits after decimal
@@ -185,16 +181,14 @@ describe('TableUtil: ', () => {
         expect(res).toEqual('43.5');
 
         res = formatValue({type: 'float', precision: 'F2'}, 1.999); //2 significant digits after decimal
-        //edge case for num.9999, will always be rounded to the next whole number
-        //if we try to format down decimal places
-        expect(res).toEqual('2.00');
+        expect(res).toEqual('2.00'); //edge case
 
-        res = formatValue({type: 'float', precision: 'F4'}, 1.999); //2 significant digits after decimal
+        res = formatValue({type: 'float', precision: 'F4'}, 1.999); //4 significant digits after decimal
         //this should return 1.9990
         expect(res).toEqual('1.9990');
 
-        res = formatValue({type: 'float', precision: 'F3'}, 45.19256); //1 significant digit after decimal
-        expect(res).toEqual('45.193'); //for 1.9999 this is an edge case, formatValue will return 2.00
+        res = formatValue({type: 'float', precision: 'F3'}, 45.19256); //3 significant digits after decimal
+        expect(res).toEqual('45.193');
 
     });
 
