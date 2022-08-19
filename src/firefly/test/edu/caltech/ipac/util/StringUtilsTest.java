@@ -124,7 +124,7 @@ public class StringUtilsTest extends ConfigTest {
         double result = getDouble(num);
 
         Assert.assertNotNull(result);
-        //what's delta in floating point numbers? 
+        //what's delta in floating point numbers?
         Assert.assertEquals(273.0, result, 0);
 
         result = getDouble("not a number");

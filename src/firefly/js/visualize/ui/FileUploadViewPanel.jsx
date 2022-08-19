@@ -625,7 +625,7 @@ const FileAnalysis = ({report, summaryModel, detailsModel, tablesOnly, isMoc}) =
                 <li style={liStyle}>Custom catalog in IPAC, CSV, TSV, VOTABLE, or FITS table format</li>
                 {!tablesOnly && <li style={liStyle}>Any FITS file with tables or images (including multiple HDUs)</li>}
                 {!tablesOnly && <li style={liStyle}>A Region file</li> }
-                {!tablesOnly && <li style={liStyle}>A MOC FITS file</li> }
+                {!tablesOnly && <li style={liStyle}>A MOC FITS file TEST!</li> }
             </ul>
         </div>);
 
