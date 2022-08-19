@@ -64,29 +64,37 @@ public class StringUtilsTest extends ConfigTest {
         Assert.assertEquals("xyz=999", results[1]);
     }
 
-    // @Kartikeya Puri, please add a few more test here..
+    // @Kartikeya Puri, adding a few more tests here..
     // i.e getInt, getLong, getDouble, getFloat from edu.caltech.ipac.util.StringUtils
     @Test
     public void getIntFunc() {
         String num = "273";
 
         int result = getInt(num);
-
         Assert.assertNotNull(result);
         Assert.assertEquals(273, result);
+        Assert.assertNotEquals(273.0, result);
 
-        result = getInt("not a number");
+        result = getInt("not a number"); //not a valid number, should return Integer.MIN_VALUE
         Assert.assertNotNull(result);
         Assert.assertEquals(Integer.MIN_VALUE, result);
 
-        num = "21474836478"; //max int = 2147483647, so this should cause NumberFormatException and return Integer.MIN_VALUE
-        result = getInt(num);
-
+        //max int = 2147483647, so this should cause NumberFormatException and return Integer.MIN_VALUE
+        result = getInt("21474836478");
         Assert.assertNotNull(result);
-        System.out.println(result);
         Assert.assertEquals(Integer.MIN_VALUE, result);
 
-        //test with sending null, floating point numbers etc. should all return Integer.MIN_VALUE
+        result = getInt("-3147483648"); //min int is = -2,147,483,648, so this should also return Integer.MIN_VALUE
+        Assert.assertNotNull(result);
+        Assert.assertEquals(Integer.MIN_VALUE, result);
+
+        result = getInt(null);
+        Assert.assertNotNull(result);
+        Assert.assertEquals(Integer.MIN_VALUE, result);
+
+        result = getInt("21.56"); //floating point -> NumberFormatException, should return Integer.MIN_VALUE
+        Assert.assertNotNull(result);
+        Assert.assertEquals(Integer.MIN_VALUE, result);
     }
 
     @Test
@@ -94,11 +102,10 @@ public class StringUtilsTest extends ConfigTest {
         String num = "273";
 
         long result = getLong(num);
-
         Assert.assertNotNull(result);
         Assert.assertEquals(273, result);
 
-        result = getLong("not a number");
+        result = getLong("not a number"); //non-number, so this should return Long.MIN_VALUE
         Assert.assertNotNull(result);
         Assert.assertEquals(Long.MIN_VALUE, result);
 
@@ -110,11 +117,19 @@ public class StringUtilsTest extends ConfigTest {
         Assert.assertNotNull(result);
         Assert.assertEquals(Long.MIN_VALUE, result);
 
-        result = getLong("6.54"); //float
+        result = getLong("6.54"); //floating point number, so this should return Long.MIN_VALUE
         Assert.assertNotNull(result);
         Assert.assertEquals(Long.MIN_VALUE, result);
 
-        System.out.println(result);
+        //Long.MAX_VALUE = 9223372036854775807
+        result = getLong("9223372036854775807");
+        Assert.assertNotNull(result);
+        Assert.assertEquals(Long.MAX_VALUE, result);
+
+        //This is > Long.MAX_VALUE so this should return Long.MIN_VALUE (NumberFormatException)
+        result = getLong("9223372036854775807999");
+        Assert.assertNotNull(result);
+        Assert.assertEquals(Long.MIN_VALUE, result);
     }
 
     @Test
@@ -122,19 +137,53 @@ public class StringUtilsTest extends ConfigTest {
         String num = "273";
 
         double result = getDouble(num);
-
         Assert.assertNotNull(result);
-        //what's delta in floating point numbers?
         Assert.assertEquals(273.0, result, 0);
 
-        result = getDouble("not a number");
+        result = getDouble("not a number"); //non-number, so getDouble will return Double.NaN
         Assert.assertNotNull(result);
         Assert.assertEquals(Double.NaN, result, 0);
 
-        result = getDouble("273");
+        result = getDouble("273.1425");
+        Assert.assertNotNull(result);
+        Assert.assertEquals(273.0, result, 0.5); //testing delta, this should return true aas 273.1425 is within 0.5 of 273
+        Assert.assertNotEquals(272.0, result, 1); //outside of delta range
+
+        result = getDouble("1.7976931348623157E308"); //Double.MAX_VALUE
+        Assert.assertNotNull(result);
+        Assert.assertEquals(1.7976931348623157E308, result, 0);
+
+        result = getDouble("4.9E-324"); //Double.MIN_VALUE
+        Assert.assertNotNull(result);
+        Assert.assertEquals(4.9E-324, result, 0);
+
+        result = getDouble(null); //null, should return Double.NaN
+        Assert.assertNotNull(result);
+        Assert.assertEquals(Double.NaN, result, 0);
+    }
+
+    @Test
+    public void getFloatFunc() {
+        String num = "273";
+
+        double result = getFloat(num);
         Assert.assertNotNull(result);
         Assert.assertEquals(273.0, result, 0);
 
-        System.out.println(result);
+        result = getFloat("not a number"); //non-number, so getFloat will return Float.NaN
+        Assert.assertNotNull(result);
+        Assert.assertEquals(Float.NaN, result, 0);
+
+        result = getFloat("273.1425");
+        Assert.assertNotNull(result);
+        Assert.assertEquals(273.0, result, 0.5); //testing delta, this should return true aas 273.1425 is within 0.5 of 273
+
+        result = getFloat("1.4E-45"); //Float.MIN_VALUE
+        Assert.assertNotNull(result);
+        Assert.assertEquals(1.401298464324817E-45, result, 0);
+
+        result = getFloat(null); //null, should return Double.NaN
+        Assert.assertNotNull(result);
+        Assert.assertEquals(Float.NaN, result, 0);
     }
 }

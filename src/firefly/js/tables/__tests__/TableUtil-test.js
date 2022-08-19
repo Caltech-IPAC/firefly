@@ -146,18 +146,19 @@ describe('TableUtil: ', () => {
         res = formatValue({format: 'cost $%.2f'}, 123.3432);
         expect(res).toEqual('cost $123.34');
 
-        // @Kartikeya Puri, please add tests for precision column meta here...
+        // @Kartikeya Puri, adding tests for precision column meta here...
         // for precision, column must be numeric.. i.e.  {type: 'float', precision: 'E3'}
         // see TableUtil.js->formatValue function descriptions from details
 
         //there is a check in CoordUtil.js's dd2sex method for longitude degree out of range (< 0 or > 360)
         //but currently there's no such check for latitude out of the [-90,90] range
+        //in firefly, we allow DMS/Latitude to be entered in degrees outside of the [-90,90] range?
 
-        //for DMS, islat = true therefore latitude
+        //for DMS, islat = true therefore latitude (dec)
         res = formatValue({type: 'float', precision: 'DMS5'}, "+30.263");
         expect(res).toEqual('+30d15m46.8s');
 
-        //for HMS, islat = false therefore longitutde
+        //for HMS, islat = false therefore longitutde (ra)
         res = formatValue({type: 'float', precision: 'HMS5'}, "+30.263");
         expect(res).toEqual('2h01m03.12s');
 
@@ -167,25 +168,33 @@ describe('TableUtil: ', () => {
         res = formatValue({type: 'float', precision: 'HMS'}, "324.42"); //longitude
         expect(res).toEqual('21h37m40.80s');
 
-        //testing below - feel free to change values as needed
-        //this is converted to 40 (400 - 360) -- but shouldn't be allowed to enter > 90 degrees for latitude, correct?
-        //even on firefly if I enter "40 400" (40 for longitude, 400 for dms, 400 is converted to 40)
+        //400, with DMS is converted to 40 (400 - 360) in dd2sex (CoordUtil.js)
+        res = formatValue({type: 'float', precision: 'DMS5'}, "400"); //latitude
+        expect(res).toEqual('+40d00m00.0s');
+
         res = formatValue({type: 'float', precision: 'DMS5'}, "11.973"); //latitude
-        console.log(res);
         expect(res).toEqual('+11d58m22.8s');
 
         res = formatValue({type: 'float', precision: 'HMS'}, "11.973"); //longitude
-        console.log(res);
         expect(res).toEqual('0h47m53.52s');
 
-        res = formatValue({type: 'float', precision: 'E3'}, 453.450664);
+        res = formatValue({type: 'float', precision: 'E3'}, 453.450664); //3 significant digits after decimal
         expect(res).toEqual('4.535E+2');
 
-        res = formatValue({type: 'float', precision: 'G3'}, 43.450664);
+        res = formatValue({type: 'float', precision: 'G3'}, 43.450664); //3 significant digits
         expect(res).toEqual('43.5');
 
-        res = formatValue({type: 'float', precision: 'F2'}, 1.9999);
-        expect(res).toEqual('2.00'); //for 1.9999 this is an edge case, formatValue will return 2.00
+        res = formatValue({type: 'float', precision: 'F2'}, 1.999); //2 significant digits after decimal
+        //edge case for num.9999, will always be rounded to the next whole number
+        //if we try to format down decimal places
+        expect(res).toEqual('2.00');
+
+        res = formatValue({type: 'float', precision: 'F4'}, 1.999); //2 significant digits after decimal
+        //this should return 1.9990
+        expect(res).toEqual('1.9990');
+
+        res = formatValue({type: 'float', precision: 'F3'}, 45.19256); //1 significant digit after decimal
+        expect(res).toEqual('45.193'); //for 1.9999 this is an edge case, formatValue will return 2.00
 
     });
 
