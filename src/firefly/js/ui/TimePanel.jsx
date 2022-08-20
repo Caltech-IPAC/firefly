@@ -2,10 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent, memo} from 'react';
+import React, {memo} from 'react';
 import PropTypes from 'prop-types';
-import {has} from 'lodash';
-import {clone} from '../util/WebUtil.js';
 import {InputFieldView} from './InputFieldView.jsx';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 import {convertISOToMJD, convertMJDToISO, validateDateTime, validateMJD, fMoment} from './DateTimePickerField.jsx';
@@ -19,72 +17,66 @@ const iconMap = {'calendar': {icon: CALENDAR, title: 'Show the calendar for sele
 
 
 
-class TimePanelView extends PureComponent {
-    constructor(props) {
-        super(props);
-    }
+function TimePanelView({showHelp, feedback, feedbackStyle, examples, label, labelStyle, labelPosition,
+                           valid, message, onChange, value, icon, onClickIcon, tooltip = 'select time',
+                           inputStyle, wrapperStyle, inputWidth, timeMode=ISO}) {
+    const ImagePadding = 3;
 
+    const iconStyle = {
+        position: 'absolute',
+        top: 1,
+        right: 1,
+        padding: ImagePadding,
+        cursor: 'pointer'
+    };
 
-    render() {
-        const {showHelp, feedback, feedbackStyle, examples, label, labelStyle, labelPosition,
-            valid, message, onChange, value, icon, onClickIcon, tooltip = 'select time',
-            inputStyle, wrapperStyle, inputWidth, timeMode=ISO}= this.props;
-        const ImagePadding = 3;
+    const iconField = iconMap?.[icon] ?
+        (<div style={iconStyle}>
+            <img
+              title={iconMap[icon].title}
+              src={iconMap[icon].icon}
+              onClick={() => onClickIcon?.()}/>/>
+         </div>) : null;
 
-        const iconStyle = {
-            position: 'absolute',
-            top: 1,
-            right: 1,
-            padding: ImagePadding,
-            cursor: 'pointer'
-        };
+    const spaceForImage = 16+ImagePadding*2;
+    const newInputStyle = {...inputStyle,
+        width: iconField ? inputWidth - spaceForImage+2 : inputWidth,
+        paddingRight: iconField ? spaceForImage : 2
+    };
+    const placeHolder = timeMode === ISO ? 'YYYY-MM-DD HH:mm:ss' : 'float number .... ';
+    const newWrapperStyle = {...wrapperStyle, params: iconField ? {width: '100%'} : {}};
+    const inputFields = {
+        valid, visible: true, message, onChange,
+        value, tooltip, wrapperStyle: newWrapperStyle, style: newInputStyle,
+        placeHolder
+    };
 
-        const iconField = icon && has(iconMap, icon) ?
-            (<div style={iconStyle}>
-                <img
-                  title={iconMap[icon].title}
-                  src={iconMap[icon].icon}
-                  onClick={() => {onClickIcon && onClickIcon();}}/>
-             </div>) : null;
+    const timeField =  (<InputFieldView {...inputFields} />);
 
-        const spaceForImage = 16+ImagePadding*2;
-        const newInputStyle = Object.assign({paddingRight: iconField ? spaceForImage : 2}, inputStyle,
-                                            {width: iconField ? inputWidth - spaceForImage+2 : inputWidth});
-        const placeHolder = timeMode === ISO ? 'YYYY-MM-DD HH:mm:ss' : 'float number .... ';
-        const newWrapperStyle = clone(wrapperStyle, (iconField ? {width: '%100'} : {}));
-        const inputFields = {
-            valid, visible: true, message, onChange,
-            value, tooltip, wrapperStyle: newWrapperStyle, style: newInputStyle,
-            placeHolder
-        };
+    const outsideWidth = inputWidth + 6;
+    const timePart = iconField ? (<div style={{position: 'relative', width: outsideWidth}}>
+                                        {timeField}
+                                        {iconField}
+                                  </div>)
+                                : timeField;
 
-        const timeField =  (<InputFieldView {...inputFields} />);
+    const newFeedbackStyle = {...feedbackStyle, width: inputWidth};
+    const lStyle = {...labelStyle, whiteSpace:'nowrap'};
+    const labelDiv = (<div style={lStyle}>{label}</div>);
+    const timeDiv = (
+        <div>
+            {timePart}
+            <TimeFeedback {...{showHelp, feedback, feedbackStyle: newFeedbackStyle, examples, timeMode}}/>
+        </div>
+    );
+    const flexDirection = (labelPosition === 'top') ? 'column' : 'row';
 
-        const outsideWidth = inputWidth + 6;
-        const timePart = iconField ? (<div style={{position: 'relative', width: outsideWidth}}>
-                                            {timeField}
-                                            {iconField}
-                                      </div>)
-                                    : (timeField);
-
-        const newFeedbackStyle = clone(feedbackStyle, {width: inputWidth});
-        const lStyle = clone(labelStyle, {whiteSpace:'nowrap'});
-        const labelDiv = (<div style={lStyle}>{label}</div>);
-        const timeDiv = (
-            <div>
-                {timePart}
-                <TimeFeedback {...{showHelp, feedback, feedbackStyle: newFeedbackStyle, examples, timeMode}}/>
-            </div>
-        );
-        const flexDirection = (labelPosition && labelPosition === 'top') ? 'column' : 'row';
-
-        return (
-            <div style={{display: 'flex', flexDirection}}>
-                {labelDiv}
-                {timeDiv}
-            </div>
-        );
-    }
+    return (
+        <div style={{display: 'flex', flexDirection}}>
+            {labelDiv}
+            {timeDiv}
+        </div>
+    );
 }
 
 TimePanelView.propTypes = {
@@ -132,8 +124,8 @@ const defaultStyle =  {paddingTop: 5, height: 50, display:'flex', contentJustify
 
 function TimeFeedback({showHelp, feedback, style={}, examples={}, timeMode=ISO}) {
 
-    examples = timeMode===ISO ? clone(defaulISOtExample, examples) : clone(defaultMJDExample, examples);
-    style = clone(defaultStyle, style);
+    examples = timeMode===ISO ? {...defaulISOtExample, examples} : {...defaultMJDExample, examples};
+    style = {...defaultStyle, style};
 
     if (showHelp) {
          return (

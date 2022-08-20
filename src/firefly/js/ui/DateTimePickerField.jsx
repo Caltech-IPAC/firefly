@@ -1,4 +1,4 @@
-import React, {memo, PureComponent} from 'react';
+import React, {memo, useState, useEffect} from 'react';
 import {isNaN, get} from 'lodash';
 import PropTypes from 'prop-types';
 import Moment from 'moment';
@@ -8,6 +8,8 @@ import FieldGroupUtils from '../fieldGroup/FieldGroupUtils';
 
 import './tap/react-datetime.css';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
+import {useFieldGroupValue} from 'firefly/ui/SimpleComponent';
+
 /**
  * try to convert date/time string to Moment, if not, keep the string
  * @param str_or_moment
@@ -80,94 +82,69 @@ function isSameTimes(time1, time2) {
      return compareMoments(m1, m2);
 }
 
-export class DateTimePicker extends PureComponent {
-    constructor(props) {
-        super(props);
-        this.onClose = this.onClose.bind(this);
-        this.onSelectedDate = this.onSelectedDate.bind(this);
+export function DateTimePicker({showInput,openPicker, value='', onChange, onChangeOpenStatus,wrapperStyle,
+                                   inputStyle, groupKey, timeFieldKey}) {
 
-        const {value = ''} = props;
-        const timeMoment = aMoment(value).isValid() ? aMoment(value) : value;   // a moment or original string value
-        this.state={timeMoment};  // store valid moment or string
-    }
-
-    onClose() {
-        const {onChangeOpenStatus} = this.props;
-
-
-        if (onChangeOpenStatus) {
-            onChangeOpenStatus(false);
+    const [timeMoment, setTimeMoment] = useState(() => aMoment(value).isValid() ? aMoment(value) : value);
+    const [setTimeStr,getTimeStr]= useFieldGroupValue(timeFieldKey);
+    useEffect(() => {
+        //componentDidMount code
+        let iAmMounted = true;
+        let unbinder;
+        // update the state in case start time or end time are updated due to the change from the entry
+        if (groupKey && timeFieldKey) {
+           unbinder = FieldGroupUtils.bindToStore(groupKey, (fields) => {
+               const time= getTimeStr();
+               if (!time || isSameTimes(time, timeMoment)) return;
+               setTimeMoment(time);
+            });
         }
-    }
 
-    onSelectedDate(moment) {
-        const {onChange} = this.props;
+        //componentWillUnmount code
+        return () => {
+            if (unbinder) unbinder();
+            iAmMounted = false;
+        };
+    }, [getTimeStr]);
+
+    const onClose= () => {
+        onChangeOpenStatus?.(false);
+    };
+
+    const onSelectedDate = (moment) => {
 
         const newTime = tryConvertToMoment(moment, true);
         if (typeof moment === 'string' && !newTime.isValid()) {
             moment = '';
         }
 
-        this.setState({timeMoment: moment});
-        if (onChange) {
-            onChange(moment);
-        }
-    }
+        setTimeMoment(moment);
+        onChange?.(moment);
+    };
 
-    componentDidMount() {
-        this.iAmMounted= true;
-        const {groupKey, timeFieldKey} = this.props;
+    wrapperStyle = {...wrapperStyle, margin: 10, height: 'calc(100% - 20pt)'};
+    inputStyle = {...inputStyle, marginBottom: 3, width: 150};
 
-        // update the state in case start time or end time are updated due to the change from the entry
-        if (groupKey && timeFieldKey) {
-            this.unbinder = FieldGroupUtils.bindToStore(groupKey, (fields) => {
-               const time = get(fields, [timeFieldKey, 'value']);
-               if (time) {
-                   const {timeMoment} = this.state;
-
-                   if (!isSameTimes(time, timeMoment)) {
-                       this.setState({timeMoment: time});
-                   }
-               }
-            });
-        }
-    }
-
-    componentWillUnmount() {
-        if (this.unbinder ) this.unbinder();
-        this.iAmMounted = false;
-    }
-
-    render() {
-        const {showInput, openPicker} = this.props;
-        let   {wrapperStyle, inputStyle} = this.props;
-        const {timeMoment} = this.state;   // string or Moment
-
-        wrapperStyle = Object.assign({margin: 10,
-                                      height: 'calc(100% - 20pt)'}, wrapperStyle);
-        inputStyle = Object.assign({marginBottom: 3, width: 150}, inputStyle);
-
-        const showOneDatePicker = () => {
-            // DateTime needs the value input in type of Moment
-            return (
-                    <DateTime onBlur={this.onClose}
-                              onChange={this.onSelectedDate}
-                              value={tryConvertToMoment(timeMoment, true)}
-                              input={showInput}
-                              open={openPicker}
-                              inputProps={{style: inputStyle}}
-                              utc={true}
-                              timeFormat={'HH:mm:ss A'}
-                    />
-            );
-        };
-
+    const showOneDatePicker = () => {
+        // DateTime needs the value input in type of Moment
         return (
-            <div style={wrapperStyle}>
-                {showOneDatePicker()}
-            </div>
+                <DateTime onBlur={onClose}
+                          onChange={onSelectedDate}
+                          value={tryConvertToMoment(timeMoment, true)}
+                          input={showInput}
+                          open={openPicker}
+                          inputProps={{style: inputStyle}}
+                          utc={true}
+                          timeFormat={'HH:mm:ss A'}
+                />
         );
-    }
+    };
+
+    return (
+        <div style={wrapperStyle}>
+            {showOneDatePicker()}
+        </div>
+    );
 }
 
 DateTimePicker.propTypes= {
@@ -178,16 +155,13 @@ DateTimePicker.propTypes= {
     onChangeOpenStatus: PropTypes.func,
     wrapperStyle: PropTypes.object,
     inputStyle: PropTypes.object,
+    groupKey: PropTypes.string,
     timeFieldKey: PropTypes.string,
 };
 
 DateTimePicker.defaultValue = {
     showInput: true,
     openPicker: false
-};
-
-const propTypes = {
-    nullAllowed: PropTypes.bool
 };
 
 function handleOnChange(momentVal, params, fireValueChange) {
@@ -229,8 +203,8 @@ DateTimePickerField.propTypes= {
 
 
 const DiffUnixMJD = 40587.0;
-const DiffUnixJD = 2440587.5;
-const DiffMJDJD = 2400000.5;
+const DiffUnixJD = 2440587.5; // don't delete - might be used in the future
+const DiffMJDJD = 2400000.5; // don't delete - might be used in the future
 const msecPerDay = 86400000.0;
 
 const MIN_VAL_MJD = 1; // for ISO 1858-11-18T00:00:00Z
