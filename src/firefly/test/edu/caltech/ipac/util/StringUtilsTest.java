@@ -64,8 +64,6 @@ public class StringUtilsTest extends ConfigTest {
         Assert.assertEquals("xyz=999", results[1]);
     }
 
-    // @Kartikeya Puri, adding a few more tests here..
-    // i.e getInt, getLong, getDouble, getFloat from edu.caltech.ipac.util.StringUtils
     @Test
     public void getIntFunc() {
         String num = "273";
