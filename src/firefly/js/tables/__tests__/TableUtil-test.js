@@ -146,11 +146,77 @@ describe('TableUtil: ', () => {
         res = formatValue({format: 'cost $%.2f'}, 123.3432);
         expect(res).toEqual('cost $123.34');
 
-        // @Kartikeya Puri, please add tests for precision column meta here...
-        // for precision, column must be numeric.. i.e.  {type: 'float', precision: 'E3'}
-        // see TableUtil.js->formatValue function descriptions from details
+        //for DMS, islat = true therefore latitude (dec)
+        res = formatValue({type: 'float', precision: 'DMS'}, '30.263'); //valid DMS range value
+        expect(res).toEqual('+30d15m46.8s');
 
+        //for HMS, islat = false therefore longitutde (ra)
+        res = formatValue({type: 'float', precision: 'HMS'}, '30.263'); //valid HMS range value
+        expect(res).toEqual('2h01m03.12s');
 
+        res = formatValue({type: 'float', precision: 'DMS5'}, '-15.530694'); //n=5 will be ignored
+        expect(res).toEqual('-15d31m50.5s');
+
+        res = formatValue({type: 'float', precision: 'HMS3'}, '324.42'); //n=3 will be ignored
+        expect(res).toEqual('21h37m40.80s');
+
+        //Testing out of range values for DMS [-90, 90] & HMS [0, 360]
+        //These should throw latitude out of range, longitude out of range
+        //and longitude cannot be negative errors respectively
+        //- uncomment these after ticket FIREFLY-1056 is closed
+
+        //res = formatValue({type: 'float', precision: 'DMS'}, '100.5');
+        //res = formatValue({type: 'float', precision: 'HMS'}, '370.2');
+        //res = formatValue({type: 'float', precision: 'HMS'}, '-10.0');
+
+        //non-numeric val=null returns '', precision/type does not matter here
+        res = formatValue({type: 'float', precision: 'E2'}, null);
+        expect(res).toEqual('');
+
+        res = formatValue({type: 'float', precision: 'E3'}, 453.450664); //3 significant digits after decimal
+        expect(res).toEqual('4.535E+2');
+
+        res = formatValue({type: 'double', precision: 'E1'}, 57.365); //1 significant digit after decimal
+        expect(res).toEqual('5.7E+1');
+
+        res = formatValue({type: 'double', precision: 'E0'}, 46.365); //rounds to 5E+1
+        expect(res).toEqual('5E+1');
+
+        res = formatValue({type: 'int', precision: 'E3'}, 453445.678); //post decimal value is truncated, as type=int
+        expect(res).toEqual('453445');
+
+        res = formatValue({type: 'long', precision: 'E3'}, 57345); //value should be unchanged for type=long
+        expect(res).toEqual('57345');
+
+        res = formatValue({type: 'float', precision: 'G3'}, 43.450664); //3 significant digits
+        expect(res).toEqual('43.5'); //rounding post decimal and truncating the rest
+
+        res = formatValue({type: 'float', precision: 'G2'}, 43.6); //2 significant digits
+        expect(res).toEqual('44'); //rounds to 44
+
+        res = formatValue({type: 'int', precision: 'G5'}, 43.5); //post decimal value is truncated, as type=int
+        expect(res).toEqual('43');
+
+        res = formatValue({type: 'long', precision: 'G1'}, 450); //value should be unchanged for type=long
+        expect(res).toEqual('450');
+
+        res = formatValue({type: 'double', precision: 'G5'}, 43); //5 significant digits
+        expect(res).toEqual('43.000');
+
+        res = formatValue({type: 'float', precision: 'F2'}, 1.999); //2 significant digits after decimal
+        expect(res).toEqual('2.00'); //rounds to 2.00
+
+        res = formatValue({type: 'float', precision: 'F3'}, 43); //2 significant digits after decimal
+        expect(res).toEqual('43.000');
+
+        res = formatValue({type: 'int', precision: 'F3'}, 99.87); //post decimal value is truncated, as type=int
+        expect(res).toEqual('99');
+
+        res = formatValue({type: 'long', precision: 'F3'}, 125); //value should be unchanged for type=long
+        expect(res).toEqual('125');
+
+        res = formatValue({type: 'double', precision: 'F3'}, 45.19256); //3 significant digits after decimal
+        expect(res).toEqual('45.193');
     });
 
 });
