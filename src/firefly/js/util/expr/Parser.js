@@ -27,8 +27,8 @@ const rators0 = [
 
 const procs1 = [
         'abs', 'acos', 'asin', 'atan',
-        'ceil', 'cos', 'exp', 'floor',
-        'log', 'ln', 'lg', 'log10', 'round', 'sin', 'sqrt',
+        'ceil', 'cos', 'degrees', 'exp', 'floor',
+        'log', 'ln', 'lg', 'log10', 'radians', 'round', 'sin', 'sqrt',
         'tan'
 ];
 
