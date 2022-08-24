@@ -17,7 +17,7 @@ import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 
 const EXPRESSION_TTIPS = `
 Supported operators: *, /, +, -.
-Supported functions: abs(x), acos(x), asin(x), atan(x), atan2(x,y), ceil(x), cos(x), exp(x), floor(x), lg(x), ln(x), log10(x), log(x), power(x,y), round(x), sin(x), sqrt(x), tan(x).
+Supported functions: abs(x), acos(x), asin(x), atan(x), atan2(x,y), ceil(x), cos(x), degrees(x), exp(x), floor(x), lg(x), ln(x), log10(x), log(x), power(x,y), radians(x), round(x), sin(x), sqrt(x), tan(x).
 Example: sqrt(power(b,4) - 4*a*c) / (2*a), where a, b, c are column names.
 Non-alphanumeric column names should be quoted in expressions.`;
 
