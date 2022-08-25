@@ -39,6 +39,8 @@
 /** Unary operator: natural log */     export const LN    = 114;
 /** Unary operator: log 10 */          export const LOG10 = 115;
 /** Unary operator: log 10 */          export const LG    = 116;
+/** Unary operator: degrees */         export const DEGREES    = 117;
+/** Unary operator: radians */         export const RADIANS    = 118;
 
 // NVL2 - If <value expr 1> is not null, returns <value expr 2>, otherwise returns <value expr 3>. (HyperSQL)
 /** Ternary operator: if null         */  export const NVL2  = 200;
@@ -175,6 +177,8 @@ class UnaryExpr {
             case SIN:   return Math.sin(arg);
             case SQRT:  return Math.sqrt(arg);
             case TAN:   return Math.tan(arg);
+            case DEGREES:  return arg * (180/Math.PI);
+            case RADIANS : return  arg * (Math.PI/180) ;
             default: throw 'BUG: bad rator: '+this.rator;
         }
     }

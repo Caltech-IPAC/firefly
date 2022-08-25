@@ -34,8 +34,8 @@ const procs1 = [
 
 const rators1 = [
         Expr.ABS, Expr.ACOS, Expr.ASIN, Expr.ATAN,
-        Expr.CEIL, Expr.COS, Expr.EXP, Expr.FLOOR,
-        Expr.LOG, Expr.LN, Expr.LG, Expr.LOG10, Expr.ROUND, Expr.SIN, Expr.SQRT,
+        Expr.CEIL, Expr.COS, Expr.DEGREES ,Expr.EXP, Expr.FLOOR,
+        Expr.LOG, Expr.LN, Expr.LG, Expr.LOG10, Expr.RADIANS, Expr.ROUND, Expr.SIN, Expr.SQRT,
         Expr.TAN
 ];
 
