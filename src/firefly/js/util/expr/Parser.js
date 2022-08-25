@@ -27,15 +27,15 @@ const rators0 = [
 
 const procs1 = [
         'abs', 'acos', 'asin', 'atan',
-        'ceil', 'cos', 'exp', 'floor',
-        'log', 'ln', 'lg', 'log10', 'round', 'sin', 'sqrt',
+        'ceil', 'cos', 'degrees', 'exp', 'floor',
+        'log', 'ln', 'lg', 'log10', 'radians', 'round', 'sin', 'sqrt',
         'tan'
 ];
 
 const rators1 = [
         Expr.ABS, Expr.ACOS, Expr.ASIN, Expr.ATAN,
-        Expr.CEIL, Expr.COS, Expr.EXP, Expr.FLOOR,
-        Expr.LOG, Expr.LN, Expr.LG, Expr.LOG10, Expr.ROUND, Expr.SIN, Expr.SQRT,
+        Expr.CEIL, Expr.COS, Expr.DEGREES ,Expr.EXP, Expr.FLOOR,
+        Expr.LOG, Expr.LN, Expr.LG, Expr.LOG10, Expr.RADIANS, Expr.ROUND, Expr.SIN, Expr.SQRT,
         Expr.TAN
 ];
 
