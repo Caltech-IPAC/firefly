@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
 import {COMMAND, getMenu} from '../core/AppDataCntlr.js';
@@ -34,7 +34,7 @@ function handleAction (menuItem) {
  * @param badgeCount
  * @returns {XML}
  */
-export function  makeMenuItem(menuItem, isSelected, isWorking, badgeCount) {
+export function  makeMenuItem(menuItem, isSelected, isWorking=false, badgeCount=0) {
     var clsname = 'menu__item' + (isSelected ? ' menu__item-selected' : '');
     return (
         <div className={clsname}
@@ -50,37 +50,20 @@ export function  makeMenuItem(menuItem, isSelected, isWorking, badgeCount) {
     );
 }
 
-export class Menu extends PureComponent {
+export function Menu({menu={}}) {
+    const {menuItems=[], showBgMonitor=true} = menu;
+    if (!menuItems.length) return <div/>;
 
-    constructor(props) {
-        super(props);
-    }
+    const items = menuItems.map( (item) => makeMenuItem(item, item.action === menu.selected));
 
-
-    // componentDidUpdate(prevProps, prevState) {
-    //     deepDiff({props: prevProps, state: prevState},
-    //         {props: this.props, state: this.state},
-    //         this.constructor.name);
-    // }
-
-    render() {
-        const {menu} = this.props;
-        const {menuItems=[], showBgMonitor=true} = menu || {};
-        if (menuItems.length === 0) return <div/>;
-
-        var items = menuItems.map( (item) => {
-            return makeMenuItem(item, item.action === menu.selected);
-        });
-
-        return (
-            <div className='menu__main'>
-                <div className='menu__item--holder'> {items} </div>
-                <div className='menu__item--holder'>
-                    {showBgMonitor && <BgMonitorButton/>}
-                </div>
+    return (
+        <div className='menu__main'>
+            <div className='menu__item--holder'> {items} </div>
+            <div className='menu__item--holder'>
+                {showBgMonitor && <BgMonitorButton/>}
             </div>
-        );
-    }
+        </div>
+    );
 }
 
 Menu.propTypes = {
