@@ -18,7 +18,7 @@ Development happens on the `dev` branch
 Tickets are implemented in branches and then merge in after an approved pull request
 
  - Branch Scheme: `Ticket Name` - `word or two description`
- - Such As: Ticket fix as a table feature might be: `Firefly-123-table-sort`
+ - Such As: Ticket fix as a table feature might be: `Firefly-123456-table-sort`
  - Such As: Ticket fix an image bug: `Firefly-456-image-zoom`
 
 ### Release Candidates
