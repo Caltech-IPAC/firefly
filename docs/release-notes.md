@@ -8,8 +8,10 @@
 
 
 ## Version 2022.2 
+- 2022.2.2 (Aug 2022)
+  - docker tag: `latest`, `2022.2`, `2022.2.2`
 - 2022.2.1 (July 2022)
-  - docker tag: `latest`, `2022.2`, `2022.2.1`
+  - docker tag: `2022.2.1`
 - 2022.2 - (July 2022)
   - docker tag: `2022.2.0`
 
@@ -43,6 +45,18 @@
   - Stretch dropdown shows checkbox if stretch selected ([Firefly-1029](https://github.com/Caltech-IPAC/firefly/pull/1225))
   - Fixed: TAP column table showing filters ([PR](https://github.com/Caltech-IPAC/firefly/pull/1244))
   - Fixed: Cube planes all change stretch ([Firefly-1038](https://github.com/Caltech-IPAC/firefly/pull/1225))
+- 2022.2.2
+  - Chart functions: now support `radians()` and `degrees()` [Firefly-1047](https://github.com/Caltech-IPAC/firefly/pull/1254))
+  - Fixed: Table: Filter by selected row returned more than it should [Firefly-1049](https://github.com/Caltech-IPAC/firefly/pull/1250))
+  - Multiple issues: [Firefly-1045](https://github.com/Caltech-IPAC/firefly/pull/1248))
+    - Fixed: Expanding/restoring an image in MultiProductViewer causes reload: stretch and color are reset
+    - Fixed: draw layer panel is hidden at times (zIndex was not correct)
+    - Fixed: on resize or when popping up mouse readout: display wrongly zoomed to fit 
+    - Fixed: Moc validation was not accepting a valid FITs TFORM header
+    - Fixed: Better support for authorization in URLDownload.java
+    - Fixed: Expose MOC in Target Hips Panel
+    - Fixed: TAP search api did not init table correctly, some bugs in the examples
+    - Stretch should be sticky: on MultiProductViewer, for multi HDU images, if the same extension type
 
 
 
@@ -94,5 +108,4 @@
 
 # Older Releases 2019 - 2021
 
-- [Older release notes 2021](older-release-notes-2021.md)
-- [Older release notes 2019-2020](older-release-notes-2019-2020.md)
+See [Older release notes 2019-2021](older-release-notes-2019-2021.md)
