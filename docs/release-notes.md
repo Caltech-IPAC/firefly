@@ -80,6 +80,7 @@
 - More image dataset added [IRSA-4468](https://github.com/Caltech-IPAC/firefly/pull/1191)
 - FITS and HiPS info dialogs better integrated [Firefly-323](https://github.com/Caltech-IPAC/firefly/pull/1185)
 - TAP: Automatic quoting of non-standard TAP columns, especially helpful when searching VizieR [Firefly-935](https://github.com/Caltech-IPAC/firefly/pull/1182)
+- Tables: Turn on units by default; raise category-column threshold [Firefly-969, Firefly-970](https://github.com/Caltech-IPAC/firefly/pull/1201)
 
 #### Notable Bug fixes
 - Fixed: Some TAP entries truncated [Firefly-719](https://github.com/Caltech-IPAC/firefly/pull/1178)
