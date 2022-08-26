@@ -15,6 +15,7 @@ import {INFO_POPUP, showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {getMultiViewRoot,dispatchUpdateCustom, getViewer} from '../MultiViewCntlr.js';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../../core/ComponentCntlr.js';
 import {Band, allBandAry} from '../Band.js';
+import {HelpIcon} from '../../ui/HelpIcon';
 
 
 
@@ -77,6 +78,9 @@ function ColorBandChooserPanel ({viewerId, bandData, dataId}) {
                     style={{padding : '12px 0 5px 5px'}} text={'Hide Three Color'}
                     onSuccess={(request) => hideThreeColor(viewerId, dataId)}
                     closeOnValid={true} dialogId='ColorBandChooserPopup' />}
+            </div>
+            <div>
+                <HelpIcon helpId={'visualization.imageview3color'} />
             </div>
 
         </FieldGroup>
