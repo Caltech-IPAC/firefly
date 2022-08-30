@@ -392,27 +392,27 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
             } else {
                 imageSetConstraint += "=";
             }
-            if (mergeImageSet.contains(DataProduct.ALLWISE_MULTIBAND_3A.imageset())) {
+            if (mergeImageSet.contains(DataProduct.ALLWISE_MULTIBAND_3A.dataset)) {
                 imageSetConstraint += "5";
                 n++;
             }
-            if (mergeImageSet.contains(DataProduct.ALLSKY_4BAND_3A.imageset())) {
+            if (mergeImageSet.contains(DataProduct.ALLSKY_4BAND_3A.dataset)) {
                 if (n>0) imageSetConstraint += ",4";
                 else imageSetConstraint += "4";
                 n++;
             }
-            if (mergeImageSet.contains(DataProduct.CRYO_3BAND_1B.imageset())) {
+            if (mergeImageSet.contains(DataProduct.CRYO_3BAND_1B.dataset)) {
                 if (n>0) imageSetConstraint += ",3";
                 else imageSetConstraint += "3";
                 n++;
             }
-            if (mergeImageSet.contains(DataProduct.POSTCRYO_1B.imageset())) {
+            if (mergeImageSet.contains(DataProduct.POSTCRYO_1B.dataset)) {
                 if (n>0) imageSetConstraint += ",2";
                 else imageSetConstraint += "2";
                 n++;
             }
 
-            if (mergeImageSet.contains(DataProduct.NEOWISER_1B.imageset())) {
+            if (mergeImageSet.contains(DataProduct.NEOWISER_1B.dataset)) {
                 if (n>0) imageSetConstraint += ",6,7,8,9,10,11,12,13";
                 else imageSetConstraint += ",6,7,8,9,10,11,12,13";
                 n++;
