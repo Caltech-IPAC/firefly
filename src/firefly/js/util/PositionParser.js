@@ -54,21 +54,38 @@ export function parsePosition(s) {
         let validDec= true;
         try {
             ra=  isNaN(Number(raStr)) ? CoordUtil.convertStringToLon(raStr, coordSys) : Number(raStr);
+            if (Number(raStr)) {
+                if (ra >= 360 || ra < 0) {
+                    raParseErr = 'Longitude is out of range [0, 359]';
+                    validRa = false;
+                    //positionValidateInternal in PositionFieldDef.js expects ra to be NaN to throw an error
+                    ra = NaN; //set ra to NaN as it is out of bounds
+                }
+            }
         } catch (e) {
             raParseErr = e;
             validRa = false;
         }
         try {
             dec= isNaN(Number(decStr)) ? CoordUtil.convertStringToLat(decStr, coordSys) : Number(decStr);
+            if (Number(decStr)) {
+                if (dec > 90 || dec < -90) {
+                    decParseErr = 'Latitude is out of range [-90.0, +90.0]';
+                    //positionValidateInternal in PositionFieldDef.js expects dec to be NaN to throw an error
+                    dec = NaN; //set dec to NaN as it is out of bounds
+                    validDec = false;
+                }
+            }
         } catch (e) {
             decParseErr = e;
             validDec = false;
         }
         // determineType uses the first string to decide if the input is a position or object name.
         // "12 mus" (a valid object name in NED) would be classified as a position.
-        if (!validDec) {
+        if (!validDec && !Number(decStr)) {
+            //validDec may be false when dec is out of range [-90, 90] as well
             inputType = PositionParsedInputType.Name;
-            objName= s;
+            objName = s;
             valid = true;
         } else {
             valid = coordSys !== CoordinateSys.UNDEFINED && validRa && validDec;
