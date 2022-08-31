@@ -39,6 +39,16 @@ export const ReservedParams= {
             'sr=22m - 22 arcminutes',
         ]
     },
+    imageSize : {
+        name: 'imageSize',
+        replace: ['imagesize'],
+        desc: [
+            'imageSize format options: d or none - degrees, m - arcminutes, s - arcseconds',
+            'imageSize=1.1d or imageSize=1.1 - 1.1 degrees',
+            'imageSize=150s - 150 arcseconds',
+            'imageSize=22m - 22 arcminutes',
+        ]
+    },
 };
 
 /**
@@ -241,6 +251,22 @@ function findInsensitiveStr(list, str) {
     return list.find( (aStr) => aStr.toLowerCase()===lowerStr);
 }
 
+
+function getDegreeVal(inVal) {
+    if (!isNaN(Number(inVal))) {
+        return Number(inVal);
+    }
+    else if (inVal.endsWith('d') && !isNaN(Number(inVal.substring(0,inVal.length-1)))) {
+        return Number(inVal.substring(0,inVal.length-1));
+    }
+    else if (inVal.endsWith('m') && !isNaN(Number(inVal.substring(0,inVal.length-1)))) {
+        return Number(inVal.substring(0,inVal.length-1)) /60;
+    }
+    else if (inVal.endsWith('s') && !isNaN(Number(inVal.substring(0,inVal.length-1)))) {
+        return Number(inVal.substring(0,inVal.length-1)) /3600;
+    }
+}
+
 function convertReservedParams(inParams, parameters) {
 
     const outParams= {...inParams};
@@ -271,25 +297,27 @@ function convertReservedParams(inParams, parameters) {
         const srKey= findInsensitiveStr(pKeys,'sr');
         if (inParams[srKey]) {
             const srVal= inParams[srKey].toLowerCase();
-            let degVal;
-            if (!isNaN(Number(srVal))) {
-                degVal= Number(srVal);
-            }
-            else if (srVal.endsWith('d') && !isNaN(Number(srVal.substring(0,srVal.length-1)))) {
-                degVal= Number(srVal.substring(0,srVal.length-1));
-            }
-            else if (srVal.endsWith('m') && !isNaN(Number(srVal.substring(0,srVal.length-1)))) {
-                degVal= Number(srVal.substring(0,srVal.length-1)) /60;
-            }
-            else if (srVal.endsWith('s') && !isNaN(Number(srVal.substring(0,srVal.length-1)))) {
-                degVal= Number(srVal.substring(0,srVal.length-1)) /3600;
-            }
+            const degVal= getDegreeVal(srVal);
             if (!isNaN(degVal)) {
                 Reflect.deleteProperty(outParams, srKey);
                 outParams[ReservedParams.SR.name]= degVal;
             }
             else {
                 badParams.push(srKey);
+            }
+        }
+    }
+    if (parameters[ReservedParams.imageSize.name]) {
+        const isKey= findInsensitiveStr(pKeys,'imageSize');
+        if (inParams[isKey]) {
+            const isVal= inParams[isKey].toLowerCase();
+            const degVal= getDegreeVal(isVal);
+            if (!isNaN(degVal)) {
+                Reflect.deleteProperty(outParams, isKey);
+                outParams[ReservedParams.imageSize.name]= degVal;
+            }
+            else {
+                badParams.push(isKey);
             }
         }
     }
