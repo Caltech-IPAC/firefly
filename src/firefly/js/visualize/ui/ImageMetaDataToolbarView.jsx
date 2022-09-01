@@ -91,14 +91,14 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds=
                                onClick={() => handleViewerLayout(viewerId,'grid',GRID_FULL)}/>}
 
                 {converter.hasRelatedBands  &&
-                            <ToolbarButton icon={GRID_GROUP} tip={'Show all as tiles'}
+                            <ToolbarButton icon={GRID_GROUP} tip={'View all images from this image set, tiled'}
                                enabled={true} visible={true} horizontal={true}
                                imageStyle={{width:24,height:24, flex: '0 0 auto'}}
                                style={{marginLeft: 20}}
                                onClick={() => dispatchChangeViewerLayout(viewerId,'grid',GRID_RELATED)}/>
                 }
                 {showThreeColorButton &&
-                             <ToolbarButton icon={THREE_COLOR} tip={'Show three color image'}
+                             <ToolbarButton icon={THREE_COLOR} tip={'Create three color image'}
                                          enabled={true} visible={true} horizontal={true}
                                          imageStyle={{width:24,height:24, flex: '0 0 auto'}}
                                          onClick={() => showThreeColorOps(viewer,dataId)}/>
