@@ -117,7 +117,7 @@ function validate(request) {
     if (Object.keys(cnt).some( (k) => k!=='NONE' && cnt[k]>1 )) {
         return {
             valid:false,
-            errStr: 'A color can be assign to only one band'
+            errStr: 'A color can be assigned to only one band'
         };
 
     }
