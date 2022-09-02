@@ -41,9 +41,9 @@
 
 ##### _Patches 2022.2_
 - 2022.2.1
-  - Added IPAC Logo to version dialog([Firefly-1037](https://github.com/Caltech-IPAC/firefly/pull/1225))
+  - Added IPAC Logo to version dialog ([Firefly-1037](https://github.com/Caltech-IPAC/firefly/pull/1225))
   - Stretch dropdown shows checkbox if stretch selected ([Firefly-1029](https://github.com/Caltech-IPAC/firefly/pull/1225))
-  - Fixed: TAP column table showing filters ([PR](https://github.com/Caltech-IPAC/firefly/pull/1244))
+  - Fixed: TAP column table showing filters (Firefly-1036, [PR](https://github.com/Caltech-IPAC/firefly/pull/1244))
   - Fixed: Cube planes all change stretch ([Firefly-1038](https://github.com/Caltech-IPAC/firefly/pull/1225))
 - 2022.2.2
   - Chart functions: now support `radians()` and `degrees()` [Firefly-1047](https://github.com/Caltech-IPAC/firefly/pull/1254))
@@ -80,6 +80,7 @@
 - More image dataset added [IRSA-4468](https://github.com/Caltech-IPAC/firefly/pull/1191)
 - FITS and HiPS info dialogs better integrated [Firefly-323](https://github.com/Caltech-IPAC/firefly/pull/1185)
 - TAP: Automatic quoting of non-standard TAP columns, especially helpful when searching VizieR [Firefly-935](https://github.com/Caltech-IPAC/firefly/pull/1182)
+- Tables: Turn on units by default; raise category-column threshold [Firefly-969, Firefly-970](https://github.com/Caltech-IPAC/firefly/pull/1201)
 
 #### Notable Bug fixes
 - Fixed: Some TAP entries truncated [Firefly-719](https://github.com/Caltech-IPAC/firefly/pull/1178)
