@@ -13,12 +13,13 @@ const startWatcher= once((dpId) => startDataProductsWatcher({ dataTypeViewerId:d
 
 /**
  * A wrapper for MultiProductViewer for data Products that starts the watcher that updates it.
- * It should be use in the case where this is the only if it the the only one one the page.
- * If you are have more that on MultiProductViewer you should lay the out directly
+ * It should be used in the case where this is the only if its the only one the page.
+ * If you arhave more that on MultiProductViewer you should lay the out directly
  */
-export const MetaDataMultiProductViewer= memo(({ viewerId='DataProductsType', metaDataTableId,
+export const MetaDataMultiProductViewer= memo(({ viewerId='DataProductsType', dataProductTableId,
                                                    enableExtraction= false,
                                                    autoStartWatcher=true, noProductMessage}) => {
     autoStartWatcher && setTimeout(() => startWatcher(viewerId),5);
-    return (<MultiProductViewer {...{viewerId, metaDataTableId, noProductMessage, enableExtraction}}/>);
+    return (<MultiProductViewer {...{viewerId, metaDataTableId:dataProductTableId,
+        noProductMessage, enableExtraction}}/>);
 });
