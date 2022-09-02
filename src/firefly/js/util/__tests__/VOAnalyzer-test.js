@@ -1,7 +1,7 @@
 // import initTest from '../InitTest.js';
 
 import {reject} from 'lodash';
-import {findTableCenterColumns, isCatalog, hasCoverageData, isMetaDataTable, applyLinkSub} from '../VOAnalyzer';
+import {findTableCenterColumns, isCatalog, hasCoverageData, isDataProductsTable, applyLinkSub} from '../VOAnalyzer';
 import {SelectInfo} from '../../tables/SelectInfo';
 
 
@@ -516,22 +516,22 @@ describe('VOAnalyzer:', () => {
             }
         };
         let result;
-        result= isMetaDataTable(table);
+        result= isDataProductsTable(table);
         expect(result).toBeTruthy();
 
 
         table.tableMeta= {dAtASouRCE:'url'};
-        result= isMetaDataTable(table);
+        result= isDataProductsTable(table);
         expect(result).toBeTruthy();
 
 
 
         table.tableMeta= {};
-        result= isMetaDataTable(table);
+        result= isDataProductsTable(table);
         expect(result).toBeFalsy();
 
         table.tableMeta= {ImageSourceId:'wise'};
-        result= isMetaDataTable(table);
+        result= isDataProductsTable(table);
         expect(result).toBeTruthy();
 
     });

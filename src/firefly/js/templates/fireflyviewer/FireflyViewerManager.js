@@ -50,7 +50,6 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
          * @prop {string}   layoutInfo.images.showCoverage  show images coverage tab
          * @prop {string}   layoutInfo.images.showFits  show images fits data tab
          * @prop {string}   layoutInfo.images.showMeta  show images image metea tab
-         * @prop {string}   layoutInfo.images.coverageLockedOn
          */
         var layoutInfo = getLayouInfo();
         var newLayoutInfo = layoutInfo;

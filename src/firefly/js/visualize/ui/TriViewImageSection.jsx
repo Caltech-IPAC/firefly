@@ -4,7 +4,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {get, isEmpty} from 'lodash';
+import {isEmpty} from 'lodash';
 
 import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
 import {Tab, Tabs} from '../../ui/panel/TabPanel.jsx';
@@ -16,9 +16,9 @@ import {DEFAULT_FITS_VIEWER_ID, REPLACE_VIEWER_ITEMS, NewPlotMode, getViewerItem
 import {getTblById, findGroupByTblId, getTblIdsByGroup, smartMerge} from '../../tables/TableUtil.js';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode, dispatchUpdateLayoutInfo, getLayouInfo} from '../../core/LayoutCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../../visualize/ImagePlotCntlr.js';
-import {TABLE_LOADED, TBL_RESULTS_ACTIVE, TBL_RESULTS_ADDED} from '../../tables/TablesCntlr.js';
+import {TABLE_HIGHLIGHT, TABLE_LOADED, TBL_RESULTS_ACTIVE, TBL_RESULTS_ADDED} from '../../tables/TablesCntlr.js';
 import {REINIT_APP} from '../../core/AppDataCntlr.js';
-import {hasCoverageData, isCatalog, isMetaDataTable} from '../../util/VOAnalyzer.js';
+import {hasCoverageData, isCatalog, isDataProductsTable} from '../../util/VOAnalyzer.js';
 import {MetaDataMultiProductViewer} from './MetaDataMultiProductViewer';
 import {CoverageViewer} from './CoveraeViewer';
 import {isOrbitalPathTable} from '../../util/VOAnalyzer';
@@ -30,30 +30,25 @@ import {getPlotViewAry} from 'firefly/visualize/PlotViewUtil.js';
  * @param p
  * @param p.showCoverage
  * @param p.showFits
+ * @param p.style
  * @param p.showMeta
+ * @param p.selectedTab
  * @param p.imageExpandedMode if true, then imageExpandedMode overrides everything else
  * @param p.closeable expanded mode should have a close button
- * @param p.metaDataTableId
- * @return {XML}
+ * @param p.dataProductTableId
  * @constructor
  */
 export function TriViewImageSection({showCoverage=false, showFits=false, selectedTab='fits',
                                      showMeta=false, imageExpandedMode=false, closeable=true,
-                                     metaDataTableId, style={}}) {
+                                     dataProductTableId, style={}}) {
 
     if (imageExpandedMode) {
-        return  ( <ImageExpandedMode
-                        key='results-plots-expanded'
-                        closeFunc={closeable ? closeExpanded : null}/>
-                );
+        return  ( <ImageExpandedMode key='results-plots-expanded' closeFunc={closeable ? closeExpanded : null}/> );
     }
     const onTabSelect = (idx, id) => dispatchUpdateLayoutInfo({images:{selectedTab:id}});
-    const table= getTblById(metaDataTableId);
+    const table= getTblById(dataProductTableId);
     const title= table?.tableMeta?.title || table?.title || '';
     const metaTitle= `Data Product${title?': ' : ''}${title}`;
-
-
-    // showCoverage= true; // todo - let the application control is coverage is visible
 
     if (showCoverage || showFits || showMeta) {
         return (
@@ -67,7 +62,7 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
                 }
                 { showMeta &&
                     <Tab name={metaTitle} removable={false} id='meta'>
-                        <MetaDataMultiProductViewer metaDataTableId={metaDataTableId} enableExtraction={true}/>
+                        <MetaDataMultiProductViewer dataProductTableId={dataProductTableId} enableExtraction={true}/>
                     </Tab>
                 }
                 { showCoverage &&
@@ -91,7 +86,7 @@ TriViewImageSection.propTypes= {
     showMeta : PropTypes.bool,
     imageExpandedMode : PropTypes.bool,
     closeable: PropTypes.bool,
-    metaDataTableId: PropTypes.string,
+    dataProductTableId: PropTypes.string,
     chartMetaId: PropTypes.string,
     selectedTab: PropTypes.oneOf(['fits', 'meta', 'coverage']),
     style: PropTypes.object
@@ -104,7 +99,7 @@ export function launchTableTypeWatchers() {
 function startLayoutWatcher() {
     const actions = [
         ImagePlotCntlr.PLOT_IMAGE_START, ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS,
-        ImagePlotCntlr.DELETE_PLOT_VIEW, REPLACE_VIEWER_ITEMS,
+        ImagePlotCntlr.DELETE_PLOT_VIEW, REPLACE_VIEWER_ITEMS,TABLE_HIGHLIGHT,
         TBL_RESULTS_ACTIVE, TABLE_LOADED, TBL_RESULTS_ADDED,
         REINIT_APP
     ];
@@ -130,7 +125,6 @@ function layoutHandler(action, cancelSelf) {
      * @prop {string}   layoutInfo.images.showCoverage  show images coverage tab
      * @prop {string}   layoutInfo.images.showFits  show images fits data tab
      * @prop {string}   layoutInfo.images.showMeta  show images image metea tab
-     * @prop {string}   layoutInfo.images.coverageLockedOn
      */
     const layoutInfo = getLayouInfo();
     let newLayoutInfo = layoutInfo;
@@ -160,6 +154,11 @@ function layoutHandler(action, cancelSelf) {
                 newLayoutInfo = onActiveTable(newLayoutInfo, action);
             }
             break;
+        case TABLE_HIGHLIGHT:
+            if (action.payload.tbl_group==='main') {
+                newLayoutInfo = onActiveTable(newLayoutInfo, action);
+            }
+            break;
         case REINIT_APP:
             cancelSelf();
             break;
@@ -180,46 +179,44 @@ function closeExpanded() {
 }
 const hasCoverageTable= (tblList) => tblList.some( (id) => hasCoverageData(id) );
 const hasOrbitalPathTable= (tblList) => tblList.some( (id) => isOrbitalPathTable(id) );
-const hasMetaTable= (tblList) => tblList.some( (id) => isMetaDataTable(id) );
-const findFirstMetaTable= (tblList) => tblList.find( (id) => isMetaDataTable(id) );
+const hasDataProductsTable= (tblList) => tblList.some( (id) => isDataProductsTable(id) );
+const findFirstDataProductsTable= (tblList) => tblList.find( (id) => isDataProductsTable(id) );
 const shouldShowFits= () => !isEmpty(getViewerItemIds(getMultiViewRoot(), DEFAULT_FITS_VIEWER_ID));
 
 function handleNewTable(layoutInfo, action) {
     const {tbl_id} = action.payload;
     const {images={}, showTables}  = layoutInfo;
     let {showImages} = layoutInfo;
-    let {coverageLockedOn, showFits, showMeta, showCoverage, selectedTab, metaDataTableId} = images;
-    const isMeta = isMetaDataTable(tbl_id);
+    let {showFits, showMeta, showCoverage, selectedTab, dataProductTableId} = images;
+    const isMeta = isDataProductsTable(tbl_id);
 
 
     if ((isMeta || hasCoverageData(tbl_id)|| isOrbitalPathTable(tbl_id) || isCatalog(tbl_id)) && showTables ) {
         if (!showFits) selectedTab = 'coverage';
         showFits= showFits || shouldShowFits();
-        // coverageLockedOn= !showFits||coverageLockedOn;
-        coverageLockedOn= true;
-        showCoverage = coverageLockedOn;
+        showCoverage = true;
         showImages = true;
     }
     if (isMeta && showTables) {
         showImages = true;
         selectedTab = 'meta';
         showMeta = true;
-        metaDataTableId = tbl_id;
+        dataProductTableId = tbl_id;
     }
-    return smartMerge(layoutInfo, {showTables: true, showImages, images: {coverageLockedOn, showFits, showMeta, showCoverage, selectedTab, metaDataTableId}});
+    return smartMerge(layoutInfo, {showTables: true, showImages, images: {showFits, showMeta, showCoverage, selectedTab, dataProductTableId}});
 }
 
 function onActiveTable (layoutInfo, action) {
     const {tbl_id} = action.payload;
-    let {images={}, showImages} = layoutInfo;
-    let {coverageLockedOn, showCoverage, showMeta, metaDataTableId} = images;
+    let {images={}} = layoutInfo;
+    let {showCoverage, showMeta, dataProductTableId} = images;
 
     const showFits= shouldShowFits();
-    showImages= showFits;
+    let showImages= showFits;
 
     if (!tbl_id) {
-        images = {showMeta: false, showCoverage: false, showFits, metaDataTableId: null};
-        return smartMerge(layoutInfo, {images, showImages:showFits, coverageLockedOn:true});
+        images = {showMeta: false, showCoverage: false, showFits, dataProductTableId: null};
+        return smartMerge(layoutInfo, {images, showImages:showFits});
     }
 
     const tblGroup= findGroupByTblId(tbl_id);
@@ -231,12 +228,7 @@ function onActiveTable (layoutInfo, action) {
     // check for catalog or meta images
     const anyHasCoverage= hasCoverageTable(tblList);
     const hasOrbitalPath=  hasOrbitalPathTable(tblList);
-    const anyHasMeta= hasMetaTable(tblList);
-
-
-    // if (coverageLockedOn) {
-    //     coverageLockedOn= anyHasCatalog || anyHasMeta;
-    // }
+    const anyHasMeta= hasDataProductsTable(tblList);
 
     if (anyHasCoverage || anyHasMeta || hasOrbitalPath) {
         showCoverage = true;
@@ -246,32 +238,30 @@ function onActiveTable (layoutInfo, action) {
         showImages= showFits;
     }
     if (anyHasMeta) {
-        metaDataTableId = isMetaDataTable(tbl_id) ? tbl_id : findFirstMetaTable(tblList);
+        dataProductTableId = isDataProductsTable(tbl_id) ? tbl_id : findFirstDataProductsTable(tblList);
         showMeta = true;
         showImages = true;
     } else {
-        metaDataTableId = null;
+        dataProductTableId = null;
         showMeta = false;
     }
-    return smartMerge(layoutInfo, {images: {coverageLockedOn, showCoverage, showMeta, metaDataTableId}, showImages});
+    return smartMerge(layoutInfo, {images: {showCoverage, showMeta, dataProductTableId}, showImages});
 }
 
 function onPlotDelete(layoutInfo, action) {
     const {images={}}  = layoutInfo;
     let {showImages} = layoutInfo;
-    let {coverageLockedOn, metaDataTableId} = images;
+    const {dataProductTableId} = images;
     const showFits = shouldShowFits();
-    if (!get(visRoot(), 'plotViewAry.length', 0)) {
-        coverageLockedOn = true;
-        showImages= metaDataTableId ? true : false;
-        // showImages = false;
+    if (!visRoot().plotViewAry?.length) {
+        showImages= Boolean(dataProductTableId);
     }
-    return smartMerge(layoutInfo, {showImages, images:{coverageLockedOn, showFits}});
+    return smartMerge(layoutInfo, {showImages, images:{showFits}});
 }
 
 function onNewImage(layoutInfo, action) {
     const {images={}} = layoutInfo;
-    let {selectedTab, showMeta, showFits, coverageLockedOn} = images;
+    let {selectedTab, showMeta, showFits} = images;
 
     const showImages= getPlotViewAry(visRoot()).some( (pv) => pv.plotViewCtx.useForSearchResults);
     if (!showImages) return layoutInfo;
@@ -281,17 +271,12 @@ function onNewImage(layoutInfo, action) {
         // select meta tab when new images are added to meta image group.
         selectedTab = 'meta';
         showMeta = true;
-        coverageLockedOn = true;
     } else if (viewerId === DEFAULT_FITS_VIEWER_ID) {
         // select fits tab when new images are added to default group.
         selectedTab = 'fits';
         showFits = true;
-        coverageLockedOn = true;
-    } else {
-        // why lock coverage here?
-        coverageLockedOn = true;
     }
 
 
-    return smartMerge(layoutInfo, {showImages:true, images: {coverageLockedOn, selectedTab, showMeta, showFits}});
+    return smartMerge(layoutInfo, {showImages:true, images: {selectedTab, showMeta, showFits}});
 }
