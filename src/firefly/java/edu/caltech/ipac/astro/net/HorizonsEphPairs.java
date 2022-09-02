@@ -40,14 +40,16 @@ public class HorizonsEphPairs {
                     s = idOrName.split("^[0-9]* "); // now get the rest
                     if (inParens(s[1])) {
                         idOrName = stripFirstLast(s[1]);
-                    } else {
-                        char[] cAry = s[1].toCharArray();
-                        boolean hasDigit = false;
-                        for (int i = 0; (i < cAry.length && !hasDigit); i++) {
-                            hasDigit = Character.isDigit(cAry[i]);
-                        }
-                        if (!hasDigit) idOrName = s[1];
                     }
+                        //do not delete this else block, might need it later to deal with inputs like '2020 Ukko'
+                        //else {
+                        //char[] cAry = s[1].toCharArray();
+                        //boolean hasDigit = false;
+                        //for (int i = 0; (i < cAry.length && !hasDigit); i++) {
+                        //    hasDigit = Character.isDigit(cAry[i]);
+                        //}
+                        //if (!hasDigit) idOrName = s[1];
+                    //}
                 } catch (NumberFormatException ignore) {
                 }
             }
