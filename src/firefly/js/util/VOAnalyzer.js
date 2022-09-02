@@ -971,7 +971,7 @@ export function hasCoverageData(tableOrId) {
  * @see MetaConst.DATA_SOURCE
  * @see MetaConst.IMAGE_SOURCE_ID
  */
-export function isMetaDataTable(tableOrId) {
+export function isDataProductsTable(tableOrId) {
     const table= getTableModel(tableOrId);
     if (isEmpty(table)) return false;
     const {tableMeta, totalRows} = table;
@@ -1084,7 +1084,7 @@ export function hasObsCoreLikeDataProducts(tableOrId) {
  * @param {ServiceDescriptorDef} sd
  * @return {boolean}
  */
-export const isDataLinkServiceDesc= (sd) => false && sd?.standardID.includes(DATALINK_SERVICE); //todo - remove the false after irsa fixes it's service
+export const isDataLinkServiceDesc= (sd) => false && sd?.standardID?.includes(DATALINK_SERVICE); //todo - remove the false after irsa fixes it's service
 
 /**
  * return true if there are service descriptor blocks in this table, false otherwise
@@ -1139,7 +1139,7 @@ export function getServiceDescriptors(tableOrId, removeAsync=true) {
         }
     ));
     if (!removeAsync)return sdAry.length ? sdAry : false;
-    const sdAryNoAsync= sdAry.filter( ({standardID}) => !standardID.toLowerCase().includes('async')); // filter out async
+    const sdAryNoAsync= sdAry.filter( ({standardID}) => !standardID?.toLowerCase().includes('async')); // filter out async
     return sdAryNoAsync.length ? sdAryNoAsync : false;
 }
 

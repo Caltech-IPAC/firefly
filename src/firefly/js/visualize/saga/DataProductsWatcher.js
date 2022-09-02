@@ -15,7 +15,7 @@ import {makeDataProductsConverter, initImage3ColorDisplayManagement} from '../..
 import {findGridTableRows} from '../../metaConvert/converterUtils.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga.js';
-import {isMetaDataTable} from '../../util/VOAnalyzer.js';
+import {isDataProductsTable} from '../../util/VOAnalyzer.js';
 import {zoomPlotPerViewSize, resetImageFullGridActivePlot, changeActivePlotView} from '../../metaConvert/ImageDataProductsUtil.js';
 import {
     dataProductRoot,
@@ -33,7 +33,7 @@ const MAX_GRID_SIZE= 50;
 const DataProductsWatcherDef = {
     id : 'ImageMetaDataWatcher',
     watcher : watchDataProductsTable,
-    testTable : (t) => isMetaDataTable(t.tbl_id),
+    testTable : (t) => isDataProductsTable(t.tbl_id),
     allowMultiples: false,
     actions: [TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE, TABLE_REMOVE,
               TBL_RESULTS_ACTIVE, REINIT_APP,
@@ -293,7 +293,7 @@ function removeAllProducts(activateParams, tbl_id) {
     const {dpId, imageViewerId}= activateParams;
     if (!imageViewerId) return;
     const activeTblId= getActiveTableId();
-    if (activeTblId===tbl_id || !isMetaDataTable(activeTblId)) {
+    if (activeTblId===tbl_id || !isDataProductsTable(activeTblId)) {
         const inViewerIds= getViewerItemIds(getMultiViewRoot(), imageViewerId);
         inViewerIds.forEach( (plotId) => dispatchDeletePlotView({plotId}));
         dispatchUpdateDataProducts(dpId,dpdtMessage('No Data Products', undefined, {noProductsAvailable:true}));
