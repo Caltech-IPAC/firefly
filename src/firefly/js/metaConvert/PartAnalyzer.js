@@ -118,7 +118,7 @@ const C_COL1= ['index','wave'];
 const C_COL2= ['flux','data','data1','data2'];
 
 const TS_C_COL1= ['mjd'];
-const TS_C_COL2= ['mag'];
+const TS_C_COL2= ['mag','flux'];
 
 const SPACITAL_C_COL1= ['ra','lon', 'c_ra', 'ra1'];
 const SPACITAL_C_COL2= ['dec','lat','c_dec','dec1'];
