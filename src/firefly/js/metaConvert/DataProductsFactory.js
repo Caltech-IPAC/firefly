@@ -183,10 +183,10 @@ function initConverterTemplates() {
             getGridDataProduct: getGridDataProductWrapper(makeWisePlotRequest),
             getRelatedDataProduct: getRelatedDataProductWrapper(makeWisePlotRequest),
             threeColorBands: {
-                b1: {color: Band.RED, title: 'Band 1'},
+                b1: {color: Band.BLUE, title: 'Band 1'},
                 b2: {color: Band.GREEN, title: 'Band 2'},
                 b3: {color: null, title: 'Band 3'},
-                b4: {color: Band.BLUE, title: 'Band 4'}
+                b4: {color: Band.RED, title: 'Band 4'}
             },
         },
         {
