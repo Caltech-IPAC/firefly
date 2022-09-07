@@ -20,7 +20,7 @@ import static edu.caltech.ipac.visualize.plot.plotdata.ImageStretchUtil.*;
 public class ImageStretch {
 
     private static boolean isHuePreserving(RangeValues rv) {
-        return rv.rgbPreserveHue();
+        return rv!=null ? rv.rgbPreserveHue() : false;
     }
 
 
