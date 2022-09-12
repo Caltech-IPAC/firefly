@@ -11,6 +11,7 @@ import {makeWorldPt, parseWorldPt} from '../visualize/Point.js';
 import {convertAngle} from '../visualize/VisUtil.js';
 import {PlotAttribute} from '../visualize/PlotAttribute';
 import {CoordinateSys} from '../visualize/CoordSys.js';
+import {GRID_FULL, GRID_RELATED} from '../visualize/MultiViewCntlr';
 
 const colToUse= ['scan_id', 'frame_num', 'coadd_id', 'in_ra', 'in_dec', 'image_set'];
 const rangeValues= RangeValues.makeRV({which:SIGMA, lowerValue:-2, upperValue:10, algorithm:STRETCH_LINEAR});
@@ -109,6 +110,31 @@ export function makeWisePlotRequest(table, row, includeSingle, includeStandard, 
         );
     }
     return retval;
+}
+
+/**
+ *
+ * @param {TableModel} table
+ * @param {DataProductsConvertType} converterTemplate
+ * @return {DataProductsConvertType}
+ */
+export function makeWiseViewCreate(table,converterTemplate) {
+    const defWiseView = {...converterTemplate,
+        canGrid:true, maxPlots:12, hasRelatedBands:true, initialLayout: GRID_RELATED};
+
+    const tblid = table.tbl_id;
+    if (tblid === 'sso') {
+        return {...defWiseView, initialLayout: GRID_FULL};
+    }
+    if (get(table, 'request.ProductLevel')) {
+        const plevel = table.request.ProductLevel;
+
+        if (plevel === '3a') {
+            return defWiseView;
+        } else if (plevel === '1b') {
+            return {...defWiseView, initialLayout: GRID_FULL};
+        }
+    }
 }
 
 
