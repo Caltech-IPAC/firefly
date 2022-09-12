@@ -57,7 +57,7 @@ export function determineViewerId(viewerId, plotId) {
 
 export function modifyRequestForWcsMatch(pv, wpr) {
     const plot = primePlot(pv);
-    if (!plot) return wpr;
+    if (!plot || !wpr) return wpr;
     const newWpr = wpr.makeCopy();
     const asPerPix = getArcSecPerPix(plot, plot.zoomFactor);
     newWpr.setRotateNorth(false);
