@@ -4,7 +4,7 @@
 
 import {get, isEmpty, isArray} from 'lodash';
 import {RangeValues, SIGMA, STRETCH_LINEAR} from '../visualize/RangeValues.js';
-import {makeWisePlotRequest} from './WiseRequestList.js';
+import {makeWiseViewCreate, makeWisePlotRequest} from './WiseRequestList.js';
 import {make2MassPlotRequest} from './TwoMassRequestList.js';
 import {makeAtlasPlotRequest} from './AtlasRequestList.js';
 import {makeZtfPlotRequest} from './ZtfRequestList.js';
@@ -172,13 +172,7 @@ function initConverterTemplates() {
         {
             converterId: 'wise',
             tableMatches: (table) => matchById(table, 'wise'),
-            create: (table, converterTemplate) =>
-                ({...converterTemplate, initialLayout:getMetaEntry(table,'DataType')==='MOS' ? GRID_FULL:GRID_RELATED}),
-            threeColor: true,
-            hasRelatedBands: true,
-            canGrid: true,
-            initialLayout: GRID_RELATED,
-            maxPlots: 12,
+            create: makeWiseViewCreate,
             getSingleDataProduct: getSingleDataProductWrapper(makeWisePlotRequest),
             getGridDataProduct: getGridDataProductWrapper(makeWisePlotRequest),
             getRelatedDataProduct: getRelatedDataProductWrapper(makeWisePlotRequest),
