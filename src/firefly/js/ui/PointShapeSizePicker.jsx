@@ -130,7 +130,7 @@ export function ShapePicker({drawingDef, displayGroupId, plotId, update, getColo
             const symbolSize = DrawUtil.getSymbolSize(isize, isize, drawingDef.symbol);
             const newDD = {...drawingDef, size: symbolSize};
 
-            setSize(size);
+            setSize(isize);
             setValidSize(validSize);
             setDrawingDef(newDD);
             const dl = getDrawLayersByDisplayGroup(getDlAry(), displayGroupId);
