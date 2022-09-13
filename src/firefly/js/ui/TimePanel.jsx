@@ -35,7 +35,7 @@ function TimePanelView({showHelp, feedback, feedbackStyle, examples, label, labe
             <img
               title={iconMap[icon].title}
               src={iconMap[icon].icon}
-              onClick={() => onClickIcon?.()}/>/>
+              onClick={() => onClickIcon?.()}/>
          </div>) : null;
 
     const spaceForImage = 16+ImagePadding*2;
