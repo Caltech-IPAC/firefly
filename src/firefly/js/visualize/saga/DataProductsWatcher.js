@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get,isEmpty} from 'lodash';
+import {get, isArray, isEmpty} from 'lodash';
 import {Band} from '../Band.js';
 import {TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_REMOVE,TABLE_UPDATE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
 import ImagePlotCntlr, {visRoot, dispatchDeletePlotView, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
@@ -166,7 +166,9 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
 }
 
 
-const getKey= (threeOp, band) => Object.keys(threeOp).find( (k) => threeOp[k].color && threeOp[k].color.key===band.key);
+const getKey= (threeOp, band) =>
+    Object.keys(threeOp).find( (k) =>
+                   isArray(threeOp[k].color) ? threeOp[k].color.includes(band) : threeOp[k].color===band );
 
 /**
  *
