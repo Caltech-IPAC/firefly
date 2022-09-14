@@ -136,7 +136,7 @@ export function makeWiseViewCreate(table,converterTemplate) {
         return {...defWiseView, initialLayout: GRID_FULL, converterId: convtid};
     }else if (tblid === '1b') {
         return {...defWiseView, initialLayout: GRID_FULL, converterId: convtid};
-    } else if (tblid === '3a') {
+    } else if (tblid === '3a' || tblid === 'sidsearch') {
         return defWiseView;
     }
 }
