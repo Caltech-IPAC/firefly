@@ -170,24 +170,8 @@ function initConverterTemplates() {
      */
     const originalConverterTemplates = [
         {
-            converterId: 'wise_1b',
-            tableMatches: (table) => matchById(table, 'wise_1b'),
-            create: makeWiseViewCreate,
-            getSingleDataProduct: getSingleDataProductWrapper(makeWisePlotRequest),
-            getGridDataProduct: getGridDataProductWrapper(makeWisePlotRequest),
-            getRelatedDataProduct: getRelatedDataProductWrapper(makeWisePlotRequest),
-        },
-        {
             converterId: 'wise',
-            tableMatches: (table) => matchById(table, 'wise_3a'),
-            create: makeWiseViewCreate,
-            getSingleDataProduct: getSingleDataProductWrapper(makeWisePlotRequest),
-            getGridDataProduct: getGridDataProductWrapper(makeWisePlotRequest),
-            getRelatedDataProduct: getRelatedDataProductWrapper(makeWisePlotRequest),
-        },
-        {
-            converterId: 'wise_sso',
-            tableMatches: (table) => matchById(table, 'wise_sso'),
+            tableMatches: (table) => matchById(table, 'wise'),
             create: makeWiseViewCreate,
             getSingleDataProduct: getSingleDataProductWrapper(makeWisePlotRequest),
             getGridDataProduct: getGridDataProductWrapper(makeWisePlotRequest),
