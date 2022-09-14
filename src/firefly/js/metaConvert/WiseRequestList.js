@@ -128,14 +128,13 @@ export function makeWiseViewCreate(table,converterTemplate) {
             b3: {color: null, title: 'Band 3'},
             b4: {color: Band.RED, title: 'Band 4'}
         },
-        initialLayout: GRID_RELATED, converterId: 'wise_3a'};
+        initialLayout: GRID_RELATED};
 
     const tblid = table.tbl_id;
-    const convtid = `wise_${tblid}`;
     if (tblid === 'sso') {
-        return {...defWiseView, initialLayout: GRID_FULL, converterId: convtid};
+        return {...defWiseView, initialLayout: GRID_FULL};
     }else if (tblid === '1b') {
-        return {...defWiseView, initialLayout: GRID_FULL, converterId: convtid};
+        return {...defWiseView, initialLayout: GRID_FULL};
     } else if (tblid === '3a' || tblid === 'sidsearch') {
         return defWiseView;
     }
