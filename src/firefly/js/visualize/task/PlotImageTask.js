@@ -171,8 +171,10 @@ async function processPlotImageSuccessResponse(dispatcher, payload, result) {
     });
 
     await getRelatedData(successAry);
-    await onViewDimDefined(successAry.map( (r) => getRequestFromResult(r)?.getPlotId()));
-    if (successAry.length) processSuccessResult(dispatcher, payload, successAry);
+    successAry.forEach( (r) => {
+        onViewDimDefined(getRequestFromResult(r)?.getPlotId())
+            .then(() => processSuccessResult(dispatcher, payload, [r]));
+    });
     if (failAry.length) processFailResult(failAry,payload, dispatcher);
 }
 

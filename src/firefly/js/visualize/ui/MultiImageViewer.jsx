@@ -95,9 +95,9 @@ export class MultiImageViewer extends PureComponent {
     }
 
     render() {
-        const {viewerId,gridDefFunc}= this.props;
+        const {viewerId,tableId,gridDefFunc}= this.props;
         const {viewer,visRoot,dlAry}= this.state;
-        const layoutType= getLayoutType(getMultiViewRoot(),viewerId);
+        const layoutType= getLayoutType(getMultiViewRoot(),viewerId,tableId);
         if (!viewer) return false;
         if (isEmpty(viewer.itemIdAry)) {
             if (!gridDefFunc) return false;
@@ -130,6 +130,7 @@ MultiImageViewer.propTypes= {
     gridDefFunc : PropTypes.func,
     insideFlex : PropTypes.bool,
     closeFunc : PropTypes.func,
+    tableId : PropTypes.string,
     showWhenExpanded : PropTypes.bool,
     controlViewerMounting : PropTypes.bool
 };
