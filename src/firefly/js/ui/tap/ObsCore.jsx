@@ -22,10 +22,15 @@ import {
     onChangeTimeMode,
     getTimeInfo,
     checkField,
-    updatePanelFields, isPanelChecked, getPanelPrefix, SmallFloatNumericWidth, SpatialLableSaptail
+    updatePanelFields,
+    isPanelChecked,
+    getPanelPrefix,
+    SmallFloatNumericWidth,
+    SpatialLableSaptail,
+    onChangeDateTimePicker
 } from 'firefly/ui/tap/TableSearchHelpers';
 import {ColsShape} from '../../charts/ui/ColumnOrExpression';
-import {convertISOToMJD, validateDateTime, validateMJD} from 'firefly/ui/DateTimePickerField';
+import {convertISOToMJD, convertMJDToISO, validateDateTime, validateMJD} from 'firefly/ui/DateTimePickerField';
 import {TimePanel} from 'firefly/ui/TimePanel';
 import {RadioGroupInputField} from 'firefly/ui/RadioGroupInputField';
 import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField';
@@ -503,9 +508,21 @@ export function ExposureDurationSearch({cols, groupKey, fields, useConstraintRed
     };
 
     const onChange = (inFields, action, rFields) => {
-        const {fieldKey, value} = action.payload;
+        const {fieldKey, value, timeMode} = action.payload;
+        let {timeOptions} = inFields;
+        timeOptions = {...timeOptions, value: timeMode}; /*FIXME: timeOptions' value shouldn't need to be manually updated here*/
         if (fieldKey === 'exposureTimeMode') {    // time mode changes => update timefrom and timeto value
             onChangeTimeMode(value, inFields, rFields, ['exposureMin', 'exposureMax']);
+        }
+        else {
+            const targetKey = fieldKey;
+            if (timeMode === 'mjd') {
+                //onChangeDateTimePicker expects an ISO value, so converting the MJD value to ISO here
+                onChangeDateTimePicker(convertMJDToISO(value), inFields, rFields, targetKey, fieldKey, timeOptions);
+            }
+            else {
+                onChangeDateTimePicker(value, inFields, rFields, targetKey, fieldKey, timeOptions);
+            }
         }
     };
 
