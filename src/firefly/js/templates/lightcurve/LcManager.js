@@ -13,7 +13,9 @@ import ImagePlotCntlr, {dispatchPlotImage, visRoot, dispatchDeletePlotView,
         dispatchChangeActivePlotView,
         WcsMatchType, dispatchWcsMatch} from '../../visualize/ImagePlotCntlr.js';
 import {getPlotViewById} from '../../visualize/PlotViewUtil.js';
-import {getMultiViewRoot, dispatchReplaceViewerItems, getViewer} from '../../visualize/MultiViewCntlr.js';
+import {
+    getMultiViewRoot, dispatchReplaceViewerItems, getViewer, getLayoutDetails
+} from '../../visualize/MultiViewCntlr.js';
 import {CHANGE_VIEWER_LAYOUT} from '../../visualize/MultiViewCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {VALUE_CHANGE, dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
@@ -715,7 +717,7 @@ export function setupImages(layoutInfo, invokedBy=TABLE_FETCH){
     }
 
     const viewer = getViewer(getMultiViewRoot(), LC.IMG_VIEWER_ID);
-    const count = get(viewer, 'layoutDetail.count', converterData.defaultImageCount);
+    const count= getLayoutDetails(getMultiViewRoot(), LC.IMG_VIEWER_ID)?.count ?? converterData.defaultImageCount
 
 
     var vr = visRoot();

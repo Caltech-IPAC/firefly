@@ -9,8 +9,10 @@ import ImagePlotCntlr, {visRoot, dispatchDeletePlotView, dispatchChangeActivePlo
 import {REINIT_APP} from '../../core/AppDataCntlr.js';
 import {getTblById,getTblInfo,getActiveTableId,isTblDataAvail} from '../../tables/TableUtil.js';
 import {primePlot} from '../PlotViewUtil.js';
-import MultiViewCntlr, {getViewerItemIds, dispatchChangeViewerLayout,
-                        getMultiViewRoot, getViewer, GRID, GRID_FULL, SINGLE} from '../MultiViewCntlr.js';
+import MultiViewCntlr, {
+    getViewerItemIds, dispatchChangeViewerLayout,
+    getMultiViewRoot, getViewer, GRID, GRID_FULL, SINGLE, getLayoutType, getLayoutDetails
+} from '../MultiViewCntlr.js';
 import {makeDataProductsConverter, initImage3ColorDisplayManagement} from '../../metaConvert/DataProductsFactory.js';
 import {findGridTableRows} from '../../metaConvert/converterUtils.js';
 import {PlotAttribute} from '../PlotAttribute.js';
@@ -64,6 +66,7 @@ export function startDataProductsWatcher({dataTypeViewerId= 'DataProductsType', 
  */
 function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
     const {options:{dataTypeViewerId= 'DataProductsType'}} = params;
+    let firstTime= params.firstTime ?? true;
     const dpId= params.options.dpId || dataTypeViewerId;
     let {paused= true, zoomOnNextViewSizeChange=false} = params;
     const {abortPromise:abortLastPromise} = params;
@@ -77,20 +80,23 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
         if (paused) {
             paused= !Boolean(imView || dpView);
         }
-        if (!paused && getActiveTableId()===tbl_id) updateDataProducts(null, tbl_id, activateParams);
+        if (!paused && getActiveTableId()===tbl_id) {
+            updateDataProducts(null, firstTime, tbl_id, activateParams);
+            firstTime= false;
+        }
         initImage3ColorDisplayManagement(imageViewerId); //todo: 3 color not working
-        return {paused};
+        return {paused, firstTime};
     }
 
     const {payload}= action;
 
 
-    if (payload.viewerId && payload.viewerId!==imageViewerId) return params;
+    if (payload.viewerId && payload.viewerId!==imageViewerId) return {...params,firstTime};
 
 
 
     if (payload.tbl_id) {
-        if (payload.tbl_id!==tbl_id) return params;
+        if (payload.tbl_id!==tbl_id) return {...params,firstTime};
         if (action.type===TABLE_REMOVE) {
             removeAllProducts(activateParams,tbl_id);
             // todo might need to remove other stuff as well: charts, images, jpeg
@@ -100,7 +106,7 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
         if (paused && imView && dpView) paused= false;
     }
     else {
-        if (getActiveTableId()!==tbl_id) return params;
+        if (getActiveTableId()!==tbl_id) return {...params, firstTime};
     }
 
 
@@ -112,20 +118,27 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
         case TABLE_HIGHLIGHT:
         case TABLE_UPDATE:
         case TBL_RESULTS_ACTIVE:
-            if (!paused) abortPromise= updateDataProducts(action, tbl_id, activateParams, abortLastPromise);
+            if (!paused) {
+                abortPromise= updateDataProducts(action, firstTime, tbl_id, activateParams, abortLastPromise);
+                firstTime= false;
+            }
             zoomOnNextViewSizeChange= false;
             break;
 
         case MultiViewCntlr.CHANGE_VIEWER_LAYOUT:
         case MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA:
-            if (!paused) abortPromise= updateDataProducts(action, tbl_id, activateParams, abortLastPromise);
+            if (!paused) {
+                abortPromise= updateDataProducts(action, firstTime, tbl_id, activateParams, abortLastPromise);
+                firstTime= false;
+            }
             zoomOnNextViewSizeChange= true;
             break;
 
 
         case MultiViewCntlr.ADD_VIEWER:
             if (payload.mounted) {
-                abortPromise= updateDataProducts(action, tbl_id, activateParams, abortLastPromise);
+                abortPromise= updateDataProducts(action, firstTime, tbl_id, activateParams, abortLastPromise);
+                firstTime= false;
                 paused= false;
                 zoomOnNextViewSizeChange= false;
             }
@@ -133,7 +146,8 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
 
         case MultiViewCntlr.VIEWER_MOUNTED:
             paused= false;
-            abortPromise= updateDataProducts(action, tbl_id, activateParams, abortLastPromise);
+            abortPromise= updateDataProducts(action, firstTime, tbl_id, activateParams, abortLastPromise);
+            firstTime= false;
             zoomOnNextViewSizeChange= false;
             break;
 
@@ -162,7 +176,7 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
             zoomOnNextViewSizeChange= false;
             break;
     }
-    return {paused, abortPromise, zoomOnNextViewSizeChange};
+    return {paused, abortPromise, firstTime, zoomOnNextViewSizeChange};
 }
 
 
@@ -171,12 +185,13 @@ const getKey= (threeOp, band) => Object.keys(threeOp).find( (k) => threeOp[k].co
 /**
  *
  * @param {Action} action
+ * @param {boolean} firstTime
  * @param {string} tbl_id
  * @param {ActivateParams} activateParams
  * @param {function} abortLastPromise
  * @return {function} a function to abort any unfinished promises
  */
-function updateDataProducts(action, tbl_id, activateParams, abortLastPromise=undefined) {
+function updateDataProducts(action, firstTime, tbl_id, activateParams, abortLastPromise=undefined) {
 
     abortLastPromise && abortLastPromise();
 
@@ -202,16 +217,15 @@ function updateDataProducts(action, tbl_id, activateParams, abortLastPromise=und
 
     const converter = makeDataProductsConverter(table);
     if (!converter) return;
-    const firstTime= !action;// if action undefined, then first time with this table
     const {converterId, initialLayout=SINGLE, canGrid= false, threeColor, hasRelatedBands}=  converter;
     let threeColorOps;
 
     if (firstTime) {
         if (canGrid && initialLayout!==SINGLE) {
-            dispatchChangeViewerLayout(viewer.viewerId,GRID,initialLayout);
+            dispatchChangeViewerLayout(viewer.viewerId,GRID,initialLayout,tbl_id);
         }
         else if (initialLayout===SINGLE) {
-            dispatchChangeViewerLayout(viewer.viewerId,SINGLE);
+            dispatchChangeViewerLayout(viewer.viewerId,SINGLE,undefined,tbl_id);
         }
         viewer = getViewer(getMultiViewRoot(), imageViewerId);
     }
@@ -231,9 +245,11 @@ function updateDataProducts(action, tbl_id, activateParams, abortLastPromise=und
     const {highlightedRow}= tableState;
 
     // keep the plotId array for 'single' layout
+    const layout= getLayoutType(getMultiViewRoot(), imageViewerId, tbl_id);
+    const layoutDetail= getLayoutDetails(getMultiViewRoot(), imageViewerId, tbl_id);
 
 
-    if (layoutChange && viewer.layout===SINGLE && !isEmpty(viewer.itemIdAry) && !foundGridFail) {
+    if (layoutChange && layout===SINGLE && !isEmpty(viewer.itemIdAry) && !foundGridFail) {
         if (viewer.itemIdAry[0].includes(GRID_FULL.toLowerCase())) {   // from full grid images
             const activePid = visRoot().activePlotId;
 
@@ -250,22 +266,23 @@ function updateDataProducts(action, tbl_id, activateParams, abortLastPromise=und
         return;
     }
 
+
     let resultPromise;
-    if (viewer.layout===SINGLE) {
+    if (layout===SINGLE) {
         resultPromise= converter.getSingleDataProduct(table,highlightedRow,activateParams);
     }
-    else if (viewer.layout===GRID && viewer.layoutDetail===GRID_FULL) { // keep this image only
+    else if (layout===GRID && layoutDetail===GRID_FULL) { // keep this image only
         const plotRows= findGridTableRows(table,Math.min(converter.maxPlots,MAX_GRID_SIZE),`${converterId}-gridfull`);
         resultPromise= converter.getGridDataProduct(table,plotRows,activateParams);
     }
-    else if (viewer.layout===GRID) {// keep this image only
+    else if (layout===GRID) {// keep this image only
         resultPromise= converter.getRelatedDataProduct(table,highlightedRow,threeColorOps,viewer.highlightPlotId,activateParams);
     }
-    resultPromise && handleProductResult(resultPromise, dpId, isPromiseAborted, viewer);
+    resultPromise && handleProductResult(resultPromise, dpId, tbl_id, isPromiseAborted, viewer, layout);
     return abortPromiseFunc;
 }
 
-function handleProductResult(p, dpId, isPromiseAborted, imageViewer) {
+function handleProductResult(p, dpId, tbl_id, isPromiseAborted, imageViewer, layout) {
     return p.then((displayTypeParams) => {
         if (isPromiseAborted()) return;
         if (displayTypeParams) {
@@ -275,11 +292,11 @@ function handleProductResult(p, dpId, isPromiseAborted, imageViewer) {
             dispatchUpdateDataProducts(dpId,dpdtMessage('Error- Search for Data product failed'));
             return;
         }
-        if (displayTypeParams.gridNotSupported && imageViewer.layout===GRID) {
-            dispatchChangeViewerLayout(imageViewer.viewerId, SINGLE);
+        if (displayTypeParams.gridNotSupported && layout===GRID) {
+            dispatchChangeViewerLayout(imageViewer.viewerId, SINGLE, undefined, tbl_id);
         }
         if (displayTypeParams.displayType==='promise' && displayTypeParams.promise) {
-            handleProductResult(displayTypeParams.promise,dpId, isPromiseAborted, imageViewer);
+            handleProductResult(displayTypeParams.promise,dpId, isPromiseAborted, imageViewer, layout);
         }
     });
 }
