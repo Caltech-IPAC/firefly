@@ -175,7 +175,7 @@ PlotlyChartArea.propTypes = {
 
 function calculateChartSize(widthPx, heightPx, xyratio, stretch) {
 
-    let chartWidth = undefined, chartHeight = undefined;
+    let chartWidth, chartHeight;
     if (xyratio) {
         if (stretch === 'fit') {
             chartHeight = Number(heightPx);
@@ -239,6 +239,9 @@ function onClick(chartId) {
 function onSelect(chartId) {
     return (evData) => {
         if (evData) {
+            // multiple selections are not supported
+            const selections = get(evData, 'selections', [])
+
             let points = undefined;
             // this is for range selection only... lasso selection is not implemented yet.
             const {activeTrace=0, curveNumberMap}  = getChartData(chartId);
@@ -260,7 +263,13 @@ function onSelect(chartId) {
                 } else {
                     dispatchChartUpdate({
                         chartId,
-                        changes: {'selection': {points, range: {x: [xMin, xMax], y: [yMin, yMax]}}}
+                        changes: {
+                            'selection': {
+                                multiArea: selections.length > 1,
+                                points,
+                                range: {x: [xMin, xMax], y: [yMin, yMax]}
+                            }
+                        }
                     });
                 }
             }
@@ -268,7 +277,7 @@ function onSelect(chartId) {
             const {selection} = getChartData(chartId);
             if (selection) {
                 // we need some change in plotly data or layout to remove the selection box - setting layout.dummy
-                dispatchChartUpdate({chartId, changes: {'selection': undefined, 'layout.dummy': 0}});
+                dispatchChartUpdate({chartId, changes: {selection: undefined}});
             }
         }
     };

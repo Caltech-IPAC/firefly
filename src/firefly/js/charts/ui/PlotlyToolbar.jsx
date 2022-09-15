@@ -232,7 +232,7 @@ function DragModePart({chartId, tbl_id, dragmode, hasSelectionMode, is3d}) {
 function ZoomBtn({style={}, chartId, dragmode='zoom'}) {
     const selected = dragmode === 'zoom' ? 'selected' : '';
     return (
-        <div style={style} onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'zoom', 'selection': undefined}})}
+        <div style={style} onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'zoom', selection: undefined}})}
              title='Zoom in the enclosed points'
              className={`ChartToolbar__zoom ${selected}`}/>
     );
@@ -241,7 +241,7 @@ function ZoomBtn({style={}, chartId, dragmode='zoom'}) {
 function PanBtn({style={}, chartId, dragmode}) {
     const selected = dragmode === 'pan' ? 'selected' : '';
     return (
-        <div style={style} onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'pan', 'selection': undefined}})}
+        <div style={style} onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'pan', selection: undefined}})}
              title='Pan'
              className={`ChartToolbar__pan ${selected}`}/>
     );
@@ -250,7 +250,7 @@ function PanBtn({style={}, chartId, dragmode}) {
 function TurntableBtn({style={}, chartId, dragmode}) {
     const selected = dragmode === 'turntable' ? 'selected' : '';
     return (
-        <div style={style} onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'turntable', 'selection': undefined}})}
+        <div style={style} onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'turntable', selection: undefined}})}
              title='Turntable rotation'
              className={`ChartToolbar__turntable ${selected}`}/>
     );
@@ -259,7 +259,7 @@ function TurntableBtn({style={}, chartId, dragmode}) {
 function OrbitBtn({style={}, chartId, dragmode}) {
     const selected = dragmode === 'orbit' ? 'selected' : '';
     return (
-        <div style={style} onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'orbit', 'selection': undefined}})}
+        <div style={style} onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'orbit', selection: undefined}})}
              title='Orbital rotation'
              className={`ChartToolbar__orbital ${selected}`}/>
     );
@@ -268,7 +268,7 @@ function OrbitBtn({style={}, chartId, dragmode}) {
 function SelectBtn({style={}, chartId, dragmode}) {
     const selected = dragmode === 'select' ? 'selected' : '';
     return (
-        <div style={style} onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'select', 'selection': undefined}})}
+        <div style={style} onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'select', selection: undefined}})}
              title='Select'
              className={`ChartToolbar__select ${selected}`}/>
     );
