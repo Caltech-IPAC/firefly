@@ -488,7 +488,6 @@ function TemporalSearch({cols, columnsModel, groupKey, fields, useConstraintRedu
         const timeOptions = [{label: 'ISO', value: ISO},
                              {label: 'MJD', value: MJD}];
         const crtTimeMode = get(fields, [TimeOptions, 'value'], ISO);
-        const icon = crtTimeMode === ISO ? 'calendar' : '';
 
         //  radio field is styled with padding right in consistent with the label part of 'temporal columns' entry
         return (
@@ -506,7 +505,7 @@ function TemporalSearch({cols, columnsModel, groupKey, fields, useConstraintRedu
                     <TimePanel fieldKey={TimeFrom}
                                  groupKey={skey}
                                  timeMode={crtTimeMode}
-                                 icon={icon}
+                                 icon={'calendar'}
                                  onClickIcon={changeDatePickerOpenStatus(FROM, TimeFrom)}
                                  feedbackStyle={{height: 100}}
                                  inputWidth={Width_Column}
@@ -520,7 +519,7 @@ function TemporalSearch({cols, columnsModel, groupKey, fields, useConstraintRedu
                     <TimePanel fieldKey={TimeTo}
                                groupKey={skey}
                                timeMode={crtTimeMode}
-                               icon={icon}
+                               icon={'calendar'}
                                onClickIcon={changeDatePickerOpenStatus(TO, TimeTo)}
                                feedbackStyle={{height: 100}}
                                inputWidth={Width_Column}
