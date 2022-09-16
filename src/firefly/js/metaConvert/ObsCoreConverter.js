@@ -32,6 +32,7 @@ const GIG= 1048576 * 1024;
  * @return {DataProductsConvertType}
  */
 export function makeObsCoreConverter(table,converterTemplate) {
+    if (!table) return converterTemplate;
     const baseRetOb= {...converterTemplate,
         canGrid:false, maxPlots:1, hasRelatedBands:false, converterId: `ObsCore-${table.tbl_id}`};
 
