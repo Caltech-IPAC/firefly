@@ -118,7 +118,7 @@ const C_COL1= ['index','wave'];
 const C_COL2= ['flux','data','data1','data2'];
 
 const TS_C_COL1= ['mjd'];
-const TS_C_COL2= ['mag','flux'];
+const TS_C_COL2= [ 'psfflux', /psf.*flux/, 'mag','flux',];
 
 const SPACITAL_C_COL1= ['ra','lon', 'c_ra', 'ra1'];
 const SPACITAL_C_COL2= ['dec','lat','c_dec','dec1'];
@@ -159,14 +159,20 @@ function getTableChartColInfo(title, part, fileFormat) {
         let yCol= tabColNames.find( (c) => C_COL2.includes(c.toLowerCase()));
         let connectPoints= true;
         if (!xCol || !yCol) {
-            xCol= tabColNames.find( (c) => TS_C_COL1.includes(c.toLowerCase()));
-            yCol= tabColNames.find( (c) => TS_C_COL2.includes(c.toLowerCase()));
+            xCol= findMatchingColumn(tabColNames,TS_C_COL1);
+            yCol= findMatchingColumn(tabColNames,TS_C_COL2);
             connectPoints= false;
         }
         const rowsTotal= getRowCnt(part,fileFormat);
         if (rowsTotal<1) return {};
         return {xCol,yCol, connectPoints, useChartChooser:true};
     }
+}
+
+function findMatchingColumn(tabColNames, testList) {
+    const bestMatcher= testList.find( (s) => tabColNames.find((c) => c.toLowerCase().match(s)?.[0]));
+    if (!bestMatcher) return;
+    return tabColNames.find( (c) => c.toLowerCase().match(bestMatcher)?.[0]) ;
 }
 
 /**
