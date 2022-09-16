@@ -8,8 +8,10 @@
 
 
 ## Version 2022.2 
+- 2022.2.4 (Sept 2022)
+  - docker tag: `latest`, `2022.2`, `2022.2.4`
 - 2022.2.3 (Sept 2022)
-  - docker tag: `latest`, `2022.2`, `2022.2.3`
+  - docker tag: `2022.2.3`
 - 2022.2.2 (Aug 2022)
   - docker tag: `2022.2.2`
 - 2022.2.1 (July 2022)
@@ -63,6 +65,9 @@
   - Fixed: Naif resolver too many results [Firefly-1065](https://github.com/Caltech-IPAC/firefly/pull/1264))
   - Fixed: Navigation icons sometimes do not show up in IRSA apps [IRSA-4769](https://github.com/Caltech-IPAC/firefly/pull/1263))
   - Improved: Recognize a "flux" column with charts in DataProduct Viewer  [Firefly-1068](https://github.com/Caltech-IPAC/firefly/pull/1265))
+- 2022.2.4
+  - Improved: Grouping in multi-product viewer is not per table [IRSA-4815](https://github.com/Caltech-IPAC/firefly/pull/1270))
+  - Fixed: tap date selection feedback not updating [Firefly-1075](https://github.com/Caltech-IPAC/firefly/pull/1271))
 
 
 
