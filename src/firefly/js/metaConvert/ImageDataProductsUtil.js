@@ -261,7 +261,7 @@ function replotImageDataProducts(activePlotId, imageViewerId, tbl_id, reqAry, th
 
     return ({nextDisplayType, nextMetaDataTableId}) => { // return the cleanup function
         if (isImageExpanded(visRoot().expandedMode)) return;
-        const layoutType= getLayoutType(getMultiViewRoot(),imageViewerId);
+        const layoutType= getLayoutType(getMultiViewRoot(),imageViewerId,tbl_id);
         if (nextDisplayType===DPtypes.IMAGE && layoutType===GRID && tbl_id===nextMetaDataTableId) {
             return;
         }

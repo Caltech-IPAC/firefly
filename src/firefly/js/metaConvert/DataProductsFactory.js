@@ -4,7 +4,7 @@
 
 import {get, isEmpty, isArray} from 'lodash';
 import {RangeValues, SIGMA, STRETCH_LINEAR} from '../visualize/RangeValues.js';
-import {makeWisePlotRequest} from './WiseRequestList.js';
+import {makeWiseViewCreate, makeWisePlotRequest} from './WiseRequestList.js';
 import {make2MassPlotRequest} from './TwoMassRequestList.js';
 import {makeAtlasPlotRequest} from './AtlasRequestList.js';
 import {makeZtfPlotRequest} from './ZtfRequestList.js';
@@ -172,22 +172,10 @@ function initConverterTemplates() {
         {
             converterId: 'wise',
             tableMatches: (table) => matchById(table, 'wise'),
-            create: (table, converterTemplate) =>
-                ({...converterTemplate, initialLayout:getMetaEntry(table,'DataType')==='MOS' ? GRID_FULL:GRID_RELATED}),
-            threeColor: true,
-            hasRelatedBands: true,
-            canGrid: true,
-            initialLayout: GRID_RELATED,
-            maxPlots: 12,
+            create: makeWiseViewCreate,
             getSingleDataProduct: getSingleDataProductWrapper(makeWisePlotRequest),
             getGridDataProduct: getGridDataProductWrapper(makeWisePlotRequest),
             getRelatedDataProduct: getRelatedDataProductWrapper(makeWisePlotRequest),
-            threeColorBands: {
-                b1: {color: Band.BLUE, title: 'Band 1'},
-                b2: {color: Band.GREEN, title: 'Band 2'},
-                b3: {color: null, title: 'Band 3'},
-                b4: {color: Band.RED, title: 'Band 4'}
-            },
         },
         {
             converterId: 'atlas',

@@ -9,7 +9,9 @@ import {get} from 'lodash';
 import {getPlotViewById, getAllDrawLayersForPlot} from '../../visualize/PlotViewUtil.js';
 import {WcsMatchType, visRoot, dispatchWcsMatch} from '../../visualize/ImagePlotCntlr.js';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
-import {dispatchChangeViewerLayout, getViewer, getMultiViewRoot, GRID, SINGLE} from '../../visualize/MultiViewCntlr.js';
+import {
+    dispatchChangeViewerLayout, getViewer, getMultiViewRoot, GRID, SINGLE, getLayoutType, getLayoutDetails
+} from '../../visualize/MultiViewCntlr.js';
 import {LC, getConverterData} from './LcManager.js';
 import {CloseButton} from '../../ui/CloseButton.jsx';
 import {getTblById} from '../../tables/TableUtil.js';
@@ -43,8 +45,7 @@ export function LcImageToolbarView({viewerId, tableId, closeFunc=null}) {
     const converter = getConverterData();
     if (!converter) { return null; }
 
-    const viewer= getViewer(getMultiViewRoot(), viewerId);
-    const count= get(viewer, 'layoutDetail.count', converter.defaultImageCount);
+    const count= getLayoutDetails(getMultiViewRoot(), viewerId)?.count ?? converter.defaultImageCount;
     const vr= visRoot();
 
     const wcsMatch= (

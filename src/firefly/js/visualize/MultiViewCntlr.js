@@ -8,6 +8,7 @@ import Enum from 'enum';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {flux} from '../core/ReduxFlux.js';
 import ImagePlotCntlr, {dispatchRecenter, visRoot, ExpandType, WcsMatchType} from './ImagePlotCntlr.js';
+import {PlotAttribute} from './PlotAttribute.js';
 import {primePlot, getPlotViewById} from './PlotViewUtil.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 
@@ -66,6 +67,8 @@ function initState() {
      * @prop {string} viewerId:EXPANDED_MODE_RESERVED,
      * @prop {string[]} itemIdAry
      * @prop {string} layout must be 'single' or 'grid'
+     * @prop {string|Object} layoutDetail
+     * @prop {object} tblBasedLayout
      * @prop {boolean} canReceiveNewPlots - NewPlotMode.create_replace.key,
      * @prop {boolean} reservedContainer
      * @prop {string} containerType - one of 'image', 'plot2d', 'wrapper'
@@ -185,9 +188,10 @@ export const dispatchAddViewerItems= (viewerId, itemIdAry, containerType, render
  * @param {string} viewerId
  * @param {string} layout single or grid
  * @param {string} layoutDetail more detail about the type of layout, hint to UI, typically detail is with GRID
+ * @param {string} associatedTblId - a table id related to this layout
  */
-export const dispatchChangeViewerLayout= (viewerId, layout, layoutDetail=undefined) =>
-    flux.process({type: CHANGE_VIEWER_LAYOUT , payload: {viewerId, layout, layoutDetail} });
+export const dispatchChangeViewerLayout= (viewerId, layout, layoutDetail=undefined, associatedTblId) =>
+    flux.process({type: CHANGE_VIEWER_LAYOUT , payload: {viewerId, layout, layoutDetail, associatedTblId} });
 
 /**
  *
@@ -274,11 +278,12 @@ export function* watchForResizing(options) {
 function changeViewerLayoutActionCreator(rawAction) {
     return (dispatcher, getState) => {
         dispatcher(rawAction);
-        const {viewerId}= rawAction.payload;
+        const {viewerId,associatedTblId}= rawAction.payload;
         const viewer= getViewer(getState()[IMAGE_MULTI_VIEW_KEY], viewerId);
+        const layout= getLayoutType(getState()[IMAGE_MULTI_VIEW_KEY],viewerId,associatedTblId);
         if (viewer?.containerType===IMAGE) {
             dispatchAddSaga(watchForResizing, {
-                    plotIdAry:viewer.layout===GRID ? viewer.itemIdAry: [viewer.lastActiveItemId]});
+                    plotIdAry:layout===GRID ? viewer.itemIdAry: [viewer.lastActiveItemId]});
         }
     };
 }
@@ -297,15 +302,31 @@ export function hasViewerId(multiViewRoot, viewerId) {
     return Boolean(multiViewRoot.find((entry) => entry.viewerId === viewerId));
 }
 
+
 /**
  * @param {MultiViewerRoot} multiViewRoot
  * @param {string} viewerId
  * @return {string} will be 'single' or 'grid'
+ * @param {string} [associatedTblId] - a table id related to this layout
  */
-export function getLayoutType(multiViewRoot, viewerId) {
+export function getLayoutType(multiViewRoot, viewerId, associatedTblId) {
     if (!multiViewRoot || !viewerId) return GRID;
     const v= multiViewRoot.find((entry) => entry.viewerId === viewerId);
-    return v ? v.layout : GRID;
+    if (v?.tblBasedLayout?.[associatedTblId]?.layout) return v.tblBasedLayout[associatedTblId].layout;
+    return v?.layout ?? GRID;
+}
+
+/**
+ * @param {MultiViewerRoot} multiViewRoot
+ * @param {string} viewerId
+ * @return {string|Object} details of this layout
+ * @param {string} [associatedTblId] - a table id related to this layout
+ */
+export function getLayoutDetails(multiViewRoot, viewerId, associatedTblId) {
+    if (!multiViewRoot || !viewerId) return undefined;
+    const v= multiViewRoot.find((entry) => entry.viewerId === viewerId);
+    if (v?.tblBasedLayout?.[associatedTblId]?.layoutDetail) return v.tblBasedLayout[associatedTblId].layoutDetail;
+    return v?.layoutDetail;
 }
 
 /**
@@ -386,8 +407,11 @@ export function isImageViewerSingleLayout(multiViewRoot, visRoot, plotId) {
     else {
         const viewerId= findViewerWithItemId(multiViewRoot, plotId, IMAGE);
         const viewer = viewerId ? getViewer(multiViewRoot, viewerId) : null;
-
-        return viewer ? viewer.layout===SINGLE : true;
+        if (!viewer) return true;
+        const plot= primePlot(visRoot,plotId);
+        const tbl_id= plot?.attributes.tbl_id ?? plot?.attributes[PlotAttribute.DATALINK_TABLE_ID];
+        const layout= getLayoutType(multiViewRoot,viewerId,tbl_id);
+        return layout===SINGLE;
     }
 }
 
@@ -576,11 +600,26 @@ function deleteSingleItem(state,itemId, containerType) {
 }
 
 function changeLayout(state,action) {
-    const {viewerId,layout,layoutDetail}= action.payload;
+    const {viewerId,layout,layoutDetail,associatedTblId}= action.payload;
     const viewer= state.find( (entry) => entry.viewerId===viewerId);
     if (!viewer) return state;
-    if (viewer.layout===layout && viewer.layoutDetail===layoutDetail) return state;
-    return state.map( (entry) => entry.viewerId===viewerId ? {...entry, layout,layoutDetail} : entry);
+
+    if (associatedTblId) {
+        const {tblBasedLayout={}}= viewer;
+        const {layout:l, layoutDetail:ld}= tblBasedLayout[associatedTblId] ?? {};
+        if (l===layout && ld===layoutDetail) return state;
+
+        return state.map( (entry) => entry.viewerId===viewerId ?
+            {...entry, layout,layoutDetail,
+                tblBasedLayout:{...tblBasedLayout, [associatedTblId]:{layout,layoutDetail}}
+            } :
+            entry);
+    }
+    else {
+        if (viewer.layout===layout && viewer.layoutDetail===layoutDetail) return state;
+        return state.map( (entry) => entry.viewerId===viewerId ? {...entry, layout,layoutDetail} : entry);
+    }
+
 }
 
 function changeMount(state,viewerId,mounted) {

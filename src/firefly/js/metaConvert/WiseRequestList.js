@@ -11,6 +11,8 @@ import {makeWorldPt, parseWorldPt} from '../visualize/Point.js';
 import {convertAngle} from '../visualize/VisUtil.js';
 import {PlotAttribute} from '../visualize/PlotAttribute';
 import {CoordinateSys} from '../visualize/CoordSys.js';
+import {GRID_FULL, GRID_RELATED} from '../visualize/MultiViewCntlr';
+import {Band} from '../visualize/Band';
 
 const colToUse= ['scan_id', 'frame_num', 'coadd_id', 'in_ra', 'in_dec', 'image_set'];
 const rangeValues= RangeValues.makeRV({which:SIGMA, lowerValue:-2, upperValue:10, algorithm:STRETCH_LINEAR});
@@ -109,6 +111,33 @@ export function makeWisePlotRequest(table, row, includeSingle, includeStandard, 
         );
     }
     return retval;
+}
+
+/**
+ *
+ * @param {TableModel} table
+ * @param {DataProductsConvertType} converterTemplate
+ * @return {DataProductsConvertType}
+ */
+export function makeWiseViewCreate(table,converterTemplate) {
+    const defWiseView = {...converterTemplate,
+        canGrid:true, maxPlots:12, hasRelatedBands:true,
+        threeColorBands: {
+            b1: {color: Band.BLUE, title: 'Band 1'},
+            b2: {color: Band.GREEN, title: 'Band 2'},
+            b3: {color: null, title: 'Band 3'},
+            b4: {color: Band.RED, title: 'Band 4'}
+        },
+        initialLayout: GRID_RELATED};
+
+    const tblid = table.tbl_id;
+    if (tblid === 'sso') {
+        return {...defWiseView, initialLayout: GRID_FULL};
+    }else if (tblid === '1b') {
+        return {...defWiseView, initialLayout: GRID_FULL};
+    } else if (tblid === '3a' || tblid === 'sidsearch') {
+        return defWiseView;
+    }
 }
 
 
