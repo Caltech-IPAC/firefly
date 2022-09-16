@@ -122,6 +122,7 @@ export function makeWisePlotRequest(table, row, includeSingle, includeStandard, 
 export function makeWiseViewCreate(table,converterTemplate) {
     const defWiseView = {...converterTemplate,
         canGrid:true, maxPlots:12, hasRelatedBands:true,
+        threeColor: true,
         threeColorBands: {
             b1: {color: Band.BLUE, title: 'Band 1'},
             b2: {color: Band.GREEN, title: 'Band 2'},
