@@ -130,7 +130,7 @@ export function makeWiseViewCreate(table,converterTemplate) {
             b4: {color: Band.RED, title: 'Band 4'}
         },
         initialLayout: GRID_RELATED};
-
+    if (!table) return defWiseView;
     const tblid = table.tbl_id;
     if (tblid === 'sso') {
         return {...defWiseView, initialLayout: GRID_FULL};

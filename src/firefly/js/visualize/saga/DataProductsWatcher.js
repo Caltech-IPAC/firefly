@@ -84,7 +84,7 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
             updateDataProducts(null, firstTime, tbl_id, activateParams);
             firstTime= false;
         }
-        initImage3ColorDisplayManagement(imageViewerId); //todo: 3 color not working
+        initImage3ColorDisplayManagement(imageViewerId);
         return {paused, firstTime};
     }
 

@@ -313,8 +313,9 @@ export const {getConverterTemplates, addTemplate, addTemplateToEnd, removeTempla
 
 export function initImage3ColorDisplayManagement(viewerId) {
      const customEntry= getConverterTemplates().reduce( (newObj, template) => {
-        if (!template.threeColor) return newObj;
-        newObj[template.converterId]= {...template.threeColorBands, threeColorVisible:false};
+        const c= template?.create(undefined,template) ?? template;
+        if (!c.threeColor) return newObj;
+        newObj[c.converterId]= {...c.threeColorBands, threeColorVisible:false};
         return newObj;
     }, {});
     dispatchUpdateCustom(viewerId, customEntry);
