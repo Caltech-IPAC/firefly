@@ -1,19 +1,20 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import React, {PureComponent} from 'react';
+import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
-import {flux} from '../core/ReduxFlux.js';
-import {isEmpty, get, isNil} from 'lodash';
+import {isEmpty ,get} from 'lodash';
 import {ValidationField} from './ValidationField.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
-import {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
-import {getWorkspaceList, isExistWorspaceFile, getWorkspacePath, getWorkspaceErrorMsg,
+import FieldGroupUtils, {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
+import {getWorkspaceList, getWorkspaceErrorMsg,
         dispatchWorkspaceUpdate, isAccessWorkspace} from '../visualize/WorkspaceCntlr.js';
-import {WorkspaceSave, workspacePopupMsg} from './WorkspaceViewer.jsx';
+import {WorkspaceSave} from './WorkspaceViewer.jsx';
 
 
 import LOADING from 'html/images/gxt/loading.gif';
+import {useStoreConnector} from 'firefly/ui/SimpleComponent';
+import {flux} from "firefly/core/ReduxFlux";
 export const LOCALFILE = 'isLocal';
 export const WORKSPACE = 'isWs';
 
@@ -28,152 +29,138 @@ export function getTypeData(key, val='', tip = '', labelV='', labelW) {
 }
 
 
-export class DownloadOptionsDialog extends PureComponent {
-    constructor(props) {
-        super(props);
+export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWidth, dialogWidth=500, dialogHeight=300,
+                                      workspace}) {
 
-        this.workspace = get(props, 'workspace', false);
-        const where = props.fromGroupKey? getFieldVal(props.fromGroupKey, 'fileLocation', LOCALFILE)
-                                        : LOCALFILE;
+    workspace = get({fromGroupKey, children, fileName, labelWidth, dialogWidth, dialogHeight,
+        workspace}, 'workspace', false);
+    const [isUpdating, setIsUpdating] = useState(() => isAccessWorkspace());
+    const [where, setWhere] = useState(() => fromGroupKey? getFieldVal(fromGroupKey, 'fileLocation', LOCALFILE) : LOCALFILE);
+    const [wsSelect, setWsSelect] = useState(() => (where === WORKSPACE) ? getFieldVal(fromGroupKey, 'wsSelect', '') : '');
+    const [wsList, setWsList] = useState(() => isUpdating ? '' : getWorkspaceList());
 
-        const fileOverwritable = props.fromGroupKey ? getFieldVal(props.fromGroupKey, 'fileOverwritable', 0) : 0;
-        const wsSelect = (where === WORKSPACE) ? getFieldVal(props.fromGroupKey, 'wsSelect', '') : '';
-        const isUpdating = isAccessWorkspace();
-        const wsList = isUpdating ? '' : getWorkspaceList();
-        this.state = {where, fileName: props.fileName, wsSelect, fileOverwritable, wsList, isUpdating};
-    }
-
-
-    static getDerivedStateFromProps(props,state) {
-        const {fileName} = props;
-        return (fileName !== state.fileName) ? {fileName} : null;
-    }
-
-    componentWillUnmount() {
-        if (this.unbinder) this.unbinder();
-        this.iAmMounted = false;
-    }
-
-    componentDidMount() {
-        this.iAmMounted = true;
-        this.removeListener= flux.addListener(() => this.storeUpdate());
-    }
-
-    storeUpdate() {
-        if (this.iAmMounted) {
+    const storeUpdate = (prev={}) => {
             const isUpdating = isAccessWorkspace();
             const wsList = getWorkspaceList();
-            const loc = this.props.fromGroupKey && getFieldVal(this.props.fromGroupKey, 'fileLocation');
-            const wsSelect = this.props.fromGroupKey && getFieldVal(this.props.fromGroupKey, 'wsSelect');
+            const loc = fromGroupKey && getFieldVal(fromGroupKey, 'fileLocation');
+            const wsSelect = fromGroupKey && getFieldVal(fromGroupKey, 'wsSelect');
 
-            this.setState((state) => {
-                state = Object.assign({}, state);
-                if (loc !== state.where) {
-                    state.where = loc;
-                    if (loc ===  WORKSPACE) {
-                        state.isUpdating = true;
-                        dispatchWorkspaceUpdate();
-                        return state;
-                    }
-                }
+            if (prev.isUpdating === isUpdating && prev.wsList === wsList && prev.loc === loc
+                && prev.wsSelect === wsSelect) {
+                return prev; //nothing has changed, return old state
+            }
+            return {isUpdating, wsList, loc, wsSelect};
+    };
 
-                if (isUpdating !== state.isUpdating) {
-                    state.isUpdating = isUpdating;
-                }
-                if (wsList !== state.wsList) {
-                    state.wsList = wsList;
-                }
+    const {isUpdatingTemp, wsListTemp, loc, wsSelectTemp} = useStoreConnector((prev) => storeUpdate(prev)); //replaced flux.addListener()
 
-                if (wsSelect !== state.wsSelect) {
-                    state.wsSelect = wsSelect;
-                }
-
-                return state;
-            });
+    useEffect(() => {
+        if (loc !== where && loc) {
+            setWhere(loc);
         }
-    }
+    }, [loc]);
 
+    useEffect(() => {
+        if (isUpdating !== isUpdatingTemp) {
+            setIsUpdating(isUpdatingTemp);
+        }
+    }, [isUpdatingTemp]);
 
-    render() {
-        const {where, wsSelect, wsList, isUpdating} = this.state;
-        const {children, dialogWidth=500, dialogHeight=300} = this.props;
-        const showWorkspace = () => {
+    useEffect(() => {
+        if (wsList !== wsListTemp) {
+            setWsList(wsListTemp);
+        }
+    }, [wsListTemp]);
 
-            const loading = () => {
-                return (
-                    <div style={{width: '100%', height: '100%', display:'flex', justifyContent: 'center', alignItems: 'center'}}>
-                        <img style={{width:14,height:14}} src={LOADING}/>
-                    </div>
-                );
-            };
+    useEffect(() => {
+        if (wsSelect !== wsSelectTemp) {
+            setWsSelect(wsSelectTemp);
+        }
+    }, [wsSelectTemp]);
 
-            const showSave = () => {
-                return (
-                    <div style={{marginTop: 10,
-                                 boxSizing: 'border-box',
-                                 width: 'calc(100%)', height: 'calc(100% - 10px)',
-                                 overflow: 'auto',
-                                 padding: 5,
-                                 border:'1px solid #a3aeb9'
-                                 }}>
-                        <WorkspaceSave fieldKey={'wsSelect'}
-                                       files={wsList}
-                                       value={wsSelect}
-                        />
-                    </div>
-                );
-            };
+    useEffect(() => {
+        if (loc ===  WORKSPACE) {
+            setIsUpdating(isUpdatingTemp);
+            dispatchWorkspaceUpdate();
+        }
+    }, [where]);
 
-            const showNoWSFiles = (message) => {
-                return (
-                    <div style={{marginTop: 10,
-                                 padding: 10,
-                                 boxSizing: 'border-box',
-                                 width: 'calc(100%)',
-                                 textAlign: 'center',
-                                 border:'1px solid #a3aeb9'}}>
-                        {message}
-                    </div>
-                );
-            };
+    const showWorkspace = () => {
 
+        const loading = () => {
             return (
-                (isUpdating) ? loading() :
-                    (!isEmpty(wsList) ? showSave() : showNoWSFiles('Workspace access error: ' + getWorkspaceErrorMsg()))
+                <div style={{width: '100%', height: '100%', display:'flex', justifyContent: 'center', alignItems: 'center'}}>
+                    <img style={{width:14,height:14}} src={LOADING}/>
+                </div>
             );
         };
 
-        const showLocation = () => {
+        const showSave = () => {
             return (
-                <div style={{marginTop: 10}}>
-                    <RadioGroupInputField
-                        options={[{label: 'Local File', value: LOCALFILE},
-                                  {label: 'Workspace', value: WORKSPACE }] }
-                        fieldKey={'fileLocation'}
+                <div style={{marginTop: 10,
+                             boxSizing: 'border-box',
+                             width: 'calc(100%)', height: 'calc(100% - 10px)',
+                             overflow: 'auto',
+                             padding: 5,
+                             border:'1px solid #a3aeb9'
+                             }}>
+                    <WorkspaceSave fieldKey={'wsSelect'}
+                                   files={wsList}
+                                   value={wsSelect}
                     />
                 </div>
             );
         };
 
+        const showNoWSFiles = (message) => {
+            return (
+                <div style={{marginTop: 10,
+                             padding: 10,
+                             boxSizing: 'border-box',
+                             width: 'calc(100%)',
+                             textAlign: 'center',
+                             border:'1px solid #a3aeb9'}}>
+                    {message}
+                </div>
+            );
+        };
+
         return (
-            <div style={{height: '100%', width: '100%'}}>
-                <div>
-                    {children}
-                </div>
-                <ValidationField
-                    wrapperStyle={{marginTop: 10}}
-                    size={50}
-                    fieldKey={'fileName'}
+            (isUpdating) ? loading() :
+                (!isEmpty(wsList) ? showSave() : showNoWSFiles('Workspace access error: ' + getWorkspaceErrorMsg()))
+        );
+    };
+
+    const showLocation = () => {
+        return (
+            <div style={{marginTop: 10}}>
+                <RadioGroupInputField
+                    options={[{label: 'Local File', value: LOCALFILE},
+                              {label: 'Workspace', value: WORKSPACE }] }
+                    fieldKey={'fileLocation'}
                 />
-
-                {this.workspace && showLocation()}
-
-                <div  style={{width: dialogWidth, height: dialogHeight}}>
-                    {where === WORKSPACE && showWorkspace()}
-                </div>
             </div>
         );
-    }
+    };
+
+    return (
+        <div style={{height: '100%', width: '100%'}}>
+            <div>
+                {children}
+            </div>
+            <ValidationField
+                wrapperStyle={{marginTop: 10}}
+                size={50}
+                fieldKey={'fileName'}
+            />
+
+            {workspace && showLocation()}
+
+            <div  style={{width: dialogWidth, height: dialogHeight}}>
+                {where === WORKSPACE && showWorkspace()}
+            </div>
+        </div>
+    );
 }
 
 DownloadOptionsDialog.propTypes = {
