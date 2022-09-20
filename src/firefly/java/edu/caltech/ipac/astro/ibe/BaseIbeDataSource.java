@@ -205,8 +205,6 @@ public class BaseIbeDataSource implements IbeDataSource {
                 params.put(SIZE, param.getSize());
             }
         }
-
-        params.put(COLUMNS, param.getColumns());
         params.put(WHERE, param.getWhere());
         return params;
     }
