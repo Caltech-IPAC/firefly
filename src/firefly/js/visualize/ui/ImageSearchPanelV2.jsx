@@ -2,48 +2,50 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {useContext, useEffect, useState} from 'react';
-import PropTypes from 'prop-types';
 import {get, includes, isNil, isString} from 'lodash';
-import {FormPanel} from '../../ui/FormPanel.jsx';
-import {FieldGroup} from '../../ui/FieldGroup.jsx';
-import {SizeInputFields} from '../../ui/SizeInputField.jsx';
-import {TargetPanel} from '../../ui/TargetPanel.jsx';
-import {ServerParams} from '../../data/ServerParams.js';
-import {showInfoPopup} from '../../ui/PopupUtil.jsx';
-import {StatefulTabs, Tab} from '../../ui/panel/TabPanel.jsx';
-import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
-import {FileUpload} from '../../ui/FileUpload.jsx';
-import {ValidationField} from '../../ui/ValidationField.jsx';
-import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
-import {parseWorldPt} from '../../visualize/Point.js';
-import WebPlotRequest, {WPConst} from '../../visualize/WebPlotRequest.js';
-import {dispatchPlotImage, visRoot, dispatchPlotHiPS} from '../../visualize/ImagePlotCntlr.js';
-import {getImageMasterData} from '../../visualize/ui/AllImageSearchConfig.js';
-import {ImageSelect} from '../../ui/ImageSelect.jsx';
-import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
-import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
-import {PopupPanel} from '../../ui/PopupPanel.jsx';
-import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
-import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
-import {NewPlotMode, findViewerWithItemId, getMultiViewRoot, getViewer, getAViewFromMultiView, IMAGE} from '../MultiViewCntlr.js';
-import {getPlotViewById} from '../PlotViewUtil.js';
-import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
-import {getWorkspaceConfig} from '../WorkspaceCntlr.js';
+import PropTypes from 'prop-types';
+import React, {useContext, useEffect, useState} from 'react';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
-import {useForImageSearch} from '../HiPSListUtil.js';
-import {HiPSImageSelect, makeHiPSWebPlotRequest, getHipsUrl} from '../../ui/HiPSImageSelect.jsx';
-
-import './ImageSearchPanelV2.css';
-import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
-import {PlotAttribute} from '../PlotAttribute';
+import {dispatchHideDialog, dispatchShowDialog} from '../../core/ComponentCntlr.js';
+import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
+import {MetaConst} from '../../data/MetaConst';
+import {ServerParams} from '../../data/ServerParams.js';
+import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {makeFileRequest} from '../../tables/TableRequestUtil';
 import {dispatchTableSearch} from '../../tables/TablesCntlr';
-import {MetaConst} from '../../data/MetaConst';
+import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
+import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
+import {FieldGroup} from '../../ui/FieldGroup.jsx';
+import {FileUpload} from '../../ui/FileUpload.jsx';
+import {FormPanel} from '../../ui/FormPanel.jsx';
+import {getHipsUrl, HiPSImageSelect, makeHiPSWebPlotRequest} from '../../ui/HiPSImageSelect.jsx';
+import {ImageSelect} from '../../ui/ImageSelect.jsx';
+import {StatefulTabs, Tab} from '../../ui/panel/TabPanel.jsx';
+import {PopupPanel} from '../../ui/PopupPanel.jsx';
+import {showInfoPopup} from '../../ui/PopupUtil.jsx';
+import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
+import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
+import {useFieldGroupValue, useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {SizeInputFields} from '../../ui/SizeInputField.jsx';
+import {DEF_TARGET_PANEL_KEY, TargetPanel} from '../../ui/TargetPanel.jsx';
+import {ValidationField} from '../../ui/ValidationField.jsx';
+import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {isDefined} from '../../util/WebUtil';
-import VisUtil from '../VisUtil';
+import {dispatchPlotHiPS, dispatchPlotImage, visRoot} from '../../visualize/ImagePlotCntlr.js';
+import {parseWorldPt} from '../../visualize/Point.js';
+import {getImageMasterData} from '../../visualize/ui/AllImageSearchConfig.js';
+import WebPlotRequest, {WPConst} from '../../visualize/WebPlotRequest.js';
 import CoordinateSys from '../CoordSys';
-import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {useForImageSearch} from '../HiPSListUtil.js';
+import {
+    findViewerWithItemId, getAViewFromMultiView, getMultiViewRoot, getViewer, IMAGE, NewPlotMode
+} from '../MultiViewCntlr.js';
+import {PlotAttribute} from '../PlotAttribute';
+import {getPlotViewById} from '../PlotViewUtil.js';
+import VisUtil from '../VisUtil';
+import {getWorkspaceConfig} from '../WorkspaceCntlr.js';
+
+import './ImageSearchPanelV2.css';
 
 
 const FG_KEYS = {
@@ -115,7 +117,8 @@ function getContexInfo(renderTreeId) {
 /* search panel used in drop-down                                                          */
 /*-----------------------------------------------------------------------------------------*/
 
-function ImageSearchPanel({resizable=true, onSubmit, gridSupport = false, multiSelect, submitText, onCancel=dispatchHideDropDown, noScroll}) {
+function ImageSearchPanel({resizable=true, onSubmit, gridSupport = false, multiSelect, submitText,
+                              onCancel=dispatchHideDropDown, noScroll, initArgs}) {
     const archiveName =  get(getAppOptions(), 'ImageSearch.archiveName');
     const resize = {resize: 'both', overflow: 'hidden', paddingBottom: 5};
     const dim = {height: 600, width: 725, minHeight: 600, minWidth: 725};
@@ -135,18 +138,20 @@ function ImageSearchPanel({resizable=true, onSubmit, gridSupport = false, multiS
                         onError = {searchFailed}
                         onCancel = {onCancel}
                         help_id = {'basics.searching'}>
-                <ImageSearchPanelV2 {...{multiSelect, archiveName, noScroll}}/>
+                <ImageSearchPanelV2 {...{multiSelect, archiveName, noScroll, initArgs}}/>
                 {gridSupport && <GridSupport/>}
             </FormPanel>
         </div>
     );
 }
 
-export function ImageSearchDropDown({gridSupport, resizable=false}) {
+
+
+export function ImageSearchDropDown({gridSupport, resizable=false, initArgs}) {
     const {renderTreeId} = useContext(RenderTreeIdCtx);
     const {plotId, viewerId, multiSelect} = getContexInfo(renderTreeId);
     const onSubmit = (request) => onSearchSubmit({request, plotId, viewerId, gridSupport, renderTreeId});
-    return <ImageSearchPanel {...{resizable, gridSupport, onSubmit, multiSelect, onCancel:dispatchHideDropDown}}/>;
+    return <ImageSearchPanel {...{resizable, gridSupport, onSubmit, multiSelect, onCancel:dispatchHideDropDown, initArgs}}/>;
 }
 
 function GridSupport() {
@@ -204,7 +209,7 @@ function getGroupsToValidate(imageType) {
 /**
  *
  */
-function ImageSearchPanelV2 ({archiveName='Search', title='Image Search', multiSelect=true, noScroll}) {
+function ImageSearchPanelV2 ({archiveName='Search', title='Image Search', multiSelect=true, noScroll, initArgs}) {
 
     const [, setImageMasterData] = useState(() => imageMasterData);
     const [showError=false, setShowError] = useState();
@@ -218,6 +223,20 @@ function ImageSearchPanelV2 ({archiveName='Search', title='Image Search', multiS
                 setShowError(true);
             });
     }, []);
+    const {wp,type}= initArgs?.searchParams ?? {};
+    const [, setTargetM]= useFieldGroupValue(DEF_TARGET_PANEL_KEY,FG_KEYS.main);
+    const [, setTargetS]= useFieldGroupValue(DEF_TARGET_PANEL_KEY,FG_KEYS.single);
+    const [, setTargetH]= useFieldGroupValue(DEF_TARGET_PANEL_KEY,FG_KEYS.hips);
+    const [, setType]= useFieldGroupValue(FD_KEYS.type,FG_KEYS.main);
+    useEffect(() => {
+        if (!wp) return;
+        setTargetM(wp);
+        setTargetS(wp);
+        setTargetH(wp);
+    }, [wp]);
+    useEffect(() => {
+        (type) && setType(type);
+    }, [type]);
 
     const imageType = useStoreConnector(() => getFieldVal(FG_KEYS.main, FD_KEYS.type));
     const {isThreeColorImgType, isHipsImgType, isSingleChannelImgType} = isImageType(imageType);

@@ -5,6 +5,8 @@
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, truncate, get, set} from 'lodash';
+import {getAppOptions} from '../../api/ApiUtil.js';
+import {ActionsDropDownButton, isTableActionsDropVisible} from '../../ui/ActionsDropDownButton.jsx';
 
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {dispatchTableRemove, dispatchTblExpanded, dispatchTableFetch, dispatchTableAddLocal, dispatchTableUiUpdate} from '../TablesCntlr.js';
@@ -45,6 +47,7 @@ export function TablePanel(props) {
     tbl_ui_id = tbl_ui_id || `${tbl_id}-ui`;
 
     const uiState = useStoreConnector(() => getTableUiById(tbl_ui_id) || {columns:[]}, [tbl_ui_id]);
+    const searchActions= getAppOptions()?.searchActions;
 
     useEffect( () => {
         if (!getTableUiByTblId(tbl_id)) {
@@ -59,7 +62,7 @@ export function TablePanel(props) {
 
     const {selectable, expandable, expandedMode, border, renderers, title, removable, rowHeight, help_id,
         showToolbar, showTitle, showInfoButton, showMetaInfo, showOptions,
-        showOptionButton, showPaging, showSave, showFilterButton,
+        showOptionButton, showPaging, showSave, showFilterButton,showSearchButton,
         totalRows, showLoading, columns, showUnits, allowUnits, showTypes, showFilters, textView,
         error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask, showToggleTextView,
         filterInfo, filterCount, sortInfo, data, backgroundable, highlightedRowHandler, cellRenderers} = {...options, ...uiState};
@@ -116,6 +119,9 @@ export function TablePanel(props) {
                             <div onClick={clearFilter}
                                  title={TT_CLEAR_FILTER}
                                  className='PanelToolbar__button clearFilters'/>}
+                            {showSearchButton &&  isTableActionsDropVisible(searchActions,tbl_id ) &&
+                                <ActionsDropDownButton {...{searchActions, tbl_id}}/>
+                            }
                             {showFilterButton &&
                             <ToolbarButton icon={FILTER}
                                            tip={TT_SHOW_FILTER}
@@ -238,6 +244,7 @@ TablePanel.propTypes = {
     showOptionButton: PropTypes.bool,
     showFilterButton: PropTypes.bool,
     showInfoButton: PropTypes.bool,
+    showSearchButton: PropTypes.bool,
     leftButtons: PropTypes.arrayOf(PropTypes.func),   // an array of functions that returns a button-like component laid out on the left side of this table header.
     rightButtons: PropTypes.arrayOf(PropTypes.func),  // an array of functions that returns a button-like component laid out on the right side of this table header.
     renderers: PropTypes.objectOf(
@@ -260,6 +267,7 @@ TablePanel.defaultProps = {
     showInfoButton: true,
     showTypes: true,
     selectable: true,
+    showSearchButton: true,
     expandedMode: false,
     expandable: true,
     showToggleTextView: true,

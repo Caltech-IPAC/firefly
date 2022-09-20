@@ -36,7 +36,7 @@ export const PopupPanel= memo((props) => {
             setPos({left:initLeft,top:initTop});
         }
         else {
-            setPos(getDefaultPopupPosition(ctxRef.popupRef,layoutPosition, element));
+            setPos(getDefaultPopupPosition(ctxRef.popupRef,layoutPosition, element, initTop, initLeft));
         }
 
         setLayout(layoutPosition);

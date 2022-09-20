@@ -6,7 +6,7 @@ import {isString, isObject, once} from 'lodash';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE,TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
 import {visRoot, dispatchRecenter} from '../ImagePlotCntlr.js';
 import {getTblById, getCellValue} from '../../tables/TableUtil.js';
-import Point, {makeAnyPt} from '../Point.js';
+import {makeAnyPt} from '../Point.js';
 import {findTableCenterColumns} from '../../util/VOAnalyzer.js';
 import { getActivePlotView, hasWCSProjection, primePlot, } from '../PlotViewUtil';
 import {CysConverter} from '../CsysConverter';
@@ -27,7 +27,10 @@ function willFitOnScreenAtCurrentZoom(pv) {
 
 
 
-/** type {TableWatcherDef} */
+/**
+ *
+ * @returns {TableWatcherDef}
+ */
 export const getActiveRowCenterDef= once(() => ({
     id : 'ActiveRowCenter',
     watcher : recenterImages,
@@ -156,6 +159,11 @@ export function getRowCenterWorldPt(tableOrId) {
     return makeAnyPt(lon,lat,csys||CoordinateSys.EQ_J2000);
 }
 
+/**
+ *
+ * @param tableOrId
+ * @returns {undefined|TableModel|*}
+ */
 function getTableModel(tableOrId) {
     if (isString(tableOrId)) return getTblById(tableOrId);  // was passed a table Id
     if (isObject(tableOrId)) return tableOrId;

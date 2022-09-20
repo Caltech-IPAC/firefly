@@ -121,12 +121,12 @@ const overlayCoverageDrawing= makeOverlayCoverageDrawing();
 
 
 export function startCoverageWatcher(options) {
-    dispatchAddTableTypeWatcherDef( { ...coverageWatcherDef, options });
+    dispatchAddTableTypeWatcherDef( { ...getCoverageWatcherDef(), options });
 }
 
 
 /** @type {TableWatcherDef} */
-export const coverageWatcherDef = {
+export const getCoverageWatcherDef = () => ({
     id : 'CoverageWatcher',
     testTable : (table) => hasCoverageData(table),
     sharedData: { preparedTables: {}, tblCatIdMap: {}},
@@ -135,7 +135,7 @@ export const coverageWatcherDef = {
     actions: [TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_REMOVE, TBL_RESULTS_ACTIVE,
         ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS,
         MultiViewCntlr.ADD_VIEWER, MultiViewCntlr.VIEWER_MOUNTED, MultiViewCntlr.VIEWER_UNMOUNTED]
-};
+});
 
 const getOptions= (inputOptions) => ({...defOptions, ...cleanUpOptions(inputOptions)});
 const centerId = (tbl_id) => (tbl_id+'_center');

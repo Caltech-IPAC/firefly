@@ -622,7 +622,7 @@ export function getBoundingBox(ptAry) {
 
 
 /**
- * @param {WebPlot} plot
+ * @param {WebPlot|undefined} plot
  * @return {{x: number, y: number, w: number, h: number}|undefined}
  */
 export function computeBoundingBoxInDeviceCoordsForPlot(plot) {

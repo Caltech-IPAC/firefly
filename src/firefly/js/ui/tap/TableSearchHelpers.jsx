@@ -162,7 +162,7 @@ const getFieldValidity = (fields, fieldKey, nullAllowed) => {
     if (isUndefined(nullAllowed) || rVal) {
         return {valid, message: (valid ? '' : (message || 'entry error'))};
     } else if (!rVal) {
-        return {valid: nullAllowed, message: !nullAllowed ? 'empty entry' : ''};
+        return {valid: nullAllowed, message: !nullAllowed ? '' : ''};
     }
 };
 

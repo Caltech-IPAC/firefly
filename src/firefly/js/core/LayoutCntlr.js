@@ -73,6 +73,8 @@ export function reducer(state={}, action={}) {
 
         case SHOW_DROPDOWN :
             const {visible = !state.disableDefaultDropDown, initArgs={}} = action.payload;
+            const newState= {...state};
+            if (newState?.dropDown?.initArgs) newState.dropDown.initArgs= undefined;
             return smartMerge(state, {dropDown: {visible, view: getSelView(state, action.payload), initArgs}});
         case ADD_CELL :
             return addCell(state, action.payload);

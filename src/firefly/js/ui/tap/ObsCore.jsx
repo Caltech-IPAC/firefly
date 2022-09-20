@@ -238,7 +238,7 @@ export function ObsCoreSearch({cols, groupKey, fields, useConstraintReducer, ini
                         label={'Calibration Level:'}
                         labelWidth={LableSaptail}
                         multiple={true}
-                        initialState={{value: initArgs.obsCoreCalibrationLevel || ''}}
+                        initialState={{value: initArgs?.urlApi?.obsCoreCalibrationLevel || ''}}
                     />
                     {obsCoreCalibrationLevelOptions.helptext &&
                     <div style={{marginLeft: LableSaptail, marginTop: '5px', padding: '2px'}}>
@@ -252,7 +252,7 @@ export function ObsCoreSearch({cols, groupKey, fields, useConstraintReducer, ini
                         tooltip={'Select ObsCore Data Product Type'}
                         label={'Data Product Type:'}
                         labelWidth={LableSaptail}
-                        initialState={{value: initArgs.obsCoreTypeSelection || 'image'}}
+                        initialState={{value: initArgs?.urlApi?.obsCoreTypeSelection || 'image'}}
                         options={typeOptions()}
                         wrapperStyle={{marginRight: '15px', padding: '8px 0 5px 0', display: 'flex'}}
                         multiple={true}
@@ -270,7 +270,7 @@ export function ObsCoreSearch({cols, groupKey, fields, useConstraintReducer, ini
                         labelWidth={LableSaptail}
                         validator={fakeValidator}
                         initialState={{
-                            value: initArgs.obsCoreInstrumentName || ''
+                            value: initArgs?.urlApi?.obsCoreInstrumentName || ''
                         }}
                     />
                     {obsCoreInstrumentNameOptions.helptext &&
@@ -291,7 +291,7 @@ export function ObsCoreSearch({cols, groupKey, fields, useConstraintReducer, ini
                         labelWidth={LableSaptail}
                         validator={fakeValidator}
                         initialState={{
-                            value: initArgs.obsCoreCollection || ''
+                            value: initArgs?.urlApi?.obsCoreCollection || ''
                         }}
                     />
                     {obsCoreCollectionOptions.helptext &&
@@ -312,7 +312,7 @@ export function ObsCoreSearch({cols, groupKey, fields, useConstraintReducer, ini
                         labelWidth={LableSaptail}
                         validator={fakeValidator}
                         initialState={{
-                            value: initArgs.obsCoreSubType || ''
+                            value: initArgs?.urlApi?.obsCoreSubType || ''
                         }}
                     />
                     {obsCoreSubTypeOptions.helptext &&
@@ -362,24 +362,24 @@ export function ExposureDurationSearch({cols, groupKey, fields, useConstraintRed
     }, []);
 
     useEffect(() => {
-        const expTimeMode = initArgs.exposureTimeMode || ISO;
-        if (initArgs.exposureMin){
+        const expTimeMode = initArgs?.urlApi?.exposureTimeMode || ISO;
+        if (initArgs?.urlApi?.exposureMin){
             dispatchValueChange({
-                ...{value:initArgs.exposureMin},
+                ...{value:initArgs?.urlApi?.exposureMin},
                 timeMode: expTimeMode,
                 fieldKey: 'exposureMin',
                 groupKey
             });
         }
-        if (initArgs.exposureMax){
+        if (initArgs?.urlApi?.exposureMax){
             dispatchValueChange({
-                ...{value:initArgs.exposureMax},
+                ...{value:initArgs?.urlApi?.exposureMax},
                 timeMode: expTimeMode,
                 fieldKey: 'exposureMax',
                 groupKey
             });
         }
-    }, [initArgs]);
+    }, [initArgs?.urlApi]);
 
     const DEBUG_OBSCORE = getAppOptions().tapObsCore?.debug ?? false;
 
@@ -543,7 +543,7 @@ export function ExposureDurationSearch({cols, groupKey, fields, useConstraintRed
                     alignment={'horizontal'}
                     label={'Time of Observation:'}
                     labelWidth={LableSaptail}
-                    initialState={{value: initArgs.exposureRangeType || 'since'}}
+                    initialState={{value: initArgs?.urlApi?.exposureRangeType || 'since'}}
                 />
                 <div>
                     {rangeType === 'range' &&
@@ -553,7 +553,7 @@ export function ExposureDurationSearch({cols, groupKey, fields, useConstraintRed
                             options={timeOptions}
                             alignment={'horizontal'}
                             wrapperStyle={{width: LabelWidth, marginTop: 5, marginLeft: 0}}
-                            initialState={{value: initArgs.exposureTimeMode || ISO}}
+                            initialState={{value: initArgs?.urlApi?.exposureTimeMode || ISO}}
                             label={'Use:'}
                             labelWidth={32 /* FIXME: Not sure if this is best */}
                             tooltip='Select time mode'
@@ -582,7 +582,7 @@ export function ExposureDurationSearch({cols, groupKey, fields, useConstraintRed
                                     inputStyle={{overflow: 'auto', height: 16}}
                                     validator={timeValidator('exposureMin')}
                                     tooltip={"'Exposure start from' time (t_min)"}
-                                    value={initArgs.exposureMin || expMin}
+                                    value={initArgs?.urlApi?.exposureMin || expMin}
                                 />
                             </div>
                         </div>
@@ -609,7 +609,7 @@ export function ExposureDurationSearch({cols, groupKey, fields, useConstraintRed
                                     inputStyle={{overflow: 'auto', height: 16}}
                                     validator={timeValidator('exposureMax')}
                                     tooltip={"'Exposure end to' time (t_max)"}
-                                    value={initArgs.exposureMax || expMax}
+                                    value={initArgs?.urlApi?.exposureMax || expMax}
                                 />
                             </div>
                         </div>
@@ -625,7 +625,7 @@ export function ExposureDurationSearch({cols, groupKey, fields, useConstraintRed
                             validator={fakeValidator}
                             wrapperStyle={{marginLeft: LableSaptail, paddingLeft: 4 /* Extra padding because there's no label */, paddingBottom: 5}}
                             initialState={{
-                                value: initArgs.exposureSinceValue || ''
+                                value: initArgs?.urlApi?.exposureSinceValue || ''
                             }}
                         />
                         <ListBoxInputField
@@ -636,7 +636,7 @@ export function ExposureDurationSearch({cols, groupKey, fields, useConstraintRed
                                 {label: 'Days', value: 'days'},
                                 {label: 'Years',value: 'years'}
                             ]}
-                            initialState={{value: initArgs.exposureSinceOptions || 'hours'}}
+                            initialState={{value: initArgs?.urlApi?.exposureSinceOptions || 'hours'}}
                         />
                     </div>
                     }
@@ -651,7 +651,7 @@ export function ExposureDurationSearch({cols, groupKey, fields, useConstraintRed
                             labelWidth={LableSaptail}
                             validator={minimumPositiveFloatValidator('Minimum Exposure Length')}
                             placeholder={'-Inf'}
-                            initialState={{value: initArgs.exposureLengthMin}}
+                            initialState={{value: initArgs?.urlApi?.exposureLengthMin}}
                         />
                         <div style={{display: 'flex', marginTop: 5, marginRight: '16px', paddingRight: '3px'}}>to</div>
                         <ValidationField
@@ -662,7 +662,7 @@ export function ExposureDurationSearch({cols, groupKey, fields, useConstraintRed
                             tooltip={'Cumulative shutter-open exposure must be less than this amount'}
                             validator={maximumPositiveFloatValidator('Maximum Exposure Length')}
                             placeholder={'+Inf'}
-                            initialState={{value: initArgs.exposureLengthMax}}
+                            initialState={{value: initArgs?.urlApi?.exposureLengthMax}}
                         />
                         <div style={{display: 'flex', marginTop: 5}}>seconds</div>
                     </div>
@@ -967,7 +967,7 @@ export function ObsCoreWavelengthSearch({cols, groupKey, fields, useConstraintRe
                                     {label: 'overlaps', value: 'overlaps'},
                                 ]}
                             initialState={{
-                                value: initArgs.obsCoreWavelengthRangeType || 'contains'
+                                value: initArgs?.urlApi?.obsCoreWavelengthRangeType || 'contains'
                             }}
                             label={'Select observations whose wavelength coverage'}
                             labelWidth={236}
@@ -983,7 +983,7 @@ export function ObsCoreWavelengthSearch({cols, groupKey, fields, useConstraintRe
                                 size={SmallFloatNumericWidth}
                                 inputStyle={{overflow: 'auto', height: 16}}
                                 validator={floatValidator(0, 100e15, 'Wavelength')}
-                                initialState={{value: initArgs.obsCoreWavelengthContains || ''}}
+                                initialState={{value: initArgs?.urlApi?.obsCoreWavelengthContains || ''}}
                             />
                         </div>
                         }
@@ -996,7 +996,7 @@ export function ObsCoreWavelengthSearch({cols, groupKey, fields, useConstraintRe
                                 inputStyle={{overflow: 'auto', height: 16}}
                                 validator={minimumPositiveFloatValidator('Min Wavelength')}
                                 placeholder={'-Inf'}
-                                initialState={{value: initArgs.obsCoreWavelengthMinRange}}
+                                initialState={{value: initArgs?.urlApi?.obsCoreWavelengthMinRange}}
                             />
                             <div style={{display: 'flex', marginTop: 5, marginRight: '16px', paddingRight: '3px'}}>to</div>
                             <ValidationField
@@ -1006,7 +1006,7 @@ export function ObsCoreWavelengthSearch({cols, groupKey, fields, useConstraintRe
                                 inputStyle={{overflow: 'auto', height: 16}}
                                 validator={maximumPositiveFloatValidator('Max Wavelength')}
                                 placeholder={'+Inf'}
-                                initialState={{value: initArgs.obsCoreWavelengthMaxRange}}
+                                initialState={{value: initArgs?.urlApi?.obsCoreWavelengthMaxRange}}
                             />
                         </div>
                         }
@@ -1019,7 +1019,7 @@ export function ObsCoreWavelengthSearch({cols, groupKey, fields, useConstraintRe
                                     {label: 'angstroms', value: 'angstrom'},
                                 ]}
                             initialState={{
-                                value: initArgs.obsCoreWavelengthUnits || 'nm'
+                                value: initArgs?.urlApi?.obsCoreWavelengthUnits || 'nm'
                             }}
                             multiple={false}
                         />

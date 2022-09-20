@@ -707,7 +707,7 @@ export class WebPlotRequest extends ServerRequest {
 
     /**
      *
-     * @param {WorldPt} worldPt WorldPt
+     * @param {WorldPt|undefined} worldPt WorldPt
      */
     setWorldPt(worldPt) { if (worldPt) this.setParam(WPConst.WORLD_PT, worldPt.toString()); }
 

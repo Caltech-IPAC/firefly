@@ -129,7 +129,7 @@ export class PlotState {
      * @param band
      * @return {string}
      */
-    getWorkingFitsFileStr(band) { return this.get(band || this.firstBand()).workingFitsFileStr;}
+    getWorkingFitsFileStr(band=undefined) { return this.get(band || this.firstBand()).workingFitsFileStr;}
 
     /**
      * @param band

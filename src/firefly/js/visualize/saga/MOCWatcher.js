@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {once} from 'lodash';
 import {dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {getTblById} from '../../tables/TableUtil.js';
@@ -18,14 +19,14 @@ import {onPlotComplete} from '../PlotCompleteMonitor';
 
 
 /** @type {TableWatcherDef} */
-export const mocWatcherDef = {
+export const getMocWatcherDef= once(() => ({
     id : 'MOCWatcher',
     watcher : watchForMOC,
     testTable : isTableMOC,
     stopPropagation: true,
     allowMultiples: false,
     actions: []
-};
+}));
 
 
 /**

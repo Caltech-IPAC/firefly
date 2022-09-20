@@ -48,6 +48,7 @@ export const ColorChangeType= {DISABLE,DYNAMIC,STATIC};
  * @prop {Boolean} destroyWhenAllDetached default: false ,hint to controller, when all plots have been detached, destroy this layer
  * @prop {String} helpLine   default: '', a one line string describing the operation, for the end user to see
  * @prop {Boolean} canAttachNewPlot default: true, can be attached to the new plot created after the drawing layer is created
+ * @prop {Boolean} supportSubgroups
  *
  * @prop {Object} drawData   the data to draw
  * @prop {Object} mouseEventMap,

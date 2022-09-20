@@ -3,10 +3,12 @@ import PropTypes from 'prop-types';
 import {get, has, isUndefined, set} from 'lodash';
 import Enum from 'enum';
 import FieldGroupUtils, {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
+import {convertWpAryToStr} from '../../visualize/ui/VisualSearchUtils.js';
 import {ListBoxInputField} from '../ListBoxInputField.jsx';
 import {FieldGroup} from '../FieldGroup.jsx';
 import {findCenterColumnsByColumnsModel, posCol, UCDCoord} from '../../util/VOAnalyzer.js';
 import FieldGroupCntlr, {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
+import {useFieldGroupValue} from '../SimpleComponent.jsx';
 import {SizeInputFields} from '../SizeInputField.jsx';
 import {ServerParams} from '../../data/ServerParams.js';
 import {getColumnIdx} from '../../tables/TableUtil.js';
@@ -20,7 +22,9 @@ import {clone} from '../../util/WebUtil.js';
 import {FieldGroupCollapsible} from '../panel/CollapsiblePanel.jsx';
 import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
 import {convertMJDToISO, validateDateTime, validateMJD} from '../DateTimePickerField.jsx';
+import {DEF_TARGET_PANEL_KEY} from '../TargetPanel.jsx';
 import {TimePanel} from '../TimePanel.jsx';
+import {gkey} from './TableSelectViewPanel.jsx';
 import {maybeQuote, getColumnAttribute, HeaderFont, ISO, MJD, tapHelpId, getTapServices} from './TapUtil.js';
 import {ColsShape, ColumnFld, getColValidator} from '../../charts/ui/ColumnOrExpression';
 import {ConnectionCtx} from '../ConnectionCtx.js';
@@ -242,7 +246,7 @@ function SpatialSearch({cols, serviceUrl, columnsModel, groupKey, fields, initAr
     const panelTitle = !obsCoreEnabled ? Spatial : 'Location';
     const panelValue = Spatial;
     const panelPrefix = getPanelPrefix(panelValue);
-    const {POSITION:worldPt, radiusInArcSec}= initArgs;
+    const {POSITION:worldPt, radiusInArcSec}= initArgs?.urlApi ?? {};
     const [spatialMethod, setSpatialMethod] = useState(TapSpatialSearchMethod.Cone.value);
     const [spatialRegionOperation, setSpatialRegionOperation] = useState('contains_shape');
     const [message, setMessage] = useState();
@@ -251,6 +255,34 @@ function SpatialSearch({cols, serviceUrl, columnsModel, groupKey, fields, initAr
     // useEffect(() => {
     //     setPanelTitle(!obsCoreEnabled ? Spatial : 'Location');
     // }, [obsCoreEnabled]);
+
+    const [, setRadius]= useFieldGroupValue(RadiusSize,skey);
+    const [, setTarget]= useFieldGroupValue(DEF_TARGET_PANEL_KEY,skey);
+    const [, setSpatialMethodValue]= useFieldGroupValue(SpatialMethod,skey);
+    const [, setPolyCoords]= useFieldGroupValue('polygoncoords',skey);
+    const [, setObsCoreQType]= useFieldGroupValue('spatialRegionOperation',skey);
+
+    useEffect(() => {
+        if (initArgs?.searchParams?.radiusInArcSec) {
+            setRadius(initArgs.searchParams.radiusInArcSec);
+        }
+    }, [initArgs?.searchParams?.radiusInArcSec]);
+
+    useEffect(() => {
+        if (initArgs?.searchParams?.wp) {
+            setSpatialMethodValue('Cone');
+            setObsCoreQType('contains_point');
+            setTarget(initArgs.searchParams.wp);
+        }
+    }, [initArgs?.searchParams?.wp]);
+
+    useEffect(() => {
+        if (initArgs?.searchParams?.corners) {
+            setSpatialMethodValue('Polygon');
+            setObsCoreQType('center_contained');
+            setPolyCoords(initArgs.searchParams.corners);
+        }
+    }, [initArgs?.searchParams?.corners]);
 
     useEffect(() => {
         return FieldGroupUtils.bindToStore(groupKey, (fields) => {
@@ -362,7 +394,7 @@ function SpatialSearch({cols, serviceUrl, columnsModel, groupKey, fields, initAr
                             {label: 'Central point (s_ra, s_dec) is contained by shape', value: 'center_contained'},
                         ]}
                     initialState={{
-                        value: initArgs.spatialRegionOperation || 'contains_point'
+                        value: initArgs?.urlApi?.spatialRegionOperation || 'contains_point'
                     }}
                     multiple={false}
                     label={'Query type:'}
@@ -1122,7 +1154,7 @@ const getFieldValidity  = (fields, fieldKey, nullAllowed) => {
     if (isUndefined(nullAllowed) || rVal) {
         return {valid, message: (valid ? '' : (message || 'entry error'))};
     } else if (!rVal) {
-        return {valid: nullAllowed, message: !nullAllowed ? 'empty entry' : ''};
+        return {valid: nullAllowed, message: !nullAllowed ? '' : ''};
     }
 };
 

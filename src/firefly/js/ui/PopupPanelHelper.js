@@ -102,9 +102,11 @@ const endMove= (ctx) => void (ctx && (ctx.moving= false));
  * @param {element} e
  * @param layoutType
  * @param {element} positionElement
+ * @param {number} topOffset - add to the top computation
+ * @param {number} leftOffset - add to the left computation
  * @return {{top: number, left: number}}
  */
-export const getDefaultPopupPosition= function(e, layoutType,positionElement) {
+export const getDefaultPopupPosition= function(e, layoutType,positionElement, topOffset=0, leftOffset=0) {
 
     let left= 0;
     let top= 0;
@@ -112,30 +114,30 @@ export const getDefaultPopupPosition= function(e, layoutType,positionElement) {
     const posBound= positionElement?.getBoundingClientRect() ?? {};
     switch (layoutType.toString()) {
         case 'CENTER' :
-            left= window.innerWidth/2 - offsetWidth/2 + window.scrollX;
-            top= window.innerHeight/2 - offsetHeight/2 + window.scrollY;
+            left= window.innerWidth/2 - offsetWidth/2 + window.scrollX + leftOffset;
+            top= window.innerHeight/2 - offsetHeight/2 + window.scrollY + topOffset;
             break;
         case 'TOP_CENTER' :
-            left= window.innerWidth/2 - offsetWidth/2 + window.scrollX;
-            top= window.scrollY+ 100;
+            left= window.innerWidth/2 - offsetWidth/2 + window.scrollX + leftOffset;
+            top= window.scrollY+ 100 + topOffset;
             break;
         case 'TOP_RIGHT' :
-            left= window.innerWidth - offsetWidth - 30 + window.scrollX;
-            top= window.scrollY+ 3;
+            left= window.innerWidth - offsetWidth - 30 + window.scrollX + leftOffset;
+            top= window.scrollY+ 3 + topOffset;
             break;
         case 'TOP_LEFT' :
-            left= 2 + window.scrollX;
-            top= window.scrollY+ 3;
+            left= 2 + window.scrollX + leftOffset;
+            top= window.scrollY+ 3 + topOffset;
             break;
         case 'TOP_EDGE_CENTER' :
-            left= window.innerWidth/2 - offsetWidth/2 + window.scrollX;
-            top= window.scrollY+ 3;
+            left= window.innerWidth/2 - offsetWidth/2 + window.scrollX + leftOffset;
+            top= window.scrollY+ 3 + topOffset;
             break;
         case 'TOP_RIGHT_OF_BUTTON' :
             if (!positionElement) return getDefaultPopupPosition(e,'TOP_RIGHT');
-            left= posBound.width + posBound.x + 5  + offsetWidth < window.innerWidth ?
-                posBound.width + posBound.x + 5 : window.innerWidth - offsetWidth;
-            top= posBound.y > offsetHeight ? posBound.y - offsetHeight : 5;
+            left= (posBound.width + posBound.x + 5  + offsetWidth < window.innerWidth ?
+                posBound.width + posBound.x + 5 : window.innerWidth - offsetWidth) + leftOffset;
+            top= (posBound.y > offsetHeight ? posBound.y - offsetHeight : 5) + topOffset;
             break;
     }
     return {left, top};

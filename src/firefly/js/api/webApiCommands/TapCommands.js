@@ -148,7 +148,7 @@ function showTapPanel(cmd,inParams) {
         Reflect.deleteProperty(params, ReservedParams.SR.name);
     }
     const view= getAppOptions()?.multiTableSearchCmdOptions?.find( ({id}) => id==='tap') ? 'MultiTableSearchCmd' : 'TAPSearch';
-    dispatchShowDropDown({view, initArgs:{...params, defaultSelectedId:'tap'}});
+    dispatchShowDropDown({view, initArgs:{defaultSelectedId:'tap', urlApi:{...params}}});
 }
 
 export function getTapCommands() {

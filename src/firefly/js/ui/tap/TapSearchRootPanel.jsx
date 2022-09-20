@@ -41,13 +41,13 @@ const ADQL_LINE_LENGTH = 100;
 let webApiUserAddedService;
 const initServiceUsingAPIOnce= makeSearchOnce(false); // call one time during first construction
 const searchFromAPIOnce= makeSearchOnce(); // setup options to immediately execute the search the first time
-const activateInitArgsAdqlOnce= once((initArgs) => initArgs?.adql && setTimeout(() => populateAndEditAdql(initArgs.adql), 5));
+const activateInitArgsAdqlOnce= once((initArgs) => initArgs?.urlApi?.adql && setTimeout(() => populateAndEditAdql(initArgs.urlApi?.adql), 5));
 
 /** if an extra service is found from the api that is not in the list then set webApiUserAddedService */
 const initApiAddedServiceOnce= once((initArgs) => {
-    if (initArgs?.service) {
-        const listedEntry= getTapServiceOptions().find( (e) => e.value===initArgs.service);
-        if (!listedEntry) webApiUserAddedService = {label: initArgs.service, value: initArgs.service};
+    if (initArgs?.urlApi?.service) {
+        const listedEntry= getTapServiceOptions().find( (e) => e.value===initArgs.urlApi?.service);
+        if (!listedEntry) webApiUserAddedService = {label: initArgs.urlApi?.service, value: initArgs.urlApi?.service};
     }
 });
 
@@ -65,12 +65,12 @@ function validateAutoSearch(fields, initArgs) {
             const adqlFragment = tableSearchMethodsConstraints(columnsModel);
             if (adqlFragment && adqlFragment.valid) {
                 const constraintInitArgs= ['WorldPt', 'radiusInArcSec']; // this should grow as we support more params in initArgs
-                const usesWhere= Object.keys(initArgs).find( (i) => constraintInitArgs.includes(i));
+                const usesWhere= Object.keys(initArgs?.urlApi ?? {}).find( (i) => constraintInitArgs.includes(i));
                 return usesWhere ? Boolean(adqlFragment.where) : true;
             }
         }
     }
-    return Boolean(initArgs.adql);
+    return Boolean(initArgs?.urlApi?.adql);
 }
 
 //----------
@@ -82,17 +82,17 @@ function validateAutoSearch(fields, initArgs) {
 function getInitServiceUrl(initArgs,tapOps) {
     let {serviceUrl=tapOps[0].value} = getTapBrowserState();
     initServiceUsingAPIOnce(true, () => {
-        if (initArgs?.service) serviceUrl= initArgs.service;
+        if (initArgs?.urlApi?.service) serviceUrl= initArgs.urlApi.service;
     });
     return serviceUrl;
 }
 
 export function TapSearchPanel({initArgs= {}, titleOn=true}) {
-    if (!initArgs?.execute) searchFromAPIOnce(true); // if not execute then mark as done, i.e. disable any auto searching
+    if (!initArgs?.urlApi?.execute) searchFromAPIOnce(true); // if not execute then mark as done, i.e. disable any auto searching
     initApiAddedServiceOnce(initArgs);  // only look for the extra service the first time
     const tapOps= getTapServiceOptions();
     const {current:clickFuncRef} = useRef({clickFunc:undefined});
-    const [selectBy, setSelectBy]= useState(initArgs.selectBy || 'basic');
+    const [selectBy, setSelectBy]= useState(initArgs?.urlApi?.selectBy || 'basic');
     const [obsCoreTableModel, setObsCoreTableModel] = useState();
     const [serviceUrl, setServiceUrl]= useState(() => getInitServiceUrl(initArgs,tapOps));
     activateInitArgsAdqlOnce(initArgs);
@@ -226,7 +226,7 @@ function TapSearchPanelComponents({initArgs, serviceUrl, onTapServiceOptionSelec
                             options: options,
                             tooltip: 'Please select an interface type to use'
                         }}
-                        defaultValue = {initArgs.selectBy}
+                        defaultValue = {initArgs?.urlApi?.selectBy}
                         options = {options}
                         wrapperStyle={{alignSelf: 'center'}}
                     />
@@ -244,7 +244,7 @@ function makeExtraWidgets(initArgs, selectBy) {
         (<ValidationField fieldKey='maxrec' key='maxrec' groupKey={gkey}
                          tooltip='Maximum number of rows to return (via MAXREC)' label= 'Row Limit:' labelWidth={0}
                          initialState= {{
-                             value: Number(initArgs.MAXREC) || Number(getAppOptions().tap?.defaultMaxrec ?? 50000),
+                             value: Number(initArgs?.urlApi?.MAXREC) || Number(getAppOptions().tap?.defaultMaxrec ?? 50000),
                              validator: intValidator(0, getMaxrecHardLimit(), 'Maximum number of rows'),
                          }}
                          wrapperStyle={{marginLeft: 30, height: '100%', alignSelf: 'center'}}

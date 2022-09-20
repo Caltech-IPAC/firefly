@@ -4,7 +4,7 @@
 
 import React from 'react';
 import {CoordinateSys, parseWorldPt} from '../../api/ApiUtilImage.jsx';
-import {CONE_CHOICE_KEY} from '../../visualize/ui/TargetHiPSPanel.jsx';
+import {CONE_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
 import {convert} from '../../visualize/VisUtil.js';
 import CompleteButton from '../CompleteButton.jsx';
 import {FieldGroup} from '../FieldGroup.jsx';

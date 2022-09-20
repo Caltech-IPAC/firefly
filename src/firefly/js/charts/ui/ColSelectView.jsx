@@ -40,8 +40,8 @@ export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonTe
 
    if (getTblById(TBL_ID)) {
        hideColSelectPopup();
-       dispatchTableRemove(TBL_ID);
-    }
+       dispatchTableRemove(TBL_ID);
+}
 
     const colNames = colValStats.map((colVal) => {return colVal.name;});
     const hlRowNum = getHlRow(currentVal,colNames) || 0;
@@ -158,8 +158,7 @@ function setXYColumns(tblId,onColSelected) {
     const tableModel = getTblById(tblId);
     const hlRow = tableModel.highlightedRow || 0;
     const selectedColName = quoteNonAlphanumeric(tableModel.tableData.data[hlRow][0]);
-    onColSelected(selectedColName);
-
+    onColSelected(selectedColName);
 }
 
 function getHlRow(currentVal,colNames) {

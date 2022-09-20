@@ -61,11 +61,12 @@ const dropdownHandler = {
     actionToUrl: (action) => {
         const logHistory = get(action, 'payload.visible', true);
         if (!logHistory) return false;
-        const {view,initArgs}= action.payload ?? {};
+        const {view,initArgs={}}= action.payload ?? {};
+        const {urlApi}= initArgs;
         let params={};
-        if (!isEmpty(initArgs)) {
-            params= Object.entries(initArgs).reduce((obj,[k,v]) => {
-                obj['initArgs.'+k]=v;
+        if (!isEmpty(urlApi)) {
+            params= Object.entries(urlApi).reduce((obj,[k,v]) => {
+                obj['initArgs.urlApi.'+k]=v;
                 return obj;
             },{view});
         }

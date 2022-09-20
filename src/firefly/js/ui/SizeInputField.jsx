@@ -156,7 +156,7 @@ SizeInputFieldView.propTypes = {
     label:    PropTypes.string,
     nullAllowed: PropTypes.bool,
     onChange: PropTypes.func,
-    value: PropTypes.string,
+    value: PropTypes.any,
     valid: PropTypes.bool,
     showFeedback: PropTypes.bool,
     wrapperStyle: PropTypes.object, // deprecated

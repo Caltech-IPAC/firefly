@@ -7,10 +7,12 @@ import {CoordinateSys} from '../../api/ApiUtilImage.jsx';
 import {floatRange, intRange} from '../../util/Validate.js';
 import {getFormattedWaveLengthUnits} from '../../visualize/PlotViewUtil.js';
 import {parseWorldPt} from '../../visualize/Point.js';
+import {CONE_AREA_OPTIONS, CONE_CHOICE_KEY, POLY_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
 import {
-    CONE_CHOICE_KEY, convertStrToWpAry, hideHiPSPopupPanel, HiPSTargetView, POLY_CHOICE_KEY, TargetHiPSRadiusPopupPanel,
+    hideHiPSPopupPanel, HiPSTargetView, TargetHiPSRadiusPopupPanel,
     VisualPolygonPanel, VisualTargetPanel
 } from '../../visualize/ui/TargetHiPSPanel.jsx';
+import {convertStrToWpAry} from '../../visualize/ui/VisualSearchUtils.js';
 import {CheckboxGroupInputField} from '../CheckboxGroupInputField.jsx';
 import {ListBoxInputField} from '../ListBoxInputField.jsx';
 import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
@@ -22,7 +24,6 @@ import {AREA, CHECKBOX, CIRCLE, ENUM, FLOAT, INT, POLYGON, POSITION, UNKNOWN} fr
 
 const DEF_LABEL_WIDTH = 100;
 const CONE_AREA_KEY = 'CONE_AREA_KEY_RESERVED';
-const CONE_AREA_OPTIONS = [{label: 'Cone', value: CONE_CHOICE_KEY}, {label: 'Polygon', value: POLY_CHOICE_KEY}];
 const DEF_AREA_EXAMPLE = 'Example: 20.7 21.5, 20.5 20.5, 21.5 20.5, 21.5 21.5';
 const BULLET = String.fromCharCode(0x2013) + '  ';
 

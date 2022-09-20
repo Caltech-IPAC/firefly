@@ -93,8 +93,8 @@ export function dispatchAddActionWatcher({id, actions, callback, params={}}) {
  * @function
  * @desc Test to see if we should watch this table
  * @param {TableModel} table
- * @param {Action} action
- * @param {Object} options
+ * @param {Action|undefined} action
+ * @param {Object|undefined} options
  * @return {boolean} true if we should watch
  *
  */
