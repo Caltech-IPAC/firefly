@@ -227,23 +227,12 @@ function dealWithMods(drawLayer,action) {
 
 
 export function getUnitStyle(cc, world) {
-    if (isUndefined(world)) {
-        world = hasWCSProjection(cc);
-    }
 
-    if (!world) {
+    if (!cc || !world) {
         return UNIT_PIXEL_ONLY;
     } else {
-        return UNIT_NO_PIXEL;
+        return isHiPS(primePlot(visRoot(),cc.plotId)) ? UNIT_NO_PIXEL : UNIT_ALL;
     }
-    /*
-    const plot= primePlot(visRoot(),cc.plotId);
-    const aHiPS = isHiPS(plot);
-    if (aHiPS) {
-        return UNIT_NO_PIXEL;
-    }
-    return UNIT_ALL;
-    */
 }
 
 export function getUnitPreference(unitStyle) {
@@ -317,7 +306,6 @@ function drag(drawLayer,action) {
     const {imagePt,plotId}= action.payload;
     const plot= primePlot(visRoot(),plotId);
     const cc= CsysConverter.make(plot);
-    if (!cc) return;
 
     const newFirst = drawLayer.moveHead ? drawLayer.firstPt : imagePt;
     const newCurrent = drawLayer.moveHead ? imagePt : drawLayer.currentPt;
@@ -449,7 +437,7 @@ function computeDistance(pt1, pt2, cc, pref) {
  * @return {Array}
  */
 function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
-    const world = hasWCSProjection(cc);
+    const world = cc ? hasWCSProjection(cc) : false;
     const unitStyle = getUnitStyle(cc, world);
     const pref = getUnitPreference(unitStyle);
 

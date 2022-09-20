@@ -265,7 +265,7 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
                 DataProduct sourcedt = DataProduct.ALLSKY_4BAND_3A;
                 String sourceTable = sourcedt.getSourceTable();
                 String sourceSpec = WISE + "." + sourceTable + "(\"source_id\":\"" + refSourceId + "\")";
-                queryParam.setPos(sourceSpec);
+                queryParam.setRefBy(sourceSpec);
             }
         }
 

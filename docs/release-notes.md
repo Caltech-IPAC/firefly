@@ -68,6 +68,7 @@
 - 2022.2.4
   - Improved: Grouping in multi-product viewer is not per table [IRSA-4815](https://github.com/Caltech-IPAC/firefly/pull/1270))
   - Fixed: tap date selection feedback not updating [Firefly-1075](https://github.com/Caltech-IPAC/firefly/pull/1271))
+  - Fixed: regression issue, pixel readout re-enabled for images, DM-36291
 
 
 
