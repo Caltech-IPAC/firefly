@@ -201,11 +201,17 @@ public class BaseIbeDataSource implements IbeDataSource {
             params.put(INTERSECT, param.getIntersect().toString());
             if (param.isMcen()) {
                 params.put(MCEN, null);
-            } else {
+            } else if(!StringUtils.isEmpty(param.getSize())){
                 params.put(SIZE, param.getSize());
             }
         }
-        params.put(WHERE, param.getWhere());
+
+        if (!StringUtils.isEmpty(param.getColumns())){
+            params.put(COLUMNS, param.getColumns());
+        }
+        if (!StringUtils.isEmpty(param.getWhere())) {
+            params.put(WHERE, param.getWhere());
+        }
         return params;
     }
 
