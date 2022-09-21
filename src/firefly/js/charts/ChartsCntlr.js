@@ -19,6 +19,7 @@ import {applyDefaults, flattenAnnotations, formatColExpr, getPointIdx, getRowIdx
 import {FilterInfo} from '../tables/FilterInfo.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {REINIT_APP, getAppOptions} from '../core/AppDataCntlr.js';
+import {showInfoPopup} from '../ui/PopupUtil.jsx';
 import {makeHistogramParams, makeXYPlotParams, getDefaultChartProps} from './ChartUtil.js';
 import {adjustColorbars, hasFireflyColorbar} from './dataTypes/FireflyHeatmap.js';
 
@@ -321,6 +322,9 @@ function chartTraceRemove(action) {
 function chartUpdate(action) {
     return (dispatch) => {
         const {chartId, changes} = action.payload;
+        // when selection  is undefined, selections layer must be removed
+        if (changes.hasOwnProperty('selection') && !changes.selection)
+            changes['layout.selections'] = []
         // remove any table's mappings from changes because it will be applied by the connectors.
         const changesWithoutTblMappings = omitBy(changes, (v) => isString(v) && v.match(TBL_SRC_PATTERN));
         set(action, 'payload.changes', changesWithoutTblMappings);
@@ -437,6 +441,11 @@ function chartFilterSelection(action) {
                 y = `ifnull(${y},${lowerLimit})`;
             }
 
+            const multiArea = get(selection, 'multiArea')
+            if (multiArea) {
+                showInfoPopup('Filtering is only supported for one selection area.', 'Warning');
+                return;
+            }
             const [xMin, xMax] = get(selection, 'range.x', []);
             const [yMin, yMax] = get(selection, 'range.y', []);
             const {request} = getTblById(tbl_id);
@@ -875,7 +884,7 @@ export function dispatchError(chartId, traceNum, reason) {
 
     const {data=[]} = getChartData(chartId);
     let forTrace = '';
-    if (data.length == 1) {
+    if (data.length === 1) {
         const name = get(data, `${traceNum}.name`);
         // if a trace is user named, mention the name
         forTrace = name && !name.toLowerCase().startsWith('trace') ? `: ${name} data` : '';
