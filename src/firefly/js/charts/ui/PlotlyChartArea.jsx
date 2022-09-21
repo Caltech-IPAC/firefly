@@ -239,12 +239,10 @@ function onClick(chartId) {
 function onSelect(chartId) {
     return (evData) => {
         if (evData) {
-            // multiple selections are not supported
-            const selections = get(evData, 'selections', [])
-
             let points = undefined;
-            // this is for range selection only... lasso selection is not implemented yet.
             const {activeTrace=0, curveNumberMap}  = getChartData(chartId);
+            // this is for last range selection only, and should not be used with multi-area selections;
+            // lasso selection is not implemented yet.
             const [xMin, xMax] = get(evData, 'range.x', []);
             const [yMin, yMax] = get(evData, 'range.y', []);
             if (xMin !== xMax && yMin !== yMax && curveNumberMap) {
@@ -261,10 +259,11 @@ function onSelect(chartId) {
                 if (isScatter2d(type) && points.length < 1) {
                     showInfoPopup((<div>No active trace points in the selection area.</div>), 'Warning');
                 } else {
+                    const selections = evData?.selections ?? []
                     dispatchChartUpdate({
                         chartId,
                         changes: {
-                            'selection': {
+                            selection: {
                                 multiArea: selections.length > 1,
                                 points,
                                 range: {x: [xMin, xMax], y: [yMin, yMax]}
