@@ -220,6 +220,31 @@
     background-image: url("~images/icons-2014/24x24_Save.png");
 }
 
+.CombineChart__popup {
+    min-width: 450px;
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+    padding: 4px;
+    resize: both;
+    overflow: hidden;
+}
+
+.CombineChart__popup > * {
+    margin-bottom: 5px;
+}
+
+.CombineChart__popup--tbl {
+    flex-grow: 1;
+    min-height: 100px;
+}
+
+.CombineChart__hints {
+    font-size: x-small;
+    font-style: italic;
+    color: grey;
+}
+
 
 /* hide the popup doubleclick tooltips since we turned it off */
 div.plotly-notifier {

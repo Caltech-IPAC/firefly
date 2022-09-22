@@ -4,7 +4,16 @@
 import {get} from 'lodash';
 import {sprintf} from '../../externalSource/sprintf.js';
 
-
+/**
+ * Return true if 'from' unit can be converted to 'to'.
+ * @param p
+ * @param p.from
+ * @param p.to
+ * @returns {boolean}
+ */
+export function canUnitConv({from, to}) {
+    return !! get(UnitXref, [from, to]);
+}
 
 /**
  * Return the SQL-like expression for unit conversion use cases.

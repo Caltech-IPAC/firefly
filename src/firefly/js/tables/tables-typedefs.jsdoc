@@ -271,7 +271,7 @@
  * @prop {boolean} [showPaging=true]    enable/disable paging feature.  When false, all data will be displayed.
  * @prop {boolean} [showSave=true]
  * @prop {boolean} [showFilterButton=true]
- * @prop {boolean} [showInfoButton=false] when true, shows additional information about table, if available
+ * @prop {boolean} [showInfoButton=true] when true, shows additional information about table, if available
  * @prop {boolean} [showOptionButton=true]
  * @prop {boolean} [showUnits]
  * @prop {boolean} [allowUnits=true] enable/disable the use of units in a table.

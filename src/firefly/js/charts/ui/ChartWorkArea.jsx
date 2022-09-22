@@ -23,7 +23,7 @@ import {useStoreConnector} from '../../ui/SimpleComponent';
 import {Logger} from '../../util/Logger.js';
 import {findGroupByTblId, getActiveTableId, getTblById, monitorChanges} from '../../tables/TableUtil';
 import {TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_REMOVE, dispatchActiveTableChanged} from '../../tables/TablesCntlr';
-import {uniqueChartId} from '../ChartUtil';
+import {getTblIdFromChart, uniqueChartId} from '../ChartUtil';
 import {getActiveViewerItemId} from './MultiChartViewer';
 import {DefaultChartsContainer} from './ChartsContainer';
 import {StatefulTabs, switchTab, Tab} from '../../ui/panel/TabPanel';
@@ -32,81 +32,13 @@ import {getComponentState, dispatchComponentStateChange} from '../../core/Compon
 import {SplitPanel} from '../../ui/panel/DockLayoutPanel';
 import {hideInfoPopup, showInfoPopup, showYesNoPopup, showPinMessage} from '../../ui/PopupUtil.jsx';
 import {TextButton} from '../../ui/TextButton.jsx';
+import {CombineChart} from './CombineChart.jsx';
 
+export const PINNED_CHART_PREFIX = 'pinned-';
+export const PINNED_VIEWER_ID = 'PINNED_CHARTS_VIEWER';
+export const PINNED_GROUP = PINNED_VIEWER_ID;                 // use same id for now.
 const logger = Logger('ChartWorkArea');
-const PINNED_CHART_PREFIX = 'pinned-';
-
-const PINNED_VIEWER_ID = 'PINNED_CHARTS_VIEWER';
-const PINNED_GROUP = PINNED_VIEWER_ID;                 // use same id for now.
 const PINNED_MAX = 12;
-
-
-export function pinChart({chartId, autoLayout=true}) {
-    const chartData = cloneDeep(omit(getChartData(chartId), ['_original', 'mounted']));
-    chartData?.tablesources?.forEach((ts) => Reflect.deleteProperty(ts, '_cancel'));
-
-    const pinnedCnt = getViewerItemIds(getMultiViewRoot(), PINNED_VIEWER_ID)?.length ?? 0;
-    if (pinnedCnt >= PINNED_MAX) {
-        showInfoPopup('You have reached the maximum number of allowable pinned charts');
-        return;
-    }
-
-    const addChart = () => {
-        dispatchChartAdd({
-            ...chartData,
-            chartId: uniqueChartId(PINNED_CHART_PREFIX),
-            groupId: PINNED_GROUP,
-            viewerId: PINNED_VIEWER_ID,
-            deletable: true,
-            mounted: true
-        });
-        if (autoLayout && pinnedCnt === 0) {
-            // if auto-layout, show side-by-side on first pinned chart
-            showSideBySide();
-        }
-        const {sideBySide} = getComponentState(PINNED_VIEWER_ID);
-        if (!sideBySide) showPinMessage('Pinning chart');
-    };
-
-    if (!chartData?.layout?.title?.text) {
-        // if chart has no title, ask to use table's title
-        const tbl_id = chartData?.data?.[0]?.tbl_id || chartData?.fireflyData?.[0].tbl_id;
-        let title = getTblById(tbl_id)?.title || '';
-        showYesNoPopup(
-            (
-                <div style={{display: 'inline-flex', whiteSpace: 'nowrap', alignItems: 'center'}}>
-                    <div style={{marginRight: 3}}>Chart Title:</div>
-                    <input defaultValue={title} onClick={(e)=>e?.target.select()} onChange={(e) => title=e?.target?.value}/>
-                </div>
-            ),
-            (p,ans) => {
-                if (ans) set(chartData, 'layout.title', title);
-                addChart();
-                hideInfoPopup();
-            },
-            'Add a title?'
-        );
-    } else {
-        addChart();
-    }
-}
-
-export const toggleSideBySide = () => {
-    const {sideBySide=false} = getComponentState(PINNED_VIEWER_ID);
-    dispatchComponentStateChange(PINNED_VIEWER_ID, {sideBySide: !sideBySide});
-};
-
-export const showSideBySide = () => {
-    dispatchComponentStateChange(PINNED_VIEWER_ID, {sideBySide: true});
-};
-
-export const showAsTabs = (showPinnedCharts=false) => {
-    if (showPinnedCharts) {
-        switchTab(PINNED_VIEWER_ID, 1);     // tab index 1 is pinned charts
-    }
-    dispatchComponentStateChange(PINNED_VIEWER_ID, {sideBySide: false});
-};
-
 
 export const ChartWorkArea = (props) => {
     const {viewerId, tbl_group} = props;
@@ -126,8 +58,8 @@ export const ChartWorkArea = (props) => {
         );
     }
 
-    const PinToolbar = () => <div style={{display: 'inline-flex'}}><ShowTable tbl_group={tbl_group}/><ToggleMode/><Help/></div>;
-    const ActiveToolbar = () => <div style={{display: 'inline-flex'}}><PinChart {...{viewerId, tbl_group}}/><ToggleMode/><Help/></div>;
+    const PinToolbar = () => <div style={{display: 'inline-flex'}}><CombineChart /><ShowTable tbl_group={tbl_group}/><ToggleLayout/><Help/></div>;
+    const ActiveToolbar = () => <div style={{display: 'inline-flex'}}><PinChart {...{viewerId, tbl_group}}/><ToggleLayout/><Help/></div>;
 
     const TabToolbar = () => {
         const {selectedIdx=0} = getComponentState(PINNED_VIEWER_ID);
@@ -190,7 +122,10 @@ ChartWorkArea.propTypes = {
 
 const Help = () => <HelpIcon helpId={'chartarea.info'} style={{marginLeft:10}}/>;
 
-const PinChart = ({viewerId, tbl_group}) => {
+
+// --------------------- Pin Chart ---------------------------
+
+export const PinChart = ({viewerId, tbl_group}) => {
     const {sideBySide=false, selectedIdx} = getComponentState(PINNED_VIEWER_ID);
     const canPin = sideBySide || selectedIdx !== 1;
     const doPinChart = () => {
@@ -204,12 +139,63 @@ const PinChart = ({viewerId, tbl_group}) => {
     return canPin ? <TextButton onClick={doPinChart} title='Pin the active chart'>Pin Chart</TextButton> : null;
 };
 
-const ShowTable = ({tbl_group}) => {
+export function pinChart({chartId, autoLayout=true}) {
+    const chartData = cloneDeep(omit(getChartData(chartId), ['_original', 'mounted']));
+    chartData?.tablesources?.forEach((ts) => Reflect.deleteProperty(ts, '_cancel'));
+
+    const pinnedCnt = getViewerItemIds(getMultiViewRoot(), PINNED_VIEWER_ID)?.length ?? 0;
+    if (pinnedCnt >= PINNED_MAX) {
+        showInfoPopup('You have reached the maximum number of allowable pinned charts');
+        return;
+    }
+
+    const addChart = () => {
+        dispatchChartAdd({
+            ...chartData,
+            chartId: uniqueChartId(PINNED_CHART_PREFIX),
+            groupId: PINNED_GROUP,
+            viewerId: PINNED_VIEWER_ID,
+            deletable: true,
+            mounted: true
+        });
+        if (autoLayout && pinnedCnt === 0) {
+            // if auto-layout, show side-by-side on first pinned chart
+            setLayout(true);
+        }
+        const {sideBySide} = getComponentState(PINNED_VIEWER_ID);
+        if (!sideBySide) showPinMessage('Pinning chart');
+    };
+
+    if (!chartData?.layout?.title?.text) {
+        // if chart has no title, ask to use table's title
+        const tbl_id = chartData?.data?.[0]?.tbl_id || chartData?.fireflyData?.[0].tbl_id;
+        let title = getTblById(tbl_id)?.title || '';
+        showYesNoPopup(
+            (
+                <div style={{display: 'inline-flex', whiteSpace: 'nowrap', alignItems: 'center'}}>
+                    <div style={{marginRight: 3}}>Chart Title:</div>
+                    <input defaultValue={title} onClick={(e)=>e?.target.select()} onChange={(e) => title=e?.target?.value}/>
+                </div>
+            ),
+            (p,ans) => {
+                if (ans) set(chartData, 'layout.title', title);
+                addChart();
+                hideInfoPopup();
+            },
+            'Add a title?'
+        );
+    } else {
+        addChart();
+    }
+}
+
+// --------------------- simple toolbar actions ---------------------------
+
+export const ShowTable = ({tbl_group}) => {
 
     const activeChartTblId = useStoreConnector(() => {
-        const chartId = getActiveViewerItemId(PINNED_VIEWER_ID) ?? getViewerItemIds(getMultiViewRoot(), PINNED_VIEWER_ID)?.[0];
-        const chartData = getChartData(chartId);
-        return chartData?.data?.[0]?.tbl_id || chartData?.fireflyData?.[0].tbl_id;
+        const chartId = getActiveViewerItemId(PINNED_VIEWER_ID, true);
+        return getTblIdFromChart(chartId);
     });
 
     const showTable = () => dispatchActiveTableChanged(activeChartTblId, tbl_group);
@@ -220,17 +206,37 @@ const ShowTable = ({tbl_group}) => {
     return canShowTable ? <TextButton onClick={showTable} title='Show the table associated with this chart'>Show Table</TextButton> : null;
 };
 
-const ToggleMode = () => {
+export const ToggleLayout = () => {
 
     const {sideBySide=false} = getComponentState(PINNED_VIEWER_ID);
     const canToggle =  getViewerItemIds(getMultiViewRoot(), PINNED_VIEWER_ID)?.length > 0;
     const [modeLabel, modeTitle] = sideBySide ? ['As Tabs', 'Switch to tabs layout'] : ['Side-By-Side', 'Switch to Side-By-Side layout'];
 
-    return canToggle ? <TextButton onClick={toggleSideBySide} title={modeTitle}>{modeLabel}</TextButton> : null;
+    return canToggle ? <TextButton onClick={toggleLayout} title={modeTitle}>{modeLabel}</TextButton> : null;
 };
 
 
-export const PinnedCharts = (props) => {
+export const toggleLayout = () => {
+    const {sideBySide=false} = getComponentState(PINNED_VIEWER_ID);
+    setLayout(!sideBySide);
+};
+
+const setLayout = (sideBySide) => {
+    dispatchComponentStateChange(PINNED_VIEWER_ID, {sideBySide});
+};
+
+export const showAsTabs = (showPinnedCharts=false) => {
+    if (showPinnedCharts) {
+        switchTab(PINNED_VIEWER_ID, 1);     // tab index 1 is pinned charts
+    }
+    setLayout(false);
+};
+
+// ------------------------------------------------
+
+
+
+const PinnedCharts = (props) => {
 
     const {tbl_group='main', expandedMode} = props;
     const canReceiveNewItems=NewPlotMode.create_replace.key, closeable=false;
@@ -263,7 +269,7 @@ export const PinnedCharts = (props) => {
     }, [tbl_group, viewerId]);
 
     const viewer = useStoreConnector(() => getViewer(getMultiViewRoot(),viewerId));
-    const activeItemId = useStoreConnector(() =>  getActiveViewerItemId(viewerId) ?? viewer.itemIdAry[0]);
+    const activeItemId = useStoreConnector(() =>  getActiveViewerItemId(viewerId, true));
 
     if (!viewer || isEmpty(viewer.itemIdAry)) {
         return expandedMode && closeable ? <BlankClosePanel/> : null;
@@ -300,6 +306,7 @@ export const PinnedCharts = (props) => {
     const ToolBar = expandedMode ? MultiChartToolbarExpanded : MultiChartToolbarStandard;
 
     logger.log('Active chart ID: ' + activeItemId);
+    if (!activeItemId) return null;
 
     return (
         <div className='ChartPanel__container'>
@@ -315,7 +322,6 @@ PinnedCharts.propTypes= {
     tbl_group: PropTypes.string,
     expandedMode: PropTypes.bool,
 };
-
 
 
 function stopPropagation(ev) {

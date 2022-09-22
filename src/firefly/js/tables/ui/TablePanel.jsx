@@ -42,7 +42,7 @@ const TT_EXPAND = 'Expand this panel to take up a larger area';
 export function TablePanel(props) {
     let {tbl_id, tbl_ui_id, tableModel, ...options} = props;
     tbl_id = tbl_id || tableModel?.tbl_id || uniqueTblId();
-    tbl_ui_id = tbl_ui_id || uniqueTblUiId();
+    tbl_ui_id = tbl_ui_id || `${tbl_id}-ui`;
 
     const uiState = useStoreConnector(() => getTableUiById(tbl_ui_id) || {columns:[]}, [tbl_ui_id]);
 

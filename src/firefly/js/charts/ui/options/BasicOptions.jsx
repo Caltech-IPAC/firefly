@@ -273,7 +273,27 @@ function XyRatio({groupKey, Xyratio, Stretch, xNoLog}) {
 export function submitChanges({chartId, fields, tbl_id, renderTreeId}) {
     if (!fields) return;                // fields failed validations..  quick/dirty.. may need to separate the logic later.
     if (!chartId) chartId = uniqueChartId();
+
+    const changes = evalChangesFromFields(chartId, tbl_id, fields);
+
+    if (isEmpty(getChartData(chartId))) {
+        // chart dropdown scenario
+        // create chart data from changes and add chart
+        const newChartData = {chartId, groupId: tbl_id};
+        Object.entries(changes).forEach(([k,v]) => set(newChartData, k, v));
+        dispatchChartAdd({chartId, chartType: 'plot.ly', groupId: tbl_id, renderTreeId,
+            viewerId: findViewerId(DEFAULT_PLOT2D_VIEWER_ID,renderTreeId),
+            ...newChartData});
+    } else {
+        // update chart from options scenario
+        dispatchChartUpdate({chartId, changes});
+    }
+}
+
+export function evalChangesFromFields(chartId, tbl_id, fields) {
+
     const {layout={}, data=[], fireflyData, activeTrace:traceNum=0} = getChartData(chartId, {});
+
     const changes = {showOptions: false};
     Object.entries(fields).forEach( ([k,v]) => {
         if (tbl_id && k.startsWith('_tables.')) {
@@ -383,18 +403,7 @@ export function submitChanges({chartId, fields, tbl_id, renderTreeId}) {
     });
     adjustAxesRange(layout, changes);
 
-    if (isEmpty(getChartData(chartId))) {
-        // chart dropdown scenario
-        // create chart data from changes and add chart
-        const newChartData = {chartId, groupId: tbl_id};
-        Object.entries(changes).forEach(([k,v]) => set(newChartData, k, v));
-        dispatchChartAdd({chartId, chartType: 'plot.ly', groupId: tbl_id, renderTreeId,
-            viewerId: findViewerId(DEFAULT_PLOT2D_VIEWER_ID,renderTreeId),
-            ...newChartData});
-    } else {
-        // update chart from options scenario
-        dispatchChartUpdate({chartId, changes});
-    }
+    return changes;
 }
 
 function adjustAxesRange(layout, changes) {
