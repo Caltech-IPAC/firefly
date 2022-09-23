@@ -80,14 +80,15 @@ export function ShapePicker({drawingDef, displayGroupId, plotId, update, getColo
 
     const storeUpdate = () => {   // color change externally
         const dl = getDrawLayersByDisplayGroup(getDlAry(), displayGroupId);
-        const dlColor = getColor(dl);
+        return getColor(dl);
+    };
 
+    const dlColor = useStoreConnector(() => storeUpdate());
+    useEffect(() => {
         if (dlColor !== drawingDef.color) {
             setDrawingDef({...drawingDef, color: dlColor});
         }
-    };
-
-    useStoreConnector(() => storeUpdate()); //replaced flux.addListener()
+    }, [dlColor]);
 
     let setDrawingDef = () => {};
     [drawingDef, setDrawingDef] = useState(() => drawingDef);
