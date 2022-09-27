@@ -27,14 +27,14 @@ const TargetPanelView = (props) =>{
     const {showHelp, feedback, valid, message, onChange, value, style={}, button,
         labelWidth, children, resolver, feedbackStyle, showResolveSourceOp= true, showExample= true,
         targetPanelExampleRow1, targetPanelExampleRow2,
-        connectedMarker=false, labelStyle={paddingRight:'45px'},
+        connectedMarker=false, labelStyle={paddingRight:'45px'}, inputStyle={},
         examples, label= LABEL_DEFAULT, onUnmountCB, wpt}= props;
 
     useEffect(() => () => onUnmountCB(props),[]);
     const connectContext= useContext(ConnectionCtx);
 
     const positionField = (
-        <InputFieldView valid={valid} visible= {true} message={message}
+        <InputFieldView valid={valid} visible= {true} message={message} style={inputStyle}
                         onChange={(ev) => onChange(ev.target.value, TARGET)}
                         label={label} value={value} tooltip='Enter a target'
                         connectedMarker={connectedMarker||connectContext.controlConnected}
@@ -70,6 +70,7 @@ const TargetPanelView = (props) =>{
 TargetPanelView.propTypes = {
     label : PropTypes.string,
     labelStyle: PropTypes.object,
+    inputStyle: PropTypes.object,
     style: PropTypes.object,
     valid   : PropTypes.bool.isRequired,
     showHelp   : PropTypes.bool.isRequired,
@@ -176,10 +177,10 @@ function replaceValue(v,defaultToActiveTarget, computedState) {
 }
 
 
+export const DEF_TARGET_PANEL_KEY= 'UserTargetWorldPt';
 
 
-
-export const TargetPanel = memo( ({fieldKey= 'UserTargetWorldPt',initialState= {},
+export const TargetPanel = memo( ({fieldKey= DEF_TARGET_PANEL_KEY,initialState= {},
                                        defaultToActiveTarget= true, ...restOfProps}) => {
     const {viewProps, fireValueChange, groupKey}=  useFieldGroupConnector({
                                 fieldKey, initialState,
