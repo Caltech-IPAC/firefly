@@ -13,8 +13,7 @@ import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
-import static edu.caltech.ipac.util.StringUtils.checkNull;
-import static edu.caltech.ipac.util.StringUtils.isEmpty;
+import static edu.caltech.ipac.util.StringUtils.*;
 
 /**
  * Date: 4/18/14
@@ -198,20 +197,17 @@ public class BaseIbeDataSource implements IbeDataSource {
             params.put(REF_BY, param.getRefBy());
         } else if (!StringUtils.isEmpty(param.getPos())) {
             params.put(POS, param.getPos());
-            params.put(INTERSECT, param.getIntersect().toString());
+            applyIfNotEmpty(param.getIntersect(), (v) -> params.put(INTERSECT, v.toString()));
             if (param.isMcen()) {
                 params.put(MCEN, null);
-            } else if(!StringUtils.isEmpty(param.getSize())){
-                params.put(SIZE, param.getSize());
+            } else {
+                applyIfNotEmpty(param.getSize(), (v) -> params.put(SIZE, v));
             }
         }
 
-        if (!StringUtils.isEmpty(param.getColumns())){
-            params.put(COLUMNS, param.getColumns());
-        }
-        if (!StringUtils.isEmpty(param.getWhere())) {
-            params.put(WHERE, param.getWhere());
-        }
+        applyIfNotEmpty(param.getColumns(), (v) -> params.put(COLUMNS, v));
+        applyIfNotEmpty(param.getWhere(), (v) -> params.put(WHERE, v));
+
         return params;
     }
 
