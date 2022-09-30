@@ -1,35 +1,38 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import React, {memo,useState} from 'react';
+import React, {memo, useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
-import {set, isEmpty, capitalize} from 'lodash';
+import {isEmpty, capitalize} from 'lodash';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
-import {getRootURL, getCmdSrvSyncURL, encodeUrl, updateSet, replaceExt} from '../util/WebUtil.js';
+import {getRootURL, getCmdSrvSyncURL, encodeUrl, replaceExt} from '../util/WebUtil.js';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
-import FieldGroupUtils, {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
-import {primePlot, getActivePlotView, getAllCanvasLayersForPlot, isThreeColor} from '../visualize/PlotViewUtil.js';
+import {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
+import {
+    primePlot,
+    getActivePlotView,
+    getAllCanvasLayersForPlot,
+    isThreeColor
+} from '../visualize/PlotViewUtil.js';
 import {Band} from '../visualize/Band.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {isImage} from '../visualize/WebPlot.js';
 import {makeRegionsFromPlot} from '../visualize/region/RegionDescription.js';
 import {saveDS9RegionFile} from '../rpc/PlotServicesJson.js';
-import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
-import {DownloadOptionsDialog, fileNameValidator, getTypeData, WORKSPACE, LOCALFILE} from './DownloadOptionsDialog.jsx';
-import {isValidWSFolder, WS_SERVER_PARAM, getWorkspacePath, isWsFolder, dispatchWorkspaceUpdate} from '../visualize/WorkspaceCntlr.js';
+import {DownloadOptionsDialog, WORKSPACE, LOCALFILE} from './DownloadOptionsDialog.jsx';
+import {isValidWSFolder, WS_SERVER_PARAM, getWorkspacePath, dispatchWorkspaceUpdate} from '../visualize/WorkspaceCntlr.js';
 import {doDownloadWorkspace, workspacePopupMsg, validateFileName} from './WorkspaceViewer.jsx';
 import {ServerParams} from '../data/ServerParams.js';
 import {INFO_POPUP, showInfoPopup} from './PopupUtil.jsx';
 import {getWorkspaceConfig} from '../visualize/WorkspaceCntlr.js';
 import {upload} from '../rpc/CoreServices.js';
 import {download, downloadBlob, makeDefaultDownloadFileName} from '../util/fetch.js';
-import {useBindFieldGroupToStore} from './SimpleComponent.jsx';
-
+import {useFieldGroupValue} from './SimpleComponent.jsx';
 import HelpIcon from './HelpIcon.jsx';
 
 const STRING_SPLIT_TOKEN= '--STR--';
@@ -42,33 +45,6 @@ const fitsDownGroup = 'FITS_DOWNLOAD_FORM';
 const labelWidth = 100;
 const hipsFileTypeOps= [ {label: 'PNG File', value: 'png' }, {label: 'Region File', value: 'reg'} ];
 const imageFileTypeOps=  [{label: 'FITS Image', value: 'fits'}, ...hipsFileTypeOps];
-
-const fKeyDef = {
-    fileType: {fKey: 'fileType', label: 'Type of files:'},
-    opOption: {fKey: 'operationOption', label: 'FITS Image:'},
-    colorBand:{fKey: 'threeBandColor', label: 'Color Band:'},
-    fileName: {fKey: 'fileName', label: 'File name:'},
-    location: {fKey: 'fileLocation', label: 'File location:'},
-    wsSelect: {fKey: 'wsSelect', label: ''},
-    overWritable: {fKey: 'fileOverwritable', label: 'File overwritable: '}
-};
-
-const defValues = {
-    [fKeyDef.fileType.fKey]: Object.assign(getTypeData(fKeyDef.fileType.fKey, 'fits',
-        'Please select an file type', fKeyDef.fileType.label, labelWidth), {validator: null}),
-    [fKeyDef.opOption.fKey]: Object.assign(getTypeData(fKeyDef.opOption.fKey, 'fileTypeOrig',
-        'Please select an option', fKeyDef.opOption.label, labelWidth), {validator: null}),
-    [fKeyDef.colorBand.fKey]: Object.assign(getTypeData(fKeyDef.colorBand.fKey, '',
-        'Please select a color option', fKeyDef.colorBand.label, labelWidth), {validator: null}),
-    [fKeyDef.fileName.fKey]: Object.assign(getTypeData(fKeyDef.fileName.fKey, '',
-        'Please enter a filename, a default name will be used if it is blank', fKeyDef.fileName.label, labelWidth), {validator: null}),
-    [fKeyDef.location.fKey]: Object.assign(getTypeData(fKeyDef.location.fKey, 'isLocal',
-        'select the location where the file is downloaded to', fKeyDef.location.label, labelWidth), {validator: null}),
-    [fKeyDef.wsSelect.fKey]: Object.assign(getTypeData(fKeyDef.wsSelect.fKey, '',
-        'workspace file system', fKeyDef.wsSelect.label, labelWidth), {validator: null}),
-    [fKeyDef.overWritable.fKey]: Object.assign(getTypeData(fKeyDef.overWritable.fKey, '0',
-        'File is overwritable', fKeyDef.overWritable.label, labelWidth), {validator: null})
-};
 
 const popupPanelResizableStyle = {
     width: dialogWidth,
@@ -109,31 +85,35 @@ const renderOperationOption= () => (
             <div>
                 <RadioGroupInputField
                     options={[ { label:'Original', value:'fileTypeOrig'}, { label:'Cropped', value:'fileTypeCrop'} ]}
-                    fieldKey='operationOption' />
+                    fieldKey='operationOption' tooltip='Please select an option'/>
             </div>
         </div> );
 
-function renderThreeBand(colors) {
-    const ft = FieldGroupUtils.getGroupFields(fitsDownGroup)?.fileType?.value;
-    if (ft==='png' || ft==='reg') return false;
+const RenderThreeBand = ({colors}) => {
+    const [ft] = useFieldGroupValue ('fileType', fitsDownGroup);
+    if (ft()==='png' || ft()==='reg') return false;
     return (
         <div style={{display: 'flex', marginTop: mTOP}}>
             <div>
-                <RadioGroupInputField options={colors.map( (c) => ({label: c, value: c}))} fieldKey='threeBandColor' />
+                <RadioGroupInputField options={colors.map( (c) => ({label: c, value: c}))} fieldKey='threeBandColor'
+                    label='Color Band:' labelWidth={100} tooltip='Please select a color option'/>
             </div>
         </div> );
-}
+};
 
-const makeFileOptions= (plot,colors,hasOperation) => (
-    <div>
-        <div style={{display: 'flex', marginTop: mTOP}}>
-            <div>
-                <RadioGroupInputField options={isImage(plot) ? imageFileTypeOps : hipsFileTypeOps} fieldKey='fileType'/>
+const MakeFileOptions = ({plot,colors,hasOperation,threeC}) => {
+     return (
+        <div>
+            <div style={{display: 'flex', marginTop: mTOP}}>
+                <div>
+                    <RadioGroupInputField options={isImage(plot) ? imageFileTypeOps : hipsFileTypeOps} fieldKey='fileType'
+                      label='Type of files:' labelWidth={100} tooltip='Please select a file type' />
+                </div>
             </div>
-        </div>
-        {hasOperation && renderOperationOption()}
-        {isThreeColor(plot) && renderThreeBand(colors)}
-    </div>);
+            {hasOperation && renderOperationOption()}
+            {threeC && <RenderThreeBand {...{colors}}/>}
+        </div>);
+};
 
 function getInitState()  {
     const pv= getActivePlotView(visRoot());
@@ -147,19 +127,50 @@ function getInitState()  {
 }
 
 const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
-    const [{pv,plot,hasOperation,threeC,colors}]= useState(getInitState);
-    useBindFieldGroupToStore(groupKey); // this will force a rerender when anything changes
-    const band = threeC ? getFieldVal(groupKey, 'threeBandColor', colors[0]) : Band.NO_BAND.key;
-    const totalChildren = (isWs ? 3 : 2) +  (hasOperation ? 1 : 0) + (threeC ? 1 : 0);// fileType + save as + (fileLocation)
-    const childH = (totalChildren*(20+mTOP));
+    const [{pv, plot, hasOperation, threeC, colors}] = useState(getInitState);
+    const [getBand]= useFieldGroupValue ('threeBandColor', groupKey);
+    const band= threeC ? getBand() : Band.NO_BAND.key;
+
+    const totalChildren = (isWs ? 3 : 2) + (hasOperation ? 1 : 0) + (threeC ? 1 : 0);// fileType + save as + (fileLocation)
+    const childH = (totalChildren * (20 + mTOP));
+
+    const [getFileType] = useFieldGroupValue ('fileType', groupKey);
+    const [getFileName, setFileName] = useFieldGroupValue('fileName', groupKey);
+    const [getLocation] = useFieldGroupValue('fileLocation', groupKey);
+
+    useEffect(() => {
+        const fileType = getFileType();
+        const fileName = getFileName();
+        const fileLocation = getLocation();
+        let fName = '';
+
+        // change the filename if a file is selected from the file picker
+        if (fileLocation === 'isWs' && isValidWSFolder(fileName, false).valid) {
+            fName = fileName.substring(fileName.lastIndexOf('/') + 1);
+        }
+        else { //FileLocation = isLocal: check for fileType change or fileName change. If fileType changes, replace file extension
+            if (fileName) { //checking if filename is !empty string allows user to delete the input string (default fileName)
+                if (!isThreeColor(plot)) {
+                    fName = replaceExt(fileName, fileType);//replaceExt(fields.fileName.value, fType);
+                } else {
+                    fName = matchPossibleDefaultNames(plot, fileName) ?
+                        makeFileName(plot, fileName, fileType) :
+                        replaceExt(fileName, fileType);
+                }
+            }
+        }
+        setFileName(fName);
+    }, [getFileType, getFileName, getLocation]);
 
     return (
-        <FieldGroup style={{height: 'calc(100% - 10px)', width: '100%'}} groupKey={groupKey}
-                    reducerFunc={makeFitsDLReducer(plot,band)}>
+        <FieldGroup style={{height: 'calc(100% - 10px)', width: '100%'}} groupKey={groupKey}>
             <div style={{boxSizing: 'border-box', paddingLeft:5, paddingRight:5, width: '100%', height: 'calc(100% - 70px)'}}>
                 <DownloadOptionsDialog {...{
-                    fromGroupKey:groupKey, workspace:isWs, children: makeFileOptions(plot,colors,hasOperation),
-                    labelWidth, dialogWidth:'100%', dialogHeight:`calc(100% - ${childH}pt)` }}/>
+                    fromGroupKey:groupKey, fileName: makeFileName(plot,band,'fits'), workspace:isWs,
+                    labelWidth, dialogWidth:'100%', dialogHeight:`calc(100% - ${childH}pt)`,
+                }}>
+                    <MakeFileOptions {...{plot, colors, hasOperation, threeC}}/>
+                </DownloadOptionsDialog>
             </div>
             <div style={{display:'flex', width:'calc(100% - 20px)', margin: '20px 10px 10px 10px', justifyContent:'space-between'}}>
                 <div style={{display:'flex', width:'30%', justifyContent:'space-around'}}>
@@ -178,51 +189,6 @@ FitsDownloadDialogForm.propTypes = {
     popupId: PropTypes.string,
     isWs: PropTypes.oneOfType([PropTypes.bool, PropTypes.string])
 };
-
-function makeFitsDLReducer(plot, band) {
-    return (inFields, action) => {
-        if (!inFields) {
-            const defV = {...defValues};
-            set(defV, [fKeyDef.colorBand.fKey, 'value'], (band !== Band.NO_BAND.key) ? band : '');
-            set(defV, [fKeyDef.fileName.fKey, 'value'], makeFileName(plot,band,'fits'));
-            set(defV, [fKeyDef.wsSelect.fKey, 'value'], '');
-            set(defV, [fKeyDef.wsSelect.fKey, 'validator'], isWsFolder());
-            set(defV, [fKeyDef.fileName.fKey, 'validator'], fileNameValidator());
-            return defV;
-        }
-        const {fieldKey,value}= action.payload;
-        const fType = inFields[fKeyDef.fileType.fKey]?.value;
-        switch (action.type) {
-            case FieldGroupCntlr.VALUE_CHANGE:
-                if (fieldKey === fKeyDef.wsSelect.fKey) {
-                    // change the filename if a file is selected from the file picker
-                    if (value && isValidWSFolder(value, false).valid) {
-                        const fName = value.substring(value.lastIndexOf('/') + 1);
-                        inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'], fName);
-                    }
-                }
-                else {
-                    let fileName;
-                    if (!isThreeColor(plot)) {
-                        fileName= replaceExt(inFields.fileName.value,fType);
-                    }
-                    else {
-                        fileName= matchPossibleDefaultNames(plot,inFields.fileName?.value) ?
-                            makeFileName(plot,inFields.threeBandColor?.value,fType) :
-                            replaceExt(inFields.fileName.value,fType);
-                    }
-                    inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'], fileName);
-                }
-                break;
-            case FieldGroupCntlr.MOUNT_FIELD_GROUP:
-                inFields = updateSet(inFields, [fKeyDef.colorBand.fKey, 'value'],
-                    ((band !== Band.NO_BAND.key) ? band : ''));
-                inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'], makeFileName(plot,band,fType));
-                break;
-        }
-        return {...inFields};
-    };
-}
 
 function matchPossibleDefaultNames(plot,fileName) {
     const possibleRoots= [makeFileName(plot,Band.NO_BAND.key, 'fits'), makeFileName(plot,Band.RED.key, 'fits'),
@@ -261,6 +227,10 @@ function resultsSuccess(request, plotView, popupId) {
 
     let {fileName} = request;
     const band = bandSelect ? Band.get(bandSelect) : Band.NO_BAND;
+
+    //if fileName is ".fits" or ".png" or ".reg", set fileName = "" so that makeFileName creates a default fileName below
+    //earlier, saving with a ".fits" or ".reg" in the filName resulted in it being downloaded "fits.txt" or "regs.txt" - now fixed
+    if (fileName === '.' + ext) fileName = '';
 
     if (ext) fileName= fileName ? fileName.replace('.fits', '.'+ ext) : makeFileName(plot,band,ext);
 
@@ -313,13 +283,13 @@ function makeFileName(plot, band='NO_BAND', ext= 'fits') {
     const req = plot.plotState.getWebPlotRequest(band);
     let root = isImage(plot) ? 'image' : 'HiPS';
     if (isImage(plot) && isThreeColor(plot) && ext==='fits') {
-        switch (band.toUpperCase()) {
+        switch (band.key || band.toUpperCase()) {
             case Band.RED.key: root= 'image-red'; break;
             case Band.GREEN.key: root= 'image-green'; break;
             case Band.BLUE.key: root= 'image-blue'; break;
         }
     }
-    const title= req.getDownloadFileNameRoot() ? req.getDownloadFileNameRoot() : plot.title;
+    const title= req?.getDownloadFileNameRoot() ?? plot.title;
     return makeDefaultDownloadFileName(root, title, ext);
 }
 
