@@ -122,24 +122,6 @@ export function getNumericCols(cols) {
 
 
 /**
- * @global
- * @public
- * @typedef {Object} XYPlotOptions - shallow object with XYPlot parameters
- * @prop {string}  [source]     location of the ipac table, url or file path; ignored when XY plot view is added to table
- * @prop {string}  [tbl_id]     table id of the table this plot is connected to
- * @prop {string}  [chartTitle] title of the chart
- * @prop {string}  xCol         column or expression to use for x values, can contain multiple column names ex. log(col) or (col1-col2)/col3
- * @prop {string}  yCol         column or expression to use for y values, can contain multiple column names ex. sin(col) or (col1-col2)/col3
- * @prop {string}  [plotStyle]  points, linepoints, line
- * @prop {string}  [xLabel]     label to use with x axis
- * @prop {string}  [yLabel]     label to use with y axis
- * @prop {string}  [xOptions]   comma separated list of x axis options: grid,flip,log
- * @prop {string}  [yOptions]   comma separated list of y axis options: grid,flip,log
- * @prop {string}  [xError]     column or expression for X error
- * @prop {string}  [yError]     column or expression for Y error
- */
-
-/**
  * @summary Convert shallow object with XYPlot parameters to scatter plot parameters object.
  * @param {XYPlotOptions} params - shallow object with XYPlot parameters
  * @returns {Object} - object, used to create Plotly chart
@@ -193,21 +175,6 @@ export function makeXYPlotParams(params) {
     return {data, layout};
 }
 
-
-/**
- * @global
- * @public
- * @typedef {Object} HistogramOptions
- * @summary shallow object with histogram parameters
- * @prop {string}  [source]     location of the ipac table, url or file path; ignored when histogram view is added to table
- * @prop {string}  [tbl_id]     table id of the table this plot is connected to
- * @prop {string}  [chartTitle] title of the chart
- * @prop {string}  col          column or expression to use for histogram, can contain multiple column names ex. log(col) or (col1-col2)/col3
- * @prop {number}  [numBins=50] number of bins for fixed bins algorithm (default)
- * @prop {number}  [falsePositiveRate] false positive rate for bayesian blocks algorithm
- * @prop {string}  [xOptions]   comma separated list of x axis options: flip,log
- * @prop {string}  [yOptions]   comma separated list of y axis options: flip,log
- */
 
 /**
  * @summary Convert shallow object with Histogram parameters to histogram plot parameters object.
@@ -475,6 +442,7 @@ export function handleBigInt(v) {
  * @param {object} p
  * @param {string} p.chartId
  * @param {object[]} p.data
+ * @param {object[]} p.fireflyData
  */
 export function handleTableSourceConnections({chartId, data, fireflyData}) {
     const tablesources = makeTableSources(chartId, data, fireflyData);
@@ -613,6 +581,11 @@ function updateChartData(chartId, traceNum, tablesource, action={}) {
 export function isSpectralOrder(chartId) {
     const {activeTrace=0, fireflyData} = getChartData(chartId) || {};
     return fireflyData?.[activeTrace]?.spectralOrder;
+}
+
+export function isSpectrum(chartId) {
+    const {activeTrace=0, fireflyData} = getChartData(chartId) || {};
+    return fireflyData?.[activeTrace]?.dataType === spectrumType;
 }
 
 
@@ -1161,4 +1134,11 @@ export function getChartProps(chartId, tbl_id, activeTrace) {
 
     return {activeTrace, data, fireflyData, layout, fireflyLayout, tablesources, tablesource, mappings, tbl_id, type, noXY,
         dataType, noColor, isYNotNumeric, isXNotNumeric, xNoLog, yNoLog, color, multiTrace, spectralAxis, fluxAxis};
+}
+
+
+export function getTblIdFromChart(chartId, traceNum) {
+    const {data, fireflyData, activeTrace} = getChartData(chartId) || {};
+    traceNum = traceNum ?? activeTrace;
+    return data?.[traceNum]?.tbl_id || fireflyData?.[traceNum].tbl_id;
 }

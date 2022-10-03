@@ -13,15 +13,17 @@ import {CloseButton} from '../../ui/CloseButton.jsx';
 import {ChartPanel} from './ChartPanel.jsx';
 import {MultiItemViewerView} from '../../visualize/ui/MultiItemViewerView.jsx';
 import {dispatchAddViewer, dispatchViewerUnmounted, dispatchUpdateCustom,
-        getMultiViewRoot, getViewer, getLayoutType,PLOT2D} from '../../visualize/MultiViewCntlr.js';
+        getMultiViewRoot, getViewer, getLayoutType, PLOT2D} from '../../visualize/MultiViewCntlr.js';
 import {getExpandedChartProps, getChartData} from '../ChartsCntlr.js';
 import {LO_VIEW, LO_MODE, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 
 import {MultiChartToolbarStandard, MultiChartToolbarExpanded} from './MultiChartToolbar.jsx';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 
-export function getActiveViewerItemId(viewerId) {
-    return getViewer(getMultiViewRoot(), viewerId)?.customData?.activeItemId;
+export function getActiveViewerItemId(viewerId, useDefault) {
+    const viewer= getViewer(getMultiViewRoot(),viewerId);
+    const activeItemId = viewer?.customData?.activeItemId;
+    return activeItemId || (useDefault ? viewer?.itemIdAry?.[0] : undefined);
 }
 
 

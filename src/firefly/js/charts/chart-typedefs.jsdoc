@@ -1,0 +1,106 @@
+/**
+ * @global
+ */
+
+/**
+ * Top level store for chart related data.  It's mounted as 'charts' under the application state
+ * @typedef {object} ChartSpace
+ * @prop {Object.<string, ChartData>}   data    repository for chart model; keyed by chartId
+ * @prop {Object.<string, Object>}      ui      not used
+ *
+ * @global
+ * @public
+ */
+
+
+/**
+ * Chart model.  The top level chart data object including UI state.
+ * @typedef {object} ChartData
+ * @prop {string}   chartId
+ * @prop {string}   chartType       chart framework type.  default to plot.ly
+ * @prop {string}   groupId
+ * @prop {string}   viewerId
+ * @prop {number}   activeTrace
+ * @prop {boolean}  hasSelected
+ * @prop {boolean}  mounted
+ * @prop {number[]} curveNumberMap
+ * @prop {PlotlyData[]} data        plotly data object
+ * @prop {PlotlyLayout} layout      plotly layout info
+ * @prop {Object[]} fireflyData     firefly aux data.  mapped directly to plotly's data array
+ * @prop {TableSource[]} tablesources    chart to table relational data
+ * @prop {PlotlyData} highlighted   highlighted is implemented as a new trace on top of the original chart
+ * @prop {PlotlyData} selected      selected is implemented as a new trace on top of the original chart
+ * @prop {ChartData}  _original     original before any modification.  Used for reset.
+ *
+ * @global
+ * @public
+ */
+
+/**
+ * Chart to table related data
+ * @typedef {object} TableSource
+ * @prop {string}   tbl_id
+ * @prop {function} fetchData   function used to fetch the required data needed to complete plotly data
+ * @prop {object}   mappings    key/value pairs mapping table data to plotly data's attribute
+ * @prop {string}   resultSetID table's resultSetID.
+ * @prop {object}   options
+ * @prop {function} _cancel     used to unwatch table data change events
+ *
+ *
+ * @global
+ * @public
+ */
+
+/**
+ * Plotly data object representing a single trace.
+ * See https://plotly.com/javascript/reference/index/ for attributes details
+ * @typedef {object} PlotlyData
+ *
+ * @global
+ * @public
+ */
+
+/**
+ * Plotly layout info for the entire chart.
+ * See https://plotly.com/javascript/reference/index/ for attributes details
+ * @typedef {object} PlotlyLayout
+ *
+ * @global
+ * @public
+ */
+
+
+/**
+ * @typedef {Object} XYPlotOptions - shallow object with XYPlot parameters
+ * @prop {string}  [source]     location of the ipac table, url or file path; ignored when XY plot view is added to table
+ * @prop {string}  [tbl_id]     table id of the table this plot is connected to
+ * @prop {string}  [chartTitle] title of the chart
+ * @prop {string}  xCol         column or expression to use for x values, can contain multiple column names ex. log(col) or (col1-col2)/col3
+ * @prop {string}  yCol         column or expression to use for y values, can contain multiple column names ex. sin(col) or (col1-col2)/col3
+ * @prop {string}  [plotStyle]  points, linepoints, line
+ * @prop {string}  [xLabel]     label to use with x axis
+ * @prop {string}  [yLabel]     label to use with y axis
+ * @prop {string}  [xOptions]   comma separated list of x axis options: grid,flip,log
+ * @prop {string}  [yOptions]   comma separated list of y axis options: grid,flip,log
+ * @prop {string}  [xError]     column or expression for X error
+ * @prop {string}  [yError]     column or expression for Y error
+ *
+ * @global
+ * @public
+ */
+
+/**
+ * @typedef {Object} HistogramOptions
+ * @summary shallow object with histogram parameters
+ * @prop {string}  [source]     location of the ipac table, url or file path; ignored when histogram view is added to table
+ * @prop {string}  [tbl_id]     table id of the table this plot is connected to
+ * @prop {string}  [chartTitle] title of the chart
+ * @prop {string}  col          column or expression to use for histogram, can contain multiple column names ex. log(col) or (col1-col2)/col3
+ * @prop {number}  [numBins=50] number of bins for fixed bins algorithm (default)
+ * @prop {number}  [falsePositiveRate] false positive rate for bayesian blocks algorithm
+ * @prop {string}  [xOptions]   comma separated list of x axis options: flip,log
+ * @prop {string}  [yOptions]   comma separated list of y axis options: flip,log
+ *
+ * @global
+ * @public
+ */

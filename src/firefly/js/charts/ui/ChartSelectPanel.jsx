@@ -1,7 +1,6 @@
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
-import shallowequal from 'shallowequal';
 
 import {FormPanel} from './../../ui/FormPanel.jsx';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
@@ -10,7 +9,7 @@ import {SimpleComponent, useStoreConnector} from './../../ui/SimpleComponent.jsx
 import {getChartData, dispatchChartTraceRemove, dispatchChartUpdate} from '../ChartsCntlr.js';
 import {NewTracePanel, getNewTraceType, getSubmitChangesFunc, addNewTrace} from './options/NewTracePanel.jsx';
 import {PopupPanel} from './../../ui/PopupPanel.jsx';
-import {isSpectralOrder, isScatter2d} from '../ChartUtil.js';
+import {isSpectralOrder, isScatter2d, getTblIdFromChart} from '../ChartUtil.js';
 import {basicOptions, BasicOptions} from './options/BasicOptions.jsx';
 import {ScatterOptions} from './options/ScatterOptions.jsx';
 import {HeatmapOptions} from './options/HeatmapOptions.jsx';
@@ -63,8 +62,11 @@ function getChartActions({chartId, tbl_id}) {
 }
 
 
-function onChartAction({chartAction, tbl_id, chartId, hideDialog, renderTreeId}) {
+function onChartAction({chartAction, chartId, hideDialog, renderTreeId}) {
     return (fields) => {
+        const {activeTrace, data, fireflyData} = getChartData(chartId);
+        const tbl_id = getTblIdFromChart(chartId, activeTrace);
+
         switch (chartAction) {
             case CHART_ADDNEW:
                 addNewTrace({fields, tbl_id, hideDialog, renderTreeId}); // no chart id
@@ -73,7 +75,6 @@ function onChartAction({chartAction, tbl_id, chartId, hideDialog, renderTreeId})
                 addNewTrace({fields, tbl_id, chartId, hideDialog});
                 break;
              case CHART_TRACE_MODIFY:
-                const {activeTrace, data, fireflyData} = getChartData(chartId);
                 const type = get(data, `${activeTrace}.type`, 'scatter');
                 let ftype = get(fireflyData, `${activeTrace}.dataType`);
                 const scatterOrHeatmap = get(fireflyData, [activeTrace, 'scatterOrHeatmap']);
@@ -84,8 +85,7 @@ function onChartAction({chartAction, tbl_id, chartId, hideDialog, renderTreeId})
                 break;
             case CHART_TRACE_REMOVE:
                 hideDialog();
-                const {activeTrace:traceNum} = getChartData(chartId);
-                dispatchChartTraceRemove(chartId, traceNum);
+                dispatchChartTraceRemove(chartId, activeTrace);
                 break;
             default:
                 console.log(`onChartAction - unsupported action ${chartAction}`);

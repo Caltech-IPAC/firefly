@@ -156,7 +156,7 @@ function buildTablePart(llApi) {
      * @prop {boolean} showSave     defaults to true
      * @prop {boolean} showOptionButton    defaults to true
      * @prop {boolean} showFilterButton    defaults to true
-     * @prop {boolean} showInfoButton     defaults to false
+     * @prop {boolean} showInfoButton      defaults to true
      * @prop {boolean} border       defaults to true
      * @prop {boolean} help_id      link to help if applicable
      * @prop {function[]}  leftButtons   an array of functions that returns a button-like component laid out on the left side of this table header.  Function will be called with table's state.

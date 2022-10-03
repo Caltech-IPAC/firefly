@@ -650,6 +650,7 @@ function reduceData(state={}, action={}) {
             }
             state = updateSet(state, chartId,
                 omitBy({
+                    chartId,
                     chartType,
                     mounted: nMounted,
                     ...rest

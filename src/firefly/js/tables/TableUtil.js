@@ -29,6 +29,7 @@ const local = {
     getTblById,
     getTblInfoById,
     getColumn,
+    getColumns,
     getCellValue,
     getSelectedData
 };

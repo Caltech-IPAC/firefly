@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
+import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 
@@ -205,8 +206,6 @@ public class HttpServices {
 
             httpClient.executeMethod(method);
 
-            logErrors(method, input);
-
             if (handler != null) {
                 handler.handleResponse(method);
             }
@@ -214,7 +213,7 @@ public class HttpServices {
             return method;
 
         } finally {
-            LOG.trace("--> HttpServices", getDetailDesc(method, input));
+            logRequest(method, input);
 
             if (method != null) {
                 method.releaseConnection();
@@ -409,7 +408,7 @@ public class HttpServices {
         }
     }
 
-    private static void logErrors(HttpMethod method, HttpServiceInput input) {
+    private static void logRequest(HttpMethod method, HttpServiceInput input) {
         int status = method.getStatusCode();
         if(!isOk(method)) {
             // logs bad requests
@@ -420,6 +419,8 @@ public class HttpServices {
             } else {
                 LOG.error("HTTP request failed with status:" + status + "\n" + getDetailDesc(method, input));
             }
+        } else {
+            LOG.trace("--> HttpServices trace: ", getDetailDesc(method, input));
         }
     }
 
@@ -433,12 +434,17 @@ public class HttpServices {
                     "\n\tREQUEST HEADERS: " + CollectionUtil.toString(method.getRequestHeaders()).replaceAll("\\r|\\n", "") +
                     "\n\tRESPONSE HEADERS: " + CollectionUtil.toString(method.getResponseHeaders()).replaceAll("\\r|\\n", "");
 
-            if (method.getName().equals("GET")) {
-                String curl = "curl -v";
-                for(Header h : method.getRequestHeaders())  curl += " -H '" + h.toString().trim() + "'";
-                curl += " '" + method.getURI() + "'";
-                desc += "\n\tCURL CMD: " + curl;
-            }
+            final StringBuilder curl = new StringBuilder("curl -v");
+            for(Header h : method.getRequestHeaders())  curl.append(" -H '" + h.toString().trim() + "'");
+
+            applyIfNotEmpty(input.getParams(),
+                    (p) -> p.forEach((k,v) -> curl.append(String.format(" -F '%s=%s'", k,v))));
+            applyIfNotEmpty(input.getFiles(),
+                    (f) -> f.forEach((k,v) -> curl.append(String.format(" -F '%s=@%s'", k,v))));
+
+            curl.append(" '" + input.getRequestUrl() + "'");
+            desc += "\n\tCURL CMD: " + curl;
+
             return desc;
         } catch (Exception e) {
             return "Details not available.  Exception occurs while trying to get the details.";

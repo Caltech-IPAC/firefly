@@ -89,7 +89,7 @@ export function spectrumReducer({chartId, activeTrace, tbl_id}) {
             ['x', 'y'].forEach((v) => {
                 if (fieldKey === `fireflyData.${activeTrace}.${v}Unit`) {
                     const axis = v === 'x' ? spectralAxis : fluxAxis;
-                    inFields = unitUpdated(fireflyData, data, inFields, v, value, activeTrace, axis, true);
+                    inFields = applyUnitConversion({fireflyData, data, inFields, axisType:v, newUnit:value, traceNum:activeTrace, axis, isInput:true});
                     inFields = updateSet(inFields, [`fireflyLayout.${v}axis.min`, 'value'], undefined);
                     inFields = updateSet(inFields, [`fireflyLayout.${v}axis.max`, 'value'], undefined);
                     inFields = updateSet(inFields, [`__${v}reset`, 'value'], 'true');
@@ -101,38 +101,38 @@ export function spectrumReducer({chartId, activeTrace, tbl_id}) {
     };
 }
 
-const unitUpdated = (fireflyData, data, inFields, axisType, value, traceNum, axis, isInput=false) => {
+export const applyUnitConversion = ({fireflyData, data, inFields, axisType, newUnit, traceNum, axis, isInput=false}) => {
 
     const path = (p) => isInput ? [p, 'value'] : [p];
 
     const layoutAxis = axisType === 'x' ? 'xaxis' : 'yaxis';
 
-    const label = getUnitInfo(value, axisType === 'x').label;
+    const label = getUnitInfo(newUnit, axisType === 'x').label;
     inFields = updateSet(inFields, path(`layout.${layoutAxis}.title.text`), label);
 
-    const colOrExpr = getUnitConvExpr({cname: axis.value, from: axis.unit, to: value});
+    const colOrExpr = getUnitConvExpr({cname: axis.value, from: axis.unit, to: newUnit});
     inFields = updateSet(inFields, path(`_tables.data.${traceNum}.${axisType}`), colOrExpr);
 
     const errCname = get(data, errorFieldKey(traceNum, axisType).replace('_tables.data.', ''));
     if (errCname) {
-        const convVal = getUnitConvExpr({cname: axis.statErrHigh || axis.statError, from: axis.unit, to: value});
+        const convVal = getUnitConvExpr({cname: axis.statErrHigh || axis.statError, from: axis.unit, to: newUnit});
         inFields = updateSet(inFields, path(errorFieldKey(traceNum, axisType)), convVal);
     }
 
     const errMinusCname =  get(data, errorMinusFieldKey(traceNum, axisType).replace('_tables.data.', ''));
     if (errMinusCname) {
-        const convVal = getUnitConvExpr({cname: axis.statErrLow, from: axis.unit, to: value});
+        const convVal = getUnitConvExpr({cname: axis.statErrLow, from: axis.unit, to: newUnit});
         inFields = updateSet(inFields, path(errorMinusFieldKey(traceNum, axisType)), convVal);
     }
 
     const upperLimit =  get(fireflyData, `${traceNum}.${axisType}Max`);
     if (upperLimit) {
-        const convVal = getUnitConvExpr({cname: axis.upperLimit, from: axis.unit, to: value});
+        const convVal = getUnitConvExpr({cname: axis.upperLimit, from: axis.unit, to: newUnit});
         inFields = updateSet(inFields, path(`_tables.fireflyData.${traceNum}.${axisType}Max`), convVal);
     }
     const lowerLimit =  get(fireflyData, `${traceNum}.${axisType}Min`);
     if (lowerLimit) {
-        const convVal = getUnitConvExpr({cname: axis.lowerLimit, from: axis.unit, to: value});
+        const convVal = getUnitConvExpr({cname: axis.lowerLimit, from: axis.unit, to: newUnit});
         inFields = updateSet(inFields, path(`_tables.fireflyData.${traceNum}.${axisType}Min`), convVal);
     }
 
@@ -143,7 +143,7 @@ const unitUpdated = (fireflyData, data, inFields, axisType, value, traceNum, axi
 
 export function submitChangesSpectrum({chartId, activeTrace, fields, tbl_id, renderTreeId}) {
 
-    // when unit changes, apple it to the other traces as well
+    // when unit changes, apply it to the other traces as well
     if (isSpectralOrder(chartId)) {
         const {data, fireflyData} = getChartData(chartId);
         const {spectralAxis={}, fluxAxis={}} = getSpectrumDM(getTblById(tbl_id)) || {};
@@ -154,8 +154,8 @@ export function submitChangesSpectrum({chartId, activeTrace, fields, tbl_id, ren
             if (idx !== activeTrace) {
                 fields = updateSet(fields, [`fireflyData.${idx}.xUnit`], xUnit);
                 fields = updateSet(fields, [`fireflyData.${idx}.yUnit`], yUnit);
-                fields = unitUpdated(fireflyData, data, fields, 'x', xUnit, idx, spectralAxis);
-                fields = unitUpdated(fireflyData, data, fields, 'y', yUnit, idx, fluxAxis);
+                fields = applyUnitConversion({fireflyData, data, inFields:fields, axisType:'x', newUnit:xUnit, traceNum:idx, axis:spectralAxis});
+                fields = applyUnitConversion({fireflyData, data, inFields:fields, axisType:'y', newUnit:yUnit, traceNum:idx, axis:fluxAxis});
             }
         });
     }

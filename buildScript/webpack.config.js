@@ -35,7 +35,7 @@ export default function makeWebpackConfig(config) {
     const localBuild= BUILD_ENV === 'local';
 
     if (!process.env.NODE_ENV) {
-        process.env.NODE_ENV = localBuild ? 'development' : 'production';
+        process.env.NODE_ENV = ['local', 'dev'].includes(BUILD_ENV) ? 'development' : 'production';
     }
 
     console.log('ENV_DEV_MODE: ' + ENV_DEV_MODE);
