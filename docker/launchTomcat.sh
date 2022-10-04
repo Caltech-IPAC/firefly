@@ -1,6 +1,10 @@
 #!/bin/bash
 
+export JPDA_ADDRESS="*:5050"
+VISUALIZE_FITS_SEARCH_PATH=${VISUALIZE_FITS_SEARCH_PATH:-''}
+START_MODE=${START_MODE:-run}
 NAME=${BUILD_TIME_NAME:-"ipac/firefly"}
+
 ADMIN_USER=${ADMIN_USER:-admin}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-`echo $RANDOM | base64 | head -c 8`}
 USE_ADMIN_AUTH=${USE_ADMIN_AUTH:-"true"}
@@ -76,7 +80,7 @@ fi
 #---------   CATALINA_OPTS must be exported for catalina.sh to pick them up
 export CATALINA_OPTS="\
   -XX:InitialRAMPercentage=${INIT_RAM_PERCENT:-10} \
-  -XX:MaxRAMPercentage=${MAX_RAM_PERCENT:-90} \
+  -XX:MaxRAMPercentage=${MAX_RAM_PERCENT:-100} \
   -DADMIN_USER=${ADMIN_USER} \
   -DADMIN_PASSWORD=${ADMIN_PASSWORD} \
   -Dhost.name=${HOSTNAME} \
@@ -119,8 +123,7 @@ CATALINA_OPTS="$CATALINA_OPTS \
 ${CATALINA_HOME}/cleanup.sh /firefly/workarea /firefly/shared-workarea &
 
 echo -e "\nlaunchTomcat.sh: Starting Tomcat"
-if [ "$DEBUG" = "true" ] ||[ "$DEBUG" = "t" ] ||[ "$DEBUG" = "1" ] ||  \
-   [ "$DEBUG" = "TRUE" ] || [ "$DEBUG" = "True" ] || [ "$1" = "--debug" ]; then
+if [ "${DEBUG,,}" = "true" ] || [ "$1" = "--debug" ]; then
     exec ${CATALINA_HOME}/bin/catalina.sh jpda ${START_MODE}
 else
     exec ${CATALINA_HOME}/bin/catalina.sh ${START_MODE}

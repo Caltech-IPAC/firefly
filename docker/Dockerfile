@@ -74,7 +74,7 @@ ARG gid=91
 # - emacs removed because it is so big: to readd emacs: emacs-nox
 RUN apt-get update && apt-get install -y \
         vim procps wget unzip \
-    && rm -rf /var/lib/apt/lists/*;
+        && rm -rf /var/lib/apt/lists/*;
 
 # These are the users replaceable environment variables, basically runtime arguments
 #          - Set the available memory on the command line with --memory="4g"
@@ -82,11 +82,7 @@ RUN apt-get update && apt-get install -y \
 #          - also- User name and password to use admin
 #          - PROPS could be used to pass any properties
 
-ENV INIT_RAM_PERCENT=10\
-    MAX_RAM_PERCENT=100\
-    JVM_CORES=0\
-    ADMIN_USER=admin\
-    ADMIN_PASSWORD='' \
+ENV JVM_CORES=0\
     DEBUG=false \
     CLEANUP_INTERVAL=12h \
     PROPS=''
@@ -101,11 +97,6 @@ ENV INIT_RAM_PERCENT=10\
 # ----------------------------------------------------------
 
 ARG IMAGE_NAME=''
-
-ENV JPDA_ADDRESS=*:5050 \
-    VISUALIZE_FITS_SEARCH_PATH='' \
-    BUILD_TIME_NAME=${IMAGE_NAME} \
-    START_MODE=run
 
 WORKDIR ${CATALINA_HOME}
 
