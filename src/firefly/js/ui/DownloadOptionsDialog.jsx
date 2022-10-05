@@ -10,8 +10,8 @@ import {getWorkspaceList, getWorkspaceErrorMsg,
         dispatchWorkspaceUpdate, isAccessWorkspace} from '../visualize/WorkspaceCntlr.js';
 import {WorkspaceSave} from './WorkspaceViewer.jsx';
 import {useFieldGroupValue, useStoreConnector} from 'firefly/ui/SimpleComponent';
-
 import LOADING from 'html/images/gxt/loading.gif';
+
 export const LOCALFILE = 'isLocal';
 export const WORKSPACE = 'isWs';
 
@@ -57,7 +57,8 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
                              overflow: 'auto',
                              padding: 5,
                              border:'1px solid #a3aeb9'}}>
-                    <WorkspaceSave fieldKey={'wsSelect'} files={wsList} value={wsSelect}/>
+                    <WorkspaceSave fieldKey={'wsSelect'} files={wsList} value={wsSelect}
+                        tooltip='workspace file system'/>
                 </div>
         );
 
@@ -81,6 +82,9 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
                     options={[{label: 'Local File', value: LOCALFILE},
                               {label: 'Workspace', value: WORKSPACE }] }
                     fieldKey={'fileLocation'}
+                    label='File location:'
+                    labelWidth={100}
+                    tooltip='select the location where the file is downloaded to'
                 />
             </div>
     );
@@ -94,6 +98,12 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
                 wrapperStyle={{marginTop: 10}}
                 size={50}
                 fieldKey={'fileName'}
+                initialState= {{
+                    value: fileName
+                }}
+                label='File name:'
+                labelWidth={100}
+                tooltip='Please enter a filename, a default name will be used if it is blank'
             />
 
             {workspace && showLocation}
