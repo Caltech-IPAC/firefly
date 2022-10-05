@@ -115,20 +115,13 @@ const MakeFileOptions = ({plot,colors,hasOperation,threeC}) => {
         </div>);
 };
 
-function getInitState()  {
+const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
     const pv= getActivePlotView(visRoot());
     const plot = primePlot(pv);
-    const colors= getColors(plot);
-    return {
-        plot, pv, colors,
-        threeC: isThreeColor(plot),
-        hasOperation: plot.plotState.hasOperation(Operation.CROP)
-    };
-}
-
-const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
-    const [{pv, plot, hasOperation, threeC, colors}] = useState(getInitState);
-    const [getBand]= useFieldGroupValue ('threeBandColor', groupKey);
+    const colors = getColors(plot);
+    const threeC = isThreeColor(plot);
+    const hasOperation = plot?.plotState.hasOperation(Operation.CROP) ?? false;
+    const [getBand] = useFieldGroupValue ('threeBandColor', groupKey);
     const band= threeC ? getBand() : Band.NO_BAND.key;
 
     const totalChildren = (isWs ? 3 : 2) + (hasOperation ? 1 : 0) + (threeC ? 1 : 0);// fileType + save as + (fileLocation)
@@ -142,6 +135,7 @@ const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
         const fileType = getFileType();
         const fileName = getFileName();
         const fileLocation = getLocation();
+        const band = getBand();
         let fName = '';
 
         // change the filename if a file is selected from the file picker
@@ -151,16 +145,16 @@ const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
         else { //FileLocation = isLocal: check for fileType change or fileName change. If fileType changes, replace file extension
             if (fileName) { //checking if filename is !empty string allows user to delete the input string (default fileName)
                 if (!isThreeColor(plot)) {
-                    fName = replaceExt(fileName, fileType);//replaceExt(fields.fileName.value, fType);
+                    fName = replaceExt(fileName, fileType);
                 } else {
                     fName = matchPossibleDefaultNames(plot, fileName) ?
-                        makeFileName(plot, fileName, fileType) :
+                        makeFileName(plot, band, fileType) :
                         replaceExt(fileName, fileType);
                 }
             }
         }
         setFileName(fName);
-    }, [getFileType, getFileName, getLocation]);
+    }, [getFileType, getFileName, getLocation, getBand]);
 
     return (
         <FieldGroup style={{height: 'calc(100% - 10px)', width: '100%'}} groupKey={groupKey}>
