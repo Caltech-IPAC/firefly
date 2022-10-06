@@ -98,7 +98,7 @@ public class FitsRead implements Serializable, HasSizeOf {
         this.planeNumber = cube ? planeNumber : 0;
         this.cube = cube;
         this.hduNumber = header.getIntValue(SPOT_EXT, 0);
-        long HDUOffset= header.getIntValue(SPOT_OFF, 0);
+        long HDUOffset= header.getLongValue(SPOT_OFF, 0);
         this.bunit= hdu.getBUnit()!=null ? hdu.getBUnit() : "DN";
 
         ImageHeader imageHeader = new ImageHeader(header, HDUOffset, planeNumber);
