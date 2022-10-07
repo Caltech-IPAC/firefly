@@ -9,6 +9,7 @@ import edu.caltech.ipac.table.io.DsvTableIO;
 import edu.caltech.ipac.table.io.FITSTableReader;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.io.VoTableReader;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.csv.CSVFormat;
 
@@ -89,7 +90,11 @@ public class TableUtil {
             return Format.TAR;
         }
 
-        BufferedReader reader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
+        BufferedReader subsetReader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
+        char[] charAry= new char[(int)FileUtil.K];
+        int len= subsetReader.read(charAry,0,(int)FileUtil.K); //limit the amount for the guess to 1 K
+        var testStr= len>-1 ? new String(charAry,0,len) : "";
+        BufferedReader reader= new BufferedReader(new StringReader(testStr));
         try {
             String line = reader.readLine();
             if (line.startsWith("{")) {
@@ -159,7 +164,8 @@ public class TableUtil {
         } catch (Exception e){
             return Format.UNKNOWN;
         } finally {
-            try {reader.close();} catch (Exception e) {e.printStackTrace();}
+            FileUtil.silentClose(subsetReader);
+            FileUtil.silentClose(reader);
         }
 
     }

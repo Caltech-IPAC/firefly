@@ -19,7 +19,7 @@ visualize.fits.Security= true
 By default Firefly will only read FITS files that are a maximum of 1.5 gigabytes. This can be changed with the `visualize.fits.MaxSizeInBytes` property.
 
 ```
-visualize.fits.MaxSizeInBytes= 10737418240     // 10 gigs, if not there it defaults to 1.5 gigs
+visualize.fits.MaxSizeInBytes= 21474836480     // 20 gigs
 ```
 
 You will need to make sure that tomcat is started with enough memory to support reading large FITS files. Here are guide lines for selecting your server memory size.
