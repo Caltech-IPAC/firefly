@@ -6,14 +6,32 @@ import {PlotAttribute} from '../PlotAttribute';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {DropDownVerticalSeparator, ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
-
 import MATCH_LOCKED from 'html/images/28x28_Match_Locked.png';
 import MATCH_UNLOCKED from 'html/images/28x28_Match_Unlocked.png';
 import {isImage} from '../WebPlot';
+import {showInfoPopup} from '../../ui/PopupUtil';
 
 function changeMatchType(vr, matchType, lockMatch) {
     const plot= primePlot(vr);
     if (!plot) return;
+    //check for images without WCS when aligning by WCS or Target, and display appropriate warning
+    if(matchType.key === 'Standard' || matchType.key === 'Target') {
+        const warningTitles= getPlotViewAry(vr)
+                .filter( (pv) => !hasWCSProjection(primePlot(pv)) )
+                .map ( (pv) => primePlot(pv).title);
+        if (warningTitles.length !== 0) { //at least one image without WCS
+            const msgTitle = 'The following image(s) do not have WCS:';
+            const msgDesc = warningTitles.join(', ');
+            const renderContent = (
+                <div>
+                    {msgTitle} <br></br> <br></br>
+                    <div style={{padding: '5', whiteSpace: 'normal', letterSpacing: '1', lineHeight: '1.5'}}>
+                        {msgDesc}
+                    </div>
+                </div>);
+            showInfoPopup(renderContent, 'Warning');
+        }
+    }
     dispatchWcsMatch({matchType, plotId:plot.plotId, lockMatch});
 }
 
