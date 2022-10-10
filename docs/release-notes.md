@@ -8,8 +8,10 @@
 
 
 ## Version 2022.2 
+- 2022.2.5 (Oct 2022)
+  - docker tag: `latest`, `2022.2`, `2022.2.5`
 - 2022.2.4 (Sept 2022)
-  - docker tag: `latest`, `2022.2`, `2022.2.4`
+  - docker tag: `2022.2.4`
 - 2022.2.3 (Sept 2022)
   - docker tag: `2022.2.3`
 - 2022.2.2 (Aug 2022)
@@ -69,6 +71,8 @@
   - Improved: Grouping in multi-product viewer is not per table [IRSA-4815](https://github.com/Caltech-IPAC/firefly/pull/1270))
   - Fixed: tap date selection feedback not updating [Firefly-1075](https://github.com/Caltech-IPAC/firefly/pull/1271))
   - Fixed: regression issue, pixel readout re-enabled for images, DM-36291
+- 2022.2.5
+  - Fixed: null pointer exception in `BaseIUbeDataSource.java`
 
 
 
