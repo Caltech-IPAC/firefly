@@ -40,7 +40,7 @@ const spacialTypes= [SearchTypes.point,SearchTypes.pointSide,SearchTypes.area,Se
 const tableTypes= [SearchTypes.point, SearchTypes.point_table_only, SearchTypes.table];
 
 function doExecute(sa,cenWpt,radius,cornerStr,table) {
-    closeToolbarModalLayers();
+    // closeToolbarModalLayers();
     switch (sa.searchType) {
         case SearchTypes.area:
         case SearchTypes.pointSide:

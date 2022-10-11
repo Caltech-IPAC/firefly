@@ -52,7 +52,7 @@ export function getSearchTypeDesc(sa, wp, size, areaPtsLength) {
     switch (sa.searchType) {
         case SearchTypes.point_table_only:
         case SearchTypes.point:
-            return `${sa.verb} ${sa.label}`;
+            return `${sa.verb} ${sa.label} at position center`;
         case SearchTypes.pointRadius:
             const r= size > sa.max ? sa.max : size < sa.min ? sa.min : size;
             return `${sa.verb} (cone) using ${sa.label} with radius of ${sprintf('%.4f',r)} degrees`;
