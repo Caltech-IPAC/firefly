@@ -298,7 +298,7 @@ function handleProductResult(p, dpId, tbl_id, isPromiseAborted, imageViewer, lay
             dispatchChangeViewerLayout(imageViewer.viewerId, SINGLE, undefined, tbl_id);
         }
         if (displayTypeParams.displayType==='promise' && displayTypeParams.promise) {
-            handleProductResult(displayTypeParams.promise,dpId, isPromiseAborted, imageViewer, layout);
+            handleProductResult(displayTypeParams.promise,dpId, tbl_id, isPromiseAborted, imageViewer, layout);
         }
     });
 }
