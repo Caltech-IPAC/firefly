@@ -159,6 +159,7 @@ export const ServerParams = {
         TILE_SIZE: 'tileSize',
         DATA_COMPRESS: 'dataCompress',
         POINT_SIZE: 'pointSize',
+        COMBINE_OP: 'combineOp',
         EXTRACTION_TYPE: 'extractionType',
         HDU_NUM: 'hduNum',
         RELATED_HDUS: 'relatedHDUs',

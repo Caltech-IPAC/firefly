@@ -124,7 +124,7 @@ public class FitsRead implements Serializable, HasSizeOf {
     public double getBzero() { return FitsReadUtil.getBzero(header); }
     public double getCdelt1() { return this.cdelt1; }
     public double getBlankValue() {return FitsReadUtil.getBlankValue(header); }
-    public int getBitPix() {return header.getIntValue("BITPIX"); }
+    public int getBitPix() {return FitsReadUtil.getBitPix(header); }
 
     public boolean isDeferredRead() { return deferredRead; }
 
@@ -147,7 +147,7 @@ public class FitsRead implements Serializable, HasSizeOf {
             fits = new Fits(this.file);
             BasicHDU<?> hdu= FitsReadUtil.readHDUs(fits)[this.hduNumber];
             if (!(hdu instanceof ImageHDU)) return null;
-            float1d= (float [])dataArrayFromFitsFile((ImageHDU)hdu, 0,0,getNaxis1(),getNaxis2(), planeNumber,false);
+            float1d= (float [])dataArrayFromFitsFile((ImageHDU)hdu, 0,0,getNaxis1(),getNaxis2(), planeNumber,Float.TYPE);
             return float1d;
         }
         catch (FitsException|IOException|ArrayIndexOutOfBoundsException e) {

@@ -37,6 +37,7 @@ import edu.caltech.ipac.visualize.plot.CropFile;
 import edu.caltech.ipac.visualize.plot.Histogram;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.PixelValue;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsExtract;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
 import nom.tam.fits.Fits;
@@ -134,32 +135,35 @@ public class VisServerOps {
         }
     }
 
-    interface Extractor { double[] getData(File fitsFile) throws Exception; }
+    interface Extractor { List<Number> getData(File fitsFile) throws Exception; }
 
-    public static double[] getDataAry(String desc, PlotState state, Extractor extractor) {
+    public static List<Number> getDataAry(String desc, PlotState state, Extractor extractor) {
         try {
             CtxControl.confirmFiles(state);
             PlotServUtils.statsLog(desc);
             File fitsFile= ServerContext.convertToFile(state.getWorkingFitsFileStr(NO_BAND));
             return extractor.getData(fitsFile);
         } catch (Exception e) {
-            return new double[] {};
+            return new ArrayList<>();
         }
 
     }
-    public static double[] getZAxisAry(PlotState state, ImagePt pt, int hduNum, int ptSize) {
+    public static List<Number> getZAxisAry(PlotState state, ImagePt pt, int hduNum,
+                                           int ptSize, FitsExtract.CombineType ct) {
         return getDataAry("z-axis drilldown", state, (f) ->
-                FitsReadUtil.getZAxisAryFromCube(pt, f, hduNum, ptSize));
+                FitsExtract.getZAxisAryFromCube(pt, f, hduNum, ptSize, ct));
     }
 
-    public static double[] getLineDataAry(PlotState state, ImagePt pt, ImagePt pt2, int plane, int hduNum, int drillSize) {
+    public static List<Number> getLineDataAry(PlotState state, ImagePt pt, ImagePt pt2, int plane, int hduNum,
+                                              int drillSize, FitsExtract.CombineType ct) {
         return getDataAry("point data", state, (f) ->
-                     FitsReadUtil.getLineDataAryFromFile(pt, pt2, plane, f, hduNum, drillSize));
+                     FitsExtract.getLineDataAryFromFile(pt, pt2, plane, f, hduNum, drillSize, ct));
     }
 
-    public static double[] getPointDataAry(PlotState state, ImagePt[] ptAry, int plane, int hduNum, int drillSize) {
+    public static List<Number> getPointDataAry(PlotState state, ImagePt[] ptAry, int plane, int hduNum,
+                                               int drillSize, FitsExtract.CombineType ct) {
         return getDataAry("line data", state, (f) ->
-                FitsReadUtil.getPointDataAryFromFile(ptAry, plane, f, hduNum, drillSize));
+                FitsExtract.getPointDataAryFromFile(ptAry, plane, f, hduNum, drillSize, ct));
     }
 
     public static List<String> getFlux(PlotState[] stateAry, ImagePt ipt) {

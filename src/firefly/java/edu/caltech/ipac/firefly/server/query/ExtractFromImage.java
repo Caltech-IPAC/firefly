@@ -4,9 +4,10 @@ import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.io.FITSTableReader;
+import edu.caltech.ipac.table.io.FITSExtractToTable;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsExtract;
 import nom.tam.fits.FitsException;
 
 import java.io.IOException;
@@ -48,6 +49,7 @@ public class ExtractFromImage extends EmbeddedDbProcessor {
         int extractionSize = req.getIntParam(EXTRACTION_SIZE, 1);
         int refHduNum = req.getIntParam(REF_HDU_NUM, -1);
         int plane = req.getIntParam(ServerParams.PLANE, -1);
+        FitsExtract.CombineType ct= Enum.valueOf(FitsExtract.CombineType.class,req.getParam(ServerParams.COMBINE_OP,"AVG"));
         boolean allMatchingHDUs = req.getBooleanParam(ALL_MATCHING_HDUS, true);
         try {
             if (extType == null || extType.equals("z-axis")) {
@@ -57,18 +59,21 @@ public class ExtractFromImage extends EmbeddedDbProcessor {
                 String wlUnit= req.getParam(ServerParams.WL_UNIT);
                 Map<Integer,String> fluxUnit= makeMapOfUnitsFromParam(req);
                 double[] wlAry= SrvParam.getDoubleAryFromJson(req.getParam(ServerParams.WL_ARY));
-                return FITSTableReader.getCubeZaxisAsTable(pt, wpt, filename, refHduNum, allMatchingHDUs, extractionSize, wlAry,wlUnit,fluxUnit);
+                return FITSExtractToTable.getCubeZaxisAsTable(pt, wpt, filename, refHduNum, allMatchingHDUs,
+                        extractionSize, ct, wlAry,wlUnit,fluxUnit);
             }
             else if (extType.equals("line")) {
                 ImagePt[] ptAry= SrvParam.getImagePtAryFromJson(req.getParam(ServerParams.PTARY));
                 WorldPt[] wptAry= SrvParam.getWorldPtAryFromJson(req.getParam(ServerParams.WPT_ARY));
                 checkPointParams(ptAry, plane, filename, refHduNum);
-                return FITSTableReader.getLineSelectAsTable(ptAry, wptAry, filename, refHduNum, plane, allMatchingHDUs, extractionSize);
+                return FITSExtractToTable.getLineSelectAsTable(ptAry, wptAry, filename, refHduNum, plane, allMatchingHDUs,
+                        extractionSize, ct);
             } else if (extType.equals("points")) {
                 ImagePt[] ptAry= SrvParam.getImagePtAryFromJson(req.getParam(ServerParams.PTARY));
                 WorldPt[] wptAry= SrvParam.getWorldPtAryFromJson(req.getParam(ServerParams.WPT_ARY));
                 checkPointParams(ptAry, plane, filename, refHduNum);
-                return FITSTableReader.getPointsAsTable(ptAry, wptAry, filename, refHduNum, plane, allMatchingHDUs, extractionSize);
+                return FITSExtractToTable.getPointsAsTable(ptAry, wptAry, filename, refHduNum, plane,
+                        allMatchingHDUs, extractionSize, ct);
             }
         } catch (IOException | FitsException e) {
             throw new IllegalArgumentException("Could not make a table from extracted data");
@@ -76,19 +81,16 @@ public class ExtractFromImage extends EmbeddedDbProcessor {
         throw new IllegalArgumentException("extractionType must be z-axis, line, or points");
     }
 
-
     private static Map<Integer,String> makeMapOfUnitsFromParam(TableServerRequest req) {
         String[] sAry= SrvParam.getStringAryFromJson(req.getParam(ServerParams.FLUX_UNIT));
         Map<Integer,String> fluxUnit= new HashMap<>();
-        if (sAry!=null) {
-            for(String entry : sAry) {
-                String[] s= entry.split("=");
-                if (s.length==2) {
-                    try {
-                        int hdu= Integer.parseInt(s[0]);
-                        fluxUnit.put(hdu,s[1]);
-                    } catch (NumberFormatException ignore) { }
-                }
+        if (sAry==null) return fluxUnit;
+        for(String entry : sAry) {
+            String[] s= entry.split("=");
+            if (s.length==2) {
+                try {
+                    fluxUnit.put(Integer.parseInt(s[0]),s[1]);
+                } catch (NumberFormatException ignore) { }
             }
         }
         return fluxUnit;
