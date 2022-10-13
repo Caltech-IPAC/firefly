@@ -7,6 +7,7 @@ import React, {memo, useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
 import {isEmpty,omit,isFunction} from 'lodash';
+import {getAppOptions} from '../../api/ApiUtil.js';
 import {getPlotGroupById}  from '../PlotGroup.js';
 import {ExpandType, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {VisCtxToolbarView, canConvertHipsAndFits} from '../ui/VisCtxToolbarView';
@@ -137,9 +138,10 @@ function contextToolbar(plotView,dlAry,extensionList, width) {
         const clearFilter= showClearFilter(plotView,dlAry);
         const selAry= extensionList.filter( (ext) => ext.extType===AREA_SELECT);
         const extensionAry= isEmpty(selAry) ? EMPTY_ARRAY : selAry;
+        const searchActions= getAppOptions()?.searchActions;
         return (
             <VisCtxToolbarView {...{plotView, extensionAry, width,
-                showSelectionTools:true, showCatSelect:select, showCatUnSelect:unselect,
+                showSelectionTools:true, showCatSelect:select, showCatUnSelect:unselect, searchActions,
                 showFilter:filter, showClearFilter:clearFilter, showMultiImageController}} />
         );
     }

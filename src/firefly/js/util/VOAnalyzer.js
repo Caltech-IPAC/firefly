@@ -4,7 +4,8 @@
 
 import {get, has, isArray, isEmpty, isObject, isString, intersection, pickBy, unset} from 'lodash';
 import Enum from 'enum';
-import { getColumn,
+import {
+    getColumn,
     getColumnIdx,
     getColumnValues,
     getColumns,
@@ -12,12 +13,12 @@ import { getColumn,
     getCellValue,
     getColumnByID,
     columnIDToName,
-    getColumnByRef
+    getColumnByRef, isTableUsingRadians
 } from '../tables/TableUtil.js';
 import {getCornersColumns} from '../tables/TableInfoUtil.js';
 import {MetaConst} from '../data/MetaConst.js';
 import {CoordinateSys} from '../visualize/CoordSys.js';
-import {makeWorldPt} from '../visualize/Point';
+import {makeAnyPt, makeWorldPt} from '../visualize/Point';
 import {getBooleanMetaEntry, getMetaEntry} from '../tables/TableUtil';
 
 
@@ -670,8 +671,8 @@ class TableRecognizer {
 /**
  * find the center column base on the table model of catalog or image metadata
  * Investigate table meta data a return a CoordColsDescription for two columns that represent and object in the row
- * @param table
- * @return {CoordColsDescription|null}
+ * @param {TableModel|undefined} table
+ * @return {CoordColsDescription|null|undefined}
  */
 export function findTableCenterColumns(table) {
     const tblRecog = get(table, ['tableData', 'columns']) && TableRecognizer.newInstance(table);
@@ -1529,4 +1530,16 @@ export function matchesObsCoreHeuristic(schemaName, tableName, columnsModel) {
         });
     }
     return false;
+}
+
+export function getWorldPtFromTable(table) {
+    const centerColumns = findTableCenterColumns(table);
+    if (!centerColumns) return undefined;
+    const {lonCol,latCol,csys}= centerColumns;
+    const ra = Number(getCellValue(table, table.highlightedRow, lonCol));
+    const dec = Number(getCellValue(table, table.highlightedRow, latCol));
+    const usingRad= isTableUsingRadians(table, [lonCol,latCol]);
+    const raDeg= usingRad ? ra * (180 / Math.PI) : ra;
+    const decDeg= usingRad ? dec * (180 / Math.PI)  : dec;
+    return makeAnyPt(raDeg,decDeg,csys||CoordinateSys.EQ_J2000);
 }

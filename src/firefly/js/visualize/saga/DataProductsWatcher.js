@@ -32,7 +32,7 @@ const MAX_GRID_SIZE= 50;
 
 
 /** type {TableWatcherDef} */
-const DataProductsWatcherDef = {
+const getDataProductsWatcherDef = () => ({
     id : 'ImageMetaDataWatcher',
     watcher : watchDataProductsTable,
     testTable : (t) => isDataProductsTable(t.tbl_id),
@@ -44,10 +44,10 @@ const DataProductsWatcherDef = {
               MultiViewCntlr.CHANGE_VIEWER_LAYOUT, MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA,
               ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW,
               ImagePlotCntlr.UPDATE_VIEW_SIZE, ImagePlotCntlr.ANY_REPLOT]
-};
+});
 
 export function startDataProductsWatcher({dataTypeViewerId= 'DataProductsType', paused=true}) {
-    dispatchAddTableTypeWatcherDef( { ...DataProductsWatcherDef, options:{dataTypeViewerId, paused} });
+    dispatchAddTableTypeWatcherDef( { ...getDataProductsWatcherDef(), options:{dataTypeViewerId, paused} });
 }
 
 

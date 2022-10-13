@@ -1,11 +1,11 @@
-import {Logger} from '../../util/Logger.js';
+import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
+import {isArray, isUndefined} from 'lodash';
+import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
+import {sortInfoString} from '../../tables/SortInfo.js';
 import {makeFileRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {doFetchTable, getColumnIdx, sortTableData} from '../../tables/TableUtil.js';
-import {sortInfoString} from '../../tables/SortInfo.js';
-import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
+import {Logger} from '../../util/Logger.js';
 import {getProp, hashCode} from '../../util/WebUtil.js';
-import {isArray, isUndefined} from 'lodash';
-import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
 
 const logger = Logger('TapUtil');
 const qFragment = '/sync?REQUEST=doQuery&LANG=ADQL&';
@@ -252,6 +252,9 @@ export function maybeQuote(name, isTable=false) {
     const re= isTable ? validTableNameRE : validColumnNameRE;
     return  (name.match(re)) ? name : `"${name}"`;
 }
+
+
+
 
 // --- keep for reference //todo delete after 2022.2 release
 // export const maybeQuoteByService= (serviceURL, item, isTable) =>

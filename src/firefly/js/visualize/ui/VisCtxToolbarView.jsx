@@ -6,12 +6,11 @@ import React, {memo,Fragment} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, isString} from 'lodash';
 import shallowequal from 'shallowequal';
-import {flux} from '../../core/ReduxFlux.js';
 import {sprintf} from '../../externalSource/sprintf';
 import {
-    primePlot,getPlotViewById, isMultiHDUFits, getCubePlaneCnt, getHDU, getActivePlotView,
-    convertHDUIdxToImageIdx, convertImageIdxToHDU, getFormattedWaveLengthUnits,
-    getHDUCount, getHDUIndex, getPtWavelength, hasPlaneOnlyWLInfo, isImageCube,
+    convertHDUIdxToImageIdx, convertImageIdxToHDU, getActivePlotView, getCubePlaneCnt, getFormattedWaveLengthUnits,
+    getHDU, getHDUCount, getHDUIndex, getPlotViewById, getPtWavelength, hasPlaneOnlyWLInfo, isImageCube, isMultiHDUFits,
+    primePlot, pvEqualExScroll,
 } from '../PlotViewUtil.js';
 import {getExtName, getExtType} from '../FitsHeaderUtil.js';
 import {makeWorldPt} from '../Point.js';
@@ -20,20 +19,23 @@ import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
 import {dispatchExtensionActivate} from '../../core/ExternalAccessCntlr.js';
 import {
-    dispatchChangePrimePlot, dispatchChangeHiPS,
-    dispatchChangeHipsImageConversion, visRoot, dispatchChangeCenterOfProjection, WcsMatchType, dispatchRecenter
+    dispatchChangeCenterOfProjection, dispatchChangeHiPS, dispatchChangeHipsImageConversion, dispatchChangePrimePlot,
+    visRoot
 } from '../ImagePlotCntlr.js';
 import {makePlotSelectionExtActivateData} from '../../core/ExternalAccessUtils.js';
 import {ListBoxInputFieldView} from '../../ui/ListBoxInputField';
 import {showHiPSSurveysPopup} from '../../ui/HiPSImageSelect.jsx';
-import {CoordinateSys} from '../CoordSys.js';
-import {convertToHiPS, convertToImage, doHiPSImageConversionIfNecessary} from '../task/PlotHipsTask.js';
 import {StateInputField} from '../../ui/StatedInputfield.jsx';
 import Validate from '../../util/Validate.js';
-import {pvEqualExScroll} from '../PlotViewUtil.js';
-import { clearFilterDrawingLayer, crop, filterDrawingLayer, recenterToSelection, selectDrawingLayer,
-    stats, unselectDrawingLayer, zoomIntoSelection } from './CtxToolbarFunctions';
-import {SingleColumnMenu} from 'firefly/ui/DropDownMenu.jsx';
+import {CoordinateSys} from '../CoordSys.js';
+import {convertToHiPS, convertToImage, doHiPSImageConversionIfNecessary} from '../task/PlotHipsTask.js';
+import {
+    clearFilterDrawingLayer, crop, filterDrawingLayer, recenterToSelection, selectDrawingLayer, stats,
+    unselectDrawingLayer, zoomIntoSelection
+} from './CtxToolbarFunctions';
+import {isSpacialActionsDropVisible, ActionsDropDownButton} from '../../ui/ActionsDropDownButton.jsx';
+import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
+import {DropDownToolbarButton} from 'firefly/ui/DropDownToolbarButton.jsx';
 
 import CROP from 'html/images/icons-2014/24x24_Crop.png';
 import STATISTICS from 'html/images/icons-2014/24x24_Statistics.png';
@@ -45,7 +47,6 @@ import PAGE_RIGHT from 'html/images/icons-2014/20x20_PageRight.png';
 import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
 import SELECTED_ZOOM from 'html/images/icons-2014/ZoomFitToSelectedSpace.png';
 import SELECTED_RECENTER from 'html/images/icons-2014/RecenterImage-selection.png';
-import {DropDownToolbarButton} from 'firefly/ui/DropDownToolbarButton.jsx';
 
 const image24x24={width:24, height:24};
 
@@ -214,6 +215,7 @@ HiPSCoordSelect.propTypes= {
  * @param props.showCatUnSelect
  * @param props.showFilter
  * @param props.showClearFilter
+ * @param props.searchActions
  * @param props.showMultiImageController
  */
 export const VisCtxToolbarView= memo((props) => {
@@ -221,6 +223,7 @@ export const VisCtxToolbarView= memo((props) => {
         plotView:pv, extensionAry, showSelectionTools=false,
         showCatSelect=false, showCatUnSelect=false, width,
         showFilter=false, showClearFilter=false,
+        searchActions= undefined,
         showMultiImageController=false }= props;
 
     const rS= {
@@ -302,6 +305,7 @@ export const VisCtxToolbarView= memo((props) => {
                            visible={mi.imageStatistics}
                            horizontal={true} onClick={() => stats(pv)}/>}
 
+            {isSpacialActionsDropVisible(searchActions,pv) && <ActionsDropDownButton {...{searchActions,pv}}/> }
             {makeExtensionButtons(extensionAry,pv)}
         </Fragment>
         );
@@ -363,6 +367,7 @@ VisCtxToolbarView.propTypes= {
     showCatUnSelect : PropTypes.bool,
     showFilter : PropTypes.bool,
     showClearFilter : PropTypes.bool,
+    searchActions: PropTypes.arrayOf(PropTypes.object),
     width : PropTypes.number,
     showMultiImageController : PropTypes.bool
 };

@@ -89,7 +89,7 @@ function SearchForm({searchItem, style, initArgs}) {
     const {name, form} = searchItem;
     const {render:Render, ...rest} = form;
 
-    const saveClick= (clickFunc) => initArgs?.execute && searchOnce(true, clickFunc);
+    const saveClick= (clickFunc) => initArgs?.urlApi?.execute && searchOnce(true, clickFunc);
 
 
     return (

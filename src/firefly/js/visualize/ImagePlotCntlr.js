@@ -38,8 +38,8 @@ import {makeAbortHiPSAction} from './task/PlotHipsTask';
 
 /** @typedef ExpandType
  * enum can be one of
- * @prop COLLAPSE,
- * @prop GRID,
+ * @prop COLLAPSE
+ * @prop GRID
  * @prop SINGLE
  * @type {Enum}
  */
@@ -206,6 +206,8 @@ const initState= () => {
      * @prop {WorldPt} wcsMatchCenterWP: null, // the point to match to
      * @prop {WcsMatchType} wcsMatchType   one of 'Standard', 'Target', 'Pixel', 'PixelCenter', or false
      * @prop {String} mpwWcsPrimId  plotId of the prime wcs match image
+     * @prop {boolean} autoScrollToHighlightedTableRow
+     * @prop {boolean} useAutoScrollToHighlightedTableRow
      *
      */
     return {
@@ -229,7 +231,7 @@ const initState= () => {
         pointSelEnableAry : [], // a list of keys who have enable point select, is array length is non-zero, then point select is enabled
         apiToolsView: false,  // this should be deprecated, it is not used for much and there are other ways to do it.
         autoScrollToHighlightedTableRow: true,
-        useAutoScrollToHighlightedTableRow: true, // this is not a use option, it is use to handle temporary disabling auto scroll`
+        useAutoScrollToHighlightedTableRow: true, // this is not an option, it is used to handle temporary disabling auto scroll`
 
         //-- wcs match parameters
         positionLock: false, // images are locked together

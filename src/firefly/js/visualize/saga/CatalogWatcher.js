@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isNil, get, isEmpty} from 'lodash';
+import {isNil, get, isEmpty, once} from 'lodash';
 import Enum from 'enum';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE,TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
 import {SUBGROUP, dispatchAttachLayerToPlot, dispatchChangeVisibility, dispatchCreateDrawLayer,
@@ -31,17 +31,29 @@ import {getMetaEntry} from '../../tables/TableUtil';
 import {MetaConst} from '../../data/MetaConst';
 
 
-/** @type {TableWatcherDef} */
-export const catalogWatcherDef = {
-    id : 'CatalogWatcher',
-    watcher : watchCatalogs,
-    testTable : (table) => !isLsstFootprintTable(table) && isCatalog(table),
-    allowMultiples: false,
-    actions: [TABLE_LOADED, TABLE_SELECT, TABLE_HIGHLIGHT, TABLE_UPDATE, TBL_RESULTS_ACTIVE,
-              TABLE_REMOVE, ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS]
-};
+/**
+ *
+ * @returns {TableWatcherDef}
+ */
+export const getCatalogWatcherDef= once(() => (
+    {
+        id : 'CatalogWatcher',
+        watcher : watchCatalogs,
+        testTable : (table) => !isLsstFootprintTable(table) && isCatalog(table),
+        allowMultiples: false,
+        actions: [TABLE_LOADED, TABLE_SELECT, TABLE_HIGHLIGHT, TABLE_UPDATE, TBL_RESULTS_ACTIVE,
+            TABLE_REMOVE, ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS]
+    }
+));
 
-export const PointType = new Enum(['WORLD', 'IMAGE']);
+/**
+ * @typedef {Object} PointType
+ * @summary type of point
+ * @prop WORLD
+ * @prop GRID
+ * @type {Enum}
+ */
+const PointType= new Enum(['WORLD', 'IMAGE']);
 
 /**
  * type {TableWatchFunc}
@@ -116,8 +128,12 @@ export function watchCatalogs(tbl_id, action, cancelSelf, params) {
 
 const searchTargetId= (tbl_id) => 'search-target-'+tbl_id;
 
+/**
+ * @param table
+ * @returns {PointType}
+ */
 const getCatalogPtType= (table) =>
-               getMetaEntry(table, MetaConst.CATALOG_OVERLAY_TYPE)?.toUpperCase()==='IMAGE_PTS' ? PointType.IMAGE : PointType.WORLD;
+    getMetaEntry(table, MetaConst.CATALOG_OVERLAY_TYPE)?.toUpperCase()==='IMAGE_PTS' ? PointType.IMAGE : PointType.WORLD;
 
 function handleCatalogUpdate(tbl_id) {
     const sourceTable= getTblById(tbl_id);
@@ -266,7 +282,7 @@ export function getSearchTarget(r, tableModel, searchTargetStr, overlayPositionS
     if (parts.length<4) return;
     let cStr= parts[0].split('(')[1];
     if (!cStr) return;
-    if (cStr.startsWith(`\'`) && cStr.endsWith(`\'`)) {
+    if (cStr.startsWith(`\'`) && cStr.endsWith(`\'`)) { // eslint-disable-line quotes
        cStr= cStr.substring(1, cStr.length-1) ;
     }
     if (!isNaN(Number(parts[1]))  && !isNaN(Number(parts[1]))) {

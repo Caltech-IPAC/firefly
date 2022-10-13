@@ -37,7 +37,7 @@ function showLcPanel(cmd,params) {
     if (!isEmpty(rest)) {
         Object.entries(rest).forEach( ([k,v]) => newUrl.searchParams.append(k,v));
     }
-    dispatchShowDropDown({view:'LCUpload', initArgs:{dataset,execute, url: newUrl.toString()}});
+    dispatchShowDropDown({view:'LCUpload', initArgs:{urlApi:{dataset,execute, url: newUrl.toString()}}});
 }
 
 export function getLcCommands() {

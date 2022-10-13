@@ -303,7 +303,7 @@ export function toNameValuePairs(params) {
  * this function supports nested object.  if the value of a param is an object
  * or an array of {name, value}, it will encode the child, and then encode the parent as well.
  * @param {Object|Object[]} params key/value object or an array of {name,value}.
- * @returns {*}
+ * @returns {String}
  */
 export function encodeParams(params) {
     params = toNameValuePairs(params);  // convert to name-value pairs if params is a plain object.

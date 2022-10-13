@@ -157,11 +157,11 @@ const BannerSection= ({menu,...rest}) => (
 const labelW = 150;
 
 const executeOnce= makeSearchOnce(); // setup options to immediately execute the search the first time
-const validateAutoSearch= (initArgs) => !isEmpty(initArgs);
+const validateAutoSearch= (initArgs) => !isEmpty(initArgs?.urlApi);
 
 async function callAutoSearch(initArgs) {
-    const {cacheKey}= await upload(initArgs.url);
-    onSearchSubmit({ mission: initArgs.dataset, rawTblSource: cacheKey});
+    const {cacheKey}= await upload(initArgs?.urlApi?.url);
+    onSearchSubmit({ mission: initArgs.urlApi?.dataset, rawTblSource: cacheKey});
 }
 
 

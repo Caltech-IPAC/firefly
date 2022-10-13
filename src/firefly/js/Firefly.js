@@ -35,6 +35,7 @@ import {setDefaultImageColorTable} from './visualize/WebPlotRequest.js';
 import {initWorkerContext} from './threadWorker/WorkerAccess.js';
 import {getTAPServices} from './ui/tap/TapKnownServices.js';
 import {loadAllJobs} from './core/background/BackgroundUtil.js';
+import {makeDefImageSearchActions, makeDefTapSearchActions} from './ui/DefaultSearchActions.js';
 
 let initDone = false;
 const logger = Logger('Firefly-init');
@@ -171,6 +172,10 @@ const defFireflyOptions = {
 
         },
     },
+    searchActions : [
+        ...makeDefTapSearchActions(),
+        ...makeDefImageSearchActions(),
+    ],
     tap : {
         services: getTAPServices( ['IRSA', 'NED', 'NASA Exoplanet Archive', 'KOA', 'HEASARC', 'MAST Images',
                                    'CADC', 'VizieR (CDS)', 'Simbad (CDS)', 'Gaia', 'GAVO', 'HSA'] ),

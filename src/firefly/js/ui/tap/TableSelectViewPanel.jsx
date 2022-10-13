@@ -77,9 +77,9 @@ export function BasicUI(props) {
     const [error, setError] = useState(undefined);
     const mountedRef = useRef(false);
     const [serviceUrl, serviceUrlRef, setServiceUrl] = useStateRef(tapFluxState.serviceUrl || props.serviceUrl);
-    const [schemaName, schemaRef, setSchemaName] = useStateRef(tapFluxState.schemaName || props.initArgs.schema);
-    const [tableName, tableRef, setTableName] = useStateRef(tapFluxState.tableName || props.initArgs.table);
-    const [obsCoreEnabled, setObsCoreEnabled] = useState(tapFluxState.obsCoreEnabled || props.initArgs.selectBy === "obscore");
+    const [schemaName, schemaRef, setSchemaName] = useStateRef(tapFluxState.schemaName || props.initArgs?.urlApi?.schema);
+    const [tableName, tableRef, setTableName] = useStateRef(tapFluxState.tableName || props.initArgs?.urlApi?.table);
+    const [obsCoreEnabled, setObsCoreEnabled] = useState(tapFluxState.obsCoreEnabled || props.initArgs?.urlApi?.selectBy === 'obscore');
     const [schemaOptions, setSchemaOptions] = useState();
     const [tableOptions, setTableOptions] = useState();
     const [columnsModel, setColumnsModel] = useState();

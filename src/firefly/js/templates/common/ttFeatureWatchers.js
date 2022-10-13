@@ -1,13 +1,13 @@
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga.js';
-import {catalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
-import {urlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
+import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
+import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
 import {getActiveRowCenterDef } from '../../visualize/saga/ActiveRowCenterWatcher.js';
-import {mocWatcherDef} from '../../visualize/saga/MOCWatcher.js';
+import {getMocWatcherDef} from '../../visualize/saga/MOCWatcher.js';
 
 
-export function startTTFeatureWatchers(startIds=[mocWatcherDef.id, catalogWatcherDef.id, urlLinkWatcherDef.id, getActiveRowCenterDef().id]) {
-    startIds.includes(mocWatcherDef.id) && dispatchAddTableTypeWatcherDef(mocWatcherDef);
-    startIds.includes(catalogWatcherDef.id) && dispatchAddTableTypeWatcherDef(catalogWatcherDef);
-    startIds.includes(urlLinkWatcherDef.id) && dispatchAddTableTypeWatcherDef(urlLinkWatcherDef);
+export function startTTFeatureWatchers(startIds=[getMocWatcherDef().id, getCatalogWatcherDef().id, getUrlLinkWatcherDef().id, getActiveRowCenterDef().id]) {
+    startIds.includes(getMocWatcherDef().id) && dispatchAddTableTypeWatcherDef(getMocWatcherDef());
+    startIds.includes(getCatalogWatcherDef().id) && dispatchAddTableTypeWatcherDef(getCatalogWatcherDef());
+    startIds.includes(getUrlLinkWatcherDef().id) && dispatchAddTableTypeWatcherDef(getUrlLinkWatcherDef());
     startIds.includes(getActiveRowCenterDef().id) && dispatchAddTableTypeWatcherDef(getActiveRowCenterDef());
 }
