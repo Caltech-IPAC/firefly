@@ -7,8 +7,11 @@ import {dispatchMountFieldGroup} from '../fieldGroup/FieldGroupCntlr.js';
 import {getFieldGroupState, isFieldGroupMounted} from '../fieldGroup/FieldGroupUtils.js';
 
 export const GroupKeyCtx = React.createContext({});
+export const EnhancedRequestCreatorCtx = React.createContext({});
+
 export const FieldGroup = memo( ({keepMounted, reducerFunc=undefined, groupKey, keepState=false, children, style, className}) => {
         const [fields, setFields]= useState(() => getFieldGroupState(groupKey));
+        const wrapperERC= useContext(EnhancedRequestCreatorCtx);
         const {groupKey:wrapperGroupKey}= useContext(GroupKeyCtx);
         useLayoutEffect(() => {
             dispatchMountFieldGroup(groupKey, true, keepState, reducerFunc, wrapperGroupKey);
@@ -28,11 +31,13 @@ export const FieldGroup = memo( ({keepMounted, reducerFunc=undefined, groupKey, 
         },[]);
         
         return (
-            <GroupKeyCtx.Provider value={{groupKey}}>
-                <div className={className} style={style} groupkey={groupKey}>
-                    {children}
-                </div>
-            </GroupKeyCtx.Provider>
+            <EnhancedRequestCreatorCtx.Provider value={wrapperERC ?? {}}>
+                <GroupKeyCtx.Provider value={{groupKey}}>
+                    <div className={className} style={style} groupkey={groupKey}>
+                        {children}
+                    </div>
+                </GroupKeyCtx.Provider>
+            </EnhancedRequestCreatorCtx.Provider>
         );
     });
 

@@ -7,7 +7,7 @@ import React, {useContext, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {validateFieldGroup, getFieldGroupResults} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
-import {GroupKeyCtx} from './FieldGroup';
+import {EnhancedRequestCreatorCtx, GroupKeyCtx} from './FieldGroup';
 
 
 export const NONE='COMPLETE-BUTTON-NO-CONTEXT';
@@ -22,22 +22,30 @@ function inGroup(e, groupKey) {
 }
 
 
+function enhanceRequest(inR={}, erContext={}) {
+    return Object.entries(erContext).reduce((r, [key,func]) => {
+        if (func) r[key]= func();
+        return r;
+    },{...inR});
+}
 
-function validUpdate(valid,onSuccess,onFail,closeOnValid,groupKey,dialogId, groupsToUse, includeUnmounted= false) {
+
+function validUpdate(valid,onSuccess,onFail,erContext, closeOnValid,groupKey,
+                     dialogId, groupsToUse, includeUnmounted= false) {
     var funcToCall = valid ? onSuccess : onFail;
     let continueValid= true;
 
     if (Array.isArray(groupKey)) {
         const groupsToValidate= groupsToUse();
-        var requestObj = groupsToValidate.reduce( (obj,groupKey) => {
+        const requestObj = groupsToValidate.reduce( (obj,groupKey) => {
             obj[groupKey]= getFieldGroupResults(groupKey,includeUnmounted);
             return obj;
         },{});
-        if (funcToCall) funcToCall(requestObj);
+        if (funcToCall) funcToCall(enhanceRequest(requestObj,erContext));
     }
     else {
-        var request = getFieldGroupResults(groupKey,includeUnmounted);
-        if (funcToCall) continueValid= funcToCall(request);
+        const request = getFieldGroupResults(groupKey,includeUnmounted);
+        if (funcToCall) continueValid= funcToCall(enhanceRequest(request,erContext));
     }
 
     const stillValid= valid && (continueValid ?? true);
@@ -45,13 +53,14 @@ function validUpdate(valid,onSuccess,onFail,closeOnValid,groupKey,dialogId, grou
     if (stillValid && dialogId && closeOnValid) dispatchHideDialog(dialogId);
 }
 
-function onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,groupsToUse, includeUnmounted, changeMasking) {
+function onClick(onSuccess,onFail,erContext, closeOnValid,groupKey,
+                 dialogId,groupsToUse, includeUnmounted, changeMasking) {
     if (groupKey) {
         if (changeMasking) changeMasking(true);
         validateFieldGroup(groupsToUse(), includeUnmounted)
             .then( (valid)=> {
                 if (changeMasking) changeMasking(false);
-                validUpdate(valid,onSuccess,onFail,closeOnValid,groupKey,dialogId, groupsToUse, includeUnmounted);
+                validUpdate(valid,onSuccess,onFail,erContext,closeOnValid,groupKey,dialogId, groupsToUse, includeUnmounted);
             });
     }
     else {
@@ -68,10 +77,11 @@ export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
                           groupsToUse= () => groupKey,
                           style={}, innerStyle= {}, changeMasking, fireOnEnter= false,
                                     getDoOnClickFunc}) {
-    const context= useContext(GroupKeyCtx);
-    if (!groupKey && context) groupKey= context.groupKey;
+    const gkContext= useContext(GroupKeyCtx);
+    const erContext= useContext(EnhancedRequestCreatorCtx);
+    if (!groupKey && gkContext) groupKey= gkContext.groupKey;
     if (groupKey===NONE) groupKey= undefined;
-    const onComplete = () => onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,
+    const onComplete = () => onClick(onSuccess,onFail,erContext,closeOnValid,groupKey,dialogId,
                                       groupsToUse, includeUnmounted,changeMasking);
 
 
