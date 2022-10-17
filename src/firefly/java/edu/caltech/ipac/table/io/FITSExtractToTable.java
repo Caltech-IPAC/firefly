@@ -43,25 +43,20 @@ public class FITSExtractToTable {
         return str.toString();
     }
 
-    private static Number getFistNonNaN(List<Number> valueList) {
+    private static Number getFirstNonNaN(List<Number> valueList) {
         for(Number v: valueList) { // find first  non nan entry
             if (!Double.isNaN(v.doubleValue())) return v;
         }
         return valueList.get(0);
     }
 
+    private static Class<?> getDataType(List<Number> valueList) {
+        return getFirstNonNaN(valueList).getClass();
+    }
+
     private static String addSize(String desc, int drillSize, FitsExtract.CombineType ct) {
         if (drillSize<2) return desc;
         return desc+ " ("+drillSize+"x"+drillSize+","+ct.toString()+")";
-    }
-
-    private static Class<?> getDataType(List<Number> valueList) {
-        Number n= getFistNonNaN(valueList);
-        if (n instanceof Double) return Double.class;
-        if (n instanceof Float) return Float.class;
-        if (n instanceof Integer) return Integer.class;
-        if (n instanceof Long) return Long.class;
-        return Double.class;
     }
 
     private static double rnd(double d, int decimalPlaces) {
@@ -223,10 +218,14 @@ public class FITSExtractToTable {
         String defYCol= "";
         for(FitsExtract.ExtractionResults result : results) {
             String desc= result.extName()!=null ? result.extName() : "HDU# "+result.hduNum();
-            desc= addSize(desc,drillSize,ct);
             String key= makeKeyforHDUTab(result);
             String bunit= result.header().getStringValue("BUNIT");
-            Class dataType= getDataType(result.aryData());
+            Class<?> dataType= getDataType(result.aryData());
+            FitsExtract.CombineType activeCt= ct;
+            if (refHduNum!=result.hduNum() && (dataType==Long.class || dataType==Integer.class)) {
+                activeCt= FitsExtract.CombineType.OR;
+            }
+            desc= addSize(desc,drillSize,activeCt);
             DataType dt = new DataType(key,dataType, desc, bunit, null,null);
             if (result.refHDU()) defYCol= key;
             dataTypes.add(dt);

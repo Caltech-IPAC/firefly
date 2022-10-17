@@ -94,7 +94,7 @@ public class FitsExtract {
      *
      * @throws IOException if it can't read the fits file
      */
-    static Number valueFromFitsFile(ImageHDU hdu, int x, int y, int plane, int ptSize, CombineType ct) throws IOException {
+    static Number valueFromFitsFile(ImageHDU hdu, int x, int y, int plane, int ptSize, CombineType ct, boolean primaryHdu) throws IOException {
         Header header= hdu.getHeader();
         int naxis1= FitsReadUtil.getNaxis1(header);
         int naxis2= FitsReadUtil.getNaxis2(header);
@@ -109,13 +109,16 @@ public class FitsExtract {
         if (x+ptSize>=naxis1) x-= (x+ptSize-naxis1+1);
         if (y+ptSize>=naxis2) y-= (y+ptSize-naxis2+1);
 
-        Class arrayType= switch (bitpix) {
+        Class<?> arrayType= switch (bitpix) {
             case -32 -> Float.TYPE;
             case 8, 16, 32 -> Integer.TYPE;
             case 64 -> Long.TYPE;
             default -> Double.TYPE;
         };
 
+        if (!primaryHdu && (arrayType==Integer.TYPE || arrayType==Long.TYPE)) {
+           ct= CombineType.OR;
+        }
         Object ary= FitsReadUtil.dataArrayFromFitsFile(hdu,x,y,ptSize,ptSize,plane,arrayType);
         Number aveValue= combineArray(objToNumberAry(ary,arrayType), ct, arrayType);
 
@@ -144,21 +147,22 @@ public class FitsExtract {
                         ((CompressedImageHDU) hdus[idx]).asImageHDU() : (ImageHDU) hdus[idx];
     }
 
-    public static List<Number> getPointDataAry(ImagePt[] ptAry, int plane, BasicHDU<?>[] hdus, int hduNum, int ptSize, CombineType ct)
+    public static List<Number> getPointDataAry(ImagePt[] ptAry, int plane, BasicHDU<?>[] hdus, int hduNum, int refHduNum, int ptSize, CombineType ct)
             throws FitsException, IOException {
         ImageHDU hdu= getImageHDU(hdus,hduNum);
+        boolean primaryHdu= hduNum==refHduNum;
         var pts= new ArrayList<Number>(ptAry.length);
-        for(int i=0;(i<ptAry.length);i++) {
-            ImagePt pt= ptAry[i];
-            pts.add(valueFromFitsFile(hdu, (int)pt.getX(),(int)pt.getY(),plane,ptSize,ct));
+        for (ImagePt pt : ptAry) {
+            pts.add(valueFromFitsFile(hdu, (int) pt.getX(), (int) pt.getY(), plane, ptSize, ct, primaryHdu));
         }
         return pts;
     }
 
     public static List<Number> getLineDataAry(ImagePt pt1, ImagePt pt2, int plane, BasicHDU<?>[] hdus,
-                                              int hduNum, int ptSize, CombineType ct)
+                                              int hduNum, int refHduNum, int ptSize, CombineType ct)
             throws FitsException, IOException {
         ImageHDU hdu= getImageHDU(hdus,hduNum);
+        boolean primaryHdu= hduNum==refHduNum;
         double x1 = pt1.getX();
         double y1 = pt1.getY();
         double x2 = pt2.getX();
@@ -181,7 +185,7 @@ public class FitsExtract {
             List<Number> pts= new ArrayList<>(n);
             for (x=minX; x<=maxX; x+=1) {
                 y = (int)(slope*x + yIntercept);
-                pts.add(valueFromFitsFile(hdu, x,y,plane,ptSize,ct));
+                pts.add(valueFromFitsFile(hdu, x,y,plane,ptSize,ct,primaryHdu));
             }
             return pts;
         } else if (y1 != y2) {
@@ -195,7 +199,7 @@ public class FitsExtract {
 
             for (y=minY; y<=maxY; y+=1) {
                 x = (int)(islope*y + xIntercept);
-                pts.add(valueFromFitsFile(hdu, x,y,plane,ptSize,ct));
+                pts.add(valueFromFitsFile(hdu, x,y,plane,ptSize,ct, primaryHdu));
             }
             return pts;
         }
@@ -223,12 +227,12 @@ public class FitsExtract {
                     Header h = hdus[i].getHeader();
                     if (FitsReadUtil.getNaxis(h) == dims && FitsReadUtil.getNaxis1(h) == xLen && FitsReadUtil.getNaxis2(h) == yLen && FitsReadUtil.getNaxis3(h) == zLen) {
                         var list = extractor.extractAry(hdus, i);
-                        retList.add(new ExtractionResults(i, FitsReadUtil.getExtName(h), list, i == refHduNum, h));
+                        retList.add(new ExtractionResults(i, FitsReadUtil.getExtNameOrType(h), list, i == refHduNum, h));
                     }
                 }
             } else {
                 var list = extractor.extractAry(hdus, refHduNum);
-                retList.add(new ExtractionResults(refHduNum, FitsReadUtil.getExtName(refHeader), list,true, refHeader));
+                retList.add(new ExtractionResults(refHduNum, FitsReadUtil.getExtNameOrType(refHeader), list,true, refHeader));
             }
             return retList;
         } finally {
@@ -254,7 +258,7 @@ public class FitsExtract {
                                                                       CombineType ct)
             throws FitsException, IOException {
         return extractFromRelatedHDUs(fitsFile, refHduNum, allMatchingHDUs,
-                (hdus, hduNum) -> getPointDataAry(ptAry, plane, hdus, hduNum, ptSize, ct));
+                (hdus, hduNum) -> getPointDataAry(ptAry, plane, hdus, hduNum, refHduNum, ptSize, ct));
     }
 
     public static List<ExtractionResults> getAllLinesFromRelatedHDUs(ImagePt pt, ImagePt pt2, File fitsFile,
@@ -263,7 +267,7 @@ public class FitsExtract {
                                                                      CombineType ct)
             throws FitsException, IOException {
         return extractFromRelatedHDUs(fitsFile, refHduNum, allMatchingHDUs,
-                (hdus, hduNum) -> getLineDataAry(pt, pt2, plane, hdus, hduNum, ptSize, ct));
+                (hdus, hduNum) -> getLineDataAry(pt, pt2, plane, hdus, hduNum, refHduNum, ptSize, ct));
     }
 
     public static List<ExtractionResults> getAllZAxisAryFromRelatedCubes(ImagePt pt, File fitsFile, int refHduNum,
@@ -271,35 +275,36 @@ public class FitsExtract {
                                                                          CombineType ct)
             throws FitsException, IOException {
         return extractFromRelatedHDUs(fitsFile, refHduNum, allMatchingHDUs,
-                (hdus,hduNum) -> getZAxisAry(pt,hdus,hduNum,ptSize,ct) );
+                (hdus,hduNum) -> getZAxisAry(pt,hdus,hduNum,refHduNum,ptSize,ct) );
     }
 
-    public static List<Number> getPointDataAryFromFile(ImagePt[] ptAry, int plane, File fitsFile, int hduNum,
+    public static List<Number> getPointDataAryFromFile(ImagePt[] ptAry, int plane, File fitsFile, int hduNum, int refHduNum,
                                                        int ptSize, CombineType ct)
             throws FitsException, IOException {
-        return extractFromHDU(fitsFile,hduNum, (hdus,num) -> getPointDataAry(ptAry,plane, hdus,num,ptSize,ct));
+        return extractFromHDU(fitsFile,hduNum, (hdus,num) -> getPointDataAry(ptAry,plane, hdus,num,refHduNum, ptSize,ct));
     }
 
-    public static List<Number> getLineDataAryFromFile(ImagePt pt, ImagePt pt2, int plane, File fitsFile, int hduNum,
+    public static List<Number> getLineDataAryFromFile(ImagePt pt, ImagePt pt2, int plane, File fitsFile, int hduNum, int refHduNum,
                                                       int ptSize, CombineType ct)
             throws FitsException, IOException {
-        return extractFromHDU(fitsFile,hduNum, (hdus,num) -> getLineDataAry(pt,pt2,plane, hdus,num,ptSize,ct));
+        return extractFromHDU(fitsFile,hduNum, (hdus,num) -> getLineDataAry(pt,pt2,plane, hdus,num,refHduNum,ptSize,ct));
     }
 
     public static List<Number> getZAxisAryFromCube(ImagePt pt, File fitsFile, int hduNum, int ptSize, CombineType ct)
             throws FitsException, IOException {
-        return extractFromHDU(fitsFile,hduNum, (hdus,num) -> getZAxisAry(pt,hdus,num,ptSize,ct));
+        return extractFromHDU(fitsFile,hduNum, (hdus,num) -> getZAxisAry(pt,hdus,num,hduNum,ptSize,ct));
     }
 
-    public static List<Number> getZAxisAry(ImagePt pt, BasicHDU<?>[] hdus, int hduNum, int ptSize, CombineType ct)
+    public static List<Number> getZAxisAry(ImagePt pt, BasicHDU<?>[] hdus, int hduNum, int refHduNum, int ptSize, CombineType ct)
             throws FitsException, IOException {
         validateCubeAtHDU(hdus,hduNum);
+        boolean primaryHdu= hduNum==refHduNum;
         ImageHDU hdu= getImageHDU(hdus,hduNum);
         Header header= hdu.getHeader();
         int zLen= FitsReadUtil.getNaxis3(header);
         List<Number> retList= new ArrayList<>(zLen);
         for(int i=0;i<zLen; i++) {
-            retList.add(valueFromFitsFile(hdu,(int)pt.getX(), (int)pt.getY(),i,ptSize, ct));
+            retList.add(valueFromFitsFile(hdu,(int)pt.getX(), (int)pt.getY(),i,ptSize, ct,primaryHdu));
         }
         return retList;
     }

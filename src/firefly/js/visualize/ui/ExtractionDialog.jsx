@@ -442,7 +442,7 @@ function ZAxisExtractionPanel({canCreateExtractionTable, pv}) {
     );
 }
 
-const pointSizeTip= 'Extract the average pixel values in the specifed aperture centered on the pixel closest to where you clicked.';
+const pointSizeTip= 'Extract and manipulate the pixel values in the specified aperture centered on the pixel closest to where you clicked.';
 
 function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivStyle,
                                  plotlyData, canCreateExtractionTable,
@@ -455,14 +455,12 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
             <div style={{
                 display:'flex', flexDirection:'row', height: 30, maxHeight:30}}>
                 <div style={{margin: '2px 0 10px 0'}}>
-                    <span title={pointSizeTip}>
-                        Aperture (Values will be combined)</span>
+                    <span title={pointSizeTip}> Aperture (Values will be combined)</span>
                     <ListBoxInputFieldView
                         inline={true} value={pointSize} onChange={(ev) => setPointSize(ev.target.value)}
                         labelWidth={10} label={' '} tooltip={ pointSizeTip} options={sizeOp} multiple={false} />
                 </div>
                 <div style={{margin: '2px 0 10px 0', width:'8em'}}>
-                    {/*<span title={pointSizeTip}> Combine Type</span>*/}
                     {pointSize>1 && <ListBoxInputFieldView
                         inline={true} value={combineOp} onChange={(ev) => setCombineOp(ev.target.value)}
                         labelWidth={10} label={' '} tooltip={pointSizeTip}
