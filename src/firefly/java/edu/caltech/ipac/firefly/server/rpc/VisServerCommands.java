@@ -16,6 +16,7 @@ import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.visualize.plot.ImagePt;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsExtract;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -152,45 +153,43 @@ public class VisServerCommands {
             boolean useFloat = sp.getOptionalInt(ServerParams.EXTRACTION_FLOAT_SIZE,64)==32;
             int ptSize= sp.getOptionalInt(ServerParams.POINT_SIZE,1);
             int hduNum= sp.getRequiredInt(ServerParams.HDU_NUM);
+            FitsExtract.CombineType ct= Enum.valueOf(FitsExtract.CombineType.class,sp.getOptional(ServerParams.COMBINE_OP,"AVG"));
 
-            int plane;
-            ImagePt pt, pt2;
-            ImagePt [] ptAry;
-            double [] extractAry;
+            List<Number> extractList= switch (exType) {
+                case "z-axis" ->
+                    VisServerOps.getZAxisAry(state,
+                            sp.getRequiredImagePt(ServerParams.PT),
+                            hduNum, ptSize, ct);
 
-            switch (exType) {
-                case "z-axis":
-                    pt= sp.getRequiredImagePt(ServerParams.PT);
-                    extractAry= VisServerOps.getZAxisAry(state,pt,hduNum,ptSize);
-                    break;
-                case "line":
-                    pt=sp.getRequiredImagePt(ServerParams.PT);
-                    pt2= sp.getRequiredImagePt(ServerParams.PT2);
-                    plane= sp.getRequiredInt(ServerParams.PLANE);
-                    extractAry= VisServerOps.getLineDataAry(state,pt,pt2,plane,hduNum,ptSize);
-                    break;
-                case "points":
-                    ptAry= sp.getRequiredImagePtAry(ServerParams.PTARY);
-                    plane= sp.getRequiredInt(ServerParams.PLANE);
-                    extractAry= VisServerOps.getPointDataAry(state,ptAry,plane,hduNum,ptSize);
-                    break;
-                default:
-                    throw new IllegalArgumentException(ServerParams.EXTRACTION_TYPE+" is not supported");
-            }
+                case "line" ->
+                    VisServerOps.getLineDataAry(state,
+                            sp.getRequiredImagePt(ServerParams.PT),
+                            sp.getRequiredImagePt(ServerParams.PT2),
+                            sp.getRequiredInt(ServerParams.PLANE),
+                            hduNum, ptSize, ct);
+
+                case "points" ->
+                        VisServerOps.getPointDataAry(state,
+                                sp.getRequiredImagePtAry(ServerParams.PTARY),
+                                sp.getRequiredInt(ServerParams.PLANE),
+                                hduNum, ptSize, ct);
+                default -> throw new IllegalArgumentException(ServerParams.EXTRACTION_TYPE + " is not supported");
+            };
 
             res.setContentType("application/octet-stream");
-            ByteBuffer byteBuf = useFloat ?
-                    ByteBuffer.allocateDirect(extractAry.length * Float.BYTES) : //4 bytes per float
-                    ByteBuffer.allocateDirect(extractAry.length * Double.BYTES); //8 bytes per float
+            int valueSize= useFloat ? Float.BYTES : Double.BYTES; //4 bytes per float, 8 bytes per double
+            ByteBuffer byteBuf = ByteBuffer.allocateDirect(extractList.size() * valueSize);
             byteBuf.order(ByteOrder.nativeOrder());
             byteBuf.order(ByteOrder.LITTLE_ENDIAN);
             if (useFloat) {
-                float[] floatExtractAry= new float[extractAry.length];
-                for(int i=0;(i<floatExtractAry.length);i++) floatExtractAry[i]= (float)extractAry[i];
+                int loc=0;
+                float [] floatExtractAry= new float[extractList.size()];
+                for(Number n : extractList) floatExtractAry[loc++]= n.floatValue();
                 byteBuf.asFloatBuffer().put(floatExtractAry);
             }
             else {
-                byteBuf.asDoubleBuffer().put(extractAry);
+                double [] doubleExtractAry= extractList.stream().mapToDouble(Number::doubleValue).toArray();
+                byteBuf.asDoubleBuffer().put(doubleExtractAry);
             }
             byteBuf.position(0);
             WritableByteChannel chan= Channels.newChannel(res.getOutputStream());

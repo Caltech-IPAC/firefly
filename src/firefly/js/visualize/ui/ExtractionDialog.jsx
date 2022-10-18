@@ -27,7 +27,7 @@ import {CCUtil, CysConverter} from 'firefly/visualize/CsysConverter.js';
 import {ListBoxInputFieldView} from 'firefly/ui/ListBoxInputField.jsx';
 import {callGetCubeDrillDownAry, callGetPointExtractionAry } from 'firefly/rpc/PlotServicesJson.js';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
-import {getExtName} from 'firefly/visualize/FitsHeaderUtil.js';
+import {getExtName, hasFloatingData} from 'firefly/visualize/FitsHeaderUtil.js';
 import {dispatchTableFetch, dispatchTableSearch} from 'firefly/tables/TablesCntlr.js';
 import {makeTblRequest} from 'firefly/tables/TableRequestUtil.js';
 import ExtractLineTool from 'firefly/drawingLayers/ExtractLineTool.js';
@@ -45,7 +45,7 @@ import {getFluxUnits} from 'firefly/visualize/WebPlot.js';
 import {Band} from 'firefly/visualize/Band.js';
 import {onTableLoaded} from 'firefly/tables/TableUtil.js';
 import {showTableDownloadDialog} from 'firefly/tables/ui/TableSave.jsx';
-import {getAppOptions} from 'firefly/api/ApiUtil.js';
+import {getAppOptions, ServerParams} from 'firefly/api/ApiUtil.js';
 import {showInfoPopup, showPinMessage} from 'firefly/ui/PopupUtil.jsx';
 import {MetaConst} from 'firefly/data/MetaConst.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
@@ -143,6 +143,17 @@ function getStoreState(prevResult) {
 const sizeOp=[];
 for(let i= 1; i<=7;i+=2) sizeOp.push({label:`${i}x${i}`, value:i});
 
+const AVG= 'AVG';
+const combineOps= [
+    {label: 'Average', value: AVG},
+    {label: 'Sum', value: 'SUM'}
+];
+const combineIntOps= [
+    ...combineOps,
+    {label: 'Logical OR', value: 'OR'}
+];
+
+
 function afterZAxisChartRedraw(imPt, pv, chart) {
     chart.on('plotly_click', (ev) => {
         setTimeout( () => {
@@ -224,6 +235,7 @@ function makeLineExtractionTitle(pv,x1,y1,x2,y2) {
 function PointExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
     const [{plotlyDivStyle, plotlyData, plotlyLayout},setChartParams]= useState({});
     const [pointSize,setPointSize]= useState(1);
+    const [combineOp,setCombineOp]= useState(AVG);
     const [allRelatedHDUS,setAllRelatedHDUS]= useState(true);
     const [chartXAxis,setChartXAxis]= useState('imageX');
     const plot= primePlot(pv);
@@ -249,7 +261,7 @@ function PointExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
     useEffect(() => {
         const getData= async () => {
             if (imPtAry && imPtAry.length && plot) {
-                const dataAry= await callGetPointExtractionAry(plot, hduNum, plane, imPtAry, pointSize, allRelatedHDUS);
+                const dataAry= await callGetPointExtractionAry(plot, hduNum, plane, imPtAry, pointSize, combineOp, allRelatedHDUS);
                 const chartTitle= 'Point Extract Preview';
                 let activeIdx= 0;
                 const key= lastChartChartXAxis==='imageX' ? 'x' : 'y';
@@ -259,18 +271,19 @@ function PointExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
                 }
                 const chartData=
                     genPointChartData(plot, dataAry,imPtAry, imPtAry[activeIdx][key], dataAry[activeIdx],
-                        pointSize,chartTitle, chartXAxis, activeIdx);
+                        pointSize,combineOp, chartTitle, chartXAxis, activeIdx);
                 setChartParams(chartData);
             }
             // if (!pv) cancelPointExtraction();
         };
         getData();
-    },[ptAry.length,hduNum,plotId,plotImageId,pointSize,chartX,chartY,chartXAxis]);
+    },[ptAry.length,hduNum,plotId,plotImageId,pointSize,combineOp,chartX,chartY,chartXAxis]);
 
     return (
         <ExtractionPanelView {...{
-            allRelatedHDUS, setAllRelatedHDUS, pointSize, setPointSize,
+            allRelatedHDUS, setAllRelatedHDUS, pointSize, setPointSize, combineOp, setCombineOp,
             plotlyDivStyle, plotlyData, plotlyLayout, canCreateExtractionTable,
+            hasFloatingData:hasFloatingData(plot),
             startUpHelp: (
                 <div>
                     <div> Click on an image to extract a point, continue clicking to extract more points. </div>
@@ -278,7 +291,10 @@ function PointExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
                 </div>
             ),
             afterRedraw: (chart,pl) => afterPointsChartRedraw(pv,chart,pl,chartXAxis, imPtAry),
-            callKeepExtraction: (download, doOverlay) => keepPointsExtraction(imPtAry, pv, plot, plot.plotState.getWorkingFitsFileStr(), hduNum, plane, pointSize,download, doOverlay),
+            callKeepExtraction: (download, doOverlay) =>
+                keepPointsExtraction(imPtAry, pv, plot,
+                    plot.plotState.getWorkingFitsFileStr(), hduNum, plane,
+                    pointSize,combineOp, download, doOverlay),
         }} /> );
 }
 
@@ -288,6 +304,7 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
     const [{plotlyDivStyle, plotlyData, plotlyLayout},setChartParams]= useState({});
     const [imPtAry,setImPtAry]= useState(undefined);
     const [pointSize,setPointSize]= useState(1);
+    const [combineOp,setCombineOp]= useState(AVG);
     const [allRelatedHDUS,setAllRelatedHDUS]= useState(true);
     const plot= primePlot(pv);
     const {pt0:pt1,pt1:pt2}=plot?.attributes?.[PlotAttribute.ACTIVE_DISTANCE] ?? {};
@@ -318,14 +335,14 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
                 }
                 const cc= CysConverter.make(plot);
 
-                const dataAry= await callGetPointExtractionAry(plot, hduNum, plane, newImPtAry, pointSize, allRelatedHDUS);
+                const dataAry= await callGetPointExtractionAry(plot, hduNum, plane, newImPtAry, pointSize, combineOp, allRelatedHDUS);
                 const chartTitle= makeLineExtractionTitle(pv,x1,y1,x2,y2);
                 const pt0= hasWCSProjection(plot) ? cc.getWorldCoords(newImPtAry[0]) : newImPtAry[0];
                 const xOffAry= hasWCSProjection(plot) ?
                     newImPtAry.map( (pt) => computeDistance(pt0,cc.getWorldCoords(pt))*3600) :
                     newImPtAry.map( (pt) => computeScreenDistance(pt0.x,pt0.y,pt.x,pt.y));
                 const chartData=
-                    genSliceChartData(plot, ipt1,ipt2,xOffAry, dataAry, chartX, chartY, pointSize, chartTitle, direction<0);
+                    genSliceChartData(plot, ipt1,ipt2,xOffAry, dataAry, chartX, chartY, pointSize, combineOp, chartTitle, direction<0);
                 ReactDOM.unstable_batchedUpdates( () => {
                         setChartParams(chartData);
                         setImPtAry(newImPtAry);
@@ -334,12 +351,12 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
             if (!pv) cancelLineExtraction();
         };
         if (extractionData) getData();
-    },[x1,y1,x2,y2,hduNum,plotId,plotImageId,pointSize,chartX,chartY]);
+    },[x1,y1,x2,y2,hduNum,plotId,plotImageId,pointSize,combineOp,chartX,chartY]);
 
     return (
         <ExtractionPanelView {...{
-            allRelatedHDUS, setAllRelatedHDUS, pointSize, setPointSize, canCreateExtractionTable,
-            plotlyDivStyle, plotlyData: extractionData&&plotlyData, plotlyLayout,
+            allRelatedHDUS, setAllRelatedHDUS, pointSize, setPointSize, combineOp, setCombineOp, canCreateExtractionTable,
+            plotlyDivStyle, plotlyData: extractionData&&plotlyData, plotlyLayout, hasFloatingData:hasFloatingData(plot),
             startUpHelp: (
                 <div>
                     <div> Draw line on image to extract point on line and show chart. </div>
@@ -347,7 +364,9 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
                 </div>
             ),
             afterRedraw: (chart,pl) => afterLineChartRedraw(pv,chart,pl,imPtAry,makeImagePt(x1,y1), makeImagePt(x2,y2)),
-            callKeepExtraction: (download, doOverlay) => keepLineExtraction(ipt1,ipt2, pv, plot, plot.plotState.getWorkingFitsFileStr(), hduNum, plane, pointSize, download, doOverlay),
+            callKeepExtraction: (download, doOverlay) =>
+                keepLineExtraction(ipt1,ipt2, pv, plot, plot.plotState.getWorkingFitsFileStr(),
+                    hduNum, plane, pointSize, combineOp, download, doOverlay),
         }} /> );
 }
 
@@ -379,6 +398,7 @@ function usingXAxis(pt1,pt2) {
 function ZAxisExtractionPanel({canCreateExtractionTable, pv}) {
     const [pointSize,setPointSize]= useState(1);
     const [allRelatedHDUS,setAllRelatedHDUS]= useState(true);
+    const [combineOp,setCombineOp]= useState(AVG);
     const [{plotlyDivStyle, plotlyData, plotlyLayout},setChartParams]= useState({});
     const plot= primePlot(pv);
     const {pt}=plot?.attributes?.[PlotAttribute.ACTIVE_POINT] ?? {};
@@ -396,43 +416,57 @@ function ZAxisExtractionPanel({canCreateExtractionTable, pv}) {
                     setChartParams({});
                     return;
                 }
-                const dataAry = await callGetCubeDrillDownAry(plot, hduNum, ipt, pointSize, allRelatedHDUS);
+                const dataAry = await callGetCubeDrillDownAry(plot, hduNum, ipt, pointSize, combineOp, allRelatedHDUS);
                 const plane=getImageCubeIdx(plot);
                 const chartTitle= `Z Axis Preview - ${extName?extName+',':''} HDU #${hduNum}, Point: (${x},${y})`;
-                setChartParams(genZAxisChartData(makeImagePt(x,y), pv, dataAry, plane , dataAry[plane] , pointSize, chartTitle));
+                setChartParams(genZAxisChartData(makeImagePt(x,y), pv, dataAry, plane , dataAry[plane] , pointSize, combineOp, chartTitle));
             }
             // if (!pv) cancelZaxisExtraction();
         };
         void updateChart();
-    },[x,y,hduNum,plotId,pointSize,plotImageId]);
+    },[x,y,hduNum,plotId,pointSize,combineOp,plotImageId]);
 
     return (
         <ExtractionPanelView {...{
-            allRelatedHDUS, setAllRelatedHDUS, pointSize, setPointSize,
+            allRelatedHDUS, setAllRelatedHDUS, pointSize, setPointSize, combineOp, setCombineOp,
+            hasFloatingData:hasFloatingData(plot),
             plotlyDivStyle, plotlyData, plotlyLayout, canCreateExtractionTable,
             startUpHelp: isImageCube(plot) ?
                 'Click on a pixel to extract data from all planes of the cube' :
                 'Please choose a cube to extract z-axis data',
             afterRedraw: (chart,pl) => afterZAxisChartRedraw(makeImagePt(x,y), pv,chart,pl),
-            callKeepExtraction: (download, doOverlay) => keepZAxisExtraction(makeImagePt(x,y), pv, plot, plot?.plotState.getWorkingFitsFileStr(), hduNum, pointSize, download,doOverlay),
+            callKeepExtraction: (download, doOverlay) =>
+                keepZAxisExtraction(makeImagePt(x,y), pv, plot, plot?.plotState.getWorkingFitsFileStr(),
+                    hduNum, pointSize, combineOp, download,doOverlay),
         }} />
     );
 }
 
-const pointSizeTip= 'Extract the average pixel values in the specifed aperture centered on the pixel closest to where you clicked.';
+const pointSizeTip= 'Extract and manipulate the pixel values in the specified aperture centered on the pixel closest to where you clicked.';
 
-function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivStyle, plotlyData, canCreateExtractionTable,
-                                 plotlyLayout, startUpHelp, callKeepExtraction, bottomUI}) {
+function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivStyle,
+                                 plotlyData, canCreateExtractionTable,
+                                 plotlyLayout, startUpHelp, callKeepExtraction,
+                                 bottomUI, combineOp, setCombineOp, hasFloatingData}) {
     return (
         <div style={{
             padding: 3, display:'flex', flexDirection:'column',
             alignItems:'center', resize:'both', overflow: 'hidden', zIndex:1}}>
-            <div style={{margin: '2px 0 10px 0'}}>
-                <span title={pointSizeTip}>
-                    Aperture (Values will be averaged)</span>
-                <ListBoxInputFieldView
-                    inline={true} value={pointSize} onChange={(ev) => setPointSize(ev.target.value)}
-                    labelWidth={10} label={' '} tooltip={ pointSizeTip} options={sizeOp} multiple={false} />
+            <div style={{
+                display:'flex', flexDirection:'row', height: 30, maxHeight:30}}>
+                <div style={{margin: '2px 0 10px 0'}}>
+                    <span title={pointSizeTip}> Aperture (Values will be combined)</span>
+                    <ListBoxInputFieldView
+                        inline={true} value={pointSize} onChange={(ev) => setPointSize(ev.target.value)}
+                        labelWidth={10} label={' '} tooltip={ pointSizeTip} options={sizeOp} multiple={false} />
+                </div>
+                <div style={{margin: '2px 0 10px 0', width:'8em'}}>
+                    {pointSize>1 && <ListBoxInputFieldView
+                        inline={true} value={combineOp} onChange={(ev) => setCombineOp(ev.target.value)}
+                        labelWidth={10} label={' '} tooltip={pointSizeTip}
+                        options={hasFloatingData?combineOps:combineIntOps}
+                        multiple={false} />}
+                </div>
             </div>
             <div style={{minWidth:440, minHeight:200, width:'100%', height:'100%',
                 flex: '1 1 auto', boxSizing: 'border-box',
@@ -520,7 +554,7 @@ function doDispatchTable(req, doOverlay) {
 
 let titleCnt= 1;
 
-function keepZAxisExtraction(pt,pv, plot, filename,refHDUNum,extractionSize, save=false, doOverlay=true) {
+function keepZAxisExtraction(pt,pv, plot, filename,refHDUNum,extractionSize, combineOp, save=false, doOverlay=true) {
     if (!pv || !plot  || !filename) {
         showInfoPopup('Plot no longer exist. Cannot extract.');
         return;
@@ -545,6 +579,7 @@ function keepZAxisExtraction(pt,pv, plot, filename,refHDUNum,extractionSize, sav
             filename,
             refHDUNum,
             extractionSize,
+            [ServerParams.COMBINE_OP]: combineOp,
             allMatchingHDUs: true,
         },
         {tbl_id});
@@ -554,7 +589,7 @@ function keepZAxisExtraction(pt,pv, plot, filename,refHDUNum,extractionSize, sav
     titleCnt++;
 }
 
-function keepLineExtraction(pt, pt2,pv, plot, filename,refHDUNum,plane,extractionSize,save=false,doOverlay=true) {
+function keepLineExtraction(pt, pt2,pv, plot, filename,refHDUNum,plane,extractionSize, combineOp, save=false,doOverlay=true) {
     if (!pv || !plot  || !filename) {
         showInfoPopup('Plot no longer exist. Cannot extract.');
         return;
@@ -574,6 +609,7 @@ function keepLineExtraction(pt, pt2,pv, plot, filename,refHDUNum,plane,extractio
             refHDUNum,
             plane,
             extractionSize,
+            [ServerParams.COMBINE_OP]: combineOp,
             allMatchingHDUs: true,
         },
         {tbl_id});
@@ -593,7 +629,7 @@ function makePlaneTitle(rootStr, pv,plot,cnt) {
     return `${rootStr} ${cnt}${hduStr}${cubeStr}`;
 }
 
-function keepPointsExtraction(ptAry,pv, plot, filename,refHDUNum,plane,extractionSize,save=false,doOverlay=true) {
+function keepPointsExtraction(ptAry,pv, plot, filename,refHDUNum,plane,extractionSize, combineOp, save=false,doOverlay=true) {
     if (!pv || !plot  || !filename) {
         showInfoPopup('Plot no longer exist. Cannot extract.');
         return;
@@ -614,6 +650,7 @@ function keepPointsExtraction(ptAry,pv, plot, filename,refHDUNum,plane,extractio
             refHDUNum,
             plane,
             extractionSize,
+            [ServerParams.COMBINE_OP]: combineOp,
             allMatchingHDUs: true,
         },
         {tbl_id});
@@ -679,7 +716,7 @@ function makePlotlyDataObj(xDataAry, yDataAry,x,y,ttXStr,ttYStr, makeXDesc= (i)=
 }
 
 
-function genSliceChartData(plot, ipt1,ipt2, xDataAry,yDataAry,x,y, pointSize, title, reversed) {
+function genSliceChartData(plot, ipt1,ipt2, xDataAry,yDataAry,x,y, pointSize, combineOp, title, reversed) {
     const unitStr= hasWCSProjection(plot) ? ' (arcsec)' : '';
     const yUnits= getFluxUnits(plot,Band.NO_BAND);
     const yAxisLabel= getExtName(plot) || 'HDU# '+getHDU(plot);
@@ -687,11 +724,11 @@ function genSliceChartData(plot, ipt1,ipt2, xDataAry,yDataAry,x,y, pointSize, ti
         plotlyDivStyle,
         plotlyData: makePlotlyDataObj(xDataAry, yDataAry, x, y, 'Offset'+unitStr, yAxisLabel),
         plotlyLayout: makePlotlyLayoutObj(title, 'Offset'+unitStr,
-            `${yAxisLabel} (${yUnits})${pointSize > 1 ? ` (${pointSize}x${pointSize} avg)` : ''}`, reversed),
+            `${yAxisLabel} (${yUnits})${pointSize > 1 ? ` (${pointSize}x${pointSize} ${combineOp.toLowerCase()})` : ''}`, reversed),
     };
 }
 
-function genPointChartData(plot, dataAry,imPtAry, x,y, pointSize, title, chartXAxis, activeIdx) {
+function genPointChartData(plot, dataAry,imPtAry, x,y, pointSize, combineOp, title, chartXAxis, activeIdx) {
 
     const xAxis= chartXAxis==='imageX' ? imPtAry.map( (pt) => pt.x) : imPtAry.map( (pt) => pt.y);
     const xAxisTitle= chartXAxis==='imageX' ? 'Image X': 'Image Y';
@@ -703,13 +740,13 @@ function genPointChartData(plot, dataAry,imPtAry, x,y, pointSize, title, chartXA
         plotlyDivStyle,
         plotlyData: makePlotlyDataObj(xAxis, dataAry, x, y, xAxisTitle, yAxisLabel,
           xLabel , xLabel(activeIdx)),
-        plotlyLayout: makePlotlyLayoutObj(title, xAxisTitle, `${yAxisLabel} (${yUnits})${pointSize > 1 ? ` (${pointSize}x${pointSize} avg)` : ''}`),
+        plotlyLayout: makePlotlyLayoutObj(title, xAxisTitle, `${yAxisLabel} (${yUnits})${pointSize > 1 ? ` (${pointSize}x${pointSize} ${combineOp.toLowerCase()})` : ''}`),
     };
 }
 
 
 
-function genZAxisChartData(imPt, pv, dataAry,x,y, pointSize, title) {
+function genZAxisChartData(imPt, pv, dataAry,x,y, pointSize, combineOp, title) {
     const plot= primePlot(pv);
     const hasWL= hasWLInfo(plot);
     const xAry= hasWL ? getAllWaveLengthsForCube(pv,imPt) : dataAry.map( (d,i) => i+1);
@@ -726,7 +763,7 @@ function genZAxisChartData(imPt, pv, dataAry,x,y, pointSize, title) {
     return {
         plotlyDivStyle,
         plotlyData,
-        plotlyLayout: makePlotlyLayoutObj(title,hasWL?'Wavelength':'cube plane', `Z-Axis${pointSize>1?` (${pointSize}x${pointSize} avg)`:''}`),
+        plotlyLayout: makePlotlyLayoutObj(title,hasWL?'Wavelength':'cube plane', `Z-Axis${pointSize>1?` (${pointSize}x${pointSize} ${combineOp.toLowerCase()})`:''}`),
     };
 }
 

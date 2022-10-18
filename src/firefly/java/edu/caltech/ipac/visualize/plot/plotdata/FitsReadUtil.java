@@ -7,7 +7,6 @@ package edu.caltech.ipac.visualize.plot.plotdata;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImageHeader;
-import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -494,6 +493,7 @@ public class FitsReadUtil {
         }
     }
 
+    public static int getBitPix(Header h) {return h.getIntValue("BITPIX"); }
     public static int getNaxis(Header h) { return h.getIntValue("NAXIS", 0); }
     public static int getNaxis1(Header h) { return h.getIntValue("NAXIS1", 0); }
     public static int getNaxis2(Header h) { return h.getIntValue("NAXIS2", 0); }
@@ -503,7 +503,9 @@ public class FitsReadUtil {
     public static double getBzero(Header h) { return h.getDoubleValue("BZERO", 0.0); }
     public static double getBlankValue(Header h) { return h.getDoubleValue("BLANK", Double.NaN); }
     public static String getExtName(Header h) { return h.getStringValue("EXTNAME"); }
+    public static String getExtType(Header h) { return h.getStringValue("EXTTYPE"); }
     public static String getUtype(Header h) { return h.getStringValue("UTYPE"); }
+    public static String getExtNameOrType(Header h) { return getExtName(h)!=null ? getExtName(h) : getExtType(h);}
 
 
 
@@ -538,135 +540,11 @@ public class FitsReadUtil {
         }
     }
 
-    private static double averageArray(double[] ary) {
-        if (ary.length == 0) return Double.NaN;
-        if (ary.length == 1) return ary[0];
-        float sum = 0;
-        float cnt = 0;
-        for (double v : ary) {
-            if (!Double.isNaN(v)) {
-                sum += v;
-                cnt++;
-            }
-        }
-        return cnt > 0 ? sum / cnt : Float.NaN;
-    }
-
-
-
-    interface Extractor { double[] extractAry(BasicHDU<?>[] hdus, int hduNum) throws FitsException, IOException; }
-
-
-    public static List<ExtractionResults> extractFromRelatedHDUs(File fitsFile, int refHduNum,
-                                                                 boolean allMatchingHDUs, Extractor extractor)
-            throws FitsException, IOException {
-        Fits fits = null;
-        try {
-            fits = new Fits(fitsFile);
-            BasicHDU<?>[] hdus = readHDUs(fits);
-            BasicHDU<?> hdu = hdus[refHduNum];
-            validateImageAtHDU(hdus, refHduNum);
-            Header refHeader = hdu.getHeader();
-            int dims = getNaxis(refHeader);
-            int xLen = getNaxis1(refHeader);
-            int yLen = getNaxis2(refHeader);
-            int zLen = getNaxis3(refHeader);
-            List<ExtractionResults> retList = new ArrayList<>();
-
-            if (allMatchingHDUs) {
-                for (int i = 0; (i < hdus.length); i++) {
-                    Header h = hdus[i].getHeader();
-                    if (getNaxis(h) == dims && getNaxis1(h) == xLen && getNaxis2(h) == yLen && getNaxis3(h) == zLen) {
-                        double[] ary = extractor.extractAry(hdus, i);
-                        retList.add(new ExtractionResults(i, getExtName(h), ary, i == refHduNum, h));
-                    }
-                }
-            } else {
-                double[] ary = extractor.extractAry(hdus, refHduNum);
-                retList.add(new ExtractionResults(refHduNum, getExtName(refHeader), ary, true, refHeader));
-            }
-            return retList;
-        } finally {
-            closeFits(fits);
-        }
-    }
-
-    public static double[] extractFromHDU(File fitsFile, int hduNum, Extractor extractor)
-            throws FitsException, IOException {
-        Fits fits= null;
-        try {
-            fits = new Fits(fitsFile);
-            return extractor.extractAry(readHDUs(fits), hduNum);
-        }
-        finally {
-            closeFits(fits);
-        }
-    }
-
-    public static List<ExtractionResults> getAllPointsFromRelatedHDUs(ImagePt[] ptAry, File fitsFile,
-                                                                      int refHduNum, int plane,
-                                                                      boolean allMatchingHDUs, int ptSize)
-            throws FitsException, IOException {
-        return extractFromRelatedHDUs(fitsFile, refHduNum, allMatchingHDUs,
-                (hdus, hduNum) -> getPointDataAry(ptAry, plane, hdus, hduNum, ptSize));
-    }
-
-    public static List<ExtractionResults> getAllLinesFromRelatedHDUs(ImagePt pt, ImagePt pt2, File fitsFile,
-                                                                     int refHduNum, int plane,
-                                                                     boolean allMatchingHDUs, int ptSize)
-            throws FitsException, IOException {
-        return extractFromRelatedHDUs(fitsFile, refHduNum, allMatchingHDUs,
-                (hdus, hduNum) -> getLineDataAry(pt, pt2, plane, hdus, hduNum, ptSize));
-    }
-
-    public static List<ExtractionResults> getAllZAxisAryFromRelatedCubes(ImagePt pt, File fitsFile, int refHduNum,
-                                                                         boolean allMatchingHDUs, int ptSize)
-            throws FitsException, IOException {
-        return extractFromRelatedHDUs(fitsFile, refHduNum, allMatchingHDUs,
-                (hdus,hduNum) -> getZAxisAry(pt,hdus,hduNum,ptSize) );
-    }
-
-    public static double[] getPointDataAryFromFile(ImagePt[] ptAry, int plane, File fitsFile, int hduNum, int ptSize)
-            throws FitsException, IOException {
-        return extractFromHDU(fitsFile,hduNum, (hdus,num) -> getPointDataAry(ptAry,plane, hdus,num,ptSize));
-    }
-
-    public static double[] getLineDataAryFromFile(ImagePt pt, ImagePt pt2, int plane, File fitsFile, int hduNum, int ptSize)
-            throws FitsException, IOException {
-        return extractFromHDU(fitsFile,hduNum, (hdus,num) -> getLineDataAry(pt,pt2,plane, hdus,num,ptSize));
-    }
-
-    public static double[] getZAxisAryFromCube(ImagePt pt, File fitsFile, int hduNum, int ptSize)
-            throws FitsException, IOException {
-        return extractFromHDU(fitsFile,hduNum, (hdus,num) -> getZAxisAry(pt,hdus,num,ptSize));
-    }
-
-
-
-    private static double valueFromFitsFile(ImageHDU hdu, int x, int y, int plane, int ptSize) throws IOException {
-        Header header= hdu.getHeader();
-        int naxis1= getNaxis1(header);
-        int naxis2= getNaxis2(header);
-        if (ptSize<1) ptSize= 1;
-        else if (ptSize>5) ptSize= 5;
-        int adjust= (int)Math.floor((ptSize-1) / 2.0);
-        x= x - adjust;
-        y= y - adjust;
-        if (x<0) x= 0;
-        if (y<0) y= 0;
-        if (x+ptSize>=naxis1) x-= (x+ptSize-naxis1+1);
-        if (y+ptSize>=naxis2) y-= (y+ptSize-naxis2+1);
-        double[] doubleAry= (double[]) dataArrayFromFitsFile(hdu,x,y,ptSize,ptSize,plane,true);
-        double aveValue= averageArray(doubleAry);
-        return ImageStretch.getFluxStandard( aveValue, getBlankValue(header), getBscale(header), getBzero(header));
-    }
-
     /**
      *
-     * @param doDouble true for double array, false for float ary
      * @return an Object that will be a double array or an float array
      */
-    public static Object dataArrayFromFitsFile(ImageHDU hdu, int x, int y, int width, int height, int plane, boolean doDouble) throws IOException {
+    public static Object dataArrayFromFitsFile(ImageHDU hdu, int x, int y, int width, int height, int plane, Class<?> arrayType) throws IOException {
         Header header= hdu.getHeader();
         int naxis= getNaxis(header);
         if (naxis==4 && getNaxis4(header)!=1) throw new IllegalArgumentException("naxis 4 must has naxis 4 as dimension 1");
@@ -689,113 +567,9 @@ public class FitsReadUtil {
                 break;
         }
         Object value= tiler.getTile(loc, tileSize);
-        return ArrayFuncs.convertArray(value, doDouble ? Double.TYPE : Float.TYPE, true);
+        return ArrayFuncs.convertArray(value, arrayType, true);
     }
 
-
-    public static double[] getZAxisAry(ImagePt pt, BasicHDU<?>[] hdus, int hduNum, int ptSize)
-            throws FitsException, IOException {
-        validateCubeAtHDU(hdus,hduNum);
-        ImageHDU hdu= getImageHDU(hdus,hduNum);
-        Header header= hdu.getHeader();
-        int zLen= getNaxis3(header);
-        double[] retAry= new double[zLen];
-        for(int i=0;i<zLen; i++) {
-            retAry[i]=valueFromFitsFile(hdu,(int)pt.getX(), (int)pt.getY(),i,ptSize);
-        }
-        return retAry;
-    }
-
-    private static ImageHDU getImageHDU(BasicHDU<?>[] hdus, int idx) throws FitsException {
-        if ( !(hdus[idx] instanceof ImageHDU) && !(hdus[idx] instanceof CompressedImageHDU) ) {
-            throw new FitsException(idx + " is not a cube");
-        }
-        return (hdus[idx] instanceof CompressedImageHDU) ?
-                        ((CompressedImageHDU) hdus[idx]).asImageHDU() : (ImageHDU) hdus[idx];
-    }
-
-    private static void validateCubeAtHDU(BasicHDU<?>[] hdus, int hduNum) throws FitsException {
-        validateImageAtHDU(hdus,hduNum);
-        BasicHDU<?> basicHDU= hdus[hduNum];
-        Header header= basicHDU.getHeader();
-        String hduNumStr= "HDU #"+hduNum;
-        int nAxis= getNaxis(header);
-        if (nAxis<3) throw new FitsException(hduNumStr + " is not a cube");
-        if (nAxis==4 && getNaxis4(header)!=1) throw new FitsException(hduNumStr + " is not a cube, 4 axes");
-    }
-
-    private static void validateImageAtHDU(BasicHDU<?>[] hdus, int hduNum) throws FitsException {
-        String hduNumStr= "HDU #"+hduNum;
-        if (hduNum>=hdus.length) throw new FitsException("no "+hduNumStr);
-        BasicHDU<?> basicHDU= hdus[hduNum];
-        if ( !(basicHDU instanceof ImageHDU) && !(basicHDU instanceof CompressedImageHDU) ) {
-            throw new FitsException(hduNumStr+ " is not a image HDU");
-        }
-    }
-
-
-    public static double[] getPointDataAry(ImagePt[] ptAry, int plane, BasicHDU<?>[] hdus, int hduNum, int ptSize)
-            throws FitsException, IOException {
-        ImageHDU hdu= getImageHDU(hdus,hduNum);
-        double[] pts= new double[ptAry.length];
-        for(int i=0;(i<ptAry.length);i++) {
-            ImagePt pt= ptAry[i];
-            pts[i] = valueFromFitsFile(hdu, (int)pt.getX(),(int)pt.getY(),plane,ptSize);
-        }
-        return pts;
-    }
-
-
-
-    public static double[] getLineDataAry(ImagePt pt1, ImagePt pt2, int plane, BasicHDU<?>[] hdus, int hduNum, int ptSize)
-            throws FitsException, IOException {
-        ImageHDU hdu= getImageHDU(hdus,hduNum);
-        double x1 = pt1.getX();
-        double y1 = pt1.getY();
-        double x2 = pt2.getX();
-        double y2 = pt2.getY();
-
-        // delta X and Y in image pixels
-        double deltaX = Math.abs(pt2.getX() - pt1.getX());
-        double deltaY = Math.abs(pt2.getY() - pt1.getY());
-        double slope;
-        double yIntercept;
-
-        int x, y;
-        if (deltaX > deltaY) {
-            slope = (y2-y1)/(x2-x1);
-            yIntercept = y1-slope*x1;
-
-            int minX = (int)Math.min(x1, x2);
-            int maxX = (int)Math.max(x1, x2) ;
-            int n = (int)Math.rint(Math.ceil(maxX-minX))+1;
-            double [] pts = new double[n];
-            int idx = 0;
-            for (x=minX; x<=maxX; x+=1) {
-                y = (int)(slope*x + yIntercept);
-                pts[idx] = valueFromFitsFile(hdu, x,y,plane,ptSize);
-                idx++;
-            }
-            return pts;
-        } else if (y1 != y2) {
-            double  islope = (x2-x1)/(y2-y1);
-            double xIntercept = x1-islope*y1;
-
-            int minY = (int)Math.min(y1, y2);
-            int maxY = (int)Math.max(y1, y2);
-            int n = (int)Math.rint(Math.ceil(maxY - minY))+1;
-            double [] pts = new double[n];
-
-            int idx = 0;
-            for (y=minY; y<=maxY; y+=1) {
-                x = (int)(islope*y + xIntercept);
-                pts[idx] = valueFromFitsFile(hdu, x,y,plane,ptSize);
-                idx++;
-            }
-            return pts;
-        }
-        return null;
-    }
 
     public static Class<?> getDataType(int bitPix){
         return switch (bitPix) {
@@ -810,5 +584,4 @@ public class FitsReadUtil {
     }
 
 
-    public record ExtractionResults(int hduNum, String extName, double[] aryData, boolean refHDU, Header header) { }
 }

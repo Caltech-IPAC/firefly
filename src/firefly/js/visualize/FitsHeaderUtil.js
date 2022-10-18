@@ -23,6 +23,7 @@ export const HdrConst= {
     CTYPE3   : 'CTYPE3',
     BITPIX   : 'BITPIX',
     BSCALE   : 'BSCALE',
+    BZERO    : 'BZERO',
     CRPIX1   : 'CRPIX1',
     CRPIX2   : 'CRPIX2',
     CRVAL1   : 'CRVAL1',
@@ -220,8 +221,15 @@ export function getAllValuesOfHeader(plotOrHeader, headerKey) {
  * @return {string}
  */
 export const getExtName= (plotOrHeader) => getHeader(plotOrHeader,HdrConst.EXTNAME,'');
-
 export const getExtType= (plotOrHeader) => getHeader(plotOrHeader,HdrConst.EXTTYPE,'');
+export const getBixPix= (plotOrHeader) => getNumberHeader(plotOrHeader,HdrConst.BITPIX,-32);
+export const getBScale= (plotOrHeader) => getNumberHeader(plotOrHeader,HdrConst.BSCALE,1);
+export const getBZero= (plotOrHeader) => getNumberHeader(plotOrHeader,HdrConst.BZERO,0);
+
+export function hasFloatingData(plotOrHeader) {
+    const bitpix= getBixPix(plotOrHeader);
+    return bitpix===-64 || bitpix===-32;
+}
 
 /**
  * return a header number value given a header key

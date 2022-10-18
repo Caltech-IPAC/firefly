@@ -149,10 +149,12 @@ public class LockingVisNetwork {
         public void dataDownloading(DownloadEvent ev) {
             if (_key == null) return;
             String offStr = "";
-            if (ev.getMax() > 0) {
+            long current= ev.getCurrent();
+            long max= ev.getMax();
+            if (max > 0 && current<max) {
                 offStr = " of " + FileUtil.getSizeAsString(ev.getMax(),true);
             }
-            String messStr = "Retrieved " + FileUtil.getSizeAsString(ev.getCurrent(),true) + offStr;
+            String messStr = "Retrieved " + FileUtil.getSizeAsString(current,true) + offStr;
             PlotServUtils.updatePlotCreateProgress(_key, _plotId, ProgressStat.PType.DOWNLOADING, messStr);
         }
     }

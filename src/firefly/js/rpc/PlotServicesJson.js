@@ -12,7 +12,7 @@ import {doJsonRequest} from '../core/JsonUtils.js';
 import {SelectedShape} from '../drawingLayers/SelectedShape';
 import {getCmdSrvSyncURL} from 'firefly/util/WebUtil.js';
 import {fetchUrl} from 'firefly/api/ApiUtil.js';
-import {getNumberHeader, HdrConst} from 'firefly/visualize/FitsHeaderUtil.js';
+import {getBixPix, getNumberHeader, HdrConst} from 'firefly/visualize/FitsHeaderUtil.js';
 
 
 /**
@@ -81,7 +81,7 @@ export function callGetFileFlux(stateAry, pt) {
 }
 
 async function fetchExtraction(plot, inParams, cmd= ServerParams.FITS_EXTRACTION) {
-    const use64Bit= getNumberHeader(plot,HdrConst.BITPIX,-64)===-64;
+    const use64Bit= getBixPix(plot)===-64;
     const params= {...inParams, [ServerParams.EXTRACTION_FLOAT_SIZE]: use64Bit ? 64 : 32};
     const response= await fetchUrl(getCmdSrvSyncURL()+`?${ServerParams.COMMAND}=${cmd}`,{method:'POST', params },false);
     if (!response.ok) {
@@ -91,19 +91,20 @@ async function fetchExtraction(plot, inParams, cmd= ServerParams.FITS_EXTRACTION
     return use64Bit ? new Float64Array(arrayBuffer) : new Float32Array(arrayBuffer);
 }
 
-export async function callGetCubeDrillDownAry(plot, hduNum, pt, ptSize, relatedCubes) {
+export async function callGetCubeDrillDownAry(plot, hduNum, pt, ptSize, combineOp, relatedCubes) {
     return fetchExtraction(plot,
         {
             [ServerParams.EXTRACTION_TYPE]: 'z-axis',
             [ServerParams.STATE]: plot.plotState.toJson(false),
             [ServerParams.PT] : pt.toString(),
             [ServerParams.POINT_SIZE] : ptSize+'',
+            [ServerParams.COMBINE_OP] : combineOp,
             [ServerParams.HDU_NUM] : hduNum+'',
             [ServerParams.RELATED_HDUS] : relatedCubes+'',
         });
 }
 
-export async function callGetLineExtractionAry(plot, hduNum, plane, pt, pt2, ptSize, relatedHDUS) {
+export async function callGetLineExtractionAry(plot, hduNum, plane, pt, pt2, ptSize, combineOp, relatedHDUS) {
     return fetchExtraction(plot,
         {
             [ServerParams.EXTRACTION_TYPE]: 'line',
@@ -111,19 +112,21 @@ export async function callGetLineExtractionAry(plot, hduNum, plane, pt, pt2, ptS
             [ServerParams.PT] : pt.toString(),
             [ServerParams.PT2] : pt2.toString(),
             [ServerParams.POINT_SIZE] : ptSize+'',
+            [ServerParams.COMBINE_OP] : combineOp,
             [ServerParams.PLANE] : plane+'',
             [ServerParams.HDU_NUM] : hduNum+'',
             [ServerParams.RELATED_HDUS] : relatedHDUS+'',
         });
 }
 
-export async function callGetPointExtractionAry(plot, hduNum, plane, ptAry, ptSize, relatedHDUS) {
+export async function callGetPointExtractionAry(plot, hduNum, plane, ptAry, ptSize, combineOp, relatedHDUS) {
     return fetchExtraction(plot,
         {
             [ServerParams.EXTRACTION_TYPE]: 'points',
             [ServerParams.STATE]: plot.plotState.toJson(false),
             [ServerParams.PTARY] : JSON.stringify(ptAry.map( (pt) => pt.toString())),
             [ServerParams.POINT_SIZE] : ptSize+'',
+            [ServerParams.COMBINE_OP] : combineOp,
             [ServerParams.PLANE] : plane+'',
             [ServerParams.HDU_NUM] : hduNum+'',
             [ServerParams.RELATED_HDUS] : relatedHDUS+'',

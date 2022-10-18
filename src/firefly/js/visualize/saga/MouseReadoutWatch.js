@@ -18,7 +18,7 @@ import {
     primePlot, getPlotStateAry, getPlotViewById, getImageCubeIdx, getPtWavelength,
     getWavelengthParseFailReason, getWaveLengthUnits, hasPixelLevelWLInfo, hasPlaneOnlyWLInfo,
     isImageCube, wavelengthInfoParsedSuccessfully, } from '../PlotViewUtil';
-import {getNumberHeader, HdrConst} from '../FitsHeaderUtil.js';
+import {getBixPix, getBScale, getNumberHeader, HdrConst} from '../FitsHeaderUtil.js';
 
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -244,8 +244,8 @@ function makeImagePlotAsyncReadout(plotView, worldPt, screenPt, imagePt, threeCo
 function isFluxInt(plot,band) {
     const h= plot.headerAry[band.value];
     if (!h) return false;
-    const bp= getNumberHeader(h,HdrConst.BITPIX);
-    const bscale= getNumberHeader(h,HdrConst.BSCALE);
+    const bp= getBixPix(h);
+    const bscale= getBScale(h);
     if (isNaN(bscale)) return false;
     return (bp>0) && Number.isInteger(bscale);
 }
