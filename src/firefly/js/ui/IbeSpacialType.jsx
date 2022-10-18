@@ -23,7 +23,7 @@ import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {SizeInputFields} from './SizeInputField.jsx';
-import {GroupKeyCtx} from './FieldGroup';
+import {FieldGroupCtx} from './FieldGroup';
 
 
 const mcenTip= `Specifies whether to return only the most centered (in pixel space)
@@ -89,7 +89,7 @@ export class IbeSpacialType extends PureComponent {
 }
 
 
-IbeSpacialType.contextType = GroupKeyCtx;
+IbeSpacialType.contextType = FieldGroupCtx;
 
 
 function renderSearchRegion(visible) {

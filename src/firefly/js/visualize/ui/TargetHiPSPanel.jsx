@@ -16,7 +16,7 @@ import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
 import ImageOutline from '../../drawingLayers/ImageOutline.js';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {ConnectionCtx} from '../../ui/ConnectionCtx.js';
-import {GroupKeyCtx} from '../../ui/FieldGroup.jsx';
+import {FieldGroupCtx} from '../../ui/FieldGroup.jsx';
 import {InputAreaFieldConnected} from '../../ui/InputAreaField.jsx';
 import {useFieldGroupValue, useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {SizeInputFields} from '../../ui/SizeInputField.jsx';
@@ -227,7 +227,7 @@ function HiPSPanelPopupButton({groupKey:gk, polygonKey, whichOverlay=CONE_CHOICE
                                   tip='Choose search area visually',
                                   hipsFOVInDeg, ...restOfProps}) {
 
-    const context= useContext(GroupKeyCtx);
+    const context= useContext(FieldGroupCtx);
     const connectContext= useContext(ConnectionCtx);
     const groupKey= gk || context.groupKey;
 

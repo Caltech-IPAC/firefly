@@ -2,12 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {delay} from 'lodash';
+import {delay, isFunction, isUndefined} from 'lodash';
 import React, {useContext, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {validateFieldGroup, getFieldGroupResults} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
-import {EnhancedRequestCreatorCtx, GroupKeyCtx} from './FieldGroup';
+import {FieldGroupCtx} from './FieldGroup';
 
 
 export const NONE='COMPLETE-BUTTON-NO-CONTEXT';
@@ -22,17 +22,19 @@ function inGroup(e, groupKey) {
 }
 
 
-function enhanceRequest(inR={}, erContext={}) {
-    return Object.entries(erContext).reduce((r, [key,func]) => {
-        if (func) r[key]= func();
+function addComponentData(inR={}, registeredComponents={}) {
+    return Object.entries(registeredComponents).reduce((r, [key,funcOrData]) => {
+        if (!isUndefined(funcOrData)) {
+            r[key]= isFunction(funcOrData) ? funcOrData() : funcOrData;
+        }
         return r;
     },{...inR});
 }
 
 
-function validUpdate(valid,onSuccess,onFail,erContext, closeOnValid,groupKey,
+function validUpdate(valid,onSuccess,onFail,registeredComponents, closeOnValid,groupKey,
                      dialogId, groupsToUse, includeUnmounted= false) {
-    var funcToCall = valid ? onSuccess : onFail;
+    const funcToCall = valid ? onSuccess : onFail;
     let continueValid= true;
 
     if (Array.isArray(groupKey)) {
@@ -41,11 +43,11 @@ function validUpdate(valid,onSuccess,onFail,erContext, closeOnValid,groupKey,
             obj[groupKey]= getFieldGroupResults(groupKey,includeUnmounted);
             return obj;
         },{});
-        if (funcToCall) funcToCall(enhanceRequest(requestObj,erContext));
+        if (funcToCall) funcToCall(addComponentData(requestObj,registeredComponents));
     }
     else {
         const request = getFieldGroupResults(groupKey,includeUnmounted);
-        if (funcToCall) continueValid= funcToCall(enhanceRequest(request,erContext));
+        if (funcToCall) continueValid= funcToCall(addComponentData(request,registeredComponents));
     }
 
     const stillValid= valid && (continueValid ?? true);
@@ -53,14 +55,14 @@ function validUpdate(valid,onSuccess,onFail,erContext, closeOnValid,groupKey,
     if (stillValid && dialogId && closeOnValid) dispatchHideDialog(dialogId);
 }
 
-function onClick(onSuccess,onFail,erContext, closeOnValid,groupKey,
+function onClick(onSuccess,onFail,registeredComponents, closeOnValid,groupKey,
                  dialogId,groupsToUse, includeUnmounted, changeMasking) {
     if (groupKey) {
         if (changeMasking) changeMasking(true);
         validateFieldGroup(groupsToUse(), includeUnmounted)
             .then( (valid)=> {
                 if (changeMasking) changeMasking(false);
-                validUpdate(valid,onSuccess,onFail,erContext,closeOnValid,groupKey,dialogId, groupsToUse, includeUnmounted);
+                validUpdate(valid,onSuccess,onFail,registeredComponents,closeOnValid,groupKey,dialogId, groupsToUse, includeUnmounted);
             });
     }
     else {
@@ -77,11 +79,10 @@ export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
                           groupsToUse= () => groupKey,
                           style={}, innerStyle= {}, changeMasking, fireOnEnter= false,
                                     getDoOnClickFunc}) {
-    const gkContext= useContext(GroupKeyCtx);
-    const erContext= useContext(EnhancedRequestCreatorCtx);
-    if (!groupKey && gkContext) groupKey= gkContext.groupKey;
+    const {registeredComponents,groupKey:ctxGroupKey}= useContext(FieldGroupCtx);
+    if (!groupKey && ctxGroupKey) groupKey= ctxGroupKey;
     if (groupKey===NONE) groupKey= undefined;
-    const onComplete = () => onClick(onSuccess,onFail,erContext,closeOnValid,groupKey,dialogId,
+    const onComplete = () => onClick(onSuccess,onFail,registeredComponents,closeOnValid,groupKey,dialogId,
                                       groupsToUse, includeUnmounted,changeMasking);
 
 

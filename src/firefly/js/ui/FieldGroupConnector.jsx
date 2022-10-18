@@ -8,7 +8,7 @@ import {get,omit} from 'lodash';
 import {dispatchMountComponent,dispatchValueChange} from '../fieldGroup/FieldGroupCntlr.js';
 import FieldGroupUtils, {getFieldGroupState} from '../fieldGroup/FieldGroupUtils.js';
 import {flux} from '../core/ReduxFlux.js';
-import {GroupKeyCtx} from './FieldGroup';
+import {FieldGroupCtx} from './FieldGroup';
 import {isDefined} from '../util/WebUtil';
 
 const defaultConfirmValue= (v) => v;
@@ -144,7 +144,7 @@ export const fgMinPropTypes= {
  */
 export const useFieldGroupConnector= (props) => {
     const infoRef = useRef({prevFieldKey:undefined, prevGroupKey:undefined});
-    const context= useContext(GroupKeyCtx);
+    const context= useContext(FieldGroupCtx);
     const {fieldKey,confirmValue,confirmValueOnInit}= props;
     let {initialState}= props;
     const groupKey= props.groupKey || context.groupKey;

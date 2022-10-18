@@ -14,7 +14,7 @@ import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {SuggestBoxInputField} from './SuggestBoxInputField.jsx';
 import {PlotlyWrapper} from '../charts/ui/PlotlyWrapper.jsx';
 import CompleteButton from './CompleteButton.jsx';
-import {EnhancedRequestCreatorCtx, FieldGroup} from './FieldGroup.jsx';
+import {FieldGroup, FieldGroupCtx} from './FieldGroup.jsx';
 import {dispatchMultiValueChange, dispatchRestoreDefaults, VALUE_CHANGE} from '../fieldGroup/FieldGroupCntlr.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
@@ -475,12 +475,12 @@ FieldGroupTestView.propTypes= {
 
 
 function X3Stuff({tabX3CheckBoxOps}) {
-    const erContext= useContext(EnhancedRequestCreatorCtx);
+    const {register, unregister}= useContext(FieldGroupCtx);
     
     useEffect( () => {
-        erContext.moreInfo=() => Object.keys(tabX3CheckBoxOps).join('---');
-        return () => erContext.moreInfo=undefined;
-    },[]);
+        register('tabX3Data',() => tabX3CheckBoxOps.map( ({label}) => label).join('---'));
+        return () => unregister('tabX3Data');
+    },[tabX3CheckBoxOps]);
 
 
     return (
