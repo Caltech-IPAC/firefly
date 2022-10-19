@@ -5,7 +5,13 @@
 import React, {useState} from 'react';
 import {FormPanel} from './FormPanel.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
-import {panelKey, FileUploadViewPanel, resultSuccess, resultFail} from '../visualize/ui/FileUploadViewPanel.jsx';
+import {
+    panelKey,
+    FileUploadViewPanel,
+    resultSuccess,
+    resultFail,
+    resultsTEMPSuccess
+} from '../visualize/ui/FileUploadViewPanel.jsx';
 import {getAppOptions} from 'firefly/api/ApiUtil.js';
 import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
 import {dispatchHideDialog, dispatchShowDialog} from 'firefly/core/ComponentCntlr.js';
@@ -28,7 +34,7 @@ export const FileUploadDropdown= ({style={}, onCancel=dispatchHideDropDown, onSu
                 changeMasking={changeMasking}
                 inputStyle={{height:'100%'}}
                 submitBarStyle={{padding: '2px 3px 3px'}} help_id={helpId}>
-                <FileUploadViewPanel setSubmitText={setSubmitText}/>
+                <FileUploadViewPanel submitText={submitText} setSubmitText={setSubmitText} showCompleteButton={true}/>
             </FormPanel>
             {doMask && <div style={maskWrapper}> <div className='loading-mask'/> </div> }
         </div>
@@ -39,6 +45,9 @@ const DIALOG_ID= 'FileUploadDialog';
 
 export function showUploadDialog() {
 
+    //removing the onCancel and onSubmit below from the call to FileUploadDropdown fixes it so that the  req obj
+    //is not empty when resultSuccess is called from FileUploadDropdown
+    //but showUploadDialog is only called from HiPsImageSelect.jsx if (visRoot().apiToolsView) -> what is that if condition?
     DialogRootContainer.defineDialog(DIALOG_ID,
         <PopupPanel title={'Upload'}
                     closeCallback={
