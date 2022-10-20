@@ -5,7 +5,7 @@ import {flux} from '../core/ReduxFlux.js';
 import FieldGroupUtils, {getField, getFieldVal, getGroupFields} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
 import {dispatchValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
-import {GroupKeyCtx} from './FieldGroup.jsx';
+import {FieldGroupCtx} from './FieldGroup.jsx';
 
 export class SimpleComponent extends PureComponent {
     constructor(props) {
@@ -141,7 +141,7 @@ export function useBindFieldGroupToStore(groupKey) {
  * @return {Array.<Function>}  return an array of 2 functions [getValue,setValue]
  */
 export function useFieldGroupValue(fieldKey, gk) {
-    const context= useContext(GroupKeyCtx);
+    const context= useContext(FieldGroupCtx);
     const groupKey= gk || context.groupKey;
     const setValueToState= useState(undefined)[1]; // use state here is just to force re-renders on value change
     let mounted= true;

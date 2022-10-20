@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
+import React, {useContext, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {TargetPanel} from './TargetPanel.jsx';
 import {InputGroup} from './InputGroup.jsx';
@@ -14,7 +14,7 @@ import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {SuggestBoxInputField} from './SuggestBoxInputField.jsx';
 import {PlotlyWrapper} from '../charts/ui/PlotlyWrapper.jsx';
 import CompleteButton from './CompleteButton.jsx';
-import {FieldGroup} from './FieldGroup.jsx';
+import {FieldGroup, FieldGroupCtx} from './FieldGroup.jsx';
 import {dispatchMultiValueChange, dispatchRestoreDefaults, VALUE_CHANGE} from '../fieldGroup/FieldGroupCntlr.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
@@ -319,8 +319,7 @@ function FieldGroupTestView ({fields={}}) {
         {label: 'Green Beans', value: 'G'},
         {label: 'Peas', value: 'P'}
     ];
-    if (fields.fieldInTabX3?.value > 30 ) tabX3CheckBoxOps.push({label: 'Tomatoes', value: 'T'});
-    else if (fields.fieldInTabX3?.value < 23 ) tabX3CheckBoxOps[0].label='Carrots!!!!';
+    if (fields.fieldInTabX3?.value > 30 ) tabX3CheckBoxOps[0].label='Carrots!!!!';
 
 
 
@@ -441,19 +440,7 @@ function FieldGroupTestView ({fields={}}) {
                                          }} />
                     </Tab>
                     <Tab name='X 3' id='x3'>
-                        <div>
-                            <ValidationField fieldKey='fieldInTabX3'
-                                             tooltip= 'more tipping' label= 'tab test field:' labelWidth ={100}
-                                             validator= {Validate.intRange.bind(null, 11, 55, 'Tab Test Field 11-55')}
-                                             initialState= {{ value: 25}}
-                            />
-                            <div style={{padding: '10px 0 5px 0', fontSize:'smaller'}}>
-                                if you enter a number over 30 you will get another checkbox, also try less than 23</div>
-                            <CheckboxGroupInputField fieldKey='checkBoxGrpFldAgain'
-                                                     tooltip= 'Please select some boxes' label='Checkbox Group:'
-                                                     options={tabX3CheckBoxOps}
-                                                     initialState= {{value: 'C,S,P'}} />
-                        </div>
+                        <X3Stuff {...{tabX3CheckBoxOps}} />
                     </Tab>
                 </FieldGroupTabs>
 
@@ -486,6 +473,33 @@ FieldGroupTestView.propTypes= {
     fields: PropTypes.object
 };
 
+
+function X3Stuff({tabX3CheckBoxOps}) {
+    const {register, unregister}= useContext(FieldGroupCtx);
+    
+    useEffect( () => {
+        register('tabX3Data',() => tabX3CheckBoxOps.map( ({label}) => label).join('---'));
+        return () => unregister('tabX3Data');
+    },[tabX3CheckBoxOps]);
+
+
+    return (
+        <div>
+            <ValidationField fieldKey='fieldInTabX3'
+                             tooltip= 'more tipping' label= 'tab test field:' labelWidth ={100}
+                             validator= {Validate.intRange.bind(null, 11, 55, 'Tab Test Field 11-55')}
+                             initialState= {{ value: 25}}
+            />
+            <div style={{padding: '10px 0 5px 0', fontSize:'smaller'}}>
+                if you enter a number over 30 you will get another checkbox, also try less than 23</div>
+            <CheckboxGroupInputField fieldKey='checkBoxGrpFldAgain'
+                                     tooltip= 'Please select some boxes' label='Checkbox Group:'
+                                     options={tabX3CheckBoxOps}
+                                     initialState= {{value: 'C,S,P'}} />
+        </div>
+
+    );
+}
 
 function resetSomeDefaults() {
     const defValueAry= Object.keys(defValues).map( (k) => defValues[k]);
