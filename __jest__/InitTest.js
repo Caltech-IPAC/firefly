@@ -36,6 +36,12 @@ jest.mock('firefly/ui/ExampleDialog.jsx', () => {
     };
 });
 
+jest.mock('firefly/ui/ActionsDropDownButton.jsx', () => {
+    return {
+        ActionsDropDownButton: () => '',
+    };
+});
+
 jest.mock('firefly/visualize/DrawLayerCntlr.js', () => {
     return {
         dispatchDestroyDrawLayer: () => '',
