@@ -1,10 +1,10 @@
 import {PureComponent, useCallback, useContext, useEffect, useState} from 'react';
-import {uniqueId} from 'lodash';
+import {isEmpty, uniqueId} from 'lodash';
 import shallowequal from 'shallowequal';
 import {flux} from '../core/ReduxFlux.js';
-import FieldGroupUtils, {getField, getFieldVal, getGroupFields} from '../fieldGroup/FieldGroupUtils.js';
+import FieldGroupUtils, { getField, getFieldVal, getGroupFields, getMetaState } from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
-import {dispatchValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
+import {dispatchMetaStateChange, dispatchValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 import {FieldGroupCtx} from './FieldGroup.jsx';
 
 export class SimpleComponent extends PureComponent {
@@ -105,32 +105,6 @@ export function useBindFieldGroupToStore(groupKey) {
     return fields || undefined;
 }
 
-// todo - keep around for a while - this is the array version of useFieldGroupValue
-//        I don't think we need it
-// export function useFieldGroupValuesOLD2(groupKey,fieldKeys) {
-//     const keyList= isArray(fieldKeys) ? fieldKeys : isString(fieldKeys) ? [fieldKeys] : [];
-//     let mounted= true;
-//     const stateList= keyList.map( (fieldKey) => {
-//         const [value,setValue]= useState(() => getFldValue(getGroupFields(groupKey),fieldKey));
-//         return {fieldKey,value,setValue};
-//     },{});
-//
-//     useEffect(() => {
-//         const remover= FieldGroupUtils.bindToStore(groupKey, (updatedFields) => {
-//             mounted && stateList.forEach( ({fieldKey,setValue}) => setValue( getFldValue(updatedFields,fieldKey)));
-//         });
-//         return () => {
-//             mounted= false;
-//             remover();
-//         };
-//     },[]);
-//
-//     return stateList.map( ({fieldKey,value}) =>
-//         [
-//             useCallback(() =>getFieldVal(groupKey,fieldKey,value), [value]),   // getter
-//             useCallback((newValue,valid=true) => dispatchValueChange({fieldKey, groupKey, value:newValue,valid, displayValue:''})) //setter
-//         ]);
-// }
 
 /**
  * This hook will return a setter and a getter function for a field value.
@@ -162,14 +136,47 @@ export function useFieldGroupValue(fieldKey, gk) {
         };
     },[]);
 
-    const getter= useCallback(() =>getFieldVal(groupKey,fieldKey,value), [value]);   // getter
+    const getter= useCallback(    // getter - fullFieldInfo: true: return the full field object, false: just the value
+        (fullFieldInfo=false) => fullFieldInfo ? getField(groupKey,fieldKey) : getFieldVal(groupKey,fieldKey,value),
+        [value]);
     const setter= useCallback(
-            (newValue,valid=true) => {
-                const field= getField(groupKey,fieldKey);
-                if (!field || newValue===field.value) return;
-                dispatchValueChange({fieldKey, groupKey, value:newValue,valid, displayValue:''});
-            }, [value]); //setter
-    return [ getter, setter ];
+        (newValue,valid=true,additionalSettings={}) => {
+            const field= getField(groupKey,fieldKey);
+            if (!field || newValue===field.value) return;
+            dispatchValueChange({fieldKey, groupKey, value:newValue,valid, displayValue:'', ...additionalSettings});
+        }, [value]); //setter
+    return [ getter, setter];
+}
+
+
+export function useFieldGroupMetaState(defMetaState={}, gk) {
+    const context= useContext(FieldGroupCtx);
+    const groupKey= gk || context.groupKey;
+    const setToReactState= useState(undefined)[1]; // use state here is just to force re-renders on value change
+    let mounted= true;
+    let metaState= {...defMetaState, ...getMetaState(groupKey)};
+    useEffect(() => {
+        const updater= () => {
+            if (!mounted) return;
+            const newMetaState= getMetaState(groupKey);
+            if (!shallowequal(newMetaState,metaState)) {
+                setToReactState(newMetaState);
+                metaState= newMetaState;
+            }
+        };
+        const remover= FieldGroupUtils.bindToStore(groupKey, updater);
+        return () => {
+            mounted= false;
+            remover();
+        };
+    },[]);
+
+    const getter= useCallback( () => {
+        const ms= getMetaState(groupKey);
+        return isEmpty(ms) ? metaState : ms;
+    }, [metaState]);// getter
+    const setter= useCallback( (newMetaState) => dispatchMetaStateChange({groupKey, metaState:newMetaState}), [metaState]); //setter
+    return [getter, setter];
 }
 
 

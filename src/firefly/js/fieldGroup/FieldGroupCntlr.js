@@ -44,6 +44,7 @@ import {isDefined} from 'firefly/util/WebUtil.js';
  * @prop {boolean} mounted field is mounted
  * @prop {String} wrapperGroupKey
  * @prop {boolean} fieldGroupValid
+ * @prop {Object} metaState
  *
  * @global
  * @public
@@ -53,10 +54,10 @@ export const INIT_FIELD_GROUP= 'FieldGroupCntlr/initFieldGroup';
 export const MOUNT_COMPONENT= 'FieldGroupCntlr/mountComponent';
 export const MOUNT_FIELD_GROUP= 'FieldGroupCntlr/mountFieldGroup';
 export const VALUE_CHANGE= 'FieldGroupCntlr/valueChange';
+export const META_STATE_CHANGE= 'FieldGroupCntlr/metaStateChange';
 export const MULTI_VALUE_CHANGE= 'FieldGroupCntlr/multiValueChange';
 export const RESTORE_DEFAULTS= 'FieldGroupCntlr/restoreDefaults';
 export const CHILD_GROUP_CHANGE= 'FieldGroupCntlr/childGroupChange';
-// export const UPDATE_REDUCER= 'FieldGroupCntlr/updateReducer';
 export const FORCE_FIELD_GROUP_REDUCER= 'FieldGroupCntlr/forceFieldGroupReducer';
 
 
@@ -126,6 +127,15 @@ export function dispatchValueChange(payload) {
     flux.process({type: VALUE_CHANGE, payload});
 }
 
+/**
+ *
+ * @param {Object} payload
+ * @param {String} payload.groupKey group key
+ * @param {Object} payload.metaState a generated state object
+ */
+export function dispatchMetaStateChange(payload) {
+    flux.process({type: META_STATE_CHANGE, payload});
+}
 
 /**
  * Update mutiliple fields
@@ -143,14 +153,6 @@ export function dispatchMultiValueChange(groupKey, fieldAry) {
 export function dispatchRestoreDefaults(groupKey) {
     flux.process({type: RESTORE_DEFAULTS, payload:{groupKey}});
 }
-
-/**
- * @param {String} groupKey
- * @param {Function} reducerFunc
- */
-// export function dispatchUpdateReducer(groupKey,reducerFunc) {
-//     flux.process({type: UPDATE_REDUCER, payload:{groupKey,reducerFunc}});
-// }
 
 /*
  * @param groupKey
@@ -223,6 +225,7 @@ function reducer(state={}, action={}) {
         case MOUNT_COMPONENT: return updateMount(state, action);
         case MOUNT_FIELD_GROUP: return updateFieldGroupMount(state, action);
         case VALUE_CHANGE: return valueChange(state, action);
+        case META_STATE_CHANGE: return updateMetaState(state, action);
         case MULTI_VALUE_CHANGE: return multiValueChange(state, action);
         case RESTORE_DEFAULTS: return restoreDefaults(state, action);
         case FORCE_FIELD_GROUP_REDUCER: return forceFieldGroupReducer(state,action);
@@ -277,7 +280,10 @@ function updateFieldGroupMount(state,action) {
         if (isFieldGroupDefined(state,groupKey)) {
             const fg= findAndCloneFieldGroup(state, groupKey, {mounted:false});
             const doKeepState= isUndefined(keepState) ? fg.keepState : keepState;
-            if (!doKeepState) fg.fields= null;
+            if (!doKeepState) {
+                fg.fields= null;
+                fg.metaState={};
+            }
             retState= {...state,[groupKey]:fg};
         }
     }
@@ -348,6 +354,11 @@ function valueChange(state,action) {
     //==============
 
     return {...state,...mods};
+}
+
+function updateMetaState(state,action) {
+    const {groupKey, metaState={}}= action.payload;
+    return {...state,[groupKey]:findAndCloneFieldGroup(state, groupKey,{metaState})};
 }
 
 function updateWrapperGroup(state, fg, groupKey, action) {
@@ -479,6 +490,7 @@ function constructFieldGroup(groupKey,fields={}, reducerFunc, keepState, wrapper
              fields,
              reducerFunc,
              keepState,
+             metaState: {},
              wrapperGroupKey,
              mounted : false,
              fieldGroupValid : false

@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get,isFunction,hasIn,isBoolean, isEmpty} from 'lodash';
+import {isFunction,hasIn,isBoolean, isEmpty} from 'lodash';
 import {flux} from '../core/ReduxFlux.js';
 import {smartMerge} from '../tables/TableUtil.js';
 import {FIELD_GROUP_KEY,dispatchValueChange,dispatchMultiValueChange} from './FieldGroupCntlr.js';
@@ -131,15 +131,16 @@ export function getFieldGroupResults(groupKey,includeUnmounted=false) {
  */
 export const getFieldGroupState= (groupKey) => flux.getState()[FIELD_GROUP_KEY]?.[groupKey];
 
-export const isFieldGroupMounted = (groupKey) => getFieldGroupState(groupKey)?.isMounted
+export const isFieldGroupMounted = (groupKey) => getFieldGroupState(groupKey)?.isMounted;
 
 export const getFieldVal= (groupKey, fldName, defval) => getFldValue(getGroupFields(groupKey), fldName, defval);
 
 const getFldValue= (fields, fldName, defval=undefined) => fields?.[fldName]?.value ?? defval;
 
+export const getMetaState= (groupKey) => getFieldGroupState(groupKey)?.metaState;
+
 export const getField= (groupKey, fldName) => getGroupFields(groupKey)?.[fldName];
 
-export const getReducerFunc= (groupKey) => getFieldGroupState(groupKey)?.reducerFunc;
 /**
  * Get the group fields for a key
  * @param {string} groupKey
@@ -184,10 +185,5 @@ export function revalidateFields(fields) {
 }
 
 
-
-
-
 const FieldGroupUtils= {getGroupFields, getFldValue, bindToStore };
-
 export default FieldGroupUtils;
-
