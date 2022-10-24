@@ -1,11 +1,11 @@
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {isArray, get, isUndefined, isEmpty, reverse, set, isString} from 'lodash';
+import {get, isArray, isEmpty, isString, isUndefined, reverse, set} from 'lodash';
 
-import {dispatchChartUpdate, dispatchChartAdd, getChartData} from '../../ChartsCntlr.js';
+import {dispatchChartAdd, dispatchChartUpdate, getChartData} from '../../ChartsCntlr.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
-import {getFieldVal, getField} from '../../../fieldGroup/FieldGroupUtils.js';
-import {dispatchValueChange, VALUE_CHANGE, MULTI_VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
+import {getField, getFieldVal} from '../../../fieldGroup/FieldGroupUtils.js';
+import {dispatchValueChange, MULTI_VALUE_CHANGE, VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
 import {FieldGroupCollapsible} from '../../../ui/panel/CollapsiblePanel.jsx';
 
 import {showColorPickerDialog} from '../../../ui/ColorPicker.jsx';
@@ -18,7 +18,7 @@ import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
 import {updateSet} from '../../../util/WebUtil.js';
 import {hideColSelectPopup} from '../ColSelectView.jsx';
 import {addColorbarChanges} from '../../dataTypes/FireflyHeatmap.js';
-import {uniqueChartId, TRACE_COLORS, toRGBA, colorsOnTypes, getChartProps} from '../../ChartUtil.js';
+import {colorsOnTypes, getChartProps, toRGBA, TRACE_COLORS, uniqueChartId} from '../../ChartUtil.js';
 import {colorscaleNameToVal} from '../../Colorscale.js';
 import {DEFAULT_PLOT2D_VIEWER_ID} from '../../../visualize/MultiViewCntlr.js';
 
@@ -264,7 +264,7 @@ function XyRatio({groupKey, Xyratio, Stretch, xNoLog}) {
  * It assume the fieldId is the 'path' to the chart data and the value of the field is the value you want to change.
  * For fields that are mapped to tables, it assumes that they starts with '_tables'.  In this case, it will prepend
  * 'tables::' to the value.
- * @param {pbject} p
+ * @param {object} p
  * @param {string} p.chartId
  * @param {object} p.fields
  * @param {string} p.tbl_id
@@ -298,7 +298,10 @@ export function evalChangesFromFields(chartId, tbl_id, fields) {
     Object.entries(fields).forEach( ([k,v]) => {
         if (tbl_id && k.startsWith('_tables.')) {
             const [,activeTrace] = /^_tables.data.(\d)/.exec(k) || [];
-            if (!isUndefined(activeTrace)) set(changes, [`data.${activeTrace}.tbl_id`], tbl_id);
+            if (!isUndefined(activeTrace)) {
+                // table id must be set for a data change
+                changes[`data.${activeTrace}.tbl_id`] = data[activeTrace]?.tbl_id || tbl_id;
+            }
             k = k.replace('_tables.', '');
             v = v ? `tables::${v}` : undefined;
         } else if (k.startsWith('__')) {
@@ -576,4 +579,4 @@ export function basicOptions ({activeTrace:pActiveTrace, chartId, tbl_id, groupK
             );
         },
     };
-};
+}

@@ -88,8 +88,11 @@ async function fetchData(chartId, traceNum, tablesource) {
         addOtherChanges({changes, chartId, traceNum, tablesource, tableModel: originalTableModel});
 
         dispatchChartUpdate({chartId, changes});
-        updateHighlighted(chartId, traceNum, highlightedRow);
-        updateSelected(chartId, selectInfo);
+        const {activeTrace} = getChartData(chartId);
+        if (isUndefined(activeTrace) || activeTrace === traceNum) {
+            updateHighlighted(chartId, traceNum, highlightedRow);
+            updateSelected(chartId, selectInfo);
+        }
     } else {
         dispatchError(chartId, traceNum, 'No data');
     }

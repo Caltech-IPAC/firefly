@@ -4,7 +4,7 @@ import {get, range} from 'lodash';
 import {getChartData} from '../../ChartsCntlr.js';
 import {getTblById} from '../../../tables/TableUtil.js';
 import {getSpectrumDM} from '../../../util/VOAnalyzer.js';
-import {getUnitInfo, getUnitConvExpr} from '../../dataTypes/SpectrumUnitConversion.js';
+import {canUnitConv, getUnitInfo, getUnitConvExpr} from '../../dataTypes/SpectrumUnitConversion.js';
 
 import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
@@ -144,21 +144,26 @@ export const applyUnitConversion = ({fireflyData, data, inFields, axisType, newU
 export function submitChangesSpectrum({chartId, activeTrace, fields, tbl_id, renderTreeId}) {
 
     // when unit changes, apply it to the other traces as well
-    if (isSpectralOrder(chartId)) {
-        const {data, fireflyData} = getChartData(chartId);
-        const {spectralAxis={}, fluxAxis={}} = getSpectrumDM(getTblById(tbl_id)) || {};
+    const {data, fireflyData} = getChartData(chartId);
+    const {spectralAxis={}, fluxAxis={}} = getSpectrumDM(getTblById(tbl_id)) || {};
 
-        const xUnit = fields[`fireflyData.${activeTrace}.xUnit`];
-        const yUnit = fields[`fireflyData.${activeTrace}.yUnit`];
-        range(data.length).forEach((idx) => {
-            if (idx !== activeTrace) {
+    const xUnit = fields[`fireflyData.${activeTrace}.xUnit`];
+    const yUnit = fields[`fireflyData.${activeTrace}.yUnit`]; // undefined if no field for yUnit
+    range(data.length).forEach((idx) => {
+        if (idx !== activeTrace) {
+            const xUnitTrace = fireflyData?.[idx]?.xUnit;
+            const yUnitTrace = fireflyData?.[idx]?.yUnit;
+            if (canUnitConv({from: xUnitTrace, to: xUnit}) ||
+                canUnitConv({from: yUnitTrace, to: yUnit})) {
+                // resetting unit resets the field,
+                // both fields must be updated even if only one changed
                 fields = updateSet(fields, [`fireflyData.${idx}.xUnit`], xUnit);
-                fields = updateSet(fields, [`fireflyData.${idx}.yUnit`], yUnit);
+                fields = updateSet(fields, [`fireflyData.${idx}.yUnit`], yUnit || yUnitTrace);
                 fields = applyUnitConversion({fireflyData, data, inFields:fields, axisType:'x', newUnit:xUnit, traceNum:idx, axis:spectralAxis});
-                fields = applyUnitConversion({fireflyData, data, inFields:fields, axisType:'y', newUnit:yUnit, traceNum:idx, axis:fluxAxis});
+                fields = applyUnitConversion({fireflyData, data, inFields:fields, axisType:'y', newUnit:yUnit || yUnitTrace, traceNum:idx, axis:fluxAxis});
             }
-        });
-    }
+        }
+    });
 
     // Object.assign(changes, fields);
     submitChangesScatter({chartId, activeTrace, fields, tbl_id, renderTreeId});

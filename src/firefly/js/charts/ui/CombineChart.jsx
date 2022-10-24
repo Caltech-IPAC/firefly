@@ -3,7 +3,7 @@
  */
 
 import React, {useEffect, useState} from 'react';
-import {cloneDeep, pick, set} from 'lodash';
+import {cloneDeep, get, pick, set} from 'lodash';
 
 import {getMultiViewRoot, getViewerItemIds} from '../../visualize/MultiViewCntlr.js';
 import {dispatchChartAdd, getChartData} from '../ChartsCntlr.js';
@@ -12,7 +12,7 @@ import {TextButton} from '../../ui/TextButton.jsx';
 import {PINNED_VIEWER_ID, PINNED_GROUP, PINNED_CHART_PREFIX} from './ChartWorkArea.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
-import {basicOptions} from './options/BasicOptions.jsx';
+import {basicOptions, evalChangesFromFields} from './options/BasicOptions.jsx';
 import {getColumnValues, getSelectedDataSync, getTblById} from '../../tables/TableUtil.js';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {getGroupFields} from '../../fieldGroup/FieldGroupUtils.js';
@@ -242,7 +242,7 @@ function combineChart(chartIds, props={}) {
             });
         }
 
-        // apply unit conversion to xAxis if needed.
+        // apply unit conversion to yAxis if needed.
         const yUnit = doUnitConversion({chartId, chartData, axisType:'y', to:baseYUnit});
 
         if (baseYUnit !== yUnit) {
@@ -256,12 +256,16 @@ function combineChart(chartIds, props={}) {
             });
         }
 
-        // failed when only one of the two are mapped(??).  apply map to both(workaround)
         const xmapped = (data?.[activeTrace]?.x || '').startsWith?.('tables:');
         const ymapped = (data?.[activeTrace]?.y || '').startsWith?.('tables:');
         if (xmapped ^ ymapped) {
-            if (!ymapped) set(data, `${activeTrace}.y`, `tables::${tablesources?.[activeTrace]?.mappings?.y}`);
-            if (!xmapped) set(data, `${activeTrace}.x`, `tables::${tablesources?.[activeTrace]?.mappings?.x}`);
+            // all mapped fields should be handled: x, y, error_y.array, etc.
+            Object.entries(tablesources?.[activeTrace]?.mappings || {}).forEach(([key, val]) => {
+                // need get to handle compound keys, like 'error_y.array'
+                if (!get(data, `${activeTrace}.${key}`)?.startsWith?.('tables:')) {
+                    set(data, `${activeTrace}.${key}`, `tables::${val}`);
+                }
+            });
         }
 
         // merge selected chart data into new chart
@@ -279,7 +283,7 @@ function combineChart(chartIds, props={}) {
     return baseChartData;
 }
 
-/* return unit for the give axisType */
+/* return unit for the given axisType */
 function doUnitConversion({chartId, chartData, axisType, to}) {
     const {activeTrace, fireflyData, data} = chartData;
 
@@ -289,7 +293,8 @@ function doUnitConversion({chartId, chartData, axisType, to}) {
         if (canUnitConv({from: unit, to})) {
             const tbl_id = getTblIdFromChart(chartId, activeTrace);
             const axis = getSpectrumDM(getTblById(tbl_id))?.[axisType === 'x' ? 'spectralAxis' : 'fluxAxis'];
-            const changes = applyUnitConversion({
+            // unit conversion changes for input fields
+            let changes = applyUnitConversion({
                 fireflyData,
                 data,
                 inFields: {},
@@ -298,6 +303,8 @@ function doUnitConversion({chartId, chartData, axisType, to}) {
                 traceNum: activeTrace,
                 axis
             });
+            // field changes must be converted to state changes
+            changes = evalChangesFromFields(chartId, tbl_id, changes);
             Object.entries(changes).forEach(([key, val]) => {
                 set(chartData, key, val);
             });
