@@ -303,19 +303,11 @@ function doUnitConversion({chartId, chartData, axisType, to}) {
                 traceNum: activeTrace,
                 axis
             });
-            // changes for fields must be converted to changes for state
+            // field changes must be converted to state changes
             changes = evalChangesFromFields(chartId, tbl_id, changes);
             Object.entries(changes).forEach(([key, val]) => {
                 set(chartData, key, val);
             });
-            // for (let [k, v] of Object.entries(changes)) {
-            //     if (k.startsWith('_tables')) {
-            //         // the unit conversion applies to chart state, not to input fields
-            //         k = k.replace('_tables.', '');
-            //         v = `tables::${v}`;
-            //     }
-            //     set(chartData, k, v);
-            // }
             unit = to;
             set(fireflyData, [activeTrace, `${axisType}Unit`], unit);
         }
