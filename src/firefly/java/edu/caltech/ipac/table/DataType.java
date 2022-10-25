@@ -17,9 +17,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static edu.caltech.ipac.table.TableMeta.DERIVED_FROM;
 import static edu.caltech.ipac.table.TableUtil.foldAry;
-import static edu.caltech.ipac.util.StringUtils.isEmpty;
-import static edu.caltech.ipac.util.StringUtils.split;
+import static edu.caltech.ipac.util.StringUtils.*;
 import static org.apache.commons.lang.StringUtils.stripEnd;
 
 /**
@@ -618,6 +618,12 @@ public class DataType implements Serializable, Cloneable {
             typeDesc = useShortType ? S_BOOL : BOOLEAN;
 
         return typeDesc;
+    }
+
+    public String getDerivedFrom() {
+        if (getDesc() == null) return null;
+        String[] derived = groupMatch(String.format("^\\(%s=(.*)\\).*", DERIVED_FROM), getDesc(), Pattern.DOTALL);  // allow new-line in description.
+        return derived == null ? null : derived[0];
     }
 
     public static Class descToType(String type) {

@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.table;
 
+import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.data.ServerParams;
@@ -45,6 +46,51 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 			Assert.fail("Unable to ingest data into the database");
 		}
 	}
+
+	/**
+	 * test add new column
+	 */
+	@Test
+	public void testAddTableColumn() {
+
+		DataType nCol = new DataType("NEW_COL_1", Double.class, "label", "units", null, "desc");
+		nCol.setUCD("ucd");
+		EmbeddedDbUtil.addNewColumn(dbFile, DbAdapter.getAdapter(), nCol, "\"dec\" + 3");
+		DataGroup res = EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(), dbFile, String.format("select * from %s", MAIN_DB_TBL), MAIN_DB_TBL);
+
+		DataType c = res.getDataDefintion("NEW_COL_1");
+		Assert.assertEquals("test number of columns", 10, res.getDataDefinitions().length);			// column added
+		Assert.assertNotNull("test name", c);
+		Assert.assertEquals("test label", c.getLabel(), "label");
+		Assert.assertEquals("test units", c.getUnits(), "units");
+		Assert.assertEquals("test label", c.getLabel(), "label");
+		Assert.assertEquals("test UCD", c.getUCD(), "ucd");
+		Assert.assertEquals("test visibility", c.getVisibility(), DataType.Visibility.show);
+		Assert.assertEquals("test value of the expression is populated",
+					Double.parseDouble(res.getData("dec", 0).toString()) + 3,
+							Double.parseDouble(res.getData("NEW_COL_1", 0).toString()), 0.0001);
+
+		// test rollback conditions
+
+		// bad expression:  dec + 3 is a bad expression since DEC is not a column; dec without quotes is treated as uppercase
+		nCol.setKeyName("NEW_COL_2");
+		try {
+			EmbeddedDbUtil.addNewColumn(dbFile, DbAdapter.getAdapter(), nCol, "dec + 3");
+		} catch (Exception ignored){}
+		res = EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(), dbFile, String.format("select * from %s", MAIN_DB_TBL), MAIN_DB_TBL);
+		Assert.assertEquals("same number of columns as before", 10, res.getDataDefinitions().length);
+		Assert.assertNull("new column not added", res.getDataDefintion("NEW_COL_2"));
+
+		// bad column name:  exceeded 128 characters
+		nCol.setKeyName("c12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890");
+		try {
+			EmbeddedDbUtil.addNewColumn(dbFile, DbAdapter.getAdapter(), nCol , "\"dec\" + 3");
+		} catch (Exception ignored){}
+		res = EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(), dbFile, String.format("select * from %s", MAIN_DB_TBL), MAIN_DB_TBL);
+		Assert.assertEquals("same number of columns as before", 10, res.getDataDefinitions().length);
+
+	}
+
 
 	/**
 	 * test results based on the constructed TableServerRequest

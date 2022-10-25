@@ -57,7 +57,8 @@ export const HeaderCell = React.memo( ({col, showUnits, showTypes, showFilters, 
     const sortCol = sortByCols || name;
     const typeVal = getTypeLabel(col);
     const unitsVal = col.units ? `(${col.units})`: '';
-    const className = toBoolean(sortable, true) ? 'clickable' : undefined;
+    let  className = toBoolean(sortable, true) ? 'clickable' : undefined;
+    className = col.DERIVED_FROM ? className + ' derived' : '';
 
     const onClick = toBoolean(sortable, true) ? () => onSort(sortCol) : () => showInfoPopup('This column is not sortable');
     return (

@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import React from 'react';
+import React, {useContext} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
 import {Expression} from '../../util/expr/Expression.js';
@@ -13,6 +13,7 @@ import ColValuesStatistics from '../ColValuesStatistics.js';
 import {showColSelectPopup} from './ColSelectView.jsx';
 import MAGNIFYING_GLASS from 'html/images/icons-2014/magnifyingGlass.png';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
+import {FieldGroupCtx} from '../../ui/FieldGroup.jsx';
 
 
 const EXPRESSION_TTIPS = `
@@ -130,10 +131,12 @@ ColumnOrExpression.propTypes = {
 };
 
 export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidth, tooltip='Table column',
-                           name, nullAllowed, canBeExpression=false, inputStyle, readonly}) {
+                           name, nullAllowed, canBeExpression=false, inputStyle, readonly, helper, required, validator}) {
     const value = initValue || getFieldVal(groupKey, fieldKey);
     const colValidator = getColValidator(cols, !nullAllowed, canBeExpression);
     const {valid=true, message=''} = value ? colValidator(value) : {};
+    const context= useContext(FieldGroupCtx);
+    groupKey= groupKey || context.groupKey;
 
     let val = value;
     const onColSelected = (colName) => {
@@ -143,15 +146,24 @@ export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidt
 
     const labelProps = (label || labelWidth) ? { label: label || '', labelWidth} : {};
 
+    if (!helper) {
+        helper = (
+            <div style={{display: 'inline-block', cursor: 'pointer', paddingLeft: 2, verticalAlign: 'top'}}
+                       title={`Select ${name} column`}
+                       onClick={() => showColSelectPopup(cols, onColSelected, `Choose ${name}`, 'OK', val)}>
+                <ToolbarButton icon={MAGNIFYING_GLASS}/>
+            </div>);
+    }
+
     return (
-        <div style={{whiteSpace: 'nowrap'}}>
+        <div style={{whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center'}}>
             <SuggestBoxInputField
                 inline={true}
                 initialState= {{
                     value,
                     valid,
                     message,
-                    validator: colValidator,
+                    validator: validator || colValidator,
                     tooltip,
                     nullAllowed
                 }}
@@ -163,14 +175,9 @@ export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidt
                 {...labelProps}
                 inputStyle={inputStyle}
                 readonly={readonly}
+                required={required}
             />
-            {!readonly &&
-            <div style={{display: 'inline-block', cursor: 'pointer', paddingLeft: 2, verticalAlign: 'top'}}
-                 title={`Select ${name} column`}
-                 onClick={() => showColSelectPopup(cols, onColSelected, `Choose ${name}`, 'OK', val)}>
-                <ToolbarButton icon={MAGNIFYING_GLASS}/>
-            </div>
-            }
+            {!readonly && helper}
         </div>
     );
 }
@@ -178,7 +185,7 @@ export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidt
 ColumnFld.propTypes = {
     cols: ColsShape.isRequired,
     initValue: PropTypes.string,
-    groupKey: PropTypes.string.isRequired,
+    groupKey: PropTypes.string,
     fieldKey: PropTypes.string.isRequired,
     label: PropTypes.string,
     labelWidth: PropTypes.number,
@@ -187,6 +194,8 @@ ColumnFld.propTypes = {
     nullAllowed: PropTypes.bool,
     canBeExpression: PropTypes.bool,
     inputStyle: PropTypes.object,
-    readonly: PropTypes.bool
+    readonly: PropTypes.bool,
+    required: PropTypes.bool,
+    helper: PropTypes.element
 };
 

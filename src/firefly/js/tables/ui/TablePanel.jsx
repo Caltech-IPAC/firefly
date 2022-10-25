@@ -10,7 +10,7 @@ import {ActionsDropDownButton, isTableActionsDropVisible} from '../../ui/Actions
 
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {dispatchTableRemove, dispatchTblExpanded, dispatchTableFetch, dispatchTableAddLocal, dispatchTableUiUpdate} from '../TablesCntlr.js';
-import {uniqueTblUiId, uniqueTblId, getTableUiById, getTableUiByTblId, makeBgKey, getResultSetRequest} from '../TableUtil.js';
+import {uniqueTblId, getTableUiById, getTableUiByTblId, makeBgKey, getResultSetRequest, isClientTable} from '../TableUtil.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
 import {TableInfo, MetaInfo} from './TableInfo.jsx';
@@ -24,6 +24,7 @@ import {showTableDownloadDialog} from './TableSave.jsx';
 import {showOptionsPopup} from '../../ui/PopupUtil.jsx';
 import {BgMaskPanel} from '../../core/background/BgMaskPanel.jsx';
 import {Logger} from '../../util/Logger.js';
+import {AddColumnBtn} from 'firefly/tables/ui/AddColumn.jsx';
 
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
@@ -66,7 +67,9 @@ export function TablePanel(props) {
         totalRows, showLoading, columns, showUnits, allowUnits, showTypes, showFilters, textView,
         error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask, showToggleTextView,
         filterInfo, filterCount, sortInfo, data, backgroundable, highlightedRowHandler, cellRenderers} = {...options, ...uiState};
-    let {leftButtons, rightButtons} = {...options, ...uiState};
+    let {leftButtons, rightButtons, showAddColumn} = {...options, ...uiState};
+
+    showAddColumn = isClientTable(tbl_id) ? false : showAddColumn;
 
     const connector = makeConnector(tbl_id, tbl_ui_id);
 
@@ -136,6 +139,7 @@ export function TablePanel(props) {
                             <div onClick={showTableDownloadDialog({tbl_id, tbl_ui_id})}
                                  title={TT_SAVE}
                                  className='PanelToolbar__button save'/> }
+                            {showAddColumn && <AddColumnBtn tbl_id={tbl_id} tbl_ui_id={tbl_ui_id}/> }
                             {showInfoButton &&
                             <div style={{marginLeft: '4px'}}
                                  title={TT_INFO}
@@ -243,6 +247,7 @@ TablePanel.propTypes = {
     showToggleTextView: PropTypes.bool,
     showOptionButton: PropTypes.bool,
     showFilterButton: PropTypes.bool,
+    showAddColumn: PropTypes.bool,
     showInfoButton: PropTypes.bool,
     showSearchButton: PropTypes.bool,
     leftButtons: PropTypes.arrayOf(PropTypes.func),   // an array of functions that returns a button-like component laid out on the left side of this table header.
@@ -265,6 +270,7 @@ TablePanel.defaultProps = {
     showOptionButton: true,
     showFilterButton: true,
     showInfoButton: true,
+    showAddColumn: true,
     showTypes: true,
     selectable: true,
     showSearchButton: true,

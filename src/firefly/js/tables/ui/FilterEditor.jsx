@@ -211,7 +211,7 @@ function makeRenderers(onFilter, tbl_id) {
 
 /*----------------------------------------------  Advanced Filter panel -----------------------------------------------*/
 
-const code = {style: {color: 'green', whiteSpace: 'pre', fontFamily: 'monospace', display: 'inline-block'}};
+export const code = {style: {color: 'green', whiteSpace: 'pre', fontFamily: 'monospace', display: 'inline-block'}};
 const sqlKey = 'SqlTableFilter-sql';
 const opKey =  'SqlTableFilter-op';
 const groupKey = 'sqltablefilter';
@@ -223,7 +223,7 @@ export function setSqlFilter(op, sql) {
                         ]);
 }
 
-export function SqlTableFilter({tbl_ui_id, tbl_id, onChange}) {
+export function SqlTableFilter({tbl_ui_id, tbl_id, onChange, style={}, samples, usages, inputLabel, placeholder}) {
 
 
     const sqlEl = useRef(null);                                                // using a useRef hook
@@ -241,10 +241,9 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange}) {
                         .map((c) => <TreeNode style={{marginLeft: -10}} key={c.name} title={`  ${c.label || c.name} (${c.type || '---'})`} isLeaf={true}/>);
 
     const onApply = () => {
-        const sqlVal = getFieldVal(groupKey, sqlKey);
-        const opVal = getFieldVal(groupKey, opKey);
-        const sqlFilter = sqlVal ? `${opVal}::${sqlVal}` : '';
-        onChange({sqlFilter});
+        const sql = getFieldVal(groupKey, sqlKey);
+        const op = getFieldVal(groupKey, opKey);
+        onChange?.({op, sql});
     };
 
     const onNodeClick = (skeys, {node}) => {
@@ -254,12 +253,17 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange}) {
     };
 
     const colFilters = getFiltersAsSql(tbl_id);
-    const sqlLabel = colFilters ? 'Additional Constraints (SQL):' : 'Constraints (SQL):';
+    inputLabel = inputLabel || (colFilters ? 'Additional Constraints (SQL):' : 'Constraints (SQL):');
     const iconGen = () => <img width="14" height="14" src={RIGHT_ARROW}/> ;
 
     const errStyle = error ? {borderColor: 'red'} : {};
+
+    usages = usages || <Usages/>;
+    samples = samples || <Samples/>;
+    placeholder = placeholder || 'e.g., "ra" > 180 AND "ra" < 185';
+
     return (
-        <SplitPane split='vertical' defaultSize={200} style={{display: 'inline-flex'}}>
+        <SplitPane split='vertical' defaultSize={200} style={{display: 'inline-flex', ...style}}>
             <SplitContent style={{display: 'flex', flexDirection: 'column'}}>
                 <b>Columns (sorted)</b>
                 <div  style={{overflow: 'auto', flexGrow: 1}}>
@@ -272,7 +276,7 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange}) {
                 <div className='flex-full' style={{height: '100%', overflow: 'hidden'}}>
                     <ColumnFilter {...{colFilters, onChange}}/>
                     <div style={{display: 'inline-flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                        <h3>{sqlLabel}</h3>
+                        <h3>{inputLabel}</h3>
                             <div style={{display: 'inline-flex', alignItems: 'center'}}>
                             <button className='button std' title='Apply the constraints' style={{height: 24}} onClick={onApply}>Apply</button>
                             {colFilters &&
@@ -297,33 +301,12 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange}) {
                         groupKey={groupKey}
                         fieldKey={sqlKey}
                         tooltip='Additional filter to apply to the table'
-                        placeholder='e.g., "ra" > 180 AND "ra" < 185'
+                        placeholder={placeholder}
                     />
                     {error && <li style={{color: 'red', fontStyle: 'italic'}}>{error}</li>}
                     <div style={{color: '#4c4c4c', overflow: 'auto', flexGrow: 1}}>
-                        <h4>Usage</h4>
-                        <div style={{marginLeft: 5}}>
-                            <div>Input should follow the syntax of an SQL WHERE clause.</div>
-                            <div>Click on a Column name to insert the name into the SQL Filter input box.</div>
-                            <div style={{marginTop: 5}}>Standard SQL-like operators can be used where applicable.
-                                Supported operators are:
-                                <span {...code}>{'  +, -, *, /, =, >, <, >=, <=, !=, LIKE, IN, IS NULL, IS NOT NULL'}</span>
-                            </div>
-                            <div style={{marginTop: 5}}>
-                                You may use functions as well.  A few of the common functions are listed below.
-                                For a list of all available functions, click <a href='http://hsqldb.org/doc/2.0/guide/builtinfunctions-chapt.html' target='_blank'>here</a>
-                            </div>
-                            <div style={{marginLeft: 5}}>
-                                <li style={{whiteSpace: 'nowrap'}}>String functions: <span {...code}>CONCAT(s1,s2[,...]]) INSTR(s,pattern[,offset]) LENGTH(s) SUBSTR(s,offset,length)</span></li>
-                                <li style={{whiteSpace: 'nowrap'}}>Numeric functions: <span {...code}>LOG10(x)/LG(x) LN(x)/LOG(x) DEGREES(x) ABS(x) COS(x) SIN(x) TAN(x) POWER(x,y)</span></li>
-                            </div>
-                        </div>
-
-                        <h4>Sample Filters</h4>
-                        <div style={{marginLeft: 5}}>
-                            <li style={{whiteSpace: 'nowrap'}}><div {...code}>{'("ra" > 185 AND "ra" < 185.1) OR ("dec" > 15 AND "dec" < 15.1) AND "band" IN (1,2)'}</div></li>
-                            <li style={{whiteSpace: 'nowrap'}}><div {...code}>{'POWER("v",2) / POWER("err",2) > 4 AND "band" = 3'}</div></li>
-                        </div>
+                        {usages}
+                        {samples}
                     </div>
                 </div>
             </SplitContent>
@@ -354,3 +337,39 @@ function ColumnFilter({colFilters, onChange}) {
         );
     } else return null;
 }
+
+const Usages = () => {
+    return (
+        <>
+            <h4>Usage</h4>
+            <div style={{marginLeft: 5}}>
+                <div>Input should follow the syntax of an SQL WHERE clause.</div>
+                <div>Click on a Column name to insert the name into the SQL Filter input box.</div>
+                <div style={{marginTop: 5}}>Standard SQL-like operators can be used where applicable.
+                    Supported operators are:
+                    <span {...code}>{'  +, -, *, /, =, >, <, >=, <=, !=, LIKE, IN, IS NULL, IS NOT NULL'}</span>
+                </div>
+                <div style={{marginTop: 5}}>
+                    You may use functions as well.  A few of the common functions are listed below.
+                    For a list of all available functions, click <a href='http://hsqldb.org/doc/2.0/guide/builtinfunctions-chapt.html' target='_blank'>here</a>
+                </div>
+                <div style={{marginLeft: 5}}>
+                    <li style={{whiteSpace: 'nowrap'}}>String functions: <span {...code}>CONCAT(s1,s2[,...]]) INSTR(s,pattern[,offset]) LENGTH(s) SUBSTR(s,offset,length)</span></li>
+                    <li style={{whiteSpace: 'nowrap'}}>Numeric functions: <span {...code}>LOG10(x)/LG(x) LN(x)/LOG(x) DEGREES(x) ABS(x) COS(x) SIN(x) TAN(x) POWER(x,y)</span></li>
+                </div>
+            </div>
+        </>
+    );
+};
+
+const Samples = () => {
+    return (
+        <>
+            <h4>Sample Filters</h4>
+            <div style={{marginLeft: 5}}>
+                <li style={{whiteSpace: 'nowrap'}}><div {...code}>{'("ra" > 185 AND "ra" < 185.1) OR ("dec" > 15 AND "dec" < 15.1) AND "band" IN (1,2)'}</div></li>
+                <li style={{whiteSpace: 'nowrap'}}><div {...code}>{'POWER("v",2) / POWER("err",2) > 4 AND "band" = 3'}</div></li>
+            </div>
+        </>
+    );
+};

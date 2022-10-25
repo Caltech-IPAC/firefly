@@ -111,6 +111,18 @@ export function queryTable(tableRequest, {filters, sortInfo, inclCols}) {
 }
 
 /**
+ * a utility function used to query data from the given tableRequest without altering the table.
+ * @param {TableRequest} tableRequest is a table request params object
+ * @param colAttribs      column attributes.  i.e. name, type, expression, etc
+ * @returns {Promise.<number>}
+ */
+export function addTableColumn(tableRequest, colAttribs) {
+
+    const params = Object.assign(pickBy(colAttribs), {[ServerParams.REQUEST]: JSON.stringify(tableRequest)});
+    return doJsonRequest(ServerParams.ADD_TABLE_COLUMN, params);
+}
+
+/**
  * returns the table data for the given parameters
  * @param {Object} p  parameters object
  * @param {string[]} p.columnNames an array of column names

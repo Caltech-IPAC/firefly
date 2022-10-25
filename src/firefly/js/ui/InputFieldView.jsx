@@ -95,7 +95,7 @@ export class InputFieldView extends PureComponent {
         const {hasFocus}= this.state;
         const {visible,disabled, label,tooltip,labelWidth,value,style,wrapperStyle,labelStyle, inputRef, autoFocus,
              valid,size,onChange, onBlur, onKeyPress, onKeyDown, onKeyUp, showWarning, connectedMarker=false,
-            message, type, placeholder, readonly}= this.props;
+            message, type, placeholder, readonly, required}= this.props;
         if (!visible) return null;
         const useWrapperStyle = {whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block', ...wrapperStyle};
         let {form='__ignore'}= this.props;
@@ -111,7 +111,7 @@ export class InputFieldView extends PureComponent {
 
         return (
             <div style={useWrapperStyle}>
-                {label && <InputFieldLabel labelStyle={labelStyle} label={label} tooltip={tooltip} labelWidth={labelWidth}/> }
+                {label && <InputFieldLabel {...{required, labelStyle, label, tooltip, labelWidth}}/> }
                 <input style={{...inputStyle, ...style}}
                        className={computeStyle(valid,hasFocus, readonly,connectedMarker)}
                        onChange={(ev) => onChange ? onChange(ev) : null}
@@ -127,7 +127,7 @@ export class InputFieldView extends PureComponent {
                        disabled={readonly}
                        title={ (!showWarning && !valid) ? message : tooltip}
                        ref={inputRef}
-                       {...pickBy({size, type, disabled, placeholder, form, autoFocus})}
+                       {...pickBy({size, type, disabled, placeholder, form, autoFocus, required})}
                 />
                 {showWarning && this.makeWarningArea(!valid)}
             </div>
@@ -159,7 +159,8 @@ InputFieldView.propTypes= {
     placeholder: string,
     form: string,
     connectedMarker: bool,
-    readonly: bool
+    readonly: bool,
+    required: bool
 };
 
 InputFieldView.defaultProps= {
@@ -168,7 +169,8 @@ InputFieldView.defaultProps= {
     visible : true,
     message: '',
     type: 'text',
-    readonly: false
+    readonly: false,
+    required: false
 };
 
 export const propTypes = InputFieldView.propTypes;

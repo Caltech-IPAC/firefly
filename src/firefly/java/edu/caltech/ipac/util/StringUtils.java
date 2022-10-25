@@ -94,7 +94,7 @@ public class StringUtils {
         Matcher m = pattern.matcher(val);
         ArrayList<String> res = new ArrayList<>();
         while ( m.find() ) {
-            res.add(m.group(0));
+            res.add(m.group());
         }
         return res.size() > 0 ? res.toArray(new String[0]) : null;
     }

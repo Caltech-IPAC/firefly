@@ -4,7 +4,7 @@
 
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {get, cloneDeep} from 'lodash';
+import {get, cloneDeep, isEmpty} from 'lodash';
 
 import {SqlTableFilter, setSqlFilter} from './FilterEditor.jsx';
 import {InputField} from '../../ui/InputField.jsx';
@@ -12,7 +12,7 @@ import {intValidator} from '../../util/Validate.js';
 import {getTableUiById, isClientTable} from '../TableUtil.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {dispatchTableAddLocal, dispatchTableRemove, TABLE_SELECT, dispatchTableFilter} from '../TablesCntlr.js';
-import {COL_TYPE,  getTblById, isOfType, parsePrecision, getColumnValues, watchTableChanges, getFilterCount, getColumn, hasAuxData} from '../TableUtil.js';
+import {COL_TYPE,  getTblById, isOfType, parsePrecision, getColumnValues, watchTableChanges, getFilterCount, getColumn} from '../TableUtil.js';
 import {TablePanel} from './TablePanel';
 import {FILTER_CONDITION_TTIPS, FilterInfo} from '../FilterInfo';
 import {inputColumnRenderer} from './TableRenderer.js';
@@ -61,6 +61,8 @@ export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOpt
         dispatchHideDialog(POPUP_DIALOG_ID);
     };
 
+    const onSqlFilterChanged = ({op, sql}) =>  onChange({sqlFilter: sql ? `${op}::${sql}` : ''});
+
     return (
         <div className='TablePanelOptions'>
             <Options {...{uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChange}} />
@@ -72,7 +74,7 @@ export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOpt
                 {showAdvFilter &&
                     <Tab name={advFilterName} label={label()}>
                         <div style={{display: 'flex', flex: '1 1 0', position: 'relative'}}>
-                            <SqlTableFilter {...{tbl_id, tbl_ui_id, onChange}} />
+                            <SqlTableFilter {...{tbl_id, tbl_ui_id, onChange}} onChange={onSqlFilterChanged} />
                         </div>
                     </Tab>
                 }
@@ -184,14 +186,17 @@ const typeIdx = 4;
 
 export const ColumnOptions = React.memo(({tbl_id, tbl_ui_id, ctm_tbl_id, onChange}) => {
 
+    const columns =  useStoreConnector( () => getTableUiById(tbl_ui_id)?.columns || []);
+
     useEffect(() => {
-        let  ctm = getTblById(ctm_tbl_id);
-        if (!ctm) {
-            ctm = createColumnTableModel(tbl_id, tbl_ui_id);
+        if (!isEmpty(columns)) {
+            const ctm = createColumnTableModel(tbl_id, tbl_ui_id);
             ctm.tbl_id = ctm_tbl_id;
             dispatchTableAddLocal(ctm, undefined, false);
         }
+    }, [columns]);
 
+    useEffect(() => {
         watchTableChanges(ctm_tbl_id, [TABLE_SELECT], ({payload}) => {
             const {selectInfo} = payload || {};
             const selectInfoCls = SelectInfo.newInstance(selectInfo);
