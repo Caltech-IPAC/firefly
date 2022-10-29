@@ -14,6 +14,7 @@ import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.csv.CSVFormat;
 
 import java.io.BufferedReader;
+import java.io.CharArrayReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -91,10 +92,9 @@ public class TableUtil {
         }
 
         BufferedReader subsetReader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
-        char[] charAry= new char[(int)FileUtil.K];
-        int len= subsetReader.read(charAry,0,(int)FileUtil.K); //limit the amount for the guess to 1 K
-        var testStr= len>-1 ? new String(charAry,0,len) : "";
-        BufferedReader reader= new BufferedReader(new StringReader(testStr));
+        char[] charAry= new char[IpacTableUtil.FILE_IO_BUFFER_SIZE];
+        subsetReader.read(charAry,0,charAry.length);           // limit the amount for the guess to FILE_IO_BUFFER_SIZE(32k)
+        BufferedReader reader= new BufferedReader(new CharArrayReader(charAry));
         try {
             String line = reader.readLine();
             if (line.startsWith("{")) {
