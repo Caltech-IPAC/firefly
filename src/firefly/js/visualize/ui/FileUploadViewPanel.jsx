@@ -14,29 +14,17 @@ import {getCellValue, getTblById, uniqueTblId, getSelectedDataSync} from '../../
 import {dispatchTableSearch, dispatchTableFetch, dispatchTableAddLocal} from '../../tables/TablesCntlr.js';
 import {getSizeAsString} from '../../util/WebUtil.js';
 
-
-import {makeFileRequest, makeTblRequest} from '../../tables/TableRequestUtil.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';
-import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
-import RangeValues from '../RangeValues.js';
-import WebPlotRequest from '../WebPlotRequest.js';
 import ImagePlotCntlr, {dispatchPlotImage, visRoot} from '../ImagePlotCntlr.js';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {isAccessWorkspace, getWorkspaceConfig} from '../WorkspaceCntlr.js';
-import {getAppHiPSForMoc} from '../HiPSMocUtil.js';
-import {primePlot, getDrawLayersByType, getPlotViewAry} from '../PlotViewUtil.js';
-import {
-    getDlAry, dispatchCreateImageLineBasedFootprintLayer, dispatchCreateRegionLayer } from '../DrawLayerCntlr.js';
-import LSSTFootprint from '../../drawingLayers/ImageLineBasedFootprint.js';
 import {isMOCFitsFromUploadAnalsysis} from '../HiPSMocUtil.js';
 import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
 import {getComponentState, dispatchComponentStateChange} from '../../core/ComponentCntlr.js';
 
 import {useFieldGroupMetaState, useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {PlotAttribute} from '../PlotAttribute.js';
-import {MetaConst} from '../../data/MetaConst.js';
 
 import './FileUploadViewPanel.css';
 import {getIntHeader} from '../../metaConvert/PartAnalyzer';
@@ -47,18 +35,20 @@ import {createNewRegionLayerId} from 'firefly/drawingLayers/RegionPlot.js';
 import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
 import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField.jsx';
+import {
+    getFileFormat,
+    getFirstPartType,
+    getPartCnt,
+    getSelectedRows,
+    isRegion,
+    resultSuccess
+} from 'firefly/ui/FileUploadProcessor';
 
 
 export const panelKey = 'FileUploadAnalysis';
 const  FILE_ID = 'fileUpload';
 const  URL_ID = 'urlUpload';
 const  WS_ID = 'wsUpload';
-
-/*const SUMMARY_TBL_ID = 'AnalysisTable';
-const DETAILS_TBL_ID = 'AnalysisTable-Details';
-const UNKNOWN_FORMAT = 'UNKNOWN';
-const summaryUiId = SUMMARY_TBL_ID + '-UI';
-const detailsUiId = DETAILS_TBL_ID + '-UI';*/
 
 const SUPPORTED_TYPES=[
     FileAnalysisType.REGION,
@@ -72,54 +62,51 @@ const TABLES_ONLY_SUPPORTED_TYPES=[
     FileAnalysisType.Table,
 ];
 
-
-const isTablesOnly= () => getAppOptions()?.uploadPanelLimit==='tablesOnly';
-
-
 const uploadOptions = 'uploadOptions';
 
-//let currentAnalysisResult, currentReport, currentSummaryModel, currentDetailsModel;
 const FILE_UPLOAD_KEY= 'file-upload-key-';
 let keyCnt=0;
 
+/*const groupKey = 'FileUploadAnalysis';
+const SUMMARY_TBL_ID = groupKey; //FileUploadAnalysis
+const DETAILS_TBL_ID = groupKey + '-Details';
+const UNKNOWN_FORMAT = 'UNKNOWN';
+const summaryUiId = SUMMARY_TBL_ID + '-UI';
+const detailsUiId = DETAILS_TBL_ID + '-UI';*/
 
-export function FileUploadViewPanel({submitText, setSubmitText, showCompleteButton}) {
+//let currentAnalysisResult, currentReport, currentSummaryModel, currentDetailsModel;
 
-    const {isLoading,statusKey} = useStoreConnector(() => getComponentState(panelKey, {isLoading:false,statusKey:''}));
+
+export function FileUploadViewPanel({setSubmitText}) {
+
+    const {groupKey}= useContext(FieldGroupCtx);
+
+    const {isLoading,statusKey} = useStoreConnector(() => getComponentState(groupKey, {isLoading:false,statusKey:''}));
     const isWsUpdating          = useStoreConnector(() => isAccessWorkspace());
-    const uploadSrc             = useStoreConnector(() => getFieldVal(panelKey, uploadOptions));
+    const uploadSrc             = useStoreConnector(() => getFieldVal(groupKey, uploadOptions));
 
-    const SUMMARY_TBL_ID = 'AnalysisTable';
-    const DETAILS_TBL_ID = 'AnalysisTable-Details';
+
+    const SUMMARY_TBL_ID = groupKey; //FileUploadAnalysis
+    const DETAILS_TBL_ID = groupKey + '-Details';
     const UNKNOWN_FORMAT = 'UNKNOWN';
     const summaryUiId = SUMMARY_TBL_ID + '-UI';
     const detailsUiId = DETAILS_TBL_ID + '-UI';
 
     //let currentAnalysisResult, currentReport, currentSummaryModel, currentDetailsModel;
 
-
-    const {message, analysisResult, report, summaryModel, detailsModel,currentAnalysisResult} = useStoreConnector((oldState) =>
-        getNextState(oldState, SUMMARY_TBL_ID, UNKNOWN_FORMAT, DETAILS_TBL_ID));
-
-    //const {message, analysisResult, report, summaryModel, detailsModel} = useStoreConnector((oldState) =>
-    //        getNextState(oldState, SUMMARY_TBL_ID, DETAILS_TBL_ID, UNKNOWN_FORMAT, currentAnalysisResult, currentReport, currentSummaryModel, currentDetailsModel));
+    let {message, analysisResult, report, summaryModel, detailsModel, prevAnalysisResult} = useStoreConnector((oldState) =>
+        getNextState(oldState, groupKey));
 
     const [loadingMsg,setLoadingMsg]= useState(() => '');
     const [uploadKey,setUploadKey]= useState(() => FILE_UPLOAD_KEY+keyCnt);
 
     useEffect(() => {
-        setSubmitText(getLoadButtonText(SUMMARY_TBL_ID,report,detailsModel,summaryModel));
-        //setSubmitText(getLoadButtonText(SUMMARY_TBL_ID,currentReport,currentDetailsModel,currentSummaryModel));
-    },[report,setSubmitText, summaryModel, detailsModel, analysisResult, message]);
 
-
-    useEffect(() => {
-
-        if (message || (analysisResult && analysisResult !== currentAnalysisResult)) {
-            if (currentAnalysisResult !== analysisResult) {
-                //currentAnalysisResult = analysisResult;
+        if (message || (analysisResult !== prevAnalysisResult)) {
+            if (prevAnalysisResult !== analysisResult) {
+                prevAnalysisResult = analysisResult;
             }
-            dispatchComponentStateChange(panelKey, {isLoading: false});
+            dispatchComponentStateChange(groupKey, {isLoading: false});
         }
     });
     useEffect(() => {
@@ -129,6 +116,10 @@ export function FileUploadViewPanel({submitText, setSubmitText, showCompleteButt
     useEffect(() => {
         dispatchTableAddLocal(detailsModel, undefined, false);
     }, [detailsModel]);
+
+    useEffect(() => {
+        setSubmitText(getLoadButtonText(SUMMARY_TBL_ID,report,detailsModel,summaryModel));
+    },[report,setSubmitText, summaryModel, detailsModel]);
 
     let aWStatusKey;
     useEffect(() => {
@@ -153,6 +144,7 @@ export function FileUploadViewPanel({submitText, setSubmitText, showCompleteButt
         });
     }, [isLoading, statusKey] );
 
+    const isTablesOnly= () => getAppOptions()?.uploadPanelLimit==='tablesOnly';
     const tablesOnly= isTablesOnly();
 
     const workspace = getWorkspaceConfig();
@@ -160,21 +152,18 @@ export function FileUploadViewPanel({submitText, setSubmitText, showCompleteButt
         {value: URL_ID, label: 'Upload from URL'}
     ].concat(workspace ? [{value: WS_ID, label: 'Upload from workspace'}] : []);
 
-
     const clearReport= () => {
         //currentReport= undefined;
-        dispatchValueChange({fieldKey:getLoadingFieldName(), groupKey:panelKey, value:'', displayValue:'', analysisResult:undefined});
+        dispatchValueChange({fieldKey:getLoadingFieldName(groupKey), groupKey:groupKey, value:'', displayValue:'', analysisResult:undefined});
     };
 
-    const isMoc=  isMOCFitsFromUploadAnalsysis(report)?.valid;//isMOCFitsFromUploadAnalsysis(currentReport)?.valid;
-
-    const tempVar = 'original value';
-
+    const isMoc=  isMOCFitsFromUploadAnalsysis(report)?.valid;
+    //keepState={true} for the 2nd div below (previously FieldGroup)
+    //<FieldGroup groupKey={panelKey} keepState={true} style={{height:'100%',
+    //    display: 'flex', alignItems: 'stretch', flexDirection: 'column'}} >
     return (
         <div style={{position: 'relative', height: '100%', display: 'flex', alignItems: 'stretch',
             flexDirection: 'column' }}>
-            <FieldGroup groupKey={panelKey} keepState={true} style={{height:'100%',
-                display: 'flex', alignItems: 'stretch', flexDirection: 'column'}} >
                 <div className='FileUpload'>
                     <div className='FileUpload__input'>
                         <RadioGroupInputField
@@ -193,15 +182,11 @@ export function FileUploadViewPanel({submitText, setSubmitText, showCompleteButt
                                                        }}/> }
                         </div>
                     </div>
-                    <FileAnalysis {...{report, summaryModel, detailsModel,tablesOnly, isMoc, UNKNOWN_FORMAT, summaryUiId, detailsUiId, tempVar}}/>
-                    <ImageDisplayOption SUMMARY_TBL_ID={SUMMARY_TBL_ID}/>
-                    <TableDisplayOption isMoc={isMoc} SUMMARY_TBL_ID={SUMMARY_TBL_ID}/>
+                    <FileAnalysis {...{report, summaryModel, detailsModel,tablesOnly, isMoc, UNKNOWN_FORMAT, summaryUiId, detailsUiId}}/>
+                    <ImageDisplayOption SUMMARY_TBL_ID={SUMMARY_TBL_ID} currentReport={report} currentSummaryModel={summaryModel}/>
+                    <TableDisplayOption isMoc={isMoc} SUMMARY_TBL_ID={SUMMARY_TBL_ID} currentReport={report} currentSummaryModel={summaryModel}/>
                 </div>
                 {(isLoading) && <LoadingMessage message={loadingMsg}/>}
-                {(showCompleteButton) && <CompleteButton onSuccess={resultsTEMPSuccess}
-                                includeUnmounted={false}
-                />}
-            </FieldGroup>
         </div>
     );
 }
@@ -228,7 +213,7 @@ const LoadingMessage= ({message}) => (
 function getLoadButtonText(SUMMARY_TBL_ID,currentReport,currentDetailsModel,currentSummaryModel) {
     const tblCnt = getSelectedRows(FileAnalysisType.Table, SUMMARY_TBL_ID, currentReport, currentSummaryModel)?.length ?? 0;
     if (tblCnt && isMOCFitsFromUploadAnalsysis(currentReport).valid) return 'Load MOC';
-    if (isRegion()) return 'Load Region';
+    if (isRegion(currentSummaryModel)) return 'Load Region';
 
     const imgCnt = getSelectedRows(FileAnalysisType.Image, SUMMARY_TBL_ID, currentReport, currentSummaryModel)?.length ?? 0;
 
@@ -240,123 +225,50 @@ function getLoadButtonText(SUMMARY_TBL_ID,currentReport,currentDetailsModel,curr
 }
 
 
-
-
-
 export function resultFail() {
     showInfoPopup('One or more fields are invalid', 'Validation Error');
 }
 
-const getPartCnt= (currentReport) => currentReport?.parts?.length ?? 1; //args = currentReport
-const getFirstPartType= (currentSummaryModel) => currentSummaryModel?.tableData.data[0]?.[1]; //args = currentSummaryModel
-const getFileFormat= (currentReport) => currentReport?.fileFormat; //args = currentReport
-const isRegion= (currentSummaryModel) => getFirstPartType(currentSummaryModel)===FileAnalysisType.REGION;
 
-function isSinglePartFileSupported() {
+function isSinglePartFileSupported(currentSummaryModel) {
+    const isTablesOnly= () => getAppOptions()?.uploadPanelLimit==='tablesOnly';
     const supportedTypes= isTablesOnly() ? TABLES_ONLY_SUPPORTED_TYPES : SUPPORTED_TYPES;
-    return getFirstPartType() && (supportedTypes.includes(getFirstPartType()));
-}
-
-function isFileSupported(summaryModel, currentReport) {
-    return getFirstPartType(summaryModel) && (SUPPORTED_TYPES.includes(getFirstPartType(summaryModel)) || getFileFormat(currentReport)===Format.FITS);
+    return getFirstPartType(currentSummaryModel) && (supportedTypes.includes(getFirstPartType(currentSummaryModel)));
 }
 
 
 function getFirstExtWithData(parts) {
+    const isTablesOnly= () => getAppOptions()?.uploadPanelLimit==='tablesOnly';
     return isTablesOnly() ?
         parts.findIndex((p) => p.type.includes(FileAnalysisType.Table)) :
         parts.findIndex((p) => !p.type.includes(FileAnalysisType.HeaderOnly));
 }
 
-
-
-function tablesOnlyResultSuccess(request, SUMMARY_TBL_ID, currentReport, currentSummaryModel) {
-    const tableIndices = getSelectedRows(FileAnalysisType.Table, SUMMARY_TBL_ID, currentReport, currentSummaryModel);
-    const imageIndices = getSelectedRows(FileAnalysisType.Image, SUMMARY_TBL_ID, currentReport, currentSummaryModel);
-
-    if (tableIndices.length>0) {
-        imageIndices.length>0 && showInfoPopup('Only loading the tables, ignoring the images.');
-        sendTableRequest(tableIndices, getFileCacheKey(), Boolean(request.tablesAsSpectrum==='spectrum'), currentReport);
-        return true;
-    }
-    else {
-        showInfoPopup('You may only upload tables.');
-        return false;
-    }
-}
-
-export function resultsTEMPSuccess(request) {
-    //const request = Object.assign({}, params, request);
-    //const reqTitle = title && (typeof title === 'function') ? title(request) : title;
-    request = Object.assign({}, makeTblRequest(request.id, request.title, request), request);//makeTblRequest(request.id, request.title, request);
-
-    console.log(request);
-    resultSuccess(request);
-}
-
-export function resultSuccess(request) {
-    console.log(request);
-    const SUMMARY_TBL_ID = 'AnalysisTable';
-    const currentReport = request.additionalParams.currentReport;
-    const currentDetailsModel = request.additionalParams.currentDetailsModel;
-    const summaryModel = request.additionalParams.summaryModel;
-
-    const isTablesOnly= () => getAppOptions()?.uploadPanelLimit==='tablesOnly';
-    if (isTablesOnly()) return tablesOnlyResultSuccess(request, SUMMARY_TBL_ID, currentReport, summaryModel);
-    const fileCacheKey = getFileCacheKey();
-
-    const tableIndices = getSelectedRows(FileAnalysisType.Table, SUMMARY_TBL_ID, currentReport, summaryModel);
-    const imageIndices = getSelectedRows(FileAnalysisType.Image, SUMMARY_TBL_ID, currentReport, summaryModel);
-
-    if (!isFileSupported(summaryModel, currentReport)) {
-        showInfoPopup(getFirstPartType(summaryModel) ? `File type of ${getFirstPartType(summaryModel)} is not supported.`: 'Could not recognize the file type');
-        return false;
-    }
-
-    if (!isRegion(summaryModel) && tableIndices.length + imageIndices.length === 0) {
-        if (getSelectedRows('HeaderOnly', SUMMARY_TBL_ID, currentReport, summaryModel)?.length) {
-            showInfoPopup('FITS HDU type of HeaderOnly is not supported. A header-only HDU contains no additional data.', 'Validation Error');
-        }
-        else {
-            showInfoPopup('No extension is selected', 'Validation Error');
-        }
-        return false;
-    }
-
-    const isMocFits =  isMOCFitsFromUploadAnalsysis(currentReport);
-    if (isRegion(summaryModel)) {
-        sendRegionRequest(fileCacheKey);
-    }
-    else if (isMocFits.valid) {
-        const mocMeta= {[MetaConst.PREFERRED_HIPS]: getAppHiPSForMoc()};
-        if (request.mocOp==='table') mocMeta[MetaConst.IGNORE_MOC]='true';
-        sendTableRequest(tableIndices, fileCacheKey, request.mocOp==='table', currentReport, false, mocMeta);
-    } else if ( isLsstFootprintTable(currentDetailsModel) ) {
-        sendLSSTFootprintRequest(fileCacheKey, request.fileName, tableIndices[0]);
-    } else {
-        sendTableRequest(tableIndices, fileCacheKey, Boolean(request.tablesAsSpectrum==='spectrum'), currentReport);
-        sendImageRequest(imageIndices, request, fileCacheKey, currentReport);
-    }
-}
-
 /*-----------------------------------------------------------------------------------------*/
 
-const getLoadingFieldName= () => getFieldVal(panelKey, uploadOptions) || FILE_ID;
+const getLoadingFieldName= (groupKey) => getFieldVal(groupKey, uploadOptions) || FILE_ID;
 
-//const {message, analysisResult, report, summaryModel, detailsModel,currentAnalysisResult, currentReport, currentSummaryModel, currentDetailsModel}
-function getNextState(oldState, SUMMARY_TBL_ID, UNKNOWN_FORMAT, DETAILS_TBL_ID) {
-    //function getNextState(oldState, SUMMARY_TBL_ID, DETAILS_TBL_ID, UNKNOWN_FORMAT, currentAnalysisResult, currentReport, currentSummaryModel, currentDetailsModel) {
+function getNextState(oldState, groupKey) {
     // because this value is stored in different fields.. so we have to check on what options were selected to determine the active value
-    let currentReport, currentSummaryModel, currentDetailsModel;
-    const fieldState = getField(panelKey, getLoadingFieldName()) || {};
-    const {message, analysisResult,currentAnalysisResult} = fieldState;
-    //const {analysisResult, message} = fieldState;
+
+    const SUMMARY_TBL_ID = groupKey; //FileUploadAnalysis
+    const DETAILS_TBL_ID = groupKey + '-Details';
+    const UNKNOWN_FORMAT = 'UNKNOWN';
+
+    let prevAnalysisResult, currentReport, currentSummaryModel, currentDetailsModel;
+    prevAnalysisResult = oldState?.analysisResult;
+    currentReport = oldState?.report;
+    currentSummaryModel = oldState?.summaryModel;
+    currentDetailsModel = oldState?.detailsModel;
+    const fieldState = getField(groupKey, getLoadingFieldName()) || {};
+
+    const {analysisResult, message} = fieldState;
     let modelToUseForDetails= getTblById(SUMMARY_TBL_ID)?? currentSummaryModel;
 
     if (message) {
         return {message, report:undefined, summaryModel:undefined, detailsModel:undefined};
     } else  if (analysisResult) {
-        if (analysisResult && analysisResult !== currentAnalysisResult) {
+        if (analysisResult && analysisResult !== prevAnalysisResult) {
             currentReport = JSON.parse(analysisResult);
             if (currentReport.fileFormat===UNKNOWN_FORMAT) {
                 return {message:'Unrecognized file type', report:undefined, summaryModel:undefined, detailsModel:undefined};
@@ -379,9 +291,9 @@ function getNextState(oldState, SUMMARY_TBL_ID, UNKNOWN_FORMAT, DETAILS_TBL_ID) 
     if (shallowequal(detailsModel, currentDetailsModel)) {
         detailsModel = currentDetailsModel;
     }
-    currentDetailsModel = detailsModel;
 
-    const newState= {message, analysisResult, report:currentReport, summaryModel:currentSummaryModel, detailsModel};
+    const newState= {message, analysisResult, report:currentReport, summaryModel:currentSummaryModel, detailsModel,
+                    prevAnalysisResult: oldState?.analysisResult};
     if (statesEqual(oldState,newState)) {
         return oldState;
     }
@@ -406,6 +318,9 @@ function statesEqual(s1,s2) {
                 r1.fileSize !== r2.fileSize || r1.parts?.length !== r2.parts?.length) return false;
         }
     }
+    if ((r1 && !r2) || (!r1 && r2)) {
+        return false;
+    }
 
     if (!summaryModelEqual(s1.summaryModel, s2.summaryModel)) return false;
 
@@ -415,6 +330,9 @@ function statesEqual(s1,s2) {
         if (d1 !== d2 &&
             (d1?.totalRows !== d2?.totalRows ||
                 d1?.tableData.data?.find((d, idx) => d?.[2] !== d2?.tableData.data[idx][2]))) return false;
+    }
+    if ((d1 && !d2) || (!d1 && d2)) {
+        return false;
     }
     return true;
 
@@ -457,15 +375,10 @@ function getDetailsModel(tableModel, report, DETAILS_TBL_ID, UNKNOWN_FORMAT) {
     return details;
 }
 
-function getFileCacheKey() {
-    // because this value is stored in different fields.. so we have to check on what options were selected to determine the active value
-    const uploadSrc = getFieldVal(panelKey, uploadOptions) || FILE_ID;
-    return getFieldVal(panelKey, uploadSrc);
-}
+function TableDisplayOption({isMoc, SUMMARY_TBL_ID, currentReport, currentSummaryModel}) {
 
-function TableDisplayOption({isMoc, SUMMARY_TBL_ID}) {
-
-    const selectedTables = useStoreConnector(() => getFileFormat() ? getSelectedRows('Table', SUMMARY_TBL_ID) : [] );
+    const selectedTables = useStoreConnector(() => getFileFormat() ?
+        getSelectedRows('Table', SUMMARY_TBL_ID, currentReport, currentSummaryModel) : [] );
     if ( selectedTables.length < 1) return null;
 
     if (isMoc) {
@@ -497,8 +410,8 @@ function TableDisplayOption({isMoc, SUMMARY_TBL_ID}) {
     );
 }
 
-function ImageDisplayOption({SUMMARY_TBL_ID}) {
-    const selectedImages = useStoreConnector(() => getSelectedRows('Image', SUMMARY_TBL_ID));
+function ImageDisplayOption({SUMMARY_TBL_ID, currentReport, currentSummaryModel}) {
+    const selectedImages = useStoreConnector(() => getSelectedRows('Image', SUMMARY_TBL_ID, currentReport, currentSummaryModel));
     if ( selectedImages.length < 2) return null;
 
     const imgOptions = [{value: 'oneWindow', label: 'All images in one window'},
@@ -587,13 +500,16 @@ function AnalysisTable({summaryModel, detailsModel, report, isMoc, UNKNOWN_FORMA
             {(summaryModel.tableData.data.length>1) ?
                 <MultiDataSet summaryModel={summaryModel} detailsModel={detailsModel} isMoc={isMoc} summaryUiId={summaryUiId}/> :
                 <SingleDataSet type={summaryModel.tableData.data[0][1]} desc={summaryModel.tableData.data[0][2]}
-                               detailsModel={detailsModel} report={report} UNKNOWN_FORMAT={UNKNOWN_FORMAT} detailsUiId={detailsUiId}/>
+                               detailsModel={detailsModel} report={report} UNKNOWN_FORMAT={UNKNOWN_FORMAT} detailsUiId={detailsUiId}
+                               currentSummaryModel={summaryModel}
+                />
             }
         </div>
     );
 }
 
-function SingleDataSet({type, desc, detailsModel, report, supported=isSinglePartFileSupported(), UNKNOWN_FORMAT, detailsUiId}) {
+function SingleDataSet({type, desc, detailsModel, report, UNKNOWN_FORMAT, detailsUiId, currentSummaryModel}) {
+    const supported = isSinglePartFileSupported(currentSummaryModel);
     const showDetails= supported && detailsModel;
     return (
         <div style={{display:'flex', flex:'1 1 auto', justifyContent: showDetails?'start':'center'}}>
@@ -653,10 +569,11 @@ function getTableArea(report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT,
 }
 
 
-const FileAnalysis = ({report, summaryModel, detailsModel, tablesOnly, isMoc, UNKNOWN_FORMAT, summaryUiId, detailsUiId, tempVar}) => {
+const FileAnalysis = ({report, summaryModel, detailsModel, tablesOnly, isMoc, UNKNOWN_FORMAT, summaryUiId, detailsUiId}) => {
+    //getting FieldGroup context and adding required params to the request object (sent to resultSuccess)
     const {groupKey, register, unregister}= useContext(FieldGroupCtx);
-    const additionalReqObjs = {summaryModel: summaryModel, currentReport: report, currentDetailsModel: detailsModel};
-    const [getRequestObjs, setRequestObjs] = useFieldGroupMetaState(additionalReqObjs);
+    const additionalReqObjs = {summaryModel: summaryModel, currentReport: report, currentDetailsModel: detailsModel, groupKey: groupKey};
+    //const [getRequestObjs, setRequestObjs] = useFieldGroupMetaState(additionalReqObjs);
     useEffect(() => {
         register('additionalParams', () => additionalReqObjs);
         return () => unregister('additionalParams');
@@ -688,115 +605,3 @@ const FileAnalysis = ({report, summaryModel, detailsModel, tablesOnly, isMoc, UN
 
 
 
-
-function getSelectedRows(type, SUMMARY_TBL_ID, currentReport, currentSummaryModel) {
-    if (getPartCnt(currentReport)===1) {
-        if (type===getFirstPartType(currentSummaryModel)) {
-            return [0];
-        }
-        return [];
-    }
-    const {totalRows=0, tableData} = getSelectedDataSync(SUMMARY_TBL_ID, ['Index', 'Type']);
-    if (totalRows === 0) return [];
-    const selectedRows = tableData.data;
-    return selectedRows.filter((row) => row[1] === type)            // take only rows with the right type
-        .map((row) => row[0]);                       // returns only the index
-}
-
-
-
-function sendRegionRequest(fileCacheKey,currentReport) {
-    const drawLayerId = createNewRegionLayerId();
-    const title= currentReport.fileName ?? 'Region File';
-    dispatchCreateRegionLayer(drawLayerId, title, fileCacheKey, null);
-    if (!getPlotViewAry(visRoot())?.length) {
-        showInfoPopup('The region file is loaded but you will not be able to see it until you load an image (FITS or HiPS)', 'Warning');
-    }
-}
-
-function sendTableRequest(tableIndices, fileCacheKey, loadToUI= true, currentReport, treatAsSpectrum, metaData={}) {
-    const {fileName, parts=[]} = currentReport;
-
-    tableIndices.forEach((idx) => {
-        const {index} = parts[idx];
-        const title = parts.length > 1 ? `${fileName}-${index}` : fileName;
-        const META_INFO= {...metaData};
-        if (treatAsSpectrum) META_INFO[MetaConst.DATA_TYPE_HINT]= 'spectrum';
-        const options=  {META_INFO};
-        const tblReq = makeFileRequest(title, fileCacheKey, null, options);
-        tblReq.tbl_index = index;
-        loadToUI ? dispatchTableSearch(tblReq) : dispatchTableFetch(tblReq);
-
-    });
-}
-
-/**
- * send request to get the data of image unit, the extension index is mapped to be that at
- * the server side
- * @param imageIndices
- * @param request
- * @param fileCacheKey
- */
-function sendImageRequest(imageIndices, request, fileCacheKey, currentReport) {
-
-    if (imageIndices.length === 0) return;
-
-    const {fileName, parts=[]} = currentReport;
-
-    const wpRequest = WebPlotRequest.makeFilePlotRequest(fileCacheKey);
-    wpRequest.setInitialRangeValues(RangeValues.make2To10SigmaLinear());
-    const {viewerId=''} = getAViewFromMultiView(getMultiViewRoot(), IMAGE) || {};
-
-    if (viewerId) {
-        wpRequest.setPlotGroupId(viewerId);
-
-        if (request.imageDisplay === 'mulWindow') {
-            // plot each image separately
-
-            imageIndices.forEach( (idx) => {
-                const plotId = `${fileName}-${idx}`;
-                const {index} = parts[idx];
-
-                // if (index !== -1)  wpRequest.setPostTitle(`- ext. ${idx}`); // not primary
-                if (index !== -1)  wpRequest.setAttributes({[PlotAttribute.POST_TITLE]:`- ext. ${idx}`}); // not primary
-
-                wpRequest.setMultiImageExts(`${index}`);
-                dispatchPlotImage({plotId, wpRequest, viewerId});
-            });
-        } else {
-            const extList = imageIndices.map((idx) => parts?.[idx]?.index).join();
-
-            wpRequest.setMultiImageExts(extList);
-            if (!extList.includes('-1')) wpRequest.setAttributes({[PlotAttribute.POST_TITLE]:`- ext. ${extList}`});
-
-            const plotId = `${fileName.replace('.', '_')}-${imageIndices.join('_')}`;
-            dispatchPlotImage({plotId, wpRequest, viewerId});
-        }
-    }
-}
-
-
-function sendLSSTFootprintRequest(uploadPath, displayValue, tblIdx) {
-    const dl_id = getLSSTFootprintId();
-    const pv = primePlot(visRoot());
-    const pIds = pv ? [pv.plotId]: [];
-
-    dispatchCreateImageLineBasedFootprintLayer(dl_id, displayValue,
-        null, pIds,
-        uploadPath, null, tblIdx);
-}
-
-
-function getLSSTFootprintId() {
-    const dlId = uniqueTblId();
-    let   idx = 1;
-    let   fpLayerId = dlId;
-    const dls = getDrawLayersByType(getDlAry(), LSSTFootprint.TYPE_ID);
-
-    while (true) {
-        const dl = dls.find((oneLayer) => oneLayer.drawLayerId === fpLayerId);
-
-        if (!dl) return dlId;
-        fpLayerId = dlId + `${idx++}`;
-    }
-}
