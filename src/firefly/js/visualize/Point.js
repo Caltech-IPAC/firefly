@@ -457,7 +457,7 @@ export const parseScreenPt= (inStr) => parsePt(SPT,inStr);
 
 /**
  *
- * @param serializedWP
+ * @param {String} serializedWP
  * @return {WorldPt}
  */
 export const parseWorldPt = function (serializedWP) {

@@ -1,22 +1,21 @@
-import React from 'react';
-import {isDialogVisible} from 'firefly/core/ComponentCntlr';
-import {POPUP_DIALOG_ID, showOptionsPopup} from 'firefly/ui/PopupUtil';
-import {get, set, has, isUndefined} from 'lodash';
-import FieldGroupUtils from 'firefly/fieldGroup/FieldGroupUtils';
-import {
-    convertISOToMJD,
-    convertMJDToISO, DateTimePicker,
-    DateTimePickerField, fMoment, tryConvertToMoment,
-    validateDateTime,
-    validateMJD
-} from 'firefly/ui/DateTimePickerField';
-import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField';
-import {HeaderFont, ISO, MJD} from 'firefly/ui/tap/TapUtil';
 import HelpIcon from 'firefly/ui/HelpIcon';
-import * as PropTypes from 'prop-types';
-import {formFeedback, isShowHelp} from 'firefly/ui/TimePanel';
+import {isEqual} from 'lodash';
+import PropTypes from 'prop-types';
+import React from 'react';
+import {getAppOptions} from '../../api/ApiUtil.js';
+import {isDialogVisible} from '../../core/ComponentCntlr.js';
+import {CheckboxGroupInputField} from '../CheckboxGroupInputField.jsx';
+import {
+    convertISOToMJD, convertMJDToISO, DateTimePicker, fMoment, tryConvertToMoment, validateDateTime, validateMJD
+} from '../DateTimePickerField.jsx';
+import {FieldGroupCollapsible} from '../panel/CollapsiblePanel.jsx';
+import {POPUP_DIALOG_ID, showOptionsPopup} from '../PopupUtil.jsx';
+import {useFieldGroupValue} from '../SimpleComponent.jsx';
+import {formFeedback, isShowHelp} from '../TimePanel.jsx';
+import {ISO, MJD} from './TapUtil.js';
+export const HeaderFont = {fontSize: 12, fontWeight: 'bold', alignItems: 'center'};
 
-/* Style Helpers */
+// Style Helpers
 export const LeftInSearch = 24;
 export const LabelWidth = 110;
 export const LableSaptail = 110;
@@ -25,35 +24,15 @@ export const SpatialLableSaptail = LableSaptail + 45 /* padding of target */ - 4
 export const Width_Column = 175;
 export const SmallFloatNumericWidth = 12;
 export const Width_Time_Wrapper = Width_Column + 30;
-
+export const SpatialPanelWidth = Math.max(Width_Time_Wrapper * 2, SpatialWidth) + LabelWidth + 10;
+// field constants
 export const  FROM = 0;
 export const  TO  = 1;
 
-export const skey = 'TABLE_SEARCH_METHODS';
+const DEF_ERR_MSG= 'Constraints Error';
 
 
-const showTimePicker = (loc, show, timeKey) => {
-    const pickerKey = timeKey + 'Picker';
-    const title = loc === FROM ? 'select "from" time' : 'select "to" time';
-
-    const fields = FieldGroupUtils.getGroupFields(skey);
-    const {value/*, valid, message*/} = get(fields, pickerKey, {value: '', valid: true, message: ''});
-
-    const content = (
-        <DateTimePickerField fieldKey={pickerKey}
-                             groupKey={skey}
-                             showInput={false}
-                             openPicker={true}
-                             initialState={{
-                                 value
-                             }}
-                             inputStyle={{marginBottom: 3}}
-        />);
-
-    showOptionsPopup({content, title, modal: true, show});
-};
-
-export const changeDatePickerOpenStatusNew = (loc, timeKey, currentValue, currentTimeMode, setTimeCallback) => {
+export const changeDatePickerOpenStatus = (loc, timeKey, currentValue, currentTimeMode, setTimeCallback) => {
     const currentTimeInfo = getTimeInfo(currentTimeMode, currentValue, true, '');
     const doSetTime = function(moment) {
         const timeInfo = getTimeInfo(ISO, fMoment(moment), true, '');
@@ -67,21 +46,11 @@ export const changeDatePickerOpenStatusNew = (loc, timeKey, currentValue, curren
                             openPicker={true}
                             value={currentTimeInfo[ISO].value}
                             onChange={doSetTime}
-                            inputStyle={{marginBottom: 3}}
-            />);
+                            inputStyle={{marginBottom: 3}} />);
 
         showOptionsPopup({content, title, modal: true, show});
     };
 };
-
-// ExpsoureStartFrom
-export function changeDatePickerOpenStatus(loc, timeKey) {
-    return () => {
-        const show = !isDialogVisible(POPUP_DIALOG_ID);
-
-        showTimePicker(loc, show, timeKey);
-    };
-}
 
 export const getTimeInfo = function(timeMode, value, valid, message){
     const updateValue = timeMode === MJD ? value : (valid ? fMoment(tryConvertToMoment(value, true)): value);
@@ -92,149 +61,99 @@ export const getTimeInfo = function(timeMode, value, valid, message){
     return {[ISO]: isoValInfo, [MJD]: mjdValInfo};
 };
 
-export const onChangeTimeMode = (newTimeMode, inFields, rFields, updateComponents) => {
-    updateComponents.forEach((timeKey) => {
-        const field = inFields[timeKey];
-        const timeInfo = getTimeInfo(field.timeMode, field.value, field.valid, field.message);
-        const newTimeInfo = timeInfo[newTimeMode];
 
-        const showHelp = isShowHelp(timeInfo[ISO].value, timeInfo[MJD].value);
-        const feedback = formFeedback(timeInfo[ISO].value, timeInfo[MJD].value);
+export const onChangeTimeMode = (newTimeMode, getter, setter) => {
+    if (!getter(true)) return;
+    const {value,valid,message, timeMode,...rest} = getter(true);
+    const timeInfo = getTimeInfo(timeMode, value, valid, message);
+    const newTimeInfo = timeInfo[newTimeMode];
+    if (!newTimeInfo) return;
 
-        rFields[timeKey] = {
-            ...inFields[timeKey],
-            value: newTimeInfo.value,
-            valid: newTimeInfo.valid,
-            message: newTimeInfo.message,
-            showHelp, feedback,
-            timeMode: newTimeMode
-        };
-    });
+    const showHelp = isShowHelp(timeInfo[ISO].value, timeInfo[MJD].value);
+    const feedback = formFeedback(timeInfo[ISO].value, timeInfo[MJD].value);
+
+    setter (newTimeInfo.value, {valid:newTimeInfo.valid,
+        ...rest, message: newTimeInfo.message, timeMode: newTimeMode, showHelp, feedback});
 };
 
-export const onChangeTimeField = (value, inFields, rFields, timeKey, timeOptionsKey) => {
-    // only update picker & mjd when there is no pop-up picker (time input -> picker or mjd)
-    if (!isDialogVisible(POPUP_DIALOG_ID)) {
-        const {valid, message} = inFields?.[timeKey] ?? {};
-        const currentTimeMode = inFields?.[timeOptionsKey]?.value;
-        const timeInfo = getTimeInfo(currentTimeMode, value, valid, message);
-        const showHelp = isShowHelp(timeInfo[ISO].value, timeInfo[MJD].value);
-        const feedback = formFeedback(timeInfo[ISO].value, timeInfo[MJD].value);
-        rFields[timeKey] = {
-            ...inFields[timeKey],
-            value: timeInfo[currentTimeMode].value, message, valid, showHelp, feedback,
-            [ISO]: timeInfo[ISO],
-            [MJD]: timeInfo[MJD]
-        };
-    }
-};
-
-export const onChangeDateTimePicker = (value, inFields, rFields, timeKey, pickerKey, timeOptions) => {
-    const currentTimeMode = timeOptions.value;
-    // update MJD & TimeFrom (TimeTo) when there is pop-up picker (picker -> time field & mjd)
-    if (isDialogVisible(POPUP_DIALOG_ID)) {
-        const {valid, message} = get(inFields, pickerKey) || {};
-        const timeInfo = getTimeInfo(ISO, value, valid, message);
-        const showHelp = isShowHelp(timeInfo[ISO].value, timeInfo[MJD].value);
-        const feedback = formFeedback(timeInfo[ISO].value, timeInfo[MJD].value);
-        rFields[timeKey] = {
-            ...inFields[timeKey],
-            value: timeInfo[currentTimeMode].value, message, valid, showHelp, feedback, timeMode: currentTimeMode,
-            [ISO]: timeInfo[ISO],
-            [MJD]: timeInfo[MJD]
-        };
-    }
-};
-
-const updateMessage = (retval, field) => {
-    if (field) {
-        retval.message = `field '${field.label}': ${retval.message}`;
-    }
-    return retval;
-};
-
-const getFieldValidity = (fields, fieldKey, nullAllowed) => {
-    const {valid=true, message, value, displayValue} = get(fields, fieldKey) || {};
-    const val = displayValue || value;
-    const rVal = val && (typeof val === 'string') ? val.trim() : val;
-
-    // if nullAllowed is undefined, just pass valid & message as assigned
-    if (isUndefined(nullAllowed) || rVal) {
-        return {valid, message: (valid ? '' : (message || 'entry error'))};
-    } else if (!rVal) {
-        return {valid: nullAllowed, message: !nullAllowed ? '' : ''};
-    }
-};
-
-export const checkField = (key, opFields, nullAllowed, fieldsValidity) => {
-    const retval = getFieldValidity(opFields, key, nullAllowed);
-    const field = get(opFields, key);
-    const validity = {valid: retval.valid, message: retval.message};
-    if (!retval.valid) {
-        updateMessage(retval, field);
-    }
-    if (has(field, 'nullAllowed')) {
-        validity.nullAllowed = nullAllowed;
-    }
-    fieldsValidity.set(key, validity);
-    return validity;
+/**
+ * make a FieldErrorList object
+ * @returns {FieldErrorList}
+ */
+export const makeFieldErrorList = () => {
+    const errors= [];
+    const checkForError= ({valid=true, message=''}= {}) => !valid && errors.push(message);
+    const addError= (message) => errors.push(message);
+    const getErrors= () => [...errors];
+    return {checkForError,addError,getErrors};
 };
 
 export const getPanelPrefix = (panelTitle) => {
     return panelTitle[0].toLowerCase() + panelTitle.substr(1);
 };
 
-export const isPanelChecked = (panelTitle, panelPrefix, fields) => {
-    const panelCheckId = `${panelPrefix}Check`;
-    return get(fields, [panelCheckId, 'value' ]) === panelTitle;
-};
 
-/*
- * Encapsulates the logic to inspect a panel's check, field validity,
- * and update everything accordingly.
- */
-export const updatePanelFields = (fieldsValidity, valid, fields, newFields, panelTitle, panelPrefix, defaultMessage) => {
-    const panelCheckId = `${panelPrefix}Check`;
-    const panelFieldKey = `${panelPrefix}SearchPanel`;
-    const firstMessage = Array.from(fieldsValidity.values()).find((v) => !v.valid)?.message ?? defaultMessage;
-    if (newFields) {
-        const panelActive = get(fields, [panelCheckId, 'value']) === panelTitle;
-        const panelValid = get(fields, [panelFieldKey, 'panelValid'], false);
-        for (const [key, validity] of fieldsValidity.entries()) {
-            newFields[key].validity = validity;
-            newFields[key].message = validity.message;
-            if (has(newFields[key], 'nullAllowed')) {
-                newFields[key].nullAllowed = !panelActive;
-                newFields[key].valid = panelActive ? validity.valid : true;
-            }
-        }
+function getPanelAdqlConstraint(panelActive, panelTitle,constraintsValid,adqlConstraintsAry,firstMessage, defErrorMessage=DEF_ERR_MSG) {
+    if (!panelActive) return {adqlConstraint:'',adqlConstraintErrors:[]};
 
-        Object.assign(newFields[panelFieldKey], {
-            'panelValid': valid,
-            'panelMessage': !valid ? firstMessage : '',
-        });
-        if (valid && !panelValid && [...fieldsValidity.keys()].length > 0) {
-            set(newFields, [panelCheckId, 'value'], panelTitle);
-        }
+    if (constraintsValid && adqlConstraintsAry?.length) {
+        return {adqlConstraint:adqlConstraintsAry.join(' AND '),adqlConstraintErrors:[]};
+    } else {
+        const msg= (!constraintsValid && firstMessage) ?
+            `Error processing ${panelTitle} constraints: ${firstMessage}` : defErrorMessage;
+        return {adqlConstraint:'',adqlConstraintErrors:[msg]};
     }
-};
+}
+
+/**
+ *
+ * @param {boolean} panelActive
+ * @param {String} panelTitle
+ * @param {String} [defErrorMessage]
+ * @returns {Function}
+ */
+export function makePanelStatusUpdater(panelActive,panelTitle,defErrorMessage) {
+    /**
+     * @Function
+     * @param {InputConstraints} constraints
+     * @param {ConstraintResult} lastConstraintResult
+     * @param {Function} setConstraintResult - a function to set the constraint result setConstraintResult(ConstraintResult)
+     * @String string - panel message
+     */
+    return (constraints, lastConstraintResult, setConstraintResult) => {
+        const {valid:constraintsValid,errAry, adqlConstraintsAry, siaConstraints, siaConstraintErrors}= constraints;
+
+        const simpleError= constraintsValid ? '' : (errAry[0]|| defErrorMessage || '');
+
+        const {adqlConstraint, adqlConstraintErrors}=
+            getPanelAdqlConstraint(panelActive,panelTitle, constraintsValid,adqlConstraintsAry,errAry[0], defErrorMessage);
+        const cr = { adqlConstraint, adqlConstraintErrors, siaConstraints, siaConstraintErrors, simpleError};
+        if (constrainResultDiffer(cr, lastConstraintResult)) setConstraintResult(cr);
+
+        return simpleError;
+    };
+}
+
+
+function constrainResultDiffer(c1, c2) {
+    return (c1?.adqlConstraint !== c2?.adqlConstraint ||
+        (c1.simpleError!==c2.simpleError) ||
+        !isEqual(c1.adqlConstraintErrors, c2.adqlConstraintErrors) ||
+        !isEqual(c1.siaConstraints, c2.siaConstraints) ||
+        !isEqual(c1.siaConstraintErrors, c2.siaConstraintErrors));
+}
+
+
 
 export function Header({title, helpID='', checkID, message, enabled=false, panelValue=undefined}) {
     const tooltip = title + ' search is included in the query if checked';
     return (
         <div style={{display: 'inline-flex', alignItems: 'center'}} title={title + ' search'}>
             <div onClick={(e) => e.stopPropagation()} title={tooltip}>
-                <CheckboxGroupInputField
-                    key={checkID}
-                    fieldKey={checkID}
-                    initialState={{
-                        value: enabled ? panelValue || title:'',
-                        label: ''
-                    }}
+                <CheckboxGroupInputField key={checkID} fieldKey={checkID}
+                    initialState={{ value: enabled ? panelValue || title:'', label: '' }}
                     options={[{label:'', value: panelValue || title}]}
-                    alignment='horizontal'
-                    wrapperStyle={{whiteSpace: 'norma'}}
-                />
+                    alignment='horizontal' wrapperStyle={{whiteSpace: 'norma'}} />
             </div>
             <div style={{...HeaderFont, marginRight: 5}}>{title}</div>
             <HelpIcon helpId={helpID}/>
@@ -247,5 +166,113 @@ Header.propTypes = {
     title: PropTypes.string,
     helpID: PropTypes.string,
     checkID: PropTypes.string,
-    message: PropTypes.string
+    message: PropTypes.string,
+    panelValue: PropTypes.string,
+    enabled: PropTypes.bool
 };
+
+export function InternalCollapsibleCheckHeader({title, helpID, children, fieldKey, checkKey, message, initialState, initialStateChecked, panelValue}) {
+
+    return (
+        <FieldGroupCollapsible header={<Header title={title} helpID={helpID}
+                                               enabled={initialStateChecked}
+                                               checkID={checkKey} message={message} panelValue={panelValue}/>}
+                               initialState={initialState} fieldKey={fieldKey} headerStyle={HeaderFont}>
+            {children}
+        </FieldGroupCollapsible>
+
+    );
+}
+
+
+
+export function makeCollapsibleCheckHeader(base) {
+    const panelKey= base+'-panelKey';
+    const panelCheckKey= base+'-panelCheckKey';
+    const panelValue= base+'-panelEnabled';
+
+    const retObj= {
+            isPanelActive: () => false,
+            setPanelActive: () => undefined,
+            collapsibleCheckHeaderKeys:  [panelKey,panelCheckKey],
+        };
+
+    retObj.CollapsibleCheckHeader= ({title,helpID,message,initialStateOpen, initialStateChecked,children}) => {
+        const [getPanelActive, setPanelActive] = useFieldGroupValue(panelCheckKey);// eslint-disable-line react-hooks/rules-of-hooks
+        const isActive= getPanelActive() === panelValue;
+        retObj.isPanelActive= () => getPanelActive() === panelValue;
+        retObj.setPanelActive= (active) => setPanelActive(active ? panelValue : '');
+        return (
+            <InternalCollapsibleCheckHeader {...{title, helpID, checkKey:panelCheckKey, fieldKey:panelKey,
+                                            message: isActive ? message:'', initialStateChecked, panelValue,
+                                            initialState:{value: initialStateOpen ? 'open' : 'close'}}} >
+                {children}
+            </InternalCollapsibleCheckHeader>
+        );
+    };
+    return retObj;
+}
+
+
+
+
+
+
+export function DebugObsCore({constraintResult}) {
+    if (!getAppOptions().tapObsCore?.debug) return false;
+    return (
+        <div>
+            adql fragment: {constraintResult?.adqlConstraint} <br/>
+            sia fragment: {constraintResult?.siaConstraintErrors?.length ?
+                           `Error: ${constraintResult?.siaConstraintErrors?.join(' ')}` :
+                           constraintResult?.siaConstraints?.join('&')}
+        </div> );
+}
+
+
+
+
+/**
+ * @param {FieldGroupField} timeMinField
+ * @param {FieldGroupField} timeMaxField
+ * @returns {{minValue: string, maxValue: string, minGreaterThanMax: boolean, isoRange: number[], mjdRange: String[]}}
+ */
+export function checkExposureTime(timeMinField, timeMaxField) {
+    const {mjd: minMjd} = getTimeInfo(timeMinField.timeMode, timeMinField.value, timeMinField.valid, timeMinField.message);
+    const {mjd: maxMjd} = getTimeInfo(timeMaxField.timeMode, timeMaxField.value, timeMaxField.valid, timeMaxField.message);
+    const minValue = minMjd.value.length ? minMjd.value : '-Inf';
+    const maxValue = maxMjd.value.length ? maxMjd.value : '+Inf';
+    const mjdRange = [Number(minValue) > 0 ? Number(minValue) : NaN, Number(maxValue) > 0 ? Number(maxValue) : NaN];
+    const isoRange = [convertMJDToISO(mjdRange[0]), convertMJDToISO(mjdRange[0])];
+    const minGreaterThanMax = minValue && maxValue && (Number(minValue) > Number(maxValue));
+    return {minValue, maxValue, mjdRange, isoRange, minGreaterThanMax};
+}
+
+
+/**
+ * @typedef {Object} FieldErrorList
+ * @prop {Function} addError - add a string error message, addError(string)
+ * @prop {Function} checkForError - check and FieldGroupField for errors and add if found, checkForError(field)
+ * @prop {Function} getErrors - return the arrays of errors, const errAry= errList.getErrors()
+ */
+
+/**
+ * @typedef {Object} InputConstraints
+ *
+ * @prop {boolean} valid
+ * @prop {Array.<String>} errAry
+ * @props {Array.<String>} adqlConstraintsAry
+ * @props {Array.<String>} siaConstraints
+ * @props {Array.<String>} siaConstraintErrors
+ */
+
+/**
+ * @typedef {Object} ConstraintResult
+ *
+ * @prop {String} adqlConstraint
+ * @props {Array.<String>} adqlConstraintErrors
+ * @props {Array.<String>} siaConstraints
+ * @props {Array.<String>} siaConstraintErrors
+ * @prop {String} simpleError
+ *
+ */

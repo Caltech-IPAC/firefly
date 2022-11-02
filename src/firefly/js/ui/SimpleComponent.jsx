@@ -1,10 +1,12 @@
-import {PureComponent, useCallback, useContext, useEffect, useState} from 'react';
 import {isEmpty, uniqueId} from 'lodash';
+import {PureComponent, useCallback, useContext, useEffect, useState} from 'react';
 import shallowequal from 'shallowequal';
 import {flux} from '../core/ReduxFlux.js';
-import FieldGroupUtils, { getField, getFieldVal, getGroupFields, getMetaState } from '../fieldGroup/FieldGroupUtils.js';
+import FieldGroupUtils, {
+    getField, getFieldsForKeys, getFieldVal, getGroupFields, getMetaState, makeFieldsObject, setFieldValue
+} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
-import {dispatchMetaStateChange, dispatchValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
+import {dispatchMetaStateChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 import {FieldGroupCtx} from './FieldGroup.jsx';
 
 export class SimpleComponent extends PureComponent {
@@ -112,7 +114,11 @@ export function useBindFieldGroupToStore(groupKey) {
  * useCallback. Therefor they can be used in useEffects array of values dependencies.
  * @param {String} fieldKey - a fieldKey to check for
  * @param {String} [gk] - the groupKey if not set then it is retrieved from context, the normal use is to not pass this parameter
- * @return {Array.<Function>}  return an array of 2 functions [getValue,setValue]
+ * @return {Array.<Function>}  return an array of 2 functions [getValue,setValue].
+ * getValue(true) will return the whole field while getValue() will just return the fields value.
+ * setValue will take up two arguments. setValue(value, {field group changes}). The first arguments is the new field value.
+ * The second optional augment is an object with any other property of the field group. Such as-
+ * setValue(4,{value:false, message: '4 is not valid'}
  */
 export function useFieldGroupValue(fieldKey, gk) {
     const context= useContext(FieldGroupCtx);
@@ -137,16 +143,80 @@ export function useFieldGroupValue(fieldKey, gk) {
     },[]);
 
     const getter= useCallback(    // getter - fullFieldInfo: true: return the full field object, false: just the value
-        (fullFieldInfo=false) => fullFieldInfo ? getField(groupKey,fieldKey) : getFieldVal(groupKey,fieldKey,value),
+        (fullFieldInfo=false) => fullFieldInfo ? (getField(groupKey,fieldKey) ??{}) : getFieldVal(groupKey,fieldKey,value),
         [value]);
     const setter= useCallback(
-        (newValue,valid=true,additionalSettings={}) => {
-            const field= getField(groupKey,fieldKey);
-            if (!field || newValue===field.value) return;
-            dispatchValueChange({fieldKey, groupKey, value:newValue,valid, displayValue:'', ...additionalSettings});
-        }, [value]); //setter
+        /**
+         * the setter
+         * @param newValue the new value
+         * @param {Object|Boolean} [inSettings] - if object then use as settings for the FieldGroupField, if boolean use as valid
+         */
+        (newValue,inSettings={}) => setFieldValue(groupKey,fieldKey,newValue,inSettings) , [value]); //setter
     return [ getter, setter];
 }
+
+
+
+/**
+ * This hook will force a rerender if certain fields change
+ * @param {Array.<String>} [fldNameAry] - array of field name keys, if undefined then rerender if any field in the group changes
+ * @param {String} [gk] - the groupKey if not set then it is retrieved from context, the normal use is to not pass this parameter
+ */
+export function useFieldGroupRerender(fldNameAry=[], gk) {
+    const context= useContext(FieldGroupCtx);
+    const groupKey= gk || context.groupKey;
+    const setValueToState= useState(undefined)[1]; // use state here is just to force re-renders on value change
+    let mounted= true;
+    const getFs= () => fldNameAry.length ? makeFieldsObject(groupKey,fldNameAry) : getGroupFields(groupKey);
+    let value= getFs();
+    useEffect(() => {
+        const updater= () => {
+            if (!mounted) return;
+            const newValue= getFs();
+            if (!shallowequal(newValue,value)) {
+                setValueToState(newValue);
+                value= newValue;
+            }
+        };
+        const remover= FieldGroupUtils.bindToStore(groupKey, updater);
+        return () => {
+            mounted= false;
+            remover();
+        };
+    },[]);
+}
+
+
+
+export function useFieldGroupWatch(keyAry,f,dependAry=[],gk) {
+    let mounted= true;
+    let isInit= true;
+    const context= useContext(FieldGroupCtx);
+    const groupKey= gk || context.groupKey;
+    let watchFieldsAry= getFieldsForKeys(groupKey,keyAry);
+    useEffect(() => {
+        const watcher= (force) => {
+            if (!mounted) return;
+            if (!keyAry?.length) force= true;
+            const newWatchFieldsAry= getFieldsForKeys(groupKey,keyAry);
+            const doUpdate= force || newWatchFieldsAry.some( (field,idx) =>
+                field.value!==watchFieldsAry[idx].value || field.valid!==watchFieldsAry[idx].valid);
+            if (!doUpdate) return;
+            watchFieldsAry= newWatchFieldsAry;
+            f?.(watchFieldsAry ? watchFieldsAry.map( (fld) => fld.value) : [], isInit);
+            isInit= false;
+        };
+        watcher(true);
+        const remover= FieldGroupUtils.bindToStore(groupKey, () => watcher(false));
+        return () => {
+            mounted= false;
+            remover();
+        };
+
+    },dependAry);
+}
+
+
 
 
 export function useFieldGroupMetaState(defMetaState={}, gk) {
@@ -172,7 +242,7 @@ export function useFieldGroupMetaState(defMetaState={}, gk) {
     },[metaState]);
 
     const getter= useCallback( () => {
-        const ms= getMetaState(groupKey);
+        const ms= {...defMetaState, ...getMetaState(groupKey)};
         return isEmpty(ms) ? metaState : ms;
     }, [metaState]);// getter
     const setter= useCallback( (newMetaState) => dispatchMetaStateChange({groupKey, metaState:newMetaState}), [metaState]); //setter

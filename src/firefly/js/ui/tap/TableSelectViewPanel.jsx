@@ -1,42 +1,30 @@
-import React, {Fragment, useState, useEffect, useRef} from 'react';
+import React, {Fragment, useEffect, useRef, useState} from 'react';
 import SplitPane from 'react-split-pane';
-
-import {SplitContent} from '../panel/DockLayoutPanel';
-import {HelpIcon} from '../HelpIcon';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {getColumnValues} from '../../tables/TableUtil.js';
+import {matchesObsCoreHeuristic} from '../../util/VOAnalyzer';
+import {HelpIcon} from '../HelpIcon';
 
-import {TableSearchMethods, SpatialPanelWidth} from './TableSearchMethods.jsx';
+import {SplitContent} from '../panel/DockLayoutPanel';
+import {useFieldGroupMetaState} from '../SimpleComponent.jsx';
 import {AdvancedADQL} from './AdvancedADQL.jsx';
-import {
-    loadTapColumns,
-    loadTapTables,
-    loadTapSchemas,
-    getTapBrowserState,
-    setTapBrowserState,
-    tapHelpId,
-    updateTapBrowserState,
-    loadObsCoreSchemaTables,
-} from './TapUtil.js';
 import {NameSelect} from './Select.jsx';
 
 import {TableColumnsConstraints, TableColumnsConstraintsToolbar} from './TableColumnsConstraints.jsx';
+import {SpatialPanelWidth} from './TableSearchHelpers.jsx';
+
+import {TableSearchMethods} from './TableSearchMethods.jsx';
 
 
 import './TableSelectViewPanel.css';
-import {matchesObsCoreHeuristic} from '../../util/VOAnalyzer';
-
+import {
+    defTapBrowserState, loadTapColumns, loadTapSchemas, loadTapTables, TAP_PANEL_GROUP_KEY, tapHelpId,
+} from './TapUtil.js';
 
 
 const SCHEMA_TIP= 'Select a table collection (TAP ‘schema’); type to search the schema names and descriptions.';
 const TABLE_TIP= 'Select a table; type to search the table names and descriptions.';
 const SCH_TAB_TITLE_TIP= 'Select a table collection (TAP ‘schema’), then select a table';
-
-/**
- * group key for fieldgroup comp
- */
-
-export const gkey = 'TAP_SEARCH_PANEL';
 
 export const SectionTitle= ({title,helpId,tip}) => (
     <div className='TapSearch__section--title' title={tip}>{title}<HelpIcon helpId={tapHelpId(helpId)}/></div>);
@@ -54,7 +42,7 @@ export function AdqlUI({serviceUrl}) {
 
             <div className='expandable'>
                 <div style={{flexGrow: 1}}>
-                    <AdvancedADQL groupKey={gkey} adqlKey='adqlQuery' defAdqlKey='defAdqlKey' tblNameKey='tableName' serviceUrl={serviceUrl}/>
+                    <AdvancedADQL groupKey={TAP_PANEL_GROUP_KEY} adqlKey='adqlQuery' defAdqlKey='defAdqlKey' tblNameKey='tableName' serviceUrl={serviceUrl}/>
                 </div>
             </div>
         </div>
@@ -73,13 +61,15 @@ function useStateRef(initialState){
 }
 
 export function BasicUI(props) {
-    const tapFluxState = getTapBrowserState();
+    const {initArgs}= props;
+    const [getTapBrowserState,setTapBrowserState]= useFieldGroupMetaState(defTapBrowserState);
+    const initState = getTapBrowserState();
     const [error, setError] = useState(undefined);
     const mountedRef = useRef(false);
-    const [serviceUrl, serviceUrlRef, setServiceUrl] = useStateRef(tapFluxState.serviceUrl || props.serviceUrl);
-    const [schemaName, schemaRef, setSchemaName] = useStateRef(tapFluxState.schemaName || props.initArgs?.urlApi?.schema);
-    const [tableName, tableRef, setTableName] = useStateRef(tapFluxState.tableName || props.initArgs?.urlApi?.table);
-    const [obsCoreEnabled, setObsCoreEnabled] = useState(tapFluxState.obsCoreEnabled || props.initArgs?.urlApi?.selectBy === 'obscore');
+    const [serviceUrl, serviceUrlRef, setServiceUrl] = useStateRef(initState.serviceUrl || props.serviceUrl);
+    const [schemaName, schemaRef, setSchemaName] = useStateRef(initState.schemaName || props.initArgs?.urlApi?.schema);
+    const [tableName, tableRef, setTableName] = useStateRef(initState.tableName || props.initArgs?.urlApi?.table);
+    const [obsCoreEnabled, setObsCoreEnabled] = useState(initState.obsCoreEnabled || props.initArgs?.urlApi?.selectBy === 'obscore');
     const [schemaOptions, setSchemaOptions] = useState();
     const [tableOptions, setTableOptions] = useState();
     const [columnsModel, setColumnsModel] = useState();
@@ -99,7 +89,7 @@ export function BasicUI(props) {
         setTableOptions(undefined);
         setColumnsModel(undefined);
         setObsCoreEnabled(undefined);
-        dispatchValueChange({groupKey: gkey, fieldKey: 'tableName', value: undefined});
+        dispatchValueChange({groupKey: TAP_PANEL_GROUP_KEY, fieldKey: 'tableName', value: undefined});
         // update state for higher level components that might rely on obsCoreTables
 
         loadTapSchemas(requestServiceUrl).then((tableModel) => {
@@ -138,7 +128,7 @@ export function BasicUI(props) {
         setTableName(undefined);
         setTableOptions(undefined);
         setColumnsModel(undefined);
-        dispatchValueChange({groupKey: gkey, fieldKey: 'tableName', value: undefined});
+        dispatchValueChange({groupKey: TAP_PANEL_GROUP_KEY, fieldKey: 'tableName', value: undefined});
 
         loadTapTables(requestServiceUrl, requestSchemaName).then((tableModel) => {
             if (!mountedRef.current) {
@@ -163,7 +153,7 @@ export function BasicUI(props) {
                 });
                 setTableName(requestTableName);
                 setTableOptions(tableOptions);
-                dispatchValueChange({groupKey: gkey, fieldKey: 'tableName', value: requestTableName});
+                dispatchValueChange({groupKey: TAP_PANEL_GROUP_KEY, fieldKey: 'tableName', value: requestTableName});
             }
         });
     };
@@ -184,8 +174,9 @@ export function BasicUI(props) {
             // and we should be able to just check the names, but this is a bit more robust (probably?)
             const matchesObsCore = matchesObsCoreHeuristic(schemaName, tableName, columnsModel);
             setObsCoreEnabled(matchesObsCore);
-            setTapBrowserState({serviceUrl: requestServiceUrl, schemaName: requestSchemaName, schemaOptions,
-                tableName: requestTableName, tableOptions, columnsModel, obsCoreEnabled: matchesObsCore});
+            setTapBrowserState({...getTapBrowserState(), serviceUrl: requestServiceUrl,
+                schemaName: requestSchemaName, schemaOptions, tableName: requestTableName,
+                tableOptions, columnsModel, obsCoreEnabled: matchesObsCore});
         });
     };
 
@@ -215,7 +206,7 @@ export function BasicUI(props) {
     useEffect(() => {
         if (selectBy === 'obscore'){
             if (obsCoreTableModel?.tableData?.data) {
-                const [schema, table, ...more] = obsCoreTableModel?.tableData?.data[0];
+                const [schema, table] = obsCoreTableModel?.tableData?.data[0];
                 setSchemaName(schema);
                 setTableName(table);
             }
@@ -259,7 +250,7 @@ export function BasicUI(props) {
                             value={tableName}
                             onSelect={(selectedTapTable) => {
                                 setTableName(selectedTapTable);
-                                dispatchValueChange({groupKey: gkey, fieldKey: 'tableName', value: selectedTapTable});
+                                dispatchValueChange({groupKey: TAP_PANEL_GROUP_KEY, fieldKey: 'tableName', value: selectedTapTable});
                             }}
                         />
                     </div>
@@ -278,7 +269,8 @@ export function BasicUI(props) {
                 <div className='expandable'>
                     <SplitPane split='vertical' maxSize={splitMax} mixSize={20} defaultSize={splitDef}>
                         <SplitContent>
-                            {columnsModel ?  <TableSearchMethods initArgs={props.initArgs} serviceUrl={serviceUrl} columnsModel={columnsModel} obsCoreEnabled={obsCoreEnabled}/>
+                            {columnsModel ?
+                                <TableSearchMethods {...{initArgs, serviceUrl, columnsModel, obsCoreEnabled}}/>
                                 : <div className='loading-mask'/>
                             }
                         </SplitContent>
