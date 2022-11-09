@@ -39,7 +39,7 @@ import {
     getFileFormat,
     getFirstPartType,
     getPartCnt,
-    getSelectedRows,
+    getSelectedRows, getSelectedRowsforImageDisplayOption,
     isRegion,
     resultSuccess
 } from 'firefly/ui/FileUploadProcessor';
@@ -153,7 +153,6 @@ export function FileUploadViewPanel({setSubmitText}) {
     ].concat(workspace ? [{value: WS_ID, label: 'Upload from workspace'}] : []);
 
     const clearReport= () => {
-        //currentReport= undefined;
         dispatchValueChange({fieldKey:getLoadingFieldName(groupKey), groupKey:groupKey, value:'', displayValue:'', analysisResult:undefined});
     };
 
@@ -260,9 +259,12 @@ function getNextState(oldState, groupKey) {
     currentReport = oldState?.report;
     currentSummaryModel = oldState?.summaryModel;
     currentDetailsModel = oldState?.detailsModel;
-    const fieldState = getField(groupKey, getLoadingFieldName()) || {};
+    const fieldState = getField(groupKey, getLoadingFieldName(groupKey)) || {};
 
     const {analysisResult, message} = fieldState;
+    if (!analysisResult) { //clearReport sets analysisResult:undefined, so set currentReport=undefined to clear the file
+        currentReport = undefined;
+    }
     let modelToUseForDetails= getTblById(SUMMARY_TBL_ID)?? currentSummaryModel;
 
     if (message) {

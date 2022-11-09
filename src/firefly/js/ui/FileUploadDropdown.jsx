@@ -53,7 +53,6 @@ const DIALOG_ID= 'FileUploadDialog';
 
 export function showUploadDialog() {
 
-    //can call this showUploadDialog from within the "Add MOC layer" popup dialog for HiPS/MOC upload...
     //removing the onCancel and onSubmit below from the call to FileUploadDropdown fixes it so that the  req obj
     //is not empty when resultSuccess is called from FileUploadDropdown
     //but showUploadDialog is only called from HiPsImageSelect.jsx if (visRoot().apiToolsView) -> what is that if condition?
@@ -70,7 +69,7 @@ export function showUploadDialog() {
                     onCancel={() => dispatchHideDialog(DIALOG_ID)}
                     onSubmit={() => {
                         dispatchHideDialog(DIALOG_ID);
-                        resultSuccess();
+                        //resultSuccess();
                     }}
                 />
             </div>
