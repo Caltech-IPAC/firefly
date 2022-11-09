@@ -122,7 +122,7 @@ export function showHiPSSurveysPopup(pv, moc= false) {
                         <HiPSSurveyTable groupKey={groupKey} moc={moc}/>
                         {moc && <div style={{display:'flex', padding: '6px 15px 0 0', justifyContent:'flex-end'}}>
                             <div style={{lineHeight:'25px', height: 25, paddingRight: 4, fontWeight:'bold'}}> To Upload a MOC: </div>
-                            <CompleteButton text='Upload' groupKey='' onSuccess={() => showUploadDialog()} />
+                            <CompleteButton text='Upload' groupKey='' onSuccess={() => showUploadDialog(true)} />
                         </div>}
                     </div>
                 </FieldGroup>

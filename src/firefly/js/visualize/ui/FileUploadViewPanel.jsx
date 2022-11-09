@@ -6,16 +6,16 @@ import React, {useContext, useEffect, useState} from 'react';
 import shallowequal from 'shallowequal';
 import SplitPane from 'react-split-pane';
 
-import {FieldGroup, FieldGroupCtx} from '../../ui/FieldGroup.jsx';
+import {FieldGroupCtx} from '../../ui/FieldGroup.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import {getFieldVal, getField} from '../../fieldGroup/FieldGroupUtils';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
-import {getCellValue, getTblById, uniqueTblId, getSelectedDataSync} from '../../tables/TableUtil.js';
-import {dispatchTableSearch, dispatchTableFetch, dispatchTableAddLocal} from '../../tables/TablesCntlr.js';
+import {getCellValue, getTblById} from '../../tables/TableUtil.js';
+import {dispatchTableAddLocal} from '../../tables/TablesCntlr.js';
 import {getSizeAsString} from '../../util/WebUtil.js';
 
 import {SelectInfo} from '../../tables/SelectInfo.js';
-import ImagePlotCntlr, {dispatchPlotImage, visRoot} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr from '../ImagePlotCntlr.js';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
@@ -24,28 +24,23 @@ import {isMOCFitsFromUploadAnalsysis} from '../HiPSMocUtil.js';
 import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
 import {getComponentState, dispatchComponentStateChange} from '../../core/ComponentCntlr.js';
 
-import {useFieldGroupMetaState, useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 
 import './FileUploadViewPanel.css';
 import {getIntHeader} from '../../metaConvert/PartAnalyzer';
-import {FileAnalysisType, Format} from '../../data/FileAnalysis';
+import {FileAnalysisType} from '../../data/FileAnalysis';
 import {dispatchValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 import {CompleteButton,NONE} from 'firefly/ui/CompleteButton.jsx';
-import {createNewRegionLayerId} from 'firefly/drawingLayers/RegionPlot.js';
 import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
 import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField.jsx';
 import {
     getFileFormat,
     getFirstPartType,
-    getPartCnt,
-    getSelectedRows, getSelectedRowsforImageDisplayOption,
-    isRegion,
-    resultSuccess
+    getSelectedRows,
+    isRegion
 } from 'firefly/ui/FileUploadProcessor';
 
-
-export const panelKey = 'FileUploadAnalysis';
 const  FILE_ID = 'fileUpload';
 const  URL_ID = 'urlUpload';
 const  WS_ID = 'wsUpload';
@@ -67,17 +62,7 @@ const uploadOptions = 'uploadOptions';
 const FILE_UPLOAD_KEY= 'file-upload-key-';
 let keyCnt=0;
 
-/*const groupKey = 'FileUploadAnalysis';
-const SUMMARY_TBL_ID = groupKey; //FileUploadAnalysis
-const DETAILS_TBL_ID = groupKey + '-Details';
-const UNKNOWN_FORMAT = 'UNKNOWN';
-const summaryUiId = SUMMARY_TBL_ID + '-UI';
-const detailsUiId = DETAILS_TBL_ID + '-UI';*/
-
-//let currentAnalysisResult, currentReport, currentSummaryModel, currentDetailsModel;
-
-
-export function FileUploadViewPanel({setSubmitText}) {
+export function FileUploadViewPanel({setSubmitText, acceptMoc}) {
 
     const {groupKey}= useContext(FieldGroupCtx);
 
@@ -92,8 +77,6 @@ export function FileUploadViewPanel({setSubmitText}) {
     const summaryUiId = SUMMARY_TBL_ID + '-UI';
     const detailsUiId = DETAILS_TBL_ID + '-UI';
 
-    //let currentAnalysisResult, currentReport, currentSummaryModel, currentDetailsModel;
-
     let {message, analysisResult, report, summaryModel, detailsModel, prevAnalysisResult} = useStoreConnector((oldState) =>
         getNextState(oldState, groupKey));
 
@@ -101,16 +84,20 @@ export function FileUploadViewPanel({setSubmitText}) {
     const [uploadKey,setUploadKey]= useState(() => FILE_UPLOAD_KEY+keyCnt);
 
     useEffect(() => {
+        dispatchValueChange({fieldKey:getLoadingFieldName(groupKey), groupKey:groupKey, prevAnalysisResult: analysisResult});
+    }, [analysisResult]);
 
-        if (message || (analysisResult !== prevAnalysisResult)) {
-            if (prevAnalysisResult !== analysisResult) {
-                prevAnalysisResult = analysisResult;
-            }
-            dispatchComponentStateChange(groupKey, {isLoading: false});
-        }
-    });
+    useEffect(() => {
+        dispatchValueChange({fieldKey:getLoadingFieldName(groupKey), groupKey:groupKey, report: report});
+    }, [report]);
+
+    useEffect(() => {
+        if (message || analysisResult) dispatchComponentStateChange(groupKey, {isLoading: false});
+    }, [message, analysisResult]);
+
     useEffect(() => {
         dispatchTableAddLocal(summaryModel, undefined, false);
+        dispatchValueChange({fieldKey:getLoadingFieldName(groupKey), groupKey:groupKey, summaryModel: summaryModel});
     }, [summaryModel]);
 
     useEffect(() => {
@@ -157,9 +144,7 @@ export function FileUploadViewPanel({setSubmitText}) {
     };
 
     const isMoc=  isMOCFitsFromUploadAnalsysis(report)?.valid;
-    //keepState={true} for the 2nd div below (previously FieldGroup)
-    //<FieldGroup groupKey={panelKey} keepState={true} style={{height:'100%',
-    //    display: 'flex', alignItems: 'stretch', flexDirection: 'column'}} >
+
     return (
         <div style={{position: 'relative', height: '100%', display: 'flex', alignItems: 'stretch',
             flexDirection: 'column' }}>
@@ -172,7 +157,7 @@ export function FileUploadViewPanel({setSubmitText}) {
                             options={uploadMethod}
                             wrapperStyle={{fontWeight: 'bold', fontSize: 12}}/>
                         <div style={{paddingTop: '10px', display:'flex', flexDirection:'row', justifyContent:'space-between'}}>
-                            <UploadOptions {...{uploadSrc, isLoading, isWsUpdating,  uploadKey:uploadKey}}/>
+                            <UploadOptions {...{uploadSrc, isLoading, isWsUpdating,  uploadKey:uploadKey, groupKey}}/>
                             {report && <CompleteButton text='Clear File' groupKey={NONE}
                                                        onSuccess={() =>{
                                                            clearReport();
@@ -181,7 +166,7 @@ export function FileUploadViewPanel({setSubmitText}) {
                                                        }}/> }
                         </div>
                     </div>
-                    <FileAnalysis {...{report, summaryModel, detailsModel,tablesOnly, isMoc, UNKNOWN_FORMAT, summaryUiId, detailsUiId}}/>
+                    <FileAnalysis {...{report, summaryModel, detailsModel,tablesOnly, isMoc, UNKNOWN_FORMAT, summaryUiId, detailsUiId, acceptMoc}}/>
                     <ImageDisplayOption SUMMARY_TBL_ID={SUMMARY_TBL_ID} currentReport={report} currentSummaryModel={summaryModel}/>
                     <TableDisplayOption isMoc={isMoc} SUMMARY_TBL_ID={SUMMARY_TBL_ID} currentReport={report} currentSummaryModel={summaryModel}/>
                 </div>
@@ -254,14 +239,16 @@ function getNextState(oldState, groupKey) {
     const DETAILS_TBL_ID = groupKey + '-Details';
     const UNKNOWN_FORMAT = 'UNKNOWN';
 
-    let prevAnalysisResult, currentReport, currentSummaryModel, currentDetailsModel;
-    prevAnalysisResult = oldState?.analysisResult;
-    currentReport = oldState?.report;
-    currentSummaryModel = oldState?.summaryModel;
-    currentDetailsModel = oldState?.detailsModel;
-    const fieldState = getField(groupKey, getLoadingFieldName(groupKey)) || {};
+    let currentReport, currentSummaryModel, currentDetailsModel;
 
-    const {analysisResult, message} = fieldState;
+    const fieldState = getField(groupKey, getLoadingFieldName(groupKey)) || {};
+    let {analysisResult, message, summaryModel, prevAnalysisResult, report} = fieldState;
+
+    prevAnalysisResult = oldState?.analysisResult? oldState.analysisResult : prevAnalysisResult;
+    currentReport = oldState?.report? oldState.report: report;
+    currentSummaryModel = oldState?.summaryModel? oldState.summaryModel: summaryModel;
+    currentDetailsModel = oldState?.detailsModel;
+
     if (!analysisResult) { //clearReport sets analysisResult:undefined, so set currentReport=undefined to clear the file
         currentReport = undefined;
     }
@@ -289,7 +276,7 @@ function getNextState(oldState, groupKey) {
 
         }
     }
-    let detailsModel = getDetailsModel( modelToUseForDetails,currentReport,DETAILS_TBL_ID,UNKNOWN_FORMAT);
+    detailsModel = getDetailsModel( modelToUseForDetails,currentReport,DETAILS_TBL_ID,UNKNOWN_FORMAT);
     if (shallowequal(detailsModel, currentDetailsModel)) {
         detailsModel = currentDetailsModel;
     }
@@ -300,7 +287,7 @@ function getNextState(oldState, groupKey) {
         return oldState;
     }
     else {
-        // event if we have a new state, test to see if we have to replace the summaryModel.
+        // even if we have a new state, test to see if we have to replace the summaryModel.
         return oldState &&
         summaryModelEqual(newState.summaryModel,oldState.summaryModel) &&
         oldState.analysisResult!==oldState.analysisResult ?
@@ -379,8 +366,10 @@ function getDetailsModel(tableModel, report, DETAILS_TBL_ID, UNKNOWN_FORMAT) {
 
 function TableDisplayOption({isMoc, SUMMARY_TBL_ID, currentReport, currentSummaryModel}) {
 
-    const selectedTables = useStoreConnector(() => getFileFormat() ?
-        getSelectedRows('Table', SUMMARY_TBL_ID, currentReport, currentSummaryModel) : [] );
+    const selectedTables = getFileFormat(currentReport) ?
+        getSelectedRows('Table', SUMMARY_TBL_ID, currentReport, currentSummaryModel) : [];
+        //useStoreConnector(() => getFileFormat(currentReport) ?
+        //getSelectedRows('Table', SUMMARY_TBL_ID, currentReport, currentSummaryModel) : [] );
     if ( selectedTables.length < 1) return null;
 
     if (isMoc) {
@@ -413,7 +402,7 @@ function TableDisplayOption({isMoc, SUMMARY_TBL_ID, currentReport, currentSummar
 }
 
 function ImageDisplayOption({SUMMARY_TBL_ID, currentReport, currentSummaryModel}) {
-    const selectedImages = useStoreConnector(() => getSelectedRows('Image', SUMMARY_TBL_ID, currentReport, currentSummaryModel));
+    const selectedImages = getSelectedRows('Image', SUMMARY_TBL_ID, currentReport, currentSummaryModel);//useStoreConnector(() => getSelectedRows('Image', SUMMARY_TBL_ID, currentReport, currentSummaryModel));
     if ( selectedImages.length < 2) return null;
 
     const imgOptions = [{value: 'oneWindow', label: 'All images in one window'},
@@ -429,10 +418,10 @@ function ImageDisplayOption({SUMMARY_TBL_ID, currentReport, currentSummaryModel}
     );
 }
 
-function UploadOptions({uploadSrc=FILE_ID, isloading, isWsUpdating, uploadKey}) {
+function UploadOptions({uploadSrc=FILE_ID, isloading, isWsUpdating, uploadKey, groupKey}) {
 
     const onLoading = (loading, statusKey) => {
-        dispatchComponentStateChange(panelKey, {isLoading: loading, statusKey:loading?statusKey:''});
+        dispatchComponentStateChange(groupKey, {isLoading: loading, statusKey:loading?statusKey:''});
     };
 
     if (uploadSrc === FILE_ID) {
@@ -571,7 +560,7 @@ function getTableArea(report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT,
 }
 
 
-const FileAnalysis = ({report, summaryModel, detailsModel, tablesOnly, isMoc, UNKNOWN_FORMAT, summaryUiId, detailsUiId}) => {
+const FileAnalysis = ({report, summaryModel, detailsModel, tablesOnly, isMoc, UNKNOWN_FORMAT, summaryUiId, detailsUiId, acceptMoc}) => {
     //getting FieldGroup context and adding required params to the request object (sent to resultSuccess)
     const {groupKey, register, unregister}= useContext(FieldGroupCtx);
     const additionalReqObjs = {summaryModel: summaryModel, currentReport: report, currentDetailsModel: detailsModel, groupKey: groupKey};
@@ -581,7 +570,13 @@ const FileAnalysis = ({report, summaryModel, detailsModel, tablesOnly, isMoc, UN
         return () => unregister('additionalParams');
     }, [report]);
 
-    if (report) {
+    if (acceptMoc && !isMoc) {
+        return (<div style={{color:'gray', margin:'20px 0 0 200px', fontSize:'larger', lineHeight:'1.3em'}}>
+            Warning: You are attempting to upload a non-MOC file.
+        </div>);
+    }
+
+    else if (report) {
         return (
             <div className='FileUpload__report'>
                 {summaryModel.tableData.data.length>1 && <AnalysisInfo report={report} />}
@@ -589,6 +584,7 @@ const FileAnalysis = ({report, summaryModel, detailsModel, tablesOnly, isMoc, UN
             </div>
         );
     }
+
     else {
         const liStyle= {listStyleType:'circle'};
         return (<div style={{color:'gray', margin:'20px 0 0 200px', fontSize:'larger', lineHeight:'1.3em'}}>

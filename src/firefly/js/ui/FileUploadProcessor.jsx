@@ -3,10 +3,9 @@ import {showInfoPopup} from 'firefly/ui/PopupUtil';
 import {getAppHiPSForMoc, isMOCFitsFromUploadAnalsysis} from 'firefly/visualize/HiPSMocUtil';
 import {MetaConst} from 'firefly/data/MetaConst';
 import {isLsstFootprintTable} from 'firefly/visualize/task/LSSTFootprintTask';
-import {makeFileRequest, makeTblRequest} from 'firefly/tables/TableRequestUtil';
+import {makeFileRequest} from 'firefly/tables/TableRequestUtil';
 import {getAppOptions} from 'firefly/core/AppDataCntlr';
 import {getFieldVal} from 'firefly/fieldGroup/FieldGroupUtils';
-//import {getFileFormat, getFirstPartType, getSelectedRows, isRegion, panelKey} from 'firefly/visualize/ui/FileUploadViewPanel';
 import {createNewRegionLayerId} from 'firefly/drawingLayers/RegionPlot';
 import {dispatchCreateImageLineBasedFootprintLayer, dispatchCreateRegionLayer, getDlAry} from 'firefly/visualize/DrawLayerCntlr';
 import {getDrawLayersByType, getPlotViewAry, primePlot} from 'firefly/visualize/PlotViewUtil';
@@ -18,9 +17,6 @@ import WebPlotRequest from 'firefly/visualize/WebPlotRequest';
 import RangeValues from 'firefly/visualize/RangeValues';
 import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from 'firefly/visualize/MultiViewCntlr';
 import {PlotAttribute} from 'firefly/visualize/PlotAttribute';
-import * as TablesCntlr from 'firefly/tables/TablesCntlr';
-import {useContext} from "react";
-import {FieldGroupCtx} from "firefly/ui/FieldGroup";
 
 const FILE_ID = 'fileUpload';
 const uploadOptions = 'uploadOptions';
@@ -35,16 +31,10 @@ const SUPPORTED_TYPES=[
 
 export function resultSuccess(request) {
 
-    //request = Object.assign({}, makeTblRequest(request.id, request.title, request), request);//makeTblRequest(request.id, request.title, request)
-    //will need to bring over remaining logic from FormPanel's createSuccessHandler here because rn
-    //selecting and loading tables is not working! 
-    //TablesCntlr.dispatchTableSearch(request);
-
     const currentReport = request.additionalParams?.currentReport;
     const currentDetailsModel = request.additionalParams?.currentDetailsModel;
     const summaryModel = request.additionalParams?.summaryModel;
     const groupKey = request.additionalParams?.groupKey;
-    console.log('groupKey in resultSuccess: ' + groupKey);
     const SUMMARY_TBL_ID = groupKey; //FileUploadAnalysis
 
     const isTablesOnly= () => getAppOptions()?.uploadPanelLimit==='tablesOnly';
@@ -53,8 +43,6 @@ export function resultSuccess(request) {
 
     const tableIndices = getSelectedRows(FileAnalysisType.Table, SUMMARY_TBL_ID, currentReport, summaryModel);
     const imageIndices = getSelectedRows(FileAnalysisType.Image, SUMMARY_TBL_ID, currentReport, summaryModel);
-
-    console.log('imageIndices: ' + imageIndices);
 
     if (!isFileSupported(summaryModel, currentReport)) {
         showInfoPopup(getFirstPartType(summaryModel) ? `File type of ${getFirstPartType(summaryModel)} is not supported.`: 'Could not recognize the file type');
@@ -93,7 +81,6 @@ function tablesOnlyResultSuccess(request, SUMMARY_TBL_ID, currentReport, current
 
     if (tableIndices.length>0) {
         imageIndices.length>0 && showInfoPopup('Only loading the tables, ignoring the images.');
-        console.log('groupKey 2: ' + groupKey);
         sendTableRequest(tableIndices, getFileCacheKey(groupKey), Boolean(request.tablesAsSpectrum==='spectrum'), currentReport);
         return true;
     }
@@ -105,7 +92,6 @@ function tablesOnlyResultSuccess(request, SUMMARY_TBL_ID, currentReport, current
 
 function getFileCacheKey(groupKey) {
     // because this value is stored in different fields.. so we have to check on what options were selected to determine the active value
-    console.log('groupKey 3: ' + groupKey);
     const uploadSrc = getFieldVal(groupKey, uploadOptions) || FILE_ID;
     return getFieldVal(groupKey, uploadSrc);
 }
@@ -128,7 +114,7 @@ function sendRegionRequest(fileCacheKey,currentReport) {
     }
 }
 
-function sendTableRequest(tableIndices, fileCacheKey, loadToUI= true, currentReport, treatAsSpectrum, metaData={}) {
+function sendTableRequest(tableIndices, fileCacheKey, treatAsSpectrum, currentReport, loadToUI= true, metaData={}) {
     const {fileName, parts=[]} = currentReport;
 
     tableIndices.forEach((idx) => {
