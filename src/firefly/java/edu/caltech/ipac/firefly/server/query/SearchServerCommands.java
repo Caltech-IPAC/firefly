@@ -19,6 +19,7 @@ import edu.caltech.ipac.firefly.server.packagedata.PackagingWorker;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.util.StringUtils;
@@ -33,6 +34,7 @@ import java.util.*;
 
 import static edu.caltech.ipac.firefly.data.ServerParams.EMAIL;
 import static edu.caltech.ipac.firefly.data.ServerParams.JOB_ID;
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
  * @author Trey Roby
@@ -62,6 +64,32 @@ public class SearchServerCommands {
             return json.toJSONString();
         }
     }
+    public static class AddTableColumn extends ServCommand {
+
+        public boolean getCanCreateJson() { return false; }
+
+        public String doCommand(SrvParam params) throws Exception {
+            TableServerRequest tsr = params.getTableServerRequest();
+            String expression = params.getRequired("expression");
+            String cname = params.getRequired("cname");
+            String dtype = params.getRequired("dtype");
+            String desc = params.getOptional("desc");
+            String units = params.getOptional("units");
+            String ucd = params.getOptional("ucd");
+            String precision = params.getOptional("precision");
+            DataType dt = new DataType(cname, DataType.descToType(dtype), null, units, "null", desc);       // fixed nullString to 'null'
+            if (ucd != null) dt.setUCD(ucd);
+            if (dt.isFloatingPoint() && !isEmpty(precision)) dt.setPrecision(precision);
+
+            try {
+                EmbeddedDbProcessor processor = (EmbeddedDbProcessor)SearchManager.getProcessor(tsr.getRequestId());
+                processor.addNewColumn(tsr, dt, expression);
+            } catch (ClassCastException cce) {
+                throw new RuntimeException(String.format("Invalid Search Processor ID: %s", tsr.getRequestId()));
+            }
+            return "ok";
+        }
+    }
 
     public static class QueryTable extends ServCommand {
 
@@ -73,7 +101,7 @@ public class SearchServerCommands {
             treq.setFilters(StringUtils.asList(params.getOptional(TableServerRequest.FILTERS), ","));
             treq.setSqlFilter(params.getOptional(TableServerRequest.SQL_FILTER));
             String sortInfo = params.getOptional(TableServerRequest.SORT_INFO);
-            if (!StringUtils.isEmpty(sortInfo)) {
+            if (!isEmpty(sortInfo)) {
                 treq.setSortInfo(SortInfo.parse(sortInfo));
             }
 
@@ -95,19 +123,6 @@ public class SearchServerCommands {
                 return JsonTableUtil.toJsonTableModel(page, treq).toJSONString();
             } catch (IOException e) {
                 throw new DataAccessException("Unable to resolve a search processor for this request.  SelectedValues aborted.");
-            }
-        }
-    }
-
-    public static class JsonSearch extends ServCommand {
-
-        public String doCommand(SrvParam params) throws Exception {
-            TableServerRequest tsr = params.getTableServerRequest();
-            SearchProcessor processor = SearchManager.getProcessor(tsr.getRequestId());
-            if (processor instanceof JsonDataProcessor) {
-                return  ((JsonDataProcessor)processor).getData(tsr);
-            } else {
-                throw new DataAccessException("Unable to resolve a search processor for this request.  Operation aborted:" + tsr.getRequestId());
             }
         }
     }

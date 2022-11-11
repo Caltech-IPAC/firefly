@@ -28,7 +28,7 @@ export function uniqueTabId() {
  * See each component description below for more details.
  */
 const TabsHeaderInternal = React.memo((props) => {
-    const {tabId, children, resizable, headerStyle={}, size, label, onSelect, showOpenTabs} = props;
+    const {tabId, children, resizable, headerStyle={}, size, label, onSelect, showOpenTabs, actions} = props;
 
     const childrenAry = React.Children.toArray(children);
     const {width:widthPx} = size;
@@ -62,13 +62,16 @@ const TabsHeaderInternal = React.memo((props) => {
                 {(widthPx||!resizable) ? <ul className='TabPanel__Tabs'>
                     {sizedChildren}
                 </ul> : <div/>}
-                {showOpenTabs && (
-                    <div style={{width: 20, height: 20, marginLeft: 3}}>
-                        <div className='round-btn' onClick={showTabs} ref={arrowEl} title='Search open tabs'>
-                            <div className='arrow-down' style={{borderWidth: '7px 7px 0 7px'}}/>
+                <div style={{display:'inline-flex'}}>
+                    {actions && actions()}
+                    {showOpenTabs && (
+                        <div style={{width: 20, height: 20, marginLeft: 3}}>
+                            <div className='round-btn' onClick={showTabs} ref={arrowEl} title='Search open tabs'>
+                                <div className='arrow-down' style={{borderWidth: '7px 7px 0 7px'}}/>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -81,6 +84,7 @@ TabsHeaderInternal.propTypes= {
     size: PropTypes.object.isRequired,
     tabId: PropTypes.string,
     onSelect: PropTypes.func,
+    actions: PropTypes.elementType,
     showOpenTabs: PropTypes.bool
 };
 
@@ -146,7 +150,7 @@ Tab.defaultProps= { selected: false };
 export const TabsView = React.memo((props) => {
 
     const {children, onTabSelect, defaultSelected, useFlex, resizable, borderless, tabId=uniqueTabId(),
-        style={}, headerStyle, contentStyle={}, label, showOpenTabs} = props;
+        style={}, headerStyle, contentStyle={}, label, showOpenTabs, actions} = props;
 
     const onSelect = useCallback( (index,id,name) => {
         onTabSelect && onTabSelect(index,id,name);
@@ -174,7 +178,7 @@ export const TabsView = React.memo((props) => {
 
     return (
         <div className={mainClsName} style={style}>
-            <TabsHeader {...{resizable, headerStyle, label, tabId, onSelect, showOpenTabs}}>{headers}</TabsHeader>
+            <TabsHeader {...{resizable, headerStyle, label, tabId, onSelect, showOpenTabs, actions}}>{headers}</TabsHeader>
             <div style={contentStyle} className={contentClsName}>
                 {(content) ? content : ''}
             </div>
@@ -194,6 +198,7 @@ TabsView.propTypes = {
     contentStyle: PropTypes.object,
     borderless: PropTypes.bool,
     label: PropTypes.node,
+    actions: PropTypes.elementType,
     tabId: PropTypes.string
 };
 

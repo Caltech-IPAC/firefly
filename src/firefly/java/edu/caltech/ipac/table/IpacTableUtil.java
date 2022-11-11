@@ -90,7 +90,7 @@ public class IpacTableUtil {
         return attribs;
     }
 
-    private static void ensureKey(List<DataGroup.Attribute> attribs, String name, String value, String tag) {
+    public static void ensureKey(List<DataGroup.Attribute> attribs, String name, String value, String tag) {
         if (!isEmpty(value)) {
             String key = TableMeta.makeAttribKey(tag, name);
             attribs.add(new DataGroup.Attribute(key, value));

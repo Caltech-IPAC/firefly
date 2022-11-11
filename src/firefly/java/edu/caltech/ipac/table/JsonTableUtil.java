@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static edu.caltech.ipac.table.TableMeta.DERIVED_FROM;
 import static edu.caltech.ipac.util.StringUtils.*;
 
 /**
@@ -337,6 +338,7 @@ public class JsonTableUtil {
             applyIfNotEmpty(dt.getDesc(),       v -> c.put("desc", v));
             applyIfNotEmpty(dt.getLabel(),      v -> c.put("label", v));
             applyIfNotEmpty(dt.getArraySize(),  v -> c.put("arraySize", v));
+            applyIfNotEmpty(dt.getDerivedFrom(),  v -> c.put(DERIVED_FROM, v));
 
             if (dt.getVisibility() != DataType.Visibility.show)
                 c.put("visibility", dt.getVisibility().name());

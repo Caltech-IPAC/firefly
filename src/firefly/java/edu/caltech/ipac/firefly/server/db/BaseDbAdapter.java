@@ -372,7 +372,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
         LAST_CHECK = System.currentTimeMillis();
     }
 
-    private static void compact(EmbeddedDbInstance db) {
+    public static void compact(EmbeddedDbInstance db) {
         List<String> tables = getTempTables(db);
         if (tables.size() > 0) {
             // do compact.. remove all temporary tables

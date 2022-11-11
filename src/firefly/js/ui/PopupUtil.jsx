@@ -62,22 +62,36 @@ export function showPinMessage(text) {
  * @param {boolean} [p.show=true] show or hide this dialog
  */
 export function showOptionsPopup({content, title='Options', modal = false, show=true}) {
-
   if (show) {
-      const dialogContent= (
-          <PopupPanel title={title} modal={modal}>
-
-                  {content}
-
-          </PopupPanel>
-      );
-    DialogRootContainer.defineDialog(POPUP_DIALOG_ID, dialogContent);
-
-    dispatchShowDialog(POPUP_DIALOG_ID);
+      showPopup({ID: POPUP_DIALOG_ID, content, title, modal});
   } else {
     dispatchHideDialog(POPUP_DIALOG_ID);
   }
 }
+
+/**
+ * Creates and shows the modal dialog.
+ * @param {object} p
+ * @param {string} [p.ID] ID of the popup dialog
+ * @param {string | object}  p.content can be a string or a react component
+ * @param {string} [p.title] popup title
+ * @param {boolean} [p.modal=false] when true, glass panel will be under the popup
+ * @return {function} return function to hide the popup
+ */
+export function showPopup({ID, content, title='Options', modal = false}) {
+
+    const dialogContent= (
+        <PopupPanel title={title} modal={modal}>
+            {content}
+        </PopupPanel>
+    );
+    DialogRootContainer.defineDialog(ID, dialogContent);
+    dispatchShowDialog(ID);
+
+    return () => dispatchHideDialog(ID);
+}
+
+
 /**
  * Show a simple information popup
  *

@@ -81,7 +81,7 @@ const BasicTableViewInternal = React.memo((props) => {
         if (!isEmpty(changes)) {
             dispatchTableUiUpdate({tbl_ui_id, ...changes});
         }
-    });
+    }, [columns, columnWidths, adjScrollLeft, adjScrollTop]);
 
     const makeColumnsProps = {columns, data, selectable, selectInfoCls, renderers, bgColor,
         columnWidths, filterInfo, sortInfo, showUnits, showTypes, showFilters,

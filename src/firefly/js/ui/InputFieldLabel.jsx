@@ -10,17 +10,18 @@ import PropTypes from 'prop-types';
  * @return {XML}
  * @constructor
  */
-export const InputFieldLabel= function( { label= '', tooltip= '', labelStyle, labelWidth=200, } ) {
+export const InputFieldLabel= function( { label= '', tooltip= '', labelStyle, labelWidth=200, required} ) {
 
     //var currStyle = labelStyle || { display:'inline-block', paddingRight:'4px' };
-    var currStyle = Object.assign({ display:'inline-block', paddingRight:'4px' }, labelStyle);
+    var currStyle = Object.assign({ display:'inline-flex', paddingRight:'4px' }, labelStyle);
 
     if (labelWidth > 0) {
         currStyle.width = labelWidth;
     }
+    const className = 'disable-select' + (required ? ' required' : '');
 
     return (
-        <div style={currStyle} title={tooltip} className={'disable-select'} >
+        <div style={currStyle} title={tooltip} className={className} >
             {label}
         </div>
     );

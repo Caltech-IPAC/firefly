@@ -79,6 +79,7 @@
  * @prop {string} minValue  minimum value.
  * @prop {LINK[]} links     links if any.
  * @prop {string} cellRenderer  use custom predefined cell renderer.  See TableRenderer.js for usage.
+ * @prop {string} DERIVED_FROM  column derived from the given expression
  *
  * @global
  * @public
@@ -271,6 +272,7 @@
  * @prop {boolean} [showPaging=true]    enable/disable paging feature.  When false, all data will be displayed.
  * @prop {boolean} [showSave=true]
  * @prop {boolean} [showFilterButton=true]
+ * @prop {boolean} [showAddColumn=true]  when true, allow add column to table
  * @prop {boolean} [showInfoButton=true] when true, shows additional information about table, if available
  * @prop {boolean} [showOptionButton=true]
  * @prop {boolean} [showUnits]

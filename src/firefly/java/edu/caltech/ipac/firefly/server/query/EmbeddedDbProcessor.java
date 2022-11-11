@@ -466,6 +466,12 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
     public boolean isSecurityAware() { return false; }
 
+    public void addNewColumn(TableServerRequest tsr, DataType dtype, String expression) {
+        File dbFile = getDbFile(tsr);
+        DbAdapter dbAdapter = DbAdapter.getAdapter(tsr);
+        EmbeddedDbUtil.addNewColumn(dbFile, dbAdapter, dtype, expression);
+    }
+
 //====================================================================
 //
 //====================================================================

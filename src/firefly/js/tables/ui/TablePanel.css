@@ -110,6 +110,10 @@
     background-image: linear-gradient(#fff, #dcdcdc);
 }
 
+.TablePanel__header .derived {
+    color: maroon;
+}
+
 .TablePanel__options--small {
     position: absolute;
     top: 1px;
@@ -322,6 +326,32 @@
     justify-content: center;
 }
 
+.AddColumn__form {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+}
+.AddColumn__form > * {
+    margin-bottom: 3px;
+}
+
+.AddColumn__error {
+    color: maroon;
+    text-indent: -15px;
+    margin-left: 15px;
+}
+
+.AddColumn__actions {
+    padding: 3px;
+    background-color: #d6d6d6;
+    border-top: solid 1px #cdcdcd;
+}
+
+.AddColumn__datatype {
+    display: inline-flex;
+    width: 304px;
+    justify-content: space-between;
+}
 
 
 /** below are taken from FixedDataTable with some modifications */

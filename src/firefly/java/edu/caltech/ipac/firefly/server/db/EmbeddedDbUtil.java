@@ -33,9 +33,11 @@ import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_PATH;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_TYPE;
+import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
 import static edu.caltech.ipac.firefly.server.db.DbCustomFunctions.createCustomFunctions;
 import static edu.caltech.ipac.firefly.server.db.DbInstance.USE_REAL_AS_DOUBLE;
 import static edu.caltech.ipac.table.DataGroup.ROW_IDX;
+import static edu.caltech.ipac.table.TableMeta.DERIVED_FROM;
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
@@ -274,6 +276,42 @@ public class EmbeddedDbUtil {
         return new DataGroupPart(data, treq.getStartIndex(), data.size());
     }
 
+    public static void addNewColumn(File dbFile, DbAdapter dbAdapter, DataType dtype, String expression) {
+        DbAdapter.EmbeddedDbInstance dbInstance = (DbAdapter.EmbeddedDbInstance) dbAdapter.getDbInstance(dbFile);
+        JdbcTemplate jdbc = JdbcFactory.getTemplate(dbInstance);
+
+        try {
+            // add column to main table
+            jdbc.update(String.format("ALTER TABLE %s ADD COLUMN \"%s\" %s BEFORE ROW_IDX", MAIN_DB_TBL, dtype.getKeyName(), dbAdapter.toDbDataType(dtype)));
+        } catch (Exception e) {
+            // DDL statement are transactionally isolated, therefore need to manually rollback if this succeed but the next few statements failed.
+            throw e;
+        }
+        try {
+            TransactionTemplate txnJdbc = JdbcFactory.getTransactionTemplate(jdbc.getDataSource());
+            txnJdbc.execute((st) -> {
+                // add a record to DD table
+                String sql = dbAdapter.insertDDSql(MAIN_DB_TBL);
+                String desc = isEmpty(dtype.getDesc()) ? "" : dtype.getDesc();
+                desc = String.format("(%s=%s) ", DERIVED_FROM, expression) + desc;     // prepend DERIVED_FROM expression into the description.  This is how we determine if a column is derived.
+                dtype.setDesc(desc);
+                jdbc.update(sql, getDDfrom(dtype));
+
+                // populate column with new values
+                jdbc.update(String.format("UPDATE %s SET \"%s\" = %s", MAIN_DB_TBL, dtype.getKeyName(), expression));
+
+                // purge all cached tables
+                BaseDbAdapter.compact(dbInstance);
+                return st;
+            });
+        } catch (Exception e) {
+            // manually remove the added column
+            jdbc.update(String.format("ALTER TABLE %s DROP COLUMN \"%s\"", MAIN_DB_TBL, dtype.getKeyName()));
+            throw e;
+        }
+    }
+
+
 
 //====================================================================
 //  O-R mapping functions
@@ -392,39 +430,41 @@ public class EmbeddedDbUtil {
 
         List<Object[]> data = new ArrayList<>();
         for(DataType dt : colsAry) {
-            data.add( new Object[]
-                    {
-                            dt.getKeyName(),
-                            dt.getLabel(),
-                            dt.getTypeDesc(),
-                            dt.getUnits(),
-                            dt.getNullString(),
-                            dt.getFormat(),
-                            dt.getFmtDisp(),
-                            dt.getWidth(),
-                            dt.getVisibility().name(),
-                            dt.isSortable(),
-                            dt.isFilterable(),
-                            dt.isFixed(),
-                            dt.getDesc(),
-                            dt.getEnumVals(),
-                            dt.getID(),
-                            dt.getPrecision(),
-                            dt.getUCD(),
-                            dt.getUType(),
-                            dt.getRef(),
-                            dt.getMaxValue(),
-                            dt.getMinValue(),
-                            dt.getLinkInfos(),
-                            dt.getDataOptions(),
-                            dt.getArraySize(),
-                            dt.getCellRenderer(),
-                            dt.getSortByCols()
-                    }
-            );
+            data.add( getDDfrom(dt) );
         }
         String insertDDSql = dbAdapter.insertDDSql(tblName);
         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).batchUpdate(insertDDSql, data);
+    }
+
+    private static Object[] getDDfrom(DataType dt) {
+        return new Object[] {
+                        dt.getKeyName(),
+                        dt.getLabel(),
+                        dt.getTypeDesc(),
+                        dt.getUnits(),
+                        dt.getNullString(),
+                        dt.getFormat(),
+                        dt.getFmtDisp(),
+                        dt.getWidth(),
+                        dt.getVisibility().name(),
+                        dt.isSortable(),
+                        dt.isFilterable(),
+                        dt.isFixed(),
+                        dt.getDesc(),
+                        dt.getEnumVals(),
+                        dt.getID(),
+                        dt.getPrecision(),
+                        dt.getUCD(),
+                        dt.getUType(),
+                        dt.getRef(),
+                        dt.getMaxValue(),
+                        dt.getMinValue(),
+                        dt.getLinkInfos(),
+                        dt.getDataOptions(),
+                        dt.getArraySize(),
+                        dt.getCellRenderer(),
+                        dt.getSortByCols()
+                };
     }
 
     private static int dbToDD(DataGroup dg, ResultSet rs) {
@@ -571,6 +611,10 @@ public class EmbeddedDbUtil {
                 }
             });
         }
+    }
+
+    private static DataType[] makeDbCols(DataType[] columns) {
+        return makeDbCols( new DataGroup("temp", columns));
     }
 
     private static DataType[] makeDbCols(DataGroup dg) {

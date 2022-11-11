@@ -69,6 +69,7 @@ public class TableMeta implements Serializable {
     public static final String XTYPE = "xtype";
     public static final String DESC = "desc";
     public static final String NAME = "name";
+    public static final String DERIVED_FROM = "DERIVED_FROM";
 
     private Map<String, DataGroup.Attribute> attributes = new HashMap<>();                      // including keywords and meta added during processing
     private List<DataGroup.Attribute> keywords = new ArrayList<>();                             // meta from the original source

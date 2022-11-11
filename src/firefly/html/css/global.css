@@ -545,3 +545,16 @@ div.rootStyle img {
     flex-direction: column;
     flex-grow: 1;
 }
+
+.required-msg {
+    font-style: italic;
+    margin: 10px;
+}
+.required-msg::before {
+    content: 'Required fields are marked';
+}
+.required::after, .required-msg::after {
+    color: red;
+    margin-left: 3px;
+    content: '*';
+}

@@ -85,6 +85,20 @@ export const NotBlank = (val='') => {
     return retval;
 };
 
+export const textValidator = ({min=0, max, pattern, message}) => {
+    return (val='') => {
+        val = val.trim();
+        let error = `Value must be at least ${min} character${min>1 ? 's' : ''}`;
+        if (max) error += ` and no more than ${max} characters`;
+
+        if(val.length === 0 && min > 0)    return {valid: false, message: message ?? 'This is a required field. \n' + error};
+        if (val.length < min || val.length > (max ?? Number.MAX_VALUE)) return {valid: false, message: message ?? error};
+        if (pattern && !val.match(pattern)) return {valid: false, message: message ?? `Value must match pattern: ${pattern}`};
+
+        return {valid: true, message: ''};
+    };
+};
+
 export const validateEmail = function(description,valStr) {
     const retval = {
         valid: true,
