@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {useContext, useState} from 'react';
+import React, {useState} from 'react';
 import {FormPanel} from './FormPanel.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 import {
@@ -19,17 +19,18 @@ import {FieldGroup} from 'firefly/ui/FieldGroup';
 const maskWrapper= { position:'absolute', left:0, top:0, width:'100%', height:'100%' };
 const panelKey = 'FileUploadAnalysis';
 
-export const FileUploadDropdown= ({style={}, onCancel=dispatchHideDropDown, onSubmit=resultSuccess, acceptMoc=false}) =>{ //onSubmit=resultSuccess
+export const FileUploadDropdown= ({style={}, onCancel=dispatchHideDropDown, acceptMoc=false, onSubmit=resultSuccess, keepState=true,
+                                      groupKey=panelKey}) =>{
     const [submitText,setSubmitText]= useState('Load');
     const [doMask, changeMasking]= useState(() => false);
     const helpId = getAppOptions()?.uploadPanelHelpId ?? 'basics.searching';
     return (
 
         <div style={{width: '100%', ...style}}>
-            <FieldGroup groupKey={panelKey} keepState={true} style={{height:'100%', width: '100%',
+            <FieldGroup groupKey={groupKey} keepState={keepState} style={{height:'100%', width: '100%',
                 display: 'flex', alignItems: 'stretch', flexDirection: 'column'}}>
                 <FormPanel
-                    width='auto' height='auto' groupKey={panelKey} onSubmit={onSubmit}
+                    width='auto' height='auto' groupKey={groupKey} onSubmit={onSubmit}
                     onError={resultFail}
                     onCancel={onCancel}
                     submitText={submitText}
@@ -49,7 +50,7 @@ export const FileUploadDropdown= ({style={}, onCancel=dispatchHideDropDown, onSu
 
 const DIALOG_ID= 'FileUploadDialog';
 
-export function showUploadDialog(acceptMoc) {
+export function showUploadDialog(acceptMoc, keepState, groupKey) {
 
     DialogRootContainer.defineDialog(DIALOG_ID,
         <PopupPanel title={'Upload'}
@@ -62,10 +63,13 @@ export function showUploadDialog(acceptMoc) {
                     style={{height: '100%'}}
                     onCancel={() => dispatchHideDialog(DIALOG_ID)}
                     acceptMoc={acceptMoc}
-                    /*onSubmit={() => {
-                        dispatchHideDialog(DIALOG_ID);
-                        resultSuccess;
-                    }}*/
+                    onSubmit={
+                        (request) => {
+                            if (resultSuccess(request)) dispatchHideDialog(DIALOG_ID);
+                        }
+                    }
+                    keepState={keepState}
+                    groupKey={groupKey}
                 />
             </div>
         </PopupPanel>

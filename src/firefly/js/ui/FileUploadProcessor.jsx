@@ -35,14 +35,15 @@ export function resultSuccess(request) {
     const currentDetailsModel = request.additionalParams?.currentDetailsModel;
     const summaryModel = request.additionalParams?.summaryModel;
     const groupKey = request.additionalParams?.groupKey;
-    const SUMMARY_TBL_ID = groupKey; //FileUploadAnalysis
+    const acceptMoc = request.additionalParams?.acceptMoc;
+    const summaryTblId = groupKey; //FileUploadAnalysis
 
     const isTablesOnly= () => getAppOptions()?.uploadPanelLimit==='tablesOnly';
-    if (isTablesOnly()) return tablesOnlyResultSuccess(request, SUMMARY_TBL_ID, currentReport, summaryModel, groupKey);
+    if (isTablesOnly()) return tablesOnlyResultSuccess(request, summaryTblId, currentReport, summaryModel, groupKey);
     const fileCacheKey = getFileCacheKey(groupKey);
 
-    const tableIndices = getSelectedRows(FileAnalysisType.Table, SUMMARY_TBL_ID, currentReport, summaryModel);
-    const imageIndices = getSelectedRows(FileAnalysisType.Image, SUMMARY_TBL_ID, currentReport, summaryModel);
+    const tableIndices = getSelectedRows(FileAnalysisType.Table, summaryTblId, currentReport, summaryModel);
+    const imageIndices = getSelectedRows(FileAnalysisType.Image, summaryTblId, currentReport, summaryModel);
 
     if (!isFileSupported(summaryModel, currentReport)) {
         showInfoPopup(getFirstPartType(summaryModel) ? `File type of ${getFirstPartType(summaryModel)} is not supported.`: 'Could not recognize the file type');
@@ -50,7 +51,7 @@ export function resultSuccess(request) {
     }
 
     if (!isRegion(summaryModel) && tableIndices.length + imageIndices.length === 0) {
-        if (getSelectedRows('HeaderOnly', SUMMARY_TBL_ID, currentReport, summaryModel)?.length) {
+        if (getSelectedRows('HeaderOnly', summaryTblId, currentReport, summaryModel)?.length) {
             showInfoPopup('FITS HDU type of HeaderOnly is not supported. A header-only HDU contains no additional data.', 'Validation Error');
         }
         else {
@@ -60,6 +61,13 @@ export function resultSuccess(request) {
     }
 
     const isMocFits =  isMOCFitsFromUploadAnalsysis(currentReport);
+
+    //user is attempting to load a non-moc file from a HiPs Upload Dialog, which expects a moc fits file
+    if (acceptMoc && !isMocFits.valid) {
+        showInfoPopup( 'Warning: Loading a non-MOC FITS file from this dialog is not supported.', 'Warning');
+        return false;
+    }
+
     if (isRegion(summaryModel)) {
         sendRegionRequest(fileCacheKey, currentReport);
     }
@@ -68,6 +76,8 @@ export function resultSuccess(request) {
         if (request.mocOp==='table') mocMeta[MetaConst.IGNORE_MOC]='true';
         //loadToUI = true if request.mocOp==='table', else loadToUI=false
         sendTableRequest(tableIndices, fileCacheKey, Boolean(request.tablesAsSpectrum==='spectrum'), currentReport, Boolean(request.mocOp==='table'), mocMeta);
+        //this will signal to showUploadDialog in FileUploadDropdown.jsx to hide the upload dialog (from a HiPs/MOC upload)
+        return true;
     } else if ( isLsstFootprintTable(currentDetailsModel) ) {
         sendLSSTFootprintRequest(fileCacheKey, request.fileName, tableIndices[0]);
     } else {
@@ -76,9 +86,9 @@ export function resultSuccess(request) {
     }
 }
 
-function tablesOnlyResultSuccess(request, SUMMARY_TBL_ID, currentReport, currentSummaryModel, groupKey) {
-    const tableIndices = getSelectedRows(FileAnalysisType.Table, SUMMARY_TBL_ID, currentReport, currentSummaryModel);
-    const imageIndices = getSelectedRows(FileAnalysisType.Image, SUMMARY_TBL_ID, currentReport, currentSummaryModel);
+function tablesOnlyResultSuccess(request, summaryTblId, currentReport, currentSummaryModel, groupKey) {
+    const tableIndices = getSelectedRows(FileAnalysisType.Table, summaryTblId, currentReport, currentSummaryModel);
+    const imageIndices = getSelectedRows(FileAnalysisType.Image, summaryTblId, currentReport, currentSummaryModel);
 
     if (tableIndices.length>0) {
         imageIndices.length>0 && showInfoPopup('Only loading the tables, ignoring the images.');
@@ -92,7 +102,7 @@ function tablesOnlyResultSuccess(request, SUMMARY_TBL_ID, currentReport, current
 }
 
 function getFileCacheKey(groupKey) {
-    // because this value is stored in different fields.. so we have to check on what options were selected to determine the active value
+    // because this value is stored in different fields, so we have to check on what options were selected to determine the active value
     const uploadSrc = getFieldVal(groupKey, uploadOptions) || FILE_ID;
     return getFieldVal(groupKey, uploadSrc);
 }
@@ -194,7 +204,6 @@ function sendImageRequest(imageIndices, request, fileCacheKey, currentReport) {
             const extList = imageIndices.map((idx) => parts?.[idx]?.index).join();
 
             wpRequest.setMultiImageExts(extList);
-            if (!extList.includes('-1')) wpRequest.setAttributes({[PlotAttribute.POST_TITLE]:`- ext. ${extList}`});
 
             const plotId = `${fileName.replace('.', '_')}-${imageIndices.join('_')}`;
             dispatchPlotImage({plotId, wpRequest, viewerId});
@@ -202,14 +211,14 @@ function sendImageRequest(imageIndices, request, fileCacheKey, currentReport) {
     }
 }
 
-export function getSelectedRows(type, SUMMARY_TBL_ID, currentReport, currentSummaryModel) {
+export function getSelectedRows(type, summaryTblId, currentReport, currentSummaryModel) {
     if (getPartCnt(currentReport)===1) {
         if (type===getFirstPartType(currentSummaryModel)) {
             return [0];
         }
         return [];
     }
-    const {totalRows=0, tableData} = getSelectedDataSync(SUMMARY_TBL_ID, ['Index', 'Type']);
+    const {totalRows=0, tableData} = getSelectedDataSync(summaryTblId, ['Index', 'Type']);
     if (totalRows === 0) return [];
     const selectedRows = tableData.data;
     return selectedRows.filter((row) => row[1] === type)            // take only rows with the right type

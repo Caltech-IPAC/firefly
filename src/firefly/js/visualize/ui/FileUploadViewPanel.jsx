@@ -8,10 +8,10 @@ import SplitPane from 'react-split-pane';
 
 import {FieldGroupCtx} from '../../ui/FieldGroup.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
-import {getFieldVal, getField} from '../../fieldGroup/FieldGroupUtils';
+import {getField} from '../../fieldGroup/FieldGroupUtils';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {getCellValue, getTblById} from '../../tables/TableUtil.js';
-import {dispatchTableAddLocal} from '../../tables/TablesCntlr.js';
+import {dispatchTableAddLocal, dispatchTableRemove} from '../../tables/TablesCntlr.js';
 import {getSizeAsString} from '../../util/WebUtil.js';
 
 import {SelectInfo} from '../../tables/SelectInfo.js';
@@ -22,9 +22,8 @@ import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {isAccessWorkspace, getWorkspaceConfig} from '../WorkspaceCntlr.js';
 import {isMOCFitsFromUploadAnalsysis} from '../HiPSMocUtil.js';
 import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
-import {getComponentState, dispatchComponentStateChange} from '../../core/ComponentCntlr.js';
 
-import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {useFieldGroupMetaState, useFieldGroupValue, useStoreConnector} from '../../ui/SimpleComponent.jsx';
 
 import './FileUploadViewPanel.css';
 import {getIntHeader} from '../../metaConvert/PartAnalyzer';
@@ -64,48 +63,55 @@ let keyCnt=0;
 
 export function FileUploadViewPanel({setSubmitText, acceptMoc}) {
 
-    const {groupKey}= useContext(FieldGroupCtx);
+    const {groupKey, keepState}= useContext(FieldGroupCtx);
 
-    const {isLoading,statusKey} = useStoreConnector(() => getComponentState(groupKey, {isLoading:false,statusKey:''}));
     const isWsUpdating          = useStoreConnector(() => isAccessWorkspace());
-    const uploadSrc             = useStoreConnector(() => getFieldVal(groupKey, uploadOptions));
+    const [getLoadingOp]= useFieldGroupValue(uploadOptions);
+    const loadingOp= getLoadingOp();
 
-
-    const SUMMARY_TBL_ID = groupKey; //FileUploadAnalysis
-    const DETAILS_TBL_ID = groupKey + '-Details';
+    const summaryTblId = groupKey;
+    const detailsTblId = groupKey + '-Details';
     const UNKNOWN_FORMAT = 'UNKNOWN';
-    const summaryUiId = SUMMARY_TBL_ID + '-UI';
-    const detailsUiId = DETAILS_TBL_ID + '-UI';
 
-    let {message, analysisResult, report, summaryModel, detailsModel, prevAnalysisResult} = useStoreConnector((oldState) =>
-        getNextState(oldState, groupKey));
+    const [getUploadMetaInfo, setUploadMetaInfo]= useFieldGroupMetaState({message:undefined, analysisResult: undefined,
+        report: undefined, summaryModel: undefined, detailsModel: undefined, prevAnalysisResult: undefined}, groupKey);
+
+    const {message, analysisResult, report, summaryModel, detailsModel, prevAnalysisResult} =
+        useStoreConnector(() => {
+            const loadingOp= getLoadingOp();
+            const {analysisResult, message}= getField(groupKey, loadingOp) || {};
+            const summaryTbl= getTblById(summaryTblId);
+            return getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, message, getUploadMetaInfo());
+        });
+
+    const {isLoading,statusKey} = getUploadMetaInfo();
 
     const [loadingMsg,setLoadingMsg]= useState(() => '');
     const [uploadKey,setUploadKey]= useState(() => FILE_UPLOAD_KEY+keyCnt);
 
     useEffect(() => {
-        dispatchValueChange({fieldKey:getLoadingFieldName(groupKey), groupKey:groupKey, prevAnalysisResult: analysisResult});
-    }, [analysisResult]);
-
-    useEffect(() => {
-        dispatchValueChange({fieldKey:getLoadingFieldName(groupKey), groupKey:groupKey, report: report});
-    }, [report]);
-
-    useEffect(() => {
-        if (message || analysisResult) dispatchComponentStateChange(groupKey, {isLoading: false});
-    }, [message, analysisResult]);
+        if (message || analysisResult) {
+            setUploadMetaInfo({...getUploadMetaInfo(), prevAnalysisResult, report, summaryModel,
+                detailsModel, analysisResult, message});
+        }
+    }, [message, analysisResult, report, summaryModel, detailsModel, prevAnalysisResult]);
 
     useEffect(() => {
         dispatchTableAddLocal(summaryModel, undefined, false);
-        dispatchValueChange({fieldKey:getLoadingFieldName(groupKey), groupKey:groupKey, summaryModel: summaryModel});
+        return (() => {
+            if (!keepState) dispatchTableRemove(summaryTblId);
+        });
     }, [summaryModel]);
 
     useEffect(() => {
         dispatchTableAddLocal(detailsModel, undefined, false);
+        return (() => {
+            if (!keepState) dispatchTableRemove(detailsTblId);
+        });
     }, [detailsModel]);
 
     useEffect(() => {
-        setSubmitText(getLoadButtonText(SUMMARY_TBL_ID,report,detailsModel,summaryModel));
+        setSubmitText(getLoadButtonText(summaryTblId,report,detailsModel,summaryModel));
     },[report,setSubmitText, summaryModel, detailsModel]);
 
     let aWStatusKey;
@@ -140,7 +146,7 @@ export function FileUploadViewPanel({setSubmitText, acceptMoc}) {
     ].concat(workspace ? [{value: WS_ID, label: 'Upload from workspace'}] : []);
 
     const clearReport= () => {
-        dispatchValueChange({fieldKey:getLoadingFieldName(groupKey), groupKey:groupKey, value:'', displayValue:'', analysisResult:undefined});
+        dispatchValueChange({fieldKey:getLoadingOp(), groupKey, value:'', displayValue:'', analysisResult:undefined});
     };
 
     const isMoc=  isMOCFitsFromUploadAnalsysis(report)?.valid;
@@ -157,7 +163,7 @@ export function FileUploadViewPanel({setSubmitText, acceptMoc}) {
                             options={uploadMethod}
                             wrapperStyle={{fontWeight: 'bold', fontSize: 12}}/>
                         <div style={{paddingTop: '10px', display:'flex', flexDirection:'row', justifyContent:'space-between'}}>
-                            <UploadOptions {...{uploadSrc, isLoading, isWsUpdating,  uploadKey:uploadKey, groupKey}}/>
+                            <UploadOptions {...{loadingOp, isLoading, isWsUpdating,  uploadKey}}/>
                             {report && <CompleteButton text='Clear File' groupKey={NONE}
                                                        onSuccess={() =>{
                                                            clearReport();
@@ -166,9 +172,9 @@ export function FileUploadViewPanel({setSubmitText, acceptMoc}) {
                                                        }}/> }
                         </div>
                     </div>
-                    <FileAnalysis {...{report, summaryModel, detailsModel,tablesOnly, isMoc, UNKNOWN_FORMAT, summaryUiId, detailsUiId, acceptMoc}}/>
-                    <ImageDisplayOption SUMMARY_TBL_ID={SUMMARY_TBL_ID} currentReport={report} currentSummaryModel={summaryModel}/>
-                    <TableDisplayOption isMoc={isMoc} SUMMARY_TBL_ID={SUMMARY_TBL_ID} currentReport={report} currentSummaryModel={summaryModel}/>
+                    <FileAnalysis {...{report, summaryModel, detailsModel,tablesOnly, isMoc, UNKNOWN_FORMAT, acceptMoc}}/>
+                    <ImageDisplayOption summaryTblId={summaryTblId} currentReport={report} currentSummaryModel={summaryModel}/>
+                    <TableDisplayOption isMoc={isMoc} summaryTblId={summaryTblId} currentReport={report} currentSummaryModel={summaryModel}/>
                 </div>
                 {(isLoading) && <LoadingMessage message={loadingMsg}/>}
         </div>
@@ -194,12 +200,12 @@ const LoadingMessage= ({message}) => (
     </div>
 );
 
-function getLoadButtonText(SUMMARY_TBL_ID,currentReport,currentDetailsModel,currentSummaryModel) {
-    const tblCnt = getSelectedRows(FileAnalysisType.Table, SUMMARY_TBL_ID, currentReport, currentSummaryModel)?.length ?? 0;
+function getLoadButtonText(summaryTblId,currentReport,currentDetailsModel,currentSummaryModel) {
+    const tblCnt = getSelectedRows(FileAnalysisType.Table, summaryTblId, currentReport, currentSummaryModel)?.length ?? 0;
     if (tblCnt && isMOCFitsFromUploadAnalsysis(currentReport).valid) return 'Load MOC';
     if (isRegion(currentSummaryModel)) return 'Load Region';
 
-    const imgCnt = getSelectedRows(FileAnalysisType.Image, SUMMARY_TBL_ID, currentReport, currentSummaryModel)?.length ?? 0;
+    const imgCnt = getSelectedRows(FileAnalysisType.Image, summaryTblId, currentReport, currentSummaryModel)?.length ?? 0;
 
     if (isLsstFootprintTable(currentDetailsModel) ) return 'Load Footprint';
     if (tblCnt && !imgCnt) return tblCnt>1 ? `Load ${tblCnt} Tables` : 'Load Table';
@@ -230,29 +236,21 @@ function getFirstExtWithData(parts) {
 
 /*-----------------------------------------------------------------------------------------*/
 
-const getLoadingFieldName= (groupKey) => getFieldVal(groupKey, uploadOptions) || FILE_ID;
-
-function getNextState(oldState, groupKey) {
-    // because this value is stored in different fields.. so we have to check on what options were selected to determine the active value
-
-    const SUMMARY_TBL_ID = groupKey; //FileUploadAnalysis
-    const DETAILS_TBL_ID = groupKey + '-Details';
+function getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, message, oldState) {
+    // because this value is stored in different fields, so we have to check on what options were selected to determine the active value
     const UNKNOWN_FORMAT = 'UNKNOWN';
 
-    let currentReport, currentSummaryModel, currentDetailsModel;
+   let currentReport, currentSummaryModel;
 
-    const fieldState = getField(groupKey, getLoadingFieldName(groupKey)) || {};
-    let {analysisResult, message, summaryModel, prevAnalysisResult, report} = fieldState;
-
-    prevAnalysisResult = oldState?.analysisResult? oldState.analysisResult : prevAnalysisResult;
-    currentReport = oldState?.report? oldState.report: report;
-    currentSummaryModel = oldState?.summaryModel? oldState.summaryModel: summaryModel;
-    currentDetailsModel = oldState?.detailsModel;
+    const prevAnalysisResult = oldState?.analysisResult;
+    currentReport = oldState?.report;
+    currentSummaryModel = oldState.summaryModel;
+    const currentDetailsModel = oldState?.detailsModel;
 
     if (!analysisResult) { //clearReport sets analysisResult:undefined, so set currentReport=undefined to clear the file
         currentReport = undefined;
     }
-    let modelToUseForDetails= getTblById(SUMMARY_TBL_ID)?? currentSummaryModel;
+    let modelToUseForDetails= summaryTbl ?? currentSummaryModel;
 
     if (message) {
         return {message, report:undefined, summaryModel:undefined, detailsModel:undefined};
@@ -263,7 +261,7 @@ function getNextState(oldState, groupKey) {
                 return {message:'Unrecognized file type', report:undefined, summaryModel:undefined, detailsModel:undefined};
             }
 
-            currentSummaryModel= makeSummaryModel(currentReport, SUMMARY_TBL_ID);
+            currentSummaryModel= makeSummaryModel(currentReport, summaryTblId);
             modelToUseForDetails= currentSummaryModel;
 
             const firstExtWithData= getFirstExtWithData(currentReport.parts);
@@ -276,7 +274,7 @@ function getNextState(oldState, groupKey) {
 
         }
     }
-    let detailsModel = getDetailsModel( modelToUseForDetails,currentReport,DETAILS_TBL_ID,UNKNOWN_FORMAT);
+    let detailsModel = getDetailsModel( modelToUseForDetails,currentReport,detailsTblId,UNKNOWN_FORMAT);
     if (shallowequal(detailsModel, currentDetailsModel)) {
         detailsModel = currentDetailsModel;
     }
@@ -333,7 +331,7 @@ function summaryModelEqual(sm1,sm2) {
         sm1?.selectInfo !== sm2?.selectInfo);
 }
 
-function makeSummaryModel(report, SUMMARY_TBL_ID) {
+function makeSummaryModel(report, summaryTblId) {
     const columns = [
         {name: 'Index', type: 'int', desc: 'Extension Index'},
         {name: 'Type', type: 'char', desc: 'Data Type'},
@@ -345,7 +343,7 @@ function makeSummaryModel(report, SUMMARY_TBL_ID) {
         return [p.index, (naxis===1 && p.type===FileAnalysisType.Image)?FileAnalysisType.Table :p.type, p.desc];
     });
     const summaryModel = {
-        tbl_id: SUMMARY_TBL_ID,
+        tbl_id: summaryTblId,
         title: 'File Summary',
         totalRows: data.length,
         tableData: {columns, data}
@@ -353,23 +351,22 @@ function makeSummaryModel(report, SUMMARY_TBL_ID) {
     return summaryModel;
 }
 
-function getDetailsModel(tableModel, report, DETAILS_TBL_ID, UNKNOWN_FORMAT) {
+function getDetailsModel(tableModel, report, detailsTblId, UNKNOWN_FORMAT) {
     if (!tableModel) return;
     const {highlightedRow=0} = tableModel;
     const partNum = getCellValue(tableModel, highlightedRow, 'Index');
     const type = getCellValue(tableModel, highlightedRow, 'Type');
     if (type===UNKNOWN_FORMAT) return undefined;
     const details = report?.parts?.[partNum]?.details;
-    if (details) details.tbl_id = DETAILS_TBL_ID;
+    if (details) details.tbl_id = detailsTblId;
     return details;
 }
 
-function TableDisplayOption({isMoc, SUMMARY_TBL_ID, currentReport, currentSummaryModel}) {
+function TableDisplayOption({isMoc, summaryTblId, currentReport, currentSummaryModel}) {
 
     const selectedTables = getFileFormat(currentReport) ?
-        getSelectedRows('Table', SUMMARY_TBL_ID, currentReport, currentSummaryModel) : [];
-        //useStoreConnector(() => getFileFormat(currentReport) ?
-        //getSelectedRows('Table', SUMMARY_TBL_ID, currentReport, currentSummaryModel) : [] );
+        getSelectedRows('Table', summaryTblId, currentReport, currentSummaryModel) : [];
+
     if ( selectedTables.length < 1) return null;
 
     if (isMoc) {
@@ -401,8 +398,9 @@ function TableDisplayOption({isMoc, SUMMARY_TBL_ID, currentReport, currentSummar
     );
 }
 
-function ImageDisplayOption({SUMMARY_TBL_ID, currentReport, currentSummaryModel}) {
-    const selectedImages = getSelectedRows('Image', SUMMARY_TBL_ID, currentReport, currentSummaryModel);//useStoreConnector(() => getSelectedRows('Image', SUMMARY_TBL_ID, currentReport, currentSummaryModel));
+function ImageDisplayOption({summaryTblId, currentReport, currentSummaryModel}) {
+    const selectedImages = getSelectedRows('Image', summaryTblId, currentReport, currentSummaryModel);
+
     if ( selectedImages.length < 2) return null;
 
     const imgOptions = [{value: 'oneWindow', label: 'All images in one window'},
@@ -418,10 +416,11 @@ function ImageDisplayOption({SUMMARY_TBL_ID, currentReport, currentSummaryModel}
     );
 }
 
-function UploadOptions({uploadSrc=FILE_ID, isloading, isWsUpdating, uploadKey, groupKey}) {
+function UploadOptions({uploadSrc=FILE_ID, isLoading, isWsUpdating, uploadKey}) {
 
+    const [getUploadMetaInfo, setUploadMetaInfo]= useFieldGroupMetaState({isLoading:undefined, statusKey: undefined });
     const onLoading = (loading, statusKey) => {
-        dispatchComponentStateChange(groupKey, {isLoading: loading, statusKey:loading?statusKey:''});
+        setUploadMetaInfo({...getUploadMetaInfo(), isLoading:loading, statusKey: loading?statusKey:''});
     };
 
     if (uploadSrc === FILE_ID) {
@@ -454,7 +453,7 @@ function UploadOptions({uploadSrc=FILE_ID, isloading, isWsUpdating, uploadKey, g
                 wrapperStyle={{marginRight: 32}}
                 preloadWsFile={true}
                 fieldKey={WS_ID}
-                isLoading={isloading || isWsUpdating}
+                isLoading={isLoading || isWsUpdating}
                 fileAnalysis={onLoading}
                 tooltip='Select a file in FITS, VOTABLE, CSV, TSV, or IPAC format from workspace'
             />
@@ -482,16 +481,16 @@ function AnalysisInfo({report,supported=true,UNKNOWN_FORMAT}) {
 
 const tblOptions = {showToolbar:false, border:false, showOptionButton: false, showFilters: true};
 
-function AnalysisTable({summaryModel, detailsModel, report, isMoc, UNKNOWN_FORMAT, summaryUiId, detailsUiId}) {
+function AnalysisTable({summaryModel, detailsModel, report, isMoc, UNKNOWN_FORMAT}) {
     if (!summaryModel) return null;
 
-    // Details table need to render first to create a stub to collect data when Summary table is loaded.
+    // Details table needs to render first to create a stub to collect data when Summary table is loaded.
     return (
         <div className='FileUpload__summary'>
             {(summaryModel.tableData.data.length>1) ?
-                <MultiDataSet summaryModel={summaryModel} detailsModel={detailsModel} isMoc={isMoc} summaryUiId={summaryUiId}/> :
+                <MultiDataSet summaryModel={summaryModel} detailsModel={detailsModel} isMoc={isMoc}/> :
                 <SingleDataSet type={summaryModel.tableData.data[0][1]} desc={summaryModel.tableData.data[0][2]}
-                               detailsModel={detailsModel} report={report} UNKNOWN_FORMAT={UNKNOWN_FORMAT} detailsUiId={detailsUiId}
+                               detailsModel={detailsModel} report={report} UNKNOWN_FORMAT={UNKNOWN_FORMAT}
                                currentSummaryModel={summaryModel}
                 />
             }
@@ -499,7 +498,7 @@ function AnalysisTable({summaryModel, detailsModel, report, isMoc, UNKNOWN_FORMA
     );
 }
 
-function SingleDataSet({type, desc, detailsModel, report, UNKNOWN_FORMAT, detailsUiId, currentSummaryModel}) {
+function SingleDataSet({type, desc, detailsModel, report, UNKNOWN_FORMAT, currentSummaryModel}) {
     const supported = isSinglePartFileSupported(currentSummaryModel);
     const showDetails= supported && detailsModel;
     return (
@@ -511,12 +510,12 @@ function SingleDataSet({type, desc, detailsModel, report, UNKNOWN_FORMAT, detail
                 <AnalysisInfo report={report} supported={supported} UNKNOWN_FORMAT={UNKNOWN_FORMAT} />
                 <div style={{paddingTop:15}}>No other detail about this file</div>
             </div>
-            {  showDetails && <Details detailsModel={detailsModel} detailsUiId={detailsUiId}/>}
+            {  showDetails && <Details detailsModel={detailsModel}/>}
         </div>
     );
 }
 
-function MultiDataSet({summaryModel, detailsModel, isMoc, summaryUiId}) {
+function MultiDataSet({summaryModel, detailsModel, isMoc}) {
     return (
         <div style={{display: 'flex', flexDirection: 'column', width: '100%'}}>
             {
@@ -527,7 +526,7 @@ function MultiDataSet({summaryModel, detailsModel, isMoc, summaryUiId}) {
             }
             <div style={{height:'100%', position:'relative'}}>
                 <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={350}>
-                    <TablePanel showTypes={false} title='File Summary' tableModel={summaryModel} tbl_ui_id={summaryUiId} {...tblOptions} />
+                    <TablePanel showTypes={false} title='File Summary' tableModel={summaryModel} {...tblOptions} />
                     <Details detailsModel={detailsModel}/>
                 </SplitPane>
             </div>
@@ -536,19 +535,19 @@ function MultiDataSet({summaryModel, detailsModel, isMoc, summaryUiId}) {
 }
 
 
-function Details({detailsModel,detailsUiId}) {
+function Details({detailsModel}) {
     if (!detailsModel) return <div className='FileUpload__noDetails'>Details not available</div>;
 
     return (
         <TablePanel showTypes={false}  title='File Details'
-                    tableModel={detailsModel} tbl_ui_id={detailsUiId}
+                    tableModel={detailsModel}
                     {...tblOptions} showMetaInfo={true} selectable={false}/>
     );
 
 }
 
 
-function getTableArea(report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, summaryUiId, detailsUiId) {
+function getTableArea(report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT) {
     if (report?.fileFormat === UNKNOWN_FORMAT) {
         return (
             <div style={{flexGrow: 1, marginTop: 40, textAlign:'center', fontSize: 'larger', color: 'red'}}>
@@ -556,32 +555,21 @@ function getTableArea(report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT,
             </div>
         );
     }
-    return <AnalysisTable {...{summaryModel, detailsModel, report, isMoc, UNKNOWN_FORMAT, summaryUiId, detailsUiId}} />;
+    return <AnalysisTable {...{summaryModel, detailsModel, report, isMoc, UNKNOWN_FORMAT}} />;
 }
 
 
-const FileAnalysis = ({report, summaryModel, detailsModel, tablesOnly, isMoc, UNKNOWN_FORMAT, summaryUiId, detailsUiId, acceptMoc}) => {
-    //getting FieldGroup context and adding required params to the request object (sent to resultSuccess)
+const FileAnalysis = ({report, summaryModel, detailsModel, tablesOnly, isMoc, UNKNOWN_FORMAT, acceptMoc}) => {
+    //getting FieldGroup context and adding required params to the request object (used in resultSuccess in FileUploadProcessor)
     const {groupKey, register, unregister}= useContext(FieldGroupCtx);
-    const additionalReqObjs = {summaryModel: summaryModel, currentReport: report, currentDetailsModel: detailsModel, groupKey: groupKey};
-    //const [getRequestObjs, setRequestObjs] = useFieldGroupMetaState(additionalReqObjs);
+    const additionalReqObjs = {summaryModel, currentReport: report, currentDetailsModel: detailsModel,
+        groupKey, acceptMoc};
     useEffect(() => {
         register('additionalParams', () => additionalReqObjs);
         return () => unregister('additionalParams');
     }, [report]);
 
     if (report && acceptMoc && !isMoc) {
-        const msgTitle = 'Warning: ';
-        const msgDesc = 'You are attempting to upload a non-MOC file.';
-        const renderContent = (
-            <div>
-                {msgTitle} <br></br> <br></br>
-                <div style={{padding: '5', whiteSpace: 'normal', letterSpacing: '1', lineHeight: '1.5'}}>
-                    {msgDesc}
-                </div>
-            </div>);
-        showInfoPopup(renderContent, 'Warning');
-
         return (<div style={{color:'gray', margin:'20px 0 0 200px', fontSize:'larger', lineHeight:'1.3em'}}>
             Warning: You are attempting to upload a non-MOC file.
         </div>);
@@ -591,7 +579,7 @@ const FileAnalysis = ({report, summaryModel, detailsModel, tablesOnly, isMoc, UN
         return (
             <div className='FileUpload__report'>
                 {summaryModel.tableData.data.length>1 && <AnalysisInfo report={report} />}
-                {getTableArea(report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, summaryUiId, detailsUiId)}
+                {getTableArea(report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT)}
             </div>
         );
     }
