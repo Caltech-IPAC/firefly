@@ -276,7 +276,7 @@ function getNextState(oldState, groupKey) {
 
         }
     }
-    detailsModel = getDetailsModel( modelToUseForDetails,currentReport,DETAILS_TBL_ID,UNKNOWN_FORMAT);
+    let detailsModel = getDetailsModel( modelToUseForDetails,currentReport,DETAILS_TBL_ID,UNKNOWN_FORMAT);
     if (shallowequal(detailsModel, currentDetailsModel)) {
         detailsModel = currentDetailsModel;
     }
@@ -570,7 +570,18 @@ const FileAnalysis = ({report, summaryModel, detailsModel, tablesOnly, isMoc, UN
         return () => unregister('additionalParams');
     }, [report]);
 
-    if (acceptMoc && !isMoc) {
+    if (report && acceptMoc && !isMoc) {
+        const msgTitle = 'Warning: ';
+        const msgDesc = 'You are attempting to upload a non-MOC file.';
+        const renderContent = (
+            <div>
+                {msgTitle} <br></br> <br></br>
+                <div style={{padding: '5', whiteSpace: 'normal', letterSpacing: '1', lineHeight: '1.5'}}>
+                    {msgDesc}
+                </div>
+            </div>);
+        showInfoPopup(renderContent, 'Warning');
+
         return (<div style={{color:'gray', margin:'20px 0 0 200px', fontSize:'larger', lineHeight:'1.3em'}}>
             Warning: You are attempting to upload a non-MOC file.
         </div>);

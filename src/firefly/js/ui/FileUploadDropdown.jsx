@@ -19,7 +19,7 @@ import {FieldGroup} from 'firefly/ui/FieldGroup';
 const maskWrapper= { position:'absolute', left:0, top:0, width:'100%', height:'100%' };
 const panelKey = 'FileUploadAnalysis';
 
-export const FileUploadDropdown= ({style={}, onCancel=dispatchHideDropDown, onSubmit=resultSuccess, acceptMoc}) =>{ //onSubmit=resultSuccess
+export const FileUploadDropdown= ({style={}, onCancel=dispatchHideDropDown, onSubmit=resultSuccess, acceptMoc=false}) =>{ //onSubmit=resultSuccess
     const [submitText,setSubmitText]= useState('Load');
     const [doMask, changeMasking]= useState(() => false);
     const helpId = getAppOptions()?.uploadPanelHelpId ?? 'basics.searching';

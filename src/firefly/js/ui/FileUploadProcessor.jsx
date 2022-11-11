@@ -66,7 +66,8 @@ export function resultSuccess(request) {
     else if (isMocFits.valid) {
         const mocMeta= {[MetaConst.PREFERRED_HIPS]: getAppHiPSForMoc()};
         if (request.mocOp==='table') mocMeta[MetaConst.IGNORE_MOC]='true';
-        sendTableRequest(tableIndices, fileCacheKey, request.mocOp==='table', currentReport, false, mocMeta);
+        //loadToUI = true if request.mocOp==='table', else loadToUI=false
+        sendTableRequest(tableIndices, fileCacheKey, Boolean(request.tablesAsSpectrum==='spectrum'), currentReport, Boolean(request.mocOp==='table'), mocMeta);
     } else if ( isLsstFootprintTable(currentDetailsModel) ) {
         sendLSSTFootprintRequest(fileCacheKey, request.fileName, tableIndices[0]);
     } else {
