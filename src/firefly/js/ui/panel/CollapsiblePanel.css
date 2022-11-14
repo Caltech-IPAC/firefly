@@ -14,7 +14,7 @@
   box-sizing: border-box;
   font: inherit;
   border-bottom: solid 1px transparent;
-  border-radius:  0em;
+  border-radius: 0;
 }
 
 .CollapsiblePanel__Header:before {
@@ -31,21 +31,8 @@
   margin: 0 10px;
   padding: 0 10px;
   overflow: hidden;
-}
-
-.CollapsiblePanel__Content-oneborder {
   border-left: 2px solid #ccc;
 }
 
-.CollapsiblePanel__Content-twoborder {
-  border-left: 2px solid #ccc;
-  border-right: 2px solid #ccc;
-}
-
-.CollapsiblePanel__Content-threeborder {
-  border-left: 2px solid #ccc;
-  border-right: 2px solid #ccc;
-  border-bottom: 2px solid #ccc;
-}
 
 
