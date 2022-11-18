@@ -169,7 +169,7 @@ export function useFieldGroupMetaState(defMetaState={}, gk) {
             mounted= false;
             remover();
         };
-    },[]);
+    },[metaState]);
 
     const getter= useCallback( () => {
         const ms= getMetaState(groupKey);

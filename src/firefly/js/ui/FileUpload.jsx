@@ -185,8 +185,12 @@ function doUpload(fileOrUrl, fileAnalysis, params={}) {
     const faFunction= isFunction(fileAnalysis) && fileAnalysis;
     faFunction && faFunction(true, isString(fileOrUrl) ? fileOrUrl : fileOrUrl?.name ? fileOrUrl.name : undefined);
     if (fileAnalysis) fileAnalysis=true;
-    return upload(fileOrUrl, Boolean(fileAnalysis), params).then( (results) => {
-        faFunction && faFunction(false);
-        return results;
-    });
+    return upload(fileOrUrl, Boolean(fileAnalysis), params)
+        .then( (results) => {
+            faFunction && faFunction(false);
+            return results;
+        })
+        .catch(() => {
+            faFunction && faFunction(false);
+        });
 }
