@@ -80,7 +80,7 @@ function getTitle(pv, plot, drawLayer) {
     const titleEmLen= Math.min(plot.title.length+2,24);
     const minWidth= showSize || !drawLayer.isPointData ? (titleEmLen+6)+'em' : titleEmLen+'em';
     const {blank=false}= plot;
-    const hipsStr= blank ? '': 'HiPS';
+    const hipsStr= blank ? '': 'Image (HiPS)';
     return () => {
        return  (
             <div style={{
@@ -93,7 +93,7 @@ function getTitle(pv, plot, drawLayer) {
             } }
                  title={plot.title}>
                 <div>{plot.title}</div>
-                <div style={{paddingLeft: 10, fontSize:'80%'}}>{`${isHiPS(plot) ? hipsStr : 'Image'}${showSize?',':''}`}</div>
+                <div style={{paddingLeft: 10, fontSize:'80%'}}>{`${isHiPS(plot) ? hipsStr : 'Image (FITS)'}${showSize?',':''}`}</div>
                 {showSize &&
                 <div  style={{paddingLeft: 5, fontSize:'80%'}}>
                     {`Search Size: ${sprintf('%.4f',r.getSizeInDeg())}${String.fromCharCode(176)}`}
