@@ -148,7 +148,7 @@ function suggestedValuesPanel( plot,band ) {
     const dataMaxStr = `Data Max: ${sprintf('%.6f',dataMax)} `;
     const dataMinStr = `Data Min: ${sprintf('%.6f', dataMin)}`;
 
-    if (!dataMin && !dataMax) return <div style={style}/>
+    if (!dataMin && !dataMax) return <div style={style}/>;
 
     return (
         <div style={style}>
@@ -321,7 +321,7 @@ export function renderAsinH(fields, renderRange, replot, wrapperStyle={paddingBo
                          slideValue={qvalue}
                          label={label}
                          labelWidth={60}
-                         wrapperStyle={{marginTop: 10, marginBottom: 20, marginRight: 15}}
+                         style={{marginTop: 10, marginBottom: 20, marginRight: 15}}
                          decimalDig={1}
                          onValueChange={replot}
             />

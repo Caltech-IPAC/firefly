@@ -59,14 +59,14 @@ const colorTables=[
     { id: 5,  icon: ColorTable5, tip: 'For False Color - Reversed' },
     { id: 6,  icon: ColorTable6, tip: 'For False Color - Compressed' },
     { id: 7,  icon: ColorTable7, tip: 'For difference images' },
-    { id: 8,  icon: ColorTable8, tip: `DS9's a color bar` },
-    { id: 9,  icon: ColorTable9, tip: `DS9's b color bar` },
-    { id: 10, icon: ColorTable10, tip: `DS9's bb color bar` },
-    { id: 11, icon: ColorTable11, tip: `DS9's he color bar` },
-    { id: 12, icon: ColorTable12, tip: `DS9's i8 color bar` },
-    { id: 13, icon: ColorTable13, tip: `DS9's aips color bar` },
-    { id: 14, icon: ColorTable14, tip: `DS9's sls color bar` },
-    { id: 15, icon: ColorTable15, tip: `DS9's hsv color bar` },
+    { id: 8,  icon: ColorTable8, tip: 'DS9\'s a color bar' },
+    { id: 9,  icon: ColorTable9, tip: 'DS9\'s b color bar' },
+    { id: 10, icon: ColorTable10, tip: 'DS9\'s bb color bar' },
+    { id: 11, icon: ColorTable11, tip: 'DS9\'s he color bar' },
+    { id: 12, icon: ColorTable12, tip: 'DS9\'s i8 color bar' },
+    { id: 13, icon: ColorTable13, tip: 'DS9\'s aips color bar' },
+    { id: 14, icon: ColorTable14, tip: 'DS9\'s sls color bar' },
+    { id: 15, icon: ColorTable15, tip: 'DS9\'s hsv color bar' },
     { id: 16, icon: ColorTable16, tip: 'Heat (ds9)' },
     { id: 17, icon: ColorTable17, tip: 'Cool (ds9)' },
     { id: 18, icon: ColorTable18, tip: 'Rainbow (ds9)' },
@@ -194,7 +194,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
         setUseBlue(useBlue);
         const colorChangeParam=  {
                         plotId:plot.plotId,
-                        cbarId: colorTableId,
+                        cbarId: Number(colorTableId),
                         bias: band===Band.NO_BAND ? newBias : newBiasAry,
                         contrast: band===Band.NO_BAND ? newContrast : newContrastAry,
                         useRed, useBlue, useGreen,
@@ -219,7 +219,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
             <div style={{display:'flex', flexDirection: 'column', alignItems: 'center'}}>
                 <div style={{padding: '5px 0 0 0'}}>Color Bar</div>
                 <RangeSliderView {...{
-                    wrapperStyle:{paddingTop: 7, width: 200},
+                    style:{paddingTop: 7, width: 200},
                     min:image?0:-1,max:21, step:1,vertical:false, marks:ctMarks,
                     defaultValue:colorTableId, slideValue:colorTableId,
                     handleChange:(v) => changeBiasContrastColor(v, bias,contrast)}} />
@@ -228,7 +228,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
             {colorTableId!==-1 ? <div style={{display:'flex', flexDirection: 'column', alignItems: 'center'}}>
                 <div style={{padding: '30px 0 0 0'}}>Bias</div>
                 <RangeSliderView {...{
-                    wrapperStyle:{paddingTop: 7, width: 200},
+                    style:{paddingTop: 7, width: 200},
                     min:8,max:32, step:1,vertical:false, marks:biasMarks,
                     defaultValue:biasInt, slideValue:biasInt,
                     handleChange:(v) => changeBiasContrastColor(colorTableId, v/40,contrast)}} />
@@ -237,7 +237,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
             {colorTableId!==-1 ? <div style={{display:'flex', flexDirection: 'column', alignItems: 'center'}}>
                 <div style={{padding: '30px 0 0 0'}}>Contrast</div>
                 <RangeSliderView {...{
-                    wrapperStyle:{paddingTop: 7, width: 200},
+                    style:{paddingTop: 7, width: 200},
                     min:0,max:20, step:1,vertical:false, marks:contrastMarks,
                     defaultValue:contrastInt, slideValue:contrastInt,
                     handleChange:(v) => changeBiasContrastColor(colorTableId, bias,v/10)}} />
@@ -270,7 +270,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
                                             <span style={{color:b.key}}>{b.key}</span> Bias
                                         </div>
                                         <RangeSliderView {...{
-                                            wrapperStyle:{paddingTop: 7, width: 200},
+                                            style:{paddingTop: 7, width: 200},
                                             min:8,max:32, step:1,vertical:false, marks:biasMarks,
                                             defaultValue:biasInt[b.value], slideValue:biasInt[b.value],
                                             handleChange:(v) => changeBiasContrastColor(colorTableId, v/40,contrast[b.value],useRed,useGreen,useBlue,b)}} />
@@ -278,7 +278,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
                                     <div style={{display:'flex', flexDirection: 'column', alignItems: 'center'}}>
                                         <div style={{padding: '30px 0 0 0'}}><span style={{color:b.key}}>{b.key}</span> Contrast</div>
                                         <RangeSliderView {...{
-                                            wrapperStyle:{paddingTop: 7, width: 200},
+                                            style:{paddingTop: 7, width: 200},
                                             min:0,max:20, step:1,vertical:false, marks:contrastMarks,
                                             defaultValue:contrastInt[b.value], slideValue:contrastInt[b.value],
                                                         handleChange:(v) => changeBiasContrastColor(colorTableId, bias[b.value],v/10, useRed,useGreen,useBlue,b)}} />

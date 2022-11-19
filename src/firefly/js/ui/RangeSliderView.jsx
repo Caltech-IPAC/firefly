@@ -1,78 +1,50 @@
-import React, {PureComponent} from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-import {get, has, isNumber, isString, isObject, isNaN} from 'lodash';
+import {has, isNumber, isString, isObject, isNaN} from 'lodash';
 import Slider from 'rc-slider';
 import './rc-slider.css';
 
-/**
- * @summary slider component
- */
-export class RangeSliderView extends PureComponent {
-    constructor(props) {
-        super(props);
 
-        this.state = {value: parseFloat(props.slideValue)};
-        this.onSliderChange = this.onSliderChange.bind(this);
-        const d = get(props, 'decimalDig', 3);
-        this.decimalDig = (d < 0) ? 0 : (d > 20) ? 20 : d;
-    }
-
-    static getDerivedStateFromProps(props,state) {
-        return {value: parseFloat(props.slideValue)};
-    }
-
-    onSliderChange(v) {
-        const {handleChange, minStop, maxStop} = this.props;
-
-        if (minStop && v < minStop ) {
-            v = minStop;
-        } else if (maxStop && v > maxStop) {
-            v = maxStop;
-        }
-
-        this.setState({value: v});
-        v = parseFloat(v.toFixed(this.decimalDig));
-
-        if (handleChange) {
-            handleChange(`${v}`);      //value could be any number of decimal
-        }
-    }
-
-
-    render() {
-        const {wrapperStyle={}, sliderStyle={}, className, marks, vertical,
-             defaultValue, handle, label, labelWidth, tooltip, minStop, maxStop, min, max, step} = this.props;
-        const {value} = this.state;    //displayValue in string, min, max, step: number
-        let val = parseFloat(value);
-
+export function RangeSliderView({min=0, max=100, minStop, maxStop, className, marks, step=1, vertical=false,
+                                    defaultValue=0, slideValue, handle, style={}, sliderStyle={},
+                                    label='', labelWidth, tooltip, decimalDig=3, handleChange}){
+    const toRangeBound = (val) => {
         if (minStop && val < minStop ) {
             val = minStop;
         } else if (maxStop && val > maxStop) {
             val = maxStop;
         }
-        if (isNaN(val)) val= minStop || min || 0;
+        if (isNaN(val)) val = minStop || min;
+        return val;
+    };
 
-        return (
-            <div style={wrapperStyle}>
-                <div style={Object.assign({display: 'flex'}, sliderStyle)}>
-                    <div title={tooltip} style={{width: labelWidth, marginBottom: 5}}>{label}</div>
-                    <Slider min={min}
-                            max={max}
-                            className={className}
-                            marks={marks}
-                            step={step}
-                            vertical={vertical}
-                            defaultValue={defaultValue}
-                            value={val}
-                            handle={handle}
-                            tipFormatter={null}
-                            included={true}
-                            onChange={this.onSliderChange} />
-                </div>
+    const onSliderChange = (v) => {
+        const numDecimalDigits = (decimalDig < 0) ? 0 : (decimalDig > 20) ? 20 : decimalDig;
+
+        handleChange?.(toRangeBound(v).toFixed(numDecimalDigits));
+    };
+
+    return (
+        <div style={style}>
+            <div style={{display: 'flex', ...sliderStyle}}>
+                <div title={tooltip} style={{width: labelWidth, marginBottom: 5}}>{label}</div>
+                <Slider min={min}
+                        max={max}
+                        className={className}
+                        marks={marks}
+                        step={step}
+                        vertical={vertical}
+                        defaultValue={defaultValue}
+                        value={toRangeBound(parseFloat(slideValue))}
+                        handle={handle}
+                        tipFormatter={null}
+                        included={true}
+                        onChange={onSliderChange} />
             </div>
-        );
-    }
+        </div>
+    );
 }
+
 
 RangeSliderView.propTypes = {
     min:   PropTypes.number,
@@ -85,26 +57,14 @@ RangeSliderView.propTypes = {
     vertical: PropTypes.bool,
     defaultValue: PropTypes.number,
     slideValue: PropTypes.oneOfType([PropTypes.string,PropTypes.number]).isRequired,
-    value: PropTypes.oneOfType([PropTypes.string,PropTypes.number]),
     handle: PropTypes.element,
-    wrapperStyle: PropTypes.object,
+    style: PropTypes.object,
     sliderStyle: PropTypes.object,
     label: PropTypes.string,
     labelWidth: PropTypes.number,
     tooltip:  PropTypes.string,
     decimalDig: PropTypes.number,
     handleChange: PropTypes.func           // callback on slider change
-};
-
-RangeSliderView.defaultProps = {
-    min: 0,
-    max: 100,
-    step: 1,
-    vertical: false,
-    defaultValue: 0,
-    value: 0.0,
-    label: '',
-    decimalDig: 3
 };
 
 
@@ -122,4 +82,3 @@ export function checkMarksObject(props, propName, componentName) {
         return new Error('invalid ' + propName + ' supplied to ' + componentName + '. Validation failed');
     }
 }
-
