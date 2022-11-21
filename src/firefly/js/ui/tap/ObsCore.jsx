@@ -222,7 +222,7 @@ export function ObsCoreSearch({cols, groupKey, fields, useConstraintReducer, ini
                                                checkID={`${panelPrefix}Check`} panelValue={panelValue} message={message}/>}
                                initialState={{value: 'open'}}
                                fieldKey={`${panelPrefix}SearchPanel`}
-                               wrapperStyle={{marginBottom: 15}}
+                               style={{marginBottom: 15}}
                                headerStyle={HeaderFont}
         >
 
@@ -686,7 +686,7 @@ export function ExposureDurationSearch({cols, groupKey, fields, useConstraintRed
             />}
             initialState={{value: 'closed'}}
             fieldKey={`${panelPrefix}SearchPanel`}
-            wrapperStyle={{marginBottom: 15}}
+            style={{marginBottom: 15}}
             headerStyle={HeaderFont}>
             <div style={{marginTop: 5}}>
                 {showExposureRange()}

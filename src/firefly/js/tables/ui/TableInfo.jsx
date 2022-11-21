@@ -59,7 +59,7 @@ function MetaContent({tbl_id}) {
 
 export function MetaInfo({tbl_id, style, isOpen=false}) {
     const contentStyle={display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingBottom: 1};
-    const wrapperStyle={width: '100%'};
+    const collapsiblePanelStyle={width: '100%'};
 
     if (!hasAuxData(tbl_id)) {
         return null;
@@ -69,7 +69,7 @@ export function MetaInfo({tbl_id, style, isOpen=false}) {
     return (
         <div className='TablePanel__meta' style={style}>
             { !isEmpty(keywords) &&
-            <CollapsiblePanel componentKey={tbl_id + '-meta'} header='Table Meta' {...{isOpen, contentStyle, wrapperStyle}}>
+            <CollapsiblePanel componentKey={tbl_id + '-meta'} header='Table Meta' style={collapsiblePanelStyle} {...{isOpen, contentStyle}}>
                 {keywords.concat()                                             // make a copy so the original array does not mutate
                     .filter( ({key}) => key)
                     .sort(({key:k1}, {key:k2}) => (k1+'').localeCompare(k2+''))        // sort it by key
@@ -78,7 +78,7 @@ export function MetaInfo({tbl_id, style, isOpen=false}) {
             </CollapsiblePanel>
             }
             { !isEmpty(params) &&
-            <CollapsiblePanel componentKey={tbl_id + '-params'} header='Table Params' {...{isOpen, contentStyle, wrapperStyle}}>
+            <CollapsiblePanel componentKey={tbl_id + '-params'} header='Table Params' style={collapsiblePanelStyle} {...{isOpen, contentStyle}}>
                 {params.concat()                                                          // same logic as keywords, but sort by name
                     .sort(({name:k1}, {name:k2}) => k1.localeCompare(k2))
                     .map(({name, value, type='N/A'}, idx) => <KeywordBlock key={'params-' + idx} label={`${name}(${type})`} value={value}/>)
@@ -86,7 +86,7 @@ export function MetaInfo({tbl_id, style, isOpen=false}) {
             </CollapsiblePanel>
             }
             { !isEmpty(groups) &&
-            <CollapsiblePanel componentKey={tbl_id + '-groups'} header='Groups' {...{isOpen, contentStyle, wrapperStyle}}>
+            <CollapsiblePanel componentKey={tbl_id + '-groups'} header='Groups' style={collapsiblePanelStyle} {...{isOpen, contentStyle}}>
                 {groups.map((rs, idx) => {
                     const showValue = () => showInfoPopup(
                         <div style={{whiteSpace: 'pre'}}>
@@ -106,7 +106,7 @@ export function MetaInfo({tbl_id, style, isOpen=false}) {
             </CollapsiblePanel>
             }
             { !isEmpty(links) &&
-            <CollapsiblePanel componentKey={tbl_id + '-links'} header='Links' {...{isOpen, contentStyle, wrapperStyle}}>
+            <CollapsiblePanel componentKey={tbl_id + '-links'} header='Links' style={collapsiblePanelStyle} {...{isOpen, contentStyle}}>
                 {links.map((l, idx) => {
                     return (
                         <div key={'links-' + idx} style={{display: 'inline-flex', alignItems: 'center'}}>
@@ -121,7 +121,7 @@ export function MetaInfo({tbl_id, style, isOpen=false}) {
             </CollapsiblePanel>
             }
             { !isEmpty(resources) &&
-            <CollapsiblePanel componentKey={tbl_id + '-resources'} header='Resources' {...{isOpen, contentStyle, wrapperStyle}}>
+            <CollapsiblePanel componentKey={tbl_id + '-resources'} header='Resources' style={collapsiblePanelStyle} {...{isOpen, contentStyle}}>
                 {resources.map((rs, idx) => {
                     const showValue = () => showInfoPopup(
                         <div style={{whiteSpace: 'pre'}}>

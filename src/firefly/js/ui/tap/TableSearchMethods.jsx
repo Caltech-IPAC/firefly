@@ -459,7 +459,7 @@ function SpatialSearch({cols, serviceUrl, columnsModel, groupKey, fields, initAr
                                        checkID={`${panelPrefix}Check`}  panelValue={panelValue} message={message} enabled={Boolean(worldPt)}/>}
                                initialState={{ value: 'open' }}
                                fieldKey={`${panelPrefix}SearchPanel`}
-                               wrapperStyle={{marginBottom: 15}}
+                               style={{marginBottom: 15}}
                                label={'Spatial'}
                                headerStyle={HeaderFont}>
             <div style={{marginTop: '5px'}}>
@@ -632,7 +632,7 @@ function TemporalSearch({cols, columnsModel, groupKey, fields, useConstraintRedu
                                         checkID={`${panelPrefix}Check`} message={message}/>}
                                initialState={{ value: 'closed' }}
                                fieldKey={`${panelPrefix}SearchPanel`}
-                               wrapperStyle={{marginBottom: 15}}
+                               style={{marginBottom: 15}}
                                label={Temporal}
                                headerStyle={HeaderFont}>
                 <div style={{marginTop: 5, height: 100}}>
