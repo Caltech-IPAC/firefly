@@ -282,7 +282,7 @@ function onSelect(chartId) {
                 }
                 const {data} = getChartData(chartId);
                 const traceData = data?.[newActiveTrace]
-                const type = traceData?.type ?? 'scatter';
+                const type = traceData?.type || 'scatter';
                 // points are populated only for scatter2d, not for heatmap
                 if (isScatter2d(type)) {
                     if (points.length < 1) {
