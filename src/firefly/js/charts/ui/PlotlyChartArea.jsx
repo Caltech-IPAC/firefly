@@ -219,7 +219,7 @@ function onClick(chartId) {
         // traceNum is related to any of trace data or SELECTED trace or HIGHLIGHTED trace
         // if traceNUm is between [0, curveNumberMap.length-1], then curveNumber is mapped to one of the trace data
         // if traceNum is greater than curveNumberMap.length-1, then curveNumber is mapped to either SELECTED trace or HIGHLIGHTED trace
-        if (traceNum === activeTrace || traceNum === curveNumberMap.length) {
+        if (traceNum <= curveNumberMap.length) {
             dispatchChartHighlighted({
                 chartId,
                 traceNum,
@@ -233,6 +233,10 @@ function onClick(chartId) {
 
 /**
  * plotly chart, select area callback, update chart by collecting all points on active trace enclosed by selected area
+ *
+ * For 2d scatter, when other trace points are selected and no active trace points are in the selection area,
+ * the active trace is changed.
+ *
  * @param chartId
  * @returns {Function}
  */
@@ -247,30 +251,81 @@ function onSelect(chartId) {
             const [yMin, yMax] = get(evData, 'range.y', []);
             if (xMin !== xMax && yMin !== yMax && curveNumberMap) {
                 points = get(evData, 'points', []);
-                if (!isSpectralOrder(chartId)) {
-                    points.filter((o) => curveNumberMap[o.curveNumber] === activeTrace);
-                }
                 points = points.map((o) => [o.pointNumber, curveNumberMap[o.curveNumber]]);
-            }
-            if (points) {
-                const {data, activeTrace=0} = getChartData(chartId);
-                const type = get(data, [activeTrace, 'type'], 'scatter');
+                let newActiveTrace = activeTrace;
+                if (!isSpectralOrder(chartId)) {
+                    // selected points must belong to the active trace
+                    // if no active trace points are selected,
+                    // find the trace with the most points in the selection area and make it active
+                    let activeTracePoints = points.filter(([, c]) => c === activeTrace);
+                    if (activeTracePoints.length < 1) {
+                        // find the curve with max points in the selection area
+                        const freqByCurveMap = {}
+                        let curveWithMaxPts = activeTrace;
+                        let maxPts = 0;
+                        points.forEach(([, c]) => {
+                            if (freqByCurveMap[c] == null) {
+                                freqByCurveMap[c] = 0;
+                            }
+                            freqByCurveMap[c]++;
+                            if (maxPts < freqByCurveMap[c]) {
+                                maxPts = freqByCurveMap[c];
+                                curveWithMaxPts = c;
+                            }
+                        });
+                        if (curveWithMaxPts !== activeTrace) {
+                            activeTracePoints = points.filter(([, c]) => c === curveWithMaxPts);
+                            newActiveTrace = curveWithMaxPts;
+                        }
+                    }
+                    points = activeTracePoints;
+                }
+                const {data} = getChartData(chartId);
+                const traceData = data?.[newActiveTrace]
+                const type = traceData?.type || 'scatter';
                 // points are populated only for scatter2d, not for heatmap
-                if (isScatter2d(type) && points.length < 1) {
-                    showInfoPopup((<div>No active trace points in the selection area.</div>), 'Warning');
+                if (isScatter2d(type)) {
+                    if (points.length < 1) {
+                        showInfoPopup((<div>No points in the selection area.</div>), 'Warning');
+                        return;
+                    }
                 } else {
-                    const selections = evData?.selections ?? []
-                    dispatchChartUpdate({
-                        chartId,
-                        changes: {
-                            selection: {
-                                multiArea: selections.length > 1,
-                                points,
-                                range: {x: [xMin, xMax], y: [yMin, yMax]}
+                    // heatmap-like traces that support selection
+                    if (traceData?.z && traceData.x && traceData.y) {
+                        // check if at least one point is in the selection area
+                        let ptInRange = false;
+                        const {x, y, z} = traceData
+                        for (let i=0; i<x.length; i++) {
+                            if (z[i] != null &&
+                                xMin < x[i] && x[i] < xMax &&
+                                yMin < y[i] && y[i] < yMax) {
+                                ptInRange = true;
+                                break;
                             }
                         }
-                    });
+                        if (!ptInRange) {
+                            showInfoPopup((<div>Active trace does not overlap with the selection area.</div>), 'Warning');
+                            return;
+                        }
+                    }
                 }
+                // trace change here removes the selection box
+                // it needs to be restored in the following update
+                if (newActiveTrace !== activeTrace) {
+                    dispatchSetActiveTrace({chartId, activeTrace: newActiveTrace});
+                }
+                const selections = evData?.selections ?? []
+                dispatchChartUpdate({
+                    chartId,
+                    changes: {
+                        selection: {
+                            multiArea: selections.length > 1,
+                            points,
+                            range: {x: [xMin, xMax], y: [yMin, yMax]}
+                        },
+                        'layout.selections': selections
+                    }
+                });
             }
         } else {
             const {selection} = getChartData(chartId);
