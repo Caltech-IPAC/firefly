@@ -37,8 +37,8 @@ export default local;
 
 const TEXT  = ['char', 'c', 's', 'str'];
 const INT   = ['long', 'l', 'int', 'i'];
-const FLOAT = ['double', 'd', 'float', 'f'];
-const BOOL  = ['boolean','bool'];
+const FLOAT = ['double', 'd', 'float', 'f', 'real', 'r'];
+const BOOL  = ['boolean','bool', 'b'];
 const DATE  = ['date'];
 const NUMBER= [...INT, ...FLOAT];
 const USE_STRING = [...TEXT, ...DATE];

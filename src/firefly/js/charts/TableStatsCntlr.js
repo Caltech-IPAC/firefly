@@ -7,7 +7,7 @@ import ColValuesStatistics from './ColValuesStatistics.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 
 import {makeTblRequest, cloneRequest, MAX_ROW} from '../tables/TableRequestUtil.js';
-import {getTblById, doFetchTable} from '../tables/TableUtil.js';
+import {getTblById, doFetchTable, getColumns, COL_TYPE} from '../tables/TableUtil.js';
 
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 
@@ -28,6 +28,21 @@ export const LOAD_TBL_STATS = `${TBLSTATS_DATA_KEY}/LOAD_TBL_STATS`;
 export const UPDATE_TBL_STATS = `${TBLSTATS_DATA_KEY}/UPDATE_TBL_STATS`;
 
 
+export default {actionCreators, reducers};
+
+function actionCreators() {
+    return {
+        [LOAD_TBL_STATS]:   loadTblStats
+    };
+}
+
+function reducers() {
+    return {
+        [TBLSTATS_DATA_KEY]: reducer
+    };
+}
+
+
 /*
  * Get the number of points, min and max values, units and description for each table column
  * @param {ServerRequest} searchRequest - table search request
@@ -37,9 +52,12 @@ export function dispatchLoadTblStats(searchRequest, dispatcher= flux.process) {
     const tbl_id = get(searchRequest, 'tbl_id');
     if (!tbl_id) return;
     // use resultSetID to determine if a call needs to be placed
-    const resultSetID = get(flux.getState(), [TBLSTATS_DATA_KEY, tbl_id, 'resultSetID']);
+    const {resultSetID, numericColCnt} = get(flux.getState(), [TBLSTATS_DATA_KEY, tbl_id], {});
     const resultSetIDNow = get(getTblById(tbl_id), 'tableMeta.resultSetID');
-    if (resultSetID !== resultSetIDNow) {
+    const curNumericColCnt = getColumns(getTblById(tbl_id), COL_TYPE.NUMBER);
+
+    if (resultSetID !== resultSetIDNow
+        || curNumericColCnt !== numericColCnt) {  // also reload stats if the number of numeric columns changes.
         dispatcher({type: LOAD_TBL_STATS, payload: {searchRequest}});
     }
 }
@@ -158,11 +176,13 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
                     return colstats;
                 }, []);
             }
+            const numericColCnt = getColumns(getTblById(tbl_id), COL_TYPE.NUMBER);
             dispatch(updateTblStats(
                 {
                     tblId: tbl_id,
                     isColStatsReady: true,
-                    colStats
+                    colStats,
+                    numericColCnt
                 }));
         }
     ).catch(

@@ -237,6 +237,7 @@
 .CombineChart__popup--tbl {
     flex-grow: 1;
     min-height: 100px;
+    height: 1px;
 }
 
 .CombineChart__hints {

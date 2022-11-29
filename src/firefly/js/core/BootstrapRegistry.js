@@ -11,7 +11,7 @@ import {createLogger} from 'redux-logger';
 
 import * as LayoutCntlr from './LayoutCntlr.js';
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
-import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
+import TableStatsCntlr from '../charts/TableStatsCntlr.js';
 import ComponentCntlr, {DIALOG_OR_COMPONENT_KEY} from './ComponentCntlr.js';
 import AppDataCntlr from './AppDataCntlr.js';
 import BackgroundCntlr from './background/BackgroundCntlr.js';
@@ -95,7 +95,7 @@ const USE_LOGGING_MIDDLEWARE= false; // logging middleware is useful for debuggi
 
 
 /**
- * Get the bootstrap registry, one the first call the bootstrap registry will initalize
+ * Get the bootstrap registry, one the first call the bootstrap registry will initialize
  * @return {BootstrapRegistry}
  */
 export const getBootstrapRegistry= once(() => {
@@ -104,7 +104,6 @@ export const getBootstrapRegistry= once(() => {
     const reducers = {
         [LayoutCntlr.LAYOUT_PATH]: LayoutCntlr.reducer,
         [ExternalAccessCntlr.EXTERNAL_ACCESS_KEY]: ExternalAccessCntlr.reducer,
-        [TableStatsCntlr.TBLSTATS_DATA_KEY]: TableStatsCntlr.reducer,
         [DIALOG_OR_COMPONENT_KEY]: ComponentCntlr.reducer
     };
 
@@ -149,8 +148,8 @@ export const getBootstrapRegistry= once(() => {
     registerCntlr(MultiViewCntlr);
     registerCntlr(WorkspaceCntlr);
     registerCntlr(DataProductsCntlr);
+    registerCntlr(TableStatsCntlr);
 
-    actionCreators.set(TableStatsCntlr.LOAD_TBL_STATS, TableStatsCntlr.loadTblStats);
     actionCreators.set('exampleDialog', (rawAction) => {
         showExampleDialog();
         return rawAction;
