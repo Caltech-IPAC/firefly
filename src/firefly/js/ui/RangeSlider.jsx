@@ -1,6 +1,6 @@
-import React, {memo, PureComponent} from 'react';
+import React, {memo} from 'react';
 import PropTypes from 'prop-types';
-import { has, isNaN} from 'lodash';
+import {isNaN} from 'lodash';
 import {RangeSliderView, checkMarksObject} from './RangeSliderView.jsx';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 
@@ -11,29 +11,19 @@ import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
  * @param {function} fireValueChange
  */
 function handleOnChange(value, params, fireValueChange){
-     fireValueChange&&fireValueChange({
-         value
-     });
+     fireValueChange?.({value});
 
-    const {min, max} = params;    //displayValue in string, min, max, step: number
-    const {minStop=min, maxStop=max} = params;
+    const {min, max, minStop=min, maxStop=max} = params;    //displayValue in string, min, max, step: number
     const val = parseFloat(value);
 
-    if (!isNaN(val) && val >= minStop && val <= maxStop) {
-        if (has(params, 'onValueChange')) {
-            params.onValueChange(val);
-        }
-    }
+    if (!isNaN(val) && val >= minStop && val <= maxStop) params?.onValueChange(val);
 }
-
-
-// export const RangeSlider = fieldGroupConnector(RangeSliderView, getProps, propTypes, null);
 
 
 export const RangeSlider= memo( (props) => {
     const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
     return (<RangeSliderView {...viewProps}
-                            handleChange={(value) => handleOnChange(value,viewProps, fireValueChange)}/>);
+                            handleChange={(value) => handleOnChange(value, viewProps, fireValueChange)}/>);
 });
 
 
@@ -43,7 +33,6 @@ RangeSlider.propTypes={
     associatedKey: PropTypes.string,
     label:       PropTypes.string,             // slider label
     slideValue:  PropTypes.oneOfType([PropTypes.string,PropTypes.number]).isRequired, // slider value
-    value:       PropTypes.oneOfType([PropTypes.string,PropTypes.number]),
     onValueChange: PropTypes.func,                  // callback on slider change
     min:         PropTypes.number,                  // minimum end of slider
     max:         PropTypes.number,                  // maximum end of slider
@@ -53,7 +42,7 @@ RangeSlider.propTypes={
     vertical:    PropTypes.bool,                         // slider is in vertical
     defaultValue: PropTypes.number,                      // default value of slider
     handle:      PropTypes.element,                      // custom made slider handle
-    wrapperStyle: PropTypes.object,                      // wrapper style for entire component
+    style: PropTypes.object,                             // style for entire component
     sliderStyle: PropTypes.object,                       // style for slider component
     labelWidth: PropTypes.number,                        // label width
     tooltip:  PropTypes.string,                          // tooltip on label

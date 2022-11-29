@@ -656,7 +656,7 @@ function LcPFOptions({fields, lastPeriod, periodList=[]}) {
                                  tooptip={'slide to set period value'}
                                  slideValue={period}
                                  defaultValue={minPerN}
-                                 wrapperStyle={{marginBottom: 20, marginLeft: 9, marginRight: 25, width: highlightW}}
+                                 style={{marginBottom: 20, marginLeft: 9, marginRight: 25, width: highlightW}}
                                  decimalDig={DEC_PHASE}
                     />
                     <ValidationField fieldKey={fKeyDef.max.fkey} style={{width: pSize}}/>

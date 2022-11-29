@@ -107,7 +107,7 @@ function FitsRotationImmediatePanel() {
                     </div>
 
                     <RangeSliderView {...{
-                        wrapperStyle:{paddingTop: 15, width: 225},
+                        style:{paddingTop: 15, width: 225},
                         min:0,max:359, step:1,vertical:false, marks,
                         defaultValue:currRotation, slideValue:currRotation,
                         handleChange:(v) => changeRotation(v)}} />

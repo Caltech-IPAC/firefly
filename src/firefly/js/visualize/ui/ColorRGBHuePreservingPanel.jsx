@@ -117,7 +117,7 @@ function renderScalingCoefficients(fields, replot) {
                         slideValue={value}
                         label={label}
                         labelWidth={100}
-                        wrapperStyle={{marginTop: 10, marginBottom: 20, marginRight: 15}}
+                        style={{marginTop: 10, marginBottom: 20, marginRight: 15}}
                         decimalDig={2}
                         onValueChange={replot}
                     />);
