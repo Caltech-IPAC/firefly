@@ -79,6 +79,7 @@ function getTitle(pv, plot, drawLayer) {
     const showSize= Boolean(r.getSizeInDeg() && isImage(plot) );
     const titleEmLen= Math.min(plot.title.length+2,24);
     const minWidth= showSize || !drawLayer.isPointData ? (titleEmLen+6)+'em' : titleEmLen+'em';
+    const maxWidth=450;
     const {blank=false}= plot;
     const hipsStr= blank ? '': 'Image (HiPS)';
     return () => {
@@ -86,19 +87,19 @@ function getTitle(pv, plot, drawLayer) {
             <div style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                width: 100,
+                maxWidth,
                 minWidth,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis'
             } }
                  title={plot.title}>
-                <div>{plot.title}</div>
-                <div style={{paddingLeft: 10, fontSize:'80%'}}>{`${isHiPS(plot) ? hipsStr : 'Image (FITS)'}${showSize?',':''}`}</div>
-                {showSize &&
-                <div  style={{paddingLeft: 5, fontSize:'80%'}}>
-                    {`Search Size: ${sprintf('%.4f',r.getSizeInDeg())}${String.fromCharCode(176)}`}
-                </div>
-                }
+                 <div>{plot.title}</div>
+                 <div style={{paddingLeft: 10, fontSize:'80%'}}>{`${isHiPS(plot) ? hipsStr : 'Image (FITS)'}${showSize?',':''}`}</div>
+                 {showSize &&
+                 <div  style={{paddingLeft: 5, fontSize:'80%'}}>
+                   {`Search Size: ${sprintf('%.4f',r.getSizeInDeg())}${String.fromCharCode(176)}`}
+                 </div>
+                 }
             </div>
         );
     };
