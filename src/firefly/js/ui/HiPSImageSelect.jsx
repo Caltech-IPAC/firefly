@@ -30,8 +30,6 @@ import {BLANK_HIPS_URL} from '../visualize/WebPlot.js';
 import {createHiPSMocLayer} from 'firefly/visualize/task/PlotHipsTask.js';
 import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
 import CompleteButton from 'firefly/ui/CompleteButton.jsx';
-import {dispatchShowDropDown} from 'firefly/core/LayoutCntlr.js';
-import {setMultiSearchPanelTab} from 'firefly/ui/MultiSearchPanel.jsx';
 import {getDefaultMOCList} from 'firefly/visualize/HiPSMocUtil.js';
 import {showUploadDialog} from 'firefly/ui/FileUploadDropdown.jsx';
 
@@ -71,19 +69,6 @@ HiPSImageSelect.propTypes = {
 
 const DIALOG_ID = 'HiPSImageSelectPopup';
 
-function showUpload()  {
-    if (visRoot().apiToolsView) {
-        showUploadDialog();
-    }
-    else {
-        const view= getAppOptions()?.multiTableSearchCmdOptions
-            ?.find( ({id}) => id==='upload') ? 'MultiTableSearchCmd' : 'FileUploadDropDownCmd';
-        dispatchHideDialog(DIALOG_ID);
-        if (view==='MultiTableSearchCmd') setMultiSearchPanelTab('upload');
-        dispatchShowDropDown({view, initArgs:{defaultSelectedId:'upload', always:true}});
-    }
-}
-
 
 /**
  * show HiPS survey info table in popup panel
@@ -122,7 +107,7 @@ export function showHiPSSurveysPopup(pv, moc= false) {
                         <HiPSSurveyTable groupKey={groupKey} moc={moc}/>
                         {moc && <div style={{display:'flex', padding: '6px 15px 0 0', justifyContent:'flex-end'}}>
                             <div style={{lineHeight:'25px', height: 25, paddingRight: 4, fontWeight:'bold'}}> To Upload a MOC: </div>
-                            <CompleteButton text='Upload' groupKey='' onSuccess={() => showUpload()} />
+                            <CompleteButton text='Upload' groupKey='' onSuccess={() => showUploadDialog(true, false, 'FileUploadHips')} />
                         </div>}
                     </div>
                 </FieldGroup>

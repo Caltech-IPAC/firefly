@@ -30,7 +30,7 @@ export const FieldGroup = memo( ({keepMounted, reducerFunc=undefined, groupKey, 
         }
     };
 
-    const ctx= {groupKey,register, unregister, registeredComponents:wrapperRegisteredComponents??registeredComponents};
+    const ctx= {groupKey, register, unregister, registeredComponents:wrapperRegisteredComponents??registeredComponents, keepState};
 
     useLayoutEffect(() => {
         dispatchMountFieldGroup(groupKey, true, keepState, reducerFunc, wrapperGroupKey);
