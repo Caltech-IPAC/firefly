@@ -39,14 +39,22 @@ export const FieldGroup = memo( ({keepMounted, reducerFunc=undefined, groupKey, 
 
 
     const register= (key, f) => {
-        wrapperRegister ? wrapperRegister(key,f) : setRegisteredComponents({...registeredComponents,[key]:f});
+        if (wrapperRegister) {
+            wrapperRegister(key,f);
+        }
+        else {
+            registeredComponents[key]= f;
+            setRegisteredComponents(registeredComponents);
+        }
     };
     const unregister= (key) => {
         if (wrapperUnregister ) {
             wrapperUnregister(key);
         }
         else if (!isUndefined(registeredComponents[key])){
-            setRegisteredComponents({...registeredComponents,[key]:undefined});
+            // setRegisteredComponents({...registeredComponents,[key]:undefined});
+            registeredComponents[key]= undefined;
+            setRegisteredComponents(registeredComponents);
         }
     };
     const [ctx,setCtx]= useState(() => makeCtx(groupKey,register,unregister,wrapperRegisteredComponents,registeredComponents,keepState) );

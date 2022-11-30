@@ -105,7 +105,7 @@ function makeWavelengthConstraints(wavelengthSelection, rangeType, filterDefinit
 const checkHeaderCtl= makeCollapsibleCheckHeader(getPanelPrefix(panelValue));
 const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
 const fldKeys= ['obsCoreWavelengthContains', 'obsCoreWavelengthMinRange','obsCoreWavelengthSelectionType',
-                'obsCoreWavelengthMaxRange', 'obsCoreWavelengthUnits'];
+                'obsCoreWavelengthRangeType', 'obsCoreWavelengthMaxRange', 'obsCoreWavelengthUnits'];
 
 export function ObsCoreWavelengthSearch({initArgs}) {
     const filterDefinitions = getAppOptions()?.tapObsCore?.filterDefinitions ?? [];
@@ -118,7 +118,7 @@ export function ObsCoreWavelengthSearch({initArgs}) {
 
 
     const rangeType= getVal('obsCoreWavelengthRangeType');
-    const selectionType= getVal('obsCoreWavelengthSelectionType');
+    const selectionType= getVal('obsCoreWavelengthSelectionType') ?? 'numerical';
     const hasFilters = filterDefinitions?.length > 0;
     const useNumerical = !hasFilters || selectionType === 'numerical';
     const updatePanelStatus= makePanelStatusUpdater(checkHeaderCtl.isPanelActive(), panelValue);
@@ -135,7 +135,8 @@ export function ObsCoreWavelengthSearch({initArgs}) {
     }, [constraintResult]);
 
     useFieldGroupWatch([...fdDefsKeys,
-    'obsCoreWavelengthContains', 'obsCoreWavelengthMinRange', 'obsCoreWavelengthMaxRange', 'obsCoreWavelengthUnits' ],
+    // 'obsCoreWavelengthContains', 'obsCoreWavelengthMinRange', 'obsCoreWavelengthMaxRange', 'obsCoreWavelengthUnits' ],
+            'obsCoreWavelengthContains', 'obsCoreWavelengthMinRange', 'obsCoreWavelengthMaxRange' ],
         (valAry,isInit) => {
             !isInit && valAry.some((v)=>v) && checkHeaderCtl.setPanelActive(true);
         });

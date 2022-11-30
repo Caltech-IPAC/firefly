@@ -18,21 +18,21 @@ import {dispatchTableSearch} from 'firefly/tables/TablesCntlr.js';
 import {showInfoPopup, showYesNoPopup} from 'firefly/ui/PopupUtil.jsx';
 import {dispatchHideDialog} from 'firefly/core/ComponentCntlr.js';
 import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr.js';
-import {ConstraintContext, getConstraints} from './Constraints.js';
+import {ConstraintContext, getHelperConstraints} from './Constraints.js';
 
 import {tableColumnsConstraints} from 'firefly/ui/tap/TableColumnsConstraints.jsx';
 import {commonSelectStyles, selectTheme} from 'firefly/ui/tap/Select.jsx';
 import {
     getMaxrecHardLimit, tapHelpId, getTapServices,
-    loadObsCoreSchemaTables, maybeQuote, TAP_PANEL_GROUP_KEY, defTapBrowserState
+    loadObsCoreSchemaTables, maybeQuote, defTapBrowserState
 } from 'firefly/ui/tap/TapUtil.js';
 import { SectionTitle, AdqlUI, BasicUI} from 'firefly/ui/tap/TableSelectViewPanel.jsx';
 import {useFieldGroupMetaState} from '../SimpleComponent.jsx';
 
 
 
+export const TAP_PANEL_GROUP_KEY = 'TAP_PANEL_GROUP_KEY';
 const SERVICE_TIP= 'Select a TAP service, or type to enter the URL of any other TAP service';
-const ADQL_LINE_LENGTH = 100;
 
 //-------------
 //-------------
@@ -65,7 +65,7 @@ function validateAutoSearch(fields, initArgs, tapBrowserState) {
     const {urlApi = {}} = initArgs;
     if (urlApi.adql) return true;
     if (!getAdqlQuery(tapBrowserState, false)) return false; // if we can't build a query then we are not initialized yet
-    const {valid, where} = getConstraints(tapBrowserState);
+    const {valid, where} = getHelperConstraints(tapBrowserState);
     if (!valid) return false;
     const notWhereArgs = ['MAXREC', 'execute', 'schema', 'service', 'table'];
     const needsWhereClause = Object.keys(urlApi).some((arg) => !notWhereArgs.includes(arg));
@@ -352,53 +352,32 @@ function onTapSearchSubmit(request,serviceUrl,tapBrowserState) {
  * @returns {string|null}
  */
 function getAdqlQuery(tapBrowserState, showErrors= true) {
-
-    const tableName = maybeQuote(FieldGroupUtils.getGroupFields(TAP_PANEL_GROUP_KEY)?.tableName?.value, true);
+    const tableName = maybeQuote(tapBrowserState?.tableName, true);
     if (!tableName) return;
+    const helperFragment = getHelperConstraints(tapBrowserState);
+    const tableCol = tableColumnsConstraints(tapBrowserState.columnsModel);
 
-
-    // spatial and temporal constraints
-    const whereFragment = getConstraints(tapBrowserState);
-    if (!whereFragment.valid) {
-        const firstMessage = whereFragment.messages[0];
-        showInfoPopup(firstMessage, 'Error');
-        return null;
+    // check for errors
+    if (!helperFragment.valid) {
+        if (showErrors) showInfoPopup(helperFragment.messages[0], 'Error');
+        return;
     }
-    let constraints = whereFragment.where || '';
-    const addAnd = Boolean(constraints);
-
-    // table column constraints and column selections
-    const {columnsModel} = tapBrowserState;
-    const adqlFragment = tableColumnsConstraints(columnsModel);
-    if (!adqlFragment.valid && showErrors) {
-        showInfoPopup(adqlFragment.message, 'Error');
-        return null;
-    }
-    if (adqlFragment.where) {
-        constraints += (addAnd ? ' AND ' : '') + `(${adqlFragment.where})`;
-    }
-    let selcols = adqlFragment.selcols || '*';
-
-    // If the line is long, rebuild the line from array of column names
-    // breaking at ADQL_LINE_LENGTH
-    if (selcols.length > ADQL_LINE_LENGTH) {
-        selcols = '';
-        let line = adqlFragment.selcolsArray[0];
-        const colsCopy = adqlFragment.selcolsArray.slice(1);
-        colsCopy.forEach((value) => {
-            const nextColumn = ',' + value;
-            if ((line + nextColumn).length > ADQL_LINE_LENGTH){
-                selcols += line + '\n';
-                line = '    ';
-            }
-            line += nextColumn;
-        });
-        selcols += line;
+    if (!tableCol.valid) {
+        if (showErrors) showInfoPopup(tableCol.message, 'Error');
+        return;
     }
 
-    if (constraints) {
-        constraints = `WHERE ${constraints}`;
+    // build columns
+    const selcols = tableCol.selcols || '*';
+
+    // build up constraints
+    let constraints = helperFragment.where || '';
+    if (tableCol.where) {
+        const addAnd = Boolean(constraints);
+        constraints += (addAnd ? ' AND ' : '') + `(${tableCol.where})`;
     }
+
+    if (constraints) constraints = `WHERE ${constraints}`;
 
     // if we use TOP  when maxrec is set `${maxrec ? `TOP ${maxrec} `:''}`,
     // overflow indicator will not be included with the results

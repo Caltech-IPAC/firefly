@@ -1,25 +1,20 @@
 import PropTypes from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
-import {isDialogVisible} from '../../core/ComponentCntlr.js';
 import {maximumPositiveFloatValidator, minimumPositiveFloatValidator} from '../../util/Validate.js';
-import {convertISOToMJD} from '../DateTimePickerField.jsx';
 import {FieldGroupCtx, ForceFieldGroupValid} from '../FieldGroup.jsx';
 import {ListBoxInputField} from '../ListBoxInputField.jsx';
-import {POPUP_DIALOG_ID} from '../PopupUtil.jsx';
-import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
 import {useFieldGroupRerender, useFieldGroupValue, useFieldGroupWatch} from '../SimpleComponent.jsx';
-import {formFeedback, isShowHelp, TimePanel} from '../TimePanel.jsx';
+import {checkExposureTime, convertISOToMJD} from '../TimeUIUtil.js';
 import {ValidationField} from '../ValidationField.jsx';
-import {makeAdqlQueryRangeFragment, ConstraintContext, siaQueryRange} from './Constraints.js';
+import {ConstraintContext, makeAdqlQueryRangeFragment, siaQueryRange} from './Constraints.js';
+import {TimeRangePanel} from './TimeRangePanel.jsx';
 import {
-    changeDatePickerOpenStatus, checkExposureTime, DebugObsCore, FROM, getPanelPrefix, getTimeInfo,
-    LabelWidth, LableSaptail, LeftInSearch, makeCollapsibleCheckHeader, makeFieldErrorList, makePanelStatusUpdater,
-    onChangeTimeMode,
-    SmallFloatNumericWidth, SpatialLableSaptail, TO, Width_Column, Width_Time_Wrapper
+    DebugObsCore, getPanelPrefix, LableSaptail, LeftInSearch, makeCollapsibleCheckHeader, makeFieldErrorList,
+    makePanelStatusUpdater,
+    SmallFloatNumericWidth
 } from './TableSearchHelpers.jsx';
-import {ISO, MJD, tapHelpId} from './TapUtil.js';
+import {tapHelpId} from './TapUtil.js';
 
-const START_TIME_GREATER_MSG= 'the start time is greater than the end time';
 const START_EXP_GREATER_MSG= 'exposure time max must be greater than time min';
 const ONE_POPULATED= 'at least one field must be populated';
 
@@ -43,20 +38,6 @@ function getSinceMill(sinceVal, ops) {
     }
 }
 
-const onChangeDateTimePicker = (getter, setter) => {
-    if (isDialogVisible(POPUP_DIALOG_ID)) {
-        const {valid, message, value, timeMode, ...rest} = getter(true) || {};
-        const timeInfo = getTimeInfo(timeMode, value, valid, message);
-        const showHelp = isShowHelp(timeInfo[ISO].value, timeInfo[MJD].value);
-        const feedback = formFeedback(timeInfo[ISO].value, timeInfo[MJD].value);
-
-        setter(timeInfo[timeMode].value,
-            {...rest, valid,
-                message, showHelp, feedback, timeMode, [ISO]: timeInfo[ISO], [MJD]: timeInfo[MJD]
-            }
-        );
-    }
-};
 
 function checkSinceTimeInMjd(sinceVal, sinceOp) {
     const sinceMillis = getSinceMill(parseFloat(sinceVal), sinceOp);
@@ -168,7 +149,10 @@ export function ExposureDurationSearch({initArgs}) {
                                 initialState:{value: initArgs?.urlApi?.exposureRangeType || 'since'} }} />
                         <div>
                             {isRange ?
-                                <ExposeRange {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive()}}/> :
+                                <TimeRangePanel {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive(),
+                                    fromTip:"'Exposure start from' time (t_min)",
+                                    toTip:"'Exposure end to' time (t_min)",
+                                    style:{marginLeft: LeftInSearch, marginTop: 10}}}/> :
                                 <ExposureSince {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive()}} /> }
                             <ExposureLength {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive()}}/>
                         </div>
@@ -184,102 +168,6 @@ ExposureDurationSearch.propTypes = {
     initArgs: PropTypes.object,
 };
 
-
-function ExposeRange({initArgs, panelActive, turnOnPanel}) {
-    const [getExposureTimeMode] = useFieldGroupValue('exposureTimeMode');
-    const [getExposureMin, setExposureMin] = useFieldGroupValue('exposureMin');
-    const [getExposureMax, setExposureMax] = useFieldGroupValue('exposureMax');
-    const icon = 'calendar';
-    const timeOptions = [{label: 'UTC date/times (ISO format)', value: ISO}, {label: 'MJD values', value: MJD}];
-
-    useEffect(() => {
-        const timeMode = initArgs?.urlApi?.exposureTimeMode || ISO;
-        if (initArgs?.urlApi?.exposureMin) setExposureMin(initArgs?.urlApi?.exposureMin, {timeMode});
-        if (initArgs?.urlApi?.exposureMax) setExposureMax(initArgs?.urlApi?.exposureMax, {timeMode});
-    }, [initArgs?.urlApi]);
-
-
-    useEffect(() => {
-        if (!panelActive) return;
-        const {minGreaterThanMax}=  checkExposureTime(getExposureMin(true), getExposureMax(true));
-        if (minGreaterThanMax) setExposureMax(getExposureMax(), {valid: false, message: START_TIME_GREATER_MSG });
-    }, [panelActive]);
-
-    useFieldGroupWatch(['exposureMin', 'exposureMax'],
-        ([expMin,expMax],isInit) => !isInit && (expMin || expMax) && turnOnPanel() );
-
-    useEffect(() => {
-        onChangeDateTimePicker(getExposureMin, setExposureMin);
-        const {minGreaterThanMax}=  checkExposureTime(getExposureMin(true), getExposureMax(true));
-        if (minGreaterThanMax) setExposureMax(getExposureMax(), {valid: false, message: START_TIME_GREATER_MSG });
-    }, [getExposureMin]);
-
-    useEffect(() => {
-        onChangeDateTimePicker(getExposureMax, setExposureMax);
-        const {minGreaterThanMax}=  checkExposureTime(getExposureMin(true), getExposureMax(true));
-        if (minGreaterThanMax) setExposureMax(getExposureMax(), {valid: false, message: START_TIME_GREATER_MSG });
-    }, [getExposureMax]);
-
-    useEffect(() => {
-        onChangeTimeMode(getExposureTimeMode(), getExposureMin, setExposureMin);
-        onChangeTimeMode(getExposureTimeMode(), getExposureMax, setExposureMax);
-    }, [getExposureTimeMode]);
-
-
-
-    return (
-        <div style={{display: 'block', marginLeft: LeftInSearch, marginTop: 10}}>
-            <RadioGroupInputField
-                fieldKey='exposureTimeMode' options={timeOptions} alignment={'horizontal'}
-                wrapperStyle={{width: LabelWidth, marginTop: 5, marginLeft: 0}}
-                label='Use:' tooltip='Select time mode'
-                labelWidth={32 /* FIXME: Not sure if this is best */}
-                initialState={{value: initArgs?.urlApi?.exposureTimeMode || ISO}}
-            />
-            <div style={{display: 'flex', marginTop: 10}}>
-                <div title='Start Time'
-                     style={{
-                         display: 'inline-block',
-                         paddingRight: '4px',
-                         width: SpatialLableSaptail
-                     }}>Start Time
-                </div>
-                <div style={{width: Width_Time_Wrapper}}>
-                    <TimePanel
-                        fieldKey='exposureMin' timeMode={getExposureTimeMode()} icon={icon}
-                        tooltip="'Exposure start from' time (t_min)"
-                        feedbackStyle={{height: 100}}
-                        inputWidth={Width_Column} inputStyle={{overflow: 'auto', height: 16}}
-                        onClickIcon={
-                            changeDatePickerOpenStatus(FROM, 'exposureMin', getExposureMin(), getExposureTimeMode(), (value) => {
-                                /* NOTE: if we don't do timeMode: expTimeMode - we can't see the current time mode for this field (when new) */
-                                setExposureMin(value, {timeMode: getExposureTimeMode()});
-                            })}
-                        value={initArgs?.urlApi?.exposureMin || getExposureMin()}
-                    />
-                </div>
-            </div>
-            <div style={{display: 'flex', marginTop: 5}}>
-                <div title='End Time'
-                     style={{display: 'inline-block', paddingRight: '4px', width: SpatialLableSaptail}}>End
-                    Time
-                </div>
-                <div style={{width: Width_Time_Wrapper}}>
-                    <TimePanel
-                        fieldKey='exposureMax' timeMode={getExposureTimeMode()} icon={icon}
-                        tooltip={"'Exposure end to' time (t_max)"}
-                        feedbackStyle={{height: 100}}
-                        inputWidth={Width_Column} inputStyle={{overflow: 'auto', height: 16}}
-                        onClickIcon={changeDatePickerOpenStatus(TO, 'exposureMax', getExposureMax(), getExposureTimeMode(), (value) => {
-                            setExposureMax(value, {timeMode: getExposureTimeMode()});
-                        })}
-                        value={initArgs?.urlApi?.exposureMax || getExposureMax()}
-                    />
-                </div>
-            </div>
-        </div>
-    );
-}
 
 function ExposureSince({initArgs, turnOnPanel}) {
 

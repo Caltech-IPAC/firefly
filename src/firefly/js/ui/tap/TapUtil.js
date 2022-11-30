@@ -9,9 +9,7 @@ import {getProp, hashCode} from '../../util/WebUtil.js';
 const logger = Logger('TapUtil');
 const qFragment = '/sync?REQUEST=doQuery&LANG=ADQL&';
 
-export const  MJD = 'mjd';
-export const  ISO = 'iso';
-export const TAP_PANEL_GROUP_KEY = 'TAP_PANEL_GROUP_KEY';
+export const ADQL_LINE_LENGTH = 100;
 
 export function getMaxrecHardLimit() {
     const defaultValue = Number.parseInt(getProp('tap.maxrec.hardlimit'));

@@ -1,10 +1,9 @@
-import React, {Fragment, useEffect, useRef, useState} from 'react';
+import React, {Fragment, useContext, useEffect, useRef, useState} from 'react';
 import SplitPane from 'react-split-pane';
-import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {getColumnValues} from '../../tables/TableUtil.js';
 import {matchesObsCoreHeuristic} from '../../util/VOAnalyzer';
+import {FieldGroupCtx} from '../FieldGroup.jsx';
 import {HelpIcon} from '../HelpIcon';
-
 import {SplitContent} from '../panel/DockLayoutPanel';
 import {useFieldGroupMetaState} from '../SimpleComponent.jsx';
 import {AdvancedADQL} from './AdvancedADQL.jsx';
@@ -12,14 +11,11 @@ import {NameSelect} from './Select.jsx';
 
 import {TableColumnsConstraints, TableColumnsConstraintsToolbar} from './TableColumnsConstraints.jsx';
 import {SpatialPanelWidth} from './TableSearchHelpers.jsx';
-
 import {TableSearchMethods} from './TableSearchMethods.jsx';
+import { defTapBrowserState, loadTapColumns, loadTapSchemas, loadTapTables, tapHelpId, } from './TapUtil.js';
 
 
 import './TableSelectViewPanel.css';
-import {
-    defTapBrowserState, loadTapColumns, loadTapSchemas, loadTapTables, TAP_PANEL_GROUP_KEY, tapHelpId,
-} from './TapUtil.js';
 
 
 const SCHEMA_TIP= 'Select a table collection (TAP ‘schema’); type to search the schema names and descriptions.';
@@ -42,7 +38,7 @@ export function AdqlUI({serviceUrl}) {
 
             <div className='expandable'>
                 <div style={{flexGrow: 1}}>
-                    <AdvancedADQL groupKey={TAP_PANEL_GROUP_KEY} adqlKey='adqlQuery' defAdqlKey='defAdqlKey' tblNameKey='tableName' serviceUrl={serviceUrl}/>
+                    <AdvancedADQL adqlKey='adqlQuery' defAdqlKey='defAdqlKey' tblNameKey='tableName' serviceUrl={serviceUrl}/>
                 </div>
             </div>
         </div>
@@ -66,6 +62,7 @@ export function BasicUI(props) {
     const initState = getTapBrowserState();
     const [error, setError] = useState(undefined);
     const mountedRef = useRef(false);
+    const {setVal}= useContext(FieldGroupCtx);
     const [serviceUrl, serviceUrlRef, setServiceUrl] = useStateRef(initState.serviceUrl || props.serviceUrl);
     const [schemaName, schemaRef, setSchemaName] = useStateRef(initState.schemaName || props.initArgs?.urlApi?.schema);
     const [tableName, tableRef, setTableName] = useStateRef(initState.tableName || props.initArgs?.urlApi?.table);
@@ -82,14 +79,14 @@ export function BasicUI(props) {
     const splitDef = SpatialPanelWidth+80;
     const splitMax = SpatialPanelWidth+80;
 
-    const loadSchemas = (requestServiceUrl, requestSchemaName=undefined, requestTableName=undefined) => {
+    const loadSchemas = (requestServiceUrl, requestSchemaName=undefined) => {
         setError(undefined);
         setSchemaOptions(undefined);
         setTableName(undefined);
         setTableOptions(undefined);
         setColumnsModel(undefined);
         setObsCoreEnabled(undefined);
-        dispatchValueChange({groupKey: TAP_PANEL_GROUP_KEY, fieldKey: 'tableName', value: undefined});
+        setVal('tableName',undefined);
         // update state for higher level components that might rely on obsCoreTables
 
         loadTapSchemas(requestServiceUrl).then((tableModel) => {
@@ -128,7 +125,7 @@ export function BasicUI(props) {
         setTableName(undefined);
         setTableOptions(undefined);
         setColumnsModel(undefined);
-        dispatchValueChange({groupKey: TAP_PANEL_GROUP_KEY, fieldKey: 'tableName', value: undefined});
+        setVal('tableName',undefined);
 
         loadTapTables(requestServiceUrl, requestSchemaName).then((tableModel) => {
             if (!mountedRef.current) {
@@ -153,14 +150,13 @@ export function BasicUI(props) {
                 });
                 setTableName(requestTableName);
                 setTableOptions(tableOptions);
-                dispatchValueChange({groupKey: TAP_PANEL_GROUP_KEY, fieldKey: 'tableName', value: requestTableName});
+                setVal('tableName',requestTableName);
             }
         });
     };
 
     const loadColumns = (requestServiceUrl, requestSchemaName, requestTableName) => {
         setColumnsModel(undefined);
-        //dispatchValueChange({groupKey: gkey, fieldKey: 'columnsModel', value: undefined});
         loadTapColumns(requestServiceUrl, requestSchemaName, requestTableName).then((columnsModel) => {
             if (!mountedRef.current) {
                 return;
@@ -250,7 +246,7 @@ export function BasicUI(props) {
                             value={tableName}
                             onSelect={(selectedTapTable) => {
                                 setTableName(selectedTapTable);
-                                dispatchValueChange({groupKey: TAP_PANEL_GROUP_KEY, fieldKey: 'tableName', value: selectedTapTable});
+                                setVal('tableName',selectedTapTable);
                             }}
                         />
                     </div>

@@ -9,7 +9,7 @@ export const ConstraintContext = React.createContext({});
  * @param {TapBrowserState} tapBrowserState
  * @returns {Object}
  */
-export function getConstraints(tapBrowserState) {
+export function getHelperConstraints(tapBrowserState) {
     const {constraintFragments}= tapBrowserState;
     const adqlConstraints = [];
     const adqlConstraintErrorsArray = [];

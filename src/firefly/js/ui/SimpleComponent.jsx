@@ -168,6 +168,7 @@ export function useFieldGroupRerender(fldNameAry=[], gk) {
     const setValueToState= useState(undefined)[1]; // use state here is just to force re-renders on value change
     let mounted= true;
     const getFs= () => fldNameAry.length ? makeFieldsObject(groupKey,fldNameAry) : getGroupFields(groupKey);
+    // const getFs= () => getGroupFields(groupKey);
     let value= getFs();
     useEffect(() => {
         const updater= () => {

@@ -164,11 +164,11 @@ export function makeFieldsObject(groupKey,fldNameAry) {
  */
 export function setField(groupKey,fieldKey,fieldUpdates) {
     if (!fieldUpdates) return;
-    const cField= getField(groupKey,fieldKey);
-    if (!cField || !fieldUpdates) return;
+    const cField= getField(groupKey,fieldKey) ?? {};
+    if (!fieldUpdates) return;
     const originObj= pick(cField,Object.keys(fieldUpdates));
     if (shallowequal(originObj,fieldUpdates)) return;
-    dispatchValueChange({...cField, ...fieldUpdates});
+    dispatchValueChange({...cField, ...fieldUpdates, groupKey, fieldKey});
 }
 
 /**

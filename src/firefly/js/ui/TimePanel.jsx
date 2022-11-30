@@ -2,15 +2,15 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {memo} from 'react';
-import PropTypes from 'prop-types';
-import {InputFieldView} from './InputFieldView.jsx';
-import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
-import {convertISOToMJD, convertMJDToISO, validateDateTime, validateMJD, fMoment} from './DateTimePickerField.jsx';
-import {MJD, ISO} from './tap/TapUtil.js';
-
-
 import CALENDAR from 'html/images/datetime_picker_16x16.png';
+import PropTypes from 'prop-types';
+import React, {memo} from 'react';
+import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
+import {InputFieldView} from './InputFieldView.jsx';
+import {
+    convertISOToMJD, convertMJDToISO, formatMoment, formFeedback, ISO, isTimeUndefined, MJD, validateDateTime, validateMJD
+} from './TimeUIUtil.js';
+
 const invalidDate = 'invalid date/time';
 
 const iconMap = {'calendar': {icon: CALENDAR, title: 'Show the calendar for selecting date/time'}};
@@ -164,7 +164,7 @@ function handleOnChange(ev, params, fireValueChange) {
     if (timeMode === ISO) {
         validateRet = validateDateTime(v);
         if (validateRet.valid) {
-            result.UTC = v ? (fMoment(validateRet.moment)): v;
+            result.UTC = v ? (formatMoment(validateRet.moment)): v;
             result.MJD = convertISOToMJD(validateRet.moment);
         }
     } else if (timeMode === MJD) {
@@ -179,7 +179,7 @@ function handleOnChange(ev, params, fireValueChange) {
         result.MJD = '';
         result.message = invalidDate;
     }
-    const showHelp = isShowHelp(result.UTC, result.MJD);
+    const showHelp = isTimeUndefined(result.UTC, result.MJD);
     const feedback = showHelp ? '' : formFeedback(result.UTC, result.MJD);
 
     // time panel show v as display value, feedback shows standard moment utc string
@@ -189,17 +189,6 @@ function handleOnChange(ev, params, fireValueChange) {
                     showHelp, feedback,
                     timeMode});
 }
-
-export const formFeedback = (utc, mjd) => {
-    return isShowHelp(utc, mjd) ? '' :
-            '<div style="font-size:11px">' +
-                    `<i>UTC:&nbsp</i>${utc}<br/>`+
-                    `<div style="padding-top: 6px"><i>MJD:&nbsp</i>${mjd}</div>`+'</div>';
-};
-
-export const isShowHelp = (utc, mjd) => {
-    return !utc && !mjd;
-};
 
 export const TimePanel= memo( (props) => {
     const {viewProps, fireValueChange}=  useFieldGroupConnector(props);

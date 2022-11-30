@@ -89,6 +89,12 @@ const makeConstraints = function(hasSubType, fldObj) {
             siaConstraintErrors.push('Not able to translate dataproduct_subtype to SIAV2 query');
         }
     }
+
+    if (!obsCoreCollection?.value && !obsCoreCalibrationLevel?.value &&
+        !obsCoreInstrumentName?.value && !obsCoreSubType?.value && !obsCoreTypeSelection?.value) {
+        errList.addError('at least one field must be populated');
+    }
+
     const errAry= errList.getErrors();
     return { valid: errAry.length===0, errAry, adqlConstraintsAry, siaConstraints, siaConstraintErrors };
 };

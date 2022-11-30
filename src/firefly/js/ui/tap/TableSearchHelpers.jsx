@@ -1,18 +1,13 @@
 import HelpIcon from 'firefly/ui/HelpIcon';
 import {isEqual} from 'lodash';
+import Prism from 'prismjs';
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, {useEffect, useRef} from 'react';
 import {getAppOptions} from '../../api/ApiUtil.js';
-import {isDialogVisible} from '../../core/ComponentCntlr.js';
 import {CheckboxGroupInputField} from '../CheckboxGroupInputField.jsx';
-import {
-    convertISOToMJD, convertMJDToISO, DateTimePicker, fMoment, tryConvertToMoment, validateDateTime, validateMJD
-} from '../DateTimePickerField.jsx';
 import {FieldGroupCollapsible} from '../panel/CollapsiblePanel.jsx';
-import {POPUP_DIALOG_ID, showOptionsPopup} from '../PopupUtil.jsx';
 import {useFieldGroupValue} from '../SimpleComponent.jsx';
-import {formFeedback, isShowHelp} from '../TimePanel.jsx';
-import {ISO, MJD} from './TapUtil.js';
+
 export const HeaderFont = {fontSize: 12, fontWeight: 'bold', alignItems: 'center'};
 
 // Style Helpers
@@ -20,61 +15,13 @@ export const LeftInSearch = 24;
 export const LabelWidth = 110;
 export const LableSaptail = 110;
 export const SpatialWidth = 440;
-export const SpatialLableSaptail = LableSaptail + 45 /* padding of target */ - 4 /* padding of label */;
 export const Width_Column = 175;
 export const SmallFloatNumericWidth = 12;
 export const Width_Time_Wrapper = Width_Column + 30;
 export const SpatialPanelWidth = Math.max(Width_Time_Wrapper * 2, SpatialWidth) + LabelWidth + 10;
-// field constants
-export const  FROM = 0;
-export const  TO  = 1;
 
 const DEF_ERR_MSG= 'Constraints Error';
 
-
-export const changeDatePickerOpenStatus = (loc, timeKey, currentValue, currentTimeMode, setTimeCallback) => {
-    const currentTimeInfo = getTimeInfo(currentTimeMode, currentValue, true, '');
-    const doSetTime = function(moment) {
-        const timeInfo = getTimeInfo(ISO, fMoment(moment), true, '');
-        setTimeCallback(timeInfo[currentTimeMode].value);
-    };
-    return () => {
-        const show = !isDialogVisible(POPUP_DIALOG_ID);
-        const title = loc === FROM ? 'select "from" time' : 'select "to" time';
-        const content = (
-            <DateTimePicker showInput={false}
-                            openPicker={true}
-                            value={currentTimeInfo[ISO].value}
-                            onChange={doSetTime}
-                            inputStyle={{marginBottom: 3}} />);
-
-        showOptionsPopup({content, title, modal: true, show});
-    };
-};
-
-export const getTimeInfo = function(timeMode, value, valid, message){
-    const updateValue = timeMode === MJD ? value : (valid ? fMoment(tryConvertToMoment(value, true)): value);
-    const isoVal = timeMode === MJD ? convertMJDToISO(updateValue) : updateValue;
-    const mjdVal = timeMode === ISO ? convertISOToMJD(updateValue) : updateValue;
-    const isoValInfo = timeMode === MJD ? validateDateTime(isoVal) : {value: isoVal, valid, message};
-    const mjdValInfo = timeMode === ISO ? validateMJD(mjdVal) : {value: mjdVal, valid, message};
-    return {[ISO]: isoValInfo, [MJD]: mjdValInfo};
-};
-
-
-export const onChangeTimeMode = (newTimeMode, getter, setter) => {
-    if (!getter(true)) return;
-    const {value,valid,message, timeMode,...rest} = getter(true);
-    const timeInfo = getTimeInfo(timeMode, value, valid, message);
-    const newTimeInfo = timeInfo[newTimeMode];
-    if (!newTimeInfo) return;
-
-    const showHelp = isShowHelp(timeInfo[ISO].value, timeInfo[MJD].value);
-    const feedback = formFeedback(timeInfo[ISO].value, timeInfo[MJD].value);
-
-    setter (newTimeInfo.value, {valid:newTimeInfo.valid,
-        ...rest, message: newTimeInfo.message, timeMode: newTimeMode, showHelp, feedback});
-};
 
 /**
  * make a FieldErrorList object
@@ -88,9 +35,7 @@ export const makeFieldErrorList = () => {
     return {checkForError,addError,getErrors};
 };
 
-export const getPanelPrefix = (panelTitle) => {
-    return panelTitle[0].toLowerCase() + panelTitle.substr(1);
-};
+export const getPanelPrefix = (panelTitle) => panelTitle[0].toLowerCase() + panelTitle.substr(1);
 
 
 function getPanelAdqlConstraint(panelActive, panelTitle,constraintsValid,adqlConstraintsAry,firstMessage, defErrorMessage=DEF_ERR_MSG) {
@@ -145,7 +90,7 @@ function constrainResultDiffer(c1, c2) {
 
 
 
-export function Header({title, helpID='', checkID, message, enabled=false, panelValue=undefined}) {
+function Header({title, helpID='', checkID, message, enabled=false, panelValue=undefined}) {
     const tooltip = title + ' search is included in the query if checked';
     return (
         <div style={{display: 'inline-flex', alignItems: 'center'}} title={title + ' search'}>
@@ -171,7 +116,7 @@ Header.propTypes = {
     enabled: PropTypes.bool
 };
 
-export function InternalCollapsibleCheckHeader({title, helpID, children, fieldKey, checkKey, message, initialState, initialStateChecked, panelValue}) {
+function InternalCollapsibleCheckHeader({title, helpID, children, fieldKey, checkKey, message, initialState, initialStateChecked, panelValue}) {
 
     return (
         <FieldGroupCollapsible header={<Header title={title} helpID={helpID}
@@ -218,35 +163,42 @@ export function makeCollapsibleCheckHeader(base) {
 
 
 
-export function DebugObsCore({constraintResult}) {
+export function DebugObsCore({constraintResult, includeSia=false}) {
+
+    const {current:divElementRef}= useRef({divElement:undefined});
+
+    useEffect(() => {
+        divElementRef.divElement&& Prism.highlightAllUnder(divElementRef.divElement);// highlight help text/code snippets
+    });
     if (!getAppOptions().tapObsCore?.debug) return false;
+
+    const siaFrag= (
+        <span>
+            sia: {constraintResult?.siaConstraintErrors?.length ?
+            `Error: ${constraintResult?.siaConstraintErrors?.join(' ')}` :
+            constraintResult?.siaConstraints?.join('&')}
+        </span>
+
+    );
+
+    const adqlFrag= (
+        <code className='language-sql' style={{   background: 'none' }}>
+            {constraintResult?.adqlConstraint}
+        </code>
+    );
+
     return (
-        <div>
-            adql fragment: {constraintResult?.adqlConstraint} <br/>
-            sia fragment: {constraintResult?.siaConstraintErrors?.length ?
-                           `Error: ${constraintResult?.siaConstraintErrors?.join(' ')}` :
-                           constraintResult?.siaConstraints?.join('&')}
+        <div ref={(c) => divElementRef.divElement= c} style={{marginTop:5}}>
+            <span style={{fontStyle:'italic', fontSize:'smaller'}}>adql: </span>
+            <span>
+                {constraintResult?.adqlConstraint ? adqlFrag : <span>&#8709;</span>}
+            </span> <br/>
+            {includeSia && siaFrag}
         </div> );
 }
 
 
 
-
-/**
- * @param {FieldGroupField} timeMinField
- * @param {FieldGroupField} timeMaxField
- * @returns {{minValue: string, maxValue: string, minGreaterThanMax: boolean, isoRange: number[], mjdRange: String[]}}
- */
-export function checkExposureTime(timeMinField, timeMaxField) {
-    const {mjd: minMjd} = getTimeInfo(timeMinField.timeMode, timeMinField.value, timeMinField.valid, timeMinField.message);
-    const {mjd: maxMjd} = getTimeInfo(timeMaxField.timeMode, timeMaxField.value, timeMaxField.valid, timeMaxField.message);
-    const minValue = minMjd.value.length ? minMjd.value : '-Inf';
-    const maxValue = maxMjd.value.length ? maxMjd.value : '+Inf';
-    const mjdRange = [Number(minValue) > 0 ? Number(minValue) : NaN, Number(maxValue) > 0 ? Number(maxValue) : NaN];
-    const isoRange = [convertMJDToISO(mjdRange[0]), convertMJDToISO(mjdRange[0])];
-    const minGreaterThanMax = minValue && maxValue && (Number(minValue) > Number(maxValue));
-    return {minValue, maxValue, mjdRange, isoRange, minGreaterThanMax};
-}
 
 
 /**
