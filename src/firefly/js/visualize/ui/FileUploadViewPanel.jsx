@@ -67,7 +67,6 @@ export function FileUploadViewPanel({setSubmitText, acceptMoc}) {
 
     const isWsUpdating          = useStoreConnector(() => isAccessWorkspace());
     const [getLoadingOp]= useFieldGroupValue(uploadOptions);
-    const loadingOp= getLoadingOp();
 
     const summaryTblId = groupKey;
     const detailsTblId = groupKey + '-Details';
@@ -79,6 +78,7 @@ export function FileUploadViewPanel({setSubmitText, acceptMoc}) {
     const {message, analysisResult, report, summaryModel, detailsModel, prevAnalysisResult} =
         useStoreConnector(() => {
             const loadingOp= getLoadingOp();
+            console.log('loadingOp: ' + loadingOp);
             const {analysisResult, message}= getField(groupKey, loadingOp) || {};
             const summaryTbl= getTblById(summaryTblId);
             return getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, message, getUploadMetaInfo());
@@ -111,7 +111,7 @@ export function FileUploadViewPanel({setSubmitText, acceptMoc}) {
     }, [detailsModel]);
 
     useEffect(() => {
-        setSubmitText(getLoadButtonText(summaryTblId,report,detailsModel,summaryModel));
+        setSubmitText?.(getLoadButtonText(summaryTblId,report,detailsModel,summaryModel));
     },[report,setSubmitText, summaryModel, detailsModel]);
 
     let aWStatusKey;
@@ -163,7 +163,7 @@ export function FileUploadViewPanel({setSubmitText, acceptMoc}) {
                             options={uploadMethod}
                             wrapperStyle={{fontWeight: 'bold', fontSize: 12}}/>
                         <div style={{paddingTop: '10px', display:'flex', flexDirection:'row', justifyContent:'space-between'}}>
-                            <UploadOptions {...{loadingOp, isLoading, isWsUpdating,  uploadKey}}/>
+                            <UploadOptions {...{uploadSrc:getLoadingOp(), isLoading, isWsUpdating,  uploadKey}}/>
                             {report && <CompleteButton text='Clear File' groupKey={NONE}
                                                        onSuccess={() =>{
                                                            clearReport();
@@ -174,7 +174,7 @@ export function FileUploadViewPanel({setSubmitText, acceptMoc}) {
                     </div>
                     <FileAnalysis {...{report, summaryModel, detailsModel,tablesOnly, isMoc, UNKNOWN_FORMAT, acceptMoc}}/>
                     <ImageDisplayOption summaryTblId={summaryTblId} currentReport={report} currentSummaryModel={summaryModel}/>
-                    <TableDisplayOption isMoc={isMoc} summaryTblId={summaryTblId} currentReport={report} currentSummaryModel={summaryModel}/>
+                    <TableDisplayOption isMoc={isMoc} summaryTblId={summaryTblId} currentReport={report} currentSummaryModel={summaryModel} acceptMoc={acceptMoc}/>
                 </div>
                 {(isLoading) && <LoadingMessage message={loadingMsg}/>}
         </div>
@@ -362,14 +362,14 @@ function getDetailsModel(tableModel, report, detailsTblId, UNKNOWN_FORMAT) {
     return details;
 }
 
-function TableDisplayOption({isMoc, summaryTblId, currentReport, currentSummaryModel}) {
+function TableDisplayOption({isMoc, summaryTblId, currentReport, currentSummaryModel, acceptMoc}) {
 
     const selectedTables = getFileFormat(currentReport) ?
         getSelectedRows('Table', summaryTblId, currentReport, currentSummaryModel) : [];
 
     if ( selectedTables.length < 1) return null;
 
-    if (isMoc) {
+    if (isMoc && !acceptMoc) {
         const options= [{label:'Load as MOC Overlay', value:'moc'}, {label:'Load as Table', value:'table'}];
         return (
             <div style={{padding: '5px 0 5px 0'}}>
@@ -381,6 +381,10 @@ function TableDisplayOption({isMoc, summaryTblId, currentReport, currentSummaryM
 
             </div>
         );
+    }
+
+    else if (acceptMoc) { //Upload Panel in the HiPS/MOC 'Add MOC Layer' tab
+        return (null);
     }
 
     return (
@@ -416,7 +420,7 @@ function ImageDisplayOption({summaryTblId, currentReport, currentSummaryModel}) 
     );
 }
 
-function UploadOptions({uploadSrc=FILE_ID, isLoading, isWsUpdating, uploadKey}) {
+function UploadOptions({uploadSrc, isLoading, isWsUpdating, uploadKey}) {
 
     const [getUploadMetaInfo, setUploadMetaInfo]= useFieldGroupMetaState({isLoading:undefined, statusKey: undefined });
     const onLoading = (loading, statusKey) => {
