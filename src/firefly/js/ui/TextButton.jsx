@@ -6,10 +6,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-export const TextButton = ({text, style, children, ...rest}) => {
+export const TextButton = ({text, style, children, disabled, ...rest}) => {
     const val = text || children || '';
+    const className = 'button text' + (disabled ? ' disabled' : '');
     return (
-        <div className='button text' style={style} {...{...rest}}>{val}</div>
+        <div className={className} style={style} {...{...rest}}>{val}</div>
     );
 };
 

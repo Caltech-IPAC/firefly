@@ -62,10 +62,10 @@ function getChartActions({chartId, tbl_id}) {
 }
 
 
-function onChartAction({chartAction, chartId, hideDialog, renderTreeId}) {
+function onChartAction({chartAction, tbl_id, chartId, hideDialog, renderTreeId}) {
     return (fields) => {
         const {activeTrace, data, fireflyData} = getChartData(chartId);
-        const tbl_id = getTblIdFromChart(chartId, activeTrace);
+        tbl_id = tbl_id || getTblIdFromChart(chartId, activeTrace);
 
         switch (chartAction) {
             case CHART_ADDNEW:

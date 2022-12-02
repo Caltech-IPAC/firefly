@@ -9,7 +9,7 @@ import {getMultiViewRoot, getViewerItemIds} from '../../visualize/MultiViewCntlr
 import {dispatchChartAdd, getChartData} from '../ChartsCntlr.js';
 import {getTblIdFromChart, uniqueChartId} from '../ChartUtil.js';
 import {TextButton} from '../../ui/TextButton.jsx';
-import {PINNED_VIEWER_ID, PINNED_GROUP, PINNED_CHART_PREFIX} from './ChartWorkArea.jsx';
+import {PINNED_VIEWER_ID, PINNED_GROUP, PINNED_CHART_PREFIX} from './PinnedChartPanel.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {basicOptions, evalChangesFromFields} from './options/BasicOptions.jsx';
@@ -24,6 +24,7 @@ import {showInfoPopup, showOptionsPopup} from '../../ui/PopupUtil.jsx';
 import {getSpectrumDM} from '../../util/VOAnalyzer.js';
 import {applyUnitConversion} from './options/SpectrumOptions.jsx';
 import {canUnitConv} from '../dataTypes/SpectrumUnitConversion.js';
+import {SelectInfo} from 'firefly/tables/SelectInfo.js';
 
 
 /**
@@ -59,7 +60,6 @@ function addTracesTitle(chartId, current=[]) {
     data.forEach((d, idx) => {
         let title = d?.name;
         if (!title && idx === 0) title = layout?.title?.text;
-        if (!title) title = `Trace ${current.length}`;
         current.push(title);
     });
     return current;
@@ -90,6 +90,10 @@ function createTableModel(showAll, tbl_id) {
     const table =  {title: 'Charts to combine', tableData:{columns, data}, totalRows: data.length};
     table.tbl_id = tbl_id;
     set(table, 'request.tbl_id', table.tbl_id);
+    if (table.totalRows === 1) {
+        table.selectInfo  = SelectInfo.newInstance({selectAll:true, rowCount:1}).data;
+    }
+
     return table;
 }
 
@@ -146,13 +150,15 @@ const CombineChartDialog = ({onComplete}) => {
     );
 };
 
-const SelChartOpt = ({groupKey, ctitle, traces, idx, totalTraces}) => {
-    const key = `cOpt-${idx}`;
+let totalTraces = 0;
 
-    const ctraceIdx = totalTraces - traces.length;
+const SelChartOpt = ({groupKey, ctitle, traces, idx}) => {
+    const key = `cOpt-${idx}`;
 
     const TraceOpt = ({traceNum, title}) => {
         const {Name, Color} = basicOptions({activeTrace: traceNum, groupKey, fieldProps:{labelWidth: 32, size: 40}});
+        if (!title || title.toLowerCase().startsWith('trace '))  title = `trace ${traceNum}`;
+
         return (
             <div className='FieldGroup__vertical'>
                 <Name initialState={{value: title}}/>
@@ -163,13 +169,13 @@ const SelChartOpt = ({groupKey, ctitle, traces, idx, totalTraces}) => {
     
     return (
         <CollapsiblePanel componentKey={key} header={ctitle} initialState= {{ value:'closed' }}>
-            {traces.map((title, idx) => <TraceOpt {...{key:idx, traceNum: ctraceIdx+idx, title}}/>)}
+            {traces.map((title, idx) => <TraceOpt {...{key:idx, traceNum: totalTraces++, title}}/>)}
         </CollapsiblePanel>
     );
 
 };
 
-const SelChartProps = ({tbl_id, groupKey}) => {
+function SelChartProps ({tbl_id, groupKey}) {
 
     useStoreConnector(() => getTblById(tbl_id)?.selectInfo);     // rerender when selectInfo changes
     const selChartId = getSelChartId();
@@ -183,17 +189,17 @@ const SelChartProps = ({tbl_id, groupKey}) => {
     };
 
     const charts = [getSelCharInfo(selChartId)];
+    totalTraces = 0;
 
     selectedData.tableData.data.map( (tr) => tr[3])         // get all selected chartId
         .forEach((id) => charts.push(getSelCharInfo(id)));
 
-    let totalTraces=0;
     return (
         <React.Fragment>
             {
                 charts.map(([chartId, ctitle, traces], idx) => {
-                    totalTraces += traces.length;
-                    return <SelChartOpt key={idx} {...{groupKey, ctitle, traces, idx, totalTraces}}/>;
+                    if (idx === 0) ctitle = <b>{ctitle}</b>;
+                    return <SelChartOpt key={idx} {...{groupKey, ctitle, traces, idx}}/>;
                 })
             }
         </React.Fragment>

@@ -14,7 +14,7 @@ import {showOptionsPopup} from '../../ui/PopupUtil.jsx';
 import {showChartsDialog} from './ChartSelectPanel.jsx';
 import {FilterEditorWrapper} from './FilterEditorWrapper.jsx';
 import {isScatter2d} from '../ChartUtil.js';
-import {findViewerWithItemId, getMultiViewRoot, PLOT2D} from '../../visualize/MultiViewCntlr.js';
+import {dispatchChangeViewerLayout, findViewerWithItemId, getLayoutType, getMultiViewRoot, PLOT2D} from '../../visualize/MultiViewCntlr.js';
 
 
 export function PlotlyToolbar({chartId, expandable, expandedMode}) {
@@ -337,11 +337,16 @@ function OptionsBtn({style={}, chartId}) {
 
 
 function ExpandBtn({style={}, chartId} ){
-    const expandedViewerId= findViewerWithItemId(getMultiViewRoot(), chartId,PLOT2D);
+    const expand = () => {
+        const expandedViewerId= findViewerWithItemId(getMultiViewRoot(), chartId,PLOT2D);
+        const layout = getLayoutType(getMultiViewRoot(), expandedViewerId);                // record the current layout before expanding
+        dispatchChartExpanded({chartId, expandedViewerId, layout});
+        dispatchChangeViewerLayout(expandedViewerId,'single');                      // auto-switch to single view so that the active chart is fully expanded
+        dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.xyPlots);
+    };
+
     return (
-        <div style={style} onClick={() => {   dispatchChartExpanded({chartId, expandedViewerId});
-                                              dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.xyPlots);
-                                          }}
+        <div style={style} onClick={expand}
              title='Expand this panel to take up a larger area'
              className='ChartToolbar__expand'/>
     );

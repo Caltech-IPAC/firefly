@@ -37,10 +37,10 @@ import {CombineChart} from './CombineChart.jsx';
 export const PINNED_CHART_PREFIX = 'pinned-';
 export const PINNED_VIEWER_ID = 'PINNED_CHARTS_VIEWER';
 export const PINNED_GROUP = PINNED_VIEWER_ID;                 // use same id for now.
-const logger = Logger('ChartWorkArea');
+const logger = Logger('PinnedChartPanel');
 const PINNED_MAX = 12;
 
-export const ChartWorkArea = (props) => {
+export const PinnedChartPanel = (props) => {
     const {viewerId, tbl_group} = props;
 
     const chartIds = useStoreConnector(() =>  getChartIdsInGroup(PINNED_GROUP));
@@ -109,7 +109,7 @@ export const ChartWorkArea = (props) => {
         );
     }
 };
-ChartWorkArea.propTypes = {
+PinnedChartPanel.propTypes = {
     expandedMode: PropTypes.bool,
     closeable: PropTypes.bool,
     chartId: PropTypes.string,
@@ -197,13 +197,15 @@ export const ShowTable = ({tbl_group}) => {
         const chartId = getActiveViewerItemId(PINNED_VIEWER_ID, true);
         return getTblIdFromChart(chartId);
     });
+    const activeTblId = useStoreConnector(() => getActiveTableId());
 
     const showTable = () => dispatchActiveTableChanged(activeChartTblId, tbl_group);
 
     const {sideBySide=false, selectedIdx} = getComponentState(PINNED_VIEWER_ID);
     const canShowTable = activeChartTblId && (sideBySide || selectedIdx === 1);
+    const disabled = activeChartTblId === activeTblId;
 
-    return canShowTable ? <TextButton onClick={showTable} title='Show the table associated with this chart'>Show Table</TextButton> : null;
+    return canShowTable ? <TextButton disabled={disabled} onClick={showTable} title='Show the table associated with this chart'>Show Table</TextButton> : null;
 };
 
 export const ToggleLayout = () => {
