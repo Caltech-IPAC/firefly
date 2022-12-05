@@ -145,7 +145,7 @@ const defFireflyOptions = {
         minScatterGLRows: 1000,         // minimum number of points to use WebGL 'scattergl' instead of SVG 'scatter'
         singleTraceUI: false,           // by default we support multi-trace in UI
         upperLimitUI: false,            // by default user can not set upper limit column in scatter options
-        useChartWorkArea: false,        // true to use Chart container with 'pin' feature
+        allowPinnedCharts: false,        // true to use Chart container with 'pin' feature
         ui: {HistogramOptions: {fixedAlgorithm: undefined}}     // by default we allow both "uniform binning" and "bayesian blocks"
     },
     hips : {

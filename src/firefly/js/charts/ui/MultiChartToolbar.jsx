@@ -17,7 +17,7 @@ import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
 import {PagingControl} from '../../visualize/iv/ExpandedTools.jsx';
 import {ChartToolbar} from './ChartPanel';
 import {CloseButton} from '../../ui/CloseButton';
-import {dispatchSetLayoutMode, LO_MODE, LO_VIEW} from '../../core/LayoutCntlr';
+import {closeExpandedChart} from 'firefly/charts/ui/ChartsContainer.jsx';
 
 
 export function MultiChartToolbarStandard({viewerId, chartId, expandable, expandedMode,
@@ -61,13 +61,14 @@ const viewerTitleStyle= {
     alignSelf : 'center'
 };
 
-export function MultiChartToolbarExpanded({viewerId, chartId, expandable, expandedMode, closeable,
-    layoutType=getLayoutType(getMultiViewRoot(), viewerId),
-    activeItemId=getViewer(getMultiViewRoot(), viewerId)?.customData?.activeItemId}) {
+export function MultiChartToolbarExpanded({viewerId, chartId, expandable, expandedMode, closeable, layoutType, activeItemId}) {
+
+    layoutType = layoutType || getLayoutType(getMultiViewRoot(), viewerId);
+    activeItemId = activeItemId || getViewer(getMultiViewRoot(), viewerId)?.customData?.activeItemId;
 
     return (
         <div style={tbstyle}>
-            {closeable && <CloseButton onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>}
+            {closeable && <CloseButton onClick={() => closeExpandedChart(viewerId)}/>}
             <MultiChartExt {...{viewerId, layoutType, activeItemId}}/>
             <ChartToolbar {...{chartId, expandable, expandedMode}}/>
         </div>

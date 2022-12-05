@@ -85,10 +85,10 @@ export function getMinScatterGLRows() {
 }
 
 /**
- * @returns {boolean} return true if ChartWorkArea is used.
+ * @returns {boolean} return true if PinnedChartPanel is used.
  */
-export function useChartWorkArea() {
-    return getAppOptions()?.charts?.useChartWorkArea ?? false;
+export function allowPinnedCharts() {
+    return getAppOptions()?.charts?.allowPinnedCharts ?? false;
 }
 
 

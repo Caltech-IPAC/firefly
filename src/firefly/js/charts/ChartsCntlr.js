@@ -192,8 +192,8 @@ export function dispatchSetActiveTrace({chartId, activeTrace, dispatcher=flux.pr
  * @param {string} p.expandedViewerId- chart id
  * @param {Function} [p.dispatcher=flux.process] - only for special dispatching uses such as remote
  */
-export function dispatchChartExpanded({chartId, expandedViewerId, dispatcher=flux.process}) {
-    dispatcher( {type: CHART_UI_EXPANDED, payload: {chartId, expandedViewerId}});
+export function dispatchChartExpanded({dispatcher=flux.process, ...rest}) {
+    dispatcher( {type: CHART_UI_EXPANDED, payload: rest});
 }
 
 
@@ -755,8 +755,7 @@ export function getTraceSymbol(data, fireflyData, traceNum) {
 function reduceUI(state={}, action={}) {
     switch (action.type) {
         case (CHART_UI_EXPANDED) :
-            const {chartId, expandedViewerId}  = action.payload;
-            return updateSet(state, 'expanded', {chartId,expandedViewerId});
+            return updateSet(state, 'expanded', action.payload);
         case (CHART_REMOVE) :
             if (get(action.payload, 'chartId') === get(getExpandedChartProps(), 'chartId')) {
                 return omit(state, 'expanded');
@@ -924,8 +923,7 @@ export function dispatchError(chartId, traceNum, reason) {
 }
 
 export function getExpandedChartProps() {
-    const {chartId, expandedViewerId} = flux.getState()[CHART_SPACE_PATH]?.ui?.expanded ?? {};
-    return {chartId, expandedViewerId};
+    return  flux.getState()[CHART_SPACE_PATH]?.ui?.expanded ?? {};
 }
 
 

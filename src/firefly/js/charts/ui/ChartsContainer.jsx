@@ -7,16 +7,16 @@ import PropTypes from 'prop-types';
 import {isEqual, isEmpty} from 'lodash';
 
 import {LO_VIEW, LO_MODE, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
-import {PLOT2D, DEFAULT_PLOT2D_VIEWER_ID, dispatchAddViewerItems, dispatchRemoveViewerItems, dispatchUpdateCustom, getViewerItemIds, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
+import {PLOT2D, DEFAULT_PLOT2D_VIEWER_ID, dispatchAddViewerItems, dispatchRemoveViewerItems, dispatchUpdateCustom, getViewerItemIds, getMultiViewRoot, dispatchChangeViewerLayout} from '../../visualize/MultiViewCntlr.js';
 import {monitorChanges, findGroupByTblId, getActiveTableId, isFullyLoaded, } from '../../tables/TableUtil.js';
 import {TBL_RESULTS_ACTIVE, TABLE_LOADED, TABLE_SELECT} from '../../tables/TablesCntlr';
-import {CHART_ADD, CHART_REMOVE, getChartIdsInGroup, getChartData, dispatchChartAdd} from '../ChartsCntlr.js';
-import {getDefaultChartProps, useChartWorkArea} from '../ChartUtil.js';
+import {CHART_ADD, CHART_REMOVE, getChartIdsInGroup, getChartData, dispatchChartAdd, getExpandedChartProps} from '../ChartsCntlr.js';
+import {getDefaultChartProps, allowPinnedCharts} from '../ChartUtil.js';
 
 import {CloseButton} from '../../ui/CloseButton.jsx';
 import {ChartPanel, ChartToolbar} from './ChartPanel.jsx';
 import {MultiChartViewer, getActiveViewerItemId} from './MultiChartViewer.jsx';
-import {ChartWorkArea} from 'firefly/charts/ui/ChartWorkArea';
+import {PinnedChartPanel} from 'firefly/charts/ui/PinnedChartPanel.jsx';
 
 
 
@@ -68,7 +68,9 @@ function ensureDefaultChart(tbl_id) {
 function doUpdateViewer(viewerId, tblGroup, chartId, useOnlyChartsInViewer) {
     const currentIds = getViewerItemIds(getMultiViewRoot(), viewerId);
     if (useOnlyChartsInViewer) {
-        dispatchUpdateCustom(viewerId, {activeItemId: currentIds[0]});
+        if (!getActiveViewerItemId(viewerId)) {
+            dispatchUpdateCustom(viewerId, {activeItemId: currentIds[0]});
+        }
         return;
     }
     const tblId = getActiveTableId(tblGroup);
@@ -96,9 +98,9 @@ export const ChartsContainer = (props)  =>{
     const {chartId, expandedMode} = props;
 
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    return expandedMode || chartId || !useChartWorkArea() ?
+    return expandedMode || chartId || !allowPinnedCharts() ?
         <DefaultChartsContainer {...props}/>:
-        <ChartWorkArea {...props}/> ;
+        <PinnedChartPanel {...props}/> ;
 };
 
 ChartsContainer.propTypes = {
@@ -149,7 +151,8 @@ export const DefaultChartsContainer = (props) => {
                     key: 'chart-expanded',
                     closeable,
                     chartId,
-                    noChartToolbar
+                    noChartToolbar,
+                    viewerId
                 }}/>
             );
         } else {
@@ -186,10 +189,10 @@ ChartsContainer.propTypes = {
 };
 
 function ExpandedView(props) {
-    const {closeable, chartId, noChartToolbar} = props;
+    const {closeable, chartId, viewerId} = props;
     return (
         <div style={{display: 'flex', flexDirection: 'column', height: '100%'}}>
-            <ChartToolbarExt {...{chartId, closeable}}/>
+            <ChartToolbarExt {...{chartId, closeable, viewerId}}/>
             <div style={{position: 'relative', flexGrow: 1}}>
                 <ChartPanel {...{
                     key: 'expanded-'+chartId,
@@ -206,16 +209,23 @@ function ExpandedView(props) {
 ExpandedView.propTypes = {
     closeable: PropTypes.bool,
     chartId: PropTypes.string,
-    noChartToolbar : PropTypes.bool
+    noChartToolbar : PropTypes.bool,
+    viewerId: PropTypes.string
 };
 
 
-const ChartToolbarExt = ({chartId, noChartToolbar, closeable=true}) => {
+export function closeExpandedChart(viewerId) {
+    const {layout} = getExpandedChartProps();
+    viewerId && layout && dispatchChangeViewerLayout(viewerId, layout);                      // switch back to previous layout if exists
+    dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none);
+}
+
+const ChartToolbarExt = ({chartId, viewerId, noChartToolbar, closeable=true}) => {
     if (!closeable && noChartToolbar) return null;
 
     return (
         <div style={{display: 'inline-flex', justifyContent: 'space-between'}}>
-            {closeable && <CloseButton onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>}
+            {closeable && <CloseButton onClick={() => closeExpandedChart(viewerId)}/>}
             {!noChartToolbar && <ChartToolbar {...{chartId, expandable:false, expandedMode:true}}/>}
         </div>
     );

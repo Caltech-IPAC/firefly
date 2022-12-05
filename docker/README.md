@@ -117,13 +117,13 @@ Firefly has many configurable runtime parameters.  For more information, run
 
     docker run --rm ipac/firefly:latest --help
 
-There are many `docker run` examples on how to use these parameters.  Consider add them into a docker-compose.yml for 
+There are many `docker run` examples on how to use these parameters.  Consider add them into a compose.yml for 
 easy operation.  For information on how to do this, go here: https://docs.docker.com/compose/compose-file/compose-file-v3/
 
 Docker-compose file allows for variables substitute.  You can set the values in the environment, by adding a line
 to `firefly-docker.env` file.
 
-For example, Firefly's `docker-compose.yml` can have additional environment variables.  The values can come from the 
+For example, Firefly's `compose.yml` can have additional environment variables.  The values can come from the 
 `firefly-docker.env` file, like this
 
     cat firefly-docker.env

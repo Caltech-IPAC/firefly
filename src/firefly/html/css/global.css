@@ -107,6 +107,11 @@ div.rootStyle img {
     cursor: pointer;
 }
 
+.button.disabled {
+    opacity: .3;
+    pointer-events: none;
+}
+
 .button.text {
     line-height: 1.5;
     padding: 0 5px;
