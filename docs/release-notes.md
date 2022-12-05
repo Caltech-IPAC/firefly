@@ -8,8 +8,10 @@
 
 
 ## Version 2022.2 
+- 2022.2.6 (Dec 2022)
+  - docker tag: `latest`, `2022.2`, `2022.2.6`
 - 2022.2.5 (Oct 2022)
-  - docker tag: `latest`, `2022.2`, `2022.2.5`
+  - docker tag: `2022.2.5`
 - 2022.2.4 (Sept 2022)
   - docker tag: `2022.2.4`
 - 2022.2.3 (Sept 2022)
@@ -73,6 +75,8 @@
   - Fixed: regression issue, pixel readout re-enabled for images, DM-36291
 - 2022.2.5
   - Fixed: null pointer exception in `BaseIUbeDataSource.java`
+- 2022.2.6
+  - Fixed: some service descriptors without a `standardID` would not load correctly
 
 
 
