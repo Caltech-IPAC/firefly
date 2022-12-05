@@ -169,21 +169,10 @@ export function pinChart({chartId, autoLayout=true}) {
     if (!chartData?.layout?.title?.text) {
         // if chart has no title, ask to use table's title
         const tbl_id = chartData?.data?.[0]?.tbl_id || chartData?.fireflyData?.[0].tbl_id;
-        let title = getTblById(tbl_id)?.title || '';
-        showYesNoPopup(
-            (
-                <div style={{display: 'inline-flex', whiteSpace: 'nowrap', alignItems: 'center'}}>
-                    <div style={{marginRight: 3}}>Chart Title:</div>
-                    <input defaultValue={title} onClick={(e)=>e?.target.select()} onChange={(e) => title=e?.target?.value}/>
-                </div>
-            ),
-            (p,ans) => {
-                if (ans) set(chartData, 'layout.title', title);
-                addChart();
-                hideInfoPopup();
-            },
-            'Add a title?'
-        );
+        const title = getTblById(tbl_id)?.title || '';
+        set(chartData, 'layout.title', title);
+        addChart();
+        hideInfoPopup();
     } else {
         addChart();
     }

@@ -129,11 +129,13 @@ const CombineChartDialog = ({onComplete}) => {
 
     return (
         <div className='CombineChart__popup'>
+            {/*--- temporarily removed to only combine charts with similar axes
             <div style={{display: 'inline-flex', alignItems: 'center'}}>
                 <label htmlFor='showAll'>Show All Charts: </label>
                 <input type='checkbox' id='showAll' title={showAllHint} value={showAll} onClick={(e) => setShowAll(e.target?.checked)}/>
                 <span className='CombineChart__hints'>({showAllHint})</span>
             </div>
+            ----------*/}
             <div className='CombineChart__popup--tbl'>
                 <TablePanel {...{tbl_id, showToolbar:false, showUnits:false, showTypes:false}}/>
             </div>
@@ -142,8 +144,8 @@ const CombineChartDialog = ({onComplete}) => {
                 <SelChartProps {...{tbl_id, groupKey}}/>
             </FieldGroup>
             <div>
-                <button type='button' className='button std' style={{marginRight: 5}} onClick={doApply}>Apply</button>
-                <button type='button' className='button std' onClick={closePopup}>Close </button>
+                <button type='button' className='button std' style={{marginRight: 5}} onClick={doApply}>Ok</button>
+                <button type='button' className='button std' onClick={closePopup}>Cancel </button>
                 <HelpIcon helpId={'chartarea.combineCharts'} style={{float: 'right', marginTop: 4}}/>
             </div>
         </div>
