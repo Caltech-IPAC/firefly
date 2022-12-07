@@ -10,6 +10,7 @@ package edu.caltech.ipac.firefly.server;
 
 
 import edu.caltech.ipac.firefly.server.security.SsoAdapter;
+import edu.caltech.ipac.firefly.server.util.VersionUtil;
 import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -154,8 +155,12 @@ public class Counters {
         addToList(retList, "Auth Token", (ssoAdapter != null && ssoAdapter.getAuthToken() != null) ? ssoAdapter.getAuthToken().getId() : null);
         addToList(retList, "Session ID", ServerContext.getRequestOwner().getRequestAgent().getSessId());
         addToList(retList, "User Key", ServerContext.getRequestOwner().getUserKey());
+
         retList.add("");
         addMemoryStatus(retList);
+
+        retList.add("");
+        addVersionInfo(retList);
 
         String pagesCat= Category.Pages.toString();
         List<String> pagesList= new ArrayList<String>(300);
@@ -226,6 +231,14 @@ public class Counters {
         addMemStrToList(retList,"Total Active", FileUtil.getSizeAsString(totMem));
         retList.add("");
         retList.add("Cores - "+ Runtime.getRuntime().availableProcessors());
+        retList.add("");
+    }
+
+
+    private void addVersionInfo(List<String> retList) {
+        retList.add("Version Information");
+        VersionUtil.getVersionInfo().forEach(verInfoKeyVal ->
+                addToList(retList, verInfoKeyVal.getKey(), verInfoKeyVal.getValue()));
         retList.add("");
     }
 

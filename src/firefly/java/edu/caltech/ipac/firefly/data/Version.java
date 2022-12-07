@@ -22,7 +22,7 @@ public class Version implements Serializable {
     private String      _appName= "Web App";
     private int         _major= 0;
     private int         _minor= 0;
-    private int         _rev= 0;
+    private String      _rev= "0";
     private VersionType _vType= VersionType.Unknown;
     private int         _build = 0;
     private String      _buildDate= "Don't Know";
@@ -31,6 +31,7 @@ public class Version implements Serializable {
     private String      _buildCommit= "";
     private String      _buildCommitFirefly= "";
     private String      _buildFireflyTag = "";
+    private String      _buildFireflyBranch = "";
     private String      _devCycleTag = "";
     private long        _configLastModTime = 0;
 
@@ -51,7 +52,7 @@ public class Version implements Serializable {
     public void setMinor(int m) { _minor= m;}
     public void setVersionType(VersionType vt) { _vType= vt; }
     public void setBuildDate(String date) { _buildDate= date;}
-    public void setRev(int rev) { _rev = rev;  }
+    public void setRev(String rev) { _rev = rev;  }
     /**
      * The build number is only use if type is not final.  Finals should not have a build number
      * @param build build number, not used with final
@@ -75,6 +76,9 @@ public class Version implements Serializable {
     }
 
     public void setBuildFireflyTag(String buildFireflyTag) { this._buildFireflyTag = buildFireflyTag; }
+
+    public void setBuildFireflyBranch(String buildFireflyBranch) { this._buildFireflyBranch = buildFireflyBranch; }
+
     public void setDevCycleTag(String devCycleTag) { this._devCycleTag = devCycleTag; }
 
     public String getBuildTime() {
@@ -95,19 +99,20 @@ public class Version implements Serializable {
 
     public int getMajor() { return _major;}
     public int getMinor() { return _minor;}
-    public int getRev() { return _rev;}
+    public String getRev() { return _rev;}
     public VersionType getVersionType() { return _vType; }
     public String getBuildDate() { return _buildDate; }
     public int getBuildNumber() { return _build;  }
     public String getAppName() { return _appName; }
     public String getBuildFireflyTag() { return _buildFireflyTag; }
+    public String getBuildFireflyBranch() { return _buildFireflyBranch; }
     public String getDevCycleTag() { return _devCycleTag; }
 
     @Override
     public String toString() {
         String retval = _major + "." + _minor;
 
-        if (_rev > 0) {
+        if (!_rev.equals("0")) {
             retval += "." + _rev;
         }
         retval += " " + convertVersionType(_vType);
