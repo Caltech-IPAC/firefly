@@ -590,6 +590,11 @@ const FileAnalysis = ({report, summaryModel, detailsModel, tablesOnly, isMoc, UN
 
     else {
         const liStyle= {listStyleType:'circle'};
+        if (acceptMoc) {
+            return (<div style={{color:'gray', margin:'20px 0 0 200px', fontSize:'larger', lineHeight:'1.3em'}}>
+                Note: You can only load a MOC FITS file from this dialog
+            </div>);
+        }
         return (<div style={{color:'gray', margin:'20px 0 0 200px', fontSize:'larger', lineHeight:'1.3em'}}>
             You can load any of the following types of files:
             <ul>
