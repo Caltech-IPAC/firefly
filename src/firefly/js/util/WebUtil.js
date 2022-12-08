@@ -803,6 +803,21 @@ export function uuid() {
     });
 }
 
+
+export function tokenSub(valObs, str='') {
+    if (!str || !isString(str))  return str;
+    const vars = str.match(/\${[\w -.]+}/g);
+    if (!vars) return str;
+    let replaceStr = str;
+    vars.forEach((v) => {
+        const [,keyName] = v.match(/\${([\w -.]+)}/) || [];
+        if (isDefined(valObs[keyName])) {
+            replaceStr = replaceStr.replace(v, valObs[keyName]);
+        }
+    });
+    return replaceStr;
+}
+
 /**
  * File is safe to use from a WebWorker
  */

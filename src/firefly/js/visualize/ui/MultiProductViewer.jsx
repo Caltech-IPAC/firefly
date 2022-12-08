@@ -36,7 +36,7 @@ import {
 } from '../../metaConvert/DataProductsCntlr';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView';
 import {dispatchChangeActivePlotView} from '../ImagePlotCntlr';
-import {ServiceDescriptorPanel} from './ServiceDescriptorPanel.jsx';
+import {ServiceDescriptorPanel} from '../../ui/dynamic/ServiceDescriptorPanel.jsx';
 import {getServiceParamsAry} from '../../metaConvert/DataProductsCntlr.js';
 
 

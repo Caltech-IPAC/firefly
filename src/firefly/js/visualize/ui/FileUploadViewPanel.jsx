@@ -12,6 +12,7 @@ import {getField} from '../../fieldGroup/FieldGroupUtils';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {getCellValue, getTblById} from '../../tables/TableUtil.js';
 import {dispatchTableAddLocal, dispatchTableRemove} from '../../tables/TablesCntlr.js';
+import {isAnalysisTableDatalink} from '../../util/VOAnalyzer.js';
 import {getSizeAsString} from '../../util/WebUtil.js';
 
 import {SelectInfo} from '../../tables/SelectInfo.js';
@@ -149,6 +150,7 @@ export function FileUploadViewPanel({setSubmitText, acceptMoc}) {
     };
 
     const isMoc=  isMOCFitsFromUploadAnalsysis(report)?.valid;
+    const isDatalink=  isAnalysisTableDatalink(report);
 
     return (
         <div style={{position: 'relative', height: '100%', display: 'flex', alignItems: 'stretch',
@@ -173,7 +175,7 @@ export function FileUploadViewPanel({setSubmitText, acceptMoc}) {
                     </div>
                     <FileAnalysis {...{report, summaryModel, detailsModel,tablesOnly, isMoc, UNKNOWN_FORMAT, acceptMoc}}/>
                     <ImageDisplayOption summaryTblId={summaryTblId} currentReport={report} currentSummaryModel={summaryModel}/>
-                    <TableDisplayOption isMoc={isMoc} summaryTblId={summaryTblId} currentReport={report} currentSummaryModel={summaryModel} acceptMoc={acceptMoc}/>
+                    <TableDisplayOption {...{isMoc, isDatalink, summaryTblId, currentReport:report, currentSummaryModel:summaryModel, acceptMoc}}/>
                 </div>
                 {(isLoading) && <LoadingMessage message={loadingMsg}/>}
         </div>
@@ -361,7 +363,7 @@ function getDetailsModel(tableModel, report, detailsTblId, UNKNOWN_FORMAT) {
     return details;
 }
 
-function TableDisplayOption({isMoc, summaryTblId, currentReport, currentSummaryModel, acceptMoc}) {
+function TableDisplayOption({isMoc, isDatalink, summaryTblId, currentReport, currentSummaryModel, acceptMoc}) {
 
     const selectedTables = getFileFormat(currentReport) ?
         getSelectedRows('Table', summaryTblId, currentReport, currentSummaryModel) : [];
@@ -383,7 +385,20 @@ function TableDisplayOption({isMoc, summaryTblId, currentReport, currentSummaryM
     }
 
     else if (acceptMoc) { //Upload Panel in the HiPS/MOC 'Add MOC Layer' tab
-        return (null);
+        return null;
+    }
+    else if (isDatalink) {
+        const options= [{label:'Load as Datalink Search UI', value:'datalinkUI'}, {label:'Load as Table', value:'table'}];
+        return (
+            <div style={{padding: '5px 0 5px 0'}}>
+                <RadioGroupInputField options={options}
+                                      labelWidth={100}
+                                      alignment={'horizontal'}
+                                      defaultValue = {'datalinkUI'}
+                                      fieldKey = 'datalinkOp' />
+
+            </div>
+        );
     }
 
     return (

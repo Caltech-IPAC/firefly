@@ -4,14 +4,16 @@
 
 import React from 'react';
 import {CoordinateSys, parseWorldPt} from '../../api/ApiUtilImage.jsx';
-import {CONE_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
+import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
 import {convert} from '../../visualize/VisUtil.js';
 import CompleteButton from '../CompleteButton.jsx';
 import {FieldGroup} from '../FieldGroup.jsx';
 import {FormPanel} from '../FormPanel.jsx';
 import {showInfoPopup} from '../PopupUtil.jsx';
-import {AREA, CHECKBOX, CIRCLE, ENUM, FLOAT, INT, POLYGON, POSITION, UNKNOWN} from './DynamicDef.js';
-import {getSpacialSearchType, hasValidSpacialSearch, makeAllFields, makeUnitsStr} from './DynComponents.jsx';
+import {AREA, CHECKBOX, CIRCLE, CONE_AREA_KEY, ENUM, FLOAT, INT, POLYGON, POSITION, UNKNOWN} from './DynamicDef.js';
+import {
+    getSpacialSearchType, hasValidSpacialSearch, makeAllFields, makeUnitsStr
+} from './DynComponents.jsx';
 import './DynamicUI.css';
 
 
@@ -57,11 +59,24 @@ export function DynamicForm({DynLayoutPanel, groupKey,fieldDefAry, onSubmit, onE
 }
 
 
-export function convertRequest(request, fieldDefAry) {
-    return fieldDefAry.reduce( (out, {key,type, targetDetails:{raKey,decKey, targetKey,sizeKey}={} }) => {
+export function convertRequest(request, fieldDefAry, treatAsSia= false) {
+    const retReq= fieldDefAry.reduce( (out, {key,type, targetDetails:{raKey,decKey, targetKey,polygonKey, sizeKey}={} }) => {
+        const coneOrArea= request[CONE_AREA_KEY] ?? (targetKey ? CONE_CHOICE_KEY : POLY_CHOICE_KEY);
+        if (coneOrArea) {
+            if (type===POLYGON && coneOrArea !== POLY_CHOICE_KEY) return out;
+            if (type===CIRCLE && coneOrArea !== CONE_CHOICE_KEY) return out;
+            if (type===POSITION && coneOrArea !== CONE_CHOICE_KEY) return out;
+            if (type===AREA && coneOrArea !== CONE_CHOICE_KEY) return out;
+        }
         switch (type) {
-            case FLOAT: case INT: case AREA: case ENUM: case POLYGON: case UNKNOWN:
+            case FLOAT: case INT: case AREA: case ENUM:
                 out[key]= request[key];
+                return out;
+            case UNKNOWN:
+                return out;
+            case POLYGON:
+                out[key]= treatAsSia ?
+                    'POLYGON ' +request[polygonKey].replaceAll(',', '') : request[polygonKey];
                 return out;
             case CHECKBOX:
                 const value= Object.entries(request)
@@ -75,25 +90,31 @@ export function convertRequest(request, fieldDefAry) {
                     out[decKey]= wp?.y;
                 }
                 else {
-                    out[key]= request[key];
+                    out[key]= request[targetKey];
                 }
                 return out;
             case CIRCLE:
                 const radius= request[sizeKey];
                 const wp= convert(parseWorldPt(request[targetKey]), CoordinateSys.EQ_J2000);
                 if (radius && wp) {
-                    out[key]= `${wp.x} ${wp.y} ${radius}`;
+                    out[key]= `${treatAsSia?'CIRCLE ':''}${wp.x} ${wp.y} ${radius}`;
                 }
                 return out;
             default: return out;
         }
     }, {});
+    const hiddenFields= fieldDefAry
+        .reduce( (obj,{hide, key,initValue}) => {
+            if (hide && key && initValue) obj[key]= initValue;
+            return obj;
+        },{});
+    return {...retReq,...hiddenFields};
 }
 
 
-function SimpleDynSearchPanel({style={}, fieldDefAry}) {
-    const { spacialPanel, areaFields, polyPanel, circlePolyField, checkBoxFields, fieldsInputAry, opsInputAry,
-        useSpacial, useArea, useCirclePolyField}= makeAllFields(fieldDefAry);
+function SimpleDynSearchPanel({style={}, fieldDefAry, popupHiPS= true}) {
+    const { spacialPanel, areaFields, polyPanel, checkBoxFields, fieldsInputAry, opsInputAry,
+        useSpacial, useArea}= makeAllFields(fieldDefAry,false,popupHiPS);
 
     let iFieldLayout;
     if (fieldsInputAry.length || opsInputAry.length) {
@@ -110,17 +131,13 @@ function SimpleDynSearchPanel({style={}, fieldDefAry}) {
     return (
         <div style={style}>
             {useSpacial &&
-                <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}> {spacialPanel} </div>}
+                <div style={{display:'flex', flexDirection:'column', alignItems:'center', height:'100%'}}> {spacialPanel} </div>}
             {Boolean(polyPanel) &&
                 <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}> {polyPanel} </div>}
             <div style={{paddingLeft:5, display:'flex', flexDirection:'column'}}>
                 {useArea &&
                     <div key='a' style={{paddingTop:5, display:'flex', flexDirection:'column'}}>
                         {areaFields}
-                    </div>}
-                {(useCirclePolyField) &&
-                    <div style={{paddingTop:5, display:'flex', flexDirection:'column'}}>
-                        {circlePolyField}
                     </div>}
                 <div style={{display:'flex', flexDirection:'row', alignItems:'center'}}>
                     {Boolean(iFieldLayout) && <div>{iFieldLayout}</div>}
@@ -134,9 +151,9 @@ function SimpleDynSearchPanel({style={}, fieldDefAry}) {
     );
 }
 
-function GridDynSearchPanel({style={}, fieldDefAry}) {
+function GridDynSearchPanel({style={}, fieldDefAry, popupHiPS= true}) {
     const { spacialPanel, areaFields, checkBoxFields, fieldsInputAry, opsInputAry,
-        useArea, useCirclePolyField, useSpacial}= makeAllFields(fieldDefAry, true);
+        useArea, useSpacial}= makeAllFields(fieldDefAry, true, popupHiPS);
 
     const labelAry= fieldDefAry
         .filter( ({type}) => type===INT || type===FLOAT || type===ENUM || type===UNKNOWN)
@@ -161,7 +178,6 @@ function GridDynSearchPanel({style={}, fieldDefAry}) {
                 <div style={{display:'flex', flexDirection:'column', alignItems:'center', alignSelf:'stretch'}}>
                     {spacialPanel}
                     {useArea && <> {areaFields} </>}
-                    {useCirclePolyField && <> <div style={{paddingTop:5}}/> {useCirclePolyField} </>}
                 </div>
             }
             {Boolean(checkBoxFields) && <div key='b' style={{paddingTop:5, display:'flex', flexDirection:'column'}}>

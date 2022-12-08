@@ -76,17 +76,21 @@ export function VisualPolygonPanel({label, initValue, tooltip, fieldKey, style,
     );
 }
 
-export function VisualTargetPanel({fieldKey, labelWidth= 100, label, labelStyle, ...restOfProps}) {
+export function VisualTargetPanel({fieldKey, labelWidth= 100, label, labelStyle,
+                                      targetPanelExampleRow1, targetPanelExampleRow2, ...restOfProps}) {
     const popupButton= (
         <div style={{paddingRight: 2}}>
             <HiPSPanelPopupButton {...{targetKey:fieldKey, whichOverlay:CONE_CHOICE_KEY, ...restOfProps}} />
         </div>
     );
-    return ( <TargetPanel fieldKey={fieldKey} button={popupButton} labelStyle={labelStyle} labelWidth={labelWidth} label={label}/> );
+    return ( <TargetPanel {...{fieldKey, button:popupButton, labelStyle, labelWidth, label,
+        targetPanelExampleRow1, targetPanelExampleRow2}}/> );
 }
 
 VisualTargetPanel.propTypes= {
     labelWidth: number,
+    targetPanelExampleRow1: PropTypes.arrayOf(PropTypes.string),
+    targetPanelExampleRow2: PropTypes.arrayOf(PropTypes.string),
     ...sharedPropTypes
 };
 
@@ -140,7 +144,7 @@ export const HiPSTargetView = ({style, hipsDisplayKey='none',
     }, [sRegion]);
 
     return (
-        <div style={{height:500, ...style, display:'flex', flexDirection:'column'}}>
+        <div style={{minHeight:200, ...style, display:'flex', flexDirection:'column'}}>
             <div style={{padding: '5px 5px 10px 5px',
                 alignSelf: 'stretch', marginBottom: 1,
                 display: 'flex', flexDirection:'row',
@@ -172,7 +176,7 @@ export const TargetHiPSPanel = ({searchAreaInDeg, style,
                                     minValue:min= 1/3600, maxValue:max= 100, ...restOfProps}) => (
     <div style={{display:'flex', width: 700, height:700, flexDirection:'column', ...style}}>
         <HiPSTargetView {...{...restOfProps, targetKey:DEF_TARGET_PANEL_KEY, sizeKey:'HiPSPanelRadius',
-                             minSize:min, maxSize:max, style:{height:400} }}/>
+                             minSize:min, maxSize:max, style:{minHeight:400} }}/>
         <div style={{display:'flex', flexDirection:'column', marginLeft:100}}>
             <TargetPanel style={{paddingTop: 10}} labelWidth={100}/>
             <SizeInputFields fieldKey='HiPSPanelRadius' showFeedback={true} labelWidth= {100}  nullAllowed={false}

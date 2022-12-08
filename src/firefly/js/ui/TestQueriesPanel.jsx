@@ -47,7 +47,7 @@ import {NaifidPanel} from './NaifidPanel';
 
 const dynamic1Params= [
     makeTargetDef(
-        {hipsUrl:'ivo://CDS/P/DSS2/color', centerPt:makeWorldPt(10,10), hipsFOVInDeg:10, raKey:'ra', decKey:'dec', popupHiPS:false}),
+        {hipsUrl:'ivo://CDS/P/DSS2/color', centerPt:makeWorldPt(10,10), hipsFOVInDeg:10, raKey:'ra', decKey:'dec'}),
     makeAreaDef({key:'sizeOfSearch', minValue:1, maxValue:10, initValue:2, desc:'Area to Search'}),
     makeIntDef({key:'int1', minValue:10, maxValue:1000, desc:'field #1', units: 'um', tooltip:'tooltip for field1',initValue:25 }),
     makeFloatDef({key:'float2', minValue:.1, maxValue:8.88, precision:3, initValue:3, desc:'float #3', tooltip:'tooltip for field1'}),
@@ -211,7 +211,7 @@ function renderNaifid(fields){
 function makeDynamic1() {
 
     return (
-        <DynLayoutPanelTypes.Simple fieldDefAry={dynamic1Params} style={{margin:3, width:'100%'}}/>
+        <DynLayoutPanelTypes.Simple fieldDefAry={dynamic1Params} style={{margin:3, width:'100%'}} popupHiPS={false}/>
     );
 }
 

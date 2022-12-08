@@ -1,4 +1,5 @@
 import {isEmpty} from 'lodash';
+import {getDatalinkUICommands} from './DatalinkUICommands.js';
 import {getImageCommands} from './ImageCommands';
 import {getTableCommands} from './TableCommands';
 import {getTapCommands} from './TapCommands';
@@ -12,7 +13,7 @@ export function getFireflyViewerWebApiCommands(cmdNameList) {
     const allCommands= [
         ...getImageCommands(),
         ...getTableCommands(),
-        ...getTapCommands()
+        ...getTapCommands(),
     ];
 
     if (isEmpty(cmdNameList)) return allCommands;

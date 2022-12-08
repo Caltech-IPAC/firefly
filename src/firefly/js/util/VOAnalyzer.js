@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, has, isArray, isEmpty, isObject, isString, intersection, pickBy, unset} from 'lodash';
+import {get, has, isArray, isEmpty, isObject, isString, intersection, unset} from 'lodash';
 import Enum from 'enum';
 import {
     getColumn,
@@ -11,7 +11,6 @@ import {
     getColumns,
     getTblById,
     getCellValue,
-    getColumnByID,
     columnIDToName,
     getColumnByRef, isTableUsingRadians
 } from '../tables/TableUtil.js';
@@ -23,6 +22,13 @@ import {getBooleanMetaEntry, getMetaEntry} from '../tables/TableUtil';
 
 
 export const UCDCoord = new Enum(['eq', 'ecliptic', 'galactic']);
+export const adhocServiceUtype= 'adhoc:service';
+export const cisxAdhocServiceUtype= 'cisx:adhoc:service';
+
+export const standardIDs = {
+    tap: 'ivo://ivoa.net/std/tap',
+    sia: 'ivo://ivoa.net/std/sia'
+};
 
 // known service IDs from service descriptor's standardId field (so far just one)
 export const DATALINK_SERVICE= 'ivo://ivoa.net/std/DataLink';
@@ -121,6 +127,9 @@ const OBSTAPCOLUMNS = [
     ['facility_name',     'meta.id;instr.tel',          'Provenance.ObsConfig.Facility.name'],
     ['instrument_name',   'meta.id;instr',              'Provenance.ObsConfig.Instrument.name']
 ];
+
+const SERVICE_DESC_CNAMES = [ 'id', 'access_url', 'service_def', 'error_message', 'semantics',
+    'description', 'content_type', 'content_length'];
 
 const OBSTAP_OPTIONAL_CNAMES = [
     'dataproduct_subtype', 'target_class', 'obs_title', 'obs_creation_date', 'obs_creator_name',
@@ -1130,6 +1139,8 @@ export function hasObsCoreLikeDataProducts(tableOrId) {
  * @prop {string} value
  * @prop {boolean} allowsInput - use may change the parameter
  * @prop {boolean} inputRequired - user must enter something
+ * @prop {Array.<ServiceDescriptorInputParam>} [cisxUI] - names should be one of: HiPS, FOV, centerRA, centerDec, moc, examples, hipsCtype1, hipsCtype2
+ * @prop {Array.<ServiceDescriptorInputParam>} [cisxTokenSub]
  * @prop {Array.<ServiceDescriptorInputParam>} serDefParams
  */
 
@@ -1159,6 +1170,9 @@ function getSDDescription(table, ID) {
     return sdRow[descriptionCol];
 }
 
+const gNameMatches= (group,name) => group?.name.toLowerCase()===name?.toLowerCase();
+
+
 /**
  * return a list of service descriptors found in the table or false
  * @param {String|TableModel} tableOrId
@@ -1169,18 +1183,22 @@ export function getServiceDescriptors(tableOrId, removeAsync=true) {
     const table= getTableModel(tableOrId);
     if (!table || !isArray(table.resources)) return false;
     const sResources= table.resources.filter(
-        (r) => r.type?.toLowerCase()==='meta' &&
-               r.utype?.toLowerCase()==='adhoc:service' &&
-               r.params.some( (p) => (p.name==='accessURL' && p.value)));
+        (r) => {
+            if (!r?.utype || r?.type.toLowerCase()!=='meta') return false;
+            const utype= r.utype.toLowerCase();
+            return  (utype===adhocServiceUtype || utype===cisxAdhocServiceUtype) &&
+                         r.params.some( (p) => (p.name==='accessURL' && p.value));
+        });
     if (!sResources.length) return false;
-    const sdAry= sResources.map( ({desc,params,ID,groups}, idx) => (
+    const sdAry= sResources.map( ({desc,params,ID,groups,utype}, idx) => (
         {
             ID,
+            utype,
             title: desc ?? getSDDescription(table,ID) ??'Service Descriptor '+idx,
             accessURL: params.find( ({name}) => name==='accessURL')?.value,
             standardID: params.find( ({name}) => name==='standardID')?.value,
             serDefParams: groups
-                .find( (g) => g.name==='inputParams')
+                .find( (g) => gNameMatches(g,'inputParams'))
                 ?.params.map( (p) => {
                     const optionalParam= !p.ref && !p.value && !p.options;
                     return {...p,
@@ -1190,12 +1208,40 @@ export function getServiceDescriptors(tableOrId, removeAsync=true) {
                         inputRequired: !p.ref && !p.value && !optionalParam
                     };
                 }),
+            cisxUI: groups.find( (g) => gNameMatches(g,'CISX:ui'))?.params.map( (p) => ({...p})),
+            cisxTokenSub: groups.find( (g) => gNameMatches(g,'CISX:tokenSub'))?.params.map( (p) => ({...p})),
         }
     ));
     if (!removeAsync)return sdAry.length ? sdAry : false;
     const sdAryNoAsync= sdAry.filter( ({standardID}) => !standardID?.toLowerCase().includes('async')); // filter out async
     return sdAryNoAsync.length ? sdAryNoAsync : false;
 }
+
+
+/**
+ * Check to see if the file analysis report indicates the file is a service descriptor
+ * @param {FileAnalysisReport} report
+ * @returns {boolean} true if the file analysis report indicates a service descriptor
+ */
+export function isAnalysisTableDatalink(report) {
+    if (report?.parts.length !== 1 || report?.parts[0]?.type !== 'Table' || !report?.parts[0]?.details) {
+        return false;
+    }
+
+    /**@type FileAnalysisPart*/
+    const part= report.parts[0];
+    const {tableData}= part.details;
+    if (!tableData.data?.length) return;
+    const tabColNames= tableData.data.map((d) => d?.[0]?.toLowerCase());
+    const hasCorrectCols= SERVICE_DESC_CNAMES.every( (cname) => tabColNames.includes(cname) );
+    if (!hasCorrectCols) return false;
+    return hasCorrectCols && part.totalTableRows<50; // 50 is arbitrary, it is protections from dealing with files that are very big
+}
+
+export function isTableDatalink(table) {
+    return SERVICE_DESC_CNAMES.every( (cname) => getColumn(table,cname,true));
+}
+
 
 
 /**
@@ -1401,7 +1447,7 @@ export function isObsCoreLike(tableModel) {
     const cols = getColumns(tableModel);
     if (cols.findIndex((c) => get(c, 'utype', '').startsWith(obsPrefix)) >= 0) {
         return true;
-    };
+    }
     const v = intersection(cols.map( (c) => c.name), OBSTAP_CNAMES);
     return v.length > 2;
 }
@@ -1451,7 +1497,7 @@ const dataAxis = {
 /**
  *
  * @param tableModel
- * @returns {SpectrumDM}
+ * @returns {SpectrumDM|undefined}
  */
 export function getSpectrumDM(tableModel) {
     const utype = tableModel?.tableMeta?.utype?.toLowerCase();
@@ -1505,7 +1551,7 @@ export function getSpectrumDM(tableModel) {
 
     if (spectralAxis && (fluxAxis || timeAxis)) {
         return {spectralAxis, fluxAxis, timeAxis, isSED};
-    } else return ;
+    }
 }
 
 function findColByUtype(tableModel, prefixes, suffix) {

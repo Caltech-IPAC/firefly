@@ -60,16 +60,17 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
             <DataReadoutItem lArea='pixReadoutLabel' vArea='pixReadoutValue' cArea='clipboardIcon'
                              label={readout1.label} value={readout1.value} copyValue={readout1.copyValue} showCopy={showCopy}
                              labelStyle={ls}
+                             valueStyle={{fontWeight:'bold'}}
                              prefChangeFunc={showReadout1PrefChange}/>
 
             {fullSize && !threeColor && image && <DataReadoutItem lArea='fluxLabel' vArea='fluxValue' label={fluxArray[0].label} value={fluxArray[0].value}
-                                                      labelStyle={ls}
+                                                      labelStyle={ls} valueStyle={{fontWeight:'bold'}}
             />}
             {fullSize && threeColor && image && <DataReadoutItem lArea='fluxLabel' vArea='fluxValue' label={get3CLabel(fluxArray)} value={get3CValue(fluxArray)}
-                                                     labelStyle={ls}
+                                                     labelStyle={ls} valueStyle={{fontWeight:'bold'}}
             />}
             {fullSize && waveLength && image && <DataReadoutItem lArea='wlLabel' vArea='wlValue' label={waveLength.label} value={waveLength.value}
-                                                     labelStyle={ls}
+                                                     labelStyle={ls} valueStyle={{fontWeight:'bold'}}
                                                      prefChangeFunc={showWavelengthFailed} /> }
             {<MouseReadoutLock gArea='lock' gAreaLabel='lockLabel'  lockByClick={readout.lockByClick} />}
             <ToolbarButton icon={POPOUT_ICON}

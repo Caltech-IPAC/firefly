@@ -45,6 +45,7 @@
 
 .plot-title-zoom {
     display: inline-block;
+    font-weight: bold;
     overflow: hidden;
     padding-left: 6px;
     color: #49a344;

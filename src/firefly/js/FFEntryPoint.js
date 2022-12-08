@@ -4,6 +4,7 @@
 
 
 import {get} from 'lodash';
+import {getDatalinkUICommands} from './api/webApiCommands/DatalinkUICommands.js';
 import {firefly} from './Firefly.js';
 import {mergeObjectOnly} from './util/WebUtil.js';
 import {getFireflyViewerWebApiCommands} from './api/webApiCommands/ViewerWebApiCommands';
@@ -58,7 +59,7 @@ let options = {
 options = mergeObjectOnly(options, get(window, 'firefly.options', {}));
 let apiCommands;
 
-if (template==='FireflyViewer' || template==='FireflySlate') apiCommands= getFireflyViewerWebApiCommands();
+if (template==='FireflyViewer' || template==='FireflySlate') apiCommands= [...getFireflyViewerWebApiCommands(), ...getDatalinkUICommands(false)];
 else if (template==='LightCurveViewer') apiCommands= getLcCommands();
 
 

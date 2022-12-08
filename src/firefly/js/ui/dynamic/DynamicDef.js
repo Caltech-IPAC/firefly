@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+export const CONE_AREA_KEY = 'CONE_AREA_KEY_RESERVED';
 export const POSITION = 'position';
 export const ENUM = 'enum';
 export const CHECKBOX = 'checkbox';
@@ -10,6 +11,7 @@ export const FLOAT = 'float';
 export const UNKNOWN = 'unknown';
 export const AREA = 'area';
 export const POLYGON = 'polygon';
+export const RANGE = 'range';
 export const CIRCLE = 'circle';
 
 /**
@@ -22,7 +24,6 @@ export const CIRCLE = 'circle';
  * @param {CoordinateSys} obj.coordinateSys
  * @param {String|Array.<String>} obj.mocList
  * @param {boolean} obj.nullAllowed
- * @param {boolean} obj.popupHiPS
  * @param {number} obj.minValue
  * @param {number} obj.maxValue
  * @param {String} obj.targetPanelExampleRow1
@@ -30,7 +31,7 @@ export const CIRCLE = 'circle';
  * @return {FieldDef}
  */
 export function makeTargetDef({
-                                  hipsUrl, centerPt, hipsFOVInDeg, coordinateSys, mocList, nullAllowed, popupHiPS,
+                                  hipsUrl, centerPt, hipsFOVInDeg, coordinateSys, mocList, nullAllowed,
                                   minValue, maxValue,
                                   targetPanelExampleRow1, targetPanelExampleRow2, raKey, decKey
                               }) {
@@ -44,7 +45,7 @@ export function makeTargetDef({
         targetDetails: {
             raKey, decKey, hipsUrl, centerPt, hipsFOVInDeg, coordinateSys, mocList,
             targetKey: defTargetKey,
-            popupHiPS, targetPanelExampleRow1, targetPanelExampleRow2
+            targetPanelExampleRow1, targetPanelExampleRow2
         }
     };
 }
@@ -115,10 +116,11 @@ export const makeFloatDef = ({key, minValue, maxValue, precision, desc, tooltip,
  * @param {String} obj.units
  * @param {string} obj.initValue
  * @param {boolean} obj.nullAllowed
+ * @param {boolean} obj.hide
  * @return {FieldDef}
  */
-export const makeUnknownDef = ({key, desc, tooltip, units, initValue, nullAllowed}) =>
-    ({type: UNKNOWN, key, desc, tooltip, units, initValue, nullAllowed});
+export const makeUnknownDef = ({key, desc, tooltip, units, initValue, nullAllowed, hide}) =>
+    ({type: UNKNOWN, key, desc, tooltip, units, initValue, nullAllowed, hide});
 
 /**
  * @param {Object} obj
@@ -171,10 +173,14 @@ export function makeCircleDef({ key, targetKey, sizeKey, minValue, maxValue, des
 }
 
 export const makePolygonDef = ({key, desc, tooltip, initValue, targetPanelExampleRow1, sRegion,
-                                   nullAllowed, popupHiPS=true}) =>
+                                   nullAllowed}) =>
     ({type: POLYGON, key, desc, tooltip, initValue, nullAllowed,
-        targetDetails: {targetPanelExampleRow1,popupHiPS,polygonKey:key, sRegion}
+        targetDetails: {targetPanelExampleRow1,polygonKey:key+'-polygon', sRegion}
     });
+
+export const makeRangeDef = ({key, desc, tooltip,
+                                   nullAllowed}) =>
+    ({type: RANGE, key, desc, tooltip, nullAllowed, targetDetails: {rangeKey:key+'-range'} });
 
 /**
  * @typedef {Object} FieldDef
@@ -206,7 +212,6 @@ export const makePolygonDef = ({key, desc, tooltip, initValue, targetPanelExampl
  * @prop {string} coordinateSys - one of 'GALACTIC' or 'EQ_J2000'
  * @prop {Array.<{mocUrl:String, title:String}>} mocList
  * @prop {boolean} nullAllowed
- * @prop {boolean} popupHiPS
  * @prop {String} raKey
  * @prop {String} decKey
  * @prop {String} targetKey
@@ -216,4 +221,3 @@ export const makePolygonDef = ({key, desc, tooltip, initValue, targetPanelExampl
  * @prop {Array.<String>} targetPanelExampleRow1 eg- [`'62, -37'`, `'60.4 -35.1'`, `'4h11m59s -32d51m59s equ j2000'`, `'239.2 -47.6 gal'`],
  * @prop {Array.<String>} targetPanelExampleRow2  eg= [`'NGC 1532' (NB: DC2 is a simulated sky, so names are not useful)`],
  */
-
