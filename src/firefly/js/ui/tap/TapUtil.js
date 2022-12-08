@@ -1,6 +1,5 @@
 import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
 import {isArray, isUndefined} from 'lodash';
-import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {makeFileRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {doFetchTable, getColumnIdx, sortTableData} from '../../tables/TableUtil.js';
@@ -9,12 +8,8 @@ import {getProp, hashCode} from '../../util/WebUtil.js';
 
 const logger = Logger('TapUtil');
 const qFragment = '/sync?REQUEST=doQuery&LANG=ADQL&';
-export const HeaderFont={fontSize: 12, fontWeight: 'bold', alignItems: 'center'};
 
-export const  MJD = 'mjd';
-export const  ISO = 'iso';
-
-const tapBrowserComponentKey = 'TAP_BROWSER';
+export const ADQL_LINE_LENGTH = 100;
 
 export function getMaxrecHardLimit() {
     const defaultValue = Number.parseInt(getProp('tap.maxrec.hardlimit'));
@@ -27,24 +22,25 @@ export function getMaxrecHardLimit() {
 
 export const tapHelpId = (id) => `tapSearches.${id}`;
 
-export function getTapBrowserState() {
-    const tapBrowserState = getComponentState(tapBrowserComponentKey);
-    const {serviceUrl, schemaOptions, schemaName, tableOptions, tableName, columnsModel, obsCoreEnabled, obsCoreTableModel} = tapBrowserState || {};
-    return {serviceUrl, schemaOptions, schemaName, tableOptions, tableName, columnsModel, obsCoreEnabled, obsCoreTableModel};
-}
 
-export function setTapBrowserState({serviceUrl, schemaOptions=undefined, schemaName=undefined,
-                                       tableOptions=undefined, tableName=undefined, columnsModel=undefined,
-                                       obsCoreEnabled= false, obsCoreTableModel=undefined}) {
-    dispatchComponentStateChange(tapBrowserComponentKey,
-        {serviceUrl, schemaOptions, schemaName, tableOptions, tableName, columnsModel,
-            obsCoreEnabled, obsCoreTableModel});
-}
+/**
+ * @typedef {Object} TapBrowserState
+ *
+ * @prop  columnsModel
+ * @props {String} serviceUrl
+ * @prop schemaOptions
+ * @prop tableOptions
+ * @props {String} schemaName
+ * @props {String} tableName
+ * @prop {Map<String, String>} constraintFragments
+ * @prop obsCoreTableModel
+ * @prop {boolean} obsCoreEnabled
+ */
 
-export function updateTapBrowserState(updates) {
-    const tapBrowserState = getComponentState(tapBrowserComponentKey);
-    return Object.assign({}, tapBrowserState, updates);
-}
+
+/** * @type TapBrowserState */
+export const defTapBrowserState= {serviceUrl:undefined, schemaOptions:undefined, schemaName:undefined, tableOptions:undefined,
+    tableName:undefined, columnsModel:undefined, obsCoreEnabled:false, obsCoreTableModel:undefined, constraintFragments: new Map()};
 
 export function getColumnsTblId(serviceUrl, tableName) {
     // table name is unique across schemas
@@ -100,7 +96,7 @@ export function loadObsCoreSchemaTables(serviceUrl) {
                but we would need to do a `s.*` in the select list, which not all ADQL implementations like,
                since the column appears optional.
                */
-            var colIdx = getColumnIdx(tableModel, 'table_name');
+            const colIdx = getColumnIdx(tableModel, 'table_name');
             tableModel.tableData.data.sort((r1, r2) => {
                 let [s1, s2] = [r1[colIdx], r2[colIdx]];
                 s1 = s1 === '' ? '\u0002' : s1 === null ? '\u0001' : isUndefined(s1) ? '\u0000' : s1;
@@ -319,3 +315,6 @@ export const TAP_SERVICES_FALLBACK = [
             'POLYGON(\'ICRS\', 9.4999, -1.18268, 9.4361, -1.18269, 9.4361, -1.11891, 9.4999, -1.1189))=1'
     }
 ];
+/**
+ * group key for fieldgroup comp
+ */

@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isFunction,hasIn,isBoolean, isEmpty} from 'lodash';
+import {isFunction, hasIn, isBoolean, isEmpty, pick} from 'lodash';
+import shallowequal from 'shallowequal';
 import {flux} from '../core/ReduxFlux.js';
 import {smartMerge} from '../tables/TableUtil.js';
 import {FIELD_GROUP_KEY,dispatchValueChange,dispatchMultiValueChange} from './FieldGroupCntlr.js';
@@ -58,7 +59,7 @@ function validateSingle(groupKey, includeUnmounted) {
             if (!f.nullAllowed && !f.value && f.valid && !isBoolean(f.value) && f.mounted) {
                 f= {...f, message: 'Value is required', valid: false};
             }
-            f= (f.validator && f.valid) ? {...f, ...f.validator(f.value)} : f;
+            f= (f.validator && f.valid) ? {...f, ...callValidator(f)} : f;
             return f;
         });
 
@@ -92,10 +93,10 @@ function validateGroup(groupKeyAry, includeUnmounted) {
 /**
  * 
  * @param groupKey
- * @param includeUnmounted
+ * @param [includeUnmounted]
  * @return {Promise} promise of a boolean true if valid
  */
-export var validateFieldGroup= function(groupKey, includeUnmounted) {
+export var validateFieldGroup= function(groupKey, includeUnmounted= false) {
     if (Array.isArray(groupKey)) {
         return validateGroup(groupKey,includeUnmounted);
     }
@@ -135,11 +136,54 @@ export const isFieldGroupMounted = (groupKey) => getFieldGroupState(groupKey)?.i
 
 export const getFieldVal= (groupKey, fldName, defval) => getFldValue(getGroupFields(groupKey), fldName, defval);
 
+export function getFieldsForKeys(groupKey,fldNameKeyAry) {
+    if (!groupKey || !fldNameKeyAry?.length) return [];
+    const fields= getGroupFields(groupKey) ?? {};
+    return fldNameKeyAry.map( (key) => ({...(fields[key] ?? {})}));
+}
+
+
 const getFldValue= (fields, fldName, defval=undefined) => fields?.[fldName]?.value ?? defval;
 
 export const getMetaState= (groupKey) => getFieldGroupState(groupKey)?.metaState;
 
 export const getField= (groupKey, fldName) => getGroupFields(groupKey)?.[fldName];
+
+export function makeFieldsObject(groupKey,fldNameAry) {
+    return fldNameAry.reduce( (obj,key) => {
+        obj[key]= getField(groupKey,key);
+        return obj;
+    },{});
+}
+
+/**
+ * set any value in the field object
+ * @param {String} groupKey
+ * @param {String} fieldKey
+ * @param {Object} fieldUpdates
+ */
+export function setField(groupKey,fieldKey,fieldUpdates) {
+    if (!fieldUpdates) return;
+    const cField= getField(groupKey,fieldKey) ?? {};
+    if (!fieldUpdates) return;
+    const originObj= pick(cField,Object.keys(fieldUpdates));
+    if (shallowequal(originObj,fieldUpdates)) return;
+    dispatchValueChange({...cField, ...fieldUpdates, groupKey, fieldKey});
+}
+
+/**
+ * set the field value and optionally send an object with other fieldUpdates (such as {valid:false,message:'opps'}
+ * @param {String} groupKey
+ * @param {String} fieldKey
+ * @param value
+ * @param {Object} fieldUpdates
+ */
+export function setFieldValue(groupKey,fieldKey,value=undefined,fieldUpdates) {
+    if (isEmpty(fieldUpdates) && !value) return;
+    const sendUpdates = {...fieldUpdates};
+    const valueUpdates = {displayValue: '', value, valid: true};
+    setField(groupKey,fieldKey,{...valueUpdates, ...sendUpdates});
+}
 
 /**
  * Get the group fields for a key
@@ -164,6 +208,13 @@ function bindToStore(groupKey, stateUpdaterFunc) {
     } );
 }
 
+export function canValidate(f) {
+    return Boolean(f.validator && !isFunction(f.value) && !f.value?.then);
+}
+
+export function callValidator(f) {
+    return canValidate(f) ? f.validator(f.value) : {valid: true, message: ''};
+}
 
 /**
  * Revalidate fields. If no change happened in a field state, its reference does not change
@@ -174,8 +225,8 @@ export function revalidateFields(fields) {
     let hasChanged = false;
     Object.keys(fields).forEach( (key) => {
         const f= fields[key];
-        if (f.validator && !isFunction(f.value) && f.value && !f.value.then) {
-            newfields[key]= smartMerge(f,f.validator(f.value));
+        if (canValidate(f)) {
+            newfields[key]= smartMerge(f,callValidator(f));
             if (newfields[key] !== f) hasChanged = true;
         } else {
             newfields[key] = f;

@@ -18,18 +18,21 @@ import {dispatchTableSearch} from 'firefly/tables/TablesCntlr.js';
 import {showInfoPopup, showYesNoPopup} from 'firefly/ui/PopupUtil.jsx';
 import {dispatchHideDialog} from 'firefly/core/ComponentCntlr.js';
 import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr.js';
+import {ConstraintContext, getHelperConstraints} from './Constraints.js';
 
 import {tableColumnsConstraints} from 'firefly/ui/tap/TableColumnsConstraints.jsx';
-import {skey, tableSearchMethodsConstraints} from 'firefly/ui/tap/TableSearchMethods.jsx';
 import {commonSelectStyles, selectTheme} from 'firefly/ui/tap/Select.jsx';
-import { getMaxrecHardLimit, getTapBrowserState, tapHelpId, getTapServices,
-    loadObsCoreSchemaTables, updateTapBrowserState, maybeQuote } from 'firefly/ui/tap/TapUtil.js';
-import { gkey, SectionTitle, AdqlUI, BasicUI} from 'firefly/ui/tap/TableSelectViewPanel.jsx';
+import {
+    getMaxrecHardLimit, tapHelpId, getTapServices,
+    loadObsCoreSchemaTables, maybeQuote, defTapBrowserState
+} from 'firefly/ui/tap/TapUtil.js';
+import { SectionTitle, AdqlUI, BasicUI} from 'firefly/ui/tap/TableSelectViewPanel.jsx';
+import {useFieldGroupMetaState} from '../SimpleComponent.jsx';
 
 
 
+export const TAP_PANEL_GROUP_KEY = 'TAP_PANEL_GROUP_KEY';
 const SERVICE_TIP= 'Select a TAP service, or type to enter the URL of any other TAP service';
-const ADQL_LINE_LENGTH = 100;
 
 //-------------
 //-------------
@@ -41,7 +44,7 @@ const ADQL_LINE_LENGTH = 100;
 let webApiUserAddedService;
 const initServiceUsingAPIOnce= makeSearchOnce(false); // call one time during first construction
 const searchFromAPIOnce= makeSearchOnce(); // setup options to immediately execute the search the first time
-const activateInitArgsAdqlOnce= once((initArgs) => initArgs?.urlApi?.adql && setTimeout(() => populateAndEditAdql(initArgs.urlApi?.adql), 5));
+const activateInitArgsAdqlOnce= once((tapBrowserState,initArgs) => initArgs?.urlApi?.adql && setTimeout(() => populateAndEditAdql(tapBrowserState,initArgs.urlApi?.adql), 5));
 
 /** if an extra service is found from the api that is not in the list then set webApiUserAddedService */
 const initApiAddedServiceOnce= once((initArgs) => {
@@ -52,26 +55,23 @@ const initApiAddedServiceOnce= once((initArgs) => {
 });
 
 /**
- * Return true it the initArgs has populated the tap fields so a valid search can be executed.
+ * Return true if the initArgs has populated the tap fields so a valid search can be executed.
  * @param fields
  * @param initArgs
+ * @param {TapBrowserState} tapBrowserState
  * @return {boolean} true if the field are valid to doa search
  */
-function validateAutoSearch(fields, initArgs) {
-    const {columnsModel} = getTapBrowserState();
-    if (columnsModel && getAdqlQuery(false)) {
-        const searchMethodFields= FieldGroupUtils.getGroupFields(skey);
-        if (searchMethodFields) {
-            const adqlFragment = tableSearchMethodsConstraints(columnsModel);
-            if (adqlFragment && adqlFragment.valid) {
-                const constraintInitArgs= ['WorldPt', 'radiusInArcSec']; // this should grow as we support more params in initArgs
-                const usesWhere= Object.keys(initArgs?.urlApi ?? {}).find( (i) => constraintInitArgs.includes(i));
-                return usesWhere ? Boolean(adqlFragment.where) : true;
-            }
-        }
-    }
-    return Boolean(initArgs?.urlApi?.adql);
+function validateAutoSearch(fields, initArgs, tapBrowserState) {
+    const {urlApi = {}} = initArgs;
+    if (urlApi.adql) return true;
+    if (!getAdqlQuery(tapBrowserState, false)) return false; // if we can't build a query then we are not initialized yet
+    const {valid, where} = getHelperConstraints(tapBrowserState);
+    if (!valid) return false;
+    const notWhereArgs = ['MAXREC', 'execute', 'schema', 'service', 'table'];
+    const needsWhereClause = Object.keys(urlApi).some((arg) => !notWhereArgs.includes(arg));
+    return needsWhereClause ? Boolean(where) : true;
 }
+
 
 //----------
 //----------
@@ -79,8 +79,8 @@ function validateAutoSearch(fields, initArgs) {
 //----------
 //----------
 
-function getInitServiceUrl(initArgs,tapOps) {
-    let {serviceUrl=tapOps[0].value} = getTapBrowserState();
+function getInitServiceUrl(tapBrowserState,initArgs,tapOps) {
+    let {serviceUrl=tapOps[0].value} = tapBrowserState;
     initServiceUsingAPIOnce(true, () => {
         if (initArgs?.urlApi?.service) serviceUrl= initArgs.urlApi.service;
     });
@@ -88,20 +88,22 @@ function getInitServiceUrl(initArgs,tapOps) {
 }
 
 export function TapSearchPanel({initArgs= {}, titleOn=true}) {
+    const [getTapBrowserState]= useFieldGroupMetaState(defTapBrowserState,TAP_PANEL_GROUP_KEY);
+    const tapState= getTapBrowserState();
     if (!initArgs?.urlApi?.execute) searchFromAPIOnce(true); // if not execute then mark as done, i.e. disable any auto searching
     initApiAddedServiceOnce(initArgs);  // only look for the extra service the first time
     const tapOps= getTapServiceOptions();
     const {current:clickFuncRef} = useRef({clickFunc:undefined});
     const [selectBy, setSelectBy]= useState(initArgs?.urlApi?.selectBy || 'basic');
     const [obsCoreTableModel, setObsCoreTableModel] = useState();
-    const [serviceUrl, setServiceUrl]= useState(() => getInitServiceUrl(initArgs,tapOps));
-    activateInitArgsAdqlOnce(initArgs);
+    const [serviceUrl, setServiceUrl]= useState(() => getInitServiceUrl(tapState,initArgs,tapOps));
+    activateInitArgsAdqlOnce(tapState,initArgs);
 
     const obsCoreEnabled = obsCoreTableModel?.tableData?.data?.length > 0;
 
     const onTapServiceOptionSelect= (selectedOption) => {
         if (!selectedOption) return;
-        dispatchMultiValueChange(gkey,
+        dispatchMultiValueChange(TAP_PANEL_GROUP_KEY,
             [
                 {fieldKey: 'defAdqlKey', value: ''},
                 {fieldKey: 'adqlQuery', placeholder: '', value: ''}
@@ -112,27 +114,41 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
     };
 
     useEffect(() => {
-        return FieldGroupUtils.bindToStore( gkey, (fields) => {
-            setSelectBy(getFieldVal(gkey,'selectBy',selectBy));
-            setObsCoreTableModel(getTapBrowserState().obsCoreTableModel);
-            searchFromAPIOnce( () => validateAutoSearch(fields,initArgs), () => setTimeout(() => clickFuncRef.clickFunc?.(), 5));
+        return FieldGroupUtils.bindToStore( TAP_PANEL_GROUP_KEY, (fields) => {
+            setSelectBy(getFieldVal(TAP_PANEL_GROUP_KEY,'selectBy',selectBy));
+            const ts= getTapBrowserState();
+            setObsCoreTableModel(ts.obsCoreTableModel);
+
+            searchFromAPIOnce( // searchFromAPIOnce only matters if the urlApi.execute is true
+                () => validateAutoSearch(fields,initArgs,ts),
+                () => setTimeout(() => clickFuncRef.clickFunc?.(), 5));
         });
     }, []);
 
+    const ctx= {
+        setConstraintFragment: (key,value) => {
+            value ?
+                getTapBrowserState().constraintFragments.set(key,value) :
+                getTapBrowserState().constraintFragments.delete(key);
+        }
+    };
+
     return (
         <div style={{width: '100%'}}>
-            <FormPanel  inputStyle = {{display: 'flex', flexDirection: 'column', backgroundColor: 'transparent', padding: 'none', border: 'none'}}
-                        groupKey={gkey}
-                        getDoOnClickFunc={(clickFunc) => clickFuncRef.clickFunc= clickFunc}
-                        params={{hideOnInvalid: false}}
-                        onSubmit={(request) => onTapSearchSubmit(request, serviceUrl)}
-                        extraWidgets={makeExtraWidgets(initArgs,selectBy)}
-                        buttonStyle={{justifyContent: 'left'}}
-                        submitBarStyle={{padding: '2px 3px 3px'}}
-                        help_id = {tapHelpId('form')} >
-                <TapSearchPanelComponents {...{
-                    initArgs, selectBy, serviceUrl, onTapServiceOptionSelect, titleOn, tapOps, obsCoreEnabled}} />
-            </FormPanel>
+            <ConstraintContext.Provider value={ctx}>
+                <FormPanel  inputStyle = {{display: 'flex', flexDirection: 'column', backgroundColor: 'transparent', padding: 'none', border: 'none'}}
+                            groupKey={TAP_PANEL_GROUP_KEY}
+                            getDoOnClickFunc={(clickFunc) => clickFuncRef.clickFunc= clickFunc}
+                            params={{hideOnInvalid: false}}
+                            onSubmit={(request) => onTapSearchSubmit(request, serviceUrl,tapState)}
+                            extraWidgets={makeExtraWidgets(initArgs,selectBy,tapState)}
+                            buttonStyle={{justifyContent: 'left'}}
+                            submitBarStyle={{padding: '2px 3px 3px'}}
+                            help_id = {tapHelpId('form')} >
+                    <TapSearchPanelComponents {...{
+                        initArgs, selectBy, serviceUrl, onTapServiceOptionSelect, titleOn, tapOps, obsCoreEnabled}} />
+                </FormPanel>
+            </ConstraintContext.Provider>
         </div>
     );
 
@@ -195,9 +211,6 @@ function TapSearchPanelComponents({initArgs, serviceUrl, onTapServiceOptionSelec
     const loadObsCoreTables = (requestServiceUrl) => {
         loadObsCoreSchemaTables(requestServiceUrl).then((tableModel) => {
             setObsCoreTableModel(tableModel);
-            // Update state early for ObsCore support
-            // we'll still have to wait for loadTables and loadColumns
-            updateTapBrowserState({obsCoreTableModel: tableModel});
         });
     };
 
@@ -206,7 +219,7 @@ function TapSearchPanelComponents({initArgs, serviceUrl, onTapServiceOptionSelec
     }, [serviceUrl]);
 
     return (
-        <FieldGroup groupKey={gkey} keepState={true} style={{flexGrow: 1, display: 'flex'}}>
+        <FieldGroup groupKey={TAP_PANEL_GROUP_KEY} keepState={true} style={{flexGrow: 1, display: 'flex'}}>
             <div className='TapSearch'>
                 {titleOn && <div className='TapSearch__title'>TAP Searches</div>}
                 <div className='TapSearch__section' title={SERVICE_TIP}>
@@ -222,26 +235,23 @@ function TapSearchPanelComponents({initArgs, serviceUrl, onTapServiceOptionSelec
                     <SectionTitle title='2. Select Query Type  ' helpId='selectBy'/>
                     <RadioGroupInputField
                         fieldKey = 'selectBy'
-                        initialState = {{
-                            options: options,
-                            tooltip: 'Please select an interface type to use'
-                        }}
+                        initialState = {{ tooltip: 'Please select an interface type to use' }}
                         defaultValue = {initArgs?.urlApi?.selectBy}
                         options = {options}
                         wrapperStyle={{alignSelf: 'center'}}
                     />
                     {queryTypeEpilogue}
                 </div>
-                {(selectBy === 'basic' || selectBy === 'obscore') && <BasicUI  serviceUrl={serviceUrl} selectBy={selectBy} initArgs={initArgs} obsCoreTableModel={obsCoreTableModel}/>}
-                {selectBy === 'adql' && <AdqlUI serviceUrl={serviceUrl}/>}
+                { selectBy === 'adql' ?
+                    <AdqlUI {...{serviceUrl}}/> : <BasicUI  {...{serviceUrl, selectBy, initArgs, obsCoreTableModel}}/>}
             </div>
         </FieldGroup>
     );
 }
 
-function makeExtraWidgets(initArgs, selectBy) {
+function makeExtraWidgets(initArgs, selectBy, tapBrowserState) {
     const extraWidgets = [
-        (<ValidationField fieldKey='maxrec' key='maxrec' groupKey={gkey}
+        (<ValidationField fieldKey='maxrec' key='maxrec' groupKey={TAP_PANEL_GROUP_KEY}
                          tooltip='Maximum number of rows to return (via MAXREC)' label= 'Row Limit:' labelWidth={0}
                          initialState= {{
                              value: Number(initArgs?.urlApi?.MAXREC) || Number(getAppOptions().tap?.defaultMaxrec ?? 50000),
@@ -252,15 +262,15 @@ function makeExtraWidgets(initArgs, selectBy) {
         ];
     if (selectBy==='basic' || selectBy==='obscore') {
         extraWidgets.push( (<ExtraButton key='editADQL' text='Populate and edit ADQL'
-                                         onClick={() => populateAndEditAdql()} style={{marginLeft: 30}} />));
+                                         onClick={() => populateAndEditAdql(tapBrowserState)} style={{marginLeft: 30}} />));
     }
     return extraWidgets;
 }
 
-function populateAndEditAdql(inAdql) {
-    const adql = inAdql ?? getAdqlQuery();
+function populateAndEditAdql(tapBrowserState,inAdql) {
+    const adql = inAdql ?? getAdqlQuery(tapBrowserState);
     if (!adql) return;
-    dispatchMultiValueChange(gkey,   //set adql and switch tab to ADQL
+    dispatchMultiValueChange(TAP_PANEL_GROUP_KEY,   //set adql and switch tab to ADQL
         [
             {fieldKey: 'defAdqlKey', value: adql},
             {fieldKey: 'adqlQuery', value: adql},
@@ -292,9 +302,9 @@ function getTitle(adql, serviceUrl) {
 
 
 
-function onTapSearchSubmit(request,serviceUrl) {
+function onTapSearchSubmit(request,serviceUrl,tapBrowserState) {
     const isADQL = (request.selectBy === 'adql');
-    let adql = isADQL ? request.adqlQuery : getAdqlQuery();
+    let adql = isADQL ? request.adqlQuery : getAdqlQuery(tapBrowserState);
     const maxrec = request.maxrec;
 
     if (adql) {
@@ -335,54 +345,39 @@ function onTapSearchSubmit(request,serviceUrl) {
 }
 
 
-
-function getAdqlQuery(showErrors= true) {
-    const tableName = maybeQuote(FieldGroupUtils.getGroupFields(gkey)?.tableName?.value, true);
+/**
+ *
+ * @param {TapBrowserState} tapBrowserState
+ * @param [showErrors]
+ * @returns {string|null}
+ */
+function getAdqlQuery(tapBrowserState, showErrors= true) {
+    const tableName = maybeQuote(tapBrowserState?.tableName, true);
     if (!tableName) return;
+    const helperFragment = getHelperConstraints(tapBrowserState);
+    const tableCol = tableColumnsConstraints(tapBrowserState.columnsModel);
 
-    const {columnsModel} = getTapBrowserState();
-
-    // spatial and temporal constraints
-    const whereFragment = tableSearchMethodsConstraints(columnsModel);
-    if (!whereFragment.valid) {
-        const firstMessage = whereFragment.messages[0];
-        showInfoPopup(firstMessage, 'Error');
-        return null;
+    // check for errors
+    if (!helperFragment.valid) {
+        if (showErrors) showInfoPopup(helperFragment.messages[0], 'Error');
+        return;
     }
-    let constraints = whereFragment.where || '';
-    const addAnd = Boolean(constraints);
-
-    // table column constraints and column selections
-    const adqlFragment = tableColumnsConstraints(columnsModel);
-    if (!adqlFragment.valid && showErrors) {
-        showInfoPopup(adqlFragment.message, 'Error');
-        return null;
-    }
-    if (adqlFragment.where) {
-        constraints += (addAnd ? ' AND ' : '') + `(${adqlFragment.where})`;
-    }
-    let selcols = adqlFragment.selcols || '*';
-
-    // If the line is long, rebuild the line from array of column names
-    // breaking at ADQL_LINE_LENGTH
-    if (selcols.length > ADQL_LINE_LENGTH) {
-        selcols = '';
-        let line = adqlFragment.selcolsArray[0];
-        const colsCopy = adqlFragment.selcolsArray.slice(1);
-        colsCopy.forEach((value) => {
-            const nextColumn = ',' + value;
-            if ((line + nextColumn).length > ADQL_LINE_LENGTH){
-                selcols += line + '\n';
-                line = '    ';
-            }
-            line += nextColumn;
-        });
-        selcols += line;
+    if (!tableCol.valid) {
+        if (showErrors) showInfoPopup(tableCol.message, 'Error');
+        return;
     }
 
-    if (constraints) {
-        constraints = `WHERE ${constraints}`;
+    // build columns
+    const selcols = tableCol.selcols || '*';
+
+    // build up constraints
+    let constraints = helperFragment.where || '';
+    if (tableCol.where) {
+        const addAnd = Boolean(constraints);
+        constraints += (addAnd ? ' AND ' : '') + `(${tableCol.where})`;
     }
+
+    if (constraints) constraints = `WHERE ${constraints}`;
 
     // if we use TOP  when maxrec is set `${maxrec ? `TOP ${maxrec} `:''}`,
     // overflow indicator will not be included with the results

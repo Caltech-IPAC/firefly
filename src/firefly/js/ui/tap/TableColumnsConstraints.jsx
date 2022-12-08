@@ -1,10 +1,11 @@
 import React, {useState, useEffect} from 'react';
 import {cloneDeep, get, isEmpty,} from 'lodash';
 
-import {calcColumnWidths, getCellValue, getColumn, getColumns, getColumnValues, getTblById, watchTableChanges} from '../../tables/TableUtil.js';
+import {getCellValue, getColumn, getColumns, getColumnValues, getTblById, watchTableChanges} from '../../tables/TableUtil.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {dispatchTableFilter, dispatchTableAddLocal, TABLE_LOADED, TABLE_REPLACE, TABLE_SELECT} from '../../tables/TablesCntlr.js';
 import {ColumnConstraintsPanel, getTableConstraints} from './ColumnConstraintsPanel.jsx';
+import {ADQL_LINE_LENGTH} from './TapUtil.js';
 
 const COLS_TO_DISPLAY_FIRST = ['column_name','unit','ucd','description','datatype','arraysize','utype','xtype','principal'];
 
@@ -190,27 +191,43 @@ function reorganizeTableModel(tableModel, columnNames, reset) {
     return modifiedTableModel;
 }
 
+function makeColsLines(selcolsArray) {
+    const colSingleLine= selcolsArray?.join(',') ?? '';
+    if (colSingleLine.length < ADQL_LINE_LENGTH) return colSingleLine;
+
+    let multiLineCols = '';
+    let line = selcolsArray[0];
+    const colsCopy = selcolsArray.slice(1);
+    colsCopy.forEach((value) => {
+        if (value) line+=',';
+        if ((line + value).length > ADQL_LINE_LENGTH){
+            multiLineCols+= line + '\n';
+            line = '       ';
+        }
+        line += value;
+    });
+    multiLineCols += line;
+    return multiLineCols;
+}
+
 /**
  * Get constraints as ADQL
  * @param {object} columnsModel
  * @returns {AdqlFragment}
  */
 export function tableColumnsConstraints(columnsModel) {
-    const tbl_id = get(columnsModel, 'tbl_id');
+    const tbl_id = columnsModel?.tbl_id;
     if (!tbl_id) {
         return {valid: false, message: 'Unable to retrieve table column constraints'};
     }
 
-    const tableconstraints = getTableConstraints(tbl_id);
-    if (!tableconstraints) {
-        return {valid: false, message: 'Unable to retrive table column constraints and selected columns'};
+    const tableConstraints = getTableConstraints(tbl_id);
+    if (!tableConstraints) {
+        return {valid: false, message: 'Unable to retrieve table column constraints and selected columns'};
     }
-    const {whereFragment, selcolsFragment, errors} = tableconstraints;
-    if (errors) {
-        return {valid: false, message: errors};
-    }
-    const colsToSelect = selcolsFragment.lastIndexOf(',') > 0 ?
-        selcolsFragment.substring(0, selcolsFragment.lastIndexOf(',')) : selcolsFragment;
+    const {whereFragment, selcolsArray, errors} = tableConstraints;
+    if (errors) return {valid: false, message: errors};
 
-    return {valid: true, where: whereFragment, selcols: (colsToSelect.length > 0) ? colsToSelect : '', selcolsArray: tableconstraints.selcolsArray};
+    const selcols= makeColsLines(selcolsArray);
+    return {valid: true, where: whereFragment, selcols, selcolsArray};
 }

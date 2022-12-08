@@ -238,7 +238,10 @@ async function doUploadAndAnalysis({
      */
     const processAndActivate= (serverCacheFileKey, fileFormat, fileAnalysis) => {
         const {parts,fileName}= fileAnalysis;
-        if (!parts || fileFormat==='UNKNOWN') return makeErrorResult('Could not parse file',fileName,serverCacheFileKey);
+        if (!parts || fileFormat==='UNKNOWN') {
+            return dpdtMessageWithDownload('No displayable data available for this row: Unknown file type',
+                                                  fileName&&'Download File', url);
+        }
 
         const result= processAnalysisResult({ table, row, request, activateParams, serverCacheFileKey,
                                               fileAnalysis, dataTypeHint, analysisActivateFunc, serDefParams,

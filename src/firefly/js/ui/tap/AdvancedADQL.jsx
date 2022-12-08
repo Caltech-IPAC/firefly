@@ -2,13 +2,14 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {useState, useRef, useEffect, Fragment} from 'react';
+import React, {useState, useRef, useEffect, Fragment, useContext} from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import SplitPane from 'react-split-pane';
 import Tree, { TreeNode } from 'rc-tree';
 import 'rc-tree/assets/index.css';
 import {cloneDeep, defer, isArray, isObject} from 'lodash';
+import {FieldGroupCtx} from '../FieldGroup.jsx';
 
 import {InputAreaFieldConnected} from '../InputAreaField.jsx';
 import {SplitContent} from '../panel/DockLayoutPanel';
@@ -27,7 +28,7 @@ import '../../externalSource/prismLive/prism.css';
 import '../../externalSource/prismLive/prism-live.css';
 
 const code = {className: 'language-sql'};
-var cFetchKey = Date.now();
+let cFetchKey = Date.now();
 const SB_TIP= 'Clicking on a table or column name below will insert it into the ADQL Query field to the right';
 
 const defaultExamples=[
@@ -71,12 +72,13 @@ function getExamples(serviceUrl) {
     );
 }
 
-export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={}}) {
+export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, style={}}) {
 
     const [treeData, setTreeData] = useState([]);                               // using a useState hook
     const adqlEl = useRef(null);                                                // using a useRef hook
     const ffcn = useRef(null);                                                  // using a useRef hook
     const prismLiveRef = useRef(null);
+    const {groupKey}= useContext(FieldGroupCtx);
 
     useEffect(() => {
         cFetchKey = Date.now();
