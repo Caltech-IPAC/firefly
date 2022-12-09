@@ -78,7 +78,6 @@ export function FileUploadViewPanel({setSubmitText, acceptMoc}) {
     const {message, analysisResult, report, summaryModel, detailsModel, prevAnalysisResult} =
         useStoreConnector(() => {
             const loadingOp= getLoadingOp();
-            console.log('loadingOp: ' + loadingOp);
             const {analysisResult, message}= getField(groupKey, loadingOp) || {};
             const summaryTbl= getTblById(summaryTblId);
             return getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, message, getUploadMetaInfo());

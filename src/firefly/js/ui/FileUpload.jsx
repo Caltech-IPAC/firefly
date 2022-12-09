@@ -23,8 +23,6 @@ function FileUploadView({fileType, isLoading, label, valid, wrapperStyle,  messa
                 visible={true}
                 message={message}
                 onChange={onChange}
-                onBlur={() => onUrlAnalysis(value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') onUrlAnalysis(value); }}
                 type={isFromURL ? 'text' : 'file'}
                 label={label}
                 value={value}

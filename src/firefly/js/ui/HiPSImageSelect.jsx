@@ -89,7 +89,7 @@ export function showHiPSSurveysPopup(pv, moc= false) {
             if (rootUrl) {
                 const plot = pv ? primePlot(pv) : primePlot(visRoot());
                 // update the table highlight of the other one which is not shown in table panel
-                moc ? createHiPSMocLayer(getIvoaId(), getTitle(), rootUrl, primePlot(pv), true).then() :
+                moc ? createHiPSMocLayer(getIvoaId(), getTitle(), rootUrl, primePlot(pv), true) :
                     dispatchChangeHiPS({plotId: plot.plotId, hipsUrlRoot: rootUrl});
                 dispatchHideDialog(DIALOG_ID);
             }
@@ -109,7 +109,7 @@ export function showHiPSSurveysPopup(pv, moc= false) {
                             help_id='visualization.changehips'>
                     {moc &&
                         <FieldGroupTabs initialState= {{ value:'search' }} fieldKey='mocTabs'
-                                            style={{minWidth:600, minHeight:500, width:'100%', height: '100%'}}>
+                                            style={{minWidth:715, minHeight:500, width:'100%', height: '100%'}}>
                             <Tab name='Search' id='search'>
                                 <div className='ImageSearch__HipsPopup' style={{padding: '5px 0px 0px 0px'}}>
                                     <SourceSelect moc={moc}/>
@@ -118,14 +118,14 @@ export function showHiPSSurveysPopup(pv, moc= false) {
                             </Tab>
 
                             <Tab name='Use my MOC' id='uploadMoc'>
-                                <div style={{width: '100%'}} >
+                                <div style={{width:'100%', minWidth:715, minHeight:500}} >
                                     <FileUploadViewPanel acceptMoc={true}/>
                                 </div>
                             </Tab>
                         </FieldGroupTabs>}
 
                     {!moc &&
-                        <div className='ImageSearch__HipsPopup' style={{minWidth:600, minHeight:500}}>
+                        <div className='ImageSearch__HipsPopup' style={{minWidth:715, minHeight:500}}>
                             <SourceSelect moc={moc}/>
                             <HiPSSurveyTable groupKey={groupKey} moc={moc}/>
                         </div>}
