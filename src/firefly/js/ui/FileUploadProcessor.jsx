@@ -76,7 +76,7 @@ export function resultSuccess(request) {
         if (request.mocOp==='table') mocMeta[MetaConst.IGNORE_MOC]='true';
         //loadToUI = true if request.mocOp==='table', else loadToUI=false
         sendTableRequest(tableIndices, fileCacheKey, Boolean(request.tablesAsSpectrum==='spectrum'), currentReport, Boolean(request.mocOp==='table'), mocMeta);
-        //this will signal to showUploadDialog in FileUploadDropdown.jsx to hide the upload dialog (from a HiPs/MOC upload)
+        //this will signal HiPSImageSelect's 'Add MOC Layer dialog' to hide itself
         return true;
     } else if ( isLsstFootprintTable(currentDetailsModel) ) {
         sendLSSTFootprintRequest(fileCacheKey, request.fileName, tableIndices[0]);

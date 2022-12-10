@@ -29,9 +29,10 @@ import {primePlot} from '../visualize/PlotViewUtil.js';
 import {BLANK_HIPS_URL} from '../visualize/WebPlot.js';
 import {createHiPSMocLayer} from 'firefly/visualize/task/PlotHipsTask.js';
 import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
-import CompleteButton from 'firefly/ui/CompleteButton.jsx';
 import {getDefaultMOCList} from 'firefly/visualize/HiPSMocUtil.js';
-import {showUploadDialog} from 'firefly/ui/FileUploadDropdown.jsx';
+import {FieldGroupTabs, Tab} from 'firefly/ui/panel/TabPanel';
+import {FileUploadViewPanel} from 'firefly/visualize/ui/FileUploadViewPanel';
+import {resultSuccess} from 'firefly/ui/FileUploadProcessor';
 
 const useSourceHiPS = 'useSourceHiPS';
 const useSourceMOC = 'useSourceMOC';
@@ -69,7 +70,6 @@ HiPSImageSelect.propTypes = {
 
 const DIALOG_ID = 'HiPSImageSelectPopup';
 
-
 /**
  * show HiPS survey info table in popup panel
  * @param {PlotView} pv
@@ -80,38 +80,57 @@ export function showHiPSSurveysPopup(pv, moc= false) {
 
     const groupKey = activeGroupKey || DIALOG_ID;
 
-    const onSubmit = () => {
-        const rootUrl = getHipsUrl();
-        if (rootUrl) {
-            const plot = pv ? primePlot(pv) : primePlot(visRoot());
-            // update the table highlight of the other one which is not shown in table panel
-            moc ? createHiPSMocLayer(getIvoaId(), getTitle(), rootUrl, primePlot(pv), true).then() :
-                  dispatchChangeHiPS({plotId: plot.plotId, hipsUrlRoot: rootUrl});
-            dispatchHideDialog(DIALOG_ID);
+    const onSubmit = (request) => {
+        if (request.mocTabs === 'uploadMoc') {
+            if (resultSuccess(request)) dispatchHideDialog(DIALOG_ID);
+        }
+        else {
+            const rootUrl = getHipsUrl();
+            if (rootUrl) {
+                const plot = pv ? primePlot(pv) : primePlot(visRoot());
+                // update the table highlight of the other one which is not shown in table panel
+                moc ? createHiPSMocLayer(getIvoaId(), getTitle(), rootUrl, primePlot(pv), true) :
+                    dispatchChangeHiPS({plotId: plot.plotId, hipsUrlRoot: rootUrl});
+                dispatchHideDialog(DIALOG_ID);
+            }
         }
     };
 
     const popup = (
         <PopupPanel title={moc ? 'Add MOC Layer' : 'Change HiPS Image'} modal={true}>
-            <FormPanel  submitBarStyle = {{flexShrink: 0, padding: '0 6px 3px 6px'}}
-                        style={ {resize:'both', overflow: 'hidden', zIndex:1}}
-                        groupKey = {groupKey}
-                        submitText={moc ? 'Add MOC' : 'Change HiPS'}
-                        onSubmit = {onSubmit}
-                        onCancel = {() => dispatchHideDialog(DIALOG_ID)}
-                        params={{disabledDropdownHide: true}}
-                        help_id = 'visualization.changehips'>
-                <FieldGroup groupKey={groupKey} keepState={true} style={{width:'100%', height:'100%'}}>
-                    <div className='ImageSearch__HipsPopup'>
-                        <SourceSelect moc={moc}/>
-                        <HiPSSurveyTable groupKey={groupKey} moc={moc}/>
-                        {moc && <div style={{display:'flex', padding: '6px 15px 0 0', justifyContent:'flex-end'}}>
-                            <div style={{lineHeight:'25px', height: 25, paddingRight: 4, fontWeight:'bold'}}> To Upload a MOC: </div>
-                            <CompleteButton text='Upload' groupKey='' onSuccess={() => showUploadDialog(true, false, 'FileUploadHips')} />
+            <FieldGroup groupKey={groupKey} keepState={true} style={{width:'100%', height: '100%'}}>
+                <FormPanel submitBarStyle={{flexShrink: 0, padding: '0px 6px 3px 6px'}}
+                           style={ { resize:'both', overflow: 'hidden', zIndex:1}}
+                            groupKey={groupKey}
+                            submitText={moc ? 'Add MOC' : 'Change HiPS'}
+                            onSubmit={onSubmit}
+                            onCancel={() => dispatchHideDialog(DIALOG_ID)}
+                            params={{disabledDropdownHide: true}}
+                            help_id='visualization.changehips'>
+                    {moc &&
+                        <FieldGroupTabs initialState= {{ value:'search' }} fieldKey='mocTabs'
+                                            style={{minWidth:715, minHeight:500, width:'100%', height: '100%'}}>
+                            <Tab name='Search' id='search'>
+                                <div className='ImageSearch__HipsPopup' style={{padding: '5px 0px 0px 0px'}}>
+                                    <SourceSelect moc={moc}/>
+                                    <HiPSSurveyTable groupKey={groupKey} moc={moc}/>
+                                </div>
+                            </Tab>
+
+                            <Tab name='Use my MOC' id='uploadMoc'>
+                                <div style={{width:'100%', minWidth:715, minHeight:500}} >
+                                    <FileUploadViewPanel acceptMoc={true}/>
+                                </div>
+                            </Tab>
+                        </FieldGroupTabs>}
+
+                    {!moc &&
+                        <div className='ImageSearch__HipsPopup' style={{minWidth:715, minHeight:500}}>
+                            <SourceSelect moc={moc}/>
+                            <HiPSSurveyTable groupKey={groupKey} moc={moc}/>
                         </div>}
-                    </div>
-                </FieldGroup>
-            </FormPanel>
+                </FormPanel>
+            </FieldGroup>
         </PopupPanel>
     );
 
