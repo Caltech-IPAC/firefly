@@ -11,7 +11,6 @@ USE_ADMIN_AUTH=${USE_ADMIN_AUTH:-"true"}
 
 
 
-
 echo -e "\n!!============================================================"
 echo "!!============================================================"
 echo "!!==================== For Help =============================="
@@ -31,6 +30,7 @@ echo "        Admin username                   ADMIN_USER                    ${A
 echo "        Admin password                   ADMIN_PASSWORD                ${ADMIN_PASSWORD}"
 echo "        Additional data path             VISUALIZE_FITS_SEARCH_PATH    ${VISUALIZE_FITS_SEARCH_PATH}"
 echo "        Clean internal(eg- 720m, 5h, 3d) CLEANUP_INTERVAL              ${CLEANUP_INTERVAL}"
+echo "        Base URL.  Default to /          baseURL                       ${baseURL:-/}"
 echo
 echo "Advanced environment variables:"
 echo "        Run tomcat with debug            DEBUG                         ${DEBUG}"
@@ -59,6 +59,25 @@ echo "Command line options: "
 echo "        --help  : show help message, examples, stop"
 echo "        --debug : start in debug mode"
 echo -e "\n"
+
+
+#-- prepare webapps on first time startup
+#   - extract the war files from webapps-ref to webapps
+#   - modify log4j to have log sent to stdout as well
+#   - modify context path(baseURL) if given
+if [ -z "$(ls -A ${CATALINA_HOME}/webapps)" ]; then
+  for n in ${CATALINA_HOME}/webapps-ref/*.war; do
+    fn=`basename $n .war`
+    if [ ! -z ${baseURL} ]; then
+      fn="$(sed -r 's/\//#/g;s/^(#)+|(#)+$//g' <<< ${baseURL})#${fn}"   # append baseURL to the context path
+    fi
+    war_dir="${CATALINA_HOME}/webapps/${fn}"
+    mkdir -p $war_dir
+    unzip -oqd $war_dir $n
+    sed -E -i.bak 's/##out--//' $war_dir/WEB-INF/classes/log4j2.properties
+  done
+fi
+#-------------------------------------------------------------------
 
 
 #------------ if we are doing firefly.jar setup examples in the local/www directory
