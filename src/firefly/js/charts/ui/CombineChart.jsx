@@ -7,7 +7,7 @@ import {cloneDeep, get, pick, set} from 'lodash';
 
 import {getMultiViewRoot, getViewerItemIds} from '../../visualize/MultiViewCntlr.js';
 import {dispatchChartAdd, getChartData} from '../ChartsCntlr.js';
-import {getTblIdFromChart, uniqueChartId} from '../ChartUtil.js';
+import {getNewTraceDefaults, getTblIdFromChart, uniqueChartId} from '../ChartUtil.js';
 import {TextButton} from '../../ui/TextButton.jsx';
 import {PINNED_VIEWER_ID, PINNED_GROUP, PINNED_CHART_PREFIX} from './PinnedChartPanel.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
@@ -139,9 +139,11 @@ const CombineChartDialog = ({onComplete}) => {
             <div className='CombineChart__popup--tbl'>
                 <TablePanel {...{tbl_id, showToolbar:false, showUnits:false, showTypes:false}}/>
             </div>
-            <FieldGroup keepState={false} groupKey={groupKey}>
+            <FieldGroup keepState={false} groupKey={groupKey} style={{overflow: 'hidden', display: 'flex', flexDirection: 'column'}}>
                 <Title initialState={{value: 'combined'}}/>
-                <SelChartProps {...{tbl_id, groupKey}}/>
+                <div style={{overflow: 'auto'}}>
+                    <SelChartProps {...{tbl_id, groupKey}}/>
+                </div>
             </FieldGroup>
             <div>
                 <button type='button' className='button std' style={{marginRight: 5}} onClick={doApply}>Ok</button>
@@ -158,19 +160,18 @@ const SelChartOpt = ({groupKey, ctitle, traces, idx}) => {
     const key = `cOpt-${idx}`;
 
     const TraceOpt = ({traceNum, title}) => {
-        const {Name, Color} = basicOptions({activeTrace: traceNum, groupKey, fieldProps:{labelWidth: 32, size: 40}});
+        const {Name} = basicOptions({activeTrace: traceNum, groupKey, fieldProps:{labelWidth: 32, size: 40}});
         if (!title || title.toLowerCase().startsWith('trace '))  title = `trace ${traceNum}`;
 
         return (
             <div className='FieldGroup__vertical'>
                 <Name initialState={{value: title}}/>
-                <Color/>
             </div>
         ) ;
     };
     
     return (
-        <CollapsiblePanel componentKey={key} header={ctitle} initialState= {{ value:'closed' }}>
+        <CollapsiblePanel componentKey={key} header={ctitle} isOpen={true}>
             {traces.map((title, idx) => <TraceOpt {...{key:idx, traceNum: totalTraces++, title}}/>)}
         </CollapsiblePanel>
     );
@@ -225,6 +226,7 @@ function combineChart(chartIds, props={}) {
     const baseChartData = cloneDeep(pick(getChartData(baseChartId), ['chartType', 'activeTrace', 'data', 'fireflyData', 'layout', 'tablesources', 'viewerId']));
     const baseXUnit = baseChartData.fireflyData?.[baseChartData?.activeTrace]?.xUnit;
     const baseYUnit = baseChartData.fireflyData?.[baseChartData?.activeTrace]?.yUnit;
+    const baseTraceCnt = baseChartData?.data?.length ?? 0;
 
     baseChartData?.tablesources?.forEach((ts) => Reflect.deleteProperty(ts, '_cancel'));
 
@@ -280,8 +282,15 @@ function combineChart(chartIds, props={}) {
         data         && baseChartData.data.push(...data);
         fireflyData  && baseChartData.fireflyData.push(...fireflyData);
         tablesources && baseChartData.tablesources.push(...tablesources);
-
     }
+
+    baseChartData.data.forEach((trace, idx) => {
+        if (idx >= baseTraceCnt) {
+            // apply defaults settings to newly created traces
+            Object.entries(getNewTraceDefaults(null, trace?.type, idx))
+                .forEach(([k,v]) => !props[k] && (props[k] = v));
+        }
+    });
 
     // override new baseChartData using lodash.set fashion
     Object.entries(props).forEach(([key, val]) => {

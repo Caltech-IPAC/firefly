@@ -1140,5 +1140,5 @@ export function getChartProps(chartId, tbl_id, activeTrace) {
 export function getTblIdFromChart(chartId, traceNum) {
     const {data, fireflyData, activeTrace} = getChartData(chartId) || {};
     traceNum = traceNum ?? activeTrace;
-    return data?.[traceNum]?.tbl_id || fireflyData?.[traceNum].tbl_id;
+    return data?.[traceNum]?.tbl_id || fireflyData?.[traceNum]?.tbl_id;
 }
