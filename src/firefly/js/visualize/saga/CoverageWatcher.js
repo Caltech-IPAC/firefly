@@ -4,6 +4,7 @@
 
 import Enum from 'enum';
 import {isEmpty, isObject, isString, flattenDeep, values, isUndefined, isNil} from 'lodash';
+import {makeRelativePolygonAry} from '../ui/VisualSearchUtils.js';
 import {WebPlotRequest} from '../WebPlotRequest.js';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE,
         TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
@@ -396,12 +397,19 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
     }
 
     const tblIdAry= Object.keys(preparedTables).filter( (v) => !isString(preparedTables[v]));
+    const oldAtt= primePlot(visRoot(), PLOT_ID)?.attributes ?? {};
 
     const attributes= {
         [COVERAGE_TARGET]: avgOfCenters,
         [COVERAGE_FOV]: fovSize,
         [PlotAttribute.VISUALIZED_TABLE_IDS]: tblIdAry,
         [PlotAttribute.REPLOT_WITH_NEW_CENTER]: true,
+
+        // search area
+        [PlotAttribute.USER_SEARCH_WP]: oldAtt[PlotAttribute.USER_SEARCH_WP],
+        [PlotAttribute.USER_SEARCH_RADIUS_DEG]: oldAtt[PlotAttribute.USER_SEARCH_RADIUS_DEG],
+        [PlotAttribute.POLYGON_ARY]: oldAtt[PlotAttribute.POLYGON_ARY],
+        [PlotAttribute.USE_POLYGON]: oldAtt[PlotAttribute.USE_POLYGON]
     };
     if (commonSearchTarget) attributes[PlotAttribute.CENTER_ON_FIXED_TARGET]= commonSearchTarget;
 

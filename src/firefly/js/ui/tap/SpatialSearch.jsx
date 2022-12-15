@@ -31,6 +31,7 @@ const Spatial = 'Spatial';
 const RadiusSize = 'coneSize';
 const SpatialMethod = 'spatialMethod';
 const PolygonCorners = 'polygoncoords';
+const cornerCalcType= 'imageCornerCalc';
 const SpatialRegOp= 'spatialRegionOperation';
 
 const SpatialLableSaptail = LableSaptail + 45 /* padding of target */ - 4 /* padding of label */;
@@ -79,7 +80,7 @@ const checkHeaderCtl= makeCollapsibleCheckHeader(getPanelPrefix(Spatial));
 const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
 
 const fldListAry= [ServerParams.USER_TARGET_WORLD_PT,SpatialRegOp,
-            SpatialMethod,RadiusSize, PolygonCorners,CenterLonColumns,CenterLatColumns];
+            SpatialMethod,RadiusSize, PolygonCorners,CenterLonColumns,CenterLatColumns, cornerCalcType];
 
 export function SpatialSearch({cols, serviceUrl, columnsModel, initArgs={}, obsCoreEnabled}) {
     const {searchParams={}}= initArgs ?? {};
@@ -132,10 +133,13 @@ export function SpatialSearch({cols, serviceUrl, columnsModel, initArgs={}, obsC
         const pv = getActivePlotView(visRoot());
         const plot = primePlot(pv);
         if (!plot) return;
-        const cornerCalcV = getVal('imageCornerCalc') || 'image';
-        if ((cornerCalcV === 'image' || cornerCalcV === 'viewport' || cornerCalcV === 'area-selection')) {
-            const sel = plot.attributes[PlotAttribute.SELECTION];
-            if (!sel && cornerCalcV === 'area-selection') setVal('imageCornerCalc','image');
+        const cornerCalcV = getVal(cornerCalcType);
+        if ((!cornerCalcV || cornerCalcV === 'image' || cornerCalcV === 'viewport' || cornerCalcV === 'area-selection')) {
+            const sel = plot.attributes[PlotAttribute.SELECTION] ?? plot.attributes[PlotAttribute.POLYGON_ARY];
+            if (!sel && cornerCalcV === 'area-selection') setVal(cornerCalcType,'image');
+            if (!cornerCalcV) {
+                if (sel) setVal(cornerCalcType,'area-selection');
+            }
             setTimeout( () => setVal(PolygonCorners,calcCornerString(pv, cornerCalcV)), 5);
         }
     };
@@ -144,7 +148,7 @@ export function SpatialSearch({cols, serviceUrl, columnsModel, initArgs={}, obsC
         ([spatialMethod]) => spatialMethod==='Polygon' && onChangeToPolygonMethod()
     );
 
-    useFieldGroupWatch(['imageCornerCalc'], () => onChangeToPolygonMethod());
+    useFieldGroupWatch([cornerCalcType], () => onChangeToPolygonMethod());
 
     useEffect(() => {
         const constraints= makeSpatialConstraints(columnsModel, obsCoreEnabled, makeFldObj(fldListAry));
@@ -215,7 +219,7 @@ export function SpatialSearch({cols, serviceUrl, columnsModel, initArgs={}, obsC
             <div style={{display:'flex', flexDirection:'column', flexWrap:'no-wrap',
                 width: SpatialWidth, marginLeft: LeftInSearch, marginTop: 5}}>
                 {selectSpatialSearchMethod(getVal(SpatialMethod)??'Cone', hasRadius, hipsUrl, centerWP, fovDeg)}
-                {setSpatialSearchSize(radiusInArcSec, getVal(SpatialMethod)??'Cone', getVal('imageCornerCalc')??'image',
+                {setSpatialSearchSize(radiusInArcSec, getVal(SpatialMethod)??'Cone', getVal(cornerCalcType)??'image',
                     hipsUrl,centerWP,fovDeg)}
             </div>
         );

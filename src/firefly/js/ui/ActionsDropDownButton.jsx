@@ -1,7 +1,7 @@
 import {isArray} from 'lodash';
-import React, {useRef} from 'react';
+import React, {Fragment, useRef} from 'react';
 import {getTblById} from '../tables/TableUtil.js';
-import {getWorldPtFromTable} from '../util/VOAnalyzer.js';
+import {getWorldPtFromTableRow} from '../util/VOAnalyzer.js';
 import {SingleColumnMenu} from './DropDownMenu.jsx';
 import {DropDownToolbarButton} from './DropDownToolbarButton.jsx';
 import {useStoreConnector} from './SimpleComponent.jsx';
@@ -11,8 +11,7 @@ import CysConverter from '../visualize/CsysConverter.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {getActivePlotView, primePlot} from '../visualize/PlotViewUtil.js';
-import {showSearchRefinementTool} from '../visualize/SearchRefinementTool.jsx';
-import {closeToolbarModalLayers} from '../visualize/ui/VisMiniToolbar.jsx';
+import {markOutline, showSearchRefinementTool} from '../visualize/SearchRefinementTool.jsx';
 import {convertWpAryToStr, getDetailsFromSelection} from '../visualize/ui/VisualSearchUtils.js';
 import {formatWorldPt} from '../visualize/ui/WorldPtFormat.jsx';
 
@@ -22,9 +21,9 @@ export function ActionsDropDownButton({searchActions, pv, tbl_id}) {
     const buttonRef = useRef();
     const spacial= Boolean(pv);
     const {cenWpt} = spacial ? getDetailsFromSelection(primePlot(pv)) :
-                                {cenWpt:getWorldPtFromTable(getTblById(tbl_id))};
+                                {cenWpt:getWorldPtFromTableRow(getTblById(tbl_id))};
     if (!cenWpt) return <div/>;
-    const dropDown = <SearchDropDown {...{searchActions, buttonRef, spacial, tbl_id}}/>;
+    const dropDown = <SearchDropDown {...{searchActions, buttonRef, spacial, tbl_id, key:'searchDropDown'}}/>;
 
     return (
         <div ref={buttonRef}>
@@ -37,15 +36,16 @@ export function ActionsDropDownButton({searchActions, pv, tbl_id}) {
 }
 
 const spacialTypes= [SearchTypes.point,SearchTypes.pointSide,SearchTypes.area,SearchTypes.pointRadius];
-const tableTypes= [SearchTypes.point, SearchTypes.point_table_only, SearchTypes.table];
+const tableTypes= [SearchTypes.point_table_only, SearchTypes.table];
 
 function doExecute(sa,cenWpt,radius,cornerStr,table) {
-    // closeToolbarModalLayers();
     switch (sa.searchType) {
         case SearchTypes.area:
         case SearchTypes.pointSide:
         case SearchTypes.pointRadius:
-            sa.execute(sa, cenWpt, getValidSize(sa, radius), cornerStr);
+            const valRadius= getValidSize(sa, radius);
+            sa.execute(sa, cenWpt, valRadius, cornerStr);
+            markOutline(sa, primePlot(visRoot())?.plotId,{ wp:cenWpt, radius:valRadius, polyStr:cornerStr});
             break;
         case SearchTypes.point:
         case SearchTypes.point_table_only:
@@ -75,29 +75,33 @@ function SearchDropDown({searchActions, buttonRef, spacial, tbl_id}) {
     const pv = useStoreConnector(() => spacial? getActivePlotView(visRoot()) : undefined);
     const table= tbl_id && getTblById(tbl_id);
     const {cenWpt, radius, corners} = spacial ?
-        getDetailsFromSelection(primePlot(pv)) :
-        {cenWpt:getWorldPtFromTable(table)};
+        getDetailsFromSelection(primePlot(pv)) : {cenWpt:getWorldPtFromTableRow(table)};
 
     const cornerStr = isArray(corners) ? convertWpAryToStr(corners, primePlot(pv)) : undefined;
     const includeTypes= spacial ? spacialTypes : tableTypes;
 
+    let lastGroupId;
 
     const supportedSearchActions= searchActions
         .filter(({searchType}) => includeTypes.includes(searchType))
         .filter((sa) => spacial ? sa.supported(pv,cenWpt, radius, corners) : sa.supported(table));
+
+    const spacialSearchActions= supportedSearchActions.filter(({searchType}) => searchType!==SearchTypes.table);
+    const tableNonSpacialSearchActions= supportedSearchActions.filter(({searchType}) => searchType===SearchTypes.table);
+
+
+
     return (
-        <SingleColumnMenu>
-            {supportedSearchActions
-                .filter(({searchType}) => searchType===SearchTypes.table)
-                .map((sa) => {
-                    const text = getSearchTypeDesc(sa, cenWpt, radius, corners?.length);
-                    return (
-                        <ToolbarButton text={text} tip={`${sa.tip} for\n${text}`}
-                                       enabled={true} horizontal={false} key={sa.cmd}
-                                       visible={isSupported(sa, cenWpt, radius, cornerStr, table)}
-                                       onClick={() => doExecute(sa, cenWpt, radius, cornerStr, table)}/>
-                    );
-                })}
+        <SingleColumnMenu key='searchMenu'>
+            {Boolean(tableNonSpacialSearchActions.length) && tableNonSpacialSearchActions.map((sa) => {
+                const text = getSearchTypeDesc(sa, cenWpt, radius, corners?.length);
+                return (
+                    <ToolbarButton text={text} tip={`${sa.tip} for\n${text}`}
+                                   enabled={true} horizontal={false} key={sa.cmd}
+                                   visible={isSupported(sa, cenWpt, radius, cornerStr, table)}
+                                   onClick={() => doExecute(sa, cenWpt, radius, cornerStr, table)}/>
+                );
+            })}
             <div style={{whiteSpace: 'nowrap', fontSize: '10pt', padding: '5px 1px 5px 15px'}}>
                 <span style={{fontStyle: 'italic'}}>
                     {'Actions based on center: '}
@@ -106,27 +110,36 @@ function SearchDropDown({searchActions, buttonRef, spacial, tbl_id}) {
                     {formatWorldPt(cenWpt, 3)}
                 </span>
             </div>
-            {supportedSearchActions
-                .filter(({searchType}) => searchType!==SearchTypes.table)
-                .map((sa) => {
+            {spacialSearchActions.map((sa,idx) => {
                 const text = getSearchTypeDesc(sa, cenWpt, radius, corners?.length);
+                let useSep= false;
+                if (lastGroupId && sa.groupId!==lastGroupId) {
+                    lastGroupId= sa.groupId;
+                    useSep= true;
+                }
+                if (!lastGroupId) lastGroupId= sa.groupId;
                 return (
-                    <ToolbarButton text={text} tip={`${sa.tip} for\n${text}`}
-                                   enabled={true} horizontal={false} key={sa.cmd}
-                                   visible={isSupported(sa,cenWpt,radius,cornerStr,table) }
-                                   onClick={() => doExecute(sa,cenWpt,radius,cornerStr,table) }/>
+                    <React.Fragment key={'frag='+idx}>
+                        {useSep && <DropDownVerticalSeparator key={sa.cmd+'---separator'} useLine={true}/>}
+                        <ToolbarButton text={text} tip={`${sa.tip} for\n${text}`}
+                                       enabled={true} horizontal={false} key={sa.cmd}
+                                       visible={isSupported(sa,cenWpt,radius,cornerStr,table) }
+                                       onClick={() => doExecute(sa,cenWpt,radius,cornerStr,table) }/>
+                    </React.Fragment>
                 );
             })}
-            {spacial && <DropDownVerticalSeparator useLine={true}/>}
-            {spacial && <ToolbarButton text='Use search refinement tool' tip='Use search refinement tool'
-                           enabled={true} horizontal={false} key={'refine'}
-                           visible={true}
-                           onClick={() =>
-                               showSearchRefinementTool({
-                                   popupClosing: () => console.log('popup closed'), element: buttonRef.current,
-                                   plotId: pv.plotId, searchActions:supportedSearchActions,
-                                   wp: cenWpt, searchAreaInDeg: radius, polygonValue: corners})
-                           }/>}
+            {spacial &&
+                <>
+                    <DropDownVerticalSeparator useLine={true} key='refine---separator'/>
+                    <ToolbarButton text='Refine search region' tip='Refine search region'
+                                   enabled={true} horizontal={false} key='refine' visible={true}
+                                   onClick={() =>
+                                       showSearchRefinementTool({
+                                           element: buttonRef.current, plotId: pv.plotId,
+                                           searchActions:supportedSearchActions,
+                                           wp: cenWpt, searchAreaInDeg: radius, polygonValue: corners}) }/>
+                </>
+            }
         </SingleColumnMenu>
     );
 
@@ -149,6 +162,6 @@ export function isSpacialActionsDropVisible(searchActions, pv) {
 export function isTableActionsDropVisible(searchActions, tbl_id) {
     const table= getTblById(tbl_id);
     if (!searchActions.some( ({searchType}) => tableTypes.includes(searchType))) return false;
-    const wp= getWorldPtFromTable(table);
+    const wp= getWorldPtFromTableRow(table);
     return Boolean(wp);
 }

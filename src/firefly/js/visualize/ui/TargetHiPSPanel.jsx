@@ -9,7 +9,6 @@ import {ToolbarButton} from 'firefly/ui/ToolbarButton.jsx';
 import {closeToolbarModalLayers} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
 import {computeCentralPointAndRadius,} from 'firefly/visualize/VisUtil.js';
 import CLICK from 'html/images/20x20_click.png';
-import SELECT_NONE from 'html/images/icons-2014/28x28_Rect_DD.png';
 import PropTypes, {arrayOf, bool, number, object, oneOf, shape, string} from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';

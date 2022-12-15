@@ -1,3 +1,4 @@
+import {isFunction, isString} from 'lodash';
 import {sprintf} from '../externalSource/sprintf.js';
 
 export const SearchTypes =  { point: 'point', pointRadius: 'pointRadius', pointSide: 'pointSide', area: 'area',point_table_only:'point_table_only', table:'table' };
@@ -29,40 +30,50 @@ const DEF_SUPPORTED= () => true;
 /**
  *
  * @param {String} cmd
+ * @param {String} groupId
  * @param {String} label - should be very short, used to build full label
  * @param {String} tip
  * @param {String} searchType - on of the value default by SearchTypes - one of  'point', 'pointRadius', 'area'
  * @param {number} min
  * @param {number} max
  * @param {Function} execute
- * @param {Function} [supported] a function, default to a return true
+ * @param {String|Function} [searchDesc] - if string- the text of the search description, if function return the text call with f(wp, size, areaPtsLength)
  * @param {String} [verb] - defaults to 'Search'
+ * @param {Function} [supported] a function, default to a return true
  * @returns {ClickToActionCommand}
  */
-export function makeSearchAction(cmd, label, tip, searchType, min, max, execute, supported= DEF_SUPPORTED, verb=DEFAULT_VERB) {
-
+export function makeSearchAction(cmd, groupId, label, tip, searchType, min, max, execute, searchDesc=undefined, verb=DEFAULT_VERB, supported= DEF_SUPPORTED) {
     if (searchType!==SearchTypes[searchType]) searchType= SearchTypes.point;
-    return {
-        cmd, label, tip, searchType, min, max, supported, execute, verb
-    };
+    return { cmd, label, tip, searchType, min, max, supported, execute, verb, searchDesc, groupId};
 }
 
 
 export function getSearchTypeDesc(sa, wp, size, areaPtsLength) {
-    switch (sa.searchType) {
+
+    const {searchDesc, searchType, verb, label, min, max}= sa;
+    if (searchDesc) {
+        if (isString(searchDesc)) return searchDesc;
+        if (isFunction(searchDesc)) {
+            const title= searchDesc(wp,size,areaPtsLength);
+            if (isString(title)) return title;
+        }
+    }
+
+    switch (searchType) {
         case SearchTypes.point_table_only:
+            return `${verb} ${label} at row`;
         case SearchTypes.point:
-            return `${sa.verb} ${sa.label} at position center`;
+            return `${verb} ${label} at region center`;
         case SearchTypes.pointRadius:
-            const r= size > sa.max ? sa.max : size < sa.min ? sa.min : size;
-            return `${sa.verb} (cone) using ${sa.label} with radius of ${sprintf('%.4f',r)} degrees`;
+            const r= size > max ? max : size < min ? min : size;
+            return `${verb} (cone) using ${label} with radius of ${sprintf('%.4f',r)} degrees`;
         case SearchTypes.pointSide:
-            const s= size > sa.max ? sa.max : size < sa.min ? sa.min : size;
-            return `${sa.verb} using ${sa.label}  with side of ${s}`;
+            const s= size > max ? max : size < min ? min : size;
+            return `${verb} using ${label}  with side of ${s}`;
         case SearchTypes.area:
-            return `${sa.verb} (polygon) using ${sa.label} around an area (${areaPtsLength??0} points)`;
+            return `${verb} (polygon) using ${label} around an area (${areaPtsLength??0} points)`;
         case SearchTypes.table:
-            return `${sa.verb} ${sa.label}`;
+            return `${verb} ${label}`;
         default:
             return 'Search';
     }
