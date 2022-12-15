@@ -3,7 +3,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {get, isEmpty} from 'lodash';
 import {dispatchChartUpdate, dispatchChartFilterSelection, dispatchChartSelect, getChartData, dispatchSetActiveTrace, dispatchChartExpanded, resetChart} from '../ChartsCntlr.js';
-import {SimpleComponent} from '../../ui/SimpleComponent.jsx';
+import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {getTblById, clearFilters, getColumnIdx, getColumnType} from '../../tables/TableUtil.js';
 import {dispatchSetLayoutMode, LO_MODE, LO_VIEW} from '../../core/LayoutCntlr.js';
 import {downloadChart} from './PlotlyWrapper.jsx';
@@ -17,7 +17,7 @@ import {isScatter2d} from '../ChartUtil.js';
 import {dispatchChangeViewerLayout, findViewerWithItemId, getLayoutType, getMultiViewRoot, PLOT2D} from '../../visualize/MultiViewCntlr.js';
 
 
-export function PlotlyToolbar({chartId, expandable, expandedMode}) {
+export function PlotlyToolbar({chartId, expandable}) {
     const {activeTrace} = getChartData(chartId);
     const ToolbarUI = getToolbarUI(chartId, activeTrace);
     return <ToolbarUI {...{chartId, expandable}}/>;
@@ -53,63 +53,29 @@ function getToolbarStates(chartId) {
 }
 
 
-class SingleTraceUIToolbar extends SimpleComponent {
-    getNextState(np) {
-        const {chartId} = np || this.props;
-        return getToolbarStates(chartId);
-    }
+function ScatterToolbar({chartId, expandable}) {
+    const scatterToolbarState = useStoreConnector(() => getToolbarStates(chartId), [chartId]);
 
-    render() {
-        const {chartId, expandable} = this.props;
-        const {hasSelection, hasFilter, activeTrace, tbl_id, hasSelected} = this.state;
-        const help_id = get(getChartData(chartId), 'help_id');
-        return (
-            <div className='ChartToolbar'>
-                <SelectionPart {...{chartId, hasFilter, activeTrace, hasSelection, hasSelected, tbl_id}}/>
-                <div className='ChartToolbar__buttons'>
-                    <ResetZoomBtn style={{marginLeft: 10}} {...{chartId}} />
-                    <SaveBtn {...{chartId}} />
-                    <OptionsBtn {...{chartId}} />
-                    {expandable && <ExpandBtn {...{chartId}} />}
-                </div>
-                { help_id && <div className='ChartToolbar__help'> <HelpIcon helpId={help_id} /> </div>}
+    const {hasSelection, hasFilter, activeTrace, tbl_id, hasSelected, dragmode} = scatterToolbarState;
+    const hasSelectionMode = Boolean(tbl_id);
+    const help_id = getChartData(chartId)?.help_id;
+
+    return (
+        <div className='ChartToolbar'>
+            <ActiveTraceSelect style={{marginRight: 20}} {...{chartId, activeTrace}}/>
+            <SelectionPart {...{chartId, hasFilter, activeTrace, hasSelection, hasSelected, tbl_id}}/>
+            <DragModePart {...{chartId, tbl_id, dragmode, hasSelectionMode}}/>
+            <div className='ChartToolbar__buttons'>
+                <ResetZoomBtn style={{marginLeft: 10}} {...{chartId}} />
+                <SaveBtn {...{chartId}} />
+                <RestoreBtn {...{chartId}} />
+                {tbl_id && <FiltersBtn {...{chartId}} />}
+                <OptionsBtn {...{chartId}} />
+                {expandable && <ExpandBtn {...{chartId}} />}
             </div>
-        );
-    }
-
-}
-
-class ScatterToolbar extends SimpleComponent {
-
-    getNextState(np) {
-        const {chartId} = np || this.props;
-        return getToolbarStates(chartId);
-    }
-
-
-    render() {
-        const {chartId, expandable} = this.props;
-        const {hasSelection, hasFilter, activeTrace, tbl_id, hasSelected, dragmode} = this.state;
-        const hasSelectionMode = Boolean(tbl_id);
-        const help_id=get(getChartData(chartId), 'help_id');
-
-        return (
-            <div className='ChartToolbar'>
-                <ActiveTraceSelect style={{marginRight: 20}} {...{chartId, activeTrace}}/>
-                <SelectionPart {...{chartId, hasFilter, activeTrace, hasSelection, hasSelected, tbl_id}}/>
-                <DragModePart {...{chartId, tbl_id, dragmode, hasSelectionMode}}/>
-                <div className='ChartToolbar__buttons'>
-                    <ResetZoomBtn style={{marginLeft: 10}} {...{chartId}} />
-                    <SaveBtn {...{chartId}} />
-                    <RestoreBtn {...{chartId}} />
-                    {tbl_id && <FiltersBtn {...{chartId}} />}
-                    <OptionsBtn {...{chartId}} />
-                    {expandable && <ExpandBtn {...{chartId}} />}
-                </div>
-                { help_id && <div className='ChartToolbar__help'> <HelpIcon helpId={help_id} /> </div>}
-            </div>
-        );
-    }
+            { help_id && <div className='ChartToolbar__help'> <HelpIcon helpId={help_id} /> </div>}
+        </div>
+    );
 }
 
 
@@ -155,46 +121,37 @@ function isSelectable(tbl_id, chartId, type) {
     return (noSelectionTraceIdx < 0);
 }
 
-class BasicToolbar extends SimpleComponent {
+function BasicToolbar({chartId, expandable}) {
+    const basicToolbarState = useStoreConnector(() => getToolbarStates(chartId), [chartId]);
 
-    getNextState(np) {
-        const {chartId} = np || this.props;
-        return getToolbarStates(chartId);
-    }
+    const {activeTrace, hasFilter, hasSelection, tbl_id, dragmode} = basicToolbarState;
+    const type = getChartData(chartId)?.data?.[activeTrace]?.type ?? '';
+    const showSelectionPart = isSelectable(tbl_id, chartId, type);
+    const showDragPart = !type.includes('pie');
+    const is3d = type.endsWith('3d') || type === 'surface'; // scatter3d, mesh3d, surface
 
-    render() {
-        const {chartId, expandable} = this.props;
-        //const {hasSelection, hasFilter, activeTrace, tbl_id, hasSelected, dragmode} = this.state;
-        const {activeTrace, hasFilter, hasSelection, tbl_id, dragmode} = this.state;
+    const help_id = getChartData(chartId)?.help_id;
 
-        const type = get(getChartData(chartId), `data.${activeTrace}.type`, '');
-        const showSelectionPart = isSelectable(tbl_id, chartId, type);
-        const showDragPart = !type.includes('pie');
-        const is3d = type.endsWith('3d') || type === 'surface'; // scatter3d, mesh3d, surface
-
-        const help_id=get(getChartData(chartId), 'help_id');
-
-        return (
-            <div className='ChartToolbar'>
-                <ActiveTraceSelect style={{marginRight: 20}} {...{chartId, activeTrace}}/>
-                {showDragPart &&
-                    <DragModePart {...{chartId, tbl_id, dragmode, hasSelectionMode: showSelectionPart, is3d}}/>}
-                {showSelectionPart && <div className='ChartToolbar__buttons' style={{margin: '0 5px'}}>
-                    {hasFilter && <ClearFilter {...{tbl_id}} />}
-                    {hasSelection && <FilterSelection {...{chartId}} />}
-                </div>}
-                <div className='ChartToolbar__buttons'>
-                    {showDragPart && <ResetZoomBtn style={{marginLeft: 10}} {...{chartId}} />}
-                    <SaveBtn {...{chartId}} />
-                    <RestoreBtn {...{chartId}} />
-                    {tbl_id && <FiltersBtn {...{chartId}} />}
-                    <OptionsBtn {...{chartId}} />
-                    {expandable && <ExpandBtn {...{chartId}} />}
-                </div>
-                { help_id && <div className='ChartToolbar__help'> <HelpIcon helpId={help_id} /> </div>}
+    return (
+        <div className='ChartToolbar'>
+            <ActiveTraceSelect style={{marginRight: 20}} {...{chartId, activeTrace}}/>
+            {showDragPart &&
+                <DragModePart {...{chartId, tbl_id, dragmode, hasSelectionMode: showSelectionPart, is3d}}/>}
+            {showSelectionPart && <div className='ChartToolbar__buttons' style={{margin: '0 5px'}}>
+                {hasFilter && <ClearFilter {...{tbl_id}} />}
+                {hasSelection && <FilterSelection {...{chartId}} />}
+            </div>}
+            <div className='ChartToolbar__buttons'>
+                {showDragPart && <ResetZoomBtn style={{marginLeft: 10}} {...{chartId}} />}
+                <SaveBtn {...{chartId}} />
+                <RestoreBtn {...{chartId}} />
+                {tbl_id && <FiltersBtn {...{chartId}} />}
+                <OptionsBtn {...{chartId}} />
+                {expandable && <ExpandBtn {...{chartId}} />}
             </div>
-        );
-    }
+            { help_id && <div className='ChartToolbar__help'> <HelpIcon helpId={help_id} /> </div>}
+        </div>
+    );
 }
 
 
