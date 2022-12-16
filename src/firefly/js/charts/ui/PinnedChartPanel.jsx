@@ -15,7 +15,7 @@ import {
     dispatchAddViewer, dispatchViewerUnmounted, dispatchUpdateCustom,
     getMultiViewRoot, getViewer, getLayoutType, PLOT2D, getViewerItemIds, dispatchRemoveViewerItems, dispatchAddViewerItems, NewPlotMode
 } from '../../visualize/MultiViewCntlr.js';
-import {getExpandedChartProps, getChartData, CHART_ADD, CHART_REMOVE, getChartIdsInGroup, dispatchChartAdd, dispatchChartRemove} from '../ChartsCntlr.js';
+import {getExpandedChartProps, getChartData, CHART_ADD, CHART_REMOVE, getChartIdsInGroup, dispatchChartAdd, dispatchChartRemove, CHART_UPDATE} from '../ChartsCntlr.js';
 import {LO_VIEW, LO_MODE, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 import {MultiChartToolbarStandard, MultiChartToolbarExpanded} from './MultiChartToolbar.jsx';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
@@ -23,7 +23,7 @@ import {useStoreConnector} from '../../ui/SimpleComponent';
 import {Logger} from '../../util/Logger.js';
 import {findGroupByTblId, getActiveTableId, getTblById, monitorChanges} from '../../tables/TableUtil';
 import {TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_REMOVE, dispatchActiveTableChanged} from '../../tables/TablesCntlr';
-import {getTblIdFromChart, uniqueChartId} from '../ChartUtil';
+import {getTblIdFromChart, isChartLoaded, uniqueChartId} from '../ChartUtil';
 import {getActiveViewerItemId} from './MultiChartViewer';
 import {DefaultChartsContainer} from './ChartsContainer';
 import {StatefulTabs, switchTab, Tab} from '../../ui/panel/TabPanel';
@@ -33,6 +33,7 @@ import {SplitPanel} from '../../ui/panel/DockLayoutPanel';
 import {hideInfoPopup, showInfoPopup, showPinMessage} from '../../ui/PopupUtil.jsx';
 import {TextButton} from '../../ui/TextButton.jsx';
 import {CombineChart} from './CombineChart.jsx';
+import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga.js';
 
 export const PINNED_CHART_PREFIX = 'pinned-';
 export const PINNED_VIEWER_ID = 'PINNED_CHARTS_VIEWER';
@@ -140,6 +141,29 @@ export const PinChart = ({viewerId, tbl_group}) => {
 };
 
 export function pinChart({chartId, autoLayout=true }) {
+
+    // there are cases when chart is not fully loaded.  if so, wait before pinning the chart
+    if (isChartLoaded(chartId)) {
+        doPinChart({chartId,autoLayout});
+    } else {
+        dispatchAddActionWatcher({actions:[CHART_UPDATE], callback: ({action, cancelSelf}) => {
+                const aChartId = action.payload?.chartId;
+                if (chartId === aChartId) {
+                    if (isChartLoaded(chartId)) {
+                        doPinChart({chartId, autoLayout});
+                        cancelSelf();
+                    }
+                } else {
+                    // fallback to ensure there's no orphan watchers (may need to adjust)
+                    cancelSelf();
+                }
+            }
+        });
+    }
+}
+
+function doPinChart({chartId, autoLayout=true }) {
+
     const chartData = cloneDeep(omit(getChartData(chartId), ['_original', 'mounted']));
     chartData?.tablesources?.forEach((ts) => Reflect.deleteProperty(ts, '_cancel'));
 
@@ -177,6 +201,7 @@ export function pinChart({chartId, autoLayout=true }) {
         addChart();
     }
 }
+
 
 // --------------------- simple toolbar actions ---------------------------
 

@@ -28,7 +28,7 @@ import {ListBoxInputFieldView} from 'firefly/ui/ListBoxInputField.jsx';
 import {callGetCubeDrillDownAry, callGetPointExtractionAry } from 'firefly/rpc/PlotServicesJson.js';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {getExtName, hasFloatingData} from 'firefly/visualize/FitsHeaderUtil.js';
-import {dispatchTableFetch, dispatchTableSearch, TABLE_LOADED} from 'firefly/tables/TablesCntlr.js';
+import {dispatchTableFetch, dispatchTableSearch, TABLE_LOADED, TABLE_UPDATE} from 'firefly/tables/TablesCntlr.js';
 import {makeTblRequest} from 'firefly/tables/TableRequestUtil.js';
 import ExtractLineTool from 'firefly/drawingLayers/ExtractLineTool.js';
 import ExtractPointsTool from 'firefly/drawingLayers/ExtractPointsTool.js';
@@ -50,6 +50,8 @@ import {showInfoPopup, showPinMessage} from 'firefly/ui/PopupUtil.jsx';
 import {MetaConst} from 'firefly/data/MetaConst.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
 import {setupChartWatcher} from 'firefly/charts/ChartUtil';
+import {CHART_ADD} from 'firefly/charts/ChartsCntlr.js';
+import {pinChart} from 'firefly/charts/ui/PinnedChartPanel.jsx';
 
 
 
@@ -449,6 +451,30 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
                                  plotlyData, canCreateExtractionTable,
                                  plotlyLayout, startUpHelp, callKeepExtraction,
                                  bottomUI, combineOp, setCombineOp, hasFloatingData}) {
+
+    const doPinChart = () => {
+        const {tbl_id} = callKeepExtraction(false, true);
+        // when a new table is added, an 'active chart' will be added when ChartContainer is mounted.
+        // watch for chart_add to extract chart_id, then pin it.
+        dispatchAddActionWatcher({actions: [CHART_ADD, TABLE_UPDATE], callback: ({action, cancelSelf}) => {
+                const atype = action.type;
+                if (atype === CHART_ADD) {
+                    const {chartId, tbl_id:cTblId} = extractAddedChartInfo(action);
+                    if (cTblId === tbl_id) {        // only pin the chart from the table that just created
+                        pinChart(chartId);          // currently, pinChart will only pin fully loaded charts, we need to add logic for it to wait if not loaded.
+                    }
+                    cancelSelf();
+                } else {
+                    // this flow assume CHART_ADD will happen immediately after table is pinned
+                    // have a fallback to cancel this watcher in cases when this is not true.
+                    // since we have tbl_id, we will watch for any TABLE_UPDATE to catch cases where CHART_ADD was not called
+                    const aTblId = action.payload?.tbl_id;
+                    if (aTblId !== tbl_id) cancelSelf();
+                }
+            }
+        });
+    };
+
     return (
         <div style={{
             padding: 3, display:'flex', flexDirection:'column',
@@ -483,7 +509,7 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
                 justifyContent:'space-between', padding: '15px 15px 7px 8px' }}>
                 <div style={{display:'flex', justifyContent:'space-between'}}>
                     {plotlyData && canCreateExtractionTable &&
-                    <CompleteButton style={{paddingLeft: 15}} text='Pin Table' onSuccess={()=> callKeepExtraction(false, true)} />}
+                    <CompleteButton style={{paddingLeft: 15}} text='Pin Table' onSuccess={doPinChart} />}
                     {plotlyData &&
                     <CompleteButton style={{paddingLeft: 15}} text='Download as Table' onSuccess={()=> callKeepExtraction(true,false)}/>}
                     {plotlyData &&
@@ -586,9 +612,9 @@ function keepZAxisExtraction(pt,pv, plot, filename,refHDUNum,extractionSize, com
         {tbl_id});
     if (save) dataTableReq.pageSize = 0;
     save ? doDispatchTableSaving(dataTableReq, doOverlay) : doDispatchTable(dataTableReq, doOverlay);
-    setupChartWatcher(tbl_id); //watches for chart updates, and pins chart when chart is fully loaded
     idCnt++;
     titleCnt++;
+    return {tbl_id};
 }
 
 function keepLineExtraction(pt, pt2,pv, plot, filename,refHDUNum,plane,extractionSize, combineOp, save=false,doOverlay=true) {
@@ -616,9 +642,9 @@ function keepLineExtraction(pt, pt2,pv, plot, filename,refHDUNum,plane,extractio
         },
         {tbl_id});
     save ? doDispatchTableSaving(dataTableReq, doOverlay) : doDispatchTable(dataTableReq, doOverlay);
-    setupChartWatcher(tbl_id); //watches for chart updates, and pins chart when chart is fully loaded
     idCnt++;
     titleCnt++;
+    return {tbl_id};
 }
 
 function makePlaneTitle(rootStr, pv,plot,cnt) {
@@ -658,9 +684,9 @@ function keepPointsExtraction(ptAry,pv, plot, filename,refHDUNum,plane,extractio
         },
         {tbl_id});
     save ? doDispatchTableSaving(dataTableReq,doOverlay) : doDispatchTable(dataTableReq,doOverlay);
-    setupChartWatcher(tbl_id); //watches for chart updates, and pins chart when chart is fully loaded
     idCnt++;
     titleCnt++;
+    return {tbl_id};
 }
 
 const plotlyDivStyle= { border: '1px solid a5a5a5', borderRadius: 5, width: '100%', height: '100%' };

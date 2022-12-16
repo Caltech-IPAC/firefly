@@ -97,12 +97,12 @@ function doUpdateViewer(viewerId, tblGroup, chartId, useOnlyChartsInViewer) {
 export const ChartsContainer = (props)  =>{
     const {chartId, expandedMode} = props;
 
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    return <PinnedChartPanel {...props}/>;
+    // // eslint-disable-next-line react-hooks/rules-of-hooks
+    // return <PinnedChartPanel {...props}/>;
 
-    //return expandedMode || chartId || !allowPinnedCharts() ?
-       // <DefaultChartsContainer {...props}/>:
-        //<PinnedChartPanel {...props}/> ;
+    return expandedMode || chartId || !allowPinnedCharts() ?
+       <DefaultChartsContainer {...props}/>:
+        <PinnedChartPanel {...props}/> ;
 };
 
 ChartsContainer.propTypes = {
