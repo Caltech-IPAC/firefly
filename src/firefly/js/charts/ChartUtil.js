@@ -13,11 +13,19 @@ import {assign, cloneDeep, flatten, get, has, isArray, isEmpty, isObject, isStri
 import shallowequal from 'shallowequal';
 
 import {getAppOptions} from '../core/AppDataCntlr.js';
-import { COL_TYPE, getColumnType, getMetaEntry, getTblById, isColumnType, isFullyLoaded, isTableLoaded,
-    stripColumnNameQuotes, watchTableChanges } from '../tables/TableUtil.js';
+import {
+    COL_TYPE, getColumnType, getMetaEntry, getTblById, isColumnType, isFullyLoaded, isTableLoaded,
+    stripColumnNameQuotes, watchTableChanges
+} from '../tables/TableUtil.js';
 import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_SELECT, TABLE_SORT} from '../tables/TablesCntlr.js';
 import {dispatchLoadTblStats, getColValStats} from './TableStatsCntlr.js';
-import {dispatchChartHighlighted, dispatchChartSelect, dispatchChartUpdate, dispatchSetActiveTrace, getChartData} from './ChartsCntlr.js';
+import {
+    dispatchChartHighlighted,
+    dispatchChartSelect,
+    dispatchChartUpdate,
+    dispatchSetActiveTrace,
+    getChartData
+} from './ChartsCntlr.js';
 import {Expression} from '../util/expr/Expression.js';
 import {quoteNonAlphanumeric} from '../util/expr/Variable.js';
 import {flattenObject} from '../util/WebUtil.js';
@@ -517,6 +525,17 @@ export function setupTableWatcher(chartId, ts, idx) {
         [TABLE_LOADED, TABLE_HIGHLIGHT, TABLE_SELECT],
         (action) => updateChartData(chartId, idx, ts, action),
         uniqueId(`ucd-${ts.tbl_id}-trace`)); // watcher id for debugging
+}
+
+
+/**
+ * Get feedback as boolean on whether chart is fully loaded or not
+ * @param chartId - chartId of the current chart
+ */
+export function isChartLoading(chartId) {
+    const {fireflyData=[]} = getChartData(chartId);
+    const isChartLoading = fireflyData.some((e)=>  e.isLoading);
+    return isChartLoading; //true when chart is still loading
 }
 
 function tablesourcesEqual(newTS, oldTS) {

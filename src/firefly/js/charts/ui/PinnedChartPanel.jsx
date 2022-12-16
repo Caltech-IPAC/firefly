@@ -15,7 +15,9 @@ import {
     dispatchAddViewer, dispatchViewerUnmounted, dispatchUpdateCustom,
     getMultiViewRoot, getViewer, getLayoutType, PLOT2D, getViewerItemIds, dispatchRemoveViewerItems, dispatchAddViewerItems, NewPlotMode
 } from '../../visualize/MultiViewCntlr.js';
-import {getExpandedChartProps, getChartData, CHART_ADD, CHART_REMOVE, getChartIdsInGroup, dispatchChartAdd, dispatchChartRemove} from '../ChartsCntlr.js';
+import {
+    getExpandedChartProps, getChartData, CHART_ADD, CHART_REMOVE, getChartIdsInGroup, dispatchChartAdd, dispatchChartRemove, CHART_UPDATE
+} from '../ChartsCntlr.js';
 import {LO_VIEW, LO_MODE, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 import {MultiChartToolbarStandard, MultiChartToolbarExpanded} from './MultiChartToolbar.jsx';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
@@ -23,16 +25,17 @@ import {useStoreConnector} from '../../ui/SimpleComponent';
 import {Logger} from '../../util/Logger.js';
 import {findGroupByTblId, getActiveTableId, getTblById, monitorChanges} from '../../tables/TableUtil';
 import {TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_REMOVE, dispatchActiveTableChanged} from '../../tables/TablesCntlr';
-import {getTblIdFromChart, uniqueChartId} from '../ChartUtil';
+import {getTblIdFromChart, isChartLoading, uniqueChartId} from '../ChartUtil';
 import {getActiveViewerItemId} from './MultiChartViewer';
 import {DefaultChartsContainer} from './ChartsContainer';
 import {StatefulTabs, switchTab, Tab} from '../../ui/panel/TabPanel';
 import {HelpIcon} from '../../ui/HelpIcon';
 import {getComponentState, dispatchComponentStateChange} from '../../core/ComponentCntlr';
 import {SplitPanel} from '../../ui/panel/DockLayoutPanel';
-import {hideInfoPopup, showInfoPopup, showYesNoPopup, showPinMessage} from '../../ui/PopupUtil.jsx';
+import {hideInfoPopup, showInfoPopup, showPinMessage} from '../../ui/PopupUtil.jsx';
 import {TextButton} from '../../ui/TextButton.jsx';
 import {CombineChart} from './CombineChart.jsx';
+import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga';
 
 export const PINNED_CHART_PREFIX = 'pinned-';
 export const PINNED_VIEWER_ID = 'PINNED_CHARTS_VIEWER';
@@ -139,13 +142,39 @@ export const PinChart = ({viewerId, tbl_group}) => {
     return canPin ? <TextButton onClick={doPinChart} title='Pin the active chart'>Pin Chart</TextButton> : null;
 };
 
-export function pinChart({chartId, autoLayout=true}) {
+export function pinChart({chartId, autoLayout=true }) {
+
+
+    if (!isChartLoading(chartId)) {
+        doPinChart({chartId,autoLayout});
+        return;
+    }
+    // there are cases when chart is not fully loaded.  if so, wait before pinning the chart
+    else {
+        dispatchAddActionWatcher({actions:[CHART_UPDATE], callback: (action, cancelSelf) => {
+                const aChartId = action.payload?.chartId;
+                if (chartId !== aChartId) {
+                    cancelSelf?.();
+                    return;
+                }
+                if (!isChartLoading(chartId)) { //chart is fully loaded now
+                    cancelSelf?.();
+                    doPinChart({chartId, autoLayout});
+                }
+            }
+        });
+    }
+}
+
+
+function doPinChart({chartId, autoLayout=true }) {
+
     const chartData = cloneDeep(omit(getChartData(chartId), ['_original', 'mounted']));
     chartData?.tablesources?.forEach((ts) => Reflect.deleteProperty(ts, '_cancel'));
 
     const pinnedCnt = getViewerItemIds(getMultiViewRoot(), PINNED_VIEWER_ID)?.length ?? 0;
     if (pinnedCnt >= PINNED_MAX) {
-        showInfoPopup('You have reached the maximum number of allowable pinned charts');
+        showInfoPopup('Only pinning table: You have reached the maximum number of allowable pinned charts.', 'Max Pinned Charts');
         return;
     }
 
@@ -177,6 +206,7 @@ export function pinChart({chartId, autoLayout=true}) {
         addChart();
     }
 }
+
 
 // --------------------- simple toolbar actions ---------------------------
 

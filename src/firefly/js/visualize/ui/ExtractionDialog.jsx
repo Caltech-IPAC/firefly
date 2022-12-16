@@ -28,7 +28,7 @@ import {ListBoxInputFieldView} from 'firefly/ui/ListBoxInputField.jsx';
 import {callGetCubeDrillDownAry, callGetPointExtractionAry } from 'firefly/rpc/PlotServicesJson.js';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {getExtName, hasFloatingData} from 'firefly/visualize/FitsHeaderUtil.js';
-import {dispatchTableFetch, dispatchTableSearch} from 'firefly/tables/TablesCntlr.js';
+import {dispatchTableFetch, dispatchTableSearch, TABLE_UPDATE} from 'firefly/tables/TablesCntlr.js';
 import {makeTblRequest} from 'firefly/tables/TableRequestUtil.js';
 import ExtractLineTool from 'firefly/drawingLayers/ExtractLineTool.js';
 import ExtractPointsTool from 'firefly/drawingLayers/ExtractPointsTool.js';
@@ -49,6 +49,9 @@ import {getAppOptions, ServerParams} from 'firefly/api/ApiUtil.js';
 import {showInfoPopup, showPinMessage} from 'firefly/ui/PopupUtil.jsx';
 import {MetaConst} from 'firefly/data/MetaConst.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
+import {allowPinnedCharts} from 'firefly/charts/ChartUtil';
+import {CHART_ADD} from 'firefly/charts/ChartsCntlr.js';
+import {pinChart} from 'firefly/charts/ui/PinnedChartPanel.jsx';
 
 
 
@@ -444,10 +447,37 @@ function ZAxisExtractionPanel({canCreateExtractionTable, pv}) {
 
 const pointSizeTip= 'Extract and manipulate the pixel values in the specified aperture centered on the pixel closest to where you clicked.';
 
+function doPinChart (tbl_id) {
+    // when a new table is added, an 'active chart' will be added when ChartContainer is mounted.
+    // watch for chart_add to extract chart_id, then pin it.
+    dispatchAddActionWatcher({actions: [TABLE_UPDATE, CHART_ADD], callback: (action, cancelSelf) => {
+            const aType = action?.type;
+            const payload = action?.payload;
+            if (aType === CHART_ADD) {
+                const {chartId, tbl_id:cTblId} = extractAddedChartInfo({payload});
+                if (cTblId === tbl_id) {  // only pin the chart from the table that just got created
+                    cancelSelf?.();
+                    pinChart({chartId});
+                }
+                cancelSelf?.();
+            } else {
+                // this flow assumes CHART_ADD will happen immediately after table is pinned
+                // have a fallback to cancel this watcher in cases when this is not true.
+                // since we have tbl_id, we will watch for any TABLE_UPDATE to catch cases where CHART_ADD was not called
+                const aTblId = action?.payload?.tbl_id;
+                if (aTblId !== tbl_id) cancelSelf?.();
+            }
+        }
+    });
+}
+
+const extractAddedChartInfo = ({payload}) => ( {chartId: payload.chartId, tbl_id: payload.data?.[0].tbl_id});
+
 function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivStyle,
                                  plotlyData, canCreateExtractionTable,
                                  plotlyLayout, startUpHelp, callKeepExtraction,
                                  bottomUI, combineOp, setCombineOp, hasFloatingData}) {
+
     return (
         <div style={{
             padding: 3, display:'flex', flexDirection:'column',
@@ -481,8 +511,13 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
                 textAlign:'center', alignSelf: 'stretch', flexDirection:'row',  display:'flex',
                 justifyContent:'space-between', padding: '15px 15px 7px 8px' }}>
                 <div style={{display:'flex', justifyContent:'space-between'}}>
-                    {plotlyData && canCreateExtractionTable &&
-                    <CompleteButton style={{paddingLeft: 15}} text='Pin Table' onSuccess={()=> callKeepExtraction(false, true)} />}
+                    {plotlyData && canCreateExtractionTable && !allowPinnedCharts() &&
+                    <CompleteButton style={{paddingLeft: 15}} text='Pin Table' onSuccess={()=> callKeepExtraction(false,true)} />}
+                    {plotlyData && canCreateExtractionTable && allowPinnedCharts() &&
+                        <CompleteButton style={{paddingLeft: 15}} text='Pin Chart/Table' onSuccess={() => {
+                            const tbl_id = callKeepExtraction(false,true);
+                            doPinChart(tbl_id);
+                        }} />}
                     {plotlyData &&
                     <CompleteButton style={{paddingLeft: 15}} text='Download as Table' onSuccess={()=> callKeepExtraction(true,false)}/>}
                     {plotlyData &&
@@ -587,6 +622,7 @@ function keepZAxisExtraction(pt,pv, plot, filename,refHDUNum,extractionSize, com
     save ? doDispatchTableSaving(dataTableReq, doOverlay) : doDispatchTable(dataTableReq, doOverlay);
     idCnt++;
     titleCnt++;
+    return tbl_id;
 }
 
 function keepLineExtraction(pt, pt2,pv, plot, filename,refHDUNum,plane,extractionSize, combineOp, save=false,doOverlay=true) {
@@ -616,6 +652,7 @@ function keepLineExtraction(pt, pt2,pv, plot, filename,refHDUNum,plane,extractio
     save ? doDispatchTableSaving(dataTableReq, doOverlay) : doDispatchTable(dataTableReq, doOverlay);
     idCnt++;
     titleCnt++;
+    return tbl_id;
 }
 
 function makePlaneTitle(rootStr, pv,plot,cnt) {
@@ -657,6 +694,7 @@ function keepPointsExtraction(ptAry,pv, plot, filename,refHDUNum,plane,extractio
     save ? doDispatchTableSaving(dataTableReq,doOverlay) : doDispatchTable(dataTableReq,doOverlay);
     idCnt++;
     titleCnt++;
+    return tbl_id;
 }
 
 const plotlyDivStyle= { border: '1px solid a5a5a5', borderRadius: 5, width: '100%', height: '100%' };
