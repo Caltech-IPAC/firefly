@@ -13,14 +13,23 @@ import {assign, cloneDeep, flatten, get, has, isArray, isEmpty, isObject, isStri
 import shallowequal from 'shallowequal';
 
 import {getAppOptions} from '../core/AppDataCntlr.js';
-import { COL_TYPE, getColumnType, getMetaEntry, getTblById, isColumnType, isFullyLoaded, isTableLoaded,
-    stripColumnNameQuotes, watchTableChanges } from '../tables/TableUtil.js';
+import {
+    COL_TYPE, getColumnType, getMetaEntry, getTblById, isColumnType, isFullyLoaded, isTableLoaded, monitorChanges,
+    stripColumnNameQuotes, watchTableChanges
+} from '../tables/TableUtil.js';
 import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_SELECT, TABLE_SORT} from '../tables/TablesCntlr.js';
 import {dispatchLoadTblStats, getColValStats} from './TableStatsCntlr.js';
-import {dispatchChartHighlighted, dispatchChartSelect, dispatchChartUpdate, dispatchSetActiveTrace, getChartData} from './ChartsCntlr.js';
+import ChartsCntlr, {
+    CHART_ADD, CHART_HIGHLIGHT, CHART_MOUNTED, CHART_UPDATE,
+    dispatchChartHighlighted,
+    dispatchChartSelect,
+    dispatchChartUpdate,
+    dispatchSetActiveTrace,
+    getChartData
+} from './ChartsCntlr.js';
 import {Expression} from '../util/expr/Expression.js';
 import {quoteNonAlphanumeric} from '../util/expr/Variable.js';
-import {flattenObject} from '../util/WebUtil.js';
+import {flattenObject, uniqueID} from '../util/WebUtil.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {getTraceTSEntries as histogramTSGetter} from './dataTypes/FireflyHistogram.js';
 import {getTraceTSEntries as heatmapTSGetter} from './dataTypes/FireflyHeatmap.js';
@@ -31,6 +40,8 @@ import {MetaConst} from '../data/MetaConst';
 import {ALL_COLORSCALE_NAMES, colorscaleNameToVal} from './Colorscale.js';
 import {findTableCenterColumns, getSpectrumDM} from '../util/VOAnalyzer.js';
 import {getColValidator} from './ui/ColumnOrExpression.jsx';
+import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga';
+import {pinChart} from 'firefly/charts/ui/PinnedChartPanel';
 
 export const DEFAULT_ALPHA = 0.5;
 
@@ -517,6 +528,46 @@ export function setupTableWatcher(chartId, ts, idx) {
         [TABLE_LOADED, TABLE_HIGHLIGHT, TABLE_SELECT],
         (action) => updateChartData(chartId, idx, ts, action),
         uniqueId(`ucd-${ts.tbl_id}-trace`)); // watcher id for debugging
+}
+
+/**
+ * Get feedback as boolean on whether chart is fully loaded or not
+ * @param chartId - chartId of the current chart
+ */
+export function isChartLoaded(chartId) {
+    const {fireflyData=[]} = getChartData(chartId);
+    const isLoading = fireflyData.every((e)=>get(e, 'isLoading'));
+    return !isLoading; //true when chart is fully loaded (isLoading: false)
+}
+
+const onChartLoad = (action, accept, cancelSelf) => {
+    const {chartId} = action.payload;
+    if (accept(action)) {
+        if (isChartLoaded(chartId)) {
+            pinChart({chartId});
+            cancelSelf && cancelSelf(); //ActionWatcher cleanup
+        }
+    }
+    else { //if we possibly get a different tbl_id/chartId - cancel this ActionWatcher
+        cancelSelf && cancelSelf();
+    }
+};
+
+
+export function setupChartWatcher(tbl_id) {
+    const accept = (a) => 'default-'+tbl_id === (get(a, 'payload.chartId') || get(a, 'payload.request.chartId'));
+    return watchChartChanges([CHART_UPDATE],
+        (action, cancelSelf) => onChartLoad(action, accept, cancelSelf));
+}
+
+/**
+ * this function invokes the given callback when changes are made to a Chart (in this case, CHART_UPDATE from setupChartWatcher)
+ * @param {Object}   actions  an array of chart actions to watch
+ * @param {function} callback  callback to execute when table is loaded.
+ */
+export function watchChartChanges(actions, callback) {
+    const id = uniqueID();
+    dispatchAddActionWatcher({id, actions, callback:callback});
 }
 
 function tablesourcesEqual(newTS, oldTS) {

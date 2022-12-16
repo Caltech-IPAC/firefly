@@ -98,9 +98,11 @@ export const ChartsContainer = (props)  =>{
     const {chartId, expandedMode} = props;
 
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    return expandedMode || chartId || !allowPinnedCharts() ?
-        <DefaultChartsContainer {...props}/>:
-        <PinnedChartPanel {...props}/> ;
+    return <PinnedChartPanel {...props}/>;
+
+    //return expandedMode || chartId || !allowPinnedCharts() ?
+       // <DefaultChartsContainer {...props}/>:
+        //<PinnedChartPanel {...props}/> ;
 };
 
 ChartsContainer.propTypes = {

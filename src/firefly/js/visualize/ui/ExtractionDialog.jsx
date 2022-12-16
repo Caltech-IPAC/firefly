@@ -28,7 +28,7 @@ import {ListBoxInputFieldView} from 'firefly/ui/ListBoxInputField.jsx';
 import {callGetCubeDrillDownAry, callGetPointExtractionAry } from 'firefly/rpc/PlotServicesJson.js';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {getExtName, hasFloatingData} from 'firefly/visualize/FitsHeaderUtil.js';
-import {dispatchTableFetch, dispatchTableSearch} from 'firefly/tables/TablesCntlr.js';
+import {dispatchTableFetch, dispatchTableSearch, TABLE_LOADED} from 'firefly/tables/TablesCntlr.js';
 import {makeTblRequest} from 'firefly/tables/TableRequestUtil.js';
 import ExtractLineTool from 'firefly/drawingLayers/ExtractLineTool.js';
 import ExtractPointsTool from 'firefly/drawingLayers/ExtractPointsTool.js';
@@ -49,6 +49,7 @@ import {getAppOptions, ServerParams} from 'firefly/api/ApiUtil.js';
 import {showInfoPopup, showPinMessage} from 'firefly/ui/PopupUtil.jsx';
 import {MetaConst} from 'firefly/data/MetaConst.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
+import {setupChartWatcher} from 'firefly/charts/ChartUtil';
 
 
 
@@ -585,6 +586,7 @@ function keepZAxisExtraction(pt,pv, plot, filename,refHDUNum,extractionSize, com
         {tbl_id});
     if (save) dataTableReq.pageSize = 0;
     save ? doDispatchTableSaving(dataTableReq, doOverlay) : doDispatchTable(dataTableReq, doOverlay);
+    setupChartWatcher(tbl_id); //watches for chart updates, and pins chart when chart is fully loaded
     idCnt++;
     titleCnt++;
 }
@@ -614,6 +616,7 @@ function keepLineExtraction(pt, pt2,pv, plot, filename,refHDUNum,plane,extractio
         },
         {tbl_id});
     save ? doDispatchTableSaving(dataTableReq, doOverlay) : doDispatchTable(dataTableReq, doOverlay);
+    setupChartWatcher(tbl_id); //watches for chart updates, and pins chart when chart is fully loaded
     idCnt++;
     titleCnt++;
 }
@@ -655,6 +658,7 @@ function keepPointsExtraction(ptAry,pv, plot, filename,refHDUNum,plane,extractio
         },
         {tbl_id});
     save ? doDispatchTableSaving(dataTableReq,doOverlay) : doDispatchTable(dataTableReq,doOverlay);
+    setupChartWatcher(tbl_id); //watches for chart updates, and pins chart when chart is fully loaded
     idCnt++;
     titleCnt++;
 }

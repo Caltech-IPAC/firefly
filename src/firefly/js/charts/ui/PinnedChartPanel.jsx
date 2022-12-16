@@ -30,7 +30,7 @@ import {StatefulTabs, switchTab, Tab} from '../../ui/panel/TabPanel';
 import {HelpIcon} from '../../ui/HelpIcon';
 import {getComponentState, dispatchComponentStateChange} from '../../core/ComponentCntlr';
 import {SplitPanel} from '../../ui/panel/DockLayoutPanel';
-import {hideInfoPopup, showInfoPopup, showYesNoPopup, showPinMessage} from '../../ui/PopupUtil.jsx';
+import {hideInfoPopup, showInfoPopup, showPinMessage} from '../../ui/PopupUtil.jsx';
 import {TextButton} from '../../ui/TextButton.jsx';
 import {CombineChart} from './CombineChart.jsx';
 
@@ -139,7 +139,7 @@ export const PinChart = ({viewerId, tbl_group}) => {
     return canPin ? <TextButton onClick={doPinChart} title='Pin the active chart'>Pin Chart</TextButton> : null;
 };
 
-export function pinChart({chartId, autoLayout=true}) {
+export function pinChart({chartId, autoLayout=true }) {
     const chartData = cloneDeep(omit(getChartData(chartId), ['_original', 'mounted']));
     chartData?.tablesources?.forEach((ts) => Reflect.deleteProperty(ts, '_cancel'));
 

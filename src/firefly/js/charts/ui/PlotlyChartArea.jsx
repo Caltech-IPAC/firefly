@@ -149,7 +149,7 @@ export class PlotlyChartArea extends Component {
         }
         const {chartWidth, chartHeight} = calculateChartSize(widthPx, heightPx, xyratio, stretch);
         //const playout = Object.assign({showlegend}, adjustLayout(layout), {width: chartWidth, height: chartHeight, annotations});
-        const playout = cloneDeep(Object.assign({showlegend}, adjustLayout(layout), {width: chartWidth, height: chartHeight, annotations}))
+        const playout = cloneDeep(Object.assign({showlegend}, adjustLayout(layout), {width: chartWidth, height: chartHeight, annotations}));
 
         const style = {float: 'left'};
         if (chartWidth > widthPx || chartHeight > heightPx) {
@@ -260,7 +260,7 @@ function onSelect(chartId) {
                     let activeTracePoints = points.filter(([, c]) => c === activeTrace);
                     if (activeTracePoints.length < 1) {
                         // find the curve with max points in the selection area
-                        const freqByCurveMap = {}
+                        const freqByCurveMap = {};
                         let curveWithMaxPts = activeTrace;
                         let maxPts = 0;
                         points.forEach(([, c]) => {
@@ -281,7 +281,7 @@ function onSelect(chartId) {
                     points = activeTracePoints;
                 }
                 const {data} = getChartData(chartId);
-                const traceData = data?.[newActiveTrace]
+                const traceData = data?.[newActiveTrace];
                 const type = traceData?.type || 'scatter';
                 // points are populated only for scatter2d, not for heatmap
                 if (isScatter2d(type)) {
@@ -294,7 +294,7 @@ function onSelect(chartId) {
                     if (traceData?.z && traceData.x && traceData.y) {
                         // check if at least one point is in the selection area
                         let ptInRange = false;
-                        const {x, y, z} = traceData
+                        const {x, y, z} = traceData;
                         for (let i=0; i<x.length; i++) {
                             if (z[i] != null &&
                                 xMin < x[i] && x[i] < xMax &&
@@ -314,7 +314,7 @@ function onSelect(chartId) {
                 if (newActiveTrace !== activeTrace) {
                     dispatchSetActiveTrace({chartId, activeTrace: newActiveTrace});
                 }
-                const selections = evData?.selections ?? []
+                const selections = evData?.selections ?? [];
                 dispatchChartUpdate({
                     chartId,
                     changes: {
