@@ -4,61 +4,55 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {set, get} from 'lodash';
+import {set} from 'lodash';
 import {dispatchUpdateAppData} from '../core/AppDataCntlr.js';
 import {getSearchInfo} from '../core/AppDataCntlr.js';
 import {FormPanel} from './FormPanel.jsx';
-import {SimpleComponent} from './SimpleComponent.jsx';
+import {useStoreConnector} from './SimpleComponent.jsx';
 import {StatefulTabs, Tab} from './panel/TabPanel.jsx';
 import {makeSearchOnce} from '../util/WebUtil';
 
-export class SearchPanel extends SimpleComponent {
+export function SearchPanel({style={}, initArgs={}}) {
+    const searchPanelState = useStoreConnector(getSearchInfo);
 
-    getNextState() {
-        return getSearchInfo();
+    const {activeSearch, groups, allSearchItems={}, flow='vertical', title} = searchPanelState;
+    const searchItem = allSearchItems[activeSearch];
+
+    const isSingleSearch = Object.keys(allSearchItems).length === 1;
+    if (isSingleSearch) {
+        return (
+            <div>
+                {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
+                <SearchForm style={{height: 'auto'}} searchItem={searchItem} initArgs={initArgs}/>
+            </div>
+        );
     }
 
-    render() {
-        const {style={}, initArgs={}} = this.props;
-        const {activeSearch, groups, allSearchItems={}, flow='vertical', title} = this.state;
-        const searchItem = allSearchItems[activeSearch];
-
-        const isSingleSearch = Object.keys(allSearchItems).length === 1;
-        if (isSingleSearch) {
-            return (
-                <div>
-                    {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
-                    <SearchForm style={{height: 'auto'}} searchItem={searchItem} initArgs={initArgs}/>
-                </div>
-            );
-        }
-
-        if (flow === 'vertical') {
-            const sideBar = <SideBar {...{activeSearch, groups}}/> ;
-            return (
-                <div>
-                    {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
-                    <div className='SearchPanel' style={style}>
-                        {sideBar}
-                        {searchItem &&
-                        <div className='SearchPanel__form'>
-                            <SearchForm searchItem={searchItem}  initArgs={initArgs}/>
-                        </div>
-                        }
+    if (flow === 'vertical') {
+        const sideBar = <SideBar {...{activeSearch, groups}}/> ;
+        return (
+            <div>
+                {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
+                <div className='SearchPanel' style={style}>
+                    {sideBar}
+                    {searchItem &&
+                    <div className='SearchPanel__form'>
+                        <SearchForm searchItem={searchItem}  initArgs={initArgs}/>
                     </div>
+                    }
                 </div>
-            );
-        } else {
-            const onTabSelect = (index,id,name) => dispatchUpdateAppData(set({}, ['searches', 'activeSearch'], name));
-            return (
-                <div>
-                    {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
-                    <StatefulTabs componentKey={`SearchPanel_${title}`} onTabSelect={onTabSelect} resizable={true} useFlex={true} borderless={true} contentStyle={{backgroundColor: 'transparent'}}>
-                        {searchesAsTabs(allSearchItems, initArgs)}
-                    </StatefulTabs>
-                </div>
-            );
-        }
+            </div>
+        );
+    } else {
+        const onTabSelect = (index,id,name) => dispatchUpdateAppData(set({}, ['searches', 'activeSearch'], name));
+        return (
+            <div>
+                {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
+                <StatefulTabs componentKey={`SearchPanel_${title}`} onTabSelect={onTabSelect} resizable={true} useFlex={true} borderless={true} contentStyle={{backgroundColor: 'transparent'}}>
+                    {searchesAsTabs(allSearchItems, initArgs)}
+                </StatefulTabs>
+            </div>
+        );
     }
 }
 

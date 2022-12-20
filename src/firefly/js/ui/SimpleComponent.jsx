@@ -1,5 +1,5 @@
 import {isEmpty, uniqueId} from 'lodash';
-import {PureComponent, useCallback, useContext, useEffect, useState} from 'react';
+import {useCallback, useContext, useEffect, useState} from 'react';
 import shallowequal from 'shallowequal';
 import {flux} from '../core/ReduxFlux.js';
 import FieldGroupUtils, {
@@ -9,42 +9,8 @@ import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/cor
 import {dispatchMetaStateChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 import {FieldGroupCtx} from './FieldGroup.jsx';
 
-export class SimpleComponent extends PureComponent {
-    constructor(props) {
-        super(props);
-        this.state = this.getNextState(props);
-    }
-
-    UNSAFE_componentWillReceiveProps(np) {
-        if (!this.isUnmounted) {
-            if (!shallowequal(this.props, np)) {
-                this.setState(this.getNextState(np));
-            }
-        }
-    }
-    componentDidMount() {
-        this.removeListener = flux.addListener(() => this.storeUpdate());
-    }
-    componentWillUnmount() {
-        this.isUnmounted=true;
-        this.removeListener && this.removeListener();
-    }
-
-    getNextState(np) {
-        return {};      // need to implement
-    }
-
-    storeUpdate() {
-        if (!this.isUnmounted) {
-            this.setState(this.getNextState(this.props));
-        }
-    }
-}
-
-
 
 /**
- * A replacement for SimpleComponent.
  * This function make use of useState and useEffect to
  * trigger a re-render of functional components when the value in the store changes.
  *

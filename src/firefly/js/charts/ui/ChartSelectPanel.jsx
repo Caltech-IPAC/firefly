@@ -1,11 +1,11 @@
-import React, {useEffect} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
 
 import {FormPanel} from './../../ui/FormPanel.jsx';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {RadioGroupInputFieldView} from './../../ui/RadioGroupInputFieldView.jsx';
-import {SimpleComponent, useStoreConnector} from './../../ui/SimpleComponent.jsx';
+import {useStoreConnector} from './../../ui/SimpleComponent.jsx';
 import {getChartData, dispatchChartTraceRemove, dispatchChartUpdate} from '../ChartsCntlr.js';
 import {NewTracePanel, getNewTraceType, getSubmitChangesFunc, addNewTrace} from './options/NewTracePanel.jsx';
 import {PopupPanel} from './../../ui/PopupPanel.jsx';
@@ -106,60 +106,45 @@ function getGroupKey(chartId, chartAction) {
     }
 }
 
+export function ChartSelectPanel({tbl_id, chartId, chartAction, inputStyle={}, hideDialog, style={}}) {
+    const {renderTreeId} = useContext(RenderTreeIdCtx);
 
-export class ChartSelectPanel extends SimpleComponent {
-    constructor(props) {
-        super(props);
+    const chartActions = getChartActions({chartId, tbl_id});
+    const [chartActionState, setChartActionState] = useState(
+        (chartActions.includes(chartAction)) ? chartAction : chartActions[0]);
 
-        const {chartId, tbl_id, chartAction} = this.props;
-        let newChartAction = chartAction;
-        const chartActions = getChartActions({chartId, tbl_id});
+    const groupKey = getGroupKey(chartId, chartActionState);
 
-        if (!newChartAction || !chartActions.includes(newChartAction)) {
-            newChartAction = chartActions[0];
-        }
+    const chartActionChanged = (chartAction) => setChartActionState(chartAction);
 
-        this.state = {chartAction: newChartAction};
-    }
-
-    render() {
-        const {tbl_id, chartId, inputStyle={}, hideDialog, style={}} = this.props;
-        const {renderTreeId}= this.context;
-
-        const chartActions = getChartActions({chartId, tbl_id});
-        const {chartAction} = this.state;
-        const groupKey = getGroupKey(chartId, chartAction);
-
-        const chartActionChanged = (chartAction) => { this.setState({chartAction}); };
-
-        return (
-            <div style={{padding: 10, ...style}}>
-                <FormPanel
-                    groupKey={groupKey}
-                    submitText={chartAction===CHART_TRACE_MODIFY ? 'Apply' : 'OK'}
-                    onSuccess={onChartAction({chartAction, tbl_id, chartId, hideDialog, renderTreeId})}
-                    cancelText='Close'
-                    onError={() => {}}
-                    onCancel={hideDialog}
-                    inputStyle = {inputStyle}
-                    style={{padding:5}}
-                    changeMasking={this.changeMasking}>
-                    <ChartAction {...{chartId, chartActions, chartAction, chartActionChanged}}/>
-                    <ChartActionOptions {...{chartAction, tbl_id, chartId, groupKey, hideDialog}}/>
-                </FormPanel>
-            </div>
-        );
-    }
+    return (
+        <div style={{padding: 10, ...style}}>
+            <FormPanel
+                groupKey={groupKey}
+                submitText={chartActionState===CHART_TRACE_MODIFY ? 'Apply' : 'OK'}
+                onSuccess={onChartAction({chartAction: chartActionState,
+                    tbl_id, chartId, hideDialog, renderTreeId})}
+                cancelText='Close'
+                onCancel={hideDialog}
+                inputStyle = {inputStyle}
+                style={{padding:5}}>
+                <ChartAction {...{chartId, chartActions, chartAction: chartActionState, chartActionChanged}}/>
+                <ChartActionOptions {...{chartAction: chartActionState, tbl_id, chartId, groupKey, hideDialog}}/>
+            </FormPanel>
+        </div>
+    );
 }
+
 
 ChartSelectPanel.propTypes = {
     tbl_id: PropTypes.string,
     chartId: PropTypes.string,
     chartAction: PropTypes.string, // suggested chart action
     hideDialog: PropTypes.func,
-    inputStyle: PropTypes.object
+    inputStyle: PropTypes.object,
+    style: PropTypes.object
 };
-ChartSelectPanel.contextType= RenderTreeIdCtx;
+
 
 function ChartAction({chartId, chartActions, chartAction, chartActionChanged}) {
 
@@ -207,6 +192,7 @@ function ChartAction({chartId, chartActions, chartAction, chartActionChanged}) {
 }
 
 ChartAction.propTypes = {
+    chartId: PropTypes.string,
     chartActions: PropTypes.arrayOf(PropTypes.string),
     chartAction: PropTypes.string,
     chartActionChanged: PropTypes.func
@@ -245,7 +231,7 @@ ChartActionOptions.propTypes = {
     tbl_id: PropTypes.string,
     chartId: PropTypes.string,
     groupKey: PropTypes.string,
-    hideDialog: PropTypes.func
+    hideDialog: PropTypes.func,
 };
 
 function SyncedOptionsUI (props) {
