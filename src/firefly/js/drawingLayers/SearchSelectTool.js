@@ -12,10 +12,8 @@ import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
-import {clone} from '../util/WebUtil.js';
 import ShapeDataObj, {UnitType} from '../visualize/draw/ShapeDataObj.js';
-import {makeDevicePt, makeImagePt, makeWorldPt, pointEquals} from 'firefly/visualize/Point.js';
-import {SelectedShape} from './SelectedShape.js';
+import {makeImagePt, pointEquals} from 'firefly/visualize/Point.js';
 
 const ID= 'SEARCH_SELECT_TOOL';
 const TYPE_ID= 'SEARCH_SELECT_TOOL_TYPE';
@@ -32,6 +30,7 @@ let lastProjectionCenter= undefined;
 
 function dispatchSelectPoint(mouseStatePayload) {
     const {plotId,screenPt,drawLayer,shiftDown}= mouseStatePayload;
+    if (!drawLayer.isInteractive) return;
     if (shiftDown || !drawLayer.drawData.data) return;
     const plot= primePlot(visRoot(),plotId);
     const cc= CsysConverter.make(plot);
@@ -71,8 +70,8 @@ function onDetach(drawLayer,action) {
     });
 }
 
-function creator({minSize=1/3600,maxSize=100, searchType=RADIUS}={}, presetDefaults) {
-    const drawingDef= { ...makeDrawingDef('yellow'), symbol: DrawSymbol.DIAMOND, size: 8, ...presetDefaults };
+function creator({minSize=1/3600,maxSize=100, searchType=RADIUS}={}, presetDefaults, color='yellow') {
+    const drawingDef= { ...makeDrawingDef(color), symbol: DrawSymbol.DIAMOND, size: 8, ...presetDefaults };
     idCnt++;
     const pairs= {
         [MouseState.UP.key]: dispatchSelectPoint,
@@ -84,10 +83,11 @@ function creator({minSize=1/3600,maxSize=100, searchType=RADIUS}={}, presetDefau
         hasPerPlotData: true,
         canUserDelete: false,
         canUserChangeColor: ColorChangeType.DYNAMIC,
-        destroyWhenAllDetached : true,
+        destroyWhenAllDetached : false,
         minSize,
         maxSize,
         searchType,
+        isInteractive: true
     };
     return DrawLayer.makeDrawLayer(`${ID}-${idCnt}`,TYPE_ID, 'Search Select Tool', options, drawingDef, actionTypes, pairs);
 }
@@ -102,7 +102,9 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 function getLayerChanges(drawLayer, action) {
     switch (action.type) {
         case DrawLayerCntlr.CHANGE_DRAWING_DEF:
-            return {drawingDef: clone(drawLayer.drawingDef,action.payload.drawingDef)};
+            return {drawingDef: {...drawLayer.drawingDef,...action.payload.drawingDef}};
+        case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
+            return {...action.payload.changes};
     }
 }
 
@@ -119,15 +121,27 @@ function drawSearchSelectionCircle(plot, drawLayer) {
     const wp= plot.attributes[PlotAttribute.USER_SEARCH_WP];
     if (!wp) return [];
     const radius= plot.attributes[PlotAttribute.USER_SEARCH_RADIUS_DEG];
-    const drawAry= [ PointDataObj.make(wp,7, DrawSymbol.EMP_SQUARE_X)];
+    const drawAry= [];
     const drawRadius= radius<=maxSize ? (radius >= minSize ? radius : minSize) : maxSize;
-    radius && drawAry.push( {...ShapeDataObj.makeCircleWithRadius(wp, drawRadius*3600,UnitType.ARCSEC), lineWidth:3} );
+    if (drawLayer.isInteractive) {
+        drawAry.push(PointDataObj.make(wp,7, DrawSymbol.EMP_SQUARE_X));
+        radius && drawAry.push( {...ShapeDataObj.makeCircleWithRadius(wp, drawRadius*3600,UnitType.ARCSEC), lineWidth:3} );
+    }
+    else {
+        drawAry.push(PointDataObj.make(wp,3, DrawSymbol.CROSS));
+        radius && drawAry.push(
+            {...ShapeDataObj.makeCircleWithRadius(wp, drawRadius*3600,UnitType.ARCSEC),
+                lineWidth:1,
+                renderOptions:{lineDash:[5,5]}
+            });
+    }
     return drawAry;
 }
 
 function drawSearchSelectionPolygon(plot, drawLayer) {
     const wpAry= plot?.attributes[PlotAttribute.POLYGON_ARY];
-    if (!(wpAry?.length>2)) return [];
-    const drawAry= [{...ShapeDataObj.makePolygon(wpAry), lineWidth:3 }];
-    return drawAry;
+    if (!wpAry || wpAry.length<3) return [];
+    return [ drawLayer.isInteractive ?
+        {...ShapeDataObj.makePolygon(wpAry), lineWidth:3 } :
+        {...ShapeDataObj.makePolygon(wpAry), lineWidth:1,  renderOptions:{lineDash:[5,5]}}];
 }

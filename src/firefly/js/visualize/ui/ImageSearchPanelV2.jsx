@@ -15,7 +15,7 @@ import {makeFileRequest} from '../../tables/TableRequestUtil';
 import {dispatchTableSearch} from '../../tables/TablesCntlr';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
-import {FieldGroup} from '../../ui/FieldGroup.jsx';
+import {FieldGroup, FieldGroupCtx} from '../../ui/FieldGroup.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import {FormPanel} from '../../ui/FormPanel.jsx';
 import {getHipsUrl, HiPSImageSelect, makeHiPSWebPlotRequest} from '../../ui/HiPSImageSelect.jsx';
@@ -31,9 +31,9 @@ import {DEF_TARGET_PANEL_KEY, TargetPanel} from '../../ui/TargetPanel.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {isDefined} from '../../util/WebUtil';
-import {dispatchPlotHiPS, dispatchPlotImage, visRoot} from '../../visualize/ImagePlotCntlr.js';
-import {parseWorldPt} from '../../visualize/Point.js';
-import {getImageMasterData} from '../../visualize/ui/AllImageSearchConfig.js';
+import {dispatchPlotHiPS, dispatchPlotImage, visRoot} from '../ImagePlotCntlr.js';
+import {parseWorldPt} from '../Point.js';
+import {getImageMasterData} from './AllImageSearchConfig.js';
 import WebPlotRequest, {WPConst} from '../../visualize/WebPlotRequest.js';
 import CoordinateSys from '../CoordSys';
 import {useForImageSearch} from '../HiPSListUtil.js';
@@ -223,7 +223,7 @@ function ImageSearchPanelV2 ({archiveName='Search', title='Image Search', multiS
                 setShowError(true);
             });
     }, []);
-    const {wp,type}= initArgs?.searchParams ?? {};
+    const {wp,type, radius}= initArgs?.searchParams ?? {};
     const [, setTargetM]= useFieldGroupValue(DEF_TARGET_PANEL_KEY,FG_KEYS.main);
     const [, setTargetS]= useFieldGroupValue(DEF_TARGET_PANEL_KEY,FG_KEYS.single);
     const [, setTargetH]= useFieldGroupValue(DEF_TARGET_PANEL_KEY,FG_KEYS.hips);
@@ -263,7 +263,7 @@ function ImageSearchPanelV2 ({archiveName='Search', title='Image Search', multiS
                     <ThreeColor {...{imageMasterData:imageMasterData.filter( (md) => (!md.dataType || md.dataType==='image')), multiSelect, archiveName, noScroll}}/>}
                     {isSingleChannelImgType && <SingleChannel {...{groupKey: FG_KEYS.single,
                         imageMasterData, multiSelect, archiveName, noScroll}}/>}
-                    {isHipsImgType && <HiPSImage {...{imageMasterData, groupKey: FG_KEYS.hips,  archiveName}}/>}
+                    {isHipsImgType && <HiPSImage {...{imageMasterData, groupKey: FG_KEYS.hips,  archiveName, initArgs}}/>}
                 </div>
             </div>
         );
@@ -309,11 +309,11 @@ function ThreeColor({imageMasterData, multiSelect, archiveName, noScroll}) {
     );
 }
 
-function HiPSImage({groupKey, archiveName, imageMasterData}) {
+function HiPSImage({groupKey, archiveName, imageMasterData, initArgs}) {
     return (
         <div className='flex-full' style={{flexGrow: 1}}>
             <FieldGroup className='flex-full' groupKey={groupKey} reducerFunc={mainReducer} keepState={true}>
-                <ImageSource {...{groupKey, archiveName, imageMasterData}}/>
+                <ImageSource {...{groupKey, archiveName, imageMasterData, initArgs}}/>
             </FieldGroup>
         </div>
     );
@@ -344,14 +344,13 @@ function ImageType({}) {
 }
 
 
-function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archive', noScroll}) {
+function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archive', noScroll, initArgs}) {
 
     const imageType = useStoreConnector(() => getFieldVal(FG_KEYS.main, FD_KEYS.type));
     const {isThreeColorImgType, isHipsImgType} = isImageType(imageType);
 
     const defaultValue = isThreeColorImgType ? 'none' : 'archive';
     const imageSource  = useStoreConnector(() => getFieldVal(groupKey, FD_KEYS.source, defaultValue));
-
 
     const options = [   {label: archiveName, value: 'archive'},
                         {label: 'URL', value: 'url'}];
@@ -376,15 +375,22 @@ function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archi
                     options = {options}
                     fieldKey = { FD_KEYS.source }/>
             </div>
-            {imageSource === 'url'  && (isHipsImgType ? <SelectArchive {...{groupKey, imageMasterData, multiSelect, isHipsImgType, noScroll}}/> : <SelectUrl />)}
-            {imageSource === 'archive'  && <SelectArchive {...{groupKey, imageMasterData, multiSelect, isHipsImgType, noScroll}}/>}
+            {imageSource === 'url'  && (isHipsImgType ? <SelectArchive {...{groupKey, imageMasterData, multiSelect, isHipsImgType, noScroll, initArgs}}/> : <SelectUrl />)}
+            {imageSource === 'archive'  && <SelectArchive {...{groupKey, imageMasterData, multiSelect, isHipsImgType, noScroll,initArgs}}/>}
             {imageSource === 'upload' && <SelectUpload />}
             {imageSource === ServerParams.IS_WS && <SelectWorkspace />}
         </div>
     );
 }
 
-function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, noScroll}) {
+function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, noScroll, initArgs}) {
+
+    const {radius:initRadius}= initArgs?.searchParams ?? {};
+    const {setFld}= useContext(FieldGroupCtx);
+    useEffect(() => {
+        initRadius && setFld('sizeFov', {value:initRadius*2, unit : 'deg' });
+    }, [initRadius]);
+
     const title = '4. Select Data Set';
     const targetStyle = {height: 40, width: 450};
     const isHips = isHipsImgType;
@@ -410,7 +416,7 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, 
                                              unit: initUnit,
                                              labelWidth : 0,
                                              nullAllowed: true,
-                                             value: sizeVal,
+                                             value: initRadius? initRadius*2 : sizeVal,
                                              min: minSize,
                                              max: maxSize
                                          }}

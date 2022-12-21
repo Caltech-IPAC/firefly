@@ -1,8 +1,10 @@
 import React, {useEffect} from 'react';
 import {dispatchHideDialog, dispatchShowDialog} from '../core/ComponentCntlr.js';
+import SearchSelectTool from '../drawingLayers/SearchSelectTool.js';
 import DialogRootContainer from '../ui/DialogRootContainer.jsx';
 import {SingleColumnMenu} from '../ui/DropDownMenu.jsx';
-import {DropDownToolbarButton} from '../ui/DropDownToolbarButton.jsx';
+import {DROP_DOWN_KEY, DropDownToolbarButton} from '../ui/DropDownToolbarButton.jsx';
+import {AREA} from '../ui/dynamic/DynamicDef.js';
 import {FieldGroup} from '../ui/FieldGroup.jsx';
 import {InputAreaFieldConnected} from '../ui/InputAreaField.jsx';
 import {LayoutType, PopupPanel} from '../ui/PopupPanel.jsx';
@@ -12,14 +14,18 @@ import {SizeInputFields} from '../ui/SizeInputField.jsx';
 import {DEF_TARGET_PANEL_KEY, TargetPanel} from '../ui/TargetPanel.jsx';
 import {ToolbarButton} from '../ui/ToolbarButton.jsx';
 import {DEFAULT_VERB, getSearchTypeDesc, getValidSize, searchMatches} from '../core/ClickToAction.js';
-import {visRoot} from './ImagePlotCntlr.js';
-import {getPlotViewById, primePlot} from './PlotViewUtil.js';
+import {
+    dispatchChangeDrawingDef, dispatchForceDrawLayerUpdate, dispatchModifyCustomField, getDlAry
+} from './DrawLayerCntlr.js';
+import {dispatchAttributeChange, visRoot} from './ImagePlotCntlr.js';
+import {PlotAttribute} from './PlotAttribute.js';
+import {getDrawLayerByType, getPlotViewById, primePlot} from './PlotViewUtil.js';
 import {parseWorldPt} from './Point.js';
 import {CONE_AREA_OPTIONS, CONE_CHOICE_KEY, POLY_CHOICE_KEY} from './ui/CommonUIKeys.js';
 import {closeToolbarModalLayers} from './ui/VisMiniToolbar.jsx';
 import {ConnectionCtx} from '../ui/ConnectionCtx.js';
 import {
-    convertStrToWpAry, convertWpAryToStr, HelpLines, initSearchSelectTool, removeSearchSelectTool,
+    convertStrToWpAry, convertWpAryToStr, initSearchSelectTool, makeRelativePolygonAry, removeSearchSelectTool,
     updatePlotOverlayFromUserInput,
     updateUIFromPlot
 } from './ui/VisualSearchUtils.js';
@@ -31,6 +37,7 @@ const SIZE_KEY= 'SIZE';
 const POLYGON_KEY= 'POLYGON';
 const GROUP_KEY= 'SearchRefinementToolGroup';
 
+const DD_KEY= 'moreSearches';
 
 export function showSearchRefinementTool({popupClosing, element, plotId,
                                       searchActions, searchAreaInDeg, wp, polygonValue}) {
@@ -38,6 +45,7 @@ export function showSearchRefinementTool({popupClosing, element, plotId,
 
     const doClose= () => {
         closeToolbarModalLayers();
+        dispatchHideDialog(DD_KEY);
         popupClosing?.();
     };
 
@@ -92,7 +100,7 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
         updatePlotOverlayFromUserInput(plotId, whichOverlay, parseWorldPt(getWP()),
             Number(hasRadius ? getSize() : .0002), convertStrToWpAry(getPoly()));
         return () => {
-            removeSearchSelectTool(plotId);
+            // removeSearchSelectTool(plotId);
         };
     },[plotId]);
 
@@ -101,7 +109,7 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
     }, [polyStr]);
 
     useEffect(() => {
-        wp && setWP();
+        wp && setWP(wp);
         hasRadius && searchAreaInDeg && setSize(searchAreaInDeg);
     }, [wp, searchAreaInDeg]);
 
@@ -115,12 +123,14 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
             Number(hasRadius ? getSize() : .0002), convertStrToWpAry(getPoly()));
     }, [getWP, getSize, getPoly, whichOverlay]);
 
+    const cenWpt= parseWorldPt(getWP()??wp);
+
     return (
         <ConnectionCtx.Provider value={{controlConnected:true, setControlConnected: () => undefined}}>
             <FieldGroup groupKey={GROUP_KEY} style={{display:'flex', flexDirection:'column', padding: '10px 5px 5px 5px'}}>
                 <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 480}}>
                     <div style={{fontSize:'9pt', paddingRight: 10}}>
-                        {<HelpLines whichOverlay={whichOverlay} />}
+                        {<HelpLines/>}
                     </div>
                     {usingToggle &&
                         <RadioGroupInputField {...{
@@ -152,7 +162,7 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
                             initialState:{value:convertWpAryToStr(polygonValue,primePlot(pv))},
                         }} /> }
                 </div>
-                <ActionsDrop {...{searchActions, whichOverlay, polyStr:getPoly()??polyStr, size:getSize()??searchAreaInDeg, cenWpt:getWP()??wp}}/>
+                <ActionsDrop {...{searchActions, whichOverlay, polyStr:getPoly()??polyStr, size:getSize()??searchAreaInDeg, cenWpt}}/>
             </FieldGroup>
         </ConnectionCtx.Provider>
     );
@@ -161,7 +171,7 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
 const ActionsDrop= ({searchActions, polyStr, size, cenWpt, whichOverlay}) => (
         <DropDownToolbarButton text={searchActions.every( (sa) => sa.verb===DEFAULT_VERB) ? 'Searches' : 'Actions'}
                                tip='Search this area'
-                               disableHiding={true} dropDownKey={'moreSearches'}
+                               disableHiding={true} dropDownKey={DD_KEY}
                                useDropDownIndicator={true} enabled={true} horizontal={true} visible={true}
                                style={{
                                    margin: '15px 0 3px 10px',
@@ -191,6 +201,12 @@ function SearchDropDown({searchActions, cenWpt, size, polyStr, whichOverlay}) {
                                        onClick={() => {
                                            dispatchHideDialog(DIALOG_ID);
                                            sa.execute(sa,cenWpt,getValidSize(sa,size),polyStr);
+                                           // markOutline(cenWpt,getValidSize(sa,size),polyStr);
+                                           markOutline(sa,
+                                               primePlot(visRoot())?.plotId,{
+                                               wp:cenWpt,
+                                               radius:Number(getValidSize(sa,size)),
+                                               polyStr});
                                        }
                                        }/>
                     );
@@ -199,3 +215,47 @@ function SearchDropDown({searchActions, cenWpt, size, polyStr, whichOverlay}) {
     );
 
 }
+
+const HelpLines= () => (
+    <div style={{margin:'0 0 5px 5px'}}>
+            <span>
+            Click on the image to choose a new search center,
+            or enter new values in the boxes below to adjust the search region.
+            Then initiate the search of your choice from the menu below.
+            </span>
+    </div>);
+
+/**
+ *
+ * @param {ClickToActionCommand} sa
+ * @param plotId
+ * @param obj
+ * @param obj.wp
+ * @param obj.radius
+ * @param obj.polyStr
+ */
+export function markOutline(sa, plotId, {wp,radius,polyStr}) {
+    initSearchSelectTool(plotId);
+    const dl = getDrawLayerByType(getDlAry(), SearchSelectTool.TYPE_ID);
+    if (!dl) return;
+    if ((!wp || !radius) && !polygonAry) return;
+    let isCone= wp && radius;
+    const polygonAry= convertStrToWpAry(polyStr);
+    if (polygonAry && sa.searchType===AREA) isCone= false;
+
+    dispatchChangeDrawingDef(dl.drawLayerId,{...dl.drawingDef,color:'red'},plotId);
+    dispatchModifyCustomField(dl.drawLayerId,{isInteractive: false},plotId);
+
+    dispatchAttributeChange({
+        plotId,
+        changes: {
+            [PlotAttribute.USER_SEARCH_WP]: isCone ? wp : undefined,
+            [PlotAttribute.USER_SEARCH_RADIUS_DEG]: isCone ? radius : undefined,
+            [PlotAttribute.POLYGON_ARY]: isCone ? undefined : polygonAry,
+            [PlotAttribute.RELATIVE_IMAGE_POLYGON_ARY]: isCone ? undefined : makeRelativePolygonAry(primePlot(visRoot(), plotId), polygonAry),
+            [PlotAttribute.USE_POLYGON]: !isCone,
+        }
+    });
+    dispatchForceDrawLayerUpdate(dl.drawLayerId, plotId);
+}
+

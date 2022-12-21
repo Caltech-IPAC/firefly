@@ -365,7 +365,7 @@ export function renderPolygonDataArea({imageCornerCalc, labelWidth, labelStyle, 
             ];
     }
     if (imageCornerCalc!=='clear' && plot) {
-        const sel= plot.attributes[PlotAttribute.SELECTION];
+        const sel= plot.attributes[PlotAttribute.SELECTION] ?? plot.attributes[PlotAttribute.POLYGON_ARY];
         if (sel) {
             cornerTypeOps.splice(cornerTypeOps.length-1, 0, {label: 'Selection', value: 'area-selection'});
         }

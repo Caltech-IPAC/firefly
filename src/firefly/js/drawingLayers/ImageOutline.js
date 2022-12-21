@@ -2,10 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
-
 
 import {get, isArray} from 'lodash';
 import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';

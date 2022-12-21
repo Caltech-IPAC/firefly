@@ -121,5 +121,5 @@
 .ff-vertical-line-separator {
     height: 0;
     margin: 3px 0 3px 0;
-    border-bottom: 1px solid rgba(0,0,0,.4);
+    border-bottom: 1px solid rgba(0,0,0,.2);
 }

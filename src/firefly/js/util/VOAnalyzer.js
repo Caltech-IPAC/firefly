@@ -1585,7 +1585,7 @@ export function matchesObsCoreHeuristic(schemaName, tableName, columnsModel) {
     return false;
 }
 
-export function getWorldPtFromTable(table) {
+export function getWorldPtFromTableRow(table) {
     const centerColumns = findTableCenterColumns(table);
     if (!centerColumns) return undefined;
     const {lonCol,latCol,csys}= centerColumns;

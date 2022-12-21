@@ -6,7 +6,8 @@ import {sprintf} from '../../externalSource/sprintf.js';
 import {splitByWhiteSpace} from '../../util/WebUtil.js';
 import CsysConverter from '../CsysConverter.js';
 import {
-    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dispatchForceDrawLayerUpdate, getDlAry
+    dispatchAttachLayerToPlot, dispatchChangeDrawingDef, dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
+    dispatchForceDrawLayerUpdate, dispatchModifyCustomField, getDlAry
 } from '../DrawLayerCntlr.js';
 import {dispatchAttributeChange, dispatchChangeCenterOfProjection, visRoot} from '../ImagePlotCntlr.js';
 import {PlotAttribute} from '../PlotAttribute.js';
@@ -19,6 +20,38 @@ import {closeToolbarModalLayers} from './VisMiniToolbar.jsx';
 
 
 const radians= [Math.PI/4, 2*Math.PI/4, 3*Math.PI/4, 4*Math.PI/4, 5*Math.PI/4, 6*Math.PI/4, 7*Math.PI/4, 8*Math.PI/4];
+
+function getInscribedCorners(cc,cen,rx,ry) {
+    const corners= radians.map( (radian) => {
+        const {x,y}= getPointOnEllipse(cen.x,cen.y,rx,ry,radian);
+        return cc.getWorldCoords(makeDevicePt(x,y));
+    });
+    return corners;
+}
+
+function getCircumscribedCorners(cc,cen,rx,ry) {
+    const PI= Math.PI;
+    const {y:topY}= getPointOnEllipse(cen.x,cen.y,rx,ry,4*PI/8);
+    const {x:xDiagLeft}= getPointOnEllipse(cen.x,cen.y,rx,ry,3*PI/8);
+    const {x:xDiagRight}= getPointOnEllipse(cen.x,cen.y,rx,ry,5*PI/8);
+    const {y:bottomY}= getPointOnEllipse(cen.x,cen.y,rx,ry,12*PI/8);
+
+    const {x:leftX}= getPointOnEllipse(cen.x,cen.y,rx,ry,16*PI/8);
+    const {x:rightX}= getPointOnEllipse(cen.x,cen.y,rx,ry,8*PI/8);
+    const {y:yDiagUp}= getPointOnEllipse(cen.x,cen.y,rx,ry,1*PI/8);
+    const {y:yDiagDown}= getPointOnEllipse(cen.x,cen.y,rx,ry,15*PI/8);
+
+    return [
+        cc.getWorldCoords(makeDevicePt(xDiagLeft,topY)),
+        cc.getWorldCoords(makeDevicePt(xDiagRight,topY)),
+        cc.getWorldCoords(makeDevicePt(rightX,yDiagUp)),
+        cc.getWorldCoords(makeDevicePt(rightX,yDiagDown)),
+        cc.getWorldCoords(makeDevicePt(xDiagRight,bottomY)),
+        cc.getWorldCoords(makeDevicePt(xDiagLeft,bottomY)),
+        cc.getWorldCoords(makeDevicePt(leftX,yDiagDown)),
+        cc.getWorldCoords(makeDevicePt(leftX,yDiagUp)),
+    ];
+}
 
 /**
  * @param {WebPlot|undefined} plot
@@ -44,10 +77,7 @@ export function getDetailsFromSelection(plot) {
 
 
     if (plot.attributes[PlotAttribute.SELECTION_TYPE]===SelectedShape.circle.key) {
-        corners= radians.map( (radian) => {
-            const {x,y}= getPointOnEllipse(cen.x,cen.y,rx,ry,radian);
-            return cc.getWorldCoords(makeDevicePt(x,y));
-        });
+        corners= getCircumscribedCorners(cc,cen,rx,ry);
     }
     else {
         const ptCorner01= cc.getWorldCoords(makeDevicePt(dPt0.x, dPt1.y));
@@ -65,6 +95,7 @@ export function getDetailsFromSelection(plot) {
 }
 
 export function makeRelativePolygonAry(plot, polygonAry) {
+    if (!polygonAry) return;
     const cc= CsysConverter.make(plot);
     if (!cc) return;
     const dAry= polygonAry.map( (pt) => cc.getImageCoords(pt)).filter( (pt) => pt);
@@ -77,6 +108,7 @@ export function makeRelativePolygonAry(plot, polygonAry) {
 }
 
 export function convertStrToWpAry(str) {
+    if (!str) return;
     const ptStrAry = str?.split(',');
     if (!(ptStrAry?.length > 1)) return [];
     const wpAry = ptStrAry
@@ -159,6 +191,9 @@ export function updatePlotOverlayFromUserInput(plotId, whichOverlay, wp, radius,
     if (!dl) return;
     const isCone = whichOverlay === CONE_CHOICE_KEY;
 
+    dispatchChangeDrawingDef(dl.drawLayerId,{...dl.drawingDef,color:'yellow'},plotId);
+    dispatchModifyCustomField(dl.drawLayerId,{isInteractive: true},plotId);
+
     dispatchAttributeChange({
         plotId,
         changes: {
@@ -172,6 +207,7 @@ export function updatePlotOverlayFromUserInput(plotId, whichOverlay, wp, radius,
     dispatchForceDrawLayerUpdate(dl.drawLayerId, plotId);
     const plot= primePlot(visRoot());
     if (!plot || isImage(plot)) return;
+    if (!isCone && !polygonAry) return;
 
     const centerProjPt = isCone ? wp : computeCentralPointAndRadius(polygonAry)?.centralPoint;
     const cc = CsysConverter.make(plot);

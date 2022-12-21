@@ -35,7 +35,9 @@ import {setDefaultImageColorTable} from './visualize/WebPlotRequest.js';
 import {initWorkerContext} from './threadWorker/WorkerAccess.js';
 import {getTAPServices} from './ui/tap/TapKnownServices.js';
 import {loadAllJobs} from './core/background/BackgroundUtil.js';
-import {makeDefImageSearchActions, makeDefTapSearchActions} from './ui/DefaultSearchActions.js';
+import {
+    makeDefImageSearchActions, makeDefTableSearchActions, makeDefTapSearchActions, makeExternalSearchActions
+} from './ui/DefaultSearchActions.js';
 
 let initDone = false;
 const logger = Logger('Firefly-init');
@@ -173,6 +175,8 @@ const defFireflyOptions = {
         },
     },
     searchActions : [
+        ...makeExternalSearchActions(),
+        ...makeDefTableSearchActions(),
         ...makeDefTapSearchActions(),
         ...makeDefImageSearchActions(),
     ],
@@ -190,9 +194,10 @@ const defFireflyOptions = {
 
 /**
  * add options to store and setup any options that need specific initialization
- * @param {Object} options
+ * @param {Object} appSpecificOptions
  */
-function installOptions(options) {
+function installOptions(appSpecificOptions) {
+    const options=  mergeObjectOnly(defFireflyOptions, appSpecificOptions); // app specific will override default
     // setup options
     dispatchAppOptions(options);
     options.disableDefaultDropDown && dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
@@ -206,13 +211,14 @@ function installOptions(options) {
 
 }
 
+
 /**
  *
  * @param {AppProps} props
- * @param {FireflyOptions} options
+ * @param {FireflyOptions} appSpecificOptions
  * @param {Array.<WebApiCommand>} webApiCommands
  */
-function fireflyInit(props, options={}, webApiCommands) {
+function fireflyInit(props, appSpecificOptions={}, webApiCommands) {
 
     if (initDone) return;
 
@@ -220,7 +226,7 @@ function fireflyInit(props, options={}, webApiCommands) {
     const viewer = Templates[props.template];
     if (viewer) props.renderTreeId= undefined; // in non API usages, renderTreeId is not used, this line is just for clarity
 
-    installOptions(mergeObjectOnly(defFireflyOptions, options));
+    installOptions(appSpecificOptions);
 
     // initialize UI or API depending on entry mode.
     documentReady().then(() => viewer ? renderRoot(viewer, props,webApiCommands) : initApi(props));
@@ -307,11 +313,11 @@ export const firefly = {
 /**
  * bootstrap Firefly api or application.
  * @param {AppProps} props - application properties
- * @param {FireflyOptions} options - startup options
+ * @param {FireflyOptions} clientAppSpecificOptions - firefly options specific to this client
  * @param {Array.<WebApiCommand>} webApiCommands
  * @returns {Promise.<boolean>}
  */
-function bootstrap(props, options, webApiCommands) {
+function bootstrap(props, clientAppSpecificOptions, webApiCommands) {
 
     if (window?.firefly?.initialized) return Promise.resolve(); // if initialized, don't run it again.
 
@@ -328,20 +334,19 @@ function bootstrap(props, options, webApiCommands) {
         flux.process( {type : APP_LOAD} );  // setup initial store/state
 
         ensureUsrKey();
-        // establish websocket connection first before doing anything else.
 
-        let srvOptions={};
+        let srvAppSpecificOptions={};
         try {
-            srvOptions= await getServerDefinedOptions();
+            srvAppSpecificOptions= await getServerDefinedOptions();
         }
         catch (err) {
             logger.error('could not retrieve valid server options');
         }
+        const appSpecificOptions = mergeObjectOnly(clientAppSpecificOptions, srvAppSpecificOptions);
 
-        const finalOptions = mergeObjectOnly(options, srvOptions);
-        const client= await getOrCreateWsConn();
+        const client= await getOrCreateWsConn(); // establish websocket connection first before doing anything else.
 
-        fireflyInit(props, finalOptions, webApiCommands);
+        fireflyInit(props, appSpecificOptions, webApiCommands);
 
         client.addListener(ActionEventHandler);
         window.firefly.wsClient = client;

@@ -61,5 +61,8 @@ let apiCommands;
 if (template==='FireflyViewer' || template==='FireflySlate') apiCommands= getFireflyViewerWebApiCommands();
 else if (template==='LightCurveViewer') apiCommands= getLcCommands();
 
+
+if (!template || template==='LightCurveViewer') options.searchActions= [];
+
 firefly.bootstrap(props, options, apiCommands);
 
