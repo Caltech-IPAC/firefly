@@ -54,7 +54,8 @@ const FG_KEYS = {
     red: 'ImageSearchPanel_red',
     green: 'ImageSearchPanel_green',
     blue: 'ImageSearchPanel_blue',
-    hips: 'ImageSearchPanel_hips'
+    hips: 'ImageSearchPanel_hips',
+    targetSelect: 'ImageSearchPanel_targetSelect'
 };
 
 const FD_KEYS = {
@@ -200,9 +201,9 @@ function isImageType(imageType=getFieldVal(FG_KEYS.main, FD_KEYS.type)) {
 function getGroupsToValidate(imageType) {
     const {isThreeColorImgType, isHipsImgType, isSingleChannelImgType} = isImageType(imageType);
 
-    if (isThreeColorImgType) return [FG_KEYS.main,FG_KEYS.red,FG_KEYS.green,FG_KEYS.blue];
-    else if (isHipsImgType) return [FG_KEYS.main,FG_KEYS.hips];
-    else if (isSingleChannelImgType) return [FG_KEYS.main,FG_KEYS.single];
+    if (isThreeColorImgType) return [FG_KEYS.main,FG_KEYS.red,FG_KEYS.green,FG_KEYS.blue,FG_KEYS.targetSelect];
+    else if (isHipsImgType) return [FG_KEYS.main,FG_KEYS.hips,FG_KEYS.targetSelect];
+    else if (isSingleChannelImgType) return [FG_KEYS.main,FG_KEYS.single,FG_KEYS.targetSelect];
     else return Object.values(FG_KEYS);
 }
 
@@ -384,7 +385,6 @@ function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archi
 }
 
 function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, noScroll, initArgs}) {
-
     const {radius:initRadius}= initArgs?.searchParams ?? {};
     const {setFld}= useContext(FieldGroupCtx);
     useEffect(() => {
@@ -398,7 +398,6 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, 
     const sizeKey = isHips ? 'sizeFov' : 'conesize';
     const minSize = isHips ? 9/3600 : 1/3600;
     const maxSize = isHips ? 180 : 1;
-    // const sizeVal = isHips ? (180) + '' : (500/3600) + '';
     const sizeVal = isHips ?  '' : (500/3600) + '';
     const initUnit = isHips ? 'deg' : 'arcsec';
 
@@ -406,24 +405,25 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, 
         <div className='flex-full'>
             <div className='ImageSearch__section'>
                 <div className='ImageSearch__section--title'>3. Select Target</div>
-                <div className='flex-full'>
-                    <TargetPanel labelWidth={isHips?150:100} feedbackStyle={targetStyle}
-                                 label={isHips?'Coordinates or Object Name (optional):' :'Coordinates or Object Name:' }
-                                 nullAllowed={true} />
-                    <SizeInputFields fieldKey={sizeKey} showFeedback={true}
-                                     feedbackStyle={{marginLeft:185}}
-                                     initialState={{
+                <FieldGroup groupKey={FG_KEYS.targetSelect} keepState={true}>
+                    <div className='flex-full'>
+                        <TargetPanel labelWidth={isHips ? 150 : 100} feedbackStyle={targetStyle}
+                                     label={isHips ? 'Coordinates or Object Name (optional):' : 'Coordinates or Object Name:'}
+                                     nullAllowed={true}/>
+                        <SizeInputFields fieldKey={sizeKey} showFeedback={true}
+                                         feedbackStyle={{marginLeft: 185}}
+                                         initialState={{
                                              unit: initUnit,
-                                             labelWidth : 0,
+                                             labelWidth: 0,
                                              nullAllowed: true,
                                              value: initRadius? initRadius*2 : sizeVal,
                                              min: minSize,
                                              max: maxSize
                                          }}
-                                     label={sizeLabel}
-                                     key={`sizeInput_${groupKey}`}
-                    />
-                </div>
+                                         label={sizeLabel}
+                                         key={`sizeInput_${groupKey}`}/>
+                    </div>
+                </FieldGroup>
             </div>
             {isHips ?
                 <HiPSImageSelect groupKey={groupKey} /> :
@@ -435,6 +435,7 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, 
         </div>
     );
 }
+
 
 function SelectUpload() {
     return (
@@ -489,6 +490,14 @@ function mainReducer(inFields, action) {
 }
 
 function onSearchSubmit({request, gridSupport, plotId, plotGroupId, viewerId, renderTreeId}) {
+    const commonTargetSelectReq = request?.[FG_KEYS.targetSelect];
+    if (commonTargetSelectReq) {
+        // copy common target selection request data to each individual request if image source is archive
+        [FG_KEYS.single, FG_KEYS.red, FG_KEYS.green, FG_KEYS.blue, FG_KEYS.hips].forEach((k) => {
+            if (request?.[k]?.imageSource === 'archive') request[k] = {...request[k], ...commonTargetSelectReq};
+        });
+    }
+
     const validInfo= validateInput(request);
     if (!validInfo.valid)  {
         showInfoPopup(validInfo.message);
