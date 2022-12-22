@@ -21,7 +21,7 @@ import {showInfoPopup} from './ui/PopupUtil';
 import {bootstrapRedux, flux} from './core/ReduxFlux.js';
 import {getOrCreateWsConn} from './core/messaging/WebSocketClient.js';
 import {ActionEventHandler} from './core/messaging/MessageHandlers.js';
-import {getServerDefinedOptions, notifyServerAppInit} from './rpc/CoreServices.js';
+import {getJsonProperty, notifyServerAppInit} from './rpc/CoreServices.js';
 import {getPropsWith, mergeObjectOnly, getProp, toBoolean, documentReady,uuid} from './util/WebUtil.js';
 import {dispatchChangeTableAutoScroll, dispatchWcsMatch, visRoot} from './visualize/ImagePlotCntlr.js';
 import {Logger} from './util/Logger.js';
@@ -337,7 +337,7 @@ function bootstrap(props, clientAppSpecificOptions, webApiCommands) {
 
         let srvAppSpecificOptions={};
         try {
-            srvAppSpecificOptions= await getServerDefinedOptions();
+            srvAppSpecificOptions= await getJsonProperty('FIREFLY_OPTIONS');
         }
         catch (err) {
             logger.error('could not retrieve valid server options');

@@ -151,6 +151,7 @@ public class ServerParams {
     public static final String CLIENT_ROT_ANGLE= "clientRotAngle";
     public static final String CLIENT_FlIP_Y= "clientFlipY";
     public static final String ACTION= "action";
+    public static final String PROP= "prop";
 
     public static final String VIS_PUSH_ALIVE_CHECK= "pushAliveCheck";
     public static final String VIS_PUSH_ALIVE_COUNT= "pushAliveCount";
@@ -171,7 +172,7 @@ public class ServerParams {
     public static final String ADD_TABLE_COLUMN = "addTableColumn";
 
     public static final String INIT_APP = "CmdInitApp";
-    public static final String SRV_DEFINED_OPTIONS= "CmdSrvDefinedOptions";
+    public static final String JSON_PROPERTY= "CmdJsonProperty";
     public static final String LOGOUT = "CmdLogout";
     public static final String TILE_SIZE = "tileSize";
     public static final String DATA_COMPRESS = "dataCompress";

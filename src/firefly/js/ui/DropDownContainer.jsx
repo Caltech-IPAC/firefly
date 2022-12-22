@@ -22,6 +22,7 @@ import './DropDownContainer.css';
 import {MultiSearchPanel} from 'firefly/ui/MultiSearchPanel.jsx';
 import {TapSearchPanel} from 'firefly/ui/tap/TapSearchRootPanel.jsx';
 import {VersionInfo} from 'firefly/ui/VersionInfo.jsx';
+import {DLGeneratedDropDown} from './dynamic/DLGeneratedDropDown.js';
 
 const flexGrowWithMax = {width: '100%', maxWidth: 1400};
 
@@ -42,6 +43,7 @@ export const dropDownMap = {
     MultiTableSearchCmd: {view: <MultiSearchPanel/>,  layout: {width: '100%'}},
     FileUploadDropDownCmd: {view: <FileUploadDropdown />, layout: {width: '100%'}},
     WorkspaceDropDownCmd: {view: <WorkspaceDropdown />},
+    DLGeneratedDropDownCmd: {view: <DLGeneratedDropDown/>, layout: {width: '100%'}},
     // --- testing
     TestSearch: {view: <TestSearchPanel />},
     TestSearches: {view: <TestQueriesPanel />},

@@ -318,15 +318,16 @@ export function findIndex(tbl_id, filterInfo) {
  * Returns the column index with the given name; otherwise, -1.
  * @param {TableModel} tableModel
  * @param {string} colName
+ * @param {boolean} ignoreCase if true then case when finding columns
  * @returns {number}
  * @public
  * @func getColumnIdx
  * @memberof firefly.util.table
  */
-export function getColumnIdx(tableModel, colName) {
+export function getColumnIdx(tableModel, colName, ignoreCase= false) {
     const cols = getAllColumns(tableModel);
     return cols.findIndex((col) => {
-        return col.name === colName;
+        return ignoreCase? col?.name?.toLowerCase()===colName?.toLowerCase() : col.name === colName;
     });
 }
 
@@ -347,13 +348,14 @@ export function getColumnType(tableModel, colName) {
  * returns column information for the given name.
  * @param {TableModel} tableModel
  * @param {string} colName
+ * @param {boolean} ignoreCase if true then case when finding columns
  * @returns {TableColumn}
  * @public
  * @func getColumn
  * @memberof firefly.util.table
  */
-export function getColumn(tableModel, colName) {
-    const colIdx = getColumnIdx(tableModel, colName);
+export function getColumn(tableModel, colName, ignoreCase= false) {
+    const colIdx = getColumnIdx(tableModel, colName, ignoreCase);
     if (colIdx >= 0) {
         return get(tableModel, `tableData.columns.${colIdx}`);
     }

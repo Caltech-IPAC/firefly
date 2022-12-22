@@ -77,7 +77,6 @@ public class ServerContext {
     private static final String SHARED_WORK_DIR_PROP= "shared.work.directory";
     public static final String VIS_SEARCH_PATH= "visualize.fits.search.path";
     public static final String STATS_LOG_DIR= "stats.log.dir";
-    public static final String JSON_OPTIONS= "FIREFLY_OPTIONS";
 
 
     private static RequestOwnerThreadLocal owner = new RequestOwnerThreadLocal();

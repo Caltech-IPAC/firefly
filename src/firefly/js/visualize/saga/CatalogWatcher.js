@@ -31,10 +31,7 @@ import {getMetaEntry} from '../../tables/TableUtil';
 import {MetaConst} from '../../data/MetaConst';
 
 
-/**
- *
- * @returns {TableWatcherDef}
- */
+/** @type {TableWatcherDef} */
 export const getCatalogWatcherDef= once(() => (
     {
         id : 'CatalogWatcher',

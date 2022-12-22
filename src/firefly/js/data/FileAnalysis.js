@@ -144,6 +144,7 @@ export const makeFileAnalysisPart= (index,fileLocationIndex=0) => (
  *  @prop {boolean} [interpretedData] - should be true if this is data that has been added to the original
  *  @prop {string} chartTableDefOption - only used if there is a chart on of 'auto', 'showChart', 'showTable', 'showImage'
  *  @prop {TableModel} [details]
+ *  @prop {Number} [totalTableRows] if the part is a table the number of rows in the table, otherwise undefined
  *
  *
  */

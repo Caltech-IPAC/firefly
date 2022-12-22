@@ -13,6 +13,11 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class AppServerCommands {
     private static final String SPA_NAME = "spaName";
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
@@ -32,22 +37,40 @@ public class AppServerCommands {
         }
     }
 
-    public static class SrvDefinedOptions extends ServCommand {
-        static boolean firstTime= true;
-        static String json = AppProperties.getProperty(ServerContext.JSON_OPTIONS,"{}");
-        public String doCommand(SrvParam params) throws Exception {
+    public static class JsonProperty extends ServCommand {
+        static final String INVENTORY_PROP = "inventory.serverURLAry";
+        static final String JSON_OPTIONS = "FIREFLY_OPTIONS";
+        static final Map<String, String> map = new HashMap<>();
+        static final List<String> validatedList = new ArrayList<>();
 
-            if (firstTime) {
+        static {
+            map.put(JSON_OPTIONS, AppProperties.getProperty(JSON_OPTIONS, "{}"));
+            map.put(INVENTORY_PROP, AppProperties.getProperty(INVENTORY_PROP, "[]"));
+            validateAll();
+        }
+
+        private static void validateAll() {
+            List<String> msgList = new ArrayList<>();
+            msgList.add("-- JSON properties --");
+            for (Map.Entry<String, String> entry : map.entrySet()) {
+                var json = entry.getValue();
+                var prop = entry.getKey();
                 try {
                     new JSONParser().parse(json);
-                    LOG.info("Client Options ("+ServerContext.JSON_OPTIONS+"): " +json);
-                } catch (ParseException e){
-                    LOG.error("Could not parse Client Options ("+ServerContext.JSON_OPTIONS+") to JSON: " +json);
-                    json = "{}";
+                    validatedList.add(prop);
+                    msgList.add(prop + " parsed: " + json);
+                } catch (ParseException e) {
+                    msgList.add(prop + ": Could not parse Json: " + json);
                 }
-                firstTime= false;
             }
-            return json;
+            LOG.info(msgList.toArray(new String[0]));
+        }
+
+        public String doCommand(SrvParam sp) throws Exception {
+            var propName = sp.getRequired(ServerParams.PROP);
+            if (validatedList.contains(propName)) return map.get(propName);
+            if (!map.containsKey(propName)) LOG.error("no json property exposed for " + propName);
+            return "{}";
         }
     }
 

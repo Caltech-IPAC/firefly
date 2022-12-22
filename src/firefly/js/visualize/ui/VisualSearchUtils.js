@@ -1,3 +1,4 @@
+import {isString} from 'lodash';
 import React from 'react';
 import SELECT_NONE from 'images/icons-2014/28x28_Rect_DD.png';
 import SearchSelectTool from '../../drawingLayers/SearchSelectTool.js';
@@ -109,6 +110,7 @@ export function makeRelativePolygonAry(plot, polygonAry) {
 
 export function convertStrToWpAry(str) {
     if (!str) return;
+    if (!isString(str)) return [];
     const ptStrAry = str?.split(',');
     if (!(ptStrAry?.length > 1)) return [];
     const wpAry = ptStrAry
