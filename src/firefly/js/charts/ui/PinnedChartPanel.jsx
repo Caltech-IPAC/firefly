@@ -150,20 +150,18 @@ export function pinChart({chartId, autoLayout=true }) {
         return;
     }
     // there are cases when chart is not fully loaded.  if so, wait before pinning the chart
-    else {
-        dispatchAddActionWatcher({actions:[CHART_UPDATE], callback: (action, cancelSelf) => {
-                const aChartId = action.payload?.chartId;
-                if (chartId !== aChartId) {
-                    cancelSelf?.();
-                    return;
-                }
-                if (!isChartLoading(chartId)) { //chart is fully loaded now
-                    cancelSelf?.();
-                    doPinChart({chartId, autoLayout});
-                }
+    dispatchAddActionWatcher({actions:[CHART_UPDATE], callback: (action, cancelSelf) => {
+            const aChartId = action.payload?.chartId;
+            if (chartId !== aChartId) {
+                cancelSelf?.();
+                return;
             }
-        });
-    }
+            if (!isChartLoading(chartId)) { //chart is fully loaded now
+                cancelSelf?.();
+                doPinChart({chartId, autoLayout});
+            }
+        }
+    });
 }
 
 
