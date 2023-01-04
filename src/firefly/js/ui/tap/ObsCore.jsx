@@ -5,7 +5,7 @@ import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField';
 import {ListBoxInputField} from 'firefly/ui/ListBoxInputField';
 import {
     makeFieldErrorList, getPanelPrefix, LableSaptail, makePanelStatusUpdater,
-    SpatialWidth, Width_Column, DebugObsCore, makeCollapsibleCheckHeader
+    SpatialWidth, Width_Column, DebugObsCore, makeCollapsibleCheckHeader, getTapObsCoreOptions
 } from 'firefly/ui/tap/TableSearchHelpers';
 import {tapHelpId} from 'firefly/ui/tap/TapUtil';
 import {ValidationField} from 'firefly/ui/ValidationField';
@@ -125,13 +125,13 @@ const getCalibrationOptions= (obsCoreCalibrationLevelOptions) => defCalLabels.ma
 
 const checkHeaderCtl= makeCollapsibleCheckHeader(getPanelPrefix(panelValue));
 const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
-const fldListAry= ['obsCoreCalibrationLevel', 'obsCoreTypeSelection', 'obsCoreInstrumentName', 'obsCoreCollection'];
+const fldListAry= ['obsCoreCalibrationLevel', 'obsCoreTypeSelection', 'obsCoreSubType', 'obsCoreInstrumentName', 'obsCoreCollection'];
 
 
-export function ObsCoreSearch({cols, initArgs={}}) {
+export function ObsCoreSearch({cols, serviceLabel, initArgs={}}) {
     const {urlApi={}}= initArgs;
     const {setConstraintFragment}= useContext(ConstraintContext);
-    const tapObsCoreOps= getAppOptions().tapObsCore ?? {};
+    const tapObsCoreOps= getTapObsCoreOptions(serviceLabel);
     const {makeFldObj}= useContext(FieldGroupCtx);
     const obsCoreCollectionOptions =  tapObsCoreOps.obsCoreCollection ?? {};
     const obsCoreCalibrationLevelOptions =  tapObsCoreOps.obsCoreCalibrationLevel ?? {};
