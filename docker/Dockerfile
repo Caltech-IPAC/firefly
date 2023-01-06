@@ -59,7 +59,7 @@ RUN gradle -Penv=${env} -p ../firefly :firefly:jar && gradle -Penv=${env} ${targ
 # /external                 : default external data directory visible to Firefly
 
 
-FROM tomcat:9.0-jdk11-openjdk-slim-buster
+FROM tomcat:9.0-jdk11
 
 ARG build_dir
 ARG user=tomcat
