@@ -7,9 +7,41 @@
   - [Notes on next version](next-release-details.md)
 
 
+## Version 2022.3 
+- 2022.3 - (Dec 2022)
+  - docker tag: `latest`, `2022.3`, `2022.3.0`
+
+### _Notes_
+#### This release some significant new features and code clean up
+
+#### New Features
+- Spectral Charts support combining spectra [Firefly-1041](https://github.com/Caltech-IPAC/firefly/pull/1274)
+- Click to Search: [Firefly-1086](https://github.com/Caltech-IPAC/firefly/pull/1275)
+- Derived columns in tables: [Firefly-1042](https://github.com/Caltech-IPAC/firefly/pull/1283)
+
+#### UI Enhancements
+- Improvements to extraction: [Firefly-1060](https://github.com/Caltech-IPAC/firefly/pull/1280)
+- Improved MOC uploading: [Firefly-1124](https://github.com/Caltech-IPAC/firefly/pull/1294)
+- Datalink driven searchform: [Firefly-993](https://github.com/Caltech-IPAC/firefly/pull/1298) 
+- Improving chart/table pinning: [Firefly-1024](https://github.com/Caltech-IPAC/firefly/pull/1299) 
+- Improved mask layer UI: [Firefly-1033](https://github.com/Caltech-IPAC/firefly/pull/1304) 
+- TAP panel stability and features: [Firefly-1115](https://github.com/Caltech-IPAC/firefly/pull/1286) 
+
+#### Infrastructure Enhancements
+- Plot.ly updated to 2.18.0 [Firefly-1079](https://github.com/Caltech-IPAC/firefly/pull/1272)
+- Improved status page with version [Firefly-1116](https://github.com/Caltech-IPAC/firefly/pull/1295)
+
+
+
+##### _Pull Requests in this release_
+- [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2022.3+label%3abug)
+- [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2022.3+)
+
+
+
 ## Version 2022.2 
 - 2022.2.6 (Dec 2022)
-  - docker tag: `latest`, `2022.2`, `2022.2.6`
+  - docker tag: `2022.2`, `2022.2.6`
 - 2022.2.5 (Oct 2022)
   - docker tag: `2022.2.5`
 - 2022.2.4 (Sept 2022)
