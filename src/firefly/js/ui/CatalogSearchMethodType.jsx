@@ -2,13 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React, {PureComponent, useContext} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
 import {getAppOptions} from '../core/AppDataCntlr.js';
 
 import {ValidationField} from '../ui/ValidationField.jsx';
-import {VALUE_CHANGE, dispatchValueChange} from '../fieldGroup/FieldGroupCntlr.js';
+import {dispatchValueChange} from '../fieldGroup/FieldGroupCntlr.js';
 import {TargetPanel} from '../ui/TargetPanel.jsx';
 import {VisualPolygonPanel} from '../visualize/ui/TargetHiPSPanel.jsx';
 
@@ -17,13 +17,13 @@ import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import Validate from '../util/Validate.js';
 import Enum from 'enum';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
-import {clone} from '../util/WebUtil.js';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {SizeInputFields} from './SizeInputField.jsx';
 import {UploadOptionsDialog} from './UploadOptionsDialog.jsx';
 import {getWorkspaceConfig} from '../visualize/WorkspaceCntlr.js';
-import {FieldGroup} from './FieldGroup.jsx';
+import {FieldGroup, FieldGroupCtx} from './FieldGroup.jsx';
+import {useFieldGroupWatch} from './SimpleComponent';
 
 import CsysConverter from '../visualize/CsysConverter.js';
 import {primePlot, getActivePlotView, getFoV} from '../visualize/PlotViewUtil.js';
@@ -87,13 +87,13 @@ export class CatalogSearchMethodType extends PureComponent {
                                    : SpatialMethod['All Sky'].value;
 
         return (
-            <FieldGroup groupKey={groupKey} reducerFunc={searchMethodTypeReducer} keepState={true}
+            <FieldGroup groupKey={groupKey} keepState={true}
                 style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
                 {renderTargetPanel(groupKey, searchType)}
                 <div
                     style={{display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
                     {spatialSelection(withPos, polyIsDef, searchOption)}
-                    {sizeArea(groupKey, searchType, get(fields, 'imageCornerCalc.value', 'image'))}
+                    <SizeArea {...{groupKey, searchType, imageCornerCalc: fields?.imageCornerCalc?.value ?? 'image'}}/>
                 </div>
             </FieldGroup>
         );
@@ -269,7 +269,25 @@ radiusInField.propTypes = {
    label: PropTypes.string
 };
 
-function sizeArea(groupKey, searchType, imageCornerCalc) {
+function SizeArea({groupKey, searchType, imageCornerCalc}) {
+    const {setVal,getVal} = useContext(FieldGroupCtx);
+
+    const onChangeToPolygonMethod = () => {
+        const pv = getActivePlotView(visRoot());
+        const plot = primePlot(pv);
+        if (!plot) return;
+        const cornerCalcV = getVal('imageCornerCalc');
+        if ((!cornerCalcV || cornerCalcV === 'image' || cornerCalcV === 'viewport' || cornerCalcV === 'area-selection')) {
+            const sel = plot.attributes[PlotAttribute.SELECTION] ?? plot.attributes[PlotAttribute.POLYGON_ARY];
+            if (!sel && cornerCalcV === 'area-selection') setVal('imageCornerCalc', 'image');
+            if (!cornerCalcV) {
+                if (sel) setVal('imageCornerCalc', 'area-selection');
+            }
+            setVal('polygoncoords', calcCornerString(pv, cornerCalcV));
+        }
+    };
+
+    useFieldGroupWatch(['imageCornerCalc'], () => onChangeToPolygonMethod());
 
     if (searchType === SpatialMethod.Cone.value) {
         return (
@@ -445,26 +463,3 @@ export const SpatialMethod = new Enum({
     {ignoreCase: true}
 );
 
-function searchMethodTypeReducer(inFields, action) {
-    if (!inFields)  return {};
-    const {fieldKey}= action.payload;
-    const rFields= clone(inFields);
-    if (action.type===VALUE_CHANGE && fieldKey==='polygoncoords') {
-        rFields.imageCornerCalc= {...inFields.imageCornerCalc, value:'user'};
-    }
-    else {
-        const cornerCalcV= inFields.imageCornerCalc?.value ?? 'image';
-        const pv= getActivePlotView(visRoot());
-        const plot = primePlot(pv);
-        if (plot && (cornerCalcV==='image' || cornerCalcV==='viewport' || cornerCalcV==='area-selection')) {
-            const sel = plot.attributes[PlotAttribute.SELECTION];
-            if (!sel && cornerCalcV === 'area-selection') {
-                rFields.imageCornerCalc = {...inFields.imageCornerCalc, value: 'image'};
-            }
-            const cornerCalcV2= rFields.imageCornerCalc?.value ?? 'image';
-            const v = calcCornerString(pv, cornerCalcV2);
-            rFields.polygoncoords = {...inFields.polygoncoords, value: v};
-        }
-    }
-    return rFields;
-}
