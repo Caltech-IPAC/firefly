@@ -2,7 +2,7 @@ ARG build_dir=firefly
 ARG target=firefly:warAll
 ARG env=dev
 
-FROM openjdk:8-jdk-slim-buster AS deps
+FROM eclipse-temurin:8-jdk-jammy AS deps
 
 RUN apt-get update && apt-get install -y curl git htmldoc unzip wget bzip2
 
@@ -59,7 +59,7 @@ RUN gradle -Penv=${env} -p ../firefly :firefly:jar && gradle -Penv=${env} ${targ
 # /external                 : default external data directory visible to Firefly
 
 
-FROM tomcat:9.0-jdk11
+FROM tomcat:9.0-jre11
 
 ARG build_dir
 ARG user=tomcat
@@ -109,7 +109,7 @@ RUN mkdir -p conf/Catalina/localhost /local/www /firefly/config /firefly/workare
 COPY firefly/docker/*.sh firefly/docker/*.txt ${CATALINA_HOME}/
 
 # Tomcat config files, tomcat-users is for the admin username and password
-COPY firefly/docker/tomcat-users.xml firefly/docker/java.security.override conf/
+COPY firefly/docker/tomcat-users.xml conf/
 COPY firefly/docker/local.xml conf/Catalina/localhost
 
 # copy all wars, typically there should only be one
