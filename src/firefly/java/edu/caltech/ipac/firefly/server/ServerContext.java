@@ -173,22 +173,17 @@ public class ServerContext {
         CacheManager.setCacheProvider(EhcacheProvider.class.getName());
 
         // setup working area
-        File workingDirFile = null;
-        String workDirRoot = AppProperties.getProperty(WORK_DIR_PROP);
-        if (!StringUtils.isEmpty(workDirRoot)) {
-            workingDirFile = new File(workDirRoot);
-            initDir(workingDirFile);
+        File workingDirFile = setupWorkDir("Setting up " + WORK_DIR_PROP,
+                                AppProperties.getProperty(WORK_DIR_PROP),
+                                new File(System.getProperty("java.io.tmpdir"),"workarea"));
+        if (workingDirFile != null) {
+            setWorkingDir(new File(workingDirFile, contextName));
         }
-        if (workingDirFile == null || !workingDirFile.canWrite()) {
-            workingDirFile = new File(System.getProperty("java.io.tmpdir"),"workarea");
-        }
-        setWorkingDir(new File(workingDirFile, contextName));
 
-
-        File sharedWorkingDirFile = null;
-        String sharedWorkDirRoot = AppProperties.getProperty(SHARED_WORK_DIR_PROP);
-        if (!StringUtils.isEmpty(sharedWorkDirRoot)) {
-            sharedWorkingDirFile= initDir(new File(sharedWorkDirRoot));
+        // setup shared working area
+        File sharedWorkingDirFile = setupWorkDir("Setting up " + SHARED_WORK_DIR_PROP,
+                AppProperties.getProperty(SHARED_WORK_DIR_PROP), workingDirFile);
+        if (sharedWorkingDirFile != null) {
             setSharedWorkingDir(new File(sharedWorkingDirFile, contextName));
             try {
                 File f= new File(getSharedWorkingDir(), FileUtil.getHostname()+"."+ACCESS_TEST_EXT);
@@ -200,15 +195,36 @@ public class ServerContext {
             }
         }
 
-
         Logger.info("",
                 "CACHE_PROVIDER : " + EhcacheProvider.class.getName(),
                 "WORK_DIR       : " + getWorkingDir(),
                 "Available Cores: " + getAvailableCores() );
+    }
 
-         if (!getWorkingDir().equals(getSharedWorkingDir())) {
-             Logger.info("Using shared working dir: "+ getSharedWorkingDir());
-         }
+    private static File setupWorkDir(String desc, String fromProp, File altDir) {
+        log.info(desc);
+        if (!StringUtils.isEmpty(fromProp)) {
+            log.info(desc +  "; Using path from property: " + fromProp);
+            File workDir = new File(fromProp);
+            initDir(workDir);
+            if (!workDir.canWrite()) {
+                log.info(desc + " failed. " + " Unable to write to directory: " + workDir.getPath());
+            }
+            return workDir;
+        }
+
+        if (altDir == null) {
+            log.info(desc + " failed. " + " alternate directory is null");
+            return null;
+        }
+
+        // using altDir
+        log.info(desc +  "; Using alternate path: " + altDir.getPath());
+        initDir(altDir);
+        if (!altDir.canWrite()) {
+            log.info(desc + " failed. " + " Unable to write to alternate directory: " + altDir.getPath());
+        }
+        return altDir;
     }
 
 
@@ -323,18 +339,13 @@ public class ServerContext {
      * @return File the original requested SharedWorkingDirRequested, may not be a good directory
      */
     public static File getSharedWorkingDirRequested() {
-        return sharedWorkingDir;
+        String swd = AppProperties.getProperty(SHARED_WORK_DIR_PROP);
+        return swd == null ? null : new File(swd);
     }
-
 
     public static File getSharedWorkingDir() {
-        if (sharedWorkingDir==null) return getWorkingDir();
-        initDir(sharedWorkingDir);
-        if (!sharedWorkingDir.canWrite()) return getWorkingDir();
-        return sharedWorkingDir;
+        return initDir(sharedWorkingDir);
     }
-
-
 
     public static void setWorkingDir(File workDir) {
         workingDir = workDir;
@@ -342,9 +353,6 @@ public class ServerContext {
 
     public static void setSharedWorkingDir(File sharedWorkDir) {
         sharedWorkingDir = sharedWorkDir;
-        if (!sharedWorkingDir.canWrite()) {
-            Logger.getLogger().error("Cannot write to Shared Worked Dir: " + sharedWorkDir.toString());
-        }
     }
 
     public static File getHiPSDir() {

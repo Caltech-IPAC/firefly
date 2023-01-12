@@ -14,4 +14,4 @@ for n in *.war; do \
 done
 
 cd ${CATALINA_HOME}
-/opt/tomcat/launchTomcat.sh
+${CATALINA_HOME}/launchTomcat.sh
