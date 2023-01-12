@@ -2,15 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-
-import {get} from 'lodash';
-import {getDatalinkUICommands} from './api/webApiCommands/DatalinkUICommands.js';
 import {firefly} from './Firefly.js';
 import {mergeObjectOnly} from './util/WebUtil.js';
 import {getFireflyViewerWebApiCommands} from './api/webApiCommands/ViewerWebApiCommands';
 import {getLcCommands} from './api/webApiCommands/LcWebApiCommands.js';
-import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-42x42.png';
+import {getDatalinkUICommands} from './api/webApiCommands/DatalinkUICommands.js';
 import {getDefaultMOCList} from 'firefly/visualize/HiPSMocUtil.js';
+import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-42x42.png';
 
 
 /**
@@ -22,16 +20,16 @@ import {getDefaultMOCList} from 'firefly/visualize/HiPSMocUtil.js';
  *      window.firefly = {app: {views: 'images | tables', menu}};
  *   </script>
  */
-let props = {
+const defProps = {
     appTitle: 'Firefly',
     initLoadingMessage: window?.firefly?.options?.initLoadingMessage,
     appIcon : FFTOOLS_ICO
 };
 
-props = mergeObjectOnly(props, get(window, 'firefly.app', {}));
+const props = mergeObjectOnly(defProps, window?.firefly?.app ?? {});
 const {template}= props;
 
-let options = {
+const defOptions = {
     MenuItemKeys: {maskOverlay:true},
     catalogSpatialOp: 'polygonWhenPlotExist',
     workspace : {showOptions: false},
@@ -52,18 +50,16 @@ let options = {
         },
         mergedListPriority: 'Irsa'
     },
-    coverage : { // example of using DSS and wise combination for coverage (not that anyone would want to combination)
-    }
+    coverage : { }
 };
 
-options = mergeObjectOnly(options, get(window, 'firefly.options', {}));
-let apiCommands;
+const options = mergeObjectOnly(defOptions, window?.firefly?.options ?? {});
 
-if (template==='FireflyViewer' || template==='FireflySlate') apiCommands= [...getFireflyViewerWebApiCommands(), ...getDatalinkUICommands(false)];
+let apiCommands;
+if (template==='FireflyViewer' || template==='FireflySlate') apiCommands= [...getFireflyViewerWebApiCommands(), ...getDatalinkUICommands(true)];
 else if (template==='LightCurveViewer') apiCommands= getLcCommands();
 
 
 if (!template || template==='LightCurveViewer') options.searchActions= [];
 
 firefly.bootstrap(props, options, apiCommands);
-

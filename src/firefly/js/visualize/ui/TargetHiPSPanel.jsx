@@ -117,8 +117,8 @@ export const HiPSTargetView = ({style, hipsDisplayKey='none',
     useEffect(() => { // show HiPS plot
         if (!pv || hipsUrl!==pv.request.getHipsRootUrl()) {
             initHiPSPlot({plotId,hipsUrl, viewerId,centerPt,hipsFOVInDeg, coordinateSys, mocList,
-                userEnterWorldPt:userEnterWorldPt(), userEnterSearchRadius:userEnterSearchRadius(),
-                whichOverlay, userEnterPolygon:userEnterPolygon(),
+                userEnterWorldPt, userEnterSearchRadius,
+                whichOverlay, userEnterPolygon,
             });
         }
         else {
@@ -335,10 +335,10 @@ const createMocTableId= () => `moc-table-${++mocCnt}`;
  * @param obj.hipsFOVInDeg
  * @param obj.coordinateSys
  * @param obj.mocList
- * @param obj.userEnterWorldPt
- * @param obj.userEnterSearchRadius
+ * @param {Function} obj.userEnterWorldPt
+ * @param {Function} obj.userEnterSearchRadius
  * @param obj.whichOverlay
- * @param obj.userEnterPolygon
+ * @param {Function} obj.userEnterPolygon
  * @return {Promise<void>}
  */
 async function initHiPSPlot({ hipsUrl, plotId, viewerId, centerPt, hipsFOVInDeg, coordinateSys, mocList,
@@ -372,8 +372,8 @@ async function initHiPSPlot({ hipsUrl, plotId, viewerId, centerPt, hipsFOVInDeg,
     }
 
     initSearchSelectTool(plotId);
-    if (userEnterWorldPt || userEnterPolygon?.length) {
-        updatePlotOverlayFromUserInput(plotId,whichOverlay, userEnterWorldPt, userEnterSearchRadius, userEnterPolygon, true);
+    if (userEnterWorldPt?.() || userEnterPolygon?.()?.length) {
+        updatePlotOverlayFromUserInput(plotId,whichOverlay, userEnterWorldPt?.(), userEnterSearchRadius?.(), userEnterPolygon?.(), true);
     }
 }
 

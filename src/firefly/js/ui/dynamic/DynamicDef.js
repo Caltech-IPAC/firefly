@@ -195,7 +195,7 @@ export const makeRangeDef = ({key, desc, tooltip,
  * @prop {string} tooltip
  * @prop {number} labelWidth
  * @prop {number} precision - used with float
- * @prop {number|string} initValue used with float, int, enum
+ * @prop {number|string} initValue - used with float, int, enum
  * @prop {string} areaType - only used with area - one of square, circleRadius, circleDiameter, none
  * @prop {TargetSearchDetails} targetDetails - only use with ra, dec, position, polygon
  * @prop {Array.<{label:string,value:string}|String>} enumValues only used with enum

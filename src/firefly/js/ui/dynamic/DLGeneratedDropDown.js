@@ -1,17 +1,19 @@
-import React, {useEffect, useState} from 'react';
-import {dispatchAddPreference, getPreference} from '../../core/AppDataCntlr.js';
+import {isEmpty, once} from 'lodash';
+import React, {useEffect, useRef, useState} from 'react';
+import {dispatchActiveTarget, dispatchAddPreference, getPreference} from '../../core/AppDataCntlr.js';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
-import {MetaConst} from '../../data/MetaConst.js';
-import {makeFileRequest} from '../../tables/TableRequestUtil.js';
-import {dispatchTableFetch, dispatchTableSearch} from '../../tables/TablesCntlr.js';
+import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {getCellValue, getColumnIdx, getTblById} from '../../tables/TableUtil.js';
 import {Logger} from '../../util/Logger.js';
 import {cisxAdhocServiceUtype, getServiceDescriptors, standardIDs} from '../../util/VOAnalyzer.js';
+import {pointEquals} from '../../visualize/Point.js';
+import {fetchDatalinkUITable} from './FetchDatalinkTable.js';
 import {
+    ingestInitArgs,
     isSIAStandardID, makeFieldDefs, makeSearchAreaInfo, makeServiceDescriptorSearchRequest
 } from './ServiceDefTools.js';
-import {RANGE} from './DynamicDef.js';
 import {convertRequest, DynLayoutPanelTypes} from './DynamicUISearchPanel.jsx';
+import {CIRCLE, POSITION, RANGE} from './DynamicDef.js';
 import {FieldGroup} from '../FieldGroup.jsx';
 import {FormPanel} from '../FormPanel.jsx';
 import {FieldGroupTabs, Tab} from '../panel/TabPanel.jsx';
@@ -33,8 +35,7 @@ export function DLGeneratedDropDown({initArgs={}}) {// eslint-disable-line no-un
     useEffect(() => {
         if (!tblIdList.length) {
             const newUrlAry= getPreference('dlGeneratedTableUrls');
-            const loadOptions=  {META_INFO:{[MetaConst.LOAD_TO_DATALINK_UI]: 'true'}};
-            newUrlAry.forEach( (url) =>  dispatchTableFetch(makeFileRequest('Data link UI', url, undefined, loadOptions)));
+            newUrlAry.forEach( (url) =>  fetchDatalinkUITable(url));
         }
     }, []);
 
@@ -49,12 +50,12 @@ export function DLGeneratedDropDown({initArgs={}}) {// eslint-disable-line no-un
         }
     });
 
-    return <DLGeneratedDropDownTables {...{currentTblId,tblIdList}}/>;
+    return <DLGeneratedDropDownTables {...{currentTblId,tblIdList,initArgs}}/>;
 }
 
-export function DLGeneratedDropDownTables({tblIdList=[], currentTblId}) {// eslint-disable-line no-unused-vars
+export function DLGeneratedDropDownTables({tblIdList=[], currentTblId, initArgs}) {// eslint-disable-line no-unused-vars
 
-    if (tblIdList.length<2) return (<DLGeneratedTableSearch {...{currentTblId}}/>);
+    if (tblIdList.length<2) return (<DLGeneratedTableSearch {...{currentTblId,initArgs}}/>);
 
     const changeActiveTable= (tbl_id) =>
         dispatchComponentStateChange(DL_UI_LIST, {currentTblId:tbl_id, tblIdList});
@@ -62,7 +63,7 @@ export function DLGeneratedDropDownTables({tblIdList=[], currentTblId}) {// esli
     return (
         <div className='SearchPanel' style={{width:'100%'}}>
             <SideBar {...{tblIdList,currentTblId,changeActiveTable}}/>
-            <DLGeneratedTableSearch {...{currentTblId}}/>
+            <DLGeneratedTableSearch {...{currentTblId, initArgs}}/>
         </div>
     );
 }
@@ -126,7 +127,24 @@ const SearchItem= ({desc, tbl_id, active, changeActiveTable}) => (
 );
 
 
-function DLGeneratedTableSearch({currentTblId}) {
+const initTargetOnce= once((wp) => wp && dispatchActiveTarget(wp));
+
+const doSearchOnce= once((clickFunc) => clickFunc() );
+
+
+function DLGeneratedTableSearch({currentTblId, initArgs}) {
+
+    const {current:clickFuncRef} = useRef({clickFunc:undefined});
+
+
+    useEffect(() => {
+        if (initArgs?.urlApi?.execute) {
+            setTimeout(() => {
+                doSearchOnce(clickFuncRef.clickFunc);
+            },10);
+        }
+    }, []);
+
 
     const qAna= analyzeQueries(currentTblId);
     const tabsKey= 'Tabs='+currentTblId;
@@ -138,16 +156,29 @@ function DLGeneratedTableSearch({currentTblId}) {
         );
     }
 
+
     const fdAry= qAna.primarySearchDef.map( (fd) => {
         const {serviceDef}= fd; //todo handle case with only an access url
         const standId= (serviceDef.standardID??'').toLowerCase();
         const utype= (serviceDef.utype||'').toLowerCase();
+        let fdEntryAry;
         if (utype===cisxAdhocServiceUtype && standId.startsWith(standardIDs.tap) && serviceDef.cisxTokenSub) {
-            return makeFieldDefs(serviceDef.cisxTokenSub, undefined, makeSearchAreaInfo(serviceDef.cisxUI), false);
+            fdEntryAry= makeFieldDefs(serviceDef.cisxTokenSub, undefined, makeSearchAreaInfo(serviceDef.cisxUI), false);
         }
         else {
-            return makeFieldDefs(serviceDef.serDefParams, undefined, makeSearchAreaInfo(serviceDef.cisxUI), true);
+            fdEntryAry= makeFieldDefs(serviceDef.serDefParams, undefined, makeSearchAreaInfo(serviceDef.cisxUI), true);
         }
+        if (!isEmpty(initArgs.urlApi)) {
+            const originalWp= fdEntryAry.find((fd) => fd.type===POSITION)?.initValue ?? fdEntryAry.find((fd) => fd.type===CIRCLE)?.targetDetails?.centerPt;
+            const initFdEntryAry= ingestInitArgs(fdEntryAry,initArgs.urlApi);
+            const initWp= initFdEntryAry.find((fd) => fd.type===POSITION)?.initValue ?? initFdEntryAry.find((fd) => fd.type===CIRCLE)?.targetDetails?.centerPt;
+            if (!pointEquals(originalWp,initWp)) initTargetOnce(initWp);
+            return initFdEntryAry;
+        }
+        else {
+            return fdEntryAry;
+        }
+
     });
 
     const docRows= qAna.urlRows.filter( ({semantic}) => semantic?.toLowerCase().endsWith('documentation'));
@@ -183,12 +214,13 @@ function DLGeneratedTableSearch({currentTblId}) {
             <FormPanel submitText = 'Search' groupKey = 'DL_UI'
                        onSubmit = {submitSearch}
                        params={{hideOnInvalid: false}}
+                       getDoOnClickFunc={(clickFunc) => clickFuncRef.clickFunc= clickFunc}
                        onError = {() => showInfoPopup('Fix errors and search again', 'Error') }
                        help_id  = {'todo-AtReplaceHelpId-todo'}>
                 <FieldGroup groupKey='DL_UI' keepState={true} style={{height:'100%', width:'100%'}}>
                     {searchObjFds.length===1 ?
-                        <ServDescPanel{...{fds:searchObjFds[0].fds, style:{width:'100%',height:'100%'}, desc:searchObjFds[0].desc, docRows}} /> :
-                        <TabView{...{tabsKey,searchObjFds,qAna, docRows}}/>}
+                        <ServDescPanel{...{initArgs, fds:searchObjFds[0].fds, style:{width:'100%',height:'100%'}, desc:searchObjFds[0].desc, docRows}} /> :
+                        <TabView{...{initArgs, tabsKey,searchObjFds,qAna, docRows}}/>}
                 </FieldGroup>
             </FormPanel>
         </div>

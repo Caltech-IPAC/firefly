@@ -18,6 +18,7 @@ import RangeValues from 'firefly/visualize/RangeValues';
 import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from 'firefly/visualize/MultiViewCntlr';
 import {PlotAttribute} from 'firefly/visualize/PlotAttribute';
 import {isAnalysisTableDatalink} from '../util/VOAnalyzer.js';
+import {fetchDatalinkUITable} from './dynamic/FetchDatalinkTable.js';
 
 const FILE_ID = 'fileUpload';
 const uploadOptions = 'uploadOptions';
@@ -81,9 +82,8 @@ export function resultSuccess(request) {
         //this will signal HiPSImageSelect's 'Add MOC Layer dialog' to hide itself
         return true;
     }
-    else if (isDL && request.datalinkOp === 'datalinkUI') { // handle service descriptor
-        sendTableRequest(tableIndices, fileCacheKey, false, currentReport, false ,
-            {[MetaConst.LOAD_TO_DATALINK_UI]: 'true'});
+    else if (isDL && request.datalinkOp === 'datalinkUI') { // handle Datalink / service descriptor UI
+        tableIndices.forEach((idx) => void fetchDatalinkUITable(fileCacheKey,idx) );
     }
     else if ( isLsstFootprintTable(currentDetailsModel) ) {
         sendLSSTFootprintRequest(fileCacheKey, request.fileName, tableIndices[0]);
