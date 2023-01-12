@@ -155,6 +155,7 @@ export function KeywordBlock({style={}, label, value, title, asLink}) {
 export function Keyword({style={}, label, value, title, asLink}) {
     label = label && label + ':';
     if (label || value) {
+        value = String(value);
         return (
             <React.Fragment>
                 {label && <div title={title} className='keyword-label'>{label}</div>}

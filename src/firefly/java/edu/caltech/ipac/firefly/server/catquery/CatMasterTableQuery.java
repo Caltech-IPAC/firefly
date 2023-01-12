@@ -6,9 +6,9 @@ package edu.caltech.ipac.firefly.server.catquery;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
+import edu.caltech.ipac.firefly.server.network.IpacTableHandler;
 import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
 import edu.caltech.ipac.table.DataGroupPart;
-import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
@@ -20,9 +20,7 @@ import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
@@ -44,23 +42,12 @@ public class CatMasterTableQuery extends EmbeddedDbProcessor {
 
     public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
 
-        AtomicReference<DataGroup> dgRef = new AtomicReference<>();
-        AtomicReference<DataAccessException> exRef = new AtomicReference<>();
-        HttpServices.getData(new HttpServiceInput(MASTER_LOC), method -> {
-            if (HttpServices.isOk(method)) {
-                try {
-                    dgRef.set(IpacTableReader.read(method.getResponseBodyAsStream()));
-                } catch (IOException e) {
-                    exRef.set(new DataAccessException("Unable to parse Master Table", e));
-                }
-            } else {
-                exRef.set(new DataAccessException("Exception while fetching Master Table: " + StringUtils.toString(req.getSearchParams())));
-            }
-        });
-
-        if (exRef.get() != null) throw exRef.get();
-
-        DataGroup dg = dgRef.get();
+        IpacTableHandler handler = new IpacTableHandler();
+        HttpServices.Status status = HttpServices.getData(new HttpServiceInput(MASTER_LOC), handler);
+        if (status.isError()) {
+            throw new DataAccessException("Unable to parse Master Table: " + status.getErrMsg());
+        }
+        DataGroup dg = handler.results;
 
         appendHostToUrls(dg, "moreinfo", "description");
         makeIntoUrl(dg, "infourl", "info");

@@ -49,7 +49,7 @@ export const BgMaskPanel = React.memo(({componentKey, onMaskComplete, style={}})
         jobInfo && showJobInfo(jobInfo.jobId);
     };
 
-    const msg = jobInfo?.error || jobInfo?.progressDesc || 'Working...';
+    const msg = jobInfo?.errorSummary?.message || jobInfo?.jobInfo?.progressDesc || 'Working...';
 
     const Options = () => ( inProgress &&
         <div className='BgMaskPanel__actions'>

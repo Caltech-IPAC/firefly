@@ -75,17 +75,17 @@ public class PackagedEmail {
         StringWriter sw = new StringWriter();
         try{
             String label= jobInfo.getLabel();
-            JobInfo.PHASE phase = jobInfo.getPhase();
-            if (phase.equals(JobInfo.PHASE.ABORTED)) {
+            JobInfo.Phase phase = jobInfo.getPhase();
+            if (phase.equals(JobInfo.Phase.ABORTED)) {
                 sw.append("\nYour packaging was aborted.\n\n");
-            } else if (phase.equals(JobInfo.PHASE.ERROR)) {
+            } else if (phase.equals(JobInfo.Phase.ERROR)) {
                 sw.append("\nYour packaging request did not complete.\n\n");
-            } else if (phase.equals(JobInfo.PHASE.COMPLETED)) {
+            } else if (phase.equals(JobInfo.Phase.COMPLETED)) {
                 sw.append("\n");
                 sw.append(MAIL_SUCCESS_MESSAGE);
                 sw.append("\n\n");
             } else {
-                logger.warn(jobInfo.getId(),
+                logger.warn(jobInfo.getJobId(),
                                          "Cannot send completion email. Unexpected state in JobInfo: " + phase);
                 return;
             }
@@ -139,7 +139,7 @@ public class PackagedEmail {
             sw.flush();
             EMailUtil.sendMessage(new String[]{email}, null, null, "Download Status - " + label, sw.toString());
         } catch(Throwable e) {
-            logger.warn(jobInfo.getId()!=null ? jobInfo.getId() : "Unknown Background ID",
+            logger.warn(jobInfo.getJobId()!=null ? jobInfo.getJobId() : "Unknown Background ID",
                                      "Failed to send completion email to "+email+": "+e.getMessage() + sw.toString());
         }
     }
@@ -153,7 +153,7 @@ public class PackagedEmail {
             try {
                 urlList.add(new URL(part));
             } catch (MalformedURLException e) {
-                logger.warn("Bad url for download script: " + part + "Background ID: " + jobInfo.getId());
+                logger.warn("Bad url for download script: " + part + "Background ID: " + jobInfo.getJobId());
             }
         }
         String fName = "download-results";
@@ -174,19 +174,19 @@ public class PackagedEmail {
                 if (fStr!= null) {
 
                     scriptUrl=  BASE_SERVLET  + fStr + RET_FILE + retFile;
-                    logger.info("download script built, returning: " + outFile, "Background ID: " + jobInfo.getId());
+                    logger.info("download script built, returning: " + outFile, "Background ID: " + jobInfo.getJobId());
                     statsLogger.stats("create_script", "fname", outFile);
                 }
             } catch (IOException e) {
                 logger.warn(e,"Could not create temp file",
-                        "Background ID: " + jobInfo.getId(),
+                        "Background ID: " + jobInfo.getJobId(),
                         "file root: "  + fName,
                         "ext: "+ ext);
             }
         }
         else {
             logger.warn("Could not build a download script list, urlList length==0",
-                    "Background ID: " + jobInfo.getId());
+                    "Background ID: " + jobInfo.getJobId());
         }
         return ServerContext.getRequestOwner().getBaseUrl() + scriptUrl;
     }

@@ -111,7 +111,7 @@ export function queryTable(tableRequest, {filters, sortInfo, inclCols}) {
 }
 
 /**
- * a utility function used to query data from the given tableRequest without altering the table.
+ * add a column to the table backed by this tableRequest
  * @param {TableRequest} tableRequest is a table request params object
  * @param colAttribs      column attributes.  i.e. name, type, expression, etc
  * @returns {Promise.<number>}
@@ -196,7 +196,7 @@ export function removeBgJob(jobId) {
     const params = {[ServerParams.JOB_ID]: jobId};
     return doJsonRequest(ServerParams.REMOVE_JOB, params).then( (jobInfo) => {
         if (!jobInfo) {     // job is not on the server.. remove it locally
-            dispatchBgJobInfo(updateSet(getJobInfo(jobId), 'monitored', false));
+            dispatchBgJobInfo(updateSet(getJobInfo(jobId), 'jobInfo.monitored', false));
         }
     });
 }
@@ -209,6 +209,12 @@ export function removeBgJob(jobId) {
 export function cancel(jobId) {
     const params = {[ServerParams.JOB_ID]: jobId};
     return doJsonRequest(ServerParams.CANCEL, params);
+}
+
+export function uwsJobInfo(jobUrl, jobId) {
+    const params = {[ServerParams.JOB_ID]: jobId,
+                    [ServerParams.JOB_URL]: jobUrl};
+    return doJsonRequest(ServerParams.UWS_JOB_INFO, params);
 }
 
 /**

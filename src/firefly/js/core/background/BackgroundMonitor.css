@@ -148,7 +148,7 @@
 
 .JobInfo__popup {
     width: 500px;
-    height: 200px;
+    height: 150px;
     min-height: 100px;
     min-width: 250px;
     resize: both;
@@ -157,7 +157,10 @@
     flex-direction: column;
     justify-content: space-between;
 }
-
+.JobInfo__popup.uws {
+    position: relative;
+    height: 200px;
+}
 
 .JobInfo__items {
     display: flex;
@@ -166,14 +169,6 @@
 
 .JobInfo__items > * {
     margin: 2px 0;
-}
-
-.JobInfo__items .keyword-label {
-    width: 63px;
-}
-
-.JobInfo__items .params .keyword-label {
-    width: unset;
 }
 
 .JobInfo__items--link {

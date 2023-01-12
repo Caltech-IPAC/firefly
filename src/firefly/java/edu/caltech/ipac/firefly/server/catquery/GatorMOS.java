@@ -6,7 +6,7 @@ package edu.caltech.ipac.firefly.server.catquery;
 
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
-import edu.caltech.ipac.firefly.server.network.DataGroupHandler;
+import edu.caltech.ipac.firefly.server.network.IpacTableHandler;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
@@ -16,7 +16,6 @@ import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 
 import static edu.caltech.ipac.firefly.server.catquery.GatorMOS.PROC_ID;
@@ -80,9 +79,11 @@ public class GatorMOS extends EmbeddedDbProcessor {
             input.setParam(Param.outfmt.name(), "1");       // defaults to ASCII table, or it will fail because API default is 0(HTML).
         }
 
-        DataGroupHandler handler = new DataGroupHandler(req);
-        HttpServices.getData(input, handler);
-        if (handler.exception != null) handleError(handler.exception);
+        IpacTableHandler handler = new IpacTableHandler();
+        HttpServices.Status status = HttpServices.getData(input, handler);
+        if (status.isError()) {
+            handleError(status.getErrMsg());
+        }
         DataGroup results = handler.results;
         TableMeta.LonLatColumns centcol = new TableMeta.LonLatColumns(RA, DEC, CoordinateSys.EQ_J2000);
         results.getTableMeta().setCenterCoordColumns(centcol);
@@ -90,8 +91,7 @@ public class GatorMOS extends EmbeddedDbProcessor {
         return handler.results;
     }
 
-    private void handleError(Exception exception) throws DataAccessException{
-        String msg = exception.getMessage();
+    private void handleError(String msg) throws DataAccessException{
         String[] parts = StringUtils.groupMatch(".*msg=\"(.+)\".*", msg);
         msg = parts.length > 0 ? parts[0] : msg;
         throw new DataAccessException(msg);

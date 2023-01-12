@@ -62,6 +62,7 @@ public abstract class ServCmdJob extends ServCommand implements Job {
             this.worker = worker;
             worker.setJob(this);
             JobInfo info = getJobInfo();
+            info.setType(worker.getType());
             info.setLabel(worker.getLabel());
         }
     }

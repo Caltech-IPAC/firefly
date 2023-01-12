@@ -33,7 +33,6 @@ import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryUsage;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static edu.caltech.ipac.firefly.TestUtil.getDataFile;
 import static edu.caltech.ipac.firefly.TestUtil.logMemUsage;
@@ -175,74 +174,74 @@ public class DataGroupReadTest {
 
         logMemUsage(() -> {
             List<Object> olist = new ArrayList<>();
-            ref.setSource(olist);
+            ref.set(olist);
             for (int i=0; i< testSize; i++) olist.add(i + Math.random());
             return String.format("List<Object>(%,d)", testSize);
         });
-        ref.setSource(null);        // allow gc to collect
+        ref.set(null);        // allow gc to collect
 
         logMemUsage(() -> {
             PrimitiveList.Objects objects = new PrimitiveList.Objects();
-            ref.setSource(objects);
+            ref.set(objects);
             for (int i=0; i< testSize; i++) objects.add(i + Math.random());
             return String.format("Object[](%,d)    ", testSize);
         });
-        ref.setSource(null);
+        ref.set(null);
 
         logMemUsage(() -> {
             List<Double> dlist = new ArrayList<>();
-            ref.setSource(dlist);
+            ref.set(dlist);
             for (int i=0; i< testSize; i++) dlist.add(i + Math.random());
             return String.format("List<Double>(%,d)", testSize);
         });
-        ref.setSource(null);
+        ref.set(null);
 
         logMemUsage(() -> {
             PrimitiveList.Doubles doubleAry = new PrimitiveList.Doubles();
-            ref.setSource(doubleAry);
+            ref.set(doubleAry);
             for (int i=0; i< testSize; i++) doubleAry.add(i * Math.random());
             return String.format("double[](%,d)    ", testSize);
         });
-        ref.setSource(null);
+        ref.set(null);
 
         logMemUsage(() -> {
             PrimitiveList.Integers intAry = new PrimitiveList.Integers();
-            ref.setSource(intAry);
+            ref.set(intAry);
             for (int i=0; i< testSize; i++) intAry.add((int) (i * Math.random()));
             return String.format("int[](%,d)       ", testSize);
         });
-        ref.setSource(null);
+        ref.set(null);
 
         logMemUsage(() -> {
             String[] strAry = new String[testSize];
-            ref.setSource(strAry);
+            ref.set(strAry);
             for (int i=0; i< testSize; i++) {
                 strAry[i] = String.valueOf(i%10);
             }
             return String.format("strAry[](%,d)    ", testSize);
         });
-        ref.setSource(null);
+        ref.set(null);
 
         logMemUsage(() -> {
             List<String> strList = new ArrayList<>();
-            ref.setSource(strList);
+            ref.set(strList);
             for (int i=0; i< testSize; i++) {
                 strList.add(String.valueOf(i%10));
             }
             return String.format("strList[](%,d)   ", testSize);
         });
-        ref.setSource(null);
+        ref.set(null);
     }
 
     private static DataGroup readTest(File inFile) throws IOException {
         Ref<DataGroup> data = new Ref<>();
         logMemUsage(() -> {
             try {
-                data.setSource(IpacTableReader.read(inFile));
-                return String.format("READ(%,d)", data.getSource().size());
+                data.set(IpacTableReader.read(inFile));
+                return String.format("READ(%,d)", data.get().size());
             } catch (IOException e) {return "ERROR:" + e.getMessage();}
         });
-        return data.getSource();
+        return data.get();
     }
 
     private static void writeTest(DataGroup data) throws IOException {

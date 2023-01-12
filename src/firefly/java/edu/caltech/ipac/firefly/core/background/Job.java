@@ -8,7 +8,7 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
-import static edu.caltech.ipac.firefly.core.background.JobInfo.PHASE.ABORTED;
+import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase.ABORTED;
 
 /**
  * Date: 9/29/21
@@ -18,7 +18,7 @@ import static edu.caltech.ipac.firefly.core.background.JobInfo.PHASE.ABORTED;
  */
 public interface Job extends Callable<String> {
 
-    enum Type {SEARCH, PACKAGE}
+    enum Type {SEARCH, UWS, PACKAGE}
 
     String getJobId();
 
@@ -40,7 +40,7 @@ public interface Job extends Callable<String> {
 
     default JobInfo getJobInfo() {return JobManager.getJobInfo(getJobId()); }
 
-    default void setPhase(JobInfo.PHASE phase) { setIf(getJobInfo(), v -> v.setPhase(phase)); }
+    default void setPhase(JobInfo.Phase phase) { setIf(getJobInfo(), v -> v.setPhase(phase)); }
 
     default void setError(int code, String msg) {
         setIf(getJobInfo(), v -> v.setError(new JobInfo.Error(code, msg)));
@@ -69,12 +69,12 @@ public interface Job extends Callable<String> {
 
     default String call() {
 
-        setPhase(JobInfo.PHASE.EXECUTING);
+        setPhase(JobInfo.Phase.EXECUTING);
         JobManager.logJobInfo(getJobInfo());
 
         try {
             String results = run();
-            setPhase(JobInfo.PHASE.COMPLETED);
+            setPhase(JobInfo.Phase.COMPLETED);
             JobManager.logJobInfo(getJobInfo());
             return results;
         } catch (InterruptedException | DataAccessException.Aborted e) {

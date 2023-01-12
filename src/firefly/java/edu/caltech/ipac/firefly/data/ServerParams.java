@@ -139,6 +139,7 @@ public class ServerParams {
     public static final String SET_EMAIL= "setEmail";
     public static final String RESEND_EMAIL= "resendEmail";
     public static final String CREATE_DOWNLOAD_SCRIPT= "createDownoadScript";
+    public static final String UWS_JOB_INFO= "uwsJobInfo";
 
     public static final String REPORT_USER_ACTION= "reportUserAction";
     public static final String DS9_REGION= "ds9Region";
