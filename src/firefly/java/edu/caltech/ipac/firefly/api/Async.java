@@ -62,7 +62,7 @@ public class Async extends BaseHttpServlet {
             } else {
                 if (action == null) {
                     if (params.size() == 0) {
-                        // get JobInfo;                         /CmdSrv/async/{id} 
+                        // get JobInfo;                         /CmdSrv/async/{id}
                         getJobInfo(res, jobId);
                     } else if (params.getCommandKey() != null){
                         // run a command on this job;           /CmdSrv/async/{id}?cmd=xxx
@@ -103,7 +103,7 @@ public class Async extends BaseHttpServlet {
         Job job = ServerCommandAccess.getCmdJob(params);
         if (job != null) {
             JobInfo info = JobManager.submit(job);
-            res.setHeader("Location", getAsyncUrl() + info.getId());
+            res.setHeader("Location", getAsyncUrl() + info.getJobId());
             res.setStatus(301);
         } else {
             sendErrorResponse(404, null, "Command not found: " + params.getCommandKey(), res);
@@ -143,7 +143,7 @@ public class Async extends BaseHttpServlet {
         SrvParam params = info.getSrvParams();
         Job job = ServerCommandAccess.getCmdJob(params);
         if (job != null && job.getType() == Job.Type.SEARCH) {
-            job.setJobId(info.getId());
+            job.setJobId(info.getJobId());
             String json = job.run();
             sendResponse(json, res);
         }

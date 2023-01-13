@@ -60,6 +60,8 @@ public final class PackagingWorker implements Job.Worker {
     private String wsDestPath;
     private boolean hasErrors;
 
+    public Job.Type getType() { return Job.Type.PACKAGE; }
+
     public void setJob(Job job) {
         this.job = job;
     }
@@ -117,7 +119,7 @@ public final class PackagingWorker implements Job.Worker {
         jobInfo.setProgress(100);
         jobInfo.setProgressDesc(summary);
         jobInfo.setSummary(summary);
-        getJob().setPhase(JobInfo.PHASE.COMPLETED);
+        getJob().setPhase(JobInfo.Phase.COMPLETED);
 
         PackagedEmail.send(getJob().getJobInfo());
 
@@ -134,8 +136,8 @@ public final class PackagingWorker implements Job.Worker {
     private void updateJobProgress() throws DataAccessException.Aborted {
         Job job = getJob();
         if (job != null) {
-            JobInfo.PHASE phase = job.getJobInfo().getPhase();
-            if (phase == JobInfo.PHASE.ABORTED) throw new DataAccessException.Aborted();
+            JobInfo.Phase phase = job.getJobInfo().getPhase();
+            if (phase == JobInfo.Phase.ABORTED) throw new DataAccessException.Aborted();
 
             if (System.currentTimeMillis() - lastUpdatedTime > 2000) {
                 lastUpdatedTime = System.currentTimeMillis();

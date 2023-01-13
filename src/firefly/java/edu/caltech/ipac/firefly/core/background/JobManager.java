@@ -31,7 +31,7 @@ import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 import static edu.caltech.ipac.firefly.core.background.Job.Type.PACKAGE;
 import static edu.caltech.ipac.firefly.core.background.Job.Type.SEARCH;
-import static edu.caltech.ipac.firefly.core.background.JobInfo.PHASE.*;
+import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase.*;
 
 
 /**
@@ -78,7 +78,7 @@ public class JobManager {
 
     public static void sendUpdate(JobInfo jobInfo) {
         if (jobInfo.getPhase() == COMPLETED) {
-            runningJobs.remove(jobInfo.getId());
+            runningJobs.remove(jobInfo.getJobId());
         }
         // send updated jobInfo to client
         FluxAction addAction = new FluxAction(FluxAction.JOB_INFO, toJsonObject(jobInfo));
@@ -88,17 +88,21 @@ public class JobManager {
     public static JobInfo submit(Job job) {
         RequestOwner reqOwner = ServerContext.getRequestOwner();
         JobInfo info = new JobInfo(nextJobId());
+        Instant start = Instant.now();
+        info.setStartTime(start);
+        info.setCreationTime(start);
+        info.setDestruction(start.plus(7, ChronoUnit.DAYS));
         info.setOwner(reqOwner.getUserKey());
         info.setPhase(QUEUED);
         info.setEventConnId(reqOwner.getEventConnID());
         info.setType(job.getType());
-        allJobInfos.put(info.getId(), info);
+        allJobInfos.put(info.getJobId(), info);
 
         job.runAs(reqOwner);
-        job.setJobId(info.getId());
+        job.setJobId(info.getJobId());
 
         logJobInfo(info);
-        Future future = job.getType() == SEARCH ? searches.submit(job) : packagers.submit(job);
+        Future future = job.getType() == PACKAGE ? packagers.submit(job) : searches.submit(job);
 
         try {
             future.get(WAIT_COMPLETE, TimeUnit.SECONDS);        // wait in seconds for a job to complete
@@ -178,28 +182,40 @@ public class JobManager {
         String asyncUrl = getAsyncUrl();
 
         JSONObject rval = new JSONObject();
-        rval.put("jobId", info.getId());
-        rval.put("ownerId", info.getOwner());
-        rval.put("phase", info.getPhase().toString());
-        applyIfNotEmpty(info.getLabel(),   v -> rval.put("label", v));
-        rval.put("startTime", info.getStartTime().toString());
+        rval.put("jobId", info.getJobId());
+        applyIfNotEmpty(info.getRunId(), v -> rval.put("runId", v));
+        applyIfNotEmpty(info.getOwner(), v -> rval.put("ownerId", v));
+        applyIfNotEmpty(info.getPhase(), v -> rval.put("phase", v.toString()));
+        applyIfNotEmpty(info.getQuote(),   v -> rval.put("quote", v.toString()));
+        applyIfNotEmpty(info.getCreationTime(),   v -> rval.put("creationTime", v.toString()));
+        applyIfNotEmpty(info.getStartTime(),   v -> rval.put("startTime", v.toString()));
         applyIfNotEmpty(info.getEndTime(),   v -> rval.put("endTime", v.toString()));
-        applyIfNotEmpty(info.executionDuration(),   v -> rval.put("executionDuration", v));
-        applyIfNotEmpty(info.getDestructionTime(),   v -> rval.put("destruction", v.toString()));
+        applyIfNotEmpty(info.executionDuration(),   v -> rval.put("executionDuration", v.toString()));
+        applyIfNotEmpty(info.getDestruction(), v -> rval.put("destruction", v.toString()));
         rval.put("parameters", info.getParams());
 
         if (info.getPhase() == COMPLETED && info.getResults().size() == 0) {
-            rval.put("results", Arrays.asList(asyncUrl + info.getId() + "/results/result"));
-        } else {
-            if (info.getResults().size() > 0) rval.put("results", info.getResults());
+            rval.put("results", Arrays.asList(asyncUrl + info.getJobId() + "/results/result"));
+        } else if (info.getResults().size() > 0) {
+            rval.put("results", info.getResults());
         }
-        applyIfNotEmpty(info.getError(),   v -> rval.put("error", v.getMsg()));
-        applyIfNotEmpty(info.getType(),   v -> rval.put("type", v.toString()));
-        applyIfNotEmpty(info.isMonitored(),   v -> rval.put("monitored", v));
-        rval.put("progress", info.getProgress());
-        applyIfNotEmpty(info.getProgressDesc(),   v -> rval.put("progressDesc", v));
-        applyIfNotEmpty(info.getDataOrigin(), v -> rval.put("dataOrigin", v));
-        applyIfNotEmpty(info.getSummary(),   v -> rval.put("summary", v));
+        applyIfNotEmpty(info.getError(),   v -> {
+            JSONObject errSum = new JSONObject();
+            errSum.put("message", v.msg());
+            errSum.put("type", v.code() < 500 ? "fatal" : "transient");     // 5xx are typically system error, e.g. server down.
+            rval.put("errorSummary", errSum);
+        });
+
+
+        JSONObject addtlInfo = new JSONObject();
+        rval.put("jobInfo", addtlInfo);
+        applyIfNotEmpty(info.getType(),   v -> addtlInfo.put("type", v.toString()));
+        applyIfNotEmpty(info.getLabel(), v -> addtlInfo.put("label", v));
+        applyIfNotEmpty(info.getProgress(),   v -> addtlInfo.put("progress", v));
+        applyIfNotEmpty(info.isMonitored(),   v -> addtlInfo.put("monitored", v));
+        applyIfNotEmpty(info.getProgressDesc(),   v -> addtlInfo.put("progressDesc", v));
+        applyIfNotEmpty(info.getDataOrigin(), v -> addtlInfo.put("dataOrigin", v));
+        applyIfNotEmpty(info.getSummary(),   v -> addtlInfo.put("summary", v));
 
         return rval;
     }
@@ -212,7 +228,7 @@ public class JobManager {
         JSONObject rval = new JSONObject();
         if (infos != null && infos.size() > 0) {
             // object with "jobs": array of JobInfo urls
-            List<String> urls = infos.stream().map(i ->i.getId()).collect(Collectors.toList());
+            List<String> urls = infos.stream().map(i ->i.getJobId()).collect(Collectors.toList());
             rval.put("jobs", urls);
         }
         return rval.toJSONString();
@@ -226,7 +242,7 @@ public class JobManager {
         JSONObject rval = new JSONObject();
         if (info.getPhase() == COMPLETED) {
             if (info.getResults().size() == 0) {
-                rval.put("results", Arrays.asList(getAsyncUrl() + info.getId() + "/results/result"));
+                rval.put("results", Arrays.asList(getAsyncUrl() + info.getJobId() + "/results/result"));
             } else {
                 rval.put("results", info.getResults());
             }
@@ -264,15 +280,15 @@ public class JobManager {
             sb.append("--------------- ----------- --------------------------- -------------- --------\n");
             allJobInfos.forEach((k, v) -> {
                 sb.append(String.format("%15s %11s %27s %14s %8s\n",
-                        v.getId(), v.getPhase(), v.getStartTime(), Duration.between(v.getStartTime(), Instant.now()).toMillis()/1000, v.getProgress()));
+                        v.getJobId(), v.getPhase(), v.getStartTime(), Duration.between(v.getStartTime(), Instant.now()).toMillis()/1000, v.getProgress()));
             });
         }
         return sb.toString();
     }
 
     static void logJobInfo(JobInfo info) {
-        LOG.debug(String.format("JOB:%s  owner:%s  phase:%s  msg:%s", info.getId(), info.getOwner(), info.getPhase(), info.getSummary()));
-        LOG.trace(String.format("JOB: %s details: %s", info.getId(), toJson(info)));
+        LOG.debug(String.format("JOB:%s  owner:%s  phase:%s  msg:%s", info.getJobId(), info.getOwner(), info.getPhase(), info.getSummary()));
+        LOG.trace(String.format("JOB: %s details: %s", info.getJobId(), toJson(info)));
     }
 
 
@@ -299,7 +315,7 @@ public class JobManager {
             JobInfo info = je.job.getJobInfo();
             long duration = info.executionDuration();
             if (duration != 0 && info.getStartTime().plus(duration, ChronoUnit.SECONDS).isBefore(Instant.now())) {
-                abort(info.getId(), "Exceeded execution duration");
+                abort(info.getJobId(), "Exceeded execution duration");
             }
         });
     }

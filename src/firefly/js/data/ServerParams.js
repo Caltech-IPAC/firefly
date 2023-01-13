@@ -119,7 +119,9 @@ export const ServerParams = {
         RESOLVE_NAIFID: 'CmdResolveNaifid',
 
         // Background Job related
+        UWS_JOB_INFO: 'uwsJobInfo',
         JOB_ID: 'jobId',
+        JOB_URL: 'jobUrl',
         GET_STATUS: 'status',
         REMOVE_JOB: 'removeBgJob',
         ADD_JOB: 'addBgJob',

@@ -81,33 +81,33 @@ public class MessengerTest extends ConfigTest {
         String topic2 = "test2";
 
         Ref<CountDownLatch> tester = new Ref<>();       // using Ref due to inner class references
-        Subscriber sub11 = Messenger.subscribe(topic1, msg -> tester.getSource().countDown());
-        Subscriber sub12 = Messenger.subscribe(topic1, msg -> tester.getSource().countDown());
-        Subscriber sub21 = Messenger.subscribe(topic2, msg -> tester.getSource().countDown());
-        Subscriber sub22 =Messenger.subscribe(topic2, msg -> tester.getSource().countDown());
+        Subscriber sub11 = Messenger.subscribe(topic1, msg -> tester.get().countDown());
+        Subscriber sub12 = Messenger.subscribe(topic1, msg -> tester.get().countDown());
+        Subscriber sub21 = Messenger.subscribe(topic2, msg -> tester.get().countDown());
+        Subscriber sub22 =Messenger.subscribe(topic2, msg -> tester.get().countDown());
 
         LOG.debug("1 msg to each topic x 2 subs per topic.. = 4");
-        tester.setSource(new CountDownLatch(4));
+        tester.set(new CountDownLatch(4));
         Messenger.publish(topic1, testMsg);
         Messenger.publish(topic2, testMsg);
-        tester.getSource().await(1, TimeUnit.SECONDS);       // wait up to 1s for msg delivery..
-        assertEquals("latch(4) should drain", 0, tester.getSource().getCount());
+        tester.get().await(1, TimeUnit.SECONDS);       // wait up to 1s for msg delivery..
+        assertEquals("latch(4) should drain", 0, tester.get().getCount());
 
         LOG.debug("same as above, but 1 sub removed from topic1... = 3");
-        tester.setSource(new CountDownLatch(3));
+        tester.set(new CountDownLatch(3));
         Messenger.unSubscribe(sub11);
         Messenger.publish(topic1, testMsg);
         Messenger.publish(topic2, testMsg);
-        tester.getSource().await(1, TimeUnit.SECONDS);       // wait up to 1s for msg delivery..
-        assertEquals("latch(3)3 should drain", 0, tester.getSource().getCount());
+        tester.get().await(1, TimeUnit.SECONDS);       // wait up to 1s for msg delivery..
+        assertEquals("latch(3)3 should drain", 0, tester.get().getCount());
 
         LOG.debug("same as above, but remove both subs from topic1... = 2");
-        tester.setSource(new CountDownLatch(2));
+        tester.set(new CountDownLatch(2));
         Messenger.unSubscribe(sub12);
         Messenger.publish(topic1, testMsg);
         Messenger.publish(topic2, testMsg);
-        tester.getSource().await(1, TimeUnit.SECONDS);       // wait up to 1s for msg delivery..
-        assertEquals("latch(2) should drain", 0, tester.getSource().getCount());
+        tester.get().await(1, TimeUnit.SECONDS);       // wait up to 1s for msg delivery..
+        assertEquals("latch(2) should drain", 0, tester.get().getCount());
 
         // clean up
         Messenger.unSubscribe(sub21);

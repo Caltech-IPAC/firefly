@@ -43,7 +43,11 @@ public class SearchServerCommands {
 
 
     public static class TableSearch extends ServCmdJob {
-        public Job.Type getType() { return Job.Type.SEARCH; }
+        public Job.Type getType() {
+            JobInfo jInfo = getJobInfo();
+            Type type = jInfo == null || jInfo.getType() == null ? Type.SEARCH : jInfo.getType();
+            return type;
+        }
 
         public String getLabel() {
             return getParams().getTableServerRequest().getTblTitle();
@@ -187,6 +191,21 @@ public class SearchServerCommands {
                 }
             );
             return "true";
+        }
+    }
+
+    public static class UwsJobInfo extends ServCommand {
+
+        public String doCommand(SrvParam params) throws Exception {
+            String jobUrl = params.getOptional(UwsJobProcessor.JOB_URL);
+            if (isEmpty(jobUrl)) {
+                String jobId = params.getRequired(JOB_ID);
+                JobInfo info = JobManager.getJobInfo(jobId);
+                if (info == null || info.getType() != Job.Type.UWS) return null;
+                jobUrl = info.getDataOrigin();
+            }
+            JobInfo uws = UwsJobProcessor.getUwsJobInfo(jobUrl);
+            return JobManager.toJson(uws);
         }
     }
 

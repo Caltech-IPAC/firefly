@@ -50,8 +50,8 @@ export function showBackgroundMonitor(show=true) {
     const {jobs={}, email, enableEmail, help_id} = useStoreConnector(() => getBackgroundInfo());
 
     const items = Object.values(jobs)
-                    .filter((job) => job?.monitored)
-                    .map( (job) =>  job?.type === 'PACKAGE' ?
+                    .filter((job) => job.jobInfo?.monitored)
+                    .map( (job) =>  job.jobInfo?.type === 'PACKAGE' ?
                         <PackageJob key={job.jobId} jobInfo={job} /> :
                         <SearchJob key={job.jobId} jobInfo={job} />
                     );
@@ -128,7 +128,9 @@ function SearchJob({jobInfo}) {
 }
 
 function PackageJob({jobInfo}) {
-    const {jobId, results, DATA_SOURCE, email, label='unknown'} = jobInfo;
+    const {jobId, results, DATA_SOURCE, email, jobInfo:others} = jobInfo;
+    const label = others?.label || 'unknown';
+
     const script = canCreateScript(jobInfo) && isSuccess(jobInfo) && results?.length > 1;
 
     const items = results?.map( (url, idx) => <PackageItem key={'multi-' + idx} jobId={jobInfo.jobId} index={idx} />);
@@ -152,7 +154,8 @@ function PackageJob({jobInfo}) {
 }
 
 function JobHeader({jobInfo}) {
-    const {jobId, label} = jobInfo || {};
+    const jobId = jobInfo?.jobId;
+    const label = jobInfo?.jobInfo?.label;
 
     const removeBgStatus = () => {
         dispatchJobRemove(jobId);
@@ -186,7 +189,8 @@ function JobHeader({jobInfo}) {
 }
 
 function JobProgress({jobInfo}) {
-    const {progressDesc, progress, jobId} = jobInfo;
+    const {jobId} = jobInfo;
+    const {progressDesc, progress} = jobInfo.jobInfo || {};
     if (isActive(jobInfo)) {
         return (
             <div className='BGMon__packageItem'>
@@ -196,14 +200,14 @@ function JobProgress({jobInfo}) {
     } else if (isAborted(jobInfo)) {
         return <div>{jobInfo?.error || 'Job aborted'}</div>;
     } else if (isSuccess(jobInfo)) {
-        if (jobInfo?.type === 'SEARCH') {
+        if (jobInfo?.type === 'PACKAGE') {
+            return jobInfo?.results?.length === 1 ? <PackageItem {...{SINGLE:true, jobId, index:0}} /> : <div/> ;
+        } else {
             const showTable = () => {
                 const request = getRequestFromJob(jobInfo.jobId);
                 request && dispatchTableSearch(request);
             };
             return (<div className='BGMon__packageItem--url' onClick={showTable}>Show results</div> );
-        } else {
-            return jobInfo?.results?.length === 1 ? <PackageItem {...{SINGLE:true, jobId, index:0}} /> : <div/> ;
         }
     } else {
         return <div className='BGMon__header--error'>Job Failed</div>;

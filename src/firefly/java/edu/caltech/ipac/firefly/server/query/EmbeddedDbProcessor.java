@@ -649,9 +649,9 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     protected void jobExecIf(Consumer<Job> f) throws DataAccessException {
         Job job = getJob();
         if (job != null) {
-            JobInfo.PHASE phase = job.getJobInfo().getPhase();
-            if (phase == JobInfo.PHASE.EXECUTING) f.accept(job);
-            if (phase == JobInfo.PHASE.ABORTED) throw new DataAccessException.Aborted();
+            JobInfo.Phase phase = job.getJobInfo().getPhase();
+            if (phase == JobInfo.Phase.EXECUTING) f.accept(job);
+            if (phase == JobInfo.Phase.ABORTED) throw new DataAccessException.Aborted();
         }
     }
 

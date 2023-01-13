@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.firefly.server.util;
 
-import edu.caltech.ipac.util.AppProperties;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -146,9 +145,9 @@ public class StopWatch {
         public void printLog(Unit unit) {
             if (isRunning) stops();
             if (numStops == 1) {
-                logger.debug(String.format("%s ran with elapsed time of %.4f %s", desc, getElapsedTime(unit),  unit.name()));
+                logger.trace(String.format("%s ran with elapsed time of %.4f %s", desc, getElapsedTime(unit),  unit.name()));
             } else {
-                logger.debug(String.format("%s ran %d times.", desc, numStops),
+                logger.trace(String.format("%s ran %d times.", desc, numStops),
                              String.format("Elapsed Time: %.4f %s.", getElapsedTime(unit), unit.name()),
                              String.format("Total time is %.4f %s", getTotalTime(unit), unit.name()),
                              String.format("Avg time is %.4f %s.", getAvgTime(unit), unit.name()));

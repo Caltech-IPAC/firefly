@@ -102,15 +102,14 @@ public class HttpServices {
     public static Status getData(HttpServiceInput input, Handler handler) {
         try {
             String url = input.getRequestUrl();
-            HttpMethod method = executeMethod(new GetMethod(url), input, handler);
-            return Status.getStatus(method);
-        } catch (IOException e) {
+            return executeMethod(new GetMethod(url), input, handler);
+        } catch (Exception e) {
             LOG.error(e);
             return new Status(400, e.getMessage());
         }
     }
 
-    //====================================================================
+//====================================================================
 //  POST convenience functions
 //====================================================================
     public static Status postData(String url, File results) {
@@ -146,9 +145,8 @@ public class HttpServices {
             String url = input.getRequestUrl();
             if (isEmpty(url))  throw new FileNotFoundException("Missing URL parameter");
             input.setFollowRedirect(false);                                                 // post are not allowed to follow redirect
-            HttpMethod method = executeMethod(new PostMethod(url), input, handler);
-            return Status.getStatus(method);
-        } catch (IOException e) {
+            return executeMethod(new PostMethod(url), input, handler);
+        } catch (Exception e) {
             return new Status(400, e.getMessage());
         }
     }
@@ -166,13 +164,11 @@ public class HttpServices {
     }
 
     public static Status executeMethod(HttpMethod method, HttpServiceInput input, File results) throws IOException {
-        executeMethod(method, input, defaultHandler(results));
-        return Status.getStatus(method);
+        return executeMethod(method, input, defaultHandler(results));
     }
 
     public static Status executeMethod(HttpMethod method, HttpServiceInput input, OutputStream results) throws IOException {
-        executeMethod(method, input, defaultHandler(results));
-        return Status.getStatus(method);
+        return executeMethod(method, input, defaultHandler(results));
     }
 
     /**
@@ -182,7 +178,8 @@ public class HttpServices {
      * @param handler response handler
      * @return HttpMethod
      */
-    public static HttpMethod executeMethod(HttpMethod method, HttpServiceInput input, Handler handler) throws IOException {
+    public static Status executeMethod(HttpMethod method, HttpServiceInput input, Handler handler) throws IOException {
+        Status status = null;
         try {
             input = input == null ? new HttpServiceInput() : input;
 
@@ -192,6 +189,7 @@ public class HttpServices {
             if (method instanceof GetMethod) {
                 method.setFollowRedirects(input.isFollowRedirect());    // post are not allowed to follow redirect
             }
+
             HttpClient httpClient = newHttpClient();
 
             handleAuth(httpClient, method, input.getUserId(), input.getPasswd());
@@ -202,18 +200,16 @@ public class HttpServices {
 
             handleParams(method, input.getParams(), input.getFiles());
 
-            LOG.info("HttpServices URL:" + method.getURI().toString());
+            logRequestStart(method, input);
 
             httpClient.executeMethod(method);
-
             if (handler != null) {
-                handler.handleResponse(method);
+                status = handler.handleResponse(method);
             }
 
-            return method;
-
+            return status == null ? Status.getStatus(method) : status;
         } finally {
-            logRequest(method, input);
+            logRequestEnd(method, input, status);
 
             if (method != null) {
                 method.releaseConnection();
@@ -277,13 +273,16 @@ public class HttpServices {
             this.statusCode = statusCode;
         }
 
-        public boolean isError() { return statusCode < 200 || statusCode >= 300; }
+        public boolean isOk() { return statusCode >= 200 && statusCode < 300; }
+        public boolean isRedirected() { return statusCode >= 300 && statusCode < 400; }
+        public boolean isError() { return !isOk(); }
         public String getErrMsg() { return errMsg; }
         public int getStatusCode() { return statusCode;}
 
         public static Status getStatus(HttpMethod method) {
             return new Status(method.getStatusCode(), method.getStatusText());
         }
+        public static Status ok() {return new Status(200, null);};
     }
 
     public static class OutputStreamHandler implements Handler {
@@ -297,7 +296,7 @@ public class HttpServices {
             this.results = results;
         }
 
-        public void handleResponse(HttpMethod method) {
+        public Status handleResponse(HttpMethod method) {
             BufferedInputStream bis = null;
             BufferedOutputStream bos = null;
             try {
@@ -308,11 +307,12 @@ public class HttpServices {
                     bos.write(b);
                 }
             } catch (IOException e) {
-                LOG.error(e, "Error while reading response body");
+                return new Status(400, String.format("Error while reading response body: %s", e.getMessage()));
             } finally {
                 FileUtil.silentClose(bis);
                 FileUtil.silentClose(bos);
             }
+            return new Status(method.getStatusCode(), method.getStatusText());
         }
     }
 
@@ -408,41 +408,51 @@ public class HttpServices {
         }
     }
 
-    private static void logRequest(HttpMethod method, HttpServiceInput input) {
-        int status = method.getStatusCode();
-        if(!isOk(method)) {
-            // logs bad requests
-            if (isRedirected(method)) {
-                if (input.isFollowRedirect()) {
-                    LOG.error("Failed to follow redirect:" + status + "\n" + getDetailDesc(method, input));
-                }
-            } else {
-                LOG.error("HTTP request failed with status:" + status + "\n" + getDetailDesc(method, input));
+    private static void logRequestStart(HttpMethod method, HttpServiceInput input) {
+        try {
+            LOG.info("HttpServices URL:" + method.getURI().toString());
+            if (method.getClass().isAssignableFrom(PostMethod.class)) {
+                if (input.getParams() != null) LOG.info("-->  POST params:" + input.getParams());
+                if (input.getFiles() != null)  LOG.info("-->  POST files :" + input.getFiles());
             }
-        } else {
-            LOG.trace("--> HttpServices trace: ", getDetailDesc(method, input));
-        }
+        } catch (Exception ignore){}
     }
 
-    private static String getDetailDesc(HttpMethod method, HttpServiceInput input) {
+    private static void logRequestEnd(HttpMethod method, HttpServiceInput input, Status status) {
+
+        try {
+            if (status == null) status = Status.getStatus(method);
+
+            if(status.isOk()) {
+                LOG.info("--> done URL: " + method.getURI().toString());
+                LOG.trace("--> trace: ", getDetailDesc(method, input, status));
+            } else if (status.isRedirected() && input.isFollowRedirect()) {
+                LOG.error("--> Failed to follow redirect with status:" + status + "\n" + getDetailDesc(method, input, status));
+            } else {
+                LOG.error("--> Failed with status:" + status + "\n" + getDetailDesc(method, input, status));
+            }
+        } catch (Exception ignore){}
+    }
+
+    private static String getDetailDesc(HttpMethod method, HttpServiceInput input, Status status) {
 
         try {
             String desc = "\tmethod: "+method.getName() +
-                    "\n\tstatus: "+method.getStatusText()+
+                    "\n\tstatus: " + status.getStatusCode() + "-" + status.getErrMsg() +
                     "\n\turl: " + method.getURI() +
                     input.getDesc() +
                     "\n\tREQUEST HEADERS: " + CollectionUtil.toString(method.getRequestHeaders()).replaceAll("\\r|\\n", "") +
                     "\n\tRESPONSE HEADERS: " + CollectionUtil.toString(method.getResponseHeaders()).replaceAll("\\r|\\n", "");
 
             final StringBuilder curl = new StringBuilder("curl -v");
-            for(Header h : method.getRequestHeaders())  curl.append(" -H '" + h.toString().trim() + "'");
+            for(Header h : method.getRequestHeaders())  curl.append(String.format(" -H '%s'", h.toString().trim()));
 
             applyIfNotEmpty(input.getParams(),
                     (p) -> p.forEach((k,v) -> curl.append(String.format(" -F '%s=%s'", k,v))));
             applyIfNotEmpty(input.getFiles(),
                     (f) -> f.forEach((k,v) -> curl.append(String.format(" -F '%s=@%s'", k,v))));
 
-            curl.append(" '" + input.getRequestUrl() + "'");
+            curl.append(String.format(" '%s'", input.getRequestUrl()));
             desc += "\n\tCURL CMD: " + curl;
 
             return desc;
@@ -454,6 +464,6 @@ public class HttpServices {
 
 
     public interface Handler {
-        void handleResponse(HttpMethod method);
+        Status handleResponse(HttpMethod method);
     }
 }

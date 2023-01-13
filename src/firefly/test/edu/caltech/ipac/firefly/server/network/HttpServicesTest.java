@@ -109,7 +109,6 @@ public class HttpServicesTest {
 	}
 
 	@Test
-	@Ignore
 	public void testRedirectData(){
 		input.setParam("url", GET_URL);  // redirect back to get
 		ByteArrayOutputStream results = new ByteArrayOutputStream();
@@ -121,19 +120,18 @@ public class HttpServicesTest {
 	}
 
 	@Test
-	@Ignore
 	public void testFollowRedirect(){
 		HttpServiceInput nInput = input.setRequestUrl(REDIRECT_URL)
 										.setParam("url", "http://www.acme.org")
 										.setParam("status_code", "301");
 
-		HttpServices.getData(nInput, (method -> {
-			assertFalse(HttpServices.isRedirected(method));
-		}));
+		HttpServices.Status status = HttpServices.getData(nInput, new ByteArrayOutputStream());
+		assertFalse(status.isRedirected());
 
 		HttpServices.getData(nInput.setFollowRedirect(false), (method -> {
 			assertTrue(HttpServices.isRedirected(method));
 			assertEquals("redirect to www.acme.org", method.getResponseHeader("location").getValue(), "http://www.acme.org");
+			return HttpServices.Status.ok();
 		}));
 	}
 

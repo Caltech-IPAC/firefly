@@ -7,7 +7,6 @@ import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.MOSRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
@@ -97,11 +96,11 @@ public class QueryMOS extends IpacTablePartProcessor {
             Thread catSearchTread = null;
             // pre-generate gator upload file for catalog overlay
             if (req.getBooleanParam(MOSRequest.CAT_OVERLAY)) {
-                catOverlayFile.setSource(File.createTempFile("mosCatOverlayFile-", ".tbl", QueryUtil.getTempDir(req)));
+                catOverlayFile.set(File.createTempFile("mosCatOverlayFile-", ".tbl", QueryUtil.getTempDir(req)));
                 Runnable r = new Runnable() {
                     public void run() {
                         try {
-                            URLDownload.getDataToFile(createURL(req, true), catOverlayFile.getSource());
+                            URLDownload.getDataToFile(createURL(req, true), catOverlayFile.get());
                         } catch (Exception e) {
                             _log.error(e);
                         }
@@ -122,9 +121,9 @@ public class QueryMOS extends IpacTablePartProcessor {
             DataGroup[] groups = VoTableReader.voToDataGroups(votable.getAbsolutePath(), headerOnly);
             if (groups != null) {
                 for (DataGroup dg : groups) {
-                    if (dg.getTitle().equalsIgnoreCase(RESULT_TABLE_NAME) && catOverlayFile.getSource() != null) {
+                    if (dg.getTitle().equalsIgnoreCase(RESULT_TABLE_NAME) && catOverlayFile.get() != null) {
                             // save the generated file as ipac table headers
-                            dg.addAttribute(MOSRequest.CAT_OVERLAY_FILE, catOverlayFile.getSource().getPath());
+                            dg.addAttribute(MOSRequest.CAT_OVERLAY_FILE, catOverlayFile.get().getPath());
                     }
 
                     if (dg.getTitle().equals(tblName)) {

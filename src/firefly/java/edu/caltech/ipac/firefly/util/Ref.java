@@ -18,15 +18,15 @@ public class Ref<T> {
         this.source = source;
     }
 
-    public void setSource(T source) {
+    public void set(T source) {
         this.source = source;
     }
 
-    public T getSource() {
+    public T get() {
         return source;
     }
 
-    public boolean hasSource() {
+    public boolean has() {
         return source != null;
     }
 }

@@ -9,11 +9,11 @@ import edu.caltech.ipac.util.AppProperties;
 
 import java.io.Serializable;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 
 /**
  * Value object containing information of a Job
@@ -25,55 +25,66 @@ import java.util.Map;
  */
 public class JobInfo implements Serializable {
 
-    public enum PHASE {PENDING, QUEUED, EXECUTING, COMPLETED, ERROR, ABORTED}
+    public enum Phase {PENDING, QUEUED, EXECUTING, COMPLETED, ERROR, ABORTED, HELD, SUSPENDED, ARCHIVED, UNKNOWN}
     private static final int LIFE_SPAN = AppProperties.getIntProperty("job.lifespan", 60*60*24);        // default lifespan in seconds; kill job if exceed
 
-    private String id;
-    private String label;
-    private PHASE phase;
-    private Error error;
-    private List<String> results = new ArrayList<>();
-    private Map<String, String> params = new HashMap<>();
+    private String jobId;
+    private String runId;
     private String owner;
+    private Phase phase;
+    private Instant quote;
+    private Instant creationTime;
     private Instant startTime;
     private Instant endTime;
-    private Instant destructionTime;
-    private boolean monitored;
+    private int executionDuration = LIFE_SPAN;
+    private Instant destruction;
+    private Map<String, String> params = new HashMap<>();
+    private List<String> results = new ArrayList<>();
+    private Error error;
+
+    // these are additional info that's not in uws:job defined props
+    // in serialized form, it will go under uws:jobInfo block
     private int progress;
     private String progressDesc;
     private Job.Type type;
     private String summary;
     private String dataOrigin;
+    private boolean monitored;
+    private String label;
 
     // not sent to client
     private String eventConnId;
 
 
     public JobInfo(String id) {
-        this.id = id;
-        startTime = Instant.now();
-        destructionTime = startTime.plus(7, ChronoUnit.DAYS);
+        this.jobId = id;
     }
 
-    public String getId() {
-        return id;
+    public String getJobId() {
+        return jobId;
+    }
+
+    public String getRunId() {
+        return runId;
+    }
+    public void setRunId(String runId) {
+        this.runId = runId;
     }
 
     public String getLabel() {
         return label;
     }
-
     public void setLabel(String label) {
         this.label = label;
     }
 
-    public PHASE getPhase() {
+    public Phase getPhase() {
         return phase;
     }
 
-    public void setPhase(PHASE phase) {
+    public void setPhase(Phase phase) {
         this.phase = phase;
-        if (phase == PHASE.COMPLETED) {
+        if (phase == Phase.COMPLETED) {
             endTime = Instant.now();
             progress = 100;
         }
@@ -84,7 +95,7 @@ public class JobInfo implements Serializable {
     }
 
     public void setError(Error error) {
-        if (error != null) this.phase = PHASE.ERROR;
+        if (error != null) this.phase = Phase.ERROR;
         this.error = error;
     }
 
@@ -108,15 +119,32 @@ public class JobInfo implements Serializable {
         this.owner = owner;
     }
 
+    public Instant getCreationTime() {
+        return creationTime;
+    }
+    public void setCreationTime(Instant time) {
+        creationTime = time;
+    }
+
     public Instant getStartTime() {
         return startTime;
+    }
+    public void setStartTime(Instant time) {
+        startTime = time;
     }
 
     public Instant getEndTime() {
         return endTime;
     }
+    public void setEndTime(Instant time) {
+        endTime = time;
+    }
 
-    public Instant getDestructionTime() { return destructionTime; }
+    public Instant getDestruction() { return destruction; }
+    public void setDestruction(Instant time) { destruction = time; }
+
+    public Instant getQuote() { return quote; }
+    public void setQuote(Instant time) { quote = time; }
 
     public Job.Type getType() { return type; }
 
@@ -142,7 +170,6 @@ public class JobInfo implements Serializable {
     public void setProgress(int progress) { this.progress = Math.min(Math.max(progress, 0), 100); }
 
     public String getProgressDesc() { return progressDesc; }
-
     public void setProgressDesc(String progressDesc) { this.progressDesc = progressDesc;}
 
     public void addResult(String result) { results.add(result);}
@@ -151,15 +178,14 @@ public class JobInfo implements Serializable {
      * @return how long this job may run in seconds.  zero implies unlimited execution duration.
      */
     public long executionDuration() {
-        return LIFE_SPAN;
+        return executionDuration;
     }
+    public void setExecutionDuration(int duration) { executionDuration = duration; }
 
     public String getSummary() { return summary; }
-
     public void setSummary(String summary) { this.summary = summary;}
 
     public String getDataOrigin() { return dataOrigin; }
-
     public void setDataOrigin(String dataOrigin) { this.dataOrigin = dataOrigin;}
 
     /**
@@ -173,19 +199,7 @@ public class JobInfo implements Serializable {
 //
 //====================================================================
 
-
-    public static final class Error implements Serializable {
-        private int code;
-        private String msg;
-
-        public Error(int code, String msg) {
-            this.code = code;
-            this.msg = msg;
-        }
-
-        public int getCode() { return code; }
-        public String getMsg() { return msg;}
-    }
+    public static record Error ( int code, String msg){}
 
 }
 /*
