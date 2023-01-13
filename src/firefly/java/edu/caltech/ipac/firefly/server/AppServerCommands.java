@@ -18,6 +18,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
+
 public class AppServerCommands {
     private static final String SPA_NAME = "spaName";
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
@@ -39,12 +41,12 @@ public class AppServerCommands {
 
     public static class JsonProperty extends ServCommand {
         static final String INVENTORY_PROP = "inventory.serverURLAry";
-        static final String JSON_OPTIONS = "FIREFLY_OPTIONS";
+        static final String FIREFLY_OPTIONS = "FIREFLY_OPTIONS";
         static final Map<String, String> map = new HashMap<>();
         static final List<String> validatedList = new ArrayList<>();
 
         static {
-            map.put(JSON_OPTIONS, AppProperties.getProperty(JSON_OPTIONS, "{}"));
+            map.put(FIREFLY_OPTIONS, getAppOptions());
             map.put(INVENTORY_PROP, AppProperties.getProperty(INVENTORY_PROP, "[]"));
             validateAll();
         }
@@ -132,4 +134,24 @@ public class AppServerCommands {
             return map.toString();
         }
     }
+
+
+    private static final String HELP_BASE_URL = "help.base.url";
+    private static String getAppOptions() {
+        Map appOpts;
+        String def = "{}";
+        String appOptStr = AppProperties.getProperty(JsonProperty.FIREFLY_OPTIONS, def);
+        try{
+            appOpts = (Map) new JSONParser().parse(appOptStr);
+            // additional props as FIREFLY_OPTIONS
+            applyIfNotEmpty(AppProperties.getProperty(HELP_BASE_URL), v -> appOpts.put(HELP_BASE_URL, v));
+
+            return new JSONObject(appOpts).toJSONString();
+        }catch(ParseException pe){
+            Logger.getLogger().error(String.format("Failed parsing %s", appOptStr));
+            return def;
+        }
+    }
+
+
 }

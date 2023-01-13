@@ -3,7 +3,7 @@ ARG target=firefly:warAll
 ARG env=local
 ARG BranchOverride=''
 
-FROM openjdk:17-jdk-slim-buster AS deps
+FROM eclipse-temurin:17-jdk-jammy AS deps
 
 RUN apt-get update && apt-get install -y curl git htmldoc unzip wget
 
@@ -34,15 +34,13 @@ FROM node_module AS dev_env
 
 RUN apt-get update \
     && apt-get install -y vim procps \
-# install tomcat9 for dev mode \
-    && curl -O https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.68/bin/apache-tomcat-9.0.68.tar.gz \
-    && mkdir /opt/tomcat && tar xzf apache-tomcat-9*tar.gz -C /opt/tomcat --strip-components=1 \
-    && sed -i -E 's/allow=".*"/allow=".*"/' /opt/tomcat/webapps/manager/META-INF/context.xml \
 # cleanup
-    && rm apache-tomcat-9*tar.gz \
     && rm -rf /var/lib/apt/lists/*;
 
-ENV CATALINA_HOME=/opt/tomcat \
+COPY --from=tomcat:9.0-jre17 /usr/local/tomcat /usr/local/tomcat
+
+
+ENV CATALINA_HOME=/usr/local/tomcat \
     USE_ADMIN_AUTH=false \
     DEBUG=true
 
@@ -104,7 +102,7 @@ RUN gradle -Penv=${env} -PBranchOverride=${BranchOverride} ${target}
 # /external                 : default external data directory visible to Firefly
 
 
-FROM tomcat:9.0-jdk17-openjdk-buster
+FROM tomcat:9.0-jre17
 
 ARG build_dir
 ARG user=tomcat
@@ -155,7 +153,7 @@ COPY firefly/docker/*.sh firefly/docker/*.txt ${CATALINA_HOME}/
 
 # Tomcat config files, tomcat-users is for the admin username and password
 # context.xml set delegate to true for we can use the classpath of tomcat
-COPY firefly/docker/tomcat-users.xml firefly/docker/java.security.override conf/
+COPY firefly/docker/tomcat-users.xml conf/
 COPY firefly/docker/local.xml conf/Catalina/localhost
 
 #copy all wars, typically there should only be one

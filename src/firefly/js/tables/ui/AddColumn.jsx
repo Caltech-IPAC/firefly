@@ -107,7 +107,7 @@ export const AddColumn = React.memo(({tbl_ui_id, tbl_id}) => {
                 <button type='button' className='button std'
                         onClick={() => hideDialogPopup?.()}>Cancel
                 </button>
-                <HelpIcon helpId={'tables.options'} style={{float: 'right', marginTop: 4}}/>
+                <HelpIcon helpId={'tables.addColumn'} style={{float: 'right', marginTop: 4}}/>
             </div>
         </div>
     );

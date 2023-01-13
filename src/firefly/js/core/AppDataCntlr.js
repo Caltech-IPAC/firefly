@@ -7,7 +7,7 @@ import {flux} from './ReduxFlux';
 import {dispatchAddActionWatcher} from './MasterSaga';
 import {appDataReducer, menuReducer, alertsReducer} from './AppDataReducers.js';
 import Point, {isValidPoint} from '../visualize/Point.js';
-import {getModuleName, getProp} from '../util/WebUtil.js';
+import {getModuleName, getProp, getRootURL} from '../util/WebUtil.js';
 import {dispatchRemoteAction} from './JsonUtils.js';
 import {getWsConn} from './messaging/WebSocketClient';
 
@@ -289,21 +289,14 @@ function grabWindowFocus() {
 function onlineHelpLoad( action )
 {
     return () => {
-        var url = getAppOptions()?.['help.base.url'] || getProp('help.base.url', '');
-        var windowName = 'onlineHelp';
-        var moduleName = getProp('help.subpath', getModuleName());
-
-        if (moduleName) {
-            windowName += '-' + moduleName;
-        }
+        let url = getAppOptions()?.['help.base.url'] || '';
         url = url.endsWith('/') ? url : url + '/';
-        if (action.payload && action.payload.helpId) {
-            url += '#id=' + action.payload.helpId;
-        }
+        url += action?.payload?.helpId ? '#id=' + action.payload.helpId : '';
+        url = new URL(url, getRootURL());                   // use rootURL instead of document.baseURI if relative
 
-        if (url) {
-            window.open(url, windowName);
-        }
+        const moduleName = getProp('help.subpath', getModuleName());
+        const windowName = `onlineHelp-${moduleName}`;
+        window.open(url.href, windowName);
     };
 }
 
