@@ -44,24 +44,10 @@ import {PlotAttribute} from '../PlotAttribute';
 import {getPlotViewById} from '../PlotViewUtil.js';
 import VisUtil from '../VisUtil';
 import {getWorkspaceConfig} from '../WorkspaceCntlr.js';
+import {FG_KEYS, FD_KEYS} from './UIConst';
 
 import './ImageSearchPanelV2.css';
 
-
-const FG_KEYS = {
-    main: 'ImageSearchPanel_imageType',
-    single: 'ImageSearchPanel_single',
-    red: 'ImageSearchPanel_red',
-    green: 'ImageSearchPanel_green',
-    blue: 'ImageSearchPanel_blue',
-    hips: 'ImageSearchPanel_hips',
-    targetSelect: 'ImageSearchPanel_targetSelect'
-};
-
-const FD_KEYS = {
-    type: 'imageType',
-    source: 'imageSource'
-};
 
 var imageMasterData;        // latest imageMasterData retrieved from server
 const scrollDivId = 'ImageSearchScroll';
@@ -350,7 +336,8 @@ function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archi
     const imageType = useStoreConnector(() => getFieldVal(FG_KEYS.main, FD_KEYS.type));
     const {isThreeColorImgType, isHipsImgType} = isImageType(imageType);
 
-    const defaultValue = isThreeColorImgType ? 'none' : 'archive';
+    const [getDefaultImages, ] = useFieldGroupValue('defaultImages', FG_KEYS.rgb);
+    const defaultValue = isThreeColorImgType && !getDefaultImages() ? 'none' : 'archive'; // if 3 color, set 'archive' if defaultImages are defined
     const imageSource  = useStoreConnector(() => getFieldVal(groupKey, FD_KEYS.source, defaultValue));
 
     const options = [   {label: archiveName, value: 'archive'},

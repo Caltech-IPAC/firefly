@@ -18,6 +18,7 @@ import java.util.Map;
 public class ImageMasterDataEntry {
 
     public static final String PLOT_REQUEST_PARAMS= "plotRequestParams";
+    public static final String DEFAULT_COLOR= "defaultColor";
     private Map<String,Object> map= new HashMap<>();
 
     public enum PARAMS{
@@ -51,6 +52,8 @@ public class ImageMasterDataEntry {
     }
 
     public void setPlotRequestParams(Map<String,String> params) { map.put(PLOT_REQUEST_PARAMS, params);}
+
+    public void setDefaultColorParams(Map<String,String> params) { map.put(DEFAULT_COLOR, params);}
 
 
     public String getParamString(PARAMS key) {
