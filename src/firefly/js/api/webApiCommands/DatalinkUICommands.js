@@ -1,9 +1,7 @@
 import {isArray} from 'lodash';
-import {MetaConst} from '../../data/MetaConst.js';
 import {getJsonProperty} from '../../rpc/CoreServices.js';
-import {makeFileRequest} from '../../tables/TableRequestUtil.js';
-import {dispatchTableFetch} from '../../tables/TablesCntlr.js';
-import {makeExamples} from '../WebApi.js';
+import {fetchDatalinkUITable} from '../../ui/dynamic/FetchDatalinkTable.js';
+import {makeExamples, ReservedParams} from '../WebApi.js';
 
 const urlExamples= [
     {
@@ -45,29 +43,27 @@ function validate(params) {
     return {valid:true};
 }
 
-const loadOptions=  {META_INFO:{[MetaConst.LOAD_TO_DATALINK_UI]: 'true'}};
-
 function loadDLUITable(cmd,params, includeIdType) {
     let urlAry;
     if (params.url) {
         urlAry= isArray(params.url) ? params.url : [params.url];
+        const initArgs={urlApi:params};
         urlAry.forEach( (url) =>  {
-            const tblReq = makeFileRequest('Data link UI', url, undefined, loadOptions);
-            dispatchTableFetch(tblReq);
+            void fetchDatalinkUITable(url,0,initArgs);
         });
     }
     else if (includeIdType) {
         void getServerAndLoadTablesById(cmd,params);
     }
-
 }
 
 async function getServerAndLoadTablesById(cmd,params) {
     const urlRootAry= await getJsonProperty('inventory.serverURLAry');
+    const initArgs={urlApi:params};
     const urlRoot= urlRootAry[0];
     const makeUrl= (id) =>  urlRoot +'?'+ new URLSearchParams({collection:id}).toString();
     const urlAry=  (isArray(params.id)) ? params.id.map( (id) => makeUrl(id))  : [makeUrl(params.id)];
-    urlAry.forEach( (url) =>  dispatchTableFetch(makeFileRequest('Data link UI', url, undefined, loadOptions)));
+    urlAry.forEach( (url) =>  void fetchDatalinkUITable(url,0,initArgs));
 }
 
 
@@ -83,11 +79,16 @@ export function getDatalinkUICommands(includeIdType) {
     const execute= (cmd,params) => loadDLUITable(cmd,params,includeIdType);
     const overview= [ 'Load Service Descriptor UI' ];
 
-    const urlOnlyParameters= { url: {desc:'url to datalink UI file'}, };
+    const urlOnlyParameters= { url: {desc:'url to datalink UI file'},
+        [ReservedParams.POSITION.name]: ['coordinates of the search',...ReservedParams.POSITION.desc],
+        [ReservedParams.SR.name]: ['radius of search  (optional)',...ReservedParams.SR.desc],
+        execute: 'true or false - if true execute the search'
+    };
     const bothParameters= {...urlOnlyParameters, id : {desc:'ID to predefined data link UI service'}};
+    const allowAdditionalParameters= true;
     
     return includeIdType ?
-        [{ cmd, validate, execute, overview, examples, parameters:bothParameters}] :
-        [{ cmd, validate, execute, overview, examples, parameters:urlOnlyParameters}];
+        [{ cmd, allowAdditionalParameters, validate, execute, overview, examples, parameters:bothParameters}] :
+        [{ cmd, allowAdditionalParameters, validate, execute, overview, examples, parameters:urlOnlyParameters}];
 }
 

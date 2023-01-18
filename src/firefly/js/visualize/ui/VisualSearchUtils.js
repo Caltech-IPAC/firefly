@@ -129,7 +129,7 @@ export function convertWpAryToStr(wpAry, plot) {
 }
 
 export function isWpArysEquals(wpAry1, wpAry2) {
-    if (wpAry1?.length !== wpAry2.length) return false;
+    if (wpAry1?.length !== wpAry2?.length) return false;
     return wpAry1.filter((wp, idx) => pointEquals(wp, wpAry2[idx])).length === wpAry1.length;
 }
 

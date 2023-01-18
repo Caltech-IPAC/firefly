@@ -1,13 +1,16 @@
+import {isString} from 'lodash';
+import {ReservedParams} from '../../api/WebApi.js';
 import {sprintf} from '../../externalSource/sprintf.js';
 import {makeFileRequest, makeTblRequest, setNoCache} from '../../tables/TableRequestUtil.js';
 import {
+    AREA, CHECKBOX, CIRCLE, ENUM, FLOAT, INT,
     makeAreaDef, makeCircleDef, makeEnumDef, makeFloatDef, makeIntDef, makePolygonDef, makeRangeDef, makeTargetDef,
-    makeUnknownDef
+    makeUnknownDef, POLYGON, POSITION, UNKNOWN
 } from './DynamicDef.js';
 import {cisxAdhocServiceUtype, standardIDs} from '../../util/VOAnalyzer.js';
 import {splitByWhiteSpace, tokenSub} from '../../util/WebUtil.js';
 import CoordinateSys from '../../visualize/CoordSys.js';
-import {makeWorldPt} from '../../visualize/Point.js';
+import {makeWorldPt, parseWorldPt} from '../../visualize/Point.js';
 
 
 export const isSIAStandardID = (standardID) => standardID?.toLowerCase().startsWith(standardIDs.sia);
@@ -117,7 +120,7 @@ function makeExamples(inExample) {
  * @param sRegion
  * @param {SearchAreaInfo} [searchAreaInfo]
  * @param {boolean} [hidePredefinedStringFields]
- * @returns {*}
+ * @returns {Array.<FieldDef>}
  */
 export function makeFieldDefs(serDefParams, sRegion, searchAreaInfo = {}, hidePredefinedStringFields = false) {
 
@@ -270,3 +273,73 @@ export function makeServiceDescriptorSearchRequest(request, serviceDescriptor) {
         return makeFileRequest(serviceDescriptor.title, url);   //todo- figure out title
     }
 }
+
+
+/**
+ *
+ * @param {Array.<FieldDef>} fdAry
+ * @param args - object of init values
+ * @return {Array.<FieldDef>} array with defaults
+ */
+export function ingestInitArgs(fdAry, args) {
+
+    return fdAry.map((fd) => {
+        const {type,key}= fd;
+
+        switch (type) {
+            case FLOAT: case INT: case ENUM: case UNKNOWN: case CHECKBOX:
+                return (args[key]) ? {...fd, initValue: args[key]} : fd;
+            case POLYGON:
+                let v = args[key];
+                if (!v || !isString(v)) return fd;
+                if (v.toLowerCase().startsWith('polygon')) v= v.substring(8);
+                const valStrAry= v.split(' ').filter((s) => s);
+                const valNumAry= valStrAry.map( (s) => Number(s) ).filter( (n) => !isNaN(n));
+                if (valStrAry.length !== valStrAry.length || valStrAry.length<6 || valStrAry.length%2===1) return fd;
+                const finalStr= valNumAry.reduce((str, n, idx) =>
+                    str+ ((idx%2 ===0 || idx===valNumAry.length-1) ? `${str.length? ' ':''}${n}` : ' '+n+','), '');
+
+                let sumX=0, sumY=0;
+                const len= valNumAry.length;
+                for(let i=0; i<len-1; i++) {
+                    sumX+=valNumAry[i];
+                    sumY+=valNumAry[i+1];
+                }
+                const cenX= sumX/(len/2);
+                const cenY= sumY/(len/2);
+                return {...fd,initValue:finalStr, targetDetails:{...fd.targetDetails, centerPt:makeWorldPt(cenX,cenY)}};
+            case AREA:
+                if (args[ReservedParams.SR.name]) return {...fd, initValue:args[ReservedParams.SR.name]};
+                if (args[key] && !isNaN(parseFloat(args[key]))) return {...fd, initValue:parseFloat(args[key])};
+                return fd;
+            case POSITION:
+                if (args[ReservedParams.POSITION.name]) return {...fd, initValue:args[ReservedParams.POSITION.name]};
+                if (args[key] && parseWorldPt(args[key]))  return {...fd, initValue:parseWorldPt(args[POSITION])};
+                return fd;
+            case CIRCLE:
+                if (args[key]) {
+                    let v= args[key];
+                    if (v.toLowerCase().startsWith('circle')) v= v.substring(7);
+                    const cirAry= v.split(' ')
+                        .filter((s) => s)
+                        .map( (s) => Number(s) )
+                        .filter( (n) => !isNaN(n));
+                    if (cirAry.length!==3) return fd;
+                    return {
+                        ...fd, initValue: cirAry[2], targetDetails:{...fd.targetDetails, centerPt: makeWorldPt(cirAry[0],cirAry[1])}
+                    };
+                }
+                else {
+                    const newFd= {...fd};
+                    if (args[ReservedParams.POSITION.name]) newFd.targetDetails.centerPt= args[ReservedParams.POSITION.name];
+                    if (args[ReservedParams.SR.name]) newFd.initValue= args[ReservedParams.SR.name];
+                    return newFd;
+                }
+            default:
+                return fd;
+        }
+    });
+}
+
+
+

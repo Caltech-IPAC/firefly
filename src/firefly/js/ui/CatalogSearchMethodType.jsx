@@ -244,9 +244,6 @@ export function calcCornerString(pv, method) {
  * labelwidth = 100 is fixed.
  * @param {Object} p
  * @param {string} p.label by default is 'Radius'
- * @param {string} p.tooltip by default is the radius size tooltip
- * @param {number} p.min by default 1 arcsec
- * @param {number} p.max by default is 1 degree (3600 arcsec)
  * @returns {Object} SizeInputFields component
  */
 function radiusInField({label = 'Radius:'}) {
@@ -410,7 +407,6 @@ export function renderPolygonDataArea({imageCornerCalc, labelWidth, labelStyle, 
             <VisualPolygonPanel {...{
                 fieldKey:'polygoncoords',
                 style:{overflow:'auto',height:'65px', maxHeight:'200px', width:'220px', maxWidth:'300px'},
-                initialState:{},
                 hipsDisplayKey:fovDeg,
                 hipsUrl,
                 hipsFOVInDeg:fovDeg,

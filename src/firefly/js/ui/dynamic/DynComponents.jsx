@@ -168,11 +168,6 @@ function PositionAndPolyFieldEmbed({fieldDefAry}) {
     const [getConeAreaOp] = useFieldGroupValue(CONE_AREA_KEY);
 
 
-    const doGetConeAreaOp= () => {
-        if (polyType && (posType||circleType)) return getConeAreaOp();
-        if (polyType) return POLY_CHOICE_KEY;
-        return CONE_CHOICE_KEY;
-    };
 
     const {
         hipsUrl, centerPt, hipsFOVInDeg = 240, coordinateSys: csysStr = 'EQ_J2000', mocList, sRegion,
@@ -192,20 +187,33 @@ function PositionAndPolyFieldEmbed({fieldDefAry}) {
     if (!targetKey && sizeKey) return false;
 
     const doToggle= polyType && (posType||circleType);
+    const initToggle= polyType?.initValue  ? POLY_CHOICE_KEY : CONE_CHOICE_KEY;
+    const initCenterPt= initToggle===POLY_CHOICE_KEY  ? polyType?.targetDetails?.centerPt : centerPt;
+
+
+    const doGetConeAreaOp= () => {
+        if (polyType && (posType||circleType)) {
+            const op= getConeAreaOp();
+            return op ?? initToggle;
+        }
+        if (polyType) return POLY_CHOICE_KEY;
+        return CONE_CHOICE_KEY;
+    };
+
 
     return (
         <div key='targetGroup'
              style={{display: 'flex', flexDirection: 'column', alignItems: 'center', alignSelf: 'stretch', height:'100%',
                  paddingBottom:20}}>
             <HiPSTargetView {...{
-                hipsUrl, centerPt, hipsFOVInDeg, mocList, coordinateSys, sRegion,
+                hipsUrl, centerPt:initCenterPt, hipsFOVInDeg, mocList, coordinateSys, sRegion,
                 minSize: minValue, maxSize: maxValue, whichOverlay: doGetConeAreaOp(),
                 targetKey, sizeKey, polygonKey, style: {minHeight: 300, alignSelf: 'stretch', flexGrow:1}
             }}/>
             <div style={{paddingTop:10}}/>
             {doToggle && <RadioGroupInputField {...{
                 inline: true, fieldKey: CONE_AREA_KEY, wrapperStyle: {paddingBottom: 10, paddingTop: 10},
-                tooltip: 'Chose type of search', initialState: {value: CONE_CHOICE_KEY}, options: CONE_AREA_OPTIONS
+                tooltip: 'Chose type of search', initialState: {value: initToggle}, options: CONE_AREA_OPTIONS
             }} />}
             {doGetConeAreaOp() === CONE_CHOICE_KEY &&
                 <div style={{paddingTop:5}}>
@@ -341,7 +349,7 @@ function PolygonField({ fieldKey, desc = 'Coordinates', initValue = '', style={}
                 fieldKey,
                 wrapperStyle: {display: 'flex', alignItems: 'center'},
                 style: {width: 350, maxWidth: 420},
-                initialState: {value: initValue, tooltip},
+                initValue,
                 label: desc,
                 labelStyle: {},
                 labelWidth,
