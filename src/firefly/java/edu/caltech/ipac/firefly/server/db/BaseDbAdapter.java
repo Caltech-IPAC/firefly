@@ -7,8 +7,10 @@ import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.util.Ref;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
+import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -31,7 +33,6 @@ import static edu.caltech.ipac.util.StringUtils.isEmpty;
  */
 abstract public class BaseDbAdapter implements DbAdapter {
     private static ConcurrentHashMap<String, EmbeddedDbInstance> dbInstances = new ConcurrentHashMap<>();
-    private static long LAST_CHECK = System.currentTimeMillis();
     private static Logger.LoggerImpl LOGGER = Logger.getLogger();
     private static EmbeddedDbStats dbStats = new EmbeddedDbStats();
 
@@ -257,6 +258,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
 
     public void close(File dbFile, boolean deleteFile) {
+        LOGGER.debug(String.format("DbAdapter -> closing DB, delete(%s): %s", deleteFile, dbFile.getPath()));
         EmbeddedDbInstance db = dbInstances.get(dbFile.getPath());
         if (db != null) {
             try {
@@ -301,18 +303,36 @@ abstract public class BaseDbAdapter implements DbAdapter {
         cleanup(false);
     }
 
-    public EmbeddedDbStats getRuntimeStats() {
+    public EmbeddedDbStats getRuntimeStats(boolean doUpdate) {
+        if (doUpdate) updateDbStats();
+
+        int memRows = dbInstances.values().stream().mapToInt((db) -> db.getDbStats().totalRows()).sum();
+        dbStats.maxMemRows = MAX_MEM_ROWS;
+        dbStats.memDbs = dbInstances.size();
+        dbStats.memRows = memRows;
+        dbStats.peakMemRows = Math.max(memRows, dbStats.peakMemRows);
         return dbStats;
+    }
+
+    public EmbeddedDbStats getRuntimeStats() {
+        return getRuntimeStats(false);
     }
 
     public void cleanup(boolean force) {
         cleanup(force, false);
     }
 
+    public void updateDbStats() {
+        LOGGER.trace("DbAdapter -> updateDbStats");
+        for(EmbeddedDbInstance db : dbInstances.values()) {
+            db.setDbStats(getDbStats(db));
+        }
+    }
+
     public void cleanup(boolean force, boolean deleteFile) {
 
         try {
-            long MAX_MEMORY_ROWS = DbAdapter.maxMemRows();
+            LOGGER.trace("DbAdapter -> cleanup");
 
             // remove expired search results
             List<EmbeddedDbInstance> toBeRemove = dbInstances.values().stream()
@@ -321,58 +341,38 @@ abstract public class BaseDbAdapter implements DbAdapter {
                 LOGGER.info(String.format("There are currently %d databases open.  Of which, %d will be closed.", dbInstances.size(), toBeRemove.size()));
                 toBeRemove.forEach((db) -> close(db.getDbFile(), deleteFile));
             }
-            // remove search results based on LRU when count is greater than the high-water mark
-            long totalRows = dbInstances.values().stream().mapToInt((db) -> db.getRowCount()).sum();
-            if (totalRows > MAX_MEMORY_ROWS) {
-                long cRows = 0, highWaterMark = (long) (MAX_MEMORY_ROWS * .8);      // bring max down to 80% capacity
-                List<EmbeddedDbInstance> active = new ArrayList<>(dbInstances.values());
-                Collections.sort(active, (db1, db2) -> Long.compare(db2.getLastAccessed(), db1.getLastAccessed()));  // sorted descending..
-                for(EmbeddedDbInstance db : active) {
-                    cRows += db.getRowCount();
-                    if (cRows > highWaterMark) {
-                        close(db.getDbFile(), deleteFile);
-                    }
-                }
-            }
 
-            List<EmbeddedDbInstance> cDbInstances = new ArrayList<>(dbInstances.values());
-
-            // compact long active databases - should only check if it's been recently accessed and that it was not just created.
-            List<EmbeddedDbInstance> toCompact = cDbInstances.stream()
-                    .filter((db) -> !db.isCompact() && db.getRowCount() > 0 && db.getLastAccessed() < LAST_CHECK)
+            // compact idled databases
+            List<EmbeddedDbInstance> toCompact = dbInstances.values().stream()
+                    .filter((db) -> db.mayCompact())
                     .collect(Collectors.toList());
             if (toCompact.size() > 0) {
                 toCompact.forEach((db) -> compact(db));
             }
 
-            // record stats if needed
-            for(EmbeddedDbInstance db : cDbInstances) {
-                if (db.getRowCount() < 1) {
-                    DbStats stats = getDbStats(db);
-                    db.setRowCount(stats.rowCount);
-                    db.setColCount(stats.colCount);
-                }
-                if (db.getLastAccessed() > LAST_CHECK) {
-                    db.setTblCount(getTempTables(db).size()+1);
+            updateDbStats();
+
+            // remove search results based on LRU(least recently used) when count is greater than the high-water mark
+            long totalRows = dbInstances.values().stream().mapToInt((db) -> db.getDbStats().totalRows()).sum();
+            if (totalRows > MAX_MEM_ROWS) {
+                long cRows = 0;
+                List<EmbeddedDbInstance> active = new ArrayList<>(dbInstances.values());
+                Collections.sort(active, (db1, db2) -> Long.compare(db2.getLastAccessed(), db1.getLastAccessed()));  // sorted descending..
+                for(EmbeddedDbInstance db : active) {
+                    cRows += db.getDbStats().totalRows();
+                    if (cRows > MAX_MEM_ROWS) {
+                        close(db.getDbFile(), deleteFile);
+                    }
                 }
             }
-
-            int memRows = cDbInstances.stream().mapToInt((db) -> db.getRowCount()).sum();
-            EmbeddedDbStats stats = getRuntimeStats();
-            stats.lastCleanup = System.currentTimeMillis();
-            stats.maxMemRows = MAX_MEMORY_ROWS;
-            stats.peakMaxMemRows = Math.max(MAX_MEMORY_ROWS, stats.peakMaxMemRows);
-            stats.memDbs = cDbInstances.size();
-            stats.memRows = memRows;
-            stats.peakMemRows = Math.max(memRows, stats.peakMemRows);
-
+            dbStats.lastCleanup = System.currentTimeMillis();
         }catch (Exception e) {
             LOGGER.error(e);
         }
-        LAST_CHECK = System.currentTimeMillis();
     }
 
     public static void compact(EmbeddedDbInstance db) {
+        LOGGER.debug(String.format("DbAdapter -> compacting DB: %s", db.getDbFile().getPath()));
         List<String> tables = getTempTables(db);
         if (tables.size() > 0) {
             // do compact.. remove all temporary tables
@@ -385,28 +385,32 @@ abstract public class BaseDbAdapter implements DbAdapter {
             }
         }
         db.setCompact(true);
-        db.setTblCount(1);
-    }
-
-    private static class DbStats {
-        int rowCount;
-        int colCount;
-
-        public DbStats(int rowCount, int colCount) {
-            this.rowCount = rowCount;
-            this.colCount = colCount;
-        }
     }
 
     private static DbStats getDbStats(EmbeddedDbInstance db) {
         try {
-            String sql = " SELECT CARDINALITY, count(*) FROM INFORMATION_SCHEMA.SYSTEM_COLUMNS c, INFORMATION_SCHEMA.SYSTEM_TABLESTATS t" +
-                         " WHERE c.TABLE_NAME = t.TABLE_NAME" +
-                         " AND c.TABLE_NAME = 'DATA'" +
-                         " GROUP BY CARDINALITY";
-            return  JdbcFactory.getSimpleTemplate(db).queryForObject(sql, (rs, i) -> new DbStats(rs.getInt(1), rs.getInt(2)));
+            final Ref<Integer> rows = new Ref<>();
+            final Ref<Integer> cols = new Ref<>();
+            final Ref<Integer> tables = new Ref<>();
+            final Ref<Integer> totalRows = new Ref<>();
+
+            SimpleJdbcTemplate jdbc = JdbcFactory.getSimpleTemplate(db);
+            jdbc.queryForObject("SELECT count(*), sum(cardinality) from INFORMATION_SCHEMA.SYSTEM_TABLESTATS where table_schema = 'PUBLIC' and not REGEXP_MATCHES(table_name,'.*_DD$|.*_META$|.*_AUX$')", (rs, i) -> {
+                tables.set(rs.getInt(1));
+                totalRows.set(rs.getInt(2));
+                return null;
+            });
+            jdbc.queryForObject("SELECT count(column_name), cardinality from INFORMATION_SCHEMA.SYSTEM_COLUMNS c, INFORMATION_SCHEMA.SYSTEM_TABLESTATS t" +
+                    " where c.table_name = t.table_name" +
+                    " and t.table_name = 'DATA'" +
+                    " group by cardinality", (rs,i) -> {
+                cols.set(rs.getInt(1));
+                rows.set(rs.getInt(2));
+                return null;
+            });
+            return  new DbStats(tables.get(), cols.get(), rows.get(), totalRows.get());
         } catch (Exception e) {
-            return new DbStats(-1,-1);
+            return new DbStats();
         }
     }
 

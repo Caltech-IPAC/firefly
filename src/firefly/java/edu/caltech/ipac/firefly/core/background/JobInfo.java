@@ -84,9 +84,15 @@ public class JobInfo implements Serializable {
 
     public void setPhase(Phase phase) {
         this.phase = phase;
-        if (phase == Phase.COMPLETED) {
-            endTime = Instant.now();
-            progress = 100;
+        switch (phase) {
+            case UNKNOWN:
+            case ERROR:
+            case ABORTED:
+                endTime = Instant.now();
+                break;
+            case COMPLETED:
+                endTime = Instant.now();
+                progress = 100;
         }
     }
 
@@ -95,7 +101,7 @@ public class JobInfo implements Serializable {
     }
 
     public void setError(Error error) {
-        if (error != null) this.phase = Phase.ERROR;
+        if (error != null) setPhase(Phase.ERROR);
         this.error = error;
     }
 
@@ -136,9 +142,7 @@ public class JobInfo implements Serializable {
     public Instant getEndTime() {
         return endTime;
     }
-    public void setEndTime(Instant time) {
-        endTime = time;
-    }
+    public void setEndTime(Instant time) { endTime = time; }
 
     public Instant getDestruction() { return destruction; }
     public void setDestruction(Instant time) { destruction = time; }

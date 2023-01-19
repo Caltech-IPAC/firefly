@@ -48,6 +48,7 @@ import static edu.caltech.ipac.util.FileUtil.writeStringToFile;
         })
 public class ResourceProcessor extends EmbeddedDbProcessor {
     public static final String PROC_ID = "ResourceProcessor";
+    public static final String SUBDIR_PATH = "resource-db";
 
     public static final String ACTION = "action";
     public static final String SCOPE = "scope";
@@ -69,7 +70,7 @@ public class ResourceProcessor extends EmbeddedDbProcessor {
     public File getDbFile(TableServerRequest treq) {
         DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
         String resourceID = getResourceID(treq);
-        String fname = String.format("resources/%s.%s", resourceID, dbAdapter.getName());
+        String fname = String.format("%s/%s.%s", SUBDIR_PATH, resourceID, dbAdapter.getName());
         return new File(ServerContext.getHiPSDir(), fname);
     }
 

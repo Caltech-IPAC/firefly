@@ -19,6 +19,7 @@ import org.json.simple.JSONObject;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -258,29 +259,25 @@ public class JobManager {
         StrBuilder sb = new StrBuilder();
 
 
-        sb.append("   Job Count       Active Count     Error Count   \n");
-        sb.append("(Search/Package) (Search/Package) (Search/Package)\n");
-        sb.append("---------------- ---------------- ----------------\n");
+        sb.append        ("          |   Job Count Active Count  Error Count\n");
+        sb.append        ("          |------------ ------------ ------------\n");
 
-        long searchCnt = allJobInfos.values().stream().filter(v -> v.getType() == SEARCH).count();
-        long packageCnt = allJobInfos.values().stream().filter(v -> v.getType() == PACKAGE).count();
-        long errSearchCnt = allJobInfos.values().stream().filter(v -> v.getPhase() == ERROR && v.getType() == SEARCH).count();
-        long errPackageCnt = allJobInfos.values().stream().filter(v -> v.getPhase() == ERROR && v.getType() == PACKAGE).count();
-        long activeSearchCnt = allJobInfos.values().stream().filter(v -> v.getPhase() == EXECUTING && v.getType() == SEARCH).count();
-        long activePackageCnt = allJobInfos.values().stream().filter(v -> v.getPhase() == EXECUTING && v.getType() == PACKAGE).count();
+        Arrays.stream(Job.Type.values()).forEach(type -> {
+            long total = allJobInfos.values().stream().filter(v -> v.getType() == type).count();
+            long active = allJobInfos.values().stream().filter(v -> v.getPhase() == EXECUTING && v.getType() == type).count();
+            long error = allJobInfos.values().stream().filter(v -> v.getPhase() == ERROR && v.getType() == type).count();
 
-        sb.append(String.format("%,16d %,16d %,16d\n",
-                allJobInfos.size(), activeSearchCnt+activePackageCnt, errSearchCnt+errPackageCnt));
-        sb.append(String.format(" %,6d / %,6d  %,6d / %,6d  %,6d / %,6d\n",
-                searchCnt, packageCnt, activeSearchCnt, activePackageCnt, errSearchCnt, errPackageCnt));
+            sb.append(String.format("%9s |%,12d %,12d %,12d\n", type, total, active, error));
+        });
 
         if (details) {
             sb.append("\n");
-            sb.append("JOB ID          PHASE       startTime                   elapsedTime(s) progress\n");
-            sb.append("--------------- ----------- --------------------------- -------------- --------\n");
+            sb.append("JOB ID          PHASE       startTime              elapsedTime(s) progress\n");
+            sb.append("--------------- ----------- ---------------------- -------------- --------\n");
             allJobInfos.forEach((k, v) -> {
-                sb.append(String.format("%15s %11s %27s %14s %8s\n",
-                        v.getJobId(), v.getPhase(), v.getStartTime(), Duration.between(v.getStartTime(), Instant.now()).toMillis()/1000, v.getProgress()));
+                Instant endT = v.getEndTime() != null ? v.getEndTime() : Instant.now();
+                sb.append(String.format("%15s %11s %22s %,14d %8d\n",
+                        v.getJobId(), v.getPhase(), v.getStartTime().truncatedTo(ChronoUnit.SECONDS), Duration.between(v.getStartTime(), endT).toSeconds(), v.getProgress()));
             });
         }
         return sb.toString();

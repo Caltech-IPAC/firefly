@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.server.db;
 
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.query.ResourceProcessor;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
@@ -28,26 +29,41 @@ public interface DbAdapter {
 
     /*
       CLEAN UP POLICY:
-        A rough estimate: A search results of one million rows displayed in the triview(chart + image + table) takes around 500 MB
-        There are two stages of clean-up; compact(remove all temp tables), then shutdown(remove from memory)
+        A rough estimate:
+        1m rows; 30 cols table when displayed in triview(table+chart+image) uses 800mb -> 4 tables; 2m rows
+        After 2 sort, uses 1.5g ->  10 tables; 6m rows
+        2 more sort, uses 2.2g ->  16 tables; 10m rows
 
-        - Compact DB once it has idled longer than CLEANUP_INTVL
+        There are two stages of clean-up; compact(remove all temp tables), then shutdown(remove from memory)
+        - Compact DB once it has idled longer than a time based on COMPACT_FACTOR
         - Shutdown DB once it has expired; idle longer than MAX_IDLE_TIME
         - Shutdown DB based on LRU(Least Recently Used) once the total rows have exceeded MAX_MEMORY_ROWS
 
-        Current settings:
+        Default settings:
           - CLEANUP_INTVL:  1 minutes
           - MAX_IDLE_TIME: 15 minutes
-          - MAX_MEMORY_ROWS:  250k rows for every 1GB of max heap, between the range of 250k to 10 millions.
+          - MAX_IDLE_TIME_RSC: MAX_IDLE_TIME
+          - COMPACT_FACTOR: .5
+          - MAX_MEMORY_ROWS:  1m rows for every 1GB of memory at startup. minimum of 2 million.
      */
-    long MAX_IDLE_TIME  = 1000 * 60 * 15;   // will shutdown database if idle more than 15 minutes.
+    long MAX_IDLE_PROP  = AppProperties.getLongProperty("dbTbl.maxIdle", 15);                       // idle time before DB is shutdown.  Defaults to 15 minutes.
+    long MAX_IDLE_TIME  = MAX_IDLE_PROP * 1000 * 60;                                                          // max idle time in ms
+    long MAX_IDLE_TIME_RSC = AppProperties.getLongProperty("dbRsc.maxIdle", MAX_IDLE_PROP) * 1000 * 60;  // same as dbTbl.maxIdle, but for Resource tables.
+    float COMPACT_FACTOR = AppProperties.getFloatProperty("dbTbl.compactFactor", 0.5f);             // when to compact the DB as a factor of MAX_IDLE.  defaults to 1/2 of MAX_IDLE_TIME
+    long MAX_MEM_ROWS   = AppProperties.getLongProperty("dbTbl.maxMemRows", maxMemRows());
     int  CLEANUP_INTVL  = 1000 * 60;        // check every 1 minutes
-    static long maxMemRows() {
-        long availMem = Runtime.getRuntime().maxMemory() - (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
-        return Math.min(10000000, Math.max(1000000, availMem/1024/1024/1024 * 250000));
+    /**
+     * Total number of rows allowed in memory at startup.
+     * When met, system will aggressively shutdown DBs even before expiry time starting with the
+     * earliest last modified date.
+     * @return
+     */
+    private static long maxMemRows() {
+        long freeMem = Runtime.getRuntime().maxMemory();                // using designated memory(-Xmx) to simplify the logic.
+        return Math.max(2000000, freeMem/1024/1024/1024 * 1000000);     // minimum 2m rows
     }
 
-    EmbeddedDbStats getRuntimeStats();
+    EmbeddedDbStats getRuntimeStats(boolean doUpdate);
 
     /**
      * @return the name of this database
@@ -142,15 +158,19 @@ public interface DbAdapter {
         }
     }
 
+    record DbStats(int tblCnt, int colCnt, int rowCnt, int totalRows){
+        public DbStats() {
+            this(-1, -1, -1, -1);
+        }
+    }
     class EmbeddedDbInstance extends DbInstance {
         ReentrantLock lock = new ReentrantLock();
         long lastAccessed;
         long created;
         File dbFile;
         boolean isCompact;
-        int tblCount;
-        int rowCount = -1;
-        int colCount = -1;
+        DbStats dbStats;
+        boolean isResourceDb;
 
         EmbeddedDbInstance(String type, File dbFile, String dbUrl, String driver) {
             this(type, dbFile, dbUrl, driver, System.currentTimeMillis());
@@ -161,6 +181,7 @@ public interface DbAdapter {
             lastAccessed = System.currentTimeMillis();
             this.dbFile = dbFile;
             this.created = created;
+            isResourceDb = dbFile.getParentFile().getName().equals(ResourceProcessor.SUBDIR_PATH);
         }
 
         @Override
@@ -180,7 +201,11 @@ public interface DbAdapter {
         public long getCreated() { return created; }
 
         public boolean hasExpired() {
-            return System.currentTimeMillis() - lastAccessed > MAX_IDLE_TIME;
+            return System.currentTimeMillis() - lastAccessed > maxIdle();
+        }
+
+        public boolean mayCompact() {
+            return !isCompact && getDbStats().totalRows() > 0 && System.currentTimeMillis() - lastAccessed > maxIdle() * COMPACT_FACTOR;
         }
 
         public File getDbFile() {
@@ -192,27 +217,28 @@ public interface DbAdapter {
             isCompact = false;
         }
 
+        private long maxIdle() {
+            return isResourceDb ? MAX_IDLE_TIME_RSC : MAX_IDLE_TIME;
+        }
+
         public ReentrantLock getLock() {
             return lock;
         }
         public void setCompact(boolean compact) { isCompact = compact;}
         public boolean isCompact() { return isCompact; }
-        public int getTblCount() { return tblCount; }
-        public int getRowCount() { return rowCount; }
-        public int getColCount() { return colCount; }
-        public void setTblCount(int tblCount) { this.tblCount = tblCount; }
-        public void setRowCount(int rowCount) { this.rowCount = rowCount; }
-        public void setColCount(int colCount) { this.colCount = colCount; }
+
+        public void setDbStats(DbStats dbStats) { this.dbStats = dbStats; }
+        public DbStats getDbStats() { return dbStats == null ? new DbStats() : dbStats; }
     }
 
     class EmbeddedDbStats {
-        public long maxMemRows = maxMemRows();
+        public long maxMemRows = MAX_MEM_ROWS;
+        public float compactFactor = COMPACT_FACTOR;
         public long memDbs;
         public long totalDbs;
         public long memRows;
         public long peakMemDbs;
         public long peakMemRows;
-        public long peakMaxMemRows;
         public long lastCleanup;
     }
 
