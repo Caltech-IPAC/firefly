@@ -31,26 +31,28 @@ import {getIntHeader} from '../../metaConvert/PartAnalyzer';
 import {FileAnalysisType} from '../../data/FileAnalysis';
 import {dispatchValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 import {CompleteButton,NONE} from 'firefly/ui/CompleteButton.jsx';
-import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
 import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField.jsx';
-import {
-    getFileFormat,
-    getFirstPartType,
-    getSelectedRows,
-    isRegion
-} from 'firefly/ui/FileUploadProcessor';
+import {getFileFormat, getFirstPartType, getSelectedRows, isRegion} from 'firefly/ui/FileUploadProcessor';
+import {acceptAnyTables, acceptDataLinkTables, acceptImages, acceptMocTables, acceptNonDataLinkTables,
+    acceptNonMocTables, acceptOnlyTables, acceptRegions, acceptTableOrSpectrum, DATA_LINK_TABLES,
+    IMAGES, REGIONS, SPECTRUM_TABLES, TABLES} from 'firefly/ui/FileUploadUtil';
 
 const  FILE_ID = 'fileUpload';
 const  URL_ID = 'urlUpload';
 const  WS_ID = 'wsUpload';
 
+const TABLE_MSG = 'Custom catalog in IPAC, CSV, TSV, VOTABLE, or FITS table format';
+const REGION_MSG = 'A Region file';
+const IMAGE_MSG = 'Any FITS file with images (including multiple HDUs)';
+const MOC_MSG = 'A MOC FITS file';
+const DL_MSG = 'A Data Link Table file';
+
 const SUPPORTED_TYPES=[
     FileAnalysisType.REGION,
     FileAnalysisType.Image,
     FileAnalysisType.Table,
-    FileAnalysisType.Spectrum,
-    FileAnalysisType.REGION,
+    FileAnalysisType.Spectrum
 ];
 
 const TABLES_ONLY_SUPPORTED_TYPES=[
@@ -62,7 +64,7 @@ const uploadOptions = 'uploadOptions';
 const FILE_UPLOAD_KEY= 'file-upload-key-';
 let keyCnt=0;
 
-export function FileUploadViewPanel({setSubmitText, acceptMoc}) {
+export function FileUploadViewPanel({setSubmitText, acceptList}) {
 
     const {groupKey, keepState}= useContext(FieldGroupCtx);
 
@@ -81,7 +83,7 @@ export function FileUploadViewPanel({setSubmitText, acceptMoc}) {
             const loadingOp= getLoadingOp();
             const {analysisResult, message}= getField(groupKey, loadingOp) || {};
             const summaryTbl= getTblById(summaryTblId);
-            return getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, message, getUploadMetaInfo());
+            return getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, message, getUploadMetaInfo(), acceptList);
         });
 
     const {isLoading,statusKey} = getUploadMetaInfo();
@@ -111,7 +113,7 @@ export function FileUploadViewPanel({setSubmitText, acceptMoc}) {
     }, [detailsModel]);
 
     useEffect(() => {
-        setSubmitText?.(getLoadButtonText(summaryTblId,report,detailsModel,summaryModel));
+        setSubmitText?.(getLoadButtonText(summaryTblId,report,detailsModel,summaryModel,acceptList));
     },[report,setSubmitText, summaryModel, detailsModel]);
 
     let aWStatusKey;
@@ -136,9 +138,6 @@ export function FileUploadViewPanel({setSubmitText, acceptMoc}) {
             aWStatusKey && dispatchCancelActionWatcher(aWStatusKey);
         });
     }, [isLoading, statusKey] );
-
-    const isTablesOnly= () => getAppOptions()?.uploadPanelLimit==='tablesOnly';
-    const tablesOnly= isTablesOnly();
 
     const workspace = getWorkspaceConfig();
     const uploadMethod = [{value: FILE_ID, label: 'Upload file'},
@@ -173,9 +172,9 @@ export function FileUploadViewPanel({setSubmitText, acceptMoc}) {
                                                        }}/> }
                         </div>
                     </div>
-                    <FileAnalysis {...{report, summaryModel, detailsModel,tablesOnly, isMoc, UNKNOWN_FORMAT, acceptMoc}}/>
-                    <ImageDisplayOption summaryTblId={summaryTblId} currentReport={report} currentSummaryModel={summaryModel}/>
-                    <TableDisplayOption {...{isMoc, isDatalink, summaryTblId, currentReport:report, currentSummaryModel:summaryModel, acceptMoc}}/>
+                    <FileAnalysis {...{report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList, isDatalink}}/>
+                    <ImageDisplayOption {...{summaryTblId, currentReport:report, currentSummaryModel:summaryModel, acceptList}}/>
+                    <TableDisplayOption {...{isMoc, isDatalink, summaryTblId, currentReport:report, currentSummaryModel:summaryModel, acceptList}}/>
                 </div>
                 {(isLoading) && <LoadingMessage message={loadingMsg}/>}
         </div>
@@ -201,17 +200,19 @@ const LoadingMessage= ({message}) => (
     </div>
 );
 
-function getLoadButtonText(summaryTblId,currentReport,currentDetailsModel,currentSummaryModel) {
-    const tblCnt = getSelectedRows(FileAnalysisType.Table, summaryTblId, currentReport, currentSummaryModel)?.length ?? 0;
-    if (tblCnt && isMOCFitsFromUploadAnalsysis(currentReport).valid) return 'Load MOC';
-    if (isRegion(currentSummaryModel)) return 'Load Region';
+function getLoadButtonText(summaryTblId,currentReport,currentDetailsModel,currentSummaryModel,acceptList) {
+    const tblCnt = getSelectedRows(FileAnalysisType.Table, summaryTblId, currentReport, currentSummaryModel, acceptList)?.length ?? 0;
+    if (tblCnt && isMOCFitsFromUploadAnalsysis(currentReport).valid && acceptMocTables(acceptList)) return 'Load MOC';
+    if (isRegion(currentSummaryModel) && acceptRegions(acceptList)) return 'Load Region';
 
-    const imgCnt = getSelectedRows(FileAnalysisType.Image, summaryTblId, currentReport, currentSummaryModel)?.length ?? 0;
+    const imgCnt = getSelectedRows(FileAnalysisType.Image, summaryTblId, currentReport, currentSummaryModel, acceptList)?.length ?? 0;
 
     if (isLsstFootprintTable(currentDetailsModel) ) return 'Load Footprint';
-    if (tblCnt && !imgCnt) return tblCnt>1 ? `Load ${tblCnt} Tables` : 'Load Table';
-    if (!tblCnt && imgCnt) return imgCnt>1 ? `Load ${imgCnt} Images` : 'Load Image';
-    if (tblCnt && imgCnt) return `Load ${imgCnt>1?imgCnt+' ' : ''}Image${imgCnt >1 ?'s':''} and ${tblCnt>1?tblCnt+' ' : ''}Table${tblCnt>1? 's':''}`;
+    if ((tblCnt && !imgCnt && acceptAnyTables(acceptList)) || (tblCnt && imgCnt && !acceptImages(acceptList))) return tblCnt>1 ? `Load ${tblCnt} Tables` : 'Load Table';
+    if ((!tblCnt && imgCnt && acceptImages(acceptList)) || (tblCnt && imgCnt && !acceptAnyTables(acceptList))) return imgCnt>1 ? `Load ${imgCnt} Images` : 'Load Image';
+    if (tblCnt && imgCnt) {
+        return `Load ${imgCnt > 1 ? imgCnt + ' ' : ''}Image${imgCnt > 1 ? 's' : ''} and ${tblCnt > 1 ? tblCnt + ' ' : ''}Table${tblCnt > 1 ? 's' : ''}`;
+    }
     return  'Load';
 }
 
@@ -221,23 +222,28 @@ export function resultFail() {
 }
 
 
-function isSinglePartFileSupported(currentSummaryModel) {
-    const isTablesOnly= () => getAppOptions()?.uploadPanelLimit==='tablesOnly';
-    const supportedTypes= isTablesOnly() ? TABLES_ONLY_SUPPORTED_TYPES : SUPPORTED_TYPES;
+function isSinglePartFileSupported(currentSummaryModel, acceptList) {
+    const supportedTypes = (acceptOnlyTables(acceptList)) ? TABLES_ONLY_SUPPORTED_TYPES : SUPPORTED_TYPES;
     return getFirstPartType(currentSummaryModel) && (supportedTypes.includes(getFirstPartType(currentSummaryModel)));
 }
 
 
-function getFirstExtWithData(parts) {
-    const isTablesOnly= () => getAppOptions()?.uploadPanelLimit==='tablesOnly';
-    return isTablesOnly() ?
-        parts.findIndex((p) => p.type.includes(FileAnalysisType.Table)) :
-        parts.findIndex((p) => !p.type.includes(FileAnalysisType.HeaderOnly));
+function getFirstExtWithData(parts, acceptList, summaryModel) {
+    if (acceptOnlyTables(acceptList)) {
+        return summaryModel.tableData.data.findIndex((p) => p[1].includes(FileAnalysisType.Table));
+    }
+    if (!acceptImages(acceptList)) {
+        return summaryModel.tableData.data.findIndex((p) => (!p[1].includes(FileAnalysisType.Image) && !p[1].includes(FileAnalysisType.HeaderOnly)));
+    }
+    if (!acceptAnyTables(acceptList)) {
+        return summaryModel.tableData.data.findIndex((p) => (!p[1].includes(FileAnalysisType.Table) && !p[1].includes(FileAnalysisType.HeaderOnly)));
+    }
+    return summaryModel.tableData.data.findIndex((p) => !p[1].includes(FileAnalysisType.HeaderOnly));
 }
 
 /*-----------------------------------------------------------------------------------------*/
 
-function getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, message, oldState) {
+function getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, message, oldState, acceptList) {
     // because this value is stored in different fields, so we have to check on what options were selected to determine the active value
     const UNKNOWN_FORMAT = 'UNKNOWN';
 
@@ -262,10 +268,10 @@ function getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, me
                 return {message:'Unrecognized file type', report:undefined, summaryModel:undefined, detailsModel:undefined};
             }
 
-            currentSummaryModel= makeSummaryModel(currentReport, summaryTblId);
+            currentSummaryModel= makeSummaryModel(currentReport, summaryTblId, acceptList);
             modelToUseForDetails= currentSummaryModel;
 
-            const firstExtWithData= getFirstExtWithData(currentReport.parts);
+            const firstExtWithData= getFirstExtWithData(currentReport.parts, acceptList, currentSummaryModel);
             if (firstExtWithData >= 0) {
                 const selectInfo = SelectInfo.newInstance({rowCount: currentSummaryModel.tableData.data.length});
                 selectInfo.setRowSelect(firstExtWithData, true);        // default select first extension/part with data
@@ -332,19 +338,40 @@ function summaryModelEqual(sm1,sm2) {
         sm1?.selectInfo !== sm2?.selectInfo);
 }
 
-function makeSummaryModel(report, summaryTblId) {
+function makeSummaryModel(report, summaryTblId, acceptList) {
     const columns = [
         {name: 'Index', type: 'int', desc: 'Extension Index'},
         {name: 'Type', type: 'char', desc: 'Data Type'},
-        {name: 'Description', type: 'char', desc: 'Extension Description'}
+        {name: 'Description', type: 'char', desc: 'Extension Description'},
+        {name: 'AllowedType', type: 'boolean', desc: 'Type in AcceptList', visibility: 'hidden'}
     ];
     const {parts=[]} = report;
     const data = parts.map( (p) => {
         const naxis= getIntHeader('NAXIS',p,0);
-        return [p.index, (naxis===1 && p.type===FileAnalysisType.Image)?FileAnalysisType.Table :p.type, p.desc];
+        const entryType = (naxis===1 && p.type===FileAnalysisType.Image)?FileAnalysisType.Table :p.type;
+        const isMoc=  isMOCFitsFromUploadAnalsysis(report)?.valid;
+        const isDatalink=  isAnalysisTableDatalink(report);
+        let isImageAllowed = true;
+        let isTableAllowed = true;
+        if (!acceptImages(acceptList)) {
+            isImageAllowed = false;
+        }
+        if (!acceptTableOrSpectrum(acceptList)) {
+            //edge case: could still be a MOC/DL table file - which only has table entries - don't pink those out
+            isMoc || isDatalink? isTableAllowed= true: isTableAllowed= false;
+        }
+        let allowedType = true;
+        if (entryType === FileAnalysisType.Table || entryType === FileAnalysisType.Image) {
+            allowedType = entryType === FileAnalysisType.Table? isTableAllowed: isImageAllowed;
+        }
+        return [p.index, entryType , p.desc, allowedType];
     });
+
     const summaryModel = {
         tbl_id: summaryTblId,
+        tableMeta: {
+            DATARIGHTS_COL: 'AllowedType'
+        },
         title: 'File Summary',
         totalRows: data.length,
         tableData: {columns, data}
@@ -363,14 +390,18 @@ function getDetailsModel(tableModel, report, detailsTblId, UNKNOWN_FORMAT) {
     return details;
 }
 
-function TableDisplayOption({isMoc, isDatalink, summaryTblId, currentReport, currentSummaryModel, acceptMoc}) {
+function TableDisplayOption({isMoc, isDatalink, summaryTblId, currentReport, currentSummaryModel, acceptList}) {
 
     const selectedTables = getFileFormat(currentReport) ?
         getSelectedRows('Table', summaryTblId, currentReport, currentSummaryModel) : [];
 
     if ( selectedTables.length < 1) return null;
 
-    if (isMoc && !acceptMoc) {
+    //Possibly from the Upload Panel in the HiPS/MOC 'Add MOC Layer' tab
+    if (isMoc && acceptMocTables(acceptList) && !(acceptTableOrSpectrum(acceptList))) {
+        return null;
+    }
+    else if (isMoc && acceptTableOrSpectrum(acceptList)) {
         const options= [{label:'Load as MOC Overlay', value:'moc'}, {label:'Load as Table', value:'table'}];
         return (
             <div style={{padding: '5px 0 5px 0'}}>
@@ -383,11 +414,7 @@ function TableDisplayOption({isMoc, isDatalink, summaryTblId, currentReport, cur
             </div>
         );
     }
-
-    else if (acceptMoc) { //Upload Panel in the HiPS/MOC 'Add MOC Layer' tab
-        return null;
-    }
-    else if (isDatalink) {
+    else if (isDatalink && acceptList.includes(DATA_LINK_TABLES)) {
         const options= [{label:'Load as Datalink Search UI', value:'datalinkUI'}, {label:'Load as Table', value:'table'}];
         return (
             <div style={{padding: '5px 0 5px 0'}}>
@@ -404,34 +431,39 @@ function TableDisplayOption({isMoc, isDatalink, summaryTblId, currentReport, cur
     return (
         <div style={{marginTop: 3}}>
             <div style={{padding:'5px 0 9px 0'}}>
-                <CheckboxGroupInputField
+                {acceptList.includes(SPECTRUM_TABLES) && <CheckboxGroupInputField
                     options={[{value: 'spectrum',
                         title:'If possible - interpret table columns names to fit into a spectrum data model',
                         label:'Attempt to interpret tables as spectra'}]}
                     fieldKey='tablesAsSpectrum'
                     labelWidth={90}
-                />
+                />}
             </div>
         </div>
     );
 }
 
-function ImageDisplayOption({summaryTblId, currentReport, currentSummaryModel}) {
+function ImageDisplayOption({summaryTblId, currentReport, currentSummaryModel, acceptList}) {
     const selectedImages = getSelectedRows('Image', summaryTblId, currentReport, currentSummaryModel);
 
     if ( selectedImages.length < 2) return null;
 
     const imgOptions = [{value: 'oneWindow', label: 'All images in one window'},
         {value: 'mulWindow', label: 'One extension image per window'}];
-    return (
-        <div style={{marginTop: 3}}>
-            <RadioGroupInputField
-                tooltip='display image extensions in one window or multiple windows'
-                fieldKey='imageDisplay'
-                options={imgOptions}
-            />
-        </div>
-    );
+    if (acceptList.includes(IMAGES)) {
+        return (
+            <div style={{marginTop: 3}}>
+                <RadioGroupInputField
+                    tooltip='display image extensions in one window or multiple windows'
+                    fieldKey='imageDisplay'
+                    options={imgOptions}
+                />
+            </div>
+        );
+    }
+    else { //could still be a FITS file, but acceptList only accepts Tables & not Images
+        return null;
+    }
 }
 
 function UploadOptions({uploadSrc, isLoading, isWsUpdating, uploadKey}) {
@@ -499,7 +531,7 @@ function AnalysisInfo({report,supported=true,UNKNOWN_FORMAT}) {
 
 const tblOptions = {showToolbar:false, border:false, showOptionButton: false, showFilters: true};
 
-function AnalysisTable({summaryModel, detailsModel, report, isMoc, UNKNOWN_FORMAT}) {
+function AnalysisTable({summaryModel, detailsModel, report, isMoc, UNKNOWN_FORMAT, acceptList}) {
     if (!summaryModel) return null;
 
     // Details table needs to render first to create a stub to collect data when Summary table is loaded.
@@ -509,15 +541,15 @@ function AnalysisTable({summaryModel, detailsModel, report, isMoc, UNKNOWN_FORMA
                 <MultiDataSet summaryModel={summaryModel} detailsModel={detailsModel} isMoc={isMoc}/> :
                 <SingleDataSet type={summaryModel.tableData.data[0][1]} desc={summaryModel.tableData.data[0][2]}
                                detailsModel={detailsModel} report={report} UNKNOWN_FORMAT={UNKNOWN_FORMAT}
-                               currentSummaryModel={summaryModel}
+                               currentSummaryModel={summaryModel} acceptList={acceptList}
                 />
             }
         </div>
     );
 }
 
-function SingleDataSet({type, desc, detailsModel, report, UNKNOWN_FORMAT, currentSummaryModel}) {
-    const supported = isSinglePartFileSupported(currentSummaryModel);
+function SingleDataSet({type, desc, detailsModel, report, UNKNOWN_FORMAT, currentSummaryModel, acceptList}) {
+    const supported = isSinglePartFileSupported(currentSummaryModel, acceptList);
     const showDetails= supported && detailsModel;
     return (
         <div style={{display:'flex', flex:'1 1 auto', justifyContent: showDetails?'start':'center'}}>
@@ -565,7 +597,7 @@ function Details({detailsModel}) {
 }
 
 
-function getTableArea(report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT) {
+function getTableArea(report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList) {
     if (report?.fileFormat === UNKNOWN_FORMAT) {
         return (
             <div style={{flexGrow: 1, marginTop: 40, textAlign:'center', fontSize: 'larger', color: 'red'}}>
@@ -573,52 +605,133 @@ function getTableArea(report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT)
             </div>
         );
     }
-    return <AnalysisTable {...{summaryModel, detailsModel, report, isMoc, UNKNOWN_FORMAT}} />;
+    return <AnalysisTable {...{summaryModel, detailsModel, report, isMoc, UNKNOWN_FORMAT, acceptList}} />;
 }
 
+function buildAllowedTypes(acceptList) {
+    const allowedTypes = [];
+    acceptTableOrSpectrum(acceptList) && allowedTypes.push(TABLE_MSG);
+    acceptRegions(acceptList) && allowedTypes.push(REGION_MSG);
+    acceptImages(acceptList) && allowedTypes.push(IMAGE_MSG);
+    acceptMocTables(acceptList) && allowedTypes.push(MOC_MSG);
+    acceptDataLinkTables(acceptList) && allowedTypes.push(DL_MSG);
+    return allowedTypes;
+}
 
-const FileAnalysis = ({report, summaryModel, detailsModel, tablesOnly, isMoc, UNKNOWN_FORMAT, acceptMoc}) => {
+const AcceptedList = (props) => {
+    const {list} = props;
+    const allowedTypes = buildAllowedTypes(list);
+    const liStyle= {listStyleType:'circle'};
+    return (<div style={{color:'gray', margin:'20px 0 0 200px', fontSize:'larger', lineHeight:'1.3em'}}>
+        You can load any of the following types of files:
+        <ul>
+            {allowedTypes.map((fileType, index) => {
+                return <li key={index} style={liStyle}>{fileType}</li>;
+            })}
+        </ul>
+    </div>);
+};
+
+const NotAccepted = (props) => {
+    const  {types} = props;
+    const liStyle= {listStyleType:'circle'};
+    return (<div style={{color:'gray', margin:'20px 0 0 200px', fontSize:'larger', lineHeight:'1.3em'}}>
+        {'Warning: You cannot upload the following file type(s) from here:'}
+         <ul>
+            {types.map((fileType, index) => {
+                return <li key={index} style={liStyle}>{fileType}</li>;
+            })}
+        </ul>
+    </div>);
+};
+
+const determineAccepted = (acceptList, uniqueTypes, isMoc, isDL) => {
+    const notAcceptedTypes = [];
+    let accepted = false;
+    if (uniqueTypes.includes(REGIONS)) {
+        if (!acceptRegions(acceptList)) {
+            notAcceptedTypes.push('Region');
+        }
+    }
+    else if (uniqueTypes.includes(IMAGES) && uniqueTypes.includes(TABLES)) { //possibly FITs
+        if (!acceptImages(acceptList) && !acceptTableOrSpectrum(acceptList)) {
+            notAcceptedTypes.push('Images', 'Tables');
+        }
+    }
+    else if (uniqueTypes.includes(IMAGES)) { //but not table
+        if (!acceptImages(acceptList)) {
+            notAcceptedTypes.push('Images');
+        }
+    }
+    else if (uniqueTypes.includes(TABLES)) { //but not image - could be moc fits, vot, tsv, etc.
+        //even if one of these is in the acceptList, we can assume tables are allowed, but if not - throw a warning
+        if (!acceptAnyTables(acceptList)) {
+            notAcceptedTypes.push('Tables');
+        }
+        //assuming if acceptList = 1, in this case we only accept MOC fits files and nothing else
+        if (acceptMocTables((acceptList)) && !isMoc &&
+            (acceptList.length===1 || !acceptNonMocTables(acceptList))) {
+            notAcceptedTypes.push('Any non MOC FITS files');
+        }
+        if (acceptDataLinkTables(acceptList) && !isDL &&
+            (acceptList.length===1 || !acceptNonDataLinkTables(acceptList))) {
+            notAcceptedTypes.push('Any non Datalink Tables');
+        }
+    }
+
+    notAcceptedTypes.length === 0? accepted=true: accepted=false;
+    return {accepted, notAcceptedTypes};
+};
+
+const warningMessage = (acceptList, uniqueTypes) => {
+    //if this is a file with both table and image entries, but either table or image is not in acceptList, there will be some pinked out entries (tables or images)
+    if (uniqueTypes.includes('Table') && uniqueTypes.includes('Image') && (!acceptImages((acceptList)) || !acceptTableOrSpectrum(acceptList))) {
+        return (<div style={{color: 'gray', margin: '20px 0 0 0', fontSize: 'larger', lineHeight: '1.3em'}}>
+            {'Note: Any selected entries with highlighted pink lines will not be loaded.'}
+        </div>);
+    }
+    else {
+        return null;
+    }
+};
+
+const FileAnalysis = ({report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList, isDL}) => {
     //getting FieldGroup context and adding required params to the request object (used in resultSuccess in FileUploadProcessor)
     const {groupKey, register, unregister}= useContext(FieldGroupCtx);
+
+    const types= summaryModel?.tableData?.data.map( (d) => d[1]) ?? [];
+
+    //types will have repeated 'Image', 'Table', etc. - getting only unique values from types
+    const uniqueTypes = types.filter((value, index, self) => self.indexOf(value) === index);
+
     const additionalReqObjs = {summaryModel, currentReport: report, currentDetailsModel: detailsModel,
-        groupKey, acceptMoc};
+        groupKey, acceptList, uniqueTypes};
     useEffect(() => {
         register('additionalParams', () => additionalReqObjs);
         return () => unregister('additionalParams');
     }, [report]);
 
-    if (report && acceptMoc && !isMoc) {
-        return (<div style={{color:'gray', margin:'20px 0 0 200px', fontSize:'larger', lineHeight:'1.3em'}}>
-            Warning: You are attempting to upload a non-MOC file.
-        </div>);
-    }
+    if (report) {
 
-    else if (report) {
-        return (
-            <div className='FileUpload__report'>
-                {summaryModel.tableData.data.length>1 && <AnalysisInfo report={report} />}
-                {getTableArea(report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT)}
-            </div>
-        );
+        const {accepted, notAcceptedTypes}= determineAccepted(acceptList, uniqueTypes, isMoc, isDL);
+
+        if  (accepted) { //no errors/warnings: show the AnalysisInfo
+            return (
+                <div className='FileUpload__report'>
+                    {summaryModel.tableData.data.length>1 && <AnalysisInfo report={report} />}
+                    {warningMessage(acceptList, uniqueTypes)}
+                    {getTableArea(report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList)}
+                </div>
+            );
+        }
+        else {
+            return  (<NotAccepted types={notAcceptedTypes}/>);
+        }
+
     }
 
     else {
-        const liStyle= {listStyleType:'circle'};
-        if (acceptMoc) {
-            return (<div style={{color:'gray', margin:'20px 0 0 200px', fontSize:'larger', lineHeight:'1.3em'}}>
-                Note: You can only load a MOC FITS file from this dialog
-            </div>);
-        }
-        return (<div style={{color:'gray', margin:'20px 0 0 200px', fontSize:'larger', lineHeight:'1.3em'}}>
-            You can load any of the following types of files:
-            <ul>
-                <li style={liStyle}>Custom catalog in IPAC, CSV, TSV, VOTABLE, or FITS table format</li>
-                {!tablesOnly && <li style={liStyle}>Any FITS file with tables or images (including multiple HDUs)</li>}
-                {!tablesOnly && <li style={liStyle}>A Region file</li> }
-                {!tablesOnly && <li style={liStyle}>A MOC FITS file</li> }
-            </ul>
-        </div>);
-
+        return (<AcceptedList list={acceptList}/>);
     }
 };
 

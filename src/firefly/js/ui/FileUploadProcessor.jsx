@@ -1,10 +1,9 @@
 import {FileAnalysisType, Format} from 'firefly/data/FileAnalysis';
-import {showInfoPopup} from 'firefly/ui/PopupUtil';
+import {showInfoPopup, showYesNoPopup} from 'firefly/ui/PopupUtil';
 import {getAppHiPSForMoc, isMOCFitsFromUploadAnalsysis} from 'firefly/visualize/HiPSMocUtil';
 import {MetaConst} from 'firefly/data/MetaConst';
 import {isLsstFootprintTable} from 'firefly/visualize/task/LSSTFootprintTask';
 import {makeFileRequest} from 'firefly/tables/TableRequestUtil';
-import {getAppOptions} from 'firefly/core/AppDataCntlr';
 import {getFieldVal} from 'firefly/fieldGroup/FieldGroupUtils';
 import {createNewRegionLayerId} from 'firefly/drawingLayers/RegionPlot';
 import {dispatchCreateImageLineBasedFootprintLayer, dispatchCreateRegionLayer, getDlAry} from 'firefly/visualize/DrawLayerCntlr';
@@ -19,6 +18,12 @@ import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from 'firefly/visualize/
 import {PlotAttribute} from 'firefly/visualize/PlotAttribute';
 import {isAnalysisTableDatalink} from '../util/VOAnalyzer.js';
 import {fetchDatalinkUITable} from './dynamic/FetchDatalinkTable.js';
+import {dispatchHideDialog} from 'firefly/core/ComponentCntlr';
+import React from 'react';
+import {
+    acceptAnyTables, acceptDataLinkTables, acceptImages, acceptMocTables, acceptNonDataLinkTables,
+    acceptNonMocTables, acceptRegions, acceptTableOrSpectrum, IMAGES, REGIONS, TABLES
+} from 'firefly/ui/FileUploadUtil';
 
 const FILE_ID = 'fileUpload';
 const uploadOptions = 'uploadOptions';
@@ -27,89 +32,231 @@ const SUPPORTED_TYPES=[
     FileAnalysisType.REGION,
     FileAnalysisType.Image,
     FileAnalysisType.Table,
-    FileAnalysisType.Spectrum,
-    FileAnalysisType.REGION,
+    FileAnalysisType.Spectrum
 ];
+
+const LOAD_REGION=0;
+const LOAD_MOC=1;
+const LOAD_DL=2;
+const LOAD_FOOTPRINT=3;
+const LOAD_IMAGE_AND_TABLES=4;
+const LOAD_IMAGE_ONLY=5;
+const LOAD_TABLE_ONLY=6;
+
+const imageWarning = 'Only loading the table(s), ignoring any selected image(s).';
+const tableWarning = 'Only loading the image(s), ignoring any selected table(s).';
+
 
 export function resultSuccess(request) {
 
-    const currentReport = request.additionalParams?.currentReport;
-    const currentDetailsModel = request.additionalParams?.currentDetailsModel;
-    const summaryModel = request.additionalParams?.summaryModel;
-    const groupKey = request.additionalParams?.groupKey;
-    const acceptMoc = request.additionalParams?.acceptMoc;
+    const {currentReport, currentDetailsModel, summaryModel, groupKey, acceptList, uniqueTypes}= request.additionalParams ?? {};
     const summaryTblId = groupKey; //FileUploadAnalysis
-
-    const isTablesOnly= () => getAppOptions()?.uploadPanelLimit==='tablesOnly';
-    if (isTablesOnly()) return tablesOnlyResultSuccess(request, summaryTblId, currentReport, summaryModel, groupKey);
     const fileCacheKey = getFileCacheKey(groupKey);
 
-    const tableIndices = getSelectedRows(FileAnalysisType.Table, summaryTblId, currentReport, summaryModel);
-    const imageIndices = getSelectedRows(FileAnalysisType.Image, summaryTblId, currentReport, summaryModel);
+    //determine if the file type or selections are valid to be loaded
+    const {valid, errorMsg, title} = determineValidity(acceptList, uniqueTypes, summaryModel, summaryTblId, currentReport);
 
-    if (!isFileSupported(summaryModel, currentReport)) {
-        showInfoPopup(getFirstPartType(summaryModel) ? `File type of ${getFirstPartType(summaryModel)} is not supported.`: 'Could not recognize the file type');
+    if (!valid) {
+        showInfoPopup(errorMsg, title);
         return false;
     }
 
-    if (!isRegion(summaryModel) && tableIndices.length + imageIndices.length === 0) {
-        if (getSelectedRows('HeaderOnly', summaryTblId, currentReport, summaryModel)?.length) {
-            showInfoPopup('FITS HDU type of HeaderOnly is not supported. A header-only HDU contains no additional data.', 'Validation Error');
+    const {loadType, tableIndices, imageIndices} = determineLoadType(acceptList, uniqueTypes, summaryModel,
+        summaryTblId, currentReport, fileCacheKey, request, currentDetailsModel);
+
+    switch(loadType) {
+        case LOAD_REGION:
+            sendRegionRequest(fileCacheKey, currentReport);
+            return true;
+
+        case LOAD_MOC:
+            const mocMeta= {[MetaConst.PREFERRED_HIPS]: getAppHiPSForMoc()};
+            if (request.mocOp==='table') mocMeta[MetaConst.IGNORE_MOC]='true';
+            //loadToUI = true if request.mocOp==='table', else loadToUI=false
+            sendTableRequest(tableIndices, fileCacheKey, Boolean(request.tablesAsSpectrum==='spectrum'), currentReport, Boolean(request.mocOp==='table'), mocMeta);
+            return true;
+
+        case LOAD_DL:
+            tableIndices.forEach((idx) => void fetchDatalinkUITable(fileCacheKey,idx) );
+            return true;
+
+        case LOAD_FOOTPRINT:
+            sendLSSTFootprintRequest(fileCacheKey, request.fileName, tableIndices[0]);
+            return true;
+
+        case LOAD_IMAGE_AND_TABLES:
+            sendTableRequest(tableIndices, fileCacheKey, Boolean(request.tablesAsSpectrum==='spectrum'), currentReport);
+            sendImageRequest(imageIndices, request, fileCacheKey, currentReport);
+            return true;
+
+        case LOAD_IMAGE_ONLY:
+            if (tableIndices > 0) {
+                showWarning(tableWarning, () =>  sendImageRequest(imageIndices, request, fileCacheKey, currentReport));
+            }
+            else {
+                sendImageRequest(imageIndices, request, fileCacheKey, currentReport);
+                return true;
+            }
+            return false;
+
+        case LOAD_TABLE_ONLY:
+            if (imageIndices > 0) {
+                 showWarning(imageWarning,
+                    () => sendTableRequest(tableIndices, fileCacheKey, Boolean(request.tablesAsSpectrum==='spectrum'), currentReport));
+            }
+            else {
+                sendTableRequest(tableIndices, fileCacheKey, Boolean(request.tablesAsSpectrum==='spectrum'), currentReport);
+                return true;
+            }
+            return false;
+        default: return false;
+    }
+    return false;
+}
+
+function showWarning(warningMsg,sendRequest) {
+    showYesNoPopup(warningPrompt(warningMsg),(id, yes) => {
+        if (yes) {
+            sendRequest();
+            dispatchHideDialog(id);
         }
         else {
-            showInfoPopup('No extension is selected', 'Validation Error');
+            dispatchHideDialog(id);
         }
-        return false;
-    }
+    });
+}
 
+const warningPrompt = (warningMsg) => {
+    return (<div style={{width: 260}}>
+        {warningMsg}
+        <br/><br/>
+        Are you sure you want to continue? <br/><br/>
+        Click 'Yes' to continue or 'No' to cancel. <br/>
+    </div>);
+};
+
+function determineLoadType(acceptList, uniqueTypes, summaryModel, summaryTblId, currentReport, fileCacheKey, request, currentDetailsModel) {
+    const tableIndices = getSelectedRows(FileAnalysisType.Table, summaryTblId, currentReport, summaryModel);
+    const imageIndices = getSelectedRows(FileAnalysisType.Image, summaryTblId, currentReport, summaryModel);
     const isMocFits =  isMOCFitsFromUploadAnalsysis(currentReport);
     const isDL=  isAnalysisTableDatalink(currentReport);
 
-    //user is attempting to load a non-moc file from a HiPs Upload Dialog, which expects a moc fits file
-    if (acceptMoc && !isMocFits.valid) {
-        showInfoPopup( 'Warning: Loading a non-MOC FITS file from this dialog is not supported.', 'Warning');
-        return false;
-    }
-
     if (isRegion(summaryModel)) {
-        sendRegionRequest(fileCacheKey, currentReport);
+        return {loadType: LOAD_REGION};
     }
     else if (isMocFits.valid) {
         const mocMeta= {[MetaConst.PREFERRED_HIPS]: getAppHiPSForMoc()};
         if (request.mocOp==='table') mocMeta[MetaConst.IGNORE_MOC]='true';
         //loadToUI = true if request.mocOp==='table', else loadToUI=false
-        sendTableRequest(tableIndices, fileCacheKey, Boolean(request.tablesAsSpectrum==='spectrum'), currentReport, Boolean(request.mocOp==='table'), mocMeta);
-        //this will signal HiPSImageSelect's 'Add MOC Layer dialog' to hide itself
-        return true;
+        return {loadType: LOAD_MOC, tableIndices};
     }
     else if (isDL && request.datalinkOp === 'datalinkUI') { // handle Datalink / service descriptor UI
-        tableIndices.forEach((idx) => void fetchDatalinkUITable(fileCacheKey,idx) );
+        return {loadType: LOAD_DL, tableIndices};
     }
     else if ( isLsstFootprintTable(currentDetailsModel) ) {
-        sendLSSTFootprintRequest(fileCacheKey, request.fileName, tableIndices[0]);
+        return {loadType: LOAD_FOOTPRINT, tableIndices};
     }
-    else {
-        sendTableRequest(tableIndices, fileCacheKey, Boolean(request.tablesAsSpectrum==='spectrum'), currentReport);
-        sendImageRequest(imageIndices, request, fileCacheKey, currentReport);
-    }
-}
-
-function tablesOnlyResultSuccess(request, summaryTblId, currentReport, currentSummaryModel, groupKey) {
-    const tableIndices = getSelectedRows(FileAnalysisType.Table, summaryTblId, currentReport, currentSummaryModel);
-    const imageIndices = getSelectedRows(FileAnalysisType.Image, summaryTblId, currentReport, currentSummaryModel);
-
-    if (tableIndices.length>0) {
-        imageIndices.length>0 && showInfoPopup('Only loading the tables, ignoring the images.');
-        sendTableRequest(tableIndices, getFileCacheKey(groupKey), Boolean(request.tablesAsSpectrum==='spectrum'), currentReport);
-        return true;
-    }
-    else {
-        showInfoPopup('You may only upload tables.');
-        return false;
+    else { //either an image/table or combined FITS file
+        if (acceptTableOrSpectrum(acceptList) && acceptImages(acceptList)) {
+            return {loadType: LOAD_IMAGE_AND_TABLES, tableIndices, imageIndices};
+        } else if (!acceptImages(acceptList)) {
+            return {loadType: LOAD_TABLE_ONLY, tableIndices, imageIndices};
+        } else if (!acceptTableOrSpectrum(acceptList)) {
+            return {loadType: LOAD_IMAGE_ONLY, tableIndices, imageIndices};
+        }
     }
 }
 
-function getFileCacheKey(groupKey) {
+const errorObj = {
+    regionMismatchErr: {valid: false, errorMsg: 'You may not load a Region file from here', title: 'File Type Mismatch'},
+    headerOnlyErr: {valid: false, errorMsg: 'FITS HDU type of HeaderOnly is not supported. A header-only HDU contains no additional data',title:'Validation Error'},
+    noExtensionErr: {valid: false, errorMsg: 'No extension is selected', title:'Validation Error'},
+    nonMocFitsErr: {valid: false, errorMsg: 'Warning: Loading a non-MOC FITS file from this dialog is not supported.', title: 'File Type Mismatch'},
+    nonDLErr: {valid: false, errorMsg: 'Warning: Loading a non-DataLink Table file from this dialog is not supported.', title: 'File Type Mismatch'},
+    nonMocAndDLErr: {valid: false, errorMsg: 'Warning: You may only load a MOC FITS or Data Link Table file from here.', title: 'File Type Mismatch'},
+    noImgOrTblErr: {valid: false, errorMsg: 'You may not load a FITS file from here.', title: 'File Type Mismatch'},
+    noTblSelectedErr: {valid: false, errorMsg: 'You must select at least one Table.', title: 'Validation Error'},
+    noImgSelectedErr: {valid: false, errorMsg: 'You must select at least one Image.', title: 'Validation Error'},
+    imgNotAcceptedErr: {valid: false, errorMsg: 'You may not load an image file from here.', title: 'File Type Mismatch'},
+    tblNotAcceptedErr: {valid: false, errorMsg: 'You may not load tables from here.', title: 'File Type Mismatch'},
+};
+
+function determineValidity(acceptList, uniqueTypes, summaryModel, summaryTblId, currentReport) {
+    let {errorMsg, title} = '';
+    let valid = true;
+    const tableIndices = getSelectedRows(FileAnalysisType.Table, summaryTblId, currentReport, summaryModel);
+    const imageIndices = getSelectedRows(FileAnalysisType.Image, summaryTblId, currentReport, summaryModel);
+    const isMocFits =  isMOCFitsFromUploadAnalsysis(currentReport);
+    const isDL=  isAnalysisTableDatalink(currentReport);
+
+    if (uniqueTypes.includes(REGIONS) && !acceptRegions(acceptList)) {
+        return errorObj.regionMismatchErr;
+    }
+
+    if (!isFileSupported(summaryModel, currentReport)) {
+        errorMsg = getFirstPartType(summaryModel) ? `File type of ${getFirstPartType(summaryModel)} is not supported.`: 'Could not recognize the file type';
+        title = 'File Type Error';
+        valid = false;
+        return {valid, errorMsg, title};
+    }
+
+    if (!uniqueTypes.includes(REGIONS) && tableIndices.length + imageIndices.length === 0) {
+        if (getSelectedRows('HeaderOnly', summaryTblId, currentReport, summaryModel)?.length) {
+            return errorObj.headerOnlyErr;
+        }
+        else {
+            return errorObj.noExtensionErr;
+        }
+    }
+
+    //uniqueTypes are the types of the parts of the uploaded file (retrieved in FileAnalysis)
+    if (uniqueTypes.includes(IMAGES) && uniqueTypes.includes(TABLES)) {
+        if (!acceptImages(acceptList) && !acceptTableOrSpectrum(acceptList)) {
+            return errorObj.noImgOrTblErr;
+        }
+        else if (!acceptImages(acceptList)) {
+            if (tableIndices.length === 0) {
+                return errorObj.noTblSelectedErr;
+            }
+        }
+        else if (!acceptTableOrSpectrum(acceptList)){
+            if (imageIndices.length === 0) {
+                return errorObj.noImgSelectedErr;
+            }
+        }
+    }
+    else if (uniqueTypes.includes(IMAGES)) {
+        if (!acceptImages(acceptList)) {
+            return errorObj.imgNotAcceptedErr;
+        }
+        if (imageIndices.length === 0) {
+            return errorObj.noImgSelectedErr;
+        }
+    }
+    else if (uniqueTypes.includes(TABLES)) {
+        if (!acceptAnyTables(acceptList))  {
+            return errorObj.tblNotAcceptedErr;
+        }
+        if (acceptMocTables((acceptList)) && !isMocFits.valid &&
+            (acceptList.length===1 || !acceptNonMocTables(acceptList) )) {
+            return errorObj.nonMocFitsErr;
+        }
+        if (acceptDataLinkTables(acceptList) && !isDL &&
+            (acceptList.length===1 || !acceptNonDataLinkTables(acceptList) )) {
+            return errorObj.nonDLErr;
+        }
+        if (acceptMocTables((acceptList)) && acceptDataLinkTables(acceptList) && !isDL && !isMocFits.valid) {
+            //edge case - in case acceptList= [DATA_LINK_TABLES, MOC_TABLES] and user uploads some other table file
+            return errorObj.nonMocAndDLErr;
+        }
+        if (tableIndices.length === 0) {
+            return errorObj.noTblSelectedErr;
+        }
+    }
+    return {valid, errorMsg, title}; //valid will be true here
+}
+
+export function getFileCacheKey(groupKey) {
     // because this value is stored in different fields, so we have to check on what options were selected to determine the active value
     const uploadSrc = getFieldVal(groupKey, uploadOptions) || FILE_ID;
     return getFieldVal(groupKey, uploadSrc);
@@ -220,6 +367,7 @@ function sendImageRequest(imageIndices, request, fileCacheKey, currentReport) {
 }
 
 export function getSelectedRows(type, summaryTblId, currentReport, currentSummaryModel) {
+
     if (getPartCnt(currentReport)===1) {
         if (type===getFirstPartType(currentSummaryModel)) {
             return [0];
