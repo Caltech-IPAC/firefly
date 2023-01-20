@@ -104,6 +104,9 @@ function onAnyAction(layoutInfo, action, views) {
             break;
         }
     }
+    if (count===0 && expanded !==LO_VIEW.none) {
+        expanded= LO_VIEW.none;
+    }
     return smartMerge(layoutInfo, {showTables, showImages, showXyPlots, autoExpand, mode: {expanded, standard, closeable}});
 }
 

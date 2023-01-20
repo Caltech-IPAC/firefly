@@ -311,7 +311,7 @@ public final class FITSTableReader
         }
         Header h= hdu.getHeader();
 
-        String zValue= h.containsKey("ZIMAGE") ? h.getStringValue("ZIMAGE").toUpperCase() : "";
+        String zValue= (h.containsKey("ZIMAGE") && h.getStringValue("ZIMAGE")!=null) ? h.getStringValue("ZIMAGE").toUpperCase() : "";
         if (zValue.equals("T") || zValue.equals("TRUE")) {
             logTableReadError(fitsFilename,tableIdx,"HDU is an compressed image stored at a table");
             return null;

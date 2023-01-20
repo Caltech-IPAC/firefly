@@ -184,6 +184,7 @@ function makeImageLayerItemAry(pv, maxTitleChars, hasLast, mouseOverMaskValue) {
                            canUserDelete={true}
                            canUserChangeColor={true}
                            isPointData={false}
+                           packWithNext= {idx!==last}
                            color={opv.colorAttributes.color}
                            autoFormatTitle={true}
                            title= {makeOverlayTitle(opv, (mouseOverMaskValue & opv.maskValue)) }

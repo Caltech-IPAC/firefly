@@ -235,7 +235,7 @@ export const makeChangeHiPSAction= (rawAction) => (dispatcher, getState) => doHi
 async function makeHiPSPlot(rawAction, dispatcher) {
 
     const {payload}= rawAction;
-    const {plotId, attributes, pvOptions, renderTreeId}= payload;
+    const {plotId, attributes, pvOptions={}, renderTreeId}= payload;
     const wpRequest= ensureWPR(payload.wpRequest);
     const blank= isBlankHiPSURL(wpRequest.getHipsRootUrl());
 
