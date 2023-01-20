@@ -23,6 +23,9 @@ export const SpatialPanelWidth = Math.max(Width_Time_Wrapper * 2, SpatialWidth) 
 const DEF_ERR_MSG= 'Constraints Error';
 
 
+export const getTapObsCoreOptions= (serviceLabel) =>
+    getAppOptions().tapObsCore?.[serviceLabel] ?? getAppOptions().tapObsCore ?? {};
+
 /**
  * make a FieldErrorList object
  * @returns {FieldErrorList}

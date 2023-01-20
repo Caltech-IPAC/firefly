@@ -10,7 +10,8 @@ import {useFieldGroupRerender, useFieldGroupWatch} from '../SimpleComponent.jsx'
 import {ValidationField} from '../ValidationField.jsx';
 import {makeAdqlQueryRangeFragment, ConstraintContext, siaQueryRange} from './Constraints.js';
 import {
-    DebugObsCore, getPanelPrefix, LableSaptail, LeftInSearch, makeCollapsibleCheckHeader, makeFieldErrorList,
+    DebugObsCore, getPanelPrefix, getTapObsCoreOptions, LableSaptail, LeftInSearch, makeCollapsibleCheckHeader,
+    makeFieldErrorList,
     makePanelStatusUpdater, SmallFloatNumericWidth, SpatialWidth,
 } from './TableSearchHelpers.jsx';
 import {tapHelpId} from './TapUtil.js';
@@ -107,8 +108,8 @@ const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
 const fldKeys= ['obsCoreWavelengthContains', 'obsCoreWavelengthMinRange','obsCoreWavelengthSelectionType',
                 'obsCoreWavelengthRangeType', 'obsCoreWavelengthMaxRange', 'obsCoreWavelengthUnits'];
 
-export function ObsCoreWavelengthSearch({initArgs}) {
-    const filterDefinitions = getAppOptions()?.tapObsCore?.filterDefinitions ?? [];
+export function ObsCoreWavelengthSearch({initArgs, serviceLabel}) {
+    const filterDefinitions = getTapObsCoreOptions(serviceLabel).filterDefinitions ?? [];
     const fdDefsKeys= filterDefinitions.length ? filterDefinitions.map((fd) =>'filter' +fd.name ) : [];
 
     const {getVal,makeFldObj}= useContext(FieldGroupCtx);
@@ -233,5 +234,6 @@ export function ObsCoreWavelengthSearch({initArgs}) {
 }
 
 ObsCoreWavelengthSearch.propTypes = {
-    initArgs: PropTypes.object
+    initArgs: PropTypes.object,
+    serviceLabel: PropTypes.string
 };

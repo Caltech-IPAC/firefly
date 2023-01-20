@@ -999,7 +999,7 @@ export function getDefaultChartProps(tbl_id,fbXCol,fbYCol) {
 
     // if defined, use these columns if nothing is specifically defined in the meta
     if (fbXCol && fbYCol) {
-        return genericXYChart({tbl_id, xCol:fbXCol, yCol:fbYCol, xOptions: 'flip'});
+        return genericXYChart({tbl_id, xCol:fbXCol, yCol:fbYCol});
     }
 
     // for catalogs use lon and lat columns

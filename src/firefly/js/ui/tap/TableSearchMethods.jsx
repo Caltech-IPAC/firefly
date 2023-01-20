@@ -10,7 +10,7 @@ import {ObsCoreWavelengthSearch} from './WavelengthPanel.jsx';
 
 const TAP_SEARCH_METHODS_GROUP= 'TAP_SEARCH_METHODS_GROUP';
 
-export const TableSearchMethods = ({initArgs, obsCoreEnabled, columnsModel, serviceUrl}) => {
+export const TableSearchMethods = ({initArgs, obsCoreEnabled, columnsModel, serviceUrl, serviceLabel}) => {
 
     const [controlConnected, setControlConnected] = useState(false);
 
@@ -18,26 +18,26 @@ export const TableSearchMethods = ({initArgs, obsCoreEnabled, columnsModel, serv
         <ConnectionCtx.Provider value={{controlConnected, setControlConnected}}>
             <FieldGroup style={{height: '100%', overflow: 'auto'}} groupKey={TAP_SEARCH_METHODS_GROUP} keepState={true}>
                 <HelperComponents {...{initArgs,cols:getAvailableColumns(columnsModel),
-                    columnsModel,serviceUrl,obsCoreEnabled}}/>
+                    columnsModel,serviceUrl,serviceLabel,obsCoreEnabled}}/>
             </FieldGroup>
         </ConnectionCtx.Provider>
     );
 };
 
-function HelperComponents({initArgs, cols, columnsModel, serviceUrl, obsCoreEnabled}) {
+function HelperComponents({initArgs, cols, columnsModel, serviceUrl, serviceLabel, obsCoreEnabled}) {
     return obsCoreEnabled ?
         (
             <React.Fragment>
-                <ObsCoreSearch {...{cols, initArgs}} />
+                <ObsCoreSearch {...{cols, serviceLabel, initArgs}} />
                 <SpatialSearch {...{cols, serviceUrl, columnsModel, initArgs, obsCoreEnabled}} />
                 <ExposureDurationSearch {...{initArgs}} />
-                <ObsCoreWavelengthSearch {...{initArgs}} />
+                <ObsCoreWavelengthSearch {...{initArgs, serviceLabel}} />
             </React.Fragment>
         ) :
         (
             <React.Fragment>
                 <SpatialSearch {...{cols, serviceUrl, columnsModel, initArgs, obsCoreEnabled}} />
-                <TemporalSearch {...{cols, columnsModel}} />
+                <TemporalSearch {...{cols, columnsModel,}} />
             </React.Fragment>
         );
 }

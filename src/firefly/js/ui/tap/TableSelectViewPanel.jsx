@@ -63,6 +63,7 @@ export function BasicUI(props) {
     const [error, setError] = useState(undefined);
     const mountedRef = useRef(false);
     const {setVal}= useContext(FieldGroupCtx);
+    const serviceLabel= props.serviceLabel ?? initState.serviceLabel;
     const [serviceUrl, serviceUrlRef, setServiceUrl] = useStateRef(initState.serviceUrl || props.serviceUrl);
     const [schemaName, schemaRef, setSchemaName] = useStateRef(initState.schemaName || props.initArgs?.urlApi?.schema);
     const [tableName, tableRef, setTableName] = useStateRef(initState.tableName || props.initArgs?.urlApi?.table);
@@ -266,7 +267,7 @@ export function BasicUI(props) {
                     <SplitPane split='vertical' maxSize={splitMax} mixSize={20} defaultSize={splitDef}>
                         <SplitContent>
                             {columnsModel ?
-                                <TableSearchMethods {...{initArgs, serviceUrl, columnsModel, obsCoreEnabled}}/>
+                                <TableSearchMethods {...{initArgs, serviceUrl, serviceLabel, columnsModel, obsCoreEnabled}}/>
                                 : <div className='loading-mask'/>
                             }
                         </SplitContent>

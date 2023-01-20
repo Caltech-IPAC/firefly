@@ -243,7 +243,7 @@ function TapSearchPanelComponents({initArgs, serviceUrl, onTapServiceOptionSelec
                     {queryTypeEpilogue}
                 </div>
                 { selectBy === 'adql' ?
-                    <AdqlUI {...{serviceUrl}}/> : <BasicUI  {...{serviceUrl, selectBy, initArgs, obsCoreTableModel}}/>}
+                    <AdqlUI {...{serviceUrl}}/> : <BasicUI  {...{serviceUrl, serviceLabel: label, selectBy, initArgs, obsCoreTableModel}}/>}
             </div>
         </FieldGroup>
     );

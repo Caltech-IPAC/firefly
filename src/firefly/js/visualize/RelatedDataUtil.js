@@ -188,6 +188,7 @@ function makeMaskTitle(maskNumber, availableMask) {
         .find( (k) => parseInt(availableMask[k])===maskNumber);
     if (maskDesc) {
         if (maskDesc.startsWith('HIERARCH')) maskDesc= maskDesc.substring(9);
+        if (maskDesc.startsWith('MP_')) maskDesc= maskDesc.substring(3);
         return `${titleRoot} - ${maskDesc}`;
     }
     else {
