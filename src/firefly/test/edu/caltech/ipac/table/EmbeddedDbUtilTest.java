@@ -3,7 +3,10 @@
  */
 package edu.caltech.ipac.table;
 
+import edu.caltech.ipac.TestCategory;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
+import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.data.ServerParams;
@@ -13,9 +16,11 @@ import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.db.HsqlDbAdapter;
 import edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource;
 import edu.caltech.ipac.firefly.util.FileLoader;
+import org.apache.logging.log4j.Level;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.io.File;
 import java.io.IOException;
@@ -191,4 +196,41 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 		Assert.assertEquals("%.6g", dt.getFmtDisp());
 	}
 
+	@Category({TestCategory.Perf.class})
+	@Test
+	public void perfTestLargeSize() throws Exception {
+
+//		no added props.  all defaults from hsqldb
+//		StopWatch - ingest DB file ran with elapsed time of 16.7340 SECONDS
+//		StopWatch - sort DATA table ran with elapsed time of 5.0720 SECONDS
+
+// 		custom props
+//		StopWatch - ingest DB file ran with elapsed time of 3.0330 SECONDS
+//		StopWatch - sort DATA table ran with elapsed time of 5.3010 SECONDS
+
+//		custom props; with hsqldb.tx=MVCC
+//		StopWatch - ingest DB file ran with elapsed time of 3.3680 SECONDS
+//		StopWatch - sort DATA table ran with elapsed time of 5.5850 SECONDS
+
+
+		File testFile = FileLoader.resolveFile("large-ipac-tables/wise-950000.tbl");            // 358MB; 950k rows
+
+		File dbFile = File.createTempFile("perfTest", ".hsql");
+		dbFile.deleteOnExit();
+
+		HsqlDbAdapter dbAdapter = new HsqlDbAdapter();
+
+		Logger.setLogLevel(Level.TRACE, "edu.caltech");
+		DataGroup data = IpacTableReader.read(testFile);
+		StopWatch.getInstance().start("ingest DB file");
+		EmbeddedDbUtil.createDbFile(dbFile,dbAdapter);
+		EmbeddedDbUtil.ingestDataGroup(dbFile, data, dbAdapter, MAIN_DB_TBL);
+		StopWatch.getInstance().printLog("ingest DB file");
+
+		StopWatch.getInstance().start("sort DATA table");
+		String sql = "select * from DATA order by \"w1mpro\"";
+		EmbeddedDbUtil.execQuery(dbAdapter, dbFile, sql, MAIN_DB_TBL);
+		StopWatch.getInstance().printLog("sort DATA table");
+
+	}
 }
