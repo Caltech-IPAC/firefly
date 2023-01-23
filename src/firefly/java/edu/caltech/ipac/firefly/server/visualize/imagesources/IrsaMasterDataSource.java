@@ -90,7 +90,7 @@ public class IrsaMasterDataSource implements ImageMasterDataSourceType {
          Map<String, String> paramMaps=getParameterMaps();
          PARAMS[] parameters = ImageMasterDataEntry.PARAMS.values();
 
-         ArrayList<String> missionIdList=new ArrayList<>();
+         ArrayList<String> imageIdList=new ArrayList<>();
          if (!validateMasterTable(inDg, parameters)){
              throw new Exception("The column names do not match the required parameter names");
          }
@@ -101,20 +101,21 @@ public class IrsaMasterDataSource implements ImageMasterDataSourceType {
                      Object obj = row.getDataElement(parameters[i].getKey());
                      String val = obj != null ? String.valueOf(obj) : null;
 
-                     //make a temporary missionId
+                     //make a temporary imageId
                      if (val==null && parameters[i].getKey().equals("imageId")){
                          val = String.valueOf(row.getDataElement(PARAMS.MISSION_ID.getKey()))
                                  +String.valueOf(row.getDataElement("surveyKey"))
                                  +String.valueOf(row.getDataElement(PARAMS.WAVEBAND_ID.getKey()));
-                         if( missionIdList.contains(val)){
-                             val=val.concat(new String("_"+i));
+                         if( imageIdList.contains(val)){
+                             val+="_"+i;
                          }
-                         missionIdList.add(val);
-                     }//end making missionId
+                         imageIdList.add(val);
+                     }//end making imageId
 
                      entry.set(parameters[i], val);
              }
              entry.setPlotRequestParams(getMappedPlotRequestParam(row, paramMaps));
+             entry.setDefaultColorParams(getMappedColors(row));
 
              retList.add( entry);
          }
@@ -152,6 +153,22 @@ public class IrsaMasterDataSource implements ImageMasterDataSourceType {
          //For IRSA, type is SERVICE for now.
          params.put("type",  "SERVICE");
          return params;
+     }
+
+     private HashMap<String, String> getMappedColors(DataObject row){
+         HashMap<String, String> colorMap = new HashMap<>();
+         Object colorObj = row.getDataElement("defaultRgbColor");
+         if (colorObj!=null) {
+             String[] rgbColors = colorObj.toString().split(";");
+             String[] rgbColorKeys = {"red", "green", "blue"};
+             for (int i = 0; i < 3; i++) {
+                 String imageId = String.valueOf(row.getDataElement(PARAMS.MISSION_ID.getKey()))
+                         + String.valueOf(row.getDataElement("surveyKey"))
+                         + rgbColors[i];
+                 colorMap.put(rgbColorKeys[i], imageId);
+             }
+         }
+         return colorMap;
      }
 
      DataGroup getDataFromMasterTable(String masterTableName) throws IOException, FailedRequestException {

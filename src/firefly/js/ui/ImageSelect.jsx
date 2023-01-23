@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 
 import PropTypes from 'prop-types';
 import {uniqBy, get, countBy, remove, sortBy, isNil} from 'lodash';
@@ -11,11 +11,12 @@ import {uniqBy, get, countBy, remove, sortBy, isNil} from 'lodash';
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {CollapsiblePanel} from '../ui/panel/CollapsiblePanel.jsx';
-import FieldGroupUtils, {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
+import FieldGroupUtils, {getFieldVal, setFieldValue} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchMultiValueChange} from '../fieldGroup/FieldGroupCntlr.js';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
 import {updateSet} from '../util/WebUtil.js';
-import {useStoreConnector} from './SimpleComponent';
+import {useFieldGroupValue, useFieldGroupWatch, useStoreConnector} from './SimpleComponent';
+import {FD_KEYS, FG_KEYS} from 'firefly/visualize/ui/UIConst';
 
 import './ImageSelect.css';
 import infoIcon from 'html/images/info-icon.png';
@@ -351,11 +352,39 @@ const toFilterSummary = (master, key, desc) => Object.entries(countBy(master, (d
 /*--------------------------- Data Product List ---------------------------------------*/
 
 function DataProductList({filteredImageData, groupKey, multiSelect}) {
+    // Create a field for storing default images in rgb field group
+    const [getDefaultImages, setDefaultImages] = useFieldGroupValue('defaultImages', FG_KEYS.rgb);
+
+    const updateDefaultImages = (color) => ([coloredImageVal]) => {
+        // if it's a colored (red, green, or blue) DataProductList and if image for that color is selected for the first time
+        if (groupKey===FG_KEYS[color] && (coloredImageVal && !getDefaultImages()?.[color])) {
+            const selectedColoredImage = filteredImageData.find((d) => d.imageId === coloredImageVal);
+
+            // if defaultColor field (default images for rgb) is defined and default image specified for that color is same as selected image
+            if (selectedColoredImage?.defaultColor && selectedColoredImage.defaultColor[color]===coloredImageVal) {
+                setDefaultImages(selectedColoredImage.defaultColor);
+
+                // also change image source of rest of colored images to archive
+                ['red', 'green', 'blue'].forEach((c)=> setFieldValue(FG_KEYS[c], FD_KEYS.source, 'archive'));
+            }
+        }
+    };
+
+    // Update default images if image selection for any of 3 colors is changed
+    useFieldGroupWatch([IMG_PREFIX+FG_KEYS.red], updateDefaultImages('red'), [], FG_KEYS.red);
+    useFieldGroupWatch([IMG_PREFIX+FG_KEYS.green], updateDefaultImages('green'), [], FG_KEYS.green);
+    useFieldGroupWatch([IMG_PREFIX+FG_KEYS.blue], updateDefaultImages('blue'), [], FG_KEYS.blue);
+
+    let defaultImage = '';
+    if (groupKey===FG_KEYS.red) defaultImage = getDefaultImages()?.red;
+    else if (groupKey===FG_KEYS.green) defaultImage = getDefaultImages()?.green;
+    else if (groupKey===FG_KEYS.blue) defaultImage = getDefaultImages()?.blue;
+
     const projects= uniqBy(filteredImageData, 'project').map( (d) => d.project);
 
     let content;
     if (projects.length > 0) {
-        content = projects.map((p) => <DataProduct key={p} {...{groupKey, project:p, filteredImageData, multiSelect}}/>);
+        content = projects.map((p) => <DataProduct key={p} {...{groupKey, project:p, filteredImageData, multiSelect, defaultImage}}/>);
     } else {
         content = (
             <div style={{display:'flex', justifyContent:'center', marginTop: 40}}>
@@ -371,7 +400,7 @@ function DataProductList({filteredImageData, groupKey, multiSelect}) {
     );
 }
 
-function DataProduct({groupKey, project, filteredImageData, multiSelect}) {
+function DataProduct({groupKey, project, filteredImageData, multiSelect, defaultImage}) {
 
     // filter projects ... projects is like dataproduct or dataset.. i.e SEIP
     const projectData= filteredImageData.filter((d) => d.project === project);
@@ -386,7 +415,7 @@ function DataProduct({groupKey, project, filteredImageData, multiSelect}) {
                 <div className='DataProductList__item--details'>
                     {
                         subProjects.map((sp) =>
-                            <BandSelect key={'sub_' + sp} {...{groupKey, subProject:sp, projectData, labelMaxWidth, multiSelect}}/>
+                            <BandSelect key={'sub_' + sp} {...{groupKey, subProject:sp, projectData, labelMaxWidth, multiSelect, defaultImage}}/>
                         )
                     }
                 </div>
@@ -445,7 +474,7 @@ const hasImageSelection = (groupKey, proj) => {
 };
 
 
-function BandSelect({groupKey, subProject, projectData, labelMaxWidth, multiSelect}) {
+function BandSelect({groupKey, subProject, projectData, labelMaxWidth, multiSelect, defaultImage}) {
     const fieldKey= IMG_PREFIX + get(projectData, [0, 'project']) + (subProject ? '||' + subProject : '');
     const options = toImageOptions(projectData.filter( (p) => p.subProject === subProject));
     const label = subProject && (
@@ -483,7 +512,7 @@ function BandSelect({groupKey, subProject, projectData, labelMaxWidth, multiSele
                     isGrouped={true}
                     initialState={{
                             options,        // Note: values in initialState are saved into fieldgroup.  options are used in the reducer above to determine what 'all' means.
-                            value: '',
+                            value: defaultImage,
                             tooltip: 'Please select some boxes',
                             label : '' }}
                     options={options}
