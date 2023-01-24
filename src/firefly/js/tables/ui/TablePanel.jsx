@@ -5,7 +5,7 @@
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, truncate, get, set} from 'lodash';
-import {getAppOptions} from '../../api/ApiUtil.js';
+import {getSearchActions} from '../../core/AppDataCntlr.js';
 import {ActionsDropDownButton, isTableActionsDropVisible} from '../../ui/ActionsDropDownButton.jsx';
 
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
@@ -48,7 +48,7 @@ export function TablePanel(props) {
     tbl_ui_id = tbl_ui_id || `${tbl_id}-ui`;
 
     const uiState = useStoreConnector(() => getTableUiById(tbl_ui_id) || {columns:[]}, [tbl_ui_id]);
-    const searchActions= getAppOptions()?.searchActions;
+    const searchActions= getSearchActions();
 
     useEffect( () => {
         if (!getTableUiByTblId(tbl_id)) {

@@ -74,6 +74,21 @@ export function BasicUI(props) {
     const selectBy = props.selectBy;
     const obsCoreTableModel = props.obsCoreTableModel;
 
+    useEffect(() => {
+        const {table:t,schemaName:s}= initArgs?.searchParams ?? {};
+        if (s && (s!==schemaName)) {
+            setTimeout(() => {
+                setSchemaName(s);
+                setTableName(t);
+                loadSchemas(serviceUrl,s).then(() => {
+                    setTableName(t);
+                    loadTables(serviceUrl,s,t);
+                });
+            },5);
+        }
+        // t && (t!==tableName) && setTableName(initArgs?.searchParams?.table);
+    }, [initArgs?.searchParams?.schemaName]);
+
     const obsCoreSelected = selectBy === 'obscore';
     const tableSectionNumber = !obsCoreSelected ? '4' : '3';
 
@@ -90,7 +105,7 @@ export function BasicUI(props) {
         setVal('tableName',undefined);
         // update state for higher level components that might rely on obsCoreTables
 
-        loadTapSchemas(requestServiceUrl).then((tableModel) => {
+        return loadTapSchemas(requestServiceUrl).then((tableModel) => {
             if (!mountedRef.current) {
                 return;
             }
