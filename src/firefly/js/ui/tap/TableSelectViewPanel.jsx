@@ -14,7 +14,6 @@ import {SpatialPanelWidth} from './TableSearchHelpers.jsx';
 import {TableSearchMethods} from './TableSearchMethods.jsx';
 import { defTapBrowserState, loadTapColumns, loadTapSchemas, loadTapTables, tapHelpId, } from './TapUtil.js';
 
-
 import './TableSelectViewPanel.css';
 
 
@@ -26,23 +25,18 @@ export const SectionTitle= ({title,helpId,tip}) => (
     <div className='TapSearch__section--title' title={tip}>{title}<HelpIcon helpId={tapHelpId(helpId)}/></div>);
 
 export function AdqlUI({serviceUrl}) {
-
     return (
-
         <div className='TapSearch__section' style={{flexDirection: 'column', flexGrow: 1}}>
             <div style={{ display: 'inline-flex', alignItems: 'center'}}>
                 <div className='TapSearch__section--title'>3. Advanced ADQL  <HelpIcon helpId={tapHelpId('adql')}/> </div>
                 <div style={{color: 'brown', fontSize: 'larger'}}>ADQL edits below will not be reflected in <b>Single Table</b> view</div>
             </div>
-
-
             <div className='expandable'>
                 <div style={{flexGrow: 1}}>
                     <AdvancedADQL adqlKey='adqlQuery' defAdqlKey='defAdqlKey' tblNameKey='tableName' serviceUrl={serviceUrl}/>
                 </div>
             </div>
         </div>
-
     );
 }
 
@@ -57,22 +51,23 @@ function useStateRef(initialState){
 }
 
 export function BasicUI(props) {
-    const {initArgs}= props;
+    const {initArgs={}}= props;
+    const {urlApi={},searchParams={}}= initArgs;
     const [getTapBrowserState,setTapBrowserState]= useFieldGroupMetaState(defTapBrowserState);
+    const {selectBy, obsCoreTableModel}= props;
     const initState = getTapBrowserState();
     const [error, setError] = useState(undefined);
     const mountedRef = useRef(false);
     const {setVal}= useContext(FieldGroupCtx);
     const serviceLabel= props.serviceLabel ?? initState.serviceLabel;
     const [serviceUrl, serviceUrlRef, setServiceUrl] = useStateRef(initState.serviceUrl || props.serviceUrl);
-    const [schemaName, schemaRef, setSchemaName] = useStateRef(initState.schemaName || props.initArgs?.urlApi?.schema);
-    const [tableName, tableRef, setTableName] = useStateRef(initState.tableName || props.initArgs?.urlApi?.table);
-    const [obsCoreEnabled, setObsCoreEnabled] = useState(initState.obsCoreEnabled || props.initArgs?.urlApi?.selectBy === 'obscore');
+    const [schemaName, schemaRef, setSchemaName] = useStateRef(searchParams.schema || initState.schemaName || urlApi.schema);
+    const [tableName, tableRef, setTableName] = useStateRef(searchParams.table || initState.tableName || urlApi.table);
+    const [obsCoreEnabled, setObsCoreEnabled] = useState(initState.obsCoreEnabled || initArgs.urlApi?.selectBy === 'obscore');
     const [schemaOptions, setSchemaOptions] = useState();
     const [tableOptions, setTableOptions] = useState();
     const [columnsModel, setColumnsModel] = useState();
-    const selectBy = props.selectBy;
-    const obsCoreTableModel = props.obsCoreTableModel;
+
 
     const obsCoreSelected = selectBy === 'obscore';
     const tableSectionNumber = !obsCoreSelected ? '4' : '3';

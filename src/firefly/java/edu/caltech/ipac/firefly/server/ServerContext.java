@@ -207,10 +207,12 @@ public class ServerContext {
             log.info(desc +  "; Using path from property: " + fromProp);
             File workDir = new File(fromProp);
             initDir(workDir);
-            if (!workDir.canWrite()) {
+            if (workDir.canWrite()) {
+                return workDir;
+            }
+            else {
                 log.info(desc + " failed. " + " Unable to write to directory: " + workDir.getPath());
             }
-            return workDir;
         }
 
         if (altDir == null) {

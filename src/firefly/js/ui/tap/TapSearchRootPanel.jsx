@@ -114,6 +114,11 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
     };
 
     useEffect(() => {
+        const {serviceUrl:u}= initArgs?.searchParams ?? {};
+        u && u!==serviceUrl && setServiceUrl(u);
+    }, [initArgs?.searchParams?.serviceUrl]);
+
+    useEffect(() => {
         return FieldGroupUtils.bindToStore( TAP_PANEL_GROUP_KEY, (fields) => {
             setSelectBy(getFieldVal(TAP_PANEL_GROUP_KEY,'selectBy',selectBy));
             const ts= getTapBrowserState();
