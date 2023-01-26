@@ -71,11 +71,7 @@ if [ "$1" = "--help" ] || [ "$1" = "-help" ] || [ "$1" = "-h" ]; then
     exit 0
 fi
 
-if [ -z ${VISUALIZE_FITS_SEARCH_PATH} ]; then
-   VIS_PATH="/external"
-else
-   VIS_PATH="/external:${VISUALIZE_FITS_SEARCH_PATH}"
-fi
+# removed custom VISUALIZE_FITS_SEARCH_PATH for GWT.  not needed.
 
 #---------   CATALINA_OPTS must be exported for catalina.sh to pick them up
 export CATALINA_OPTS="\
@@ -91,7 +87,6 @@ export CATALINA_OPTS="\
   -Dserver_config_dir=/firefly/config \
   -Dstats.log.dir=/firefly/logs/statistics \
   -Dalerts.dir=/firefly/alerts \
-  -Dvisualize.fits.search.path=${VIS_PATH} \
 	"
 
 #----- remove ADMIN_PROTECTED path so it no longer restricted by basic auth
