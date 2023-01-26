@@ -39,15 +39,7 @@
        - the `latest` tag is always the latest formal release. (note- development release use `nightly`)
        
 ### Test the Build
-   - Start docker on your laptop
-   - `docker pull ipac/firefly:yyyy.m.r`
-   - `docker run --rm  -p 8090:8080 -m 4G --name firefly ipac/firefly:yyyy.m.r`
-   - Look at the main page: 
-     - http://localhost:8090/firefly/
-     - bring up version information, confirm build date and version
-     - test one of the new features
-   - Look at test pages
-     - http://localhost:8090/firefly/test
+    - Try in in the firefly dev build you just main
    
 ### Merge RC and Start a new development cycle
    - merge rc into dev, use `--no-ff` to create a new commit
