@@ -15,9 +15,9 @@ const dispatchShowDropDown= ({view, initArgs}) =>
     flux.process({type: 'layout.showDropDown', payload: {visible: true, view, initArgs}});
 //------------
 
-const showTap= (initArgs) => {
+export const showTapSearchPanel= (searchParams={}) => {
     const view= getAppOptions()?.multiTableSearchCmdOptions?.find(({id}) => id === 'tap') ? 'MultiTableSearchCmd' : 'TAPSearch';
-    dispatchShowDropDown({ view, initArgs});
+    dispatchShowDropDown({ view, initArgs:{defaultSelectedId: 'tap', searchParams}});
 };
 
 const showImage= (initArgs) => dispatchShowDropDown( { view: 'ImageSelectDropDownCmd', initArgs});
@@ -25,24 +25,18 @@ const showImage= (initArgs) => dispatchShowDropDown( { view: 'ImageSelectDropDow
 export const makeDefTapSearchActions = () => {
     return [
         makeSearchAction('tapRadius', 'tap', 'TAP ', 'Cone Search', SearchTypes.pointRadius, .001, 2.25,
-            (sa, cenWpt, radius) => {
-                showTap( {defaultSelectedId: 'tap', searchParams: {radiusInArcSec: radius, wp: cenWpt}});
-            }),
+            (sa, cenWpt, radius) => showTapSearchPanel( {radiusInArcSec: radius, wp: cenWpt}), ),
         makeSearchAction('tapArea', 'tap', 'TAP', 'Area Search', SearchTypes.area, undefined, undefined,
-            (sa, cenWpt, radius, corners) => {
-                showTap({defaultSelectedId: 'tap', searchParams: {corners}});
-            }),
-        makeSearchAction('tapRadius', 'tap', 'TAP ', 'Cone Search', SearchTypes.point_table_only, .001, 2.25,
-            (sa, cenWpt) => {
-                showTap({defaultSelectedId: 'tap', searchParams: {wp: cenWpt}});
-            }),
+            (sa, cenWpt, radius, corners) => showTapSearchPanel({corners}), ),
+        makeSearchAction('tableTapRadius', 'tap', 'TAP ', 'Cone Search', SearchTypes.point_table_only, .001, 2.25,
+            (sa, cenWpt) => showTapSearchPanel({wp: cenWpt}), ),
     ];
 };
 
 
 export const makeDefImageSearchActions = () => {
     return [
-        makeSearchAction('imageFits', 'image', 'FITS', 'Fits tip', SearchTypes.point, undefined, undefined,
+        makeSearchAction('imageFits', 'image', 'FITS', 'Load a FITS Image at this point', SearchTypes.point, undefined, undefined,
             (sa, wp) => showImage( {searchParams: {wp, type: 'singleChannel'}}) ),
         makeSearchAction('HiPS', 'image', 'HiPS', 'HiPS tip', SearchTypes.pointRadius, .0025, 180,
             (sa, wp, radius) => showImage( {searchParams: {wp, type: 'hipsImage', radius}}), 'Display HiPS at region center'),

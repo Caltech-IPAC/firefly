@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, map, isUndefined} from 'lodash';
+import {get, map, isUndefined, isEmpty} from 'lodash';
 import {flux} from './ReduxFlux';
 import {dispatchAddActionWatcher} from './MasterSaga';
 import {appDataReducer, menuReducer, alertsReducer} from './AppDataReducers.js';
@@ -222,6 +222,14 @@ export function getAppOptions() {
 
 export function getUserInfo() {
     return flux.getState()[APP_DATA_PATH].userInfo;
+}
+
+export function getSearchActions() {
+    const {searchActions, searchActionsCmdMask}= getAppOptions() ?? {};
+    if (isEmpty(searchActions)) return undefined;
+    if (isEmpty(searchActionsCmdMask)) return searchActions;
+    const retSearchActions= searchActions.filter( ({cmd}) => searchActionsCmdMask.includes(cmd));
+    return retSearchActions;
 }
 
 /**

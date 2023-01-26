@@ -62,6 +62,7 @@ function getNextState(prevS, renderTreeId) {
  *
  */
 export const FireflySlate= memo(( {initLoadingMessage, appTitle= 'Firefly', appIcon=FFTOOLS_ICO, altAppIcon,
+                                      bannerLeftStyle, bannerMiddleStyle,
                                       footer, style, renderTreeId, menu:menuItems, showBgMonitor=false}) => {
     const state= useStoreConnector( (prevState) => getNextState(prevState,renderTreeId));
     const {isReady, mode={}, gridView= [], gridColumns=1, menu={}, dropDown={}, layoutInfo, initLoadCompleted, dropdownPanels} = state;
@@ -81,7 +82,7 @@ export const FireflySlate= memo(( {initLoadingMessage, appTitle= 'Firefly', appI
         <RenderTreeIdCtx.Provider value={{renderTreeId}}>
             <div id='App' className='rootStyle' style={style}>
                 <header>
-                    <BannerSection {...{menu, appTitle, appIcon, altAppIcon}}/>
+                    <BannerSection {...{menu, appTitle, appIcon, altAppIcon, bannerLeftStyle, bannerMiddleStyle}}/>
                     <div id={warningDivId} data-decor='full' className='warning-div center'/>
                     <DropDownContainer key='dropdown' footer={footer} visible={!!visible}
                         selected={view} initArgs={initArgs} {...{dropdownPanels} } />
