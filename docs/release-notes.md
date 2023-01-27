@@ -8,7 +8,9 @@
 
 
 ## Version 2022.3 
-- 2022.3 - (Dec 2023)
+- 2022.3.1 (Jan 2022)
+  - docker tag: `2022.3`, `2022.3.1`
+- 2022.3.0 - (Dec 2023)
   - docker tag: `latest`, `2022.3`, `2022.3.0`
 
 ### _Notes_
@@ -37,6 +39,9 @@
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2022.3+label%3abug)
 - [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2022.3+)
 
+##### _Patches 2022.3_
+- 2022.3.1
+  - fixed an undefined exception when SearchActions are empty
 
 
 ## Version 2022.2 

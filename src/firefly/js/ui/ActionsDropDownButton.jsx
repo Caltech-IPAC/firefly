@@ -160,7 +160,9 @@ export function isSpacialActionsDropVisible(searchActions, pv) {
 }
 
 export function isTableActionsDropVisible(searchActions, tbl_id) {
+    if (!searchActions?.length) return false;
     const table= getTblById(tbl_id);
+    if (!table) return false;
     if (!searchActions.some( ({searchType}) => tableTypes.includes(searchType))) return false;
     const wp= getWorldPtFromTableRow(table);
     return Boolean(wp);
