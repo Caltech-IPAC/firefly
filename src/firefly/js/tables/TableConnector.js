@@ -2,11 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isEmpty, omitBy, isUndefined, cloneDeep, get, range} from 'lodash';
+import {isEmpty, omitBy, isUndefined, cloneDeep, get, range, pick} from 'lodash';
 import * as TblCntlr from './TablesCntlr.js';
 import {getTblById, getTblInfoById} from './TableUtil.js';
 import {SelectInfo} from './SelectInfo.js';
 import {getTableUiById} from './TableUtil';
+import {setTblPref, clearTblPref} from './TablePref.js';
 
 
 
@@ -25,7 +26,7 @@ export const makeConnector = ((tbl_id, tbl_ui_id) => {
         onToggleTextView: (textView) => onToggleTextView(tbl_ui_id, textView),
         onToggleOptionsz: (showOptions) => onToggleOptions(tbl_ui_id, showOptions),
         onOptionUpdate: (changes) => onOptionUpdate( {...changes, tbl_id, tbl_ui_id}),
-        onOptionReset: (original) => onOptionReset(tbl_id, tbl_ui_id, original),
+        onOptionReset: () => onOptionReset(tbl_id, tbl_ui_id),
     };
 });
 
@@ -149,22 +150,16 @@ export function onOptionUpdate({tbl_id, tbl_ui_id, pageSize, columns, showUnits,
     if (!isEmpty(changes)) {
         changes.tbl_ui_id = tbl_ui_id;
         TblCntlr.dispatchTableUiUpdate(changes);
+
+        if (!isEmpty(pick(changes, 'columns', 'showUnits', 'showTypes', 'showFilters'))) setTblPref(tbl_ui_id);        // save as preferences if one of these changes
     }
 }
 
-export function onOptionReset(tbl_id, tbl_ui_id, original) {
+/* modified to only reset columns selection */
+export function onOptionReset(tbl_id, tbl_ui_id) {
     const ctable = getTblById(tbl_id);
-    const {showUnits, showFilters, showTypes} = original;
 
-    const pageSize = ctable?.request?.pageSize !== original.pageSize ? original.pageSize : undefined;       // only set if it has changed
-    onOptionUpdate({tbl_id, tbl_ui_id, pageSize, resetColWidth: true,
-                    columns: cloneDeep(get(ctable, 'tableData.columns', [])),
-                    showUnits, showTypes, showFilters});
-
-    const {filters, sqlFilter}= ctable?.request;
-    if (filters || sqlFilter) {
-        TblCntlr.dispatchTableFilter({tbl_id, sqlFilter: '', filters: ''});
-    }
+    onOptionUpdate({tbl_id, tbl_ui_id, resetColWidth: true,
+        columns: cloneDeep(ctable?.tableData.columns || [])});
+    clearTblPref(tbl_ui_id);
 }
-
-

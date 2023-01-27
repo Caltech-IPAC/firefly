@@ -216,17 +216,19 @@ public class ServerContext {
         }
 
         if (altDir == null) {
-            log.info(desc + " failed. " + " alternate directory is null");
+            log.error(desc + " failed. " + " no alternate directory is given");
             return null;
         }
 
         // using altDir
         log.info(desc +  "; Using alternate path: " + altDir.getPath());
         initDir(altDir);
-        if (!altDir.canWrite()) {
-            log.info(desc + " failed. " + " Unable to write to alternate directory: " + altDir.getPath());
+        if (altDir.canWrite()) {
+            return altDir;
+        } else {
+            log.error(desc + " failed. " + " Unable to write to alternate directory: " + altDir.getPath());
+            return null;
         }
-        return altDir;
     }
 
 

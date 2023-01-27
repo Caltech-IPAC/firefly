@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {once} from 'lodash';
+import {once, set} from 'lodash';
 import React, {useEffect, useRef, useState} from 'react';
 import FieldGroupUtils, {getFieldVal} from 'firefly/fieldGroup/FieldGroupUtils.js';
 import {makeSearchOnce} from 'firefly/util/WebUtil.js';
@@ -28,6 +28,7 @@ import {
 } from 'firefly/ui/tap/TapUtil.js';
 import { SectionTitle, AdqlUI, BasicUI} from 'firefly/ui/tap/TableSelectViewPanel.jsx';
 import {useFieldGroupMetaState} from '../SimpleComponent.jsx';
+import {PREF_KEY} from 'firefly/tables/TablePref.js';
 
 
 
@@ -322,6 +323,8 @@ function onTapSearchSubmit(request,serviceUrl,tapBrowserState) {
 
             const treq = makeTblRequest('AsyncTapQuery', getTitle(adql,serviceUrl), params, options);
             setNoCache(treq);
+
+            if (!isADQL) set(treq, `META_INFO.${PREF_KEY}`, `${tapBrowserState.schemaName}-${tapBrowserState.tableName}`);
             dispatchTableSearch(treq, {backgroundable: true, showFilters: true, showInfoButton: true});
 
         };

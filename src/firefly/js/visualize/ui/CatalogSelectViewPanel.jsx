@@ -5,7 +5,7 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {FormPanel} from '../../ui/FormPanel.jsx';
-import { get, merge, isEmpty, isFunction} from 'lodash';
+import {set, get, merge, isEmpty, isFunction} from 'lodash';
 import {updateMerge} from '../../util/WebUtil.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {doFetchTable} from '../../tables/TableUtil.js';
@@ -27,6 +27,7 @@ import {getAppOptions} from '../../core/AppDataCntlr.js';
 
 import './CatalogTableListField.css';
 import './CatalogSelectViewPanel.css';
+import {PREF_KEY} from 'firefly/tables/TablePref.js';
 
 /**
  * group key for fieldgroup comp
@@ -210,6 +211,8 @@ function doCatalog(request) {
         tReq.selcols = colsSearched;
     }
     //console.log('final request: ' + JSON.stringify(tReq));
+
+    set(tReq, `META_INFO.${PREF_KEY}`, `${tReq.catalogProject}-${tReq.catalog}`);
     dispatchTableSearch(tReq, {backgroundable:true});
 }
 
