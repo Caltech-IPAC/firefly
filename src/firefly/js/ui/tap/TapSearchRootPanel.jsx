@@ -3,7 +3,7 @@
  */
 import {once, set} from 'lodash';
 import React, {useEffect, useRef, useState} from 'react';
-import FieldGroupUtils, {getFieldVal} from 'firefly/fieldGroup/FieldGroupUtils.js';
+import FieldGroupUtils, {getFieldVal, setFieldValue} from 'firefly/fieldGroup/FieldGroupUtils.js';
 import {makeSearchOnce} from 'firefly/util/WebUtil.js';
 import {dispatchMultiValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
@@ -12,7 +12,6 @@ import {ValidationField} from 'firefly/ui/ValidationField.jsx';
 import {intValidator} from 'firefly/util/Validate.js';
 import {FieldGroup} from 'firefly/ui/FieldGroup.jsx';
 import CreatableSelect from 'react-select/creatable';
-import {RadioGroupInputField} from 'firefly/ui/RadioGroupInputField.jsx';
 import {makeTblRequest, setNoCache} from 'firefly/tables/TableRequestUtil.js';
 import {dispatchTableSearch} from 'firefly/tables/TablesCntlr.js';
 import {showInfoPopup, showYesNoPopup} from 'firefly/ui/PopupUtil.jsx';
@@ -30,7 +29,7 @@ import {
     getMaxrecHardLimit, tapHelpId, getTapServices,
     loadObsCoreSchemaTables, maybeQuote, defTapBrowserState, TAP_UPLOAD_SCHEMA, getAsEntryForTableName,
 } from 'firefly/ui/tap/TapUtil.js';
-import { SectionTitle, AdqlUI, BasicUI} from 'firefly/ui/tap/TableSelectViewPanel.jsx';
+import {SectionTitle, AdqlUI, BasicUI} from 'firefly/ui/tap/TableSelectViewPanel.jsx';
 import {useFieldGroupMetaState} from '../SimpleComponent.jsx';
 import {PREF_KEY} from 'firefly/tables/TablePref.js';
 
@@ -100,6 +99,7 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
     const tapOps= getTapServiceOptions();
     const {current:clickFuncRef} = useRef({clickFunc:undefined});
     const [selectBy, setSelectBy]= useState(initArgs?.urlApi?.selectBy || 'basic');
+    const [servicesShowing, setServicesShowing]= useState(false);
     const [obsCoreTableModel, setObsCoreTableModel] = useState();
     const [serviceUrl, setServiceUrl]= useState(() => getInitServiceUrl(tapState,initArgs,tapOps));
     activateInitArgsAdqlOnce(tapState,initArgs);
@@ -135,6 +135,10 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
         });
     }, []);
 
+    useEffect(() => {
+        setFieldValue(TAP_PANEL_GROUP_KEY, 'selectBy', selectBy);
+    }, [selectBy]);
+
     const ctx= {
         setConstraintFragment: (key,value) => {
             value ?
@@ -151,13 +155,15 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
                             getDoOnClickFunc={(clickFunc) => clickFuncRef.clickFunc= clickFunc}
                             params={{hideOnInvalid: false}}
                             onSubmit={(request) => onTapSearchSubmit(request, serviceUrl,tapState)}
-                            extraWidgets={makeExtraWidgets(initArgs,selectBy,tapState)}
+                            extraWidgets={makeExtraWidgets(initArgs,selectBy,setSelectBy, tapState)}
+                            // extraWidgetsRight={makeExtraWidgetsRight(servicesShowing, setServicesShowing)}
                             buttonStyle={{justifyContent: 'left'}}
                             submitBarStyle={{padding: '2px 3px 3px'}}
                             includeUnmounted={true}
                             help_id = {tapHelpId('form')} >
                     <TapSearchPanelComponents {...{
-                        initArgs, selectBy, serviceUrl, onTapServiceOptionSelect, titleOn, tapOps, obsCoreEnabled}} />
+                        servicesShowing, setServicesShowing,
+                        initArgs, selectBy, setSelectBy, serviceUrl, onTapServiceOptionSelect, titleOn, tapOps, obsCoreEnabled}} />
                 </FormPanel>
             </ConstraintContext.Provider>
         </div>
@@ -186,38 +192,11 @@ const makePlaceHolderBeforeStyle= (l) =>
 
 
 
-function TapSearchPanelComponents({initArgs, serviceUrl, onTapServiceOptionSelect, tapOps, titleOn=true, selectBy}) {
+function TapSearchPanelComponents({initArgs, serviceUrl, servicesShowing, setServicesShowing, onTapServiceOptionSelect, tapOps, titleOn=true, selectBy, setSelectBy}) {
 
     const label= (serviceUrl && (tapOps.find( (e) => e.value===serviceUrl)?.labelOnly)) || '';
-    const placeholder = serviceUrl ? `${serviceUrl} - Replace...` : 'Select TAP...';
     const [obsCoreTableModel, setObsCoreTableModel] = useState();
     const hasObsCoreTable = obsCoreTableModel?.tableData?.data?.length > 0;
-
-    const tableSelectStyleEnhanced= {
-        ...tableSelectStyleEnhancedTemplate,
-        placeholder: (provided) => ({ ...provided, ':before': makePlaceHolderBeforeStyle(label) })
-    };
-
-    const options = [
-        {label: 'Single Table (UI assisted) ', value: 'basic', tooltip: 'Search a single table using a GUI query builder'},
-        {label: 'Edit ADQL (advanced)', value: 'adql', tooltip: 'Enter or edit directly an ADQL query; supports complex queries including JOINs'}
-    ];
-
-    if (hasObsCoreTable) {
-        options.push({label: 'Image Search (ObsTAP)', value: 'obscore', tooltip: 'Search the ObsTAP image metadata on this service with a specialized GUI query builder'});
-    }
-
-    let queryTypeEpilogue = '';
-    if (selectBy === 'obscore') {
-        let obsCoreTableName = 'ivoa.ObsCore';
-        if (hasObsCoreTable){
-            obsCoreTableName = obsCoreTableModel?.tableData?.data[0][1];
-        }
-        // This component does not know the actual name of the table, but it is guaranteed
-        // that name.toLowerCase() === 'ivoa.ObsCore'.toLowerCase()
-        queryTypeEpilogue =
-            <div style={{display: 'inline-flex', marginTop: '4px'}}>(Searching the <pre style={{margin: '0px .5em'}}>{obsCoreTableName}</pre> table on this service...)</div>;
-    }
 
     const loadObsCoreTables = (requestServiceUrl) => {
         loadObsCoreSchemaTables(requestServiceUrl).then((tableModel) => {
@@ -233,36 +212,55 @@ function TapSearchPanelComponents({initArgs, serviceUrl, onTapServiceOptionSelec
         <FieldGroup groupKey={TAP_PANEL_GROUP_KEY} keepState={true} style={{flexGrow: 1, display: 'flex'}}>
             <div className='TapSearch'>
                 {titleOn && <div className='TapSearch__title'>TAP Searches</div>}
-                <div className='TapSearch__section' title={SERVICE_TIP}>
-                    <SectionTitle title='1. Select TAP Service ' helpId='tapService' tip={SERVICE_TIP}/>
-                    <div style={{flexGrow: 1, marginRight: 3, maxWidth: 1000,  zIndex: 9999}}>
-                        <CreatableSelect
-                            options={tapOps} isClearable={true} onChange={onTapServiceOptionSelect}
-                            placeholder={placeholder} theme={selectTheme} styles={ tableSelectStyleEnhanced}/>
-                    </div>
-                </div>
-
-                <div className='TapSearch__section' >
-                    <SectionTitle title='2. Select Query Type  ' helpId='selectBy'/>
-                    <RadioGroupInputField
-                        fieldKey = 'selectBy'
-                        initialState = {{ tooltip: 'Please select an interface type to use' }}
-                        defaultValue = {initArgs?.urlApi?.selectBy}
-                        options = {options}
-                        wrapperStyle={{alignSelf: 'center'}}
-                    />
-                    {queryTypeEpilogue}
-                </div>
+                <Services {...{serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect}}/>
                 { selectBy === 'adql' ?
-                    <AdqlUI {...{serviceUrl}}/> :
-                    <BasicUI  {...{serviceUrl, serviceLabel: label, selectBy, initArgs, obsCoreTableModel}}/>
+                    <AdqlUI {...{serviceUrl, servicesShowing, setServicesShowing, setSelectBy}}/> :
+                    <BasicUI  {...{serviceUrl, serviceLabel: label, selectBy, initArgs, obsCoreTableModel,
+                        servicesShowing, setServicesShowing, hasObsCoreTable, setSelectBy}}/>
                 }
             </div>
         </FieldGroup>
     );
 }
 
-function makeExtraWidgets(initArgs, selectBy, tapBrowserState) {
+function Services({serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect} ) {
+    const label= (serviceUrl && (tapOps.find( (e) => e.value===serviceUrl)?.labelOnly)) || '';
+    const placeholder = serviceUrl ? `${serviceUrl} - Replace...` : 'Select TAP...';
+    const [extraStyle,setExtraStyle] = useState({overflow:'hidden'});
+
+    const tableSelectStyleEnhanced= {
+        ...tableSelectStyleEnhancedTemplate,
+        placeholder: (provided) => ({ ...provided, ':before': makePlaceHolderBeforeStyle(label) })
+    };
+    const title= <div style={{width:170}}>{'Select TAP Service'}</div>;
+
+    useEffect(() => {
+        if (servicesShowing) {
+            setTimeout(() => setExtraStyle({overflow:'visible'}), 250);
+        }
+        else {
+            setExtraStyle({overflow:'hidden'});
+        }
+    }, [servicesShowing]);
+
+    return (
+        <div
+            className={servicesShowing?'TapSearch__section':'TapSearch__section TapSearch__hide'}
+            style={{height: servicesShowing?62:0, justifyContent:'space-between', alignItems:'center',...extraStyle}}
+            title={SERVICE_TIP}>
+            <div style={{display:'flex', alignItems:'center', width:'100%'}}>
+                <SectionTitle helpId='tapService' tip={SERVICE_TIP} title={title}/>
+                <div style={{flexGrow: 1, marginRight: 3, maxWidth: 1000,  zIndex: 9999}}>
+                    <CreatableSelect
+                        options={tapOps} isClearable={true} onChange={onTapServiceOptionSelect}
+                        placeholder={placeholder} theme={selectTheme} styles={ tableSelectStyleEnhanced}/>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function makeExtraWidgets(initArgs, selectBy, setSelectBy, tapBrowserState) {
     const extraWidgets = [
         (<ValidationField fieldKey='maxrec' key='maxrec' groupKey={TAP_PANEL_GROUP_KEY}
                          tooltip='Maximum number of rows to return (via MAXREC)' label= 'Row Limit:' labelWidth={0}
@@ -273,9 +271,16 @@ function makeExtraWidgets(initArgs, selectBy, tapBrowserState) {
                          wrapperStyle={{marginLeft: 30, height: '100%', alignSelf: 'center'}}
                          style={{height: 17, width: 70}} />)
         ];
-    if (selectBy==='basic' || selectBy==='obscore') {
+    if (selectBy==='basic') {
         extraWidgets.push( (<ExtraButton key='editADQL' text='Populate and edit ADQL'
-                                         onClick={() => populateAndEditAdql(tapBrowserState)} style={{marginLeft: 30}} />));
+                                         onClick={() => populateAndEditAdql(tapBrowserState)}
+                                         style={{marginLeft: 10}} />));
+    }
+    else {
+        extraWidgets.push( (<ExtraButton key='singleTable' text='Single Table (UI assisted)'
+                                         onClick={() => setSelectBy('basic')}
+                                         style={{marginLeft: 10}} />));
+
     }
     return extraWidgets;
 }

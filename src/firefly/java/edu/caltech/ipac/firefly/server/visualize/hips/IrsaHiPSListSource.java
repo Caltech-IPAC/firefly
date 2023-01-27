@@ -18,7 +18,7 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
     public List<HiPSMasterListEntry> getHiPSListData(String[] dataTypes, String source) {
         try {
             if (!Arrays.asList(dataTypes).contains(ServerParams.IMAGE)) return null;
-            return HiPSListUtil.createHiPSListFromUrl(irsaHipsListUrl, source, true, null);
+            return HiPSListUtil.createHiPSListFromUrl(irsaHipsListUrl, source, false, null);
         }
         catch (Exception e) {
             HiPSListUtil.warn("get " + source + " HiPS failed - " + e.getMessage());

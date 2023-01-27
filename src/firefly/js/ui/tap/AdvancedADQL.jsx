@@ -181,9 +181,9 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
                 </SplitContent>
                 <SplitContent style={{overflow: 'auto'}}>
                     <div className='flex-full'>
-                        <div style={{display: 'inline-flex', marginRight: 25, justifyContent: 'space-between', alignItems: 'center'}}>
+                        <div style={{display: 'inline-flex', marginRight: 25, justifyContent: 'flex-start', alignItems: 'center'}}>
                             <h3>ADQL Query:</h3>
-                            <div style={{display: 'inline-flux'}}>
+                            <div style={{display: 'inline-flux', marginLeft:50}}>
                                 <button className='button std' title='Reset to the initial query' style={{height: 24, marginRight: 5}} onClick={onReset}>Reset</button>
                                 <button className='button std' title='Clear the query' style={{height: 24}} onClick={onClear}>Clear</button>
                             </div>

@@ -106,7 +106,7 @@ const defAppProps = {
     template: undefined,        // don't set a default value for this.  it's also used as a switch for API vs UI mode
     appTitle: '',
     showUserInfo: false,
-    showViewsSwitch: false,
+    showViewsSwitch: true,
     rightButtons: undefined,
 
     menu: [

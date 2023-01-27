@@ -4,9 +4,13 @@ import Prism from 'prismjs';
 import PropTypes from 'prop-types';
 import React, {useEffect, useRef} from 'react';
 import {getAppOptions} from '../../api/ApiUtil.js';
-import {CheckboxGroupInputField} from '../CheckboxGroupInputField.jsx';
+import {CheckboxGroupInputField, CheckboxGroupInputFieldView} from '../CheckboxGroupInputField.jsx';
 import {FieldGroupCollapsible} from '../panel/CollapsiblePanel.jsx';
+import {RadioGroupInputFieldView} from '../RadioGroupInputFieldView.jsx';
 import {useFieldGroupValue} from '../SimpleComponent.jsx';
+
+import HIDE_ICON from 'images/show-up-3.png';
+import SHOW_ICON from 'images/hide-down-3.png';
 
 export const HeaderFont = {fontSize: 12, fontWeight: 'bold', alignItems: 'center'};
 
@@ -171,9 +175,80 @@ export function makeCollapsibleCheckHeader(base) {
 }
 
 
+export function NavButtons({setServicesShowing, servicesShowing, currentPanel, setNextPanel}) {
+
+    return (
+        <div style={{display:'flex', flexDirection:'column', margin:'5px 5px 0 60px'}}>
+            <ShowServicesButton {...{setServicesShowing,servicesShowing, labelWidth:0}}/>
+            <GotoPanelButton {...{style:{marginTop:5}, setNextPanel,currentPanel, labelWidth:0}}/>
+        </div>
+    );
+}
+
+export const ADQL= 'adql';
+export const SINGLE= 'basic';
+export const OBSCORE= 'obscore';
+export const ANY= 'any';
+const HIDE='HIDE';
+const SHOW='SHOW';
+
+const ServLabel= ({text,icon}) => (
+    <div style={{display:'flex', flexDirection:'row', justifyContent:'flex-start', alignItems:'center'}}>
+        <img src={icon} alt={text} height={10}/>
+        <div style={{paddingLeft:12}}>{text}</div>
+    </div>
+);
 
 
+function ShowServicesButton({style={}, labelWidth, setServicesShowing, servicesShowing }) {
+    const currState= servicesShowing ? SHOW : HIDE;
+    const tooltip= servicesShowing ? 'Showing TAP services selection' : 'TAP Services selection is hidden';
+    const showLabel= <ServLabel icon={SHOW_ICON} text='Show'/>;
+    const hideLabel= <ServLabel icon={HIDE_ICON} text='Hide'/>;
+    const options= [ {label:showLabel, value:SHOW}, {label:hideLabel, value:HIDE} ];
 
+    return (
+            <RadioGroupInputFieldView {...{
+                wrapperStyle:{display:'inline-flex', alignItems:'center', justifyContent:'flex-end'},
+                buttonGroupButtonStyle:{width:80},
+                options, value:currState, labelWidth, tooltip,
+                label:'TAP Services: ',
+                buttonGroup:true, inline:true,
+                onChange:() => setServicesShowing(!servicesShowing)
+            }}/>
+    );
+}
+
+function GotoPanelButton({style={}, currentPanel, setNextPanel, labelWidth}) {
+    const options= [ {label:'UI assisted', value:SINGLE}, {label:'Edit ADQL', value:ADQL}];
+    const tooltip= 'Please select an interface type to use';
+
+    return (
+            <RadioGroupInputFieldView {...{
+                wrapperStyle:{...style, display:'inline-flex', alignItems:'center', justifyContent:'flex-end'},
+                options, value:currentPanel, labelWidth,
+                buttonGroupButtonStyle:{width:80},
+                label:'View: ',
+                tooltip,
+                buttonGroup:true, inline:true,
+                onChange: () => setNextPanel(currentPanel===SINGLE ? ADQL : SINGLE)
+            }}/>
+    );
+}
+
+export function TableTypeButton({style={}, lockToObsCore, setLockToObsCore}) {
+    const options= [ {label:'Use Image Search (ObsTAP)', value:OBSCORE}];
+    const tooltip= lockToObsCore ? 'Selected anb image Search' : 'Selected search for catalog or other tables';
+
+    return (
+        <CheckboxGroupInputFieldView  {...{
+            wrapperStyle:{...style, display:'inline-flex', alignItems:'center', justifyContent:'flex-start'},
+            options,
+            tooltip,value:lockToObsCore?OBSCORE:'', labelWidth:1,
+            onChange: () => setLockToObsCore(!lockToObsCore)
+        }}/>
+    );
+}
 
 export function DebugObsCore({constraintResult, includeSia=false}) {
 

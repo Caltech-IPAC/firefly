@@ -281,7 +281,7 @@ function UploadTableSelector({uploadInfo, setUploadInfo}) {
             {haveTable &&
                 <CenterColumns {...{lonCol: getLon(), latCol: getLat(), cols:columns,
                     headerTitle:'Position Columns:', openKey,
-                    headerPostTitle:'(from the upload table)',
+                    headerPostTitle:'(from the uploaded table)',
                     headerStyle:{paddingLeft:1},
                     style:{margin:'0 0 10px 195px'},
                     labelStyle:{paddingRight:10},
